@@ -12,6 +12,127 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
     Terraform outputs consumed by the planner after apply.
  */
 message Yandex {
+    message Settings {
+        /*
+        PlatformId identifies the Yandex Compute platform architecture tier.
+     */
+        enum PlatformId {
+            /*
+                PLATFORM_ID_UNSPECIFIED is the unset zero value.
+             */
+            PLATFORM_ID_UNSPECIFIED = 0;
+            /*
+                PLATFORM_ID_STANDARD_V1 is the first-generation standard x86-64
+                platform.
+             */
+            PLATFORM_ID_STANDARD_V1 = 1;
+            /*
+                PLATFORM_ID_STANDARD_V2 is the second-generation standard x86-64
+                platform.
+             */
+            PLATFORM_ID_STANDARD_V2 = 2;
+            /*
+                PLATFORM_ID_STANDARD_V3 is the third-generation standard x86-64
+                platform.
+             */
+            PLATFORM_ID_STANDARD_V3 = 3;
+            /*
+                PLATFORM_ID_STANDARD_V4A is the fourth-generation AMD-based
+                standard platform.
+             */
+            PLATFORM_ID_STANDARD_V4A = 4;
+            /*
+                PLATFORM_ID_AMD_V1 is the AMD EPYC-based platform variant.
+             */
+            PLATFORM_ID_AMD_V1 = 5;
+            /*
+                PLATFORM_ID_HIGHFREQ_V3 is the high-frequency third-generation
+                x86-64 platform.
+             */
+            PLATFORM_ID_HIGHFREQ_V3 = 6;
+            /*
+                PLATFORM_ID_HIGHFREQ_V4A is the high-frequency fourth-generation
+                AMD platform.
+             */
+            PLATFORM_ID_HIGHFREQ_V4A = 7;
+        }
+
+        /*
+            Zone identifies the Yandex Cloud availability zone for deployment
+            resources.
+         */
+        enum Zone {
+            /*
+                ZONE_UNSPECIFIED is the unset zero value.
+             */
+            ZONE_UNSPECIFIED = 0;
+            /*
+                ZONE_RU_CENTRAL1_A is the Central Russia A zone.
+             */
+            ZONE_RU_CENTRAL1_A = 1;
+            /*
+                ZONE_RU_CENTRAL1_B is the Central Russia B zone.
+             */
+            ZONE_RU_CENTRAL1_B = 2;
+            /*
+                ZONE_RU_CENTRAL1_D is the Central Russia D zone.
+             */
+            ZONE_RU_CENTRAL1_D = 3;
+        }
+
+        /*
+            token is the Yandex Cloud API authentication token.
+         */
+        string token = 1 [(validate.rules).string.max_len = 4096];
+        /*
+            cloud_id is the Yandex Cloud account identifier.
+         */
+        string cloud_id = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+        /*
+            folder_id is the Yandex Cloud folder/project resource id.
+         */
+        string folder_id = 3 [(validate.rules).string = {min_len: 1, max_len: 128}];
+        /*
+            zone is the default availability zone for deployment resources.
+         */
+        Zone zone = 4 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+        /*
+            network_id is the VPC network resource id.
+         */
+        string network_id = 5 [(validate.rules).string = {min_len: 1, max_len: 128}];
+        /*
+            network_name is the VPC network display name.
+         */
+        string network_name = 6 [(validate.rules).string = {min_len: 1, max_len: 63}];
+        /*
+            subnet_cidr is the CIDR block used for the deployment subnet.
+         */
+        string subnet_cidr = 7 [(validate.rules).string = {min_len: 1, max_len: 64}];
+        /*
+            platform_id is the VM platform architecture tier.
+         */
+        PlatformId platform_id = 8 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+        /*
+            image_id is the Yandex Compute image identifier.
+         */
+        string image_id = 9 [(validate.rules).string = {min_len: 1, max_len: 128}];
+        /*
+            assign_public_ip enables public IP assignment for provisioned VMs.
+         */
+        bool assign_public_ip = 10;
+        /*
+            software_accelerated_network enables software packet acceleration.
+         */
+        bool software_accelerated_network = 11;
+        /*
+            ssh_user is the login username used for SSH access.
+         */
+        string ssh_user = 12 [(validate.rules).string = {min_len: 1, max_len: 64}];
+        /*
+            ssh_public_key is the SSH public key used for authentication.
+         */
+        string ssh_public_key = 13 [(validate.rules).string = {min_len: 1, max_len: 4096}];
+    }
     /* input contains Terraform variables for one apply. */
     Input input = 1 [(validate.rules).message.required = true];
     /* output contains Terraform outputs after apply. */

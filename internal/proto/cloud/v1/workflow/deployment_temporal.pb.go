@@ -14,7 +14,6 @@ import (
 	helpers "github.com/cludden/protoc-gen-go-temporal/pkg/helpers"
 	scheme "github.com/cludden/protoc-gen-go-temporal/pkg/scheme"
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
-	topology "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology"
 	enumsv1 "go.temporal.io/api/enums/v1"
 	activity "go.temporal.io/sdk/activity"
 	client "go.temporal.io/sdk/client"
@@ -36,7 +35,9 @@ var DeploymentServiceTaskQueue = "stroppy-cloud"
 // cloud.v1.workflow.DeploymentService workflow names
 const (
 	CalculateQuotasWorkflowWorkflowName          = "CalculateQuotasWorkflow"
-	ProcessDeploymentWorkflowWorkflowName        = "ProcessDeploymentWorkflow"
+	ExecuteDeploymentPlanWorkflowWorkflowName    = "ExecuteDeploymentPlanWorkflow"
+	ProcessInfrastructureWorkflowWorkflowName    = "ProcessInfrastructureWorkflow"
+	RenderDeploymentPlanWorkflowWorkflowName     = "RenderDeploymentPlanWorkflow"
 	RenderDockerInputWorkflowWorkflowName        = "RenderDockerInputWorkflow"
 	RenderTerraformVariablesWorkflowWorkflowName = "RenderTerraformVariablesWorkflow"
 )
@@ -55,8 +56,8 @@ const (
 
 // DeploymentServiceClient describes a client for a(n) cloud.v1.workflow.DeploymentService worker
 type DeploymentServiceClient interface {
-	// CalculateQuotasWorkflow computes resource quota requests from a topology
-	// (pure computation, retryable).
+	// CalculateQuotasWorkflow computes quota requests from an infrastructure
+	// plan.
 	CalculateQuotasWorkflow(ctx context.Context, req *CalculateQuotasWorkflowRequest, opts ...*CalculateQuotasWorkflowOptions) (*CalculateQuotasWorkflowResponse, error)
 
 	// CalculateQuotasWorkflowAsync starts a(n) CalculateQuotasWorkflow workflow and returns a handle to the workflow run
@@ -65,32 +66,48 @@ type DeploymentServiceClient interface {
 	// GetCalculateQuotasWorkflow retrieves a handle to an existing CalculateQuotasWorkflow workflow execution
 	GetCalculateQuotasWorkflow(ctx context.Context, workflowID string, runID string) CalculateQuotasWorkflowRun
 
-	// ProcessDeploymentWorkflow provisions a topology end to end; always a
-	// child of TestWorkflow and never auto-retried as a whole.
-	ProcessDeploymentWorkflow(ctx context.Context, req *ProcessDeploymentWorkflowRequest, opts ...*ProcessDeploymentWorkflowOptions) (*ProcessDeploymentWorkflowResponse, error)
+	// ExecuteDeploymentPlanWorkflow executes rendered agent steps.
+	ExecuteDeploymentPlanWorkflow(ctx context.Context, req *ExecuteDeploymentPlanWorkflowRequest, opts ...*ExecuteDeploymentPlanWorkflowOptions) (*ExecuteDeploymentPlanWorkflowResponse, error)
 
-	// ProcessDeploymentWorkflowAsync starts a(n) ProcessDeploymentWorkflow workflow and returns a handle to the workflow run
-	ProcessDeploymentWorkflowAsync(ctx context.Context, req *ProcessDeploymentWorkflowRequest, opts ...*ProcessDeploymentWorkflowOptions) (ProcessDeploymentWorkflowRun, error)
+	// ExecuteDeploymentPlanWorkflowAsync starts a(n) ExecuteDeploymentPlanWorkflow workflow and returns a handle to the workflow run
+	ExecuteDeploymentPlanWorkflowAsync(ctx context.Context, req *ExecuteDeploymentPlanWorkflowRequest, opts ...*ExecuteDeploymentPlanWorkflowOptions) (ExecuteDeploymentPlanWorkflowRun, error)
 
-	// GetProcessDeploymentWorkflow retrieves a handle to an existing ProcessDeploymentWorkflow workflow execution
-	GetProcessDeploymentWorkflow(ctx context.Context, workflowID string, runID string) ProcessDeploymentWorkflowRun
+	// GetExecuteDeploymentPlanWorkflow retrieves a handle to an existing ExecuteDeploymentPlanWorkflow workflow execution
+	GetExecuteDeploymentPlanWorkflow(ctx context.Context, workflowID string, runID string) ExecuteDeploymentPlanWorkflowRun
 
-	// RenderDockerInputWorkflow renders a topology into Docker compose input
-	// (pure render, retryable).
-	RenderDockerInputWorkflow(ctx context.Context, req *topology.Topology, opts ...*RenderDockerInputWorkflowOptions) (*deployment.Docker_Input, error)
+	// ProcessInfrastructureWorkflow provisions provider infrastructure.
+	ProcessInfrastructureWorkflow(ctx context.Context, req *ProcessInfrastructureWorkflowRequest, opts ...*ProcessInfrastructureWorkflowOptions) (*ProcessInfrastructureWorkflowResponse, error)
+
+	// ProcessInfrastructureWorkflowAsync starts a(n) ProcessInfrastructureWorkflow workflow and returns a handle to the workflow run
+	ProcessInfrastructureWorkflowAsync(ctx context.Context, req *ProcessInfrastructureWorkflowRequest, opts ...*ProcessInfrastructureWorkflowOptions) (ProcessInfrastructureWorkflowRun, error)
+
+	// GetProcessInfrastructureWorkflow retrieves a handle to an existing ProcessInfrastructureWorkflow workflow execution
+	GetProcessInfrastructureWorkflow(ctx context.Context, workflowID string, runID string) ProcessInfrastructureWorkflowRun
+
+	// RenderDeploymentPlanWorkflow renders package/config/agent steps.
+	RenderDeploymentPlanWorkflow(ctx context.Context, req *RenderDeploymentPlanWorkflowRequest, opts ...*RenderDeploymentPlanWorkflowOptions) (*RenderDeploymentPlanWorkflowResponse, error)
+
+	// RenderDeploymentPlanWorkflowAsync starts a(n) RenderDeploymentPlanWorkflow workflow and returns a handle to the workflow run
+	RenderDeploymentPlanWorkflowAsync(ctx context.Context, req *RenderDeploymentPlanWorkflowRequest, opts ...*RenderDeploymentPlanWorkflowOptions) (RenderDeploymentPlanWorkflowRun, error)
+
+	// GetRenderDeploymentPlanWorkflow retrieves a handle to an existing RenderDeploymentPlanWorkflow workflow execution
+	GetRenderDeploymentPlanWorkflow(ctx context.Context, workflowID string, runID string) RenderDeploymentPlanWorkflowRun
+
+	// RenderDockerInputWorkflow renders infrastructure plan to Docker input.
+	RenderDockerInputWorkflow(ctx context.Context, req *deployment.InfrastructurePlan, opts ...*RenderDockerInputWorkflowOptions) (*deployment.Docker_Input, error)
 
 	// RenderDockerInputWorkflowAsync starts a(n) RenderDockerInputWorkflow workflow and returns a handle to the workflow run
-	RenderDockerInputWorkflowAsync(ctx context.Context, req *topology.Topology, opts ...*RenderDockerInputWorkflowOptions) (RenderDockerInputWorkflowRun, error)
+	RenderDockerInputWorkflowAsync(ctx context.Context, req *deployment.InfrastructurePlan, opts ...*RenderDockerInputWorkflowOptions) (RenderDockerInputWorkflowRun, error)
 
 	// GetRenderDockerInputWorkflow retrieves a handle to an existing RenderDockerInputWorkflow workflow execution
 	GetRenderDockerInputWorkflow(ctx context.Context, workflowID string, runID string) RenderDockerInputWorkflowRun
 
-	// RenderTerraformVariablesWorkflow renders a topology into Terraform
-	// variables input (pure render, retryable).
-	RenderTerraformVariablesWorkflow(ctx context.Context, req *topology.Topology, opts ...*RenderTerraformVariablesWorkflowOptions) (*deployment.Terraform_Input, error)
+	// RenderTerraformVariablesWorkflow renders infrastructure plan to Terraform
+	// input.
+	RenderTerraformVariablesWorkflow(ctx context.Context, req *deployment.InfrastructurePlan, opts ...*RenderTerraformVariablesWorkflowOptions) (*deployment.Terraform_Input, error)
 
 	// RenderTerraformVariablesWorkflowAsync starts a(n) RenderTerraformVariablesWorkflow workflow and returns a handle to the workflow run
-	RenderTerraformVariablesWorkflowAsync(ctx context.Context, req *topology.Topology, opts ...*RenderTerraformVariablesWorkflowOptions) (RenderTerraformVariablesWorkflowRun, error)
+	RenderTerraformVariablesWorkflowAsync(ctx context.Context, req *deployment.InfrastructurePlan, opts ...*RenderTerraformVariablesWorkflowOptions) (RenderTerraformVariablesWorkflowRun, error)
 
 	// GetRenderTerraformVariablesWorkflow retrieves a handle to an existing RenderTerraformVariablesWorkflow workflow execution
 	GetRenderTerraformVariablesWorkflow(ctx context.Context, workflowID string, runID string) RenderTerraformVariablesWorkflowRun
@@ -167,8 +184,8 @@ func (opts *deploymentServiceClientOptions) getLogger() *slog.Logger {
 	return slog.Default()
 }
 
-// CalculateQuotasWorkflow computes resource quota requests from a topology
-// (pure computation, retryable).
+// CalculateQuotasWorkflow computes quota requests from an infrastructure
+// plan.
 func (c *deploymentServiceClient) CalculateQuotasWorkflow(ctx context.Context, req *CalculateQuotasWorkflowRequest, options ...*CalculateQuotasWorkflowOptions) (*CalculateQuotasWorkflowResponse, error) {
 	run, err := c.CalculateQuotasWorkflowAsync(ctx, req, options...)
 	if err != nil {
@@ -177,8 +194,8 @@ func (c *deploymentServiceClient) CalculateQuotasWorkflow(ctx context.Context, r
 	return run.Get(ctx)
 }
 
-// CalculateQuotasWorkflow computes resource quota requests from a topology
-// (pure computation, retryable).
+// CalculateQuotasWorkflow computes quota requests from an infrastructure
+// plan.
 func (c *deploymentServiceClient) CalculateQuotasWorkflowAsync(ctx context.Context, req *CalculateQuotasWorkflowRequest, options ...*CalculateQuotasWorkflowOptions) (CalculateQuotasWorkflowRun, error) {
 	var o *CalculateQuotasWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
@@ -211,53 +228,134 @@ func (c *deploymentServiceClient) GetCalculateQuotasWorkflow(ctx context.Context
 	}
 }
 
-// ProcessDeploymentWorkflow provisions a topology end to end; always a
-// child of TestWorkflow and never auto-retried as a whole.
-func (c *deploymentServiceClient) ProcessDeploymentWorkflow(ctx context.Context, req *ProcessDeploymentWorkflowRequest, options ...*ProcessDeploymentWorkflowOptions) (*ProcessDeploymentWorkflowResponse, error) {
-	run, err := c.ProcessDeploymentWorkflowAsync(ctx, req, options...)
+// ExecuteDeploymentPlanWorkflow executes rendered agent steps.
+func (c *deploymentServiceClient) ExecuteDeploymentPlanWorkflow(ctx context.Context, req *ExecuteDeploymentPlanWorkflowRequest, options ...*ExecuteDeploymentPlanWorkflowOptions) (*ExecuteDeploymentPlanWorkflowResponse, error) {
+	run, err := c.ExecuteDeploymentPlanWorkflowAsync(ctx, req, options...)
 	if err != nil {
 		return nil, err
 	}
 	return run.Get(ctx)
 }
 
-// ProcessDeploymentWorkflow provisions a topology end to end; always a
-// child of TestWorkflow and never auto-retried as a whole.
-func (c *deploymentServiceClient) ProcessDeploymentWorkflowAsync(ctx context.Context, req *ProcessDeploymentWorkflowRequest, options ...*ProcessDeploymentWorkflowOptions) (ProcessDeploymentWorkflowRun, error) {
-	var o *ProcessDeploymentWorkflowOptions
+// ExecuteDeploymentPlanWorkflow executes rendered agent steps.
+func (c *deploymentServiceClient) ExecuteDeploymentPlanWorkflowAsync(ctx context.Context, req *ExecuteDeploymentPlanWorkflowRequest, options ...*ExecuteDeploymentPlanWorkflowOptions) (ExecuteDeploymentPlanWorkflowRun, error) {
+	var o *ExecuteDeploymentPlanWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
 	} else {
-		o = NewProcessDeploymentWorkflowOptions()
+		o = NewExecuteDeploymentPlanWorkflowOptions()
 	}
 	opts, err := o.Build(req.ProtoReflect())
 	if err != nil {
 		return nil, fmt.Errorf("error initializing client.StartWorkflowOptions: %w", err)
 	}
-	run, err := c.client.ExecuteWorkflow(ctx, opts, ProcessDeploymentWorkflowWorkflowName, req)
+	run, err := c.client.ExecuteWorkflow(ctx, opts, ExecuteDeploymentPlanWorkflowWorkflowName, req)
 	if err != nil {
 		return nil, err
 	}
 	if run == nil {
 		return nil, errors.New("execute workflow returned nil run")
 	}
-	return &processDeploymentWorkflowRun{
+	return &executeDeploymentPlanWorkflowRun{
 		client: c,
 		run:    run,
 	}, nil
 }
 
-// GetProcessDeploymentWorkflow fetches an existing ProcessDeploymentWorkflow execution
-func (c *deploymentServiceClient) GetProcessDeploymentWorkflow(ctx context.Context, workflowID string, runID string) ProcessDeploymentWorkflowRun {
-	return &processDeploymentWorkflowRun{
+// GetExecuteDeploymentPlanWorkflow fetches an existing ExecuteDeploymentPlanWorkflow execution
+func (c *deploymentServiceClient) GetExecuteDeploymentPlanWorkflow(ctx context.Context, workflowID string, runID string) ExecuteDeploymentPlanWorkflowRun {
+	return &executeDeploymentPlanWorkflowRun{
 		client: c,
 		run:    c.client.GetWorkflow(ctx, workflowID, runID),
 	}
 }
 
-// RenderDockerInputWorkflow renders a topology into Docker compose input
-// (pure render, retryable).
-func (c *deploymentServiceClient) RenderDockerInputWorkflow(ctx context.Context, req *topology.Topology, options ...*RenderDockerInputWorkflowOptions) (*deployment.Docker_Input, error) {
+// ProcessInfrastructureWorkflow provisions provider infrastructure.
+func (c *deploymentServiceClient) ProcessInfrastructureWorkflow(ctx context.Context, req *ProcessInfrastructureWorkflowRequest, options ...*ProcessInfrastructureWorkflowOptions) (*ProcessInfrastructureWorkflowResponse, error) {
+	run, err := c.ProcessInfrastructureWorkflowAsync(ctx, req, options...)
+	if err != nil {
+		return nil, err
+	}
+	return run.Get(ctx)
+}
+
+// ProcessInfrastructureWorkflow provisions provider infrastructure.
+func (c *deploymentServiceClient) ProcessInfrastructureWorkflowAsync(ctx context.Context, req *ProcessInfrastructureWorkflowRequest, options ...*ProcessInfrastructureWorkflowOptions) (ProcessInfrastructureWorkflowRun, error) {
+	var o *ProcessInfrastructureWorkflowOptions
+	if len(options) > 0 && options[0] != nil {
+		o = options[0]
+	} else {
+		o = NewProcessInfrastructureWorkflowOptions()
+	}
+	opts, err := o.Build(req.ProtoReflect())
+	if err != nil {
+		return nil, fmt.Errorf("error initializing client.StartWorkflowOptions: %w", err)
+	}
+	run, err := c.client.ExecuteWorkflow(ctx, opts, ProcessInfrastructureWorkflowWorkflowName, req)
+	if err != nil {
+		return nil, err
+	}
+	if run == nil {
+		return nil, errors.New("execute workflow returned nil run")
+	}
+	return &processInfrastructureWorkflowRun{
+		client: c,
+		run:    run,
+	}, nil
+}
+
+// GetProcessInfrastructureWorkflow fetches an existing ProcessInfrastructureWorkflow execution
+func (c *deploymentServiceClient) GetProcessInfrastructureWorkflow(ctx context.Context, workflowID string, runID string) ProcessInfrastructureWorkflowRun {
+	return &processInfrastructureWorkflowRun{
+		client: c,
+		run:    c.client.GetWorkflow(ctx, workflowID, runID),
+	}
+}
+
+// RenderDeploymentPlanWorkflow renders package/config/agent steps.
+func (c *deploymentServiceClient) RenderDeploymentPlanWorkflow(ctx context.Context, req *RenderDeploymentPlanWorkflowRequest, options ...*RenderDeploymentPlanWorkflowOptions) (*RenderDeploymentPlanWorkflowResponse, error) {
+	run, err := c.RenderDeploymentPlanWorkflowAsync(ctx, req, options...)
+	if err != nil {
+		return nil, err
+	}
+	return run.Get(ctx)
+}
+
+// RenderDeploymentPlanWorkflow renders package/config/agent steps.
+func (c *deploymentServiceClient) RenderDeploymentPlanWorkflowAsync(ctx context.Context, req *RenderDeploymentPlanWorkflowRequest, options ...*RenderDeploymentPlanWorkflowOptions) (RenderDeploymentPlanWorkflowRun, error) {
+	var o *RenderDeploymentPlanWorkflowOptions
+	if len(options) > 0 && options[0] != nil {
+		o = options[0]
+	} else {
+		o = NewRenderDeploymentPlanWorkflowOptions()
+	}
+	opts, err := o.Build(req.ProtoReflect())
+	if err != nil {
+		return nil, fmt.Errorf("error initializing client.StartWorkflowOptions: %w", err)
+	}
+	run, err := c.client.ExecuteWorkflow(ctx, opts, RenderDeploymentPlanWorkflowWorkflowName, req)
+	if err != nil {
+		return nil, err
+	}
+	if run == nil {
+		return nil, errors.New("execute workflow returned nil run")
+	}
+	return &renderDeploymentPlanWorkflowRun{
+		client: c,
+		run:    run,
+	}, nil
+}
+
+// GetRenderDeploymentPlanWorkflow fetches an existing RenderDeploymentPlanWorkflow execution
+func (c *deploymentServiceClient) GetRenderDeploymentPlanWorkflow(ctx context.Context, workflowID string, runID string) RenderDeploymentPlanWorkflowRun {
+	return &renderDeploymentPlanWorkflowRun{
+		client: c,
+		run:    c.client.GetWorkflow(ctx, workflowID, runID),
+	}
+}
+
+// RenderDockerInputWorkflow renders infrastructure plan to Docker input.
+func (c *deploymentServiceClient) RenderDockerInputWorkflow(ctx context.Context, req *deployment.InfrastructurePlan, options ...*RenderDockerInputWorkflowOptions) (*deployment.Docker_Input, error) {
 	run, err := c.RenderDockerInputWorkflowAsync(ctx, req, options...)
 	if err != nil {
 		return nil, err
@@ -265,9 +363,8 @@ func (c *deploymentServiceClient) RenderDockerInputWorkflow(ctx context.Context,
 	return run.Get(ctx)
 }
 
-// RenderDockerInputWorkflow renders a topology into Docker compose input
-// (pure render, retryable).
-func (c *deploymentServiceClient) RenderDockerInputWorkflowAsync(ctx context.Context, req *topology.Topology, options ...*RenderDockerInputWorkflowOptions) (RenderDockerInputWorkflowRun, error) {
+// RenderDockerInputWorkflow renders infrastructure plan to Docker input.
+func (c *deploymentServiceClient) RenderDockerInputWorkflowAsync(ctx context.Context, req *deployment.InfrastructurePlan, options ...*RenderDockerInputWorkflowOptions) (RenderDockerInputWorkflowRun, error) {
 	var o *RenderDockerInputWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
@@ -299,9 +396,9 @@ func (c *deploymentServiceClient) GetRenderDockerInputWorkflow(ctx context.Conte
 	}
 }
 
-// RenderTerraformVariablesWorkflow renders a topology into Terraform
-// variables input (pure render, retryable).
-func (c *deploymentServiceClient) RenderTerraformVariablesWorkflow(ctx context.Context, req *topology.Topology, options ...*RenderTerraformVariablesWorkflowOptions) (*deployment.Terraform_Input, error) {
+// RenderTerraformVariablesWorkflow renders infrastructure plan to Terraform
+// input.
+func (c *deploymentServiceClient) RenderTerraformVariablesWorkflow(ctx context.Context, req *deployment.InfrastructurePlan, options ...*RenderTerraformVariablesWorkflowOptions) (*deployment.Terraform_Input, error) {
 	run, err := c.RenderTerraformVariablesWorkflowAsync(ctx, req, options...)
 	if err != nil {
 		return nil, err
@@ -309,9 +406,9 @@ func (c *deploymentServiceClient) RenderTerraformVariablesWorkflow(ctx context.C
 	return run.Get(ctx)
 }
 
-// RenderTerraformVariablesWorkflow renders a topology into Terraform
-// variables input (pure render, retryable).
-func (c *deploymentServiceClient) RenderTerraformVariablesWorkflowAsync(ctx context.Context, req *topology.Topology, options ...*RenderTerraformVariablesWorkflowOptions) (RenderTerraformVariablesWorkflowRun, error) {
+// RenderTerraformVariablesWorkflow renders infrastructure plan to Terraform
+// input.
+func (c *deploymentServiceClient) RenderTerraformVariablesWorkflowAsync(ctx context.Context, req *deployment.InfrastructurePlan, options ...*RenderTerraformVariablesWorkflowOptions) (RenderTerraformVariablesWorkflowRun, error) {
 	var o *RenderTerraformVariablesWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
@@ -554,8 +651,8 @@ func (r *calculateQuotasWorkflowRun) Terminate(ctx context.Context, reason strin
 	return r.client.TerminateWorkflow(ctx, r.ID(), r.RunID(), reason, details...)
 }
 
-// ProcessDeploymentWorkflowOptions provides configuration for a ProcessDeploymentWorkflow workflow operation
-type ProcessDeploymentWorkflowOptions struct {
+// ExecuteDeploymentPlanWorkflowOptions provides configuration for a ExecuteDeploymentPlanWorkflow workflow operation
+type ExecuteDeploymentPlanWorkflowOptions struct {
 	options                  client.StartWorkflowOptions
 	executionTimeout         *time.Duration
 	id                       *string
@@ -570,13 +667,13 @@ type ProcessDeploymentWorkflowOptions struct {
 	workflowIdConflictPolicy enumsv1.WorkflowIdConflictPolicy
 }
 
-// NewProcessDeploymentWorkflowOptions initializes a new ProcessDeploymentWorkflowOptions value
-func NewProcessDeploymentWorkflowOptions() *ProcessDeploymentWorkflowOptions {
-	return &ProcessDeploymentWorkflowOptions{}
+// NewExecuteDeploymentPlanWorkflowOptions initializes a new ExecuteDeploymentPlanWorkflowOptions value
+func NewExecuteDeploymentPlanWorkflowOptions() *ExecuteDeploymentPlanWorkflowOptions {
+	return &ExecuteDeploymentPlanWorkflowOptions{}
 }
 
 // Build initializes a new go.temporal.io/sdk/client.StartWorkflowOptions value with defaults and overrides applied
-func (o *ProcessDeploymentWorkflowOptions) Build(req protoreflect.Message) (client.StartWorkflowOptions, error) {
+func (o *ExecuteDeploymentPlanWorkflowOptions) Build(req protoreflect.Message) (client.StartWorkflowOptions, error) {
 	opts := o.options
 	if v := o.id; v != nil {
 		opts.ID = *v
@@ -621,79 +718,79 @@ func (o *ProcessDeploymentWorkflowOptions) Build(req protoreflect.Message) (clie
 }
 
 // WithStartWorkflowOptions sets the initial go.temporal.io/sdk/client.StartWorkflowOptions
-func (o *ProcessDeploymentWorkflowOptions) WithStartWorkflowOptions(options client.StartWorkflowOptions) *ProcessDeploymentWorkflowOptions {
+func (o *ExecuteDeploymentPlanWorkflowOptions) WithStartWorkflowOptions(options client.StartWorkflowOptions) *ExecuteDeploymentPlanWorkflowOptions {
 	o.options = options
 	return o
 }
 
 // WithEnableEagerStart sets the EnableEagerStart value
-func (o *ProcessDeploymentWorkflowOptions) WithEnableEagerStart(enable bool) *ProcessDeploymentWorkflowOptions {
+func (o *ExecuteDeploymentPlanWorkflowOptions) WithEnableEagerStart(enable bool) *ExecuteDeploymentPlanWorkflowOptions {
 	o.enableEagerStart = &enable
 	return o
 }
 
 // WithExecutionTimeout sets the WorkflowExecutionTimeout value
-func (o *ProcessDeploymentWorkflowOptions) WithExecutionTimeout(d time.Duration) *ProcessDeploymentWorkflowOptions {
+func (o *ExecuteDeploymentPlanWorkflowOptions) WithExecutionTimeout(d time.Duration) *ExecuteDeploymentPlanWorkflowOptions {
 	o.executionTimeout = &d
 	return o
 }
 
 // WithID sets the ID value
-func (o *ProcessDeploymentWorkflowOptions) WithID(id string) *ProcessDeploymentWorkflowOptions {
+func (o *ExecuteDeploymentPlanWorkflowOptions) WithID(id string) *ExecuteDeploymentPlanWorkflowOptions {
 	o.id = &id
 	return o
 }
 
 // WithIDReusePolicy sets the WorkflowIDReusePolicy value
-func (o *ProcessDeploymentWorkflowOptions) WithIDReusePolicy(policy enumsv1.WorkflowIdReusePolicy) *ProcessDeploymentWorkflowOptions {
+func (o *ExecuteDeploymentPlanWorkflowOptions) WithIDReusePolicy(policy enumsv1.WorkflowIdReusePolicy) *ExecuteDeploymentPlanWorkflowOptions {
 	o.idReusePolicy = policy
 	return o
 }
 
 // WithRetryPolicy sets the RetryPolicy value
-func (o *ProcessDeploymentWorkflowOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *ProcessDeploymentWorkflowOptions {
+func (o *ExecuteDeploymentPlanWorkflowOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *ExecuteDeploymentPlanWorkflowOptions {
 	o.retryPolicy = policy
 	return o
 }
 
 // WithRunTimeout sets the WorkflowRunTimeout value
-func (o *ProcessDeploymentWorkflowOptions) WithRunTimeout(d time.Duration) *ProcessDeploymentWorkflowOptions {
+func (o *ExecuteDeploymentPlanWorkflowOptions) WithRunTimeout(d time.Duration) *ExecuteDeploymentPlanWorkflowOptions {
 	o.runTimeout = &d
 	return o
 }
 
 // WithSearchAttributes sets the SearchAttributes value
-func (o *ProcessDeploymentWorkflowOptions) WithSearchAttributes(sa map[string]any) *ProcessDeploymentWorkflowOptions {
+func (o *ExecuteDeploymentPlanWorkflowOptions) WithSearchAttributes(sa map[string]any) *ExecuteDeploymentPlanWorkflowOptions {
 	o.searchAttributes = sa
 	return o
 }
 
 // WithTaskTimeout sets the WorkflowTaskTimeout value
-func (o *ProcessDeploymentWorkflowOptions) WithTaskTimeout(d time.Duration) *ProcessDeploymentWorkflowOptions {
+func (o *ExecuteDeploymentPlanWorkflowOptions) WithTaskTimeout(d time.Duration) *ExecuteDeploymentPlanWorkflowOptions {
 	o.taskTimeout = &d
 	return o
 }
 
 // WithTaskQueue sets the TaskQueue value
-func (o *ProcessDeploymentWorkflowOptions) WithTaskQueue(tq string) *ProcessDeploymentWorkflowOptions {
+func (o *ExecuteDeploymentPlanWorkflowOptions) WithTaskQueue(tq string) *ExecuteDeploymentPlanWorkflowOptions {
 	o.taskQueue = &tq
 	return o
 }
 
 // WithTypedSearchAttributes sets the TypedSearchAttributes value
-func (o *ProcessDeploymentWorkflowOptions) WithTypedSearchAttributes(tsa temporal.SearchAttributes) *ProcessDeploymentWorkflowOptions {
+func (o *ExecuteDeploymentPlanWorkflowOptions) WithTypedSearchAttributes(tsa temporal.SearchAttributes) *ExecuteDeploymentPlanWorkflowOptions {
 	o.typedSearchAttributes = &tsa
 	return o
 }
 
 // WithWorkflowIdConflictPolicy sets the WorkflowIdConflictPolicy value
-func (o *ProcessDeploymentWorkflowOptions) WithWorkflowIdConflictPolicy(policy enumsv1.WorkflowIdConflictPolicy) *ProcessDeploymentWorkflowOptions {
+func (o *ExecuteDeploymentPlanWorkflowOptions) WithWorkflowIdConflictPolicy(policy enumsv1.WorkflowIdConflictPolicy) *ExecuteDeploymentPlanWorkflowOptions {
 	o.workflowIdConflictPolicy = policy
 	return o
 }
 
-// ProcessDeploymentWorkflowRun describes a(n) ProcessDeploymentWorkflow workflow run
-type ProcessDeploymentWorkflowRun interface {
+// ExecuteDeploymentPlanWorkflowRun describes a(n) ExecuteDeploymentPlanWorkflow workflow run
+type ExecuteDeploymentPlanWorkflowRun interface {
 	// ID returns the workflow ID
 	ID() string
 
@@ -704,7 +801,7 @@ type ProcessDeploymentWorkflowRun interface {
 	Run() client.WorkflowRun
 
 	// Get blocks until the workflow is complete and returns the result
-	Get(ctx context.Context) (*ProcessDeploymentWorkflowResponse, error)
+	Get(ctx context.Context) (*ExecuteDeploymentPlanWorkflowResponse, error)
 
 	// Cancel requests cancellation of a workflow in execution, returning an error if applicable
 	Cancel(ctx context.Context) error
@@ -713,35 +810,35 @@ type ProcessDeploymentWorkflowRun interface {
 	Terminate(ctx context.Context, reason string, details ...interface{}) error
 }
 
-// processDeploymentWorkflowRun provides an internal implementation of a(n) ProcessDeploymentWorkflowRunRun
-type processDeploymentWorkflowRun struct {
+// executeDeploymentPlanWorkflowRun provides an internal implementation of a(n) ExecuteDeploymentPlanWorkflowRunRun
+type executeDeploymentPlanWorkflowRun struct {
 	client *deploymentServiceClient
 	run    client.WorkflowRun
 }
 
 // ID returns the workflow ID
-func (r *processDeploymentWorkflowRun) ID() string {
+func (r *executeDeploymentPlanWorkflowRun) ID() string {
 	return r.run.GetID()
 }
 
 // Run returns the inner client.WorkflowRun
-func (r *processDeploymentWorkflowRun) Run() client.WorkflowRun {
+func (r *executeDeploymentPlanWorkflowRun) Run() client.WorkflowRun {
 	return r.run
 }
 
 // RunID returns the execution ID
-func (r *processDeploymentWorkflowRun) RunID() string {
+func (r *executeDeploymentPlanWorkflowRun) RunID() string {
 	return r.run.GetRunID()
 }
 
 // Cancel requests cancellation of a workflow in execution, returning an error if applicable
-func (r *processDeploymentWorkflowRun) Cancel(ctx context.Context) error {
+func (r *executeDeploymentPlanWorkflowRun) Cancel(ctx context.Context) error {
 	return r.client.CancelWorkflow(ctx, r.ID(), r.RunID())
 }
 
 // Get blocks until the workflow is complete, returning the result if applicable
-func (r *processDeploymentWorkflowRun) Get(ctx context.Context) (*ProcessDeploymentWorkflowResponse, error) {
-	var resp ProcessDeploymentWorkflowResponse
+func (r *executeDeploymentPlanWorkflowRun) Get(ctx context.Context) (*ExecuteDeploymentPlanWorkflowResponse, error) {
+	var resp ExecuteDeploymentPlanWorkflowResponse
 	if err := r.run.Get(ctx, &resp); err != nil {
 		return nil, err
 	}
@@ -749,7 +846,407 @@ func (r *processDeploymentWorkflowRun) Get(ctx context.Context) (*ProcessDeploym
 }
 
 // Terminate terminates a workflow in execution, returning an error if applicable
-func (r *processDeploymentWorkflowRun) Terminate(ctx context.Context, reason string, details ...interface{}) error {
+func (r *executeDeploymentPlanWorkflowRun) Terminate(ctx context.Context, reason string, details ...interface{}) error {
+	return r.client.TerminateWorkflow(ctx, r.ID(), r.RunID(), reason, details...)
+}
+
+// ProcessInfrastructureWorkflowOptions provides configuration for a ProcessInfrastructureWorkflow workflow operation
+type ProcessInfrastructureWorkflowOptions struct {
+	options                  client.StartWorkflowOptions
+	executionTimeout         *time.Duration
+	id                       *string
+	idReusePolicy            enumsv1.WorkflowIdReusePolicy
+	retryPolicy              *temporal.RetryPolicy
+	runTimeout               *time.Duration
+	searchAttributes         map[string]any
+	taskQueue                *string
+	taskTimeout              *time.Duration
+	typedSearchAttributes    *temporal.SearchAttributes
+	enableEagerStart         *bool
+	workflowIdConflictPolicy enumsv1.WorkflowIdConflictPolicy
+}
+
+// NewProcessInfrastructureWorkflowOptions initializes a new ProcessInfrastructureWorkflowOptions value
+func NewProcessInfrastructureWorkflowOptions() *ProcessInfrastructureWorkflowOptions {
+	return &ProcessInfrastructureWorkflowOptions{}
+}
+
+// Build initializes a new go.temporal.io/sdk/client.StartWorkflowOptions value with defaults and overrides applied
+func (o *ProcessInfrastructureWorkflowOptions) Build(req protoreflect.Message) (client.StartWorkflowOptions, error) {
+	opts := o.options
+	if v := o.id; v != nil {
+		opts.ID = *v
+	}
+	if v := o.idReusePolicy; v != enumsv1.WORKFLOW_ID_REUSE_POLICY_UNSPECIFIED {
+		opts.WorkflowIDReusePolicy = v
+	}
+	if v := o.workflowIdConflictPolicy; v != enumsv1.WORKFLOW_ID_CONFLICT_POLICY_UNSPECIFIED {
+		opts.WorkflowIDConflictPolicy = v
+	}
+	if v := o.taskQueue; v != nil {
+		opts.TaskQueue = *v
+	} else if opts.TaskQueue == "" {
+		opts.TaskQueue = DeploymentServiceTaskQueue
+	}
+	if v := o.retryPolicy; v != nil {
+		opts.RetryPolicy = v
+	} else if opts.RetryPolicy == nil {
+		opts.RetryPolicy = &temporal.RetryPolicy{
+			MaximumAttempts: int32(1),
+		}
+	}
+	if v := o.searchAttributes; v != nil {
+		opts.SearchAttributes = o.searchAttributes
+	}
+	if v := o.typedSearchAttributes; v != nil {
+		opts.TypedSearchAttributes = *v
+	}
+	if v := o.enableEagerStart; v != nil {
+		opts.EnableEagerStart = *v
+	}
+	if v := o.executionTimeout; v != nil {
+		opts.WorkflowExecutionTimeout = *v
+	}
+	if v := o.runTimeout; v != nil {
+		opts.WorkflowRunTimeout = *v
+	}
+	if v := o.taskTimeout; v != nil {
+		opts.WorkflowTaskTimeout = *v
+	}
+	return opts, nil
+}
+
+// WithStartWorkflowOptions sets the initial go.temporal.io/sdk/client.StartWorkflowOptions
+func (o *ProcessInfrastructureWorkflowOptions) WithStartWorkflowOptions(options client.StartWorkflowOptions) *ProcessInfrastructureWorkflowOptions {
+	o.options = options
+	return o
+}
+
+// WithEnableEagerStart sets the EnableEagerStart value
+func (o *ProcessInfrastructureWorkflowOptions) WithEnableEagerStart(enable bool) *ProcessInfrastructureWorkflowOptions {
+	o.enableEagerStart = &enable
+	return o
+}
+
+// WithExecutionTimeout sets the WorkflowExecutionTimeout value
+func (o *ProcessInfrastructureWorkflowOptions) WithExecutionTimeout(d time.Duration) *ProcessInfrastructureWorkflowOptions {
+	o.executionTimeout = &d
+	return o
+}
+
+// WithID sets the ID value
+func (o *ProcessInfrastructureWorkflowOptions) WithID(id string) *ProcessInfrastructureWorkflowOptions {
+	o.id = &id
+	return o
+}
+
+// WithIDReusePolicy sets the WorkflowIDReusePolicy value
+func (o *ProcessInfrastructureWorkflowOptions) WithIDReusePolicy(policy enumsv1.WorkflowIdReusePolicy) *ProcessInfrastructureWorkflowOptions {
+	o.idReusePolicy = policy
+	return o
+}
+
+// WithRetryPolicy sets the RetryPolicy value
+func (o *ProcessInfrastructureWorkflowOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *ProcessInfrastructureWorkflowOptions {
+	o.retryPolicy = policy
+	return o
+}
+
+// WithRunTimeout sets the WorkflowRunTimeout value
+func (o *ProcessInfrastructureWorkflowOptions) WithRunTimeout(d time.Duration) *ProcessInfrastructureWorkflowOptions {
+	o.runTimeout = &d
+	return o
+}
+
+// WithSearchAttributes sets the SearchAttributes value
+func (o *ProcessInfrastructureWorkflowOptions) WithSearchAttributes(sa map[string]any) *ProcessInfrastructureWorkflowOptions {
+	o.searchAttributes = sa
+	return o
+}
+
+// WithTaskTimeout sets the WorkflowTaskTimeout value
+func (o *ProcessInfrastructureWorkflowOptions) WithTaskTimeout(d time.Duration) *ProcessInfrastructureWorkflowOptions {
+	o.taskTimeout = &d
+	return o
+}
+
+// WithTaskQueue sets the TaskQueue value
+func (o *ProcessInfrastructureWorkflowOptions) WithTaskQueue(tq string) *ProcessInfrastructureWorkflowOptions {
+	o.taskQueue = &tq
+	return o
+}
+
+// WithTypedSearchAttributes sets the TypedSearchAttributes value
+func (o *ProcessInfrastructureWorkflowOptions) WithTypedSearchAttributes(tsa temporal.SearchAttributes) *ProcessInfrastructureWorkflowOptions {
+	o.typedSearchAttributes = &tsa
+	return o
+}
+
+// WithWorkflowIdConflictPolicy sets the WorkflowIdConflictPolicy value
+func (o *ProcessInfrastructureWorkflowOptions) WithWorkflowIdConflictPolicy(policy enumsv1.WorkflowIdConflictPolicy) *ProcessInfrastructureWorkflowOptions {
+	o.workflowIdConflictPolicy = policy
+	return o
+}
+
+// ProcessInfrastructureWorkflowRun describes a(n) ProcessInfrastructureWorkflow workflow run
+type ProcessInfrastructureWorkflowRun interface {
+	// ID returns the workflow ID
+	ID() string
+
+	// RunID returns the workflow instance ID
+	RunID() string
+
+	// Run returns the inner client.WorkflowRun
+	Run() client.WorkflowRun
+
+	// Get blocks until the workflow is complete and returns the result
+	Get(ctx context.Context) (*ProcessInfrastructureWorkflowResponse, error)
+
+	// Cancel requests cancellation of a workflow in execution, returning an error if applicable
+	Cancel(ctx context.Context) error
+
+	// Terminate terminates a workflow in execution, returning an error if applicable
+	Terminate(ctx context.Context, reason string, details ...interface{}) error
+}
+
+// processInfrastructureWorkflowRun provides an internal implementation of a(n) ProcessInfrastructureWorkflowRunRun
+type processInfrastructureWorkflowRun struct {
+	client *deploymentServiceClient
+	run    client.WorkflowRun
+}
+
+// ID returns the workflow ID
+func (r *processInfrastructureWorkflowRun) ID() string {
+	return r.run.GetID()
+}
+
+// Run returns the inner client.WorkflowRun
+func (r *processInfrastructureWorkflowRun) Run() client.WorkflowRun {
+	return r.run
+}
+
+// RunID returns the execution ID
+func (r *processInfrastructureWorkflowRun) RunID() string {
+	return r.run.GetRunID()
+}
+
+// Cancel requests cancellation of a workflow in execution, returning an error if applicable
+func (r *processInfrastructureWorkflowRun) Cancel(ctx context.Context) error {
+	return r.client.CancelWorkflow(ctx, r.ID(), r.RunID())
+}
+
+// Get blocks until the workflow is complete, returning the result if applicable
+func (r *processInfrastructureWorkflowRun) Get(ctx context.Context) (*ProcessInfrastructureWorkflowResponse, error) {
+	var resp ProcessInfrastructureWorkflowResponse
+	if err := r.run.Get(ctx, &resp); err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
+// Terminate terminates a workflow in execution, returning an error if applicable
+func (r *processInfrastructureWorkflowRun) Terminate(ctx context.Context, reason string, details ...interface{}) error {
+	return r.client.TerminateWorkflow(ctx, r.ID(), r.RunID(), reason, details...)
+}
+
+// RenderDeploymentPlanWorkflowOptions provides configuration for a RenderDeploymentPlanWorkflow workflow operation
+type RenderDeploymentPlanWorkflowOptions struct {
+	options                  client.StartWorkflowOptions
+	executionTimeout         *time.Duration
+	id                       *string
+	idReusePolicy            enumsv1.WorkflowIdReusePolicy
+	retryPolicy              *temporal.RetryPolicy
+	runTimeout               *time.Duration
+	searchAttributes         map[string]any
+	taskQueue                *string
+	taskTimeout              *time.Duration
+	typedSearchAttributes    *temporal.SearchAttributes
+	enableEagerStart         *bool
+	workflowIdConflictPolicy enumsv1.WorkflowIdConflictPolicy
+}
+
+// NewRenderDeploymentPlanWorkflowOptions initializes a new RenderDeploymentPlanWorkflowOptions value
+func NewRenderDeploymentPlanWorkflowOptions() *RenderDeploymentPlanWorkflowOptions {
+	return &RenderDeploymentPlanWorkflowOptions{}
+}
+
+// Build initializes a new go.temporal.io/sdk/client.StartWorkflowOptions value with defaults and overrides applied
+func (o *RenderDeploymentPlanWorkflowOptions) Build(req protoreflect.Message) (client.StartWorkflowOptions, error) {
+	opts := o.options
+	if v := o.id; v != nil {
+		opts.ID = *v
+	}
+	if v := o.idReusePolicy; v != enumsv1.WORKFLOW_ID_REUSE_POLICY_UNSPECIFIED {
+		opts.WorkflowIDReusePolicy = v
+	}
+	if v := o.workflowIdConflictPolicy; v != enumsv1.WORKFLOW_ID_CONFLICT_POLICY_UNSPECIFIED {
+		opts.WorkflowIDConflictPolicy = v
+	}
+	if v := o.taskQueue; v != nil {
+		opts.TaskQueue = *v
+	} else if opts.TaskQueue == "" {
+		opts.TaskQueue = DeploymentServiceTaskQueue
+	}
+	if v := o.retryPolicy; v != nil {
+		opts.RetryPolicy = v
+	} else if opts.RetryPolicy == nil {
+		opts.RetryPolicy = &temporal.RetryPolicy{
+			MaximumAttempts: int32(3),
+		}
+	}
+	if v := o.searchAttributes; v != nil {
+		opts.SearchAttributes = o.searchAttributes
+	}
+	if v := o.typedSearchAttributes; v != nil {
+		opts.TypedSearchAttributes = *v
+	}
+	if v := o.enableEagerStart; v != nil {
+		opts.EnableEagerStart = *v
+	}
+	if v := o.executionTimeout; v != nil {
+		opts.WorkflowExecutionTimeout = *v
+	}
+	if v := o.runTimeout; v != nil {
+		opts.WorkflowRunTimeout = *v
+	} else if opts.WorkflowRunTimeout == 0 {
+		opts.WorkflowRunTimeout = 300000000000 // 5 minutes
+	}
+	if v := o.taskTimeout; v != nil {
+		opts.WorkflowTaskTimeout = *v
+	}
+	return opts, nil
+}
+
+// WithStartWorkflowOptions sets the initial go.temporal.io/sdk/client.StartWorkflowOptions
+func (o *RenderDeploymentPlanWorkflowOptions) WithStartWorkflowOptions(options client.StartWorkflowOptions) *RenderDeploymentPlanWorkflowOptions {
+	o.options = options
+	return o
+}
+
+// WithEnableEagerStart sets the EnableEagerStart value
+func (o *RenderDeploymentPlanWorkflowOptions) WithEnableEagerStart(enable bool) *RenderDeploymentPlanWorkflowOptions {
+	o.enableEagerStart = &enable
+	return o
+}
+
+// WithExecutionTimeout sets the WorkflowExecutionTimeout value
+func (o *RenderDeploymentPlanWorkflowOptions) WithExecutionTimeout(d time.Duration) *RenderDeploymentPlanWorkflowOptions {
+	o.executionTimeout = &d
+	return o
+}
+
+// WithID sets the ID value
+func (o *RenderDeploymentPlanWorkflowOptions) WithID(id string) *RenderDeploymentPlanWorkflowOptions {
+	o.id = &id
+	return o
+}
+
+// WithIDReusePolicy sets the WorkflowIDReusePolicy value
+func (o *RenderDeploymentPlanWorkflowOptions) WithIDReusePolicy(policy enumsv1.WorkflowIdReusePolicy) *RenderDeploymentPlanWorkflowOptions {
+	o.idReusePolicy = policy
+	return o
+}
+
+// WithRetryPolicy sets the RetryPolicy value
+func (o *RenderDeploymentPlanWorkflowOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *RenderDeploymentPlanWorkflowOptions {
+	o.retryPolicy = policy
+	return o
+}
+
+// WithRunTimeout sets the WorkflowRunTimeout value
+func (o *RenderDeploymentPlanWorkflowOptions) WithRunTimeout(d time.Duration) *RenderDeploymentPlanWorkflowOptions {
+	o.runTimeout = &d
+	return o
+}
+
+// WithSearchAttributes sets the SearchAttributes value
+func (o *RenderDeploymentPlanWorkflowOptions) WithSearchAttributes(sa map[string]any) *RenderDeploymentPlanWorkflowOptions {
+	o.searchAttributes = sa
+	return o
+}
+
+// WithTaskTimeout sets the WorkflowTaskTimeout value
+func (o *RenderDeploymentPlanWorkflowOptions) WithTaskTimeout(d time.Duration) *RenderDeploymentPlanWorkflowOptions {
+	o.taskTimeout = &d
+	return o
+}
+
+// WithTaskQueue sets the TaskQueue value
+func (o *RenderDeploymentPlanWorkflowOptions) WithTaskQueue(tq string) *RenderDeploymentPlanWorkflowOptions {
+	o.taskQueue = &tq
+	return o
+}
+
+// WithTypedSearchAttributes sets the TypedSearchAttributes value
+func (o *RenderDeploymentPlanWorkflowOptions) WithTypedSearchAttributes(tsa temporal.SearchAttributes) *RenderDeploymentPlanWorkflowOptions {
+	o.typedSearchAttributes = &tsa
+	return o
+}
+
+// WithWorkflowIdConflictPolicy sets the WorkflowIdConflictPolicy value
+func (o *RenderDeploymentPlanWorkflowOptions) WithWorkflowIdConflictPolicy(policy enumsv1.WorkflowIdConflictPolicy) *RenderDeploymentPlanWorkflowOptions {
+	o.workflowIdConflictPolicy = policy
+	return o
+}
+
+// RenderDeploymentPlanWorkflowRun describes a(n) RenderDeploymentPlanWorkflow workflow run
+type RenderDeploymentPlanWorkflowRun interface {
+	// ID returns the workflow ID
+	ID() string
+
+	// RunID returns the workflow instance ID
+	RunID() string
+
+	// Run returns the inner client.WorkflowRun
+	Run() client.WorkflowRun
+
+	// Get blocks until the workflow is complete and returns the result
+	Get(ctx context.Context) (*RenderDeploymentPlanWorkflowResponse, error)
+
+	// Cancel requests cancellation of a workflow in execution, returning an error if applicable
+	Cancel(ctx context.Context) error
+
+	// Terminate terminates a workflow in execution, returning an error if applicable
+	Terminate(ctx context.Context, reason string, details ...interface{}) error
+}
+
+// renderDeploymentPlanWorkflowRun provides an internal implementation of a(n) RenderDeploymentPlanWorkflowRunRun
+type renderDeploymentPlanWorkflowRun struct {
+	client *deploymentServiceClient
+	run    client.WorkflowRun
+}
+
+// ID returns the workflow ID
+func (r *renderDeploymentPlanWorkflowRun) ID() string {
+	return r.run.GetID()
+}
+
+// Run returns the inner client.WorkflowRun
+func (r *renderDeploymentPlanWorkflowRun) Run() client.WorkflowRun {
+	return r.run
+}
+
+// RunID returns the execution ID
+func (r *renderDeploymentPlanWorkflowRun) RunID() string {
+	return r.run.GetRunID()
+}
+
+// Cancel requests cancellation of a workflow in execution, returning an error if applicable
+func (r *renderDeploymentPlanWorkflowRun) Cancel(ctx context.Context) error {
+	return r.client.CancelWorkflow(ctx, r.ID(), r.RunID())
+}
+
+// Get blocks until the workflow is complete, returning the result if applicable
+func (r *renderDeploymentPlanWorkflowRun) Get(ctx context.Context) (*RenderDeploymentPlanWorkflowResponse, error) {
+	var resp RenderDeploymentPlanWorkflowResponse
+	if err := r.run.Get(ctx, &resp); err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
+// Terminate terminates a workflow in execution, returning an error if applicable
+func (r *renderDeploymentPlanWorkflowRun) Terminate(ctx context.Context, reason string, details ...interface{}) error {
 	return r.client.TerminateWorkflow(ctx, r.ID(), r.RunID(), reason, details...)
 }
 
@@ -1159,36 +1656,40 @@ func (r *renderTerraformVariablesWorkflowRun) Terminate(ctx context.Context, rea
 var (
 	// deploymentServiceRegistrationMutex is a mutex for registering cloud.v1.workflow.DeploymentService workflows
 	deploymentServiceRegistrationMutex sync.Mutex
-	// CalculateQuotasWorkflow computes resource quota requests from a topology
-	// (pure computation, retryable).
+	// CalculateQuotasWorkflow computes quota requests from an infrastructure
+	// plan.
 	CalculateQuotasWorkflowFunction func(workflow.Context, *CalculateQuotasWorkflowRequest) (*CalculateQuotasWorkflowResponse, error)
-	// ProcessDeploymentWorkflow provisions a topology end to end; always a
-	// child of TestWorkflow and never auto-retried as a whole.
-	ProcessDeploymentWorkflowFunction func(workflow.Context, *ProcessDeploymentWorkflowRequest) (*ProcessDeploymentWorkflowResponse, error)
-	// RenderDockerInputWorkflow renders a topology into Docker compose input
-	// (pure render, retryable).
-	RenderDockerInputWorkflowFunction func(workflow.Context, *topology.Topology) (*deployment.Docker_Input, error)
-	// RenderTerraformVariablesWorkflow renders a topology into Terraform
-	// variables input (pure render, retryable).
-	RenderTerraformVariablesWorkflowFunction func(workflow.Context, *topology.Topology) (*deployment.Terraform_Input, error)
+	// ExecuteDeploymentPlanWorkflow executes rendered agent steps.
+	ExecuteDeploymentPlanWorkflowFunction func(workflow.Context, *ExecuteDeploymentPlanWorkflowRequest) (*ExecuteDeploymentPlanWorkflowResponse, error)
+	// ProcessInfrastructureWorkflow provisions provider infrastructure.
+	ProcessInfrastructureWorkflowFunction func(workflow.Context, *ProcessInfrastructureWorkflowRequest) (*ProcessInfrastructureWorkflowResponse, error)
+	// RenderDeploymentPlanWorkflow renders package/config/agent steps.
+	RenderDeploymentPlanWorkflowFunction func(workflow.Context, *RenderDeploymentPlanWorkflowRequest) (*RenderDeploymentPlanWorkflowResponse, error)
+	// RenderDockerInputWorkflow renders infrastructure plan to Docker input.
+	RenderDockerInputWorkflowFunction func(workflow.Context, *deployment.InfrastructurePlan) (*deployment.Docker_Input, error)
+	// RenderTerraformVariablesWorkflow renders infrastructure plan to Terraform
+	// input.
+	RenderTerraformVariablesWorkflowFunction func(workflow.Context, *deployment.InfrastructurePlan) (*deployment.Terraform_Input, error)
 )
 
 // DeploymentServiceWorkflowFunctions describes a mockable dependency for inlining workflows within other workflows
 type (
 	// DeploymentServiceWorkflowFunctions describes a mockable dependency for inlining workflows within other workflows
 	DeploymentServiceWorkflowFunctions interface {
-		// CalculateQuotasWorkflow computes resource quota requests from a topology
-		// (pure computation, retryable).
+		// CalculateQuotasWorkflow computes quota requests from an infrastructure
+		// plan.
 		CalculateQuotasWorkflow(workflow.Context, *CalculateQuotasWorkflowRequest) (*CalculateQuotasWorkflowResponse, error)
-		// ProcessDeploymentWorkflow provisions a topology end to end; always a
-		// child of TestWorkflow and never auto-retried as a whole.
-		ProcessDeploymentWorkflow(workflow.Context, *ProcessDeploymentWorkflowRequest) (*ProcessDeploymentWorkflowResponse, error)
-		// RenderDockerInputWorkflow renders a topology into Docker compose input
-		// (pure render, retryable).
-		RenderDockerInputWorkflow(workflow.Context, *topology.Topology) (*deployment.Docker_Input, error)
-		// RenderTerraformVariablesWorkflow renders a topology into Terraform
-		// variables input (pure render, retryable).
-		RenderTerraformVariablesWorkflow(workflow.Context, *topology.Topology) (*deployment.Terraform_Input, error)
+		// ExecuteDeploymentPlanWorkflow executes rendered agent steps.
+		ExecuteDeploymentPlanWorkflow(workflow.Context, *ExecuteDeploymentPlanWorkflowRequest) (*ExecuteDeploymentPlanWorkflowResponse, error)
+		// ProcessInfrastructureWorkflow provisions provider infrastructure.
+		ProcessInfrastructureWorkflow(workflow.Context, *ProcessInfrastructureWorkflowRequest) (*ProcessInfrastructureWorkflowResponse, error)
+		// RenderDeploymentPlanWorkflow renders package/config/agent steps.
+		RenderDeploymentPlanWorkflow(workflow.Context, *RenderDeploymentPlanWorkflowRequest) (*RenderDeploymentPlanWorkflowResponse, error)
+		// RenderDockerInputWorkflow renders infrastructure plan to Docker input.
+		RenderDockerInputWorkflow(workflow.Context, *deployment.InfrastructurePlan) (*deployment.Docker_Input, error)
+		// RenderTerraformVariablesWorkflow renders infrastructure plan to Terraform
+		// input.
+		RenderTerraformVariablesWorkflow(workflow.Context, *deployment.InfrastructurePlan) (*deployment.Terraform_Input, error)
 	}
 	// deploymentServiceWorkflowFunctions provides an internal DeploymentServiceWorkflowFunctions implementation
 	deploymentServiceWorkflowFunctions struct{}
@@ -1198,8 +1699,8 @@ func NewDeploymentServiceWorkflowFunctions() DeploymentServiceWorkflowFunctions 
 	return &deploymentServiceWorkflowFunctions{}
 }
 
-// CalculateQuotasWorkflow computes resource quota requests from a topology
-// (pure computation, retryable).
+// CalculateQuotasWorkflow computes quota requests from an infrastructure
+// plan.
 func (f *deploymentServiceWorkflowFunctions) CalculateQuotasWorkflow(ctx workflow.Context, req *CalculateQuotasWorkflowRequest) (*CalculateQuotasWorkflowResponse, error) {
 	if CalculateQuotasWorkflowFunction == nil {
 		return nil, errors.New("CalculateQuotasWorkflow requires workflow registration via RegisterDeploymentServiceWorkflows or RegisterCalculateQuotasWorkflowWorkflow")
@@ -1207,27 +1708,41 @@ func (f *deploymentServiceWorkflowFunctions) CalculateQuotasWorkflow(ctx workflo
 	return CalculateQuotasWorkflowFunction(ctx, req)
 }
 
-// ProcessDeploymentWorkflow provisions a topology end to end; always a
-// child of TestWorkflow and never auto-retried as a whole.
-func (f *deploymentServiceWorkflowFunctions) ProcessDeploymentWorkflow(ctx workflow.Context, req *ProcessDeploymentWorkflowRequest) (*ProcessDeploymentWorkflowResponse, error) {
-	if ProcessDeploymentWorkflowFunction == nil {
-		return nil, errors.New("ProcessDeploymentWorkflow requires workflow registration via RegisterDeploymentServiceWorkflows or RegisterProcessDeploymentWorkflowWorkflow")
+// ExecuteDeploymentPlanWorkflow executes rendered agent steps.
+func (f *deploymentServiceWorkflowFunctions) ExecuteDeploymentPlanWorkflow(ctx workflow.Context, req *ExecuteDeploymentPlanWorkflowRequest) (*ExecuteDeploymentPlanWorkflowResponse, error) {
+	if ExecuteDeploymentPlanWorkflowFunction == nil {
+		return nil, errors.New("ExecuteDeploymentPlanWorkflow requires workflow registration via RegisterDeploymentServiceWorkflows or RegisterExecuteDeploymentPlanWorkflowWorkflow")
 	}
-	return ProcessDeploymentWorkflowFunction(ctx, req)
+	return ExecuteDeploymentPlanWorkflowFunction(ctx, req)
 }
 
-// RenderDockerInputWorkflow renders a topology into Docker compose input
-// (pure render, retryable).
-func (f *deploymentServiceWorkflowFunctions) RenderDockerInputWorkflow(ctx workflow.Context, req *topology.Topology) (*deployment.Docker_Input, error) {
+// ProcessInfrastructureWorkflow provisions provider infrastructure.
+func (f *deploymentServiceWorkflowFunctions) ProcessInfrastructureWorkflow(ctx workflow.Context, req *ProcessInfrastructureWorkflowRequest) (*ProcessInfrastructureWorkflowResponse, error) {
+	if ProcessInfrastructureWorkflowFunction == nil {
+		return nil, errors.New("ProcessInfrastructureWorkflow requires workflow registration via RegisterDeploymentServiceWorkflows or RegisterProcessInfrastructureWorkflowWorkflow")
+	}
+	return ProcessInfrastructureWorkflowFunction(ctx, req)
+}
+
+// RenderDeploymentPlanWorkflow renders package/config/agent steps.
+func (f *deploymentServiceWorkflowFunctions) RenderDeploymentPlanWorkflow(ctx workflow.Context, req *RenderDeploymentPlanWorkflowRequest) (*RenderDeploymentPlanWorkflowResponse, error) {
+	if RenderDeploymentPlanWorkflowFunction == nil {
+		return nil, errors.New("RenderDeploymentPlanWorkflow requires workflow registration via RegisterDeploymentServiceWorkflows or RegisterRenderDeploymentPlanWorkflowWorkflow")
+	}
+	return RenderDeploymentPlanWorkflowFunction(ctx, req)
+}
+
+// RenderDockerInputWorkflow renders infrastructure plan to Docker input.
+func (f *deploymentServiceWorkflowFunctions) RenderDockerInputWorkflow(ctx workflow.Context, req *deployment.InfrastructurePlan) (*deployment.Docker_Input, error) {
 	if RenderDockerInputWorkflowFunction == nil {
 		return nil, errors.New("RenderDockerInputWorkflow requires workflow registration via RegisterDeploymentServiceWorkflows or RegisterRenderDockerInputWorkflowWorkflow")
 	}
 	return RenderDockerInputWorkflowFunction(ctx, req)
 }
 
-// RenderTerraformVariablesWorkflow renders a topology into Terraform
-// variables input (pure render, retryable).
-func (f *deploymentServiceWorkflowFunctions) RenderTerraformVariablesWorkflow(ctx workflow.Context, req *topology.Topology) (*deployment.Terraform_Input, error) {
+// RenderTerraformVariablesWorkflow renders infrastructure plan to Terraform
+// input.
+func (f *deploymentServiceWorkflowFunctions) RenderTerraformVariablesWorkflow(ctx workflow.Context, req *deployment.InfrastructurePlan) (*deployment.Terraform_Input, error) {
 	if RenderTerraformVariablesWorkflowFunction == nil {
 		return nil, errors.New("RenderTerraformVariablesWorkflow requires workflow registration via RegisterDeploymentServiceWorkflows or RegisterRenderTerraformVariablesWorkflowWorkflow")
 	}
@@ -1236,27 +1751,33 @@ func (f *deploymentServiceWorkflowFunctions) RenderTerraformVariablesWorkflow(ct
 
 // DeploymentServiceWorkflows provides methods for initializing new cloud.v1.workflow.DeploymentService workflow values
 type DeploymentServiceWorkflows interface {
-	// CalculateQuotasWorkflow computes resource quota requests from a topology
-	// (pure computation, retryable).
+	// CalculateQuotasWorkflow computes quota requests from an infrastructure
+	// plan.
 	CalculateQuotasWorkflow(ctx workflow.Context, input *CalculateQuotasWorkflowWorkflowInput) (CalculateQuotasWorkflowWorkflow, error)
 
-	// ProcessDeploymentWorkflow provisions a topology end to end; always a
-	// child of TestWorkflow and never auto-retried as a whole.
-	ProcessDeploymentWorkflow(ctx workflow.Context, input *ProcessDeploymentWorkflowWorkflowInput) (ProcessDeploymentWorkflowWorkflow, error)
+	// ExecuteDeploymentPlanWorkflow executes rendered agent steps.
+	ExecuteDeploymentPlanWorkflow(ctx workflow.Context, input *ExecuteDeploymentPlanWorkflowWorkflowInput) (ExecuteDeploymentPlanWorkflowWorkflow, error)
 
-	// RenderDockerInputWorkflow renders a topology into Docker compose input
-	// (pure render, retryable).
+	// ProcessInfrastructureWorkflow provisions provider infrastructure.
+	ProcessInfrastructureWorkflow(ctx workflow.Context, input *ProcessInfrastructureWorkflowWorkflowInput) (ProcessInfrastructureWorkflowWorkflow, error)
+
+	// RenderDeploymentPlanWorkflow renders package/config/agent steps.
+	RenderDeploymentPlanWorkflow(ctx workflow.Context, input *RenderDeploymentPlanWorkflowWorkflowInput) (RenderDeploymentPlanWorkflowWorkflow, error)
+
+	// RenderDockerInputWorkflow renders infrastructure plan to Docker input.
 	RenderDockerInputWorkflow(ctx workflow.Context, input *RenderDockerInputWorkflowWorkflowInput) (RenderDockerInputWorkflowWorkflow, error)
 
-	// RenderTerraformVariablesWorkflow renders a topology into Terraform
-	// variables input (pure render, retryable).
+	// RenderTerraformVariablesWorkflow renders infrastructure plan to Terraform
+	// input.
 	RenderTerraformVariablesWorkflow(ctx workflow.Context, input *RenderTerraformVariablesWorkflowWorkflowInput) (RenderTerraformVariablesWorkflowWorkflow, error)
 }
 
 // RegisterDeploymentServiceWorkflows registers cloud.v1.workflow.DeploymentService workflows with the given worker
 func RegisterDeploymentServiceWorkflows(r worker.WorkflowRegistry, workflows DeploymentServiceWorkflows) {
 	RegisterCalculateQuotasWorkflowWorkflow(r, workflows.CalculateQuotasWorkflow)
-	RegisterProcessDeploymentWorkflowWorkflow(r, workflows.ProcessDeploymentWorkflow)
+	RegisterExecuteDeploymentPlanWorkflowWorkflow(r, workflows.ExecuteDeploymentPlanWorkflow)
+	RegisterProcessInfrastructureWorkflowWorkflow(r, workflows.ProcessInfrastructureWorkflow)
+	RegisterRenderDeploymentPlanWorkflowWorkflow(r, workflows.RenderDeploymentPlanWorkflow)
 	RegisterRenderDockerInputWorkflowWorkflow(r, workflows.RenderDockerInputWorkflow)
 	RegisterRenderTerraformVariablesWorkflowWorkflow(r, workflows.RenderTerraformVariablesWorkflow)
 }
@@ -1305,15 +1826,15 @@ func (i *CalculateQuotasWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Contex
 	return nil, workflow.NewContinueAsNewError(ctx, CalculateQuotasWorkflowWorkflowName, next)
 }
 
-// CalculateQuotasWorkflow computes resource quota requests from a topology
-// (pure computation, retryable).
+// CalculateQuotasWorkflow computes quota requests from an infrastructure
+// plan.
 type CalculateQuotasWorkflowWorkflow interface {
 	// Execute defines the entrypoint to a(n) CalculateQuotasWorkflow workflow
 	Execute(ctx workflow.Context) (*CalculateQuotasWorkflowResponse, error)
 }
 
-// CalculateQuotasWorkflow computes resource quota requests from a topology
-// (pure computation, retryable).
+// CalculateQuotasWorkflow computes quota requests from an infrastructure
+// plan.
 func CalculateQuotasWorkflowChild(ctx workflow.Context, req *CalculateQuotasWorkflowRequest, options ...*CalculateQuotasWorkflowChildOptions) (*CalculateQuotasWorkflowResponse, error) {
 	childRun, err := CalculateQuotasWorkflowChildAsync(ctx, req, options...)
 	if err != nil {
@@ -1322,8 +1843,8 @@ func CalculateQuotasWorkflowChild(ctx workflow.Context, req *CalculateQuotasWork
 	return childRun.Get(ctx)
 }
 
-// CalculateQuotasWorkflow computes resource quota requests from a topology
-// (pure computation, retryable).
+// CalculateQuotasWorkflow computes quota requests from an infrastructure
+// plan.
 func CalculateQuotasWorkflowChildAsync(ctx workflow.Context, req *CalculateQuotasWorkflowRequest, options ...*CalculateQuotasWorkflowChildOptions) (*CalculateQuotasWorkflowChildRun, error) {
 	var o *CalculateQuotasWorkflowChildOptions
 	if len(options) > 0 && options[0] != nil {
@@ -1530,18 +2051,18 @@ func (r *CalculateQuotasWorkflowChildRun) WaitStart(ctx workflow.Context) (*work
 	return &exec, nil
 }
 
-// RegisterProcessDeploymentWorkflowWorkflow registers a cloud.v1.workflow.DeploymentService.ProcessDeploymentWorkflow workflow with the given worker
-func RegisterProcessDeploymentWorkflowWorkflow(r worker.WorkflowRegistry, wf func(workflow.Context, *ProcessDeploymentWorkflowWorkflowInput) (ProcessDeploymentWorkflowWorkflow, error)) {
+// RegisterExecuteDeploymentPlanWorkflowWorkflow registers a cloud.v1.workflow.DeploymentService.ExecuteDeploymentPlanWorkflow workflow with the given worker
+func RegisterExecuteDeploymentPlanWorkflowWorkflow(r worker.WorkflowRegistry, wf func(workflow.Context, *ExecuteDeploymentPlanWorkflowWorkflowInput) (ExecuteDeploymentPlanWorkflowWorkflow, error)) {
 	deploymentServiceRegistrationMutex.Lock()
 	defer deploymentServiceRegistrationMutex.Unlock()
-	ProcessDeploymentWorkflowFunction = buildProcessDeploymentWorkflow(wf)
-	r.RegisterWorkflowWithOptions(ProcessDeploymentWorkflowFunction, workflow.RegisterOptions{Name: ProcessDeploymentWorkflowWorkflowName})
+	ExecuteDeploymentPlanWorkflowFunction = buildExecuteDeploymentPlanWorkflow(wf)
+	r.RegisterWorkflowWithOptions(ExecuteDeploymentPlanWorkflowFunction, workflow.RegisterOptions{Name: ExecuteDeploymentPlanWorkflowWorkflowName})
 }
 
-// buildProcessDeploymentWorkflow converts a ProcessDeploymentWorkflow workflow struct into a valid workflow function
-func buildProcessDeploymentWorkflow(ctor func(workflow.Context, *ProcessDeploymentWorkflowWorkflowInput) (ProcessDeploymentWorkflowWorkflow, error)) func(workflow.Context, *ProcessDeploymentWorkflowRequest) (*ProcessDeploymentWorkflowResponse, error) {
-	return func(ctx workflow.Context, req *ProcessDeploymentWorkflowRequest) (*ProcessDeploymentWorkflowResponse, error) {
-		input := &ProcessDeploymentWorkflowWorkflowInput{
+// buildExecuteDeploymentPlanWorkflow converts a ExecuteDeploymentPlanWorkflow workflow struct into a valid workflow function
+func buildExecuteDeploymentPlanWorkflow(ctor func(workflow.Context, *ExecuteDeploymentPlanWorkflowWorkflowInput) (ExecuteDeploymentPlanWorkflowWorkflow, error)) func(workflow.Context, *ExecuteDeploymentPlanWorkflowRequest) (*ExecuteDeploymentPlanWorkflowResponse, error) {
+	return func(ctx workflow.Context, req *ExecuteDeploymentPlanWorkflowRequest) (*ExecuteDeploymentPlanWorkflowResponse, error) {
+		input := &ExecuteDeploymentPlanWorkflowWorkflowInput{
 			Req: req,
 		}
 		wf, err := ctor(ctx, input)
@@ -1557,48 +2078,45 @@ func buildProcessDeploymentWorkflow(ctor func(workflow.Context, *ProcessDeployme
 	}
 }
 
-// ProcessDeploymentWorkflowWorkflowInput describes the input to a(n) ProcessDeploymentWorkflow workflow constructor
-type ProcessDeploymentWorkflowWorkflowInput struct {
-	Req *ProcessDeploymentWorkflowRequest
+// ExecuteDeploymentPlanWorkflowWorkflowInput describes the input to a(n) ExecuteDeploymentPlanWorkflow workflow constructor
+type ExecuteDeploymentPlanWorkflowWorkflowInput struct {
+	Req *ExecuteDeploymentPlanWorkflowRequest
 }
 
 // ContinueAsNew returns an appropriately configured ContinueAsNewError
-func (i *ProcessDeploymentWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Context, input *ProcessDeploymentWorkflowRequest, options ...workflow.ContinueAsNewErrorOptions) (*ProcessDeploymentWorkflowResponse, error) {
+func (i *ExecuteDeploymentPlanWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Context, input *ExecuteDeploymentPlanWorkflowRequest, options ...workflow.ContinueAsNewErrorOptions) (*ExecuteDeploymentPlanWorkflowResponse, error) {
 	next := i.Req
 	if input != nil {
 		next = input
 	}
 	if len(options) > 0 {
-		return nil, workflow.NewContinueAsNewErrorWithOptions(ctx, options[0], ProcessDeploymentWorkflowWorkflowName, next)
+		return nil, workflow.NewContinueAsNewErrorWithOptions(ctx, options[0], ExecuteDeploymentPlanWorkflowWorkflowName, next)
 	}
-	return nil, workflow.NewContinueAsNewError(ctx, ProcessDeploymentWorkflowWorkflowName, next)
+	return nil, workflow.NewContinueAsNewError(ctx, ExecuteDeploymentPlanWorkflowWorkflowName, next)
 }
 
-// ProcessDeploymentWorkflow provisions a topology end to end; always a
-// child of TestWorkflow and never auto-retried as a whole.
-type ProcessDeploymentWorkflowWorkflow interface {
-	// Execute defines the entrypoint to a(n) ProcessDeploymentWorkflow workflow
-	Execute(ctx workflow.Context) (*ProcessDeploymentWorkflowResponse, error)
+// ExecuteDeploymentPlanWorkflow executes rendered agent steps.
+type ExecuteDeploymentPlanWorkflowWorkflow interface {
+	// Execute defines the entrypoint to a(n) ExecuteDeploymentPlanWorkflow workflow
+	Execute(ctx workflow.Context) (*ExecuteDeploymentPlanWorkflowResponse, error)
 }
 
-// ProcessDeploymentWorkflow provisions a topology end to end; always a
-// child of TestWorkflow and never auto-retried as a whole.
-func ProcessDeploymentWorkflowChild(ctx workflow.Context, req *ProcessDeploymentWorkflowRequest, options ...*ProcessDeploymentWorkflowChildOptions) (*ProcessDeploymentWorkflowResponse, error) {
-	childRun, err := ProcessDeploymentWorkflowChildAsync(ctx, req, options...)
+// ExecuteDeploymentPlanWorkflow executes rendered agent steps.
+func ExecuteDeploymentPlanWorkflowChild(ctx workflow.Context, req *ExecuteDeploymentPlanWorkflowRequest, options ...*ExecuteDeploymentPlanWorkflowChildOptions) (*ExecuteDeploymentPlanWorkflowResponse, error) {
+	childRun, err := ExecuteDeploymentPlanWorkflowChildAsync(ctx, req, options...)
 	if err != nil {
 		return nil, err
 	}
 	return childRun.Get(ctx)
 }
 
-// ProcessDeploymentWorkflow provisions a topology end to end; always a
-// child of TestWorkflow and never auto-retried as a whole.
-func ProcessDeploymentWorkflowChildAsync(ctx workflow.Context, req *ProcessDeploymentWorkflowRequest, options ...*ProcessDeploymentWorkflowChildOptions) (*ProcessDeploymentWorkflowChildRun, error) {
-	var o *ProcessDeploymentWorkflowChildOptions
+// ExecuteDeploymentPlanWorkflow executes rendered agent steps.
+func ExecuteDeploymentPlanWorkflowChildAsync(ctx workflow.Context, req *ExecuteDeploymentPlanWorkflowRequest, options ...*ExecuteDeploymentPlanWorkflowChildOptions) (*ExecuteDeploymentPlanWorkflowChildRun, error) {
+	var o *ExecuteDeploymentPlanWorkflowChildOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
 	} else {
-		o = NewProcessDeploymentWorkflowChildOptions()
+		o = NewExecuteDeploymentPlanWorkflowChildOptions()
 	}
 	opts, err := o.Build(ctx, req.ProtoReflect())
 	if err != nil {
@@ -1608,11 +2126,11 @@ func ProcessDeploymentWorkflowChildAsync(ctx workflow.Context, req *ProcessDeplo
 	if o.dc != nil {
 		ctx = workflow.WithDataConverter(ctx, o.dc)
 	}
-	return &ProcessDeploymentWorkflowChildRun{Future: workflow.ExecuteChildWorkflow(ctx, ProcessDeploymentWorkflowWorkflowName, req)}, nil
+	return &ExecuteDeploymentPlanWorkflowChildRun{Future: workflow.ExecuteChildWorkflow(ctx, ExecuteDeploymentPlanWorkflowWorkflowName, req)}, nil
 }
 
-// ProcessDeploymentWorkflowChildOptions provides configuration for a child ProcessDeploymentWorkflow workflow operation
-type ProcessDeploymentWorkflowChildOptions struct {
+// ExecuteDeploymentPlanWorkflowChildOptions provides configuration for a child ExecuteDeploymentPlanWorkflow workflow operation
+type ExecuteDeploymentPlanWorkflowChildOptions struct {
 	options               workflow.ChildWorkflowOptions
 	executionTimeout      *time.Duration
 	id                    *string
@@ -1628,13 +2146,13 @@ type ProcessDeploymentWorkflowChildOptions struct {
 	waitForCancellation   *bool
 }
 
-// NewProcessDeploymentWorkflowChildOptions initializes a new ProcessDeploymentWorkflowChildOptions value
-func NewProcessDeploymentWorkflowChildOptions() *ProcessDeploymentWorkflowChildOptions {
-	return &ProcessDeploymentWorkflowChildOptions{}
+// NewExecuteDeploymentPlanWorkflowChildOptions initializes a new ExecuteDeploymentPlanWorkflowChildOptions value
+func NewExecuteDeploymentPlanWorkflowChildOptions() *ExecuteDeploymentPlanWorkflowChildOptions {
+	return &ExecuteDeploymentPlanWorkflowChildOptions{}
 }
 
 // Build initializes a new go.temporal.io/sdk/workflow.ChildWorkflowOptions value with defaults and overrides applied
-func (o *ProcessDeploymentWorkflowChildOptions) Build(ctx workflow.Context, req protoreflect.Message) (workflow.ChildWorkflowOptions, error) {
+func (o *ExecuteDeploymentPlanWorkflowChildOptions) Build(ctx workflow.Context, req protoreflect.Message) (workflow.ChildWorkflowOptions, error) {
 	opts := o.options
 	if v := o.id; v != nil {
 		opts.WorkflowID = *v
@@ -1679,91 +2197,91 @@ func (o *ProcessDeploymentWorkflowChildOptions) Build(ctx workflow.Context, req 
 }
 
 // WithChildWorkflowOptions sets the initial go.temporal.io/sdk/workflow.ChildWorkflowOptions
-func (o *ProcessDeploymentWorkflowChildOptions) WithChildWorkflowOptions(options workflow.ChildWorkflowOptions) *ProcessDeploymentWorkflowChildOptions {
+func (o *ExecuteDeploymentPlanWorkflowChildOptions) WithChildWorkflowOptions(options workflow.ChildWorkflowOptions) *ExecuteDeploymentPlanWorkflowChildOptions {
 	o.options = options
 	return o
 }
 
 // WithDataConverter registers a DataConverter for the child workflow
-func (o *ProcessDeploymentWorkflowChildOptions) WithDataConverter(dc converter.DataConverter) *ProcessDeploymentWorkflowChildOptions {
+func (o *ExecuteDeploymentPlanWorkflowChildOptions) WithDataConverter(dc converter.DataConverter) *ExecuteDeploymentPlanWorkflowChildOptions {
 	o.dc = dc
 	return o
 }
 
 // WithExecutionTimeout sets the WorkflowExecutionTimeout value
-func (o *ProcessDeploymentWorkflowChildOptions) WithExecutionTimeout(d time.Duration) *ProcessDeploymentWorkflowChildOptions {
+func (o *ExecuteDeploymentPlanWorkflowChildOptions) WithExecutionTimeout(d time.Duration) *ExecuteDeploymentPlanWorkflowChildOptions {
 	o.executionTimeout = &d
 	return o
 }
 
 // WithID sets the WorkflowID value
-func (o *ProcessDeploymentWorkflowChildOptions) WithID(id string) *ProcessDeploymentWorkflowChildOptions {
+func (o *ExecuteDeploymentPlanWorkflowChildOptions) WithID(id string) *ExecuteDeploymentPlanWorkflowChildOptions {
 	o.id = &id
 	return o
 }
 
 // WithIDReusePolicy sets the WorkflowIDReusePolicy value
-func (o *ProcessDeploymentWorkflowChildOptions) WithIDReusePolicy(policy enumsv1.WorkflowIdReusePolicy) *ProcessDeploymentWorkflowChildOptions {
+func (o *ExecuteDeploymentPlanWorkflowChildOptions) WithIDReusePolicy(policy enumsv1.WorkflowIdReusePolicy) *ExecuteDeploymentPlanWorkflowChildOptions {
 	o.idReusePolicy = policy
 	return o
 }
 
 // WithParentClosePolicy sets the WorkflowIDReusePolicy value
-func (o *ProcessDeploymentWorkflowChildOptions) WithParentClosePolicy(policy enumsv1.ParentClosePolicy) *ProcessDeploymentWorkflowChildOptions {
+func (o *ExecuteDeploymentPlanWorkflowChildOptions) WithParentClosePolicy(policy enumsv1.ParentClosePolicy) *ExecuteDeploymentPlanWorkflowChildOptions {
 	o.parentClosePolicy = policy
 	return o
 }
 
 // WithRetryPolicy sets the RetryPolicy value
-func (o *ProcessDeploymentWorkflowChildOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *ProcessDeploymentWorkflowChildOptions {
+func (o *ExecuteDeploymentPlanWorkflowChildOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *ExecuteDeploymentPlanWorkflowChildOptions {
 	o.retryPolicy = policy
 	return o
 }
 
 // WithRunTimeout sets the WorkflowRunTimeout value
-func (o *ProcessDeploymentWorkflowChildOptions) WithRunTimeout(d time.Duration) *ProcessDeploymentWorkflowChildOptions {
+func (o *ExecuteDeploymentPlanWorkflowChildOptions) WithRunTimeout(d time.Duration) *ExecuteDeploymentPlanWorkflowChildOptions {
 	o.runTimeout = &d
 	return o
 }
 
 // WithSearchAttributes sets the SearchAttributes value
-func (o *ProcessDeploymentWorkflowChildOptions) WithSearchAttributes(sa map[string]any) *ProcessDeploymentWorkflowChildOptions {
+func (o *ExecuteDeploymentPlanWorkflowChildOptions) WithSearchAttributes(sa map[string]any) *ExecuteDeploymentPlanWorkflowChildOptions {
 	o.searchAttributes = sa
 	return o
 }
 
 // WithTaskTimeout sets the WorkflowTaskTimeout value
-func (o *ProcessDeploymentWorkflowChildOptions) WithTaskTimeout(d time.Duration) *ProcessDeploymentWorkflowChildOptions {
+func (o *ExecuteDeploymentPlanWorkflowChildOptions) WithTaskTimeout(d time.Duration) *ExecuteDeploymentPlanWorkflowChildOptions {
 	o.taskTimeout = &d
 	return o
 }
 
 // WithTaskQueue sets the TaskQueue value
-func (o *ProcessDeploymentWorkflowChildOptions) WithTaskQueue(tq string) *ProcessDeploymentWorkflowChildOptions {
+func (o *ExecuteDeploymentPlanWorkflowChildOptions) WithTaskQueue(tq string) *ExecuteDeploymentPlanWorkflowChildOptions {
 	o.taskQueue = &tq
 	return o
 }
 
 // WithTypedSearchAttributes sets the TypedSearchAttributes value
-func (o *ProcessDeploymentWorkflowChildOptions) WithTypedSearchAttributes(tsa temporal.SearchAttributes) *ProcessDeploymentWorkflowChildOptions {
+func (o *ExecuteDeploymentPlanWorkflowChildOptions) WithTypedSearchAttributes(tsa temporal.SearchAttributes) *ExecuteDeploymentPlanWorkflowChildOptions {
 	o.typedSearchAttributes = &tsa
 	return o
 }
 
 // WithWaitForCancellation sets the WaitForCancellation value
-func (o *ProcessDeploymentWorkflowChildOptions) WithWaitForCancellation(wait bool) *ProcessDeploymentWorkflowChildOptions {
+func (o *ExecuteDeploymentPlanWorkflowChildOptions) WithWaitForCancellation(wait bool) *ExecuteDeploymentPlanWorkflowChildOptions {
 	o.waitForCancellation = &wait
 	return o
 }
 
-// ProcessDeploymentWorkflowChildRun describes a child ProcessDeploymentWorkflow workflow run
-type ProcessDeploymentWorkflowChildRun struct {
+// ExecuteDeploymentPlanWorkflowChildRun describes a child ExecuteDeploymentPlanWorkflow workflow run
+type ExecuteDeploymentPlanWorkflowChildRun struct {
 	Future workflow.ChildWorkflowFuture
 }
 
 // Get blocks until the workflow is completed, returning the response value
-func (r *ProcessDeploymentWorkflowChildRun) Get(ctx workflow.Context) (*ProcessDeploymentWorkflowResponse, error) {
-	var resp ProcessDeploymentWorkflowResponse
+func (r *ExecuteDeploymentPlanWorkflowChildRun) Get(ctx workflow.Context) (*ExecuteDeploymentPlanWorkflowResponse, error) {
+	var resp ExecuteDeploymentPlanWorkflowResponse
 	if err := r.Future.Get(ctx, &resp); err != nil {
 		return nil, err
 	}
@@ -1771,7 +2289,7 @@ func (r *ProcessDeploymentWorkflowChildRun) Get(ctx workflow.Context) (*ProcessD
 }
 
 // Select adds this completion to the selector. Callback can be nil.
-func (r *ProcessDeploymentWorkflowChildRun) Select(sel workflow.Selector, fn func(*ProcessDeploymentWorkflowChildRun)) workflow.Selector {
+func (r *ExecuteDeploymentPlanWorkflowChildRun) Select(sel workflow.Selector, fn func(*ExecuteDeploymentPlanWorkflowChildRun)) workflow.Selector {
 	return sel.AddFuture(r.Future, func(workflow.Future) {
 		if fn != nil {
 			fn(r)
@@ -1780,7 +2298,7 @@ func (r *ProcessDeploymentWorkflowChildRun) Select(sel workflow.Selector, fn fun
 }
 
 // SelectStart adds waiting for start to the selector. Callback can be nil.
-func (r *ProcessDeploymentWorkflowChildRun) SelectStart(sel workflow.Selector, fn func(*ProcessDeploymentWorkflowChildRun)) workflow.Selector {
+func (r *ExecuteDeploymentPlanWorkflowChildRun) SelectStart(sel workflow.Selector, fn func(*ExecuteDeploymentPlanWorkflowChildRun)) workflow.Selector {
 	return sel.AddFuture(r.Future.GetChildWorkflowExecution(), func(workflow.Future) {
 		if fn != nil {
 			fn(r)
@@ -1789,7 +2307,537 @@ func (r *ProcessDeploymentWorkflowChildRun) SelectStart(sel workflow.Selector, f
 }
 
 // WaitStart waits for the child workflow to start
-func (r *ProcessDeploymentWorkflowChildRun) WaitStart(ctx workflow.Context) (*workflow.Execution, error) {
+func (r *ExecuteDeploymentPlanWorkflowChildRun) WaitStart(ctx workflow.Context) (*workflow.Execution, error) {
+	var exec workflow.Execution
+	if err := r.Future.GetChildWorkflowExecution().Get(ctx, &exec); err != nil {
+		return nil, err
+	}
+	return &exec, nil
+}
+
+// RegisterProcessInfrastructureWorkflowWorkflow registers a cloud.v1.workflow.DeploymentService.ProcessInfrastructureWorkflow workflow with the given worker
+func RegisterProcessInfrastructureWorkflowWorkflow(r worker.WorkflowRegistry, wf func(workflow.Context, *ProcessInfrastructureWorkflowWorkflowInput) (ProcessInfrastructureWorkflowWorkflow, error)) {
+	deploymentServiceRegistrationMutex.Lock()
+	defer deploymentServiceRegistrationMutex.Unlock()
+	ProcessInfrastructureWorkflowFunction = buildProcessInfrastructureWorkflow(wf)
+	r.RegisterWorkflowWithOptions(ProcessInfrastructureWorkflowFunction, workflow.RegisterOptions{Name: ProcessInfrastructureWorkflowWorkflowName})
+}
+
+// buildProcessInfrastructureWorkflow converts a ProcessInfrastructureWorkflow workflow struct into a valid workflow function
+func buildProcessInfrastructureWorkflow(ctor func(workflow.Context, *ProcessInfrastructureWorkflowWorkflowInput) (ProcessInfrastructureWorkflowWorkflow, error)) func(workflow.Context, *ProcessInfrastructureWorkflowRequest) (*ProcessInfrastructureWorkflowResponse, error) {
+	return func(ctx workflow.Context, req *ProcessInfrastructureWorkflowRequest) (*ProcessInfrastructureWorkflowResponse, error) {
+		input := &ProcessInfrastructureWorkflowWorkflowInput{
+			Req: req,
+		}
+		wf, err := ctor(ctx, input)
+		if err != nil {
+			return nil, err
+		}
+		if initializable, ok := wf.(helpers.Initializable); ok {
+			if err := initializable.Initialize(ctx); err != nil {
+				return nil, err
+			}
+		}
+		return wf.Execute(ctx)
+	}
+}
+
+// ProcessInfrastructureWorkflowWorkflowInput describes the input to a(n) ProcessInfrastructureWorkflow workflow constructor
+type ProcessInfrastructureWorkflowWorkflowInput struct {
+	Req *ProcessInfrastructureWorkflowRequest
+}
+
+// ContinueAsNew returns an appropriately configured ContinueAsNewError
+func (i *ProcessInfrastructureWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Context, input *ProcessInfrastructureWorkflowRequest, options ...workflow.ContinueAsNewErrorOptions) (*ProcessInfrastructureWorkflowResponse, error) {
+	next := i.Req
+	if input != nil {
+		next = input
+	}
+	if len(options) > 0 {
+		return nil, workflow.NewContinueAsNewErrorWithOptions(ctx, options[0], ProcessInfrastructureWorkflowWorkflowName, next)
+	}
+	return nil, workflow.NewContinueAsNewError(ctx, ProcessInfrastructureWorkflowWorkflowName, next)
+}
+
+// ProcessInfrastructureWorkflow provisions provider infrastructure.
+type ProcessInfrastructureWorkflowWorkflow interface {
+	// Execute defines the entrypoint to a(n) ProcessInfrastructureWorkflow workflow
+	Execute(ctx workflow.Context) (*ProcessInfrastructureWorkflowResponse, error)
+}
+
+// ProcessInfrastructureWorkflow provisions provider infrastructure.
+func ProcessInfrastructureWorkflowChild(ctx workflow.Context, req *ProcessInfrastructureWorkflowRequest, options ...*ProcessInfrastructureWorkflowChildOptions) (*ProcessInfrastructureWorkflowResponse, error) {
+	childRun, err := ProcessInfrastructureWorkflowChildAsync(ctx, req, options...)
+	if err != nil {
+		return nil, err
+	}
+	return childRun.Get(ctx)
+}
+
+// ProcessInfrastructureWorkflow provisions provider infrastructure.
+func ProcessInfrastructureWorkflowChildAsync(ctx workflow.Context, req *ProcessInfrastructureWorkflowRequest, options ...*ProcessInfrastructureWorkflowChildOptions) (*ProcessInfrastructureWorkflowChildRun, error) {
+	var o *ProcessInfrastructureWorkflowChildOptions
+	if len(options) > 0 && options[0] != nil {
+		o = options[0]
+	} else {
+		o = NewProcessInfrastructureWorkflowChildOptions()
+	}
+	opts, err := o.Build(ctx, req.ProtoReflect())
+	if err != nil {
+		return nil, fmt.Errorf("error initializing workflow.ChildWorkflowOptions: %w", err)
+	}
+	ctx = workflow.WithChildOptions(ctx, opts)
+	if o.dc != nil {
+		ctx = workflow.WithDataConverter(ctx, o.dc)
+	}
+	return &ProcessInfrastructureWorkflowChildRun{Future: workflow.ExecuteChildWorkflow(ctx, ProcessInfrastructureWorkflowWorkflowName, req)}, nil
+}
+
+// ProcessInfrastructureWorkflowChildOptions provides configuration for a child ProcessInfrastructureWorkflow workflow operation
+type ProcessInfrastructureWorkflowChildOptions struct {
+	options               workflow.ChildWorkflowOptions
+	executionTimeout      *time.Duration
+	id                    *string
+	idReusePolicy         enumsv1.WorkflowIdReusePolicy
+	retryPolicy           *temporal.RetryPolicy
+	runTimeout            *time.Duration
+	searchAttributes      map[string]any
+	taskQueue             *string
+	taskTimeout           *time.Duration
+	typedSearchAttributes *temporal.SearchAttributes
+	dc                    converter.DataConverter
+	parentClosePolicy     enumsv1.ParentClosePolicy
+	waitForCancellation   *bool
+}
+
+// NewProcessInfrastructureWorkflowChildOptions initializes a new ProcessInfrastructureWorkflowChildOptions value
+func NewProcessInfrastructureWorkflowChildOptions() *ProcessInfrastructureWorkflowChildOptions {
+	return &ProcessInfrastructureWorkflowChildOptions{}
+}
+
+// Build initializes a new go.temporal.io/sdk/workflow.ChildWorkflowOptions value with defaults and overrides applied
+func (o *ProcessInfrastructureWorkflowChildOptions) Build(ctx workflow.Context, req protoreflect.Message) (workflow.ChildWorkflowOptions, error) {
+	opts := o.options
+	if v := o.id; v != nil {
+		opts.WorkflowID = *v
+	}
+	if v := o.idReusePolicy; v != enumsv1.WORKFLOW_ID_REUSE_POLICY_UNSPECIFIED {
+		opts.WorkflowIDReusePolicy = v
+	}
+	if v := o.taskQueue; v != nil {
+		opts.TaskQueue = *v
+	} else if opts.TaskQueue == "" {
+		opts.TaskQueue = DeploymentServiceTaskQueue
+	}
+	if v := o.retryPolicy; v != nil {
+		opts.RetryPolicy = v
+	} else if opts.RetryPolicy == nil {
+		opts.RetryPolicy = &temporal.RetryPolicy{
+			MaximumAttempts: int32(1),
+		}
+	}
+	if v := o.searchAttributes; v != nil {
+		opts.SearchAttributes = o.searchAttributes
+	}
+	if v := o.typedSearchAttributes; v != nil {
+		opts.TypedSearchAttributes = *v
+	}
+	if v := o.executionTimeout; v != nil {
+		opts.WorkflowExecutionTimeout = *v
+	}
+	if v := o.runTimeout; v != nil {
+		opts.WorkflowRunTimeout = *v
+	}
+	if v := o.taskTimeout; v != nil {
+		opts.WorkflowTaskTimeout = *v
+	}
+	if v := o.parentClosePolicy; v != enumsv1.PARENT_CLOSE_POLICY_UNSPECIFIED {
+		opts.ParentClosePolicy = v
+	}
+	if v := o.waitForCancellation; v != nil {
+		opts.WaitForCancellation = *v
+	}
+	return opts, nil
+}
+
+// WithChildWorkflowOptions sets the initial go.temporal.io/sdk/workflow.ChildWorkflowOptions
+func (o *ProcessInfrastructureWorkflowChildOptions) WithChildWorkflowOptions(options workflow.ChildWorkflowOptions) *ProcessInfrastructureWorkflowChildOptions {
+	o.options = options
+	return o
+}
+
+// WithDataConverter registers a DataConverter for the child workflow
+func (o *ProcessInfrastructureWorkflowChildOptions) WithDataConverter(dc converter.DataConverter) *ProcessInfrastructureWorkflowChildOptions {
+	o.dc = dc
+	return o
+}
+
+// WithExecutionTimeout sets the WorkflowExecutionTimeout value
+func (o *ProcessInfrastructureWorkflowChildOptions) WithExecutionTimeout(d time.Duration) *ProcessInfrastructureWorkflowChildOptions {
+	o.executionTimeout = &d
+	return o
+}
+
+// WithID sets the WorkflowID value
+func (o *ProcessInfrastructureWorkflowChildOptions) WithID(id string) *ProcessInfrastructureWorkflowChildOptions {
+	o.id = &id
+	return o
+}
+
+// WithIDReusePolicy sets the WorkflowIDReusePolicy value
+func (o *ProcessInfrastructureWorkflowChildOptions) WithIDReusePolicy(policy enumsv1.WorkflowIdReusePolicy) *ProcessInfrastructureWorkflowChildOptions {
+	o.idReusePolicy = policy
+	return o
+}
+
+// WithParentClosePolicy sets the WorkflowIDReusePolicy value
+func (o *ProcessInfrastructureWorkflowChildOptions) WithParentClosePolicy(policy enumsv1.ParentClosePolicy) *ProcessInfrastructureWorkflowChildOptions {
+	o.parentClosePolicy = policy
+	return o
+}
+
+// WithRetryPolicy sets the RetryPolicy value
+func (o *ProcessInfrastructureWorkflowChildOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *ProcessInfrastructureWorkflowChildOptions {
+	o.retryPolicy = policy
+	return o
+}
+
+// WithRunTimeout sets the WorkflowRunTimeout value
+func (o *ProcessInfrastructureWorkflowChildOptions) WithRunTimeout(d time.Duration) *ProcessInfrastructureWorkflowChildOptions {
+	o.runTimeout = &d
+	return o
+}
+
+// WithSearchAttributes sets the SearchAttributes value
+func (o *ProcessInfrastructureWorkflowChildOptions) WithSearchAttributes(sa map[string]any) *ProcessInfrastructureWorkflowChildOptions {
+	o.searchAttributes = sa
+	return o
+}
+
+// WithTaskTimeout sets the WorkflowTaskTimeout value
+func (o *ProcessInfrastructureWorkflowChildOptions) WithTaskTimeout(d time.Duration) *ProcessInfrastructureWorkflowChildOptions {
+	o.taskTimeout = &d
+	return o
+}
+
+// WithTaskQueue sets the TaskQueue value
+func (o *ProcessInfrastructureWorkflowChildOptions) WithTaskQueue(tq string) *ProcessInfrastructureWorkflowChildOptions {
+	o.taskQueue = &tq
+	return o
+}
+
+// WithTypedSearchAttributes sets the TypedSearchAttributes value
+func (o *ProcessInfrastructureWorkflowChildOptions) WithTypedSearchAttributes(tsa temporal.SearchAttributes) *ProcessInfrastructureWorkflowChildOptions {
+	o.typedSearchAttributes = &tsa
+	return o
+}
+
+// WithWaitForCancellation sets the WaitForCancellation value
+func (o *ProcessInfrastructureWorkflowChildOptions) WithWaitForCancellation(wait bool) *ProcessInfrastructureWorkflowChildOptions {
+	o.waitForCancellation = &wait
+	return o
+}
+
+// ProcessInfrastructureWorkflowChildRun describes a child ProcessInfrastructureWorkflow workflow run
+type ProcessInfrastructureWorkflowChildRun struct {
+	Future workflow.ChildWorkflowFuture
+}
+
+// Get blocks until the workflow is completed, returning the response value
+func (r *ProcessInfrastructureWorkflowChildRun) Get(ctx workflow.Context) (*ProcessInfrastructureWorkflowResponse, error) {
+	var resp ProcessInfrastructureWorkflowResponse
+	if err := r.Future.Get(ctx, &resp); err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
+// Select adds this completion to the selector. Callback can be nil.
+func (r *ProcessInfrastructureWorkflowChildRun) Select(sel workflow.Selector, fn func(*ProcessInfrastructureWorkflowChildRun)) workflow.Selector {
+	return sel.AddFuture(r.Future, func(workflow.Future) {
+		if fn != nil {
+			fn(r)
+		}
+	})
+}
+
+// SelectStart adds waiting for start to the selector. Callback can be nil.
+func (r *ProcessInfrastructureWorkflowChildRun) SelectStart(sel workflow.Selector, fn func(*ProcessInfrastructureWorkflowChildRun)) workflow.Selector {
+	return sel.AddFuture(r.Future.GetChildWorkflowExecution(), func(workflow.Future) {
+		if fn != nil {
+			fn(r)
+		}
+	})
+}
+
+// WaitStart waits for the child workflow to start
+func (r *ProcessInfrastructureWorkflowChildRun) WaitStart(ctx workflow.Context) (*workflow.Execution, error) {
+	var exec workflow.Execution
+	if err := r.Future.GetChildWorkflowExecution().Get(ctx, &exec); err != nil {
+		return nil, err
+	}
+	return &exec, nil
+}
+
+// RegisterRenderDeploymentPlanWorkflowWorkflow registers a cloud.v1.workflow.DeploymentService.RenderDeploymentPlanWorkflow workflow with the given worker
+func RegisterRenderDeploymentPlanWorkflowWorkflow(r worker.WorkflowRegistry, wf func(workflow.Context, *RenderDeploymentPlanWorkflowWorkflowInput) (RenderDeploymentPlanWorkflowWorkflow, error)) {
+	deploymentServiceRegistrationMutex.Lock()
+	defer deploymentServiceRegistrationMutex.Unlock()
+	RenderDeploymentPlanWorkflowFunction = buildRenderDeploymentPlanWorkflow(wf)
+	r.RegisterWorkflowWithOptions(RenderDeploymentPlanWorkflowFunction, workflow.RegisterOptions{Name: RenderDeploymentPlanWorkflowWorkflowName})
+}
+
+// buildRenderDeploymentPlanWorkflow converts a RenderDeploymentPlanWorkflow workflow struct into a valid workflow function
+func buildRenderDeploymentPlanWorkflow(ctor func(workflow.Context, *RenderDeploymentPlanWorkflowWorkflowInput) (RenderDeploymentPlanWorkflowWorkflow, error)) func(workflow.Context, *RenderDeploymentPlanWorkflowRequest) (*RenderDeploymentPlanWorkflowResponse, error) {
+	return func(ctx workflow.Context, req *RenderDeploymentPlanWorkflowRequest) (*RenderDeploymentPlanWorkflowResponse, error) {
+		input := &RenderDeploymentPlanWorkflowWorkflowInput{
+			Req: req,
+		}
+		wf, err := ctor(ctx, input)
+		if err != nil {
+			return nil, err
+		}
+		if initializable, ok := wf.(helpers.Initializable); ok {
+			if err := initializable.Initialize(ctx); err != nil {
+				return nil, err
+			}
+		}
+		return wf.Execute(ctx)
+	}
+}
+
+// RenderDeploymentPlanWorkflowWorkflowInput describes the input to a(n) RenderDeploymentPlanWorkflow workflow constructor
+type RenderDeploymentPlanWorkflowWorkflowInput struct {
+	Req *RenderDeploymentPlanWorkflowRequest
+}
+
+// ContinueAsNew returns an appropriately configured ContinueAsNewError
+func (i *RenderDeploymentPlanWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Context, input *RenderDeploymentPlanWorkflowRequest, options ...workflow.ContinueAsNewErrorOptions) (*RenderDeploymentPlanWorkflowResponse, error) {
+	next := i.Req
+	if input != nil {
+		next = input
+	}
+	if len(options) > 0 {
+		return nil, workflow.NewContinueAsNewErrorWithOptions(ctx, options[0], RenderDeploymentPlanWorkflowWorkflowName, next)
+	}
+	return nil, workflow.NewContinueAsNewError(ctx, RenderDeploymentPlanWorkflowWorkflowName, next)
+}
+
+// RenderDeploymentPlanWorkflow renders package/config/agent steps.
+type RenderDeploymentPlanWorkflowWorkflow interface {
+	// Execute defines the entrypoint to a(n) RenderDeploymentPlanWorkflow workflow
+	Execute(ctx workflow.Context) (*RenderDeploymentPlanWorkflowResponse, error)
+}
+
+// RenderDeploymentPlanWorkflow renders package/config/agent steps.
+func RenderDeploymentPlanWorkflowChild(ctx workflow.Context, req *RenderDeploymentPlanWorkflowRequest, options ...*RenderDeploymentPlanWorkflowChildOptions) (*RenderDeploymentPlanWorkflowResponse, error) {
+	childRun, err := RenderDeploymentPlanWorkflowChildAsync(ctx, req, options...)
+	if err != nil {
+		return nil, err
+	}
+	return childRun.Get(ctx)
+}
+
+// RenderDeploymentPlanWorkflow renders package/config/agent steps.
+func RenderDeploymentPlanWorkflowChildAsync(ctx workflow.Context, req *RenderDeploymentPlanWorkflowRequest, options ...*RenderDeploymentPlanWorkflowChildOptions) (*RenderDeploymentPlanWorkflowChildRun, error) {
+	var o *RenderDeploymentPlanWorkflowChildOptions
+	if len(options) > 0 && options[0] != nil {
+		o = options[0]
+	} else {
+		o = NewRenderDeploymentPlanWorkflowChildOptions()
+	}
+	opts, err := o.Build(ctx, req.ProtoReflect())
+	if err != nil {
+		return nil, fmt.Errorf("error initializing workflow.ChildWorkflowOptions: %w", err)
+	}
+	ctx = workflow.WithChildOptions(ctx, opts)
+	if o.dc != nil {
+		ctx = workflow.WithDataConverter(ctx, o.dc)
+	}
+	return &RenderDeploymentPlanWorkflowChildRun{Future: workflow.ExecuteChildWorkflow(ctx, RenderDeploymentPlanWorkflowWorkflowName, req)}, nil
+}
+
+// RenderDeploymentPlanWorkflowChildOptions provides configuration for a child RenderDeploymentPlanWorkflow workflow operation
+type RenderDeploymentPlanWorkflowChildOptions struct {
+	options               workflow.ChildWorkflowOptions
+	executionTimeout      *time.Duration
+	id                    *string
+	idReusePolicy         enumsv1.WorkflowIdReusePolicy
+	retryPolicy           *temporal.RetryPolicy
+	runTimeout            *time.Duration
+	searchAttributes      map[string]any
+	taskQueue             *string
+	taskTimeout           *time.Duration
+	typedSearchAttributes *temporal.SearchAttributes
+	dc                    converter.DataConverter
+	parentClosePolicy     enumsv1.ParentClosePolicy
+	waitForCancellation   *bool
+}
+
+// NewRenderDeploymentPlanWorkflowChildOptions initializes a new RenderDeploymentPlanWorkflowChildOptions value
+func NewRenderDeploymentPlanWorkflowChildOptions() *RenderDeploymentPlanWorkflowChildOptions {
+	return &RenderDeploymentPlanWorkflowChildOptions{}
+}
+
+// Build initializes a new go.temporal.io/sdk/workflow.ChildWorkflowOptions value with defaults and overrides applied
+func (o *RenderDeploymentPlanWorkflowChildOptions) Build(ctx workflow.Context, req protoreflect.Message) (workflow.ChildWorkflowOptions, error) {
+	opts := o.options
+	if v := o.id; v != nil {
+		opts.WorkflowID = *v
+	}
+	if v := o.idReusePolicy; v != enumsv1.WORKFLOW_ID_REUSE_POLICY_UNSPECIFIED {
+		opts.WorkflowIDReusePolicy = v
+	}
+	if v := o.taskQueue; v != nil {
+		opts.TaskQueue = *v
+	} else if opts.TaskQueue == "" {
+		opts.TaskQueue = DeploymentServiceTaskQueue
+	}
+	if v := o.retryPolicy; v != nil {
+		opts.RetryPolicy = v
+	} else if opts.RetryPolicy == nil {
+		opts.RetryPolicy = &temporal.RetryPolicy{
+			MaximumAttempts: int32(3),
+		}
+	}
+	if v := o.searchAttributes; v != nil {
+		opts.SearchAttributes = o.searchAttributes
+	}
+	if v := o.typedSearchAttributes; v != nil {
+		opts.TypedSearchAttributes = *v
+	}
+	if v := o.executionTimeout; v != nil {
+		opts.WorkflowExecutionTimeout = *v
+	}
+	if v := o.runTimeout; v != nil {
+		opts.WorkflowRunTimeout = *v
+	} else if opts.WorkflowRunTimeout == 0 {
+		opts.WorkflowRunTimeout = 300000000000 // 5 minutes
+	}
+	if v := o.taskTimeout; v != nil {
+		opts.WorkflowTaskTimeout = *v
+	}
+	if v := o.parentClosePolicy; v != enumsv1.PARENT_CLOSE_POLICY_UNSPECIFIED {
+		opts.ParentClosePolicy = v
+	}
+	if v := o.waitForCancellation; v != nil {
+		opts.WaitForCancellation = *v
+	}
+	return opts, nil
+}
+
+// WithChildWorkflowOptions sets the initial go.temporal.io/sdk/workflow.ChildWorkflowOptions
+func (o *RenderDeploymentPlanWorkflowChildOptions) WithChildWorkflowOptions(options workflow.ChildWorkflowOptions) *RenderDeploymentPlanWorkflowChildOptions {
+	o.options = options
+	return o
+}
+
+// WithDataConverter registers a DataConverter for the child workflow
+func (o *RenderDeploymentPlanWorkflowChildOptions) WithDataConverter(dc converter.DataConverter) *RenderDeploymentPlanWorkflowChildOptions {
+	o.dc = dc
+	return o
+}
+
+// WithExecutionTimeout sets the WorkflowExecutionTimeout value
+func (o *RenderDeploymentPlanWorkflowChildOptions) WithExecutionTimeout(d time.Duration) *RenderDeploymentPlanWorkflowChildOptions {
+	o.executionTimeout = &d
+	return o
+}
+
+// WithID sets the WorkflowID value
+func (o *RenderDeploymentPlanWorkflowChildOptions) WithID(id string) *RenderDeploymentPlanWorkflowChildOptions {
+	o.id = &id
+	return o
+}
+
+// WithIDReusePolicy sets the WorkflowIDReusePolicy value
+func (o *RenderDeploymentPlanWorkflowChildOptions) WithIDReusePolicy(policy enumsv1.WorkflowIdReusePolicy) *RenderDeploymentPlanWorkflowChildOptions {
+	o.idReusePolicy = policy
+	return o
+}
+
+// WithParentClosePolicy sets the WorkflowIDReusePolicy value
+func (o *RenderDeploymentPlanWorkflowChildOptions) WithParentClosePolicy(policy enumsv1.ParentClosePolicy) *RenderDeploymentPlanWorkflowChildOptions {
+	o.parentClosePolicy = policy
+	return o
+}
+
+// WithRetryPolicy sets the RetryPolicy value
+func (o *RenderDeploymentPlanWorkflowChildOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *RenderDeploymentPlanWorkflowChildOptions {
+	o.retryPolicy = policy
+	return o
+}
+
+// WithRunTimeout sets the WorkflowRunTimeout value
+func (o *RenderDeploymentPlanWorkflowChildOptions) WithRunTimeout(d time.Duration) *RenderDeploymentPlanWorkflowChildOptions {
+	o.runTimeout = &d
+	return o
+}
+
+// WithSearchAttributes sets the SearchAttributes value
+func (o *RenderDeploymentPlanWorkflowChildOptions) WithSearchAttributes(sa map[string]any) *RenderDeploymentPlanWorkflowChildOptions {
+	o.searchAttributes = sa
+	return o
+}
+
+// WithTaskTimeout sets the WorkflowTaskTimeout value
+func (o *RenderDeploymentPlanWorkflowChildOptions) WithTaskTimeout(d time.Duration) *RenderDeploymentPlanWorkflowChildOptions {
+	o.taskTimeout = &d
+	return o
+}
+
+// WithTaskQueue sets the TaskQueue value
+func (o *RenderDeploymentPlanWorkflowChildOptions) WithTaskQueue(tq string) *RenderDeploymentPlanWorkflowChildOptions {
+	o.taskQueue = &tq
+	return o
+}
+
+// WithTypedSearchAttributes sets the TypedSearchAttributes value
+func (o *RenderDeploymentPlanWorkflowChildOptions) WithTypedSearchAttributes(tsa temporal.SearchAttributes) *RenderDeploymentPlanWorkflowChildOptions {
+	o.typedSearchAttributes = &tsa
+	return o
+}
+
+// WithWaitForCancellation sets the WaitForCancellation value
+func (o *RenderDeploymentPlanWorkflowChildOptions) WithWaitForCancellation(wait bool) *RenderDeploymentPlanWorkflowChildOptions {
+	o.waitForCancellation = &wait
+	return o
+}
+
+// RenderDeploymentPlanWorkflowChildRun describes a child RenderDeploymentPlanWorkflow workflow run
+type RenderDeploymentPlanWorkflowChildRun struct {
+	Future workflow.ChildWorkflowFuture
+}
+
+// Get blocks until the workflow is completed, returning the response value
+func (r *RenderDeploymentPlanWorkflowChildRun) Get(ctx workflow.Context) (*RenderDeploymentPlanWorkflowResponse, error) {
+	var resp RenderDeploymentPlanWorkflowResponse
+	if err := r.Future.Get(ctx, &resp); err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
+// Select adds this completion to the selector. Callback can be nil.
+func (r *RenderDeploymentPlanWorkflowChildRun) Select(sel workflow.Selector, fn func(*RenderDeploymentPlanWorkflowChildRun)) workflow.Selector {
+	return sel.AddFuture(r.Future, func(workflow.Future) {
+		if fn != nil {
+			fn(r)
+		}
+	})
+}
+
+// SelectStart adds waiting for start to the selector. Callback can be nil.
+func (r *RenderDeploymentPlanWorkflowChildRun) SelectStart(sel workflow.Selector, fn func(*RenderDeploymentPlanWorkflowChildRun)) workflow.Selector {
+	return sel.AddFuture(r.Future.GetChildWorkflowExecution(), func(workflow.Future) {
+		if fn != nil {
+			fn(r)
+		}
+	})
+}
+
+// WaitStart waits for the child workflow to start
+func (r *RenderDeploymentPlanWorkflowChildRun) WaitStart(ctx workflow.Context) (*workflow.Execution, error) {
 	var exec workflow.Execution
 	if err := r.Future.GetChildWorkflowExecution().Get(ctx, &exec); err != nil {
 		return nil, err
@@ -1806,8 +2854,8 @@ func RegisterRenderDockerInputWorkflowWorkflow(r worker.WorkflowRegistry, wf fun
 }
 
 // buildRenderDockerInputWorkflow converts a RenderDockerInputWorkflow workflow struct into a valid workflow function
-func buildRenderDockerInputWorkflow(ctor func(workflow.Context, *RenderDockerInputWorkflowWorkflowInput) (RenderDockerInputWorkflowWorkflow, error)) func(workflow.Context, *topology.Topology) (*deployment.Docker_Input, error) {
-	return func(ctx workflow.Context, req *topology.Topology) (*deployment.Docker_Input, error) {
+func buildRenderDockerInputWorkflow(ctor func(workflow.Context, *RenderDockerInputWorkflowWorkflowInput) (RenderDockerInputWorkflowWorkflow, error)) func(workflow.Context, *deployment.InfrastructurePlan) (*deployment.Docker_Input, error) {
+	return func(ctx workflow.Context, req *deployment.InfrastructurePlan) (*deployment.Docker_Input, error) {
 		input := &RenderDockerInputWorkflowWorkflowInput{
 			Req: req,
 		}
@@ -1826,11 +2874,11 @@ func buildRenderDockerInputWorkflow(ctor func(workflow.Context, *RenderDockerInp
 
 // RenderDockerInputWorkflowWorkflowInput describes the input to a(n) RenderDockerInputWorkflow workflow constructor
 type RenderDockerInputWorkflowWorkflowInput struct {
-	Req *topology.Topology
+	Req *deployment.InfrastructurePlan
 }
 
 // ContinueAsNew returns an appropriately configured ContinueAsNewError
-func (i *RenderDockerInputWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Context, input *topology.Topology, options ...workflow.ContinueAsNewErrorOptions) (*deployment.Docker_Input, error) {
+func (i *RenderDockerInputWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Context, input *deployment.InfrastructurePlan, options ...workflow.ContinueAsNewErrorOptions) (*deployment.Docker_Input, error) {
 	next := i.Req
 	if input != nil {
 		next = input
@@ -1841,16 +2889,14 @@ func (i *RenderDockerInputWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Cont
 	return nil, workflow.NewContinueAsNewError(ctx, RenderDockerInputWorkflowWorkflowName, next)
 }
 
-// RenderDockerInputWorkflow renders a topology into Docker compose input
-// (pure render, retryable).
+// RenderDockerInputWorkflow renders infrastructure plan to Docker input.
 type RenderDockerInputWorkflowWorkflow interface {
 	// Execute defines the entrypoint to a(n) RenderDockerInputWorkflow workflow
 	Execute(ctx workflow.Context) (*deployment.Docker_Input, error)
 }
 
-// RenderDockerInputWorkflow renders a topology into Docker compose input
-// (pure render, retryable).
-func RenderDockerInputWorkflowChild(ctx workflow.Context, req *topology.Topology, options ...*RenderDockerInputWorkflowChildOptions) (*deployment.Docker_Input, error) {
+// RenderDockerInputWorkflow renders infrastructure plan to Docker input.
+func RenderDockerInputWorkflowChild(ctx workflow.Context, req *deployment.InfrastructurePlan, options ...*RenderDockerInputWorkflowChildOptions) (*deployment.Docker_Input, error) {
 	childRun, err := RenderDockerInputWorkflowChildAsync(ctx, req, options...)
 	if err != nil {
 		return nil, err
@@ -1858,9 +2904,8 @@ func RenderDockerInputWorkflowChild(ctx workflow.Context, req *topology.Topology
 	return childRun.Get(ctx)
 }
 
-// RenderDockerInputWorkflow renders a topology into Docker compose input
-// (pure render, retryable).
-func RenderDockerInputWorkflowChildAsync(ctx workflow.Context, req *topology.Topology, options ...*RenderDockerInputWorkflowChildOptions) (*RenderDockerInputWorkflowChildRun, error) {
+// RenderDockerInputWorkflow renders infrastructure plan to Docker input.
+func RenderDockerInputWorkflowChildAsync(ctx workflow.Context, req *deployment.InfrastructurePlan, options ...*RenderDockerInputWorkflowChildOptions) (*RenderDockerInputWorkflowChildRun, error) {
 	var o *RenderDockerInputWorkflowChildOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
@@ -2075,8 +3120,8 @@ func RegisterRenderTerraformVariablesWorkflowWorkflow(r worker.WorkflowRegistry,
 }
 
 // buildRenderTerraformVariablesWorkflow converts a RenderTerraformVariablesWorkflow workflow struct into a valid workflow function
-func buildRenderTerraformVariablesWorkflow(ctor func(workflow.Context, *RenderTerraformVariablesWorkflowWorkflowInput) (RenderTerraformVariablesWorkflowWorkflow, error)) func(workflow.Context, *topology.Topology) (*deployment.Terraform_Input, error) {
-	return func(ctx workflow.Context, req *topology.Topology) (*deployment.Terraform_Input, error) {
+func buildRenderTerraformVariablesWorkflow(ctor func(workflow.Context, *RenderTerraformVariablesWorkflowWorkflowInput) (RenderTerraformVariablesWorkflowWorkflow, error)) func(workflow.Context, *deployment.InfrastructurePlan) (*deployment.Terraform_Input, error) {
+	return func(ctx workflow.Context, req *deployment.InfrastructurePlan) (*deployment.Terraform_Input, error) {
 		input := &RenderTerraformVariablesWorkflowWorkflowInput{
 			Req: req,
 		}
@@ -2095,11 +3140,11 @@ func buildRenderTerraformVariablesWorkflow(ctor func(workflow.Context, *RenderTe
 
 // RenderTerraformVariablesWorkflowWorkflowInput describes the input to a(n) RenderTerraformVariablesWorkflow workflow constructor
 type RenderTerraformVariablesWorkflowWorkflowInput struct {
-	Req *topology.Topology
+	Req *deployment.InfrastructurePlan
 }
 
 // ContinueAsNew returns an appropriately configured ContinueAsNewError
-func (i *RenderTerraformVariablesWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Context, input *topology.Topology, options ...workflow.ContinueAsNewErrorOptions) (*deployment.Terraform_Input, error) {
+func (i *RenderTerraformVariablesWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Context, input *deployment.InfrastructurePlan, options ...workflow.ContinueAsNewErrorOptions) (*deployment.Terraform_Input, error) {
 	next := i.Req
 	if input != nil {
 		next = input
@@ -2110,16 +3155,16 @@ func (i *RenderTerraformVariablesWorkflowWorkflowInput) ContinueAsNew(ctx workfl
 	return nil, workflow.NewContinueAsNewError(ctx, RenderTerraformVariablesWorkflowWorkflowName, next)
 }
 
-// RenderTerraformVariablesWorkflow renders a topology into Terraform
-// variables input (pure render, retryable).
+// RenderTerraformVariablesWorkflow renders infrastructure plan to Terraform
+// input.
 type RenderTerraformVariablesWorkflowWorkflow interface {
 	// Execute defines the entrypoint to a(n) RenderTerraformVariablesWorkflow workflow
 	Execute(ctx workflow.Context) (*deployment.Terraform_Input, error)
 }
 
-// RenderTerraformVariablesWorkflow renders a topology into Terraform
-// variables input (pure render, retryable).
-func RenderTerraformVariablesWorkflowChild(ctx workflow.Context, req *topology.Topology, options ...*RenderTerraformVariablesWorkflowChildOptions) (*deployment.Terraform_Input, error) {
+// RenderTerraformVariablesWorkflow renders infrastructure plan to Terraform
+// input.
+func RenderTerraformVariablesWorkflowChild(ctx workflow.Context, req *deployment.InfrastructurePlan, options ...*RenderTerraformVariablesWorkflowChildOptions) (*deployment.Terraform_Input, error) {
 	childRun, err := RenderTerraformVariablesWorkflowChildAsync(ctx, req, options...)
 	if err != nil {
 		return nil, err
@@ -2127,9 +3172,9 @@ func RenderTerraformVariablesWorkflowChild(ctx workflow.Context, req *topology.T
 	return childRun.Get(ctx)
 }
 
-// RenderTerraformVariablesWorkflow renders a topology into Terraform
-// variables input (pure render, retryable).
-func RenderTerraformVariablesWorkflowChildAsync(ctx workflow.Context, req *topology.Topology, options ...*RenderTerraformVariablesWorkflowChildOptions) (*RenderTerraformVariablesWorkflowChildRun, error) {
+// RenderTerraformVariablesWorkflow renders infrastructure plan to Terraform
+// input.
+func RenderTerraformVariablesWorkflowChildAsync(ctx workflow.Context, req *deployment.InfrastructurePlan, options ...*RenderTerraformVariablesWorkflowChildOptions) (*RenderTerraformVariablesWorkflowChildRun, error) {
 	var o *RenderTerraformVariablesWorkflowChildOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
@@ -2337,35 +3382,28 @@ func (r *RenderTerraformVariablesWorkflowChildRun) WaitStart(ctx workflow.Contex
 
 // DeploymentServiceActivities describes available worker activities
 type DeploymentServiceActivities interface {
-	// AcquireNetworkActivity acquires a network from the provider (deduped by
-	// name, retried on transient errors).
+	// AcquireNetworkActivity acquires a provider network.
 	AcquireNetworkActivity(ctx context.Context, req *AcquireNetworkActivityRequest) (*AcquireNetworkActivityResponse, error)
 
-	// AcquireQuotasActivity acquires the requested quotas from the provider
-	// (retried with backoff).
+	// AcquireQuotasActivity acquires requested quotas.
 	AcquireQuotasActivity(ctx context.Context, req *AcquireQuotasActivityRequest) (*AcquireQuotasActivityResponse, error)
 
-	// DockerDownActivity tears the compose stack down (idempotent, retryable).
+	// DockerDownActivity tears down the Docker topology.
 	DockerDownActivity(ctx context.Context, req *deployment.Docker_Input) (*deployment.Docker_Output, error)
 
-	// DockerPullActivity pulls the required container images (idempotent,
-	// retried with backoff).
+	// DockerPullActivity pulls container images.
 	DockerPullActivity(ctx context.Context, req *deployment.Docker_Input) (*deployment.Docker_Output, error)
 
-	// DockerUpActivity brings the compose stack up (idempotent/converges,
-	// heartbeats while starting).
+	// DockerUpActivity starts the Docker topology.
 	DockerUpActivity(ctx context.Context, req *deployment.Docker_Input) (*deployment.Docker_Output, error)
 
-	// TerraformApplyActivity runs terraform apply to provision resources
-	// (mutating; retried sparingly under the state lock).
+	// TerraformApplyActivity runs terraform apply.
 	TerraformApplyActivity(ctx context.Context, req *deployment.Terraform_Input) (*deployment.Terraform_Output, error)
 
-	// TerraformDestroyActivity runs terraform destroy to tear down all
-	// resources (idempotent/converges, retried to avoid leaks).
+	// TerraformDestroyActivity runs terraform destroy.
 	TerraformDestroyActivity(ctx context.Context, req *deployment.Terraform_Input) (*deployment.Terraform_Output, error)
 
-	// TerraformPlanActivity runs terraform plan against the provider (read-only,
-	// retryable).
+	// TerraformPlanActivity runs terraform plan.
 	TerraformPlanActivity(ctx context.Context, req *deployment.Terraform_Input) (*deployment.Terraform_Output, error)
 }
 
@@ -2411,14 +3449,12 @@ func (f *AcquireNetworkActivityFuture) Select(sel workflow.Selector, fn func(*Ac
 	})
 }
 
-// AcquireNetworkActivity acquires a network from the provider (deduped by
-// name, retried on transient errors).
+// AcquireNetworkActivity acquires a provider network.
 func AcquireNetworkActivity(ctx workflow.Context, req *AcquireNetworkActivityRequest, options ...*AcquireNetworkActivityActivityOptions) (*AcquireNetworkActivityResponse, error) {
 	return AcquireNetworkActivityAsync(ctx, req, options...).Get(ctx)
 }
 
-// AcquireNetworkActivity acquires a network from the provider (deduped by
-// name, retried on transient errors).
+// AcquireNetworkActivity acquires a provider network.
 func AcquireNetworkActivityAsync(ctx workflow.Context, req *AcquireNetworkActivityRequest, options ...*AcquireNetworkActivityActivityOptions) *AcquireNetworkActivityFuture {
 	var o *AcquireNetworkActivityActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -2440,14 +3476,12 @@ func AcquireNetworkActivityAsync(ctx workflow.Context, req *AcquireNetworkActivi
 	return future
 }
 
-// AcquireNetworkActivity acquires a network from the provider (deduped by
-// name, retried on transient errors).
+// AcquireNetworkActivity acquires a provider network.
 func AcquireNetworkActivityLocal(ctx workflow.Context, req *AcquireNetworkActivityRequest, options ...*AcquireNetworkActivityLocalActivityOptions) (*AcquireNetworkActivityResponse, error) {
 	return AcquireNetworkActivityLocalAsync(ctx, req, options...).Get(ctx)
 }
 
-// AcquireNetworkActivity acquires a network from the provider (deduped by
-// name, retried on transient errors).
+// AcquireNetworkActivity acquires a provider network.
 func AcquireNetworkActivityLocalAsync(ctx workflow.Context, req *AcquireNetworkActivityRequest, options ...*AcquireNetworkActivityLocalActivityOptions) *AcquireNetworkActivityFuture {
 	var o *AcquireNetworkActivityLocalActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -2679,14 +3713,12 @@ func (f *AcquireQuotasActivityFuture) Select(sel workflow.Selector, fn func(*Acq
 	})
 }
 
-// AcquireQuotasActivity acquires the requested quotas from the provider
-// (retried with backoff).
+// AcquireQuotasActivity acquires requested quotas.
 func AcquireQuotasActivity(ctx workflow.Context, req *AcquireQuotasActivityRequest, options ...*AcquireQuotasActivityActivityOptions) (*AcquireQuotasActivityResponse, error) {
 	return AcquireQuotasActivityAsync(ctx, req, options...).Get(ctx)
 }
 
-// AcquireQuotasActivity acquires the requested quotas from the provider
-// (retried with backoff).
+// AcquireQuotasActivity acquires requested quotas.
 func AcquireQuotasActivityAsync(ctx workflow.Context, req *AcquireQuotasActivityRequest, options ...*AcquireQuotasActivityActivityOptions) *AcquireQuotasActivityFuture {
 	var o *AcquireQuotasActivityActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -2708,14 +3740,12 @@ func AcquireQuotasActivityAsync(ctx workflow.Context, req *AcquireQuotasActivity
 	return future
 }
 
-// AcquireQuotasActivity acquires the requested quotas from the provider
-// (retried with backoff).
+// AcquireQuotasActivity acquires requested quotas.
 func AcquireQuotasActivityLocal(ctx workflow.Context, req *AcquireQuotasActivityRequest, options ...*AcquireQuotasActivityLocalActivityOptions) (*AcquireQuotasActivityResponse, error) {
 	return AcquireQuotasActivityLocalAsync(ctx, req, options...).Get(ctx)
 }
 
-// AcquireQuotasActivity acquires the requested quotas from the provider
-// (retried with backoff).
+// AcquireQuotasActivity acquires requested quotas.
 func AcquireQuotasActivityLocalAsync(ctx workflow.Context, req *AcquireQuotasActivityRequest, options ...*AcquireQuotasActivityLocalActivityOptions) *AcquireQuotasActivityFuture {
 	var o *AcquireQuotasActivityLocalActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -2947,12 +3977,12 @@ func (f *DockerDownActivityFuture) Select(sel workflow.Selector, fn func(*Docker
 	})
 }
 
-// DockerDownActivity tears the compose stack down (idempotent, retryable).
+// DockerDownActivity tears down the Docker topology.
 func DockerDownActivity(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerDownActivityActivityOptions) (*deployment.Docker_Output, error) {
 	return DockerDownActivityAsync(ctx, req, options...).Get(ctx)
 }
 
-// DockerDownActivity tears the compose stack down (idempotent, retryable).
+// DockerDownActivity tears down the Docker topology.
 func DockerDownActivityAsync(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerDownActivityActivityOptions) *DockerDownActivityFuture {
 	var o *DockerDownActivityActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -2974,12 +4004,12 @@ func DockerDownActivityAsync(ctx workflow.Context, req *deployment.Docker_Input,
 	return future
 }
 
-// DockerDownActivity tears the compose stack down (idempotent, retryable).
+// DockerDownActivity tears down the Docker topology.
 func DockerDownActivityLocal(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerDownActivityLocalActivityOptions) (*deployment.Docker_Output, error) {
 	return DockerDownActivityLocalAsync(ctx, req, options...).Get(ctx)
 }
 
-// DockerDownActivity tears the compose stack down (idempotent, retryable).
+// DockerDownActivity tears down the Docker topology.
 func DockerDownActivityLocalAsync(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerDownActivityLocalActivityOptions) *DockerDownActivityFuture {
 	var o *DockerDownActivityLocalActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -3211,14 +4241,12 @@ func (f *DockerPullActivityFuture) Select(sel workflow.Selector, fn func(*Docker
 	})
 }
 
-// DockerPullActivity pulls the required container images (idempotent,
-// retried with backoff).
+// DockerPullActivity pulls container images.
 func DockerPullActivity(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerPullActivityActivityOptions) (*deployment.Docker_Output, error) {
 	return DockerPullActivityAsync(ctx, req, options...).Get(ctx)
 }
 
-// DockerPullActivity pulls the required container images (idempotent,
-// retried with backoff).
+// DockerPullActivity pulls container images.
 func DockerPullActivityAsync(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerPullActivityActivityOptions) *DockerPullActivityFuture {
 	var o *DockerPullActivityActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -3240,14 +4268,12 @@ func DockerPullActivityAsync(ctx workflow.Context, req *deployment.Docker_Input,
 	return future
 }
 
-// DockerPullActivity pulls the required container images (idempotent,
-// retried with backoff).
+// DockerPullActivity pulls container images.
 func DockerPullActivityLocal(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerPullActivityLocalActivityOptions) (*deployment.Docker_Output, error) {
 	return DockerPullActivityLocalAsync(ctx, req, options...).Get(ctx)
 }
 
-// DockerPullActivity pulls the required container images (idempotent,
-// retried with backoff).
+// DockerPullActivity pulls container images.
 func DockerPullActivityLocalAsync(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerPullActivityLocalActivityOptions) *DockerPullActivityFuture {
 	var o *DockerPullActivityLocalActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -3479,14 +4505,12 @@ func (f *DockerUpActivityFuture) Select(sel workflow.Selector, fn func(*DockerUp
 	})
 }
 
-// DockerUpActivity brings the compose stack up (idempotent/converges,
-// heartbeats while starting).
+// DockerUpActivity starts the Docker topology.
 func DockerUpActivity(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerUpActivityActivityOptions) (*deployment.Docker_Output, error) {
 	return DockerUpActivityAsync(ctx, req, options...).Get(ctx)
 }
 
-// DockerUpActivity brings the compose stack up (idempotent/converges,
-// heartbeats while starting).
+// DockerUpActivity starts the Docker topology.
 func DockerUpActivityAsync(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerUpActivityActivityOptions) *DockerUpActivityFuture {
 	var o *DockerUpActivityActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -3508,14 +4532,12 @@ func DockerUpActivityAsync(ctx workflow.Context, req *deployment.Docker_Input, o
 	return future
 }
 
-// DockerUpActivity brings the compose stack up (idempotent/converges,
-// heartbeats while starting).
+// DockerUpActivity starts the Docker topology.
 func DockerUpActivityLocal(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerUpActivityLocalActivityOptions) (*deployment.Docker_Output, error) {
 	return DockerUpActivityLocalAsync(ctx, req, options...).Get(ctx)
 }
 
-// DockerUpActivity brings the compose stack up (idempotent/converges,
-// heartbeats while starting).
+// DockerUpActivity starts the Docker topology.
 func DockerUpActivityLocalAsync(ctx workflow.Context, req *deployment.Docker_Input, options ...*DockerUpActivityLocalActivityOptions) *DockerUpActivityFuture {
 	var o *DockerUpActivityLocalActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -3749,14 +4771,12 @@ func (f *TerraformApplyActivityFuture) Select(sel workflow.Selector, fn func(*Te
 	})
 }
 
-// TerraformApplyActivity runs terraform apply to provision resources
-// (mutating; retried sparingly under the state lock).
+// TerraformApplyActivity runs terraform apply.
 func TerraformApplyActivity(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformApplyActivityActivityOptions) (*deployment.Terraform_Output, error) {
 	return TerraformApplyActivityAsync(ctx, req, options...).Get(ctx)
 }
 
-// TerraformApplyActivity runs terraform apply to provision resources
-// (mutating; retried sparingly under the state lock).
+// TerraformApplyActivity runs terraform apply.
 func TerraformApplyActivityAsync(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformApplyActivityActivityOptions) *TerraformApplyActivityFuture {
 	var o *TerraformApplyActivityActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -3778,14 +4798,12 @@ func TerraformApplyActivityAsync(ctx workflow.Context, req *deployment.Terraform
 	return future
 }
 
-// TerraformApplyActivity runs terraform apply to provision resources
-// (mutating; retried sparingly under the state lock).
+// TerraformApplyActivity runs terraform apply.
 func TerraformApplyActivityLocal(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformApplyActivityLocalActivityOptions) (*deployment.Terraform_Output, error) {
 	return TerraformApplyActivityLocalAsync(ctx, req, options...).Get(ctx)
 }
 
-// TerraformApplyActivity runs terraform apply to provision resources
-// (mutating; retried sparingly under the state lock).
+// TerraformApplyActivity runs terraform apply.
 func TerraformApplyActivityLocalAsync(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformApplyActivityLocalActivityOptions) *TerraformApplyActivityFuture {
 	var o *TerraformApplyActivityLocalActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -4019,14 +5037,12 @@ func (f *TerraformDestroyActivityFuture) Select(sel workflow.Selector, fn func(*
 	})
 }
 
-// TerraformDestroyActivity runs terraform destroy to tear down all
-// resources (idempotent/converges, retried to avoid leaks).
+// TerraformDestroyActivity runs terraform destroy.
 func TerraformDestroyActivity(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformDestroyActivityActivityOptions) (*deployment.Terraform_Output, error) {
 	return TerraformDestroyActivityAsync(ctx, req, options...).Get(ctx)
 }
 
-// TerraformDestroyActivity runs terraform destroy to tear down all
-// resources (idempotent/converges, retried to avoid leaks).
+// TerraformDestroyActivity runs terraform destroy.
 func TerraformDestroyActivityAsync(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformDestroyActivityActivityOptions) *TerraformDestroyActivityFuture {
 	var o *TerraformDestroyActivityActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -4048,14 +5064,12 @@ func TerraformDestroyActivityAsync(ctx workflow.Context, req *deployment.Terrafo
 	return future
 }
 
-// TerraformDestroyActivity runs terraform destroy to tear down all
-// resources (idempotent/converges, retried to avoid leaks).
+// TerraformDestroyActivity runs terraform destroy.
 func TerraformDestroyActivityLocal(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformDestroyActivityLocalActivityOptions) (*deployment.Terraform_Output, error) {
 	return TerraformDestroyActivityLocalAsync(ctx, req, options...).Get(ctx)
 }
 
-// TerraformDestroyActivity runs terraform destroy to tear down all
-// resources (idempotent/converges, retried to avoid leaks).
+// TerraformDestroyActivity runs terraform destroy.
 func TerraformDestroyActivityLocalAsync(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformDestroyActivityLocalActivityOptions) *TerraformDestroyActivityFuture {
 	var o *TerraformDestroyActivityLocalActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -4289,14 +5303,12 @@ func (f *TerraformPlanActivityFuture) Select(sel workflow.Selector, fn func(*Ter
 	})
 }
 
-// TerraformPlanActivity runs terraform plan against the provider (read-only,
-// retryable).
+// TerraformPlanActivity runs terraform plan.
 func TerraformPlanActivity(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformPlanActivityActivityOptions) (*deployment.Terraform_Output, error) {
 	return TerraformPlanActivityAsync(ctx, req, options...).Get(ctx)
 }
 
-// TerraformPlanActivity runs terraform plan against the provider (read-only,
-// retryable).
+// TerraformPlanActivity runs terraform plan.
 func TerraformPlanActivityAsync(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformPlanActivityActivityOptions) *TerraformPlanActivityFuture {
 	var o *TerraformPlanActivityActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -4318,14 +5330,12 @@ func TerraformPlanActivityAsync(ctx workflow.Context, req *deployment.Terraform_
 	return future
 }
 
-// TerraformPlanActivity runs terraform plan against the provider (read-only,
-// retryable).
+// TerraformPlanActivity runs terraform plan.
 func TerraformPlanActivityLocal(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformPlanActivityLocalActivityOptions) (*deployment.Terraform_Output, error) {
 	return TerraformPlanActivityLocalAsync(ctx, req, options...).Get(ctx)
 }
 
-// TerraformPlanActivity runs terraform plan against the provider (read-only,
-// retryable).
+// TerraformPlanActivity runs terraform plan.
 func TerraformPlanActivityLocalAsync(ctx workflow.Context, req *deployment.Terraform_Input, options ...*TerraformPlanActivityLocalActivityOptions) *TerraformPlanActivityFuture {
 	var o *TerraformPlanActivityLocalActivityOptions
 	if len(options) > 0 && options[0] != nil {
@@ -4577,37 +5587,95 @@ func (c *TestDeploymentServiceClient) GetCalculateQuotasWorkflow(ctx context.Con
 	return &testCalculateQuotasWorkflowRun{env: c.env, workflows: c.workflows}
 }
 
-// ProcessDeploymentWorkflow executes a(n) ProcessDeploymentWorkflow workflow in the test environment
-func (c *TestDeploymentServiceClient) ProcessDeploymentWorkflow(ctx context.Context, req *ProcessDeploymentWorkflowRequest, opts ...*ProcessDeploymentWorkflowOptions) (*ProcessDeploymentWorkflowResponse, error) {
-	run, err := c.ProcessDeploymentWorkflowAsync(ctx, req, opts...)
+// ExecuteDeploymentPlanWorkflow executes a(n) ExecuteDeploymentPlanWorkflow workflow in the test environment
+func (c *TestDeploymentServiceClient) ExecuteDeploymentPlanWorkflow(ctx context.Context, req *ExecuteDeploymentPlanWorkflowRequest, opts ...*ExecuteDeploymentPlanWorkflowOptions) (*ExecuteDeploymentPlanWorkflowResponse, error) {
+	run, err := c.ExecuteDeploymentPlanWorkflowAsync(ctx, req, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return run.Get(ctx)
 }
 
-// ProcessDeploymentWorkflowAsync executes a(n) ProcessDeploymentWorkflow workflow in the test environment
-func (c *TestDeploymentServiceClient) ProcessDeploymentWorkflowAsync(ctx context.Context, req *ProcessDeploymentWorkflowRequest, options ...*ProcessDeploymentWorkflowOptions) (ProcessDeploymentWorkflowRun, error) {
-	var o *ProcessDeploymentWorkflowOptions
+// ExecuteDeploymentPlanWorkflowAsync executes a(n) ExecuteDeploymentPlanWorkflow workflow in the test environment
+func (c *TestDeploymentServiceClient) ExecuteDeploymentPlanWorkflowAsync(ctx context.Context, req *ExecuteDeploymentPlanWorkflowRequest, options ...*ExecuteDeploymentPlanWorkflowOptions) (ExecuteDeploymentPlanWorkflowRun, error) {
+	var o *ExecuteDeploymentPlanWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
 	} else {
-		o = NewProcessDeploymentWorkflowOptions()
+		o = NewExecuteDeploymentPlanWorkflowOptions()
 	}
 	opts, err := o.Build(req.ProtoReflect())
 	if err != nil {
 		return nil, fmt.Errorf("error initializing client.StartWorkflowOptions: %w", err)
 	}
-	return &testProcessDeploymentWorkflowRun{client: c, env: c.env, opts: &opts, req: req, workflows: c.workflows}, nil
+	return &testExecuteDeploymentPlanWorkflowRun{client: c, env: c.env, opts: &opts, req: req, workflows: c.workflows}, nil
 }
 
-// GetProcessDeploymentWorkflow is a noop
-func (c *TestDeploymentServiceClient) GetProcessDeploymentWorkflow(ctx context.Context, workflowID string, runID string) ProcessDeploymentWorkflowRun {
-	return &testProcessDeploymentWorkflowRun{env: c.env, workflows: c.workflows}
+// GetExecuteDeploymentPlanWorkflow is a noop
+func (c *TestDeploymentServiceClient) GetExecuteDeploymentPlanWorkflow(ctx context.Context, workflowID string, runID string) ExecuteDeploymentPlanWorkflowRun {
+	return &testExecuteDeploymentPlanWorkflowRun{env: c.env, workflows: c.workflows}
+}
+
+// ProcessInfrastructureWorkflow executes a(n) ProcessInfrastructureWorkflow workflow in the test environment
+func (c *TestDeploymentServiceClient) ProcessInfrastructureWorkflow(ctx context.Context, req *ProcessInfrastructureWorkflowRequest, opts ...*ProcessInfrastructureWorkflowOptions) (*ProcessInfrastructureWorkflowResponse, error) {
+	run, err := c.ProcessInfrastructureWorkflowAsync(ctx, req, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return run.Get(ctx)
+}
+
+// ProcessInfrastructureWorkflowAsync executes a(n) ProcessInfrastructureWorkflow workflow in the test environment
+func (c *TestDeploymentServiceClient) ProcessInfrastructureWorkflowAsync(ctx context.Context, req *ProcessInfrastructureWorkflowRequest, options ...*ProcessInfrastructureWorkflowOptions) (ProcessInfrastructureWorkflowRun, error) {
+	var o *ProcessInfrastructureWorkflowOptions
+	if len(options) > 0 && options[0] != nil {
+		o = options[0]
+	} else {
+		o = NewProcessInfrastructureWorkflowOptions()
+	}
+	opts, err := o.Build(req.ProtoReflect())
+	if err != nil {
+		return nil, fmt.Errorf("error initializing client.StartWorkflowOptions: %w", err)
+	}
+	return &testProcessInfrastructureWorkflowRun{client: c, env: c.env, opts: &opts, req: req, workflows: c.workflows}, nil
+}
+
+// GetProcessInfrastructureWorkflow is a noop
+func (c *TestDeploymentServiceClient) GetProcessInfrastructureWorkflow(ctx context.Context, workflowID string, runID string) ProcessInfrastructureWorkflowRun {
+	return &testProcessInfrastructureWorkflowRun{env: c.env, workflows: c.workflows}
+}
+
+// RenderDeploymentPlanWorkflow executes a(n) RenderDeploymentPlanWorkflow workflow in the test environment
+func (c *TestDeploymentServiceClient) RenderDeploymentPlanWorkflow(ctx context.Context, req *RenderDeploymentPlanWorkflowRequest, opts ...*RenderDeploymentPlanWorkflowOptions) (*RenderDeploymentPlanWorkflowResponse, error) {
+	run, err := c.RenderDeploymentPlanWorkflowAsync(ctx, req, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return run.Get(ctx)
+}
+
+// RenderDeploymentPlanWorkflowAsync executes a(n) RenderDeploymentPlanWorkflow workflow in the test environment
+func (c *TestDeploymentServiceClient) RenderDeploymentPlanWorkflowAsync(ctx context.Context, req *RenderDeploymentPlanWorkflowRequest, options ...*RenderDeploymentPlanWorkflowOptions) (RenderDeploymentPlanWorkflowRun, error) {
+	var o *RenderDeploymentPlanWorkflowOptions
+	if len(options) > 0 && options[0] != nil {
+		o = options[0]
+	} else {
+		o = NewRenderDeploymentPlanWorkflowOptions()
+	}
+	opts, err := o.Build(req.ProtoReflect())
+	if err != nil {
+		return nil, fmt.Errorf("error initializing client.StartWorkflowOptions: %w", err)
+	}
+	return &testRenderDeploymentPlanWorkflowRun{client: c, env: c.env, opts: &opts, req: req, workflows: c.workflows}, nil
+}
+
+// GetRenderDeploymentPlanWorkflow is a noop
+func (c *TestDeploymentServiceClient) GetRenderDeploymentPlanWorkflow(ctx context.Context, workflowID string, runID string) RenderDeploymentPlanWorkflowRun {
+	return &testRenderDeploymentPlanWorkflowRun{env: c.env, workflows: c.workflows}
 }
 
 // RenderDockerInputWorkflow executes a(n) RenderDockerInputWorkflow workflow in the test environment
-func (c *TestDeploymentServiceClient) RenderDockerInputWorkflow(ctx context.Context, req *topology.Topology, opts ...*RenderDockerInputWorkflowOptions) (*deployment.Docker_Input, error) {
+func (c *TestDeploymentServiceClient) RenderDockerInputWorkflow(ctx context.Context, req *deployment.InfrastructurePlan, opts ...*RenderDockerInputWorkflowOptions) (*deployment.Docker_Input, error) {
 	run, err := c.RenderDockerInputWorkflowAsync(ctx, req, opts...)
 	if err != nil {
 		return nil, err
@@ -4616,7 +5684,7 @@ func (c *TestDeploymentServiceClient) RenderDockerInputWorkflow(ctx context.Cont
 }
 
 // RenderDockerInputWorkflowAsync executes a(n) RenderDockerInputWorkflow workflow in the test environment
-func (c *TestDeploymentServiceClient) RenderDockerInputWorkflowAsync(ctx context.Context, req *topology.Topology, options ...*RenderDockerInputWorkflowOptions) (RenderDockerInputWorkflowRun, error) {
+func (c *TestDeploymentServiceClient) RenderDockerInputWorkflowAsync(ctx context.Context, req *deployment.InfrastructurePlan, options ...*RenderDockerInputWorkflowOptions) (RenderDockerInputWorkflowRun, error) {
 	var o *RenderDockerInputWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
@@ -4636,7 +5704,7 @@ func (c *TestDeploymentServiceClient) GetRenderDockerInputWorkflow(ctx context.C
 }
 
 // RenderTerraformVariablesWorkflow executes a(n) RenderTerraformVariablesWorkflow workflow in the test environment
-func (c *TestDeploymentServiceClient) RenderTerraformVariablesWorkflow(ctx context.Context, req *topology.Topology, opts ...*RenderTerraformVariablesWorkflowOptions) (*deployment.Terraform_Input, error) {
+func (c *TestDeploymentServiceClient) RenderTerraformVariablesWorkflow(ctx context.Context, req *deployment.InfrastructurePlan, opts ...*RenderTerraformVariablesWorkflowOptions) (*deployment.Terraform_Input, error) {
 	run, err := c.RenderTerraformVariablesWorkflowAsync(ctx, req, opts...)
 	if err != nil {
 		return nil, err
@@ -4645,7 +5713,7 @@ func (c *TestDeploymentServiceClient) RenderTerraformVariablesWorkflow(ctx conte
 }
 
 // RenderTerraformVariablesWorkflowAsync executes a(n) RenderTerraformVariablesWorkflow workflow in the test environment
-func (c *TestDeploymentServiceClient) RenderTerraformVariablesWorkflowAsync(ctx context.Context, req *topology.Topology, options ...*RenderTerraformVariablesWorkflowOptions) (RenderTerraformVariablesWorkflowRun, error) {
+func (c *TestDeploymentServiceClient) RenderTerraformVariablesWorkflowAsync(ctx context.Context, req *deployment.InfrastructurePlan, options ...*RenderTerraformVariablesWorkflowOptions) (RenderTerraformVariablesWorkflowRun, error) {
 	var o *RenderTerraformVariablesWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
@@ -4733,27 +5801,27 @@ func (r *testCalculateQuotasWorkflowRun) Terminate(ctx context.Context, reason s
 	return r.client.TerminateWorkflow(ctx, r.ID(), r.RunID(), reason, details...)
 }
 
-var _ ProcessDeploymentWorkflowRun = &testProcessDeploymentWorkflowRun{}
+var _ ExecuteDeploymentPlanWorkflowRun = &testExecuteDeploymentPlanWorkflowRun{}
 
-// testProcessDeploymentWorkflowRun provides convenience methods for interacting with a(n) ProcessDeploymentWorkflow workflow in the test environment
-type testProcessDeploymentWorkflowRun struct {
+// testExecuteDeploymentPlanWorkflowRun provides convenience methods for interacting with a(n) ExecuteDeploymentPlanWorkflow workflow in the test environment
+type testExecuteDeploymentPlanWorkflowRun struct {
 	client    *TestDeploymentServiceClient
 	env       *testsuite.TestWorkflowEnvironment
 	isStarted atomic.Bool
 	opts      *client.StartWorkflowOptions
-	req       *ProcessDeploymentWorkflowRequest
+	req       *ExecuteDeploymentPlanWorkflowRequest
 	workflows DeploymentServiceWorkflows
 }
 
 // Cancel requests cancellation of a workflow in execution, returning an error if applicable
-func (r *testProcessDeploymentWorkflowRun) Cancel(ctx context.Context) error {
+func (r *testExecuteDeploymentPlanWorkflowRun) Cancel(ctx context.Context) error {
 	return r.client.CancelWorkflow(ctx, r.ID(), r.RunID())
 }
 
-// Get retrieves a test ProcessDeploymentWorkflow workflow result
-func (r *testProcessDeploymentWorkflowRun) Get(context.Context) (*ProcessDeploymentWorkflowResponse, error) {
+// Get retrieves a test ExecuteDeploymentPlanWorkflow workflow result
+func (r *testExecuteDeploymentPlanWorkflowRun) Get(context.Context) (*ExecuteDeploymentPlanWorkflowResponse, error) {
 	if r.isStarted.CompareAndSwap(false, true) {
-		r.env.ExecuteWorkflow(ProcessDeploymentWorkflowWorkflowName, r.req)
+		r.env.ExecuteWorkflow(ExecuteDeploymentPlanWorkflowWorkflowName, r.req)
 	}
 	if !r.env.IsWorkflowCompleted() {
 		return nil, errors.New("workflow in progress")
@@ -4761,15 +5829,15 @@ func (r *testProcessDeploymentWorkflowRun) Get(context.Context) (*ProcessDeploym
 	if err := r.env.GetWorkflowError(); err != nil {
 		return nil, err
 	}
-	var result ProcessDeploymentWorkflowResponse
+	var result ExecuteDeploymentPlanWorkflowResponse
 	if err := r.env.GetWorkflowResult(&result); err != nil {
 		return nil, err
 	}
 	return &result, nil
 }
 
-// ID returns a test ProcessDeploymentWorkflow workflow run's workflow ID
-func (r *testProcessDeploymentWorkflowRun) ID() string {
+// ID returns a test ExecuteDeploymentPlanWorkflow workflow run's workflow ID
+func (r *testExecuteDeploymentPlanWorkflowRun) ID() string {
 	if r.opts != nil {
 		return r.opts.ID
 	}
@@ -4777,17 +5845,133 @@ func (r *testProcessDeploymentWorkflowRun) ID() string {
 }
 
 // Run noop implementation
-func (r *testProcessDeploymentWorkflowRun) Run() client.WorkflowRun {
+func (r *testExecuteDeploymentPlanWorkflowRun) Run() client.WorkflowRun {
 	return nil
 }
 
 // RunID noop implementation
-func (r *testProcessDeploymentWorkflowRun) RunID() string {
+func (r *testExecuteDeploymentPlanWorkflowRun) RunID() string {
 	return ""
 }
 
 // Terminate terminates a workflow in execution, returning an error if applicable
-func (r *testProcessDeploymentWorkflowRun) Terminate(ctx context.Context, reason string, details ...interface{}) error {
+func (r *testExecuteDeploymentPlanWorkflowRun) Terminate(ctx context.Context, reason string, details ...interface{}) error {
+	return r.client.TerminateWorkflow(ctx, r.ID(), r.RunID(), reason, details...)
+}
+
+var _ ProcessInfrastructureWorkflowRun = &testProcessInfrastructureWorkflowRun{}
+
+// testProcessInfrastructureWorkflowRun provides convenience methods for interacting with a(n) ProcessInfrastructureWorkflow workflow in the test environment
+type testProcessInfrastructureWorkflowRun struct {
+	client    *TestDeploymentServiceClient
+	env       *testsuite.TestWorkflowEnvironment
+	isStarted atomic.Bool
+	opts      *client.StartWorkflowOptions
+	req       *ProcessInfrastructureWorkflowRequest
+	workflows DeploymentServiceWorkflows
+}
+
+// Cancel requests cancellation of a workflow in execution, returning an error if applicable
+func (r *testProcessInfrastructureWorkflowRun) Cancel(ctx context.Context) error {
+	return r.client.CancelWorkflow(ctx, r.ID(), r.RunID())
+}
+
+// Get retrieves a test ProcessInfrastructureWorkflow workflow result
+func (r *testProcessInfrastructureWorkflowRun) Get(context.Context) (*ProcessInfrastructureWorkflowResponse, error) {
+	if r.isStarted.CompareAndSwap(false, true) {
+		r.env.ExecuteWorkflow(ProcessInfrastructureWorkflowWorkflowName, r.req)
+	}
+	if !r.env.IsWorkflowCompleted() {
+		return nil, errors.New("workflow in progress")
+	}
+	if err := r.env.GetWorkflowError(); err != nil {
+		return nil, err
+	}
+	var result ProcessInfrastructureWorkflowResponse
+	if err := r.env.GetWorkflowResult(&result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+// ID returns a test ProcessInfrastructureWorkflow workflow run's workflow ID
+func (r *testProcessInfrastructureWorkflowRun) ID() string {
+	if r.opts != nil {
+		return r.opts.ID
+	}
+	return ""
+}
+
+// Run noop implementation
+func (r *testProcessInfrastructureWorkflowRun) Run() client.WorkflowRun {
+	return nil
+}
+
+// RunID noop implementation
+func (r *testProcessInfrastructureWorkflowRun) RunID() string {
+	return ""
+}
+
+// Terminate terminates a workflow in execution, returning an error if applicable
+func (r *testProcessInfrastructureWorkflowRun) Terminate(ctx context.Context, reason string, details ...interface{}) error {
+	return r.client.TerminateWorkflow(ctx, r.ID(), r.RunID(), reason, details...)
+}
+
+var _ RenderDeploymentPlanWorkflowRun = &testRenderDeploymentPlanWorkflowRun{}
+
+// testRenderDeploymentPlanWorkflowRun provides convenience methods for interacting with a(n) RenderDeploymentPlanWorkflow workflow in the test environment
+type testRenderDeploymentPlanWorkflowRun struct {
+	client    *TestDeploymentServiceClient
+	env       *testsuite.TestWorkflowEnvironment
+	isStarted atomic.Bool
+	opts      *client.StartWorkflowOptions
+	req       *RenderDeploymentPlanWorkflowRequest
+	workflows DeploymentServiceWorkflows
+}
+
+// Cancel requests cancellation of a workflow in execution, returning an error if applicable
+func (r *testRenderDeploymentPlanWorkflowRun) Cancel(ctx context.Context) error {
+	return r.client.CancelWorkflow(ctx, r.ID(), r.RunID())
+}
+
+// Get retrieves a test RenderDeploymentPlanWorkflow workflow result
+func (r *testRenderDeploymentPlanWorkflowRun) Get(context.Context) (*RenderDeploymentPlanWorkflowResponse, error) {
+	if r.isStarted.CompareAndSwap(false, true) {
+		r.env.ExecuteWorkflow(RenderDeploymentPlanWorkflowWorkflowName, r.req)
+	}
+	if !r.env.IsWorkflowCompleted() {
+		return nil, errors.New("workflow in progress")
+	}
+	if err := r.env.GetWorkflowError(); err != nil {
+		return nil, err
+	}
+	var result RenderDeploymentPlanWorkflowResponse
+	if err := r.env.GetWorkflowResult(&result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+// ID returns a test RenderDeploymentPlanWorkflow workflow run's workflow ID
+func (r *testRenderDeploymentPlanWorkflowRun) ID() string {
+	if r.opts != nil {
+		return r.opts.ID
+	}
+	return ""
+}
+
+// Run noop implementation
+func (r *testRenderDeploymentPlanWorkflowRun) Run() client.WorkflowRun {
+	return nil
+}
+
+// RunID noop implementation
+func (r *testRenderDeploymentPlanWorkflowRun) RunID() string {
+	return ""
+}
+
+// Terminate terminates a workflow in execution, returning an error if applicable
+func (r *testRenderDeploymentPlanWorkflowRun) Terminate(ctx context.Context, reason string, details ...interface{}) error {
 	return r.client.TerminateWorkflow(ctx, r.ID(), r.RunID(), reason, details...)
 }
 
@@ -4799,7 +5983,7 @@ type testRenderDockerInputWorkflowRun struct {
 	env       *testsuite.TestWorkflowEnvironment
 	isStarted atomic.Bool
 	opts      *client.StartWorkflowOptions
-	req       *topology.Topology
+	req       *deployment.InfrastructurePlan
 	workflows DeploymentServiceWorkflows
 }
 
@@ -4857,7 +6041,7 @@ type testRenderTerraformVariablesWorkflowRun struct {
 	env       *testsuite.TestWorkflowEnvironment
 	isStarted atomic.Bool
 	opts      *client.StartWorkflowOptions
-	req       *topology.Topology
+	req       *deployment.InfrastructurePlan
 	workflows DeploymentServiceWorkflows
 }
 
@@ -4915,7 +6099,7 @@ func WithDeploymentServiceSchemeTypes() scheme.Option {
 		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("AcquireQuotasActivityRequest"))
 		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("AcquireQuotasActivityRequest").Messages().ByName("QuotaRequestsEntry"))
 		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("AcquireQuotasActivityResponse"))
-		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("AcquireQuotasActivityResponse").Messages().ByName("QuotaAllocationEntry"))
+		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("AcquireQuotasActivityResponse").Messages().ByName("QuotaAllocationsEntry"))
 		s.RegisterType(deployment.File_cloud_v1_deployment_docker_proto.Messages().ByName("Input"))
 		s.RegisterType(deployment.File_cloud_v1_deployment_docker_proto.Messages().ByName("Input").Messages().ByName("ContainersEntry"))
 		s.RegisterType(deployment.File_cloud_v1_deployment_docker_proto.Messages().ByName("Output"))
@@ -4925,9 +6109,13 @@ func WithDeploymentServiceSchemeTypes() scheme.Option {
 		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("CalculateQuotasWorkflowRequest"))
 		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("CalculateQuotasWorkflowResponse"))
 		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("CalculateQuotasWorkflowResponse").Messages().ByName("QuotaRequestsEntry"))
-		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("ProcessDeploymentWorkflowRequest"))
-		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("ProcessDeploymentWorkflowResponse"))
-		s.RegisterType(topology.File_cloud_v1_topology_topology_proto.Messages().ByName("Topology"))
-		s.RegisterType(topology.File_cloud_v1_topology_topology_proto.Messages().ByName("Topology").Messages().ByName("Instance"))
+		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("ExecuteDeploymentPlanWorkflowRequest"))
+		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("ExecuteDeploymentPlanWorkflowResponse"))
+		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("ProcessInfrastructureWorkflowRequest"))
+		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("ProcessInfrastructureWorkflowResponse"))
+		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("RenderDeploymentPlanWorkflowRequest"))
+		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("RenderDeploymentPlanWorkflowResponse"))
+		s.RegisterType(deployment.File_cloud_v1_deployment_infrastructure_proto.Messages().ByName("InfrastructurePlan"))
+		s.RegisterType(deployment.File_cloud_v1_deployment_infrastructure_proto.Messages().ByName("InfrastructurePlan").Messages().ByName("LabelsEntry"))
 	}
 }

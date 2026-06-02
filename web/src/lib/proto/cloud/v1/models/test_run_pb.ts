@@ -10,6 +10,10 @@ import type { Status, StatusJson } from "../common/status_pb.ts";
 import { file_cloud_v1_common_status } from "../common/status_pb.ts";
 import type { Trigger, TriggerJson } from "../common/trigger_pb.ts";
 import { file_cloud_v1_common_trigger } from "../common/trigger_pb.ts";
+import type { InfrastructureState, InfrastructureStateJson } from "../deployment/infrastructure_pb.ts";
+import { file_cloud_v1_deployment_infrastructure } from "../deployment/infrastructure_pb.ts";
+import type { DeploymentPlan, DeploymentPlanJson } from "../deployment/plan_pb.ts";
+import { file_cloud_v1_deployment_plan } from "../deployment/plan_pb.ts";
 import type { Provider, ProviderJson } from "../deployment/provider_pb.ts";
 import { file_cloud_v1_deployment_provider } from "../deployment/provider_pb.ts";
 import type { Database_Kind, Database_KindJson } from "../domain/database_pb.ts";
@@ -25,18 +29,18 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/models/test_run.proto.
  */
 export const file_cloud_v1_models_test_run: GenFile = /*@__PURE__*/
-  fileDesc("Ch5jbG91ZC92MS9tb2RlbHMvdGVzdF9ydW4ucHJvdG8SD2Nsb3VkLnYxLm1vZGVscyLUBgoNVGVzdFJ1blJlY29yZBIxCgZlbnRpdHkYASABKAsyFy5jbG91ZC52MS5jb21tb24uRW50aXR5Qgj6QgWKAQIQARIwCgRzcGVjGAIgASgLMhguY2xvdWQudjEuZG9tYWluLlRlc3RSdW5CCPpCBYoBAhABEicKBnN0YXR1cxgDIAEoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXMSHQoMc3VpdGVfcnVuX2lkGAQgASgJQgf6QgRyAhhAEikKB3RyaWdnZXIYByABKA4yGC5jbG91ZC52MS5jb21tb24uVHJpZ2dlchIYChBpbl90ZW5hbnRfcmF0aW5nGAggASgIEhgKEGluX2dsb2JhbF9yYXRpbmcYCSABKAgSNwoHc3VtbWFyeRgGIAEoCzImLmNsb3VkLnYxLm1vZGVscy5UZXN0UnVuUmVjb3JkLlN1bW1hcnka9wMKB1N1bW1hcnkSLwoHZGJfa2luZBgBIAEoDjIeLmNsb3VkLnYxLmRvbWFpbi5EYXRhYmFzZS5LaW5kEh0KDGRiX3ByZXNldF9pZBgCIAEoCUIH+kIEcgIYQBIgCg5kYl9wcmVzZXRfbmFtZRgDIAEoCUII+kIFcgMY/wESIwoSd29ya2xvYWRfcHJlc2V0X2lkGAQgASgJQgf6QgRyAhhAEh8KDXdvcmtsb2FkX25hbWUYBSABKAlCCPpCBXIDGP8BEiAKD3N0cm9wcHlfdmVyc2lvbhgGIAEoCUIH+kIEcgIYQBIgCg50b3BvbG9neV9sYWJlbBgHIAEoCUII+kIFcgMYgAESEgoKbm9kZV9jb3VudBgIIAEoDRIvCghwcm92aWRlchgJIAEoDjIdLmNsb3VkLnYxLmRlcGxveW1lbnQuUHJvdmlkZXISHQoMcHJvZ3Jlc3NfcGN0GAogASgNQgf6QgQqAhhkEi4KCnN0YXJ0ZWRfYXQYCyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC2ZpbmlzaGVkX2F0GAwgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIrCghkdXJhdGlvbhgNIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbkoECAUQBkJEWkJnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9tb2RlbHNiBnByb3RvMw", [file_cloud_v1_common_entity, file_cloud_v1_common_status, file_cloud_v1_common_trigger, file_cloud_v1_deployment_provider, file_cloud_v1_domain_database, file_cloud_v1_domain_test, file_google_protobuf_duration, file_google_protobuf_timestamp, file_validate_validate]);
+  fileDesc("Ch5jbG91ZC92MS9tb2RlbHMvdGVzdF9ydW4ucHJvdG8SD2Nsb3VkLnYxLm1vZGVscyLaBwoNVGVzdFJ1blJlY29yZBIxCgZlbnRpdHkYASABKAsyFy5jbG91ZC52MS5jb21tb24uRW50aXR5Qgj6QgWKAQIQARIwCgRzcGVjGAIgASgLMhguY2xvdWQudjEuZG9tYWluLlRlc3RSdW5CCPpCBYoBAhABEicKBnN0YXR1cxgDIAEoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXMSHQoMc3VpdGVfcnVuX2lkGAQgASgJQgf6QgRyAhhAEikKB3RyaWdnZXIYByABKA4yGC5jbG91ZC52MS5jb21tb24uVHJpZ2dlchIYChBpbl90ZW5hbnRfcmF0aW5nGAggASgIEhgKEGluX2dsb2JhbF9yYXRpbmcYCSABKAgSNwoHc3VtbWFyeRgGIAEoCzImLmNsb3VkLnYxLm1vZGVscy5UZXN0UnVuUmVjb3JkLlN1bW1hcnkSRgoUaW5mcmFzdHJ1Y3R1cmVfc3RhdGUYCiABKAsyKC5jbG91ZC52MS5kZXBsb3ltZW50LkluZnJhc3RydWN0dXJlU3RhdGUSPAoPZGVwbG95bWVudF9wbGFuGAsgASgLMiMuY2xvdWQudjEuZGVwbG95bWVudC5EZXBsb3ltZW50UGxhbhr3AwoHU3VtbWFyeRIvCgdkYl9raW5kGAEgASgOMh4uY2xvdWQudjEuZG9tYWluLkRhdGFiYXNlLktpbmQSHQoMZGJfcHJlc2V0X2lkGAIgASgJQgf6QgRyAhhAEiAKDmRiX3ByZXNldF9uYW1lGAMgASgJQgj6QgVyAxj/ARIjChJ3b3JrbG9hZF9wcmVzZXRfaWQYBCABKAlCB/pCBHICGEASHwoNd29ya2xvYWRfbmFtZRgFIAEoCUII+kIFcgMY/wESIAoPc3Ryb3BweV92ZXJzaW9uGAYgASgJQgf6QgRyAhhAEiAKDnRvcG9sb2d5X2xhYmVsGAcgASgJQgj6QgVyAxiAARISCgpub2RlX2NvdW50GAggASgNEi8KCHByb3ZpZGVyGAkgASgOMh0uY2xvdWQudjEuZGVwbG95bWVudC5Qcm92aWRlchIdCgxwcm9ncmVzc19wY3QYCiABKA1CB/pCBCoCGGQSLgoKc3RhcnRlZF9hdBgLIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLwoLZmluaXNoZWRfYXQYDCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEisKCGR1cmF0aW9uGA0gASgLMhkuZ29vZ2xlLnByb3RvYnVmLkR1cmF0aW9uSgQIBRAGQkRaQmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL21vZGVsc2IGcHJvdG8z", [file_cloud_v1_common_entity, file_cloud_v1_common_status, file_cloud_v1_common_trigger, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_plan, file_cloud_v1_deployment_provider, file_cloud_v1_domain_database, file_cloud_v1_domain_test, file_google_protobuf_duration, file_google_protobuf_timestamp, file_validate_validate]);
 
 /**
  *
- * TestRunRecord is a persisted test execution (one table). The baked spec is the
- * input to TestWorkflow; status tracks the run lifecycle; suite_run_id links it to
- * a parent SuiteRunRecord when the run is part of a suite (empty = standalone).
+ * TestRunRecord is a persisted test execution. spec is the immutable workflow
+ * input. infrastructure_state and deployment_plan are staged workflow artifacts
+ * filled as the run progresses.
  *
- * `spec` is a baked Struct and is NOT queryable. For the runs table (filter / sort
- * / display of db, workload, preset, topology, progress, duration, ...) the server
- * DENORMALIZES those into flat columns in `summary`, filled at Start and updated
- * as the run progresses.
+ * For the runs table (filter / sort / display of db, workload, preset,
+ * topology, progress, duration, ...) the server DENORMALIZES queryable facets
+ * into flat columns in `summary`, filled at Start and updated as the run
+ * progresses.
  *
  * Runtime observations (logs/metrics) are keyed by the run id directly (no dag
  * id) — see monitor/logs.proto, monitor/metrics.proto.
@@ -119,18 +123,36 @@ export type TestRunRecord = Message<"cloud.v1.models.TestRunRecord"> & {
    * @generated from field: cloud.v1.models.TestRunRecord.Summary summary = 6;
    */
   summary?: TestRunRecord_Summary;
+
+  /**
+   *
+   * infrastructure_state is provider output (resource ids, IPs/endpoints,
+   * allocated quotas), filled after infrastructure deployment.
+   *
+   * @generated from field: cloud.v1.deployment.InfrastructureState infrastructure_state = 10;
+   */
+  infrastructureState?: InfrastructureState;
+
+  /**
+   *
+   * deployment_plan is the rendered agent execution plan, then updated with
+   * execution statuses.
+   *
+   * @generated from field: cloud.v1.deployment.DeploymentPlan deployment_plan = 11;
+   */
+  deploymentPlan?: DeploymentPlan;
 };
 
 /**
  *
- * TestRunRecord is a persisted test execution (one table). The baked spec is the
- * input to TestWorkflow; status tracks the run lifecycle; suite_run_id links it to
- * a parent SuiteRunRecord when the run is part of a suite (empty = standalone).
+ * TestRunRecord is a persisted test execution. spec is the immutable workflow
+ * input. infrastructure_state and deployment_plan are staged workflow artifacts
+ * filled as the run progresses.
  *
- * `spec` is a baked Struct and is NOT queryable. For the runs table (filter / sort
- * / display of db, workload, preset, topology, progress, duration, ...) the server
- * DENORMALIZES those into flat columns in `summary`, filled at Start and updated
- * as the run progresses.
+ * For the runs table (filter / sort / display of db, workload, preset,
+ * topology, progress, duration, ...) the server DENORMALIZES queryable facets
+ * into flat columns in `summary`, filled at Start and updated as the run
+ * progresses.
  *
  * Runtime observations (logs/metrics) are keyed by the run id directly (no dag
  * id) — see monitor/logs.proto, monitor/metrics.proto.
@@ -213,6 +235,24 @@ export type TestRunRecordJson = {
    * @generated from field: cloud.v1.models.TestRunRecord.Summary summary = 6;
    */
   summary?: TestRunRecord_SummaryJson;
+
+  /**
+   *
+   * infrastructure_state is provider output (resource ids, IPs/endpoints,
+   * allocated quotas), filled after infrastructure deployment.
+   *
+   * @generated from field: cloud.v1.deployment.InfrastructureState infrastructure_state = 10;
+   */
+  infrastructureState?: InfrastructureStateJson;
+
+  /**
+   *
+   * deployment_plan is the rendered agent execution plan, then updated with
+   * execution statuses.
+   *
+   * @generated from field: cloud.v1.deployment.DeploymentPlan deployment_plan = 11;
+   */
+  deploymentPlan?: DeploymentPlanJson;
 };
 
 export type TestRunRecordValid = TestRunRecord;

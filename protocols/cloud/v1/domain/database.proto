@@ -3,29 +3,314 @@ syntax = "proto3";
 package cloud.v1.domain;
 
 import "cloud/v1/common/tags.proto";
-import "schemapb/schema.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain";
 
+
 /*
-    database.proto describes the database under test. A Database picks a Kind
-    and supplies it via one of three mutually exclusive sources: baked
-    self-deploy params, an external already-running endpoint, or a preset id
-    resolved server-side. It is provider-agnostic; how/where it deploys is
-    decided later when a Test is baked into a TestRun.
+    package.proto describes the INSTALL RECIPE for a database engine build: the apt
+    packages, pre-install repo setup, and/or an uploaded .deb/binary an agent runs to
+    install the database on a target host. The deployment renderer bakes this
+    recipe into deployment.DeploymentPlan agent steps.
+
+    This is DISTINCT from models.PackageRecord, which is only the uploaded BLOB
+    metadata (object storage: format/storage_uri/sha256/size/status). A builtin
+    Package (pgdg, mysql.com, mariadb, ...) carries apt_packages + pre_install and no
+    blob; a custom Package references an uploaded PackageRecord via package_record_id.
  */
+
+/*
+    Package is how to install one database engine version on a host. Selected on a
+    Database via package_id; when empty the backend resolves the builtin default for
+    the database's kind + version.
+ */
+message Package {
+    /* id is the stable package identifier (a stored row id, or a builtin id). */
+    string id = 1;
+    /* name is the package's display name, e.g. "PostgreSQL 16". */
+    string name = 2;
+    /* db_kind is the database engine this package installs. */
+    Database.Kind db_kind = 3 [(validate.rules).enum = {defined_only: true,not_in: [0]}];
+    /* db_version is the engine version this package installs, e.g. "16". */
+    string db_version = 4 [(validate.rules).string.max_len = 128];
+    /* is_builtin marks a stock, server-seeded package (vs a tenant custom one). */
+    bool is_builtin = 5;
+    /* apt_packages are the apt package names to install (empty for download-only
+       engines like YDB/Cockroach that pull a binary directly). */
+    repeated string apt_packages = 6;
+    /* pre_install are shell commands run before the install (add repo, import gpg
+       key, apt-get update). */
+    repeated string pre_install = 7;
+    /* custom_repo is an extra apt repo line to add before install. */
+    string custom_repo = 8;
+    /* custom_repo_key is the gpg key (url or inline) for custom_repo. */
+    string custom_repo_key = 9;
+    /* deb_filename is the download URL (or filename) of a .deb to install; for a
+       custom package it is filled by the launcher (server addr + auth token). */
+    string deb_filename = 10;
+    /* package_record_id links to an uploaded models.PackageRecord blob (custom
+       builds); empty for builtins. */
+    string package_record_id = 11;
+}
+
+
+/*
+    database.proto describes the database under test. A Database picks a Kind and
+    supplies it via one of three mutually exclusive sources: typed self-deploy
+    params (one message per engine), an external already-running endpoint, or a
+    preset id resolved server-side.
+
+    These params are PROVIDER-AGNOSTIC and describe the ENGINE topology only:
+    logical node counts (replicas, shards, nodes), HA/cluster flags, and config
+    passthroughs. Hardware sizing (cpu/ram/disk), placement (zones) and
+    provider-specific machine params do NOT live here — the backend expands a
+    Database into cloud.v1.topology.TopologySpec, then overlays provider defaults
+    into cloud.v1.deployment.InfrastructurePlan for wizard machine editing.
+ */
+
+// ─── Per-engine self-deploy params (engine config + logical counts only) ──────
+//
+// The *_options maps are verbatim config-file passthroughs (key → value) merged
+// into the rendered config for that component; well-known keys live in the
+// engine defaults, not enumerated here.
+
+/* PostgresParams is the engine topology for PostgreSQL (master is always 1). */
+message PostgresParams {
+    /* replicas is the streaming-replica node count (0 = no replicas). */
+    uint32 replicas = 1;
+    /* haproxy is the dedicated HAProxy LB node count (0 = none). */
+    uint32 haproxy = 2;
+    /* pgbouncer colocates PgBouncer on each PG node. */
+    bool pgbouncer = 3;
+    /* patroni enables Patroni-managed HA (needs etcd). */
+    bool patroni = 4;
+    /* etcd colocates etcd on the PG nodes (capped at the first 3). */
+    bool etcd = 5;
+    /* sync_replicas is the synchronous standby count; >0 turns on Patroni sync mode. */
+    uint32 sync_replicas = 6;
+
+    /* master_options is postgresql.conf for the master. */
+    map<string, string> master_options = 10;
+    /* replica_options is postgresql.conf for replicas. */
+    map<string, string> replica_options = 11;
+    /* haproxy_options tunes haproxy.cfg. */
+    map<string, string> haproxy_options = 12;
+    /* pgbouncer_options tunes pgbouncer.ini (e.g. auth_type, pool_mode). */
+    map<string, string> pgbouncer_options = 13;
+    /* patroni_options tunes patroni.yml (e.g. ttl, loop_wait, retry_timeout). */
+    map<string, string> patroni_options = 14;
+    /* etcd_options tunes etcd. */
+    map<string, string> etcd_options = 15;
+}
+
+/*
+    MySqlParams is the engine topology for MySQL. MariaDB reuses this exact
+    message (same shape); only the engine Kind / install package differs.
+ */
+message MySqlParams {
+    /* replicas is the replica node count (0 = no replicas). */
+    uint32 replicas = 1;
+    /* proxysql is the dedicated ProxySQL node count (0 = none). */
+    uint32 proxysql = 2;
+    /* group_replication enables MySQL Group Replication. */
+    bool group_replication = 3;
+    /* semi_sync enables semi-synchronous replication (used when group_replication is off). */
+    bool semi_sync = 4;
+
+    /* primary_options is my.cnf for the primary. */
+    map<string, string> primary_options = 10;
+    /* replica_options is my.cnf for replicas. */
+    map<string, string> replica_options = 11;
+    /* proxysql_options tunes proxysql.cnf (e.g. threads, max_connections). */
+    map<string, string> proxysql_options = 12;
+}
+
+/* PicodataTier is one tier of a multi-tier Picodata cluster. */
+message PicodataTier {
+    /* name is the tier name (e.g. "compute", "storage"). */
+    string name = 1 [(validate.rules).string = {min_len: 1}];
+    /* replication_factor is the per-tier replication factor. */
+    uint32 replication_factor = 2;
+    /* can_vote marks the tier as raft-voting. */
+    bool can_vote = 3;
+    /* count is the instance count in this tier. */
+    uint32 count = 4;
+}
+
+/* PicodataParams is the engine topology for Picodata. */
+message PicodataParams {
+    /* instances is the instance node count (single-tier). */
+    uint32 instances = 1 [(validate.rules).uint32 = {gte: 1}];
+    /* haproxy is the HAProxy LB node count for the pgproto port (0 = none). */
+    uint32 haproxy = 2;
+    /* replication_factor is the cluster replication factor (single-tier). */
+    uint32 replication_factor = 3;
+    /* shards is the shard count (single-tier). */
+    uint32 shards = 4;
+    /* tiers optionally defines a multi-tier layout (overrides single-tier rf/shards/instances). */
+    repeated PicodataTier tiers = 5;
+
+    /* instance_options tunes picodata.yaml (e.g. memtx_memory, vinyl_memory, log_level). */
+    map<string, string> instance_options = 10;
+    /* haproxy_options tunes haproxy.cfg. */
+    map<string, string> haproxy_options = 11;
+}
+
+/* YdbParams is the self-deployed (IaaS) YDB engine topology. */
+message YdbParams {
+    /* FaultTolerance is the YDB erasure / fault-tolerance mode. */
+    enum FaultTolerance {
+        /* unset → "none". */
+        FAULT_TOLERANCE_UNSPECIFIED = 0;
+        /* maps to "none". */
+        FAULT_TOLERANCE_NONE = 1;
+        /* maps to "block-4-2". */
+        FAULT_TOLERANCE_BLOCK_4_2 = 2;
+        /* maps to "mirror-3-dc" (needs >=3 storage nodes + >=3 pdisks each, disk failure domain). */
+        FAULT_TOLERANCE_MIRROR_3_DC = 3;
+    }
+    /* FailureDomain is the failure-domain granularity. */
+    enum FailureDomain {
+        /* unset → default. */
+        FAILURE_DOMAIN_UNSPECIFIED = 0;
+        /* maps to "disk". */
+        FAILURE_DOMAIN_DISK = 1;
+    }
+    /* DiskType is the YDB storage-pool kind. */
+    enum DiskType {
+        /* unset → "ssd". */
+        DISK_TYPE_UNSPECIFIED = 0;
+        DISK_TYPE_SSD = 1;
+        DISK_TYPE_NVME = 2;
+        DISK_TYPE_ROT = 3;
+    }
+
+    /* storage_nodes is the static (storage) node count. */
+    uint32 storage_nodes = 1 [(validate.rules).uint32 = {gte: 1}];
+    /* database_nodes is the dynamic (compute) node count; 0 = combined mode
+       (compute runs on the storage nodes). */
+    uint32 database_nodes = 2;
+    /* haproxy is the HAProxy LB node count for the gRPC port (0 = none). */
+    uint32 haproxy = 3;
+    /* pdisks_per_storage_node is the number of data pdisks per storage node
+       (logical: mirror-3-dc needs >=3). Their SIZE is a topology/provider concern. */
+    uint32 pdisks_per_storage_node = 4;
+    /* fault_tolerance is the erasure mode. */
+    FaultTolerance fault_tolerance = 5;
+    /* failure_domain_type is the failure-domain granularity. */
+    FailureDomain failure_domain_type = 6;
+    /* default_disk_type is the storage-pool disk kind. */
+    DiskType default_disk_type = 7;
+    /* storage_groups is the pool group count for `database create` (0 → 1). */
+    uint32 storage_groups = 8;
+    /* auto_size_pdisks lets a dry-run resize the pdisks from the workload. */
+    bool auto_size_pdisks = 9;
+    /* database_path is the tenant DB path (default "/Root/testdb"). */
+    string database_path = 10;
+
+    /* storage_options is the storage config passthrough. */
+    map<string, string> storage_options = 20;
+    /* database_options is the database config passthrough. */
+    map<string, string> database_options = 21;
+    /* haproxy_options tunes haproxy.cfg. */
+    map<string, string> haproxy_options = 22;
+}
+
+/*
+    YdbManagedParams is cloud-managed (provider-hosted) YDB. The managed DB itself
+    has no node sizing; the stroppy client node is a separate topology instance.
+ */
+message YdbManagedParams {
+    /* Type is the managed YDB flavor. */
+    enum Type {
+        TYPE_UNSPECIFIED = 0;
+        /* serverless (pay-per-request). */
+        TYPE_SERVERLESS = 1;
+        /* dedicated (provisioned nodes). */
+        TYPE_DEDICATED = 2;
+    }
+    /* ComputeType is a UI workload class that filters the preset catalog; it is
+       NOT sent to terraform. */
+    enum ComputeType {
+        COMPUTE_TYPE_UNSPECIFIED = 0;
+        COMPUTE_TYPE_OLTP = 1;
+        COMPUTE_TYPE_OLAP = 2;
+    }
+    /* AutoScale switches a dedicated database to autoscaling (replaces node_count). */
+    message AutoScale {
+        /* min_size is the minimum node count. */
+        uint32 min_size = 1 [(validate.rules).uint32 = {gte: 1}];
+        /* max_size is the maximum node count. */
+        uint32 max_size = 2 [(validate.rules).uint32 = {gte: 1}];
+        /* cpu_utilization_percent is the target-tracking CPU threshold (default 70). */
+        uint32 cpu_utilization_percent = 3 [(validate.rules).uint32 = {gte: 0, lte: 100}];
+    }
+
+    /* type selects serverless vs dedicated. */
+    Type type = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    /* compute_type is the UI workload class (oltp/olap). */
+    ComputeType compute_type = 2;
+    /* resource_preset_id is the dedicated node preset id (ignored for serverless). */
+    string resource_preset_id = 3;
+    /* node_count is the dedicated fixed-scale node count (ignored when auto_scale set). */
+    uint32 node_count = 4;
+    /* auto_scale switches dedicated to autoscaling. */
+    AutoScale auto_scale = 5;
+    /* storage_groups is the dedicated storage group count (ignored for serverless). */
+    uint32 storage_groups = 6;
+    /* storage_type is the dedicated disk type id, e.g. "ssd" (ignored for serverless). */
+    string storage_type = 7;
+    /* throttling_rcus is the serverless throttling RCU limit (0 = provider default). */
+    uint32 throttling_rcus = 8;
+}
+
+/* CockroachParams is the engine topology for CockroachDB (homogeneous nodes). */
+message CockroachParams {
+    /* nodes is the homogeneous node count. */
+    uint32 nodes = 1 [(validate.rules).uint32 = {gte: 1}];
+    /* options are applied post-init as `SET CLUSTER SETTING k='v'`, or as a startup
+       flag when the key is prefixed `flag:`. */
+    map<string, string> options = 2;
+}
+
+/*
+    DatabaseParams is the typed self-deploy variant (replaces the former
+    schemapb.Baked). It carries the common version + config overrides and exactly
+    one engine-specific params message. The selected engine MUST match Database.kind.
+ */
+message DatabaseParams {
+    /* version is the engine version label (e.g. "16", "8.0", "25.2"). Empty uses
+       the engine default. */
+    string version = 1;
+
+    Package package = 2;
+    /* engine is the engine-specific self-deploy params. Exactly one must be set
+       and must match Database.kind. */
+    oneof engine {
+        option (validate.required) = true;
+
+        PostgresParams postgres = 10;
+        MySqlParams mysql = 11;
+        /* mariadb reuses the MySQL params shape. */
+        MySqlParams mariadb = 12;
+        PicodataParams picodata = 13;
+        YdbParams ydb = 14;
+        YdbManagedParams ydb_managed = 15;
+        CockroachParams cockroach = 16;
+    }
+}
 
 /*
     Database is the database-under-test definition for a test run. It selects a
     Kind and provides it through exactly one source variant, optionally carrying
-    the params schema and free-form tags.
+    free-form tags.
  */
 message Database {
     /*
-        PresetId is a reference to a stored database preset. Resolved
-        server-side into one of the inline `source` variants (params for
-        self-deploy, or external).
+        PresetId is a reference to a stored database preset. Resolved server-side
+        into one of the inline `source` variants (params for self-deploy, or
+        external).
      */
     message PresetId {
         /* id is the stored database preset identifier to resolve. */
@@ -68,19 +353,14 @@ message Database {
     /* kind selects which database engine is under test. */
     Kind kind = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
 
-    /* prams_schema is the schema (the form) describing self-deploy params for
-       this kind. */
-    schemapb.Schema prams_schema = 2;
-
     /* source selects how the database is provided for a test run. Exactly one
        variant must be set. */
     oneof source {
         option (validate.required) = true;
 
-        /* params is the self-deploy variant: filled values of prams_schema.
-           TestWorkflow deploys a DB instance into the topology and tears it
-           down at the end. */
-        schemapb.Baked params = 3;
+        /* params is the typed self-deploy variant: deploy a DB instance into the
+           topology and tear it down at the end. */
+        DatabaseParams params = 3;
 
         /* external is the external variant: connect to an existing endpoint,
            skip deploy/teardown. */
@@ -90,6 +370,11 @@ message Database {
            server-side. */
         PresetId database_preset_id = 5;
     }
+
+    /* package_id selects the install package (domain.Package) for self-deploy
+       kinds; empty resolves the builtin default for kind + params.version. Ignored
+       for external / managed sources. */
+    string package_id = 6;
 
     /* tags are free-form metadata attached to the database definition. */
     common.Tags tags = 7;

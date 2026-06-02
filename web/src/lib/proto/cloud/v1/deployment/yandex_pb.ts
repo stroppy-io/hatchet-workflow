@@ -11,7 +11,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/deployment/yandex.proto.
  */
 export const file_cloud_v1_deployment_yandex: GenFile = /*@__PURE__*/
-  fileDesc("CiBjbG91ZC92MS9kZXBsb3ltZW50L3lhbmRleC5wcm90bxITY2xvdWQudjEuZGVwbG95bWVudCK/JQoGWWFuZGV4EjoKBWlucHV0GAEgASgLMiEuY2xvdWQudjEuZGVwbG95bWVudC5ZYW5kZXguSW5wdXRCCPpCBYoBAhABEjIKBm91dHB1dBgCIAEoCzIiLmNsb3VkLnYxLmRlcGxveW1lbnQuWWFuZGV4Lk91dHB1dBrEAQoFSW5wdXQSPgoHbmV0d29yaxgBIAEoCzIjLmNsb3VkLnYxLmRlcGxveW1lbnQuWWFuZGV4Lk5ldHdvcmtCCPpCBYoBAhABEj4KB2NvbXB1dGUYAiABKAsyIy5jbG91ZC52MS5kZXBsb3ltZW50LllhbmRleC5Db21wdXRlQgj6QgWKAQIQARI7CgttYW5hZ2VkX3lkYhgDIAEoCzImLmNsb3VkLnYxLmRlcGxveW1lbnQuWWFuZGV4Lk1hbmFnZWRZZGIaqQMKB05ldHdvcmsSFwoEbmFtZRgBIAEoCUIJ+kIGcgQQARg/EhsKCm5ldHdvcmtfaWQYAiABKAlCB/pCBHICEAESFQoEY2lkchgDIAEoCUIH+kIEcgIQARJPCgR6b25lGAQgASgJQkH6Qj5yPFINcnUtY2VudHJhbDEtYVINcnUtY2VudHJhbDEtYlINcnUtY2VudHJhbDEtY1INcnUtY2VudHJhbDEtZBJLCgdzdWJuZXRzGAUgAygLMjAuY2xvdWQudjEuZGVwbG95bWVudC5ZYW5kZXguTmV0d29yay5TdWJuZXRzRW50cnlCCPpCBZoBAhBAEl8KDW1hbmFnZWRfem9uZXMYBiADKAlCSPpCRZIBQiI+cjxSDXJ1LWNlbnRyYWwxLWFSDXJ1LWNlbnRyYWwxLWJSDXJ1LWNlbnRyYWwxLWNSDXJ1LWNlbnRyYWwxLWQQEBpSCgxTdWJuZXRzRW50cnkSCwoDa2V5GAEgASgJEjEKBXZhbHVlGAIgASgLMiIuY2xvdWQudjEuZGVwbG95bWVudC5ZYW5kZXguU3VibmV0OgI4ARpwCgZTdWJuZXQSTwoEem9uZRgBIAEoCUJB+kI+cjxSDXJ1LWNlbnRyYWwxLWFSDXJ1LWNlbnRyYWwxLWJSDXJ1LWNlbnRyYWwxLWNSDXJ1LWNlbnRyYWwxLWQSFQoEY2lkchgCIAEoCUIH+kIEcgIQARqhAgoHQ29tcHV0ZRJOCgtwbGF0Zm9ybV9pZBgBIAEoCUI5+kI2cjRSC3N0YW5kYXJkLXYxUgtzdGFuZGFyZC12MlILc3RhbmRhcmQtdjNSC2hpZ2hmcmVxLXYzEhkKCGltYWdlX2lkGAIgASgJQgf6QgRyAhABEhoKEnNlcmlhbF9wb3J0X2VuYWJsZRgDIAEoCBJDCgN2bXMYBCADKAsyLC5jbG91ZC52MS5kZXBsb3ltZW50LllhbmRleC5Db21wdXRlLlZtc0VudHJ5Qgj6QgWaAQIIARpKCghWbXNFbnRyeRILCgNrZXkYASABKAkSLQoFdmFsdWUYAiABKAsyHi5jbG91ZC52MS5kZXBsb3ltZW50LllhbmRleC5WbToCOAEa3wMKAlZtEhYKBWNvcmVzGAEgASgNQgf6QgQqAiAAEhoKCW1lbW9yeV9nYhgCIAEoBEIH+kIEMgIgABIdCgxib290X2Rpc2tfZ2IYAyABKARCB/pCBDICIAASZQoOYm9vdF9kaXNrX3R5cGUYBCABKAlCTfpCSnJIUgtuZXR3b3JrLXNzZFILbmV0d29yay1oZGRSGW5ldHdvcmstc3NkLW5vbnJlcGxpY2F0ZWRSEW5ldHdvcmstc3NkLWlvLW0zElEKBHpvbmUYBSABKAlCQ/pCQHI+UgBSDXJ1LWNlbnRyYWwxLWFSDXJ1LWNlbnRyYWwxLWJSDXJ1LWNlbnRyYWwxLWNSDXJ1LWNlbnRyYWwxLWQSHAoLaW50ZXJuYWxfaXAYBiABKAlCB/pCBHICEAESEQoJcHVibGljX2lwGAcgASgIEhEKCXVzZXJfZGF0YRgIIAEoCRJDChRuZXR3b3JrX2FjY2VsZXJhdGlvbhgJIAEoCUIl+kIiciBSCHN0YW5kYXJkUhRzb2Z0d2FyZV9hY2NlbGVyYXRlZBJDCg9zZWNvbmRhcnlfZGlza3MYCiADKAsyIC5jbG91ZC52MS5kZXBsb3ltZW50LllhbmRleC5EaXNrQgj6QgWSAQIQQBqbAQoERGlzaxIcCgtkZXZpY2VfbmFtZRgBIAEoCUIH+kIEcgIQARIYCgdzaXplX2diGAIgASgNQgf6QgQqAiAAElsKBHR5cGUYAyABKAlCTfpCSnJIUgtuZXR3b3JrLXNzZFILbmV0d29yay1oZGRSGW5ldHdvcmstc3NkLW5vbnJlcGxpY2F0ZWRSEW5ldHdvcmstc3NkLWlvLW0zGuEKCgpNYW5hZ2VkWWRiEhcKBG5hbWUYASABKAlCCfpCBnIEEAMYPxIaCglmb2xkZXJfaWQYAiABKAlCB/pCBHICEAESLAoLbG9jYXRpb25faWQYAyABKAlCF/pCFHISUgtydS1jZW50cmFsMVIDa3oxEhsKE2RlbGV0aW9uX3Byb3RlY3Rpb24YBCABKAgSTAoGbGFiZWxzGAUgAygLMjIuY2xvdWQudjEuZGVwbG95bWVudC5ZYW5kZXguTWFuYWdlZFlkYi5MYWJlbHNFbnRyeUII+kIFmgECEEASJQoUc2VydmljZV9hY2NvdW50X25hbWUYBiABKAlCB/pCBHICGD8SUQoKc2VydmVybGVzcxgKIAEoCzIxLmNsb3VkLnYxLmRlcGxveW1lbnQuWWFuZGV4Lk1hbmFnZWRZZGIuU2VydmVybGVzc0II+kIFigECEAFIABJPCglkZWRpY2F0ZWQYCyABKAsyMC5jbG91ZC52MS5kZXBsb3ltZW50LllhbmRleC5NYW5hZ2VkWWRiLkRlZGljYXRlZEII+kIFigECEAFIABotCgtMYWJlbHNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGooBCgpTZXJ2ZXJsZXNzEiMKG2VuYWJsZV90aHJvdHRsaW5nX3JjdV9saW1pdBgBIAEoCBIcChR0aHJvdHRsaW5nX3JjdV9saW1pdBgCIAEoDRIdChVwcm92aXNpb25lZF9yY3VfbGltaXQYAyABKA0SGgoSc3RvcmFnZV9zaXplX2xpbWl0GAQgASgNGrsCCglEZWRpY2F0ZWQSIwoScmVzb3VyY2VfcHJlc2V0X2lkGAEgASgJQgf6QgRyAhABElIKDHNjYWxlX3BvbGljeRgCIAEoCzIyLmNsb3VkLnYxLmRlcGxveW1lbnQuWWFuZGV4Lk1hbmFnZWRZZGIuU2NhbGVQb2xpY3lCCPpCBYoBAhABElYKDnN0b3JhZ2VfY29uZmlnGAMgASgLMjQuY2xvdWQudjEuZGVwbG95bWVudC5ZYW5kZXguTWFuYWdlZFlkYi5TdG9yYWdlQ29uZmlnQgj6QgWKAQIQARIcCgpzdWJuZXRfaWRzGAQgAygJQgj6QgWSAQIQEBIkChJzZWN1cml0eV9ncm91cF9pZHMYBSADKAlCCPpCBZIBAhAQEhkKEWFzc2lnbl9wdWJsaWNfaXBzGAYgASgIGs4CCgtTY2FsZVBvbGljeRJTCgVmaXhlZBgBIAEoCzI4LmNsb3VkLnYxLmRlcGxveW1lbnQuWWFuZGV4Lk1hbmFnZWRZZGIuU2NhbGVQb2xpY3kuRml4ZWRCCPpCBYoBAhABSAASUQoEYXV0bxgCIAEoCzI3LmNsb3VkLnYxLmRlcGxveW1lbnQuWWFuZGV4Lk1hbmFnZWRZZGIuU2NhbGVQb2xpY3kuQXV0b0II+kIFigECEAFIABoeCgVGaXhlZBIVCgRzaXplGAEgASgNQgf6QgQqAigBGmgKBEF1dG8SGQoIbWluX3NpemUYASABKA1CB/pCBCoCKAESGQoIbWF4X3NpemUYAiABKA1CB/pCBCoCKAESKgoXY3B1X3V0aWxpemF0aW9uX3BlcmNlbnQYAyABKA1CCfpCBioEKAEYZEINCgZwb2xpY3kSA/hCARpiCg1TdG9yYWdlQ29uZmlnEhwKC2dyb3VwX2NvdW50GAEgASgNQgf6QgQqAigBEjMKD3N0b3JhZ2VfdHlwZV9pZBgCIAEoCUIa+kIXchVSA3NzZFIDcm90Uglsb2NhbC1zc2RCCwoEa2luZBID+EIBGvMBCgZPdXRwdXQSOAoDdm1zGAEgAygLMisuY2xvdWQudjEuZGVwbG95bWVudC5ZYW5kZXguT3V0cHV0LlZtc0VudHJ5EkEKC21hbmFnZWRfeWRiGAIgASgLMiwuY2xvdWQudjEuZGVwbG95bWVudC5ZYW5kZXguTWFuYWdlZFlkYk91dHB1dBIaChJzZXJ2aWNlX2FjY291bnRfaWQYAyABKAkaUAoIVm1zRW50cnkSCwoDa2V5GAEgASgJEjMKBXZhbHVlGAIgASgLMiQuY2xvdWQudjEuZGVwbG95bWVudC5ZYW5kZXguVm1PdXRwdXQ6AjgBGj4KCFZtT3V0cHV0EgoKAmlkGAEgASgJEhMKC2ludGVybmFsX2lwGAIgASgJEhEKCXB1YmxpY19pcBgDIAEoCRrLBQoQTWFuYWdlZFlkYk91dHB1dBIKCgJpZBgBIAEoCRIMCgR0eXBlGAIgASgJEgwKBG5hbWUYAyABKAkSEQoJZm9sZGVyX2lkGAQgASgJEhMKC2xvY2F0aW9uX2lkGAUgASgJEhUKDWRhdGFiYXNlX3BhdGgYBiABKAkSGAoQeWRiX2FwaV9lbmRwb2ludBgHIAEoCRIZChF5ZGJfZnVsbF9lbmRwb2ludBgIIAEoCRIdChVkb2N1bWVudF9hcGlfZW5kcG9pbnQYCSABKAkSEwoLdGxzX2VuYWJsZWQYCiABKAgSDgoGc3RhdHVzGAsgASgJEhIKCmNyZWF0ZWRfYXQYDCABKAkSSAoGbGFiZWxzGA0gAygLMjguY2xvdWQudjEuZGVwbG95bWVudC5ZYW5kZXguTWFuYWdlZFlkYk91dHB1dC5MYWJlbHNFbnRyeRIaChJyZXNvdXJjZV9wcmVzZXRfaWQYDiABKAkSEgoKbmV0d29ya19pZBgPIAEoCRISCgpzdWJuZXRfaWRzGBAgAygJEkwKDnN0b3JhZ2VfY29uZmlnGBEgASgLMjQuY2xvdWQudjEuZGVwbG95bWVudC5ZYW5kZXguTWFuYWdlZFlkYi5TdG9yYWdlQ29uZmlnEkgKDHNjYWxlX3BvbGljeRgSIAEoCzIyLmNsb3VkLnYxLmRlcGxveW1lbnQuWWFuZGV4Lk1hbmFnZWRZZGIuU2NhbGVQb2xpY3kSQgoDcmF3GBQgAygLMjUuY2xvdWQudjEuZGVwbG95bWVudC5ZYW5kZXguTWFuYWdlZFlkYk91dHB1dC5SYXdFbnRyeRotCgtMYWJlbHNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGioKCFJhd0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEipQEKCERpc2tUeXBlEhkKFURJU0tfVFlQRV9VTlNQRUNJRklFRBAAEhkKFURJU0tfVFlQRV9ORVRXT1JLX1NTRBABEhkKFURJU0tfVFlQRV9ORVRXT1JLX0hERBACEicKI0RJU0tfVFlQRV9ORVRXT1JLX1NTRF9OT05SRVBMSUNBVEVEEAMSHwobRElTS19UWVBFX05FVFdPUktfU1NEX0lPX00zEAQijQEKE05ldHdvcmtBY2NlbGVyYXRpb24SJAogTkVUV09SS19BQ0NFTEVSQVRJT05fVU5TUEVDSUZJRUQQABIhCh1ORVRXT1JLX0FDQ0VMRVJBVElPTl9TVEFOREFSRBABEi0KKU5FVFdPUktfQUNDRUxFUkFUSU9OX1NPRlRXQVJFX0FDQ0VMRVJBVEVEEAIinQEKClBsYXRmb3JtSWQSGwoXUExBVEZPUk1fSURfVU5TUEVDSUZJRUQQABIbChdQTEFURk9STV9JRF9TVEFOREFSRF9WMRABEhsKF1BMQVRGT1JNX0lEX1NUQU5EQVJEX1YyEAISGwoXUExBVEZPUk1fSURfU1RBTkRBUkRfVjMQAxIbChdQTEFURk9STV9JRF9ISUdIRlJFUV9WMxAEInwKBFpvbmUSFAoQWk9ORV9VTlNQRUNJRklFRBAAEhYKElpPTkVfUlVfQ0VOVFJBTDFfQRABEhYKElpPTkVfUlVfQ0VOVFJBTDFfQhACEhYKElpPTkVfUlVfQ0VOVFJBTDFfQxADEhYKElpPTkVfUlVfQ0VOVFJBTDFfRBAEQkhaRmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2RlcGxveW1lbnRiBnByb3RvMw", [file_validate_validate]);
+  fileDesc("CiBjbG91ZC92MS9kZXBsb3ltZW50L3lhbmRleC5wcm90bxITY2xvdWQudjEuZGVwbG95bWVudCKTLAoGWWFuZGV4EjoKBWlucHV0GAEgASgLMiEuY2xvdWQudjEuZGVwbG95bWVudC5ZYW5kZXguSW5wdXRCCPpCBYoBAhABEjIKBm91dHB1dBgCIAEoCzIiLmNsb3VkLnYxLmRlcGxveW1lbnQuWWFuZGV4Lk91dHB1dBrRBgoIU2V0dGluZ3MSFwoFdG9rZW4YASABKAlCCPpCBXIDGIAgEhwKCGNsb3VkX2lkGAIgASgJQgr6QgdyBRiAARABEh0KCWZvbGRlcl9pZBgDIAEoCUIK+kIHcgUYgAEQARJDCgR6b25lGAQgASgOMikuY2xvdWQudjEuZGVwbG95bWVudC5ZYW5kZXguU2V0dGluZ3MuWm9uZUIK+kIHggEEEAEgABIeCgpuZXR3b3JrX2lkGAUgASgJQgr6QgdyBRABGIABEh8KDG5ldHdvcmtfbmFtZRgGIAEoCUIJ+kIGcgQQARg/Eh4KC3N1Ym5ldF9jaWRyGAcgASgJQgn6QgZyBBABGEASUAoLcGxhdGZvcm1faWQYCCABKA4yLy5jbG91ZC52MS5kZXBsb3ltZW50LllhbmRleC5TZXR0aW5ncy5QbGF0Zm9ybUlkQgr6QgeCAQQQASAAEhwKCGltYWdlX2lkGAkgASgJQgr6QgdyBRABGIABEhgKEGFzc2lnbl9wdWJsaWNfaXAYCiABKAgSJAocc29mdHdhcmVfYWNjZWxlcmF0ZWRfbmV0d29yaxgLIAEoCBIbCghzc2hfdXNlchgMIAEoCUIJ+kIGcgQQARhAEiIKDnNzaF9wdWJsaWNfa2V5GA0gASgJQgr6QgdyBRABGIAgIvEBCgpQbGF0Zm9ybUlkEhsKF1BMQVRGT1JNX0lEX1VOU1BFQ0lGSUVEEAASGwoXUExBVEZPUk1fSURfU1RBTkRBUkRfVjEQARIbChdQTEFURk9STV9JRF9TVEFOREFSRF9WMhACEhsKF1BMQVRGT1JNX0lEX1NUQU5EQVJEX1YzEAMSHAoYUExBVEZPUk1fSURfU1RBTkRBUkRfVjRBEAQSFgoSUExBVEZPUk1fSURfQU1EX1YxEAUSGwoXUExBVEZPUk1fSURfSElHSEZSRVFfVjMQBhIcChhQTEFURk9STV9JRF9ISUdIRlJFUV9WNEEQByJkCgRab25lEhQKEFpPTkVfVU5TUEVDSUZJRUQQABIWChJaT05FX1JVX0NFTlRSQUwxX0EQARIWChJaT05FX1JVX0NFTlRSQUwxX0IQAhIWChJaT05FX1JVX0NFTlRSQUwxX0QQAxrEAQoFSW5wdXQSPgoHbmV0d29yaxgBIAEoCzIjLmNsb3VkLnYxLmRlcGxveW1lbnQuWWFuZGV4Lk5ldHdvcmtCCPpCBYoBAhABEj4KB2NvbXB1dGUYAiABKAsyIy5jbG91ZC52MS5kZXBsb3ltZW50LllhbmRleC5Db21wdXRlQgj6QgWKAQIQARI7CgttYW5hZ2VkX3lkYhgDIAEoCzImLmNsb3VkLnYxLmRlcGxveW1lbnQuWWFuZGV4Lk1hbmFnZWRZZGIaqQMKB05ldHdvcmsSFwoEbmFtZRgBIAEoCUIJ+kIGcgQQARg/EhsKCm5ldHdvcmtfaWQYAiABKAlCB/pCBHICEAESFQoEY2lkchgDIAEoCUIH+kIEcgIQARJPCgR6b25lGAQgASgJQkH6Qj5yPFINcnUtY2VudHJhbDEtYVINcnUtY2VudHJhbDEtYlINcnUtY2VudHJhbDEtY1INcnUtY2VudHJhbDEtZBJLCgdzdWJuZXRzGAUgAygLMjAuY2xvdWQudjEuZGVwbG95bWVudC5ZYW5kZXguTmV0d29yay5TdWJuZXRzRW50cnlCCPpCBZoBAhBAEl8KDW1hbmFnZWRfem9uZXMYBiADKAlCSPpCRZIBQhAQIj5yPFINcnUtY2VudHJhbDEtYVINcnUtY2VudHJhbDEtYlINcnUtY2VudHJhbDEtY1INcnUtY2VudHJhbDEtZBpSCgxTdWJuZXRzRW50cnkSCwoDa2V5GAEgASgJEjEKBXZhbHVlGAIgASgLMiIuY2xvdWQudjEuZGVwbG95bWVudC5ZYW5kZXguU3VibmV0OgI4ARpwCgZTdWJuZXQSTwoEem9uZRgBIAEoCUJB+kI+cjxSDXJ1LWNlbnRyYWwxLWFSDXJ1LWNlbnRyYWwxLWJSDXJ1LWNlbnRyYWwxLWNSDXJ1LWNlbnRyYWwxLWQSFQoEY2lkchgCIAEoCUIH+kIEcgIQARqhAgoHQ29tcHV0ZRJOCgtwbGF0Zm9ybV9pZBgBIAEoCUI5+kI2cjRSC3N0YW5kYXJkLXYxUgtzdGFuZGFyZC12MlILc3RhbmRhcmQtdjNSC2hpZ2hmcmVxLXYzEhkKCGltYWdlX2lkGAIgASgJQgf6QgRyAhABEhoKEnNlcmlhbF9wb3J0X2VuYWJsZRgDIAEoCBJDCgN2bXMYBCADKAsyLC5jbG91ZC52MS5kZXBsb3ltZW50LllhbmRleC5Db21wdXRlLlZtc0VudHJ5Qgj6QgWaAQIIARpKCghWbXNFbnRyeRILCgNrZXkYASABKAkSLQoFdmFsdWUYAiABKAsyHi5jbG91ZC52MS5kZXBsb3ltZW50LllhbmRleC5WbToCOAEa3wMKAlZtEhYKBWNvcmVzGAEgASgNQgf6QgQqAiAAEhoKCW1lbW9yeV9nYhgCIAEoBEIH+kIEMgIgABIdCgxib290X2Rpc2tfZ2IYAyABKARCB/pCBDICIAASZQoOYm9vdF9kaXNrX3R5cGUYBCABKAlCTfpCSnJIUgtuZXR3b3JrLXNzZFILbmV0d29yay1oZGRSGW5ldHdvcmstc3NkLW5vbnJlcGxpY2F0ZWRSEW5ldHdvcmstc3NkLWlvLW0zElEKBHpvbmUYBSABKAlCQ/pCQHI+UgBSDXJ1LWNlbnRyYWwxLWFSDXJ1LWNlbnRyYWwxLWJSDXJ1LWNlbnRyYWwxLWNSDXJ1LWNlbnRyYWwxLWQSHAoLaW50ZXJuYWxfaXAYBiABKAlCB/pCBHICEAESEQoJcHVibGljX2lwGAcgASgIEhEKCXVzZXJfZGF0YRgIIAEoCRJDChRuZXR3b3JrX2FjY2VsZXJhdGlvbhgJIAEoCUIl+kIiciBSCHN0YW5kYXJkUhRzb2Z0d2FyZV9hY2NlbGVyYXRlZBJDCg9zZWNvbmRhcnlfZGlza3MYCiADKAsyIC5jbG91ZC52MS5kZXBsb3ltZW50LllhbmRleC5EaXNrQgj6QgWSAQIQQBqbAQoERGlzaxIcCgtkZXZpY2VfbmFtZRgBIAEoCUIH+kIEcgIQARIYCgdzaXplX2diGAIgASgNQgf6QgQqAiAAElsKBHR5cGUYAyABKAlCTfpCSnJIUgtuZXR3b3JrLXNzZFILbmV0d29yay1oZGRSGW5ldHdvcmstc3NkLW5vbnJlcGxpY2F0ZWRSEW5ldHdvcmstc3NkLWlvLW0zGuEKCgpNYW5hZ2VkWWRiEhcKBG5hbWUYASABKAlCCfpCBnIEEAMYPxIaCglmb2xkZXJfaWQYAiABKAlCB/pCBHICEAESLAoLbG9jYXRpb25faWQYAyABKAlCF/pCFHISUgtydS1jZW50cmFsMVIDa3oxEhsKE2RlbGV0aW9uX3Byb3RlY3Rpb24YBCABKAgSTAoGbGFiZWxzGAUgAygLMjIuY2xvdWQudjEuZGVwbG95bWVudC5ZYW5kZXguTWFuYWdlZFlkYi5MYWJlbHNFbnRyeUII+kIFmgECEEASJQoUc2VydmljZV9hY2NvdW50X25hbWUYBiABKAlCB/pCBHICGD8SUQoKc2VydmVybGVzcxgKIAEoCzIxLmNsb3VkLnYxLmRlcGxveW1lbnQuWWFuZGV4Lk1hbmFnZWRZZGIuU2VydmVybGVzc0II+kIFigECEAFIABJPCglkZWRpY2F0ZWQYCyABKAsyMC5jbG91ZC52MS5kZXBsb3ltZW50LllhbmRleC5NYW5hZ2VkWWRiLkRlZGljYXRlZEII+kIFigECEAFIABotCgtMYWJlbHNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGooBCgpTZXJ2ZXJsZXNzEiMKG2VuYWJsZV90aHJvdHRsaW5nX3JjdV9saW1pdBgBIAEoCBIcChR0aHJvdHRsaW5nX3JjdV9saW1pdBgCIAEoDRIdChVwcm92aXNpb25lZF9yY3VfbGltaXQYAyABKA0SGgoSc3RvcmFnZV9zaXplX2xpbWl0GAQgASgNGrsCCglEZWRpY2F0ZWQSIwoScmVzb3VyY2VfcHJlc2V0X2lkGAEgASgJQgf6QgRyAhABElIKDHNjYWxlX3BvbGljeRgCIAEoCzIyLmNsb3VkLnYxLmRlcGxveW1lbnQuWWFuZGV4Lk1hbmFnZWRZZGIuU2NhbGVQb2xpY3lCCPpCBYoBAhABElYKDnN0b3JhZ2VfY29uZmlnGAMgASgLMjQuY2xvdWQudjEuZGVwbG95bWVudC5ZYW5kZXguTWFuYWdlZFlkYi5TdG9yYWdlQ29uZmlnQgj6QgWKAQIQARIcCgpzdWJuZXRfaWRzGAQgAygJQgj6QgWSAQIQEBIkChJzZWN1cml0eV9ncm91cF9pZHMYBSADKAlCCPpCBZIBAhAQEhkKEWFzc2lnbl9wdWJsaWNfaXBzGAYgASgIGs4CCgtTY2FsZVBvbGljeRJTCgVmaXhlZBgBIAEoCzI4LmNsb3VkLnYxLmRlcGxveW1lbnQuWWFuZGV4Lk1hbmFnZWRZZGIuU2NhbGVQb2xpY3kuRml4ZWRCCPpCBYoBAhABSAASUQoEYXV0bxgCIAEoCzI3LmNsb3VkLnYxLmRlcGxveW1lbnQuWWFuZGV4Lk1hbmFnZWRZZGIuU2NhbGVQb2xpY3kuQXV0b0II+kIFigECEAFIABoeCgVGaXhlZBIVCgRzaXplGAEgASgNQgf6QgQqAigBGmgKBEF1dG8SGQoIbWluX3NpemUYASABKA1CB/pCBCoCKAESGQoIbWF4X3NpemUYAiABKA1CB/pCBCoCKAESKgoXY3B1X3V0aWxpemF0aW9uX3BlcmNlbnQYAyABKA1CCfpCBioEGGQoAUINCgZwb2xpY3kSA/hCARpiCg1TdG9yYWdlQ29uZmlnEhwKC2dyb3VwX2NvdW50GAEgASgNQgf6QgQqAigBEjMKD3N0b3JhZ2VfdHlwZV9pZBgCIAEoCUIa+kIXchVSA3NzZFIDcm90Uglsb2NhbC1zc2RCCwoEa2luZBID+EIBGvMBCgZPdXRwdXQSOAoDdm1zGAEgAygLMisuY2xvdWQudjEuZGVwbG95bWVudC5ZYW5kZXguT3V0cHV0LlZtc0VudHJ5EkEKC21hbmFnZWRfeWRiGAIgASgLMiwuY2xvdWQudjEuZGVwbG95bWVudC5ZYW5kZXguTWFuYWdlZFlkYk91dHB1dBIaChJzZXJ2aWNlX2FjY291bnRfaWQYAyABKAkaUAoIVm1zRW50cnkSCwoDa2V5GAEgASgJEjMKBXZhbHVlGAIgASgLMiQuY2xvdWQudjEuZGVwbG95bWVudC5ZYW5kZXguVm1PdXRwdXQ6AjgBGj4KCFZtT3V0cHV0EgoKAmlkGAEgASgJEhMKC2ludGVybmFsX2lwGAIgASgJEhEKCXB1YmxpY19pcBgDIAEoCRrLBQoQTWFuYWdlZFlkYk91dHB1dBIKCgJpZBgBIAEoCRIMCgR0eXBlGAIgASgJEgwKBG5hbWUYAyABKAkSEQoJZm9sZGVyX2lkGAQgASgJEhMKC2xvY2F0aW9uX2lkGAUgASgJEhUKDWRhdGFiYXNlX3BhdGgYBiABKAkSGAoQeWRiX2FwaV9lbmRwb2ludBgHIAEoCRIZChF5ZGJfZnVsbF9lbmRwb2ludBgIIAEoCRIdChVkb2N1bWVudF9hcGlfZW5kcG9pbnQYCSABKAkSEwoLdGxzX2VuYWJsZWQYCiABKAgSDgoGc3RhdHVzGAsgASgJEhIKCmNyZWF0ZWRfYXQYDCABKAkSSAoGbGFiZWxzGA0gAygLMjguY2xvdWQudjEuZGVwbG95bWVudC5ZYW5kZXguTWFuYWdlZFlkYk91dHB1dC5MYWJlbHNFbnRyeRIaChJyZXNvdXJjZV9wcmVzZXRfaWQYDiABKAkSEgoKbmV0d29ya19pZBgPIAEoCRISCgpzdWJuZXRfaWRzGBAgAygJEkwKDnN0b3JhZ2VfY29uZmlnGBEgASgLMjQuY2xvdWQudjEuZGVwbG95bWVudC5ZYW5kZXguTWFuYWdlZFlkYi5TdG9yYWdlQ29uZmlnEkgKDHNjYWxlX3BvbGljeRgSIAEoCzIyLmNsb3VkLnYxLmRlcGxveW1lbnQuWWFuZGV4Lk1hbmFnZWRZZGIuU2NhbGVQb2xpY3kSQgoDcmF3GBQgAygLMjUuY2xvdWQudjEuZGVwbG95bWVudC5ZYW5kZXguTWFuYWdlZFlkYk91dHB1dC5SYXdFbnRyeRotCgtMYWJlbHNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGioKCFJhd0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEipQEKCERpc2tUeXBlEhkKFURJU0tfVFlQRV9VTlNQRUNJRklFRBAAEhkKFURJU0tfVFlQRV9ORVRXT1JLX1NTRBABEhkKFURJU0tfVFlQRV9ORVRXT1JLX0hERBACEicKI0RJU0tfVFlQRV9ORVRXT1JLX1NTRF9OT05SRVBMSUNBVEVEEAMSHwobRElTS19UWVBFX05FVFdPUktfU1NEX0lPX00zEAQijQEKE05ldHdvcmtBY2NlbGVyYXRpb24SJAogTkVUV09SS19BQ0NFTEVSQVRJT05fVU5TUEVDSUZJRUQQABIhCh1ORVRXT1JLX0FDQ0VMRVJBVElPTl9TVEFOREFSRBABEi0KKU5FVFdPUktfQUNDRUxFUkFUSU9OX1NPRlRXQVJFX0FDQ0VMRVJBVEVEEAIinQEKClBsYXRmb3JtSWQSGwoXUExBVEZPUk1fSURfVU5TUEVDSUZJRUQQABIbChdQTEFURk9STV9JRF9TVEFOREFSRF9WMRABEhsKF1BMQVRGT1JNX0lEX1NUQU5EQVJEX1YyEAISGwoXUExBVEZPUk1fSURfU1RBTkRBUkRfVjMQAxIbChdQTEFURk9STV9JRF9ISUdIRlJFUV9WMxAEInwKBFpvbmUSFAoQWk9ORV9VTlNQRUNJRklFRBAAEhYKElpPTkVfUlVfQ0VOVFJBTDFfQRABEhYKElpPTkVfUlVfQ0VOVFJBTDFfQhACEhYKElpPTkVfUlVfQ0VOVFJBTDFfQxADEhYKElpPTkVfUlVfQ0VOVFJBTDFfRBAEQkhaRmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2RlcGxveW1lbnRiBnByb3RvMw", [file_validate_validate]);
 
 /**
  *
@@ -69,6 +69,381 @@ export type YandexValid = Yandex;
  */
 export const YandexSchema: GenMessage<Yandex, {jsonType: YandexJson, validType: YandexValid}> = /*@__PURE__*/
   messageDesc(file_cloud_v1_deployment_yandex, 0);
+
+/**
+ * @generated from message cloud.v1.deployment.Yandex.Settings
+ */
+export type Yandex_Settings = Message<"cloud.v1.deployment.Yandex.Settings"> & {
+  /**
+   *
+   * token is the Yandex Cloud API authentication token.
+   *
+   * @generated from field: string token = 1;
+   */
+  token: string;
+
+  /**
+   *
+   * cloud_id is the Yandex Cloud account identifier.
+   *
+   * @generated from field: string cloud_id = 2;
+   */
+  cloudId: string;
+
+  /**
+   *
+   * folder_id is the Yandex Cloud folder/project resource id.
+   *
+   * @generated from field: string folder_id = 3;
+   */
+  folderId: string;
+
+  /**
+   *
+   * zone is the default availability zone for deployment resources.
+   *
+   * @generated from field: cloud.v1.deployment.Yandex.Settings.Zone zone = 4;
+   */
+  zone: Yandex_Settings_Zone;
+
+  /**
+   *
+   * network_id is the VPC network resource id.
+   *
+   * @generated from field: string network_id = 5;
+   */
+  networkId: string;
+
+  /**
+   *
+   * network_name is the VPC network display name.
+   *
+   * @generated from field: string network_name = 6;
+   */
+  networkName: string;
+
+  /**
+   *
+   * subnet_cidr is the CIDR block used for the deployment subnet.
+   *
+   * @generated from field: string subnet_cidr = 7;
+   */
+  subnetCidr: string;
+
+  /**
+   *
+   * platform_id is the VM platform architecture tier.
+   *
+   * @generated from field: cloud.v1.deployment.Yandex.Settings.PlatformId platform_id = 8;
+   */
+  platformId: Yandex_Settings_PlatformId;
+
+  /**
+   *
+   * image_id is the Yandex Compute image identifier.
+   *
+   * @generated from field: string image_id = 9;
+   */
+  imageId: string;
+
+  /**
+   *
+   * assign_public_ip enables public IP assignment for provisioned VMs.
+   *
+   * @generated from field: bool assign_public_ip = 10;
+   */
+  assignPublicIp: boolean;
+
+  /**
+   *
+   * software_accelerated_network enables software packet acceleration.
+   *
+   * @generated from field: bool software_accelerated_network = 11;
+   */
+  softwareAcceleratedNetwork: boolean;
+
+  /**
+   *
+   * ssh_user is the login username used for SSH access.
+   *
+   * @generated from field: string ssh_user = 12;
+   */
+  sshUser: string;
+
+  /**
+   *
+   * ssh_public_key is the SSH public key used for authentication.
+   *
+   * @generated from field: string ssh_public_key = 13;
+   */
+  sshPublicKey: string;
+};
+
+/**
+ * @generated from message cloud.v1.deployment.Yandex.Settings
+ */
+export type Yandex_SettingsJson = {
+  /**
+   *
+   * token is the Yandex Cloud API authentication token.
+   *
+   * @generated from field: string token = 1;
+   */
+  token?: string;
+
+  /**
+   *
+   * cloud_id is the Yandex Cloud account identifier.
+   *
+   * @generated from field: string cloud_id = 2;
+   */
+  cloudId?: string;
+
+  /**
+   *
+   * folder_id is the Yandex Cloud folder/project resource id.
+   *
+   * @generated from field: string folder_id = 3;
+   */
+  folderId?: string;
+
+  /**
+   *
+   * zone is the default availability zone for deployment resources.
+   *
+   * @generated from field: cloud.v1.deployment.Yandex.Settings.Zone zone = 4;
+   */
+  zone?: Yandex_Settings_ZoneJson;
+
+  /**
+   *
+   * network_id is the VPC network resource id.
+   *
+   * @generated from field: string network_id = 5;
+   */
+  networkId?: string;
+
+  /**
+   *
+   * network_name is the VPC network display name.
+   *
+   * @generated from field: string network_name = 6;
+   */
+  networkName?: string;
+
+  /**
+   *
+   * subnet_cidr is the CIDR block used for the deployment subnet.
+   *
+   * @generated from field: string subnet_cidr = 7;
+   */
+  subnetCidr?: string;
+
+  /**
+   *
+   * platform_id is the VM platform architecture tier.
+   *
+   * @generated from field: cloud.v1.deployment.Yandex.Settings.PlatformId platform_id = 8;
+   */
+  platformId?: Yandex_Settings_PlatformIdJson;
+
+  /**
+   *
+   * image_id is the Yandex Compute image identifier.
+   *
+   * @generated from field: string image_id = 9;
+   */
+  imageId?: string;
+
+  /**
+   *
+   * assign_public_ip enables public IP assignment for provisioned VMs.
+   *
+   * @generated from field: bool assign_public_ip = 10;
+   */
+  assignPublicIp?: boolean;
+
+  /**
+   *
+   * software_accelerated_network enables software packet acceleration.
+   *
+   * @generated from field: bool software_accelerated_network = 11;
+   */
+  softwareAcceleratedNetwork?: boolean;
+
+  /**
+   *
+   * ssh_user is the login username used for SSH access.
+   *
+   * @generated from field: string ssh_user = 12;
+   */
+  sshUser?: string;
+
+  /**
+   *
+   * ssh_public_key is the SSH public key used for authentication.
+   *
+   * @generated from field: string ssh_public_key = 13;
+   */
+  sshPublicKey?: string;
+};
+
+export type Yandex_SettingsValid = Yandex_Settings;
+
+/**
+ * Describes the message cloud.v1.deployment.Yandex.Settings.
+ * Use `create(Yandex_SettingsSchema)` to create a new message.
+ */
+export const Yandex_SettingsSchema: GenMessage<Yandex_Settings, {jsonType: Yandex_SettingsJson, validType: Yandex_SettingsValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_deployment_yandex, 0, 0);
+
+/**
+ *
+ * PlatformId identifies the Yandex Compute platform architecture tier.
+ *
+ * @generated from enum cloud.v1.deployment.Yandex.Settings.PlatformId
+ */
+export enum Yandex_Settings_PlatformId {
+  /**
+   *
+   * PLATFORM_ID_UNSPECIFIED is the unset zero value.
+   *
+   * @generated from enum value: PLATFORM_ID_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   *
+   * PLATFORM_ID_STANDARD_V1 is the first-generation standard x86-64
+   * platform.
+   *
+   * @generated from enum value: PLATFORM_ID_STANDARD_V1 = 1;
+   */
+  STANDARD_V1 = 1,
+
+  /**
+   *
+   * PLATFORM_ID_STANDARD_V2 is the second-generation standard x86-64
+   * platform.
+   *
+   * @generated from enum value: PLATFORM_ID_STANDARD_V2 = 2;
+   */
+  STANDARD_V2 = 2,
+
+  /**
+   *
+   * PLATFORM_ID_STANDARD_V3 is the third-generation standard x86-64
+   * platform.
+   *
+   * @generated from enum value: PLATFORM_ID_STANDARD_V3 = 3;
+   */
+  STANDARD_V3 = 3,
+
+  /**
+   *
+   * PLATFORM_ID_STANDARD_V4A is the fourth-generation AMD-based
+   * standard platform.
+   *
+   * @generated from enum value: PLATFORM_ID_STANDARD_V4A = 4;
+   */
+  STANDARD_V4A = 4,
+
+  /**
+   *
+   * PLATFORM_ID_AMD_V1 is the AMD EPYC-based platform variant.
+   *
+   * @generated from enum value: PLATFORM_ID_AMD_V1 = 5;
+   */
+  AMD_V1 = 5,
+
+  /**
+   *
+   * PLATFORM_ID_HIGHFREQ_V3 is the high-frequency third-generation
+   * x86-64 platform.
+   *
+   * @generated from enum value: PLATFORM_ID_HIGHFREQ_V3 = 6;
+   */
+  HIGHFREQ_V3 = 6,
+
+  /**
+   *
+   * PLATFORM_ID_HIGHFREQ_V4A is the high-frequency fourth-generation
+   * AMD platform.
+   *
+   * @generated from enum value: PLATFORM_ID_HIGHFREQ_V4A = 7;
+   */
+  HIGHFREQ_V4A = 7,
+}
+
+/**
+ *
+ * PlatformId identifies the Yandex Compute platform architecture tier.
+ *
+ * @generated from enum cloud.v1.deployment.Yandex.Settings.PlatformId
+ */
+export type Yandex_Settings_PlatformIdJson = "PLATFORM_ID_UNSPECIFIED" | "PLATFORM_ID_STANDARD_V1" | "PLATFORM_ID_STANDARD_V2" | "PLATFORM_ID_STANDARD_V3" | "PLATFORM_ID_STANDARD_V4A" | "PLATFORM_ID_AMD_V1" | "PLATFORM_ID_HIGHFREQ_V3" | "PLATFORM_ID_HIGHFREQ_V4A";
+
+/**
+ * Describes the enum cloud.v1.deployment.Yandex.Settings.PlatformId.
+ */
+export const Yandex_Settings_PlatformIdSchema: GenEnum<Yandex_Settings_PlatformId, Yandex_Settings_PlatformIdJson> = /*@__PURE__*/
+  enumDesc(file_cloud_v1_deployment_yandex, 0, 0, 0);
+
+/**
+ *
+ * Zone identifies the Yandex Cloud availability zone for deployment
+ * resources.
+ *
+ * @generated from enum cloud.v1.deployment.Yandex.Settings.Zone
+ */
+export enum Yandex_Settings_Zone {
+  /**
+   *
+   * ZONE_UNSPECIFIED is the unset zero value.
+   *
+   * @generated from enum value: ZONE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   *
+   * ZONE_RU_CENTRAL1_A is the Central Russia A zone.
+   *
+   * @generated from enum value: ZONE_RU_CENTRAL1_A = 1;
+   */
+  RU_CENTRAL1_A = 1,
+
+  /**
+   *
+   * ZONE_RU_CENTRAL1_B is the Central Russia B zone.
+   *
+   * @generated from enum value: ZONE_RU_CENTRAL1_B = 2;
+   */
+  RU_CENTRAL1_B = 2,
+
+  /**
+   *
+   * ZONE_RU_CENTRAL1_D is the Central Russia D zone.
+   *
+   * @generated from enum value: ZONE_RU_CENTRAL1_D = 3;
+   */
+  RU_CENTRAL1_D = 3,
+}
+
+/**
+ *
+ * Zone identifies the Yandex Cloud availability zone for deployment
+ * resources.
+ *
+ * @generated from enum cloud.v1.deployment.Yandex.Settings.Zone
+ */
+export type Yandex_Settings_ZoneJson = "ZONE_UNSPECIFIED" | "ZONE_RU_CENTRAL1_A" | "ZONE_RU_CENTRAL1_B" | "ZONE_RU_CENTRAL1_D";
+
+/**
+ * Describes the enum cloud.v1.deployment.Yandex.Settings.Zone.
+ */
+export const Yandex_Settings_ZoneSchema: GenEnum<Yandex_Settings_Zone, Yandex_Settings_ZoneJson> = /*@__PURE__*/
+  enumDesc(file_cloud_v1_deployment_yandex, 0, 0, 1);
 
 /**
  * Input contains all variables passed to deployments/terraform/yandex. 
@@ -133,7 +508,7 @@ export type Yandex_InputValid = Yandex_Input;
  * Use `create(Yandex_InputSchema)` to create a new message.
  */
 export const Yandex_InputSchema: GenMessage<Yandex_Input, {jsonType: Yandex_InputJson, validType: Yandex_InputValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_deployment_yandex, 0, 0);
+  messageDesc(file_cloud_v1_deployment_yandex, 0, 1);
 
 /**
  * Network describes existing VPC network and subnets created for a run. 
@@ -240,7 +615,7 @@ export type Yandex_NetworkValid = Yandex_Network;
  * Use `create(Yandex_NetworkSchema)` to create a new message.
  */
 export const Yandex_NetworkSchema: GenMessage<Yandex_Network, {jsonType: Yandex_NetworkJson, validType: Yandex_NetworkValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_deployment_yandex, 0, 1);
+  messageDesc(file_cloud_v1_deployment_yandex, 0, 2);
 
 /**
  * Subnet describes one VPC subnet to create. 
@@ -291,7 +666,7 @@ export type Yandex_SubnetValid = Yandex_Subnet;
  * Use `create(Yandex_SubnetSchema)` to create a new message.
  */
 export const Yandex_SubnetSchema: GenMessage<Yandex_Subnet, {jsonType: Yandex_SubnetJson, validType: Yandex_SubnetValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_deployment_yandex, 0, 2);
+  messageDesc(file_cloud_v1_deployment_yandex, 0, 3);
 
 /**
  * Compute describes VM instances created by Terraform. 
@@ -372,7 +747,7 @@ export type Yandex_ComputeValid = Yandex_Compute;
  * Use `create(Yandex_ComputeSchema)` to create a new message.
  */
 export const Yandex_ComputeSchema: GenMessage<Yandex_Compute, {jsonType: Yandex_ComputeJson, validType: Yandex_ComputeValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_deployment_yandex, 0, 3);
+  messageDesc(file_cloud_v1_deployment_yandex, 0, 4);
 
 /**
  * Vm is the runtime yandex_compute_instance spec. 
@@ -537,7 +912,7 @@ export type Yandex_VmValid = Yandex_Vm;
  * Use `create(Yandex_VmSchema)` to create a new message.
  */
 export const Yandex_VmSchema: GenMessage<Yandex_Vm, {jsonType: Yandex_VmJson, validType: Yandex_VmValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_deployment_yandex, 0, 4);
+  messageDesc(file_cloud_v1_deployment_yandex, 0, 5);
 
 /**
  * Disk describes an additional yandex_compute_disk attached to a VM. 
@@ -602,7 +977,7 @@ export type Yandex_DiskValid = Yandex_Disk;
  * Use `create(Yandex_DiskSchema)` to create a new message.
  */
 export const Yandex_DiskSchema: GenMessage<Yandex_Disk, {jsonType: Yandex_DiskJson, validType: Yandex_DiskValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_deployment_yandex, 0, 5);
+  messageDesc(file_cloud_v1_deployment_yandex, 0, 6);
 
 /**
  * ManagedYdb describes optional Yandex Managed Service for YDB resources. 
@@ -744,7 +1119,7 @@ export type Yandex_ManagedYdbValid = Yandex_ManagedYdb;
  * Use `create(Yandex_ManagedYdbSchema)` to create a new message.
  */
 export const Yandex_ManagedYdbSchema: GenMessage<Yandex_ManagedYdb, {jsonType: Yandex_ManagedYdbJson, validType: Yandex_ManagedYdbValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_deployment_yandex, 0, 6);
+  messageDesc(file_cloud_v1_deployment_yandex, 0, 7);
 
 /**
  * Serverless contains yandex_ydb_database_serverless.serverless_database fields. 
@@ -823,7 +1198,7 @@ export type Yandex_ManagedYdb_ServerlessValid = Yandex_ManagedYdb_Serverless;
  * Use `create(Yandex_ManagedYdb_ServerlessSchema)` to create a new message.
  */
 export const Yandex_ManagedYdb_ServerlessSchema: GenMessage<Yandex_ManagedYdb_Serverless, {jsonType: Yandex_ManagedYdb_ServerlessJson, validType: Yandex_ManagedYdb_ServerlessValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_deployment_yandex, 0, 6, 0);
+  messageDesc(file_cloud_v1_deployment_yandex, 0, 7, 0);
 
 /**
  * Dedicated contains yandex_ydb_database_dedicated fields. 
@@ -934,7 +1309,7 @@ export type Yandex_ManagedYdb_DedicatedValid = Yandex_ManagedYdb_Dedicated;
  * Use `create(Yandex_ManagedYdb_DedicatedSchema)` to create a new message.
  */
 export const Yandex_ManagedYdb_DedicatedSchema: GenMessage<Yandex_ManagedYdb_Dedicated, {jsonType: Yandex_ManagedYdb_DedicatedJson, validType: Yandex_ManagedYdb_DedicatedValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_deployment_yandex, 0, 6, 1);
+  messageDesc(file_cloud_v1_deployment_yandex, 0, 7, 1);
 
 /**
  * ScalePolicy maps to yandex_ydb_database_dedicated.scale_policy. 
@@ -992,7 +1367,7 @@ export type Yandex_ManagedYdb_ScalePolicyValid = Yandex_ManagedYdb_ScalePolicy;
  * Use `create(Yandex_ManagedYdb_ScalePolicySchema)` to create a new message.
  */
 export const Yandex_ManagedYdb_ScalePolicySchema: GenMessage<Yandex_ManagedYdb_ScalePolicy, {jsonType: Yandex_ManagedYdb_ScalePolicyJson, validType: Yandex_ManagedYdb_ScalePolicyValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_deployment_yandex, 0, 6, 2);
+  messageDesc(file_cloud_v1_deployment_yandex, 0, 7, 2);
 
 /**
  * Fixed configures fixed node count. 
@@ -1029,7 +1404,7 @@ export type Yandex_ManagedYdb_ScalePolicy_FixedValid = Yandex_ManagedYdb_ScalePo
  * Use `create(Yandex_ManagedYdb_ScalePolicy_FixedSchema)` to create a new message.
  */
 export const Yandex_ManagedYdb_ScalePolicy_FixedSchema: GenMessage<Yandex_ManagedYdb_ScalePolicy_Fixed, {jsonType: Yandex_ManagedYdb_ScalePolicy_FixedJson, validType: Yandex_ManagedYdb_ScalePolicy_FixedValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_deployment_yandex, 0, 6, 2, 0);
+  messageDesc(file_cloud_v1_deployment_yandex, 0, 7, 2, 0);
 
 /**
  * Auto configures YDB dedicated autoscaling. 
@@ -1094,7 +1469,7 @@ export type Yandex_ManagedYdb_ScalePolicy_AutoValid = Yandex_ManagedYdb_ScalePol
  * Use `create(Yandex_ManagedYdb_ScalePolicy_AutoSchema)` to create a new message.
  */
 export const Yandex_ManagedYdb_ScalePolicy_AutoSchema: GenMessage<Yandex_ManagedYdb_ScalePolicy_Auto, {jsonType: Yandex_ManagedYdb_ScalePolicy_AutoJson, validType: Yandex_ManagedYdb_ScalePolicy_AutoValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_deployment_yandex, 0, 6, 2, 1);
+  messageDesc(file_cloud_v1_deployment_yandex, 0, 7, 2, 1);
 
 /**
  * StorageConfig maps to yandex_ydb_database_dedicated.storage_config. 
@@ -1145,7 +1520,7 @@ export type Yandex_ManagedYdb_StorageConfigValid = Yandex_ManagedYdb_StorageConf
  * Use `create(Yandex_ManagedYdb_StorageConfigSchema)` to create a new message.
  */
 export const Yandex_ManagedYdb_StorageConfigSchema: GenMessage<Yandex_ManagedYdb_StorageConfig, {jsonType: Yandex_ManagedYdb_StorageConfigJson, validType: Yandex_ManagedYdb_StorageConfigValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_deployment_yandex, 0, 6, 3);
+  messageDesc(file_cloud_v1_deployment_yandex, 0, 7, 3);
 
 /**
  * Output mirrors Terraform outputs. 
@@ -1210,7 +1585,7 @@ export type Yandex_OutputValid = Yandex_Output;
  * Use `create(Yandex_OutputSchema)` to create a new message.
  */
 export const Yandex_OutputSchema: GenMessage<Yandex_Output, {jsonType: Yandex_OutputJson, validType: Yandex_OutputValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_deployment_yandex, 0, 7);
+  messageDesc(file_cloud_v1_deployment_yandex, 0, 8);
 
 /**
  * VmOutput describes one created VM. 
@@ -1275,7 +1650,7 @@ export type Yandex_VmOutputValid = Yandex_VmOutput;
  * Use `create(Yandex_VmOutputSchema)` to create a new message.
  */
 export const Yandex_VmOutputSchema: GenMessage<Yandex_VmOutput, {jsonType: Yandex_VmOutputJson, validType: Yandex_VmOutputValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_deployment_yandex, 0, 8);
+  messageDesc(file_cloud_v1_deployment_yandex, 0, 9);
 
 /**
  * ManagedYdbOutput describes created managed YDB database. 
@@ -1564,7 +1939,7 @@ export type Yandex_ManagedYdbOutputValid = Yandex_ManagedYdbOutput;
  * Use `create(Yandex_ManagedYdbOutputSchema)` to create a new message.
  */
 export const Yandex_ManagedYdbOutputSchema: GenMessage<Yandex_ManagedYdbOutput, {jsonType: Yandex_ManagedYdbOutputJson, validType: Yandex_ManagedYdbOutputValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_deployment_yandex, 0, 9);
+  messageDesc(file_cloud_v1_deployment_yandex, 0, 10);
 
 /**
  * DiskType maps to yandex_compute_disk.type tf string. 

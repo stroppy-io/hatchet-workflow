@@ -17,13 +17,13 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/domain/suite.proto.
  */
 export const file_cloud_v1_domain_suite: GenFile = /*@__PURE__*/
-  fileDesc("ChtjbG91ZC92MS9kb21haW4vc3VpdGUucHJvdG8SD2Nsb3VkLnYxLmRvbWFpbiLXAgoFU3VpdGUSEwoCaWQYASABKAlCB/pCBHICEAESIgoKcHJlc2V0X2lkcxgCIAMoCUIO+kILkgEIIgRyAhABCAESOwoIcHJvdmlkZXIYAyABKA4yHS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyQgr6QgeCAQQQASAAEiMKBHRhZ3MYBCABKAsyFS5jbG91ZC52MS5jb21tb24uVGFncxIrCghzY2hlZHVsZRgFIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5TY2hlZHVsZRIlChhkZWZhdWx0X2luX3RlbmFudF9yYXRpbmcYBiABKAhIAIgBARIlChhkZWZhdWx0X2luX2dsb2JhbF9yYXRpbmcYByABKAhIAYgBAUIbChlfZGVmYXVsdF9pbl90ZW5hbnRfcmF0aW5nQhsKGV9kZWZhdWx0X2luX2dsb2JhbF9yYXRpbmciTgoIU2NoZWR1bGUSDwoHZW5hYmxlZBgBIAEoCBIWCgRjcm9uGAIgASgJQgj6QgVyAxiAARIZCgh0aW1lem9uZRgDIAEoCUIH+kIEcgIYQCKHAQoIU3VpdGVSdW4SEwoCaWQYASABKAlCB/pCBHICEAESGQoIc3VpdGVfaWQYAiABKAlCB/pCBHICEAESNQoJdGVzdF9ydW5zGAMgAygLMhguY2xvdWQudjEuZG9tYWluLlRlc3RSdW5CCPpCBZIBAggBEhQKDG1heF9wYXJhbGxlbBgEIAEoDUJEWkJnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9kb21haW5iBnByb3RvMw", [file_cloud_v1_common_tags, file_cloud_v1_deployment_provider, file_cloud_v1_domain_test, file_validate_validate]);
+  fileDesc("ChtjbG91ZC92MS9kb21haW4vc3VpdGUucHJvdG8SD2Nsb3VkLnYxLmRvbWFpbiLXAgoFU3VpdGUSEwoCaWQYASABKAlCB/pCBHICEAESIgoKcHJlc2V0X2lkcxgCIAMoCUIO+kILkgEIIgRyAhABCAESOwoIcHJvdmlkZXIYAyABKA4yHS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyQgr6QgeCAQQgABABEiMKBHRhZ3MYBCABKAsyFS5jbG91ZC52MS5jb21tb24uVGFncxIrCghzY2hlZHVsZRgFIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5TY2hlZHVsZRIlChhkZWZhdWx0X2luX3RlbmFudF9yYXRpbmcYBiABKAhIAIgBARIlChhkZWZhdWx0X2luX2dsb2JhbF9yYXRpbmcYByABKAhIAYgBAUIbChlfZGVmYXVsdF9pbl90ZW5hbnRfcmF0aW5nQhsKGV9kZWZhdWx0X2luX2dsb2JhbF9yYXRpbmciTgoIU2NoZWR1bGUSDwoHZW5hYmxlZBgBIAEoCBIWCgRjcm9uGAIgASgJQgj6QgVyAxiAARIZCgh0aW1lem9uZRgDIAEoCUIH+kIEcgIYQCKHAQoIU3VpdGVSdW4SEwoCaWQYASABKAlCB/pCBHICEAESGQoIc3VpdGVfaWQYAiABKAlCB/pCBHICEAESNQoJdGVzdF9ydW5zGAMgAygLMhguY2xvdWQudjEuZG9tYWluLlRlc3RSdW5CCPpCBZIBAggBEhQKDG1heF9wYXJhbGxlbBgEIAEoDUJEWkJnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9kb21haW5iBnByb3RvMw", [file_cloud_v1_common_tags, file_cloud_v1_deployment_provider, file_cloud_v1_domain_test, file_validate_validate]);
 
 /**
  *
  * Suite is a reusable test bundle. It references provider-agnostic,
- * params-only presets; the provider is applied once here, and the wizard bakes
- * provider_parms when expanding presets into TestRuns.
+ * params-only presets; the provider is applied once here, and expansion bakes
+ * topology specs plus infrastructure plans into child TestRuns.
  *
  * @generated from message cloud.v1.domain.Suite
  */
@@ -91,8 +91,8 @@ export type Suite = Message<"cloud.v1.domain.Suite"> & {
 /**
  *
  * Suite is a reusable test bundle. It references provider-agnostic,
- * params-only presets; the provider is applied once here, and the wizard bakes
- * provider_parms when expanding presets into TestRuns.
+ * params-only presets; the provider is applied once here, and expansion bakes
+ * topology specs plus infrastructure plans into child TestRuns.
  *
  * @generated from message cloud.v1.domain.Suite
  */

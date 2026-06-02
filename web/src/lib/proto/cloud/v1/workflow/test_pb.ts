@@ -6,6 +6,10 @@ import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegen
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Status, StatusJson } from "../common/status_pb.ts";
 import { file_cloud_v1_common_status } from "../common/status_pb.ts";
+import type { InfrastructureState, InfrastructureStateJson } from "../deployment/infrastructure_pb.ts";
+import { file_cloud_v1_deployment_infrastructure } from "../deployment/infrastructure_pb.ts";
+import type { DeploymentPlan, DeploymentPlanJson } from "../deployment/plan_pb.ts";
+import { file_cloud_v1_deployment_plan } from "../deployment/plan_pb.ts";
 import type { Database, DatabaseJson } from "../domain/database_pb.ts";
 import { file_cloud_v1_domain_database } from "../domain/database_pb.ts";
 import type { SuiteRun, SuiteRunJson } from "../domain/suite_pb.ts";
@@ -14,7 +18,7 @@ import type { TestRun, TestRunJson } from "../domain/test_pb.ts";
 import { file_cloud_v1_domain_test } from "../domain/test_pb.ts";
 import type { Workload, WorkloadJson } from "../domain/workload_pb.ts";
 import { file_cloud_v1_domain_workload } from "../domain/workload_pb.ts";
-import type { Topology, TopologyJson } from "../topology/topology_pb.ts";
+import type { TopologySpec, TopologySpecJson } from "../topology/topology_pb.ts";
 import { file_cloud_v1_topology_topology } from "../topology/topology_pb.ts";
 import type { EmptySchema, Timestamp, TimestampJson } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_empty, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
@@ -26,7 +30,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/workflow/test.proto.
  */
 export const file_cloud_v1_workflow_test: GenFile = /*@__PURE__*/
-  fileDesc("ChxjbG91ZC92MS93b3JrZmxvdy90ZXN0LnByb3RvEhFjbG91ZC52MS53b3JrZmxvdyJLChNUZXN0V29ya2Zsb3dSZXF1ZXN0EjQKCHRlc3RfcnVuGAEgASgLMhguY2xvdWQudjEuZG9tYWluLlRlc3RSdW5CCPpCBYoBAhABIhYKFFRlc3RXb3JrZmxvd1Jlc3BvbnNlIl0KCFJ1blN0YXRlEicKBnN0YXR1cxgBIAEoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXMSKAoGc3RhZ2VzGAIgAygLMhguY2xvdWQudjEud29ya2Zsb3cuU3RhZ2UiywEKBVN0YWdlEhkKEW5vZGVfZXhlY3V0aW9uX2lkGAEgASgJEgwKBG5hbWUYAiABKAkSJwoGc3RhdHVzGAMgASgOMhcuY2xvdWQudjEuY29tbW9uLlN0YXR1cxIuCgpzdGFydGVkX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIvCgtmaW5pc2hlZF9hdBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDwoHYXR0ZW1wdBgGIAEoDSJYCh1JbnN0YWxsU3Ryb3BweVdvcmtmbG93UmVxdWVzdBI3Cgh0b3BvbG9neRgBIAEoCzIbLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5Qgj6QgWKAQIQASIgCh5JbnN0YWxsU3Ryb3BweVdvcmtmbG93UmVzcG9uc2UikAEKHkluc3RhbGxEYXRhYmFzZVdvcmtmbG93UmVxdWVzdBI3Cgh0b3BvbG9neRgBIAEoCzIbLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5Qgj6QgWKAQIQARI1CghkYXRhYmFzZRgCIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5EYXRhYmFzZUII+kIFigECEAEiIQofSW5zdGFsbERhdGFiYXNlV29ya2Zsb3dSZXNwb25zZSKMAQoaUnVuV29ya2xvYWRXb3JrZmxvd1JlcXVlc3QSNwoIdG9wb2xvZ3kYASABKAsyGy5jbG91ZC52MS50b3BvbG9neS5Ub3BvbG9neUII+kIFigECEAESNQoId29ya2xvYWQYAiABKAsyGS5jbG91ZC52MS5kb21haW4uV29ya2xvYWRCCPpCBYoBAhABIh0KG1J1bldvcmtsb2FkV29ya2Zsb3dSZXNwb25zZSJOChRTdWl0ZVdvcmtmbG93UmVxdWVzdBI2CglzdWl0ZV9ydW4YASABKAsyGS5jbG91ZC52MS5kb21haW4uU3VpdGVSdW5CCPpCBYoBAhABIhcKFVN1aXRlV29ya2Zsb3dSZXNwb25zZTKQBgoLVGVzdFNlcnZpY2USpAEKDFRlc3RXb3JrZmxvdxImLmNsb3VkLnYxLndvcmtmbG93LlRlc3RXb3JrZmxvd1JlcXVlc3QaJy5jbG91ZC52MS53b3JrZmxvdy5UZXN0V29ya2Zsb3dSZXNwb25zZSJDisQDPwoNCgtHZXRSdW5TdGF0ZXIMVGVzdFdvcmtmbG93Khp0ZXN0LXJ1bi8keyEgdGVzdF9ydW4uaWQgfTACSgIgARJVCgtHZXRSdW5TdGF0ZRIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRobLmNsb3VkLnYxLndvcmtmbG93LlJ1blN0YXRlIhGaxAMNCgtHZXRSdW5TdGF0ZRKoAQoWSW5zdGFsbFN0cm9wcHlXb3JrZmxvdxIwLmNsb3VkLnYxLndvcmtmbG93Lkluc3RhbGxTdHJvcHB5V29ya2Zsb3dSZXF1ZXN0GjEuY2xvdWQudjEud29ya2Zsb3cuSW5zdGFsbFN0cm9wcHlXb3JrZmxvd1Jlc3BvbnNlIimKxAMlchZJbnN0YWxsU3Ryb3BweVdvcmtmbG93UgMIiA5KBiADCgIIBRKsAQoXSW5zdGFsbERhdGFiYXNlV29ya2Zsb3cSMS5jbG91ZC52MS53b3JrZmxvdy5JbnN0YWxsRGF0YWJhc2VXb3JrZmxvd1JlcXVlc3QaMi5jbG91ZC52MS53b3JrZmxvdy5JbnN0YWxsRGF0YWJhc2VXb3JrZmxvd1Jlc3BvbnNlIiqKxAMmchdJbnN0YWxsRGF0YWJhc2VXb3JrZmxvd1IDCIgOSgYgAwoCCAUSkwEKE1J1bldvcmtsb2FkV29ya2Zsb3cSLS5jbG91ZC52MS53b3JrZmxvdy5SdW5Xb3JrbG9hZFdvcmtmbG93UmVxdWVzdBouLmNsb3VkLnYxLndvcmtmbG93LlJ1bldvcmtsb2FkV29ya2Zsb3dSZXNwb25zZSIdisQDGUoCIAFyE1J1bldvcmtsb2FkV29ya2Zsb3caE4rEAw8KDXN0cm9wcHktY2xvdWQyyQEKFFN1aXRlV29ya2Zsb3dTZXJ2aWNlEpsBCg1TdWl0ZVdvcmtmbG93EicuY2xvdWQudjEud29ya2Zsb3cuU3VpdGVXb3JrZmxvd1JlcXVlc3QaKC5jbG91ZC52MS53b3JrZmxvdy5TdWl0ZVdvcmtmbG93UmVzcG9uc2UiN4rEAzNyDVN1aXRlV29ya2Zsb3cqHHN1aXRlLXJ1bi8keyEgc3VpdGVfcnVuLmlkIH0wAkoCIAEaE4rEAw8KDXN0cm9wcHktY2xvdWRCRlpEZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvd29ya2Zsb3diBnByb3RvMw", [file_cloud_v1_common_status, file_cloud_v1_domain_database, file_cloud_v1_domain_suite, file_cloud_v1_domain_test, file_cloud_v1_domain_workload, file_cloud_v1_topology_topology, file_google_protobuf_empty, file_google_protobuf_timestamp, file_temporal_v1_temporal, file_validate_validate]);
+  fileDesc("ChxjbG91ZC92MS93b3JrZmxvdy90ZXN0LnByb3RvEhFjbG91ZC52MS53b3JrZmxvdyJLChNUZXN0V29ya2Zsb3dSZXF1ZXN0EjQKCHRlc3RfcnVuGAEgASgLMhguY2xvdWQudjEuZG9tYWluLlRlc3RSdW5CCPpCBYoBAhABIhYKFFRlc3RXb3JrZmxvd1Jlc3BvbnNlIl0KCFJ1blN0YXRlEicKBnN0YXR1cxgBIAEoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXMSKAoGc3RhZ2VzGAIgAygLMhguY2xvdWQudjEud29ya2Zsb3cuU3RhZ2UiywEKBVN0YWdlEhkKEW5vZGVfZXhlY3V0aW9uX2lkGAEgASgJEgwKBG5hbWUYAiABKAkSJwoGc3RhdHVzGAMgASgOMhcuY2xvdWQudjEuY29tbW9uLlN0YXR1cxIuCgpzdGFydGVkX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIvCgtmaW5pc2hlZF9hdBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDwoHYXR0ZW1wdBgGIAEoDSK5AQodSW5zdGFsbFN0cm9wcHlXb3JrZmxvd1JlcXVlc3QSUAoUaW5mcmFzdHJ1Y3R1cmVfc3RhdGUYASABKAsyKC5jbG91ZC52MS5kZXBsb3ltZW50LkluZnJhc3RydWN0dXJlU3RhdGVCCPpCBYoBAhABEkYKD2RlcGxveW1lbnRfcGxhbhgCIAEoCzIjLmNsb3VkLnYxLmRlcGxveW1lbnQuRGVwbG95bWVudFBsYW5CCPpCBYoBAhABIiAKHkluc3RhbGxTdHJvcHB5V29ya2Zsb3dSZXNwb25zZSLxAQoeSW5zdGFsbERhdGFiYXNlV29ya2Zsb3dSZXF1ZXN0ElAKFGluZnJhc3RydWN0dXJlX3N0YXRlGAEgASgLMiguY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVN0YXRlQgj6QgWKAQIQARI1CghkYXRhYmFzZRgCIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5EYXRhYmFzZUII+kIFigECEAESRgoPZGVwbG95bWVudF9wbGFuGAMgASgLMiMuY2xvdWQudjEuZGVwbG95bWVudC5EZXBsb3ltZW50UGxhbkII+kIFigECEAEiIQofSW5zdGFsbERhdGFiYXNlV29ya2Zsb3dSZXNwb25zZSLnAQoaUnVuV29ya2xvYWRXb3JrZmxvd1JlcXVlc3QSQAoNdG9wb2xvZ3lfc3BlYxgBIAEoCzIfLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5U3BlY0II+kIFigECEAESNQoId29ya2xvYWQYAiABKAsyGS5jbG91ZC52MS5kb21haW4uV29ya2xvYWRCCPpCBYoBAhABElAKFGluZnJhc3RydWN0dXJlX3N0YXRlGAMgASgLMiguY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVN0YXRlQgj6QgWKAQIQASIdChtSdW5Xb3JrbG9hZFdvcmtmbG93UmVzcG9uc2UiTgoUU3VpdGVXb3JrZmxvd1JlcXVlc3QSNgoJc3VpdGVfcnVuGAEgASgLMhkuY2xvdWQudjEuZG9tYWluLlN1aXRlUnVuQgj6QgWKAQIQASIXChVTdWl0ZVdvcmtmbG93UmVzcG9uc2UykAYKC1Rlc3RTZXJ2aWNlEqQBCgxUZXN0V29ya2Zsb3cSJi5jbG91ZC52MS53b3JrZmxvdy5UZXN0V29ya2Zsb3dSZXF1ZXN0GicuY2xvdWQudjEud29ya2Zsb3cuVGVzdFdvcmtmbG93UmVzcG9uc2UiQ4rEAz9yDFRlc3RXb3JrZmxvdyoadGVzdC1ydW4vJHshIHRlc3RfcnVuLmlkIH0wAkoCIAEKDQoLR2V0UnVuU3RhdGUSVQoLR2V0UnVuU3RhdGUSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaGy5jbG91ZC52MS53b3JrZmxvdy5SdW5TdGF0ZSIRmsQDDQoLR2V0UnVuU3RhdGUSqAEKFkluc3RhbGxTdHJvcHB5V29ya2Zsb3cSMC5jbG91ZC52MS53b3JrZmxvdy5JbnN0YWxsU3Ryb3BweVdvcmtmbG93UmVxdWVzdBoxLmNsb3VkLnYxLndvcmtmbG93Lkluc3RhbGxTdHJvcHB5V29ya2Zsb3dSZXNwb25zZSIpisQDJXIWSW5zdGFsbFN0cm9wcHlXb3JrZmxvd1IDCIgOSgYgAwoCCAUSrAEKF0luc3RhbGxEYXRhYmFzZVdvcmtmbG93EjEuY2xvdWQudjEud29ya2Zsb3cuSW5zdGFsbERhdGFiYXNlV29ya2Zsb3dSZXF1ZXN0GjIuY2xvdWQudjEud29ya2Zsb3cuSW5zdGFsbERhdGFiYXNlV29ya2Zsb3dSZXNwb25zZSIqisQDJnIXSW5zdGFsbERhdGFiYXNlV29ya2Zsb3dSAwiIDkoGIAMKAggFEpMBChNSdW5Xb3JrbG9hZFdvcmtmbG93Ei0uY2xvdWQudjEud29ya2Zsb3cuUnVuV29ya2xvYWRXb3JrZmxvd1JlcXVlc3QaLi5jbG91ZC52MS53b3JrZmxvdy5SdW5Xb3JrbG9hZFdvcmtmbG93UmVzcG9uc2UiHYrEAxlyE1J1bldvcmtsb2FkV29ya2Zsb3dKAiABGhOKxAMPCg1zdHJvcHB5LWNsb3VkMskBChRTdWl0ZVdvcmtmbG93U2VydmljZRKbAQoNU3VpdGVXb3JrZmxvdxInLmNsb3VkLnYxLndvcmtmbG93LlN1aXRlV29ya2Zsb3dSZXF1ZXN0GiguY2xvdWQudjEud29ya2Zsb3cuU3VpdGVXb3JrZmxvd1Jlc3BvbnNlIjeKxAMzcg1TdWl0ZVdvcmtmbG93KhxzdWl0ZS1ydW4vJHshIHN1aXRlX3J1bi5pZCB9MAJKAiABGhOKxAMPCg1zdHJvcHB5LWNsb3VkQkZaRGdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL3dvcmtmbG93YgZwcm90bzM", [file_cloud_v1_common_status, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_plan, file_cloud_v1_domain_database, file_cloud_v1_domain_suite, file_cloud_v1_domain_test, file_cloud_v1_domain_workload, file_cloud_v1_topology_topology, file_google_protobuf_empty, file_google_protobuf_timestamp, file_temporal_v1_temporal, file_validate_validate]);
 
 /**
  *
@@ -280,38 +284,52 @@ export const StageSchema: GenMessage<Stage, {jsonType: StageJson, validType: Sta
 
 /**
  *
- * InstallStroppyWorkflowRequest asks to install stroppy on the runner
- * instances. Runner machines are always deployed, so this always runs.
- * Topology is read-only here (baked + runtime).
+ * InstallStroppyWorkflowRequest asks to execute stroppy installation steps on
+ * runner nodes.
  *
  * @generated from message cloud.v1.workflow.InstallStroppyWorkflowRequest
  */
 export type InstallStroppyWorkflowRequest = Message<"cloud.v1.workflow.InstallStroppyWorkflowRequest"> & {
   /**
    *
-   * topology is the (read-only) topology whose runner machines get stroppy.
+   * infrastructure_state is used to route steps to node agents.
    *
-   * @generated from field: cloud.v1.topology.Topology topology = 1;
+   * @generated from field: cloud.v1.deployment.InfrastructureState infrastructure_state = 1;
    */
-  topology?: Topology;
+  infrastructureState?: InfrastructureState;
+
+  /**
+   *
+   * deployment_plan contains the stroppy-related agent steps.
+   *
+   * @generated from field: cloud.v1.deployment.DeploymentPlan deployment_plan = 2;
+   */
+  deploymentPlan?: DeploymentPlan;
 };
 
 /**
  *
- * InstallStroppyWorkflowRequest asks to install stroppy on the runner
- * instances. Runner machines are always deployed, so this always runs.
- * Topology is read-only here (baked + runtime).
+ * InstallStroppyWorkflowRequest asks to execute stroppy installation steps on
+ * runner nodes.
  *
  * @generated from message cloud.v1.workflow.InstallStroppyWorkflowRequest
  */
 export type InstallStroppyWorkflowRequestJson = {
   /**
    *
-   * topology is the (read-only) topology whose runner machines get stroppy.
+   * infrastructure_state is used to route steps to node agents.
    *
-   * @generated from field: cloud.v1.topology.Topology topology = 1;
+   * @generated from field: cloud.v1.deployment.InfrastructureState infrastructure_state = 1;
    */
-  topology?: TopologyJson;
+  infrastructureState?: InfrastructureStateJson;
+
+  /**
+   *
+   * deployment_plan contains the stroppy-related agent steps.
+   *
+   * @generated from field: cloud.v1.deployment.DeploymentPlan deployment_plan = 2;
+   */
+  deploymentPlan?: DeploymentPlanJson;
 };
 
 export type InstallStroppyWorkflowRequestValid = InstallStroppyWorkflowRequest;
@@ -361,11 +379,11 @@ export const InstallStroppyWorkflowResponseSchema: GenMessage<InstallStroppyWork
 export type InstallDatabaseWorkflowRequest = Message<"cloud.v1.workflow.InstallDatabaseWorkflowRequest"> & {
   /**
    *
-   * topology is the topology the database is brought up within.
+   * infrastructure_state is used to route steps to node agents.
    *
-   * @generated from field: cloud.v1.topology.Topology topology = 1;
+   * @generated from field: cloud.v1.deployment.InfrastructureState infrastructure_state = 1;
    */
-  topology?: Topology;
+  infrastructureState?: InfrastructureState;
 
   /**
    *
@@ -374,6 +392,14 @@ export type InstallDatabaseWorkflowRequest = Message<"cloud.v1.workflow.InstallD
    * @generated from field: cloud.v1.domain.Database database = 2;
    */
   database?: Database;
+
+  /**
+   *
+   * deployment_plan contains the database-related agent steps.
+   *
+   * @generated from field: cloud.v1.deployment.DeploymentPlan deployment_plan = 3;
+   */
+  deploymentPlan?: DeploymentPlan;
 };
 
 /**
@@ -387,11 +413,11 @@ export type InstallDatabaseWorkflowRequest = Message<"cloud.v1.workflow.InstallD
 export type InstallDatabaseWorkflowRequestJson = {
   /**
    *
-   * topology is the topology the database is brought up within.
+   * infrastructure_state is used to route steps to node agents.
    *
-   * @generated from field: cloud.v1.topology.Topology topology = 1;
+   * @generated from field: cloud.v1.deployment.InfrastructureState infrastructure_state = 1;
    */
-  topology?: TopologyJson;
+  infrastructureState?: InfrastructureStateJson;
 
   /**
    *
@@ -400,6 +426,14 @@ export type InstallDatabaseWorkflowRequestJson = {
    * @generated from field: cloud.v1.domain.Database database = 2;
    */
   database?: DatabaseJson;
+
+  /**
+   *
+   * deployment_plan contains the database-related agent steps.
+   *
+   * @generated from field: cloud.v1.deployment.DeploymentPlan deployment_plan = 3;
+   */
+  deploymentPlan?: DeploymentPlanJson;
 };
 
 export type InstallDatabaseWorkflowRequestValid = InstallDatabaseWorkflowRequest;
@@ -448,11 +482,11 @@ export const InstallDatabaseWorkflowResponseSchema: GenMessage<InstallDatabaseWo
 export type RunWorkloadWorkflowRequest = Message<"cloud.v1.workflow.RunWorkloadWorkflowRequest"> & {
   /**
    *
-   * topology is the topology the workload runs against.
+   * topology_spec is the logical graph the workload targets.
    *
-   * @generated from field: cloud.v1.topology.Topology topology = 1;
+   * @generated from field: cloud.v1.topology.TopologySpec topology_spec = 1;
    */
-  topology?: Topology;
+  topologySpec?: TopologySpec;
 
   /**
    *
@@ -461,6 +495,15 @@ export type RunWorkloadWorkflowRequest = Message<"cloud.v1.workflow.RunWorkloadW
    * @generated from field: cloud.v1.domain.Workload workload = 2;
    */
   workload?: Workload;
+
+  /**
+   *
+   * infrastructure_state carries runtime endpoints used to render the workload
+   * connection string and route agent calls.
+   *
+   * @generated from field: cloud.v1.deployment.InfrastructureState infrastructure_state = 3;
+   */
+  infrastructureState?: InfrastructureState;
 };
 
 /**
@@ -473,11 +516,11 @@ export type RunWorkloadWorkflowRequest = Message<"cloud.v1.workflow.RunWorkloadW
 export type RunWorkloadWorkflowRequestJson = {
   /**
    *
-   * topology is the topology the workload runs against.
+   * topology_spec is the logical graph the workload targets.
    *
-   * @generated from field: cloud.v1.topology.Topology topology = 1;
+   * @generated from field: cloud.v1.topology.TopologySpec topology_spec = 1;
    */
-  topology?: TopologyJson;
+  topologySpec?: TopologySpecJson;
 
   /**
    *
@@ -486,6 +529,15 @@ export type RunWorkloadWorkflowRequestJson = {
    * @generated from field: cloud.v1.domain.Workload workload = 2;
    */
   workload?: WorkloadJson;
+
+  /**
+   *
+   * infrastructure_state carries runtime endpoints used to render the workload
+   * connection string and route agent calls.
+   *
+   * @generated from field: cloud.v1.deployment.InfrastructureState infrastructure_state = 3;
+   */
+  infrastructureState?: InfrastructureStateJson;
 };
 
 export type RunWorkloadWorkflowRequestValid = RunWorkloadWorkflowRequest;

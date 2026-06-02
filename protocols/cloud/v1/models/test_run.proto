@@ -5,6 +5,8 @@ package cloud.v1.models;
 import "cloud/v1/common/entity.proto";
 import "cloud/v1/common/status.proto";
 import "cloud/v1/common/trigger.proto";
+import "cloud/v1/deployment/infrastructure.proto";
+import "cloud/v1/deployment/plan.proto";
 import "cloud/v1/deployment/provider.proto";
 import "cloud/v1/domain/database.proto";
 import "cloud/v1/domain/test.proto";
@@ -15,14 +17,14 @@ import "validate/validate.proto";
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models";
 
 /*
-    TestRunRecord is a persisted test execution (one table). The baked spec is the
-    input to TestWorkflow; status tracks the run lifecycle; suite_run_id links it to
-    a parent SuiteRunRecord when the run is part of a suite (empty = standalone).
+    TestRunRecord is a persisted test execution. spec is the immutable workflow
+    input. infrastructure_state and deployment_plan are staged workflow artifacts
+    filled as the run progresses.
 
-    `spec` is a baked Struct and is NOT queryable. For the runs table (filter / sort
-    / display of db, workload, preset, topology, progress, duration, ...) the server
-    DENORMALIZES those into flat columns in `summary`, filled at Start and updated
-    as the run progresses.
+    For the runs table (filter / sort / display of db, workload, preset,
+    topology, progress, duration, ...) the server DENORMALIZES queryable facets
+    into flat columns in `summary`, filled at Start and updated as the run
+    progresses.
 
     Runtime observations (logs/metrics) are keyed by the run id directly (no dag
     id) — see monitor/logs.proto, monitor/metrics.proto.
@@ -80,6 +82,16 @@ message TestRunRecord {
         Temporal).
      */
     Summary summary = 6;
+    /*
+        infrastructure_state is provider output (resource ids, IPs/endpoints,
+        allocated quotas), filled after infrastructure deployment.
+     */
+    deployment.InfrastructureState infrastructure_state = 10;
+    /*
+        deployment_plan is the rendered agent execution plan, then updated with
+        execution statuses.
+     */
+    deployment.DeploymentPlan deployment_plan = 11;
 
     /*
         Summary is the flat, indexed projection of the run used by the table:

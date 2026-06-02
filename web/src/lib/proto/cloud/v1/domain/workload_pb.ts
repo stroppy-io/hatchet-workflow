@@ -2,76 +2,177 @@
 // @generated from file cloud/v1/domain/workload.proto (package cloud.v1.domain, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
-import type { Baked, BakedJson } from "../../../schemapb/schema_pb.ts";
-import { file_schemapb_schema } from "../../../schemapb/schema_pb.ts";
+import type { GenEnum, GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
+import { enumDesc, fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Tags, TagsJson } from "../common/tags_pb.ts";
 import { file_cloud_v1_common_tags } from "../common/tags_pb.ts";
+import { file_validate_validate } from "../../../validate/validate_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file cloud/v1/domain/workload.proto.
  */
 export const file_cloud_v1_domain_workload: GenFile = /*@__PURE__*/
-  fileDesc("Ch5jbG91ZC92MS9kb21haW4vd29ya2xvYWQucHJvdG8SD2Nsb3VkLnYxLmRvbWFpbiJpCghXb3JrbG9hZBIXCg9zdHJvcHB5X3ZlcnNpb24YASABKAkSHwoGcGFyYW1zGAIgASgLMg8uc2NoZW1hcGIuQmFrZWQSIwoEdGFncxgDIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzQkRaQmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2RvbWFpbmIGcHJvdG8z", [file_schemapb_schema, file_cloud_v1_common_tags]);
+  fileDesc("Ch5jbG91ZC92MS9kb21haW4vd29ya2xvYWQucHJvdG8SD2Nsb3VkLnYxLmRvbWFpbiLXCQoIV29ya2xvYWQSIAoPc3Ryb3BweV92ZXJzaW9uGAEgASgJQgf6QgRyAhhAEhoKBnNjcmlwdBgCIAEoCUIK+kIHcgUYgAQQARIVCgNzcWwYAyABKAlCCPpCBXIDGIAEEj4KCHByb3RvY29sGAQgASgOMiIuY2xvdWQudjEuZG9tYWluLldvcmtsb2FkLlByb3RvY29sQgj6QgWCAQIQARJACglleGVjdXRpb24YBSABKAsyIy5jbG91ZC52MS5kb21haW4uV29ya2xvYWQuRXhlY3V0aW9uQgj6QgWKAQIQARI4CgpwYXJhbWV0ZXJzGAYgASgLMiQuY2xvdWQudjEuZG9tYWluLldvcmtsb2FkLlBhcmFtZXRlcnMSPwoFZmlsZXMYByADKAsyJi5jbG91ZC52MS5kb21haW4uV29ya2xvYWQuV29ya2xvYWRGaWxlQgj6QgWSAQIQQBIjCgR0YWdzGAggASgLMhUuY2xvdWQudjEuY29tbW9uLlRhZ3MasgEKCUV4ZWN1dGlvbhIYCgN2dXMYASABKA1CC/pCCCoGGKCNBigBEjgKCGR1cmF0aW9uGAIgASgJQiT6QiFyHxggMhteKFswLTldKyhuc3x1c3xtc3xzfG18aCkpKyRIABIdCgppdGVyYXRpb25zGAMgASgNQgf6QgQqAigBSAASDQoFcXVpZXQYBCABKAgSFQoNbm9fdGhyZXNob2xkcxgFIAEoCEIMCgVsaW1pdBID+EIBGoMDCgpQYXJhbWV0ZXJzEhwKCXBvb2xfc2l6ZRgBIAEoDUIJ+kIGKgQY//8DEi0KDHNjYWxlX2ZhY3RvchgCIAEoAUIX+kIUEhIZAAAAAABq+EAhAAAAAAAAAAASJgoVZGVmYXVsdF9pbnNlcnRfbWV0aG9kGAMgASgJQgf6QgRyAhhAEmkKA2VudhgEIAMoCzItLmNsb3VkLnYxLmRvbWFpbi5Xb3JrbG9hZC5QYXJhbWV0ZXJzLkVudkVudHJ5Qi36QiqaASciG3IZEAEYgAIyEl5bQS1aX11bQS1aMC05X10qJCoFcgMYgEAQgAISMgoFc3RlcHMYBSADKAlCI/pCIJIBHRAgIhlyFzIRXlthLXpdW2EtejAtOV9dKiQQARhAEjUKCG5vX3N0ZXBzGAYgAygJQiP6QiCSAR0QICIZchcQARhAMhFeW2Etel1bYS16MC05X10qJBoqCghFbnZFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGm8KDFdvcmtsb2FkRmlsZRIrCgRuYW1lGAEgASgJQh36QhpyGBABGIACMhFeW0EtWmEtejAtOS5fLV0rJBIVCgRraW5kGAIgASgJQgf6QgRyAhggEhsKB2NvbnRlbnQYAyABKAlCCvpCB3IFKICAgAIipwEKCFByb3RvY29sEhgKFFBST1RPQ09MX1VOU1BFQ0lGSUVEEAASDwoLUFJPVE9DT0xfUEcQARISCg5QUk9UT0NPTF9NWVNRTBACEhUKEVBST1RPQ09MX1BJQ09EQVRBEAMSFQoRUFJPVE9DT0xfWURCX0dSUEMQBBIWChJQUk9UT0NPTF9ZREJfR1JQQ1MQBRIWChJQUk9UT0NPTF9DT0NLUk9BQ0gQB0JEWkJnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9kb21haW5iBnByb3RvMw", [file_cloud_v1_common_tags, file_validate_validate]);
 
 /**
  *
- * Workload describes the stroppy load to run against the database under test:
- * the stroppy binary version plus its sealed, schema-backed parameters.
+ * Workload is the cloud-facing workload DTO sent by the wizard — ONLY the load
+ * (script, protocol, k6 profile, parameters, run-scoped files). DB engine
+ * install/packages belong to the Database intent, not here; stroppy_version is
+ * just a selector for which stroppy the load needs. The backend renders this into
+ * stroppy's RunConfig protojson before launching.
+ *
+ * These are the params the user supplies AROUND the probe: the wizard sends the
+ * base fields (version, script, sql, files, protocol, scale_factor, pool_size) to
+ * `stroppy probe`; the frontend renders the discovered structure (env
+ * declarations, steps, sql sections, driver setups) itself; the user's choices
+ * land back in Parameters (env values, steps) + Execution. The probe OUTPUT is
+ * intentionally NOT modelled in proto — it is stroppy-version-specific and
+ * rendered client-side.
+ *
+ * protocol x engine support and the (kind, protocol, script) compatibility matrix
+ * stay backend data + validation, enforced when a preset binds Database.Kind to
+ * Workload.Protocol — intentionally not modeled in proto.
  *
  * @generated from message cloud.v1.domain.Workload
  */
 export type Workload = Message<"cloud.v1.domain.Workload"> & {
   /**
-   * stroppy_version is the stroppy binary version to run. 
+   * stroppy_version is the stroppy binary version/tag the load needs. 
    *
    * @generated from field: string stroppy_version = 1;
    */
   stroppyVersion: string;
 
   /**
-   * params is the sealed, schema-backed stroppy workload configuration. 
+   * script is a stroppy-accepted script/preset/path/inline SQL,
+   * e.g. "tpcc/tx", "tpcds", "./bench.ts", "queries.sql". 
    *
-   * @generated from field: schemapb.Baked params = 2;
+   * @generated from field: string script = 2;
    */
-  params?: Baked;
+  script: string;
+
+  /**
+   * sql is an optional second stroppy positional arg, e.g. an SQL probe file. 
+   *
+   * @generated from field: string sql = 3;
+   */
+  sql: string;
+
+  /**
+   * protocol selects wire format. UNSPECIFIED means backend default for Database.Kind. 
+   *
+   * @generated from field: cloud.v1.domain.Workload.Protocol protocol = 4;
+   */
+  protocol: Workload_Protocol;
+
+  /**
+   * execution is the k6 execution profile. 
+   *
+   * @generated from field: cloud.v1.domain.Workload.Execution execution = 5;
+   */
+  execution?: Workload_Execution;
+
+  /**
+   * parameters are workload/script parameters. 
+   *
+   * @generated from field: cloud.v1.domain.Workload.Parameters parameters = 6;
+   */
+  parameters?: Workload_Parameters;
+
+  /**
+   * files are run-scoped files staged next to stroppy-config.json. 
+   *
+   * @generated from field: repeated cloud.v1.domain.Workload.WorkloadFile files = 7;
+   */
+  files: Workload_WorkloadFile[];
 
   /**
    * tags are free-form metadata attached to the workload. 
    *
-   * @generated from field: cloud.v1.common.Tags tags = 3;
+   * @generated from field: cloud.v1.common.Tags tags = 8;
    */
   tags?: Tags;
 };
 
 /**
  *
- * Workload describes the stroppy load to run against the database under test:
- * the stroppy binary version plus its sealed, schema-backed parameters.
+ * Workload is the cloud-facing workload DTO sent by the wizard — ONLY the load
+ * (script, protocol, k6 profile, parameters, run-scoped files). DB engine
+ * install/packages belong to the Database intent, not here; stroppy_version is
+ * just a selector for which stroppy the load needs. The backend renders this into
+ * stroppy's RunConfig protojson before launching.
+ *
+ * These are the params the user supplies AROUND the probe: the wizard sends the
+ * base fields (version, script, sql, files, protocol, scale_factor, pool_size) to
+ * `stroppy probe`; the frontend renders the discovered structure (env
+ * declarations, steps, sql sections, driver setups) itself; the user's choices
+ * land back in Parameters (env values, steps) + Execution. The probe OUTPUT is
+ * intentionally NOT modelled in proto — it is stroppy-version-specific and
+ * rendered client-side.
+ *
+ * protocol x engine support and the (kind, protocol, script) compatibility matrix
+ * stay backend data + validation, enforced when a preset binds Database.Kind to
+ * Workload.Protocol — intentionally not modeled in proto.
  *
  * @generated from message cloud.v1.domain.Workload
  */
 export type WorkloadJson = {
   /**
-   * stroppy_version is the stroppy binary version to run. 
+   * stroppy_version is the stroppy binary version/tag the load needs. 
    *
    * @generated from field: string stroppy_version = 1;
    */
   stroppyVersion?: string;
 
   /**
-   * params is the sealed, schema-backed stroppy workload configuration. 
+   * script is a stroppy-accepted script/preset/path/inline SQL,
+   * e.g. "tpcc/tx", "tpcds", "./bench.ts", "queries.sql". 
    *
-   * @generated from field: schemapb.Baked params = 2;
+   * @generated from field: string script = 2;
    */
-  params?: BakedJson;
+  script?: string;
+
+  /**
+   * sql is an optional second stroppy positional arg, e.g. an SQL probe file. 
+   *
+   * @generated from field: string sql = 3;
+   */
+  sql?: string;
+
+  /**
+   * protocol selects wire format. UNSPECIFIED means backend default for Database.Kind. 
+   *
+   * @generated from field: cloud.v1.domain.Workload.Protocol protocol = 4;
+   */
+  protocol?: Workload_ProtocolJson;
+
+  /**
+   * execution is the k6 execution profile. 
+   *
+   * @generated from field: cloud.v1.domain.Workload.Execution execution = 5;
+   */
+  execution?: Workload_ExecutionJson;
+
+  /**
+   * parameters are workload/script parameters. 
+   *
+   * @generated from field: cloud.v1.domain.Workload.Parameters parameters = 6;
+   */
+  parameters?: Workload_ParametersJson;
+
+  /**
+   * files are run-scoped files staged next to stroppy-config.json. 
+   *
+   * @generated from field: repeated cloud.v1.domain.Workload.WorkloadFile files = 7;
+   */
+  files?: Workload_WorkloadFileJson[];
 
   /**
    * tags are free-form metadata attached to the workload. 
    *
-   * @generated from field: cloud.v1.common.Tags tags = 3;
+   * @generated from field: cloud.v1.common.Tags tags = 8;
    */
   tags?: TagsJson;
 };
@@ -84,4 +185,363 @@ export type WorkloadValid = Workload;
  */
 export const WorkloadSchema: GenMessage<Workload, {jsonType: WorkloadJson, validType: WorkloadValid}> = /*@__PURE__*/
   messageDesc(file_cloud_v1_domain_workload, 0);
+
+/**
+ *
+ * Execution is the k6 execution profile. Limit is exclusive: duration OR
+ * iterations.
+ *
+ * @generated from message cloud.v1.domain.Workload.Execution
+ */
+export type Workload_Execution = Message<"cloud.v1.domain.Workload.Execution"> & {
+  /**
+   * vus is virtual users (k6 --vus). 
+   *
+   * @generated from field: uint32 vus = 1;
+   */
+  vus: number;
+
+  /**
+   * @generated from oneof cloud.v1.domain.Workload.Execution.limit
+   */
+  limit: {
+    /**
+     * duration maps to k6 --duration, format like "10m", "1h30m". 
+     *
+     * @generated from field: string duration = 2;
+     */
+    value: string;
+    case: "duration";
+  } | {
+    /**
+     * iterations maps to k6 --iterations, fixed iteration count. 
+     *
+     * @generated from field: uint32 iterations = 3;
+     */
+    value: number;
+    case: "iterations";
+  } | { case: undefined; value?: undefined };
+
+  /**
+   * quiet maps to k6 -q. 
+   *
+   * @generated from field: bool quiet = 4;
+   */
+  quiet: boolean;
+
+  /**
+   * no_thresholds maps to k6 --no-thresholds. 
+   *
+   * @generated from field: bool no_thresholds = 5;
+   */
+  noThresholds: boolean;
+};
+
+/**
+ *
+ * Execution is the k6 execution profile. Limit is exclusive: duration OR
+ * iterations.
+ *
+ * @generated from message cloud.v1.domain.Workload.Execution
+ */
+export type Workload_ExecutionJson = {
+  /**
+   * vus is virtual users (k6 --vus). 
+   *
+   * @generated from field: uint32 vus = 1;
+   */
+  vus?: number;
+
+  /**
+   * duration maps to k6 --duration, format like "10m", "1h30m". 
+   *
+   * @generated from field: string duration = 2;
+   */
+  duration?: string;
+
+  /**
+   * iterations maps to k6 --iterations, fixed iteration count. 
+   *
+   * @generated from field: uint32 iterations = 3;
+   */
+  iterations?: number;
+
+  /**
+   * quiet maps to k6 -q. 
+   *
+   * @generated from field: bool quiet = 4;
+   */
+  quiet?: boolean;
+
+  /**
+   * no_thresholds maps to k6 --no-thresholds. 
+   *
+   * @generated from field: bool no_thresholds = 5;
+   */
+  noThresholds?: boolean;
+};
+
+export type Workload_ExecutionValid = Workload_Execution;
+
+/**
+ * Describes the message cloud.v1.domain.Workload.Execution.
+ * Use `create(Workload_ExecutionSchema)` to create a new message.
+ */
+export const Workload_ExecutionSchema: GenMessage<Workload_Execution, {jsonType: Workload_ExecutionJson, validType: Workload_ExecutionValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_domain_workload, 0, 0);
+
+/**
+ *
+ * Parameters are workload/script parameters rendered into stroppy env, driver
+ * config, and step filters.
+ *
+ * @generated from message cloud.v1.domain.Workload.Parameters
+ */
+export type Workload_Parameters = Message<"cloud.v1.domain.Workload.Parameters"> & {
+  /**
+   * pool_size is DB connection pool size on the stroppy side. 
+   *
+   * @generated from field: uint32 pool_size = 1;
+   */
+  poolSize: number;
+
+  /**
+   * scale_factor is TPC-C warehouses / TPC-B branches / TPC-H scale factor.
+   * Fractional values are valid for smoke tests, e.g. TPCH SCALE_FACTOR=0.01. 
+   *
+   * @generated from field: double scale_factor = 2;
+   */
+  scaleFactor: number;
+
+  /**
+   * default_insert_method overrides insert method. "native" by default. 
+   *
+   * @generated from field: string default_insert_method = 3;
+   */
+  defaultInsertMethod: string;
+
+  /**
+   * env are script-specific env overrides (POSIX-style key) — the values the
+   * user filled for the env declarations the probe reported. 
+   *
+   * @generated from field: map<string, string> env = 4;
+   */
+  env: { [key: string]: string };
+
+  /**
+   * steps is a phase allowlist (e.g. create_schema, load_data, workload).
+   * Mutually exclusive with no_steps — backend enforces. 
+   *
+   * @generated from field: repeated string steps = 5;
+   */
+  steps: string[];
+
+  /**
+   * no_steps is a phase blocklist. Mutually exclusive with steps. 
+   *
+   * @generated from field: repeated string no_steps = 6;
+   */
+  noSteps: string[];
+};
+
+/**
+ *
+ * Parameters are workload/script parameters rendered into stroppy env, driver
+ * config, and step filters.
+ *
+ * @generated from message cloud.v1.domain.Workload.Parameters
+ */
+export type Workload_ParametersJson = {
+  /**
+   * pool_size is DB connection pool size on the stroppy side. 
+   *
+   * @generated from field: uint32 pool_size = 1;
+   */
+  poolSize?: number;
+
+  /**
+   * scale_factor is TPC-C warehouses / TPC-B branches / TPC-H scale factor.
+   * Fractional values are valid for smoke tests, e.g. TPCH SCALE_FACTOR=0.01. 
+   *
+   * @generated from field: double scale_factor = 2;
+   */
+  scaleFactor?: number | "NaN" | "Infinity" | "-Infinity";
+
+  /**
+   * default_insert_method overrides insert method. "native" by default. 
+   *
+   * @generated from field: string default_insert_method = 3;
+   */
+  defaultInsertMethod?: string;
+
+  /**
+   * env are script-specific env overrides (POSIX-style key) — the values the
+   * user filled for the env declarations the probe reported. 
+   *
+   * @generated from field: map<string, string> env = 4;
+   */
+  env?: { [key: string]: string };
+
+  /**
+   * steps is a phase allowlist (e.g. create_schema, load_data, workload).
+   * Mutually exclusive with no_steps — backend enforces. 
+   *
+   * @generated from field: repeated string steps = 5;
+   */
+  steps?: string[];
+
+  /**
+   * no_steps is a phase blocklist. Mutually exclusive with steps. 
+   *
+   * @generated from field: repeated string no_steps = 6;
+   */
+  noSteps?: string[];
+};
+
+export type Workload_ParametersValid = Workload_Parameters;
+
+/**
+ * Describes the message cloud.v1.domain.Workload.Parameters.
+ * Use `create(Workload_ParametersSchema)` to create a new message.
+ */
+export const Workload_ParametersSchema: GenMessage<Workload_Parameters, {jsonType: Workload_ParametersJson, validType: Workload_ParametersValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_domain_workload, 0, 1);
+
+/**
+ * WorkloadFile is a run-scoped file staged for stroppy (SQL probes, support files). 
+ *
+ * @generated from message cloud.v1.domain.Workload.WorkloadFile
+ */
+export type Workload_WorkloadFile = Message<"cloud.v1.domain.Workload.WorkloadFile"> & {
+  /**
+   * name is the file basename inside the run dir. 
+   *
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * kind tags file usage, e.g. "sql", "config". 
+   *
+   * @generated from field: string kind = 2;
+   */
+  kind: string;
+
+  /**
+   * content is the raw file content. 
+   *
+   * @generated from field: string content = 3;
+   */
+  content: string;
+};
+
+/**
+ * WorkloadFile is a run-scoped file staged for stroppy (SQL probes, support files). 
+ *
+ * @generated from message cloud.v1.domain.Workload.WorkloadFile
+ */
+export type Workload_WorkloadFileJson = {
+  /**
+   * name is the file basename inside the run dir. 
+   *
+   * @generated from field: string name = 1;
+   */
+  name?: string;
+
+  /**
+   * kind tags file usage, e.g. "sql", "config". 
+   *
+   * @generated from field: string kind = 2;
+   */
+  kind?: string;
+
+  /**
+   * content is the raw file content. 
+   *
+   * @generated from field: string content = 3;
+   */
+  content?: string;
+};
+
+export type Workload_WorkloadFileValid = Workload_WorkloadFile;
+
+/**
+ * Describes the message cloud.v1.domain.Workload.WorkloadFile.
+ * Use `create(Workload_WorkloadFileSchema)` to create a new message.
+ */
+export const Workload_WorkloadFileSchema: GenMessage<Workload_WorkloadFile, {jsonType: Workload_WorkloadFileJson, validType: Workload_WorkloadFileValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_domain_workload, 0, 2);
+
+/**
+ *
+ * Protocol is the cloud-side wire-format selector. The backend maps this plus
+ * Database.Kind into stroppy driverType/url in stroppy-config.json.
+ *
+ * @generated from enum cloud.v1.domain.Workload.Protocol
+ */
+export enum Workload_Protocol {
+  /**
+   * UNSPECIFIED defers to backend default per Database.Kind. 
+   *
+   * @generated from enum value: PROTOCOL_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * PG is Postgres / CockroachDB / Yugabyte pg-wire. 
+   *
+   * @generated from enum value: PROTOCOL_PG = 1;
+   */
+  PG = 1,
+
+  /**
+   * MYSQL is MySQL / MariaDB / Percona / Vitess. 
+   *
+   * @generated from enum value: PROTOCOL_MYSQL = 2;
+   */
+  MYSQL = 2,
+
+  /**
+   * PICODATA is Picodata-aware pg-wire routing. 
+   *
+   * @generated from enum value: PROTOCOL_PICODATA = 3;
+   */
+  PICODATA = 3,
+
+  /**
+   * YDB_GRPC is YDB native gRPC. 
+   *
+   * @generated from enum value: PROTOCOL_YDB_GRPC = 4;
+   */
+  YDB_GRPC = 4,
+
+  /**
+   * YDB_GRPCS is YDB native gRPC over TLS. 
+   *
+   * @generated from enum value: PROTOCOL_YDB_GRPCS = 5;
+   */
+  YDB_GRPCS = 5,
+
+  /**
+   * COCKROACH is CockroachDB pg-wire on its own default port. 
+   *
+   * @generated from enum value: PROTOCOL_COCKROACH = 7;
+   */
+  COCKROACH = 7,
+}
+
+/**
+ *
+ * Protocol is the cloud-side wire-format selector. The backend maps this plus
+ * Database.Kind into stroppy driverType/url in stroppy-config.json.
+ *
+ * @generated from enum cloud.v1.domain.Workload.Protocol
+ */
+export type Workload_ProtocolJson = "PROTOCOL_UNSPECIFIED" | "PROTOCOL_PG" | "PROTOCOL_MYSQL" | "PROTOCOL_PICODATA" | "PROTOCOL_YDB_GRPC" | "PROTOCOL_YDB_GRPCS" | "PROTOCOL_COCKROACH";
+
+/**
+ * Describes the enum cloud.v1.domain.Workload.Protocol.
+ */
+export const Workload_ProtocolSchema: GenEnum<Workload_Protocol, Workload_ProtocolJson> = /*@__PURE__*/
+  enumDesc(file_cloud_v1_domain_workload, 0, 0);
 

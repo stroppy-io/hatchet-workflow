@@ -107,38 +107,33 @@ func (m *TenantSettingsRecord) validate(all bool) error {
 
 	// no validation rules for RunRetentionDays
 
-	for idx, item := range m.GetProviders() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, TenantSettingsRecordValidationError{
-						field:  fmt.Sprintf("Providers[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, TenantSettingsRecordValidationError{
-						field:  fmt.Sprintf("Providers[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return TenantSettingsRecordValidationError{
-					field:  fmt.Sprintf("Providers[%v]", idx),
+	if all {
+		switch v := interface{}(m.GetYandexSettings()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TenantSettingsRecordValidationError{
+					field:  "YandexSettings",
 					reason: "embedded message failed validation",
 					cause:  err,
-				}
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TenantSettingsRecordValidationError{
+					field:  "YandexSettings",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
 			}
 		}
-
+	} else if v, ok := interface{}(m.GetYandexSettings()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TenantSettingsRecordValidationError{
+				field:  "YandexSettings",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
 	}
 
 	if m.DefaultInTenantRating != nil {

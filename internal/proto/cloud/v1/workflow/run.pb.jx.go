@@ -6,6 +6,9 @@ import (
 	fmt "fmt"
 	jx "github.com/go-faster/jx"
 	jxpb "github.com/gopherex/protoc-gen-go-jx/jxpb"
+	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
+	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
+	topology "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology"
 )
 
 func (m *RunConfig) Encode(e *jx.Encoder) {
@@ -19,17 +22,33 @@ func (m *RunConfig) Encode(e *jx.Encoder) {
 		e.FieldStart("id")
 		e.Str(m.Id)
 	}
-	if m.Provider != "" {
-		e.FieldStart("provider")
-		e.Str(m.Provider)
+	if m.Database != nil {
+		e.FieldStart("database")
+		jxpb.EncMessage(e, m.Database)
 	}
-	if m.ExternalDb != false {
-		e.FieldStart("externalDb")
-		e.Bool(m.ExternalDb)
+	if m.Workload != nil {
+		e.FieldStart("workload")
+		jxpb.EncMessage(e, m.Workload)
 	}
-	if len(m.ConfigJson) > 0 {
-		e.FieldStart("configJson")
-		jxpb.EncBytes(e, m.ConfigJson)
+	if m.TopologySpec != nil {
+		e.FieldStart("topologySpec")
+		jxpb.EncMessage(e, m.TopologySpec)
+	}
+	if m.InfrastructurePlan != nil {
+		e.FieldStart("infrastructurePlan")
+		jxpb.EncMessage(e, m.InfrastructurePlan)
+	}
+	if m.InfrastructureState != nil {
+		e.FieldStart("infrastructureState")
+		jxpb.EncMessage(e, m.InfrastructureState)
+	}
+	if m.DeploymentPlan != nil {
+		e.FieldStart("deploymentPlan")
+		jxpb.EncMessage(e, m.DeploymentPlan)
+	}
+	if m.RenderOverrides != nil {
+		e.FieldStart("renderOverrides")
+		jxpb.EncMessage(e, m.RenderOverrides)
 	}
 	e.ObjEnd()
 }
@@ -52,47 +71,96 @@ func (m *RunConfig) Decode(d *jx.Decoder) error {
 			}
 			m.Id = v
 			return nil
-		case "provider":
-			if seen["Provider"] {
+		case "database":
+			if seen["Database"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["Provider"] = true
+			seen["Database"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			v, err := d.Str()
-			if err != nil {
+			m.Database = &domain.Database{}
+			if err := jxpb.DecMessage(d, m.Database); err != nil {
 				return err
 			}
-			m.Provider = v
 			return nil
-		case "externalDb", "external_db":
-			if seen["ExternalDb"] {
+		case "workload":
+			if seen["Workload"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["ExternalDb"] = true
+			seen["Workload"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			v, err := d.Bool()
-			if err != nil {
+			m.Workload = &domain.Workload{}
+			if err := jxpb.DecMessage(d, m.Workload); err != nil {
 				return err
 			}
-			m.ExternalDb = v
 			return nil
-		case "configJson", "config_json":
-			if seen["ConfigJson"] {
+		case "topologySpec", "topology_spec":
+			if seen["TopologySpec"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["ConfigJson"] = true
+			seen["TopologySpec"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			v, err := jxpb.DecBytes(d)
-			if err != nil {
+			m.TopologySpec = &topology.TopologySpec{}
+			if err := jxpb.DecMessage(d, m.TopologySpec); err != nil {
 				return err
 			}
-			m.ConfigJson = v
+			return nil
+		case "infrastructurePlan", "infrastructure_plan":
+			if seen["InfrastructurePlan"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["InfrastructurePlan"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.InfrastructurePlan = &deployment.InfrastructurePlan{}
+			if err := jxpb.DecMessage(d, m.InfrastructurePlan); err != nil {
+				return err
+			}
+			return nil
+		case "infrastructureState", "infrastructure_state":
+			if seen["InfrastructureState"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["InfrastructureState"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.InfrastructureState = &deployment.InfrastructureState{}
+			if err := jxpb.DecMessage(d, m.InfrastructureState); err != nil {
+				return err
+			}
+			return nil
+		case "deploymentPlan", "deployment_plan":
+			if seen["DeploymentPlan"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["DeploymentPlan"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.DeploymentPlan = &deployment.DeploymentPlan{}
+			if err := jxpb.DecMessage(d, m.DeploymentPlan); err != nil {
+				return err
+			}
+			return nil
+		case "renderOverrides", "render_overrides":
+			if seen["RenderOverrides"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["RenderOverrides"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.RenderOverrides = &deployment.RenderOverrideSet{}
+			if err := jxpb.DecMessage(d, m.RenderOverrides); err != nil {
+				return err
+			}
 			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)
@@ -107,296 +175,6 @@ func (m *RunConfig) MarshalJSON() ([]byte, error) {
 }
 
 func (m *RunConfig) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return m.Decode(d)
-}
-
-func (m *Target) Encode(e *jx.Encoder) {
-	if m == nil {
-		e.ObjStart()
-		e.ObjEnd()
-		return
-	}
-	e.ObjStart()
-	if m.Id != "" {
-		e.FieldStart("id")
-		e.Str(m.Id)
-	}
-	if m.Host != "" {
-		e.FieldStart("host")
-		e.Str(m.Host)
-	}
-	if m.InternalHost != "" {
-		e.FieldStart("internalHost")
-		e.Str(m.InternalHost)
-	}
-	if m.AgentPort != 0 {
-		e.FieldStart("agentPort")
-		e.Int32(m.AgentPort)
-	}
-	if m.Zone != "" {
-		e.FieldStart("zone")
-		e.Str(m.Zone)
-	}
-	if m.Role != "" {
-		e.FieldStart("role")
-		e.Str(m.Role)
-	}
-	e.ObjEnd()
-}
-
-func (m *Target) Decode(d *jx.Decoder) error {
-	seen := map[string]bool{}
-	return d.Obj(func(d *jx.Decoder, key string) error {
-		switch key {
-		case "id":
-			if seen["Id"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["Id"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			v, err := d.Str()
-			if err != nil {
-				return err
-			}
-			m.Id = v
-			return nil
-		case "host":
-			if seen["Host"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["Host"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			v, err := d.Str()
-			if err != nil {
-				return err
-			}
-			m.Host = v
-			return nil
-		case "internalHost", "internal_host":
-			if seen["InternalHost"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["InternalHost"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			v, err := d.Str()
-			if err != nil {
-				return err
-			}
-			m.InternalHost = v
-			return nil
-		case "agentPort", "agent_port":
-			if seen["AgentPort"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["AgentPort"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			v, err := jxpb.DecInt32(d)
-			if err != nil {
-				return err
-			}
-			m.AgentPort = v
-			return nil
-		case "zone":
-			if seen["Zone"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["Zone"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			v, err := d.Str()
-			if err != nil {
-				return err
-			}
-			m.Zone = v
-			return nil
-		case "role":
-			if seen["Role"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["Role"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			v, err := d.Str()
-			if err != nil {
-				return err
-			}
-			m.Role = v
-			return nil
-		default:
-			return fmt.Errorf("unknown field %q", key)
-		}
-	})
-}
-
-func (m *Target) MarshalJSON() ([]byte, error) {
-	var e jx.Encoder
-	m.Encode(&e)
-	return e.Bytes(), nil
-}
-
-func (m *Target) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return m.Decode(d)
-}
-
-func (m *Deployment) Encode(e *jx.Encoder) {
-	if m == nil {
-		e.ObjStart()
-		e.ObjEnd()
-		return
-	}
-	e.ObjStart()
-	if len(m.Targets) > 0 {
-		e.FieldStart("targets")
-		e.ArrStart()
-		for _, v := range m.Targets {
-			v.Encode(e)
-		}
-		e.ArrEnd()
-	}
-	if m.DbHost != "" {
-		e.FieldStart("dbHost")
-		e.Str(m.DbHost)
-	}
-	if m.DbPort != 0 {
-		e.FieldStart("dbPort")
-		e.Int32(m.DbPort)
-	}
-	if len(m.ContainerIds) > 0 {
-		e.FieldStart("containerIds")
-		e.ArrStart()
-		for _, v := range m.ContainerIds {
-			e.Str(v)
-		}
-		e.ArrEnd()
-	}
-	if m.NetworkId != "" {
-		e.FieldStart("networkId")
-		e.Str(m.NetworkId)
-	}
-	if m.TerraformWdId != "" {
-		e.FieldStart("terraformWdId")
-		e.Str(m.TerraformWdId)
-	}
-	e.ObjEnd()
-}
-
-func (m *Deployment) Decode(d *jx.Decoder) error {
-	seen := map[string]bool{}
-	return d.Obj(func(d *jx.Decoder, key string) error {
-		switch key {
-		case "targets":
-			if seen["Targets"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["Targets"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			return d.Arr(func(d *jx.Decoder) error {
-				el := &Target{}
-				if err := el.Decode(d); err != nil {
-					return err
-				}
-				m.Targets = append(m.Targets, el)
-				return nil
-			})
-		case "dbHost", "db_host":
-			if seen["DbHost"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["DbHost"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			v, err := d.Str()
-			if err != nil {
-				return err
-			}
-			m.DbHost = v
-			return nil
-		case "dbPort", "db_port":
-			if seen["DbPort"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["DbPort"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			v, err := jxpb.DecInt32(d)
-			if err != nil {
-				return err
-			}
-			m.DbPort = v
-			return nil
-		case "containerIds", "container_ids":
-			if seen["ContainerIds"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["ContainerIds"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			return d.Arr(func(d *jx.Decoder) error {
-				v, err := d.Str()
-				if err != nil {
-					return err
-				}
-				m.ContainerIds = append(m.ContainerIds, v)
-				return nil
-			})
-		case "networkId", "network_id":
-			if seen["NetworkId"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["NetworkId"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			v, err := d.Str()
-			if err != nil {
-				return err
-			}
-			m.NetworkId = v
-			return nil
-		case "terraformWdId", "terraform_wd_id":
-			if seen["TerraformWdId"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["TerraformWdId"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			v, err := d.Str()
-			if err != nil {
-				return err
-			}
-			m.TerraformWdId = v
-			return nil
-		default:
-			return fmt.Errorf("unknown field %q", key)
-		}
-	})
-}
-
-func (m *Deployment) MarshalJSON() ([]byte, error) {
-	var e jx.Encoder
-	m.Encode(&e)
-	return e.Bytes(), nil
-}
-
-func (m *Deployment) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return m.Decode(d)
 }

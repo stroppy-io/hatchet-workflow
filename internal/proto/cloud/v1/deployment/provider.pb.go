@@ -7,7 +7,6 @@
 package deployment
 
 import (
-	schemapb "github.com/stroppy-io/schemapb/schemapb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -77,15 +76,13 @@ func (Provider) EnumDescriptor() ([]byte, []int) {
 	return file_cloud_v1_deployment_provider_proto_rawDescGZIP(), []int{0}
 }
 
-// ProviderSettings binds a chosen Provider to its baked, schema-backed
-// backend configuration. provider selects the backend and, with it, the
-// schema that settings is validated against.
 type ProviderSettings struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// provider selects the deployment backend these settings configure.
-	Provider Provider `protobuf:"varint,1,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
-	// settings is the sealed, schema-backed configuration for the provider.
-	Settings      *schemapb.Baked `protobuf:"bytes,2,opt,name=settings,proto3" json:"settings,omitempty"`
+	// Types that are valid to be assigned to Settings:
+	//
+	//	*ProviderSettings_Docker
+	//	*ProviderSettings_Yandex
+	Settings      isProviderSettings_Settings `protobuf_oneof:"settings"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -120,28 +117,57 @@ func (*ProviderSettings) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_deployment_provider_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *ProviderSettings) GetProvider() Provider {
-	if x != nil {
-		return x.Provider
-	}
-	return Provider_PROVIDER_UNSPECIFIED
-}
-
-func (x *ProviderSettings) GetSettings() *schemapb.Baked {
+func (x *ProviderSettings) GetSettings() isProviderSettings_Settings {
 	if x != nil {
 		return x.Settings
 	}
 	return nil
 }
 
+func (x *ProviderSettings) GetDocker() *Docker_Settings {
+	if x != nil {
+		if x, ok := x.Settings.(*ProviderSettings_Docker); ok {
+			return x.Docker
+		}
+	}
+	return nil
+}
+
+func (x *ProviderSettings) GetYandex() *Yandex_Settings {
+	if x != nil {
+		if x, ok := x.Settings.(*ProviderSettings_Yandex); ok {
+			return x.Yandex
+		}
+	}
+	return nil
+}
+
+type isProviderSettings_Settings interface {
+	isProviderSettings_Settings()
+}
+
+type ProviderSettings_Docker struct {
+	Docker *Docker_Settings `protobuf:"bytes,1,opt,name=docker,proto3,oneof"`
+}
+
+type ProviderSettings_Yandex struct {
+	Yandex *Yandex_Settings `protobuf:"bytes,2,opt,name=yandex,proto3,oneof"`
+}
+
+func (*ProviderSettings_Docker) isProviderSettings_Settings() {}
+
+func (*ProviderSettings_Yandex) isProviderSettings_Settings() {}
+
 var File_cloud_v1_deployment_provider_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_deployment_provider_proto_rawDesc = "" +
 	"\n" +
-	"\"cloud/v1/deployment/provider.proto\x12\x13cloud.v1.deployment\x1a\x15schemapb/schema.proto\"z\n" +
-	"\x10ProviderSettings\x129\n" +
-	"\bprovider\x18\x01 \x01(\x0e2\x1d.cloud.v1.deployment.ProviderR\bprovider\x12+\n" +
-	"\bsettings\x18\x02 \x01(\v2\x0f.schemapb.BakedR\bsettings*N\n" +
+	"\"cloud/v1/deployment/provider.proto\x12\x13cloud.v1.deployment\x1a cloud/v1/deployment/docker.proto\x1a cloud/v1/deployment/yandex.proto\"\x9e\x01\n" +
+	"\x10ProviderSettings\x12>\n" +
+	"\x06docker\x18\x01 \x01(\v2$.cloud.v1.deployment.Docker.SettingsH\x00R\x06docker\x12>\n" +
+	"\x06yandex\x18\x02 \x01(\v2$.cloud.v1.deployment.Yandex.SettingsH\x00R\x06yandexB\n" +
+	"\n" +
+	"\bsettings*N\n" +
 	"\bProvider\x12\x18\n" +
 	"\x14PROVIDER_UNSPECIFIED\x10\x00\x12\x13\n" +
 	"\x0fPROVIDER_DOCKER\x10\x01\x12\x13\n" +
@@ -164,11 +190,12 @@ var file_cloud_v1_deployment_provider_proto_msgTypes = make([]protoimpl.MessageI
 var file_cloud_v1_deployment_provider_proto_goTypes = []any{
 	(Provider)(0),            // 0: cloud.v1.deployment.Provider
 	(*ProviderSettings)(nil), // 1: cloud.v1.deployment.ProviderSettings
-	(*schemapb.Baked)(nil),   // 2: schemapb.Baked
+	(*Docker_Settings)(nil),  // 2: cloud.v1.deployment.Docker.Settings
+	(*Yandex_Settings)(nil),  // 3: cloud.v1.deployment.Yandex.Settings
 }
 var file_cloud_v1_deployment_provider_proto_depIdxs = []int32{
-	0, // 0: cloud.v1.deployment.ProviderSettings.provider:type_name -> cloud.v1.deployment.Provider
-	2, // 1: cloud.v1.deployment.ProviderSettings.settings:type_name -> schemapb.Baked
+	2, // 0: cloud.v1.deployment.ProviderSettings.docker:type_name -> cloud.v1.deployment.Docker.Settings
+	3, // 1: cloud.v1.deployment.ProviderSettings.yandex:type_name -> cloud.v1.deployment.Yandex.Settings
 	2, // [2:2] is the sub-list for method output_type
 	2, // [2:2] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name
@@ -180,6 +207,12 @@ func init() { file_cloud_v1_deployment_provider_proto_init() }
 func file_cloud_v1_deployment_provider_proto_init() {
 	if File_cloud_v1_deployment_provider_proto != nil {
 		return
+	}
+	file_cloud_v1_deployment_docker_proto_init()
+	file_cloud_v1_deployment_yandex_proto_init()
+	file_cloud_v1_deployment_provider_proto_msgTypes[0].OneofWrappers = []any{
+		(*ProviderSettings_Docker)(nil),
+		(*ProviderSettings_Yandex)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{

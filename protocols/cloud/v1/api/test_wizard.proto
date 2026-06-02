@@ -3,26 +3,29 @@ syntax = "proto3";
 package cloud.v1.api;
 
 import "cloud/v1/common/entity.proto";
+import "cloud/v1/deployment/infrastructure.proto";
+import "cloud/v1/deployment/provider.proto";
+import "cloud/v1/deployment/render.proto";
+import "cloud/v1/domain/database.proto";
 import "cloud/v1/domain/test.proto";
+import "cloud/v1/domain/workload.proto";
 import "cloud/v1/iam/options.proto";
 import "cloud/v1/iam/permission.proto";
 import "cloud/v1/models/preset.proto";
 import "cloud/v1/models/test_run.proto";
 import "cloud/v1/models/test_wizard.proto";
-import "schemapb/schema.proto";
+import "cloud/v1/topology/topology.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
 
 /*
     test_wizard.proto is the TEST wizard API (suite wizard is separate). Big-schema
-    patch-loop: the whole test form is ONE composite schema (models.TestWizardDraft.form)
-    = chosen database schema (by kind, provider-agnostic) + workload schema +
-    a provider_type selector that picks one of the tenant's providers
-    (TenantSettings.providers). Provider settings are NOT in the form, and machines
-    are not entered either: the topology is DERIVED by the server (role->VM expander
-    + provider overlay) on every patch. The API is thin — Start, then repeatedly
-    PatchTestWizard(Filled), then Finish.
+    patch-loop: provider/database/workload/render edits are submitted, the server
+    derives topology_spec, infrastructure_plan and render_preview, then merges
+    user machine overrides from infrastructure_plan and editable config overrides
+    from render_overrides. Provider account settings come from tenant settings at
+    finish/start time.
 
     Every request is tenant-scoped (tenant_id, the default auth tenant_field) and
     gated by RESOURCE_WIZARD.
@@ -115,10 +118,11 @@ message ListTestWizardDraftsResponse {
 }
 
 /*
-    PatchTestWizard submits the edited form. The server validates the whole schema
-    (honoring `when` gates), regenerates the topology and recomputes readiness,
-    returning the full new draft (form may carry a re-emitted schema when a coarse
-    choice changed the active branches).
+    PatchTestWizard submits edited typed draft fields. The server validates,
+    re-derives topology_spec, infrastructure_plan and render_preview, preserves
+    compatible machine overrides from infrastructure_plan, applies compatible
+    render_overrides, recomputes readiness and returns the full new draft. Send
+    the fields you changed; unset typed messages are treated as "no change".
  */
 message PatchTestWizardRequest {
     /*
@@ -130,9 +134,34 @@ message PatchTestWizardRequest {
      */
     string draft_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
     /*
-        form carries the edited form values (Filled = values + schema ref).
+        provider selects/updates the deployment backend.
      */
-    schemapb.Filled form = 3 [(validate.rules).message.required = true];
+    deployment.Provider provider = 3 [(validate.rules).enum = {defined_only: true}];
+    /*
+        database is the typed, provider-agnostic database under test.
+     */
+    domain.Database database = 4;
+    /*
+        workload is the typed stroppy workload.
+     */
+    domain.Workload workload = 5;
+    /*
+        topology_spec optionally carries the server-derived graph back to the
+        server. Structural edits are ignored; it exists for optimistic clients
+        that patch all draft sections at once.
+     */
+    topology.TopologySpec topology_spec = 6;
+    /*
+        infrastructure_plan optionally carries user edits to provider-specific
+        machine params. The server re-derives the plan and merges compatible
+        MachinePlan overrides by node_id.
+     */
+    deployment.InfrastructurePlan infrastructure_plan = 8;
+    /*
+        render_overrides carries user edits to editable render artifacts. The
+        server applies compatible overrides and drops or reports stale ones.
+     */
+    deployment.RenderOverrideSet render_overrides = 9;
 }
 /*
     PatchTestWizardResponse returns the recomputed wizard draft.
@@ -164,10 +193,10 @@ message DeleteTestWizardDraftRequest {
 message DeleteTestWizardDraftResponse {}
 
 /*
-    FinishTestWizard bakes the form (Filled -> Baked, layered overrides applied)
-    into a ready domain.TestRun. Rejected unless draft.ready. Optionally, in the
-    same call: start it (internally calls TestRunAPI.StartTestRun -> persists a
-    TestRunRecord + launches TestWorkflow) and/or save it as a TestPresetRecord.
+    FinishTestWizard bakes the draft into a ready domain.TestRun containing
+    database/workload/topology_spec/infrastructure_plan. Rejected unless
+    draft.ready. Optionally, in the same call: start it (persist a TestRunRecord
+    + launch workflow) and/or save it as a TestPresetRecord.
  */
 message FinishTestWizardRequest {
     /*

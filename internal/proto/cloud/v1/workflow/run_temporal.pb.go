@@ -15,7 +15,6 @@ import (
 	helpers "github.com/cludden/protoc-gen-go-temporal/pkg/helpers"
 	scheme "github.com/cludden/protoc-gen-go-temporal/pkg/scheme"
 	enumsv1 "go.temporal.io/api/enums/v1"
-	activity "go.temporal.io/sdk/activity"
 	client "go.temporal.io/sdk/client"
 	converter "go.temporal.io/sdk/converter"
 	temporal "go.temporal.io/sdk/temporal"
@@ -34,53 +33,31 @@ var RunWorkflowServiceTaskQueue = "stroppy-cloud"
 
 // cloud.v1.workflow.RunWorkflowService workflow names
 const (
-	RunWorkflowWorkflowName = "RunWorkflow"
+	TestRunWorkflowWorkflowName = "TestRunWorkflow"
 )
 
 // cloud.v1.workflow.RunWorkflowService workflow id expressions
 var (
-	RunWorkflowIdexpression = expression.MustParseExpression("run/${! id }")
-)
-
-// cloud.v1.workflow.RunWorkflowService activity names
-const (
-	CreateNetworkActivityActivityName  = "cloud.v1.workflow.RunWorkflowService.CreateNetworkActivity"
-	DeployMachinesActivityActivityName = "cloud.v1.workflow.RunWorkflowService.DeployMachinesActivity"
-	TeardownActivityActivityName       = "cloud.v1.workflow.RunWorkflowService.TeardownActivity"
-)
-
-// cloud.v1.workflow.RunWorkflowService query names
-const (
-	GetRunWorkflowStateQueryName = "GetRunWorkflowState"
+	TestRunWorkflowIdexpression = expression.MustParseExpression("run/${! id }")
 )
 
 // RunWorkflowServiceClient describes a client for a(n) cloud.v1.workflow.RunWorkflowService worker
 type RunWorkflowServiceClient interface {
-	// RunWorkflow runs one full benchmark run: network -> machines -> bootstrap
-	// -> install/configure database (+ conditional etcd/patroni/pgbouncer/proxy
-	// /ydb-init/cockroach-init) -> install/configure monitor -> install stroppy
-	// -> run workload -> teardown. Deduplicated by a deterministic id from
-	// RunConfig.id; re-run allowed only after a failed previous attempt; never
-	// auto-retried as a whole (side effects). Answers the GetRunState query.
-	RunWorkflow(ctx context.Context, req *RunConfig, opts ...*RunWorkflowOptions) error
+	// TestRunWorkflow runs one full benchmark run:
+	// infrastructure -> deployment plan render -> agent execution -> workload.
+	TestRunWorkflow(ctx context.Context, req *RunConfig, opts ...*TestRunWorkflowOptions) error
 
-	// RunWorkflowAsync starts a(n) RunWorkflow workflow and returns a handle to the workflow run
-	RunWorkflowAsync(ctx context.Context, req *RunConfig, opts ...*RunWorkflowOptions) (RunWorkflowRun, error)
+	// TestRunWorkflowAsync starts a(n) TestRunWorkflow workflow and returns a handle to the workflow run
+	TestRunWorkflowAsync(ctx context.Context, req *RunConfig, opts ...*TestRunWorkflowOptions) (TestRunWorkflowRun, error)
 
-	// GetRunWorkflow retrieves a handle to an existing RunWorkflow workflow execution
-	GetRunWorkflow(ctx context.Context, workflowID string, runID string) RunWorkflowRun
+	// GetTestRunWorkflow retrieves a handle to an existing TestRunWorkflow workflow execution
+	GetTestRunWorkflow(ctx context.Context, workflowID string, runID string) TestRunWorkflowRun
 
 	// CancelWorkflow requests cancellation of an existing workflow execution
 	CancelWorkflow(ctx context.Context, workflowID string, runID string) error
 
 	// TerminateWorkflow an existing workflow execution
 	TerminateWorkflow(ctx context.Context, workflowID string, runID string, reason string, details ...interface{}) error
-
-	// GetRunWorkflowState is a query against a running RunWorkflow returning the
-	// live RunState (overall status + per-phase breakdown) for the run Overview.
-	// Named distinctly from TestService.GetRunState to avoid a generated query
-	// constant clash in the shared cloud.v1.workflow package.
-	GetRunWorkflowState(ctx context.Context, workflowID string, runID string) (*RunState, error)
 }
 
 // runWorkflowServiceClient implements a temporal client for a cloud.v1.workflow.RunWorkflowService service
@@ -148,53 +125,45 @@ func (opts *runWorkflowServiceClientOptions) getLogger() *slog.Logger {
 	return slog.Default()
 }
 
-// RunWorkflow runs one full benchmark run: network -> machines -> bootstrap
-// -> install/configure database (+ conditional etcd/patroni/pgbouncer/proxy
-// /ydb-init/cockroach-init) -> install/configure monitor -> install stroppy
-// -> run workload -> teardown. Deduplicated by a deterministic id from
-// RunConfig.id; re-run allowed only after a failed previous attempt; never
-// auto-retried as a whole (side effects). Answers the GetRunState query.
-func (c *runWorkflowServiceClient) RunWorkflow(ctx context.Context, req *RunConfig, options ...*RunWorkflowOptions) error {
-	run, err := c.RunWorkflowAsync(ctx, req, options...)
+// TestRunWorkflow runs one full benchmark run:
+// infrastructure -> deployment plan render -> agent execution -> workload.
+func (c *runWorkflowServiceClient) TestRunWorkflow(ctx context.Context, req *RunConfig, options ...*TestRunWorkflowOptions) error {
+	run, err := c.TestRunWorkflowAsync(ctx, req, options...)
 	if err != nil {
 		return err
 	}
 	return run.Get(ctx)
 }
 
-// RunWorkflow runs one full benchmark run: network -> machines -> bootstrap
-// -> install/configure database (+ conditional etcd/patroni/pgbouncer/proxy
-// /ydb-init/cockroach-init) -> install/configure monitor -> install stroppy
-// -> run workload -> teardown. Deduplicated by a deterministic id from
-// RunConfig.id; re-run allowed only after a failed previous attempt; never
-// auto-retried as a whole (side effects). Answers the GetRunState query.
-func (c *runWorkflowServiceClient) RunWorkflowAsync(ctx context.Context, req *RunConfig, options ...*RunWorkflowOptions) (RunWorkflowRun, error) {
-	var o *RunWorkflowOptions
+// TestRunWorkflow runs one full benchmark run:
+// infrastructure -> deployment plan render -> agent execution -> workload.
+func (c *runWorkflowServiceClient) TestRunWorkflowAsync(ctx context.Context, req *RunConfig, options ...*TestRunWorkflowOptions) (TestRunWorkflowRun, error) {
+	var o *TestRunWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
 	} else {
-		o = NewRunWorkflowOptions()
+		o = NewTestRunWorkflowOptions()
 	}
 	opts, err := o.Build(req.ProtoReflect())
 	if err != nil {
 		return nil, fmt.Errorf("error initializing client.StartWorkflowOptions: %w", err)
 	}
-	run, err := c.client.ExecuteWorkflow(ctx, opts, RunWorkflowWorkflowName, req)
+	run, err := c.client.ExecuteWorkflow(ctx, opts, TestRunWorkflowWorkflowName, req)
 	if err != nil {
 		return nil, err
 	}
 	if run == nil {
 		return nil, errors.New("execute workflow returned nil run")
 	}
-	return &runWorkflowRun{
+	return &testRunWorkflowRun{
 		client: c,
 		run:    run,
 	}, nil
 }
 
-// GetRunWorkflow fetches an existing RunWorkflow execution
-func (c *runWorkflowServiceClient) GetRunWorkflow(ctx context.Context, workflowID string, runID string) RunWorkflowRun {
-	return &runWorkflowRun{
+// GetTestRunWorkflow fetches an existing TestRunWorkflow execution
+func (c *runWorkflowServiceClient) GetTestRunWorkflow(ctx context.Context, workflowID string, runID string) TestRunWorkflowRun {
+	return &testRunWorkflowRun{
 		client: c,
 		run:    c.client.GetWorkflow(ctx, workflowID, runID),
 	}
@@ -210,22 +179,8 @@ func (c *runWorkflowServiceClient) TerminateWorkflow(ctx context.Context, workfl
 	return c.client.TerminateWorkflow(ctx, workflowID, runID, reason, details...)
 }
 
-// GetRunWorkflowState is a query against a running RunWorkflow returning the
-// live RunState (overall status + per-phase breakdown) for the run Overview.
-// Named distinctly from TestService.GetRunState to avoid a generated query
-// constant clash in the shared cloud.v1.workflow package.
-func (c *runWorkflowServiceClient) GetRunWorkflowState(ctx context.Context, workflowID string, runID string) (*RunState, error) {
-	var resp RunState
-	if val, err := c.client.QueryWorkflow(ctx, workflowID, runID, GetRunWorkflowStateQueryName); err != nil {
-		return nil, err
-	} else if err = val.Get(&resp); err != nil {
-		return nil, err
-	}
-	return &resp, nil
-}
-
-// RunWorkflowOptions provides configuration for a RunWorkflow workflow operation
-type RunWorkflowOptions struct {
+// TestRunWorkflowOptions provides configuration for a TestRunWorkflow workflow operation
+type TestRunWorkflowOptions struct {
 	options                  client.StartWorkflowOptions
 	executionTimeout         *time.Duration
 	id                       *string
@@ -240,20 +195,20 @@ type RunWorkflowOptions struct {
 	workflowIdConflictPolicy enumsv1.WorkflowIdConflictPolicy
 }
 
-// NewRunWorkflowOptions initializes a new RunWorkflowOptions value
-func NewRunWorkflowOptions() *RunWorkflowOptions {
-	return &RunWorkflowOptions{}
+// NewTestRunWorkflowOptions initializes a new TestRunWorkflowOptions value
+func NewTestRunWorkflowOptions() *TestRunWorkflowOptions {
+	return &TestRunWorkflowOptions{}
 }
 
 // Build initializes a new go.temporal.io/sdk/client.StartWorkflowOptions value with defaults and overrides applied
-func (o *RunWorkflowOptions) Build(req protoreflect.Message) (client.StartWorkflowOptions, error) {
+func (o *TestRunWorkflowOptions) Build(req protoreflect.Message) (client.StartWorkflowOptions, error) {
 	opts := o.options
 	if v := o.id; v != nil {
 		opts.ID = *v
 	} else if opts.ID == "" {
-		id, err := expression.EvalExpression(RunWorkflowIdexpression, req)
+		id, err := expression.EvalExpression(TestRunWorkflowIdexpression, req)
 		if err != nil {
-			return opts, fmt.Errorf("error evaluating id expression for %q workflow: %w", RunWorkflowWorkflowName, err)
+			return opts, fmt.Errorf("error evaluating id expression for %q workflow: %w", TestRunWorkflowWorkflowName, err)
 		}
 		opts.ID = id
 	}
@@ -299,79 +254,79 @@ func (o *RunWorkflowOptions) Build(req protoreflect.Message) (client.StartWorkfl
 }
 
 // WithStartWorkflowOptions sets the initial go.temporal.io/sdk/client.StartWorkflowOptions
-func (o *RunWorkflowOptions) WithStartWorkflowOptions(options client.StartWorkflowOptions) *RunWorkflowOptions {
+func (o *TestRunWorkflowOptions) WithStartWorkflowOptions(options client.StartWorkflowOptions) *TestRunWorkflowOptions {
 	o.options = options
 	return o
 }
 
 // WithEnableEagerStart sets the EnableEagerStart value
-func (o *RunWorkflowOptions) WithEnableEagerStart(enable bool) *RunWorkflowOptions {
+func (o *TestRunWorkflowOptions) WithEnableEagerStart(enable bool) *TestRunWorkflowOptions {
 	o.enableEagerStart = &enable
 	return o
 }
 
 // WithExecutionTimeout sets the WorkflowExecutionTimeout value
-func (o *RunWorkflowOptions) WithExecutionTimeout(d time.Duration) *RunWorkflowOptions {
+func (o *TestRunWorkflowOptions) WithExecutionTimeout(d time.Duration) *TestRunWorkflowOptions {
 	o.executionTimeout = &d
 	return o
 }
 
 // WithID sets the ID value
-func (o *RunWorkflowOptions) WithID(id string) *RunWorkflowOptions {
+func (o *TestRunWorkflowOptions) WithID(id string) *TestRunWorkflowOptions {
 	o.id = &id
 	return o
 }
 
 // WithIDReusePolicy sets the WorkflowIDReusePolicy value
-func (o *RunWorkflowOptions) WithIDReusePolicy(policy enumsv1.WorkflowIdReusePolicy) *RunWorkflowOptions {
+func (o *TestRunWorkflowOptions) WithIDReusePolicy(policy enumsv1.WorkflowIdReusePolicy) *TestRunWorkflowOptions {
 	o.idReusePolicy = policy
 	return o
 }
 
 // WithRetryPolicy sets the RetryPolicy value
-func (o *RunWorkflowOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *RunWorkflowOptions {
+func (o *TestRunWorkflowOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *TestRunWorkflowOptions {
 	o.retryPolicy = policy
 	return o
 }
 
 // WithRunTimeout sets the WorkflowRunTimeout value
-func (o *RunWorkflowOptions) WithRunTimeout(d time.Duration) *RunWorkflowOptions {
+func (o *TestRunWorkflowOptions) WithRunTimeout(d time.Duration) *TestRunWorkflowOptions {
 	o.runTimeout = &d
 	return o
 }
 
 // WithSearchAttributes sets the SearchAttributes value
-func (o *RunWorkflowOptions) WithSearchAttributes(sa map[string]any) *RunWorkflowOptions {
+func (o *TestRunWorkflowOptions) WithSearchAttributes(sa map[string]any) *TestRunWorkflowOptions {
 	o.searchAttributes = sa
 	return o
 }
 
 // WithTaskTimeout sets the WorkflowTaskTimeout value
-func (o *RunWorkflowOptions) WithTaskTimeout(d time.Duration) *RunWorkflowOptions {
+func (o *TestRunWorkflowOptions) WithTaskTimeout(d time.Duration) *TestRunWorkflowOptions {
 	o.taskTimeout = &d
 	return o
 }
 
 // WithTaskQueue sets the TaskQueue value
-func (o *RunWorkflowOptions) WithTaskQueue(tq string) *RunWorkflowOptions {
+func (o *TestRunWorkflowOptions) WithTaskQueue(tq string) *TestRunWorkflowOptions {
 	o.taskQueue = &tq
 	return o
 }
 
 // WithTypedSearchAttributes sets the TypedSearchAttributes value
-func (o *RunWorkflowOptions) WithTypedSearchAttributes(tsa temporal.SearchAttributes) *RunWorkflowOptions {
+func (o *TestRunWorkflowOptions) WithTypedSearchAttributes(tsa temporal.SearchAttributes) *TestRunWorkflowOptions {
 	o.typedSearchAttributes = &tsa
 	return o
 }
 
 // WithWorkflowIdConflictPolicy sets the WorkflowIdConflictPolicy value
-func (o *RunWorkflowOptions) WithWorkflowIdConflictPolicy(policy enumsv1.WorkflowIdConflictPolicy) *RunWorkflowOptions {
+func (o *TestRunWorkflowOptions) WithWorkflowIdConflictPolicy(policy enumsv1.WorkflowIdConflictPolicy) *TestRunWorkflowOptions {
 	o.workflowIdConflictPolicy = policy
 	return o
 }
 
-// RunWorkflowRun describes a(n) RunWorkflow workflow run
-type RunWorkflowRun interface {
+// TestRunWorkflowRun describes a(n) TestRunWorkflow workflow run
+type TestRunWorkflowRun interface {
 	// ID returns the workflow ID
 	ID() string
 
@@ -389,82 +344,60 @@ type RunWorkflowRun interface {
 
 	// Terminate terminates a workflow in execution, returning an error if applicable
 	Terminate(ctx context.Context, reason string, details ...interface{}) error
-
-	// GetRunWorkflowState is a query against a running RunWorkflow returning the
-	// live RunState (overall status + per-phase breakdown) for the run Overview.
-	// Named distinctly from TestService.GetRunState to avoid a generated query
-	// constant clash in the shared cloud.v1.workflow package.
-	GetRunWorkflowState(ctx context.Context) (*RunState, error)
 }
 
-// runWorkflowRun provides an internal implementation of a(n) RunWorkflowRunRun
-type runWorkflowRun struct {
+// testRunWorkflowRun provides an internal implementation of a(n) TestRunWorkflowRunRun
+type testRunWorkflowRun struct {
 	client *runWorkflowServiceClient
 	run    client.WorkflowRun
 }
 
 // ID returns the workflow ID
-func (r *runWorkflowRun) ID() string {
+func (r *testRunWorkflowRun) ID() string {
 	return r.run.GetID()
 }
 
 // Run returns the inner client.WorkflowRun
-func (r *runWorkflowRun) Run() client.WorkflowRun {
+func (r *testRunWorkflowRun) Run() client.WorkflowRun {
 	return r.run
 }
 
 // RunID returns the execution ID
-func (r *runWorkflowRun) RunID() string {
+func (r *testRunWorkflowRun) RunID() string {
 	return r.run.GetRunID()
 }
 
 // Cancel requests cancellation of a workflow in execution, returning an error if applicable
-func (r *runWorkflowRun) Cancel(ctx context.Context) error {
+func (r *testRunWorkflowRun) Cancel(ctx context.Context) error {
 	return r.client.CancelWorkflow(ctx, r.ID(), r.RunID())
 }
 
 // Get blocks until the workflow is complete, returning the result if applicable
-func (r *runWorkflowRun) Get(ctx context.Context) error {
+func (r *testRunWorkflowRun) Get(ctx context.Context) error {
 	return r.run.Get(ctx, nil)
 }
 
 // Terminate terminates a workflow in execution, returning an error if applicable
-func (r *runWorkflowRun) Terminate(ctx context.Context, reason string, details ...interface{}) error {
+func (r *testRunWorkflowRun) Terminate(ctx context.Context, reason string, details ...interface{}) error {
 	return r.client.TerminateWorkflow(ctx, r.ID(), r.RunID(), reason, details...)
-}
-
-// GetRunWorkflowState is a query against a running RunWorkflow returning the
-// live RunState (overall status + per-phase breakdown) for the run Overview.
-// Named distinctly from TestService.GetRunState to avoid a generated query
-// constant clash in the shared cloud.v1.workflow package.
-func (r *runWorkflowRun) GetRunWorkflowState(ctx context.Context) (*RunState, error) {
-	return r.client.GetRunWorkflowState(ctx, r.ID(), "")
 }
 
 // Reference to generated workflow functions
 var (
 	// runWorkflowServiceRegistrationMutex is a mutex for registering cloud.v1.workflow.RunWorkflowService workflows
 	runWorkflowServiceRegistrationMutex sync.Mutex
-	// RunWorkflow runs one full benchmark run: network -> machines -> bootstrap
-	// -> install/configure database (+ conditional etcd/patroni/pgbouncer/proxy
-	// /ydb-init/cockroach-init) -> install/configure monitor -> install stroppy
-	// -> run workload -> teardown. Deduplicated by a deterministic id from
-	// RunConfig.id; re-run allowed only after a failed previous attempt; never
-	// auto-retried as a whole (side effects). Answers the GetRunState query.
-	RunWorkflowFunction func(workflow.Context, *RunConfig) error
+	// TestRunWorkflow runs one full benchmark run:
+	// infrastructure -> deployment plan render -> agent execution -> workload.
+	TestRunWorkflowFunction func(workflow.Context, *RunConfig) error
 )
 
 // RunWorkflowServiceWorkflowFunctions describes a mockable dependency for inlining workflows within other workflows
 type (
 	// RunWorkflowServiceWorkflowFunctions describes a mockable dependency for inlining workflows within other workflows
 	RunWorkflowServiceWorkflowFunctions interface {
-		// RunWorkflow runs one full benchmark run: network -> machines -> bootstrap
-		// -> install/configure database (+ conditional etcd/patroni/pgbouncer/proxy
-		// /ydb-init/cockroach-init) -> install/configure monitor -> install stroppy
-		// -> run workload -> teardown. Deduplicated by a deterministic id from
-		// RunConfig.id; re-run allowed only after a failed previous attempt; never
-		// auto-retried as a whole (side effects). Answers the GetRunState query.
-		RunWorkflow(workflow.Context, *RunConfig) error
+		// TestRunWorkflow runs one full benchmark run:
+		// infrastructure -> deployment plan render -> agent execution -> workload.
+		TestRunWorkflow(workflow.Context, *RunConfig) error
 	}
 	// runWorkflowServiceWorkflowFunctions provides an internal RunWorkflowServiceWorkflowFunctions implementation
 	runWorkflowServiceWorkflowFunctions struct{}
@@ -474,47 +407,39 @@ func NewRunWorkflowServiceWorkflowFunctions() RunWorkflowServiceWorkflowFunction
 	return &runWorkflowServiceWorkflowFunctions{}
 }
 
-// RunWorkflow runs one full benchmark run: network -> machines -> bootstrap
-// -> install/configure database (+ conditional etcd/patroni/pgbouncer/proxy
-// /ydb-init/cockroach-init) -> install/configure monitor -> install stroppy
-// -> run workload -> teardown. Deduplicated by a deterministic id from
-// RunConfig.id; re-run allowed only after a failed previous attempt; never
-// auto-retried as a whole (side effects). Answers the GetRunState query.
-func (f *runWorkflowServiceWorkflowFunctions) RunWorkflow(ctx workflow.Context, req *RunConfig) error {
-	if RunWorkflowFunction == nil {
-		return errors.New("RunWorkflow requires workflow registration via RegisterRunWorkflowServiceWorkflows or RegisterRunWorkflowWorkflow")
+// TestRunWorkflow runs one full benchmark run:
+// infrastructure -> deployment plan render -> agent execution -> workload.
+func (f *runWorkflowServiceWorkflowFunctions) TestRunWorkflow(ctx workflow.Context, req *RunConfig) error {
+	if TestRunWorkflowFunction == nil {
+		return errors.New("TestRunWorkflow requires workflow registration via RegisterRunWorkflowServiceWorkflows or RegisterTestRunWorkflowWorkflow")
 	}
-	return RunWorkflowFunction(ctx, req)
+	return TestRunWorkflowFunction(ctx, req)
 }
 
 // RunWorkflowServiceWorkflows provides methods for initializing new cloud.v1.workflow.RunWorkflowService workflow values
 type RunWorkflowServiceWorkflows interface {
-	// RunWorkflow runs one full benchmark run: network -> machines -> bootstrap
-	// -> install/configure database (+ conditional etcd/patroni/pgbouncer/proxy
-	// /ydb-init/cockroach-init) -> install/configure monitor -> install stroppy
-	// -> run workload -> teardown. Deduplicated by a deterministic id from
-	// RunConfig.id; re-run allowed only after a failed previous attempt; never
-	// auto-retried as a whole (side effects). Answers the GetRunState query.
-	RunWorkflow(ctx workflow.Context, input *RunWorkflowWorkflowInput) (RunWorkflowWorkflow, error)
+	// TestRunWorkflow runs one full benchmark run:
+	// infrastructure -> deployment plan render -> agent execution -> workload.
+	TestRunWorkflow(ctx workflow.Context, input *TestRunWorkflowWorkflowInput) (TestRunWorkflowWorkflow, error)
 }
 
 // RegisterRunWorkflowServiceWorkflows registers cloud.v1.workflow.RunWorkflowService workflows with the given worker
 func RegisterRunWorkflowServiceWorkflows(r worker.WorkflowRegistry, workflows RunWorkflowServiceWorkflows) {
-	RegisterRunWorkflowWorkflow(r, workflows.RunWorkflow)
+	RegisterTestRunWorkflowWorkflow(r, workflows.TestRunWorkflow)
 }
 
-// RegisterRunWorkflowWorkflow registers a cloud.v1.workflow.RunWorkflowService.RunWorkflow workflow with the given worker
-func RegisterRunWorkflowWorkflow(r worker.WorkflowRegistry, wf func(workflow.Context, *RunWorkflowWorkflowInput) (RunWorkflowWorkflow, error)) {
+// RegisterTestRunWorkflowWorkflow registers a cloud.v1.workflow.RunWorkflowService.TestRunWorkflow workflow with the given worker
+func RegisterTestRunWorkflowWorkflow(r worker.WorkflowRegistry, wf func(workflow.Context, *TestRunWorkflowWorkflowInput) (TestRunWorkflowWorkflow, error)) {
 	runWorkflowServiceRegistrationMutex.Lock()
 	defer runWorkflowServiceRegistrationMutex.Unlock()
-	RunWorkflowFunction = buildRunWorkflow(wf)
-	r.RegisterWorkflowWithOptions(RunWorkflowFunction, workflow.RegisterOptions{Name: RunWorkflowWorkflowName})
+	TestRunWorkflowFunction = buildTestRunWorkflow(wf)
+	r.RegisterWorkflowWithOptions(TestRunWorkflowFunction, workflow.RegisterOptions{Name: TestRunWorkflowWorkflowName})
 }
 
-// buildRunWorkflow converts a RunWorkflow workflow struct into a valid workflow function
-func buildRunWorkflow(ctor func(workflow.Context, *RunWorkflowWorkflowInput) (RunWorkflowWorkflow, error)) func(workflow.Context, *RunConfig) error {
+// buildTestRunWorkflow converts a TestRunWorkflow workflow struct into a valid workflow function
+func buildTestRunWorkflow(ctor func(workflow.Context, *TestRunWorkflowWorkflowInput) (TestRunWorkflowWorkflow, error)) func(workflow.Context, *RunConfig) error {
 	return func(ctx workflow.Context, req *RunConfig) error {
-		input := &RunWorkflowWorkflowInput{
+		input := &TestRunWorkflowWorkflowInput{
 			Req: req,
 		}
 		wf, err := ctor(ctx, input)
@@ -526,75 +451,54 @@ func buildRunWorkflow(ctor func(workflow.Context, *RunWorkflowWorkflowInput) (Ru
 				return err
 			}
 		}
-		if err := workflow.SetQueryHandler(ctx, GetRunWorkflowStateQueryName, wf.GetRunWorkflowState); err != nil {
-			return err
-		}
 		return wf.Execute(ctx)
 	}
 }
 
-// RunWorkflowWorkflowInput describes the input to a(n) RunWorkflow workflow constructor
-type RunWorkflowWorkflowInput struct {
+// TestRunWorkflowWorkflowInput describes the input to a(n) TestRunWorkflow workflow constructor
+type TestRunWorkflowWorkflowInput struct {
 	Req *RunConfig
 }
 
 // ContinueAsNew returns an appropriately configured ContinueAsNewError
-func (i *RunWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Context, input *RunConfig, options ...workflow.ContinueAsNewErrorOptions) error {
+func (i *TestRunWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Context, input *RunConfig, options ...workflow.ContinueAsNewErrorOptions) error {
 	next := i.Req
 	if input != nil {
 		next = input
 	}
 	if len(options) > 0 {
-		return workflow.NewContinueAsNewErrorWithOptions(ctx, options[0], RunWorkflowWorkflowName, next)
+		return workflow.NewContinueAsNewErrorWithOptions(ctx, options[0], TestRunWorkflowWorkflowName, next)
 	}
-	return workflow.NewContinueAsNewError(ctx, RunWorkflowWorkflowName, next)
+	return workflow.NewContinueAsNewError(ctx, TestRunWorkflowWorkflowName, next)
 }
 
-// RunWorkflow runs one full benchmark run: network -> machines -> bootstrap
-// -> install/configure database (+ conditional etcd/patroni/pgbouncer/proxy
-// /ydb-init/cockroach-init) -> install/configure monitor -> install stroppy
-// -> run workload -> teardown. Deduplicated by a deterministic id from
-// RunConfig.id; re-run allowed only after a failed previous attempt; never
-// auto-retried as a whole (side effects). Answers the GetRunState query.
+// TestRunWorkflow runs one full benchmark run:
+// infrastructure -> deployment plan render -> agent execution -> workload.
 //
 // workflow details: (id: "run/${! id }")
-type RunWorkflowWorkflow interface {
-	// Execute defines the entrypoint to a(n) RunWorkflow workflow
+type TestRunWorkflowWorkflow interface {
+	// Execute defines the entrypoint to a(n) TestRunWorkflow workflow
 	Execute(ctx workflow.Context) error
-
-	// GetRunWorkflowState is a query against a running RunWorkflow returning the
-	// live RunState (overall status + per-phase breakdown) for the run Overview.
-	// Named distinctly from TestService.GetRunState to avoid a generated query
-	// constant clash in the shared cloud.v1.workflow package.
-	GetRunWorkflowState() (*RunState, error)
 }
 
-// RunWorkflow runs one full benchmark run: network -> machines -> bootstrap
-// -> install/configure database (+ conditional etcd/patroni/pgbouncer/proxy
-// /ydb-init/cockroach-init) -> install/configure monitor -> install stroppy
-// -> run workload -> teardown. Deduplicated by a deterministic id from
-// RunConfig.id; re-run allowed only after a failed previous attempt; never
-// auto-retried as a whole (side effects). Answers the GetRunState query.
-func RunWorkflowChild(ctx workflow.Context, req *RunConfig, options ...*RunWorkflowChildOptions) error {
-	childRun, err := RunWorkflowChildAsync(ctx, req, options...)
+// TestRunWorkflow runs one full benchmark run:
+// infrastructure -> deployment plan render -> agent execution -> workload.
+func TestRunWorkflowChild(ctx workflow.Context, req *RunConfig, options ...*TestRunWorkflowChildOptions) error {
+	childRun, err := TestRunWorkflowChildAsync(ctx, req, options...)
 	if err != nil {
 		return err
 	}
 	return childRun.Get(ctx)
 }
 
-// RunWorkflow runs one full benchmark run: network -> machines -> bootstrap
-// -> install/configure database (+ conditional etcd/patroni/pgbouncer/proxy
-// /ydb-init/cockroach-init) -> install/configure monitor -> install stroppy
-// -> run workload -> teardown. Deduplicated by a deterministic id from
-// RunConfig.id; re-run allowed only after a failed previous attempt; never
-// auto-retried as a whole (side effects). Answers the GetRunState query.
-func RunWorkflowChildAsync(ctx workflow.Context, req *RunConfig, options ...*RunWorkflowChildOptions) (*RunWorkflowChildRun, error) {
-	var o *RunWorkflowChildOptions
+// TestRunWorkflow runs one full benchmark run:
+// infrastructure -> deployment plan render -> agent execution -> workload.
+func TestRunWorkflowChildAsync(ctx workflow.Context, req *RunConfig, options ...*TestRunWorkflowChildOptions) (*TestRunWorkflowChildRun, error) {
+	var o *TestRunWorkflowChildOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
 	} else {
-		o = NewRunWorkflowChildOptions()
+		o = NewTestRunWorkflowChildOptions()
 	}
 	opts, err := o.Build(ctx, req.ProtoReflect())
 	if err != nil {
@@ -604,11 +508,11 @@ func RunWorkflowChildAsync(ctx workflow.Context, req *RunConfig, options ...*Run
 	if o.dc != nil {
 		ctx = workflow.WithDataConverter(ctx, o.dc)
 	}
-	return &RunWorkflowChildRun{Future: workflow.ExecuteChildWorkflow(ctx, RunWorkflowWorkflowName, req)}, nil
+	return &TestRunWorkflowChildRun{Future: workflow.ExecuteChildWorkflow(ctx, TestRunWorkflowWorkflowName, req)}, nil
 }
 
-// RunWorkflowChildOptions provides configuration for a child RunWorkflow workflow operation
-type RunWorkflowChildOptions struct {
+// TestRunWorkflowChildOptions provides configuration for a child TestRunWorkflow workflow operation
+type TestRunWorkflowChildOptions struct {
 	options               workflow.ChildWorkflowOptions
 	executionTimeout      *time.Duration
 	id                    *string
@@ -624,13 +528,13 @@ type RunWorkflowChildOptions struct {
 	waitForCancellation   *bool
 }
 
-// NewRunWorkflowChildOptions initializes a new RunWorkflowChildOptions value
-func NewRunWorkflowChildOptions() *RunWorkflowChildOptions {
-	return &RunWorkflowChildOptions{}
+// NewTestRunWorkflowChildOptions initializes a new TestRunWorkflowChildOptions value
+func NewTestRunWorkflowChildOptions() *TestRunWorkflowChildOptions {
+	return &TestRunWorkflowChildOptions{}
 }
 
 // Build initializes a new go.temporal.io/sdk/workflow.ChildWorkflowOptions value with defaults and overrides applied
-func (o *RunWorkflowChildOptions) Build(ctx workflow.Context, req protoreflect.Message) (workflow.ChildWorkflowOptions, error) {
+func (o *TestRunWorkflowChildOptions) Build(ctx workflow.Context, req protoreflect.Message) (workflow.ChildWorkflowOptions, error) {
 	opts := o.options
 	if v := o.id; v != nil {
 		opts.WorkflowID = *v
@@ -641,18 +545,18 @@ func (o *RunWorkflowChildOptions) Build(ctx workflow.Context, req protoreflect.M
 			lao := workflow.GetLocalActivityOptions(ctx)
 			lao.ScheduleToCloseTimeout = time.Second * 10
 			if err := workflow.ExecuteLocalActivity(workflow.WithLocalActivityOptions(ctx, lao), func(ctx context.Context) (string, error) {
-				id, err := expression.EvalExpression(RunWorkflowIdexpression, req)
+				id, err := expression.EvalExpression(TestRunWorkflowIdexpression, req)
 				if err != nil {
-					return "", fmt.Errorf("error evaluating id expression for %q workflow: %w", RunWorkflowWorkflowName, err)
+					return "", fmt.Errorf("error evaluating id expression for %q workflow: %w", TestRunWorkflowWorkflowName, err)
 				}
 				return id, nil
 			}).Get(ctx, &opts.WorkflowID); err != nil {
-				return opts, fmt.Errorf("error evaluating id expression for %q workflow: %w", RunWorkflowWorkflowName, err)
+				return opts, fmt.Errorf("error evaluating id expression for %q workflow: %w", TestRunWorkflowWorkflowName, err)
 			}
 		} else {
-			id, err := expression.EvalExpression(RunWorkflowIdexpression, req)
+			id, err := expression.EvalExpression(TestRunWorkflowIdexpression, req)
 			if err != nil {
-				return opts, fmt.Errorf("error evaluating id expression for %q workflow: %w", RunWorkflowWorkflowName, err)
+				return opts, fmt.Errorf("error evaluating id expression for %q workflow: %w", TestRunWorkflowWorkflowName, err)
 			}
 			opts.WorkflowID = id
 		}
@@ -699,90 +603,90 @@ func (o *RunWorkflowChildOptions) Build(ctx workflow.Context, req protoreflect.M
 }
 
 // WithChildWorkflowOptions sets the initial go.temporal.io/sdk/workflow.ChildWorkflowOptions
-func (o *RunWorkflowChildOptions) WithChildWorkflowOptions(options workflow.ChildWorkflowOptions) *RunWorkflowChildOptions {
+func (o *TestRunWorkflowChildOptions) WithChildWorkflowOptions(options workflow.ChildWorkflowOptions) *TestRunWorkflowChildOptions {
 	o.options = options
 	return o
 }
 
 // WithDataConverter registers a DataConverter for the child workflow
-func (o *RunWorkflowChildOptions) WithDataConverter(dc converter.DataConverter) *RunWorkflowChildOptions {
+func (o *TestRunWorkflowChildOptions) WithDataConverter(dc converter.DataConverter) *TestRunWorkflowChildOptions {
 	o.dc = dc
 	return o
 }
 
 // WithExecutionTimeout sets the WorkflowExecutionTimeout value
-func (o *RunWorkflowChildOptions) WithExecutionTimeout(d time.Duration) *RunWorkflowChildOptions {
+func (o *TestRunWorkflowChildOptions) WithExecutionTimeout(d time.Duration) *TestRunWorkflowChildOptions {
 	o.executionTimeout = &d
 	return o
 }
 
 // WithID sets the WorkflowID value
-func (o *RunWorkflowChildOptions) WithID(id string) *RunWorkflowChildOptions {
+func (o *TestRunWorkflowChildOptions) WithID(id string) *TestRunWorkflowChildOptions {
 	o.id = &id
 	return o
 }
 
 // WithIDReusePolicy sets the WorkflowIDReusePolicy value
-func (o *RunWorkflowChildOptions) WithIDReusePolicy(policy enumsv1.WorkflowIdReusePolicy) *RunWorkflowChildOptions {
+func (o *TestRunWorkflowChildOptions) WithIDReusePolicy(policy enumsv1.WorkflowIdReusePolicy) *TestRunWorkflowChildOptions {
 	o.idReusePolicy = policy
 	return o
 }
 
 // WithParentClosePolicy sets the WorkflowIDReusePolicy value
-func (o *RunWorkflowChildOptions) WithParentClosePolicy(policy enumsv1.ParentClosePolicy) *RunWorkflowChildOptions {
+func (o *TestRunWorkflowChildOptions) WithParentClosePolicy(policy enumsv1.ParentClosePolicy) *TestRunWorkflowChildOptions {
 	o.parentClosePolicy = policy
 	return o
 }
 
 // WithRetryPolicy sets the RetryPolicy value
-func (o *RunWorkflowChildOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *RunWorkflowChildOptions {
+func (o *TestRunWorkflowChildOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *TestRunWorkflowChildOptions {
 	o.retryPolicy = policy
 	return o
 }
 
 // WithRunTimeout sets the WorkflowRunTimeout value
-func (o *RunWorkflowChildOptions) WithRunTimeout(d time.Duration) *RunWorkflowChildOptions {
+func (o *TestRunWorkflowChildOptions) WithRunTimeout(d time.Duration) *TestRunWorkflowChildOptions {
 	o.runTimeout = &d
 	return o
 }
 
 // WithSearchAttributes sets the SearchAttributes value
-func (o *RunWorkflowChildOptions) WithSearchAttributes(sa map[string]any) *RunWorkflowChildOptions {
+func (o *TestRunWorkflowChildOptions) WithSearchAttributes(sa map[string]any) *TestRunWorkflowChildOptions {
 	o.searchAttributes = sa
 	return o
 }
 
 // WithTaskTimeout sets the WorkflowTaskTimeout value
-func (o *RunWorkflowChildOptions) WithTaskTimeout(d time.Duration) *RunWorkflowChildOptions {
+func (o *TestRunWorkflowChildOptions) WithTaskTimeout(d time.Duration) *TestRunWorkflowChildOptions {
 	o.taskTimeout = &d
 	return o
 }
 
 // WithTaskQueue sets the TaskQueue value
-func (o *RunWorkflowChildOptions) WithTaskQueue(tq string) *RunWorkflowChildOptions {
+func (o *TestRunWorkflowChildOptions) WithTaskQueue(tq string) *TestRunWorkflowChildOptions {
 	o.taskQueue = &tq
 	return o
 }
 
 // WithTypedSearchAttributes sets the TypedSearchAttributes value
-func (o *RunWorkflowChildOptions) WithTypedSearchAttributes(tsa temporal.SearchAttributes) *RunWorkflowChildOptions {
+func (o *TestRunWorkflowChildOptions) WithTypedSearchAttributes(tsa temporal.SearchAttributes) *TestRunWorkflowChildOptions {
 	o.typedSearchAttributes = &tsa
 	return o
 }
 
 // WithWaitForCancellation sets the WaitForCancellation value
-func (o *RunWorkflowChildOptions) WithWaitForCancellation(wait bool) *RunWorkflowChildOptions {
+func (o *TestRunWorkflowChildOptions) WithWaitForCancellation(wait bool) *TestRunWorkflowChildOptions {
 	o.waitForCancellation = &wait
 	return o
 }
 
-// RunWorkflowChildRun describes a child RunWorkflow workflow run
-type RunWorkflowChildRun struct {
+// TestRunWorkflowChildRun describes a child TestRunWorkflow workflow run
+type TestRunWorkflowChildRun struct {
 	Future workflow.ChildWorkflowFuture
 }
 
 // Get blocks until the workflow is completed, returning the response value
-func (r *RunWorkflowChildRun) Get(ctx workflow.Context) error {
+func (r *TestRunWorkflowChildRun) Get(ctx workflow.Context) error {
 	if err := r.Future.Get(ctx, nil); err != nil {
 		return err
 	}
@@ -790,7 +694,7 @@ func (r *RunWorkflowChildRun) Get(ctx workflow.Context) error {
 }
 
 // Select adds this completion to the selector. Callback can be nil.
-func (r *RunWorkflowChildRun) Select(sel workflow.Selector, fn func(*RunWorkflowChildRun)) workflow.Selector {
+func (r *TestRunWorkflowChildRun) Select(sel workflow.Selector, fn func(*TestRunWorkflowChildRun)) workflow.Selector {
 	return sel.AddFuture(r.Future, func(workflow.Future) {
 		if fn != nil {
 			fn(r)
@@ -799,7 +703,7 @@ func (r *RunWorkflowChildRun) Select(sel workflow.Selector, fn func(*RunWorkflow
 }
 
 // SelectStart adds waiting for start to the selector. Callback can be nil.
-func (r *RunWorkflowChildRun) SelectStart(sel workflow.Selector, fn func(*RunWorkflowChildRun)) workflow.Selector {
+func (r *TestRunWorkflowChildRun) SelectStart(sel workflow.Selector, fn func(*TestRunWorkflowChildRun)) workflow.Selector {
 	return sel.AddFuture(r.Future.GetChildWorkflowExecution(), func(workflow.Future) {
 		if fn != nil {
 			fn(r)
@@ -808,7 +712,7 @@ func (r *RunWorkflowChildRun) SelectStart(sel workflow.Selector, fn func(*RunWor
 }
 
 // WaitStart waits for the child workflow to start
-func (r *RunWorkflowChildRun) WaitStart(ctx workflow.Context) (*workflow.Execution, error) {
+func (r *TestRunWorkflowChildRun) WaitStart(ctx workflow.Context) (*workflow.Execution, error) {
 	var exec workflow.Execution
 	if err := r.Future.GetChildWorkflowExecution().Get(ctx, &exec); err != nil {
 		return nil, err
@@ -817,849 +721,10 @@ func (r *RunWorkflowChildRun) WaitStart(ctx workflow.Context) (*workflow.Executi
 }
 
 // RunWorkflowServiceActivities describes available worker activities
-type RunWorkflowServiceActivities interface {
-	// CreateNetworkActivity acquires the run network (docker network create /
-	// yandex subnet) and returns the partial Deployment carrying its handle.
-	// Idempotent (dedupe by name) => retryable.
-	CreateNetworkActivity(ctx context.Context, req *RunConfig) (*Deployment, error)
-
-	// DeployMachinesActivity provisions the machines (docker containers /
-	// terraform apply), waits for them, and returns the full Deployment:
-	// targets, db endpoint, and teardown handles. Mutating but
-	// terraform/docker-idempotent; retried sparingly, heartbeats while running.
-	DeployMachinesActivity(ctx context.Context, req *RunConfig) (*Deployment, error)
-
-	// TeardownActivity destroys the run's infrastructure (docker rm + network
-	// remove / terraform destroy) from the Deployment handles. Idempotent
-	// (converges to empty) => retried to avoid leaks. Runs even on failure.
-	TeardownActivity(ctx context.Context, req *Deployment) error
-}
+type RunWorkflowServiceActivities interface{}
 
 // RegisterRunWorkflowServiceActivities registers activities with a worker
 func RegisterRunWorkflowServiceActivities(r worker.ActivityRegistry, activities RunWorkflowServiceActivities) {
-	RegisterCreateNetworkActivityActivity(r, activities.CreateNetworkActivity)
-	RegisterDeployMachinesActivityActivity(r, activities.DeployMachinesActivity)
-	RegisterTeardownActivityActivity(r, activities.TeardownActivity)
-}
-
-// RegisterCreateNetworkActivityActivity registers a cloud.v1.workflow.RunWorkflowService.CreateNetworkActivity activity
-func RegisterCreateNetworkActivityActivity(r worker.ActivityRegistry, fn func(context.Context, *RunConfig) (*Deployment, error)) {
-	r.RegisterActivityWithOptions(fn, activity.RegisterOptions{
-		Name: CreateNetworkActivityActivityName,
-	})
-}
-
-// CreateNetworkActivityFuture describes a(n) cloud.v1.workflow.RunWorkflowService.CreateNetworkActivity activity execution
-type CreateNetworkActivityFuture struct {
-	Future workflow.Future
-}
-
-// Get blocks on the activity's completion, returning the response
-func (f *CreateNetworkActivityFuture) Get(ctx workflow.Context) (*Deployment, error) {
-	var resp Deployment
-	if err := f.Future.Get(ctx, &resp); err != nil {
-		return nil, err
-	}
-	return &resp, nil
-}
-
-// Select adds the activity's completion to the selector, callback can be nil
-func (f *CreateNetworkActivityFuture) Select(sel workflow.Selector, fn func(*CreateNetworkActivityFuture)) workflow.Selector {
-	return sel.AddFuture(f.Future, func(workflow.Future) {
-		if fn != nil {
-			fn(f)
-		}
-	})
-}
-
-// CreateNetworkActivity acquires the run network (docker network create /
-// yandex subnet) and returns the partial Deployment carrying its handle.
-// Idempotent (dedupe by name) => retryable.
-func CreateNetworkActivity(ctx workflow.Context, req *RunConfig, options ...*CreateNetworkActivityActivityOptions) (*Deployment, error) {
-	return CreateNetworkActivityAsync(ctx, req, options...).Get(ctx)
-}
-
-// CreateNetworkActivity acquires the run network (docker network create /
-// yandex subnet) and returns the partial Deployment carrying its handle.
-// Idempotent (dedupe by name) => retryable.
-func CreateNetworkActivityAsync(ctx workflow.Context, req *RunConfig, options ...*CreateNetworkActivityActivityOptions) *CreateNetworkActivityFuture {
-	var o *CreateNetworkActivityActivityOptions
-	if len(options) > 0 && options[0] != nil {
-		o = options[0]
-	} else {
-		o = NewCreateNetworkActivityActivityOptions()
-	}
-	var err error
-	if ctx, err = o.Build(ctx); err != nil {
-		errF, errS := workflow.NewFuture(ctx)
-		errS.SetError(err)
-		return &CreateNetworkActivityFuture{Future: errF}
-	}
-	activity := CreateNetworkActivityActivityName
-	if o.dc != nil {
-		ctx = workflow.WithDataConverter(ctx, o.dc)
-	}
-	future := &CreateNetworkActivityFuture{Future: workflow.ExecuteActivity(ctx, activity, req)}
-	return future
-}
-
-// CreateNetworkActivity acquires the run network (docker network create /
-// yandex subnet) and returns the partial Deployment carrying its handle.
-// Idempotent (dedupe by name) => retryable.
-func CreateNetworkActivityLocal(ctx workflow.Context, req *RunConfig, options ...*CreateNetworkActivityLocalActivityOptions) (*Deployment, error) {
-	return CreateNetworkActivityLocalAsync(ctx, req, options...).Get(ctx)
-}
-
-// CreateNetworkActivity acquires the run network (docker network create /
-// yandex subnet) and returns the partial Deployment carrying its handle.
-// Idempotent (dedupe by name) => retryable.
-func CreateNetworkActivityLocalAsync(ctx workflow.Context, req *RunConfig, options ...*CreateNetworkActivityLocalActivityOptions) *CreateNetworkActivityFuture {
-	var o *CreateNetworkActivityLocalActivityOptions
-	if len(options) > 0 && options[0] != nil {
-		o = options[0]
-	} else {
-		o = NewCreateNetworkActivityLocalActivityOptions()
-	}
-	var err error
-	if ctx, err = o.Build(ctx); err != nil {
-		errF, errS := workflow.NewFuture(ctx)
-		errS.SetError(err)
-		return &CreateNetworkActivityFuture{Future: errF}
-	}
-	var activity any
-	if o.fn != nil {
-		activity = o.fn
-	} else {
-		activity = CreateNetworkActivityActivityName
-	}
-	if o.dc != nil {
-		ctx = workflow.WithDataConverter(ctx, o.dc)
-	}
-	future := &CreateNetworkActivityFuture{Future: workflow.ExecuteLocalActivity(ctx, activity, req)}
-	return future
-}
-
-// CreateNetworkActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.RunWorkflowService.CreateNetworkActivity activity
-type CreateNetworkActivityActivityOptions struct {
-	options                workflow.ActivityOptions
-	retryPolicy            *temporal.RetryPolicy
-	scheduleToCloseTimeout *time.Duration
-	startToCloseTimeout    *time.Duration
-	dc                     converter.DataConverter
-	heartbeatTimeout       *time.Duration
-	scheduleToStartTimeout *time.Duration
-	taskQueue              *string
-	waitForCancellation    *bool
-}
-
-// NewCreateNetworkActivityActivityOptions initializes a new CreateNetworkActivityActivityOptions value
-func NewCreateNetworkActivityActivityOptions() *CreateNetworkActivityActivityOptions {
-	return &CreateNetworkActivityActivityOptions{}
-}
-
-// Build initializes a workflow.Context with appropriate ActivityOptions values derived from schema defaults and any user-defined overrides
-func (o *CreateNetworkActivityActivityOptions) Build(ctx workflow.Context) (workflow.Context, error) {
-	opts := o.options
-	if v := o.heartbeatTimeout; v != nil {
-		opts.HeartbeatTimeout = *v
-	}
-	if v := o.retryPolicy; v != nil {
-		opts.RetryPolicy = v
-	} else if opts.RetryPolicy == nil {
-		opts.RetryPolicy = &temporal.RetryPolicy{InitialInterval: 5000000000, BackoffCoefficient: 2.0, MaximumAttempts: int32(3)}
-	}
-	if v := o.scheduleToCloseTimeout; v != nil {
-		opts.ScheduleToCloseTimeout = *v
-	}
-	if v := o.scheduleToStartTimeout; v != nil {
-		opts.ScheduleToStartTimeout = *v
-	}
-	if v := o.startToCloseTimeout; v != nil {
-		opts.StartToCloseTimeout = *v
-	} else if opts.StartToCloseTimeout == 0 {
-		opts.StartToCloseTimeout = 300000000000 // 5 minutes
-	}
-	if v := o.taskQueue; v != nil {
-		opts.TaskQueue = *v
-	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = RunWorkflowServiceTaskQueue
-	}
-	if v := o.waitForCancellation; v != nil {
-		opts.WaitForCancellation = *v
-	}
-	return workflow.WithActivityOptions(ctx, opts), nil
-}
-
-// WithActivityOptions specifies an initial ActivityOptions value to which defaults will be applied
-func (o *CreateNetworkActivityActivityOptions) WithActivityOptions(options workflow.ActivityOptions) *CreateNetworkActivityActivityOptions {
-	o.options = options
-	return o
-}
-
-// WithDataConverter registers a DataConverter for the (local) activity
-func (o *CreateNetworkActivityActivityOptions) WithDataConverter(dc converter.DataConverter) *CreateNetworkActivityActivityOptions {
-	o.dc = dc
-	return o
-}
-
-// WithHeartbeatTimeout sets the HeartbeatTimeout value
-func (o *CreateNetworkActivityActivityOptions) WithHeartbeatTimeout(d time.Duration) *CreateNetworkActivityActivityOptions {
-	o.heartbeatTimeout = &d
-	return o
-}
-
-// WithRetryPolicy sets the RetryPolicy value
-func (o *CreateNetworkActivityActivityOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *CreateNetworkActivityActivityOptions {
-	o.retryPolicy = policy
-	return o
-}
-
-// WithScheduleToCloseTimeout sets the ScheduleToCloseTimeout value
-func (o *CreateNetworkActivityActivityOptions) WithScheduleToCloseTimeout(d time.Duration) *CreateNetworkActivityActivityOptions {
-	o.scheduleToCloseTimeout = &d
-	return o
-}
-
-// WithScheduleToStartTimeout sets the ScheduleToStartTimeout value
-func (o *CreateNetworkActivityActivityOptions) WithScheduleToStartTimeout(d time.Duration) *CreateNetworkActivityActivityOptions {
-	o.scheduleToStartTimeout = &d
-	return o
-}
-
-// WithStartToCloseTimeout sets the StartToCloseTimeout value
-func (o *CreateNetworkActivityActivityOptions) WithStartToCloseTimeout(d time.Duration) *CreateNetworkActivityActivityOptions {
-	o.startToCloseTimeout = &d
-	return o
-}
-
-// WithTaskQueue sets the TaskQueue value
-func (o *CreateNetworkActivityActivityOptions) WithTaskQueue(tq string) *CreateNetworkActivityActivityOptions {
-	o.taskQueue = &tq
-	return o
-}
-
-// WithWaitForCancellation sets the WaitForCancellation value
-func (o *CreateNetworkActivityActivityOptions) WithWaitForCancellation(wait bool) *CreateNetworkActivityActivityOptions {
-	o.waitForCancellation = &wait
-	return o
-}
-
-// CreateNetworkActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.RunWorkflowService.CreateNetworkActivity activity
-type CreateNetworkActivityLocalActivityOptions struct {
-	options                workflow.LocalActivityOptions
-	retryPolicy            *temporal.RetryPolicy
-	scheduleToCloseTimeout *time.Duration
-	startToCloseTimeout    *time.Duration
-	dc                     converter.DataConverter
-	fn                     func(context.Context, *RunConfig) (*Deployment, error)
-}
-
-// NewCreateNetworkActivityLocalActivityOptions initializes a new CreateNetworkActivityLocalActivityOptions value
-func NewCreateNetworkActivityLocalActivityOptions() *CreateNetworkActivityLocalActivityOptions {
-	return &CreateNetworkActivityLocalActivityOptions{}
-}
-
-// Build initializes a workflow.Context with appropriate LocalActivityOptions values derived from schema defaults and any user-defined overrides
-func (o *CreateNetworkActivityLocalActivityOptions) Build(ctx workflow.Context) (workflow.Context, error) {
-	opts := o.options
-	if v := o.retryPolicy; v != nil {
-		opts.RetryPolicy = v
-	} else if opts.RetryPolicy == nil {
-		opts.RetryPolicy = &temporal.RetryPolicy{InitialInterval: 5000000000, BackoffCoefficient: 2.0, MaximumAttempts: int32(3)}
-	}
-	if v := o.scheduleToCloseTimeout; v != nil {
-		opts.ScheduleToCloseTimeout = *v
-	}
-	if v := o.startToCloseTimeout; v != nil {
-		opts.StartToCloseTimeout = *v
-	} else if opts.StartToCloseTimeout == 0 {
-		opts.StartToCloseTimeout = 300000000000 // 5 minutes
-	}
-	return workflow.WithLocalActivityOptions(ctx, opts), nil
-}
-
-// Local specifies a custom cloud.v1.workflow.RunWorkflowService.CreateNetworkActivity implementation
-func (o *CreateNetworkActivityLocalActivityOptions) Local(fn func(context.Context, *RunConfig) (*Deployment, error)) *CreateNetworkActivityLocalActivityOptions {
-	o.fn = fn
-	return o
-}
-
-// WithLocalActivityOptions specifies an initial LocalActivityOptions value to which defaults will be applied
-func (o *CreateNetworkActivityLocalActivityOptions) WithLocalActivityOptions(options workflow.LocalActivityOptions) *CreateNetworkActivityLocalActivityOptions {
-	o.options = options
-	return o
-}
-
-// WithDataConverter registers a DataConverter for the (local) activity
-func (o *CreateNetworkActivityLocalActivityOptions) WithDataConverter(dc converter.DataConverter) *CreateNetworkActivityLocalActivityOptions {
-	o.dc = dc
-	return o
-}
-
-// WithRetryPolicy sets the RetryPolicy value
-func (o *CreateNetworkActivityLocalActivityOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *CreateNetworkActivityLocalActivityOptions {
-	o.retryPolicy = policy
-	return o
-}
-
-// WithScheduleToCloseTimeout sets the ScheduleToCloseTimeout value
-func (o *CreateNetworkActivityLocalActivityOptions) WithScheduleToCloseTimeout(d time.Duration) *CreateNetworkActivityLocalActivityOptions {
-	o.scheduleToCloseTimeout = &d
-	return o
-}
-
-// WithStartToCloseTimeout sets the StartToCloseTimeout value
-func (o *CreateNetworkActivityLocalActivityOptions) WithStartToCloseTimeout(d time.Duration) *CreateNetworkActivityLocalActivityOptions {
-	o.startToCloseTimeout = &d
-	return o
-}
-
-// RegisterDeployMachinesActivityActivity registers a cloud.v1.workflow.RunWorkflowService.DeployMachinesActivity activity
-func RegisterDeployMachinesActivityActivity(r worker.ActivityRegistry, fn func(context.Context, *RunConfig) (*Deployment, error)) {
-	r.RegisterActivityWithOptions(fn, activity.RegisterOptions{
-		Name: DeployMachinesActivityActivityName,
-	})
-}
-
-// DeployMachinesActivityFuture describes a(n) cloud.v1.workflow.RunWorkflowService.DeployMachinesActivity activity execution
-type DeployMachinesActivityFuture struct {
-	Future workflow.Future
-}
-
-// Get blocks on the activity's completion, returning the response
-func (f *DeployMachinesActivityFuture) Get(ctx workflow.Context) (*Deployment, error) {
-	var resp Deployment
-	if err := f.Future.Get(ctx, &resp); err != nil {
-		return nil, err
-	}
-	return &resp, nil
-}
-
-// Select adds the activity's completion to the selector, callback can be nil
-func (f *DeployMachinesActivityFuture) Select(sel workflow.Selector, fn func(*DeployMachinesActivityFuture)) workflow.Selector {
-	return sel.AddFuture(f.Future, func(workflow.Future) {
-		if fn != nil {
-			fn(f)
-		}
-	})
-}
-
-// DeployMachinesActivity provisions the machines (docker containers /
-// terraform apply), waits for them, and returns the full Deployment:
-// targets, db endpoint, and teardown handles. Mutating but
-// terraform/docker-idempotent; retried sparingly, heartbeats while running.
-func DeployMachinesActivity(ctx workflow.Context, req *RunConfig, options ...*DeployMachinesActivityActivityOptions) (*Deployment, error) {
-	return DeployMachinesActivityAsync(ctx, req, options...).Get(ctx)
-}
-
-// DeployMachinesActivity provisions the machines (docker containers /
-// terraform apply), waits for them, and returns the full Deployment:
-// targets, db endpoint, and teardown handles. Mutating but
-// terraform/docker-idempotent; retried sparingly, heartbeats while running.
-func DeployMachinesActivityAsync(ctx workflow.Context, req *RunConfig, options ...*DeployMachinesActivityActivityOptions) *DeployMachinesActivityFuture {
-	var o *DeployMachinesActivityActivityOptions
-	if len(options) > 0 && options[0] != nil {
-		o = options[0]
-	} else {
-		o = NewDeployMachinesActivityActivityOptions()
-	}
-	var err error
-	if ctx, err = o.Build(ctx); err != nil {
-		errF, errS := workflow.NewFuture(ctx)
-		errS.SetError(err)
-		return &DeployMachinesActivityFuture{Future: errF}
-	}
-	activity := DeployMachinesActivityActivityName
-	if o.dc != nil {
-		ctx = workflow.WithDataConverter(ctx, o.dc)
-	}
-	future := &DeployMachinesActivityFuture{Future: workflow.ExecuteActivity(ctx, activity, req)}
-	return future
-}
-
-// DeployMachinesActivity provisions the machines (docker containers /
-// terraform apply), waits for them, and returns the full Deployment:
-// targets, db endpoint, and teardown handles. Mutating but
-// terraform/docker-idempotent; retried sparingly, heartbeats while running.
-func DeployMachinesActivityLocal(ctx workflow.Context, req *RunConfig, options ...*DeployMachinesActivityLocalActivityOptions) (*Deployment, error) {
-	return DeployMachinesActivityLocalAsync(ctx, req, options...).Get(ctx)
-}
-
-// DeployMachinesActivity provisions the machines (docker containers /
-// terraform apply), waits for them, and returns the full Deployment:
-// targets, db endpoint, and teardown handles. Mutating but
-// terraform/docker-idempotent; retried sparingly, heartbeats while running.
-func DeployMachinesActivityLocalAsync(ctx workflow.Context, req *RunConfig, options ...*DeployMachinesActivityLocalActivityOptions) *DeployMachinesActivityFuture {
-	var o *DeployMachinesActivityLocalActivityOptions
-	if len(options) > 0 && options[0] != nil {
-		o = options[0]
-	} else {
-		o = NewDeployMachinesActivityLocalActivityOptions()
-	}
-	var err error
-	if ctx, err = o.Build(ctx); err != nil {
-		errF, errS := workflow.NewFuture(ctx)
-		errS.SetError(err)
-		return &DeployMachinesActivityFuture{Future: errF}
-	}
-	var activity any
-	if o.fn != nil {
-		activity = o.fn
-	} else {
-		activity = DeployMachinesActivityActivityName
-	}
-	if o.dc != nil {
-		ctx = workflow.WithDataConverter(ctx, o.dc)
-	}
-	future := &DeployMachinesActivityFuture{Future: workflow.ExecuteLocalActivity(ctx, activity, req)}
-	return future
-}
-
-// DeployMachinesActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.RunWorkflowService.DeployMachinesActivity activity
-type DeployMachinesActivityActivityOptions struct {
-	options                workflow.ActivityOptions
-	retryPolicy            *temporal.RetryPolicy
-	scheduleToCloseTimeout *time.Duration
-	startToCloseTimeout    *time.Duration
-	dc                     converter.DataConverter
-	heartbeatTimeout       *time.Duration
-	scheduleToStartTimeout *time.Duration
-	taskQueue              *string
-	waitForCancellation    *bool
-}
-
-// NewDeployMachinesActivityActivityOptions initializes a new DeployMachinesActivityActivityOptions value
-func NewDeployMachinesActivityActivityOptions() *DeployMachinesActivityActivityOptions {
-	return &DeployMachinesActivityActivityOptions{}
-}
-
-// Build initializes a workflow.Context with appropriate ActivityOptions values derived from schema defaults and any user-defined overrides
-func (o *DeployMachinesActivityActivityOptions) Build(ctx workflow.Context) (workflow.Context, error) {
-	opts := o.options
-	if v := o.heartbeatTimeout; v != nil {
-		opts.HeartbeatTimeout = *v
-	} else if opts.HeartbeatTimeout == 0 {
-		opts.HeartbeatTimeout = 60000000000 // 1 minute
-	}
-	if v := o.retryPolicy; v != nil {
-		opts.RetryPolicy = v
-	} else if opts.RetryPolicy == nil {
-		opts.RetryPolicy = &temporal.RetryPolicy{InitialInterval: 10000000000, MaximumAttempts: int32(2)}
-	}
-	if v := o.scheduleToCloseTimeout; v != nil {
-		opts.ScheduleToCloseTimeout = *v
-	}
-	if v := o.scheduleToStartTimeout; v != nil {
-		opts.ScheduleToStartTimeout = *v
-	}
-	if v := o.startToCloseTimeout; v != nil {
-		opts.StartToCloseTimeout = *v
-	} else if opts.StartToCloseTimeout == 0 {
-		opts.StartToCloseTimeout = 1800000000000 // 30 minutes
-	}
-	if v := o.taskQueue; v != nil {
-		opts.TaskQueue = *v
-	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = RunWorkflowServiceTaskQueue
-	}
-	if v := o.waitForCancellation; v != nil {
-		opts.WaitForCancellation = *v
-	}
-	return workflow.WithActivityOptions(ctx, opts), nil
-}
-
-// WithActivityOptions specifies an initial ActivityOptions value to which defaults will be applied
-func (o *DeployMachinesActivityActivityOptions) WithActivityOptions(options workflow.ActivityOptions) *DeployMachinesActivityActivityOptions {
-	o.options = options
-	return o
-}
-
-// WithDataConverter registers a DataConverter for the (local) activity
-func (o *DeployMachinesActivityActivityOptions) WithDataConverter(dc converter.DataConverter) *DeployMachinesActivityActivityOptions {
-	o.dc = dc
-	return o
-}
-
-// WithHeartbeatTimeout sets the HeartbeatTimeout value
-func (o *DeployMachinesActivityActivityOptions) WithHeartbeatTimeout(d time.Duration) *DeployMachinesActivityActivityOptions {
-	o.heartbeatTimeout = &d
-	return o
-}
-
-// WithRetryPolicy sets the RetryPolicy value
-func (o *DeployMachinesActivityActivityOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *DeployMachinesActivityActivityOptions {
-	o.retryPolicy = policy
-	return o
-}
-
-// WithScheduleToCloseTimeout sets the ScheduleToCloseTimeout value
-func (o *DeployMachinesActivityActivityOptions) WithScheduleToCloseTimeout(d time.Duration) *DeployMachinesActivityActivityOptions {
-	o.scheduleToCloseTimeout = &d
-	return o
-}
-
-// WithScheduleToStartTimeout sets the ScheduleToStartTimeout value
-func (o *DeployMachinesActivityActivityOptions) WithScheduleToStartTimeout(d time.Duration) *DeployMachinesActivityActivityOptions {
-	o.scheduleToStartTimeout = &d
-	return o
-}
-
-// WithStartToCloseTimeout sets the StartToCloseTimeout value
-func (o *DeployMachinesActivityActivityOptions) WithStartToCloseTimeout(d time.Duration) *DeployMachinesActivityActivityOptions {
-	o.startToCloseTimeout = &d
-	return o
-}
-
-// WithTaskQueue sets the TaskQueue value
-func (o *DeployMachinesActivityActivityOptions) WithTaskQueue(tq string) *DeployMachinesActivityActivityOptions {
-	o.taskQueue = &tq
-	return o
-}
-
-// WithWaitForCancellation sets the WaitForCancellation value
-func (o *DeployMachinesActivityActivityOptions) WithWaitForCancellation(wait bool) *DeployMachinesActivityActivityOptions {
-	o.waitForCancellation = &wait
-	return o
-}
-
-// DeployMachinesActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.RunWorkflowService.DeployMachinesActivity activity
-type DeployMachinesActivityLocalActivityOptions struct {
-	options                workflow.LocalActivityOptions
-	retryPolicy            *temporal.RetryPolicy
-	scheduleToCloseTimeout *time.Duration
-	startToCloseTimeout    *time.Duration
-	dc                     converter.DataConverter
-	fn                     func(context.Context, *RunConfig) (*Deployment, error)
-}
-
-// NewDeployMachinesActivityLocalActivityOptions initializes a new DeployMachinesActivityLocalActivityOptions value
-func NewDeployMachinesActivityLocalActivityOptions() *DeployMachinesActivityLocalActivityOptions {
-	return &DeployMachinesActivityLocalActivityOptions{}
-}
-
-// Build initializes a workflow.Context with appropriate LocalActivityOptions values derived from schema defaults and any user-defined overrides
-func (o *DeployMachinesActivityLocalActivityOptions) Build(ctx workflow.Context) (workflow.Context, error) {
-	opts := o.options
-	if v := o.retryPolicy; v != nil {
-		opts.RetryPolicy = v
-	} else if opts.RetryPolicy == nil {
-		opts.RetryPolicy = &temporal.RetryPolicy{InitialInterval: 10000000000, MaximumAttempts: int32(2)}
-	}
-	if v := o.scheduleToCloseTimeout; v != nil {
-		opts.ScheduleToCloseTimeout = *v
-	}
-	if v := o.startToCloseTimeout; v != nil {
-		opts.StartToCloseTimeout = *v
-	} else if opts.StartToCloseTimeout == 0 {
-		opts.StartToCloseTimeout = 1800000000000 // 30 minutes
-	}
-	return workflow.WithLocalActivityOptions(ctx, opts), nil
-}
-
-// Local specifies a custom cloud.v1.workflow.RunWorkflowService.DeployMachinesActivity implementation
-func (o *DeployMachinesActivityLocalActivityOptions) Local(fn func(context.Context, *RunConfig) (*Deployment, error)) *DeployMachinesActivityLocalActivityOptions {
-	o.fn = fn
-	return o
-}
-
-// WithLocalActivityOptions specifies an initial LocalActivityOptions value to which defaults will be applied
-func (o *DeployMachinesActivityLocalActivityOptions) WithLocalActivityOptions(options workflow.LocalActivityOptions) *DeployMachinesActivityLocalActivityOptions {
-	o.options = options
-	return o
-}
-
-// WithDataConverter registers a DataConverter for the (local) activity
-func (o *DeployMachinesActivityLocalActivityOptions) WithDataConverter(dc converter.DataConverter) *DeployMachinesActivityLocalActivityOptions {
-	o.dc = dc
-	return o
-}
-
-// WithRetryPolicy sets the RetryPolicy value
-func (o *DeployMachinesActivityLocalActivityOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *DeployMachinesActivityLocalActivityOptions {
-	o.retryPolicy = policy
-	return o
-}
-
-// WithScheduleToCloseTimeout sets the ScheduleToCloseTimeout value
-func (o *DeployMachinesActivityLocalActivityOptions) WithScheduleToCloseTimeout(d time.Duration) *DeployMachinesActivityLocalActivityOptions {
-	o.scheduleToCloseTimeout = &d
-	return o
-}
-
-// WithStartToCloseTimeout sets the StartToCloseTimeout value
-func (o *DeployMachinesActivityLocalActivityOptions) WithStartToCloseTimeout(d time.Duration) *DeployMachinesActivityLocalActivityOptions {
-	o.startToCloseTimeout = &d
-	return o
-}
-
-// RegisterTeardownActivityActivity registers a cloud.v1.workflow.RunWorkflowService.TeardownActivity activity
-func RegisterTeardownActivityActivity(r worker.ActivityRegistry, fn func(context.Context, *Deployment) error) {
-	r.RegisterActivityWithOptions(fn, activity.RegisterOptions{
-		Name: TeardownActivityActivityName,
-	})
-}
-
-// TeardownActivityFuture describes a(n) cloud.v1.workflow.RunWorkflowService.TeardownActivity activity execution
-type TeardownActivityFuture struct {
-	Future workflow.Future
-}
-
-// Get blocks on the activity's completion, returning the response
-func (f *TeardownActivityFuture) Get(ctx workflow.Context) error {
-	return f.Future.Get(ctx, nil)
-}
-
-// Select adds the activity's completion to the selector, callback can be nil
-func (f *TeardownActivityFuture) Select(sel workflow.Selector, fn func(*TeardownActivityFuture)) workflow.Selector {
-	return sel.AddFuture(f.Future, func(workflow.Future) {
-		if fn != nil {
-			fn(f)
-		}
-	})
-}
-
-// TeardownActivity destroys the run's infrastructure (docker rm + network
-// remove / terraform destroy) from the Deployment handles. Idempotent
-// (converges to empty) => retried to avoid leaks. Runs even on failure.
-func TeardownActivity(ctx workflow.Context, req *Deployment, options ...*TeardownActivityActivityOptions) error {
-	return TeardownActivityAsync(ctx, req, options...).Get(ctx)
-}
-
-// TeardownActivity destroys the run's infrastructure (docker rm + network
-// remove / terraform destroy) from the Deployment handles. Idempotent
-// (converges to empty) => retried to avoid leaks. Runs even on failure.
-func TeardownActivityAsync(ctx workflow.Context, req *Deployment, options ...*TeardownActivityActivityOptions) *TeardownActivityFuture {
-	var o *TeardownActivityActivityOptions
-	if len(options) > 0 && options[0] != nil {
-		o = options[0]
-	} else {
-		o = NewTeardownActivityActivityOptions()
-	}
-	var err error
-	if ctx, err = o.Build(ctx); err != nil {
-		errF, errS := workflow.NewFuture(ctx)
-		errS.SetError(err)
-		return &TeardownActivityFuture{Future: errF}
-	}
-	activity := TeardownActivityActivityName
-	if o.dc != nil {
-		ctx = workflow.WithDataConverter(ctx, o.dc)
-	}
-	future := &TeardownActivityFuture{Future: workflow.ExecuteActivity(ctx, activity, req)}
-	return future
-}
-
-// TeardownActivity destroys the run's infrastructure (docker rm + network
-// remove / terraform destroy) from the Deployment handles. Idempotent
-// (converges to empty) => retried to avoid leaks. Runs even on failure.
-func TeardownActivityLocal(ctx workflow.Context, req *Deployment, options ...*TeardownActivityLocalActivityOptions) error {
-	return TeardownActivityLocalAsync(ctx, req, options...).Get(ctx)
-}
-
-// TeardownActivity destroys the run's infrastructure (docker rm + network
-// remove / terraform destroy) from the Deployment handles. Idempotent
-// (converges to empty) => retried to avoid leaks. Runs even on failure.
-func TeardownActivityLocalAsync(ctx workflow.Context, req *Deployment, options ...*TeardownActivityLocalActivityOptions) *TeardownActivityFuture {
-	var o *TeardownActivityLocalActivityOptions
-	if len(options) > 0 && options[0] != nil {
-		o = options[0]
-	} else {
-		o = NewTeardownActivityLocalActivityOptions()
-	}
-	var err error
-	if ctx, err = o.Build(ctx); err != nil {
-		errF, errS := workflow.NewFuture(ctx)
-		errS.SetError(err)
-		return &TeardownActivityFuture{Future: errF}
-	}
-	var activity any
-	if o.fn != nil {
-		activity = o.fn
-	} else {
-		activity = TeardownActivityActivityName
-	}
-	if o.dc != nil {
-		ctx = workflow.WithDataConverter(ctx, o.dc)
-	}
-	future := &TeardownActivityFuture{Future: workflow.ExecuteLocalActivity(ctx, activity, req)}
-	return future
-}
-
-// TeardownActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.RunWorkflowService.TeardownActivity activity
-type TeardownActivityActivityOptions struct {
-	options                workflow.ActivityOptions
-	retryPolicy            *temporal.RetryPolicy
-	scheduleToCloseTimeout *time.Duration
-	startToCloseTimeout    *time.Duration
-	dc                     converter.DataConverter
-	heartbeatTimeout       *time.Duration
-	scheduleToStartTimeout *time.Duration
-	taskQueue              *string
-	waitForCancellation    *bool
-}
-
-// NewTeardownActivityActivityOptions initializes a new TeardownActivityActivityOptions value
-func NewTeardownActivityActivityOptions() *TeardownActivityActivityOptions {
-	return &TeardownActivityActivityOptions{}
-}
-
-// Build initializes a workflow.Context with appropriate ActivityOptions values derived from schema defaults and any user-defined overrides
-func (o *TeardownActivityActivityOptions) Build(ctx workflow.Context) (workflow.Context, error) {
-	opts := o.options
-	if v := o.heartbeatTimeout; v != nil {
-		opts.HeartbeatTimeout = *v
-	} else if opts.HeartbeatTimeout == 0 {
-		opts.HeartbeatTimeout = 60000000000 // 1 minute
-	}
-	if v := o.retryPolicy; v != nil {
-		opts.RetryPolicy = v
-	} else if opts.RetryPolicy == nil {
-		opts.RetryPolicy = &temporal.RetryPolicy{InitialInterval: 10000000000, MaximumAttempts: int32(3)}
-	}
-	if v := o.scheduleToCloseTimeout; v != nil {
-		opts.ScheduleToCloseTimeout = *v
-	}
-	if v := o.scheduleToStartTimeout; v != nil {
-		opts.ScheduleToStartTimeout = *v
-	}
-	if v := o.startToCloseTimeout; v != nil {
-		opts.StartToCloseTimeout = *v
-	} else if opts.StartToCloseTimeout == 0 {
-		opts.StartToCloseTimeout = 1800000000000 // 30 minutes
-	}
-	if v := o.taskQueue; v != nil {
-		opts.TaskQueue = *v
-	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = RunWorkflowServiceTaskQueue
-	}
-	if v := o.waitForCancellation; v != nil {
-		opts.WaitForCancellation = *v
-	}
-	return workflow.WithActivityOptions(ctx, opts), nil
-}
-
-// WithActivityOptions specifies an initial ActivityOptions value to which defaults will be applied
-func (o *TeardownActivityActivityOptions) WithActivityOptions(options workflow.ActivityOptions) *TeardownActivityActivityOptions {
-	o.options = options
-	return o
-}
-
-// WithDataConverter registers a DataConverter for the (local) activity
-func (o *TeardownActivityActivityOptions) WithDataConverter(dc converter.DataConverter) *TeardownActivityActivityOptions {
-	o.dc = dc
-	return o
-}
-
-// WithHeartbeatTimeout sets the HeartbeatTimeout value
-func (o *TeardownActivityActivityOptions) WithHeartbeatTimeout(d time.Duration) *TeardownActivityActivityOptions {
-	o.heartbeatTimeout = &d
-	return o
-}
-
-// WithRetryPolicy sets the RetryPolicy value
-func (o *TeardownActivityActivityOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *TeardownActivityActivityOptions {
-	o.retryPolicy = policy
-	return o
-}
-
-// WithScheduleToCloseTimeout sets the ScheduleToCloseTimeout value
-func (o *TeardownActivityActivityOptions) WithScheduleToCloseTimeout(d time.Duration) *TeardownActivityActivityOptions {
-	o.scheduleToCloseTimeout = &d
-	return o
-}
-
-// WithScheduleToStartTimeout sets the ScheduleToStartTimeout value
-func (o *TeardownActivityActivityOptions) WithScheduleToStartTimeout(d time.Duration) *TeardownActivityActivityOptions {
-	o.scheduleToStartTimeout = &d
-	return o
-}
-
-// WithStartToCloseTimeout sets the StartToCloseTimeout value
-func (o *TeardownActivityActivityOptions) WithStartToCloseTimeout(d time.Duration) *TeardownActivityActivityOptions {
-	o.startToCloseTimeout = &d
-	return o
-}
-
-// WithTaskQueue sets the TaskQueue value
-func (o *TeardownActivityActivityOptions) WithTaskQueue(tq string) *TeardownActivityActivityOptions {
-	o.taskQueue = &tq
-	return o
-}
-
-// WithWaitForCancellation sets the WaitForCancellation value
-func (o *TeardownActivityActivityOptions) WithWaitForCancellation(wait bool) *TeardownActivityActivityOptions {
-	o.waitForCancellation = &wait
-	return o
-}
-
-// TeardownActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.RunWorkflowService.TeardownActivity activity
-type TeardownActivityLocalActivityOptions struct {
-	options                workflow.LocalActivityOptions
-	retryPolicy            *temporal.RetryPolicy
-	scheduleToCloseTimeout *time.Duration
-	startToCloseTimeout    *time.Duration
-	dc                     converter.DataConverter
-	fn                     func(context.Context, *Deployment) error
-}
-
-// NewTeardownActivityLocalActivityOptions initializes a new TeardownActivityLocalActivityOptions value
-func NewTeardownActivityLocalActivityOptions() *TeardownActivityLocalActivityOptions {
-	return &TeardownActivityLocalActivityOptions{}
-}
-
-// Build initializes a workflow.Context with appropriate LocalActivityOptions values derived from schema defaults and any user-defined overrides
-func (o *TeardownActivityLocalActivityOptions) Build(ctx workflow.Context) (workflow.Context, error) {
-	opts := o.options
-	if v := o.retryPolicy; v != nil {
-		opts.RetryPolicy = v
-	} else if opts.RetryPolicy == nil {
-		opts.RetryPolicy = &temporal.RetryPolicy{InitialInterval: 10000000000, MaximumAttempts: int32(3)}
-	}
-	if v := o.scheduleToCloseTimeout; v != nil {
-		opts.ScheduleToCloseTimeout = *v
-	}
-	if v := o.startToCloseTimeout; v != nil {
-		opts.StartToCloseTimeout = *v
-	} else if opts.StartToCloseTimeout == 0 {
-		opts.StartToCloseTimeout = 1800000000000 // 30 minutes
-	}
-	return workflow.WithLocalActivityOptions(ctx, opts), nil
-}
-
-// Local specifies a custom cloud.v1.workflow.RunWorkflowService.TeardownActivity implementation
-func (o *TeardownActivityLocalActivityOptions) Local(fn func(context.Context, *Deployment) error) *TeardownActivityLocalActivityOptions {
-	o.fn = fn
-	return o
-}
-
-// WithLocalActivityOptions specifies an initial LocalActivityOptions value to which defaults will be applied
-func (o *TeardownActivityLocalActivityOptions) WithLocalActivityOptions(options workflow.LocalActivityOptions) *TeardownActivityLocalActivityOptions {
-	o.options = options
-	return o
-}
-
-// WithDataConverter registers a DataConverter for the (local) activity
-func (o *TeardownActivityLocalActivityOptions) WithDataConverter(dc converter.DataConverter) *TeardownActivityLocalActivityOptions {
-	o.dc = dc
-	return o
-}
-
-// WithRetryPolicy sets the RetryPolicy value
-func (o *TeardownActivityLocalActivityOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *TeardownActivityLocalActivityOptions {
-	o.retryPolicy = policy
-	return o
-}
-
-// WithScheduleToCloseTimeout sets the ScheduleToCloseTimeout value
-func (o *TeardownActivityLocalActivityOptions) WithScheduleToCloseTimeout(d time.Duration) *TeardownActivityLocalActivityOptions {
-	o.scheduleToCloseTimeout = &d
-	return o
-}
-
-// WithStartToCloseTimeout sets the StartToCloseTimeout value
-func (o *TeardownActivityLocalActivityOptions) WithStartToCloseTimeout(d time.Duration) *TeardownActivityLocalActivityOptions {
-	o.startToCloseTimeout = &d
-	return o
 }
 
 // TestClient provides a testsuite-compatible Client
@@ -1681,33 +746,33 @@ func NewTestRunWorkflowServiceClient(env *testsuite.TestWorkflowEnvironment, wor
 	return &TestRunWorkflowServiceClient{env, workflows}
 }
 
-// RunWorkflow executes a(n) RunWorkflow workflow in the test environment
-func (c *TestRunWorkflowServiceClient) RunWorkflow(ctx context.Context, req *RunConfig, opts ...*RunWorkflowOptions) error {
-	run, err := c.RunWorkflowAsync(ctx, req, opts...)
+// TestRunWorkflow executes a(n) TestRunWorkflow workflow in the test environment
+func (c *TestRunWorkflowServiceClient) TestRunWorkflow(ctx context.Context, req *RunConfig, opts ...*TestRunWorkflowOptions) error {
+	run, err := c.TestRunWorkflowAsync(ctx, req, opts...)
 	if err != nil {
 		return err
 	}
 	return run.Get(ctx)
 }
 
-// RunWorkflowAsync executes a(n) RunWorkflow workflow in the test environment
-func (c *TestRunWorkflowServiceClient) RunWorkflowAsync(ctx context.Context, req *RunConfig, options ...*RunWorkflowOptions) (RunWorkflowRun, error) {
-	var o *RunWorkflowOptions
+// TestRunWorkflowAsync executes a(n) TestRunWorkflow workflow in the test environment
+func (c *TestRunWorkflowServiceClient) TestRunWorkflowAsync(ctx context.Context, req *RunConfig, options ...*TestRunWorkflowOptions) (TestRunWorkflowRun, error) {
+	var o *TestRunWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
 	} else {
-		o = NewRunWorkflowOptions()
+		o = NewTestRunWorkflowOptions()
 	}
 	opts, err := o.Build(req.ProtoReflect())
 	if err != nil {
 		return nil, fmt.Errorf("error initializing client.StartWorkflowOptions: %w", err)
 	}
-	return &testRunWorkflowRun{client: c, env: c.env, opts: &opts, req: req, workflows: c.workflows}, nil
+	return &testTestRunWorkflowRun{client: c, env: c.env, opts: &opts, req: req, workflows: c.workflows}, nil
 }
 
-// GetRunWorkflow is a noop
-func (c *TestRunWorkflowServiceClient) GetRunWorkflow(ctx context.Context, workflowID string, runID string) RunWorkflowRun {
-	return &testRunWorkflowRun{env: c.env, workflows: c.workflows}
+// GetTestRunWorkflow is a noop
+func (c *TestRunWorkflowServiceClient) GetTestRunWorkflow(ctx context.Context, workflowID string, runID string) TestRunWorkflowRun {
+	return &testTestRunWorkflowRun{env: c.env, workflows: c.workflows}
 }
 
 // CancelWorkflow requests cancellation of an existing workflow execution
@@ -1721,26 +786,10 @@ func (c *TestRunWorkflowServiceClient) TerminateWorkflow(ctx context.Context, wo
 	return c.CancelWorkflow(ctx, workflowID, runID)
 }
 
-// GetRunWorkflowState executes a GetRunWorkflowState query
-func (c *TestRunWorkflowServiceClient) GetRunWorkflowState(ctx context.Context, workflowID string, runID string) (*RunState, error) {
-	val, err := c.env.QueryWorkflow(GetRunWorkflowStateQueryName)
-	if err != nil {
-		return nil, err
-	} else if !val.HasValue() {
-		return nil, nil
-	} else {
-		var result RunState
-		if err := val.Get(&result); err != nil {
-			return nil, err
-		}
-		return &result, nil
-	}
-}
+var _ TestRunWorkflowRun = &testTestRunWorkflowRun{}
 
-var _ RunWorkflowRun = &testRunWorkflowRun{}
-
-// testRunWorkflowRun provides convenience methods for interacting with a(n) RunWorkflow workflow in the test environment
-type testRunWorkflowRun struct {
+// testTestRunWorkflowRun provides convenience methods for interacting with a(n) TestRunWorkflow workflow in the test environment
+type testTestRunWorkflowRun struct {
 	client    *TestRunWorkflowServiceClient
 	env       *testsuite.TestWorkflowEnvironment
 	isStarted atomic.Bool
@@ -1750,14 +799,14 @@ type testRunWorkflowRun struct {
 }
 
 // Cancel requests cancellation of a workflow in execution, returning an error if applicable
-func (r *testRunWorkflowRun) Cancel(ctx context.Context) error {
+func (r *testTestRunWorkflowRun) Cancel(ctx context.Context) error {
 	return r.client.CancelWorkflow(ctx, r.ID(), r.RunID())
 }
 
-// Get retrieves a test RunWorkflow workflow result
-func (r *testRunWorkflowRun) Get(context.Context) error {
+// Get retrieves a test TestRunWorkflow workflow result
+func (r *testTestRunWorkflowRun) Get(context.Context) error {
 	if r.isStarted.CompareAndSwap(false, true) {
-		r.env.ExecuteWorkflow(RunWorkflowWorkflowName, r.req)
+		r.env.ExecuteWorkflow(TestRunWorkflowWorkflowName, r.req)
 	}
 	if !r.env.IsWorkflowCompleted() {
 		return errors.New("workflow in progress")
@@ -1768,8 +817,8 @@ func (r *testRunWorkflowRun) Get(context.Context) error {
 	return nil
 }
 
-// ID returns a test RunWorkflow workflow run's workflow ID
-func (r *testRunWorkflowRun) ID() string {
+// ID returns a test TestRunWorkflow workflow run's workflow ID
+func (r *testTestRunWorkflowRun) ID() string {
 	if r.opts != nil {
 		return r.opts.ID
 	}
@@ -1777,30 +826,23 @@ func (r *testRunWorkflowRun) ID() string {
 }
 
 // Run noop implementation
-func (r *testRunWorkflowRun) Run() client.WorkflowRun {
+func (r *testTestRunWorkflowRun) Run() client.WorkflowRun {
 	return nil
 }
 
 // RunID noop implementation
-func (r *testRunWorkflowRun) RunID() string {
+func (r *testTestRunWorkflowRun) RunID() string {
 	return ""
 }
 
 // Terminate terminates a workflow in execution, returning an error if applicable
-func (r *testRunWorkflowRun) Terminate(ctx context.Context, reason string, details ...interface{}) error {
+func (r *testTestRunWorkflowRun) Terminate(ctx context.Context, reason string, details ...interface{}) error {
 	return r.client.TerminateWorkflow(ctx, r.ID(), r.RunID(), reason, details...)
-}
-
-// GetRunWorkflowState executes a GetRunWorkflowState query against a test RunWorkflow workflow
-func (r *testRunWorkflowRun) GetRunWorkflowState(ctx context.Context) (*RunState, error) {
-	return r.client.GetRunWorkflowState(ctx, r.ID(), r.RunID())
 }
 
 // WithRunWorkflowServiceSchemeTypes registers all RunWorkflowService protobuf types with the given scheme
 func WithRunWorkflowServiceSchemeTypes() scheme.Option {
 	return func(s *scheme.Scheme) {
 		s.RegisterType(File_cloud_v1_workflow_run_proto.Messages().ByName("RunConfig"))
-		s.RegisterType(File_cloud_v1_workflow_run_proto.Messages().ByName("Deployment"))
-		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("RunState"))
 	}
 }

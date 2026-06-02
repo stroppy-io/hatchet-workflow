@@ -73,6 +73,309 @@ func (m *Yandex) UnmarshalJSON(data []byte) error {
 	return m.Decode(d)
 }
 
+func (m *Yandex_Settings) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Token != "" {
+		e.FieldStart("token")
+		e.Str(m.Token)
+	}
+	if m.CloudId != "" {
+		e.FieldStart("cloudId")
+		e.Str(m.CloudId)
+	}
+	if m.FolderId != "" {
+		e.FieldStart("folderId")
+		e.Str(m.FolderId)
+	}
+	if m.Zone != 0 {
+		e.FieldStart("zone")
+		if s, ok := Yandex_Settings_Zone_name[int32(m.Zone)]; ok {
+			e.Str(s)
+		} else {
+			e.Int32(int32(m.Zone))
+		}
+	}
+	if m.NetworkId != "" {
+		e.FieldStart("networkId")
+		e.Str(m.NetworkId)
+	}
+	if m.NetworkName != "" {
+		e.FieldStart("networkName")
+		e.Str(m.NetworkName)
+	}
+	if m.SubnetCidr != "" {
+		e.FieldStart("subnetCidr")
+		e.Str(m.SubnetCidr)
+	}
+	if m.PlatformId != 0 {
+		e.FieldStart("platformId")
+		if s, ok := Yandex_Settings_PlatformId_name[int32(m.PlatformId)]; ok {
+			e.Str(s)
+		} else {
+			e.Int32(int32(m.PlatformId))
+		}
+	}
+	if m.ImageId != "" {
+		e.FieldStart("imageId")
+		e.Str(m.ImageId)
+	}
+	if m.AssignPublicIp != false {
+		e.FieldStart("assignPublicIp")
+		e.Bool(m.AssignPublicIp)
+	}
+	if m.SoftwareAcceleratedNetwork != false {
+		e.FieldStart("softwareAcceleratedNetwork")
+		e.Bool(m.SoftwareAcceleratedNetwork)
+	}
+	if m.SshUser != "" {
+		e.FieldStart("sshUser")
+		e.Str(m.SshUser)
+	}
+	if m.SshPublicKey != "" {
+		e.FieldStart("sshPublicKey")
+		e.Str(m.SshPublicKey)
+	}
+	e.ObjEnd()
+}
+
+func (m *Yandex_Settings) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "token":
+			if seen["Token"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Token"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Token = v
+			return nil
+		case "cloudId", "cloud_id":
+			if seen["CloudId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["CloudId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.CloudId = v
+			return nil
+		case "folderId", "folder_id":
+			if seen["FolderId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["FolderId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.FolderId = v
+			return nil
+		case "zone":
+			if seen["Zone"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Zone"] = true
+			switch d.Next() {
+			case jx.String:
+				s, err := d.Str()
+				if err != nil {
+					return err
+				}
+				n, ok := Yandex_Settings_Zone_value[s]
+				if !ok {
+					return fmt.Errorf("unknown enum value %q", s)
+				}
+				m.Zone = Yandex_Settings_Zone(n)
+				return nil
+			case jx.Number:
+				n, err := d.Int32()
+				if err != nil {
+					return err
+				}
+				m.Zone = Yandex_Settings_Zone(n)
+				return nil
+			case jx.Null:
+				return d.Null()
+			default:
+				return fmt.Errorf("invalid enum token %s", d.Next())
+			}
+		case "networkId", "network_id":
+			if seen["NetworkId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["NetworkId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.NetworkId = v
+			return nil
+		case "networkName", "network_name":
+			if seen["NetworkName"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["NetworkName"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.NetworkName = v
+			return nil
+		case "subnetCidr", "subnet_cidr":
+			if seen["SubnetCidr"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["SubnetCidr"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.SubnetCidr = v
+			return nil
+		case "platformId", "platform_id":
+			if seen["PlatformId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["PlatformId"] = true
+			switch d.Next() {
+			case jx.String:
+				s, err := d.Str()
+				if err != nil {
+					return err
+				}
+				n, ok := Yandex_Settings_PlatformId_value[s]
+				if !ok {
+					return fmt.Errorf("unknown enum value %q", s)
+				}
+				m.PlatformId = Yandex_Settings_PlatformId(n)
+				return nil
+			case jx.Number:
+				n, err := d.Int32()
+				if err != nil {
+					return err
+				}
+				m.PlatformId = Yandex_Settings_PlatformId(n)
+				return nil
+			case jx.Null:
+				return d.Null()
+			default:
+				return fmt.Errorf("invalid enum token %s", d.Next())
+			}
+		case "imageId", "image_id":
+			if seen["ImageId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["ImageId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.ImageId = v
+			return nil
+		case "assignPublicIp", "assign_public_ip":
+			if seen["AssignPublicIp"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["AssignPublicIp"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Bool()
+			if err != nil {
+				return err
+			}
+			m.AssignPublicIp = v
+			return nil
+		case "softwareAcceleratedNetwork", "software_accelerated_network":
+			if seen["SoftwareAcceleratedNetwork"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["SoftwareAcceleratedNetwork"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Bool()
+			if err != nil {
+				return err
+			}
+			m.SoftwareAcceleratedNetwork = v
+			return nil
+		case "sshUser", "ssh_user":
+			if seen["SshUser"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["SshUser"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.SshUser = v
+			return nil
+		case "sshPublicKey", "ssh_public_key":
+			if seen["SshPublicKey"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["SshPublicKey"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.SshPublicKey = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *Yandex_Settings) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *Yandex_Settings) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
 func (m *Yandex_Input) Encode(e *jx.Encoder) {
 	if m == nil {
 		e.ObjStart()

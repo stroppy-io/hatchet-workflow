@@ -2,27 +2,130 @@ syntax = "proto3";
 
 package cloud.v1.domain;
 
-import "schemapb/schema.proto";
 import "cloud/v1/common/tags.proto";
+import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain";
 
 /*
-    workload.proto defines the Workload: which stroppy version to run and the
-    baked, schema-backed parameters that drive it against the database under
-    test. It is the "how to load the database" half of a Test.
- */
+    Workload is the cloud-facing workload DTO sent by the wizard — ONLY the load
+    (script, protocol, k6 profile, parameters, run-scoped files). DB engine
+    install/packages belong to the Database intent, not here; stroppy_version is
+    just a selector for which stroppy the load needs. The backend renders this into
+    stroppy's RunConfig protojson before launching.
 
-/*
-    Workload describes the stroppy load to run against the database under test:
-    the stroppy binary version plus its sealed, schema-backed parameters.
+    These are the params the user supplies AROUND the probe: the wizard sends the
+    base fields (version, script, sql, files, protocol, scale_factor, pool_size) to
+    `stroppy probe`; the frontend renders the discovered structure (env
+    declarations, steps, sql sections, driver setups) itself; the user's choices
+    land back in Parameters (env values, steps) + Execution. The probe OUTPUT is
+    intentionally NOT modelled in proto — it is stroppy-version-specific and
+    rendered client-side.
+
+    protocol x engine support and the (kind, protocol, script) compatibility matrix
+    stay backend data + validation, enforced when a preset binds Database.Kind to
+    Workload.Protocol — intentionally not modeled in proto.
  */
 message Workload {
-    /* stroppy_version is the stroppy binary version to run. */
-    string stroppy_version = 1;
-    /* params is the sealed, schema-backed stroppy workload configuration. */
-    schemapb.Baked params = 2;
-    /* tags are free-form metadata attached to the workload. */
-    common.Tags tags = 3;
-}
+    /*
+        Protocol is the cloud-side wire-format selector. The backend maps this plus
+        Database.Kind into stroppy driverType/url in stroppy-config.json.
+     */
+    enum Protocol {
+        /* UNSPECIFIED defers to backend default per Database.Kind. */
+        PROTOCOL_UNSPECIFIED = 0;
+        /* PG is Postgres / CockroachDB / Yugabyte pg-wire. */
+        PROTOCOL_PG = 1;
+        /* MYSQL is MySQL / MariaDB / Percona / Vitess. */
+        PROTOCOL_MYSQL = 2;
+        /* PICODATA is Picodata-aware pg-wire routing. */
+        PROTOCOL_PICODATA = 3;
+        /* YDB_GRPC is YDB native gRPC. */
+        PROTOCOL_YDB_GRPC = 4;
+        /* YDB_GRPCS is YDB native gRPC over TLS. */
+        PROTOCOL_YDB_GRPCS = 5;
+        /* COCKROACH is CockroachDB pg-wire on its own default port. */
+        PROTOCOL_COCKROACH = 7;
+    }
 
+    /*
+        Execution is the k6 execution profile. Limit is exclusive: duration OR
+        iterations.
+     */
+    message Execution {
+        /* vus is virtual users (k6 --vus). */
+        uint32 vus = 1 [(validate.rules).uint32 = {gte: 1, lte: 100000}];
+        oneof limit {
+            option (validate.required) = true;
+            /* duration maps to k6 --duration, format like "10m", "1h30m". */
+            string duration = 2 [(validate.rules).string = {max_len: 32, pattern: "^([0-9]+(ns|us|ms|s|m|h))+$"}];
+            /* iterations maps to k6 --iterations, fixed iteration count. */
+            uint32 iterations = 3 [(validate.rules).uint32.gte = 1];
+        }
+        /* quiet maps to k6 -q. */
+        bool quiet = 4;
+        /* no_thresholds maps to k6 --no-thresholds. */
+        bool no_thresholds = 5;
+    }
+
+    /*
+        Parameters are workload/script parameters rendered into stroppy env, driver
+        config, and step filters.
+     */
+    message Parameters {
+        /* pool_size is DB connection pool size on the stroppy side. */
+        uint32 pool_size = 1 [(validate.rules).uint32.lte = 65535];
+        /* scale_factor is TPC-C warehouses / TPC-B branches / TPC-H scale factor.
+           Fractional values are valid for smoke tests, e.g. TPCH SCALE_FACTOR=0.01. */
+        double scale_factor = 2 [(validate.rules).double = {gt: 0, lte: 100000}];
+        /* default_insert_method overrides insert method. "native" by default. */
+        string default_insert_method = 3 [(validate.rules).string.max_len = 64];
+        /* env are script-specific env overrides (POSIX-style key) — the values the
+           user filled for the env declarations the probe reported. */
+        map<string, string> env = 4 [(validate.rules).map = {
+            max_pairs: 256,
+            keys: {string: {min_len: 1, max_len: 256, pattern: "^[A-Z_][A-Z0-9_]*$"}},
+            values: {string: {max_len: 8192}}
+        }];
+        /* steps is a phase allowlist (e.g. create_schema, load_data, workload).
+           Mutually exclusive with no_steps — backend enforces. */
+        repeated string steps = 5 [(validate.rules).repeated = {
+            max_items: 32,
+            items: {string: {min_len: 1, max_len: 64, pattern: "^[a-z][a-z0-9_]*$"}}
+        }];
+        /* no_steps is a phase blocklist. Mutually exclusive with steps. */
+        repeated string no_steps = 6 [(validate.rules).repeated = {
+            max_items: 32,
+            items: {string: {min_len: 1, max_len: 64, pattern: "^[a-z][a-z0-9_]*$"}}
+        }];
+    }
+
+    /* WorkloadFile is a run-scoped file staged for stroppy (SQL probes, support files). */
+    message WorkloadFile {
+        /* name is the file basename inside the run dir. */
+        string name = 1 [(validate.rules).string = {min_len: 1, max_len: 256, pattern: "^[A-Za-z0-9._-]+$"}];
+        /* kind tags file usage, e.g. "sql", "config". */
+        string kind = 2 [(validate.rules).string.max_len = 32];
+        /* content is the raw file content. */
+        string content = 3 [(validate.rules).string.max_bytes = 4194304];
+    }
+
+    /* stroppy_version is the stroppy binary version/tag the load needs. */
+    string stroppy_version = 1 [(validate.rules).string.max_len = 64];
+    /* script is a stroppy-accepted script/preset/path/inline SQL,
+       e.g. "tpcc/tx", "tpcds", "./bench.ts", "queries.sql". */
+    string script = 2 [(validate.rules).string = {min_len: 1, max_len: 512}];
+    /* sql is an optional second stroppy positional arg, e.g. an SQL probe file. */
+    string sql = 3 [(validate.rules).string.max_len = 512];
+    /* protocol selects wire format. UNSPECIFIED means backend default for Database.Kind. */
+    Protocol protocol = 4 [(validate.rules).enum.defined_only = true];
+    /* execution is the k6 execution profile. */
+    Execution execution = 5 [(validate.rules).message.required = true];
+    /* parameters are workload/script parameters. */
+    Parameters parameters = 6;
+    /* files are run-scoped files staged next to stroppy-config.json. */
+    repeated WorkloadFile files = 7 [(validate.rules).repeated.max_items = 64];
+
+    /* tags are free-form metadata attached to the workload. */
+    common.Tags tags = 8;
+}

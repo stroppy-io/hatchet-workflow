@@ -4,6 +4,7 @@ package cloud.v1.models;
 
 import "cloud/v1/common/entity.proto";
 import "cloud/v1/deployment/provider.proto";
+import "cloud/v1/deployment/yandex.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models";
@@ -54,5 +55,5 @@ message TenantSettingsRecord {
         values carry secrets (mark secret fields in the schema); guard reads.
         At most one entry per Provider.
      */
-    repeated deployment.ProviderSettings providers = 7;
+    deployment.Yandex.Settings yandex_settings = 7;
 }

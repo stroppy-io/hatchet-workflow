@@ -7,13 +7,17 @@
 - Messages
   - [cloud.v1.topology.Component](#cloud-v1-topology-component)
   - [cloud.v1.topology.Component.Kind](#cloud-v1-topology-component-kind)
-  - [cloud.v1.topology.Component.Strategy](#cloud-v1-topology-component-strategy)
+  - [cloud.v1.topology.Component.LabelsEntry](#cloud-v1-topology-component-labelsentry)
   - [cloud.v1.topology.Connection](#cloud-v1-topology-connection)
   - [cloud.v1.topology.Connection.Kind](#cloud-v1-topology-connection-kind)
   - [cloud.v1.topology.Connection.Mode](#cloud-v1-topology-connection-mode)
   - [cloud.v1.topology.Connection.Protocol](#cloud-v1-topology-connection-protocol)
+  - [cloud.v1.topology.Node](#cloud-v1-topology-node)
+  - [cloud.v1.topology.Node.LabelsEntry](#cloud-v1-topology-node-labelsentry)
   - [cloud.v1.topology.Topology](#cloud-v1-topology-topology)
-  - [cloud.v1.topology.Topology.Instance](#cloud-v1-topology-topology-instance)
+  - [cloud.v1.topology.Topology.State](#cloud-v1-topology-topology-state)
+  - [cloud.v1.topology.TopologySpec](#cloud-v1-topology-topologyspec)
+  - [cloud.v1.topology.TopologySpec.LabelsEntry](#cloud-v1-topology-topologyspec-labelsentry)
 
 <a name="cloud-v1-topology-messages"></a>
 ## Messages
@@ -22,7 +26,7 @@
 ### cloud.v1.topology.Component
 
 <pre>
-//Component is one logical node in the topology graph.
+//Component is one logical service role in the benchmark graph.
 </pre>
 
 <table>
@@ -32,27 +36,20 @@
 <th>Description</th>
 </tr>
 <tr>
-<td>allocated_on_instance_id</td>
+<td>engine</td>
 <td>string</td>
 <td><pre>
-//allocated_on_instance_id is the instance this component was placed on;
-//calculated (deployment).<br>
+//engine identifies the owning product or subsystem, e.g. postgres, ydb,
+//stroppy, victoriametrics. It is data rather than an enum so new engines
+//do not require changing topology proto.<br>
 
-json_name: allocatedOnInstanceId
-go_name: AllocatedOnInstanceId</pre></td>
-</tr><tr>
-<td>deployment_strategy</td>
-<td><a href="#cloud-v1-topology-component-strategy">cloud.v1.topology.Component.Strategy</a></td>
-<td><pre>
-//deployment_strategy is the deploy recipe; calculated (build).<br>
-
-json_name: deploymentStrategy
-go_name: DeploymentStrategy</pre></td>
+json_name: engine
+go_name: Engine</pre></td>
 </tr><tr>
 <td>id</td>
 <td>string</td>
 <td><pre>
-//id is the unique identifier of the component within the topology.<br>
+//id is the stable logical component id within the topology spec.<br>
 
 json_name: id
 go_name: Id</pre></td>
@@ -60,32 +57,32 @@ go_name: Id</pre></td>
 <td>kind</td>
 <td><a href="#cloud-v1-topology-component-kind">cloud.v1.topology.Component.Kind</a></td>
 <td><pre>
-//kind is the role this component plays; must be a defined, non-zero value.<br>
+//kind is the broad component family.<br>
 
 json_name: kind
 go_name: Kind</pre></td>
 </tr><tr>
-<td>provider_parms</td>
-<td><a href="../../../schemapb/README.md#schemapb-baked">schemapb.Baked</a></td>
+<td>labels</td>
+<td><a href="#cloud-v1-topology-component-labelsentry">cloud.v1.topology.Component.LabelsEntry</a></td>
 <td><pre>
-//provider_parms are the baked provider parameters; calculated (wisard
-//actual for non-owr components).<br>
+//labels are structured role metadata used by renderers and UI.<br>
 
-json_name: providerParms
-go_name: ProviderParms</pre></td>
+json_name: labels
+go_name: Labels</pre></td>
 </tr><tr>
-<td>status</td>
-<td><a href="../common/README.md#cloud-v1-common-status">cloud.v1.common.Status</a></td>
+<td>role</td>
+<td>string</td>
 <td><pre>
-//status is the current runtime status of the component.<br>
+//role identifies the concrete role inside the engine, e.g. master,
+//replica, haproxy, pgbouncer, patroni, etcd.<br>
 
-json_name: status
-go_name: Status</pre></td>
+json_name: role
+go_name: Role</pre></td>
 </tr><tr>
 <td>tags</td>
 <td><a href="../common/README.md#cloud-v1-common-tags">cloud.v1.common.Tags</a></td>
 <td><pre>
-//tags are arbitrary key/value labels attached to the component.<br>
+//tags are arbitrary user/system tags.<br>
 
 json_name: tags
 go_name: Tags</pre></td>
@@ -98,7 +95,7 @@ go_name: Tags</pre></td>
 ### cloud.v1.topology.Component.Kind
 
 <pre>
-//Kind enumerates the role a component plays in the topology.
+//Kind enumerates the broad role family a component belongs to.
 </pre>
 
 <table>
@@ -106,7 +103,7 @@ go_name: Tags</pre></td>
 <tr>
 <td>KIND_UNSPECIFIED</td>
 <td><pre>
-//KIND_UNSPECIFIED is the unset zero value (rejected by validation).
+//KIND_UNSPECIFIED is the unset zero value.
 </pre></td>
 </tr><tr>
 <td>KIND_AGENT</td>
@@ -121,17 +118,17 @@ go_name: Tags</pre></td>
 </tr><tr>
 <td>KIND_DATABASE</td>
 <td><pre>
-//KIND_DATABASE is a primary database node.
+//KIND_DATABASE is a primary database service component.
 </pre></td>
 </tr><tr>
 <td>KIND_REPLICA</td>
 <td><pre>
-//KIND_REPLICA is a database replica node.
+//KIND_REPLICA is a database replica service component.
 </pre></td>
 </tr><tr>
 <td>KIND_PROXY</td>
 <td><pre>
-//KIND_PROXY is a connection proxy/pooler.
+//KIND_PROXY is a proxy, load balancer, or connection pooler.
 </pre></td>
 </tr><tr>
 <td>KIND_WORKLOAD</td>
@@ -141,7 +138,7 @@ go_name: Tags</pre></td>
 </tr><tr>
 <td>KIND_COORDINATOR</td>
 <td><pre>
-//KIND_COORDINATOR is a cluster coordinator/control node.
+//KIND_COORDINATOR is a cluster coordinator/control-plane component.
 </pre></td>
 </tr><tr>
 <td>KIND_ADDON</td>
@@ -151,18 +148,13 @@ go_name: Tags</pre></td>
 </tr><tr>
 <td>KIND_EXTERNAL</td>
 <td><pre>
-//KIND_EXTERNAL is a component provided externally (e.g. a managed service).
+//KIND_EXTERNAL is provided outside this deployment.
 </pre></td>
 </tr>
 </table>
 
-<a name="cloud-v1-topology-component-strategy"></a>
-### cloud.v1.topology.Component.Strategy
-
-<pre>
-//Strategy is the recipe used to deploy a component: configuration files to
-//lay down and commands to run.
-</pre>
+<a name="cloud-v1-topology-component-labelsentry"></a>
+### cloud.v1.topology.Component.LabelsEntry
 
 <table>
 <tr>
@@ -171,21 +163,17 @@ go_name: Tags</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>configuration_files</td>
-<td><a href="../common/README.md#cloud-v1-common-bakedfile">cloud.v1.common.BakedFile</a></td>
+<td>key</td>
+<td>string</td>
 <td><pre>
-//configuration_files are the rendered config files to place on the host.<br>
-
-json_name: configurationFiles
-go_name: ConfigurationFiles</pre></td>
+json_name: key
+go_name: Key</pre></td>
 </tr><tr>
-<td>deployment_commands</td>
-<td><a href="../common/README.md#cloud-v1-common-cmd">cloud.v1.common.Cmd</a></td>
+<td>value</td>
+<td>string</td>
 <td><pre>
-//deployment_commands are the commands to run to bring the component up.<br>
-
-json_name: deploymentCommands
-go_name: DeploymentCommands</pre></td>
+json_name: value
+go_name: Value</pre></td>
 </tr>
 </table>
 
@@ -195,7 +183,7 @@ go_name: DeploymentCommands</pre></td>
 ### cloud.v1.topology.Connection
 
 <pre>
-//Connection is a directed edge between two components in the topology.
+//Connection is a directed logical edge from one component to another.
 </pre>
 
 <table>
@@ -205,26 +193,36 @@ go_name: DeploymentCommands</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>from</td>
-<td>string</td>
-<td><pre>
-//from is the source component id of the edge.<br>
-
-json_name: from
-go_name: From</pre></td>
-</tr><tr>
-<td>inner</td>
+<td>colocated</td>
 <td>bool</td>
 <td><pre>
-//inner is true when both endpoints live on one physical VM.<br>
+//colocated is true when this edge intentionally stays inside one node.<br>
 
-json_name: inner
-go_name: Inner</pre></td>
+json_name: colocated
+go_name: Colocated</pre></td>
+</tr><tr>
+<td>endpoint_name</td>
+<td>string</td>
+<td><pre>
+//endpoint_name optionally selects a named destination endpoint, e.g.
+//postgres, pgbouncer, patroni_rest, etcd_peer. Empty means renderer
+//chooses the role default.<br>
+
+json_name: endpointName
+go_name: EndpointName</pre></td>
+</tr><tr>
+<td>from_component_id</td>
+<td>string</td>
+<td><pre>
+//from_component_id is the source component id.<br>
+
+json_name: fromComponentId
+go_name: FromComponentId</pre></td>
 </tr><tr>
 <td>kind</td>
 <td><a href="#cloud-v1-topology-connection-kind">cloud.v1.topology.Connection.Kind</a></td>
 <td><pre>
-//kind is the semantic relationship of the edge.<br>
+//kind is the semantic relationship.<br>
 
 json_name: kind
 go_name: Kind</pre></td>
@@ -232,7 +230,7 @@ go_name: Kind</pre></td>
 <td>mode</td>
 <td><a href="#cloud-v1-topology-connection-mode">cloud.v1.topology.Connection.Mode</a></td>
 <td><pre>
-//mode is the traffic character of the edge.<br>
+//mode is the traffic character.<br>
 
 json_name: mode
 go_name: Mode</pre></td>
@@ -240,7 +238,7 @@ go_name: Mode</pre></td>
 <td>port</td>
 <td>uint32</td>
 <td><pre>
-//port is the destination port, when applicable (<= 65535).<br>
+//port is the destination port when it is known at spec time.<br>
 
 json_name: port
 go_name: Port</pre></td>
@@ -248,7 +246,7 @@ go_name: Port</pre></td>
 <td>protocol</td>
 <td><a href="#cloud-v1-topology-connection-protocol">cloud.v1.topology.Connection.Protocol</a></td>
 <td><pre>
-//protocol is the wire protocol carried on the edge.<br>
+//protocol is the protocol family.<br>
 
 json_name: protocol
 go_name: Protocol</pre></td>
@@ -256,18 +254,18 @@ go_name: Protocol</pre></td>
 <td>tags</td>
 <td><a href="../common/README.md#cloud-v1-common-tags">cloud.v1.common.Tags</a></td>
 <td><pre>
-//tags are arbitrary key/value labels attached to the connection.<br>
+//tags are arbitrary metadata on the edge.<br>
 
 json_name: tags
 go_name: Tags</pre></td>
 </tr><tr>
-<td>to</td>
+<td>to_component_id</td>
 <td>string</td>
 <td><pre>
-//to is the destination component id of the edge.<br>
+//to_component_id is the destination component id.<br>
 
-json_name: to
-go_name: To</pre></td>
+json_name: toComponentId
+go_name: ToComponentId</pre></td>
 </tr>
 </table>
 
@@ -277,46 +275,32 @@ go_name: To</pre></td>
 ### cloud.v1.topology.Connection.Kind
 
 <pre>
-//Kind is the semantic relationship an edge represents.
+//Kind is the semantic relationship represented by the edge.
 </pre>
 
 <table>
 <tr><th>Value</th><th>Description</th></tr>
 <tr>
 <td>KIND_UNSPECIFIED</td>
-<td><pre>
-//KIND_UNSPECIFIED is the unset zero value.
-</pre></td>
+<td></td>
 </tr><tr>
 <td>KIND_FLOW</td>
-<td><pre>
-//KIND_FLOW is a normal data/application flow.
-</pre></td>
+<td></td>
 </tr><tr>
 <td>KIND_PROXY</td>
-<td><pre>
-//KIND_PROXY is traffic routed through a proxy/pooler.
-</pre></td>
+<td></td>
 </tr><tr>
 <td>KIND_REPLICATION</td>
-<td><pre>
-//KIND_REPLICATION is database replication traffic.
-</pre></td>
+<td></td>
 </tr><tr>
 <td>KIND_COORDINATION</td>
-<td><pre>
-//KIND_COORDINATION is cluster coordination/control traffic.
-</pre></td>
+<td></td>
 </tr><tr>
 <td>KIND_OBSERVATION</td>
-<td><pre>
-//KIND_OBSERVATION is monitoring/metrics observation traffic.
-</pre></td>
+<td></td>
 </tr><tr>
 <td>KIND_SUPPORT</td>
-<td><pre>
-//KIND_SUPPORT is auxiliary/supporting traffic.
-</pre></td>
+<td></td>
 </tr>
 </table>
 
@@ -324,41 +308,29 @@ go_name: To</pre></td>
 ### cloud.v1.topology.Connection.Mode
 
 <pre>
-Mode is the traffic character on an edge.
+//Mode is the traffic character of the edge.
 </pre>
 
 <table>
 <tr><th>Value</th><th>Description</th></tr>
 <tr>
 <td>MODE_UNSPECIFIED</td>
-<td><pre>
-//MODE_UNSPECIFIED is the unset zero value.
-</pre></td>
+<td></td>
 </tr><tr>
 <td>MODE_REQUEST</td>
-<td><pre>
-REQUEST is request/response.
-</pre></td>
+<td></td>
 </tr><tr>
 <td>MODE_STREAM</td>
-<td><pre>
-STREAM is a continuous one-way data stream.
-</pre></td>
+<td></td>
 </tr><tr>
 <td>MODE_SYNC</td>
-<td><pre>
-SYNC is bidirectional state synchronization.
-</pre></td>
+<td></td>
 </tr><tr>
 <td>MODE_HEARTBEAT</td>
-<td><pre>
-HEARTBEAT is periodic liveness/keepalive.
-</pre></td>
+<td></td>
 </tr><tr>
 <td>MODE_BROADCAST</td>
-<td><pre>
-BROADCAST is one-to-many fanout.
-</pre></td>
+<td></td>
 </tr>
 </table>
 
@@ -366,70 +338,50 @@ BROADCAST is one-to-many fanout.
 ### cloud.v1.topology.Connection.Protocol
 
 <pre>
-Protocol is the wire format on an edge.
+//Protocol is the wire/protocol family carried over the edge.
 </pre>
 
 <table>
 <tr><th>Value</th><th>Description</th></tr>
 <tr>
 <td>PROTOCOL_UNSPECIFIED</td>
-<td><pre>
-//PROTOCOL_UNSPECIFIED is the unset zero value.
-</pre></td>
+<td></td>
 </tr><tr>
 <td>PROTOCOL_TCP</td>
-<td><pre>
-TCP is plain TCP/IP traffic.
-</pre></td>
+<td></td>
 </tr><tr>
 <td>PROTOCOL_GRPC</td>
-<td><pre>
-GRPC is gRPC.
-</pre></td>
+<td></td>
 </tr><tr>
 <td>PROTOCOL_HTTP</td>
-<td><pre>
-HTTP is HTTP/HTTPS.
-</pre></td>
+<td></td>
 </tr><tr>
 <td>PROTOCOL_REPLICATION</td>
-<td><pre>
-REPLICATION is a DB-engine replication stream.
-</pre></td>
+<td></td>
 </tr><tr>
 <td>PROTOCOL_POOL</td>
-<td><pre>
-POOL is a pooled connection (pgbouncer, proxysql).
-</pre></td>
+<td></td>
 </tr><tr>
 <td>PROTOCOL_CONTROL</td>
-<td><pre>
-CONTROL is a control-plane protocol (DCS, raft).
-</pre></td>
+<td></td>
 </tr><tr>
 <td>PROTOCOL_OTLP</td>
-<td><pre>
-OTLP is a metrics/logs/traces scrape.
-</pre></td>
+<td></td>
 </tr><tr>
 <td>PROTOCOL_PROMETHEUS_REMOTE_WRITE</td>
-<td><pre>
-PROTOCOL_PROMETHEUS_REMOTE_WRITE is a Prometheus remote-write metrics push.
-</pre></td>
+<td></td>
 </tr><tr>
 <td>PROTOCOL_PROMETHEUS_PULL</td>
-<td><pre>
-PROTOCOL_PROMETHEUS_PULL is a Prometheus pull/scrape of metrics.
-</pre></td>
+<td></td>
 </tr>
 </table>
 
-<a name="cloud-v1-topology-topology"></a>
-### cloud.v1.topology.Topology
+<a name="cloud-v1-topology-node"></a>
+### cloud.v1.topology.Node
 
 <pre>
-//Topology is the complete description of a benchmark deployment: its
-//instances, the edges between components, and any external components.
+//Node is a logical placement unit. A node may become a VM, a Docker container,
+//or a managed/external provider resource after the infrastructure stage.
 </pre>
 
 <table>
@@ -439,10 +391,200 @@ PROTOCOL_PROMETHEUS_PULL is a Prometheus pull/scrape of metrics.
 <th>Description</th>
 </tr>
 <tr>
+<td>component_ids</td>
+<td>string</td>
+<td><pre>
+//component_ids are the components intentionally colocated on this node.<br>
+
+json_name: componentIds
+go_name: ComponentIds</pre></td>
+</tr><tr>
+<td>id</td>
+<td>string</td>
+<td><pre>
+//id is the stable logical node id.<br>
+
+json_name: id
+go_name: Id</pre></td>
+</tr><tr>
+<td>labels</td>
+<td><a href="#cloud-v1-topology-node-labelsentry">cloud.v1.topology.Node.LabelsEntry</a></td>
+<td><pre>
+//labels are structured metadata used by planners and UI.<br>
+
+json_name: labels
+go_name: Labels</pre></td>
+</tr><tr>
+<td>tags</td>
+<td><a href="../common/README.md#cloud-v1-common-tags">cloud.v1.common.Tags</a></td>
+<td><pre>
+//tags are arbitrary user/system tags.<br>
+
+json_name: tags
+go_name: Tags</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-topology-node-labelsentry"></a>
+### cloud.v1.topology.Node.LabelsEntry
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>key</td>
+<td>string</td>
+<td><pre>
+json_name: key
+go_name: Key</pre></td>
+</tr><tr>
+<td>value</td>
+<td>string</td>
+<td><pre>
+json_name: value
+go_name: Value</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-topology-topology"></a>
+### cloud.v1.topology.Topology
+
+<pre>
+//Topology is the full staged object for a run or wizard draft.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>deployment_plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-deploymentplan">cloud.v1.deployment.DeploymentPlan</a></td>
+<td><pre>
+//deployment_plan is the agent execution plan. Present from
+//STATE_DEPLOYMENT_PLANNED.<br>
+
+json_name: deploymentPlan
+go_name: DeploymentPlan</pre></td>
+</tr><tr>
+<td>infrastructure_plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructureplan">cloud.v1.deployment.InfrastructurePlan</a></td>
+<td><pre>
+//infrastructure_plan is provider input derived from spec + provider
+//choices. Present from STATE_INFRASTRUCTURE_PLANNED.<br>
+
+json_name: infrastructurePlan
+go_name: InfrastructurePlan</pre></td>
+</tr><tr>
+<td>infrastructure_state</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructurestate">cloud.v1.deployment.InfrastructureState</a></td>
+<td><pre>
+//infrastructure_state is provider output: ids, addresses, allocated
+//quotas. Present from STATE_INFRASTRUCTURE_DEPLOYED.<br>
+
+json_name: infrastructureState
+go_name: InfrastructureState</pre></td>
+</tr><tr>
+<td>spec</td>
+<td><a href="#cloud-v1-topology-topologyspec">cloud.v1.topology.TopologySpec</a></td>
+<td><pre>
+//spec is the logical graph.<br>
+
+json_name: spec
+go_name: Spec</pre></td>
+</tr><tr>
+<td>state</td>
+<td><a href="#cloud-v1-topology-topology-state">cloud.v1.topology.Topology.State</a></td>
+<td><pre>
+//state records the current stage.<br>
+
+json_name: state
+go_name: State</pre></td>
+</tr><tr>
+<td>tags</td>
+<td><a href="../common/README.md#cloud-v1-common-tags">cloud.v1.common.Tags</a></td>
+<td><pre>
+//tags are arbitrary metadata on the envelope.<br>
+
+json_name: tags
+go_name: Tags</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-topology-topology-state"></a>
+### cloud.v1.topology.Topology.State
+
+<pre>
+//State records the furthest stage represented by the envelope.
+</pre>
+
+<table>
+<tr><th>Value</th><th>Description</th></tr>
+<tr>
+<td>STATE_UNSPECIFIED</td>
+<td></td>
+</tr><tr>
+<td>STATE_SPEC</td>
+<td></td>
+</tr><tr>
+<td>STATE_INFRASTRUCTURE_PLANNED</td>
+<td></td>
+</tr><tr>
+<td>STATE_INFRASTRUCTURE_DEPLOYED</td>
+<td></td>
+</tr><tr>
+<td>STATE_DEPLOYMENT_PLANNED</td>
+<td></td>
+</tr><tr>
+<td>STATE_DEPLOYED</td>
+<td></td>
+</tr><tr>
+<td>STATE_UNDEPLOYED</td>
+<td></td>
+</tr><tr>
+<td>STATE_ARCHIVE</td>
+<td></td>
+</tr>
+</table>
+
+<a name="cloud-v1-topology-topologyspec"></a>
+### cloud.v1.topology.TopologySpec
+
+<pre>
+//TopologySpec is the pure logical graph produced from domain params.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>components</td>
+<td><a href="#cloud-v1-topology-component">cloud.v1.topology.Component</a></td>
+<td><pre>
+//components are logical services/roles.<br>
+
+json_name: components
+go_name: Components</pre></td>
+</tr><tr>
 <td>connections</td>
 <td><a href="#cloud-v1-topology-connection">cloud.v1.topology.Connection</a></td>
 <td><pre>
-//connections are the edges between components; at least one is required.<br>
+//connections are logical edges between components. Single-node topologies
+//may legitimately have no edges.<br>
 
 json_name: connections
 go_name: Connections</pre></td>
@@ -450,25 +592,31 @@ go_name: Connections</pre></td>
 <td>external_components</td>
 <td><a href="#cloud-v1-topology-component">cloud.v1.topology.Component</a></td>
 <td><pre>
-//Here we can add something like managed database or another sevice from prvider
-//Responsibility of this is RenderTerraformVariablesWorkflow|RenderDockerInputWorkflow<br>
+//external_components are logical components not deployed by this run.<br>
 
 json_name: externalComponents
 go_name: ExternalComponents</pre></td>
 </tr><tr>
-<td>instances</td>
-<td><a href="#cloud-v1-topology-topology-instance">cloud.v1.topology.Topology.Instance</a></td>
+<td>labels</td>
+<td><a href="#cloud-v1-topology-topologyspec-labelsentry">cloud.v1.topology.TopologySpec.LabelsEntry</a></td>
 <td><pre>
-//instances are the physical machines making up the topology; at least one
-//is required.<br>
+//labels are structured metadata attached to the spec.<br>
 
-json_name: instances
-go_name: Instances</pre></td>
+json_name: labels
+go_name: Labels</pre></td>
+</tr><tr>
+<td>nodes</td>
+<td><a href="#cloud-v1-topology-node">cloud.v1.topology.Node</a></td>
+<td><pre>
+//nodes are logical placement units.<br>
+
+json_name: nodes
+go_name: Nodes</pre></td>
 </tr><tr>
 <td>tags</td>
 <td><a href="../common/README.md#cloud-v1-common-tags">cloud.v1.common.Tags</a></td>
 <td><pre>
-//tags are arbitrary key/value labels attached to the whole topology.<br>
+//tags are arbitrary user/system tags.<br>
 
 json_name: tags
 go_name: Tags</pre></td>
@@ -477,13 +625,8 @@ go_name: Tags</pre></td>
 
 
 
-<a name="cloud-v1-topology-topology-instance"></a>
-### cloud.v1.topology.Topology.Instance
-
-<pre>
-//Instance is one physical machine (VM) in the topology onto which
-//components are allocated.
-</pre>
+<a name="cloud-v1-topology-topologyspec-labelsentry"></a>
+### cloud.v1.topology.TopologySpec.LabelsEntry
 
 <table>
 <tr>
@@ -492,80 +635,17 @@ go_name: Tags</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>allocated_quotas</td>
-<td><a href="../deployment/README.md#cloud-v1-deployment-quota-allocation">cloud.v1.deployment.Quota.Allocation</a></td>
-<td><pre>
-//allocated_quotas are the quotas actually granted to this instance;
-//calculated (deployment).<br>
-
-json_name: allocatedQuotas
-go_name: AllocatedQuotas</pre></td>
-</tr><tr>
-<td>components</td>
-<td><a href="#cloud-v1-topology-component">cloud.v1.topology.Component</a></td>
-<td><pre>
-//components are the logical components (roles) hosted on this instance.<br>
-
-json_name: components
-go_name: Components</pre></td>
-</tr><tr>
-<td>deployment_parms</td>
-<td><a href="../../../schemapb/README.md#schemapb-baked">schemapb.Baked</a></td>
-<td><pre>
-//deployment_parms are the baked deployment parameters; calculated
-//(deployment).<br>
-
-json_name: deploymentParms
-go_name: DeploymentParms</pre></td>
-</tr><tr>
-<td>id</td>
+<td>key</td>
 <td>string</td>
 <td><pre>
-//id is the unique identifier of the instance within the topology.<br>
-
-json_name: id
-go_name: Id</pre></td>
+json_name: key
+go_name: Key</pre></td>
 </tr><tr>
-<td>machine_info</td>
-<td><a href="../deployment/README.md#cloud-v1-deployment-machineinfo">cloud.v1.deployment.MachineInfo</a></td>
+<td>value</td>
+<td>string</td>
 <td><pre>
-//machine_info describes the requested machine shape/specs.<br>
-
-json_name: machineInfo
-go_name: MachineInfo</pre></td>
-</tr><tr>
-<td>provider_parms</td>
-<td><a href="../../../schemapb/README.md#schemapb-baked">schemapb.Baked</a></td>
-<td><pre>
-//provider_parms are the baked provider parameters; calculated (wisard).<br>
-
-json_name: providerParms
-go_name: ProviderParms</pre></td>
-</tr><tr>
-<td>quota_requests</td>
-<td><a href="../deployment/README.md#cloud-v1-deployment-quota-request">cloud.v1.deployment.Quota.Request</a></td>
-<td><pre>
-//quota_requests are the resource quotas requested for this instance;
-//calculated (deployment).<br>
-
-json_name: quotaRequests
-go_name: QuotaRequests</pre></td>
-</tr><tr>
-<td>status</td>
-<td><a href="../common/README.md#cloud-v1-common-status">cloud.v1.common.Status</a></td>
-<td><pre>
-//status is the current runtime status of the instance.<br>
-
-json_name: status
-go_name: Status</pre></td>
-</tr><tr>
-<td>tags</td>
-<td><a href="../common/README.md#cloud-v1-common-tags">cloud.v1.common.Tags</a></td>
-<td><pre>
-//tags are arbitrary key/value labels attached to the instance.<br>
-
-json_name: tags
-go_name: Tags</pre></td>
+json_name: value
+go_name: Value</pre></td>
 </tr>
 </table>
 

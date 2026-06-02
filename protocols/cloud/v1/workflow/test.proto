@@ -3,6 +3,8 @@ syntax = "proto3";
 package cloud.v1.workflow;
 
 import "cloud/v1/common/status.proto";
+import "cloud/v1/deployment/infrastructure.proto";
+import "cloud/v1/deployment/plan.proto";
 import "cloud/v1/domain/database.proto";
 import "cloud/v1/domain/suite.proto";
 import "cloud/v1/domain/test.proto";
@@ -82,15 +84,18 @@ message Stage {
 }
 
 /*
-    InstallStroppyWorkflowRequest asks to install stroppy on the runner
-    instances. Runner machines are always deployed, so this always runs.
-    Topology is read-only here (baked + runtime).
+    InstallStroppyWorkflowRequest asks to execute stroppy installation steps on
+    runner nodes.
  */
 message InstallStroppyWorkflowRequest {
     /*
-        topology is the (read-only) topology whose runner machines get stroppy.
+        infrastructure_state is used to route steps to node agents.
      */
-    topology.Topology topology = 1 [(validate.rules).message.required = true];
+    deployment.InfrastructureState infrastructure_state = 1 [(validate.rules).message.required = true];
+    /*
+        deployment_plan contains the stroppy-related agent steps.
+     */
+    deployment.DeploymentPlan deployment_plan = 2 [(validate.rules).message.required = true];
 }
 /*
     InstallStroppyWorkflowResponse is the empty result of installing stroppy.
@@ -104,13 +109,17 @@ message InstallStroppyWorkflowResponse {}
  */
 message InstallDatabaseWorkflowRequest {
     /*
-        topology is the topology the database is brought up within.
+        infrastructure_state is used to route steps to node agents.
      */
-    topology.Topology topology = 1 [(validate.rules).message.required = true];
+    deployment.InfrastructureState infrastructure_state = 1 [(validate.rules).message.required = true];
     /*
         database is the database definition to provision.
      */
     domain.Database database = 2 [(validate.rules).message.required = true];
+    /*
+        deployment_plan contains the database-related agent steps.
+     */
+    deployment.DeploymentPlan deployment_plan = 3 [(validate.rules).message.required = true];
 }
 /*
     InstallDatabaseWorkflowResponse is the empty result of installing the database.
@@ -123,13 +132,18 @@ message InstallDatabaseWorkflowResponse {}
  */
 message RunWorkloadWorkflowRequest {
     /*
-        topology is the topology the workload runs against.
+        topology_spec is the logical graph the workload targets.
      */
-    topology.Topology topology = 1 [(validate.rules).message.required = true];
+    topology.TopologySpec topology_spec = 1 [(validate.rules).message.required = true];
     /*
         workload is the workload definition to execute.
      */
     domain.Workload workload = 2 [(validate.rules).message.required = true];
+    /*
+        infrastructure_state carries runtime endpoints used to render the workload
+        connection string and route agent calls.
+     */
+    deployment.InfrastructureState infrastructure_state = 3 [(validate.rules).message.required = true];
 }
 /*
     RunWorkloadWorkflowResponse is the empty result of a workload run (results go

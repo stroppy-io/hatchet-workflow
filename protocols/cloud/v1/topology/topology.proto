@@ -2,90 +2,118 @@ syntax = "proto3";
 
 package cloud.v1.topology;
 
-import "cloud/v1/common/status.proto";
 import "cloud/v1/common/tags.proto";
-import "cloud/v1/deployment/machine.proto";
-import "cloud/v1/deployment/quota.proto";
+import "cloud/v1/deployment/infrastructure.proto";
+import "cloud/v1/deployment/plan.proto";
 import "cloud/v1/topology/component.proto";
 import "cloud/v1/topology/connection.proto";
-import "schemapb/schema.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology";
 
 /*
-    topology.proto defines the full benchmark topology: the set of physical
-    instances (VMs), the components allocated onto them, and the connections
-    between them. Provider/deployment parameters and quota fields are filled in
-    progressively by the deployment workflows.
+    topology.proto defines the staged deployment model. TopologySpec is the
+    provider-agnostic graph. Topology is an envelope that can accumulate later
+    stage artifacts without making the spec itself depend on runtime facts.
  */
 
 /*
-    Topology is the complete description of a benchmark deployment: its
-    instances, the edges between components, and any external components.
+    Node is a logical placement unit. A node may become a VM, a Docker container,
+    or a managed/external provider resource after the infrastructure stage.
+ */
+message Node {
+    /*
+        id is the stable logical node id.
+     */
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /*
+        component_ids are the components intentionally colocated on this node.
+     */
+    repeated string component_ids = 2 [(validate.rules).repeated = {min_items: 1, max_items: 64, items: {string: {min_len: 1, max_len: 128}}}];
+    /*
+        labels are structured metadata used by planners and UI.
+     */
+    map<string, string> labels = 3 [(validate.rules).map.max_pairs = 128];
+    /*
+        tags are arbitrary user/system tags.
+     */
+    common.Tags tags = 4;
+}
+
+/*
+    TopologySpec is the pure logical graph produced from domain params.
+ */
+message TopologySpec {
+    /*
+        nodes are logical placement units.
+     */
+    repeated Node nodes = 1 [(validate.rules).repeated.min_items = 1];
+    /*
+        components are logical services/roles.
+     */
+    repeated Component components = 2 [(validate.rules).repeated.min_items = 1];
+    /*
+        connections are logical edges between components. Single-node topologies
+        may legitimately have no edges.
+     */
+    repeated Connection connections = 3;
+    /*
+        external_components are logical components not deployed by this run.
+     */
+    repeated Component external_components = 4 [(validate.rules).repeated.max_items = 64];
+    /*
+        labels are structured metadata attached to the spec.
+     */
+    map<string, string> labels = 5 [(validate.rules).map.max_pairs = 128];
+    /*
+        tags are arbitrary user/system tags.
+     */
+    common.Tags tags = 6;
+}
+
+/*
+    Topology is the full staged object for a run or wizard draft.
  */
 message Topology {
     /*
-        Instance is one physical machine (VM) in the topology onto which
-        components are allocated.
+        State records the furthest stage represented by the envelope.
      */
-    message Instance {
-        /*
-            id is the unique identifier of the instance within the topology.
-         */
-        string id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
-        /*
-            status is the current runtime status of the instance.
-         */
-        common.Status status = 2;
-        /*
-            machine_info describes the requested machine shape/specs.
-         */
-        deployment.MachineInfo machine_info = 3;
-        /*
-            provider_parms are the baked provider parameters; calculated (wisard).
-         */
-        optional schemapb.Baked provider_parms = 4;
-        /*
-            quota_requests are the resource quotas requested for this instance;
-            calculated (deployment).
-         */
-        repeated deployment.Quota.Request quota_requests = 5;
-        /*
-            allocated_quotas are the quotas actually granted to this instance;
-            calculated (deployment).
-         */
-        repeated deployment.Quota.Allocation allocated_quotas = 6;
-        /*
-            deployment_parms are the baked deployment parameters; calculated
-            (deployment).
-         */
-        optional schemapb.Baked deployment_parms = 7;
-        /*
-            tags are arbitrary key/value labels attached to the instance.
-         */
-        common.Tags tags = 8;
-        /*
-            components are the logical components (roles) hosted on this instance.
-         */
-        repeated Component components = 9;
+    enum State {
+        STATE_UNSPECIFIED = 0;
+        STATE_SPEC = 1;
+        STATE_INFRASTRUCTURE_PLANNED = 2;
+        STATE_INFRASTRUCTURE_DEPLOYED = 3;
+        STATE_DEPLOYMENT_PLANNED = 4;
+        STATE_DEPLOYED = 5;
+        STATE_UNDEPLOYED = 6;
+        STATE_ARCHIVE = 7;
     }
+
     /*
-        instances are the physical machines making up the topology; at least one
-        is required.
+        state records the current stage.
      */
-    repeated Instance instances = 1 [(validate.rules).repeated.min_items = 1];
+    State state = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
     /*
-        connections are the edges between components; at least one is required.
+        spec is the logical graph.
      */
-    repeated topology.Connection connections = 2 [(validate.rules).repeated.min_items = 1];
+    TopologySpec spec = 2 [(validate.rules).message.required = true];
     /*
-        Here we can add something like managed database or another sevice from prvider
-        Responsibility of this is RenderTerraformVariablesWorkflow|RenderDockerInputWorkflow
-    */
-    repeated Component external_components = 3 [(validate.rules).repeated.max_items = 64];
-    /*
-        tags are arbitrary key/value labels attached to the whole topology.
+        infrastructure_plan is provider input derived from spec + provider
+        choices. Present from STATE_INFRASTRUCTURE_PLANNED.
      */
-    common.Tags tags = 4;
+    deployment.InfrastructurePlan infrastructure_plan = 3;
+    /*
+        infrastructure_state is provider output: ids, addresses, allocated
+        quotas. Present from STATE_INFRASTRUCTURE_DEPLOYED.
+     */
+    deployment.InfrastructureState infrastructure_state = 4;
+    /*
+        deployment_plan is the agent execution plan. Present from
+        STATE_DEPLOYMENT_PLANNED.
+     */
+    deployment.DeploymentPlan deployment_plan = 5;
+    /*
+        tags are arbitrary metadata on the envelope.
+     */
+    common.Tags tags = 6;
 }

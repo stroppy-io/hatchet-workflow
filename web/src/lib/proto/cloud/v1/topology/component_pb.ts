@@ -4,16 +4,8 @@
 
 import type { GenEnum, GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
-import type { Cmd, CmdJson } from "../common/cmd_pb.ts";
-import { file_cloud_v1_common_cmd } from "../common/cmd_pb.ts";
-import type { BakedFile, BakedFileJson } from "../common/file_pb.ts";
-import { file_cloud_v1_common_file } from "../common/file_pb.ts";
-import type { Status, StatusJson } from "../common/status_pb.ts";
-import { file_cloud_v1_common_status } from "../common/status_pb.ts";
 import type { Tags, TagsJson } from "../common/tags_pb.ts";
 import { file_cloud_v1_common_tags } from "../common/tags_pb.ts";
-import type { Baked, BakedJson } from "../../../schemapb/schema_pb.ts";
-import { file_schemapb_schema } from "../../../schemapb/schema_pb.ts";
 import { file_validate_validate } from "../../../validate/validate_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -21,18 +13,18 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/topology/component.proto.
  */
 export const file_cloud_v1_topology_component: GenFile = /*@__PURE__*/
-  fileDesc("CiFjbG91ZC92MS90b3BvbG9neS9jb21wb25lbnQucHJvdG8SEWNsb3VkLnYxLnRvcG9sb2d5IrEFCglDb21wb25lbnQSFgoCaWQYASABKAlCCvpCB3IFEAEYgAESOwoEa2luZBgCIAEoDjIhLmNsb3VkLnYxLnRvcG9sb2d5LkNvbXBvbmVudC5LaW5kQgr6QgeCAQQQASAAEicKBnN0YXR1cxgDIAEoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXMSQgoTZGVwbG95bWVudF9zdHJhdGVneRgEIAEoCzIlLmNsb3VkLnYxLnRvcG9sb2d5LkNvbXBvbmVudC5TdHJhdGVneRIsCg5wcm92aWRlcl9wYXJtcxgFIAEoCzIPLnNjaGVtYXBiLkJha2VkSACIAQESJQoYYWxsb2NhdGVkX29uX2luc3RhbmNlX2lkGAYgASgJSAGIAQESIwoEdGFncxgHIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzGnYKCFN0cmF0ZWd5EjcKE2NvbmZpZ3VyYXRpb25fZmlsZXMYASADKAsyGi5jbG91ZC52MS5jb21tb24uQmFrZWRGaWxlEjEKE2RlcGxveW1lbnRfY29tbWFuZHMYAiADKAsyFC5jbG91ZC52MS5jb21tb24uQ21kIr8BCgRLaW5kEhQKEEtJTkRfVU5TUEVDSUZJRUQQABIOCgpLSU5EX0FHRU5UEAESEAoMS0lORF9NT05JVE9SEAISEQoNS0lORF9EQVRBQkFTRRADEhAKDEtJTkRfUkVQTElDQRAEEg4KCktJTkRfUFJPWFkQBRIRCg1LSU5EX1dPUktMT0FEEAYSFAoQS0lORF9DT09SRElOQVRPUhAHEg4KCktJTkRfQURET04QCBIRCg1LSU5EX0VYVEVSTkFMEAlCEQoPX3Byb3ZpZGVyX3Bhcm1zQhsKGV9hbGxvY2F0ZWRfb25faW5zdGFuY2VfaWRCRlpEZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvdG9wb2xvZ3liBnByb3RvMw", [file_cloud_v1_common_cmd, file_cloud_v1_common_file, file_cloud_v1_common_status, file_cloud_v1_common_tags, file_schemapb_schema, file_validate_validate]);
+  fileDesc("CiFjbG91ZC92MS90b3BvbG9neS9jb21wb25lbnQucHJvdG8SEWNsb3VkLnYxLnRvcG9sb2d5IocECglDb21wb25lbnQSFgoCaWQYASABKAlCCvpCB3IFEAEYgAESOwoEa2luZBgCIAEoDjIhLmNsb3VkLnYxLnRvcG9sb2d5LkNvbXBvbmVudC5LaW5kQgr6QgeCAQQQASAAEhkKBmVuZ2luZRgDIAEoCUIJ+kIGcgQQARhAEhcKBHJvbGUYBCABKAlCCfpCBnIEEAEYQBJDCgZsYWJlbHMYBiADKAsyKC5jbG91ZC52MS50b3BvbG9neS5Db21wb25lbnQuTGFiZWxzRW50cnlCCfpCBpoBAxCAARIjCgR0YWdzGAcgASgLMhUuY2xvdWQudjEuY29tbW9uLlRhZ3MaLQoLTGFiZWxzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASK/AQoES2luZBIUChBLSU5EX1VOU1BFQ0lGSUVEEAASDgoKS0lORF9BR0VOVBABEhAKDEtJTkRfTU9OSVRPUhACEhEKDUtJTkRfREFUQUJBU0UQAxIQCgxLSU5EX1JFUExJQ0EQBBIOCgpLSU5EX1BST1hZEAUSEQoNS0lORF9XT1JLTE9BRBAGEhQKEEtJTkRfQ09PUkRJTkFUT1IQBxIOCgpLSU5EX0FERE9OEAgSEQoNS0lORF9FWFRFUk5BTBAJSgQIBRAGUhBjb25maWdfb3ZlcnJpZGVzQkZaRGdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL3RvcG9sb2d5YgZwcm90bzM", [file_cloud_v1_common_tags, file_validate_validate]);
 
 /**
  *
- * Component is one logical node in the topology graph.
+ * Component is one logical service role in the benchmark graph.
  *
  * @generated from message cloud.v1.topology.Component
  */
 export type Component = Message<"cloud.v1.topology.Component"> & {
   /**
    *
-   * id is the unique identifier of the component within the topology.
+   * id is the stable logical component id within the topology spec.
    *
    * @generated from field: string id = 1;
    */
@@ -40,7 +32,7 @@ export type Component = Message<"cloud.v1.topology.Component"> & {
 
   /**
    *
-   * kind is the role this component plays; must be a defined, non-zero value.
+   * kind is the broad component family.
    *
    * @generated from field: cloud.v1.topology.Component.Kind kind = 2;
    */
@@ -48,41 +40,34 @@ export type Component = Message<"cloud.v1.topology.Component"> & {
 
   /**
    *
-   * status is the current runtime status of the component.
+   * engine identifies the owning product or subsystem, e.g. postgres, ydb,
+   * stroppy, victoriametrics. It is data rather than an enum so new engines
+   * do not require changing topology proto.
    *
-   * @generated from field: cloud.v1.common.Status status = 3;
+   * @generated from field: string engine = 3;
    */
-  status: Status;
+  engine: string;
 
   /**
    *
-   * deployment_strategy is the deploy recipe; calculated (build).
+   * role identifies the concrete role inside the engine, e.g. master,
+   * replica, haproxy, pgbouncer, patroni, etcd.
    *
-   * @generated from field: cloud.v1.topology.Component.Strategy deployment_strategy = 4;
+   * @generated from field: string role = 4;
    */
-  deploymentStrategy?: Component_Strategy;
+  role: string;
 
   /**
    *
-   * provider_parms are the baked provider parameters; calculated (wisard
-   * actual for non-owr components).
+   * labels are structured role metadata used by renderers and UI.
    *
-   * @generated from field: optional schemapb.Baked provider_parms = 5;
+   * @generated from field: map<string, string> labels = 6;
    */
-  providerParms?: Baked;
+  labels: { [key: string]: string };
 
   /**
    *
-   * allocated_on_instance_id is the instance this component was placed on;
-   * calculated (deployment).
-   *
-   * @generated from field: optional string allocated_on_instance_id = 6;
-   */
-  allocatedOnInstanceId?: string;
-
-  /**
-   *
-   * tags are arbitrary key/value labels attached to the component.
+   * tags are arbitrary user/system tags.
    *
    * @generated from field: cloud.v1.common.Tags tags = 7;
    */
@@ -91,14 +76,14 @@ export type Component = Message<"cloud.v1.topology.Component"> & {
 
 /**
  *
- * Component is one logical node in the topology graph.
+ * Component is one logical service role in the benchmark graph.
  *
  * @generated from message cloud.v1.topology.Component
  */
 export type ComponentJson = {
   /**
    *
-   * id is the unique identifier of the component within the topology.
+   * id is the stable logical component id within the topology spec.
    *
    * @generated from field: string id = 1;
    */
@@ -106,7 +91,7 @@ export type ComponentJson = {
 
   /**
    *
-   * kind is the role this component plays; must be a defined, non-zero value.
+   * kind is the broad component family.
    *
    * @generated from field: cloud.v1.topology.Component.Kind kind = 2;
    */
@@ -114,41 +99,34 @@ export type ComponentJson = {
 
   /**
    *
-   * status is the current runtime status of the component.
+   * engine identifies the owning product or subsystem, e.g. postgres, ydb,
+   * stroppy, victoriametrics. It is data rather than an enum so new engines
+   * do not require changing topology proto.
    *
-   * @generated from field: cloud.v1.common.Status status = 3;
+   * @generated from field: string engine = 3;
    */
-  status?: StatusJson;
+  engine?: string;
 
   /**
    *
-   * deployment_strategy is the deploy recipe; calculated (build).
+   * role identifies the concrete role inside the engine, e.g. master,
+   * replica, haproxy, pgbouncer, patroni, etcd.
    *
-   * @generated from field: cloud.v1.topology.Component.Strategy deployment_strategy = 4;
+   * @generated from field: string role = 4;
    */
-  deploymentStrategy?: Component_StrategyJson;
+  role?: string;
 
   /**
    *
-   * provider_parms are the baked provider parameters; calculated (wisard
-   * actual for non-owr components).
+   * labels are structured role metadata used by renderers and UI.
    *
-   * @generated from field: optional schemapb.Baked provider_parms = 5;
+   * @generated from field: map<string, string> labels = 6;
    */
-  providerParms?: BakedJson;
+  labels?: { [key: string]: string };
 
   /**
    *
-   * allocated_on_instance_id is the instance this component was placed on;
-   * calculated (deployment).
-   *
-   * @generated from field: optional string allocated_on_instance_id = 6;
-   */
-  allocatedOnInstanceId?: string;
-
-  /**
-   *
-   * tags are arbitrary key/value labels attached to the component.
+   * tags are arbitrary user/system tags.
    *
    * @generated from field: cloud.v1.common.Tags tags = 7;
    */
@@ -166,73 +144,14 @@ export const ComponentSchema: GenMessage<Component, {jsonType: ComponentJson, va
 
 /**
  *
- * Strategy is the recipe used to deploy a component: configuration files to
- * lay down and commands to run.
- *
- * @generated from message cloud.v1.topology.Component.Strategy
- */
-export type Component_Strategy = Message<"cloud.v1.topology.Component.Strategy"> & {
-  /**
-   *
-   * configuration_files are the rendered config files to place on the host.
-   *
-   * @generated from field: repeated cloud.v1.common.BakedFile configuration_files = 1;
-   */
-  configurationFiles: BakedFile[];
-
-  /**
-   *
-   * deployment_commands are the commands to run to bring the component up.
-   *
-   * @generated from field: repeated cloud.v1.common.Cmd deployment_commands = 2;
-   */
-  deploymentCommands: Cmd[];
-};
-
-/**
- *
- * Strategy is the recipe used to deploy a component: configuration files to
- * lay down and commands to run.
- *
- * @generated from message cloud.v1.topology.Component.Strategy
- */
-export type Component_StrategyJson = {
-  /**
-   *
-   * configuration_files are the rendered config files to place on the host.
-   *
-   * @generated from field: repeated cloud.v1.common.BakedFile configuration_files = 1;
-   */
-  configurationFiles?: BakedFileJson[];
-
-  /**
-   *
-   * deployment_commands are the commands to run to bring the component up.
-   *
-   * @generated from field: repeated cloud.v1.common.Cmd deployment_commands = 2;
-   */
-  deploymentCommands?: CmdJson[];
-};
-
-export type Component_StrategyValid = Component_Strategy;
-
-/**
- * Describes the message cloud.v1.topology.Component.Strategy.
- * Use `create(Component_StrategySchema)` to create a new message.
- */
-export const Component_StrategySchema: GenMessage<Component_Strategy, {jsonType: Component_StrategyJson, validType: Component_StrategyValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_topology_component, 0, 0);
-
-/**
- *
- * Kind enumerates the role a component plays in the topology.
+ * Kind enumerates the broad role family a component belongs to.
  *
  * @generated from enum cloud.v1.topology.Component.Kind
  */
 export enum Component_Kind {
   /**
    *
-   * KIND_UNSPECIFIED is the unset zero value (rejected by validation).
+   * KIND_UNSPECIFIED is the unset zero value.
    *
    * @generated from enum value: KIND_UNSPECIFIED = 0;
    */
@@ -256,7 +175,7 @@ export enum Component_Kind {
 
   /**
    *
-   * KIND_DATABASE is a primary database node.
+   * KIND_DATABASE is a primary database service component.
    *
    * @generated from enum value: KIND_DATABASE = 3;
    */
@@ -264,7 +183,7 @@ export enum Component_Kind {
 
   /**
    *
-   * KIND_REPLICA is a database replica node.
+   * KIND_REPLICA is a database replica service component.
    *
    * @generated from enum value: KIND_REPLICA = 4;
    */
@@ -272,7 +191,7 @@ export enum Component_Kind {
 
   /**
    *
-   * KIND_PROXY is a connection proxy/pooler.
+   * KIND_PROXY is a proxy, load balancer, or connection pooler.
    *
    * @generated from enum value: KIND_PROXY = 5;
    */
@@ -288,7 +207,7 @@ export enum Component_Kind {
 
   /**
    *
-   * KIND_COORDINATOR is a cluster coordinator/control node.
+   * KIND_COORDINATOR is a cluster coordinator/control-plane component.
    *
    * @generated from enum value: KIND_COORDINATOR = 7;
    */
@@ -304,7 +223,7 @@ export enum Component_Kind {
 
   /**
    *
-   * KIND_EXTERNAL is a component provided externally (e.g. a managed service).
+   * KIND_EXTERNAL is provided outside this deployment.
    *
    * @generated from enum value: KIND_EXTERNAL = 9;
    */
@@ -313,7 +232,7 @@ export enum Component_Kind {
 
 /**
  *
- * Kind enumerates the role a component plays in the topology.
+ * Kind enumerates the broad role family a component belongs to.
  *
  * @generated from enum cloud.v1.topology.Component.Kind
  */

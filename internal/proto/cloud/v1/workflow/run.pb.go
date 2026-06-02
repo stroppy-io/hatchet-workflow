@@ -9,6 +9,9 @@ package workflow
 import (
 	_ "github.com/cludden/protoc-gen-go-temporal/gen/temporal/v1"
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
+	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
+	topology "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -24,26 +27,30 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// RunConfig is the input to RunWorkflow. For this first port it carries the
-// current types.RunConfig as opaque JSON: the worker unmarshals config_json
-// into the existing Go struct, so no domain remodeling is needed up front.
-// Top-level fields the workflow branches on are surfaced explicitly.
+// RunConfig is the durable input to one benchmark run workflow.
 type RunConfig struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// id is the stable run identifier (drives the deterministic workflow id).
+	// id is the stable run identifier.
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// provider selects the deployment backend ("docker" | "yandex").
-	Provider string `protobuf:"bytes,2,opt,name=provider,proto3" json:"provider,omitempty"`
-	// external_db, when true, is a bring-your-own-database run: the workflow
-	// skips the network/machines/install/configure phases and only installs
-	// stroppy + runs the workload against the supplied endpoint.
-	ExternalDb bool `protobuf:"varint,3,opt,name=external_db,json=externalDb,proto3" json:"external_db,omitempty"`
-	// config_json is the full types.RunConfig serialized as JSON. The worker
-	// decodes it into the existing Go model. Replaced by typed proto fields in
-	// a later pass.
-	ConfigJson    []byte `protobuf:"bytes,4,opt,name=config_json,json=configJson,proto3" json:"config_json,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// database is the database under test.
+	Database *domain.Database `protobuf:"bytes,2,opt,name=database,proto3" json:"database,omitempty"`
+	// workload is the workload to run against the database.
+	Workload *domain.Workload `protobuf:"bytes,3,opt,name=workload,proto3" json:"workload,omitempty"`
+	// topology_spec is the provider-agnostic logical graph.
+	TopologySpec *topology.TopologySpec `protobuf:"bytes,4,opt,name=topology_spec,json=topologySpec,proto3" json:"topology_spec,omitempty"`
+	// infrastructure_plan is the provider-specific machine/resource intent.
+	InfrastructurePlan *deployment.InfrastructurePlan `protobuf:"bytes,5,opt,name=infrastructure_plan,json=infrastructurePlan,proto3" json:"infrastructure_plan,omitempty"`
+	// infrastructure_state is filled after provider provisioning. It may be
+	// empty at workflow start and carried forward by the workflow.
+	InfrastructureState *deployment.InfrastructureState `protobuf:"bytes,6,opt,name=infrastructure_state,json=infrastructureState,proto3" json:"infrastructure_state,omitempty"`
+	// deployment_plan is filled after package/config rendering. It may be empty
+	// at workflow start and carried forward by the workflow.
+	DeploymentPlan *deployment.DeploymentPlan `protobuf:"bytes,7,opt,name=deployment_plan,json=deploymentPlan,proto3" json:"deployment_plan,omitempty"`
+	// render_overrides are user edits to editable render artifacts. Workflow
+	// renderers apply them when producing deployment_plan.
+	RenderOverrides *deployment.RenderOverrideSet `protobuf:"bytes,8,opt,name=render_overrides,json=renderOverrides,proto3" json:"render_overrides,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *RunConfig) Reset() {
@@ -83,257 +90,72 @@ func (x *RunConfig) GetId() string {
 	return ""
 }
 
-func (x *RunConfig) GetProvider() string {
+func (x *RunConfig) GetDatabase() *domain.Database {
 	if x != nil {
-		return x.Provider
-	}
-	return ""
-}
-
-func (x *RunConfig) GetExternalDb() bool {
-	if x != nil {
-		return x.ExternalDb
-	}
-	return false
-}
-
-func (x *RunConfig) GetConfigJson() []byte {
-	if x != nil {
-		return x.ConfigJson
+		return x.Database
 	}
 	return nil
 }
 
-// Target is an agent endpoint plus its role — the current run.State target,
-// plus a role tag derived from the machine id.
-type Target struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// id is the machine id ("<run>-<role>-<i>"); also the agent task-queue.
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// host is the server->agent address (may be empty in poll/host mode).
-	Host string `protobuf:"bytes,2,opt,name=host,proto3" json:"host,omitempty"`
-	// internal_host is the container name / internal IP for node-to-node comms.
-	InternalHost string `protobuf:"bytes,3,opt,name=internal_host,json=internalHost,proto3" json:"internal_host,omitempty"`
-	// agent_port is the agent's port when reachable directly.
-	AgentPort int32 `protobuf:"varint,4,opt,name=agent_port,json=agentPort,proto3" json:"agent_port,omitempty"`
-	// zone is the provider placement zone, when known.
-	Zone string `protobuf:"bytes,5,opt,name=zone,proto3" json:"zone,omitempty"`
-	// role is the component role on this machine: database | replica | monitor |
-	// proxy | stroppy | etcd | ydb-storage | ydb-database.
-	Role          string `protobuf:"bytes,6,opt,name=role,proto3" json:"role,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Target) Reset() {
-	*x = Target{}
-	mi := &file_cloud_v1_workflow_run_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Target) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Target) ProtoMessage() {}
-
-func (x *Target) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_workflow_run_proto_msgTypes[1]
+func (x *RunConfig) GetWorkload() *domain.Workload {
 	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Target.ProtoReflect.Descriptor instead.
-func (*Target) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_workflow_run_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *Target) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-func (x *Target) GetHost() string {
-	if x != nil {
-		return x.Host
-	}
-	return ""
-}
-
-func (x *Target) GetInternalHost() string {
-	if x != nil {
-		return x.InternalHost
-	}
-	return ""
-}
-
-func (x *Target) GetAgentPort() int32 {
-	if x != nil {
-		return x.AgentPort
-	}
-	return 0
-}
-
-func (x *Target) GetZone() string {
-	if x != nil {
-		return x.Zone
-	}
-	return ""
-}
-
-func (x *Target) GetRole() string {
-	if x != nil {
-		return x.Role
-	}
-	return ""
-}
-
-// Deployment is the cross-phase state the current run.State holds after the
-// machines phase: the agent targets, the DB endpoint stroppy connects to, and
-// the provider handles needed for teardown. Produced by DeployMachinesActivity,
-// threaded through the workflow, and consumed by TeardownActivity.
-type Deployment struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// targets are all provisioned agent machines.
-	Targets []*Target `protobuf:"bytes,1,rep,name=targets,proto3" json:"targets,omitempty"`
-	// db_host is the endpoint host stroppy connects to (container name / IP / proxy).
-	DbHost string `protobuf:"bytes,2,opt,name=db_host,json=dbHost,proto3" json:"db_host,omitempty"`
-	// db_port is the endpoint port for the selected protocol.
-	DbPort int32 `protobuf:"varint,3,opt,name=db_port,json=dbPort,proto3" json:"db_port,omitempty"`
-	// container_ids are the docker container ids for docker-provider teardown.
-	ContainerIds []string `protobuf:"bytes,4,rep,name=container_ids,json=containerIds,proto3" json:"container_ids,omitempty"`
-	// network_id is the docker network id for docker-provider teardown.
-	NetworkId string `protobuf:"bytes,5,opt,name=network_id,json=networkId,proto3" json:"network_id,omitempty"`
-	// terraform_wd_id is the terraform working-dir id for yandex-provider teardown.
-	TerraformWdId string `protobuf:"bytes,6,opt,name=terraform_wd_id,json=terraformWdId,proto3" json:"terraform_wd_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Deployment) Reset() {
-	*x = Deployment{}
-	mi := &file_cloud_v1_workflow_run_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Deployment) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Deployment) ProtoMessage() {}
-
-func (x *Deployment) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_workflow_run_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Deployment.ProtoReflect.Descriptor instead.
-func (*Deployment) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_workflow_run_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *Deployment) GetTargets() []*Target {
-	if x != nil {
-		return x.Targets
+		return x.Workload
 	}
 	return nil
 }
 
-func (x *Deployment) GetDbHost() string {
+func (x *RunConfig) GetTopologySpec() *topology.TopologySpec {
 	if x != nil {
-		return x.DbHost
-	}
-	return ""
-}
-
-func (x *Deployment) GetDbPort() int32 {
-	if x != nil {
-		return x.DbPort
-	}
-	return 0
-}
-
-func (x *Deployment) GetContainerIds() []string {
-	if x != nil {
-		return x.ContainerIds
+		return x.TopologySpec
 	}
 	return nil
 }
 
-func (x *Deployment) GetNetworkId() string {
+func (x *RunConfig) GetInfrastructurePlan() *deployment.InfrastructurePlan {
 	if x != nil {
-		return x.NetworkId
+		return x.InfrastructurePlan
 	}
-	return ""
+	return nil
 }
 
-func (x *Deployment) GetTerraformWdId() string {
+func (x *RunConfig) GetInfrastructureState() *deployment.InfrastructureState {
 	if x != nil {
-		return x.TerraformWdId
+		return x.InfrastructureState
 	}
-	return ""
+	return nil
+}
+
+func (x *RunConfig) GetDeploymentPlan() *deployment.DeploymentPlan {
+	if x != nil {
+		return x.DeploymentPlan
+	}
+	return nil
+}
+
+func (x *RunConfig) GetRenderOverrides() *deployment.RenderOverrideSet {
+	if x != nil {
+		return x.RenderOverrides
+	}
+	return nil
 }
 
 var File_cloud_v1_workflow_run_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_workflow_run_proto_rawDesc = "" +
 	"\n" +
-	"\x1bcloud/v1/workflow/run.proto\x12\x11cloud.v1.workflow\x1a\x1ccloud/v1/workflow/test.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1atemporal/v1/temporal.proto\x1a\x17validate/validate.proto\"\x94\x01\n" +
-	"\tRunConfig\x12\x17\n" +
-	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\x12#\n" +
-	"\bprovider\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\bprovider\x12\x1f\n" +
-	"\vexternal_db\x18\x03 \x01(\bR\n" +
-	"externalDb\x12(\n" +
-	"\vconfig_json\x18\x04 \x01(\fB\a\xfaB\x04z\x02\x10\x01R\n" +
-	"configJson\"\xa1\x01\n" +
-	"\x06Target\x12\x17\n" +
-	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\x12\x12\n" +
-	"\x04host\x18\x02 \x01(\tR\x04host\x12#\n" +
-	"\rinternal_host\x18\x03 \x01(\tR\finternalHost\x12\x1d\n" +
-	"\n" +
-	"agent_port\x18\x04 \x01(\x05R\tagentPort\x12\x12\n" +
-	"\x04zone\x18\x05 \x01(\tR\x04zone\x12\x12\n" +
-	"\x04role\x18\x06 \x01(\tR\x04role\"\xdf\x01\n" +
-	"\n" +
-	"Deployment\x123\n" +
-	"\atargets\x18\x01 \x03(\v2\x19.cloud.v1.workflow.TargetR\atargets\x12\x17\n" +
-	"\adb_host\x18\x02 \x01(\tR\x06dbHost\x12\x17\n" +
-	"\adb_port\x18\x03 \x01(\x05R\x06dbPort\x12#\n" +
-	"\rcontainer_ids\x18\x04 \x03(\tR\fcontainerIds\x12\x1d\n" +
-	"\n" +
-	"network_id\x18\x05 \x01(\tR\tnetworkId\x12&\n" +
-	"\x0fterraform_wd_id\x18\x06 \x01(\tR\rterraformWdId2\xd6\x04\n" +
-	"\x12RunWorkflowService\x12\x81\x01\n" +
-	"\vRunWorkflow\x12\x1c.cloud.v1.workflow.RunConfig\x1a\x16.google.protobuf.Empty\"<\x8a\xc4\x038\n" +
-	"\x15\n" +
-	"\x13GetRunWorkflowState*\frun/${! id }0\x02J\x02 \x01r\vRunWorkflow\x12e\n" +
-	"\x13GetRunWorkflowState\x12\x16.google.protobuf.Empty\x1a\x1b.cloud.v1.workflow.RunState\"\x19\x9a\xc4\x03\x15\n" +
-	"\x13GetRunWorkflowState\x12p\n" +
-	"\x15CreateNetworkActivity\x12\x1c.cloud.v1.workflow.RunConfig\x1a\x1d.cloud.v1.workflow.Deployment\"\x1a\x92\xc4\x03\x16\"\x03\b\xac\x022\x0f\n" +
-	"\x02\b\x05\x11\x00\x00\x00\x00\x00\x00\x00@ \x03\x12l\n" +
-	"\x16DeployMachinesActivity\x12\x1c.cloud.v1.workflow.RunConfig\x1a\x1d.cloud.v1.workflow.Deployment\"\x15\x92\xc4\x03\x11\"\x03\b\x88\x0e*\x02\b<2\x06\n" +
-	"\x02\b\n" +
-	" \x02\x12`\n" +
-	"\x10TeardownActivity\x12\x1d.cloud.v1.workflow.Deployment\x1a\x16.google.protobuf.Empty\"\x15\x92\xc4\x03\x11\"\x03\b\x88\x0e*\x02\b<2\x06\n" +
-	"\x02\b\n" +
-	" \x03\x1a\x13\x8a\xc4\x03\x0f\n" +
+	"\x1bcloud/v1/workflow/run.proto\x12\x11cloud.v1.workflow\x1a(cloud/v1/deployment/infrastructure.proto\x1a\x1ecloud/v1/deployment/plan.proto\x1a cloud/v1/deployment/render.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a cloud/v1/topology/topology.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1atemporal/v1/temporal.proto\x1a\x17validate/validate.proto\"\xdb\x04\n" +
+	"\tRunConfig\x12\x1a\n" +
+	"\x02id\x18\x01 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x02id\x12?\n" +
+	"\bdatabase\x18\x02 \x01(\v2\x19.cloud.v1.domain.DatabaseB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bdatabase\x12?\n" +
+	"\bworkload\x18\x03 \x01(\v2\x19.cloud.v1.domain.WorkloadB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bworkload\x12N\n" +
+	"\rtopology_spec\x18\x04 \x01(\v2\x1f.cloud.v1.topology.TopologySpecB\b\xfaB\x05\x8a\x01\x02\x10\x01R\ftopologySpec\x12b\n" +
+	"\x13infrastructure_plan\x18\x05 \x01(\v2'.cloud.v1.deployment.InfrastructurePlanB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x12infrastructurePlan\x12[\n" +
+	"\x14infrastructure_state\x18\x06 \x01(\v2(.cloud.v1.deployment.InfrastructureStateR\x13infrastructureState\x12L\n" +
+	"\x0fdeployment_plan\x18\a \x01(\v2#.cloud.v1.deployment.DeploymentPlanR\x0edeploymentPlan\x12Q\n" +
+	"\x10render_overrides\x18\b \x01(\v2&.cloud.v1.deployment.RenderOverrideSetR\x0frenderOverrides2\x9d\x01\n" +
+	"\x12RunWorkflowService\x12r\n" +
+	"\x0fTestRunWorkflow\x12\x1c.cloud.v1.workflow.RunConfig\x1a\x16.google.protobuf.Empty\")\x8a\xc4\x03%*\frun/${! id }0\x02J\x02 \x01r\x0fTestRunWorkflow\x1a\x13\x8a\xc4\x03\x0f\n" +
 	"\rstroppy-cloudBFZDgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflowb\x06proto3"
 
 var (
@@ -348,31 +170,33 @@ func file_cloud_v1_workflow_run_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_workflow_run_proto_rawDescData
 }
 
-var file_cloud_v1_workflow_run_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_cloud_v1_workflow_run_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_cloud_v1_workflow_run_proto_goTypes = []any{
-	(*RunConfig)(nil),     // 0: cloud.v1.workflow.RunConfig
-	(*Target)(nil),        // 1: cloud.v1.workflow.Target
-	(*Deployment)(nil),    // 2: cloud.v1.workflow.Deployment
-	(*emptypb.Empty)(nil), // 3: google.protobuf.Empty
-	(*RunState)(nil),      // 4: cloud.v1.workflow.RunState
+	(*RunConfig)(nil),                      // 0: cloud.v1.workflow.RunConfig
+	(*domain.Database)(nil),                // 1: cloud.v1.domain.Database
+	(*domain.Workload)(nil),                // 2: cloud.v1.domain.Workload
+	(*topology.TopologySpec)(nil),          // 3: cloud.v1.topology.TopologySpec
+	(*deployment.InfrastructurePlan)(nil),  // 4: cloud.v1.deployment.InfrastructurePlan
+	(*deployment.InfrastructureState)(nil), // 5: cloud.v1.deployment.InfrastructureState
+	(*deployment.DeploymentPlan)(nil),      // 6: cloud.v1.deployment.DeploymentPlan
+	(*deployment.RenderOverrideSet)(nil),   // 7: cloud.v1.deployment.RenderOverrideSet
+	(*emptypb.Empty)(nil),                  // 8: google.protobuf.Empty
 }
 var file_cloud_v1_workflow_run_proto_depIdxs = []int32{
-	1, // 0: cloud.v1.workflow.Deployment.targets:type_name -> cloud.v1.workflow.Target
-	0, // 1: cloud.v1.workflow.RunWorkflowService.RunWorkflow:input_type -> cloud.v1.workflow.RunConfig
-	3, // 2: cloud.v1.workflow.RunWorkflowService.GetRunWorkflowState:input_type -> google.protobuf.Empty
-	0, // 3: cloud.v1.workflow.RunWorkflowService.CreateNetworkActivity:input_type -> cloud.v1.workflow.RunConfig
-	0, // 4: cloud.v1.workflow.RunWorkflowService.DeployMachinesActivity:input_type -> cloud.v1.workflow.RunConfig
-	2, // 5: cloud.v1.workflow.RunWorkflowService.TeardownActivity:input_type -> cloud.v1.workflow.Deployment
-	3, // 6: cloud.v1.workflow.RunWorkflowService.RunWorkflow:output_type -> google.protobuf.Empty
-	4, // 7: cloud.v1.workflow.RunWorkflowService.GetRunWorkflowState:output_type -> cloud.v1.workflow.RunState
-	2, // 8: cloud.v1.workflow.RunWorkflowService.CreateNetworkActivity:output_type -> cloud.v1.workflow.Deployment
-	2, // 9: cloud.v1.workflow.RunWorkflowService.DeployMachinesActivity:output_type -> cloud.v1.workflow.Deployment
-	3, // 10: cloud.v1.workflow.RunWorkflowService.TeardownActivity:output_type -> google.protobuf.Empty
-	6, // [6:11] is the sub-list for method output_type
-	1, // [1:6] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	1, // 0: cloud.v1.workflow.RunConfig.database:type_name -> cloud.v1.domain.Database
+	2, // 1: cloud.v1.workflow.RunConfig.workload:type_name -> cloud.v1.domain.Workload
+	3, // 2: cloud.v1.workflow.RunConfig.topology_spec:type_name -> cloud.v1.topology.TopologySpec
+	4, // 3: cloud.v1.workflow.RunConfig.infrastructure_plan:type_name -> cloud.v1.deployment.InfrastructurePlan
+	5, // 4: cloud.v1.workflow.RunConfig.infrastructure_state:type_name -> cloud.v1.deployment.InfrastructureState
+	6, // 5: cloud.v1.workflow.RunConfig.deployment_plan:type_name -> cloud.v1.deployment.DeploymentPlan
+	7, // 6: cloud.v1.workflow.RunConfig.render_overrides:type_name -> cloud.v1.deployment.RenderOverrideSet
+	0, // 7: cloud.v1.workflow.RunWorkflowService.TestRunWorkflow:input_type -> cloud.v1.workflow.RunConfig
+	8, // 8: cloud.v1.workflow.RunWorkflowService.TestRunWorkflow:output_type -> google.protobuf.Empty
+	8, // [8:9] is the sub-list for method output_type
+	7, // [7:8] is the sub-list for method input_type
+	7, // [7:7] is the sub-list for extension type_name
+	7, // [7:7] is the sub-list for extension extendee
+	0, // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_workflow_run_proto_init() }
@@ -380,14 +204,13 @@ func file_cloud_v1_workflow_run_proto_init() {
 	if File_cloud_v1_workflow_run_proto != nil {
 		return
 	}
-	file_cloud_v1_workflow_test_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_workflow_run_proto_rawDesc), len(file_cloud_v1_workflow_run_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   1,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

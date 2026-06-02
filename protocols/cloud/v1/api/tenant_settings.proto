@@ -4,9 +4,8 @@ package cloud.v1.api;
 
 import "cloud/v1/deployment/provider.proto";
 import "cloud/v1/iam/options.proto";
-import "cloud/v1/iam/permission.proto";
 import "cloud/v1/models/tenant_settings.proto";
-import "schemapb/schema.proto";
+import "google/protobuf/empty.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
@@ -72,25 +71,12 @@ message SetTenantProviderSettingsRequest {
      */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
     /*
-        provider selects which provider's config to set (must be a defined,
-        non-zero provider).
-     */
-    deployment.Provider provider = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
-    /*
         settings carries only the form values (Filled = values + schema ref); the
         server validates against the provider schema and bakes the result.
      */
-    schemapb.Filled settings = 3 [(validate.rules).message.required = true];
+    deployment.ProviderSettings settings = 2;
 }
-/*
-    SetTenantProviderSettingsResponse returns the saved, baked provider config.
- */
-message SetTenantProviderSettingsResponse {
-    /*
-        settings is the saved, baked provider config.
-     */
-    deployment.ProviderSettings settings = 1 [(validate.rules).message.required = true];
-}
+
 
 /*
     TenantSettingsService is the tenant-scoped API for reading and updating
@@ -115,7 +101,7 @@ service TenantSettingsService {
         SetTenantProviderSettings is idempotent: setting the same provider config
         converges.
      */
-    rpc SetTenantProviderSettings (SetTenantProviderSettingsRequest) returns (SetTenantProviderSettingsResponse) {
+    rpc SetTenantProviderSettings (SetTenantProviderSettingsRequest) returns (google.protobuf.Empty) {
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SETTINGS, action: ACTION_UPDATE}]};
     }

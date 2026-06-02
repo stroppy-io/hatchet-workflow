@@ -6,7 +6,6 @@ import (
 	fmt "fmt"
 	jx "github.com/go-faster/jx"
 	jxpb "github.com/gopherex/protoc-gen-go-jx/jxpb"
-	schemapb "github.com/stroppy-io/schemapb/schemapb"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 )
 
@@ -29,25 +28,22 @@ func (m *Component) Encode(e *jx.Encoder) {
 			e.Int32(int32(m.Kind))
 		}
 	}
-	if m.Status != 0 {
-		e.FieldStart("status")
-		if s, ok := common.Status_name[int32(m.Status)]; ok {
-			e.Str(s)
-		} else {
-			e.Int32(int32(m.Status))
+	if m.Engine != "" {
+		e.FieldStart("engine")
+		e.Str(m.Engine)
+	}
+	if m.Role != "" {
+		e.FieldStart("role")
+		e.Str(m.Role)
+	}
+	if len(m.Labels) > 0 {
+		e.FieldStart("labels")
+		e.ObjStart()
+		for k, v := range m.Labels {
+			e.FieldStart(k)
+			e.Str(v)
 		}
-	}
-	if m.DeploymentStrategy != nil {
-		e.FieldStart("deploymentStrategy")
-		m.DeploymentStrategy.Encode(e)
-	}
-	if m.ProviderParms != nil {
-		e.FieldStart("providerParms")
-		jxpb.EncMessage(e, m.ProviderParms)
-	}
-	if m.AllocatedOnInstanceId != nil {
-		e.FieldStart("allocatedOnInstanceId")
-		e.Str(*m.AllocatedOnInstanceId)
+		e.ObjEnd()
 	}
 	if m.Tags != nil {
 		e.FieldStart("tags")
@@ -103,66 +99,11 @@ func (m *Component) Decode(d *jx.Decoder) error {
 			default:
 				return fmt.Errorf("invalid enum token %s", d.Next())
 			}
-		case "status":
-			if seen["Status"] {
+		case "engine":
+			if seen["Engine"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["Status"] = true
-			switch d.Next() {
-			case jx.String:
-				s, err := d.Str()
-				if err != nil {
-					return err
-				}
-				n, ok := common.Status_value[s]
-				if !ok {
-					return fmt.Errorf("unknown enum value %q", s)
-				}
-				m.Status = common.Status(n)
-				return nil
-			case jx.Number:
-				n, err := d.Int32()
-				if err != nil {
-					return err
-				}
-				m.Status = common.Status(n)
-				return nil
-			case jx.Null:
-				return d.Null()
-			default:
-				return fmt.Errorf("invalid enum token %s", d.Next())
-			}
-		case "deploymentStrategy", "deployment_strategy":
-			if seen["DeploymentStrategy"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["DeploymentStrategy"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			m.DeploymentStrategy = &Component_Strategy{}
-			if err := m.DeploymentStrategy.Decode(d); err != nil {
-				return err
-			}
-			return nil
-		case "providerParms", "provider_parms":
-			if seen["ProviderParms"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["ProviderParms"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			m.ProviderParms = &schemapb.Baked{}
-			if err := jxpb.DecMessage(d, m.ProviderParms); err != nil {
-				return err
-			}
-			return nil
-		case "allocatedOnInstanceId", "allocated_on_instance_id":
-			if seen["AllocatedOnInstanceId"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["AllocatedOnInstanceId"] = true
+			seen["Engine"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
@@ -170,8 +111,44 @@ func (m *Component) Decode(d *jx.Decoder) error {
 			if err != nil {
 				return err
 			}
-			m.AllocatedOnInstanceId = &v
+			m.Engine = v
 			return nil
+		case "role":
+			if seen["Role"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Role"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Role = v
+			return nil
+		case "labels":
+			if seen["Labels"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Labels"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			if m.Labels == nil {
+				m.Labels = make(map[string]string)
+			}
+			return d.Obj(func(d *jx.Decoder, ks string) error {
+				mk := ks
+				var mv string
+				tv, err := d.Str()
+				if err != nil {
+					return err
+				}
+				mv = tv
+				m.Labels[mk] = mv
+				return nil
+			})
 		case "tags":
 			if seen["Tags"] {
 				return fmt.Errorf("duplicate field %q", key)
@@ -198,85 +175,6 @@ func (m *Component) MarshalJSON() ([]byte, error) {
 }
 
 func (m *Component) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return m.Decode(d)
-}
-
-func (m *Component_Strategy) Encode(e *jx.Encoder) {
-	if m == nil {
-		e.ObjStart()
-		e.ObjEnd()
-		return
-	}
-	e.ObjStart()
-	if len(m.ConfigurationFiles) > 0 {
-		e.FieldStart("configurationFiles")
-		e.ArrStart()
-		for _, v := range m.ConfigurationFiles {
-			jxpb.EncMessage(e, v)
-		}
-		e.ArrEnd()
-	}
-	if len(m.DeploymentCommands) > 0 {
-		e.FieldStart("deploymentCommands")
-		e.ArrStart()
-		for _, v := range m.DeploymentCommands {
-			jxpb.EncMessage(e, v)
-		}
-		e.ArrEnd()
-	}
-	e.ObjEnd()
-}
-
-func (m *Component_Strategy) Decode(d *jx.Decoder) error {
-	seen := map[string]bool{}
-	return d.Obj(func(d *jx.Decoder, key string) error {
-		switch key {
-		case "configurationFiles", "configuration_files":
-			if seen["ConfigurationFiles"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["ConfigurationFiles"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			return d.Arr(func(d *jx.Decoder) error {
-				el := &common.BakedFile{}
-				if err := jxpb.DecMessage(d, el); err != nil {
-					return err
-				}
-				m.ConfigurationFiles = append(m.ConfigurationFiles, el)
-				return nil
-			})
-		case "deploymentCommands", "deployment_commands":
-			if seen["DeploymentCommands"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["DeploymentCommands"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			return d.Arr(func(d *jx.Decoder) error {
-				el := &common.Cmd{}
-				if err := jxpb.DecMessage(d, el); err != nil {
-					return err
-				}
-				m.DeploymentCommands = append(m.DeploymentCommands, el)
-				return nil
-			})
-		default:
-			return fmt.Errorf("unknown field %q", key)
-		}
-	})
-}
-
-func (m *Component_Strategy) MarshalJSON() ([]byte, error) {
-	var e jx.Encoder
-	m.Encode(&e)
-	return e.Bytes(), nil
-}
-
-func (m *Component_Strategy) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return m.Decode(d)
 }

@@ -53,9 +53,9 @@ type TenantSettingsRecord struct {
 	// what the wizards/deploy use as the provider base. SENSITIVE: the baked
 	// values carry secrets (mark secret fields in the schema); guard reads.
 	// At most one entry per Provider.
-	Providers     []*deployment.ProviderSettings `protobuf:"bytes,7,rep,name=providers,proto3" json:"providers,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	YandexSettings *deployment.Yandex_Settings `protobuf:"bytes,7,opt,name=yandex_settings,json=yandexSettings,proto3" json:"yandex_settings,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *TenantSettingsRecord) Reset() {
@@ -130,9 +130,9 @@ func (x *TenantSettingsRecord) GetRunRetentionDays() uint32 {
 	return 0
 }
 
-func (x *TenantSettingsRecord) GetProviders() []*deployment.ProviderSettings {
+func (x *TenantSettingsRecord) GetYandexSettings() *deployment.Yandex_Settings {
 	if x != nil {
-		return x.Providers
+		return x.YandexSettings
 	}
 	return nil
 }
@@ -141,15 +141,15 @@ var File_cloud_v1_models_tenant_settings_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_models_tenant_settings_proto_rawDesc = "" +
 	"\n" +
-	"%cloud/v1/models/tenant_settings.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/common/entity.proto\x1a\"cloud/v1/deployment/provider.proto\x1a\x17validate/validate.proto\"\xf6\x03\n" +
+	"%cloud/v1/models/tenant_settings.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/common/entity.proto\x1a\"cloud/v1/deployment/provider.proto\x1a cloud/v1/deployment/yandex.proto\x1a\x17validate/validate.proto\"\x80\x04\n" +
 	"\x14TenantSettingsRecord\x129\n" +
 	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.common.EntityB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06entity\x12H\n" +
 	"\x10default_provider\x18\x02 \x01(\x0e2\x1d.cloud.v1.deployment.ProviderR\x0fdefaultProvider\x12<\n" +
 	"\x18default_in_tenant_rating\x18\x03 \x01(\bH\x00R\x15defaultInTenantRating\x88\x01\x01\x12<\n" +
 	"\x18default_in_global_rating\x18\x04 \x01(\bH\x01R\x15defaultInGlobalRating\x88\x01\x01\x120\n" +
 	"\x14default_max_parallel\x18\x05 \x01(\rR\x12defaultMaxParallel\x12,\n" +
-	"\x12run_retention_days\x18\x06 \x01(\rR\x10runRetentionDays\x12C\n" +
-	"\tproviders\x18\a \x03(\v2%.cloud.v1.deployment.ProviderSettingsR\tprovidersB\x1b\n" +
+	"\x12run_retention_days\x18\x06 \x01(\rR\x10runRetentionDays\x12M\n" +
+	"\x0fyandex_settings\x18\a \x01(\v2$.cloud.v1.deployment.Yandex.SettingsR\x0eyandexSettingsB\x1b\n" +
 	"\x19_default_in_tenant_ratingB\x1b\n" +
 	"\x19_default_in_global_ratingBDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/modelsb\x06proto3"
 
@@ -167,15 +167,15 @@ func file_cloud_v1_models_tenant_settings_proto_rawDescGZIP() []byte {
 
 var file_cloud_v1_models_tenant_settings_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_cloud_v1_models_tenant_settings_proto_goTypes = []any{
-	(*TenantSettingsRecord)(nil),        // 0: cloud.v1.models.TenantSettingsRecord
-	(*common.Entity)(nil),               // 1: cloud.v1.common.Entity
-	(deployment.Provider)(0),            // 2: cloud.v1.deployment.Provider
-	(*deployment.ProviderSettings)(nil), // 3: cloud.v1.deployment.ProviderSettings
+	(*TenantSettingsRecord)(nil),       // 0: cloud.v1.models.TenantSettingsRecord
+	(*common.Entity)(nil),              // 1: cloud.v1.common.Entity
+	(deployment.Provider)(0),           // 2: cloud.v1.deployment.Provider
+	(*deployment.Yandex_Settings)(nil), // 3: cloud.v1.deployment.Yandex.Settings
 }
 var file_cloud_v1_models_tenant_settings_proto_depIdxs = []int32{
 	1, // 0: cloud.v1.models.TenantSettingsRecord.entity:type_name -> cloud.v1.common.Entity
 	2, // 1: cloud.v1.models.TenantSettingsRecord.default_provider:type_name -> cloud.v1.deployment.Provider
-	3, // 2: cloud.v1.models.TenantSettingsRecord.providers:type_name -> cloud.v1.deployment.ProviderSettings
+	3, // 2: cloud.v1.models.TenantSettingsRecord.yandex_settings:type_name -> cloud.v1.deployment.Yandex.Settings
 	3, // [3:3] is the sub-list for method output_type
 	3, // [3:3] is the sub-list for method input_type
 	3, // [3:3] is the sub-list for extension type_name

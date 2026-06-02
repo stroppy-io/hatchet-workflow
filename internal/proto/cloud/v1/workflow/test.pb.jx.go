@@ -7,6 +7,7 @@ import (
 	jx "github.com/go-faster/jx"
 	jxpb "github.com/gopherex/protoc-gen-go-jx/jxpb"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
+	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	topology "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -345,9 +346,13 @@ func (m *InstallStroppyWorkflowRequest) Encode(e *jx.Encoder) {
 		return
 	}
 	e.ObjStart()
-	if m.Topology != nil {
-		e.FieldStart("topology")
-		jxpb.EncMessage(e, m.Topology)
+	if m.InfrastructureState != nil {
+		e.FieldStart("infrastructureState")
+		jxpb.EncMessage(e, m.InfrastructureState)
+	}
+	if m.DeploymentPlan != nil {
+		e.FieldStart("deploymentPlan")
+		jxpb.EncMessage(e, m.DeploymentPlan)
 	}
 	e.ObjEnd()
 }
@@ -356,16 +361,29 @@ func (m *InstallStroppyWorkflowRequest) Decode(d *jx.Decoder) error {
 	seen := map[string]bool{}
 	return d.Obj(func(d *jx.Decoder, key string) error {
 		switch key {
-		case "topology":
-			if seen["Topology"] {
+		case "infrastructureState", "infrastructure_state":
+			if seen["InfrastructureState"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["Topology"] = true
+			seen["InfrastructureState"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			m.Topology = &topology.Topology{}
-			if err := jxpb.DecMessage(d, m.Topology); err != nil {
+			m.InfrastructureState = &deployment.InfrastructureState{}
+			if err := jxpb.DecMessage(d, m.InfrastructureState); err != nil {
+				return err
+			}
+			return nil
+		case "deploymentPlan", "deployment_plan":
+			if seen["DeploymentPlan"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["DeploymentPlan"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.DeploymentPlan = &deployment.DeploymentPlan{}
+			if err := jxpb.DecMessage(d, m.DeploymentPlan); err != nil {
 				return err
 			}
 			return nil
@@ -423,13 +441,17 @@ func (m *InstallDatabaseWorkflowRequest) Encode(e *jx.Encoder) {
 		return
 	}
 	e.ObjStart()
-	if m.Topology != nil {
-		e.FieldStart("topology")
-		jxpb.EncMessage(e, m.Topology)
+	if m.InfrastructureState != nil {
+		e.FieldStart("infrastructureState")
+		jxpb.EncMessage(e, m.InfrastructureState)
 	}
 	if m.Database != nil {
 		e.FieldStart("database")
 		jxpb.EncMessage(e, m.Database)
+	}
+	if m.DeploymentPlan != nil {
+		e.FieldStart("deploymentPlan")
+		jxpb.EncMessage(e, m.DeploymentPlan)
 	}
 	e.ObjEnd()
 }
@@ -438,16 +460,16 @@ func (m *InstallDatabaseWorkflowRequest) Decode(d *jx.Decoder) error {
 	seen := map[string]bool{}
 	return d.Obj(func(d *jx.Decoder, key string) error {
 		switch key {
-		case "topology":
-			if seen["Topology"] {
+		case "infrastructureState", "infrastructure_state":
+			if seen["InfrastructureState"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["Topology"] = true
+			seen["InfrastructureState"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			m.Topology = &topology.Topology{}
-			if err := jxpb.DecMessage(d, m.Topology); err != nil {
+			m.InfrastructureState = &deployment.InfrastructureState{}
+			if err := jxpb.DecMessage(d, m.InfrastructureState); err != nil {
 				return err
 			}
 			return nil
@@ -461,6 +483,19 @@ func (m *InstallDatabaseWorkflowRequest) Decode(d *jx.Decoder) error {
 			}
 			m.Database = &domain.Database{}
 			if err := jxpb.DecMessage(d, m.Database); err != nil {
+				return err
+			}
+			return nil
+		case "deploymentPlan", "deployment_plan":
+			if seen["DeploymentPlan"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["DeploymentPlan"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.DeploymentPlan = &deployment.DeploymentPlan{}
+			if err := jxpb.DecMessage(d, m.DeploymentPlan); err != nil {
 				return err
 			}
 			return nil
@@ -518,13 +553,17 @@ func (m *RunWorkloadWorkflowRequest) Encode(e *jx.Encoder) {
 		return
 	}
 	e.ObjStart()
-	if m.Topology != nil {
-		e.FieldStart("topology")
-		jxpb.EncMessage(e, m.Topology)
+	if m.TopologySpec != nil {
+		e.FieldStart("topologySpec")
+		jxpb.EncMessage(e, m.TopologySpec)
 	}
 	if m.Workload != nil {
 		e.FieldStart("workload")
 		jxpb.EncMessage(e, m.Workload)
+	}
+	if m.InfrastructureState != nil {
+		e.FieldStart("infrastructureState")
+		jxpb.EncMessage(e, m.InfrastructureState)
 	}
 	e.ObjEnd()
 }
@@ -533,16 +572,16 @@ func (m *RunWorkloadWorkflowRequest) Decode(d *jx.Decoder) error {
 	seen := map[string]bool{}
 	return d.Obj(func(d *jx.Decoder, key string) error {
 		switch key {
-		case "topology":
-			if seen["Topology"] {
+		case "topologySpec", "topology_spec":
+			if seen["TopologySpec"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["Topology"] = true
+			seen["TopologySpec"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			m.Topology = &topology.Topology{}
-			if err := jxpb.DecMessage(d, m.Topology); err != nil {
+			m.TopologySpec = &topology.TopologySpec{}
+			if err := jxpb.DecMessage(d, m.TopologySpec); err != nil {
 				return err
 			}
 			return nil
@@ -556,6 +595,19 @@ func (m *RunWorkloadWorkflowRequest) Decode(d *jx.Decoder) error {
 			}
 			m.Workload = &domain.Workload{}
 			if err := jxpb.DecMessage(d, m.Workload); err != nil {
+				return err
+			}
+			return nil
+		case "infrastructureState", "infrastructure_state":
+			if seen["InfrastructureState"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["InfrastructureState"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.InfrastructureState = &deployment.InfrastructureState{}
+			if err := jxpb.DecMessage(d, m.InfrastructureState); err != nil {
 				return err
 			}
 			return nil

@@ -10,6 +10,7 @@ import (
 	_ "github.com/cludden/protoc-gen-go-temporal/gen/temporal/v1"
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
+	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	topology "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -259,15 +260,16 @@ func (x *Stage) GetAttempt() uint32 {
 	return 0
 }
 
-// InstallStroppyWorkflowRequest asks to install stroppy on the runner
-// instances. Runner machines are always deployed, so this always runs.
-// Topology is read-only here (baked + runtime).
+// InstallStroppyWorkflowRequest asks to execute stroppy installation steps on
+// runner nodes.
 type InstallStroppyWorkflowRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// topology is the (read-only) topology whose runner machines get stroppy.
-	Topology      *topology.Topology `protobuf:"bytes,1,opt,name=topology,proto3" json:"topology,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// infrastructure_state is used to route steps to node agents.
+	InfrastructureState *deployment.InfrastructureState `protobuf:"bytes,1,opt,name=infrastructure_state,json=infrastructureState,proto3" json:"infrastructure_state,omitempty"`
+	// deployment_plan contains the stroppy-related agent steps.
+	DeploymentPlan *deployment.DeploymentPlan `protobuf:"bytes,2,opt,name=deployment_plan,json=deploymentPlan,proto3" json:"deployment_plan,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *InstallStroppyWorkflowRequest) Reset() {
@@ -300,9 +302,16 @@ func (*InstallStroppyWorkflowRequest) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_workflow_test_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *InstallStroppyWorkflowRequest) GetTopology() *topology.Topology {
+func (x *InstallStroppyWorkflowRequest) GetInfrastructureState() *deployment.InfrastructureState {
 	if x != nil {
-		return x.Topology
+		return x.InfrastructureState
+	}
+	return nil
+}
+
+func (x *InstallStroppyWorkflowRequest) GetDeploymentPlan() *deployment.DeploymentPlan {
+	if x != nil {
+		return x.DeploymentPlan
 	}
 	return nil
 }
@@ -349,12 +358,14 @@ func (*InstallStroppyWorkflowResponse) Descriptor() ([]byte, []int) {
 // skipped for external dbs.
 type InstallDatabaseWorkflowRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// topology is the topology the database is brought up within.
-	Topology *topology.Topology `protobuf:"bytes,1,opt,name=topology,proto3" json:"topology,omitempty"`
+	// infrastructure_state is used to route steps to node agents.
+	InfrastructureState *deployment.InfrastructureState `protobuf:"bytes,1,opt,name=infrastructure_state,json=infrastructureState,proto3" json:"infrastructure_state,omitempty"`
 	// database is the database definition to provision.
-	Database      *domain.Database `protobuf:"bytes,2,opt,name=database,proto3" json:"database,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Database *domain.Database `protobuf:"bytes,2,opt,name=database,proto3" json:"database,omitempty"`
+	// deployment_plan contains the database-related agent steps.
+	DeploymentPlan *deployment.DeploymentPlan `protobuf:"bytes,3,opt,name=deployment_plan,json=deploymentPlan,proto3" json:"deployment_plan,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *InstallDatabaseWorkflowRequest) Reset() {
@@ -387,9 +398,9 @@ func (*InstallDatabaseWorkflowRequest) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_workflow_test_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *InstallDatabaseWorkflowRequest) GetTopology() *topology.Topology {
+func (x *InstallDatabaseWorkflowRequest) GetInfrastructureState() *deployment.InfrastructureState {
 	if x != nil {
-		return x.Topology
+		return x.InfrastructureState
 	}
 	return nil
 }
@@ -397,6 +408,13 @@ func (x *InstallDatabaseWorkflowRequest) GetTopology() *topology.Topology {
 func (x *InstallDatabaseWorkflowRequest) GetDatabase() *domain.Database {
 	if x != nil {
 		return x.Database
+	}
+	return nil
+}
+
+func (x *InstallDatabaseWorkflowRequest) GetDeploymentPlan() *deployment.DeploymentPlan {
+	if x != nil {
+		return x.DeploymentPlan
 	}
 	return nil
 }
@@ -442,12 +460,15 @@ func (*InstallDatabaseWorkflowResponse) Descriptor() ([]byte, []int) {
 // stroppy config + call stroppy). Results land in metrics, not in the response.
 type RunWorkloadWorkflowRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// topology is the topology the workload runs against.
-	Topology *topology.Topology `protobuf:"bytes,1,opt,name=topology,proto3" json:"topology,omitempty"`
+	// topology_spec is the logical graph the workload targets.
+	TopologySpec *topology.TopologySpec `protobuf:"bytes,1,opt,name=topology_spec,json=topologySpec,proto3" json:"topology_spec,omitempty"`
 	// workload is the workload definition to execute.
-	Workload      *domain.Workload `protobuf:"bytes,2,opt,name=workload,proto3" json:"workload,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Workload *domain.Workload `protobuf:"bytes,2,opt,name=workload,proto3" json:"workload,omitempty"`
+	// infrastructure_state carries runtime endpoints used to render the workload
+	// connection string and route agent calls.
+	InfrastructureState *deployment.InfrastructureState `protobuf:"bytes,3,opt,name=infrastructure_state,json=infrastructureState,proto3" json:"infrastructure_state,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *RunWorkloadWorkflowRequest) Reset() {
@@ -480,9 +501,9 @@ func (*RunWorkloadWorkflowRequest) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_workflow_test_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *RunWorkloadWorkflowRequest) GetTopology() *topology.Topology {
+func (x *RunWorkloadWorkflowRequest) GetTopologySpec() *topology.TopologySpec {
 	if x != nil {
-		return x.Topology
+		return x.TopologySpec
 	}
 	return nil
 }
@@ -490,6 +511,13 @@ func (x *RunWorkloadWorkflowRequest) GetTopology() *topology.Topology {
 func (x *RunWorkloadWorkflowRequest) GetWorkload() *domain.Workload {
 	if x != nil {
 		return x.Workload
+	}
+	return nil
+}
+
+func (x *RunWorkloadWorkflowRequest) GetInfrastructureState() *deployment.InfrastructureState {
+	if x != nil {
+		return x.InfrastructureState
 	}
 	return nil
 }
@@ -619,7 +647,7 @@ var File_cloud_v1_workflow_test_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_workflow_test_proto_rawDesc = "" +
 	"\n" +
-	"\x1ccloud/v1/workflow/test.proto\x12\x11cloud.v1.workflow\x1a\x1ccloud/v1/common/status.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1bcloud/v1/domain/suite.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a cloud/v1/topology/topology.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1atemporal/v1/temporal.proto\x1a\x17validate/validate.proto\"T\n" +
+	"\x1ccloud/v1/workflow/test.proto\x12\x11cloud.v1.workflow\x1a\x1ccloud/v1/common/status.proto\x1a(cloud/v1/deployment/infrastructure.proto\x1a\x1ecloud/v1/deployment/plan.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1bcloud/v1/domain/suite.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a cloud/v1/topology/topology.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1atemporal/v1/temporal.proto\x1a\x17validate/validate.proto\"T\n" +
 	"\x13TestWorkflowRequest\x12=\n" +
 	"\btest_run\x18\x01 \x01(\v2\x18.cloud.v1.domain.TestRunB\b\xfaB\x05\x8a\x01\x02\x10\x01R\atestRun\"\x16\n" +
 	"\x14TestWorkflowResponse\"m\n" +
@@ -634,17 +662,20 @@ const file_cloud_v1_workflow_test_proto_rawDesc = "" +
 	"started_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\x12;\n" +
 	"\vfinished_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"finishedAt\x12\x18\n" +
-	"\aattempt\x18\x06 \x01(\rR\aattempt\"b\n" +
-	"\x1dInstallStroppyWorkflowRequest\x12A\n" +
-	"\btopology\x18\x01 \x01(\v2\x1b.cloud.v1.topology.TopologyB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btopology\" \n" +
-	"\x1eInstallStroppyWorkflowResponse\"\xa4\x01\n" +
-	"\x1eInstallDatabaseWorkflowRequest\x12A\n" +
-	"\btopology\x18\x01 \x01(\v2\x1b.cloud.v1.topology.TopologyB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btopology\x12?\n" +
-	"\bdatabase\x18\x02 \x01(\v2\x19.cloud.v1.domain.DatabaseB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bdatabase\"!\n" +
-	"\x1fInstallDatabaseWorkflowResponse\"\xa0\x01\n" +
-	"\x1aRunWorkloadWorkflowRequest\x12A\n" +
-	"\btopology\x18\x01 \x01(\v2\x1b.cloud.v1.topology.TopologyB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btopology\x12?\n" +
-	"\bworkload\x18\x02 \x01(\v2\x19.cloud.v1.domain.WorkloadB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bworkload\"\x1d\n" +
+	"\aattempt\x18\x06 \x01(\rR\aattempt\"\xde\x01\n" +
+	"\x1dInstallStroppyWorkflowRequest\x12e\n" +
+	"\x14infrastructure_state\x18\x01 \x01(\v2(.cloud.v1.deployment.InfrastructureStateB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x13infrastructureState\x12V\n" +
+	"\x0fdeployment_plan\x18\x02 \x01(\v2#.cloud.v1.deployment.DeploymentPlanB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x0edeploymentPlan\" \n" +
+	"\x1eInstallStroppyWorkflowResponse\"\xa0\x02\n" +
+	"\x1eInstallDatabaseWorkflowRequest\x12e\n" +
+	"\x14infrastructure_state\x18\x01 \x01(\v2(.cloud.v1.deployment.InfrastructureStateB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x13infrastructureState\x12?\n" +
+	"\bdatabase\x18\x02 \x01(\v2\x19.cloud.v1.domain.DatabaseB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bdatabase\x12V\n" +
+	"\x0fdeployment_plan\x18\x03 \x01(\v2#.cloud.v1.deployment.DeploymentPlanB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x0edeploymentPlan\"!\n" +
+	"\x1fInstallDatabaseWorkflowResponse\"\x94\x02\n" +
+	"\x1aRunWorkloadWorkflowRequest\x12N\n" +
+	"\rtopology_spec\x18\x01 \x01(\v2\x1f.cloud.v1.topology.TopologySpecB\b\xfaB\x05\x8a\x01\x02\x10\x01R\ftopologySpec\x12?\n" +
+	"\bworkload\x18\x02 \x01(\v2\x19.cloud.v1.domain.WorkloadB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bworkload\x12e\n" +
+	"\x14infrastructure_state\x18\x03 \x01(\v2(.cloud.v1.deployment.InfrastructureStateB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x13infrastructureState\"\x1d\n" +
 	"\x1bRunWorkloadWorkflowResponse\"X\n" +
 	"\x14SuiteWorkflowRequest\x12@\n" +
 	"\tsuite_run\x18\x01 \x01(\v2\x19.cloud.v1.domain.SuiteRunB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bsuiteRun\"\x17\n" +
@@ -694,11 +725,13 @@ var file_cloud_v1_workflow_test_proto_goTypes = []any{
 	(*domain.TestRun)(nil),                  // 12: cloud.v1.domain.TestRun
 	(common.Status)(0),                      // 13: cloud.v1.common.Status
 	(*timestamppb.Timestamp)(nil),           // 14: google.protobuf.Timestamp
-	(*topology.Topology)(nil),               // 15: cloud.v1.topology.Topology
-	(*domain.Database)(nil),                 // 16: cloud.v1.domain.Database
-	(*domain.Workload)(nil),                 // 17: cloud.v1.domain.Workload
-	(*domain.SuiteRun)(nil),                 // 18: cloud.v1.domain.SuiteRun
-	(*emptypb.Empty)(nil),                   // 19: google.protobuf.Empty
+	(*deployment.InfrastructureState)(nil),  // 15: cloud.v1.deployment.InfrastructureState
+	(*deployment.DeploymentPlan)(nil),       // 16: cloud.v1.deployment.DeploymentPlan
+	(*domain.Database)(nil),                 // 17: cloud.v1.domain.Database
+	(*topology.TopologySpec)(nil),           // 18: cloud.v1.topology.TopologySpec
+	(*domain.Workload)(nil),                 // 19: cloud.v1.domain.Workload
+	(*domain.SuiteRun)(nil),                 // 20: cloud.v1.domain.SuiteRun
+	(*emptypb.Empty)(nil),                   // 21: google.protobuf.Empty
 }
 var file_cloud_v1_workflow_test_proto_depIdxs = []int32{
 	12, // 0: cloud.v1.workflow.TestWorkflowRequest.test_run:type_name -> cloud.v1.domain.TestRun
@@ -707,29 +740,32 @@ var file_cloud_v1_workflow_test_proto_depIdxs = []int32{
 	13, // 3: cloud.v1.workflow.Stage.status:type_name -> cloud.v1.common.Status
 	14, // 4: cloud.v1.workflow.Stage.started_at:type_name -> google.protobuf.Timestamp
 	14, // 5: cloud.v1.workflow.Stage.finished_at:type_name -> google.protobuf.Timestamp
-	15, // 6: cloud.v1.workflow.InstallStroppyWorkflowRequest.topology:type_name -> cloud.v1.topology.Topology
-	15, // 7: cloud.v1.workflow.InstallDatabaseWorkflowRequest.topology:type_name -> cloud.v1.topology.Topology
-	16, // 8: cloud.v1.workflow.InstallDatabaseWorkflowRequest.database:type_name -> cloud.v1.domain.Database
-	15, // 9: cloud.v1.workflow.RunWorkloadWorkflowRequest.topology:type_name -> cloud.v1.topology.Topology
-	17, // 10: cloud.v1.workflow.RunWorkloadWorkflowRequest.workload:type_name -> cloud.v1.domain.Workload
-	18, // 11: cloud.v1.workflow.SuiteWorkflowRequest.suite_run:type_name -> cloud.v1.domain.SuiteRun
-	0,  // 12: cloud.v1.workflow.TestService.TestWorkflow:input_type -> cloud.v1.workflow.TestWorkflowRequest
-	19, // 13: cloud.v1.workflow.TestService.GetRunState:input_type -> google.protobuf.Empty
-	4,  // 14: cloud.v1.workflow.TestService.InstallStroppyWorkflow:input_type -> cloud.v1.workflow.InstallStroppyWorkflowRequest
-	6,  // 15: cloud.v1.workflow.TestService.InstallDatabaseWorkflow:input_type -> cloud.v1.workflow.InstallDatabaseWorkflowRequest
-	8,  // 16: cloud.v1.workflow.TestService.RunWorkloadWorkflow:input_type -> cloud.v1.workflow.RunWorkloadWorkflowRequest
-	10, // 17: cloud.v1.workflow.SuiteWorkflowService.SuiteWorkflow:input_type -> cloud.v1.workflow.SuiteWorkflowRequest
-	1,  // 18: cloud.v1.workflow.TestService.TestWorkflow:output_type -> cloud.v1.workflow.TestWorkflowResponse
-	2,  // 19: cloud.v1.workflow.TestService.GetRunState:output_type -> cloud.v1.workflow.RunState
-	5,  // 20: cloud.v1.workflow.TestService.InstallStroppyWorkflow:output_type -> cloud.v1.workflow.InstallStroppyWorkflowResponse
-	7,  // 21: cloud.v1.workflow.TestService.InstallDatabaseWorkflow:output_type -> cloud.v1.workflow.InstallDatabaseWorkflowResponse
-	9,  // 22: cloud.v1.workflow.TestService.RunWorkloadWorkflow:output_type -> cloud.v1.workflow.RunWorkloadWorkflowResponse
-	11, // 23: cloud.v1.workflow.SuiteWorkflowService.SuiteWorkflow:output_type -> cloud.v1.workflow.SuiteWorkflowResponse
-	18, // [18:24] is the sub-list for method output_type
-	12, // [12:18] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	15, // 6: cloud.v1.workflow.InstallStroppyWorkflowRequest.infrastructure_state:type_name -> cloud.v1.deployment.InfrastructureState
+	16, // 7: cloud.v1.workflow.InstallStroppyWorkflowRequest.deployment_plan:type_name -> cloud.v1.deployment.DeploymentPlan
+	15, // 8: cloud.v1.workflow.InstallDatabaseWorkflowRequest.infrastructure_state:type_name -> cloud.v1.deployment.InfrastructureState
+	17, // 9: cloud.v1.workflow.InstallDatabaseWorkflowRequest.database:type_name -> cloud.v1.domain.Database
+	16, // 10: cloud.v1.workflow.InstallDatabaseWorkflowRequest.deployment_plan:type_name -> cloud.v1.deployment.DeploymentPlan
+	18, // 11: cloud.v1.workflow.RunWorkloadWorkflowRequest.topology_spec:type_name -> cloud.v1.topology.TopologySpec
+	19, // 12: cloud.v1.workflow.RunWorkloadWorkflowRequest.workload:type_name -> cloud.v1.domain.Workload
+	15, // 13: cloud.v1.workflow.RunWorkloadWorkflowRequest.infrastructure_state:type_name -> cloud.v1.deployment.InfrastructureState
+	20, // 14: cloud.v1.workflow.SuiteWorkflowRequest.suite_run:type_name -> cloud.v1.domain.SuiteRun
+	0,  // 15: cloud.v1.workflow.TestService.TestWorkflow:input_type -> cloud.v1.workflow.TestWorkflowRequest
+	21, // 16: cloud.v1.workflow.TestService.GetRunState:input_type -> google.protobuf.Empty
+	4,  // 17: cloud.v1.workflow.TestService.InstallStroppyWorkflow:input_type -> cloud.v1.workflow.InstallStroppyWorkflowRequest
+	6,  // 18: cloud.v1.workflow.TestService.InstallDatabaseWorkflow:input_type -> cloud.v1.workflow.InstallDatabaseWorkflowRequest
+	8,  // 19: cloud.v1.workflow.TestService.RunWorkloadWorkflow:input_type -> cloud.v1.workflow.RunWorkloadWorkflowRequest
+	10, // 20: cloud.v1.workflow.SuiteWorkflowService.SuiteWorkflow:input_type -> cloud.v1.workflow.SuiteWorkflowRequest
+	1,  // 21: cloud.v1.workflow.TestService.TestWorkflow:output_type -> cloud.v1.workflow.TestWorkflowResponse
+	2,  // 22: cloud.v1.workflow.TestService.GetRunState:output_type -> cloud.v1.workflow.RunState
+	5,  // 23: cloud.v1.workflow.TestService.InstallStroppyWorkflow:output_type -> cloud.v1.workflow.InstallStroppyWorkflowResponse
+	7,  // 24: cloud.v1.workflow.TestService.InstallDatabaseWorkflow:output_type -> cloud.v1.workflow.InstallDatabaseWorkflowResponse
+	9,  // 25: cloud.v1.workflow.TestService.RunWorkloadWorkflow:output_type -> cloud.v1.workflow.RunWorkloadWorkflowResponse
+	11, // 26: cloud.v1.workflow.SuiteWorkflowService.SuiteWorkflow:output_type -> cloud.v1.workflow.SuiteWorkflowResponse
+	21, // [21:27] is the sub-list for method output_type
+	15, // [15:21] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	15, // [15:15] is the sub-list for extension extendee
+	0,  // [0:15] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_workflow_test_proto_init() }

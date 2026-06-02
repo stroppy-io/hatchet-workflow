@@ -37,11 +37,11 @@ generate:
         import_extension: ts
         json_types: true
         valid_types: legacy_required+protovalidate_required
-#    - name: connect-es
-#      out: ../web/src/lib/proto
-#      opts:
-#        target: ts
-#        import_extension: ts
+    - name: connect-es
+      out: ../web/src/lib/proto
+      opts:
+        target: ts
+        import_extension: ts
 breaking:
   ignore: []
   against_git_ref: master-worker

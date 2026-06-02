@@ -17,8 +17,6 @@ import (
 	"unicode/utf8"
 
 	"google.golang.org/protobuf/types/known/anypb"
-
-	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 )
 
 // ensure the imports are used
@@ -35,8 +33,6 @@ var (
 	_ = (*mail.Address)(nil)
 	_ = anypb.Any{}
 	_ = sort.Sort
-
-	_ = common.Status(0)
 )
 
 // Validate checks the field values on Component with the rules defined in the
@@ -94,35 +90,37 @@ func (m *Component) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	// no validation rules for Status
+	if l := utf8.RuneCountInString(m.GetEngine()); l < 1 || l > 64 {
+		err := ComponentValidationError{
+			field:  "Engine",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	if all {
-		switch v := interface{}(m.GetDeploymentStrategy()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, ComponentValidationError{
-					field:  "DeploymentStrategy",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, ComponentValidationError{
-					field:  "DeploymentStrategy",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
+	if l := utf8.RuneCountInString(m.GetRole()); l < 1 || l > 64 {
+		err := ComponentValidationError{
+			field:  "Role",
+			reason: "value length must be between 1 and 64 runes, inclusive",
 		}
-	} else if v, ok := interface{}(m.GetDeploymentStrategy()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return ComponentValidationError{
-				field:  "DeploymentStrategy",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
+		if !all {
+			return err
 		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetLabels()) > 128 {
+		err := ComponentValidationError{
+			field:  "Labels",
+			reason: "value must contain no more than 128 pair(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
 	}
 
 	if all {
@@ -152,43 +150,6 @@ func (m *Component) validate(all bool) error {
 				cause:  err,
 			}
 		}
-	}
-
-	if m.ProviderParms != nil {
-
-		if all {
-			switch v := interface{}(m.GetProviderParms()).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, ComponentValidationError{
-						field:  "ProviderParms",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, ComponentValidationError{
-						field:  "ProviderParms",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(m.GetProviderParms()).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return ComponentValidationError{
-					field:  "ProviderParms",
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	if m.AllocatedOnInstanceId != nil {
-		// no validation rules for AllocatedOnInstanceId
 	}
 
 	if len(errors) > 0 {
@@ -271,173 +232,3 @@ var _ interface {
 var _Component_Kind_NotInLookup = map[Component_Kind]struct{}{
 	0: {},
 }
-
-// Validate checks the field values on Component_Strategy with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *Component_Strategy) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on Component_Strategy with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// Component_StrategyMultiError, or nil if none found.
-func (m *Component_Strategy) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *Component_Strategy) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	for idx, item := range m.GetConfigurationFiles() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, Component_StrategyValidationError{
-						field:  fmt.Sprintf("ConfigurationFiles[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, Component_StrategyValidationError{
-						field:  fmt.Sprintf("ConfigurationFiles[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return Component_StrategyValidationError{
-					field:  fmt.Sprintf("ConfigurationFiles[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	for idx, item := range m.GetDeploymentCommands() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, Component_StrategyValidationError{
-						field:  fmt.Sprintf("DeploymentCommands[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, Component_StrategyValidationError{
-						field:  fmt.Sprintf("DeploymentCommands[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return Component_StrategyValidationError{
-					field:  fmt.Sprintf("DeploymentCommands[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	if len(errors) > 0 {
-		return Component_StrategyMultiError(errors)
-	}
-
-	return nil
-}
-
-// Component_StrategyMultiError is an error wrapping multiple validation errors
-// returned by Component_Strategy.ValidateAll() if the designated constraints
-// aren't met.
-type Component_StrategyMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m Component_StrategyMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m Component_StrategyMultiError) AllErrors() []error { return m }
-
-// Component_StrategyValidationError is the validation error returned by
-// Component_Strategy.Validate if the designated constraints aren't met.
-type Component_StrategyValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e Component_StrategyValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e Component_StrategyValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e Component_StrategyValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e Component_StrategyValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e Component_StrategyValidationError) ErrorName() string {
-	return "Component_StrategyValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e Component_StrategyValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sComponent_Strategy.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = Component_StrategyValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = Component_StrategyValidationError{}

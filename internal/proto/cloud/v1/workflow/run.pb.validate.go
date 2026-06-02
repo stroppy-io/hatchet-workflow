@@ -57,10 +57,10 @@ func (m *RunConfig) validate(all bool) error {
 
 	var errors []error
 
-	if utf8.RuneCountInString(m.GetId()) < 1 {
+	if l := utf8.RuneCountInString(m.GetId()); l < 1 || l > 128 {
 		err := RunConfigValidationError{
 			field:  "Id",
-			reason: "value length must be at least 1 runes",
+			reason: "value length must be between 1 and 128 runes, inclusive",
 		}
 		if !all {
 			return err
@@ -68,10 +68,10 @@ func (m *RunConfig) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if utf8.RuneCountInString(m.GetProvider()) < 1 {
+	if m.GetDatabase() == nil {
 		err := RunConfigValidationError{
-			field:  "Provider",
-			reason: "value length must be at least 1 runes",
+			field:  "Database",
+			reason: "value is required",
 		}
 		if !all {
 			return err
@@ -79,17 +79,240 @@ func (m *RunConfig) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	// no validation rules for ExternalDb
+	if all {
+		switch v := interface{}(m.GetDatabase()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RunConfigValidationError{
+					field:  "Database",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RunConfigValidationError{
+					field:  "Database",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDatabase()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RunConfigValidationError{
+				field:  "Database",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
-	if len(m.GetConfigJson()) < 1 {
+	if m.GetWorkload() == nil {
 		err := RunConfigValidationError{
-			field:  "ConfigJson",
-			reason: "value length must be at least 1 bytes",
+			field:  "Workload",
+			reason: "value is required",
 		}
 		if !all {
 			return err
 		}
 		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetWorkload()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RunConfigValidationError{
+					field:  "Workload",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RunConfigValidationError{
+					field:  "Workload",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetWorkload()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RunConfigValidationError{
+				field:  "Workload",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetTopologySpec() == nil {
+		err := RunConfigValidationError{
+			field:  "TopologySpec",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetTopologySpec()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RunConfigValidationError{
+					field:  "TopologySpec",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RunConfigValidationError{
+					field:  "TopologySpec",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTopologySpec()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RunConfigValidationError{
+				field:  "TopologySpec",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetInfrastructurePlan() == nil {
+		err := RunConfigValidationError{
+			field:  "InfrastructurePlan",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetInfrastructurePlan()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RunConfigValidationError{
+					field:  "InfrastructurePlan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RunConfigValidationError{
+					field:  "InfrastructurePlan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetInfrastructurePlan()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RunConfigValidationError{
+				field:  "InfrastructurePlan",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetInfrastructureState()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RunConfigValidationError{
+					field:  "InfrastructureState",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RunConfigValidationError{
+					field:  "InfrastructureState",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetInfrastructureState()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RunConfigValidationError{
+				field:  "InfrastructureState",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetDeploymentPlan()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RunConfigValidationError{
+					field:  "DeploymentPlan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RunConfigValidationError{
+					field:  "DeploymentPlan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDeploymentPlan()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RunConfigValidationError{
+				field:  "DeploymentPlan",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetRenderOverrides()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RunConfigValidationError{
+					field:  "RenderOverrides",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RunConfigValidationError{
+					field:  "RenderOverrides",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetRenderOverrides()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RunConfigValidationError{
+				field:  "RenderOverrides",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
 	}
 
 	if len(errors) > 0 {
@@ -168,263 +391,3 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = RunConfigValidationError{}
-
-// Validate checks the field values on Target with the rules defined in the
-// proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *Target) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on Target with the rules defined in the
-// proto definition for this message. If any rules are violated, the result is
-// a list of violation errors wrapped in TargetMultiError, or nil if none found.
-func (m *Target) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *Target) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if utf8.RuneCountInString(m.GetId()) < 1 {
-		err := TargetValidationError{
-			field:  "Id",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	// no validation rules for Host
-
-	// no validation rules for InternalHost
-
-	// no validation rules for AgentPort
-
-	// no validation rules for Zone
-
-	// no validation rules for Role
-
-	if len(errors) > 0 {
-		return TargetMultiError(errors)
-	}
-
-	return nil
-}
-
-// TargetMultiError is an error wrapping multiple validation errors returned by
-// Target.ValidateAll() if the designated constraints aren't met.
-type TargetMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m TargetMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m TargetMultiError) AllErrors() []error { return m }
-
-// TargetValidationError is the validation error returned by Target.Validate if
-// the designated constraints aren't met.
-type TargetValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e TargetValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e TargetValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e TargetValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e TargetValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e TargetValidationError) ErrorName() string { return "TargetValidationError" }
-
-// Error satisfies the builtin error interface
-func (e TargetValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sTarget.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = TargetValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = TargetValidationError{}
-
-// Validate checks the field values on Deployment with the rules defined in the
-// proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *Deployment) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on Deployment with the rules defined in
-// the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in DeploymentMultiError, or
-// nil if none found.
-func (m *Deployment) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *Deployment) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	for idx, item := range m.GetTargets() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, DeploymentValidationError{
-						field:  fmt.Sprintf("Targets[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, DeploymentValidationError{
-						field:  fmt.Sprintf("Targets[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return DeploymentValidationError{
-					field:  fmt.Sprintf("Targets[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	// no validation rules for DbHost
-
-	// no validation rules for DbPort
-
-	// no validation rules for NetworkId
-
-	// no validation rules for TerraformWdId
-
-	if len(errors) > 0 {
-		return DeploymentMultiError(errors)
-	}
-
-	return nil
-}
-
-// DeploymentMultiError is an error wrapping multiple validation errors
-// returned by Deployment.ValidateAll() if the designated constraints aren't met.
-type DeploymentMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m DeploymentMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m DeploymentMultiError) AllErrors() []error { return m }
-
-// DeploymentValidationError is the validation error returned by
-// Deployment.Validate if the designated constraints aren't met.
-type DeploymentValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e DeploymentValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e DeploymentValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e DeploymentValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e DeploymentValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e DeploymentValidationError) ErrorName() string { return "DeploymentValidationError" }
-
-// Error satisfies the builtin error interface
-func (e DeploymentValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sDeployment.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = DeploymentValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = DeploymentValidationError{}

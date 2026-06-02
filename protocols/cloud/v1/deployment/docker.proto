@@ -12,6 +12,7 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
     by the orchestrator), ContainerOutput (provider state after start).
  */
 message Docker {
+    message Settings {}
     /* input contains runtime container specs for one deployment. */
     Input input = 1 [(validate.rules).message.required = true];
     /* output contains created container metadata. */

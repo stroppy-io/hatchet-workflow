@@ -4,44 +4,43 @@
 
 import type { GenEnum, GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
-import { file_cloud_v1_common_ip } from "../common/ip_pb.ts";
-import { file_validate_validate } from "../../../validate/validate_pb.ts";
 import type { Tags, TagsJson } from "../common/tags_pb.ts";
 import { file_cloud_v1_common_tags } from "../common/tags_pb.ts";
+import { file_validate_validate } from "../../../validate/validate_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file cloud/v1/topology/connection.proto.
  */
 export const file_cloud_v1_topology_connection: GenFile = /*@__PURE__*/
-  fileDesc("CiJjbG91ZC92MS90b3BvbG9neS9jb25uZWN0aW9uLnByb3RvEhFjbG91ZC52MS50b3BvbG9neSLZBgoKQ29ubmVjdGlvbhIYCgRmcm9tGAEgASgJQgr6QgdyBRABGIABEhYKAnRvGAIgASgJQgr6QgdyBRABGIABEjoKBGtpbmQYAyABKA4yIi5jbG91ZC52MS50b3BvbG9neS5Db25uZWN0aW9uLktpbmRCCPpCBYIBAhABEkIKCHByb3RvY29sGAQgASgOMiYuY2xvdWQudjEudG9wb2xvZ3kuQ29ubmVjdGlvbi5Qcm90b2NvbEII+kIFggECEAESOgoEbW9kZRgFIAEoDjIiLmNsb3VkLnYxLnRvcG9sb2d5LkNvbm5lY3Rpb24uTW9kZUII+kIFggECEAESHAoEcG9ydBgGIAEoDUIJ+kIGKgQY//8DSACIAQESDQoFaW5uZXIYCCABKAgSIwoEdGFncxgHIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzIpABCgRLaW5kEhQKEEtJTkRfVU5TUEVDSUZJRUQQABINCglLSU5EX0ZMT1cQARIOCgpLSU5EX1BST1hZEAISFAoQS0lORF9SRVBMSUNBVElPThADEhUKEUtJTkRfQ09PUkRJTkFUSU9OEAQSFAoQS0lORF9PQlNFUlZBVElPThAFEhAKDEtJTkRfU1VQUE9SVBAGIvYBCghQcm90b2NvbBIYChRQUk9UT0NPTF9VTlNQRUNJRklFRBAAEhAKDFBST1RPQ09MX1RDUBABEhEKDVBST1RPQ09MX0dSUEMQAhIRCg1QUk9UT0NPTF9IVFRQEAMSGAoUUFJPVE9DT0xfUkVQTElDQVRJT04QBBIRCg1QUk9UT0NPTF9QT09MEAUSFAoQUFJPVE9DT0xfQ09OVFJPTBAGEhEKDVBST1RPQ09MX09UTFAQBxIkCiBQUk9UT0NPTF9QUk9NRVRIRVVTX1JFTU9URV9XUklURRAIEhwKGFBST1RPQ09MX1BST01FVEhFVVNfUFVMTBAJInYKBE1vZGUSFAoQTU9ERV9VTlNQRUNJRklFRBAAEhAKDE1PREVfUkVRVUVTVBABEg8KC01PREVfU1RSRUFNEAISDQoJTU9ERV9TWU5DEAMSEgoOTU9ERV9IRUFSVEJFQVQQBBISCg5NT0RFX0JST0FEQ0FTVBAFQgcKBV9wb3J0QkZaRGdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL3RvcG9sb2d5YgZwcm90bzM", [file_cloud_v1_common_ip, file_validate_validate, file_cloud_v1_common_tags]);
+  fileDesc("CiJjbG91ZC92MS90b3BvbG9neS9jb25uZWN0aW9uLnByb3RvEhFjbG91ZC52MS50b3BvbG9neSKXBwoKQ29ubmVjdGlvbhIlChFmcm9tX2NvbXBvbmVudF9pZBgBIAEoCUIK+kIHcgUQARiAARIjCg90b19jb21wb25lbnRfaWQYAiABKAlCCvpCB3IFEAEYgAESOgoEa2luZBgDIAEoDjIiLmNsb3VkLnYxLnRvcG9sb2d5LkNvbm5lY3Rpb24uS2luZEII+kIFggECEAESQgoIcHJvdG9jb2wYBCABKA4yJi5jbG91ZC52MS50b3BvbG9neS5Db25uZWN0aW9uLlByb3RvY29sQgj6QgWCAQIQARI6CgRtb2RlGAUgASgOMiIuY2xvdWQudjEudG9wb2xvZ3kuQ29ubmVjdGlvbi5Nb2RlQgj6QgWCAQIQARIeCg1lbmRwb2ludF9uYW1lGAYgASgJQgf6QgRyAhhAEhwKBHBvcnQYByABKA1CCfpCBioEGP//A0gAiAEBEhEKCWNvbG9jYXRlZBgIIAEoCBIjCgR0YWdzGAkgASgLMhUuY2xvdWQudjEuY29tbW9uLlRhZ3MikAEKBEtpbmQSFAoQS0lORF9VTlNQRUNJRklFRBAAEg0KCUtJTkRfRkxPVxABEg4KCktJTkRfUFJPWFkQAhIUChBLSU5EX1JFUExJQ0FUSU9OEAMSFQoRS0lORF9DT09SRElOQVRJT04QBBIUChBLSU5EX09CU0VSVkFUSU9OEAUSEAoMS0lORF9TVVBQT1JUEAYi9gEKCFByb3RvY29sEhgKFFBST1RPQ09MX1VOU1BFQ0lGSUVEEAASEAoMUFJPVE9DT0xfVENQEAESEQoNUFJPVE9DT0xfR1JQQxACEhEKDVBST1RPQ09MX0hUVFAQAxIYChRQUk9UT0NPTF9SRVBMSUNBVElPThAEEhEKDVBST1RPQ09MX1BPT0wQBRIUChBQUk9UT0NPTF9DT05UUk9MEAYSEQoNUFJPVE9DT0xfT1RMUBAHEiQKIFBST1RPQ09MX1BST01FVEhFVVNfUkVNT1RFX1dSSVRFEAgSHAoYUFJPVE9DT0xfUFJPTUVUSEVVU19QVUxMEAkidgoETW9kZRIUChBNT0RFX1VOU1BFQ0lGSUVEEAASEAoMTU9ERV9SRVFVRVNUEAESDwoLTU9ERV9TVFJFQU0QAhINCglNT0RFX1NZTkMQAxISCg5NT0RFX0hFQVJUQkVBVBAEEhIKDk1PREVfQlJPQURDQVNUEAVCBwoFX3BvcnRCRlpEZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvdG9wb2xvZ3liBnByb3RvMw", [file_cloud_v1_common_tags, file_validate_validate]);
 
 /**
  *
- * Connection is a directed edge between two components in the topology.
+ * Connection is a directed logical edge from one component to another.
  *
  * @generated from message cloud.v1.topology.Connection
  */
 export type Connection = Message<"cloud.v1.topology.Connection"> & {
   /**
    *
-   * from is the source component id of the edge.
+   * from_component_id is the source component id.
    *
-   * @generated from field: string from = 1;
+   * @generated from field: string from_component_id = 1;
    */
-  from: string;
+  fromComponentId: string;
 
   /**
    *
-   * to is the destination component id of the edge.
+   * to_component_id is the destination component id.
    *
-   * @generated from field: string to = 2;
+   * @generated from field: string to_component_id = 2;
    */
-  to: string;
+  toComponentId: string;
 
   /**
    *
-   * kind is the semantic relationship of the edge.
+   * kind is the semantic relationship.
    *
    * @generated from field: cloud.v1.topology.Connection.Kind kind = 3;
    */
@@ -49,7 +48,7 @@ export type Connection = Message<"cloud.v1.topology.Connection"> & {
 
   /**
    *
-   * protocol is the wire protocol carried on the edge.
+   * protocol is the protocol family.
    *
    * @generated from field: cloud.v1.topology.Connection.Protocol protocol = 4;
    */
@@ -57,7 +56,7 @@ export type Connection = Message<"cloud.v1.topology.Connection"> & {
 
   /**
    *
-   * mode is the traffic character of the edge.
+   * mode is the traffic character.
    *
    * @generated from field: cloud.v1.topology.Connection.Mode mode = 5;
    */
@@ -65,55 +64,65 @@ export type Connection = Message<"cloud.v1.topology.Connection"> & {
 
   /**
    *
-   * port is the destination port, when applicable (<= 65535).
+   * endpoint_name optionally selects a named destination endpoint, e.g.
+   * postgres, pgbouncer, patroni_rest, etcd_peer. Empty means renderer
+   * chooses the role default.
    *
-   * @generated from field: optional uint32 port = 6;
+   * @generated from field: string endpoint_name = 6;
+   */
+  endpointName: string;
+
+  /**
+   *
+   * port is the destination port when it is known at spec time.
+   *
+   * @generated from field: optional uint32 port = 7;
    */
   port?: number;
 
   /**
    *
-   * inner is true when both endpoints live on one physical VM.
+   * colocated is true when this edge intentionally stays inside one node.
    *
-   * @generated from field: bool inner = 8;
+   * @generated from field: bool colocated = 8;
    */
-  inner: boolean;
+  colocated: boolean;
 
   /**
    *
-   * tags are arbitrary key/value labels attached to the connection.
+   * tags are arbitrary metadata on the edge.
    *
-   * @generated from field: cloud.v1.common.Tags tags = 7;
+   * @generated from field: cloud.v1.common.Tags tags = 9;
    */
   tags?: Tags;
 };
 
 /**
  *
- * Connection is a directed edge between two components in the topology.
+ * Connection is a directed logical edge from one component to another.
  *
  * @generated from message cloud.v1.topology.Connection
  */
 export type ConnectionJson = {
   /**
    *
-   * from is the source component id of the edge.
+   * from_component_id is the source component id.
    *
-   * @generated from field: string from = 1;
+   * @generated from field: string from_component_id = 1;
    */
-  from?: string;
+  fromComponentId?: string;
 
   /**
    *
-   * to is the destination component id of the edge.
+   * to_component_id is the destination component id.
    *
-   * @generated from field: string to = 2;
+   * @generated from field: string to_component_id = 2;
    */
-  to?: string;
+  toComponentId?: string;
 
   /**
    *
-   * kind is the semantic relationship of the edge.
+   * kind is the semantic relationship.
    *
    * @generated from field: cloud.v1.topology.Connection.Kind kind = 3;
    */
@@ -121,7 +130,7 @@ export type ConnectionJson = {
 
   /**
    *
-   * protocol is the wire protocol carried on the edge.
+   * protocol is the protocol family.
    *
    * @generated from field: cloud.v1.topology.Connection.Protocol protocol = 4;
    */
@@ -129,7 +138,7 @@ export type ConnectionJson = {
 
   /**
    *
-   * mode is the traffic character of the edge.
+   * mode is the traffic character.
    *
    * @generated from field: cloud.v1.topology.Connection.Mode mode = 5;
    */
@@ -137,25 +146,35 @@ export type ConnectionJson = {
 
   /**
    *
-   * port is the destination port, when applicable (<= 65535).
+   * endpoint_name optionally selects a named destination endpoint, e.g.
+   * postgres, pgbouncer, patroni_rest, etcd_peer. Empty means renderer
+   * chooses the role default.
    *
-   * @generated from field: optional uint32 port = 6;
+   * @generated from field: string endpoint_name = 6;
+   */
+  endpointName?: string;
+
+  /**
+   *
+   * port is the destination port when it is known at spec time.
+   *
+   * @generated from field: optional uint32 port = 7;
    */
   port?: number;
 
   /**
    *
-   * inner is true when both endpoints live on one physical VM.
+   * colocated is true when this edge intentionally stays inside one node.
    *
-   * @generated from field: bool inner = 8;
+   * @generated from field: bool colocated = 8;
    */
-  inner?: boolean;
+  colocated?: boolean;
 
   /**
    *
-   * tags are arbitrary key/value labels attached to the connection.
+   * tags are arbitrary metadata on the edge.
    *
-   * @generated from field: cloud.v1.common.Tags tags = 7;
+   * @generated from field: cloud.v1.common.Tags tags = 9;
    */
   tags?: TagsJson;
 };
@@ -171,63 +190,42 @@ export const ConnectionSchema: GenMessage<Connection, {jsonType: ConnectionJson,
 
 /**
  *
- * Kind is the semantic relationship an edge represents.
+ * Kind is the semantic relationship represented by the edge.
  *
  * @generated from enum cloud.v1.topology.Connection.Kind
  */
 export enum Connection_Kind {
   /**
-   *
-   * KIND_UNSPECIFIED is the unset zero value.
-   *
    * @generated from enum value: KIND_UNSPECIFIED = 0;
    */
   UNSPECIFIED = 0,
 
   /**
-   *
-   * KIND_FLOW is a normal data/application flow.
-   *
    * @generated from enum value: KIND_FLOW = 1;
    */
   FLOW = 1,
 
   /**
-   *
-   * KIND_PROXY is traffic routed through a proxy/pooler.
-   *
    * @generated from enum value: KIND_PROXY = 2;
    */
   PROXY = 2,
 
   /**
-   *
-   * KIND_REPLICATION is database replication traffic.
-   *
    * @generated from enum value: KIND_REPLICATION = 3;
    */
   REPLICATION = 3,
 
   /**
-   *
-   * KIND_COORDINATION is cluster coordination/control traffic.
-   *
    * @generated from enum value: KIND_COORDINATION = 4;
    */
   COORDINATION = 4,
 
   /**
-   *
-   * KIND_OBSERVATION is monitoring/metrics observation traffic.
-   *
    * @generated from enum value: KIND_OBSERVATION = 5;
    */
   OBSERVATION = 5,
 
   /**
-   *
-   * KIND_SUPPORT is auxiliary/supporting traffic.
-   *
    * @generated from enum value: KIND_SUPPORT = 6;
    */
   SUPPORT = 6,
@@ -235,7 +233,7 @@ export enum Connection_Kind {
 
 /**
  *
- * Kind is the semantic relationship an edge represents.
+ * Kind is the semantic relationship represented by the edge.
  *
  * @generated from enum cloud.v1.topology.Connection.Kind
  */
@@ -248,85 +246,66 @@ export const Connection_KindSchema: GenEnum<Connection_Kind, Connection_KindJson
   enumDesc(file_cloud_v1_topology_connection, 0, 0);
 
 /**
- * Protocol is the wire format on an edge. 
+ *
+ * Protocol is the wire/protocol family carried over the edge.
  *
  * @generated from enum cloud.v1.topology.Connection.Protocol
  */
 export enum Connection_Protocol {
   /**
-   *
-   * PROTOCOL_UNSPECIFIED is the unset zero value.
-   *
    * @generated from enum value: PROTOCOL_UNSPECIFIED = 0;
    */
   UNSPECIFIED = 0,
 
   /**
-   * TCP is plain TCP/IP traffic. 
-   *
    * @generated from enum value: PROTOCOL_TCP = 1;
    */
   TCP = 1,
 
   /**
-   * GRPC is gRPC. 
-   *
    * @generated from enum value: PROTOCOL_GRPC = 2;
    */
   GRPC = 2,
 
   /**
-   * HTTP is HTTP/HTTPS. 
-   *
    * @generated from enum value: PROTOCOL_HTTP = 3;
    */
   HTTP = 3,
 
   /**
-   * REPLICATION is a DB-engine replication stream. 
-   *
    * @generated from enum value: PROTOCOL_REPLICATION = 4;
    */
   REPLICATION = 4,
 
   /**
-   * POOL is a pooled connection (pgbouncer, proxysql). 
-   *
    * @generated from enum value: PROTOCOL_POOL = 5;
    */
   POOL = 5,
 
   /**
-   * CONTROL is a control-plane protocol (DCS, raft). 
-   *
    * @generated from enum value: PROTOCOL_CONTROL = 6;
    */
   CONTROL = 6,
 
   /**
-   * OTLP is a metrics/logs/traces scrape. 
-   *
    * @generated from enum value: PROTOCOL_OTLP = 7;
    */
   OTLP = 7,
 
   /**
-   * PROTOCOL_PROMETHEUS_REMOTE_WRITE is a Prometheus remote-write metrics push. 
-   *
    * @generated from enum value: PROTOCOL_PROMETHEUS_REMOTE_WRITE = 8;
    */
   PROMETHEUS_REMOTE_WRITE = 8,
 
   /**
-   * PROTOCOL_PROMETHEUS_PULL is a Prometheus pull/scrape of metrics. 
-   *
    * @generated from enum value: PROTOCOL_PROMETHEUS_PULL = 9;
    */
   PROMETHEUS_PULL = 9,
 }
 
 /**
- * Protocol is the wire format on an edge. 
+ *
+ * Protocol is the wire/protocol family carried over the edge.
  *
  * @generated from enum cloud.v1.topology.Connection.Protocol
  */
@@ -339,57 +318,46 @@ export const Connection_ProtocolSchema: GenEnum<Connection_Protocol, Connection_
   enumDesc(file_cloud_v1_topology_connection, 0, 1);
 
 /**
- * Mode is the traffic character on an edge. 
+ *
+ * Mode is the traffic character of the edge.
  *
  * @generated from enum cloud.v1.topology.Connection.Mode
  */
 export enum Connection_Mode {
   /**
-   *
-   * MODE_UNSPECIFIED is the unset zero value.
-   *
    * @generated from enum value: MODE_UNSPECIFIED = 0;
    */
   UNSPECIFIED = 0,
 
   /**
-   * REQUEST is request/response. 
-   *
    * @generated from enum value: MODE_REQUEST = 1;
    */
   REQUEST = 1,
 
   /**
-   * STREAM is a continuous one-way data stream. 
-   *
    * @generated from enum value: MODE_STREAM = 2;
    */
   STREAM = 2,
 
   /**
-   * SYNC is bidirectional state synchronization. 
-   *
    * @generated from enum value: MODE_SYNC = 3;
    */
   SYNC = 3,
 
   /**
-   * HEARTBEAT is periodic liveness/keepalive. 
-   *
    * @generated from enum value: MODE_HEARTBEAT = 4;
    */
   HEARTBEAT = 4,
 
   /**
-   * BROADCAST is one-to-many fanout. 
-   *
    * @generated from enum value: MODE_BROADCAST = 5;
    */
   BROADCAST = 5,
 }
 
 /**
- * Mode is the traffic character on an edge. 
+ *
+ * Mode is the traffic character of the edge.
  *
  * @generated from enum cloud.v1.topology.Connection.Mode
  */

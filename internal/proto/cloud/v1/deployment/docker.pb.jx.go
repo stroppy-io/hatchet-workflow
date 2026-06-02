@@ -75,6 +75,36 @@ func (m *Docker) UnmarshalJSON(data []byte) error {
 	return m.Decode(d)
 }
 
+func (m *Docker_Settings) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	e.ObjEnd()
+}
+
+func (m *Docker_Settings) Decode(d *jx.Decoder) error {
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *Docker_Settings) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *Docker_Settings) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
 func (m *Docker_Input) Encode(e *jx.Encoder) {
 	if m == nil {
 		e.ObjStart()

@@ -25,8 +25,8 @@ const (
 )
 
 // Suite is a reusable test bundle. It references provider-agnostic,
-// params-only presets; the provider is applied once here, and the wizard bakes
-// provider_parms when expanding presets into TestRuns.
+// params-only presets; the provider is applied once here, and expansion bakes
+// topology specs plus infrastructure plans into child TestRuns.
 type Suite struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// id is the stable suite identifier.

@@ -1,3 +1,5 @@
+//go:build integration
+
 // Package tests contains integration tests for stroppy-cloud.
 // These tests require Docker and network access.
 //

@@ -23,24 +23,17 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Kind is the semantic relationship an edge represents.
+// Kind is the semantic relationship represented by the edge.
 type Connection_Kind int32
 
 const (
-	// KIND_UNSPECIFIED is the unset zero value.
-	Connection_KIND_UNSPECIFIED Connection_Kind = 0
-	// KIND_FLOW is a normal data/application flow.
-	Connection_KIND_FLOW Connection_Kind = 1
-	// KIND_PROXY is traffic routed through a proxy/pooler.
-	Connection_KIND_PROXY Connection_Kind = 2
-	// KIND_REPLICATION is database replication traffic.
-	Connection_KIND_REPLICATION Connection_Kind = 3
-	// KIND_COORDINATION is cluster coordination/control traffic.
+	Connection_KIND_UNSPECIFIED  Connection_Kind = 0
+	Connection_KIND_FLOW         Connection_Kind = 1
+	Connection_KIND_PROXY        Connection_Kind = 2
+	Connection_KIND_REPLICATION  Connection_Kind = 3
 	Connection_KIND_COORDINATION Connection_Kind = 4
-	// KIND_OBSERVATION is monitoring/metrics observation traffic.
-	Connection_KIND_OBSERVATION Connection_Kind = 5
-	// KIND_SUPPORT is auxiliary/supporting traffic.
-	Connection_KIND_SUPPORT Connection_Kind = 6
+	Connection_KIND_OBSERVATION  Connection_Kind = 5
+	Connection_KIND_SUPPORT      Connection_Kind = 6
 )
 
 // Enum value maps for Connection_Kind.
@@ -92,30 +85,20 @@ func (Connection_Kind) EnumDescriptor() ([]byte, []int) {
 	return file_cloud_v1_topology_connection_proto_rawDescGZIP(), []int{0, 0}
 }
 
-// Protocol is the wire format on an edge.
+// Protocol is the wire/protocol family carried over the edge.
 type Connection_Protocol int32
 
 const (
-	// PROTOCOL_UNSPECIFIED is the unset zero value.
-	Connection_PROTOCOL_UNSPECIFIED Connection_Protocol = 0
-	// TCP is plain TCP/IP traffic.
-	Connection_PROTOCOL_TCP Connection_Protocol = 1
-	// GRPC is gRPC.
-	Connection_PROTOCOL_GRPC Connection_Protocol = 2
-	// HTTP is HTTP/HTTPS.
-	Connection_PROTOCOL_HTTP Connection_Protocol = 3
-	// REPLICATION is a DB-engine replication stream.
-	Connection_PROTOCOL_REPLICATION Connection_Protocol = 4
-	// POOL is a pooled connection (pgbouncer, proxysql).
-	Connection_PROTOCOL_POOL Connection_Protocol = 5
-	// CONTROL is a control-plane protocol (DCS, raft).
-	Connection_PROTOCOL_CONTROL Connection_Protocol = 6
-	// OTLP is a metrics/logs/traces scrape.
-	Connection_PROTOCOL_OTLP Connection_Protocol = 7
-	// PROTOCOL_PROMETHEUS_REMOTE_WRITE is a Prometheus remote-write metrics push.
+	Connection_PROTOCOL_UNSPECIFIED             Connection_Protocol = 0
+	Connection_PROTOCOL_TCP                     Connection_Protocol = 1
+	Connection_PROTOCOL_GRPC                    Connection_Protocol = 2
+	Connection_PROTOCOL_HTTP                    Connection_Protocol = 3
+	Connection_PROTOCOL_REPLICATION             Connection_Protocol = 4
+	Connection_PROTOCOL_POOL                    Connection_Protocol = 5
+	Connection_PROTOCOL_CONTROL                 Connection_Protocol = 6
+	Connection_PROTOCOL_OTLP                    Connection_Protocol = 7
 	Connection_PROTOCOL_PROMETHEUS_REMOTE_WRITE Connection_Protocol = 8
-	// PROTOCOL_PROMETHEUS_PULL is a Prometheus pull/scrape of metrics.
-	Connection_PROTOCOL_PROMETHEUS_PULL Connection_Protocol = 9
+	Connection_PROTOCOL_PROMETHEUS_PULL         Connection_Protocol = 9
 )
 
 // Enum value maps for Connection_Protocol.
@@ -173,22 +156,16 @@ func (Connection_Protocol) EnumDescriptor() ([]byte, []int) {
 	return file_cloud_v1_topology_connection_proto_rawDescGZIP(), []int{0, 1}
 }
 
-// Mode is the traffic character on an edge.
+// Mode is the traffic character of the edge.
 type Connection_Mode int32
 
 const (
-	// MODE_UNSPECIFIED is the unset zero value.
 	Connection_MODE_UNSPECIFIED Connection_Mode = 0
-	// REQUEST is request/response.
-	Connection_MODE_REQUEST Connection_Mode = 1
-	// STREAM is a continuous one-way data stream.
-	Connection_MODE_STREAM Connection_Mode = 2
-	// SYNC is bidirectional state synchronization.
-	Connection_MODE_SYNC Connection_Mode = 3
-	// HEARTBEAT is periodic liveness/keepalive.
-	Connection_MODE_HEARTBEAT Connection_Mode = 4
-	// BROADCAST is one-to-many fanout.
-	Connection_MODE_BROADCAST Connection_Mode = 5
+	Connection_MODE_REQUEST     Connection_Mode = 1
+	Connection_MODE_STREAM      Connection_Mode = 2
+	Connection_MODE_SYNC        Connection_Mode = 3
+	Connection_MODE_HEARTBEAT   Connection_Mode = 4
+	Connection_MODE_BROADCAST   Connection_Mode = 5
 )
 
 // Enum value maps for Connection_Mode.
@@ -238,25 +215,29 @@ func (Connection_Mode) EnumDescriptor() ([]byte, []int) {
 	return file_cloud_v1_topology_connection_proto_rawDescGZIP(), []int{0, 2}
 }
 
-// Connection is a directed edge between two components in the topology.
+// Connection is a directed logical edge from one component to another.
 type Connection struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// from is the source component id of the edge.
-	From string `protobuf:"bytes,1,opt,name=from,proto3" json:"from,omitempty"`
-	// to is the destination component id of the edge.
-	To string `protobuf:"bytes,2,opt,name=to,proto3" json:"to,omitempty"`
-	// kind is the semantic relationship of the edge.
+	// from_component_id is the source component id.
+	FromComponentId string `protobuf:"bytes,1,opt,name=from_component_id,json=fromComponentId,proto3" json:"from_component_id,omitempty"`
+	// to_component_id is the destination component id.
+	ToComponentId string `protobuf:"bytes,2,opt,name=to_component_id,json=toComponentId,proto3" json:"to_component_id,omitempty"`
+	// kind is the semantic relationship.
 	Kind Connection_Kind `protobuf:"varint,3,opt,name=kind,proto3,enum=cloud.v1.topology.Connection_Kind" json:"kind,omitempty"`
-	// protocol is the wire protocol carried on the edge.
+	// protocol is the protocol family.
 	Protocol Connection_Protocol `protobuf:"varint,4,opt,name=protocol,proto3,enum=cloud.v1.topology.Connection_Protocol" json:"protocol,omitempty"`
-	// mode is the traffic character of the edge.
+	// mode is the traffic character.
 	Mode Connection_Mode `protobuf:"varint,5,opt,name=mode,proto3,enum=cloud.v1.topology.Connection_Mode" json:"mode,omitempty"`
-	// port is the destination port, when applicable (<= 65535).
-	Port *uint32 `protobuf:"varint,6,opt,name=port,proto3,oneof" json:"port,omitempty"`
-	// inner is true when both endpoints live on one physical VM.
-	Inner bool `protobuf:"varint,8,opt,name=inner,proto3" json:"inner,omitempty"`
-	// tags are arbitrary key/value labels attached to the connection.
-	Tags          *common.Tags `protobuf:"bytes,7,opt,name=tags,proto3" json:"tags,omitempty"`
+	// endpoint_name optionally selects a named destination endpoint, e.g.
+	// postgres, pgbouncer, patroni_rest, etcd_peer. Empty means renderer
+	// chooses the role default.
+	EndpointName string `protobuf:"bytes,6,opt,name=endpoint_name,json=endpointName,proto3" json:"endpoint_name,omitempty"`
+	// port is the destination port when it is known at spec time.
+	Port *uint32 `protobuf:"varint,7,opt,name=port,proto3,oneof" json:"port,omitempty"`
+	// colocated is true when this edge intentionally stays inside one node.
+	Colocated bool `protobuf:"varint,8,opt,name=colocated,proto3" json:"colocated,omitempty"`
+	// tags are arbitrary metadata on the edge.
+	Tags          *common.Tags `protobuf:"bytes,9,opt,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -291,16 +272,16 @@ func (*Connection) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_topology_connection_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Connection) GetFrom() string {
+func (x *Connection) GetFromComponentId() string {
 	if x != nil {
-		return x.From
+		return x.FromComponentId
 	}
 	return ""
 }
 
-func (x *Connection) GetTo() string {
+func (x *Connection) GetToComponentId() string {
 	if x != nil {
-		return x.To
+		return x.ToComponentId
 	}
 	return ""
 }
@@ -326,6 +307,13 @@ func (x *Connection) GetMode() Connection_Mode {
 	return Connection_MODE_UNSPECIFIED
 }
 
+func (x *Connection) GetEndpointName() string {
+	if x != nil {
+		return x.EndpointName
+	}
+	return ""
+}
+
 func (x *Connection) GetPort() uint32 {
 	if x != nil && x.Port != nil {
 		return *x.Port
@@ -333,9 +321,9 @@ func (x *Connection) GetPort() uint32 {
 	return 0
 }
 
-func (x *Connection) GetInner() bool {
+func (x *Connection) GetColocated() bool {
 	if x != nil {
-		return x.Inner
+		return x.Colocated
 	}
 	return false
 }
@@ -351,19 +339,20 @@ var File_cloud_v1_topology_connection_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_topology_connection_proto_rawDesc = "" +
 	"\n" +
-	"\"cloud/v1/topology/connection.proto\x12\x11cloud.v1.topology\x1a\x18cloud/v1/common/ip.proto\x1a\x17validate/validate.proto\x1a\x1acloud/v1/common/tags.proto\"\x8c\a\n" +
+	"\"cloud/v1/topology/connection.proto\x12\x11cloud.v1.topology\x1a\x1acloud/v1/common/tags.proto\x1a\x17validate/validate.proto\"\xf2\a\n" +
 	"\n" +
-	"Connection\x12\x1e\n" +
-	"\x04from\x18\x01 \x01(\tB\n" +
-	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x04from\x12\x1a\n" +
-	"\x02to\x18\x02 \x01(\tB\n" +
-	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x02to\x12@\n" +
+	"Connection\x126\n" +
+	"\x11from_component_id\x18\x01 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x0ffromComponentId\x122\n" +
+	"\x0fto_component_id\x18\x02 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\rtoComponentId\x12@\n" +
 	"\x04kind\x18\x03 \x01(\x0e2\".cloud.v1.topology.Connection.KindB\b\xfaB\x05\x82\x01\x02\x10\x01R\x04kind\x12L\n" +
 	"\bprotocol\x18\x04 \x01(\x0e2&.cloud.v1.topology.Connection.ProtocolB\b\xfaB\x05\x82\x01\x02\x10\x01R\bprotocol\x12@\n" +
-	"\x04mode\x18\x05 \x01(\x0e2\".cloud.v1.topology.Connection.ModeB\b\xfaB\x05\x82\x01\x02\x10\x01R\x04mode\x12\"\n" +
-	"\x04port\x18\x06 \x01(\rB\t\xfaB\x06*\x04\x18\xff\xff\x03H\x00R\x04port\x88\x01\x01\x12\x14\n" +
-	"\x05inner\x18\b \x01(\bR\x05inner\x12)\n" +
-	"\x04tags\x18\a \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\"\x90\x01\n" +
+	"\x04mode\x18\x05 \x01(\x0e2\".cloud.v1.topology.Connection.ModeB\b\xfaB\x05\x82\x01\x02\x10\x01R\x04mode\x12,\n" +
+	"\rendpoint_name\x18\x06 \x01(\tB\a\xfaB\x04r\x02\x18@R\fendpointName\x12\"\n" +
+	"\x04port\x18\a \x01(\rB\t\xfaB\x06*\x04\x18\xff\xff\x03H\x00R\x04port\x88\x01\x01\x12\x1c\n" +
+	"\tcolocated\x18\b \x01(\bR\tcolocated\x12)\n" +
+	"\x04tags\x18\t \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\"\x90\x01\n" +
 	"\x04Kind\x12\x14\n" +
 	"\x10KIND_UNSPECIFIED\x10\x00\x12\r\n" +
 	"\tKIND_FLOW\x10\x01\x12\x0e\n" +

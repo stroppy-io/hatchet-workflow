@@ -17,6 +17,8 @@ import (
 	"unicode/utf8"
 
 	"google.golang.org/protobuf/types/known/anypb"
+
+	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 )
 
 // ensure the imports are used
@@ -33,6 +35,8 @@ var (
 	_ = (*mail.Address)(nil)
 	_ = anypb.Any{}
 	_ = sort.Sort
+
+	_ = deployment.Provider(0)
 )
 
 // Validate checks the field values on TestWizardDraftRecord with the rules
@@ -97,12 +101,23 @@ func (m *TestWizardDraftRecord) validate(all bool) error {
 		}
 	}
 
+	if _, ok := deployment.Provider_name[int32(m.GetProvider())]; !ok {
+		err := TestWizardDraftRecordValidationError{
+			field:  "Provider",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if all {
-		switch v := interface{}(m.GetForm()).(type) {
+		switch v := interface{}(m.GetDatabase()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, TestWizardDraftRecordValidationError{
-					field:  "Form",
+					field:  "Database",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -110,16 +125,16 @@ func (m *TestWizardDraftRecord) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, TestWizardDraftRecordValidationError{
-					field:  "Form",
+					field:  "Database",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetForm()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetDatabase()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return TestWizardDraftRecordValidationError{
-				field:  "Form",
+				field:  "Database",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -127,11 +142,11 @@ func (m *TestWizardDraftRecord) validate(all bool) error {
 	}
 
 	if all {
-		switch v := interface{}(m.GetTopology()).(type) {
+		switch v := interface{}(m.GetWorkload()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, TestWizardDraftRecordValidationError{
-					field:  "Topology",
+					field:  "Workload",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -139,16 +154,132 @@ func (m *TestWizardDraftRecord) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, TestWizardDraftRecordValidationError{
-					field:  "Topology",
+					field:  "Workload",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetTopology()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetWorkload()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return TestWizardDraftRecordValidationError{
-				field:  "Topology",
+				field:  "Workload",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetTopologySpec()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TestWizardDraftRecordValidationError{
+					field:  "TopologySpec",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TestWizardDraftRecordValidationError{
+					field:  "TopologySpec",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTopologySpec()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TestWizardDraftRecordValidationError{
+				field:  "TopologySpec",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetInfrastructurePlan()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TestWizardDraftRecordValidationError{
+					field:  "InfrastructurePlan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TestWizardDraftRecordValidationError{
+					field:  "InfrastructurePlan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetInfrastructurePlan()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TestWizardDraftRecordValidationError{
+				field:  "InfrastructurePlan",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetRenderPreview()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TestWizardDraftRecordValidationError{
+					field:  "RenderPreview",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TestWizardDraftRecordValidationError{
+					field:  "RenderPreview",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetRenderPreview()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TestWizardDraftRecordValidationError{
+				field:  "RenderPreview",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetRenderOverrides()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TestWizardDraftRecordValidationError{
+					field:  "RenderOverrides",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TestWizardDraftRecordValidationError{
+					field:  "RenderOverrides",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetRenderOverrides()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TestWizardDraftRecordValidationError{
+				field:  "RenderOverrides",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}

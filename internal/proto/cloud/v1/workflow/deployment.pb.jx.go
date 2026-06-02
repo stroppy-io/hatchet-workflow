@@ -8,74 +8,38 @@ import (
 	jxpb "github.com/gopherex/protoc-gen-go-jx/jxpb"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
+	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	topology "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology"
 )
 
-func (m *ProcessDeploymentWorkflowRequest) Encode(e *jx.Encoder) {
+func (m *ProcessInfrastructureWorkflowRequest) Encode(e *jx.Encoder) {
 	if m == nil {
 		e.ObjStart()
 		e.ObjEnd()
 		return
 	}
 	e.ObjStart()
-	if m.Provider != 0 {
-		e.FieldStart("provider")
-		if s, ok := deployment.Provider_name[int32(m.Provider)]; ok {
-			e.Str(s)
-		} else {
-			e.Int32(int32(m.Provider))
-		}
-	}
-	if m.Topology != nil {
-		e.FieldStart("topology")
-		jxpb.EncMessage(e, m.Topology)
+	if m.Plan != nil {
+		e.FieldStart("plan")
+		jxpb.EncMessage(e, m.Plan)
 	}
 	e.ObjEnd()
 }
 
-func (m *ProcessDeploymentWorkflowRequest) Decode(d *jx.Decoder) error {
+func (m *ProcessInfrastructureWorkflowRequest) Decode(d *jx.Decoder) error {
 	seen := map[string]bool{}
 	return d.Obj(func(d *jx.Decoder, key string) error {
 		switch key {
-		case "provider":
-			if seen["Provider"] {
+		case "plan":
+			if seen["Plan"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["Provider"] = true
-			switch d.Next() {
-			case jx.String:
-				s, err := d.Str()
-				if err != nil {
-					return err
-				}
-				n, ok := deployment.Provider_value[s]
-				if !ok {
-					return fmt.Errorf("unknown enum value %q", s)
-				}
-				m.Provider = deployment.Provider(n)
-				return nil
-			case jx.Number:
-				n, err := d.Int32()
-				if err != nil {
-					return err
-				}
-				m.Provider = deployment.Provider(n)
-				return nil
-			case jx.Null:
-				return d.Null()
-			default:
-				return fmt.Errorf("invalid enum token %s", d.Next())
-			}
-		case "topology":
-			if seen["Topology"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["Topology"] = true
+			seen["Plan"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			m.Topology = &topology.Topology{}
-			if err := jxpb.DecMessage(d, m.Topology); err != nil {
+			m.Plan = &deployment.InfrastructurePlan{}
+			if err := jxpb.DecMessage(d, m.Plan); err != nil {
 				return err
 			}
 			return nil
@@ -85,82 +49,45 @@ func (m *ProcessDeploymentWorkflowRequest) Decode(d *jx.Decoder) error {
 	})
 }
 
-func (m *ProcessDeploymentWorkflowRequest) MarshalJSON() ([]byte, error) {
+func (m *ProcessInfrastructureWorkflowRequest) MarshalJSON() ([]byte, error) {
 	var e jx.Encoder
 	m.Encode(&e)
 	return e.Bytes(), nil
 }
 
-func (m *ProcessDeploymentWorkflowRequest) UnmarshalJSON(data []byte) error {
+func (m *ProcessInfrastructureWorkflowRequest) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return m.Decode(d)
 }
 
-func (m *ProcessDeploymentWorkflowResponse) Encode(e *jx.Encoder) {
+func (m *ProcessInfrastructureWorkflowResponse) Encode(e *jx.Encoder) {
 	if m == nil {
 		e.ObjStart()
 		e.ObjEnd()
 		return
 	}
 	e.ObjStart()
-	if m.Provider != 0 {
-		e.FieldStart("provider")
-		if s, ok := deployment.Provider_name[int32(m.Provider)]; ok {
-			e.Str(s)
-		} else {
-			e.Int32(int32(m.Provider))
-		}
-	}
-	if m.DeployedTopology != nil {
-		e.FieldStart("deployedTopology")
-		jxpb.EncMessage(e, m.DeployedTopology)
+	if m.State != nil {
+		e.FieldStart("state")
+		jxpb.EncMessage(e, m.State)
 	}
 	e.ObjEnd()
 }
 
-func (m *ProcessDeploymentWorkflowResponse) Decode(d *jx.Decoder) error {
+func (m *ProcessInfrastructureWorkflowResponse) Decode(d *jx.Decoder) error {
 	seen := map[string]bool{}
 	return d.Obj(func(d *jx.Decoder, key string) error {
 		switch key {
-		case "provider":
-			if seen["Provider"] {
+		case "state":
+			if seen["State"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["Provider"] = true
-			switch d.Next() {
-			case jx.String:
-				s, err := d.Str()
-				if err != nil {
-					return err
-				}
-				n, ok := deployment.Provider_value[s]
-				if !ok {
-					return fmt.Errorf("unknown enum value %q", s)
-				}
-				m.Provider = deployment.Provider(n)
-				return nil
-			case jx.Number:
-				n, err := d.Int32()
-				if err != nil {
-					return err
-				}
-				m.Provider = deployment.Provider(n)
-				return nil
-			case jx.Null:
-				return d.Null()
-			default:
-				return fmt.Errorf("invalid enum token %s", d.Next())
-			}
-		case "deployedTopology", "deployed_topology":
-			if seen["DeployedTopology"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["DeployedTopology"] = true
+			seen["State"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			m.DeployedTopology = &topology.Topology{}
-			if err := jxpb.DecMessage(d, m.DeployedTopology); err != nil {
+			m.State = &deployment.InfrastructureState{}
+			if err := jxpb.DecMessage(d, m.State); err != nil {
 				return err
 			}
 			return nil
@@ -170,13 +97,13 @@ func (m *ProcessDeploymentWorkflowResponse) Decode(d *jx.Decoder) error {
 	})
 }
 
-func (m *ProcessDeploymentWorkflowResponse) MarshalJSON() ([]byte, error) {
+func (m *ProcessInfrastructureWorkflowResponse) MarshalJSON() ([]byte, error) {
 	var e jx.Encoder
 	m.Encode(&e)
 	return e.Bytes(), nil
 }
 
-func (m *ProcessDeploymentWorkflowResponse) UnmarshalJSON(data []byte) error {
+func (m *ProcessInfrastructureWorkflowResponse) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return m.Decode(d)
 }
@@ -188,9 +115,9 @@ func (m *CalculateQuotasWorkflowRequest) Encode(e *jx.Encoder) {
 		return
 	}
 	e.ObjStart()
-	if m.Topology != nil {
-		e.FieldStart("topology")
-		jxpb.EncMessage(e, m.Topology)
+	if m.Plan != nil {
+		e.FieldStart("plan")
+		jxpb.EncMessage(e, m.Plan)
 	}
 	e.ObjEnd()
 }
@@ -199,16 +126,16 @@ func (m *CalculateQuotasWorkflowRequest) Decode(d *jx.Decoder) error {
 	seen := map[string]bool{}
 	return d.Obj(func(d *jx.Decoder, key string) error {
 		switch key {
-		case "topology":
-			if seen["Topology"] {
+		case "plan":
+			if seen["Plan"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["Topology"] = true
+			seen["Plan"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			m.Topology = &topology.Topology{}
-			if err := jxpb.DecMessage(d, m.Topology); err != nil {
+			m.Plan = &deployment.InfrastructurePlan{}
+			if err := jxpb.DecMessage(d, m.Plan); err != nil {
 				return err
 			}
 			return nil
@@ -236,9 +163,9 @@ func (m *CalculateQuotasWorkflowResponse) Encode(e *jx.Encoder) {
 		return
 	}
 	e.ObjStart()
-	if m.Topology != nil {
-		e.FieldStart("topology")
-		jxpb.EncMessage(e, m.Topology)
+	if m.Plan != nil {
+		e.FieldStart("plan")
+		jxpb.EncMessage(e, m.Plan)
 	}
 	if len(m.QuotaRequests) > 0 {
 		e.FieldStart("quotaRequests")
@@ -256,16 +183,16 @@ func (m *CalculateQuotasWorkflowResponse) Decode(d *jx.Decoder) error {
 	seen := map[string]bool{}
 	return d.Obj(func(d *jx.Decoder, key string) error {
 		switch key {
-		case "topology":
-			if seen["Topology"] {
+		case "plan":
+			if seen["Plan"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["Topology"] = true
+			seen["Plan"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			m.Topology = &topology.Topology{}
-			if err := jxpb.DecMessage(d, m.Topology); err != nil {
+			m.Plan = &deployment.InfrastructurePlan{}
+			if err := jxpb.DecMessage(d, m.Plan); err != nil {
 				return err
 			}
 			return nil
@@ -314,9 +241,9 @@ func (m *AcquireNetworkActivityRequest) Encode(e *jx.Encoder) {
 		return
 	}
 	e.ObjStart()
-	if m.Settings != nil {
-		e.FieldStart("settings")
-		jxpb.EncMessage(e, m.Settings)
+	if m.Plan != nil {
+		e.FieldStart("plan")
+		jxpb.EncMessage(e, m.Plan)
 	}
 	e.ObjEnd()
 }
@@ -325,16 +252,16 @@ func (m *AcquireNetworkActivityRequest) Decode(d *jx.Decoder) error {
 	seen := map[string]bool{}
 	return d.Obj(func(d *jx.Decoder, key string) error {
 		switch key {
-		case "settings":
-			if seen["Settings"] {
+		case "plan":
+			if seen["Plan"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["Settings"] = true
+			seen["Plan"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			m.Settings = &deployment.ProviderSettings{}
-			if err := jxpb.DecMessage(d, m.Settings); err != nil {
+			m.Plan = &deployment.InfrastructurePlan{}
+			if err := jxpb.DecMessage(d, m.Plan); err != nil {
 				return err
 			}
 			return nil
@@ -471,10 +398,10 @@ func (m *AcquireQuotasActivityResponse) Encode(e *jx.Encoder) {
 		return
 	}
 	e.ObjStart()
-	if len(m.QuotaAllocation) > 0 {
-		e.FieldStart("quotaAllocation")
+	if len(m.QuotaAllocations) > 0 {
+		e.FieldStart("quotaAllocations")
 		e.ObjStart()
-		for k, v := range m.QuotaAllocation {
+		for k, v := range m.QuotaAllocations {
 			e.FieldStart(k)
 			jxpb.EncMessage(e, v)
 		}
@@ -487,16 +414,16 @@ func (m *AcquireQuotasActivityResponse) Decode(d *jx.Decoder) error {
 	seen := map[string]bool{}
 	return d.Obj(func(d *jx.Decoder, key string) error {
 		switch key {
-		case "quotaAllocation", "quota_allocation":
-			if seen["QuotaAllocation"] {
+		case "quotaAllocations", "quota_allocations":
+			if seen["QuotaAllocations"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["QuotaAllocation"] = true
+			seen["QuotaAllocations"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			if m.QuotaAllocation == nil {
-				m.QuotaAllocation = make(map[string]*deployment.Quota_Allocation)
+			if m.QuotaAllocations == nil {
+				m.QuotaAllocations = make(map[string]*deployment.Quota_Allocation)
 			}
 			return d.Obj(func(d *jx.Decoder, ks string) error {
 				mk := ks
@@ -505,7 +432,7 @@ func (m *AcquireQuotasActivityResponse) Decode(d *jx.Decoder) error {
 				if err := jxpb.DecMessage(d, mv); err != nil {
 					return err
 				}
-				m.QuotaAllocation[mk] = mv
+				m.QuotaAllocations[mk] = mv
 				return nil
 			})
 		default:
@@ -521,6 +448,283 @@ func (m *AcquireQuotasActivityResponse) MarshalJSON() ([]byte, error) {
 }
 
 func (m *AcquireQuotasActivityResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *RenderDeploymentPlanWorkflowRequest) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.TopologySpec != nil {
+		e.FieldStart("topologySpec")
+		jxpb.EncMessage(e, m.TopologySpec)
+	}
+	if m.InfrastructurePlan != nil {
+		e.FieldStart("infrastructurePlan")
+		jxpb.EncMessage(e, m.InfrastructurePlan)
+	}
+	if m.InfrastructureState != nil {
+		e.FieldStart("infrastructureState")
+		jxpb.EncMessage(e, m.InfrastructureState)
+	}
+	if m.RenderOverrides != nil {
+		e.FieldStart("renderOverrides")
+		jxpb.EncMessage(e, m.RenderOverrides)
+	}
+	if m.Database != nil {
+		e.FieldStart("database")
+		jxpb.EncMessage(e, m.Database)
+	}
+	e.ObjEnd()
+}
+
+func (m *RenderDeploymentPlanWorkflowRequest) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "topologySpec", "topology_spec":
+			if seen["TopologySpec"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["TopologySpec"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.TopologySpec = &topology.TopologySpec{}
+			if err := jxpb.DecMessage(d, m.TopologySpec); err != nil {
+				return err
+			}
+			return nil
+		case "infrastructurePlan", "infrastructure_plan":
+			if seen["InfrastructurePlan"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["InfrastructurePlan"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.InfrastructurePlan = &deployment.InfrastructurePlan{}
+			if err := jxpb.DecMessage(d, m.InfrastructurePlan); err != nil {
+				return err
+			}
+			return nil
+		case "infrastructureState", "infrastructure_state":
+			if seen["InfrastructureState"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["InfrastructureState"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.InfrastructureState = &deployment.InfrastructureState{}
+			if err := jxpb.DecMessage(d, m.InfrastructureState); err != nil {
+				return err
+			}
+			return nil
+		case "renderOverrides", "render_overrides":
+			if seen["RenderOverrides"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["RenderOverrides"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.RenderOverrides = &deployment.RenderOverrideSet{}
+			if err := jxpb.DecMessage(d, m.RenderOverrides); err != nil {
+				return err
+			}
+			return nil
+		case "database":
+			if seen["Database"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Database"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Database = &domain.Database{}
+			if err := jxpb.DecMessage(d, m.Database); err != nil {
+				return err
+			}
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *RenderDeploymentPlanWorkflowRequest) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *RenderDeploymentPlanWorkflowRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *RenderDeploymentPlanWorkflowResponse) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.DeploymentPlan != nil {
+		e.FieldStart("deploymentPlan")
+		jxpb.EncMessage(e, m.DeploymentPlan)
+	}
+	e.ObjEnd()
+}
+
+func (m *RenderDeploymentPlanWorkflowResponse) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "deploymentPlan", "deployment_plan":
+			if seen["DeploymentPlan"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["DeploymentPlan"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.DeploymentPlan = &deployment.DeploymentPlan{}
+			if err := jxpb.DecMessage(d, m.DeploymentPlan); err != nil {
+				return err
+			}
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *RenderDeploymentPlanWorkflowResponse) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *RenderDeploymentPlanWorkflowResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *ExecuteDeploymentPlanWorkflowRequest) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.DeploymentPlan != nil {
+		e.FieldStart("deploymentPlan")
+		jxpb.EncMessage(e, m.DeploymentPlan)
+	}
+	if m.InfrastructureState != nil {
+		e.FieldStart("infrastructureState")
+		jxpb.EncMessage(e, m.InfrastructureState)
+	}
+	e.ObjEnd()
+}
+
+func (m *ExecuteDeploymentPlanWorkflowRequest) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "deploymentPlan", "deployment_plan":
+			if seen["DeploymentPlan"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["DeploymentPlan"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.DeploymentPlan = &deployment.DeploymentPlan{}
+			if err := jxpb.DecMessage(d, m.DeploymentPlan); err != nil {
+				return err
+			}
+			return nil
+		case "infrastructureState", "infrastructure_state":
+			if seen["InfrastructureState"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["InfrastructureState"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.InfrastructureState = &deployment.InfrastructureState{}
+			if err := jxpb.DecMessage(d, m.InfrastructureState); err != nil {
+				return err
+			}
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *ExecuteDeploymentPlanWorkflowRequest) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *ExecuteDeploymentPlanWorkflowRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *ExecuteDeploymentPlanWorkflowResponse) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.DeploymentPlan != nil {
+		e.FieldStart("deploymentPlan")
+		jxpb.EncMessage(e, m.DeploymentPlan)
+	}
+	e.ObjEnd()
+}
+
+func (m *ExecuteDeploymentPlanWorkflowResponse) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "deploymentPlan", "deployment_plan":
+			if seen["DeploymentPlan"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["DeploymentPlan"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.DeploymentPlan = &deployment.DeploymentPlan{}
+			if err := jxpb.DecMessage(d, m.DeploymentPlan); err != nil {
+				return err
+			}
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *ExecuteDeploymentPlanWorkflowResponse) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *ExecuteDeploymentPlanWorkflowResponse) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return m.Decode(d)
 }

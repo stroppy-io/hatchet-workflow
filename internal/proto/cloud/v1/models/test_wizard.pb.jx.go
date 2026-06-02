@@ -8,6 +8,8 @@ import (
 	jxpb "github.com/gopherex/protoc-gen-go-jx/jxpb"
 	schemapb "github.com/stroppy-io/schemapb/schemapb"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
+	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
+	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	topology "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology"
 )
 
@@ -22,13 +24,37 @@ func (m *TestWizardDraftRecord) Encode(e *jx.Encoder) {
 		e.FieldStart("entity")
 		jxpb.EncMessage(e, m.Entity)
 	}
-	if m.Form != nil {
-		e.FieldStart("form")
-		jxpb.EncMessage(e, m.Form)
+	if m.Provider != 0 {
+		e.FieldStart("provider")
+		if s, ok := deployment.Provider_name[int32(m.Provider)]; ok {
+			e.Str(s)
+		} else {
+			e.Int32(int32(m.Provider))
+		}
 	}
-	if m.Topology != nil {
-		e.FieldStart("topology")
-		jxpb.EncMessage(e, m.Topology)
+	if m.Database != nil {
+		e.FieldStart("database")
+		jxpb.EncMessage(e, m.Database)
+	}
+	if m.Workload != nil {
+		e.FieldStart("workload")
+		jxpb.EncMessage(e, m.Workload)
+	}
+	if m.TopologySpec != nil {
+		e.FieldStart("topologySpec")
+		jxpb.EncMessage(e, m.TopologySpec)
+	}
+	if m.InfrastructurePlan != nil {
+		e.FieldStart("infrastructurePlan")
+		jxpb.EncMessage(e, m.InfrastructurePlan)
+	}
+	if m.RenderPreview != nil {
+		e.FieldStart("renderPreview")
+		jxpb.EncMessage(e, m.RenderPreview)
+	}
+	if m.RenderOverrides != nil {
+		e.FieldStart("renderOverrides")
+		jxpb.EncMessage(e, m.RenderOverrides)
 	}
 	if len(m.Errors) > 0 {
 		e.FieldStart("errors")
@@ -66,29 +92,110 @@ func (m *TestWizardDraftRecord) Decode(d *jx.Decoder) error {
 				return err
 			}
 			return nil
-		case "form":
-			if seen["Form"] {
+		case "provider":
+			if seen["Provider"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["Form"] = true
+			seen["Provider"] = true
+			switch d.Next() {
+			case jx.String:
+				s, err := d.Str()
+				if err != nil {
+					return err
+				}
+				n, ok := deployment.Provider_value[s]
+				if !ok {
+					return fmt.Errorf("unknown enum value %q", s)
+				}
+				m.Provider = deployment.Provider(n)
+				return nil
+			case jx.Number:
+				n, err := d.Int32()
+				if err != nil {
+					return err
+				}
+				m.Provider = deployment.Provider(n)
+				return nil
+			case jx.Null:
+				return d.Null()
+			default:
+				return fmt.Errorf("invalid enum token %s", d.Next())
+			}
+		case "database":
+			if seen["Database"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Database"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			m.Form = &schemapb.Filled{}
-			if err := jxpb.DecMessage(d, m.Form); err != nil {
+			m.Database = &domain.Database{}
+			if err := jxpb.DecMessage(d, m.Database); err != nil {
 				return err
 			}
 			return nil
-		case "topology":
-			if seen["Topology"] {
+		case "workload":
+			if seen["Workload"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["Topology"] = true
+			seen["Workload"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			m.Topology = &topology.Topology{}
-			if err := jxpb.DecMessage(d, m.Topology); err != nil {
+			m.Workload = &domain.Workload{}
+			if err := jxpb.DecMessage(d, m.Workload); err != nil {
+				return err
+			}
+			return nil
+		case "topologySpec", "topology_spec":
+			if seen["TopologySpec"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["TopologySpec"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.TopologySpec = &topology.TopologySpec{}
+			if err := jxpb.DecMessage(d, m.TopologySpec); err != nil {
+				return err
+			}
+			return nil
+		case "infrastructurePlan", "infrastructure_plan":
+			if seen["InfrastructurePlan"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["InfrastructurePlan"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.InfrastructurePlan = &deployment.InfrastructurePlan{}
+			if err := jxpb.DecMessage(d, m.InfrastructurePlan); err != nil {
+				return err
+			}
+			return nil
+		case "renderPreview", "render_preview":
+			if seen["RenderPreview"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["RenderPreview"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.RenderPreview = &deployment.RenderPreview{}
+			if err := jxpb.DecMessage(d, m.RenderPreview); err != nil {
+				return err
+			}
+			return nil
+		case "renderOverrides", "render_overrides":
+			if seen["RenderOverrides"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["RenderOverrides"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.RenderOverrides = &deployment.RenderOverrideSet{}
+			if err := jxpb.DecMessage(d, m.RenderOverrides); err != nil {
 				return err
 			}
 			return nil

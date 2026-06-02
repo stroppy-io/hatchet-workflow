@@ -4,62 +4,53 @@
 
 import type { GenEnum, GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
-import type { Baked, BakedJson } from "../../../schemapb/schema_pb.ts";
-import { file_schemapb_schema } from "../../../schemapb/schema_pb.ts";
+import type { Docker_Settings, Docker_SettingsJson } from "./docker_pb.ts";
+import { file_cloud_v1_deployment_docker } from "./docker_pb.ts";
+import type { Yandex_Settings, Yandex_SettingsJson } from "./yandex_pb.ts";
+import { file_cloud_v1_deployment_yandex } from "./yandex_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file cloud/v1/deployment/provider.proto.
  */
 export const file_cloud_v1_deployment_provider: GenFile = /*@__PURE__*/
-  fileDesc("CiJjbG91ZC92MS9kZXBsb3ltZW50L3Byb3ZpZGVyLnByb3RvEhNjbG91ZC52MS5kZXBsb3ltZW50ImYKEFByb3ZpZGVyU2V0dGluZ3MSLwoIcHJvdmlkZXIYASABKA4yHS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyEiEKCHNldHRpbmdzGAIgASgLMg8uc2NoZW1hcGIuQmFrZWQqTgoIUHJvdmlkZXISGAoUUFJPVklERVJfVU5TUEVDSUZJRUQQABITCg9QUk9WSURFUl9ET0NLRVIQARITCg9QUk9WSURFUl9ZQU5ERVgQAkJIWkZnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9kZXBsb3ltZW50YgZwcm90bzM", [file_schemapb_schema]);
+  fileDesc("CiJjbG91ZC92MS9kZXBsb3ltZW50L3Byb3ZpZGVyLnByb3RvEhNjbG91ZC52MS5kZXBsb3ltZW50Io4BChBQcm92aWRlclNldHRpbmdzEjYKBmRvY2tlchgBIAEoCzIkLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLlNldHRpbmdzSAASNgoGeWFuZGV4GAIgASgLMiQuY2xvdWQudjEuZGVwbG95bWVudC5ZYW5kZXguU2V0dGluZ3NIAEIKCghzZXR0aW5ncypOCghQcm92aWRlchIYChRQUk9WSURFUl9VTlNQRUNJRklFRBAAEhMKD1BST1ZJREVSX0RPQ0tFUhABEhMKD1BST1ZJREVSX1lBTkRFWBACQkhaRmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2RlcGxveW1lbnRiBnByb3RvMw", [file_cloud_v1_deployment_docker, file_cloud_v1_deployment_yandex]);
 
 /**
- *
- * ProviderSettings binds a chosen Provider to its baked, schema-backed
- * backend configuration. provider selects the backend and, with it, the
- * schema that settings is validated against.
- *
  * @generated from message cloud.v1.deployment.ProviderSettings
  */
 export type ProviderSettings = Message<"cloud.v1.deployment.ProviderSettings"> & {
   /**
-   * provider selects the deployment backend these settings configure. 
-   *
-   * @generated from field: cloud.v1.deployment.Provider provider = 1;
+   * @generated from oneof cloud.v1.deployment.ProviderSettings.settings
    */
-  provider: Provider;
-
-  /**
-   * settings is the sealed, schema-backed configuration for the provider. 
-   *
-   * @generated from field: schemapb.Baked settings = 2;
-   */
-  settings?: Baked;
+  settings: {
+    /**
+     * @generated from field: cloud.v1.deployment.Docker.Settings docker = 1;
+     */
+    value: Docker_Settings;
+    case: "docker";
+  } | {
+    /**
+     * @generated from field: cloud.v1.deployment.Yandex.Settings yandex = 2;
+     */
+    value: Yandex_Settings;
+    case: "yandex";
+  } | { case: undefined; value?: undefined };
 };
 
 /**
- *
- * ProviderSettings binds a chosen Provider to its baked, schema-backed
- * backend configuration. provider selects the backend and, with it, the
- * schema that settings is validated against.
- *
  * @generated from message cloud.v1.deployment.ProviderSettings
  */
 export type ProviderSettingsJson = {
   /**
-   * provider selects the deployment backend these settings configure. 
-   *
-   * @generated from field: cloud.v1.deployment.Provider provider = 1;
+   * @generated from field: cloud.v1.deployment.Docker.Settings docker = 1;
    */
-  provider?: ProviderJson;
+  docker?: Docker_SettingsJson;
 
   /**
-   * settings is the sealed, schema-backed configuration for the provider. 
-   *
-   * @generated from field: schemapb.Baked settings = 2;
+   * @generated from field: cloud.v1.deployment.Yandex.Settings yandex = 2;
    */
-  settings?: BakedJson;
+  yandex?: Yandex_SettingsJson;
 };
 
 export type ProviderSettingsValid = ProviderSettings;
@@ -81,21 +72,24 @@ export const ProviderSettingsSchema: GenMessage<ProviderSettings, {jsonType: Pro
  */
 export enum Provider {
   /**
-   * PROVIDER_UNSPECIFIED is the unset zero value; never a valid backend. 
+   *
+   * PROVIDER_UNSPECIFIED is the unset zero value; never a valid backend.
    *
    * @generated from enum value: PROVIDER_UNSPECIFIED = 0;
    */
   UNSPECIFIED = 0,
 
   /**
-   * PROVIDER_DOCKER is the local Docker daemon backend (Docker message). 
+   *
+   * PROVIDER_DOCKER is the local Docker daemon backend (Docker message).
    *
    * @generated from enum value: PROVIDER_DOCKER = 1;
    */
   DOCKER = 1,
 
   /**
-   * PROVIDER_YANDEX is the Yandex Cloud Terraform backend (Yandex message). 
+   *
+   * PROVIDER_YANDEX is the Yandex Cloud Terraform backend (Yandex message).
    *
    * @generated from enum value: PROVIDER_YANDEX = 2;
    */

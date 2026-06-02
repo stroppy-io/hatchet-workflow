@@ -57,9 +57,9 @@ func (m *Connection) validate(all bool) error {
 
 	var errors []error
 
-	if l := utf8.RuneCountInString(m.GetFrom()); l < 1 || l > 128 {
+	if l := utf8.RuneCountInString(m.GetFromComponentId()); l < 1 || l > 128 {
 		err := ConnectionValidationError{
-			field:  "From",
+			field:  "FromComponentId",
 			reason: "value length must be between 1 and 128 runes, inclusive",
 		}
 		if !all {
@@ -68,9 +68,9 @@ func (m *Connection) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if l := utf8.RuneCountInString(m.GetTo()); l < 1 || l > 128 {
+	if l := utf8.RuneCountInString(m.GetToComponentId()); l < 1 || l > 128 {
 		err := ConnectionValidationError{
-			field:  "To",
+			field:  "ToComponentId",
 			reason: "value length must be between 1 and 128 runes, inclusive",
 		}
 		if !all {
@@ -112,7 +112,18 @@ func (m *Connection) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	// no validation rules for Inner
+	if utf8.RuneCountInString(m.GetEndpointName()) > 64 {
+		err := ConnectionValidationError{
+			field:  "EndpointName",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for Colocated
 
 	if all {
 		switch v := interface{}(m.GetTags()).(type) {

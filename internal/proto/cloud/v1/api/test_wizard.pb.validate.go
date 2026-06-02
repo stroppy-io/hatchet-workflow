@@ -17,6 +17,8 @@ import (
 	"unicode/utf8"
 
 	"google.golang.org/protobuf/types/known/anypb"
+
+	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 )
 
 // ensure the imports are used
@@ -33,6 +35,8 @@ var (
 	_ = (*mail.Address)(nil)
 	_ = anypb.Any{}
 	_ = sort.Sort
+
+	_ = deployment.Provider(0)
 )
 
 // Validate checks the field values on StartTestWizardRequest with the rules
@@ -962,10 +966,10 @@ func (m *PatchTestWizardRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if m.GetForm() == nil {
+	if _, ok := deployment.Provider_name[int32(m.GetProvider())]; !ok {
 		err := PatchTestWizardRequestValidationError{
-			field:  "Form",
-			reason: "value is required",
+			field:  "Provider",
+			reason: "value must be one of the defined enum values",
 		}
 		if !all {
 			return err
@@ -974,11 +978,11 @@ func (m *PatchTestWizardRequest) validate(all bool) error {
 	}
 
 	if all {
-		switch v := interface{}(m.GetForm()).(type) {
+		switch v := interface{}(m.GetDatabase()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, PatchTestWizardRequestValidationError{
-					field:  "Form",
+					field:  "Database",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -986,16 +990,132 @@ func (m *PatchTestWizardRequest) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, PatchTestWizardRequestValidationError{
-					field:  "Form",
+					field:  "Database",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetForm()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetDatabase()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return PatchTestWizardRequestValidationError{
-				field:  "Form",
+				field:  "Database",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetWorkload()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, PatchTestWizardRequestValidationError{
+					field:  "Workload",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, PatchTestWizardRequestValidationError{
+					field:  "Workload",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetWorkload()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return PatchTestWizardRequestValidationError{
+				field:  "Workload",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetTopologySpec()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, PatchTestWizardRequestValidationError{
+					field:  "TopologySpec",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, PatchTestWizardRequestValidationError{
+					field:  "TopologySpec",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTopologySpec()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return PatchTestWizardRequestValidationError{
+				field:  "TopologySpec",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetInfrastructurePlan()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, PatchTestWizardRequestValidationError{
+					field:  "InfrastructurePlan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, PatchTestWizardRequestValidationError{
+					field:  "InfrastructurePlan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetInfrastructurePlan()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return PatchTestWizardRequestValidationError{
+				field:  "InfrastructurePlan",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetRenderOverrides()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, PatchTestWizardRequestValidationError{
+					field:  "RenderOverrides",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, PatchTestWizardRequestValidationError{
+					field:  "RenderOverrides",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetRenderOverrides()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return PatchTestWizardRequestValidationError{
+				field:  "RenderOverrides",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}

@@ -6,7 +6,6 @@ import (
 	fmt "fmt"
 	jx "github.com/go-faster/jx"
 	jxpb "github.com/gopherex/protoc-gen-go-jx/jxpb"
-	schemapb "github.com/stroppy-io/schemapb/schemapb"
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 )
@@ -233,14 +232,6 @@ func (m *SetTenantProviderSettingsRequest) Encode(e *jx.Encoder) {
 		e.FieldStart("tenantId")
 		e.Str(m.TenantId)
 	}
-	if m.Provider != 0 {
-		e.FieldStart("provider")
-		if s, ok := deployment.Provider_name[int32(m.Provider)]; ok {
-			e.Str(s)
-		} else {
-			e.Int32(int32(m.Provider))
-		}
-	}
 	if m.Settings != nil {
 		e.FieldStart("settings")
 		jxpb.EncMessage(e, m.Settings)
@@ -266,83 +257,6 @@ func (m *SetTenantProviderSettingsRequest) Decode(d *jx.Decoder) error {
 			}
 			m.TenantId = v
 			return nil
-		case "provider":
-			if seen["Provider"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["Provider"] = true
-			switch d.Next() {
-			case jx.String:
-				s, err := d.Str()
-				if err != nil {
-					return err
-				}
-				n, ok := deployment.Provider_value[s]
-				if !ok {
-					return fmt.Errorf("unknown enum value %q", s)
-				}
-				m.Provider = deployment.Provider(n)
-				return nil
-			case jx.Number:
-				n, err := d.Int32()
-				if err != nil {
-					return err
-				}
-				m.Provider = deployment.Provider(n)
-				return nil
-			case jx.Null:
-				return d.Null()
-			default:
-				return fmt.Errorf("invalid enum token %s", d.Next())
-			}
-		case "settings":
-			if seen["Settings"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["Settings"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			m.Settings = &schemapb.Filled{}
-			if err := jxpb.DecMessage(d, m.Settings); err != nil {
-				return err
-			}
-			return nil
-		default:
-			return fmt.Errorf("unknown field %q", key)
-		}
-	})
-}
-
-func (m *SetTenantProviderSettingsRequest) MarshalJSON() ([]byte, error) {
-	var e jx.Encoder
-	m.Encode(&e)
-	return e.Bytes(), nil
-}
-
-func (m *SetTenantProviderSettingsRequest) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return m.Decode(d)
-}
-
-func (m *SetTenantProviderSettingsResponse) Encode(e *jx.Encoder) {
-	if m == nil {
-		e.ObjStart()
-		e.ObjEnd()
-		return
-	}
-	e.ObjStart()
-	if m.Settings != nil {
-		e.FieldStart("settings")
-		jxpb.EncMessage(e, m.Settings)
-	}
-	e.ObjEnd()
-}
-
-func (m *SetTenantProviderSettingsResponse) Decode(d *jx.Decoder) error {
-	seen := map[string]bool{}
-	return d.Obj(func(d *jx.Decoder, key string) error {
-		switch key {
 		case "settings":
 			if seen["Settings"] {
 				return fmt.Errorf("duplicate field %q", key)
@@ -362,13 +276,13 @@ func (m *SetTenantProviderSettingsResponse) Decode(d *jx.Decoder) error {
 	})
 }
 
-func (m *SetTenantProviderSettingsResponse) MarshalJSON() ([]byte, error) {
+func (m *SetTenantProviderSettingsRequest) MarshalJSON() ([]byte, error) {
 	var e jx.Encoder
 	m.Encode(&e)
 	return e.Bytes(), nil
 }
 
-func (m *SetTenantProviderSettingsResponse) UnmarshalJSON(data []byte) error {
+func (m *SetTenantProviderSettingsRequest) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return m.Decode(d)
 }

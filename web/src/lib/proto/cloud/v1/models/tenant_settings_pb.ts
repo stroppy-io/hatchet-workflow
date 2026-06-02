@@ -6,8 +6,10 @@ import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Entity, EntityJson } from "../common/entity_pb.ts";
 import { file_cloud_v1_common_entity } from "../common/entity_pb.ts";
-import type { Provider, ProviderJson, ProviderSettings, ProviderSettingsJson } from "../deployment/provider_pb.ts";
+import type { Provider, ProviderJson } from "../deployment/provider_pb.ts";
 import { file_cloud_v1_deployment_provider } from "../deployment/provider_pb.ts";
+import type { Yandex_Settings, Yandex_SettingsJson } from "../deployment/yandex_pb.ts";
+import { file_cloud_v1_deployment_yandex } from "../deployment/yandex_pb.ts";
 import { file_validate_validate } from "../../../validate/validate_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -15,7 +17,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/models/tenant_settings.proto.
  */
 export const file_cloud_v1_models_tenant_settings: GenFile = /*@__PURE__*/
-  fileDesc("CiVjbG91ZC92MS9tb2RlbHMvdGVuYW50X3NldHRpbmdzLnByb3RvEg9jbG91ZC52MS5tb2RlbHMi/gIKFFRlbmFudFNldHRpbmdzUmVjb3JkEjEKBmVudGl0eRgBIAEoCzIXLmNsb3VkLnYxLmNvbW1vbi5FbnRpdHlCCPpCBYoBAhABEjcKEGRlZmF1bHRfcHJvdmlkZXIYAiABKA4yHS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyEiUKGGRlZmF1bHRfaW5fdGVuYW50X3JhdGluZxgDIAEoCEgAiAEBEiUKGGRlZmF1bHRfaW5fZ2xvYmFsX3JhdGluZxgEIAEoCEgBiAEBEhwKFGRlZmF1bHRfbWF4X3BhcmFsbGVsGAUgASgNEhoKEnJ1bl9yZXRlbnRpb25fZGF5cxgGIAEoDRI4Cglwcm92aWRlcnMYByADKAsyJS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyU2V0dGluZ3NCGwoZX2RlZmF1bHRfaW5fdGVuYW50X3JhdGluZ0IbChlfZGVmYXVsdF9pbl9nbG9iYWxfcmF0aW5nQkRaQmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL21vZGVsc2IGcHJvdG8z", [file_cloud_v1_common_entity, file_cloud_v1_deployment_provider, file_validate_validate]);
+  fileDesc("CiVjbG91ZC92MS9tb2RlbHMvdGVuYW50X3NldHRpbmdzLnByb3RvEg9jbG91ZC52MS5tb2RlbHMigwMKFFRlbmFudFNldHRpbmdzUmVjb3JkEjEKBmVudGl0eRgBIAEoCzIXLmNsb3VkLnYxLmNvbW1vbi5FbnRpdHlCCPpCBYoBAhABEjcKEGRlZmF1bHRfcHJvdmlkZXIYAiABKA4yHS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyEiUKGGRlZmF1bHRfaW5fdGVuYW50X3JhdGluZxgDIAEoCEgAiAEBEiUKGGRlZmF1bHRfaW5fZ2xvYmFsX3JhdGluZxgEIAEoCEgBiAEBEhwKFGRlZmF1bHRfbWF4X3BhcmFsbGVsGAUgASgNEhoKEnJ1bl9yZXRlbnRpb25fZGF5cxgGIAEoDRI9Cg95YW5kZXhfc2V0dGluZ3MYByABKAsyJC5jbG91ZC52MS5kZXBsb3ltZW50LllhbmRleC5TZXR0aW5nc0IbChlfZGVmYXVsdF9pbl90ZW5hbnRfcmF0aW5nQhsKGV9kZWZhdWx0X2luX2dsb2JhbF9yYXRpbmdCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvbW9kZWxzYgZwcm90bzM", [file_cloud_v1_common_entity, file_cloud_v1_deployment_provider, file_cloud_v1_deployment_yandex, file_validate_validate]);
 
 /**
  *
@@ -89,9 +91,9 @@ export type TenantSettingsRecord = Message<"cloud.v1.models.TenantSettingsRecord
    * values carry secrets (mark secret fields in the schema); guard reads.
    * At most one entry per Provider.
    *
-   * @generated from field: repeated cloud.v1.deployment.ProviderSettings providers = 7;
+   * @generated from field: cloud.v1.deployment.Yandex.Settings yandex_settings = 7;
    */
-  providers: ProviderSettings[];
+  yandexSettings?: Yandex_Settings;
 };
 
 /**
@@ -166,9 +168,9 @@ export type TenantSettingsRecordJson = {
    * values carry secrets (mark secret fields in the schema); guard reads.
    * At most one entry per Provider.
    *
-   * @generated from field: repeated cloud.v1.deployment.ProviderSettings providers = 7;
+   * @generated from field: cloud.v1.deployment.Yandex.Settings yandex_settings = 7;
    */
-  providers?: ProviderSettingsJson[];
+  yandexSettings?: Yandex_SettingsJson;
 };
 
 export type TenantSettingsRecordValid = TenantSettingsRecord;

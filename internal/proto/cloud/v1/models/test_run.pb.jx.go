@@ -60,6 +60,14 @@ func (m *TestRunRecord) Encode(e *jx.Encoder) {
 		e.FieldStart("summary")
 		m.Summary.Encode(e)
 	}
+	if m.InfrastructureState != nil {
+		e.FieldStart("infrastructureState")
+		jxpb.EncMessage(e, m.InfrastructureState)
+	}
+	if m.DeploymentPlan != nil {
+		e.FieldStart("deploymentPlan")
+		jxpb.EncMessage(e, m.DeploymentPlan)
+	}
 	e.ObjEnd()
 }
 
@@ -203,6 +211,32 @@ func (m *TestRunRecord) Decode(d *jx.Decoder) error {
 			}
 			m.Summary = &TestRunRecord_Summary{}
 			if err := m.Summary.Decode(d); err != nil {
+				return err
+			}
+			return nil
+		case "infrastructureState", "infrastructure_state":
+			if seen["InfrastructureState"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["InfrastructureState"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.InfrastructureState = &deployment.InfrastructureState{}
+			if err := jxpb.DecMessage(d, m.InfrastructureState); err != nil {
+				return err
+			}
+			return nil
+		case "deploymentPlan", "deployment_plan":
+			if seen["DeploymentPlan"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["DeploymentPlan"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.DeploymentPlan = &deployment.DeploymentPlan{}
+			if err := jxpb.DecMessage(d, m.DeploymentPlan); err != nil {
 				return err
 			}
 			return nil

@@ -111,9 +111,9 @@ func (ListTestRunsRequest_Sort_Kind) EnumDescriptor() ([]byte, []int) {
 	return file_cloud_v1_api_test_run_proto_rawDescGZIP(), []int{4, 0, 0}
 }
 
-// StartTestRun launches a run. Provide a fully-baked `run` (CLI / wizard finish)
-// to persist a new record and start it; or `test_run_id` to re-run an existing
-// record's spec as a new run. Launches TestWorkflow.
+// StartTestRun launches a run. Provide a staged `run` spec (CLI / wizard
+// finish) to persist a new record and start it; or `test_run_id` to re-run an
+// existing record's spec as a new run. Launches TestWorkflow.
 type StartTestRunRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// tenant_id scopes the request to the owning tenant.
@@ -217,7 +217,7 @@ type isStartTestRunRequest_Source interface {
 }
 
 type StartTestRunRequest_Run struct {
-	// run is a fully-baked TestRun to persist and start (CLI / wizard finish).
+	// run is a staged TestRun spec to persist and start (CLI / wizard finish).
 	Run *domain.TestRun `protobuf:"bytes,2,opt,name=run,proto3,oneof"`
 }
 

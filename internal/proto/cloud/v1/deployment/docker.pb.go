@@ -272,6 +272,42 @@ func (x *Docker) GetOutput() *Docker_Output {
 	return nil
 }
 
+type Docker_Settings struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Docker_Settings) Reset() {
+	*x = Docker_Settings{}
+	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Docker_Settings) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Docker_Settings) ProtoMessage() {}
+
+func (x *Docker_Settings) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Docker_Settings.ProtoReflect.Descriptor instead.
+func (*Docker_Settings) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_deployment_docker_proto_rawDescGZIP(), []int{0, 0}
+}
+
 // Input contains runtime parameters passed to the Docker deployer.
 type Docker_Input struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -285,7 +321,7 @@ type Docker_Input struct {
 
 func (x *Docker_Input) Reset() {
 	*x = Docker_Input{}
-	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[1]
+	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -297,7 +333,7 @@ func (x *Docker_Input) String() string {
 func (*Docker_Input) ProtoMessage() {}
 
 func (x *Docker_Input) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[1]
+	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -310,7 +346,7 @@ func (x *Docker_Input) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Docker_Input.ProtoReflect.Descriptor instead.
 func (*Docker_Input) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_docker_proto_rawDescGZIP(), []int{0, 0}
+	return file_cloud_v1_deployment_docker_proto_rawDescGZIP(), []int{0, 1}
 }
 
 func (x *Docker_Input) GetNetwork() *Docker_Network {
@@ -340,7 +376,7 @@ type Docker_Network struct {
 
 func (x *Docker_Network) Reset() {
 	*x = Docker_Network{}
-	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[2]
+	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -352,7 +388,7 @@ func (x *Docker_Network) String() string {
 func (*Docker_Network) ProtoMessage() {}
 
 func (x *Docker_Network) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[2]
+	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -365,7 +401,7 @@ func (x *Docker_Network) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Docker_Network.ProtoReflect.Descriptor instead.
 func (*Docker_Network) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_docker_proto_rawDescGZIP(), []int{0, 1}
+	return file_cloud_v1_deployment_docker_proto_rawDescGZIP(), []int{0, 2}
 }
 
 func (x *Docker_Network) GetName() string {
@@ -427,7 +463,7 @@ type Docker_Container struct {
 
 func (x *Docker_Container) Reset() {
 	*x = Docker_Container{}
-	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[3]
+	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -439,7 +475,7 @@ func (x *Docker_Container) String() string {
 func (*Docker_Container) ProtoMessage() {}
 
 func (x *Docker_Container) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[3]
+	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -452,7 +488,7 @@ func (x *Docker_Container) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Docker_Container.ProtoReflect.Descriptor instead.
 func (*Docker_Container) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_docker_proto_rawDescGZIP(), []int{0, 2}
+	return file_cloud_v1_deployment_docker_proto_rawDescGZIP(), []int{0, 3}
 }
 
 func (x *Docker_Container) GetImage() string {
@@ -596,7 +632,7 @@ type Docker_VolumeMount struct {
 
 func (x *Docker_VolumeMount) Reset() {
 	*x = Docker_VolumeMount{}
-	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[4]
+	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -608,7 +644,7 @@ func (x *Docker_VolumeMount) String() string {
 func (*Docker_VolumeMount) ProtoMessage() {}
 
 func (x *Docker_VolumeMount) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[4]
+	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -621,7 +657,7 @@ func (x *Docker_VolumeMount) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Docker_VolumeMount.ProtoReflect.Descriptor instead.
 func (*Docker_VolumeMount) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_docker_proto_rawDescGZIP(), []int{0, 3}
+	return file_cloud_v1_deployment_docker_proto_rawDescGZIP(), []int{0, 4}
 }
 
 func (x *Docker_VolumeMount) GetName() string {
@@ -662,7 +698,7 @@ type Docker_PortBinding struct {
 
 func (x *Docker_PortBinding) Reset() {
 	*x = Docker_PortBinding{}
-	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[5]
+	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -674,7 +710,7 @@ func (x *Docker_PortBinding) String() string {
 func (*Docker_PortBinding) ProtoMessage() {}
 
 func (x *Docker_PortBinding) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[5]
+	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -687,7 +723,7 @@ func (x *Docker_PortBinding) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Docker_PortBinding.ProtoReflect.Descriptor instead.
 func (*Docker_PortBinding) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_docker_proto_rawDescGZIP(), []int{0, 4}
+	return file_cloud_v1_deployment_docker_proto_rawDescGZIP(), []int{0, 5}
 }
 
 func (x *Docker_PortBinding) GetContainerPort() uint32 {
@@ -733,7 +769,7 @@ type Docker_File struct {
 
 func (x *Docker_File) Reset() {
 	*x = Docker_File{}
-	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[6]
+	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -745,7 +781,7 @@ func (x *Docker_File) String() string {
 func (*Docker_File) ProtoMessage() {}
 
 func (x *Docker_File) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[6]
+	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -758,7 +794,7 @@ func (x *Docker_File) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Docker_File.ProtoReflect.Descriptor instead.
 func (*Docker_File) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_docker_proto_rawDescGZIP(), []int{0, 5}
+	return file_cloud_v1_deployment_docker_proto_rawDescGZIP(), []int{0, 6}
 }
 
 func (x *Docker_File) GetPath() string {
@@ -801,7 +837,7 @@ type Docker_Healthcheck struct {
 
 func (x *Docker_Healthcheck) Reset() {
 	*x = Docker_Healthcheck{}
-	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[7]
+	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -813,7 +849,7 @@ func (x *Docker_Healthcheck) String() string {
 func (*Docker_Healthcheck) ProtoMessage() {}
 
 func (x *Docker_Healthcheck) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[7]
+	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -826,7 +862,7 @@ func (x *Docker_Healthcheck) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Docker_Healthcheck.ProtoReflect.Descriptor instead.
 func (*Docker_Healthcheck) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_docker_proto_rawDescGZIP(), []int{0, 6}
+	return file_cloud_v1_deployment_docker_proto_rawDescGZIP(), []int{0, 7}
 }
 
 func (x *Docker_Healthcheck) GetTest() []string {
@@ -879,7 +915,7 @@ type Docker_Resources struct {
 
 func (x *Docker_Resources) Reset() {
 	*x = Docker_Resources{}
-	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[8]
+	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -891,7 +927,7 @@ func (x *Docker_Resources) String() string {
 func (*Docker_Resources) ProtoMessage() {}
 
 func (x *Docker_Resources) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[8]
+	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -904,7 +940,7 @@ func (x *Docker_Resources) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Docker_Resources.ProtoReflect.Descriptor instead.
 func (*Docker_Resources) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_docker_proto_rawDescGZIP(), []int{0, 7}
+	return file_cloud_v1_deployment_docker_proto_rawDescGZIP(), []int{0, 8}
 }
 
 func (x *Docker_Resources) GetCpuCores() float64 {
@@ -941,7 +977,7 @@ type Docker_Output struct {
 
 func (x *Docker_Output) Reset() {
 	*x = Docker_Output{}
-	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[9]
+	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -953,7 +989,7 @@ func (x *Docker_Output) String() string {
 func (*Docker_Output) ProtoMessage() {}
 
 func (x *Docker_Output) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[9]
+	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -966,7 +1002,7 @@ func (x *Docker_Output) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Docker_Output.ProtoReflect.Descriptor instead.
 func (*Docker_Output) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_docker_proto_rawDescGZIP(), []int{0, 8}
+	return file_cloud_v1_deployment_docker_proto_rawDescGZIP(), []int{0, 9}
 }
 
 func (x *Docker_Output) GetContainers() map[string]*Docker_ContainerOutput {
@@ -1004,7 +1040,7 @@ type Docker_ContainerOutput struct {
 
 func (x *Docker_ContainerOutput) Reset() {
 	*x = Docker_ContainerOutput{}
-	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[10]
+	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1016,7 +1052,7 @@ func (x *Docker_ContainerOutput) String() string {
 func (*Docker_ContainerOutput) ProtoMessage() {}
 
 func (x *Docker_ContainerOutput) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[10]
+	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1029,7 +1065,7 @@ func (x *Docker_ContainerOutput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Docker_ContainerOutput.ProtoReflect.Descriptor instead.
 func (*Docker_ContainerOutput) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_docker_proto_rawDescGZIP(), []int{0, 9}
+	return file_cloud_v1_deployment_docker_proto_rawDescGZIP(), []int{0, 10}
 }
 
 func (x *Docker_ContainerOutput) GetId() string {
@@ -1078,10 +1114,12 @@ var File_cloud_v1_deployment_docker_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_deployment_docker_proto_rawDesc = "" +
 	"\n" +
-	" cloud/v1/deployment/docker.proto\x12\x13cloud.v1.deployment\x1a\x17validate/validate.proto\"\xb3\x1b\n" +
+	" cloud/v1/deployment/docker.proto\x12\x13cloud.v1.deployment\x1a\x17validate/validate.proto\"\xbf\x1b\n" +
 	"\x06Docker\x12A\n" +
 	"\x05input\x18\x01 \x01(\v2!.cloud.v1.deployment.Docker.InputB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x05input\x12:\n" +
-	"\x06output\x18\x02 \x01(\v2\".cloud.v1.deployment.Docker.OutputR\x06output\x1a\x93\x02\n" +
+	"\x06output\x18\x02 \x01(\v2\".cloud.v1.deployment.Docker.OutputR\x06output\x1a\n" +
+	"\n" +
+	"\bSettings\x1a\x93\x02\n" +
 	"\x05Input\x12G\n" +
 	"\anetwork\x18\x02 \x01(\v2#.cloud.v1.deployment.Docker.NetworkB\b\xfaB\x05\x8a\x01\x02\x10\x01R\anetwork\x12[\n" +
 	"\n" +
@@ -1207,48 +1245,49 @@ func file_cloud_v1_deployment_docker_proto_rawDescGZIP() []byte {
 }
 
 var file_cloud_v1_deployment_docker_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_cloud_v1_deployment_docker_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_cloud_v1_deployment_docker_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_cloud_v1_deployment_docker_proto_goTypes = []any{
 	(Docker_Protocol)(0),           // 0: cloud.v1.deployment.Docker.Protocol
 	(Docker_RestartPolicy)(0),      // 1: cloud.v1.deployment.Docker.RestartPolicy
 	(Docker_QuotaKind)(0),          // 2: cloud.v1.deployment.Docker.QuotaKind
 	(*Docker)(nil),                 // 3: cloud.v1.deployment.Docker
-	(*Docker_Input)(nil),           // 4: cloud.v1.deployment.Docker.Input
-	(*Docker_Network)(nil),         // 5: cloud.v1.deployment.Docker.Network
-	(*Docker_Container)(nil),       // 6: cloud.v1.deployment.Docker.Container
-	(*Docker_VolumeMount)(nil),     // 7: cloud.v1.deployment.Docker.VolumeMount
-	(*Docker_PortBinding)(nil),     // 8: cloud.v1.deployment.Docker.PortBinding
-	(*Docker_File)(nil),            // 9: cloud.v1.deployment.Docker.File
-	(*Docker_Healthcheck)(nil),     // 10: cloud.v1.deployment.Docker.Healthcheck
-	(*Docker_Resources)(nil),       // 11: cloud.v1.deployment.Docker.Resources
-	(*Docker_Output)(nil),          // 12: cloud.v1.deployment.Docker.Output
-	(*Docker_ContainerOutput)(nil), // 13: cloud.v1.deployment.Docker.ContainerOutput
-	nil,                            // 14: cloud.v1.deployment.Docker.Input.ContainersEntry
-	nil,                            // 15: cloud.v1.deployment.Docker.Container.EnvEntry
-	nil,                            // 16: cloud.v1.deployment.Docker.Container.LabelsEntry
-	nil,                            // 17: cloud.v1.deployment.Docker.Container.TmpfsEntry
-	nil,                            // 18: cloud.v1.deployment.Docker.Output.ContainersEntry
-	nil,                            // 19: cloud.v1.deployment.Docker.ContainerOutput.MappedPortsEntry
+	(*Docker_Settings)(nil),        // 4: cloud.v1.deployment.Docker.Settings
+	(*Docker_Input)(nil),           // 5: cloud.v1.deployment.Docker.Input
+	(*Docker_Network)(nil),         // 6: cloud.v1.deployment.Docker.Network
+	(*Docker_Container)(nil),       // 7: cloud.v1.deployment.Docker.Container
+	(*Docker_VolumeMount)(nil),     // 8: cloud.v1.deployment.Docker.VolumeMount
+	(*Docker_PortBinding)(nil),     // 9: cloud.v1.deployment.Docker.PortBinding
+	(*Docker_File)(nil),            // 10: cloud.v1.deployment.Docker.File
+	(*Docker_Healthcheck)(nil),     // 11: cloud.v1.deployment.Docker.Healthcheck
+	(*Docker_Resources)(nil),       // 12: cloud.v1.deployment.Docker.Resources
+	(*Docker_Output)(nil),          // 13: cloud.v1.deployment.Docker.Output
+	(*Docker_ContainerOutput)(nil), // 14: cloud.v1.deployment.Docker.ContainerOutput
+	nil,                            // 15: cloud.v1.deployment.Docker.Input.ContainersEntry
+	nil,                            // 16: cloud.v1.deployment.Docker.Container.EnvEntry
+	nil,                            // 17: cloud.v1.deployment.Docker.Container.LabelsEntry
+	nil,                            // 18: cloud.v1.deployment.Docker.Container.TmpfsEntry
+	nil,                            // 19: cloud.v1.deployment.Docker.Output.ContainersEntry
+	nil,                            // 20: cloud.v1.deployment.Docker.ContainerOutput.MappedPortsEntry
 }
 var file_cloud_v1_deployment_docker_proto_depIdxs = []int32{
-	4,  // 0: cloud.v1.deployment.Docker.input:type_name -> cloud.v1.deployment.Docker.Input
-	12, // 1: cloud.v1.deployment.Docker.output:type_name -> cloud.v1.deployment.Docker.Output
-	5,  // 2: cloud.v1.deployment.Docker.Input.network:type_name -> cloud.v1.deployment.Docker.Network
-	14, // 3: cloud.v1.deployment.Docker.Input.containers:type_name -> cloud.v1.deployment.Docker.Input.ContainersEntry
-	15, // 4: cloud.v1.deployment.Docker.Container.env:type_name -> cloud.v1.deployment.Docker.Container.EnvEntry
-	16, // 5: cloud.v1.deployment.Docker.Container.labels:type_name -> cloud.v1.deployment.Docker.Container.LabelsEntry
-	17, // 6: cloud.v1.deployment.Docker.Container.tmpfs:type_name -> cloud.v1.deployment.Docker.Container.TmpfsEntry
-	7,  // 7: cloud.v1.deployment.Docker.Container.volumes:type_name -> cloud.v1.deployment.Docker.VolumeMount
-	8,  // 8: cloud.v1.deployment.Docker.Container.ports:type_name -> cloud.v1.deployment.Docker.PortBinding
-	9,  // 9: cloud.v1.deployment.Docker.Container.files:type_name -> cloud.v1.deployment.Docker.File
+	5,  // 0: cloud.v1.deployment.Docker.input:type_name -> cloud.v1.deployment.Docker.Input
+	13, // 1: cloud.v1.deployment.Docker.output:type_name -> cloud.v1.deployment.Docker.Output
+	6,  // 2: cloud.v1.deployment.Docker.Input.network:type_name -> cloud.v1.deployment.Docker.Network
+	15, // 3: cloud.v1.deployment.Docker.Input.containers:type_name -> cloud.v1.deployment.Docker.Input.ContainersEntry
+	16, // 4: cloud.v1.deployment.Docker.Container.env:type_name -> cloud.v1.deployment.Docker.Container.EnvEntry
+	17, // 5: cloud.v1.deployment.Docker.Container.labels:type_name -> cloud.v1.deployment.Docker.Container.LabelsEntry
+	18, // 6: cloud.v1.deployment.Docker.Container.tmpfs:type_name -> cloud.v1.deployment.Docker.Container.TmpfsEntry
+	8,  // 7: cloud.v1.deployment.Docker.Container.volumes:type_name -> cloud.v1.deployment.Docker.VolumeMount
+	9,  // 8: cloud.v1.deployment.Docker.Container.ports:type_name -> cloud.v1.deployment.Docker.PortBinding
+	10, // 9: cloud.v1.deployment.Docker.Container.files:type_name -> cloud.v1.deployment.Docker.File
 	1,  // 10: cloud.v1.deployment.Docker.Container.restart_policy:type_name -> cloud.v1.deployment.Docker.RestartPolicy
-	10, // 11: cloud.v1.deployment.Docker.Container.healthcheck:type_name -> cloud.v1.deployment.Docker.Healthcheck
-	11, // 12: cloud.v1.deployment.Docker.Container.resources:type_name -> cloud.v1.deployment.Docker.Resources
+	11, // 11: cloud.v1.deployment.Docker.Container.healthcheck:type_name -> cloud.v1.deployment.Docker.Healthcheck
+	12, // 12: cloud.v1.deployment.Docker.Container.resources:type_name -> cloud.v1.deployment.Docker.Resources
 	0,  // 13: cloud.v1.deployment.Docker.PortBinding.protocol:type_name -> cloud.v1.deployment.Docker.Protocol
-	18, // 14: cloud.v1.deployment.Docker.Output.containers:type_name -> cloud.v1.deployment.Docker.Output.ContainersEntry
-	19, // 15: cloud.v1.deployment.Docker.ContainerOutput.mapped_ports:type_name -> cloud.v1.deployment.Docker.ContainerOutput.MappedPortsEntry
-	6,  // 16: cloud.v1.deployment.Docker.Input.ContainersEntry.value:type_name -> cloud.v1.deployment.Docker.Container
-	13, // 17: cloud.v1.deployment.Docker.Output.ContainersEntry.value:type_name -> cloud.v1.deployment.Docker.ContainerOutput
+	19, // 14: cloud.v1.deployment.Docker.Output.containers:type_name -> cloud.v1.deployment.Docker.Output.ContainersEntry
+	20, // 15: cloud.v1.deployment.Docker.ContainerOutput.mapped_ports:type_name -> cloud.v1.deployment.Docker.ContainerOutput.MappedPortsEntry
+	7,  // 16: cloud.v1.deployment.Docker.Input.ContainersEntry.value:type_name -> cloud.v1.deployment.Docker.Container
+	14, // 17: cloud.v1.deployment.Docker.Output.ContainersEntry.value:type_name -> cloud.v1.deployment.Docker.ContainerOutput
 	18, // [18:18] is the sub-list for method output_type
 	18, // [18:18] is the sub-list for method input_type
 	18, // [18:18] is the sub-list for extension type_name
@@ -1267,7 +1306,7 @@ func file_cloud_v1_deployment_docker_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_deployment_docker_proto_rawDesc), len(file_cloud_v1_deployment_docker_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   17,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

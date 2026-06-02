@@ -6,9 +6,19 @@ import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Entity, EntityJson } from "../common/entity_pb.ts";
 import { file_cloud_v1_common_entity } from "../common/entity_pb.ts";
-import type { Topology, TopologyJson } from "../topology/topology_pb.ts";
+import type { InfrastructurePlan, InfrastructurePlanJson } from "../deployment/infrastructure_pb.ts";
+import { file_cloud_v1_deployment_infrastructure } from "../deployment/infrastructure_pb.ts";
+import type { Provider, ProviderJson } from "../deployment/provider_pb.ts";
+import { file_cloud_v1_deployment_provider } from "../deployment/provider_pb.ts";
+import type { RenderOverrideSet, RenderOverrideSetJson, RenderPreview, RenderPreviewJson } from "../deployment/render_pb.ts";
+import { file_cloud_v1_deployment_render } from "../deployment/render_pb.ts";
+import type { Database, DatabaseJson } from "../domain/database_pb.ts";
+import { file_cloud_v1_domain_database } from "../domain/database_pb.ts";
+import type { Workload, WorkloadJson } from "../domain/workload_pb.ts";
+import { file_cloud_v1_domain_workload } from "../domain/workload_pb.ts";
+import type { TopologySpec, TopologySpecJson } from "../topology/topology_pb.ts";
 import { file_cloud_v1_topology_topology } from "../topology/topology_pb.ts";
-import type { FieldError, FieldErrorJson, Filled, FilledJson } from "../../../schemapb/schema_pb.ts";
+import type { FieldError, FieldErrorJson } from "../../../schemapb/schema_pb.ts";
 import { file_schemapb_schema } from "../../../schemapb/schema_pb.ts";
 import { file_validate_validate } from "../../../validate/validate_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
@@ -17,28 +27,19 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/models/test_wizard.proto.
  */
 export const file_cloud_v1_models_test_wizard: GenFile = /*@__PURE__*/
-  fileDesc("CiFjbG91ZC92MS9tb2RlbHMvdGVzdF93aXphcmQucHJvdG8SD2Nsb3VkLnYxLm1vZGVscyLvAQoVVGVzdFdpemFyZERyYWZ0UmVjb3JkEjEKBmVudGl0eRgBIAEoCzIXLmNsb3VkLnYxLmNvbW1vbi5FbnRpdHlCCPpCBYoBAhABEh4KBGZvcm0YAiABKAsyEC5zY2hlbWFwYi5GaWxsZWQSLQoIdG9wb2xvZ3kYAyABKAsyGy5jbG91ZC52MS50b3BvbG9neS5Ub3BvbG9neRIkCgZlcnJvcnMYBCADKAsyFC5zY2hlbWFwYi5GaWVsZEVycm9yEg0KBXJlYWR5GAUgASgIEh8KDnRlc3RfcHJlc2V0X2lkGAYgASgJQgf6QgRyAhhAQkRaQmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL21vZGVsc2IGcHJvdG8z", [file_cloud_v1_common_entity, file_cloud_v1_topology_topology, file_schemapb_schema, file_validate_validate]);
+  fileDesc("CiFjbG91ZC92MS9tb2RlbHMvdGVzdF93aXphcmQucHJvdG8SD2Nsb3VkLnYxLm1vZGVscyKxBAoVVGVzdFdpemFyZERyYWZ0UmVjb3JkEjEKBmVudGl0eRgBIAEoCzIXLmNsb3VkLnYxLmNvbW1vbi5FbnRpdHlCCPpCBYoBAhABEjkKCHByb3ZpZGVyGAIgASgOMh0uY2xvdWQudjEuZGVwbG95bWVudC5Qcm92aWRlckII+kIFggECEAESKwoIZGF0YWJhc2UYByABKAsyGS5jbG91ZC52MS5kb21haW4uRGF0YWJhc2USKwoId29ya2xvYWQYCCABKAsyGS5jbG91ZC52MS5kb21haW4uV29ya2xvYWQSNgoNdG9wb2xvZ3lfc3BlYxgDIAEoCzIfLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5U3BlYxJEChNpbmZyYXN0cnVjdHVyZV9wbGFuGAkgASgLMicuY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVBsYW4SOgoOcmVuZGVyX3ByZXZpZXcYCiABKAsyIi5jbG91ZC52MS5kZXBsb3ltZW50LlJlbmRlclByZXZpZXcSQAoQcmVuZGVyX292ZXJyaWRlcxgLIAEoCzImLmNsb3VkLnYxLmRlcGxveW1lbnQuUmVuZGVyT3ZlcnJpZGVTZXQSJAoGZXJyb3JzGAQgAygLMhQuc2NoZW1hcGIuRmllbGRFcnJvchINCgVyZWFkeRgFIAEoCBIfCg50ZXN0X3ByZXNldF9pZBgGIAEoCUIH+kIEcgIYQEJEWkJnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9tb2RlbHNiBnByb3RvMw", [file_cloud_v1_common_entity, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_provider, file_cloud_v1_deployment_render, file_cloud_v1_domain_database, file_cloud_v1_domain_workload, file_cloud_v1_topology_topology, file_schemapb_schema, file_validate_validate]);
 
 /**
  *
  * TestWizardDraft is the server-held, mutable state of a TEST wizard.
  *
- * Big-schema model: the whole test form is ONE composite schemapb schema,
- * carried in `form` (a Filled = schema + values). It is the chosen DATABASE
- * schema (selected by kind: postgres/mysql/mariadb/picodata/ydb/ydbmanaged/
- * cockroach — pure and provider-agnostic, owning its own DB-internal cross-rules)
- * + a WORKLOAD schema + a `provider_type` selector that names which tenant
- * provider to deploy on. The form does NOT carry provider SETTINGS (those come
- * from TenantSettings.providers, keyed by provider_type) and does NOT carry
- * per-node machine forms (machines are derived, never entered by the user).
+ * The server derives:
+ * database + workload -> topology_spec
+ * topology_spec + provider/defaults/user overrides -> infrastructure_plan
  *
- * The server builds the composite schema, validates the whole form
- * authoritatively, re-derives the topology and recomputes readiness on every
- * patch. The frontend renders the form straight from `form` (schemapb ts sdk +
- * cel-es for live UX) and sends back a patched Filled.
- *
- * Persistence: own table (tenant-scoped via Entity) + in-memory cache. On finish
- * it bakes into a domain.TestRun.
+ * Provider account settings come from tenant settings at bake/start time. The
+ * draft stores provider choice and per-node machine overrides inside
+ * infrastructure_plan.
  *
  * @generated from message cloud.v1.models.TestWizardDraftRecord
  */
@@ -54,25 +55,65 @@ export type TestWizardDraftRecord = Message<"cloud.v1.models.TestWizardDraftReco
 
   /**
    *
-   * form is the whole test form as one composite schema + its current values
-   * (a Filled = schema + values): the chosen database schema (by kind,
-   * provider-agnostic) + a workload schema + a provider_type selector. No
-   * provider settings, no per-node machine forms.
+   * provider selects the deployment backend (docker/yandex).
    *
-   * @generated from field: schemapb.Filled form = 2;
+   * @generated from field: cloud.v1.deployment.Provider provider = 2;
    */
-  form?: Filled;
+  provider: Provider;
 
   /**
    *
-   * topology is the server-DERIVED topology, recomputed on every patch: the
-   * role->VM expander turns the validated DB config into machines, then a
-   * provider overlay (zone/disk/platform from the selected provider_type's
-   * TenantSettings) fills each machine's provider_parms. Never user-entered.
+   * database is the typed, provider-agnostic database under test (engine kind +
+   * DatabaseParams: logical node counts, HA flags, options). Replaces the old
+   * schemapb database form half.
    *
-   * @generated from field: cloud.v1.topology.Topology topology = 3;
+   * @generated from field: cloud.v1.domain.Database database = 7;
    */
-  topology?: Topology;
+  database?: Database;
+
+  /**
+   *
+   * workload is the typed stroppy workload (the "how to load" half).
+   *
+   * @generated from field: cloud.v1.domain.Workload workload = 8;
+   */
+  workload?: Workload;
+
+  /**
+   *
+   * topology_spec is the server-derived provider-agnostic graph. Node roles
+   * and counts are never hand-entered; they come from database/workload.
+   *
+   * @generated from field: cloud.v1.topology.TopologySpec topology_spec = 3;
+   */
+  topologySpec?: TopologySpec;
+
+  /**
+   *
+   * infrastructure_plan is the provider-specific resource intent derived from
+   * topology_spec and provider defaults, with user machine overrides merged.
+   *
+   * @generated from field: cloud.v1.deployment.InfrastructurePlan infrastructure_plan = 9;
+   */
+  infrastructurePlan?: InfrastructurePlan;
+
+  /**
+   *
+   * render_preview is the server-rendered wizard view of generated files,
+   * commands, directories, and runtime-only placeholders.
+   *
+   * @generated from field: cloud.v1.deployment.RenderPreview render_preview = 10;
+   */
+  renderPreview?: RenderPreview;
+
+  /**
+   *
+   * render_overrides are user edits to editable render artifacts. They are
+   * merged into render_preview and later into the runtime deployment plan.
+   *
+   * @generated from field: cloud.v1.deployment.RenderOverrideSet render_overrides = 11;
+   */
+  renderOverrides?: RenderOverrideSet;
 
   /**
    *
@@ -108,22 +149,13 @@ export type TestWizardDraftRecord = Message<"cloud.v1.models.TestWizardDraftReco
  *
  * TestWizardDraft is the server-held, mutable state of a TEST wizard.
  *
- * Big-schema model: the whole test form is ONE composite schemapb schema,
- * carried in `form` (a Filled = schema + values). It is the chosen DATABASE
- * schema (selected by kind: postgres/mysql/mariadb/picodata/ydb/ydbmanaged/
- * cockroach — pure and provider-agnostic, owning its own DB-internal cross-rules)
- * + a WORKLOAD schema + a `provider_type` selector that names which tenant
- * provider to deploy on. The form does NOT carry provider SETTINGS (those come
- * from TenantSettings.providers, keyed by provider_type) and does NOT carry
- * per-node machine forms (machines are derived, never entered by the user).
+ * The server derives:
+ * database + workload -> topology_spec
+ * topology_spec + provider/defaults/user overrides -> infrastructure_plan
  *
- * The server builds the composite schema, validates the whole form
- * authoritatively, re-derives the topology and recomputes readiness on every
- * patch. The frontend renders the form straight from `form` (schemapb ts sdk +
- * cel-es for live UX) and sends back a patched Filled.
- *
- * Persistence: own table (tenant-scoped via Entity) + in-memory cache. On finish
- * it bakes into a domain.TestRun.
+ * Provider account settings come from tenant settings at bake/start time. The
+ * draft stores provider choice and per-node machine overrides inside
+ * infrastructure_plan.
  *
  * @generated from message cloud.v1.models.TestWizardDraftRecord
  */
@@ -139,25 +171,65 @@ export type TestWizardDraftRecordJson = {
 
   /**
    *
-   * form is the whole test form as one composite schema + its current values
-   * (a Filled = schema + values): the chosen database schema (by kind,
-   * provider-agnostic) + a workload schema + a provider_type selector. No
-   * provider settings, no per-node machine forms.
+   * provider selects the deployment backend (docker/yandex).
    *
-   * @generated from field: schemapb.Filled form = 2;
+   * @generated from field: cloud.v1.deployment.Provider provider = 2;
    */
-  form?: FilledJson;
+  provider?: ProviderJson;
 
   /**
    *
-   * topology is the server-DERIVED topology, recomputed on every patch: the
-   * role->VM expander turns the validated DB config into machines, then a
-   * provider overlay (zone/disk/platform from the selected provider_type's
-   * TenantSettings) fills each machine's provider_parms. Never user-entered.
+   * database is the typed, provider-agnostic database under test (engine kind +
+   * DatabaseParams: logical node counts, HA flags, options). Replaces the old
+   * schemapb database form half.
    *
-   * @generated from field: cloud.v1.topology.Topology topology = 3;
+   * @generated from field: cloud.v1.domain.Database database = 7;
    */
-  topology?: TopologyJson;
+  database?: DatabaseJson;
+
+  /**
+   *
+   * workload is the typed stroppy workload (the "how to load" half).
+   *
+   * @generated from field: cloud.v1.domain.Workload workload = 8;
+   */
+  workload?: WorkloadJson;
+
+  /**
+   *
+   * topology_spec is the server-derived provider-agnostic graph. Node roles
+   * and counts are never hand-entered; they come from database/workload.
+   *
+   * @generated from field: cloud.v1.topology.TopologySpec topology_spec = 3;
+   */
+  topologySpec?: TopologySpecJson;
+
+  /**
+   *
+   * infrastructure_plan is the provider-specific resource intent derived from
+   * topology_spec and provider defaults, with user machine overrides merged.
+   *
+   * @generated from field: cloud.v1.deployment.InfrastructurePlan infrastructure_plan = 9;
+   */
+  infrastructurePlan?: InfrastructurePlanJson;
+
+  /**
+   *
+   * render_preview is the server-rendered wizard view of generated files,
+   * commands, directories, and runtime-only placeholders.
+   *
+   * @generated from field: cloud.v1.deployment.RenderPreview render_preview = 10;
+   */
+  renderPreview?: RenderPreviewJson;
+
+  /**
+   *
+   * render_overrides are user edits to editable render artifacts. They are
+   * merged into render_preview and later into the runtime deployment plan.
+   *
+   * @generated from field: cloud.v1.deployment.RenderOverrideSet render_overrides = 11;
+   */
+  renderOverrides?: RenderOverrideSetJson;
 
   /**
    *

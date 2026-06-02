@@ -8,12 +8,12 @@ package api
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
-	schemapb "github.com/stroppy-io/schemapb/schemapb"
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	_ "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -228,12 +228,9 @@ type SetTenantProviderSettingsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// tenant_id scopes the request to the owning tenant.
 	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	// provider selects which provider's config to set (must be a defined,
-	// non-zero provider).
-	Provider deployment.Provider `protobuf:"varint,2,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
 	// settings carries only the form values (Filled = values + schema ref); the
 	// server validates against the provider schema and bakes the result.
-	Settings      *schemapb.Filled `protobuf:"bytes,3,opt,name=settings,proto3" json:"settings,omitempty"`
+	Settings      *deployment.ProviderSettings `protobuf:"bytes,2,opt,name=settings,proto3" json:"settings,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -275,60 +272,7 @@ func (x *SetTenantProviderSettingsRequest) GetTenantId() string {
 	return ""
 }
 
-func (x *SetTenantProviderSettingsRequest) GetProvider() deployment.Provider {
-	if x != nil {
-		return x.Provider
-	}
-	return deployment.Provider(0)
-}
-
-func (x *SetTenantProviderSettingsRequest) GetSettings() *schemapb.Filled {
-	if x != nil {
-		return x.Settings
-	}
-	return nil
-}
-
-// SetTenantProviderSettingsResponse returns the saved, baked provider config.
-type SetTenantProviderSettingsResponse struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// settings is the saved, baked provider config.
-	Settings      *deployment.ProviderSettings `protobuf:"bytes,1,opt,name=settings,proto3" json:"settings,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SetTenantProviderSettingsResponse) Reset() {
-	*x = SetTenantProviderSettingsResponse{}
-	mi := &file_cloud_v1_api_tenant_settings_proto_msgTypes[5]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SetTenantProviderSettingsResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SetTenantProviderSettingsResponse) ProtoMessage() {}
-
-func (x *SetTenantProviderSettingsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_tenant_settings_proto_msgTypes[5]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SetTenantProviderSettingsResponse.ProtoReflect.Descriptor instead.
-func (*SetTenantProviderSettingsResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_tenant_settings_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *SetTenantProviderSettingsResponse) GetSettings() *deployment.ProviderSettings {
+func (x *SetTenantProviderSettingsRequest) GetSettings() *deployment.ProviderSettings {
 	if x != nil {
 		return x.Settings
 	}
@@ -339,7 +283,7 @@ var File_cloud_v1_api_tenant_settings_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_tenant_settings_proto_rawDesc = "" +
 	"\n" +
-	"\"cloud/v1/api/tenant_settings.proto\x12\fcloud.v1.api\x1a\"cloud/v1/deployment/provider.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a%cloud/v1/models/tenant_settings.proto\x1a\x15schemapb/schema.proto\x1a\x17validate/validate.proto\"B\n" +
+	"\"cloud/v1/api/tenant_settings.proto\x12\fcloud.v1.api\x1a\"cloud/v1/deployment/provider.proto\x1a\x1acloud/v1/iam/options.proto\x1a%cloud/v1/models/tenant_settings.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x17validate/validate.proto\"B\n" +
 	"\x18GetTenantSettingsRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\"h\n" +
 	"\x19GetTenantSettingsResponse\x12K\n" +
@@ -348,18 +292,14 @@ const file_cloud_v1_api_tenant_settings_proto_rawDesc = "" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12K\n" +
 	"\bsettings\x18\x02 \x01(\v2%.cloud.v1.models.TenantSettingsRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bsettings\"k\n" +
 	"\x1cUpdateTenantSettingsResponse\x12K\n" +
-	"\bsettings\x18\x01 \x01(\v2%.cloud.v1.models.TenantSettingsRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bsettings\"\xc9\x01\n" +
+	"\bsettings\x18\x01 \x01(\v2%.cloud.v1.models.TenantSettingsRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bsettings\"\x8d\x01\n" +
 	" SetTenantProviderSettingsRequest\x12&\n" +
-	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12E\n" +
-	"\bprovider\x18\x02 \x01(\x0e2\x1d.cloud.v1.deployment.ProviderB\n" +
-	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\bprovider\x126\n" +
-	"\bsettings\x18\x03 \x01(\v2\x10.schemapb.FilledB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bsettings\"p\n" +
-	"!SetTenantProviderSettingsResponse\x12K\n" +
-	"\bsettings\x18\x01 \x01(\v2%.cloud.v1.deployment.ProviderSettingsB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bsettings2\x98\x03\n" +
+	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12A\n" +
+	"\bsettings\x18\x02 \x01(\v2%.cloud.v1.deployment.ProviderSettingsR\bsettings2\xfe\x02\n" +
 	"\x15TenantSettingsService\x12s\n" +
 	"\x11GetTenantSettings\x12&.cloud.v1.api.GetTenantSettingsRequest\x1a'.cloud.v1.api.GetTenantSettingsResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x05\x10\x02\x90\x02\x01\x12|\n" +
-	"\x14UpdateTenantSettings\x12).cloud.v1.api.UpdateTenantSettingsRequest\x1a*.cloud.v1.api.UpdateTenantSettingsResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x05\x10\x03\x90\x02\x02\x12\x8b\x01\n" +
-	"\x19SetTenantProviderSettings\x12..cloud.v1.api.SetTenantProviderSettingsRequest\x1a/.cloud.v1.api.SetTenantProviderSettingsResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x05\x10\x03\x90\x02\x02BAZ?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
+	"\x14UpdateTenantSettings\x12).cloud.v1.api.UpdateTenantSettingsRequest\x1a*.cloud.v1.api.UpdateTenantSettingsResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x05\x10\x03\x90\x02\x02\x12r\n" +
+	"\x19SetTenantProviderSettings\x12..cloud.v1.api.SetTenantProviderSettingsRequest\x1a\x16.google.protobuf.Empty\"\r\x8a\xb5\x18\x06\x12\x04\b\x05\x10\x03\x90\x02\x02BAZ?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
 
 var (
 	file_cloud_v1_api_tenant_settings_proto_rawDescOnce sync.Once
@@ -373,37 +313,33 @@ func file_cloud_v1_api_tenant_settings_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_api_tenant_settings_proto_rawDescData
 }
 
-var file_cloud_v1_api_tenant_settings_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_cloud_v1_api_tenant_settings_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_cloud_v1_api_tenant_settings_proto_goTypes = []any{
-	(*GetTenantSettingsRequest)(nil),          // 0: cloud.v1.api.GetTenantSettingsRequest
-	(*GetTenantSettingsResponse)(nil),         // 1: cloud.v1.api.GetTenantSettingsResponse
-	(*UpdateTenantSettingsRequest)(nil),       // 2: cloud.v1.api.UpdateTenantSettingsRequest
-	(*UpdateTenantSettingsResponse)(nil),      // 3: cloud.v1.api.UpdateTenantSettingsResponse
-	(*SetTenantProviderSettingsRequest)(nil),  // 4: cloud.v1.api.SetTenantProviderSettingsRequest
-	(*SetTenantProviderSettingsResponse)(nil), // 5: cloud.v1.api.SetTenantProviderSettingsResponse
-	(*models.TenantSettingsRecord)(nil),       // 6: cloud.v1.models.TenantSettingsRecord
-	(deployment.Provider)(0),                  // 7: cloud.v1.deployment.Provider
-	(*schemapb.Filled)(nil),                   // 8: schemapb.Filled
-	(*deployment.ProviderSettings)(nil),       // 9: cloud.v1.deployment.ProviderSettings
+	(*GetTenantSettingsRequest)(nil),         // 0: cloud.v1.api.GetTenantSettingsRequest
+	(*GetTenantSettingsResponse)(nil),        // 1: cloud.v1.api.GetTenantSettingsResponse
+	(*UpdateTenantSettingsRequest)(nil),      // 2: cloud.v1.api.UpdateTenantSettingsRequest
+	(*UpdateTenantSettingsResponse)(nil),     // 3: cloud.v1.api.UpdateTenantSettingsResponse
+	(*SetTenantProviderSettingsRequest)(nil), // 4: cloud.v1.api.SetTenantProviderSettingsRequest
+	(*models.TenantSettingsRecord)(nil),      // 5: cloud.v1.models.TenantSettingsRecord
+	(*deployment.ProviderSettings)(nil),      // 6: cloud.v1.deployment.ProviderSettings
+	(*emptypb.Empty)(nil),                    // 7: google.protobuf.Empty
 }
 var file_cloud_v1_api_tenant_settings_proto_depIdxs = []int32{
-	6, // 0: cloud.v1.api.GetTenantSettingsResponse.settings:type_name -> cloud.v1.models.TenantSettingsRecord
-	6, // 1: cloud.v1.api.UpdateTenantSettingsRequest.settings:type_name -> cloud.v1.models.TenantSettingsRecord
-	6, // 2: cloud.v1.api.UpdateTenantSettingsResponse.settings:type_name -> cloud.v1.models.TenantSettingsRecord
-	7, // 3: cloud.v1.api.SetTenantProviderSettingsRequest.provider:type_name -> cloud.v1.deployment.Provider
-	8, // 4: cloud.v1.api.SetTenantProviderSettingsRequest.settings:type_name -> schemapb.Filled
-	9, // 5: cloud.v1.api.SetTenantProviderSettingsResponse.settings:type_name -> cloud.v1.deployment.ProviderSettings
-	0, // 6: cloud.v1.api.TenantSettingsService.GetTenantSettings:input_type -> cloud.v1.api.GetTenantSettingsRequest
-	2, // 7: cloud.v1.api.TenantSettingsService.UpdateTenantSettings:input_type -> cloud.v1.api.UpdateTenantSettingsRequest
-	4, // 8: cloud.v1.api.TenantSettingsService.SetTenantProviderSettings:input_type -> cloud.v1.api.SetTenantProviderSettingsRequest
-	1, // 9: cloud.v1.api.TenantSettingsService.GetTenantSettings:output_type -> cloud.v1.api.GetTenantSettingsResponse
-	3, // 10: cloud.v1.api.TenantSettingsService.UpdateTenantSettings:output_type -> cloud.v1.api.UpdateTenantSettingsResponse
-	5, // 11: cloud.v1.api.TenantSettingsService.SetTenantProviderSettings:output_type -> cloud.v1.api.SetTenantProviderSettingsResponse
-	9, // [9:12] is the sub-list for method output_type
-	6, // [6:9] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	5, // 0: cloud.v1.api.GetTenantSettingsResponse.settings:type_name -> cloud.v1.models.TenantSettingsRecord
+	5, // 1: cloud.v1.api.UpdateTenantSettingsRequest.settings:type_name -> cloud.v1.models.TenantSettingsRecord
+	5, // 2: cloud.v1.api.UpdateTenantSettingsResponse.settings:type_name -> cloud.v1.models.TenantSettingsRecord
+	6, // 3: cloud.v1.api.SetTenantProviderSettingsRequest.settings:type_name -> cloud.v1.deployment.ProviderSettings
+	0, // 4: cloud.v1.api.TenantSettingsService.GetTenantSettings:input_type -> cloud.v1.api.GetTenantSettingsRequest
+	2, // 5: cloud.v1.api.TenantSettingsService.UpdateTenantSettings:input_type -> cloud.v1.api.UpdateTenantSettingsRequest
+	4, // 6: cloud.v1.api.TenantSettingsService.SetTenantProviderSettings:input_type -> cloud.v1.api.SetTenantProviderSettingsRequest
+	1, // 7: cloud.v1.api.TenantSettingsService.GetTenantSettings:output_type -> cloud.v1.api.GetTenantSettingsResponse
+	3, // 8: cloud.v1.api.TenantSettingsService.UpdateTenantSettings:output_type -> cloud.v1.api.UpdateTenantSettingsResponse
+	7, // 9: cloud.v1.api.TenantSettingsService.SetTenantProviderSettings:output_type -> google.protobuf.Empty
+	7, // [7:10] is the sub-list for method output_type
+	4, // [4:7] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_api_tenant_settings_proto_init() }
@@ -417,7 +353,7 @@ func file_cloud_v1_api_tenant_settings_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_api_tenant_settings_proto_rawDesc), len(file_cloud_v1_api_tenant_settings_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

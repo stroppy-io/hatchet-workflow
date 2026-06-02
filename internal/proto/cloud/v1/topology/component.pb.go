@@ -8,7 +8,6 @@ package topology
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
-	schemapb "github.com/stroppy-io/schemapb/schemapb"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -24,29 +23,29 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Kind enumerates the role a component plays in the topology.
+// Kind enumerates the broad role family a component belongs to.
 type Component_Kind int32
 
 const (
-	// KIND_UNSPECIFIED is the unset zero value (rejected by validation).
+	// KIND_UNSPECIFIED is the unset zero value.
 	Component_KIND_UNSPECIFIED Component_Kind = 0
 	// KIND_AGENT is a stroppy agent host.
 	Component_KIND_AGENT Component_Kind = 1
 	// KIND_MONITOR is a monitoring/metrics component.
 	Component_KIND_MONITOR Component_Kind = 2
-	// KIND_DATABASE is a primary database node.
+	// KIND_DATABASE is a primary database service component.
 	Component_KIND_DATABASE Component_Kind = 3
-	// KIND_REPLICA is a database replica node.
+	// KIND_REPLICA is a database replica service component.
 	Component_KIND_REPLICA Component_Kind = 4
-	// KIND_PROXY is a connection proxy/pooler.
+	// KIND_PROXY is a proxy, load balancer, or connection pooler.
 	Component_KIND_PROXY Component_Kind = 5
 	// KIND_WORKLOAD is a workload/load-generator runner.
 	Component_KIND_WORKLOAD Component_Kind = 6
-	// KIND_COORDINATOR is a cluster coordinator/control node.
+	// KIND_COORDINATOR is a cluster coordinator/control-plane component.
 	Component_KIND_COORDINATOR Component_Kind = 7
 	// KIND_ADDON is a supporting add-on component.
 	Component_KIND_ADDON Component_Kind = 8
-	// KIND_EXTERNAL is a component provided externally (e.g. a managed service).
+	// KIND_EXTERNAL is provided outside this deployment.
 	Component_KIND_EXTERNAL Component_Kind = 9
 )
 
@@ -105,24 +104,23 @@ func (Component_Kind) EnumDescriptor() ([]byte, []int) {
 	return file_cloud_v1_topology_component_proto_rawDescGZIP(), []int{0, 0}
 }
 
-// Component is one logical node in the topology graph.
+// Component is one logical service role in the benchmark graph.
 type Component struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// id is the unique identifier of the component within the topology.
+	// id is the stable logical component id within the topology spec.
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// kind is the role this component plays; must be a defined, non-zero value.
+	// kind is the broad component family.
 	Kind Component_Kind `protobuf:"varint,2,opt,name=kind,proto3,enum=cloud.v1.topology.Component_Kind" json:"kind,omitempty"`
-	// status is the current runtime status of the component.
-	Status common.Status `protobuf:"varint,3,opt,name=status,proto3,enum=cloud.v1.common.Status" json:"status,omitempty"`
-	// deployment_strategy is the deploy recipe; calculated (build).
-	DeploymentStrategy *Component_Strategy `protobuf:"bytes,4,opt,name=deployment_strategy,json=deploymentStrategy,proto3" json:"deployment_strategy,omitempty"`
-	// provider_parms are the baked provider parameters; calculated (wisard
-	// actual for non-owr components).
-	ProviderParms *schemapb.Baked `protobuf:"bytes,5,opt,name=provider_parms,json=providerParms,proto3,oneof" json:"provider_parms,omitempty"`
-	// allocated_on_instance_id is the instance this component was placed on;
-	// calculated (deployment).
-	AllocatedOnInstanceId *string `protobuf:"bytes,6,opt,name=allocated_on_instance_id,json=allocatedOnInstanceId,proto3,oneof" json:"allocated_on_instance_id,omitempty"`
-	// tags are arbitrary key/value labels attached to the component.
+	// engine identifies the owning product or subsystem, e.g. postgres, ydb,
+	// stroppy, victoriametrics. It is data rather than an enum so new engines
+	// do not require changing topology proto.
+	Engine string `protobuf:"bytes,3,opt,name=engine,proto3" json:"engine,omitempty"`
+	// role identifies the concrete role inside the engine, e.g. master,
+	// replica, haproxy, pgbouncer, patroni, etcd.
+	Role string `protobuf:"bytes,4,opt,name=role,proto3" json:"role,omitempty"`
+	// labels are structured role metadata used by renderers and UI.
+	Labels map[string]string `protobuf:"bytes,6,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// tags are arbitrary user/system tags.
 	Tags          *common.Tags `protobuf:"bytes,7,opt,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -172,32 +170,25 @@ func (x *Component) GetKind() Component_Kind {
 	return Component_KIND_UNSPECIFIED
 }
 
-func (x *Component) GetStatus() common.Status {
+func (x *Component) GetEngine() string {
 	if x != nil {
-		return x.Status
-	}
-	return common.Status(0)
-}
-
-func (x *Component) GetDeploymentStrategy() *Component_Strategy {
-	if x != nil {
-		return x.DeploymentStrategy
-	}
-	return nil
-}
-
-func (x *Component) GetProviderParms() *schemapb.Baked {
-	if x != nil {
-		return x.ProviderParms
-	}
-	return nil
-}
-
-func (x *Component) GetAllocatedOnInstanceId() string {
-	if x != nil && x.AllocatedOnInstanceId != nil {
-		return *x.AllocatedOnInstanceId
+		return x.Engine
 	}
 	return ""
+}
+
+func (x *Component) GetRole() string {
+	if x != nil {
+		return x.Role
+	}
+	return ""
+}
+
+func (x *Component) GetLabels() map[string]string {
+	if x != nil {
+		return x.Labels
+	}
+	return nil
 }
 
 func (x *Component) GetTags() *common.Tags {
@@ -207,80 +198,23 @@ func (x *Component) GetTags() *common.Tags {
 	return nil
 }
 
-// Strategy is the recipe used to deploy a component: configuration files to
-// lay down and commands to run.
-type Component_Strategy struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// configuration_files are the rendered config files to place on the host.
-	ConfigurationFiles []*common.BakedFile `protobuf:"bytes,1,rep,name=configuration_files,json=configurationFiles,proto3" json:"configuration_files,omitempty"`
-	// deployment_commands are the commands to run to bring the component up.
-	DeploymentCommands []*common.Cmd `protobuf:"bytes,2,rep,name=deployment_commands,json=deploymentCommands,proto3" json:"deployment_commands,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
-}
-
-func (x *Component_Strategy) Reset() {
-	*x = Component_Strategy{}
-	mi := &file_cloud_v1_topology_component_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Component_Strategy) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Component_Strategy) ProtoMessage() {}
-
-func (x *Component_Strategy) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_topology_component_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Component_Strategy.ProtoReflect.Descriptor instead.
-func (*Component_Strategy) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_topology_component_proto_rawDescGZIP(), []int{0, 0}
-}
-
-func (x *Component_Strategy) GetConfigurationFiles() []*common.BakedFile {
-	if x != nil {
-		return x.ConfigurationFiles
-	}
-	return nil
-}
-
-func (x *Component_Strategy) GetDeploymentCommands() []*common.Cmd {
-	if x != nil {
-		return x.DeploymentCommands
-	}
-	return nil
-}
-
 var File_cloud_v1_topology_component_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_topology_component_proto_rawDesc = "" +
 	"\n" +
-	"!cloud/v1/topology/component.proto\x12\x11cloud.v1.topology\x1a\x19cloud/v1/common/cmd.proto\x1a\x1acloud/v1/common/file.proto\x1a\x1ccloud/v1/common/status.proto\x1a\x1acloud/v1/common/tags.proto\x1a\x15schemapb/schema.proto\x1a\x17validate/validate.proto\"\xac\x06\n" +
+	"!cloud/v1/topology/component.proto\x12\x11cloud.v1.topology\x1a\x1acloud/v1/common/tags.proto\x1a\x17validate/validate.proto\"\xb9\x04\n" +
 	"\tComponent\x12\x1a\n" +
 	"\x02id\x18\x01 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x02id\x12A\n" +
 	"\x04kind\x18\x02 \x01(\x0e2!.cloud.v1.topology.Component.KindB\n" +
-	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x04kind\x12/\n" +
-	"\x06status\x18\x03 \x01(\x0e2\x17.cloud.v1.common.StatusR\x06status\x12V\n" +
-	"\x13deployment_strategy\x18\x04 \x01(\v2%.cloud.v1.topology.Component.StrategyR\x12deploymentStrategy\x12;\n" +
-	"\x0eprovider_parms\x18\x05 \x01(\v2\x0f.schemapb.BakedH\x00R\rproviderParms\x88\x01\x01\x12<\n" +
-	"\x18allocated_on_instance_id\x18\x06 \x01(\tH\x01R\x15allocatedOnInstanceId\x88\x01\x01\x12)\n" +
-	"\x04tags\x18\a \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1a\x9e\x01\n" +
-	"\bStrategy\x12K\n" +
-	"\x13configuration_files\x18\x01 \x03(\v2\x1a.cloud.v1.common.BakedFileR\x12configurationFiles\x12E\n" +
-	"\x13deployment_commands\x18\x02 \x03(\v2\x14.cloud.v1.common.CmdR\x12deploymentCommands\"\xbf\x01\n" +
+	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x04kind\x12!\n" +
+	"\x06engine\x18\x03 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x06engine\x12\x1d\n" +
+	"\x04role\x18\x04 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x04role\x12K\n" +
+	"\x06labels\x18\x06 \x03(\v2(.cloud.v1.topology.Component.LabelsEntryB\t\xfaB\x06\x9a\x01\x03\x10\x80\x01R\x06labels\x12)\n" +
+	"\x04tags\x18\a \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1a9\n" +
+	"\vLabelsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xbf\x01\n" +
 	"\x04Kind\x12\x14\n" +
 	"\x10KIND_UNSPECIFIED\x10\x00\x12\x0e\n" +
 	"\n" +
@@ -294,9 +228,7 @@ const file_cloud_v1_topology_component_proto_rawDesc = "" +
 	"\x10KIND_COORDINATOR\x10\a\x12\x0e\n" +
 	"\n" +
 	"KIND_ADDON\x10\b\x12\x11\n" +
-	"\rKIND_EXTERNAL\x10\tB\x11\n" +
-	"\x0f_provider_parmsB\x1b\n" +
-	"\x19_allocated_on_instance_idBFZDgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topologyb\x06proto3"
+	"\rKIND_EXTERNAL\x10\tJ\x04\b\x05\x10\x06R\x10config_overridesBFZDgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topologyb\x06proto3"
 
 var (
 	file_cloud_v1_topology_component_proto_rawDescOnce sync.Once
@@ -313,28 +245,20 @@ func file_cloud_v1_topology_component_proto_rawDescGZIP() []byte {
 var file_cloud_v1_topology_component_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_cloud_v1_topology_component_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_cloud_v1_topology_component_proto_goTypes = []any{
-	(Component_Kind)(0),        // 0: cloud.v1.topology.Component.Kind
-	(*Component)(nil),          // 1: cloud.v1.topology.Component
-	(*Component_Strategy)(nil), // 2: cloud.v1.topology.Component.Strategy
-	(common.Status)(0),         // 3: cloud.v1.common.Status
-	(*schemapb.Baked)(nil),     // 4: schemapb.Baked
-	(*common.Tags)(nil),        // 5: cloud.v1.common.Tags
-	(*common.BakedFile)(nil),   // 6: cloud.v1.common.BakedFile
-	(*common.Cmd)(nil),         // 7: cloud.v1.common.Cmd
+	(Component_Kind)(0), // 0: cloud.v1.topology.Component.Kind
+	(*Component)(nil),   // 1: cloud.v1.topology.Component
+	nil,                 // 2: cloud.v1.topology.Component.LabelsEntry
+	(*common.Tags)(nil), // 3: cloud.v1.common.Tags
 }
 var file_cloud_v1_topology_component_proto_depIdxs = []int32{
 	0, // 0: cloud.v1.topology.Component.kind:type_name -> cloud.v1.topology.Component.Kind
-	3, // 1: cloud.v1.topology.Component.status:type_name -> cloud.v1.common.Status
-	2, // 2: cloud.v1.topology.Component.deployment_strategy:type_name -> cloud.v1.topology.Component.Strategy
-	4, // 3: cloud.v1.topology.Component.provider_parms:type_name -> schemapb.Baked
-	5, // 4: cloud.v1.topology.Component.tags:type_name -> cloud.v1.common.Tags
-	6, // 5: cloud.v1.topology.Component.Strategy.configuration_files:type_name -> cloud.v1.common.BakedFile
-	7, // 6: cloud.v1.topology.Component.Strategy.deployment_commands:type_name -> cloud.v1.common.Cmd
-	7, // [7:7] is the sub-list for method output_type
-	7, // [7:7] is the sub-list for method input_type
-	7, // [7:7] is the sub-list for extension type_name
-	7, // [7:7] is the sub-list for extension extendee
-	0, // [0:7] is the sub-list for field type_name
+	2, // 1: cloud.v1.topology.Component.labels:type_name -> cloud.v1.topology.Component.LabelsEntry
+	3, // 2: cloud.v1.topology.Component.tags:type_name -> cloud.v1.common.Tags
+	3, // [3:3] is the sub-list for method output_type
+	3, // [3:3] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_topology_component_proto_init() }
@@ -342,7 +266,6 @@ func file_cloud_v1_topology_component_proto_init() {
 	if File_cloud_v1_topology_component_proto != nil {
 		return
 	}
-	file_cloud_v1_topology_component_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

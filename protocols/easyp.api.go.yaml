@@ -17,7 +17,7 @@ deps:
 generate:
   inputs:
     - directory: cloud/v1/agent
-#    - directory: cloud/v1/api
+    - directory: cloud/v1/api
   plugins:
     - name: go-grpc
       out: ../internal/proto
@@ -31,11 +31,6 @@ generate:
 #    - name: go-graphql
 #      opts:
 #        paths: source_relative
-
-    - name: doc
-      out: ../docs/proto
-      opts:
-        markdown,proto.md:
 
 breaking:
   ignore: []

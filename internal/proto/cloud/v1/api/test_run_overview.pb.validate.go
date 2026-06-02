@@ -115,9 +115,9 @@ func (m *LogFilter) validate(all bool) error {
 
 	}
 
-	if len(m.GetMachineIds()) > 256 {
+	if len(m.GetNodeIds()) > 256 {
 		err := LogFilterValidationError{
-			field:  "MachineIds",
+			field:  "NodeIds",
 			reason: "value must contain no more than 256 item(s)",
 		}
 		if !all {
@@ -126,12 +126,12 @@ func (m *LogFilter) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	for idx, item := range m.GetMachineIds() {
+	for idx, item := range m.GetNodeIds() {
 		_, _ = idx, item
 
 		if utf8.RuneCountInString(item) > 128 {
 			err := LogFilterValidationError{
-				field:  fmt.Sprintf("MachineIds[%v]", idx),
+				field:  fmt.Sprintf("NodeIds[%v]", idx),
 				reason: "value length must be at most 128 runes",
 			}
 			if !all {
@@ -310,6 +310,228 @@ var _ interface {
 	ErrorName() string
 } = LogFilterValidationError{}
 
+// Validate checks the field values on TestRunOverviewSnapshot with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *TestRunOverviewSnapshot) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on TestRunOverviewSnapshot with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// TestRunOverviewSnapshotMultiError, or nil if none found.
+func (m *TestRunOverviewSnapshot) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *TestRunOverviewSnapshot) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetRun() == nil {
+		err := TestRunOverviewSnapshotValidationError{
+			field:  "Run",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetRun()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TestRunOverviewSnapshotValidationError{
+					field:  "Run",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TestRunOverviewSnapshotValidationError{
+					field:  "Run",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetRun()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TestRunOverviewSnapshotValidationError{
+				field:  "Run",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetTopology() == nil {
+		err := TestRunOverviewSnapshotValidationError{
+			field:  "Topology",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetTopology()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TestRunOverviewSnapshotValidationError{
+					field:  "Topology",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TestRunOverviewSnapshotValidationError{
+					field:  "Topology",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTopology()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TestRunOverviewSnapshotValidationError{
+				field:  "Topology",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetOverview() == nil {
+		err := TestRunOverviewSnapshotValidationError{
+			field:  "Overview",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetOverview()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TestRunOverviewSnapshotValidationError{
+					field:  "Overview",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TestRunOverviewSnapshotValidationError{
+					field:  "Overview",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetOverview()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TestRunOverviewSnapshotValidationError{
+				field:  "Overview",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return TestRunOverviewSnapshotMultiError(errors)
+	}
+
+	return nil
+}
+
+// TestRunOverviewSnapshotMultiError is an error wrapping multiple validation
+// errors returned by TestRunOverviewSnapshot.ValidateAll() if the designated
+// constraints aren't met.
+type TestRunOverviewSnapshotMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m TestRunOverviewSnapshotMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m TestRunOverviewSnapshotMultiError) AllErrors() []error { return m }
+
+// TestRunOverviewSnapshotValidationError is the validation error returned by
+// TestRunOverviewSnapshot.Validate if the designated constraints aren't met.
+type TestRunOverviewSnapshotValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e TestRunOverviewSnapshotValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e TestRunOverviewSnapshotValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e TestRunOverviewSnapshotValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e TestRunOverviewSnapshotValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e TestRunOverviewSnapshotValidationError) ErrorName() string {
+	return "TestRunOverviewSnapshotValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e TestRunOverviewSnapshotValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTestRunOverviewSnapshot.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = TestRunOverviewSnapshotValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = TestRunOverviewSnapshotValidationError{}
+
 // Validate checks the field values on GetTestRunOverviewRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
@@ -456,9 +678,9 @@ func (m *GetTestRunOverviewResponse) validate(all bool) error {
 
 	var errors []error
 
-	if m.GetOverview() == nil {
+	if m.GetSnapshot() == nil {
 		err := GetTestRunOverviewResponseValidationError{
-			field:  "Overview",
+			field:  "Snapshot",
 			reason: "value is required",
 		}
 		if !all {
@@ -468,11 +690,11 @@ func (m *GetTestRunOverviewResponse) validate(all bool) error {
 	}
 
 	if all {
-		switch v := interface{}(m.GetOverview()).(type) {
+		switch v := interface{}(m.GetSnapshot()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, GetTestRunOverviewResponseValidationError{
-					field:  "Overview",
+					field:  "Snapshot",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -480,16 +702,16 @@ func (m *GetTestRunOverviewResponse) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, GetTestRunOverviewResponseValidationError{
-					field:  "Overview",
+					field:  "Snapshot",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetOverview()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetSnapshot()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return GetTestRunOverviewResponseValidationError{
-				field:  "Overview",
+				field:  "Snapshot",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}

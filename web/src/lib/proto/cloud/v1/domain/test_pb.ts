@@ -6,13 +6,15 @@ import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Tags, TagsJson } from "../common/tags_pb.ts";
 import { file_cloud_v1_common_tags } from "../common/tags_pb.ts";
-import type { ProviderSettings, ProviderSettingsJson } from "../deployment/provider_pb.ts";
-import { file_cloud_v1_deployment_provider } from "../deployment/provider_pb.ts";
+import type { InfrastructurePlan, InfrastructurePlanJson } from "../deployment/infrastructure_pb.ts";
+import { file_cloud_v1_deployment_infrastructure } from "../deployment/infrastructure_pb.ts";
+import type { RenderOverrideSet, RenderOverrideSetJson } from "../deployment/render_pb.ts";
+import { file_cloud_v1_deployment_render } from "../deployment/render_pb.ts";
 import type { Database, DatabaseJson } from "./database_pb.ts";
 import { file_cloud_v1_domain_database } from "./database_pb.ts";
 import type { Workload, WorkloadJson } from "./workload_pb.ts";
 import { file_cloud_v1_domain_workload } from "./workload_pb.ts";
-import type { Topology, TopologyJson } from "../topology/topology_pb.ts";
+import type { TopologySpec, TopologySpecJson } from "../topology/topology_pb.ts";
 import { file_cloud_v1_topology_topology } from "../topology/topology_pb.ts";
 import { file_validate_validate } from "../../../validate/validate_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
@@ -21,13 +23,13 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/domain/test.proto.
  */
 export const file_cloud_v1_domain_test: GenFile = /*@__PURE__*/
-  fileDesc("ChpjbG91ZC92MS9kb21haW4vdGVzdC5wcm90bxIPY2xvdWQudjEuZG9tYWluIpkBCgRUZXN0EjUKCGRhdGFiYXNlGAEgASgLMhkuY2xvdWQudjEuZG9tYWluLkRhdGFiYXNlQgj6QgWKAQIQARI1Cgh3b3JrbG9hZBgCIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5Xb3JrbG9hZEII+kIFigECEAESIwoEdGFncxgDIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzIr8CCgdUZXN0UnVuEhMKAmlkGAEgASgJQgf6QgRyAhABEhAKCHN1aXRlX2lkGAIgASgJEkEKCHByb3ZpZGVyGAMgASgLMiUuY2xvdWQudjEuZGVwbG95bWVudC5Qcm92aWRlclNldHRpbmdzQgj6QgWKAQIQARI3Cgh0b3BvbG9neRgEIAEoCzIbLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5Qgj6QgWKAQIQARI1CghkYXRhYmFzZRgFIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5EYXRhYmFzZUII+kIFigECEAESNQoId29ya2xvYWQYBiABKAsyGS5jbG91ZC52MS5kb21haW4uV29ya2xvYWRCCPpCBYoBAhABEiMKBHRhZ3MYByABKAsyFS5jbG91ZC52MS5jb21tb24uVGFnc0JEWkJnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9kb21haW5iBnByb3RvMw", [file_cloud_v1_common_tags, file_cloud_v1_deployment_provider, file_cloud_v1_domain_database, file_cloud_v1_domain_workload, file_cloud_v1_topology_topology, file_validate_validate]);
+  fileDesc("ChpjbG91ZC92MS9kb21haW4vdGVzdC5wcm90bxIPY2xvdWQudjEuZG9tYWluIpkBCgRUZXN0EjUKCGRhdGFiYXNlGAEgASgLMhkuY2xvdWQudjEuZG9tYWluLkRhdGFiYXNlQgj6QgWKAQIQARI1Cgh3b3JrbG9hZBgCIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5Xb3JrbG9hZEII+kIFigECEAESIwoEdGFncxgDIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzIpcDCgdUZXN0UnVuEhMKAmlkGAEgASgJQgf6QgRyAhABEhAKCHN1aXRlX2lkGAIgASgJEjUKCGRhdGFiYXNlGAMgASgLMhkuY2xvdWQudjEuZG9tYWluLkRhdGFiYXNlQgj6QgWKAQIQARI1Cgh3b3JrbG9hZBgEIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5Xb3JrbG9hZEII+kIFigECEAESQAoNdG9wb2xvZ3lfc3BlYxgFIAEoCzIfLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5U3BlY0II+kIFigECEAESTgoTaW5mcmFzdHJ1Y3R1cmVfcGxhbhgGIAEoCzInLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVQbGFuQgj6QgWKAQIQARJAChByZW5kZXJfb3ZlcnJpZGVzGAggASgLMiYuY2xvdWQudjEuZGVwbG95bWVudC5SZW5kZXJPdmVycmlkZVNldBIjCgR0YWdzGAcgASgLMhUuY2xvdWQudjEuY29tbW9uLlRhZ3NCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvZG9tYWluYgZwcm90bzM", [file_cloud_v1_common_tags, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_render, file_cloud_v1_domain_database, file_cloud_v1_domain_workload, file_cloud_v1_topology_topology, file_validate_validate]);
 
 /**
  *
  * Test is an abstract, provider-agnostic test definition: what to test.
- * Topology is derived from params (e.g. database replica count) in code; the
- * provider is chosen later, and the wizard fills provider_parms into a TestRun.
+ * TopologySpec is derived from params later; provider infrastructure is chosen
+ * only when creating a TestRun.
  *
  * @generated from message cloud.v1.domain.Test
  */
@@ -57,8 +59,8 @@ export type Test = Message<"cloud.v1.domain.Test"> & {
 /**
  *
  * Test is an abstract, provider-agnostic test definition: what to test.
- * Topology is derived from params (e.g. database replica count) in code; the
- * provider is chosen later, and the wizard fills provider_parms into a TestRun.
+ * TopologySpec is derived from params later; provider infrastructure is chosen
+ * only when creating a TestRun.
  *
  * @generated from message cloud.v1.domain.Test
  */
@@ -96,9 +98,10 @@ export const TestSchema: GenMessage<Test, {jsonType: TestJson, validType: TestVa
 
 /**
  *
- * TestRun is a single, fully-baked test execution. All fields are baked at
- * creation time; TestWorkflow does not mutate the topology, only carries
- * runtime info returned by the deployment.
+ * TestRun is the durable input for a concrete execution. It is fully specified
+ * up to provider infrastructure intent. Runtime facts (IPs/resource ids) and
+ * rendered agent steps are produced by workflow stages and stored in the run
+ * record, not in this domain object.
  *
  * @generated from message cloud.v1.domain.TestRun
  */
@@ -118,34 +121,39 @@ export type TestRun = Message<"cloud.v1.domain.TestRun"> & {
   suiteId: string;
 
   /**
-   * provider says where/how to provision the stand: backend + baked provider
-   * settings. 
-   *
-   * @generated from field: cloud.v1.deployment.ProviderSettings provider = 3;
-   */
-  provider?: ProviderSettings;
-
-  /**
-   * topology is the baked topology: stroppy runner instances (+ db instances
-   * when self-deploy), and external_components when the database is external. 
-   *
-   * @generated from field: cloud.v1.topology.Topology topology = 4;
-   */
-  topology?: Topology;
-
-  /**
    * database is the database under test (self-deploy / managed / external). 
    *
-   * @generated from field: cloud.v1.domain.Database database = 5;
+   * @generated from field: cloud.v1.domain.Database database = 3;
    */
   database?: Database;
 
   /**
    * workload is the stroppy workload to run on top of the database. 
    *
-   * @generated from field: cloud.v1.domain.Workload workload = 6;
+   * @generated from field: cloud.v1.domain.Workload workload = 4;
    */
   workload?: Workload;
+
+  /**
+   * topology_spec is the provider-agnostic logical graph. 
+   *
+   * @generated from field: cloud.v1.topology.TopologySpec topology_spec = 5;
+   */
+  topologySpec?: TopologySpec;
+
+  /**
+   * infrastructure_plan is the provider-specific resource intent. 
+   *
+   * @generated from field: cloud.v1.deployment.InfrastructurePlan infrastructure_plan = 6;
+   */
+  infrastructurePlan?: InfrastructurePlan;
+
+  /**
+   * render_overrides are user edits to editable render artifacts. 
+   *
+   * @generated from field: cloud.v1.deployment.RenderOverrideSet render_overrides = 8;
+   */
+  renderOverrides?: RenderOverrideSet;
 
   /**
    * tags are free-form metadata attached to the test run. 
@@ -157,9 +165,10 @@ export type TestRun = Message<"cloud.v1.domain.TestRun"> & {
 
 /**
  *
- * TestRun is a single, fully-baked test execution. All fields are baked at
- * creation time; TestWorkflow does not mutate the topology, only carries
- * runtime info returned by the deployment.
+ * TestRun is the durable input for a concrete execution. It is fully specified
+ * up to provider infrastructure intent. Runtime facts (IPs/resource ids) and
+ * rendered agent steps are produced by workflow stages and stored in the run
+ * record, not in this domain object.
  *
  * @generated from message cloud.v1.domain.TestRun
  */
@@ -179,34 +188,39 @@ export type TestRunJson = {
   suiteId?: string;
 
   /**
-   * provider says where/how to provision the stand: backend + baked provider
-   * settings. 
-   *
-   * @generated from field: cloud.v1.deployment.ProviderSettings provider = 3;
-   */
-  provider?: ProviderSettingsJson;
-
-  /**
-   * topology is the baked topology: stroppy runner instances (+ db instances
-   * when self-deploy), and external_components when the database is external. 
-   *
-   * @generated from field: cloud.v1.topology.Topology topology = 4;
-   */
-  topology?: TopologyJson;
-
-  /**
    * database is the database under test (self-deploy / managed / external). 
    *
-   * @generated from field: cloud.v1.domain.Database database = 5;
+   * @generated from field: cloud.v1.domain.Database database = 3;
    */
   database?: DatabaseJson;
 
   /**
    * workload is the stroppy workload to run on top of the database. 
    *
-   * @generated from field: cloud.v1.domain.Workload workload = 6;
+   * @generated from field: cloud.v1.domain.Workload workload = 4;
    */
   workload?: WorkloadJson;
+
+  /**
+   * topology_spec is the provider-agnostic logical graph. 
+   *
+   * @generated from field: cloud.v1.topology.TopologySpec topology_spec = 5;
+   */
+  topologySpec?: TopologySpecJson;
+
+  /**
+   * infrastructure_plan is the provider-specific resource intent. 
+   *
+   * @generated from field: cloud.v1.deployment.InfrastructurePlan infrastructure_plan = 6;
+   */
+  infrastructurePlan?: InfrastructurePlanJson;
+
+  /**
+   * render_overrides are user edits to editable render artifacts. 
+   *
+   * @generated from field: cloud.v1.deployment.RenderOverrideSet render_overrides = 8;
+   */
+  renderOverrides?: RenderOverrideSetJson;
 
   /**
    * tags are free-form metadata attached to the test run. 

@@ -6,8 +6,8 @@ import (
 	fmt "fmt"
 	jx "github.com/go-faster/jx"
 	jxpb "github.com/gopherex/protoc-gen-go-jx/jxpb"
-	schemapb "github.com/stroppy-io/schemapb/schemapb"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
+	math "math"
 )
 
 func (m *Workload) Encode(e *jx.Encoder) {
@@ -21,9 +21,37 @@ func (m *Workload) Encode(e *jx.Encoder) {
 		e.FieldStart("stroppyVersion")
 		e.Str(m.StroppyVersion)
 	}
-	if m.Params != nil {
-		e.FieldStart("params")
-		jxpb.EncMessage(e, m.Params)
+	if m.Script != "" {
+		e.FieldStart("script")
+		e.Str(m.Script)
+	}
+	if m.Sql != "" {
+		e.FieldStart("sql")
+		e.Str(m.Sql)
+	}
+	if m.Protocol != 0 {
+		e.FieldStart("protocol")
+		if s, ok := Workload_Protocol_name[int32(m.Protocol)]; ok {
+			e.Str(s)
+		} else {
+			e.Int32(int32(m.Protocol))
+		}
+	}
+	if m.Execution != nil {
+		e.FieldStart("execution")
+		m.Execution.Encode(e)
+	}
+	if m.Parameters != nil {
+		e.FieldStart("parameters")
+		m.Parameters.Encode(e)
+	}
+	if len(m.Files) > 0 {
+		e.FieldStart("files")
+		e.ArrStart()
+		for _, v := range m.Files {
+			v.Encode(e)
+		}
+		e.ArrEnd()
 	}
 	if m.Tags != nil {
 		e.FieldStart("tags")
@@ -50,19 +78,105 @@ func (m *Workload) Decode(d *jx.Decoder) error {
 			}
 			m.StroppyVersion = v
 			return nil
-		case "params":
-			if seen["Params"] {
+		case "script":
+			if seen["Script"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["Params"] = true
+			seen["Script"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			m.Params = &schemapb.Baked{}
-			if err := jxpb.DecMessage(d, m.Params); err != nil {
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Script = v
+			return nil
+		case "sql":
+			if seen["Sql"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Sql"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Sql = v
+			return nil
+		case "protocol":
+			if seen["Protocol"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Protocol"] = true
+			switch d.Next() {
+			case jx.String:
+				s, err := d.Str()
+				if err != nil {
+					return err
+				}
+				n, ok := Workload_Protocol_value[s]
+				if !ok {
+					return fmt.Errorf("unknown enum value %q", s)
+				}
+				m.Protocol = Workload_Protocol(n)
+				return nil
+			case jx.Number:
+				n, err := d.Int32()
+				if err != nil {
+					return err
+				}
+				m.Protocol = Workload_Protocol(n)
+				return nil
+			case jx.Null:
+				return d.Null()
+			default:
+				return fmt.Errorf("invalid enum token %s", d.Next())
+			}
+		case "execution":
+			if seen["Execution"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Execution"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Execution = &Workload_Execution{}
+			if err := m.Execution.Decode(d); err != nil {
 				return err
 			}
 			return nil
+		case "parameters":
+			if seen["Parameters"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Parameters"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Parameters = &Workload_Parameters{}
+			if err := m.Parameters.Decode(d); err != nil {
+				return err
+			}
+			return nil
+		case "files":
+			if seen["Files"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Files"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &Workload_WorkloadFile{}
+				if err := el.Decode(d); err != nil {
+					return err
+				}
+				m.Files = append(m.Files, el)
+				return nil
+			})
 		case "tags":
 			if seen["Tags"] {
 				return fmt.Errorf("duplicate field %q", key)
@@ -89,6 +203,376 @@ func (m *Workload) MarshalJSON() ([]byte, error) {
 }
 
 func (m *Workload) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *Workload_Execution) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Vus != 0 {
+		e.FieldStart("vus")
+		e.UInt32(m.Vus)
+	}
+	if m.Quiet != false {
+		e.FieldStart("quiet")
+		e.Bool(m.Quiet)
+	}
+	if m.NoThresholds != false {
+		e.FieldStart("noThresholds")
+		e.Bool(m.NoThresholds)
+	}
+	switch v := m.Limit.(type) {
+	case *Workload_Execution_Duration:
+		e.FieldStart("duration")
+		e.Str(v.Duration)
+	case *Workload_Execution_Iterations:
+		e.FieldStart("iterations")
+		e.UInt32(v.Iterations)
+	}
+	e.ObjEnd()
+}
+
+func (m *Workload_Execution) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "vus":
+			if seen["Vus"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Vus"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint32(d)
+			if err != nil {
+				return err
+			}
+			m.Vus = v
+			return nil
+		case "quiet":
+			if seen["Quiet"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Quiet"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Bool()
+			if err != nil {
+				return err
+			}
+			m.Quiet = v
+			return nil
+		case "noThresholds", "no_thresholds":
+			if seen["NoThresholds"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["NoThresholds"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Bool()
+			if err != nil {
+				return err
+			}
+			m.NoThresholds = v
+			return nil
+		case "duration":
+			if seen["oneof:Limit"] {
+				return fmt.Errorf("multiple keys for oneof limit")
+			}
+			seen["oneof:Limit"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			val, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Limit = &Workload_Execution_Duration{Duration: val}
+			return nil
+		case "iterations":
+			if seen["oneof:Limit"] {
+				return fmt.Errorf("multiple keys for oneof limit")
+			}
+			seen["oneof:Limit"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			val, err := jxpb.DecUint32(d)
+			if err != nil {
+				return err
+			}
+			m.Limit = &Workload_Execution_Iterations{Iterations: val}
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *Workload_Execution) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *Workload_Execution) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *Workload_Parameters) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.PoolSize != 0 {
+		e.FieldStart("poolSize")
+		e.UInt32(m.PoolSize)
+	}
+	if m.ScaleFactor != 0 || math.Signbit(float64(m.ScaleFactor)) {
+		e.FieldStart("scaleFactor")
+		jxpb.EncFloat64(e, m.ScaleFactor)
+	}
+	if m.DefaultInsertMethod != "" {
+		e.FieldStart("defaultInsertMethod")
+		e.Str(m.DefaultInsertMethod)
+	}
+	if len(m.Env) > 0 {
+		e.FieldStart("env")
+		e.ObjStart()
+		for k, v := range m.Env {
+			e.FieldStart(k)
+			e.Str(v)
+		}
+		e.ObjEnd()
+	}
+	if len(m.Steps) > 0 {
+		e.FieldStart("steps")
+		e.ArrStart()
+		for _, v := range m.Steps {
+			e.Str(v)
+		}
+		e.ArrEnd()
+	}
+	if len(m.NoSteps) > 0 {
+		e.FieldStart("noSteps")
+		e.ArrStart()
+		for _, v := range m.NoSteps {
+			e.Str(v)
+		}
+		e.ArrEnd()
+	}
+	e.ObjEnd()
+}
+
+func (m *Workload_Parameters) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "poolSize", "pool_size":
+			if seen["PoolSize"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["PoolSize"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint32(d)
+			if err != nil {
+				return err
+			}
+			m.PoolSize = v
+			return nil
+		case "scaleFactor", "scale_factor":
+			if seen["ScaleFactor"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["ScaleFactor"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecFloat64(d)
+			if err != nil {
+				return err
+			}
+			m.ScaleFactor = v
+			return nil
+		case "defaultInsertMethod", "default_insert_method":
+			if seen["DefaultInsertMethod"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["DefaultInsertMethod"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.DefaultInsertMethod = v
+			return nil
+		case "env":
+			if seen["Env"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Env"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			if m.Env == nil {
+				m.Env = make(map[string]string)
+			}
+			return d.Obj(func(d *jx.Decoder, ks string) error {
+				mk := ks
+				var mv string
+				tv, err := d.Str()
+				if err != nil {
+					return err
+				}
+				mv = tv
+				m.Env[mk] = mv
+				return nil
+			})
+		case "steps":
+			if seen["Steps"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Steps"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				v, err := d.Str()
+				if err != nil {
+					return err
+				}
+				m.Steps = append(m.Steps, v)
+				return nil
+			})
+		case "noSteps", "no_steps":
+			if seen["NoSteps"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["NoSteps"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				v, err := d.Str()
+				if err != nil {
+					return err
+				}
+				m.NoSteps = append(m.NoSteps, v)
+				return nil
+			})
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *Workload_Parameters) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *Workload_Parameters) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *Workload_WorkloadFile) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Name != "" {
+		e.FieldStart("name")
+		e.Str(m.Name)
+	}
+	if m.Kind != "" {
+		e.FieldStart("kind")
+		e.Str(m.Kind)
+	}
+	if m.Content != "" {
+		e.FieldStart("content")
+		e.Str(m.Content)
+	}
+	e.ObjEnd()
+}
+
+func (m *Workload_WorkloadFile) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "name":
+			if seen["Name"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Name"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Name = v
+			return nil
+		case "kind":
+			if seen["Kind"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Kind"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Kind = v
+			return nil
+		case "content":
+			if seen["Content"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Content"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Content = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *Workload_WorkloadFile) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *Workload_WorkloadFile) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return m.Decode(d)
 }

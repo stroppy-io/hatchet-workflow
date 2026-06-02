@@ -7,7 +7,7 @@
 package domain
 
 import (
-	schemapb "github.com/stroppy-io/schemapb/schemapb"
+	_ "github.com/envoyproxy/protoc-gen-validate/validate"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -23,16 +23,112 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Workload describes the stroppy load to run against the database under test:
-// the stroppy binary version plus its sealed, schema-backed parameters.
+// Protocol is the cloud-side wire-format selector. The backend maps this plus
+// Database.Kind into stroppy driverType/url in stroppy-config.json.
+type Workload_Protocol int32
+
+const (
+	// UNSPECIFIED defers to backend default per Database.Kind.
+	Workload_PROTOCOL_UNSPECIFIED Workload_Protocol = 0
+	// PG is Postgres / CockroachDB / Yugabyte pg-wire.
+	Workload_PROTOCOL_PG Workload_Protocol = 1
+	// MYSQL is MySQL / MariaDB / Percona / Vitess.
+	Workload_PROTOCOL_MYSQL Workload_Protocol = 2
+	// PICODATA is Picodata-aware pg-wire routing.
+	Workload_PROTOCOL_PICODATA Workload_Protocol = 3
+	// YDB_GRPC is YDB native gRPC.
+	Workload_PROTOCOL_YDB_GRPC Workload_Protocol = 4
+	// YDB_GRPCS is YDB native gRPC over TLS.
+	Workload_PROTOCOL_YDB_GRPCS Workload_Protocol = 5
+	// COCKROACH is CockroachDB pg-wire on its own default port.
+	Workload_PROTOCOL_COCKROACH Workload_Protocol = 7
+)
+
+// Enum value maps for Workload_Protocol.
+var (
+	Workload_Protocol_name = map[int32]string{
+		0: "PROTOCOL_UNSPECIFIED",
+		1: "PROTOCOL_PG",
+		2: "PROTOCOL_MYSQL",
+		3: "PROTOCOL_PICODATA",
+		4: "PROTOCOL_YDB_GRPC",
+		5: "PROTOCOL_YDB_GRPCS",
+		7: "PROTOCOL_COCKROACH",
+	}
+	Workload_Protocol_value = map[string]int32{
+		"PROTOCOL_UNSPECIFIED": 0,
+		"PROTOCOL_PG":          1,
+		"PROTOCOL_MYSQL":       2,
+		"PROTOCOL_PICODATA":    3,
+		"PROTOCOL_YDB_GRPC":    4,
+		"PROTOCOL_YDB_GRPCS":   5,
+		"PROTOCOL_COCKROACH":   7,
+	}
+)
+
+func (x Workload_Protocol) Enum() *Workload_Protocol {
+	p := new(Workload_Protocol)
+	*p = x
+	return p
+}
+
+func (x Workload_Protocol) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Workload_Protocol) Descriptor() protoreflect.EnumDescriptor {
+	return file_cloud_v1_domain_workload_proto_enumTypes[0].Descriptor()
+}
+
+func (Workload_Protocol) Type() protoreflect.EnumType {
+	return &file_cloud_v1_domain_workload_proto_enumTypes[0]
+}
+
+func (x Workload_Protocol) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Workload_Protocol.Descriptor instead.
+func (Workload_Protocol) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_domain_workload_proto_rawDescGZIP(), []int{0, 0}
+}
+
+// Workload is the cloud-facing workload DTO sent by the wizard — ONLY the load
+// (script, protocol, k6 profile, parameters, run-scoped files). DB engine
+// install/packages belong to the Database intent, not here; stroppy_version is
+// just a selector for which stroppy the load needs. The backend renders this into
+// stroppy's RunConfig protojson before launching.
+//
+// These are the params the user supplies AROUND the probe: the wizard sends the
+// base fields (version, script, sql, files, protocol, scale_factor, pool_size) to
+// `stroppy probe`; the frontend renders the discovered structure (env
+// declarations, steps, sql sections, driver setups) itself; the user's choices
+// land back in Parameters (env values, steps) + Execution. The probe OUTPUT is
+// intentionally NOT modelled in proto — it is stroppy-version-specific and
+// rendered client-side.
+//
+// protocol x engine support and the (kind, protocol, script) compatibility matrix
+// stay backend data + validation, enforced when a preset binds Database.Kind to
+// Workload.Protocol — intentionally not modeled in proto.
 type Workload struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// stroppy_version is the stroppy binary version to run.
+	// stroppy_version is the stroppy binary version/tag the load needs.
 	StroppyVersion string `protobuf:"bytes,1,opt,name=stroppy_version,json=stroppyVersion,proto3" json:"stroppy_version,omitempty"`
-	// params is the sealed, schema-backed stroppy workload configuration.
-	Params *schemapb.Baked `protobuf:"bytes,2,opt,name=params,proto3" json:"params,omitempty"`
+	// script is a stroppy-accepted script/preset/path/inline SQL,
+	// e.g. "tpcc/tx", "tpcds", "./bench.ts", "queries.sql".
+	Script string `protobuf:"bytes,2,opt,name=script,proto3" json:"script,omitempty"`
+	// sql is an optional second stroppy positional arg, e.g. an SQL probe file.
+	Sql string `protobuf:"bytes,3,opt,name=sql,proto3" json:"sql,omitempty"`
+	// protocol selects wire format. UNSPECIFIED means backend default for Database.Kind.
+	Protocol Workload_Protocol `protobuf:"varint,4,opt,name=protocol,proto3,enum=cloud.v1.domain.Workload_Protocol" json:"protocol,omitempty"`
+	// execution is the k6 execution profile.
+	Execution *Workload_Execution `protobuf:"bytes,5,opt,name=execution,proto3" json:"execution,omitempty"`
+	// parameters are workload/script parameters.
+	Parameters *Workload_Parameters `protobuf:"bytes,6,opt,name=parameters,proto3" json:"parameters,omitempty"`
+	// files are run-scoped files staged next to stroppy-config.json.
+	Files []*Workload_WorkloadFile `protobuf:"bytes,7,rep,name=files,proto3" json:"files,omitempty"`
 	// tags are free-form metadata attached to the workload.
-	Tags          *common.Tags `protobuf:"bytes,3,opt,name=tags,proto3" json:"tags,omitempty"`
+	Tags          *common.Tags `protobuf:"bytes,8,opt,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -74,9 +170,44 @@ func (x *Workload) GetStroppyVersion() string {
 	return ""
 }
 
-func (x *Workload) GetParams() *schemapb.Baked {
+func (x *Workload) GetScript() string {
 	if x != nil {
-		return x.Params
+		return x.Script
+	}
+	return ""
+}
+
+func (x *Workload) GetSql() string {
+	if x != nil {
+		return x.Sql
+	}
+	return ""
+}
+
+func (x *Workload) GetProtocol() Workload_Protocol {
+	if x != nil {
+		return x.Protocol
+	}
+	return Workload_PROTOCOL_UNSPECIFIED
+}
+
+func (x *Workload) GetExecution() *Workload_Execution {
+	if x != nil {
+		return x.Execution
+	}
+	return nil
+}
+
+func (x *Workload) GetParameters() *Workload_Parameters {
+	if x != nil {
+		return x.Parameters
+	}
+	return nil
+}
+
+func (x *Workload) GetFiles() []*Workload_WorkloadFile {
+	if x != nil {
+		return x.Files
 	}
 	return nil
 }
@@ -88,15 +219,328 @@ func (x *Workload) GetTags() *common.Tags {
 	return nil
 }
 
+// Execution is the k6 execution profile. Limit is exclusive: duration OR
+// iterations.
+type Workload_Execution struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// vus is virtual users (k6 --vus).
+	Vus uint32 `protobuf:"varint,1,opt,name=vus,proto3" json:"vus,omitempty"`
+	// Types that are valid to be assigned to Limit:
+	//
+	//	*Workload_Execution_Duration
+	//	*Workload_Execution_Iterations
+	Limit isWorkload_Execution_Limit `protobuf_oneof:"limit"`
+	// quiet maps to k6 -q.
+	Quiet bool `protobuf:"varint,4,opt,name=quiet,proto3" json:"quiet,omitempty"`
+	// no_thresholds maps to k6 --no-thresholds.
+	NoThresholds  bool `protobuf:"varint,5,opt,name=no_thresholds,json=noThresholds,proto3" json:"no_thresholds,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Workload_Execution) Reset() {
+	*x = Workload_Execution{}
+	mi := &file_cloud_v1_domain_workload_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Workload_Execution) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Workload_Execution) ProtoMessage() {}
+
+func (x *Workload_Execution) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_domain_workload_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Workload_Execution.ProtoReflect.Descriptor instead.
+func (*Workload_Execution) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_domain_workload_proto_rawDescGZIP(), []int{0, 0}
+}
+
+func (x *Workload_Execution) GetVus() uint32 {
+	if x != nil {
+		return x.Vus
+	}
+	return 0
+}
+
+func (x *Workload_Execution) GetLimit() isWorkload_Execution_Limit {
+	if x != nil {
+		return x.Limit
+	}
+	return nil
+}
+
+func (x *Workload_Execution) GetDuration() string {
+	if x != nil {
+		if x, ok := x.Limit.(*Workload_Execution_Duration); ok {
+			return x.Duration
+		}
+	}
+	return ""
+}
+
+func (x *Workload_Execution) GetIterations() uint32 {
+	if x != nil {
+		if x, ok := x.Limit.(*Workload_Execution_Iterations); ok {
+			return x.Iterations
+		}
+	}
+	return 0
+}
+
+func (x *Workload_Execution) GetQuiet() bool {
+	if x != nil {
+		return x.Quiet
+	}
+	return false
+}
+
+func (x *Workload_Execution) GetNoThresholds() bool {
+	if x != nil {
+		return x.NoThresholds
+	}
+	return false
+}
+
+type isWorkload_Execution_Limit interface {
+	isWorkload_Execution_Limit()
+}
+
+type Workload_Execution_Duration struct {
+	// duration maps to k6 --duration, format like "10m", "1h30m".
+	Duration string `protobuf:"bytes,2,opt,name=duration,proto3,oneof"`
+}
+
+type Workload_Execution_Iterations struct {
+	// iterations maps to k6 --iterations, fixed iteration count.
+	Iterations uint32 `protobuf:"varint,3,opt,name=iterations,proto3,oneof"`
+}
+
+func (*Workload_Execution_Duration) isWorkload_Execution_Limit() {}
+
+func (*Workload_Execution_Iterations) isWorkload_Execution_Limit() {}
+
+// Parameters are workload/script parameters rendered into stroppy env, driver
+// config, and step filters.
+type Workload_Parameters struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// pool_size is DB connection pool size on the stroppy side.
+	PoolSize uint32 `protobuf:"varint,1,opt,name=pool_size,json=poolSize,proto3" json:"pool_size,omitempty"`
+	// scale_factor is TPC-C warehouses / TPC-B branches / TPC-H scale factor.
+	// Fractional values are valid for smoke tests, e.g. TPCH SCALE_FACTOR=0.01.
+	ScaleFactor float64 `protobuf:"fixed64,2,opt,name=scale_factor,json=scaleFactor,proto3" json:"scale_factor,omitempty"`
+	// default_insert_method overrides insert method. "native" by default.
+	DefaultInsertMethod string `protobuf:"bytes,3,opt,name=default_insert_method,json=defaultInsertMethod,proto3" json:"default_insert_method,omitempty"`
+	// env are script-specific env overrides (POSIX-style key) — the values the
+	// user filled for the env declarations the probe reported.
+	Env map[string]string `protobuf:"bytes,4,rep,name=env,proto3" json:"env,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// steps is a phase allowlist (e.g. create_schema, load_data, workload).
+	// Mutually exclusive with no_steps — backend enforces.
+	Steps []string `protobuf:"bytes,5,rep,name=steps,proto3" json:"steps,omitempty"`
+	// no_steps is a phase blocklist. Mutually exclusive with steps.
+	NoSteps       []string `protobuf:"bytes,6,rep,name=no_steps,json=noSteps,proto3" json:"no_steps,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Workload_Parameters) Reset() {
+	*x = Workload_Parameters{}
+	mi := &file_cloud_v1_domain_workload_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Workload_Parameters) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Workload_Parameters) ProtoMessage() {}
+
+func (x *Workload_Parameters) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_domain_workload_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Workload_Parameters.ProtoReflect.Descriptor instead.
+func (*Workload_Parameters) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_domain_workload_proto_rawDescGZIP(), []int{0, 1}
+}
+
+func (x *Workload_Parameters) GetPoolSize() uint32 {
+	if x != nil {
+		return x.PoolSize
+	}
+	return 0
+}
+
+func (x *Workload_Parameters) GetScaleFactor() float64 {
+	if x != nil {
+		return x.ScaleFactor
+	}
+	return 0
+}
+
+func (x *Workload_Parameters) GetDefaultInsertMethod() string {
+	if x != nil {
+		return x.DefaultInsertMethod
+	}
+	return ""
+}
+
+func (x *Workload_Parameters) GetEnv() map[string]string {
+	if x != nil {
+		return x.Env
+	}
+	return nil
+}
+
+func (x *Workload_Parameters) GetSteps() []string {
+	if x != nil {
+		return x.Steps
+	}
+	return nil
+}
+
+func (x *Workload_Parameters) GetNoSteps() []string {
+	if x != nil {
+		return x.NoSteps
+	}
+	return nil
+}
+
+// WorkloadFile is a run-scoped file staged for stroppy (SQL probes, support files).
+type Workload_WorkloadFile struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// name is the file basename inside the run dir.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// kind tags file usage, e.g. "sql", "config".
+	Kind string `protobuf:"bytes,2,opt,name=kind,proto3" json:"kind,omitempty"`
+	// content is the raw file content.
+	Content       string `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Workload_WorkloadFile) Reset() {
+	*x = Workload_WorkloadFile{}
+	mi := &file_cloud_v1_domain_workload_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Workload_WorkloadFile) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Workload_WorkloadFile) ProtoMessage() {}
+
+func (x *Workload_WorkloadFile) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_domain_workload_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Workload_WorkloadFile.ProtoReflect.Descriptor instead.
+func (*Workload_WorkloadFile) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_domain_workload_proto_rawDescGZIP(), []int{0, 2}
+}
+
+func (x *Workload_WorkloadFile) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Workload_WorkloadFile) GetKind() string {
+	if x != nil {
+		return x.Kind
+	}
+	return ""
+}
+
+func (x *Workload_WorkloadFile) GetContent() string {
+	if x != nil {
+		return x.Content
+	}
+	return ""
+}
+
 var File_cloud_v1_domain_workload_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_domain_workload_proto_rawDesc = "" +
 	"\n" +
-	"\x1ecloud/v1/domain/workload.proto\x12\x0fcloud.v1.domain\x1a\x15schemapb/schema.proto\x1a\x1acloud/v1/common/tags.proto\"\x87\x01\n" +
-	"\bWorkload\x12'\n" +
-	"\x0fstroppy_version\x18\x01 \x01(\tR\x0estroppyVersion\x12'\n" +
-	"\x06params\x18\x02 \x01(\v2\x0f.schemapb.BakedR\x06params\x12)\n" +
-	"\x04tags\x18\x03 \x01(\v2\x15.cloud.v1.common.TagsR\x04tagsBDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domainb\x06proto3"
+	"\x1ecloud/v1/domain/workload.proto\x12\x0fcloud.v1.domain\x1a\x1acloud/v1/common/tags.proto\x1a\x17validate/validate.proto\"\xb5\v\n" +
+	"\bWorkload\x120\n" +
+	"\x0fstroppy_version\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x18@R\x0estroppyVersion\x12\"\n" +
+	"\x06script\x18\x02 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x04R\x06script\x12\x1a\n" +
+	"\x03sql\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x04R\x03sql\x12H\n" +
+	"\bprotocol\x18\x04 \x01(\x0e2\".cloud.v1.domain.Workload.ProtocolB\b\xfaB\x05\x82\x01\x02\x10\x01R\bprotocol\x12K\n" +
+	"\texecution\x18\x05 \x01(\v2#.cloud.v1.domain.Workload.ExecutionB\b\xfaB\x05\x8a\x01\x02\x10\x01R\texecution\x12D\n" +
+	"\n" +
+	"parameters\x18\x06 \x01(\v2$.cloud.v1.domain.Workload.ParametersR\n" +
+	"parameters\x12F\n" +
+	"\x05files\x18\a \x03(\v2&.cloud.v1.domain.Workload.WorkloadFileB\b\xfaB\x05\x92\x01\x02\x10@R\x05files\x12)\n" +
+	"\x04tags\x18\b \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1a\xe2\x01\n" +
+	"\tExecution\x12\x1d\n" +
+	"\x03vus\x18\x01 \x01(\rB\v\xfaB\b*\x06\x18\xa0\x8d\x06(\x01R\x03vus\x12B\n" +
+	"\bduration\x18\x02 \x01(\tB$\xfaB!r\x1f\x18 2\x1b^([0-9]+(ns|us|ms|s|m|h))+$H\x00R\bduration\x12)\n" +
+	"\n" +
+	"iterations\x18\x03 \x01(\rB\a\xfaB\x04*\x02(\x01H\x00R\n" +
+	"iterations\x12\x14\n" +
+	"\x05quiet\x18\x04 \x01(\bR\x05quiet\x12#\n" +
+	"\rno_thresholds\x18\x05 \x01(\bR\fnoThresholdsB\f\n" +
+	"\x05limit\x12\x03\xf8B\x01\x1a\xd0\x03\n" +
+	"\n" +
+	"Parameters\x12&\n" +
+	"\tpool_size\x18\x01 \x01(\rB\t\xfaB\x06*\x04\x18\xff\xff\x03R\bpoolSize\x12:\n" +
+	"\fscale_factor\x18\x02 \x01(\x01B\x17\xfaB\x14\x12\x12\x19\x00\x00\x00\x00\x00j\xf8@!\x00\x00\x00\x00\x00\x00\x00\x00R\vscaleFactor\x12;\n" +
+	"\x15default_insert_method\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x18@R\x13defaultInsertMethod\x12n\n" +
+	"\x03env\x18\x04 \x03(\v2-.cloud.v1.domain.Workload.Parameters.EnvEntryB-\xfaB*\x9a\x01'\x10\x80\x02\"\x1br\x19\x10\x01\x18\x80\x022\x12^[A-Z_][A-Z0-9_]*$*\x05r\x03\x18\x80@R\x03env\x129\n" +
+	"\x05steps\x18\x05 \x03(\tB#\xfaB \x92\x01\x1d\x10 \"\x19r\x17\x10\x01\x18@2\x11^[a-z][a-z0-9_]*$R\x05steps\x12>\n" +
+	"\bno_steps\x18\x06 \x03(\tB#\xfaB \x92\x01\x1d\x10 \"\x19r\x17\x10\x01\x18@2\x11^[a-z][a-z0-9_]*$R\anoSteps\x1a6\n" +
+	"\bEnvEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a\x84\x01\n" +
+	"\fWorkloadFile\x121\n" +
+	"\x04name\x18\x01 \x01(\tB\x1d\xfaB\x1ar\x18\x10\x01\x18\x80\x022\x11^[A-Za-z0-9._-]+$R\x04name\x12\x1b\n" +
+	"\x04kind\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x18 R\x04kind\x12$\n" +
+	"\acontent\x18\x03 \x01(\tB\n" +
+	"\xfaB\ar\x05(\x80\x80\x80\x02R\acontent\"\xa7\x01\n" +
+	"\bProtocol\x12\x18\n" +
+	"\x14PROTOCOL_UNSPECIFIED\x10\x00\x12\x0f\n" +
+	"\vPROTOCOL_PG\x10\x01\x12\x12\n" +
+	"\x0ePROTOCOL_MYSQL\x10\x02\x12\x15\n" +
+	"\x11PROTOCOL_PICODATA\x10\x03\x12\x15\n" +
+	"\x11PROTOCOL_YDB_GRPC\x10\x04\x12\x16\n" +
+	"\x12PROTOCOL_YDB_GRPCS\x10\x05\x12\x16\n" +
+	"\x12PROTOCOL_COCKROACH\x10\aBDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domainb\x06proto3"
 
 var (
 	file_cloud_v1_domain_workload_proto_rawDescOnce sync.Once
@@ -110,20 +554,29 @@ func file_cloud_v1_domain_workload_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_domain_workload_proto_rawDescData
 }
 
-var file_cloud_v1_domain_workload_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_cloud_v1_domain_workload_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_cloud_v1_domain_workload_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_cloud_v1_domain_workload_proto_goTypes = []any{
-	(*Workload)(nil),       // 0: cloud.v1.domain.Workload
-	(*schemapb.Baked)(nil), // 1: schemapb.Baked
-	(*common.Tags)(nil),    // 2: cloud.v1.common.Tags
+	(Workload_Protocol)(0),        // 0: cloud.v1.domain.Workload.Protocol
+	(*Workload)(nil),              // 1: cloud.v1.domain.Workload
+	(*Workload_Execution)(nil),    // 2: cloud.v1.domain.Workload.Execution
+	(*Workload_Parameters)(nil),   // 3: cloud.v1.domain.Workload.Parameters
+	(*Workload_WorkloadFile)(nil), // 4: cloud.v1.domain.Workload.WorkloadFile
+	nil,                           // 5: cloud.v1.domain.Workload.Parameters.EnvEntry
+	(*common.Tags)(nil),           // 6: cloud.v1.common.Tags
 }
 var file_cloud_v1_domain_workload_proto_depIdxs = []int32{
-	1, // 0: cloud.v1.domain.Workload.params:type_name -> schemapb.Baked
-	2, // 1: cloud.v1.domain.Workload.tags:type_name -> cloud.v1.common.Tags
-	2, // [2:2] is the sub-list for method output_type
-	2, // [2:2] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	0, // 0: cloud.v1.domain.Workload.protocol:type_name -> cloud.v1.domain.Workload.Protocol
+	2, // 1: cloud.v1.domain.Workload.execution:type_name -> cloud.v1.domain.Workload.Execution
+	3, // 2: cloud.v1.domain.Workload.parameters:type_name -> cloud.v1.domain.Workload.Parameters
+	4, // 3: cloud.v1.domain.Workload.files:type_name -> cloud.v1.domain.Workload.WorkloadFile
+	6, // 4: cloud.v1.domain.Workload.tags:type_name -> cloud.v1.common.Tags
+	5, // 5: cloud.v1.domain.Workload.Parameters.env:type_name -> cloud.v1.domain.Workload.Parameters.EnvEntry
+	6, // [6:6] is the sub-list for method output_type
+	6, // [6:6] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_domain_workload_proto_init() }
@@ -131,18 +584,23 @@ func file_cloud_v1_domain_workload_proto_init() {
 	if File_cloud_v1_domain_workload_proto != nil {
 		return
 	}
+	file_cloud_v1_domain_workload_proto_msgTypes[1].OneofWrappers = []any{
+		(*Workload_Execution_Duration)(nil),
+		(*Workload_Execution_Iterations)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_domain_workload_proto_rawDesc), len(file_cloud_v1_domain_workload_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   1,
+			NumEnums:      1,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_cloud_v1_domain_workload_proto_goTypes,
 		DependencyIndexes: file_cloud_v1_domain_workload_proto_depIdxs,
+		EnumInfos:         file_cloud_v1_domain_workload_proto_enumTypes,
 		MessageInfos:      file_cloud_v1_domain_workload_proto_msgTypes,
 	}.Build()
 	File_cloud_v1_domain_workload_proto = out.File

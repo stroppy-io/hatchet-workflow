@@ -4,14 +4,13 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import type { Provider, ProviderJson, ProviderSettings, ProviderSettingsJson } from "../deployment/provider_pb.ts";
+import type { ProviderSettings, ProviderSettingsJson } from "../deployment/provider_pb.ts";
 import { file_cloud_v1_deployment_provider } from "../deployment/provider_pb.ts";
 import { file_cloud_v1_iam_options } from "../iam/options_pb.ts";
-import { file_cloud_v1_iam_permission } from "../iam/permission_pb.ts";
 import type { TenantSettingsRecord, TenantSettingsRecordJson } from "../models/tenant_settings_pb.ts";
 import { file_cloud_v1_models_tenant_settings } from "../models/tenant_settings_pb.ts";
-import type { Filled, FilledJson } from "../../../schemapb/schema_pb.ts";
-import { file_schemapb_schema } from "../../../schemapb/schema_pb.ts";
+import type { EmptySchema } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_empty } from "@bufbuild/protobuf/wkt";
 import { file_validate_validate } from "../../../validate/validate_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -19,7 +18,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/api/tenant_settings.proto.
  */
 export const file_cloud_v1_api_tenant_settings: GenFile = /*@__PURE__*/
-  fileDesc("CiJjbG91ZC92MS9hcGkvdGVuYW50X3NldHRpbmdzLnByb3RvEgxjbG91ZC52MS5hcGkiOAoYR2V0VGVuYW50U2V0dGluZ3NSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQYQBABIl4KGUdldFRlbmFudFNldHRpbmdzUmVzcG9uc2USQQoIc2V0dGluZ3MYASABKAsyJS5jbG91ZC52MS5tb2RlbHMuVGVuYW50U2V0dGluZ3NSZWNvcmRCCPpCBYoBAhABIn4KG1VwZGF0ZVRlbmFudFNldHRpbmdzUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBJBCghzZXR0aW5ncxgCIAEoCzIlLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRTZXR0aW5nc1JlY29yZEII+kIFigECEAEiYQocVXBkYXRlVGVuYW50U2V0dGluZ3NSZXNwb25zZRJBCghzZXR0aW5ncxgBIAEoCzIlLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRTZXR0aW5nc1JlY29yZEII+kIFigECEAEiqwEKIFNldFRlbmFudFByb3ZpZGVyU2V0dGluZ3NSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQYQBABEjsKCHByb3ZpZGVyGAIgASgOMh0uY2xvdWQudjEuZGVwbG95bWVudC5Qcm92aWRlckIK+kIHggEEEAEgABIsCghzZXR0aW5ncxgDIAEoCzIQLnNjaGVtYXBiLkZpbGxlZEII+kIFigECEAEiZgohU2V0VGVuYW50UHJvdmlkZXJTZXR0aW5nc1Jlc3BvbnNlEkEKCHNldHRpbmdzGAEgASgLMiUuY2xvdWQudjEuZGVwbG95bWVudC5Qcm92aWRlclNldHRpbmdzQgj6QgWKAQIQATKYAwoVVGVuYW50U2V0dGluZ3NTZXJ2aWNlEnMKEUdldFRlbmFudFNldHRpbmdzEiYuY2xvdWQudjEuYXBpLkdldFRlbmFudFNldHRpbmdzUmVxdWVzdBonLmNsb3VkLnYxLmFwaS5HZXRUZW5hbnRTZXR0aW5nc1Jlc3BvbnNlIg2QAgGKtRgGEgQQAggFEnwKFFVwZGF0ZVRlbmFudFNldHRpbmdzEikuY2xvdWQudjEuYXBpLlVwZGF0ZVRlbmFudFNldHRpbmdzUmVxdWVzdBoqLmNsb3VkLnYxLmFwaS5VcGRhdGVUZW5hbnRTZXR0aW5nc1Jlc3BvbnNlIg2QAgKKtRgGEgQIBRADEosBChlTZXRUZW5hbnRQcm92aWRlclNldHRpbmdzEi4uY2xvdWQudjEuYXBpLlNldFRlbmFudFByb3ZpZGVyU2V0dGluZ3NSZXF1ZXN0Gi8uY2xvdWQudjEuYXBpLlNldFRlbmFudFByb3ZpZGVyU2V0dGluZ3NSZXNwb25zZSINkAICirUYBhIECAUQA0JBWj9naXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9hcGliBnByb3RvMw", [file_cloud_v1_deployment_provider, file_cloud_v1_iam_options, file_cloud_v1_iam_permission, file_cloud_v1_models_tenant_settings, file_schemapb_schema, file_validate_validate]);
+  fileDesc("CiJjbG91ZC92MS9hcGkvdGVuYW50X3NldHRpbmdzLnByb3RvEgxjbG91ZC52MS5hcGkiOAoYR2V0VGVuYW50U2V0dGluZ3NSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAIl4KGUdldFRlbmFudFNldHRpbmdzUmVzcG9uc2USQQoIc2V0dGluZ3MYASABKAsyJS5jbG91ZC52MS5tb2RlbHMuVGVuYW50U2V0dGluZ3NSZWNvcmRCCPpCBYoBAhABIn4KG1VwZGF0ZVRlbmFudFNldHRpbmdzUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBJBCghzZXR0aW5ncxgCIAEoCzIlLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRTZXR0aW5nc1JlY29yZEII+kIFigECEAEiYQocVXBkYXRlVGVuYW50U2V0dGluZ3NSZXNwb25zZRJBCghzZXR0aW5ncxgBIAEoCzIlLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRTZXR0aW5nc1JlY29yZEII+kIFigECEAEieQogU2V0VGVuYW50UHJvdmlkZXJTZXR0aW5nc1JlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASNwoIc2V0dGluZ3MYAiABKAsyJS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyU2V0dGluZ3My/gIKFVRlbmFudFNldHRpbmdzU2VydmljZRJzChFHZXRUZW5hbnRTZXR0aW5ncxImLmNsb3VkLnYxLmFwaS5HZXRUZW5hbnRTZXR0aW5nc1JlcXVlc3QaJy5jbG91ZC52MS5hcGkuR2V0VGVuYW50U2V0dGluZ3NSZXNwb25zZSINkAIBirUYBhIECAUQAhJ8ChRVcGRhdGVUZW5hbnRTZXR0aW5ncxIpLmNsb3VkLnYxLmFwaS5VcGRhdGVUZW5hbnRTZXR0aW5nc1JlcXVlc3QaKi5jbG91ZC52MS5hcGkuVXBkYXRlVGVuYW50U2V0dGluZ3NSZXNwb25zZSINkAICirUYBhIECAUQAxJyChlTZXRUZW5hbnRQcm92aWRlclNldHRpbmdzEi4uY2xvdWQudjEuYXBpLlNldFRlbmFudFByb3ZpZGVyU2V0dGluZ3NSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5Ig2QAgKKtRgGEgQIBRADQkFaP2dpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2FwaWIGcHJvdG8z", [file_cloud_v1_deployment_provider, file_cloud_v1_iam_options, file_cloud_v1_models_tenant_settings, file_google_protobuf_empty, file_validate_validate]);
 
 /**
  *
@@ -222,21 +221,12 @@ export type SetTenantProviderSettingsRequest = Message<"cloud.v1.api.SetTenantPr
 
   /**
    *
-   * provider selects which provider's config to set (must be a defined,
-   * non-zero provider).
-   *
-   * @generated from field: cloud.v1.deployment.Provider provider = 2;
-   */
-  provider: Provider;
-
-  /**
-   *
    * settings carries only the form values (Filled = values + schema ref); the
    * server validates against the provider schema and bakes the result.
    *
-   * @generated from field: schemapb.Filled settings = 3;
+   * @generated from field: cloud.v1.deployment.ProviderSettings settings = 2;
    */
-  settings?: Filled;
+  settings?: ProviderSettings;
 };
 
 /**
@@ -260,21 +250,12 @@ export type SetTenantProviderSettingsRequestJson = {
 
   /**
    *
-   * provider selects which provider's config to set (must be a defined,
-   * non-zero provider).
-   *
-   * @generated from field: cloud.v1.deployment.Provider provider = 2;
-   */
-  provider?: ProviderJson;
-
-  /**
-   *
    * settings carries only the form values (Filled = values + schema ref); the
    * server validates against the provider schema and bakes the result.
    *
-   * @generated from field: schemapb.Filled settings = 3;
+   * @generated from field: cloud.v1.deployment.ProviderSettings settings = 2;
    */
-  settings?: FilledJson;
+  settings?: ProviderSettingsJson;
 };
 
 export type SetTenantProviderSettingsRequestValid = SetTenantProviderSettingsRequest;
@@ -285,47 +266,6 @@ export type SetTenantProviderSettingsRequestValid = SetTenantProviderSettingsReq
  */
 export const SetTenantProviderSettingsRequestSchema: GenMessage<SetTenantProviderSettingsRequest, {jsonType: SetTenantProviderSettingsRequestJson, validType: SetTenantProviderSettingsRequestValid}> = /*@__PURE__*/
   messageDesc(file_cloud_v1_api_tenant_settings, 4);
-
-/**
- *
- * SetTenantProviderSettingsResponse returns the saved, baked provider config.
- *
- * @generated from message cloud.v1.api.SetTenantProviderSettingsResponse
- */
-export type SetTenantProviderSettingsResponse = Message<"cloud.v1.api.SetTenantProviderSettingsResponse"> & {
-  /**
-   *
-   * settings is the saved, baked provider config.
-   *
-   * @generated from field: cloud.v1.deployment.ProviderSettings settings = 1;
-   */
-  settings?: ProviderSettings;
-};
-
-/**
- *
- * SetTenantProviderSettingsResponse returns the saved, baked provider config.
- *
- * @generated from message cloud.v1.api.SetTenantProviderSettingsResponse
- */
-export type SetTenantProviderSettingsResponseJson = {
-  /**
-   *
-   * settings is the saved, baked provider config.
-   *
-   * @generated from field: cloud.v1.deployment.ProviderSettings settings = 1;
-   */
-  settings?: ProviderSettingsJson;
-};
-
-export type SetTenantProviderSettingsResponseValid = SetTenantProviderSettingsResponse;
-
-/**
- * Describes the message cloud.v1.api.SetTenantProviderSettingsResponse.
- * Use `create(SetTenantProviderSettingsResponseSchema)` to create a new message.
- */
-export const SetTenantProviderSettingsResponseSchema: GenMessage<SetTenantProviderSettingsResponse, {jsonType: SetTenantProviderSettingsResponseJson, validType: SetTenantProviderSettingsResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_tenant_settings, 5);
 
 /**
  *
@@ -367,7 +307,7 @@ export const TenantSettingsService: GenService<{
   setTenantProviderSettings: {
     methodKind: "unary";
     input: typeof SetTenantProviderSettingsRequestSchema;
-    output: typeof SetTenantProviderSettingsResponseSchema;
+    output: typeof EmptySchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_cloud_v1_api_tenant_settings, 0);

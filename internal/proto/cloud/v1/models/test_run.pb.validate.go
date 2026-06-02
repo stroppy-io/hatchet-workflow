@@ -197,6 +197,64 @@ func (m *TestRunRecord) validate(all bool) error {
 		}
 	}
 
+	if all {
+		switch v := interface{}(m.GetInfrastructureState()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TestRunRecordValidationError{
+					field:  "InfrastructureState",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TestRunRecordValidationError{
+					field:  "InfrastructureState",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetInfrastructureState()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TestRunRecordValidationError{
+				field:  "InfrastructureState",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetDeploymentPlan()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TestRunRecordValidationError{
+					field:  "DeploymentPlan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TestRunRecordValidationError{
+					field:  "DeploymentPlan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDeploymentPlan()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TestRunRecordValidationError{
+				field:  "DeploymentPlan",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	if len(errors) > 0 {
 		return TestRunRecordMultiError(errors)
 	}

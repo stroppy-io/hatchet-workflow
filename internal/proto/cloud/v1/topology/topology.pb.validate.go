@@ -17,8 +17,6 @@ import (
 	"unicode/utf8"
 
 	"google.golang.org/protobuf/types/known/anypb"
-
-	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 )
 
 // ensure the imports are used
@@ -35,9 +33,491 @@ var (
 	_ = (*mail.Address)(nil)
 	_ = anypb.Any{}
 	_ = sort.Sort
-
-	_ = common.Status(0)
 )
+
+// Validate checks the field values on Node with the rules defined in the proto
+// definition for this message. If any rules are violated, the first error
+// encountered is returned, or nil if there are no violations.
+func (m *Node) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Node with the rules defined in the
+// proto definition for this message. If any rules are violated, the result is
+// a list of violation errors wrapped in NodeMultiError, or nil if none found.
+func (m *Node) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Node) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetId()); l < 1 || l > 128 {
+		err := NodeValidationError{
+			field:  "Id",
+			reason: "value length must be between 1 and 128 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := len(m.GetComponentIds()); l < 1 || l > 64 {
+		err := NodeValidationError{
+			field:  "ComponentIds",
+			reason: "value must contain between 1 and 64 items, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetComponentIds() {
+		_, _ = idx, item
+
+		if l := utf8.RuneCountInString(item); l < 1 || l > 128 {
+			err := NodeValidationError{
+				field:  fmt.Sprintf("ComponentIds[%v]", idx),
+				reason: "value length must be between 1 and 128 runes, inclusive",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if len(m.GetLabels()) > 128 {
+		err := NodeValidationError{
+			field:  "Labels",
+			reason: "value must contain no more than 128 pair(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetTags()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, NodeValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, NodeValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTags()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return NodeValidationError{
+				field:  "Tags",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return NodeMultiError(errors)
+	}
+
+	return nil
+}
+
+// NodeMultiError is an error wrapping multiple validation errors returned by
+// Node.ValidateAll() if the designated constraints aren't met.
+type NodeMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m NodeMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m NodeMultiError) AllErrors() []error { return m }
+
+// NodeValidationError is the validation error returned by Node.Validate if the
+// designated constraints aren't met.
+type NodeValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e NodeValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e NodeValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e NodeValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e NodeValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e NodeValidationError) ErrorName() string { return "NodeValidationError" }
+
+// Error satisfies the builtin error interface
+func (e NodeValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sNode.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = NodeValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = NodeValidationError{}
+
+// Validate checks the field values on TopologySpec with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *TopologySpec) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on TopologySpec with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in TopologySpecMultiError, or
+// nil if none found.
+func (m *TopologySpec) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *TopologySpec) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(m.GetNodes()) < 1 {
+		err := TopologySpecValidationError{
+			field:  "Nodes",
+			reason: "value must contain at least 1 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetNodes() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, TopologySpecValidationError{
+						field:  fmt.Sprintf("Nodes[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, TopologySpecValidationError{
+						field:  fmt.Sprintf("Nodes[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return TopologySpecValidationError{
+					field:  fmt.Sprintf("Nodes[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(m.GetComponents()) < 1 {
+		err := TopologySpecValidationError{
+			field:  "Components",
+			reason: "value must contain at least 1 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetComponents() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, TopologySpecValidationError{
+						field:  fmt.Sprintf("Components[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, TopologySpecValidationError{
+						field:  fmt.Sprintf("Components[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return TopologySpecValidationError{
+					field:  fmt.Sprintf("Components[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	for idx, item := range m.GetConnections() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, TopologySpecValidationError{
+						field:  fmt.Sprintf("Connections[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, TopologySpecValidationError{
+						field:  fmt.Sprintf("Connections[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return TopologySpecValidationError{
+					field:  fmt.Sprintf("Connections[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(m.GetExternalComponents()) > 64 {
+		err := TopologySpecValidationError{
+			field:  "ExternalComponents",
+			reason: "value must contain no more than 64 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetExternalComponents() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, TopologySpecValidationError{
+						field:  fmt.Sprintf("ExternalComponents[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, TopologySpecValidationError{
+						field:  fmt.Sprintf("ExternalComponents[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return TopologySpecValidationError{
+					field:  fmt.Sprintf("ExternalComponents[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(m.GetLabels()) > 128 {
+		err := TopologySpecValidationError{
+			field:  "Labels",
+			reason: "value must contain no more than 128 pair(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetTags()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TopologySpecValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TopologySpecValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTags()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TopologySpecValidationError{
+				field:  "Tags",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return TopologySpecMultiError(errors)
+	}
+
+	return nil
+}
+
+// TopologySpecMultiError is an error wrapping multiple validation errors
+// returned by TopologySpec.ValidateAll() if the designated constraints aren't met.
+type TopologySpecMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m TopologySpecMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m TopologySpecMultiError) AllErrors() []error { return m }
+
+// TopologySpecValidationError is the validation error returned by
+// TopologySpec.Validate if the designated constraints aren't met.
+type TopologySpecValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e TopologySpecValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e TopologySpecValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e TopologySpecValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e TopologySpecValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e TopologySpecValidationError) ErrorName() string { return "TopologySpecValidationError" }
+
+// Error satisfies the builtin error interface
+func (e TopologySpecValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTopologySpec.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = TopologySpecValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = TopologySpecValidationError{}
 
 // Validate checks the field values on Topology with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
@@ -61,10 +541,10 @@ func (m *Topology) validate(all bool) error {
 
 	var errors []error
 
-	if len(m.GetInstances()) < 1 {
+	if _, ok := _Topology_State_NotInLookup[m.GetState()]; ok {
 		err := TopologyValidationError{
-			field:  "Instances",
-			reason: "value must contain at least 1 item(s)",
+			field:  "State",
+			reason: "value must not be in list [STATE_UNSPECIFIED]",
 		}
 		if !all {
 			return err
@@ -72,44 +552,10 @@ func (m *Topology) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	for idx, item := range m.GetInstances() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, TopologyValidationError{
-						field:  fmt.Sprintf("Instances[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, TopologyValidationError{
-						field:  fmt.Sprintf("Instances[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return TopologyValidationError{
-					field:  fmt.Sprintf("Instances[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	if len(m.GetConnections()) < 1 {
+	if _, ok := Topology_State_name[int32(m.GetState())]; !ok {
 		err := TopologyValidationError{
-			field:  "Connections",
-			reason: "value must contain at least 1 item(s)",
+			field:  "State",
+			reason: "value must be one of the defined enum values",
 		}
 		if !all {
 			return err
@@ -117,44 +563,10 @@ func (m *Topology) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	for idx, item := range m.GetConnections() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, TopologyValidationError{
-						field:  fmt.Sprintf("Connections[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, TopologyValidationError{
-						field:  fmt.Sprintf("Connections[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return TopologyValidationError{
-					field:  fmt.Sprintf("Connections[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	if len(m.GetExternalComponents()) > 64 {
+	if m.GetSpec() == nil {
 		err := TopologyValidationError{
-			field:  "ExternalComponents",
-			reason: "value must contain no more than 64 item(s)",
+			field:  "Spec",
+			reason: "value is required",
 		}
 		if !all {
 			return err
@@ -162,38 +574,120 @@ func (m *Topology) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	for idx, item := range m.GetExternalComponents() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, TopologyValidationError{
-						field:  fmt.Sprintf("ExternalComponents[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, TopologyValidationError{
-						field:  fmt.Sprintf("ExternalComponents[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return TopologyValidationError{
-					field:  fmt.Sprintf("ExternalComponents[%v]", idx),
+	if all {
+		switch v := interface{}(m.GetSpec()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TopologyValidationError{
+					field:  "Spec",
 					reason: "embedded message failed validation",
 					cause:  err,
-				}
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TopologyValidationError{
+					field:  "Spec",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
 			}
 		}
+	} else if v, ok := interface{}(m.GetSpec()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TopologyValidationError{
+				field:  "Spec",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
+	if all {
+		switch v := interface{}(m.GetInfrastructurePlan()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TopologyValidationError{
+					field:  "InfrastructurePlan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TopologyValidationError{
+					field:  "InfrastructurePlan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetInfrastructurePlan()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TopologyValidationError{
+				field:  "InfrastructurePlan",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetInfrastructureState()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TopologyValidationError{
+					field:  "InfrastructureState",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TopologyValidationError{
+					field:  "InfrastructureState",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetInfrastructureState()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TopologyValidationError{
+				field:  "InfrastructureState",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetDeploymentPlan()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TopologyValidationError{
+					field:  "DeploymentPlan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TopologyValidationError{
+					field:  "DeploymentPlan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDeploymentPlan()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TopologyValidationError{
+				field:  "DeploymentPlan",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
 	}
 
 	if all {
@@ -302,343 +796,6 @@ var _ interface {
 	ErrorName() string
 } = TopologyValidationError{}
 
-// Validate checks the field values on Topology_Instance with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// first error encountered is returned, or nil if there are no violations.
-func (m *Topology_Instance) Validate() error {
-	return m.validate(false)
+var _Topology_State_NotInLookup = map[Topology_State]struct{}{
+	0: {},
 }
-
-// ValidateAll checks the field values on Topology_Instance with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// Topology_InstanceMultiError, or nil if none found.
-func (m *Topology_Instance) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *Topology_Instance) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if l := utf8.RuneCountInString(m.GetId()); l < 1 || l > 128 {
-		err := Topology_InstanceValidationError{
-			field:  "Id",
-			reason: "value length must be between 1 and 128 runes, inclusive",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	// no validation rules for Status
-
-	if all {
-		switch v := interface{}(m.GetMachineInfo()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Topology_InstanceValidationError{
-					field:  "MachineInfo",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, Topology_InstanceValidationError{
-					field:  "MachineInfo",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetMachineInfo()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return Topology_InstanceValidationError{
-				field:  "MachineInfo",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	for idx, item := range m.GetQuotaRequests() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, Topology_InstanceValidationError{
-						field:  fmt.Sprintf("QuotaRequests[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, Topology_InstanceValidationError{
-						field:  fmt.Sprintf("QuotaRequests[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return Topology_InstanceValidationError{
-					field:  fmt.Sprintf("QuotaRequests[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	for idx, item := range m.GetAllocatedQuotas() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, Topology_InstanceValidationError{
-						field:  fmt.Sprintf("AllocatedQuotas[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, Topology_InstanceValidationError{
-						field:  fmt.Sprintf("AllocatedQuotas[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return Topology_InstanceValidationError{
-					field:  fmt.Sprintf("AllocatedQuotas[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	if all {
-		switch v := interface{}(m.GetTags()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Topology_InstanceValidationError{
-					field:  "Tags",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, Topology_InstanceValidationError{
-					field:  "Tags",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetTags()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return Topology_InstanceValidationError{
-				field:  "Tags",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	for idx, item := range m.GetComponents() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, Topology_InstanceValidationError{
-						field:  fmt.Sprintf("Components[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, Topology_InstanceValidationError{
-						field:  fmt.Sprintf("Components[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return Topology_InstanceValidationError{
-					field:  fmt.Sprintf("Components[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	if m.ProviderParms != nil {
-
-		if all {
-			switch v := interface{}(m.GetProviderParms()).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, Topology_InstanceValidationError{
-						field:  "ProviderParms",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, Topology_InstanceValidationError{
-						field:  "ProviderParms",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(m.GetProviderParms()).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return Topology_InstanceValidationError{
-					field:  "ProviderParms",
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	if m.DeploymentParms != nil {
-
-		if all {
-			switch v := interface{}(m.GetDeploymentParms()).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, Topology_InstanceValidationError{
-						field:  "DeploymentParms",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, Topology_InstanceValidationError{
-						field:  "DeploymentParms",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(m.GetDeploymentParms()).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return Topology_InstanceValidationError{
-					field:  "DeploymentParms",
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	if len(errors) > 0 {
-		return Topology_InstanceMultiError(errors)
-	}
-
-	return nil
-}
-
-// Topology_InstanceMultiError is an error wrapping multiple validation errors
-// returned by Topology_Instance.ValidateAll() if the designated constraints
-// aren't met.
-type Topology_InstanceMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m Topology_InstanceMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m Topology_InstanceMultiError) AllErrors() []error { return m }
-
-// Topology_InstanceValidationError is the validation error returned by
-// Topology_Instance.Validate if the designated constraints aren't met.
-type Topology_InstanceValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e Topology_InstanceValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e Topology_InstanceValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e Topology_InstanceValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e Topology_InstanceValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e Topology_InstanceValidationError) ErrorName() string {
-	return "Topology_InstanceValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e Topology_InstanceValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sTopology_Instance.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = Topology_InstanceValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = Topology_InstanceValidationError{}

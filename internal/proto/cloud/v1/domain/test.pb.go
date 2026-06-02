@@ -26,8 +26,8 @@ const (
 )
 
 // Test is an abstract, provider-agnostic test definition: what to test.
-// Topology is derived from params (e.g. database replica count) in code; the
-// provider is chosen later, and the wizard fills provider_parms into a TestRun.
+// TopologySpec is derived from params later; provider infrastructure is chosen
+// only when creating a TestRun.
 type Test struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// database is the database under test.
@@ -91,25 +91,26 @@ func (x *Test) GetTags() *common.Tags {
 	return nil
 }
 
-// TestRun is a single, fully-baked test execution. All fields are baked at
-// creation time; TestWorkflow does not mutate the topology, only carries
-// runtime info returned by the deployment.
+// TestRun is the durable input for a concrete execution. It is fully specified
+// up to provider infrastructure intent. Runtime facts (IPs/resource ids) and
+// rendered agent steps are produced by workflow stages and stored in the run
+// record, not in this domain object.
 type TestRun struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// id is the stable test-run identifier.
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// suite_id is the owning suite. Empty for a standalone (non-suite) run.
 	SuiteId string `protobuf:"bytes,2,opt,name=suite_id,json=suiteId,proto3" json:"suite_id,omitempty"`
-	// provider says where/how to provision the stand: backend + baked provider
-	// settings.
-	Provider *deployment.ProviderSettings `protobuf:"bytes,3,opt,name=provider,proto3" json:"provider,omitempty"`
-	// topology is the baked topology: stroppy runner instances (+ db instances
-	// when self-deploy), and external_components when the database is external.
-	Topology *topology.Topology `protobuf:"bytes,4,opt,name=topology,proto3" json:"topology,omitempty"`
 	// database is the database under test (self-deploy / managed / external).
-	Database *Database `protobuf:"bytes,5,opt,name=database,proto3" json:"database,omitempty"`
+	Database *Database `protobuf:"bytes,3,opt,name=database,proto3" json:"database,omitempty"`
 	// workload is the stroppy workload to run on top of the database.
-	Workload *Workload `protobuf:"bytes,6,opt,name=workload,proto3" json:"workload,omitempty"`
+	Workload *Workload `protobuf:"bytes,4,opt,name=workload,proto3" json:"workload,omitempty"`
+	// topology_spec is the provider-agnostic logical graph.
+	TopologySpec *topology.TopologySpec `protobuf:"bytes,5,opt,name=topology_spec,json=topologySpec,proto3" json:"topology_spec,omitempty"`
+	// infrastructure_plan is the provider-specific resource intent.
+	InfrastructurePlan *deployment.InfrastructurePlan `protobuf:"bytes,6,opt,name=infrastructure_plan,json=infrastructurePlan,proto3" json:"infrastructure_plan,omitempty"`
+	// render_overrides are user edits to editable render artifacts.
+	RenderOverrides *deployment.RenderOverrideSet `protobuf:"bytes,8,opt,name=render_overrides,json=renderOverrides,proto3" json:"render_overrides,omitempty"`
 	// tags are free-form metadata attached to the test run.
 	Tags          *common.Tags `protobuf:"bytes,7,opt,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -160,20 +161,6 @@ func (x *TestRun) GetSuiteId() string {
 	return ""
 }
 
-func (x *TestRun) GetProvider() *deployment.ProviderSettings {
-	if x != nil {
-		return x.Provider
-	}
-	return nil
-}
-
-func (x *TestRun) GetTopology() *topology.Topology {
-	if x != nil {
-		return x.Topology
-	}
-	return nil
-}
-
 func (x *TestRun) GetDatabase() *Database {
 	if x != nil {
 		return x.Database
@@ -184,6 +171,27 @@ func (x *TestRun) GetDatabase() *Database {
 func (x *TestRun) GetWorkload() *Workload {
 	if x != nil {
 		return x.Workload
+	}
+	return nil
+}
+
+func (x *TestRun) GetTopologySpec() *topology.TopologySpec {
+	if x != nil {
+		return x.TopologySpec
+	}
+	return nil
+}
+
+func (x *TestRun) GetInfrastructurePlan() *deployment.InfrastructurePlan {
+	if x != nil {
+		return x.InfrastructurePlan
+	}
+	return nil
+}
+
+func (x *TestRun) GetRenderOverrides() *deployment.RenderOverrideSet {
+	if x != nil {
+		return x.RenderOverrides
 	}
 	return nil
 }
@@ -199,18 +207,19 @@ var File_cloud_v1_domain_test_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_domain_test_proto_rawDesc = "" +
 	"\n" +
-	"\x1acloud/v1/domain/test.proto\x12\x0fcloud.v1.domain\x1a\x1acloud/v1/common/tags.proto\x1a\"cloud/v1/deployment/provider.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a cloud/v1/topology/topology.proto\x1a\x17validate/validate.proto\"\xb3\x01\n" +
+	"\x1acloud/v1/domain/test.proto\x12\x0fcloud.v1.domain\x1a\x1acloud/v1/common/tags.proto\x1a(cloud/v1/deployment/infrastructure.proto\x1a cloud/v1/deployment/render.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a cloud/v1/topology/topology.proto\x1a\x17validate/validate.proto\"\xb3\x01\n" +
 	"\x04Test\x12?\n" +
 	"\bdatabase\x18\x01 \x01(\v2\x19.cloud.v1.domain.DatabaseB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bdatabase\x12?\n" +
 	"\bworkload\x18\x02 \x01(\v2\x19.cloud.v1.domain.WorkloadB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bworkload\x12)\n" +
-	"\x04tags\x18\x03 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\"\xfa\x02\n" +
+	"\x04tags\x18\x03 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\"\xf1\x03\n" +
 	"\aTestRun\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\x12\x19\n" +
-	"\bsuite_id\x18\x02 \x01(\tR\asuiteId\x12K\n" +
-	"\bprovider\x18\x03 \x01(\v2%.cloud.v1.deployment.ProviderSettingsB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bprovider\x12A\n" +
-	"\btopology\x18\x04 \x01(\v2\x1b.cloud.v1.topology.TopologyB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btopology\x12?\n" +
-	"\bdatabase\x18\x05 \x01(\v2\x19.cloud.v1.domain.DatabaseB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bdatabase\x12?\n" +
-	"\bworkload\x18\x06 \x01(\v2\x19.cloud.v1.domain.WorkloadB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bworkload\x12)\n" +
+	"\bsuite_id\x18\x02 \x01(\tR\asuiteId\x12?\n" +
+	"\bdatabase\x18\x03 \x01(\v2\x19.cloud.v1.domain.DatabaseB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bdatabase\x12?\n" +
+	"\bworkload\x18\x04 \x01(\v2\x19.cloud.v1.domain.WorkloadB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bworkload\x12N\n" +
+	"\rtopology_spec\x18\x05 \x01(\v2\x1f.cloud.v1.topology.TopologySpecB\b\xfaB\x05\x8a\x01\x02\x10\x01R\ftopologySpec\x12b\n" +
+	"\x13infrastructure_plan\x18\x06 \x01(\v2'.cloud.v1.deployment.InfrastructurePlanB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x12infrastructurePlan\x12Q\n" +
+	"\x10render_overrides\x18\b \x01(\v2&.cloud.v1.deployment.RenderOverrideSetR\x0frenderOverrides\x12)\n" +
 	"\x04tags\x18\a \x01(\v2\x15.cloud.v1.common.TagsR\x04tagsBDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domainb\x06proto3"
 
 var (
@@ -227,28 +236,30 @@ func file_cloud_v1_domain_test_proto_rawDescGZIP() []byte {
 
 var file_cloud_v1_domain_test_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_cloud_v1_domain_test_proto_goTypes = []any{
-	(*Test)(nil),                        // 0: cloud.v1.domain.Test
-	(*TestRun)(nil),                     // 1: cloud.v1.domain.TestRun
-	(*Database)(nil),                    // 2: cloud.v1.domain.Database
-	(*Workload)(nil),                    // 3: cloud.v1.domain.Workload
-	(*common.Tags)(nil),                 // 4: cloud.v1.common.Tags
-	(*deployment.ProviderSettings)(nil), // 5: cloud.v1.deployment.ProviderSettings
-	(*topology.Topology)(nil),           // 6: cloud.v1.topology.Topology
+	(*Test)(nil),                          // 0: cloud.v1.domain.Test
+	(*TestRun)(nil),                       // 1: cloud.v1.domain.TestRun
+	(*Database)(nil),                      // 2: cloud.v1.domain.Database
+	(*Workload)(nil),                      // 3: cloud.v1.domain.Workload
+	(*common.Tags)(nil),                   // 4: cloud.v1.common.Tags
+	(*topology.TopologySpec)(nil),         // 5: cloud.v1.topology.TopologySpec
+	(*deployment.InfrastructurePlan)(nil), // 6: cloud.v1.deployment.InfrastructurePlan
+	(*deployment.RenderOverrideSet)(nil),  // 7: cloud.v1.deployment.RenderOverrideSet
 }
 var file_cloud_v1_domain_test_proto_depIdxs = []int32{
 	2, // 0: cloud.v1.domain.Test.database:type_name -> cloud.v1.domain.Database
 	3, // 1: cloud.v1.domain.Test.workload:type_name -> cloud.v1.domain.Workload
 	4, // 2: cloud.v1.domain.Test.tags:type_name -> cloud.v1.common.Tags
-	5, // 3: cloud.v1.domain.TestRun.provider:type_name -> cloud.v1.deployment.ProviderSettings
-	6, // 4: cloud.v1.domain.TestRun.topology:type_name -> cloud.v1.topology.Topology
-	2, // 5: cloud.v1.domain.TestRun.database:type_name -> cloud.v1.domain.Database
-	3, // 6: cloud.v1.domain.TestRun.workload:type_name -> cloud.v1.domain.Workload
-	4, // 7: cloud.v1.domain.TestRun.tags:type_name -> cloud.v1.common.Tags
-	8, // [8:8] is the sub-list for method output_type
-	8, // [8:8] is the sub-list for method input_type
-	8, // [8:8] is the sub-list for extension type_name
-	8, // [8:8] is the sub-list for extension extendee
-	0, // [0:8] is the sub-list for field type_name
+	2, // 3: cloud.v1.domain.TestRun.database:type_name -> cloud.v1.domain.Database
+	3, // 4: cloud.v1.domain.TestRun.workload:type_name -> cloud.v1.domain.Workload
+	5, // 5: cloud.v1.domain.TestRun.topology_spec:type_name -> cloud.v1.topology.TopologySpec
+	6, // 6: cloud.v1.domain.TestRun.infrastructure_plan:type_name -> cloud.v1.deployment.InfrastructurePlan
+	7, // 7: cloud.v1.domain.TestRun.render_overrides:type_name -> cloud.v1.deployment.RenderOverrideSet
+	4, // 8: cloud.v1.domain.TestRun.tags:type_name -> cloud.v1.common.Tags
+	9, // [9:9] is the sub-list for method output_type
+	9, // [9:9] is the sub-list for method input_type
+	9, // [9:9] is the sub-list for extension type_name
+	9, // [9:9] is the sub-list for extension extendee
+	0, // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_domain_test_proto_init() }

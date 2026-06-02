@@ -254,6 +254,143 @@ func (Yandex_Zone) EnumDescriptor() ([]byte, []int) {
 	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 3}
 }
 
+// PlatformId identifies the Yandex Compute platform architecture tier.
+type Yandex_Settings_PlatformId int32
+
+const (
+	// PLATFORM_ID_UNSPECIFIED is the unset zero value.
+	Yandex_Settings_PLATFORM_ID_UNSPECIFIED Yandex_Settings_PlatformId = 0
+	// PLATFORM_ID_STANDARD_V1 is the first-generation standard x86-64
+	// platform.
+	Yandex_Settings_PLATFORM_ID_STANDARD_V1 Yandex_Settings_PlatformId = 1
+	// PLATFORM_ID_STANDARD_V2 is the second-generation standard x86-64
+	// platform.
+	Yandex_Settings_PLATFORM_ID_STANDARD_V2 Yandex_Settings_PlatformId = 2
+	// PLATFORM_ID_STANDARD_V3 is the third-generation standard x86-64
+	// platform.
+	Yandex_Settings_PLATFORM_ID_STANDARD_V3 Yandex_Settings_PlatformId = 3
+	// PLATFORM_ID_STANDARD_V4A is the fourth-generation AMD-based
+	// standard platform.
+	Yandex_Settings_PLATFORM_ID_STANDARD_V4A Yandex_Settings_PlatformId = 4
+	// PLATFORM_ID_AMD_V1 is the AMD EPYC-based platform variant.
+	Yandex_Settings_PLATFORM_ID_AMD_V1 Yandex_Settings_PlatformId = 5
+	// PLATFORM_ID_HIGHFREQ_V3 is the high-frequency third-generation
+	// x86-64 platform.
+	Yandex_Settings_PLATFORM_ID_HIGHFREQ_V3 Yandex_Settings_PlatformId = 6
+	// PLATFORM_ID_HIGHFREQ_V4A is the high-frequency fourth-generation
+	// AMD platform.
+	Yandex_Settings_PLATFORM_ID_HIGHFREQ_V4A Yandex_Settings_PlatformId = 7
+)
+
+// Enum value maps for Yandex_Settings_PlatformId.
+var (
+	Yandex_Settings_PlatformId_name = map[int32]string{
+		0: "PLATFORM_ID_UNSPECIFIED",
+		1: "PLATFORM_ID_STANDARD_V1",
+		2: "PLATFORM_ID_STANDARD_V2",
+		3: "PLATFORM_ID_STANDARD_V3",
+		4: "PLATFORM_ID_STANDARD_V4A",
+		5: "PLATFORM_ID_AMD_V1",
+		6: "PLATFORM_ID_HIGHFREQ_V3",
+		7: "PLATFORM_ID_HIGHFREQ_V4A",
+	}
+	Yandex_Settings_PlatformId_value = map[string]int32{
+		"PLATFORM_ID_UNSPECIFIED":  0,
+		"PLATFORM_ID_STANDARD_V1":  1,
+		"PLATFORM_ID_STANDARD_V2":  2,
+		"PLATFORM_ID_STANDARD_V3":  3,
+		"PLATFORM_ID_STANDARD_V4A": 4,
+		"PLATFORM_ID_AMD_V1":       5,
+		"PLATFORM_ID_HIGHFREQ_V3":  6,
+		"PLATFORM_ID_HIGHFREQ_V4A": 7,
+	}
+)
+
+func (x Yandex_Settings_PlatformId) Enum() *Yandex_Settings_PlatformId {
+	p := new(Yandex_Settings_PlatformId)
+	*p = x
+	return p
+}
+
+func (x Yandex_Settings_PlatformId) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Yandex_Settings_PlatformId) Descriptor() protoreflect.EnumDescriptor {
+	return file_cloud_v1_deployment_yandex_proto_enumTypes[4].Descriptor()
+}
+
+func (Yandex_Settings_PlatformId) Type() protoreflect.EnumType {
+	return &file_cloud_v1_deployment_yandex_proto_enumTypes[4]
+}
+
+func (x Yandex_Settings_PlatformId) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Yandex_Settings_PlatformId.Descriptor instead.
+func (Yandex_Settings_PlatformId) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 0, 0}
+}
+
+// Zone identifies the Yandex Cloud availability zone for deployment
+// resources.
+type Yandex_Settings_Zone int32
+
+const (
+	// ZONE_UNSPECIFIED is the unset zero value.
+	Yandex_Settings_ZONE_UNSPECIFIED Yandex_Settings_Zone = 0
+	// ZONE_RU_CENTRAL1_A is the Central Russia A zone.
+	Yandex_Settings_ZONE_RU_CENTRAL1_A Yandex_Settings_Zone = 1
+	// ZONE_RU_CENTRAL1_B is the Central Russia B zone.
+	Yandex_Settings_ZONE_RU_CENTRAL1_B Yandex_Settings_Zone = 2
+	// ZONE_RU_CENTRAL1_D is the Central Russia D zone.
+	Yandex_Settings_ZONE_RU_CENTRAL1_D Yandex_Settings_Zone = 3
+)
+
+// Enum value maps for Yandex_Settings_Zone.
+var (
+	Yandex_Settings_Zone_name = map[int32]string{
+		0: "ZONE_UNSPECIFIED",
+		1: "ZONE_RU_CENTRAL1_A",
+		2: "ZONE_RU_CENTRAL1_B",
+		3: "ZONE_RU_CENTRAL1_D",
+	}
+	Yandex_Settings_Zone_value = map[string]int32{
+		"ZONE_UNSPECIFIED":   0,
+		"ZONE_RU_CENTRAL1_A": 1,
+		"ZONE_RU_CENTRAL1_B": 2,
+		"ZONE_RU_CENTRAL1_D": 3,
+	}
+)
+
+func (x Yandex_Settings_Zone) Enum() *Yandex_Settings_Zone {
+	p := new(Yandex_Settings_Zone)
+	*p = x
+	return p
+}
+
+func (x Yandex_Settings_Zone) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Yandex_Settings_Zone) Descriptor() protoreflect.EnumDescriptor {
+	return file_cloud_v1_deployment_yandex_proto_enumTypes[5].Descriptor()
+}
+
+func (Yandex_Settings_Zone) Type() protoreflect.EnumType {
+	return &file_cloud_v1_deployment_yandex_proto_enumTypes[5]
+}
+
+func (x Yandex_Settings_Zone) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Yandex_Settings_Zone.Descriptor instead.
+func (Yandex_Settings_Zone) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 0, 1}
+}
+
 // YandexTf is the protobuf boundary for the single Yandex Cloud Terraform root.
 // Input is serialized into tfvars before terraform apply. Output mirrors the
 // Terraform outputs consumed by the planner after apply.
@@ -311,6 +448,159 @@ func (x *Yandex) GetOutput() *Yandex_Output {
 	return nil
 }
 
+type Yandex_Settings struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// token is the Yandex Cloud API authentication token.
+	Token string `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	// cloud_id is the Yandex Cloud account identifier.
+	CloudId string `protobuf:"bytes,2,opt,name=cloud_id,json=cloudId,proto3" json:"cloud_id,omitempty"`
+	// folder_id is the Yandex Cloud folder/project resource id.
+	FolderId string `protobuf:"bytes,3,opt,name=folder_id,json=folderId,proto3" json:"folder_id,omitempty"`
+	// zone is the default availability zone for deployment resources.
+	Zone Yandex_Settings_Zone `protobuf:"varint,4,opt,name=zone,proto3,enum=cloud.v1.deployment.Yandex_Settings_Zone" json:"zone,omitempty"`
+	// network_id is the VPC network resource id.
+	NetworkId string `protobuf:"bytes,5,opt,name=network_id,json=networkId,proto3" json:"network_id,omitempty"`
+	// network_name is the VPC network display name.
+	NetworkName string `protobuf:"bytes,6,opt,name=network_name,json=networkName,proto3" json:"network_name,omitempty"`
+	// subnet_cidr is the CIDR block used for the deployment subnet.
+	SubnetCidr string `protobuf:"bytes,7,opt,name=subnet_cidr,json=subnetCidr,proto3" json:"subnet_cidr,omitempty"`
+	// platform_id is the VM platform architecture tier.
+	PlatformId Yandex_Settings_PlatformId `protobuf:"varint,8,opt,name=platform_id,json=platformId,proto3,enum=cloud.v1.deployment.Yandex_Settings_PlatformId" json:"platform_id,omitempty"`
+	// image_id is the Yandex Compute image identifier.
+	ImageId string `protobuf:"bytes,9,opt,name=image_id,json=imageId,proto3" json:"image_id,omitempty"`
+	// assign_public_ip enables public IP assignment for provisioned VMs.
+	AssignPublicIp bool `protobuf:"varint,10,opt,name=assign_public_ip,json=assignPublicIp,proto3" json:"assign_public_ip,omitempty"`
+	// software_accelerated_network enables software packet acceleration.
+	SoftwareAcceleratedNetwork bool `protobuf:"varint,11,opt,name=software_accelerated_network,json=softwareAcceleratedNetwork,proto3" json:"software_accelerated_network,omitempty"`
+	// ssh_user is the login username used for SSH access.
+	SshUser string `protobuf:"bytes,12,opt,name=ssh_user,json=sshUser,proto3" json:"ssh_user,omitempty"`
+	// ssh_public_key is the SSH public key used for authentication.
+	SshPublicKey  string `protobuf:"bytes,13,opt,name=ssh_public_key,json=sshPublicKey,proto3" json:"ssh_public_key,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Yandex_Settings) Reset() {
+	*x = Yandex_Settings{}
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Yandex_Settings) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Yandex_Settings) ProtoMessage() {}
+
+func (x *Yandex_Settings) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Yandex_Settings.ProtoReflect.Descriptor instead.
+func (*Yandex_Settings) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 0}
+}
+
+func (x *Yandex_Settings) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
+func (x *Yandex_Settings) GetCloudId() string {
+	if x != nil {
+		return x.CloudId
+	}
+	return ""
+}
+
+func (x *Yandex_Settings) GetFolderId() string {
+	if x != nil {
+		return x.FolderId
+	}
+	return ""
+}
+
+func (x *Yandex_Settings) GetZone() Yandex_Settings_Zone {
+	if x != nil {
+		return x.Zone
+	}
+	return Yandex_Settings_ZONE_UNSPECIFIED
+}
+
+func (x *Yandex_Settings) GetNetworkId() string {
+	if x != nil {
+		return x.NetworkId
+	}
+	return ""
+}
+
+func (x *Yandex_Settings) GetNetworkName() string {
+	if x != nil {
+		return x.NetworkName
+	}
+	return ""
+}
+
+func (x *Yandex_Settings) GetSubnetCidr() string {
+	if x != nil {
+		return x.SubnetCidr
+	}
+	return ""
+}
+
+func (x *Yandex_Settings) GetPlatformId() Yandex_Settings_PlatformId {
+	if x != nil {
+		return x.PlatformId
+	}
+	return Yandex_Settings_PLATFORM_ID_UNSPECIFIED
+}
+
+func (x *Yandex_Settings) GetImageId() string {
+	if x != nil {
+		return x.ImageId
+	}
+	return ""
+}
+
+func (x *Yandex_Settings) GetAssignPublicIp() bool {
+	if x != nil {
+		return x.AssignPublicIp
+	}
+	return false
+}
+
+func (x *Yandex_Settings) GetSoftwareAcceleratedNetwork() bool {
+	if x != nil {
+		return x.SoftwareAcceleratedNetwork
+	}
+	return false
+}
+
+func (x *Yandex_Settings) GetSshUser() string {
+	if x != nil {
+		return x.SshUser
+	}
+	return ""
+}
+
+func (x *Yandex_Settings) GetSshPublicKey() string {
+	if x != nil {
+		return x.SshPublicKey
+	}
+	return ""
+}
+
 // Input contains all variables passed to deployments/terraform/yandex.
 type Yandex_Input struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -326,7 +616,7 @@ type Yandex_Input struct {
 
 func (x *Yandex_Input) Reset() {
 	*x = Yandex_Input{}
-	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[1]
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -338,7 +628,7 @@ func (x *Yandex_Input) String() string {
 func (*Yandex_Input) ProtoMessage() {}
 
 func (x *Yandex_Input) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[1]
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -351,7 +641,7 @@ func (x *Yandex_Input) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Yandex_Input.ProtoReflect.Descriptor instead.
 func (*Yandex_Input) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 0}
+	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 1}
 }
 
 func (x *Yandex_Input) GetNetwork() *Yandex_Network {
@@ -396,7 +686,7 @@ type Yandex_Network struct {
 
 func (x *Yandex_Network) Reset() {
 	*x = Yandex_Network{}
-	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[2]
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -408,7 +698,7 @@ func (x *Yandex_Network) String() string {
 func (*Yandex_Network) ProtoMessage() {}
 
 func (x *Yandex_Network) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[2]
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -421,7 +711,7 @@ func (x *Yandex_Network) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Yandex_Network.ProtoReflect.Descriptor instead.
 func (*Yandex_Network) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 1}
+	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 2}
 }
 
 func (x *Yandex_Network) GetName() string {
@@ -479,7 +769,7 @@ type Yandex_Subnet struct {
 
 func (x *Yandex_Subnet) Reset() {
 	*x = Yandex_Subnet{}
-	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[3]
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -491,7 +781,7 @@ func (x *Yandex_Subnet) String() string {
 func (*Yandex_Subnet) ProtoMessage() {}
 
 func (x *Yandex_Subnet) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[3]
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -504,7 +794,7 @@ func (x *Yandex_Subnet) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Yandex_Subnet.ProtoReflect.Descriptor instead.
 func (*Yandex_Subnet) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 2}
+	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 3}
 }
 
 func (x *Yandex_Subnet) GetZone() string {
@@ -539,7 +829,7 @@ type Yandex_Compute struct {
 
 func (x *Yandex_Compute) Reset() {
 	*x = Yandex_Compute{}
-	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[4]
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -551,7 +841,7 @@ func (x *Yandex_Compute) String() string {
 func (*Yandex_Compute) ProtoMessage() {}
 
 func (x *Yandex_Compute) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[4]
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -564,7 +854,7 @@ func (x *Yandex_Compute) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Yandex_Compute.ProtoReflect.Descriptor instead.
 func (*Yandex_Compute) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 3}
+	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 4}
 }
 
 func (x *Yandex_Compute) GetPlatformId() string {
@@ -625,7 +915,7 @@ type Yandex_Vm struct {
 
 func (x *Yandex_Vm) Reset() {
 	*x = Yandex_Vm{}
-	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[5]
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -637,7 +927,7 @@ func (x *Yandex_Vm) String() string {
 func (*Yandex_Vm) ProtoMessage() {}
 
 func (x *Yandex_Vm) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[5]
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -650,7 +940,7 @@ func (x *Yandex_Vm) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Yandex_Vm.ProtoReflect.Descriptor instead.
 func (*Yandex_Vm) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 4}
+	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 5}
 }
 
 func (x *Yandex_Vm) GetCores() uint32 {
@@ -738,7 +1028,7 @@ type Yandex_Disk struct {
 
 func (x *Yandex_Disk) Reset() {
 	*x = Yandex_Disk{}
-	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[6]
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -750,7 +1040,7 @@ func (x *Yandex_Disk) String() string {
 func (*Yandex_Disk) ProtoMessage() {}
 
 func (x *Yandex_Disk) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[6]
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -763,7 +1053,7 @@ func (x *Yandex_Disk) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Yandex_Disk.ProtoReflect.Descriptor instead.
 func (*Yandex_Disk) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 5}
+	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 6}
 }
 
 func (x *Yandex_Disk) GetDeviceName() string {
@@ -813,7 +1103,7 @@ type Yandex_ManagedYdb struct {
 
 func (x *Yandex_ManagedYdb) Reset() {
 	*x = Yandex_ManagedYdb{}
-	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[7]
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -825,7 +1115,7 @@ func (x *Yandex_ManagedYdb) String() string {
 func (*Yandex_ManagedYdb) ProtoMessage() {}
 
 func (x *Yandex_ManagedYdb) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[7]
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -838,7 +1128,7 @@ func (x *Yandex_ManagedYdb) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Yandex_ManagedYdb.ProtoReflect.Descriptor instead.
 func (*Yandex_ManagedYdb) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 6}
+	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 7}
 }
 
 func (x *Yandex_ManagedYdb) GetName() string {
@@ -941,7 +1231,7 @@ type Yandex_Output struct {
 
 func (x *Yandex_Output) Reset() {
 	*x = Yandex_Output{}
-	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[8]
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -953,7 +1243,7 @@ func (x *Yandex_Output) String() string {
 func (*Yandex_Output) ProtoMessage() {}
 
 func (x *Yandex_Output) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[8]
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -966,7 +1256,7 @@ func (x *Yandex_Output) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Yandex_Output.ProtoReflect.Descriptor instead.
 func (*Yandex_Output) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 7}
+	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 8}
 }
 
 func (x *Yandex_Output) GetVms() map[string]*Yandex_VmOutput {
@@ -1005,7 +1295,7 @@ type Yandex_VmOutput struct {
 
 func (x *Yandex_VmOutput) Reset() {
 	*x = Yandex_VmOutput{}
-	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[9]
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1017,7 +1307,7 @@ func (x *Yandex_VmOutput) String() string {
 func (*Yandex_VmOutput) ProtoMessage() {}
 
 func (x *Yandex_VmOutput) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[9]
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1030,7 +1320,7 @@ func (x *Yandex_VmOutput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Yandex_VmOutput.ProtoReflect.Descriptor instead.
 func (*Yandex_VmOutput) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 8}
+	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 9}
 }
 
 func (x *Yandex_VmOutput) GetId() string {
@@ -1101,7 +1391,7 @@ type Yandex_ManagedYdbOutput struct {
 
 func (x *Yandex_ManagedYdbOutput) Reset() {
 	*x = Yandex_ManagedYdbOutput{}
-	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[10]
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1113,7 +1403,7 @@ func (x *Yandex_ManagedYdbOutput) String() string {
 func (*Yandex_ManagedYdbOutput) ProtoMessage() {}
 
 func (x *Yandex_ManagedYdbOutput) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[10]
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1126,7 +1416,7 @@ func (x *Yandex_ManagedYdbOutput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Yandex_ManagedYdbOutput.ProtoReflect.Descriptor instead.
 func (*Yandex_ManagedYdbOutput) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 9}
+	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 10}
 }
 
 func (x *Yandex_ManagedYdbOutput) GetId() string {
@@ -1279,7 +1569,7 @@ type Yandex_ManagedYdb_Serverless struct {
 
 func (x *Yandex_ManagedYdb_Serverless) Reset() {
 	*x = Yandex_ManagedYdb_Serverless{}
-	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[14]
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1291,7 +1581,7 @@ func (x *Yandex_ManagedYdb_Serverless) String() string {
 func (*Yandex_ManagedYdb_Serverless) ProtoMessage() {}
 
 func (x *Yandex_ManagedYdb_Serverless) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[14]
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1304,7 +1594,7 @@ func (x *Yandex_ManagedYdb_Serverless) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Yandex_ManagedYdb_Serverless.ProtoReflect.Descriptor instead.
 func (*Yandex_ManagedYdb_Serverless) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 6, 1}
+	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 7, 1}
 }
 
 func (x *Yandex_ManagedYdb_Serverless) GetEnableThrottlingRcuLimit() bool {
@@ -1358,7 +1648,7 @@ type Yandex_ManagedYdb_Dedicated struct {
 
 func (x *Yandex_ManagedYdb_Dedicated) Reset() {
 	*x = Yandex_ManagedYdb_Dedicated{}
-	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[15]
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1370,7 +1660,7 @@ func (x *Yandex_ManagedYdb_Dedicated) String() string {
 func (*Yandex_ManagedYdb_Dedicated) ProtoMessage() {}
 
 func (x *Yandex_ManagedYdb_Dedicated) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[15]
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1383,7 +1673,7 @@ func (x *Yandex_ManagedYdb_Dedicated) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Yandex_ManagedYdb_Dedicated.ProtoReflect.Descriptor instead.
 func (*Yandex_ManagedYdb_Dedicated) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 6, 2}
+	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 7, 2}
 }
 
 func (x *Yandex_ManagedYdb_Dedicated) GetResourcePresetId() string {
@@ -1442,7 +1732,7 @@ type Yandex_ManagedYdb_ScalePolicy struct {
 
 func (x *Yandex_ManagedYdb_ScalePolicy) Reset() {
 	*x = Yandex_ManagedYdb_ScalePolicy{}
-	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[16]
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1454,7 +1744,7 @@ func (x *Yandex_ManagedYdb_ScalePolicy) String() string {
 func (*Yandex_ManagedYdb_ScalePolicy) ProtoMessage() {}
 
 func (x *Yandex_ManagedYdb_ScalePolicy) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[16]
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1467,7 +1757,7 @@ func (x *Yandex_ManagedYdb_ScalePolicy) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Yandex_ManagedYdb_ScalePolicy.ProtoReflect.Descriptor instead.
 func (*Yandex_ManagedYdb_ScalePolicy) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 6, 3}
+	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 7, 3}
 }
 
 func (x *Yandex_ManagedYdb_ScalePolicy) GetPolicy() isYandex_ManagedYdb_ScalePolicy_Policy {
@@ -1526,7 +1816,7 @@ type Yandex_ManagedYdb_StorageConfig struct {
 
 func (x *Yandex_ManagedYdb_StorageConfig) Reset() {
 	*x = Yandex_ManagedYdb_StorageConfig{}
-	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[17]
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1538,7 +1828,7 @@ func (x *Yandex_ManagedYdb_StorageConfig) String() string {
 func (*Yandex_ManagedYdb_StorageConfig) ProtoMessage() {}
 
 func (x *Yandex_ManagedYdb_StorageConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[17]
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1551,7 +1841,7 @@ func (x *Yandex_ManagedYdb_StorageConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Yandex_ManagedYdb_StorageConfig.ProtoReflect.Descriptor instead.
 func (*Yandex_ManagedYdb_StorageConfig) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 6, 4}
+	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 7, 4}
 }
 
 func (x *Yandex_ManagedYdb_StorageConfig) GetGroupCount() uint32 {
@@ -1579,7 +1869,7 @@ type Yandex_ManagedYdb_ScalePolicy_Fixed struct {
 
 func (x *Yandex_ManagedYdb_ScalePolicy_Fixed) Reset() {
 	*x = Yandex_ManagedYdb_ScalePolicy_Fixed{}
-	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[18]
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1591,7 +1881,7 @@ func (x *Yandex_ManagedYdb_ScalePolicy_Fixed) String() string {
 func (*Yandex_ManagedYdb_ScalePolicy_Fixed) ProtoMessage() {}
 
 func (x *Yandex_ManagedYdb_ScalePolicy_Fixed) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[18]
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1604,7 +1894,7 @@ func (x *Yandex_ManagedYdb_ScalePolicy_Fixed) ProtoReflect() protoreflect.Messag
 
 // Deprecated: Use Yandex_ManagedYdb_ScalePolicy_Fixed.ProtoReflect.Descriptor instead.
 func (*Yandex_ManagedYdb_ScalePolicy_Fixed) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 6, 3, 0}
+	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 7, 3, 0}
 }
 
 func (x *Yandex_ManagedYdb_ScalePolicy_Fixed) GetSize() uint32 {
@@ -1629,7 +1919,7 @@ type Yandex_ManagedYdb_ScalePolicy_Auto struct {
 
 func (x *Yandex_ManagedYdb_ScalePolicy_Auto) Reset() {
 	*x = Yandex_ManagedYdb_ScalePolicy_Auto{}
-	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[19]
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1641,7 +1931,7 @@ func (x *Yandex_ManagedYdb_ScalePolicy_Auto) String() string {
 func (*Yandex_ManagedYdb_ScalePolicy_Auto) ProtoMessage() {}
 
 func (x *Yandex_ManagedYdb_ScalePolicy_Auto) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[19]
+	mi := &file_cloud_v1_deployment_yandex_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1654,7 +1944,7 @@ func (x *Yandex_ManagedYdb_ScalePolicy_Auto) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use Yandex_ManagedYdb_ScalePolicy_Auto.ProtoReflect.Descriptor instead.
 func (*Yandex_ManagedYdb_ScalePolicy_Auto) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 6, 3, 1}
+	return file_cloud_v1_deployment_yandex_proto_rawDescGZIP(), []int{0, 7, 3, 1}
 }
 
 func (x *Yandex_ManagedYdb_ScalePolicy_Auto) GetMinSize() uint32 {
@@ -1682,10 +1972,50 @@ var File_cloud_v1_deployment_yandex_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_deployment_yandex_proto_rawDesc = "" +
 	"\n" +
-	" cloud/v1/deployment/yandex.proto\x12\x13cloud.v1.deployment\x1a\x17validate/validate.proto\"\xb3-\n" +
+	" cloud/v1/deployment/yandex.proto\x12\x13cloud.v1.deployment\x1a\x17validate/validate.proto\"\xa35\n" +
 	"\x06Yandex\x12A\n" +
 	"\x05input\x18\x01 \x01(\v2!.cloud.v1.deployment.Yandex.InputB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x05input\x12:\n" +
-	"\x06output\x18\x02 \x01(\v2\".cloud.v1.deployment.Yandex.OutputR\x06output\x1a\xe2\x01\n" +
+	"\x06output\x18\x02 \x01(\v2\".cloud.v1.deployment.Yandex.OutputR\x06output\x1a\xed\a\n" +
+	"\bSettings\x12\x1e\n" +
+	"\x05token\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x18\x80 R\x05token\x12%\n" +
+	"\bcloud_id\x18\x02 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\acloudId\x12'\n" +
+	"\tfolder_id\x18\x03 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\bfolderId\x12I\n" +
+	"\x04zone\x18\x04 \x01(\x0e2).cloud.v1.deployment.Yandex.Settings.ZoneB\n" +
+	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x04zone\x12)\n" +
+	"\n" +
+	"network_id\x18\x05 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\tnetworkId\x12,\n" +
+	"\fnetwork_name\x18\x06 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18?R\vnetworkName\x12*\n" +
+	"\vsubnet_cidr\x18\a \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\n" +
+	"subnetCidr\x12\\\n" +
+	"\vplatform_id\x18\b \x01(\x0e2/.cloud.v1.deployment.Yandex.Settings.PlatformIdB\n" +
+	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\n" +
+	"platformId\x12%\n" +
+	"\bimage_id\x18\t \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\aimageId\x12(\n" +
+	"\x10assign_public_ip\x18\n" +
+	" \x01(\bR\x0eassignPublicIp\x12@\n" +
+	"\x1csoftware_accelerated_network\x18\v \x01(\bR\x1asoftwareAcceleratedNetwork\x12$\n" +
+	"\bssh_user\x18\f \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\asshUser\x120\n" +
+	"\x0essh_public_key\x18\r \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80 R\fsshPublicKey\"\xf1\x01\n" +
+	"\n" +
+	"PlatformId\x12\x1b\n" +
+	"\x17PLATFORM_ID_UNSPECIFIED\x10\x00\x12\x1b\n" +
+	"\x17PLATFORM_ID_STANDARD_V1\x10\x01\x12\x1b\n" +
+	"\x17PLATFORM_ID_STANDARD_V2\x10\x02\x12\x1b\n" +
+	"\x17PLATFORM_ID_STANDARD_V3\x10\x03\x12\x1c\n" +
+	"\x18PLATFORM_ID_STANDARD_V4A\x10\x04\x12\x16\n" +
+	"\x12PLATFORM_ID_AMD_V1\x10\x05\x12\x1b\n" +
+	"\x17PLATFORM_ID_HIGHFREQ_V3\x10\x06\x12\x1c\n" +
+	"\x18PLATFORM_ID_HIGHFREQ_V4A\x10\a\"d\n" +
+	"\x04Zone\x12\x14\n" +
+	"\x10ZONE_UNSPECIFIED\x10\x00\x12\x16\n" +
+	"\x12ZONE_RU_CENTRAL1_A\x10\x01\x12\x16\n" +
+	"\x12ZONE_RU_CENTRAL1_B\x10\x02\x12\x16\n" +
+	"\x12ZONE_RU_CENTRAL1_D\x10\x03\x1a\xe2\x01\n" +
 	"\x05Input\x12G\n" +
 	"\anetwork\x18\x01 \x01(\v2#.cloud.v1.deployment.Yandex.NetworkB\b\xfaB\x05\x8a\x01\x02\x10\x01R\anetwork\x12G\n" +
 	"\acompute\x18\x02 \x01(\v2#.cloud.v1.deployment.Yandex.ComputeB\b\xfaB\x05\x8a\x01\x02\x10\x01R\acompute\x12G\n" +
@@ -1860,67 +2190,72 @@ func file_cloud_v1_deployment_yandex_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_deployment_yandex_proto_rawDescData
 }
 
-var file_cloud_v1_deployment_yandex_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_cloud_v1_deployment_yandex_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
+var file_cloud_v1_deployment_yandex_proto_enumTypes = make([]protoimpl.EnumInfo, 6)
+var file_cloud_v1_deployment_yandex_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
 var file_cloud_v1_deployment_yandex_proto_goTypes = []any{
 	(Yandex_DiskType)(0),                        // 0: cloud.v1.deployment.Yandex.DiskType
 	(Yandex_NetworkAcceleration)(0),             // 1: cloud.v1.deployment.Yandex.NetworkAcceleration
 	(Yandex_PlatformId)(0),                      // 2: cloud.v1.deployment.Yandex.PlatformId
 	(Yandex_Zone)(0),                            // 3: cloud.v1.deployment.Yandex.Zone
-	(*Yandex)(nil),                              // 4: cloud.v1.deployment.Yandex
-	(*Yandex_Input)(nil),                        // 5: cloud.v1.deployment.Yandex.Input
-	(*Yandex_Network)(nil),                      // 6: cloud.v1.deployment.Yandex.Network
-	(*Yandex_Subnet)(nil),                       // 7: cloud.v1.deployment.Yandex.Subnet
-	(*Yandex_Compute)(nil),                      // 8: cloud.v1.deployment.Yandex.Compute
-	(*Yandex_Vm)(nil),                           // 9: cloud.v1.deployment.Yandex.Vm
-	(*Yandex_Disk)(nil),                         // 10: cloud.v1.deployment.Yandex.Disk
-	(*Yandex_ManagedYdb)(nil),                   // 11: cloud.v1.deployment.Yandex.ManagedYdb
-	(*Yandex_Output)(nil),                       // 12: cloud.v1.deployment.Yandex.Output
-	(*Yandex_VmOutput)(nil),                     // 13: cloud.v1.deployment.Yandex.VmOutput
-	(*Yandex_ManagedYdbOutput)(nil),             // 14: cloud.v1.deployment.Yandex.ManagedYdbOutput
-	nil,                                         // 15: cloud.v1.deployment.Yandex.Network.SubnetsEntry
-	nil,                                         // 16: cloud.v1.deployment.Yandex.Compute.VmsEntry
-	nil,                                         // 17: cloud.v1.deployment.Yandex.ManagedYdb.LabelsEntry
-	(*Yandex_ManagedYdb_Serverless)(nil),        // 18: cloud.v1.deployment.Yandex.ManagedYdb.Serverless
-	(*Yandex_ManagedYdb_Dedicated)(nil),         // 19: cloud.v1.deployment.Yandex.ManagedYdb.Dedicated
-	(*Yandex_ManagedYdb_ScalePolicy)(nil),       // 20: cloud.v1.deployment.Yandex.ManagedYdb.ScalePolicy
-	(*Yandex_ManagedYdb_StorageConfig)(nil),     // 21: cloud.v1.deployment.Yandex.ManagedYdb.StorageConfig
-	(*Yandex_ManagedYdb_ScalePolicy_Fixed)(nil), // 22: cloud.v1.deployment.Yandex.ManagedYdb.ScalePolicy.Fixed
-	(*Yandex_ManagedYdb_ScalePolicy_Auto)(nil),  // 23: cloud.v1.deployment.Yandex.ManagedYdb.ScalePolicy.Auto
-	nil, // 24: cloud.v1.deployment.Yandex.Output.VmsEntry
-	nil, // 25: cloud.v1.deployment.Yandex.ManagedYdbOutput.LabelsEntry
-	nil, // 26: cloud.v1.deployment.Yandex.ManagedYdbOutput.RawEntry
+	(Yandex_Settings_PlatformId)(0),             // 4: cloud.v1.deployment.Yandex.Settings.PlatformId
+	(Yandex_Settings_Zone)(0),                   // 5: cloud.v1.deployment.Yandex.Settings.Zone
+	(*Yandex)(nil),                              // 6: cloud.v1.deployment.Yandex
+	(*Yandex_Settings)(nil),                     // 7: cloud.v1.deployment.Yandex.Settings
+	(*Yandex_Input)(nil),                        // 8: cloud.v1.deployment.Yandex.Input
+	(*Yandex_Network)(nil),                      // 9: cloud.v1.deployment.Yandex.Network
+	(*Yandex_Subnet)(nil),                       // 10: cloud.v1.deployment.Yandex.Subnet
+	(*Yandex_Compute)(nil),                      // 11: cloud.v1.deployment.Yandex.Compute
+	(*Yandex_Vm)(nil),                           // 12: cloud.v1.deployment.Yandex.Vm
+	(*Yandex_Disk)(nil),                         // 13: cloud.v1.deployment.Yandex.Disk
+	(*Yandex_ManagedYdb)(nil),                   // 14: cloud.v1.deployment.Yandex.ManagedYdb
+	(*Yandex_Output)(nil),                       // 15: cloud.v1.deployment.Yandex.Output
+	(*Yandex_VmOutput)(nil),                     // 16: cloud.v1.deployment.Yandex.VmOutput
+	(*Yandex_ManagedYdbOutput)(nil),             // 17: cloud.v1.deployment.Yandex.ManagedYdbOutput
+	nil,                                         // 18: cloud.v1.deployment.Yandex.Network.SubnetsEntry
+	nil,                                         // 19: cloud.v1.deployment.Yandex.Compute.VmsEntry
+	nil,                                         // 20: cloud.v1.deployment.Yandex.ManagedYdb.LabelsEntry
+	(*Yandex_ManagedYdb_Serverless)(nil),        // 21: cloud.v1.deployment.Yandex.ManagedYdb.Serverless
+	(*Yandex_ManagedYdb_Dedicated)(nil),         // 22: cloud.v1.deployment.Yandex.ManagedYdb.Dedicated
+	(*Yandex_ManagedYdb_ScalePolicy)(nil),       // 23: cloud.v1.deployment.Yandex.ManagedYdb.ScalePolicy
+	(*Yandex_ManagedYdb_StorageConfig)(nil),     // 24: cloud.v1.deployment.Yandex.ManagedYdb.StorageConfig
+	(*Yandex_ManagedYdb_ScalePolicy_Fixed)(nil), // 25: cloud.v1.deployment.Yandex.ManagedYdb.ScalePolicy.Fixed
+	(*Yandex_ManagedYdb_ScalePolicy_Auto)(nil),  // 26: cloud.v1.deployment.Yandex.ManagedYdb.ScalePolicy.Auto
+	nil, // 27: cloud.v1.deployment.Yandex.Output.VmsEntry
+	nil, // 28: cloud.v1.deployment.Yandex.ManagedYdbOutput.LabelsEntry
+	nil, // 29: cloud.v1.deployment.Yandex.ManagedYdbOutput.RawEntry
 }
 var file_cloud_v1_deployment_yandex_proto_depIdxs = []int32{
-	5,  // 0: cloud.v1.deployment.Yandex.input:type_name -> cloud.v1.deployment.Yandex.Input
-	12, // 1: cloud.v1.deployment.Yandex.output:type_name -> cloud.v1.deployment.Yandex.Output
-	6,  // 2: cloud.v1.deployment.Yandex.Input.network:type_name -> cloud.v1.deployment.Yandex.Network
-	8,  // 3: cloud.v1.deployment.Yandex.Input.compute:type_name -> cloud.v1.deployment.Yandex.Compute
-	11, // 4: cloud.v1.deployment.Yandex.Input.managed_ydb:type_name -> cloud.v1.deployment.Yandex.ManagedYdb
-	15, // 5: cloud.v1.deployment.Yandex.Network.subnets:type_name -> cloud.v1.deployment.Yandex.Network.SubnetsEntry
-	16, // 6: cloud.v1.deployment.Yandex.Compute.vms:type_name -> cloud.v1.deployment.Yandex.Compute.VmsEntry
-	10, // 7: cloud.v1.deployment.Yandex.Vm.secondary_disks:type_name -> cloud.v1.deployment.Yandex.Disk
-	17, // 8: cloud.v1.deployment.Yandex.ManagedYdb.labels:type_name -> cloud.v1.deployment.Yandex.ManagedYdb.LabelsEntry
-	18, // 9: cloud.v1.deployment.Yandex.ManagedYdb.serverless:type_name -> cloud.v1.deployment.Yandex.ManagedYdb.Serverless
-	19, // 10: cloud.v1.deployment.Yandex.ManagedYdb.dedicated:type_name -> cloud.v1.deployment.Yandex.ManagedYdb.Dedicated
-	24, // 11: cloud.v1.deployment.Yandex.Output.vms:type_name -> cloud.v1.deployment.Yandex.Output.VmsEntry
-	14, // 12: cloud.v1.deployment.Yandex.Output.managed_ydb:type_name -> cloud.v1.deployment.Yandex.ManagedYdbOutput
-	25, // 13: cloud.v1.deployment.Yandex.ManagedYdbOutput.labels:type_name -> cloud.v1.deployment.Yandex.ManagedYdbOutput.LabelsEntry
-	21, // 14: cloud.v1.deployment.Yandex.ManagedYdbOutput.storage_config:type_name -> cloud.v1.deployment.Yandex.ManagedYdb.StorageConfig
-	20, // 15: cloud.v1.deployment.Yandex.ManagedYdbOutput.scale_policy:type_name -> cloud.v1.deployment.Yandex.ManagedYdb.ScalePolicy
-	26, // 16: cloud.v1.deployment.Yandex.ManagedYdbOutput.raw:type_name -> cloud.v1.deployment.Yandex.ManagedYdbOutput.RawEntry
-	7,  // 17: cloud.v1.deployment.Yandex.Network.SubnetsEntry.value:type_name -> cloud.v1.deployment.Yandex.Subnet
-	9,  // 18: cloud.v1.deployment.Yandex.Compute.VmsEntry.value:type_name -> cloud.v1.deployment.Yandex.Vm
-	20, // 19: cloud.v1.deployment.Yandex.ManagedYdb.Dedicated.scale_policy:type_name -> cloud.v1.deployment.Yandex.ManagedYdb.ScalePolicy
-	21, // 20: cloud.v1.deployment.Yandex.ManagedYdb.Dedicated.storage_config:type_name -> cloud.v1.deployment.Yandex.ManagedYdb.StorageConfig
-	22, // 21: cloud.v1.deployment.Yandex.ManagedYdb.ScalePolicy.fixed:type_name -> cloud.v1.deployment.Yandex.ManagedYdb.ScalePolicy.Fixed
-	23, // 22: cloud.v1.deployment.Yandex.ManagedYdb.ScalePolicy.auto:type_name -> cloud.v1.deployment.Yandex.ManagedYdb.ScalePolicy.Auto
-	13, // 23: cloud.v1.deployment.Yandex.Output.VmsEntry.value:type_name -> cloud.v1.deployment.Yandex.VmOutput
-	24, // [24:24] is the sub-list for method output_type
-	24, // [24:24] is the sub-list for method input_type
-	24, // [24:24] is the sub-list for extension type_name
-	24, // [24:24] is the sub-list for extension extendee
-	0,  // [0:24] is the sub-list for field type_name
+	8,  // 0: cloud.v1.deployment.Yandex.input:type_name -> cloud.v1.deployment.Yandex.Input
+	15, // 1: cloud.v1.deployment.Yandex.output:type_name -> cloud.v1.deployment.Yandex.Output
+	5,  // 2: cloud.v1.deployment.Yandex.Settings.zone:type_name -> cloud.v1.deployment.Yandex.Settings.Zone
+	4,  // 3: cloud.v1.deployment.Yandex.Settings.platform_id:type_name -> cloud.v1.deployment.Yandex.Settings.PlatformId
+	9,  // 4: cloud.v1.deployment.Yandex.Input.network:type_name -> cloud.v1.deployment.Yandex.Network
+	11, // 5: cloud.v1.deployment.Yandex.Input.compute:type_name -> cloud.v1.deployment.Yandex.Compute
+	14, // 6: cloud.v1.deployment.Yandex.Input.managed_ydb:type_name -> cloud.v1.deployment.Yandex.ManagedYdb
+	18, // 7: cloud.v1.deployment.Yandex.Network.subnets:type_name -> cloud.v1.deployment.Yandex.Network.SubnetsEntry
+	19, // 8: cloud.v1.deployment.Yandex.Compute.vms:type_name -> cloud.v1.deployment.Yandex.Compute.VmsEntry
+	13, // 9: cloud.v1.deployment.Yandex.Vm.secondary_disks:type_name -> cloud.v1.deployment.Yandex.Disk
+	20, // 10: cloud.v1.deployment.Yandex.ManagedYdb.labels:type_name -> cloud.v1.deployment.Yandex.ManagedYdb.LabelsEntry
+	21, // 11: cloud.v1.deployment.Yandex.ManagedYdb.serverless:type_name -> cloud.v1.deployment.Yandex.ManagedYdb.Serverless
+	22, // 12: cloud.v1.deployment.Yandex.ManagedYdb.dedicated:type_name -> cloud.v1.deployment.Yandex.ManagedYdb.Dedicated
+	27, // 13: cloud.v1.deployment.Yandex.Output.vms:type_name -> cloud.v1.deployment.Yandex.Output.VmsEntry
+	17, // 14: cloud.v1.deployment.Yandex.Output.managed_ydb:type_name -> cloud.v1.deployment.Yandex.ManagedYdbOutput
+	28, // 15: cloud.v1.deployment.Yandex.ManagedYdbOutput.labels:type_name -> cloud.v1.deployment.Yandex.ManagedYdbOutput.LabelsEntry
+	24, // 16: cloud.v1.deployment.Yandex.ManagedYdbOutput.storage_config:type_name -> cloud.v1.deployment.Yandex.ManagedYdb.StorageConfig
+	23, // 17: cloud.v1.deployment.Yandex.ManagedYdbOutput.scale_policy:type_name -> cloud.v1.deployment.Yandex.ManagedYdb.ScalePolicy
+	29, // 18: cloud.v1.deployment.Yandex.ManagedYdbOutput.raw:type_name -> cloud.v1.deployment.Yandex.ManagedYdbOutput.RawEntry
+	10, // 19: cloud.v1.deployment.Yandex.Network.SubnetsEntry.value:type_name -> cloud.v1.deployment.Yandex.Subnet
+	12, // 20: cloud.v1.deployment.Yandex.Compute.VmsEntry.value:type_name -> cloud.v1.deployment.Yandex.Vm
+	23, // 21: cloud.v1.deployment.Yandex.ManagedYdb.Dedicated.scale_policy:type_name -> cloud.v1.deployment.Yandex.ManagedYdb.ScalePolicy
+	24, // 22: cloud.v1.deployment.Yandex.ManagedYdb.Dedicated.storage_config:type_name -> cloud.v1.deployment.Yandex.ManagedYdb.StorageConfig
+	25, // 23: cloud.v1.deployment.Yandex.ManagedYdb.ScalePolicy.fixed:type_name -> cloud.v1.deployment.Yandex.ManagedYdb.ScalePolicy.Fixed
+	26, // 24: cloud.v1.deployment.Yandex.ManagedYdb.ScalePolicy.auto:type_name -> cloud.v1.deployment.Yandex.ManagedYdb.ScalePolicy.Auto
+	16, // 25: cloud.v1.deployment.Yandex.Output.VmsEntry.value:type_name -> cloud.v1.deployment.Yandex.VmOutput
+	26, // [26:26] is the sub-list for method output_type
+	26, // [26:26] is the sub-list for method input_type
+	26, // [26:26] is the sub-list for extension type_name
+	26, // [26:26] is the sub-list for extension extendee
+	0,  // [0:26] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_deployment_yandex_proto_init() }
@@ -1928,11 +2263,11 @@ func file_cloud_v1_deployment_yandex_proto_init() {
 	if File_cloud_v1_deployment_yandex_proto != nil {
 		return
 	}
-	file_cloud_v1_deployment_yandex_proto_msgTypes[7].OneofWrappers = []any{
+	file_cloud_v1_deployment_yandex_proto_msgTypes[8].OneofWrappers = []any{
 		(*Yandex_ManagedYdb_Serverless_)(nil),
 		(*Yandex_ManagedYdb_Dedicated_)(nil),
 	}
-	file_cloud_v1_deployment_yandex_proto_msgTypes[16].OneofWrappers = []any{
+	file_cloud_v1_deployment_yandex_proto_msgTypes[17].OneofWrappers = []any{
 		(*Yandex_ManagedYdb_ScalePolicy_Fixed_)(nil),
 		(*Yandex_ManagedYdb_ScalePolicy_Auto_)(nil),
 	}
@@ -1941,8 +2276,8 @@ func file_cloud_v1_deployment_yandex_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_deployment_yandex_proto_rawDesc), len(file_cloud_v1_deployment_yandex_proto_rawDesc)),
-			NumEnums:      4,
-			NumMessages:   23,
+			NumEnums:      6,
+			NumMessages:   24,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

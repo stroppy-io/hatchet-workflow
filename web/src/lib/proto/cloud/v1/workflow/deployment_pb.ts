@@ -8,177 +8,142 @@ import type { Net, NetJson } from "../common/ip_pb.ts";
 import { file_cloud_v1_common_ip } from "../common/ip_pb.ts";
 import type { Docker_InputSchema, Docker_OutputSchema } from "../deployment/docker_pb.ts";
 import { file_cloud_v1_deployment_docker } from "../deployment/docker_pb.ts";
-import type { Provider, ProviderJson, ProviderSettings, ProviderSettingsJson } from "../deployment/provider_pb.ts";
-import { file_cloud_v1_deployment_provider } from "../deployment/provider_pb.ts";
+import type { InfrastructurePlan, InfrastructurePlanJson, InfrastructurePlanSchema, InfrastructureState, InfrastructureStateJson } from "../deployment/infrastructure_pb.ts";
+import { file_cloud_v1_deployment_infrastructure } from "../deployment/infrastructure_pb.ts";
+import type { DeploymentPlan, DeploymentPlanJson } from "../deployment/plan_pb.ts";
+import { file_cloud_v1_deployment_plan } from "../deployment/plan_pb.ts";
 import type { Quota_Allocation, Quota_AllocationJson, Quota_Request, Quota_RequestJson } from "../deployment/quota_pb.ts";
 import { file_cloud_v1_deployment_quota } from "../deployment/quota_pb.ts";
+import type { RenderOverrideSet, RenderOverrideSetJson } from "../deployment/render_pb.ts";
+import { file_cloud_v1_deployment_render } from "../deployment/render_pb.ts";
 import type { Terraform_InputSchema, Terraform_OutputSchema } from "../deployment/terraform_pb.ts";
 import { file_cloud_v1_deployment_terraform } from "../deployment/terraform_pb.ts";
-import type { Topology, TopologyJson, TopologySchema } from "../topology/topology_pb.ts";
+import type { Database, DatabaseJson } from "../domain/database_pb.ts";
+import { file_cloud_v1_domain_database } from "../domain/database_pb.ts";
+import type { TopologySpec, TopologySpecJson } from "../topology/topology_pb.ts";
 import { file_cloud_v1_topology_topology } from "../topology/topology_pb.ts";
 import { file_temporal_v1_temporal } from "../../../temporal/v1/temporal_pb.ts";
+import { file_validate_validate } from "../../../validate/validate_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file cloud/v1/workflow/deployment.proto.
  */
 export const file_cloud_v1_workflow_deployment: GenFile = /*@__PURE__*/
-  fileDesc("CiJjbG91ZC92MS93b3JrZmxvdy9kZXBsb3ltZW50LnByb3RvEhFjbG91ZC52MS53b3JrZmxvdyKCAQogUHJvY2Vzc0RlcGxveW1lbnRXb3JrZmxvd1JlcXVlc3QSLwoIcHJvdmlkZXIYASABKA4yHS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyEi0KCHRvcG9sb2d5GAIgASgLMhsuY2xvdWQudjEudG9wb2xvZ3kuVG9wb2xvZ3kijAEKIVByb2Nlc3NEZXBsb3ltZW50V29ya2Zsb3dSZXNwb25zZRIvCghwcm92aWRlchgBIAEoDjIdLmNsb3VkLnYxLmRlcGxveW1lbnQuUHJvdmlkZXISNgoRZGVwbG95ZWRfdG9wb2xvZ3kYAiABKAsyGy5jbG91ZC52MS50b3BvbG9neS5Ub3BvbG9neSJPCh5DYWxjdWxhdGVRdW90YXNXb3JrZmxvd1JlcXVlc3QSLQoIdG9wb2xvZ3kYASABKAsyGy5jbG91ZC52MS50b3BvbG9neS5Ub3BvbG9neSKJAgofQ2FsY3VsYXRlUXVvdGFzV29ya2Zsb3dSZXNwb25zZRItCgh0b3BvbG9neRgBIAEoCzIbLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5El0KDnF1b3RhX3JlcXVlc3RzGAUgAygLMkUuY2xvdWQudjEud29ya2Zsb3cuQ2FsY3VsYXRlUXVvdGFzV29ya2Zsb3dSZXNwb25zZS5RdW90YVJlcXVlc3RzRW50cnkaWAoSUXVvdGFSZXF1ZXN0c0VudHJ5EgsKA2tleRgBIAEoCRIxCgV2YWx1ZRgCIAEoCzIiLmNsb3VkLnYxLmRlcGxveW1lbnQuUXVvdGEuUmVxdWVzdDoCOAEiWAodQWNxdWlyZU5ldHdvcmtBY3Rpdml0eVJlcXVlc3QSNwoIc2V0dGluZ3MYAiABKAsyJS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyU2V0dGluZ3MiQwoeQWNxdWlyZU5ldHdvcmtBY3Rpdml0eVJlc3BvbnNlEiEKA25ldBgBIAEoCzIULmNsb3VkLnYxLmNvbW1vbi5OZXQi1AEKHEFjcXVpcmVRdW90YXNBY3Rpdml0eVJlcXVlc3QSWgoOcXVvdGFfcmVxdWVzdHMYBSADKAsyQi5jbG91ZC52MS53b3JrZmxvdy5BY3F1aXJlUXVvdGFzQWN0aXZpdHlSZXF1ZXN0LlF1b3RhUmVxdWVzdHNFbnRyeRpYChJRdW90YVJlcXVlc3RzRW50cnkSCwoDa2V5GAEgASgJEjEKBXZhbHVlGAIgASgLMiIuY2xvdWQudjEuZGVwbG95bWVudC5RdW90YS5SZXF1ZXN0OgI4ASLfAQodQWNxdWlyZVF1b3Rhc0FjdGl2aXR5UmVzcG9uc2USXwoQcXVvdGFfYWxsb2NhdGlvbhgBIAMoCzJFLmNsb3VkLnYxLndvcmtmbG93LkFjcXVpcmVRdW90YXNBY3Rpdml0eVJlc3BvbnNlLlF1b3RhQWxsb2NhdGlvbkVudHJ5Gl0KFFF1b3RhQWxsb2NhdGlvbkVudHJ5EgsKA2tleRgBIAEoCRI0CgV2YWx1ZRgCIAEoCzIlLmNsb3VkLnYxLmRlcGxveW1lbnQuUXVvdGEuQWxsb2NhdGlvbjoCOAEyqw0KEURlcGxveW1lbnRTZXJ2aWNlEqsBChlQcm9jZXNzRGVwbG95bWVudFdvcmtmbG93EjMuY2xvdWQudjEud29ya2Zsb3cuUHJvY2Vzc0RlcGxveW1lbnRXb3JrZmxvd1JlcXVlc3QaNC5jbG91ZC52MS53b3JrZmxvdy5Qcm9jZXNzRGVwbG95bWVudFdvcmtmbG93UmVzcG9uc2UiI4rEAx9yGVByb2Nlc3NEZXBsb3ltZW50V29ya2Zsb3dKAiABEpkBChZBY3F1aXJlTmV0d29ya0FjdGl2aXR5EjAuY2xvdWQudjEud29ya2Zsb3cuQWNxdWlyZU5ldHdvcmtBY3Rpdml0eVJlcXVlc3QaMS5jbG91ZC52MS53b3JrZmxvdy5BY3F1aXJlTmV0d29ya0FjdGl2aXR5UmVzcG9uc2UiGpLEAxYiAwisAjIPIAMKAggFEQAAAAAAAABAEqgBChdDYWxjdWxhdGVRdW90YXNXb3JrZmxvdxIxLmNsb3VkLnYxLndvcmtmbG93LkNhbGN1bGF0ZVF1b3Rhc1dvcmtmbG93UmVxdWVzdBoyLmNsb3VkLnYxLndvcmtmbG93LkNhbGN1bGF0ZVF1b3Rhc1dvcmtmbG93UmVzcG9uc2UiJorEAyJKAiADchdDYWxjdWxhdGVRdW90YXNXb3JrZmxvd1IDCKwCEpYBChVBY3F1aXJlUXVvdGFzQWN0aXZpdHkSLy5jbG91ZC52MS53b3JrZmxvdy5BY3F1aXJlUXVvdGFzQWN0aXZpdHlSZXF1ZXN0GjAuY2xvdWQudjEud29ya2Zsb3cuQWNxdWlyZVF1b3Rhc0FjdGl2aXR5UmVzcG9uc2UiGpLEAxYiAwisAjIPEQAAAAAAAABAIAMKAggFEoQBChlSZW5kZXJEb2NrZXJJbnB1dFdvcmtmbG93EhsuY2xvdWQudjEudG9wb2xvZ3kuVG9wb2xvZ3kaIS5jbG91ZC52MS5kZXBsb3ltZW50LkRvY2tlci5JbnB1dCInisQDI3IZUmVuZGVyRG9ja2VySW5wdXRXb3JrZmxvd1ICCDxKAiADEncKEkRvY2tlclB1bGxBY3Rpdml0eRIhLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLklucHV0GiIuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuT3V0cHV0IhqSxAMWIgMI2AQyDyADCgIIBREAAAAAAAAAQBJwChBEb2NrZXJVcEFjdGl2aXR5EiEuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuSW5wdXQaIi5jbG91ZC52MS5kZXBsb3ltZW50LkRvY2tlci5PdXRwdXQiFZLEAxEiAwjYBCoCCDwyBiADCgIIBRJuChJEb2NrZXJEb3duQWN0aXZpdHkSIS5jbG91ZC52MS5kZXBsb3ltZW50LkRvY2tlci5JbnB1dBoiLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLk91dHB1dCIRksQDDTIGIAMKAggFIgMIrAISlQEKIFJlbmRlclRlcnJhZm9ybVZhcmlhYmxlc1dvcmtmbG93EhsuY2xvdWQudjEudG9wb2xvZ3kuVG9wb2xvZ3kaJC5jbG91ZC52MS5kZXBsb3ltZW50LlRlcnJhZm9ybS5JbnB1dCIuisQDKkoCIANyIFJlbmRlclRlcnJhZm9ybVZhcmlhYmxlc1dvcmtmbG93UgIIPBJ7ChVUZXJyYWZvcm1QbGFuQWN0aXZpdHkSJC5jbG91ZC52MS5kZXBsb3ltZW50LlRlcnJhZm9ybS5JbnB1dBolLmNsb3VkLnYxLmRlcGxveW1lbnQuVGVycmFmb3JtLk91dHB1dCIVksQDESIDCIQHKgIIPDIGCgIICiACEnwKFlRlcnJhZm9ybUFwcGx5QWN0aXZpdHkSJC5jbG91ZC52MS5kZXBsb3ltZW50LlRlcnJhZm9ybS5JbnB1dBolLmNsb3VkLnYxLmRlcGxveW1lbnQuVGVycmFmb3JtLk91dHB1dCIVksQDESIDCIgOKgIIPDIGIAIKAggKEn4KGFRlcnJhZm9ybURlc3Ryb3lBY3Rpdml0eRIkLmNsb3VkLnYxLmRlcGxveW1lbnQuVGVycmFmb3JtLklucHV0GiUuY2xvdWQudjEuZGVwbG95bWVudC5UZXJyYWZvcm0uT3V0cHV0IhWSxAMRIgMIiA4qAgg8MgYgAwoCCAoaE4rEAw8KDXN0cm9wcHktY2xvdWRCRlpEZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvd29ya2Zsb3diBnByb3RvMw", [file_cloud_v1_common_ip, file_cloud_v1_deployment_docker, file_cloud_v1_deployment_provider, file_cloud_v1_deployment_quota, file_cloud_v1_deployment_terraform, file_cloud_v1_topology_topology, file_temporal_v1_temporal]);
+  fileDesc("CiJjbG91ZC92MS93b3JrZmxvdy9kZXBsb3ltZW50LnByb3RvEhFjbG91ZC52MS53b3JrZmxvdyJnCiRQcm9jZXNzSW5mcmFzdHJ1Y3R1cmVXb3JrZmxvd1JlcXVlc3QSPwoEcGxhbhgBIAEoCzInLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVQbGFuQgj6QgWKAQIQASJqCiVQcm9jZXNzSW5mcmFzdHJ1Y3R1cmVXb3JrZmxvd1Jlc3BvbnNlEkEKBXN0YXRlGAEgASgLMiguY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVN0YXRlQgj6QgWKAQIQASJhCh5DYWxjdWxhdGVRdW90YXNXb3JrZmxvd1JlcXVlc3QSPwoEcGxhbhgBIAEoCzInLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVQbGFuQgj6QgWKAQIQASKbAgofQ2FsY3VsYXRlUXVvdGFzV29ya2Zsb3dSZXNwb25zZRI/CgRwbGFuGAEgASgLMicuY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVBsYW5CCPpCBYoBAhABEl0KDnF1b3RhX3JlcXVlc3RzGAIgAygLMkUuY2xvdWQudjEud29ya2Zsb3cuQ2FsY3VsYXRlUXVvdGFzV29ya2Zsb3dSZXNwb25zZS5RdW90YVJlcXVlc3RzRW50cnkaWAoSUXVvdGFSZXF1ZXN0c0VudHJ5EgsKA2tleRgBIAEoCRIxCgV2YWx1ZRgCIAEoCzIiLmNsb3VkLnYxLmRlcGxveW1lbnQuUXVvdGEuUmVxdWVzdDoCOAEiYAodQWNxdWlyZU5ldHdvcmtBY3Rpdml0eVJlcXVlc3QSPwoEcGxhbhgBIAEoCzInLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVQbGFuQgj6QgWKAQIQASJDCh5BY3F1aXJlTmV0d29ya0FjdGl2aXR5UmVzcG9uc2USIQoDbmV0GAEgASgLMhQuY2xvdWQudjEuY29tbW9uLk5ldCLUAQocQWNxdWlyZVF1b3Rhc0FjdGl2aXR5UmVxdWVzdBJaCg5xdW90YV9yZXF1ZXN0cxgBIAMoCzJCLmNsb3VkLnYxLndvcmtmbG93LkFjcXVpcmVRdW90YXNBY3Rpdml0eVJlcXVlc3QuUXVvdGFSZXF1ZXN0c0VudHJ5GlgKElF1b3RhUmVxdWVzdHNFbnRyeRILCgNrZXkYASABKAkSMQoFdmFsdWUYAiABKAsyIi5jbG91ZC52MS5kZXBsb3ltZW50LlF1b3RhLlJlcXVlc3Q6AjgBIuIBCh1BY3F1aXJlUXVvdGFzQWN0aXZpdHlSZXNwb25zZRJhChFxdW90YV9hbGxvY2F0aW9ucxgBIAMoCzJGLmNsb3VkLnYxLndvcmtmbG93LkFjcXVpcmVRdW90YXNBY3Rpdml0eVJlc3BvbnNlLlF1b3RhQWxsb2NhdGlvbnNFbnRyeRpeChVRdW90YUFsbG9jYXRpb25zRW50cnkSCwoDa2V5GAEgASgJEjQKBXZhbHVlGAIgASgLMiUuY2xvdWQudjEuZGVwbG95bWVudC5RdW90YS5BbGxvY2F0aW9uOgI4ASL4AgojUmVuZGVyRGVwbG95bWVudFBsYW5Xb3JrZmxvd1JlcXVlc3QSQAoNdG9wb2xvZ3lfc3BlYxgBIAEoCzIfLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5U3BlY0II+kIFigECEAESTgoTaW5mcmFzdHJ1Y3R1cmVfcGxhbhgCIAEoCzInLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVQbGFuQgj6QgWKAQIQARJGChRpbmZyYXN0cnVjdHVyZV9zdGF0ZRgDIAEoCzIoLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVTdGF0ZRJAChByZW5kZXJfb3ZlcnJpZGVzGAQgASgLMiYuY2xvdWQudjEuZGVwbG95bWVudC5SZW5kZXJPdmVycmlkZVNldBI1CghkYXRhYmFzZRgFIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5EYXRhYmFzZUII+kIFigECEAEibgokUmVuZGVyRGVwbG95bWVudFBsYW5Xb3JrZmxvd1Jlc3BvbnNlEkYKD2RlcGxveW1lbnRfcGxhbhgBIAEoCzIjLmNsb3VkLnYxLmRlcGxveW1lbnQuRGVwbG95bWVudFBsYW5CCPpCBYoBAhABIsABCiRFeGVjdXRlRGVwbG95bWVudFBsYW5Xb3JrZmxvd1JlcXVlc3QSRgoPZGVwbG95bWVudF9wbGFuGAEgASgLMiMuY2xvdWQudjEuZGVwbG95bWVudC5EZXBsb3ltZW50UGxhbkII+kIFigECEAESUAoUaW5mcmFzdHJ1Y3R1cmVfc3RhdGUYAiABKAsyKC5jbG91ZC52MS5kZXBsb3ltZW50LkluZnJhc3RydWN0dXJlU3RhdGVCCPpCBYoBAhABIm8KJUV4ZWN1dGVEZXBsb3ltZW50UGxhbldvcmtmbG93UmVzcG9uc2USRgoPZGVwbG95bWVudF9wbGFuGAEgASgLMiMuY2xvdWQudjEuZGVwbG95bWVudC5EZXBsb3ltZW50UGxhbkII+kIFigECEAEy0BAKEURlcGxveW1lbnRTZXJ2aWNlErsBCh1Qcm9jZXNzSW5mcmFzdHJ1Y3R1cmVXb3JrZmxvdxI3LmNsb3VkLnYxLndvcmtmbG93LlByb2Nlc3NJbmZyYXN0cnVjdHVyZVdvcmtmbG93UmVxdWVzdBo4LmNsb3VkLnYxLndvcmtmbG93LlByb2Nlc3NJbmZyYXN0cnVjdHVyZVdvcmtmbG93UmVzcG9uc2UiJ4rEAyNyHVByb2Nlc3NJbmZyYXN0cnVjdHVyZVdvcmtmbG93SgIgARKoAQoXQ2FsY3VsYXRlUXVvdGFzV29ya2Zsb3cSMS5jbG91ZC52MS53b3JrZmxvdy5DYWxjdWxhdGVRdW90YXNXb3JrZmxvd1JlcXVlc3QaMi5jbG91ZC52MS53b3JrZmxvdy5DYWxjdWxhdGVRdW90YXNXb3JrZmxvd1Jlc3BvbnNlIiaKxAMiSgIgA3IXQ2FsY3VsYXRlUXVvdGFzV29ya2Zsb3dSAwisAhKZAQoWQWNxdWlyZU5ldHdvcmtBY3Rpdml0eRIwLmNsb3VkLnYxLndvcmtmbG93LkFjcXVpcmVOZXR3b3JrQWN0aXZpdHlSZXF1ZXN0GjEuY2xvdWQudjEud29ya2Zsb3cuQWNxdWlyZU5ldHdvcmtBY3Rpdml0eVJlc3BvbnNlIhqSxAMWIgMIrAIyDyADCgIIBREAAAAAAAAAQBKWAQoVQWNxdWlyZVF1b3Rhc0FjdGl2aXR5Ei8uY2xvdWQudjEud29ya2Zsb3cuQWNxdWlyZVF1b3Rhc0FjdGl2aXR5UmVxdWVzdBowLmNsb3VkLnYxLndvcmtmbG93LkFjcXVpcmVRdW90YXNBY3Rpdml0eVJlc3BvbnNlIhqSxAMWMg8gAwoCCAURAAAAAAAAAEAiAwisAhKQAQoZUmVuZGVyRG9ja2VySW5wdXRXb3JrZmxvdxInLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVQbGFuGiEuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuSW5wdXQiJ4rEAyNSAgg8SgIgA3IZUmVuZGVyRG9ja2VySW5wdXRXb3JrZmxvdxJ3ChJEb2NrZXJQdWxsQWN0aXZpdHkSIS5jbG91ZC52MS5kZXBsb3ltZW50LkRvY2tlci5JbnB1dBoiLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLk91dHB1dCIaksQDFiIDCNgEMg8gAwoCCAURAAAAAAAAAEAScAoQRG9ja2VyVXBBY3Rpdml0eRIhLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLklucHV0GiIuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuT3V0cHV0IhWSxAMRKgIIPDIGIAMKAggFIgMI2AQSbgoSRG9ja2VyRG93bkFjdGl2aXR5EiEuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuSW5wdXQaIi5jbG91ZC52MS5kZXBsb3ltZW50LkRvY2tlci5PdXRwdXQiEZLEAw0iAwisAjIGIAMKAggFEqEBCiBSZW5kZXJUZXJyYWZvcm1WYXJpYWJsZXNXb3JrZmxvdxInLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVQbGFuGiQuY2xvdWQudjEuZGVwbG95bWVudC5UZXJyYWZvcm0uSW5wdXQiLorEAypyIFJlbmRlclRlcnJhZm9ybVZhcmlhYmxlc1dvcmtmbG93UgIIPEoCIAMSewoVVGVycmFmb3JtUGxhbkFjdGl2aXR5EiQuY2xvdWQudjEuZGVwbG95bWVudC5UZXJyYWZvcm0uSW5wdXQaJS5jbG91ZC52MS5kZXBsb3ltZW50LlRlcnJhZm9ybS5PdXRwdXQiFZLEAxEiAwiEByoCCDwyBiACCgIIChJ8ChZUZXJyYWZvcm1BcHBseUFjdGl2aXR5EiQuY2xvdWQudjEuZGVwbG95bWVudC5UZXJyYWZvcm0uSW5wdXQaJS5jbG91ZC52MS5kZXBsb3ltZW50LlRlcnJhZm9ybS5PdXRwdXQiFZLEAxEiAwiIDioCCDwyBiACCgIIChJ+ChhUZXJyYWZvcm1EZXN0cm95QWN0aXZpdHkSJC5jbG91ZC52MS5kZXBsb3ltZW50LlRlcnJhZm9ybS5JbnB1dBolLmNsb3VkLnYxLmRlcGxveW1lbnQuVGVycmFmb3JtLk91dHB1dCIVksQDESIDCIgOKgIIPDIGCgIICiADErwBChxSZW5kZXJEZXBsb3ltZW50UGxhbldvcmtmbG93EjYuY2xvdWQudjEud29ya2Zsb3cuUmVuZGVyRGVwbG95bWVudFBsYW5Xb3JrZmxvd1JlcXVlc3QaNy5jbG91ZC52MS53b3JrZmxvdy5SZW5kZXJEZXBsb3ltZW50UGxhbldvcmtmbG93UmVzcG9uc2UiK4rEAydyHFJlbmRlckRlcGxveW1lbnRQbGFuV29ya2Zsb3dSAwisAkoCIAMSuwEKHUV4ZWN1dGVEZXBsb3ltZW50UGxhbldvcmtmbG93EjcuY2xvdWQudjEud29ya2Zsb3cuRXhlY3V0ZURlcGxveW1lbnRQbGFuV29ya2Zsb3dSZXF1ZXN0GjguY2xvdWQudjEud29ya2Zsb3cuRXhlY3V0ZURlcGxveW1lbnRQbGFuV29ya2Zsb3dSZXNwb25zZSInisQDI3IdRXhlY3V0ZURlcGxveW1lbnRQbGFuV29ya2Zsb3dKAiABGhOKxAMPCg1zdHJvcHB5LWNsb3VkQkZaRGdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL3dvcmtmbG93YgZwcm90bzM", [file_cloud_v1_common_ip, file_cloud_v1_deployment_docker, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_plan, file_cloud_v1_deployment_quota, file_cloud_v1_deployment_render, file_cloud_v1_deployment_terraform, file_cloud_v1_domain_database, file_cloud_v1_topology_topology, file_temporal_v1_temporal, file_validate_validate]);
 
 /**
  *
- * ProcessDeploymentWorkflowRequest is the input to the top-level deployment
- * workflow: which provider to use and the topology to provision.
+ * ProcessInfrastructureWorkflowRequest is the input to provider provisioning.
  *
- * @generated from message cloud.v1.workflow.ProcessDeploymentWorkflowRequest
+ * @generated from message cloud.v1.workflow.ProcessInfrastructureWorkflowRequest
  */
-export type ProcessDeploymentWorkflowRequest = Message<"cloud.v1.workflow.ProcessDeploymentWorkflowRequest"> & {
+export type ProcessInfrastructureWorkflowRequest = Message<"cloud.v1.workflow.ProcessInfrastructureWorkflowRequest"> & {
   /**
    *
-   * provider is the target cloud/provider to deploy onto.
+   * plan is the provider-specific infrastructure plan to materialize.
    *
-   * @generated from field: cloud.v1.deployment.Provider provider = 1;
+   * @generated from field: cloud.v1.deployment.InfrastructurePlan plan = 1;
    */
-  provider: Provider;
-
-  /**
-   *
-   * topology is the topology to provision; instances MUST already carry their
-   * provider_parms.
-   *
-   * @generated from field: cloud.v1.topology.Topology topology = 2;
-   */
-  topology?: Topology;
+  plan?: InfrastructurePlan;
 };
 
 /**
  *
- * ProcessDeploymentWorkflowRequest is the input to the top-level deployment
- * workflow: which provider to use and the topology to provision.
+ * ProcessInfrastructureWorkflowRequest is the input to provider provisioning.
  *
- * @generated from message cloud.v1.workflow.ProcessDeploymentWorkflowRequest
+ * @generated from message cloud.v1.workflow.ProcessInfrastructureWorkflowRequest
  */
-export type ProcessDeploymentWorkflowRequestJson = {
+export type ProcessInfrastructureWorkflowRequestJson = {
   /**
    *
-   * provider is the target cloud/provider to deploy onto.
+   * plan is the provider-specific infrastructure plan to materialize.
    *
-   * @generated from field: cloud.v1.deployment.Provider provider = 1;
+   * @generated from field: cloud.v1.deployment.InfrastructurePlan plan = 1;
    */
-  provider?: ProviderJson;
-
-  /**
-   *
-   * topology is the topology to provision; instances MUST already carry their
-   * provider_parms.
-   *
-   * @generated from field: cloud.v1.topology.Topology topology = 2;
-   */
-  topology?: TopologyJson;
+  plan?: InfrastructurePlanJson;
 };
 
-export type ProcessDeploymentWorkflowRequestValid = ProcessDeploymentWorkflowRequest;
+export type ProcessInfrastructureWorkflowRequestValid = ProcessInfrastructureWorkflowRequest;
 
 /**
- * Describes the message cloud.v1.workflow.ProcessDeploymentWorkflowRequest.
- * Use `create(ProcessDeploymentWorkflowRequestSchema)` to create a new message.
+ * Describes the message cloud.v1.workflow.ProcessInfrastructureWorkflowRequest.
+ * Use `create(ProcessInfrastructureWorkflowRequestSchema)` to create a new message.
  */
-export const ProcessDeploymentWorkflowRequestSchema: GenMessage<ProcessDeploymentWorkflowRequest, {jsonType: ProcessDeploymentWorkflowRequestJson, validType: ProcessDeploymentWorkflowRequestValid}> = /*@__PURE__*/
+export const ProcessInfrastructureWorkflowRequestSchema: GenMessage<ProcessInfrastructureWorkflowRequest, {jsonType: ProcessInfrastructureWorkflowRequestJson, validType: ProcessInfrastructureWorkflowRequestValid}> = /*@__PURE__*/
   messageDesc(file_cloud_v1_workflow_deployment, 0);
 
 /**
  *
- * ProcessDeploymentWorkflowResponse is the result of the deployment workflow:
- * the provider used and the fully deployed topology.
+ * ProcessInfrastructureWorkflowResponse is provider runtime output.
  *
- * @generated from message cloud.v1.workflow.ProcessDeploymentWorkflowResponse
+ * @generated from message cloud.v1.workflow.ProcessInfrastructureWorkflowResponse
  */
-export type ProcessDeploymentWorkflowResponse = Message<"cloud.v1.workflow.ProcessDeploymentWorkflowResponse"> & {
+export type ProcessInfrastructureWorkflowResponse = Message<"cloud.v1.workflow.ProcessInfrastructureWorkflowResponse"> & {
   /**
    *
-   * provider is the provider the topology was deployed onto.
+   * state is the runtime provider state after apply/up.
    *
-   * @generated from field: cloud.v1.deployment.Provider provider = 1;
+   * @generated from field: cloud.v1.deployment.InfrastructureState state = 1;
    */
-  provider: Provider;
-
-  /**
-   *
-   * deployed_topology is the full deployed topology with all runtime params
-   * filled in.
-   *
-   * @generated from field: cloud.v1.topology.Topology deployed_topology = 2;
-   */
-  deployedTopology?: Topology;
+  state?: InfrastructureState;
 };
 
 /**
  *
- * ProcessDeploymentWorkflowResponse is the result of the deployment workflow:
- * the provider used and the fully deployed topology.
+ * ProcessInfrastructureWorkflowResponse is provider runtime output.
  *
- * @generated from message cloud.v1.workflow.ProcessDeploymentWorkflowResponse
+ * @generated from message cloud.v1.workflow.ProcessInfrastructureWorkflowResponse
  */
-export type ProcessDeploymentWorkflowResponseJson = {
+export type ProcessInfrastructureWorkflowResponseJson = {
   /**
    *
-   * provider is the provider the topology was deployed onto.
+   * state is the runtime provider state after apply/up.
    *
-   * @generated from field: cloud.v1.deployment.Provider provider = 1;
+   * @generated from field: cloud.v1.deployment.InfrastructureState state = 1;
    */
-  provider?: ProviderJson;
-
-  /**
-   *
-   * deployed_topology is the full deployed topology with all runtime params
-   * filled in.
-   *
-   * @generated from field: cloud.v1.topology.Topology deployed_topology = 2;
-   */
-  deployedTopology?: TopologyJson;
+  state?: InfrastructureStateJson;
 };
 
-export type ProcessDeploymentWorkflowResponseValid = ProcessDeploymentWorkflowResponse;
+export type ProcessInfrastructureWorkflowResponseValid = ProcessInfrastructureWorkflowResponse;
 
 /**
- * Describes the message cloud.v1.workflow.ProcessDeploymentWorkflowResponse.
- * Use `create(ProcessDeploymentWorkflowResponseSchema)` to create a new message.
+ * Describes the message cloud.v1.workflow.ProcessInfrastructureWorkflowResponse.
+ * Use `create(ProcessInfrastructureWorkflowResponseSchema)` to create a new message.
  */
-export const ProcessDeploymentWorkflowResponseSchema: GenMessage<ProcessDeploymentWorkflowResponse, {jsonType: ProcessDeploymentWorkflowResponseJson, validType: ProcessDeploymentWorkflowResponseValid}> = /*@__PURE__*/
+export const ProcessInfrastructureWorkflowResponseSchema: GenMessage<ProcessInfrastructureWorkflowResponse, {jsonType: ProcessInfrastructureWorkflowResponseJson, validType: ProcessInfrastructureWorkflowResponseValid}> = /*@__PURE__*/
   messageDesc(file_cloud_v1_workflow_deployment, 1);
 
 /**
  *
- * CalculateQuotasWorkflowRequest asks the workflow to compute resource quotas
- * for a topology.
+ * CalculateQuotasWorkflowRequest asks to compute quota requests for a plan.
  *
  * @generated from message cloud.v1.workflow.CalculateQuotasWorkflowRequest
  */
 export type CalculateQuotasWorkflowRequest = Message<"cloud.v1.workflow.CalculateQuotasWorkflowRequest"> & {
   /**
    *
-   * topology is the topology to compute quota requests for.
+   * plan is the infrastructure plan to compute quotas for.
    *
-   * @generated from field: cloud.v1.topology.Topology topology = 1;
+   * @generated from field: cloud.v1.deployment.InfrastructurePlan plan = 1;
    */
-  topology?: Topology;
+  plan?: InfrastructurePlan;
 };
 
 /**
  *
- * CalculateQuotasWorkflowRequest asks the workflow to compute resource quotas
- * for a topology.
+ * CalculateQuotasWorkflowRequest asks to compute quota requests for a plan.
  *
  * @generated from message cloud.v1.workflow.CalculateQuotasWorkflowRequest
  */
 export type CalculateQuotasWorkflowRequestJson = {
   /**
    *
-   * topology is the topology to compute quota requests for.
+   * plan is the infrastructure plan to compute quotas for.
    *
-   * @generated from field: cloud.v1.topology.Topology topology = 1;
+   * @generated from field: cloud.v1.deployment.InfrastructurePlan plan = 1;
    */
-  topology?: TopologyJson;
+  plan?: InfrastructurePlanJson;
 };
 
 export type CalculateQuotasWorkflowRequestValid = CalculateQuotasWorkflowRequest;
@@ -192,50 +157,48 @@ export const CalculateQuotasWorkflowRequestSchema: GenMessage<CalculateQuotasWor
 
 /**
  *
- * CalculateQuotasWorkflowResponse returns the topology along with the computed
- * quota requests.
+ * CalculateQuotasWorkflowResponse returns quota requests keyed by node id.
  *
  * @generated from message cloud.v1.workflow.CalculateQuotasWorkflowResponse
  */
 export type CalculateQuotasWorkflowResponse = Message<"cloud.v1.workflow.CalculateQuotasWorkflowResponse"> & {
   /**
    *
-   * topology is the (unchanged) topology the quotas were computed for.
+   * plan is the plan the quotas were computed for.
    *
-   * @generated from field: cloud.v1.topology.Topology topology = 1;
+   * @generated from field: cloud.v1.deployment.InfrastructurePlan plan = 1;
    */
-  topology?: Topology;
+  plan?: InfrastructurePlan;
 
   /**
    *
-   * quota_requests are the computed requests keyed by component.id.
+   * quota_requests are requested quotas keyed by topology node id.
    *
-   * @generated from field: map<string, cloud.v1.deployment.Quota.Request> quota_requests = 5;
+   * @generated from field: map<string, cloud.v1.deployment.Quota.Request> quota_requests = 2;
    */
   quotaRequests: { [key: string]: Quota_Request };
 };
 
 /**
  *
- * CalculateQuotasWorkflowResponse returns the topology along with the computed
- * quota requests.
+ * CalculateQuotasWorkflowResponse returns quota requests keyed by node id.
  *
  * @generated from message cloud.v1.workflow.CalculateQuotasWorkflowResponse
  */
 export type CalculateQuotasWorkflowResponseJson = {
   /**
    *
-   * topology is the (unchanged) topology the quotas were computed for.
+   * plan is the plan the quotas were computed for.
    *
-   * @generated from field: cloud.v1.topology.Topology topology = 1;
+   * @generated from field: cloud.v1.deployment.InfrastructurePlan plan = 1;
    */
-  topology?: TopologyJson;
+  plan?: InfrastructurePlanJson;
 
   /**
    *
-   * quota_requests are the computed requests keyed by component.id.
+   * quota_requests are requested quotas keyed by topology node id.
    *
-   * @generated from field: map<string, cloud.v1.deployment.Quota.Request> quota_requests = 5;
+   * @generated from field: map<string, cloud.v1.deployment.Quota.Request> quota_requests = 2;
    */
   quotaRequests?: { [key: string]: Quota_RequestJson };
 };
@@ -258,11 +221,12 @@ export const CalculateQuotasWorkflowResponseSchema: GenMessage<CalculateQuotasWo
 export type AcquireNetworkActivityRequest = Message<"cloud.v1.workflow.AcquireNetworkActivityRequest"> & {
   /**
    *
-   * settings are the provider-specific settings used to acquire the network.
+   * plan is the infrastructure plan whose provider settings drive network
+   * acquisition.
    *
-   * @generated from field: cloud.v1.deployment.ProviderSettings settings = 2;
+   * @generated from field: cloud.v1.deployment.InfrastructurePlan plan = 1;
    */
-  settings?: ProviderSettings;
+  plan?: InfrastructurePlan;
 };
 
 /**
@@ -274,11 +238,12 @@ export type AcquireNetworkActivityRequest = Message<"cloud.v1.workflow.AcquireNe
 export type AcquireNetworkActivityRequestJson = {
   /**
    *
-   * settings are the provider-specific settings used to acquire the network.
+   * plan is the infrastructure plan whose provider settings drive network
+   * acquisition.
    *
-   * @generated from field: cloud.v1.deployment.ProviderSettings settings = 2;
+   * @generated from field: cloud.v1.deployment.InfrastructurePlan plan = 1;
    */
-  settings?: ProviderSettingsJson;
+  plan?: InfrastructurePlanJson;
 };
 
 export type AcquireNetworkActivityRequestValid = AcquireNetworkActivityRequest;
@@ -333,34 +298,32 @@ export const AcquireNetworkActivityResponseSchema: GenMessage<AcquireNetworkActi
 
 /**
  *
- * AcquireQuotasActivityRequest asks the provider to acquire the requested
- * quotas.
+ * AcquireQuotasActivityRequest asks the provider to acquire requested quotas.
  *
  * @generated from message cloud.v1.workflow.AcquireQuotasActivityRequest
  */
 export type AcquireQuotasActivityRequest = Message<"cloud.v1.workflow.AcquireQuotasActivityRequest"> & {
   /**
    *
-   * quota_requests are the requests to acquire, keyed by component.id.
+   * quota_requests are requested quotas keyed by topology node id.
    *
-   * @generated from field: map<string, cloud.v1.deployment.Quota.Request> quota_requests = 5;
+   * @generated from field: map<string, cloud.v1.deployment.Quota.Request> quota_requests = 1;
    */
   quotaRequests: { [key: string]: Quota_Request };
 };
 
 /**
  *
- * AcquireQuotasActivityRequest asks the provider to acquire the requested
- * quotas.
+ * AcquireQuotasActivityRequest asks the provider to acquire requested quotas.
  *
  * @generated from message cloud.v1.workflow.AcquireQuotasActivityRequest
  */
 export type AcquireQuotasActivityRequestJson = {
   /**
    *
-   * quota_requests are the requests to acquire, keyed by component.id.
+   * quota_requests are requested quotas keyed by topology node id.
    *
-   * @generated from field: map<string, cloud.v1.deployment.Quota.Request> quota_requests = 5;
+   * @generated from field: map<string, cloud.v1.deployment.Quota.Request> quota_requests = 1;
    */
   quotaRequests?: { [key: string]: Quota_RequestJson };
 };
@@ -376,34 +339,34 @@ export const AcquireQuotasActivityRequestSchema: GenMessage<AcquireQuotasActivit
 
 /**
  *
- * AcquireQuotasActivityResponse returns the quotas the provider allocated.
+ * AcquireQuotasActivityResponse returns granted allocations keyed by node id.
  *
  * @generated from message cloud.v1.workflow.AcquireQuotasActivityResponse
  */
 export type AcquireQuotasActivityResponse = Message<"cloud.v1.workflow.AcquireQuotasActivityResponse"> & {
   /**
    *
-   * quota_allocation is the granted allocation keyed by component.id.
+   * quota_allocations are granted allocations keyed by topology node id.
    *
-   * @generated from field: map<string, cloud.v1.deployment.Quota.Allocation> quota_allocation = 1;
+   * @generated from field: map<string, cloud.v1.deployment.Quota.Allocation> quota_allocations = 1;
    */
-  quotaAllocation: { [key: string]: Quota_Allocation };
+  quotaAllocations: { [key: string]: Quota_Allocation };
 };
 
 /**
  *
- * AcquireQuotasActivityResponse returns the quotas the provider allocated.
+ * AcquireQuotasActivityResponse returns granted allocations keyed by node id.
  *
  * @generated from message cloud.v1.workflow.AcquireQuotasActivityResponse
  */
 export type AcquireQuotasActivityResponseJson = {
   /**
    *
-   * quota_allocation is the granted allocation keyed by component.id.
+   * quota_allocations are granted allocations keyed by topology node id.
    *
-   * @generated from field: map<string, cloud.v1.deployment.Quota.Allocation> quota_allocation = 1;
+   * @generated from field: map<string, cloud.v1.deployment.Quota.Allocation> quota_allocations = 1;
    */
-  quotaAllocation?: { [key: string]: Quota_AllocationJson };
+  quotaAllocations?: { [key: string]: Quota_AllocationJson };
 };
 
 export type AcquireQuotasActivityResponseValid = AcquireQuotasActivityResponse;
@@ -417,40 +380,277 @@ export const AcquireQuotasActivityResponseSchema: GenMessage<AcquireQuotasActivi
 
 /**
  *
- * DeploymentService groups the Temporal workflows and activities that provision
- * and tear down a topology's infrastructure.
+ * RenderDeploymentPlanWorkflowRequest asks to render install/config agent steps.
+ *
+ * @generated from message cloud.v1.workflow.RenderDeploymentPlanWorkflowRequest
+ */
+export type RenderDeploymentPlanWorkflowRequest = Message<"cloud.v1.workflow.RenderDeploymentPlanWorkflowRequest"> & {
+  /**
+   *
+   * topology_spec is the provider-agnostic logical graph.
+   *
+   * @generated from field: cloud.v1.topology.TopologySpec topology_spec = 1;
+   */
+  topologySpec?: TopologySpec;
+
+  /**
+   *
+   * infrastructure_plan is provider input, including OS/image choices.
+   *
+   * @generated from field: cloud.v1.deployment.InfrastructurePlan infrastructure_plan = 2;
+   */
+  infrastructurePlan?: InfrastructurePlan;
+
+  /**
+   *
+   * infrastructure_state carries runtime facts such as addresses. It may be
+   * partially filled when a renderer can use logical hostnames instead.
+   *
+   * @generated from field: cloud.v1.deployment.InfrastructureState infrastructure_state = 3;
+   */
+  infrastructureState?: InfrastructureState;
+
+  /**
+   *
+   * render_overrides are user edits to editable render artifacts.
+   *
+   * @generated from field: cloud.v1.deployment.RenderOverrideSet render_overrides = 4;
+   */
+  renderOverrides?: RenderOverrideSet;
+
+  /**
+   *
+   * database is the engine input used by package resolution and config
+   * renderers. It is not topology because renderers need version/package and
+   * editable engine config values.
+   *
+   * @generated from field: cloud.v1.domain.Database database = 5;
+   */
+  database?: Database;
+};
+
+/**
+ *
+ * RenderDeploymentPlanWorkflowRequest asks to render install/config agent steps.
+ *
+ * @generated from message cloud.v1.workflow.RenderDeploymentPlanWorkflowRequest
+ */
+export type RenderDeploymentPlanWorkflowRequestJson = {
+  /**
+   *
+   * topology_spec is the provider-agnostic logical graph.
+   *
+   * @generated from field: cloud.v1.topology.TopologySpec topology_spec = 1;
+   */
+  topologySpec?: TopologySpecJson;
+
+  /**
+   *
+   * infrastructure_plan is provider input, including OS/image choices.
+   *
+   * @generated from field: cloud.v1.deployment.InfrastructurePlan infrastructure_plan = 2;
+   */
+  infrastructurePlan?: InfrastructurePlanJson;
+
+  /**
+   *
+   * infrastructure_state carries runtime facts such as addresses. It may be
+   * partially filled when a renderer can use logical hostnames instead.
+   *
+   * @generated from field: cloud.v1.deployment.InfrastructureState infrastructure_state = 3;
+   */
+  infrastructureState?: InfrastructureStateJson;
+
+  /**
+   *
+   * render_overrides are user edits to editable render artifacts.
+   *
+   * @generated from field: cloud.v1.deployment.RenderOverrideSet render_overrides = 4;
+   */
+  renderOverrides?: RenderOverrideSetJson;
+
+  /**
+   *
+   * database is the engine input used by package resolution and config
+   * renderers. It is not topology because renderers need version/package and
+   * editable engine config values.
+   *
+   * @generated from field: cloud.v1.domain.Database database = 5;
+   */
+  database?: DatabaseJson;
+};
+
+export type RenderDeploymentPlanWorkflowRequestValid = RenderDeploymentPlanWorkflowRequest;
+
+/**
+ * Describes the message cloud.v1.workflow.RenderDeploymentPlanWorkflowRequest.
+ * Use `create(RenderDeploymentPlanWorkflowRequestSchema)` to create a new message.
+ */
+export const RenderDeploymentPlanWorkflowRequestSchema: GenMessage<RenderDeploymentPlanWorkflowRequest, {jsonType: RenderDeploymentPlanWorkflowRequestJson, validType: RenderDeploymentPlanWorkflowRequestValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_workflow_deployment, 8);
+
+/**
+ *
+ * RenderDeploymentPlanWorkflowResponse returns an executable deployment plan.
+ *
+ * @generated from message cloud.v1.workflow.RenderDeploymentPlanWorkflowResponse
+ */
+export type RenderDeploymentPlanWorkflowResponse = Message<"cloud.v1.workflow.RenderDeploymentPlanWorkflowResponse"> & {
+  /**
+   *
+   * deployment_plan is the agent-executable plan.
+   *
+   * @generated from field: cloud.v1.deployment.DeploymentPlan deployment_plan = 1;
+   */
+  deploymentPlan?: DeploymentPlan;
+};
+
+/**
+ *
+ * RenderDeploymentPlanWorkflowResponse returns an executable deployment plan.
+ *
+ * @generated from message cloud.v1.workflow.RenderDeploymentPlanWorkflowResponse
+ */
+export type RenderDeploymentPlanWorkflowResponseJson = {
+  /**
+   *
+   * deployment_plan is the agent-executable plan.
+   *
+   * @generated from field: cloud.v1.deployment.DeploymentPlan deployment_plan = 1;
+   */
+  deploymentPlan?: DeploymentPlanJson;
+};
+
+export type RenderDeploymentPlanWorkflowResponseValid = RenderDeploymentPlanWorkflowResponse;
+
+/**
+ * Describes the message cloud.v1.workflow.RenderDeploymentPlanWorkflowResponse.
+ * Use `create(RenderDeploymentPlanWorkflowResponseSchema)` to create a new message.
+ */
+export const RenderDeploymentPlanWorkflowResponseSchema: GenMessage<RenderDeploymentPlanWorkflowResponse, {jsonType: RenderDeploymentPlanWorkflowResponseJson, validType: RenderDeploymentPlanWorkflowResponseValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_workflow_deployment, 9);
+
+/**
+ *
+ * ExecuteDeploymentPlanWorkflowRequest asks to execute an agent plan.
+ *
+ * @generated from message cloud.v1.workflow.ExecuteDeploymentPlanWorkflowRequest
+ */
+export type ExecuteDeploymentPlanWorkflowRequest = Message<"cloud.v1.workflow.ExecuteDeploymentPlanWorkflowRequest"> & {
+  /**
+   *
+   * deployment_plan is the plan to execute.
+   *
+   * @generated from field: cloud.v1.deployment.DeploymentPlan deployment_plan = 1;
+   */
+  deploymentPlan?: DeploymentPlan;
+
+  /**
+   *
+   * infrastructure_state is used to route steps to node agents.
+   *
+   * @generated from field: cloud.v1.deployment.InfrastructureState infrastructure_state = 2;
+   */
+  infrastructureState?: InfrastructureState;
+};
+
+/**
+ *
+ * ExecuteDeploymentPlanWorkflowRequest asks to execute an agent plan.
+ *
+ * @generated from message cloud.v1.workflow.ExecuteDeploymentPlanWorkflowRequest
+ */
+export type ExecuteDeploymentPlanWorkflowRequestJson = {
+  /**
+   *
+   * deployment_plan is the plan to execute.
+   *
+   * @generated from field: cloud.v1.deployment.DeploymentPlan deployment_plan = 1;
+   */
+  deploymentPlan?: DeploymentPlanJson;
+
+  /**
+   *
+   * infrastructure_state is used to route steps to node agents.
+   *
+   * @generated from field: cloud.v1.deployment.InfrastructureState infrastructure_state = 2;
+   */
+  infrastructureState?: InfrastructureStateJson;
+};
+
+export type ExecuteDeploymentPlanWorkflowRequestValid = ExecuteDeploymentPlanWorkflowRequest;
+
+/**
+ * Describes the message cloud.v1.workflow.ExecuteDeploymentPlanWorkflowRequest.
+ * Use `create(ExecuteDeploymentPlanWorkflowRequestSchema)` to create a new message.
+ */
+export const ExecuteDeploymentPlanWorkflowRequestSchema: GenMessage<ExecuteDeploymentPlanWorkflowRequest, {jsonType: ExecuteDeploymentPlanWorkflowRequestJson, validType: ExecuteDeploymentPlanWorkflowRequestValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_workflow_deployment, 10);
+
+/**
+ *
+ * ExecuteDeploymentPlanWorkflowResponse returns the executed plan with statuses.
+ *
+ * @generated from message cloud.v1.workflow.ExecuteDeploymentPlanWorkflowResponse
+ */
+export type ExecuteDeploymentPlanWorkflowResponse = Message<"cloud.v1.workflow.ExecuteDeploymentPlanWorkflowResponse"> & {
+  /**
+   *
+   * deployment_plan is the executed plan with statuses/results filled.
+   *
+   * @generated from field: cloud.v1.deployment.DeploymentPlan deployment_plan = 1;
+   */
+  deploymentPlan?: DeploymentPlan;
+};
+
+/**
+ *
+ * ExecuteDeploymentPlanWorkflowResponse returns the executed plan with statuses.
+ *
+ * @generated from message cloud.v1.workflow.ExecuteDeploymentPlanWorkflowResponse
+ */
+export type ExecuteDeploymentPlanWorkflowResponseJson = {
+  /**
+   *
+   * deployment_plan is the executed plan with statuses/results filled.
+   *
+   * @generated from field: cloud.v1.deployment.DeploymentPlan deployment_plan = 1;
+   */
+  deploymentPlan?: DeploymentPlanJson;
+};
+
+export type ExecuteDeploymentPlanWorkflowResponseValid = ExecuteDeploymentPlanWorkflowResponse;
+
+/**
+ * Describes the message cloud.v1.workflow.ExecuteDeploymentPlanWorkflowResponse.
+ * Use `create(ExecuteDeploymentPlanWorkflowResponseSchema)` to create a new message.
+ */
+export const ExecuteDeploymentPlanWorkflowResponseSchema: GenMessage<ExecuteDeploymentPlanWorkflowResponse, {jsonType: ExecuteDeploymentPlanWorkflowResponseJson, validType: ExecuteDeploymentPlanWorkflowResponseValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_workflow_deployment, 11);
+
+/**
+ *
+ * DeploymentService groups the staged deployment workflows and provider
+ * activities.
  *
  * @generated from service cloud.v1.workflow.DeploymentService
  */
 export const DeploymentService: GenService<{
   /**
    *
-   * ProcessDeploymentWorkflow provisions a topology end to end; always a
-   * child of TestWorkflow and never auto-retried as a whole.
+   * ProcessInfrastructureWorkflow provisions provider infrastructure.
    *
-   * @generated from rpc cloud.v1.workflow.DeploymentService.ProcessDeploymentWorkflow
+   * @generated from rpc cloud.v1.workflow.DeploymentService.ProcessInfrastructureWorkflow
    */
-  processDeploymentWorkflow: {
+  processInfrastructureWorkflow: {
     methodKind: "unary";
-    input: typeof ProcessDeploymentWorkflowRequestSchema;
-    output: typeof ProcessDeploymentWorkflowResponseSchema;
+    input: typeof ProcessInfrastructureWorkflowRequestSchema;
+    output: typeof ProcessInfrastructureWorkflowResponseSchema;
   },
   /**
    *
-   * AcquireNetworkActivity acquires a network from the provider (deduped by
-   * name, retried on transient errors).
-   *
-   * @generated from rpc cloud.v1.workflow.DeploymentService.AcquireNetworkActivity
-   */
-  acquireNetworkActivity: {
-    methodKind: "unary";
-    input: typeof AcquireNetworkActivityRequestSchema;
-    output: typeof AcquireNetworkActivityResponseSchema;
-  },
-  /**
-   *
-   * CalculateQuotasWorkflow computes resource quota requests from a topology
-   * (pure computation, retryable).
+   * CalculateQuotasWorkflow computes quota requests from an infrastructure
+   * plan.
    *
    * @generated from rpc cloud.v1.workflow.DeploymentService.CalculateQuotasWorkflow
    */
@@ -461,8 +661,18 @@ export const DeploymentService: GenService<{
   },
   /**
    *
-   * AcquireQuotasActivity acquires the requested quotas from the provider
-   * (retried with backoff).
+   * AcquireNetworkActivity acquires a provider network.
+   *
+   * @generated from rpc cloud.v1.workflow.DeploymentService.AcquireNetworkActivity
+   */
+  acquireNetworkActivity: {
+    methodKind: "unary";
+    input: typeof AcquireNetworkActivityRequestSchema;
+    output: typeof AcquireNetworkActivityResponseSchema;
+  },
+  /**
+   *
+   * AcquireQuotasActivity acquires requested quotas.
    *
    * @generated from rpc cloud.v1.workflow.DeploymentService.AcquireQuotasActivity
    */
@@ -473,20 +683,18 @@ export const DeploymentService: GenService<{
   },
   /**
    *
-   * RenderDockerInputWorkflow renders a topology into Docker compose input
-   * (pure render, retryable).
+   * RenderDockerInputWorkflow renders infrastructure plan to Docker input.
    *
    * @generated from rpc cloud.v1.workflow.DeploymentService.RenderDockerInputWorkflow
    */
   renderDockerInputWorkflow: {
     methodKind: "unary";
-    input: typeof TopologySchema;
+    input: typeof InfrastructurePlanSchema;
     output: typeof Docker_InputSchema;
   },
   /**
    *
-   * DockerPullActivity pulls the required container images (idempotent,
-   * retried with backoff).
+   * DockerPullActivity pulls container images.
    *
    * @generated from rpc cloud.v1.workflow.DeploymentService.DockerPullActivity
    */
@@ -497,8 +705,7 @@ export const DeploymentService: GenService<{
   },
   /**
    *
-   * DockerUpActivity brings the compose stack up (idempotent/converges,
-   * heartbeats while starting).
+   * DockerUpActivity starts the Docker topology.
    *
    * @generated from rpc cloud.v1.workflow.DeploymentService.DockerUpActivity
    */
@@ -509,7 +716,7 @@ export const DeploymentService: GenService<{
   },
   /**
    *
-   * DockerDownActivity tears the compose stack down (idempotent, retryable).
+   * DockerDownActivity tears down the Docker topology.
    *
    * @generated from rpc cloud.v1.workflow.DeploymentService.DockerDownActivity
    */
@@ -520,20 +727,19 @@ export const DeploymentService: GenService<{
   },
   /**
    *
-   * RenderTerraformVariablesWorkflow renders a topology into Terraform
-   * variables input (pure render, retryable).
+   * RenderTerraformVariablesWorkflow renders infrastructure plan to Terraform
+   * input.
    *
    * @generated from rpc cloud.v1.workflow.DeploymentService.RenderTerraformVariablesWorkflow
    */
   renderTerraformVariablesWorkflow: {
     methodKind: "unary";
-    input: typeof TopologySchema;
+    input: typeof InfrastructurePlanSchema;
     output: typeof Terraform_InputSchema;
   },
   /**
    *
-   * TerraformPlanActivity runs terraform plan against the provider (read-only,
-   * retryable).
+   * TerraformPlanActivity runs terraform plan.
    *
    * @generated from rpc cloud.v1.workflow.DeploymentService.TerraformPlanActivity
    */
@@ -544,8 +750,7 @@ export const DeploymentService: GenService<{
   },
   /**
    *
-   * TerraformApplyActivity runs terraform apply to provision resources
-   * (mutating; retried sparingly under the state lock).
+   * TerraformApplyActivity runs terraform apply.
    *
    * @generated from rpc cloud.v1.workflow.DeploymentService.TerraformApplyActivity
    */
@@ -556,8 +761,7 @@ export const DeploymentService: GenService<{
   },
   /**
    *
-   * TerraformDestroyActivity runs terraform destroy to tear down all
-   * resources (idempotent/converges, retried to avoid leaks).
+   * TerraformDestroyActivity runs terraform destroy.
    *
    * @generated from rpc cloud.v1.workflow.DeploymentService.TerraformDestroyActivity
    */
@@ -565,6 +769,28 @@ export const DeploymentService: GenService<{
     methodKind: "unary";
     input: typeof Terraform_InputSchema;
     output: typeof Terraform_OutputSchema;
+  },
+  /**
+   *
+   * RenderDeploymentPlanWorkflow renders package/config/agent steps.
+   *
+   * @generated from rpc cloud.v1.workflow.DeploymentService.RenderDeploymentPlanWorkflow
+   */
+  renderDeploymentPlanWorkflow: {
+    methodKind: "unary";
+    input: typeof RenderDeploymentPlanWorkflowRequestSchema;
+    output: typeof RenderDeploymentPlanWorkflowResponseSchema;
+  },
+  /**
+   *
+   * ExecuteDeploymentPlanWorkflow executes rendered agent steps.
+   *
+   * @generated from rpc cloud.v1.workflow.DeploymentService.ExecuteDeploymentPlanWorkflow
+   */
+  executeDeploymentPlanWorkflow: {
+    methodKind: "unary";
+    input: typeof ExecuteDeploymentPlanWorkflowRequestSchema;
+    output: typeof ExecuteDeploymentPlanWorkflowResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_cloud_v1_workflow_deployment, 0);

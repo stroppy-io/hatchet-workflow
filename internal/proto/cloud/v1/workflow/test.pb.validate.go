@@ -604,9 +604,9 @@ func (m *InstallStroppyWorkflowRequest) validate(all bool) error {
 
 	var errors []error
 
-	if m.GetTopology() == nil {
+	if m.GetInfrastructureState() == nil {
 		err := InstallStroppyWorkflowRequestValidationError{
-			field:  "Topology",
+			field:  "InfrastructureState",
 			reason: "value is required",
 		}
 		if !all {
@@ -616,11 +616,11 @@ func (m *InstallStroppyWorkflowRequest) validate(all bool) error {
 	}
 
 	if all {
-		switch v := interface{}(m.GetTopology()).(type) {
+		switch v := interface{}(m.GetInfrastructureState()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, InstallStroppyWorkflowRequestValidationError{
-					field:  "Topology",
+					field:  "InfrastructureState",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -628,16 +628,56 @@ func (m *InstallStroppyWorkflowRequest) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, InstallStroppyWorkflowRequestValidationError{
-					field:  "Topology",
+					field:  "InfrastructureState",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetTopology()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetInfrastructureState()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return InstallStroppyWorkflowRequestValidationError{
-				field:  "Topology",
+				field:  "InfrastructureState",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetDeploymentPlan() == nil {
+		err := InstallStroppyWorkflowRequestValidationError{
+			field:  "DeploymentPlan",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetDeploymentPlan()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, InstallStroppyWorkflowRequestValidationError{
+					field:  "DeploymentPlan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, InstallStroppyWorkflowRequestValidationError{
+					field:  "DeploymentPlan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDeploymentPlan()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return InstallStroppyWorkflowRequestValidationError{
+				field:  "DeploymentPlan",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -850,9 +890,9 @@ func (m *InstallDatabaseWorkflowRequest) validate(all bool) error {
 
 	var errors []error
 
-	if m.GetTopology() == nil {
+	if m.GetInfrastructureState() == nil {
 		err := InstallDatabaseWorkflowRequestValidationError{
-			field:  "Topology",
+			field:  "InfrastructureState",
 			reason: "value is required",
 		}
 		if !all {
@@ -862,11 +902,11 @@ func (m *InstallDatabaseWorkflowRequest) validate(all bool) error {
 	}
 
 	if all {
-		switch v := interface{}(m.GetTopology()).(type) {
+		switch v := interface{}(m.GetInfrastructureState()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, InstallDatabaseWorkflowRequestValidationError{
-					field:  "Topology",
+					field:  "InfrastructureState",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -874,16 +914,16 @@ func (m *InstallDatabaseWorkflowRequest) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, InstallDatabaseWorkflowRequestValidationError{
-					field:  "Topology",
+					field:  "InfrastructureState",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetTopology()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetInfrastructureState()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return InstallDatabaseWorkflowRequestValidationError{
-				field:  "Topology",
+				field:  "InfrastructureState",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -924,6 +964,46 @@ func (m *InstallDatabaseWorkflowRequest) validate(all bool) error {
 		if err := v.Validate(); err != nil {
 			return InstallDatabaseWorkflowRequestValidationError{
 				field:  "Database",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetDeploymentPlan() == nil {
+		err := InstallDatabaseWorkflowRequestValidationError{
+			field:  "DeploymentPlan",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetDeploymentPlan()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, InstallDatabaseWorkflowRequestValidationError{
+					field:  "DeploymentPlan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, InstallDatabaseWorkflowRequestValidationError{
+					field:  "DeploymentPlan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDeploymentPlan()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return InstallDatabaseWorkflowRequestValidationError{
+				field:  "DeploymentPlan",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -1136,9 +1216,9 @@ func (m *RunWorkloadWorkflowRequest) validate(all bool) error {
 
 	var errors []error
 
-	if m.GetTopology() == nil {
+	if m.GetTopologySpec() == nil {
 		err := RunWorkloadWorkflowRequestValidationError{
-			field:  "Topology",
+			field:  "TopologySpec",
 			reason: "value is required",
 		}
 		if !all {
@@ -1148,11 +1228,11 @@ func (m *RunWorkloadWorkflowRequest) validate(all bool) error {
 	}
 
 	if all {
-		switch v := interface{}(m.GetTopology()).(type) {
+		switch v := interface{}(m.GetTopologySpec()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, RunWorkloadWorkflowRequestValidationError{
-					field:  "Topology",
+					field:  "TopologySpec",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -1160,16 +1240,16 @@ func (m *RunWorkloadWorkflowRequest) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, RunWorkloadWorkflowRequestValidationError{
-					field:  "Topology",
+					field:  "TopologySpec",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetTopology()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetTopologySpec()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return RunWorkloadWorkflowRequestValidationError{
-				field:  "Topology",
+				field:  "TopologySpec",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -1210,6 +1290,46 @@ func (m *RunWorkloadWorkflowRequest) validate(all bool) error {
 		if err := v.Validate(); err != nil {
 			return RunWorkloadWorkflowRequestValidationError{
 				field:  "Workload",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetInfrastructureState() == nil {
+		err := RunWorkloadWorkflowRequestValidationError{
+			field:  "InfrastructureState",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetInfrastructureState()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RunWorkloadWorkflowRequestValidationError{
+					field:  "InfrastructureState",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RunWorkloadWorkflowRequestValidationError{
+					field:  "InfrastructureState",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetInfrastructureState()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RunWorkloadWorkflowRequestValidationError{
+				field:  "InfrastructureState",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}

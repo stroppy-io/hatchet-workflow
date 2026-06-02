@@ -9,7 +9,9 @@ package api
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
 	_ "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
+	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	monitor "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
+	topology "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -87,8 +89,8 @@ type LogFilter struct {
 	NodeExecutionIds []string `protobuf:"bytes,1,rep,name=node_execution_ids,json=nodeExecutionIds,proto3" json:"node_execution_ids,omitempty"`
 	// component_ids restricts to lines emitted by these components.
 	ComponentIds []string `protobuf:"bytes,2,rep,name=component_ids,json=componentIds,proto3" json:"component_ids,omitempty"`
-	// machine_ids restricts to lines emitted by these machines.
-	MachineIds []string `protobuf:"bytes,3,rep,name=machine_ids,json=machineIds,proto3" json:"machine_ids,omitempty"`
+	// node_ids restricts to lines emitted by these logical topology nodes.
+	NodeIds []string `protobuf:"bytes,3,rep,name=node_ids,json=nodeIds,proto3" json:"node_ids,omitempty"`
 	// sources restricts to these log sources.
 	Sources []monitor.Source `protobuf:"varint,4,rep,packed,name=sources,proto3,enum=cloud.v1.monitor.Source" json:"sources,omitempty"`
 	// streams restricts to these log streams (e.g. stdout/stderr).
@@ -151,9 +153,9 @@ func (x *LogFilter) GetComponentIds() []string {
 	return nil
 }
 
-func (x *LogFilter) GetMachineIds() []string {
+func (x *LogFilter) GetNodeIds() []string {
 	if x != nil {
-		return x.MachineIds
+		return x.NodeIds
 	}
 	return nil
 }
@@ -207,6 +209,73 @@ func (x *LogFilter) GetQuery() string {
 	return ""
 }
 
+// TestRunOverviewSnapshot is the overview page state: persisted run record,
+// current staged topology envelope, and live monitor pipeline/timeline view.
+type TestRunOverviewSnapshot struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// run is the persisted run record, including immutable spec and any stored
+	// infrastructure/deployment artifacts.
+	Run *models.TestRunRecord `protobuf:"bytes,1,opt,name=run,proto3" json:"run,omitempty"`
+	// topology is the staged topology envelope composed from the run spec,
+	// infrastructure state and deployment plan.
+	Topology *topology.Topology `protobuf:"bytes,2,opt,name=topology,proto3" json:"topology,omitempty"`
+	// overview is the live status/pipeline/workers/timeline projection.
+	Overview      *monitor.Overview `protobuf:"bytes,3,opt,name=overview,proto3" json:"overview,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TestRunOverviewSnapshot) Reset() {
+	*x = TestRunOverviewSnapshot{}
+	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TestRunOverviewSnapshot) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TestRunOverviewSnapshot) ProtoMessage() {}
+
+func (x *TestRunOverviewSnapshot) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TestRunOverviewSnapshot.ProtoReflect.Descriptor instead.
+func (*TestRunOverviewSnapshot) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_test_run_overview_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *TestRunOverviewSnapshot) GetRun() *models.TestRunRecord {
+	if x != nil {
+		return x.Run
+	}
+	return nil
+}
+
+func (x *TestRunOverviewSnapshot) GetTopology() *topology.Topology {
+	if x != nil {
+		return x.Topology
+	}
+	return nil
+}
+
+func (x *TestRunOverviewSnapshot) GetOverview() *monitor.Overview {
+	if x != nil {
+		return x.Overview
+	}
+	return nil
+}
+
 // GetTestRunOverviewRequest fetches the Overview tab payload for a run.
 type GetTestRunOverviewRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -220,7 +289,7 @@ type GetTestRunOverviewRequest struct {
 
 func (x *GetTestRunOverviewRequest) Reset() {
 	*x = GetTestRunOverviewRequest{}
-	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[1]
+	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -232,7 +301,7 @@ func (x *GetTestRunOverviewRequest) String() string {
 func (*GetTestRunOverviewRequest) ProtoMessage() {}
 
 func (x *GetTestRunOverviewRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[1]
+	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -245,7 +314,7 @@ func (x *GetTestRunOverviewRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTestRunOverviewRequest.ProtoReflect.Descriptor instead.
 func (*GetTestRunOverviewRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_test_run_overview_proto_rawDescGZIP(), []int{1}
+	return file_cloud_v1_api_test_run_overview_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GetTestRunOverviewRequest) GetTenantId() string {
@@ -262,18 +331,18 @@ func (x *GetTestRunOverviewRequest) GetRunId() string {
 	return ""
 }
 
-// GetTestRunOverviewResponse returns the run's Overview snapshot.
+// GetTestRunOverviewResponse returns the run's staged Overview snapshot.
 type GetTestRunOverviewResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// overview is the full overview (status/pipeline/workers/timeline).
-	Overview      *monitor.Overview `protobuf:"bytes,1,opt,name=overview,proto3" json:"overview,omitempty"`
+	// snapshot is the full overview page state.
+	Snapshot      *TestRunOverviewSnapshot `protobuf:"bytes,1,opt,name=snapshot,proto3" json:"snapshot,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetTestRunOverviewResponse) Reset() {
 	*x = GetTestRunOverviewResponse{}
-	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[2]
+	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -285,7 +354,7 @@ func (x *GetTestRunOverviewResponse) String() string {
 func (*GetTestRunOverviewResponse) ProtoMessage() {}
 
 func (x *GetTestRunOverviewResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[2]
+	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -298,19 +367,19 @@ func (x *GetTestRunOverviewResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTestRunOverviewResponse.ProtoReflect.Descriptor instead.
 func (*GetTestRunOverviewResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_test_run_overview_proto_rawDescGZIP(), []int{2}
+	return file_cloud_v1_api_test_run_overview_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *GetTestRunOverviewResponse) GetOverview() *monitor.Overview {
+func (x *GetTestRunOverviewResponse) GetSnapshot() *TestRunOverviewSnapshot {
 	if x != nil {
-		return x.Overview
+		return x.Snapshot
 	}
 	return nil
 }
 
 // StreamTestRunOverviewRequest opens a live overview stream for a run. Each stream
-// tick is a fresh full Overview (status/pipeline/workers/timeline) so the client
-// just replaces its state; no diff merging.
+// tick is a fresh full snapshot so the client just replaces its state; no diff
+// merging.
 type StreamTestRunOverviewRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// tenant_id scopes the request to the owning tenant.
@@ -323,7 +392,7 @@ type StreamTestRunOverviewRequest struct {
 
 func (x *StreamTestRunOverviewRequest) Reset() {
 	*x = StreamTestRunOverviewRequest{}
-	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[3]
+	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -335,7 +404,7 @@ func (x *StreamTestRunOverviewRequest) String() string {
 func (*StreamTestRunOverviewRequest) ProtoMessage() {}
 
 func (x *StreamTestRunOverviewRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[3]
+	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -348,7 +417,7 @@ func (x *StreamTestRunOverviewRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StreamTestRunOverviewRequest.ProtoReflect.Descriptor instead.
 func (*StreamTestRunOverviewRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_test_run_overview_proto_rawDescGZIP(), []int{3}
+	return file_cloud_v1_api_test_run_overview_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *StreamTestRunOverviewRequest) GetTenantId() string {
@@ -388,7 +457,7 @@ type QueryLogsRequest struct {
 
 func (x *QueryLogsRequest) Reset() {
 	*x = QueryLogsRequest{}
-	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[4]
+	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -400,7 +469,7 @@ func (x *QueryLogsRequest) String() string {
 func (*QueryLogsRequest) ProtoMessage() {}
 
 func (x *QueryLogsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[4]
+	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -413,7 +482,7 @@ func (x *QueryLogsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryLogsRequest.ProtoReflect.Descriptor instead.
 func (*QueryLogsRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_test_run_overview_proto_rawDescGZIP(), []int{4}
+	return file_cloud_v1_api_test_run_overview_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *QueryLogsRequest) GetTenantId() string {
@@ -475,7 +544,7 @@ type QueryLogsResponse struct {
 
 func (x *QueryLogsResponse) Reset() {
 	*x = QueryLogsResponse{}
-	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[5]
+	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -487,7 +556,7 @@ func (x *QueryLogsResponse) String() string {
 func (*QueryLogsResponse) ProtoMessage() {}
 
 func (x *QueryLogsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[5]
+	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -500,7 +569,7 @@ func (x *QueryLogsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryLogsResponse.ProtoReflect.Descriptor instead.
 func (*QueryLogsResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_test_run_overview_proto_rawDescGZIP(), []int{5}
+	return file_cloud_v1_api_test_run_overview_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *QueryLogsResponse) GetLines() []*monitor.LogLine {
@@ -545,7 +614,7 @@ type StreamLogsRequest struct {
 
 func (x *StreamLogsRequest) Reset() {
 	*x = StreamLogsRequest{}
-	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[6]
+	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -557,7 +626,7 @@ func (x *StreamLogsRequest) String() string {
 func (*StreamLogsRequest) ProtoMessage() {}
 
 func (x *StreamLogsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[6]
+	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -570,7 +639,7 @@ func (x *StreamLogsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StreamLogsRequest.ProtoReflect.Descriptor instead.
 func (*StreamLogsRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_test_run_overview_proto_rawDescGZIP(), []int{6}
+	return file_cloud_v1_api_test_run_overview_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *StreamLogsRequest) GetTenantId() string {
@@ -616,7 +685,7 @@ type ResolveLogRefRequest struct {
 
 func (x *ResolveLogRefRequest) Reset() {
 	*x = ResolveLogRefRequest{}
-	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[7]
+	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -628,7 +697,7 @@ func (x *ResolveLogRefRequest) String() string {
 func (*ResolveLogRefRequest) ProtoMessage() {}
 
 func (x *ResolveLogRefRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[7]
+	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -641,7 +710,7 @@ func (x *ResolveLogRefRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolveLogRefRequest.ProtoReflect.Descriptor instead.
 func (*ResolveLogRefRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_test_run_overview_proto_rawDescGZIP(), []int{7}
+	return file_cloud_v1_api_test_run_overview_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ResolveLogRefRequest) GetTenantId() string {
@@ -674,7 +743,7 @@ type ResolveLogRefResponse struct {
 
 func (x *ResolveLogRefResponse) Reset() {
 	*x = ResolveLogRefResponse{}
-	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[8]
+	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -686,7 +755,7 @@ func (x *ResolveLogRefResponse) String() string {
 func (*ResolveLogRefResponse) ProtoMessage() {}
 
 func (x *ResolveLogRefResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[8]
+	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -699,7 +768,7 @@ func (x *ResolveLogRefResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolveLogRefResponse.ProtoReflect.Descriptor instead.
 func (*ResolveLogRefResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_test_run_overview_proto_rawDescGZIP(), []int{8}
+	return file_cloud_v1_api_test_run_overview_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ResolveLogRefResponse) GetRunId() string {
@@ -737,7 +806,7 @@ type GetRunMetricsRequest struct {
 
 func (x *GetRunMetricsRequest) Reset() {
 	*x = GetRunMetricsRequest{}
-	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[9]
+	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -749,7 +818,7 @@ func (x *GetRunMetricsRequest) String() string {
 func (*GetRunMetricsRequest) ProtoMessage() {}
 
 func (x *GetRunMetricsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[9]
+	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -762,7 +831,7 @@ func (x *GetRunMetricsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRunMetricsRequest.ProtoReflect.Descriptor instead.
 func (*GetRunMetricsRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_test_run_overview_proto_rawDescGZIP(), []int{9}
+	return file_cloud_v1_api_test_run_overview_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *GetRunMetricsRequest) GetTenantId() string {
@@ -790,7 +859,7 @@ type GetRunMetricsResponse struct {
 
 func (x *GetRunMetricsResponse) Reset() {
 	*x = GetRunMetricsResponse{}
-	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[10]
+	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -802,7 +871,7 @@ func (x *GetRunMetricsResponse) String() string {
 func (*GetRunMetricsResponse) ProtoMessage() {}
 
 func (x *GetRunMetricsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[10]
+	mi := &file_cloud_v1_api_test_run_overview_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -815,7 +884,7 @@ func (x *GetRunMetricsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRunMetricsResponse.ProtoReflect.Descriptor instead.
 func (*GetRunMetricsResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_test_run_overview_proto_rawDescGZIP(), []int{10}
+	return file_cloud_v1_api_test_run_overview_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *GetRunMetricsResponse) GetMetrics() *monitor.RunMetrics {
@@ -829,15 +898,14 @@ var File_cloud_v1_api_test_run_overview_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_test_run_overview_proto_rawDesc = "" +
 	"\n" +
-	"$cloud/v1/api/test_run_overview.proto\x12\fcloud.v1.api\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1bcloud/v1/monitor/logs.proto\x1a\x1ecloud/v1/monitor/metrics.proto\x1a\x1fcloud/v1/monitor/overview.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\xdd\x03\n" +
+	"$cloud/v1/api/test_run_overview.proto\x12\fcloud.v1.api\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1ecloud/v1/models/test_run.proto\x1a\x1bcloud/v1/monitor/logs.proto\x1a\x1ecloud/v1/monitor/metrics.proto\x1a\x1fcloud/v1/monitor/overview.proto\x1a cloud/v1/topology/topology.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\xd7\x03\n" +
 	"\tLogFilter\x12>\n" +
 	"\x12node_execution_ids\x18\x01 \x03(\tB\x10\xfaB\r\x92\x01\n" +
 	"\x10\x80\x02\"\x05r\x03\x18\x80\x01R\x10nodeExecutionIds\x125\n" +
 	"\rcomponent_ids\x18\x02 \x03(\tB\x10\xfaB\r\x92\x01\n" +
-	"\x10\x80\x02\"\x05r\x03\x18\x80\x01R\fcomponentIds\x121\n" +
-	"\vmachine_ids\x18\x03 \x03(\tB\x10\xfaB\r\x92\x01\n" +
-	"\x10\x80\x02\"\x05r\x03\x18\x80\x01R\n" +
-	"machineIds\x122\n" +
+	"\x10\x80\x02\"\x05r\x03\x18\x80\x01R\fcomponentIds\x12+\n" +
+	"\bnode_ids\x18\x03 \x03(\tB\x10\xfaB\r\x92\x01\n" +
+	"\x10\x80\x02\"\x05r\x03\x18\x80\x01R\anodeIds\x122\n" +
 	"\asources\x18\x04 \x03(\x0e2\x18.cloud.v1.monitor.SourceR\asources\x122\n" +
 	"\astreams\x18\x05 \x03(\x0e2\x18.cloud.v1.monitor.StreamR\astreams\x12\x1c\n" +
 	"\x04unit\x18\x06 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x02R\x04unit\x120\n" +
@@ -845,13 +913,17 @@ const file_cloud_v1_api_test_run_overview_proto_rawDesc = "" +
 	"\x03end\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\x03end\x12 \n" +
 	"\x06search\x18\t \x01(\tB\b\xfaB\x05r\x03\x18\x80\bR\x06search\x12\x1e\n" +
 	"\x05query\x18\n" +
-	" \x01(\tB\b\xfaB\x05r\x03\x18\x80 R\x05query\"f\n" +
+	" \x01(\tB\b\xfaB\x05r\x03\x18\x80 R\x05query\"\xda\x01\n" +
+	"\x17TestRunOverviewSnapshot\x12:\n" +
+	"\x03run\x18\x01 \x01(\v2\x1e.cloud.v1.models.TestRunRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x03run\x12A\n" +
+	"\btopology\x18\x02 \x01(\v2\x1b.cloud.v1.topology.TopologyB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btopology\x12@\n" +
+	"\boverview\x18\x03 \x01(\v2\x1a.cloud.v1.monitor.OverviewB\b\xfaB\x05\x8a\x01\x02\x10\x01R\boverview\"f\n" +
 	"\x19GetTestRunOverviewRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12!\n" +
 	"\x06run_id\x18\x02 \x01(\tB\n" +
-	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x05runId\"^\n" +
-	"\x1aGetTestRunOverviewResponse\x12@\n" +
-	"\boverview\x18\x01 \x01(\v2\x1a.cloud.v1.monitor.OverviewB\b\xfaB\x05\x8a\x01\x02\x10\x01R\boverview\"i\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x05runId\"i\n" +
+	"\x1aGetTestRunOverviewResponse\x12K\n" +
+	"\bsnapshot\x18\x01 \x01(\v2%.cloud.v1.api.TestRunOverviewSnapshotB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bsnapshot\"i\n" +
 	"\x1cStreamTestRunOverviewRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12!\n" +
 	"\x06run_id\x18\x02 \x01(\tB\n" +
@@ -890,10 +962,10 @@ const file_cloud_v1_api_test_run_overview_proto_rawDesc = "" +
 	"\x12LogScrollDirection\x12$\n" +
 	" LOG_SCROLL_DIRECTION_UNSPECIFIED\x10\x00\x12\x1e\n" +
 	"\x1aLOG_SCROLL_DIRECTION_OLDER\x10\x01\x12\x1e\n" +
-	"\x1aLOG_SCROLL_DIRECTION_NEWER\x10\x022\x86\x05\n" +
+	"\x1aLOG_SCROLL_DIRECTION_NEWER\x10\x022\x91\x05\n" +
 	"\x16TestRunOverviewService\x12v\n" +
-	"\x12GetTestRunOverview\x12'.cloud.v1.api.GetTestRunOverviewRequest\x1a(.cloud.v1.api.GetTestRunOverviewResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\b\x10\x02\x90\x02\x01\x12m\n" +
-	"\x15StreamTestRunOverview\x12*.cloud.v1.api.StreamTestRunOverviewRequest\x1a\x1a.cloud.v1.monitor.Overview\"\n" +
+	"\x12GetTestRunOverview\x12'.cloud.v1.api.GetTestRunOverviewRequest\x1a(.cloud.v1.api.GetTestRunOverviewResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\b\x10\x02\x90\x02\x01\x12x\n" +
+	"\x15StreamTestRunOverview\x12*.cloud.v1.api.StreamTestRunOverviewRequest\x1a%.cloud.v1.api.TestRunOverviewSnapshot\"\n" +
 	"\x8a\xb5\x18\x06\x12\x04\b\b\x10\x020\x01\x12[\n" +
 	"\tQueryLogs\x12\x1e.cloud.v1.api.QueryLogsRequest\x1a\x1f.cloud.v1.api.QueryLogsResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\b\x10\x02\x90\x02\x01\x12V\n" +
 	"\n" +
@@ -915,64 +987,70 @@ func file_cloud_v1_api_test_run_overview_proto_rawDescGZIP() []byte {
 }
 
 var file_cloud_v1_api_test_run_overview_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_cloud_v1_api_test_run_overview_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_cloud_v1_api_test_run_overview_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_cloud_v1_api_test_run_overview_proto_goTypes = []any{
 	(LogScrollDirection)(0),              // 0: cloud.v1.api.LogScrollDirection
 	(*LogFilter)(nil),                    // 1: cloud.v1.api.LogFilter
-	(*GetTestRunOverviewRequest)(nil),    // 2: cloud.v1.api.GetTestRunOverviewRequest
-	(*GetTestRunOverviewResponse)(nil),   // 3: cloud.v1.api.GetTestRunOverviewResponse
-	(*StreamTestRunOverviewRequest)(nil), // 4: cloud.v1.api.StreamTestRunOverviewRequest
-	(*QueryLogsRequest)(nil),             // 5: cloud.v1.api.QueryLogsRequest
-	(*QueryLogsResponse)(nil),            // 6: cloud.v1.api.QueryLogsResponse
-	(*StreamLogsRequest)(nil),            // 7: cloud.v1.api.StreamLogsRequest
-	(*ResolveLogRefRequest)(nil),         // 8: cloud.v1.api.ResolveLogRefRequest
-	(*ResolveLogRefResponse)(nil),        // 9: cloud.v1.api.ResolveLogRefResponse
-	(*GetRunMetricsRequest)(nil),         // 10: cloud.v1.api.GetRunMetricsRequest
-	(*GetRunMetricsResponse)(nil),        // 11: cloud.v1.api.GetRunMetricsResponse
-	(monitor.Source)(0),                  // 12: cloud.v1.monitor.Source
-	(monitor.Stream)(0),                  // 13: cloud.v1.monitor.Stream
-	(*timestamppb.Timestamp)(nil),        // 14: google.protobuf.Timestamp
-	(*monitor.Overview)(nil),             // 15: cloud.v1.monitor.Overview
-	(*monitor.LogCursor)(nil),            // 16: cloud.v1.monitor.LogCursor
-	(*monitor.LogLine)(nil),              // 17: cloud.v1.monitor.LogLine
-	(*monitor.LogRef)(nil),               // 18: cloud.v1.monitor.LogRef
-	(*monitor.RunMetrics)(nil),           // 19: cloud.v1.monitor.RunMetrics
+	(*TestRunOverviewSnapshot)(nil),      // 2: cloud.v1.api.TestRunOverviewSnapshot
+	(*GetTestRunOverviewRequest)(nil),    // 3: cloud.v1.api.GetTestRunOverviewRequest
+	(*GetTestRunOverviewResponse)(nil),   // 4: cloud.v1.api.GetTestRunOverviewResponse
+	(*StreamTestRunOverviewRequest)(nil), // 5: cloud.v1.api.StreamTestRunOverviewRequest
+	(*QueryLogsRequest)(nil),             // 6: cloud.v1.api.QueryLogsRequest
+	(*QueryLogsResponse)(nil),            // 7: cloud.v1.api.QueryLogsResponse
+	(*StreamLogsRequest)(nil),            // 8: cloud.v1.api.StreamLogsRequest
+	(*ResolveLogRefRequest)(nil),         // 9: cloud.v1.api.ResolveLogRefRequest
+	(*ResolveLogRefResponse)(nil),        // 10: cloud.v1.api.ResolveLogRefResponse
+	(*GetRunMetricsRequest)(nil),         // 11: cloud.v1.api.GetRunMetricsRequest
+	(*GetRunMetricsResponse)(nil),        // 12: cloud.v1.api.GetRunMetricsResponse
+	(monitor.Source)(0),                  // 13: cloud.v1.monitor.Source
+	(monitor.Stream)(0),                  // 14: cloud.v1.monitor.Stream
+	(*timestamppb.Timestamp)(nil),        // 15: google.protobuf.Timestamp
+	(*models.TestRunRecord)(nil),         // 16: cloud.v1.models.TestRunRecord
+	(*topology.Topology)(nil),            // 17: cloud.v1.topology.Topology
+	(*monitor.Overview)(nil),             // 18: cloud.v1.monitor.Overview
+	(*monitor.LogCursor)(nil),            // 19: cloud.v1.monitor.LogCursor
+	(*monitor.LogLine)(nil),              // 20: cloud.v1.monitor.LogLine
+	(*monitor.LogRef)(nil),               // 21: cloud.v1.monitor.LogRef
+	(*monitor.RunMetrics)(nil),           // 22: cloud.v1.monitor.RunMetrics
 }
 var file_cloud_v1_api_test_run_overview_proto_depIdxs = []int32{
-	12, // 0: cloud.v1.api.LogFilter.sources:type_name -> cloud.v1.monitor.Source
-	13, // 1: cloud.v1.api.LogFilter.streams:type_name -> cloud.v1.monitor.Stream
-	14, // 2: cloud.v1.api.LogFilter.start:type_name -> google.protobuf.Timestamp
-	14, // 3: cloud.v1.api.LogFilter.end:type_name -> google.protobuf.Timestamp
-	15, // 4: cloud.v1.api.GetTestRunOverviewResponse.overview:type_name -> cloud.v1.monitor.Overview
-	1,  // 5: cloud.v1.api.QueryLogsRequest.filter:type_name -> cloud.v1.api.LogFilter
-	16, // 6: cloud.v1.api.QueryLogsRequest.from:type_name -> cloud.v1.monitor.LogCursor
-	0,  // 7: cloud.v1.api.QueryLogsRequest.direction:type_name -> cloud.v1.api.LogScrollDirection
-	17, // 8: cloud.v1.api.QueryLogsResponse.lines:type_name -> cloud.v1.monitor.LogLine
-	16, // 9: cloud.v1.api.QueryLogsResponse.older:type_name -> cloud.v1.monitor.LogCursor
-	16, // 10: cloud.v1.api.QueryLogsResponse.newer:type_name -> cloud.v1.monitor.LogCursor
-	1,  // 11: cloud.v1.api.StreamLogsRequest.filter:type_name -> cloud.v1.api.LogFilter
-	16, // 12: cloud.v1.api.StreamLogsRequest.from:type_name -> cloud.v1.monitor.LogCursor
-	18, // 13: cloud.v1.api.ResolveLogRefRequest.ref:type_name -> cloud.v1.monitor.LogRef
-	1,  // 14: cloud.v1.api.ResolveLogRefResponse.filter:type_name -> cloud.v1.api.LogFilter
-	16, // 15: cloud.v1.api.ResolveLogRefResponse.cursor:type_name -> cloud.v1.monitor.LogCursor
-	19, // 16: cloud.v1.api.GetRunMetricsResponse.metrics:type_name -> cloud.v1.monitor.RunMetrics
-	2,  // 17: cloud.v1.api.TestRunOverviewService.GetTestRunOverview:input_type -> cloud.v1.api.GetTestRunOverviewRequest
-	4,  // 18: cloud.v1.api.TestRunOverviewService.StreamTestRunOverview:input_type -> cloud.v1.api.StreamTestRunOverviewRequest
-	5,  // 19: cloud.v1.api.TestRunOverviewService.QueryLogs:input_type -> cloud.v1.api.QueryLogsRequest
-	7,  // 20: cloud.v1.api.TestRunOverviewService.StreamLogs:input_type -> cloud.v1.api.StreamLogsRequest
-	8,  // 21: cloud.v1.api.TestRunOverviewService.ResolveLogRef:input_type -> cloud.v1.api.ResolveLogRefRequest
-	10, // 22: cloud.v1.api.TestRunOverviewService.GetRunMetrics:input_type -> cloud.v1.api.GetRunMetricsRequest
-	3,  // 23: cloud.v1.api.TestRunOverviewService.GetTestRunOverview:output_type -> cloud.v1.api.GetTestRunOverviewResponse
-	15, // 24: cloud.v1.api.TestRunOverviewService.StreamTestRunOverview:output_type -> cloud.v1.monitor.Overview
-	6,  // 25: cloud.v1.api.TestRunOverviewService.QueryLogs:output_type -> cloud.v1.api.QueryLogsResponse
-	17, // 26: cloud.v1.api.TestRunOverviewService.StreamLogs:output_type -> cloud.v1.monitor.LogLine
-	9,  // 27: cloud.v1.api.TestRunOverviewService.ResolveLogRef:output_type -> cloud.v1.api.ResolveLogRefResponse
-	11, // 28: cloud.v1.api.TestRunOverviewService.GetRunMetrics:output_type -> cloud.v1.api.GetRunMetricsResponse
-	23, // [23:29] is the sub-list for method output_type
-	17, // [17:23] is the sub-list for method input_type
-	17, // [17:17] is the sub-list for extension type_name
-	17, // [17:17] is the sub-list for extension extendee
-	0,  // [0:17] is the sub-list for field type_name
+	13, // 0: cloud.v1.api.LogFilter.sources:type_name -> cloud.v1.monitor.Source
+	14, // 1: cloud.v1.api.LogFilter.streams:type_name -> cloud.v1.monitor.Stream
+	15, // 2: cloud.v1.api.LogFilter.start:type_name -> google.protobuf.Timestamp
+	15, // 3: cloud.v1.api.LogFilter.end:type_name -> google.protobuf.Timestamp
+	16, // 4: cloud.v1.api.TestRunOverviewSnapshot.run:type_name -> cloud.v1.models.TestRunRecord
+	17, // 5: cloud.v1.api.TestRunOverviewSnapshot.topology:type_name -> cloud.v1.topology.Topology
+	18, // 6: cloud.v1.api.TestRunOverviewSnapshot.overview:type_name -> cloud.v1.monitor.Overview
+	2,  // 7: cloud.v1.api.GetTestRunOverviewResponse.snapshot:type_name -> cloud.v1.api.TestRunOverviewSnapshot
+	1,  // 8: cloud.v1.api.QueryLogsRequest.filter:type_name -> cloud.v1.api.LogFilter
+	19, // 9: cloud.v1.api.QueryLogsRequest.from:type_name -> cloud.v1.monitor.LogCursor
+	0,  // 10: cloud.v1.api.QueryLogsRequest.direction:type_name -> cloud.v1.api.LogScrollDirection
+	20, // 11: cloud.v1.api.QueryLogsResponse.lines:type_name -> cloud.v1.monitor.LogLine
+	19, // 12: cloud.v1.api.QueryLogsResponse.older:type_name -> cloud.v1.monitor.LogCursor
+	19, // 13: cloud.v1.api.QueryLogsResponse.newer:type_name -> cloud.v1.monitor.LogCursor
+	1,  // 14: cloud.v1.api.StreamLogsRequest.filter:type_name -> cloud.v1.api.LogFilter
+	19, // 15: cloud.v1.api.StreamLogsRequest.from:type_name -> cloud.v1.monitor.LogCursor
+	21, // 16: cloud.v1.api.ResolveLogRefRequest.ref:type_name -> cloud.v1.monitor.LogRef
+	1,  // 17: cloud.v1.api.ResolveLogRefResponse.filter:type_name -> cloud.v1.api.LogFilter
+	19, // 18: cloud.v1.api.ResolveLogRefResponse.cursor:type_name -> cloud.v1.monitor.LogCursor
+	22, // 19: cloud.v1.api.GetRunMetricsResponse.metrics:type_name -> cloud.v1.monitor.RunMetrics
+	3,  // 20: cloud.v1.api.TestRunOverviewService.GetTestRunOverview:input_type -> cloud.v1.api.GetTestRunOverviewRequest
+	5,  // 21: cloud.v1.api.TestRunOverviewService.StreamTestRunOverview:input_type -> cloud.v1.api.StreamTestRunOverviewRequest
+	6,  // 22: cloud.v1.api.TestRunOverviewService.QueryLogs:input_type -> cloud.v1.api.QueryLogsRequest
+	8,  // 23: cloud.v1.api.TestRunOverviewService.StreamLogs:input_type -> cloud.v1.api.StreamLogsRequest
+	9,  // 24: cloud.v1.api.TestRunOverviewService.ResolveLogRef:input_type -> cloud.v1.api.ResolveLogRefRequest
+	11, // 25: cloud.v1.api.TestRunOverviewService.GetRunMetrics:input_type -> cloud.v1.api.GetRunMetricsRequest
+	4,  // 26: cloud.v1.api.TestRunOverviewService.GetTestRunOverview:output_type -> cloud.v1.api.GetTestRunOverviewResponse
+	2,  // 27: cloud.v1.api.TestRunOverviewService.StreamTestRunOverview:output_type -> cloud.v1.api.TestRunOverviewSnapshot
+	7,  // 28: cloud.v1.api.TestRunOverviewService.QueryLogs:output_type -> cloud.v1.api.QueryLogsResponse
+	20, // 29: cloud.v1.api.TestRunOverviewService.StreamLogs:output_type -> cloud.v1.monitor.LogLine
+	10, // 30: cloud.v1.api.TestRunOverviewService.ResolveLogRef:output_type -> cloud.v1.api.ResolveLogRefResponse
+	12, // 31: cloud.v1.api.TestRunOverviewService.GetRunMetrics:output_type -> cloud.v1.api.GetRunMetricsResponse
+	26, // [26:32] is the sub-list for method output_type
+	20, // [20:26] is the sub-list for method input_type
+	20, // [20:20] is the sub-list for extension type_name
+	20, // [20:20] is the sub-list for extension extendee
+	0,  // [0:20] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_api_test_run_overview_proto_init() }
@@ -986,7 +1064,7 @@ func file_cloud_v1_api_test_run_overview_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_api_test_run_overview_proto_rawDesc), len(file_cloud_v1_api_test_run_overview_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   11,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

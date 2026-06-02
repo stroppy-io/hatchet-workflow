@@ -681,7 +681,7 @@ var File_cloud_v1_api_suite_wizard_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_suite_wizard_proto_rawDesc = "" +
 	"\n" +
-	"\x1fcloud/v1/api/suite_wizard.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a\x1bcloud/v1/domain/suite.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\"cloud/v1/models/suite_wizard.proto\x1a\x15schemapb/schema.proto\x1a\x17validate/validate.proto\"\x83\x01\n" +
+	"\x1fcloud/v1/api/suite_wizard.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a\x1bcloud/v1/domain/suite.proto\x1a\x1acloud/v1/iam/options.proto\x1a\"cloud/v1/models/suite_wizard.proto\x1a\x15schemapb/schema.proto\x1a\x17validate/validate.proto\"\x83\x01\n" +
 	"\x17StartSuiteWizardRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x1c\n" +
 	"\x04name\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\xff\x01R\x04name\x12\"\n" +

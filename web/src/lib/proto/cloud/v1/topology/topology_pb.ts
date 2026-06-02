@@ -2,22 +2,18 @@
 // @generated from file cloud/v1/topology/topology.proto (package cloud.v1.topology, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
-import type { Status, StatusJson } from "../common/status_pb.ts";
-import { file_cloud_v1_common_status } from "../common/status_pb.ts";
+import type { GenEnum, GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
+import { enumDesc, fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Tags, TagsJson } from "../common/tags_pb.ts";
 import { file_cloud_v1_common_tags } from "../common/tags_pb.ts";
-import type { MachineInfo, MachineInfoJson } from "../deployment/machine_pb.ts";
-import { file_cloud_v1_deployment_machine } from "../deployment/machine_pb.ts";
-import type { Quota_Allocation, Quota_AllocationJson, Quota_Request, Quota_RequestJson } from "../deployment/quota_pb.ts";
-import { file_cloud_v1_deployment_quota } from "../deployment/quota_pb.ts";
+import type { InfrastructurePlan, InfrastructurePlanJson, InfrastructureState, InfrastructureStateJson } from "../deployment/infrastructure_pb.ts";
+import { file_cloud_v1_deployment_infrastructure } from "../deployment/infrastructure_pb.ts";
+import type { DeploymentPlan, DeploymentPlanJson } from "../deployment/plan_pb.ts";
+import { file_cloud_v1_deployment_plan } from "../deployment/plan_pb.ts";
 import type { Component, ComponentJson } from "./component_pb.ts";
 import { file_cloud_v1_topology_component } from "./component_pb.ts";
 import type { Connection, ConnectionJson } from "./connection_pb.ts";
 import { file_cloud_v1_topology_connection } from "./connection_pb.ts";
-import type { Baked, BakedJson } from "../../../schemapb/schema_pb.ts";
-import { file_schemapb_schema } from "../../../schemapb/schema_pb.ts";
 import { file_validate_validate } from "../../../validate/validate_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -25,45 +21,43 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/topology/topology.proto.
  */
 export const file_cloud_v1_topology_topology: GenFile = /*@__PURE__*/
-  fileDesc("CiBjbG91ZC92MS90b3BvbG9neS90b3BvbG9neS5wcm90bxIRY2xvdWQudjEudG9wb2xvZ3ki1QUKCFRvcG9sb2d5EkEKCWluc3RhbmNlcxgBIAMoCzIkLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5Lkluc3RhbmNlQgj6QgWSAQIIARI8Cgtjb25uZWN0aW9ucxgCIAMoCzIdLmNsb3VkLnYxLnRvcG9sb2d5LkNvbm5lY3Rpb25CCPpCBZIBAggBEkMKE2V4dGVybmFsX2NvbXBvbmVudHMYAyADKAsyHC5jbG91ZC52MS50b3BvbG9neS5Db21wb25lbnRCCPpCBZIBAhBAEiMKBHRhZ3MYBCABKAsyFS5jbG91ZC52MS5jb21tb24uVGFncxrdAwoISW5zdGFuY2USFgoCaWQYASABKAlCCvpCB3IFEAEYgAESJwoGc3RhdHVzGAIgASgOMhcuY2xvdWQudjEuY29tbW9uLlN0YXR1cxI2CgxtYWNoaW5lX2luZm8YAyABKAsyIC5jbG91ZC52MS5kZXBsb3ltZW50Lk1hY2hpbmVJbmZvEiwKDnByb3ZpZGVyX3Bhcm1zGAQgASgLMg8uc2NoZW1hcGIuQmFrZWRIAIgBARI6Cg5xdW90YV9yZXF1ZXN0cxgFIAMoCzIiLmNsb3VkLnYxLmRlcGxveW1lbnQuUXVvdGEuUmVxdWVzdBI/ChBhbGxvY2F0ZWRfcXVvdGFzGAYgAygLMiUuY2xvdWQudjEuZGVwbG95bWVudC5RdW90YS5BbGxvY2F0aW9uEi4KEGRlcGxveW1lbnRfcGFybXMYByABKAsyDy5zY2hlbWFwYi5CYWtlZEgBiAEBEiMKBHRhZ3MYCCABKAsyFS5jbG91ZC52MS5jb21tb24uVGFncxIwCgpjb21wb25lbnRzGAkgAygLMhwuY2xvdWQudjEudG9wb2xvZ3kuQ29tcG9uZW50QhEKD19wcm92aWRlcl9wYXJtc0ITChFfZGVwbG95bWVudF9wYXJtc0JGWkRnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS90b3BvbG9neWIGcHJvdG8z", [file_cloud_v1_common_status, file_cloud_v1_common_tags, file_cloud_v1_deployment_machine, file_cloud_v1_deployment_quota, file_cloud_v1_topology_component, file_cloud_v1_topology_connection, file_schemapb_schema, file_validate_validate]);
+  fileDesc("CiBjbG91ZC92MS90b3BvbG9neS90b3BvbG9neS5wcm90bxIRY2xvdWQudjEudG9wb2xvZ3ki3gEKBE5vZGUSFgoCaWQYASABKAlCCvpCB3IFEAEYgAESKgoNY29tcG9uZW50X2lkcxgCIAMoCUIT+kIQkgENCAEQQCIHcgUQARiAARI+CgZsYWJlbHMYAyADKAsyIy5jbG91ZC52MS50b3BvbG9neS5Ob2RlLkxhYmVsc0VudHJ5Qgn6QgaaAQMQgAESIwoEdGFncxgEIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzGi0KC0xhYmVsc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEikQMKDFRvcG9sb2d5U3BlYxIwCgVub2RlcxgBIAMoCzIXLmNsb3VkLnYxLnRvcG9sb2d5Lk5vZGVCCPpCBZIBAggBEjoKCmNvbXBvbmVudHMYAiADKAsyHC5jbG91ZC52MS50b3BvbG9neS5Db21wb25lbnRCCPpCBZIBAggBEjIKC2Nvbm5lY3Rpb25zGAMgAygLMh0uY2xvdWQudjEudG9wb2xvZ3kuQ29ubmVjdGlvbhJDChNleHRlcm5hbF9jb21wb25lbnRzGAQgAygLMhwuY2xvdWQudjEudG9wb2xvZ3kuQ29tcG9uZW50Qgj6QgWSAQIQQBJGCgZsYWJlbHMYBSADKAsyKy5jbG91ZC52MS50b3BvbG9neS5Ub3BvbG9neVNwZWMuTGFiZWxzRW50cnlCCfpCBpoBAxCAARIjCgR0YWdzGAYgASgLMhUuY2xvdWQudjEuY29tbW9uLlRhZ3MaLQoLTGFiZWxzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASLDBAoIVG9wb2xvZ3kSPAoFc3RhdGUYASABKA4yIS5jbG91ZC52MS50b3BvbG9neS5Ub3BvbG9neS5TdGF0ZUIK+kIHggEEEAEgABI3CgRzcGVjGAIgASgLMh8uY2xvdWQudjEudG9wb2xvZ3kuVG9wb2xvZ3lTcGVjQgj6QgWKAQIQARJEChNpbmZyYXN0cnVjdHVyZV9wbGFuGAMgASgLMicuY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVBsYW4SRgoUaW5mcmFzdHJ1Y3R1cmVfc3RhdGUYBCABKAsyKC5jbG91ZC52MS5kZXBsb3ltZW50LkluZnJhc3RydWN0dXJlU3RhdGUSPAoPZGVwbG95bWVudF9wbGFuGAUgASgLMiMuY2xvdWQudjEuZGVwbG95bWVudC5EZXBsb3ltZW50UGxhbhIjCgR0YWdzGAYgASgLMhUuY2xvdWQudjEuY29tbW9uLlRhZ3MizgEKBVN0YXRlEhUKEVNUQVRFX1VOU1BFQ0lGSUVEEAASDgoKU1RBVEVfU1BFQxABEiAKHFNUQVRFX0lORlJBU1RSVUNUVVJFX1BMQU5ORUQQAhIhCh1TVEFURV9JTkZSQVNUUlVDVFVSRV9ERVBMT1lFRBADEhwKGFNUQVRFX0RFUExPWU1FTlRfUExBTk5FRBAEEhIKDlNUQVRFX0RFUExPWUVEEAUSFAoQU1RBVEVfVU5ERVBMT1lFRBAGEhEKDVNUQVRFX0FSQ0hJVkUQB0JGWkRnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS90b3BvbG9neWIGcHJvdG8z", [file_cloud_v1_common_tags, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_plan, file_cloud_v1_topology_component, file_cloud_v1_topology_connection, file_validate_validate]);
 
 /**
  *
- * Topology is the complete description of a benchmark deployment: its
- * instances, the edges between components, and any external components.
+ * Node is a logical placement unit. A node may become a VM, a Docker container,
+ * or a managed/external provider resource after the infrastructure stage.
  *
- * @generated from message cloud.v1.topology.Topology
+ * @generated from message cloud.v1.topology.Node
  */
-export type Topology = Message<"cloud.v1.topology.Topology"> & {
+export type Node = Message<"cloud.v1.topology.Node"> & {
   /**
    *
-   * instances are the physical machines making up the topology; at least one
-   * is required.
+   * id is the stable logical node id.
    *
-   * @generated from field: repeated cloud.v1.topology.Topology.Instance instances = 1;
+   * @generated from field: string id = 1;
    */
-  instances: Topology_Instance[];
+  id: string;
 
   /**
    *
-   * connections are the edges between components; at least one is required.
+   * component_ids are the components intentionally colocated on this node.
    *
-   * @generated from field: repeated cloud.v1.topology.Connection connections = 2;
+   * @generated from field: repeated string component_ids = 2;
    */
-  connections: Connection[];
+  componentIds: string[];
 
   /**
    *
-   * Here we can add something like managed database or another sevice from prvider
-   * Responsibility of this is RenderTerraformVariablesWorkflow|RenderDockerInputWorkflow
+   * labels are structured metadata used by planners and UI.
    *
-   * @generated from field: repeated cloud.v1.topology.Component external_components = 3;
+   * @generated from field: map<string, string> labels = 3;
    */
-  externalComponents: Component[];
+  labels: { [key: string]: string };
 
   /**
    *
-   * tags are arbitrary key/value labels attached to the whole topology.
+   * tags are arbitrary user/system tags.
    *
    * @generated from field: cloud.v1.common.Tags tags = 4;
    */
@@ -72,43 +66,291 @@ export type Topology = Message<"cloud.v1.topology.Topology"> & {
 
 /**
  *
- * Topology is the complete description of a benchmark deployment: its
- * instances, the edges between components, and any external components.
+ * Node is a logical placement unit. A node may become a VM, a Docker container,
+ * or a managed/external provider resource after the infrastructure stage.
+ *
+ * @generated from message cloud.v1.topology.Node
+ */
+export type NodeJson = {
+  /**
+   *
+   * id is the stable logical node id.
+   *
+   * @generated from field: string id = 1;
+   */
+  id?: string;
+
+  /**
+   *
+   * component_ids are the components intentionally colocated on this node.
+   *
+   * @generated from field: repeated string component_ids = 2;
+   */
+  componentIds?: string[];
+
+  /**
+   *
+   * labels are structured metadata used by planners and UI.
+   *
+   * @generated from field: map<string, string> labels = 3;
+   */
+  labels?: { [key: string]: string };
+
+  /**
+   *
+   * tags are arbitrary user/system tags.
+   *
+   * @generated from field: cloud.v1.common.Tags tags = 4;
+   */
+  tags?: TagsJson;
+};
+
+export type NodeValid = Node;
+
+/**
+ * Describes the message cloud.v1.topology.Node.
+ * Use `create(NodeSchema)` to create a new message.
+ */
+export const NodeSchema: GenMessage<Node, {jsonType: NodeJson, validType: NodeValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_topology_topology, 0);
+
+/**
+ *
+ * TopologySpec is the pure logical graph produced from domain params.
+ *
+ * @generated from message cloud.v1.topology.TopologySpec
+ */
+export type TopologySpec = Message<"cloud.v1.topology.TopologySpec"> & {
+  /**
+   *
+   * nodes are logical placement units.
+   *
+   * @generated from field: repeated cloud.v1.topology.Node nodes = 1;
+   */
+  nodes: Node[];
+
+  /**
+   *
+   * components are logical services/roles.
+   *
+   * @generated from field: repeated cloud.v1.topology.Component components = 2;
+   */
+  components: Component[];
+
+  /**
+   *
+   * connections are logical edges between components. Single-node topologies
+   * may legitimately have no edges.
+   *
+   * @generated from field: repeated cloud.v1.topology.Connection connections = 3;
+   */
+  connections: Connection[];
+
+  /**
+   *
+   * external_components are logical components not deployed by this run.
+   *
+   * @generated from field: repeated cloud.v1.topology.Component external_components = 4;
+   */
+  externalComponents: Component[];
+
+  /**
+   *
+   * labels are structured metadata attached to the spec.
+   *
+   * @generated from field: map<string, string> labels = 5;
+   */
+  labels: { [key: string]: string };
+
+  /**
+   *
+   * tags are arbitrary user/system tags.
+   *
+   * @generated from field: cloud.v1.common.Tags tags = 6;
+   */
+  tags?: Tags;
+};
+
+/**
+ *
+ * TopologySpec is the pure logical graph produced from domain params.
+ *
+ * @generated from message cloud.v1.topology.TopologySpec
+ */
+export type TopologySpecJson = {
+  /**
+   *
+   * nodes are logical placement units.
+   *
+   * @generated from field: repeated cloud.v1.topology.Node nodes = 1;
+   */
+  nodes?: NodeJson[];
+
+  /**
+   *
+   * components are logical services/roles.
+   *
+   * @generated from field: repeated cloud.v1.topology.Component components = 2;
+   */
+  components?: ComponentJson[];
+
+  /**
+   *
+   * connections are logical edges between components. Single-node topologies
+   * may legitimately have no edges.
+   *
+   * @generated from field: repeated cloud.v1.topology.Connection connections = 3;
+   */
+  connections?: ConnectionJson[];
+
+  /**
+   *
+   * external_components are logical components not deployed by this run.
+   *
+   * @generated from field: repeated cloud.v1.topology.Component external_components = 4;
+   */
+  externalComponents?: ComponentJson[];
+
+  /**
+   *
+   * labels are structured metadata attached to the spec.
+   *
+   * @generated from field: map<string, string> labels = 5;
+   */
+  labels?: { [key: string]: string };
+
+  /**
+   *
+   * tags are arbitrary user/system tags.
+   *
+   * @generated from field: cloud.v1.common.Tags tags = 6;
+   */
+  tags?: TagsJson;
+};
+
+export type TopologySpecValid = TopologySpec;
+
+/**
+ * Describes the message cloud.v1.topology.TopologySpec.
+ * Use `create(TopologySpecSchema)` to create a new message.
+ */
+export const TopologySpecSchema: GenMessage<TopologySpec, {jsonType: TopologySpecJson, validType: TopologySpecValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_topology_topology, 1);
+
+/**
+ *
+ * Topology is the full staged object for a run or wizard draft.
+ *
+ * @generated from message cloud.v1.topology.Topology
+ */
+export type Topology = Message<"cloud.v1.topology.Topology"> & {
+  /**
+   *
+   * state records the current stage.
+   *
+   * @generated from field: cloud.v1.topology.Topology.State state = 1;
+   */
+  state: Topology_State;
+
+  /**
+   *
+   * spec is the logical graph.
+   *
+   * @generated from field: cloud.v1.topology.TopologySpec spec = 2;
+   */
+  spec?: TopologySpec;
+
+  /**
+   *
+   * infrastructure_plan is provider input derived from spec + provider
+   * choices. Present from STATE_INFRASTRUCTURE_PLANNED.
+   *
+   * @generated from field: cloud.v1.deployment.InfrastructurePlan infrastructure_plan = 3;
+   */
+  infrastructurePlan?: InfrastructurePlan;
+
+  /**
+   *
+   * infrastructure_state is provider output: ids, addresses, allocated
+   * quotas. Present from STATE_INFRASTRUCTURE_DEPLOYED.
+   *
+   * @generated from field: cloud.v1.deployment.InfrastructureState infrastructure_state = 4;
+   */
+  infrastructureState?: InfrastructureState;
+
+  /**
+   *
+   * deployment_plan is the agent execution plan. Present from
+   * STATE_DEPLOYMENT_PLANNED.
+   *
+   * @generated from field: cloud.v1.deployment.DeploymentPlan deployment_plan = 5;
+   */
+  deploymentPlan?: DeploymentPlan;
+
+  /**
+   *
+   * tags are arbitrary metadata on the envelope.
+   *
+   * @generated from field: cloud.v1.common.Tags tags = 6;
+   */
+  tags?: Tags;
+};
+
+/**
+ *
+ * Topology is the full staged object for a run or wizard draft.
  *
  * @generated from message cloud.v1.topology.Topology
  */
 export type TopologyJson = {
   /**
    *
-   * instances are the physical machines making up the topology; at least one
-   * is required.
+   * state records the current stage.
    *
-   * @generated from field: repeated cloud.v1.topology.Topology.Instance instances = 1;
+   * @generated from field: cloud.v1.topology.Topology.State state = 1;
    */
-  instances?: Topology_InstanceJson[];
+  state?: Topology_StateJson;
 
   /**
    *
-   * connections are the edges between components; at least one is required.
+   * spec is the logical graph.
    *
-   * @generated from field: repeated cloud.v1.topology.Connection connections = 2;
+   * @generated from field: cloud.v1.topology.TopologySpec spec = 2;
    */
-  connections?: ConnectionJson[];
+  spec?: TopologySpecJson;
 
   /**
    *
-   * Here we can add something like managed database or another sevice from prvider
-   * Responsibility of this is RenderTerraformVariablesWorkflow|RenderDockerInputWorkflow
+   * infrastructure_plan is provider input derived from spec + provider
+   * choices. Present from STATE_INFRASTRUCTURE_PLANNED.
    *
-   * @generated from field: repeated cloud.v1.topology.Component external_components = 3;
+   * @generated from field: cloud.v1.deployment.InfrastructurePlan infrastructure_plan = 3;
    */
-  externalComponents?: ComponentJson[];
+  infrastructurePlan?: InfrastructurePlanJson;
 
   /**
    *
-   * tags are arbitrary key/value labels attached to the whole topology.
+   * infrastructure_state is provider output: ids, addresses, allocated
+   * quotas. Present from STATE_INFRASTRUCTURE_DEPLOYED.
    *
-   * @generated from field: cloud.v1.common.Tags tags = 4;
+   * @generated from field: cloud.v1.deployment.InfrastructureState infrastructure_state = 4;
+   */
+  infrastructureState?: InfrastructureStateJson;
+
+  /**
+   *
+   * deployment_plan is the agent execution plan. Present from
+   * STATE_DEPLOYMENT_PLANNED.
+   *
+   * @generated from field: cloud.v1.deployment.DeploymentPlan deployment_plan = 5;
+   */
+  deploymentPlan?: DeploymentPlanJson;
+
+  /**
+   *
+   * tags are arbitrary metadata on the envelope.
+   *
+   * @generated from field: cloud.v1.common.Tags tags = 6;
    */
   tags?: TagsJson;
 };
@@ -120,182 +362,67 @@ export type TopologyValid = Topology;
  * Use `create(TopologySchema)` to create a new message.
  */
 export const TopologySchema: GenMessage<Topology, {jsonType: TopologyJson, validType: TopologyValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_topology_topology, 0);
+  messageDesc(file_cloud_v1_topology_topology, 2);
 
 /**
  *
- * Instance is one physical machine (VM) in the topology onto which
- * components are allocated.
+ * State records the furthest stage represented by the envelope.
  *
- * @generated from message cloud.v1.topology.Topology.Instance
+ * @generated from enum cloud.v1.topology.Topology.State
  */
-export type Topology_Instance = Message<"cloud.v1.topology.Topology.Instance"> & {
+export enum Topology_State {
   /**
-   *
-   * id is the unique identifier of the instance within the topology.
-   *
-   * @generated from field: string id = 1;
+   * @generated from enum value: STATE_UNSPECIFIED = 0;
    */
-  id: string;
+  UNSPECIFIED = 0,
 
   /**
-   *
-   * status is the current runtime status of the instance.
-   *
-   * @generated from field: cloud.v1.common.Status status = 2;
+   * @generated from enum value: STATE_SPEC = 1;
    */
-  status: Status;
+  SPEC = 1,
 
   /**
-   *
-   * machine_info describes the requested machine shape/specs.
-   *
-   * @generated from field: cloud.v1.deployment.MachineInfo machine_info = 3;
+   * @generated from enum value: STATE_INFRASTRUCTURE_PLANNED = 2;
    */
-  machineInfo?: MachineInfo;
+  INFRASTRUCTURE_PLANNED = 2,
 
   /**
-   *
-   * provider_parms are the baked provider parameters; calculated (wisard).
-   *
-   * @generated from field: optional schemapb.Baked provider_parms = 4;
+   * @generated from enum value: STATE_INFRASTRUCTURE_DEPLOYED = 3;
    */
-  providerParms?: Baked;
+  INFRASTRUCTURE_DEPLOYED = 3,
 
   /**
-   *
-   * quota_requests are the resource quotas requested for this instance;
-   * calculated (deployment).
-   *
-   * @generated from field: repeated cloud.v1.deployment.Quota.Request quota_requests = 5;
+   * @generated from enum value: STATE_DEPLOYMENT_PLANNED = 4;
    */
-  quotaRequests: Quota_Request[];
+  DEPLOYMENT_PLANNED = 4,
 
   /**
-   *
-   * allocated_quotas are the quotas actually granted to this instance;
-   * calculated (deployment).
-   *
-   * @generated from field: repeated cloud.v1.deployment.Quota.Allocation allocated_quotas = 6;
+   * @generated from enum value: STATE_DEPLOYED = 5;
    */
-  allocatedQuotas: Quota_Allocation[];
+  DEPLOYED = 5,
 
   /**
-   *
-   * deployment_parms are the baked deployment parameters; calculated
-   * (deployment).
-   *
-   * @generated from field: optional schemapb.Baked deployment_parms = 7;
+   * @generated from enum value: STATE_UNDEPLOYED = 6;
    */
-  deploymentParms?: Baked;
+  UNDEPLOYED = 6,
 
   /**
-   *
-   * tags are arbitrary key/value labels attached to the instance.
-   *
-   * @generated from field: cloud.v1.common.Tags tags = 8;
+   * @generated from enum value: STATE_ARCHIVE = 7;
    */
-  tags?: Tags;
-
-  /**
-   *
-   * components are the logical components (roles) hosted on this instance.
-   *
-   * @generated from field: repeated cloud.v1.topology.Component components = 9;
-   */
-  components: Component[];
-};
+  ARCHIVE = 7,
+}
 
 /**
  *
- * Instance is one physical machine (VM) in the topology onto which
- * components are allocated.
+ * State records the furthest stage represented by the envelope.
  *
- * @generated from message cloud.v1.topology.Topology.Instance
+ * @generated from enum cloud.v1.topology.Topology.State
  */
-export type Topology_InstanceJson = {
-  /**
-   *
-   * id is the unique identifier of the instance within the topology.
-   *
-   * @generated from field: string id = 1;
-   */
-  id?: string;
-
-  /**
-   *
-   * status is the current runtime status of the instance.
-   *
-   * @generated from field: cloud.v1.common.Status status = 2;
-   */
-  status?: StatusJson;
-
-  /**
-   *
-   * machine_info describes the requested machine shape/specs.
-   *
-   * @generated from field: cloud.v1.deployment.MachineInfo machine_info = 3;
-   */
-  machineInfo?: MachineInfoJson;
-
-  /**
-   *
-   * provider_parms are the baked provider parameters; calculated (wisard).
-   *
-   * @generated from field: optional schemapb.Baked provider_parms = 4;
-   */
-  providerParms?: BakedJson;
-
-  /**
-   *
-   * quota_requests are the resource quotas requested for this instance;
-   * calculated (deployment).
-   *
-   * @generated from field: repeated cloud.v1.deployment.Quota.Request quota_requests = 5;
-   */
-  quotaRequests?: Quota_RequestJson[];
-
-  /**
-   *
-   * allocated_quotas are the quotas actually granted to this instance;
-   * calculated (deployment).
-   *
-   * @generated from field: repeated cloud.v1.deployment.Quota.Allocation allocated_quotas = 6;
-   */
-  allocatedQuotas?: Quota_AllocationJson[];
-
-  /**
-   *
-   * deployment_parms are the baked deployment parameters; calculated
-   * (deployment).
-   *
-   * @generated from field: optional schemapb.Baked deployment_parms = 7;
-   */
-  deploymentParms?: BakedJson;
-
-  /**
-   *
-   * tags are arbitrary key/value labels attached to the instance.
-   *
-   * @generated from field: cloud.v1.common.Tags tags = 8;
-   */
-  tags?: TagsJson;
-
-  /**
-   *
-   * components are the logical components (roles) hosted on this instance.
-   *
-   * @generated from field: repeated cloud.v1.topology.Component components = 9;
-   */
-  components?: ComponentJson[];
-};
-
-export type Topology_InstanceValid = Topology_Instance;
+export type Topology_StateJson = "STATE_UNSPECIFIED" | "STATE_SPEC" | "STATE_INFRASTRUCTURE_PLANNED" | "STATE_INFRASTRUCTURE_DEPLOYED" | "STATE_DEPLOYMENT_PLANNED" | "STATE_DEPLOYED" | "STATE_UNDEPLOYED" | "STATE_ARCHIVE";
 
 /**
- * Describes the message cloud.v1.topology.Topology.Instance.
- * Use `create(Topology_InstanceSchema)` to create a new message.
+ * Describes the enum cloud.v1.topology.Topology.State.
  */
-export const Topology_InstanceSchema: GenMessage<Topology_Instance, {jsonType: Topology_InstanceJson, validType: Topology_InstanceValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_topology_topology, 0, 0);
+export const Topology_StateSchema: GenEnum<Topology_State, Topology_StateJson> = /*@__PURE__*/
+  enumDesc(file_cloud_v1_topology_topology, 2, 0);
 

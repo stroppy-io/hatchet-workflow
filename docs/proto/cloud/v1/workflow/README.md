@@ -15,7 +15,9 @@
 - [cloud.v1.workflow.DeploymentService](#cloud-v1-workflow-deploymentservice)
   - [Workflows](#cloud-v1-workflow-deploymentservice-workflows)
     - [CalculateQuotasWorkflow](#calculatequotasworkflow-workflow)
-    - [ProcessDeploymentWorkflow](#processdeploymentworkflow-workflow)
+    - [ExecuteDeploymentPlanWorkflow](#executedeploymentplanworkflow-workflow)
+    - [ProcessInfrastructureWorkflow](#processinfrastructureworkflow-workflow)
+    - [RenderDeploymentPlanWorkflow](#renderdeploymentplanworkflow-workflow)
     - [RenderDockerInputWorkflow](#renderdockerinputworkflow-workflow)
     - [RenderTerraformVariablesWorkflow](#renderterraformvariablesworkflow-workflow)
   - [Activities](#cloud-v1-workflow-deploymentservice-activities)
@@ -29,13 +31,7 @@
     - [cloud.v1.workflow.DeploymentService.TerraformPlanActivity](#cloud-v1-workflow-deploymentservice-terraformplanactivity-activity)
 - [cloud.v1.workflow.RunWorkflowService](#cloud-v1-workflow-runworkflowservice)
   - [Workflows](#cloud-v1-workflow-runworkflowservice-workflows)
-    - [RunWorkflow](#runworkflow-workflow)
-  - [Queries](#cloud-v1-workflow-runworkflowservice-queries)
-    - [GetRunWorkflowState](#getrunworkflowstate-query)
-  - [Activities](#cloud-v1-workflow-runworkflowservice-activities)
-    - [cloud.v1.workflow.RunWorkflowService.CreateNetworkActivity](#cloud-v1-workflow-runworkflowservice-createnetworkactivity-activity)
-    - [cloud.v1.workflow.RunWorkflowService.DeployMachinesActivity](#cloud-v1-workflow-runworkflowservice-deploymachinesactivity-activity)
-    - [cloud.v1.workflow.RunWorkflowService.TeardownActivity](#cloud-v1-workflow-runworkflowservice-teardownactivity-activity)
+    - [TestRunWorkflow](#testrunworkflow-workflow)
 - [cloud.v1.workflow.SuiteWorkflowService](#cloud-v1-workflow-suiteworkflowservice)
   - [Workflows](#cloud-v1-workflow-suiteworkflowservice-workflows)
     - [SuiteWorkflow](#suiteworkflow-workflow)
@@ -53,17 +49,20 @@
   - [cloud.v1.workflow.AcquireQuotasActivityRequest](#cloud-v1-workflow-acquirequotasactivityrequest)
   - [cloud.v1.workflow.AcquireQuotasActivityRequest.QuotaRequestsEntry](#cloud-v1-workflow-acquirequotasactivityrequest-quotarequestsentry)
   - [cloud.v1.workflow.AcquireQuotasActivityResponse](#cloud-v1-workflow-acquirequotasactivityresponse)
-  - [cloud.v1.workflow.AcquireQuotasActivityResponse.QuotaAllocationEntry](#cloud-v1-workflow-acquirequotasactivityresponse-quotaallocationentry)
+  - [cloud.v1.workflow.AcquireQuotasActivityResponse.QuotaAllocationsEntry](#cloud-v1-workflow-acquirequotasactivityresponse-quotaallocationsentry)
   - [cloud.v1.workflow.CalculateQuotasWorkflowRequest](#cloud-v1-workflow-calculatequotasworkflowrequest)
   - [cloud.v1.workflow.CalculateQuotasWorkflowResponse](#cloud-v1-workflow-calculatequotasworkflowresponse)
   - [cloud.v1.workflow.CalculateQuotasWorkflowResponse.QuotaRequestsEntry](#cloud-v1-workflow-calculatequotasworkflowresponse-quotarequestsentry)
-  - [cloud.v1.workflow.Deployment](#cloud-v1-workflow-deployment)
+  - [cloud.v1.workflow.ExecuteDeploymentPlanWorkflowRequest](#cloud-v1-workflow-executedeploymentplanworkflowrequest)
+  - [cloud.v1.workflow.ExecuteDeploymentPlanWorkflowResponse](#cloud-v1-workflow-executedeploymentplanworkflowresponse)
   - [cloud.v1.workflow.InstallDatabaseWorkflowRequest](#cloud-v1-workflow-installdatabaseworkflowrequest)
   - [cloud.v1.workflow.InstallDatabaseWorkflowResponse](#cloud-v1-workflow-installdatabaseworkflowresponse)
   - [cloud.v1.workflow.InstallStroppyWorkflowRequest](#cloud-v1-workflow-installstroppyworkflowrequest)
   - [cloud.v1.workflow.InstallStroppyWorkflowResponse](#cloud-v1-workflow-installstroppyworkflowresponse)
-  - [cloud.v1.workflow.ProcessDeploymentWorkflowRequest](#cloud-v1-workflow-processdeploymentworkflowrequest)
-  - [cloud.v1.workflow.ProcessDeploymentWorkflowResponse](#cloud-v1-workflow-processdeploymentworkflowresponse)
+  - [cloud.v1.workflow.ProcessInfrastructureWorkflowRequest](#cloud-v1-workflow-processinfrastructureworkflowrequest)
+  - [cloud.v1.workflow.ProcessInfrastructureWorkflowResponse](#cloud-v1-workflow-processinfrastructureworkflowresponse)
+  - [cloud.v1.workflow.RenderDeploymentPlanWorkflowRequest](#cloud-v1-workflow-renderdeploymentplanworkflowrequest)
+  - [cloud.v1.workflow.RenderDeploymentPlanWorkflowResponse](#cloud-v1-workflow-renderdeploymentplanworkflowresponse)
   - [cloud.v1.workflow.RunConfig](#cloud-v1-workflow-runconfig)
   - [cloud.v1.workflow.RunState](#cloud-v1-workflow-runstate)
   - [cloud.v1.workflow.RunWorkloadWorkflowRequest](#cloud-v1-workflow-runworkloadworkflowrequest)
@@ -71,7 +70,6 @@
   - [cloud.v1.workflow.Stage](#cloud-v1-workflow-stage)
   - [cloud.v1.workflow.SuiteWorkflowRequest](#cloud-v1-workflow-suiteworkflowrequest)
   - [cloud.v1.workflow.SuiteWorkflowResponse](#cloud-v1-workflow-suiteworkflowresponse)
-  - [cloud.v1.workflow.Target](#cloud-v1-workflow-target)
   - [cloud.v1.workflow.TestWorkflowRequest](#cloud-v1-workflow-testworkflowrequest)
   - [cloud.v1.workflow.TestWorkflowResponse](#cloud-v1-workflow-testworkflowresponse)
 
@@ -445,8 +443,8 @@ go_name: Text</pre></td>
 ## cloud.v1.workflow.DeploymentService
 
 <pre>
-//DeploymentService groups the Temporal workflows and activities that provision
-//and tear down a topology's infrastructure.
+//DeploymentService groups the staged deployment workflows and provider
+//activities.
 </pre>
 
 <a name="cloud-v1-workflow-deploymentservice-workflows"></a>
@@ -457,8 +455,8 @@ go_name: Text</pre></td>
 ### CalculateQuotasWorkflow
 
 <pre>
-//CalculateQuotasWorkflow computes resource quota requests from a topology
-//(pure computation, retryable).
+//CalculateQuotasWorkflow computes quota requests from an infrastructure
+//plan.
 </pre>
 
 **Input:** [cloud.v1.workflow.CalculateQuotasWorkflowRequest](#cloud-v1-workflow-calculatequotasworkflowrequest)
@@ -470,13 +468,13 @@ go_name: Text</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>topology</td>
-<td><a href="../topology/README.md#cloud-v1-topology-topology">cloud.v1.topology.Topology</a></td>
+<td>plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructureplan">cloud.v1.deployment.InfrastructurePlan</a></td>
 <td><pre>
-//topology is the topology to compute quota requests for.<br>
+//plan is the infrastructure plan to compute quotas for.<br>
 
-json_name: topology
-go_name: Topology</pre></td>
+json_name: plan
+go_name: Plan</pre></td>
 </tr>
 </table>
 
@@ -489,21 +487,21 @@ go_name: Topology</pre></td>
 <th>Description</th>
 </tr>
 <tr>
+<td>plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructureplan">cloud.v1.deployment.InfrastructurePlan</a></td>
+<td><pre>
+//plan is the plan the quotas were computed for.<br>
+
+json_name: plan
+go_name: Plan</pre></td>
+</tr><tr>
 <td>quota_requests</td>
 <td><a href="#cloud-v1-workflow-calculatequotasworkflowresponse-quotarequestsentry">cloud.v1.workflow.CalculateQuotasWorkflowResponse.QuotaRequestsEntry</a></td>
 <td><pre>
-//quota_requests are the computed requests keyed by component.id.<br>
+//quota_requests are requested quotas keyed by topology node id.<br>
 
 json_name: quotaRequests
 go_name: QuotaRequests</pre></td>
-</tr><tr>
-<td>topology</td>
-<td><a href="../topology/README.md#cloud-v1-topology-topology">cloud.v1.topology.Topology</a></td>
-<td><pre>
-//topology is the (unchanged) topology the quotas were computed for.<br>
-
-json_name: topology
-go_name: Topology</pre></td>
 </tr>
 </table>
 
@@ -517,15 +515,14 @@ go_name: Topology</pre></td>
 </table>
 
 ---
-<a name="processdeploymentworkflow-workflow"></a>
-### ProcessDeploymentWorkflow
+<a name="executedeploymentplanworkflow-workflow"></a>
+### ExecuteDeploymentPlanWorkflow
 
 <pre>
-//ProcessDeploymentWorkflow provisions a topology end to end; always a
-//child of TestWorkflow and never auto-retried as a whole.
+//ExecuteDeploymentPlanWorkflow executes rendered agent steps.
 </pre>
 
-**Input:** [cloud.v1.workflow.ProcessDeploymentWorkflowRequest](#cloud-v1-workflow-processdeploymentworkflowrequest)
+**Input:** [cloud.v1.workflow.ExecuteDeploymentPlanWorkflowRequest](#cloud-v1-workflow-executedeploymentplanworkflowrequest)
 
 <table>
 <tr>
@@ -534,26 +531,25 @@ go_name: Topology</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>provider</td>
-<td><a href="../deployment/README.md#cloud-v1-deployment-provider">cloud.v1.deployment.Provider</a></td>
+<td>deployment_plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-deploymentplan">cloud.v1.deployment.DeploymentPlan</a></td>
 <td><pre>
-//provider is the target cloud/provider to deploy onto.<br>
+//deployment_plan is the plan to execute.<br>
 
-json_name: provider
-go_name: Provider</pre></td>
+json_name: deploymentPlan
+go_name: DeploymentPlan</pre></td>
 </tr><tr>
-<td>topology</td>
-<td><a href="../topology/README.md#cloud-v1-topology-topology">cloud.v1.topology.Topology</a></td>
+<td>infrastructure_state</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructurestate">cloud.v1.deployment.InfrastructureState</a></td>
 <td><pre>
-//topology is the topology to provision; instances MUST already carry their
-//provider_parms.<br>
+//infrastructure_state is used to route steps to node agents.<br>
 
-json_name: topology
-go_name: Topology</pre></td>
+json_name: infrastructureState
+go_name: InfrastructureState</pre></td>
 </tr>
 </table>
 
-**Output:** [cloud.v1.workflow.ProcessDeploymentWorkflowResponse](#cloud-v1-workflow-processdeploymentworkflowresponse)
+**Output:** [cloud.v1.workflow.ExecuteDeploymentPlanWorkflowResponse](#cloud-v1-workflow-executedeploymentplanworkflowresponse)
 
 <table>
 <tr>
@@ -562,22 +558,13 @@ go_name: Topology</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>deployed_topology</td>
-<td><a href="../topology/README.md#cloud-v1-topology-topology">cloud.v1.topology.Topology</a></td>
+<td>deployment_plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-deploymentplan">cloud.v1.deployment.DeploymentPlan</a></td>
 <td><pre>
-//deployed_topology is the full deployed topology with all runtime params
-//filled in.<br>
+//deployment_plan is the executed plan with statuses/results filled.<br>
 
-json_name: deployedTopology
-go_name: DeployedTopology</pre></td>
-</tr><tr>
-<td>provider</td>
-<td><a href="../deployment/README.md#cloud-v1-deployment-provider">cloud.v1.deployment.Provider</a></td>
-<td><pre>
-//provider is the provider the topology was deployed onto.<br>
-
-json_name: provider
-go_name: Provider</pre></td>
+json_name: deploymentPlan
+go_name: DeploymentPlan</pre></td>
 </tr>
 </table>
 
@@ -590,15 +577,14 @@ go_name: Provider</pre></td>
 </table>
 
 ---
-<a name="renderdockerinputworkflow-workflow"></a>
-### RenderDockerInputWorkflow
+<a name="processinfrastructureworkflow-workflow"></a>
+### ProcessInfrastructureWorkflow
 
 <pre>
-//RenderDockerInputWorkflow renders a topology into Docker compose input
-//(pure render, retryable).
+//ProcessInfrastructureWorkflow provisions provider infrastructure.
 </pre>
 
-**Input:** [cloud.v1.topology.Topology](../topology/README.md#cloud-v1-topology-topology)
+**Input:** [cloud.v1.workflow.ProcessInfrastructureWorkflowRequest](#cloud-v1-workflow-processinfrastructureworkflowrequest)
 
 <table>
 <tr>
@@ -607,36 +593,186 @@ go_name: Provider</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>connections</td>
-<td><a href="../topology/README.md#cloud-v1-topology-connection">cloud.v1.topology.Connection</a></td>
+<td>plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructureplan">cloud.v1.deployment.InfrastructurePlan</a></td>
 <td><pre>
-//connections are the edges between components; at least one is required.<br>
+//plan is the provider-specific infrastructure plan to materialize.<br>
 
-json_name: connections
-go_name: Connections</pre></td>
+json_name: plan
+go_name: Plan</pre></td>
+</tr>
+</table>
+
+**Output:** [cloud.v1.workflow.ProcessInfrastructureWorkflowResponse](#cloud-v1-workflow-processinfrastructureworkflowresponse)
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>state</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructurestate">cloud.v1.deployment.InfrastructureState</a></td>
+<td><pre>
+//state is the runtime provider state after apply/up.<br>
+
+json_name: state
+go_name: State</pre></td>
+</tr>
+</table>
+
+**Defaults:**
+
+<table>
+<tr><th>Name</th><th>Value</th></tr>
+<tr><td>id_reuse_policy</td><td><pre><code>WORKFLOW_ID_REUSE_POLICY_UNSPECIFIED</code></pre></td></tr>
+<tr><td>retry_policy.max_attempts</td><td>1</td></tr>
+</table>
+
+---
+<a name="renderdeploymentplanworkflow-workflow"></a>
+### RenderDeploymentPlanWorkflow
+
+<pre>
+//RenderDeploymentPlanWorkflow renders package/config/agent steps.
+</pre>
+
+**Input:** [cloud.v1.workflow.RenderDeploymentPlanWorkflowRequest](#cloud-v1-workflow-renderdeploymentplanworkflowrequest)
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>database</td>
+<td><a href="../domain/README.md#cloud-v1-domain-database">cloud.v1.domain.Database</a></td>
+<td><pre>
+//database is the engine input used by package resolution and config
+//renderers. It is not topology because renderers need version/package and
+//editable engine config values.<br>
+
+json_name: database
+go_name: Database</pre></td>
 </tr><tr>
-<td>external_components</td>
-<td><a href="../topology/README.md#cloud-v1-topology-component">cloud.v1.topology.Component</a></td>
+<td>infrastructure_plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructureplan">cloud.v1.deployment.InfrastructurePlan</a></td>
 <td><pre>
-//Here we can add something like managed database or another sevice from prvider
-//Responsibility of this is RenderTerraformVariablesWorkflow|RenderDockerInputWorkflow<br>
+//infrastructure_plan is provider input, including OS/image choices.<br>
 
-json_name: externalComponents
-go_name: ExternalComponents</pre></td>
+json_name: infrastructurePlan
+go_name: InfrastructurePlan</pre></td>
 </tr><tr>
-<td>instances</td>
-<td><a href="../topology/README.md#cloud-v1-topology-topology-instance">cloud.v1.topology.Topology.Instance</a></td>
+<td>infrastructure_state</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructurestate">cloud.v1.deployment.InfrastructureState</a></td>
 <td><pre>
-//instances are the physical machines making up the topology; at least one
-//is required.<br>
+//infrastructure_state carries runtime facts such as addresses. It may be
+//partially filled when a renderer can use logical hostnames instead.<br>
 
-json_name: instances
-go_name: Instances</pre></td>
+json_name: infrastructureState
+go_name: InfrastructureState</pre></td>
+</tr><tr>
+<td>render_overrides</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-renderoverrideset">cloud.v1.deployment.RenderOverrideSet</a></td>
+<td><pre>
+//render_overrides are user edits to editable render artifacts.<br>
+
+json_name: renderOverrides
+go_name: RenderOverrides</pre></td>
+</tr><tr>
+<td>topology_spec</td>
+<td><a href="../topology/README.md#cloud-v1-topology-topologyspec">cloud.v1.topology.TopologySpec</a></td>
+<td><pre>
+//topology_spec is the provider-agnostic logical graph.<br>
+
+json_name: topologySpec
+go_name: TopologySpec</pre></td>
+</tr>
+</table>
+
+**Output:** [cloud.v1.workflow.RenderDeploymentPlanWorkflowResponse](#cloud-v1-workflow-renderdeploymentplanworkflowresponse)
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>deployment_plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-deploymentplan">cloud.v1.deployment.DeploymentPlan</a></td>
+<td><pre>
+//deployment_plan is the agent-executable plan.<br>
+
+json_name: deploymentPlan
+go_name: DeploymentPlan</pre></td>
+</tr>
+</table>
+
+**Defaults:**
+
+<table>
+<tr><th>Name</th><th>Value</th></tr>
+<tr><td>id_reuse_policy</td><td><pre><code>WORKFLOW_ID_REUSE_POLICY_UNSPECIFIED</code></pre></td></tr>
+<tr><td>retry_policy.max_attempts</td><td>3</td></tr>
+<tr><td>run_timeout</td><td>5 minutes</td></tr>
+</table>
+
+---
+<a name="renderdockerinputworkflow-workflow"></a>
+### RenderDockerInputWorkflow
+
+<pre>
+//RenderDockerInputWorkflow renders infrastructure plan to Docker input.
+</pre>
+
+**Input:** [cloud.v1.deployment.InfrastructurePlan](../deployment/README.md#cloud-v1-deployment-infrastructureplan)
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>labels</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructureplan-labelsentry">cloud.v1.deployment.InfrastructurePlan.LabelsEntry</a></td>
+<td><pre>
+//labels are structured metadata attached to the plan.<br>
+
+json_name: labels
+go_name: Labels</pre></td>
+</tr><tr>
+<td>machines</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-machineplan">cloud.v1.deployment.MachinePlan</a></td>
+<td><pre>
+//machines are provider-specific resources keyed back to topology.Node.id.<br>
+
+json_name: machines
+go_name: Machines</pre></td>
+</tr><tr>
+<td>provider</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-provider">cloud.v1.deployment.Provider</a></td>
+<td><pre>
+//provider selects the backend that will materialize this plan.<br>
+
+json_name: provider
+go_name: Provider</pre></td>
+</tr><tr>
+<td>settings</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-providersettings">cloud.v1.deployment.ProviderSettings</a></td>
+<td><pre>
+//settings are provider account/network/auth settings.<br>
+
+json_name: settings
+go_name: Settings</pre></td>
 </tr><tr>
 <td>tags</td>
 <td><a href="../common/README.md#cloud-v1-common-tags">cloud.v1.common.Tags</a></td>
 <td><pre>
-//tags are arbitrary key/value labels attached to the whole topology.<br>
+//tags are arbitrary metadata attached to the plan.<br>
 
 json_name: tags
 go_name: Tags</pre></td>
@@ -684,11 +820,11 @@ go_name: Network</pre></td>
 ### RenderTerraformVariablesWorkflow
 
 <pre>
-//RenderTerraformVariablesWorkflow renders a topology into Terraform
-//variables input (pure render, retryable).
+//RenderTerraformVariablesWorkflow renders infrastructure plan to Terraform
+//input.
 </pre>
 
-**Input:** [cloud.v1.topology.Topology](../topology/README.md#cloud-v1-topology-topology)
+**Input:** [cloud.v1.deployment.InfrastructurePlan](../deployment/README.md#cloud-v1-deployment-infrastructureplan)
 
 <table>
 <tr>
@@ -697,36 +833,42 @@ go_name: Network</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>connections</td>
-<td><a href="../topology/README.md#cloud-v1-topology-connection">cloud.v1.topology.Connection</a></td>
+<td>labels</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructureplan-labelsentry">cloud.v1.deployment.InfrastructurePlan.LabelsEntry</a></td>
 <td><pre>
-//connections are the edges between components; at least one is required.<br>
+//labels are structured metadata attached to the plan.<br>
 
-json_name: connections
-go_name: Connections</pre></td>
+json_name: labels
+go_name: Labels</pre></td>
 </tr><tr>
-<td>external_components</td>
-<td><a href="../topology/README.md#cloud-v1-topology-component">cloud.v1.topology.Component</a></td>
+<td>machines</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-machineplan">cloud.v1.deployment.MachinePlan</a></td>
 <td><pre>
-//Here we can add something like managed database or another sevice from prvider
-//Responsibility of this is RenderTerraformVariablesWorkflow|RenderDockerInputWorkflow<br>
+//machines are provider-specific resources keyed back to topology.Node.id.<br>
 
-json_name: externalComponents
-go_name: ExternalComponents</pre></td>
+json_name: machines
+go_name: Machines</pre></td>
 </tr><tr>
-<td>instances</td>
-<td><a href="../topology/README.md#cloud-v1-topology-topology-instance">cloud.v1.topology.Topology.Instance</a></td>
+<td>provider</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-provider">cloud.v1.deployment.Provider</a></td>
 <td><pre>
-//instances are the physical machines making up the topology; at least one
-//is required.<br>
+//provider selects the backend that will materialize this plan.<br>
 
-json_name: instances
-go_name: Instances</pre></td>
+json_name: provider
+go_name: Provider</pre></td>
+</tr><tr>
+<td>settings</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-providersettings">cloud.v1.deployment.ProviderSettings</a></td>
+<td><pre>
+//settings are provider account/network/auth settings.<br>
+
+json_name: settings
+go_name: Settings</pre></td>
 </tr><tr>
 <td>tags</td>
 <td><a href="../common/README.md#cloud-v1-common-tags">cloud.v1.common.Tags</a></td>
 <td><pre>
-//tags are arbitrary key/value labels attached to the whole topology.<br>
+//tags are arbitrary metadata attached to the plan.<br>
 
 json_name: tags
 go_name: Tags</pre></td>
@@ -754,8 +896,7 @@ go_name: Tags</pre></td>
 ### cloud.v1.workflow.DeploymentService.AcquireNetworkActivity
 
 <pre>
-//AcquireNetworkActivity acquires a network from the provider (deduped by
-//name, retried on transient errors).
+//AcquireNetworkActivity acquires a provider network.
 </pre>
 
 **Input:** [cloud.v1.workflow.AcquireNetworkActivityRequest](#cloud-v1-workflow-acquirenetworkactivityrequest)
@@ -767,13 +908,14 @@ go_name: Tags</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>settings</td>
-<td><a href="../deployment/README.md#cloud-v1-deployment-providersettings">cloud.v1.deployment.ProviderSettings</a></td>
+<td>plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructureplan">cloud.v1.deployment.InfrastructurePlan</a></td>
 <td><pre>
-//settings are the provider-specific settings used to acquire the network.<br>
+//plan is the infrastructure plan whose provider settings drive network
+//acquisition.<br>
 
-json_name: settings
-go_name: Settings</pre></td>
+json_name: plan
+go_name: Plan</pre></td>
 </tr>
 </table>
 
@@ -811,8 +953,7 @@ go_name: Net</pre></td>
 ### cloud.v1.workflow.DeploymentService.AcquireQuotasActivity
 
 <pre>
-//AcquireQuotasActivity acquires the requested quotas from the provider
-//(retried with backoff).
+//AcquireQuotasActivity acquires requested quotas.
 </pre>
 
 **Input:** [cloud.v1.workflow.AcquireQuotasActivityRequest](#cloud-v1-workflow-acquirequotasactivityrequest)
@@ -827,7 +968,7 @@ go_name: Net</pre></td>
 <td>quota_requests</td>
 <td><a href="#cloud-v1-workflow-acquirequotasactivityrequest-quotarequestsentry">cloud.v1.workflow.AcquireQuotasActivityRequest.QuotaRequestsEntry</a></td>
 <td><pre>
-//quota_requests are the requests to acquire, keyed by component.id.<br>
+//quota_requests are requested quotas keyed by topology node id.<br>
 
 json_name: quotaRequests
 go_name: QuotaRequests</pre></td>
@@ -843,13 +984,13 @@ go_name: QuotaRequests</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>quota_allocation</td>
-<td><a href="#cloud-v1-workflow-acquirequotasactivityresponse-quotaallocationentry">cloud.v1.workflow.AcquireQuotasActivityResponse.QuotaAllocationEntry</a></td>
+<td>quota_allocations</td>
+<td><a href="#cloud-v1-workflow-acquirequotasactivityresponse-quotaallocationsentry">cloud.v1.workflow.AcquireQuotasActivityResponse.QuotaAllocationsEntry</a></td>
 <td><pre>
-//quota_allocation is the granted allocation keyed by component.id.<br>
+//quota_allocations are granted allocations keyed by topology node id.<br>
 
-json_name: quotaAllocation
-go_name: QuotaAllocation</pre></td>
+json_name: quotaAllocations
+go_name: QuotaAllocations</pre></td>
 </tr>
 </table>
 
@@ -868,7 +1009,7 @@ go_name: QuotaAllocation</pre></td>
 ### cloud.v1.workflow.DeploymentService.DockerDownActivity
 
 <pre>
-//DockerDownActivity tears the compose stack down (idempotent, retryable).
+//DockerDownActivity tears down the Docker topology.
 </pre>
 
 **Input:** [cloud.v1.deployment.Docker.Input](../deployment/README.md#cloud-v1-deployment-docker-input)
@@ -939,8 +1080,7 @@ go_name: NetworkId</pre></td>
 ### cloud.v1.workflow.DeploymentService.DockerPullActivity
 
 <pre>
-//DockerPullActivity pulls the required container images (idempotent,
-//retried with backoff).
+//DockerPullActivity pulls container images.
 </pre>
 
 **Input:** [cloud.v1.deployment.Docker.Input](../deployment/README.md#cloud-v1-deployment-docker-input)
@@ -1012,8 +1152,7 @@ go_name: NetworkId</pre></td>
 ### cloud.v1.workflow.DeploymentService.DockerUpActivity
 
 <pre>
-//DockerUpActivity brings the compose stack up (idempotent/converges,
-//heartbeats while starting).
+//DockerUpActivity starts the Docker topology.
 </pre>
 
 **Input:** [cloud.v1.deployment.Docker.Input](../deployment/README.md#cloud-v1-deployment-docker-input)
@@ -1086,8 +1225,7 @@ go_name: NetworkId</pre></td>
 ### cloud.v1.workflow.DeploymentService.TerraformApplyActivity
 
 <pre>
-//TerraformApplyActivity runs terraform apply to provision resources
-//(mutating; retried sparingly under the state lock).
+//TerraformApplyActivity runs terraform apply.
 </pre>
 
 **Input:** [cloud.v1.deployment.Terraform.Input](#cloud-v1-deployment-terraform-input)
@@ -1114,8 +1252,7 @@ go_name: NetworkId</pre></td>
 ### cloud.v1.workflow.DeploymentService.TerraformDestroyActivity
 
 <pre>
-//TerraformDestroyActivity runs terraform destroy to tear down all
-//resources (idempotent/converges, retried to avoid leaks).
+//TerraformDestroyActivity runs terraform destroy.
 </pre>
 
 **Input:** [cloud.v1.deployment.Terraform.Input](#cloud-v1-deployment-terraform-input)
@@ -1142,8 +1279,7 @@ go_name: NetworkId</pre></td>
 ### cloud.v1.workflow.DeploymentService.TerraformPlanActivity
 
 <pre>
-//TerraformPlanActivity runs terraform plan against the provider (read-only,
-//retryable).
+//TerraformPlanActivity runs terraform plan.
 </pre>
 
 **Input:** [cloud.v1.deployment.Terraform.Input](#cloud-v1-deployment-terraform-input)
@@ -1169,26 +1305,19 @@ go_name: NetworkId</pre></td>
 ## cloud.v1.workflow.RunWorkflowService
 
 <pre>
-//RunWorkflowService is the Temporal replacement for the custom DAG executor +
-//durable scheduler. RunWorkflow orchestrates the full run cycle in Go,
-//delegating side effects to the infra activities below and to agent.proto's
-//AgentCommandService (per-target agent ops, routed by Target.id task queue).
+//RunWorkflowService is the top-level Temporal workflow over all stages.
 </pre>
 
 <a name="cloud-v1-workflow-runworkflowservice-workflows"></a>
 ### Workflows
 
 ---
-<a name="runworkflow-workflow"></a>
-### RunWorkflow
+<a name="testrunworkflow-workflow"></a>
+### TestRunWorkflow
 
 <pre>
-//RunWorkflow runs one full benchmark run: network -> machines -> bootstrap
-//-> install/configure database (+ conditional etcd/patroni/pgbouncer/proxy
-///ydb-init/cockroach-init) -> install/configure monitor -> install stroppy
-//-> run workload -> teardown. Deduplicated by a deterministic id from
-//RunConfig.id; re-run allowed only after a failed previous attempt; never
-//auto-retried as a whole (side effects). Answers the GetRunState query.
+//TestRunWorkflow runs one full benchmark run:
+//infrastructure -> deployment plan render -> agent execution -> workload.
 </pre>
 
 **Input:** [cloud.v1.workflow.RunConfig](#cloud-v1-workflow-runconfig)
@@ -1200,41 +1329,72 @@ go_name: NetworkId</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>config_json</td>
-<td>bytes</td>
+<td>database</td>
+<td><a href="../domain/README.md#cloud-v1-domain-database">cloud.v1.domain.Database</a></td>
 <td><pre>
-//config_json is the full types.RunConfig serialized as JSON. The worker
-//decodes it into the existing Go model. Replaced by typed proto fields in
-//a later pass.<br>
+//database is the database under test.<br>
 
-json_name: configJson
-go_name: ConfigJson</pre></td>
+json_name: database
+go_name: Database</pre></td>
 </tr><tr>
-<td>external_db</td>
-<td>bool</td>
+<td>deployment_plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-deploymentplan">cloud.v1.deployment.DeploymentPlan</a></td>
 <td><pre>
-//external_db, when true, is a bring-your-own-database run: the workflow
-//skips the network/machines/install/configure phases and only installs
-//stroppy + runs the workload against the supplied endpoint.<br>
+//deployment_plan is filled after package/config rendering. It may be empty
+//at workflow start and carried forward by the workflow.<br>
 
-json_name: externalDb
-go_name: ExternalDb</pre></td>
+json_name: deploymentPlan
+go_name: DeploymentPlan</pre></td>
 </tr><tr>
 <td>id</td>
 <td>string</td>
 <td><pre>
-id is the stable run identifier (drives the deterministic workflow id).<br>
+//id is the stable run identifier.<br>
 
 json_name: id
 go_name: Id</pre></td>
 </tr><tr>
-<td>provider</td>
-<td>string</td>
+<td>infrastructure_plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructureplan">cloud.v1.deployment.InfrastructurePlan</a></td>
 <td><pre>
-provider selects the deployment backend ("docker" | "yandex").<br>
+//infrastructure_plan is the provider-specific machine/resource intent.<br>
 
-json_name: provider
-go_name: Provider</pre></td>
+json_name: infrastructurePlan
+go_name: InfrastructurePlan</pre></td>
+</tr><tr>
+<td>infrastructure_state</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructurestate">cloud.v1.deployment.InfrastructureState</a></td>
+<td><pre>
+//infrastructure_state is filled after provider provisioning. It may be
+//empty at workflow start and carried forward by the workflow.<br>
+
+json_name: infrastructureState
+go_name: InfrastructureState</pre></td>
+</tr><tr>
+<td>render_overrides</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-renderoverrideset">cloud.v1.deployment.RenderOverrideSet</a></td>
+<td><pre>
+//render_overrides are user edits to editable render artifacts. Workflow
+//renderers apply them when producing deployment_plan.<br>
+
+json_name: renderOverrides
+go_name: RenderOverrides</pre></td>
+</tr><tr>
+<td>topology_spec</td>
+<td><a href="../topology/README.md#cloud-v1-topology-topologyspec">cloud.v1.topology.TopologySpec</a></td>
+<td><pre>
+//topology_spec is the provider-agnostic logical graph.<br>
+
+json_name: topologySpec
+go_name: TopologySpec</pre></td>
+</tr><tr>
+<td>workload</td>
+<td><a href="../domain/README.md#cloud-v1-domain-workload">cloud.v1.domain.Workload</a></td>
+<td><pre>
+//workload is the workload to run against the database.<br>
+
+json_name: workload
+go_name: Workload</pre></td>
 </tr>
 </table>
 
@@ -1245,392 +1405,7 @@ go_name: Provider</pre></td>
 <tr><td>id</td><td><pre><code>run/${! id }</code></pre></td></tr>
 <tr><td>id_reuse_policy</td><td><pre><code>WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY</code></pre></td></tr>
 <tr><td>retry_policy.max_attempts</td><td>1</td></tr>
-</table>
-
-**Queries:**
-
-<table>
-<tr><th>Query</th></tr>
-<tr><td><a href="#cloud-v1-workflow-runworkflowservice-getrunworkflowstate-query">cloud.v1.workflow.RunWorkflowService.GetRunWorkflowState</a></td></tr>
-</table>  
-
-<a name="cloud-v1-workflow-runworkflowservice-queries"></a>
-### Queries
-
----
-<a name="getrunworkflowstate-query"></a>
-### GetRunWorkflowState
-
-<pre>
-//GetRunWorkflowState is a query against a running RunWorkflow returning the
-//live RunState (overall status + per-phase breakdown) for the run Overview.
-//Named distinctly from TestService.GetRunState to avoid a generated query
-//constant clash in the shared cloud.v1.workflow package.
-</pre>
-
-**Output:** [cloud.v1.workflow.RunState](#cloud-v1-workflow-runstate)
-
-<table>
-<tr>
-<th>Attribute</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-<tr>
-<td>stages</td>
-<td><a href="#cloud-v1-workflow-stage">cloud.v1.workflow.Stage</a></td>
-<td><pre>
-//stages is the per-stage breakdown of the run.<br>
-
-json_name: stages
-go_name: Stages</pre></td>
-</tr><tr>
-<td>status</td>
-<td><a href="../common/README.md#cloud-v1-common-status">cloud.v1.common.Status</a></td>
-<td><pre>
-//status is the overall status of the run.<br>
-
-json_name: status
-go_name: Status</pre></td>
-</tr>
-</table>   
-
-<a name="cloud-v1-workflow-runworkflowservice-activities"></a>
-### Activities
-
----
-<a name="cloud-v1-workflow-runworkflowservice-createnetworkactivity-activity"></a>
-### cloud.v1.workflow.RunWorkflowService.CreateNetworkActivity
-
-<pre>
-//CreateNetworkActivity acquires the run network (docker network create /
-//yandex subnet) and returns the partial Deployment carrying its handle.
-//Idempotent (dedupe by name) => retryable.
-</pre>
-
-**Input:** [cloud.v1.workflow.RunConfig](#cloud-v1-workflow-runconfig)
-
-<table>
-<tr>
-<th>Attribute</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-<tr>
-<td>config_json</td>
-<td>bytes</td>
-<td><pre>
-//config_json is the full types.RunConfig serialized as JSON. The worker
-//decodes it into the existing Go model. Replaced by typed proto fields in
-//a later pass.<br>
-
-json_name: configJson
-go_name: ConfigJson</pre></td>
-</tr><tr>
-<td>external_db</td>
-<td>bool</td>
-<td><pre>
-//external_db, when true, is a bring-your-own-database run: the workflow
-//skips the network/machines/install/configure phases and only installs
-//stroppy + runs the workload against the supplied endpoint.<br>
-
-json_name: externalDb
-go_name: ExternalDb</pre></td>
-</tr><tr>
-<td>id</td>
-<td>string</td>
-<td><pre>
-id is the stable run identifier (drives the deterministic workflow id).<br>
-
-json_name: id
-go_name: Id</pre></td>
-</tr><tr>
-<td>provider</td>
-<td>string</td>
-<td><pre>
-provider selects the deployment backend ("docker" | "yandex").<br>
-
-json_name: provider
-go_name: Provider</pre></td>
-</tr>
-</table>
-
-**Output:** [cloud.v1.workflow.Deployment](#cloud-v1-workflow-deployment)
-
-<table>
-<tr>
-<th>Attribute</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-<tr>
-<td>container_ids</td>
-<td>string</td>
-<td><pre>
-container_ids are the docker container ids for docker-provider teardown.<br>
-
-json_name: containerIds
-go_name: ContainerIds</pre></td>
-</tr><tr>
-<td>db_host</td>
-<td>string</td>
-<td><pre>
-db_host is the endpoint host stroppy connects to (container name / IP / proxy).<br>
-
-json_name: dbHost
-go_name: DbHost</pre></td>
-</tr><tr>
-<td>db_port</td>
-<td>int32</td>
-<td><pre>
-db_port is the endpoint port for the selected protocol.<br>
-
-json_name: dbPort
-go_name: DbPort</pre></td>
-</tr><tr>
-<td>network_id</td>
-<td>string</td>
-<td><pre>
-network_id is the docker network id for docker-provider teardown.<br>
-
-json_name: networkId
-go_name: NetworkId</pre></td>
-</tr><tr>
-<td>targets</td>
-<td><a href="#cloud-v1-workflow-target">cloud.v1.workflow.Target</a></td>
-<td><pre>
-targets are all provisioned agent machines.<br>
-
-json_name: targets
-go_name: Targets</pre></td>
-</tr><tr>
-<td>terraform_wd_id</td>
-<td>string</td>
-<td><pre>
-terraform_wd_id is the terraform working-dir id for yandex-provider teardown.<br>
-
-json_name: terraformWdId
-go_name: TerraformWdId</pre></td>
-</tr>
-</table>
-
-**Defaults:**
-
-<table>
-<tr><th>Name</th><th>Value</th></tr>
-<tr><td>retry_policy.backoff_coefficient</td><td>2</td></tr>
-<tr><td>retry_policy.initial_interval</td><td>5 seconds</td></tr>
-<tr><td>retry_policy.max_attempts</td><td>3</td></tr>
-<tr><td>start_to_close_timeout</td><td>5 minutes</td></tr>
-</table> 
-
----
-<a name="cloud-v1-workflow-runworkflowservice-deploymachinesactivity-activity"></a>
-### cloud.v1.workflow.RunWorkflowService.DeployMachinesActivity
-
-<pre>
-//DeployMachinesActivity provisions the machines (docker containers /
-//terraform apply), waits for them, and returns the full Deployment:
-//targets, db endpoint, and teardown handles. Mutating but
-//terraform/docker-idempotent; retried sparingly, heartbeats while running.
-</pre>
-
-**Input:** [cloud.v1.workflow.RunConfig](#cloud-v1-workflow-runconfig)
-
-<table>
-<tr>
-<th>Attribute</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-<tr>
-<td>config_json</td>
-<td>bytes</td>
-<td><pre>
-//config_json is the full types.RunConfig serialized as JSON. The worker
-//decodes it into the existing Go model. Replaced by typed proto fields in
-//a later pass.<br>
-
-json_name: configJson
-go_name: ConfigJson</pre></td>
-</tr><tr>
-<td>external_db</td>
-<td>bool</td>
-<td><pre>
-//external_db, when true, is a bring-your-own-database run: the workflow
-//skips the network/machines/install/configure phases and only installs
-//stroppy + runs the workload against the supplied endpoint.<br>
-
-json_name: externalDb
-go_name: ExternalDb</pre></td>
-</tr><tr>
-<td>id</td>
-<td>string</td>
-<td><pre>
-id is the stable run identifier (drives the deterministic workflow id).<br>
-
-json_name: id
-go_name: Id</pre></td>
-</tr><tr>
-<td>provider</td>
-<td>string</td>
-<td><pre>
-provider selects the deployment backend ("docker" | "yandex").<br>
-
-json_name: provider
-go_name: Provider</pre></td>
-</tr>
-</table>
-
-**Output:** [cloud.v1.workflow.Deployment](#cloud-v1-workflow-deployment)
-
-<table>
-<tr>
-<th>Attribute</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-<tr>
-<td>container_ids</td>
-<td>string</td>
-<td><pre>
-container_ids are the docker container ids for docker-provider teardown.<br>
-
-json_name: containerIds
-go_name: ContainerIds</pre></td>
-</tr><tr>
-<td>db_host</td>
-<td>string</td>
-<td><pre>
-db_host is the endpoint host stroppy connects to (container name / IP / proxy).<br>
-
-json_name: dbHost
-go_name: DbHost</pre></td>
-</tr><tr>
-<td>db_port</td>
-<td>int32</td>
-<td><pre>
-db_port is the endpoint port for the selected protocol.<br>
-
-json_name: dbPort
-go_name: DbPort</pre></td>
-</tr><tr>
-<td>network_id</td>
-<td>string</td>
-<td><pre>
-network_id is the docker network id for docker-provider teardown.<br>
-
-json_name: networkId
-go_name: NetworkId</pre></td>
-</tr><tr>
-<td>targets</td>
-<td><a href="#cloud-v1-workflow-target">cloud.v1.workflow.Target</a></td>
-<td><pre>
-targets are all provisioned agent machines.<br>
-
-json_name: targets
-go_name: Targets</pre></td>
-</tr><tr>
-<td>terraform_wd_id</td>
-<td>string</td>
-<td><pre>
-terraform_wd_id is the terraform working-dir id for yandex-provider teardown.<br>
-
-json_name: terraformWdId
-go_name: TerraformWdId</pre></td>
-</tr>
-</table>
-
-**Defaults:**
-
-<table>
-<tr><th>Name</th><th>Value</th></tr>
-<tr><td>heartbeat_timeout</td><td>1 minute</td></tr>
-<tr><td>retry_policy.initial_interval</td><td>10 seconds</td></tr>
-<tr><td>retry_policy.max_attempts</td><td>2</td></tr>
-<tr><td>schedule_to_close_timeout</td><td>1 minute</td></tr>
-<tr><td>start_to_close_timeout</td><td>30 minutes</td></tr>
-</table> 
-
----
-<a name="cloud-v1-workflow-runworkflowservice-teardownactivity-activity"></a>
-### cloud.v1.workflow.RunWorkflowService.TeardownActivity
-
-<pre>
-//TeardownActivity destroys the run's infrastructure (docker rm + network
-//remove / terraform destroy) from the Deployment handles. Idempotent
-//(converges to empty) => retried to avoid leaks. Runs even on failure.
-</pre>
-
-**Input:** [cloud.v1.workflow.Deployment](#cloud-v1-workflow-deployment)
-
-<table>
-<tr>
-<th>Attribute</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-<tr>
-<td>container_ids</td>
-<td>string</td>
-<td><pre>
-container_ids are the docker container ids for docker-provider teardown.<br>
-
-json_name: containerIds
-go_name: ContainerIds</pre></td>
-</tr><tr>
-<td>db_host</td>
-<td>string</td>
-<td><pre>
-db_host is the endpoint host stroppy connects to (container name / IP / proxy).<br>
-
-json_name: dbHost
-go_name: DbHost</pre></td>
-</tr><tr>
-<td>db_port</td>
-<td>int32</td>
-<td><pre>
-db_port is the endpoint port for the selected protocol.<br>
-
-json_name: dbPort
-go_name: DbPort</pre></td>
-</tr><tr>
-<td>network_id</td>
-<td>string</td>
-<td><pre>
-network_id is the docker network id for docker-provider teardown.<br>
-
-json_name: networkId
-go_name: NetworkId</pre></td>
-</tr><tr>
-<td>targets</td>
-<td><a href="#cloud-v1-workflow-target">cloud.v1.workflow.Target</a></td>
-<td><pre>
-targets are all provisioned agent machines.<br>
-
-json_name: targets
-go_name: Targets</pre></td>
-</tr><tr>
-<td>terraform_wd_id</td>
-<td>string</td>
-<td><pre>
-terraform_wd_id is the terraform working-dir id for yandex-provider teardown.<br>
-
-json_name: terraformWdId
-go_name: TerraformWdId</pre></td>
-</tr>
-</table>
-
-**Defaults:**
-
-<table>
-<tr><th>Name</th><th>Value</th></tr>
-<tr><td>heartbeat_timeout</td><td>1 minute</td></tr>
-<tr><td>retry_policy.initial_interval</td><td>10 seconds</td></tr>
-<tr><td>retry_policy.max_attempts</td><td>3</td></tr>
-<tr><td>schedule_to_close_timeout</td><td>1 minute</td></tr>
-<tr><td>start_to_close_timeout</td><td>30 minutes</td></tr>
-</table>   
+</table>     
 
 <a name="cloud-v1-workflow-suiteworkflowservice"></a>
 ## cloud.v1.workflow.SuiteWorkflowService
@@ -1723,13 +1498,21 @@ go_name: SuiteRun</pre></td>
 json_name: database
 go_name: Database</pre></td>
 </tr><tr>
-<td>topology</td>
-<td><a href="../topology/README.md#cloud-v1-topology-topology">cloud.v1.topology.Topology</a></td>
+<td>deployment_plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-deploymentplan">cloud.v1.deployment.DeploymentPlan</a></td>
 <td><pre>
-//topology is the topology the database is brought up within.<br>
+//deployment_plan contains the database-related agent steps.<br>
 
-json_name: topology
-go_name: Topology</pre></td>
+json_name: deploymentPlan
+go_name: DeploymentPlan</pre></td>
+</tr><tr>
+<td>infrastructure_state</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructurestate">cloud.v1.deployment.InfrastructureState</a></td>
+<td><pre>
+//infrastructure_state is used to route steps to node agents.<br>
+
+json_name: infrastructureState
+go_name: InfrastructureState</pre></td>
 </tr>
 </table>
 
@@ -1765,13 +1548,21 @@ go_name: Topology</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>topology</td>
-<td><a href="../topology/README.md#cloud-v1-topology-topology">cloud.v1.topology.Topology</a></td>
+<td>deployment_plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-deploymentplan">cloud.v1.deployment.DeploymentPlan</a></td>
 <td><pre>
-//topology is the (read-only) topology whose runner machines get stroppy.<br>
+//deployment_plan contains the stroppy-related agent steps.<br>
 
-json_name: topology
-go_name: Topology</pre></td>
+json_name: deploymentPlan
+go_name: DeploymentPlan</pre></td>
+</tr><tr>
+<td>infrastructure_state</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructurestate">cloud.v1.deployment.InfrastructureState</a></td>
+<td><pre>
+//infrastructure_state is used to route steps to node agents.<br>
+
+json_name: infrastructureState
+go_name: InfrastructureState</pre></td>
 </tr>
 </table>
 
@@ -1807,13 +1598,22 @@ go_name: Topology</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>topology</td>
-<td><a href="../topology/README.md#cloud-v1-topology-topology">cloud.v1.topology.Topology</a></td>
+<td>infrastructure_state</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructurestate">cloud.v1.deployment.InfrastructureState</a></td>
 <td><pre>
-//topology is the topology the workload runs against.<br>
+//infrastructure_state carries runtime endpoints used to render the workload
+//connection string and route agent calls.<br>
 
-json_name: topology
-go_name: Topology</pre></td>
+json_name: infrastructureState
+go_name: InfrastructureState</pre></td>
+</tr><tr>
+<td>topology_spec</td>
+<td><a href="../topology/README.md#cloud-v1-topology-topologyspec">cloud.v1.topology.TopologySpec</a></td>
+<td><pre>
+//topology_spec is the logical graph the workload targets.<br>
+
+json_name: topologySpec
+go_name: TopologySpec</pre></td>
 </tr><tr>
 <td>workload</td>
 <td><a href="../domain/README.md#cloud-v1-domain-workload">cloud.v1.domain.Workload</a></td>
@@ -1942,13 +1742,14 @@ go_name: Status</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>settings</td>
-<td><a href="../deployment/README.md#cloud-v1-deployment-providersettings">cloud.v1.deployment.ProviderSettings</a></td>
+<td>plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructureplan">cloud.v1.deployment.InfrastructurePlan</a></td>
 <td><pre>
-//settings are the provider-specific settings used to acquire the network.<br>
+//plan is the infrastructure plan whose provider settings drive network
+//acquisition.<br>
 
-json_name: settings
-go_name: Settings</pre></td>
+json_name: plan
+go_name: Plan</pre></td>
 </tr>
 </table>
 
@@ -1984,8 +1785,7 @@ go_name: Net</pre></td>
 ### cloud.v1.workflow.AcquireQuotasActivityRequest
 
 <pre>
-//AcquireQuotasActivityRequest asks the provider to acquire the requested
-//quotas.
+//AcquireQuotasActivityRequest asks the provider to acquire requested quotas.
 </pre>
 
 <table>
@@ -1998,7 +1798,7 @@ go_name: Net</pre></td>
 <td>quota_requests</td>
 <td><a href="#cloud-v1-workflow-acquirequotasactivityrequest-quotarequestsentry">cloud.v1.workflow.AcquireQuotasActivityRequest.QuotaRequestsEntry</a></td>
 <td><pre>
-//quota_requests are the requests to acquire, keyed by component.id.<br>
+//quota_requests are requested quotas keyed by topology node id.<br>
 
 json_name: quotaRequests
 go_name: QuotaRequests</pre></td>
@@ -2037,7 +1837,7 @@ go_name: Value</pre></td>
 ### cloud.v1.workflow.AcquireQuotasActivityResponse
 
 <pre>
-//AcquireQuotasActivityResponse returns the quotas the provider allocated.
+//AcquireQuotasActivityResponse returns granted allocations keyed by node id.
 </pre>
 
 <table>
@@ -2047,20 +1847,20 @@ go_name: Value</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>quota_allocation</td>
-<td><a href="#cloud-v1-workflow-acquirequotasactivityresponse-quotaallocationentry">cloud.v1.workflow.AcquireQuotasActivityResponse.QuotaAllocationEntry</a></td>
+<td>quota_allocations</td>
+<td><a href="#cloud-v1-workflow-acquirequotasactivityresponse-quotaallocationsentry">cloud.v1.workflow.AcquireQuotasActivityResponse.QuotaAllocationsEntry</a></td>
 <td><pre>
-//quota_allocation is the granted allocation keyed by component.id.<br>
+//quota_allocations are granted allocations keyed by topology node id.<br>
 
-json_name: quotaAllocation
-go_name: QuotaAllocation</pre></td>
+json_name: quotaAllocations
+go_name: QuotaAllocations</pre></td>
 </tr>
 </table>
 
 
 
-<a name="cloud-v1-workflow-acquirequotasactivityresponse-quotaallocationentry"></a>
-### cloud.v1.workflow.AcquireQuotasActivityResponse.QuotaAllocationEntry
+<a name="cloud-v1-workflow-acquirequotasactivityresponse-quotaallocationsentry"></a>
+### cloud.v1.workflow.AcquireQuotasActivityResponse.QuotaAllocationsEntry
 
 <table>
 <tr>
@@ -2089,8 +1889,7 @@ go_name: Value</pre></td>
 ### cloud.v1.workflow.CalculateQuotasWorkflowRequest
 
 <pre>
-//CalculateQuotasWorkflowRequest asks the workflow to compute resource quotas
-//for a topology.
+//CalculateQuotasWorkflowRequest asks to compute quota requests for a plan.
 </pre>
 
 <table>
@@ -2100,13 +1899,13 @@ go_name: Value</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>topology</td>
-<td><a href="../topology/README.md#cloud-v1-topology-topology">cloud.v1.topology.Topology</a></td>
+<td>plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructureplan">cloud.v1.deployment.InfrastructurePlan</a></td>
 <td><pre>
-//topology is the topology to compute quota requests for.<br>
+//plan is the infrastructure plan to compute quotas for.<br>
 
-json_name: topology
-go_name: Topology</pre></td>
+json_name: plan
+go_name: Plan</pre></td>
 </tr>
 </table>
 
@@ -2116,8 +1915,7 @@ go_name: Topology</pre></td>
 ### cloud.v1.workflow.CalculateQuotasWorkflowResponse
 
 <pre>
-//CalculateQuotasWorkflowResponse returns the topology along with the computed
-//quota requests.
+//CalculateQuotasWorkflowResponse returns quota requests keyed by node id.
 </pre>
 
 <table>
@@ -2127,21 +1925,21 @@ go_name: Topology</pre></td>
 <th>Description</th>
 </tr>
 <tr>
+<td>plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructureplan">cloud.v1.deployment.InfrastructurePlan</a></td>
+<td><pre>
+//plan is the plan the quotas were computed for.<br>
+
+json_name: plan
+go_name: Plan</pre></td>
+</tr><tr>
 <td>quota_requests</td>
 <td><a href="#cloud-v1-workflow-calculatequotasworkflowresponse-quotarequestsentry">cloud.v1.workflow.CalculateQuotasWorkflowResponse.QuotaRequestsEntry</a></td>
 <td><pre>
-//quota_requests are the computed requests keyed by component.id.<br>
+//quota_requests are requested quotas keyed by topology node id.<br>
 
 json_name: quotaRequests
 go_name: QuotaRequests</pre></td>
-</tr><tr>
-<td>topology</td>
-<td><a href="../topology/README.md#cloud-v1-topology-topology">cloud.v1.topology.Topology</a></td>
-<td><pre>
-//topology is the (unchanged) topology the quotas were computed for.<br>
-
-json_name: topology
-go_name: Topology</pre></td>
 </tr>
 </table>
 
@@ -2173,14 +1971,11 @@ go_name: Value</pre></td>
 
 
 
-<a name="cloud-v1-workflow-deployment"></a>
-### cloud.v1.workflow.Deployment
+<a name="cloud-v1-workflow-executedeploymentplanworkflowrequest"></a>
+### cloud.v1.workflow.ExecuteDeploymentPlanWorkflowRequest
 
 <pre>
-//Deployment is the cross-phase state the current run.State holds after the
-//machines phase: the agent targets, the DB endpoint stroppy connects to, and
-//the provider handles needed for teardown. Produced by DeployMachinesActivity,
-//threaded through the workflow, and consumed by TeardownActivity.
+//ExecuteDeploymentPlanWorkflowRequest asks to execute an agent plan.
 </pre>
 
 <table>
@@ -2190,53 +1985,47 @@ go_name: Value</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>container_ids</td>
-<td>string</td>
+<td>deployment_plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-deploymentplan">cloud.v1.deployment.DeploymentPlan</a></td>
 <td><pre>
-container_ids are the docker container ids for docker-provider teardown.<br>
+//deployment_plan is the plan to execute.<br>
 
-json_name: containerIds
-go_name: ContainerIds</pre></td>
+json_name: deploymentPlan
+go_name: DeploymentPlan</pre></td>
 </tr><tr>
-<td>db_host</td>
-<td>string</td>
+<td>infrastructure_state</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructurestate">cloud.v1.deployment.InfrastructureState</a></td>
 <td><pre>
-db_host is the endpoint host stroppy connects to (container name / IP / proxy).<br>
+//infrastructure_state is used to route steps to node agents.<br>
 
-json_name: dbHost
-go_name: DbHost</pre></td>
-</tr><tr>
-<td>db_port</td>
-<td>int32</td>
+json_name: infrastructureState
+go_name: InfrastructureState</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-workflow-executedeploymentplanworkflowresponse"></a>
+### cloud.v1.workflow.ExecuteDeploymentPlanWorkflowResponse
+
+<pre>
+//ExecuteDeploymentPlanWorkflowResponse returns the executed plan with statuses.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>deployment_plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-deploymentplan">cloud.v1.deployment.DeploymentPlan</a></td>
 <td><pre>
-db_port is the endpoint port for the selected protocol.<br>
+//deployment_plan is the executed plan with statuses/results filled.<br>
 
-json_name: dbPort
-go_name: DbPort</pre></td>
-</tr><tr>
-<td>network_id</td>
-<td>string</td>
-<td><pre>
-network_id is the docker network id for docker-provider teardown.<br>
-
-json_name: networkId
-go_name: NetworkId</pre></td>
-</tr><tr>
-<td>targets</td>
-<td><a href="#cloud-v1-workflow-target">cloud.v1.workflow.Target</a></td>
-<td><pre>
-targets are all provisioned agent machines.<br>
-
-json_name: targets
-go_name: Targets</pre></td>
-</tr><tr>
-<td>terraform_wd_id</td>
-<td>string</td>
-<td><pre>
-terraform_wd_id is the terraform working-dir id for yandex-provider teardown.<br>
-
-json_name: terraformWdId
-go_name: TerraformWdId</pre></td>
+json_name: deploymentPlan
+go_name: DeploymentPlan</pre></td>
 </tr>
 </table>
 
@@ -2266,13 +2055,21 @@ go_name: TerraformWdId</pre></td>
 json_name: database
 go_name: Database</pre></td>
 </tr><tr>
-<td>topology</td>
-<td><a href="../topology/README.md#cloud-v1-topology-topology">cloud.v1.topology.Topology</a></td>
+<td>deployment_plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-deploymentplan">cloud.v1.deployment.DeploymentPlan</a></td>
 <td><pre>
-//topology is the topology the database is brought up within.<br>
+//deployment_plan contains the database-related agent steps.<br>
 
-json_name: topology
-go_name: Topology</pre></td>
+json_name: deploymentPlan
+go_name: DeploymentPlan</pre></td>
+</tr><tr>
+<td>infrastructure_state</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructurestate">cloud.v1.deployment.InfrastructureState</a></td>
+<td><pre>
+//infrastructure_state is used to route steps to node agents.<br>
+
+json_name: infrastructureState
+go_name: InfrastructureState</pre></td>
 </tr>
 </table>
 
@@ -2291,9 +2088,8 @@ go_name: Topology</pre></td>
 ### cloud.v1.workflow.InstallStroppyWorkflowRequest
 
 <pre>
-//InstallStroppyWorkflowRequest asks to install stroppy on the runner
-//instances. Runner machines are always deployed, so this always runs.
-//Topology is read-only here (baked + runtime).
+//InstallStroppyWorkflowRequest asks to execute stroppy installation steps on
+//runner nodes.
 </pre>
 
 <table>
@@ -2303,13 +2099,21 @@ go_name: Topology</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>topology</td>
-<td><a href="../topology/README.md#cloud-v1-topology-topology">cloud.v1.topology.Topology</a></td>
+<td>deployment_plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-deploymentplan">cloud.v1.deployment.DeploymentPlan</a></td>
 <td><pre>
-//topology is the (read-only) topology whose runner machines get stroppy.<br>
+//deployment_plan contains the stroppy-related agent steps.<br>
 
-json_name: topology
-go_name: Topology</pre></td>
+json_name: deploymentPlan
+go_name: DeploymentPlan</pre></td>
+</tr><tr>
+<td>infrastructure_state</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructurestate">cloud.v1.deployment.InfrastructureState</a></td>
+<td><pre>
+//infrastructure_state is used to route steps to node agents.<br>
+
+json_name: infrastructureState
+go_name: InfrastructureState</pre></td>
 </tr>
 </table>
 
@@ -2324,12 +2128,11 @@ go_name: Topology</pre></td>
 
 
 
-<a name="cloud-v1-workflow-processdeploymentworkflowrequest"></a>
-### cloud.v1.workflow.ProcessDeploymentWorkflowRequest
+<a name="cloud-v1-workflow-processinfrastructureworkflowrequest"></a>
+### cloud.v1.workflow.ProcessInfrastructureWorkflowRequest
 
 <pre>
-//ProcessDeploymentWorkflowRequest is the input to the top-level deployment
-//workflow: which provider to use and the topology to provision.
+//ProcessInfrastructureWorkflowRequest is the input to provider provisioning.
 </pre>
 
 <table>
@@ -2339,33 +2142,23 @@ go_name: Topology</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>provider</td>
-<td><a href="../deployment/README.md#cloud-v1-deployment-provider">cloud.v1.deployment.Provider</a></td>
+<td>plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructureplan">cloud.v1.deployment.InfrastructurePlan</a></td>
 <td><pre>
-//provider is the target cloud/provider to deploy onto.<br>
+//plan is the provider-specific infrastructure plan to materialize.<br>
 
-json_name: provider
-go_name: Provider</pre></td>
-</tr><tr>
-<td>topology</td>
-<td><a href="../topology/README.md#cloud-v1-topology-topology">cloud.v1.topology.Topology</a></td>
-<td><pre>
-//topology is the topology to provision; instances MUST already carry their
-//provider_parms.<br>
-
-json_name: topology
-go_name: Topology</pre></td>
+json_name: plan
+go_name: Plan</pre></td>
 </tr>
 </table>
 
 
 
-<a name="cloud-v1-workflow-processdeploymentworkflowresponse"></a>
-### cloud.v1.workflow.ProcessDeploymentWorkflowResponse
+<a name="cloud-v1-workflow-processinfrastructureworkflowresponse"></a>
+### cloud.v1.workflow.ProcessInfrastructureWorkflowResponse
 
 <pre>
-//ProcessDeploymentWorkflowResponse is the result of the deployment workflow:
-//the provider used and the fully deployed topology.
+//ProcessInfrastructureWorkflowResponse is provider runtime output.
 </pre>
 
 <table>
@@ -2375,22 +2168,100 @@ go_name: Topology</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>deployed_topology</td>
-<td><a href="../topology/README.md#cloud-v1-topology-topology">cloud.v1.topology.Topology</a></td>
+<td>state</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructurestate">cloud.v1.deployment.InfrastructureState</a></td>
 <td><pre>
-//deployed_topology is the full deployed topology with all runtime params
-//filled in.<br>
+//state is the runtime provider state after apply/up.<br>
 
-json_name: deployedTopology
-go_name: DeployedTopology</pre></td>
+json_name: state
+go_name: State</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-workflow-renderdeploymentplanworkflowrequest"></a>
+### cloud.v1.workflow.RenderDeploymentPlanWorkflowRequest
+
+<pre>
+//RenderDeploymentPlanWorkflowRequest asks to render install/config agent steps.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>database</td>
+<td><a href="../domain/README.md#cloud-v1-domain-database">cloud.v1.domain.Database</a></td>
+<td><pre>
+//database is the engine input used by package resolution and config
+//renderers. It is not topology because renderers need version/package and
+//editable engine config values.<br>
+
+json_name: database
+go_name: Database</pre></td>
 </tr><tr>
-<td>provider</td>
-<td><a href="../deployment/README.md#cloud-v1-deployment-provider">cloud.v1.deployment.Provider</a></td>
+<td>infrastructure_plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructureplan">cloud.v1.deployment.InfrastructurePlan</a></td>
 <td><pre>
-//provider is the provider the topology was deployed onto.<br>
+//infrastructure_plan is provider input, including OS/image choices.<br>
 
-json_name: provider
-go_name: Provider</pre></td>
+json_name: infrastructurePlan
+go_name: InfrastructurePlan</pre></td>
+</tr><tr>
+<td>infrastructure_state</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructurestate">cloud.v1.deployment.InfrastructureState</a></td>
+<td><pre>
+//infrastructure_state carries runtime facts such as addresses. It may be
+//partially filled when a renderer can use logical hostnames instead.<br>
+
+json_name: infrastructureState
+go_name: InfrastructureState</pre></td>
+</tr><tr>
+<td>render_overrides</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-renderoverrideset">cloud.v1.deployment.RenderOverrideSet</a></td>
+<td><pre>
+//render_overrides are user edits to editable render artifacts.<br>
+
+json_name: renderOverrides
+go_name: RenderOverrides</pre></td>
+</tr><tr>
+<td>topology_spec</td>
+<td><a href="../topology/README.md#cloud-v1-topology-topologyspec">cloud.v1.topology.TopologySpec</a></td>
+<td><pre>
+//topology_spec is the provider-agnostic logical graph.<br>
+
+json_name: topologySpec
+go_name: TopologySpec</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-workflow-renderdeploymentplanworkflowresponse"></a>
+### cloud.v1.workflow.RenderDeploymentPlanWorkflowResponse
+
+<pre>
+//RenderDeploymentPlanWorkflowResponse returns an executable deployment plan.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>deployment_plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-deploymentplan">cloud.v1.deployment.DeploymentPlan</a></td>
+<td><pre>
+//deployment_plan is the agent-executable plan.<br>
+
+json_name: deploymentPlan
+go_name: DeploymentPlan</pre></td>
 </tr>
 </table>
 
@@ -2400,10 +2271,7 @@ go_name: Provider</pre></td>
 ### cloud.v1.workflow.RunConfig
 
 <pre>
-//RunConfig is the input to RunWorkflow. For this first port it carries the
-//current types.RunConfig as opaque JSON: the worker unmarshals config_json
-//into the existing Go struct, so no domain remodeling is needed up front.
-//Top-level fields the workflow branches on are surfaced explicitly.
+//RunConfig is the durable input to one benchmark run workflow.
 </pre>
 
 <table>
@@ -2413,41 +2281,72 @@ go_name: Provider</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>config_json</td>
-<td>bytes</td>
+<td>database</td>
+<td><a href="../domain/README.md#cloud-v1-domain-database">cloud.v1.domain.Database</a></td>
 <td><pre>
-//config_json is the full types.RunConfig serialized as JSON. The worker
-//decodes it into the existing Go model. Replaced by typed proto fields in
-//a later pass.<br>
+//database is the database under test.<br>
 
-json_name: configJson
-go_name: ConfigJson</pre></td>
+json_name: database
+go_name: Database</pre></td>
 </tr><tr>
-<td>external_db</td>
-<td>bool</td>
+<td>deployment_plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-deploymentplan">cloud.v1.deployment.DeploymentPlan</a></td>
 <td><pre>
-//external_db, when true, is a bring-your-own-database run: the workflow
-//skips the network/machines/install/configure phases and only installs
-//stroppy + runs the workload against the supplied endpoint.<br>
+//deployment_plan is filled after package/config rendering. It may be empty
+//at workflow start and carried forward by the workflow.<br>
 
-json_name: externalDb
-go_name: ExternalDb</pre></td>
+json_name: deploymentPlan
+go_name: DeploymentPlan</pre></td>
 </tr><tr>
 <td>id</td>
 <td>string</td>
 <td><pre>
-id is the stable run identifier (drives the deterministic workflow id).<br>
+//id is the stable run identifier.<br>
 
 json_name: id
 go_name: Id</pre></td>
 </tr><tr>
-<td>provider</td>
-<td>string</td>
+<td>infrastructure_plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructureplan">cloud.v1.deployment.InfrastructurePlan</a></td>
 <td><pre>
-provider selects the deployment backend ("docker" | "yandex").<br>
+//infrastructure_plan is the provider-specific machine/resource intent.<br>
 
-json_name: provider
-go_name: Provider</pre></td>
+json_name: infrastructurePlan
+go_name: InfrastructurePlan</pre></td>
+</tr><tr>
+<td>infrastructure_state</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructurestate">cloud.v1.deployment.InfrastructureState</a></td>
+<td><pre>
+//infrastructure_state is filled after provider provisioning. It may be
+//empty at workflow start and carried forward by the workflow.<br>
+
+json_name: infrastructureState
+go_name: InfrastructureState</pre></td>
+</tr><tr>
+<td>render_overrides</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-renderoverrideset">cloud.v1.deployment.RenderOverrideSet</a></td>
+<td><pre>
+//render_overrides are user edits to editable render artifacts. Workflow
+//renderers apply them when producing deployment_plan.<br>
+
+json_name: renderOverrides
+go_name: RenderOverrides</pre></td>
+</tr><tr>
+<td>topology_spec</td>
+<td><a href="../topology/README.md#cloud-v1-topology-topologyspec">cloud.v1.topology.TopologySpec</a></td>
+<td><pre>
+//topology_spec is the provider-agnostic logical graph.<br>
+
+json_name: topologySpec
+go_name: TopologySpec</pre></td>
+</tr><tr>
+<td>workload</td>
+<td><a href="../domain/README.md#cloud-v1-domain-workload">cloud.v1.domain.Workload</a></td>
+<td><pre>
+//workload is the workload to run against the database.<br>
+
+json_name: workload
+go_name: Workload</pre></td>
 </tr>
 </table>
 
@@ -2503,13 +2402,22 @@ go_name: Status</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>topology</td>
-<td><a href="../topology/README.md#cloud-v1-topology-topology">cloud.v1.topology.Topology</a></td>
+<td>infrastructure_state</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructurestate">cloud.v1.deployment.InfrastructureState</a></td>
 <td><pre>
-//topology is the topology the workload runs against.<br>
+//infrastructure_state carries runtime endpoints used to render the workload
+//connection string and route agent calls.<br>
 
-json_name: topology
-go_name: Topology</pre></td>
+json_name: infrastructureState
+go_name: InfrastructureState</pre></td>
+</tr><tr>
+<td>topology_spec</td>
+<td><a href="../topology/README.md#cloud-v1-topology-topologyspec">cloud.v1.topology.TopologySpec</a></td>
+<td><pre>
+//topology_spec is the logical graph the workload targets.<br>
+
+json_name: topologySpec
+go_name: TopologySpec</pre></td>
 </tr><tr>
 <td>workload</td>
 <td><a href="../domain/README.md#cloud-v1-domain-workload">cloud.v1.domain.Workload</a></td>
@@ -2632,74 +2540,6 @@ go_name: SuiteRun</pre></td>
 <pre>
 //SuiteWorkflowResponse is the empty result of a completed suite run.
 </pre>
-
-
-
-<a name="cloud-v1-workflow-target"></a>
-### cloud.v1.workflow.Target
-
-<pre>
-//Target is an agent endpoint plus its role — the current run.State target,
-//plus a role tag derived from the machine id.
-</pre>
-
-<table>
-<tr>
-<th>Attribute</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-<tr>
-<td>agent_port</td>
-<td>int32</td>
-<td><pre>
-agent_port is the agent's port when reachable directly.<br>
-
-json_name: agentPort
-go_name: AgentPort</pre></td>
-</tr><tr>
-<td>host</td>
-<td>string</td>
-<td><pre>
-host is the server->agent address (may be empty in poll/host mode).<br>
-
-json_name: host
-go_name: Host</pre></td>
-</tr><tr>
-<td>id</td>
-<td>string</td>
-<td><pre>
-id is the machine id ("<run>-<role>-<i>"); also the agent task-queue.<br>
-
-json_name: id
-go_name: Id</pre></td>
-</tr><tr>
-<td>internal_host</td>
-<td>string</td>
-<td><pre>
-internal_host is the container name / internal IP for node-to-node comms.<br>
-
-json_name: internalHost
-go_name: InternalHost</pre></td>
-</tr><tr>
-<td>role</td>
-<td>string</td>
-<td><pre>
-//role is the component role on this machine: database | replica | monitor |
-//proxy | stroppy | etcd | ydb-storage | ydb-database.<br>
-
-json_name: role
-go_name: Role</pre></td>
-</tr><tr>
-<td>zone</td>
-<td>string</td>
-<td><pre>
-zone is the provider placement zone, when known.<br>
-
-json_name: zone
-go_name: Zone</pre></td>
-</tr>
-</table>
 
 
 

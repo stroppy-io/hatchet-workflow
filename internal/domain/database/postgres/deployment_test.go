@@ -1,0 +1,286 @@
+package postgres
+
+import (
+	"strings"
+	"testing"
+
+	deploymentbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/deployment"
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/packages"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
+	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
+	topologypb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology"
+)
+
+func TestPostgresDeploymentRendererRendersPrioritiesDependenciesAndSteps(t *testing.T) {
+	db := postgresDeploymentDatabase()
+	spec, err := (&Database{}).BuildTopologySpec(db.GetParams().GetPostgres())
+	if err != nil {
+		t.Fatalf("build topology spec: %v", err)
+	}
+
+	plan, err := deploymentbuilder.BuildPlan(spec, postgresInfrastructureStateForSpec(spec), deploymentbuilder.BuildOptions{
+		Database:        db,
+		PackageResolver: packages.NewRegistry(PackageResolver{}),
+		Renderers:       deploymentbuilder.NewRegistry(DeploymentRenderer{}),
+	})
+	if err != nil {
+		t.Fatalf("build deployment plan: %v", err)
+	}
+
+	if err := plan.Validate(); err != nil {
+		t.Fatalf("plan is invalid: %v", err)
+	}
+
+	components := deploymentComponentsByID(plan)
+	if got, want := components["postgres-master-etcd"].GetGlobalPriority(), uint32(10); got != want {
+		t.Fatalf("etcd global priority = %d, want %d", got, want)
+	}
+	if got, want := components["postgres-master"].GetGlobalPriority(), uint32(20); got != want {
+		t.Fatalf("master global priority = %d, want %d", got, want)
+	}
+	if !deploymentHasDependency(components["postgres-master-pgbouncer"], "postgres-master") {
+		t.Fatal("pgbouncer does not depend on postgres-master")
+	}
+	if !deploymentHasDependency(components["haproxy-1"], "postgres-master-pgbouncer") {
+		t.Fatal("haproxy does not depend on postgres-master-pgbouncer")
+	}
+
+	master := components["postgres-master"]
+	if got, want := len(master.GetSteps()), 9; got != want {
+		t.Fatalf("master steps = %d, want %d", got, want)
+	}
+	context := findDeploymentWriteFileText(t, master, "020_write_context")
+	if !strings.Contains(context, "ENDPOINT_PRIVATE_ADDRESS='10.0.0.1'") {
+		t.Fatalf("context does not contain private endpoint: %s", context)
+	}
+	config := findDeploymentWriteFileText(t, master, "030_write_config")
+	if !strings.Contains(config, "max_connections = 200") {
+		t.Fatalf("config does not contain rendered postgres options: %s", config)
+	}
+
+	install := findDeploymentCallCmd(t, master, "110_install")
+	if !strings.Contains(install, "postgresql-16") {
+		t.Fatalf("install command does not use resolved package: %s", install)
+	}
+}
+
+func TestPostgresDeploymentRendererBuildsRenderPreview(t *testing.T) {
+	db := postgresDeploymentDatabase()
+	spec, err := (&Database{}).BuildTopologySpec(db.GetParams().GetPostgres())
+	if err != nil {
+		t.Fatalf("build topology spec: %v", err)
+	}
+
+	preview, err := deploymentbuilder.BuildPreview(spec, deploymentbuilder.PreviewOptions{
+		Database:        db,
+		PackageResolver: packages.NewRegistry(PackageResolver{}),
+		Renderers:       deploymentbuilder.NewRegistry(DeploymentRenderer{}),
+	})
+	if err != nil {
+		t.Fatalf("build render preview: %v", err)
+	}
+
+	if err := preview.Validate(); err != nil {
+		t.Fatalf("preview is invalid: %v", err)
+	}
+
+	config := findRenderArtifact(t, preview, "postgres-master/postgresql.conf")
+	if got, want := config.GetOrigin(), deploymentpb.RenderArtifact_ORIGIN_RENDERED_DEFAULT; got != want {
+		t.Fatalf("config origin = %s, want %s", got, want)
+	}
+	if got, want := config.GetMutability(), deploymentpb.RenderArtifact_MUTABILITY_EDITABLE; got != want {
+		t.Fatalf("config mutability = %s, want %s", got, want)
+	}
+	if !strings.Contains(config.GetFile().GetText(), "max_connections = 200") {
+		t.Fatalf("config preview does not contain rendered postgres options: %s", config.GetFile().GetText())
+	}
+
+	runtime := findRenderArtifact(t, preview, "postgres-master/runtime/private-address")
+	if got, want := runtime.GetMutability(), deploymentpb.RenderArtifact_MUTABILITY_RUNTIME_ONLY; got != want {
+		t.Fatalf("runtime mutability = %s, want %s", got, want)
+	}
+	if got := runtime.GetRuntimeValue(); got != "machine.postgres-master.endpoint.private.address" {
+		t.Fatalf("runtime value = %q", got)
+	}
+
+	install := findRenderArtifact(t, preview, "postgres-master/install/110")
+	if got, want := install.GetMutability(), deploymentpb.RenderArtifact_MUTABILITY_READ_ONLY; got != want {
+		t.Fatalf("install mutability = %s, want %s", got, want)
+	}
+	if !strings.Contains(install.GetCmd().GetSpec().GetScript().GetText(), "postgresql-16") {
+		t.Fatalf("install preview does not use resolved package: %s", install.GetCmd().GetSpec().GetScript().GetText())
+	}
+}
+
+func TestPostgresDeploymentRendererAppliesRenderOverrides(t *testing.T) {
+	db := postgresDeploymentDatabase()
+	spec, err := (&Database{}).BuildTopologySpec(db.GetParams().GetPostgres())
+	if err != nil {
+		t.Fatalf("build topology spec: %v", err)
+	}
+
+	master := componentsByID(spec)["postgres-master"]
+	overrides := &deploymentpb.RenderOverrideSet{
+		Files: []*deploymentpb.FileOverride{
+			{
+				ArtifactId:  "postgres-master/postgresql.conf",
+				ComponentId: "postgres-master",
+				BaseHash:    deploymentbuilder.FileHash(postgresDefaultConfigFile(master, db)),
+				File: &common.File{
+					Info: &common.File_Info{
+						Path:          "/etc/stroppy-cloud/postgres-master/postgresql.conf",
+						Mode:          0644,
+						CreateParents: true,
+					},
+					Content: &common.File_Text{Text: "shared_buffers = 1GB\n"},
+				},
+			},
+		},
+	}
+
+	preview, err := deploymentbuilder.BuildPreview(spec, deploymentbuilder.PreviewOptions{
+		Database:        db,
+		PackageResolver: packages.NewRegistry(PackageResolver{}),
+		Renderers:       deploymentbuilder.NewRegistry(DeploymentRenderer{}),
+		RenderOverrides: overrides,
+	})
+	if err != nil {
+		t.Fatalf("build render preview: %v", err)
+	}
+	config := findRenderArtifact(t, preview, "postgres-master/postgresql.conf")
+	if got, want := config.GetOrigin(), deploymentpb.RenderArtifact_ORIGIN_USER_OVERRIDE; got != want {
+		t.Fatalf("config origin = %s, want %s", got, want)
+	}
+	if got := config.GetFile().GetText(); got != "shared_buffers = 1GB\n" {
+		t.Fatalf("config preview text = %q", got)
+	}
+
+	plan, err := deploymentbuilder.BuildPlan(spec, postgresInfrastructureStateForSpec(spec), deploymentbuilder.BuildOptions{
+		Database:        db,
+		PackageResolver: packages.NewRegistry(PackageResolver{}),
+		Renderers:       deploymentbuilder.NewRegistry(DeploymentRenderer{}),
+		RenderOverrides: overrides,
+	})
+	if err != nil {
+		t.Fatalf("build deployment plan: %v", err)
+	}
+	deployment := deploymentComponentsByID(plan)["postgres-master"]
+	if got := findDeploymentWriteFileText(t, deployment, "030_write_config"); got != "shared_buffers = 1GB\n" {
+		t.Fatalf("deployment config text = %q", got)
+	}
+}
+
+func TestPostgresPackageResolverResolvesVersion(t *testing.T) {
+	pkg, err := PackageResolver{}.ResolveDatabasePackage(postgresDeploymentDatabase())
+	if err != nil {
+		t.Fatalf("resolve package: %v", err)
+	}
+	if got, want := pkg.GetId(), "builtin/postgres/16"; got != want {
+		t.Fatalf("package id = %q, want %q", got, want)
+	}
+	if got, want := pkg.GetAptPackages()[0], "postgresql-16"; got != want {
+		t.Fatalf("first apt package = %q, want %q", got, want)
+	}
+}
+
+func postgresDeploymentDatabase() *domain.Database {
+	return &domain.Database{
+		Kind: domain.Database_KIND_POSTGRES,
+		Source: &domain.Database_Params{
+			Params: &domain.DatabaseParams{
+				Version: "16",
+				Engine: &domain.DatabaseParams_Postgres{
+					Postgres: &domain.PostgresParams{
+						Replicas:  1,
+						Haproxy:   1,
+						Pgbouncer: true,
+						Patroni:   true,
+						MasterOptions: map[string]string{
+							"max_connections": "200",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func postgresInfrastructureStateForSpec(spec *topologypb.TopologySpec) *deploymentpb.InfrastructureState {
+	state := &deploymentpb.InfrastructureState{
+		Provider: deploymentpb.Provider_PROVIDER_DOCKER,
+		Machines: make([]*deploymentpb.MachineState, 0, len(spec.GetNodes())),
+		Tags:     &common.Tags{Tags: []string{"test"}},
+	}
+
+	for i, node := range spec.GetNodes() {
+		privatePort := uint32(22)
+		state.Machines = append(state.Machines, &deploymentpb.MachineState{
+			NodeId:             node.GetId(),
+			ProviderResourceId: "container-" + node.GetId(),
+			Status:             common.Status_STATUS_DEPLOYED,
+			Endpoints: []*deploymentpb.Endpoint{
+				{
+					Name:    "private",
+					Address: "10.0.0." + string(rune('1'+i)),
+					Port:    &privatePort,
+				},
+			},
+		})
+	}
+
+	return state
+}
+
+func deploymentComponentsByID(plan *deploymentpb.DeploymentPlan) map[string]*deploymentpb.ComponentDeployment {
+	components := make(map[string]*deploymentpb.ComponentDeployment, len(plan.GetComponents()))
+	for _, component := range plan.GetComponents() {
+		components[component.GetComponentId()] = component
+	}
+	return components
+}
+
+func deploymentHasDependency(component *deploymentpb.ComponentDeployment, dependency string) bool {
+	for _, candidate := range component.GetDependsOnComponentIds() {
+		if candidate == dependency {
+			return true
+		}
+	}
+	return false
+}
+
+func findDeploymentWriteFileText(t *testing.T, component *deploymentpb.ComponentDeployment, stepID string) string {
+	t.Helper()
+
+	for _, step := range component.GetSteps() {
+		if step.GetId() == stepID {
+			return step.GetWriteFile().GetText()
+		}
+	}
+	t.Fatalf("step %q is missing", stepID)
+	return ""
+}
+
+func findDeploymentCallCmd(t *testing.T, component *deploymentpb.ComponentDeployment, stepID string) string {
+	t.Helper()
+
+	for _, step := range component.GetSteps() {
+		if step.GetId() == stepID {
+			return step.GetCallCmd().GetSpec().GetScript().GetText()
+		}
+	}
+	t.Fatalf("step %q is missing", stepID)
+	return ""
+}
+
+func findRenderArtifact(t *testing.T, preview *deploymentpb.RenderPreview, artifactID string) *deploymentpb.RenderArtifact {
+	t.Helper()
+
+	for _, artifact := range preview.GetArtifacts() {
+		if artifact.GetId() == artifactID {
+			return artifact
+		}
+	}
+	t.Fatalf("artifact %q is missing", artifactID)
+	return nil
+}

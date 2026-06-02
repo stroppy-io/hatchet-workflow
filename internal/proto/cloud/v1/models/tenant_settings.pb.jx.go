@@ -45,13 +45,9 @@ func (m *TenantSettingsRecord) Encode(e *jx.Encoder) {
 		e.FieldStart("runRetentionDays")
 		e.UInt32(m.RunRetentionDays)
 	}
-	if len(m.Providers) > 0 {
-		e.FieldStart("providers")
-		e.ArrStart()
-		for _, v := range m.Providers {
-			jxpb.EncMessage(e, v)
-		}
-		e.ArrEnd()
+	if m.YandexSettings != nil {
+		e.FieldStart("yandexSettings")
+		jxpb.EncMessage(e, m.YandexSettings)
 	}
 	e.ObjEnd()
 }
@@ -158,22 +154,19 @@ func (m *TenantSettingsRecord) Decode(d *jx.Decoder) error {
 			}
 			m.RunRetentionDays = v
 			return nil
-		case "providers":
-			if seen["Providers"] {
+		case "yandexSettings", "yandex_settings":
+			if seen["YandexSettings"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["Providers"] = true
+			seen["YandexSettings"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			return d.Arr(func(d *jx.Decoder) error {
-				el := &deployment.ProviderSettings{}
-				if err := jxpb.DecMessage(d, el); err != nil {
-					return err
-				}
-				m.Providers = append(m.Providers, el)
-				return nil
-			})
+			m.YandexSettings = &deployment.Yandex_Settings{}
+			if err := jxpb.DecMessage(d, m.YandexSettings); err != nil {
+				return err
+			}
+			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}

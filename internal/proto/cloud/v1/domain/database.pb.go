@@ -8,7 +8,6 @@ package domain
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
-	schemapb "github.com/stroppy-io/schemapb/schemapb"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -23,6 +22,269 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
+
+// FaultTolerance is the YDB erasure / fault-tolerance mode.
+type YdbParams_FaultTolerance int32
+
+const (
+	// unset → "none".
+	YdbParams_FAULT_TOLERANCE_UNSPECIFIED YdbParams_FaultTolerance = 0
+	// maps to "none".
+	YdbParams_FAULT_TOLERANCE_NONE YdbParams_FaultTolerance = 1
+	// maps to "block-4-2".
+	YdbParams_FAULT_TOLERANCE_BLOCK_4_2 YdbParams_FaultTolerance = 2
+	// maps to "mirror-3-dc" (needs >=3 storage nodes + >=3 pdisks each, disk failure domain).
+	YdbParams_FAULT_TOLERANCE_MIRROR_3_DC YdbParams_FaultTolerance = 3
+)
+
+// Enum value maps for YdbParams_FaultTolerance.
+var (
+	YdbParams_FaultTolerance_name = map[int32]string{
+		0: "FAULT_TOLERANCE_UNSPECIFIED",
+		1: "FAULT_TOLERANCE_NONE",
+		2: "FAULT_TOLERANCE_BLOCK_4_2",
+		3: "FAULT_TOLERANCE_MIRROR_3_DC",
+	}
+	YdbParams_FaultTolerance_value = map[string]int32{
+		"FAULT_TOLERANCE_UNSPECIFIED": 0,
+		"FAULT_TOLERANCE_NONE":        1,
+		"FAULT_TOLERANCE_BLOCK_4_2":   2,
+		"FAULT_TOLERANCE_MIRROR_3_DC": 3,
+	}
+)
+
+func (x YdbParams_FaultTolerance) Enum() *YdbParams_FaultTolerance {
+	p := new(YdbParams_FaultTolerance)
+	*p = x
+	return p
+}
+
+func (x YdbParams_FaultTolerance) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (YdbParams_FaultTolerance) Descriptor() protoreflect.EnumDescriptor {
+	return file_cloud_v1_domain_database_proto_enumTypes[0].Descriptor()
+}
+
+func (YdbParams_FaultTolerance) Type() protoreflect.EnumType {
+	return &file_cloud_v1_domain_database_proto_enumTypes[0]
+}
+
+func (x YdbParams_FaultTolerance) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use YdbParams_FaultTolerance.Descriptor instead.
+func (YdbParams_FaultTolerance) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{5, 0}
+}
+
+// FailureDomain is the failure-domain granularity.
+type YdbParams_FailureDomain int32
+
+const (
+	// unset → default.
+	YdbParams_FAILURE_DOMAIN_UNSPECIFIED YdbParams_FailureDomain = 0
+	// maps to "disk".
+	YdbParams_FAILURE_DOMAIN_DISK YdbParams_FailureDomain = 1
+)
+
+// Enum value maps for YdbParams_FailureDomain.
+var (
+	YdbParams_FailureDomain_name = map[int32]string{
+		0: "FAILURE_DOMAIN_UNSPECIFIED",
+		1: "FAILURE_DOMAIN_DISK",
+	}
+	YdbParams_FailureDomain_value = map[string]int32{
+		"FAILURE_DOMAIN_UNSPECIFIED": 0,
+		"FAILURE_DOMAIN_DISK":        1,
+	}
+)
+
+func (x YdbParams_FailureDomain) Enum() *YdbParams_FailureDomain {
+	p := new(YdbParams_FailureDomain)
+	*p = x
+	return p
+}
+
+func (x YdbParams_FailureDomain) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (YdbParams_FailureDomain) Descriptor() protoreflect.EnumDescriptor {
+	return file_cloud_v1_domain_database_proto_enumTypes[1].Descriptor()
+}
+
+func (YdbParams_FailureDomain) Type() protoreflect.EnumType {
+	return &file_cloud_v1_domain_database_proto_enumTypes[1]
+}
+
+func (x YdbParams_FailureDomain) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use YdbParams_FailureDomain.Descriptor instead.
+func (YdbParams_FailureDomain) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{5, 1}
+}
+
+// DiskType is the YDB storage-pool kind.
+type YdbParams_DiskType int32
+
+const (
+	// unset → "ssd".
+	YdbParams_DISK_TYPE_UNSPECIFIED YdbParams_DiskType = 0
+	YdbParams_DISK_TYPE_SSD         YdbParams_DiskType = 1
+	YdbParams_DISK_TYPE_NVME        YdbParams_DiskType = 2
+	YdbParams_DISK_TYPE_ROT         YdbParams_DiskType = 3
+)
+
+// Enum value maps for YdbParams_DiskType.
+var (
+	YdbParams_DiskType_name = map[int32]string{
+		0: "DISK_TYPE_UNSPECIFIED",
+		1: "DISK_TYPE_SSD",
+		2: "DISK_TYPE_NVME",
+		3: "DISK_TYPE_ROT",
+	}
+	YdbParams_DiskType_value = map[string]int32{
+		"DISK_TYPE_UNSPECIFIED": 0,
+		"DISK_TYPE_SSD":         1,
+		"DISK_TYPE_NVME":        2,
+		"DISK_TYPE_ROT":         3,
+	}
+)
+
+func (x YdbParams_DiskType) Enum() *YdbParams_DiskType {
+	p := new(YdbParams_DiskType)
+	*p = x
+	return p
+}
+
+func (x YdbParams_DiskType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (YdbParams_DiskType) Descriptor() protoreflect.EnumDescriptor {
+	return file_cloud_v1_domain_database_proto_enumTypes[2].Descriptor()
+}
+
+func (YdbParams_DiskType) Type() protoreflect.EnumType {
+	return &file_cloud_v1_domain_database_proto_enumTypes[2]
+}
+
+func (x YdbParams_DiskType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use YdbParams_DiskType.Descriptor instead.
+func (YdbParams_DiskType) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{5, 2}
+}
+
+// Type is the managed YDB flavor.
+type YdbManagedParams_Type int32
+
+const (
+	YdbManagedParams_TYPE_UNSPECIFIED YdbManagedParams_Type = 0
+	// serverless (pay-per-request).
+	YdbManagedParams_TYPE_SERVERLESS YdbManagedParams_Type = 1
+	// dedicated (provisioned nodes).
+	YdbManagedParams_TYPE_DEDICATED YdbManagedParams_Type = 2
+)
+
+// Enum value maps for YdbManagedParams_Type.
+var (
+	YdbManagedParams_Type_name = map[int32]string{
+		0: "TYPE_UNSPECIFIED",
+		1: "TYPE_SERVERLESS",
+		2: "TYPE_DEDICATED",
+	}
+	YdbManagedParams_Type_value = map[string]int32{
+		"TYPE_UNSPECIFIED": 0,
+		"TYPE_SERVERLESS":  1,
+		"TYPE_DEDICATED":   2,
+	}
+)
+
+func (x YdbManagedParams_Type) Enum() *YdbManagedParams_Type {
+	p := new(YdbManagedParams_Type)
+	*p = x
+	return p
+}
+
+func (x YdbManagedParams_Type) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (YdbManagedParams_Type) Descriptor() protoreflect.EnumDescriptor {
+	return file_cloud_v1_domain_database_proto_enumTypes[3].Descriptor()
+}
+
+func (YdbManagedParams_Type) Type() protoreflect.EnumType {
+	return &file_cloud_v1_domain_database_proto_enumTypes[3]
+}
+
+func (x YdbManagedParams_Type) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use YdbManagedParams_Type.Descriptor instead.
+func (YdbManagedParams_Type) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{6, 0}
+}
+
+// ComputeType is a UI workload class that filters the preset catalog; it is
+// NOT sent to terraform.
+type YdbManagedParams_ComputeType int32
+
+const (
+	YdbManagedParams_COMPUTE_TYPE_UNSPECIFIED YdbManagedParams_ComputeType = 0
+	YdbManagedParams_COMPUTE_TYPE_OLTP        YdbManagedParams_ComputeType = 1
+	YdbManagedParams_COMPUTE_TYPE_OLAP        YdbManagedParams_ComputeType = 2
+)
+
+// Enum value maps for YdbManagedParams_ComputeType.
+var (
+	YdbManagedParams_ComputeType_name = map[int32]string{
+		0: "COMPUTE_TYPE_UNSPECIFIED",
+		1: "COMPUTE_TYPE_OLTP",
+		2: "COMPUTE_TYPE_OLAP",
+	}
+	YdbManagedParams_ComputeType_value = map[string]int32{
+		"COMPUTE_TYPE_UNSPECIFIED": 0,
+		"COMPUTE_TYPE_OLTP":        1,
+		"COMPUTE_TYPE_OLAP":        2,
+	}
+)
+
+func (x YdbManagedParams_ComputeType) Enum() *YdbManagedParams_ComputeType {
+	p := new(YdbManagedParams_ComputeType)
+	*p = x
+	return p
+}
+
+func (x YdbManagedParams_ComputeType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (YdbManagedParams_ComputeType) Descriptor() protoreflect.EnumDescriptor {
+	return file_cloud_v1_domain_database_proto_enumTypes[4].Descriptor()
+}
+
+func (YdbManagedParams_ComputeType) Type() protoreflect.EnumType {
+	return &file_cloud_v1_domain_database_proto_enumTypes[4]
+}
+
+func (x YdbManagedParams_ComputeType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use YdbManagedParams_ComputeType.Descriptor instead.
+func (YdbManagedParams_ComputeType) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{6, 1}
+}
 
 // Kind enumerates the supported database engines under test.
 type Database_Kind int32
@@ -86,11 +348,11 @@ func (x Database_Kind) String() string {
 }
 
 func (Database_Kind) Descriptor() protoreflect.EnumDescriptor {
-	return file_cloud_v1_domain_database_proto_enumTypes[0].Descriptor()
+	return file_cloud_v1_domain_database_proto_enumTypes[5].Descriptor()
 }
 
 func (Database_Kind) Type() protoreflect.EnumType {
-	return &file_cloud_v1_domain_database_proto_enumTypes[0]
+	return &file_cloud_v1_domain_database_proto_enumTypes[5]
 }
 
 func (x Database_Kind) Number() protoreflect.EnumNumber {
@@ -99,19 +361,1085 @@ func (x Database_Kind) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Database_Kind.Descriptor instead.
 func (Database_Kind) EnumDescriptor() ([]byte, []int) {
-	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{0, 0}
+	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{9, 0}
 }
+
+// Package is how to install one database engine version on a host. Selected on a
+// Database via package_id; when empty the backend resolves the builtin default for
+// the database's kind + version.
+type Package struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is the stable package identifier (a stored row id, or a builtin id).
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// name is the package's display name, e.g. "PostgreSQL 16".
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// db_kind is the database engine this package installs.
+	DbKind Database_Kind `protobuf:"varint,3,opt,name=db_kind,json=dbKind,proto3,enum=cloud.v1.domain.Database_Kind" json:"db_kind,omitempty"`
+	// db_version is the engine version this package installs, e.g. "16".
+	DbVersion string `protobuf:"bytes,4,opt,name=db_version,json=dbVersion,proto3" json:"db_version,omitempty"`
+	// is_builtin marks a stock, server-seeded package (vs a tenant custom one).
+	IsBuiltin bool `protobuf:"varint,5,opt,name=is_builtin,json=isBuiltin,proto3" json:"is_builtin,omitempty"`
+	// apt_packages are the apt package names to install (empty for download-only
+	// engines like YDB/Cockroach that pull a binary directly).
+	AptPackages []string `protobuf:"bytes,6,rep,name=apt_packages,json=aptPackages,proto3" json:"apt_packages,omitempty"`
+	// pre_install are shell commands run before the install (add repo, import gpg
+	// key, apt-get update).
+	PreInstall []string `protobuf:"bytes,7,rep,name=pre_install,json=preInstall,proto3" json:"pre_install,omitempty"`
+	// custom_repo is an extra apt repo line to add before install.
+	CustomRepo string `protobuf:"bytes,8,opt,name=custom_repo,json=customRepo,proto3" json:"custom_repo,omitempty"`
+	// custom_repo_key is the gpg key (url or inline) for custom_repo.
+	CustomRepoKey string `protobuf:"bytes,9,opt,name=custom_repo_key,json=customRepoKey,proto3" json:"custom_repo_key,omitempty"`
+	// deb_filename is the download URL (or filename) of a .deb to install; for a
+	// custom package it is filled by the launcher (server addr + auth token).
+	DebFilename string `protobuf:"bytes,10,opt,name=deb_filename,json=debFilename,proto3" json:"deb_filename,omitempty"`
+	// package_record_id links to an uploaded models.PackageRecord blob (custom
+	// builds); empty for builtins.
+	PackageRecordId string `protobuf:"bytes,11,opt,name=package_record_id,json=packageRecordId,proto3" json:"package_record_id,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *Package) Reset() {
+	*x = Package{}
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Package) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Package) ProtoMessage() {}
+
+func (x *Package) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Package.ProtoReflect.Descriptor instead.
+func (*Package) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *Package) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Package) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Package) GetDbKind() Database_Kind {
+	if x != nil {
+		return x.DbKind
+	}
+	return Database_KIND_UNSPECIFIED
+}
+
+func (x *Package) GetDbVersion() string {
+	if x != nil {
+		return x.DbVersion
+	}
+	return ""
+}
+
+func (x *Package) GetIsBuiltin() bool {
+	if x != nil {
+		return x.IsBuiltin
+	}
+	return false
+}
+
+func (x *Package) GetAptPackages() []string {
+	if x != nil {
+		return x.AptPackages
+	}
+	return nil
+}
+
+func (x *Package) GetPreInstall() []string {
+	if x != nil {
+		return x.PreInstall
+	}
+	return nil
+}
+
+func (x *Package) GetCustomRepo() string {
+	if x != nil {
+		return x.CustomRepo
+	}
+	return ""
+}
+
+func (x *Package) GetCustomRepoKey() string {
+	if x != nil {
+		return x.CustomRepoKey
+	}
+	return ""
+}
+
+func (x *Package) GetDebFilename() string {
+	if x != nil {
+		return x.DebFilename
+	}
+	return ""
+}
+
+func (x *Package) GetPackageRecordId() string {
+	if x != nil {
+		return x.PackageRecordId
+	}
+	return ""
+}
+
+// PostgresParams is the engine topology for PostgreSQL (master is always 1).
+type PostgresParams struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// replicas is the streaming-replica node count (0 = no replicas).
+	Replicas uint32 `protobuf:"varint,1,opt,name=replicas,proto3" json:"replicas,omitempty"`
+	// haproxy is the dedicated HAProxy LB node count (0 = none).
+	Haproxy uint32 `protobuf:"varint,2,opt,name=haproxy,proto3" json:"haproxy,omitempty"`
+	// pgbouncer colocates PgBouncer on each PG node.
+	Pgbouncer bool `protobuf:"varint,3,opt,name=pgbouncer,proto3" json:"pgbouncer,omitempty"`
+	// patroni enables Patroni-managed HA (needs etcd).
+	Patroni bool `protobuf:"varint,4,opt,name=patroni,proto3" json:"patroni,omitempty"`
+	// etcd colocates etcd on the PG nodes (capped at the first 3).
+	Etcd bool `protobuf:"varint,5,opt,name=etcd,proto3" json:"etcd,omitempty"`
+	// sync_replicas is the synchronous standby count; >0 turns on Patroni sync mode.
+	SyncReplicas uint32 `protobuf:"varint,6,opt,name=sync_replicas,json=syncReplicas,proto3" json:"sync_replicas,omitempty"`
+	// master_options is postgresql.conf for the master.
+	MasterOptions map[string]string `protobuf:"bytes,10,rep,name=master_options,json=masterOptions,proto3" json:"master_options,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// replica_options is postgresql.conf for replicas.
+	ReplicaOptions map[string]string `protobuf:"bytes,11,rep,name=replica_options,json=replicaOptions,proto3" json:"replica_options,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// haproxy_options tunes haproxy.cfg.
+	HaproxyOptions map[string]string `protobuf:"bytes,12,rep,name=haproxy_options,json=haproxyOptions,proto3" json:"haproxy_options,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// pgbouncer_options tunes pgbouncer.ini (e.g. auth_type, pool_mode).
+	PgbouncerOptions map[string]string `protobuf:"bytes,13,rep,name=pgbouncer_options,json=pgbouncerOptions,proto3" json:"pgbouncer_options,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// patroni_options tunes patroni.yml (e.g. ttl, loop_wait, retry_timeout).
+	PatroniOptions map[string]string `protobuf:"bytes,14,rep,name=patroni_options,json=patroniOptions,proto3" json:"patroni_options,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// etcd_options tunes etcd.
+	EtcdOptions   map[string]string `protobuf:"bytes,15,rep,name=etcd_options,json=etcdOptions,proto3" json:"etcd_options,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PostgresParams) Reset() {
+	*x = PostgresParams{}
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PostgresParams) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PostgresParams) ProtoMessage() {}
+
+func (x *PostgresParams) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PostgresParams.ProtoReflect.Descriptor instead.
+func (*PostgresParams) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *PostgresParams) GetReplicas() uint32 {
+	if x != nil {
+		return x.Replicas
+	}
+	return 0
+}
+
+func (x *PostgresParams) GetHaproxy() uint32 {
+	if x != nil {
+		return x.Haproxy
+	}
+	return 0
+}
+
+func (x *PostgresParams) GetPgbouncer() bool {
+	if x != nil {
+		return x.Pgbouncer
+	}
+	return false
+}
+
+func (x *PostgresParams) GetPatroni() bool {
+	if x != nil {
+		return x.Patroni
+	}
+	return false
+}
+
+func (x *PostgresParams) GetEtcd() bool {
+	if x != nil {
+		return x.Etcd
+	}
+	return false
+}
+
+func (x *PostgresParams) GetSyncReplicas() uint32 {
+	if x != nil {
+		return x.SyncReplicas
+	}
+	return 0
+}
+
+func (x *PostgresParams) GetMasterOptions() map[string]string {
+	if x != nil {
+		return x.MasterOptions
+	}
+	return nil
+}
+
+func (x *PostgresParams) GetReplicaOptions() map[string]string {
+	if x != nil {
+		return x.ReplicaOptions
+	}
+	return nil
+}
+
+func (x *PostgresParams) GetHaproxyOptions() map[string]string {
+	if x != nil {
+		return x.HaproxyOptions
+	}
+	return nil
+}
+
+func (x *PostgresParams) GetPgbouncerOptions() map[string]string {
+	if x != nil {
+		return x.PgbouncerOptions
+	}
+	return nil
+}
+
+func (x *PostgresParams) GetPatroniOptions() map[string]string {
+	if x != nil {
+		return x.PatroniOptions
+	}
+	return nil
+}
+
+func (x *PostgresParams) GetEtcdOptions() map[string]string {
+	if x != nil {
+		return x.EtcdOptions
+	}
+	return nil
+}
+
+// MySqlParams is the engine topology for MySQL. MariaDB reuses this exact
+// message (same shape); only the engine Kind / install package differs.
+type MySqlParams struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// replicas is the replica node count (0 = no replicas).
+	Replicas uint32 `protobuf:"varint,1,opt,name=replicas,proto3" json:"replicas,omitempty"`
+	// proxysql is the dedicated ProxySQL node count (0 = none).
+	Proxysql uint32 `protobuf:"varint,2,opt,name=proxysql,proto3" json:"proxysql,omitempty"`
+	// group_replication enables MySQL Group Replication.
+	GroupReplication bool `protobuf:"varint,3,opt,name=group_replication,json=groupReplication,proto3" json:"group_replication,omitempty"`
+	// semi_sync enables semi-synchronous replication (used when group_replication is off).
+	SemiSync bool `protobuf:"varint,4,opt,name=semi_sync,json=semiSync,proto3" json:"semi_sync,omitempty"`
+	// primary_options is my.cnf for the primary.
+	PrimaryOptions map[string]string `protobuf:"bytes,10,rep,name=primary_options,json=primaryOptions,proto3" json:"primary_options,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// replica_options is my.cnf for replicas.
+	ReplicaOptions map[string]string `protobuf:"bytes,11,rep,name=replica_options,json=replicaOptions,proto3" json:"replica_options,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// proxysql_options tunes proxysql.cnf (e.g. threads, max_connections).
+	ProxysqlOptions map[string]string `protobuf:"bytes,12,rep,name=proxysql_options,json=proxysqlOptions,proto3" json:"proxysql_options,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *MySqlParams) Reset() {
+	*x = MySqlParams{}
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MySqlParams) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MySqlParams) ProtoMessage() {}
+
+func (x *MySqlParams) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MySqlParams.ProtoReflect.Descriptor instead.
+func (*MySqlParams) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *MySqlParams) GetReplicas() uint32 {
+	if x != nil {
+		return x.Replicas
+	}
+	return 0
+}
+
+func (x *MySqlParams) GetProxysql() uint32 {
+	if x != nil {
+		return x.Proxysql
+	}
+	return 0
+}
+
+func (x *MySqlParams) GetGroupReplication() bool {
+	if x != nil {
+		return x.GroupReplication
+	}
+	return false
+}
+
+func (x *MySqlParams) GetSemiSync() bool {
+	if x != nil {
+		return x.SemiSync
+	}
+	return false
+}
+
+func (x *MySqlParams) GetPrimaryOptions() map[string]string {
+	if x != nil {
+		return x.PrimaryOptions
+	}
+	return nil
+}
+
+func (x *MySqlParams) GetReplicaOptions() map[string]string {
+	if x != nil {
+		return x.ReplicaOptions
+	}
+	return nil
+}
+
+func (x *MySqlParams) GetProxysqlOptions() map[string]string {
+	if x != nil {
+		return x.ProxysqlOptions
+	}
+	return nil
+}
+
+// PicodataTier is one tier of a multi-tier Picodata cluster.
+type PicodataTier struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// name is the tier name (e.g. "compute", "storage").
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// replication_factor is the per-tier replication factor.
+	ReplicationFactor uint32 `protobuf:"varint,2,opt,name=replication_factor,json=replicationFactor,proto3" json:"replication_factor,omitempty"`
+	// can_vote marks the tier as raft-voting.
+	CanVote bool `protobuf:"varint,3,opt,name=can_vote,json=canVote,proto3" json:"can_vote,omitempty"`
+	// count is the instance count in this tier.
+	Count         uint32 `protobuf:"varint,4,opt,name=count,proto3" json:"count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PicodataTier) Reset() {
+	*x = PicodataTier{}
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PicodataTier) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PicodataTier) ProtoMessage() {}
+
+func (x *PicodataTier) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PicodataTier.ProtoReflect.Descriptor instead.
+func (*PicodataTier) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *PicodataTier) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *PicodataTier) GetReplicationFactor() uint32 {
+	if x != nil {
+		return x.ReplicationFactor
+	}
+	return 0
+}
+
+func (x *PicodataTier) GetCanVote() bool {
+	if x != nil {
+		return x.CanVote
+	}
+	return false
+}
+
+func (x *PicodataTier) GetCount() uint32 {
+	if x != nil {
+		return x.Count
+	}
+	return 0
+}
+
+// PicodataParams is the engine topology for Picodata.
+type PicodataParams struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// instances is the instance node count (single-tier).
+	Instances uint32 `protobuf:"varint,1,opt,name=instances,proto3" json:"instances,omitempty"`
+	// haproxy is the HAProxy LB node count for the pgproto port (0 = none).
+	Haproxy uint32 `protobuf:"varint,2,opt,name=haproxy,proto3" json:"haproxy,omitempty"`
+	// replication_factor is the cluster replication factor (single-tier).
+	ReplicationFactor uint32 `protobuf:"varint,3,opt,name=replication_factor,json=replicationFactor,proto3" json:"replication_factor,omitempty"`
+	// shards is the shard count (single-tier).
+	Shards uint32 `protobuf:"varint,4,opt,name=shards,proto3" json:"shards,omitempty"`
+	// tiers optionally defines a multi-tier layout (overrides single-tier rf/shards/instances).
+	Tiers []*PicodataTier `protobuf:"bytes,5,rep,name=tiers,proto3" json:"tiers,omitempty"`
+	// instance_options tunes picodata.yaml (e.g. memtx_memory, vinyl_memory, log_level).
+	InstanceOptions map[string]string `protobuf:"bytes,10,rep,name=instance_options,json=instanceOptions,proto3" json:"instance_options,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// haproxy_options tunes haproxy.cfg.
+	HaproxyOptions map[string]string `protobuf:"bytes,11,rep,name=haproxy_options,json=haproxyOptions,proto3" json:"haproxy_options,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *PicodataParams) Reset() {
+	*x = PicodataParams{}
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PicodataParams) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PicodataParams) ProtoMessage() {}
+
+func (x *PicodataParams) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PicodataParams.ProtoReflect.Descriptor instead.
+func (*PicodataParams) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *PicodataParams) GetInstances() uint32 {
+	if x != nil {
+		return x.Instances
+	}
+	return 0
+}
+
+func (x *PicodataParams) GetHaproxy() uint32 {
+	if x != nil {
+		return x.Haproxy
+	}
+	return 0
+}
+
+func (x *PicodataParams) GetReplicationFactor() uint32 {
+	if x != nil {
+		return x.ReplicationFactor
+	}
+	return 0
+}
+
+func (x *PicodataParams) GetShards() uint32 {
+	if x != nil {
+		return x.Shards
+	}
+	return 0
+}
+
+func (x *PicodataParams) GetTiers() []*PicodataTier {
+	if x != nil {
+		return x.Tiers
+	}
+	return nil
+}
+
+func (x *PicodataParams) GetInstanceOptions() map[string]string {
+	if x != nil {
+		return x.InstanceOptions
+	}
+	return nil
+}
+
+func (x *PicodataParams) GetHaproxyOptions() map[string]string {
+	if x != nil {
+		return x.HaproxyOptions
+	}
+	return nil
+}
+
+// YdbParams is the self-deployed (IaaS) YDB engine topology.
+type YdbParams struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// storage_nodes is the static (storage) node count.
+	StorageNodes uint32 `protobuf:"varint,1,opt,name=storage_nodes,json=storageNodes,proto3" json:"storage_nodes,omitempty"`
+	// database_nodes is the dynamic (compute) node count; 0 = combined mode
+	// (compute runs on the storage nodes).
+	DatabaseNodes uint32 `protobuf:"varint,2,opt,name=database_nodes,json=databaseNodes,proto3" json:"database_nodes,omitempty"`
+	// haproxy is the HAProxy LB node count for the gRPC port (0 = none).
+	Haproxy uint32 `protobuf:"varint,3,opt,name=haproxy,proto3" json:"haproxy,omitempty"`
+	// pdisks_per_storage_node is the number of data pdisks per storage node
+	// (logical: mirror-3-dc needs >=3). Their SIZE is a topology/provider concern.
+	PdisksPerStorageNode uint32 `protobuf:"varint,4,opt,name=pdisks_per_storage_node,json=pdisksPerStorageNode,proto3" json:"pdisks_per_storage_node,omitempty"`
+	// fault_tolerance is the erasure mode.
+	FaultTolerance YdbParams_FaultTolerance `protobuf:"varint,5,opt,name=fault_tolerance,json=faultTolerance,proto3,enum=cloud.v1.domain.YdbParams_FaultTolerance" json:"fault_tolerance,omitempty"`
+	// failure_domain_type is the failure-domain granularity.
+	FailureDomainType YdbParams_FailureDomain `protobuf:"varint,6,opt,name=failure_domain_type,json=failureDomainType,proto3,enum=cloud.v1.domain.YdbParams_FailureDomain" json:"failure_domain_type,omitempty"`
+	// default_disk_type is the storage-pool disk kind.
+	DefaultDiskType YdbParams_DiskType `protobuf:"varint,7,opt,name=default_disk_type,json=defaultDiskType,proto3,enum=cloud.v1.domain.YdbParams_DiskType" json:"default_disk_type,omitempty"`
+	// storage_groups is the pool group count for `database create` (0 → 1).
+	StorageGroups uint32 `protobuf:"varint,8,opt,name=storage_groups,json=storageGroups,proto3" json:"storage_groups,omitempty"`
+	// auto_size_pdisks lets a dry-run resize the pdisks from the workload.
+	AutoSizePdisks bool `protobuf:"varint,9,opt,name=auto_size_pdisks,json=autoSizePdisks,proto3" json:"auto_size_pdisks,omitempty"`
+	// database_path is the tenant DB path (default "/Root/testdb").
+	DatabasePath string `protobuf:"bytes,10,opt,name=database_path,json=databasePath,proto3" json:"database_path,omitempty"`
+	// storage_options is the storage config passthrough.
+	StorageOptions map[string]string `protobuf:"bytes,20,rep,name=storage_options,json=storageOptions,proto3" json:"storage_options,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// database_options is the database config passthrough.
+	DatabaseOptions map[string]string `protobuf:"bytes,21,rep,name=database_options,json=databaseOptions,proto3" json:"database_options,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// haproxy_options tunes haproxy.cfg.
+	HaproxyOptions map[string]string `protobuf:"bytes,22,rep,name=haproxy_options,json=haproxyOptions,proto3" json:"haproxy_options,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *YdbParams) Reset() {
+	*x = YdbParams{}
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *YdbParams) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*YdbParams) ProtoMessage() {}
+
+func (x *YdbParams) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use YdbParams.ProtoReflect.Descriptor instead.
+func (*YdbParams) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *YdbParams) GetStorageNodes() uint32 {
+	if x != nil {
+		return x.StorageNodes
+	}
+	return 0
+}
+
+func (x *YdbParams) GetDatabaseNodes() uint32 {
+	if x != nil {
+		return x.DatabaseNodes
+	}
+	return 0
+}
+
+func (x *YdbParams) GetHaproxy() uint32 {
+	if x != nil {
+		return x.Haproxy
+	}
+	return 0
+}
+
+func (x *YdbParams) GetPdisksPerStorageNode() uint32 {
+	if x != nil {
+		return x.PdisksPerStorageNode
+	}
+	return 0
+}
+
+func (x *YdbParams) GetFaultTolerance() YdbParams_FaultTolerance {
+	if x != nil {
+		return x.FaultTolerance
+	}
+	return YdbParams_FAULT_TOLERANCE_UNSPECIFIED
+}
+
+func (x *YdbParams) GetFailureDomainType() YdbParams_FailureDomain {
+	if x != nil {
+		return x.FailureDomainType
+	}
+	return YdbParams_FAILURE_DOMAIN_UNSPECIFIED
+}
+
+func (x *YdbParams) GetDefaultDiskType() YdbParams_DiskType {
+	if x != nil {
+		return x.DefaultDiskType
+	}
+	return YdbParams_DISK_TYPE_UNSPECIFIED
+}
+
+func (x *YdbParams) GetStorageGroups() uint32 {
+	if x != nil {
+		return x.StorageGroups
+	}
+	return 0
+}
+
+func (x *YdbParams) GetAutoSizePdisks() bool {
+	if x != nil {
+		return x.AutoSizePdisks
+	}
+	return false
+}
+
+func (x *YdbParams) GetDatabasePath() string {
+	if x != nil {
+		return x.DatabasePath
+	}
+	return ""
+}
+
+func (x *YdbParams) GetStorageOptions() map[string]string {
+	if x != nil {
+		return x.StorageOptions
+	}
+	return nil
+}
+
+func (x *YdbParams) GetDatabaseOptions() map[string]string {
+	if x != nil {
+		return x.DatabaseOptions
+	}
+	return nil
+}
+
+func (x *YdbParams) GetHaproxyOptions() map[string]string {
+	if x != nil {
+		return x.HaproxyOptions
+	}
+	return nil
+}
+
+// YdbManagedParams is cloud-managed (provider-hosted) YDB. The managed DB itself
+// has no node sizing; the stroppy client node is a separate topology instance.
+type YdbManagedParams struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// type selects serverless vs dedicated.
+	Type YdbManagedParams_Type `protobuf:"varint,1,opt,name=type,proto3,enum=cloud.v1.domain.YdbManagedParams_Type" json:"type,omitempty"`
+	// compute_type is the UI workload class (oltp/olap).
+	ComputeType YdbManagedParams_ComputeType `protobuf:"varint,2,opt,name=compute_type,json=computeType,proto3,enum=cloud.v1.domain.YdbManagedParams_ComputeType" json:"compute_type,omitempty"`
+	// resource_preset_id is the dedicated node preset id (ignored for serverless).
+	ResourcePresetId string `protobuf:"bytes,3,opt,name=resource_preset_id,json=resourcePresetId,proto3" json:"resource_preset_id,omitempty"`
+	// node_count is the dedicated fixed-scale node count (ignored when auto_scale set).
+	NodeCount uint32 `protobuf:"varint,4,opt,name=node_count,json=nodeCount,proto3" json:"node_count,omitempty"`
+	// auto_scale switches dedicated to autoscaling.
+	AutoScale *YdbManagedParams_AutoScale `protobuf:"bytes,5,opt,name=auto_scale,json=autoScale,proto3" json:"auto_scale,omitempty"`
+	// storage_groups is the dedicated storage group count (ignored for serverless).
+	StorageGroups uint32 `protobuf:"varint,6,opt,name=storage_groups,json=storageGroups,proto3" json:"storage_groups,omitempty"`
+	// storage_type is the dedicated disk type id, e.g. "ssd" (ignored for serverless).
+	StorageType string `protobuf:"bytes,7,opt,name=storage_type,json=storageType,proto3" json:"storage_type,omitempty"`
+	// throttling_rcus is the serverless throttling RCU limit (0 = provider default).
+	ThrottlingRcus uint32 `protobuf:"varint,8,opt,name=throttling_rcus,json=throttlingRcus,proto3" json:"throttling_rcus,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *YdbManagedParams) Reset() {
+	*x = YdbManagedParams{}
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *YdbManagedParams) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*YdbManagedParams) ProtoMessage() {}
+
+func (x *YdbManagedParams) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use YdbManagedParams.ProtoReflect.Descriptor instead.
+func (*YdbManagedParams) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *YdbManagedParams) GetType() YdbManagedParams_Type {
+	if x != nil {
+		return x.Type
+	}
+	return YdbManagedParams_TYPE_UNSPECIFIED
+}
+
+func (x *YdbManagedParams) GetComputeType() YdbManagedParams_ComputeType {
+	if x != nil {
+		return x.ComputeType
+	}
+	return YdbManagedParams_COMPUTE_TYPE_UNSPECIFIED
+}
+
+func (x *YdbManagedParams) GetResourcePresetId() string {
+	if x != nil {
+		return x.ResourcePresetId
+	}
+	return ""
+}
+
+func (x *YdbManagedParams) GetNodeCount() uint32 {
+	if x != nil {
+		return x.NodeCount
+	}
+	return 0
+}
+
+func (x *YdbManagedParams) GetAutoScale() *YdbManagedParams_AutoScale {
+	if x != nil {
+		return x.AutoScale
+	}
+	return nil
+}
+
+func (x *YdbManagedParams) GetStorageGroups() uint32 {
+	if x != nil {
+		return x.StorageGroups
+	}
+	return 0
+}
+
+func (x *YdbManagedParams) GetStorageType() string {
+	if x != nil {
+		return x.StorageType
+	}
+	return ""
+}
+
+func (x *YdbManagedParams) GetThrottlingRcus() uint32 {
+	if x != nil {
+		return x.ThrottlingRcus
+	}
+	return 0
+}
+
+// CockroachParams is the engine topology for CockroachDB (homogeneous nodes).
+type CockroachParams struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// nodes is the homogeneous node count.
+	Nodes uint32 `protobuf:"varint,1,opt,name=nodes,proto3" json:"nodes,omitempty"`
+	// options are applied post-init as `SET CLUSTER SETTING k='v'`, or as a startup
+	// flag when the key is prefixed `flag:`.
+	Options       map[string]string `protobuf:"bytes,2,rep,name=options,proto3" json:"options,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CockroachParams) Reset() {
+	*x = CockroachParams{}
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CockroachParams) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CockroachParams) ProtoMessage() {}
+
+func (x *CockroachParams) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CockroachParams.ProtoReflect.Descriptor instead.
+func (*CockroachParams) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *CockroachParams) GetNodes() uint32 {
+	if x != nil {
+		return x.Nodes
+	}
+	return 0
+}
+
+func (x *CockroachParams) GetOptions() map[string]string {
+	if x != nil {
+		return x.Options
+	}
+	return nil
+}
+
+// DatabaseParams is the typed self-deploy variant (replaces the former
+// schemapb.Baked). It carries the common version + config overrides and exactly
+// one engine-specific params message. The selected engine MUST match Database.kind.
+type DatabaseParams struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// version is the engine version label (e.g. "16", "8.0", "25.2"). Empty uses
+	// the engine default.
+	Version string   `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
+	Package *Package `protobuf:"bytes,2,opt,name=package,proto3" json:"package,omitempty"`
+	// engine is the engine-specific self-deploy params. Exactly one must be set
+	// and must match Database.kind.
+	// Types that are valid to be assigned to Engine:
+	//
+	//	*DatabaseParams_Postgres
+	//	*DatabaseParams_Mysql
+	//	*DatabaseParams_Mariadb
+	//	*DatabaseParams_Picodata
+	//	*DatabaseParams_Ydb
+	//	*DatabaseParams_YdbManaged
+	//	*DatabaseParams_Cockroach
+	Engine        isDatabaseParams_Engine `protobuf_oneof:"engine"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DatabaseParams) Reset() {
+	*x = DatabaseParams{}
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DatabaseParams) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DatabaseParams) ProtoMessage() {}
+
+func (x *DatabaseParams) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DatabaseParams.ProtoReflect.Descriptor instead.
+func (*DatabaseParams) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *DatabaseParams) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+func (x *DatabaseParams) GetPackage() *Package {
+	if x != nil {
+		return x.Package
+	}
+	return nil
+}
+
+func (x *DatabaseParams) GetEngine() isDatabaseParams_Engine {
+	if x != nil {
+		return x.Engine
+	}
+	return nil
+}
+
+func (x *DatabaseParams) GetPostgres() *PostgresParams {
+	if x != nil {
+		if x, ok := x.Engine.(*DatabaseParams_Postgres); ok {
+			return x.Postgres
+		}
+	}
+	return nil
+}
+
+func (x *DatabaseParams) GetMysql() *MySqlParams {
+	if x != nil {
+		if x, ok := x.Engine.(*DatabaseParams_Mysql); ok {
+			return x.Mysql
+		}
+	}
+	return nil
+}
+
+func (x *DatabaseParams) GetMariadb() *MySqlParams {
+	if x != nil {
+		if x, ok := x.Engine.(*DatabaseParams_Mariadb); ok {
+			return x.Mariadb
+		}
+	}
+	return nil
+}
+
+func (x *DatabaseParams) GetPicodata() *PicodataParams {
+	if x != nil {
+		if x, ok := x.Engine.(*DatabaseParams_Picodata); ok {
+			return x.Picodata
+		}
+	}
+	return nil
+}
+
+func (x *DatabaseParams) GetYdb() *YdbParams {
+	if x != nil {
+		if x, ok := x.Engine.(*DatabaseParams_Ydb); ok {
+			return x.Ydb
+		}
+	}
+	return nil
+}
+
+func (x *DatabaseParams) GetYdbManaged() *YdbManagedParams {
+	if x != nil {
+		if x, ok := x.Engine.(*DatabaseParams_YdbManaged); ok {
+			return x.YdbManaged
+		}
+	}
+	return nil
+}
+
+func (x *DatabaseParams) GetCockroach() *CockroachParams {
+	if x != nil {
+		if x, ok := x.Engine.(*DatabaseParams_Cockroach); ok {
+			return x.Cockroach
+		}
+	}
+	return nil
+}
+
+type isDatabaseParams_Engine interface {
+	isDatabaseParams_Engine()
+}
+
+type DatabaseParams_Postgres struct {
+	Postgres *PostgresParams `protobuf:"bytes,10,opt,name=postgres,proto3,oneof"`
+}
+
+type DatabaseParams_Mysql struct {
+	Mysql *MySqlParams `protobuf:"bytes,11,opt,name=mysql,proto3,oneof"`
+}
+
+type DatabaseParams_Mariadb struct {
+	// mariadb reuses the MySQL params shape.
+	Mariadb *MySqlParams `protobuf:"bytes,12,opt,name=mariadb,proto3,oneof"`
+}
+
+type DatabaseParams_Picodata struct {
+	Picodata *PicodataParams `protobuf:"bytes,13,opt,name=picodata,proto3,oneof"`
+}
+
+type DatabaseParams_Ydb struct {
+	Ydb *YdbParams `protobuf:"bytes,14,opt,name=ydb,proto3,oneof"`
+}
+
+type DatabaseParams_YdbManaged struct {
+	YdbManaged *YdbManagedParams `protobuf:"bytes,15,opt,name=ydb_managed,json=ydbManaged,proto3,oneof"`
+}
+
+type DatabaseParams_Cockroach struct {
+	Cockroach *CockroachParams `protobuf:"bytes,16,opt,name=cockroach,proto3,oneof"`
+}
+
+func (*DatabaseParams_Postgres) isDatabaseParams_Engine() {}
+
+func (*DatabaseParams_Mysql) isDatabaseParams_Engine() {}
+
+func (*DatabaseParams_Mariadb) isDatabaseParams_Engine() {}
+
+func (*DatabaseParams_Picodata) isDatabaseParams_Engine() {}
+
+func (*DatabaseParams_Ydb) isDatabaseParams_Engine() {}
+
+func (*DatabaseParams_YdbManaged) isDatabaseParams_Engine() {}
+
+func (*DatabaseParams_Cockroach) isDatabaseParams_Engine() {}
 
 // Database is the database-under-test definition for a test run. It selects a
 // Kind and provides it through exactly one source variant, optionally carrying
-// the params schema and free-form tags.
+// free-form tags.
 type Database struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// kind selects which database engine is under test.
 	Kind Database_Kind `protobuf:"varint,1,opt,name=kind,proto3,enum=cloud.v1.domain.Database_Kind" json:"kind,omitempty"`
-	// prams_schema is the schema (the form) describing self-deploy params for
-	// this kind.
-	PramsSchema *schemapb.Schema `protobuf:"bytes,2,opt,name=prams_schema,json=pramsSchema,proto3" json:"prams_schema,omitempty"`
 	// source selects how the database is provided for a test run. Exactly one
 	// variant must be set.
 	// Types that are valid to be assigned to Source:
@@ -120,6 +1448,10 @@ type Database struct {
 	//	*Database_External_
 	//	*Database_DatabasePresetId
 	Source isDatabase_Source `protobuf_oneof:"source"`
+	// package_id selects the install package (domain.Package) for self-deploy
+	// kinds; empty resolves the builtin default for kind + params.version. Ignored
+	// for external / managed sources.
+	PackageId string `protobuf:"bytes,6,opt,name=package_id,json=packageId,proto3" json:"package_id,omitempty"`
 	// tags are free-form metadata attached to the database definition.
 	Tags          *common.Tags `protobuf:"bytes,7,opt,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -128,7 +1460,7 @@ type Database struct {
 
 func (x *Database) Reset() {
 	*x = Database{}
-	mi := &file_cloud_v1_domain_database_proto_msgTypes[0]
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -140,7 +1472,7 @@ func (x *Database) String() string {
 func (*Database) ProtoMessage() {}
 
 func (x *Database) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_domain_database_proto_msgTypes[0]
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -153,7 +1485,7 @@ func (x *Database) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Database.ProtoReflect.Descriptor instead.
 func (*Database) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{0}
+	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *Database) GetKind() Database_Kind {
@@ -163,13 +1495,6 @@ func (x *Database) GetKind() Database_Kind {
 	return Database_KIND_UNSPECIFIED
 }
 
-func (x *Database) GetPramsSchema() *schemapb.Schema {
-	if x != nil {
-		return x.PramsSchema
-	}
-	return nil
-}
-
 func (x *Database) GetSource() isDatabase_Source {
 	if x != nil {
 		return x.Source
@@ -177,7 +1502,7 @@ func (x *Database) GetSource() isDatabase_Source {
 	return nil
 }
 
-func (x *Database) GetParams() *schemapb.Baked {
+func (x *Database) GetParams() *DatabaseParams {
 	if x != nil {
 		if x, ok := x.Source.(*Database_Params); ok {
 			return x.Params
@@ -204,6 +1529,13 @@ func (x *Database) GetDatabasePresetId() *Database_PresetId {
 	return nil
 }
 
+func (x *Database) GetPackageId() string {
+	if x != nil {
+		return x.PackageId
+	}
+	return ""
+}
+
 func (x *Database) GetTags() *common.Tags {
 	if x != nil {
 		return x.Tags
@@ -216,10 +1548,9 @@ type isDatabase_Source interface {
 }
 
 type Database_Params struct {
-	// params is the self-deploy variant: filled values of prams_schema.
-	// TestWorkflow deploys a DB instance into the topology and tears it
-	// down at the end.
-	Params *schemapb.Baked `protobuf:"bytes,3,opt,name=params,proto3,oneof"`
+	// params is the typed self-deploy variant: deploy a DB instance into the
+	// topology and tear it down at the end.
+	Params *DatabaseParams `protobuf:"bytes,3,opt,name=params,proto3,oneof"`
 }
 
 type Database_External_ struct {
@@ -240,9 +1571,73 @@ func (*Database_External_) isDatabase_Source() {}
 
 func (*Database_DatabasePresetId) isDatabase_Source() {}
 
-// PresetId is a reference to a stored database preset. Resolved
-// server-side into one of the inline `source` variants (params for
-// self-deploy, or external).
+// AutoScale switches a dedicated database to autoscaling (replaces node_count).
+type YdbManagedParams_AutoScale struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// min_size is the minimum node count.
+	MinSize uint32 `protobuf:"varint,1,opt,name=min_size,json=minSize,proto3" json:"min_size,omitempty"`
+	// max_size is the maximum node count.
+	MaxSize uint32 `protobuf:"varint,2,opt,name=max_size,json=maxSize,proto3" json:"max_size,omitempty"`
+	// cpu_utilization_percent is the target-tracking CPU threshold (default 70).
+	CpuUtilizationPercent uint32 `protobuf:"varint,3,opt,name=cpu_utilization_percent,json=cpuUtilizationPercent,proto3" json:"cpu_utilization_percent,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
+}
+
+func (x *YdbManagedParams_AutoScale) Reset() {
+	*x = YdbManagedParams_AutoScale{}
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *YdbManagedParams_AutoScale) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*YdbManagedParams_AutoScale) ProtoMessage() {}
+
+func (x *YdbManagedParams_AutoScale) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use YdbManagedParams_AutoScale.ProtoReflect.Descriptor instead.
+func (*YdbManagedParams_AutoScale) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{6, 0}
+}
+
+func (x *YdbManagedParams_AutoScale) GetMinSize() uint32 {
+	if x != nil {
+		return x.MinSize
+	}
+	return 0
+}
+
+func (x *YdbManagedParams_AutoScale) GetMaxSize() uint32 {
+	if x != nil {
+		return x.MaxSize
+	}
+	return 0
+}
+
+func (x *YdbManagedParams_AutoScale) GetCpuUtilizationPercent() uint32 {
+	if x != nil {
+		return x.CpuUtilizationPercent
+	}
+	return 0
+}
+
+// PresetId is a reference to a stored database preset. Resolved server-side
+// into one of the inline `source` variants (params for self-deploy, or
+// external).
 type Database_PresetId struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// id is the stored database preset identifier to resolve.
@@ -253,7 +1648,7 @@ type Database_PresetId struct {
 
 func (x *Database_PresetId) Reset() {
 	*x = Database_PresetId{}
-	mi := &file_cloud_v1_domain_database_proto_msgTypes[1]
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -265,7 +1660,7 @@ func (x *Database_PresetId) String() string {
 func (*Database_PresetId) ProtoMessage() {}
 
 func (x *Database_PresetId) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_domain_database_proto_msgTypes[1]
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -278,7 +1673,7 @@ func (x *Database_PresetId) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Database_PresetId.ProtoReflect.Descriptor instead.
 func (*Database_PresetId) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{0, 0}
+	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{9, 0}
 }
 
 func (x *Database_PresetId) GetId() string {
@@ -302,7 +1697,7 @@ type Database_External struct {
 
 func (x *Database_External) Reset() {
 	*x = Database_External{}
-	mi := &file_cloud_v1_domain_database_proto_msgTypes[2]
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -314,7 +1709,7 @@ func (x *Database_External) String() string {
 func (*Database_External) ProtoMessage() {}
 
 func (x *Database_External) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_domain_database_proto_msgTypes[2]
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -327,7 +1722,7 @@ func (x *Database_External) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Database_External.ProtoReflect.Descriptor instead.
 func (*Database_External) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{0, 1}
+	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{9, 1}
 }
 
 func (x *Database_External) GetDsn() string {
@@ -348,14 +1743,184 @@ var File_cloud_v1_domain_database_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_domain_database_proto_rawDesc = "" +
 	"\n" +
-	"\x1ecloud/v1/domain/database.proto\x12\x0fcloud.v1.domain\x1a\x1acloud/v1/common/tags.proto\x1a\x15schemapb/schema.proto\x1a\x17validate/validate.proto\"\xa3\x05\n" +
+	"\x1ecloud/v1/domain/database.proto\x12\x0fcloud.v1.domain\x1a\x1acloud/v1/common/tags.proto\x1a\x17validate/validate.proto\"\x96\x03\n" +
+	"\aPackage\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12C\n" +
+	"\adb_kind\x18\x03 \x01(\x0e2\x1e.cloud.v1.domain.Database.KindB\n" +
+	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x06dbKind\x12'\n" +
+	"\n" +
+	"db_version\x18\x04 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\tdbVersion\x12\x1d\n" +
+	"\n" +
+	"is_builtin\x18\x05 \x01(\bR\tisBuiltin\x12!\n" +
+	"\fapt_packages\x18\x06 \x03(\tR\vaptPackages\x12\x1f\n" +
+	"\vpre_install\x18\a \x03(\tR\n" +
+	"preInstall\x12\x1f\n" +
+	"\vcustom_repo\x18\b \x01(\tR\n" +
+	"customRepo\x12&\n" +
+	"\x0fcustom_repo_key\x18\t \x01(\tR\rcustomRepoKey\x12!\n" +
+	"\fdeb_filename\x18\n" +
+	" \x01(\tR\vdebFilename\x12*\n" +
+	"\x11package_record_id\x18\v \x01(\tR\x0fpackageRecordId\"\xf5\b\n" +
+	"\x0ePostgresParams\x12\x1a\n" +
+	"\breplicas\x18\x01 \x01(\rR\breplicas\x12\x18\n" +
+	"\ahaproxy\x18\x02 \x01(\rR\ahaproxy\x12\x1c\n" +
+	"\tpgbouncer\x18\x03 \x01(\bR\tpgbouncer\x12\x18\n" +
+	"\apatroni\x18\x04 \x01(\bR\apatroni\x12\x12\n" +
+	"\x04etcd\x18\x05 \x01(\bR\x04etcd\x12#\n" +
+	"\rsync_replicas\x18\x06 \x01(\rR\fsyncReplicas\x12Y\n" +
+	"\x0emaster_options\x18\n" +
+	" \x03(\v22.cloud.v1.domain.PostgresParams.MasterOptionsEntryR\rmasterOptions\x12\\\n" +
+	"\x0freplica_options\x18\v \x03(\v23.cloud.v1.domain.PostgresParams.ReplicaOptionsEntryR\x0ereplicaOptions\x12\\\n" +
+	"\x0fhaproxy_options\x18\f \x03(\v23.cloud.v1.domain.PostgresParams.HaproxyOptionsEntryR\x0ehaproxyOptions\x12b\n" +
+	"\x11pgbouncer_options\x18\r \x03(\v25.cloud.v1.domain.PostgresParams.PgbouncerOptionsEntryR\x10pgbouncerOptions\x12\\\n" +
+	"\x0fpatroni_options\x18\x0e \x03(\v23.cloud.v1.domain.PostgresParams.PatroniOptionsEntryR\x0epatroniOptions\x12S\n" +
+	"\fetcd_options\x18\x0f \x03(\v20.cloud.v1.domain.PostgresParams.EtcdOptionsEntryR\vetcdOptions\x1a@\n" +
+	"\x12MasterOptionsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1aA\n" +
+	"\x13ReplicaOptionsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1aA\n" +
+	"\x13HaproxyOptionsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1aC\n" +
+	"\x15PgbouncerOptionsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1aA\n" +
+	"\x13PatroniOptionsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a>\n" +
+	"\x10EtcdOptionsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xed\x04\n" +
+	"\vMySqlParams\x12\x1a\n" +
+	"\breplicas\x18\x01 \x01(\rR\breplicas\x12\x1a\n" +
+	"\bproxysql\x18\x02 \x01(\rR\bproxysql\x12+\n" +
+	"\x11group_replication\x18\x03 \x01(\bR\x10groupReplication\x12\x1b\n" +
+	"\tsemi_sync\x18\x04 \x01(\bR\bsemiSync\x12Y\n" +
+	"\x0fprimary_options\x18\n" +
+	" \x03(\v20.cloud.v1.domain.MySqlParams.PrimaryOptionsEntryR\x0eprimaryOptions\x12Y\n" +
+	"\x0freplica_options\x18\v \x03(\v20.cloud.v1.domain.MySqlParams.ReplicaOptionsEntryR\x0ereplicaOptions\x12\\\n" +
+	"\x10proxysql_options\x18\f \x03(\v21.cloud.v1.domain.MySqlParams.ProxysqlOptionsEntryR\x0fproxysqlOptions\x1aA\n" +
+	"\x13PrimaryOptionsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1aA\n" +
+	"\x13ReplicaOptionsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1aB\n" +
+	"\x14ProxysqlOptionsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x8b\x01\n" +
+	"\fPicodataTier\x12\x1b\n" +
+	"\x04name\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04name\x12-\n" +
+	"\x12replication_factor\x18\x02 \x01(\rR\x11replicationFactor\x12\x19\n" +
+	"\bcan_vote\x18\x03 \x01(\bR\acanVote\x12\x14\n" +
+	"\x05count\x18\x04 \x01(\rR\x05count\"\x93\x04\n" +
+	"\x0ePicodataParams\x12%\n" +
+	"\tinstances\x18\x01 \x01(\rB\a\xfaB\x04*\x02(\x01R\tinstances\x12\x18\n" +
+	"\ahaproxy\x18\x02 \x01(\rR\ahaproxy\x12-\n" +
+	"\x12replication_factor\x18\x03 \x01(\rR\x11replicationFactor\x12\x16\n" +
+	"\x06shards\x18\x04 \x01(\rR\x06shards\x123\n" +
+	"\x05tiers\x18\x05 \x03(\v2\x1d.cloud.v1.domain.PicodataTierR\x05tiers\x12_\n" +
+	"\x10instance_options\x18\n" +
+	" \x03(\v24.cloud.v1.domain.PicodataParams.InstanceOptionsEntryR\x0finstanceOptions\x12\\\n" +
+	"\x0fhaproxy_options\x18\v \x03(\v23.cloud.v1.domain.PicodataParams.HaproxyOptionsEntryR\x0ehaproxyOptions\x1aB\n" +
+	"\x14InstanceOptionsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1aA\n" +
+	"\x13HaproxyOptionsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xb7\n" +
+	"\n" +
+	"\tYdbParams\x12,\n" +
+	"\rstorage_nodes\x18\x01 \x01(\rB\a\xfaB\x04*\x02(\x01R\fstorageNodes\x12%\n" +
+	"\x0edatabase_nodes\x18\x02 \x01(\rR\rdatabaseNodes\x12\x18\n" +
+	"\ahaproxy\x18\x03 \x01(\rR\ahaproxy\x125\n" +
+	"\x17pdisks_per_storage_node\x18\x04 \x01(\rR\x14pdisksPerStorageNode\x12R\n" +
+	"\x0ffault_tolerance\x18\x05 \x01(\x0e2).cloud.v1.domain.YdbParams.FaultToleranceR\x0efaultTolerance\x12X\n" +
+	"\x13failure_domain_type\x18\x06 \x01(\x0e2(.cloud.v1.domain.YdbParams.FailureDomainR\x11failureDomainType\x12O\n" +
+	"\x11default_disk_type\x18\a \x01(\x0e2#.cloud.v1.domain.YdbParams.DiskTypeR\x0fdefaultDiskType\x12%\n" +
+	"\x0estorage_groups\x18\b \x01(\rR\rstorageGroups\x12(\n" +
+	"\x10auto_size_pdisks\x18\t \x01(\bR\x0eautoSizePdisks\x12#\n" +
+	"\rdatabase_path\x18\n" +
+	" \x01(\tR\fdatabasePath\x12W\n" +
+	"\x0fstorage_options\x18\x14 \x03(\v2..cloud.v1.domain.YdbParams.StorageOptionsEntryR\x0estorageOptions\x12Z\n" +
+	"\x10database_options\x18\x15 \x03(\v2/.cloud.v1.domain.YdbParams.DatabaseOptionsEntryR\x0fdatabaseOptions\x12W\n" +
+	"\x0fhaproxy_options\x18\x16 \x03(\v2..cloud.v1.domain.YdbParams.HaproxyOptionsEntryR\x0ehaproxyOptions\x1aA\n" +
+	"\x13StorageOptionsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1aB\n" +
+	"\x14DatabaseOptionsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1aA\n" +
+	"\x13HaproxyOptionsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x8b\x01\n" +
+	"\x0eFaultTolerance\x12\x1f\n" +
+	"\x1bFAULT_TOLERANCE_UNSPECIFIED\x10\x00\x12\x18\n" +
+	"\x14FAULT_TOLERANCE_NONE\x10\x01\x12\x1d\n" +
+	"\x19FAULT_TOLERANCE_BLOCK_4_2\x10\x02\x12\x1f\n" +
+	"\x1bFAULT_TOLERANCE_MIRROR_3_DC\x10\x03\"H\n" +
+	"\rFailureDomain\x12\x1e\n" +
+	"\x1aFAILURE_DOMAIN_UNSPECIFIED\x10\x00\x12\x17\n" +
+	"\x13FAILURE_DOMAIN_DISK\x10\x01\"_\n" +
+	"\bDiskType\x12\x19\n" +
+	"\x15DISK_TYPE_UNSPECIFIED\x10\x00\x12\x11\n" +
+	"\rDISK_TYPE_SSD\x10\x01\x12\x12\n" +
+	"\x0eDISK_TYPE_NVME\x10\x02\x12\x11\n" +
+	"\rDISK_TYPE_ROT\x10\x03\"\xf3\x05\n" +
+	"\x10YdbManagedParams\x12F\n" +
+	"\x04type\x18\x01 \x01(\x0e2&.cloud.v1.domain.YdbManagedParams.TypeB\n" +
+	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x04type\x12P\n" +
+	"\fcompute_type\x18\x02 \x01(\x0e2-.cloud.v1.domain.YdbManagedParams.ComputeTypeR\vcomputeType\x12,\n" +
+	"\x12resource_preset_id\x18\x03 \x01(\tR\x10resourcePresetId\x12\x1d\n" +
+	"\n" +
+	"node_count\x18\x04 \x01(\rR\tnodeCount\x12J\n" +
+	"\n" +
+	"auto_scale\x18\x05 \x01(\v2+.cloud.v1.domain.YdbManagedParams.AutoScaleR\tautoScale\x12%\n" +
+	"\x0estorage_groups\x18\x06 \x01(\rR\rstorageGroups\x12!\n" +
+	"\fstorage_type\x18\a \x01(\tR\vstorageType\x12'\n" +
+	"\x0fthrottling_rcus\x18\b \x01(\rR\x0ethrottlingRcus\x1a\x96\x01\n" +
+	"\tAutoScale\x12\"\n" +
+	"\bmin_size\x18\x01 \x01(\rB\a\xfaB\x04*\x02(\x01R\aminSize\x12\"\n" +
+	"\bmax_size\x18\x02 \x01(\rB\a\xfaB\x04*\x02(\x01R\amaxSize\x12A\n" +
+	"\x17cpu_utilization_percent\x18\x03 \x01(\rB\t\xfaB\x06*\x04\x18d(\x00R\x15cpuUtilizationPercent\"E\n" +
+	"\x04Type\x12\x14\n" +
+	"\x10TYPE_UNSPECIFIED\x10\x00\x12\x13\n" +
+	"\x0fTYPE_SERVERLESS\x10\x01\x12\x12\n" +
+	"\x0eTYPE_DEDICATED\x10\x02\"Y\n" +
+	"\vComputeType\x12\x1c\n" +
+	"\x18COMPUTE_TYPE_UNSPECIFIED\x10\x00\x12\x15\n" +
+	"\x11COMPUTE_TYPE_OLTP\x10\x01\x12\x15\n" +
+	"\x11COMPUTE_TYPE_OLAP\x10\x02\"\xb5\x01\n" +
+	"\x0fCockroachParams\x12\x1d\n" +
+	"\x05nodes\x18\x01 \x01(\rB\a\xfaB\x04*\x02(\x01R\x05nodes\x12G\n" +
+	"\aoptions\x18\x02 \x03(\v2-.cloud.v1.domain.CockroachParams.OptionsEntryR\aoptions\x1a:\n" +
+	"\fOptionsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x93\x04\n" +
+	"\x0eDatabaseParams\x12\x18\n" +
+	"\aversion\x18\x01 \x01(\tR\aversion\x122\n" +
+	"\apackage\x18\x02 \x01(\v2\x18.cloud.v1.domain.PackageR\apackage\x12=\n" +
+	"\bpostgres\x18\n" +
+	" \x01(\v2\x1f.cloud.v1.domain.PostgresParamsH\x00R\bpostgres\x124\n" +
+	"\x05mysql\x18\v \x01(\v2\x1c.cloud.v1.domain.MySqlParamsH\x00R\x05mysql\x128\n" +
+	"\amariadb\x18\f \x01(\v2\x1c.cloud.v1.domain.MySqlParamsH\x00R\amariadb\x12=\n" +
+	"\bpicodata\x18\r \x01(\v2\x1f.cloud.v1.domain.PicodataParamsH\x00R\bpicodata\x12.\n" +
+	"\x03ydb\x18\x0e \x01(\v2\x1a.cloud.v1.domain.YdbParamsH\x00R\x03ydb\x12D\n" +
+	"\vydb_managed\x18\x0f \x01(\v2!.cloud.v1.domain.YdbManagedParamsH\x00R\n" +
+	"ydbManaged\x12@\n" +
+	"\tcockroach\x18\x10 \x01(\v2 .cloud.v1.domain.CockroachParamsH\x00R\tcockroachB\r\n" +
+	"\x06engine\x12\x03\xf8B\x01\"\x9d\x05\n" +
 	"\bDatabase\x12>\n" +
 	"\x04kind\x18\x01 \x01(\x0e2\x1e.cloud.v1.domain.Database.KindB\n" +
-	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x04kind\x123\n" +
-	"\fprams_schema\x18\x02 \x01(\v2\x10.schemapb.SchemaR\vpramsSchema\x12)\n" +
-	"\x06params\x18\x03 \x01(\v2\x0f.schemapb.BakedH\x00R\x06params\x12@\n" +
+	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x04kind\x129\n" +
+	"\x06params\x18\x03 \x01(\v2\x1f.cloud.v1.domain.DatabaseParamsH\x00R\x06params\x12@\n" +
 	"\bexternal\x18\x04 \x01(\v2\".cloud.v1.domain.Database.ExternalH\x00R\bexternal\x12R\n" +
-	"\x12database_preset_id\x18\x05 \x01(\v2\".cloud.v1.domain.Database.PresetIdH\x00R\x10databasePresetId\x12)\n" +
+	"\x12database_preset_id\x18\x05 \x01(\v2\".cloud.v1.domain.Database.PresetIdH\x00R\x10databasePresetId\x12\x1d\n" +
+	"\n" +
+	"package_id\x18\x06 \x01(\tR\tpackageId\x12)\n" +
 	"\x04tags\x18\a \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1a#\n" +
 	"\bPresetId\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\x1aP\n" +
@@ -387,30 +1952,88 @@ func file_cloud_v1_domain_database_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_domain_database_proto_rawDescData
 }
 
-var file_cloud_v1_domain_database_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_cloud_v1_domain_database_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_cloud_v1_domain_database_proto_enumTypes = make([]protoimpl.EnumInfo, 6)
+var file_cloud_v1_domain_database_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
 var file_cloud_v1_domain_database_proto_goTypes = []any{
-	(Database_Kind)(0),        // 0: cloud.v1.domain.Database.Kind
-	(*Database)(nil),          // 1: cloud.v1.domain.Database
-	(*Database_PresetId)(nil), // 2: cloud.v1.domain.Database.PresetId
-	(*Database_External)(nil), // 3: cloud.v1.domain.Database.External
-	(*schemapb.Schema)(nil),   // 4: schemapb.Schema
-	(*schemapb.Baked)(nil),    // 5: schemapb.Baked
-	(*common.Tags)(nil),       // 6: cloud.v1.common.Tags
+	(YdbParams_FaultTolerance)(0),      // 0: cloud.v1.domain.YdbParams.FaultTolerance
+	(YdbParams_FailureDomain)(0),       // 1: cloud.v1.domain.YdbParams.FailureDomain
+	(YdbParams_DiskType)(0),            // 2: cloud.v1.domain.YdbParams.DiskType
+	(YdbManagedParams_Type)(0),         // 3: cloud.v1.domain.YdbManagedParams.Type
+	(YdbManagedParams_ComputeType)(0),  // 4: cloud.v1.domain.YdbManagedParams.ComputeType
+	(Database_Kind)(0),                 // 5: cloud.v1.domain.Database.Kind
+	(*Package)(nil),                    // 6: cloud.v1.domain.Package
+	(*PostgresParams)(nil),             // 7: cloud.v1.domain.PostgresParams
+	(*MySqlParams)(nil),                // 8: cloud.v1.domain.MySqlParams
+	(*PicodataTier)(nil),               // 9: cloud.v1.domain.PicodataTier
+	(*PicodataParams)(nil),             // 10: cloud.v1.domain.PicodataParams
+	(*YdbParams)(nil),                  // 11: cloud.v1.domain.YdbParams
+	(*YdbManagedParams)(nil),           // 12: cloud.v1.domain.YdbManagedParams
+	(*CockroachParams)(nil),            // 13: cloud.v1.domain.CockroachParams
+	(*DatabaseParams)(nil),             // 14: cloud.v1.domain.DatabaseParams
+	(*Database)(nil),                   // 15: cloud.v1.domain.Database
+	nil,                                // 16: cloud.v1.domain.PostgresParams.MasterOptionsEntry
+	nil,                                // 17: cloud.v1.domain.PostgresParams.ReplicaOptionsEntry
+	nil,                                // 18: cloud.v1.domain.PostgresParams.HaproxyOptionsEntry
+	nil,                                // 19: cloud.v1.domain.PostgresParams.PgbouncerOptionsEntry
+	nil,                                // 20: cloud.v1.domain.PostgresParams.PatroniOptionsEntry
+	nil,                                // 21: cloud.v1.domain.PostgresParams.EtcdOptionsEntry
+	nil,                                // 22: cloud.v1.domain.MySqlParams.PrimaryOptionsEntry
+	nil,                                // 23: cloud.v1.domain.MySqlParams.ReplicaOptionsEntry
+	nil,                                // 24: cloud.v1.domain.MySqlParams.ProxysqlOptionsEntry
+	nil,                                // 25: cloud.v1.domain.PicodataParams.InstanceOptionsEntry
+	nil,                                // 26: cloud.v1.domain.PicodataParams.HaproxyOptionsEntry
+	nil,                                // 27: cloud.v1.domain.YdbParams.StorageOptionsEntry
+	nil,                                // 28: cloud.v1.domain.YdbParams.DatabaseOptionsEntry
+	nil,                                // 29: cloud.v1.domain.YdbParams.HaproxyOptionsEntry
+	(*YdbManagedParams_AutoScale)(nil), // 30: cloud.v1.domain.YdbManagedParams.AutoScale
+	nil,                                // 31: cloud.v1.domain.CockroachParams.OptionsEntry
+	(*Database_PresetId)(nil),          // 32: cloud.v1.domain.Database.PresetId
+	(*Database_External)(nil),          // 33: cloud.v1.domain.Database.External
+	(*common.Tags)(nil),                // 34: cloud.v1.common.Tags
 }
 var file_cloud_v1_domain_database_proto_depIdxs = []int32{
-	0, // 0: cloud.v1.domain.Database.kind:type_name -> cloud.v1.domain.Database.Kind
-	4, // 1: cloud.v1.domain.Database.prams_schema:type_name -> schemapb.Schema
-	5, // 2: cloud.v1.domain.Database.params:type_name -> schemapb.Baked
-	3, // 3: cloud.v1.domain.Database.external:type_name -> cloud.v1.domain.Database.External
-	2, // 4: cloud.v1.domain.Database.database_preset_id:type_name -> cloud.v1.domain.Database.PresetId
-	6, // 5: cloud.v1.domain.Database.tags:type_name -> cloud.v1.common.Tags
-	6, // 6: cloud.v1.domain.Database.External.tags:type_name -> cloud.v1.common.Tags
-	7, // [7:7] is the sub-list for method output_type
-	7, // [7:7] is the sub-list for method input_type
-	7, // [7:7] is the sub-list for extension type_name
-	7, // [7:7] is the sub-list for extension extendee
-	0, // [0:7] is the sub-list for field type_name
+	5,  // 0: cloud.v1.domain.Package.db_kind:type_name -> cloud.v1.domain.Database.Kind
+	16, // 1: cloud.v1.domain.PostgresParams.master_options:type_name -> cloud.v1.domain.PostgresParams.MasterOptionsEntry
+	17, // 2: cloud.v1.domain.PostgresParams.replica_options:type_name -> cloud.v1.domain.PostgresParams.ReplicaOptionsEntry
+	18, // 3: cloud.v1.domain.PostgresParams.haproxy_options:type_name -> cloud.v1.domain.PostgresParams.HaproxyOptionsEntry
+	19, // 4: cloud.v1.domain.PostgresParams.pgbouncer_options:type_name -> cloud.v1.domain.PostgresParams.PgbouncerOptionsEntry
+	20, // 5: cloud.v1.domain.PostgresParams.patroni_options:type_name -> cloud.v1.domain.PostgresParams.PatroniOptionsEntry
+	21, // 6: cloud.v1.domain.PostgresParams.etcd_options:type_name -> cloud.v1.domain.PostgresParams.EtcdOptionsEntry
+	22, // 7: cloud.v1.domain.MySqlParams.primary_options:type_name -> cloud.v1.domain.MySqlParams.PrimaryOptionsEntry
+	23, // 8: cloud.v1.domain.MySqlParams.replica_options:type_name -> cloud.v1.domain.MySqlParams.ReplicaOptionsEntry
+	24, // 9: cloud.v1.domain.MySqlParams.proxysql_options:type_name -> cloud.v1.domain.MySqlParams.ProxysqlOptionsEntry
+	9,  // 10: cloud.v1.domain.PicodataParams.tiers:type_name -> cloud.v1.domain.PicodataTier
+	25, // 11: cloud.v1.domain.PicodataParams.instance_options:type_name -> cloud.v1.domain.PicodataParams.InstanceOptionsEntry
+	26, // 12: cloud.v1.domain.PicodataParams.haproxy_options:type_name -> cloud.v1.domain.PicodataParams.HaproxyOptionsEntry
+	0,  // 13: cloud.v1.domain.YdbParams.fault_tolerance:type_name -> cloud.v1.domain.YdbParams.FaultTolerance
+	1,  // 14: cloud.v1.domain.YdbParams.failure_domain_type:type_name -> cloud.v1.domain.YdbParams.FailureDomain
+	2,  // 15: cloud.v1.domain.YdbParams.default_disk_type:type_name -> cloud.v1.domain.YdbParams.DiskType
+	27, // 16: cloud.v1.domain.YdbParams.storage_options:type_name -> cloud.v1.domain.YdbParams.StorageOptionsEntry
+	28, // 17: cloud.v1.domain.YdbParams.database_options:type_name -> cloud.v1.domain.YdbParams.DatabaseOptionsEntry
+	29, // 18: cloud.v1.domain.YdbParams.haproxy_options:type_name -> cloud.v1.domain.YdbParams.HaproxyOptionsEntry
+	3,  // 19: cloud.v1.domain.YdbManagedParams.type:type_name -> cloud.v1.domain.YdbManagedParams.Type
+	4,  // 20: cloud.v1.domain.YdbManagedParams.compute_type:type_name -> cloud.v1.domain.YdbManagedParams.ComputeType
+	30, // 21: cloud.v1.domain.YdbManagedParams.auto_scale:type_name -> cloud.v1.domain.YdbManagedParams.AutoScale
+	31, // 22: cloud.v1.domain.CockroachParams.options:type_name -> cloud.v1.domain.CockroachParams.OptionsEntry
+	6,  // 23: cloud.v1.domain.DatabaseParams.package:type_name -> cloud.v1.domain.Package
+	7,  // 24: cloud.v1.domain.DatabaseParams.postgres:type_name -> cloud.v1.domain.PostgresParams
+	8,  // 25: cloud.v1.domain.DatabaseParams.mysql:type_name -> cloud.v1.domain.MySqlParams
+	8,  // 26: cloud.v1.domain.DatabaseParams.mariadb:type_name -> cloud.v1.domain.MySqlParams
+	10, // 27: cloud.v1.domain.DatabaseParams.picodata:type_name -> cloud.v1.domain.PicodataParams
+	11, // 28: cloud.v1.domain.DatabaseParams.ydb:type_name -> cloud.v1.domain.YdbParams
+	12, // 29: cloud.v1.domain.DatabaseParams.ydb_managed:type_name -> cloud.v1.domain.YdbManagedParams
+	13, // 30: cloud.v1.domain.DatabaseParams.cockroach:type_name -> cloud.v1.domain.CockroachParams
+	5,  // 31: cloud.v1.domain.Database.kind:type_name -> cloud.v1.domain.Database.Kind
+	14, // 32: cloud.v1.domain.Database.params:type_name -> cloud.v1.domain.DatabaseParams
+	33, // 33: cloud.v1.domain.Database.external:type_name -> cloud.v1.domain.Database.External
+	32, // 34: cloud.v1.domain.Database.database_preset_id:type_name -> cloud.v1.domain.Database.PresetId
+	34, // 35: cloud.v1.domain.Database.tags:type_name -> cloud.v1.common.Tags
+	34, // 36: cloud.v1.domain.Database.External.tags:type_name -> cloud.v1.common.Tags
+	37, // [37:37] is the sub-list for method output_type
+	37, // [37:37] is the sub-list for method input_type
+	37, // [37:37] is the sub-list for extension type_name
+	37, // [37:37] is the sub-list for extension extendee
+	0,  // [0:37] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_domain_database_proto_init() }
@@ -418,7 +2041,16 @@ func file_cloud_v1_domain_database_proto_init() {
 	if File_cloud_v1_domain_database_proto != nil {
 		return
 	}
-	file_cloud_v1_domain_database_proto_msgTypes[0].OneofWrappers = []any{
+	file_cloud_v1_domain_database_proto_msgTypes[8].OneofWrappers = []any{
+		(*DatabaseParams_Postgres)(nil),
+		(*DatabaseParams_Mysql)(nil),
+		(*DatabaseParams_Mariadb)(nil),
+		(*DatabaseParams_Picodata)(nil),
+		(*DatabaseParams_Ydb)(nil),
+		(*DatabaseParams_YdbManaged)(nil),
+		(*DatabaseParams_Cockroach)(nil),
+	}
+	file_cloud_v1_domain_database_proto_msgTypes[9].OneofWrappers = []any{
 		(*Database_Params)(nil),
 		(*Database_External_)(nil),
 		(*Database_DatabasePresetId)(nil),
@@ -428,8 +2060,8 @@ func file_cloud_v1_domain_database_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_domain_database_proto_rawDesc), len(file_cloud_v1_domain_database_proto_rawDesc)),
-			NumEnums:      1,
-			NumMessages:   3,
+			NumEnums:      6,
+			NumMessages:   28,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

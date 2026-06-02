@@ -8,7 +8,6 @@ package topology
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
-	schemapb "github.com/stroppy-io/schemapb/schemapb"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -25,27 +24,262 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Topology is the complete description of a benchmark deployment: its
-// instances, the edges between components, and any external components.
+// State records the furthest stage represented by the envelope.
+type Topology_State int32
+
+const (
+	Topology_STATE_UNSPECIFIED             Topology_State = 0
+	Topology_STATE_SPEC                    Topology_State = 1
+	Topology_STATE_INFRASTRUCTURE_PLANNED  Topology_State = 2
+	Topology_STATE_INFRASTRUCTURE_DEPLOYED Topology_State = 3
+	Topology_STATE_DEPLOYMENT_PLANNED      Topology_State = 4
+	Topology_STATE_DEPLOYED                Topology_State = 5
+	Topology_STATE_UNDEPLOYED              Topology_State = 6
+	Topology_STATE_ARCHIVE                 Topology_State = 7
+)
+
+// Enum value maps for Topology_State.
+var (
+	Topology_State_name = map[int32]string{
+		0: "STATE_UNSPECIFIED",
+		1: "STATE_SPEC",
+		2: "STATE_INFRASTRUCTURE_PLANNED",
+		3: "STATE_INFRASTRUCTURE_DEPLOYED",
+		4: "STATE_DEPLOYMENT_PLANNED",
+		5: "STATE_DEPLOYED",
+		6: "STATE_UNDEPLOYED",
+		7: "STATE_ARCHIVE",
+	}
+	Topology_State_value = map[string]int32{
+		"STATE_UNSPECIFIED":             0,
+		"STATE_SPEC":                    1,
+		"STATE_INFRASTRUCTURE_PLANNED":  2,
+		"STATE_INFRASTRUCTURE_DEPLOYED": 3,
+		"STATE_DEPLOYMENT_PLANNED":      4,
+		"STATE_DEPLOYED":                5,
+		"STATE_UNDEPLOYED":              6,
+		"STATE_ARCHIVE":                 7,
+	}
+)
+
+func (x Topology_State) Enum() *Topology_State {
+	p := new(Topology_State)
+	*p = x
+	return p
+}
+
+func (x Topology_State) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Topology_State) Descriptor() protoreflect.EnumDescriptor {
+	return file_cloud_v1_topology_topology_proto_enumTypes[0].Descriptor()
+}
+
+func (Topology_State) Type() protoreflect.EnumType {
+	return &file_cloud_v1_topology_topology_proto_enumTypes[0]
+}
+
+func (x Topology_State) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Topology_State.Descriptor instead.
+func (Topology_State) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_topology_topology_proto_rawDescGZIP(), []int{2, 0}
+}
+
+// Node is a logical placement unit. A node may become a VM, a Docker container,
+// or a managed/external provider resource after the infrastructure stage.
+type Node struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is the stable logical node id.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// component_ids are the components intentionally colocated on this node.
+	ComponentIds []string `protobuf:"bytes,2,rep,name=component_ids,json=componentIds,proto3" json:"component_ids,omitempty"`
+	// labels are structured metadata used by planners and UI.
+	Labels map[string]string `protobuf:"bytes,3,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// tags are arbitrary user/system tags.
+	Tags          *common.Tags `protobuf:"bytes,4,opt,name=tags,proto3" json:"tags,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Node) Reset() {
+	*x = Node{}
+	mi := &file_cloud_v1_topology_topology_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Node) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Node) ProtoMessage() {}
+
+func (x *Node) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_topology_topology_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Node.ProtoReflect.Descriptor instead.
+func (*Node) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_topology_topology_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *Node) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Node) GetComponentIds() []string {
+	if x != nil {
+		return x.ComponentIds
+	}
+	return nil
+}
+
+func (x *Node) GetLabels() map[string]string {
+	if x != nil {
+		return x.Labels
+	}
+	return nil
+}
+
+func (x *Node) GetTags() *common.Tags {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+// TopologySpec is the pure logical graph produced from domain params.
+type TopologySpec struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// nodes are logical placement units.
+	Nodes []*Node `protobuf:"bytes,1,rep,name=nodes,proto3" json:"nodes,omitempty"`
+	// components are logical services/roles.
+	Components []*Component `protobuf:"bytes,2,rep,name=components,proto3" json:"components,omitempty"`
+	// connections are logical edges between components. Single-node topologies
+	// may legitimately have no edges.
+	Connections []*Connection `protobuf:"bytes,3,rep,name=connections,proto3" json:"connections,omitempty"`
+	// external_components are logical components not deployed by this run.
+	ExternalComponents []*Component `protobuf:"bytes,4,rep,name=external_components,json=externalComponents,proto3" json:"external_components,omitempty"`
+	// labels are structured metadata attached to the spec.
+	Labels map[string]string `protobuf:"bytes,5,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// tags are arbitrary user/system tags.
+	Tags          *common.Tags `protobuf:"bytes,6,opt,name=tags,proto3" json:"tags,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TopologySpec) Reset() {
+	*x = TopologySpec{}
+	mi := &file_cloud_v1_topology_topology_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TopologySpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TopologySpec) ProtoMessage() {}
+
+func (x *TopologySpec) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_topology_topology_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TopologySpec.ProtoReflect.Descriptor instead.
+func (*TopologySpec) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_topology_topology_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *TopologySpec) GetNodes() []*Node {
+	if x != nil {
+		return x.Nodes
+	}
+	return nil
+}
+
+func (x *TopologySpec) GetComponents() []*Component {
+	if x != nil {
+		return x.Components
+	}
+	return nil
+}
+
+func (x *TopologySpec) GetConnections() []*Connection {
+	if x != nil {
+		return x.Connections
+	}
+	return nil
+}
+
+func (x *TopologySpec) GetExternalComponents() []*Component {
+	if x != nil {
+		return x.ExternalComponents
+	}
+	return nil
+}
+
+func (x *TopologySpec) GetLabels() map[string]string {
+	if x != nil {
+		return x.Labels
+	}
+	return nil
+}
+
+func (x *TopologySpec) GetTags() *common.Tags {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+// Topology is the full staged object for a run or wizard draft.
 type Topology struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// instances are the physical machines making up the topology; at least one
-	// is required.
-	Instances []*Topology_Instance `protobuf:"bytes,1,rep,name=instances,proto3" json:"instances,omitempty"`
-	// connections are the edges between components; at least one is required.
-	Connections []*Connection `protobuf:"bytes,2,rep,name=connections,proto3" json:"connections,omitempty"`
-	// Here we can add something like managed database or another sevice from prvider
-	// Responsibility of this is RenderTerraformVariablesWorkflow|RenderDockerInputWorkflow
-	ExternalComponents []*Component `protobuf:"bytes,3,rep,name=external_components,json=externalComponents,proto3" json:"external_components,omitempty"`
-	// tags are arbitrary key/value labels attached to the whole topology.
-	Tags          *common.Tags `protobuf:"bytes,4,opt,name=tags,proto3" json:"tags,omitempty"`
+	// state records the current stage.
+	State Topology_State `protobuf:"varint,1,opt,name=state,proto3,enum=cloud.v1.topology.Topology_State" json:"state,omitempty"`
+	// spec is the logical graph.
+	Spec *TopologySpec `protobuf:"bytes,2,opt,name=spec,proto3" json:"spec,omitempty"`
+	// infrastructure_plan is provider input derived from spec + provider
+	// choices. Present from STATE_INFRASTRUCTURE_PLANNED.
+	InfrastructurePlan *deployment.InfrastructurePlan `protobuf:"bytes,3,opt,name=infrastructure_plan,json=infrastructurePlan,proto3" json:"infrastructure_plan,omitempty"`
+	// infrastructure_state is provider output: ids, addresses, allocated
+	// quotas. Present from STATE_INFRASTRUCTURE_DEPLOYED.
+	InfrastructureState *deployment.InfrastructureState `protobuf:"bytes,4,opt,name=infrastructure_state,json=infrastructureState,proto3" json:"infrastructure_state,omitempty"`
+	// deployment_plan is the agent execution plan. Present from
+	// STATE_DEPLOYMENT_PLANNED.
+	DeploymentPlan *deployment.DeploymentPlan `protobuf:"bytes,5,opt,name=deployment_plan,json=deploymentPlan,proto3" json:"deployment_plan,omitempty"`
+	// tags are arbitrary metadata on the envelope.
+	Tags          *common.Tags `protobuf:"bytes,6,opt,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Topology) Reset() {
 	*x = Topology{}
-	mi := &file_cloud_v1_topology_topology_proto_msgTypes[0]
+	mi := &file_cloud_v1_topology_topology_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -57,7 +291,7 @@ func (x *Topology) String() string {
 func (*Topology) ProtoMessage() {}
 
 func (x *Topology) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_topology_topology_proto_msgTypes[0]
+	mi := &file_cloud_v1_topology_topology_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -70,26 +304,40 @@ func (x *Topology) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Topology.ProtoReflect.Descriptor instead.
 func (*Topology) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_topology_topology_proto_rawDescGZIP(), []int{0}
+	return file_cloud_v1_topology_topology_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *Topology) GetInstances() []*Topology_Instance {
+func (x *Topology) GetState() Topology_State {
 	if x != nil {
-		return x.Instances
+		return x.State
+	}
+	return Topology_STATE_UNSPECIFIED
+}
+
+func (x *Topology) GetSpec() *TopologySpec {
+	if x != nil {
+		return x.Spec
 	}
 	return nil
 }
 
-func (x *Topology) GetConnections() []*Connection {
+func (x *Topology) GetInfrastructurePlan() *deployment.InfrastructurePlan {
 	if x != nil {
-		return x.Connections
+		return x.InfrastructurePlan
 	}
 	return nil
 }
 
-func (x *Topology) GetExternalComponents() []*Component {
+func (x *Topology) GetInfrastructureState() *deployment.InfrastructureState {
 	if x != nil {
-		return x.ExternalComponents
+		return x.InfrastructureState
+	}
+	return nil
+}
+
+func (x *Topology) GetDeploymentPlan() *deployment.DeploymentPlan {
+	if x != nil {
+		return x.DeploymentPlan
 	}
 	return nil
 }
@@ -101,153 +349,50 @@ func (x *Topology) GetTags() *common.Tags {
 	return nil
 }
 
-// Instance is one physical machine (VM) in the topology onto which
-// components are allocated.
-type Topology_Instance struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// id is the unique identifier of the instance within the topology.
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// status is the current runtime status of the instance.
-	Status common.Status `protobuf:"varint,2,opt,name=status,proto3,enum=cloud.v1.common.Status" json:"status,omitempty"`
-	// machine_info describes the requested machine shape/specs.
-	MachineInfo *deployment.MachineInfo `protobuf:"bytes,3,opt,name=machine_info,json=machineInfo,proto3" json:"machine_info,omitempty"`
-	// provider_parms are the baked provider parameters; calculated (wisard).
-	ProviderParms *schemapb.Baked `protobuf:"bytes,4,opt,name=provider_parms,json=providerParms,proto3,oneof" json:"provider_parms,omitempty"`
-	// quota_requests are the resource quotas requested for this instance;
-	// calculated (deployment).
-	QuotaRequests []*deployment.Quota_Request `protobuf:"bytes,5,rep,name=quota_requests,json=quotaRequests,proto3" json:"quota_requests,omitempty"`
-	// allocated_quotas are the quotas actually granted to this instance;
-	// calculated (deployment).
-	AllocatedQuotas []*deployment.Quota_Allocation `protobuf:"bytes,6,rep,name=allocated_quotas,json=allocatedQuotas,proto3" json:"allocated_quotas,omitempty"`
-	// deployment_parms are the baked deployment parameters; calculated
-	// (deployment).
-	DeploymentParms *schemapb.Baked `protobuf:"bytes,7,opt,name=deployment_parms,json=deploymentParms,proto3,oneof" json:"deployment_parms,omitempty"`
-	// tags are arbitrary key/value labels attached to the instance.
-	Tags *common.Tags `protobuf:"bytes,8,opt,name=tags,proto3" json:"tags,omitempty"`
-	// components are the logical components (roles) hosted on this instance.
-	Components    []*Component `protobuf:"bytes,9,rep,name=components,proto3" json:"components,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Topology_Instance) Reset() {
-	*x = Topology_Instance{}
-	mi := &file_cloud_v1_topology_topology_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Topology_Instance) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Topology_Instance) ProtoMessage() {}
-
-func (x *Topology_Instance) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_topology_topology_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Topology_Instance.ProtoReflect.Descriptor instead.
-func (*Topology_Instance) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_topology_topology_proto_rawDescGZIP(), []int{0, 0}
-}
-
-func (x *Topology_Instance) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-func (x *Topology_Instance) GetStatus() common.Status {
-	if x != nil {
-		return x.Status
-	}
-	return common.Status(0)
-}
-
-func (x *Topology_Instance) GetMachineInfo() *deployment.MachineInfo {
-	if x != nil {
-		return x.MachineInfo
-	}
-	return nil
-}
-
-func (x *Topology_Instance) GetProviderParms() *schemapb.Baked {
-	if x != nil {
-		return x.ProviderParms
-	}
-	return nil
-}
-
-func (x *Topology_Instance) GetQuotaRequests() []*deployment.Quota_Request {
-	if x != nil {
-		return x.QuotaRequests
-	}
-	return nil
-}
-
-func (x *Topology_Instance) GetAllocatedQuotas() []*deployment.Quota_Allocation {
-	if x != nil {
-		return x.AllocatedQuotas
-	}
-	return nil
-}
-
-func (x *Topology_Instance) GetDeploymentParms() *schemapb.Baked {
-	if x != nil {
-		return x.DeploymentParms
-	}
-	return nil
-}
-
-func (x *Topology_Instance) GetTags() *common.Tags {
-	if x != nil {
-		return x.Tags
-	}
-	return nil
-}
-
-func (x *Topology_Instance) GetComponents() []*Component {
-	if x != nil {
-		return x.Components
-	}
-	return nil
-}
-
 var File_cloud_v1_topology_topology_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_topology_topology_proto_rawDesc = "" +
 	"\n" +
-	" cloud/v1/topology/topology.proto\x12\x11cloud.v1.topology\x1a\x1ccloud/v1/common/status.proto\x1a\x1acloud/v1/common/tags.proto\x1a!cloud/v1/deployment/machine.proto\x1a\x1fcloud/v1/deployment/quota.proto\x1a!cloud/v1/topology/component.proto\x1a\"cloud/v1/topology/connection.proto\x1a\x15schemapb/schema.proto\x1a\x17validate/validate.proto\"\xf2\x06\n" +
-	"\bTopology\x12L\n" +
-	"\tinstances\x18\x01 \x03(\v2$.cloud.v1.topology.Topology.InstanceB\b\xfaB\x05\x92\x01\x02\b\x01R\tinstances\x12I\n" +
-	"\vconnections\x18\x02 \x03(\v2\x1d.cloud.v1.topology.ConnectionB\b\xfaB\x05\x92\x01\x02\b\x01R\vconnections\x12W\n" +
-	"\x13external_components\x18\x03 \x03(\v2\x1c.cloud.v1.topology.ComponentB\b\xfaB\x05\x92\x01\x02\x10@R\x12externalComponents\x12)\n" +
-	"\x04tags\x18\x04 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1a\xc8\x04\n" +
-	"\bInstance\x12\x1a\n" +
+	" cloud/v1/topology/topology.proto\x12\x11cloud.v1.topology\x1a\x1acloud/v1/common/tags.proto\x1a(cloud/v1/deployment/infrastructure.proto\x1a\x1ecloud/v1/deployment/plan.proto\x1a!cloud/v1/topology/component.proto\x1a\"cloud/v1/topology/connection.proto\x1a\x17validate/validate.proto\"\x8a\x02\n" +
+	"\x04Node\x12\x1a\n" +
 	"\x02id\x18\x01 \x01(\tB\n" +
-	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x02id\x12/\n" +
-	"\x06status\x18\x02 \x01(\x0e2\x17.cloud.v1.common.StatusR\x06status\x12C\n" +
-	"\fmachine_info\x18\x03 \x01(\v2 .cloud.v1.deployment.MachineInfoR\vmachineInfo\x12;\n" +
-	"\x0eprovider_parms\x18\x04 \x01(\v2\x0f.schemapb.BakedH\x00R\rproviderParms\x88\x01\x01\x12I\n" +
-	"\x0equota_requests\x18\x05 \x03(\v2\".cloud.v1.deployment.Quota.RequestR\rquotaRequests\x12P\n" +
-	"\x10allocated_quotas\x18\x06 \x03(\v2%.cloud.v1.deployment.Quota.AllocationR\x0fallocatedQuotas\x12?\n" +
-	"\x10deployment_parms\x18\a \x01(\v2\x0f.schemapb.BakedH\x01R\x0fdeploymentParms\x88\x01\x01\x12)\n" +
-	"\x04tags\x18\b \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x12<\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x02id\x128\n" +
+	"\rcomponent_ids\x18\x02 \x03(\tB\x13\xfaB\x10\x92\x01\r\b\x01\x10@\"\ar\x05\x10\x01\x18\x80\x01R\fcomponentIds\x12F\n" +
+	"\x06labels\x18\x03 \x03(\v2#.cloud.v1.topology.Node.LabelsEntryB\t\xfaB\x06\x9a\x01\x03\x10\x80\x01R\x06labels\x12)\n" +
+	"\x04tags\x18\x04 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1a9\n" +
+	"\vLabelsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xdf\x03\n" +
+	"\fTopologySpec\x127\n" +
+	"\x05nodes\x18\x01 \x03(\v2\x17.cloud.v1.topology.NodeB\b\xfaB\x05\x92\x01\x02\b\x01R\x05nodes\x12F\n" +
 	"\n" +
-	"components\x18\t \x03(\v2\x1c.cloud.v1.topology.ComponentR\n" +
-	"componentsB\x11\n" +
-	"\x0f_provider_parmsB\x13\n" +
-	"\x11_deployment_parmsBFZDgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topologyb\x06proto3"
+	"components\x18\x02 \x03(\v2\x1c.cloud.v1.topology.ComponentB\b\xfaB\x05\x92\x01\x02\b\x01R\n" +
+	"components\x12?\n" +
+	"\vconnections\x18\x03 \x03(\v2\x1d.cloud.v1.topology.ConnectionR\vconnections\x12W\n" +
+	"\x13external_components\x18\x04 \x03(\v2\x1c.cloud.v1.topology.ComponentB\b\xfaB\x05\x92\x01\x02\x10@R\x12externalComponents\x12N\n" +
+	"\x06labels\x18\x05 \x03(\v2+.cloud.v1.topology.TopologySpec.LabelsEntryB\t\xfaB\x06\x9a\x01\x03\x10\x80\x01R\x06labels\x12)\n" +
+	"\x04tags\x18\x06 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1a9\n" +
+	"\vLabelsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x8f\x05\n" +
+	"\bTopology\x12C\n" +
+	"\x05state\x18\x01 \x01(\x0e2!.cloud.v1.topology.Topology.StateB\n" +
+	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x05state\x12=\n" +
+	"\x04spec\x18\x02 \x01(\v2\x1f.cloud.v1.topology.TopologySpecB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04spec\x12X\n" +
+	"\x13infrastructure_plan\x18\x03 \x01(\v2'.cloud.v1.deployment.InfrastructurePlanR\x12infrastructurePlan\x12[\n" +
+	"\x14infrastructure_state\x18\x04 \x01(\v2(.cloud.v1.deployment.InfrastructureStateR\x13infrastructureState\x12L\n" +
+	"\x0fdeployment_plan\x18\x05 \x01(\v2#.cloud.v1.deployment.DeploymentPlanR\x0edeploymentPlan\x12)\n" +
+	"\x04tags\x18\x06 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\"\xce\x01\n" +
+	"\x05State\x12\x15\n" +
+	"\x11STATE_UNSPECIFIED\x10\x00\x12\x0e\n" +
+	"\n" +
+	"STATE_SPEC\x10\x01\x12 \n" +
+	"\x1cSTATE_INFRASTRUCTURE_PLANNED\x10\x02\x12!\n" +
+	"\x1dSTATE_INFRASTRUCTURE_DEPLOYED\x10\x03\x12\x1c\n" +
+	"\x18STATE_DEPLOYMENT_PLANNED\x10\x04\x12\x12\n" +
+	"\x0eSTATE_DEPLOYED\x10\x05\x12\x14\n" +
+	"\x10STATE_UNDEPLOYED\x10\x06\x12\x11\n" +
+	"\rSTATE_ARCHIVE\x10\aBFZDgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topologyb\x06proto3"
 
 var (
 	file_cloud_v1_topology_topology_proto_rawDescOnce sync.Once
@@ -261,37 +406,42 @@ func file_cloud_v1_topology_topology_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_topology_topology_proto_rawDescData
 }
 
-var file_cloud_v1_topology_topology_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_cloud_v1_topology_topology_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_cloud_v1_topology_topology_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_cloud_v1_topology_topology_proto_goTypes = []any{
-	(*Topology)(nil),                    // 0: cloud.v1.topology.Topology
-	(*Topology_Instance)(nil),           // 1: cloud.v1.topology.Topology.Instance
-	(*Connection)(nil),                  // 2: cloud.v1.topology.Connection
-	(*Component)(nil),                   // 3: cloud.v1.topology.Component
-	(*common.Tags)(nil),                 // 4: cloud.v1.common.Tags
-	(common.Status)(0),                  // 5: cloud.v1.common.Status
-	(*deployment.MachineInfo)(nil),      // 6: cloud.v1.deployment.MachineInfo
-	(*schemapb.Baked)(nil),              // 7: schemapb.Baked
-	(*deployment.Quota_Request)(nil),    // 8: cloud.v1.deployment.Quota.Request
-	(*deployment.Quota_Allocation)(nil), // 9: cloud.v1.deployment.Quota.Allocation
+	(Topology_State)(0),                    // 0: cloud.v1.topology.Topology.State
+	(*Node)(nil),                           // 1: cloud.v1.topology.Node
+	(*TopologySpec)(nil),                   // 2: cloud.v1.topology.TopologySpec
+	(*Topology)(nil),                       // 3: cloud.v1.topology.Topology
+	nil,                                    // 4: cloud.v1.topology.Node.LabelsEntry
+	nil,                                    // 5: cloud.v1.topology.TopologySpec.LabelsEntry
+	(*common.Tags)(nil),                    // 6: cloud.v1.common.Tags
+	(*Component)(nil),                      // 7: cloud.v1.topology.Component
+	(*Connection)(nil),                     // 8: cloud.v1.topology.Connection
+	(*deployment.InfrastructurePlan)(nil),  // 9: cloud.v1.deployment.InfrastructurePlan
+	(*deployment.InfrastructureState)(nil), // 10: cloud.v1.deployment.InfrastructureState
+	(*deployment.DeploymentPlan)(nil),      // 11: cloud.v1.deployment.DeploymentPlan
 }
 var file_cloud_v1_topology_topology_proto_depIdxs = []int32{
-	1,  // 0: cloud.v1.topology.Topology.instances:type_name -> cloud.v1.topology.Topology.Instance
-	2,  // 1: cloud.v1.topology.Topology.connections:type_name -> cloud.v1.topology.Connection
-	3,  // 2: cloud.v1.topology.Topology.external_components:type_name -> cloud.v1.topology.Component
-	4,  // 3: cloud.v1.topology.Topology.tags:type_name -> cloud.v1.common.Tags
-	5,  // 4: cloud.v1.topology.Topology.Instance.status:type_name -> cloud.v1.common.Status
-	6,  // 5: cloud.v1.topology.Topology.Instance.machine_info:type_name -> cloud.v1.deployment.MachineInfo
-	7,  // 6: cloud.v1.topology.Topology.Instance.provider_parms:type_name -> schemapb.Baked
-	8,  // 7: cloud.v1.topology.Topology.Instance.quota_requests:type_name -> cloud.v1.deployment.Quota.Request
-	9,  // 8: cloud.v1.topology.Topology.Instance.allocated_quotas:type_name -> cloud.v1.deployment.Quota.Allocation
-	7,  // 9: cloud.v1.topology.Topology.Instance.deployment_parms:type_name -> schemapb.Baked
-	4,  // 10: cloud.v1.topology.Topology.Instance.tags:type_name -> cloud.v1.common.Tags
-	3,  // 11: cloud.v1.topology.Topology.Instance.components:type_name -> cloud.v1.topology.Component
-	12, // [12:12] is the sub-list for method output_type
-	12, // [12:12] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	4,  // 0: cloud.v1.topology.Node.labels:type_name -> cloud.v1.topology.Node.LabelsEntry
+	6,  // 1: cloud.v1.topology.Node.tags:type_name -> cloud.v1.common.Tags
+	1,  // 2: cloud.v1.topology.TopologySpec.nodes:type_name -> cloud.v1.topology.Node
+	7,  // 3: cloud.v1.topology.TopologySpec.components:type_name -> cloud.v1.topology.Component
+	8,  // 4: cloud.v1.topology.TopologySpec.connections:type_name -> cloud.v1.topology.Connection
+	7,  // 5: cloud.v1.topology.TopologySpec.external_components:type_name -> cloud.v1.topology.Component
+	5,  // 6: cloud.v1.topology.TopologySpec.labels:type_name -> cloud.v1.topology.TopologySpec.LabelsEntry
+	6,  // 7: cloud.v1.topology.TopologySpec.tags:type_name -> cloud.v1.common.Tags
+	0,  // 8: cloud.v1.topology.Topology.state:type_name -> cloud.v1.topology.Topology.State
+	2,  // 9: cloud.v1.topology.Topology.spec:type_name -> cloud.v1.topology.TopologySpec
+	9,  // 10: cloud.v1.topology.Topology.infrastructure_plan:type_name -> cloud.v1.deployment.InfrastructurePlan
+	10, // 11: cloud.v1.topology.Topology.infrastructure_state:type_name -> cloud.v1.deployment.InfrastructureState
+	11, // 12: cloud.v1.topology.Topology.deployment_plan:type_name -> cloud.v1.deployment.DeploymentPlan
+	6,  // 13: cloud.v1.topology.Topology.tags:type_name -> cloud.v1.common.Tags
+	14, // [14:14] is the sub-list for method output_type
+	14, // [14:14] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_topology_topology_proto_init() }
@@ -301,19 +451,19 @@ func file_cloud_v1_topology_topology_proto_init() {
 	}
 	file_cloud_v1_topology_component_proto_init()
 	file_cloud_v1_topology_connection_proto_init()
-	file_cloud_v1_topology_topology_proto_msgTypes[1].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_topology_topology_proto_rawDesc), len(file_cloud_v1_topology_topology_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   2,
+			NumEnums:      1,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_cloud_v1_topology_topology_proto_goTypes,
 		DependencyIndexes: file_cloud_v1_topology_topology_proto_depIdxs,
+		EnumInfos:         file_cloud_v1_topology_topology_proto_enumTypes,
 		MessageInfos:      file_cloud_v1_topology_topology_proto_msgTypes,
 	}.Build()
 	File_cloud_v1_topology_topology_proto = out.File

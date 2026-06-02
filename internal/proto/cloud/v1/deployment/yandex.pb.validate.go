@@ -202,6 +202,261 @@ var _ interface {
 	ErrorName() string
 } = YandexValidationError{}
 
+// Validate checks the field values on Yandex_Settings with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *Yandex_Settings) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Yandex_Settings with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Yandex_SettingsMultiError, or nil if none found.
+func (m *Yandex_Settings) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Yandex_Settings) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetToken()) > 4096 {
+		err := Yandex_SettingsValidationError{
+			field:  "Token",
+			reason: "value length must be at most 4096 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetCloudId()); l < 1 || l > 128 {
+		err := Yandex_SettingsValidationError{
+			field:  "CloudId",
+			reason: "value length must be between 1 and 128 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetFolderId()); l < 1 || l > 128 {
+		err := Yandex_SettingsValidationError{
+			field:  "FolderId",
+			reason: "value length must be between 1 and 128 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := _Yandex_Settings_Zone_NotInLookup[m.GetZone()]; ok {
+		err := Yandex_SettingsValidationError{
+			field:  "Zone",
+			reason: "value must not be in list [ZONE_UNSPECIFIED]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := Yandex_Settings_Zone_name[int32(m.GetZone())]; !ok {
+		err := Yandex_SettingsValidationError{
+			field:  "Zone",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetNetworkId()); l < 1 || l > 128 {
+		err := Yandex_SettingsValidationError{
+			field:  "NetworkId",
+			reason: "value length must be between 1 and 128 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetNetworkName()); l < 1 || l > 63 {
+		err := Yandex_SettingsValidationError{
+			field:  "NetworkName",
+			reason: "value length must be between 1 and 63 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetSubnetCidr()); l < 1 || l > 64 {
+		err := Yandex_SettingsValidationError{
+			field:  "SubnetCidr",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := _Yandex_Settings_PlatformId_NotInLookup[m.GetPlatformId()]; ok {
+		err := Yandex_SettingsValidationError{
+			field:  "PlatformId",
+			reason: "value must not be in list [PLATFORM_ID_UNSPECIFIED]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := Yandex_Settings_PlatformId_name[int32(m.GetPlatformId())]; !ok {
+		err := Yandex_SettingsValidationError{
+			field:  "PlatformId",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetImageId()); l < 1 || l > 128 {
+		err := Yandex_SettingsValidationError{
+			field:  "ImageId",
+			reason: "value length must be between 1 and 128 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for AssignPublicIp
+
+	// no validation rules for SoftwareAcceleratedNetwork
+
+	if l := utf8.RuneCountInString(m.GetSshUser()); l < 1 || l > 64 {
+		err := Yandex_SettingsValidationError{
+			field:  "SshUser",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetSshPublicKey()); l < 1 || l > 4096 {
+		err := Yandex_SettingsValidationError{
+			field:  "SshPublicKey",
+			reason: "value length must be between 1 and 4096 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return Yandex_SettingsMultiError(errors)
+	}
+
+	return nil
+}
+
+// Yandex_SettingsMultiError is an error wrapping multiple validation errors
+// returned by Yandex_Settings.ValidateAll() if the designated constraints
+// aren't met.
+type Yandex_SettingsMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Yandex_SettingsMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Yandex_SettingsMultiError) AllErrors() []error { return m }
+
+// Yandex_SettingsValidationError is the validation error returned by
+// Yandex_Settings.Validate if the designated constraints aren't met.
+type Yandex_SettingsValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Yandex_SettingsValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Yandex_SettingsValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Yandex_SettingsValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Yandex_SettingsValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Yandex_SettingsValidationError) ErrorName() string { return "Yandex_SettingsValidationError" }
+
+// Error satisfies the builtin error interface
+func (e Yandex_SettingsValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sYandex_Settings.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Yandex_SettingsValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Yandex_SettingsValidationError{}
+
+var _Yandex_Settings_Zone_NotInLookup = map[Yandex_Settings_Zone]struct{}{
+	0: {},
+}
+
+var _Yandex_Settings_PlatformId_NotInLookup = map[Yandex_Settings_PlatformId]struct{}{
+	0: {},
+}
+
 // Validate checks the field values on Yandex_Input with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.

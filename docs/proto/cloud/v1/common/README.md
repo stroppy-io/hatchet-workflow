@@ -5,7 +5,6 @@
 
 ## Table of Contents
 - Messages
-  - [cloud.v1.common.BakedFile](#cloud-v1-common-bakedfile)
   - [cloud.v1.common.Cidr](#cloud-v1-common-cidr)
   - [cloud.v1.common.Cmd](#cloud-v1-common-cmd)
   - [cloud.v1.common.Cmd.Argv](#cloud-v1-common-cmd-argv)
@@ -38,49 +37,6 @@
 
 <a name="cloud-v1-common-messages"></a>
 ## Messages
-
-<a name="cloud-v1-common-bakedfile"></a>
-### cloud.v1.common.BakedFile
-
-<pre>
-//BakedFile pairs a File with the resolver that produced it and the
-//schema-validated data used to render it, capturing a fully materialized file.
-</pre>
-
-<table>
-<tr>
-<th>Attribute</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-<tr>
-<td>data</td>
-<td><a href="../../../schemapb/README.md#schemapb-baked">schemapb.Baked</a></td>
-<td><pre>
-data is the schema-validated input baked into the file.<br>
-
-json_name: data
-go_name: Data</pre></td>
-</tr><tr>
-<td>file</td>
-<td><a href="#cloud-v1-common-file">cloud.v1.common.File</a></td>
-<td><pre>
-file is the materialized file description.<br>
-
-json_name: file
-go_name: File</pre></td>
-</tr><tr>
-<td>resolver_name</td>
-<td>string</td>
-<td><pre>
-resolver_name identifies the resolver that produced the file content.<br>
-
-json_name: resolverName
-go_name: ResolverName</pre></td>
-</tr>
-</table>
-
-
 
 <a name="cloud-v1-common-cidr"></a>
 ### cloud.v1.common.Cidr

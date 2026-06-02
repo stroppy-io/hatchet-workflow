@@ -57,35 +57,91 @@ func (m *ProviderSettings) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Provider
-
-	if all {
-		switch v := interface{}(m.GetSettings()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, ProviderSettingsValidationError{
-					field:  "Settings",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, ProviderSettingsValidationError{
-					field:  "Settings",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetSettings()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return ProviderSettingsValidationError{
+	switch v := m.Settings.(type) {
+	case *ProviderSettings_Docker:
+		if v == nil {
+			err := ProviderSettingsValidationError{
 				field:  "Settings",
-				reason: "embedded message failed validation",
-				cause:  err,
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+		if all {
+			switch v := interface{}(m.GetDocker()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ProviderSettingsValidationError{
+						field:  "Docker",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ProviderSettingsValidationError{
+						field:  "Docker",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetDocker()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ProviderSettingsValidationError{
+					field:  "Docker",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
 			}
 		}
+
+	case *ProviderSettings_Yandex:
+		if v == nil {
+			err := ProviderSettingsValidationError{
+				field:  "Settings",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+		if all {
+			switch v := interface{}(m.GetYandex()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ProviderSettingsValidationError{
+						field:  "Yandex",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ProviderSettingsValidationError{
+						field:  "Yandex",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetYandex()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ProviderSettingsValidationError{
+					field:  "Yandex",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	default:
+		_ = v // ensures v is used
 	}
 
 	if len(errors) > 0 {

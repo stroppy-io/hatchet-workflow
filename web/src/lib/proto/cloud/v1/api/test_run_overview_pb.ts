@@ -6,12 +6,16 @@ import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobu
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import { file_cloud_v1_iam_options } from "../iam/options_pb.ts";
 import { file_cloud_v1_iam_permission } from "../iam/permission_pb.ts";
+import type { TestRunRecord, TestRunRecordJson } from "../models/test_run_pb.ts";
+import { file_cloud_v1_models_test_run } from "../models/test_run_pb.ts";
 import type { LogCursor, LogCursorJson, LogLine, LogLineJson, LogLineSchema, LogRef, LogRefJson, Source, SourceJson, Stream, StreamJson } from "../monitor/logs_pb.ts";
 import { file_cloud_v1_monitor_logs } from "../monitor/logs_pb.ts";
 import type { RunMetrics, RunMetricsJson } from "../monitor/metrics_pb.ts";
 import { file_cloud_v1_monitor_metrics } from "../monitor/metrics_pb.ts";
-import type { Overview, OverviewJson, OverviewSchema } from "../monitor/overview_pb.ts";
+import type { Overview, OverviewJson } from "../monitor/overview_pb.ts";
 import { file_cloud_v1_monitor_overview } from "../monitor/overview_pb.ts";
+import type { Topology, TopologyJson } from "../topology/topology_pb.ts";
+import { file_cloud_v1_topology_topology } from "../topology/topology_pb.ts";
 import type { Timestamp, TimestampJson } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import { file_validate_validate } from "../../../validate/validate_pb.ts";
@@ -21,7 +25,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/api/test_run_overview.proto.
  */
 export const file_cloud_v1_api_test_run_overview: GenFile = /*@__PURE__*/
-  fileDesc("CiRjbG91ZC92MS9hcGkvdGVzdF9ydW5fb3ZlcnZpZXcucHJvdG8SDGNsb3VkLnYxLmFwaSL+AgoJTG9nRmlsdGVyEiwKEm5vZGVfZXhlY3V0aW9uX2lkcxgBIAMoCUIQ+kINkgEKEIACIgVyAxiAARInCg1jb21wb25lbnRfaWRzGAIgAygJQhD6Qg2SAQoiBXIDGIABEIACEiUKC21hY2hpbmVfaWRzGAMgAygJQhD6Qg2SAQoQgAIiBXIDGIABEikKB3NvdXJjZXMYBCADKA4yGC5jbG91ZC52MS5tb25pdG9yLlNvdXJjZRIpCgdzdHJlYW1zGAUgAygOMhguY2xvdWQudjEubW9uaXRvci5TdHJlYW0SFgoEdW5pdBgGIAEoCUII+kIFcgMYgAISKQoFc3RhcnQYByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEicKA2VuZBgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASGAoGc2VhcmNoGAkgASgJQgj6QgVyAxiACBIXCgVxdWVyeRgKIAEoCUII+kIFcgMYgCAiVQoZR2V0VGVzdFJ1bk92ZXJ2aWV3UmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIaCgZydW5faWQYAiABKAlCCvpCB3IFGIABEAEiVAoaR2V0VGVzdFJ1bk92ZXJ2aWV3UmVzcG9uc2USNgoIb3ZlcnZpZXcYASABKAsyGi5jbG91ZC52MS5tb25pdG9yLk92ZXJ2aWV3Qgj6QgWKAQIQASJYChxTdHJlYW1UZXN0UnVuT3ZlcnZpZXdSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhoKBnJ1bl9pZBgCIAEoCUIK+kIHcgUQARiAASLuAQoQUXVlcnlMb2dzUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEGEAQARIaCgZydW5faWQYAiABKAlCCvpCB3IFEAEYgAESJwoGZmlsdGVyGAMgASgLMhcuY2xvdWQudjEuYXBpLkxvZ0ZpbHRlchIpCgRmcm9tGAQgASgLMhsuY2xvdWQudjEubW9uaXRvci5Mb2dDdXJzb3ISMwoJZGlyZWN0aW9uGAUgASgOMiAuY2xvdWQudjEuYXBpLkxvZ1Njcm9sbERpcmVjdGlvbhIXCgVsaW1pdBgGIAEoDUII+kIFKgMYiCcilQEKEVF1ZXJ5TG9nc1Jlc3BvbnNlEigKBWxpbmVzGAEgAygLMhkuY2xvdWQudjEubW9uaXRvci5Mb2dMaW5lEioKBW9sZGVyGAIgASgLMhsuY2xvdWQudjEubW9uaXRvci5Mb2dDdXJzb3ISKgoFbmV3ZXIYAyABKAsyGy5jbG91ZC52MS5tb25pdG9yLkxvZ0N1cnNvciKhAQoRU3RyZWFtTG9nc1JlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASGgoGcnVuX2lkGAIgASgJQgr6QgdyBRABGIABEicKBmZpbHRlchgDIAEoCzIXLmNsb3VkLnYxLmFwaS5Mb2dGaWx0ZXISKQoEZnJvbRgEIAEoCzIbLmNsb3VkLnYxLm1vbml0b3IuTG9nQ3Vyc29yImUKFFJlc29sdmVMb2dSZWZSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEi8KA3JlZhgCIAEoCzIYLmNsb3VkLnYxLm1vbml0b3IuTG9nUmVmQgj6QgWKAQIQASJ9ChVSZXNvbHZlTG9nUmVmUmVzcG9uc2USDgoGcnVuX2lkGAEgASgJEicKBmZpbHRlchgCIAEoCzIXLmNsb3VkLnYxLmFwaS5Mb2dGaWx0ZXISKwoGY3Vyc29yGAMgASgLMhsuY2xvdWQudjEubW9uaXRvci5Mb2dDdXJzb3IiUAoUR2V0UnVuTWV0cmljc1JlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBhAEAESGgoGcnVuX2lkGAIgASgJQgr6QgdyBRABGIABIlAKFUdldFJ1bk1ldHJpY3NSZXNwb25zZRI3CgdtZXRyaWNzGAEgASgLMhwuY2xvdWQudjEubW9uaXRvci5SdW5NZXRyaWNzQgj6QgWKAQIQASp6ChJMb2dTY3JvbGxEaXJlY3Rpb24SJAogTE9HX1NDUk9MTF9ESVJFQ1RJT05fVU5TUEVDSUZJRUQQABIeChpMT0dfU0NST0xMX0RJUkVDVElPTl9PTERFUhABEh4KGkxPR19TQ1JPTExfRElSRUNUSU9OX05FV0VSEAIyhgUKFlRlc3RSdW5PdmVydmlld1NlcnZpY2USdgoSR2V0VGVzdFJ1bk92ZXJ2aWV3EicuY2xvdWQudjEuYXBpLkdldFRlc3RSdW5PdmVydmlld1JlcXVlc3QaKC5jbG91ZC52MS5hcGkuR2V0VGVzdFJ1bk92ZXJ2aWV3UmVzcG9uc2UiDZACAYq1GAYSBBACCAgSbQoVU3RyZWFtVGVzdFJ1bk92ZXJ2aWV3EiouY2xvdWQudjEuYXBpLlN0cmVhbVRlc3RSdW5PdmVydmlld1JlcXVlc3QaGi5jbG91ZC52MS5tb25pdG9yLk92ZXJ2aWV3IgqKtRgGEgQICBACMAESWwoJUXVlcnlMb2dzEh4uY2xvdWQudjEuYXBpLlF1ZXJ5TG9nc1JlcXVlc3QaHy5jbG91ZC52MS5hcGkuUXVlcnlMb2dzUmVzcG9uc2UiDZACAYq1GAYSBAgIEAISVgoKU3RyZWFtTG9ncxIfLmNsb3VkLnYxLmFwaS5TdHJlYW1Mb2dzUmVxdWVzdBoZLmNsb3VkLnYxLm1vbml0b3IuTG9nTGluZSIKirUYBhIECAgQAjABEmcKDVJlc29sdmVMb2dSZWYSIi5jbG91ZC52MS5hcGkuUmVzb2x2ZUxvZ1JlZlJlcXVlc3QaIy5jbG91ZC52MS5hcGkuUmVzb2x2ZUxvZ1JlZlJlc3BvbnNlIg2QAgGKtRgGEgQICBACEmcKDUdldFJ1bk1ldHJpY3MSIi5jbG91ZC52MS5hcGkuR2V0UnVuTWV0cmljc1JlcXVlc3QaIy5jbG91ZC52MS5hcGkuR2V0UnVuTWV0cmljc1Jlc3BvbnNlIg2QAgGKtRgGEgQICBACQkFaP2dpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2FwaWIGcHJvdG8z", [file_cloud_v1_iam_options, file_cloud_v1_iam_permission, file_cloud_v1_monitor_logs, file_cloud_v1_monitor_metrics, file_cloud_v1_monitor_overview, file_google_protobuf_timestamp, file_validate_validate]);
+  fileDesc("CiRjbG91ZC92MS9hcGkvdGVzdF9ydW5fb3ZlcnZpZXcucHJvdG8SDGNsb3VkLnYxLmFwaSL7AgoJTG9nRmlsdGVyEiwKEm5vZGVfZXhlY3V0aW9uX2lkcxgBIAMoCUIQ+kINkgEKEIACIgVyAxiAARInCg1jb21wb25lbnRfaWRzGAIgAygJQhD6Qg2SAQoQgAIiBXIDGIABEiIKCG5vZGVfaWRzGAMgAygJQhD6Qg2SAQoQgAIiBXIDGIABEikKB3NvdXJjZXMYBCADKA4yGC5jbG91ZC52MS5tb25pdG9yLlNvdXJjZRIpCgdzdHJlYW1zGAUgAygOMhguY2xvdWQudjEubW9uaXRvci5TdHJlYW0SFgoEdW5pdBgGIAEoCUII+kIFcgMYgAISKQoFc3RhcnQYByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEicKA2VuZBgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASGAoGc2VhcmNoGAkgASgJQgj6QgVyAxiACBIXCgVxdWVyeRgKIAEoCUII+kIFcgMYgCAiwQEKF1Rlc3RSdW5PdmVydmlld1NuYXBzaG90EjUKA3J1bhgBIAEoCzIeLmNsb3VkLnYxLm1vZGVscy5UZXN0UnVuUmVjb3JkQgj6QgWKAQIQARI3Cgh0b3BvbG9neRgCIAEoCzIbLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5Qgj6QgWKAQIQARI2CghvdmVydmlldxgDIAEoCzIaLmNsb3VkLnYxLm1vbml0b3IuT3ZlcnZpZXdCCPpCBYoBAhABIlUKGUdldFRlc3RSdW5PdmVydmlld1JlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASGgoGcnVuX2lkGAIgASgJQgr6QgdyBRABGIABIl8KGkdldFRlc3RSdW5PdmVydmlld1Jlc3BvbnNlEkEKCHNuYXBzaG90GAEgASgLMiUuY2xvdWQudjEuYXBpLlRlc3RSdW5PdmVydmlld1NuYXBzaG90Qgj6QgWKAQIQASJYChxTdHJlYW1UZXN0UnVuT3ZlcnZpZXdSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhoKBnJ1bl9pZBgCIAEoCUIK+kIHcgUQARiAASLuAQoQUXVlcnlMb2dzUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIaCgZydW5faWQYAiABKAlCCvpCB3IFGIABEAESJwoGZmlsdGVyGAMgASgLMhcuY2xvdWQudjEuYXBpLkxvZ0ZpbHRlchIpCgRmcm9tGAQgASgLMhsuY2xvdWQudjEubW9uaXRvci5Mb2dDdXJzb3ISMwoJZGlyZWN0aW9uGAUgASgOMiAuY2xvdWQudjEuYXBpLkxvZ1Njcm9sbERpcmVjdGlvbhIXCgVsaW1pdBgGIAEoDUII+kIFKgMYiCcilQEKEVF1ZXJ5TG9nc1Jlc3BvbnNlEigKBWxpbmVzGAEgAygLMhkuY2xvdWQudjEubW9uaXRvci5Mb2dMaW5lEioKBW9sZGVyGAIgASgLMhsuY2xvdWQudjEubW9uaXRvci5Mb2dDdXJzb3ISKgoFbmV3ZXIYAyABKAsyGy5jbG91ZC52MS5tb25pdG9yLkxvZ0N1cnNvciKhAQoRU3RyZWFtTG9nc1JlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASGgoGcnVuX2lkGAIgASgJQgr6QgdyBRABGIABEicKBmZpbHRlchgDIAEoCzIXLmNsb3VkLnYxLmFwaS5Mb2dGaWx0ZXISKQoEZnJvbRgEIAEoCzIbLmNsb3VkLnYxLm1vbml0b3IuTG9nQ3Vyc29yImUKFFJlc29sdmVMb2dSZWZSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEi8KA3JlZhgCIAEoCzIYLmNsb3VkLnYxLm1vbml0b3IuTG9nUmVmQgj6QgWKAQIQASJ9ChVSZXNvbHZlTG9nUmVmUmVzcG9uc2USDgoGcnVuX2lkGAEgASgJEicKBmZpbHRlchgCIAEoCzIXLmNsb3VkLnYxLmFwaS5Mb2dGaWx0ZXISKwoGY3Vyc29yGAMgASgLMhsuY2xvdWQudjEubW9uaXRvci5Mb2dDdXJzb3IiUAoUR2V0UnVuTWV0cmljc1JlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASGgoGcnVuX2lkGAIgASgJQgr6QgdyBRABGIABIlAKFUdldFJ1bk1ldHJpY3NSZXNwb25zZRI3CgdtZXRyaWNzGAEgASgLMhwuY2xvdWQudjEubW9uaXRvci5SdW5NZXRyaWNzQgj6QgWKAQIQASp6ChJMb2dTY3JvbGxEaXJlY3Rpb24SJAogTE9HX1NDUk9MTF9ESVJFQ1RJT05fVU5TUEVDSUZJRUQQABIeChpMT0dfU0NST0xMX0RJUkVDVElPTl9PTERFUhABEh4KGkxPR19TQ1JPTExfRElSRUNUSU9OX05FV0VSEAIykQUKFlRlc3RSdW5PdmVydmlld1NlcnZpY2USdgoSR2V0VGVzdFJ1bk92ZXJ2aWV3EicuY2xvdWQudjEuYXBpLkdldFRlc3RSdW5PdmVydmlld1JlcXVlc3QaKC5jbG91ZC52MS5hcGkuR2V0VGVzdFJ1bk92ZXJ2aWV3UmVzcG9uc2UiDZACAYq1GAYSBAgIEAISeAoVU3RyZWFtVGVzdFJ1bk92ZXJ2aWV3EiouY2xvdWQudjEuYXBpLlN0cmVhbVRlc3RSdW5PdmVydmlld1JlcXVlc3QaJS5jbG91ZC52MS5hcGkuVGVzdFJ1bk92ZXJ2aWV3U25hcHNob3QiCoq1GAYSBAgIEAIwARJbCglRdWVyeUxvZ3MSHi5jbG91ZC52MS5hcGkuUXVlcnlMb2dzUmVxdWVzdBofLmNsb3VkLnYxLmFwaS5RdWVyeUxvZ3NSZXNwb25zZSINkAIBirUYBhIECAgQAhJWCgpTdHJlYW1Mb2dzEh8uY2xvdWQudjEuYXBpLlN0cmVhbUxvZ3NSZXF1ZXN0GhkuY2xvdWQudjEubW9uaXRvci5Mb2dMaW5lIgqKtRgGEgQICBACMAESZwoNUmVzb2x2ZUxvZ1JlZhIiLmNsb3VkLnYxLmFwaS5SZXNvbHZlTG9nUmVmUmVxdWVzdBojLmNsb3VkLnYxLmFwaS5SZXNvbHZlTG9nUmVmUmVzcG9uc2UiDZACAYq1GAYSBAgIEAISZwoNR2V0UnVuTWV0cmljcxIiLmNsb3VkLnYxLmFwaS5HZXRSdW5NZXRyaWNzUmVxdWVzdBojLmNsb3VkLnYxLmFwaS5HZXRSdW5NZXRyaWNzUmVzcG9uc2UiDZACAYq1GAYSBAgIEAJCQVo/Z2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvYXBpYgZwcm90bzM", [file_cloud_v1_iam_options, file_cloud_v1_iam_permission, file_cloud_v1_models_test_run, file_cloud_v1_monitor_logs, file_cloud_v1_monitor_metrics, file_cloud_v1_monitor_overview, file_cloud_v1_topology_topology, file_google_protobuf_timestamp, file_validate_validate]);
 
 /**
  *
@@ -50,11 +54,11 @@ export type LogFilter = Message<"cloud.v1.api.LogFilter"> & {
 
   /**
    *
-   * machine_ids restricts to lines emitted by these machines.
+   * node_ids restricts to lines emitted by these logical topology nodes.
    *
-   * @generated from field: repeated string machine_ids = 3;
+   * @generated from field: repeated string node_ids = 3;
    */
-  machineIds: string[];
+  nodeIds: string[];
 
   /**
    *
@@ -140,11 +144,11 @@ export type LogFilterJson = {
 
   /**
    *
-   * machine_ids restricts to lines emitted by these machines.
+   * node_ids restricts to lines emitted by these logical topology nodes.
    *
-   * @generated from field: repeated string machine_ids = 3;
+   * @generated from field: repeated string node_ids = 3;
    */
-  machineIds?: string[];
+  nodeIds?: string[];
 
   /**
    *
@@ -214,6 +218,85 @@ export const LogFilterSchema: GenMessage<LogFilter, {jsonType: LogFilterJson, va
 
 /**
  *
+ * TestRunOverviewSnapshot is the overview page state: persisted run record,
+ * current staged topology envelope, and live monitor pipeline/timeline view.
+ *
+ * @generated from message cloud.v1.api.TestRunOverviewSnapshot
+ */
+export type TestRunOverviewSnapshot = Message<"cloud.v1.api.TestRunOverviewSnapshot"> & {
+  /**
+   *
+   * run is the persisted run record, including immutable spec and any stored
+   * infrastructure/deployment artifacts.
+   *
+   * @generated from field: cloud.v1.models.TestRunRecord run = 1;
+   */
+  run?: TestRunRecord;
+
+  /**
+   *
+   * topology is the staged topology envelope composed from the run spec,
+   * infrastructure state and deployment plan.
+   *
+   * @generated from field: cloud.v1.topology.Topology topology = 2;
+   */
+  topology?: Topology;
+
+  /**
+   *
+   * overview is the live status/pipeline/workers/timeline projection.
+   *
+   * @generated from field: cloud.v1.monitor.Overview overview = 3;
+   */
+  overview?: Overview;
+};
+
+/**
+ *
+ * TestRunOverviewSnapshot is the overview page state: persisted run record,
+ * current staged topology envelope, and live monitor pipeline/timeline view.
+ *
+ * @generated from message cloud.v1.api.TestRunOverviewSnapshot
+ */
+export type TestRunOverviewSnapshotJson = {
+  /**
+   *
+   * run is the persisted run record, including immutable spec and any stored
+   * infrastructure/deployment artifacts.
+   *
+   * @generated from field: cloud.v1.models.TestRunRecord run = 1;
+   */
+  run?: TestRunRecordJson;
+
+  /**
+   *
+   * topology is the staged topology envelope composed from the run spec,
+   * infrastructure state and deployment plan.
+   *
+   * @generated from field: cloud.v1.topology.Topology topology = 2;
+   */
+  topology?: TopologyJson;
+
+  /**
+   *
+   * overview is the live status/pipeline/workers/timeline projection.
+   *
+   * @generated from field: cloud.v1.monitor.Overview overview = 3;
+   */
+  overview?: OverviewJson;
+};
+
+export type TestRunOverviewSnapshotValid = TestRunOverviewSnapshot;
+
+/**
+ * Describes the message cloud.v1.api.TestRunOverviewSnapshot.
+ * Use `create(TestRunOverviewSnapshotSchema)` to create a new message.
+ */
+export const TestRunOverviewSnapshotSchema: GenMessage<TestRunOverviewSnapshot, {jsonType: TestRunOverviewSnapshotJson, validType: TestRunOverviewSnapshotValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_test_run_overview, 1);
+
+/**
+ *
  * GetTestRunOverviewRequest fetches the Overview tab payload for a run.
  *
  * @generated from message cloud.v1.api.GetTestRunOverviewRequest
@@ -267,38 +350,38 @@ export type GetTestRunOverviewRequestValid = GetTestRunOverviewRequest;
  * Use `create(GetTestRunOverviewRequestSchema)` to create a new message.
  */
 export const GetTestRunOverviewRequestSchema: GenMessage<GetTestRunOverviewRequest, {jsonType: GetTestRunOverviewRequestJson, validType: GetTestRunOverviewRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_test_run_overview, 1);
+  messageDesc(file_cloud_v1_api_test_run_overview, 2);
 
 /**
  *
- * GetTestRunOverviewResponse returns the run's Overview snapshot.
+ * GetTestRunOverviewResponse returns the run's staged Overview snapshot.
  *
  * @generated from message cloud.v1.api.GetTestRunOverviewResponse
  */
 export type GetTestRunOverviewResponse = Message<"cloud.v1.api.GetTestRunOverviewResponse"> & {
   /**
    *
-   * overview is the full overview (status/pipeline/workers/timeline).
+   * snapshot is the full overview page state.
    *
-   * @generated from field: cloud.v1.monitor.Overview overview = 1;
+   * @generated from field: cloud.v1.api.TestRunOverviewSnapshot snapshot = 1;
    */
-  overview?: Overview;
+  snapshot?: TestRunOverviewSnapshot;
 };
 
 /**
  *
- * GetTestRunOverviewResponse returns the run's Overview snapshot.
+ * GetTestRunOverviewResponse returns the run's staged Overview snapshot.
  *
  * @generated from message cloud.v1.api.GetTestRunOverviewResponse
  */
 export type GetTestRunOverviewResponseJson = {
   /**
    *
-   * overview is the full overview (status/pipeline/workers/timeline).
+   * snapshot is the full overview page state.
    *
-   * @generated from field: cloud.v1.monitor.Overview overview = 1;
+   * @generated from field: cloud.v1.api.TestRunOverviewSnapshot snapshot = 1;
    */
-  overview?: OverviewJson;
+  snapshot?: TestRunOverviewSnapshotJson;
 };
 
 export type GetTestRunOverviewResponseValid = GetTestRunOverviewResponse;
@@ -308,13 +391,13 @@ export type GetTestRunOverviewResponseValid = GetTestRunOverviewResponse;
  * Use `create(GetTestRunOverviewResponseSchema)` to create a new message.
  */
 export const GetTestRunOverviewResponseSchema: GenMessage<GetTestRunOverviewResponse, {jsonType: GetTestRunOverviewResponseJson, validType: GetTestRunOverviewResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_test_run_overview, 2);
+  messageDesc(file_cloud_v1_api_test_run_overview, 3);
 
 /**
  *
  * StreamTestRunOverviewRequest opens a live overview stream for a run. Each stream
- * tick is a fresh full Overview (status/pipeline/workers/timeline) so the client
- * just replaces its state; no diff merging.
+ * tick is a fresh full snapshot so the client just replaces its state; no diff
+ * merging.
  *
  * @generated from message cloud.v1.api.StreamTestRunOverviewRequest
  */
@@ -339,8 +422,8 @@ export type StreamTestRunOverviewRequest = Message<"cloud.v1.api.StreamTestRunOv
 /**
  *
  * StreamTestRunOverviewRequest opens a live overview stream for a run. Each stream
- * tick is a fresh full Overview (status/pipeline/workers/timeline) so the client
- * just replaces its state; no diff merging.
+ * tick is a fresh full snapshot so the client just replaces its state; no diff
+ * merging.
  *
  * @generated from message cloud.v1.api.StreamTestRunOverviewRequest
  */
@@ -369,7 +452,7 @@ export type StreamTestRunOverviewRequestValid = StreamTestRunOverviewRequest;
  * Use `create(StreamTestRunOverviewRequestSchema)` to create a new message.
  */
 export const StreamTestRunOverviewRequestSchema: GenMessage<StreamTestRunOverviewRequest, {jsonType: StreamTestRunOverviewRequestJson, validType: StreamTestRunOverviewRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_test_run_overview, 3);
+  messageDesc(file_cloud_v1_api_test_run_overview, 4);
 
 /**
  *
@@ -494,7 +577,7 @@ export type QueryLogsRequestValid = QueryLogsRequest;
  * Use `create(QueryLogsRequestSchema)` to create a new message.
  */
 export const QueryLogsRequestSchema: GenMessage<QueryLogsRequest, {jsonType: QueryLogsRequestJson, validType: QueryLogsRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_test_run_overview, 4);
+  messageDesc(file_cloud_v1_api_test_run_overview, 5);
 
 /**
  *
@@ -571,7 +654,7 @@ export type QueryLogsResponseValid = QueryLogsResponse;
  * Use `create(QueryLogsResponseSchema)` to create a new message.
  */
 export const QueryLogsResponseSchema: GenMessage<QueryLogsResponse, {jsonType: QueryLogsResponseJson, validType: QueryLogsResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_test_run_overview, 5);
+  messageDesc(file_cloud_v1_api_test_run_overview, 6);
 
 /**
  *
@@ -668,7 +751,7 @@ export type StreamLogsRequestValid = StreamLogsRequest;
  * Use `create(StreamLogsRequestSchema)` to create a new message.
  */
 export const StreamLogsRequestSchema: GenMessage<StreamLogsRequest, {jsonType: StreamLogsRequestJson, validType: StreamLogsRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_test_run_overview, 6);
+  messageDesc(file_cloud_v1_api_test_run_overview, 7);
 
 /**
  *
@@ -729,7 +812,7 @@ export type ResolveLogRefRequestValid = ResolveLogRefRequest;
  * Use `create(ResolveLogRefRequestSchema)` to create a new message.
  */
 export const ResolveLogRefRequestSchema: GenMessage<ResolveLogRefRequest, {jsonType: ResolveLogRefRequestJson, validType: ResolveLogRefRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_test_run_overview, 7);
+  messageDesc(file_cloud_v1_api_test_run_overview, 8);
 
 /**
  *
@@ -804,7 +887,7 @@ export type ResolveLogRefResponseValid = ResolveLogRefResponse;
  * Use `create(ResolveLogRefResponseSchema)` to create a new message.
  */
 export const ResolveLogRefResponseSchema: GenMessage<ResolveLogRefResponse, {jsonType: ResolveLogRefResponseJson, validType: ResolveLogRefResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_test_run_overview, 8);
+  messageDesc(file_cloud_v1_api_test_run_overview, 9);
 
 /**
  *
@@ -863,7 +946,7 @@ export type GetRunMetricsRequestValid = GetRunMetricsRequest;
  * Use `create(GetRunMetricsRequestSchema)` to create a new message.
  */
 export const GetRunMetricsRequestSchema: GenMessage<GetRunMetricsRequest, {jsonType: GetRunMetricsRequestJson, validType: GetRunMetricsRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_test_run_overview, 9);
+  messageDesc(file_cloud_v1_api_test_run_overview, 10);
 
 /**
  *
@@ -904,7 +987,7 @@ export type GetRunMetricsResponseValid = GetRunMetricsResponse;
  * Use `create(GetRunMetricsResponseSchema)` to create a new message.
  */
 export const GetRunMetricsResponseSchema: GenMessage<GetRunMetricsResponse, {jsonType: GetRunMetricsResponseJson, validType: GetRunMetricsResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_test_run_overview, 10);
+  messageDesc(file_cloud_v1_api_test_run_overview, 11);
 
 /**
  *
@@ -973,14 +1056,14 @@ export const TestRunOverviewService: GenService<{
   },
   /**
    *
-   * StreamTestRunOverview streams full Overview snapshots as the run progresses.
+   * StreamTestRunOverview streams full staged snapshots as the run progresses.
    *
    * @generated from rpc cloud.v1.api.TestRunOverviewService.StreamTestRunOverview
    */
   streamTestRunOverview: {
     methodKind: "server_streaming";
     input: typeof StreamTestRunOverviewRequestSchema;
-    output: typeof OverviewSchema;
+    output: typeof TestRunOverviewSnapshotSchema;
   },
   /**
    *

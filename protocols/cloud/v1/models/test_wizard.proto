@@ -3,6 +3,11 @@ syntax = "proto3";
 package cloud.v1.models;
 
 import "cloud/v1/common/entity.proto";
+import "cloud/v1/deployment/infrastructure.proto";
+import "cloud/v1/deployment/provider.proto";
+import "cloud/v1/deployment/render.proto";
+import "cloud/v1/domain/database.proto";
+import "cloud/v1/domain/workload.proto";
 import "cloud/v1/topology/topology.proto";
 import "schemapb/schema.proto";
 import "validate/validate.proto";
@@ -12,22 +17,13 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
 /*
     TestWizardDraft is the server-held, mutable state of a TEST wizard.
 
-    Big-schema model: the whole test form is ONE composite schemapb schema,
-    carried in `form` (a Filled = schema + values). It is the chosen DATABASE
-    schema (selected by kind: postgres/mysql/mariadb/picodata/ydb/ydbmanaged/
-    cockroach — pure and provider-agnostic, owning its own DB-internal cross-rules)
-    + a WORKLOAD schema + a `provider_type` selector that names which tenant
-    provider to deploy on. The form does NOT carry provider SETTINGS (those come
-    from TenantSettings.providers, keyed by provider_type) and does NOT carry
-    per-node machine forms (machines are derived, never entered by the user).
+    The server derives:
+      database + workload -> topology_spec
+      topology_spec + provider/defaults/user overrides -> infrastructure_plan
 
-    The server builds the composite schema, validates the whole form
-    authoritatively, re-derives the topology and recomputes readiness on every
-    patch. The frontend renders the form straight from `form` (schemapb ts sdk +
-    cel-es for live UX) and sends back a patched Filled.
-
-    Persistence: own table (tenant-scoped via Entity) + in-memory cache. On finish
-    it bakes into a domain.TestRun.
+    Provider account settings come from tenant settings at bake/start time. The
+    draft stores provider choice and per-node machine overrides inside
+    infrastructure_plan.
  */
 message TestWizardDraftRecord {
     /*
@@ -37,20 +33,42 @@ message TestWizardDraftRecord {
     common.Entity entity = 1 [(validate.rules).message.required = true];
 
     /*
-        form is the whole test form as one composite schema + its current values
-        (a Filled = schema + values): the chosen database schema (by kind,
-        provider-agnostic) + a workload schema + a provider_type selector. No
-        provider settings, no per-node machine forms.
+        provider selects the deployment backend (docker/yandex).
      */
-    schemapb.Filled form = 2;
+    deployment.Provider provider = 2 [(validate.rules).enum = {defined_only: true}];
 
     /*
-        topology is the server-DERIVED topology, recomputed on every patch: the
-        role->VM expander turns the validated DB config into machines, then a
-        provider overlay (zone/disk/platform from the selected provider_type's
-        TenantSettings) fills each machine's provider_parms. Never user-entered.
+        database is the typed, provider-agnostic database under test (engine kind +
+        DatabaseParams: logical node counts, HA flags, options). Replaces the old
+        schemapb database form half.
      */
-    topology.Topology topology = 3;
+    domain.Database database = 7;
+
+    /*
+        workload is the typed stroppy workload (the "how to load" half).
+     */
+    domain.Workload workload = 8;
+
+    /*
+        topology_spec is the server-derived provider-agnostic graph. Node roles
+        and counts are never hand-entered; they come from database/workload.
+     */
+    topology.TopologySpec topology_spec = 3;
+    /*
+        infrastructure_plan is the provider-specific resource intent derived from
+        topology_spec and provider defaults, with user machine overrides merged.
+     */
+    deployment.InfrastructurePlan infrastructure_plan = 9;
+    /*
+        render_preview is the server-rendered wizard view of generated files,
+        commands, directories, and runtime-only placeholders.
+     */
+    deployment.RenderPreview render_preview = 10;
+    /*
+        render_overrides are user edits to editable render artifacts. They are
+        merged into render_preview and later into the runtime deployment plan.
+     */
+    deployment.RenderOverrideSet render_overrides = 11;
     /*
         errors are the current authoritative errors (recomputed on every patch):
         schema validation errors PLUS the bake-time capacity/sanity errors

@@ -4,8 +4,18 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import type { RunStateSchema } from "./test_pb.ts";
-import { file_cloud_v1_workflow_test } from "./test_pb.ts";
+import type { InfrastructurePlan, InfrastructurePlanJson, InfrastructureState, InfrastructureStateJson } from "../deployment/infrastructure_pb.ts";
+import { file_cloud_v1_deployment_infrastructure } from "../deployment/infrastructure_pb.ts";
+import type { DeploymentPlan, DeploymentPlanJson } from "../deployment/plan_pb.ts";
+import { file_cloud_v1_deployment_plan } from "../deployment/plan_pb.ts";
+import type { RenderOverrideSet, RenderOverrideSetJson } from "../deployment/render_pb.ts";
+import { file_cloud_v1_deployment_render } from "../deployment/render_pb.ts";
+import type { Database, DatabaseJson } from "../domain/database_pb.ts";
+import { file_cloud_v1_domain_database } from "../domain/database_pb.ts";
+import type { Workload, WorkloadJson } from "../domain/workload_pb.ts";
+import { file_cloud_v1_domain_workload } from "../domain/workload_pb.ts";
+import type { TopologySpec, TopologySpecJson } from "../topology/topology_pb.ts";
+import { file_cloud_v1_topology_topology } from "../topology/topology_pb.ts";
 import type { EmptySchema } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_empty } from "@bufbuild/protobuf/wkt";
 import { file_temporal_v1_temporal } from "../../../temporal/v1/temporal_pb.ts";
@@ -16,96 +26,156 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/workflow/run.proto.
  */
 export const file_cloud_v1_workflow_run: GenFile = /*@__PURE__*/
-  fileDesc("ChtjbG91ZC92MS93b3JrZmxvdy9ydW4ucHJvdG8SEWNsb3VkLnYxLndvcmtmbG93Im4KCVJ1bkNvbmZpZxITCgJpZBgBIAEoCUIH+kIEcgIQARIZCghwcm92aWRlchgCIAEoCUIH+kIEcgIQARITCgtleHRlcm5hbF9kYhgDIAEoCBIcCgtjb25maWdfanNvbhgEIAEoDEIH+kIEegIQASJyCgZUYXJnZXQSEwoCaWQYASABKAlCB/pCBHICEAESDAoEaG9zdBgCIAEoCRIVCg1pbnRlcm5hbF9ob3N0GAMgASgJEhIKCmFnZW50X3BvcnQYBCABKAUSDAoEem9uZRgFIAEoCRIMCgRyb2xlGAYgASgJIp4BCgpEZXBsb3ltZW50EioKB3RhcmdldHMYASADKAsyGS5jbG91ZC52MS53b3JrZmxvdy5UYXJnZXQSDwoHZGJfaG9zdBgCIAEoCRIPCgdkYl9wb3J0GAMgASgFEhUKDWNvbnRhaW5lcl9pZHMYBCADKAkSEgoKbmV0d29ya19pZBgFIAEoCRIXCg90ZXJyYWZvcm1fd2RfaWQYBiABKAkyvQQKElJ1bldvcmtmbG93U2VydmljZRJ5CgtSdW5Xb3JrZmxvdxIcLmNsb3VkLnYxLndvcmtmbG93LlJ1bkNvbmZpZxoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSI0isQDMAoNCgtHZXRSdW5TdGF0ZXILUnVuV29ya2Zsb3cqDHJ1bi8keyEgaWQgfTACSgIgARJVCgtHZXRSdW5TdGF0ZRIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRobLmNsb3VkLnYxLndvcmtmbG93LlJ1blN0YXRlIhGaxAMNCgtHZXRSdW5TdGF0ZRJwChVDcmVhdGVOZXR3b3JrQWN0aXZpdHkSHC5jbG91ZC52MS53b3JrZmxvdy5SdW5Db25maWcaHS5jbG91ZC52MS53b3JrZmxvdy5EZXBsb3ltZW50IhqSxAMWIgMIrAIyDyADCgIIBREAAAAAAAAAQBJsChZEZXBsb3lNYWNoaW5lc0FjdGl2aXR5EhwuY2xvdWQudjEud29ya2Zsb3cuUnVuQ29uZmlnGh0uY2xvdWQudjEud29ya2Zsb3cuRGVwbG95bWVudCIVksQDESIDCIgOKgIIPDIGIAIKAggKEmAKEFRlYXJkb3duQWN0aXZpdHkSHS5jbG91ZC52MS53b3JrZmxvdy5EZXBsb3ltZW50GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IhWSxAMRKgIIPDIGIAMKAggKIgMIiA4aE4rEAw8KDXN0cm9wcHktY2xvdWRCRlpEZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvd29ya2Zsb3diBnByb3RvMw", [file_cloud_v1_workflow_test, file_google_protobuf_empty, file_temporal_v1_temporal, file_validate_validate]);
+  fileDesc("ChtjbG91ZC92MS93b3JrZmxvdy9ydW4ucHJvdG8SEWNsb3VkLnYxLndvcmtmbG93IusDCglSdW5Db25maWcSFgoCaWQYASABKAlCCvpCB3IFGIABEAESNQoIZGF0YWJhc2UYAiABKAsyGS5jbG91ZC52MS5kb21haW4uRGF0YWJhc2VCCPpCBYoBAhABEjUKCHdvcmtsb2FkGAMgASgLMhkuY2xvdWQudjEuZG9tYWluLldvcmtsb2FkQgj6QgWKAQIQARJACg10b3BvbG9neV9zcGVjGAQgASgLMh8uY2xvdWQudjEudG9wb2xvZ3kuVG9wb2xvZ3lTcGVjQgj6QgWKAQIQARJOChNpbmZyYXN0cnVjdHVyZV9wbGFuGAUgASgLMicuY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVBsYW5CCPpCBYoBAhABEkYKFGluZnJhc3RydWN0dXJlX3N0YXRlGAYgASgLMiguY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVN0YXRlEjwKD2RlcGxveW1lbnRfcGxhbhgHIAEoCzIjLmNsb3VkLnYxLmRlcGxveW1lbnQuRGVwbG95bWVudFBsYW4SQAoQcmVuZGVyX292ZXJyaWRlcxgIIAEoCzImLmNsb3VkLnYxLmRlcGxveW1lbnQuUmVuZGVyT3ZlcnJpZGVTZXQynQEKElJ1bldvcmtmbG93U2VydmljZRJyCg9UZXN0UnVuV29ya2Zsb3cSHC5jbG91ZC52MS53b3JrZmxvdy5SdW5Db25maWcaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiKYrEAyVKAiABcg9UZXN0UnVuV29ya2Zsb3cqDHJ1bi8keyEgaWQgfTACGhOKxAMPCg1zdHJvcHB5LWNsb3VkQkZaRGdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL3dvcmtmbG93YgZwcm90bzM", [file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_plan, file_cloud_v1_deployment_render, file_cloud_v1_domain_database, file_cloud_v1_domain_workload, file_cloud_v1_topology_topology, file_google_protobuf_empty, file_temporal_v1_temporal, file_validate_validate]);
 
 /**
  *
- * RunConfig is the input to RunWorkflow. For this first port it carries the
- * current types.RunConfig as opaque JSON: the worker unmarshals config_json
- * into the existing Go struct, so no domain remodeling is needed up front.
- * Top-level fields the workflow branches on are surfaced explicitly.
+ * RunConfig is the durable input to one benchmark run workflow.
  *
  * @generated from message cloud.v1.workflow.RunConfig
  */
 export type RunConfig = Message<"cloud.v1.workflow.RunConfig"> & {
   /**
-   * id is the stable run identifier (drives the deterministic workflow id). 
+   *
+   * id is the stable run identifier.
    *
    * @generated from field: string id = 1;
    */
   id: string;
 
   /**
-   * provider selects the deployment backend ("docker" | "yandex"). 
    *
-   * @generated from field: string provider = 2;
+   * database is the database under test.
+   *
+   * @generated from field: cloud.v1.domain.Database database = 2;
    */
-  provider: string;
+  database?: Database;
 
   /**
    *
-   * external_db, when true, is a bring-your-own-database run: the workflow
-   * skips the network/machines/install/configure phases and only installs
-   * stroppy + runs the workload against the supplied endpoint.
+   * workload is the workload to run against the database.
    *
-   * @generated from field: bool external_db = 3;
+   * @generated from field: cloud.v1.domain.Workload workload = 3;
    */
-  externalDb: boolean;
+  workload?: Workload;
 
   /**
    *
-   * config_json is the full types.RunConfig serialized as JSON. The worker
-   * decodes it into the existing Go model. Replaced by typed proto fields in
-   * a later pass.
+   * topology_spec is the provider-agnostic logical graph.
    *
-   * @generated from field: bytes config_json = 4;
+   * @generated from field: cloud.v1.topology.TopologySpec topology_spec = 4;
    */
-  configJson: Uint8Array;
+  topologySpec?: TopologySpec;
+
+  /**
+   *
+   * infrastructure_plan is the provider-specific machine/resource intent.
+   *
+   * @generated from field: cloud.v1.deployment.InfrastructurePlan infrastructure_plan = 5;
+   */
+  infrastructurePlan?: InfrastructurePlan;
+
+  /**
+   *
+   * infrastructure_state is filled after provider provisioning. It may be
+   * empty at workflow start and carried forward by the workflow.
+   *
+   * @generated from field: cloud.v1.deployment.InfrastructureState infrastructure_state = 6;
+   */
+  infrastructureState?: InfrastructureState;
+
+  /**
+   *
+   * deployment_plan is filled after package/config rendering. It may be empty
+   * at workflow start and carried forward by the workflow.
+   *
+   * @generated from field: cloud.v1.deployment.DeploymentPlan deployment_plan = 7;
+   */
+  deploymentPlan?: DeploymentPlan;
+
+  /**
+   *
+   * render_overrides are user edits to editable render artifacts. Workflow
+   * renderers apply them when producing deployment_plan.
+   *
+   * @generated from field: cloud.v1.deployment.RenderOverrideSet render_overrides = 8;
+   */
+  renderOverrides?: RenderOverrideSet;
 };
 
 /**
  *
- * RunConfig is the input to RunWorkflow. For this first port it carries the
- * current types.RunConfig as opaque JSON: the worker unmarshals config_json
- * into the existing Go struct, so no domain remodeling is needed up front.
- * Top-level fields the workflow branches on are surfaced explicitly.
+ * RunConfig is the durable input to one benchmark run workflow.
  *
  * @generated from message cloud.v1.workflow.RunConfig
  */
 export type RunConfigJson = {
   /**
-   * id is the stable run identifier (drives the deterministic workflow id). 
+   *
+   * id is the stable run identifier.
    *
    * @generated from field: string id = 1;
    */
   id?: string;
 
   /**
-   * provider selects the deployment backend ("docker" | "yandex"). 
    *
-   * @generated from field: string provider = 2;
+   * database is the database under test.
+   *
+   * @generated from field: cloud.v1.domain.Database database = 2;
    */
-  provider?: string;
+  database?: DatabaseJson;
 
   /**
    *
-   * external_db, when true, is a bring-your-own-database run: the workflow
-   * skips the network/machines/install/configure phases and only installs
-   * stroppy + runs the workload against the supplied endpoint.
+   * workload is the workload to run against the database.
    *
-   * @generated from field: bool external_db = 3;
+   * @generated from field: cloud.v1.domain.Workload workload = 3;
    */
-  externalDb?: boolean;
+  workload?: WorkloadJson;
 
   /**
    *
-   * config_json is the full types.RunConfig serialized as JSON. The worker
-   * decodes it into the existing Go model. Replaced by typed proto fields in
-   * a later pass.
+   * topology_spec is the provider-agnostic logical graph.
    *
-   * @generated from field: bytes config_json = 4;
+   * @generated from field: cloud.v1.topology.TopologySpec topology_spec = 4;
    */
-  configJson?: string;
+  topologySpec?: TopologySpecJson;
+
+  /**
+   *
+   * infrastructure_plan is the provider-specific machine/resource intent.
+   *
+   * @generated from field: cloud.v1.deployment.InfrastructurePlan infrastructure_plan = 5;
+   */
+  infrastructurePlan?: InfrastructurePlanJson;
+
+  /**
+   *
+   * infrastructure_state is filled after provider provisioning. It may be
+   * empty at workflow start and carried forward by the workflow.
+   *
+   * @generated from field: cloud.v1.deployment.InfrastructureState infrastructure_state = 6;
+   */
+  infrastructureState?: InfrastructureStateJson;
+
+  /**
+   *
+   * deployment_plan is filled after package/config rendering. It may be empty
+   * at workflow start and carried forward by the workflow.
+   *
+   * @generated from field: cloud.v1.deployment.DeploymentPlan deployment_plan = 7;
+   */
+  deploymentPlan?: DeploymentPlanJson;
+
+  /**
+   *
+   * render_overrides are user edits to editable render artifacts. Workflow
+   * renderers apply them when producing deployment_plan.
+   *
+   * @generated from field: cloud.v1.deployment.RenderOverrideSet render_overrides = 8;
+   */
+  renderOverrides?: RenderOverrideSetJson;
 };
 
 export type RunConfigValid = RunConfig;
@@ -119,310 +189,21 @@ export const RunConfigSchema: GenMessage<RunConfig, {jsonType: RunConfigJson, va
 
 /**
  *
- * Target is an agent endpoint plus its role — the current run.State target,
- * plus a role tag derived from the machine id.
- *
- * @generated from message cloud.v1.workflow.Target
- */
-export type Target = Message<"cloud.v1.workflow.Target"> & {
-  /**
-   * id is the machine id ("<run>-<role>-<i>"); also the agent task-queue. 
-   *
-   * @generated from field: string id = 1;
-   */
-  id: string;
-
-  /**
-   * host is the server->agent address (may be empty in poll/host mode). 
-   *
-   * @generated from field: string host = 2;
-   */
-  host: string;
-
-  /**
-   * internal_host is the container name / internal IP for node-to-node comms. 
-   *
-   * @generated from field: string internal_host = 3;
-   */
-  internalHost: string;
-
-  /**
-   * agent_port is the agent's port when reachable directly. 
-   *
-   * @generated from field: int32 agent_port = 4;
-   */
-  agentPort: number;
-
-  /**
-   * zone is the provider placement zone, when known. 
-   *
-   * @generated from field: string zone = 5;
-   */
-  zone: string;
-
-  /**
-   *
-   * role is the component role on this machine: database | replica | monitor |
-   * proxy | stroppy | etcd | ydb-storage | ydb-database.
-   *
-   * @generated from field: string role = 6;
-   */
-  role: string;
-};
-
-/**
- *
- * Target is an agent endpoint plus its role — the current run.State target,
- * plus a role tag derived from the machine id.
- *
- * @generated from message cloud.v1.workflow.Target
- */
-export type TargetJson = {
-  /**
-   * id is the machine id ("<run>-<role>-<i>"); also the agent task-queue. 
-   *
-   * @generated from field: string id = 1;
-   */
-  id?: string;
-
-  /**
-   * host is the server->agent address (may be empty in poll/host mode). 
-   *
-   * @generated from field: string host = 2;
-   */
-  host?: string;
-
-  /**
-   * internal_host is the container name / internal IP for node-to-node comms. 
-   *
-   * @generated from field: string internal_host = 3;
-   */
-  internalHost?: string;
-
-  /**
-   * agent_port is the agent's port when reachable directly. 
-   *
-   * @generated from field: int32 agent_port = 4;
-   */
-  agentPort?: number;
-
-  /**
-   * zone is the provider placement zone, when known. 
-   *
-   * @generated from field: string zone = 5;
-   */
-  zone?: string;
-
-  /**
-   *
-   * role is the component role on this machine: database | replica | monitor |
-   * proxy | stroppy | etcd | ydb-storage | ydb-database.
-   *
-   * @generated from field: string role = 6;
-   */
-  role?: string;
-};
-
-export type TargetValid = Target;
-
-/**
- * Describes the message cloud.v1.workflow.Target.
- * Use `create(TargetSchema)` to create a new message.
- */
-export const TargetSchema: GenMessage<Target, {jsonType: TargetJson, validType: TargetValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_run, 1);
-
-/**
- *
- * Deployment is the cross-phase state the current run.State holds after the
- * machines phase: the agent targets, the DB endpoint stroppy connects to, and
- * the provider handles needed for teardown. Produced by DeployMachinesActivity,
- * threaded through the workflow, and consumed by TeardownActivity.
- *
- * @generated from message cloud.v1.workflow.Deployment
- */
-export type Deployment = Message<"cloud.v1.workflow.Deployment"> & {
-  /**
-   * targets are all provisioned agent machines. 
-   *
-   * @generated from field: repeated cloud.v1.workflow.Target targets = 1;
-   */
-  targets: Target[];
-
-  /**
-   * db_host is the endpoint host stroppy connects to (container name / IP / proxy). 
-   *
-   * @generated from field: string db_host = 2;
-   */
-  dbHost: string;
-
-  /**
-   * db_port is the endpoint port for the selected protocol. 
-   *
-   * @generated from field: int32 db_port = 3;
-   */
-  dbPort: number;
-
-  /**
-   * container_ids are the docker container ids for docker-provider teardown. 
-   *
-   * @generated from field: repeated string container_ids = 4;
-   */
-  containerIds: string[];
-
-  /**
-   * network_id is the docker network id for docker-provider teardown. 
-   *
-   * @generated from field: string network_id = 5;
-   */
-  networkId: string;
-
-  /**
-   * terraform_wd_id is the terraform working-dir id for yandex-provider teardown. 
-   *
-   * @generated from field: string terraform_wd_id = 6;
-   */
-  terraformWdId: string;
-};
-
-/**
- *
- * Deployment is the cross-phase state the current run.State holds after the
- * machines phase: the agent targets, the DB endpoint stroppy connects to, and
- * the provider handles needed for teardown. Produced by DeployMachinesActivity,
- * threaded through the workflow, and consumed by TeardownActivity.
- *
- * @generated from message cloud.v1.workflow.Deployment
- */
-export type DeploymentJson = {
-  /**
-   * targets are all provisioned agent machines. 
-   *
-   * @generated from field: repeated cloud.v1.workflow.Target targets = 1;
-   */
-  targets?: TargetJson[];
-
-  /**
-   * db_host is the endpoint host stroppy connects to (container name / IP / proxy). 
-   *
-   * @generated from field: string db_host = 2;
-   */
-  dbHost?: string;
-
-  /**
-   * db_port is the endpoint port for the selected protocol. 
-   *
-   * @generated from field: int32 db_port = 3;
-   */
-  dbPort?: number;
-
-  /**
-   * container_ids are the docker container ids for docker-provider teardown. 
-   *
-   * @generated from field: repeated string container_ids = 4;
-   */
-  containerIds?: string[];
-
-  /**
-   * network_id is the docker network id for docker-provider teardown. 
-   *
-   * @generated from field: string network_id = 5;
-   */
-  networkId?: string;
-
-  /**
-   * terraform_wd_id is the terraform working-dir id for yandex-provider teardown. 
-   *
-   * @generated from field: string terraform_wd_id = 6;
-   */
-  terraformWdId?: string;
-};
-
-export type DeploymentValid = Deployment;
-
-/**
- * Describes the message cloud.v1.workflow.Deployment.
- * Use `create(DeploymentSchema)` to create a new message.
- */
-export const DeploymentSchema: GenMessage<Deployment, {jsonType: DeploymentJson, validType: DeploymentValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_run, 2);
-
-/**
- *
- * RunWorkflowService is the Temporal replacement for the custom DAG executor +
- * durable scheduler. RunWorkflow orchestrates the full run cycle in Go,
- * delegating side effects to the infra activities below and to agent.proto's
- * AgentCommandService (per-target agent ops, routed by Target.id task queue).
+ * RunWorkflowService is the top-level Temporal workflow over all stages.
  *
  * @generated from service cloud.v1.workflow.RunWorkflowService
  */
 export const RunWorkflowService: GenService<{
   /**
    *
-   * RunWorkflow runs one full benchmark run: network -> machines -> bootstrap
-   * -> install/configure database (+ conditional etcd/patroni/pgbouncer/proxy
-   * /ydb-init/cockroach-init) -> install/configure monitor -> install stroppy
-   * -> run workload -> teardown. Deduplicated by a deterministic id from
-   * RunConfig.id; re-run allowed only after a failed previous attempt; never
-   * auto-retried as a whole (side effects). Answers the GetRunState query.
+   * TestRunWorkflow runs one full benchmark run:
+   * infrastructure -> deployment plan render -> agent execution -> workload.
    *
-   * @generated from rpc cloud.v1.workflow.RunWorkflowService.RunWorkflow
+   * @generated from rpc cloud.v1.workflow.RunWorkflowService.TestRunWorkflow
    */
-  runWorkflow: {
+  testRunWorkflow: {
     methodKind: "unary";
     input: typeof RunConfigSchema;
-    output: typeof EmptySchema;
-  },
-  /**
-   *
-   * GetRunState is a query against a running RunWorkflow returning the live
-   * RunState (overall status + per-phase breakdown) for the run Overview.
-   *
-   * @generated from rpc cloud.v1.workflow.RunWorkflowService.GetRunState
-   */
-  getRunState: {
-    methodKind: "unary";
-    input: typeof EmptySchema;
-    output: typeof RunStateSchema;
-  },
-  /**
-   *
-   * CreateNetworkActivity acquires the run network (docker network create /
-   * yandex subnet) and returns the partial Deployment carrying its handle.
-   * Idempotent (dedupe by name) => retryable.
-   *
-   * @generated from rpc cloud.v1.workflow.RunWorkflowService.CreateNetworkActivity
-   */
-  createNetworkActivity: {
-    methodKind: "unary";
-    input: typeof RunConfigSchema;
-    output: typeof DeploymentSchema;
-  },
-  /**
-   *
-   * DeployMachinesActivity provisions the machines (docker containers /
-   * terraform apply), waits for them, and returns the full Deployment:
-   * targets, db endpoint, and teardown handles. Mutating but
-   * terraform/docker-idempotent; retried sparingly, heartbeats while running.
-   *
-   * @generated from rpc cloud.v1.workflow.RunWorkflowService.DeployMachinesActivity
-   */
-  deployMachinesActivity: {
-    methodKind: "unary";
-    input: typeof RunConfigSchema;
-    output: typeof DeploymentSchema;
-  },
-  /**
-   *
-   * TeardownActivity destroys the run's infrastructure (docker rm + network
-   * remove / terraform destroy) from the Deployment handles. Idempotent
-   * (converges to empty) => retried to avoid leaks. Runs even on failure.
-   *
-   * @generated from rpc cloud.v1.workflow.RunWorkflowService.TeardownActivity
-   */
-  teardownActivity: {
-    methodKind: "unary";
-    input: typeof DeploymentSchema;
     output: typeof EmptySchema;
   },
 }> = /*@__PURE__*/

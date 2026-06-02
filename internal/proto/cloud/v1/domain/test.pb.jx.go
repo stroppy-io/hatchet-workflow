@@ -108,14 +108,6 @@ func (m *TestRun) Encode(e *jx.Encoder) {
 		e.FieldStart("suiteId")
 		e.Str(m.SuiteId)
 	}
-	if m.Provider != nil {
-		e.FieldStart("provider")
-		jxpb.EncMessage(e, m.Provider)
-	}
-	if m.Topology != nil {
-		e.FieldStart("topology")
-		jxpb.EncMessage(e, m.Topology)
-	}
 	if m.Database != nil {
 		e.FieldStart("database")
 		m.Database.Encode(e)
@@ -123,6 +115,18 @@ func (m *TestRun) Encode(e *jx.Encoder) {
 	if m.Workload != nil {
 		e.FieldStart("workload")
 		m.Workload.Encode(e)
+	}
+	if m.TopologySpec != nil {
+		e.FieldStart("topologySpec")
+		jxpb.EncMessage(e, m.TopologySpec)
+	}
+	if m.InfrastructurePlan != nil {
+		e.FieldStart("infrastructurePlan")
+		jxpb.EncMessage(e, m.InfrastructurePlan)
+	}
+	if m.RenderOverrides != nil {
+		e.FieldStart("renderOverrides")
+		jxpb.EncMessage(e, m.RenderOverrides)
 	}
 	if m.Tags != nil {
 		e.FieldStart("tags")
@@ -163,32 +167,6 @@ func (m *TestRun) Decode(d *jx.Decoder) error {
 			}
 			m.SuiteId = v
 			return nil
-		case "provider":
-			if seen["Provider"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["Provider"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			m.Provider = &deployment.ProviderSettings{}
-			if err := jxpb.DecMessage(d, m.Provider); err != nil {
-				return err
-			}
-			return nil
-		case "topology":
-			if seen["Topology"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["Topology"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			m.Topology = &topology.Topology{}
-			if err := jxpb.DecMessage(d, m.Topology); err != nil {
-				return err
-			}
-			return nil
 		case "database":
 			if seen["Database"] {
 				return fmt.Errorf("duplicate field %q", key)
@@ -212,6 +190,45 @@ func (m *TestRun) Decode(d *jx.Decoder) error {
 			}
 			m.Workload = &Workload{}
 			if err := m.Workload.Decode(d); err != nil {
+				return err
+			}
+			return nil
+		case "topologySpec", "topology_spec":
+			if seen["TopologySpec"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["TopologySpec"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.TopologySpec = &topology.TopologySpec{}
+			if err := jxpb.DecMessage(d, m.TopologySpec); err != nil {
+				return err
+			}
+			return nil
+		case "infrastructurePlan", "infrastructure_plan":
+			if seen["InfrastructurePlan"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["InfrastructurePlan"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.InfrastructurePlan = &deployment.InfrastructurePlan{}
+			if err := jxpb.DecMessage(d, m.InfrastructurePlan); err != nil {
+				return err
+			}
+			return nil
+		case "renderOverrides", "render_overrides":
+			if seen["RenderOverrides"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["RenderOverrides"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.RenderOverrides = &deployment.RenderOverrideSet{}
+			if err := jxpb.DecMessage(d, m.RenderOverrides); err != nil {
 				return err
 			}
 			return nil

@@ -2,37 +2,27 @@ syntax = "proto3";
 
 package cloud.v1.topology;
 
-import "cloud/v1/common/cmd.proto";
-import "cloud/v1/common/file.proto";
-import "cloud/v1/common/status.proto";
 import "cloud/v1/common/tags.proto";
-import "schemapb/schema.proto";
-
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology";
 
 /*
-    component.proto defines a single logical node in a benchmark topology — a
-    database, monitor, workload runner, proxy, etc. A Component carries its kind,
-    runtime status, the strategy used to deploy it (config files + commands), and
-    the provider/deployment parameters that get filled in as the pipeline runs.
+    component.proto defines the logical component inventory for a topology spec.
+    Components are provider-agnostic: they describe WHAT should exist, not how it
+    is installed, where it runs, or which runtime addresses were allocated.
  */
 
 /*
-    Component is one logical node in the topology graph.
+    Component is one logical service role in the benchmark graph.
  */
 message Component {
     /*
-        id is the unique identifier of the component within the topology.
-     */
-    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
-    /*
-        Kind enumerates the role a component plays in the topology.
+        Kind enumerates the broad role family a component belongs to.
      */
     enum Kind {
         /*
-            KIND_UNSPECIFIED is the unset zero value (rejected by validation).
+            KIND_UNSPECIFIED is the unset zero value.
          */
         KIND_UNSPECIFIED = 0;
         /*
@@ -44,15 +34,15 @@ message Component {
          */
         KIND_MONITOR = 2;
         /*
-            KIND_DATABASE is a primary database node.
+            KIND_DATABASE is a primary database service component.
          */
         KIND_DATABASE = 3;
         /*
-            KIND_REPLICA is a database replica node.
+            KIND_REPLICA is a database replica service component.
          */
         KIND_REPLICA = 4;
         /*
-            KIND_PROXY is a connection proxy/pooler.
+            KIND_PROXY is a proxy, load balancer, or connection pooler.
          */
         KIND_PROXY = 5;
         /*
@@ -60,7 +50,7 @@ message Component {
          */
         KIND_WORKLOAD = 6;
         /*
-            KIND_COORDINATOR is a cluster coordinator/control node.
+            KIND_COORDINATOR is a cluster coordinator/control-plane component.
          */
         KIND_COORDINATOR = 7;
         /*
@@ -68,49 +58,38 @@ message Component {
          */
         KIND_ADDON = 8;
         /*
-            KIND_EXTERNAL is a component provided externally (e.g. a managed service).
+            KIND_EXTERNAL is provided outside this deployment.
          */
         KIND_EXTERNAL = 9;
     }
+
     /*
-        kind is the role this component plays; must be a defined, non-zero value.
+        id is the stable logical component id within the topology spec.
+     */
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /*
+        kind is the broad component family.
      */
     Kind kind = 2 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
     /*
-        status is the current runtime status of the component.
+        engine identifies the owning product or subsystem, e.g. postgres, ydb,
+        stroppy, victoriametrics. It is data rather than an enum so new engines
+        do not require changing topology proto.
      */
-    common.Status status = 3;
+    string engine = 3 [(validate.rules).string = {min_len: 1, max_len: 64}];
     /*
-        Strategy is the recipe used to deploy a component: configuration files to
-        lay down and commands to run.
+        role identifies the concrete role inside the engine, e.g. master,
+        replica, haproxy, pgbouncer, patroni, etcd.
      */
-    message Strategy {
-        /*
-            configuration_files are the rendered config files to place on the host.
-         */
-        repeated common.BakedFile configuration_files = 1;
-        /*
-            deployment_commands are the commands to run to bring the component up.
-         */
-        repeated common.Cmd deployment_commands = 2;
-    }
+    string role = 4 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    reserved 5;
+    reserved "config_overrides";
     /*
-        deployment_strategy is the deploy recipe; calculated (build).
+        labels are structured role metadata used by renderers and UI.
      */
-    Strategy deployment_strategy = 4;
+    map<string, string> labels = 6 [(validate.rules).map.max_pairs = 128];
     /*
-        provider_parms are the baked provider parameters; calculated (wisard
-        actual for non-owr components).
-     */
-    optional schemapb.Baked provider_parms = 5;
-    /*
-        allocated_on_instance_id is the instance this component was placed on;
-        calculated (deployment).
-     */
-    optional string allocated_on_instance_id = 6;
-    /*
-        tags are arbitrary key/value labels attached to the component.
+        tags are arbitrary user/system tags.
      */
     common.Tags tags = 7;
 }
-

@@ -1274,19 +1274,6 @@ go_name: DefaultProvider</pre></td>
 json_name: entity
 go_name: Entity</pre></td>
 </tr><tr>
-<td>providers</td>
-<td><a href="../deployment/README.md#cloud-v1-deployment-providersettings">cloud.v1.deployment.ProviderSettings</a></td>
-<td><pre>
-//Per-provider configuration for this tenant: one ProviderSettings per
-//provider the tenant has set up (credentials / region / global sizing
-//policy, as baked values against the provider's settings schema). This is
-//what the wizards/deploy use as the provider base. SENSITIVE: the baked
-//values carry secrets (mark secret fields in the schema); guard reads.
-//At most one entry per Provider.<br>
-
-json_name: providers
-go_name: Providers</pre></td>
-</tr><tr>
 <td>run_retention_days</td>
 <td>uint32</td>
 <td><pre>
@@ -1295,6 +1282,19 @@ go_name: Providers</pre></td>
 
 json_name: runRetentionDays
 go_name: RunRetentionDays</pre></td>
+</tr><tr>
+<td>yandex_settings</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-yandex-settings">cloud.v1.deployment.Yandex.Settings</a></td>
+<td><pre>
+//Per-provider configuration for this tenant: one ProviderSettings per
+//provider the tenant has set up (credentials / region / global sizing
+//policy, as baked values against the provider's settings schema). This is
+//what the wizards/deploy use as the provider base. SENSITIVE: the baked
+//values carry secrets (mark secret fields in the schema); guard reads.
+//At most one entry per Provider.<br>
+
+json_name: yandexSettings
+go_name: YandexSettings</pre></td>
 </tr>
 </table>
 
@@ -1351,14 +1351,14 @@ go_name: Test</pre></td>
 ### cloud.v1.models.TestRunRecord
 
 <pre>
-//TestRunRecord is a persisted test execution (one table). The baked spec is the
-//input to TestWorkflow; status tracks the run lifecycle; suite_run_id links it to
-//a parent SuiteRunRecord when the run is part of a suite (empty = standalone).
+//TestRunRecord is a persisted test execution. spec is the immutable workflow
+//input. infrastructure_state and deployment_plan are staged workflow artifacts
+//filled as the run progresses.
 
-//`spec` is a baked Struct and is NOT queryable. For the runs table (filter / sort
-/// display of db, workload, preset, topology, progress, duration, ...) the server
-//DENORMALIZES those into flat columns in `summary`, filled at Start and updated
-//as the run progresses.
+//For the runs table (filter / sort / display of db, workload, preset,
+//topology, progress, duration, ...) the server DENORMALIZES queryable facets
+//into flat columns in `summary`, filled at Start and updated as the run
+//progresses.
 
 //Runtime observations (logs/metrics) are keyed by the run id directly (no dag
 //id) — see monitor/logs.proto, monitor/metrics.proto.
@@ -1371,6 +1371,15 @@ go_name: Test</pre></td>
 <th>Description</th>
 </tr>
 <tr>
+<td>deployment_plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-deploymentplan">cloud.v1.deployment.DeploymentPlan</a></td>
+<td><pre>
+//deployment_plan is the rendered agent execution plan, then updated with
+//execution statuses.<br>
+
+json_name: deploymentPlan
+go_name: DeploymentPlan</pre></td>
+</tr><tr>
 <td>entity</td>
 <td><a href="../common/README.md#cloud-v1-common-entity">cloud.v1.common.Entity</a></td>
 <td><pre>
@@ -1399,6 +1408,15 @@ go_name: InGlobalRating</pre></td>
 
 json_name: inTenantRating
 go_name: InTenantRating</pre></td>
+</tr><tr>
+<td>infrastructure_state</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructurestate">cloud.v1.deployment.InfrastructureState</a></td>
+<td><pre>
+//infrastructure_state is provider output (resource ids, IPs/endpoints,
+//allocated quotas), filled after infrastructure deployment.<br>
+
+json_name: infrastructureState
+go_name: InfrastructureState</pre></td>
 </tr><tr>
 <td>spec</td>
 <td><a href="../domain/README.md#cloud-v1-domain-testrun">cloud.v1.domain.TestRun</a></td>
@@ -1584,22 +1602,13 @@ go_name: WorkloadPresetId</pre></td>
 <pre>
 //TestWizardDraft is the server-held, mutable state of a TEST wizard.
 
-//Big-schema model: the whole test form is ONE composite schemapb schema,
-//carried in `form` (a Filled = schema + values). It is the chosen DATABASE
-//schema (selected by kind: postgres/mysql/mariadb/picodata/ydb/ydbmanaged/
-//cockroach — pure and provider-agnostic, owning its own DB-internal cross-rules)
-//+ a WORKLOAD schema + a `provider_type` selector that names which tenant
-//provider to deploy on. The form does NOT carry provider SETTINGS (those come
-//from TenantSettings.providers, keyed by provider_type) and does NOT carry
-//per-node machine forms (machines are derived, never entered by the user).
+//The server derives:
+//database + workload -> topology_spec
+//topology_spec + provider/defaults/user overrides -> infrastructure_plan
 
-//The server builds the composite schema, validates the whole form
-//authoritatively, re-derives the topology and recomputes readiness on every
-//patch. The frontend renders the form straight from `form` (schemapb ts sdk +
-//cel-es for live UX) and sends back a patched Filled.
-
-//Persistence: own table (tenant-scoped via Entity) + in-memory cache. On finish
-//it bakes into a domain.TestRun.
+//Provider account settings come from tenant settings at bake/start time. The
+//draft stores provider choice and per-node machine overrides inside
+//infrastructure_plan.
 </pre>
 
 <table>
@@ -1609,6 +1618,16 @@ go_name: WorkloadPresetId</pre></td>
 <th>Description</th>
 </tr>
 <tr>
+<td>database</td>
+<td><a href="../domain/README.md#cloud-v1-domain-database">cloud.v1.domain.Database</a></td>
+<td><pre>
+//database is the typed, provider-agnostic database under test (engine kind +
+//DatabaseParams: logical node counts, HA flags, options). Replaces the old
+//schemapb database form half.<br>
+
+json_name: database
+go_name: Database</pre></td>
+</tr><tr>
 <td>entity</td>
 <td><a href="../common/README.md#cloud-v1-common-entity">cloud.v1.common.Entity</a></td>
 <td><pre>
@@ -1629,16 +1648,22 @@ go_name: Entity</pre></td>
 json_name: errors
 go_name: Errors</pre></td>
 </tr><tr>
-<td>form</td>
-<td><a href="../../../schemapb/README.md#schemapb-filled">schemapb.Filled</a></td>
+<td>infrastructure_plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructureplan">cloud.v1.deployment.InfrastructurePlan</a></td>
 <td><pre>
-//form is the whole test form as one composite schema + its current values
-//(a Filled = schema + values): the chosen database schema (by kind,
-//provider-agnostic) + a workload schema + a provider_type selector. No
-//provider settings, no per-node machine forms.<br>
+//infrastructure_plan is the provider-specific resource intent derived from
+//topology_spec and provider defaults, with user machine overrides merged.<br>
 
-json_name: form
-go_name: Form</pre></td>
+json_name: infrastructurePlan
+go_name: InfrastructurePlan</pre></td>
+</tr><tr>
+<td>provider</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-provider">cloud.v1.deployment.Provider</a></td>
+<td><pre>
+//provider selects the deployment backend (docker/yandex).<br>
+
+json_name: provider
+go_name: Provider</pre></td>
 </tr><tr>
 <td>ready</td>
 <td>bool</td>
@@ -1649,6 +1674,24 @@ go_name: Form</pre></td>
 json_name: ready
 go_name: Ready</pre></td>
 </tr><tr>
+<td>render_overrides</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-renderoverrideset">cloud.v1.deployment.RenderOverrideSet</a></td>
+<td><pre>
+//render_overrides are user edits to editable render artifacts. They are
+//merged into render_preview and later into the runtime deployment plan.<br>
+
+json_name: renderOverrides
+go_name: RenderOverrides</pre></td>
+</tr><tr>
+<td>render_preview</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-renderpreview">cloud.v1.deployment.RenderPreview</a></td>
+<td><pre>
+//render_preview is the server-rendered wizard view of generated files,
+//commands, directories, and runtime-only placeholders.<br>
+
+json_name: renderPreview
+go_name: RenderPreview</pre></td>
+</tr><tr>
 <td>test_preset_id</td>
 <td>string</td>
 <td><pre>
@@ -1658,16 +1701,22 @@ go_name: Ready</pre></td>
 json_name: testPresetId
 go_name: TestPresetId</pre></td>
 </tr><tr>
-<td>topology</td>
-<td><a href="../topology/README.md#cloud-v1-topology-topology">cloud.v1.topology.Topology</a></td>
+<td>topology_spec</td>
+<td><a href="../topology/README.md#cloud-v1-topology-topologyspec">cloud.v1.topology.TopologySpec</a></td>
 <td><pre>
-//topology is the server-DERIVED topology, recomputed on every patch: the
-//role->VM expander turns the validated DB config into machines, then a
-//provider overlay (zone/disk/platform from the selected provider_type's
-//TenantSettings) fills each machine's provider_parms. Never user-entered.<br>
+//topology_spec is the server-derived provider-agnostic graph. Node roles
+//and counts are never hand-entered; they come from database/workload.<br>
 
-json_name: topology
-go_name: Topology</pre></td>
+json_name: topologySpec
+go_name: TopologySpec</pre></td>
+</tr><tr>
+<td>workload</td>
+<td><a href="../domain/README.md#cloud-v1-domain-workload">cloud.v1.domain.Workload</a></td>
+<td><pre>
+//workload is the typed stroppy workload (the "how to load" half).<br>
+
+json_name: workload
+go_name: Workload</pre></td>
 </tr>
 </table>
 

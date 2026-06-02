@@ -35,6 +35,1518 @@ var (
 	_ = sort.Sort
 )
 
+// Validate checks the field values on Package with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *Package) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Package with the rules defined in the
+// proto definition for this message. If any rules are violated, the result is
+// a list of violation errors wrapped in PackageMultiError, or nil if none found.
+func (m *Package) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Package) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Id
+
+	// no validation rules for Name
+
+	if _, ok := _Package_DbKind_NotInLookup[m.GetDbKind()]; ok {
+		err := PackageValidationError{
+			field:  "DbKind",
+			reason: "value must not be in list [KIND_UNSPECIFIED]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := Database_Kind_name[int32(m.GetDbKind())]; !ok {
+		err := PackageValidationError{
+			field:  "DbKind",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetDbVersion()) > 128 {
+		err := PackageValidationError{
+			field:  "DbVersion",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for IsBuiltin
+
+	// no validation rules for CustomRepo
+
+	// no validation rules for CustomRepoKey
+
+	// no validation rules for DebFilename
+
+	// no validation rules for PackageRecordId
+
+	if len(errors) > 0 {
+		return PackageMultiError(errors)
+	}
+
+	return nil
+}
+
+// PackageMultiError is an error wrapping multiple validation errors returned
+// by Package.ValidateAll() if the designated constraints aren't met.
+type PackageMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m PackageMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m PackageMultiError) AllErrors() []error { return m }
+
+// PackageValidationError is the validation error returned by Package.Validate
+// if the designated constraints aren't met.
+type PackageValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PackageValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PackageValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PackageValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PackageValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PackageValidationError) ErrorName() string { return "PackageValidationError" }
+
+// Error satisfies the builtin error interface
+func (e PackageValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPackage.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PackageValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PackageValidationError{}
+
+var _Package_DbKind_NotInLookup = map[Database_Kind]struct{}{
+	0: {},
+}
+
+// Validate checks the field values on PostgresParams with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *PostgresParams) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on PostgresParams with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in PostgresParamsMultiError,
+// or nil if none found.
+func (m *PostgresParams) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *PostgresParams) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Replicas
+
+	// no validation rules for Haproxy
+
+	// no validation rules for Pgbouncer
+
+	// no validation rules for Patroni
+
+	// no validation rules for Etcd
+
+	// no validation rules for SyncReplicas
+
+	// no validation rules for MasterOptions
+
+	// no validation rules for ReplicaOptions
+
+	// no validation rules for HaproxyOptions
+
+	// no validation rules for PgbouncerOptions
+
+	// no validation rules for PatroniOptions
+
+	// no validation rules for EtcdOptions
+
+	if len(errors) > 0 {
+		return PostgresParamsMultiError(errors)
+	}
+
+	return nil
+}
+
+// PostgresParamsMultiError is an error wrapping multiple validation errors
+// returned by PostgresParams.ValidateAll() if the designated constraints
+// aren't met.
+type PostgresParamsMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m PostgresParamsMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m PostgresParamsMultiError) AllErrors() []error { return m }
+
+// PostgresParamsValidationError is the validation error returned by
+// PostgresParams.Validate if the designated constraints aren't met.
+type PostgresParamsValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PostgresParamsValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PostgresParamsValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PostgresParamsValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PostgresParamsValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PostgresParamsValidationError) ErrorName() string { return "PostgresParamsValidationError" }
+
+// Error satisfies the builtin error interface
+func (e PostgresParamsValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPostgresParams.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PostgresParamsValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PostgresParamsValidationError{}
+
+// Validate checks the field values on MySqlParams with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *MySqlParams) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on MySqlParams with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in MySqlParamsMultiError, or
+// nil if none found.
+func (m *MySqlParams) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *MySqlParams) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Replicas
+
+	// no validation rules for Proxysql
+
+	// no validation rules for GroupReplication
+
+	// no validation rules for SemiSync
+
+	// no validation rules for PrimaryOptions
+
+	// no validation rules for ReplicaOptions
+
+	// no validation rules for ProxysqlOptions
+
+	if len(errors) > 0 {
+		return MySqlParamsMultiError(errors)
+	}
+
+	return nil
+}
+
+// MySqlParamsMultiError is an error wrapping multiple validation errors
+// returned by MySqlParams.ValidateAll() if the designated constraints aren't met.
+type MySqlParamsMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m MySqlParamsMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m MySqlParamsMultiError) AllErrors() []error { return m }
+
+// MySqlParamsValidationError is the validation error returned by
+// MySqlParams.Validate if the designated constraints aren't met.
+type MySqlParamsValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e MySqlParamsValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e MySqlParamsValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e MySqlParamsValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e MySqlParamsValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e MySqlParamsValidationError) ErrorName() string { return "MySqlParamsValidationError" }
+
+// Error satisfies the builtin error interface
+func (e MySqlParamsValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sMySqlParams.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = MySqlParamsValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = MySqlParamsValidationError{}
+
+// Validate checks the field values on PicodataTier with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *PicodataTier) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on PicodataTier with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in PicodataTierMultiError, or
+// nil if none found.
+func (m *PicodataTier) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *PicodataTier) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetName()) < 1 {
+		err := PicodataTierValidationError{
+			field:  "Name",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for ReplicationFactor
+
+	// no validation rules for CanVote
+
+	// no validation rules for Count
+
+	if len(errors) > 0 {
+		return PicodataTierMultiError(errors)
+	}
+
+	return nil
+}
+
+// PicodataTierMultiError is an error wrapping multiple validation errors
+// returned by PicodataTier.ValidateAll() if the designated constraints aren't met.
+type PicodataTierMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m PicodataTierMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m PicodataTierMultiError) AllErrors() []error { return m }
+
+// PicodataTierValidationError is the validation error returned by
+// PicodataTier.Validate if the designated constraints aren't met.
+type PicodataTierValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PicodataTierValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PicodataTierValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PicodataTierValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PicodataTierValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PicodataTierValidationError) ErrorName() string { return "PicodataTierValidationError" }
+
+// Error satisfies the builtin error interface
+func (e PicodataTierValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPicodataTier.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PicodataTierValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PicodataTierValidationError{}
+
+// Validate checks the field values on PicodataParams with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *PicodataParams) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on PicodataParams with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in PicodataParamsMultiError,
+// or nil if none found.
+func (m *PicodataParams) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *PicodataParams) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetInstances() < 1 {
+		err := PicodataParamsValidationError{
+			field:  "Instances",
+			reason: "value must be greater than or equal to 1",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for Haproxy
+
+	// no validation rules for ReplicationFactor
+
+	// no validation rules for Shards
+
+	for idx, item := range m.GetTiers() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, PicodataParamsValidationError{
+						field:  fmt.Sprintf("Tiers[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, PicodataParamsValidationError{
+						field:  fmt.Sprintf("Tiers[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return PicodataParamsValidationError{
+					field:  fmt.Sprintf("Tiers[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	// no validation rules for InstanceOptions
+
+	// no validation rules for HaproxyOptions
+
+	if len(errors) > 0 {
+		return PicodataParamsMultiError(errors)
+	}
+
+	return nil
+}
+
+// PicodataParamsMultiError is an error wrapping multiple validation errors
+// returned by PicodataParams.ValidateAll() if the designated constraints
+// aren't met.
+type PicodataParamsMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m PicodataParamsMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m PicodataParamsMultiError) AllErrors() []error { return m }
+
+// PicodataParamsValidationError is the validation error returned by
+// PicodataParams.Validate if the designated constraints aren't met.
+type PicodataParamsValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PicodataParamsValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PicodataParamsValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PicodataParamsValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PicodataParamsValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PicodataParamsValidationError) ErrorName() string { return "PicodataParamsValidationError" }
+
+// Error satisfies the builtin error interface
+func (e PicodataParamsValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPicodataParams.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PicodataParamsValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PicodataParamsValidationError{}
+
+// Validate checks the field values on YdbParams with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *YdbParams) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on YdbParams with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in YdbParamsMultiError, or nil
+// if none found.
+func (m *YdbParams) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *YdbParams) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetStorageNodes() < 1 {
+		err := YdbParamsValidationError{
+			field:  "StorageNodes",
+			reason: "value must be greater than or equal to 1",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for DatabaseNodes
+
+	// no validation rules for Haproxy
+
+	// no validation rules for PdisksPerStorageNode
+
+	// no validation rules for FaultTolerance
+
+	// no validation rules for FailureDomainType
+
+	// no validation rules for DefaultDiskType
+
+	// no validation rules for StorageGroups
+
+	// no validation rules for AutoSizePdisks
+
+	// no validation rules for DatabasePath
+
+	// no validation rules for StorageOptions
+
+	// no validation rules for DatabaseOptions
+
+	// no validation rules for HaproxyOptions
+
+	if len(errors) > 0 {
+		return YdbParamsMultiError(errors)
+	}
+
+	return nil
+}
+
+// YdbParamsMultiError is an error wrapping multiple validation errors returned
+// by YdbParams.ValidateAll() if the designated constraints aren't met.
+type YdbParamsMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m YdbParamsMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m YdbParamsMultiError) AllErrors() []error { return m }
+
+// YdbParamsValidationError is the validation error returned by
+// YdbParams.Validate if the designated constraints aren't met.
+type YdbParamsValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e YdbParamsValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e YdbParamsValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e YdbParamsValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e YdbParamsValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e YdbParamsValidationError) ErrorName() string { return "YdbParamsValidationError" }
+
+// Error satisfies the builtin error interface
+func (e YdbParamsValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sYdbParams.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = YdbParamsValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = YdbParamsValidationError{}
+
+// Validate checks the field values on YdbManagedParams with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *YdbManagedParams) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on YdbManagedParams with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// YdbManagedParamsMultiError, or nil if none found.
+func (m *YdbManagedParams) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *YdbManagedParams) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if _, ok := _YdbManagedParams_Type_NotInLookup[m.GetType()]; ok {
+		err := YdbManagedParamsValidationError{
+			field:  "Type",
+			reason: "value must not be in list [TYPE_UNSPECIFIED]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := YdbManagedParams_Type_name[int32(m.GetType())]; !ok {
+		err := YdbManagedParamsValidationError{
+			field:  "Type",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for ComputeType
+
+	// no validation rules for ResourcePresetId
+
+	// no validation rules for NodeCount
+
+	if all {
+		switch v := interface{}(m.GetAutoScale()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, YdbManagedParamsValidationError{
+					field:  "AutoScale",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, YdbManagedParamsValidationError{
+					field:  "AutoScale",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetAutoScale()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return YdbManagedParamsValidationError{
+				field:  "AutoScale",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for StorageGroups
+
+	// no validation rules for StorageType
+
+	// no validation rules for ThrottlingRcus
+
+	if len(errors) > 0 {
+		return YdbManagedParamsMultiError(errors)
+	}
+
+	return nil
+}
+
+// YdbManagedParamsMultiError is an error wrapping multiple validation errors
+// returned by YdbManagedParams.ValidateAll() if the designated constraints
+// aren't met.
+type YdbManagedParamsMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m YdbManagedParamsMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m YdbManagedParamsMultiError) AllErrors() []error { return m }
+
+// YdbManagedParamsValidationError is the validation error returned by
+// YdbManagedParams.Validate if the designated constraints aren't met.
+type YdbManagedParamsValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e YdbManagedParamsValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e YdbManagedParamsValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e YdbManagedParamsValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e YdbManagedParamsValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e YdbManagedParamsValidationError) ErrorName() string { return "YdbManagedParamsValidationError" }
+
+// Error satisfies the builtin error interface
+func (e YdbManagedParamsValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sYdbManagedParams.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = YdbManagedParamsValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = YdbManagedParamsValidationError{}
+
+var _YdbManagedParams_Type_NotInLookup = map[YdbManagedParams_Type]struct{}{
+	0: {},
+}
+
+// Validate checks the field values on CockroachParams with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *CockroachParams) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CockroachParams with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CockroachParamsMultiError, or nil if none found.
+func (m *CockroachParams) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CockroachParams) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetNodes() < 1 {
+		err := CockroachParamsValidationError{
+			field:  "Nodes",
+			reason: "value must be greater than or equal to 1",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for Options
+
+	if len(errors) > 0 {
+		return CockroachParamsMultiError(errors)
+	}
+
+	return nil
+}
+
+// CockroachParamsMultiError is an error wrapping multiple validation errors
+// returned by CockroachParams.ValidateAll() if the designated constraints
+// aren't met.
+type CockroachParamsMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CockroachParamsMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CockroachParamsMultiError) AllErrors() []error { return m }
+
+// CockroachParamsValidationError is the validation error returned by
+// CockroachParams.Validate if the designated constraints aren't met.
+type CockroachParamsValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CockroachParamsValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CockroachParamsValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CockroachParamsValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CockroachParamsValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CockroachParamsValidationError) ErrorName() string { return "CockroachParamsValidationError" }
+
+// Error satisfies the builtin error interface
+func (e CockroachParamsValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCockroachParams.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CockroachParamsValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CockroachParamsValidationError{}
+
+// Validate checks the field values on DatabaseParams with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *DatabaseParams) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DatabaseParams with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in DatabaseParamsMultiError,
+// or nil if none found.
+func (m *DatabaseParams) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DatabaseParams) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Version
+
+	if all {
+		switch v := interface{}(m.GetPackage()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DatabaseParamsValidationError{
+					field:  "Package",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DatabaseParamsValidationError{
+					field:  "Package",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPackage()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DatabaseParamsValidationError{
+				field:  "Package",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	oneofEnginePresent := false
+	switch v := m.Engine.(type) {
+	case *DatabaseParams_Postgres:
+		if v == nil {
+			err := DatabaseParamsValidationError{
+				field:  "Engine",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofEnginePresent = true
+
+		if all {
+			switch v := interface{}(m.GetPostgres()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, DatabaseParamsValidationError{
+						field:  "Postgres",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, DatabaseParamsValidationError{
+						field:  "Postgres",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetPostgres()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return DatabaseParamsValidationError{
+					field:  "Postgres",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *DatabaseParams_Mysql:
+		if v == nil {
+			err := DatabaseParamsValidationError{
+				field:  "Engine",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofEnginePresent = true
+
+		if all {
+			switch v := interface{}(m.GetMysql()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, DatabaseParamsValidationError{
+						field:  "Mysql",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, DatabaseParamsValidationError{
+						field:  "Mysql",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetMysql()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return DatabaseParamsValidationError{
+					field:  "Mysql",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *DatabaseParams_Mariadb:
+		if v == nil {
+			err := DatabaseParamsValidationError{
+				field:  "Engine",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofEnginePresent = true
+
+		if all {
+			switch v := interface{}(m.GetMariadb()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, DatabaseParamsValidationError{
+						field:  "Mariadb",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, DatabaseParamsValidationError{
+						field:  "Mariadb",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetMariadb()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return DatabaseParamsValidationError{
+					field:  "Mariadb",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *DatabaseParams_Picodata:
+		if v == nil {
+			err := DatabaseParamsValidationError{
+				field:  "Engine",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofEnginePresent = true
+
+		if all {
+			switch v := interface{}(m.GetPicodata()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, DatabaseParamsValidationError{
+						field:  "Picodata",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, DatabaseParamsValidationError{
+						field:  "Picodata",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetPicodata()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return DatabaseParamsValidationError{
+					field:  "Picodata",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *DatabaseParams_Ydb:
+		if v == nil {
+			err := DatabaseParamsValidationError{
+				field:  "Engine",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofEnginePresent = true
+
+		if all {
+			switch v := interface{}(m.GetYdb()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, DatabaseParamsValidationError{
+						field:  "Ydb",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, DatabaseParamsValidationError{
+						field:  "Ydb",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetYdb()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return DatabaseParamsValidationError{
+					field:  "Ydb",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *DatabaseParams_YdbManaged:
+		if v == nil {
+			err := DatabaseParamsValidationError{
+				field:  "Engine",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofEnginePresent = true
+
+		if all {
+			switch v := interface{}(m.GetYdbManaged()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, DatabaseParamsValidationError{
+						field:  "YdbManaged",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, DatabaseParamsValidationError{
+						field:  "YdbManaged",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetYdbManaged()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return DatabaseParamsValidationError{
+					field:  "YdbManaged",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *DatabaseParams_Cockroach:
+		if v == nil {
+			err := DatabaseParamsValidationError{
+				field:  "Engine",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofEnginePresent = true
+
+		if all {
+			switch v := interface{}(m.GetCockroach()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, DatabaseParamsValidationError{
+						field:  "Cockroach",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, DatabaseParamsValidationError{
+						field:  "Cockroach",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetCockroach()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return DatabaseParamsValidationError{
+					field:  "Cockroach",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	default:
+		_ = v // ensures v is used
+	}
+	if !oneofEnginePresent {
+		err := DatabaseParamsValidationError{
+			field:  "Engine",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return DatabaseParamsMultiError(errors)
+	}
+
+	return nil
+}
+
+// DatabaseParamsMultiError is an error wrapping multiple validation errors
+// returned by DatabaseParams.ValidateAll() if the designated constraints
+// aren't met.
+type DatabaseParamsMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DatabaseParamsMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DatabaseParamsMultiError) AllErrors() []error { return m }
+
+// DatabaseParamsValidationError is the validation error returned by
+// DatabaseParams.Validate if the designated constraints aren't met.
+type DatabaseParamsValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DatabaseParamsValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DatabaseParamsValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DatabaseParamsValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DatabaseParamsValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DatabaseParamsValidationError) ErrorName() string { return "DatabaseParamsValidationError" }
+
+// Error satisfies the builtin error interface
+func (e DatabaseParamsValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDatabaseParams.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DatabaseParamsValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DatabaseParamsValidationError{}
+
 // Validate checks the field values on Database with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -79,34 +1591,7 @@ func (m *Database) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if all {
-		switch v := interface{}(m.GetPramsSchema()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, DatabaseValidationError{
-					field:  "PramsSchema",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, DatabaseValidationError{
-					field:  "PramsSchema",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetPramsSchema()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return DatabaseValidationError{
-				field:  "PramsSchema",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
+	// no validation rules for PackageId
 
 	if all {
 		switch v := interface{}(m.GetTags()).(type) {
@@ -359,6 +1844,141 @@ var _ interface {
 var _Database_Kind_NotInLookup = map[Database_Kind]struct{}{
 	0: {},
 }
+
+// Validate checks the field values on YdbManagedParams_AutoScale with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *YdbManagedParams_AutoScale) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on YdbManagedParams_AutoScale with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// YdbManagedParams_AutoScaleMultiError, or nil if none found.
+func (m *YdbManagedParams_AutoScale) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *YdbManagedParams_AutoScale) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetMinSize() < 1 {
+		err := YdbManagedParams_AutoScaleValidationError{
+			field:  "MinSize",
+			reason: "value must be greater than or equal to 1",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetMaxSize() < 1 {
+		err := YdbManagedParams_AutoScaleValidationError{
+			field:  "MaxSize",
+			reason: "value must be greater than or equal to 1",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if val := m.GetCpuUtilizationPercent(); val < 0 || val > 100 {
+		err := YdbManagedParams_AutoScaleValidationError{
+			field:  "CpuUtilizationPercent",
+			reason: "value must be inside range [0, 100]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return YdbManagedParams_AutoScaleMultiError(errors)
+	}
+
+	return nil
+}
+
+// YdbManagedParams_AutoScaleMultiError is an error wrapping multiple
+// validation errors returned by YdbManagedParams_AutoScale.ValidateAll() if
+// the designated constraints aren't met.
+type YdbManagedParams_AutoScaleMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m YdbManagedParams_AutoScaleMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m YdbManagedParams_AutoScaleMultiError) AllErrors() []error { return m }
+
+// YdbManagedParams_AutoScaleValidationError is the validation error returned
+// by YdbManagedParams_AutoScale.Validate if the designated constraints aren't met.
+type YdbManagedParams_AutoScaleValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e YdbManagedParams_AutoScaleValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e YdbManagedParams_AutoScaleValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e YdbManagedParams_AutoScaleValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e YdbManagedParams_AutoScaleValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e YdbManagedParams_AutoScaleValidationError) ErrorName() string {
+	return "YdbManagedParams_AutoScaleValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e YdbManagedParams_AutoScaleValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sYdbManagedParams_AutoScale.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = YdbManagedParams_AutoScaleValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = YdbManagedParams_AutoScaleValidationError{}
 
 // Validate checks the field values on Database_PresetId with the rules defined
 // in the proto definition for this message. If any rules are violated, the

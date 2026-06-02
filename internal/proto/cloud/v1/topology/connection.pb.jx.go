@@ -16,13 +16,13 @@ func (m *Connection) Encode(e *jx.Encoder) {
 		return
 	}
 	e.ObjStart()
-	if m.From != "" {
-		e.FieldStart("from")
-		e.Str(m.From)
+	if m.FromComponentId != "" {
+		e.FieldStart("fromComponentId")
+		e.Str(m.FromComponentId)
 	}
-	if m.To != "" {
-		e.FieldStart("to")
-		e.Str(m.To)
+	if m.ToComponentId != "" {
+		e.FieldStart("toComponentId")
+		e.Str(m.ToComponentId)
 	}
 	if m.Kind != 0 {
 		e.FieldStart("kind")
@@ -48,13 +48,17 @@ func (m *Connection) Encode(e *jx.Encoder) {
 			e.Int32(int32(m.Mode))
 		}
 	}
+	if m.EndpointName != "" {
+		e.FieldStart("endpointName")
+		e.Str(m.EndpointName)
+	}
 	if m.Port != nil {
 		e.FieldStart("port")
 		e.UInt32(*m.Port)
 	}
-	if m.Inner != false {
-		e.FieldStart("inner")
-		e.Bool(m.Inner)
+	if m.Colocated != false {
+		e.FieldStart("colocated")
+		e.Bool(m.Colocated)
 	}
 	if m.Tags != nil {
 		e.FieldStart("tags")
@@ -67,11 +71,11 @@ func (m *Connection) Decode(d *jx.Decoder) error {
 	seen := map[string]bool{}
 	return d.Obj(func(d *jx.Decoder, key string) error {
 		switch key {
-		case "from":
-			if seen["From"] {
+		case "fromComponentId", "from_component_id":
+			if seen["FromComponentId"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["From"] = true
+			seen["FromComponentId"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
@@ -79,13 +83,13 @@ func (m *Connection) Decode(d *jx.Decoder) error {
 			if err != nil {
 				return err
 			}
-			m.From = v
+			m.FromComponentId = v
 			return nil
-		case "to":
-			if seen["To"] {
+		case "toComponentId", "to_component_id":
+			if seen["ToComponentId"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["To"] = true
+			seen["ToComponentId"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
@@ -93,7 +97,7 @@ func (m *Connection) Decode(d *jx.Decoder) error {
 			if err != nil {
 				return err
 			}
-			m.To = v
+			m.ToComponentId = v
 			return nil
 		case "kind":
 			if seen["Kind"] {
@@ -182,6 +186,20 @@ func (m *Connection) Decode(d *jx.Decoder) error {
 			default:
 				return fmt.Errorf("invalid enum token %s", d.Next())
 			}
+		case "endpointName", "endpoint_name":
+			if seen["EndpointName"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["EndpointName"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.EndpointName = v
+			return nil
 		case "port":
 			if seen["Port"] {
 				return fmt.Errorf("duplicate field %q", key)
@@ -196,11 +214,11 @@ func (m *Connection) Decode(d *jx.Decoder) error {
 			}
 			m.Port = &v
 			return nil
-		case "inner":
-			if seen["Inner"] {
+		case "colocated":
+			if seen["Colocated"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["Inner"] = true
+			seen["Colocated"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
@@ -208,7 +226,7 @@ func (m *Connection) Decode(d *jx.Decoder) error {
 			if err != nil {
 				return err
 			}
-			m.Inner = v
+			m.Colocated = v
 			return nil
 		case "tags":
 			if seen["Tags"] {

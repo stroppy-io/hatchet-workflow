@@ -13,13 +13,13 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
     suite.proto defines a Suite: a named collection of provider-agnostic,
     params-only presets run together under a single provider, optionally on a
     cron schedule. Expanding a Suite produces a SuiteRun whose child TestRuns
-    are baked by the wizard (it fills provider_parms per preset).
+    are baked by deriving topology specs and infrastructure plans per preset.
  */
 
 /*
     Suite is a reusable test bundle. It references provider-agnostic,
-    params-only presets; the provider is applied once here, and the wizard bakes
-    provider_parms when expanding presets into TestRuns.
+    params-only presets; the provider is applied once here, and expansion bakes
+    topology specs plus infrastructure plans into child TestRuns.
  */
 message Suite {
     /* id is the stable suite identifier. */

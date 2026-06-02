@@ -5,8 +5,6 @@ package deployment
 import (
 	fmt "fmt"
 	jx "github.com/go-faster/jx"
-	jxpb "github.com/gopherex/protoc-gen-go-jx/jxpb"
-	schemapb "github.com/stroppy-io/schemapb/schemapb"
 )
 
 func (m *ProviderSettings) Encode(e *jx.Encoder) {
@@ -16,17 +14,13 @@ func (m *ProviderSettings) Encode(e *jx.Encoder) {
 		return
 	}
 	e.ObjStart()
-	if m.Provider != 0 {
-		e.FieldStart("provider")
-		if s, ok := Provider_name[int32(m.Provider)]; ok {
-			e.Str(s)
-		} else {
-			e.Int32(int32(m.Provider))
-		}
-	}
-	if m.Settings != nil {
-		e.FieldStart("settings")
-		jxpb.EncMessage(e, m.Settings)
+	switch v := m.Settings.(type) {
+	case *ProviderSettings_Docker:
+		e.FieldStart("docker")
+		v.Docker.Encode(e)
+	case *ProviderSettings_Yandex:
+		e.FieldStart("yandex")
+		v.Yandex.Encode(e)
 	}
 	e.ObjEnd()
 }
@@ -35,47 +29,35 @@ func (m *ProviderSettings) Decode(d *jx.Decoder) error {
 	seen := map[string]bool{}
 	return d.Obj(func(d *jx.Decoder, key string) error {
 		switch key {
-		case "provider":
-			if seen["Provider"] {
-				return fmt.Errorf("duplicate field %q", key)
+		case "docker":
+			if seen["oneof:Settings"] {
+				return fmt.Errorf("multiple keys for oneof settings")
 			}
-			seen["Provider"] = true
-			switch d.Next() {
-			case jx.String:
-				s, err := d.Str()
-				if err != nil {
-					return err
-				}
-				n, ok := Provider_value[s]
-				if !ok {
-					return fmt.Errorf("unknown enum value %q", s)
-				}
-				m.Provider = Provider(n)
-				return nil
-			case jx.Number:
-				n, err := d.Int32()
-				if err != nil {
-					return err
-				}
-				m.Provider = Provider(n)
-				return nil
-			case jx.Null:
-				return d.Null()
-			default:
-				return fmt.Errorf("invalid enum token %s", d.Next())
-			}
-		case "settings":
-			if seen["Settings"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["Settings"] = true
+			seen["oneof:Settings"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			m.Settings = &schemapb.Baked{}
-			if err := jxpb.DecMessage(d, m.Settings); err != nil {
+			w := &ProviderSettings_Docker{}
+			w.Docker = &Docker_Settings{}
+			if err := w.Docker.Decode(d); err != nil {
 				return err
 			}
+			m.Settings = w
+			return nil
+		case "yandex":
+			if seen["oneof:Settings"] {
+				return fmt.Errorf("multiple keys for oneof settings")
+			}
+			seen["oneof:Settings"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			w := &ProviderSettings_Yandex{}
+			w.Yandex = &Yandex_Settings{}
+			if err := w.Yandex.Decode(d); err != nil {
+				return err
+			}
+			m.Settings = w
 			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)

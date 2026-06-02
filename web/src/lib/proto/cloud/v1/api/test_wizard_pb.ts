@@ -6,8 +6,18 @@ import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegen
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import type { EntityFilter, EntityFilterJson, EntitySort, EntitySortJson, Page, PageJson } from "../common/entity_pb.ts";
 import { file_cloud_v1_common_entity } from "../common/entity_pb.ts";
+import type { InfrastructurePlan, InfrastructurePlanJson } from "../deployment/infrastructure_pb.ts";
+import { file_cloud_v1_deployment_infrastructure } from "../deployment/infrastructure_pb.ts";
+import type { Provider, ProviderJson } from "../deployment/provider_pb.ts";
+import { file_cloud_v1_deployment_provider } from "../deployment/provider_pb.ts";
+import type { RenderOverrideSet, RenderOverrideSetJson } from "../deployment/render_pb.ts";
+import { file_cloud_v1_deployment_render } from "../deployment/render_pb.ts";
+import type { Database, DatabaseJson } from "../domain/database_pb.ts";
+import { file_cloud_v1_domain_database } from "../domain/database_pb.ts";
 import type { TestRun, TestRunJson } from "../domain/test_pb.ts";
 import { file_cloud_v1_domain_test } from "../domain/test_pb.ts";
+import type { Workload, WorkloadJson } from "../domain/workload_pb.ts";
+import { file_cloud_v1_domain_workload } from "../domain/workload_pb.ts";
 import { file_cloud_v1_iam_options } from "../iam/options_pb.ts";
 import { file_cloud_v1_iam_permission } from "../iam/permission_pb.ts";
 import type { TestPresetRecord, TestPresetRecordJson } from "../models/preset_pb.ts";
@@ -16,8 +26,8 @@ import type { TestRunRecord, TestRunRecordJson } from "../models/test_run_pb.ts"
 import { file_cloud_v1_models_test_run } from "../models/test_run_pb.ts";
 import type { TestWizardDraftRecord, TestWizardDraftRecordJson } from "../models/test_wizard_pb.ts";
 import { file_cloud_v1_models_test_wizard } from "../models/test_wizard_pb.ts";
-import type { Filled, FilledJson } from "../../../schemapb/schema_pb.ts";
-import { file_schemapb_schema } from "../../../schemapb/schema_pb.ts";
+import type { TopologySpec, TopologySpecJson } from "../topology/topology_pb.ts";
+import { file_cloud_v1_topology_topology } from "../topology/topology_pb.ts";
 import { file_validate_validate } from "../../../validate/validate_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -25,7 +35,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/api/test_wizard.proto.
  */
 export const file_cloud_v1_api_test_wizard: GenFile = /*@__PURE__*/
-  fileDesc("Ch5jbG91ZC92MS9hcGkvdGVzdF93aXphcmQucHJvdG8SDGNsb3VkLnYxLmFwaSJvChZTdGFydFRlc3RXaXphcmRSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhYKBG5hbWUYAiABKAlCCPpCBXIDGP8BEh8KDnRlc3RfcHJlc2V0X2lkGAMgASgJQgf6QgRyAhhAIloKF1N0YXJ0VGVzdFdpemFyZFJlc3BvbnNlEj8KBWRyYWZ0GAEgASgLMiYuY2xvdWQudjEubW9kZWxzLlRlc3RXaXphcmREcmFmdFJlY29yZEII+kIFigECEAEiVgoZR2V0VGVzdFdpemFyZERyYWZ0UmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIbCghkcmFmdF9pZBgCIAEoCUIJ+kIGcgQQARhAIl0KGkdldFRlc3RXaXphcmREcmFmdFJlc3BvbnNlEj8KBWRyYWZ0GAEgASgLMiYuY2xvdWQudjEubW9kZWxzLlRlc3RXaXphcmREcmFmdFJlY29yZEII+kIFigECEAEiugEKG0xpc3RUZXN0V2l6YXJkRHJhZnRzUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBItCgZmaWx0ZXIYAiABKAsyHS5jbG91ZC52MS5jb21tb24uRW50aXR5RmlsdGVyEikKBHNvcnQYAyABKAsyGy5jbG91ZC52MS5jb21tb24uRW50aXR5U29ydBIjCgRwYWdlGAQgASgLMhUuY2xvdWQudjEuY29tbW9uLlBhZ2UibwocTGlzdFRlc3RXaXphcmREcmFmdHNSZXNwb25zZRI2CgZkcmFmdHMYASADKAsyJi5jbG91ZC52MS5tb2RlbHMuVGVzdFdpemFyZERyYWZ0UmVjb3JkEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSJ9ChZQYXRjaFRlc3RXaXphcmRSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQYQBABEhsKCGRyYWZ0X2lkGAIgASgJQgn6QgZyBBABGEASKAoEZm9ybRgDIAEoCzIQLnNjaGVtYXBiLkZpbGxlZEII+kIFigECEAEiWgoXUGF0Y2hUZXN0V2l6YXJkUmVzcG9uc2USPwoFZHJhZnQYASABKAsyJi5jbG91ZC52MS5tb2RlbHMuVGVzdFdpemFyZERyYWZ0UmVjb3JkQgj6QgWKAQIQASJZChxEZWxldGVUZXN0V2l6YXJkRHJhZnRSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhsKCGRyYWZ0X2lkGAIgASgJQgn6QgZyBBABGEAiHwodRGVsZXRlVGVzdFdpemFyZERyYWZ0UmVzcG9uc2UiggIKF0ZpbmlzaFRlc3RXaXphcmRSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhsKCGRyYWZ0X2lkGAIgASgJQgn6QgZyBBABGEASDQoFc3RhcnQYAyABKAgSFgoOc2F2ZV9hc19wcmVzZXQYBCABKAgSHQoLcHJlc2V0X25hbWUYBSABKAlCCPpCBXIDGP8BEh0KEGluX3RlbmFudF9yYXRpbmcYBiABKAhIAIgBARIdChBpbl9nbG9iYWxfcmF0aW5nGAcgASgISAGIAQFCEwoRX2luX3RlbmFudF9yYXRpbmdCEwoRX2luX2dsb2JhbF9yYXRpbmcisAEKGEZpbmlzaFRlc3RXaXphcmRSZXNwb25zZRI0Cgh0ZXN0X3J1bhgBIAEoCzIYLmNsb3VkLnYxLmRvbWFpbi5UZXN0UnVuQgj6QgWKAQIQARIrCgNydW4YAiABKAsyHi5jbG91ZC52MS5tb2RlbHMuVGVzdFJ1blJlY29yZBIxCgZwcmVzZXQYAyABKAsyIS5jbG91ZC52MS5tb2RlbHMuVGVzdFByZXNldFJlY29yZDLUBQoRVGVzdFdpemFyZFNlcnZpY2USagoPU3RhcnRUZXN0V2l6YXJkEiQuY2xvdWQudjEuYXBpLlN0YXJ0VGVzdFdpemFyZFJlcXVlc3QaJS5jbG91ZC52MS5hcGkuU3RhcnRUZXN0V2l6YXJkUmVzcG9uc2UiCoq1GAYSBAgHEAESdgoSR2V0VGVzdFdpemFyZERyYWZ0EicuY2xvdWQudjEuYXBpLkdldFRlc3RXaXphcmREcmFmdFJlcXVlc3QaKC5jbG91ZC52MS5hcGkuR2V0VGVzdFdpemFyZERyYWZ0UmVzcG9uc2UiDZACAYq1GAYSBAgHEAISfAoUTGlzdFRlc3RXaXphcmREcmFmdHMSKS5jbG91ZC52MS5hcGkuTGlzdFRlc3RXaXphcmREcmFmdHNSZXF1ZXN0GiouY2xvdWQudjEuYXBpLkxpc3RUZXN0V2l6YXJkRHJhZnRzUmVzcG9uc2UiDZACAYq1GAYSBAgHEAUSbQoPUGF0Y2hUZXN0V2l6YXJkEiQuY2xvdWQudjEuYXBpLlBhdGNoVGVzdFdpemFyZFJlcXVlc3QaJS5jbG91ZC52MS5hcGkuUGF0Y2hUZXN0V2l6YXJkUmVzcG9uc2UiDZACAoq1GAYSBAgHEAMSfwoVRGVsZXRlVGVzdFdpemFyZERyYWZ0EiouY2xvdWQudjEuYXBpLkRlbGV0ZVRlc3RXaXphcmREcmFmdFJlcXVlc3QaKy5jbG91ZC52MS5hcGkuRGVsZXRlVGVzdFdpemFyZERyYWZ0UmVzcG9uc2UiDZACAoq1GAYSBBAECAcSbQoQRmluaXNoVGVzdFdpemFyZBIlLmNsb3VkLnYxLmFwaS5GaW5pc2hUZXN0V2l6YXJkUmVxdWVzdBomLmNsb3VkLnYxLmFwaS5GaW5pc2hUZXN0V2l6YXJkUmVzcG9uc2UiCoq1GAYSBAgHEANCQVo/Z2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvYXBpYgZwcm90bzM", [file_cloud_v1_common_entity, file_cloud_v1_domain_test, file_cloud_v1_iam_options, file_cloud_v1_iam_permission, file_cloud_v1_models_preset, file_cloud_v1_models_test_run, file_cloud_v1_models_test_wizard, file_schemapb_schema, file_validate_validate]);
+  fileDesc("Ch5jbG91ZC92MS9hcGkvdGVzdF93aXphcmQucHJvdG8SDGNsb3VkLnYxLmFwaSJvChZTdGFydFRlc3RXaXphcmRSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhYKBG5hbWUYAiABKAlCCPpCBXIDGP8BEh8KDnRlc3RfcHJlc2V0X2lkGAMgASgJQgf6QgRyAhhAIloKF1N0YXJ0VGVzdFdpemFyZFJlc3BvbnNlEj8KBWRyYWZ0GAEgASgLMiYuY2xvdWQudjEubW9kZWxzLlRlc3RXaXphcmREcmFmdFJlY29yZEII+kIFigECEAEiVgoZR2V0VGVzdFdpemFyZERyYWZ0UmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIbCghkcmFmdF9pZBgCIAEoCUIJ+kIGcgQYQBABIl0KGkdldFRlc3RXaXphcmREcmFmdFJlc3BvbnNlEj8KBWRyYWZ0GAEgASgLMiYuY2xvdWQudjEubW9kZWxzLlRlc3RXaXphcmREcmFmdFJlY29yZEII+kIFigECEAEiugEKG0xpc3RUZXN0V2l6YXJkRHJhZnRzUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEGEAQARItCgZmaWx0ZXIYAiABKAsyHS5jbG91ZC52MS5jb21tb24uRW50aXR5RmlsdGVyEikKBHNvcnQYAyABKAsyGy5jbG91ZC52MS5jb21tb24uRW50aXR5U29ydBIjCgRwYWdlGAQgASgLMhUuY2xvdWQudjEuY29tbW9uLlBhZ2UibwocTGlzdFRlc3RXaXphcmREcmFmdHNSZXNwb25zZRI2CgZkcmFmdHMYASADKAsyJi5jbG91ZC52MS5tb2RlbHMuVGVzdFdpemFyZERyYWZ0UmVjb3JkEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSKoAwoWUGF0Y2hUZXN0V2l6YXJkUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIbCghkcmFmdF9pZBgCIAEoCUIJ+kIGcgQQARhAEjkKCHByb3ZpZGVyGAMgASgOMh0uY2xvdWQudjEuZGVwbG95bWVudC5Qcm92aWRlckII+kIFggECEAESKwoIZGF0YWJhc2UYBCABKAsyGS5jbG91ZC52MS5kb21haW4uRGF0YWJhc2USKwoId29ya2xvYWQYBSABKAsyGS5jbG91ZC52MS5kb21haW4uV29ya2xvYWQSNgoNdG9wb2xvZ3lfc3BlYxgGIAEoCzIfLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5U3BlYxJEChNpbmZyYXN0cnVjdHVyZV9wbGFuGAggASgLMicuY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVBsYW4SQAoQcmVuZGVyX292ZXJyaWRlcxgJIAEoCzImLmNsb3VkLnYxLmRlcGxveW1lbnQuUmVuZGVyT3ZlcnJpZGVTZXQiWgoXUGF0Y2hUZXN0V2l6YXJkUmVzcG9uc2USPwoFZHJhZnQYASABKAsyJi5jbG91ZC52MS5tb2RlbHMuVGVzdFdpemFyZERyYWZ0UmVjb3JkQgj6QgWKAQIQASJZChxEZWxldGVUZXN0V2l6YXJkRHJhZnRSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQYQBABEhsKCGRyYWZ0X2lkGAIgASgJQgn6QgZyBBABGEAiHwodRGVsZXRlVGVzdFdpemFyZERyYWZ0UmVzcG9uc2UiggIKF0ZpbmlzaFRlc3RXaXphcmRSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhsKCGRyYWZ0X2lkGAIgASgJQgn6QgZyBBABGEASDQoFc3RhcnQYAyABKAgSFgoOc2F2ZV9hc19wcmVzZXQYBCABKAgSHQoLcHJlc2V0X25hbWUYBSABKAlCCPpCBXIDGP8BEh0KEGluX3RlbmFudF9yYXRpbmcYBiABKAhIAIgBARIdChBpbl9nbG9iYWxfcmF0aW5nGAcgASgISAGIAQFCEwoRX2luX3RlbmFudF9yYXRpbmdCEwoRX2luX2dsb2JhbF9yYXRpbmcisAEKGEZpbmlzaFRlc3RXaXphcmRSZXNwb25zZRI0Cgh0ZXN0X3J1bhgBIAEoCzIYLmNsb3VkLnYxLmRvbWFpbi5UZXN0UnVuQgj6QgWKAQIQARIrCgNydW4YAiABKAsyHi5jbG91ZC52MS5tb2RlbHMuVGVzdFJ1blJlY29yZBIxCgZwcmVzZXQYAyABKAsyIS5jbG91ZC52MS5tb2RlbHMuVGVzdFByZXNldFJlY29yZDLUBQoRVGVzdFdpemFyZFNlcnZpY2USagoPU3RhcnRUZXN0V2l6YXJkEiQuY2xvdWQudjEuYXBpLlN0YXJ0VGVzdFdpemFyZFJlcXVlc3QaJS5jbG91ZC52MS5hcGkuU3RhcnRUZXN0V2l6YXJkUmVzcG9uc2UiCoq1GAYSBBABCAcSdgoSR2V0VGVzdFdpemFyZERyYWZ0EicuY2xvdWQudjEuYXBpLkdldFRlc3RXaXphcmREcmFmdFJlcXVlc3QaKC5jbG91ZC52MS5hcGkuR2V0VGVzdFdpemFyZERyYWZ0UmVzcG9uc2UiDZACAYq1GAYSBAgHEAISfAoUTGlzdFRlc3RXaXphcmREcmFmdHMSKS5jbG91ZC52MS5hcGkuTGlzdFRlc3RXaXphcmREcmFmdHNSZXF1ZXN0GiouY2xvdWQudjEuYXBpLkxpc3RUZXN0V2l6YXJkRHJhZnRzUmVzcG9uc2UiDZACAYq1GAYSBAgHEAUSbQoPUGF0Y2hUZXN0V2l6YXJkEiQuY2xvdWQudjEuYXBpLlBhdGNoVGVzdFdpemFyZFJlcXVlc3QaJS5jbG91ZC52MS5hcGkuUGF0Y2hUZXN0V2l6YXJkUmVzcG9uc2UiDZACAoq1GAYSBAgHEAMSfwoVRGVsZXRlVGVzdFdpemFyZERyYWZ0EiouY2xvdWQudjEuYXBpLkRlbGV0ZVRlc3RXaXphcmREcmFmdFJlcXVlc3QaKy5jbG91ZC52MS5hcGkuRGVsZXRlVGVzdFdpemFyZERyYWZ0UmVzcG9uc2UiDZACAoq1GAYSBBAECAcSbQoQRmluaXNoVGVzdFdpemFyZBIlLmNsb3VkLnYxLmFwaS5GaW5pc2hUZXN0V2l6YXJkUmVxdWVzdBomLmNsb3VkLnYxLmFwaS5GaW5pc2hUZXN0V2l6YXJkUmVzcG9uc2UiCoq1GAYSBAgHEANCQVo/Z2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvYXBpYgZwcm90bzM", [file_cloud_v1_common_entity, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_provider, file_cloud_v1_deployment_render, file_cloud_v1_domain_database, file_cloud_v1_domain_test, file_cloud_v1_domain_workload, file_cloud_v1_iam_options, file_cloud_v1_iam_permission, file_cloud_v1_models_preset, file_cloud_v1_models_test_run, file_cloud_v1_models_test_wizard, file_cloud_v1_topology_topology, file_validate_validate]);
 
 /**
  *
@@ -389,10 +399,11 @@ export const ListTestWizardDraftsResponseSchema: GenMessage<ListTestWizardDrafts
 
 /**
  *
- * PatchTestWizard submits the edited form. The server validates the whole schema
- * (honoring `when` gates), regenerates the topology and recomputes readiness,
- * returning the full new draft (form may carry a re-emitted schema when a coarse
- * choice changed the active branches).
+ * PatchTestWizard submits edited typed draft fields. The server validates,
+ * re-derives topology_spec, infrastructure_plan and render_preview, preserves
+ * compatible machine overrides from infrastructure_plan, applies compatible
+ * render_overrides, recomputes readiness and returns the full new draft. Send
+ * the fields you changed; unset typed messages are treated as "no change".
  *
  * @generated from message cloud.v1.api.PatchTestWizardRequest
  */
@@ -415,19 +426,65 @@ export type PatchTestWizardRequest = Message<"cloud.v1.api.PatchTestWizardReques
 
   /**
    *
-   * form carries the edited form values (Filled = values + schema ref).
+   * provider selects/updates the deployment backend.
    *
-   * @generated from field: schemapb.Filled form = 3;
+   * @generated from field: cloud.v1.deployment.Provider provider = 3;
    */
-  form?: Filled;
+  provider: Provider;
+
+  /**
+   *
+   * database is the typed, provider-agnostic database under test.
+   *
+   * @generated from field: cloud.v1.domain.Database database = 4;
+   */
+  database?: Database;
+
+  /**
+   *
+   * workload is the typed stroppy workload.
+   *
+   * @generated from field: cloud.v1.domain.Workload workload = 5;
+   */
+  workload?: Workload;
+
+  /**
+   *
+   * topology_spec optionally carries the server-derived graph back to the
+   * server. Structural edits are ignored; it exists for optimistic clients
+   * that patch all draft sections at once.
+   *
+   * @generated from field: cloud.v1.topology.TopologySpec topology_spec = 6;
+   */
+  topologySpec?: TopologySpec;
+
+  /**
+   *
+   * infrastructure_plan optionally carries user edits to provider-specific
+   * machine params. The server re-derives the plan and merges compatible
+   * MachinePlan overrides by node_id.
+   *
+   * @generated from field: cloud.v1.deployment.InfrastructurePlan infrastructure_plan = 8;
+   */
+  infrastructurePlan?: InfrastructurePlan;
+
+  /**
+   *
+   * render_overrides carries user edits to editable render artifacts. The
+   * server applies compatible overrides and drops or reports stale ones.
+   *
+   * @generated from field: cloud.v1.deployment.RenderOverrideSet render_overrides = 9;
+   */
+  renderOverrides?: RenderOverrideSet;
 };
 
 /**
  *
- * PatchTestWizard submits the edited form. The server validates the whole schema
- * (honoring `when` gates), regenerates the topology and recomputes readiness,
- * returning the full new draft (form may carry a re-emitted schema when a coarse
- * choice changed the active branches).
+ * PatchTestWizard submits edited typed draft fields. The server validates,
+ * re-derives topology_spec, infrastructure_plan and render_preview, preserves
+ * compatible machine overrides from infrastructure_plan, applies compatible
+ * render_overrides, recomputes readiness and returns the full new draft. Send
+ * the fields you changed; unset typed messages are treated as "no change".
  *
  * @generated from message cloud.v1.api.PatchTestWizardRequest
  */
@@ -450,11 +507,56 @@ export type PatchTestWizardRequestJson = {
 
   /**
    *
-   * form carries the edited form values (Filled = values + schema ref).
+   * provider selects/updates the deployment backend.
    *
-   * @generated from field: schemapb.Filled form = 3;
+   * @generated from field: cloud.v1.deployment.Provider provider = 3;
    */
-  form?: FilledJson;
+  provider?: ProviderJson;
+
+  /**
+   *
+   * database is the typed, provider-agnostic database under test.
+   *
+   * @generated from field: cloud.v1.domain.Database database = 4;
+   */
+  database?: DatabaseJson;
+
+  /**
+   *
+   * workload is the typed stroppy workload.
+   *
+   * @generated from field: cloud.v1.domain.Workload workload = 5;
+   */
+  workload?: WorkloadJson;
+
+  /**
+   *
+   * topology_spec optionally carries the server-derived graph back to the
+   * server. Structural edits are ignored; it exists for optimistic clients
+   * that patch all draft sections at once.
+   *
+   * @generated from field: cloud.v1.topology.TopologySpec topology_spec = 6;
+   */
+  topologySpec?: TopologySpecJson;
+
+  /**
+   *
+   * infrastructure_plan optionally carries user edits to provider-specific
+   * machine params. The server re-derives the plan and merges compatible
+   * MachinePlan overrides by node_id.
+   *
+   * @generated from field: cloud.v1.deployment.InfrastructurePlan infrastructure_plan = 8;
+   */
+  infrastructurePlan?: InfrastructurePlanJson;
+
+  /**
+   *
+   * render_overrides carries user edits to editable render artifacts. The
+   * server applies compatible overrides and drops or reports stale ones.
+   *
+   * @generated from field: cloud.v1.deployment.RenderOverrideSet render_overrides = 9;
+   */
+  renderOverrides?: RenderOverrideSetJson;
 };
 
 export type PatchTestWizardRequestValid = PatchTestWizardRequest;
@@ -595,10 +697,10 @@ export const DeleteTestWizardDraftResponseSchema: GenMessage<DeleteTestWizardDra
 
 /**
  *
- * FinishTestWizard bakes the form (Filled -> Baked, layered overrides applied)
- * into a ready domain.TestRun. Rejected unless draft.ready. Optionally, in the
- * same call: start it (internally calls TestRunAPI.StartTestRun -> persists a
- * TestRunRecord + launches TestWorkflow) and/or save it as a TestPresetRecord.
+ * FinishTestWizard bakes the draft into a ready domain.TestRun containing
+ * database/workload/topology_spec/infrastructure_plan. Rejected unless
+ * draft.ready. Optionally, in the same call: start it (persist a TestRunRecord
+ * + launch workflow) and/or save it as a TestPresetRecord.
  *
  * @generated from message cloud.v1.api.FinishTestWizardRequest
  */
@@ -666,10 +768,10 @@ export type FinishTestWizardRequest = Message<"cloud.v1.api.FinishTestWizardRequ
 
 /**
  *
- * FinishTestWizard bakes the form (Filled -> Baked, layered overrides applied)
- * into a ready domain.TestRun. Rejected unless draft.ready. Optionally, in the
- * same call: start it (internally calls TestRunAPI.StartTestRun -> persists a
- * TestRunRecord + launches TestWorkflow) and/or save it as a TestPresetRecord.
+ * FinishTestWizard bakes the draft into a ready domain.TestRun containing
+ * database/workload/topology_spec/infrastructure_plan. Rejected unless
+ * draft.ready. Optionally, in the same call: start it (persist a TestRunRecord
+ * + launch workflow) and/or save it as a TestPresetRecord.
  *
  * @generated from message cloud.v1.api.FinishTestWizardRequest
  */

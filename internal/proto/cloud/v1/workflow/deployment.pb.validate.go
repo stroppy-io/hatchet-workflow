@@ -17,8 +17,6 @@ import (
 	"unicode/utf8"
 
 	"google.golang.org/protobuf/types/known/anypb"
-
-	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 )
 
 // ensure the imports are used
@@ -35,194 +33,65 @@ var (
 	_ = (*mail.Address)(nil)
 	_ = anypb.Any{}
 	_ = sort.Sort
-
-	_ = deployment.Provider(0)
 )
 
-// Validate checks the field values on ProcessDeploymentWorkflowRequest with
-// the rules defined in the proto definition for this message. If any rules
-// are violated, the first error encountered is returned, or nil if there are
-// no violations.
-func (m *ProcessDeploymentWorkflowRequest) Validate() error {
+// Validate checks the field values on ProcessInfrastructureWorkflowRequest
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the first error encountered is returned, or nil if
+// there are no violations.
+func (m *ProcessInfrastructureWorkflowRequest) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on ProcessDeploymentWorkflowRequest with
-// the rules defined in the proto definition for this message. If any rules
-// are violated, the result is a list of violation errors wrapped in
-// ProcessDeploymentWorkflowRequestMultiError, or nil if none found.
-func (m *ProcessDeploymentWorkflowRequest) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *ProcessDeploymentWorkflowRequest) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	// no validation rules for Provider
-
-	if all {
-		switch v := interface{}(m.GetTopology()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, ProcessDeploymentWorkflowRequestValidationError{
-					field:  "Topology",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, ProcessDeploymentWorkflowRequestValidationError{
-					field:  "Topology",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetTopology()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return ProcessDeploymentWorkflowRequestValidationError{
-				field:  "Topology",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if len(errors) > 0 {
-		return ProcessDeploymentWorkflowRequestMultiError(errors)
-	}
-
-	return nil
-}
-
-// ProcessDeploymentWorkflowRequestMultiError is an error wrapping multiple
-// validation errors returned by
-// ProcessDeploymentWorkflowRequest.ValidateAll() if the designated
-// constraints aren't met.
-type ProcessDeploymentWorkflowRequestMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m ProcessDeploymentWorkflowRequestMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m ProcessDeploymentWorkflowRequestMultiError) AllErrors() []error { return m }
-
-// ProcessDeploymentWorkflowRequestValidationError is the validation error
-// returned by ProcessDeploymentWorkflowRequest.Validate if the designated
-// constraints aren't met.
-type ProcessDeploymentWorkflowRequestValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e ProcessDeploymentWorkflowRequestValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e ProcessDeploymentWorkflowRequestValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e ProcessDeploymentWorkflowRequestValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e ProcessDeploymentWorkflowRequestValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e ProcessDeploymentWorkflowRequestValidationError) ErrorName() string {
-	return "ProcessDeploymentWorkflowRequestValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e ProcessDeploymentWorkflowRequestValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sProcessDeploymentWorkflowRequest.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = ProcessDeploymentWorkflowRequestValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = ProcessDeploymentWorkflowRequestValidationError{}
-
-// Validate checks the field values on ProcessDeploymentWorkflowResponse with
-// the rules defined in the proto definition for this message. If any rules
-// are violated, the first error encountered is returned, or nil if there are
-// no violations.
-func (m *ProcessDeploymentWorkflowResponse) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on ProcessDeploymentWorkflowResponse
+// ValidateAll checks the field values on ProcessInfrastructureWorkflowRequest
 // with the rules defined in the proto definition for this message. If any
 // rules are violated, the result is a list of violation errors wrapped in
-// ProcessDeploymentWorkflowResponseMultiError, or nil if none found.
-func (m *ProcessDeploymentWorkflowResponse) ValidateAll() error {
+// ProcessInfrastructureWorkflowRequestMultiError, or nil if none found.
+func (m *ProcessInfrastructureWorkflowRequest) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *ProcessDeploymentWorkflowResponse) validate(all bool) error {
+func (m *ProcessInfrastructureWorkflowRequest) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
 
-	// no validation rules for Provider
+	if m.GetPlan() == nil {
+		err := ProcessInfrastructureWorkflowRequestValidationError{
+			field:  "Plan",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if all {
-		switch v := interface{}(m.GetDeployedTopology()).(type) {
+		switch v := interface{}(m.GetPlan()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, ProcessDeploymentWorkflowResponseValidationError{
-					field:  "DeployedTopology",
+				errors = append(errors, ProcessInfrastructureWorkflowRequestValidationError{
+					field:  "Plan",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, ProcessDeploymentWorkflowResponseValidationError{
-					field:  "DeployedTopology",
+				errors = append(errors, ProcessInfrastructureWorkflowRequestValidationError{
+					field:  "Plan",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetDeployedTopology()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetPlan()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return ProcessDeploymentWorkflowResponseValidationError{
-				field:  "DeployedTopology",
+			return ProcessInfrastructureWorkflowRequestValidationError{
+				field:  "Plan",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -230,20 +99,20 @@ func (m *ProcessDeploymentWorkflowResponse) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return ProcessDeploymentWorkflowResponseMultiError(errors)
+		return ProcessInfrastructureWorkflowRequestMultiError(errors)
 	}
 
 	return nil
 }
 
-// ProcessDeploymentWorkflowResponseMultiError is an error wrapping multiple
+// ProcessInfrastructureWorkflowRequestMultiError is an error wrapping multiple
 // validation errors returned by
-// ProcessDeploymentWorkflowResponse.ValidateAll() if the designated
+// ProcessInfrastructureWorkflowRequest.ValidateAll() if the designated
 // constraints aren't met.
-type ProcessDeploymentWorkflowResponseMultiError []error
+type ProcessInfrastructureWorkflowRequestMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m ProcessDeploymentWorkflowResponseMultiError) Error() string {
+func (m ProcessInfrastructureWorkflowRequestMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -252,12 +121,12 @@ func (m ProcessDeploymentWorkflowResponseMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m ProcessDeploymentWorkflowResponseMultiError) AllErrors() []error { return m }
+func (m ProcessInfrastructureWorkflowRequestMultiError) AllErrors() []error { return m }
 
-// ProcessDeploymentWorkflowResponseValidationError is the validation error
-// returned by ProcessDeploymentWorkflowResponse.Validate if the designated
+// ProcessInfrastructureWorkflowRequestValidationError is the validation error
+// returned by ProcessInfrastructureWorkflowRequest.Validate if the designated
 // constraints aren't met.
-type ProcessDeploymentWorkflowResponseValidationError struct {
+type ProcessInfrastructureWorkflowRequestValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -265,24 +134,24 @@ type ProcessDeploymentWorkflowResponseValidationError struct {
 }
 
 // Field function returns field value.
-func (e ProcessDeploymentWorkflowResponseValidationError) Field() string { return e.field }
+func (e ProcessInfrastructureWorkflowRequestValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ProcessDeploymentWorkflowResponseValidationError) Reason() string { return e.reason }
+func (e ProcessInfrastructureWorkflowRequestValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ProcessDeploymentWorkflowResponseValidationError) Cause() error { return e.cause }
+func (e ProcessInfrastructureWorkflowRequestValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ProcessDeploymentWorkflowResponseValidationError) Key() bool { return e.key }
+func (e ProcessInfrastructureWorkflowRequestValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ProcessDeploymentWorkflowResponseValidationError) ErrorName() string {
-	return "ProcessDeploymentWorkflowResponseValidationError"
+func (e ProcessInfrastructureWorkflowRequestValidationError) ErrorName() string {
+	return "ProcessInfrastructureWorkflowRequestValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e ProcessDeploymentWorkflowResponseValidationError) Error() string {
+func (e ProcessInfrastructureWorkflowRequestValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -294,14 +163,14 @@ func (e ProcessDeploymentWorkflowResponseValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sProcessDeploymentWorkflowResponse.%s: %s%s",
+		"invalid %sProcessInfrastructureWorkflowRequest.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ProcessDeploymentWorkflowResponseValidationError{}
+var _ error = ProcessInfrastructureWorkflowRequestValidationError{}
 
 var _ interface {
 	Field() string
@@ -309,7 +178,152 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ProcessDeploymentWorkflowResponseValidationError{}
+} = ProcessInfrastructureWorkflowRequestValidationError{}
+
+// Validate checks the field values on ProcessInfrastructureWorkflowResponse
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the first error encountered is returned, or nil if
+// there are no violations.
+func (m *ProcessInfrastructureWorkflowResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ProcessInfrastructureWorkflowResponse
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// ProcessInfrastructureWorkflowResponseMultiError, or nil if none found.
+func (m *ProcessInfrastructureWorkflowResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ProcessInfrastructureWorkflowResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetState() == nil {
+		err := ProcessInfrastructureWorkflowResponseValidationError{
+			field:  "State",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetState()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ProcessInfrastructureWorkflowResponseValidationError{
+					field:  "State",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ProcessInfrastructureWorkflowResponseValidationError{
+					field:  "State",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetState()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ProcessInfrastructureWorkflowResponseValidationError{
+				field:  "State",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return ProcessInfrastructureWorkflowResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ProcessInfrastructureWorkflowResponseMultiError is an error wrapping
+// multiple validation errors returned by
+// ProcessInfrastructureWorkflowResponse.ValidateAll() if the designated
+// constraints aren't met.
+type ProcessInfrastructureWorkflowResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ProcessInfrastructureWorkflowResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ProcessInfrastructureWorkflowResponseMultiError) AllErrors() []error { return m }
+
+// ProcessInfrastructureWorkflowResponseValidationError is the validation error
+// returned by ProcessInfrastructureWorkflowResponse.Validate if the
+// designated constraints aren't met.
+type ProcessInfrastructureWorkflowResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ProcessInfrastructureWorkflowResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ProcessInfrastructureWorkflowResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ProcessInfrastructureWorkflowResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ProcessInfrastructureWorkflowResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ProcessInfrastructureWorkflowResponseValidationError) ErrorName() string {
+	return "ProcessInfrastructureWorkflowResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ProcessInfrastructureWorkflowResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sProcessInfrastructureWorkflowResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ProcessInfrastructureWorkflowResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ProcessInfrastructureWorkflowResponseValidationError{}
 
 // Validate checks the field values on CalculateQuotasWorkflowRequest with the
 // rules defined in the proto definition for this message. If any rules are
@@ -333,12 +347,23 @@ func (m *CalculateQuotasWorkflowRequest) validate(all bool) error {
 
 	var errors []error
 
+	if m.GetPlan() == nil {
+		err := CalculateQuotasWorkflowRequestValidationError{
+			field:  "Plan",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if all {
-		switch v := interface{}(m.GetTopology()).(type) {
+		switch v := interface{}(m.GetPlan()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, CalculateQuotasWorkflowRequestValidationError{
-					field:  "Topology",
+					field:  "Plan",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -346,16 +371,16 @@ func (m *CalculateQuotasWorkflowRequest) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, CalculateQuotasWorkflowRequestValidationError{
-					field:  "Topology",
+					field:  "Plan",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetTopology()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetPlan()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return CalculateQuotasWorkflowRequestValidationError{
-				field:  "Topology",
+				field:  "Plan",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -465,12 +490,23 @@ func (m *CalculateQuotasWorkflowResponse) validate(all bool) error {
 
 	var errors []error
 
+	if m.GetPlan() == nil {
+		err := CalculateQuotasWorkflowResponseValidationError{
+			field:  "Plan",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if all {
-		switch v := interface{}(m.GetTopology()).(type) {
+		switch v := interface{}(m.GetPlan()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, CalculateQuotasWorkflowResponseValidationError{
-					field:  "Topology",
+					field:  "Plan",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -478,16 +514,16 @@ func (m *CalculateQuotasWorkflowResponse) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, CalculateQuotasWorkflowResponseValidationError{
-					field:  "Topology",
+					field:  "Plan",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetTopology()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetPlan()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return CalculateQuotasWorkflowResponseValidationError{
-				field:  "Topology",
+				field:  "Plan",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -643,12 +679,23 @@ func (m *AcquireNetworkActivityRequest) validate(all bool) error {
 
 	var errors []error
 
+	if m.GetPlan() == nil {
+		err := AcquireNetworkActivityRequestValidationError{
+			field:  "Plan",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if all {
-		switch v := interface{}(m.GetSettings()).(type) {
+		switch v := interface{}(m.GetPlan()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, AcquireNetworkActivityRequestValidationError{
-					field:  "Settings",
+					field:  "Plan",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -656,16 +703,16 @@ func (m *AcquireNetworkActivityRequest) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, AcquireNetworkActivityRequestValidationError{
-					field:  "Settings",
+					field:  "Plan",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetSettings()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetPlan()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return AcquireNetworkActivityRequestValidationError{
-				field:  "Settings",
+				field:  "Plan",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -1057,25 +1104,25 @@ func (m *AcquireQuotasActivityResponse) validate(all bool) error {
 	var errors []error
 
 	{
-		sorted_keys := make([]string, len(m.GetQuotaAllocation()))
+		sorted_keys := make([]string, len(m.GetQuotaAllocations()))
 		i := 0
-		for key := range m.GetQuotaAllocation() {
+		for key := range m.GetQuotaAllocations() {
 			sorted_keys[i] = key
 			i++
 		}
 		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
 		for _, key := range sorted_keys {
-			val := m.GetQuotaAllocation()[key]
+			val := m.GetQuotaAllocations()[key]
 			_ = val
 
-			// no validation rules for QuotaAllocation[key]
+			// no validation rules for QuotaAllocations[key]
 
 			if all {
 				switch v := interface{}(val).(type) {
 				case interface{ ValidateAll() error }:
 					if err := v.ValidateAll(); err != nil {
 						errors = append(errors, AcquireQuotasActivityResponseValidationError{
-							field:  fmt.Sprintf("QuotaAllocation[%v]", key),
+							field:  fmt.Sprintf("QuotaAllocations[%v]", key),
 							reason: "embedded message failed validation",
 							cause:  err,
 						})
@@ -1083,7 +1130,7 @@ func (m *AcquireQuotasActivityResponse) validate(all bool) error {
 				case interface{ Validate() error }:
 					if err := v.Validate(); err != nil {
 						errors = append(errors, AcquireQuotasActivityResponseValidationError{
-							field:  fmt.Sprintf("QuotaAllocation[%v]", key),
+							field:  fmt.Sprintf("QuotaAllocations[%v]", key),
 							reason: "embedded message failed validation",
 							cause:  err,
 						})
@@ -1092,7 +1139,7 @@ func (m *AcquireQuotasActivityResponse) validate(all bool) error {
 			} else if v, ok := interface{}(val).(interface{ Validate() error }); ok {
 				if err := v.Validate(); err != nil {
 					return AcquireQuotasActivityResponseValidationError{
-						field:  fmt.Sprintf("QuotaAllocation[%v]", key),
+						field:  fmt.Sprintf("QuotaAllocations[%v]", key),
 						reason: "embedded message failed validation",
 						cause:  err,
 					}
@@ -1182,3 +1229,761 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = AcquireQuotasActivityResponseValidationError{}
+
+// Validate checks the field values on RenderDeploymentPlanWorkflowRequest with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *RenderDeploymentPlanWorkflowRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RenderDeploymentPlanWorkflowRequest
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// RenderDeploymentPlanWorkflowRequestMultiError, or nil if none found.
+func (m *RenderDeploymentPlanWorkflowRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RenderDeploymentPlanWorkflowRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetTopologySpec() == nil {
+		err := RenderDeploymentPlanWorkflowRequestValidationError{
+			field:  "TopologySpec",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetTopologySpec()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RenderDeploymentPlanWorkflowRequestValidationError{
+					field:  "TopologySpec",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RenderDeploymentPlanWorkflowRequestValidationError{
+					field:  "TopologySpec",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTopologySpec()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RenderDeploymentPlanWorkflowRequestValidationError{
+				field:  "TopologySpec",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetInfrastructurePlan() == nil {
+		err := RenderDeploymentPlanWorkflowRequestValidationError{
+			field:  "InfrastructurePlan",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetInfrastructurePlan()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RenderDeploymentPlanWorkflowRequestValidationError{
+					field:  "InfrastructurePlan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RenderDeploymentPlanWorkflowRequestValidationError{
+					field:  "InfrastructurePlan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetInfrastructurePlan()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RenderDeploymentPlanWorkflowRequestValidationError{
+				field:  "InfrastructurePlan",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetInfrastructureState()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RenderDeploymentPlanWorkflowRequestValidationError{
+					field:  "InfrastructureState",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RenderDeploymentPlanWorkflowRequestValidationError{
+					field:  "InfrastructureState",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetInfrastructureState()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RenderDeploymentPlanWorkflowRequestValidationError{
+				field:  "InfrastructureState",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetRenderOverrides()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RenderDeploymentPlanWorkflowRequestValidationError{
+					field:  "RenderOverrides",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RenderDeploymentPlanWorkflowRequestValidationError{
+					field:  "RenderOverrides",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetRenderOverrides()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RenderDeploymentPlanWorkflowRequestValidationError{
+				field:  "RenderOverrides",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetDatabase() == nil {
+		err := RenderDeploymentPlanWorkflowRequestValidationError{
+			field:  "Database",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetDatabase()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RenderDeploymentPlanWorkflowRequestValidationError{
+					field:  "Database",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RenderDeploymentPlanWorkflowRequestValidationError{
+					field:  "Database",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDatabase()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RenderDeploymentPlanWorkflowRequestValidationError{
+				field:  "Database",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return RenderDeploymentPlanWorkflowRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// RenderDeploymentPlanWorkflowRequestMultiError is an error wrapping multiple
+// validation errors returned by
+// RenderDeploymentPlanWorkflowRequest.ValidateAll() if the designated
+// constraints aren't met.
+type RenderDeploymentPlanWorkflowRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RenderDeploymentPlanWorkflowRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RenderDeploymentPlanWorkflowRequestMultiError) AllErrors() []error { return m }
+
+// RenderDeploymentPlanWorkflowRequestValidationError is the validation error
+// returned by RenderDeploymentPlanWorkflowRequest.Validate if the designated
+// constraints aren't met.
+type RenderDeploymentPlanWorkflowRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e RenderDeploymentPlanWorkflowRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e RenderDeploymentPlanWorkflowRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e RenderDeploymentPlanWorkflowRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e RenderDeploymentPlanWorkflowRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e RenderDeploymentPlanWorkflowRequestValidationError) ErrorName() string {
+	return "RenderDeploymentPlanWorkflowRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e RenderDeploymentPlanWorkflowRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRenderDeploymentPlanWorkflowRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = RenderDeploymentPlanWorkflowRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = RenderDeploymentPlanWorkflowRequestValidationError{}
+
+// Validate checks the field values on RenderDeploymentPlanWorkflowResponse
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the first error encountered is returned, or nil if
+// there are no violations.
+func (m *RenderDeploymentPlanWorkflowResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RenderDeploymentPlanWorkflowResponse
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// RenderDeploymentPlanWorkflowResponseMultiError, or nil if none found.
+func (m *RenderDeploymentPlanWorkflowResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RenderDeploymentPlanWorkflowResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetDeploymentPlan() == nil {
+		err := RenderDeploymentPlanWorkflowResponseValidationError{
+			field:  "DeploymentPlan",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetDeploymentPlan()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RenderDeploymentPlanWorkflowResponseValidationError{
+					field:  "DeploymentPlan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RenderDeploymentPlanWorkflowResponseValidationError{
+					field:  "DeploymentPlan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDeploymentPlan()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RenderDeploymentPlanWorkflowResponseValidationError{
+				field:  "DeploymentPlan",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return RenderDeploymentPlanWorkflowResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// RenderDeploymentPlanWorkflowResponseMultiError is an error wrapping multiple
+// validation errors returned by
+// RenderDeploymentPlanWorkflowResponse.ValidateAll() if the designated
+// constraints aren't met.
+type RenderDeploymentPlanWorkflowResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RenderDeploymentPlanWorkflowResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RenderDeploymentPlanWorkflowResponseMultiError) AllErrors() []error { return m }
+
+// RenderDeploymentPlanWorkflowResponseValidationError is the validation error
+// returned by RenderDeploymentPlanWorkflowResponse.Validate if the designated
+// constraints aren't met.
+type RenderDeploymentPlanWorkflowResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e RenderDeploymentPlanWorkflowResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e RenderDeploymentPlanWorkflowResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e RenderDeploymentPlanWorkflowResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e RenderDeploymentPlanWorkflowResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e RenderDeploymentPlanWorkflowResponseValidationError) ErrorName() string {
+	return "RenderDeploymentPlanWorkflowResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e RenderDeploymentPlanWorkflowResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRenderDeploymentPlanWorkflowResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = RenderDeploymentPlanWorkflowResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = RenderDeploymentPlanWorkflowResponseValidationError{}
+
+// Validate checks the field values on ExecuteDeploymentPlanWorkflowRequest
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the first error encountered is returned, or nil if
+// there are no violations.
+func (m *ExecuteDeploymentPlanWorkflowRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ExecuteDeploymentPlanWorkflowRequest
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// ExecuteDeploymentPlanWorkflowRequestMultiError, or nil if none found.
+func (m *ExecuteDeploymentPlanWorkflowRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ExecuteDeploymentPlanWorkflowRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetDeploymentPlan() == nil {
+		err := ExecuteDeploymentPlanWorkflowRequestValidationError{
+			field:  "DeploymentPlan",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetDeploymentPlan()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ExecuteDeploymentPlanWorkflowRequestValidationError{
+					field:  "DeploymentPlan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ExecuteDeploymentPlanWorkflowRequestValidationError{
+					field:  "DeploymentPlan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDeploymentPlan()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ExecuteDeploymentPlanWorkflowRequestValidationError{
+				field:  "DeploymentPlan",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetInfrastructureState() == nil {
+		err := ExecuteDeploymentPlanWorkflowRequestValidationError{
+			field:  "InfrastructureState",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetInfrastructureState()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ExecuteDeploymentPlanWorkflowRequestValidationError{
+					field:  "InfrastructureState",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ExecuteDeploymentPlanWorkflowRequestValidationError{
+					field:  "InfrastructureState",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetInfrastructureState()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ExecuteDeploymentPlanWorkflowRequestValidationError{
+				field:  "InfrastructureState",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return ExecuteDeploymentPlanWorkflowRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// ExecuteDeploymentPlanWorkflowRequestMultiError is an error wrapping multiple
+// validation errors returned by
+// ExecuteDeploymentPlanWorkflowRequest.ValidateAll() if the designated
+// constraints aren't met.
+type ExecuteDeploymentPlanWorkflowRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ExecuteDeploymentPlanWorkflowRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ExecuteDeploymentPlanWorkflowRequestMultiError) AllErrors() []error { return m }
+
+// ExecuteDeploymentPlanWorkflowRequestValidationError is the validation error
+// returned by ExecuteDeploymentPlanWorkflowRequest.Validate if the designated
+// constraints aren't met.
+type ExecuteDeploymentPlanWorkflowRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ExecuteDeploymentPlanWorkflowRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ExecuteDeploymentPlanWorkflowRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ExecuteDeploymentPlanWorkflowRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ExecuteDeploymentPlanWorkflowRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ExecuteDeploymentPlanWorkflowRequestValidationError) ErrorName() string {
+	return "ExecuteDeploymentPlanWorkflowRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ExecuteDeploymentPlanWorkflowRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sExecuteDeploymentPlanWorkflowRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ExecuteDeploymentPlanWorkflowRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ExecuteDeploymentPlanWorkflowRequestValidationError{}
+
+// Validate checks the field values on ExecuteDeploymentPlanWorkflowResponse
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the first error encountered is returned, or nil if
+// there are no violations.
+func (m *ExecuteDeploymentPlanWorkflowResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ExecuteDeploymentPlanWorkflowResponse
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// ExecuteDeploymentPlanWorkflowResponseMultiError, or nil if none found.
+func (m *ExecuteDeploymentPlanWorkflowResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ExecuteDeploymentPlanWorkflowResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetDeploymentPlan() == nil {
+		err := ExecuteDeploymentPlanWorkflowResponseValidationError{
+			field:  "DeploymentPlan",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetDeploymentPlan()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ExecuteDeploymentPlanWorkflowResponseValidationError{
+					field:  "DeploymentPlan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ExecuteDeploymentPlanWorkflowResponseValidationError{
+					field:  "DeploymentPlan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDeploymentPlan()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ExecuteDeploymentPlanWorkflowResponseValidationError{
+				field:  "DeploymentPlan",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return ExecuteDeploymentPlanWorkflowResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ExecuteDeploymentPlanWorkflowResponseMultiError is an error wrapping
+// multiple validation errors returned by
+// ExecuteDeploymentPlanWorkflowResponse.ValidateAll() if the designated
+// constraints aren't met.
+type ExecuteDeploymentPlanWorkflowResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ExecuteDeploymentPlanWorkflowResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ExecuteDeploymentPlanWorkflowResponseMultiError) AllErrors() []error { return m }
+
+// ExecuteDeploymentPlanWorkflowResponseValidationError is the validation error
+// returned by ExecuteDeploymentPlanWorkflowResponse.Validate if the
+// designated constraints aren't met.
+type ExecuteDeploymentPlanWorkflowResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ExecuteDeploymentPlanWorkflowResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ExecuteDeploymentPlanWorkflowResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ExecuteDeploymentPlanWorkflowResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ExecuteDeploymentPlanWorkflowResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ExecuteDeploymentPlanWorkflowResponseValidationError) ErrorName() string {
+	return "ExecuteDeploymentPlanWorkflowResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ExecuteDeploymentPlanWorkflowResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sExecuteDeploymentPlanWorkflowResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ExecuteDeploymentPlanWorkflowResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ExecuteDeploymentPlanWorkflowResponseValidationError{}

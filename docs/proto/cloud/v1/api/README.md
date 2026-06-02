@@ -242,7 +242,6 @@
   - [cloud.v1.api.SetSuiteScheduleRequest](#cloud-v1-api-setsuiteschedulerequest)
   - [cloud.v1.api.SetSuiteScheduleResponse](#cloud-v1-api-setsuitescheduleresponse)
   - [cloud.v1.api.SetTenantProviderSettingsRequest](#cloud-v1-api-settenantprovidersettingsrequest)
-  - [cloud.v1.api.SetTenantProviderSettingsResponse](#cloud-v1-api-settenantprovidersettingsresponse)
   - [cloud.v1.api.ShellClientFrame](#cloud-v1-api-shellclientframe)
   - [cloud.v1.api.ShellServerFrame](#cloud-v1-api-shellserverframe)
   - [cloud.v1.api.ShellStart](#cloud-v1-api-shellstart)
@@ -261,6 +260,7 @@
   - [cloud.v1.api.StreamLogsRequest](#cloud-v1-api-streamlogsrequest)
   - [cloud.v1.api.StreamTestRunOverviewRequest](#cloud-v1-api-streamtestrunoverviewrequest)
   - [cloud.v1.api.TenantDashboard](#cloud-v1-api-tenantdashboard)
+  - [cloud.v1.api.TestRunOverviewSnapshot](#cloud-v1-api-testrunoverviewsnapshot)
   - [cloud.v1.api.TokenPair](#cloud-v1-api-tokenpair)
   - [cloud.v1.api.TransferTenantOwnershipRequest](#cloud-v1-api-transfertenantownershiprequest)
   - [cloud.v1.api.TransferTenantOwnershipResponse](#cloud-v1-api-transfertenantownershipresponse)
@@ -2907,10 +2907,10 @@ go_name: SuiteRun</pre></td>
 ### cloud.v1.api.FinishTestWizardRequest
 
 <pre>
-//FinishTestWizard bakes the form (Filled -> Baked, layered overrides applied)
-//into a ready domain.TestRun. Rejected unless draft.ready. Optionally, in the
-//same call: start it (internally calls TestRunAPI.StartTestRun -> persists a
-//TestRunRecord + launches TestWorkflow) and/or save it as a TestPresetRecord.
+//FinishTestWizard bakes the draft into a ready domain.TestRun containing
+//database/workload/topology_spec/infrastructure_plan. Rejected unless
+//draft.ready. Optionally, in the same call: start it (persist a TestRunRecord
+//+ launch workflow) and/or save it as a TestPresetRecord.
 </pre>
 
 <table>
@@ -4336,7 +4336,7 @@ go_name: TenantId</pre></td>
 ### cloud.v1.api.GetTestRunOverviewResponse
 
 <pre>
-//GetTestRunOverviewResponse returns the run's Overview snapshot.
+//GetTestRunOverviewResponse returns the run's staged Overview snapshot.
 </pre>
 
 <table>
@@ -4346,13 +4346,13 @@ go_name: TenantId</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>overview</td>
-<td><a href="../monitor/README.md#cloud-v1-monitor-overview">cloud.v1.monitor.Overview</a></td>
+<td>snapshot</td>
+<td><a href="#cloud-v1-api-testrunoverviewsnapshot">cloud.v1.api.TestRunOverviewSnapshot</a></td>
 <td><pre>
-//overview is the full overview (status/pipeline/workers/timeline).<br>
+//snapshot is the full overview page state.<br>
 
-json_name: overview
-go_name: Overview</pre></td>
+json_name: snapshot
+go_name: Snapshot</pre></td>
 </tr>
 </table>
 
@@ -7024,14 +7024,6 @@ go_name: ComponentIds</pre></td>
 json_name: end
 go_name: End</pre></td>
 </tr><tr>
-<td>machine_ids</td>
-<td>string</td>
-<td><pre>
-//machine_ids restricts to lines emitted by these machines.<br>
-
-json_name: machineIds
-go_name: MachineIds</pre></td>
-</tr><tr>
 <td>node_execution_ids</td>
 <td>string</td>
 <td><pre>
@@ -7039,6 +7031,14 @@ go_name: MachineIds</pre></td>
 
 json_name: nodeExecutionIds
 go_name: NodeExecutionIds</pre></td>
+</tr><tr>
+<td>node_ids</td>
+<td>string</td>
+<td><pre>
+//node_ids restricts to lines emitted by these logical topology nodes.<br>
+
+json_name: nodeIds
+go_name: NodeIds</pre></td>
 </tr><tr>
 <td>query</td>
 <td>string</td>
@@ -7291,10 +7291,11 @@ go_name: Draft</pre></td>
 ### cloud.v1.api.PatchTestWizardRequest
 
 <pre>
-//PatchTestWizard submits the edited form. The server validates the whole schema
-//(honoring `when` gates), regenerates the topology and recomputes readiness,
-//returning the full new draft (form may carry a re-emitted schema when a coarse
-//choice changed the active branches).
+//PatchTestWizard submits edited typed draft fields. The server validates,
+//re-derives topology_spec, infrastructure_plan and render_preview, preserves
+//compatible machine overrides from infrastructure_plan, applies compatible
+//render_overrides, recomputes readiness and returns the full new draft. Send
+//the fields you changed; unset typed messages are treated as "no change".
 </pre>
 
 <table>
@@ -7304,6 +7305,14 @@ go_name: Draft</pre></td>
 <th>Description</th>
 </tr>
 <tr>
+<td>database</td>
+<td><a href="../domain/README.md#cloud-v1-domain-database">cloud.v1.domain.Database</a></td>
+<td><pre>
+//database is the typed, provider-agnostic database under test.<br>
+
+json_name: database
+go_name: Database</pre></td>
+</tr><tr>
 <td>draft_id</td>
 <td>string</td>
 <td><pre>
@@ -7312,13 +7321,32 @@ go_name: Draft</pre></td>
 json_name: draftId
 go_name: DraftId</pre></td>
 </tr><tr>
-<td>form</td>
-<td><a href="../../../schemapb/README.md#schemapb-filled">schemapb.Filled</a></td>
+<td>infrastructure_plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructureplan">cloud.v1.deployment.InfrastructurePlan</a></td>
 <td><pre>
-//form carries the edited form values (Filled = values + schema ref).<br>
+//infrastructure_plan optionally carries user edits to provider-specific
+//machine params. The server re-derives the plan and merges compatible
+//MachinePlan overrides by node_id.<br>
 
-json_name: form
-go_name: Form</pre></td>
+json_name: infrastructurePlan
+go_name: InfrastructurePlan</pre></td>
+</tr><tr>
+<td>provider</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-provider">cloud.v1.deployment.Provider</a></td>
+<td><pre>
+//provider selects/updates the deployment backend.<br>
+
+json_name: provider
+go_name: Provider</pre></td>
+</tr><tr>
+<td>render_overrides</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-renderoverrideset">cloud.v1.deployment.RenderOverrideSet</a></td>
+<td><pre>
+//render_overrides carries user edits to editable render artifacts. The
+//server applies compatible overrides and drops or reports stale ones.<br>
+
+json_name: renderOverrides
+go_name: RenderOverrides</pre></td>
 </tr><tr>
 <td>tenant_id</td>
 <td>string</td>
@@ -7327,6 +7355,24 @@ go_name: Form</pre></td>
 
 json_name: tenantId
 go_name: TenantId</pre></td>
+</tr><tr>
+<td>topology_spec</td>
+<td><a href="../topology/README.md#cloud-v1-topology-topologyspec">cloud.v1.topology.TopologySpec</a></td>
+<td><pre>
+//topology_spec optionally carries the server-derived graph back to the
+//server. Structural edits are ignored; it exists for optimistic clients
+//that patch all draft sections at once.<br>
+
+json_name: topologySpec
+go_name: TopologySpec</pre></td>
+</tr><tr>
+<td>workload</td>
+<td><a href="../domain/README.md#cloud-v1-domain-workload">cloud.v1.domain.Workload</a></td>
+<td><pre>
+//workload is the typed stroppy workload.<br>
+
+json_name: workload
+go_name: Workload</pre></td>
 </tr>
 </table>
 
@@ -8549,17 +8595,8 @@ go_name: Suite</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>provider</td>
-<td><a href="../deployment/README.md#cloud-v1-deployment-provider">cloud.v1.deployment.Provider</a></td>
-<td><pre>
-//provider selects which provider's config to set (must be a defined,
-//non-zero provider).<br>
-
-json_name: provider
-go_name: Provider</pre></td>
-</tr><tr>
 <td>settings</td>
-<td><a href="../../../schemapb/README.md#schemapb-filled">schemapb.Filled</a></td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-providersettings">cloud.v1.deployment.ProviderSettings</a></td>
 <td><pre>
 //settings carries only the form values (Filled = values + schema ref); the
 //server validates against the provider schema and bakes the result.<br>
@@ -8574,32 +8611,6 @@ go_name: Settings</pre></td>
 
 json_name: tenantId
 go_name: TenantId</pre></td>
-</tr>
-</table>
-
-
-
-<a name="cloud-v1-api-settenantprovidersettingsresponse"></a>
-### cloud.v1.api.SetTenantProviderSettingsResponse
-
-<pre>
-//SetTenantProviderSettingsResponse returns the saved, baked provider config.
-</pre>
-
-<table>
-<tr>
-<th>Attribute</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-<tr>
-<td>settings</td>
-<td><a href="../deployment/README.md#cloud-v1-deployment-providersettings">cloud.v1.deployment.ProviderSettings</a></td>
-<td><pre>
-//settings is the saved, baked provider config.<br>
-
-json_name: settings
-go_name: Settings</pre></td>
 </tr>
 </table>
 
@@ -9043,9 +9054,9 @@ go_name: Draft</pre></td>
 ### cloud.v1.api.StartTestRunRequest
 
 <pre>
-//StartTestRun launches a run. Provide a fully-baked `run` (CLI / wizard finish)
-//to persist a new record and start it; or `test_run_id` to re-run an existing
-//record's spec as a new run. Launches TestWorkflow.
+//StartTestRun launches a run. Provide a staged `run` spec (CLI / wizard
+//finish) to persist a new record and start it; or `test_run_id` to re-run an
+//existing record's spec as a new run. Launches TestWorkflow.
 </pre>
 
 <table>
@@ -9076,7 +9087,7 @@ go_name: InTenantRating</pre></td>
 <td>run</td>
 <td><a href="../domain/README.md#cloud-v1-domain-testrun">cloud.v1.domain.TestRun</a></td>
 <td><pre>
-//run is a fully-baked TestRun to persist and start (CLI / wizard finish).<br>
+//run is a staged TestRun spec to persist and start (CLI / wizard finish).<br>
 
 json_name: run
 go_name: Run</pre></td>
@@ -9320,8 +9331,8 @@ go_name: TenantId</pre></td>
 
 <pre>
 //StreamTestRunOverviewRequest opens a live overview stream for a run. Each stream
-//tick is a fresh full Overview (status/pipeline/workers/timeline) so the client
-//just replaces its state; no diff merging.
+//tick is a fresh full snapshot so the client just replaces its state; no diff
+//merging.
 </pre>
 
 <table>
@@ -9412,6 +9423,51 @@ go_name: TopBenchmarks</pre></td>
 
 json_name: upcoming
 go_name: Upcoming</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-testrunoverviewsnapshot"></a>
+### cloud.v1.api.TestRunOverviewSnapshot
+
+<pre>
+//TestRunOverviewSnapshot is the overview page state: persisted run record,
+//current staged topology envelope, and live monitor pipeline/timeline view.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>overview</td>
+<td><a href="../monitor/README.md#cloud-v1-monitor-overview">cloud.v1.monitor.Overview</a></td>
+<td><pre>
+//overview is the live status/pipeline/workers/timeline projection.<br>
+
+json_name: overview
+go_name: Overview</pre></td>
+</tr><tr>
+<td>run</td>
+<td><a href="../models/README.md#cloud-v1-models-testrunrecord">cloud.v1.models.TestRunRecord</a></td>
+<td><pre>
+//run is the persisted run record, including immutable spec and any stored
+//infrastructure/deployment artifacts.<br>
+
+json_name: run
+go_name: Run</pre></td>
+</tr><tr>
+<td>topology</td>
+<td><a href="../topology/README.md#cloud-v1-topology-topology">cloud.v1.topology.Topology</a></td>
+<td><pre>
+//topology is the staged topology envelope composed from the run spec,
+//infrastructure state and deployment plan.<br>
+
+json_name: topology
+go_name: Topology</pre></td>
 </tr>
 </table>
 

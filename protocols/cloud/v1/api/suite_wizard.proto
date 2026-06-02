@@ -5,7 +5,6 @@ package cloud.v1.api;
 import "cloud/v1/common/entity.proto";
 import "cloud/v1/domain/suite.proto";
 import "cloud/v1/iam/options.proto";
-import "cloud/v1/iam/permission.proto";
 import "cloud/v1/models/suite_wizard.proto";
 import "schemapb/schema.proto";
 import "validate/validate.proto";

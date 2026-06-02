@@ -8,11 +8,12 @@ package api
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
-	schemapb "github.com/stroppy-io/schemapb/schemapb"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
+	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	_ "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
+	topology "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -367,20 +368,36 @@ func (x *ListTestWizardDraftsResponse) GetNextPageToken() string {
 	return ""
 }
 
-// PatchTestWizard submits the edited form. The server validates the whole schema
-// (honoring `when` gates), regenerates the topology and recomputes readiness,
-// returning the full new draft (form may carry a re-emitted schema when a coarse
-// choice changed the active branches).
+// PatchTestWizard submits edited typed draft fields. The server validates,
+// re-derives topology_spec, infrastructure_plan and render_preview, preserves
+// compatible machine overrides from infrastructure_plan, applies compatible
+// render_overrides, recomputes readiness and returns the full new draft. Send
+// the fields you changed; unset typed messages are treated as "no change".
 type PatchTestWizardRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// tenant_id scopes the request to the owning tenant.
 	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	// draft_id is the wizard draft being edited.
 	DraftId string `protobuf:"bytes,2,opt,name=draft_id,json=draftId,proto3" json:"draft_id,omitempty"`
-	// form carries the edited form values (Filled = values + schema ref).
-	Form          *schemapb.Filled `protobuf:"bytes,3,opt,name=form,proto3" json:"form,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// provider selects/updates the deployment backend.
+	Provider deployment.Provider `protobuf:"varint,3,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
+	// database is the typed, provider-agnostic database under test.
+	Database *domain.Database `protobuf:"bytes,4,opt,name=database,proto3" json:"database,omitempty"`
+	// workload is the typed stroppy workload.
+	Workload *domain.Workload `protobuf:"bytes,5,opt,name=workload,proto3" json:"workload,omitempty"`
+	// topology_spec optionally carries the server-derived graph back to the
+	// server. Structural edits are ignored; it exists for optimistic clients
+	// that patch all draft sections at once.
+	TopologySpec *topology.TopologySpec `protobuf:"bytes,6,opt,name=topology_spec,json=topologySpec,proto3" json:"topology_spec,omitempty"`
+	// infrastructure_plan optionally carries user edits to provider-specific
+	// machine params. The server re-derives the plan and merges compatible
+	// MachinePlan overrides by node_id.
+	InfrastructurePlan *deployment.InfrastructurePlan `protobuf:"bytes,8,opt,name=infrastructure_plan,json=infrastructurePlan,proto3" json:"infrastructure_plan,omitempty"`
+	// render_overrides carries user edits to editable render artifacts. The
+	// server applies compatible overrides and drops or reports stale ones.
+	RenderOverrides *deployment.RenderOverrideSet `protobuf:"bytes,9,opt,name=render_overrides,json=renderOverrides,proto3" json:"render_overrides,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *PatchTestWizardRequest) Reset() {
@@ -427,9 +444,44 @@ func (x *PatchTestWizardRequest) GetDraftId() string {
 	return ""
 }
 
-func (x *PatchTestWizardRequest) GetForm() *schemapb.Filled {
+func (x *PatchTestWizardRequest) GetProvider() deployment.Provider {
 	if x != nil {
-		return x.Form
+		return x.Provider
+	}
+	return deployment.Provider(0)
+}
+
+func (x *PatchTestWizardRequest) GetDatabase() *domain.Database {
+	if x != nil {
+		return x.Database
+	}
+	return nil
+}
+
+func (x *PatchTestWizardRequest) GetWorkload() *domain.Workload {
+	if x != nil {
+		return x.Workload
+	}
+	return nil
+}
+
+func (x *PatchTestWizardRequest) GetTopologySpec() *topology.TopologySpec {
+	if x != nil {
+		return x.TopologySpec
+	}
+	return nil
+}
+
+func (x *PatchTestWizardRequest) GetInfrastructurePlan() *deployment.InfrastructurePlan {
+	if x != nil {
+		return x.InfrastructurePlan
+	}
+	return nil
+}
+
+func (x *PatchTestWizardRequest) GetRenderOverrides() *deployment.RenderOverrideSet {
+	if x != nil {
+		return x.RenderOverrides
 	}
 	return nil
 }
@@ -573,10 +625,10 @@ func (*DeleteTestWizardDraftResponse) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_api_test_wizard_proto_rawDescGZIP(), []int{9}
 }
 
-// FinishTestWizard bakes the form (Filled -> Baked, layered overrides applied)
-// into a ready domain.TestRun. Rejected unless draft.ready. Optionally, in the
-// same call: start it (internally calls TestRunAPI.StartTestRun -> persists a
-// TestRunRecord + launches TestWorkflow) and/or save it as a TestPresetRecord.
+// FinishTestWizard bakes the draft into a ready domain.TestRun containing
+// database/workload/topology_spec/infrastructure_plan. Rejected unless
+// draft.ready. Optionally, in the same call: start it (persist a TestRunRecord
+// + launch workflow) and/or save it as a TestPresetRecord.
 type FinishTestWizardRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// tenant_id scopes the request to the owning tenant.
@@ -749,7 +801,7 @@ var File_cloud_v1_api_test_wizard_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_test_wizard_proto_rawDesc = "" +
 	"\n" +
-	"\x1ecloud/v1/api/test_wizard.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1ccloud/v1/models/preset.proto\x1a\x1ecloud/v1/models/test_run.proto\x1a!cloud/v1/models/test_wizard.proto\x1a\x15schemapb/schema.proto\x1a\x17validate/validate.proto\"\x8d\x01\n" +
+	"\x1ecloud/v1/api/test_wizard.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a(cloud/v1/deployment/infrastructure.proto\x1a\"cloud/v1/deployment/provider.proto\x1a cloud/v1/deployment/render.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1ccloud/v1/models/preset.proto\x1a\x1ecloud/v1/models/test_run.proto\x1a!cloud/v1/models/test_wizard.proto\x1a cloud/v1/topology/topology.proto\x1a\x17validate/validate.proto\"\x8d\x01\n" +
 	"\x16StartTestWizardRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x1c\n" +
 	"\x04name\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\xff\x01R\x04name\x12-\n" +
@@ -768,11 +820,16 @@ const file_cloud_v1_api_test_wizard_proto_rawDesc = "" +
 	"\x04page\x18\x04 \x01(\v2\x15.cloud.v1.common.PageR\x04page\"\x86\x01\n" +
 	"\x1cListTestWizardDraftsResponse\x12>\n" +
 	"\x06drafts\x18\x01 \x03(\v2&.cloud.v1.models.TestWizardDraftRecordR\x06drafts\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\x96\x01\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\x8c\x04\n" +
 	"\x16PatchTestWizardRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12$\n" +
-	"\bdraft_id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\adraftId\x12.\n" +
-	"\x04form\x18\x03 \x01(\v2\x10.schemapb.FilledB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04form\"a\n" +
+	"\bdraft_id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\adraftId\x12C\n" +
+	"\bprovider\x18\x03 \x01(\x0e2\x1d.cloud.v1.deployment.ProviderB\b\xfaB\x05\x82\x01\x02\x10\x01R\bprovider\x125\n" +
+	"\bdatabase\x18\x04 \x01(\v2\x19.cloud.v1.domain.DatabaseR\bdatabase\x125\n" +
+	"\bworkload\x18\x05 \x01(\v2\x19.cloud.v1.domain.WorkloadR\bworkload\x12D\n" +
+	"\rtopology_spec\x18\x06 \x01(\v2\x1f.cloud.v1.topology.TopologySpecR\ftopologySpec\x12X\n" +
+	"\x13infrastructure_plan\x18\b \x01(\v2'.cloud.v1.deployment.InfrastructurePlanR\x12infrastructurePlan\x12Q\n" +
+	"\x10render_overrides\x18\t \x01(\v2&.cloud.v1.deployment.RenderOverrideSetR\x0frenderOverrides\"a\n" +
 	"\x17PatchTestWizardResponse\x12F\n" +
 	"\x05draft\x18\x01 \x01(\v2&.cloud.v1.models.TestWizardDraftRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x05draft\"l\n" +
 	"\x1cDeleteTestWizardDraftRequest\x12&\n" +
@@ -834,10 +891,15 @@ var file_cloud_v1_api_test_wizard_proto_goTypes = []any{
 	(*common.EntityFilter)(nil),           // 13: cloud.v1.common.EntityFilter
 	(*common.EntitySort)(nil),             // 14: cloud.v1.common.EntitySort
 	(*common.Page)(nil),                   // 15: cloud.v1.common.Page
-	(*schemapb.Filled)(nil),               // 16: schemapb.Filled
-	(*domain.TestRun)(nil),                // 17: cloud.v1.domain.TestRun
-	(*models.TestRunRecord)(nil),          // 18: cloud.v1.models.TestRunRecord
-	(*models.TestPresetRecord)(nil),       // 19: cloud.v1.models.TestPresetRecord
+	(deployment.Provider)(0),              // 16: cloud.v1.deployment.Provider
+	(*domain.Database)(nil),               // 17: cloud.v1.domain.Database
+	(*domain.Workload)(nil),               // 18: cloud.v1.domain.Workload
+	(*topology.TopologySpec)(nil),         // 19: cloud.v1.topology.TopologySpec
+	(*deployment.InfrastructurePlan)(nil), // 20: cloud.v1.deployment.InfrastructurePlan
+	(*deployment.RenderOverrideSet)(nil),  // 21: cloud.v1.deployment.RenderOverrideSet
+	(*domain.TestRun)(nil),                // 22: cloud.v1.domain.TestRun
+	(*models.TestRunRecord)(nil),          // 23: cloud.v1.models.TestRunRecord
+	(*models.TestPresetRecord)(nil),       // 24: cloud.v1.models.TestPresetRecord
 }
 var file_cloud_v1_api_test_wizard_proto_depIdxs = []int32{
 	12, // 0: cloud.v1.api.StartTestWizardResponse.draft:type_name -> cloud.v1.models.TestWizardDraftRecord
@@ -846,28 +908,33 @@ var file_cloud_v1_api_test_wizard_proto_depIdxs = []int32{
 	14, // 3: cloud.v1.api.ListTestWizardDraftsRequest.sort:type_name -> cloud.v1.common.EntitySort
 	15, // 4: cloud.v1.api.ListTestWizardDraftsRequest.page:type_name -> cloud.v1.common.Page
 	12, // 5: cloud.v1.api.ListTestWizardDraftsResponse.drafts:type_name -> cloud.v1.models.TestWizardDraftRecord
-	16, // 6: cloud.v1.api.PatchTestWizardRequest.form:type_name -> schemapb.Filled
-	12, // 7: cloud.v1.api.PatchTestWizardResponse.draft:type_name -> cloud.v1.models.TestWizardDraftRecord
-	17, // 8: cloud.v1.api.FinishTestWizardResponse.test_run:type_name -> cloud.v1.domain.TestRun
-	18, // 9: cloud.v1.api.FinishTestWizardResponse.run:type_name -> cloud.v1.models.TestRunRecord
-	19, // 10: cloud.v1.api.FinishTestWizardResponse.preset:type_name -> cloud.v1.models.TestPresetRecord
-	0,  // 11: cloud.v1.api.TestWizardService.StartTestWizard:input_type -> cloud.v1.api.StartTestWizardRequest
-	2,  // 12: cloud.v1.api.TestWizardService.GetTestWizardDraft:input_type -> cloud.v1.api.GetTestWizardDraftRequest
-	4,  // 13: cloud.v1.api.TestWizardService.ListTestWizardDrafts:input_type -> cloud.v1.api.ListTestWizardDraftsRequest
-	6,  // 14: cloud.v1.api.TestWizardService.PatchTestWizard:input_type -> cloud.v1.api.PatchTestWizardRequest
-	8,  // 15: cloud.v1.api.TestWizardService.DeleteTestWizardDraft:input_type -> cloud.v1.api.DeleteTestWizardDraftRequest
-	10, // 16: cloud.v1.api.TestWizardService.FinishTestWizard:input_type -> cloud.v1.api.FinishTestWizardRequest
-	1,  // 17: cloud.v1.api.TestWizardService.StartTestWizard:output_type -> cloud.v1.api.StartTestWizardResponse
-	3,  // 18: cloud.v1.api.TestWizardService.GetTestWizardDraft:output_type -> cloud.v1.api.GetTestWizardDraftResponse
-	5,  // 19: cloud.v1.api.TestWizardService.ListTestWizardDrafts:output_type -> cloud.v1.api.ListTestWizardDraftsResponse
-	7,  // 20: cloud.v1.api.TestWizardService.PatchTestWizard:output_type -> cloud.v1.api.PatchTestWizardResponse
-	9,  // 21: cloud.v1.api.TestWizardService.DeleteTestWizardDraft:output_type -> cloud.v1.api.DeleteTestWizardDraftResponse
-	11, // 22: cloud.v1.api.TestWizardService.FinishTestWizard:output_type -> cloud.v1.api.FinishTestWizardResponse
-	17, // [17:23] is the sub-list for method output_type
-	11, // [11:17] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	16, // 6: cloud.v1.api.PatchTestWizardRequest.provider:type_name -> cloud.v1.deployment.Provider
+	17, // 7: cloud.v1.api.PatchTestWizardRequest.database:type_name -> cloud.v1.domain.Database
+	18, // 8: cloud.v1.api.PatchTestWizardRequest.workload:type_name -> cloud.v1.domain.Workload
+	19, // 9: cloud.v1.api.PatchTestWizardRequest.topology_spec:type_name -> cloud.v1.topology.TopologySpec
+	20, // 10: cloud.v1.api.PatchTestWizardRequest.infrastructure_plan:type_name -> cloud.v1.deployment.InfrastructurePlan
+	21, // 11: cloud.v1.api.PatchTestWizardRequest.render_overrides:type_name -> cloud.v1.deployment.RenderOverrideSet
+	12, // 12: cloud.v1.api.PatchTestWizardResponse.draft:type_name -> cloud.v1.models.TestWizardDraftRecord
+	22, // 13: cloud.v1.api.FinishTestWizardResponse.test_run:type_name -> cloud.v1.domain.TestRun
+	23, // 14: cloud.v1.api.FinishTestWizardResponse.run:type_name -> cloud.v1.models.TestRunRecord
+	24, // 15: cloud.v1.api.FinishTestWizardResponse.preset:type_name -> cloud.v1.models.TestPresetRecord
+	0,  // 16: cloud.v1.api.TestWizardService.StartTestWizard:input_type -> cloud.v1.api.StartTestWizardRequest
+	2,  // 17: cloud.v1.api.TestWizardService.GetTestWizardDraft:input_type -> cloud.v1.api.GetTestWizardDraftRequest
+	4,  // 18: cloud.v1.api.TestWizardService.ListTestWizardDrafts:input_type -> cloud.v1.api.ListTestWizardDraftsRequest
+	6,  // 19: cloud.v1.api.TestWizardService.PatchTestWizard:input_type -> cloud.v1.api.PatchTestWizardRequest
+	8,  // 20: cloud.v1.api.TestWizardService.DeleteTestWizardDraft:input_type -> cloud.v1.api.DeleteTestWizardDraftRequest
+	10, // 21: cloud.v1.api.TestWizardService.FinishTestWizard:input_type -> cloud.v1.api.FinishTestWizardRequest
+	1,  // 22: cloud.v1.api.TestWizardService.StartTestWizard:output_type -> cloud.v1.api.StartTestWizardResponse
+	3,  // 23: cloud.v1.api.TestWizardService.GetTestWizardDraft:output_type -> cloud.v1.api.GetTestWizardDraftResponse
+	5,  // 24: cloud.v1.api.TestWizardService.ListTestWizardDrafts:output_type -> cloud.v1.api.ListTestWizardDraftsResponse
+	7,  // 25: cloud.v1.api.TestWizardService.PatchTestWizard:output_type -> cloud.v1.api.PatchTestWizardResponse
+	9,  // 26: cloud.v1.api.TestWizardService.DeleteTestWizardDraft:output_type -> cloud.v1.api.DeleteTestWizardDraftResponse
+	11, // 27: cloud.v1.api.TestWizardService.FinishTestWizard:output_type -> cloud.v1.api.FinishTestWizardResponse
+	22, // [22:28] is the sub-list for method output_type
+	16, // [16:22] is the sub-list for method input_type
+	16, // [16:16] is the sub-list for extension type_name
+	16, // [16:16] is the sub-list for extension extendee
+	0,  // [0:16] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_api_test_wizard_proto_init() }

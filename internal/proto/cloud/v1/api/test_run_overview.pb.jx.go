@@ -6,7 +6,9 @@ import (
 	fmt "fmt"
 	jx "github.com/go-faster/jx"
 	jxpb "github.com/gopherex/protoc-gen-go-jx/jxpb"
+	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	monitor "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
+	topology "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -33,10 +35,10 @@ func (m *LogFilter) Encode(e *jx.Encoder) {
 		}
 		e.ArrEnd()
 	}
-	if len(m.MachineIds) > 0 {
-		e.FieldStart("machineIds")
+	if len(m.NodeIds) > 0 {
+		e.FieldStart("nodeIds")
 		e.ArrStart()
-		for _, v := range m.MachineIds {
+		for _, v := range m.NodeIds {
 			e.Str(v)
 		}
 		e.ArrEnd()
@@ -124,11 +126,11 @@ func (m *LogFilter) Decode(d *jx.Decoder) error {
 				m.ComponentIds = append(m.ComponentIds, v)
 				return nil
 			})
-		case "machineIds", "machine_ids":
-			if seen["MachineIds"] {
+		case "nodeIds", "node_ids":
+			if seen["NodeIds"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["MachineIds"] = true
+			seen["NodeIds"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
@@ -137,7 +139,7 @@ func (m *LogFilter) Decode(d *jx.Decoder) error {
 				if err != nil {
 					return err
 				}
-				m.MachineIds = append(m.MachineIds, v)
+				m.NodeIds = append(m.NodeIds, v)
 				return nil
 			})
 		case "sources":
@@ -287,6 +289,88 @@ func (m *LogFilter) UnmarshalJSON(data []byte) error {
 	return m.Decode(d)
 }
 
+func (m *TestRunOverviewSnapshot) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Run != nil {
+		e.FieldStart("run")
+		jxpb.EncMessage(e, m.Run)
+	}
+	if m.Topology != nil {
+		e.FieldStart("topology")
+		jxpb.EncMessage(e, m.Topology)
+	}
+	if m.Overview != nil {
+		e.FieldStart("overview")
+		jxpb.EncMessage(e, m.Overview)
+	}
+	e.ObjEnd()
+}
+
+func (m *TestRunOverviewSnapshot) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "run":
+			if seen["Run"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Run"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Run = &models.TestRunRecord{}
+			if err := jxpb.DecMessage(d, m.Run); err != nil {
+				return err
+			}
+			return nil
+		case "topology":
+			if seen["Topology"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Topology"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Topology = &topology.Topology{}
+			if err := jxpb.DecMessage(d, m.Topology); err != nil {
+				return err
+			}
+			return nil
+		case "overview":
+			if seen["Overview"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Overview"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Overview = &monitor.Overview{}
+			if err := jxpb.DecMessage(d, m.Overview); err != nil {
+				return err
+			}
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *TestRunOverviewSnapshot) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *TestRunOverviewSnapshot) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
 func (m *GetTestRunOverviewRequest) Encode(e *jx.Encoder) {
 	if m == nil {
 		e.ObjStart()
@@ -361,9 +445,9 @@ func (m *GetTestRunOverviewResponse) Encode(e *jx.Encoder) {
 		return
 	}
 	e.ObjStart()
-	if m.Overview != nil {
-		e.FieldStart("overview")
-		jxpb.EncMessage(e, m.Overview)
+	if m.Snapshot != nil {
+		e.FieldStart("snapshot")
+		m.Snapshot.Encode(e)
 	}
 	e.ObjEnd()
 }
@@ -372,16 +456,16 @@ func (m *GetTestRunOverviewResponse) Decode(d *jx.Decoder) error {
 	seen := map[string]bool{}
 	return d.Obj(func(d *jx.Decoder, key string) error {
 		switch key {
-		case "overview":
-			if seen["Overview"] {
+		case "snapshot":
+			if seen["Snapshot"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["Overview"] = true
+			seen["Snapshot"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			m.Overview = &monitor.Overview{}
-			if err := jxpb.DecMessage(d, m.Overview); err != nil {
+			m.Snapshot = &TestRunOverviewSnapshot{}
+			if err := m.Snapshot.Decode(d); err != nil {
 				return err
 			}
 			return nil

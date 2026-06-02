@@ -1,0 +1,205 @@
+syntax = "proto3";
+
+package cloud.v1.deployment;
+
+import "cloud/v1/common/cmd.proto";
+import "cloud/v1/common/dir.proto";
+import "cloud/v1/common/file.proto";
+import "cloud/v1/common/tags.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment";
+
+/*
+    render.proto defines the wizard-facing render layer. It is deliberately
+    separate from topology and deployment plan:
+
+      - topology says WHAT logical components exist;
+      - render preview says what files/commands/dirs WOULD be generated;
+      - render overrides store user edit intent for editable artifacts;
+      - deployment plan is produced later, after runtime infrastructure state.
+ */
+
+/*
+    RenderPreview is the read model shown by the wizard before a run starts.
+ */
+message RenderPreview {
+    /*
+        components groups artifacts by logical component.
+     */
+    repeated ComponentRender components = 1 [(validate.rules).repeated.max_items = 1024];
+    /*
+        artifacts are render outputs and placeholders shown to the user.
+     */
+    repeated RenderArtifact artifacts = 2 [(validate.rules).repeated.max_items = 4096];
+    /*
+        overrides are the editable user intent currently applied to this preview.
+     */
+    RenderOverrideSet overrides = 3;
+    /*
+        labels are structured metadata attached to the preview.
+     */
+    map<string, string> labels = 4 [(validate.rules).map.max_pairs = 128];
+    /*
+        tags are arbitrary metadata attached to the preview.
+     */
+    common.Tags tags = 5;
+}
+
+/*
+    ComponentRender groups artifact ids for one component.
+ */
+message ComponentRender {
+    /*
+        component_id links to topology.Component.id.
+     */
+    string component_id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /*
+        node_id links to topology.Node.id.
+     */
+    string node_id = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /*
+        artifact_ids are ids of RenderArtifact records belonging to this component.
+     */
+    repeated string artifact_ids = 3 [(validate.rules).repeated = {max_items: 256, items: {string: {min_len: 1, max_len: 256}}}];
+    /*
+        labels are structured metadata attached to this component preview.
+     */
+    map<string, string> labels = 4 [(validate.rules).map.max_pairs = 128];
+}
+
+/*
+    RenderArtifact is one previewable file/command/dir/runtime placeholder.
+ */
+message RenderArtifact {
+    /*
+        Kind identifies the artifact payload family.
+     */
+    enum Kind {
+        KIND_UNSPECIFIED = 0;
+        KIND_FILE = 1;
+        KIND_COMMAND = 2;
+        KIND_DIRECTORY = 3;
+        KIND_RUNTIME_VALUE = 4;
+    }
+
+    /*
+        Origin tells where this artifact came from.
+     */
+    enum Origin {
+        ORIGIN_UNSPECIFIED = 0;
+        ORIGIN_SYSTEM = 1;
+        ORIGIN_RENDERED_DEFAULT = 2;
+        ORIGIN_USER_OVERRIDE = 3;
+        ORIGIN_RUNTIME = 4;
+    }
+
+    /*
+        Mutability tells whether the wizard may edit this artifact.
+     */
+    enum Mutability {
+        MUTABILITY_UNSPECIFIED = 0;
+        MUTABILITY_READ_ONLY = 1;
+        MUTABILITY_EDITABLE = 2;
+        MUTABILITY_RUNTIME_ONLY = 3;
+    }
+
+    /*
+        id is stable across rerenders, e.g. postgres-master/postgresql.conf.
+     */
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 256}];
+    /*
+        component_id links to topology.Component.id.
+     */
+    string component_id = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /*
+        kind is the artifact payload family.
+     */
+    Kind kind = 3 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    /*
+        origin tells whether it is system generated, user overridden, or runtime.
+     */
+    Origin origin = 4 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    /*
+        mutability tells the UI whether editing is allowed.
+     */
+    Mutability mutability = 5 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    /*
+        lock_reason explains why a visible artifact is read-only.
+     */
+    string lock_reason = 6 [(validate.rules).string.max_len = 512];
+
+    /*
+        artifact contains exactly one payload or runtime placeholder.
+     */
+    oneof artifact {
+        option (validate.required) = true;
+        common.File file = 10 [(validate.rules).message.required = true];
+        common.Cmd cmd = 11 [(validate.rules).message.required = true];
+        common.Dir dir = 12 [(validate.rules).message.required = true];
+        string runtime_value = 13 [(validate.rules).string = {min_len: 1, max_len: 4096}];
+    }
+
+    /*
+        renderer_name identifies which renderer produced this artifact.
+     */
+    string renderer_name = 20 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /*
+        base_hash is a hash of the rendered default content, used for conflict
+        detection when user overrides survive rerenders.
+     */
+    string base_hash = 21 [(validate.rules).string.max_len = 128];
+    /*
+        labels are structured metadata attached to this artifact.
+     */
+    map<string, string> labels = 22 [(validate.rules).map.max_pairs = 128];
+    /*
+        tags are arbitrary metadata attached to this artifact.
+     */
+    common.Tags tags = 23;
+}
+
+/*
+    RenderOverrideSet is persisted user edit intent. It contains only editable
+    overrides, never system commands or runtime values.
+ */
+message RenderOverrideSet {
+    /*
+        files are user-edited replacements for editable file artifacts.
+     */
+    repeated FileOverride files = 1 [(validate.rules).repeated.max_items = 1024];
+    /*
+        labels are structured metadata attached to the override set.
+     */
+    map<string, string> labels = 2 [(validate.rules).map.max_pairs = 128];
+    /*
+        tags are arbitrary metadata attached to the override set.
+     */
+    common.Tags tags = 3;
+}
+
+/*
+    FileOverride replaces one editable RenderArtifact file.
+ */
+message FileOverride {
+    /*
+        artifact_id matches RenderArtifact.id.
+     */
+    string artifact_id = 1 [(validate.rules).string = {min_len: 1, max_len: 256}];
+    /*
+        component_id links to topology.Component.id.
+     */
+    string component_id = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /*
+        base_hash is the rendered default hash the user edited from.
+     */
+    string base_hash = 3 [(validate.rules).string.max_len = 128];
+    /*
+        file is the user's replacement file payload and metadata.
+     */
+    common.File file = 4 [(validate.rules).message.required = true];
+    /*
+        labels are structured metadata attached to this override.
+     */
+    map<string, string> labels = 5 [(validate.rules).map.max_pairs = 128];
+}
