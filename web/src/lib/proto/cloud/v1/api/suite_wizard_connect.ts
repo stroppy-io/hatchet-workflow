@@ -8,8 +8,7 @@ import { MethodIdempotency, MethodKind } from "@bufbuild/protobuf";
 
 /**
  *
- * SuiteWizardService drives the suite wizard: start, fetch/list, patch-loop and
- * finish into a baked SuiteRun.
+ * SuiteWizardService drives the suite wizard.
  *
  * @generated from service cloud.v1.api.SuiteWizardService
  */
@@ -56,7 +55,7 @@ export const SuiteWizardService = {
     },
     /**
      *
-     * PatchSuiteWizard is idempotent: re-submitting the same form converges.
+     * PatchSuiteWizard is idempotent: re-submitting the same patch converges.
      *
      * @generated from rpc cloud.v1.api.SuiteWizardService.PatchSuiteWizard
      */
@@ -69,7 +68,7 @@ export const SuiteWizardService = {
     },
     /**
      *
-     * DeleteSuiteWizardDraft is idempotent: deleting an absent draft is a no-op.
+     * DeleteSuiteWizardDraft is idempotent.
      *
      * @generated from rpc cloud.v1.api.SuiteWizardService.DeleteSuiteWizardDraft
      */
@@ -82,7 +81,7 @@ export const SuiteWizardService = {
     },
     /**
      *
-     * FinishSuiteWizard mints a SuiteRun from the draft. Not idempotent.
+     * FinishSuiteWizard persists a suite and optionally launches it.
      *
      * @generated from rpc cloud.v1.api.SuiteWizardService.FinishSuiteWizard
      */

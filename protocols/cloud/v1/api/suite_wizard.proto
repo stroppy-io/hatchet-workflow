@@ -3,25 +3,77 @@ syntax = "proto3";
 package cloud.v1.api;
 
 import "cloud/v1/common/entity.proto";
+import "cloud/v1/deployment/infrastructure.proto";
+import "cloud/v1/deployment/provider.proto";
+import "cloud/v1/deployment/render.proto";
 import "cloud/v1/domain/suite.proto";
+import "cloud/v1/domain/test.proto";
 import "cloud/v1/iam/options.proto";
+import "cloud/v1/models/suite.proto";
 import "cloud/v1/models/suite_wizard.proto";
-import "schemapb/schema.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
 
 /*
-    suite_wizard.proto is the SUITE wizard API. Same big-schema patch-loop as the
-    test wizard: the whole suite form is ONE schema (models.SuiteWizardDraft.form).
-    Start, then repeatedly PatchSuiteWizard(Filled), then Finish -> domain.SuiteRun.
-    The suite picks ONE provider_type for every cell; matrix expansion and
-    workload<->db compatibility live in the schema + server, and machines are
-    DERIVED per cell at bake (role->VM expander + provider overlay), not entered.
+    suite_wizard.proto is the typed SUITE wizard API. It follows the test wizard:
+    clients patch typed intent, the server resolves presets, derives topology and
+    infrastructure previews per cell, renders editable config previews, and returns
+    the complete draft.
 
-    Every request is tenant-scoped (tenant_id, the default auth tenant_field) and
-    gated by RESOURCE_WIZARD.
+    Finish persists a reusable SuiteRecord. If start=true it also expands the suite
+    into TestRunRecords and launches SuiteWorkflow, returning the SuiteRunRecord.
  */
+
+/*
+    SuiteWizardCellPatch is one client edit to the draft cell list.
+ */
+message SuiteWizardCellPatch {
+    /*
+        cell_id selects an existing cell. Empty means create a new cell.
+     */
+    string cell_id = 1 [(validate.rules).string.max_len = 64];
+    /*
+        remove deletes the selected cell. Other fields are ignored when remove=true.
+     */
+    bool remove = 2;
+    /*
+        enabled updates the cell enabled flag when set.
+     */
+    optional bool enabled = 3;
+    /*
+        name updates the cell display name. Empty value is allowed and means derive.
+     */
+    optional string name = 4 [(validate.rules).string.max_len = 255];
+
+    /*
+        source updates where the cell's database/workload definition comes from.
+     */
+    oneof source {
+        /*
+            preset_pair selects a database preset and workload preset.
+         */
+        domain.SuiteCell.PresetPair preset_pair = 10 [(validate.rules).message.required = true];
+        /*
+            test_preset_id selects a complete test preset.
+         */
+        string test_preset_id = 11 [(validate.rules).string = {min_len: 1, max_len: 64}];
+        /*
+            inline_test is for automation/CLI paths that do not want to create
+            presets first.
+         */
+        domain.Test inline_test = 12 [(validate.rules).message.required = true];
+    }
+
+    /*
+        machine_overrides updates provider machine edits for this cell.
+     */
+    repeated deployment.MachinePlan machine_overrides = 20 [(validate.rules).repeated.max_items = 256];
+    /*
+        render_overrides updates editable generated config overrides for this cell.
+     */
+    deployment.RenderOverrideSet render_overrides = 21;
+}
 
 /*
     StartSuiteWizardRequest opens a new suite wizard draft.
@@ -45,7 +97,7 @@ message StartSuiteWizardRequest {
  */
 message StartSuiteWizardResponse {
     /*
-        draft is the new wizard draft (carrying the initial form schema).
+        draft is the new wizard draft.
      */
     models.SuiteWizardDraftRecord draft = 1 [(validate.rules).message.required = true];
 }
@@ -83,7 +135,7 @@ message ListSuiteWizardDraftsRequest {
      */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
     /*
-        filter holds the shared Entity-level filters (author, time windows, ...).
+        filter holds the shared Entity-level filters.
      */
     common.EntityFilter filter = 2;
     /*
@@ -91,7 +143,7 @@ message ListSuiteWizardDraftsRequest {
      */
     common.EntitySort sort = 3;
     /*
-        page carries pagination (page size + token).
+        page carries pagination.
      */
     common.Page page = 4;
 }
@@ -110,10 +162,9 @@ message ListSuiteWizardDraftsResponse {
 }
 
 /*
-    PatchSuiteWizard submits the edited form. The server validates it, prunes the
-    matrix to compatible cells, expands the preview, recomputes readiness and
-    returns the full new draft (form may carry a re-emitted schema when the
-    selected presets changed the active matrix).
+    PatchSuiteWizard submits typed edits. The server merges or replaces cells,
+    resolves preset references, derives per-cell topology/infrastructure previews,
+    applies compatible render overrides, and recomputes readiness.
  */
 message PatchSuiteWizardRequest {
     /*
@@ -125,9 +176,35 @@ message PatchSuiteWizardRequest {
      */
     string draft_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
     /*
-        form carries the edited form values (Filled = values + schema ref).
+        provider updates the deployment backend when not unspecified.
      */
-    schemapb.Filled form = 3 [(validate.rules).message.required = true];
+    deployment.Provider provider = 3 [(validate.rules).enum = {defined_only: true}];
+    /*
+        cells are cell edits. When replace_cells=true they become the full cell
+        list; otherwise they are merged by cell_id.
+     */
+    repeated SuiteWizardCellPatch cells = 4 [(validate.rules).repeated.max_items = 1000];
+    /*
+        max_parallel updates draft concurrency when set. 0 means unlimited.
+     */
+    optional uint32 max_parallel = 5;
+    /*
+        schedule updates the draft schedule when present.
+     */
+    domain.Schedule schedule = 6;
+    /*
+        default_in_tenant_rating updates the suite default when set.
+     */
+    optional bool default_in_tenant_rating = 7;
+    /*
+        default_in_global_rating updates the suite default when set.
+     */
+    optional bool default_in_global_rating = 8;
+    /*
+        replace_cells makes cells the full draft matrix instead of an incremental
+        patch.
+     */
+    bool replace_cells = 9;
 }
 /*
     PatchSuiteWizardResponse returns the recomputed wizard draft.
@@ -159,9 +236,8 @@ message DeleteSuiteWizardDraftRequest {
 message DeleteSuiteWizardDraftResponse {}
 
 /*
-    FinishSuiteWizard bakes the draft into a domain.SuiteRun: every compatible cell
-    becomes a fully baked TestRun (preset params + the suite's provider settings +
-    derived topology). Rejected unless draft.ready.
+    FinishSuiteWizard persists a reusable SuiteRecord. If start=true it also starts
+    a SuiteRun using the same rules as StartSuite.
  */
 message FinishSuiteWizardRequest {
     /*
@@ -169,24 +245,44 @@ message FinishSuiteWizardRequest {
      */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
     /*
-        draft_id is the wizard draft to bake.
+        draft_id is the wizard draft to finish.
      */
     string draft_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        start launches the saved suite immediately.
+     */
+    bool start = 3;
+    /*
+        suite_name optionally overrides the persisted suite name. Empty means use
+        draft entity.name.
+     */
+    string suite_name = 4 [(validate.rules).string = {max_len: 255}];
+    /*
+        in_tenant_rating overrides child run tenant-rating membership when start=true.
+     */
+    optional bool in_tenant_rating = 5;
+    /*
+        in_global_rating overrides child run global-rating membership when start=true.
+     */
+    optional bool in_global_rating = 6;
 }
 /*
-    FinishSuiteWizardResponse returns the baked suite run spec.
+    FinishSuiteWizardResponse returns the saved suite and, when start=true, the
+    launched suite run.
  */
 message FinishSuiteWizardResponse {
     /*
-        suite_run is the baked domain.SuiteRun (every compatible cell as a baked
-        TestRun).
+        suite is the saved reusable suite definition.
      */
-    domain.SuiteRun suite_run = 1 [(validate.rules).message.required = true];
+    models.SuiteRecord suite = 1 [(validate.rules).message.required = true];
+    /*
+        suite_run is set when start=true.
+     */
+    models.SuiteRunRecord suite_run = 2;
 }
 
 /*
-    SuiteWizardService drives the suite wizard: start, fetch/list, patch-loop and
-    finish into a baked SuiteRun.
+    SuiteWizardService drives the suite wizard.
  */
 service SuiteWizardService {
     /*
@@ -210,21 +306,21 @@ service SuiteWizardService {
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_WIZARD, action: ACTION_LIST}]};
     }
     /*
-        PatchSuiteWizard is idempotent: re-submitting the same form converges.
+        PatchSuiteWizard is idempotent: re-submitting the same patch converges.
      */
     rpc PatchSuiteWizard (PatchSuiteWizardRequest) returns (PatchSuiteWizardResponse) {
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_WIZARD, action: ACTION_UPDATE}]};
     }
     /*
-        DeleteSuiteWizardDraft is idempotent: deleting an absent draft is a no-op.
+        DeleteSuiteWizardDraft is idempotent.
      */
     rpc DeleteSuiteWizardDraft (DeleteSuiteWizardDraftRequest) returns (DeleteSuiteWizardDraftResponse) {
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_WIZARD, action: ACTION_DELETE}]};
     }
     /*
-        FinishSuiteWizard mints a SuiteRun from the draft. Not idempotent.
+        FinishSuiteWizard persists a suite and optionally launches it.
      */
     rpc FinishSuiteWizard (FinishSuiteWizardRequest) returns (FinishSuiteWizardResponse) {
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_WIZARD, action: ACTION_UPDATE}]};

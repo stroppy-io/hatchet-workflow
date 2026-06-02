@@ -10,6 +10,8 @@ import type { DeploymentPlan, DeploymentPlanJson } from "../deployment/plan_pb.t
 import { file_cloud_v1_deployment_plan } from "../deployment/plan_pb.ts";
 import type { RenderOverrideSet, RenderOverrideSetJson } from "../deployment/render_pb.ts";
 import { file_cloud_v1_deployment_render } from "../deployment/render_pb.ts";
+import type { AgentBootstrap, AgentBootstrapJson } from "./deployment_pb.ts";
+import { file_cloud_v1_workflow_deployment } from "./deployment_pb.ts";
 import type { Database, DatabaseJson } from "../domain/database_pb.ts";
 import { file_cloud_v1_domain_database } from "../domain/database_pb.ts";
 import type { Workload, WorkloadJson } from "../domain/workload_pb.ts";
@@ -26,7 +28,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/workflow/run.proto.
  */
 export const file_cloud_v1_workflow_run: GenFile = /*@__PURE__*/
-  fileDesc("ChtjbG91ZC92MS93b3JrZmxvdy9ydW4ucHJvdG8SEWNsb3VkLnYxLndvcmtmbG93IusDCglSdW5Db25maWcSFgoCaWQYASABKAlCCvpCB3IFGIABEAESNQoIZGF0YWJhc2UYAiABKAsyGS5jbG91ZC52MS5kb21haW4uRGF0YWJhc2VCCPpCBYoBAhABEjUKCHdvcmtsb2FkGAMgASgLMhkuY2xvdWQudjEuZG9tYWluLldvcmtsb2FkQgj6QgWKAQIQARJACg10b3BvbG9neV9zcGVjGAQgASgLMh8uY2xvdWQudjEudG9wb2xvZ3kuVG9wb2xvZ3lTcGVjQgj6QgWKAQIQARJOChNpbmZyYXN0cnVjdHVyZV9wbGFuGAUgASgLMicuY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVBsYW5CCPpCBYoBAhABEkYKFGluZnJhc3RydWN0dXJlX3N0YXRlGAYgASgLMiguY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVN0YXRlEjwKD2RlcGxveW1lbnRfcGxhbhgHIAEoCzIjLmNsb3VkLnYxLmRlcGxveW1lbnQuRGVwbG95bWVudFBsYW4SQAoQcmVuZGVyX292ZXJyaWRlcxgIIAEoCzImLmNsb3VkLnYxLmRlcGxveW1lbnQuUmVuZGVyT3ZlcnJpZGVTZXQynQEKElJ1bldvcmtmbG93U2VydmljZRJyCg9UZXN0UnVuV29ya2Zsb3cSHC5jbG91ZC52MS53b3JrZmxvdy5SdW5Db25maWcaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiKYrEAyVKAiABcg9UZXN0UnVuV29ya2Zsb3cqDHJ1bi8keyEgaWQgfTACGhOKxAMPCg1zdHJvcHB5LWNsb3VkQkZaRGdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL3dvcmtmbG93YgZwcm90bzM", [file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_plan, file_cloud_v1_deployment_render, file_cloud_v1_domain_database, file_cloud_v1_domain_workload, file_cloud_v1_topology_topology, file_google_protobuf_empty, file_temporal_v1_temporal, file_validate_validate]);
+  fileDesc("ChtjbG91ZC92MS93b3JrZmxvdy9ydW4ucHJvdG8SEWNsb3VkLnYxLndvcmtmbG93IqcECglSdW5Db25maWcSFgoCaWQYASABKAlCCvpCB3IFEAEYgAESNQoIZGF0YWJhc2UYAiABKAsyGS5jbG91ZC52MS5kb21haW4uRGF0YWJhc2VCCPpCBYoBAhABEjUKCHdvcmtsb2FkGAMgASgLMhkuY2xvdWQudjEuZG9tYWluLldvcmtsb2FkQgj6QgWKAQIQARJACg10b3BvbG9neV9zcGVjGAQgASgLMh8uY2xvdWQudjEudG9wb2xvZ3kuVG9wb2xvZ3lTcGVjQgj6QgWKAQIQARJOChNpbmZyYXN0cnVjdHVyZV9wbGFuGAUgASgLMicuY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVBsYW5CCPpCBYoBAhABEkYKFGluZnJhc3RydWN0dXJlX3N0YXRlGAYgASgLMiguY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVN0YXRlEjwKD2RlcGxveW1lbnRfcGxhbhgHIAEoCzIjLmNsb3VkLnYxLmRlcGxveW1lbnQuRGVwbG95bWVudFBsYW4SQAoQcmVuZGVyX292ZXJyaWRlcxgIIAEoCzImLmNsb3VkLnYxLmRlcGxveW1lbnQuUmVuZGVyT3ZlcnJpZGVTZXQSOgoPYWdlbnRfYm9vdHN0cmFwGAkgASgLMiEuY2xvdWQudjEud29ya2Zsb3cuQWdlbnRCb290c3RyYXAynQEKElJ1bldvcmtmbG93U2VydmljZRJyCg9UZXN0UnVuV29ya2Zsb3cSHC5jbG91ZC52MS53b3JrZmxvdy5SdW5Db25maWcaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiKYrEAyVKAiABcg9UZXN0UnVuV29ya2Zsb3cqDHJ1bi8keyEgaWQgfTACGhOKxAMPCg1zdHJvcHB5LWNsb3VkQkZaRGdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL3dvcmtmbG93YgZwcm90bzM", [file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_plan, file_cloud_v1_deployment_render, file_cloud_v1_workflow_deployment, file_cloud_v1_domain_database, file_cloud_v1_domain_workload, file_cloud_v1_topology_topology, file_google_protobuf_empty, file_temporal_v1_temporal, file_validate_validate]);
 
 /**
  *
@@ -101,6 +103,15 @@ export type RunConfig = Message<"cloud.v1.workflow.RunConfig"> & {
    * @generated from field: cloud.v1.deployment.RenderOverrideSet render_overrides = 8;
    */
   renderOverrides?: RenderOverrideSet;
+
+  /**
+   *
+   * agent_bootstrap is runtime control-plane data delivered to provisioned
+   * agents through the provider-specific carrier.
+   *
+   * @generated from field: cloud.v1.workflow.AgentBootstrap agent_bootstrap = 9;
+   */
+  agentBootstrap?: AgentBootstrap;
 };
 
 /**
@@ -176,6 +187,15 @@ export type RunConfigJson = {
    * @generated from field: cloud.v1.deployment.RenderOverrideSet render_overrides = 8;
    */
   renderOverrides?: RenderOverrideSetJson;
+
+  /**
+   *
+   * agent_bootstrap is runtime control-plane data delivered to provisioned
+   * agents through the provider-specific carrier.
+   *
+   * @generated from field: cloud.v1.workflow.AgentBootstrap agent_bootstrap = 9;
+   */
+  agentBootstrap?: AgentBootstrapJson;
 };
 
 export type RunConfigValid = RunConfig;

@@ -36,7 +36,7 @@ resource "yandex_compute_instance" "vms" {
   network_interface {
     subnet_id          = yandex_vpc_subnet.subnet[each.value.zone != "" ? each.value.zone : var.network.zone].id
     nat                = each.value.public_ip
-    ip_address         = each.value.internal_ip
+    ip_address         = each.value.internal_ip == "auto" ? null : each.value.internal_ip
     security_group_ids = [yandex_vpc_security_group.security-group.id]
   }
 

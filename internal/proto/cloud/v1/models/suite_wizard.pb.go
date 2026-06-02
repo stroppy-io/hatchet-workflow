@@ -10,6 +10,9 @@ import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
 	schemapb "github.com/stroppy-io/schemapb/schemapb"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
+	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
+	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
+	topology "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -24,38 +27,41 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// SuiteWizardDraft is the server-held, mutable state of a SUITE wizard.
+// SuiteWizardDraftRecord is the server-held mutable state of a SUITE wizard.
 //
-// Big-schema model, like the test wizard: the whole suite form is ONE schemapb
-// schema in `form`. It carries the selections — preset_ids (a db x workload
-// matrix) + test_preset_ids — plus ONE provider_type for the whole suite (naming
-// the tenant provider every cell deploys on) and max_parallel. Presets already
-// hold baked db/workload params, so the suite wizard does NOT re-fill those — and
-// it carries NO provider settings: machines are derived per cell at bake from the
-// db config (role->VM expander + provider overlay), not entered. The server
-// validates the form, prunes the matrix to workload<->db compatible pairs (a root
-// CEL rule), expands the preview and recomputes readiness on every patch.
+// It mirrors the typed test wizard model, but per cell:
+// SuiteCell source -> resolved database/workload
+// database/workload -> topology_spec
+// topology_spec + provider/defaults/machine overrides -> infrastructure_plan
+// topology + runtime placeholders -> render_preview
 //
-// Persistence: own table (tenant-scoped via Entity) + in-memory cache. On finish
-// it bakes into a domain.SuiteRun (the full N*M TestRuns).
+// The draft never stores provider account settings. Provider settings are resolved
+// from tenant settings only when the suite is started, and runtime facts are
+// produced by workflow stages.
 type SuiteWizardDraftRecord struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// entity is the storage envelope (tenant-scoped: id, tenant_id, name,
-	// timings).
+	// entity is the storage envelope.
 	Entity *common.Entity `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
-	// form is the whole suite form as one schema + values: preset_ids (the
-	// db x workload matrix) + test_preset_ids + ONE provider_type for the whole
-	// suite + max_parallel. No per-topology provider settings.
-	Form *schemapb.Filled `protobuf:"bytes,2,opt,name=form,proto3" json:"form,omitempty"`
-	// preview holds the server-computed expanded, compatible cells (recomputed
-	// on every patch). These are lightweight summaries; full TestRuns are baked
-	// only at finish to avoid generating a topology per cell here.
-	Preview []*SuiteWizardDraftRecord_Cell `protobuf:"bytes,3,rep,name=preview,proto3" json:"preview,omitempty"`
-	// errors are the authoritative validation errors (recomputed on every
-	// patch); paths group by section in the UI.
-	Errors []*schemapb.FieldError `protobuf:"bytes,4,rep,name=errors,proto3" json:"errors,omitempty"`
-	// ready is true when there is >=1 compatible cell and the form validates.
-	Ready         bool `protobuf:"varint,5,opt,name=ready,proto3" json:"ready,omitempty"`
+	// provider selects one deployment backend for every cell.
+	Provider deployment.Provider `protobuf:"varint,2,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
+	// cells are the editable matrix entries and their server-derived previews.
+	Cells []*SuiteWizardDraftRecord_Cell `protobuf:"bytes,3,rep,name=cells,proto3" json:"cells,omitempty"`
+	// max_parallel is the suite default concurrency selected in the wizard.
+	// 0 = unlimited.
+	MaxParallel uint32 `protobuf:"varint,4,opt,name=max_parallel,json=maxParallel,proto3" json:"max_parallel,omitempty"`
+	// schedule is the optional cron schedule edited in the wizard.
+	Schedule *domain.Schedule `protobuf:"bytes,5,opt,name=schedule,proto3" json:"schedule,omitempty"`
+	// errors are draft-level validation errors.
+	Errors []*schemapb.FieldError `protobuf:"bytes,6,rep,name=errors,proto3" json:"errors,omitempty"`
+	// ready is true when at least one enabled cell is ready and the suite-level
+	// settings validate.
+	Ready bool `protobuf:"varint,7,opt,name=ready,proto3" json:"ready,omitempty"`
+	// default_in_tenant_rating is persisted to Suite.default_in_tenant_rating.
+	DefaultInTenantRating *bool `protobuf:"varint,8,opt,name=default_in_tenant_rating,json=defaultInTenantRating,proto3,oneof" json:"default_in_tenant_rating,omitempty"`
+	// default_in_global_rating is persisted to Suite.default_in_global_rating.
+	DefaultInGlobalRating *bool `protobuf:"varint,9,opt,name=default_in_global_rating,json=defaultInGlobalRating,proto3,oneof" json:"default_in_global_rating,omitempty"`
+	// suite_id is set when the draft was seeded from an existing suite.
+	SuiteId       string `protobuf:"bytes,10,opt,name=suite_id,json=suiteId,proto3" json:"suite_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -97,16 +103,30 @@ func (x *SuiteWizardDraftRecord) GetEntity() *common.Entity {
 	return nil
 }
 
-func (x *SuiteWizardDraftRecord) GetForm() *schemapb.Filled {
+func (x *SuiteWizardDraftRecord) GetProvider() deployment.Provider {
 	if x != nil {
-		return x.Form
+		return x.Provider
+	}
+	return deployment.Provider(0)
+}
+
+func (x *SuiteWizardDraftRecord) GetCells() []*SuiteWizardDraftRecord_Cell {
+	if x != nil {
+		return x.Cells
 	}
 	return nil
 }
 
-func (x *SuiteWizardDraftRecord) GetPreview() []*SuiteWizardDraftRecord_Cell {
+func (x *SuiteWizardDraftRecord) GetMaxParallel() uint32 {
 	if x != nil {
-		return x.Preview
+		return x.MaxParallel
+	}
+	return 0
+}
+
+func (x *SuiteWizardDraftRecord) GetSchedule() *domain.Schedule {
+	if x != nil {
+		return x.Schedule
 	}
 	return nil
 }
@@ -125,29 +145,52 @@ func (x *SuiteWizardDraftRecord) GetReady() bool {
 	return false
 }
 
-// Cell is one resolved (db, workload) pair the suite will run.
+func (x *SuiteWizardDraftRecord) GetDefaultInTenantRating() bool {
+	if x != nil && x.DefaultInTenantRating != nil {
+		return *x.DefaultInTenantRating
+	}
+	return false
+}
+
+func (x *SuiteWizardDraftRecord) GetDefaultInGlobalRating() bool {
+	if x != nil && x.DefaultInGlobalRating != nil {
+		return *x.DefaultInGlobalRating
+	}
+	return false
+}
+
+func (x *SuiteWizardDraftRecord) GetSuiteId() string {
+	if x != nil {
+		return x.SuiteId
+	}
+	return ""
+}
+
+// Cell is one selected suite cell plus the server-derived preview artifacts
+// shown to the user.
 type SuiteWizardDraftRecord_Cell struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// db_preset_id is the database preset from a db x workload matrix pair
-	// (paired with workload_preset_id).
-	DbPresetId string `protobuf:"bytes,1,opt,name=db_preset_id,json=dbPresetId,proto3" json:"db_preset_id,omitempty"`
-	// workload_preset_id is the workload preset from a db x workload matrix
-	// pair (paired with db_preset_id).
-	WorkloadPresetId string `protobuf:"bytes,2,opt,name=workload_preset_id,json=workloadPresetId,proto3" json:"workload_preset_id,omitempty"`
-	// test_preset_id is set when the cell came from a full TestPreset
-	// instead of a matrix pair (then db/workload preset ids are empty).
-	TestPresetId string `protobuf:"bytes,3,opt,name=test_preset_id,json=testPresetId,proto3" json:"test_preset_id,omitempty"`
-	// name is the display name of the resulting run.
-	Name string `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
-	// compatible is true when the workload is compatible with the database
-	// kind.
-	Compatible bool `protobuf:"varint,5,opt,name=compatible,proto3" json:"compatible,omitempty"`
-	// ready is true when the cell's (db, workload) are compatible and it
-	// has no per-cell errors.
-	Ready bool `protobuf:"varint,6,opt,name=ready,proto3" json:"ready,omitempty"`
-	// errors are per-cell capacity/sanity errors (quota/zones), computed at
-	// preview.
-	Errors        []*schemapb.FieldError `protobuf:"bytes,7,rep,name=errors,proto3" json:"errors,omitempty"`
+	// spec is the editable cell definition: source, enabled flag, machine
+	// overrides and render overrides.
+	Spec *domain.SuiteCell `protobuf:"bytes,1,opt,name=spec,proto3" json:"spec,omitempty"`
+	// database is the resolved database payload for this cell.
+	Database *domain.Database `protobuf:"bytes,2,opt,name=database,proto3" json:"database,omitempty"`
+	// workload is the resolved workload payload for this cell.
+	Workload *domain.Workload `protobuf:"bytes,3,opt,name=workload,proto3" json:"workload,omitempty"`
+	// topology_spec is the server-derived provider-agnostic graph.
+	TopologySpec *topology.TopologySpec `protobuf:"bytes,4,opt,name=topology_spec,json=topologySpec,proto3" json:"topology_spec,omitempty"`
+	// infrastructure_plan is provider-specific machine intent. Provider
+	// account settings are omitted/redacted in wizard drafts.
+	InfrastructurePlan *deployment.InfrastructurePlan `protobuf:"bytes,5,opt,name=infrastructure_plan,json=infrastructurePlan,proto3" json:"infrastructure_plan,omitempty"`
+	// render_preview is what generated files/commands/dirs would look like
+	// before runtime-only values are known.
+	RenderPreview *deployment.RenderPreview `protobuf:"bytes,6,opt,name=render_preview,json=renderPreview,proto3" json:"render_preview,omitempty"`
+	// compatible is true when database/workload compatibility rules pass.
+	Compatible bool `protobuf:"varint,7,opt,name=compatible,proto3" json:"compatible,omitempty"`
+	// ready is true when this enabled cell can be baked into a TestRun.
+	Ready bool `protobuf:"varint,8,opt,name=ready,proto3" json:"ready,omitempty"`
+	// errors are per-cell validation, capacity, and render errors.
+	Errors        []*schemapb.FieldError `protobuf:"bytes,9,rep,name=errors,proto3" json:"errors,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -182,32 +225,46 @@ func (*SuiteWizardDraftRecord_Cell) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_models_suite_wizard_proto_rawDescGZIP(), []int{0, 0}
 }
 
-func (x *SuiteWizardDraftRecord_Cell) GetDbPresetId() string {
+func (x *SuiteWizardDraftRecord_Cell) GetSpec() *domain.SuiteCell {
 	if x != nil {
-		return x.DbPresetId
+		return x.Spec
 	}
-	return ""
+	return nil
 }
 
-func (x *SuiteWizardDraftRecord_Cell) GetWorkloadPresetId() string {
+func (x *SuiteWizardDraftRecord_Cell) GetDatabase() *domain.Database {
 	if x != nil {
-		return x.WorkloadPresetId
+		return x.Database
 	}
-	return ""
+	return nil
 }
 
-func (x *SuiteWizardDraftRecord_Cell) GetTestPresetId() string {
+func (x *SuiteWizardDraftRecord_Cell) GetWorkload() *domain.Workload {
 	if x != nil {
-		return x.TestPresetId
+		return x.Workload
 	}
-	return ""
+	return nil
 }
 
-func (x *SuiteWizardDraftRecord_Cell) GetName() string {
+func (x *SuiteWizardDraftRecord_Cell) GetTopologySpec() *topology.TopologySpec {
 	if x != nil {
-		return x.Name
+		return x.TopologySpec
 	}
-	return ""
+	return nil
+}
+
+func (x *SuiteWizardDraftRecord_Cell) GetInfrastructurePlan() *deployment.InfrastructurePlan {
+	if x != nil {
+		return x.InfrastructurePlan
+	}
+	return nil
+}
+
+func (x *SuiteWizardDraftRecord_Cell) GetRenderPreview() *deployment.RenderPreview {
+	if x != nil {
+		return x.RenderPreview
+	}
+	return nil
 }
 
 func (x *SuiteWizardDraftRecord_Cell) GetCompatible() bool {
@@ -235,24 +292,33 @@ var File_cloud_v1_models_suite_wizard_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_models_suite_wizard_proto_rawDesc = "" +
 	"\n" +
-	"\"cloud/v1/models/suite_wizard.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/common/entity.proto\x1a\x15schemapb/schema.proto\x1a\x17validate/validate.proto\"\xfc\x03\n" +
+	"\"cloud/v1/models/suite_wizard.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/common/entity.proto\x1a(cloud/v1/deployment/infrastructure.proto\x1a\"cloud/v1/deployment/provider.proto\x1a cloud/v1/deployment/render.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1bcloud/v1/domain/suite.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a cloud/v1/topology/topology.proto\x1a\x15schemapb/schema.proto\x1a\x17validate/validate.proto\"\xdf\b\n" +
 	"\x16SuiteWizardDraftRecord\x129\n" +
-	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.common.EntityB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06entity\x12$\n" +
-	"\x04form\x18\x02 \x01(\v2\x10.schemapb.FilledR\x04form\x12F\n" +
-	"\apreview\x18\x03 \x03(\v2,.cloud.v1.models.SuiteWizardDraftRecord.CellR\apreview\x12,\n" +
-	"\x06errors\x18\x04 \x03(\v2\x14.schemapb.FieldErrorR\x06errors\x12\x14\n" +
-	"\x05ready\x18\x05 \x01(\bR\x05ready\x1a\xf4\x01\n" +
-	"\x04Cell\x12 \n" +
-	"\fdb_preset_id\x18\x01 \x01(\tR\n" +
-	"dbPresetId\x12,\n" +
-	"\x12workload_preset_id\x18\x02 \x01(\tR\x10workloadPresetId\x12$\n" +
-	"\x0etest_preset_id\x18\x03 \x01(\tR\ftestPresetId\x12\x12\n" +
-	"\x04name\x18\x04 \x01(\tR\x04name\x12\x1e\n" +
+	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.common.EntityB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06entity\x12C\n" +
+	"\bprovider\x18\x02 \x01(\x0e2\x1d.cloud.v1.deployment.ProviderB\b\xfaB\x05\x82\x01\x02\x10\x01R\bprovider\x12M\n" +
+	"\x05cells\x18\x03 \x03(\v2,.cloud.v1.models.SuiteWizardDraftRecord.CellB\t\xfaB\x06\x92\x01\x03\x10\xe8\aR\x05cells\x12!\n" +
+	"\fmax_parallel\x18\x04 \x01(\rR\vmaxParallel\x125\n" +
+	"\bschedule\x18\x05 \x01(\v2\x19.cloud.v1.domain.ScheduleR\bschedule\x12,\n" +
+	"\x06errors\x18\x06 \x03(\v2\x14.schemapb.FieldErrorR\x06errors\x12\x14\n" +
+	"\x05ready\x18\a \x01(\bR\x05ready\x12<\n" +
+	"\x18default_in_tenant_rating\x18\b \x01(\bH\x00R\x15defaultInTenantRating\x88\x01\x01\x12<\n" +
+	"\x18default_in_global_rating\x18\t \x01(\bH\x01R\x15defaultInGlobalRating\x88\x01\x01\x12\"\n" +
+	"\bsuite_id\x18\n" +
+	" \x01(\tB\a\xfaB\x04r\x02\x18@R\asuiteId\x1a\xfd\x03\n" +
+	"\x04Cell\x128\n" +
+	"\x04spec\x18\x01 \x01(\v2\x1a.cloud.v1.domain.SuiteCellB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04spec\x125\n" +
+	"\bdatabase\x18\x02 \x01(\v2\x19.cloud.v1.domain.DatabaseR\bdatabase\x125\n" +
+	"\bworkload\x18\x03 \x01(\v2\x19.cloud.v1.domain.WorkloadR\bworkload\x12D\n" +
+	"\rtopology_spec\x18\x04 \x01(\v2\x1f.cloud.v1.topology.TopologySpecR\ftopologySpec\x12X\n" +
+	"\x13infrastructure_plan\x18\x05 \x01(\v2'.cloud.v1.deployment.InfrastructurePlanR\x12infrastructurePlan\x12I\n" +
+	"\x0erender_preview\x18\x06 \x01(\v2\".cloud.v1.deployment.RenderPreviewR\rrenderPreview\x12\x1e\n" +
 	"\n" +
-	"compatible\x18\x05 \x01(\bR\n" +
+	"compatible\x18\a \x01(\bR\n" +
 	"compatible\x12\x14\n" +
-	"\x05ready\x18\x06 \x01(\bR\x05ready\x12,\n" +
-	"\x06errors\x18\a \x03(\v2\x14.schemapb.FieldErrorR\x06errorsBDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/modelsb\x06proto3"
+	"\x05ready\x18\b \x01(\bR\x05ready\x12,\n" +
+	"\x06errors\x18\t \x03(\v2\x14.schemapb.FieldErrorR\x06errorsB\x1b\n" +
+	"\x19_default_in_tenant_ratingB\x1b\n" +
+	"\x19_default_in_global_ratingBDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/modelsb\x06proto3"
 
 var (
 	file_cloud_v1_models_suite_wizard_proto_rawDescOnce sync.Once
@@ -268,23 +334,37 @@ func file_cloud_v1_models_suite_wizard_proto_rawDescGZIP() []byte {
 
 var file_cloud_v1_models_suite_wizard_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_cloud_v1_models_suite_wizard_proto_goTypes = []any{
-	(*SuiteWizardDraftRecord)(nil),      // 0: cloud.v1.models.SuiteWizardDraftRecord
-	(*SuiteWizardDraftRecord_Cell)(nil), // 1: cloud.v1.models.SuiteWizardDraftRecord.Cell
-	(*common.Entity)(nil),               // 2: cloud.v1.common.Entity
-	(*schemapb.Filled)(nil),             // 3: schemapb.Filled
-	(*schemapb.FieldError)(nil),         // 4: schemapb.FieldError
+	(*SuiteWizardDraftRecord)(nil),        // 0: cloud.v1.models.SuiteWizardDraftRecord
+	(*SuiteWizardDraftRecord_Cell)(nil),   // 1: cloud.v1.models.SuiteWizardDraftRecord.Cell
+	(*common.Entity)(nil),                 // 2: cloud.v1.common.Entity
+	(deployment.Provider)(0),              // 3: cloud.v1.deployment.Provider
+	(*domain.Schedule)(nil),               // 4: cloud.v1.domain.Schedule
+	(*schemapb.FieldError)(nil),           // 5: schemapb.FieldError
+	(*domain.SuiteCell)(nil),              // 6: cloud.v1.domain.SuiteCell
+	(*domain.Database)(nil),               // 7: cloud.v1.domain.Database
+	(*domain.Workload)(nil),               // 8: cloud.v1.domain.Workload
+	(*topology.TopologySpec)(nil),         // 9: cloud.v1.topology.TopologySpec
+	(*deployment.InfrastructurePlan)(nil), // 10: cloud.v1.deployment.InfrastructurePlan
+	(*deployment.RenderPreview)(nil),      // 11: cloud.v1.deployment.RenderPreview
 }
 var file_cloud_v1_models_suite_wizard_proto_depIdxs = []int32{
-	2, // 0: cloud.v1.models.SuiteWizardDraftRecord.entity:type_name -> cloud.v1.common.Entity
-	3, // 1: cloud.v1.models.SuiteWizardDraftRecord.form:type_name -> schemapb.Filled
-	1, // 2: cloud.v1.models.SuiteWizardDraftRecord.preview:type_name -> cloud.v1.models.SuiteWizardDraftRecord.Cell
-	4, // 3: cloud.v1.models.SuiteWizardDraftRecord.errors:type_name -> schemapb.FieldError
-	4, // 4: cloud.v1.models.SuiteWizardDraftRecord.Cell.errors:type_name -> schemapb.FieldError
-	5, // [5:5] is the sub-list for method output_type
-	5, // [5:5] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	2,  // 0: cloud.v1.models.SuiteWizardDraftRecord.entity:type_name -> cloud.v1.common.Entity
+	3,  // 1: cloud.v1.models.SuiteWizardDraftRecord.provider:type_name -> cloud.v1.deployment.Provider
+	1,  // 2: cloud.v1.models.SuiteWizardDraftRecord.cells:type_name -> cloud.v1.models.SuiteWizardDraftRecord.Cell
+	4,  // 3: cloud.v1.models.SuiteWizardDraftRecord.schedule:type_name -> cloud.v1.domain.Schedule
+	5,  // 4: cloud.v1.models.SuiteWizardDraftRecord.errors:type_name -> schemapb.FieldError
+	6,  // 5: cloud.v1.models.SuiteWizardDraftRecord.Cell.spec:type_name -> cloud.v1.domain.SuiteCell
+	7,  // 6: cloud.v1.models.SuiteWizardDraftRecord.Cell.database:type_name -> cloud.v1.domain.Database
+	8,  // 7: cloud.v1.models.SuiteWizardDraftRecord.Cell.workload:type_name -> cloud.v1.domain.Workload
+	9,  // 8: cloud.v1.models.SuiteWizardDraftRecord.Cell.topology_spec:type_name -> cloud.v1.topology.TopologySpec
+	10, // 9: cloud.v1.models.SuiteWizardDraftRecord.Cell.infrastructure_plan:type_name -> cloud.v1.deployment.InfrastructurePlan
+	11, // 10: cloud.v1.models.SuiteWizardDraftRecord.Cell.render_preview:type_name -> cloud.v1.deployment.RenderPreview
+	5,  // 11: cloud.v1.models.SuiteWizardDraftRecord.Cell.errors:type_name -> schemapb.FieldError
+	12, // [12:12] is the sub-list for method output_type
+	12, // [12:12] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_models_suite_wizard_proto_init() }
@@ -292,6 +372,7 @@ func file_cloud_v1_models_suite_wizard_proto_init() {
 	if File_cloud_v1_models_suite_wizard_proto != nil {
 		return
 	}
+	file_cloud_v1_models_suite_wizard_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

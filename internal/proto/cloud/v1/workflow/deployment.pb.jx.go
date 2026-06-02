@@ -19,9 +19,17 @@ func (m *ProcessInfrastructureWorkflowRequest) Encode(e *jx.Encoder) {
 		return
 	}
 	e.ObjStart()
+	if m.RunId != "" {
+		e.FieldStart("runId")
+		e.Str(m.RunId)
+	}
 	if m.Plan != nil {
 		e.FieldStart("plan")
 		jxpb.EncMessage(e, m.Plan)
+	}
+	if m.AgentBootstrap != nil {
+		e.FieldStart("agentBootstrap")
+		m.AgentBootstrap.Encode(e)
 	}
 	e.ObjEnd()
 }
@@ -30,6 +38,20 @@ func (m *ProcessInfrastructureWorkflowRequest) Decode(d *jx.Decoder) error {
 	seen := map[string]bool{}
 	return d.Obj(func(d *jx.Decoder, key string) error {
 		switch key {
+		case "runId", "run_id":
+			if seen["RunId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["RunId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.RunId = v
+			return nil
 		case "plan":
 			if seen["Plan"] {
 				return fmt.Errorf("duplicate field %q", key)
@@ -40,6 +62,19 @@ func (m *ProcessInfrastructureWorkflowRequest) Decode(d *jx.Decoder) error {
 			}
 			m.Plan = &deployment.InfrastructurePlan{}
 			if err := jxpb.DecMessage(d, m.Plan); err != nil {
+				return err
+			}
+			return nil
+		case "agentBootstrap", "agent_bootstrap":
+			if seen["AgentBootstrap"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["AgentBootstrap"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.AgentBootstrap = &AgentBootstrap{}
+			if err := m.AgentBootstrap.Decode(d); err != nil {
 				return err
 			}
 			return nil
@@ -452,6 +487,325 @@ func (m *AcquireQuotasActivityResponse) UnmarshalJSON(data []byte) error {
 	return m.Decode(d)
 }
 
+func (m *AgentBootstrap) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.ServerAddr != "" {
+		e.FieldStart("serverAddr")
+		e.Str(m.ServerAddr)
+	}
+	if m.BinaryUrl != "" {
+		e.FieldStart("binaryUrl")
+		e.Str(m.BinaryUrl)
+	}
+	if m.TemporalNamespace != "" {
+		e.FieldStart("temporalNamespace")
+		e.Str(m.TemporalNamespace)
+	}
+	if len(m.ExtraEnv) > 0 {
+		e.FieldStart("extraEnv")
+		e.ObjStart()
+		for k, v := range m.ExtraEnv {
+			e.FieldStart(k)
+			e.Str(v)
+		}
+		e.ObjEnd()
+	}
+	e.ObjEnd()
+}
+
+func (m *AgentBootstrap) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "serverAddr", "server_addr":
+			if seen["ServerAddr"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["ServerAddr"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.ServerAddr = v
+			return nil
+		case "binaryUrl", "binary_url":
+			if seen["BinaryUrl"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["BinaryUrl"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.BinaryUrl = v
+			return nil
+		case "temporalNamespace", "temporal_namespace":
+			if seen["TemporalNamespace"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["TemporalNamespace"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.TemporalNamespace = v
+			return nil
+		case "extraEnv", "extra_env":
+			if seen["ExtraEnv"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["ExtraEnv"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			if m.ExtraEnv == nil {
+				m.ExtraEnv = make(map[string]string)
+			}
+			return d.Obj(func(d *jx.Decoder, ks string) error {
+				mk := ks
+				var mv string
+				tv, err := d.Str()
+				if err != nil {
+					return err
+				}
+				mv = tv
+				m.ExtraEnv[mk] = mv
+				return nil
+			})
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *AgentBootstrap) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *AgentBootstrap) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *RenderDockerInputWorkflowRequest) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.RunId != "" {
+		e.FieldStart("runId")
+		e.Str(m.RunId)
+	}
+	if m.Plan != nil {
+		e.FieldStart("plan")
+		jxpb.EncMessage(e, m.Plan)
+	}
+	if m.AgentBootstrap != nil {
+		e.FieldStart("agentBootstrap")
+		m.AgentBootstrap.Encode(e)
+	}
+	e.ObjEnd()
+}
+
+func (m *RenderDockerInputWorkflowRequest) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "runId", "run_id":
+			if seen["RunId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["RunId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.RunId = v
+			return nil
+		case "plan":
+			if seen["Plan"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Plan"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Plan = &deployment.InfrastructurePlan{}
+			if err := jxpb.DecMessage(d, m.Plan); err != nil {
+				return err
+			}
+			return nil
+		case "agentBootstrap", "agent_bootstrap":
+			if seen["AgentBootstrap"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["AgentBootstrap"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.AgentBootstrap = &AgentBootstrap{}
+			if err := m.AgentBootstrap.Decode(d); err != nil {
+				return err
+			}
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *RenderDockerInputWorkflowRequest) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *RenderDockerInputWorkflowRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *RenderTerraformVariablesWorkflowRequest) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.RunId != "" {
+		e.FieldStart("runId")
+		e.Str(m.RunId)
+	}
+	if m.Plan != nil {
+		e.FieldStart("plan")
+		jxpb.EncMessage(e, m.Plan)
+	}
+	if m.Action != 0 {
+		e.FieldStart("action")
+		if s, ok := deployment.Terraform_Action_name[int32(m.Action)]; ok {
+			e.Str(s)
+		} else {
+			e.Int32(int32(m.Action))
+		}
+	}
+	if m.AgentBootstrap != nil {
+		e.FieldStart("agentBootstrap")
+		m.AgentBootstrap.Encode(e)
+	}
+	e.ObjEnd()
+}
+
+func (m *RenderTerraformVariablesWorkflowRequest) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "runId", "run_id":
+			if seen["RunId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["RunId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.RunId = v
+			return nil
+		case "plan":
+			if seen["Plan"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Plan"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Plan = &deployment.InfrastructurePlan{}
+			if err := jxpb.DecMessage(d, m.Plan); err != nil {
+				return err
+			}
+			return nil
+		case "action":
+			if seen["Action"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Action"] = true
+			switch d.Next() {
+			case jx.String:
+				s, err := d.Str()
+				if err != nil {
+					return err
+				}
+				n, ok := deployment.Terraform_Action_value[s]
+				if !ok {
+					return fmt.Errorf("unknown enum value %q", s)
+				}
+				m.Action = deployment.Terraform_Action(n)
+				return nil
+			case jx.Number:
+				n, err := d.Int32()
+				if err != nil {
+					return err
+				}
+				m.Action = deployment.Terraform_Action(n)
+				return nil
+			case jx.Null:
+				return d.Null()
+			default:
+				return fmt.Errorf("invalid enum token %s", d.Next())
+			}
+		case "agentBootstrap", "agent_bootstrap":
+			if seen["AgentBootstrap"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["AgentBootstrap"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.AgentBootstrap = &AgentBootstrap{}
+			if err := m.AgentBootstrap.Decode(d); err != nil {
+				return err
+			}
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *RenderTerraformVariablesWorkflowRequest) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *RenderTerraformVariablesWorkflowRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
 func (m *RenderDeploymentPlanWorkflowRequest) Encode(e *jx.Encoder) {
 	if m == nil {
 		e.ObjStart()
@@ -478,6 +832,10 @@ func (m *RenderDeploymentPlanWorkflowRequest) Encode(e *jx.Encoder) {
 	if m.Database != nil {
 		e.FieldStart("database")
 		jxpb.EncMessage(e, m.Database)
+	}
+	if m.Workload != nil {
+		e.FieldStart("workload")
+		jxpb.EncMessage(e, m.Workload)
 	}
 	e.ObjEnd()
 }
@@ -548,6 +906,19 @@ func (m *RenderDeploymentPlanWorkflowRequest) Decode(d *jx.Decoder) error {
 			}
 			m.Database = &domain.Database{}
 			if err := jxpb.DecMessage(d, m.Database); err != nil {
+				return err
+			}
+			return nil
+		case "workload":
+			if seen["Workload"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Workload"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Workload = &domain.Workload{}
+			if err := jxpb.DecMessage(d, m.Workload); err != nil {
 				return err
 			}
 			return nil

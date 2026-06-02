@@ -3,85 +3,228 @@ syntax = "proto3";
 package cloud.v1.domain;
 
 import "cloud/v1/common/tags.proto";
+import "cloud/v1/deployment/infrastructure.proto";
 import "cloud/v1/deployment/provider.proto";
+import "cloud/v1/deployment/render.proto";
 import "cloud/v1/domain/test.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain";
 
 /*
-    suite.proto defines a Suite: a named collection of provider-agnostic,
-    params-only presets run together under a single provider, optionally on a
-    cron schedule. Expanding a Suite produces a SuiteRun whose child TestRuns
-    are baked by deriving topology specs and infrastructure plans per preset.
+    suite.proto defines reusable suite definitions and materialized suite runs.
+
+    A Suite is a provider-scoped matrix of cells. A cell is either a db/workload
+    preset pair, a test preset, or an inline Test supplied by automation. Starting
+    a suite resolves those references, derives topology/infrastructure per cell,
+    applies per-cell machine/render overrides, and produces a SuiteRun.
+
+    Provider account settings and runtime facts are intentionally not stored here:
+    the API/start layer resolves provider settings and agent bootstrap into the
+    workflow input, and the provider workflow fills runtime state.
  */
 
 /*
-    Suite is a reusable test bundle. It references provider-agnostic,
-    params-only presets; the provider is applied once here, and expansion bakes
-    topology specs plus infrastructure plans into child TestRuns.
+    SuiteCell is one runnable entry inside a suite definition.
  */
-message Suite {
-    /* id is the stable suite identifier. */
-    string id = 1 [(validate.rules).string = {min_len: 1}];
+message SuiteCell {
+    /*
+        PresetPair references a database preset and a workload preset. The server
+        resolves both and validates compatibility before baking a TestRun.
+     */
+    message PresetPair {
+        /*
+            db_preset_id is the database preset to resolve.
+         */
+        string db_preset_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+        /*
+            workload_preset_id is the workload preset to resolve.
+         */
+        string workload_preset_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    }
 
-    /* preset_ids are the presets composing the suite (Database / Workload /
-       Test presets). */
-    repeated string preset_ids = 2 [(validate.rules).repeated = {min_items: 1, items: {string: {min_len: 1}}}];
+    /*
+        id is stable within the suite and is copied into SuiteRunCell.suite_cell_id.
+     */
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        name is the display label for this cell. Empty means server derives one
+        from the presets/test.
+     */
+    string name = 2 [(validate.rules).string.max_len = 255];
+    /*
+        enabled gates this cell without deleting its overrides. Disabled cells are
+        not baked into SuiteRun.
+     */
+    bool enabled = 3;
 
-    /* provider is the single deployment provider for now. Multi-provider
-       (cross-product to compare clouds) is planned: this becomes
-       `repeated Provider providers` and expansion does presets x providers.
-       Deferred to avoid the exponential bake cost for now. */
-    deployment.Provider provider = 3 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    /*
+        source selects how the test definition for this cell is obtained.
+     */
+    oneof source {
+        option (validate.required) = true;
+        /*
+            preset_pair expands database preset x workload preset.
+         */
+        PresetPair preset_pair = 10 [(validate.rules).message.required = true];
+        /*
+            test_preset_id resolves a complete database+workload preset.
+         */
+        string test_preset_id = 11 [(validate.rules).string = {min_len: 1, max_len: 64}];
+        /*
+            inline_test is for CLI/API automation that wants a suite without first
+            creating presets. Persisted UI-created suites should prefer presets.
+         */
+        Test inline_test = 12 [(validate.rules).message.required = true];
+    }
 
-    /* tags are free-form metadata attached to the suite. */
-    common.Tags tags = 4;
-
-    /* schedule is an optional cron schedule that auto-starts this suite.
-       Absent / disabled = the suite only runs when started manually. */
-    Schedule schedule = 5;
-
-    /* default_in_tenant_rating is the tenant-rating default propagated to every
-       child TestRun the suite spawns (incl. cron runs). Same semantics as
-       TestRunRecord: tenant defaults true. Optional so unset = platform default. */
-    optional bool default_in_tenant_rating = 6;
-    /* default_in_global_rating is the global-rating default propagated to every
-       child TestRun the suite spawns (incl. cron runs). Same semantics as
-       TestRunRecord: global defaults false (opt-in). Optional so unset =
-       platform default. */
-    optional bool default_in_global_rating = 7;
+    /*
+        machine_overrides are user edits to provider-specific machine intent. They
+        are merged into the derived InfrastructurePlan by node_id at start time.
+        Provider account settings are not stored here.
+     */
+    repeated deployment.MachinePlan machine_overrides = 20 [(validate.rules).repeated.max_items = 256];
+    /*
+        render_overrides are user edits to editable generated config artifacts for
+        this cell.
+     */
+    deployment.RenderOverrideSet render_overrides = 21;
+    /*
+        tags are free-form metadata attached to this cell and propagated to child
+        TestRun tags.
+     */
+    common.Tags tags = 22;
 }
 
 /*
-    Schedule is an optional cron trigger for a suite. When enabled with a cron
-    expression, the platform auto-starts the suite on that cadence; `enabled`
-    gates it so a configured schedule can be paused without losing the cron.
+    Suite is a reusable test bundle. It stores only stable user intent: provider,
+    schedule, and enabled cells. Starting it produces a SuiteRun with fully baked
+    TestRuns.
+ */
+message Suite {
+    /*
+        id is the stable suite identifier. For persisted suites this mirrors the
+        SuiteRecord entity id; for inline API suites it may be client-supplied.
+     */
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+
+    /*
+        cells are the runnable entries composing the suite.
+     */
+    repeated SuiteCell cells = 2 [(validate.rules).repeated = {min_items: 1, max_items: 1000}];
+
+    /*
+        provider is the single deployment provider for every cell in this suite.
+        Multi-provider comparison should be modeled as repeated suite starts or a
+        future providers[] expansion layer, not by mixing providers inside a cell.
+     */
+    deployment.Provider provider = 3 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+
+    /*
+        tags are free-form metadata attached to the suite.
+     */
+    common.Tags tags = 4;
+
+    /*
+        schedule is an optional cron schedule that auto-starts this suite. Absent
+        or disabled means the suite only runs manually/API.
+     */
+    Schedule schedule = 5;
+
+    /*
+        default_in_tenant_rating is propagated to child TestRuns when StartSuite
+        does not override it. Unset means tenant/platform default.
+     */
+    optional bool default_in_tenant_rating = 6;
+    /*
+        default_in_global_rating is propagated to child TestRuns when StartSuite
+        does not override it. Unset means tenant/platform default.
+     */
+    optional bool default_in_global_rating = 7;
+    /*
+        default_max_parallel caps concurrent child run workflows. 0 means no suite
+        definition override; the start request or tenant default decides.
+     */
+    uint32 default_max_parallel = 8;
+}
+
+/*
+    Schedule is an optional cron trigger for a suite.
  */
 message Schedule {
-    /* enabled gates the schedule: false = paused (never auto-runs). */
+    /*
+        enabled gates the schedule: false = paused.
+     */
     bool enabled = 1;
-    /* cron is a standard cron expression (e.g. "0 2 * * *"). Validated
-       server-side. */
+    /*
+        cron is a standard cron expression, validated server-side.
+     */
     string cron = 2 [(validate.rules).string.max_len = 128];
-    /* timezone is the IANA timezone for the cron (e.g. "Europe/Moscow");
-       empty = UTC. */
+    /*
+        timezone is the IANA timezone for cron evaluation. Empty means UTC.
+     */
     string timezone = 3 [(validate.rules).string.max_len = 64];
 }
 
 /*
-    SuiteRun is a materialized suite execution: the Suite's preset_ids expanded
-    into concrete TestRuns, executed with a bounded degree of parallelism.
+    SuiteRunCell is one materialized child run inside a suite execution.
+ */
+message SuiteRunCell {
+    /*
+        id is stable within this suite run.
+     */
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        suite_cell_id points back to SuiteCell.id when this run came from a stored
+        suite definition. Empty for ad-hoc inline cells.
+     */
+    string suite_cell_id = 2 [(validate.rules).string.max_len = 64];
+    /*
+        test_run is the fully baked child TestRun.
+     */
+    TestRun test_run = 3 [(validate.rules).message.required = true];
+    /*
+        name is the display label copied from the suite cell or derived at bake.
+     */
+    string name = 4 [(validate.rules).string.max_len = 255];
+    /*
+        db_preset_id records the database preset source, when applicable.
+     */
+    string db_preset_id = 5 [(validate.rules).string.max_len = 64];
+    /*
+        workload_preset_id records the workload preset source, when applicable.
+     */
+    string workload_preset_id = 6 [(validate.rules).string.max_len = 64];
+    /*
+        test_preset_id records the test preset source, when applicable.
+     */
+    string test_preset_id = 7 [(validate.rules).string.max_len = 64];
+    /*
+        tags are free-form metadata propagated to this cell.
+     */
+    common.Tags tags = 8;
+}
+
+/*
+    SuiteRun is a materialized suite execution input: all preset references have
+    been resolved into concrete child TestRuns.
  */
 message SuiteRun {
-    /* id is the stable suite-run identifier. */
-    string id = 1 [(validate.rules).string = {min_len: 1}];
-    /* suite_id references the Suite this run was expanded from. */
-    string suite_id = 2 [(validate.rules).string = {min_len: 1}];
-
-    /* test_runs are the expanded runs (one per resolved preset). */
-    repeated TestRun test_runs = 3 [(validate.rules).repeated.min_items = 1];
-
-    /* max_parallel is the max concurrent TestWorkflows. 0 = unlimited. */
+    /*
+        id is the stable suite-run identifier.
+     */
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        suite_id references the SuiteRecord definition this run came from. Empty
+        for ad-hoc inline suite starts.
+     */
+    string suite_id = 2 [(validate.rules).string.max_len = 64];
+    /*
+        cells are the expanded child runs.
+     */
+    repeated SuiteRunCell cells = 3 [(validate.rules).repeated = {min_items: 1, max_items: 1000}];
+    /*
+        max_parallel is the max concurrent child run workflows. 0 = unlimited.
+     */
     uint32 max_parallel = 4;
 }

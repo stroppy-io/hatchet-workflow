@@ -1,6 +1,8 @@
 package workflows
 
 import (
+	"context"
+	"fmt"
 	"testing"
 
 	infrastructurebuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/infrastructure"
@@ -27,6 +29,7 @@ func TestRenderDeploymentPlanWorkflowAppliesRenderOverrides(t *testing.T) {
 		InfrastructureState: state,
 		RenderOverrides:     cfg.GetRenderOverrides(),
 		Database:            cfg.GetDatabase(),
+		Workload:            cfg.GetWorkload(),
 	})
 
 	if !env.IsWorkflowCompleted() {
@@ -53,6 +56,8 @@ func TestTestRunWorkflowOrchestratesDeploymentStages(t *testing.T) {
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
 	RegisterWorkflows(env, DefaultOptions())
+	registerFakeDeploymentActivities(env)
+	registerFakeAgentActivities(env)
 
 	var childStarts []string
 	env.SetOnChildWorkflowStartedListener(func(info *temporalworkflow.Info, _ temporalworkflow.Context, _ converter.EncodedValues) {
@@ -70,6 +75,7 @@ func TestTestRunWorkflowOrchestratesDeploymentStages(t *testing.T) {
 
 	want := []string{
 		workflowpb.ProcessInfrastructureWorkflowWorkflowName,
+		workflowpb.RenderDockerInputWorkflowWorkflowName,
 		workflowpb.RenderDeploymentPlanWorkflowWorkflowName,
 		workflowpb.ExecuteDeploymentPlanWorkflowWorkflowName,
 		workflowpb.RunWorkloadWorkflowWorkflowName,
@@ -83,9 +89,14 @@ func TestTestWorkflowExposesRunStateQuery(t *testing.T) {
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
 	RegisterWorkflows(env, DefaultOptions())
+	registerFakeDeploymentActivities(env)
+	registerFakeAgentActivities(env)
 
 	testRun := domainTestRun(t, nil)
-	env.ExecuteWorkflow(workflowpb.TestWorkflowWorkflowName, &workflowpb.TestWorkflowRequest{TestRun: testRun})
+	env.ExecuteWorkflow(workflowpb.TestWorkflowWorkflowName, &workflowpb.TestWorkflowRequest{
+		TestRun:        testRun,
+		AgentBootstrap: testAgentBootstrap(),
+	})
 
 	if !env.IsWorkflowCompleted() {
 		t.Fatal("workflow did not complete")
@@ -113,6 +124,41 @@ func TestTestWorkflowExposesRunStateQuery(t *testing.T) {
 	}
 }
 
+func TestSuiteWorkflowFansOutRunConfigs(t *testing.T) {
+	var suite testsuite.WorkflowTestSuite
+	env := suite.NewTestWorkflowEnvironment()
+	RegisterWorkflows(env, DefaultOptions())
+	registerFakeDeploymentActivities(env)
+	registerFakeAgentActivities(env)
+
+	cfg1 := workflowRunConfig(t, nil)
+	cfg2 := workflowRunConfig(t, nil)
+	cfg2.Id = "run-2"
+
+	var runChildren int
+	env.SetOnChildWorkflowStartedListener(func(info *temporalworkflow.Info, _ temporalworkflow.Context, _ converter.EncodedValues) {
+		if info.WorkflowType.Name == workflowpb.TestRunWorkflowWorkflowName {
+			runChildren++
+		}
+	})
+
+	env.ExecuteWorkflow(workflowpb.SuiteWorkflowWorkflowName, &workflowpb.SuiteWorkflowRequest{
+		SuiteRunId:  "suite-run-1",
+		Runs:        []*workflowpb.RunConfig{cfg1, cfg2},
+		MaxParallel: 1,
+	})
+
+	if !env.IsWorkflowCompleted() {
+		t.Fatal("workflow did not complete")
+	}
+	if err := env.GetWorkflowError(); err != nil {
+		t.Fatalf("workflow failed: %v", err)
+	}
+	if got, want := runChildren, 2; got != want {
+		t.Fatalf("child run workflows = %d, want %d", got, want)
+	}
+}
+
 func workflowRunConfig(t *testing.T, overrides *deploymentpb.RenderOverrideSet) *workflowpb.RunConfig {
 	t.Helper()
 
@@ -124,6 +170,17 @@ func workflowRunConfig(t *testing.T, overrides *deploymentpb.RenderOverrideSet) 
 		TopologySpec:       testRun.GetTopologySpec(),
 		InfrastructurePlan: testRun.GetInfrastructurePlan(),
 		RenderOverrides:    testRun.GetRenderOverrides(),
+		AgentBootstrap:     testAgentBootstrap(),
+	}
+}
+
+func testAgentBootstrap() *workflowpb.AgentBootstrap {
+	return &workflowpb.AgentBootstrap{
+		ServerAddr:        "http://127.0.0.1:8080",
+		TemporalNamespace: "default",
+		ExtraEnv: map[string]string{
+			"STROPPY_TEST_ENV": "test",
+		},
 	}
 }
 
@@ -204,9 +261,93 @@ func infrastructureStateForPlan(plan *deploymentpb.InfrastructurePlan) *deployme
 		Tags:     plan.GetTags(),
 	}
 	for i, machine := range plan.GetMachines() {
-		state.Machines = append(state.Machines, materializeMachineState(plan.GetProvider(), machine, i))
+		address := fmt.Sprintf("10.0.0.%d", i+1)
+		sshPort := uint32(22)
+		machineState := &deploymentpb.MachineState{
+			NodeId:             machine.GetNodeId(),
+			ProviderResourceId: "resource-" + machine.GetNodeId(),
+			Status:             common.Status_STATUS_DEPLOYED,
+			Endpoints: []*deploymentpb.Endpoint{
+				{Name: "private", Address: address, Port: &sshPort},
+			},
+			Labels: machine.GetLabels(),
+			Tags:   machine.GetTags(),
+		}
+		if plan.GetProvider() == deploymentpb.Provider_PROVIDER_DOCKER {
+			machineState.ProviderOutput = &deploymentpb.MachineState_Docker{
+				Docker: &deploymentpb.Docker_ContainerOutput{
+					Id:         machineState.GetProviderResourceId(),
+					Name:       machine.GetNodeId(),
+					InternalIp: address,
+					Status:     "running",
+				},
+			}
+		}
+		state.Machines = append(state.Machines, machineState)
 	}
 	return state
+}
+
+func registerFakeDeploymentActivities(env *testsuite.TestWorkflowEnvironment) {
+	workflowpb.RegisterDeploymentServiceActivities(env, fakeDeploymentActivities{})
+}
+
+type fakeDeploymentActivities struct{}
+
+func (fakeDeploymentActivities) AcquireNetworkActivity(context.Context, *workflowpb.AcquireNetworkActivityRequest) (*workflowpb.AcquireNetworkActivityResponse, error) {
+	return &workflowpb.AcquireNetworkActivityResponse{}, nil
+}
+
+func (fakeDeploymentActivities) AcquireQuotasActivity(_ context.Context, req *workflowpb.AcquireQuotasActivityRequest) (*workflowpb.AcquireQuotasActivityResponse, error) {
+	return &workflowpb.AcquireQuotasActivityResponse{QuotaAllocations: map[string]*deploymentpb.Quota_Allocation{}}, nil
+}
+
+func (fakeDeploymentActivities) DockerPullActivity(context.Context, *deploymentpb.Docker_Input) (*deploymentpb.Docker_Output, error) {
+	return &deploymentpb.Docker_Output{}, nil
+}
+
+func (fakeDeploymentActivities) DockerUpActivity(_ context.Context, input *deploymentpb.Docker_Input) (*deploymentpb.Docker_Output, error) {
+	output := &deploymentpb.Docker_Output{
+		Containers: make(map[string]*deploymentpb.Docker_ContainerOutput, len(input.GetContainers())),
+		NetworkId:  "network-run-1",
+	}
+	i := 1
+	for name := range input.GetContainers() {
+		output.Containers[name] = &deploymentpb.Docker_ContainerOutput{
+			Id:         "container-" + name,
+			Name:       name,
+			InternalIp: fmt.Sprintf("10.0.0.%d", i),
+			Status:     "running",
+		}
+		i++
+	}
+	return output, nil
+}
+
+func (fakeDeploymentActivities) DockerDownActivity(context.Context, *deploymentpb.Docker_Input) (*deploymentpb.Docker_Output, error) {
+	return &deploymentpb.Docker_Output{}, nil
+}
+
+func (fakeDeploymentActivities) TerraformPlanActivity(context.Context, *deploymentpb.Terraform_Input) (*deploymentpb.Terraform_Output, error) {
+	return &deploymentpb.Terraform_Output{}, nil
+}
+
+func (fakeDeploymentActivities) TerraformApplyActivity(context.Context, *deploymentpb.Terraform_Input) (*deploymentpb.Terraform_Output, error) {
+	return &deploymentpb.Terraform_Output{}, nil
+}
+
+func (fakeDeploymentActivities) TerraformDestroyActivity(context.Context, *deploymentpb.Terraform_Input) (*deploymentpb.Terraform_Output, error) {
+	return &deploymentpb.Terraform_Output{}, nil
+}
+
+func registerFakeAgentActivities(env *testsuite.TestWorkflowEnvironment) {
+	workflowpb.RegisterEnsureAgentOnlineActivityActivity(env, func(context.Context) error { return nil })
+	workflowpb.RegisterCreateDirActivityActivity(env, func(context.Context, *common.Dir) error { return nil })
+	workflowpb.RegisterWriteFileActivityActivity(env, func(context.Context, *common.File) error { return nil })
+	workflowpb.RegisterFetchFileActivityActivity(env, func(context.Context, *common.File) error { return nil })
+	workflowpb.RegisterCallCmdActivityActivity(env, func(_ context.Context, _ *common.Cmd) (*common.Cmd_Result, error) {
+		return &common.Cmd_Result{ExitCode: 0}, nil
+	})
 }
 
 func componentDeploymentByID(plan *deploymentpb.DeploymentPlan, componentID string) *deploymentpb.ComponentDeployment {

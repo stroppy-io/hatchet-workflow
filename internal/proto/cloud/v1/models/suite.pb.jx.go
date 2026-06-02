@@ -130,6 +130,10 @@ func (m *SuiteRecord_Summary) Encode(e *jx.Encoder) {
 		e.FieldStart("runCount")
 		e.UInt32(m.RunCount)
 	}
+	if m.CellCount != 0 {
+		e.FieldStart("cellCount")
+		e.UInt32(m.CellCount)
+	}
 	e.ObjEnd()
 }
 
@@ -234,6 +238,20 @@ func (m *SuiteRecord_Summary) Decode(d *jx.Decoder) error {
 			}
 			m.RunCount = v
 			return nil
+		case "cellCount", "cell_count":
+			if seen["CellCount"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["CellCount"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint32(d)
+			if err != nil {
+				return err
+			}
+			m.CellCount = v
+			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}
@@ -286,11 +304,11 @@ func (m *SuiteRunRecord) Encode(e *jx.Encoder) {
 		e.FieldStart("maxParallel")
 		e.UInt32(m.MaxParallel)
 	}
-	if len(m.TestRunIds) > 0 {
-		e.FieldStart("testRunIds")
+	if len(m.Children) > 0 {
+		e.FieldStart("children")
 		e.ArrStart()
-		for _, v := range m.TestRunIds {
-			e.Str(v)
+		for _, v := range m.Children {
+			v.Encode(e)
 		}
 		e.ArrEnd()
 	}
@@ -404,20 +422,20 @@ func (m *SuiteRunRecord) Decode(d *jx.Decoder) error {
 			}
 			m.MaxParallel = v
 			return nil
-		case "testRunIds", "test_run_ids":
-			if seen["TestRunIds"] {
+		case "children":
+			if seen["Children"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["TestRunIds"] = true
+			seen["Children"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
 			return d.Arr(func(d *jx.Decoder) error {
-				v, err := d.Str()
-				if err != nil {
+				el := &SuiteRunRecord_ChildRun{}
+				if err := el.Decode(d); err != nil {
 					return err
 				}
-				m.TestRunIds = append(m.TestRunIds, v)
+				m.Children = append(m.Children, el)
 				return nil
 			})
 		case "summary":
@@ -734,6 +752,128 @@ func (m *SuiteRunRecord_Summary) MarshalJSON() ([]byte, error) {
 }
 
 func (m *SuiteRunRecord_Summary) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *SuiteRunRecord_ChildRun) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.SuiteCellId != "" {
+		e.FieldStart("suiteCellId")
+		e.Str(m.SuiteCellId)
+	}
+	if m.TestRunId != "" {
+		e.FieldStart("testRunId")
+		e.Str(m.TestRunId)
+	}
+	if m.Name != "" {
+		e.FieldStart("name")
+		e.Str(m.Name)
+	}
+	if m.Status != 0 {
+		e.FieldStart("status")
+		if s, ok := common.Status_name[int32(m.Status)]; ok {
+			e.Str(s)
+		} else {
+			e.Int32(int32(m.Status))
+		}
+	}
+	e.ObjEnd()
+}
+
+func (m *SuiteRunRecord_ChildRun) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "suiteCellId", "suite_cell_id":
+			if seen["SuiteCellId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["SuiteCellId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.SuiteCellId = v
+			return nil
+		case "testRunId", "test_run_id":
+			if seen["TestRunId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["TestRunId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.TestRunId = v
+			return nil
+		case "name":
+			if seen["Name"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Name"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Name = v
+			return nil
+		case "status":
+			if seen["Status"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Status"] = true
+			switch d.Next() {
+			case jx.String:
+				s, err := d.Str()
+				if err != nil {
+					return err
+				}
+				n, ok := common.Status_value[s]
+				if !ok {
+					return fmt.Errorf("unknown enum value %q", s)
+				}
+				m.Status = common.Status(n)
+				return nil
+			case jx.Number:
+				n, err := d.Int32()
+				if err != nil {
+					return err
+				}
+				m.Status = common.Status(n)
+				return nil
+			case jx.Null:
+				return d.Null()
+			default:
+				return fmt.Errorf("invalid enum token %s", d.Next())
+			}
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *SuiteRunRecord_ChildRun) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *SuiteRunRecord_ChildRun) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return m.Decode(d)
 }

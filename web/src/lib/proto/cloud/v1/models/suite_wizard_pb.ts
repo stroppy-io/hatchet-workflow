@@ -6,7 +6,21 @@ import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Entity, EntityJson } from "../common/entity_pb.ts";
 import { file_cloud_v1_common_entity } from "../common/entity_pb.ts";
-import type { FieldError, FieldErrorJson, Filled, FilledJson } from "../../../schemapb/schema_pb.ts";
+import type { InfrastructurePlan, InfrastructurePlanJson } from "../deployment/infrastructure_pb.ts";
+import { file_cloud_v1_deployment_infrastructure } from "../deployment/infrastructure_pb.ts";
+import type { Provider, ProviderJson } from "../deployment/provider_pb.ts";
+import { file_cloud_v1_deployment_provider } from "../deployment/provider_pb.ts";
+import type { RenderPreview, RenderPreviewJson } from "../deployment/render_pb.ts";
+import { file_cloud_v1_deployment_render } from "../deployment/render_pb.ts";
+import type { Database, DatabaseJson } from "../domain/database_pb.ts";
+import { file_cloud_v1_domain_database } from "../domain/database_pb.ts";
+import type { Schedule, ScheduleJson, SuiteCell, SuiteCellJson } from "../domain/suite_pb.ts";
+import { file_cloud_v1_domain_suite } from "../domain/suite_pb.ts";
+import type { Workload, WorkloadJson } from "../domain/workload_pb.ts";
+import { file_cloud_v1_domain_workload } from "../domain/workload_pb.ts";
+import type { TopologySpec, TopologySpecJson } from "../topology/topology_pb.ts";
+import { file_cloud_v1_topology_topology } from "../topology/topology_pb.ts";
+import type { FieldError, FieldErrorJson } from "../../../schemapb/schema_pb.ts";
 import { file_schemapb_schema } from "../../../schemapb/schema_pb.ts";
 import { file_validate_validate } from "../../../validate/validate_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
@@ -15,32 +29,28 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/models/suite_wizard.proto.
  */
 export const file_cloud_v1_models_suite_wizard: GenFile = /*@__PURE__*/
-  fileDesc("CiJjbG91ZC92MS9tb2RlbHMvc3VpdGVfd2l6YXJkLnByb3RvEg9jbG91ZC52MS5tb2RlbHMiiQMKFlN1aXRlV2l6YXJkRHJhZnRSZWNvcmQSMQoGZW50aXR5GAEgASgLMhcuY2xvdWQudjEuY29tbW9uLkVudGl0eUII+kIFigECEAESHgoEZm9ybRgCIAEoCzIQLnNjaGVtYXBiLkZpbGxlZBI9CgdwcmV2aWV3GAMgAygLMiwuY2xvdWQudjEubW9kZWxzLlN1aXRlV2l6YXJkRHJhZnRSZWNvcmQuQ2VsbBIkCgZlcnJvcnMYBCADKAsyFC5zY2hlbWFwYi5GaWVsZEVycm9yEg0KBXJlYWR5GAUgASgIGqcBCgRDZWxsEhQKDGRiX3ByZXNldF9pZBgBIAEoCRIaChJ3b3JrbG9hZF9wcmVzZXRfaWQYAiABKAkSFgoOdGVzdF9wcmVzZXRfaWQYAyABKAkSDAoEbmFtZRgEIAEoCRISCgpjb21wYXRpYmxlGAUgASgIEg0KBXJlYWR5GAYgASgIEiQKBmVycm9ycxgHIAMoCzIULnNjaGVtYXBiLkZpZWxkRXJyb3JCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvbW9kZWxzYgZwcm90bzM", [file_cloud_v1_common_entity, file_schemapb_schema, file_validate_validate]);
+  fileDesc("CiJjbG91ZC92MS9tb2RlbHMvc3VpdGVfd2l6YXJkLnByb3RvEg9jbG91ZC52MS5tb2RlbHMigwcKFlN1aXRlV2l6YXJkRHJhZnRSZWNvcmQSMQoGZW50aXR5GAEgASgLMhcuY2xvdWQudjEuY29tbW9uLkVudGl0eUII+kIFigECEAESOQoIcHJvdmlkZXIYAiABKA4yHS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyQgj6QgWCAQIQARJGCgVjZWxscxgDIAMoCzIsLmNsb3VkLnYxLm1vZGVscy5TdWl0ZVdpemFyZERyYWZ0UmVjb3JkLkNlbGxCCfpCBpIBAxDoBxIUCgxtYXhfcGFyYWxsZWwYBCABKA0SKwoIc2NoZWR1bGUYBSABKAsyGS5jbG91ZC52MS5kb21haW4uU2NoZWR1bGUSJAoGZXJyb3JzGAYgAygLMhQuc2NoZW1hcGIuRmllbGRFcnJvchINCgVyZWFkeRgHIAEoCBIlChhkZWZhdWx0X2luX3RlbmFudF9yYXRpbmcYCCABKAhIAIgBARIlChhkZWZhdWx0X2luX2dsb2JhbF9yYXRpbmcYCSABKAhIAYgBARIZCghzdWl0ZV9pZBgKIAEoCUIH+kIEcgIYQBqXAwoEQ2VsbBIyCgRzcGVjGAEgASgLMhouY2xvdWQudjEuZG9tYWluLlN1aXRlQ2VsbEII+kIFigECEAESKwoIZGF0YWJhc2UYAiABKAsyGS5jbG91ZC52MS5kb21haW4uRGF0YWJhc2USKwoId29ya2xvYWQYAyABKAsyGS5jbG91ZC52MS5kb21haW4uV29ya2xvYWQSNgoNdG9wb2xvZ3lfc3BlYxgEIAEoCzIfLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5U3BlYxJEChNpbmZyYXN0cnVjdHVyZV9wbGFuGAUgASgLMicuY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVBsYW4SOgoOcmVuZGVyX3ByZXZpZXcYBiABKAsyIi5jbG91ZC52MS5kZXBsb3ltZW50LlJlbmRlclByZXZpZXcSEgoKY29tcGF0aWJsZRgHIAEoCBINCgVyZWFkeRgIIAEoCBIkCgZlcnJvcnMYCSADKAsyFC5zY2hlbWFwYi5GaWVsZEVycm9yQhsKGV9kZWZhdWx0X2luX3RlbmFudF9yYXRpbmdCGwoZX2RlZmF1bHRfaW5fZ2xvYmFsX3JhdGluZ0JEWkJnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9tb2RlbHNiBnByb3RvMw", [file_cloud_v1_common_entity, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_provider, file_cloud_v1_deployment_render, file_cloud_v1_domain_database, file_cloud_v1_domain_suite, file_cloud_v1_domain_workload, file_cloud_v1_topology_topology, file_schemapb_schema, file_validate_validate]);
 
 /**
  *
- * SuiteWizardDraft is the server-held, mutable state of a SUITE wizard.
+ * SuiteWizardDraftRecord is the server-held mutable state of a SUITE wizard.
  *
- * Big-schema model, like the test wizard: the whole suite form is ONE schemapb
- * schema in `form`. It carries the selections — preset_ids (a db x workload
- * matrix) + test_preset_ids — plus ONE provider_type for the whole suite (naming
- * the tenant provider every cell deploys on) and max_parallel. Presets already
- * hold baked db/workload params, so the suite wizard does NOT re-fill those — and
- * it carries NO provider settings: machines are derived per cell at bake from the
- * db config (role->VM expander + provider overlay), not entered. The server
- * validates the form, prunes the matrix to workload<->db compatible pairs (a root
- * CEL rule), expands the preview and recomputes readiness on every patch.
+ * It mirrors the typed test wizard model, but per cell:
+ * SuiteCell source -> resolved database/workload
+ * database/workload -> topology_spec
+ * topology_spec + provider/defaults/machine overrides -> infrastructure_plan
+ * topology + runtime placeholders -> render_preview
  *
- * Persistence: own table (tenant-scoped via Entity) + in-memory cache. On finish
- * it bakes into a domain.SuiteRun (the full N*M TestRuns).
+ * The draft never stores provider account settings. Provider settings are resolved
+ * from tenant settings only when the suite is started, and runtime facts are
+ * produced by workflow stages.
  *
  * @generated from message cloud.v1.models.SuiteWizardDraftRecord
  */
 export type SuiteWizardDraftRecord = Message<"cloud.v1.models.SuiteWizardDraftRecord"> & {
   /**
    *
-   * entity is the storage envelope (tenant-scoped: id, tenant_id, name,
-   * timings).
+   * entity is the storage envelope.
    *
    * @generated from field: cloud.v1.common.Entity entity = 1;
    */
@@ -48,66 +58,99 @@ export type SuiteWizardDraftRecord = Message<"cloud.v1.models.SuiteWizardDraftRe
 
   /**
    *
-   * form is the whole suite form as one schema + values: preset_ids (the
-   * db x workload matrix) + test_preset_ids + ONE provider_type for the whole
-   * suite + max_parallel. No per-topology provider settings.
+   * provider selects one deployment backend for every cell.
    *
-   * @generated from field: schemapb.Filled form = 2;
+   * @generated from field: cloud.v1.deployment.Provider provider = 2;
    */
-  form?: Filled;
+  provider: Provider;
 
   /**
    *
-   * preview holds the server-computed expanded, compatible cells (recomputed
-   * on every patch). These are lightweight summaries; full TestRuns are baked
-   * only at finish to avoid generating a topology per cell here.
+   * cells are the editable matrix entries and their server-derived previews.
    *
-   * @generated from field: repeated cloud.v1.models.SuiteWizardDraftRecord.Cell preview = 3;
+   * @generated from field: repeated cloud.v1.models.SuiteWizardDraftRecord.Cell cells = 3;
    */
-  preview: SuiteWizardDraftRecord_Cell[];
+  cells: SuiteWizardDraftRecord_Cell[];
 
   /**
    *
-   * errors are the authoritative validation errors (recomputed on every
-   * patch); paths group by section in the UI.
+   * max_parallel is the suite default concurrency selected in the wizard.
+   * 0 = unlimited.
    *
-   * @generated from field: repeated schemapb.FieldError errors = 4;
+   * @generated from field: uint32 max_parallel = 4;
+   */
+  maxParallel: number;
+
+  /**
+   *
+   * schedule is the optional cron schedule edited in the wizard.
+   *
+   * @generated from field: cloud.v1.domain.Schedule schedule = 5;
+   */
+  schedule?: Schedule;
+
+  /**
+   *
+   * errors are draft-level validation errors.
+   *
+   * @generated from field: repeated schemapb.FieldError errors = 6;
    */
   errors: FieldError[];
 
   /**
    *
-   * ready is true when there is >=1 compatible cell and the form validates.
+   * ready is true when at least one enabled cell is ready and the suite-level
+   * settings validate.
    *
-   * @generated from field: bool ready = 5;
+   * @generated from field: bool ready = 7;
    */
   ready: boolean;
+
+  /**
+   *
+   * default_in_tenant_rating is persisted to Suite.default_in_tenant_rating.
+   *
+   * @generated from field: optional bool default_in_tenant_rating = 8;
+   */
+  defaultInTenantRating?: boolean;
+
+  /**
+   *
+   * default_in_global_rating is persisted to Suite.default_in_global_rating.
+   *
+   * @generated from field: optional bool default_in_global_rating = 9;
+   */
+  defaultInGlobalRating?: boolean;
+
+  /**
+   *
+   * suite_id is set when the draft was seeded from an existing suite.
+   *
+   * @generated from field: string suite_id = 10;
+   */
+  suiteId: string;
 };
 
 /**
  *
- * SuiteWizardDraft is the server-held, mutable state of a SUITE wizard.
+ * SuiteWizardDraftRecord is the server-held mutable state of a SUITE wizard.
  *
- * Big-schema model, like the test wizard: the whole suite form is ONE schemapb
- * schema in `form`. It carries the selections — preset_ids (a db x workload
- * matrix) + test_preset_ids — plus ONE provider_type for the whole suite (naming
- * the tenant provider every cell deploys on) and max_parallel. Presets already
- * hold baked db/workload params, so the suite wizard does NOT re-fill those — and
- * it carries NO provider settings: machines are derived per cell at bake from the
- * db config (role->VM expander + provider overlay), not entered. The server
- * validates the form, prunes the matrix to workload<->db compatible pairs (a root
- * CEL rule), expands the preview and recomputes readiness on every patch.
+ * It mirrors the typed test wizard model, but per cell:
+ * SuiteCell source -> resolved database/workload
+ * database/workload -> topology_spec
+ * topology_spec + provider/defaults/machine overrides -> infrastructure_plan
+ * topology + runtime placeholders -> render_preview
  *
- * Persistence: own table (tenant-scoped via Entity) + in-memory cache. On finish
- * it bakes into a domain.SuiteRun (the full N*M TestRuns).
+ * The draft never stores provider account settings. Provider settings are resolved
+ * from tenant settings only when the suite is started, and runtime facts are
+ * produced by workflow stages.
  *
  * @generated from message cloud.v1.models.SuiteWizardDraftRecord
  */
 export type SuiteWizardDraftRecordJson = {
   /**
    *
-   * entity is the storage envelope (tenant-scoped: id, tenant_id, name,
-   * timings).
+   * entity is the storage envelope.
    *
    * @generated from field: cloud.v1.common.Entity entity = 1;
    */
@@ -115,40 +158,77 @@ export type SuiteWizardDraftRecordJson = {
 
   /**
    *
-   * form is the whole suite form as one schema + values: preset_ids (the
-   * db x workload matrix) + test_preset_ids + ONE provider_type for the whole
-   * suite + max_parallel. No per-topology provider settings.
+   * provider selects one deployment backend for every cell.
    *
-   * @generated from field: schemapb.Filled form = 2;
+   * @generated from field: cloud.v1.deployment.Provider provider = 2;
    */
-  form?: FilledJson;
+  provider?: ProviderJson;
 
   /**
    *
-   * preview holds the server-computed expanded, compatible cells (recomputed
-   * on every patch). These are lightweight summaries; full TestRuns are baked
-   * only at finish to avoid generating a topology per cell here.
+   * cells are the editable matrix entries and their server-derived previews.
    *
-   * @generated from field: repeated cloud.v1.models.SuiteWizardDraftRecord.Cell preview = 3;
+   * @generated from field: repeated cloud.v1.models.SuiteWizardDraftRecord.Cell cells = 3;
    */
-  preview?: SuiteWizardDraftRecord_CellJson[];
+  cells?: SuiteWizardDraftRecord_CellJson[];
 
   /**
    *
-   * errors are the authoritative validation errors (recomputed on every
-   * patch); paths group by section in the UI.
+   * max_parallel is the suite default concurrency selected in the wizard.
+   * 0 = unlimited.
    *
-   * @generated from field: repeated schemapb.FieldError errors = 4;
+   * @generated from field: uint32 max_parallel = 4;
+   */
+  maxParallel?: number;
+
+  /**
+   *
+   * schedule is the optional cron schedule edited in the wizard.
+   *
+   * @generated from field: cloud.v1.domain.Schedule schedule = 5;
+   */
+  schedule?: ScheduleJson;
+
+  /**
+   *
+   * errors are draft-level validation errors.
+   *
+   * @generated from field: repeated schemapb.FieldError errors = 6;
    */
   errors?: FieldErrorJson[];
 
   /**
    *
-   * ready is true when there is >=1 compatible cell and the form validates.
+   * ready is true when at least one enabled cell is ready and the suite-level
+   * settings validate.
    *
-   * @generated from field: bool ready = 5;
+   * @generated from field: bool ready = 7;
    */
   ready?: boolean;
+
+  /**
+   *
+   * default_in_tenant_rating is persisted to Suite.default_in_tenant_rating.
+   *
+   * @generated from field: optional bool default_in_tenant_rating = 8;
+   */
+  defaultInTenantRating?: boolean;
+
+  /**
+   *
+   * default_in_global_rating is persisted to Suite.default_in_global_rating.
+   *
+   * @generated from field: optional bool default_in_global_rating = 9;
+   */
+  defaultInGlobalRating?: boolean;
+
+  /**
+   *
+   * suite_id is set when the draft was seeded from an existing suite.
+   *
+   * @generated from field: string suite_id = 10;
+   */
+  suiteId?: string;
 };
 
 export type SuiteWizardDraftRecordValid = SuiteWizardDraftRecord;
@@ -162,140 +242,168 @@ export const SuiteWizardDraftRecordSchema: GenMessage<SuiteWizardDraftRecord, {j
 
 /**
  *
- * Cell is one resolved (db, workload) pair the suite will run.
+ * Cell is one selected suite cell plus the server-derived preview artifacts
+ * shown to the user.
  *
  * @generated from message cloud.v1.models.SuiteWizardDraftRecord.Cell
  */
 export type SuiteWizardDraftRecord_Cell = Message<"cloud.v1.models.SuiteWizardDraftRecord.Cell"> & {
   /**
    *
-   * db_preset_id is the database preset from a db x workload matrix pair
-   * (paired with workload_preset_id).
+   * spec is the editable cell definition: source, enabled flag, machine
+   * overrides and render overrides.
    *
-   * @generated from field: string db_preset_id = 1;
+   * @generated from field: cloud.v1.domain.SuiteCell spec = 1;
    */
-  dbPresetId: string;
+  spec?: SuiteCell;
 
   /**
    *
-   * workload_preset_id is the workload preset from a db x workload matrix
-   * pair (paired with db_preset_id).
+   * database is the resolved database payload for this cell.
    *
-   * @generated from field: string workload_preset_id = 2;
+   * @generated from field: cloud.v1.domain.Database database = 2;
    */
-  workloadPresetId: string;
+  database?: Database;
 
   /**
    *
-   * test_preset_id is set when the cell came from a full TestPreset
-   * instead of a matrix pair (then db/workload preset ids are empty).
+   * workload is the resolved workload payload for this cell.
    *
-   * @generated from field: string test_preset_id = 3;
+   * @generated from field: cloud.v1.domain.Workload workload = 3;
    */
-  testPresetId: string;
+  workload?: Workload;
 
   /**
    *
-   * name is the display name of the resulting run.
+   * topology_spec is the server-derived provider-agnostic graph.
    *
-   * @generated from field: string name = 4;
+   * @generated from field: cloud.v1.topology.TopologySpec topology_spec = 4;
    */
-  name: string;
+  topologySpec?: TopologySpec;
 
   /**
    *
-   * compatible is true when the workload is compatible with the database
-   * kind.
+   * infrastructure_plan is provider-specific machine intent. Provider
+   * account settings are omitted/redacted in wizard drafts.
    *
-   * @generated from field: bool compatible = 5;
+   * @generated from field: cloud.v1.deployment.InfrastructurePlan infrastructure_plan = 5;
+   */
+  infrastructurePlan?: InfrastructurePlan;
+
+  /**
+   *
+   * render_preview is what generated files/commands/dirs would look like
+   * before runtime-only values are known.
+   *
+   * @generated from field: cloud.v1.deployment.RenderPreview render_preview = 6;
+   */
+  renderPreview?: RenderPreview;
+
+  /**
+   *
+   * compatible is true when database/workload compatibility rules pass.
+   *
+   * @generated from field: bool compatible = 7;
    */
   compatible: boolean;
 
   /**
    *
-   * ready is true when the cell's (db, workload) are compatible and it
-   * has no per-cell errors.
+   * ready is true when this enabled cell can be baked into a TestRun.
    *
-   * @generated from field: bool ready = 6;
+   * @generated from field: bool ready = 8;
    */
   ready: boolean;
 
   /**
    *
-   * errors are per-cell capacity/sanity errors (quota/zones), computed at
-   * preview.
+   * errors are per-cell validation, capacity, and render errors.
    *
-   * @generated from field: repeated schemapb.FieldError errors = 7;
+   * @generated from field: repeated schemapb.FieldError errors = 9;
    */
   errors: FieldError[];
 };
 
 /**
  *
- * Cell is one resolved (db, workload) pair the suite will run.
+ * Cell is one selected suite cell plus the server-derived preview artifacts
+ * shown to the user.
  *
  * @generated from message cloud.v1.models.SuiteWizardDraftRecord.Cell
  */
 export type SuiteWizardDraftRecord_CellJson = {
   /**
    *
-   * db_preset_id is the database preset from a db x workload matrix pair
-   * (paired with workload_preset_id).
+   * spec is the editable cell definition: source, enabled flag, machine
+   * overrides and render overrides.
    *
-   * @generated from field: string db_preset_id = 1;
+   * @generated from field: cloud.v1.domain.SuiteCell spec = 1;
    */
-  dbPresetId?: string;
+  spec?: SuiteCellJson;
 
   /**
    *
-   * workload_preset_id is the workload preset from a db x workload matrix
-   * pair (paired with db_preset_id).
+   * database is the resolved database payload for this cell.
    *
-   * @generated from field: string workload_preset_id = 2;
+   * @generated from field: cloud.v1.domain.Database database = 2;
    */
-  workloadPresetId?: string;
+  database?: DatabaseJson;
 
   /**
    *
-   * test_preset_id is set when the cell came from a full TestPreset
-   * instead of a matrix pair (then db/workload preset ids are empty).
+   * workload is the resolved workload payload for this cell.
    *
-   * @generated from field: string test_preset_id = 3;
+   * @generated from field: cloud.v1.domain.Workload workload = 3;
    */
-  testPresetId?: string;
+  workload?: WorkloadJson;
 
   /**
    *
-   * name is the display name of the resulting run.
+   * topology_spec is the server-derived provider-agnostic graph.
    *
-   * @generated from field: string name = 4;
+   * @generated from field: cloud.v1.topology.TopologySpec topology_spec = 4;
    */
-  name?: string;
+  topologySpec?: TopologySpecJson;
 
   /**
    *
-   * compatible is true when the workload is compatible with the database
-   * kind.
+   * infrastructure_plan is provider-specific machine intent. Provider
+   * account settings are omitted/redacted in wizard drafts.
    *
-   * @generated from field: bool compatible = 5;
+   * @generated from field: cloud.v1.deployment.InfrastructurePlan infrastructure_plan = 5;
+   */
+  infrastructurePlan?: InfrastructurePlanJson;
+
+  /**
+   *
+   * render_preview is what generated files/commands/dirs would look like
+   * before runtime-only values are known.
+   *
+   * @generated from field: cloud.v1.deployment.RenderPreview render_preview = 6;
+   */
+  renderPreview?: RenderPreviewJson;
+
+  /**
+   *
+   * compatible is true when database/workload compatibility rules pass.
+   *
+   * @generated from field: bool compatible = 7;
    */
   compatible?: boolean;
 
   /**
    *
-   * ready is true when the cell's (db, workload) are compatible and it
-   * has no per-cell errors.
+   * ready is true when this enabled cell can be baked into a TestRun.
    *
-   * @generated from field: bool ready = 6;
+   * @generated from field: bool ready = 8;
    */
   ready?: boolean;
 
   /**
    *
-   * errors are per-cell capacity/sanity errors (quota/zones), computed at
-   * preview.
+   * errors are per-cell validation, capacity, and render errors.
    *
-   * @generated from field: repeated schemapb.FieldError errors = 7;
+   * @generated from field: repeated schemapb.FieldError errors = 9;
    */
   errors?: FieldErrorJson[];
 };

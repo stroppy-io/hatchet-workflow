@@ -146,6 +146,10 @@ const (
 	ListWorkloadPresetsRequest_Sort_KIND_STROPPY_VERSION ListWorkloadPresetsRequest_Sort_Kind = 1
 	// KIND_IS_SYSTEM sorts system presets first/last.
 	ListWorkloadPresetsRequest_Sort_KIND_IS_SYSTEM ListWorkloadPresetsRequest_Sort_Kind = 2
+	// KIND_PROTOCOL sorts by the workload protocol.
+	ListWorkloadPresetsRequest_Sort_KIND_PROTOCOL ListWorkloadPresetsRequest_Sort_Kind = 3
+	// KIND_SCRIPT sorts by the workload script/preset/path label.
+	ListWorkloadPresetsRequest_Sort_KIND_SCRIPT ListWorkloadPresetsRequest_Sort_Kind = 4
 )
 
 // Enum value maps for ListWorkloadPresetsRequest_Sort_Kind.
@@ -154,11 +158,15 @@ var (
 		0: "KIND_UNSPECIFIED",
 		1: "KIND_STROPPY_VERSION",
 		2: "KIND_IS_SYSTEM",
+		3: "KIND_PROTOCOL",
+		4: "KIND_SCRIPT",
 	}
 	ListWorkloadPresetsRequest_Sort_Kind_value = map[string]int32{
 		"KIND_UNSPECIFIED":     0,
 		"KIND_STROPPY_VERSION": 1,
 		"KIND_IS_SYSTEM":       2,
+		"KIND_PROTOCOL":        3,
+		"KIND_SCRIPT":          4,
 	}
 )
 
@@ -201,6 +209,8 @@ const (
 	ListTestPresetsRequest_Sort_KIND_STROPPY_VERSION ListTestPresetsRequest_Sort_Kind = 2
 	// KIND_IS_SYSTEM sorts system presets first/last.
 	ListTestPresetsRequest_Sort_KIND_IS_SYSTEM ListTestPresetsRequest_Sort_Kind = 3
+	// KIND_PROTOCOL sorts by the test workload protocol.
+	ListTestPresetsRequest_Sort_KIND_PROTOCOL ListTestPresetsRequest_Sort_Kind = 4
 )
 
 // Enum value maps for ListTestPresetsRequest_Sort_Kind.
@@ -210,12 +220,14 @@ var (
 		1: "KIND_DB_KIND",
 		2: "KIND_STROPPY_VERSION",
 		3: "KIND_IS_SYSTEM",
+		4: "KIND_PROTOCOL",
 	}
 	ListTestPresetsRequest_Sort_Kind_value = map[string]int32{
 		"KIND_UNSPECIFIED":     0,
 		"KIND_DB_KIND":         1,
 		"KIND_STROPPY_VERSION": 2,
 		"KIND_IS_SYSTEM":       3,
+		"KIND_PROTOCOL":        4,
 	}
 )
 
@@ -1147,7 +1159,11 @@ type ListWorkloadPresetsRequest struct {
 	// sort is the ordering (common Entity column or table-specific).
 	Sort *ListWorkloadPresetsRequest_Sort `protobuf:"bytes,6,opt,name=sort,proto3" json:"sort,omitempty"`
 	// page is the pagination cursor/size.
-	Page          *common.Page `protobuf:"bytes,7,opt,name=page,proto3" json:"page,omitempty"`
+	Page *common.Page `protobuf:"bytes,7,opt,name=page,proto3" json:"page,omitempty"`
+	// protocols narrows to workload wire protocols.
+	Protocols []domain.Workload_Protocol `protobuf:"varint,8,rep,packed,name=protocols,proto3,enum=cloud.v1.domain.Workload_Protocol" json:"protocols,omitempty"`
+	// scripts narrows to workload script/preset/path labels.
+	Scripts       []string `protobuf:"bytes,9,rep,name=scripts,proto3" json:"scripts,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1227,6 +1243,20 @@ func (x *ListWorkloadPresetsRequest) GetSort() *ListWorkloadPresetsRequest_Sort 
 func (x *ListWorkloadPresetsRequest) GetPage() *common.Page {
 	if x != nil {
 		return x.Page
+	}
+	return nil
+}
+
+func (x *ListWorkloadPresetsRequest) GetProtocols() []domain.Workload_Protocol {
+	if x != nil {
+		return x.Protocols
+	}
+	return nil
+}
+
+func (x *ListWorkloadPresetsRequest) GetScripts() []string {
+	if x != nil {
+		return x.Scripts
 	}
 	return nil
 }
@@ -1818,7 +1848,9 @@ type ListTestPresetsRequest struct {
 	// sort is the ordering (common Entity column or table-specific).
 	Sort *ListTestPresetsRequest_Sort `protobuf:"bytes,7,opt,name=sort,proto3" json:"sort,omitempty"`
 	// page is the pagination cursor/size.
-	Page          *common.Page `protobuf:"bytes,8,opt,name=page,proto3" json:"page,omitempty"`
+	Page *common.Page `protobuf:"bytes,8,opt,name=page,proto3" json:"page,omitempty"`
+	// protocols narrows to workload wire protocols.
+	Protocols     []domain.Workload_Protocol `protobuf:"varint,9,rep,packed,name=protocols,proto3,enum=cloud.v1.domain.Workload_Protocol" json:"protocols,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1905,6 +1937,13 @@ func (x *ListTestPresetsRequest) GetSort() *ListTestPresetsRequest_Sort {
 func (x *ListTestPresetsRequest) GetPage() *common.Page {
 	if x != nil {
 		return x.Page
+	}
+	return nil
+}
+
+func (x *ListTestPresetsRequest) GetProtocols() []domain.Workload_Protocol {
+	if x != nil {
+		return x.Protocols
 	}
 	return nil
 }
@@ -2566,7 +2605,7 @@ var File_cloud_v1_api_preset_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_preset_proto_rawDesc = "" +
 	"\n" +
-	"\x19cloud/v1/api/preset.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1ccloud/v1/models/preset.proto\x1a\x17validate/validate.proto\"\x8e\x01\n" +
+	"\x19cloud/v1/api/preset.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1ccloud/v1/models/preset.proto\x1a\x17validate/validate.proto\"\x8e\x01\n" +
 	"\x1bCreateDatabasePresetRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12G\n" +
 	"\x06preset\x18\x02 \x01(\v2%.cloud.v1.models.DatabasePresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"g\n" +
@@ -2633,7 +2672,7 @@ const file_cloud_v1_api_preset_proto_rawDesc = "" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x19\n" +
 	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"d\n" +
 	"\x19GetWorkloadPresetResponse\x12G\n" +
-	"\x06preset\x18\x01 \x01(\v2%.cloud.v1.models.WorkloadPresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"\xca\x05\n" +
+	"\x06preset\x18\x01 \x01(\v2%.cloud.v1.models.WorkloadPresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"\xdb\x06\n" +
 	"\x1aListWorkloadPresetsRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x125\n" +
 	"\x06filter\x18\x02 \x01(\v2\x1d.cloud.v1.common.EntityFilterR\x06filter\x12F\n" +
@@ -2641,15 +2680,19 @@ const file_cloud_v1_api_preset_proto_rawDesc = "" +
 	"\x10stroppy_versions\x18\x04 \x03(\tB\x0e\xfaB\v\x92\x01\b\x10d\"\x04r\x02\x18@R\x0fstroppyVersions\x12 \n" +
 	"\tis_system\x18\x05 \x01(\bH\x00R\bisSystem\x88\x01\x01\x12A\n" +
 	"\x04sort\x18\x06 \x01(\v2-.cloud.v1.api.ListWorkloadPresetsRequest.SortR\x04sort\x12)\n" +
-	"\x04page\x18\a \x01(\v2\x15.cloud.v1.common.PageR\x04page\x1a\xf2\x01\n" +
+	"\x04page\x18\a \x01(\v2\x15.cloud.v1.common.PageR\x04page\x12@\n" +
+	"\tprotocols\x18\b \x03(\x0e2\".cloud.v1.domain.Workload.ProtocolR\tprotocols\x12)\n" +
+	"\ascripts\x18\t \x03(\tB\x0f\xfaB\f\x92\x01\t\x10d\"\x05r\x03\x18\x80\x04R\ascripts\x1a\x96\x02\n" +
 	"\x04Sort\x12:\n" +
 	"\x06entity\x18\x01 \x01(\x0e2 .cloud.v1.common.EntitySortFieldH\x00R\x06entity\x12H\n" +
 	"\x04kind\x18\x02 \x01(\x0e22.cloud.v1.api.ListWorkloadPresetsRequest.Sort.KindH\x00R\x04kind\x12\x12\n" +
-	"\x04desc\x18\x03 \x01(\bR\x04desc\"J\n" +
+	"\x04desc\x18\x03 \x01(\bR\x04desc\"n\n" +
 	"\x04Kind\x12\x14\n" +
 	"\x10KIND_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14KIND_STROPPY_VERSION\x10\x01\x12\x12\n" +
-	"\x0eKIND_IS_SYSTEM\x10\x02B\x04\n" +
+	"\x0eKIND_IS_SYSTEM\x10\x02\x12\x11\n" +
+	"\rKIND_PROTOCOL\x10\x03\x12\x0f\n" +
+	"\vKIND_SCRIPT\x10\x04B\x04\n" +
 	"\x02by\x1a7\n" +
 	"\tTagsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
@@ -2683,7 +2726,7 @@ const file_cloud_v1_api_preset_proto_rawDesc = "" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x19\n" +
 	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"\\\n" +
 	"\x15GetTestPresetResponse\x12C\n" +
-	"\x06preset\x18\x01 \x01(\v2!.cloud.v1.models.TestPresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"\x87\x06\n" +
+	"\x06preset\x18\x01 \x01(\v2!.cloud.v1.models.TestPresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"\xdc\x06\n" +
 	"\x16ListTestPresetsRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x125\n" +
 	"\x06filter\x18\x02 \x01(\v2\x1d.cloud.v1.common.EntityFilterR\x06filter\x12B\n" +
@@ -2692,16 +2735,18 @@ const file_cloud_v1_api_preset_proto_rawDesc = "" +
 	"\x10stroppy_versions\x18\x05 \x03(\tB\x0e\xfaB\v\x92\x01\b\x10d\"\x04r\x02\x18@R\x0fstroppyVersions\x12 \n" +
 	"\tis_system\x18\x06 \x01(\bH\x00R\bisSystem\x88\x01\x01\x12=\n" +
 	"\x04sort\x18\a \x01(\v2).cloud.v1.api.ListTestPresetsRequest.SortR\x04sort\x12)\n" +
-	"\x04page\x18\b \x01(\v2\x15.cloud.v1.common.PageR\x04page\x1a\x80\x02\n" +
+	"\x04page\x18\b \x01(\v2\x15.cloud.v1.common.PageR\x04page\x12@\n" +
+	"\tprotocols\x18\t \x03(\x0e2\".cloud.v1.domain.Workload.ProtocolR\tprotocols\x1a\x93\x02\n" +
 	"\x04Sort\x12:\n" +
 	"\x06entity\x18\x01 \x01(\x0e2 .cloud.v1.common.EntitySortFieldH\x00R\x06entity\x12D\n" +
 	"\x04kind\x18\x02 \x01(\x0e2..cloud.v1.api.ListTestPresetsRequest.Sort.KindH\x00R\x04kind\x12\x12\n" +
-	"\x04desc\x18\x03 \x01(\bR\x04desc\"\\\n" +
+	"\x04desc\x18\x03 \x01(\bR\x04desc\"o\n" +
 	"\x04Kind\x12\x14\n" +
 	"\x10KIND_UNSPECIFIED\x10\x00\x12\x10\n" +
 	"\fKIND_DB_KIND\x10\x01\x12\x18\n" +
 	"\x14KIND_STROPPY_VERSION\x10\x02\x12\x12\n" +
-	"\x0eKIND_IS_SYSTEM\x10\x03B\x04\n" +
+	"\x0eKIND_IS_SYSTEM\x10\x03\x12\x11\n" +
+	"\rKIND_PROTOCOL\x10\x04B\x04\n" +
 	"\x02by\x1a7\n" +
 	"\tTagsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
@@ -2820,8 +2865,9 @@ var file_cloud_v1_api_preset_proto_goTypes = []any{
 	(domain.Database_Kind)(0),                  // 48: cloud.v1.domain.Database.Kind
 	(*common.Page)(nil),                        // 49: cloud.v1.common.Page
 	(*models.WorkloadPresetRecord)(nil),        // 50: cloud.v1.models.WorkloadPresetRecord
-	(*models.TestPresetRecord)(nil),            // 51: cloud.v1.models.TestPresetRecord
-	(common.EntitySortField)(0),                // 52: cloud.v1.common.EntitySortField
+	(domain.Workload_Protocol)(0),              // 51: cloud.v1.domain.Workload.Protocol
+	(*models.TestPresetRecord)(nil),            // 52: cloud.v1.models.TestPresetRecord
+	(common.EntitySortField)(0),                // 53: cloud.v1.common.EntitySortField
 }
 var file_cloud_v1_api_preset_proto_depIdxs = []int32{
 	46, // 0: cloud.v1.api.CreateDatabasePresetRequest.preset:type_name -> cloud.v1.models.DatabasePresetRecord
@@ -2844,69 +2890,71 @@ var file_cloud_v1_api_preset_proto_depIdxs = []int32{
 	43, // 17: cloud.v1.api.ListWorkloadPresetsRequest.tags:type_name -> cloud.v1.api.ListWorkloadPresetsRequest.TagsEntry
 	42, // 18: cloud.v1.api.ListWorkloadPresetsRequest.sort:type_name -> cloud.v1.api.ListWorkloadPresetsRequest.Sort
 	49, // 19: cloud.v1.api.ListWorkloadPresetsRequest.page:type_name -> cloud.v1.common.Page
-	50, // 20: cloud.v1.api.ListWorkloadPresetsResponse.presets:type_name -> cloud.v1.models.WorkloadPresetRecord
-	50, // 21: cloud.v1.api.UpdateWorkloadPresetRequest.preset:type_name -> cloud.v1.models.WorkloadPresetRecord
-	50, // 22: cloud.v1.api.UpdateWorkloadPresetResponse.preset:type_name -> cloud.v1.models.WorkloadPresetRecord
-	50, // 23: cloud.v1.api.CloneWorkloadPresetResponse.preset:type_name -> cloud.v1.models.WorkloadPresetRecord
-	51, // 24: cloud.v1.api.CreateTestPresetRequest.preset:type_name -> cloud.v1.models.TestPresetRecord
-	51, // 25: cloud.v1.api.CreateTestPresetResponse.preset:type_name -> cloud.v1.models.TestPresetRecord
-	51, // 26: cloud.v1.api.GetTestPresetResponse.preset:type_name -> cloud.v1.models.TestPresetRecord
-	47, // 27: cloud.v1.api.ListTestPresetsRequest.filter:type_name -> cloud.v1.common.EntityFilter
-	45, // 28: cloud.v1.api.ListTestPresetsRequest.tags:type_name -> cloud.v1.api.ListTestPresetsRequest.TagsEntry
-	48, // 29: cloud.v1.api.ListTestPresetsRequest.db_kinds:type_name -> cloud.v1.domain.Database.Kind
-	44, // 30: cloud.v1.api.ListTestPresetsRequest.sort:type_name -> cloud.v1.api.ListTestPresetsRequest.Sort
-	49, // 31: cloud.v1.api.ListTestPresetsRequest.page:type_name -> cloud.v1.common.Page
-	51, // 32: cloud.v1.api.ListTestPresetsResponse.presets:type_name -> cloud.v1.models.TestPresetRecord
-	51, // 33: cloud.v1.api.UpdateTestPresetRequest.preset:type_name -> cloud.v1.models.TestPresetRecord
-	51, // 34: cloud.v1.api.UpdateTestPresetResponse.preset:type_name -> cloud.v1.models.TestPresetRecord
-	51, // 35: cloud.v1.api.CloneTestPresetResponse.preset:type_name -> cloud.v1.models.TestPresetRecord
-	52, // 36: cloud.v1.api.ListDatabasePresetsRequest.Sort.entity:type_name -> cloud.v1.common.EntitySortField
-	1,  // 37: cloud.v1.api.ListDatabasePresetsRequest.Sort.kind:type_name -> cloud.v1.api.ListDatabasePresetsRequest.Sort.Kind
-	52, // 38: cloud.v1.api.ListWorkloadPresetsRequest.Sort.entity:type_name -> cloud.v1.common.EntitySortField
-	2,  // 39: cloud.v1.api.ListWorkloadPresetsRequest.Sort.kind:type_name -> cloud.v1.api.ListWorkloadPresetsRequest.Sort.Kind
-	52, // 40: cloud.v1.api.ListTestPresetsRequest.Sort.entity:type_name -> cloud.v1.common.EntitySortField
-	3,  // 41: cloud.v1.api.ListTestPresetsRequest.Sort.kind:type_name -> cloud.v1.api.ListTestPresetsRequest.Sort.Kind
-	4,  // 42: cloud.v1.api.DatabasePresetService.CreateDatabasePreset:input_type -> cloud.v1.api.CreateDatabasePresetRequest
-	6,  // 43: cloud.v1.api.DatabasePresetService.GetDatabasePreset:input_type -> cloud.v1.api.GetDatabasePresetRequest
-	8,  // 44: cloud.v1.api.DatabasePresetService.ListDatabasePresets:input_type -> cloud.v1.api.ListDatabasePresetsRequest
-	10, // 45: cloud.v1.api.DatabasePresetService.UpdateDatabasePreset:input_type -> cloud.v1.api.UpdateDatabasePresetRequest
-	12, // 46: cloud.v1.api.DatabasePresetService.DeleteDatabasePreset:input_type -> cloud.v1.api.DeleteDatabasePresetRequest
-	14, // 47: cloud.v1.api.DatabasePresetService.CloneDatabasePreset:input_type -> cloud.v1.api.CloneDatabasePresetRequest
-	16, // 48: cloud.v1.api.WorkloadPresetService.CreateWorkloadPreset:input_type -> cloud.v1.api.CreateWorkloadPresetRequest
-	18, // 49: cloud.v1.api.WorkloadPresetService.GetWorkloadPreset:input_type -> cloud.v1.api.GetWorkloadPresetRequest
-	20, // 50: cloud.v1.api.WorkloadPresetService.ListWorkloadPresets:input_type -> cloud.v1.api.ListWorkloadPresetsRequest
-	22, // 51: cloud.v1.api.WorkloadPresetService.UpdateWorkloadPreset:input_type -> cloud.v1.api.UpdateWorkloadPresetRequest
-	24, // 52: cloud.v1.api.WorkloadPresetService.DeleteWorkloadPreset:input_type -> cloud.v1.api.DeleteWorkloadPresetRequest
-	26, // 53: cloud.v1.api.WorkloadPresetService.CloneWorkloadPreset:input_type -> cloud.v1.api.CloneWorkloadPresetRequest
-	28, // 54: cloud.v1.api.TestPresetService.CreateTestPreset:input_type -> cloud.v1.api.CreateTestPresetRequest
-	30, // 55: cloud.v1.api.TestPresetService.GetTestPreset:input_type -> cloud.v1.api.GetTestPresetRequest
-	32, // 56: cloud.v1.api.TestPresetService.ListTestPresets:input_type -> cloud.v1.api.ListTestPresetsRequest
-	34, // 57: cloud.v1.api.TestPresetService.UpdateTestPreset:input_type -> cloud.v1.api.UpdateTestPresetRequest
-	36, // 58: cloud.v1.api.TestPresetService.DeleteTestPreset:input_type -> cloud.v1.api.DeleteTestPresetRequest
-	38, // 59: cloud.v1.api.TestPresetService.CloneTestPreset:input_type -> cloud.v1.api.CloneTestPresetRequest
-	5,  // 60: cloud.v1.api.DatabasePresetService.CreateDatabasePreset:output_type -> cloud.v1.api.CreateDatabasePresetResponse
-	7,  // 61: cloud.v1.api.DatabasePresetService.GetDatabasePreset:output_type -> cloud.v1.api.GetDatabasePresetResponse
-	9,  // 62: cloud.v1.api.DatabasePresetService.ListDatabasePresets:output_type -> cloud.v1.api.ListDatabasePresetsResponse
-	11, // 63: cloud.v1.api.DatabasePresetService.UpdateDatabasePreset:output_type -> cloud.v1.api.UpdateDatabasePresetResponse
-	13, // 64: cloud.v1.api.DatabasePresetService.DeleteDatabasePreset:output_type -> cloud.v1.api.DeleteDatabasePresetResponse
-	15, // 65: cloud.v1.api.DatabasePresetService.CloneDatabasePreset:output_type -> cloud.v1.api.CloneDatabasePresetResponse
-	17, // 66: cloud.v1.api.WorkloadPresetService.CreateWorkloadPreset:output_type -> cloud.v1.api.CreateWorkloadPresetResponse
-	19, // 67: cloud.v1.api.WorkloadPresetService.GetWorkloadPreset:output_type -> cloud.v1.api.GetWorkloadPresetResponse
-	21, // 68: cloud.v1.api.WorkloadPresetService.ListWorkloadPresets:output_type -> cloud.v1.api.ListWorkloadPresetsResponse
-	23, // 69: cloud.v1.api.WorkloadPresetService.UpdateWorkloadPreset:output_type -> cloud.v1.api.UpdateWorkloadPresetResponse
-	25, // 70: cloud.v1.api.WorkloadPresetService.DeleteWorkloadPreset:output_type -> cloud.v1.api.DeleteWorkloadPresetResponse
-	27, // 71: cloud.v1.api.WorkloadPresetService.CloneWorkloadPreset:output_type -> cloud.v1.api.CloneWorkloadPresetResponse
-	29, // 72: cloud.v1.api.TestPresetService.CreateTestPreset:output_type -> cloud.v1.api.CreateTestPresetResponse
-	31, // 73: cloud.v1.api.TestPresetService.GetTestPreset:output_type -> cloud.v1.api.GetTestPresetResponse
-	33, // 74: cloud.v1.api.TestPresetService.ListTestPresets:output_type -> cloud.v1.api.ListTestPresetsResponse
-	35, // 75: cloud.v1.api.TestPresetService.UpdateTestPreset:output_type -> cloud.v1.api.UpdateTestPresetResponse
-	37, // 76: cloud.v1.api.TestPresetService.DeleteTestPreset:output_type -> cloud.v1.api.DeleteTestPresetResponse
-	39, // 77: cloud.v1.api.TestPresetService.CloneTestPreset:output_type -> cloud.v1.api.CloneTestPresetResponse
-	60, // [60:78] is the sub-list for method output_type
-	42, // [42:60] is the sub-list for method input_type
-	42, // [42:42] is the sub-list for extension type_name
-	42, // [42:42] is the sub-list for extension extendee
-	0,  // [0:42] is the sub-list for field type_name
+	51, // 20: cloud.v1.api.ListWorkloadPresetsRequest.protocols:type_name -> cloud.v1.domain.Workload.Protocol
+	50, // 21: cloud.v1.api.ListWorkloadPresetsResponse.presets:type_name -> cloud.v1.models.WorkloadPresetRecord
+	50, // 22: cloud.v1.api.UpdateWorkloadPresetRequest.preset:type_name -> cloud.v1.models.WorkloadPresetRecord
+	50, // 23: cloud.v1.api.UpdateWorkloadPresetResponse.preset:type_name -> cloud.v1.models.WorkloadPresetRecord
+	50, // 24: cloud.v1.api.CloneWorkloadPresetResponse.preset:type_name -> cloud.v1.models.WorkloadPresetRecord
+	52, // 25: cloud.v1.api.CreateTestPresetRequest.preset:type_name -> cloud.v1.models.TestPresetRecord
+	52, // 26: cloud.v1.api.CreateTestPresetResponse.preset:type_name -> cloud.v1.models.TestPresetRecord
+	52, // 27: cloud.v1.api.GetTestPresetResponse.preset:type_name -> cloud.v1.models.TestPresetRecord
+	47, // 28: cloud.v1.api.ListTestPresetsRequest.filter:type_name -> cloud.v1.common.EntityFilter
+	45, // 29: cloud.v1.api.ListTestPresetsRequest.tags:type_name -> cloud.v1.api.ListTestPresetsRequest.TagsEntry
+	48, // 30: cloud.v1.api.ListTestPresetsRequest.db_kinds:type_name -> cloud.v1.domain.Database.Kind
+	44, // 31: cloud.v1.api.ListTestPresetsRequest.sort:type_name -> cloud.v1.api.ListTestPresetsRequest.Sort
+	49, // 32: cloud.v1.api.ListTestPresetsRequest.page:type_name -> cloud.v1.common.Page
+	51, // 33: cloud.v1.api.ListTestPresetsRequest.protocols:type_name -> cloud.v1.domain.Workload.Protocol
+	52, // 34: cloud.v1.api.ListTestPresetsResponse.presets:type_name -> cloud.v1.models.TestPresetRecord
+	52, // 35: cloud.v1.api.UpdateTestPresetRequest.preset:type_name -> cloud.v1.models.TestPresetRecord
+	52, // 36: cloud.v1.api.UpdateTestPresetResponse.preset:type_name -> cloud.v1.models.TestPresetRecord
+	52, // 37: cloud.v1.api.CloneTestPresetResponse.preset:type_name -> cloud.v1.models.TestPresetRecord
+	53, // 38: cloud.v1.api.ListDatabasePresetsRequest.Sort.entity:type_name -> cloud.v1.common.EntitySortField
+	1,  // 39: cloud.v1.api.ListDatabasePresetsRequest.Sort.kind:type_name -> cloud.v1.api.ListDatabasePresetsRequest.Sort.Kind
+	53, // 40: cloud.v1.api.ListWorkloadPresetsRequest.Sort.entity:type_name -> cloud.v1.common.EntitySortField
+	2,  // 41: cloud.v1.api.ListWorkloadPresetsRequest.Sort.kind:type_name -> cloud.v1.api.ListWorkloadPresetsRequest.Sort.Kind
+	53, // 42: cloud.v1.api.ListTestPresetsRequest.Sort.entity:type_name -> cloud.v1.common.EntitySortField
+	3,  // 43: cloud.v1.api.ListTestPresetsRequest.Sort.kind:type_name -> cloud.v1.api.ListTestPresetsRequest.Sort.Kind
+	4,  // 44: cloud.v1.api.DatabasePresetService.CreateDatabasePreset:input_type -> cloud.v1.api.CreateDatabasePresetRequest
+	6,  // 45: cloud.v1.api.DatabasePresetService.GetDatabasePreset:input_type -> cloud.v1.api.GetDatabasePresetRequest
+	8,  // 46: cloud.v1.api.DatabasePresetService.ListDatabasePresets:input_type -> cloud.v1.api.ListDatabasePresetsRequest
+	10, // 47: cloud.v1.api.DatabasePresetService.UpdateDatabasePreset:input_type -> cloud.v1.api.UpdateDatabasePresetRequest
+	12, // 48: cloud.v1.api.DatabasePresetService.DeleteDatabasePreset:input_type -> cloud.v1.api.DeleteDatabasePresetRequest
+	14, // 49: cloud.v1.api.DatabasePresetService.CloneDatabasePreset:input_type -> cloud.v1.api.CloneDatabasePresetRequest
+	16, // 50: cloud.v1.api.WorkloadPresetService.CreateWorkloadPreset:input_type -> cloud.v1.api.CreateWorkloadPresetRequest
+	18, // 51: cloud.v1.api.WorkloadPresetService.GetWorkloadPreset:input_type -> cloud.v1.api.GetWorkloadPresetRequest
+	20, // 52: cloud.v1.api.WorkloadPresetService.ListWorkloadPresets:input_type -> cloud.v1.api.ListWorkloadPresetsRequest
+	22, // 53: cloud.v1.api.WorkloadPresetService.UpdateWorkloadPreset:input_type -> cloud.v1.api.UpdateWorkloadPresetRequest
+	24, // 54: cloud.v1.api.WorkloadPresetService.DeleteWorkloadPreset:input_type -> cloud.v1.api.DeleteWorkloadPresetRequest
+	26, // 55: cloud.v1.api.WorkloadPresetService.CloneWorkloadPreset:input_type -> cloud.v1.api.CloneWorkloadPresetRequest
+	28, // 56: cloud.v1.api.TestPresetService.CreateTestPreset:input_type -> cloud.v1.api.CreateTestPresetRequest
+	30, // 57: cloud.v1.api.TestPresetService.GetTestPreset:input_type -> cloud.v1.api.GetTestPresetRequest
+	32, // 58: cloud.v1.api.TestPresetService.ListTestPresets:input_type -> cloud.v1.api.ListTestPresetsRequest
+	34, // 59: cloud.v1.api.TestPresetService.UpdateTestPreset:input_type -> cloud.v1.api.UpdateTestPresetRequest
+	36, // 60: cloud.v1.api.TestPresetService.DeleteTestPreset:input_type -> cloud.v1.api.DeleteTestPresetRequest
+	38, // 61: cloud.v1.api.TestPresetService.CloneTestPreset:input_type -> cloud.v1.api.CloneTestPresetRequest
+	5,  // 62: cloud.v1.api.DatabasePresetService.CreateDatabasePreset:output_type -> cloud.v1.api.CreateDatabasePresetResponse
+	7,  // 63: cloud.v1.api.DatabasePresetService.GetDatabasePreset:output_type -> cloud.v1.api.GetDatabasePresetResponse
+	9,  // 64: cloud.v1.api.DatabasePresetService.ListDatabasePresets:output_type -> cloud.v1.api.ListDatabasePresetsResponse
+	11, // 65: cloud.v1.api.DatabasePresetService.UpdateDatabasePreset:output_type -> cloud.v1.api.UpdateDatabasePresetResponse
+	13, // 66: cloud.v1.api.DatabasePresetService.DeleteDatabasePreset:output_type -> cloud.v1.api.DeleteDatabasePresetResponse
+	15, // 67: cloud.v1.api.DatabasePresetService.CloneDatabasePreset:output_type -> cloud.v1.api.CloneDatabasePresetResponse
+	17, // 68: cloud.v1.api.WorkloadPresetService.CreateWorkloadPreset:output_type -> cloud.v1.api.CreateWorkloadPresetResponse
+	19, // 69: cloud.v1.api.WorkloadPresetService.GetWorkloadPreset:output_type -> cloud.v1.api.GetWorkloadPresetResponse
+	21, // 70: cloud.v1.api.WorkloadPresetService.ListWorkloadPresets:output_type -> cloud.v1.api.ListWorkloadPresetsResponse
+	23, // 71: cloud.v1.api.WorkloadPresetService.UpdateWorkloadPreset:output_type -> cloud.v1.api.UpdateWorkloadPresetResponse
+	25, // 72: cloud.v1.api.WorkloadPresetService.DeleteWorkloadPreset:output_type -> cloud.v1.api.DeleteWorkloadPresetResponse
+	27, // 73: cloud.v1.api.WorkloadPresetService.CloneWorkloadPreset:output_type -> cloud.v1.api.CloneWorkloadPresetResponse
+	29, // 74: cloud.v1.api.TestPresetService.CreateTestPreset:output_type -> cloud.v1.api.CreateTestPresetResponse
+	31, // 75: cloud.v1.api.TestPresetService.GetTestPreset:output_type -> cloud.v1.api.GetTestPresetResponse
+	33, // 76: cloud.v1.api.TestPresetService.ListTestPresets:output_type -> cloud.v1.api.ListTestPresetsResponse
+	35, // 77: cloud.v1.api.TestPresetService.UpdateTestPreset:output_type -> cloud.v1.api.UpdateTestPresetResponse
+	37, // 78: cloud.v1.api.TestPresetService.DeleteTestPreset:output_type -> cloud.v1.api.DeleteTestPresetResponse
+	39, // 79: cloud.v1.api.TestPresetService.CloneTestPreset:output_type -> cloud.v1.api.CloneTestPresetResponse
+	62, // [62:80] is the sub-list for method output_type
+	44, // [44:62] is the sub-list for method input_type
+	44, // [44:44] is the sub-list for extension type_name
+	44, // [44:44] is the sub-list for extension extendee
+	0,  // [0:44] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_api_preset_proto_init() }

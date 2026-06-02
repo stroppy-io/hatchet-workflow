@@ -4,6 +4,7 @@ package cloud.v1.api;
 
 import "cloud/v1/iam/options.proto";
 import "cloud/v1/iam/permission.proto";
+import "cloud/v1/models/suite.proto";
 import "cloud/v1/models/test_run.proto";
 import "cloud/v1/monitor/logs.proto";
 import "cloud/v1/monitor/metrics.proto";
@@ -99,6 +100,12 @@ message TestRunOverviewSnapshot {
         overview is the live status/pipeline/workers/timeline projection.
      */
     monitor.Overview overview = 3 [(validate.rules).message.required = true];
+    /*
+        suite_run is populated when run.suite_run_id is set. It gives the overview
+        page enough parent/sibling context for suite children without forcing a
+        second API round trip.
+     */
+    models.SuiteRunRecord suite_run = 4;
 }
 
 /*

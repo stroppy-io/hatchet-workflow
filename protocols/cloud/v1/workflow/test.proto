@@ -5,11 +5,13 @@ package cloud.v1.workflow;
 import "cloud/v1/common/status.proto";
 import "cloud/v1/deployment/infrastructure.proto";
 import "cloud/v1/deployment/plan.proto";
+import "cloud/v1/workflow/deployment.proto";
 import "cloud/v1/domain/database.proto";
 import "cloud/v1/domain/suite.proto";
 import "cloud/v1/domain/test.proto";
 import "cloud/v1/domain/workload.proto";
 import "cloud/v1/topology/topology.proto";
+import "cloud/v1/workflow/run.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 import "temporal/v1/temporal.proto";
@@ -21,7 +23,7 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
     test.proto defines the Temporal workflows that run benchmarks: TestWorkflow
     orchestrates one full test cycle (deploy -> install stroppy -> install
     database -> run workload -> teardown) by composing child workflows, and
-    SuiteWorkflow fans out a TestWorkflow per test run in a suite.
+    SuiteWorkflow fans out a TestRunWorkflow per child run in a suite.
  */
 
 /*
@@ -32,6 +34,11 @@ message TestWorkflowRequest {
         test_run is the full description of the test run to execute.
      */
     domain.TestRun test_run = 1 [(validate.rules).message.required = true];
+    /*
+        agent_bootstrap is runtime control-plane data delivered to provisioned
+        agents through the provider-specific carrier.
+     */
+    AgentBootstrap agent_bootstrap = 2;
 }
 /*
     TestWorkflowResponse is the empty result of a completed test run.
@@ -279,13 +286,24 @@ service TestService {
 }
 
 /*
-    SuiteWorkflowRequest is the input to a suite run.
+    SuiteWorkflowRequest is the input to a suite run. The API/start layer expands
+    the suite definition into persisted child TestRunRecords and then builds one
+    RunConfig per child with provider settings and agent bootstrap resolved.
  */
 message SuiteWorkflowRequest {
     /*
-        suite_run is the full description of the suite run to execute.
+        suite_run_id is the persisted SuiteRunRecord id.
      */
-    domain.SuiteRun suite_run = 1 [(validate.rules).message.required = true];
+    string suite_run_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        runs are the child run workflow inputs.
+     */
+    repeated RunConfig runs = 2 [(validate.rules).repeated = {min_items: 1, max_items: 1000}];
+    /*
+        max_parallel caps concurrent child TestRunWorkflow executions. 0 =
+        unlimited.
+     */
+    uint32 max_parallel = 3;
 }
 /*
     SuiteWorkflowResponse is the empty result of a completed suite run.
@@ -293,7 +311,7 @@ message SuiteWorkflowRequest {
 message SuiteWorkflowResponse {}
 
 /*
-    SuiteWorkflowService runs a child TestWorkflow per test_run, honoring
+    SuiteWorkflowService runs a child TestRunWorkflow per RunConfig, honoring
     max_parallel.
  */
 service SuiteWorkflowService {
@@ -303,19 +321,19 @@ service SuiteWorkflowService {
     option (temporal.v1.service) = {task_queue: "stroppy-cloud"};
 
     /*
-        SuiteWorkflow fans out a child TestWorkflow per test run in the suite,
-        deduplicated by a deterministic id derived from SuiteRun.id.
+        SuiteWorkflow fans out a child TestRunWorkflow per run in the suite,
+        deduplicated by a deterministic id derived from suite_run_id.
      */
     rpc SuiteWorkflow (SuiteWorkflowRequest) returns (SuiteWorkflowResponse) {
         option (temporal.v1.workflow) = {
             name: "SuiteWorkflow"
             /*
-                id: deterministic, derived from SuiteRun.id.
+                id: deterministic, derived from suite_run_id.
             */
-            id: 'suite-run/${! suite_run.id }'
+            id: 'suite-run/${! suite_run_id }'
             id_reuse_policy: WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY
             /*
-                No execution_timeout: a suite runs N child TestWorkflows, each of
+                No execution_timeout: a suite runs N child TestRunWorkflows, each of
                 which can itself run for days. Capping here would kill a healthy
                 long suite. Liveness comes from the children's activity heartbeats.
             */

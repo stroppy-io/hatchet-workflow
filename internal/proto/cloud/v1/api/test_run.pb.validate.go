@@ -774,6 +774,33 @@ func (m *ListTestRunsRequest) validate(all bool) error {
 
 	}
 
+	if len(m.GetTestPresetIds()) > 200 {
+		err := ListTestRunsRequestValidationError{
+			field:  "TestPresetIds",
+			reason: "value must contain no more than 200 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetTestPresetIds() {
+		_, _ = idx, item
+
+		if utf8.RuneCountInString(item) > 64 {
+			err := ListTestRunsRequestValidationError{
+				field:  fmt.Sprintf("TestPresetIds[%v]", idx),
+				reason: "value length must be at most 64 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
 	if len(m.GetStroppyVersions()) > 100 {
 		err := ListTestRunsRequestValidationError{
 			field:  "StroppyVersions",
@@ -810,6 +837,33 @@ func (m *ListTestRunsRequest) validate(all bool) error {
 			return err
 		}
 		errors = append(errors, err)
+	}
+
+	if len(m.GetSuiteCellIds()) > 200 {
+		err := ListTestRunsRequestValidationError{
+			field:  "SuiteCellIds",
+			reason: "value must contain no more than 200 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetSuiteCellIds() {
+		_, _ = idx, item
+
+		if utf8.RuneCountInString(item) > 64 {
+			err := ListTestRunsRequestValidationError{
+				field:  fmt.Sprintf("SuiteCellIds[%v]", idx),
+				reason: "value length must be at most 64 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
 	}
 
 	if all {

@@ -3,9 +3,8 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { AcquireNetworkActivityRequest, AcquireNetworkActivityResponse, AcquireQuotasActivityRequest, AcquireQuotasActivityResponse, CalculateQuotasWorkflowRequest, CalculateQuotasWorkflowResponse, ExecuteDeploymentPlanWorkflowRequest, ExecuteDeploymentPlanWorkflowResponse, ProcessInfrastructureWorkflowRequest, ProcessInfrastructureWorkflowResponse, RenderDeploymentPlanWorkflowRequest, RenderDeploymentPlanWorkflowResponse } from "./deployment_pbts";
+import { AcquireNetworkActivityRequest, AcquireNetworkActivityResponse, AcquireQuotasActivityRequest, AcquireQuotasActivityResponse, CalculateQuotasWorkflowRequest, CalculateQuotasWorkflowResponse, ExecuteDeploymentPlanWorkflowRequest, ExecuteDeploymentPlanWorkflowResponse, ProcessInfrastructureWorkflowRequest, ProcessInfrastructureWorkflowResponse, RenderDeploymentPlanWorkflowRequest, RenderDeploymentPlanWorkflowResponse, RenderDockerInputWorkflowRequest, RenderTerraformVariablesWorkflowRequest } from "./deployment_pbts";
 import { MethodKind } from "@bufbuild/protobuf";
-import { InfrastructurePlan } from "../deployment/infrastructure_pbts";
 import { Docker_Input, Docker_Output } from "../deployment/docker_pbts";
 import { Terraform_Input, Terraform_Output } from "../deployment/terraform_pbts";
 
@@ -76,7 +75,7 @@ export const DeploymentService = {
      */
     renderDockerInputWorkflow: {
       name: "RenderDockerInputWorkflow",
-      I: InfrastructurePlan,
+      I: RenderDockerInputWorkflowRequest,
       O: Docker_Input,
       kind: MethodKind.Unary,
     },
@@ -125,7 +124,7 @@ export const DeploymentService = {
      */
     renderTerraformVariablesWorkflow: {
       name: "RenderTerraformVariablesWorkflow",
-      I: InfrastructurePlan,
+      I: RenderTerraformVariablesWorkflowRequest,
       O: Terraform_Input,
       kind: MethodKind.Unary,
     },

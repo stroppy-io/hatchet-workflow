@@ -17,6 +17,8 @@ import (
 	"unicode/utf8"
 
 	"google.golang.org/protobuf/types/known/anypb"
+
+	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 )
 
 // ensure the imports are used
@@ -33,7 +35,349 @@ var (
 	_ = (*mail.Address)(nil)
 	_ = anypb.Any{}
 	_ = sort.Sort
+
+	_ = deployment.Provider(0)
 )
+
+// Validate checks the field values on SuiteWizardCellPatch with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *SuiteWizardCellPatch) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on SuiteWizardCellPatch with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// SuiteWizardCellPatchMultiError, or nil if none found.
+func (m *SuiteWizardCellPatch) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *SuiteWizardCellPatch) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetCellId()) > 64 {
+		err := SuiteWizardCellPatchValidationError{
+			field:  "CellId",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for Remove
+
+	if len(m.GetMachineOverrides()) > 256 {
+		err := SuiteWizardCellPatchValidationError{
+			field:  "MachineOverrides",
+			reason: "value must contain no more than 256 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetMachineOverrides() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, SuiteWizardCellPatchValidationError{
+						field:  fmt.Sprintf("MachineOverrides[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, SuiteWizardCellPatchValidationError{
+						field:  fmt.Sprintf("MachineOverrides[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return SuiteWizardCellPatchValidationError{
+					field:  fmt.Sprintf("MachineOverrides[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if all {
+		switch v := interface{}(m.GetRenderOverrides()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, SuiteWizardCellPatchValidationError{
+					field:  "RenderOverrides",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, SuiteWizardCellPatchValidationError{
+					field:  "RenderOverrides",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetRenderOverrides()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return SuiteWizardCellPatchValidationError{
+				field:  "RenderOverrides",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	switch v := m.Source.(type) {
+	case *SuiteWizardCellPatch_PresetPair:
+		if v == nil {
+			err := SuiteWizardCellPatchValidationError{
+				field:  "Source",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+		if m.GetPresetPair() == nil {
+			err := SuiteWizardCellPatchValidationError{
+				field:  "PresetPair",
+				reason: "value is required",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+		if all {
+			switch v := interface{}(m.GetPresetPair()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, SuiteWizardCellPatchValidationError{
+						field:  "PresetPair",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, SuiteWizardCellPatchValidationError{
+						field:  "PresetPair",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetPresetPair()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return SuiteWizardCellPatchValidationError{
+					field:  "PresetPair",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *SuiteWizardCellPatch_TestPresetId:
+		if v == nil {
+			err := SuiteWizardCellPatchValidationError{
+				field:  "Source",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+		if l := utf8.RuneCountInString(m.GetTestPresetId()); l < 1 || l > 64 {
+			err := SuiteWizardCellPatchValidationError{
+				field:  "TestPresetId",
+				reason: "value length must be between 1 and 64 runes, inclusive",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	case *SuiteWizardCellPatch_InlineTest:
+		if v == nil {
+			err := SuiteWizardCellPatchValidationError{
+				field:  "Source",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+		if m.GetInlineTest() == nil {
+			err := SuiteWizardCellPatchValidationError{
+				field:  "InlineTest",
+				reason: "value is required",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+		if all {
+			switch v := interface{}(m.GetInlineTest()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, SuiteWizardCellPatchValidationError{
+						field:  "InlineTest",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, SuiteWizardCellPatchValidationError{
+						field:  "InlineTest",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetInlineTest()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return SuiteWizardCellPatchValidationError{
+					field:  "InlineTest",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	default:
+		_ = v // ensures v is used
+	}
+
+	if m.Enabled != nil {
+		// no validation rules for Enabled
+	}
+
+	if m.Name != nil {
+
+		if utf8.RuneCountInString(m.GetName()) > 255 {
+			err := SuiteWizardCellPatchValidationError{
+				field:  "Name",
+				reason: "value length must be at most 255 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return SuiteWizardCellPatchMultiError(errors)
+	}
+
+	return nil
+}
+
+// SuiteWizardCellPatchMultiError is an error wrapping multiple validation
+// errors returned by SuiteWizardCellPatch.ValidateAll() if the designated
+// constraints aren't met.
+type SuiteWizardCellPatchMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m SuiteWizardCellPatchMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m SuiteWizardCellPatchMultiError) AllErrors() []error { return m }
+
+// SuiteWizardCellPatchValidationError is the validation error returned by
+// SuiteWizardCellPatch.Validate if the designated constraints aren't met.
+type SuiteWizardCellPatchValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SuiteWizardCellPatchValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SuiteWizardCellPatchValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SuiteWizardCellPatchValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SuiteWizardCellPatchValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SuiteWizardCellPatchValidationError) ErrorName() string {
+	return "SuiteWizardCellPatchValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e SuiteWizardCellPatchValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSuiteWizardCellPatch.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SuiteWizardCellPatchValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SuiteWizardCellPatchValidationError{}
 
 // Validate checks the field values on StartSuiteWizardRequest with the rules
 // defined in the proto definition for this message. If any rules are
@@ -963,10 +1307,10 @@ func (m *PatchSuiteWizardRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if m.GetForm() == nil {
+	if _, ok := deployment.Provider_name[int32(m.GetProvider())]; !ok {
 		err := PatchSuiteWizardRequestValidationError{
-			field:  "Form",
-			reason: "value is required",
+			field:  "Provider",
+			reason: "value must be one of the defined enum values",
 		}
 		if !all {
 			return err
@@ -974,12 +1318,57 @@ func (m *PatchSuiteWizardRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if len(m.GetCells()) > 1000 {
+		err := PatchSuiteWizardRequestValidationError{
+			field:  "Cells",
+			reason: "value must contain no more than 1000 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetCells() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, PatchSuiteWizardRequestValidationError{
+						field:  fmt.Sprintf("Cells[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, PatchSuiteWizardRequestValidationError{
+						field:  fmt.Sprintf("Cells[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return PatchSuiteWizardRequestValidationError{
+					field:  fmt.Sprintf("Cells[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
 	if all {
-		switch v := interface{}(m.GetForm()).(type) {
+		switch v := interface{}(m.GetSchedule()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, PatchSuiteWizardRequestValidationError{
-					field:  "Form",
+					field:  "Schedule",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -987,20 +1376,34 @@ func (m *PatchSuiteWizardRequest) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, PatchSuiteWizardRequestValidationError{
-					field:  "Form",
+					field:  "Schedule",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetForm()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetSchedule()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return PatchSuiteWizardRequestValidationError{
-				field:  "Form",
+				field:  "Schedule",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
 		}
+	}
+
+	// no validation rules for ReplaceCells
+
+	if m.MaxParallel != nil {
+		// no validation rules for MaxParallel
+	}
+
+	if m.DefaultInTenantRating != nil {
+		// no validation rules for DefaultInTenantRating
+	}
+
+	if m.DefaultInGlobalRating != nil {
+		// no validation rules for DefaultInGlobalRating
 	}
 
 	if len(errors) > 0 {
@@ -1497,6 +1900,27 @@ func (m *FinishSuiteWizardRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	// no validation rules for Start
+
+	if utf8.RuneCountInString(m.GetSuiteName()) > 255 {
+		err := FinishSuiteWizardRequestValidationError{
+			field:  "SuiteName",
+			reason: "value length must be at most 255 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.InTenantRating != nil {
+		// no validation rules for InTenantRating
+	}
+
+	if m.InGlobalRating != nil {
+		// no validation rules for InGlobalRating
+	}
+
 	if len(errors) > 0 {
 		return FinishSuiteWizardRequestMultiError(errors)
 	}
@@ -1599,15 +2023,44 @@ func (m *FinishSuiteWizardResponse) validate(all bool) error {
 
 	var errors []error
 
-	if m.GetSuiteRun() == nil {
+	if m.GetSuite() == nil {
 		err := FinishSuiteWizardResponseValidationError{
-			field:  "SuiteRun",
+			field:  "Suite",
 			reason: "value is required",
 		}
 		if !all {
 			return err
 		}
 		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetSuite()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, FinishSuiteWizardResponseValidationError{
+					field:  "Suite",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, FinishSuiteWizardResponseValidationError{
+					field:  "Suite",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSuite()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return FinishSuiteWizardResponseValidationError{
+				field:  "Suite",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
 	}
 
 	if all {

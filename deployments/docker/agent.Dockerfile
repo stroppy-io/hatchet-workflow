@@ -42,7 +42,7 @@ After=network.target\n\
 [Service]\n\
 Type=simple\n\
 EnvironmentFile=-/etc/stroppy-agent.env\n\
-ExecStartPre=/bin/bash -c "curl -fL --retry 5 --retry-delay 2 $${STROPPY_SERVER_ADDR}/agent/binary -o /usr/local/bin/stroppy-agent && chmod +x /usr/local/bin/stroppy-agent"\n\
+ExecStartPre=/bin/bash -c "curl -fL --retry 5 --retry-delay 2 $${STROPPY_AGENT_BINARY_URL:-$${STROPPY_SERVER_ADDR}/agent/binary} -o /usr/local/bin/stroppy-agent && chmod +x /usr/local/bin/stroppy-agent"\n\
 ExecStart=/usr/local/bin/stroppy-agent agent\n\
 Restart=always\n\
 \n\

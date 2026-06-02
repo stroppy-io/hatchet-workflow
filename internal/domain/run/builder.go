@@ -5,6 +5,7 @@ import (
 
 	databasebuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/database"
 	infrastructurebuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/infrastructure"
+	workloadbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/workload"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
@@ -39,8 +40,16 @@ func BuildTestRun(options BuildOptions) (*domain.TestRun, error) {
 	if err != nil {
 		return nil, err
 	}
+	spec, err = workloadbuilder.ExtendTopologySpec(spec, options.Workload)
+	if err != nil {
+		return nil, err
+	}
 
-	infrastructurePlan, err := infrastructurebuilder.BuildPlan(spec, options.Provider, options.Infrastructure)
+	infrastructureOptions := options.Infrastructure
+	infrastructureOptions.MachineSizing = cloneMachineSizing(options.Infrastructure.MachineSizing)
+	workloadbuilder.ApplyRunnerSizing(&infrastructureOptions, options.Workload)
+
+	infrastructurePlan, err := infrastructurebuilder.BuildPlan(spec, options.Provider, infrastructureOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -59,4 +68,15 @@ func BuildTestRun(options BuildOptions) (*domain.TestRun, error) {
 		return nil, err
 	}
 	return run, nil
+}
+
+func cloneMachineSizing(input map[string]infrastructurebuilder.MachineSizing) map[string]infrastructurebuilder.MachineSizing {
+	if len(input) == 0 {
+		return nil
+	}
+	output := make(map[string]infrastructurebuilder.MachineSizing, len(input))
+	for key, value := range input {
+		output[key] = value
+	}
+	return output
 }

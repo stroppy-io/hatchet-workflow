@@ -89,7 +89,7 @@ export const TestService = {
 
 /**
  *
- * SuiteWorkflowService runs a child TestWorkflow per test_run, honoring
+ * SuiteWorkflowService runs a child TestRunWorkflow per RunConfig, honoring
  * max_parallel.
  *
  * @generated from service cloud.v1.workflow.SuiteWorkflowService
@@ -99,8 +99,8 @@ export const SuiteWorkflowService = {
   methods: {
     /**
      *
-     * SuiteWorkflow fans out a child TestWorkflow per test run in the suite,
-     * deduplicated by a deterministic id derived from SuiteRun.id.
+     * SuiteWorkflow fans out a child TestRunWorkflow per run in the suite,
+     * deduplicated by a deterministic id derived from suite_run_id.
      *
      * @generated from rpc cloud.v1.workflow.SuiteWorkflowService.SuiteWorkflow
      */

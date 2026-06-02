@@ -28,7 +28,9 @@ func (w *testRunWorkflow) Execute(ctx workflow.Context) error {
 	infrastructureState := w.req.GetInfrastructureState()
 	if len(infrastructureState.GetMachines()) == 0 {
 		resp, err := workflowpb.ProcessInfrastructureWorkflowChild(ctx, &workflowpb.ProcessInfrastructureWorkflowRequest{
-			Plan: w.req.GetInfrastructurePlan(),
+			RunId:          w.req.GetId(),
+			Plan:           w.req.GetInfrastructurePlan(),
+			AgentBootstrap: w.req.GetAgentBootstrap(),
 		})
 		if err != nil {
 			return err
@@ -44,6 +46,7 @@ func (w *testRunWorkflow) Execute(ctx workflow.Context) error {
 			InfrastructureState: infrastructureState,
 			RenderOverrides:     w.req.GetRenderOverrides(),
 			Database:            w.req.GetDatabase(),
+			Workload:            w.req.GetWorkload(),
 		})
 		if err != nil {
 			return err

@@ -8,7 +8,7 @@ import type { Net, NetJson } from "../common/ip_pb.ts";
 import { file_cloud_v1_common_ip } from "../common/ip_pb.ts";
 import type { Docker_InputSchema, Docker_OutputSchema } from "../deployment/docker_pb.ts";
 import { file_cloud_v1_deployment_docker } from "../deployment/docker_pb.ts";
-import type { InfrastructurePlan, InfrastructurePlanJson, InfrastructurePlanSchema, InfrastructureState, InfrastructureStateJson } from "../deployment/infrastructure_pb.ts";
+import type { InfrastructurePlan, InfrastructurePlanJson, InfrastructureState, InfrastructureStateJson } from "../deployment/infrastructure_pb.ts";
 import { file_cloud_v1_deployment_infrastructure } from "../deployment/infrastructure_pb.ts";
 import type { DeploymentPlan, DeploymentPlanJson } from "../deployment/plan_pb.ts";
 import { file_cloud_v1_deployment_plan } from "../deployment/plan_pb.ts";
@@ -16,10 +16,12 @@ import type { Quota_Allocation, Quota_AllocationJson, Quota_Request, Quota_Reque
 import { file_cloud_v1_deployment_quota } from "../deployment/quota_pb.ts";
 import type { RenderOverrideSet, RenderOverrideSetJson } from "../deployment/render_pb.ts";
 import { file_cloud_v1_deployment_render } from "../deployment/render_pb.ts";
-import type { Terraform_InputSchema, Terraform_OutputSchema } from "../deployment/terraform_pb.ts";
+import type { Terraform_Action, Terraform_ActionJson, Terraform_InputSchema, Terraform_OutputSchema } from "../deployment/terraform_pb.ts";
 import { file_cloud_v1_deployment_terraform } from "../deployment/terraform_pb.ts";
 import type { Database, DatabaseJson } from "../domain/database_pb.ts";
 import { file_cloud_v1_domain_database } from "../domain/database_pb.ts";
+import type { Workload, WorkloadJson } from "../domain/workload_pb.ts";
+import { file_cloud_v1_domain_workload } from "../domain/workload_pb.ts";
 import type { TopologySpec, TopologySpecJson } from "../topology/topology_pb.ts";
 import { file_cloud_v1_topology_topology } from "../topology/topology_pb.ts";
 import { file_temporal_v1_temporal } from "../../../temporal/v1/temporal_pb.ts";
@@ -30,7 +32,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/workflow/deployment.proto.
  */
 export const file_cloud_v1_workflow_deployment: GenFile = /*@__PURE__*/
-  fileDesc("CiJjbG91ZC92MS93b3JrZmxvdy9kZXBsb3ltZW50LnByb3RvEhFjbG91ZC52MS53b3JrZmxvdyJnCiRQcm9jZXNzSW5mcmFzdHJ1Y3R1cmVXb3JrZmxvd1JlcXVlc3QSPwoEcGxhbhgBIAEoCzInLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVQbGFuQgj6QgWKAQIQASJqCiVQcm9jZXNzSW5mcmFzdHJ1Y3R1cmVXb3JrZmxvd1Jlc3BvbnNlEkEKBXN0YXRlGAEgASgLMiguY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVN0YXRlQgj6QgWKAQIQASJhCh5DYWxjdWxhdGVRdW90YXNXb3JrZmxvd1JlcXVlc3QSPwoEcGxhbhgBIAEoCzInLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVQbGFuQgj6QgWKAQIQASKbAgofQ2FsY3VsYXRlUXVvdGFzV29ya2Zsb3dSZXNwb25zZRI/CgRwbGFuGAEgASgLMicuY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVBsYW5CCPpCBYoBAhABEl0KDnF1b3RhX3JlcXVlc3RzGAIgAygLMkUuY2xvdWQudjEud29ya2Zsb3cuQ2FsY3VsYXRlUXVvdGFzV29ya2Zsb3dSZXNwb25zZS5RdW90YVJlcXVlc3RzRW50cnkaWAoSUXVvdGFSZXF1ZXN0c0VudHJ5EgsKA2tleRgBIAEoCRIxCgV2YWx1ZRgCIAEoCzIiLmNsb3VkLnYxLmRlcGxveW1lbnQuUXVvdGEuUmVxdWVzdDoCOAEiYAodQWNxdWlyZU5ldHdvcmtBY3Rpdml0eVJlcXVlc3QSPwoEcGxhbhgBIAEoCzInLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVQbGFuQgj6QgWKAQIQASJDCh5BY3F1aXJlTmV0d29ya0FjdGl2aXR5UmVzcG9uc2USIQoDbmV0GAEgASgLMhQuY2xvdWQudjEuY29tbW9uLk5ldCLUAQocQWNxdWlyZVF1b3Rhc0FjdGl2aXR5UmVxdWVzdBJaCg5xdW90YV9yZXF1ZXN0cxgBIAMoCzJCLmNsb3VkLnYxLndvcmtmbG93LkFjcXVpcmVRdW90YXNBY3Rpdml0eVJlcXVlc3QuUXVvdGFSZXF1ZXN0c0VudHJ5GlgKElF1b3RhUmVxdWVzdHNFbnRyeRILCgNrZXkYASABKAkSMQoFdmFsdWUYAiABKAsyIi5jbG91ZC52MS5kZXBsb3ltZW50LlF1b3RhLlJlcXVlc3Q6AjgBIuIBCh1BY3F1aXJlUXVvdGFzQWN0aXZpdHlSZXNwb25zZRJhChFxdW90YV9hbGxvY2F0aW9ucxgBIAMoCzJGLmNsb3VkLnYxLndvcmtmbG93LkFjcXVpcmVRdW90YXNBY3Rpdml0eVJlc3BvbnNlLlF1b3RhQWxsb2NhdGlvbnNFbnRyeRpeChVRdW90YUFsbG9jYXRpb25zRW50cnkSCwoDa2V5GAEgASgJEjQKBXZhbHVlGAIgASgLMiUuY2xvdWQudjEuZGVwbG95bWVudC5RdW90YS5BbGxvY2F0aW9uOgI4ASL4AgojUmVuZGVyRGVwbG95bWVudFBsYW5Xb3JrZmxvd1JlcXVlc3QSQAoNdG9wb2xvZ3lfc3BlYxgBIAEoCzIfLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5U3BlY0II+kIFigECEAESTgoTaW5mcmFzdHJ1Y3R1cmVfcGxhbhgCIAEoCzInLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVQbGFuQgj6QgWKAQIQARJGChRpbmZyYXN0cnVjdHVyZV9zdGF0ZRgDIAEoCzIoLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVTdGF0ZRJAChByZW5kZXJfb3ZlcnJpZGVzGAQgASgLMiYuY2xvdWQudjEuZGVwbG95bWVudC5SZW5kZXJPdmVycmlkZVNldBI1CghkYXRhYmFzZRgFIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5EYXRhYmFzZUII+kIFigECEAEibgokUmVuZGVyRGVwbG95bWVudFBsYW5Xb3JrZmxvd1Jlc3BvbnNlEkYKD2RlcGxveW1lbnRfcGxhbhgBIAEoCzIjLmNsb3VkLnYxLmRlcGxveW1lbnQuRGVwbG95bWVudFBsYW5CCPpCBYoBAhABIsABCiRFeGVjdXRlRGVwbG95bWVudFBsYW5Xb3JrZmxvd1JlcXVlc3QSRgoPZGVwbG95bWVudF9wbGFuGAEgASgLMiMuY2xvdWQudjEuZGVwbG95bWVudC5EZXBsb3ltZW50UGxhbkII+kIFigECEAESUAoUaW5mcmFzdHJ1Y3R1cmVfc3RhdGUYAiABKAsyKC5jbG91ZC52MS5kZXBsb3ltZW50LkluZnJhc3RydWN0dXJlU3RhdGVCCPpCBYoBAhABIm8KJUV4ZWN1dGVEZXBsb3ltZW50UGxhbldvcmtmbG93UmVzcG9uc2USRgoPZGVwbG95bWVudF9wbGFuGAEgASgLMiMuY2xvdWQudjEuZGVwbG95bWVudC5EZXBsb3ltZW50UGxhbkII+kIFigECEAEy0BAKEURlcGxveW1lbnRTZXJ2aWNlErsBCh1Qcm9jZXNzSW5mcmFzdHJ1Y3R1cmVXb3JrZmxvdxI3LmNsb3VkLnYxLndvcmtmbG93LlByb2Nlc3NJbmZyYXN0cnVjdHVyZVdvcmtmbG93UmVxdWVzdBo4LmNsb3VkLnYxLndvcmtmbG93LlByb2Nlc3NJbmZyYXN0cnVjdHVyZVdvcmtmbG93UmVzcG9uc2UiJ4rEAyNyHVByb2Nlc3NJbmZyYXN0cnVjdHVyZVdvcmtmbG93SgIgARKoAQoXQ2FsY3VsYXRlUXVvdGFzV29ya2Zsb3cSMS5jbG91ZC52MS53b3JrZmxvdy5DYWxjdWxhdGVRdW90YXNXb3JrZmxvd1JlcXVlc3QaMi5jbG91ZC52MS53b3JrZmxvdy5DYWxjdWxhdGVRdW90YXNXb3JrZmxvd1Jlc3BvbnNlIiaKxAMiSgIgA3IXQ2FsY3VsYXRlUXVvdGFzV29ya2Zsb3dSAwisAhKZAQoWQWNxdWlyZU5ldHdvcmtBY3Rpdml0eRIwLmNsb3VkLnYxLndvcmtmbG93LkFjcXVpcmVOZXR3b3JrQWN0aXZpdHlSZXF1ZXN0GjEuY2xvdWQudjEud29ya2Zsb3cuQWNxdWlyZU5ldHdvcmtBY3Rpdml0eVJlc3BvbnNlIhqSxAMWIgMIrAIyDyADCgIIBREAAAAAAAAAQBKWAQoVQWNxdWlyZVF1b3Rhc0FjdGl2aXR5Ei8uY2xvdWQudjEud29ya2Zsb3cuQWNxdWlyZVF1b3Rhc0FjdGl2aXR5UmVxdWVzdBowLmNsb3VkLnYxLndvcmtmbG93LkFjcXVpcmVRdW90YXNBY3Rpdml0eVJlc3BvbnNlIhqSxAMWMg8gAwoCCAURAAAAAAAAAEAiAwisAhKQAQoZUmVuZGVyRG9ja2VySW5wdXRXb3JrZmxvdxInLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVQbGFuGiEuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuSW5wdXQiJ4rEAyNSAgg8SgIgA3IZUmVuZGVyRG9ja2VySW5wdXRXb3JrZmxvdxJ3ChJEb2NrZXJQdWxsQWN0aXZpdHkSIS5jbG91ZC52MS5kZXBsb3ltZW50LkRvY2tlci5JbnB1dBoiLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLk91dHB1dCIaksQDFiIDCNgEMg8gAwoCCAURAAAAAAAAAEAScAoQRG9ja2VyVXBBY3Rpdml0eRIhLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLklucHV0GiIuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuT3V0cHV0IhWSxAMRKgIIPDIGIAMKAggFIgMI2AQSbgoSRG9ja2VyRG93bkFjdGl2aXR5EiEuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuSW5wdXQaIi5jbG91ZC52MS5kZXBsb3ltZW50LkRvY2tlci5PdXRwdXQiEZLEAw0iAwisAjIGIAMKAggFEqEBCiBSZW5kZXJUZXJyYWZvcm1WYXJpYWJsZXNXb3JrZmxvdxInLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVQbGFuGiQuY2xvdWQudjEuZGVwbG95bWVudC5UZXJyYWZvcm0uSW5wdXQiLorEAypyIFJlbmRlclRlcnJhZm9ybVZhcmlhYmxlc1dvcmtmbG93UgIIPEoCIAMSewoVVGVycmFmb3JtUGxhbkFjdGl2aXR5EiQuY2xvdWQudjEuZGVwbG95bWVudC5UZXJyYWZvcm0uSW5wdXQaJS5jbG91ZC52MS5kZXBsb3ltZW50LlRlcnJhZm9ybS5PdXRwdXQiFZLEAxEiAwiEByoCCDwyBiACCgIIChJ8ChZUZXJyYWZvcm1BcHBseUFjdGl2aXR5EiQuY2xvdWQudjEuZGVwbG95bWVudC5UZXJyYWZvcm0uSW5wdXQaJS5jbG91ZC52MS5kZXBsb3ltZW50LlRlcnJhZm9ybS5PdXRwdXQiFZLEAxEiAwiIDioCCDwyBiACCgIIChJ+ChhUZXJyYWZvcm1EZXN0cm95QWN0aXZpdHkSJC5jbG91ZC52MS5kZXBsb3ltZW50LlRlcnJhZm9ybS5JbnB1dBolLmNsb3VkLnYxLmRlcGxveW1lbnQuVGVycmFmb3JtLk91dHB1dCIVksQDESIDCIgOKgIIPDIGCgIICiADErwBChxSZW5kZXJEZXBsb3ltZW50UGxhbldvcmtmbG93EjYuY2xvdWQudjEud29ya2Zsb3cuUmVuZGVyRGVwbG95bWVudFBsYW5Xb3JrZmxvd1JlcXVlc3QaNy5jbG91ZC52MS53b3JrZmxvdy5SZW5kZXJEZXBsb3ltZW50UGxhbldvcmtmbG93UmVzcG9uc2UiK4rEAydyHFJlbmRlckRlcGxveW1lbnRQbGFuV29ya2Zsb3dSAwisAkoCIAMSuwEKHUV4ZWN1dGVEZXBsb3ltZW50UGxhbldvcmtmbG93EjcuY2xvdWQudjEud29ya2Zsb3cuRXhlY3V0ZURlcGxveW1lbnRQbGFuV29ya2Zsb3dSZXF1ZXN0GjguY2xvdWQudjEud29ya2Zsb3cuRXhlY3V0ZURlcGxveW1lbnRQbGFuV29ya2Zsb3dSZXNwb25zZSInisQDI3IdRXhlY3V0ZURlcGxveW1lbnRQbGFuV29ya2Zsb3dKAiABGhOKxAMPCg1zdHJvcHB5LWNsb3VkQkZaRGdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL3dvcmtmbG93YgZwcm90bzM", [file_cloud_v1_common_ip, file_cloud_v1_deployment_docker, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_plan, file_cloud_v1_deployment_quota, file_cloud_v1_deployment_render, file_cloud_v1_deployment_terraform, file_cloud_v1_domain_database, file_cloud_v1_topology_topology, file_temporal_v1_temporal, file_validate_validate]);
+  fileDesc("CiJjbG91ZC92MS93b3JrZmxvdy9kZXBsb3ltZW50LnByb3RvEhFjbG91ZC52MS53b3JrZmxvdyK/AQokUHJvY2Vzc0luZnJhc3RydWN0dXJlV29ya2Zsb3dSZXF1ZXN0EhoKBnJ1bl9pZBgBIAEoCUIK+kIHcgUYgAEQARI/CgRwbGFuGAIgASgLMicuY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVBsYW5CCPpCBYoBAhABEjoKD2FnZW50X2Jvb3RzdHJhcBgDIAEoCzIhLmNsb3VkLnYxLndvcmtmbG93LkFnZW50Qm9vdHN0cmFwImoKJVByb2Nlc3NJbmZyYXN0cnVjdHVyZVdvcmtmbG93UmVzcG9uc2USQQoFc3RhdGUYASABKAsyKC5jbG91ZC52MS5kZXBsb3ltZW50LkluZnJhc3RydWN0dXJlU3RhdGVCCPpCBYoBAhABImEKHkNhbGN1bGF0ZVF1b3Rhc1dvcmtmbG93UmVxdWVzdBI/CgRwbGFuGAEgASgLMicuY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVBsYW5CCPpCBYoBAhABIpsCCh9DYWxjdWxhdGVRdW90YXNXb3JrZmxvd1Jlc3BvbnNlEj8KBHBsYW4YASABKAsyJy5jbG91ZC52MS5kZXBsb3ltZW50LkluZnJhc3RydWN0dXJlUGxhbkII+kIFigECEAESXQoOcXVvdGFfcmVxdWVzdHMYAiADKAsyRS5jbG91ZC52MS53b3JrZmxvdy5DYWxjdWxhdGVRdW90YXNXb3JrZmxvd1Jlc3BvbnNlLlF1b3RhUmVxdWVzdHNFbnRyeRpYChJRdW90YVJlcXVlc3RzRW50cnkSCwoDa2V5GAEgASgJEjEKBXZhbHVlGAIgASgLMiIuY2xvdWQudjEuZGVwbG95bWVudC5RdW90YS5SZXF1ZXN0OgI4ASJgCh1BY3F1aXJlTmV0d29ya0FjdGl2aXR5UmVxdWVzdBI/CgRwbGFuGAEgASgLMicuY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVBsYW5CCPpCBYoBAhABIkMKHkFjcXVpcmVOZXR3b3JrQWN0aXZpdHlSZXNwb25zZRIhCgNuZXQYASABKAsyFC5jbG91ZC52MS5jb21tb24uTmV0ItQBChxBY3F1aXJlUXVvdGFzQWN0aXZpdHlSZXF1ZXN0EloKDnF1b3RhX3JlcXVlc3RzGAEgAygLMkIuY2xvdWQudjEud29ya2Zsb3cuQWNxdWlyZVF1b3Rhc0FjdGl2aXR5UmVxdWVzdC5RdW90YVJlcXVlc3RzRW50cnkaWAoSUXVvdGFSZXF1ZXN0c0VudHJ5EgsKA2tleRgBIAEoCRIxCgV2YWx1ZRgCIAEoCzIiLmNsb3VkLnYxLmRlcGxveW1lbnQuUXVvdGEuUmVxdWVzdDoCOAEi4gEKHUFjcXVpcmVRdW90YXNBY3Rpdml0eVJlc3BvbnNlEmEKEXF1b3RhX2FsbG9jYXRpb25zGAEgAygLMkYuY2xvdWQudjEud29ya2Zsb3cuQWNxdWlyZVF1b3Rhc0FjdGl2aXR5UmVzcG9uc2UuUXVvdGFBbGxvY2F0aW9uc0VudHJ5Gl4KFVF1b3RhQWxsb2NhdGlvbnNFbnRyeRILCgNrZXkYASABKAkSNAoFdmFsdWUYAiABKAsyJS5jbG91ZC52MS5kZXBsb3ltZW50LlF1b3RhLkFsbG9jYXRpb246AjgBIpYCCg5BZ2VudEJvb3RzdHJhcBIdCgtzZXJ2ZXJfYWRkchgBIAEoCUII+kIFcgMYgBASHAoKYmluYXJ5X3VybBgCIAEoCUII+kIFcgMYgBASJAoSdGVtcG9yYWxfbmFtZXNwYWNlGAMgASgJQgj6QgVyAxiAARJwCglleHRyYV9lbnYYBCADKAsyLy5jbG91ZC52MS53b3JrZmxvdy5BZ2VudEJvb3RzdHJhcC5FeHRyYUVudkVudHJ5Qiz6QimaASYiG3IZEAEYgAIyEl5bQS1aX11bQS1aMC05X10qJCoFcgMYgEAQQBovCg1FeHRyYUVudkVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiuwEKIFJlbmRlckRvY2tlcklucHV0V29ya2Zsb3dSZXF1ZXN0EhoKBnJ1bl9pZBgBIAEoCUIK+kIHcgUQARiAARI/CgRwbGFuGAIgASgLMicuY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVBsYW5CCPpCBYoBAhABEjoKD2FnZW50X2Jvb3RzdHJhcBgDIAEoCzIhLmNsb3VkLnYxLndvcmtmbG93LkFnZW50Qm9vdHN0cmFwIoMCCidSZW5kZXJUZXJyYWZvcm1WYXJpYWJsZXNXb3JrZmxvd1JlcXVlc3QSGgoGcnVuX2lkGAEgASgJQgr6QgdyBRABGIABEj8KBHBsYW4YAiABKAsyJy5jbG91ZC52MS5kZXBsb3ltZW50LkluZnJhc3RydWN0dXJlUGxhbkII+kIFigECEAESPwoGYWN0aW9uGAMgASgOMiUuY2xvdWQudjEuZGVwbG95bWVudC5UZXJyYWZvcm0uQWN0aW9uQgj6QgWCAQIQARI6Cg9hZ2VudF9ib290c3RyYXAYBCABKAsyIS5jbG91ZC52MS53b3JrZmxvdy5BZ2VudEJvb3RzdHJhcCKlAwojUmVuZGVyRGVwbG95bWVudFBsYW5Xb3JrZmxvd1JlcXVlc3QSQAoNdG9wb2xvZ3lfc3BlYxgBIAEoCzIfLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5U3BlY0II+kIFigECEAESTgoTaW5mcmFzdHJ1Y3R1cmVfcGxhbhgCIAEoCzInLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVQbGFuQgj6QgWKAQIQARJGChRpbmZyYXN0cnVjdHVyZV9zdGF0ZRgDIAEoCzIoLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVTdGF0ZRJAChByZW5kZXJfb3ZlcnJpZGVzGAQgASgLMiYuY2xvdWQudjEuZGVwbG95bWVudC5SZW5kZXJPdmVycmlkZVNldBI1CghkYXRhYmFzZRgFIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5EYXRhYmFzZUII+kIFigECEAESKwoId29ya2xvYWQYBiABKAsyGS5jbG91ZC52MS5kb21haW4uV29ya2xvYWQibgokUmVuZGVyRGVwbG95bWVudFBsYW5Xb3JrZmxvd1Jlc3BvbnNlEkYKD2RlcGxveW1lbnRfcGxhbhgBIAEoCzIjLmNsb3VkLnYxLmRlcGxveW1lbnQuRGVwbG95bWVudFBsYW5CCPpCBYoBAhABIsABCiRFeGVjdXRlRGVwbG95bWVudFBsYW5Xb3JrZmxvd1JlcXVlc3QSRgoPZGVwbG95bWVudF9wbGFuGAEgASgLMiMuY2xvdWQudjEuZGVwbG95bWVudC5EZXBsb3ltZW50UGxhbkII+kIFigECEAESUAoUaW5mcmFzdHJ1Y3R1cmVfc3RhdGUYAiABKAsyKC5jbG91ZC52MS5kZXBsb3ltZW50LkluZnJhc3RydWN0dXJlU3RhdGVCCPpCBYoBAhABIm8KJUV4ZWN1dGVEZXBsb3ltZW50UGxhbldvcmtmbG93UmVzcG9uc2USRgoPZGVwbG95bWVudF9wbGFuGAEgASgLMiMuY2xvdWQudjEuZGVwbG95bWVudC5EZXBsb3ltZW50UGxhbkII+kIFigECEAEy7xAKEURlcGxveW1lbnRTZXJ2aWNlErsBCh1Qcm9jZXNzSW5mcmFzdHJ1Y3R1cmVXb3JrZmxvdxI3LmNsb3VkLnYxLndvcmtmbG93LlByb2Nlc3NJbmZyYXN0cnVjdHVyZVdvcmtmbG93UmVxdWVzdBo4LmNsb3VkLnYxLndvcmtmbG93LlByb2Nlc3NJbmZyYXN0cnVjdHVyZVdvcmtmbG93UmVzcG9uc2UiJ4rEAyNKAiABch1Qcm9jZXNzSW5mcmFzdHJ1Y3R1cmVXb3JrZmxvdxKoAQoXQ2FsY3VsYXRlUXVvdGFzV29ya2Zsb3cSMS5jbG91ZC52MS53b3JrZmxvdy5DYWxjdWxhdGVRdW90YXNXb3JrZmxvd1JlcXVlc3QaMi5jbG91ZC52MS53b3JrZmxvdy5DYWxjdWxhdGVRdW90YXNXb3JrZmxvd1Jlc3BvbnNlIiaKxAMichdDYWxjdWxhdGVRdW90YXNXb3JrZmxvd1IDCKwCSgIgAxKZAQoWQWNxdWlyZU5ldHdvcmtBY3Rpdml0eRIwLmNsb3VkLnYxLndvcmtmbG93LkFjcXVpcmVOZXR3b3JrQWN0aXZpdHlSZXF1ZXN0GjEuY2xvdWQudjEud29ya2Zsb3cuQWNxdWlyZU5ldHdvcmtBY3Rpdml0eVJlc3BvbnNlIhqSxAMWIgMIrAIyDyADCgIIBREAAAAAAAAAQBKWAQoVQWNxdWlyZVF1b3Rhc0FjdGl2aXR5Ei8uY2xvdWQudjEud29ya2Zsb3cuQWNxdWlyZVF1b3Rhc0FjdGl2aXR5UmVxdWVzdBowLmNsb3VkLnYxLndvcmtmbG93LkFjcXVpcmVRdW90YXNBY3Rpdml0eVJlc3BvbnNlIhqSxAMWIgMIrAIyDyADCgIIBREAAAAAAAAAQBKcAQoZUmVuZGVyRG9ja2VySW5wdXRXb3JrZmxvdxIzLmNsb3VkLnYxLndvcmtmbG93LlJlbmRlckRvY2tlcklucHV0V29ya2Zsb3dSZXF1ZXN0GiEuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuSW5wdXQiJ4rEAyNKAiADchlSZW5kZXJEb2NrZXJJbnB1dFdvcmtmbG93UgIIPBJ3ChJEb2NrZXJQdWxsQWN0aXZpdHkSIS5jbG91ZC52MS5kZXBsb3ltZW50LkRvY2tlci5JbnB1dBoiLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLk91dHB1dCIaksQDFjIPCgIIBREAAAAAAAAAQCADIgMI2AQScAoQRG9ja2VyVXBBY3Rpdml0eRIhLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLklucHV0GiIuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuT3V0cHV0IhWSxAMRIgMI2AQqAgg8MgYgAwoCCAUSbgoSRG9ja2VyRG93bkFjdGl2aXR5EiEuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuSW5wdXQaIi5jbG91ZC52MS5kZXBsb3ltZW50LkRvY2tlci5PdXRwdXQiEZLEAw0iAwisAjIGIAMKAggFErQBCiBSZW5kZXJUZXJyYWZvcm1WYXJpYWJsZXNXb3JrZmxvdxI6LmNsb3VkLnYxLndvcmtmbG93LlJlbmRlclRlcnJhZm9ybVZhcmlhYmxlc1dvcmtmbG93UmVxdWVzdBokLmNsb3VkLnYxLmRlcGxveW1lbnQuVGVycmFmb3JtLklucHV0Ii6KxAMqciBSZW5kZXJUZXJyYWZvcm1WYXJpYWJsZXNXb3JrZmxvd1ICCDxKAiADEnsKFVRlcnJhZm9ybVBsYW5BY3Rpdml0eRIkLmNsb3VkLnYxLmRlcGxveW1lbnQuVGVycmFmb3JtLklucHV0GiUuY2xvdWQudjEuZGVwbG95bWVudC5UZXJyYWZvcm0uT3V0cHV0IhWSxAMRKgIIPDIGIAIKAggKIgMIhAcSfAoWVGVycmFmb3JtQXBwbHlBY3Rpdml0eRIkLmNsb3VkLnYxLmRlcGxveW1lbnQuVGVycmFmb3JtLklucHV0GiUuY2xvdWQudjEuZGVwbG95bWVudC5UZXJyYWZvcm0uT3V0cHV0IhWSxAMRKgIIPDIGCgIICiACIgMIiA4SfgoYVGVycmFmb3JtRGVzdHJveUFjdGl2aXR5EiQuY2xvdWQudjEuZGVwbG95bWVudC5UZXJyYWZvcm0uSW5wdXQaJS5jbG91ZC52MS5kZXBsb3ltZW50LlRlcnJhZm9ybS5PdXRwdXQiFZLEAxEiAwiIDioCCDwyBiADCgIIChK8AQocUmVuZGVyRGVwbG95bWVudFBsYW5Xb3JrZmxvdxI2LmNsb3VkLnYxLndvcmtmbG93LlJlbmRlckRlcGxveW1lbnRQbGFuV29ya2Zsb3dSZXF1ZXN0GjcuY2xvdWQudjEud29ya2Zsb3cuUmVuZGVyRGVwbG95bWVudFBsYW5Xb3JrZmxvd1Jlc3BvbnNlIiuKxAMnchxSZW5kZXJEZXBsb3ltZW50UGxhbldvcmtmbG93UgMIrAJKAiADErsBCh1FeGVjdXRlRGVwbG95bWVudFBsYW5Xb3JrZmxvdxI3LmNsb3VkLnYxLndvcmtmbG93LkV4ZWN1dGVEZXBsb3ltZW50UGxhbldvcmtmbG93UmVxdWVzdBo4LmNsb3VkLnYxLndvcmtmbG93LkV4ZWN1dGVEZXBsb3ltZW50UGxhbldvcmtmbG93UmVzcG9uc2UiJ4rEAyNyHUV4ZWN1dGVEZXBsb3ltZW50UGxhbldvcmtmbG93SgIgARoTisQDDwoNc3Ryb3BweS1jbG91ZEJGWkRnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS93b3JrZmxvd2IGcHJvdG8z", [file_cloud_v1_common_ip, file_cloud_v1_deployment_docker, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_plan, file_cloud_v1_deployment_quota, file_cloud_v1_deployment_render, file_cloud_v1_deployment_terraform, file_cloud_v1_domain_database, file_cloud_v1_domain_workload, file_cloud_v1_topology_topology, file_temporal_v1_temporal, file_validate_validate]);
 
 /**
  *
@@ -41,11 +43,30 @@ export const file_cloud_v1_workflow_deployment: GenFile = /*@__PURE__*/
 export type ProcessInfrastructureWorkflowRequest = Message<"cloud.v1.workflow.ProcessInfrastructureWorkflowRequest"> & {
   /**
    *
+   * run_id is the stable deployment/run identifier used for provider
+   * resource names and Terraform workdir recovery.
+   *
+   * @generated from field: string run_id = 1;
+   */
+  runId: string;
+
+  /**
+   *
    * plan is the provider-specific infrastructure plan to materialize.
    *
-   * @generated from field: cloud.v1.deployment.InfrastructurePlan plan = 1;
+   * @generated from field: cloud.v1.deployment.InfrastructurePlan plan = 2;
    */
   plan?: InfrastructurePlan;
+
+  /**
+   *
+   * agent_bootstrap is runtime control-plane data delivered to every
+   * provisioned agent. Providers only choose the carrier: Docker env file,
+   * cloud-init user-data, or local process env.
+   *
+   * @generated from field: cloud.v1.workflow.AgentBootstrap agent_bootstrap = 3;
+   */
+  agentBootstrap?: AgentBootstrap;
 };
 
 /**
@@ -57,11 +78,30 @@ export type ProcessInfrastructureWorkflowRequest = Message<"cloud.v1.workflow.Pr
 export type ProcessInfrastructureWorkflowRequestJson = {
   /**
    *
+   * run_id is the stable deployment/run identifier used for provider
+   * resource names and Terraform workdir recovery.
+   *
+   * @generated from field: string run_id = 1;
+   */
+  runId?: string;
+
+  /**
+   *
    * plan is the provider-specific infrastructure plan to materialize.
    *
-   * @generated from field: cloud.v1.deployment.InfrastructurePlan plan = 1;
+   * @generated from field: cloud.v1.deployment.InfrastructurePlan plan = 2;
    */
   plan?: InfrastructurePlanJson;
+
+  /**
+   *
+   * agent_bootstrap is runtime control-plane data delivered to every
+   * provisioned agent. Providers only choose the carrier: Docker env file,
+   * cloud-init user-data, or local process env.
+   *
+   * @generated from field: cloud.v1.workflow.AgentBootstrap agent_bootstrap = 3;
+   */
+  agentBootstrap?: AgentBootstrapJson;
 };
 
 export type ProcessInfrastructureWorkflowRequestValid = ProcessInfrastructureWorkflowRequest;
@@ -380,6 +420,273 @@ export const AcquireQuotasActivityResponseSchema: GenMessage<AcquireQuotasActivi
 
 /**
  *
+ * AgentBootstrap is the provider-independent startup contract for every agent.
+ * It is runtime control-plane data, not topology and not provider settings.
+ *
+ * @generated from message cloud.v1.workflow.AgentBootstrap
+ */
+export type AgentBootstrap = Message<"cloud.v1.workflow.AgentBootstrap"> & {
+  /**
+   *
+   * server_addr is the public/base control-plane address agents use to reach
+   * the server and Temporal proxy, e.g. http://10.0.0.10:8080.
+   *
+   * @generated from field: string server_addr = 1;
+   */
+  serverAddr: string;
+
+  /**
+   *
+   * binary_url overrides the agent binary URL. Empty means
+   * server_addr + "/agent/binary".
+   *
+   * @generated from field: string binary_url = 2;
+   */
+  binaryUrl: string;
+
+  /**
+   *
+   * temporal_namespace is the namespace agents use when registering their
+   * Temporal worker. Empty means default.
+   *
+   * @generated from field: string temporal_namespace = 3;
+   */
+  temporalNamespace: string;
+
+  /**
+   *
+   * extra_env is appended to the agent env file. Core STROPPY and AGENT
+   * fields are still rendered by the system and win over this map.
+   *
+   * @generated from field: map<string, string> extra_env = 4;
+   */
+  extraEnv: { [key: string]: string };
+};
+
+/**
+ *
+ * AgentBootstrap is the provider-independent startup contract for every agent.
+ * It is runtime control-plane data, not topology and not provider settings.
+ *
+ * @generated from message cloud.v1.workflow.AgentBootstrap
+ */
+export type AgentBootstrapJson = {
+  /**
+   *
+   * server_addr is the public/base control-plane address agents use to reach
+   * the server and Temporal proxy, e.g. http://10.0.0.10:8080.
+   *
+   * @generated from field: string server_addr = 1;
+   */
+  serverAddr?: string;
+
+  /**
+   *
+   * binary_url overrides the agent binary URL. Empty means
+   * server_addr + "/agent/binary".
+   *
+   * @generated from field: string binary_url = 2;
+   */
+  binaryUrl?: string;
+
+  /**
+   *
+   * temporal_namespace is the namespace agents use when registering their
+   * Temporal worker. Empty means default.
+   *
+   * @generated from field: string temporal_namespace = 3;
+   */
+  temporalNamespace?: string;
+
+  /**
+   *
+   * extra_env is appended to the agent env file. Core STROPPY and AGENT
+   * fields are still rendered by the system and win over this map.
+   *
+   * @generated from field: map<string, string> extra_env = 4;
+   */
+  extraEnv?: { [key: string]: string };
+};
+
+export type AgentBootstrapValid = AgentBootstrap;
+
+/**
+ * Describes the message cloud.v1.workflow.AgentBootstrap.
+ * Use `create(AgentBootstrapSchema)` to create a new message.
+ */
+export const AgentBootstrapSchema: GenMessage<AgentBootstrap, {jsonType: AgentBootstrapJson, validType: AgentBootstrapValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_workflow_deployment, 8);
+
+/**
+ *
+ * RenderDockerInputWorkflowRequest asks to render Docker daemon input from an
+ * infrastructure plan.
+ *
+ * @generated from message cloud.v1.workflow.RenderDockerInputWorkflowRequest
+ */
+export type RenderDockerInputWorkflowRequest = Message<"cloud.v1.workflow.RenderDockerInputWorkflowRequest"> & {
+  /**
+   *
+   * run_id is used as the default Docker network suffix when the plan does
+   * not pin a network name.
+   *
+   * @generated from field: string run_id = 1;
+   */
+  runId: string;
+
+  /**
+   *
+   * plan is the Docker infrastructure plan.
+   *
+   * @generated from field: cloud.v1.deployment.InfrastructurePlan plan = 2;
+   */
+  plan?: InfrastructurePlan;
+
+  /**
+   *
+   * agent_bootstrap is rendered into the Docker agent env file.
+   *
+   * @generated from field: cloud.v1.workflow.AgentBootstrap agent_bootstrap = 3;
+   */
+  agentBootstrap?: AgentBootstrap;
+};
+
+/**
+ *
+ * RenderDockerInputWorkflowRequest asks to render Docker daemon input from an
+ * infrastructure plan.
+ *
+ * @generated from message cloud.v1.workflow.RenderDockerInputWorkflowRequest
+ */
+export type RenderDockerInputWorkflowRequestJson = {
+  /**
+   *
+   * run_id is used as the default Docker network suffix when the plan does
+   * not pin a network name.
+   *
+   * @generated from field: string run_id = 1;
+   */
+  runId?: string;
+
+  /**
+   *
+   * plan is the Docker infrastructure plan.
+   *
+   * @generated from field: cloud.v1.deployment.InfrastructurePlan plan = 2;
+   */
+  plan?: InfrastructurePlanJson;
+
+  /**
+   *
+   * agent_bootstrap is rendered into the Docker agent env file.
+   *
+   * @generated from field: cloud.v1.workflow.AgentBootstrap agent_bootstrap = 3;
+   */
+  agentBootstrap?: AgentBootstrapJson;
+};
+
+export type RenderDockerInputWorkflowRequestValid = RenderDockerInputWorkflowRequest;
+
+/**
+ * Describes the message cloud.v1.workflow.RenderDockerInputWorkflowRequest.
+ * Use `create(RenderDockerInputWorkflowRequestSchema)` to create a new message.
+ */
+export const RenderDockerInputWorkflowRequestSchema: GenMessage<RenderDockerInputWorkflowRequest, {jsonType: RenderDockerInputWorkflowRequestJson, validType: RenderDockerInputWorkflowRequestValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_workflow_deployment, 9);
+
+/**
+ *
+ * RenderTerraformVariablesWorkflowRequest asks to render Terraform operation
+ * input from an infrastructure plan.
+ *
+ * @generated from message cloud.v1.workflow.RenderTerraformVariablesWorkflowRequest
+ */
+export type RenderTerraformVariablesWorkflowRequest = Message<"cloud.v1.workflow.RenderTerraformVariablesWorkflowRequest"> & {
+  /**
+   *
+   * run_id is the stable Terraform workdir id.
+   *
+   * @generated from field: string run_id = 1;
+   */
+  runId: string;
+
+  /**
+   *
+   * plan is the Terraform-backed infrastructure plan.
+   *
+   * @generated from field: cloud.v1.deployment.InfrastructurePlan plan = 2;
+   */
+  plan?: InfrastructurePlan;
+
+  /**
+   *
+   * action selects plan/apply/destroy. Empty means apply.
+   *
+   * @generated from field: cloud.v1.deployment.Terraform.Action action = 3;
+   */
+  action: Terraform_Action;
+
+  /**
+   *
+   * agent_bootstrap is rendered into Yandex cloud-init user-data.
+   *
+   * @generated from field: cloud.v1.workflow.AgentBootstrap agent_bootstrap = 4;
+   */
+  agentBootstrap?: AgentBootstrap;
+};
+
+/**
+ *
+ * RenderTerraformVariablesWorkflowRequest asks to render Terraform operation
+ * input from an infrastructure plan.
+ *
+ * @generated from message cloud.v1.workflow.RenderTerraformVariablesWorkflowRequest
+ */
+export type RenderTerraformVariablesWorkflowRequestJson = {
+  /**
+   *
+   * run_id is the stable Terraform workdir id.
+   *
+   * @generated from field: string run_id = 1;
+   */
+  runId?: string;
+
+  /**
+   *
+   * plan is the Terraform-backed infrastructure plan.
+   *
+   * @generated from field: cloud.v1.deployment.InfrastructurePlan plan = 2;
+   */
+  plan?: InfrastructurePlanJson;
+
+  /**
+   *
+   * action selects plan/apply/destroy. Empty means apply.
+   *
+   * @generated from field: cloud.v1.deployment.Terraform.Action action = 3;
+   */
+  action?: Terraform_ActionJson;
+
+  /**
+   *
+   * agent_bootstrap is rendered into Yandex cloud-init user-data.
+   *
+   * @generated from field: cloud.v1.workflow.AgentBootstrap agent_bootstrap = 4;
+   */
+  agentBootstrap?: AgentBootstrapJson;
+};
+
+export type RenderTerraformVariablesWorkflowRequestValid = RenderTerraformVariablesWorkflowRequest;
+
+/**
+ * Describes the message cloud.v1.workflow.RenderTerraformVariablesWorkflowRequest.
+ * Use `create(RenderTerraformVariablesWorkflowRequestSchema)` to create a new message.
+ */
+export const RenderTerraformVariablesWorkflowRequestSchema: GenMessage<RenderTerraformVariablesWorkflowRequest, {jsonType: RenderTerraformVariablesWorkflowRequestJson, validType: RenderTerraformVariablesWorkflowRequestValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_workflow_deployment, 10);
+
+/**
+ *
  * RenderDeploymentPlanWorkflowRequest asks to render install/config agent steps.
  *
  * @generated from message cloud.v1.workflow.RenderDeploymentPlanWorkflowRequest
@@ -427,6 +734,16 @@ export type RenderDeploymentPlanWorkflowRequest = Message<"cloud.v1.workflow.Ren
    * @generated from field: cloud.v1.domain.Database database = 5;
    */
   database?: Database;
+
+  /**
+   *
+   * workload is the stroppy workload input used by workload-runner renderers.
+   * It is optional for pure database render previews and required when the
+   * topology contains a stroppy workload component.
+   *
+   * @generated from field: cloud.v1.domain.Workload workload = 6;
+   */
+  workload?: Workload;
 };
 
 /**
@@ -478,6 +795,16 @@ export type RenderDeploymentPlanWorkflowRequestJson = {
    * @generated from field: cloud.v1.domain.Database database = 5;
    */
   database?: DatabaseJson;
+
+  /**
+   *
+   * workload is the stroppy workload input used by workload-runner renderers.
+   * It is optional for pure database render previews and required when the
+   * topology contains a stroppy workload component.
+   *
+   * @generated from field: cloud.v1.domain.Workload workload = 6;
+   */
+  workload?: WorkloadJson;
 };
 
 export type RenderDeploymentPlanWorkflowRequestValid = RenderDeploymentPlanWorkflowRequest;
@@ -487,7 +814,7 @@ export type RenderDeploymentPlanWorkflowRequestValid = RenderDeploymentPlanWorkf
  * Use `create(RenderDeploymentPlanWorkflowRequestSchema)` to create a new message.
  */
 export const RenderDeploymentPlanWorkflowRequestSchema: GenMessage<RenderDeploymentPlanWorkflowRequest, {jsonType: RenderDeploymentPlanWorkflowRequestJson, validType: RenderDeploymentPlanWorkflowRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_deployment, 8);
+  messageDesc(file_cloud_v1_workflow_deployment, 11);
 
 /**
  *
@@ -528,7 +855,7 @@ export type RenderDeploymentPlanWorkflowResponseValid = RenderDeploymentPlanWork
  * Use `create(RenderDeploymentPlanWorkflowResponseSchema)` to create a new message.
  */
 export const RenderDeploymentPlanWorkflowResponseSchema: GenMessage<RenderDeploymentPlanWorkflowResponse, {jsonType: RenderDeploymentPlanWorkflowResponseJson, validType: RenderDeploymentPlanWorkflowResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_deployment, 9);
+  messageDesc(file_cloud_v1_workflow_deployment, 12);
 
 /**
  *
@@ -585,7 +912,7 @@ export type ExecuteDeploymentPlanWorkflowRequestValid = ExecuteDeploymentPlanWor
  * Use `create(ExecuteDeploymentPlanWorkflowRequestSchema)` to create a new message.
  */
 export const ExecuteDeploymentPlanWorkflowRequestSchema: GenMessage<ExecuteDeploymentPlanWorkflowRequest, {jsonType: ExecuteDeploymentPlanWorkflowRequestJson, validType: ExecuteDeploymentPlanWorkflowRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_deployment, 10);
+  messageDesc(file_cloud_v1_workflow_deployment, 13);
 
 /**
  *
@@ -626,7 +953,7 @@ export type ExecuteDeploymentPlanWorkflowResponseValid = ExecuteDeploymentPlanWo
  * Use `create(ExecuteDeploymentPlanWorkflowResponseSchema)` to create a new message.
  */
 export const ExecuteDeploymentPlanWorkflowResponseSchema: GenMessage<ExecuteDeploymentPlanWorkflowResponse, {jsonType: ExecuteDeploymentPlanWorkflowResponseJson, validType: ExecuteDeploymentPlanWorkflowResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_deployment, 11);
+  messageDesc(file_cloud_v1_workflow_deployment, 14);
 
 /**
  *
@@ -689,7 +1016,7 @@ export const DeploymentService: GenService<{
    */
   renderDockerInputWorkflow: {
     methodKind: "unary";
-    input: typeof InfrastructurePlanSchema;
+    input: typeof RenderDockerInputWorkflowRequestSchema;
     output: typeof Docker_InputSchema;
   },
   /**
@@ -734,7 +1061,7 @@ export const DeploymentService: GenService<{
    */
   renderTerraformVariablesWorkflow: {
     methodKind: "unary";
-    input: typeof InfrastructurePlanSchema;
+    input: typeof RenderTerraformVariablesWorkflowRequestSchema;
     output: typeof Terraform_InputSchema;
   },
   /**

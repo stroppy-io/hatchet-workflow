@@ -1288,6 +1288,26 @@ func (m *ListWorkloadPresetsRequest) Encode(e *jx.Encoder) {
 		e.FieldStart("page")
 		jxpb.EncMessage(e, m.Page)
 	}
+	if len(m.Protocols) > 0 {
+		e.FieldStart("protocols")
+		e.ArrStart()
+		for _, v := range m.Protocols {
+			if s, ok := domain.Workload_Protocol_name[int32(v)]; ok {
+				e.Str(s)
+			} else {
+				e.Int32(int32(v))
+			}
+		}
+		e.ArrEnd()
+	}
+	if len(m.Scripts) > 0 {
+		e.FieldStart("scripts")
+		e.ArrStart()
+		for _, v := range m.Scripts {
+			e.Str(v)
+		}
+		e.ArrEnd()
+	}
 	e.ObjEnd()
 }
 
@@ -1400,6 +1420,53 @@ func (m *ListWorkloadPresetsRequest) Decode(d *jx.Decoder) error {
 				return err
 			}
 			return nil
+		case "protocols":
+			if seen["Protocols"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Protocols"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				var n int32
+				switch d.Next() {
+				case jx.String:
+					s, err := d.Str()
+					if err != nil {
+						return err
+					}
+					v, ok := domain.Workload_Protocol_value[s]
+					if !ok {
+						return fmt.Errorf("unknown enum value %q", s)
+					}
+					n = v
+				default:
+					v, err := d.Int32()
+					if err != nil {
+						return err
+					}
+					n = v
+				}
+				m.Protocols = append(m.Protocols, domain.Workload_Protocol(n))
+				return nil
+			})
+		case "scripts":
+			if seen["Scripts"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Scripts"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				v, err := d.Str()
+				if err != nil {
+					return err
+				}
+				m.Scripts = append(m.Scripts, v)
+				return nil
+			})
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}
@@ -2242,6 +2309,18 @@ func (m *ListTestPresetsRequest) Encode(e *jx.Encoder) {
 		e.FieldStart("page")
 		jxpb.EncMessage(e, m.Page)
 	}
+	if len(m.Protocols) > 0 {
+		e.FieldStart("protocols")
+		e.ArrStart()
+		for _, v := range m.Protocols {
+			if s, ok := domain.Workload_Protocol_name[int32(v)]; ok {
+				e.Str(s)
+			} else {
+				e.Int32(int32(v))
+			}
+		}
+		e.ArrEnd()
+	}
 	e.ObjEnd()
 }
 
@@ -2385,6 +2464,37 @@ func (m *ListTestPresetsRequest) Decode(d *jx.Decoder) error {
 				return err
 			}
 			return nil
+		case "protocols":
+			if seen["Protocols"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Protocols"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				var n int32
+				switch d.Next() {
+				case jx.String:
+					s, err := d.Str()
+					if err != nil {
+						return err
+					}
+					v, ok := domain.Workload_Protocol_value[s]
+					if !ok {
+						return fmt.Errorf("unknown enum value %q", s)
+					}
+					n = v
+				default:
+					v, err := d.Int32()
+					if err != nil {
+						return err
+					}
+					n = v
+				}
+				m.Protocols = append(m.Protocols, domain.Workload_Protocol(n))
+				return nil
+			})
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}

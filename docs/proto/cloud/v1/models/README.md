@@ -6,6 +6,7 @@
 ## Table of Contents
 - Messages
   - [cloud.v1.models.DatabasePresetRecord](#cloud-v1-models-databasepresetrecord)
+  - [cloud.v1.models.DatabasePresetRecord.Summary](#cloud-v1-models-databasepresetrecord-summary)
   - [cloud.v1.models.FavoriteRecord](#cloud-v1-models-favoriterecord)
   - [cloud.v1.models.PackageRecord](#cloud-v1-models-packagerecord)
   - [cloud.v1.models.PackageRecord.Format](#cloud-v1-models-packagerecord-format)
@@ -19,15 +20,18 @@
   - [cloud.v1.models.SuiteRecord](#cloud-v1-models-suiterecord)
   - [cloud.v1.models.SuiteRecord.Summary](#cloud-v1-models-suiterecord-summary)
   - [cloud.v1.models.SuiteRunRecord](#cloud-v1-models-suiterunrecord)
+  - [cloud.v1.models.SuiteRunRecord.ChildRun](#cloud-v1-models-suiterunrecord-childrun)
   - [cloud.v1.models.SuiteRunRecord.Summary](#cloud-v1-models-suiterunrecord-summary)
   - [cloud.v1.models.SuiteWizardDraftRecord](#cloud-v1-models-suitewizarddraftrecord)
   - [cloud.v1.models.SuiteWizardDraftRecord.Cell](#cloud-v1-models-suitewizarddraftrecord-cell)
   - [cloud.v1.models.TenantSettingsRecord](#cloud-v1-models-tenantsettingsrecord)
   - [cloud.v1.models.TestPresetRecord](#cloud-v1-models-testpresetrecord)
+  - [cloud.v1.models.TestPresetRecord.Summary](#cloud-v1-models-testpresetrecord-summary)
   - [cloud.v1.models.TestRunRecord](#cloud-v1-models-testrunrecord)
   - [cloud.v1.models.TestRunRecord.Summary](#cloud-v1-models-testrunrecord-summary)
   - [cloud.v1.models.TestWizardDraftRecord](#cloud-v1-models-testwizarddraftrecord)
   - [cloud.v1.models.WorkloadPresetRecord](#cloud-v1-models-workloadpresetrecord)
+  - [cloud.v1.models.WorkloadPresetRecord.Summary](#cloud-v1-models-workloadpresetrecord-summary)
 
 <a name="cloud-v1-models-messages"></a>
 ## Messages
@@ -74,6 +78,57 @@ go_name: Entity</pre></td>
 
 json_name: isSystem
 go_name: IsSystem</pre></td>
+</tr><tr>
+<td>summary</td>
+<td><a href="#cloud-v1-models-databasepresetrecord-summary">cloud.v1.models.DatabasePresetRecord.Summary</a></td>
+<td><pre>
+//summary is the denormalized projection used by preset pickers and suite
+//matrix screens without decoding the whole database body.<br>
+
+json_name: summary
+go_name: Summary</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-models-databasepresetrecord-summary"></a>
+### cloud.v1.models.DatabasePresetRecord.Summary
+
+<pre>
+//Summary is filled by the server from `database`.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>db_kind</td>
+<td><a href="../domain/README.md#cloud-v1-domain-database-kind">cloud.v1.domain.Database.Kind</a></td>
+<td><pre>
+//db_kind is the database engine kind.<br>
+
+json_name: dbKind
+go_name: DbKind</pre></td>
+</tr><tr>
+<td>external</td>
+<td>bool</td>
+<td><pre>
+//external is true when the preset targets an already-running database.<br>
+
+json_name: external
+go_name: External</pre></td>
+</tr><tr>
+<td>version</td>
+<td>string</td>
+<td><pre>
+//version is the self-deploy engine version, when present.<br>
+
+json_name: version
+go_name: Version</pre></td>
 </tr>
 </table>
 
@@ -780,8 +835,8 @@ go_name: Spec</pre></td>
 <td>summary</td>
 <td><a href="#cloud-v1-models-suiterecord-summary">cloud.v1.models.SuiteRecord.Summary</a></td>
 <td><pre>
-//summary holds denormalized facets for the suites table (schedule state +
-//last-run info).<br>
+//summary holds denormalized facets for the suites table (cell count,
+//schedule state, last-run info).<br>
 
 json_name: summary
 go_name: Summary</pre></td>
@@ -805,6 +860,14 @@ go_name: Summary</pre></td>
 <th>Description</th>
 </tr>
 <tr>
+<td>cell_count</td>
+<td>uint32</td>
+<td><pre>
+//cell_count is the number of enabled cells in the suite definition.<br>
+
+json_name: cellCount
+go_name: CellCount</pre></td>
+</tr><tr>
 <td>cron</td>
 <td>string</td>
 <td><pre>
@@ -865,7 +928,8 @@ go_name: ScheduleEnabled</pre></td>
 //SuiteRunRecord is a persisted suite EXECUTION. It references its expanded child
 //runs by id (each is a first-class TestRunRecord whose suite_run_id points back
 //here), so suite children list / track / show logs+metrics like any other run.
-//SuiteWorkflow receives a domain.SuiteRun assembled from the children at start.
+//SuiteWorkflow receives workflow.RunConfig entries assembled from those
+//children at start.
 </pre>
 
 <table>
@@ -875,6 +939,16 @@ go_name: ScheduleEnabled</pre></td>
 <th>Description</th>
 </tr>
 <tr>
+<td>children</td>
+<td><a href="#cloud-v1-models-suiterunrecord-childrun">cloud.v1.models.SuiteRunRecord.ChildRun</a></td>
+<td><pre>
+//children are child TestRunRecord ids keyed back to the originating suite
+//cell. These rows are still listed through TestRunAPI.ListTestRuns with
+//suite_run_id.<br>
+
+json_name: children
+go_name: Children</pre></td>
+</tr><tr>
 <td>entity</td>
 <td><a href="../common/README.md#cloud-v1-common-entity">cloud.v1.common.Entity</a></td>
 <td><pre>
@@ -886,7 +960,7 @@ go_name: Entity</pre></td>
 <td>max_parallel</td>
 <td>uint32</td>
 <td><pre>
-//max_parallel is the max number of concurrent child TestWorkflows.
+//max_parallel is the max number of concurrent child TestRunWorkflows.
 //0 = unlimited.<br>
 
 json_name: maxParallel
@@ -918,15 +992,6 @@ go_name: SuiteId</pre></td>
 json_name: summary
 go_name: Summary</pre></td>
 </tr><tr>
-<td>test_run_ids</td>
-<td>string</td>
-<td><pre>
-//test_run_ids are the ids of the child TestRunRecord rows this suite run
-//expanded into.<br>
-
-json_name: testRunIds
-go_name: TestRunIds</pre></td>
-</tr><tr>
 <td>trigger</td>
 <td><a href="../common/README.md#cloud-v1-common-trigger">cloud.v1.common.Trigger</a></td>
 <td><pre>
@@ -934,6 +999,56 @@ go_name: TestRunIds</pre></td>
 
 json_name: trigger
 go_name: Trigger</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-models-suiterunrecord-childrun"></a>
+### cloud.v1.models.SuiteRunRecord.ChildRun
+
+<pre>
+//ChildRun links one suite cell to one persisted TestRunRecord.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>name</td>
+<td>string</td>
+<td><pre>
+//name is the child display label.<br>
+
+json_name: name
+go_name: Name</pre></td>
+</tr><tr>
+<td>status</td>
+<td><a href="../common/README.md#cloud-v1-common-status">cloud.v1.common.Status</a></td>
+<td><pre>
+//status is the latest known child run status.<br>
+
+json_name: status
+go_name: Status</pre></td>
+</tr><tr>
+<td>suite_cell_id</td>
+<td>string</td>
+<td><pre>
+//suite_cell_id points to domain.SuiteCell.id.<br>
+
+json_name: suiteCellId
+go_name: SuiteCellId</pre></td>
+</tr><tr>
+<td>test_run_id</td>
+<td>string</td>
+<td><pre>
+//test_run_id is the child TestRunRecord entity id.<br>
+
+json_name: testRunId
+go_name: TestRunId</pre></td>
 </tr>
 </table>
 
@@ -1060,20 +1175,17 @@ go_name: Total</pre></td>
 ### cloud.v1.models.SuiteWizardDraftRecord
 
 <pre>
-//SuiteWizardDraft is the server-held, mutable state of a SUITE wizard.
+//SuiteWizardDraftRecord is the server-held mutable state of a SUITE wizard.
 
-//Big-schema model, like the test wizard: the whole suite form is ONE schemapb
-//schema in `form`. It carries the selections — preset_ids (a db x workload
-//matrix) + test_preset_ids — plus ONE provider_type for the whole suite (naming
-//the tenant provider every cell deploys on) and max_parallel. Presets already
-//hold baked db/workload params, so the suite wizard does NOT re-fill those — and
-//it carries NO provider settings: machines are derived per cell at bake from the
-//db config (role->VM expander + provider overlay), not entered. The server
-//validates the form, prunes the matrix to workload<->db compatible pairs (a root
-//CEL rule), expands the preview and recomputes readiness on every patch.
+//It mirrors the typed test wizard model, but per cell:
+//SuiteCell source -> resolved database/workload
+//database/workload -> topology_spec
+//topology_spec + provider/defaults/machine overrides -> infrastructure_plan
+//topology + runtime placeholders -> render_preview
 
-//Persistence: own table (tenant-scoped via Entity) + in-memory cache. On finish
-//it bakes into a domain.SuiteRun (the full N*M TestRuns).
+//The draft never stores provider account settings. Provider settings are resolved
+//from tenant settings only when the suite is started, and runtime facts are
+//produced by workflow stages.
 </pre>
 
 <table>
@@ -1083,11 +1195,34 @@ go_name: Total</pre></td>
 <th>Description</th>
 </tr>
 <tr>
+<td>cells</td>
+<td><a href="#cloud-v1-models-suitewizarddraftrecord-cell">cloud.v1.models.SuiteWizardDraftRecord.Cell</a></td>
+<td><pre>
+//cells are the editable matrix entries and their server-derived previews.<br>
+
+json_name: cells
+go_name: Cells</pre></td>
+</tr><tr>
+<td>default_in_global_rating</td>
+<td>bool</td>
+<td><pre>
+//default_in_global_rating is persisted to Suite.default_in_global_rating.<br>
+
+json_name: defaultInGlobalRating
+go_name: DefaultInGlobalRating</pre></td>
+</tr><tr>
+<td>default_in_tenant_rating</td>
+<td>bool</td>
+<td><pre>
+//default_in_tenant_rating is persisted to Suite.default_in_tenant_rating.<br>
+
+json_name: defaultInTenantRating
+go_name: DefaultInTenantRating</pre></td>
+</tr><tr>
 <td>entity</td>
 <td><a href="../common/README.md#cloud-v1-common-entity">cloud.v1.common.Entity</a></td>
 <td><pre>
-//entity is the storage envelope (tenant-scoped: id, tenant_id, name,
-//timings).<br>
+//entity is the storage envelope.<br>
 
 json_name: entity
 go_name: Entity</pre></td>
@@ -1095,39 +1230,52 @@ go_name: Entity</pre></td>
 <td>errors</td>
 <td><a href="../../../schemapb/README.md#schemapb-fielderror">schemapb.FieldError</a></td>
 <td><pre>
-//errors are the authoritative validation errors (recomputed on every
-//patch); paths group by section in the UI.<br>
+//errors are draft-level validation errors.<br>
 
 json_name: errors
 go_name: Errors</pre></td>
 </tr><tr>
-<td>form</td>
-<td><a href="../../../schemapb/README.md#schemapb-filled">schemapb.Filled</a></td>
+<td>max_parallel</td>
+<td>uint32</td>
 <td><pre>
-//form is the whole suite form as one schema + values: preset_ids (the
-//db x workload matrix) + test_preset_ids + ONE provider_type for the whole
-//suite + max_parallel. No per-topology provider settings.<br>
+//max_parallel is the suite default concurrency selected in the wizard.
+//0 = unlimited.<br>
 
-json_name: form
-go_name: Form</pre></td>
+json_name: maxParallel
+go_name: MaxParallel</pre></td>
 </tr><tr>
-<td>preview</td>
-<td><a href="#cloud-v1-models-suitewizarddraftrecord-cell">cloud.v1.models.SuiteWizardDraftRecord.Cell</a></td>
+<td>provider</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-provider">cloud.v1.deployment.Provider</a></td>
 <td><pre>
-//preview holds the server-computed expanded, compatible cells (recomputed
-//on every patch). These are lightweight summaries; full TestRuns are baked
-//only at finish to avoid generating a topology per cell here.<br>
+//provider selects one deployment backend for every cell.<br>
 
-json_name: preview
-go_name: Preview</pre></td>
+json_name: provider
+go_name: Provider</pre></td>
 </tr><tr>
 <td>ready</td>
 <td>bool</td>
 <td><pre>
-//ready is true when there is >=1 compatible cell and the form validates.<br>
+//ready is true when at least one enabled cell is ready and the suite-level
+//settings validate.<br>
 
 json_name: ready
 go_name: Ready</pre></td>
+</tr><tr>
+<td>schedule</td>
+<td><a href="../domain/README.md#cloud-v1-domain-schedule">cloud.v1.domain.Schedule</a></td>
+<td><pre>
+//schedule is the optional cron schedule edited in the wizard.<br>
+
+json_name: schedule
+go_name: Schedule</pre></td>
+</tr><tr>
+<td>suite_id</td>
+<td>string</td>
+<td><pre>
+//suite_id is set when the draft was seeded from an existing suite.<br>
+
+json_name: suiteId
+go_name: SuiteId</pre></td>
 </tr>
 </table>
 
@@ -1137,7 +1285,8 @@ go_name: Ready</pre></td>
 ### cloud.v1.models.SuiteWizardDraftRecord.Cell
 
 <pre>
-//Cell is one resolved (db, workload) pair the suite will run.
+//Cell is one selected suite cell plus the server-derived preview artifacts
+//shown to the user.
 </pre>
 
 <table>
@@ -1150,64 +1299,77 @@ go_name: Ready</pre></td>
 <td>compatible</td>
 <td>bool</td>
 <td><pre>
-//compatible is true when the workload is compatible with the database
-//kind.<br>
+//compatible is true when database/workload compatibility rules pass.<br>
 
 json_name: compatible
 go_name: Compatible</pre></td>
 </tr><tr>
-<td>db_preset_id</td>
-<td>string</td>
+<td>database</td>
+<td><a href="../domain/README.md#cloud-v1-domain-database">cloud.v1.domain.Database</a></td>
 <td><pre>
-//db_preset_id is the database preset from a db x workload matrix pair
-//(paired with workload_preset_id).<br>
+//database is the resolved database payload for this cell.<br>
 
-json_name: dbPresetId
-go_name: DbPresetId</pre></td>
+json_name: database
+go_name: Database</pre></td>
 </tr><tr>
 <td>errors</td>
 <td><a href="../../../schemapb/README.md#schemapb-fielderror">schemapb.FieldError</a></td>
 <td><pre>
-//errors are per-cell capacity/sanity errors (quota/zones), computed at
-//preview.<br>
+//errors are per-cell validation, capacity, and render errors.<br>
 
 json_name: errors
 go_name: Errors</pre></td>
 </tr><tr>
-<td>name</td>
-<td>string</td>
+<td>infrastructure_plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructureplan">cloud.v1.deployment.InfrastructurePlan</a></td>
 <td><pre>
-//name is the display name of the resulting run.<br>
+//infrastructure_plan is provider-specific machine intent. Provider
+//account settings are omitted/redacted in wizard drafts.<br>
 
-json_name: name
-go_name: Name</pre></td>
+json_name: infrastructurePlan
+go_name: InfrastructurePlan</pre></td>
 </tr><tr>
 <td>ready</td>
 <td>bool</td>
 <td><pre>
-//ready is true when the cell's (db, workload) are compatible and it
-//has no per-cell errors.<br>
+//ready is true when this enabled cell can be baked into a TestRun.<br>
 
 json_name: ready
 go_name: Ready</pre></td>
 </tr><tr>
-<td>test_preset_id</td>
-<td>string</td>
+<td>render_preview</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-renderpreview">cloud.v1.deployment.RenderPreview</a></td>
 <td><pre>
-//test_preset_id is set when the cell came from a full TestPreset
-//instead of a matrix pair (then db/workload preset ids are empty).<br>
+//render_preview is what generated files/commands/dirs would look like
+//before runtime-only values are known.<br>
 
-json_name: testPresetId
-go_name: TestPresetId</pre></td>
+json_name: renderPreview
+go_name: RenderPreview</pre></td>
 </tr><tr>
-<td>workload_preset_id</td>
-<td>string</td>
+<td>spec</td>
+<td><a href="../domain/README.md#cloud-v1-domain-suitecell">cloud.v1.domain.SuiteCell</a></td>
 <td><pre>
-//workload_preset_id is the workload preset from a db x workload matrix
-//pair (paired with db_preset_id).<br>
+//spec is the editable cell definition: source, enabled flag, machine
+//overrides and render overrides.<br>
 
-json_name: workloadPresetId
-go_name: WorkloadPresetId</pre></td>
+json_name: spec
+go_name: Spec</pre></td>
+</tr><tr>
+<td>topology_spec</td>
+<td><a href="../topology/README.md#cloud-v1-topology-topologyspec">cloud.v1.topology.TopologySpec</a></td>
+<td><pre>
+//topology_spec is the server-derived provider-agnostic graph.<br>
+
+json_name: topologySpec
+go_name: TopologySpec</pre></td>
+</tr><tr>
+<td>workload</td>
+<td><a href="../domain/README.md#cloud-v1-domain-workload">cloud.v1.domain.Workload</a></td>
+<td><pre>
+//workload is the resolved workload payload for this cell.<br>
+
+json_name: workload
+go_name: Workload</pre></td>
 </tr>
 </table>
 
@@ -1335,6 +1497,15 @@ go_name: Entity</pre></td>
 json_name: isSystem
 go_name: IsSystem</pre></td>
 </tr><tr>
+<td>summary</td>
+<td><a href="#cloud-v1-models-testpresetrecord-summary">cloud.v1.models.TestPresetRecord.Summary</a></td>
+<td><pre>
+//summary is the denormalized projection used by preset pickers and suite
+//matrix screens without decoding the whole test body.<br>
+
+json_name: summary
+go_name: Summary</pre></td>
+</tr><tr>
 <td>test</td>
 <td><a href="../domain/README.md#cloud-v1-domain-test">cloud.v1.domain.Test</a></td>
 <td><pre>
@@ -1342,6 +1513,48 @@ go_name: IsSystem</pre></td>
 
 json_name: test
 go_name: Test</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-models-testpresetrecord-summary"></a>
+### cloud.v1.models.TestPresetRecord.Summary
+
+<pre>
+//Summary is filled by the server from `test`.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>db_kind</td>
+<td><a href="../domain/README.md#cloud-v1-domain-database-kind">cloud.v1.domain.Database.Kind</a></td>
+<td><pre>
+//db_kind is the database engine kind.<br>
+
+json_name: dbKind
+go_name: DbKind</pre></td>
+</tr><tr>
+<td>protocol</td>
+<td><a href="../domain/README.md#cloud-v1-domain-workload-protocol">cloud.v1.domain.Workload.Protocol</a></td>
+<td><pre>
+//protocol is the workload wire protocol.<br>
+
+json_name: protocol
+go_name: Protocol</pre></td>
+</tr><tr>
+<td>stroppy_version</td>
+<td>string</td>
+<td><pre>
+//stroppy_version is the stroppy binary version/tag.<br>
+
+json_name: stroppyVersion
+go_name: StroppyVersion</pre></td>
 </tr>
 </table>
 
@@ -1435,6 +1648,15 @@ go_name: Spec</pre></td>
 
 json_name: status
 go_name: Status</pre></td>
+</tr><tr>
+<td>suite_cell_id</td>
+<td>string</td>
+<td><pre>
+//suite_cell_id is the originating SuiteCell.id inside suite_run_id. Empty
+//for standalone runs and ad-hoc suite children without a stable cell id.<br>
+
+json_name: suiteCellId
+go_name: SuiteCellId</pre></td>
 </tr><tr>
 <td>suite_run_id</td>
 <td>string</td>
@@ -1566,6 +1788,22 @@ go_name: StartedAt</pre></td>
 json_name: stroppyVersion
 go_name: StroppyVersion</pre></td>
 </tr><tr>
+<td>test_preset_id</td>
+<td>string</td>
+<td><pre>
+//test_preset_id is the complete test preset source, when one was used.<br>
+
+json_name: testPresetId
+go_name: TestPresetId</pre></td>
+</tr><tr>
+<td>test_preset_name</td>
+<td>string</td>
+<td><pre>
+//test_preset_name is the display name of the test preset source.<br>
+
+json_name: testPresetName
+go_name: TestPresetName</pre></td>
+</tr><tr>
 <td>topology_label</td>
 <td>string</td>
 <td><pre>
@@ -1591,6 +1829,14 @@ go_name: WorkloadName</pre></td>
 
 json_name: workloadPresetId
 go_name: WorkloadPresetId</pre></td>
+</tr><tr>
+<td>workload_protocol</td>
+<td><a href="../domain/README.md#cloud-v1-domain-workload-protocol">cloud.v1.domain.Workload.Protocol</a></td>
+<td><pre>
+//workload_protocol is the wire protocol exercised by the workload.<br>
+
+json_name: workloadProtocol
+go_name: WorkloadProtocol</pre></td>
 </tr>
 </table>
 
@@ -1756,6 +2002,15 @@ go_name: Entity</pre></td>
 json_name: isSystem
 go_name: IsSystem</pre></td>
 </tr><tr>
+<td>summary</td>
+<td><a href="#cloud-v1-models-workloadpresetrecord-summary">cloud.v1.models.WorkloadPresetRecord.Summary</a></td>
+<td><pre>
+//summary is the denormalized projection used by preset pickers and suite
+//matrix screens without decoding the whole workload body.<br>
+
+json_name: summary
+go_name: Summary</pre></td>
+</tr><tr>
 <td>workload</td>
 <td><a href="../domain/README.md#cloud-v1-domain-workload">cloud.v1.domain.Workload</a></td>
 <td><pre>
@@ -1764,6 +2019,48 @@ go_name: IsSystem</pre></td>
 
 json_name: workload
 go_name: Workload</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-models-workloadpresetrecord-summary"></a>
+### cloud.v1.models.WorkloadPresetRecord.Summary
+
+<pre>
+//Summary is filled by the server from `workload`.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>protocol</td>
+<td><a href="../domain/README.md#cloud-v1-domain-workload-protocol">cloud.v1.domain.Workload.Protocol</a></td>
+<td><pre>
+//protocol is the workload wire protocol.<br>
+
+json_name: protocol
+go_name: Protocol</pre></td>
+</tr><tr>
+<td>script</td>
+<td>string</td>
+<td><pre>
+//script is the workload script/preset/path label.<br>
+
+json_name: script
+go_name: Script</pre></td>
+</tr><tr>
+<td>stroppy_version</td>
+<td>string</td>
+<td><pre>
+//stroppy_version is the stroppy binary version/tag.<br>
+
+json_name: stroppyVersion
+go_name: StroppyVersion</pre></td>
 </tr>
 </table>
 

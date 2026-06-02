@@ -17,6 +17,8 @@ import (
 	"unicode/utf8"
 
 	"google.golang.org/protobuf/types/known/anypb"
+
+	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 )
 
 // ensure the imports are used
@@ -33,6 +35,8 @@ var (
 	_ = (*mail.Address)(nil)
 	_ = anypb.Any{}
 	_ = sort.Sort
+
+	_ = deployment.Terraform_Action(0)
 )
 
 // Validate checks the field values on ProcessInfrastructureWorkflowRequest
@@ -57,6 +61,17 @@ func (m *ProcessInfrastructureWorkflowRequest) validate(all bool) error {
 	}
 
 	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetRunId()); l < 1 || l > 128 {
+		err := ProcessInfrastructureWorkflowRequestValidationError{
+			field:  "RunId",
+			reason: "value length must be between 1 and 128 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if m.GetPlan() == nil {
 		err := ProcessInfrastructureWorkflowRequestValidationError{
@@ -92,6 +107,35 @@ func (m *ProcessInfrastructureWorkflowRequest) validate(all bool) error {
 		if err := v.Validate(); err != nil {
 			return ProcessInfrastructureWorkflowRequestValidationError{
 				field:  "Plan",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetAgentBootstrap()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ProcessInfrastructureWorkflowRequestValidationError{
+					field:  "AgentBootstrap",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ProcessInfrastructureWorkflowRequestValidationError{
+					field:  "AgentBootstrap",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetAgentBootstrap()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ProcessInfrastructureWorkflowRequestValidationError{
+				field:  "AgentBootstrap",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -1230,6 +1274,582 @@ var _ interface {
 	ErrorName() string
 } = AcquireQuotasActivityResponseValidationError{}
 
+// Validate checks the field values on AgentBootstrap with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *AgentBootstrap) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on AgentBootstrap with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in AgentBootstrapMultiError,
+// or nil if none found.
+func (m *AgentBootstrap) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *AgentBootstrap) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetServerAddr()) > 2048 {
+		err := AgentBootstrapValidationError{
+			field:  "ServerAddr",
+			reason: "value length must be at most 2048 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetBinaryUrl()) > 2048 {
+		err := AgentBootstrapValidationError{
+			field:  "BinaryUrl",
+			reason: "value length must be at most 2048 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetTemporalNamespace()) > 128 {
+		err := AgentBootstrapValidationError{
+			field:  "TemporalNamespace",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetExtraEnv()) > 64 {
+		err := AgentBootstrapValidationError{
+			field:  "ExtraEnv",
+			reason: "value must contain no more than 64 pair(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	{
+		sorted_keys := make([]string, len(m.GetExtraEnv()))
+		i := 0
+		for key := range m.GetExtraEnv() {
+			sorted_keys[i] = key
+			i++
+		}
+		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
+		for _, key := range sorted_keys {
+			val := m.GetExtraEnv()[key]
+			_ = val
+
+			if l := utf8.RuneCountInString(key); l < 1 || l > 256 {
+				err := AgentBootstrapValidationError{
+					field:  fmt.Sprintf("ExtraEnv[%v]", key),
+					reason: "value length must be between 1 and 256 runes, inclusive",
+				}
+				if !all {
+					return err
+				}
+				errors = append(errors, err)
+			}
+
+			if !_AgentBootstrap_ExtraEnv_Pattern.MatchString(key) {
+				err := AgentBootstrapValidationError{
+					field:  fmt.Sprintf("ExtraEnv[%v]", key),
+					reason: "value does not match regex pattern \"^[A-Z_][A-Z0-9_]*$\"",
+				}
+				if !all {
+					return err
+				}
+				errors = append(errors, err)
+			}
+
+			if utf8.RuneCountInString(val) > 8192 {
+				err := AgentBootstrapValidationError{
+					field:  fmt.Sprintf("ExtraEnv[%v]", key),
+					reason: "value length must be at most 8192 runes",
+				}
+				if !all {
+					return err
+				}
+				errors = append(errors, err)
+			}
+
+		}
+	}
+
+	if len(errors) > 0 {
+		return AgentBootstrapMultiError(errors)
+	}
+
+	return nil
+}
+
+// AgentBootstrapMultiError is an error wrapping multiple validation errors
+// returned by AgentBootstrap.ValidateAll() if the designated constraints
+// aren't met.
+type AgentBootstrapMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m AgentBootstrapMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m AgentBootstrapMultiError) AllErrors() []error { return m }
+
+// AgentBootstrapValidationError is the validation error returned by
+// AgentBootstrap.Validate if the designated constraints aren't met.
+type AgentBootstrapValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e AgentBootstrapValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e AgentBootstrapValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e AgentBootstrapValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e AgentBootstrapValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e AgentBootstrapValidationError) ErrorName() string { return "AgentBootstrapValidationError" }
+
+// Error satisfies the builtin error interface
+func (e AgentBootstrapValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAgentBootstrap.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = AgentBootstrapValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = AgentBootstrapValidationError{}
+
+var _AgentBootstrap_ExtraEnv_Pattern = regexp.MustCompile("^[A-Z_][A-Z0-9_]*$")
+
+// Validate checks the field values on RenderDockerInputWorkflowRequest with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *RenderDockerInputWorkflowRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RenderDockerInputWorkflowRequest with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// RenderDockerInputWorkflowRequestMultiError, or nil if none found.
+func (m *RenderDockerInputWorkflowRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RenderDockerInputWorkflowRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetRunId()); l < 1 || l > 128 {
+		err := RenderDockerInputWorkflowRequestValidationError{
+			field:  "RunId",
+			reason: "value length must be between 1 and 128 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetPlan() == nil {
+		err := RenderDockerInputWorkflowRequestValidationError{
+			field:  "Plan",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetPlan()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RenderDockerInputWorkflowRequestValidationError{
+					field:  "Plan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RenderDockerInputWorkflowRequestValidationError{
+					field:  "Plan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPlan()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RenderDockerInputWorkflowRequestValidationError{
+				field:  "Plan",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetAgentBootstrap()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RenderDockerInputWorkflowRequestValidationError{
+					field:  "AgentBootstrap",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RenderDockerInputWorkflowRequestValidationError{
+					field:  "AgentBootstrap",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetAgentBootstrap()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RenderDockerInputWorkflowRequestValidationError{
+				field:  "AgentBootstrap",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return RenderDockerInputWorkflowRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// RenderDockerInputWorkflowRequestMultiError is an error wrapping multiple
+// validation errors returned by
+// RenderDockerInputWorkflowRequest.ValidateAll() if the designated
+// constraints aren't met.
+type RenderDockerInputWorkflowRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RenderDockerInputWorkflowRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RenderDockerInputWorkflowRequestMultiError) AllErrors() []error { return m }
+
+// RenderDockerInputWorkflowRequestValidationError is the validation error
+// returned by RenderDockerInputWorkflowRequest.Validate if the designated
+// constraints aren't met.
+type RenderDockerInputWorkflowRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e RenderDockerInputWorkflowRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e RenderDockerInputWorkflowRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e RenderDockerInputWorkflowRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e RenderDockerInputWorkflowRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e RenderDockerInputWorkflowRequestValidationError) ErrorName() string {
+	return "RenderDockerInputWorkflowRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e RenderDockerInputWorkflowRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRenderDockerInputWorkflowRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = RenderDockerInputWorkflowRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = RenderDockerInputWorkflowRequestValidationError{}
+
+// Validate checks the field values on RenderTerraformVariablesWorkflowRequest
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the first error encountered is returned, or nil if
+// there are no violations.
+func (m *RenderTerraformVariablesWorkflowRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on
+// RenderTerraformVariablesWorkflowRequest with the rules defined in the proto
+// definition for this message. If any rules are violated, the result is a
+// list of violation errors wrapped in
+// RenderTerraformVariablesWorkflowRequestMultiError, or nil if none found.
+func (m *RenderTerraformVariablesWorkflowRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RenderTerraformVariablesWorkflowRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetRunId()); l < 1 || l > 128 {
+		err := RenderTerraformVariablesWorkflowRequestValidationError{
+			field:  "RunId",
+			reason: "value length must be between 1 and 128 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetPlan() == nil {
+		err := RenderTerraformVariablesWorkflowRequestValidationError{
+			field:  "Plan",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetPlan()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RenderTerraformVariablesWorkflowRequestValidationError{
+					field:  "Plan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RenderTerraformVariablesWorkflowRequestValidationError{
+					field:  "Plan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPlan()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RenderTerraformVariablesWorkflowRequestValidationError{
+				field:  "Plan",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if _, ok := deployment.Terraform_Action_name[int32(m.GetAction())]; !ok {
+		err := RenderTerraformVariablesWorkflowRequestValidationError{
+			field:  "Action",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetAgentBootstrap()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RenderTerraformVariablesWorkflowRequestValidationError{
+					field:  "AgentBootstrap",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RenderTerraformVariablesWorkflowRequestValidationError{
+					field:  "AgentBootstrap",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetAgentBootstrap()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RenderTerraformVariablesWorkflowRequestValidationError{
+				field:  "AgentBootstrap",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return RenderTerraformVariablesWorkflowRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// RenderTerraformVariablesWorkflowRequestMultiError is an error wrapping
+// multiple validation errors returned by
+// RenderTerraformVariablesWorkflowRequest.ValidateAll() if the designated
+// constraints aren't met.
+type RenderTerraformVariablesWorkflowRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RenderTerraformVariablesWorkflowRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RenderTerraformVariablesWorkflowRequestMultiError) AllErrors() []error { return m }
+
+// RenderTerraformVariablesWorkflowRequestValidationError is the validation
+// error returned by RenderTerraformVariablesWorkflowRequest.Validate if the
+// designated constraints aren't met.
+type RenderTerraformVariablesWorkflowRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e RenderTerraformVariablesWorkflowRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e RenderTerraformVariablesWorkflowRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e RenderTerraformVariablesWorkflowRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e RenderTerraformVariablesWorkflowRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e RenderTerraformVariablesWorkflowRequestValidationError) ErrorName() string {
+	return "RenderTerraformVariablesWorkflowRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e RenderTerraformVariablesWorkflowRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRenderTerraformVariablesWorkflowRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = RenderTerraformVariablesWorkflowRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = RenderTerraformVariablesWorkflowRequestValidationError{}
+
 // Validate checks the field values on RenderDeploymentPlanWorkflowRequest with
 // the rules defined in the proto definition for this message. If any rules
 // are violated, the first error encountered is returned, or nil if there are
@@ -1425,6 +2045,35 @@ func (m *RenderDeploymentPlanWorkflowRequest) validate(all bool) error {
 		if err := v.Validate(); err != nil {
 			return RenderDeploymentPlanWorkflowRequestValidationError{
 				field:  "Database",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetWorkload()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RenderDeploymentPlanWorkflowRequestValidationError{
+					field:  "Workload",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RenderDeploymentPlanWorkflowRequestValidationError{
+					field:  "Workload",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetWorkload()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RenderDeploymentPlanWorkflowRequestValidationError{
+				field:  "Workload",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}

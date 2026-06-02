@@ -4,6 +4,7 @@ package cloud.v1.api;
 
 import "cloud/v1/common/entity.proto";
 import "cloud/v1/domain/database.proto";
+import "cloud/v1/domain/workload.proto";
 import "cloud/v1/iam/options.proto";
 import "cloud/v1/iam/permission.proto";
 import "cloud/v1/models/preset.proto";
@@ -389,6 +390,14 @@ message ListWorkloadPresetsRequest {
                 KIND_IS_SYSTEM sorts system presets first/last.
              */
             KIND_IS_SYSTEM = 2;
+            /*
+                KIND_PROTOCOL sorts by the workload protocol.
+             */
+            KIND_PROTOCOL = 3;
+            /*
+                KIND_SCRIPT sorts by the workload script/preset/path label.
+             */
+            KIND_SCRIPT = 4;
         }
         /*
             by selects EITHER a common Entity column or a table-specific Kind.
@@ -440,6 +449,14 @@ message ListWorkloadPresetsRequest {
         page is the pagination cursor/size.
      */
     common.Page page = 7;
+    /*
+        protocols narrows to workload wire protocols.
+     */
+    repeated domain.Workload.Protocol protocols = 8;
+    /*
+        scripts narrows to workload script/preset/path labels.
+     */
+    repeated string scripts = 9 [(validate.rules).repeated = {max_items: 100, items: {string: {max_len: 512}}}];
 }
 /*
     ListWorkloadPresetsResponse returns one page of workload presets.
@@ -658,6 +675,10 @@ message ListTestPresetsRequest {
                 KIND_IS_SYSTEM sorts system presets first/last.
              */
             KIND_IS_SYSTEM = 3;
+            /*
+                KIND_PROTOCOL sorts by the test workload protocol.
+             */
+            KIND_PROTOCOL = 4;
         }
         /*
             by selects EITHER a common Entity column or a table-specific Kind.
@@ -713,6 +734,10 @@ message ListTestPresetsRequest {
         page is the pagination cursor/size.
      */
     common.Page page = 8;
+    /*
+        protocols narrows to workload wire protocols.
+     */
+    repeated domain.Workload.Protocol protocols = 9;
 }
 /*
     ListTestPresetsResponse returns one page of test presets.

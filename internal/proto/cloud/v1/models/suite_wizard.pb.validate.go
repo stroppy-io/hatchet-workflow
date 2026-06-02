@@ -17,6 +17,8 @@ import (
 	"unicode/utf8"
 
 	"google.golang.org/protobuf/types/known/anypb"
+
+	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 )
 
 // ensure the imports are used
@@ -33,6 +35,8 @@ var (
 	_ = (*mail.Address)(nil)
 	_ = anypb.Any{}
 	_ = sort.Sort
+
+	_ = deployment.Provider(0)
 )
 
 // Validate checks the field values on SuiteWizardDraftRecord with the rules
@@ -97,36 +101,29 @@ func (m *SuiteWizardDraftRecord) validate(all bool) error {
 		}
 	}
 
-	if all {
-		switch v := interface{}(m.GetForm()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, SuiteWizardDraftRecordValidationError{
-					field:  "Form",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, SuiteWizardDraftRecordValidationError{
-					field:  "Form",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
+	if _, ok := deployment.Provider_name[int32(m.GetProvider())]; !ok {
+		err := SuiteWizardDraftRecordValidationError{
+			field:  "Provider",
+			reason: "value must be one of the defined enum values",
 		}
-	} else if v, ok := interface{}(m.GetForm()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return SuiteWizardDraftRecordValidationError{
-				field:  "Form",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
+		if !all {
+			return err
 		}
+		errors = append(errors, err)
 	}
 
-	for idx, item := range m.GetPreview() {
+	if len(m.GetCells()) > 1000 {
+		err := SuiteWizardDraftRecordValidationError{
+			field:  "Cells",
+			reason: "value must contain no more than 1000 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetCells() {
 		_, _ = idx, item
 
 		if all {
@@ -134,7 +131,7 @@ func (m *SuiteWizardDraftRecord) validate(all bool) error {
 			case interface{ ValidateAll() error }:
 				if err := v.ValidateAll(); err != nil {
 					errors = append(errors, SuiteWizardDraftRecordValidationError{
-						field:  fmt.Sprintf("Preview[%v]", idx),
+						field:  fmt.Sprintf("Cells[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
@@ -142,7 +139,7 @@ func (m *SuiteWizardDraftRecord) validate(all bool) error {
 			case interface{ Validate() error }:
 				if err := v.Validate(); err != nil {
 					errors = append(errors, SuiteWizardDraftRecordValidationError{
-						field:  fmt.Sprintf("Preview[%v]", idx),
+						field:  fmt.Sprintf("Cells[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
@@ -151,13 +148,44 @@ func (m *SuiteWizardDraftRecord) validate(all bool) error {
 		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return SuiteWizardDraftRecordValidationError{
-					field:  fmt.Sprintf("Preview[%v]", idx),
+					field:  fmt.Sprintf("Cells[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
 			}
 		}
 
+	}
+
+	// no validation rules for MaxParallel
+
+	if all {
+		switch v := interface{}(m.GetSchedule()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, SuiteWizardDraftRecordValidationError{
+					field:  "Schedule",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, SuiteWizardDraftRecordValidationError{
+					field:  "Schedule",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSchedule()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return SuiteWizardDraftRecordValidationError{
+				field:  "Schedule",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
 	}
 
 	for idx, item := range m.GetErrors() {
@@ -195,6 +223,25 @@ func (m *SuiteWizardDraftRecord) validate(all bool) error {
 	}
 
 	// no validation rules for Ready
+
+	if utf8.RuneCountInString(m.GetSuiteId()) > 64 {
+		err := SuiteWizardDraftRecordValidationError{
+			field:  "SuiteId",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.DefaultInTenantRating != nil {
+		// no validation rules for DefaultInTenantRating
+	}
+
+	if m.DefaultInGlobalRating != nil {
+		// no validation rules for DefaultInGlobalRating
+	}
 
 	if len(errors) > 0 {
 		return SuiteWizardDraftRecordMultiError(errors)
@@ -298,13 +345,190 @@ func (m *SuiteWizardDraftRecord_Cell) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for DbPresetId
+	if m.GetSpec() == nil {
+		err := SuiteWizardDraftRecord_CellValidationError{
+			field:  "Spec",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for WorkloadPresetId
+	if all {
+		switch v := interface{}(m.GetSpec()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, SuiteWizardDraftRecord_CellValidationError{
+					field:  "Spec",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, SuiteWizardDraftRecord_CellValidationError{
+					field:  "Spec",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSpec()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return SuiteWizardDraftRecord_CellValidationError{
+				field:  "Spec",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
-	// no validation rules for TestPresetId
+	if all {
+		switch v := interface{}(m.GetDatabase()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, SuiteWizardDraftRecord_CellValidationError{
+					field:  "Database",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, SuiteWizardDraftRecord_CellValidationError{
+					field:  "Database",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDatabase()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return SuiteWizardDraftRecord_CellValidationError{
+				field:  "Database",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
-	// no validation rules for Name
+	if all {
+		switch v := interface{}(m.GetWorkload()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, SuiteWizardDraftRecord_CellValidationError{
+					field:  "Workload",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, SuiteWizardDraftRecord_CellValidationError{
+					field:  "Workload",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetWorkload()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return SuiteWizardDraftRecord_CellValidationError{
+				field:  "Workload",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetTopologySpec()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, SuiteWizardDraftRecord_CellValidationError{
+					field:  "TopologySpec",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, SuiteWizardDraftRecord_CellValidationError{
+					field:  "TopologySpec",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTopologySpec()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return SuiteWizardDraftRecord_CellValidationError{
+				field:  "TopologySpec",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetInfrastructurePlan()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, SuiteWizardDraftRecord_CellValidationError{
+					field:  "InfrastructurePlan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, SuiteWizardDraftRecord_CellValidationError{
+					field:  "InfrastructurePlan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetInfrastructurePlan()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return SuiteWizardDraftRecord_CellValidationError{
+				field:  "InfrastructurePlan",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetRenderPreview()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, SuiteWizardDraftRecord_CellValidationError{
+					field:  "RenderPreview",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, SuiteWizardDraftRecord_CellValidationError{
+					field:  "RenderPreview",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetRenderPreview()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return SuiteWizardDraftRecord_CellValidationError{
+				field:  "RenderPreview",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
 	// no validation rules for Compatible
 

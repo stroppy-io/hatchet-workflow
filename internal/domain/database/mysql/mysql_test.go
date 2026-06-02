@@ -1,0 +1,122 @@
+package mysql
+
+import (
+	"strings"
+	"testing"
+
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/database/dbtest"
+	deploymentbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/deployment"
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/packages"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology"
+)
+
+func mysqlDatabase() *domain.Database {
+	return &domain.Database{
+		Kind: domain.Database_KIND_MYSQL,
+		Source: &domain.Database_Params{
+			Params: &domain.DatabaseParams{
+				Engine: &domain.DatabaseParams_Mysql{
+					Mysql: &domain.MySqlParams{
+						Replicas: 1,
+						Proxysql: 1,
+						SemiSync: true,
+						PrimaryOptions: map[string]string{
+							"max_connections": "500",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func TestMysqlBuildTopologySpec(t *testing.T) {
+	db := mysqlDatabase()
+	spec, err := (&Database{}).BuildTopologySpec(db.GetParams().GetMysql())
+	if err != nil {
+		t.Fatalf("build topology spec: %v", err)
+	}
+	if err := spec.Validate(); err != nil {
+		t.Fatalf("spec invalid: %v", err)
+	}
+	if got, want := len(spec.GetNodes()), 3; got != want {
+		t.Fatalf("nodes = %d, want %d", got, want)
+	}
+	if dbtest.ComponentsByIDInSpec(spec)["mysql-replica-1"].GetKind() != topology.Component_KIND_REPLICA {
+		t.Fatal("mysql-replica-1 is not a replica component")
+	}
+	if !dbtest.HasConnection(spec, "mysql-replica-1", "mysql-primary", "mysql") {
+		t.Fatal("replica-1 does not replicate from primary")
+	}
+	if !dbtest.HasConnection(spec, "proxysql-1", "mysql-primary", "mysql") {
+		t.Fatal("proxysql-1 does not front primary")
+	}
+}
+
+func TestMysqlDeploymentPlan(t *testing.T) {
+	db := mysqlDatabase()
+	spec, err := (&Database{}).BuildTopologySpec(db.GetParams().GetMysql())
+	if err != nil {
+		t.Fatalf("build topology spec: %v", err)
+	}
+
+	plan, err := deploymentbuilder.BuildPlan(spec, dbtest.InfrastructureStateForSpec(spec), deploymentbuilder.BuildOptions{
+		Database:        db,
+		PackageResolver: packages.NewRegistry(PackageResolver{}),
+		Renderers:       deploymentbuilder.NewRegistry(DeploymentRenderer{}),
+	})
+	if err != nil {
+		t.Fatalf("build deployment plan: %v", err)
+	}
+	if err := plan.Validate(); err != nil {
+		t.Fatalf("plan invalid: %v", err)
+	}
+
+	components := dbtest.ComponentsByID(plan)
+	primary := components["mysql-primary"]
+	service := dbtest.ServiceUnitText(primary)
+	for _, want := range []string{"/usr/sbin/mysqld", "initialize-insecure"} {
+		if !strings.Contains(service, want) {
+			t.Fatalf("service missing %q:\n%s", want, service)
+		}
+	}
+	if strings.Contains(service, "is prepared with config") {
+		t.Fatalf("service still contains placeholder unit: %s", service)
+	}
+	config := dbtest.WriteFileText(primary, "030_write_config")
+	for _, want := range []string{"[mysqld]", "server_id = 1", "max_connections = 500", "rpl_semi_sync_master_enabled = 1"} {
+		if !strings.Contains(config, want) {
+			t.Fatalf("config missing %q:\n%s", want, config)
+		}
+	}
+
+	replica := components["mysql-replica-1"]
+	replSQL := dbtest.WriteFileText(replica, "040_write_replication_sql")
+	if !strings.Contains(replSQL, "SOURCE_HOST='10.0.0.1', SOURCE_PORT=3306") {
+		t.Fatalf("replication.sql does not target primary:\n%s", replSQL)
+	}
+	if !strings.Contains(dbtest.ServiceUnitText(replica), "replication.sql") {
+		t.Fatalf("replica service does not apply replication.sql")
+	}
+
+	proxysql := dbtest.WriteFileText(components["proxysql-1"], "030_write_config")
+	for _, want := range []string{
+		`{ address="10.0.0.1" , port=3306 , hostgroup=0 }`,
+		`{ address="10.0.0.2" , port=3306 , hostgroup=1 }`,
+	} {
+		if !strings.Contains(proxysql, want) {
+			t.Fatalf("proxysql mysql_servers missing %q:\n%s", want, proxysql)
+		}
+	}
+}
+
+func TestMysqlPackageResolver(t *testing.T) {
+	pkg, err := PackageResolver{}.ResolveDatabasePackage(mysqlDatabase())
+	if err != nil {
+		t.Fatalf("resolve package: %v", err)
+	}
+	if got, want := pkg.GetId(), "builtin/mysql/default"; got != want {
+		t.Fatalf("package id = %q, want %q", got, want)
+	}
+}

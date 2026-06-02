@@ -65,9 +65,66 @@ type RenderContext struct {
 	Component       *topologypb.Component
 	Node            *topologypb.Node
 	Machine         *deploymentpb.MachineState
+	Runtime         RuntimeView
 	Database        *domain.Database
+	Workload        *domain.Workload
 	DatabasePackage *domain.Package
 	RenderOverrides *deploymentpb.RenderOverrideSet
+}
+
+type RuntimeEndpoint struct {
+	Name    string
+	Address string
+	Port    uint32
+	HasPort bool
+}
+
+type RuntimeComponent struct {
+	ComponentID string
+	NodeID      string
+	Engine      string
+	Role        string
+	Endpoints   map[string]RuntimeEndpoint
+}
+
+func (c RuntimeComponent) Endpoint(name string) (RuntimeEndpoint, bool) {
+	endpoint, ok := c.Endpoints[name]
+	return endpoint, ok
+}
+
+func (c RuntimeComponent) PrivateEndpoint() (RuntimeEndpoint, bool) {
+	return c.Endpoint("private")
+}
+
+type RuntimeView struct {
+	components map[string]RuntimeComponent
+}
+
+func (v RuntimeView) Component(componentID string) (RuntimeComponent, bool) {
+	component, ok := v.components[componentID]
+	return component, ok
+}
+
+func (v RuntimeView) PrivateEndpoint(componentID string) (RuntimeEndpoint, bool) {
+	component, ok := v.Component(componentID)
+	if !ok {
+		return RuntimeEndpoint{}, false
+	}
+	return component.PrivateEndpoint()
+}
+
+type RuntimeTarget struct {
+	ComponentID  string
+	NodeID       string
+	Engine       string
+	Role         string
+	EndpointName string
+	Address      string
+	Port         uint32
+}
+
+func (t RuntimeTarget) AddressPort() string {
+	return AddressPort(t.Address, t.Port)
 }
 
 type PreviewContext struct {
@@ -75,12 +132,14 @@ type PreviewContext struct {
 	Component       *topologypb.Component
 	Node            *topologypb.Node
 	Database        *domain.Database
+	Workload        *domain.Workload
 	DatabasePackage *domain.Package
 	RenderOverrides *deploymentpb.RenderOverrideSet
 }
 
 type BuildOptions struct {
 	Database        *domain.Database
+	Workload        *domain.Workload
 	PackageResolver packages.Resolver
 	Renderers       Registry
 	RenderOverrides *deploymentpb.RenderOverrideSet
@@ -90,6 +149,7 @@ type BuildOptions struct {
 
 type PreviewOptions struct {
 	Database        *domain.Database
+	Workload        *domain.Workload
 	PackageResolver packages.Resolver
 	Renderers       Registry
 	RenderOverrides *deploymentpb.RenderOverrideSet
@@ -103,6 +163,10 @@ func BuildPlan(spec *topologypb.TopologySpec, state *deploymentpb.Infrastructure
 		return nil, err
 	}
 	stateIndex, err := newStateIndex(state)
+	if err != nil {
+		return nil, err
+	}
+	runtime, err := newRuntimeView(idx, stateIndex)
 	if err != nil {
 		return nil, err
 	}
@@ -139,15 +203,22 @@ func BuildPlan(spec *topologypb.TopologySpec, state *deploymentpb.Infrastructure
 			return nil, fmt.Errorf("no deployment renderer for component %q engine=%q role=%q", component.GetId(), component.GetEngine(), component.GetRole())
 		}
 
-		deployment, err := renderer.RenderComponent(RenderContext{
+		renderCtx := RenderContext{
 			Topology:        idx,
 			Component:       component,
 			Node:            node,
 			Machine:         machine,
+			Runtime:         runtime,
 			Database:        options.Database,
+			Workload:        options.Workload,
 			DatabasePackage: dbPackage,
 			RenderOverrides: options.RenderOverrides,
-		})
+		}
+		if _, err := DependencyTargets(renderCtx, nil); err != nil {
+			return nil, fmt.Errorf("resolve runtime dependencies for component %q: %w", component.GetId(), err)
+		}
+
+		deployment, err := renderer.RenderComponent(renderCtx)
 		if err != nil {
 			return nil, err
 		}
@@ -202,6 +273,7 @@ func BuildPreview(spec *topologypb.TopologySpec, options PreviewOptions) (*deplo
 			Component:       component,
 			Node:            node,
 			Database:        options.Database,
+			Workload:        options.Workload,
 			DatabasePackage: dbPackage,
 			RenderOverrides: options.RenderOverrides,
 		})
@@ -268,6 +340,45 @@ func newStateIndex(state *deploymentpb.InfrastructureState) (map[string]*deploym
 	return machines, nil
 }
 
+func newRuntimeView(idx *topologyindex.Index, machines map[string]*deploymentpb.MachineState) (RuntimeView, error) {
+	components := make(map[string]RuntimeComponent, len(idx.Spec().GetComponents()))
+	for _, component := range idx.Spec().GetComponents() {
+		node, ok := idx.NodeForComponentID(component.GetId())
+		if !ok {
+			return RuntimeView{}, fmt.Errorf("component %q is not assigned to a node", component.GetId())
+		}
+		machine, ok := machines[node.GetId()]
+		if !ok {
+			return RuntimeView{}, fmt.Errorf("infrastructure state is missing node %q", node.GetId())
+		}
+
+		endpoints := make(map[string]RuntimeEndpoint, len(machine.GetEndpoints()))
+		for _, endpoint := range machine.GetEndpoints() {
+			runtimeEndpoint := RuntimeEndpoint{
+				Name:    endpoint.GetName(),
+				Address: endpoint.GetAddress(),
+			}
+			if endpoint.Port != nil {
+				runtimeEndpoint.Port = endpoint.GetPort()
+				runtimeEndpoint.HasPort = true
+			}
+			endpoints[runtimeEndpoint.Name] = runtimeEndpoint
+		}
+		if _, ok := endpoints["private"]; !ok {
+			return RuntimeView{}, fmt.Errorf("machine state for node %q is missing private endpoint", node.GetId())
+		}
+
+		components[component.GetId()] = RuntimeComponent{
+			ComponentID: component.GetId(),
+			NodeID:      node.GetId(),
+			Engine:      component.GetEngine(),
+			Role:        component.GetRole(),
+			Endpoints:   endpoints,
+		}
+	}
+	return RuntimeView{components: components}, nil
+}
+
 func sortComponentDeployments(components []*deploymentpb.ComponentDeployment) {
 	sort.SliceStable(components, func(i, j int) bool {
 		left := components[i]
@@ -328,6 +439,107 @@ func DependencyIDs(ctx RenderContext, include func(*topologypb.Component) bool) 
 	return dependencies
 }
 
+func DependencyTargets(ctx RenderContext, include func(*topologypb.Connection, *topologypb.Component) bool) ([]RuntimeTarget, error) {
+	targets := make([]RuntimeTarget, 0)
+	seen := map[string]struct{}{}
+	for _, connection := range ctx.Topology.OutgoingConnections(ctx.Component.GetId()) {
+		target, ok := ctx.Topology.Component(connection.GetToComponentId())
+		if !ok || target.GetId() == ctx.Component.GetId() {
+			continue
+		}
+		if include != nil && !include(connection, target) {
+			continue
+		}
+		targetNode, ok := ctx.Topology.NodeForComponentID(target.GetId())
+		if !ok {
+			continue
+		}
+		private, ok := ctx.Runtime.PrivateEndpoint(target.GetId())
+		if !ok {
+			return nil, fmt.Errorf("component %q on node %q has no private endpoint", target.GetId(), targetNode.GetId())
+		}
+
+		endpointName := connection.GetEndpointName()
+		if endpointName == "" {
+			endpointName = "private"
+		}
+		port := connection.GetPort()
+		if port == 0 && private.HasPort {
+			port = private.Port
+		}
+
+		key := target.GetId() + "\x00" + endpointName + "\x00" + fmt.Sprint(port)
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		targets = append(targets, RuntimeTarget{
+			ComponentID:  target.GetId(),
+			NodeID:       targetNode.GetId(),
+			Engine:       target.GetEngine(),
+			Role:         target.GetRole(),
+			EndpointName: endpointName,
+			Address:      private.Address,
+			Port:         port,
+		})
+	}
+	sortRuntimeTargets(targets)
+	return targets, nil
+}
+
+func ComponentTargets(ctx RenderContext, include func(*topologypb.Component) bool, endpointName string, port uint32) ([]RuntimeTarget, error) {
+	if endpointName == "" {
+		endpointName = "private"
+	}
+	targets := make([]RuntimeTarget, 0)
+	for _, component := range ctx.Topology.Spec().GetComponents() {
+		if include != nil && !include(component) {
+			continue
+		}
+		node, ok := ctx.Topology.NodeForComponentID(component.GetId())
+		if !ok {
+			continue
+		}
+		private, ok := ctx.Runtime.PrivateEndpoint(component.GetId())
+		if !ok {
+			return nil, fmt.Errorf("component %q on node %q has no private endpoint", component.GetId(), node.GetId())
+		}
+		targetPort := port
+		if targetPort == 0 && private.HasPort {
+			targetPort = private.Port
+		}
+		targets = append(targets, RuntimeTarget{
+			ComponentID:  component.GetId(),
+			NodeID:       node.GetId(),
+			Engine:       component.GetEngine(),
+			Role:         component.GetRole(),
+			EndpointName: endpointName,
+			Address:      private.Address,
+			Port:         targetPort,
+		})
+	}
+	sortRuntimeTargets(targets)
+	return targets, nil
+}
+
+func OwnPrivateEndpoint(ctx RenderContext) (RuntimeEndpoint, bool) {
+	return ctx.Runtime.PrivateEndpoint(ctx.Component.GetId())
+}
+
+func sortRuntimeTargets(targets []RuntimeTarget) {
+	sort.SliceStable(targets, func(i, j int) bool {
+		left := targets[i]
+		right := targets[j]
+		if left.ComponentID != right.ComponentID {
+			return left.ComponentID < right.ComponentID
+		}
+		if left.EndpointName != right.EndpointName {
+			return left.EndpointName < right.EndpointName
+		}
+		return left.Port < right.Port
+	})
+}
+
 func ContextFile(ctx RenderContext, dependencies []string) *common.File {
 	var b strings.Builder
 	fmt.Fprintf(&b, "COMPONENT_ID=%s\n", ShellValue(ctx.Component.GetId()))
@@ -337,12 +549,19 @@ func ContextFile(ctx RenderContext, dependencies []string) *common.File {
 	if len(dependencies) > 0 {
 		fmt.Fprintf(&b, "DEPENDS_ON=%s\n", ShellValue(strings.Join(dependencies, ",")))
 	}
-	for _, endpoint := range ctx.Machine.GetEndpoints() {
+	endpoints := append([]*deploymentpb.Endpoint(nil), ctx.Machine.GetEndpoints()...)
+	sort.SliceStable(endpoints, func(i, j int) bool {
+		return endpoints[i].GetName() < endpoints[j].GetName()
+	})
+	for _, endpoint := range endpoints {
 		name := strings.ToUpper(strings.ReplaceAll(endpoint.GetName(), "-", "_"))
 		fmt.Fprintf(&b, "ENDPOINT_%s_ADDRESS=%s\n", name, ShellValue(endpoint.GetAddress()))
 		if endpoint.GetPort() > 0 {
 			fmt.Fprintf(&b, "ENDPOINT_%s_PORT=%d\n", name, endpoint.GetPort())
 		}
+	}
+	for _, target := range contextDependencyTargets(ctx, dependencies) {
+		writeDependencyTargetEnv(&b, target)
 	}
 
 	return &common.File{
@@ -353,6 +572,73 @@ func ContextFile(ctx RenderContext, dependencies []string) *common.File {
 		},
 		Content: &common.File_Text{Text: b.String()},
 	}
+}
+
+func contextDependencyTargets(ctx RenderContext, dependencies []string) []RuntimeTarget {
+	dependencySet := make(map[string]struct{}, len(dependencies))
+	for _, dependency := range dependencies {
+		dependencySet[dependency] = struct{}{}
+	}
+	targets, err := DependencyTargets(ctx, func(_ *topologypb.Connection, target *topologypb.Component) bool {
+		if len(dependencySet) == 0 {
+			return true
+		}
+		_, ok := dependencySet[target.GetId()]
+		return ok
+	})
+	if err != nil {
+		return nil
+	}
+	return targets
+}
+
+func writeDependencyTargetEnv(b *strings.Builder, target RuntimeTarget) {
+	componentName := EnvName(target.ComponentID)
+	endpointName := EnvName(target.EndpointName)
+	fmt.Fprintf(b, "DEPENDENCY_%s_NODE_ID=%s\n", componentName, ShellValue(target.NodeID))
+	fmt.Fprintf(b, "DEPENDENCY_%s_%s_ADDRESS=%s\n", componentName, endpointName, ShellValue(target.Address))
+	if target.Port > 0 {
+		fmt.Fprintf(b, "DEPENDENCY_%s_%s_PORT=%d\n", componentName, endpointName, target.Port)
+		fmt.Fprintf(b, "DEPENDENCY_%s_%s_ADDR=%s\n", componentName, endpointName, ShellValue(target.AddressPort()))
+	}
+}
+
+func AddressPort(address string, port uint32) string {
+	if port == 0 {
+		return address
+	}
+	if strings.Contains(address, ":") && !strings.HasPrefix(address, "[") {
+		return fmt.Sprintf("[%s]:%d", address, port)
+	}
+	return fmt.Sprintf("%s:%d", address, port)
+}
+
+func EnvName(value string) string {
+	var b strings.Builder
+	lastUnderscore := false
+	for _, r := range value {
+		var out rune
+		switch {
+		case r >= 'a' && r <= 'z':
+			out = r - 'a' + 'A'
+		case r >= 'A' && r <= 'Z':
+			out = r
+		case r >= '0' && r <= '9':
+			out = r
+		default:
+			out = '_'
+		}
+		if out == '_' {
+			if lastUnderscore {
+				continue
+			}
+			lastUnderscore = true
+		} else {
+			lastUnderscore = false
+		}
+		b.WriteRune(out)
+	}
+	return strings.Trim(b.String(), "_")
 }
 
 func ServiceFile(componentID, role, configDir string) *common.File {
@@ -376,11 +662,11 @@ Wants=network-online.target
 Type=oneshot
 RemainAfterExit=yes
 EnvironmentFile=%s/topology.env
-ExecStart=/bin/sh -c 'echo "%s is prepared with config from %s"'
+ExecStart=/bin/true
 
 [Install]
 WantedBy=multi-user.target
-`, role, componentID, configDir, componentID, configDir)
+`, role, componentID, configDir)
 }
 
 func CreateDirStep(id string, order uint32, path string, mode uint32) *deploymentpb.AgentStep {

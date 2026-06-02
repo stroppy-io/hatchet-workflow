@@ -6,13 +6,21 @@ import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegen
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import type { EntityFilter, EntityFilterJson, EntitySort, EntitySortJson, Page, PageJson } from "../common/entity_pb.ts";
 import { file_cloud_v1_common_entity } from "../common/entity_pb.ts";
-import type { SuiteRun, SuiteRunJson } from "../domain/suite_pb.ts";
+import type { MachinePlan, MachinePlanJson } from "../deployment/infrastructure_pb.ts";
+import { file_cloud_v1_deployment_infrastructure } from "../deployment/infrastructure_pb.ts";
+import type { Provider, ProviderJson } from "../deployment/provider_pb.ts";
+import { file_cloud_v1_deployment_provider } from "../deployment/provider_pb.ts";
+import type { RenderOverrideSet, RenderOverrideSetJson } from "../deployment/render_pb.ts";
+import { file_cloud_v1_deployment_render } from "../deployment/render_pb.ts";
+import type { Schedule, ScheduleJson, SuiteCell_PresetPair, SuiteCell_PresetPairJson } from "../domain/suite_pb.ts";
 import { file_cloud_v1_domain_suite } from "../domain/suite_pb.ts";
+import type { Test, TestJson } from "../domain/test_pb.ts";
+import { file_cloud_v1_domain_test } from "../domain/test_pb.ts";
 import { file_cloud_v1_iam_options } from "../iam/options_pb.ts";
+import type { SuiteRecord, SuiteRecordJson, SuiteRunRecord, SuiteRunRecordJson } from "../models/suite_pb.ts";
+import { file_cloud_v1_models_suite } from "../models/suite_pb.ts";
 import type { SuiteWizardDraftRecord, SuiteWizardDraftRecordJson } from "../models/suite_wizard_pb.ts";
 import { file_cloud_v1_models_suite_wizard } from "../models/suite_wizard_pb.ts";
-import type { Filled, FilledJson } from "../../../schemapb/schema_pb.ts";
-import { file_schemapb_schema } from "../../../schemapb/schema_pb.ts";
 import { file_validate_validate } from "../../../validate/validate_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -20,7 +28,189 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/api/suite_wizard.proto.
  */
 export const file_cloud_v1_api_suite_wizard: GenFile = /*@__PURE__*/
-  fileDesc("Ch9jbG91ZC92MS9hcGkvc3VpdGVfd2l6YXJkLnByb3RvEgxjbG91ZC52MS5hcGkiagoXU3RhcnRTdWl0ZVdpemFyZFJlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASFgoEbmFtZRgCIAEoCUII+kIFcgMY/wESGQoIc3VpdGVfaWQYAyABKAlCB/pCBHICGEAiXAoYU3RhcnRTdWl0ZVdpemFyZFJlc3BvbnNlEkAKBWRyYWZ0GAEgASgLMicuY2xvdWQudjEubW9kZWxzLlN1aXRlV2l6YXJkRHJhZnRSZWNvcmRCCPpCBYoBAhABIlcKGkdldFN1aXRlV2l6YXJkRHJhZnRSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQYQBABEhsKCGRyYWZ0X2lkGAIgASgJQgn6QgZyBBhAEAEiXwobR2V0U3VpdGVXaXphcmREcmFmdFJlc3BvbnNlEkAKBWRyYWZ0GAEgASgLMicuY2xvdWQudjEubW9kZWxzLlN1aXRlV2l6YXJkRHJhZnRSZWNvcmRCCPpCBYoBAhABIrsBChxMaXN0U3VpdGVXaXphcmREcmFmdHNSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEi0KBmZpbHRlchgCIAEoCzIdLmNsb3VkLnYxLmNvbW1vbi5FbnRpdHlGaWx0ZXISKQoEc29ydBgDIAEoCzIbLmNsb3VkLnYxLmNvbW1vbi5FbnRpdHlTb3J0EiMKBHBhZ2UYBCABKAsyFS5jbG91ZC52MS5jb21tb24uUGFnZSJxCh1MaXN0U3VpdGVXaXphcmREcmFmdHNSZXNwb25zZRI3CgZkcmFmdHMYASADKAsyJy5jbG91ZC52MS5tb2RlbHMuU3VpdGVXaXphcmREcmFmdFJlY29yZBIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAkifgoXUGF0Y2hTdWl0ZVdpemFyZFJlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASGwoIZHJhZnRfaWQYAiABKAlCCfpCBnIEEAEYQBIoCgRmb3JtGAMgASgLMhAuc2NoZW1hcGIuRmlsbGVkQgj6QgWKAQIQASJcChhQYXRjaFN1aXRlV2l6YXJkUmVzcG9uc2USQAoFZHJhZnQYASABKAsyJy5jbG91ZC52MS5tb2RlbHMuU3VpdGVXaXphcmREcmFmdFJlY29yZEII+kIFigECEAEiWgodRGVsZXRlU3VpdGVXaXphcmREcmFmdFJlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASGwoIZHJhZnRfaWQYAiABKAlCCfpCBnIEEAEYQCIgCh5EZWxldGVTdWl0ZVdpemFyZERyYWZ0UmVzcG9uc2UiVQoYRmluaXNoU3VpdGVXaXphcmRSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhsKCGRyYWZ0X2lkGAIgASgJQgn6QgZyBBhAEAEiUwoZRmluaXNoU3VpdGVXaXphcmRSZXNwb25zZRI2CglzdWl0ZV9ydW4YASABKAsyGS5jbG91ZC52MS5kb21haW4uU3VpdGVSdW5CCPpCBYoBAhABMugFChJTdWl0ZVdpemFyZFNlcnZpY2USbQoQU3RhcnRTdWl0ZVdpemFyZBIlLmNsb3VkLnYxLmFwaS5TdGFydFN1aXRlV2l6YXJkUmVxdWVzdBomLmNsb3VkLnYxLmFwaS5TdGFydFN1aXRlV2l6YXJkUmVzcG9uc2UiCoq1GAYSBAgHEAESeQoTR2V0U3VpdGVXaXphcmREcmFmdBIoLmNsb3VkLnYxLmFwaS5HZXRTdWl0ZVdpemFyZERyYWZ0UmVxdWVzdBopLmNsb3VkLnYxLmFwaS5HZXRTdWl0ZVdpemFyZERyYWZ0UmVzcG9uc2UiDZACAYq1GAYSBAgHEAISfwoVTGlzdFN1aXRlV2l6YXJkRHJhZnRzEiouY2xvdWQudjEuYXBpLkxpc3RTdWl0ZVdpemFyZERyYWZ0c1JlcXVlc3QaKy5jbG91ZC52MS5hcGkuTGlzdFN1aXRlV2l6YXJkRHJhZnRzUmVzcG9uc2UiDZACAYq1GAYSBAgHEAUScAoQUGF0Y2hTdWl0ZVdpemFyZBIlLmNsb3VkLnYxLmFwaS5QYXRjaFN1aXRlV2l6YXJkUmVxdWVzdBomLmNsb3VkLnYxLmFwaS5QYXRjaFN1aXRlV2l6YXJkUmVzcG9uc2UiDZACAoq1GAYSBAgHEAMSggEKFkRlbGV0ZVN1aXRlV2l6YXJkRHJhZnQSKy5jbG91ZC52MS5hcGkuRGVsZXRlU3VpdGVXaXphcmREcmFmdFJlcXVlc3QaLC5jbG91ZC52MS5hcGkuRGVsZXRlU3VpdGVXaXphcmREcmFmdFJlc3BvbnNlIg2QAgKKtRgGEgQQBAgHEnAKEUZpbmlzaFN1aXRlV2l6YXJkEiYuY2xvdWQudjEuYXBpLkZpbmlzaFN1aXRlV2l6YXJkUmVxdWVzdBonLmNsb3VkLnYxLmFwaS5GaW5pc2hTdWl0ZVdpemFyZFJlc3BvbnNlIgqKtRgGEgQIBxADQkFaP2dpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2FwaWIGcHJvdG8z", [file_cloud_v1_common_entity, file_cloud_v1_domain_suite, file_cloud_v1_iam_options, file_cloud_v1_models_suite_wizard, file_schemapb_schema, file_validate_validate]);
+  fileDesc("Ch9jbG91ZC92MS9hcGkvc3VpdGVfd2l6YXJkLnByb3RvEgxjbG91ZC52MS5hcGkiwQMKFFN1aXRlV2l6YXJkQ2VsbFBhdGNoEhgKB2NlbGxfaWQYASABKAlCB/pCBHICGEASDgoGcmVtb3ZlGAIgASgIEhQKB2VuYWJsZWQYAyABKAhIAYgBARIbCgRuYW1lGAQgASgJQgj6QgVyAxj/AUgCiAEBEkYKC3ByZXNldF9wYWlyGAogASgLMiUuY2xvdWQudjEuZG9tYWluLlN1aXRlQ2VsbC5QcmVzZXRQYWlyQgj6QgWKAQIQAUgAEiMKDnRlc3RfcHJlc2V0X2lkGAsgASgJQgn6QgZyBBhAEAFIABI2CgtpbmxpbmVfdGVzdBgMIAEoCzIVLmNsb3VkLnYxLmRvbWFpbi5UZXN0Qgj6QgWKAQIQAUgAEkYKEW1hY2hpbmVfb3ZlcnJpZGVzGBQgAygLMiAuY2xvdWQudjEuZGVwbG95bWVudC5NYWNoaW5lUGxhbkIJ+kIGkgEDEIACEkAKEHJlbmRlcl9vdmVycmlkZXMYFSABKAsyJi5jbG91ZC52MS5kZXBsb3ltZW50LlJlbmRlck92ZXJyaWRlU2V0QggKBnNvdXJjZUIKCghfZW5hYmxlZEIHCgVfbmFtZSJqChdTdGFydFN1aXRlV2l6YXJkUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIWCgRuYW1lGAIgASgJQgj6QgVyAxj/ARIZCghzdWl0ZV9pZBgDIAEoCUIH+kIEcgIYQCJcChhTdGFydFN1aXRlV2l6YXJkUmVzcG9uc2USQAoFZHJhZnQYASABKAsyJy5jbG91ZC52MS5tb2RlbHMuU3VpdGVXaXphcmREcmFmdFJlY29yZEII+kIFigECEAEiVwoaR2V0U3VpdGVXaXphcmREcmFmdFJlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASGwoIZHJhZnRfaWQYAiABKAlCCfpCBnIEGEAQASJfChtHZXRTdWl0ZVdpemFyZERyYWZ0UmVzcG9uc2USQAoFZHJhZnQYASABKAsyJy5jbG91ZC52MS5tb2RlbHMuU3VpdGVXaXphcmREcmFmdFJlY29yZEII+kIFigECEAEiuwEKHExpc3RTdWl0ZVdpemFyZERyYWZ0c1JlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASLQoGZmlsdGVyGAIgASgLMh0uY2xvdWQudjEuY29tbW9uLkVudGl0eUZpbHRlchIpCgRzb3J0GAMgASgLMhsuY2xvdWQudjEuY29tbW9uLkVudGl0eVNvcnQSIwoEcGFnZRgEIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5QYWdlInEKHUxpc3RTdWl0ZVdpemFyZERyYWZ0c1Jlc3BvbnNlEjcKBmRyYWZ0cxgBIAMoCzInLmNsb3VkLnYxLm1vZGVscy5TdWl0ZVdpemFyZERyYWZ0UmVjb3JkEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSLFAwoXUGF0Y2hTdWl0ZVdpemFyZFJlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBhAEAESGwoIZHJhZnRfaWQYAiABKAlCCfpCBnIEGEAQARI5Cghwcm92aWRlchgDIAEoDjIdLmNsb3VkLnYxLmRlcGxveW1lbnQuUHJvdmlkZXJCCPpCBYIBAhABEjwKBWNlbGxzGAQgAygLMiIuY2xvdWQudjEuYXBpLlN1aXRlV2l6YXJkQ2VsbFBhdGNoQgn6QgaSAQMQ6AcSGQoMbWF4X3BhcmFsbGVsGAUgASgNSACIAQESKwoIc2NoZWR1bGUYBiABKAsyGS5jbG91ZC52MS5kb21haW4uU2NoZWR1bGUSJQoYZGVmYXVsdF9pbl90ZW5hbnRfcmF0aW5nGAcgASgISAGIAQESJQoYZGVmYXVsdF9pbl9nbG9iYWxfcmF0aW5nGAggASgISAKIAQESFQoNcmVwbGFjZV9jZWxscxgJIAEoCEIPCg1fbWF4X3BhcmFsbGVsQhsKGV9kZWZhdWx0X2luX3RlbmFudF9yYXRpbmdCGwoZX2RlZmF1bHRfaW5fZ2xvYmFsX3JhdGluZyJcChhQYXRjaFN1aXRlV2l6YXJkUmVzcG9uc2USQAoFZHJhZnQYASABKAsyJy5jbG91ZC52MS5tb2RlbHMuU3VpdGVXaXphcmREcmFmdFJlY29yZEII+kIFigECEAEiWgodRGVsZXRlU3VpdGVXaXphcmREcmFmdFJlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBhAEAESGwoIZHJhZnRfaWQYAiABKAlCCfpCBnIEEAEYQCIgCh5EZWxldGVTdWl0ZVdpemFyZERyYWZ0UmVzcG9uc2Ui6gEKGEZpbmlzaFN1aXRlV2l6YXJkUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIbCghkcmFmdF9pZBgCIAEoCUIJ+kIGcgQQARhAEg0KBXN0YXJ0GAMgASgIEhwKCnN1aXRlX25hbWUYBCABKAlCCPpCBXIDGP8BEh0KEGluX3RlbmFudF9yYXRpbmcYBSABKAhIAIgBARIdChBpbl9nbG9iYWxfcmF0aW5nGAYgASgISAGIAQFCEwoRX2luX3RlbmFudF9yYXRpbmdCEwoRX2luX2dsb2JhbF9yYXRpbmcihgEKGUZpbmlzaFN1aXRlV2l6YXJkUmVzcG9uc2USNQoFc3VpdGUYASABKAsyHC5jbG91ZC52MS5tb2RlbHMuU3VpdGVSZWNvcmRCCPpCBYoBAhABEjIKCXN1aXRlX3J1bhgCIAEoCzIfLmNsb3VkLnYxLm1vZGVscy5TdWl0ZVJ1blJlY29yZDLoBQoSU3VpdGVXaXphcmRTZXJ2aWNlEm0KEFN0YXJ0U3VpdGVXaXphcmQSJS5jbG91ZC52MS5hcGkuU3RhcnRTdWl0ZVdpemFyZFJlcXVlc3QaJi5jbG91ZC52MS5hcGkuU3RhcnRTdWl0ZVdpemFyZFJlc3BvbnNlIgqKtRgGEgQIBxABEnkKE0dldFN1aXRlV2l6YXJkRHJhZnQSKC5jbG91ZC52MS5hcGkuR2V0U3VpdGVXaXphcmREcmFmdFJlcXVlc3QaKS5jbG91ZC52MS5hcGkuR2V0U3VpdGVXaXphcmREcmFmdFJlc3BvbnNlIg2QAgGKtRgGEgQIBxACEn8KFUxpc3RTdWl0ZVdpemFyZERyYWZ0cxIqLmNsb3VkLnYxLmFwaS5MaXN0U3VpdGVXaXphcmREcmFmdHNSZXF1ZXN0GisuY2xvdWQudjEuYXBpLkxpc3RTdWl0ZVdpemFyZERyYWZ0c1Jlc3BvbnNlIg2QAgGKtRgGEgQIBxAFEnAKEFBhdGNoU3VpdGVXaXphcmQSJS5jbG91ZC52MS5hcGkuUGF0Y2hTdWl0ZVdpemFyZFJlcXVlc3QaJi5jbG91ZC52MS5hcGkuUGF0Y2hTdWl0ZVdpemFyZFJlc3BvbnNlIg2QAgKKtRgGEgQIBxADEoIBChZEZWxldGVTdWl0ZVdpemFyZERyYWZ0EisuY2xvdWQudjEuYXBpLkRlbGV0ZVN1aXRlV2l6YXJkRHJhZnRSZXF1ZXN0GiwuY2xvdWQudjEuYXBpLkRlbGV0ZVN1aXRlV2l6YXJkRHJhZnRSZXNwb25zZSINkAICirUYBhIECAcQBBJwChFGaW5pc2hTdWl0ZVdpemFyZBImLmNsb3VkLnYxLmFwaS5GaW5pc2hTdWl0ZVdpemFyZFJlcXVlc3QaJy5jbG91ZC52MS5hcGkuRmluaXNoU3VpdGVXaXphcmRSZXNwb25zZSIKirUYBhIECAcQA0JBWj9naXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9hcGliBnByb3RvMw", [file_cloud_v1_common_entity, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_provider, file_cloud_v1_deployment_render, file_cloud_v1_domain_suite, file_cloud_v1_domain_test, file_cloud_v1_iam_options, file_cloud_v1_models_suite, file_cloud_v1_models_suite_wizard, file_validate_validate]);
+
+/**
+ *
+ * SuiteWizardCellPatch is one client edit to the draft cell list.
+ *
+ * @generated from message cloud.v1.api.SuiteWizardCellPatch
+ */
+export type SuiteWizardCellPatch = Message<"cloud.v1.api.SuiteWizardCellPatch"> & {
+  /**
+   *
+   * cell_id selects an existing cell. Empty means create a new cell.
+   *
+   * @generated from field: string cell_id = 1;
+   */
+  cellId: string;
+
+  /**
+   *
+   * remove deletes the selected cell. Other fields are ignored when remove=true.
+   *
+   * @generated from field: bool remove = 2;
+   */
+  remove: boolean;
+
+  /**
+   *
+   * enabled updates the cell enabled flag when set.
+   *
+   * @generated from field: optional bool enabled = 3;
+   */
+  enabled?: boolean;
+
+  /**
+   *
+   * name updates the cell display name. Empty value is allowed and means derive.
+   *
+   * @generated from field: optional string name = 4;
+   */
+  name?: string;
+
+  /**
+   *
+   * source updates where the cell's database/workload definition comes from.
+   *
+   * @generated from oneof cloud.v1.api.SuiteWizardCellPatch.source
+   */
+  source: {
+    /**
+     *
+     * preset_pair selects a database preset and workload preset.
+     *
+     * @generated from field: cloud.v1.domain.SuiteCell.PresetPair preset_pair = 10;
+     */
+    value: SuiteCell_PresetPair;
+    case: "presetPair";
+  } | {
+    /**
+     *
+     * test_preset_id selects a complete test preset.
+     *
+     * @generated from field: string test_preset_id = 11;
+     */
+    value: string;
+    case: "testPresetId";
+  } | {
+    /**
+     *
+     * inline_test is for automation/CLI paths that do not want to create
+     * presets first.
+     *
+     * @generated from field: cloud.v1.domain.Test inline_test = 12;
+     */
+    value: Test;
+    case: "inlineTest";
+  } | { case: undefined; value?: undefined };
+
+  /**
+   *
+   * machine_overrides updates provider machine edits for this cell.
+   *
+   * @generated from field: repeated cloud.v1.deployment.MachinePlan machine_overrides = 20;
+   */
+  machineOverrides: MachinePlan[];
+
+  /**
+   *
+   * render_overrides updates editable generated config overrides for this cell.
+   *
+   * @generated from field: cloud.v1.deployment.RenderOverrideSet render_overrides = 21;
+   */
+  renderOverrides?: RenderOverrideSet;
+};
+
+/**
+ *
+ * SuiteWizardCellPatch is one client edit to the draft cell list.
+ *
+ * @generated from message cloud.v1.api.SuiteWizardCellPatch
+ */
+export type SuiteWizardCellPatchJson = {
+  /**
+   *
+   * cell_id selects an existing cell. Empty means create a new cell.
+   *
+   * @generated from field: string cell_id = 1;
+   */
+  cellId?: string;
+
+  /**
+   *
+   * remove deletes the selected cell. Other fields are ignored when remove=true.
+   *
+   * @generated from field: bool remove = 2;
+   */
+  remove?: boolean;
+
+  /**
+   *
+   * enabled updates the cell enabled flag when set.
+   *
+   * @generated from field: optional bool enabled = 3;
+   */
+  enabled?: boolean;
+
+  /**
+   *
+   * name updates the cell display name. Empty value is allowed and means derive.
+   *
+   * @generated from field: optional string name = 4;
+   */
+  name?: string;
+
+  /**
+   *
+   * preset_pair selects a database preset and workload preset.
+   *
+   * @generated from field: cloud.v1.domain.SuiteCell.PresetPair preset_pair = 10;
+   */
+  presetPair?: SuiteCell_PresetPairJson;
+
+  /**
+   *
+   * test_preset_id selects a complete test preset.
+   *
+   * @generated from field: string test_preset_id = 11;
+   */
+  testPresetId?: string;
+
+  /**
+   *
+   * inline_test is for automation/CLI paths that do not want to create
+   * presets first.
+   *
+   * @generated from field: cloud.v1.domain.Test inline_test = 12;
+   */
+  inlineTest?: TestJson;
+
+  /**
+   *
+   * machine_overrides updates provider machine edits for this cell.
+   *
+   * @generated from field: repeated cloud.v1.deployment.MachinePlan machine_overrides = 20;
+   */
+  machineOverrides?: MachinePlanJson[];
+
+  /**
+   *
+   * render_overrides updates editable generated config overrides for this cell.
+   *
+   * @generated from field: cloud.v1.deployment.RenderOverrideSet render_overrides = 21;
+   */
+  renderOverrides?: RenderOverrideSetJson;
+};
+
+export type SuiteWizardCellPatchValid = SuiteWizardCellPatch;
+
+/**
+ * Describes the message cloud.v1.api.SuiteWizardCellPatch.
+ * Use `create(SuiteWizardCellPatchSchema)` to create a new message.
+ */
+export const SuiteWizardCellPatchSchema: GenMessage<SuiteWizardCellPatch, {jsonType: SuiteWizardCellPatchJson, validType: SuiteWizardCellPatchValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_suite_wizard, 0);
 
 /**
  *
@@ -93,7 +283,7 @@ export type StartSuiteWizardRequestValid = StartSuiteWizardRequest;
  * Use `create(StartSuiteWizardRequestSchema)` to create a new message.
  */
 export const StartSuiteWizardRequestSchema: GenMessage<StartSuiteWizardRequest, {jsonType: StartSuiteWizardRequestJson, validType: StartSuiteWizardRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_suite_wizard, 0);
+  messageDesc(file_cloud_v1_api_suite_wizard, 1);
 
 /**
  *
@@ -104,7 +294,7 @@ export const StartSuiteWizardRequestSchema: GenMessage<StartSuiteWizardRequest, 
 export type StartSuiteWizardResponse = Message<"cloud.v1.api.StartSuiteWizardResponse"> & {
   /**
    *
-   * draft is the new wizard draft (carrying the initial form schema).
+   * draft is the new wizard draft.
    *
    * @generated from field: cloud.v1.models.SuiteWizardDraftRecord draft = 1;
    */
@@ -120,7 +310,7 @@ export type StartSuiteWizardResponse = Message<"cloud.v1.api.StartSuiteWizardRes
 export type StartSuiteWizardResponseJson = {
   /**
    *
-   * draft is the new wizard draft (carrying the initial form schema).
+   * draft is the new wizard draft.
    *
    * @generated from field: cloud.v1.models.SuiteWizardDraftRecord draft = 1;
    */
@@ -134,7 +324,7 @@ export type StartSuiteWizardResponseValid = StartSuiteWizardResponse;
  * Use `create(StartSuiteWizardResponseSchema)` to create a new message.
  */
 export const StartSuiteWizardResponseSchema: GenMessage<StartSuiteWizardResponse, {jsonType: StartSuiteWizardResponseJson, validType: StartSuiteWizardResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_suite_wizard, 1);
+  messageDesc(file_cloud_v1_api_suite_wizard, 2);
 
 /**
  *
@@ -191,7 +381,7 @@ export type GetSuiteWizardDraftRequestValid = GetSuiteWizardDraftRequest;
  * Use `create(GetSuiteWizardDraftRequestSchema)` to create a new message.
  */
 export const GetSuiteWizardDraftRequestSchema: GenMessage<GetSuiteWizardDraftRequest, {jsonType: GetSuiteWizardDraftRequestJson, validType: GetSuiteWizardDraftRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_suite_wizard, 2);
+  messageDesc(file_cloud_v1_api_suite_wizard, 3);
 
 /**
  *
@@ -232,7 +422,7 @@ export type GetSuiteWizardDraftResponseValid = GetSuiteWizardDraftResponse;
  * Use `create(GetSuiteWizardDraftResponseSchema)` to create a new message.
  */
 export const GetSuiteWizardDraftResponseSchema: GenMessage<GetSuiteWizardDraftResponse, {jsonType: GetSuiteWizardDraftResponseJson, validType: GetSuiteWizardDraftResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_suite_wizard, 3);
+  messageDesc(file_cloud_v1_api_suite_wizard, 4);
 
 /**
  *
@@ -252,7 +442,7 @@ export type ListSuiteWizardDraftsRequest = Message<"cloud.v1.api.ListSuiteWizard
 
   /**
    *
-   * filter holds the shared Entity-level filters (author, time windows, ...).
+   * filter holds the shared Entity-level filters.
    *
    * @generated from field: cloud.v1.common.EntityFilter filter = 2;
    */
@@ -268,7 +458,7 @@ export type ListSuiteWizardDraftsRequest = Message<"cloud.v1.api.ListSuiteWizard
 
   /**
    *
-   * page carries pagination (page size + token).
+   * page carries pagination.
    *
    * @generated from field: cloud.v1.common.Page page = 4;
    */
@@ -293,7 +483,7 @@ export type ListSuiteWizardDraftsRequestJson = {
 
   /**
    *
-   * filter holds the shared Entity-level filters (author, time windows, ...).
+   * filter holds the shared Entity-level filters.
    *
    * @generated from field: cloud.v1.common.EntityFilter filter = 2;
    */
@@ -309,7 +499,7 @@ export type ListSuiteWizardDraftsRequestJson = {
 
   /**
    *
-   * page carries pagination (page size + token).
+   * page carries pagination.
    *
    * @generated from field: cloud.v1.common.Page page = 4;
    */
@@ -323,7 +513,7 @@ export type ListSuiteWizardDraftsRequestValid = ListSuiteWizardDraftsRequest;
  * Use `create(ListSuiteWizardDraftsRequestSchema)` to create a new message.
  */
 export const ListSuiteWizardDraftsRequestSchema: GenMessage<ListSuiteWizardDraftsRequest, {jsonType: ListSuiteWizardDraftsRequestJson, validType: ListSuiteWizardDraftsRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_suite_wizard, 4);
+  messageDesc(file_cloud_v1_api_suite_wizard, 5);
 
 /**
  *
@@ -380,14 +570,13 @@ export type ListSuiteWizardDraftsResponseValid = ListSuiteWizardDraftsResponse;
  * Use `create(ListSuiteWizardDraftsResponseSchema)` to create a new message.
  */
 export const ListSuiteWizardDraftsResponseSchema: GenMessage<ListSuiteWizardDraftsResponse, {jsonType: ListSuiteWizardDraftsResponseJson, validType: ListSuiteWizardDraftsResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_suite_wizard, 5);
+  messageDesc(file_cloud_v1_api_suite_wizard, 6);
 
 /**
  *
- * PatchSuiteWizard submits the edited form. The server validates it, prunes the
- * matrix to compatible cells, expands the preview, recomputes readiness and
- * returns the full new draft (form may carry a re-emitted schema when the
- * selected presets changed the active matrix).
+ * PatchSuiteWizard submits typed edits. The server merges or replaces cells,
+ * resolves preset references, derives per-cell topology/infrastructure previews,
+ * applies compatible render overrides, and recomputes readiness.
  *
  * @generated from message cloud.v1.api.PatchSuiteWizardRequest
  */
@@ -410,19 +599,68 @@ export type PatchSuiteWizardRequest = Message<"cloud.v1.api.PatchSuiteWizardRequ
 
   /**
    *
-   * form carries the edited form values (Filled = values + schema ref).
+   * provider updates the deployment backend when not unspecified.
    *
-   * @generated from field: schemapb.Filled form = 3;
+   * @generated from field: cloud.v1.deployment.Provider provider = 3;
    */
-  form?: Filled;
+  provider: Provider;
+
+  /**
+   *
+   * cells are cell edits. When replace_cells=true they become the full cell
+   * list; otherwise they are merged by cell_id.
+   *
+   * @generated from field: repeated cloud.v1.api.SuiteWizardCellPatch cells = 4;
+   */
+  cells: SuiteWizardCellPatch[];
+
+  /**
+   *
+   * max_parallel updates draft concurrency when set. 0 means unlimited.
+   *
+   * @generated from field: optional uint32 max_parallel = 5;
+   */
+  maxParallel?: number;
+
+  /**
+   *
+   * schedule updates the draft schedule when present.
+   *
+   * @generated from field: cloud.v1.domain.Schedule schedule = 6;
+   */
+  schedule?: Schedule;
+
+  /**
+   *
+   * default_in_tenant_rating updates the suite default when set.
+   *
+   * @generated from field: optional bool default_in_tenant_rating = 7;
+   */
+  defaultInTenantRating?: boolean;
+
+  /**
+   *
+   * default_in_global_rating updates the suite default when set.
+   *
+   * @generated from field: optional bool default_in_global_rating = 8;
+   */
+  defaultInGlobalRating?: boolean;
+
+  /**
+   *
+   * replace_cells makes cells the full draft matrix instead of an incremental
+   * patch.
+   *
+   * @generated from field: bool replace_cells = 9;
+   */
+  replaceCells: boolean;
 };
 
 /**
  *
- * PatchSuiteWizard submits the edited form. The server validates it, prunes the
- * matrix to compatible cells, expands the preview, recomputes readiness and
- * returns the full new draft (form may carry a re-emitted schema when the
- * selected presets changed the active matrix).
+ * PatchSuiteWizard submits typed edits. The server merges or replaces cells,
+ * resolves preset references, derives per-cell topology/infrastructure previews,
+ * applies compatible render overrides, and recomputes readiness.
  *
  * @generated from message cloud.v1.api.PatchSuiteWizardRequest
  */
@@ -445,11 +683,61 @@ export type PatchSuiteWizardRequestJson = {
 
   /**
    *
-   * form carries the edited form values (Filled = values + schema ref).
+   * provider updates the deployment backend when not unspecified.
    *
-   * @generated from field: schemapb.Filled form = 3;
+   * @generated from field: cloud.v1.deployment.Provider provider = 3;
    */
-  form?: FilledJson;
+  provider?: ProviderJson;
+
+  /**
+   *
+   * cells are cell edits. When replace_cells=true they become the full cell
+   * list; otherwise they are merged by cell_id.
+   *
+   * @generated from field: repeated cloud.v1.api.SuiteWizardCellPatch cells = 4;
+   */
+  cells?: SuiteWizardCellPatchJson[];
+
+  /**
+   *
+   * max_parallel updates draft concurrency when set. 0 means unlimited.
+   *
+   * @generated from field: optional uint32 max_parallel = 5;
+   */
+  maxParallel?: number;
+
+  /**
+   *
+   * schedule updates the draft schedule when present.
+   *
+   * @generated from field: cloud.v1.domain.Schedule schedule = 6;
+   */
+  schedule?: ScheduleJson;
+
+  /**
+   *
+   * default_in_tenant_rating updates the suite default when set.
+   *
+   * @generated from field: optional bool default_in_tenant_rating = 7;
+   */
+  defaultInTenantRating?: boolean;
+
+  /**
+   *
+   * default_in_global_rating updates the suite default when set.
+   *
+   * @generated from field: optional bool default_in_global_rating = 8;
+   */
+  defaultInGlobalRating?: boolean;
+
+  /**
+   *
+   * replace_cells makes cells the full draft matrix instead of an incremental
+   * patch.
+   *
+   * @generated from field: bool replace_cells = 9;
+   */
+  replaceCells?: boolean;
 };
 
 export type PatchSuiteWizardRequestValid = PatchSuiteWizardRequest;
@@ -459,7 +747,7 @@ export type PatchSuiteWizardRequestValid = PatchSuiteWizardRequest;
  * Use `create(PatchSuiteWizardRequestSchema)` to create a new message.
  */
 export const PatchSuiteWizardRequestSchema: GenMessage<PatchSuiteWizardRequest, {jsonType: PatchSuiteWizardRequestJson, validType: PatchSuiteWizardRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_suite_wizard, 6);
+  messageDesc(file_cloud_v1_api_suite_wizard, 7);
 
 /**
  *
@@ -500,7 +788,7 @@ export type PatchSuiteWizardResponseValid = PatchSuiteWizardResponse;
  * Use `create(PatchSuiteWizardResponseSchema)` to create a new message.
  */
 export const PatchSuiteWizardResponseSchema: GenMessage<PatchSuiteWizardResponse, {jsonType: PatchSuiteWizardResponseJson, validType: PatchSuiteWizardResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_suite_wizard, 7);
+  messageDesc(file_cloud_v1_api_suite_wizard, 8);
 
 /**
  *
@@ -557,7 +845,7 @@ export type DeleteSuiteWizardDraftRequestValid = DeleteSuiteWizardDraftRequest;
  * Use `create(DeleteSuiteWizardDraftRequestSchema)` to create a new message.
  */
 export const DeleteSuiteWizardDraftRequestSchema: GenMessage<DeleteSuiteWizardDraftRequest, {jsonType: DeleteSuiteWizardDraftRequestJson, validType: DeleteSuiteWizardDraftRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_suite_wizard, 8);
+  messageDesc(file_cloud_v1_api_suite_wizard, 9);
 
 /**
  *
@@ -586,13 +874,12 @@ export type DeleteSuiteWizardDraftResponseValid = DeleteSuiteWizardDraftResponse
  * Use `create(DeleteSuiteWizardDraftResponseSchema)` to create a new message.
  */
 export const DeleteSuiteWizardDraftResponseSchema: GenMessage<DeleteSuiteWizardDraftResponse, {jsonType: DeleteSuiteWizardDraftResponseJson, validType: DeleteSuiteWizardDraftResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_suite_wizard, 9);
+  messageDesc(file_cloud_v1_api_suite_wizard, 10);
 
 /**
  *
- * FinishSuiteWizard bakes the draft into a domain.SuiteRun: every compatible cell
- * becomes a fully baked TestRun (preset params + the suite's provider settings +
- * derived topology). Rejected unless draft.ready.
+ * FinishSuiteWizard persists a reusable SuiteRecord. If start=true it also starts
+ * a SuiteRun using the same rules as StartSuite.
  *
  * @generated from message cloud.v1.api.FinishSuiteWizardRequest
  */
@@ -607,18 +894,50 @@ export type FinishSuiteWizardRequest = Message<"cloud.v1.api.FinishSuiteWizardRe
 
   /**
    *
-   * draft_id is the wizard draft to bake.
+   * draft_id is the wizard draft to finish.
    *
    * @generated from field: string draft_id = 2;
    */
   draftId: string;
+
+  /**
+   *
+   * start launches the saved suite immediately.
+   *
+   * @generated from field: bool start = 3;
+   */
+  start: boolean;
+
+  /**
+   *
+   * suite_name optionally overrides the persisted suite name. Empty means use
+   * draft entity.name.
+   *
+   * @generated from field: string suite_name = 4;
+   */
+  suiteName: string;
+
+  /**
+   *
+   * in_tenant_rating overrides child run tenant-rating membership when start=true.
+   *
+   * @generated from field: optional bool in_tenant_rating = 5;
+   */
+  inTenantRating?: boolean;
+
+  /**
+   *
+   * in_global_rating overrides child run global-rating membership when start=true.
+   *
+   * @generated from field: optional bool in_global_rating = 6;
+   */
+  inGlobalRating?: boolean;
 };
 
 /**
  *
- * FinishSuiteWizard bakes the draft into a domain.SuiteRun: every compatible cell
- * becomes a fully baked TestRun (preset params + the suite's provider settings +
- * derived topology). Rejected unless draft.ready.
+ * FinishSuiteWizard persists a reusable SuiteRecord. If start=true it also starts
+ * a SuiteRun using the same rules as StartSuite.
  *
  * @generated from message cloud.v1.api.FinishSuiteWizardRequest
  */
@@ -633,11 +952,44 @@ export type FinishSuiteWizardRequestJson = {
 
   /**
    *
-   * draft_id is the wizard draft to bake.
+   * draft_id is the wizard draft to finish.
    *
    * @generated from field: string draft_id = 2;
    */
   draftId?: string;
+
+  /**
+   *
+   * start launches the saved suite immediately.
+   *
+   * @generated from field: bool start = 3;
+   */
+  start?: boolean;
+
+  /**
+   *
+   * suite_name optionally overrides the persisted suite name. Empty means use
+   * draft entity.name.
+   *
+   * @generated from field: string suite_name = 4;
+   */
+  suiteName?: string;
+
+  /**
+   *
+   * in_tenant_rating overrides child run tenant-rating membership when start=true.
+   *
+   * @generated from field: optional bool in_tenant_rating = 5;
+   */
+  inTenantRating?: boolean;
+
+  /**
+   *
+   * in_global_rating overrides child run global-rating membership when start=true.
+   *
+   * @generated from field: optional bool in_global_rating = 6;
+   */
+  inGlobalRating?: boolean;
 };
 
 export type FinishSuiteWizardRequestValid = FinishSuiteWizardRequest;
@@ -647,40 +999,56 @@ export type FinishSuiteWizardRequestValid = FinishSuiteWizardRequest;
  * Use `create(FinishSuiteWizardRequestSchema)` to create a new message.
  */
 export const FinishSuiteWizardRequestSchema: GenMessage<FinishSuiteWizardRequest, {jsonType: FinishSuiteWizardRequestJson, validType: FinishSuiteWizardRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_suite_wizard, 10);
+  messageDesc(file_cloud_v1_api_suite_wizard, 11);
 
 /**
  *
- * FinishSuiteWizardResponse returns the baked suite run spec.
+ * FinishSuiteWizardResponse returns the saved suite and, when start=true, the
+ * launched suite run.
  *
  * @generated from message cloud.v1.api.FinishSuiteWizardResponse
  */
 export type FinishSuiteWizardResponse = Message<"cloud.v1.api.FinishSuiteWizardResponse"> & {
   /**
    *
-   * suite_run is the baked domain.SuiteRun (every compatible cell as a baked
-   * TestRun).
+   * suite is the saved reusable suite definition.
    *
-   * @generated from field: cloud.v1.domain.SuiteRun suite_run = 1;
+   * @generated from field: cloud.v1.models.SuiteRecord suite = 1;
    */
-  suiteRun?: SuiteRun;
+  suite?: SuiteRecord;
+
+  /**
+   *
+   * suite_run is set when start=true.
+   *
+   * @generated from field: cloud.v1.models.SuiteRunRecord suite_run = 2;
+   */
+  suiteRun?: SuiteRunRecord;
 };
 
 /**
  *
- * FinishSuiteWizardResponse returns the baked suite run spec.
+ * FinishSuiteWizardResponse returns the saved suite and, when start=true, the
+ * launched suite run.
  *
  * @generated from message cloud.v1.api.FinishSuiteWizardResponse
  */
 export type FinishSuiteWizardResponseJson = {
   /**
    *
-   * suite_run is the baked domain.SuiteRun (every compatible cell as a baked
-   * TestRun).
+   * suite is the saved reusable suite definition.
    *
-   * @generated from field: cloud.v1.domain.SuiteRun suite_run = 1;
+   * @generated from field: cloud.v1.models.SuiteRecord suite = 1;
    */
-  suiteRun?: SuiteRunJson;
+  suite?: SuiteRecordJson;
+
+  /**
+   *
+   * suite_run is set when start=true.
+   *
+   * @generated from field: cloud.v1.models.SuiteRunRecord suite_run = 2;
+   */
+  suiteRun?: SuiteRunRecordJson;
 };
 
 export type FinishSuiteWizardResponseValid = FinishSuiteWizardResponse;
@@ -690,12 +1058,11 @@ export type FinishSuiteWizardResponseValid = FinishSuiteWizardResponse;
  * Use `create(FinishSuiteWizardResponseSchema)` to create a new message.
  */
 export const FinishSuiteWizardResponseSchema: GenMessage<FinishSuiteWizardResponse, {jsonType: FinishSuiteWizardResponseJson, validType: FinishSuiteWizardResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_suite_wizard, 11);
+  messageDesc(file_cloud_v1_api_suite_wizard, 12);
 
 /**
  *
- * SuiteWizardService drives the suite wizard: start, fetch/list, patch-loop and
- * finish into a baked SuiteRun.
+ * SuiteWizardService drives the suite wizard.
  *
  * @generated from service cloud.v1.api.SuiteWizardService
  */
@@ -735,7 +1102,7 @@ export const SuiteWizardService: GenService<{
   },
   /**
    *
-   * PatchSuiteWizard is idempotent: re-submitting the same form converges.
+   * PatchSuiteWizard is idempotent: re-submitting the same patch converges.
    *
    * @generated from rpc cloud.v1.api.SuiteWizardService.PatchSuiteWizard
    */
@@ -746,7 +1113,7 @@ export const SuiteWizardService: GenService<{
   },
   /**
    *
-   * DeleteSuiteWizardDraft is idempotent: deleting an absent draft is a no-op.
+   * DeleteSuiteWizardDraft is idempotent.
    *
    * @generated from rpc cloud.v1.api.SuiteWizardService.DeleteSuiteWizardDraft
    */
@@ -757,7 +1124,7 @@ export const SuiteWizardService: GenService<{
   },
   /**
    *
-   * FinishSuiteWizard mints a SuiteRun from the draft. Not idempotent.
+   * FinishSuiteWizard persists a suite and optionally launches it.
    *
    * @generated from rpc cloud.v1.api.SuiteWizardService.FinishSuiteWizard
    */

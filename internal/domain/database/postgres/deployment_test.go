@@ -47,7 +47,7 @@ func TestPostgresDeploymentRendererRendersPrioritiesDependenciesAndSteps(t *test
 	}
 
 	master := components["postgres-master"]
-	if got, want := len(master.GetSteps()), 9; got != want {
+	if got, want := len(master.GetSteps()), 12; got != want {
 		t.Fatalf("master steps = %d, want %d", got, want)
 	}
 	context := findDeploymentWriteFileText(t, master, "020_write_context")
@@ -62,6 +62,83 @@ func TestPostgresDeploymentRendererRendersPrioritiesDependenciesAndSteps(t *test
 	install := findDeploymentCallCmd(t, master, "110_install")
 	if !strings.Contains(install, "postgresql-16") {
 		t.Fatalf("install command does not use resolved package: %s", install)
+	}
+	hba := findDeploymentWriteFileText(t, master, "040_write_hba")
+	if !pgHBARuleExists(hba, "host", "replication", "replicator", "10.0.0.0/8", "scram-sha-256") {
+		t.Fatalf("pg_hba does not contain scram replication access: %s", hba)
+	}
+	if strings.Contains(hba, "0.0.0.0/0 trust") {
+		t.Fatalf("pg_hba must not trust replication from anywhere: %s", hba)
+	}
+	service := findDeploymentWriteFileText(t, master, "200_write_service")
+	for _, want := range []string{
+		"/usr/sbin/runuser -u postgres",
+		"initdb",
+		"postgres",
+		"-c config_file='/etc/stroppy-cloud/postgres-master/postgresql.conf'",
+		"-c hba_file='/etc/stroppy-cloud/postgres-master/pg_hba.conf'",
+	} {
+		if !strings.Contains(service, want) {
+			t.Fatalf("service does not contain %q:\n%s", want, service)
+		}
+	}
+	if strings.Contains(service, "is prepared with config") {
+		t.Fatalf("service still contains placeholder unit: %s", service)
+	}
+	healthcheck := findDeploymentCallCmd(t, master, "230_healthcheck")
+	if !strings.Contains(healthcheck, "pg_isready -h 127.0.0.1 -p 5432") {
+		t.Fatalf("healthcheck is not postgres readiness check: %s", healthcheck)
+	}
+}
+
+func TestPostgresDeploymentWiresClusterPeers(t *testing.T) {
+	db := postgresDeploymentDatabase()
+	spec, err := (&Database{}).BuildTopologySpec(db.GetParams().GetPostgres())
+	if err != nil {
+		t.Fatalf("build topology spec: %v", err)
+	}
+
+	plan, err := deploymentbuilder.BuildPlan(spec, postgresInfrastructureStateForSpec(spec), deploymentbuilder.BuildOptions{
+		Database:        db,
+		PackageResolver: packages.NewRegistry(PackageResolver{}),
+		Renderers:       deploymentbuilder.NewRegistry(DeploymentRenderer{}),
+	})
+	if err != nil {
+		t.Fatalf("build deployment plan: %v", err)
+	}
+
+	components := deploymentComponentsByID(plan)
+
+	replica := findDeploymentWriteFileText(t, components["postgres-replica-1"], "200_write_service")
+	for _, want := range []string{"pg_basebackup", "-h 10.0.0.1 -p 5432", "-U 'replicator'", "-R", "PGPASSFILE="} {
+		if !strings.Contains(replica, want) {
+			t.Fatalf("replica unit missing %q:\n%s", want, replica)
+		}
+	}
+	pgpass := findDeploymentWriteFile(t, components["postgres-replica-1"], "045_write_pgpass")
+	if got := pgpass.GetInfo().GetMode(); got != 0600 {
+		t.Fatalf(".pgpass mode = %o, want 0600", got)
+	}
+	if !strings.Contains(pgpass.GetText(), "replicator:stroppy_replication") {
+		t.Fatalf(".pgpass missing replication credential: %s", pgpass.GetText())
+	}
+	master := findDeploymentWriteFileText(t, components["postgres-master"], "200_write_service")
+	if !strings.Contains(master, "replication-setup.sql") {
+		t.Fatalf("master unit does not provision the replication role:\n%s", master)
+	}
+
+	haproxy := findDeploymentWriteFileText(t, components["haproxy-1"], "030_write_config")
+	for _, want := range []string{"server pg-1 10.0.0.1:6432 check", "server pg-2 10.0.0.2:6432 check"} {
+		if !strings.Contains(haproxy, want) {
+			t.Fatalf("haproxy backends missing %q:\n%s", want, haproxy)
+		}
+	}
+
+	etcd := findDeploymentWriteFileText(t, components["postgres-master-etcd"], "200_write_service")
+	for _, want := range []string{"--initial-cluster", "postgres-master-etcd=http://10.0.0.1:2380", "postgres-replica-1-etcd=http://10.0.0.2:2380"} {
+		if !strings.Contains(etcd, want) {
+			t.Fatalf("etcd unit missing %q:\n%s", want, etcd)
+		}
 	}
 }
 
@@ -111,6 +188,13 @@ func TestPostgresDeploymentRendererBuildsRenderPreview(t *testing.T) {
 	if !strings.Contains(install.GetCmd().GetSpec().GetScript().GetText(), "postgresql-16") {
 		t.Fatalf("install preview does not use resolved package: %s", install.GetCmd().GetSpec().GetScript().GetText())
 	}
+	service := findRenderArtifact(t, preview, "postgres-master/systemd.service")
+	if strings.Contains(service.GetFile().GetText(), "is prepared with config") {
+		t.Fatalf("service preview still contains placeholder unit: %s", service.GetFile().GetText())
+	}
+	if !strings.Contains(service.GetFile().GetText(), "/usr/sbin/runuser -u postgres") {
+		t.Fatalf("service preview does not run postgres: %s", service.GetFile().GetText())
+	}
 }
 
 func TestPostgresDeploymentRendererAppliesRenderOverrides(t *testing.T) {
@@ -126,7 +210,7 @@ func TestPostgresDeploymentRendererAppliesRenderOverrides(t *testing.T) {
 			{
 				ArtifactId:  "postgres-master/postgresql.conf",
 				ComponentId: "postgres-master",
-				BaseHash:    deploymentbuilder.FileHash(postgresDefaultConfigFile(master, db)),
+				BaseHash:    deploymentbuilder.FileHash(postgresDefaultConfigFile(master, db, postgresWiring{})),
 				File: &common.File{
 					Info: &common.File_Info{
 						Path:          "/etc/stroppy-cloud/postgres-master/postgresql.conf",
@@ -249,6 +333,15 @@ func deploymentHasDependency(component *deploymentpb.ComponentDeployment, depend
 	return false
 }
 
+func pgHBARuleExists(hba string, fields ...string) bool {
+	for _, line := range strings.Split(hba, "\n") {
+		if strings.Join(strings.Fields(line), " ") == strings.Join(fields, " ") {
+			return true
+		}
+	}
+	return false
+}
+
 func findDeploymentWriteFileText(t *testing.T, component *deploymentpb.ComponentDeployment, stepID string) string {
 	t.Helper()
 
@@ -259,6 +352,18 @@ func findDeploymentWriteFileText(t *testing.T, component *deploymentpb.Component
 	}
 	t.Fatalf("step %q is missing", stepID)
 	return ""
+}
+
+func findDeploymentWriteFile(t *testing.T, component *deploymentpb.ComponentDeployment, stepID string) *common.File {
+	t.Helper()
+
+	for _, step := range component.GetSteps() {
+		if step.GetId() == stepID {
+			return step.GetWriteFile()
+		}
+	}
+	t.Fatalf("step %q is missing", stepID)
+	return nil
 }
 
 func findDeploymentCallCmd(t *testing.T, component *deploymentpb.ComponentDeployment, stepID string) string {

@@ -24,42 +24,206 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Suite is a reusable test bundle. It references provider-agnostic,
-// params-only presets; the provider is applied once here, and expansion bakes
-// topology specs plus infrastructure plans into child TestRuns.
+// SuiteCell is one runnable entry inside a suite definition.
+type SuiteCell struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is stable within the suite and is copied into SuiteRunCell.suite_cell_id.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// name is the display label for this cell. Empty means server derives one
+	// from the presets/test.
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// enabled gates this cell without deleting its overrides. Disabled cells are
+	// not baked into SuiteRun.
+	Enabled bool `protobuf:"varint,3,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	// source selects how the test definition for this cell is obtained.
+	//
+	// Types that are valid to be assigned to Source:
+	//
+	//	*SuiteCell_PresetPair_
+	//	*SuiteCell_TestPresetId
+	//	*SuiteCell_InlineTest
+	Source isSuiteCell_Source `protobuf_oneof:"source"`
+	// machine_overrides are user edits to provider-specific machine intent. They
+	// are merged into the derived InfrastructurePlan by node_id at start time.
+	// Provider account settings are not stored here.
+	MachineOverrides []*deployment.MachinePlan `protobuf:"bytes,20,rep,name=machine_overrides,json=machineOverrides,proto3" json:"machine_overrides,omitempty"`
+	// render_overrides are user edits to editable generated config artifacts for
+	// this cell.
+	RenderOverrides *deployment.RenderOverrideSet `protobuf:"bytes,21,opt,name=render_overrides,json=renderOverrides,proto3" json:"render_overrides,omitempty"`
+	// tags are free-form metadata attached to this cell and propagated to child
+	// TestRun tags.
+	Tags          *common.Tags `protobuf:"bytes,22,opt,name=tags,proto3" json:"tags,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SuiteCell) Reset() {
+	*x = SuiteCell{}
+	mi := &file_cloud_v1_domain_suite_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SuiteCell) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SuiteCell) ProtoMessage() {}
+
+func (x *SuiteCell) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_domain_suite_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SuiteCell.ProtoReflect.Descriptor instead.
+func (*SuiteCell) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_domain_suite_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *SuiteCell) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *SuiteCell) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *SuiteCell) GetEnabled() bool {
+	if x != nil {
+		return x.Enabled
+	}
+	return false
+}
+
+func (x *SuiteCell) GetSource() isSuiteCell_Source {
+	if x != nil {
+		return x.Source
+	}
+	return nil
+}
+
+func (x *SuiteCell) GetPresetPair() *SuiteCell_PresetPair {
+	if x != nil {
+		if x, ok := x.Source.(*SuiteCell_PresetPair_); ok {
+			return x.PresetPair
+		}
+	}
+	return nil
+}
+
+func (x *SuiteCell) GetTestPresetId() string {
+	if x != nil {
+		if x, ok := x.Source.(*SuiteCell_TestPresetId); ok {
+			return x.TestPresetId
+		}
+	}
+	return ""
+}
+
+func (x *SuiteCell) GetInlineTest() *Test {
+	if x != nil {
+		if x, ok := x.Source.(*SuiteCell_InlineTest); ok {
+			return x.InlineTest
+		}
+	}
+	return nil
+}
+
+func (x *SuiteCell) GetMachineOverrides() []*deployment.MachinePlan {
+	if x != nil {
+		return x.MachineOverrides
+	}
+	return nil
+}
+
+func (x *SuiteCell) GetRenderOverrides() *deployment.RenderOverrideSet {
+	if x != nil {
+		return x.RenderOverrides
+	}
+	return nil
+}
+
+func (x *SuiteCell) GetTags() *common.Tags {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+type isSuiteCell_Source interface {
+	isSuiteCell_Source()
+}
+
+type SuiteCell_PresetPair_ struct {
+	// preset_pair expands database preset x workload preset.
+	PresetPair *SuiteCell_PresetPair `protobuf:"bytes,10,opt,name=preset_pair,json=presetPair,proto3,oneof"`
+}
+
+type SuiteCell_TestPresetId struct {
+	// test_preset_id resolves a complete database+workload preset.
+	TestPresetId string `protobuf:"bytes,11,opt,name=test_preset_id,json=testPresetId,proto3,oneof"`
+}
+
+type SuiteCell_InlineTest struct {
+	// inline_test is for CLI/API automation that wants a suite without first
+	// creating presets. Persisted UI-created suites should prefer presets.
+	InlineTest *Test `protobuf:"bytes,12,opt,name=inline_test,json=inlineTest,proto3,oneof"`
+}
+
+func (*SuiteCell_PresetPair_) isSuiteCell_Source() {}
+
+func (*SuiteCell_TestPresetId) isSuiteCell_Source() {}
+
+func (*SuiteCell_InlineTest) isSuiteCell_Source() {}
+
+// Suite is a reusable test bundle. It stores only stable user intent: provider,
+// schedule, and enabled cells. Starting it produces a SuiteRun with fully baked
+// TestRuns.
 type Suite struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// id is the stable suite identifier.
+	// id is the stable suite identifier. For persisted suites this mirrors the
+	// SuiteRecord entity id; for inline API suites it may be client-supplied.
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// preset_ids are the presets composing the suite (Database / Workload /
-	// Test presets).
-	PresetIds []string `protobuf:"bytes,2,rep,name=preset_ids,json=presetIds,proto3" json:"preset_ids,omitempty"`
-	// provider is the single deployment provider for now. Multi-provider
-	// (cross-product to compare clouds) is planned: this becomes
-	// `repeated Provider providers` and expansion does presets x providers.
-	// Deferred to avoid the exponential bake cost for now.
+	// cells are the runnable entries composing the suite.
+	Cells []*SuiteCell `protobuf:"bytes,2,rep,name=cells,proto3" json:"cells,omitempty"`
+	// provider is the single deployment provider for every cell in this suite.
+	// Multi-provider comparison should be modeled as repeated suite starts or a
+	// future providers[] expansion layer, not by mixing providers inside a cell.
 	Provider deployment.Provider `protobuf:"varint,3,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
 	// tags are free-form metadata attached to the suite.
 	Tags *common.Tags `protobuf:"bytes,4,opt,name=tags,proto3" json:"tags,omitempty"`
-	// schedule is an optional cron schedule that auto-starts this suite.
-	// Absent / disabled = the suite only runs when started manually.
+	// schedule is an optional cron schedule that auto-starts this suite. Absent
+	// or disabled means the suite only runs manually/API.
 	Schedule *Schedule `protobuf:"bytes,5,opt,name=schedule,proto3" json:"schedule,omitempty"`
-	// default_in_tenant_rating is the tenant-rating default propagated to every
-	// child TestRun the suite spawns (incl. cron runs). Same semantics as
-	// TestRunRecord: tenant defaults true. Optional so unset = platform default.
+	// default_in_tenant_rating is propagated to child TestRuns when StartSuite
+	// does not override it. Unset means tenant/platform default.
 	DefaultInTenantRating *bool `protobuf:"varint,6,opt,name=default_in_tenant_rating,json=defaultInTenantRating,proto3,oneof" json:"default_in_tenant_rating,omitempty"`
-	// default_in_global_rating is the global-rating default propagated to every
-	// child TestRun the suite spawns (incl. cron runs). Same semantics as
-	// TestRunRecord: global defaults false (opt-in). Optional so unset =
-	// platform default.
+	// default_in_global_rating is propagated to child TestRuns when StartSuite
+	// does not override it. Unset means tenant/platform default.
 	DefaultInGlobalRating *bool `protobuf:"varint,7,opt,name=default_in_global_rating,json=defaultInGlobalRating,proto3,oneof" json:"default_in_global_rating,omitempty"`
-	unknownFields         protoimpl.UnknownFields
-	sizeCache             protoimpl.SizeCache
+	// default_max_parallel caps concurrent child run workflows. 0 means no suite
+	// definition override; the start request or tenant default decides.
+	DefaultMaxParallel uint32 `protobuf:"varint,8,opt,name=default_max_parallel,json=defaultMaxParallel,proto3" json:"default_max_parallel,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *Suite) Reset() {
 	*x = Suite{}
-	mi := &file_cloud_v1_domain_suite_proto_msgTypes[0]
+	mi := &file_cloud_v1_domain_suite_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -71,7 +235,7 @@ func (x *Suite) String() string {
 func (*Suite) ProtoMessage() {}
 
 func (x *Suite) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_domain_suite_proto_msgTypes[0]
+	mi := &file_cloud_v1_domain_suite_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -84,7 +248,7 @@ func (x *Suite) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Suite.ProtoReflect.Descriptor instead.
 func (*Suite) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_domain_suite_proto_rawDescGZIP(), []int{0}
+	return file_cloud_v1_domain_suite_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Suite) GetId() string {
@@ -94,9 +258,9 @@ func (x *Suite) GetId() string {
 	return ""
 }
 
-func (x *Suite) GetPresetIds() []string {
+func (x *Suite) GetCells() []*SuiteCell {
 	if x != nil {
-		return x.PresetIds
+		return x.Cells
 	}
 	return nil
 }
@@ -136,18 +300,21 @@ func (x *Suite) GetDefaultInGlobalRating() bool {
 	return false
 }
 
-// Schedule is an optional cron trigger for a suite. When enabled with a cron
-// expression, the platform auto-starts the suite on that cadence; `enabled`
-// gates it so a configured schedule can be paused without losing the cron.
+func (x *Suite) GetDefaultMaxParallel() uint32 {
+	if x != nil {
+		return x.DefaultMaxParallel
+	}
+	return 0
+}
+
+// Schedule is an optional cron trigger for a suite.
 type Schedule struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// enabled gates the schedule: false = paused (never auto-runs).
+	// enabled gates the schedule: false = paused.
 	Enabled bool `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
-	// cron is a standard cron expression (e.g. "0 2 * * *"). Validated
-	// server-side.
+	// cron is a standard cron expression, validated server-side.
 	Cron string `protobuf:"bytes,2,opt,name=cron,proto3" json:"cron,omitempty"`
-	// timezone is the IANA timezone for the cron (e.g. "Europe/Moscow");
-	// empty = UTC.
+	// timezone is the IANA timezone for cron evaluation. Empty means UTC.
 	Timezone      string `protobuf:"bytes,3,opt,name=timezone,proto3" json:"timezone,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -155,7 +322,7 @@ type Schedule struct {
 
 func (x *Schedule) Reset() {
 	*x = Schedule{}
-	mi := &file_cloud_v1_domain_suite_proto_msgTypes[1]
+	mi := &file_cloud_v1_domain_suite_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -167,7 +334,7 @@ func (x *Schedule) String() string {
 func (*Schedule) ProtoMessage() {}
 
 func (x *Schedule) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_domain_suite_proto_msgTypes[1]
+	mi := &file_cloud_v1_domain_suite_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -180,7 +347,7 @@ func (x *Schedule) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Schedule.ProtoReflect.Descriptor instead.
 func (*Schedule) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_domain_suite_proto_rawDescGZIP(), []int{1}
+	return file_cloud_v1_domain_suite_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Schedule) GetEnabled() bool {
@@ -204,17 +371,128 @@ func (x *Schedule) GetTimezone() string {
 	return ""
 }
 
-// SuiteRun is a materialized suite execution: the Suite's preset_ids expanded
-// into concrete TestRuns, executed with a bounded degree of parallelism.
+// SuiteRunCell is one materialized child run inside a suite execution.
+type SuiteRunCell struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is stable within this suite run.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// suite_cell_id points back to SuiteCell.id when this run came from a stored
+	// suite definition. Empty for ad-hoc inline cells.
+	SuiteCellId string `protobuf:"bytes,2,opt,name=suite_cell_id,json=suiteCellId,proto3" json:"suite_cell_id,omitempty"`
+	// test_run is the fully baked child TestRun.
+	TestRun *TestRun `protobuf:"bytes,3,opt,name=test_run,json=testRun,proto3" json:"test_run,omitempty"`
+	// name is the display label copied from the suite cell or derived at bake.
+	Name string `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
+	// db_preset_id records the database preset source, when applicable.
+	DbPresetId string `protobuf:"bytes,5,opt,name=db_preset_id,json=dbPresetId,proto3" json:"db_preset_id,omitempty"`
+	// workload_preset_id records the workload preset source, when applicable.
+	WorkloadPresetId string `protobuf:"bytes,6,opt,name=workload_preset_id,json=workloadPresetId,proto3" json:"workload_preset_id,omitempty"`
+	// test_preset_id records the test preset source, when applicable.
+	TestPresetId string `protobuf:"bytes,7,opt,name=test_preset_id,json=testPresetId,proto3" json:"test_preset_id,omitempty"`
+	// tags are free-form metadata propagated to this cell.
+	Tags          *common.Tags `protobuf:"bytes,8,opt,name=tags,proto3" json:"tags,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SuiteRunCell) Reset() {
+	*x = SuiteRunCell{}
+	mi := &file_cloud_v1_domain_suite_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SuiteRunCell) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SuiteRunCell) ProtoMessage() {}
+
+func (x *SuiteRunCell) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_domain_suite_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SuiteRunCell.ProtoReflect.Descriptor instead.
+func (*SuiteRunCell) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_domain_suite_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *SuiteRunCell) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *SuiteRunCell) GetSuiteCellId() string {
+	if x != nil {
+		return x.SuiteCellId
+	}
+	return ""
+}
+
+func (x *SuiteRunCell) GetTestRun() *TestRun {
+	if x != nil {
+		return x.TestRun
+	}
+	return nil
+}
+
+func (x *SuiteRunCell) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *SuiteRunCell) GetDbPresetId() string {
+	if x != nil {
+		return x.DbPresetId
+	}
+	return ""
+}
+
+func (x *SuiteRunCell) GetWorkloadPresetId() string {
+	if x != nil {
+		return x.WorkloadPresetId
+	}
+	return ""
+}
+
+func (x *SuiteRunCell) GetTestPresetId() string {
+	if x != nil {
+		return x.TestPresetId
+	}
+	return ""
+}
+
+func (x *SuiteRunCell) GetTags() *common.Tags {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+// SuiteRun is a materialized suite execution input: all preset references have
+// been resolved into concrete child TestRuns.
 type SuiteRun struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// id is the stable suite-run identifier.
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// suite_id references the Suite this run was expanded from.
+	// suite_id references the SuiteRecord definition this run came from. Empty
+	// for ad-hoc inline suite starts.
 	SuiteId string `protobuf:"bytes,2,opt,name=suite_id,json=suiteId,proto3" json:"suite_id,omitempty"`
-	// test_runs are the expanded runs (one per resolved preset).
-	TestRuns []*TestRun `protobuf:"bytes,3,rep,name=test_runs,json=testRuns,proto3" json:"test_runs,omitempty"`
-	// max_parallel is the max concurrent TestWorkflows. 0 = unlimited.
+	// cells are the expanded child runs.
+	Cells []*SuiteRunCell `protobuf:"bytes,3,rep,name=cells,proto3" json:"cells,omitempty"`
+	// max_parallel is the max concurrent child run workflows. 0 = unlimited.
 	MaxParallel   uint32 `protobuf:"varint,4,opt,name=max_parallel,json=maxParallel,proto3" json:"max_parallel,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -222,7 +500,7 @@ type SuiteRun struct {
 
 func (x *SuiteRun) Reset() {
 	*x = SuiteRun{}
-	mi := &file_cloud_v1_domain_suite_proto_msgTypes[2]
+	mi := &file_cloud_v1_domain_suite_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -234,7 +512,7 @@ func (x *SuiteRun) String() string {
 func (*SuiteRun) ProtoMessage() {}
 
 func (x *SuiteRun) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_domain_suite_proto_msgTypes[2]
+	mi := &file_cloud_v1_domain_suite_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -247,7 +525,7 @@ func (x *SuiteRun) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SuiteRun.ProtoReflect.Descriptor instead.
 func (*SuiteRun) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_domain_suite_proto_rawDescGZIP(), []int{2}
+	return file_cloud_v1_domain_suite_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *SuiteRun) GetId() string {
@@ -264,9 +542,9 @@ func (x *SuiteRun) GetSuiteId() string {
 	return ""
 }
 
-func (x *SuiteRun) GetTestRuns() []*TestRun {
+func (x *SuiteRun) GetCells() []*SuiteRunCell {
 	if x != nil {
-		return x.TestRuns
+		return x.Cells
 	}
 	return nil
 }
@@ -278,31 +556,116 @@ func (x *SuiteRun) GetMaxParallel() uint32 {
 	return 0
 }
 
+// PresetPair references a database preset and a workload preset. The server
+// resolves both and validates compatibility before baking a TestRun.
+type SuiteCell_PresetPair struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// db_preset_id is the database preset to resolve.
+	DbPresetId string `protobuf:"bytes,1,opt,name=db_preset_id,json=dbPresetId,proto3" json:"db_preset_id,omitempty"`
+	// workload_preset_id is the workload preset to resolve.
+	WorkloadPresetId string `protobuf:"bytes,2,opt,name=workload_preset_id,json=workloadPresetId,proto3" json:"workload_preset_id,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *SuiteCell_PresetPair) Reset() {
+	*x = SuiteCell_PresetPair{}
+	mi := &file_cloud_v1_domain_suite_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SuiteCell_PresetPair) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SuiteCell_PresetPair) ProtoMessage() {}
+
+func (x *SuiteCell_PresetPair) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_domain_suite_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SuiteCell_PresetPair.ProtoReflect.Descriptor instead.
+func (*SuiteCell_PresetPair) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_domain_suite_proto_rawDescGZIP(), []int{0, 0}
+}
+
+func (x *SuiteCell_PresetPair) GetDbPresetId() string {
+	if x != nil {
+		return x.DbPresetId
+	}
+	return ""
+}
+
+func (x *SuiteCell_PresetPair) GetWorkloadPresetId() string {
+	if x != nil {
+		return x.WorkloadPresetId
+	}
+	return ""
+}
+
 var File_cloud_v1_domain_suite_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_domain_suite_proto_rawDesc = "" +
 	"\n" +
-	"\x1bcloud/v1/domain/suite.proto\x12\x0fcloud.v1.domain\x1a\x1acloud/v1/common/tags.proto\x1a\"cloud/v1/deployment/provider.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x17validate/validate.proto\"\xae\x03\n" +
-	"\x05Suite\x12\x17\n" +
-	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\x12-\n" +
+	"\x1bcloud/v1/domain/suite.proto\x12\x0fcloud.v1.domain\x1a\x1acloud/v1/common/tags.proto\x1a(cloud/v1/deployment/infrastructure.proto\x1a\"cloud/v1/deployment/provider.proto\x1a cloud/v1/deployment/render.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x17validate/validate.proto\"\x84\x05\n" +
+	"\tSuiteCell\x12\x19\n" +
+	"\x02id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\x12\x1c\n" +
+	"\x04name\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\xff\x01R\x04name\x12\x18\n" +
+	"\aenabled\x18\x03 \x01(\bR\aenabled\x12R\n" +
+	"\vpreset_pair\x18\n" +
+	" \x01(\v2%.cloud.v1.domain.SuiteCell.PresetPairB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\n" +
+	"presetPair\x121\n" +
+	"\x0etest_preset_id\x18\v \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@H\x00R\ftestPresetId\x12B\n" +
+	"\vinline_test\x18\f \x01(\v2\x15.cloud.v1.domain.TestB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\n" +
+	"inlineTest\x12X\n" +
+	"\x11machine_overrides\x18\x14 \x03(\v2 .cloud.v1.deployment.MachinePlanB\t\xfaB\x06\x92\x01\x03\x10\x80\x02R\x10machineOverrides\x12Q\n" +
+	"\x10render_overrides\x18\x15 \x01(\v2&.cloud.v1.deployment.RenderOverrideSetR\x0frenderOverrides\x12)\n" +
+	"\x04tags\x18\x16 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1ar\n" +
 	"\n" +
-	"preset_ids\x18\x02 \x03(\tB\x0e\xfaB\v\x92\x01\b\b\x01\"\x04r\x02\x10\x01R\tpresetIds\x12E\n" +
+	"PresetPair\x12+\n" +
+	"\fdb_preset_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\n" +
+	"dbPresetId\x127\n" +
+	"\x12workload_preset_id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x10workloadPresetIdB\r\n" +
+	"\x06source\x12\x03\xf8B\x01\"\xf2\x03\n" +
+	"\x05Suite\x12\x19\n" +
+	"\x02id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\x12=\n" +
+	"\x05cells\x18\x02 \x03(\v2\x1a.cloud.v1.domain.SuiteCellB\v\xfaB\b\x92\x01\x05\b\x01\x10\xe8\aR\x05cells\x12E\n" +
 	"\bprovider\x18\x03 \x01(\x0e2\x1d.cloud.v1.deployment.ProviderB\n" +
 	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\bprovider\x12)\n" +
 	"\x04tags\x18\x04 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x125\n" +
 	"\bschedule\x18\x05 \x01(\v2\x19.cloud.v1.domain.ScheduleR\bschedule\x12<\n" +
 	"\x18default_in_tenant_rating\x18\x06 \x01(\bH\x00R\x15defaultInTenantRating\x88\x01\x01\x12<\n" +
-	"\x18default_in_global_rating\x18\a \x01(\bH\x01R\x15defaultInGlobalRating\x88\x01\x01B\x1b\n" +
+	"\x18default_in_global_rating\x18\a \x01(\bH\x01R\x15defaultInGlobalRating\x88\x01\x01\x120\n" +
+	"\x14default_max_parallel\x18\b \x01(\rR\x12defaultMaxParallelB\x1b\n" +
 	"\x19_default_in_tenant_ratingB\x1b\n" +
 	"\x19_default_in_global_rating\"g\n" +
 	"\bSchedule\x12\x18\n" +
 	"\aenabled\x18\x01 \x01(\bR\aenabled\x12\x1c\n" +
 	"\x04cron\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\x04cron\x12#\n" +
-	"\btimezone\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x18@R\btimezone\"\xab\x01\n" +
-	"\bSuiteRun\x12\x17\n" +
-	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\x12\"\n" +
-	"\bsuite_id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\asuiteId\x12?\n" +
-	"\ttest_runs\x18\x03 \x03(\v2\x18.cloud.v1.domain.TestRunB\b\xfaB\x05\x92\x01\x02\b\x01R\btestRuns\x12!\n" +
+	"\btimezone\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x18@R\btimezone\"\xef\x02\n" +
+	"\fSuiteRunCell\x12\x19\n" +
+	"\x02id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\x12+\n" +
+	"\rsuite_cell_id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x18@R\vsuiteCellId\x12=\n" +
+	"\btest_run\x18\x03 \x01(\v2\x18.cloud.v1.domain.TestRunB\b\xfaB\x05\x8a\x01\x02\x10\x01R\atestRun\x12\x1c\n" +
+	"\x04name\x18\x04 \x01(\tB\b\xfaB\x05r\x03\x18\xff\x01R\x04name\x12)\n" +
+	"\fdb_preset_id\x18\x05 \x01(\tB\a\xfaB\x04r\x02\x18@R\n" +
+	"dbPresetId\x125\n" +
+	"\x12workload_preset_id\x18\x06 \x01(\tB\a\xfaB\x04r\x02\x18@R\x10workloadPresetId\x12-\n" +
+	"\x0etest_preset_id\x18\a \x01(\tB\a\xfaB\x04r\x02\x18@R\ftestPresetId\x12)\n" +
+	"\x04tags\x18\b \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\"\xae\x01\n" +
+	"\bSuiteRun\x12\x19\n" +
+	"\x02id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\x12\"\n" +
+	"\bsuite_id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x18@R\asuiteId\x12@\n" +
+	"\x05cells\x18\x03 \x03(\v2\x1d.cloud.v1.domain.SuiteRunCellB\v\xfaB\b\x92\x01\x05\b\x01\x10\xe8\aR\x05cells\x12!\n" +
 	"\fmax_parallel\x18\x04 \x01(\rR\vmaxParallelBDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domainb\x06proto3"
 
 var (
@@ -317,25 +680,39 @@ func file_cloud_v1_domain_suite_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_domain_suite_proto_rawDescData
 }
 
-var file_cloud_v1_domain_suite_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_cloud_v1_domain_suite_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_cloud_v1_domain_suite_proto_goTypes = []any{
-	(*Suite)(nil),            // 0: cloud.v1.domain.Suite
-	(*Schedule)(nil),         // 1: cloud.v1.domain.Schedule
-	(*SuiteRun)(nil),         // 2: cloud.v1.domain.SuiteRun
-	(deployment.Provider)(0), // 3: cloud.v1.deployment.Provider
-	(*common.Tags)(nil),      // 4: cloud.v1.common.Tags
-	(*TestRun)(nil),          // 5: cloud.v1.domain.TestRun
+	(*SuiteCell)(nil),                    // 0: cloud.v1.domain.SuiteCell
+	(*Suite)(nil),                        // 1: cloud.v1.domain.Suite
+	(*Schedule)(nil),                     // 2: cloud.v1.domain.Schedule
+	(*SuiteRunCell)(nil),                 // 3: cloud.v1.domain.SuiteRunCell
+	(*SuiteRun)(nil),                     // 4: cloud.v1.domain.SuiteRun
+	(*SuiteCell_PresetPair)(nil),         // 5: cloud.v1.domain.SuiteCell.PresetPair
+	(*Test)(nil),                         // 6: cloud.v1.domain.Test
+	(*deployment.MachinePlan)(nil),       // 7: cloud.v1.deployment.MachinePlan
+	(*deployment.RenderOverrideSet)(nil), // 8: cloud.v1.deployment.RenderOverrideSet
+	(*common.Tags)(nil),                  // 9: cloud.v1.common.Tags
+	(deployment.Provider)(0),             // 10: cloud.v1.deployment.Provider
+	(*TestRun)(nil),                      // 11: cloud.v1.domain.TestRun
 }
 var file_cloud_v1_domain_suite_proto_depIdxs = []int32{
-	3, // 0: cloud.v1.domain.Suite.provider:type_name -> cloud.v1.deployment.Provider
-	4, // 1: cloud.v1.domain.Suite.tags:type_name -> cloud.v1.common.Tags
-	1, // 2: cloud.v1.domain.Suite.schedule:type_name -> cloud.v1.domain.Schedule
-	5, // 3: cloud.v1.domain.SuiteRun.test_runs:type_name -> cloud.v1.domain.TestRun
-	4, // [4:4] is the sub-list for method output_type
-	4, // [4:4] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	5,  // 0: cloud.v1.domain.SuiteCell.preset_pair:type_name -> cloud.v1.domain.SuiteCell.PresetPair
+	6,  // 1: cloud.v1.domain.SuiteCell.inline_test:type_name -> cloud.v1.domain.Test
+	7,  // 2: cloud.v1.domain.SuiteCell.machine_overrides:type_name -> cloud.v1.deployment.MachinePlan
+	8,  // 3: cloud.v1.domain.SuiteCell.render_overrides:type_name -> cloud.v1.deployment.RenderOverrideSet
+	9,  // 4: cloud.v1.domain.SuiteCell.tags:type_name -> cloud.v1.common.Tags
+	0,  // 5: cloud.v1.domain.Suite.cells:type_name -> cloud.v1.domain.SuiteCell
+	10, // 6: cloud.v1.domain.Suite.provider:type_name -> cloud.v1.deployment.Provider
+	9,  // 7: cloud.v1.domain.Suite.tags:type_name -> cloud.v1.common.Tags
+	2,  // 8: cloud.v1.domain.Suite.schedule:type_name -> cloud.v1.domain.Schedule
+	11, // 9: cloud.v1.domain.SuiteRunCell.test_run:type_name -> cloud.v1.domain.TestRun
+	9,  // 10: cloud.v1.domain.SuiteRunCell.tags:type_name -> cloud.v1.common.Tags
+	3,  // 11: cloud.v1.domain.SuiteRun.cells:type_name -> cloud.v1.domain.SuiteRunCell
+	12, // [12:12] is the sub-list for method output_type
+	12, // [12:12] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_domain_suite_proto_init() }
@@ -344,14 +721,19 @@ func file_cloud_v1_domain_suite_proto_init() {
 		return
 	}
 	file_cloud_v1_domain_test_proto_init()
-	file_cloud_v1_domain_suite_proto_msgTypes[0].OneofWrappers = []any{}
+	file_cloud_v1_domain_suite_proto_msgTypes[0].OneofWrappers = []any{
+		(*SuiteCell_PresetPair_)(nil),
+		(*SuiteCell_TestPresetId)(nil),
+		(*SuiteCell_InlineTest)(nil),
+	}
+	file_cloud_v1_domain_suite_proto_msgTypes[1].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_domain_suite_proto_rawDesc), len(file_cloud_v1_domain_suite_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -41,6 +41,29 @@ message DatabasePresetRecord {
         clients cannot set it true.
      */
     bool is_system = 3;
+    /*
+        summary is the denormalized projection used by preset pickers and suite
+        matrix screens without decoding the whole database body.
+     */
+    Summary summary = 4;
+
+    /*
+        Summary is filled by the server from `database`.
+     */
+    message Summary {
+        /*
+            db_kind is the database engine kind.
+         */
+        domain.Database.Kind db_kind = 1;
+        /*
+            version is the self-deploy engine version, when present.
+         */
+        string version = 2 [(validate.rules).string.max_len = 128];
+        /*
+            external is true when the preset targets an already-running database.
+         */
+        bool external = 3;
+    }
 }
 
 /*
@@ -64,6 +87,29 @@ message WorkloadPresetRecord {
         clients cannot set it true.
      */
     bool is_system = 3;
+    /*
+        summary is the denormalized projection used by preset pickers and suite
+        matrix screens without decoding the whole workload body.
+     */
+    Summary summary = 4;
+
+    /*
+        Summary is filled by the server from `workload`.
+     */
+    message Summary {
+        /*
+            protocol is the workload wire protocol.
+         */
+        domain.Workload.Protocol protocol = 1;
+        /*
+            stroppy_version is the stroppy binary version/tag.
+         */
+        string stroppy_version = 2 [(validate.rules).string.max_len = 64];
+        /*
+            script is the workload script/preset/path label.
+         */
+        string script = 3 [(validate.rules).string.max_len = 512];
+    }
 }
 
 /*
@@ -87,4 +133,27 @@ message TestPresetRecord {
         clients cannot set it true.
      */
     bool is_system = 3;
+    /*
+        summary is the denormalized projection used by preset pickers and suite
+        matrix screens without decoding the whole test body.
+     */
+    Summary summary = 4;
+
+    /*
+        Summary is filled by the server from `test`.
+     */
+    message Summary {
+        /*
+            db_kind is the database engine kind.
+         */
+        domain.Database.Kind db_kind = 1;
+        /*
+            protocol is the workload wire protocol.
+         */
+        domain.Workload.Protocol protocol = 2;
+        /*
+            stroppy_version is the stroppy binary version/tag.
+         */
+        string stroppy_version = 3 [(validate.rules).string.max_len = 64];
+    }
 }

@@ -31,8 +31,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// SuiteWizardService drives the suite wizard: start, fetch/list, patch-loop and
-// finish into a baked SuiteRun.
+// SuiteWizardService drives the suite wizard.
 type SuiteWizardServiceClient interface {
 	// StartSuiteWizard opens a new draft. Not idempotent.
 	StartSuiteWizard(ctx context.Context, in *StartSuiteWizardRequest, opts ...grpc.CallOption) (*StartSuiteWizardResponse, error)
@@ -40,11 +39,11 @@ type SuiteWizardServiceClient interface {
 	GetSuiteWizardDraft(ctx context.Context, in *GetSuiteWizardDraftRequest, opts ...grpc.CallOption) (*GetSuiteWizardDraftResponse, error)
 	// ListSuiteWizardDrafts lists drafts with filtering and pagination. Read-only.
 	ListSuiteWizardDrafts(ctx context.Context, in *ListSuiteWizardDraftsRequest, opts ...grpc.CallOption) (*ListSuiteWizardDraftsResponse, error)
-	// PatchSuiteWizard is idempotent: re-submitting the same form converges.
+	// PatchSuiteWizard is idempotent: re-submitting the same patch converges.
 	PatchSuiteWizard(ctx context.Context, in *PatchSuiteWizardRequest, opts ...grpc.CallOption) (*PatchSuiteWizardResponse, error)
-	// DeleteSuiteWizardDraft is idempotent: deleting an absent draft is a no-op.
+	// DeleteSuiteWizardDraft is idempotent.
 	DeleteSuiteWizardDraft(ctx context.Context, in *DeleteSuiteWizardDraftRequest, opts ...grpc.CallOption) (*DeleteSuiteWizardDraftResponse, error)
-	// FinishSuiteWizard mints a SuiteRun from the draft. Not idempotent.
+	// FinishSuiteWizard persists a suite and optionally launches it.
 	FinishSuiteWizard(ctx context.Context, in *FinishSuiteWizardRequest, opts ...grpc.CallOption) (*FinishSuiteWizardResponse, error)
 }
 
@@ -120,8 +119,7 @@ func (c *suiteWizardServiceClient) FinishSuiteWizard(ctx context.Context, in *Fi
 // All implementations must embed UnimplementedSuiteWizardServiceServer
 // for forward compatibility.
 //
-// SuiteWizardService drives the suite wizard: start, fetch/list, patch-loop and
-// finish into a baked SuiteRun.
+// SuiteWizardService drives the suite wizard.
 type SuiteWizardServiceServer interface {
 	// StartSuiteWizard opens a new draft. Not idempotent.
 	StartSuiteWizard(context.Context, *StartSuiteWizardRequest) (*StartSuiteWizardResponse, error)
@@ -129,11 +127,11 @@ type SuiteWizardServiceServer interface {
 	GetSuiteWizardDraft(context.Context, *GetSuiteWizardDraftRequest) (*GetSuiteWizardDraftResponse, error)
 	// ListSuiteWizardDrafts lists drafts with filtering and pagination. Read-only.
 	ListSuiteWizardDrafts(context.Context, *ListSuiteWizardDraftsRequest) (*ListSuiteWizardDraftsResponse, error)
-	// PatchSuiteWizard is idempotent: re-submitting the same form converges.
+	// PatchSuiteWizard is idempotent: re-submitting the same patch converges.
 	PatchSuiteWizard(context.Context, *PatchSuiteWizardRequest) (*PatchSuiteWizardResponse, error)
-	// DeleteSuiteWizardDraft is idempotent: deleting an absent draft is a no-op.
+	// DeleteSuiteWizardDraft is idempotent.
 	DeleteSuiteWizardDraft(context.Context, *DeleteSuiteWizardDraftRequest) (*DeleteSuiteWizardDraftResponse, error)
-	// FinishSuiteWizard mints a SuiteRun from the draft. Not idempotent.
+	// FinishSuiteWizard persists a suite and optionally launches it.
 	FinishSuiteWizard(context.Context, *FinishSuiteWizardRequest) (*FinishSuiteWizardResponse, error)
 	mustEmbedUnimplementedSuiteWizardServiceServer()
 }

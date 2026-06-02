@@ -94,20 +94,20 @@ type DeploymentServiceClient interface {
 	GetRenderDeploymentPlanWorkflow(ctx context.Context, workflowID string, runID string) RenderDeploymentPlanWorkflowRun
 
 	// RenderDockerInputWorkflow renders infrastructure plan to Docker input.
-	RenderDockerInputWorkflow(ctx context.Context, req *deployment.InfrastructurePlan, opts ...*RenderDockerInputWorkflowOptions) (*deployment.Docker_Input, error)
+	RenderDockerInputWorkflow(ctx context.Context, req *RenderDockerInputWorkflowRequest, opts ...*RenderDockerInputWorkflowOptions) (*deployment.Docker_Input, error)
 
 	// RenderDockerInputWorkflowAsync starts a(n) RenderDockerInputWorkflow workflow and returns a handle to the workflow run
-	RenderDockerInputWorkflowAsync(ctx context.Context, req *deployment.InfrastructurePlan, opts ...*RenderDockerInputWorkflowOptions) (RenderDockerInputWorkflowRun, error)
+	RenderDockerInputWorkflowAsync(ctx context.Context, req *RenderDockerInputWorkflowRequest, opts ...*RenderDockerInputWorkflowOptions) (RenderDockerInputWorkflowRun, error)
 
 	// GetRenderDockerInputWorkflow retrieves a handle to an existing RenderDockerInputWorkflow workflow execution
 	GetRenderDockerInputWorkflow(ctx context.Context, workflowID string, runID string) RenderDockerInputWorkflowRun
 
 	// RenderTerraformVariablesWorkflow renders infrastructure plan to Terraform
 	// input.
-	RenderTerraformVariablesWorkflow(ctx context.Context, req *deployment.InfrastructurePlan, opts ...*RenderTerraformVariablesWorkflowOptions) (*deployment.Terraform_Input, error)
+	RenderTerraformVariablesWorkflow(ctx context.Context, req *RenderTerraformVariablesWorkflowRequest, opts ...*RenderTerraformVariablesWorkflowOptions) (*deployment.Terraform_Input, error)
 
 	// RenderTerraformVariablesWorkflowAsync starts a(n) RenderTerraformVariablesWorkflow workflow and returns a handle to the workflow run
-	RenderTerraformVariablesWorkflowAsync(ctx context.Context, req *deployment.InfrastructurePlan, opts ...*RenderTerraformVariablesWorkflowOptions) (RenderTerraformVariablesWorkflowRun, error)
+	RenderTerraformVariablesWorkflowAsync(ctx context.Context, req *RenderTerraformVariablesWorkflowRequest, opts ...*RenderTerraformVariablesWorkflowOptions) (RenderTerraformVariablesWorkflowRun, error)
 
 	// GetRenderTerraformVariablesWorkflow retrieves a handle to an existing RenderTerraformVariablesWorkflow workflow execution
 	GetRenderTerraformVariablesWorkflow(ctx context.Context, workflowID string, runID string) RenderTerraformVariablesWorkflowRun
@@ -355,7 +355,7 @@ func (c *deploymentServiceClient) GetRenderDeploymentPlanWorkflow(ctx context.Co
 }
 
 // RenderDockerInputWorkflow renders infrastructure plan to Docker input.
-func (c *deploymentServiceClient) RenderDockerInputWorkflow(ctx context.Context, req *deployment.InfrastructurePlan, options ...*RenderDockerInputWorkflowOptions) (*deployment.Docker_Input, error) {
+func (c *deploymentServiceClient) RenderDockerInputWorkflow(ctx context.Context, req *RenderDockerInputWorkflowRequest, options ...*RenderDockerInputWorkflowOptions) (*deployment.Docker_Input, error) {
 	run, err := c.RenderDockerInputWorkflowAsync(ctx, req, options...)
 	if err != nil {
 		return nil, err
@@ -364,7 +364,7 @@ func (c *deploymentServiceClient) RenderDockerInputWorkflow(ctx context.Context,
 }
 
 // RenderDockerInputWorkflow renders infrastructure plan to Docker input.
-func (c *deploymentServiceClient) RenderDockerInputWorkflowAsync(ctx context.Context, req *deployment.InfrastructurePlan, options ...*RenderDockerInputWorkflowOptions) (RenderDockerInputWorkflowRun, error) {
+func (c *deploymentServiceClient) RenderDockerInputWorkflowAsync(ctx context.Context, req *RenderDockerInputWorkflowRequest, options ...*RenderDockerInputWorkflowOptions) (RenderDockerInputWorkflowRun, error) {
 	var o *RenderDockerInputWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
@@ -398,7 +398,7 @@ func (c *deploymentServiceClient) GetRenderDockerInputWorkflow(ctx context.Conte
 
 // RenderTerraformVariablesWorkflow renders infrastructure plan to Terraform
 // input.
-func (c *deploymentServiceClient) RenderTerraformVariablesWorkflow(ctx context.Context, req *deployment.InfrastructurePlan, options ...*RenderTerraformVariablesWorkflowOptions) (*deployment.Terraform_Input, error) {
+func (c *deploymentServiceClient) RenderTerraformVariablesWorkflow(ctx context.Context, req *RenderTerraformVariablesWorkflowRequest, options ...*RenderTerraformVariablesWorkflowOptions) (*deployment.Terraform_Input, error) {
 	run, err := c.RenderTerraformVariablesWorkflowAsync(ctx, req, options...)
 	if err != nil {
 		return nil, err
@@ -408,7 +408,7 @@ func (c *deploymentServiceClient) RenderTerraformVariablesWorkflow(ctx context.C
 
 // RenderTerraformVariablesWorkflow renders infrastructure plan to Terraform
 // input.
-func (c *deploymentServiceClient) RenderTerraformVariablesWorkflowAsync(ctx context.Context, req *deployment.InfrastructurePlan, options ...*RenderTerraformVariablesWorkflowOptions) (RenderTerraformVariablesWorkflowRun, error) {
+func (c *deploymentServiceClient) RenderTerraformVariablesWorkflowAsync(ctx context.Context, req *RenderTerraformVariablesWorkflowRequest, options ...*RenderTerraformVariablesWorkflowOptions) (RenderTerraformVariablesWorkflowRun, error) {
 	var o *RenderTerraformVariablesWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
@@ -1666,10 +1666,10 @@ var (
 	// RenderDeploymentPlanWorkflow renders package/config/agent steps.
 	RenderDeploymentPlanWorkflowFunction func(workflow.Context, *RenderDeploymentPlanWorkflowRequest) (*RenderDeploymentPlanWorkflowResponse, error)
 	// RenderDockerInputWorkflow renders infrastructure plan to Docker input.
-	RenderDockerInputWorkflowFunction func(workflow.Context, *deployment.InfrastructurePlan) (*deployment.Docker_Input, error)
+	RenderDockerInputWorkflowFunction func(workflow.Context, *RenderDockerInputWorkflowRequest) (*deployment.Docker_Input, error)
 	// RenderTerraformVariablesWorkflow renders infrastructure plan to Terraform
 	// input.
-	RenderTerraformVariablesWorkflowFunction func(workflow.Context, *deployment.InfrastructurePlan) (*deployment.Terraform_Input, error)
+	RenderTerraformVariablesWorkflowFunction func(workflow.Context, *RenderTerraformVariablesWorkflowRequest) (*deployment.Terraform_Input, error)
 )
 
 // DeploymentServiceWorkflowFunctions describes a mockable dependency for inlining workflows within other workflows
@@ -1686,10 +1686,10 @@ type (
 		// RenderDeploymentPlanWorkflow renders package/config/agent steps.
 		RenderDeploymentPlanWorkflow(workflow.Context, *RenderDeploymentPlanWorkflowRequest) (*RenderDeploymentPlanWorkflowResponse, error)
 		// RenderDockerInputWorkflow renders infrastructure plan to Docker input.
-		RenderDockerInputWorkflow(workflow.Context, *deployment.InfrastructurePlan) (*deployment.Docker_Input, error)
+		RenderDockerInputWorkflow(workflow.Context, *RenderDockerInputWorkflowRequest) (*deployment.Docker_Input, error)
 		// RenderTerraformVariablesWorkflow renders infrastructure plan to Terraform
 		// input.
-		RenderTerraformVariablesWorkflow(workflow.Context, *deployment.InfrastructurePlan) (*deployment.Terraform_Input, error)
+		RenderTerraformVariablesWorkflow(workflow.Context, *RenderTerraformVariablesWorkflowRequest) (*deployment.Terraform_Input, error)
 	}
 	// deploymentServiceWorkflowFunctions provides an internal DeploymentServiceWorkflowFunctions implementation
 	deploymentServiceWorkflowFunctions struct{}
@@ -1733,7 +1733,7 @@ func (f *deploymentServiceWorkflowFunctions) RenderDeploymentPlanWorkflow(ctx wo
 }
 
 // RenderDockerInputWorkflow renders infrastructure plan to Docker input.
-func (f *deploymentServiceWorkflowFunctions) RenderDockerInputWorkflow(ctx workflow.Context, req *deployment.InfrastructurePlan) (*deployment.Docker_Input, error) {
+func (f *deploymentServiceWorkflowFunctions) RenderDockerInputWorkflow(ctx workflow.Context, req *RenderDockerInputWorkflowRequest) (*deployment.Docker_Input, error) {
 	if RenderDockerInputWorkflowFunction == nil {
 		return nil, errors.New("RenderDockerInputWorkflow requires workflow registration via RegisterDeploymentServiceWorkflows or RegisterRenderDockerInputWorkflowWorkflow")
 	}
@@ -1742,7 +1742,7 @@ func (f *deploymentServiceWorkflowFunctions) RenderDockerInputWorkflow(ctx workf
 
 // RenderTerraformVariablesWorkflow renders infrastructure plan to Terraform
 // input.
-func (f *deploymentServiceWorkflowFunctions) RenderTerraformVariablesWorkflow(ctx workflow.Context, req *deployment.InfrastructurePlan) (*deployment.Terraform_Input, error) {
+func (f *deploymentServiceWorkflowFunctions) RenderTerraformVariablesWorkflow(ctx workflow.Context, req *RenderTerraformVariablesWorkflowRequest) (*deployment.Terraform_Input, error) {
 	if RenderTerraformVariablesWorkflowFunction == nil {
 		return nil, errors.New("RenderTerraformVariablesWorkflow requires workflow registration via RegisterDeploymentServiceWorkflows or RegisterRenderTerraformVariablesWorkflowWorkflow")
 	}
@@ -2854,8 +2854,8 @@ func RegisterRenderDockerInputWorkflowWorkflow(r worker.WorkflowRegistry, wf fun
 }
 
 // buildRenderDockerInputWorkflow converts a RenderDockerInputWorkflow workflow struct into a valid workflow function
-func buildRenderDockerInputWorkflow(ctor func(workflow.Context, *RenderDockerInputWorkflowWorkflowInput) (RenderDockerInputWorkflowWorkflow, error)) func(workflow.Context, *deployment.InfrastructurePlan) (*deployment.Docker_Input, error) {
-	return func(ctx workflow.Context, req *deployment.InfrastructurePlan) (*deployment.Docker_Input, error) {
+func buildRenderDockerInputWorkflow(ctor func(workflow.Context, *RenderDockerInputWorkflowWorkflowInput) (RenderDockerInputWorkflowWorkflow, error)) func(workflow.Context, *RenderDockerInputWorkflowRequest) (*deployment.Docker_Input, error) {
+	return func(ctx workflow.Context, req *RenderDockerInputWorkflowRequest) (*deployment.Docker_Input, error) {
 		input := &RenderDockerInputWorkflowWorkflowInput{
 			Req: req,
 		}
@@ -2874,11 +2874,11 @@ func buildRenderDockerInputWorkflow(ctor func(workflow.Context, *RenderDockerInp
 
 // RenderDockerInputWorkflowWorkflowInput describes the input to a(n) RenderDockerInputWorkflow workflow constructor
 type RenderDockerInputWorkflowWorkflowInput struct {
-	Req *deployment.InfrastructurePlan
+	Req *RenderDockerInputWorkflowRequest
 }
 
 // ContinueAsNew returns an appropriately configured ContinueAsNewError
-func (i *RenderDockerInputWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Context, input *deployment.InfrastructurePlan, options ...workflow.ContinueAsNewErrorOptions) (*deployment.Docker_Input, error) {
+func (i *RenderDockerInputWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Context, input *RenderDockerInputWorkflowRequest, options ...workflow.ContinueAsNewErrorOptions) (*deployment.Docker_Input, error) {
 	next := i.Req
 	if input != nil {
 		next = input
@@ -2896,7 +2896,7 @@ type RenderDockerInputWorkflowWorkflow interface {
 }
 
 // RenderDockerInputWorkflow renders infrastructure plan to Docker input.
-func RenderDockerInputWorkflowChild(ctx workflow.Context, req *deployment.InfrastructurePlan, options ...*RenderDockerInputWorkflowChildOptions) (*deployment.Docker_Input, error) {
+func RenderDockerInputWorkflowChild(ctx workflow.Context, req *RenderDockerInputWorkflowRequest, options ...*RenderDockerInputWorkflowChildOptions) (*deployment.Docker_Input, error) {
 	childRun, err := RenderDockerInputWorkflowChildAsync(ctx, req, options...)
 	if err != nil {
 		return nil, err
@@ -2905,7 +2905,7 @@ func RenderDockerInputWorkflowChild(ctx workflow.Context, req *deployment.Infras
 }
 
 // RenderDockerInputWorkflow renders infrastructure plan to Docker input.
-func RenderDockerInputWorkflowChildAsync(ctx workflow.Context, req *deployment.InfrastructurePlan, options ...*RenderDockerInputWorkflowChildOptions) (*RenderDockerInputWorkflowChildRun, error) {
+func RenderDockerInputWorkflowChildAsync(ctx workflow.Context, req *RenderDockerInputWorkflowRequest, options ...*RenderDockerInputWorkflowChildOptions) (*RenderDockerInputWorkflowChildRun, error) {
 	var o *RenderDockerInputWorkflowChildOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
@@ -3120,8 +3120,8 @@ func RegisterRenderTerraformVariablesWorkflowWorkflow(r worker.WorkflowRegistry,
 }
 
 // buildRenderTerraformVariablesWorkflow converts a RenderTerraformVariablesWorkflow workflow struct into a valid workflow function
-func buildRenderTerraformVariablesWorkflow(ctor func(workflow.Context, *RenderTerraformVariablesWorkflowWorkflowInput) (RenderTerraformVariablesWorkflowWorkflow, error)) func(workflow.Context, *deployment.InfrastructurePlan) (*deployment.Terraform_Input, error) {
-	return func(ctx workflow.Context, req *deployment.InfrastructurePlan) (*deployment.Terraform_Input, error) {
+func buildRenderTerraformVariablesWorkflow(ctor func(workflow.Context, *RenderTerraformVariablesWorkflowWorkflowInput) (RenderTerraformVariablesWorkflowWorkflow, error)) func(workflow.Context, *RenderTerraformVariablesWorkflowRequest) (*deployment.Terraform_Input, error) {
+	return func(ctx workflow.Context, req *RenderTerraformVariablesWorkflowRequest) (*deployment.Terraform_Input, error) {
 		input := &RenderTerraformVariablesWorkflowWorkflowInput{
 			Req: req,
 		}
@@ -3140,11 +3140,11 @@ func buildRenderTerraformVariablesWorkflow(ctor func(workflow.Context, *RenderTe
 
 // RenderTerraformVariablesWorkflowWorkflowInput describes the input to a(n) RenderTerraformVariablesWorkflow workflow constructor
 type RenderTerraformVariablesWorkflowWorkflowInput struct {
-	Req *deployment.InfrastructurePlan
+	Req *RenderTerraformVariablesWorkflowRequest
 }
 
 // ContinueAsNew returns an appropriately configured ContinueAsNewError
-func (i *RenderTerraformVariablesWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Context, input *deployment.InfrastructurePlan, options ...workflow.ContinueAsNewErrorOptions) (*deployment.Terraform_Input, error) {
+func (i *RenderTerraformVariablesWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Context, input *RenderTerraformVariablesWorkflowRequest, options ...workflow.ContinueAsNewErrorOptions) (*deployment.Terraform_Input, error) {
 	next := i.Req
 	if input != nil {
 		next = input
@@ -3164,7 +3164,7 @@ type RenderTerraformVariablesWorkflowWorkflow interface {
 
 // RenderTerraformVariablesWorkflow renders infrastructure plan to Terraform
 // input.
-func RenderTerraformVariablesWorkflowChild(ctx workflow.Context, req *deployment.InfrastructurePlan, options ...*RenderTerraformVariablesWorkflowChildOptions) (*deployment.Terraform_Input, error) {
+func RenderTerraformVariablesWorkflowChild(ctx workflow.Context, req *RenderTerraformVariablesWorkflowRequest, options ...*RenderTerraformVariablesWorkflowChildOptions) (*deployment.Terraform_Input, error) {
 	childRun, err := RenderTerraformVariablesWorkflowChildAsync(ctx, req, options...)
 	if err != nil {
 		return nil, err
@@ -3174,7 +3174,7 @@ func RenderTerraformVariablesWorkflowChild(ctx workflow.Context, req *deployment
 
 // RenderTerraformVariablesWorkflow renders infrastructure plan to Terraform
 // input.
-func RenderTerraformVariablesWorkflowChildAsync(ctx workflow.Context, req *deployment.InfrastructurePlan, options ...*RenderTerraformVariablesWorkflowChildOptions) (*RenderTerraformVariablesWorkflowChildRun, error) {
+func RenderTerraformVariablesWorkflowChildAsync(ctx workflow.Context, req *RenderTerraformVariablesWorkflowRequest, options ...*RenderTerraformVariablesWorkflowChildOptions) (*RenderTerraformVariablesWorkflowChildRun, error) {
 	var o *RenderTerraformVariablesWorkflowChildOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
@@ -5675,7 +5675,7 @@ func (c *TestDeploymentServiceClient) GetRenderDeploymentPlanWorkflow(ctx contex
 }
 
 // RenderDockerInputWorkflow executes a(n) RenderDockerInputWorkflow workflow in the test environment
-func (c *TestDeploymentServiceClient) RenderDockerInputWorkflow(ctx context.Context, req *deployment.InfrastructurePlan, opts ...*RenderDockerInputWorkflowOptions) (*deployment.Docker_Input, error) {
+func (c *TestDeploymentServiceClient) RenderDockerInputWorkflow(ctx context.Context, req *RenderDockerInputWorkflowRequest, opts ...*RenderDockerInputWorkflowOptions) (*deployment.Docker_Input, error) {
 	run, err := c.RenderDockerInputWorkflowAsync(ctx, req, opts...)
 	if err != nil {
 		return nil, err
@@ -5684,7 +5684,7 @@ func (c *TestDeploymentServiceClient) RenderDockerInputWorkflow(ctx context.Cont
 }
 
 // RenderDockerInputWorkflowAsync executes a(n) RenderDockerInputWorkflow workflow in the test environment
-func (c *TestDeploymentServiceClient) RenderDockerInputWorkflowAsync(ctx context.Context, req *deployment.InfrastructurePlan, options ...*RenderDockerInputWorkflowOptions) (RenderDockerInputWorkflowRun, error) {
+func (c *TestDeploymentServiceClient) RenderDockerInputWorkflowAsync(ctx context.Context, req *RenderDockerInputWorkflowRequest, options ...*RenderDockerInputWorkflowOptions) (RenderDockerInputWorkflowRun, error) {
 	var o *RenderDockerInputWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
@@ -5704,7 +5704,7 @@ func (c *TestDeploymentServiceClient) GetRenderDockerInputWorkflow(ctx context.C
 }
 
 // RenderTerraformVariablesWorkflow executes a(n) RenderTerraformVariablesWorkflow workflow in the test environment
-func (c *TestDeploymentServiceClient) RenderTerraformVariablesWorkflow(ctx context.Context, req *deployment.InfrastructurePlan, opts ...*RenderTerraformVariablesWorkflowOptions) (*deployment.Terraform_Input, error) {
+func (c *TestDeploymentServiceClient) RenderTerraformVariablesWorkflow(ctx context.Context, req *RenderTerraformVariablesWorkflowRequest, opts ...*RenderTerraformVariablesWorkflowOptions) (*deployment.Terraform_Input, error) {
 	run, err := c.RenderTerraformVariablesWorkflowAsync(ctx, req, opts...)
 	if err != nil {
 		return nil, err
@@ -5713,7 +5713,7 @@ func (c *TestDeploymentServiceClient) RenderTerraformVariablesWorkflow(ctx conte
 }
 
 // RenderTerraformVariablesWorkflowAsync executes a(n) RenderTerraformVariablesWorkflow workflow in the test environment
-func (c *TestDeploymentServiceClient) RenderTerraformVariablesWorkflowAsync(ctx context.Context, req *deployment.InfrastructurePlan, options ...*RenderTerraformVariablesWorkflowOptions) (RenderTerraformVariablesWorkflowRun, error) {
+func (c *TestDeploymentServiceClient) RenderTerraformVariablesWorkflowAsync(ctx context.Context, req *RenderTerraformVariablesWorkflowRequest, options ...*RenderTerraformVariablesWorkflowOptions) (RenderTerraformVariablesWorkflowRun, error) {
 	var o *RenderTerraformVariablesWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
@@ -5983,7 +5983,7 @@ type testRenderDockerInputWorkflowRun struct {
 	env       *testsuite.TestWorkflowEnvironment
 	isStarted atomic.Bool
 	opts      *client.StartWorkflowOptions
-	req       *deployment.InfrastructurePlan
+	req       *RenderDockerInputWorkflowRequest
 	workflows DeploymentServiceWorkflows
 }
 
@@ -6041,7 +6041,7 @@ type testRenderTerraformVariablesWorkflowRun struct {
 	env       *testsuite.TestWorkflowEnvironment
 	isStarted atomic.Bool
 	opts      *client.StartWorkflowOptions
-	req       *deployment.InfrastructurePlan
+	req       *RenderTerraformVariablesWorkflowRequest
 	workflows DeploymentServiceWorkflows
 }
 
@@ -6115,7 +6115,7 @@ func WithDeploymentServiceSchemeTypes() scheme.Option {
 		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("ProcessInfrastructureWorkflowResponse"))
 		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("RenderDeploymentPlanWorkflowRequest"))
 		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("RenderDeploymentPlanWorkflowResponse"))
-		s.RegisterType(deployment.File_cloud_v1_deployment_infrastructure_proto.Messages().ByName("InfrastructurePlan"))
-		s.RegisterType(deployment.File_cloud_v1_deployment_infrastructure_proto.Messages().ByName("InfrastructurePlan").Messages().ByName("LabelsEntry"))
+		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("RenderDockerInputWorkflowRequest"))
+		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("RenderTerraformVariablesWorkflowRequest"))
 	}
 }

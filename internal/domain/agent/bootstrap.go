@@ -1,0 +1,168 @@
+package agent
+
+import (
+	"bytes"
+	"fmt"
+	"sort"
+	"strings"
+	"text/template"
+)
+
+const (
+	RemoteBinPath             = "/usr/local/bin/stroppy-agent"
+	DefaultTemporalNamespace  = "default"
+	DockerEnvFilePath         = "/etc/stroppy-agent.env"
+	CloudInitEnvFilePath      = "/etc/stroppy/agent.env"
+	DefaultAgentBinaryPathURL = "/agent/binary"
+)
+
+type Bootstrap struct {
+	ServerAddr        string
+	BinaryURL         string
+	TemporalNamespace string
+	ExtraEnv          map[string]string
+}
+
+type CloudInitOptions struct {
+	SSHUser      string
+	SSHPublicKey string
+}
+
+func Env(machineID string, bootstrap Bootstrap) (map[string]string, error) {
+	if machineID == "" {
+		return nil, fmt.Errorf("agent bootstrap: machine id is required")
+	}
+	if bootstrap.ServerAddr == "" {
+		return nil, fmt.Errorf("agent bootstrap: server addr is required")
+	}
+
+	namespace := bootstrap.TemporalNamespace
+	if namespace == "" {
+		namespace = DefaultTemporalNamespace
+	}
+	binaryURL := bootstrap.BinaryURL
+	if binaryURL == "" {
+		binaryURL = strings.TrimRight(bootstrap.ServerAddr, "/") + DefaultAgentBinaryPathURL
+	}
+
+	env := copyStringMap(bootstrap.ExtraEnv)
+	env["STROPPY_SERVER_ADDR"] = bootstrap.ServerAddr
+	env["STROPPY_AGENT_BINARY_URL"] = binaryURL
+	env["STROPPY_MACHINE_ID"] = machineID
+	env["STROPPY_NODE_ID"] = machineID
+	env["AGENT_MACHINE_ID"] = machineID
+	env["AGENT_TASK_QUEUE"] = "stroppy-agent-" + machineID
+	env["TEMPORAL_NAMESPACE"] = namespace
+	return env, nil
+}
+
+func EnvFile(machineID string, bootstrap Bootstrap) (string, error) {
+	env, err := Env(machineID, bootstrap)
+	if err != nil {
+		return "", err
+	}
+	return EnvFileFromMap(env), nil
+}
+
+func EnvFileFromMap(env map[string]string) string {
+	keys := make([]string, 0, len(env))
+	for key := range env {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	var b strings.Builder
+	for _, key := range keys {
+		fmt.Fprintf(&b, "%s=%s\n", key, env[key])
+	}
+	return b.String()
+}
+
+func CloudInit(machineID string, bootstrap Bootstrap, options CloudInitOptions) (string, error) {
+	env, err := Env(machineID, bootstrap)
+	if err != nil {
+		return "", err
+	}
+	sshUser := options.SSHUser
+	if sshUser == "" {
+		sshUser = "stroppy"
+	}
+
+	data := struct {
+		SSHUser      string
+		SSHPublicKey string
+		EnvFile      string
+		BinaryURL    string
+		BinPath      string
+	}{
+		SSHUser:      sshUser,
+		SSHPublicKey: options.SSHPublicKey,
+		EnvFile:      indent(EnvFileFromMap(env), 6),
+		BinaryURL:    env["STROPPY_AGENT_BINARY_URL"],
+		BinPath:      RemoteBinPath,
+	}
+
+	var buf bytes.Buffer
+	if err := cloudInitTmpl.Execute(&buf, data); err != nil {
+		return "", fmt.Errorf("agent bootstrap: render cloud-init: %w", err)
+	}
+	return buf.String(), nil
+}
+
+var cloudInitTmpl = template.Must(template.New("cloudinit").Parse(`#cloud-config
+users:
+  - name: {{.SSHUser}}
+    groups: sudo
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+{{- if .SSHPublicKey}}
+    ssh_authorized_keys:
+      - {{.SSHPublicKey}}
+{{- end}}
+
+write_files:
+  - path: /etc/stroppy/agent.env
+    content: |
+{{.EnvFile}}
+  - path: /etc/systemd/system/stroppy-agent.service
+    content: |
+      [Unit]
+      Description=Stroppy Agent
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=simple
+      EnvironmentFile=/etc/stroppy/agent.env
+      ExecStart={{.BinPath}} agent
+      Restart=always
+      RestartSec=2
+      StartLimitIntervalSec=0
+
+      [Install]
+      WantedBy=multi-user.target
+
+runcmd:
+  - mkdir -p /etc/stroppy
+  - curl -fsSL -o {{.BinPath}} "{{.BinaryURL}}"
+  - chmod +x {{.BinPath}}
+  - systemctl daemon-reload
+  - systemctl enable --now stroppy-agent
+`))
+
+func indent(s string, spaces int) string {
+	prefix := strings.Repeat(" ", spaces)
+	lines := strings.Split(strings.TrimRight(s, "\n"), "\n")
+	for i, line := range lines {
+		lines[i] = prefix + line
+	}
+	return strings.Join(lines, "\n")
+}
+
+func copyStringMap(in map[string]string) map[string]string {
+	out := make(map[string]string, len(in))
+	for key, value := range in {
+		out[key] = value
+	}
+	return out
+}

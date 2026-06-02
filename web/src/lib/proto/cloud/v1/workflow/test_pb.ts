@@ -10,9 +10,10 @@ import type { InfrastructureState, InfrastructureStateJson } from "../deployment
 import { file_cloud_v1_deployment_infrastructure } from "../deployment/infrastructure_pb.ts";
 import type { DeploymentPlan, DeploymentPlanJson } from "../deployment/plan_pb.ts";
 import { file_cloud_v1_deployment_plan } from "../deployment/plan_pb.ts";
+import type { AgentBootstrap, AgentBootstrapJson } from "./deployment_pb.ts";
+import { file_cloud_v1_workflow_deployment } from "./deployment_pb.ts";
 import type { Database, DatabaseJson } from "../domain/database_pb.ts";
 import { file_cloud_v1_domain_database } from "../domain/database_pb.ts";
-import type { SuiteRun, SuiteRunJson } from "../domain/suite_pb.ts";
 import { file_cloud_v1_domain_suite } from "../domain/suite_pb.ts";
 import type { TestRun, TestRunJson } from "../domain/test_pb.ts";
 import { file_cloud_v1_domain_test } from "../domain/test_pb.ts";
@@ -20,6 +21,8 @@ import type { Workload, WorkloadJson } from "../domain/workload_pb.ts";
 import { file_cloud_v1_domain_workload } from "../domain/workload_pb.ts";
 import type { TopologySpec, TopologySpecJson } from "../topology/topology_pb.ts";
 import { file_cloud_v1_topology_topology } from "../topology/topology_pb.ts";
+import type { RunConfig, RunConfigJson } from "./run_pb.ts";
+import { file_cloud_v1_workflow_run } from "./run_pb.ts";
 import type { EmptySchema, Timestamp, TimestampJson } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_empty, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import { file_temporal_v1_temporal } from "../../../temporal/v1/temporal_pb.ts";
@@ -30,7 +33,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/workflow/test.proto.
  */
 export const file_cloud_v1_workflow_test: GenFile = /*@__PURE__*/
-  fileDesc("ChxjbG91ZC92MS93b3JrZmxvdy90ZXN0LnByb3RvEhFjbG91ZC52MS53b3JrZmxvdyJLChNUZXN0V29ya2Zsb3dSZXF1ZXN0EjQKCHRlc3RfcnVuGAEgASgLMhguY2xvdWQudjEuZG9tYWluLlRlc3RSdW5CCPpCBYoBAhABIhYKFFRlc3RXb3JrZmxvd1Jlc3BvbnNlIl0KCFJ1blN0YXRlEicKBnN0YXR1cxgBIAEoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXMSKAoGc3RhZ2VzGAIgAygLMhguY2xvdWQudjEud29ya2Zsb3cuU3RhZ2UiywEKBVN0YWdlEhkKEW5vZGVfZXhlY3V0aW9uX2lkGAEgASgJEgwKBG5hbWUYAiABKAkSJwoGc3RhdHVzGAMgASgOMhcuY2xvdWQudjEuY29tbW9uLlN0YXR1cxIuCgpzdGFydGVkX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIvCgtmaW5pc2hlZF9hdBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDwoHYXR0ZW1wdBgGIAEoDSK5AQodSW5zdGFsbFN0cm9wcHlXb3JrZmxvd1JlcXVlc3QSUAoUaW5mcmFzdHJ1Y3R1cmVfc3RhdGUYASABKAsyKC5jbG91ZC52MS5kZXBsb3ltZW50LkluZnJhc3RydWN0dXJlU3RhdGVCCPpCBYoBAhABEkYKD2RlcGxveW1lbnRfcGxhbhgCIAEoCzIjLmNsb3VkLnYxLmRlcGxveW1lbnQuRGVwbG95bWVudFBsYW5CCPpCBYoBAhABIiAKHkluc3RhbGxTdHJvcHB5V29ya2Zsb3dSZXNwb25zZSLxAQoeSW5zdGFsbERhdGFiYXNlV29ya2Zsb3dSZXF1ZXN0ElAKFGluZnJhc3RydWN0dXJlX3N0YXRlGAEgASgLMiguY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVN0YXRlQgj6QgWKAQIQARI1CghkYXRhYmFzZRgCIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5EYXRhYmFzZUII+kIFigECEAESRgoPZGVwbG95bWVudF9wbGFuGAMgASgLMiMuY2xvdWQudjEuZGVwbG95bWVudC5EZXBsb3ltZW50UGxhbkII+kIFigECEAEiIQofSW5zdGFsbERhdGFiYXNlV29ya2Zsb3dSZXNwb25zZSLnAQoaUnVuV29ya2xvYWRXb3JrZmxvd1JlcXVlc3QSQAoNdG9wb2xvZ3lfc3BlYxgBIAEoCzIfLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5U3BlY0II+kIFigECEAESNQoId29ya2xvYWQYAiABKAsyGS5jbG91ZC52MS5kb21haW4uV29ya2xvYWRCCPpCBYoBAhABElAKFGluZnJhc3RydWN0dXJlX3N0YXRlGAMgASgLMiguY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVN0YXRlQgj6QgWKAQIQASIdChtSdW5Xb3JrbG9hZFdvcmtmbG93UmVzcG9uc2UiTgoUU3VpdGVXb3JrZmxvd1JlcXVlc3QSNgoJc3VpdGVfcnVuGAEgASgLMhkuY2xvdWQudjEuZG9tYWluLlN1aXRlUnVuQgj6QgWKAQIQASIXChVTdWl0ZVdvcmtmbG93UmVzcG9uc2UykAYKC1Rlc3RTZXJ2aWNlEqQBCgxUZXN0V29ya2Zsb3cSJi5jbG91ZC52MS53b3JrZmxvdy5UZXN0V29ya2Zsb3dSZXF1ZXN0GicuY2xvdWQudjEud29ya2Zsb3cuVGVzdFdvcmtmbG93UmVzcG9uc2UiQ4rEAz9yDFRlc3RXb3JrZmxvdyoadGVzdC1ydW4vJHshIHRlc3RfcnVuLmlkIH0wAkoCIAEKDQoLR2V0UnVuU3RhdGUSVQoLR2V0UnVuU3RhdGUSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaGy5jbG91ZC52MS53b3JrZmxvdy5SdW5TdGF0ZSIRmsQDDQoLR2V0UnVuU3RhdGUSqAEKFkluc3RhbGxTdHJvcHB5V29ya2Zsb3cSMC5jbG91ZC52MS53b3JrZmxvdy5JbnN0YWxsU3Ryb3BweVdvcmtmbG93UmVxdWVzdBoxLmNsb3VkLnYxLndvcmtmbG93Lkluc3RhbGxTdHJvcHB5V29ya2Zsb3dSZXNwb25zZSIpisQDJXIWSW5zdGFsbFN0cm9wcHlXb3JrZmxvd1IDCIgOSgYgAwoCCAUSrAEKF0luc3RhbGxEYXRhYmFzZVdvcmtmbG93EjEuY2xvdWQudjEud29ya2Zsb3cuSW5zdGFsbERhdGFiYXNlV29ya2Zsb3dSZXF1ZXN0GjIuY2xvdWQudjEud29ya2Zsb3cuSW5zdGFsbERhdGFiYXNlV29ya2Zsb3dSZXNwb25zZSIqisQDJnIXSW5zdGFsbERhdGFiYXNlV29ya2Zsb3dSAwiIDkoGIAMKAggFEpMBChNSdW5Xb3JrbG9hZFdvcmtmbG93Ei0uY2xvdWQudjEud29ya2Zsb3cuUnVuV29ya2xvYWRXb3JrZmxvd1JlcXVlc3QaLi5jbG91ZC52MS53b3JrZmxvdy5SdW5Xb3JrbG9hZFdvcmtmbG93UmVzcG9uc2UiHYrEAxlyE1J1bldvcmtsb2FkV29ya2Zsb3dKAiABGhOKxAMPCg1zdHJvcHB5LWNsb3VkMskBChRTdWl0ZVdvcmtmbG93U2VydmljZRKbAQoNU3VpdGVXb3JrZmxvdxInLmNsb3VkLnYxLndvcmtmbG93LlN1aXRlV29ya2Zsb3dSZXF1ZXN0GiguY2xvdWQudjEud29ya2Zsb3cuU3VpdGVXb3JrZmxvd1Jlc3BvbnNlIjeKxAMzcg1TdWl0ZVdvcmtmbG93KhxzdWl0ZS1ydW4vJHshIHN1aXRlX3J1bi5pZCB9MAJKAiABGhOKxAMPCg1zdHJvcHB5LWNsb3VkQkZaRGdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL3dvcmtmbG93YgZwcm90bzM", [file_cloud_v1_common_status, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_plan, file_cloud_v1_domain_database, file_cloud_v1_domain_suite, file_cloud_v1_domain_test, file_cloud_v1_domain_workload, file_cloud_v1_topology_topology, file_google_protobuf_empty, file_google_protobuf_timestamp, file_temporal_v1_temporal, file_validate_validate]);
+  fileDesc("ChxjbG91ZC92MS93b3JrZmxvdy90ZXN0LnByb3RvEhFjbG91ZC52MS53b3JrZmxvdyKHAQoTVGVzdFdvcmtmbG93UmVxdWVzdBI0Cgh0ZXN0X3J1bhgBIAEoCzIYLmNsb3VkLnYxLmRvbWFpbi5UZXN0UnVuQgj6QgWKAQIQARI6Cg9hZ2VudF9ib290c3RyYXAYAiABKAsyIS5jbG91ZC52MS53b3JrZmxvdy5BZ2VudEJvb3RzdHJhcCIWChRUZXN0V29ya2Zsb3dSZXNwb25zZSJdCghSdW5TdGF0ZRInCgZzdGF0dXMYASABKA4yFy5jbG91ZC52MS5jb21tb24uU3RhdHVzEigKBnN0YWdlcxgCIAMoCzIYLmNsb3VkLnYxLndvcmtmbG93LlN0YWdlIssBCgVTdGFnZRIZChFub2RlX2V4ZWN1dGlvbl9pZBgBIAEoCRIMCgRuYW1lGAIgASgJEicKBnN0YXR1cxgDIAEoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXMSLgoKc3RhcnRlZF9hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLwoLZmluaXNoZWRfYXQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEg8KB2F0dGVtcHQYBiABKA0iuQEKHUluc3RhbGxTdHJvcHB5V29ya2Zsb3dSZXF1ZXN0ElAKFGluZnJhc3RydWN0dXJlX3N0YXRlGAEgASgLMiguY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVN0YXRlQgj6QgWKAQIQARJGCg9kZXBsb3ltZW50X3BsYW4YAiABKAsyIy5jbG91ZC52MS5kZXBsb3ltZW50LkRlcGxveW1lbnRQbGFuQgj6QgWKAQIQASIgCh5JbnN0YWxsU3Ryb3BweVdvcmtmbG93UmVzcG9uc2Ui8QEKHkluc3RhbGxEYXRhYmFzZVdvcmtmbG93UmVxdWVzdBJQChRpbmZyYXN0cnVjdHVyZV9zdGF0ZRgBIAEoCzIoLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVTdGF0ZUII+kIFigECEAESNQoIZGF0YWJhc2UYAiABKAsyGS5jbG91ZC52MS5kb21haW4uRGF0YWJhc2VCCPpCBYoBAhABEkYKD2RlcGxveW1lbnRfcGxhbhgDIAEoCzIjLmNsb3VkLnYxLmRlcGxveW1lbnQuRGVwbG95bWVudFBsYW5CCPpCBYoBAhABIiEKH0luc3RhbGxEYXRhYmFzZVdvcmtmbG93UmVzcG9uc2Ui5wEKGlJ1bldvcmtsb2FkV29ya2Zsb3dSZXF1ZXN0EkAKDXRvcG9sb2d5X3NwZWMYASABKAsyHy5jbG91ZC52MS50b3BvbG9neS5Ub3BvbG9neVNwZWNCCPpCBYoBAhABEjUKCHdvcmtsb2FkGAIgASgLMhkuY2xvdWQudjEuZG9tYWluLldvcmtsb2FkQgj6QgWKAQIQARJQChRpbmZyYXN0cnVjdHVyZV9zdGF0ZRgDIAEoCzIoLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVTdGF0ZUII+kIFigECEAEiHQobUnVuV29ya2xvYWRXb3JrZmxvd1Jlc3BvbnNlIoYBChRTdWl0ZVdvcmtmbG93UmVxdWVzdBIfCgxzdWl0ZV9ydW5faWQYASABKAlCCfpCBnIEEAEYQBI3CgRydW5zGAIgAygLMhwuY2xvdWQudjEud29ya2Zsb3cuUnVuQ29uZmlnQgv6QgiSAQUQ6AcIARIUCgxtYXhfcGFyYWxsZWwYAyABKA0iFwoVU3VpdGVXb3JrZmxvd1Jlc3BvbnNlMpAGCgtUZXN0U2VydmljZRKkAQoMVGVzdFdvcmtmbG93EiYuY2xvdWQudjEud29ya2Zsb3cuVGVzdFdvcmtmbG93UmVxdWVzdBonLmNsb3VkLnYxLndvcmtmbG93LlRlc3RXb3JrZmxvd1Jlc3BvbnNlIkOKxAM/cgxUZXN0V29ya2Zsb3cqGnRlc3QtcnVuLyR7ISB0ZXN0X3J1bi5pZCB9MAJKAiABCg0KC0dldFJ1blN0YXRlElUKC0dldFJ1blN0YXRlEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GhsuY2xvdWQudjEud29ya2Zsb3cuUnVuU3RhdGUiEZrEAw0KC0dldFJ1blN0YXRlEqgBChZJbnN0YWxsU3Ryb3BweVdvcmtmbG93EjAuY2xvdWQudjEud29ya2Zsb3cuSW5zdGFsbFN0cm9wcHlXb3JrZmxvd1JlcXVlc3QaMS5jbG91ZC52MS53b3JrZmxvdy5JbnN0YWxsU3Ryb3BweVdvcmtmbG93UmVzcG9uc2UiKYrEAyVyFkluc3RhbGxTdHJvcHB5V29ya2Zsb3dSAwiIDkoGIAMKAggFEqwBChdJbnN0YWxsRGF0YWJhc2VXb3JrZmxvdxIxLmNsb3VkLnYxLndvcmtmbG93Lkluc3RhbGxEYXRhYmFzZVdvcmtmbG93UmVxdWVzdBoyLmNsb3VkLnYxLndvcmtmbG93Lkluc3RhbGxEYXRhYmFzZVdvcmtmbG93UmVzcG9uc2UiKorEAyZyF0luc3RhbGxEYXRhYmFzZVdvcmtmbG93UgMIiA5KBgoCCAUgAxKTAQoTUnVuV29ya2xvYWRXb3JrZmxvdxItLmNsb3VkLnYxLndvcmtmbG93LlJ1bldvcmtsb2FkV29ya2Zsb3dSZXF1ZXN0Gi4uY2xvdWQudjEud29ya2Zsb3cuUnVuV29ya2xvYWRXb3JrZmxvd1Jlc3BvbnNlIh2KxAMZchNSdW5Xb3JrbG9hZFdvcmtmbG93SgIgARoTisQDDwoNc3Ryb3BweS1jbG91ZDLJAQoUU3VpdGVXb3JrZmxvd1NlcnZpY2USmwEKDVN1aXRlV29ya2Zsb3cSJy5jbG91ZC52MS53b3JrZmxvdy5TdWl0ZVdvcmtmbG93UmVxdWVzdBooLmNsb3VkLnYxLndvcmtmbG93LlN1aXRlV29ya2Zsb3dSZXNwb25zZSI3isQDMzACSgIgAXINU3VpdGVXb3JrZmxvdyocc3VpdGUtcnVuLyR7ISBzdWl0ZV9ydW5faWQgfRoTisQDDwoNc3Ryb3BweS1jbG91ZEJGWkRnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS93b3JrZmxvd2IGcHJvdG8z", [file_cloud_v1_common_status, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_plan, file_cloud_v1_workflow_deployment, file_cloud_v1_domain_database, file_cloud_v1_domain_suite, file_cloud_v1_domain_test, file_cloud_v1_domain_workload, file_cloud_v1_topology_topology, file_cloud_v1_workflow_run, file_google_protobuf_empty, file_google_protobuf_timestamp, file_temporal_v1_temporal, file_validate_validate]);
 
 /**
  *
@@ -46,6 +49,15 @@ export type TestWorkflowRequest = Message<"cloud.v1.workflow.TestWorkflowRequest
    * @generated from field: cloud.v1.domain.TestRun test_run = 1;
    */
   testRun?: TestRun;
+
+  /**
+   *
+   * agent_bootstrap is runtime control-plane data delivered to provisioned
+   * agents through the provider-specific carrier.
+   *
+   * @generated from field: cloud.v1.workflow.AgentBootstrap agent_bootstrap = 2;
+   */
+  agentBootstrap?: AgentBootstrap;
 };
 
 /**
@@ -62,6 +74,15 @@ export type TestWorkflowRequestJson = {
    * @generated from field: cloud.v1.domain.TestRun test_run = 1;
    */
   testRun?: TestRunJson;
+
+  /**
+   *
+   * agent_bootstrap is runtime control-plane data delivered to provisioned
+   * agents through the provider-specific carrier.
+   *
+   * @generated from field: cloud.v1.workflow.AgentBootstrap agent_bootstrap = 2;
+   */
+  agentBootstrap?: AgentBootstrapJson;
 };
 
 export type TestWorkflowRequestValid = TestWorkflowRequest;
@@ -580,34 +601,72 @@ export const RunWorkloadWorkflowResponseSchema: GenMessage<RunWorkloadWorkflowRe
 
 /**
  *
- * SuiteWorkflowRequest is the input to a suite run.
+ * SuiteWorkflowRequest is the input to a suite run. The API/start layer expands
+ * the suite definition into persisted child TestRunRecords and then builds one
+ * RunConfig per child with provider settings and agent bootstrap resolved.
  *
  * @generated from message cloud.v1.workflow.SuiteWorkflowRequest
  */
 export type SuiteWorkflowRequest = Message<"cloud.v1.workflow.SuiteWorkflowRequest"> & {
   /**
    *
-   * suite_run is the full description of the suite run to execute.
+   * suite_run_id is the persisted SuiteRunRecord id.
    *
-   * @generated from field: cloud.v1.domain.SuiteRun suite_run = 1;
+   * @generated from field: string suite_run_id = 1;
    */
-  suiteRun?: SuiteRun;
+  suiteRunId: string;
+
+  /**
+   *
+   * runs are the child run workflow inputs.
+   *
+   * @generated from field: repeated cloud.v1.workflow.RunConfig runs = 2;
+   */
+  runs: RunConfig[];
+
+  /**
+   *
+   * max_parallel caps concurrent child TestRunWorkflow executions. 0 =
+   * unlimited.
+   *
+   * @generated from field: uint32 max_parallel = 3;
+   */
+  maxParallel: number;
 };
 
 /**
  *
- * SuiteWorkflowRequest is the input to a suite run.
+ * SuiteWorkflowRequest is the input to a suite run. The API/start layer expands
+ * the suite definition into persisted child TestRunRecords and then builds one
+ * RunConfig per child with provider settings and agent bootstrap resolved.
  *
  * @generated from message cloud.v1.workflow.SuiteWorkflowRequest
  */
 export type SuiteWorkflowRequestJson = {
   /**
    *
-   * suite_run is the full description of the suite run to execute.
+   * suite_run_id is the persisted SuiteRunRecord id.
    *
-   * @generated from field: cloud.v1.domain.SuiteRun suite_run = 1;
+   * @generated from field: string suite_run_id = 1;
    */
-  suiteRun?: SuiteRunJson;
+  suiteRunId?: string;
+
+  /**
+   *
+   * runs are the child run workflow inputs.
+   *
+   * @generated from field: repeated cloud.v1.workflow.RunConfig runs = 2;
+   */
+  runs?: RunConfigJson[];
+
+  /**
+   *
+   * max_parallel caps concurrent child TestRunWorkflow executions. 0 =
+   * unlimited.
+   *
+   * @generated from field: uint32 max_parallel = 3;
+   */
+  maxParallel?: number;
 };
 
 export type SuiteWorkflowRequestValid = SuiteWorkflowRequest;
@@ -722,7 +781,7 @@ export const TestService: GenService<{
 
 /**
  *
- * SuiteWorkflowService runs a child TestWorkflow per test_run, honoring
+ * SuiteWorkflowService runs a child TestRunWorkflow per RunConfig, honoring
  * max_parallel.
  *
  * @generated from service cloud.v1.workflow.SuiteWorkflowService
@@ -730,8 +789,8 @@ export const TestService: GenService<{
 export const SuiteWorkflowService: GenService<{
   /**
    *
-   * SuiteWorkflow fans out a child TestWorkflow per test run in the suite,
-   * deduplicated by a deterministic id derived from SuiteRun.id.
+   * SuiteWorkflow fans out a child TestRunWorkflow per run in the suite,
+   * deduplicated by a deterministic id derived from suite_run_id.
    *
    * @generated from rpc cloud.v1.workflow.SuiteWorkflowService.SuiteWorkflow
    */

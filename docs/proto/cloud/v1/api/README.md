@@ -259,6 +259,7 @@
   - [cloud.v1.api.StatusCounts](#cloud-v1-api-statuscounts)
   - [cloud.v1.api.StreamLogsRequest](#cloud-v1-api-streamlogsrequest)
   - [cloud.v1.api.StreamTestRunOverviewRequest](#cloud-v1-api-streamtestrunoverviewrequest)
+  - [cloud.v1.api.SuiteWizardCellPatch](#cloud-v1-api-suitewizardcellpatch)
   - [cloud.v1.api.TenantDashboard](#cloud-v1-api-tenantdashboard)
   - [cloud.v1.api.TestRunOverviewSnapshot](#cloud-v1-api-testrunoverviewsnapshot)
   - [cloud.v1.api.TokenPair](#cloud-v1-api-tokenpair)
@@ -2844,9 +2845,8 @@ go_name: Preset</pre></td>
 ### cloud.v1.api.FinishSuiteWizardRequest
 
 <pre>
-//FinishSuiteWizard bakes the draft into a domain.SuiteRun: every compatible cell
-//becomes a fully baked TestRun (preset params + the suite's provider settings +
-//derived topology). Rejected unless draft.ready.
+//FinishSuiteWizard persists a reusable SuiteRecord. If start=true it also starts
+//a SuiteRun using the same rules as StartSuite.
 </pre>
 
 <table>
@@ -2859,10 +2859,43 @@ go_name: Preset</pre></td>
 <td>draft_id</td>
 <td>string</td>
 <td><pre>
-//draft_id is the wizard draft to bake.<br>
+//draft_id is the wizard draft to finish.<br>
 
 json_name: draftId
 go_name: DraftId</pre></td>
+</tr><tr>
+<td>in_global_rating</td>
+<td>bool</td>
+<td><pre>
+//in_global_rating overrides child run global-rating membership when start=true.<br>
+
+json_name: inGlobalRating
+go_name: InGlobalRating</pre></td>
+</tr><tr>
+<td>in_tenant_rating</td>
+<td>bool</td>
+<td><pre>
+//in_tenant_rating overrides child run tenant-rating membership when start=true.<br>
+
+json_name: inTenantRating
+go_name: InTenantRating</pre></td>
+</tr><tr>
+<td>start</td>
+<td>bool</td>
+<td><pre>
+//start launches the saved suite immediately.<br>
+
+json_name: start
+go_name: Start</pre></td>
+</tr><tr>
+<td>suite_name</td>
+<td>string</td>
+<td><pre>
+//suite_name optionally overrides the persisted suite name. Empty means use
+//draft entity.name.<br>
+
+json_name: suiteName
+go_name: SuiteName</pre></td>
 </tr><tr>
 <td>tenant_id</td>
 <td>string</td>
@@ -2880,7 +2913,8 @@ go_name: TenantId</pre></td>
 ### cloud.v1.api.FinishSuiteWizardResponse
 
 <pre>
-//FinishSuiteWizardResponse returns the baked suite run spec.
+//FinishSuiteWizardResponse returns the saved suite and, when start=true, the
+//launched suite run.
 </pre>
 
 <table>
@@ -2890,11 +2924,18 @@ go_name: TenantId</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>suite_run</td>
-<td><a href="../domain/README.md#cloud-v1-domain-suiterun">cloud.v1.domain.SuiteRun</a></td>
+<td>suite</td>
+<td><a href="../models/README.md#cloud-v1-models-suiterecord">cloud.v1.models.SuiteRecord</a></td>
 <td><pre>
-//suite_run is the baked domain.SuiteRun (every compatible cell as a baked
-//TestRun).<br>
+//suite is the saved reusable suite definition.<br>
+
+json_name: suite
+go_name: Suite</pre></td>
+</tr><tr>
+<td>suite_run</td>
+<td><a href="../models/README.md#cloud-v1-models-suiterunrecord">cloud.v1.models.SuiteRunRecord</a></td>
+<td><pre>
+//suite_run is set when start=true.<br>
 
 json_name: suiteRun
 go_name: SuiteRun</pre></td>
@@ -5892,7 +5933,7 @@ go_name: SuiteRuns</pre></td>
 <td>filter</td>
 <td><a href="../common/README.md#cloud-v1-common-entityfilter">cloud.v1.common.EntityFilter</a></td>
 <td><pre>
-//filter holds the shared Entity-level filters (author, time windows, ...).<br>
+//filter holds the shared Entity-level filters.<br>
 
 json_name: filter
 go_name: Filter</pre></td>
@@ -5900,7 +5941,7 @@ go_name: Filter</pre></td>
 <td>page</td>
 <td><a href="../common/README.md#cloud-v1-common-page">cloud.v1.common.Page</a></td>
 <td><pre>
-//page carries pagination (page size + token).<br>
+//page carries pagination.<br>
 
 json_name: page
 go_name: Page</pre></td>
@@ -6196,6 +6237,14 @@ go_name: IsSystem</pre></td>
 json_name: page
 go_name: Page</pre></td>
 </tr><tr>
+<td>protocols</td>
+<td><a href="../domain/README.md#cloud-v1-domain-workload-protocol">cloud.v1.domain.Workload.Protocol</a></td>
+<td><pre>
+//protocols narrows to workload wire protocols.<br>
+
+json_name: protocols
+go_name: Protocols</pre></td>
+</tr><tr>
 <td>sort</td>
 <td><a href="#cloud-v1-api-listtestpresetsrequest-sort">cloud.v1.api.ListTestPresetsRequest.Sort</a></td>
 <td><pre>
@@ -6304,6 +6353,11 @@ go_name: Kind</pre></td>
 <td>KIND_IS_SYSTEM</td>
 <td><pre>
 //KIND_IS_SYSTEM sorts system presets first/last.
+</pre></td>
+</tr><tr>
+<td>KIND_PROTOCOL</td>
+<td><pre>
+//KIND_PROTOCOL sorts by the test workload protocol.
 </pre></td>
 </tr>
 </table>
@@ -6464,6 +6518,14 @@ go_name: ProgressMax</pre></td>
 json_name: progressMin
 go_name: ProgressMin</pre></td>
 </tr><tr>
+<td>protocols</td>
+<td><a href="../domain/README.md#cloud-v1-domain-workload-protocol">cloud.v1.domain.Workload.Protocol</a></td>
+<td><pre>
+//protocols facets by workload wire protocol.<br>
+
+json_name: protocols
+go_name: Protocols</pre></td>
+</tr><tr>
 <td>providers</td>
 <td><a href="../deployment/README.md#cloud-v1-deployment-provider">cloud.v1.deployment.Provider</a></td>
 <td><pre>
@@ -6522,6 +6584,14 @@ go_name: Statuses</pre></td>
 json_name: stroppyVersions
 go_name: StroppyVersions</pre></td>
 </tr><tr>
+<td>suite_cell_ids</td>
+<td>string</td>
+<td><pre>
+//suite_cell_ids scopes to specific cells inside a suite run.<br>
+
+json_name: suiteCellIds
+go_name: SuiteCellIds</pre></td>
+</tr><tr>
 <td>suite_run_id</td>
 <td>string</td>
 <td><pre>
@@ -6537,6 +6607,14 @@ go_name: SuiteRunId</pre></td>
 
 json_name: tenantId
 go_name: TenantId</pre></td>
+</tr><tr>
+<td>test_preset_ids</td>
+<td>string</td>
+<td><pre>
+//test_preset_ids facets by complete test preset id.<br>
+
+json_name: testPresetIds
+go_name: TestPresetIds</pre></td>
 </tr><tr>
 <td>triggers</td>
 <td><a href="../common/README.md#cloud-v1-common-trigger">cloud.v1.common.Trigger</a></td>
@@ -6661,6 +6739,16 @@ go_name: Kind</pre></td>
 <td>KIND_NODE_COUNT</td>
 <td><pre>
 //KIND_NODE_COUNT orders by node count.
+</pre></td>
+</tr><tr>
+<td>KIND_PROTOCOL</td>
+<td><pre>
+//KIND_PROTOCOL orders by workload protocol.
+</pre></td>
+</tr><tr>
+<td>KIND_TEST_PRESET</td>
+<td><pre>
+//KIND_TEST_PRESET orders by test preset name/id.
 </pre></td>
 </tr>
 </table>
@@ -6825,6 +6913,22 @@ go_name: IsSystem</pre></td>
 json_name: page
 go_name: Page</pre></td>
 </tr><tr>
+<td>protocols</td>
+<td><a href="../domain/README.md#cloud-v1-domain-workload-protocol">cloud.v1.domain.Workload.Protocol</a></td>
+<td><pre>
+//protocols narrows to workload wire protocols.<br>
+
+json_name: protocols
+go_name: Protocols</pre></td>
+</tr><tr>
+<td>scripts</td>
+<td>string</td>
+<td><pre>
+//scripts narrows to workload script/preset/path labels.<br>
+
+json_name: scripts
+go_name: Scripts</pre></td>
+</tr><tr>
 <td>sort</td>
 <td><a href="#cloud-v1-api-listworkloadpresetsrequest-sort">cloud.v1.api.ListWorkloadPresetsRequest.Sort</a></td>
 <td><pre>
@@ -6928,6 +7032,16 @@ go_name: Kind</pre></td>
 <td>KIND_IS_SYSTEM</td>
 <td><pre>
 //KIND_IS_SYSTEM sorts system presets first/last.
+</pre></td>
+</tr><tr>
+<td>KIND_PROTOCOL</td>
+<td><pre>
+//KIND_PROTOCOL sorts by the workload protocol.
+</pre></td>
+</tr><tr>
+<td>KIND_SCRIPT</td>
+<td><pre>
+//KIND_SCRIPT sorts by the workload script/preset/path label.
 </pre></td>
 </tr>
 </table>
@@ -7220,10 +7334,9 @@ go_name: RefreshToken</pre></td>
 ### cloud.v1.api.PatchSuiteWizardRequest
 
 <pre>
-//PatchSuiteWizard submits the edited form. The server validates it, prunes the
-//matrix to compatible cells, expands the preview, recomputes readiness and
-//returns the full new draft (form may carry a re-emitted schema when the
-//selected presets changed the active matrix).
+//PatchSuiteWizard submits typed edits. The server merges or replaces cells,
+//resolves preset references, derives per-cell topology/infrastructure previews,
+//applies compatible render overrides, and recomputes readiness.
 </pre>
 
 <table>
@@ -7233,6 +7346,31 @@ go_name: RefreshToken</pre></td>
 <th>Description</th>
 </tr>
 <tr>
+<td>cells</td>
+<td><a href="#cloud-v1-api-suitewizardcellpatch">cloud.v1.api.SuiteWizardCellPatch</a></td>
+<td><pre>
+//cells are cell edits. When replace_cells=true they become the full cell
+//list; otherwise they are merged by cell_id.<br>
+
+json_name: cells
+go_name: Cells</pre></td>
+</tr><tr>
+<td>default_in_global_rating</td>
+<td>bool</td>
+<td><pre>
+//default_in_global_rating updates the suite default when set.<br>
+
+json_name: defaultInGlobalRating
+go_name: DefaultInGlobalRating</pre></td>
+</tr><tr>
+<td>default_in_tenant_rating</td>
+<td>bool</td>
+<td><pre>
+//default_in_tenant_rating updates the suite default when set.<br>
+
+json_name: defaultInTenantRating
+go_name: DefaultInTenantRating</pre></td>
+</tr><tr>
 <td>draft_id</td>
 <td>string</td>
 <td><pre>
@@ -7241,13 +7379,38 @@ go_name: RefreshToken</pre></td>
 json_name: draftId
 go_name: DraftId</pre></td>
 </tr><tr>
-<td>form</td>
-<td><a href="../../../schemapb/README.md#schemapb-filled">schemapb.Filled</a></td>
+<td>max_parallel</td>
+<td>uint32</td>
 <td><pre>
-//form carries the edited form values (Filled = values + schema ref).<br>
+//max_parallel updates draft concurrency when set. 0 means unlimited.<br>
 
-json_name: form
-go_name: Form</pre></td>
+json_name: maxParallel
+go_name: MaxParallel</pre></td>
+</tr><tr>
+<td>provider</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-provider">cloud.v1.deployment.Provider</a></td>
+<td><pre>
+//provider updates the deployment backend when not unspecified.<br>
+
+json_name: provider
+go_name: Provider</pre></td>
+</tr><tr>
+<td>replace_cells</td>
+<td>bool</td>
+<td><pre>
+//replace_cells makes cells the full draft matrix instead of an incremental
+//patch.<br>
+
+json_name: replaceCells
+go_name: ReplaceCells</pre></td>
+</tr><tr>
+<td>schedule</td>
+<td><a href="../domain/README.md#cloud-v1-domain-schedule">cloud.v1.domain.Schedule</a></td>
+<td><pre>
+//schedule updates the draft schedule when present.<br>
+
+json_name: schedule
+go_name: Schedule</pre></td>
 </tr><tr>
 <td>tenant_id</td>
 <td>string</td>
@@ -8890,9 +9053,9 @@ go_name: State</pre></td>
 ### cloud.v1.api.StartSuiteRequest
 
 <pre>
-//StartSuite expands a suite into a SuiteRunRecord (one TestRunRecord per
-//compatible cell) and launches SuiteWorkflow. Provide a stored `suite_id`
-//(re-run) or a fully-baked `suite` directly (CLI).
+//StartSuite expands a suite definition into a SuiteRunRecord (one TestRunRecord
+//per enabled compatible cell) and launches SuiteWorkflow. Provide a stored
+//`suite_id` or an inline `suite` definition directly (CLI/API).
 </pre>
 
 <table>
@@ -8923,7 +9086,8 @@ go_name: InTenantRating</pre></td>
 <td>max_parallel</td>
 <td>uint32</td>
 <td><pre>
-//max_parallel caps concurrent child TestWorkflows. 0 = unlimited.<br>
+//max_parallel caps concurrent child run workflows. 0 = suite default, then
+//tenant default, then unlimited.<br>
 
 json_name: maxParallel
 go_name: MaxParallel</pre></td>
@@ -8931,7 +9095,7 @@ go_name: MaxParallel</pre></td>
 <td>suite</td>
 <td><a href="../domain/README.md#cloud-v1-domain-suite">cloud.v1.domain.Suite</a></td>
 <td><pre>
-//suite is a fully-baked suite supplied directly (CLI path).<br>
+//suite is an inline suite definition supplied directly (CLI path).<br>
 
 json_name: suite
 go_name: Suite</pre></td>
@@ -9041,7 +9205,7 @@ go_name: TenantId</pre></td>
 <td>draft</td>
 <td><a href="../models/README.md#cloud-v1-models-suitewizarddraftrecord">cloud.v1.models.SuiteWizardDraftRecord</a></td>
 <td><pre>
-//draft is the new wizard draft (carrying the initial form schema).<br>
+//draft is the new wizard draft.<br>
 
 json_name: draft
 go_name: Draft</pre></td>
@@ -9056,7 +9220,7 @@ go_name: Draft</pre></td>
 <pre>
 //StartTestRun launches a run. Provide a staged `run` spec (CLI / wizard
 //finish) to persist a new record and start it; or `test_run_id` to re-run an
-//existing record's spec as a new run. Launches TestWorkflow.
+//existing record's spec as a new run. Launches TestRunWorkflow.
 </pre>
 
 <table>
@@ -9362,6 +9526,97 @@ go_name: TenantId</pre></td>
 
 
 
+<a name="cloud-v1-api-suitewizardcellpatch"></a>
+### cloud.v1.api.SuiteWizardCellPatch
+
+<pre>
+//SuiteWizardCellPatch is one client edit to the draft cell list.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>cell_id</td>
+<td>string</td>
+<td><pre>
+//cell_id selects an existing cell. Empty means create a new cell.<br>
+
+json_name: cellId
+go_name: CellId</pre></td>
+</tr><tr>
+<td>enabled</td>
+<td>bool</td>
+<td><pre>
+//enabled updates the cell enabled flag when set.<br>
+
+json_name: enabled
+go_name: Enabled</pre></td>
+</tr><tr>
+<td>inline_test</td>
+<td><a href="../domain/README.md#cloud-v1-domain-test">cloud.v1.domain.Test</a></td>
+<td><pre>
+//inline_test is for automation/CLI paths that do not want to create
+//presets first.<br>
+
+json_name: inlineTest
+go_name: InlineTest</pre></td>
+</tr><tr>
+<td>machine_overrides</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-machineplan">cloud.v1.deployment.MachinePlan</a></td>
+<td><pre>
+//machine_overrides updates provider machine edits for this cell.<br>
+
+json_name: machineOverrides
+go_name: MachineOverrides</pre></td>
+</tr><tr>
+<td>name</td>
+<td>string</td>
+<td><pre>
+//name updates the cell display name. Empty value is allowed and means derive.<br>
+
+json_name: name
+go_name: Name</pre></td>
+</tr><tr>
+<td>preset_pair</td>
+<td><a href="../domain/README.md#cloud-v1-domain-suitecell-presetpair">cloud.v1.domain.SuiteCell.PresetPair</a></td>
+<td><pre>
+//preset_pair selects a database preset and workload preset.<br>
+
+json_name: presetPair
+go_name: PresetPair</pre></td>
+</tr><tr>
+<td>remove</td>
+<td>bool</td>
+<td><pre>
+//remove deletes the selected cell. Other fields are ignored when remove=true.<br>
+
+json_name: remove
+go_name: Remove</pre></td>
+</tr><tr>
+<td>render_overrides</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-renderoverrideset">cloud.v1.deployment.RenderOverrideSet</a></td>
+<td><pre>
+//render_overrides updates editable generated config overrides for this cell.<br>
+
+json_name: renderOverrides
+go_name: RenderOverrides</pre></td>
+</tr><tr>
+<td>test_preset_id</td>
+<td>string</td>
+<td><pre>
+//test_preset_id selects a complete test preset.<br>
+
+json_name: testPresetId
+go_name: TestPresetId</pre></td>
+</tr>
+</table>
+
+
+
 <a name="cloud-v1-api-tenantdashboard"></a>
 ### cloud.v1.api.TenantDashboard
 
@@ -9459,6 +9714,16 @@ go_name: Overview</pre></td>
 
 json_name: run
 go_name: Run</pre></td>
+</tr><tr>
+<td>suite_run</td>
+<td><a href="../models/README.md#cloud-v1-models-suiterunrecord">cloud.v1.models.SuiteRunRecord</a></td>
+<td><pre>
+//suite_run is populated when run.suite_run_id is set. It gives the overview
+//page enough parent/sibling context for suite children without forcing a
+//second API round trip.<br>
+
+json_name: suiteRun
+go_name: SuiteRun</pre></td>
 </tr><tr>
 <td>topology</td>
 <td><a href="../topology/README.md#cloud-v1-topology-topology">cloud.v1.topology.Topology</a></td>

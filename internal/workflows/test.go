@@ -111,7 +111,9 @@ func (w *domainTestWorkflow) Execute(ctx workflow.Context) (*workflowpb.TestWork
 
 	w.startStage(ctx, 0)
 	infrastructureResp, err := workflowpb.ProcessInfrastructureWorkflowChild(ctx, &workflowpb.ProcessInfrastructureWorkflowRequest{
-		Plan: testRun.GetInfrastructurePlan(),
+		RunId:          testRun.GetId(),
+		Plan:           testRun.GetInfrastructurePlan(),
+		AgentBootstrap: w.req.GetAgentBootstrap(),
 	})
 	if err != nil {
 		w.failStage(ctx, 0)
@@ -126,6 +128,7 @@ func (w *domainTestWorkflow) Execute(ctx workflow.Context) (*workflowpb.TestWork
 		InfrastructureState: infrastructureResp.GetState(),
 		RenderOverrides:     testRun.GetRenderOverrides(),
 		Database:            testRun.GetDatabase(),
+		Workload:            testRun.GetWorkload(),
 	})
 	if err != nil {
 		w.failStage(ctx, 1)

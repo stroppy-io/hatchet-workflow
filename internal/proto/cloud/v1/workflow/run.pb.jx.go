@@ -50,6 +50,10 @@ func (m *RunConfig) Encode(e *jx.Encoder) {
 		e.FieldStart("renderOverrides")
 		jxpb.EncMessage(e, m.RenderOverrides)
 	}
+	if m.AgentBootstrap != nil {
+		e.FieldStart("agentBootstrap")
+		m.AgentBootstrap.Encode(e)
+	}
 	e.ObjEnd()
 }
 
@@ -159,6 +163,19 @@ func (m *RunConfig) Decode(d *jx.Decoder) error {
 			}
 			m.RenderOverrides = &deployment.RenderOverrideSet{}
 			if err := jxpb.DecMessage(d, m.RenderOverrides); err != nil {
+				return err
+			}
+			return nil
+		case "agentBootstrap", "agent_bootstrap":
+			if seen["AgentBootstrap"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["AgentBootstrap"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.AgentBootstrap = &AgentBootstrap{}
+			if err := m.AgentBootstrap.Decode(d); err != nil {
 				return err
 			}
 			return nil

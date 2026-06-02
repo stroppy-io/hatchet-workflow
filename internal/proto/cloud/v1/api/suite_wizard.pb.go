@@ -8,8 +8,8 @@ package api
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
-	schemapb "github.com/stroppy-io/schemapb/schemapb"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
+	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	_ "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
@@ -27,6 +27,165 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// SuiteWizardCellPatch is one client edit to the draft cell list.
+type SuiteWizardCellPatch struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// cell_id selects an existing cell. Empty means create a new cell.
+	CellId string `protobuf:"bytes,1,opt,name=cell_id,json=cellId,proto3" json:"cell_id,omitempty"`
+	// remove deletes the selected cell. Other fields are ignored when remove=true.
+	Remove bool `protobuf:"varint,2,opt,name=remove,proto3" json:"remove,omitempty"`
+	// enabled updates the cell enabled flag when set.
+	Enabled *bool `protobuf:"varint,3,opt,name=enabled,proto3,oneof" json:"enabled,omitempty"`
+	// name updates the cell display name. Empty value is allowed and means derive.
+	Name *string `protobuf:"bytes,4,opt,name=name,proto3,oneof" json:"name,omitempty"`
+	// source updates where the cell's database/workload definition comes from.
+	//
+	// Types that are valid to be assigned to Source:
+	//
+	//	*SuiteWizardCellPatch_PresetPair
+	//	*SuiteWizardCellPatch_TestPresetId
+	//	*SuiteWizardCellPatch_InlineTest
+	Source isSuiteWizardCellPatch_Source `protobuf_oneof:"source"`
+	// machine_overrides updates provider machine edits for this cell.
+	MachineOverrides []*deployment.MachinePlan `protobuf:"bytes,20,rep,name=machine_overrides,json=machineOverrides,proto3" json:"machine_overrides,omitempty"`
+	// render_overrides updates editable generated config overrides for this cell.
+	RenderOverrides *deployment.RenderOverrideSet `protobuf:"bytes,21,opt,name=render_overrides,json=renderOverrides,proto3" json:"render_overrides,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *SuiteWizardCellPatch) Reset() {
+	*x = SuiteWizardCellPatch{}
+	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SuiteWizardCellPatch) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SuiteWizardCellPatch) ProtoMessage() {}
+
+func (x *SuiteWizardCellPatch) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SuiteWizardCellPatch.ProtoReflect.Descriptor instead.
+func (*SuiteWizardCellPatch) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_suite_wizard_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *SuiteWizardCellPatch) GetCellId() string {
+	if x != nil {
+		return x.CellId
+	}
+	return ""
+}
+
+func (x *SuiteWizardCellPatch) GetRemove() bool {
+	if x != nil {
+		return x.Remove
+	}
+	return false
+}
+
+func (x *SuiteWizardCellPatch) GetEnabled() bool {
+	if x != nil && x.Enabled != nil {
+		return *x.Enabled
+	}
+	return false
+}
+
+func (x *SuiteWizardCellPatch) GetName() string {
+	if x != nil && x.Name != nil {
+		return *x.Name
+	}
+	return ""
+}
+
+func (x *SuiteWizardCellPatch) GetSource() isSuiteWizardCellPatch_Source {
+	if x != nil {
+		return x.Source
+	}
+	return nil
+}
+
+func (x *SuiteWizardCellPatch) GetPresetPair() *domain.SuiteCell_PresetPair {
+	if x != nil {
+		if x, ok := x.Source.(*SuiteWizardCellPatch_PresetPair); ok {
+			return x.PresetPair
+		}
+	}
+	return nil
+}
+
+func (x *SuiteWizardCellPatch) GetTestPresetId() string {
+	if x != nil {
+		if x, ok := x.Source.(*SuiteWizardCellPatch_TestPresetId); ok {
+			return x.TestPresetId
+		}
+	}
+	return ""
+}
+
+func (x *SuiteWizardCellPatch) GetInlineTest() *domain.Test {
+	if x != nil {
+		if x, ok := x.Source.(*SuiteWizardCellPatch_InlineTest); ok {
+			return x.InlineTest
+		}
+	}
+	return nil
+}
+
+func (x *SuiteWizardCellPatch) GetMachineOverrides() []*deployment.MachinePlan {
+	if x != nil {
+		return x.MachineOverrides
+	}
+	return nil
+}
+
+func (x *SuiteWizardCellPatch) GetRenderOverrides() *deployment.RenderOverrideSet {
+	if x != nil {
+		return x.RenderOverrides
+	}
+	return nil
+}
+
+type isSuiteWizardCellPatch_Source interface {
+	isSuiteWizardCellPatch_Source()
+}
+
+type SuiteWizardCellPatch_PresetPair struct {
+	// preset_pair selects a database preset and workload preset.
+	PresetPair *domain.SuiteCell_PresetPair `protobuf:"bytes,10,opt,name=preset_pair,json=presetPair,proto3,oneof"`
+}
+
+type SuiteWizardCellPatch_TestPresetId struct {
+	// test_preset_id selects a complete test preset.
+	TestPresetId string `protobuf:"bytes,11,opt,name=test_preset_id,json=testPresetId,proto3,oneof"`
+}
+
+type SuiteWizardCellPatch_InlineTest struct {
+	// inline_test is for automation/CLI paths that do not want to create
+	// presets first.
+	InlineTest *domain.Test `protobuf:"bytes,12,opt,name=inline_test,json=inlineTest,proto3,oneof"`
+}
+
+func (*SuiteWizardCellPatch_PresetPair) isSuiteWizardCellPatch_Source() {}
+
+func (*SuiteWizardCellPatch_TestPresetId) isSuiteWizardCellPatch_Source() {}
+
+func (*SuiteWizardCellPatch_InlineTest) isSuiteWizardCellPatch_Source() {}
+
 // StartSuiteWizardRequest opens a new suite wizard draft.
 type StartSuiteWizardRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -42,7 +201,7 @@ type StartSuiteWizardRequest struct {
 
 func (x *StartSuiteWizardRequest) Reset() {
 	*x = StartSuiteWizardRequest{}
-	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[0]
+	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -54,7 +213,7 @@ func (x *StartSuiteWizardRequest) String() string {
 func (*StartSuiteWizardRequest) ProtoMessage() {}
 
 func (x *StartSuiteWizardRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[0]
+	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -67,7 +226,7 @@ func (x *StartSuiteWizardRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartSuiteWizardRequest.ProtoReflect.Descriptor instead.
 func (*StartSuiteWizardRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_suite_wizard_proto_rawDescGZIP(), []int{0}
+	return file_cloud_v1_api_suite_wizard_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *StartSuiteWizardRequest) GetTenantId() string {
@@ -94,7 +253,7 @@ func (x *StartSuiteWizardRequest) GetSuiteId() string {
 // StartSuiteWizardResponse returns the freshly created draft.
 type StartSuiteWizardResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// draft is the new wizard draft (carrying the initial form schema).
+	// draft is the new wizard draft.
 	Draft         *models.SuiteWizardDraftRecord `protobuf:"bytes,1,opt,name=draft,proto3" json:"draft,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -102,7 +261,7 @@ type StartSuiteWizardResponse struct {
 
 func (x *StartSuiteWizardResponse) Reset() {
 	*x = StartSuiteWizardResponse{}
-	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[1]
+	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -114,7 +273,7 @@ func (x *StartSuiteWizardResponse) String() string {
 func (*StartSuiteWizardResponse) ProtoMessage() {}
 
 func (x *StartSuiteWizardResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[1]
+	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -127,7 +286,7 @@ func (x *StartSuiteWizardResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartSuiteWizardResponse.ProtoReflect.Descriptor instead.
 func (*StartSuiteWizardResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_suite_wizard_proto_rawDescGZIP(), []int{1}
+	return file_cloud_v1_api_suite_wizard_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *StartSuiteWizardResponse) GetDraft() *models.SuiteWizardDraftRecord {
@@ -150,7 +309,7 @@ type GetSuiteWizardDraftRequest struct {
 
 func (x *GetSuiteWizardDraftRequest) Reset() {
 	*x = GetSuiteWizardDraftRequest{}
-	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[2]
+	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -162,7 +321,7 @@ func (x *GetSuiteWizardDraftRequest) String() string {
 func (*GetSuiteWizardDraftRequest) ProtoMessage() {}
 
 func (x *GetSuiteWizardDraftRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[2]
+	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -175,7 +334,7 @@ func (x *GetSuiteWizardDraftRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSuiteWizardDraftRequest.ProtoReflect.Descriptor instead.
 func (*GetSuiteWizardDraftRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_suite_wizard_proto_rawDescGZIP(), []int{2}
+	return file_cloud_v1_api_suite_wizard_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GetSuiteWizardDraftRequest) GetTenantId() string {
@@ -203,7 +362,7 @@ type GetSuiteWizardDraftResponse struct {
 
 func (x *GetSuiteWizardDraftResponse) Reset() {
 	*x = GetSuiteWizardDraftResponse{}
-	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[3]
+	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -215,7 +374,7 @@ func (x *GetSuiteWizardDraftResponse) String() string {
 func (*GetSuiteWizardDraftResponse) ProtoMessage() {}
 
 func (x *GetSuiteWizardDraftResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[3]
+	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -228,7 +387,7 @@ func (x *GetSuiteWizardDraftResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSuiteWizardDraftResponse.ProtoReflect.Descriptor instead.
 func (*GetSuiteWizardDraftResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_suite_wizard_proto_rawDescGZIP(), []int{3}
+	return file_cloud_v1_api_suite_wizard_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *GetSuiteWizardDraftResponse) GetDraft() *models.SuiteWizardDraftRecord {
@@ -244,11 +403,11 @@ type ListSuiteWizardDraftsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// tenant_id scopes the request to the owning tenant.
 	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	// filter holds the shared Entity-level filters (author, time windows, ...).
+	// filter holds the shared Entity-level filters.
 	Filter *common.EntityFilter `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
 	// sort selects the result ordering.
 	Sort *common.EntitySort `protobuf:"bytes,3,opt,name=sort,proto3" json:"sort,omitempty"`
-	// page carries pagination (page size + token).
+	// page carries pagination.
 	Page          *common.Page `protobuf:"bytes,4,opt,name=page,proto3" json:"page,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -256,7 +415,7 @@ type ListSuiteWizardDraftsRequest struct {
 
 func (x *ListSuiteWizardDraftsRequest) Reset() {
 	*x = ListSuiteWizardDraftsRequest{}
-	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[4]
+	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -268,7 +427,7 @@ func (x *ListSuiteWizardDraftsRequest) String() string {
 func (*ListSuiteWizardDraftsRequest) ProtoMessage() {}
 
 func (x *ListSuiteWizardDraftsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[4]
+	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -281,7 +440,7 @@ func (x *ListSuiteWizardDraftsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSuiteWizardDraftsRequest.ProtoReflect.Descriptor instead.
 func (*ListSuiteWizardDraftsRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_suite_wizard_proto_rawDescGZIP(), []int{4}
+	return file_cloud_v1_api_suite_wizard_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ListSuiteWizardDraftsRequest) GetTenantId() string {
@@ -325,7 +484,7 @@ type ListSuiteWizardDraftsResponse struct {
 
 func (x *ListSuiteWizardDraftsResponse) Reset() {
 	*x = ListSuiteWizardDraftsResponse{}
-	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[5]
+	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -337,7 +496,7 @@ func (x *ListSuiteWizardDraftsResponse) String() string {
 func (*ListSuiteWizardDraftsResponse) ProtoMessage() {}
 
 func (x *ListSuiteWizardDraftsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[5]
+	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -350,7 +509,7 @@ func (x *ListSuiteWizardDraftsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSuiteWizardDraftsResponse.ProtoReflect.Descriptor instead.
 func (*ListSuiteWizardDraftsResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_suite_wizard_proto_rawDescGZIP(), []int{5}
+	return file_cloud_v1_api_suite_wizard_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ListSuiteWizardDraftsResponse) GetDrafts() []*models.SuiteWizardDraftRecord {
@@ -367,25 +526,38 @@ func (x *ListSuiteWizardDraftsResponse) GetNextPageToken() string {
 	return ""
 }
 
-// PatchSuiteWizard submits the edited form. The server validates it, prunes the
-// matrix to compatible cells, expands the preview, recomputes readiness and
-// returns the full new draft (form may carry a re-emitted schema when the
-// selected presets changed the active matrix).
+// PatchSuiteWizard submits typed edits. The server merges or replaces cells,
+// resolves preset references, derives per-cell topology/infrastructure previews,
+// applies compatible render overrides, and recomputes readiness.
 type PatchSuiteWizardRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// tenant_id scopes the request to the owning tenant.
 	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	// draft_id is the wizard draft being edited.
 	DraftId string `protobuf:"bytes,2,opt,name=draft_id,json=draftId,proto3" json:"draft_id,omitempty"`
-	// form carries the edited form values (Filled = values + schema ref).
-	Form          *schemapb.Filled `protobuf:"bytes,3,opt,name=form,proto3" json:"form,omitempty"`
+	// provider updates the deployment backend when not unspecified.
+	Provider deployment.Provider `protobuf:"varint,3,opt,name=provider,proto3,enum=cloud.v1.deployment.Provider" json:"provider,omitempty"`
+	// cells are cell edits. When replace_cells=true they become the full cell
+	// list; otherwise they are merged by cell_id.
+	Cells []*SuiteWizardCellPatch `protobuf:"bytes,4,rep,name=cells,proto3" json:"cells,omitempty"`
+	// max_parallel updates draft concurrency when set. 0 means unlimited.
+	MaxParallel *uint32 `protobuf:"varint,5,opt,name=max_parallel,json=maxParallel,proto3,oneof" json:"max_parallel,omitempty"`
+	// schedule updates the draft schedule when present.
+	Schedule *domain.Schedule `protobuf:"bytes,6,opt,name=schedule,proto3" json:"schedule,omitempty"`
+	// default_in_tenant_rating updates the suite default when set.
+	DefaultInTenantRating *bool `protobuf:"varint,7,opt,name=default_in_tenant_rating,json=defaultInTenantRating,proto3,oneof" json:"default_in_tenant_rating,omitempty"`
+	// default_in_global_rating updates the suite default when set.
+	DefaultInGlobalRating *bool `protobuf:"varint,8,opt,name=default_in_global_rating,json=defaultInGlobalRating,proto3,oneof" json:"default_in_global_rating,omitempty"`
+	// replace_cells makes cells the full draft matrix instead of an incremental
+	// patch.
+	ReplaceCells  bool `protobuf:"varint,9,opt,name=replace_cells,json=replaceCells,proto3" json:"replace_cells,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *PatchSuiteWizardRequest) Reset() {
 	*x = PatchSuiteWizardRequest{}
-	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[6]
+	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -397,7 +569,7 @@ func (x *PatchSuiteWizardRequest) String() string {
 func (*PatchSuiteWizardRequest) ProtoMessage() {}
 
 func (x *PatchSuiteWizardRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[6]
+	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -410,7 +582,7 @@ func (x *PatchSuiteWizardRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PatchSuiteWizardRequest.ProtoReflect.Descriptor instead.
 func (*PatchSuiteWizardRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_suite_wizard_proto_rawDescGZIP(), []int{6}
+	return file_cloud_v1_api_suite_wizard_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *PatchSuiteWizardRequest) GetTenantId() string {
@@ -427,11 +599,53 @@ func (x *PatchSuiteWizardRequest) GetDraftId() string {
 	return ""
 }
 
-func (x *PatchSuiteWizardRequest) GetForm() *schemapb.Filled {
+func (x *PatchSuiteWizardRequest) GetProvider() deployment.Provider {
 	if x != nil {
-		return x.Form
+		return x.Provider
+	}
+	return deployment.Provider(0)
+}
+
+func (x *PatchSuiteWizardRequest) GetCells() []*SuiteWizardCellPatch {
+	if x != nil {
+		return x.Cells
 	}
 	return nil
+}
+
+func (x *PatchSuiteWizardRequest) GetMaxParallel() uint32 {
+	if x != nil && x.MaxParallel != nil {
+		return *x.MaxParallel
+	}
+	return 0
+}
+
+func (x *PatchSuiteWizardRequest) GetSchedule() *domain.Schedule {
+	if x != nil {
+		return x.Schedule
+	}
+	return nil
+}
+
+func (x *PatchSuiteWizardRequest) GetDefaultInTenantRating() bool {
+	if x != nil && x.DefaultInTenantRating != nil {
+		return *x.DefaultInTenantRating
+	}
+	return false
+}
+
+func (x *PatchSuiteWizardRequest) GetDefaultInGlobalRating() bool {
+	if x != nil && x.DefaultInGlobalRating != nil {
+		return *x.DefaultInGlobalRating
+	}
+	return false
+}
+
+func (x *PatchSuiteWizardRequest) GetReplaceCells() bool {
+	if x != nil {
+		return x.ReplaceCells
+	}
+	return false
 }
 
 // PatchSuiteWizardResponse returns the recomputed wizard draft.
@@ -445,7 +659,7 @@ type PatchSuiteWizardResponse struct {
 
 func (x *PatchSuiteWizardResponse) Reset() {
 	*x = PatchSuiteWizardResponse{}
-	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[7]
+	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -457,7 +671,7 @@ func (x *PatchSuiteWizardResponse) String() string {
 func (*PatchSuiteWizardResponse) ProtoMessage() {}
 
 func (x *PatchSuiteWizardResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[7]
+	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -470,7 +684,7 @@ func (x *PatchSuiteWizardResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PatchSuiteWizardResponse.ProtoReflect.Descriptor instead.
 func (*PatchSuiteWizardResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_suite_wizard_proto_rawDescGZIP(), []int{7}
+	return file_cloud_v1_api_suite_wizard_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *PatchSuiteWizardResponse) GetDraft() *models.SuiteWizardDraftRecord {
@@ -493,7 +707,7 @@ type DeleteSuiteWizardDraftRequest struct {
 
 func (x *DeleteSuiteWizardDraftRequest) Reset() {
 	*x = DeleteSuiteWizardDraftRequest{}
-	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[8]
+	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -505,7 +719,7 @@ func (x *DeleteSuiteWizardDraftRequest) String() string {
 func (*DeleteSuiteWizardDraftRequest) ProtoMessage() {}
 
 func (x *DeleteSuiteWizardDraftRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[8]
+	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -518,7 +732,7 @@ func (x *DeleteSuiteWizardDraftRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteSuiteWizardDraftRequest.ProtoReflect.Descriptor instead.
 func (*DeleteSuiteWizardDraftRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_suite_wizard_proto_rawDescGZIP(), []int{8}
+	return file_cloud_v1_api_suite_wizard_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *DeleteSuiteWizardDraftRequest) GetTenantId() string {
@@ -545,7 +759,7 @@ type DeleteSuiteWizardDraftResponse struct {
 
 func (x *DeleteSuiteWizardDraftResponse) Reset() {
 	*x = DeleteSuiteWizardDraftResponse{}
-	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[9]
+	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -557,7 +771,7 @@ func (x *DeleteSuiteWizardDraftResponse) String() string {
 func (*DeleteSuiteWizardDraftResponse) ProtoMessage() {}
 
 func (x *DeleteSuiteWizardDraftResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[9]
+	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -570,25 +784,33 @@ func (x *DeleteSuiteWizardDraftResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteSuiteWizardDraftResponse.ProtoReflect.Descriptor instead.
 func (*DeleteSuiteWizardDraftResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_suite_wizard_proto_rawDescGZIP(), []int{9}
+	return file_cloud_v1_api_suite_wizard_proto_rawDescGZIP(), []int{10}
 }
 
-// FinishSuiteWizard bakes the draft into a domain.SuiteRun: every compatible cell
-// becomes a fully baked TestRun (preset params + the suite's provider settings +
-// derived topology). Rejected unless draft.ready.
+// FinishSuiteWizard persists a reusable SuiteRecord. If start=true it also starts
+// a SuiteRun using the same rules as StartSuite.
 type FinishSuiteWizardRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// tenant_id scopes the request to the owning tenant.
 	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	// draft_id is the wizard draft to bake.
-	DraftId       string `protobuf:"bytes,2,opt,name=draft_id,json=draftId,proto3" json:"draft_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// draft_id is the wizard draft to finish.
+	DraftId string `protobuf:"bytes,2,opt,name=draft_id,json=draftId,proto3" json:"draft_id,omitempty"`
+	// start launches the saved suite immediately.
+	Start bool `protobuf:"varint,3,opt,name=start,proto3" json:"start,omitempty"`
+	// suite_name optionally overrides the persisted suite name. Empty means use
+	// draft entity.name.
+	SuiteName string `protobuf:"bytes,4,opt,name=suite_name,json=suiteName,proto3" json:"suite_name,omitempty"`
+	// in_tenant_rating overrides child run tenant-rating membership when start=true.
+	InTenantRating *bool `protobuf:"varint,5,opt,name=in_tenant_rating,json=inTenantRating,proto3,oneof" json:"in_tenant_rating,omitempty"`
+	// in_global_rating overrides child run global-rating membership when start=true.
+	InGlobalRating *bool `protobuf:"varint,6,opt,name=in_global_rating,json=inGlobalRating,proto3,oneof" json:"in_global_rating,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *FinishSuiteWizardRequest) Reset() {
 	*x = FinishSuiteWizardRequest{}
-	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[10]
+	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -600,7 +822,7 @@ func (x *FinishSuiteWizardRequest) String() string {
 func (*FinishSuiteWizardRequest) ProtoMessage() {}
 
 func (x *FinishSuiteWizardRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[10]
+	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -613,7 +835,7 @@ func (x *FinishSuiteWizardRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FinishSuiteWizardRequest.ProtoReflect.Descriptor instead.
 func (*FinishSuiteWizardRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_suite_wizard_proto_rawDescGZIP(), []int{10}
+	return file_cloud_v1_api_suite_wizard_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *FinishSuiteWizardRequest) GetTenantId() string {
@@ -630,19 +852,49 @@ func (x *FinishSuiteWizardRequest) GetDraftId() string {
 	return ""
 }
 
-// FinishSuiteWizardResponse returns the baked suite run spec.
+func (x *FinishSuiteWizardRequest) GetStart() bool {
+	if x != nil {
+		return x.Start
+	}
+	return false
+}
+
+func (x *FinishSuiteWizardRequest) GetSuiteName() string {
+	if x != nil {
+		return x.SuiteName
+	}
+	return ""
+}
+
+func (x *FinishSuiteWizardRequest) GetInTenantRating() bool {
+	if x != nil && x.InTenantRating != nil {
+		return *x.InTenantRating
+	}
+	return false
+}
+
+func (x *FinishSuiteWizardRequest) GetInGlobalRating() bool {
+	if x != nil && x.InGlobalRating != nil {
+		return *x.InGlobalRating
+	}
+	return false
+}
+
+// FinishSuiteWizardResponse returns the saved suite and, when start=true, the
+// launched suite run.
 type FinishSuiteWizardResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// suite_run is the baked domain.SuiteRun (every compatible cell as a baked
-	// TestRun).
-	SuiteRun      *domain.SuiteRun `protobuf:"bytes,1,opt,name=suite_run,json=suiteRun,proto3" json:"suite_run,omitempty"`
+	// suite is the saved reusable suite definition.
+	Suite *models.SuiteRecord `protobuf:"bytes,1,opt,name=suite,proto3" json:"suite,omitempty"`
+	// suite_run is set when start=true.
+	SuiteRun      *models.SuiteRunRecord `protobuf:"bytes,2,opt,name=suite_run,json=suiteRun,proto3" json:"suite_run,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *FinishSuiteWizardResponse) Reset() {
 	*x = FinishSuiteWizardResponse{}
-	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[11]
+	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -654,7 +906,7 @@ func (x *FinishSuiteWizardResponse) String() string {
 func (*FinishSuiteWizardResponse) ProtoMessage() {}
 
 func (x *FinishSuiteWizardResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[11]
+	mi := &file_cloud_v1_api_suite_wizard_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -667,10 +919,17 @@ func (x *FinishSuiteWizardResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FinishSuiteWizardResponse.ProtoReflect.Descriptor instead.
 func (*FinishSuiteWizardResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_suite_wizard_proto_rawDescGZIP(), []int{11}
+	return file_cloud_v1_api_suite_wizard_proto_rawDescGZIP(), []int{12}
 }
 
-func (x *FinishSuiteWizardResponse) GetSuiteRun() *domain.SuiteRun {
+func (x *FinishSuiteWizardResponse) GetSuite() *models.SuiteRecord {
+	if x != nil {
+		return x.Suite
+	}
+	return nil
+}
+
+func (x *FinishSuiteWizardResponse) GetSuiteRun() *models.SuiteRunRecord {
 	if x != nil {
 		return x.SuiteRun
 	}
@@ -681,7 +940,24 @@ var File_cloud_v1_api_suite_wizard_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_suite_wizard_proto_rawDesc = "" +
 	"\n" +
-	"\x1fcloud/v1/api/suite_wizard.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a\x1bcloud/v1/domain/suite.proto\x1a\x1acloud/v1/iam/options.proto\x1a\"cloud/v1/models/suite_wizard.proto\x1a\x15schemapb/schema.proto\x1a\x17validate/validate.proto\"\x83\x01\n" +
+	"\x1fcloud/v1/api/suite_wizard.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a(cloud/v1/deployment/infrastructure.proto\x1a\"cloud/v1/deployment/provider.proto\x1a cloud/v1/deployment/render.proto\x1a\x1bcloud/v1/domain/suite.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1bcloud/v1/models/suite.proto\x1a\"cloud/v1/models/suite_wizard.proto\x1a\x17validate/validate.proto\"\xa9\x04\n" +
+	"\x14SuiteWizardCellPatch\x12 \n" +
+	"\acell_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x18@R\x06cellId\x12\x16\n" +
+	"\x06remove\x18\x02 \x01(\bR\x06remove\x12\x1d\n" +
+	"\aenabled\x18\x03 \x01(\bH\x01R\aenabled\x88\x01\x01\x12!\n" +
+	"\x04name\x18\x04 \x01(\tB\b\xfaB\x05r\x03\x18\xff\x01H\x02R\x04name\x88\x01\x01\x12R\n" +
+	"\vpreset_pair\x18\n" +
+	" \x01(\v2%.cloud.v1.domain.SuiteCell.PresetPairB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\n" +
+	"presetPair\x121\n" +
+	"\x0etest_preset_id\x18\v \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@H\x00R\ftestPresetId\x12B\n" +
+	"\vinline_test\x18\f \x01(\v2\x15.cloud.v1.domain.TestB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\n" +
+	"inlineTest\x12X\n" +
+	"\x11machine_overrides\x18\x14 \x03(\v2 .cloud.v1.deployment.MachinePlanB\t\xfaB\x06\x92\x01\x03\x10\x80\x02R\x10machineOverrides\x12Q\n" +
+	"\x10render_overrides\x18\x15 \x01(\v2&.cloud.v1.deployment.RenderOverrideSetR\x0frenderOverridesB\b\n" +
+	"\x06sourceB\n" +
+	"\n" +
+	"\b_enabledB\a\n" +
+	"\x05_name\"\x83\x01\n" +
 	"\x17StartSuiteWizardRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x1c\n" +
 	"\x04name\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\xff\x01R\x04name\x12\"\n" +
@@ -700,22 +976,39 @@ const file_cloud_v1_api_suite_wizard_proto_rawDesc = "" +
 	"\x04page\x18\x04 \x01(\v2\x15.cloud.v1.common.PageR\x04page\"\x88\x01\n" +
 	"\x1dListSuiteWizardDraftsResponse\x12?\n" +
 	"\x06drafts\x18\x01 \x03(\v2'.cloud.v1.models.SuiteWizardDraftRecordR\x06drafts\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\x97\x01\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xbc\x04\n" +
 	"\x17PatchSuiteWizardRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12$\n" +
-	"\bdraft_id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\adraftId\x12.\n" +
-	"\x04form\x18\x03 \x01(\v2\x10.schemapb.FilledB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04form\"c\n" +
+	"\bdraft_id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\adraftId\x12C\n" +
+	"\bprovider\x18\x03 \x01(\x0e2\x1d.cloud.v1.deployment.ProviderB\b\xfaB\x05\x82\x01\x02\x10\x01R\bprovider\x12C\n" +
+	"\x05cells\x18\x04 \x03(\v2\".cloud.v1.api.SuiteWizardCellPatchB\t\xfaB\x06\x92\x01\x03\x10\xe8\aR\x05cells\x12&\n" +
+	"\fmax_parallel\x18\x05 \x01(\rH\x00R\vmaxParallel\x88\x01\x01\x125\n" +
+	"\bschedule\x18\x06 \x01(\v2\x19.cloud.v1.domain.ScheduleR\bschedule\x12<\n" +
+	"\x18default_in_tenant_rating\x18\a \x01(\bH\x01R\x15defaultInTenantRating\x88\x01\x01\x12<\n" +
+	"\x18default_in_global_rating\x18\b \x01(\bH\x02R\x15defaultInGlobalRating\x88\x01\x01\x12#\n" +
+	"\rreplace_cells\x18\t \x01(\bR\freplaceCellsB\x0f\n" +
+	"\r_max_parallelB\x1b\n" +
+	"\x19_default_in_tenant_ratingB\x1b\n" +
+	"\x19_default_in_global_rating\"c\n" +
 	"\x18PatchSuiteWizardResponse\x12G\n" +
 	"\x05draft\x18\x01 \x01(\v2'.cloud.v1.models.SuiteWizardDraftRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x05draft\"m\n" +
 	"\x1dDeleteSuiteWizardDraftRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12$\n" +
 	"\bdraft_id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\adraftId\" \n" +
-	"\x1eDeleteSuiteWizardDraftResponse\"h\n" +
+	"\x1eDeleteSuiteWizardDraftResponse\"\xaf\x02\n" +
 	"\x18FinishSuiteWizardRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12$\n" +
-	"\bdraft_id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\adraftId\"]\n" +
-	"\x19FinishSuiteWizardResponse\x12@\n" +
-	"\tsuite_run\x18\x01 \x01(\v2\x19.cloud.v1.domain.SuiteRunB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bsuiteRun2\xe8\x05\n" +
+	"\bdraft_id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\adraftId\x12\x14\n" +
+	"\x05start\x18\x03 \x01(\bR\x05start\x12'\n" +
+	"\n" +
+	"suite_name\x18\x04 \x01(\tB\b\xfaB\x05r\x03\x18\xff\x01R\tsuiteName\x12-\n" +
+	"\x10in_tenant_rating\x18\x05 \x01(\bH\x00R\x0einTenantRating\x88\x01\x01\x12-\n" +
+	"\x10in_global_rating\x18\x06 \x01(\bH\x01R\x0einGlobalRating\x88\x01\x01B\x13\n" +
+	"\x11_in_tenant_ratingB\x13\n" +
+	"\x11_in_global_rating\"\x97\x01\n" +
+	"\x19FinishSuiteWizardResponse\x12<\n" +
+	"\x05suite\x18\x01 \x01(\v2\x1c.cloud.v1.models.SuiteRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x05suite\x12<\n" +
+	"\tsuite_run\x18\x02 \x01(\v2\x1f.cloud.v1.models.SuiteRunRecordR\bsuiteRun2\xe8\x05\n" +
 	"\x12SuiteWizardService\x12m\n" +
 	"\x10StartSuiteWizard\x12%.cloud.v1.api.StartSuiteWizardRequest\x1a&.cloud.v1.api.StartSuiteWizardResponse\"\n" +
 	"\x8a\xb5\x18\x06\x12\x04\b\a\x10\x01\x12y\n" +
@@ -738,54 +1031,68 @@ func file_cloud_v1_api_suite_wizard_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_api_suite_wizard_proto_rawDescData
 }
 
-var file_cloud_v1_api_suite_wizard_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_cloud_v1_api_suite_wizard_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_cloud_v1_api_suite_wizard_proto_goTypes = []any{
-	(*StartSuiteWizardRequest)(nil),        // 0: cloud.v1.api.StartSuiteWizardRequest
-	(*StartSuiteWizardResponse)(nil),       // 1: cloud.v1.api.StartSuiteWizardResponse
-	(*GetSuiteWizardDraftRequest)(nil),     // 2: cloud.v1.api.GetSuiteWizardDraftRequest
-	(*GetSuiteWizardDraftResponse)(nil),    // 3: cloud.v1.api.GetSuiteWizardDraftResponse
-	(*ListSuiteWizardDraftsRequest)(nil),   // 4: cloud.v1.api.ListSuiteWizardDraftsRequest
-	(*ListSuiteWizardDraftsResponse)(nil),  // 5: cloud.v1.api.ListSuiteWizardDraftsResponse
-	(*PatchSuiteWizardRequest)(nil),        // 6: cloud.v1.api.PatchSuiteWizardRequest
-	(*PatchSuiteWizardResponse)(nil),       // 7: cloud.v1.api.PatchSuiteWizardResponse
-	(*DeleteSuiteWizardDraftRequest)(nil),  // 8: cloud.v1.api.DeleteSuiteWizardDraftRequest
-	(*DeleteSuiteWizardDraftResponse)(nil), // 9: cloud.v1.api.DeleteSuiteWizardDraftResponse
-	(*FinishSuiteWizardRequest)(nil),       // 10: cloud.v1.api.FinishSuiteWizardRequest
-	(*FinishSuiteWizardResponse)(nil),      // 11: cloud.v1.api.FinishSuiteWizardResponse
-	(*models.SuiteWizardDraftRecord)(nil),  // 12: cloud.v1.models.SuiteWizardDraftRecord
-	(*common.EntityFilter)(nil),            // 13: cloud.v1.common.EntityFilter
-	(*common.EntitySort)(nil),              // 14: cloud.v1.common.EntitySort
-	(*common.Page)(nil),                    // 15: cloud.v1.common.Page
-	(*schemapb.Filled)(nil),                // 16: schemapb.Filled
-	(*domain.SuiteRun)(nil),                // 17: cloud.v1.domain.SuiteRun
+	(*SuiteWizardCellPatch)(nil),           // 0: cloud.v1.api.SuiteWizardCellPatch
+	(*StartSuiteWizardRequest)(nil),        // 1: cloud.v1.api.StartSuiteWizardRequest
+	(*StartSuiteWizardResponse)(nil),       // 2: cloud.v1.api.StartSuiteWizardResponse
+	(*GetSuiteWizardDraftRequest)(nil),     // 3: cloud.v1.api.GetSuiteWizardDraftRequest
+	(*GetSuiteWizardDraftResponse)(nil),    // 4: cloud.v1.api.GetSuiteWizardDraftResponse
+	(*ListSuiteWizardDraftsRequest)(nil),   // 5: cloud.v1.api.ListSuiteWizardDraftsRequest
+	(*ListSuiteWizardDraftsResponse)(nil),  // 6: cloud.v1.api.ListSuiteWizardDraftsResponse
+	(*PatchSuiteWizardRequest)(nil),        // 7: cloud.v1.api.PatchSuiteWizardRequest
+	(*PatchSuiteWizardResponse)(nil),       // 8: cloud.v1.api.PatchSuiteWizardResponse
+	(*DeleteSuiteWizardDraftRequest)(nil),  // 9: cloud.v1.api.DeleteSuiteWizardDraftRequest
+	(*DeleteSuiteWizardDraftResponse)(nil), // 10: cloud.v1.api.DeleteSuiteWizardDraftResponse
+	(*FinishSuiteWizardRequest)(nil),       // 11: cloud.v1.api.FinishSuiteWizardRequest
+	(*FinishSuiteWizardResponse)(nil),      // 12: cloud.v1.api.FinishSuiteWizardResponse
+	(*domain.SuiteCell_PresetPair)(nil),    // 13: cloud.v1.domain.SuiteCell.PresetPair
+	(*domain.Test)(nil),                    // 14: cloud.v1.domain.Test
+	(*deployment.MachinePlan)(nil),         // 15: cloud.v1.deployment.MachinePlan
+	(*deployment.RenderOverrideSet)(nil),   // 16: cloud.v1.deployment.RenderOverrideSet
+	(*models.SuiteWizardDraftRecord)(nil),  // 17: cloud.v1.models.SuiteWizardDraftRecord
+	(*common.EntityFilter)(nil),            // 18: cloud.v1.common.EntityFilter
+	(*common.EntitySort)(nil),              // 19: cloud.v1.common.EntitySort
+	(*common.Page)(nil),                    // 20: cloud.v1.common.Page
+	(deployment.Provider)(0),               // 21: cloud.v1.deployment.Provider
+	(*domain.Schedule)(nil),                // 22: cloud.v1.domain.Schedule
+	(*models.SuiteRecord)(nil),             // 23: cloud.v1.models.SuiteRecord
+	(*models.SuiteRunRecord)(nil),          // 24: cloud.v1.models.SuiteRunRecord
 }
 var file_cloud_v1_api_suite_wizard_proto_depIdxs = []int32{
-	12, // 0: cloud.v1.api.StartSuiteWizardResponse.draft:type_name -> cloud.v1.models.SuiteWizardDraftRecord
-	12, // 1: cloud.v1.api.GetSuiteWizardDraftResponse.draft:type_name -> cloud.v1.models.SuiteWizardDraftRecord
-	13, // 2: cloud.v1.api.ListSuiteWizardDraftsRequest.filter:type_name -> cloud.v1.common.EntityFilter
-	14, // 3: cloud.v1.api.ListSuiteWizardDraftsRequest.sort:type_name -> cloud.v1.common.EntitySort
-	15, // 4: cloud.v1.api.ListSuiteWizardDraftsRequest.page:type_name -> cloud.v1.common.Page
-	12, // 5: cloud.v1.api.ListSuiteWizardDraftsResponse.drafts:type_name -> cloud.v1.models.SuiteWizardDraftRecord
-	16, // 6: cloud.v1.api.PatchSuiteWizardRequest.form:type_name -> schemapb.Filled
-	12, // 7: cloud.v1.api.PatchSuiteWizardResponse.draft:type_name -> cloud.v1.models.SuiteWizardDraftRecord
-	17, // 8: cloud.v1.api.FinishSuiteWizardResponse.suite_run:type_name -> cloud.v1.domain.SuiteRun
-	0,  // 9: cloud.v1.api.SuiteWizardService.StartSuiteWizard:input_type -> cloud.v1.api.StartSuiteWizardRequest
-	2,  // 10: cloud.v1.api.SuiteWizardService.GetSuiteWizardDraft:input_type -> cloud.v1.api.GetSuiteWizardDraftRequest
-	4,  // 11: cloud.v1.api.SuiteWizardService.ListSuiteWizardDrafts:input_type -> cloud.v1.api.ListSuiteWizardDraftsRequest
-	6,  // 12: cloud.v1.api.SuiteWizardService.PatchSuiteWizard:input_type -> cloud.v1.api.PatchSuiteWizardRequest
-	8,  // 13: cloud.v1.api.SuiteWizardService.DeleteSuiteWizardDraft:input_type -> cloud.v1.api.DeleteSuiteWizardDraftRequest
-	10, // 14: cloud.v1.api.SuiteWizardService.FinishSuiteWizard:input_type -> cloud.v1.api.FinishSuiteWizardRequest
-	1,  // 15: cloud.v1.api.SuiteWizardService.StartSuiteWizard:output_type -> cloud.v1.api.StartSuiteWizardResponse
-	3,  // 16: cloud.v1.api.SuiteWizardService.GetSuiteWizardDraft:output_type -> cloud.v1.api.GetSuiteWizardDraftResponse
-	5,  // 17: cloud.v1.api.SuiteWizardService.ListSuiteWizardDrafts:output_type -> cloud.v1.api.ListSuiteWizardDraftsResponse
-	7,  // 18: cloud.v1.api.SuiteWizardService.PatchSuiteWizard:output_type -> cloud.v1.api.PatchSuiteWizardResponse
-	9,  // 19: cloud.v1.api.SuiteWizardService.DeleteSuiteWizardDraft:output_type -> cloud.v1.api.DeleteSuiteWizardDraftResponse
-	11, // 20: cloud.v1.api.SuiteWizardService.FinishSuiteWizard:output_type -> cloud.v1.api.FinishSuiteWizardResponse
-	15, // [15:21] is the sub-list for method output_type
-	9,  // [9:15] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	13, // 0: cloud.v1.api.SuiteWizardCellPatch.preset_pair:type_name -> cloud.v1.domain.SuiteCell.PresetPair
+	14, // 1: cloud.v1.api.SuiteWizardCellPatch.inline_test:type_name -> cloud.v1.domain.Test
+	15, // 2: cloud.v1.api.SuiteWizardCellPatch.machine_overrides:type_name -> cloud.v1.deployment.MachinePlan
+	16, // 3: cloud.v1.api.SuiteWizardCellPatch.render_overrides:type_name -> cloud.v1.deployment.RenderOverrideSet
+	17, // 4: cloud.v1.api.StartSuiteWizardResponse.draft:type_name -> cloud.v1.models.SuiteWizardDraftRecord
+	17, // 5: cloud.v1.api.GetSuiteWizardDraftResponse.draft:type_name -> cloud.v1.models.SuiteWizardDraftRecord
+	18, // 6: cloud.v1.api.ListSuiteWizardDraftsRequest.filter:type_name -> cloud.v1.common.EntityFilter
+	19, // 7: cloud.v1.api.ListSuiteWizardDraftsRequest.sort:type_name -> cloud.v1.common.EntitySort
+	20, // 8: cloud.v1.api.ListSuiteWizardDraftsRequest.page:type_name -> cloud.v1.common.Page
+	17, // 9: cloud.v1.api.ListSuiteWizardDraftsResponse.drafts:type_name -> cloud.v1.models.SuiteWizardDraftRecord
+	21, // 10: cloud.v1.api.PatchSuiteWizardRequest.provider:type_name -> cloud.v1.deployment.Provider
+	0,  // 11: cloud.v1.api.PatchSuiteWizardRequest.cells:type_name -> cloud.v1.api.SuiteWizardCellPatch
+	22, // 12: cloud.v1.api.PatchSuiteWizardRequest.schedule:type_name -> cloud.v1.domain.Schedule
+	17, // 13: cloud.v1.api.PatchSuiteWizardResponse.draft:type_name -> cloud.v1.models.SuiteWizardDraftRecord
+	23, // 14: cloud.v1.api.FinishSuiteWizardResponse.suite:type_name -> cloud.v1.models.SuiteRecord
+	24, // 15: cloud.v1.api.FinishSuiteWizardResponse.suite_run:type_name -> cloud.v1.models.SuiteRunRecord
+	1,  // 16: cloud.v1.api.SuiteWizardService.StartSuiteWizard:input_type -> cloud.v1.api.StartSuiteWizardRequest
+	3,  // 17: cloud.v1.api.SuiteWizardService.GetSuiteWizardDraft:input_type -> cloud.v1.api.GetSuiteWizardDraftRequest
+	5,  // 18: cloud.v1.api.SuiteWizardService.ListSuiteWizardDrafts:input_type -> cloud.v1.api.ListSuiteWizardDraftsRequest
+	7,  // 19: cloud.v1.api.SuiteWizardService.PatchSuiteWizard:input_type -> cloud.v1.api.PatchSuiteWizardRequest
+	9,  // 20: cloud.v1.api.SuiteWizardService.DeleteSuiteWizardDraft:input_type -> cloud.v1.api.DeleteSuiteWizardDraftRequest
+	11, // 21: cloud.v1.api.SuiteWizardService.FinishSuiteWizard:input_type -> cloud.v1.api.FinishSuiteWizardRequest
+	2,  // 22: cloud.v1.api.SuiteWizardService.StartSuiteWizard:output_type -> cloud.v1.api.StartSuiteWizardResponse
+	4,  // 23: cloud.v1.api.SuiteWizardService.GetSuiteWizardDraft:output_type -> cloud.v1.api.GetSuiteWizardDraftResponse
+	6,  // 24: cloud.v1.api.SuiteWizardService.ListSuiteWizardDrafts:output_type -> cloud.v1.api.ListSuiteWizardDraftsResponse
+	8,  // 25: cloud.v1.api.SuiteWizardService.PatchSuiteWizard:output_type -> cloud.v1.api.PatchSuiteWizardResponse
+	10, // 26: cloud.v1.api.SuiteWizardService.DeleteSuiteWizardDraft:output_type -> cloud.v1.api.DeleteSuiteWizardDraftResponse
+	12, // 27: cloud.v1.api.SuiteWizardService.FinishSuiteWizard:output_type -> cloud.v1.api.FinishSuiteWizardResponse
+	22, // [22:28] is the sub-list for method output_type
+	16, // [16:22] is the sub-list for method input_type
+	16, // [16:16] is the sub-list for extension type_name
+	16, // [16:16] is the sub-list for extension extendee
+	0,  // [0:16] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_api_suite_wizard_proto_init() }
@@ -793,13 +1100,20 @@ func file_cloud_v1_api_suite_wizard_proto_init() {
 	if File_cloud_v1_api_suite_wizard_proto != nil {
 		return
 	}
+	file_cloud_v1_api_suite_wizard_proto_msgTypes[0].OneofWrappers = []any{
+		(*SuiteWizardCellPatch_PresetPair)(nil),
+		(*SuiteWizardCellPatch_TestPresetId)(nil),
+		(*SuiteWizardCellPatch_InlineTest)(nil),
+	}
+	file_cloud_v1_api_suite_wizard_proto_msgTypes[7].OneofWrappers = []any{}
+	file_cloud_v1_api_suite_wizard_proto_msgTypes[11].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_api_suite_wizard_proto_rawDesc), len(file_cloud_v1_api_suite_wizard_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   12,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

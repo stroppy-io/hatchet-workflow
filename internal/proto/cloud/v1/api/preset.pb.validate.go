@@ -2466,6 +2466,33 @@ func (m *ListWorkloadPresetsRequest) validate(all bool) error {
 		}
 	}
 
+	if len(m.GetScripts()) > 100 {
+		err := ListWorkloadPresetsRequestValidationError{
+			field:  "Scripts",
+			reason: "value must contain no more than 100 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetScripts() {
+		_, _ = idx, item
+
+		if utf8.RuneCountInString(item) > 512 {
+			err := ListWorkloadPresetsRequestValidationError{
+				field:  fmt.Sprintf("Scripts[%v]", idx),
+				reason: "value length must be at most 512 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
 	if m.IsSystem != nil {
 		// no validation rules for IsSystem
 	}

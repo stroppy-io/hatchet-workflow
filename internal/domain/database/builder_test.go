@@ -27,11 +27,11 @@ func TestBuildTopologySpecDispatchesPostgres(t *testing.T) {
 
 func TestBuildTopologySpecRejectsUnsupportedKind(t *testing.T) {
 	_, err := BuildTopologySpec(&domain.Database{
-		Kind: domain.Database_KIND_MYSQL,
+		Kind: domain.Database_KIND_MARIADB,
 		Source: &domain.Database_Params{
 			Params: &domain.DatabaseParams{
-				Engine: &domain.DatabaseParams_Mysql{
-					Mysql: &domain.MySqlParams{},
+				Engine: &domain.DatabaseParams_Mariadb{
+					Mariadb: &domain.MySqlParams{},
 				},
 			},
 		},

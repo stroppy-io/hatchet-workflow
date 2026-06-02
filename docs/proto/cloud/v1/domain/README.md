@@ -30,7 +30,8 @@
   - [cloud.v1.domain.PostgresParams.ReplicaOptionsEntry](#cloud-v1-domain-postgresparams-replicaoptionsentry)
   - [cloud.v1.domain.Schedule](#cloud-v1-domain-schedule)
   - [cloud.v1.domain.Suite](#cloud-v1-domain-suite)
-  - [cloud.v1.domain.SuiteRun](#cloud-v1-domain-suiterun)
+  - [cloud.v1.domain.SuiteCell](#cloud-v1-domain-suitecell)
+  - [cloud.v1.domain.SuiteCell.PresetPair](#cloud-v1-domain-suitecell-presetpair)
   - [cloud.v1.domain.Test](#cloud-v1-domain-test)
   - [cloud.v1.domain.TestRun](#cloud-v1-domain-testrun)
   - [cloud.v1.domain.Worker](#cloud-v1-domain-worker)
@@ -1105,9 +1106,7 @@ go_name: Value</pre></td>
 ### cloud.v1.domain.Schedule
 
 <pre>
-//Schedule is an optional cron trigger for a suite. When enabled with a cron
-//expression, the platform auto-starts the suite on that cadence; `enabled`
-//gates it so a configured schedule can be paused without losing the cron.
+//Schedule is an optional cron trigger for a suite.
 </pre>
 
 <table>
@@ -1120,8 +1119,7 @@ go_name: Value</pre></td>
 <td>cron</td>
 <td>string</td>
 <td><pre>
-cron is a standard cron expression (e.g. "0 2 * * *"). Validated
-//server-side.<br>
+//cron is a standard cron expression, validated server-side.<br>
 
 json_name: cron
 go_name: Cron</pre></td>
@@ -1129,7 +1127,7 @@ go_name: Cron</pre></td>
 <td>enabled</td>
 <td>bool</td>
 <td><pre>
-enabled gates the schedule: false = paused (never auto-runs).<br>
+//enabled gates the schedule: false = paused.<br>
 
 json_name: enabled
 go_name: Enabled</pre></td>
@@ -1137,8 +1135,7 @@ go_name: Enabled</pre></td>
 <td>timezone</td>
 <td>string</td>
 <td><pre>
-timezone is the IANA timezone for the cron (e.g. "Europe/Moscow");
-//empty = UTC.<br>
+//timezone is the IANA timezone for cron evaluation. Empty means UTC.<br>
 
 json_name: timezone
 go_name: Timezone</pre></td>
@@ -1151,9 +1148,9 @@ go_name: Timezone</pre></td>
 ### cloud.v1.domain.Suite
 
 <pre>
-//Suite is a reusable test bundle. It references provider-agnostic,
-//params-only presets; the provider is applied once here, and expansion bakes
-//topology specs plus infrastructure plans into child TestRuns.
+//Suite is a reusable test bundle. It stores only stable user intent: provider,
+//schedule, and enabled cells. Starting it produces a SuiteRun with fully baked
+//TestRuns.
 </pre>
 
 <table>
@@ -1163,13 +1160,19 @@ go_name: Timezone</pre></td>
 <th>Description</th>
 </tr>
 <tr>
+<td>cells</td>
+<td><a href="#cloud-v1-domain-suitecell">cloud.v1.domain.SuiteCell</a></td>
+<td><pre>
+//cells are the runnable entries composing the suite.<br>
+
+json_name: cells
+go_name: Cells</pre></td>
+</tr><tr>
 <td>default_in_global_rating</td>
 <td>bool</td>
 <td><pre>
-default_in_global_rating is the global-rating default propagated to every
-//child TestRun the suite spawns (incl. cron runs). Same semantics as
-//TestRunRecord: global defaults false (opt-in). Optional so unset =
-//platform default.<br>
+//default_in_global_rating is propagated to child TestRuns when StartSuite
+//does not override it. Unset means tenant/platform default.<br>
 
 json_name: defaultInGlobalRating
 go_name: DefaultInGlobalRating</pre></td>
@@ -1177,37 +1180,36 @@ go_name: DefaultInGlobalRating</pre></td>
 <td>default_in_tenant_rating</td>
 <td>bool</td>
 <td><pre>
-default_in_tenant_rating is the tenant-rating default propagated to every
-//child TestRun the suite spawns (incl. cron runs). Same semantics as
-//TestRunRecord: tenant defaults true. Optional so unset = platform default.<br>
+//default_in_tenant_rating is propagated to child TestRuns when StartSuite
+//does not override it. Unset means tenant/platform default.<br>
 
 json_name: defaultInTenantRating
 go_name: DefaultInTenantRating</pre></td>
 </tr><tr>
+<td>default_max_parallel</td>
+<td>uint32</td>
+<td><pre>
+//default_max_parallel caps concurrent child run workflows. 0 means no suite
+//definition override; the start request or tenant default decides.<br>
+
+json_name: defaultMaxParallel
+go_name: DefaultMaxParallel</pre></td>
+</tr><tr>
 <td>id</td>
 <td>string</td>
 <td><pre>
-id is the stable suite identifier.<br>
+//id is the stable suite identifier. For persisted suites this mirrors the
+//SuiteRecord entity id; for inline API suites it may be client-supplied.<br>
 
 json_name: id
 go_name: Id</pre></td>
 </tr><tr>
-<td>preset_ids</td>
-<td>string</td>
-<td><pre>
-preset_ids are the presets composing the suite (Database / Workload /
-//Test presets).<br>
-
-json_name: presetIds
-go_name: PresetIds</pre></td>
-</tr><tr>
 <td>provider</td>
 <td><a href="../deployment/README.md#cloud-v1-deployment-provider">cloud.v1.deployment.Provider</a></td>
 <td><pre>
-provider is the single deployment provider for now. Multi-provider
-//(cross-product to compare clouds) is planned: this becomes
-//`repeated Provider providers` and expansion does presets x providers.
-//Deferred to avoid the exponential bake cost for now.<br>
+//provider is the single deployment provider for every cell in this suite.
+//Multi-provider comparison should be modeled as repeated suite starts or a
+//future providers[] expansion layer, not by mixing providers inside a cell.<br>
 
 json_name: provider
 go_name: Provider</pre></td>
@@ -1215,8 +1217,8 @@ go_name: Provider</pre></td>
 <td>schedule</td>
 <td><a href="#cloud-v1-domain-schedule">cloud.v1.domain.Schedule</a></td>
 <td><pre>
-schedule is an optional cron schedule that auto-starts this suite.
-//Absent / disabled = the suite only runs when started manually.<br>
+//schedule is an optional cron schedule that auto-starts this suite. Absent
+//or disabled means the suite only runs manually/API.<br>
 
 json_name: schedule
 go_name: Schedule</pre></td>
@@ -1224,7 +1226,7 @@ go_name: Schedule</pre></td>
 <td>tags</td>
 <td><a href="../common/README.md#cloud-v1-common-tags">cloud.v1.common.Tags</a></td>
 <td><pre>
-tags are free-form metadata attached to the suite.<br>
+//tags are free-form metadata attached to the suite.<br>
 
 json_name: tags
 go_name: Tags</pre></td>
@@ -1233,12 +1235,11 @@ go_name: Tags</pre></td>
 
 
 
-<a name="cloud-v1-domain-suiterun"></a>
-### cloud.v1.domain.SuiteRun
+<a name="cloud-v1-domain-suitecell"></a>
+### cloud.v1.domain.SuiteCell
 
 <pre>
-//SuiteRun is a materialized suite execution: the Suite's preset_ids expanded
-//into concrete TestRuns, executed with a bounded degree of parallelism.
+//SuiteCell is one runnable entry inside a suite definition.
 </pre>
 
 <table>
@@ -1248,37 +1249,119 @@ go_name: Tags</pre></td>
 <th>Description</th>
 </tr>
 <tr>
+<td>enabled</td>
+<td>bool</td>
+<td><pre>
+//enabled gates this cell without deleting its overrides. Disabled cells are
+//not baked into SuiteRun.<br>
+
+json_name: enabled
+go_name: Enabled</pre></td>
+</tr><tr>
 <td>id</td>
 <td>string</td>
 <td><pre>
-id is the stable suite-run identifier.<br>
+//id is stable within the suite and is copied into SuiteRunCell.suite_cell_id.<br>
 
 json_name: id
 go_name: Id</pre></td>
 </tr><tr>
-<td>max_parallel</td>
-<td>uint32</td>
+<td>inline_test</td>
+<td><a href="#cloud-v1-domain-test">cloud.v1.domain.Test</a></td>
 <td><pre>
-max_parallel is the max concurrent TestWorkflows. 0 = unlimited.<br>
+//inline_test is for CLI/API automation that wants a suite without first
+//creating presets. Persisted UI-created suites should prefer presets.<br>
 
-json_name: maxParallel
-go_name: MaxParallel</pre></td>
+json_name: inlineTest
+go_name: InlineTest</pre></td>
 </tr><tr>
-<td>suite_id</td>
+<td>machine_overrides</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-machineplan">cloud.v1.deployment.MachinePlan</a></td>
+<td><pre>
+//machine_overrides are user edits to provider-specific machine intent. They
+//are merged into the derived InfrastructurePlan by node_id at start time.
+//Provider account settings are not stored here.<br>
+
+json_name: machineOverrides
+go_name: MachineOverrides</pre></td>
+</tr><tr>
+<td>name</td>
 <td>string</td>
 <td><pre>
-suite_id references the Suite this run was expanded from.<br>
+//name is the display label for this cell. Empty means server derives one
+//from the presets/test.<br>
 
-json_name: suiteId
-go_name: SuiteId</pre></td>
+json_name: name
+go_name: Name</pre></td>
 </tr><tr>
-<td>test_runs</td>
-<td><a href="#cloud-v1-domain-testrun">cloud.v1.domain.TestRun</a></td>
+<td>preset_pair</td>
+<td><a href="#cloud-v1-domain-suitecell-presetpair">cloud.v1.domain.SuiteCell.PresetPair</a></td>
 <td><pre>
-test_runs are the expanded runs (one per resolved preset).<br>
+//preset_pair expands database preset x workload preset.<br>
 
-json_name: testRuns
-go_name: TestRuns</pre></td>
+json_name: presetPair
+go_name: PresetPair</pre></td>
+</tr><tr>
+<td>render_overrides</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-renderoverrideset">cloud.v1.deployment.RenderOverrideSet</a></td>
+<td><pre>
+//render_overrides are user edits to editable generated config artifacts for
+//this cell.<br>
+
+json_name: renderOverrides
+go_name: RenderOverrides</pre></td>
+</tr><tr>
+<td>tags</td>
+<td><a href="../common/README.md#cloud-v1-common-tags">cloud.v1.common.Tags</a></td>
+<td><pre>
+//tags are free-form metadata attached to this cell and propagated to child
+//TestRun tags.<br>
+
+json_name: tags
+go_name: Tags</pre></td>
+</tr><tr>
+<td>test_preset_id</td>
+<td>string</td>
+<td><pre>
+//test_preset_id resolves a complete database+workload preset.<br>
+
+json_name: testPresetId
+go_name: TestPresetId</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-domain-suitecell-presetpair"></a>
+### cloud.v1.domain.SuiteCell.PresetPair
+
+<pre>
+//PresetPair references a database preset and a workload preset. The server
+//resolves both and validates compatibility before baking a TestRun.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>db_preset_id</td>
+<td>string</td>
+<td><pre>
+//db_preset_id is the database preset to resolve.<br>
+
+json_name: dbPresetId
+go_name: DbPresetId</pre></td>
+</tr><tr>
+<td>workload_preset_id</td>
+<td>string</td>
+<td><pre>
+//workload_preset_id is the workload preset to resolve.<br>
+
+json_name: workloadPresetId
+go_name: WorkloadPresetId</pre></td>
 </tr>
 </table>
 

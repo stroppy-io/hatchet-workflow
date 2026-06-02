@@ -6,11 +6,210 @@ import (
 	fmt "fmt"
 	jx "github.com/go-faster/jx"
 	jxpb "github.com/gopherex/protoc-gen-go-jx/jxpb"
-	schemapb "github.com/stroppy-io/schemapb/schemapb"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
+	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 )
+
+func (m *SuiteWizardCellPatch) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.CellId != "" {
+		e.FieldStart("cellId")
+		e.Str(m.CellId)
+	}
+	if m.Remove != false {
+		e.FieldStart("remove")
+		e.Bool(m.Remove)
+	}
+	if m.Enabled != nil {
+		e.FieldStart("enabled")
+		e.Bool(*m.Enabled)
+	}
+	if m.Name != nil {
+		e.FieldStart("name")
+		e.Str(*m.Name)
+	}
+	if len(m.MachineOverrides) > 0 {
+		e.FieldStart("machineOverrides")
+		e.ArrStart()
+		for _, v := range m.MachineOverrides {
+			jxpb.EncMessage(e, v)
+		}
+		e.ArrEnd()
+	}
+	if m.RenderOverrides != nil {
+		e.FieldStart("renderOverrides")
+		jxpb.EncMessage(e, m.RenderOverrides)
+	}
+	switch v := m.Source.(type) {
+	case *SuiteWizardCellPatch_PresetPair:
+		e.FieldStart("presetPair")
+		jxpb.EncMessage(e, v.PresetPair)
+	case *SuiteWizardCellPatch_TestPresetId:
+		e.FieldStart("testPresetId")
+		e.Str(v.TestPresetId)
+	case *SuiteWizardCellPatch_InlineTest:
+		e.FieldStart("inlineTest")
+		jxpb.EncMessage(e, v.InlineTest)
+	}
+	e.ObjEnd()
+}
+
+func (m *SuiteWizardCellPatch) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "cellId", "cell_id":
+			if seen["CellId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["CellId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.CellId = v
+			return nil
+		case "remove":
+			if seen["Remove"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Remove"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Bool()
+			if err != nil {
+				return err
+			}
+			m.Remove = v
+			return nil
+		case "enabled":
+			if seen["Enabled"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Enabled"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Bool()
+			if err != nil {
+				return err
+			}
+			m.Enabled = &v
+			return nil
+		case "name":
+			if seen["Name"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Name"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Name = &v
+			return nil
+		case "machineOverrides", "machine_overrides":
+			if seen["MachineOverrides"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["MachineOverrides"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &deployment.MachinePlan{}
+				if err := jxpb.DecMessage(d, el); err != nil {
+					return err
+				}
+				m.MachineOverrides = append(m.MachineOverrides, el)
+				return nil
+			})
+		case "renderOverrides", "render_overrides":
+			if seen["RenderOverrides"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["RenderOverrides"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.RenderOverrides = &deployment.RenderOverrideSet{}
+			if err := jxpb.DecMessage(d, m.RenderOverrides); err != nil {
+				return err
+			}
+			return nil
+		case "presetPair", "preset_pair":
+			if seen["oneof:Source"] {
+				return fmt.Errorf("multiple keys for oneof source")
+			}
+			seen["oneof:Source"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			w := &SuiteWizardCellPatch_PresetPair{}
+			w.PresetPair = &domain.SuiteCell_PresetPair{}
+			if err := jxpb.DecMessage(d, w.PresetPair); err != nil {
+				return err
+			}
+			m.Source = w
+			return nil
+		case "testPresetId", "test_preset_id":
+			if seen["oneof:Source"] {
+				return fmt.Errorf("multiple keys for oneof source")
+			}
+			seen["oneof:Source"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			val, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Source = &SuiteWizardCellPatch_TestPresetId{TestPresetId: val}
+			return nil
+		case "inlineTest", "inline_test":
+			if seen["oneof:Source"] {
+				return fmt.Errorf("multiple keys for oneof source")
+			}
+			seen["oneof:Source"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			w := &SuiteWizardCellPatch_InlineTest{}
+			w.InlineTest = &domain.Test{}
+			if err := jxpb.DecMessage(d, w.InlineTest); err != nil {
+				return err
+			}
+			m.Source = w
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *SuiteWizardCellPatch) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *SuiteWizardCellPatch) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
 
 func (m *StartSuiteWizardRequest) Encode(e *jx.Encoder) {
 	if m == nil {
@@ -448,9 +647,41 @@ func (m *PatchSuiteWizardRequest) Encode(e *jx.Encoder) {
 		e.FieldStart("draftId")
 		e.Str(m.DraftId)
 	}
-	if m.Form != nil {
-		e.FieldStart("form")
-		jxpb.EncMessage(e, m.Form)
+	if m.Provider != 0 {
+		e.FieldStart("provider")
+		if s, ok := deployment.Provider_name[int32(m.Provider)]; ok {
+			e.Str(s)
+		} else {
+			e.Int32(int32(m.Provider))
+		}
+	}
+	if len(m.Cells) > 0 {
+		e.FieldStart("cells")
+		e.ArrStart()
+		for _, v := range m.Cells {
+			v.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	if m.MaxParallel != nil {
+		e.FieldStart("maxParallel")
+		e.UInt32(*m.MaxParallel)
+	}
+	if m.Schedule != nil {
+		e.FieldStart("schedule")
+		jxpb.EncMessage(e, m.Schedule)
+	}
+	if m.DefaultInTenantRating != nil {
+		e.FieldStart("defaultInTenantRating")
+		e.Bool(*m.DefaultInTenantRating)
+	}
+	if m.DefaultInGlobalRating != nil {
+		e.FieldStart("defaultInGlobalRating")
+		e.Bool(*m.DefaultInGlobalRating)
+	}
+	if m.ReplaceCells != false {
+		e.FieldStart("replaceCells")
+		e.Bool(m.ReplaceCells)
 	}
 	e.ObjEnd()
 }
@@ -487,18 +718,119 @@ func (m *PatchSuiteWizardRequest) Decode(d *jx.Decoder) error {
 			}
 			m.DraftId = v
 			return nil
-		case "form":
-			if seen["Form"] {
+		case "provider":
+			if seen["Provider"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["Form"] = true
+			seen["Provider"] = true
+			switch d.Next() {
+			case jx.String:
+				s, err := d.Str()
+				if err != nil {
+					return err
+				}
+				n, ok := deployment.Provider_value[s]
+				if !ok {
+					return fmt.Errorf("unknown enum value %q", s)
+				}
+				m.Provider = deployment.Provider(n)
+				return nil
+			case jx.Number:
+				n, err := d.Int32()
+				if err != nil {
+					return err
+				}
+				m.Provider = deployment.Provider(n)
+				return nil
+			case jx.Null:
+				return d.Null()
+			default:
+				return fmt.Errorf("invalid enum token %s", d.Next())
+			}
+		case "cells":
+			if seen["Cells"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Cells"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			m.Form = &schemapb.Filled{}
-			if err := jxpb.DecMessage(d, m.Form); err != nil {
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &SuiteWizardCellPatch{}
+				if err := el.Decode(d); err != nil {
+					return err
+				}
+				m.Cells = append(m.Cells, el)
+				return nil
+			})
+		case "maxParallel", "max_parallel":
+			if seen["MaxParallel"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["MaxParallel"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint32(d)
+			if err != nil {
 				return err
 			}
+			m.MaxParallel = &v
+			return nil
+		case "schedule":
+			if seen["Schedule"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Schedule"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Schedule = &domain.Schedule{}
+			if err := jxpb.DecMessage(d, m.Schedule); err != nil {
+				return err
+			}
+			return nil
+		case "defaultInTenantRating", "default_in_tenant_rating":
+			if seen["DefaultInTenantRating"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["DefaultInTenantRating"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Bool()
+			if err != nil {
+				return err
+			}
+			m.DefaultInTenantRating = &v
+			return nil
+		case "defaultInGlobalRating", "default_in_global_rating":
+			if seen["DefaultInGlobalRating"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["DefaultInGlobalRating"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Bool()
+			if err != nil {
+				return err
+			}
+			m.DefaultInGlobalRating = &v
+			return nil
+		case "replaceCells", "replace_cells":
+			if seen["ReplaceCells"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["ReplaceCells"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Bool()
+			if err != nil {
+				return err
+			}
+			m.ReplaceCells = v
 			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)
@@ -677,6 +1009,22 @@ func (m *FinishSuiteWizardRequest) Encode(e *jx.Encoder) {
 		e.FieldStart("draftId")
 		e.Str(m.DraftId)
 	}
+	if m.Start != false {
+		e.FieldStart("start")
+		e.Bool(m.Start)
+	}
+	if m.SuiteName != "" {
+		e.FieldStart("suiteName")
+		e.Str(m.SuiteName)
+	}
+	if m.InTenantRating != nil {
+		e.FieldStart("inTenantRating")
+		e.Bool(*m.InTenantRating)
+	}
+	if m.InGlobalRating != nil {
+		e.FieldStart("inGlobalRating")
+		e.Bool(*m.InGlobalRating)
+	}
 	e.ObjEnd()
 }
 
@@ -712,6 +1060,62 @@ func (m *FinishSuiteWizardRequest) Decode(d *jx.Decoder) error {
 			}
 			m.DraftId = v
 			return nil
+		case "start":
+			if seen["Start"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Start"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Bool()
+			if err != nil {
+				return err
+			}
+			m.Start = v
+			return nil
+		case "suiteName", "suite_name":
+			if seen["SuiteName"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["SuiteName"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.SuiteName = v
+			return nil
+		case "inTenantRating", "in_tenant_rating":
+			if seen["InTenantRating"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["InTenantRating"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Bool()
+			if err != nil {
+				return err
+			}
+			m.InTenantRating = &v
+			return nil
+		case "inGlobalRating", "in_global_rating":
+			if seen["InGlobalRating"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["InGlobalRating"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Bool()
+			if err != nil {
+				return err
+			}
+			m.InGlobalRating = &v
+			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}
@@ -736,6 +1140,10 @@ func (m *FinishSuiteWizardResponse) Encode(e *jx.Encoder) {
 		return
 	}
 	e.ObjStart()
+	if m.Suite != nil {
+		e.FieldStart("suite")
+		jxpb.EncMessage(e, m.Suite)
+	}
 	if m.SuiteRun != nil {
 		e.FieldStart("suiteRun")
 		jxpb.EncMessage(e, m.SuiteRun)
@@ -747,6 +1155,19 @@ func (m *FinishSuiteWizardResponse) Decode(d *jx.Decoder) error {
 	seen := map[string]bool{}
 	return d.Obj(func(d *jx.Decoder, key string) error {
 		switch key {
+		case "suite":
+			if seen["Suite"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Suite"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Suite = &models.SuiteRecord{}
+			if err := jxpb.DecMessage(d, m.Suite); err != nil {
+				return err
+			}
+			return nil
 		case "suiteRun", "suite_run":
 			if seen["SuiteRun"] {
 				return fmt.Errorf("duplicate field %q", key)
@@ -755,7 +1176,7 @@ func (m *FinishSuiteWizardResponse) Decode(d *jx.Decoder) error {
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			m.SuiteRun = &domain.SuiteRun{}
+			m.SuiteRun = &models.SuiteRunRecord{}
 			if err := jxpb.DecMessage(d, m.SuiteRun); err != nil {
 				return err
 			}

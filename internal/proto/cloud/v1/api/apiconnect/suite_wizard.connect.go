@@ -61,11 +61,11 @@ type SuiteWizardServiceClient interface {
 	GetSuiteWizardDraft(context.Context, *api.GetSuiteWizardDraftRequest) (*api.GetSuiteWizardDraftResponse, error)
 	// ListSuiteWizardDrafts lists drafts with filtering and pagination. Read-only.
 	ListSuiteWizardDrafts(context.Context, *api.ListSuiteWizardDraftsRequest) (*api.ListSuiteWizardDraftsResponse, error)
-	// PatchSuiteWizard is idempotent: re-submitting the same form converges.
+	// PatchSuiteWizard is idempotent: re-submitting the same patch converges.
 	PatchSuiteWizard(context.Context, *api.PatchSuiteWizardRequest) (*api.PatchSuiteWizardResponse, error)
-	// DeleteSuiteWizardDraft is idempotent: deleting an absent draft is a no-op.
+	// DeleteSuiteWizardDraft is idempotent.
 	DeleteSuiteWizardDraft(context.Context, *api.DeleteSuiteWizardDraftRequest) (*api.DeleteSuiteWizardDraftResponse, error)
-	// FinishSuiteWizard mints a SuiteRun from the draft. Not idempotent.
+	// FinishSuiteWizard persists a suite and optionally launches it.
 	FinishSuiteWizard(context.Context, *api.FinishSuiteWizardRequest) (*api.FinishSuiteWizardResponse, error)
 }
 
@@ -195,11 +195,11 @@ type SuiteWizardServiceHandler interface {
 	GetSuiteWizardDraft(context.Context, *api.GetSuiteWizardDraftRequest) (*api.GetSuiteWizardDraftResponse, error)
 	// ListSuiteWizardDrafts lists drafts with filtering and pagination. Read-only.
 	ListSuiteWizardDrafts(context.Context, *api.ListSuiteWizardDraftsRequest) (*api.ListSuiteWizardDraftsResponse, error)
-	// PatchSuiteWizard is idempotent: re-submitting the same form converges.
+	// PatchSuiteWizard is idempotent: re-submitting the same patch converges.
 	PatchSuiteWizard(context.Context, *api.PatchSuiteWizardRequest) (*api.PatchSuiteWizardResponse, error)
-	// DeleteSuiteWizardDraft is idempotent: deleting an absent draft is a no-op.
+	// DeleteSuiteWizardDraft is idempotent.
 	DeleteSuiteWizardDraft(context.Context, *api.DeleteSuiteWizardDraftRequest) (*api.DeleteSuiteWizardDraftResponse, error)
-	// FinishSuiteWizard mints a SuiteRun from the draft. Not idempotent.
+	// FinishSuiteWizard persists a suite and optionally launches it.
 	FinishSuiteWizard(context.Context, *api.FinishSuiteWizardRequest) (*api.FinishSuiteWizardResponse, error)
 }
 

@@ -39,6 +39,378 @@ var (
 	_ = deployment.Provider(0)
 )
 
+// Validate checks the field values on SuiteCell with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *SuiteCell) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on SuiteCell with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in SuiteCellMultiError, or nil
+// if none found.
+func (m *SuiteCell) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *SuiteCell) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetId()); l < 1 || l > 64 {
+		err := SuiteCellValidationError{
+			field:  "Id",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetName()) > 255 {
+		err := SuiteCellValidationError{
+			field:  "Name",
+			reason: "value length must be at most 255 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for Enabled
+
+	if len(m.GetMachineOverrides()) > 256 {
+		err := SuiteCellValidationError{
+			field:  "MachineOverrides",
+			reason: "value must contain no more than 256 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetMachineOverrides() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, SuiteCellValidationError{
+						field:  fmt.Sprintf("MachineOverrides[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, SuiteCellValidationError{
+						field:  fmt.Sprintf("MachineOverrides[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return SuiteCellValidationError{
+					field:  fmt.Sprintf("MachineOverrides[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if all {
+		switch v := interface{}(m.GetRenderOverrides()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, SuiteCellValidationError{
+					field:  "RenderOverrides",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, SuiteCellValidationError{
+					field:  "RenderOverrides",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetRenderOverrides()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return SuiteCellValidationError{
+				field:  "RenderOverrides",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetTags()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, SuiteCellValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, SuiteCellValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTags()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return SuiteCellValidationError{
+				field:  "Tags",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	oneofSourcePresent := false
+	switch v := m.Source.(type) {
+	case *SuiteCell_PresetPair_:
+		if v == nil {
+			err := SuiteCellValidationError{
+				field:  "Source",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofSourcePresent = true
+
+		if m.GetPresetPair() == nil {
+			err := SuiteCellValidationError{
+				field:  "PresetPair",
+				reason: "value is required",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+		if all {
+			switch v := interface{}(m.GetPresetPair()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, SuiteCellValidationError{
+						field:  "PresetPair",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, SuiteCellValidationError{
+						field:  "PresetPair",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetPresetPair()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return SuiteCellValidationError{
+					field:  "PresetPair",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *SuiteCell_TestPresetId:
+		if v == nil {
+			err := SuiteCellValidationError{
+				field:  "Source",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofSourcePresent = true
+
+		if l := utf8.RuneCountInString(m.GetTestPresetId()); l < 1 || l > 64 {
+			err := SuiteCellValidationError{
+				field:  "TestPresetId",
+				reason: "value length must be between 1 and 64 runes, inclusive",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	case *SuiteCell_InlineTest:
+		if v == nil {
+			err := SuiteCellValidationError{
+				field:  "Source",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofSourcePresent = true
+
+		if m.GetInlineTest() == nil {
+			err := SuiteCellValidationError{
+				field:  "InlineTest",
+				reason: "value is required",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+		if all {
+			switch v := interface{}(m.GetInlineTest()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, SuiteCellValidationError{
+						field:  "InlineTest",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, SuiteCellValidationError{
+						field:  "InlineTest",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetInlineTest()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return SuiteCellValidationError{
+					field:  "InlineTest",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	default:
+		_ = v // ensures v is used
+	}
+	if !oneofSourcePresent {
+		err := SuiteCellValidationError{
+			field:  "Source",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return SuiteCellMultiError(errors)
+	}
+
+	return nil
+}
+
+// SuiteCellMultiError is an error wrapping multiple validation errors returned
+// by SuiteCell.ValidateAll() if the designated constraints aren't met.
+type SuiteCellMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m SuiteCellMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m SuiteCellMultiError) AllErrors() []error { return m }
+
+// SuiteCellValidationError is the validation error returned by
+// SuiteCell.Validate if the designated constraints aren't met.
+type SuiteCellValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SuiteCellValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SuiteCellValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SuiteCellValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SuiteCellValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SuiteCellValidationError) ErrorName() string { return "SuiteCellValidationError" }
+
+// Error satisfies the builtin error interface
+func (e SuiteCellValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSuiteCell.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SuiteCellValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SuiteCellValidationError{}
+
 // Validate checks the field values on Suite with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -60,10 +432,10 @@ func (m *Suite) validate(all bool) error {
 
 	var errors []error
 
-	if utf8.RuneCountInString(m.GetId()) < 1 {
+	if l := utf8.RuneCountInString(m.GetId()); l < 1 || l > 64 {
 		err := SuiteValidationError{
 			field:  "Id",
-			reason: "value length must be at least 1 runes",
+			reason: "value length must be between 1 and 64 runes, inclusive",
 		}
 		if !all {
 			return err
@@ -71,10 +443,10 @@ func (m *Suite) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if len(m.GetPresetIds()) < 1 {
+	if l := len(m.GetCells()); l < 1 || l > 1000 {
 		err := SuiteValidationError{
-			field:  "PresetIds",
-			reason: "value must contain at least 1 item(s)",
+			field:  "Cells",
+			reason: "value must contain between 1 and 1000 items, inclusive",
 		}
 		if !all {
 			return err
@@ -82,18 +454,36 @@ func (m *Suite) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	for idx, item := range m.GetPresetIds() {
+	for idx, item := range m.GetCells() {
 		_, _ = idx, item
 
-		if utf8.RuneCountInString(item) < 1 {
-			err := SuiteValidationError{
-				field:  fmt.Sprintf("PresetIds[%v]", idx),
-				reason: "value length must be at least 1 runes",
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, SuiteValidationError{
+						field:  fmt.Sprintf("Cells[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, SuiteValidationError{
+						field:  fmt.Sprintf("Cells[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
 			}
-			if !all {
-				return err
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return SuiteValidationError{
+					field:  fmt.Sprintf("Cells[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
 			}
-			errors = append(errors, err)
 		}
 
 	}
@@ -177,6 +567,8 @@ func (m *Suite) validate(all bool) error {
 			}
 		}
 	}
+
+	// no validation rules for DefaultMaxParallel
 
 	if m.DefaultInTenantRating != nil {
 		// no validation rules for DefaultInTenantRating
@@ -390,6 +782,240 @@ var _ interface {
 	ErrorName() string
 } = ScheduleValidationError{}
 
+// Validate checks the field values on SuiteRunCell with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *SuiteRunCell) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on SuiteRunCell with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in SuiteRunCellMultiError, or
+// nil if none found.
+func (m *SuiteRunCell) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *SuiteRunCell) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetId()); l < 1 || l > 64 {
+		err := SuiteRunCellValidationError{
+			field:  "Id",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetSuiteCellId()) > 64 {
+		err := SuiteRunCellValidationError{
+			field:  "SuiteCellId",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetTestRun() == nil {
+		err := SuiteRunCellValidationError{
+			field:  "TestRun",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetTestRun()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, SuiteRunCellValidationError{
+					field:  "TestRun",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, SuiteRunCellValidationError{
+					field:  "TestRun",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTestRun()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return SuiteRunCellValidationError{
+				field:  "TestRun",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if utf8.RuneCountInString(m.GetName()) > 255 {
+		err := SuiteRunCellValidationError{
+			field:  "Name",
+			reason: "value length must be at most 255 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetDbPresetId()) > 64 {
+		err := SuiteRunCellValidationError{
+			field:  "DbPresetId",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetWorkloadPresetId()) > 64 {
+		err := SuiteRunCellValidationError{
+			field:  "WorkloadPresetId",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetTestPresetId()) > 64 {
+		err := SuiteRunCellValidationError{
+			field:  "TestPresetId",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetTags()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, SuiteRunCellValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, SuiteRunCellValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTags()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return SuiteRunCellValidationError{
+				field:  "Tags",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return SuiteRunCellMultiError(errors)
+	}
+
+	return nil
+}
+
+// SuiteRunCellMultiError is an error wrapping multiple validation errors
+// returned by SuiteRunCell.ValidateAll() if the designated constraints aren't met.
+type SuiteRunCellMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m SuiteRunCellMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m SuiteRunCellMultiError) AllErrors() []error { return m }
+
+// SuiteRunCellValidationError is the validation error returned by
+// SuiteRunCell.Validate if the designated constraints aren't met.
+type SuiteRunCellValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SuiteRunCellValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SuiteRunCellValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SuiteRunCellValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SuiteRunCellValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SuiteRunCellValidationError) ErrorName() string { return "SuiteRunCellValidationError" }
+
+// Error satisfies the builtin error interface
+func (e SuiteRunCellValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSuiteRunCell.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SuiteRunCellValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SuiteRunCellValidationError{}
+
 // Validate checks the field values on SuiteRun with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -412,10 +1038,10 @@ func (m *SuiteRun) validate(all bool) error {
 
 	var errors []error
 
-	if utf8.RuneCountInString(m.GetId()) < 1 {
+	if l := utf8.RuneCountInString(m.GetId()); l < 1 || l > 64 {
 		err := SuiteRunValidationError{
 			field:  "Id",
-			reason: "value length must be at least 1 runes",
+			reason: "value length must be between 1 and 64 runes, inclusive",
 		}
 		if !all {
 			return err
@@ -423,10 +1049,10 @@ func (m *SuiteRun) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if utf8.RuneCountInString(m.GetSuiteId()) < 1 {
+	if utf8.RuneCountInString(m.GetSuiteId()) > 64 {
 		err := SuiteRunValidationError{
 			field:  "SuiteId",
-			reason: "value length must be at least 1 runes",
+			reason: "value length must be at most 64 runes",
 		}
 		if !all {
 			return err
@@ -434,10 +1060,10 @@ func (m *SuiteRun) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if len(m.GetTestRuns()) < 1 {
+	if l := len(m.GetCells()); l < 1 || l > 1000 {
 		err := SuiteRunValidationError{
-			field:  "TestRuns",
-			reason: "value must contain at least 1 item(s)",
+			field:  "Cells",
+			reason: "value must contain between 1 and 1000 items, inclusive",
 		}
 		if !all {
 			return err
@@ -445,7 +1071,7 @@ func (m *SuiteRun) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	for idx, item := range m.GetTestRuns() {
+	for idx, item := range m.GetCells() {
 		_, _ = idx, item
 
 		if all {
@@ -453,7 +1079,7 @@ func (m *SuiteRun) validate(all bool) error {
 			case interface{ ValidateAll() error }:
 				if err := v.ValidateAll(); err != nil {
 					errors = append(errors, SuiteRunValidationError{
-						field:  fmt.Sprintf("TestRuns[%v]", idx),
+						field:  fmt.Sprintf("Cells[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
@@ -461,7 +1087,7 @@ func (m *SuiteRun) validate(all bool) error {
 			case interface{ Validate() error }:
 				if err := v.Validate(); err != nil {
 					errors = append(errors, SuiteRunValidationError{
-						field:  fmt.Sprintf("TestRuns[%v]", idx),
+						field:  fmt.Sprintf("Cells[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
@@ -470,7 +1096,7 @@ func (m *SuiteRun) validate(all bool) error {
 		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return SuiteRunValidationError{
-					field:  fmt.Sprintf("TestRuns[%v]", idx),
+					field:  fmt.Sprintf("Cells[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
@@ -557,3 +1183,127 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = SuiteRunValidationError{}
+
+// Validate checks the field values on SuiteCell_PresetPair with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *SuiteCell_PresetPair) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on SuiteCell_PresetPair with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// SuiteCell_PresetPairMultiError, or nil if none found.
+func (m *SuiteCell_PresetPair) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *SuiteCell_PresetPair) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetDbPresetId()); l < 1 || l > 64 {
+		err := SuiteCell_PresetPairValidationError{
+			field:  "DbPresetId",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetWorkloadPresetId()); l < 1 || l > 64 {
+		err := SuiteCell_PresetPairValidationError{
+			field:  "WorkloadPresetId",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return SuiteCell_PresetPairMultiError(errors)
+	}
+
+	return nil
+}
+
+// SuiteCell_PresetPairMultiError is an error wrapping multiple validation
+// errors returned by SuiteCell_PresetPair.ValidateAll() if the designated
+// constraints aren't met.
+type SuiteCell_PresetPairMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m SuiteCell_PresetPairMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m SuiteCell_PresetPairMultiError) AllErrors() []error { return m }
+
+// SuiteCell_PresetPairValidationError is the validation error returned by
+// SuiteCell_PresetPair.Validate if the designated constraints aren't met.
+type SuiteCell_PresetPairValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SuiteCell_PresetPairValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SuiteCell_PresetPairValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SuiteCell_PresetPairValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SuiteCell_PresetPairValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SuiteCell_PresetPairValidationError) ErrorName() string {
+	return "SuiteCell_PresetPairValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e SuiteCell_PresetPairValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSuiteCell_PresetPair.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SuiteCell_PresetPairValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SuiteCell_PresetPairValidationError{}

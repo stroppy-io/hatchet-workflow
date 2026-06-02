@@ -50,6 +50,8 @@
   - [cloud.v1.workflow.AcquireQuotasActivityRequest.QuotaRequestsEntry](#cloud-v1-workflow-acquirequotasactivityrequest-quotarequestsentry)
   - [cloud.v1.workflow.AcquireQuotasActivityResponse](#cloud-v1-workflow-acquirequotasactivityresponse)
   - [cloud.v1.workflow.AcquireQuotasActivityResponse.QuotaAllocationsEntry](#cloud-v1-workflow-acquirequotasactivityresponse-quotaallocationsentry)
+  - [cloud.v1.workflow.AgentBootstrap](#cloud-v1-workflow-agentbootstrap)
+  - [cloud.v1.workflow.AgentBootstrap.ExtraEnvEntry](#cloud-v1-workflow-agentbootstrap-extraenventry)
   - [cloud.v1.workflow.CalculateQuotasWorkflowRequest](#cloud-v1-workflow-calculatequotasworkflowrequest)
   - [cloud.v1.workflow.CalculateQuotasWorkflowResponse](#cloud-v1-workflow-calculatequotasworkflowresponse)
   - [cloud.v1.workflow.CalculateQuotasWorkflowResponse.QuotaRequestsEntry](#cloud-v1-workflow-calculatequotasworkflowresponse-quotarequestsentry)
@@ -63,6 +65,8 @@
   - [cloud.v1.workflow.ProcessInfrastructureWorkflowResponse](#cloud-v1-workflow-processinfrastructureworkflowresponse)
   - [cloud.v1.workflow.RenderDeploymentPlanWorkflowRequest](#cloud-v1-workflow-renderdeploymentplanworkflowrequest)
   - [cloud.v1.workflow.RenderDeploymentPlanWorkflowResponse](#cloud-v1-workflow-renderdeploymentplanworkflowresponse)
+  - [cloud.v1.workflow.RenderDockerInputWorkflowRequest](#cloud-v1-workflow-renderdockerinputworkflowrequest)
+  - [cloud.v1.workflow.RenderTerraformVariablesWorkflowRequest](#cloud-v1-workflow-renderterraformvariablesworkflowrequest)
   - [cloud.v1.workflow.RunConfig](#cloud-v1-workflow-runconfig)
   - [cloud.v1.workflow.RunState](#cloud-v1-workflow-runstate)
   - [cloud.v1.workflow.RunWorkloadWorkflowRequest](#cloud-v1-workflow-runworkloadworkflowrequest)
@@ -593,6 +597,16 @@ go_name: DeploymentPlan</pre></td>
 <th>Description</th>
 </tr>
 <tr>
+<td>agent_bootstrap</td>
+<td><a href="#cloud-v1-workflow-agentbootstrap">cloud.v1.workflow.AgentBootstrap</a></td>
+<td><pre>
+//agent_bootstrap is runtime control-plane data delivered to every
+//provisioned agent. Providers only choose the carrier: Docker env file,
+//cloud-init user-data, or local process env.<br>
+
+json_name: agentBootstrap
+go_name: AgentBootstrap</pre></td>
+</tr><tr>
 <td>plan</td>
 <td><a href="../deployment/README.md#cloud-v1-deployment-infrastructureplan">cloud.v1.deployment.InfrastructurePlan</a></td>
 <td><pre>
@@ -600,6 +614,15 @@ go_name: DeploymentPlan</pre></td>
 
 json_name: plan
 go_name: Plan</pre></td>
+</tr><tr>
+<td>run_id</td>
+<td>string</td>
+<td><pre>
+//run_id is the stable deployment/run identifier used for provider
+//resource names and Terraform workdir recovery.<br>
+
+json_name: runId
+go_name: RunId</pre></td>
 </tr>
 </table>
 
@@ -689,6 +712,16 @@ go_name: RenderOverrides</pre></td>
 
 json_name: topologySpec
 go_name: TopologySpec</pre></td>
+</tr><tr>
+<td>workload</td>
+<td><a href="../domain/README.md#cloud-v1-domain-workload">cloud.v1.domain.Workload</a></td>
+<td><pre>
+//workload is the stroppy workload input used by workload-runner renderers.
+//It is optional for pure database render previews and required when the
+//topology contains a stroppy workload component.<br>
+
+json_name: workload
+go_name: Workload</pre></td>
 </tr>
 </table>
 
@@ -728,7 +761,7 @@ go_name: DeploymentPlan</pre></td>
 //RenderDockerInputWorkflow renders infrastructure plan to Docker input.
 </pre>
 
-**Input:** [cloud.v1.deployment.InfrastructurePlan](../deployment/README.md#cloud-v1-deployment-infrastructureplan)
+**Input:** [cloud.v1.workflow.RenderDockerInputWorkflowRequest](#cloud-v1-workflow-renderdockerinputworkflowrequest)
 
 <table>
 <tr>
@@ -737,45 +770,30 @@ go_name: DeploymentPlan</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>labels</td>
-<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructureplan-labelsentry">cloud.v1.deployment.InfrastructurePlan.LabelsEntry</a></td>
+<td>agent_bootstrap</td>
+<td><a href="#cloud-v1-workflow-agentbootstrap">cloud.v1.workflow.AgentBootstrap</a></td>
 <td><pre>
-//labels are structured metadata attached to the plan.<br>
+//agent_bootstrap is rendered into the Docker agent env file.<br>
 
-json_name: labels
-go_name: Labels</pre></td>
+json_name: agentBootstrap
+go_name: AgentBootstrap</pre></td>
 </tr><tr>
-<td>machines</td>
-<td><a href="../deployment/README.md#cloud-v1-deployment-machineplan">cloud.v1.deployment.MachinePlan</a></td>
+<td>plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructureplan">cloud.v1.deployment.InfrastructurePlan</a></td>
 <td><pre>
-//machines are provider-specific resources keyed back to topology.Node.id.<br>
+//plan is the Docker infrastructure plan.<br>
 
-json_name: machines
-go_name: Machines</pre></td>
+json_name: plan
+go_name: Plan</pre></td>
 </tr><tr>
-<td>provider</td>
-<td><a href="../deployment/README.md#cloud-v1-deployment-provider">cloud.v1.deployment.Provider</a></td>
+<td>run_id</td>
+<td>string</td>
 <td><pre>
-//provider selects the backend that will materialize this plan.<br>
+//run_id is used as the default Docker network suffix when the plan does
+//not pin a network name.<br>
 
-json_name: provider
-go_name: Provider</pre></td>
-</tr><tr>
-<td>settings</td>
-<td><a href="../deployment/README.md#cloud-v1-deployment-providersettings">cloud.v1.deployment.ProviderSettings</a></td>
-<td><pre>
-//settings are provider account/network/auth settings.<br>
-
-json_name: settings
-go_name: Settings</pre></td>
-</tr><tr>
-<td>tags</td>
-<td><a href="../common/README.md#cloud-v1-common-tags">cloud.v1.common.Tags</a></td>
-<td><pre>
-//tags are arbitrary metadata attached to the plan.<br>
-
-json_name: tags
-go_name: Tags</pre></td>
+json_name: runId
+go_name: RunId</pre></td>
 </tr>
 </table>
 
@@ -824,7 +842,7 @@ go_name: Network</pre></td>
 //input.
 </pre>
 
-**Input:** [cloud.v1.deployment.InfrastructurePlan](../deployment/README.md#cloud-v1-deployment-infrastructureplan)
+**Input:** [cloud.v1.workflow.RenderTerraformVariablesWorkflowRequest](#cloud-v1-workflow-renderterraformvariablesworkflowrequest)
 
 <table>
 <tr>
@@ -833,45 +851,37 @@ go_name: Network</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>labels</td>
-<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructureplan-labelsentry">cloud.v1.deployment.InfrastructurePlan.LabelsEntry</a></td>
+<td>action</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-terraform-action">cloud.v1.deployment.Terraform.Action</a></td>
 <td><pre>
-//labels are structured metadata attached to the plan.<br>
+//action selects plan/apply/destroy. Empty means apply.<br>
 
-json_name: labels
-go_name: Labels</pre></td>
+json_name: action
+go_name: Action</pre></td>
 </tr><tr>
-<td>machines</td>
-<td><a href="../deployment/README.md#cloud-v1-deployment-machineplan">cloud.v1.deployment.MachinePlan</a></td>
+<td>agent_bootstrap</td>
+<td><a href="#cloud-v1-workflow-agentbootstrap">cloud.v1.workflow.AgentBootstrap</a></td>
 <td><pre>
-//machines are provider-specific resources keyed back to topology.Node.id.<br>
+//agent_bootstrap is rendered into Yandex cloud-init user-data.<br>
 
-json_name: machines
-go_name: Machines</pre></td>
+json_name: agentBootstrap
+go_name: AgentBootstrap</pre></td>
 </tr><tr>
-<td>provider</td>
-<td><a href="../deployment/README.md#cloud-v1-deployment-provider">cloud.v1.deployment.Provider</a></td>
+<td>plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructureplan">cloud.v1.deployment.InfrastructurePlan</a></td>
 <td><pre>
-//provider selects the backend that will materialize this plan.<br>
+//plan is the Terraform-backed infrastructure plan.<br>
 
-json_name: provider
-go_name: Provider</pre></td>
+json_name: plan
+go_name: Plan</pre></td>
 </tr><tr>
-<td>settings</td>
-<td><a href="../deployment/README.md#cloud-v1-deployment-providersettings">cloud.v1.deployment.ProviderSettings</a></td>
+<td>run_id</td>
+<td>string</td>
 <td><pre>
-//settings are provider account/network/auth settings.<br>
+//run_id is the stable Terraform workdir id.<br>
 
-json_name: settings
-go_name: Settings</pre></td>
-</tr><tr>
-<td>tags</td>
-<td><a href="../common/README.md#cloud-v1-common-tags">cloud.v1.common.Tags</a></td>
-<td><pre>
-//tags are arbitrary metadata attached to the plan.<br>
-
-json_name: tags
-go_name: Tags</pre></td>
+json_name: runId
+go_name: RunId</pre></td>
 </tr>
 </table>
 
@@ -1329,6 +1339,15 @@ go_name: NetworkId</pre></td>
 <th>Description</th>
 </tr>
 <tr>
+<td>agent_bootstrap</td>
+<td><a href="#cloud-v1-workflow-agentbootstrap">cloud.v1.workflow.AgentBootstrap</a></td>
+<td><pre>
+//agent_bootstrap is runtime control-plane data delivered to provisioned
+//agents through the provider-specific carrier.<br>
+
+json_name: agentBootstrap
+go_name: AgentBootstrap</pre></td>
+</tr><tr>
 <td>database</td>
 <td><a href="../domain/README.md#cloud-v1-domain-database">cloud.v1.domain.Database</a></td>
 <td><pre>
@@ -1411,7 +1430,7 @@ go_name: Workload</pre></td>
 ## cloud.v1.workflow.SuiteWorkflowService
 
 <pre>
-//SuiteWorkflowService runs a child TestWorkflow per test_run, honoring
+//SuiteWorkflowService runs a child TestRunWorkflow per RunConfig, honoring
 //max_parallel.
 </pre>
 
@@ -1423,8 +1442,8 @@ go_name: Workload</pre></td>
 ### SuiteWorkflow
 
 <pre>
-//SuiteWorkflow fans out a child TestWorkflow per test run in the suite,
-//deduplicated by a deterministic id derived from SuiteRun.id.
+//SuiteWorkflow fans out a child TestRunWorkflow per run in the suite,
+//deduplicated by a deterministic id derived from suite_run_id.
 </pre>
 
 **Input:** [cloud.v1.workflow.SuiteWorkflowRequest](#cloud-v1-workflow-suiteworkflowrequest)
@@ -1436,13 +1455,30 @@ go_name: Workload</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>suite_run</td>
-<td><a href="../domain/README.md#cloud-v1-domain-suiterun">cloud.v1.domain.SuiteRun</a></td>
+<td>max_parallel</td>
+<td>uint32</td>
 <td><pre>
-//suite_run is the full description of the suite run to execute.<br>
+//max_parallel caps concurrent child TestRunWorkflow executions. 0 =
+//unlimited.<br>
 
-json_name: suiteRun
-go_name: SuiteRun</pre></td>
+json_name: maxParallel
+go_name: MaxParallel</pre></td>
+</tr><tr>
+<td>runs</td>
+<td><a href="#cloud-v1-workflow-runconfig">cloud.v1.workflow.RunConfig</a></td>
+<td><pre>
+//runs are the child run workflow inputs.<br>
+
+json_name: runs
+go_name: Runs</pre></td>
+</tr><tr>
+<td>suite_run_id</td>
+<td>string</td>
+<td><pre>
+//suite_run_id is the persisted SuiteRunRecord id.<br>
+
+json_name: suiteRunId
+go_name: SuiteRunId</pre></td>
 </tr>
 </table>
 
@@ -1454,7 +1490,7 @@ go_name: SuiteRun</pre></td>
 
 <table>
 <tr><th>Name</th><th>Value</th></tr>
-<tr><td>id</td><td><pre><code>suite-run/${! suite_run.id }</code></pre></td></tr>
+<tr><td>id</td><td><pre><code>suite-run/${! suite_run_id }</code></pre></td></tr>
 <tr><td>id_reuse_policy</td><td><pre><code>WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY</code></pre></td></tr>
 <tr><td>retry_policy.max_attempts</td><td>1</td></tr>
 </table>     
@@ -1655,6 +1691,15 @@ go_name: Workload</pre></td>
 <th>Description</th>
 </tr>
 <tr>
+<td>agent_bootstrap</td>
+<td><a href="#cloud-v1-workflow-agentbootstrap">cloud.v1.workflow.AgentBootstrap</a></td>
+<td><pre>
+//agent_bootstrap is runtime control-plane data delivered to provisioned
+//agents through the provider-specific carrier.<br>
+
+json_name: agentBootstrap
+go_name: AgentBootstrap</pre></td>
+</tr><tr>
 <td>test_run</td>
 <td><a href="../domain/README.md#cloud-v1-domain-testrun">cloud.v1.domain.TestRun</a></td>
 <td><pre>
@@ -1877,6 +1922,87 @@ go_name: Key</pre></td>
 </tr><tr>
 <td>value</td>
 <td><a href="../deployment/README.md#cloud-v1-deployment-quota-allocation">cloud.v1.deployment.Quota.Allocation</a></td>
+<td><pre>
+json_name: value
+go_name: Value</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-workflow-agentbootstrap"></a>
+### cloud.v1.workflow.AgentBootstrap
+
+<pre>
+//AgentBootstrap is the provider-independent startup contract for every agent.
+//It is runtime control-plane data, not topology and not provider settings.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>binary_url</td>
+<td>string</td>
+<td><pre>
+//binary_url overrides the agent binary URL. Empty means
+//server_addr + "/agent/binary".<br>
+
+json_name: binaryUrl
+go_name: BinaryUrl</pre></td>
+</tr><tr>
+<td>extra_env</td>
+<td><a href="#cloud-v1-workflow-agentbootstrap-extraenventry">cloud.v1.workflow.AgentBootstrap.ExtraEnvEntry</a></td>
+<td><pre>
+//extra_env is appended to the agent env file. Core STROPPY and AGENT
+//fields are still rendered by the system and win over this map.<br>
+
+json_name: extraEnv
+go_name: ExtraEnv</pre></td>
+</tr><tr>
+<td>server_addr</td>
+<td>string</td>
+<td><pre>
+//server_addr is the public/base control-plane address agents use to reach
+//the server and Temporal proxy, e.g. http://10.0.0.10:8080.<br>
+
+json_name: serverAddr
+go_name: ServerAddr</pre></td>
+</tr><tr>
+<td>temporal_namespace</td>
+<td>string</td>
+<td><pre>
+//temporal_namespace is the namespace agents use when registering their
+//Temporal worker. Empty means default.<br>
+
+json_name: temporalNamespace
+go_name: TemporalNamespace</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-workflow-agentbootstrap-extraenventry"></a>
+### cloud.v1.workflow.AgentBootstrap.ExtraEnvEntry
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>key</td>
+<td>string</td>
+<td><pre>
+json_name: key
+go_name: Key</pre></td>
+</tr><tr>
+<td>value</td>
+<td>string</td>
 <td><pre>
 json_name: value
 go_name: Value</pre></td>
@@ -2142,6 +2268,16 @@ go_name: InfrastructureState</pre></td>
 <th>Description</th>
 </tr>
 <tr>
+<td>agent_bootstrap</td>
+<td><a href="#cloud-v1-workflow-agentbootstrap">cloud.v1.workflow.AgentBootstrap</a></td>
+<td><pre>
+//agent_bootstrap is runtime control-plane data delivered to every
+//provisioned agent. Providers only choose the carrier: Docker env file,
+//cloud-init user-data, or local process env.<br>
+
+json_name: agentBootstrap
+go_name: AgentBootstrap</pre></td>
+</tr><tr>
 <td>plan</td>
 <td><a href="../deployment/README.md#cloud-v1-deployment-infrastructureplan">cloud.v1.deployment.InfrastructurePlan</a></td>
 <td><pre>
@@ -2149,6 +2285,15 @@ go_name: InfrastructureState</pre></td>
 
 json_name: plan
 go_name: Plan</pre></td>
+</tr><tr>
+<td>run_id</td>
+<td>string</td>
+<td><pre>
+//run_id is the stable deployment/run identifier used for provider
+//resource names and Terraform workdir recovery.<br>
+
+json_name: runId
+go_name: RunId</pre></td>
 </tr>
 </table>
 
@@ -2236,6 +2381,16 @@ go_name: RenderOverrides</pre></td>
 
 json_name: topologySpec
 go_name: TopologySpec</pre></td>
+</tr><tr>
+<td>workload</td>
+<td><a href="../domain/README.md#cloud-v1-domain-workload">cloud.v1.domain.Workload</a></td>
+<td><pre>
+//workload is the stroppy workload input used by workload-runner renderers.
+//It is optional for pure database render previews and required when the
+//topology contains a stroppy workload component.<br>
+
+json_name: workload
+go_name: Workload</pre></td>
 </tr>
 </table>
 
@@ -2267,6 +2422,101 @@ go_name: DeploymentPlan</pre></td>
 
 
 
+<a name="cloud-v1-workflow-renderdockerinputworkflowrequest"></a>
+### cloud.v1.workflow.RenderDockerInputWorkflowRequest
+
+<pre>
+//RenderDockerInputWorkflowRequest asks to render Docker daemon input from an
+//infrastructure plan.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>agent_bootstrap</td>
+<td><a href="#cloud-v1-workflow-agentbootstrap">cloud.v1.workflow.AgentBootstrap</a></td>
+<td><pre>
+//agent_bootstrap is rendered into the Docker agent env file.<br>
+
+json_name: agentBootstrap
+go_name: AgentBootstrap</pre></td>
+</tr><tr>
+<td>plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructureplan">cloud.v1.deployment.InfrastructurePlan</a></td>
+<td><pre>
+//plan is the Docker infrastructure plan.<br>
+
+json_name: plan
+go_name: Plan</pre></td>
+</tr><tr>
+<td>run_id</td>
+<td>string</td>
+<td><pre>
+//run_id is used as the default Docker network suffix when the plan does
+//not pin a network name.<br>
+
+json_name: runId
+go_name: RunId</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-workflow-renderterraformvariablesworkflowrequest"></a>
+### cloud.v1.workflow.RenderTerraformVariablesWorkflowRequest
+
+<pre>
+//RenderTerraformVariablesWorkflowRequest asks to render Terraform operation
+//input from an infrastructure plan.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>action</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-terraform-action">cloud.v1.deployment.Terraform.Action</a></td>
+<td><pre>
+//action selects plan/apply/destroy. Empty means apply.<br>
+
+json_name: action
+go_name: Action</pre></td>
+</tr><tr>
+<td>agent_bootstrap</td>
+<td><a href="#cloud-v1-workflow-agentbootstrap">cloud.v1.workflow.AgentBootstrap</a></td>
+<td><pre>
+//agent_bootstrap is rendered into Yandex cloud-init user-data.<br>
+
+json_name: agentBootstrap
+go_name: AgentBootstrap</pre></td>
+</tr><tr>
+<td>plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructureplan">cloud.v1.deployment.InfrastructurePlan</a></td>
+<td><pre>
+//plan is the Terraform-backed infrastructure plan.<br>
+
+json_name: plan
+go_name: Plan</pre></td>
+</tr><tr>
+<td>run_id</td>
+<td>string</td>
+<td><pre>
+//run_id is the stable Terraform workdir id.<br>
+
+json_name: runId
+go_name: RunId</pre></td>
+</tr>
+</table>
+
+
+
 <a name="cloud-v1-workflow-runconfig"></a>
 ### cloud.v1.workflow.RunConfig
 
@@ -2281,6 +2531,15 @@ go_name: DeploymentPlan</pre></td>
 <th>Description</th>
 </tr>
 <tr>
+<td>agent_bootstrap</td>
+<td><a href="#cloud-v1-workflow-agentbootstrap">cloud.v1.workflow.AgentBootstrap</a></td>
+<td><pre>
+//agent_bootstrap is runtime control-plane data delivered to provisioned
+//agents through the provider-specific carrier.<br>
+
+json_name: agentBootstrap
+go_name: AgentBootstrap</pre></td>
+</tr><tr>
 <td>database</td>
 <td><a href="../domain/README.md#cloud-v1-domain-database">cloud.v1.domain.Database</a></td>
 <td><pre>
@@ -2512,7 +2771,9 @@ go_name: Status</pre></td>
 ### cloud.v1.workflow.SuiteWorkflowRequest
 
 <pre>
-//SuiteWorkflowRequest is the input to a suite run.
+//SuiteWorkflowRequest is the input to a suite run. The API/start layer expands
+//the suite definition into persisted child TestRunRecords and then builds one
+//RunConfig per child with provider settings and agent bootstrap resolved.
 </pre>
 
 <table>
@@ -2522,13 +2783,30 @@ go_name: Status</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>suite_run</td>
-<td><a href="../domain/README.md#cloud-v1-domain-suiterun">cloud.v1.domain.SuiteRun</a></td>
+<td>max_parallel</td>
+<td>uint32</td>
 <td><pre>
-//suite_run is the full description of the suite run to execute.<br>
+//max_parallel caps concurrent child TestRunWorkflow executions. 0 =
+//unlimited.<br>
 
-json_name: suiteRun
-go_name: SuiteRun</pre></td>
+json_name: maxParallel
+go_name: MaxParallel</pre></td>
+</tr><tr>
+<td>runs</td>
+<td><a href="#cloud-v1-workflow-runconfig">cloud.v1.workflow.RunConfig</a></td>
+<td><pre>
+//runs are the child run workflow inputs.<br>
+
+json_name: runs
+go_name: Runs</pre></td>
+</tr><tr>
+<td>suite_run_id</td>
+<td>string</td>
+<td><pre>
+//suite_run_id is the persisted SuiteRunRecord id.<br>
+
+json_name: suiteRunId
+go_name: SuiteRunId</pre></td>
 </tr>
 </table>
 
@@ -2557,6 +2835,15 @@ go_name: SuiteRun</pre></td>
 <th>Description</th>
 </tr>
 <tr>
+<td>agent_bootstrap</td>
+<td><a href="#cloud-v1-workflow-agentbootstrap">cloud.v1.workflow.AgentBootstrap</a></td>
+<td><pre>
+//agent_bootstrap is runtime control-plane data delivered to provisioned
+//agents through the provider-specific carrier.<br>
+
+json_name: agentBootstrap
+go_name: AgentBootstrap</pre></td>
+</tr><tr>
 <td>test_run</td>
 <td><a href="../domain/README.md#cloud-v1-domain-testrun">cloud.v1.domain.TestRun</a></td>
 <td><pre>

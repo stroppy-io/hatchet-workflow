@@ -16,6 +16,8 @@ import type { Database_Kind, Database_KindJson } from "../domain/database_pb.ts"
 import { file_cloud_v1_domain_database } from "../domain/database_pb.ts";
 import type { TestRun, TestRunJson } from "../domain/test_pb.ts";
 import { file_cloud_v1_domain_test } from "../domain/test_pb.ts";
+import type { Workload_Protocol, Workload_ProtocolJson } from "../domain/workload_pb.ts";
+import { file_cloud_v1_domain_workload } from "../domain/workload_pb.ts";
 import { file_cloud_v1_iam_options } from "../iam/options_pb.ts";
 import { file_cloud_v1_iam_permission } from "../iam/permission_pb.ts";
 import type { TestPresetRecord, TestPresetRecordJson } from "../models/preset_pb.ts";
@@ -31,13 +33,13 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/api/test_run.proto.
  */
 export const file_cloud_v1_api_test_run: GenFile = /*@__PURE__*/
-  fileDesc("ChtjbG91ZC92MS9hcGkvdGVzdF9ydW4ucHJvdG8SDGNsb3VkLnYxLmFwaSL1AQoTU3RhcnRUZXN0UnVuUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBInCgNydW4YAiABKAsyGC5jbG91ZC52MS5kb21haW4uVGVzdFJ1bkgAEiAKC3Rlc3RfcnVuX2lkGAMgASgJQgn6QgZyBBABGEBIABIdChBpbl90ZW5hbnRfcmF0aW5nGAQgASgISAGIAQESHQoQaW5fZ2xvYmFsX3JhdGluZxgFIAEoCEgCiAEBQg0KBnNvdXJjZRID+EIBQhMKEV9pbl90ZW5hbnRfcmF0aW5nQhMKEV9pbl9nbG9iYWxfcmF0aW5nIk0KFFN0YXJ0VGVzdFJ1blJlc3BvbnNlEjUKA3J1bhgBIAEoCzIeLmNsb3VkLnYxLm1vZGVscy5UZXN0UnVuUmVjb3JkQgj6QgWKAQIQASJIChFHZXRUZXN0UnVuUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEGEAQARIVCgJpZBgCIAEoCUIJ+kIGcgQQARhAIksKEkdldFRlc3RSdW5SZXNwb25zZRI1CgNydW4YASABKAsyHi5jbG91ZC52MS5tb2RlbHMuVGVzdFJ1blJlY29yZEII+kIFigECEAEitwoKE0xpc3RUZXN0UnVuc1JlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASLQoGZmlsdGVyGAIgASgLMh0uY2xvdWQudjEuY29tbW9uLkVudGl0eUZpbHRlchIpCghzdGF0dXNlcxgDIAMoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXMSMAoIZGJfa2luZHMYBCADKA4yHi5jbG91ZC52MS5kb21haW4uRGF0YWJhc2UuS2luZBIwCglwcm92aWRlcnMYBSADKA4yHS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyEiYKDWRiX3ByZXNldF9pZHMYBiADKAlCD/pCDJIBCRDIASIEcgIYQBIsChN3b3JrbG9hZF9wcmVzZXRfaWRzGAcgAygJQg/6QgySAQkQyAEiBHICGEASKAoQc3Ryb3BweV92ZXJzaW9ucxgIIAMoCUIO+kILkgEIEGQiBHICGEASHQoMc3VpdGVfcnVuX2lkGAkgASgJQgf6QgRyAhhAEhcKCnN0YW5kYWxvbmUYCiABKAhIAIgBARIiCgxwcm9ncmVzc19taW4YCyABKA1CB/pCBCoCGGRIAYgBARIiCgxwcm9ncmVzc19tYXgYDCABKA1CB/pCBCoCGGRIAogBARIvCgxkdXJhdGlvbl9taW4YDSABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb24SLwoMZHVyYXRpb25fbWF4GA4gASgLMhkuZ29vZ2xlLnByb3RvYnVmLkR1cmF0aW9uEjEKDXN0YXJ0ZWRfYWZ0ZXIYDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjIKDnN0YXJ0ZWRfYmVmb3JlGBAgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIyCg5maW5pc2hlZF9hZnRlchgRIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASMwoPZmluaXNoZWRfYmVmb3JlGBIgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIqCgh0cmlnZ2VycxgVIAMoDjIYLmNsb3VkLnYxLmNvbW1vbi5UcmlnZ2VyEjQKBHNvcnQYEyABKAsyJi5jbG91ZC52MS5hcGkuTGlzdFRlc3RSdW5zUmVxdWVzdC5Tb3J0EiMKBHBhZ2UYFCABKAsyFS5jbG91ZC52MS5jb21tb24uUGFnZRrZAgoEU29ydBIyCgZlbnRpdHkYASABKA4yIC5jbG91ZC52MS5jb21tb24uRW50aXR5U29ydEZpZWxkSAASOwoEa2luZBgCIAEoDjIrLmNsb3VkLnYxLmFwaS5MaXN0VGVzdFJ1bnNSZXF1ZXN0LlNvcnQuS2luZEgAEgwKBGRlc2MYAyABKAgiywEKBEtpbmQSFAoQS0lORF9VTlNQRUNJRklFRBAAEg8KC0tJTkRfU1RBVFVTEAESEAoMS0lORF9EQl9LSU5EEAISEQoNS0lORF9XT1JLTE9BRBADEhEKDUtJTkRfUFJPVklERVIQBBIRCg1LSU5EX1BST0dSRVNTEAUSEQoNS0lORF9EVVJBVElPThAGEhMKD0tJTkRfU1RBUlRFRF9BVBAHEhQKEEtJTkRfRklOSVNIRURfQVQQCBITCg9LSU5EX05PREVfQ09VTlQQCUIECgJieUINCgtfc3RhbmRhbG9uZUIPCg1fcHJvZ3Jlc3NfbWluQg8KDV9wcm9ncmVzc19tYXgiXQoUTGlzdFRlc3RSdW5zUmVzcG9uc2USLAoEcnVucxgBIAMoCzIeLmNsb3VkLnYxLm1vZGVscy5UZXN0UnVuUmVjb3JkEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSJLChRDYW5jZWxUZXN0UnVuUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEGEAQARIVCgJpZBgCIAEoCUIJ+kIGcgQQARhAIk4KFUNhbmNlbFRlc3RSdW5SZXNwb25zZRI1CgNydW4YASABKAsyHi5jbG91ZC52MS5tb2RlbHMuVGVzdFJ1blJlY29yZEII+kIFigECEAEiSwoURGVsZXRlVGVzdFJ1blJlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASFQoCaWQYAiABKAlCCfpCBnIEGEAQASIXChVEZWxldGVUZXN0UnVuUmVzcG9uc2UiZQoWRXh0cmFjdFRvUHJlc2V0UmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIVCgJpZBgCIAEoCUIJ+kIGcgQQARhAEhYKBG5hbWUYAyABKAlCCPpCBXIDGP8BIlYKF0V4dHJhY3RUb1ByZXNldFJlc3BvbnNlEjsKBnByZXNldBgBIAEoCzIhLmNsb3VkLnYxLm1vZGVscy5UZXN0UHJlc2V0UmVjb3JkQgj6QgWKAQIQATL3BAoOVGVzdFJ1blNlcnZpY2USYQoMU3RhcnRUZXN0UnVuEiEuY2xvdWQudjEuYXBpLlN0YXJ0VGVzdFJ1blJlcXVlc3QaIi5jbG91ZC52MS5hcGkuU3RhcnRUZXN0UnVuUmVzcG9uc2UiCoq1GAYSBAgIEAESXgoKR2V0VGVzdFJ1bhIfLmNsb3VkLnYxLmFwaS5HZXRUZXN0UnVuUmVxdWVzdBogLmNsb3VkLnYxLmFwaS5HZXRUZXN0UnVuUmVzcG9uc2UiDZACAYq1GAYSBAgIEAISZAoMTGlzdFRlc3RSdW5zEiEuY2xvdWQudjEuYXBpLkxpc3RUZXN0UnVuc1JlcXVlc3QaIi5jbG91ZC52MS5hcGkuTGlzdFRlc3RSdW5zUmVzcG9uc2UiDZACAYq1GAYSBAgIEAUSZwoNQ2FuY2VsVGVzdFJ1bhIiLmNsb3VkLnYxLmFwaS5DYW5jZWxUZXN0UnVuUmVxdWVzdBojLmNsb3VkLnYxLmFwaS5DYW5jZWxUZXN0UnVuUmVzcG9uc2UiDZACAoq1GAYSBAgIEAMSZwoNRGVsZXRlVGVzdFJ1bhIiLmNsb3VkLnYxLmFwaS5EZWxldGVUZXN0UnVuUmVxdWVzdBojLmNsb3VkLnYxLmFwaS5EZWxldGVUZXN0UnVuUmVzcG9uc2UiDZACAoq1GAYSBAgIEAQSagoPRXh0cmFjdFRvUHJlc2V0EiQuY2xvdWQudjEuYXBpLkV4dHJhY3RUb1ByZXNldFJlcXVlc3QaJS5jbG91ZC52MS5hcGkuRXh0cmFjdFRvUHJlc2V0UmVzcG9uc2UiCoq1GAYSBBABCAZCQVo/Z2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvYXBpYgZwcm90bzM", [file_cloud_v1_common_entity, file_cloud_v1_common_status, file_cloud_v1_common_trigger, file_cloud_v1_deployment_provider, file_cloud_v1_domain_database, file_cloud_v1_domain_test, file_cloud_v1_iam_options, file_cloud_v1_iam_permission, file_cloud_v1_models_preset, file_cloud_v1_models_test_run, file_google_protobuf_duration, file_google_protobuf_timestamp, file_validate_validate]);
+  fileDesc("ChtjbG91ZC92MS9hcGkvdGVzdF9ydW4ucHJvdG8SDGNsb3VkLnYxLmFwaSL1AQoTU3RhcnRUZXN0UnVuUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBInCgNydW4YAiABKAsyGC5jbG91ZC52MS5kb21haW4uVGVzdFJ1bkgAEiAKC3Rlc3RfcnVuX2lkGAMgASgJQgn6QgZyBBABGEBIABIdChBpbl90ZW5hbnRfcmF0aW5nGAQgASgISAGIAQESHQoQaW5fZ2xvYmFsX3JhdGluZxgFIAEoCEgCiAEBQg0KBnNvdXJjZRID+EIBQhMKEV9pbl90ZW5hbnRfcmF0aW5nQhMKEV9pbl9nbG9iYWxfcmF0aW5nIk0KFFN0YXJ0VGVzdFJ1blJlc3BvbnNlEjUKA3J1bhgBIAEoCzIeLmNsb3VkLnYxLm1vZGVscy5UZXN0UnVuUmVjb3JkQgj6QgWKAQIQASJIChFHZXRUZXN0UnVuUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIVCgJpZBgCIAEoCUIJ+kIGcgQQARhAIksKEkdldFRlc3RSdW5SZXNwb25zZRI1CgNydW4YASABKAsyHi5jbG91ZC52MS5tb2RlbHMuVGVzdFJ1blJlY29yZEII+kIFigECEAEi6gsKE0xpc3RUZXN0UnVuc1JlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASLQoGZmlsdGVyGAIgASgLMh0uY2xvdWQudjEuY29tbW9uLkVudGl0eUZpbHRlchIpCghzdGF0dXNlcxgDIAMoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXMSMAoIZGJfa2luZHMYBCADKA4yHi5jbG91ZC52MS5kb21haW4uRGF0YWJhc2UuS2luZBIwCglwcm92aWRlcnMYBSADKA4yHS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyEiYKDWRiX3ByZXNldF9pZHMYBiADKAlCD/pCDJIBCRDIASIEcgIYQBIsChN3b3JrbG9hZF9wcmVzZXRfaWRzGAcgAygJQg/6QgySAQkiBHICGEAQyAESKAoPdGVzdF9wcmVzZXRfaWRzGBcgAygJQg/6QgySAQkQyAEiBHICGEASKAoQc3Ryb3BweV92ZXJzaW9ucxgIIAMoCUIO+kILkgEIIgRyAhhAEGQSNQoJcHJvdG9jb2xzGBYgAygOMiIuY2xvdWQudjEuZG9tYWluLldvcmtsb2FkLlByb3RvY29sEh0KDHN1aXRlX3J1bl9pZBgJIAEoCUIH+kIEcgIYQBInCg5zdWl0ZV9jZWxsX2lkcxgYIAMoCUIP+kIMkgEJEMgBIgRyAhhAEhcKCnN0YW5kYWxvbmUYCiABKAhIAIgBARIiCgxwcm9ncmVzc19taW4YCyABKA1CB/pCBCoCGGRIAYgBARIiCgxwcm9ncmVzc19tYXgYDCABKA1CB/pCBCoCGGRIAogBARIvCgxkdXJhdGlvbl9taW4YDSABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb24SLwoMZHVyYXRpb25fbWF4GA4gASgLMhkuZ29vZ2xlLnByb3RvYnVmLkR1cmF0aW9uEjEKDXN0YXJ0ZWRfYWZ0ZXIYDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjIKDnN0YXJ0ZWRfYmVmb3JlGBAgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIyCg5maW5pc2hlZF9hZnRlchgRIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASMwoPZmluaXNoZWRfYmVmb3JlGBIgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIqCgh0cmlnZ2VycxgVIAMoDjIYLmNsb3VkLnYxLmNvbW1vbi5UcmlnZ2VyEjQKBHNvcnQYEyABKAsyJi5jbG91ZC52MS5hcGkuTGlzdFRlc3RSdW5zUmVxdWVzdC5Tb3J0EiMKBHBhZ2UYFCABKAsyFS5jbG91ZC52MS5jb21tb24uUGFnZRqCAwoEU29ydBIyCgZlbnRpdHkYASABKA4yIC5jbG91ZC52MS5jb21tb24uRW50aXR5U29ydEZpZWxkSAASOwoEa2luZBgCIAEoDjIrLmNsb3VkLnYxLmFwaS5MaXN0VGVzdFJ1bnNSZXF1ZXN0LlNvcnQuS2luZEgAEgwKBGRlc2MYAyABKAgi9AEKBEtpbmQSFAoQS0lORF9VTlNQRUNJRklFRBAAEg8KC0tJTkRfU1RBVFVTEAESEAoMS0lORF9EQl9LSU5EEAISEQoNS0lORF9XT1JLTE9BRBADEhEKDUtJTkRfUFJPVklERVIQBBIRCg1LSU5EX1BST0dSRVNTEAUSEQoNS0lORF9EVVJBVElPThAGEhMKD0tJTkRfU1RBUlRFRF9BVBAHEhQKEEtJTkRfRklOSVNIRURfQVQQCBITCg9LSU5EX05PREVfQ09VTlQQCRIRCg1LSU5EX1BST1RPQ09MEAoSFAoQS0lORF9URVNUX1BSRVNFVBALQgQKAmJ5Qg0KC19zdGFuZGFsb25lQg8KDV9wcm9ncmVzc19taW5CDwoNX3Byb2dyZXNzX21heCJdChRMaXN0VGVzdFJ1bnNSZXNwb25zZRIsCgRydW5zGAEgAygLMh4uY2xvdWQudjEubW9kZWxzLlRlc3RSdW5SZWNvcmQSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIksKFENhbmNlbFRlc3RSdW5SZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhUKAmlkGAIgASgJQgn6QgZyBBhAEAEiTgoVQ2FuY2VsVGVzdFJ1blJlc3BvbnNlEjUKA3J1bhgBIAEoCzIeLmNsb3VkLnYxLm1vZGVscy5UZXN0UnVuUmVjb3JkQgj6QgWKAQIQASJLChREZWxldGVUZXN0UnVuUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIVCgJpZBgCIAEoCUIJ+kIGcgQYQBABIhcKFURlbGV0ZVRlc3RSdW5SZXNwb25zZSJlChZFeHRyYWN0VG9QcmVzZXRSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhUKAmlkGAIgASgJQgn6QgZyBBhAEAESFgoEbmFtZRgDIAEoCUII+kIFcgMY/wEiVgoXRXh0cmFjdFRvUHJlc2V0UmVzcG9uc2USOwoGcHJlc2V0GAEgASgLMiEuY2xvdWQudjEubW9kZWxzLlRlc3RQcmVzZXRSZWNvcmRCCPpCBYoBAhABMvcECg5UZXN0UnVuU2VydmljZRJhCgxTdGFydFRlc3RSdW4SIS5jbG91ZC52MS5hcGkuU3RhcnRUZXN0UnVuUmVxdWVzdBoiLmNsb3VkLnYxLmFwaS5TdGFydFRlc3RSdW5SZXNwb25zZSIKirUYBhIECAgQARJeCgpHZXRUZXN0UnVuEh8uY2xvdWQudjEuYXBpLkdldFRlc3RSdW5SZXF1ZXN0GiAuY2xvdWQudjEuYXBpLkdldFRlc3RSdW5SZXNwb25zZSINkAIBirUYBhIECAgQAhJkCgxMaXN0VGVzdFJ1bnMSIS5jbG91ZC52MS5hcGkuTGlzdFRlc3RSdW5zUmVxdWVzdBoiLmNsb3VkLnYxLmFwaS5MaXN0VGVzdFJ1bnNSZXNwb25zZSINkAIBirUYBhIECAgQBRJnCg1DYW5jZWxUZXN0UnVuEiIuY2xvdWQudjEuYXBpLkNhbmNlbFRlc3RSdW5SZXF1ZXN0GiMuY2xvdWQudjEuYXBpLkNhbmNlbFRlc3RSdW5SZXNwb25zZSINkAICirUYBhIECAgQAxJnCg1EZWxldGVUZXN0UnVuEiIuY2xvdWQudjEuYXBpLkRlbGV0ZVRlc3RSdW5SZXF1ZXN0GiMuY2xvdWQudjEuYXBpLkRlbGV0ZVRlc3RSdW5SZXNwb25zZSINkAICirUYBhIECAgQBBJqCg9FeHRyYWN0VG9QcmVzZXQSJC5jbG91ZC52MS5hcGkuRXh0cmFjdFRvUHJlc2V0UmVxdWVzdBolLmNsb3VkLnYxLmFwaS5FeHRyYWN0VG9QcmVzZXRSZXNwb25zZSIKirUYBhIECAYQAUJBWj9naXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9hcGliBnByb3RvMw", [file_cloud_v1_common_entity, file_cloud_v1_common_status, file_cloud_v1_common_trigger, file_cloud_v1_deployment_provider, file_cloud_v1_domain_database, file_cloud_v1_domain_test, file_cloud_v1_domain_workload, file_cloud_v1_iam_options, file_cloud_v1_iam_permission, file_cloud_v1_models_preset, file_cloud_v1_models_test_run, file_google_protobuf_duration, file_google_protobuf_timestamp, file_validate_validate]);
 
 /**
  *
  * StartTestRun launches a run. Provide a staged `run` spec (CLI / wizard
  * finish) to persist a new record and start it; or `test_run_id` to re-run an
- * existing record's spec as a new run. Launches TestWorkflow.
+ * existing record's spec as a new run. Launches TestRunWorkflow.
  *
  * @generated from message cloud.v1.api.StartTestRunRequest
  */
@@ -100,7 +102,7 @@ export type StartTestRunRequest = Message<"cloud.v1.api.StartTestRunRequest"> & 
  *
  * StartTestRun launches a run. Provide a staged `run` spec (CLI / wizard
  * finish) to persist a new record and start it; or `test_run_id` to re-run an
- * existing record's spec as a new run. Launches TestWorkflow.
+ * existing record's spec as a new run. Launches TestRunWorkflow.
  *
  * @generated from message cloud.v1.api.StartTestRunRequest
  */
@@ -364,6 +366,14 @@ export type ListTestRunsRequest = Message<"cloud.v1.api.ListTestRunsRequest"> & 
 
   /**
    *
+   * test_preset_ids facets by complete test preset id.
+   *
+   * @generated from field: repeated string test_preset_ids = 23;
+   */
+  testPresetIds: string[];
+
+  /**
+   *
    * stroppy_versions facets by stroppy version.
    *
    * @generated from field: repeated string stroppy_versions = 8;
@@ -372,11 +382,27 @@ export type ListTestRunsRequest = Message<"cloud.v1.api.ListTestRunsRequest"> & 
 
   /**
    *
+   * protocols facets by workload wire protocol.
+   *
+   * @generated from field: repeated cloud.v1.domain.Workload.Protocol protocols = 22;
+   */
+  protocols: Workload_Protocol[];
+
+  /**
+   *
    * suite_run_id scopes to a single suite run's children.
    *
    * @generated from field: string suite_run_id = 9;
    */
   suiteRunId: string;
+
+  /**
+   *
+   * suite_cell_ids scopes to specific cells inside a suite run.
+   *
+   * @generated from field: repeated string suite_cell_ids = 24;
+   */
+  suiteCellIds: string[];
 
   /**
    *
@@ -545,6 +571,14 @@ export type ListTestRunsRequestJson = {
 
   /**
    *
+   * test_preset_ids facets by complete test preset id.
+   *
+   * @generated from field: repeated string test_preset_ids = 23;
+   */
+  testPresetIds?: string[];
+
+  /**
+   *
    * stroppy_versions facets by stroppy version.
    *
    * @generated from field: repeated string stroppy_versions = 8;
@@ -553,11 +587,27 @@ export type ListTestRunsRequestJson = {
 
   /**
    *
+   * protocols facets by workload wire protocol.
+   *
+   * @generated from field: repeated cloud.v1.domain.Workload.Protocol protocols = 22;
+   */
+  protocols?: Workload_ProtocolJson[];
+
+  /**
+   *
    * suite_run_id scopes to a single suite run's children.
    *
    * @generated from field: string suite_run_id = 9;
    */
   suiteRunId?: string;
+
+  /**
+   *
+   * suite_cell_ids scopes to specific cells inside a suite run.
+   *
+   * @generated from field: repeated string suite_cell_ids = 24;
+   */
+  suiteCellIds?: string[];
 
   /**
    *
@@ -839,6 +889,22 @@ export enum ListTestRunsRequest_Sort_Kind {
    * @generated from enum value: KIND_NODE_COUNT = 9;
    */
   NODE_COUNT = 9,
+
+  /**
+   *
+   * KIND_PROTOCOL orders by workload protocol.
+   *
+   * @generated from enum value: KIND_PROTOCOL = 10;
+   */
+  PROTOCOL = 10,
+
+  /**
+   *
+   * KIND_TEST_PRESET orders by test preset name/id.
+   *
+   * @generated from enum value: KIND_TEST_PRESET = 11;
+   */
+  TEST_PRESET = 11,
 }
 
 /**
@@ -848,7 +914,7 @@ export enum ListTestRunsRequest_Sort_Kind {
  *
  * @generated from enum cloud.v1.api.ListTestRunsRequest.Sort.Kind
  */
-export type ListTestRunsRequest_Sort_KindJson = "KIND_UNSPECIFIED" | "KIND_STATUS" | "KIND_DB_KIND" | "KIND_WORKLOAD" | "KIND_PROVIDER" | "KIND_PROGRESS" | "KIND_DURATION" | "KIND_STARTED_AT" | "KIND_FINISHED_AT" | "KIND_NODE_COUNT";
+export type ListTestRunsRequest_Sort_KindJson = "KIND_UNSPECIFIED" | "KIND_STATUS" | "KIND_DB_KIND" | "KIND_WORKLOAD" | "KIND_PROVIDER" | "KIND_PROGRESS" | "KIND_DURATION" | "KIND_STARTED_AT" | "KIND_FINISHED_AT" | "KIND_NODE_COUNT" | "KIND_PROTOCOL" | "KIND_TEST_PRESET";
 
 /**
  * Describes the enum cloud.v1.api.ListTestRunsRequest.Sort.Kind.

@@ -8,6 +8,9 @@ import (
 	jxpb "github.com/gopherex/protoc-gen-go-jx/jxpb"
 	schemapb "github.com/stroppy-io/schemapb/schemapb"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
+	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
+	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
+	topology "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology"
 )
 
 func (m *SuiteWizardDraftRecord) Encode(e *jx.Encoder) {
@@ -21,17 +24,29 @@ func (m *SuiteWizardDraftRecord) Encode(e *jx.Encoder) {
 		e.FieldStart("entity")
 		jxpb.EncMessage(e, m.Entity)
 	}
-	if m.Form != nil {
-		e.FieldStart("form")
-		jxpb.EncMessage(e, m.Form)
+	if m.Provider != 0 {
+		e.FieldStart("provider")
+		if s, ok := deployment.Provider_name[int32(m.Provider)]; ok {
+			e.Str(s)
+		} else {
+			e.Int32(int32(m.Provider))
+		}
 	}
-	if len(m.Preview) > 0 {
-		e.FieldStart("preview")
+	if len(m.Cells) > 0 {
+		e.FieldStart("cells")
 		e.ArrStart()
-		for _, v := range m.Preview {
+		for _, v := range m.Cells {
 			v.Encode(e)
 		}
 		e.ArrEnd()
+	}
+	if m.MaxParallel != 0 {
+		e.FieldStart("maxParallel")
+		e.UInt32(m.MaxParallel)
+	}
+	if m.Schedule != nil {
+		e.FieldStart("schedule")
+		jxpb.EncMessage(e, m.Schedule)
 	}
 	if len(m.Errors) > 0 {
 		e.FieldStart("errors")
@@ -44,6 +59,18 @@ func (m *SuiteWizardDraftRecord) Encode(e *jx.Encoder) {
 	if m.Ready != false {
 		e.FieldStart("ready")
 		e.Bool(m.Ready)
+	}
+	if m.DefaultInTenantRating != nil {
+		e.FieldStart("defaultInTenantRating")
+		e.Bool(*m.DefaultInTenantRating)
+	}
+	if m.DefaultInGlobalRating != nil {
+		e.FieldStart("defaultInGlobalRating")
+		e.Bool(*m.DefaultInGlobalRating)
+	}
+	if m.SuiteId != "" {
+		e.FieldStart("suiteId")
+		e.Str(m.SuiteId)
 	}
 	e.ObjEnd()
 }
@@ -65,24 +92,40 @@ func (m *SuiteWizardDraftRecord) Decode(d *jx.Decoder) error {
 				return err
 			}
 			return nil
-		case "form":
-			if seen["Form"] {
+		case "provider":
+			if seen["Provider"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["Form"] = true
-			if d.Next() == jx.Null {
+			seen["Provider"] = true
+			switch d.Next() {
+			case jx.String:
+				s, err := d.Str()
+				if err != nil {
+					return err
+				}
+				n, ok := deployment.Provider_value[s]
+				if !ok {
+					return fmt.Errorf("unknown enum value %q", s)
+				}
+				m.Provider = deployment.Provider(n)
+				return nil
+			case jx.Number:
+				n, err := d.Int32()
+				if err != nil {
+					return err
+				}
+				m.Provider = deployment.Provider(n)
+				return nil
+			case jx.Null:
 				return d.Null()
+			default:
+				return fmt.Errorf("invalid enum token %s", d.Next())
 			}
-			m.Form = &schemapb.Filled{}
-			if err := jxpb.DecMessage(d, m.Form); err != nil {
-				return err
-			}
-			return nil
-		case "preview":
-			if seen["Preview"] {
+		case "cells":
+			if seen["Cells"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["Preview"] = true
+			seen["Cells"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
@@ -91,9 +134,36 @@ func (m *SuiteWizardDraftRecord) Decode(d *jx.Decoder) error {
 				if err := el.Decode(d); err != nil {
 					return err
 				}
-				m.Preview = append(m.Preview, el)
+				m.Cells = append(m.Cells, el)
 				return nil
 			})
+		case "maxParallel", "max_parallel":
+			if seen["MaxParallel"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["MaxParallel"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint32(d)
+			if err != nil {
+				return err
+			}
+			m.MaxParallel = v
+			return nil
+		case "schedule":
+			if seen["Schedule"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Schedule"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Schedule = &domain.Schedule{}
+			if err := jxpb.DecMessage(d, m.Schedule); err != nil {
+				return err
+			}
+			return nil
 		case "errors":
 			if seen["Errors"] {
 				return fmt.Errorf("duplicate field %q", key)
@@ -124,6 +194,48 @@ func (m *SuiteWizardDraftRecord) Decode(d *jx.Decoder) error {
 			}
 			m.Ready = v
 			return nil
+		case "defaultInTenantRating", "default_in_tenant_rating":
+			if seen["DefaultInTenantRating"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["DefaultInTenantRating"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Bool()
+			if err != nil {
+				return err
+			}
+			m.DefaultInTenantRating = &v
+			return nil
+		case "defaultInGlobalRating", "default_in_global_rating":
+			if seen["DefaultInGlobalRating"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["DefaultInGlobalRating"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Bool()
+			if err != nil {
+				return err
+			}
+			m.DefaultInGlobalRating = &v
+			return nil
+		case "suiteId", "suite_id":
+			if seen["SuiteId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["SuiteId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.SuiteId = v
+			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}
@@ -148,21 +260,29 @@ func (m *SuiteWizardDraftRecord_Cell) Encode(e *jx.Encoder) {
 		return
 	}
 	e.ObjStart()
-	if m.DbPresetId != "" {
-		e.FieldStart("dbPresetId")
-		e.Str(m.DbPresetId)
+	if m.Spec != nil {
+		e.FieldStart("spec")
+		jxpb.EncMessage(e, m.Spec)
 	}
-	if m.WorkloadPresetId != "" {
-		e.FieldStart("workloadPresetId")
-		e.Str(m.WorkloadPresetId)
+	if m.Database != nil {
+		e.FieldStart("database")
+		jxpb.EncMessage(e, m.Database)
 	}
-	if m.TestPresetId != "" {
-		e.FieldStart("testPresetId")
-		e.Str(m.TestPresetId)
+	if m.Workload != nil {
+		e.FieldStart("workload")
+		jxpb.EncMessage(e, m.Workload)
 	}
-	if m.Name != "" {
-		e.FieldStart("name")
-		e.Str(m.Name)
+	if m.TopologySpec != nil {
+		e.FieldStart("topologySpec")
+		jxpb.EncMessage(e, m.TopologySpec)
+	}
+	if m.InfrastructurePlan != nil {
+		e.FieldStart("infrastructurePlan")
+		jxpb.EncMessage(e, m.InfrastructurePlan)
+	}
+	if m.RenderPreview != nil {
+		e.FieldStart("renderPreview")
+		jxpb.EncMessage(e, m.RenderPreview)
 	}
 	if m.Compatible != false {
 		e.FieldStart("compatible")
@@ -187,61 +307,83 @@ func (m *SuiteWizardDraftRecord_Cell) Decode(d *jx.Decoder) error {
 	seen := map[string]bool{}
 	return d.Obj(func(d *jx.Decoder, key string) error {
 		switch key {
-		case "dbPresetId", "db_preset_id":
-			if seen["DbPresetId"] {
+		case "spec":
+			if seen["Spec"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["DbPresetId"] = true
+			seen["Spec"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			v, err := d.Str()
-			if err != nil {
+			m.Spec = &domain.SuiteCell{}
+			if err := jxpb.DecMessage(d, m.Spec); err != nil {
 				return err
 			}
-			m.DbPresetId = v
 			return nil
-		case "workloadPresetId", "workload_preset_id":
-			if seen["WorkloadPresetId"] {
+		case "database":
+			if seen["Database"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["WorkloadPresetId"] = true
+			seen["Database"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			v, err := d.Str()
-			if err != nil {
+			m.Database = &domain.Database{}
+			if err := jxpb.DecMessage(d, m.Database); err != nil {
 				return err
 			}
-			m.WorkloadPresetId = v
 			return nil
-		case "testPresetId", "test_preset_id":
-			if seen["TestPresetId"] {
+		case "workload":
+			if seen["Workload"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["TestPresetId"] = true
+			seen["Workload"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			v, err := d.Str()
-			if err != nil {
+			m.Workload = &domain.Workload{}
+			if err := jxpb.DecMessage(d, m.Workload); err != nil {
 				return err
 			}
-			m.TestPresetId = v
 			return nil
-		case "name":
-			if seen["Name"] {
+		case "topologySpec", "topology_spec":
+			if seen["TopologySpec"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["Name"] = true
+			seen["TopologySpec"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			v, err := d.Str()
-			if err != nil {
+			m.TopologySpec = &topology.TopologySpec{}
+			if err := jxpb.DecMessage(d, m.TopologySpec); err != nil {
 				return err
 			}
-			m.Name = v
+			return nil
+		case "infrastructurePlan", "infrastructure_plan":
+			if seen["InfrastructurePlan"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["InfrastructurePlan"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.InfrastructurePlan = &deployment.InfrastructurePlan{}
+			if err := jxpb.DecMessage(d, m.InfrastructurePlan); err != nil {
+				return err
+			}
+			return nil
+		case "renderPreview", "render_preview":
+			if seen["RenderPreview"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["RenderPreview"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.RenderPreview = &deployment.RenderPreview{}
+			if err := jxpb.DecMessage(d, m.RenderPreview); err != nil {
+				return err
+			}
 			return nil
 		case "compatible":
 			if seen["Compatible"] {

@@ -6,9 +6,13 @@ import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Tags, TagsJson } from "../common/tags_pb.ts";
 import { file_cloud_v1_common_tags } from "../common/tags_pb.ts";
+import type { MachinePlan, MachinePlanJson } from "../deployment/infrastructure_pb.ts";
+import { file_cloud_v1_deployment_infrastructure } from "../deployment/infrastructure_pb.ts";
 import type { Provider, ProviderJson } from "../deployment/provider_pb.ts";
 import { file_cloud_v1_deployment_provider } from "../deployment/provider_pb.ts";
-import type { TestRun, TestRunJson } from "./test_pb.ts";
+import type { RenderOverrideSet, RenderOverrideSetJson } from "../deployment/render_pb.ts";
+import { file_cloud_v1_deployment_render } from "../deployment/render_pb.ts";
+import type { Test, TestJson, TestRun, TestRunJson } from "./test_pb.ts";
 import { file_cloud_v1_domain_test } from "./test_pb.ts";
 import { file_validate_validate } from "../../../validate/validate_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
@@ -17,144 +21,421 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/domain/suite.proto.
  */
 export const file_cloud_v1_domain_suite: GenFile = /*@__PURE__*/
-  fileDesc("ChtjbG91ZC92MS9kb21haW4vc3VpdGUucHJvdG8SD2Nsb3VkLnYxLmRvbWFpbiLXAgoFU3VpdGUSEwoCaWQYASABKAlCB/pCBHICEAESIgoKcHJlc2V0X2lkcxgCIAMoCUIO+kILkgEIIgRyAhABCAESOwoIcHJvdmlkZXIYAyABKA4yHS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyQgr6QgeCAQQgABABEiMKBHRhZ3MYBCABKAsyFS5jbG91ZC52MS5jb21tb24uVGFncxIrCghzY2hlZHVsZRgFIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5TY2hlZHVsZRIlChhkZWZhdWx0X2luX3RlbmFudF9yYXRpbmcYBiABKAhIAIgBARIlChhkZWZhdWx0X2luX2dsb2JhbF9yYXRpbmcYByABKAhIAYgBAUIbChlfZGVmYXVsdF9pbl90ZW5hbnRfcmF0aW5nQhsKGV9kZWZhdWx0X2luX2dsb2JhbF9yYXRpbmciTgoIU2NoZWR1bGUSDwoHZW5hYmxlZBgBIAEoCBIWCgRjcm9uGAIgASgJQgj6QgVyAxiAARIZCgh0aW1lem9uZRgDIAEoCUIH+kIEcgIYQCKHAQoIU3VpdGVSdW4SEwoCaWQYASABKAlCB/pCBHICEAESGQoIc3VpdGVfaWQYAiABKAlCB/pCBHICEAESNQoJdGVzdF9ydW5zGAMgAygLMhguY2xvdWQudjEuZG9tYWluLlRlc3RSdW5CCPpCBZIBAggBEhQKDG1heF9wYXJhbGxlbBgEIAEoDUJEWkJnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9kb21haW5iBnByb3RvMw", [file_cloud_v1_common_tags, file_cloud_v1_deployment_provider, file_cloud_v1_domain_test, file_validate_validate]);
+  fileDesc("ChtjbG91ZC92MS9kb21haW4vc3VpdGUucHJvdG8SD2Nsb3VkLnYxLmRvbWFpbiKEBAoJU3VpdGVDZWxsEhUKAmlkGAEgASgJQgn6QgZyBBhAEAESFgoEbmFtZRgCIAEoCUII+kIFcgMY/wESDwoHZW5hYmxlZBgDIAEoCBJGCgtwcmVzZXRfcGFpchgKIAEoCzIlLmNsb3VkLnYxLmRvbWFpbi5TdWl0ZUNlbGwuUHJlc2V0UGFpckII+kIFigECEAFIABIjCg50ZXN0X3ByZXNldF9pZBgLIAEoCUIJ+kIGcgQQARhASAASNgoLaW5saW5lX3Rlc3QYDCABKAsyFS5jbG91ZC52MS5kb21haW4uVGVzdEII+kIFigECEAFIABJGChFtYWNoaW5lX292ZXJyaWRlcxgUIAMoCzIgLmNsb3VkLnYxLmRlcGxveW1lbnQuTWFjaGluZVBsYW5CCfpCBpIBAxCAAhJAChByZW5kZXJfb3ZlcnJpZGVzGBUgASgLMiYuY2xvdWQudjEuZGVwbG95bWVudC5SZW5kZXJPdmVycmlkZVNldBIjCgR0YWdzGBYgASgLMhUuY2xvdWQudjEuY29tbW9uLlRhZ3MaVAoKUHJlc2V0UGFpchIfCgxkYl9wcmVzZXRfaWQYASABKAlCCfpCBnIEEAEYQBIlChJ3b3JrbG9hZF9wcmVzZXRfaWQYAiABKAlCCfpCBnIEEAEYQEINCgZzb3VyY2USA/hCASKLAwoFU3VpdGUSFQoCaWQYASABKAlCCfpCBnIEEAEYQBI2CgVjZWxscxgCIAMoCzIaLmNsb3VkLnYxLmRvbWFpbi5TdWl0ZUNlbGxCC/pCCJIBBQgBEOgHEjsKCHByb3ZpZGVyGAMgASgOMh0uY2xvdWQudjEuZGVwbG95bWVudC5Qcm92aWRlckIK+kIHggEEEAEgABIjCgR0YWdzGAQgASgLMhUuY2xvdWQudjEuY29tbW9uLlRhZ3MSKwoIc2NoZWR1bGUYBSABKAsyGS5jbG91ZC52MS5kb21haW4uU2NoZWR1bGUSJQoYZGVmYXVsdF9pbl90ZW5hbnRfcmF0aW5nGAYgASgISACIAQESJQoYZGVmYXVsdF9pbl9nbG9iYWxfcmF0aW5nGAcgASgISAGIAQESHAoUZGVmYXVsdF9tYXhfcGFyYWxsZWwYCCABKA1CGwoZX2RlZmF1bHRfaW5fdGVuYW50X3JhdGluZ0IbChlfZGVmYXVsdF9pbl9nbG9iYWxfcmF0aW5nIk4KCFNjaGVkdWxlEg8KB2VuYWJsZWQYASABKAgSFgoEY3JvbhgCIAEoCUII+kIFcgMYgAESGQoIdGltZXpvbmUYAyABKAlCB/pCBHICGEAinQIKDFN1aXRlUnVuQ2VsbBIVCgJpZBgBIAEoCUIJ+kIGcgQYQBABEh4KDXN1aXRlX2NlbGxfaWQYAiABKAlCB/pCBHICGEASNAoIdGVzdF9ydW4YAyABKAsyGC5jbG91ZC52MS5kb21haW4uVGVzdFJ1bkII+kIFigECEAESFgoEbmFtZRgEIAEoCUII+kIFcgMY/wESHQoMZGJfcHJlc2V0X2lkGAUgASgJQgf6QgRyAhhAEiMKEndvcmtsb2FkX3ByZXNldF9pZBgGIAEoCUIH+kIEcgIYQBIfCg50ZXN0X3ByZXNldF9pZBgHIAEoCUIH+kIEcgIYQBIjCgR0YWdzGAggASgLMhUuY2xvdWQudjEuY29tbW9uLlRhZ3MijQEKCFN1aXRlUnVuEhUKAmlkGAEgASgJQgn6QgZyBBABGEASGQoIc3VpdGVfaWQYAiABKAlCB/pCBHICGEASOQoFY2VsbHMYAyADKAsyHS5jbG91ZC52MS5kb21haW4uU3VpdGVSdW5DZWxsQgv6QgiSAQUQ6AcIARIUCgxtYXhfcGFyYWxsZWwYBCABKA1CRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvZG9tYWluYgZwcm90bzM", [file_cloud_v1_common_tags, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_provider, file_cloud_v1_deployment_render, file_cloud_v1_domain_test, file_validate_validate]);
 
 /**
  *
- * Suite is a reusable test bundle. It references provider-agnostic,
- * params-only presets; the provider is applied once here, and expansion bakes
- * topology specs plus infrastructure plans into child TestRuns.
+ * SuiteCell is one runnable entry inside a suite definition.
  *
- * @generated from message cloud.v1.domain.Suite
+ * @generated from message cloud.v1.domain.SuiteCell
  */
-export type Suite = Message<"cloud.v1.domain.Suite"> & {
+export type SuiteCell = Message<"cloud.v1.domain.SuiteCell"> & {
   /**
-   * id is the stable suite identifier. 
+   *
+   * id is stable within the suite and is copied into SuiteRunCell.suite_cell_id.
    *
    * @generated from field: string id = 1;
    */
   id: string;
 
   /**
-   * preset_ids are the presets composing the suite (Database / Workload /
-   * Test presets). 
    *
-   * @generated from field: repeated string preset_ids = 2;
+   * name is the display label for this cell. Empty means server derives one
+   * from the presets/test.
+   *
+   * @generated from field: string name = 2;
    */
-  presetIds: string[];
+  name: string;
 
   /**
-   * provider is the single deployment provider for now. Multi-provider
-   * (cross-product to compare clouds) is planned: this becomes
-   * `repeated Provider providers` and expansion does presets x providers.
-   * Deferred to avoid the exponential bake cost for now. 
    *
-   * @generated from field: cloud.v1.deployment.Provider provider = 3;
+   * enabled gates this cell without deleting its overrides. Disabled cells are
+   * not baked into SuiteRun.
+   *
+   * @generated from field: bool enabled = 3;
    */
-  provider: Provider;
+  enabled: boolean;
 
   /**
-   * tags are free-form metadata attached to the suite. 
    *
-   * @generated from field: cloud.v1.common.Tags tags = 4;
+   * source selects how the test definition for this cell is obtained.
+   *
+   * @generated from oneof cloud.v1.domain.SuiteCell.source
+   */
+  source: {
+    /**
+     *
+     * preset_pair expands database preset x workload preset.
+     *
+     * @generated from field: cloud.v1.domain.SuiteCell.PresetPair preset_pair = 10;
+     */
+    value: SuiteCell_PresetPair;
+    case: "presetPair";
+  } | {
+    /**
+     *
+     * test_preset_id resolves a complete database+workload preset.
+     *
+     * @generated from field: string test_preset_id = 11;
+     */
+    value: string;
+    case: "testPresetId";
+  } | {
+    /**
+     *
+     * inline_test is for CLI/API automation that wants a suite without first
+     * creating presets. Persisted UI-created suites should prefer presets.
+     *
+     * @generated from field: cloud.v1.domain.Test inline_test = 12;
+     */
+    value: Test;
+    case: "inlineTest";
+  } | { case: undefined; value?: undefined };
+
+  /**
+   *
+   * machine_overrides are user edits to provider-specific machine intent. They
+   * are merged into the derived InfrastructurePlan by node_id at start time.
+   * Provider account settings are not stored here.
+   *
+   * @generated from field: repeated cloud.v1.deployment.MachinePlan machine_overrides = 20;
+   */
+  machineOverrides: MachinePlan[];
+
+  /**
+   *
+   * render_overrides are user edits to editable generated config artifacts for
+   * this cell.
+   *
+   * @generated from field: cloud.v1.deployment.RenderOverrideSet render_overrides = 21;
+   */
+  renderOverrides?: RenderOverrideSet;
+
+  /**
+   *
+   * tags are free-form metadata attached to this cell and propagated to child
+   * TestRun tags.
+   *
+   * @generated from field: cloud.v1.common.Tags tags = 22;
    */
   tags?: Tags;
-
-  /**
-   * schedule is an optional cron schedule that auto-starts this suite.
-   * Absent / disabled = the suite only runs when started manually. 
-   *
-   * @generated from field: cloud.v1.domain.Schedule schedule = 5;
-   */
-  schedule?: Schedule;
-
-  /**
-   * default_in_tenant_rating is the tenant-rating default propagated to every
-   * child TestRun the suite spawns (incl. cron runs). Same semantics as
-   * TestRunRecord: tenant defaults true. Optional so unset = platform default. 
-   *
-   * @generated from field: optional bool default_in_tenant_rating = 6;
-   */
-  defaultInTenantRating?: boolean;
-
-  /**
-   * default_in_global_rating is the global-rating default propagated to every
-   * child TestRun the suite spawns (incl. cron runs). Same semantics as
-   * TestRunRecord: global defaults false (opt-in). Optional so unset =
-   * platform default. 
-   *
-   * @generated from field: optional bool default_in_global_rating = 7;
-   */
-  defaultInGlobalRating?: boolean;
 };
 
 /**
  *
- * Suite is a reusable test bundle. It references provider-agnostic,
- * params-only presets; the provider is applied once here, and expansion bakes
- * topology specs plus infrastructure plans into child TestRuns.
+ * SuiteCell is one runnable entry inside a suite definition.
  *
- * @generated from message cloud.v1.domain.Suite
+ * @generated from message cloud.v1.domain.SuiteCell
  */
-export type SuiteJson = {
+export type SuiteCellJson = {
   /**
-   * id is the stable suite identifier. 
+   *
+   * id is stable within the suite and is copied into SuiteRunCell.suite_cell_id.
    *
    * @generated from field: string id = 1;
    */
   id?: string;
 
   /**
-   * preset_ids are the presets composing the suite (Database / Workload /
-   * Test presets). 
    *
-   * @generated from field: repeated string preset_ids = 2;
+   * name is the display label for this cell. Empty means server derives one
+   * from the presets/test.
+   *
+   * @generated from field: string name = 2;
    */
-  presetIds?: string[];
+  name?: string;
 
   /**
-   * provider is the single deployment provider for now. Multi-provider
-   * (cross-product to compare clouds) is planned: this becomes
-   * `repeated Provider providers` and expansion does presets x providers.
-   * Deferred to avoid the exponential bake cost for now. 
+   *
+   * enabled gates this cell without deleting its overrides. Disabled cells are
+   * not baked into SuiteRun.
+   *
+   * @generated from field: bool enabled = 3;
+   */
+  enabled?: boolean;
+
+  /**
+   *
+   * preset_pair expands database preset x workload preset.
+   *
+   * @generated from field: cloud.v1.domain.SuiteCell.PresetPair preset_pair = 10;
+   */
+  presetPair?: SuiteCell_PresetPairJson;
+
+  /**
+   *
+   * test_preset_id resolves a complete database+workload preset.
+   *
+   * @generated from field: string test_preset_id = 11;
+   */
+  testPresetId?: string;
+
+  /**
+   *
+   * inline_test is for CLI/API automation that wants a suite without first
+   * creating presets. Persisted UI-created suites should prefer presets.
+   *
+   * @generated from field: cloud.v1.domain.Test inline_test = 12;
+   */
+  inlineTest?: TestJson;
+
+  /**
+   *
+   * machine_overrides are user edits to provider-specific machine intent. They
+   * are merged into the derived InfrastructurePlan by node_id at start time.
+   * Provider account settings are not stored here.
+   *
+   * @generated from field: repeated cloud.v1.deployment.MachinePlan machine_overrides = 20;
+   */
+  machineOverrides?: MachinePlanJson[];
+
+  /**
+   *
+   * render_overrides are user edits to editable generated config artifacts for
+   * this cell.
+   *
+   * @generated from field: cloud.v1.deployment.RenderOverrideSet render_overrides = 21;
+   */
+  renderOverrides?: RenderOverrideSetJson;
+
+  /**
+   *
+   * tags are free-form metadata attached to this cell and propagated to child
+   * TestRun tags.
+   *
+   * @generated from field: cloud.v1.common.Tags tags = 22;
+   */
+  tags?: TagsJson;
+};
+
+export type SuiteCellValid = SuiteCell;
+
+/**
+ * Describes the message cloud.v1.domain.SuiteCell.
+ * Use `create(SuiteCellSchema)` to create a new message.
+ */
+export const SuiteCellSchema: GenMessage<SuiteCell, {jsonType: SuiteCellJson, validType: SuiteCellValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_domain_suite, 0);
+
+/**
+ *
+ * PresetPair references a database preset and a workload preset. The server
+ * resolves both and validates compatibility before baking a TestRun.
+ *
+ * @generated from message cloud.v1.domain.SuiteCell.PresetPair
+ */
+export type SuiteCell_PresetPair = Message<"cloud.v1.domain.SuiteCell.PresetPair"> & {
+  /**
+   *
+   * db_preset_id is the database preset to resolve.
+   *
+   * @generated from field: string db_preset_id = 1;
+   */
+  dbPresetId: string;
+
+  /**
+   *
+   * workload_preset_id is the workload preset to resolve.
+   *
+   * @generated from field: string workload_preset_id = 2;
+   */
+  workloadPresetId: string;
+};
+
+/**
+ *
+ * PresetPair references a database preset and a workload preset. The server
+ * resolves both and validates compatibility before baking a TestRun.
+ *
+ * @generated from message cloud.v1.domain.SuiteCell.PresetPair
+ */
+export type SuiteCell_PresetPairJson = {
+  /**
+   *
+   * db_preset_id is the database preset to resolve.
+   *
+   * @generated from field: string db_preset_id = 1;
+   */
+  dbPresetId?: string;
+
+  /**
+   *
+   * workload_preset_id is the workload preset to resolve.
+   *
+   * @generated from field: string workload_preset_id = 2;
+   */
+  workloadPresetId?: string;
+};
+
+export type SuiteCell_PresetPairValid = SuiteCell_PresetPair;
+
+/**
+ * Describes the message cloud.v1.domain.SuiteCell.PresetPair.
+ * Use `create(SuiteCell_PresetPairSchema)` to create a new message.
+ */
+export const SuiteCell_PresetPairSchema: GenMessage<SuiteCell_PresetPair, {jsonType: SuiteCell_PresetPairJson, validType: SuiteCell_PresetPairValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_domain_suite, 0, 0);
+
+/**
+ *
+ * Suite is a reusable test bundle. It stores only stable user intent: provider,
+ * schedule, and enabled cells. Starting it produces a SuiteRun with fully baked
+ * TestRuns.
+ *
+ * @generated from message cloud.v1.domain.Suite
+ */
+export type Suite = Message<"cloud.v1.domain.Suite"> & {
+  /**
+   *
+   * id is the stable suite identifier. For persisted suites this mirrors the
+   * SuiteRecord entity id; for inline API suites it may be client-supplied.
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   *
+   * cells are the runnable entries composing the suite.
+   *
+   * @generated from field: repeated cloud.v1.domain.SuiteCell cells = 2;
+   */
+  cells: SuiteCell[];
+
+  /**
+   *
+   * provider is the single deployment provider for every cell in this suite.
+   * Multi-provider comparison should be modeled as repeated suite starts or a
+   * future providers[] expansion layer, not by mixing providers inside a cell.
    *
    * @generated from field: cloud.v1.deployment.Provider provider = 3;
    */
-  provider?: ProviderJson;
+  provider: Provider;
 
   /**
-   * tags are free-form metadata attached to the suite. 
+   *
+   * tags are free-form metadata attached to the suite.
    *
    * @generated from field: cloud.v1.common.Tags tags = 4;
    */
-  tags?: TagsJson;
+  tags?: Tags;
 
   /**
-   * schedule is an optional cron schedule that auto-starts this suite.
-   * Absent / disabled = the suite only runs when started manually. 
+   *
+   * schedule is an optional cron schedule that auto-starts this suite. Absent
+   * or disabled means the suite only runs manually/API.
    *
    * @generated from field: cloud.v1.domain.Schedule schedule = 5;
    */
-  schedule?: ScheduleJson;
+  schedule?: Schedule;
 
   /**
-   * default_in_tenant_rating is the tenant-rating default propagated to every
-   * child TestRun the suite spawns (incl. cron runs). Same semantics as
-   * TestRunRecord: tenant defaults true. Optional so unset = platform default. 
+   *
+   * default_in_tenant_rating is propagated to child TestRuns when StartSuite
+   * does not override it. Unset means tenant/platform default.
    *
    * @generated from field: optional bool default_in_tenant_rating = 6;
    */
   defaultInTenantRating?: boolean;
 
   /**
-   * default_in_global_rating is the global-rating default propagated to every
-   * child TestRun the suite spawns (incl. cron runs). Same semantics as
-   * TestRunRecord: global defaults false (opt-in). Optional so unset =
-   * platform default. 
+   *
+   * default_in_global_rating is propagated to child TestRuns when StartSuite
+   * does not override it. Unset means tenant/platform default.
    *
    * @generated from field: optional bool default_in_global_rating = 7;
    */
   defaultInGlobalRating?: boolean;
+
+  /**
+   *
+   * default_max_parallel caps concurrent child run workflows. 0 means no suite
+   * definition override; the start request or tenant default decides.
+   *
+   * @generated from field: uint32 default_max_parallel = 8;
+   */
+  defaultMaxParallel: number;
+};
+
+/**
+ *
+ * Suite is a reusable test bundle. It stores only stable user intent: provider,
+ * schedule, and enabled cells. Starting it produces a SuiteRun with fully baked
+ * TestRuns.
+ *
+ * @generated from message cloud.v1.domain.Suite
+ */
+export type SuiteJson = {
+  /**
+   *
+   * id is the stable suite identifier. For persisted suites this mirrors the
+   * SuiteRecord entity id; for inline API suites it may be client-supplied.
+   *
+   * @generated from field: string id = 1;
+   */
+  id?: string;
+
+  /**
+   *
+   * cells are the runnable entries composing the suite.
+   *
+   * @generated from field: repeated cloud.v1.domain.SuiteCell cells = 2;
+   */
+  cells?: SuiteCellJson[];
+
+  /**
+   *
+   * provider is the single deployment provider for every cell in this suite.
+   * Multi-provider comparison should be modeled as repeated suite starts or a
+   * future providers[] expansion layer, not by mixing providers inside a cell.
+   *
+   * @generated from field: cloud.v1.deployment.Provider provider = 3;
+   */
+  provider?: ProviderJson;
+
+  /**
+   *
+   * tags are free-form metadata attached to the suite.
+   *
+   * @generated from field: cloud.v1.common.Tags tags = 4;
+   */
+  tags?: TagsJson;
+
+  /**
+   *
+   * schedule is an optional cron schedule that auto-starts this suite. Absent
+   * or disabled means the suite only runs manually/API.
+   *
+   * @generated from field: cloud.v1.domain.Schedule schedule = 5;
+   */
+  schedule?: ScheduleJson;
+
+  /**
+   *
+   * default_in_tenant_rating is propagated to child TestRuns when StartSuite
+   * does not override it. Unset means tenant/platform default.
+   *
+   * @generated from field: optional bool default_in_tenant_rating = 6;
+   */
+  defaultInTenantRating?: boolean;
+
+  /**
+   *
+   * default_in_global_rating is propagated to child TestRuns when StartSuite
+   * does not override it. Unset means tenant/platform default.
+   *
+   * @generated from field: optional bool default_in_global_rating = 7;
+   */
+  defaultInGlobalRating?: boolean;
+
+  /**
+   *
+   * default_max_parallel caps concurrent child run workflows. 0 means no suite
+   * definition override; the start request or tenant default decides.
+   *
+   * @generated from field: uint32 default_max_parallel = 8;
+   */
+  defaultMaxParallel?: number;
 };
 
 export type SuiteValid = Suite;
@@ -164,35 +445,34 @@ export type SuiteValid = Suite;
  * Use `create(SuiteSchema)` to create a new message.
  */
 export const SuiteSchema: GenMessage<Suite, {jsonType: SuiteJson, validType: SuiteValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_domain_suite, 0);
+  messageDesc(file_cloud_v1_domain_suite, 1);
 
 /**
  *
- * Schedule is an optional cron trigger for a suite. When enabled with a cron
- * expression, the platform auto-starts the suite on that cadence; `enabled`
- * gates it so a configured schedule can be paused without losing the cron.
+ * Schedule is an optional cron trigger for a suite.
  *
  * @generated from message cloud.v1.domain.Schedule
  */
 export type Schedule = Message<"cloud.v1.domain.Schedule"> & {
   /**
-   * enabled gates the schedule: false = paused (never auto-runs). 
+   *
+   * enabled gates the schedule: false = paused.
    *
    * @generated from field: bool enabled = 1;
    */
   enabled: boolean;
 
   /**
-   * cron is a standard cron expression (e.g. "0 2 * * *"). Validated
-   * server-side. 
+   *
+   * cron is a standard cron expression, validated server-side.
    *
    * @generated from field: string cron = 2;
    */
   cron: string;
 
   /**
-   * timezone is the IANA timezone for the cron (e.g. "Europe/Moscow");
-   * empty = UTC. 
+   *
+   * timezone is the IANA timezone for cron evaluation. Empty means UTC.
    *
    * @generated from field: string timezone = 3;
    */
@@ -201,31 +481,30 @@ export type Schedule = Message<"cloud.v1.domain.Schedule"> & {
 
 /**
  *
- * Schedule is an optional cron trigger for a suite. When enabled with a cron
- * expression, the platform auto-starts the suite on that cadence; `enabled`
- * gates it so a configured schedule can be paused without losing the cron.
+ * Schedule is an optional cron trigger for a suite.
  *
  * @generated from message cloud.v1.domain.Schedule
  */
 export type ScheduleJson = {
   /**
-   * enabled gates the schedule: false = paused (never auto-runs). 
+   *
+   * enabled gates the schedule: false = paused.
    *
    * @generated from field: bool enabled = 1;
    */
   enabled?: boolean;
 
   /**
-   * cron is a standard cron expression (e.g. "0 2 * * *"). Validated
-   * server-side. 
+   *
+   * cron is a standard cron expression, validated server-side.
    *
    * @generated from field: string cron = 2;
    */
   cron?: string;
 
   /**
-   * timezone is the IANA timezone for the cron (e.g. "Europe/Moscow");
-   * empty = UTC. 
+   *
+   * timezone is the IANA timezone for cron evaluation. Empty means UTC.
    *
    * @generated from field: string timezone = 3;
    */
@@ -239,39 +518,199 @@ export type ScheduleValid = Schedule;
  * Use `create(ScheduleSchema)` to create a new message.
  */
 export const ScheduleSchema: GenMessage<Schedule, {jsonType: ScheduleJson, validType: ScheduleValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_domain_suite, 1);
+  messageDesc(file_cloud_v1_domain_suite, 2);
 
 /**
  *
- * SuiteRun is a materialized suite execution: the Suite's preset_ids expanded
- * into concrete TestRuns, executed with a bounded degree of parallelism.
+ * SuiteRunCell is one materialized child run inside a suite execution.
  *
- * @generated from message cloud.v1.domain.SuiteRun
+ * @generated from message cloud.v1.domain.SuiteRunCell
  */
-export type SuiteRun = Message<"cloud.v1.domain.SuiteRun"> & {
+export type SuiteRunCell = Message<"cloud.v1.domain.SuiteRunCell"> & {
   /**
-   * id is the stable suite-run identifier. 
+   *
+   * id is stable within this suite run.
    *
    * @generated from field: string id = 1;
    */
   id: string;
 
   /**
-   * suite_id references the Suite this run was expanded from. 
+   *
+   * suite_cell_id points back to SuiteCell.id when this run came from a stored
+   * suite definition. Empty for ad-hoc inline cells.
+   *
+   * @generated from field: string suite_cell_id = 2;
+   */
+  suiteCellId: string;
+
+  /**
+   *
+   * test_run is the fully baked child TestRun.
+   *
+   * @generated from field: cloud.v1.domain.TestRun test_run = 3;
+   */
+  testRun?: TestRun;
+
+  /**
+   *
+   * name is the display label copied from the suite cell or derived at bake.
+   *
+   * @generated from field: string name = 4;
+   */
+  name: string;
+
+  /**
+   *
+   * db_preset_id records the database preset source, when applicable.
+   *
+   * @generated from field: string db_preset_id = 5;
+   */
+  dbPresetId: string;
+
+  /**
+   *
+   * workload_preset_id records the workload preset source, when applicable.
+   *
+   * @generated from field: string workload_preset_id = 6;
+   */
+  workloadPresetId: string;
+
+  /**
+   *
+   * test_preset_id records the test preset source, when applicable.
+   *
+   * @generated from field: string test_preset_id = 7;
+   */
+  testPresetId: string;
+
+  /**
+   *
+   * tags are free-form metadata propagated to this cell.
+   *
+   * @generated from field: cloud.v1.common.Tags tags = 8;
+   */
+  tags?: Tags;
+};
+
+/**
+ *
+ * SuiteRunCell is one materialized child run inside a suite execution.
+ *
+ * @generated from message cloud.v1.domain.SuiteRunCell
+ */
+export type SuiteRunCellJson = {
+  /**
+   *
+   * id is stable within this suite run.
+   *
+   * @generated from field: string id = 1;
+   */
+  id?: string;
+
+  /**
+   *
+   * suite_cell_id points back to SuiteCell.id when this run came from a stored
+   * suite definition. Empty for ad-hoc inline cells.
+   *
+   * @generated from field: string suite_cell_id = 2;
+   */
+  suiteCellId?: string;
+
+  /**
+   *
+   * test_run is the fully baked child TestRun.
+   *
+   * @generated from field: cloud.v1.domain.TestRun test_run = 3;
+   */
+  testRun?: TestRunJson;
+
+  /**
+   *
+   * name is the display label copied from the suite cell or derived at bake.
+   *
+   * @generated from field: string name = 4;
+   */
+  name?: string;
+
+  /**
+   *
+   * db_preset_id records the database preset source, when applicable.
+   *
+   * @generated from field: string db_preset_id = 5;
+   */
+  dbPresetId?: string;
+
+  /**
+   *
+   * workload_preset_id records the workload preset source, when applicable.
+   *
+   * @generated from field: string workload_preset_id = 6;
+   */
+  workloadPresetId?: string;
+
+  /**
+   *
+   * test_preset_id records the test preset source, when applicable.
+   *
+   * @generated from field: string test_preset_id = 7;
+   */
+  testPresetId?: string;
+
+  /**
+   *
+   * tags are free-form metadata propagated to this cell.
+   *
+   * @generated from field: cloud.v1.common.Tags tags = 8;
+   */
+  tags?: TagsJson;
+};
+
+export type SuiteRunCellValid = SuiteRunCell;
+
+/**
+ * Describes the message cloud.v1.domain.SuiteRunCell.
+ * Use `create(SuiteRunCellSchema)` to create a new message.
+ */
+export const SuiteRunCellSchema: GenMessage<SuiteRunCell, {jsonType: SuiteRunCellJson, validType: SuiteRunCellValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_domain_suite, 3);
+
+/**
+ *
+ * SuiteRun is a materialized suite execution input: all preset references have
+ * been resolved into concrete child TestRuns.
+ *
+ * @generated from message cloud.v1.domain.SuiteRun
+ */
+export type SuiteRun = Message<"cloud.v1.domain.SuiteRun"> & {
+  /**
+   *
+   * id is the stable suite-run identifier.
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   *
+   * suite_id references the SuiteRecord definition this run came from. Empty
+   * for ad-hoc inline suite starts.
    *
    * @generated from field: string suite_id = 2;
    */
   suiteId: string;
 
   /**
-   * test_runs are the expanded runs (one per resolved preset). 
    *
-   * @generated from field: repeated cloud.v1.domain.TestRun test_runs = 3;
+   * cells are the expanded child runs.
+   *
+   * @generated from field: repeated cloud.v1.domain.SuiteRunCell cells = 3;
    */
-  testRuns: TestRun[];
+  cells: SuiteRunCell[];
 
   /**
-   * max_parallel is the max concurrent TestWorkflows. 0 = unlimited. 
+   *
+   * max_parallel is the max concurrent child run workflows. 0 = unlimited.
    *
    * @generated from field: uint32 max_parallel = 4;
    */
@@ -280,35 +719,40 @@ export type SuiteRun = Message<"cloud.v1.domain.SuiteRun"> & {
 
 /**
  *
- * SuiteRun is a materialized suite execution: the Suite's preset_ids expanded
- * into concrete TestRuns, executed with a bounded degree of parallelism.
+ * SuiteRun is a materialized suite execution input: all preset references have
+ * been resolved into concrete child TestRuns.
  *
  * @generated from message cloud.v1.domain.SuiteRun
  */
 export type SuiteRunJson = {
   /**
-   * id is the stable suite-run identifier. 
+   *
+   * id is the stable suite-run identifier.
    *
    * @generated from field: string id = 1;
    */
   id?: string;
 
   /**
-   * suite_id references the Suite this run was expanded from. 
+   *
+   * suite_id references the SuiteRecord definition this run came from. Empty
+   * for ad-hoc inline suite starts.
    *
    * @generated from field: string suite_id = 2;
    */
   suiteId?: string;
 
   /**
-   * test_runs are the expanded runs (one per resolved preset). 
    *
-   * @generated from field: repeated cloud.v1.domain.TestRun test_runs = 3;
+   * cells are the expanded child runs.
+   *
+   * @generated from field: repeated cloud.v1.domain.SuiteRunCell cells = 3;
    */
-  testRuns?: TestRunJson[];
+  cells?: SuiteRunCellJson[];
 
   /**
-   * max_parallel is the max concurrent TestWorkflows. 0 = unlimited. 
+   *
+   * max_parallel is the max concurrent child run workflows. 0 = unlimited.
    *
    * @generated from field: uint32 max_parallel = 4;
    */
@@ -322,5 +766,5 @@ export type SuiteRunValid = SuiteRun;
  * Use `create(SuiteRunSchema)` to create a new message.
  */
 export const SuiteRunSchema: GenMessage<SuiteRun, {jsonType: SuiteRunJson, validType: SuiteRunValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_domain_suite, 2);
+  messageDesc(file_cloud_v1_domain_suite, 4);
 

@@ -40,8 +40,8 @@ func TestBuildPlanDocker(t *testing.T) {
 	if got, want := machine.GetDocker().GetResources().GetMemoryMb(), uint64(8192); got != want {
 		t.Fatalf("memory = %d, want %d", got, want)
 	}
-	if got := machine.GetDocker().GetEnv()["AGENT_MACHINE_ID"]; got != machine.GetNodeId() {
-		t.Fatalf("AGENT_MACHINE_ID = %q, want node id", got)
+	if got := machine.GetDocker().GetEnv()["STROPPY_SERVER_ADDR"]; got != "" {
+		t.Fatalf("docker plan contains runtime server addr %q", got)
 	}
 	if got, want := len(machine.GetDocker().GetPorts()), 1; got != want {
 		t.Fatalf("ports = %d, want %d", got, want)

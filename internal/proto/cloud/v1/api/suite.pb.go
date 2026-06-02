@@ -860,22 +860,23 @@ func (x *SetSuiteScheduleResponse) GetSuite() *models.SuiteRecord {
 	return nil
 }
 
-// StartSuite expands a suite into a SuiteRunRecord (one TestRunRecord per
-// compatible cell) and launches SuiteWorkflow. Provide a stored `suite_id`
-// (re-run) or a fully-baked `suite` directly (CLI).
+// StartSuite expands a suite definition into a SuiteRunRecord (one TestRunRecord
+// per enabled compatible cell) and launches SuiteWorkflow. Provide a stored
+// `suite_id` or an inline `suite` definition directly (CLI/API).
 type StartSuiteRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// tenant_id scopes the request to the owning tenant.
 	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	// source selects the suite to start: a stored definition by id, or a fully
-	// baked suite supplied inline.
+	// source selects the suite definition to start: a stored definition by id,
+	// or an inline definition supplied directly.
 	//
 	// Types that are valid to be assigned to Source:
 	//
 	//	*StartSuiteRequest_SuiteId
 	//	*StartSuiteRequest_Suite
 	Source isStartSuiteRequest_Source `protobuf_oneof:"source"`
-	// max_parallel caps concurrent child TestWorkflows. 0 = unlimited.
+	// max_parallel caps concurrent child run workflows. 0 = suite default, then
+	// tenant default, then unlimited.
 	MaxParallel uint32 `protobuf:"varint,4,opt,name=max_parallel,json=maxParallel,proto3" json:"max_parallel,omitempty"`
 	// in_tenant_rating sets tenant-rating membership for all child runs; unset ->
 	// suite defaults, then platform defaults (tenant true).
@@ -980,7 +981,7 @@ type StartSuiteRequest_SuiteId struct {
 }
 
 type StartSuiteRequest_Suite struct {
-	// suite is a fully-baked suite supplied directly (CLI path).
+	// suite is an inline suite definition supplied directly (CLI path).
 	Suite *domain.Suite `protobuf:"bytes,3,opt,name=suite,proto3,oneof"`
 }
 

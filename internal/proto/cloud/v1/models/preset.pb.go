@@ -37,7 +37,10 @@ type DatabasePresetRecord struct {
 	// the service rejects Update and Delete on them. To customize one, Clone it
 	// into a new editable tenant preset (is_system = false). Server-managed;
 	// clients cannot set it true.
-	IsSystem      bool `protobuf:"varint,3,opt,name=is_system,json=isSystem,proto3" json:"is_system,omitempty"`
+	IsSystem bool `protobuf:"varint,3,opt,name=is_system,json=isSystem,proto3" json:"is_system,omitempty"`
+	// summary is the denormalized projection used by preset pickers and suite
+	// matrix screens without decoding the whole database body.
+	Summary       *DatabasePresetRecord_Summary `protobuf:"bytes,4,opt,name=summary,proto3" json:"summary,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -93,6 +96,13 @@ func (x *DatabasePresetRecord) GetIsSystem() bool {
 	return false
 }
 
+func (x *DatabasePresetRecord) GetSummary() *DatabasePresetRecord_Summary {
+	if x != nil {
+		return x.Summary
+	}
+	return nil
+}
+
 // WorkloadPresetRecord table: a reusable stroppy workload configuration.
 type WorkloadPresetRecord struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -106,7 +116,10 @@ type WorkloadPresetRecord struct {
 	// the service rejects Update and Delete on them. To customize one, Clone it
 	// into a new editable tenant preset (is_system = false). Server-managed;
 	// clients cannot set it true.
-	IsSystem      bool `protobuf:"varint,3,opt,name=is_system,json=isSystem,proto3" json:"is_system,omitempty"`
+	IsSystem bool `protobuf:"varint,3,opt,name=is_system,json=isSystem,proto3" json:"is_system,omitempty"`
+	// summary is the denormalized projection used by preset pickers and suite
+	// matrix screens without decoding the whole workload body.
+	Summary       *WorkloadPresetRecord_Summary `protobuf:"bytes,4,opt,name=summary,proto3" json:"summary,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -162,6 +175,13 @@ func (x *WorkloadPresetRecord) GetIsSystem() bool {
 	return false
 }
 
+func (x *WorkloadPresetRecord) GetSummary() *WorkloadPresetRecord_Summary {
+	if x != nil {
+		return x.Summary
+	}
+	return nil
+}
+
 // TestPresetRecord table: a reusable database + workload combo bundling both
 // sides into a single preset.
 type TestPresetRecord struct {
@@ -175,7 +195,10 @@ type TestPresetRecord struct {
 	// the service rejects Update and Delete on them. To customize one, Clone it
 	// into a new editable tenant preset (is_system = false). Server-managed;
 	// clients cannot set it true.
-	IsSystem      bool `protobuf:"varint,3,opt,name=is_system,json=isSystem,proto3" json:"is_system,omitempty"`
+	IsSystem bool `protobuf:"varint,3,opt,name=is_system,json=isSystem,proto3" json:"is_system,omitempty"`
+	// summary is the denormalized projection used by preset pickers and suite
+	// matrix screens without decoding the whole test body.
+	Summary       *TestPresetRecord_Summary `protobuf:"bytes,4,opt,name=summary,proto3" json:"summary,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -231,23 +254,237 @@ func (x *TestPresetRecord) GetIsSystem() bool {
 	return false
 }
 
+func (x *TestPresetRecord) GetSummary() *TestPresetRecord_Summary {
+	if x != nil {
+		return x.Summary
+	}
+	return nil
+}
+
+// Summary is filled by the server from `database`.
+type DatabasePresetRecord_Summary struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// db_kind is the database engine kind.
+	DbKind domain.Database_Kind `protobuf:"varint,1,opt,name=db_kind,json=dbKind,proto3,enum=cloud.v1.domain.Database_Kind" json:"db_kind,omitempty"`
+	// version is the self-deploy engine version, when present.
+	Version string `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
+	// external is true when the preset targets an already-running database.
+	External      bool `protobuf:"varint,3,opt,name=external,proto3" json:"external,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DatabasePresetRecord_Summary) Reset() {
+	*x = DatabasePresetRecord_Summary{}
+	mi := &file_cloud_v1_models_preset_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DatabasePresetRecord_Summary) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DatabasePresetRecord_Summary) ProtoMessage() {}
+
+func (x *DatabasePresetRecord_Summary) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_models_preset_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DatabasePresetRecord_Summary.ProtoReflect.Descriptor instead.
+func (*DatabasePresetRecord_Summary) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_models_preset_proto_rawDescGZIP(), []int{0, 0}
+}
+
+func (x *DatabasePresetRecord_Summary) GetDbKind() domain.Database_Kind {
+	if x != nil {
+		return x.DbKind
+	}
+	return domain.Database_Kind(0)
+}
+
+func (x *DatabasePresetRecord_Summary) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+func (x *DatabasePresetRecord_Summary) GetExternal() bool {
+	if x != nil {
+		return x.External
+	}
+	return false
+}
+
+// Summary is filled by the server from `workload`.
+type WorkloadPresetRecord_Summary struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// protocol is the workload wire protocol.
+	Protocol domain.Workload_Protocol `protobuf:"varint,1,opt,name=protocol,proto3,enum=cloud.v1.domain.Workload_Protocol" json:"protocol,omitempty"`
+	// stroppy_version is the stroppy binary version/tag.
+	StroppyVersion string `protobuf:"bytes,2,opt,name=stroppy_version,json=stroppyVersion,proto3" json:"stroppy_version,omitempty"`
+	// script is the workload script/preset/path label.
+	Script        string `protobuf:"bytes,3,opt,name=script,proto3" json:"script,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WorkloadPresetRecord_Summary) Reset() {
+	*x = WorkloadPresetRecord_Summary{}
+	mi := &file_cloud_v1_models_preset_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WorkloadPresetRecord_Summary) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WorkloadPresetRecord_Summary) ProtoMessage() {}
+
+func (x *WorkloadPresetRecord_Summary) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_models_preset_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WorkloadPresetRecord_Summary.ProtoReflect.Descriptor instead.
+func (*WorkloadPresetRecord_Summary) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_models_preset_proto_rawDescGZIP(), []int{1, 0}
+}
+
+func (x *WorkloadPresetRecord_Summary) GetProtocol() domain.Workload_Protocol {
+	if x != nil {
+		return x.Protocol
+	}
+	return domain.Workload_Protocol(0)
+}
+
+func (x *WorkloadPresetRecord_Summary) GetStroppyVersion() string {
+	if x != nil {
+		return x.StroppyVersion
+	}
+	return ""
+}
+
+func (x *WorkloadPresetRecord_Summary) GetScript() string {
+	if x != nil {
+		return x.Script
+	}
+	return ""
+}
+
+// Summary is filled by the server from `test`.
+type TestPresetRecord_Summary struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// db_kind is the database engine kind.
+	DbKind domain.Database_Kind `protobuf:"varint,1,opt,name=db_kind,json=dbKind,proto3,enum=cloud.v1.domain.Database_Kind" json:"db_kind,omitempty"`
+	// protocol is the workload wire protocol.
+	Protocol domain.Workload_Protocol `protobuf:"varint,2,opt,name=protocol,proto3,enum=cloud.v1.domain.Workload_Protocol" json:"protocol,omitempty"`
+	// stroppy_version is the stroppy binary version/tag.
+	StroppyVersion string `protobuf:"bytes,3,opt,name=stroppy_version,json=stroppyVersion,proto3" json:"stroppy_version,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *TestPresetRecord_Summary) Reset() {
+	*x = TestPresetRecord_Summary{}
+	mi := &file_cloud_v1_models_preset_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TestPresetRecord_Summary) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TestPresetRecord_Summary) ProtoMessage() {}
+
+func (x *TestPresetRecord_Summary) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_models_preset_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TestPresetRecord_Summary.ProtoReflect.Descriptor instead.
+func (*TestPresetRecord_Summary) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_models_preset_proto_rawDescGZIP(), []int{2, 0}
+}
+
+func (x *TestPresetRecord_Summary) GetDbKind() domain.Database_Kind {
+	if x != nil {
+		return x.DbKind
+	}
+	return domain.Database_Kind(0)
+}
+
+func (x *TestPresetRecord_Summary) GetProtocol() domain.Workload_Protocol {
+	if x != nil {
+		return x.Protocol
+	}
+	return domain.Workload_Protocol(0)
+}
+
+func (x *TestPresetRecord_Summary) GetStroppyVersion() string {
+	if x != nil {
+		return x.StroppyVersion
+	}
+	return ""
+}
+
 var File_cloud_v1_models_preset_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_models_preset_proto_rawDesc = "" +
 	"\n" +
-	"\x1ccloud/v1/models/preset.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a\x17validate/validate.proto\"\xaf\x01\n" +
+	"\x1ccloud/v1/models/preset.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a\x17validate/validate.proto\"\xfd\x02\n" +
 	"\x14DatabasePresetRecord\x129\n" +
 	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.common.EntityB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06entity\x12?\n" +
 	"\bdatabase\x18\x02 \x01(\v2\x19.cloud.v1.domain.DatabaseB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bdatabase\x12\x1b\n" +
-	"\tis_system\x18\x03 \x01(\bR\bisSystem\"\xaf\x01\n" +
+	"\tis_system\x18\x03 \x01(\bR\bisSystem\x12G\n" +
+	"\asummary\x18\x04 \x01(\v2-.cloud.v1.models.DatabasePresetRecord.SummaryR\asummary\x1a\x82\x01\n" +
+	"\aSummary\x127\n" +
+	"\adb_kind\x18\x01 \x01(\x0e2\x1e.cloud.v1.domain.Database.KindR\x06dbKind\x12\"\n" +
+	"\aversion\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\aversion\x12\x1a\n" +
+	"\bexternal\x18\x03 \x01(\bR\bexternal\"\x98\x03\n" +
 	"\x14WorkloadPresetRecord\x129\n" +
 	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.common.EntityB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06entity\x12?\n" +
 	"\bworkload\x18\x02 \x01(\v2\x19.cloud.v1.domain.WorkloadB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bworkload\x12\x1b\n" +
-	"\tis_system\x18\x03 \x01(\bR\bisSystem\"\x9f\x01\n" +
+	"\tis_system\x18\x03 \x01(\bR\bisSystem\x12G\n" +
+	"\asummary\x18\x04 \x01(\v2-.cloud.v1.models.WorkloadPresetRecord.SummaryR\asummary\x1a\x9d\x01\n" +
+	"\aSummary\x12>\n" +
+	"\bprotocol\x18\x01 \x01(\x0e2\".cloud.v1.domain.Workload.ProtocolR\bprotocol\x120\n" +
+	"\x0fstroppy_version\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x18@R\x0estroppyVersion\x12 \n" +
+	"\x06script\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x04R\x06script\"\x9b\x03\n" +
 	"\x10TestPresetRecord\x129\n" +
 	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.common.EntityB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06entity\x123\n" +
 	"\x04test\x18\x02 \x01(\v2\x15.cloud.v1.domain.TestB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04test\x12\x1b\n" +
-	"\tis_system\x18\x03 \x01(\bR\bisSystemBDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/modelsb\x06proto3"
+	"\tis_system\x18\x03 \x01(\bR\bisSystem\x12C\n" +
+	"\asummary\x18\x04 \x01(\v2).cloud.v1.models.TestPresetRecord.SummaryR\asummary\x1a\xb4\x01\n" +
+	"\aSummary\x127\n" +
+	"\adb_kind\x18\x01 \x01(\x0e2\x1e.cloud.v1.domain.Database.KindR\x06dbKind\x12>\n" +
+	"\bprotocol\x18\x02 \x01(\x0e2\".cloud.v1.domain.Workload.ProtocolR\bprotocol\x120\n" +
+	"\x0fstroppy_version\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x18@R\x0estroppyVersionBDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/modelsb\x06proto3"
 
 var (
 	file_cloud_v1_models_preset_proto_rawDescOnce sync.Once
@@ -261,28 +498,40 @@ func file_cloud_v1_models_preset_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_models_preset_proto_rawDescData
 }
 
-var file_cloud_v1_models_preset_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_cloud_v1_models_preset_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_cloud_v1_models_preset_proto_goTypes = []any{
-	(*DatabasePresetRecord)(nil), // 0: cloud.v1.models.DatabasePresetRecord
-	(*WorkloadPresetRecord)(nil), // 1: cloud.v1.models.WorkloadPresetRecord
-	(*TestPresetRecord)(nil),     // 2: cloud.v1.models.TestPresetRecord
-	(*common.Entity)(nil),        // 3: cloud.v1.common.Entity
-	(*domain.Database)(nil),      // 4: cloud.v1.domain.Database
-	(*domain.Workload)(nil),      // 5: cloud.v1.domain.Workload
-	(*domain.Test)(nil),          // 6: cloud.v1.domain.Test
+	(*DatabasePresetRecord)(nil),         // 0: cloud.v1.models.DatabasePresetRecord
+	(*WorkloadPresetRecord)(nil),         // 1: cloud.v1.models.WorkloadPresetRecord
+	(*TestPresetRecord)(nil),             // 2: cloud.v1.models.TestPresetRecord
+	(*DatabasePresetRecord_Summary)(nil), // 3: cloud.v1.models.DatabasePresetRecord.Summary
+	(*WorkloadPresetRecord_Summary)(nil), // 4: cloud.v1.models.WorkloadPresetRecord.Summary
+	(*TestPresetRecord_Summary)(nil),     // 5: cloud.v1.models.TestPresetRecord.Summary
+	(*common.Entity)(nil),                // 6: cloud.v1.common.Entity
+	(*domain.Database)(nil),              // 7: cloud.v1.domain.Database
+	(*domain.Workload)(nil),              // 8: cloud.v1.domain.Workload
+	(*domain.Test)(nil),                  // 9: cloud.v1.domain.Test
+	(domain.Database_Kind)(0),            // 10: cloud.v1.domain.Database.Kind
+	(domain.Workload_Protocol)(0),        // 11: cloud.v1.domain.Workload.Protocol
 }
 var file_cloud_v1_models_preset_proto_depIdxs = []int32{
-	3, // 0: cloud.v1.models.DatabasePresetRecord.entity:type_name -> cloud.v1.common.Entity
-	4, // 1: cloud.v1.models.DatabasePresetRecord.database:type_name -> cloud.v1.domain.Database
-	3, // 2: cloud.v1.models.WorkloadPresetRecord.entity:type_name -> cloud.v1.common.Entity
-	5, // 3: cloud.v1.models.WorkloadPresetRecord.workload:type_name -> cloud.v1.domain.Workload
-	3, // 4: cloud.v1.models.TestPresetRecord.entity:type_name -> cloud.v1.common.Entity
-	6, // 5: cloud.v1.models.TestPresetRecord.test:type_name -> cloud.v1.domain.Test
-	6, // [6:6] is the sub-list for method output_type
-	6, // [6:6] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	6,  // 0: cloud.v1.models.DatabasePresetRecord.entity:type_name -> cloud.v1.common.Entity
+	7,  // 1: cloud.v1.models.DatabasePresetRecord.database:type_name -> cloud.v1.domain.Database
+	3,  // 2: cloud.v1.models.DatabasePresetRecord.summary:type_name -> cloud.v1.models.DatabasePresetRecord.Summary
+	6,  // 3: cloud.v1.models.WorkloadPresetRecord.entity:type_name -> cloud.v1.common.Entity
+	8,  // 4: cloud.v1.models.WorkloadPresetRecord.workload:type_name -> cloud.v1.domain.Workload
+	4,  // 5: cloud.v1.models.WorkloadPresetRecord.summary:type_name -> cloud.v1.models.WorkloadPresetRecord.Summary
+	6,  // 6: cloud.v1.models.TestPresetRecord.entity:type_name -> cloud.v1.common.Entity
+	9,  // 7: cloud.v1.models.TestPresetRecord.test:type_name -> cloud.v1.domain.Test
+	5,  // 8: cloud.v1.models.TestPresetRecord.summary:type_name -> cloud.v1.models.TestPresetRecord.Summary
+	10, // 9: cloud.v1.models.DatabasePresetRecord.Summary.db_kind:type_name -> cloud.v1.domain.Database.Kind
+	11, // 10: cloud.v1.models.WorkloadPresetRecord.Summary.protocol:type_name -> cloud.v1.domain.Workload.Protocol
+	10, // 11: cloud.v1.models.TestPresetRecord.Summary.db_kind:type_name -> cloud.v1.domain.Database.Kind
+	11, // 12: cloud.v1.models.TestPresetRecord.Summary.protocol:type_name -> cloud.v1.domain.Workload.Protocol
+	13, // [13:13] is the sub-list for method output_type
+	13, // [13:13] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_models_preset_proto_init() }
@@ -296,7 +545,7 @@ func file_cloud_v1_models_preset_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_models_preset_proto_rawDesc), len(file_cloud_v1_models_preset_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

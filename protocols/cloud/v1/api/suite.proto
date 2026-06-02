@@ -14,10 +14,10 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
 
 /*
     suite.proto is the tenant-scoped API over models.SuiteRecord — the reusable
-    suite DEFINITION. CRUD + clone for definitions, plus Start which expands a
-    definition into a SuiteRunRecord and launches SuiteWorkflow. Every request is
-    tenant-scoped (tenant_id); CRUD/clone gated by RESOURCE_SUITE, Start by
-    RESOURCE_SUITE_RUN (it creates a run).
+    suite DEFINITION. CRUD + clone for definitions, plus Start which resolves
+    preset-backed cells into child TestRunRecords and launches SuiteWorkflow.
+    Every request is tenant-scoped (tenant_id); CRUD/clone gated by
+    RESOURCE_SUITE, Start by RESOURCE_SUITE_RUN (it creates a run).
  */
 
 /*
@@ -264,9 +264,9 @@ message SetSuiteScheduleResponse {
 }
 
 /*
-    StartSuite expands a suite into a SuiteRunRecord (one TestRunRecord per
-    compatible cell) and launches SuiteWorkflow. Provide a stored `suite_id`
-    (re-run) or a fully-baked `suite` directly (CLI).
+    StartSuite expands a suite definition into a SuiteRunRecord (one TestRunRecord
+    per enabled compatible cell) and launches SuiteWorkflow. Provide a stored
+    `suite_id` or an inline `suite` definition directly (CLI/API).
  */
 message StartSuiteRequest {
     /*
@@ -274,8 +274,8 @@ message StartSuiteRequest {
      */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
     /*
-        source selects the suite to start: a stored definition by id, or a fully
-        baked suite supplied inline.
+        source selects the suite definition to start: a stored definition by id,
+        or an inline definition supplied directly.
      */
     oneof source {
         option (validate.required) = true;
@@ -284,12 +284,13 @@ message StartSuiteRequest {
          */
         string suite_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
         /*
-            suite is a fully-baked suite supplied directly (CLI path).
+            suite is an inline suite definition supplied directly (CLI path).
          */
         domain.Suite suite = 3;
     }
     /*
-        max_parallel caps concurrent child TestWorkflows. 0 = unlimited.
+        max_parallel caps concurrent child run workflows. 0 = suite default, then
+        tenant default, then unlimited.
      */
     uint32 max_parallel = 4;
     /*

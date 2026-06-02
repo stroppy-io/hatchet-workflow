@@ -366,6 +366,14 @@ func (m *ListTestRunsRequest) Encode(e *jx.Encoder) {
 		}
 		e.ArrEnd()
 	}
+	if len(m.TestPresetIds) > 0 {
+		e.FieldStart("testPresetIds")
+		e.ArrStart()
+		for _, v := range m.TestPresetIds {
+			e.Str(v)
+		}
+		e.ArrEnd()
+	}
 	if len(m.StroppyVersions) > 0 {
 		e.FieldStart("stroppyVersions")
 		e.ArrStart()
@@ -374,9 +382,29 @@ func (m *ListTestRunsRequest) Encode(e *jx.Encoder) {
 		}
 		e.ArrEnd()
 	}
+	if len(m.Protocols) > 0 {
+		e.FieldStart("protocols")
+		e.ArrStart()
+		for _, v := range m.Protocols {
+			if s, ok := domain.Workload_Protocol_name[int32(v)]; ok {
+				e.Str(s)
+			} else {
+				e.Int32(int32(v))
+			}
+		}
+		e.ArrEnd()
+	}
 	if m.SuiteRunId != "" {
 		e.FieldStart("suiteRunId")
 		e.Str(m.SuiteRunId)
+	}
+	if len(m.SuiteCellIds) > 0 {
+		e.FieldStart("suiteCellIds")
+		e.ArrStart()
+		for _, v := range m.SuiteCellIds {
+			e.Str(v)
+		}
+		e.ArrEnd()
 	}
 	if m.Standalone != nil {
 		e.FieldStart("standalone")
@@ -593,6 +621,22 @@ func (m *ListTestRunsRequest) Decode(d *jx.Decoder) error {
 				m.WorkloadPresetIds = append(m.WorkloadPresetIds, v)
 				return nil
 			})
+		case "testPresetIds", "test_preset_ids":
+			if seen["TestPresetIds"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["TestPresetIds"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				v, err := d.Str()
+				if err != nil {
+					return err
+				}
+				m.TestPresetIds = append(m.TestPresetIds, v)
+				return nil
+			})
 		case "stroppyVersions", "stroppy_versions":
 			if seen["StroppyVersions"] {
 				return fmt.Errorf("duplicate field %q", key)
@@ -609,6 +653,37 @@ func (m *ListTestRunsRequest) Decode(d *jx.Decoder) error {
 				m.StroppyVersions = append(m.StroppyVersions, v)
 				return nil
 			})
+		case "protocols":
+			if seen["Protocols"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Protocols"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				var n int32
+				switch d.Next() {
+				case jx.String:
+					s, err := d.Str()
+					if err != nil {
+						return err
+					}
+					v, ok := domain.Workload_Protocol_value[s]
+					if !ok {
+						return fmt.Errorf("unknown enum value %q", s)
+					}
+					n = v
+				default:
+					v, err := d.Int32()
+					if err != nil {
+						return err
+					}
+					n = v
+				}
+				m.Protocols = append(m.Protocols, domain.Workload_Protocol(n))
+				return nil
+			})
 		case "suiteRunId", "suite_run_id":
 			if seen["SuiteRunId"] {
 				return fmt.Errorf("duplicate field %q", key)
@@ -623,6 +698,22 @@ func (m *ListTestRunsRequest) Decode(d *jx.Decoder) error {
 			}
 			m.SuiteRunId = v
 			return nil
+		case "suiteCellIds", "suite_cell_ids":
+			if seen["SuiteCellIds"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["SuiteCellIds"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				v, err := d.Str()
+				if err != nil {
+					return err
+				}
+				m.SuiteCellIds = append(m.SuiteCellIds, v)
+				return nil
+			})
 		case "standalone":
 			if seen["Standalone"] {
 				return fmt.Errorf("duplicate field %q", key)

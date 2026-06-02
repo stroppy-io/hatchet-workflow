@@ -32,8 +32,8 @@ message SuiteRecord {
     domain.Suite spec = 2 [(validate.rules).message.required = true];
 
     /*
-        summary holds denormalized facets for the suites table (schedule state +
-        last-run info).
+        summary holds denormalized facets for the suites table (cell count,
+        schedule state, last-run info).
      */
     Summary summary = 3;
 
@@ -67,6 +67,10 @@ message SuiteRecord {
             run_count is how many suite runs this definition has spawned.
          */
         uint32 run_count = 6;
+        /*
+            cell_count is the number of enabled cells in the suite definition.
+         */
+        uint32 cell_count = 7;
     }
 }
 
@@ -74,7 +78,8 @@ message SuiteRecord {
     SuiteRunRecord is a persisted suite EXECUTION. It references its expanded child
     runs by id (each is a first-class TestRunRecord whose suite_run_id points back
     here), so suite children list / track / show logs+metrics like any other run.
-    SuiteWorkflow receives a domain.SuiteRun assembled from the children at start.
+    SuiteWorkflow receives workflow.RunConfig entries assembled from those
+    children at start.
  */
 message SuiteRunRecord {
     /*
@@ -94,15 +99,16 @@ message SuiteRunRecord {
      */
     common.Trigger trigger = 7;
     /*
-        max_parallel is the max number of concurrent child TestWorkflows.
+        max_parallel is the max number of concurrent child TestRunWorkflows.
         0 = unlimited.
      */
     uint32 max_parallel = 4;
     /*
-        test_run_ids are the ids of the child TestRunRecord rows this suite run
-        expanded into.
+        children are child TestRunRecord ids keyed back to the originating suite
+        cell. These rows are still listed through TestRunAPI.ListTestRuns with
+        suite_run_id.
      */
-    repeated string test_run_ids = 5 [(validate.rules).repeated = {items: {string: {max_len: 64}}}];
+    repeated ChildRun children = 5;
 
     /*
         summary holds denormalized, queryable facets for the suite-runs table
@@ -166,5 +172,27 @@ message SuiteRunRecord {
             duration is the suite run's elapsed time.
          */
         google.protobuf.Duration duration = 12;
+    }
+
+    /*
+        ChildRun links one suite cell to one persisted TestRunRecord.
+     */
+    message ChildRun {
+        /*
+            suite_cell_id points to domain.SuiteCell.id.
+         */
+        string suite_cell_id = 1 [(validate.rules).string.max_len = 64];
+        /*
+            test_run_id is the child TestRunRecord entity id.
+         */
+        string test_run_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+        /*
+            name is the child display label.
+         */
+        string name = 3 [(validate.rules).string.max_len = 255];
+        /*
+            status is the latest known child run status.
+         */
+        common.Status status = 4;
     }
 }

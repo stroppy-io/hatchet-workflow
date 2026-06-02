@@ -29,6 +29,10 @@ func (m *DatabasePresetRecord) Encode(e *jx.Encoder) {
 		e.FieldStart("isSystem")
 		e.Bool(m.IsSystem)
 	}
+	if m.Summary != nil {
+		e.FieldStart("summary")
+		m.Summary.Encode(e)
+	}
 	e.ObjEnd()
 }
 
@@ -76,6 +80,19 @@ func (m *DatabasePresetRecord) Decode(d *jx.Decoder) error {
 			}
 			m.IsSystem = v
 			return nil
+		case "summary":
+			if seen["Summary"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Summary"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Summary = &DatabasePresetRecord_Summary{}
+			if err := m.Summary.Decode(d); err != nil {
+				return err
+			}
+			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}
@@ -89,6 +106,110 @@ func (m *DatabasePresetRecord) MarshalJSON() ([]byte, error) {
 }
 
 func (m *DatabasePresetRecord) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *DatabasePresetRecord_Summary) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.DbKind != 0 {
+		e.FieldStart("dbKind")
+		if s, ok := domain.Database_Kind_name[int32(m.DbKind)]; ok {
+			e.Str(s)
+		} else {
+			e.Int32(int32(m.DbKind))
+		}
+	}
+	if m.Version != "" {
+		e.FieldStart("version")
+		e.Str(m.Version)
+	}
+	if m.External != false {
+		e.FieldStart("external")
+		e.Bool(m.External)
+	}
+	e.ObjEnd()
+}
+
+func (m *DatabasePresetRecord_Summary) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "dbKind", "db_kind":
+			if seen["DbKind"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["DbKind"] = true
+			switch d.Next() {
+			case jx.String:
+				s, err := d.Str()
+				if err != nil {
+					return err
+				}
+				n, ok := domain.Database_Kind_value[s]
+				if !ok {
+					return fmt.Errorf("unknown enum value %q", s)
+				}
+				m.DbKind = domain.Database_Kind(n)
+				return nil
+			case jx.Number:
+				n, err := d.Int32()
+				if err != nil {
+					return err
+				}
+				m.DbKind = domain.Database_Kind(n)
+				return nil
+			case jx.Null:
+				return d.Null()
+			default:
+				return fmt.Errorf("invalid enum token %s", d.Next())
+			}
+		case "version":
+			if seen["Version"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Version"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Version = v
+			return nil
+		case "external":
+			if seen["External"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["External"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Bool()
+			if err != nil {
+				return err
+			}
+			m.External = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *DatabasePresetRecord_Summary) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *DatabasePresetRecord_Summary) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return m.Decode(d)
 }
@@ -111,6 +232,10 @@ func (m *WorkloadPresetRecord) Encode(e *jx.Encoder) {
 	if m.IsSystem != false {
 		e.FieldStart("isSystem")
 		e.Bool(m.IsSystem)
+	}
+	if m.Summary != nil {
+		e.FieldStart("summary")
+		m.Summary.Encode(e)
 	}
 	e.ObjEnd()
 }
@@ -159,6 +284,19 @@ func (m *WorkloadPresetRecord) Decode(d *jx.Decoder) error {
 			}
 			m.IsSystem = v
 			return nil
+		case "summary":
+			if seen["Summary"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Summary"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Summary = &WorkloadPresetRecord_Summary{}
+			if err := m.Summary.Decode(d); err != nil {
+				return err
+			}
+			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}
@@ -172,6 +310,110 @@ func (m *WorkloadPresetRecord) MarshalJSON() ([]byte, error) {
 }
 
 func (m *WorkloadPresetRecord) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *WorkloadPresetRecord_Summary) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Protocol != 0 {
+		e.FieldStart("protocol")
+		if s, ok := domain.Workload_Protocol_name[int32(m.Protocol)]; ok {
+			e.Str(s)
+		} else {
+			e.Int32(int32(m.Protocol))
+		}
+	}
+	if m.StroppyVersion != "" {
+		e.FieldStart("stroppyVersion")
+		e.Str(m.StroppyVersion)
+	}
+	if m.Script != "" {
+		e.FieldStart("script")
+		e.Str(m.Script)
+	}
+	e.ObjEnd()
+}
+
+func (m *WorkloadPresetRecord_Summary) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "protocol":
+			if seen["Protocol"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Protocol"] = true
+			switch d.Next() {
+			case jx.String:
+				s, err := d.Str()
+				if err != nil {
+					return err
+				}
+				n, ok := domain.Workload_Protocol_value[s]
+				if !ok {
+					return fmt.Errorf("unknown enum value %q", s)
+				}
+				m.Protocol = domain.Workload_Protocol(n)
+				return nil
+			case jx.Number:
+				n, err := d.Int32()
+				if err != nil {
+					return err
+				}
+				m.Protocol = domain.Workload_Protocol(n)
+				return nil
+			case jx.Null:
+				return d.Null()
+			default:
+				return fmt.Errorf("invalid enum token %s", d.Next())
+			}
+		case "stroppyVersion", "stroppy_version":
+			if seen["StroppyVersion"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["StroppyVersion"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.StroppyVersion = v
+			return nil
+		case "script":
+			if seen["Script"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Script"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Script = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *WorkloadPresetRecord_Summary) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *WorkloadPresetRecord_Summary) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return m.Decode(d)
 }
@@ -194,6 +436,10 @@ func (m *TestPresetRecord) Encode(e *jx.Encoder) {
 	if m.IsSystem != false {
 		e.FieldStart("isSystem")
 		e.Bool(m.IsSystem)
+	}
+	if m.Summary != nil {
+		e.FieldStart("summary")
+		m.Summary.Encode(e)
 	}
 	e.ObjEnd()
 }
@@ -242,6 +488,19 @@ func (m *TestPresetRecord) Decode(d *jx.Decoder) error {
 			}
 			m.IsSystem = v
 			return nil
+		case "summary":
+			if seen["Summary"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Summary"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Summary = &TestPresetRecord_Summary{}
+			if err := m.Summary.Decode(d); err != nil {
+				return err
+			}
+			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}
@@ -255,6 +514,129 @@ func (m *TestPresetRecord) MarshalJSON() ([]byte, error) {
 }
 
 func (m *TestPresetRecord) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *TestPresetRecord_Summary) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.DbKind != 0 {
+		e.FieldStart("dbKind")
+		if s, ok := domain.Database_Kind_name[int32(m.DbKind)]; ok {
+			e.Str(s)
+		} else {
+			e.Int32(int32(m.DbKind))
+		}
+	}
+	if m.Protocol != 0 {
+		e.FieldStart("protocol")
+		if s, ok := domain.Workload_Protocol_name[int32(m.Protocol)]; ok {
+			e.Str(s)
+		} else {
+			e.Int32(int32(m.Protocol))
+		}
+	}
+	if m.StroppyVersion != "" {
+		e.FieldStart("stroppyVersion")
+		e.Str(m.StroppyVersion)
+	}
+	e.ObjEnd()
+}
+
+func (m *TestPresetRecord_Summary) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "dbKind", "db_kind":
+			if seen["DbKind"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["DbKind"] = true
+			switch d.Next() {
+			case jx.String:
+				s, err := d.Str()
+				if err != nil {
+					return err
+				}
+				n, ok := domain.Database_Kind_value[s]
+				if !ok {
+					return fmt.Errorf("unknown enum value %q", s)
+				}
+				m.DbKind = domain.Database_Kind(n)
+				return nil
+			case jx.Number:
+				n, err := d.Int32()
+				if err != nil {
+					return err
+				}
+				m.DbKind = domain.Database_Kind(n)
+				return nil
+			case jx.Null:
+				return d.Null()
+			default:
+				return fmt.Errorf("invalid enum token %s", d.Next())
+			}
+		case "protocol":
+			if seen["Protocol"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Protocol"] = true
+			switch d.Next() {
+			case jx.String:
+				s, err := d.Str()
+				if err != nil {
+					return err
+				}
+				n, ok := domain.Workload_Protocol_value[s]
+				if !ok {
+					return fmt.Errorf("unknown enum value %q", s)
+				}
+				m.Protocol = domain.Workload_Protocol(n)
+				return nil
+			case jx.Number:
+				n, err := d.Int32()
+				if err != nil {
+					return err
+				}
+				m.Protocol = domain.Workload_Protocol(n)
+				return nil
+			case jx.Null:
+				return d.Null()
+			default:
+				return fmt.Errorf("invalid enum token %s", d.Next())
+			}
+		case "stroppyVersion", "stroppy_version":
+			if seen["StroppyVersion"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["StroppyVersion"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.StroppyVersion = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *TestPresetRecord_Summary) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *TestPresetRecord_Summary) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return m.Decode(d)
 }

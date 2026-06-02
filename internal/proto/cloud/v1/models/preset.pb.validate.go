@@ -17,6 +17,8 @@ import (
 	"unicode/utf8"
 
 	"google.golang.org/protobuf/types/known/anypb"
+
+	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 )
 
 // ensure the imports are used
@@ -33,6 +35,8 @@ var (
 	_ = (*mail.Address)(nil)
 	_ = anypb.Any{}
 	_ = sort.Sort
+
+	_ = domain.Database_Kind(0)
 )
 
 // Validate checks the field values on DatabasePresetRecord with the rules
@@ -138,6 +142,35 @@ func (m *DatabasePresetRecord) validate(all bool) error {
 	}
 
 	// no validation rules for IsSystem
+
+	if all {
+		switch v := interface{}(m.GetSummary()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DatabasePresetRecordValidationError{
+					field:  "Summary",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DatabasePresetRecordValidationError{
+					field:  "Summary",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSummary()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DatabasePresetRecordValidationError{
+				field:  "Summary",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
 	if len(errors) > 0 {
 		return DatabasePresetRecordMultiError(errors)
@@ -323,6 +356,35 @@ func (m *WorkloadPresetRecord) validate(all bool) error {
 
 	// no validation rules for IsSystem
 
+	if all {
+		switch v := interface{}(m.GetSummary()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, WorkloadPresetRecordValidationError{
+					field:  "Summary",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, WorkloadPresetRecordValidationError{
+					field:  "Summary",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSummary()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return WorkloadPresetRecordValidationError{
+				field:  "Summary",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	if len(errors) > 0 {
 		return WorkloadPresetRecordMultiError(errors)
 	}
@@ -507,6 +569,35 @@ func (m *TestPresetRecord) validate(all bool) error {
 
 	// no validation rules for IsSystem
 
+	if all {
+		switch v := interface{}(m.GetSummary()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TestPresetRecordValidationError{
+					field:  "Summary",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TestPresetRecordValidationError{
+					field:  "Summary",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSummary()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TestPresetRecordValidationError{
+				field:  "Summary",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	if len(errors) > 0 {
 		return TestPresetRecordMultiError(errors)
 	}
@@ -584,3 +675,365 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = TestPresetRecordValidationError{}
+
+// Validate checks the field values on DatabasePresetRecord_Summary with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *DatabasePresetRecord_Summary) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DatabasePresetRecord_Summary with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// DatabasePresetRecord_SummaryMultiError, or nil if none found.
+func (m *DatabasePresetRecord_Summary) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DatabasePresetRecord_Summary) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for DbKind
+
+	if utf8.RuneCountInString(m.GetVersion()) > 128 {
+		err := DatabasePresetRecord_SummaryValidationError{
+			field:  "Version",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for External
+
+	if len(errors) > 0 {
+		return DatabasePresetRecord_SummaryMultiError(errors)
+	}
+
+	return nil
+}
+
+// DatabasePresetRecord_SummaryMultiError is an error wrapping multiple
+// validation errors returned by DatabasePresetRecord_Summary.ValidateAll() if
+// the designated constraints aren't met.
+type DatabasePresetRecord_SummaryMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DatabasePresetRecord_SummaryMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DatabasePresetRecord_SummaryMultiError) AllErrors() []error { return m }
+
+// DatabasePresetRecord_SummaryValidationError is the validation error returned
+// by DatabasePresetRecord_Summary.Validate if the designated constraints
+// aren't met.
+type DatabasePresetRecord_SummaryValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DatabasePresetRecord_SummaryValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DatabasePresetRecord_SummaryValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DatabasePresetRecord_SummaryValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DatabasePresetRecord_SummaryValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DatabasePresetRecord_SummaryValidationError) ErrorName() string {
+	return "DatabasePresetRecord_SummaryValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DatabasePresetRecord_SummaryValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDatabasePresetRecord_Summary.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DatabasePresetRecord_SummaryValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DatabasePresetRecord_SummaryValidationError{}
+
+// Validate checks the field values on WorkloadPresetRecord_Summary with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *WorkloadPresetRecord_Summary) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on WorkloadPresetRecord_Summary with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// WorkloadPresetRecord_SummaryMultiError, or nil if none found.
+func (m *WorkloadPresetRecord_Summary) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *WorkloadPresetRecord_Summary) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Protocol
+
+	if utf8.RuneCountInString(m.GetStroppyVersion()) > 64 {
+		err := WorkloadPresetRecord_SummaryValidationError{
+			field:  "StroppyVersion",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetScript()) > 512 {
+		err := WorkloadPresetRecord_SummaryValidationError{
+			field:  "Script",
+			reason: "value length must be at most 512 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return WorkloadPresetRecord_SummaryMultiError(errors)
+	}
+
+	return nil
+}
+
+// WorkloadPresetRecord_SummaryMultiError is an error wrapping multiple
+// validation errors returned by WorkloadPresetRecord_Summary.ValidateAll() if
+// the designated constraints aren't met.
+type WorkloadPresetRecord_SummaryMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m WorkloadPresetRecord_SummaryMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m WorkloadPresetRecord_SummaryMultiError) AllErrors() []error { return m }
+
+// WorkloadPresetRecord_SummaryValidationError is the validation error returned
+// by WorkloadPresetRecord_Summary.Validate if the designated constraints
+// aren't met.
+type WorkloadPresetRecord_SummaryValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e WorkloadPresetRecord_SummaryValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e WorkloadPresetRecord_SummaryValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e WorkloadPresetRecord_SummaryValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e WorkloadPresetRecord_SummaryValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e WorkloadPresetRecord_SummaryValidationError) ErrorName() string {
+	return "WorkloadPresetRecord_SummaryValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e WorkloadPresetRecord_SummaryValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sWorkloadPresetRecord_Summary.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = WorkloadPresetRecord_SummaryValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = WorkloadPresetRecord_SummaryValidationError{}
+
+// Validate checks the field values on TestPresetRecord_Summary with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *TestPresetRecord_Summary) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on TestPresetRecord_Summary with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// TestPresetRecord_SummaryMultiError, or nil if none found.
+func (m *TestPresetRecord_Summary) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *TestPresetRecord_Summary) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for DbKind
+
+	// no validation rules for Protocol
+
+	if utf8.RuneCountInString(m.GetStroppyVersion()) > 64 {
+		err := TestPresetRecord_SummaryValidationError{
+			field:  "StroppyVersion",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return TestPresetRecord_SummaryMultiError(errors)
+	}
+
+	return nil
+}
+
+// TestPresetRecord_SummaryMultiError is an error wrapping multiple validation
+// errors returned by TestPresetRecord_Summary.ValidateAll() if the designated
+// constraints aren't met.
+type TestPresetRecord_SummaryMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m TestPresetRecord_SummaryMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m TestPresetRecord_SummaryMultiError) AllErrors() []error { return m }
+
+// TestPresetRecord_SummaryValidationError is the validation error returned by
+// TestPresetRecord_Summary.Validate if the designated constraints aren't met.
+type TestPresetRecord_SummaryValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e TestPresetRecord_SummaryValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e TestPresetRecord_SummaryValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e TestPresetRecord_SummaryValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e TestPresetRecord_SummaryValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e TestPresetRecord_SummaryValidationError) ErrorName() string {
+	return "TestPresetRecord_SummaryValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e TestPresetRecord_SummaryValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTestPresetRecord_Summary.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = TestPresetRecord_SummaryValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = TestPresetRecord_SummaryValidationError{}

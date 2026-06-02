@@ -10,6 +10,271 @@ import (
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 )
 
+func (m *SuiteCell) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Id != "" {
+		e.FieldStart("id")
+		e.Str(m.Id)
+	}
+	if m.Name != "" {
+		e.FieldStart("name")
+		e.Str(m.Name)
+	}
+	if m.Enabled != false {
+		e.FieldStart("enabled")
+		e.Bool(m.Enabled)
+	}
+	if len(m.MachineOverrides) > 0 {
+		e.FieldStart("machineOverrides")
+		e.ArrStart()
+		for _, v := range m.MachineOverrides {
+			jxpb.EncMessage(e, v)
+		}
+		e.ArrEnd()
+	}
+	if m.RenderOverrides != nil {
+		e.FieldStart("renderOverrides")
+		jxpb.EncMessage(e, m.RenderOverrides)
+	}
+	if m.Tags != nil {
+		e.FieldStart("tags")
+		jxpb.EncMessage(e, m.Tags)
+	}
+	switch v := m.Source.(type) {
+	case *SuiteCell_PresetPair_:
+		e.FieldStart("presetPair")
+		v.PresetPair.Encode(e)
+	case *SuiteCell_TestPresetId:
+		e.FieldStart("testPresetId")
+		e.Str(v.TestPresetId)
+	case *SuiteCell_InlineTest:
+		e.FieldStart("inlineTest")
+		v.InlineTest.Encode(e)
+	}
+	e.ObjEnd()
+}
+
+func (m *SuiteCell) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "id":
+			if seen["Id"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Id"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Id = v
+			return nil
+		case "name":
+			if seen["Name"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Name"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Name = v
+			return nil
+		case "enabled":
+			if seen["Enabled"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Enabled"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Bool()
+			if err != nil {
+				return err
+			}
+			m.Enabled = v
+			return nil
+		case "machineOverrides", "machine_overrides":
+			if seen["MachineOverrides"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["MachineOverrides"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &deployment.MachinePlan{}
+				if err := jxpb.DecMessage(d, el); err != nil {
+					return err
+				}
+				m.MachineOverrides = append(m.MachineOverrides, el)
+				return nil
+			})
+		case "renderOverrides", "render_overrides":
+			if seen["RenderOverrides"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["RenderOverrides"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.RenderOverrides = &deployment.RenderOverrideSet{}
+			if err := jxpb.DecMessage(d, m.RenderOverrides); err != nil {
+				return err
+			}
+			return nil
+		case "tags":
+			if seen["Tags"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Tags"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Tags = &common.Tags{}
+			if err := jxpb.DecMessage(d, m.Tags); err != nil {
+				return err
+			}
+			return nil
+		case "presetPair", "preset_pair":
+			if seen["oneof:Source"] {
+				return fmt.Errorf("multiple keys for oneof source")
+			}
+			seen["oneof:Source"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			w := &SuiteCell_PresetPair_{}
+			w.PresetPair = &SuiteCell_PresetPair{}
+			if err := w.PresetPair.Decode(d); err != nil {
+				return err
+			}
+			m.Source = w
+			return nil
+		case "testPresetId", "test_preset_id":
+			if seen["oneof:Source"] {
+				return fmt.Errorf("multiple keys for oneof source")
+			}
+			seen["oneof:Source"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			val, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Source = &SuiteCell_TestPresetId{TestPresetId: val}
+			return nil
+		case "inlineTest", "inline_test":
+			if seen["oneof:Source"] {
+				return fmt.Errorf("multiple keys for oneof source")
+			}
+			seen["oneof:Source"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			w := &SuiteCell_InlineTest{}
+			w.InlineTest = &Test{}
+			if err := w.InlineTest.Decode(d); err != nil {
+				return err
+			}
+			m.Source = w
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *SuiteCell) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *SuiteCell) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *SuiteCell_PresetPair) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.DbPresetId != "" {
+		e.FieldStart("dbPresetId")
+		e.Str(m.DbPresetId)
+	}
+	if m.WorkloadPresetId != "" {
+		e.FieldStart("workloadPresetId")
+		e.Str(m.WorkloadPresetId)
+	}
+	e.ObjEnd()
+}
+
+func (m *SuiteCell_PresetPair) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "dbPresetId", "db_preset_id":
+			if seen["DbPresetId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["DbPresetId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.DbPresetId = v
+			return nil
+		case "workloadPresetId", "workload_preset_id":
+			if seen["WorkloadPresetId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["WorkloadPresetId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.WorkloadPresetId = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *SuiteCell_PresetPair) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *SuiteCell_PresetPair) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
 func (m *Suite) Encode(e *jx.Encoder) {
 	if m == nil {
 		e.ObjStart()
@@ -21,11 +286,11 @@ func (m *Suite) Encode(e *jx.Encoder) {
 		e.FieldStart("id")
 		e.Str(m.Id)
 	}
-	if len(m.PresetIds) > 0 {
-		e.FieldStart("presetIds")
+	if len(m.Cells) > 0 {
+		e.FieldStart("cells")
 		e.ArrStart()
-		for _, v := range m.PresetIds {
-			e.Str(v)
+		for _, v := range m.Cells {
+			v.Encode(e)
 		}
 		e.ArrEnd()
 	}
@@ -53,6 +318,10 @@ func (m *Suite) Encode(e *jx.Encoder) {
 		e.FieldStart("defaultInGlobalRating")
 		e.Bool(*m.DefaultInGlobalRating)
 	}
+	if m.DefaultMaxParallel != 0 {
+		e.FieldStart("defaultMaxParallel")
+		e.UInt32(m.DefaultMaxParallel)
+	}
 	e.ObjEnd()
 }
 
@@ -74,20 +343,20 @@ func (m *Suite) Decode(d *jx.Decoder) error {
 			}
 			m.Id = v
 			return nil
-		case "presetIds", "preset_ids":
-			if seen["PresetIds"] {
+		case "cells":
+			if seen["Cells"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["PresetIds"] = true
+			seen["Cells"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
 			return d.Arr(func(d *jx.Decoder) error {
-				v, err := d.Str()
-				if err != nil {
+				el := &SuiteCell{}
+				if err := el.Decode(d); err != nil {
 					return err
 				}
-				m.PresetIds = append(m.PresetIds, v)
+				m.Cells = append(m.Cells, el)
 				return nil
 			})
 		case "provider":
@@ -172,6 +441,20 @@ func (m *Suite) Decode(d *jx.Decoder) error {
 				return err
 			}
 			m.DefaultInGlobalRating = &v
+			return nil
+		case "defaultMaxParallel", "default_max_parallel":
+			if seen["DefaultMaxParallel"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["DefaultMaxParallel"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint32(d)
+			if err != nil {
+				return err
+			}
+			m.DefaultMaxParallel = v
 			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)
@@ -275,6 +558,179 @@ func (m *Schedule) UnmarshalJSON(data []byte) error {
 	return m.Decode(d)
 }
 
+func (m *SuiteRunCell) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Id != "" {
+		e.FieldStart("id")
+		e.Str(m.Id)
+	}
+	if m.SuiteCellId != "" {
+		e.FieldStart("suiteCellId")
+		e.Str(m.SuiteCellId)
+	}
+	if m.TestRun != nil {
+		e.FieldStart("testRun")
+		m.TestRun.Encode(e)
+	}
+	if m.Name != "" {
+		e.FieldStart("name")
+		e.Str(m.Name)
+	}
+	if m.DbPresetId != "" {
+		e.FieldStart("dbPresetId")
+		e.Str(m.DbPresetId)
+	}
+	if m.WorkloadPresetId != "" {
+		e.FieldStart("workloadPresetId")
+		e.Str(m.WorkloadPresetId)
+	}
+	if m.TestPresetId != "" {
+		e.FieldStart("testPresetId")
+		e.Str(m.TestPresetId)
+	}
+	if m.Tags != nil {
+		e.FieldStart("tags")
+		jxpb.EncMessage(e, m.Tags)
+	}
+	e.ObjEnd()
+}
+
+func (m *SuiteRunCell) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "id":
+			if seen["Id"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Id"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Id = v
+			return nil
+		case "suiteCellId", "suite_cell_id":
+			if seen["SuiteCellId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["SuiteCellId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.SuiteCellId = v
+			return nil
+		case "testRun", "test_run":
+			if seen["TestRun"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["TestRun"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.TestRun = &TestRun{}
+			if err := m.TestRun.Decode(d); err != nil {
+				return err
+			}
+			return nil
+		case "name":
+			if seen["Name"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Name"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Name = v
+			return nil
+		case "dbPresetId", "db_preset_id":
+			if seen["DbPresetId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["DbPresetId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.DbPresetId = v
+			return nil
+		case "workloadPresetId", "workload_preset_id":
+			if seen["WorkloadPresetId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["WorkloadPresetId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.WorkloadPresetId = v
+			return nil
+		case "testPresetId", "test_preset_id":
+			if seen["TestPresetId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["TestPresetId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.TestPresetId = v
+			return nil
+		case "tags":
+			if seen["Tags"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Tags"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Tags = &common.Tags{}
+			if err := jxpb.DecMessage(d, m.Tags); err != nil {
+				return err
+			}
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *SuiteRunCell) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *SuiteRunCell) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
 func (m *SuiteRun) Encode(e *jx.Encoder) {
 	if m == nil {
 		e.ObjStart()
@@ -290,10 +746,10 @@ func (m *SuiteRun) Encode(e *jx.Encoder) {
 		e.FieldStart("suiteId")
 		e.Str(m.SuiteId)
 	}
-	if len(m.TestRuns) > 0 {
-		e.FieldStart("testRuns")
+	if len(m.Cells) > 0 {
+		e.FieldStart("cells")
 		e.ArrStart()
-		for _, v := range m.TestRuns {
+		for _, v := range m.Cells {
 			v.Encode(e)
 		}
 		e.ArrEnd()
@@ -337,20 +793,20 @@ func (m *SuiteRun) Decode(d *jx.Decoder) error {
 			}
 			m.SuiteId = v
 			return nil
-		case "testRuns", "test_runs":
-			if seen["TestRuns"] {
+		case "cells":
+			if seen["Cells"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["TestRuns"] = true
+			seen["Cells"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
 			return d.Arr(func(d *jx.Decoder) error {
-				el := &TestRun{}
+				el := &SuiteRunCell{}
 				if err := el.Decode(d); err != nil {
 					return err
 				}
-				m.TestRuns = append(m.TestRuns, el)
+				m.Cells = append(m.Cells, el)
 				return nil
 			})
 		case "maxParallel", "max_parallel":

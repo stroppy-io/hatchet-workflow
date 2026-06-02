@@ -25,7 +25,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/models/suite.proto.
  */
 export const file_cloud_v1_models_suite: GenFile = /*@__PURE__*/
-  fileDesc("ChtjbG91ZC92MS9tb2RlbHMvc3VpdGUucHJvdG8SD2Nsb3VkLnYxLm1vZGVscyKMAwoLU3VpdGVSZWNvcmQSMQoGZW50aXR5GAEgASgLMhcuY2xvdWQudjEuY29tbW9uLkVudGl0eUII+kIFigECEAESLgoEc3BlYxgCIAEoCzIWLmNsb3VkLnYxLmRvbWFpbi5TdWl0ZUII+kIFigECEAESNQoHc3VtbWFyeRgDIAEoCzIkLmNsb3VkLnYxLm1vZGVscy5TdWl0ZVJlY29yZC5TdW1tYXJ5GuIBCgdTdW1tYXJ5EhgKEHNjaGVkdWxlX2VuYWJsZWQYASABKAgSFgoEY3JvbhgCIAEoCUII+kIFcgMYgAESLwoLbmV4dF9ydW5fYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC2xhc3RfcnVuX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIwCg9sYXN0X3J1bl9zdGF0dXMYBSABKA4yFy5jbG91ZC52MS5jb21tb24uU3RhdHVzEhEKCXJ1bl9jb3VudBgGIAEoDSK2BQoOU3VpdGVSdW5SZWNvcmQSMQoGZW50aXR5GAEgASgLMhcuY2xvdWQudjEuY29tbW9uLkVudGl0eUII+kIFigECEAESGwoIc3VpdGVfaWQYAiABKAlCCfpCBnIEEAEYQBInCgZzdGF0dXMYAyABKA4yFy5jbG91ZC52MS5jb21tb24uU3RhdHVzEikKB3RyaWdnZXIYByABKA4yGC5jbG91ZC52MS5jb21tb24uVHJpZ2dlchIUCgxtYXhfcGFyYWxsZWwYBCABKA0SIgoMdGVzdF9ydW5faWRzGAUgAygJQgz6QgmSAQYiBHICGEASOAoHc3VtbWFyeRgGIAEoCzInLmNsb3VkLnYxLm1vZGVscy5TdWl0ZVJ1blJlY29yZC5TdW1tYXJ5GosDCgdTdW1tYXJ5EhwKCnN1aXRlX25hbWUYASABKAlCCPpCBXIDGP8BEi8KCHByb3ZpZGVyGAIgASgOMh0uY2xvdWQudjEuZGVwbG95bWVudC5Qcm92aWRlchIwCghkYl9raW5kcxgDIAMoDjIeLmNsb3VkLnYxLmRvbWFpbi5EYXRhYmFzZS5LaW5kEg0KBXRvdGFsGAQgASgNEhEKCWNvbXBsZXRlZBgFIAEoDRIOCgZmYWlsZWQYBiABKA0SDwoHcnVubmluZxgHIAEoDRIPCgdwZW5kaW5nGAggASgNEh0KDHByb2dyZXNzX3BjdBgJIAEoDUIH+kIEKgIYZBIuCgpzdGFydGVkX2F0GAogASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIvCgtmaW5pc2hlZF9hdBgLIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASKwoIZHVyYXRpb24YDCABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb25CRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvbW9kZWxzYgZwcm90bzM", [file_cloud_v1_common_entity, file_cloud_v1_common_status, file_cloud_v1_common_trigger, file_cloud_v1_deployment_provider, file_cloud_v1_domain_database, file_cloud_v1_domain_suite, file_google_protobuf_duration, file_google_protobuf_timestamp, file_validate_validate]);
+  fileDesc("ChtjbG91ZC92MS9tb2RlbHMvc3VpdGUucHJvdG8SD2Nsb3VkLnYxLm1vZGVscyKgAwoLU3VpdGVSZWNvcmQSMQoGZW50aXR5GAEgASgLMhcuY2xvdWQudjEuY29tbW9uLkVudGl0eUII+kIFigECEAESLgoEc3BlYxgCIAEoCzIWLmNsb3VkLnYxLmRvbWFpbi5TdWl0ZUII+kIFigECEAESNQoHc3VtbWFyeRgDIAEoCzIkLmNsb3VkLnYxLm1vZGVscy5TdWl0ZVJlY29yZC5TdW1tYXJ5GvYBCgdTdW1tYXJ5EhgKEHNjaGVkdWxlX2VuYWJsZWQYASABKAgSFgoEY3JvbhgCIAEoCUII+kIFcgMYgAESLwoLbmV4dF9ydW5fYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC2xhc3RfcnVuX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIwCg9sYXN0X3J1bl9zdGF0dXMYBSABKA4yFy5jbG91ZC52MS5jb21tb24uU3RhdHVzEhEKCXJ1bl9jb3VudBgGIAEoDRISCgpjZWxsX2NvdW50GAcgASgNItwGCg5TdWl0ZVJ1blJlY29yZBIxCgZlbnRpdHkYASABKAsyFy5jbG91ZC52MS5jb21tb24uRW50aXR5Qgj6QgWKAQIQARIbCghzdWl0ZV9pZBgCIAEoCUIJ+kIGcgQQARhAEicKBnN0YXR1cxgDIAEoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXMSKQoHdHJpZ2dlchgHIAEoDjIYLmNsb3VkLnYxLmNvbW1vbi5UcmlnZ2VyEhQKDG1heF9wYXJhbGxlbBgEIAEoDRI6CghjaGlsZHJlbhgFIAMoCzIoLmNsb3VkLnYxLm1vZGVscy5TdWl0ZVJ1blJlY29yZC5DaGlsZFJ1bhI4CgdzdW1tYXJ5GAYgASgLMicuY2xvdWQudjEubW9kZWxzLlN1aXRlUnVuUmVjb3JkLlN1bW1hcnkaiwMKB1N1bW1hcnkSHAoKc3VpdGVfbmFtZRgBIAEoCUII+kIFcgMY/wESLwoIcHJvdmlkZXIYAiABKA4yHS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyEjAKCGRiX2tpbmRzGAMgAygOMh4uY2xvdWQudjEuZG9tYWluLkRhdGFiYXNlLktpbmQSDQoFdG90YWwYBCABKA0SEQoJY29tcGxldGVkGAUgASgNEg4KBmZhaWxlZBgGIAEoDRIPCgdydW5uaW5nGAcgASgNEg8KB3BlbmRpbmcYCCABKA0SHQoMcHJvZ3Jlc3NfcGN0GAkgASgNQgf6QgQqAhhkEi4KCnN0YXJ0ZWRfYXQYCiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC2ZpbmlzaGVkX2F0GAsgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIrCghkdXJhdGlvbhgMIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbhqLAQoIQ2hpbGRSdW4SHgoNc3VpdGVfY2VsbF9pZBgBIAEoCUIH+kIEcgIYQBIeCgt0ZXN0X3J1bl9pZBgCIAEoCUIJ+kIGcgQQARhAEhYKBG5hbWUYAyABKAlCCPpCBXIDGP8BEicKBnN0YXR1cxgEIAEoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXNCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvbW9kZWxzYgZwcm90bzM", [file_cloud_v1_common_entity, file_cloud_v1_common_status, file_cloud_v1_common_trigger, file_cloud_v1_deployment_provider, file_cloud_v1_domain_database, file_cloud_v1_domain_suite, file_google_protobuf_duration, file_google_protobuf_timestamp, file_validate_validate]);
 
 /**
  *
@@ -56,8 +56,8 @@ export type SuiteRecord = Message<"cloud.v1.models.SuiteRecord"> & {
 
   /**
    *
-   * summary holds denormalized facets for the suites table (schedule state +
-   * last-run info).
+   * summary holds denormalized facets for the suites table (cell count,
+   * schedule state, last-run info).
    *
    * @generated from field: cloud.v1.models.SuiteRecord.Summary summary = 3;
    */
@@ -93,8 +93,8 @@ export type SuiteRecordJson = {
 
   /**
    *
-   * summary holds denormalized facets for the suites table (schedule state +
-   * last-run info).
+   * summary holds denormalized facets for the suites table (cell count,
+   * schedule state, last-run info).
    *
    * @generated from field: cloud.v1.models.SuiteRecord.Summary summary = 3;
    */
@@ -166,6 +166,14 @@ export type SuiteRecord_Summary = Message<"cloud.v1.models.SuiteRecord.Summary">
    * @generated from field: uint32 run_count = 6;
    */
   runCount: number;
+
+  /**
+   *
+   * cell_count is the number of enabled cells in the suite definition.
+   *
+   * @generated from field: uint32 cell_count = 7;
+   */
+  cellCount: number;
 };
 
 /**
@@ -224,6 +232,14 @@ export type SuiteRecord_SummaryJson = {
    * @generated from field: uint32 run_count = 6;
    */
   runCount?: number;
+
+  /**
+   *
+   * cell_count is the number of enabled cells in the suite definition.
+   *
+   * @generated from field: uint32 cell_count = 7;
+   */
+  cellCount?: number;
 };
 
 export type SuiteRecord_SummaryValid = SuiteRecord_Summary;
@@ -240,7 +256,8 @@ export const SuiteRecord_SummarySchema: GenMessage<SuiteRecord_Summary, {jsonTyp
  * SuiteRunRecord is a persisted suite EXECUTION. It references its expanded child
  * runs by id (each is a first-class TestRunRecord whose suite_run_id points back
  * here), so suite children list / track / show logs+metrics like any other run.
- * SuiteWorkflow receives a domain.SuiteRun assembled from the children at start.
+ * SuiteWorkflow receives workflow.RunConfig entries assembled from those
+ * children at start.
  *
  * @generated from message cloud.v1.models.SuiteRunRecord
  */
@@ -279,7 +296,7 @@ export type SuiteRunRecord = Message<"cloud.v1.models.SuiteRunRecord"> & {
 
   /**
    *
-   * max_parallel is the max number of concurrent child TestWorkflows.
+   * max_parallel is the max number of concurrent child TestRunWorkflows.
    * 0 = unlimited.
    *
    * @generated from field: uint32 max_parallel = 4;
@@ -288,12 +305,13 @@ export type SuiteRunRecord = Message<"cloud.v1.models.SuiteRunRecord"> & {
 
   /**
    *
-   * test_run_ids are the ids of the child TestRunRecord rows this suite run
-   * expanded into.
+   * children are child TestRunRecord ids keyed back to the originating suite
+   * cell. These rows are still listed through TestRunAPI.ListTestRuns with
+   * suite_run_id.
    *
-   * @generated from field: repeated string test_run_ids = 5;
+   * @generated from field: repeated cloud.v1.models.SuiteRunRecord.ChildRun children = 5;
    */
-  testRunIds: string[];
+  children: SuiteRunRecord_ChildRun[];
 
   /**
    *
@@ -311,7 +329,8 @@ export type SuiteRunRecord = Message<"cloud.v1.models.SuiteRunRecord"> & {
  * SuiteRunRecord is a persisted suite EXECUTION. It references its expanded child
  * runs by id (each is a first-class TestRunRecord whose suite_run_id points back
  * here), so suite children list / track / show logs+metrics like any other run.
- * SuiteWorkflow receives a domain.SuiteRun assembled from the children at start.
+ * SuiteWorkflow receives workflow.RunConfig entries assembled from those
+ * children at start.
  *
  * @generated from message cloud.v1.models.SuiteRunRecord
  */
@@ -350,7 +369,7 @@ export type SuiteRunRecordJson = {
 
   /**
    *
-   * max_parallel is the max number of concurrent child TestWorkflows.
+   * max_parallel is the max number of concurrent child TestRunWorkflows.
    * 0 = unlimited.
    *
    * @generated from field: uint32 max_parallel = 4;
@@ -359,12 +378,13 @@ export type SuiteRunRecordJson = {
 
   /**
    *
-   * test_run_ids are the ids of the child TestRunRecord rows this suite run
-   * expanded into.
+   * children are child TestRunRecord ids keyed back to the originating suite
+   * cell. These rows are still listed through TestRunAPI.ListTestRuns with
+   * suite_run_id.
    *
-   * @generated from field: repeated string test_run_ids = 5;
+   * @generated from field: repeated cloud.v1.models.SuiteRunRecord.ChildRun children = 5;
    */
-  testRunIds?: string[];
+  children?: SuiteRunRecord_ChildRunJson[];
 
   /**
    *
@@ -608,4 +628,93 @@ export type SuiteRunRecord_SummaryValid = SuiteRunRecord_Summary;
  */
 export const SuiteRunRecord_SummarySchema: GenMessage<SuiteRunRecord_Summary, {jsonType: SuiteRunRecord_SummaryJson, validType: SuiteRunRecord_SummaryValid}> = /*@__PURE__*/
   messageDesc(file_cloud_v1_models_suite, 1, 0);
+
+/**
+ *
+ * ChildRun links one suite cell to one persisted TestRunRecord.
+ *
+ * @generated from message cloud.v1.models.SuiteRunRecord.ChildRun
+ */
+export type SuiteRunRecord_ChildRun = Message<"cloud.v1.models.SuiteRunRecord.ChildRun"> & {
+  /**
+   *
+   * suite_cell_id points to domain.SuiteCell.id.
+   *
+   * @generated from field: string suite_cell_id = 1;
+   */
+  suiteCellId: string;
+
+  /**
+   *
+   * test_run_id is the child TestRunRecord entity id.
+   *
+   * @generated from field: string test_run_id = 2;
+   */
+  testRunId: string;
+
+  /**
+   *
+   * name is the child display label.
+   *
+   * @generated from field: string name = 3;
+   */
+  name: string;
+
+  /**
+   *
+   * status is the latest known child run status.
+   *
+   * @generated from field: cloud.v1.common.Status status = 4;
+   */
+  status: Status;
+};
+
+/**
+ *
+ * ChildRun links one suite cell to one persisted TestRunRecord.
+ *
+ * @generated from message cloud.v1.models.SuiteRunRecord.ChildRun
+ */
+export type SuiteRunRecord_ChildRunJson = {
+  /**
+   *
+   * suite_cell_id points to domain.SuiteCell.id.
+   *
+   * @generated from field: string suite_cell_id = 1;
+   */
+  suiteCellId?: string;
+
+  /**
+   *
+   * test_run_id is the child TestRunRecord entity id.
+   *
+   * @generated from field: string test_run_id = 2;
+   */
+  testRunId?: string;
+
+  /**
+   *
+   * name is the child display label.
+   *
+   * @generated from field: string name = 3;
+   */
+  name?: string;
+
+  /**
+   *
+   * status is the latest known child run status.
+   *
+   * @generated from field: cloud.v1.common.Status status = 4;
+   */
+  status?: StatusJson;
+};
+
+export type SuiteRunRecord_ChildRunValid = SuiteRunRecord_ChildRun;
+
+/**
+ * Describes the message cloud.v1.models.SuiteRunRecord.ChildRun.
+ * Use `create(SuiteRunRecord_ChildRunSchema)` to create a new message.
+ */
+export const SuiteRunRecord_ChildRunSchema: GenMessage<SuiteRunRecord_ChildRun, {jsonType: SuiteRunRecord_ChildRunJson, validType: SuiteRunRecord_ChildRunValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_models_suite, 1, 1);
 

@@ -50,6 +50,9 @@ type TestRunRecord struct {
 	Status common.Status `protobuf:"varint,3,opt,name=status,proto3,enum=cloud.v1.common.Status" json:"status,omitempty"`
 	// suite_run_id is the owning suite run; empty for a standalone run.
 	SuiteRunId string `protobuf:"bytes,4,opt,name=suite_run_id,json=suiteRunId,proto3" json:"suite_run_id,omitempty"`
+	// suite_cell_id is the originating SuiteCell.id inside suite_run_id. Empty
+	// for standalone runs and ad-hoc suite children without a stable cell id.
+	SuiteCellId string `protobuf:"bytes,12,opt,name=suite_cell_id,json=suiteCellId,proto3" json:"suite_cell_id,omitempty"`
 	// trigger is the root cause of the run: MANUAL / CRON / API. For a suite
 	// child it carries the PARENT suite run's trigger (e.g. CRON), while suite
 	// membership is shown by suite_run_id. So "cron + from suite" = trigger=CRON
@@ -136,6 +139,13 @@ func (x *TestRunRecord) GetSuiteRunId() string {
 	return ""
 }
 
+func (x *TestRunRecord) GetSuiteCellId() string {
+	if x != nil {
+		return x.SuiteCellId
+	}
+	return ""
+}
+
 func (x *TestRunRecord) GetTrigger() common.Trigger {
 	if x != nil {
 		return x.Trigger
@@ -195,6 +205,12 @@ type TestRunRecord_Summary struct {
 	WorkloadName string `protobuf:"bytes,5,opt,name=workload_name,json=workloadName,proto3" json:"workload_name,omitempty"`
 	// stroppy_version is the stroppy build that ran the workload.
 	StroppyVersion string `protobuf:"bytes,6,opt,name=stroppy_version,json=stroppyVersion,proto3" json:"stroppy_version,omitempty"`
+	// workload_protocol is the wire protocol exercised by the workload.
+	WorkloadProtocol domain.Workload_Protocol `protobuf:"varint,14,opt,name=workload_protocol,json=workloadProtocol,proto3,enum=cloud.v1.domain.Workload_Protocol" json:"workload_protocol,omitempty"`
+	// test_preset_id is the complete test preset source, when one was used.
+	TestPresetId string `protobuf:"bytes,15,opt,name=test_preset_id,json=testPresetId,proto3" json:"test_preset_id,omitempty"`
+	// test_preset_name is the display name of the test preset source.
+	TestPresetName string `protobuf:"bytes,16,opt,name=test_preset_name,json=testPresetName,proto3" json:"test_preset_name,omitempty"`
 	// topology_label is the human-readable topology summary (topology
 	// facet), e.g. "PG HA x3".
 	TopologyLabel string `protobuf:"bytes,7,opt,name=topology_label,json=topologyLabel,proto3" json:"topology_label,omitempty"`
@@ -288,6 +304,27 @@ func (x *TestRunRecord_Summary) GetStroppyVersion() string {
 	return ""
 }
 
+func (x *TestRunRecord_Summary) GetWorkloadProtocol() domain.Workload_Protocol {
+	if x != nil {
+		return x.WorkloadProtocol
+	}
+	return domain.Workload_Protocol(0)
+}
+
+func (x *TestRunRecord_Summary) GetTestPresetId() string {
+	if x != nil {
+		return x.TestPresetId
+	}
+	return ""
+}
+
+func (x *TestRunRecord_Summary) GetTestPresetName() string {
+	if x != nil {
+		return x.TestPresetName
+	}
+	return ""
+}
+
 func (x *TestRunRecord_Summary) GetTopologyLabel() string {
 	if x != nil {
 		return x.TopologyLabel
@@ -341,20 +378,21 @@ var File_cloud_v1_models_test_run_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_models_test_run_proto_rawDesc = "" +
 	"\n" +
-	"\x1ecloud/v1/models/test_run.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ccloud/v1/common/status.proto\x1a\x1dcloud/v1/common/trigger.proto\x1a(cloud/v1/deployment/infrastructure.proto\x1a\x1ecloud/v1/deployment/plan.proto\x1a\"cloud/v1/deployment/provider.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\xf7\t\n" +
+	"\x1ecloud/v1/models/test_run.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ccloud/v1/common/status.proto\x1a\x1dcloud/v1/common/trigger.proto\x1a(cloud/v1/deployment/infrastructure.proto\x1a\x1ecloud/v1/deployment/plan.proto\x1a\"cloud/v1/deployment/provider.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\xd8\v\n" +
 	"\rTestRunRecord\x129\n" +
 	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.common.EntityB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06entity\x126\n" +
 	"\x04spec\x18\x02 \x01(\v2\x18.cloud.v1.domain.TestRunB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04spec\x12/\n" +
 	"\x06status\x18\x03 \x01(\x0e2\x17.cloud.v1.common.StatusR\x06status\x12)\n" +
 	"\fsuite_run_id\x18\x04 \x01(\tB\a\xfaB\x04r\x02\x18@R\n" +
-	"suiteRunId\x122\n" +
+	"suiteRunId\x12+\n" +
+	"\rsuite_cell_id\x18\f \x01(\tB\a\xfaB\x04r\x02\x18@R\vsuiteCellId\x122\n" +
 	"\atrigger\x18\a \x01(\x0e2\x18.cloud.v1.common.TriggerR\atrigger\x12(\n" +
 	"\x10in_tenant_rating\x18\b \x01(\bR\x0einTenantRating\x12(\n" +
 	"\x10in_global_rating\x18\t \x01(\bR\x0einGlobalRating\x12@\n" +
 	"\asummary\x18\x06 \x01(\v2&.cloud.v1.models.TestRunRecord.SummaryR\asummary\x12[\n" +
 	"\x14infrastructure_state\x18\n" +
 	" \x01(\v2(.cloud.v1.deployment.InfrastructureStateR\x13infrastructureState\x12L\n" +
-	"\x0fdeployment_plan\x18\v \x01(\v2#.cloud.v1.deployment.DeploymentPlanR\x0edeploymentPlan\x1a\x9b\x05\n" +
+	"\x0fdeployment_plan\x18\v \x01(\v2#.cloud.v1.deployment.DeploymentPlanR\x0edeploymentPlan\x1a\xcf\x06\n" +
 	"\aSummary\x127\n" +
 	"\adb_kind\x18\x01 \x01(\x0e2\x1e.cloud.v1.domain.Database.KindR\x06dbKind\x12)\n" +
 	"\fdb_preset_id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x18@R\n" +
@@ -362,7 +400,10 @@ const file_cloud_v1_models_test_run_proto_rawDesc = "" +
 	"\x0edb_preset_name\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\xff\x01R\fdbPresetName\x125\n" +
 	"\x12workload_preset_id\x18\x04 \x01(\tB\a\xfaB\x04r\x02\x18@R\x10workloadPresetId\x12-\n" +
 	"\rworkload_name\x18\x05 \x01(\tB\b\xfaB\x05r\x03\x18\xff\x01R\fworkloadName\x120\n" +
-	"\x0fstroppy_version\x18\x06 \x01(\tB\a\xfaB\x04r\x02\x18@R\x0estroppyVersion\x12/\n" +
+	"\x0fstroppy_version\x18\x06 \x01(\tB\a\xfaB\x04r\x02\x18@R\x0estroppyVersion\x12O\n" +
+	"\x11workload_protocol\x18\x0e \x01(\x0e2\".cloud.v1.domain.Workload.ProtocolR\x10workloadProtocol\x12-\n" +
+	"\x0etest_preset_id\x18\x0f \x01(\tB\a\xfaB\x04r\x02\x18@R\ftestPresetId\x122\n" +
+	"\x10test_preset_name\x18\x10 \x01(\tB\b\xfaB\x05r\x03\x18\xff\x01R\x0etestPresetName\x12/\n" +
 	"\x0etopology_label\x18\a \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\rtopologyLabel\x12\x1d\n" +
 	"\n" +
 	"node_count\x18\b \x01(\rR\tnodeCount\x129\n" +
@@ -398,9 +439,10 @@ var file_cloud_v1_models_test_run_proto_goTypes = []any{
 	(*deployment.InfrastructureState)(nil), // 6: cloud.v1.deployment.InfrastructureState
 	(*deployment.DeploymentPlan)(nil),      // 7: cloud.v1.deployment.DeploymentPlan
 	(domain.Database_Kind)(0),              // 8: cloud.v1.domain.Database.Kind
-	(deployment.Provider)(0),               // 9: cloud.v1.deployment.Provider
-	(*timestamppb.Timestamp)(nil),          // 10: google.protobuf.Timestamp
-	(*durationpb.Duration)(nil),            // 11: google.protobuf.Duration
+	(domain.Workload_Protocol)(0),          // 9: cloud.v1.domain.Workload.Protocol
+	(deployment.Provider)(0),               // 10: cloud.v1.deployment.Provider
+	(*timestamppb.Timestamp)(nil),          // 11: google.protobuf.Timestamp
+	(*durationpb.Duration)(nil),            // 12: google.protobuf.Duration
 }
 var file_cloud_v1_models_test_run_proto_depIdxs = []int32{
 	2,  // 0: cloud.v1.models.TestRunRecord.entity:type_name -> cloud.v1.common.Entity
@@ -411,15 +453,16 @@ var file_cloud_v1_models_test_run_proto_depIdxs = []int32{
 	6,  // 5: cloud.v1.models.TestRunRecord.infrastructure_state:type_name -> cloud.v1.deployment.InfrastructureState
 	7,  // 6: cloud.v1.models.TestRunRecord.deployment_plan:type_name -> cloud.v1.deployment.DeploymentPlan
 	8,  // 7: cloud.v1.models.TestRunRecord.Summary.db_kind:type_name -> cloud.v1.domain.Database.Kind
-	9,  // 8: cloud.v1.models.TestRunRecord.Summary.provider:type_name -> cloud.v1.deployment.Provider
-	10, // 9: cloud.v1.models.TestRunRecord.Summary.started_at:type_name -> google.protobuf.Timestamp
-	10, // 10: cloud.v1.models.TestRunRecord.Summary.finished_at:type_name -> google.protobuf.Timestamp
-	11, // 11: cloud.v1.models.TestRunRecord.Summary.duration:type_name -> google.protobuf.Duration
-	12, // [12:12] is the sub-list for method output_type
-	12, // [12:12] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	9,  // 8: cloud.v1.models.TestRunRecord.Summary.workload_protocol:type_name -> cloud.v1.domain.Workload.Protocol
+	10, // 9: cloud.v1.models.TestRunRecord.Summary.provider:type_name -> cloud.v1.deployment.Provider
+	11, // 10: cloud.v1.models.TestRunRecord.Summary.started_at:type_name -> google.protobuf.Timestamp
+	11, // 11: cloud.v1.models.TestRunRecord.Summary.finished_at:type_name -> google.protobuf.Timestamp
+	12, // 12: cloud.v1.models.TestRunRecord.Summary.duration:type_name -> google.protobuf.Duration
+	13, // [13:13] is the sub-list for method output_type
+	13, // [13:13] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_models_test_run_proto_init() }

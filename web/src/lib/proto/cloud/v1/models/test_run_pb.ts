@@ -20,6 +20,8 @@ import type { Database_Kind, Database_KindJson } from "../domain/database_pb.ts"
 import { file_cloud_v1_domain_database } from "../domain/database_pb.ts";
 import type { TestRun, TestRunJson } from "../domain/test_pb.ts";
 import { file_cloud_v1_domain_test } from "../domain/test_pb.ts";
+import type { Workload_Protocol, Workload_ProtocolJson } from "../domain/workload_pb.ts";
+import { file_cloud_v1_domain_workload } from "../domain/workload_pb.ts";
 import type { Duration, DurationJson, Timestamp, TimestampJson } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_duration, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import { file_validate_validate } from "../../../validate/validate_pb.ts";
@@ -29,7 +31,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/models/test_run.proto.
  */
 export const file_cloud_v1_models_test_run: GenFile = /*@__PURE__*/
-  fileDesc("Ch5jbG91ZC92MS9tb2RlbHMvdGVzdF9ydW4ucHJvdG8SD2Nsb3VkLnYxLm1vZGVscyLaBwoNVGVzdFJ1blJlY29yZBIxCgZlbnRpdHkYASABKAsyFy5jbG91ZC52MS5jb21tb24uRW50aXR5Qgj6QgWKAQIQARIwCgRzcGVjGAIgASgLMhguY2xvdWQudjEuZG9tYWluLlRlc3RSdW5CCPpCBYoBAhABEicKBnN0YXR1cxgDIAEoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXMSHQoMc3VpdGVfcnVuX2lkGAQgASgJQgf6QgRyAhhAEikKB3RyaWdnZXIYByABKA4yGC5jbG91ZC52MS5jb21tb24uVHJpZ2dlchIYChBpbl90ZW5hbnRfcmF0aW5nGAggASgIEhgKEGluX2dsb2JhbF9yYXRpbmcYCSABKAgSNwoHc3VtbWFyeRgGIAEoCzImLmNsb3VkLnYxLm1vZGVscy5UZXN0UnVuUmVjb3JkLlN1bW1hcnkSRgoUaW5mcmFzdHJ1Y3R1cmVfc3RhdGUYCiABKAsyKC5jbG91ZC52MS5kZXBsb3ltZW50LkluZnJhc3RydWN0dXJlU3RhdGUSPAoPZGVwbG95bWVudF9wbGFuGAsgASgLMiMuY2xvdWQudjEuZGVwbG95bWVudC5EZXBsb3ltZW50UGxhbhr3AwoHU3VtbWFyeRIvCgdkYl9raW5kGAEgASgOMh4uY2xvdWQudjEuZG9tYWluLkRhdGFiYXNlLktpbmQSHQoMZGJfcHJlc2V0X2lkGAIgASgJQgf6QgRyAhhAEiAKDmRiX3ByZXNldF9uYW1lGAMgASgJQgj6QgVyAxj/ARIjChJ3b3JrbG9hZF9wcmVzZXRfaWQYBCABKAlCB/pCBHICGEASHwoNd29ya2xvYWRfbmFtZRgFIAEoCUII+kIFcgMY/wESIAoPc3Ryb3BweV92ZXJzaW9uGAYgASgJQgf6QgRyAhhAEiAKDnRvcG9sb2d5X2xhYmVsGAcgASgJQgj6QgVyAxiAARISCgpub2RlX2NvdW50GAggASgNEi8KCHByb3ZpZGVyGAkgASgOMh0uY2xvdWQudjEuZGVwbG95bWVudC5Qcm92aWRlchIdCgxwcm9ncmVzc19wY3QYCiABKA1CB/pCBCoCGGQSLgoKc3RhcnRlZF9hdBgLIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLwoLZmluaXNoZWRfYXQYDCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEisKCGR1cmF0aW9uGA0gASgLMhkuZ29vZ2xlLnByb3RvYnVmLkR1cmF0aW9uSgQIBRAGQkRaQmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL21vZGVsc2IGcHJvdG8z", [file_cloud_v1_common_entity, file_cloud_v1_common_status, file_cloud_v1_common_trigger, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_plan, file_cloud_v1_deployment_provider, file_cloud_v1_domain_database, file_cloud_v1_domain_test, file_google_protobuf_duration, file_google_protobuf_timestamp, file_validate_validate]);
+  fileDesc("Ch5jbG91ZC92MS9tb2RlbHMvdGVzdF9ydW4ucHJvdG8SD2Nsb3VkLnYxLm1vZGVscyL+CAoNVGVzdFJ1blJlY29yZBIxCgZlbnRpdHkYASABKAsyFy5jbG91ZC52MS5jb21tb24uRW50aXR5Qgj6QgWKAQIQARIwCgRzcGVjGAIgASgLMhguY2xvdWQudjEuZG9tYWluLlRlc3RSdW5CCPpCBYoBAhABEicKBnN0YXR1cxgDIAEoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXMSHQoMc3VpdGVfcnVuX2lkGAQgASgJQgf6QgRyAhhAEh4KDXN1aXRlX2NlbGxfaWQYDCABKAlCB/pCBHICGEASKQoHdHJpZ2dlchgHIAEoDjIYLmNsb3VkLnYxLmNvbW1vbi5UcmlnZ2VyEhgKEGluX3RlbmFudF9yYXRpbmcYCCABKAgSGAoQaW5fZ2xvYmFsX3JhdGluZxgJIAEoCBI3CgdzdW1tYXJ5GAYgASgLMiYuY2xvdWQudjEubW9kZWxzLlRlc3RSdW5SZWNvcmQuU3VtbWFyeRJGChRpbmZyYXN0cnVjdHVyZV9zdGF0ZRgKIAEoCzIoLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVTdGF0ZRI8Cg9kZXBsb3ltZW50X3BsYW4YCyABKAsyIy5jbG91ZC52MS5kZXBsb3ltZW50LkRlcGxveW1lbnRQbGFuGvsECgdTdW1tYXJ5Ei8KB2RiX2tpbmQYASABKA4yHi5jbG91ZC52MS5kb21haW4uRGF0YWJhc2UuS2luZBIdCgxkYl9wcmVzZXRfaWQYAiABKAlCB/pCBHICGEASIAoOZGJfcHJlc2V0X25hbWUYAyABKAlCCPpCBXIDGP8BEiMKEndvcmtsb2FkX3ByZXNldF9pZBgEIAEoCUIH+kIEcgIYQBIfCg13b3JrbG9hZF9uYW1lGAUgASgJQgj6QgVyAxj/ARIgCg9zdHJvcHB5X3ZlcnNpb24YBiABKAlCB/pCBHICGEASPQoRd29ya2xvYWRfcHJvdG9jb2wYDiABKA4yIi5jbG91ZC52MS5kb21haW4uV29ya2xvYWQuUHJvdG9jb2wSHwoOdGVzdF9wcmVzZXRfaWQYDyABKAlCB/pCBHICGEASIgoQdGVzdF9wcmVzZXRfbmFtZRgQIAEoCUII+kIFcgMY/wESIAoOdG9wb2xvZ3lfbGFiZWwYByABKAlCCPpCBXIDGIABEhIKCm5vZGVfY291bnQYCCABKA0SLwoIcHJvdmlkZXIYCSABKA4yHS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyEh0KDHByb2dyZXNzX3BjdBgKIAEoDUIH+kIEKgIYZBIuCgpzdGFydGVkX2F0GAsgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIvCgtmaW5pc2hlZF9hdBgMIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASKwoIZHVyYXRpb24YDSABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb25KBAgFEAZCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvbW9kZWxzYgZwcm90bzM", [file_cloud_v1_common_entity, file_cloud_v1_common_status, file_cloud_v1_common_trigger, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_plan, file_cloud_v1_deployment_provider, file_cloud_v1_domain_database, file_cloud_v1_domain_test, file_cloud_v1_domain_workload, file_google_protobuf_duration, file_google_protobuf_timestamp, file_validate_validate]);
 
 /**
  *
@@ -81,6 +83,15 @@ export type TestRunRecord = Message<"cloud.v1.models.TestRunRecord"> & {
    * @generated from field: string suite_run_id = 4;
    */
   suiteRunId: string;
+
+  /**
+   *
+   * suite_cell_id is the originating SuiteCell.id inside suite_run_id. Empty
+   * for standalone runs and ad-hoc suite children without a stable cell id.
+   *
+   * @generated from field: string suite_cell_id = 12;
+   */
+  suiteCellId: string;
 
   /**
    *
@@ -193,6 +204,15 @@ export type TestRunRecordJson = {
    * @generated from field: string suite_run_id = 4;
    */
   suiteRunId?: string;
+
+  /**
+   *
+   * suite_cell_id is the originating SuiteCell.id inside suite_run_id. Empty
+   * for standalone runs and ad-hoc suite children without a stable cell id.
+   *
+   * @generated from field: string suite_cell_id = 12;
+   */
+  suiteCellId?: string;
 
   /**
    *
@@ -323,6 +343,30 @@ export type TestRunRecord_Summary = Message<"cloud.v1.models.TestRunRecord.Summa
 
   /**
    *
+   * workload_protocol is the wire protocol exercised by the workload.
+   *
+   * @generated from field: cloud.v1.domain.Workload.Protocol workload_protocol = 14;
+   */
+  workloadProtocol: Workload_Protocol;
+
+  /**
+   *
+   * test_preset_id is the complete test preset source, when one was used.
+   *
+   * @generated from field: string test_preset_id = 15;
+   */
+  testPresetId: string;
+
+  /**
+   *
+   * test_preset_name is the display name of the test preset source.
+   *
+   * @generated from field: string test_preset_name = 16;
+   */
+  testPresetName: string;
+
+  /**
+   *
    * topology_label is the human-readable topology summary (topology
    * facet), e.g. "PG HA x3".
    *
@@ -437,6 +481,30 @@ export type TestRunRecord_SummaryJson = {
    * @generated from field: string stroppy_version = 6;
    */
   stroppyVersion?: string;
+
+  /**
+   *
+   * workload_protocol is the wire protocol exercised by the workload.
+   *
+   * @generated from field: cloud.v1.domain.Workload.Protocol workload_protocol = 14;
+   */
+  workloadProtocol?: Workload_ProtocolJson;
+
+  /**
+   *
+   * test_preset_id is the complete test preset source, when one was used.
+   *
+   * @generated from field: string test_preset_id = 15;
+   */
+  testPresetId?: string;
+
+  /**
+   *
+   * test_preset_name is the display name of the test preset source.
+   *
+   * @generated from field: string test_preset_name = 16;
+   */
+  testPresetName?: string;
 
   /**
    *

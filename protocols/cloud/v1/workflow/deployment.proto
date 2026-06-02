@@ -10,6 +10,7 @@ import "cloud/v1/deployment/quota.proto";
 import "cloud/v1/deployment/render.proto";
 import "cloud/v1/deployment/terraform.proto";
 import "cloud/v1/domain/database.proto";
+import "cloud/v1/domain/workload.proto";
 import "cloud/v1/topology/topology.proto";
 import "temporal/v1/temporal.proto";
 import "validate/validate.proto";
@@ -27,9 +28,20 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
  */
 message ProcessInfrastructureWorkflowRequest {
     /*
+        run_id is the stable deployment/run identifier used for provider
+        resource names and Terraform workdir recovery.
+     */
+    string run_id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /*
         plan is the provider-specific infrastructure plan to materialize.
      */
-    deployment.InfrastructurePlan plan = 1 [(validate.rules).message.required = true];
+    deployment.InfrastructurePlan plan = 2 [(validate.rules).message.required = true];
+    /*
+        agent_bootstrap is runtime control-plane data delivered to every
+        provisioned agent. Providers only choose the carrier: Docker env file,
+        cloud-init user-data, or local process env.
+     */
+    AgentBootstrap agent_bootstrap = 3;
 }
 
 /*
@@ -108,6 +120,80 @@ message AcquireQuotasActivityResponse {
 }
 
 /*
+    AgentBootstrap is the provider-independent startup contract for every agent.
+    It is runtime control-plane data, not topology and not provider settings.
+ */
+message AgentBootstrap {
+    /*
+        server_addr is the public/base control-plane address agents use to reach
+        the server and Temporal proxy, e.g. http://10.0.0.10:8080.
+     */
+    string server_addr = 1 [(validate.rules).string.max_len = 2048];
+    /*
+        binary_url overrides the agent binary URL. Empty means
+        server_addr + "/agent/binary".
+     */
+    string binary_url = 2 [(validate.rules).string.max_len = 2048];
+    /*
+        temporal_namespace is the namespace agents use when registering their
+        Temporal worker. Empty means default.
+     */
+    string temporal_namespace = 3 [(validate.rules).string.max_len = 128];
+    /*
+        extra_env is appended to the agent env file. Core STROPPY and AGENT
+        fields are still rendered by the system and win over this map.
+     */
+    map<string, string> extra_env = 4 [(validate.rules).map = {
+        max_pairs: 64,
+        keys: {string: {min_len: 1, max_len: 256, pattern: "^[A-Z_][A-Z0-9_]*$"}},
+        values: {string: {max_len: 8192}}
+    }];
+}
+
+/*
+    RenderDockerInputWorkflowRequest asks to render Docker daemon input from an
+    infrastructure plan.
+ */
+message RenderDockerInputWorkflowRequest {
+    /*
+        run_id is used as the default Docker network suffix when the plan does
+        not pin a network name.
+     */
+    string run_id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /*
+        plan is the Docker infrastructure plan.
+     */
+    deployment.InfrastructurePlan plan = 2 [(validate.rules).message.required = true];
+    /*
+        agent_bootstrap is rendered into the Docker agent env file.
+     */
+    AgentBootstrap agent_bootstrap = 3;
+}
+
+/*
+    RenderTerraformVariablesWorkflowRequest asks to render Terraform operation
+    input from an infrastructure plan.
+ */
+message RenderTerraformVariablesWorkflowRequest {
+    /*
+        run_id is the stable Terraform workdir id.
+     */
+    string run_id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /*
+        plan is the Terraform-backed infrastructure plan.
+     */
+    deployment.InfrastructurePlan plan = 2 [(validate.rules).message.required = true];
+    /*
+        action selects plan/apply/destroy. Empty means apply.
+     */
+    deployment.Terraform.Action action = 3 [(validate.rules).enum.defined_only = true];
+    /*
+        agent_bootstrap is rendered into Yandex cloud-init user-data.
+     */
+    AgentBootstrap agent_bootstrap = 4;
+}
+
+/*
     RenderDeploymentPlanWorkflowRequest asks to render install/config agent steps.
  */
 message RenderDeploymentPlanWorkflowRequest {
@@ -134,6 +220,12 @@ message RenderDeploymentPlanWorkflowRequest {
         editable engine config values.
      */
     domain.Database database = 5 [(validate.rules).message.required = true];
+    /*
+        workload is the stroppy workload input used by workload-runner renderers.
+        It is optional for pure database render previews and required when the
+        topology contains a stroppy workload component.
+     */
+    domain.Workload workload = 6;
 }
 
 /*
@@ -225,7 +317,7 @@ service DeploymentService {
     /*
         RenderDockerInputWorkflow renders infrastructure plan to Docker input.
      */
-    rpc RenderDockerInputWorkflow (deployment.InfrastructurePlan) returns (deployment.Docker.Input) {
+    rpc RenderDockerInputWorkflow (RenderDockerInputWorkflowRequest) returns (deployment.Docker.Input) {
         option (temporal.v1.workflow) = {
             name: "RenderDockerInputWorkflow"
             run_timeout: {seconds: 60}
@@ -268,7 +360,7 @@ service DeploymentService {
         RenderTerraformVariablesWorkflow renders infrastructure plan to Terraform
         input.
      */
-    rpc RenderTerraformVariablesWorkflow (deployment.InfrastructurePlan) returns (deployment.Terraform.Input) {
+    rpc RenderTerraformVariablesWorkflow (RenderTerraformVariablesWorkflowRequest) returns (deployment.Terraform.Input) {
         option (temporal.v1.workflow) = {
             name: "RenderTerraformVariablesWorkflow"
             run_timeout: {seconds: 60}

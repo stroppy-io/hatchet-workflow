@@ -3,94 +3,121 @@ syntax = "proto3";
 package cloud.v1.models;
 
 import "cloud/v1/common/entity.proto";
+import "cloud/v1/deployment/infrastructure.proto";
+import "cloud/v1/deployment/provider.proto";
+import "cloud/v1/deployment/render.proto";
+import "cloud/v1/domain/database.proto";
+import "cloud/v1/domain/suite.proto";
+import "cloud/v1/domain/workload.proto";
+import "cloud/v1/topology/topology.proto";
 import "schemapb/schema.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models";
 
 /*
-    SuiteWizardDraft is the server-held, mutable state of a SUITE wizard.
+    SuiteWizardDraftRecord is the server-held mutable state of a SUITE wizard.
 
-    Big-schema model, like the test wizard: the whole suite form is ONE schemapb
-    schema in `form`. It carries the selections — preset_ids (a db x workload
-    matrix) + test_preset_ids — plus ONE provider_type for the whole suite (naming
-    the tenant provider every cell deploys on) and max_parallel. Presets already
-    hold baked db/workload params, so the suite wizard does NOT re-fill those — and
-    it carries NO provider settings: machines are derived per cell at bake from the
-    db config (role->VM expander + provider overlay), not entered. The server
-    validates the form, prunes the matrix to workload<->db compatible pairs (a root
-    CEL rule), expands the preview and recomputes readiness on every patch.
+    It mirrors the typed test wizard model, but per cell:
+      SuiteCell source -> resolved database/workload
+      database/workload -> topology_spec
+      topology_spec + provider/defaults/machine overrides -> infrastructure_plan
+      topology + runtime placeholders -> render_preview
 
-    Persistence: own table (tenant-scoped via Entity) + in-memory cache. On finish
-    it bakes into a domain.SuiteRun (the full N*M TestRuns).
+    The draft never stores provider account settings. Provider settings are resolved
+    from tenant settings only when the suite is started, and runtime facts are
+    produced by workflow stages.
  */
 message SuiteWizardDraftRecord {
     /*
-        entity is the storage envelope (tenant-scoped: id, tenant_id, name,
-        timings).
+        entity is the storage envelope.
      */
     common.Entity entity = 1 [(validate.rules).message.required = true];
 
     /*
-        form is the whole suite form as one schema + values: preset_ids (the
-        db x workload matrix) + test_preset_ids + ONE provider_type for the whole
-        suite + max_parallel. No per-topology provider settings.
+        provider selects one deployment backend for every cell.
      */
-    schemapb.Filled form = 2;
+    deployment.Provider provider = 2 [(validate.rules).enum = {defined_only: true}];
 
     /*
-        preview holds the server-computed expanded, compatible cells (recomputed
-        on every patch). These are lightweight summaries; full TestRuns are baked
-        only at finish to avoid generating a topology per cell here.
+        cells are the editable matrix entries and their server-derived previews.
      */
-    repeated Cell preview = 3;
-    /*
-        errors are the authoritative validation errors (recomputed on every
-        patch); paths group by section in the UI.
-     */
-    repeated schemapb.FieldError errors = 4;
-    /*
-        ready is true when there is >=1 compatible cell and the form validates.
-     */
-    bool ready = 5;
+    repeated Cell cells = 3 [(validate.rules).repeated.max_items = 1000];
 
     /*
-        Cell is one resolved (db, workload) pair the suite will run.
+        max_parallel is the suite default concurrency selected in the wizard.
+        0 = unlimited.
+     */
+    uint32 max_parallel = 4;
+    /*
+        schedule is the optional cron schedule edited in the wizard.
+     */
+    domain.Schedule schedule = 5;
+    /*
+        errors are draft-level validation errors.
+     */
+    repeated schemapb.FieldError errors = 6;
+    /*
+        ready is true when at least one enabled cell is ready and the suite-level
+        settings validate.
+     */
+    bool ready = 7;
+    /*
+        default_in_tenant_rating is persisted to Suite.default_in_tenant_rating.
+     */
+    optional bool default_in_tenant_rating = 8;
+    /*
+        default_in_global_rating is persisted to Suite.default_in_global_rating.
+     */
+    optional bool default_in_global_rating = 9;
+    /*
+        suite_id is set when the draft was seeded from an existing suite.
+     */
+    string suite_id = 10 [(validate.rules).string.max_len = 64];
+
+    /*
+        Cell is one selected suite cell plus the server-derived preview artifacts
+        shown to the user.
      */
     message Cell {
         /*
-            db_preset_id is the database preset from a db x workload matrix pair
-            (paired with workload_preset_id).
+            spec is the editable cell definition: source, enabled flag, machine
+            overrides and render overrides.
          */
-        string db_preset_id = 1;
+        domain.SuiteCell spec = 1 [(validate.rules).message.required = true];
         /*
-            workload_preset_id is the workload preset from a db x workload matrix
-            pair (paired with db_preset_id).
+            database is the resolved database payload for this cell.
          */
-        string workload_preset_id = 2;
+        domain.Database database = 2;
         /*
-            test_preset_id is set when the cell came from a full TestPreset
-            instead of a matrix pair (then db/workload preset ids are empty).
+            workload is the resolved workload payload for this cell.
          */
-        string test_preset_id = 3;
+        domain.Workload workload = 3;
         /*
-            name is the display name of the resulting run.
+            topology_spec is the server-derived provider-agnostic graph.
          */
-        string name = 4;
+        topology.TopologySpec topology_spec = 4;
         /*
-            compatible is true when the workload is compatible with the database
-            kind.
+            infrastructure_plan is provider-specific machine intent. Provider
+            account settings are omitted/redacted in wizard drafts.
          */
-        bool compatible = 5;
+        deployment.InfrastructurePlan infrastructure_plan = 5;
         /*
-            ready is true when the cell's (db, workload) are compatible and it
-            has no per-cell errors.
+            render_preview is what generated files/commands/dirs would look like
+            before runtime-only values are known.
          */
-        bool ready = 6;
+        deployment.RenderPreview render_preview = 6;
         /*
-            errors are per-cell capacity/sanity errors (quota/zones), computed at
-            preview.
+            compatible is true when database/workload compatibility rules pass.
          */
-        repeated schemapb.FieldError errors = 7;
+        bool compatible = 7;
+        /*
+            ready is true when this enabled cell can be baked into a TestRun.
+         */
+        bool ready = 8;
+        /*
+            errors are per-cell validation, capacity, and render errors.
+         */
+        repeated schemapb.FieldError errors = 9;
     }
 }

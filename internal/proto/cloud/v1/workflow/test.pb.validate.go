@@ -101,6 +101,35 @@ func (m *TestWorkflowRequest) validate(all bool) error {
 		}
 	}
 
+	if all {
+		switch v := interface{}(m.GetAgentBootstrap()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TestWorkflowRequestValidationError{
+					field:  "AgentBootstrap",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TestWorkflowRequestValidationError{
+					field:  "AgentBootstrap",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetAgentBootstrap()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TestWorkflowRequestValidationError{
+				field:  "AgentBootstrap",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	if len(errors) > 0 {
 		return TestWorkflowRequestMultiError(errors)
 	}
@@ -1541,10 +1570,10 @@ func (m *SuiteWorkflowRequest) validate(all bool) error {
 
 	var errors []error
 
-	if m.GetSuiteRun() == nil {
+	if l := utf8.RuneCountInString(m.GetSuiteRunId()); l < 1 || l > 64 {
 		err := SuiteWorkflowRequestValidationError{
-			field:  "SuiteRun",
-			reason: "value is required",
+			field:  "SuiteRunId",
+			reason: "value length must be between 1 and 64 runes, inclusive",
 		}
 		if !all {
 			return err
@@ -1552,34 +1581,52 @@ func (m *SuiteWorkflowRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if all {
-		switch v := interface{}(m.GetSuiteRun()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, SuiteWorkflowRequestValidationError{
-					field:  "SuiteRun",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, SuiteWorkflowRequestValidationError{
-					field:  "SuiteRun",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
+	if l := len(m.GetRuns()); l < 1 || l > 1000 {
+		err := SuiteWorkflowRequestValidationError{
+			field:  "Runs",
+			reason: "value must contain between 1 and 1000 items, inclusive",
 		}
-	} else if v, ok := interface{}(m.GetSuiteRun()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return SuiteWorkflowRequestValidationError{
-				field:  "SuiteRun",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
+		if !all {
+			return err
 		}
+		errors = append(errors, err)
 	}
+
+	for idx, item := range m.GetRuns() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, SuiteWorkflowRequestValidationError{
+						field:  fmt.Sprintf("Runs[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, SuiteWorkflowRequestValidationError{
+						field:  fmt.Sprintf("Runs[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return SuiteWorkflowRequestValidationError{
+					field:  fmt.Sprintf("Runs[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	// no validation rules for MaxParallel
 
 	if len(errors) > 0 {
 		return SuiteWorkflowRequestMultiError(errors)

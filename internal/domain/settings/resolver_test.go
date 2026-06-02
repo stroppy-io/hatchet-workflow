@@ -1,0 +1,81 @@
+package settings
+
+import (
+	"context"
+	"testing"
+
+	apipb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
+	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
+	modelspb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
+)
+
+func TestResolverReadsProviderAndAgentSettingsThroughInterfaces(t *testing.T) {
+	resolver := Resolver{
+		PlatformSource: StaticPlatformSettingsSource{
+			Settings: &apipb.PlatformSettings{ServerAddr: "https://control.example"},
+		},
+		TenantSource: StaticTenantSettingsSource{
+			Settings: map[string]*modelspb.TenantSettingsRecord{
+				"tenant-1": {
+					YandexSettings: &deploymentpb.Yandex_Settings{
+						Token:        "token",
+						CloudId:      "cloud-id",
+						FolderId:     "folder-id",
+						Zone:         deploymentpb.Yandex_Settings_ZONE_RU_CENTRAL1_A,
+						NetworkId:    "network-id",
+						NetworkName:  "stroppy",
+						SubnetCidr:   "10.0.0.0/8",
+						PlatformId:   deploymentpb.Yandex_Settings_PLATFORM_ID_STANDARD_V2,
+						ImageId:      "image-id",
+						SshUser:      "stroppy",
+						SshPublicKey: "ssh-rsa test",
+					},
+				},
+			},
+		},
+		DefaultTemporalNamespace: "bench",
+		DefaultAgentEnv:          map[string]string{"CUSTOM_ENV": "value"},
+	}
+
+	providerSettings, err := resolver.ProviderSettings(context.Background(), "tenant-1", deploymentpb.Provider_PROVIDER_YANDEX)
+	if err != nil {
+		t.Fatalf("provider settings: %v", err)
+	}
+	if got, want := providerSettings.GetYandex().GetCloudId(), "cloud-id"; got != want {
+		t.Fatalf("cloud id = %q, want %q", got, want)
+	}
+
+	bootstrap, err := resolver.AgentBootstrap(context.Background())
+	if err != nil {
+		t.Fatalf("agent bootstrap: %v", err)
+	}
+	if got, want := bootstrap.GetServerAddr(), "https://control.example"; got != want {
+		t.Fatalf("server addr = %q, want %q", got, want)
+	}
+	if got, want := bootstrap.GetTemporalNamespace(), "bench"; got != want {
+		t.Fatalf("temporal namespace = %q, want %q", got, want)
+	}
+	if got, want := bootstrap.GetExtraEnv()["CUSTOM_ENV"], "value"; got != want {
+		t.Fatalf("extra env = %q, want %q", got, want)
+	}
+}
+
+func TestResolverDefaultsDockerProviderAndLocalAgentAddress(t *testing.T) {
+	resolver := Resolver{}
+
+	providerSettings, err := resolver.ProviderSettings(context.Background(), "tenant-1", deploymentpb.Provider_PROVIDER_DOCKER)
+	if err != nil {
+		t.Fatalf("provider settings: %v", err)
+	}
+	if providerSettings.GetDocker() == nil {
+		t.Fatal("docker settings are missing")
+	}
+
+	bootstrap, err := resolver.AgentBootstrap(context.Background())
+	if err != nil {
+		t.Fatalf("agent bootstrap: %v", err)
+	}
+	if got, want := bootstrap.GetServerAddr(), DefaultLocalServerAddr; got != want {
+		t.Fatalf("server addr = %q, want %q", got, want)
+	}
+}

@@ -54,21 +54,27 @@ const (
 	ListTestRunsRequest_Sort_KIND_FINISHED_AT ListTestRunsRequest_Sort_Kind = 8
 	// KIND_NODE_COUNT orders by node count.
 	ListTestRunsRequest_Sort_KIND_NODE_COUNT ListTestRunsRequest_Sort_Kind = 9
+	// KIND_PROTOCOL orders by workload protocol.
+	ListTestRunsRequest_Sort_KIND_PROTOCOL ListTestRunsRequest_Sort_Kind = 10
+	// KIND_TEST_PRESET orders by test preset name/id.
+	ListTestRunsRequest_Sort_KIND_TEST_PRESET ListTestRunsRequest_Sort_Kind = 11
 )
 
 // Enum value maps for ListTestRunsRequest_Sort_Kind.
 var (
 	ListTestRunsRequest_Sort_Kind_name = map[int32]string{
-		0: "KIND_UNSPECIFIED",
-		1: "KIND_STATUS",
-		2: "KIND_DB_KIND",
-		3: "KIND_WORKLOAD",
-		4: "KIND_PROVIDER",
-		5: "KIND_PROGRESS",
-		6: "KIND_DURATION",
-		7: "KIND_STARTED_AT",
-		8: "KIND_FINISHED_AT",
-		9: "KIND_NODE_COUNT",
+		0:  "KIND_UNSPECIFIED",
+		1:  "KIND_STATUS",
+		2:  "KIND_DB_KIND",
+		3:  "KIND_WORKLOAD",
+		4:  "KIND_PROVIDER",
+		5:  "KIND_PROGRESS",
+		6:  "KIND_DURATION",
+		7:  "KIND_STARTED_AT",
+		8:  "KIND_FINISHED_AT",
+		9:  "KIND_NODE_COUNT",
+		10: "KIND_PROTOCOL",
+		11: "KIND_TEST_PRESET",
 	}
 	ListTestRunsRequest_Sort_Kind_value = map[string]int32{
 		"KIND_UNSPECIFIED": 0,
@@ -81,6 +87,8 @@ var (
 		"KIND_STARTED_AT":  7,
 		"KIND_FINISHED_AT": 8,
 		"KIND_NODE_COUNT":  9,
+		"KIND_PROTOCOL":    10,
+		"KIND_TEST_PRESET": 11,
 	}
 )
 
@@ -113,7 +121,7 @@ func (ListTestRunsRequest_Sort_Kind) EnumDescriptor() ([]byte, []int) {
 
 // StartTestRun launches a run. Provide a staged `run` spec (CLI / wizard
 // finish) to persist a new record and start it; or `test_run_id` to re-run an
-// existing record's spec as a new run. Launches TestWorkflow.
+// existing record's spec as a new run. Launches TestRunWorkflow.
 type StartTestRunRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// tenant_id scopes the request to the owning tenant.
@@ -397,10 +405,16 @@ type ListTestRunsRequest struct {
 	DbPresetIds []string `protobuf:"bytes,6,rep,name=db_preset_ids,json=dbPresetIds,proto3" json:"db_preset_ids,omitempty"`
 	// workload_preset_ids facets by workload preset id.
 	WorkloadPresetIds []string `protobuf:"bytes,7,rep,name=workload_preset_ids,json=workloadPresetIds,proto3" json:"workload_preset_ids,omitempty"`
+	// test_preset_ids facets by complete test preset id.
+	TestPresetIds []string `protobuf:"bytes,23,rep,name=test_preset_ids,json=testPresetIds,proto3" json:"test_preset_ids,omitempty"`
 	// stroppy_versions facets by stroppy version.
 	StroppyVersions []string `protobuf:"bytes,8,rep,name=stroppy_versions,json=stroppyVersions,proto3" json:"stroppy_versions,omitempty"`
+	// protocols facets by workload wire protocol.
+	Protocols []domain.Workload_Protocol `protobuf:"varint,22,rep,packed,name=protocols,proto3,enum=cloud.v1.domain.Workload_Protocol" json:"protocols,omitempty"`
 	// suite_run_id scopes to a single suite run's children.
 	SuiteRunId string `protobuf:"bytes,9,opt,name=suite_run_id,json=suiteRunId,proto3" json:"suite_run_id,omitempty"`
+	// suite_cell_ids scopes to specific cells inside a suite run.
+	SuiteCellIds []string `protobuf:"bytes,24,rep,name=suite_cell_ids,json=suiteCellIds,proto3" json:"suite_cell_ids,omitempty"`
 	// standalone facets by suite membership. Unset = both; true = only standalone
 	// (no suite); false = only suite children.
 	Standalone *bool `protobuf:"varint,10,opt,name=standalone,proto3,oneof" json:"standalone,omitempty"`
@@ -510,9 +524,23 @@ func (x *ListTestRunsRequest) GetWorkloadPresetIds() []string {
 	return nil
 }
 
+func (x *ListTestRunsRequest) GetTestPresetIds() []string {
+	if x != nil {
+		return x.TestPresetIds
+	}
+	return nil
+}
+
 func (x *ListTestRunsRequest) GetStroppyVersions() []string {
 	if x != nil {
 		return x.StroppyVersions
+	}
+	return nil
+}
+
+func (x *ListTestRunsRequest) GetProtocols() []domain.Workload_Protocol {
+	if x != nil {
+		return x.Protocols
 	}
 	return nil
 }
@@ -522,6 +550,13 @@ func (x *ListTestRunsRequest) GetSuiteRunId() string {
 		return x.SuiteRunId
 	}
 	return ""
+}
+
+func (x *ListTestRunsRequest) GetSuiteCellIds() []string {
+	if x != nil {
+		return x.SuiteCellIds
+	}
+	return nil
 }
 
 func (x *ListTestRunsRequest) GetStandalone() bool {
@@ -1070,7 +1105,7 @@ var File_cloud_v1_api_test_run_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_test_run_proto_rawDesc = "" +
 	"\n" +
-	"\x1bcloud/v1/api/test_run.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ccloud/v1/common/status.proto\x1a\x1dcloud/v1/common/trigger.proto\x1a\"cloud/v1/deployment/provider.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1ccloud/v1/models/preset.proto\x1a\x1ecloud/v1/models/test_run.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\xaf\x02\n" +
+	"\x1bcloud/v1/api/test_run.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ccloud/v1/common/status.proto\x1a\x1dcloud/v1/common/trigger.proto\x1a\"cloud/v1/deployment/provider.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1ccloud/v1/models/preset.proto\x1a\x1ecloud/v1/models/test_run.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\xaf\x02\n" +
 	"\x13StartTestRunRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12,\n" +
 	"\x03run\x18\x02 \x01(\v2\x18.cloud.v1.domain.TestRunH\x00R\x03run\x12+\n" +
@@ -1086,7 +1121,7 @@ const file_cloud_v1_api_test_run_proto_rawDesc = "" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x19\n" +
 	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"P\n" +
 	"\x12GetTestRunResponse\x12:\n" +
-	"\x03run\x18\x01 \x01(\v2\x1e.cloud.v1.models.TestRunRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x03run\"\xca\f\n" +
+	"\x03run\x18\x01 \x01(\v2\x1e.cloud.v1.models.TestRunRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x03run\"\xa5\x0e\n" +
 	"\x13ListTestRunsRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x125\n" +
 	"\x06filter\x18\x02 \x01(\v2\x1d.cloud.v1.common.EntityFilterR\x06filter\x123\n" +
@@ -1094,10 +1129,13 @@ const file_cloud_v1_api_test_run_proto_rawDesc = "" +
 	"\bdb_kinds\x18\x04 \x03(\x0e2\x1e.cloud.v1.domain.Database.KindR\adbKinds\x12;\n" +
 	"\tproviders\x18\x05 \x03(\x0e2\x1d.cloud.v1.deployment.ProviderR\tproviders\x123\n" +
 	"\rdb_preset_ids\x18\x06 \x03(\tB\x0f\xfaB\f\x92\x01\t\x10\xc8\x01\"\x04r\x02\x18@R\vdbPresetIds\x12?\n" +
-	"\x13workload_preset_ids\x18\a \x03(\tB\x0f\xfaB\f\x92\x01\t\x10\xc8\x01\"\x04r\x02\x18@R\x11workloadPresetIds\x129\n" +
-	"\x10stroppy_versions\x18\b \x03(\tB\x0e\xfaB\v\x92\x01\b\x10d\"\x04r\x02\x18@R\x0fstroppyVersions\x12)\n" +
+	"\x13workload_preset_ids\x18\a \x03(\tB\x0f\xfaB\f\x92\x01\t\x10\xc8\x01\"\x04r\x02\x18@R\x11workloadPresetIds\x127\n" +
+	"\x0ftest_preset_ids\x18\x17 \x03(\tB\x0f\xfaB\f\x92\x01\t\x10\xc8\x01\"\x04r\x02\x18@R\rtestPresetIds\x129\n" +
+	"\x10stroppy_versions\x18\b \x03(\tB\x0e\xfaB\v\x92\x01\b\x10d\"\x04r\x02\x18@R\x0fstroppyVersions\x12@\n" +
+	"\tprotocols\x18\x16 \x03(\x0e2\".cloud.v1.domain.Workload.ProtocolR\tprotocols\x12)\n" +
 	"\fsuite_run_id\x18\t \x01(\tB\a\xfaB\x04r\x02\x18@R\n" +
-	"suiteRunId\x12#\n" +
+	"suiteRunId\x125\n" +
+	"\x0esuite_cell_ids\x18\x18 \x03(\tB\x0f\xfaB\f\x92\x01\t\x10\xc8\x01\"\x04r\x02\x18@R\fsuiteCellIds\x12#\n" +
 	"\n" +
 	"standalone\x18\n" +
 	" \x01(\bH\x00R\n" +
@@ -1112,11 +1150,11 @@ const file_cloud_v1_api_test_run_proto_rawDesc = "" +
 	"\x0ffinished_before\x18\x12 \x01(\v2\x1a.google.protobuf.TimestampR\x0efinishedBefore\x124\n" +
 	"\btriggers\x18\x15 \x03(\x0e2\x18.cloud.v1.common.TriggerR\btriggers\x12:\n" +
 	"\x04sort\x18\x13 \x01(\v2&.cloud.v1.api.ListTestRunsRequest.SortR\x04sort\x12)\n" +
-	"\x04page\x18\x14 \x01(\v2\x15.cloud.v1.common.PageR\x04page\x1a\xed\x02\n" +
+	"\x04page\x18\x14 \x01(\v2\x15.cloud.v1.common.PageR\x04page\x1a\x96\x03\n" +
 	"\x04Sort\x12:\n" +
 	"\x06entity\x18\x01 \x01(\x0e2 .cloud.v1.common.EntitySortFieldH\x00R\x06entity\x12A\n" +
 	"\x04kind\x18\x02 \x01(\x0e2+.cloud.v1.api.ListTestRunsRequest.Sort.KindH\x00R\x04kind\x12\x12\n" +
-	"\x04desc\x18\x03 \x01(\bR\x04desc\"\xcb\x01\n" +
+	"\x04desc\x18\x03 \x01(\bR\x04desc\"\xf4\x01\n" +
 	"\x04Kind\x12\x14\n" +
 	"\x10KIND_UNSPECIFIED\x10\x00\x12\x0f\n" +
 	"\vKIND_STATUS\x10\x01\x12\x10\n" +
@@ -1127,7 +1165,10 @@ const file_cloud_v1_api_test_run_proto_rawDesc = "" +
 	"\rKIND_DURATION\x10\x06\x12\x13\n" +
 	"\x0fKIND_STARTED_AT\x10\a\x12\x14\n" +
 	"\x10KIND_FINISHED_AT\x10\b\x12\x13\n" +
-	"\x0fKIND_NODE_COUNT\x10\tB\x04\n" +
+	"\x0fKIND_NODE_COUNT\x10\t\x12\x11\n" +
+	"\rKIND_PROTOCOL\x10\n" +
+	"\x12\x14\n" +
+	"\x10KIND_TEST_PRESET\x10\vB\x04\n" +
 	"\x02byB\r\n" +
 	"\v_standaloneB\x0f\n" +
 	"\r_progress_minB\x0f\n" +
@@ -1196,12 +1237,13 @@ var file_cloud_v1_api_test_run_proto_goTypes = []any{
 	(common.Status)(0),                 // 17: cloud.v1.common.Status
 	(domain.Database_Kind)(0),          // 18: cloud.v1.domain.Database.Kind
 	(deployment.Provider)(0),           // 19: cloud.v1.deployment.Provider
-	(*durationpb.Duration)(nil),        // 20: google.protobuf.Duration
-	(*timestamppb.Timestamp)(nil),      // 21: google.protobuf.Timestamp
-	(common.Trigger)(0),                // 22: cloud.v1.common.Trigger
-	(*common.Page)(nil),                // 23: cloud.v1.common.Page
-	(*models.TestPresetRecord)(nil),    // 24: cloud.v1.models.TestPresetRecord
-	(common.EntitySortField)(0),        // 25: cloud.v1.common.EntitySortField
+	(domain.Workload_Protocol)(0),      // 20: cloud.v1.domain.Workload.Protocol
+	(*durationpb.Duration)(nil),        // 21: google.protobuf.Duration
+	(*timestamppb.Timestamp)(nil),      // 22: google.protobuf.Timestamp
+	(common.Trigger)(0),                // 23: cloud.v1.common.Trigger
+	(*common.Page)(nil),                // 24: cloud.v1.common.Page
+	(*models.TestPresetRecord)(nil),    // 25: cloud.v1.models.TestPresetRecord
+	(common.EntitySortField)(0),        // 26: cloud.v1.common.EntitySortField
 }
 var file_cloud_v1_api_test_run_proto_depIdxs = []int32{
 	14, // 0: cloud.v1.api.StartTestRunRequest.run:type_name -> cloud.v1.domain.TestRun
@@ -1211,37 +1253,38 @@ var file_cloud_v1_api_test_run_proto_depIdxs = []int32{
 	17, // 4: cloud.v1.api.ListTestRunsRequest.statuses:type_name -> cloud.v1.common.Status
 	18, // 5: cloud.v1.api.ListTestRunsRequest.db_kinds:type_name -> cloud.v1.domain.Database.Kind
 	19, // 6: cloud.v1.api.ListTestRunsRequest.providers:type_name -> cloud.v1.deployment.Provider
-	20, // 7: cloud.v1.api.ListTestRunsRequest.duration_min:type_name -> google.protobuf.Duration
-	20, // 8: cloud.v1.api.ListTestRunsRequest.duration_max:type_name -> google.protobuf.Duration
-	21, // 9: cloud.v1.api.ListTestRunsRequest.started_after:type_name -> google.protobuf.Timestamp
-	21, // 10: cloud.v1.api.ListTestRunsRequest.started_before:type_name -> google.protobuf.Timestamp
-	21, // 11: cloud.v1.api.ListTestRunsRequest.finished_after:type_name -> google.protobuf.Timestamp
-	21, // 12: cloud.v1.api.ListTestRunsRequest.finished_before:type_name -> google.protobuf.Timestamp
-	22, // 13: cloud.v1.api.ListTestRunsRequest.triggers:type_name -> cloud.v1.common.Trigger
-	13, // 14: cloud.v1.api.ListTestRunsRequest.sort:type_name -> cloud.v1.api.ListTestRunsRequest.Sort
-	23, // 15: cloud.v1.api.ListTestRunsRequest.page:type_name -> cloud.v1.common.Page
-	15, // 16: cloud.v1.api.ListTestRunsResponse.runs:type_name -> cloud.v1.models.TestRunRecord
-	15, // 17: cloud.v1.api.CancelTestRunResponse.run:type_name -> cloud.v1.models.TestRunRecord
-	24, // 18: cloud.v1.api.ExtractToPresetResponse.preset:type_name -> cloud.v1.models.TestPresetRecord
-	25, // 19: cloud.v1.api.ListTestRunsRequest.Sort.entity:type_name -> cloud.v1.common.EntitySortField
-	0,  // 20: cloud.v1.api.ListTestRunsRequest.Sort.kind:type_name -> cloud.v1.api.ListTestRunsRequest.Sort.Kind
-	1,  // 21: cloud.v1.api.TestRunService.StartTestRun:input_type -> cloud.v1.api.StartTestRunRequest
-	3,  // 22: cloud.v1.api.TestRunService.GetTestRun:input_type -> cloud.v1.api.GetTestRunRequest
-	5,  // 23: cloud.v1.api.TestRunService.ListTestRuns:input_type -> cloud.v1.api.ListTestRunsRequest
-	7,  // 24: cloud.v1.api.TestRunService.CancelTestRun:input_type -> cloud.v1.api.CancelTestRunRequest
-	9,  // 25: cloud.v1.api.TestRunService.DeleteTestRun:input_type -> cloud.v1.api.DeleteTestRunRequest
-	11, // 26: cloud.v1.api.TestRunService.ExtractToPreset:input_type -> cloud.v1.api.ExtractToPresetRequest
-	2,  // 27: cloud.v1.api.TestRunService.StartTestRun:output_type -> cloud.v1.api.StartTestRunResponse
-	4,  // 28: cloud.v1.api.TestRunService.GetTestRun:output_type -> cloud.v1.api.GetTestRunResponse
-	6,  // 29: cloud.v1.api.TestRunService.ListTestRuns:output_type -> cloud.v1.api.ListTestRunsResponse
-	8,  // 30: cloud.v1.api.TestRunService.CancelTestRun:output_type -> cloud.v1.api.CancelTestRunResponse
-	10, // 31: cloud.v1.api.TestRunService.DeleteTestRun:output_type -> cloud.v1.api.DeleteTestRunResponse
-	12, // 32: cloud.v1.api.TestRunService.ExtractToPreset:output_type -> cloud.v1.api.ExtractToPresetResponse
-	27, // [27:33] is the sub-list for method output_type
-	21, // [21:27] is the sub-list for method input_type
-	21, // [21:21] is the sub-list for extension type_name
-	21, // [21:21] is the sub-list for extension extendee
-	0,  // [0:21] is the sub-list for field type_name
+	20, // 7: cloud.v1.api.ListTestRunsRequest.protocols:type_name -> cloud.v1.domain.Workload.Protocol
+	21, // 8: cloud.v1.api.ListTestRunsRequest.duration_min:type_name -> google.protobuf.Duration
+	21, // 9: cloud.v1.api.ListTestRunsRequest.duration_max:type_name -> google.protobuf.Duration
+	22, // 10: cloud.v1.api.ListTestRunsRequest.started_after:type_name -> google.protobuf.Timestamp
+	22, // 11: cloud.v1.api.ListTestRunsRequest.started_before:type_name -> google.protobuf.Timestamp
+	22, // 12: cloud.v1.api.ListTestRunsRequest.finished_after:type_name -> google.protobuf.Timestamp
+	22, // 13: cloud.v1.api.ListTestRunsRequest.finished_before:type_name -> google.protobuf.Timestamp
+	23, // 14: cloud.v1.api.ListTestRunsRequest.triggers:type_name -> cloud.v1.common.Trigger
+	13, // 15: cloud.v1.api.ListTestRunsRequest.sort:type_name -> cloud.v1.api.ListTestRunsRequest.Sort
+	24, // 16: cloud.v1.api.ListTestRunsRequest.page:type_name -> cloud.v1.common.Page
+	15, // 17: cloud.v1.api.ListTestRunsResponse.runs:type_name -> cloud.v1.models.TestRunRecord
+	15, // 18: cloud.v1.api.CancelTestRunResponse.run:type_name -> cloud.v1.models.TestRunRecord
+	25, // 19: cloud.v1.api.ExtractToPresetResponse.preset:type_name -> cloud.v1.models.TestPresetRecord
+	26, // 20: cloud.v1.api.ListTestRunsRequest.Sort.entity:type_name -> cloud.v1.common.EntitySortField
+	0,  // 21: cloud.v1.api.ListTestRunsRequest.Sort.kind:type_name -> cloud.v1.api.ListTestRunsRequest.Sort.Kind
+	1,  // 22: cloud.v1.api.TestRunService.StartTestRun:input_type -> cloud.v1.api.StartTestRunRequest
+	3,  // 23: cloud.v1.api.TestRunService.GetTestRun:input_type -> cloud.v1.api.GetTestRunRequest
+	5,  // 24: cloud.v1.api.TestRunService.ListTestRuns:input_type -> cloud.v1.api.ListTestRunsRequest
+	7,  // 25: cloud.v1.api.TestRunService.CancelTestRun:input_type -> cloud.v1.api.CancelTestRunRequest
+	9,  // 26: cloud.v1.api.TestRunService.DeleteTestRun:input_type -> cloud.v1.api.DeleteTestRunRequest
+	11, // 27: cloud.v1.api.TestRunService.ExtractToPreset:input_type -> cloud.v1.api.ExtractToPresetRequest
+	2,  // 28: cloud.v1.api.TestRunService.StartTestRun:output_type -> cloud.v1.api.StartTestRunResponse
+	4,  // 29: cloud.v1.api.TestRunService.GetTestRun:output_type -> cloud.v1.api.GetTestRunResponse
+	6,  // 30: cloud.v1.api.TestRunService.ListTestRuns:output_type -> cloud.v1.api.ListTestRunsResponse
+	8,  // 31: cloud.v1.api.TestRunService.CancelTestRun:output_type -> cloud.v1.api.CancelTestRunResponse
+	10, // 32: cloud.v1.api.TestRunService.DeleteTestRun:output_type -> cloud.v1.api.DeleteTestRunResponse
+	12, // 33: cloud.v1.api.TestRunService.ExtractToPreset:output_type -> cloud.v1.api.ExtractToPresetResponse
+	28, // [28:34] is the sub-list for method output_type
+	22, // [22:28] is the sub-list for method input_type
+	22, // [22:22] is the sub-list for extension type_name
+	22, // [22:22] is the sub-list for extension extendee
+	0,  // [0:22] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_api_test_run_proto_init() }

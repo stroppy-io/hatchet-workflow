@@ -334,18 +334,36 @@ func (m *SuiteRunRecord) validate(all bool) error {
 
 	// no validation rules for MaxParallel
 
-	for idx, item := range m.GetTestRunIds() {
+	for idx, item := range m.GetChildren() {
 		_, _ = idx, item
 
-		if utf8.RuneCountInString(item) > 64 {
-			err := SuiteRunRecordValidationError{
-				field:  fmt.Sprintf("TestRunIds[%v]", idx),
-				reason: "value length must be at most 64 runes",
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, SuiteRunRecordValidationError{
+						field:  fmt.Sprintf("Children[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, SuiteRunRecordValidationError{
+						field:  fmt.Sprintf("Children[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
 			}
-			if !all {
-				return err
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return SuiteRunRecordValidationError{
+					field:  fmt.Sprintf("Children[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
 			}
-			errors = append(errors, err)
 		}
 
 	}
@@ -553,6 +571,8 @@ func (m *SuiteRecord_Summary) validate(all bool) error {
 	// no validation rules for LastRunStatus
 
 	// no validation rules for RunCount
+
+	// no validation rules for CellCount
 
 	if len(errors) > 0 {
 		return SuiteRecord_SummaryMultiError(errors)
@@ -856,3 +876,140 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = SuiteRunRecord_SummaryValidationError{}
+
+// Validate checks the field values on SuiteRunRecord_ChildRun with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *SuiteRunRecord_ChildRun) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on SuiteRunRecord_ChildRun with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// SuiteRunRecord_ChildRunMultiError, or nil if none found.
+func (m *SuiteRunRecord_ChildRun) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *SuiteRunRecord_ChildRun) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetSuiteCellId()) > 64 {
+		err := SuiteRunRecord_ChildRunValidationError{
+			field:  "SuiteCellId",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetTestRunId()); l < 1 || l > 64 {
+		err := SuiteRunRecord_ChildRunValidationError{
+			field:  "TestRunId",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetName()) > 255 {
+		err := SuiteRunRecord_ChildRunValidationError{
+			field:  "Name",
+			reason: "value length must be at most 255 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for Status
+
+	if len(errors) > 0 {
+		return SuiteRunRecord_ChildRunMultiError(errors)
+	}
+
+	return nil
+}
+
+// SuiteRunRecord_ChildRunMultiError is an error wrapping multiple validation
+// errors returned by SuiteRunRecord_ChildRun.ValidateAll() if the designated
+// constraints aren't met.
+type SuiteRunRecord_ChildRunMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m SuiteRunRecord_ChildRunMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m SuiteRunRecord_ChildRunMultiError) AllErrors() []error { return m }
+
+// SuiteRunRecord_ChildRunValidationError is the validation error returned by
+// SuiteRunRecord_ChildRun.Validate if the designated constraints aren't met.
+type SuiteRunRecord_ChildRunValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SuiteRunRecord_ChildRunValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SuiteRunRecord_ChildRunValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SuiteRunRecord_ChildRunValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SuiteRunRecord_ChildRunValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SuiteRunRecord_ChildRunValidationError) ErrorName() string {
+	return "SuiteRunRecord_ChildRunValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e SuiteRunRecord_ChildRunValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSuiteRunRecord_ChildRun.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SuiteRunRecord_ChildRunValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SuiteRunRecord_ChildRunValidationError{}

@@ -40,6 +40,10 @@ func (m *TestRunRecord) Encode(e *jx.Encoder) {
 		e.FieldStart("suiteRunId")
 		e.Str(m.SuiteRunId)
 	}
+	if m.SuiteCellId != "" {
+		e.FieldStart("suiteCellId")
+		e.Str(m.SuiteCellId)
+	}
 	if m.Trigger != 0 {
 		e.FieldStart("trigger")
 		if s, ok := common.Trigger_name[int32(m.Trigger)]; ok {
@@ -143,6 +147,20 @@ func (m *TestRunRecord) Decode(d *jx.Decoder) error {
 				return err
 			}
 			m.SuiteRunId = v
+			return nil
+		case "suiteCellId", "suite_cell_id":
+			if seen["SuiteCellId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["SuiteCellId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.SuiteCellId = v
 			return nil
 		case "trigger":
 			if seen["Trigger"] {
@@ -292,6 +310,22 @@ func (m *TestRunRecord_Summary) Encode(e *jx.Encoder) {
 		e.FieldStart("stroppyVersion")
 		e.Str(m.StroppyVersion)
 	}
+	if m.WorkloadProtocol != 0 {
+		e.FieldStart("workloadProtocol")
+		if s, ok := domain.Workload_Protocol_name[int32(m.WorkloadProtocol)]; ok {
+			e.Str(s)
+		} else {
+			e.Int32(int32(m.WorkloadProtocol))
+		}
+	}
+	if m.TestPresetId != "" {
+		e.FieldStart("testPresetId")
+		e.Str(m.TestPresetId)
+	}
+	if m.TestPresetName != "" {
+		e.FieldStart("testPresetName")
+		e.Str(m.TestPresetName)
+	}
 	if m.TopologyLabel != "" {
 		e.FieldStart("topologyLabel")
 		e.Str(m.TopologyLabel)
@@ -429,6 +463,63 @@ func (m *TestRunRecord_Summary) Decode(d *jx.Decoder) error {
 				return err
 			}
 			m.StroppyVersion = v
+			return nil
+		case "workloadProtocol", "workload_protocol":
+			if seen["WorkloadProtocol"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["WorkloadProtocol"] = true
+			switch d.Next() {
+			case jx.String:
+				s, err := d.Str()
+				if err != nil {
+					return err
+				}
+				n, ok := domain.Workload_Protocol_value[s]
+				if !ok {
+					return fmt.Errorf("unknown enum value %q", s)
+				}
+				m.WorkloadProtocol = domain.Workload_Protocol(n)
+				return nil
+			case jx.Number:
+				n, err := d.Int32()
+				if err != nil {
+					return err
+				}
+				m.WorkloadProtocol = domain.Workload_Protocol(n)
+				return nil
+			case jx.Null:
+				return d.Null()
+			default:
+				return fmt.Errorf("invalid enum token %s", d.Next())
+			}
+		case "testPresetId", "test_preset_id":
+			if seen["TestPresetId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["TestPresetId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.TestPresetId = v
+			return nil
+		case "testPresetName", "test_preset_name":
+			if seen["TestPresetName"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["TestPresetName"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.TestPresetName = v
 			return nil
 		case "topologyLabel", "topology_label":
 			if seen["TopologyLabel"] {

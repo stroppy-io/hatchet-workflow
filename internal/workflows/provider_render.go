@@ -1,0 +1,439 @@
+package workflows
+
+import (
+	"encoding/json"
+	"fmt"
+	"math"
+	"regexp"
+	"sort"
+	"strings"
+
+	schemapb "github.com/stroppy-io/schemapb/schemapb"
+	yandextf "github.com/stroppy-io/stroppy-cloud/deployments/terraform/yandex"
+	agentdomain "github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
+	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/terraform"
+	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
+	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/structpb"
+)
+
+const (
+	defaultYandexPlatformID          = "standard-v2"
+	defaultYandexBootDiskType        = "network-ssd"
+	defaultYandexNetworkAcceleration = "standard"
+)
+
+func renderDockerInput(req *workflowpb.RenderDockerInputWorkflowRequest) (*deploymentpb.Docker_Input, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	plan := req.GetPlan()
+	if plan.GetProvider() != deploymentpb.Provider_PROVIDER_DOCKER {
+		return nil, fmt.Errorf("docker input requires docker provider, got %s", plan.GetProvider())
+	}
+
+	containers := make(map[string]*deploymentpb.Docker_Container, len(plan.GetMachines()))
+	for _, machine := range plan.GetMachines() {
+		container := machine.GetDocker()
+		if container == nil {
+			return nil, fmt.Errorf("machine %q has no docker params", machine.GetNodeId())
+		}
+		name := dockerResourceName(req.GetRunId(), machine.GetNodeId())
+		clone := proto.Clone(container).(*deploymentpb.Docker_Container)
+		if err := applyDockerAgentBootstrap(machine.GetNodeId(), clone, req.GetAgentBootstrap()); err != nil {
+			return nil, err
+		}
+		if clone.Labels == nil {
+			clone.Labels = map[string]string{}
+		}
+		clone.Labels["stroppy.cloud/run_id"] = req.GetRunId()
+		clone.Labels["stroppy.cloud/node_id"] = machine.GetNodeId()
+		clone.Labels["stroppy.cloud/resource_name"] = name
+		clone.DependsOn = dockerDependencyNames(req.GetRunId(), clone.GetDependsOn())
+		containers[name] = clone
+	}
+
+	input := &deploymentpb.Docker_Input{
+		Network: &deploymentpb.Docker_Network{
+			Name: dockerNetworkName(req.GetRunId()),
+		},
+		Containers: containers,
+	}
+	if err := input.Validate(); err != nil {
+		return nil, err
+	}
+	return input, nil
+}
+
+func renderTerraformInput(req *workflowpb.RenderTerraformVariablesWorkflowRequest) (*deploymentpb.Terraform_Input, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	plan := req.GetPlan()
+	if plan.GetProvider() != deploymentpb.Provider_PROVIDER_YANDEX {
+		return nil, fmt.Errorf("terraform input requires yandex provider, got %s", plan.GetProvider())
+	}
+
+	settings := plan.GetSettings().GetYandex()
+	if settings == nil {
+		return nil, fmt.Errorf("yandex settings are required")
+	}
+	if err := settings.Validate(); err != nil {
+		return nil, err
+	}
+
+	input, err := yandexInput(req.GetRunId(), plan, settings, req.GetAgentBootstrap())
+	if err != nil {
+		return nil, err
+	}
+	tfvars, err := bakedProto("yandex.tfvars", input)
+	if err != nil {
+		return nil, err
+	}
+
+	files, err := yandextf.EmbeddedTfFiles()
+	if err != nil {
+		return nil, err
+	}
+	sourceFiles := make([]*deploymentpb.Terraform_Operation_SourceFile, 0, len(files))
+	for _, file := range files {
+		sourceFiles = append(sourceFiles, &deploymentpb.Terraform_Operation_SourceFile{
+			Path:    file.Name(),
+			Content: file.Content(),
+		})
+	}
+
+	action := req.GetAction()
+	if action == deploymentpb.Terraform_ACTION_UNSPECIFIED {
+		action = deploymentpb.Terraform_ACTION_APPLY
+	}
+	operation := &deploymentpb.Terraform_Operation{
+		Action:                action,
+		WorkdirId:             req.GetRunId(),
+		VarFileName:           terraform.DefaultVarFileName,
+		Files:                 sourceFiles,
+		Env:                   yandexEnv(settings),
+		Parallelism:           10,
+		PreserveExistingState: true,
+		DestroyOnApplyError:   action == deploymentpb.Terraform_ACTION_APPLY,
+	}
+
+	tfInput := &deploymentpb.Terraform_Input{
+		Provider:  deploymentpb.Provider_PROVIDER_YANDEX,
+		Operation: operation,
+		Tfvars:    tfvars,
+	}
+	if action == deploymentpb.Terraform_ACTION_DESTROY {
+		tfInput.Tfvars = nil
+	}
+	if err := tfInput.Validate(); err != nil {
+		return nil, err
+	}
+	return tfInput, nil
+}
+
+func yandexInput(runID string, plan *deploymentpb.InfrastructurePlan, settings *deploymentpb.Yandex_Settings, bootstrap *workflowpb.AgentBootstrap) (*deploymentpb.Yandex_Input, error) {
+	defaultZone := yandexSettingsZone(settings.GetZone())
+	if defaultZone == "" {
+		return nil, fmt.Errorf("unsupported yandex zone %s", settings.GetZone())
+	}
+	platformID := yandexSettingsPlatformID(settings.GetPlatformId())
+	if platformID == "" {
+		return nil, fmt.Errorf("unsupported yandex platform %s", settings.GetPlatformId())
+	}
+
+	vms := make(map[string]*deploymentpb.Yandex_Vm, len(plan.GetMachines()))
+	zones := map[string]struct{}{}
+	for _, machine := range plan.GetMachines() {
+		vm := machine.GetYandex()
+		if vm == nil {
+			return nil, fmt.Errorf("machine %q has no yandex params", machine.GetNodeId())
+		}
+		name := yandexResourceName(runID, machine.GetNodeId())
+		clone := proto.Clone(vm).(*deploymentpb.Yandex_Vm)
+		if clone.Zone == "" {
+			clone.Zone = defaultZone
+		}
+		if clone.InternalIp == "" {
+			clone.InternalIp = "auto"
+		}
+		if clone.BootDiskType == "" {
+			clone.BootDiskType = defaultYandexBootDiskType
+		}
+		if clone.NetworkAcceleration == "" {
+			clone.NetworkAcceleration = defaultYandexNetworkAcceleration
+			if settings.GetSoftwareAcceleratedNetwork() {
+				clone.NetworkAcceleration = "software_accelerated"
+			}
+		}
+		if clone.UserData == "" {
+			userData, err := agentdomain.CloudInit(machine.GetNodeId(), agentBootstrap(bootstrap), agentdomain.CloudInitOptions{
+				SSHUser:      settings.GetSshUser(),
+				SSHPublicKey: settings.GetSshPublicKey(),
+			})
+			if err != nil {
+				return nil, fmt.Errorf("render yandex cloud-init for %q: %w", machine.GetNodeId(), err)
+			}
+			clone.UserData = userData
+		}
+		clone.PublicIp = clone.GetPublicIp() || settings.GetAssignPublicIp()
+		clone.BootDiskGb = uint64(roundIOM3GB(int(clone.GetBootDiskGb()), clone.GetBootDiskType()))
+		for _, disk := range clone.GetSecondaryDisks() {
+			disk.SizeGb = uint32(roundIOM3GB(int(disk.GetSizeGb()), disk.GetType()))
+		}
+		zones[clone.GetZone()] = struct{}{}
+		vms[name] = clone
+	}
+
+	subnets := map[string]*deploymentpb.Yandex_Subnet{}
+	if len(zones) > 1 {
+		zoneList := make([]string, 0, len(zones))
+		for zone := range zones {
+			zoneList = append(zoneList, zone)
+		}
+		sort.Strings(zoneList)
+		subnets = runSubnetCIDRs(runID, zoneList)
+	}
+
+	input := &deploymentpb.Yandex_Input{
+		Network: &deploymentpb.Yandex_Network{
+			Name:      yandexNetworkName(settings.GetNetworkName(), runID),
+			NetworkId: settings.GetNetworkId(),
+			Cidr:      runSubnetCIDR(runID, settings.GetSubnetCidr()),
+			Zone:      defaultZone,
+			Subnets:   subnets,
+		},
+		Compute: &deploymentpb.Yandex_Compute{
+			PlatformId:       platformID,
+			ImageId:          settings.GetImageId(),
+			SerialPortEnable: true,
+			Vms:              vms,
+		},
+	}
+	if err := input.Validate(); err != nil {
+		return nil, err
+	}
+	return input, nil
+}
+
+func yandexEnv(settings *deploymentpb.Yandex_Settings) map[string]string {
+	return map[string]string{
+		"YC_TOKEN":     settings.GetToken(),
+		"YC_CLOUD_ID":  settings.GetCloudId(),
+		"YC_FOLDER_ID": settings.GetFolderId(),
+		"YC_ZONE":      yandexSettingsZone(settings.GetZone()),
+	}
+}
+
+func applyDockerAgentBootstrap(nodeID string, container *deploymentpb.Docker_Container, bootstrap *workflowpb.AgentBootstrap) error {
+	env, err := agentdomain.Env(nodeID, agentBootstrap(bootstrap))
+	if err != nil {
+		return fmt.Errorf("render docker agent env for %q: %w", nodeID, err)
+	}
+	mergedEnv := mergeStringMap(container.GetEnv(), env)
+	container.Env = mergedEnv
+	container.Files = upsertDockerFile(container.GetFiles(), &deploymentpb.Docker_File{
+		Path:    agentdomain.DockerEnvFilePath,
+		Content: []byte(agentdomain.EnvFileFromMap(mergedEnv)),
+		Mode:    0644,
+	})
+	return nil
+}
+
+func agentBootstrap(input *workflowpb.AgentBootstrap) agentdomain.Bootstrap {
+	if input == nil {
+		return agentdomain.Bootstrap{}
+	}
+	return agentdomain.Bootstrap{
+		ServerAddr:        input.GetServerAddr(),
+		BinaryURL:         input.GetBinaryUrl(),
+		TemporalNamespace: input.GetTemporalNamespace(),
+		ExtraEnv:          input.GetExtraEnv(),
+	}
+}
+
+func mergeStringMap(base, override map[string]string) map[string]string {
+	out := make(map[string]string, len(base)+len(override))
+	for key, value := range base {
+		out[key] = value
+	}
+	for key, value := range override {
+		out[key] = value
+	}
+	return out
+}
+
+func upsertDockerFile(files []*deploymentpb.Docker_File, file *deploymentpb.Docker_File) []*deploymentpb.Docker_File {
+	out := make([]*deploymentpb.Docker_File, 0, len(files)+1)
+	replaced := false
+	for _, existing := range files {
+		if existing.GetPath() == file.GetPath() {
+			out = append(out, file)
+			replaced = true
+			continue
+		}
+		out = append(out, existing)
+	}
+	if !replaced {
+		out = append(out, file)
+	}
+	return out
+}
+
+func terraformYandexOutput(output *deploymentpb.Terraform_Output) (*deploymentpb.Yandex_Output, error) {
+	if output.GetOutputs() == nil {
+		return nil, fmt.Errorf("terraform outputs are missing")
+	}
+	data, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(output.GetOutputs().GetValues())
+	if err != nil {
+		return nil, err
+	}
+	var yandexOutput deploymentpb.Yandex_Output
+	if err := protojson.Unmarshal(data, &yandexOutput); err != nil {
+		return nil, fmt.Errorf("decode yandex terraform outputs: %w", err)
+	}
+	return &yandexOutput, nil
+}
+
+func bakedProto(name string, msg proto.Message) (*schemapb.Baked, error) {
+	data, err := protojson.MarshalOptions{UseProtoNames: true, EmitDefaultValues: true}.Marshal(msg)
+	if err != nil {
+		return nil, err
+	}
+	var values map[string]any
+	if err := json.Unmarshal(data, &values); err != nil {
+		return nil, err
+	}
+	return bakedValues(name, values)
+}
+
+func bakedValues(name string, values map[string]any) (*schemapb.Baked, error) {
+	st, err := structpb.NewStruct(values)
+	if err != nil {
+		return nil, err
+	}
+	return &schemapb.Baked{
+		Schema: &schemapb.Schema{
+			Id: &schemapb.SchemaIdentity{
+				Namespace: "stroppy-cloud",
+				Name:      name,
+				Version:   "v1",
+			},
+		},
+		Values: st,
+	}, nil
+}
+
+func yandexSettingsZone(zone deploymentpb.Yandex_Settings_Zone) string {
+	switch zone {
+	case deploymentpb.Yandex_Settings_ZONE_RU_CENTRAL1_A:
+		return "ru-central1-a"
+	case deploymentpb.Yandex_Settings_ZONE_RU_CENTRAL1_B:
+		return "ru-central1-b"
+	case deploymentpb.Yandex_Settings_ZONE_RU_CENTRAL1_D:
+		return "ru-central1-d"
+	default:
+		return ""
+	}
+}
+
+func yandexSettingsPlatformID(platform deploymentpb.Yandex_Settings_PlatformId) string {
+	switch platform {
+	case deploymentpb.Yandex_Settings_PLATFORM_ID_UNSPECIFIED:
+		return defaultYandexPlatformID
+	case deploymentpb.Yandex_Settings_PLATFORM_ID_STANDARD_V1:
+		return "standard-v1"
+	case deploymentpb.Yandex_Settings_PLATFORM_ID_STANDARD_V2:
+		return "standard-v2"
+	case deploymentpb.Yandex_Settings_PLATFORM_ID_STANDARD_V3:
+		return "standard-v3"
+	case deploymentpb.Yandex_Settings_PLATFORM_ID_HIGHFREQ_V3:
+		return "highfreq-v3"
+	default:
+		return ""
+	}
+}
+
+func roundIOM3GB(sizeGB int, diskType string) int {
+	if sizeGB <= 0 {
+		return sizeGB
+	}
+	if diskType != "network-ssd-io-m3" {
+		return sizeGB
+	}
+	return int(math.Ceil(float64(sizeGB)/93.0)) * 93
+}
+
+func runSubnetCIDR(runID, base string) string {
+	if base == "" {
+		base = "10.0.0.0/8"
+	}
+	var hash byte
+	for _, b := range []byte(runID) {
+		hash = hash*31 + b
+	}
+	return fmt.Sprintf("10.%d.0.0/16", int(hash%254)+1)
+}
+
+func runSubnetCIDRs(runID string, zones []string) map[string]*deploymentpb.Yandex_Subnet {
+	var hash byte
+	for _, b := range []byte(runID) {
+		hash = hash*31 + b
+	}
+	octet := int(hash%254) + 1
+	out := make(map[string]*deploymentpb.Yandex_Subnet, len(zones))
+	for i, zone := range zones {
+		out[zone] = &deploymentpb.Yandex_Subnet{
+			Zone: zone,
+			Cidr: fmt.Sprintf("10.%d.%d.0/24", octet, i),
+		}
+	}
+	return out
+}
+
+func dockerNetworkName(runID string) string {
+	return sanitizeProviderName("stroppy-" + runID)
+}
+
+func dockerResourceName(runID, nodeID string) string {
+	return sanitizeProviderName("stroppy-" + runID + "-" + nodeID)
+}
+
+func yandexNetworkName(base, runID string) string {
+	if base == "" {
+		base = "stroppy"
+	}
+	return sanitizeProviderName(base + "-" + runID)
+}
+
+func yandexResourceName(runID, nodeID string) string {
+	return sanitizeProviderName("stroppy-" + runID + "-" + nodeID)
+}
+
+func dockerDependencyNames(runID string, deps []string) []string {
+	out := make([]string, 0, len(deps))
+	for _, dep := range deps {
+		out = append(out, dockerResourceName(runID, dep))
+	}
+	return out
+}
+
+var providerNameInvalid = regexp.MustCompile(`[^a-z0-9-]+`)
+
+func sanitizeProviderName(name string) string {
+	name = strings.ToLower(name)
+	name = providerNameInvalid.ReplaceAllString(name, "-")
+	name = strings.Trim(name, "-")
+	if name == "" {
+		name = "stroppy"
+	}
+	if name[0] < 'a' || name[0] > 'z' {
+		name = "s-" + name
+	}
+	if len(name) > 63 {
+		name = strings.TrimRight(name[:63], "-")
+	}
+	return name
+}

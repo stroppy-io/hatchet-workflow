@@ -24,6 +24,10 @@ func (m *TestWorkflowRequest) Encode(e *jx.Encoder) {
 		e.FieldStart("testRun")
 		jxpb.EncMessage(e, m.TestRun)
 	}
+	if m.AgentBootstrap != nil {
+		e.FieldStart("agentBootstrap")
+		m.AgentBootstrap.Encode(e)
+	}
 	e.ObjEnd()
 }
 
@@ -41,6 +45,19 @@ func (m *TestWorkflowRequest) Decode(d *jx.Decoder) error {
 			}
 			m.TestRun = &domain.TestRun{}
 			if err := jxpb.DecMessage(d, m.TestRun); err != nil {
+				return err
+			}
+			return nil
+		case "agentBootstrap", "agent_bootstrap":
+			if seen["AgentBootstrap"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["AgentBootstrap"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.AgentBootstrap = &AgentBootstrap{}
+			if err := m.AgentBootstrap.Decode(d); err != nil {
 				return err
 			}
 			return nil
@@ -665,9 +682,21 @@ func (m *SuiteWorkflowRequest) Encode(e *jx.Encoder) {
 		return
 	}
 	e.ObjStart()
-	if m.SuiteRun != nil {
-		e.FieldStart("suiteRun")
-		jxpb.EncMessage(e, m.SuiteRun)
+	if m.SuiteRunId != "" {
+		e.FieldStart("suiteRunId")
+		e.Str(m.SuiteRunId)
+	}
+	if len(m.Runs) > 0 {
+		e.FieldStart("runs")
+		e.ArrStart()
+		for _, v := range m.Runs {
+			v.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	if m.MaxParallel != 0 {
+		e.FieldStart("maxParallel")
+		e.UInt32(m.MaxParallel)
 	}
 	e.ObjEnd()
 }
@@ -676,18 +705,49 @@ func (m *SuiteWorkflowRequest) Decode(d *jx.Decoder) error {
 	seen := map[string]bool{}
 	return d.Obj(func(d *jx.Decoder, key string) error {
 		switch key {
-		case "suiteRun", "suite_run":
-			if seen["SuiteRun"] {
+		case "suiteRunId", "suite_run_id":
+			if seen["SuiteRunId"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["SuiteRun"] = true
+			seen["SuiteRunId"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			m.SuiteRun = &domain.SuiteRun{}
-			if err := jxpb.DecMessage(d, m.SuiteRun); err != nil {
+			v, err := d.Str()
+			if err != nil {
 				return err
 			}
+			m.SuiteRunId = v
+			return nil
+		case "runs":
+			if seen["Runs"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Runs"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &RunConfig{}
+				if err := el.Decode(d); err != nil {
+					return err
+				}
+				m.Runs = append(m.Runs, el)
+				return nil
+			})
+		case "maxParallel", "max_parallel":
+			if seen["MaxParallel"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["MaxParallel"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint32(d)
+			if err != nil {
+				return err
+			}
+			m.MaxParallel = v
 			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)

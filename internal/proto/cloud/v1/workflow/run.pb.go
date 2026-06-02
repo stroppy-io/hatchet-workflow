@@ -49,8 +49,11 @@ type RunConfig struct {
 	// render_overrides are user edits to editable render artifacts. Workflow
 	// renderers apply them when producing deployment_plan.
 	RenderOverrides *deployment.RenderOverrideSet `protobuf:"bytes,8,opt,name=render_overrides,json=renderOverrides,proto3" json:"render_overrides,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// agent_bootstrap is runtime control-plane data delivered to provisioned
+	// agents through the provider-specific carrier.
+	AgentBootstrap *AgentBootstrap `protobuf:"bytes,9,opt,name=agent_bootstrap,json=agentBootstrap,proto3" json:"agent_bootstrap,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *RunConfig) Reset() {
@@ -139,11 +142,18 @@ func (x *RunConfig) GetRenderOverrides() *deployment.RenderOverrideSet {
 	return nil
 }
 
+func (x *RunConfig) GetAgentBootstrap() *AgentBootstrap {
+	if x != nil {
+		return x.AgentBootstrap
+	}
+	return nil
+}
+
 var File_cloud_v1_workflow_run_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_workflow_run_proto_rawDesc = "" +
 	"\n" +
-	"\x1bcloud/v1/workflow/run.proto\x12\x11cloud.v1.workflow\x1a(cloud/v1/deployment/infrastructure.proto\x1a\x1ecloud/v1/deployment/plan.proto\x1a cloud/v1/deployment/render.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a cloud/v1/topology/topology.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1atemporal/v1/temporal.proto\x1a\x17validate/validate.proto\"\xdb\x04\n" +
+	"\x1bcloud/v1/workflow/run.proto\x12\x11cloud.v1.workflow\x1a(cloud/v1/deployment/infrastructure.proto\x1a\x1ecloud/v1/deployment/plan.proto\x1a cloud/v1/deployment/render.proto\x1a\"cloud/v1/workflow/deployment.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a cloud/v1/topology/topology.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1atemporal/v1/temporal.proto\x1a\x17validate/validate.proto\"\xa7\x05\n" +
 	"\tRunConfig\x12\x1a\n" +
 	"\x02id\x18\x01 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x02id\x12?\n" +
@@ -153,7 +163,8 @@ const file_cloud_v1_workflow_run_proto_rawDesc = "" +
 	"\x13infrastructure_plan\x18\x05 \x01(\v2'.cloud.v1.deployment.InfrastructurePlanB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x12infrastructurePlan\x12[\n" +
 	"\x14infrastructure_state\x18\x06 \x01(\v2(.cloud.v1.deployment.InfrastructureStateR\x13infrastructureState\x12L\n" +
 	"\x0fdeployment_plan\x18\a \x01(\v2#.cloud.v1.deployment.DeploymentPlanR\x0edeploymentPlan\x12Q\n" +
-	"\x10render_overrides\x18\b \x01(\v2&.cloud.v1.deployment.RenderOverrideSetR\x0frenderOverrides2\x9d\x01\n" +
+	"\x10render_overrides\x18\b \x01(\v2&.cloud.v1.deployment.RenderOverrideSetR\x0frenderOverrides\x12J\n" +
+	"\x0fagent_bootstrap\x18\t \x01(\v2!.cloud.v1.workflow.AgentBootstrapR\x0eagentBootstrap2\x9d\x01\n" +
 	"\x12RunWorkflowService\x12r\n" +
 	"\x0fTestRunWorkflow\x12\x1c.cloud.v1.workflow.RunConfig\x1a\x16.google.protobuf.Empty\")\x8a\xc4\x03%*\frun/${! id }0\x02J\x02 \x01r\x0fTestRunWorkflow\x1a\x13\x8a\xc4\x03\x0f\n" +
 	"\rstroppy-cloudBFZDgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflowb\x06proto3"
@@ -180,7 +191,8 @@ var file_cloud_v1_workflow_run_proto_goTypes = []any{
 	(*deployment.InfrastructureState)(nil), // 5: cloud.v1.deployment.InfrastructureState
 	(*deployment.DeploymentPlan)(nil),      // 6: cloud.v1.deployment.DeploymentPlan
 	(*deployment.RenderOverrideSet)(nil),   // 7: cloud.v1.deployment.RenderOverrideSet
-	(*emptypb.Empty)(nil),                  // 8: google.protobuf.Empty
+	(*AgentBootstrap)(nil),                 // 8: cloud.v1.workflow.AgentBootstrap
+	(*emptypb.Empty)(nil),                  // 9: google.protobuf.Empty
 }
 var file_cloud_v1_workflow_run_proto_depIdxs = []int32{
 	1, // 0: cloud.v1.workflow.RunConfig.database:type_name -> cloud.v1.domain.Database
@@ -190,13 +202,14 @@ var file_cloud_v1_workflow_run_proto_depIdxs = []int32{
 	5, // 4: cloud.v1.workflow.RunConfig.infrastructure_state:type_name -> cloud.v1.deployment.InfrastructureState
 	6, // 5: cloud.v1.workflow.RunConfig.deployment_plan:type_name -> cloud.v1.deployment.DeploymentPlan
 	7, // 6: cloud.v1.workflow.RunConfig.render_overrides:type_name -> cloud.v1.deployment.RenderOverrideSet
-	0, // 7: cloud.v1.workflow.RunWorkflowService.TestRunWorkflow:input_type -> cloud.v1.workflow.RunConfig
-	8, // 8: cloud.v1.workflow.RunWorkflowService.TestRunWorkflow:output_type -> google.protobuf.Empty
-	8, // [8:9] is the sub-list for method output_type
-	7, // [7:8] is the sub-list for method input_type
-	7, // [7:7] is the sub-list for extension type_name
-	7, // [7:7] is the sub-list for extension extendee
-	0, // [0:7] is the sub-list for field type_name
+	8, // 7: cloud.v1.workflow.RunConfig.agent_bootstrap:type_name -> cloud.v1.workflow.AgentBootstrap
+	0, // 8: cloud.v1.workflow.RunWorkflowService.TestRunWorkflow:input_type -> cloud.v1.workflow.RunConfig
+	9, // 9: cloud.v1.workflow.RunWorkflowService.TestRunWorkflow:output_type -> google.protobuf.Empty
+	9, // [9:10] is the sub-list for method output_type
+	8, // [8:9] is the sub-list for method input_type
+	8, // [8:8] is the sub-list for extension type_name
+	8, // [8:8] is the sub-list for extension extendee
+	0, // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_workflow_run_proto_init() }
@@ -204,6 +217,7 @@ func file_cloud_v1_workflow_run_proto_init() {
 	if File_cloud_v1_workflow_run_proto != nil {
 		return
 	}
+	file_cloud_v1_workflow_deployment_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

@@ -38,8 +38,8 @@ type SuiteRecord struct {
 	// spec is the suite definition payload that SuiteAPI.Start expands into a
 	// SuiteRunRecord.
 	Spec *domain.Suite `protobuf:"bytes,2,opt,name=spec,proto3" json:"spec,omitempty"`
-	// summary holds denormalized facets for the suites table (schedule state +
-	// last-run info).
+	// summary holds denormalized facets for the suites table (cell count,
+	// schedule state, last-run info).
 	Summary       *SuiteRecord_Summary `protobuf:"bytes,3,opt,name=summary,proto3" json:"summary,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -99,7 +99,8 @@ func (x *SuiteRecord) GetSummary() *SuiteRecord_Summary {
 // SuiteRunRecord is a persisted suite EXECUTION. It references its expanded child
 // runs by id (each is a first-class TestRunRecord whose suite_run_id points back
 // here), so suite children list / track / show logs+metrics like any other run.
-// SuiteWorkflow receives a domain.SuiteRun assembled from the children at start.
+// SuiteWorkflow receives workflow.RunConfig entries assembled from those
+// children at start.
 type SuiteRunRecord struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// entity is the storage envelope (id, tenant_id, name, timings).
@@ -110,12 +111,13 @@ type SuiteRunRecord struct {
 	Status common.Status `protobuf:"varint,3,opt,name=status,proto3,enum=cloud.v1.common.Status" json:"status,omitempty"`
 	// trigger records how this run was triggered (MANUAL / CRON / API).
 	Trigger common.Trigger `protobuf:"varint,7,opt,name=trigger,proto3,enum=cloud.v1.common.Trigger" json:"trigger,omitempty"`
-	// max_parallel is the max number of concurrent child TestWorkflows.
+	// max_parallel is the max number of concurrent child TestRunWorkflows.
 	// 0 = unlimited.
 	MaxParallel uint32 `protobuf:"varint,4,opt,name=max_parallel,json=maxParallel,proto3" json:"max_parallel,omitempty"`
-	// test_run_ids are the ids of the child TestRunRecord rows this suite run
-	// expanded into.
-	TestRunIds []string `protobuf:"bytes,5,rep,name=test_run_ids,json=testRunIds,proto3" json:"test_run_ids,omitempty"`
+	// children are child TestRunRecord ids keyed back to the originating suite
+	// cell. These rows are still listed through TestRunAPI.ListTestRuns with
+	// suite_run_id.
+	Children []*SuiteRunRecord_ChildRun `protobuf:"bytes,5,rep,name=children,proto3" json:"children,omitempty"`
 	// summary holds denormalized, queryable facets for the suite-runs table
 	// (fewer than a test run: mostly child-count aggregates + provider +
 	// timing).
@@ -189,9 +191,9 @@ func (x *SuiteRunRecord) GetMaxParallel() uint32 {
 	return 0
 }
 
-func (x *SuiteRunRecord) GetTestRunIds() []string {
+func (x *SuiteRunRecord) GetChildren() []*SuiteRunRecord_ChildRun {
 	if x != nil {
-		return x.TestRunIds
+		return x.Children
 	}
 	return nil
 }
@@ -219,7 +221,9 @@ type SuiteRecord_Summary struct {
 	// last_run_status is the status of the last suite run.
 	LastRunStatus common.Status `protobuf:"varint,5,opt,name=last_run_status,json=lastRunStatus,proto3,enum=cloud.v1.common.Status" json:"last_run_status,omitempty"`
 	// run_count is how many suite runs this definition has spawned.
-	RunCount      uint32 `protobuf:"varint,6,opt,name=run_count,json=runCount,proto3" json:"run_count,omitempty"`
+	RunCount uint32 `protobuf:"varint,6,opt,name=run_count,json=runCount,proto3" json:"run_count,omitempty"`
+	// cell_count is the number of enabled cells in the suite definition.
+	CellCount     uint32 `protobuf:"varint,7,opt,name=cell_count,json=cellCount,proto3" json:"cell_count,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -292,6 +296,13 @@ func (x *SuiteRecord_Summary) GetLastRunStatus() common.Status {
 func (x *SuiteRecord_Summary) GetRunCount() uint32 {
 	if x != nil {
 		return x.RunCount
+	}
+	return 0
+}
+
+func (x *SuiteRecord_Summary) GetCellCount() uint32 {
+	if x != nil {
+		return x.CellCount
 	}
 	return 0
 }
@@ -444,30 +455,104 @@ func (x *SuiteRunRecord_Summary) GetDuration() *durationpb.Duration {
 	return nil
 }
 
+// ChildRun links one suite cell to one persisted TestRunRecord.
+type SuiteRunRecord_ChildRun struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// suite_cell_id points to domain.SuiteCell.id.
+	SuiteCellId string `protobuf:"bytes,1,opt,name=suite_cell_id,json=suiteCellId,proto3" json:"suite_cell_id,omitempty"`
+	// test_run_id is the child TestRunRecord entity id.
+	TestRunId string `protobuf:"bytes,2,opt,name=test_run_id,json=testRunId,proto3" json:"test_run_id,omitempty"`
+	// name is the child display label.
+	Name string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	// status is the latest known child run status.
+	Status        common.Status `protobuf:"varint,4,opt,name=status,proto3,enum=cloud.v1.common.Status" json:"status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SuiteRunRecord_ChildRun) Reset() {
+	*x = SuiteRunRecord_ChildRun{}
+	mi := &file_cloud_v1_models_suite_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SuiteRunRecord_ChildRun) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SuiteRunRecord_ChildRun) ProtoMessage() {}
+
+func (x *SuiteRunRecord_ChildRun) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_models_suite_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SuiteRunRecord_ChildRun.ProtoReflect.Descriptor instead.
+func (*SuiteRunRecord_ChildRun) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_models_suite_proto_rawDescGZIP(), []int{1, 1}
+}
+
+func (x *SuiteRunRecord_ChildRun) GetSuiteCellId() string {
+	if x != nil {
+		return x.SuiteCellId
+	}
+	return ""
+}
+
+func (x *SuiteRunRecord_ChildRun) GetTestRunId() string {
+	if x != nil {
+		return x.TestRunId
+	}
+	return ""
+}
+
+func (x *SuiteRunRecord_ChildRun) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *SuiteRunRecord_ChildRun) GetStatus() common.Status {
+	if x != nil {
+		return x.Status
+	}
+	return common.Status(0)
+}
+
 var File_cloud_v1_models_suite_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_models_suite_proto_rawDesc = "" +
 	"\n" +
-	"\x1bcloud/v1/models/suite.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ccloud/v1/common/status.proto\x1a\x1dcloud/v1/common/trigger.proto\x1a\"cloud/v1/deployment/provider.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1bcloud/v1/domain/suite.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\xe9\x03\n" +
+	"\x1bcloud/v1/models/suite.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ccloud/v1/common/status.proto\x1a\x1dcloud/v1/common/trigger.proto\x1a\"cloud/v1/deployment/provider.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1bcloud/v1/domain/suite.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\x88\x04\n" +
 	"\vSuiteRecord\x129\n" +
 	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.common.EntityB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06entity\x124\n" +
 	"\x04spec\x18\x02 \x01(\v2\x16.cloud.v1.domain.SuiteB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04spec\x12>\n" +
-	"\asummary\x18\x03 \x01(\v2$.cloud.v1.models.SuiteRecord.SummaryR\asummary\x1a\xa8\x02\n" +
+	"\asummary\x18\x03 \x01(\v2$.cloud.v1.models.SuiteRecord.SummaryR\asummary\x1a\xc7\x02\n" +
 	"\aSummary\x12)\n" +
 	"\x10schedule_enabled\x18\x01 \x01(\bR\x0fscheduleEnabled\x12\x1c\n" +
 	"\x04cron\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\x04cron\x12:\n" +
 	"\vnext_run_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tnextRunAt\x12:\n" +
 	"\vlast_run_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tlastRunAt\x12?\n" +
 	"\x0flast_run_status\x18\x05 \x01(\x0e2\x17.cloud.v1.common.StatusR\rlastRunStatus\x12\x1b\n" +
-	"\trun_count\x18\x06 \x01(\rR\brunCount\"\xf2\x06\n" +
+	"\trun_count\x18\x06 \x01(\rR\brunCount\x12\x1d\n" +
+	"\n" +
+	"cell_count\x18\a \x01(\rR\tcellCount\"\xbc\b\n" +
 	"\x0eSuiteRunRecord\x129\n" +
 	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.common.EntityB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06entity\x12$\n" +
 	"\bsuite_id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\asuiteId\x12/\n" +
 	"\x06status\x18\x03 \x01(\x0e2\x17.cloud.v1.common.StatusR\x06status\x122\n" +
 	"\atrigger\x18\a \x01(\x0e2\x18.cloud.v1.common.TriggerR\atrigger\x12!\n" +
-	"\fmax_parallel\x18\x04 \x01(\rR\vmaxParallel\x12.\n" +
-	"\ftest_run_ids\x18\x05 \x03(\tB\f\xfaB\t\x92\x01\x06\"\x04r\x02\x18@R\n" +
-	"testRunIds\x12A\n" +
+	"\fmax_parallel\x18\x04 \x01(\rR\vmaxParallel\x12D\n" +
+	"\bchildren\x18\x05 \x03(\v2(.cloud.v1.models.SuiteRunRecord.ChildRunR\bchildren\x12A\n" +
 	"\asummary\x18\x06 \x01(\v2'.cloud.v1.models.SuiteRunRecord.SummaryR\asummary\x1a\x83\x04\n" +
 	"\aSummary\x12'\n" +
 	"\n" +
@@ -485,7 +570,12 @@ const file_cloud_v1_models_suite_proto_rawDesc = "" +
 	" \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\x12;\n" +
 	"\vfinished_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"finishedAt\x125\n" +
-	"\bduration\x18\f \x01(\v2\x19.google.protobuf.DurationR\bdurationBDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/modelsb\x06proto3"
+	"\bduration\x18\f \x01(\v2\x19.google.protobuf.DurationR\bduration\x1a\xb1\x01\n" +
+	"\bChildRun\x12+\n" +
+	"\rsuite_cell_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x18@R\vsuiteCellId\x12)\n" +
+	"\vtest_run_id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\ttestRunId\x12\x1c\n" +
+	"\x04name\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\xff\x01R\x04name\x12/\n" +
+	"\x06status\x18\x04 \x01(\x0e2\x17.cloud.v1.common.StatusR\x06statusBDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/modelsb\x06proto3"
 
 var (
 	file_cloud_v1_models_suite_proto_rawDescOnce sync.Once
@@ -499,42 +589,45 @@ func file_cloud_v1_models_suite_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_models_suite_proto_rawDescData
 }
 
-var file_cloud_v1_models_suite_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_cloud_v1_models_suite_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_cloud_v1_models_suite_proto_goTypes = []any{
-	(*SuiteRecord)(nil),            // 0: cloud.v1.models.SuiteRecord
-	(*SuiteRunRecord)(nil),         // 1: cloud.v1.models.SuiteRunRecord
-	(*SuiteRecord_Summary)(nil),    // 2: cloud.v1.models.SuiteRecord.Summary
-	(*SuiteRunRecord_Summary)(nil), // 3: cloud.v1.models.SuiteRunRecord.Summary
-	(*common.Entity)(nil),          // 4: cloud.v1.common.Entity
-	(*domain.Suite)(nil),           // 5: cloud.v1.domain.Suite
-	(common.Status)(0),             // 6: cloud.v1.common.Status
-	(common.Trigger)(0),            // 7: cloud.v1.common.Trigger
-	(*timestamppb.Timestamp)(nil),  // 8: google.protobuf.Timestamp
-	(deployment.Provider)(0),       // 9: cloud.v1.deployment.Provider
-	(domain.Database_Kind)(0),      // 10: cloud.v1.domain.Database.Kind
-	(*durationpb.Duration)(nil),    // 11: google.protobuf.Duration
+	(*SuiteRecord)(nil),             // 0: cloud.v1.models.SuiteRecord
+	(*SuiteRunRecord)(nil),          // 1: cloud.v1.models.SuiteRunRecord
+	(*SuiteRecord_Summary)(nil),     // 2: cloud.v1.models.SuiteRecord.Summary
+	(*SuiteRunRecord_Summary)(nil),  // 3: cloud.v1.models.SuiteRunRecord.Summary
+	(*SuiteRunRecord_ChildRun)(nil), // 4: cloud.v1.models.SuiteRunRecord.ChildRun
+	(*common.Entity)(nil),           // 5: cloud.v1.common.Entity
+	(*domain.Suite)(nil),            // 6: cloud.v1.domain.Suite
+	(common.Status)(0),              // 7: cloud.v1.common.Status
+	(common.Trigger)(0),             // 8: cloud.v1.common.Trigger
+	(*timestamppb.Timestamp)(nil),   // 9: google.protobuf.Timestamp
+	(deployment.Provider)(0),        // 10: cloud.v1.deployment.Provider
+	(domain.Database_Kind)(0),       // 11: cloud.v1.domain.Database.Kind
+	(*durationpb.Duration)(nil),     // 12: google.protobuf.Duration
 }
 var file_cloud_v1_models_suite_proto_depIdxs = []int32{
-	4,  // 0: cloud.v1.models.SuiteRecord.entity:type_name -> cloud.v1.common.Entity
-	5,  // 1: cloud.v1.models.SuiteRecord.spec:type_name -> cloud.v1.domain.Suite
+	5,  // 0: cloud.v1.models.SuiteRecord.entity:type_name -> cloud.v1.common.Entity
+	6,  // 1: cloud.v1.models.SuiteRecord.spec:type_name -> cloud.v1.domain.Suite
 	2,  // 2: cloud.v1.models.SuiteRecord.summary:type_name -> cloud.v1.models.SuiteRecord.Summary
-	4,  // 3: cloud.v1.models.SuiteRunRecord.entity:type_name -> cloud.v1.common.Entity
-	6,  // 4: cloud.v1.models.SuiteRunRecord.status:type_name -> cloud.v1.common.Status
-	7,  // 5: cloud.v1.models.SuiteRunRecord.trigger:type_name -> cloud.v1.common.Trigger
-	3,  // 6: cloud.v1.models.SuiteRunRecord.summary:type_name -> cloud.v1.models.SuiteRunRecord.Summary
-	8,  // 7: cloud.v1.models.SuiteRecord.Summary.next_run_at:type_name -> google.protobuf.Timestamp
-	8,  // 8: cloud.v1.models.SuiteRecord.Summary.last_run_at:type_name -> google.protobuf.Timestamp
-	6,  // 9: cloud.v1.models.SuiteRecord.Summary.last_run_status:type_name -> cloud.v1.common.Status
-	9,  // 10: cloud.v1.models.SuiteRunRecord.Summary.provider:type_name -> cloud.v1.deployment.Provider
-	10, // 11: cloud.v1.models.SuiteRunRecord.Summary.db_kinds:type_name -> cloud.v1.domain.Database.Kind
-	8,  // 12: cloud.v1.models.SuiteRunRecord.Summary.started_at:type_name -> google.protobuf.Timestamp
-	8,  // 13: cloud.v1.models.SuiteRunRecord.Summary.finished_at:type_name -> google.protobuf.Timestamp
-	11, // 14: cloud.v1.models.SuiteRunRecord.Summary.duration:type_name -> google.protobuf.Duration
-	15, // [15:15] is the sub-list for method output_type
-	15, // [15:15] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	5,  // 3: cloud.v1.models.SuiteRunRecord.entity:type_name -> cloud.v1.common.Entity
+	7,  // 4: cloud.v1.models.SuiteRunRecord.status:type_name -> cloud.v1.common.Status
+	8,  // 5: cloud.v1.models.SuiteRunRecord.trigger:type_name -> cloud.v1.common.Trigger
+	4,  // 6: cloud.v1.models.SuiteRunRecord.children:type_name -> cloud.v1.models.SuiteRunRecord.ChildRun
+	3,  // 7: cloud.v1.models.SuiteRunRecord.summary:type_name -> cloud.v1.models.SuiteRunRecord.Summary
+	9,  // 8: cloud.v1.models.SuiteRecord.Summary.next_run_at:type_name -> google.protobuf.Timestamp
+	9,  // 9: cloud.v1.models.SuiteRecord.Summary.last_run_at:type_name -> google.protobuf.Timestamp
+	7,  // 10: cloud.v1.models.SuiteRecord.Summary.last_run_status:type_name -> cloud.v1.common.Status
+	10, // 11: cloud.v1.models.SuiteRunRecord.Summary.provider:type_name -> cloud.v1.deployment.Provider
+	11, // 12: cloud.v1.models.SuiteRunRecord.Summary.db_kinds:type_name -> cloud.v1.domain.Database.Kind
+	9,  // 13: cloud.v1.models.SuiteRunRecord.Summary.started_at:type_name -> google.protobuf.Timestamp
+	9,  // 14: cloud.v1.models.SuiteRunRecord.Summary.finished_at:type_name -> google.protobuf.Timestamp
+	12, // 15: cloud.v1.models.SuiteRunRecord.Summary.duration:type_name -> google.protobuf.Duration
+	7,  // 16: cloud.v1.models.SuiteRunRecord.ChildRun.status:type_name -> cloud.v1.common.Status
+	17, // [17:17] is the sub-list for method output_type
+	17, // [17:17] is the sub-list for method input_type
+	17, // [17:17] is the sub-list for extension type_name
+	17, // [17:17] is the sub-list for extension extendee
+	0,  // [0:17] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_models_suite_proto_init() }
@@ -548,7 +641,7 @@ func file_cloud_v1_models_suite_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_models_suite_proto_rawDesc), len(file_cloud_v1_models_suite_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

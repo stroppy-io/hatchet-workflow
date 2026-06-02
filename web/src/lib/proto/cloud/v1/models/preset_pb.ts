@@ -6,11 +6,11 @@ import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Entity, EntityJson } from "../common/entity_pb.ts";
 import { file_cloud_v1_common_entity } from "../common/entity_pb.ts";
-import type { Database, DatabaseJson } from "../domain/database_pb.ts";
+import type { Database, Database_Kind, Database_KindJson, DatabaseJson } from "../domain/database_pb.ts";
 import { file_cloud_v1_domain_database } from "../domain/database_pb.ts";
 import type { Test, TestJson } from "../domain/test_pb.ts";
 import { file_cloud_v1_domain_test } from "../domain/test_pb.ts";
-import type { Workload, WorkloadJson } from "../domain/workload_pb.ts";
+import type { Workload, Workload_Protocol, Workload_ProtocolJson, WorkloadJson } from "../domain/workload_pb.ts";
 import { file_cloud_v1_domain_workload } from "../domain/workload_pb.ts";
 import { file_validate_validate } from "../../../validate/validate_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
@@ -19,7 +19,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/models/preset.proto.
  */
 export const file_cloud_v1_models_preset: GenFile = /*@__PURE__*/
-  fileDesc("ChxjbG91ZC92MS9tb2RlbHMvcHJlc2V0LnByb3RvEg9jbG91ZC52MS5tb2RlbHMikwEKFERhdGFiYXNlUHJlc2V0UmVjb3JkEjEKBmVudGl0eRgBIAEoCzIXLmNsb3VkLnYxLmNvbW1vbi5FbnRpdHlCCPpCBYoBAhABEjUKCGRhdGFiYXNlGAIgASgLMhkuY2xvdWQudjEuZG9tYWluLkRhdGFiYXNlQgj6QgWKAQIQARIRCglpc19zeXN0ZW0YAyABKAgikwEKFFdvcmtsb2FkUHJlc2V0UmVjb3JkEjEKBmVudGl0eRgBIAEoCzIXLmNsb3VkLnYxLmNvbW1vbi5FbnRpdHlCCPpCBYoBAhABEjUKCHdvcmtsb2FkGAIgASgLMhkuY2xvdWQudjEuZG9tYWluLldvcmtsb2FkQgj6QgWKAQIQARIRCglpc19zeXN0ZW0YAyABKAgihwEKEFRlc3RQcmVzZXRSZWNvcmQSMQoGZW50aXR5GAEgASgLMhcuY2xvdWQudjEuY29tbW9uLkVudGl0eUII+kIFigECEAESLQoEdGVzdBgCIAEoCzIVLmNsb3VkLnYxLmRvbWFpbi5UZXN0Qgj6QgWKAQIQARIRCglpc19zeXN0ZW0YAyABKAhCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvbW9kZWxzYgZwcm90bzM", [file_cloud_v1_common_entity, file_cloud_v1_domain_database, file_cloud_v1_domain_test, file_cloud_v1_domain_workload, file_validate_validate]);
+  fileDesc("ChxjbG91ZC92MS9tb2RlbHMvcHJlc2V0LnByb3RvEg9jbG91ZC52MS5tb2RlbHMivAIKFERhdGFiYXNlUHJlc2V0UmVjb3JkEjEKBmVudGl0eRgBIAEoCzIXLmNsb3VkLnYxLmNvbW1vbi5FbnRpdHlCCPpCBYoBAhABEjUKCGRhdGFiYXNlGAIgASgLMhkuY2xvdWQudjEuZG9tYWluLkRhdGFiYXNlQgj6QgWKAQIQARIRCglpc19zeXN0ZW0YAyABKAgSPgoHc3VtbWFyeRgEIAEoCzItLmNsb3VkLnYxLm1vZGVscy5EYXRhYmFzZVByZXNldFJlY29yZC5TdW1tYXJ5GmcKB1N1bW1hcnkSLwoHZGJfa2luZBgBIAEoDjIeLmNsb3VkLnYxLmRvbWFpbi5EYXRhYmFzZS5LaW5kEhkKB3ZlcnNpb24YAiABKAlCCPpCBXIDGIABEhAKCGV4dGVybmFsGAMgASgIItACChRXb3JrbG9hZFByZXNldFJlY29yZBIxCgZlbnRpdHkYASABKAsyFy5jbG91ZC52MS5jb21tb24uRW50aXR5Qgj6QgWKAQIQARI1Cgh3b3JrbG9hZBgCIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5Xb3JrbG9hZEII+kIFigECEAESEQoJaXNfc3lzdGVtGAMgASgIEj4KB3N1bW1hcnkYBCABKAsyLS5jbG91ZC52MS5tb2RlbHMuV29ya2xvYWRQcmVzZXRSZWNvcmQuU3VtbWFyeRp7CgdTdW1tYXJ5EjQKCHByb3RvY29sGAEgASgOMiIuY2xvdWQudjEuZG9tYWluLldvcmtsb2FkLlByb3RvY29sEiAKD3N0cm9wcHlfdmVyc2lvbhgCIAEoCUIH+kIEcgIYQBIYCgZzY3JpcHQYAyABKAlCCPpCBXIDGIAEItgCChBUZXN0UHJlc2V0UmVjb3JkEjEKBmVudGl0eRgBIAEoCzIXLmNsb3VkLnYxLmNvbW1vbi5FbnRpdHlCCPpCBYoBAhABEi0KBHRlc3QYAiABKAsyFS5jbG91ZC52MS5kb21haW4uVGVzdEII+kIFigECEAESEQoJaXNfc3lzdGVtGAMgASgIEjoKB3N1bW1hcnkYBCABKAsyKS5jbG91ZC52MS5tb2RlbHMuVGVzdFByZXNldFJlY29yZC5TdW1tYXJ5GpIBCgdTdW1tYXJ5Ei8KB2RiX2tpbmQYASABKA4yHi5jbG91ZC52MS5kb21haW4uRGF0YWJhc2UuS2luZBI0Cghwcm90b2NvbBgCIAEoDjIiLmNsb3VkLnYxLmRvbWFpbi5Xb3JrbG9hZC5Qcm90b2NvbBIgCg9zdHJvcHB5X3ZlcnNpb24YAyABKAlCB/pCBHICGEBCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvbW9kZWxzYgZwcm90bzM", [file_cloud_v1_common_entity, file_cloud_v1_domain_database, file_cloud_v1_domain_test, file_cloud_v1_domain_workload, file_validate_validate]);
 
 /**
  *
@@ -56,6 +56,15 @@ export type DatabasePresetRecord = Message<"cloud.v1.models.DatabasePresetRecord
    * @generated from field: bool is_system = 3;
    */
   isSystem: boolean;
+
+  /**
+   *
+   * summary is the denormalized projection used by preset pickers and suite
+   * matrix screens without decoding the whole database body.
+   *
+   * @generated from field: cloud.v1.models.DatabasePresetRecord.Summary summary = 4;
+   */
+  summary?: DatabasePresetRecord_Summary;
 };
 
 /**
@@ -93,6 +102,15 @@ export type DatabasePresetRecordJson = {
    * @generated from field: bool is_system = 3;
    */
   isSystem?: boolean;
+
+  /**
+   *
+   * summary is the denormalized projection used by preset pickers and suite
+   * matrix screens without decoding the whole database body.
+   *
+   * @generated from field: cloud.v1.models.DatabasePresetRecord.Summary summary = 4;
+   */
+  summary?: DatabasePresetRecord_SummaryJson;
 };
 
 export type DatabasePresetRecordValid = DatabasePresetRecord;
@@ -103,6 +121,79 @@ export type DatabasePresetRecordValid = DatabasePresetRecord;
  */
 export const DatabasePresetRecordSchema: GenMessage<DatabasePresetRecord, {jsonType: DatabasePresetRecordJson, validType: DatabasePresetRecordValid}> = /*@__PURE__*/
   messageDesc(file_cloud_v1_models_preset, 0);
+
+/**
+ *
+ * Summary is filled by the server from `database`.
+ *
+ * @generated from message cloud.v1.models.DatabasePresetRecord.Summary
+ */
+export type DatabasePresetRecord_Summary = Message<"cloud.v1.models.DatabasePresetRecord.Summary"> & {
+  /**
+   *
+   * db_kind is the database engine kind.
+   *
+   * @generated from field: cloud.v1.domain.Database.Kind db_kind = 1;
+   */
+  dbKind: Database_Kind;
+
+  /**
+   *
+   * version is the self-deploy engine version, when present.
+   *
+   * @generated from field: string version = 2;
+   */
+  version: string;
+
+  /**
+   *
+   * external is true when the preset targets an already-running database.
+   *
+   * @generated from field: bool external = 3;
+   */
+  external: boolean;
+};
+
+/**
+ *
+ * Summary is filled by the server from `database`.
+ *
+ * @generated from message cloud.v1.models.DatabasePresetRecord.Summary
+ */
+export type DatabasePresetRecord_SummaryJson = {
+  /**
+   *
+   * db_kind is the database engine kind.
+   *
+   * @generated from field: cloud.v1.domain.Database.Kind db_kind = 1;
+   */
+  dbKind?: Database_KindJson;
+
+  /**
+   *
+   * version is the self-deploy engine version, when present.
+   *
+   * @generated from field: string version = 2;
+   */
+  version?: string;
+
+  /**
+   *
+   * external is true when the preset targets an already-running database.
+   *
+   * @generated from field: bool external = 3;
+   */
+  external?: boolean;
+};
+
+export type DatabasePresetRecord_SummaryValid = DatabasePresetRecord_Summary;
+
+/**
+ * Describes the message cloud.v1.models.DatabasePresetRecord.Summary.
+ * Use `create(DatabasePresetRecord_SummarySchema)` to create a new message.
+ */
+export const DatabasePresetRecord_SummarySchema: GenMessage<DatabasePresetRecord_Summary, {jsonType: DatabasePresetRecord_SummaryJson, validType: DatabasePresetRecord_SummaryValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_models_preset, 0, 0);
 
 /**
  *
@@ -139,6 +230,15 @@ export type WorkloadPresetRecord = Message<"cloud.v1.models.WorkloadPresetRecord
    * @generated from field: bool is_system = 3;
    */
   isSystem: boolean;
+
+  /**
+   *
+   * summary is the denormalized projection used by preset pickers and suite
+   * matrix screens without decoding the whole workload body.
+   *
+   * @generated from field: cloud.v1.models.WorkloadPresetRecord.Summary summary = 4;
+   */
+  summary?: WorkloadPresetRecord_Summary;
 };
 
 /**
@@ -176,6 +276,15 @@ export type WorkloadPresetRecordJson = {
    * @generated from field: bool is_system = 3;
    */
   isSystem?: boolean;
+
+  /**
+   *
+   * summary is the denormalized projection used by preset pickers and suite
+   * matrix screens without decoding the whole workload body.
+   *
+   * @generated from field: cloud.v1.models.WorkloadPresetRecord.Summary summary = 4;
+   */
+  summary?: WorkloadPresetRecord_SummaryJson;
 };
 
 export type WorkloadPresetRecordValid = WorkloadPresetRecord;
@@ -186,6 +295,79 @@ export type WorkloadPresetRecordValid = WorkloadPresetRecord;
  */
 export const WorkloadPresetRecordSchema: GenMessage<WorkloadPresetRecord, {jsonType: WorkloadPresetRecordJson, validType: WorkloadPresetRecordValid}> = /*@__PURE__*/
   messageDesc(file_cloud_v1_models_preset, 1);
+
+/**
+ *
+ * Summary is filled by the server from `workload`.
+ *
+ * @generated from message cloud.v1.models.WorkloadPresetRecord.Summary
+ */
+export type WorkloadPresetRecord_Summary = Message<"cloud.v1.models.WorkloadPresetRecord.Summary"> & {
+  /**
+   *
+   * protocol is the workload wire protocol.
+   *
+   * @generated from field: cloud.v1.domain.Workload.Protocol protocol = 1;
+   */
+  protocol: Workload_Protocol;
+
+  /**
+   *
+   * stroppy_version is the stroppy binary version/tag.
+   *
+   * @generated from field: string stroppy_version = 2;
+   */
+  stroppyVersion: string;
+
+  /**
+   *
+   * script is the workload script/preset/path label.
+   *
+   * @generated from field: string script = 3;
+   */
+  script: string;
+};
+
+/**
+ *
+ * Summary is filled by the server from `workload`.
+ *
+ * @generated from message cloud.v1.models.WorkloadPresetRecord.Summary
+ */
+export type WorkloadPresetRecord_SummaryJson = {
+  /**
+   *
+   * protocol is the workload wire protocol.
+   *
+   * @generated from field: cloud.v1.domain.Workload.Protocol protocol = 1;
+   */
+  protocol?: Workload_ProtocolJson;
+
+  /**
+   *
+   * stroppy_version is the stroppy binary version/tag.
+   *
+   * @generated from field: string stroppy_version = 2;
+   */
+  stroppyVersion?: string;
+
+  /**
+   *
+   * script is the workload script/preset/path label.
+   *
+   * @generated from field: string script = 3;
+   */
+  script?: string;
+};
+
+export type WorkloadPresetRecord_SummaryValid = WorkloadPresetRecord_Summary;
+
+/**
+ * Describes the message cloud.v1.models.WorkloadPresetRecord.Summary.
+ * Use `create(WorkloadPresetRecord_SummarySchema)` to create a new message.
+ */
+export const WorkloadPresetRecord_SummarySchema: GenMessage<WorkloadPresetRecord_Summary, {jsonType: WorkloadPresetRecord_SummaryJson, validType: WorkloadPresetRecord_SummaryValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_models_preset, 1, 0);
 
 /**
  *
@@ -222,6 +404,15 @@ export type TestPresetRecord = Message<"cloud.v1.models.TestPresetRecord"> & {
    * @generated from field: bool is_system = 3;
    */
   isSystem: boolean;
+
+  /**
+   *
+   * summary is the denormalized projection used by preset pickers and suite
+   * matrix screens without decoding the whole test body.
+   *
+   * @generated from field: cloud.v1.models.TestPresetRecord.Summary summary = 4;
+   */
+  summary?: TestPresetRecord_Summary;
 };
 
 /**
@@ -259,6 +450,15 @@ export type TestPresetRecordJson = {
    * @generated from field: bool is_system = 3;
    */
   isSystem?: boolean;
+
+  /**
+   *
+   * summary is the denormalized projection used by preset pickers and suite
+   * matrix screens without decoding the whole test body.
+   *
+   * @generated from field: cloud.v1.models.TestPresetRecord.Summary summary = 4;
+   */
+  summary?: TestPresetRecord_SummaryJson;
 };
 
 export type TestPresetRecordValid = TestPresetRecord;
@@ -269,4 +469,77 @@ export type TestPresetRecordValid = TestPresetRecord;
  */
 export const TestPresetRecordSchema: GenMessage<TestPresetRecord, {jsonType: TestPresetRecordJson, validType: TestPresetRecordValid}> = /*@__PURE__*/
   messageDesc(file_cloud_v1_models_preset, 2);
+
+/**
+ *
+ * Summary is filled by the server from `test`.
+ *
+ * @generated from message cloud.v1.models.TestPresetRecord.Summary
+ */
+export type TestPresetRecord_Summary = Message<"cloud.v1.models.TestPresetRecord.Summary"> & {
+  /**
+   *
+   * db_kind is the database engine kind.
+   *
+   * @generated from field: cloud.v1.domain.Database.Kind db_kind = 1;
+   */
+  dbKind: Database_Kind;
+
+  /**
+   *
+   * protocol is the workload wire protocol.
+   *
+   * @generated from field: cloud.v1.domain.Workload.Protocol protocol = 2;
+   */
+  protocol: Workload_Protocol;
+
+  /**
+   *
+   * stroppy_version is the stroppy binary version/tag.
+   *
+   * @generated from field: string stroppy_version = 3;
+   */
+  stroppyVersion: string;
+};
+
+/**
+ *
+ * Summary is filled by the server from `test`.
+ *
+ * @generated from message cloud.v1.models.TestPresetRecord.Summary
+ */
+export type TestPresetRecord_SummaryJson = {
+  /**
+   *
+   * db_kind is the database engine kind.
+   *
+   * @generated from field: cloud.v1.domain.Database.Kind db_kind = 1;
+   */
+  dbKind?: Database_KindJson;
+
+  /**
+   *
+   * protocol is the workload wire protocol.
+   *
+   * @generated from field: cloud.v1.domain.Workload.Protocol protocol = 2;
+   */
+  protocol?: Workload_ProtocolJson;
+
+  /**
+   *
+   * stroppy_version is the stroppy binary version/tag.
+   *
+   * @generated from field: string stroppy_version = 3;
+   */
+  stroppyVersion?: string;
+};
+
+export type TestPresetRecord_SummaryValid = TestPresetRecord_Summary;
+
+/**
+ * Describes the message cloud.v1.models.TestPresetRecord.Summary.
+ * Use `create(TestPresetRecord_SummarySchema)` to create a new message.
+ */
+export const TestPresetRecord_SummarySchema: GenMessage<TestPresetRecord_Summary, {jsonType: TestPresetRecord_SummaryJson, validType: TestPresetRecord_SummaryValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_models_preset, 2, 0);
 

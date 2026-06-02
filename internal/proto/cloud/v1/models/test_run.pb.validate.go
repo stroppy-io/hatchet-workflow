@@ -162,6 +162,17 @@ func (m *TestRunRecord) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if utf8.RuneCountInString(m.GetSuiteCellId()) > 64 {
+		err := TestRunRecordValidationError{
+			field:  "SuiteCellId",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	// no validation rules for Trigger
 
 	// no validation rules for InTenantRating
@@ -405,6 +416,30 @@ func (m *TestRunRecord_Summary) validate(all bool) error {
 		err := TestRunRecord_SummaryValidationError{
 			field:  "StroppyVersion",
 			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for WorkloadProtocol
+
+	if utf8.RuneCountInString(m.GetTestPresetId()) > 64 {
+		err := TestRunRecord_SummaryValidationError{
+			field:  "TestPresetId",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetTestPresetName()) > 255 {
+		err := TestRunRecord_SummaryValidationError{
+			field:  "TestPresetName",
+			reason: "value length must be at most 255 runes",
 		}
 		if !all {
 			return err

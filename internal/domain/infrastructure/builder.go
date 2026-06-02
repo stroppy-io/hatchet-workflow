@@ -134,16 +134,12 @@ func dockerContainer(node *topologypb.Node, sizing MachineSizing, options Docker
 		cgroupnsMode = "host"
 	}
 
-	env := copyStringMap(options.Env)
-	env["STROPPY_NODE_ID"] = node.GetId()
-	env["AGENT_MACHINE_ID"] = node.GetId()
-
 	container := &deployment.Docker_Container{
 		Image:         image,
 		FallbackImage: options.FallbackImage,
 		Hostname:      node.GetId(),
 		Cmd:           []string{"/sbin/init"},
-		Env:           env,
+		Env:           copyStringMap(options.Env),
 		Labels: mergeLabels(node.GetLabels(), map[string]string{
 			"stroppy.cloud/node_id": node.GetId(),
 		}),
