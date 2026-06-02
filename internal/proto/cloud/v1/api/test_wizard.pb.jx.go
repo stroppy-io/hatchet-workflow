@@ -11,6 +11,7 @@ import (
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	topology "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology"
+	structpb "google.golang.org/protobuf/types/known/structpb"
 )
 
 func (m *StartTestWizardRequest) Encode(e *jx.Encoder) {
@@ -1003,6 +1004,351 @@ func (m *FinishTestWizardResponse) MarshalJSON() ([]byte, error) {
 }
 
 func (m *FinishTestWizardResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *ProbeScriptRequest) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Version != "" {
+		e.FieldStart("version")
+		e.Str(m.Version)
+	}
+	if m.Script != "" {
+		e.FieldStart("script")
+		e.Str(m.Script)
+	}
+	if m.Sql != "" {
+		e.FieldStart("sql")
+		e.Str(m.Sql)
+	}
+	if m.DriverType != "" {
+		e.FieldStart("driverType")
+		e.Str(m.DriverType)
+	}
+	if m.PoolSize != 0 {
+		e.FieldStart("poolSize")
+		e.Int32(m.PoolSize)
+	}
+	if m.ScaleFactor != 0 {
+		e.FieldStart("scaleFactor")
+		e.Int32(m.ScaleFactor)
+	}
+	if len(m.Env) > 0 {
+		e.FieldStart("env")
+		e.ObjStart()
+		for k, v := range m.Env {
+			e.FieldStart(k)
+			e.Str(v)
+		}
+		e.ObjEnd()
+	}
+	if len(m.Files) > 0 {
+		e.FieldStart("files")
+		e.ArrStart()
+		for _, v := range m.Files {
+			v.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	if m.IncludeHuman != false {
+		e.FieldStart("includeHuman")
+		e.Bool(m.IncludeHuman)
+	}
+	e.ObjEnd()
+}
+
+func (m *ProbeScriptRequest) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "version":
+			if seen["Version"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Version"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Version = v
+			return nil
+		case "script":
+			if seen["Script"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Script"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Script = v
+			return nil
+		case "sql":
+			if seen["Sql"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Sql"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Sql = v
+			return nil
+		case "driverType", "driver_type":
+			if seen["DriverType"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["DriverType"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.DriverType = v
+			return nil
+		case "poolSize", "pool_size":
+			if seen["PoolSize"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["PoolSize"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecInt32(d)
+			if err != nil {
+				return err
+			}
+			m.PoolSize = v
+			return nil
+		case "scaleFactor", "scale_factor":
+			if seen["ScaleFactor"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["ScaleFactor"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecInt32(d)
+			if err != nil {
+				return err
+			}
+			m.ScaleFactor = v
+			return nil
+		case "env":
+			if seen["Env"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Env"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			if m.Env == nil {
+				m.Env = make(map[string]string)
+			}
+			return d.Obj(func(d *jx.Decoder, ks string) error {
+				mk := ks
+				var mv string
+				tv, err := d.Str()
+				if err != nil {
+					return err
+				}
+				mv = tv
+				m.Env[mk] = mv
+				return nil
+			})
+		case "files":
+			if seen["Files"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Files"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &ProbeWorkloadFile{}
+				if err := el.Decode(d); err != nil {
+					return err
+				}
+				m.Files = append(m.Files, el)
+				return nil
+			})
+		case "includeHuman", "include_human":
+			if seen["IncludeHuman"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["IncludeHuman"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Bool()
+			if err != nil {
+				return err
+			}
+			m.IncludeHuman = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *ProbeScriptRequest) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *ProbeScriptRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *ProbeWorkloadFile) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Name != "" {
+		e.FieldStart("name")
+		e.Str(m.Name)
+	}
+	if m.Content != "" {
+		e.FieldStart("content")
+		e.Str(m.Content)
+	}
+	e.ObjEnd()
+}
+
+func (m *ProbeWorkloadFile) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "name":
+			if seen["Name"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Name"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Name = v
+			return nil
+		case "content":
+			if seen["Content"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Content"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Content = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *ProbeWorkloadFile) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *ProbeWorkloadFile) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *ProbeScriptResponse) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Metadata != nil {
+		e.FieldStart("metadata")
+		jxpb.EncStruct(e, m.Metadata)
+	}
+	if m.Human != "" {
+		e.FieldStart("human")
+		e.Str(m.Human)
+	}
+	e.ObjEnd()
+}
+
+func (m *ProbeScriptResponse) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "metadata":
+			if seen["Metadata"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Metadata"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Metadata = &structpb.Struct{}
+			if err := jxpb.DecStruct(d, m.Metadata); err != nil {
+				return err
+			}
+			return nil
+		case "human":
+			if seen["Human"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Human"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Human = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *ProbeScriptResponse) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *ProbeScriptResponse) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return m.Decode(d)
 }

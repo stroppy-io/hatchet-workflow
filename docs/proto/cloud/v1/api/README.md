@@ -213,6 +213,10 @@
   - [cloud.v1.api.PatchTestWizardRequest](#cloud-v1-api-patchtestwizardrequest)
   - [cloud.v1.api.PatchTestWizardResponse](#cloud-v1-api-patchtestwizardresponse)
   - [cloud.v1.api.PlatformSettings](#cloud-v1-api-platformsettings)
+  - [cloud.v1.api.ProbeScriptRequest](#cloud-v1-api-probescriptrequest)
+  - [cloud.v1.api.ProbeScriptRequest.EnvEntry](#cloud-v1-api-probescriptrequest-enventry)
+  - [cloud.v1.api.ProbeScriptResponse](#cloud-v1-api-probescriptresponse)
+  - [cloud.v1.api.ProbeWorkloadFile](#cloud-v1-api-probeworkloadfile)
   - [cloud.v1.api.PublicRatingEntry](#cloud-v1-api-publicratingentry)
   - [cloud.v1.api.QueryLogsRequest](#cloud-v1-api-querylogsrequest)
   - [cloud.v1.api.QueryLogsResponse](#cloud-v1-api-querylogsresponse)
@@ -7626,6 +7630,192 @@ go_name: AllowSelfRegistration</pre></td>
 
 json_name: serverAddr
 go_name: ServerAddr</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-probescriptrequest"></a>
+### cloud.v1.api.ProbeScriptRequest
+
+<pre>
+//ProbeScriptRequest introspects a stroppy script: the server execs a local
+//`stroppy probe` against the given script + driver and returns the script
+//metadata (available steps, declared env vars, SQL sections, driver defaults,
+//pool size) so the wizard can drive its workload form.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>driver_type</td>
+<td>string</td>
+<td><pre>
+//driver_type is the stroppy driver ("postgres"|"mysql"|"picodata"|"ydb"|...).<br>
+
+json_name: driverType
+go_name: DriverType</pre></td>
+</tr><tr>
+<td>env</td>
+<td><a href="#cloud-v1-api-probescriptrequest-enventry">cloud.v1.api.ProbeScriptRequest.EnvEntry</a></td>
+<td><pre>
+//env are extra env overrides for the probed script (keys uppercased).<br>
+
+json_name: env
+go_name: Env</pre></td>
+</tr><tr>
+<td>files</td>
+<td><a href="#cloud-v1-api-probeworkloadfile">cloud.v1.api.ProbeWorkloadFile</a></td>
+<td><pre>
+//files are inline workload files written next to the generated config so the
+//probed script can reference them by name.<br>
+
+json_name: files
+go_name: Files</pre></td>
+</tr><tr>
+<td>include_human</td>
+<td>bool</td>
+<td><pre>
+//include_human additionally runs `probe -o human` and fills the human field.<br>
+
+json_name: includeHuman
+go_name: IncludeHuman</pre></td>
+</tr><tr>
+<td>pool_size</td>
+<td>int32</td>
+<td><pre>
+//pool_size, when > 0, sets the driver pool min/max conns and a POOL_SIZE env.<br>
+
+json_name: poolSize
+go_name: PoolSize</pre></td>
+</tr><tr>
+<td>scale_factor</td>
+<td>int32</td>
+<td><pre>
+//scale_factor, when > 0, sets a SCALE_FACTOR env override.<br>
+
+json_name: scaleFactor
+go_name: ScaleFactor</pre></td>
+</tr><tr>
+<td>script</td>
+<td>string</td>
+<td><pre>
+//script is the stroppy script to introspect (e.g. "tpcc/procs"). Required.<br>
+
+json_name: script
+go_name: Script</pre></td>
+</tr><tr>
+<td>sql</td>
+<td>string</td>
+<td><pre>
+//sql is an optional second SQL argument.<br>
+
+json_name: sql
+go_name: Sql</pre></td>
+</tr><tr>
+<td>version</td>
+<td>string</td>
+<td><pre>
+//version selects the stroppy binary: a github release tag (e.g. "1.2.0") or
+//"commit:<sha>". Empty uses the configured upstream / PATH binary.<br>
+
+json_name: version
+go_name: Version</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-probescriptrequest-enventry"></a>
+### cloud.v1.api.ProbeScriptRequest.EnvEntry
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>key</td>
+<td>string</td>
+<td><pre>
+json_name: key
+go_name: Key</pre></td>
+</tr><tr>
+<td>value</td>
+<td>string</td>
+<td><pre>
+json_name: value
+go_name: Value</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-probescriptresponse"></a>
+### cloud.v1.api.ProbeScriptResponse
+
+<pre>
+//ProbeScriptResponse returns the parsed probe metadata.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>human</td>
+<td>string</td>
+<td><pre>
+//human is stroppy's `probe -o human` output, populated only when
+//include_human is set and the human render succeeds.<br>
+
+json_name: human
+go_name: Human</pre></td>
+</tr><tr>
+<td>metadata</td>
+<td><a href="../../../google/protobuf/README.md#google-protobuf-struct">google.protobuf.Struct</a></td>
+<td><pre>
+//metadata is stroppy's `probe -o json` output, full-fidelity.<br>
+
+json_name: metadata
+go_name: Metadata</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-probeworkloadfile"></a>
+### cloud.v1.api.ProbeWorkloadFile
+
+<pre>
+//ProbeWorkloadFile is an inline workload file made available to the probe.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>content</td>
+<td>string</td>
+<td><pre>
+json_name: content
+go_name: Content</pre></td>
+</tr><tr>
+<td>name</td>
+<td>string</td>
+<td><pre>
+json_name: name
+go_name: Name</pre></td>
 </tr>
 </table>
 

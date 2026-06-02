@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strconv"
+	"strings"
 	"time"
 
 	deploymentbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/deployment"
@@ -258,10 +260,85 @@ func yandexInfrastructureState(runID string, plan *deploymentpb.InfrastructurePl
 			Tags: machine.GetTags(),
 		})
 	}
+
+	// Managed YDB has no VM machine in the plan (the provider runs the
+	// database), so synthesize a machine state for the managed-YDB topology
+	// node from the terraform managed_ydb output. Its private endpoint is the
+	// managed database's API endpoint host:port — this is what the deployment
+	// builder resolves the workload→DB connection to, so stroppy connects to
+	// the managed YDB instead of a self-hosted node.
+	if managedNode := plan.GetLabels()["managed_node"]; managedNode != "" {
+		managedState, err := managedYDBMachineState(managedNode, output.GetManagedYdb())
+		if err != nil {
+			return nil, err
+		}
+		state.Machines = append(state.Machines, managedState)
+	}
+
 	if err := state.Validate(); err != nil {
 		return nil, err
 	}
 	return state, nil
+}
+
+// managedYDBMachineState builds the synthetic MachineState for the managed-YDB
+// topology node. The node carries no VM; its private endpoint is the managed
+// database's gRPC(S) API endpoint (host:port), so the topology connection from
+// the stroppy runner resolves to the managed YDB service.
+func managedYDBMachineState(nodeID string, managed *deploymentpb.Yandex_ManagedYdbOutput) (*deploymentpb.MachineState, error) {
+	if managed == nil {
+		return nil, fmt.Errorf("yandex output is missing managed_ydb for node %q", nodeID)
+	}
+	host, port := parseYDBEndpoint(managed.GetYdbApiEndpoint())
+	if host == "" {
+		return nil, fmt.Errorf("cannot parse managed YDB endpoint %q for node %q", managed.GetYdbApiEndpoint(), nodeID)
+	}
+	endpoint := &deploymentpb.Endpoint{
+		Name:    "private",
+		Address: host,
+		Port:    &port,
+		Labels: map[string]string{
+			"scope":         "private",
+			"managed":       "true",
+			"database_path": managed.GetDatabasePath(),
+			"api_endpoint":  managed.GetYdbApiEndpoint(),
+		},
+	}
+	return &deploymentpb.MachineState{
+		NodeId:             nodeID,
+		ProviderResourceId: managed.GetId(),
+		Status:             common.Status_STATUS_DEPLOYED,
+		Endpoints:          []*deploymentpb.Endpoint{endpoint},
+		Labels: map[string]string{
+			"node_id":       nodeID,
+			"managed":       "true",
+			"database_path": managed.GetDatabasePath(),
+		},
+	}, nil
+}
+
+// parseYDBEndpoint splits a YC ydb_api_endpoint URL into host and port.
+// Examples: grpcs://ydb.serverless.yandexcloud.net:2135/?database=/...
+//
+//	grpcs://ydb.api.cloud.yandex.net:2135/...
+func parseYDBEndpoint(raw string) (string, uint32) {
+	s := strings.TrimPrefix(raw, "grpcs://")
+	s = strings.TrimPrefix(s, "grpc://")
+	if i := strings.IndexAny(s, "/?"); i >= 0 {
+		s = s[:i]
+	}
+	host, portStr, ok := strings.Cut(s, ":")
+	if !ok {
+		if host == "" {
+			return "", 0
+		}
+		return host, 2135
+	}
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		return host, 2135
+	}
+	return host, uint32(port)
 }
 
 func baseInfrastructureState(plan *deploymentpb.InfrastructurePlan, provider string) *deploymentpb.InfrastructureState {

@@ -28,14 +28,16 @@ import type { TestWizardDraftRecord, TestWizardDraftRecordJson } from "../models
 import { file_cloud_v1_models_test_wizard } from "../models/test_wizard_pb.ts";
 import type { TopologySpec, TopologySpecJson } from "../topology/topology_pb.ts";
 import { file_cloud_v1_topology_topology } from "../topology/topology_pb.ts";
+import type { StructJson } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_struct } from "@bufbuild/protobuf/wkt";
 import { file_validate_validate } from "../../../validate/validate_pb.ts";
-import type { Message } from "@bufbuild/protobuf";
+import type { JsonObject, Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file cloud/v1/api/test_wizard.proto.
  */
 export const file_cloud_v1_api_test_wizard: GenFile = /*@__PURE__*/
-  fileDesc("Ch5jbG91ZC92MS9hcGkvdGVzdF93aXphcmQucHJvdG8SDGNsb3VkLnYxLmFwaSJvChZTdGFydFRlc3RXaXphcmRSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhYKBG5hbWUYAiABKAlCCPpCBXIDGP8BEh8KDnRlc3RfcHJlc2V0X2lkGAMgASgJQgf6QgRyAhhAIloKF1N0YXJ0VGVzdFdpemFyZFJlc3BvbnNlEj8KBWRyYWZ0GAEgASgLMiYuY2xvdWQudjEubW9kZWxzLlRlc3RXaXphcmREcmFmdFJlY29yZEII+kIFigECEAEiVgoZR2V0VGVzdFdpemFyZERyYWZ0UmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIbCghkcmFmdF9pZBgCIAEoCUIJ+kIGcgQQARhAIl0KGkdldFRlc3RXaXphcmREcmFmdFJlc3BvbnNlEj8KBWRyYWZ0GAEgASgLMiYuY2xvdWQudjEubW9kZWxzLlRlc3RXaXphcmREcmFmdFJlY29yZEII+kIFigECEAEiugEKG0xpc3RUZXN0V2l6YXJkRHJhZnRzUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBItCgZmaWx0ZXIYAiABKAsyHS5jbG91ZC52MS5jb21tb24uRW50aXR5RmlsdGVyEikKBHNvcnQYAyABKAsyGy5jbG91ZC52MS5jb21tb24uRW50aXR5U29ydBIjCgRwYWdlGAQgASgLMhUuY2xvdWQudjEuY29tbW9uLlBhZ2UibwocTGlzdFRlc3RXaXphcmREcmFmdHNSZXNwb25zZRI2CgZkcmFmdHMYASADKAsyJi5jbG91ZC52MS5tb2RlbHMuVGVzdFdpemFyZERyYWZ0UmVjb3JkEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSKoAwoWUGF0Y2hUZXN0V2l6YXJkUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEGEAQARIbCghkcmFmdF9pZBgCIAEoCUIJ+kIGcgQQARhAEjkKCHByb3ZpZGVyGAMgASgOMh0uY2xvdWQudjEuZGVwbG95bWVudC5Qcm92aWRlckII+kIFggECEAESKwoIZGF0YWJhc2UYBCABKAsyGS5jbG91ZC52MS5kb21haW4uRGF0YWJhc2USKwoId29ya2xvYWQYBSABKAsyGS5jbG91ZC52MS5kb21haW4uV29ya2xvYWQSNgoNdG9wb2xvZ3lfc3BlYxgGIAEoCzIfLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5U3BlYxJEChNpbmZyYXN0cnVjdHVyZV9wbGFuGAggASgLMicuY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVBsYW4SQAoQcmVuZGVyX292ZXJyaWRlcxgJIAEoCzImLmNsb3VkLnYxLmRlcGxveW1lbnQuUmVuZGVyT3ZlcnJpZGVTZXQiWgoXUGF0Y2hUZXN0V2l6YXJkUmVzcG9uc2USPwoFZHJhZnQYASABKAsyJi5jbG91ZC52MS5tb2RlbHMuVGVzdFdpemFyZERyYWZ0UmVjb3JkQgj6QgWKAQIQASJZChxEZWxldGVUZXN0V2l6YXJkRHJhZnRSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQYQBABEhsKCGRyYWZ0X2lkGAIgASgJQgn6QgZyBBhAEAEiHwodRGVsZXRlVGVzdFdpemFyZERyYWZ0UmVzcG9uc2UiggIKF0ZpbmlzaFRlc3RXaXphcmRSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQYQBABEhsKCGRyYWZ0X2lkGAIgASgJQgn6QgZyBBABGEASDQoFc3RhcnQYAyABKAgSFgoOc2F2ZV9hc19wcmVzZXQYBCABKAgSHQoLcHJlc2V0X25hbWUYBSABKAlCCPpCBXIDGP8BEh0KEGluX3RlbmFudF9yYXRpbmcYBiABKAhIAIgBARIdChBpbl9nbG9iYWxfcmF0aW5nGAcgASgISAGIAQFCEwoRX2luX3RlbmFudF9yYXRpbmdCEwoRX2luX2dsb2JhbF9yYXRpbmcisAEKGEZpbmlzaFRlc3RXaXphcmRSZXNwb25zZRI0Cgh0ZXN0X3J1bhgBIAEoCzIYLmNsb3VkLnYxLmRvbWFpbi5UZXN0UnVuQgj6QgWKAQIQARIrCgNydW4YAiABKAsyHi5jbG91ZC52MS5tb2RlbHMuVGVzdFJ1blJlY29yZBIxCgZwcmVzZXQYAyABKAsyIS5jbG91ZC52MS5tb2RlbHMuVGVzdFByZXNldFJlY29yZDLUBQoRVGVzdFdpemFyZFNlcnZpY2USagoPU3RhcnRUZXN0V2l6YXJkEiQuY2xvdWQudjEuYXBpLlN0YXJ0VGVzdFdpemFyZFJlcXVlc3QaJS5jbG91ZC52MS5hcGkuU3RhcnRUZXN0V2l6YXJkUmVzcG9uc2UiCoq1GAYSBAgHEAESdgoSR2V0VGVzdFdpemFyZERyYWZ0EicuY2xvdWQudjEuYXBpLkdldFRlc3RXaXphcmREcmFmdFJlcXVlc3QaKC5jbG91ZC52MS5hcGkuR2V0VGVzdFdpemFyZERyYWZ0UmVzcG9uc2UiDZACAYq1GAYSBAgHEAISfAoUTGlzdFRlc3RXaXphcmREcmFmdHMSKS5jbG91ZC52MS5hcGkuTGlzdFRlc3RXaXphcmREcmFmdHNSZXF1ZXN0GiouY2xvdWQudjEuYXBpLkxpc3RUZXN0V2l6YXJkRHJhZnRzUmVzcG9uc2UiDZACAYq1GAYSBAgHEAUSbQoPUGF0Y2hUZXN0V2l6YXJkEiQuY2xvdWQudjEuYXBpLlBhdGNoVGVzdFdpemFyZFJlcXVlc3QaJS5jbG91ZC52MS5hcGkuUGF0Y2hUZXN0V2l6YXJkUmVzcG9uc2UiDZACAoq1GAYSBAgHEAMSfwoVRGVsZXRlVGVzdFdpemFyZERyYWZ0EiouY2xvdWQudjEuYXBpLkRlbGV0ZVRlc3RXaXphcmREcmFmdFJlcXVlc3QaKy5jbG91ZC52MS5hcGkuRGVsZXRlVGVzdFdpemFyZERyYWZ0UmVzcG9uc2UiDZACAoq1GAYSBBAECAcSbQoQRmluaXNoVGVzdFdpemFyZBIlLmNsb3VkLnYxLmFwaS5GaW5pc2hUZXN0V2l6YXJkUmVxdWVzdBomLmNsb3VkLnYxLmFwaS5GaW5pc2hUZXN0V2l6YXJkUmVzcG9uc2UiCoq1GAYSBAgHEANCQVo/Z2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvYXBpYgZwcm90bzM", [file_cloud_v1_common_entity, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_provider, file_cloud_v1_deployment_render, file_cloud_v1_domain_database, file_cloud_v1_domain_test, file_cloud_v1_domain_workload, file_cloud_v1_iam_options, file_cloud_v1_iam_permission, file_cloud_v1_models_preset, file_cloud_v1_models_test_run, file_cloud_v1_models_test_wizard, file_cloud_v1_topology_topology, file_validate_validate]);
+  fileDesc("Ch5jbG91ZC92MS9hcGkvdGVzdF93aXphcmQucHJvdG8SDGNsb3VkLnYxLmFwaSJvChZTdGFydFRlc3RXaXphcmRSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhYKBG5hbWUYAiABKAlCCPpCBXIDGP8BEh8KDnRlc3RfcHJlc2V0X2lkGAMgASgJQgf6QgRyAhhAIloKF1N0YXJ0VGVzdFdpemFyZFJlc3BvbnNlEj8KBWRyYWZ0GAEgASgLMiYuY2xvdWQudjEubW9kZWxzLlRlc3RXaXphcmREcmFmdFJlY29yZEII+kIFigECEAEiVgoZR2V0VGVzdFdpemFyZERyYWZ0UmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIbCghkcmFmdF9pZBgCIAEoCUIJ+kIGcgQYQBABIl0KGkdldFRlc3RXaXphcmREcmFmdFJlc3BvbnNlEj8KBWRyYWZ0GAEgASgLMiYuY2xvdWQudjEubW9kZWxzLlRlc3RXaXphcmREcmFmdFJlY29yZEII+kIFigECEAEiugEKG0xpc3RUZXN0V2l6YXJkRHJhZnRzUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBItCgZmaWx0ZXIYAiABKAsyHS5jbG91ZC52MS5jb21tb24uRW50aXR5RmlsdGVyEikKBHNvcnQYAyABKAsyGy5jbG91ZC52MS5jb21tb24uRW50aXR5U29ydBIjCgRwYWdlGAQgASgLMhUuY2xvdWQudjEuY29tbW9uLlBhZ2UibwocTGlzdFRlc3RXaXphcmREcmFmdHNSZXNwb25zZRI2CgZkcmFmdHMYASADKAsyJi5jbG91ZC52MS5tb2RlbHMuVGVzdFdpemFyZERyYWZ0UmVjb3JkEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSKoAwoWUGF0Y2hUZXN0V2l6YXJkUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIbCghkcmFmdF9pZBgCIAEoCUIJ+kIGcgQQARhAEjkKCHByb3ZpZGVyGAMgASgOMh0uY2xvdWQudjEuZGVwbG95bWVudC5Qcm92aWRlckII+kIFggECEAESKwoIZGF0YWJhc2UYBCABKAsyGS5jbG91ZC52MS5kb21haW4uRGF0YWJhc2USKwoId29ya2xvYWQYBSABKAsyGS5jbG91ZC52MS5kb21haW4uV29ya2xvYWQSNgoNdG9wb2xvZ3lfc3BlYxgGIAEoCzIfLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5U3BlYxJEChNpbmZyYXN0cnVjdHVyZV9wbGFuGAggASgLMicuY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVBsYW4SQAoQcmVuZGVyX292ZXJyaWRlcxgJIAEoCzImLmNsb3VkLnYxLmRlcGxveW1lbnQuUmVuZGVyT3ZlcnJpZGVTZXQiWgoXUGF0Y2hUZXN0V2l6YXJkUmVzcG9uc2USPwoFZHJhZnQYASABKAsyJi5jbG91ZC52MS5tb2RlbHMuVGVzdFdpemFyZERyYWZ0UmVjb3JkQgj6QgWKAQIQASJZChxEZWxldGVUZXN0V2l6YXJkRHJhZnRSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhsKCGRyYWZ0X2lkGAIgASgJQgn6QgZyBBABGEAiHwodRGVsZXRlVGVzdFdpemFyZERyYWZ0UmVzcG9uc2UiggIKF0ZpbmlzaFRlc3RXaXphcmRSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhsKCGRyYWZ0X2lkGAIgASgJQgn6QgZyBBABGEASDQoFc3RhcnQYAyABKAgSFgoOc2F2ZV9hc19wcmVzZXQYBCABKAgSHQoLcHJlc2V0X25hbWUYBSABKAlCCPpCBXIDGP8BEh0KEGluX3RlbmFudF9yYXRpbmcYBiABKAhIAIgBARIdChBpbl9nbG9iYWxfcmF0aW5nGAcgASgISAGIAQFCEwoRX2luX3RlbmFudF9yYXRpbmdCEwoRX2luX2dsb2JhbF9yYXRpbmcisAEKGEZpbmlzaFRlc3RXaXphcmRSZXNwb25zZRI0Cgh0ZXN0X3J1bhgBIAEoCzIYLmNsb3VkLnYxLmRvbWFpbi5UZXN0UnVuQgj6QgWKAQIQARIrCgNydW4YAiABKAsyHi5jbG91ZC52MS5tb2RlbHMuVGVzdFJ1blJlY29yZBIxCgZwcmVzZXQYAyABKAsyIS5jbG91ZC52MS5tb2RlbHMuVGVzdFByZXNldFJlY29yZCK0AgoSUHJvYmVTY3JpcHRSZXF1ZXN0Eg8KB3ZlcnNpb24YASABKAkSFwoGc2NyaXB0GAIgASgJQgf6QgRyAhABEgsKA3NxbBgDIAEoCRITCgtkcml2ZXJfdHlwZRgEIAEoCRIRCglwb29sX3NpemUYBSABKAUSFAoMc2NhbGVfZmFjdG9yGAYgASgFEjYKA2VudhgHIAMoCzIpLmNsb3VkLnYxLmFwaS5Qcm9iZVNjcmlwdFJlcXVlc3QuRW52RW50cnkSLgoFZmlsZXMYCCADKAsyHy5jbG91ZC52MS5hcGkuUHJvYmVXb3JrbG9hZEZpbGUSFQoNaW5jbHVkZV9odW1hbhgJIAEoCBoqCghFbnZFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIjIKEVByb2JlV29ya2xvYWRGaWxlEgwKBG5hbWUYASABKAkSDwoHY29udGVudBgCIAEoCSJPChNQcm9iZVNjcmlwdFJlc3BvbnNlEikKCG1ldGFkYXRhGAEgASgLMhcuZ29vZ2xlLnByb3RvYnVmLlN0cnVjdBINCgVodW1hbhgCIAEoCTK3BgoRVGVzdFdpemFyZFNlcnZpY2USagoPU3RhcnRUZXN0V2l6YXJkEiQuY2xvdWQudjEuYXBpLlN0YXJ0VGVzdFdpemFyZFJlcXVlc3QaJS5jbG91ZC52MS5hcGkuU3RhcnRUZXN0V2l6YXJkUmVzcG9uc2UiCoq1GAYSBAgHEAESdgoSR2V0VGVzdFdpemFyZERyYWZ0EicuY2xvdWQudjEuYXBpLkdldFRlc3RXaXphcmREcmFmdFJlcXVlc3QaKC5jbG91ZC52MS5hcGkuR2V0VGVzdFdpemFyZERyYWZ0UmVzcG9uc2UiDZACAYq1GAYSBAgHEAISfAoUTGlzdFRlc3RXaXphcmREcmFmdHMSKS5jbG91ZC52MS5hcGkuTGlzdFRlc3RXaXphcmREcmFmdHNSZXF1ZXN0GiouY2xvdWQudjEuYXBpLkxpc3RUZXN0V2l6YXJkRHJhZnRzUmVzcG9uc2UiDZACAYq1GAYSBBAFCAcSbQoPUGF0Y2hUZXN0V2l6YXJkEiQuY2xvdWQudjEuYXBpLlBhdGNoVGVzdFdpemFyZFJlcXVlc3QaJS5jbG91ZC52MS5hcGkuUGF0Y2hUZXN0V2l6YXJkUmVzcG9uc2UiDZACAoq1GAYSBBADCAcSfwoVRGVsZXRlVGVzdFdpemFyZERyYWZ0EiouY2xvdWQudjEuYXBpLkRlbGV0ZVRlc3RXaXphcmREcmFmdFJlcXVlc3QaKy5jbG91ZC52MS5hcGkuRGVsZXRlVGVzdFdpemFyZERyYWZ0UmVzcG9uc2UiDZACAoq1GAYSBAgHEAQSbQoQRmluaXNoVGVzdFdpemFyZBIlLmNsb3VkLnYxLmFwaS5GaW5pc2hUZXN0V2l6YXJkUmVxdWVzdBomLmNsb3VkLnYxLmFwaS5GaW5pc2hUZXN0V2l6YXJkUmVzcG9uc2UiCoq1GAYSBAgHEAMSYQoLUHJvYmVTY3JpcHQSIC5jbG91ZC52MS5hcGkuUHJvYmVTY3JpcHRSZXF1ZXN0GiEuY2xvdWQudjEuYXBpLlByb2JlU2NyaXB0UmVzcG9uc2UiDZACAYq1GAYSBAgHEAJCQVo/Z2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvYXBpYgZwcm90bzM", [file_cloud_v1_common_entity, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_provider, file_cloud_v1_deployment_render, file_cloud_v1_domain_database, file_cloud_v1_domain_test, file_cloud_v1_domain_workload, file_cloud_v1_iam_options, file_cloud_v1_iam_permission, file_cloud_v1_models_preset, file_cloud_v1_models_test_run, file_cloud_v1_models_test_wizard, file_cloud_v1_topology_topology, file_google_protobuf_struct, file_validate_validate]);
 
 /**
  *
@@ -923,6 +925,289 @@ export const FinishTestWizardResponseSchema: GenMessage<FinishTestWizardResponse
 
 /**
  *
+ * ProbeScriptRequest introspects a stroppy script: the server execs a local
+ * `stroppy probe` against the given script + driver and returns the script
+ * metadata (available steps, declared env vars, SQL sections, driver defaults,
+ * pool size) so the wizard can drive its workload form.
+ *
+ * @generated from message cloud.v1.api.ProbeScriptRequest
+ */
+export type ProbeScriptRequest = Message<"cloud.v1.api.ProbeScriptRequest"> & {
+  /**
+   *
+   * version selects the stroppy binary: a github release tag (e.g. "1.2.0") or
+   * "commit:<sha>". Empty uses the configured upstream / PATH binary.
+   *
+   * @generated from field: string version = 1;
+   */
+  version: string;
+
+  /**
+   *
+   * script is the stroppy script to introspect (e.g. "tpcc/procs"). Required.
+   *
+   * @generated from field: string script = 2;
+   */
+  script: string;
+
+  /**
+   *
+   * sql is an optional second SQL argument.
+   *
+   * @generated from field: string sql = 3;
+   */
+  sql: string;
+
+  /**
+   *
+   * driver_type is the stroppy driver ("postgres"|"mysql"|"picodata"|"ydb"|...).
+   *
+   * @generated from field: string driver_type = 4;
+   */
+  driverType: string;
+
+  /**
+   *
+   * pool_size, when > 0, sets the driver pool min/max conns and a POOL_SIZE env.
+   *
+   * @generated from field: int32 pool_size = 5;
+   */
+  poolSize: number;
+
+  /**
+   *
+   * scale_factor, when > 0, sets a SCALE_FACTOR env override.
+   *
+   * @generated from field: int32 scale_factor = 6;
+   */
+  scaleFactor: number;
+
+  /**
+   *
+   * env are extra env overrides for the probed script (keys uppercased).
+   *
+   * @generated from field: map<string, string> env = 7;
+   */
+  env: { [key: string]: string };
+
+  /**
+   *
+   * files are inline workload files written next to the generated config so the
+   * probed script can reference them by name.
+   *
+   * @generated from field: repeated cloud.v1.api.ProbeWorkloadFile files = 8;
+   */
+  files: ProbeWorkloadFile[];
+
+  /**
+   *
+   * include_human additionally runs `probe -o human` and fills the human field.
+   *
+   * @generated from field: bool include_human = 9;
+   */
+  includeHuman: boolean;
+};
+
+/**
+ *
+ * ProbeScriptRequest introspects a stroppy script: the server execs a local
+ * `stroppy probe` against the given script + driver and returns the script
+ * metadata (available steps, declared env vars, SQL sections, driver defaults,
+ * pool size) so the wizard can drive its workload form.
+ *
+ * @generated from message cloud.v1.api.ProbeScriptRequest
+ */
+export type ProbeScriptRequestJson = {
+  /**
+   *
+   * version selects the stroppy binary: a github release tag (e.g. "1.2.0") or
+   * "commit:<sha>". Empty uses the configured upstream / PATH binary.
+   *
+   * @generated from field: string version = 1;
+   */
+  version?: string;
+
+  /**
+   *
+   * script is the stroppy script to introspect (e.g. "tpcc/procs"). Required.
+   *
+   * @generated from field: string script = 2;
+   */
+  script?: string;
+
+  /**
+   *
+   * sql is an optional second SQL argument.
+   *
+   * @generated from field: string sql = 3;
+   */
+  sql?: string;
+
+  /**
+   *
+   * driver_type is the stroppy driver ("postgres"|"mysql"|"picodata"|"ydb"|...).
+   *
+   * @generated from field: string driver_type = 4;
+   */
+  driverType?: string;
+
+  /**
+   *
+   * pool_size, when > 0, sets the driver pool min/max conns and a POOL_SIZE env.
+   *
+   * @generated from field: int32 pool_size = 5;
+   */
+  poolSize?: number;
+
+  /**
+   *
+   * scale_factor, when > 0, sets a SCALE_FACTOR env override.
+   *
+   * @generated from field: int32 scale_factor = 6;
+   */
+  scaleFactor?: number;
+
+  /**
+   *
+   * env are extra env overrides for the probed script (keys uppercased).
+   *
+   * @generated from field: map<string, string> env = 7;
+   */
+  env?: { [key: string]: string };
+
+  /**
+   *
+   * files are inline workload files written next to the generated config so the
+   * probed script can reference them by name.
+   *
+   * @generated from field: repeated cloud.v1.api.ProbeWorkloadFile files = 8;
+   */
+  files?: ProbeWorkloadFileJson[];
+
+  /**
+   *
+   * include_human additionally runs `probe -o human` and fills the human field.
+   *
+   * @generated from field: bool include_human = 9;
+   */
+  includeHuman?: boolean;
+};
+
+export type ProbeScriptRequestValid = ProbeScriptRequest;
+
+/**
+ * Describes the message cloud.v1.api.ProbeScriptRequest.
+ * Use `create(ProbeScriptRequestSchema)` to create a new message.
+ */
+export const ProbeScriptRequestSchema: GenMessage<ProbeScriptRequest, {jsonType: ProbeScriptRequestJson, validType: ProbeScriptRequestValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_test_wizard, 12);
+
+/**
+ *
+ * ProbeWorkloadFile is an inline workload file made available to the probe.
+ *
+ * @generated from message cloud.v1.api.ProbeWorkloadFile
+ */
+export type ProbeWorkloadFile = Message<"cloud.v1.api.ProbeWorkloadFile"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string content = 2;
+   */
+  content: string;
+};
+
+/**
+ *
+ * ProbeWorkloadFile is an inline workload file made available to the probe.
+ *
+ * @generated from message cloud.v1.api.ProbeWorkloadFile
+ */
+export type ProbeWorkloadFileJson = {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name?: string;
+
+  /**
+   * @generated from field: string content = 2;
+   */
+  content?: string;
+};
+
+export type ProbeWorkloadFileValid = ProbeWorkloadFile;
+
+/**
+ * Describes the message cloud.v1.api.ProbeWorkloadFile.
+ * Use `create(ProbeWorkloadFileSchema)` to create a new message.
+ */
+export const ProbeWorkloadFileSchema: GenMessage<ProbeWorkloadFile, {jsonType: ProbeWorkloadFileJson, validType: ProbeWorkloadFileValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_test_wizard, 13);
+
+/**
+ *
+ * ProbeScriptResponse returns the parsed probe metadata.
+ *
+ * @generated from message cloud.v1.api.ProbeScriptResponse
+ */
+export type ProbeScriptResponse = Message<"cloud.v1.api.ProbeScriptResponse"> & {
+  /**
+   *
+   * metadata is stroppy's `probe -o json` output, full-fidelity.
+   *
+   * @generated from field: google.protobuf.Struct metadata = 1;
+   */
+  metadata?: JsonObject;
+
+  /**
+   *
+   * human is stroppy's `probe -o human` output, populated only when
+   * include_human is set and the human render succeeds.
+   *
+   * @generated from field: string human = 2;
+   */
+  human: string;
+};
+
+/**
+ *
+ * ProbeScriptResponse returns the parsed probe metadata.
+ *
+ * @generated from message cloud.v1.api.ProbeScriptResponse
+ */
+export type ProbeScriptResponseJson = {
+  /**
+   *
+   * metadata is stroppy's `probe -o json` output, full-fidelity.
+   *
+   * @generated from field: google.protobuf.Struct metadata = 1;
+   */
+  metadata?: StructJson;
+
+  /**
+   *
+   * human is stroppy's `probe -o human` output, populated only when
+   * include_human is set and the human render succeeds.
+   *
+   * @generated from field: string human = 2;
+   */
+  human?: string;
+};
+
+export type ProbeScriptResponseValid = ProbeScriptResponse;
+
+/**
+ * Describes the message cloud.v1.api.ProbeScriptResponse.
+ * Use `create(ProbeScriptResponseSchema)` to create a new message.
+ */
+export const ProbeScriptResponseSchema: GenMessage<ProbeScriptResponse, {jsonType: ProbeScriptResponseJson, validType: ProbeScriptResponseValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_test_wizard, 14);
+
+/**
+ *
  * TestWizardService drives the test wizard: start, fetch/list, patch-loop and
  * finish into a baked TestRun (optionally started and/or saved as a preset).
  *
@@ -994,6 +1279,17 @@ export const TestWizardService: GenService<{
     methodKind: "unary";
     input: typeof FinishTestWizardRequestSchema;
     output: typeof FinishTestWizardResponseSchema;
+  },
+  /**
+   *
+   * ProbeScript introspects a stroppy script. Read-only / no side effects.
+   *
+   * @generated from rpc cloud.v1.api.TestWizardService.ProbeScript
+   */
+  probeScript: {
+    methodKind: "unary";
+    input: typeof ProbeScriptRequestSchema;
+    output: typeof ProbeScriptResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_cloud_v1_api_test_wizard, 0);

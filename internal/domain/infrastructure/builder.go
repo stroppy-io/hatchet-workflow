@@ -18,6 +18,12 @@ const (
 	defaultCPUCores = 2
 	defaultMemoryMB = 4096
 	defaultDiskGB   = 40
+
+	// labelManaged marks a node/spec as a provider-managed database. Such a
+	// node gets no self-hosted VM; the provider runs the database. Mirrors
+	// ydbmanaged.LabelManaged (kept as a local string to avoid coupling the
+	// infrastructure builder to a specific database engine package).
+	labelManaged = "managed"
 )
 
 type MachineSizing struct {
@@ -79,6 +85,14 @@ func BuildPlan(spec *topologypb.TopologySpec, provider deployment.Provider, opti
 	}
 
 	for _, node := range idx.Spec().GetNodes() {
+		// Provider-managed databases (e.g. Yandex Managed YDB) carry no
+		// self-hosted VM: the cloud provider runs the database. Skip VM/
+		// container allocation for such nodes — the managed resource is
+		// requested via the provider-specific managed input instead (carried
+		// on the plan labels, see managedInputLabel below).
+		if isManagedNode(node) {
+			continue
+		}
 		machine, err := buildMachine(node, provider, options)
 		if err != nil {
 			return nil, err
@@ -90,6 +104,12 @@ func BuildPlan(spec *topologypb.TopologySpec, provider deployment.Provider, opti
 		return nil, err
 	}
 	return plan, nil
+}
+
+// isManagedNode reports whether the topology node represents a provider-managed
+// database (e.g. Yandex Managed YDB) that must not allocate a self-hosted VM.
+func isManagedNode(node *topologypb.Node) bool {
+	return node.GetLabels()[labelManaged] == "true"
 }
 
 func buildMachine(node *topologypb.Node, provider deployment.Provider, options BuildOptions) (*deployment.MachinePlan, error) {

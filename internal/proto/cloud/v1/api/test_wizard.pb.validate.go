@@ -1918,3 +1918,403 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = FinishTestWizardResponseValidationError{}
+
+// Validate checks the field values on ProbeScriptRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ProbeScriptRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ProbeScriptRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ProbeScriptRequestMultiError, or nil if none found.
+func (m *ProbeScriptRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ProbeScriptRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Version
+
+	if utf8.RuneCountInString(m.GetScript()) < 1 {
+		err := ProbeScriptRequestValidationError{
+			field:  "Script",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for Sql
+
+	// no validation rules for DriverType
+
+	// no validation rules for PoolSize
+
+	// no validation rules for ScaleFactor
+
+	// no validation rules for Env
+
+	for idx, item := range m.GetFiles() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ProbeScriptRequestValidationError{
+						field:  fmt.Sprintf("Files[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ProbeScriptRequestValidationError{
+						field:  fmt.Sprintf("Files[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ProbeScriptRequestValidationError{
+					field:  fmt.Sprintf("Files[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	// no validation rules for IncludeHuman
+
+	if len(errors) > 0 {
+		return ProbeScriptRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// ProbeScriptRequestMultiError is an error wrapping multiple validation errors
+// returned by ProbeScriptRequest.ValidateAll() if the designated constraints
+// aren't met.
+type ProbeScriptRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ProbeScriptRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ProbeScriptRequestMultiError) AllErrors() []error { return m }
+
+// ProbeScriptRequestValidationError is the validation error returned by
+// ProbeScriptRequest.Validate if the designated constraints aren't met.
+type ProbeScriptRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ProbeScriptRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ProbeScriptRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ProbeScriptRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ProbeScriptRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ProbeScriptRequestValidationError) ErrorName() string {
+	return "ProbeScriptRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ProbeScriptRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sProbeScriptRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ProbeScriptRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ProbeScriptRequestValidationError{}
+
+// Validate checks the field values on ProbeWorkloadFile with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *ProbeWorkloadFile) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ProbeWorkloadFile with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ProbeWorkloadFileMultiError, or nil if none found.
+func (m *ProbeWorkloadFile) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ProbeWorkloadFile) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Name
+
+	// no validation rules for Content
+
+	if len(errors) > 0 {
+		return ProbeWorkloadFileMultiError(errors)
+	}
+
+	return nil
+}
+
+// ProbeWorkloadFileMultiError is an error wrapping multiple validation errors
+// returned by ProbeWorkloadFile.ValidateAll() if the designated constraints
+// aren't met.
+type ProbeWorkloadFileMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ProbeWorkloadFileMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ProbeWorkloadFileMultiError) AllErrors() []error { return m }
+
+// ProbeWorkloadFileValidationError is the validation error returned by
+// ProbeWorkloadFile.Validate if the designated constraints aren't met.
+type ProbeWorkloadFileValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ProbeWorkloadFileValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ProbeWorkloadFileValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ProbeWorkloadFileValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ProbeWorkloadFileValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ProbeWorkloadFileValidationError) ErrorName() string {
+	return "ProbeWorkloadFileValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ProbeWorkloadFileValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sProbeWorkloadFile.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ProbeWorkloadFileValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ProbeWorkloadFileValidationError{}
+
+// Validate checks the field values on ProbeScriptResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ProbeScriptResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ProbeScriptResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ProbeScriptResponseMultiError, or nil if none found.
+func (m *ProbeScriptResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ProbeScriptResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetMetadata()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ProbeScriptResponseValidationError{
+					field:  "Metadata",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ProbeScriptResponseValidationError{
+					field:  "Metadata",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetMetadata()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ProbeScriptResponseValidationError{
+				field:  "Metadata",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for Human
+
+	if len(errors) > 0 {
+		return ProbeScriptResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ProbeScriptResponseMultiError is an error wrapping multiple validation
+// errors returned by ProbeScriptResponse.ValidateAll() if the designated
+// constraints aren't met.
+type ProbeScriptResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ProbeScriptResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ProbeScriptResponseMultiError) AllErrors() []error { return m }
+
+// ProbeScriptResponseValidationError is the validation error returned by
+// ProbeScriptResponse.Validate if the designated constraints aren't met.
+type ProbeScriptResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ProbeScriptResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ProbeScriptResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ProbeScriptResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ProbeScriptResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ProbeScriptResponseValidationError) ErrorName() string {
+	return "ProbeScriptResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ProbeScriptResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sProbeScriptResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ProbeScriptResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ProbeScriptResponseValidationError{}

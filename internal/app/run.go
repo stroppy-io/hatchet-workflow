@@ -1,0 +1,585 @@
+package app
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"io/fs"
+	"log/slog"
+	"net"
+	"net/http"
+	"strings"
+
+	"go.temporal.io/sdk/client"
+	"go.temporal.io/sdk/worker"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
+	"google.golang.org/grpc"
+
+	domsettings "github.com/stroppy-io/stroppy-cloud/internal/domain/settings"
+	"github.com/stroppy-io/stroppy-cloud/internal/gateway"
+	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/adapters"
+	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/execution"
+	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/identity"
+	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/apiconnect"
+	"github.com/stroppy-io/stroppy-cloud/internal/services/agent_shell"
+	"github.com/stroppy-io/stroppy-cloud/internal/services/compare"
+	"github.com/stroppy-io/stroppy-cloud/internal/services/favorite"
+	iamsvc "github.com/stroppy-io/stroppy-cloud/internal/services/iam"
+	packagessvc "github.com/stroppy-io/stroppy-cloud/internal/services/packages"
+	presetsvc "github.com/stroppy-io/stroppy-cloud/internal/services/preset"
+	publicrating "github.com/stroppy-io/stroppy-cloud/internal/services/public_rating"
+	publicshare "github.com/stroppy-io/stroppy-cloud/internal/services/public_share"
+	ratingsvc "github.com/stroppy-io/stroppy-cloud/internal/services/rating"
+	sharesvc "github.com/stroppy-io/stroppy-cloud/internal/services/share"
+	suitesvc "github.com/stroppy-io/stroppy-cloud/internal/services/suite"
+	suiterunsvc "github.com/stroppy-io/stroppy-cloud/internal/services/suite_run"
+	suitewizardsvc "github.com/stroppy-io/stroppy-cloud/internal/services/suite_wizard"
+	systemsettings "github.com/stroppy-io/stroppy-cloud/internal/services/system_settings"
+	tenantdashboard "github.com/stroppy-io/stroppy-cloud/internal/services/tenant_dashboard"
+	tenantsettings "github.com/stroppy-io/stroppy-cloud/internal/services/tenant_settings"
+	testrunsvc "github.com/stroppy-io/stroppy-cloud/internal/services/test_run"
+	testrunoverview "github.com/stroppy-io/stroppy-cloud/internal/services/test_run_overview"
+	testwizardsvc "github.com/stroppy-io/stroppy-cloud/internal/services/test_wizard"
+	"github.com/stroppy-io/stroppy-cloud/internal/workflows"
+	"github.com/stroppy-io/stroppy-cloud/web"
+)
+
+// dashboardRatingMetricKey is the headline metric the tenant dashboard ranks its
+// top-benchmark tile by.
+const dashboardRatingMetricKey = "tps"
+
+// Run boots the full control plane and blocks until ctx is cancelled, then tears
+// everything down in reverse order. It owns the entire object graph.
+func Run(ctx context.Context, cfg Config) error {
+	log := slog.Default()
+
+	// 1) Postgres store + transaction manager.
+	db, err := postgres.Connect(ctx, cfg.DatabaseURL)
+	if err != nil {
+		return fmt.Errorf("connect postgres: %w", err)
+	}
+	defer db.Close()
+	if err := db.Migrate(ctx); err != nil {
+		return fmt.Errorf("migrate postgres: %w", err)
+	}
+	store := postgres.New(db)
+	trm := db.Trm()
+
+	// 2) Temporal client.
+	tc, err := client.Dial(client.Options{
+		HostPort:  cfg.TemporalHostPort,
+		Namespace: cfg.TemporalNS,
+	})
+	if err != nil {
+		return fmt.Errorf("dial temporal: %w", err)
+	}
+	defer tc.Close()
+
+	// 3) Identity layer.
+	idCfg := identity.Config{
+		SigningSecret: cfg.JWTSecret,
+		// A 32-byte AES key derived deterministically from the signing secret so
+		// provider secrets can be sealed without a second configured key.
+		SecretEncryptionKey: deriveSecretKey(cfg.JWTSecret),
+	}
+	authn, err := identity.NewJWTAuthn(idCfg)
+	if err != nil {
+		return fmt.Errorf("identity authn: %w", err)
+	}
+	tokenSvc, err := identity.NewJWTTokenService(idCfg, store.RefreshSessions())
+	if err != nil {
+		return fmt.Errorf("identity token service: %w", err)
+	}
+	providerSecrets, err := identity.NewProviderSecrets(store.Secrets(), idCfg)
+	if err != nil {
+		return fmt.Errorf("identity provider secrets: %w", err)
+	}
+	settingsReader := identity.NewSettingsReader(store.Settings())
+	gates := identity.NewGates(settingsReader)
+	permResolver := identity.NewPermissionResolver(store.Memberships(), store.Roles())
+	tenantReader := identity.NewTenantReader(store.Tenants())
+	hasher := identity.NewBcryptHasher(0)
+	apiTokenMinter := identity.NewApiTokenMinter()
+	apiTokenSecrets := identity.NewApiTokenSecrets(store.Secrets())
+	oidc := identity.NewOIDCFlows(idCfg, store.SSOStates())
+	notifier := identity.NewSlogNotifier(log)
+	catalog := identity.NewCatalog()
+	ttl := identity.NewTokenTTL(idCfg)
+
+	// First-boot seeding: on a brand-new database create the initial admin
+	// account + default tenant + owner role + membership and default platform
+	// settings, so the install has a principal that can log in. Idempotent: a
+	// no-op once any account exists, and skipped entirely if no admin password
+	// is configured. Runs after the store + identity layer are built, before
+	// services start.
+	if err := seedFirstBoot(ctx, log, store, db, hasher, catalog, cfg); err != nil {
+		return fmt.Errorf("first-boot seeding: %w", err)
+	}
+
+	// 4) Execution layer.
+	caller := authnCaller{authn: authn}
+	bid := byIDReader{db: db}
+
+	// Settings resolver feeds the agent bootstrap baked into launched workflows.
+	resolver := domsettings.Resolver{
+		PlatformSource:           settingsReader,
+		TenantSource:             tenantSettingsSource{repo: store.TenantSettings()},
+		DefaultServerAddr:        cfg.AgentServerAddr,
+		DefaultTemporalNamespace: cfg.TemporalNS,
+		DefaultBinaryURL:         cfg.AgentServerAddr + "/agent/binary",
+	}
+
+	testWorkflows := execution.NewTestWorkflows(tc, resolver, log)
+	summarizer := execution.NewRunSummarizer()
+	snapReader := snapshotRunReader{r: bid, suiteRuns: store.SuiteRuns()}
+	overviewReader := execution.NewOverviewReader(tc, snapReader)
+	logReader := execution.NewLogReader(cfg.MonitoringURL, log)
+	metricsReader := execution.NewMetricsReader(cfg.MonitoringURL, snapReader, log)
+	runStarter := execution.NewTestRunStarter(store.TestRuns(), summarizer, testWorkflows, caller)
+	testWizardEngine := execution.NewTestWizardEngine()
+
+	// Server-side stroppy "probe": script-metadata introspection (available
+	// steps, declared env vars, SQL sections, driver defaults, pool size) the
+	// monolith exposed at POST /api/v1/probe. The prober execs a server-local
+	// `stroppy probe` against a generated minimal run config, fetching/caching the
+	// stroppy binary from the same upstream the gateway serves the "stroppy"
+	// artifact from (cfg.StroppyUpstream), under a probe-specific cache subdir.
+	//
+	// It backs the TestWizardService.ProbeScript RPC through the
+	// stroppyProberAdapter (a cycle-free port: the service must not import
+	// execution), injected into the wizard service's Deps below.
+	stroppyProber := execution.NewStroppyProber(cfg.StroppyUpstream, probeBinaryCacheDir(cfg.CacheDir))
+
+	cells := cellResolver{
+		dbPresets:       store.DatabasePresets(),
+		workloadPresets: store.WorkloadPresets(),
+		testPresets:     store.TestPresets(),
+	}
+	suiteLauncher := execution.NewSuiteRunLauncher(tc, cells, childRunPersister{runs: store.TestRuns()}, resolver)
+	suiteCanceller := execution.NewSuiteRunCanceller(tc)
+
+	// 5) Adapters layer.
+	blobStore, err := adapters.NewLocalBlobStore(cfg.PackageBlobDir, "")
+	if err != nil {
+		return fmt.Errorf("packages blob store: %w", err)
+	}
+	storageKeys := adapters.NewStorageKeys()
+	limits := adapters.NewStaticLimits(0)
+	uploadTTL := adapters.NewStaticUploadTTL(0)
+	tokenMinter := adapters.NewRandomTokenMinter(0)
+
+	shareRuns := shareRunReader{r: bid, suiteRuns: store.SuiteRuns()}
+	snapshotBuilder := adapters.NewRunSnapshotBuilder(shareRuns, metricsReader)
+
+	compareRuns := runRecordGetter{r: bid}
+	testRunReader := adapters.NewTestRunReader(compareRuns)
+	metricsComparator := adapters.NewMetricsComparator(metricsReader)
+
+	ratingNames := ratingNames{accounts: store.Accounts(), tenants: store.Tenants()}
+	ratingRuns := ratingRunsLister{db: db, runs: store.TestRuns()}
+	ratingBoard := adapters.NewRatingBoard(ratingRuns, metricsReader, ratingNames)
+	publicRatingBoard := adapters.NewPublicRatingBoard(ratingRuns, metricsReader)
+
+	favoriteTargets := adapters.NewFavoriteTargetResolver(adapters.FavoriteTargetRepos{
+		DatabasePresets: adapters.EntityGetterFunc(func(ctx context.Context, id string) (*commonEntity, error) {
+			rec, err := store.DatabasePresets().Get(ctx, "", id, "")
+			if err != nil {
+				return nil, err
+			}
+			return rec.GetEntity(), nil
+		}),
+		WorkloadPresets: adapters.EntityGetterFunc(func(ctx context.Context, id string) (*commonEntity, error) {
+			rec, err := store.WorkloadPresets().Get(ctx, "", id, "")
+			if err != nil {
+				return nil, err
+			}
+			return rec.GetEntity(), nil
+		}),
+		TestPresets: adapters.EntityGetterFunc(func(ctx context.Context, id string) (*commonEntity, error) {
+			rec, err := store.TestPresets().Get(ctx, "", id, "")
+			if err != nil {
+				return nil, err
+			}
+			return rec.GetEntity(), nil
+		}),
+		TestRuns: adapters.EntityGetterFunc(func(ctx context.Context, id string) (*commonEntity, error) {
+			rec, err := bid.testRun(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			return rec.GetEntity(), nil
+		}),
+		Suites: adapters.EntityGetterFunc(func(ctx context.Context, id string) (*commonEntity, error) {
+			rec, err := store.Suites().Get(ctx, "", id)
+			if err != nil {
+				return nil, err
+			}
+			return rec.GetEntity(), nil
+		}),
+		SuiteRuns: adapters.EntityGetterFunc(func(ctx context.Context, id string) (*commonEntity, error) {
+			rec, err := store.SuiteRuns().Get(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			return rec.GetEntity(), nil
+		}),
+	})
+
+	shellHub := adapters.NewInMemoryShellHub(log)
+	machineLocator := adapters.NewMachineLocator(allMachinesResolver{}, shellHub)
+	tenantGuard := adapters.NewTenantGuard(tenantMembership{memberships: store.Memberships()})
+	shellAudit := adapters.NewSlogShellAudit(log)
+
+	dashRuns := dashboardRuns{runs: store.TestRuns(), suiteRuns: store.SuiteRuns(), suites: store.Suites()}
+	runStats := adapters.NewRunStatsReader(dashRuns)
+	recentRuns := adapters.NewRecentRunsReader(dashRuns)
+	scheduleReader := adapters.NewScheduleReader(dashRuns)
+	dashRating := adapters.NewDashboardRatingReader(ratingBoard, dashboardRatingMetricKey)
+
+	baker := &suiteBaker{
+		suites:    store.Suites(),
+		suiteRuns: store.SuiteRuns(),
+		launcher:  suiteLauncher,
+		caller:    caller,
+	}
+	suiteWizardEngine := adapters.NewSuiteWizardEngine(cells, baker)
+
+	// 6) Services.
+	iamService := iamsvc.NewIamService(iamsvc.IamDeps{
+		Authn:              authn,
+		Authz:              permResolver,
+		Accounts:           store.Accounts(),
+		Credentials:        store.Credentials(),
+		Hasher:             hasher,
+		Tokens:             tokenSvc,
+		OneTimeTokens:      store.OneTimeTokens(),
+		Notifier:           notifier,
+		Gates:              gates,
+		Catalog:            catalog,
+		Tenants:            store.Tenants(),
+		Roles:              store.Roles(),
+		Memberships:        store.Memberships(),
+		Providers:          store.IdentityProviders(),
+		ProviderSecrets:    providerSecrets,
+		ExternalIdentities: store.ExternalIdentities(),
+		SSO:                oidc,
+		TTL:                ttl,
+		ApiTokens:          store.ApiTokens(),
+		ApiTokenSecrets:    apiTokenSecrets,
+		ApiTokenMinter:     apiTokenMinter,
+		Tx:                 trm,
+	})
+
+	systemSettingsService := systemsettings.NewSystemSettingsService(systemsettings.SystemSettingsDeps{
+		Authn:    authn,
+		Settings: store.Settings(),
+		Tx:       trm,
+	})
+
+	tenantSettingsService := tenantsettings.NewTenantSettingsService(tenantsettings.TenantSettingsDeps{
+		Authn:    authn,
+		Tenants:  tenantReader,
+		Settings: store.TenantSettings(),
+		Tx:       trm,
+	})
+
+	databasePresetService := presetsvc.NewDatabasePresetService(presetsvc.Deps{
+		Authn:     authn,
+		Databases: store.DatabasePresets(),
+		Workloads: store.WorkloadPresets(),
+		Tests:     store.TestPresets(),
+		Tx:        trm,
+	})
+	workloadPresetService := presetsvc.NewWorkloadPresetService(presetsvc.Deps{
+		Authn:     authn,
+		Databases: store.DatabasePresets(),
+		Workloads: store.WorkloadPresets(),
+		Tests:     store.TestPresets(),
+		Tx:        trm,
+	})
+	testPresetService := presetsvc.NewTestPresetService(presetsvc.Deps{
+		Authn:     authn,
+		Databases: store.DatabasePresets(),
+		Workloads: store.WorkloadPresets(),
+		Tests:     store.TestPresets(),
+		Tx:        trm,
+	})
+
+	packageService := packagessvc.NewPackageService(packagessvc.PackageDeps{
+		Authn:    authn,
+		Packages: store.Packages(),
+		Blobs:    blobStore,
+		Keys:     storageKeys,
+		Limits:   limits,
+		TTL:      uploadTTL,
+		Tx:       trm,
+	})
+
+	testRunService := testrunsvc.NewTestRunService(testrunsvc.TestRunDeps{
+		Authn:      authn,
+		Runs:       store.TestRuns(),
+		Presets:    store.Presets(),
+		Summarizer: summarizer,
+		Workflows:  testWorkflows,
+		Tx:         trm,
+	})
+
+	testRunOverviewService := testrunoverview.NewTestRunOverviewService(testrunoverview.TestRunOverviewDeps{
+		Authn:    authn,
+		Runs:     store.TestRuns(),
+		Overview: overviewReader,
+		Logs:     logReader,
+		Metrics:  metricsReader,
+		Tx:       trm,
+	})
+
+	testWizardService := testwizardsvc.NewTestWizardService(testwizardsvc.TestWizardDeps{
+		Authn:   authn,
+		Drafts:  store.Drafts(),
+		Presets: store.Presets(),
+		Engine:  testWizardEngine,
+		Runs:    runStarter,
+		Saver:   store.Presets(),
+		Prober:  stroppyProberAdapter{prober: stroppyProber},
+		Tx:      trm,
+	})
+
+	suiteService := suitesvc.NewSuiteService(suitesvc.SuiteDeps{
+		Authn:    authn,
+		Suites:   store.Suites(),
+		Launcher: suiteLauncher,
+		Tx:       trm,
+	})
+
+	suiteRunService := suiterunsvc.NewSuiteRunService(suiterunsvc.SuiteRunDeps{
+		Authn:     authn,
+		SuiteRuns: store.SuiteRuns(),
+		Canceller: suiteCanceller,
+		Tx:        trm,
+	})
+
+	suiteWizardService := suitewizardsvc.NewSuiteWizardService(suitewizardsvc.SuiteWizardDeps{
+		Authn:  authn,
+		Drafts: store.SuiteDrafts(),
+		Suites: suiteSpecReader{suites: store.Suites()},
+		Engine: suiteWizardEngine,
+		Tx:     trm,
+	})
+
+	compareService := compare.NewCompareService(compare.CompareDeps{
+		Authn:   authn,
+		Runs:    testRunReader,
+		Metrics: metricsComparator,
+		Tx:      trm,
+	})
+
+	ratingService := ratingsvc.NewRatingService(ratingsvc.RatingDeps{
+		Authn:   authn,
+		Board:   ratingBoard,
+		Tenants: tenantReader,
+		Tx:      trm,
+	})
+
+	publicRatingService := publicrating.NewPublicRatingService(publicrating.PublicRatingDeps{
+		Board: publicRatingBoard,
+		Tx:    trm,
+	})
+
+	shareService := sharesvc.NewShareService(sharesvc.ShareDeps{
+		Authn:     authn,
+		Shares:    store.Shares(),
+		Minter:    tokenMinter,
+		Snapshots: snapshotBuilder,
+		Tx:        trm,
+	})
+
+	publicShareService := publicshare.NewPublicShareService(publicshare.PublicShareDeps{
+		Shares: store.Shares(),
+		Tx:     trm,
+	})
+
+	favoriteService := favorite.NewFavoriteService(favorite.FavoriteDeps{
+		Authn:     authn,
+		Favorites: store.Favorites(),
+		Targets:   favoriteTargets,
+		Tx:        trm,
+	})
+
+	agentShellService := agent_shell.NewAgentShellService(agent_shell.AgentShellDeps{
+		Authn:    authn,
+		Tenants:  tenantGuard,
+		Machines: machineLocator,
+		Hub:      shellHub,
+		Audit:    shellAudit,
+		Tx:       trm,
+	})
+
+	tenantDashboardService := tenantdashboard.NewTenantDashboardService(tenantdashboard.TenantDashboardDeps{
+		Authn:    authn,
+		Tenants:  tenantReader,
+		RunStats: runStats,
+		Recent:   recentRuns,
+		Schedule: scheduleReader,
+		Rating:   dashRating,
+		Tx:       trm,
+	})
+
+	// 7) Connect handlers + embedded SPA on one mux.
+	mux := http.NewServeMux()
+	register(mux,
+		func() (string, http.Handler) { return apiconnect.NewIamServiceHandler(iamService) },
+		func() (string, http.Handler) {
+			return apiconnect.NewSystemSettingsServiceHandler(systemSettingsService)
+		},
+		func() (string, http.Handler) {
+			return apiconnect.NewTenantSettingsServiceHandler(tenantSettingsService)
+		},
+		func() (string, http.Handler) {
+			return apiconnect.NewDatabasePresetServiceHandler(databasePresetService)
+		},
+		func() (string, http.Handler) {
+			return apiconnect.NewWorkloadPresetServiceHandler(workloadPresetService)
+		},
+		func() (string, http.Handler) { return apiconnect.NewTestPresetServiceHandler(testPresetService) },
+		func() (string, http.Handler) { return apiconnect.NewPackageServiceHandler(packageService) },
+		func() (string, http.Handler) { return apiconnect.NewTestRunServiceHandler(testRunService) },
+		func() (string, http.Handler) { return apiconnect.NewTestWizardServiceHandler(testWizardService) },
+		func() (string, http.Handler) { return apiconnect.NewSuiteServiceHandler(suiteService) },
+		func() (string, http.Handler) { return apiconnect.NewSuiteRunServiceHandler(suiteRunService) },
+		func() (string, http.Handler) {
+			return apiconnect.NewSuiteWizardServiceHandler(suiteWizardService)
+		},
+		func() (string, http.Handler) { return apiconnect.NewCompareServiceHandler(compareService) },
+		func() (string, http.Handler) { return apiconnect.NewRatingServiceHandler(ratingService) },
+		func() (string, http.Handler) {
+			return apiconnect.NewPublicRatingServiceHandler(publicRatingService)
+		},
+		func() (string, http.Handler) { return apiconnect.NewShareServiceHandler(shareService) },
+		func() (string, http.Handler) {
+			return apiconnect.NewPublicShareServiceHandler(publicShareService)
+		},
+		func() (string, http.Handler) { return apiconnect.NewFavoriteServiceHandler(favoriteService) },
+		func() (string, http.Handler) {
+			return apiconnect.NewTenantDashboardServiceHandler(tenantDashboardService)
+		},
+	)
+
+	spa, err := spaHandler()
+	if err != nil {
+		return fmt.Errorf("embedded spa: %w", err)
+	}
+	mux.Handle("/", spa)
+
+	// TestRunOverview (server-streaming) and AgentShell (bidi-streaming) are
+	// gRPC-native streaming services: their generated method sets use
+	// grpc.ServerStream / grpc.BidiStream, which the connect handler interfaces do
+	// not accept. They are served by a real grpc.Server multiplexed onto the same
+	// HTTP/2 cleartext handler by content-type ("application/grpc").
+	grpcSrv := grpc.NewServer()
+	api.RegisterTestRunOverviewServiceServer(grpcSrv, testRunOverviewService)
+	api.RegisterAgentShellServiceServer(grpcSrv, agentShellService)
+
+	// Wrap with h2c so connect-over-HTTP/2 cleartext works behind the gateway, and
+	// route native gRPC traffic to the grpc.Server.
+	h2cHandler := h2c.NewHandler(grpcOrHTTP(grpcSrv, mux), &http2.Server{})
+
+	// 8) Temporal server worker.
+	w := worker.New(tc, "stroppy-cloud", worker.Options{})
+	workflows.RegisterWorkflows(w, workflows.DefaultOptions())
+	workflows.RegisterActivities(w)
+	if err := w.Start(); err != nil {
+		return fmt.Errorf("start temporal worker: %w", err)
+	}
+	defer w.Stop()
+
+	// 9) Gateway: single agent-facing entrypoint sharing the connect API + SPA.
+	gw, err := gateway.New(gateway.Config{
+		TemporalHostPort:  cfg.TemporalHostPort,
+		AgentBinaryPath:   cfg.AgentBinaryPath,
+		CacheDir:          cfg.CacheDir,
+		Artifacts:         map[string]string{"stroppy": cfg.StroppyUpstream},
+		AptBackend:        cfg.AptBackend,
+		MonitoringBackend: cfg.MonitoringURL,   // relay agent /insert/* + /select/* → vmauth
+		MonitoringToken:   cfg.MonitoringToken, // bearer injected on relayed monitoring requests
+		GrafanaBackend:    cfg.GrafanaBackend,  // serve /grafana/* from the server origin
+		HTTPFallback:      h2cHandler,
+		Logger:            log,
+	})
+	if err != nil {
+		return fmt.Errorf("build gateway: %w", err)
+	}
+
+	lis, err := net.Listen("tcp", cfg.ListenAddr)
+	if err != nil {
+		return fmt.Errorf("listen %s: %w", cfg.ListenAddr, err)
+	}
+
+	serveErr := make(chan error, 1)
+	go func() { serveErr <- gw.Serve(lis) }()
+	log.Info("control plane listening", slog.String("addr", cfg.ListenAddr))
+
+	select {
+	case <-ctx.Done():
+		gw.Close()
+		return nil
+	case err := <-serveErr:
+		gw.Close()
+		if err != nil && !errors.Is(err, net.ErrClosed) {
+			return fmt.Errorf("gateway serve: %w", err)
+		}
+		return nil
+	}
+}
+
+// grpcOrHTTP dispatches native gRPC requests (HTTP/2 with an application/grpc
+// content-type) to the gRPC server and everything else (connect, SPA) to the
+// HTTP mux, sharing one HTTP/2 cleartext handler.
+func grpcOrHTTP(grpcSrv *grpc.Server, httpHandler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.ProtoMajor == 2 && strings.HasPrefix(r.Header.Get("Content-Type"), "application/grpc") {
+			grpcSrv.ServeHTTP(w, r)
+			return
+		}
+		httpHandler.ServeHTTP(w, r)
+	})
+}
+
+// register wires each (path, handler) pair from the connect handler constructors
+// into the mux.
+func register(mux *http.ServeMux, handlers ...func() (string, http.Handler)) {
+	for _, h := range handlers {
+		path, handler := h()
+		mux.Handle(path, handler)
+	}
+}
+
+// spaHandler serves the embedded SPA (web.Dist/dist) as the fallback for every
+// non-API, non-/cloud. path, falling back to index.html for client-side routes.
+func spaHandler() (http.Handler, error) {
+	dist, err := fs.Sub(web.Dist, "dist")
+	if err != nil {
+		return nil, err
+	}
+	fileServer := http.FileServer(http.FS(dist))
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Serve the asset if it exists; otherwise fall back to index.html so the
+		// SPA router can resolve the deep link.
+		if _, statErr := fs.Stat(dist, trimLeadingSlash(r.URL.Path)); statErr == nil || r.URL.Path == "/" {
+			fileServer.ServeHTTP(w, r)
+			return
+		}
+		r2 := r.Clone(r.Context())
+		r2.URL.Path = "/"
+		fileServer.ServeHTTP(w, r2)
+	}), nil
+}
+
+func trimLeadingSlash(p string) string {
+	if len(p) > 0 && p[0] == '/' {
+		return p[1:]
+	}
+	return p
+}

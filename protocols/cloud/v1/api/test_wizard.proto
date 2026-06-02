@@ -15,6 +15,7 @@ import "cloud/v1/models/preset.proto";
 import "cloud/v1/models/test_run.proto";
 import "cloud/v1/models/test_wizard.proto";
 import "cloud/v1/topology/topology.proto";
+import "google/protobuf/struct.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
@@ -252,6 +253,74 @@ message FinishTestWizardResponse {
 }
 
 /*
+    ProbeScriptRequest introspects a stroppy script: the server execs a local
+    `stroppy probe` against the given script + driver and returns the script
+    metadata (available steps, declared env vars, SQL sections, driver defaults,
+    pool size) so the wizard can drive its workload form.
+ */
+message ProbeScriptRequest {
+    /*
+        version selects the stroppy binary: a github release tag (e.g. "1.2.0") or
+        "commit:<sha>". Empty uses the configured upstream / PATH binary.
+     */
+    string version = 1;
+    /*
+        script is the stroppy script to introspect (e.g. "tpcc/procs"). Required.
+     */
+    string script = 2 [(validate.rules).string = {min_len: 1}];
+    /*
+        sql is an optional second SQL argument.
+     */
+    string sql = 3;
+    /*
+        driver_type is the stroppy driver ("postgres"|"mysql"|"picodata"|"ydb"|...).
+     */
+    string driver_type = 4;
+    /*
+        pool_size, when > 0, sets the driver pool min/max conns and a POOL_SIZE env.
+     */
+    int32 pool_size = 5;
+    /*
+        scale_factor, when > 0, sets a SCALE_FACTOR env override.
+     */
+    int32 scale_factor = 6;
+    /*
+        env are extra env overrides for the probed script (keys uppercased).
+     */
+    map<string, string> env = 7;
+    /*
+        files are inline workload files written next to the generated config so the
+        probed script can reference them by name.
+     */
+    repeated ProbeWorkloadFile files = 8;
+    /*
+        include_human additionally runs `probe -o human` and fills the human field.
+     */
+    bool include_human = 9;
+}
+/*
+    ProbeWorkloadFile is an inline workload file made available to the probe.
+ */
+message ProbeWorkloadFile {
+    string name = 1;
+    string content = 2;
+}
+/*
+    ProbeScriptResponse returns the parsed probe metadata.
+ */
+message ProbeScriptResponse {
+    /*
+        metadata is stroppy's `probe -o json` output, full-fidelity.
+     */
+    google.protobuf.Struct metadata = 1;
+    /*
+        human is stroppy's `probe -o human` output, populated only when
+        include_human is set and the human render succeeds.
+     */
+    string human = 2;
+}
+
+/*
     TestWizardService drives the test wizard: start, fetch/list, patch-loop and
     finish into a baked TestRun (optionally started and/or saved as a preset).
  */
@@ -295,5 +364,12 @@ service TestWizardService {
      */
     rpc FinishTestWizard (FinishTestWizardRequest) returns (FinishTestWizardResponse) {
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_WIZARD, action: ACTION_UPDATE}]};
+    }
+    /*
+        ProbeScript introspects a stroppy script. Read-only / no side effects.
+     */
+    rpc ProbeScript (ProbeScriptRequest) returns (ProbeScriptResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_WIZARD, action: ACTION_READ}]};
     }
 }

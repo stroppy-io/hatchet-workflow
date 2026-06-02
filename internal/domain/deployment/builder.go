@@ -77,6 +77,11 @@ type RuntimeEndpoint struct {
 	Address string
 	Port    uint32
 	HasPort bool
+	// Labels carries the resolved endpoint's labels (e.g. a managed YDB
+	// endpoint's database_path). They reach the renderers through the same
+	// runtime view that surfaces the host/port, so the stroppy URL resolver
+	// can read database_path the same way it reads the address.
+	Labels map[string]string
 }
 
 type RuntimeComponent struct {
@@ -121,6 +126,9 @@ type RuntimeTarget struct {
 	EndpointName string
 	Address      string
 	Port         uint32
+	// Labels carries the resolved endpoint's labels (e.g. database_path for a
+	// managed YDB endpoint), mirrored from the RuntimeEndpoint.
+	Labels map[string]string
 }
 
 func (t RuntimeTarget) AddressPort() string {
@@ -357,6 +365,7 @@ func newRuntimeView(idx *topologyindex.Index, machines map[string]*deploymentpb.
 			runtimeEndpoint := RuntimeEndpoint{
 				Name:    endpoint.GetName(),
 				Address: endpoint.GetAddress(),
+				Labels:  endpoint.GetLabels(),
 			}
 			if endpoint.Port != nil {
 				runtimeEndpoint.Port = endpoint.GetPort()
@@ -481,6 +490,7 @@ func DependencyTargets(ctx RenderContext, include func(*topologypb.Connection, *
 			EndpointName: endpointName,
 			Address:      private.Address,
 			Port:         port,
+			Labels:       private.Labels,
 		})
 	}
 	sortRuntimeTargets(targets)
@@ -516,6 +526,7 @@ func ComponentTargets(ctx RenderContext, include func(*topologypb.Component) boo
 			EndpointName: endpointName,
 			Address:      private.Address,
 			Port:         targetPort,
+			Labels:       private.Labels,
 		})
 	}
 	sortRuntimeTargets(targets)

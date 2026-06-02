@@ -20,6 +20,15 @@ generate:
     - git_repo:
         url: github.com/bufbuild/protoc-gen-validate
         sub_directory: validate
+    - git_repo:
+        url: github.com/stroppy-io/schemapb
+        sub_directory: schemapb
+    - git_repo:
+        url: github.com/cludden/protoc-gen-go-temporal
+        sub_directory: temporal/v1
+    - git_repo:
+        url: github.com/temporalio/api
+        sub_directory: temporal/api/enums
 #    - git_repo:
 #        url: github.com/yaroher/protoc-gen-go-plain
 #        sub_directory: goplain
@@ -37,11 +46,6 @@ generate:
         import_extension: ts
         json_types: true
         valid_types: legacy_required+protovalidate_required
-    - name: connect-es
-      out: ../web/src/lib/proto
-      opts:
-        target: ts
-        import_extension: ts
 breaking:
   ignore: []
   against_git_ref: master-worker

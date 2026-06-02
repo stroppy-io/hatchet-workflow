@@ -10,7 +10,6 @@ import (
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	topologypb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology"
-	"google.golang.org/protobuf/encoding/protojson"
 )
 
 type DeploymentRenderer struct{}
@@ -24,7 +23,7 @@ func (r DeploymentRenderer) RenderComponent(ctx deploymentbuilder.RenderContext)
 		return nil, fmt.Errorf("workload renderer requires workload input")
 	}
 	dependencies := deploymentbuilder.DependencyIDs(ctx, nil)
-	configFile, _ := effectiveConfigFile(ctx.Component.GetId(), ctx.Workload, ctx.RenderOverrides)
+	configFile, _ := effectiveConfigFile(ctx.Component.GetId(), ctx.Workload, ctx.RenderOverrides, ctx.Topology.Spec().GetLabels(), resolveDatabasePathLabel(ctx))
 
 	steps := []*deploymentpb.AgentStep{
 		deploymentbuilder.CreateDirStep("010_create_config_dir", 10, deploymentbuilder.ConfigDir(ctx.Component.GetId()), 0755),
@@ -36,6 +35,11 @@ func (r DeploymentRenderer) RenderComponent(ctx deploymentbuilder.RenderContext)
 		deploymentbuilder.CallCmdStep("100_prepare_stroppy", 100, installCommand(ctx.Workload)),
 		deploymentbuilder.CallCmdStep("110_healthcheck", 110, "test -d "+deploymentbuilder.ShellQuote(deploymentbuilder.ConfigDir(ctx.Component.GetId()))),
 	)
+	// The stroppy runner emits the k6/stroppy OTEL metrics the dashboards read,
+	// so it needs the same node_exporter + vmagent + vector collectors as the DB
+	// machines (the DB engine renderers get these via RenderComponentDeployment;
+	// the workload renderer builds its own step list, so append them here too).
+	steps = append(steps, deploymentbuilder.MonitorSteps(ctx)...)
 
 	return &deploymentpb.ComponentDeployment{
 		ComponentId:           ctx.Component.GetId(),
@@ -62,8 +66,14 @@ func (r DeploymentRenderer) RenderPreview(ctx deploymentbuilder.PreviewContext) 
 		Component: ctx.Component,
 		Node:      ctx.Node,
 	}, nil)
-	configFile, configOrigin := effectiveConfigFile(ctx.Component.GetId(), ctx.Workload, ctx.RenderOverrides)
-	defaultConfigFile := defaultConfigFile(ctx.Component.GetId(), ctx.Workload)
+	labels := ctx.Topology.Spec().GetLabels()
+	// The preview runs before infrastructure is provisioned, so the managed DB
+	// path (a terraform output) is not known yet — leave it empty, which keeps
+	// the URL free of a `?database=` (consistent with the address placeholders
+	// the preview also leaves unresolved). The real path is substituted in
+	// RenderComponent once the DB endpoint is resolved.
+	configFile, configOrigin := effectiveConfigFile(ctx.Component.GetId(), ctx.Workload, ctx.RenderOverrides, labels, "")
+	defaultConfigFile := defaultConfigFile(ctx.Component.GetId(), ctx.Workload, labels, "")
 
 	artifacts := []*deploymentpb.RenderArtifact{
 		deploymentbuilder.DirArtifact(ctx, Engine, "config-dir", &common.Dir{
@@ -84,31 +94,43 @@ func (r DeploymentRenderer) RenderPreview(ctx deploymentbuilder.PreviewContext) 
 	return artifacts, nil
 }
 
-func effectiveConfigFile(componentID string, input *domain.Workload, overrides *deploymentpb.RenderOverrideSet) (*common.File, deploymentpb.RenderArtifact_Origin) {
+func effectiveConfigFile(componentID string, input *domain.Workload, overrides *deploymentpb.RenderOverrideSet, labels map[string]string, databasePath string) (*common.File, deploymentpb.RenderArtifact_Origin) {
 	artifactID := configArtifactID(componentID)
 	if override, ok := deploymentbuilder.OverrideFile(overrides, componentID, artifactID); ok && override.GetFile() != nil {
 		return override.GetFile(), deploymentpb.RenderArtifact_ORIGIN_USER_OVERRIDE
 	}
-	return defaultConfigFile(componentID, input), deploymentpb.RenderArtifact_ORIGIN_RENDERED_DEFAULT
+	return defaultConfigFile(componentID, input, labels, databasePath), deploymentpb.RenderArtifact_ORIGIN_RENDERED_DEFAULT
 }
 
-func defaultConfigFile(componentID string, input *domain.Workload) *common.File {
+func defaultConfigFile(componentID string, input *domain.Workload, labels map[string]string, databasePath string) *common.File {
 	return &common.File{
 		Info: &common.File_Info{
 			Path:          configPath(componentID),
 			Mode:          0644,
 			CreateParents: true,
 		},
-		Content: &common.File_Text{Text: workloadConfig(input)},
+		Content: &common.File_Text{Text: renderStroppyConfigJSON(input, labels, databasePath)},
 	}
 }
 
-func workloadConfig(input *domain.Workload) string {
-	data, err := protojson.MarshalOptions{Multiline: true, Indent: "  ", EmitUnpopulated: true}.Marshal(input)
+// resolveDatabasePathLabel returns the managed-database path of the connected
+// DB endpoint, read from its database_path label. Managed YDB stamps this label
+// on its synthesized endpoint (workflows/deployment.go managedYDBMachineState);
+// self-hosted databases carry no such label, so this returns "" and the stroppy
+// URL ends up without a `?database=` query. The runner connects to exactly one
+// DB target, so the first non-empty database_path among the resolved
+// dependency targets wins.
+func resolveDatabasePathLabel(ctx deploymentbuilder.RenderContext) string {
+	targets, err := deploymentbuilder.DependencyTargets(ctx, nil)
 	if err != nil {
-		return "{}\n"
+		return ""
 	}
-	return string(data) + "\n"
+	for _, target := range targets {
+		if path := target.Labels[dbDatabaseLabel]; path != "" {
+			return path
+		}
+	}
+	return ""
 }
 
 func workloadFileSteps(componentID string, input *domain.Workload) []*deploymentpb.AgentStep {

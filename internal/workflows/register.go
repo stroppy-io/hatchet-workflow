@@ -6,6 +6,7 @@ import (
 	databasepicodata "github.com/stroppy-io/stroppy-cloud/internal/domain/database/picodata"
 	databasepostgres "github.com/stroppy-io/stroppy-cloud/internal/domain/database/postgres"
 	databaseydb "github.com/stroppy-io/stroppy-cloud/internal/domain/database/ydb"
+	databaseydbmanaged "github.com/stroppy-io/stroppy-cloud/internal/domain/database/ydbmanaged"
 	deploymentbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/packages"
 	workloadbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/workload"
@@ -24,6 +25,7 @@ func DefaultOptions() Options {
 			databasepostgres.PackageResolver{},
 			databasepicodata.PackageResolver{},
 			databaseydb.PackageResolver{},
+			databaseydbmanaged.PackageResolver{},
 			databasecockroach.PackageResolver{},
 			databasemysql.PackageResolver{},
 		),
@@ -31,6 +33,7 @@ func DefaultOptions() Options {
 			databasepostgres.DeploymentRenderer{},
 			databasepicodata.DeploymentRenderer{},
 			databaseydb.DeploymentRenderer{},
+			databaseydbmanaged.DeploymentRenderer{},
 			databasecockroach.DeploymentRenderer{},
 			databasemysql.DeploymentRenderer{},
 			workloadbuilder.DeploymentRenderer{},

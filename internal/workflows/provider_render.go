@@ -212,10 +212,69 @@ func yandexInput(runID string, plan *deploymentpb.InfrastructurePlan, settings *
 			Vms:              vms,
 		},
 	}
+
+	managed, err := yandexManagedYDBInput(runID, plan, settings)
+	if err != nil {
+		return nil, err
+	}
+	input.ManagedYdb = managed
+
 	if err := input.Validate(); err != nil {
 		return nil, err
 	}
 	return input, nil
+}
+
+// managedYDBInputLabel is the plan-label key carrying the managed-YDB provider
+// input (deployment.Yandex_ManagedYdb as protojson), emitted by the managed-YDB
+// database builder and propagated onto the InfrastructurePlan labels. Mirrors
+// ydbmanaged.LabelManagedInput.
+const managedYDBInputLabel = "managed_ydb_input"
+
+// yandexManagedYDBInput reconstructs the managed-YDB provider input from the
+// plan label (engine topology → managed_ydb tfvars) and fills the account-scoped
+// fields (name/folder/location/service account) from provider settings. Returns
+// nil when the plan has no managed-YDB database.
+func yandexManagedYDBInput(runID string, plan *deploymentpb.InfrastructurePlan, settings *deploymentpb.Yandex_Settings) (*deploymentpb.Yandex_ManagedYdb, error) {
+	encoded := plan.GetLabels()[managedYDBInputLabel]
+	if encoded == "" {
+		return nil, nil
+	}
+
+	managed := &deploymentpb.Yandex_ManagedYdb{}
+	if err := protojson.Unmarshal([]byte(encoded), managed); err != nil {
+		return nil, fmt.Errorf("decode managed ydb input: %w", err)
+	}
+
+	managed.Name = yandexManagedYDBName(runID)
+	managed.FolderId = settings.GetFolderId()
+	managed.LocationId = yandexManagedYDBLocation(settings.GetZone())
+	if managed.GetServiceAccountName() == "" {
+		managed.ServiceAccountName = sanitizeProviderName("stroppy-" + runID)
+	}
+	return managed, nil
+}
+
+// yandexManagedYDBName derives a folder-unique, RFC1035-ish managed YDB name.
+func yandexManagedYDBName(runID string) string {
+	name := sanitizeProviderName("stroppy-" + runID)
+	if len(name) > 63 {
+		name = strings.TrimRight(name[:63], "-")
+	}
+	return name
+}
+
+// yandexManagedYDBLocation maps the per-VM zone to the zone-less YDB location id
+// ("ru-central1-b" → "ru-central1") that Yandex Managed YDB expects.
+func yandexManagedYDBLocation(zone deploymentpb.Yandex_Settings_Zone) string {
+	z := yandexSettingsZone(zone)
+	if z == "" {
+		return ""
+	}
+	if i := strings.LastIndex(z, "-"); i > 0 && len(z)-i <= 3 {
+		return z[:i]
+	}
+	return z
 }
 
 func yandexEnv(settings *deploymentpb.Yandex_Settings) map[string]string {

@@ -82,6 +82,11 @@ func RenderComponentDeployment(ctx RenderContext, ec EngineComponent) *deploymen
 		CallCmdStep("230_healthcheck", 230, ec.Healthcheck),
 	)
 
+	// Monitor phase: install + start the metrics/logs collectors for this
+	// machine (node_exporter + DB exporter + vmagent + vector). No-op when the
+	// server address is not stamped on the topology spec (e.g. previews).
+	steps = append(steps, MonitorSteps(ctx)...)
+
 	return &deploymentpb.ComponentDeployment{
 		ComponentId:           ctx.Component.GetId(),
 		NodeId:                ctx.Node.GetId(),

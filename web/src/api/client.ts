@@ -20,6 +20,11 @@ import type {
   ProbeResponse,
 } from "./types";
 
+import {
+  testWizardClient,
+  setAccessToken as setTransportAccessToken,
+} from "./transport";
+
 const API_BASE = "/api/v1";
 
 // Module-level access token — never stored in localStorage.
@@ -27,6 +32,9 @@ let _accessToken: string | null = null;
 
 export function setAccessToken(token: string | null) {
   _accessToken = token;
+  // Keep the Connect transport's in-memory token in sync so connect-based RPCs
+  // (e.g. TestWizardService.ProbeScript) are authenticated with the same token.
+  setTransportAccessToken(token);
 }
 
 export function getAccessToken(): string | null {
@@ -593,11 +601,33 @@ export async function crossBatch(
 
 // ---------- Probe ----------
 
+// probeScript introspects a stroppy script via the connect
+// TestWizardService.ProbeScript RPC (the old REST POST /api/v1/probe is gone).
+// The RPC returns stroppy's full-fidelity `probe -o json` output as a free-form
+// Struct (metadata) plus the optional human render; this adapter flattens that
+// Struct back onto the legacy ProbeResponse shape WorkloadForm consumes
+// (steps / env_declarations / sql_sections / driver_setups / human).
 export async function probeScript(req: ProbeRequest): Promise<ProbeResponse> {
-  return request(`${API_BASE}/probe`, {
-    method: "POST",
-    body: JSON.stringify(req),
+  const resp = await testWizardClient.probeScript({
+    version: req.version ?? "",
+    script: req.script,
+    sql: req.sql ?? "",
+    driverType: req.driver_type ?? "",
+    poolSize: req.pool_size ?? 0,
+    scaleFactor: req.scale_factor ?? 0,
+    env: req.env ?? {},
+    files: (req.files ?? []).map((f) => ({
+      name: f.name,
+      content: f.content,
+    })),
+    includeHuman: req.include_human ?? false,
   });
+
+  const metadata = (resp.metadata ?? {}) as Record<string, unknown>;
+  return {
+    ...(metadata as ProbeResponse),
+    human: resp.human || (metadata.human as string | undefined),
+  };
 }
 
 // ---------- Metrics ----------

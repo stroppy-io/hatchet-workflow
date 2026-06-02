@@ -8,6 +8,7 @@ import (
 	picodatadb "github.com/stroppy-io/stroppy-cloud/internal/domain/database/picodata"
 	postgresdb "github.com/stroppy-io/stroppy-cloud/internal/domain/database/postgres"
 	ydbdb "github.com/stroppy-io/stroppy-cloud/internal/domain/database/ydb"
+	ydbmanageddb "github.com/stroppy-io/stroppy-cloud/internal/domain/database/ydbmanaged"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology"
 )
@@ -41,6 +42,11 @@ func BuildTopologySpec(input *domain.Database) (*topology.TopologySpec, error) {
 			return nil, fmt.Errorf("ydb database requires ydb params")
 		}
 		return (&ydbdb.Database{}).BuildTopologySpec(params.GetYdb())
+	case domain.Database_KIND_YDB_MANAGED:
+		if params.GetYdbManaged() == nil {
+			return nil, fmt.Errorf("ydb managed database requires ydb_managed params")
+		}
+		return (&ydbmanageddb.Database{}).BuildTopologySpec(params.GetYdbManaged())
 	case domain.Database_KIND_COCKROACH:
 		if params.GetCockroach() == nil {
 			return nil, fmt.Errorf("cockroach database requires cockroach params")

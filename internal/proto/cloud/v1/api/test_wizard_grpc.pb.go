@@ -25,6 +25,7 @@ const (
 	TestWizardService_PatchTestWizard_FullMethodName       = "/cloud.v1.api.TestWizardService/PatchTestWizard"
 	TestWizardService_DeleteTestWizardDraft_FullMethodName = "/cloud.v1.api.TestWizardService/DeleteTestWizardDraft"
 	TestWizardService_FinishTestWizard_FullMethodName      = "/cloud.v1.api.TestWizardService/FinishTestWizard"
+	TestWizardService_ProbeScript_FullMethodName           = "/cloud.v1.api.TestWizardService/ProbeScript"
 )
 
 // TestWizardServiceClient is the client API for TestWizardService service.
@@ -46,6 +47,8 @@ type TestWizardServiceClient interface {
 	DeleteTestWizardDraft(ctx context.Context, in *DeleteTestWizardDraftRequest, opts ...grpc.CallOption) (*DeleteTestWizardDraftResponse, error)
 	// FinishTestWizard mints a TestRun from the draft. Not idempotent.
 	FinishTestWizard(ctx context.Context, in *FinishTestWizardRequest, opts ...grpc.CallOption) (*FinishTestWizardResponse, error)
+	// ProbeScript introspects a stroppy script. Read-only / no side effects.
+	ProbeScript(ctx context.Context, in *ProbeScriptRequest, opts ...grpc.CallOption) (*ProbeScriptResponse, error)
 }
 
 type testWizardServiceClient struct {
@@ -116,6 +119,16 @@ func (c *testWizardServiceClient) FinishTestWizard(ctx context.Context, in *Fini
 	return out, nil
 }
 
+func (c *testWizardServiceClient) ProbeScript(ctx context.Context, in *ProbeScriptRequest, opts ...grpc.CallOption) (*ProbeScriptResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ProbeScriptResponse)
+	err := c.cc.Invoke(ctx, TestWizardService_ProbeScript_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TestWizardServiceServer is the server API for TestWizardService service.
 // All implementations must embed UnimplementedTestWizardServiceServer
 // for forward compatibility.
@@ -135,6 +148,8 @@ type TestWizardServiceServer interface {
 	DeleteTestWizardDraft(context.Context, *DeleteTestWizardDraftRequest) (*DeleteTestWizardDraftResponse, error)
 	// FinishTestWizard mints a TestRun from the draft. Not idempotent.
 	FinishTestWizard(context.Context, *FinishTestWizardRequest) (*FinishTestWizardResponse, error)
+	// ProbeScript introspects a stroppy script. Read-only / no side effects.
+	ProbeScript(context.Context, *ProbeScriptRequest) (*ProbeScriptResponse, error)
 	mustEmbedUnimplementedTestWizardServiceServer()
 }
 
@@ -162,6 +177,9 @@ func (UnimplementedTestWizardServiceServer) DeleteTestWizardDraft(context.Contex
 }
 func (UnimplementedTestWizardServiceServer) FinishTestWizard(context.Context, *FinishTestWizardRequest) (*FinishTestWizardResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method FinishTestWizard not implemented")
+}
+func (UnimplementedTestWizardServiceServer) ProbeScript(context.Context, *ProbeScriptRequest) (*ProbeScriptResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ProbeScript not implemented")
 }
 func (UnimplementedTestWizardServiceServer) mustEmbedUnimplementedTestWizardServiceServer() {}
 func (UnimplementedTestWizardServiceServer) testEmbeddedByValue()                           {}
@@ -292,6 +310,24 @@ func _TestWizardService_FinishTestWizard_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TestWizardService_ProbeScript_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ProbeScriptRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TestWizardServiceServer).ProbeScript(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TestWizardService_ProbeScript_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TestWizardServiceServer).ProbeScript(ctx, req.(*ProbeScriptRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TestWizardService_ServiceDesc is the grpc.ServiceDesc for TestWizardService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -322,6 +358,10 @@ var TestWizardService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "FinishTestWizard",
 			Handler:    _TestWizardService_FinishTestWizard_Handler,
+		},
+		{
+			MethodName: "ProbeScript",
+			Handler:    _TestWizardService_ProbeScript_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

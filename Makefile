@@ -1,6 +1,7 @@
 # stroppy-cloud Makefile
 .PHONY: help configure build build-all protocols test test-integration test-e2e test-coverage \
         test-unit test-db test-full smoke smoke-clean \
+        tools db-gen migrate-generate migrate-clear \
         lint fmt docker-build docker-push docker-up docker-down docker-logs \
         serve docs-install docs-dev docs-build web-install web-dev web-build \
         clean release
@@ -61,6 +62,34 @@ protocols: ## Generate Go + TS code from proto
 	cd protocols && easyp -cfg easyp.go.yaml generate && easyp -cfg easyp.api.go.yaml generate
 	rm -rf $(CURDIR)/web/src/lib/proto
 	cd protocols && easyp -cfg easyp.ts.yaml generate
+
+# ============================================================
+# Postgres store codegen (komeet sqld toolchain)
+# ============================================================
+# SQLD_CFG points at the postgres adapter's sqld config; the toolchain reads
+# schema.sql + queries/*.sql and writes gen/db (+ gen/bob) and migrations.
+SQLD_CFG := internal/infrastructure/postgres/sqld.yaml
+
+tools: ## Install the sqld code generators into ./bin
+	GOFLAGS=-mod=mod GOBIN=$$(pwd)/bin go install github.com/gopherex/sqld/cmd/sqld@v1.0.0
+	GOFLAGS=-mod=mod GOBIN=$$(pwd)/bin go install github.com/gopherex/sqld/cmd/sqld-gen-go@v1.0.0
+	GOFLAGS=-mod=mod GOBIN=$$(pwd)/bin go install github.com/gopherex/sqld/cmd/sqld-gen-bob@v1.0.0
+
+db-gen: tools ## Generate gen/db + gen/bob from schema.sql + queries/*.sql
+	./bin/sqld generate -c $(SQLD_CFG)
+
+migrate-generate: tools ## Generate a migration by schema diff (usage: make migrate-generate name=add_table)
+	@test -n "$(name)" || (echo "usage: make migrate-generate name=add_table" && exit 2)
+	./bin/sqld migrate generate $(name) -c $(SQLD_CFG)
+
+migrate-clear: tools ## Regenerate the single bootstrap migration from schema.sql, then regenerate code
+	rm -f internal/infrastructure/postgres/migrations/*.sql
+	./bin/sqld migrate generate bootstrap -c $(SQLD_CFG)
+	@for f in internal/infrastructure/postgres/migrations/*.sql; do \
+		awk 'index(tolower($$0), "-- sqld:" "up") == 1 { next } index(tolower($$0), "-- sqld:" "down") == 1 { exit } { print }' "$$f" > "$$f.tmp"; \
+		mv "$$f.tmp" "$$f"; \
+	done
+	$(MAKE) db-gen
 
 # ============================================================
 # Test

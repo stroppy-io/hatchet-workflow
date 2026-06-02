@@ -51,6 +51,9 @@ const (
 	// TestWizardServiceFinishTestWizardProcedure is the fully-qualified name of the TestWizardService's
 	// FinishTestWizard RPC.
 	TestWizardServiceFinishTestWizardProcedure = "/cloud.v1.api.TestWizardService/FinishTestWizard"
+	// TestWizardServiceProbeScriptProcedure is the fully-qualified name of the TestWizardService's
+	// ProbeScript RPC.
+	TestWizardServiceProbeScriptProcedure = "/cloud.v1.api.TestWizardService/ProbeScript"
 )
 
 // TestWizardServiceClient is a client for the cloud.v1.api.TestWizardService service.
@@ -67,6 +70,8 @@ type TestWizardServiceClient interface {
 	DeleteTestWizardDraft(context.Context, *api.DeleteTestWizardDraftRequest) (*api.DeleteTestWizardDraftResponse, error)
 	// FinishTestWizard mints a TestRun from the draft. Not idempotent.
 	FinishTestWizard(context.Context, *api.FinishTestWizardRequest) (*api.FinishTestWizardResponse, error)
+	// ProbeScript introspects a stroppy script. Read-only / no side effects.
+	ProbeScript(context.Context, *api.ProbeScriptRequest) (*api.ProbeScriptResponse, error)
 }
 
 // NewTestWizardServiceClient constructs a client for the cloud.v1.api.TestWizardService service. By
@@ -120,6 +125,13 @@ func NewTestWizardServiceClient(httpClient connect.HTTPClient, baseURL string, o
 			connect.WithSchema(testWizardServiceMethods.ByName("FinishTestWizard")),
 			connect.WithClientOptions(opts...),
 		),
+		probeScript: connect.NewClient[api.ProbeScriptRequest, api.ProbeScriptResponse](
+			httpClient,
+			baseURL+TestWizardServiceProbeScriptProcedure,
+			connect.WithSchema(testWizardServiceMethods.ByName("ProbeScript")),
+			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -131,6 +143,7 @@ type testWizardServiceClient struct {
 	patchTestWizard       *connect.Client[api.PatchTestWizardRequest, api.PatchTestWizardResponse]
 	deleteTestWizardDraft *connect.Client[api.DeleteTestWizardDraftRequest, api.DeleteTestWizardDraftResponse]
 	finishTestWizard      *connect.Client[api.FinishTestWizardRequest, api.FinishTestWizardResponse]
+	probeScript           *connect.Client[api.ProbeScriptRequest, api.ProbeScriptResponse]
 }
 
 // StartTestWizard calls cloud.v1.api.TestWizardService.StartTestWizard.
@@ -187,6 +200,15 @@ func (c *testWizardServiceClient) FinishTestWizard(ctx context.Context, req *api
 	return nil, err
 }
 
+// ProbeScript calls cloud.v1.api.TestWizardService.ProbeScript.
+func (c *testWizardServiceClient) ProbeScript(ctx context.Context, req *api.ProbeScriptRequest) (*api.ProbeScriptResponse, error) {
+	response, err := c.probeScript.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // TestWizardServiceHandler is an implementation of the cloud.v1.api.TestWizardService service.
 type TestWizardServiceHandler interface {
 	// StartTestWizard opens a new draft. Not idempotent.
@@ -201,6 +223,8 @@ type TestWizardServiceHandler interface {
 	DeleteTestWizardDraft(context.Context, *api.DeleteTestWizardDraftRequest) (*api.DeleteTestWizardDraftResponse, error)
 	// FinishTestWizard mints a TestRun from the draft. Not idempotent.
 	FinishTestWizard(context.Context, *api.FinishTestWizardRequest) (*api.FinishTestWizardResponse, error)
+	// ProbeScript introspects a stroppy script. Read-only / no side effects.
+	ProbeScript(context.Context, *api.ProbeScriptRequest) (*api.ProbeScriptResponse, error)
 }
 
 // NewTestWizardServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -250,6 +274,13 @@ func NewTestWizardServiceHandler(svc TestWizardServiceHandler, opts ...connect.H
 		connect.WithSchema(testWizardServiceMethods.ByName("FinishTestWizard")),
 		connect.WithHandlerOptions(opts...),
 	)
+	testWizardServiceProbeScriptHandler := connect.NewUnaryHandlerSimple(
+		TestWizardServiceProbeScriptProcedure,
+		svc.ProbeScript,
+		connect.WithSchema(testWizardServiceMethods.ByName("ProbeScript")),
+		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/cloud.v1.api.TestWizardService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case TestWizardServiceStartTestWizardProcedure:
@@ -264,6 +295,8 @@ func NewTestWizardServiceHandler(svc TestWizardServiceHandler, opts ...connect.H
 			testWizardServiceDeleteTestWizardDraftHandler.ServeHTTP(w, r)
 		case TestWizardServiceFinishTestWizardProcedure:
 			testWizardServiceFinishTestWizardHandler.ServeHTTP(w, r)
+		case TestWizardServiceProbeScriptProcedure:
+			testWizardServiceProbeScriptHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -295,4 +328,8 @@ func (UnimplementedTestWizardServiceHandler) DeleteTestWizardDraft(context.Conte
 
 func (UnimplementedTestWizardServiceHandler) FinishTestWizard(context.Context, *api.FinishTestWizardRequest) (*api.FinishTestWizardResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.TestWizardService.FinishTestWizard is not implemented"))
+}
+
+func (UnimplementedTestWizardServiceHandler) ProbeScript(context.Context, *api.ProbeScriptRequest) (*api.ProbeScriptResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.TestWizardService.ProbeScript is not implemented"))
 }

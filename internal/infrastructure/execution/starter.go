@@ -1,0 +1,111 @@
+package execution
+
+import (
+	"context"
+	"time"
+
+	"github.com/google/uuid"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
+	commonpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
+	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
+	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
+	"github.com/stroppy-io/stroppy-cloud/internal/services/test_run"
+	"github.com/stroppy-io/stroppy-cloud/internal/services/test_wizard"
+)
+
+// CallerSource resolves the acting account id for author stamping inside the
+// wizard's Start path (the wizard service has already authenticated the caller;
+// the starter only needs the id). Implemented by the integration layer.
+type CallerSource interface {
+	AccountID(ctx context.Context) (string, error)
+}
+
+// TestRunStarter implements test_wizard.TestRunStarter: the wizard's
+// Finish(start=true) path. It mirrors test_run.StartTestRun — mint a fresh record
+// (new id, PENDING, summarized), persist it through the run repo, then launch the
+// TestWorkflow. It deliberately reuses the same TestRunRepo / Summarizer /
+// Workflows ports the TestRun service uses, so the started run is observable by
+// the overview service exactly like an API-started one.
+//
+// Start participates in the ambient ctx transaction for the persist; the launch
+// is external IO performed after the record is created (the wizard service runs
+// Finish in a serializable tx, so the launch must remain idempotent — Temporal
+// dedupes by the deterministic workflow id derived from the run id).
+type TestRunStarter struct {
+	runs       test_run.TestRunRepo
+	summarizer test_run.Summarizer
+	workflows  test_run.Workflows
+	caller     CallerSource
+}
+
+var _ test_wizard.TestRunStarter = (*TestRunStarter)(nil)
+
+// NewTestRunStarter builds the test_wizard.TestRunStarter adapter from the same
+// run-persistence, summarization and workflow ports the TestRun service uses.
+// caller may be nil (the run is then stamped with an empty author id).
+func NewTestRunStarter(runs test_run.TestRunRepo, summarizer test_run.Summarizer, workflows test_run.Workflows, caller CallerSource) *TestRunStarter {
+	return &TestRunStarter{runs: runs, summarizer: summarizer, workflows: workflows, caller: caller}
+}
+
+// Start persists a brand-new run record for the baked spec and launches its
+// TestWorkflow. The spec is cloned and given the server-minted run id so runtime
+// observations key off it.
+func (s *TestRunStarter) Start(
+	ctx context.Context,
+	tenantID string,
+	run *domain.TestRun,
+	trigger commonpb.Trigger,
+	inTenant, inGlobal bool,
+) (*models.TestRunRecord, error) {
+	spec := proto.Clone(run).(*domain.TestRun)
+	runID := uuid.NewString()
+	spec.Id = runID
+
+	authorID := ""
+	if s.caller != nil {
+		id, err := s.caller.AccountID(ctx)
+		if err != nil {
+			return nil, err
+		}
+		authorID = id
+	}
+
+	now := timestamppb.New(time.Now())
+	rec := &models.TestRunRecord{
+		Entity: &commonpb.Entity{
+			Id:       runID,
+			TenantId: tenantID,
+			Name:     specName(spec),
+			AuthorId: authorID,
+			Timings:  &commonpb.Timings{CreatedAt: now, UpdatedAt: now},
+		},
+		Spec:           spec,
+		Status:         commonpb.Status_STATUS_PENDING,
+		Trigger:        trigger,
+		InTenantRating: inTenant,
+		InGlobalRating: inGlobal,
+		Summary:        s.summarizer.Summarize(spec),
+	}
+
+	// Persist inside the ambient transaction.
+	if err := s.runs.Create(ctx, rec); err != nil {
+		return nil, err
+	}
+	// Launch the workflow. A duplicate is deduplicated by the deterministic id, so
+	// a tx retry that re-runs Start does not double-launch.
+	if err := s.workflows.LaunchTest(ctx, rec); err != nil {
+		return nil, err
+	}
+	return rec, nil
+}
+
+// specName derives a human label for the run record from the baked workload
+// version, falling back to a generic label (mirrors test_run.specName).
+func specName(spec *domain.TestRun) string {
+	if v := spec.GetWorkload().GetStroppyVersion(); v != "" {
+		return "stroppy " + v
+	}
+	return "test run"
+}
