@@ -2201,8 +2201,8 @@ func (e *Executor) installPgNoop(ctx context.Context, cmd Command) error {
 	if err := parseConfig(cmd, &cfg); err != nil {
 		return err
 	}
-	if _, err := exec.LookPath("pgnoop"); err == nil {
-		e.emitLine("pgnoop already installed, skipping download")
+	if _, err := os.Stat("/usr/local/bin/pgnoop"); err == nil {
+		e.emitLine("pgnoop already installed in /usr/local/bin, skipping download")
 		return nil
 	}
 	version := strings.TrimPrefix(strings.TrimSpace(cfg.Version), "v")
