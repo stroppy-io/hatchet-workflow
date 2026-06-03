@@ -2209,7 +2209,7 @@ func (e *Executor) installPgNoop(ctx context.Context, cmd Command) error {
 	if version == "" {
 		version = "0.1.1"
 	}
-	file := "pgnoop-x86_64-unknown-linux-musl.tar.gz"
+	file := "pg-noop-x86_64-unknown-linux-musl.tar.xz"
 	base := strings.TrimRight(os.Getenv("STROPPY_SERVER_ADDR"), "/")
 	url := fmt.Sprintf("https://github.com/stroppy-io/pg-noop/releases/download/v%s/%s", version, file)
 	if base != "" {
@@ -2217,12 +2217,12 @@ func (e *Executor) installPgNoop(ctx context.Context, cmd Command) error {
 	}
 	e.emitLine(fmt.Sprintf("downloading pgnoop v%s from %s...", version, url))
 	if _, err := e.shell(ctx, fmt.Sprintf(
-		`rm -rf /tmp/pgnoop-extract /tmp/pgnoop.tar.gz && mkdir -p /tmp/pgnoop-extract && `+
-			`curl -fsSL --connect-timeout 20 --max-time 120 --retry 3 --retry-delay 5 --retry-connrefused --retry-max-time 300 %q -o /tmp/pgnoop.tar.gz && `+
-			`tar xzf /tmp/pgnoop.tar.gz -C /tmp/pgnoop-extract && `+
+		`rm -rf /tmp/pgnoop-extract /tmp/pgnoop.tar.xz && mkdir -p /tmp/pgnoop-extract && `+
+			`curl -fsSL --connect-timeout 20 --max-time 120 --retry 3 --retry-delay 5 --retry-connrefused --retry-max-time 300 %q -o /tmp/pgnoop.tar.xz && `+
+			`tar xf /tmp/pgnoop.tar.xz --no-same-owner --strip-components 1 -C /tmp/pgnoop-extract && `+
 			`bin="$(find /tmp/pgnoop-extract -type f -name pgnoop | head -n1)" && test -n "$bin" && `+
 			`install -m 0755 "$bin" /usr/local/bin/pgnoop && `+
-			`rm -rf /tmp/pgnoop-extract /tmp/pgnoop.tar.gz`,
+			`rm -rf /tmp/pgnoop-extract /tmp/pgnoop.tar.xz`,
 		url)); err != nil {
 		return fmt.Errorf("install pgnoop: %w", err)
 	}

@@ -227,6 +227,8 @@ func guessFilename(name, ver string) string {
 		return fmt.Sprintf("postgres_exporter-%s.linux-amd64.tar.gz", ver)
 	case "mysqld_exporter":
 		return fmt.Sprintf("mysqld_exporter-%s.linux-amd64.tar.gz", ver)
+	case "pgnoop":
+		return "pg-noop-x86_64-unknown-linux-musl.tar.xz"
 	}
 	return ""
 }
