@@ -218,6 +218,9 @@ func rankRuns(ctx context.Context, metrics RunMetricsGetter, runs []*models.Test
 	higherIsBetter := true
 
 	for _, run := range runs {
+		if run.GetEntity().GetTimings().GetDeletedAt() != nil {
+			continue
+		}
 		if !matchFacets(run, f) {
 			continue
 		}

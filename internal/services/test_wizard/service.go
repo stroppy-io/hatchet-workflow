@@ -80,13 +80,13 @@ type WizardEngine interface {
 	Bake(ctx context.Context, draft *models.TestWizardDraftRecord) (*domain.TestRun, error)
 }
 
-// TestRunStarter persists and launches a baked run via the TestRun API
-// (TestWorkflow). It participates in the ambient ctx transaction so the
-// persisted TestRunRecord commits atomically with the draft delete. trigger is
-// MANUAL for a wizard-started run; inTenantRating/inGlobalRating carry the
-// resolved rating membership.
+// TestRunStarter persists a baked run via the TestRun API path and returns a
+// post-commit TestWorkflow starter. It participates in the ambient ctx
+// transaction only for the TestRunRecord write, so the record commits atomically
+// with the draft delete. trigger is MANUAL for a wizard-started run;
+// inTenantRating/inGlobalRating carry the resolved rating membership.
 type TestRunStarter interface {
-	Start(ctx context.Context, tenantID string, run *domain.TestRun, trigger common.Trigger, inTenantRating, inGlobalRating bool) (*models.TestRunRecord, error)
+	Start(ctx context.Context, tenantID string, run *domain.TestRun, trigger common.Trigger, inTenantRating, inGlobalRating bool) (*models.TestRunRecord, func(context.Context) error, error)
 }
 
 // PresetSaver persists a baked run's db+workload as a reusable test preset. It
@@ -337,16 +337,18 @@ func (s *TestWizardService) DeleteTestWizardDraft(ctx context.Context, req *api.
 
 // FinishTestWizard bakes a ready draft into a domain.TestRun. Rejected unless the
 // draft is ready. Not idempotent — every call mints a new run. Optionally, in the
-// same transaction, the baked run is started (persisted + TestWorkflow launched)
-// and/or saved as a reusable test preset. The recompute + readiness check + bake
-// + optional start/save all run in one serializable transaction so the readiness
-// gate cannot race a concurrent patch and partial side effects cannot commit.
+// same transaction, the baked run is persisted and/or saved as a reusable test
+// preset. TestWorkflow is started only after that transaction commits. The
+// recompute + readiness check + bake + optional persist/save all run in one
+// serializable transaction so the readiness gate cannot race a concurrent patch
+// and partial DB side effects cannot commit.
 func (s *TestWizardService) FinishTestWizard(ctx context.Context, req *api.FinishTestWizardRequest) (*api.FinishTestWizardResponse, error) {
 	c, err := s.caller(ctx)
 	if err != nil {
 		return nil, err
 	}
 
+	var startRun func(context.Context) error
 	resp, err := doTxRet(ctx, s, func(ctx context.Context) (*api.FinishTestWizardResponse, error) {
 		draft, err := s.loadDraft(ctx, req.GetTenantId(), req.GetDraftId())
 		if err != nil {
@@ -382,11 +384,12 @@ func (s *TestWizardService) FinishTestWizard(ctx context.Context, req *api.Finis
 
 		if req.GetStart() {
 			inTenant, inGlobal := resolveRating(req)
-			rec, err := s.d.Runs.Start(ctx, req.GetTenantId(), run, common.Trigger_TRIGGER_MANUAL, inTenant, inGlobal)
+			rec, starter, err := s.d.Runs.Start(ctx, req.GetTenantId(), run, common.Trigger_TRIGGER_MANUAL, inTenant, inGlobal)
 			if err != nil {
 				return nil, utils.MapErr(err)
 			}
 			out.Run = rec
+			startRun = starter
 		}
 
 		// The draft has served its purpose once a run is minted; drop it so it does
@@ -398,6 +401,11 @@ func (s *TestWizardService) FinishTestWizard(ctx context.Context, req *api.Finis
 	})
 	if err != nil {
 		return nil, err
+	}
+	if startRun != nil {
+		if err := startRun(ctx); err != nil {
+			return nil, status.Error(codes.Internal, err.Error())
+		}
 	}
 	return resp, nil
 }

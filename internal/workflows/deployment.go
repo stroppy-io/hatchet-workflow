@@ -57,12 +57,17 @@ func (w *calculateQuotasWorkflow) Execute(workflow.Context) (*workflowpb.Calcula
 		return nil, err
 	}
 
-	quotas := make(map[string]*deploymentpb.Quota_Request, len(plan.GetMachines()))
+	quotas := make([]*workflowpb.QuotaRequestRef, 0)
 	for _, machine := range plan.GetMachines() {
-		if len(machine.GetQuotaRequests()) == 0 {
-			continue
+		for _, req := range machine.GetQuotaRequests() {
+			if req == nil {
+				continue
+			}
+			quotas = append(quotas, &workflowpb.QuotaRequestRef{
+				NodeId:  machine.GetNodeId(),
+				Request: req,
+			})
 		}
-		quotas[machine.GetNodeId()] = machine.GetQuotaRequests()[0]
 	}
 
 	return &workflowpb.CalculateQuotasWorkflowResponse{

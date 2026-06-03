@@ -186,20 +186,129 @@ func (x *CalculateQuotasWorkflowRequest) GetPlan() *deployment.InfrastructurePla
 	return nil
 }
 
-// CalculateQuotasWorkflowResponse returns quota requests keyed by node id.
+// QuotaRequestRef keeps the topology node id together with one quota request.
+// One node usually asks for several quotas (instances, CPU, memory, disk), so
+// this must be repeated rather than map<node_id, request>.
+type QuotaRequestRef struct {
+	state         protoimpl.MessageState    `protogen:"open.v1"`
+	NodeId        string                    `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	Request       *deployment.Quota_Request `protobuf:"bytes,2,opt,name=request,proto3" json:"request,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *QuotaRequestRef) Reset() {
+	*x = QuotaRequestRef{}
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QuotaRequestRef) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QuotaRequestRef) ProtoMessage() {}
+
+func (x *QuotaRequestRef) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QuotaRequestRef.ProtoReflect.Descriptor instead.
+func (*QuotaRequestRef) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_workflow_deployment_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *QuotaRequestRef) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *QuotaRequestRef) GetRequest() *deployment.Quota_Request {
+	if x != nil {
+		return x.Request
+	}
+	return nil
+}
+
+// QuotaAllocationRef keeps the topology node id together with one granted
+// quota allocation.
+type QuotaAllocationRef struct {
+	state         protoimpl.MessageState       `protogen:"open.v1"`
+	NodeId        string                       `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	Allocation    *deployment.Quota_Allocation `protobuf:"bytes,2,opt,name=allocation,proto3" json:"allocation,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *QuotaAllocationRef) Reset() {
+	*x = QuotaAllocationRef{}
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QuotaAllocationRef) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QuotaAllocationRef) ProtoMessage() {}
+
+func (x *QuotaAllocationRef) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QuotaAllocationRef.ProtoReflect.Descriptor instead.
+func (*QuotaAllocationRef) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_workflow_deployment_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *QuotaAllocationRef) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *QuotaAllocationRef) GetAllocation() *deployment.Quota_Allocation {
+	if x != nil {
+		return x.Allocation
+	}
+	return nil
+}
+
+// CalculateQuotasWorkflowResponse returns all quota requests with node ids.
 type CalculateQuotasWorkflowResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// plan is the plan the quotas were computed for.
 	Plan *deployment.InfrastructurePlan `protobuf:"bytes,1,opt,name=plan,proto3" json:"plan,omitempty"`
-	// quota_requests are requested quotas keyed by topology node id.
-	QuotaRequests map[string]*deployment.Quota_Request `protobuf:"bytes,2,rep,name=quota_requests,json=quotaRequests,proto3" json:"quota_requests,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// quota_requests are requested quotas with topology node ids.
+	QuotaRequests []*QuotaRequestRef `protobuf:"bytes,2,rep,name=quota_requests,json=quotaRequests,proto3" json:"quota_requests,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CalculateQuotasWorkflowResponse) Reset() {
 	*x = CalculateQuotasWorkflowResponse{}
-	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[3]
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -211,7 +320,7 @@ func (x *CalculateQuotasWorkflowResponse) String() string {
 func (*CalculateQuotasWorkflowResponse) ProtoMessage() {}
 
 func (x *CalculateQuotasWorkflowResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[3]
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -224,7 +333,7 @@ func (x *CalculateQuotasWorkflowResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CalculateQuotasWorkflowResponse.ProtoReflect.Descriptor instead.
 func (*CalculateQuotasWorkflowResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_workflow_deployment_proto_rawDescGZIP(), []int{3}
+	return file_cloud_v1_workflow_deployment_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *CalculateQuotasWorkflowResponse) GetPlan() *deployment.InfrastructurePlan {
@@ -234,7 +343,7 @@ func (x *CalculateQuotasWorkflowResponse) GetPlan() *deployment.InfrastructurePl
 	return nil
 }
 
-func (x *CalculateQuotasWorkflowResponse) GetQuotaRequests() map[string]*deployment.Quota_Request {
+func (x *CalculateQuotasWorkflowResponse) GetQuotaRequests() []*QuotaRequestRef {
 	if x != nil {
 		return x.QuotaRequests
 	}
@@ -253,7 +362,7 @@ type AcquireNetworkActivityRequest struct {
 
 func (x *AcquireNetworkActivityRequest) Reset() {
 	*x = AcquireNetworkActivityRequest{}
-	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[4]
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -265,7 +374,7 @@ func (x *AcquireNetworkActivityRequest) String() string {
 func (*AcquireNetworkActivityRequest) ProtoMessage() {}
 
 func (x *AcquireNetworkActivityRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[4]
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -278,7 +387,7 @@ func (x *AcquireNetworkActivityRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AcquireNetworkActivityRequest.ProtoReflect.Descriptor instead.
 func (*AcquireNetworkActivityRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_workflow_deployment_proto_rawDescGZIP(), []int{4}
+	return file_cloud_v1_workflow_deployment_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *AcquireNetworkActivityRequest) GetPlan() *deployment.InfrastructurePlan {
@@ -299,7 +408,7 @@ type AcquireNetworkActivityResponse struct {
 
 func (x *AcquireNetworkActivityResponse) Reset() {
 	*x = AcquireNetworkActivityResponse{}
-	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[5]
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -311,7 +420,7 @@ func (x *AcquireNetworkActivityResponse) String() string {
 func (*AcquireNetworkActivityResponse) ProtoMessage() {}
 
 func (x *AcquireNetworkActivityResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[5]
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -324,7 +433,7 @@ func (x *AcquireNetworkActivityResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AcquireNetworkActivityResponse.ProtoReflect.Descriptor instead.
 func (*AcquireNetworkActivityResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_workflow_deployment_proto_rawDescGZIP(), []int{5}
+	return file_cloud_v1_workflow_deployment_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *AcquireNetworkActivityResponse) GetNet() *common.Net {
@@ -336,16 +445,19 @@ func (x *AcquireNetworkActivityResponse) GetNet() *common.Net {
 
 // AcquireQuotasActivityRequest asks the provider to acquire requested quotas.
 type AcquireQuotasActivityRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// quota_requests are requested quotas keyed by topology node id.
-	QuotaRequests map[string]*deployment.Quota_Request `protobuf:"bytes,1,rep,name=quota_requests,json=quotaRequests,proto3" json:"quota_requests,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	state    protoimpl.MessageState         `protogen:"open.v1"`
+	TenantId string                         `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	RunId    string                         `protobuf:"bytes,2,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	Plan     *deployment.InfrastructurePlan `protobuf:"bytes,3,opt,name=plan,proto3" json:"plan,omitempty"`
+	// quota_requests are requested quotas with topology node ids.
+	QuotaRequests []*QuotaRequestRef `protobuf:"bytes,4,rep,name=quota_requests,json=quotaRequests,proto3" json:"quota_requests,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *AcquireQuotasActivityRequest) Reset() {
 	*x = AcquireQuotasActivityRequest{}
-	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[6]
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -357,7 +469,7 @@ func (x *AcquireQuotasActivityRequest) String() string {
 func (*AcquireQuotasActivityRequest) ProtoMessage() {}
 
 func (x *AcquireQuotasActivityRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[6]
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -370,28 +482,49 @@ func (x *AcquireQuotasActivityRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AcquireQuotasActivityRequest.ProtoReflect.Descriptor instead.
 func (*AcquireQuotasActivityRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_workflow_deployment_proto_rawDescGZIP(), []int{6}
+	return file_cloud_v1_workflow_deployment_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *AcquireQuotasActivityRequest) GetQuotaRequests() map[string]*deployment.Quota_Request {
+func (x *AcquireQuotasActivityRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *AcquireQuotasActivityRequest) GetRunId() string {
+	if x != nil {
+		return x.RunId
+	}
+	return ""
+}
+
+func (x *AcquireQuotasActivityRequest) GetPlan() *deployment.InfrastructurePlan {
+	if x != nil {
+		return x.Plan
+	}
+	return nil
+}
+
+func (x *AcquireQuotasActivityRequest) GetQuotaRequests() []*QuotaRequestRef {
 	if x != nil {
 		return x.QuotaRequests
 	}
 	return nil
 }
 
-// AcquireQuotasActivityResponse returns granted allocations keyed by node id.
+// AcquireQuotasActivityResponse returns granted allocations with node ids.
 type AcquireQuotasActivityResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// quota_allocations are granted allocations keyed by topology node id.
-	QuotaAllocations map[string]*deployment.Quota_Allocation `protobuf:"bytes,1,rep,name=quota_allocations,json=quotaAllocations,proto3" json:"quota_allocations,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// quota_allocations are granted allocations with topology node ids.
+	QuotaAllocations []*QuotaAllocationRef `protobuf:"bytes,1,rep,name=quota_allocations,json=quotaAllocations,proto3" json:"quota_allocations,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
 
 func (x *AcquireQuotasActivityResponse) Reset() {
 	*x = AcquireQuotasActivityResponse{}
-	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[7]
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -403,7 +536,7 @@ func (x *AcquireQuotasActivityResponse) String() string {
 func (*AcquireQuotasActivityResponse) ProtoMessage() {}
 
 func (x *AcquireQuotasActivityResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[7]
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -416,14 +549,209 @@ func (x *AcquireQuotasActivityResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AcquireQuotasActivityResponse.ProtoReflect.Descriptor instead.
 func (*AcquireQuotasActivityResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_workflow_deployment_proto_rawDescGZIP(), []int{7}
+	return file_cloud_v1_workflow_deployment_proto_rawDescGZIP(), []int{9}
 }
 
-func (x *AcquireQuotasActivityResponse) GetQuotaAllocations() map[string]*deployment.Quota_Allocation {
+func (x *AcquireQuotasActivityResponse) GetQuotaAllocations() []*QuotaAllocationRef {
 	if x != nil {
 		return x.QuotaAllocations
 	}
 	return nil
+}
+
+// CommitQuotasActivityRequest marks a run's reserved quotas as provider-backed
+// allocations after infrastructure was successfully provisioned.
+type CommitQuotasActivityRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	RunId         string                 `protobuf:"bytes,2,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CommitQuotasActivityRequest) Reset() {
+	*x = CommitQuotasActivityRequest{}
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CommitQuotasActivityRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CommitQuotasActivityRequest) ProtoMessage() {}
+
+func (x *CommitQuotasActivityRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CommitQuotasActivityRequest.ProtoReflect.Descriptor instead.
+func (*CommitQuotasActivityRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_workflow_deployment_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *CommitQuotasActivityRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *CommitQuotasActivityRequest) GetRunId() string {
+	if x != nil {
+		return x.RunId
+	}
+	return ""
+}
+
+type CommitQuotasActivityResponse struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	QuotaAllocations []*QuotaAllocationRef  `protobuf:"bytes,1,rep,name=quota_allocations,json=quotaAllocations,proto3" json:"quota_allocations,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *CommitQuotasActivityResponse) Reset() {
+	*x = CommitQuotasActivityResponse{}
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CommitQuotasActivityResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CommitQuotasActivityResponse) ProtoMessage() {}
+
+func (x *CommitQuotasActivityResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CommitQuotasActivityResponse.ProtoReflect.Descriptor instead.
+func (*CommitQuotasActivityResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_workflow_deployment_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *CommitQuotasActivityResponse) GetQuotaAllocations() []*QuotaAllocationRef {
+	if x != nil {
+		return x.QuotaAllocations
+	}
+	return nil
+}
+
+// ReleaseQuotasActivityRequest releases pre-deploy reservations for a run.
+type ReleaseQuotasActivityRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	RunId         string                 `protobuf:"bytes,2,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReleaseQuotasActivityRequest) Reset() {
+	*x = ReleaseQuotasActivityRequest{}
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReleaseQuotasActivityRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReleaseQuotasActivityRequest) ProtoMessage() {}
+
+func (x *ReleaseQuotasActivityRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReleaseQuotasActivityRequest.ProtoReflect.Descriptor instead.
+func (*ReleaseQuotasActivityRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_workflow_deployment_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *ReleaseQuotasActivityRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *ReleaseQuotasActivityRequest) GetRunId() string {
+	if x != nil {
+		return x.RunId
+	}
+	return ""
+}
+
+type ReleaseQuotasActivityResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Released      uint32                 `protobuf:"varint,1,opt,name=released,proto3" json:"released,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReleaseQuotasActivityResponse) Reset() {
+	*x = ReleaseQuotasActivityResponse{}
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReleaseQuotasActivityResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReleaseQuotasActivityResponse) ProtoMessage() {}
+
+func (x *ReleaseQuotasActivityResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReleaseQuotasActivityResponse.ProtoReflect.Descriptor instead.
+func (*ReleaseQuotasActivityResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_workflow_deployment_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *ReleaseQuotasActivityResponse) GetReleased() uint32 {
+	if x != nil {
+		return x.Released
+	}
+	return 0
 }
 
 // AgentBootstrap is the provider-independent startup contract for every agent.
@@ -448,7 +776,7 @@ type AgentBootstrap struct {
 
 func (x *AgentBootstrap) Reset() {
 	*x = AgentBootstrap{}
-	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[8]
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -460,7 +788,7 @@ func (x *AgentBootstrap) String() string {
 func (*AgentBootstrap) ProtoMessage() {}
 
 func (x *AgentBootstrap) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[8]
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -473,7 +801,7 @@ func (x *AgentBootstrap) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AgentBootstrap.ProtoReflect.Descriptor instead.
 func (*AgentBootstrap) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_workflow_deployment_proto_rawDescGZIP(), []int{8}
+	return file_cloud_v1_workflow_deployment_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *AgentBootstrap) GetServerAddr() string {
@@ -521,7 +849,7 @@ type RenderDockerInputWorkflowRequest struct {
 
 func (x *RenderDockerInputWorkflowRequest) Reset() {
 	*x = RenderDockerInputWorkflowRequest{}
-	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[9]
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -533,7 +861,7 @@ func (x *RenderDockerInputWorkflowRequest) String() string {
 func (*RenderDockerInputWorkflowRequest) ProtoMessage() {}
 
 func (x *RenderDockerInputWorkflowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[9]
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -546,7 +874,7 @@ func (x *RenderDockerInputWorkflowRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RenderDockerInputWorkflowRequest.ProtoReflect.Descriptor instead.
 func (*RenderDockerInputWorkflowRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_workflow_deployment_proto_rawDescGZIP(), []int{9}
+	return file_cloud_v1_workflow_deployment_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *RenderDockerInputWorkflowRequest) GetRunId() string {
@@ -588,7 +916,7 @@ type RenderTerraformVariablesWorkflowRequest struct {
 
 func (x *RenderTerraformVariablesWorkflowRequest) Reset() {
 	*x = RenderTerraformVariablesWorkflowRequest{}
-	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[10]
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -600,7 +928,7 @@ func (x *RenderTerraformVariablesWorkflowRequest) String() string {
 func (*RenderTerraformVariablesWorkflowRequest) ProtoMessage() {}
 
 func (x *RenderTerraformVariablesWorkflowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[10]
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -613,7 +941,7 @@ func (x *RenderTerraformVariablesWorkflowRequest) ProtoReflect() protoreflect.Me
 
 // Deprecated: Use RenderTerraformVariablesWorkflowRequest.ProtoReflect.Descriptor instead.
 func (*RenderTerraformVariablesWorkflowRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_workflow_deployment_proto_rawDescGZIP(), []int{10}
+	return file_cloud_v1_workflow_deployment_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *RenderTerraformVariablesWorkflowRequest) GetRunId() string {
@@ -670,7 +998,7 @@ type RenderDeploymentPlanWorkflowRequest struct {
 
 func (x *RenderDeploymentPlanWorkflowRequest) Reset() {
 	*x = RenderDeploymentPlanWorkflowRequest{}
-	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[11]
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -682,7 +1010,7 @@ func (x *RenderDeploymentPlanWorkflowRequest) String() string {
 func (*RenderDeploymentPlanWorkflowRequest) ProtoMessage() {}
 
 func (x *RenderDeploymentPlanWorkflowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[11]
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -695,7 +1023,7 @@ func (x *RenderDeploymentPlanWorkflowRequest) ProtoReflect() protoreflect.Messag
 
 // Deprecated: Use RenderDeploymentPlanWorkflowRequest.ProtoReflect.Descriptor instead.
 func (*RenderDeploymentPlanWorkflowRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_workflow_deployment_proto_rawDescGZIP(), []int{11}
+	return file_cloud_v1_workflow_deployment_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *RenderDeploymentPlanWorkflowRequest) GetTopologySpec() *topology.TopologySpec {
@@ -751,7 +1079,7 @@ type RenderDeploymentPlanWorkflowResponse struct {
 
 func (x *RenderDeploymentPlanWorkflowResponse) Reset() {
 	*x = RenderDeploymentPlanWorkflowResponse{}
-	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[12]
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -763,7 +1091,7 @@ func (x *RenderDeploymentPlanWorkflowResponse) String() string {
 func (*RenderDeploymentPlanWorkflowResponse) ProtoMessage() {}
 
 func (x *RenderDeploymentPlanWorkflowResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[12]
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -776,7 +1104,7 @@ func (x *RenderDeploymentPlanWorkflowResponse) ProtoReflect() protoreflect.Messa
 
 // Deprecated: Use RenderDeploymentPlanWorkflowResponse.ProtoReflect.Descriptor instead.
 func (*RenderDeploymentPlanWorkflowResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_workflow_deployment_proto_rawDescGZIP(), []int{12}
+	return file_cloud_v1_workflow_deployment_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *RenderDeploymentPlanWorkflowResponse) GetDeploymentPlan() *deployment.DeploymentPlan {
@@ -799,7 +1127,7 @@ type ExecuteDeploymentPlanWorkflowRequest struct {
 
 func (x *ExecuteDeploymentPlanWorkflowRequest) Reset() {
 	*x = ExecuteDeploymentPlanWorkflowRequest{}
-	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[13]
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -811,7 +1139,7 @@ func (x *ExecuteDeploymentPlanWorkflowRequest) String() string {
 func (*ExecuteDeploymentPlanWorkflowRequest) ProtoMessage() {}
 
 func (x *ExecuteDeploymentPlanWorkflowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[13]
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -824,7 +1152,7 @@ func (x *ExecuteDeploymentPlanWorkflowRequest) ProtoReflect() protoreflect.Messa
 
 // Deprecated: Use ExecuteDeploymentPlanWorkflowRequest.ProtoReflect.Descriptor instead.
 func (*ExecuteDeploymentPlanWorkflowRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_workflow_deployment_proto_rawDescGZIP(), []int{13}
+	return file_cloud_v1_workflow_deployment_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ExecuteDeploymentPlanWorkflowRequest) GetDeploymentPlan() *deployment.DeploymentPlan {
@@ -852,7 +1180,7 @@ type ExecuteDeploymentPlanWorkflowResponse struct {
 
 func (x *ExecuteDeploymentPlanWorkflowResponse) Reset() {
 	*x = ExecuteDeploymentPlanWorkflowResponse{}
-	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[14]
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -864,7 +1192,7 @@ func (x *ExecuteDeploymentPlanWorkflowResponse) String() string {
 func (*ExecuteDeploymentPlanWorkflowResponse) ProtoMessage() {}
 
 func (x *ExecuteDeploymentPlanWorkflowResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[14]
+	mi := &file_cloud_v1_workflow_deployment_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -877,7 +1205,7 @@ func (x *ExecuteDeploymentPlanWorkflowResponse) ProtoReflect() protoreflect.Mess
 
 // Deprecated: Use ExecuteDeploymentPlanWorkflowResponse.ProtoReflect.Descriptor instead.
 func (*ExecuteDeploymentPlanWorkflowResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_workflow_deployment_proto_rawDescGZIP(), []int{14}
+	return file_cloud_v1_workflow_deployment_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *ExecuteDeploymentPlanWorkflowResponse) GetDeploymentPlan() *deployment.DeploymentPlan {
@@ -900,27 +1228,44 @@ const file_cloud_v1_workflow_deployment_proto_rawDesc = "" +
 	"%ProcessInfrastructureWorkflowResponse\x12H\n" +
 	"\x05state\x18\x01 \x01(\v2(.cloud.v1.deployment.InfrastructureStateB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x05state\"g\n" +
 	"\x1eCalculateQuotasWorkflowRequest\x12E\n" +
-	"\x04plan\x18\x01 \x01(\v2'.cloud.v1.deployment.InfrastructurePlanB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04plan\"\xbc\x02\n" +
+	"\x04plan\x18\x01 \x01(\v2'.cloud.v1.deployment.InfrastructurePlanB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04plan\"~\n" +
+	"\x0fQuotaRequestRef\x12#\n" +
+	"\anode_id\x18\x01 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x06nodeId\x12F\n" +
+	"\arequest\x18\x02 \x01(\v2\".cloud.v1.deployment.Quota.RequestB\b\xfaB\x05\x8a\x01\x02\x10\x01R\arequest\"\x8a\x01\n" +
+	"\x12QuotaAllocationRef\x12#\n" +
+	"\anode_id\x18\x01 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x06nodeId\x12O\n" +
+	"\n" +
+	"allocation\x18\x02 \x01(\v2%.cloud.v1.deployment.Quota.AllocationB\b\xfaB\x05\x8a\x01\x02\x10\x01R\n" +
+	"allocation\"\xbe\x01\n" +
 	"\x1fCalculateQuotasWorkflowResponse\x12E\n" +
-	"\x04plan\x18\x01 \x01(\v2'.cloud.v1.deployment.InfrastructurePlanB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04plan\x12l\n" +
-	"\x0equota_requests\x18\x02 \x03(\v2E.cloud.v1.workflow.CalculateQuotasWorkflowResponse.QuotaRequestsEntryR\rquotaRequests\x1ad\n" +
-	"\x12QuotaRequestsEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x128\n" +
-	"\x05value\x18\x02 \x01(\v2\".cloud.v1.deployment.Quota.RequestR\x05value:\x028\x01\"f\n" +
+	"\x04plan\x18\x01 \x01(\v2'.cloud.v1.deployment.InfrastructurePlanB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04plan\x12T\n" +
+	"\x0equota_requests\x18\x02 \x03(\v2\".cloud.v1.workflow.QuotaRequestRefB\t\xfaB\x06\x92\x01\x03\x10\x80\bR\rquotaRequests\"f\n" +
 	"\x1dAcquireNetworkActivityRequest\x12E\n" +
 	"\x04plan\x18\x01 \x01(\v2'.cloud.v1.deployment.InfrastructurePlanB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04plan\"H\n" +
 	"\x1eAcquireNetworkActivityResponse\x12&\n" +
-	"\x03net\x18\x01 \x01(\v2\x14.cloud.v1.common.NetR\x03net\"\xef\x01\n" +
-	"\x1cAcquireQuotasActivityRequest\x12i\n" +
-	"\x0equota_requests\x18\x01 \x03(\v2B.cloud.v1.workflow.AcquireQuotasActivityRequest.QuotaRequestsEntryR\rquotaRequests\x1ad\n" +
-	"\x12QuotaRequestsEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x128\n" +
-	"\x05value\x18\x02 \x01(\v2\".cloud.v1.deployment.Quota.RequestR\x05value:\x028\x01\"\x80\x02\n" +
-	"\x1dAcquireQuotasActivityResponse\x12s\n" +
-	"\x11quota_allocations\x18\x01 \x03(\v2F.cloud.v1.workflow.AcquireQuotasActivityResponse.QuotaAllocationsEntryR\x10quotaAllocations\x1aj\n" +
-	"\x15QuotaAllocationsEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12;\n" +
-	"\x05value\x18\x02 \x01(\v2%.cloud.v1.deployment.Quota.AllocationR\x05value:\x028\x01\"\xd6\x02\n" +
+	"\x03net\x18\x01 \x01(\v2\x14.cloud.v1.common.NetR\x03net\"\x86\x02\n" +
+	"\x1cAcquireQuotasActivityRequest\x12&\n" +
+	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12!\n" +
+	"\x06run_id\x18\x02 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x05runId\x12E\n" +
+	"\x04plan\x18\x03 \x01(\v2'.cloud.v1.deployment.InfrastructurePlanB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04plan\x12T\n" +
+	"\x0equota_requests\x18\x04 \x03(\v2\".cloud.v1.workflow.QuotaRequestRefB\t\xfaB\x06\x92\x01\x03\x10\x80\bR\rquotaRequests\"~\n" +
+	"\x1dAcquireQuotasActivityResponse\x12]\n" +
+	"\x11quota_allocations\x18\x01 \x03(\v2%.cloud.v1.workflow.QuotaAllocationRefB\t\xfaB\x06\x92\x01\x03\x10\x80\bR\x10quotaAllocations\"h\n" +
+	"\x1bCommitQuotasActivityRequest\x12&\n" +
+	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12!\n" +
+	"\x06run_id\x18\x02 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x05runId\"}\n" +
+	"\x1cCommitQuotasActivityResponse\x12]\n" +
+	"\x11quota_allocations\x18\x01 \x03(\v2%.cloud.v1.workflow.QuotaAllocationRefB\t\xfaB\x06\x92\x01\x03\x10\x80\bR\x10quotaAllocations\"i\n" +
+	"\x1cReleaseQuotasActivityRequest\x12&\n" +
+	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12!\n" +
+	"\x06run_id\x18\x02 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x05runId\";\n" +
+	"\x1dReleaseQuotasActivityResponse\x12\x1a\n" +
+	"\breleased\x18\x01 \x01(\rR\breleased\"\xd6\x02\n" +
 	"\x0eAgentBootstrap\x12)\n" +
 	"\vserver_addr\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x10R\n" +
 	"serverAddr\x12'\n" +
@@ -955,14 +1300,18 @@ const file_cloud_v1_workflow_deployment_proto_rawDesc = "" +
 	"\x0fdeployment_plan\x18\x01 \x01(\v2#.cloud.v1.deployment.DeploymentPlanB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x0edeploymentPlan\x12e\n" +
 	"\x14infrastructure_state\x18\x02 \x01(\v2(.cloud.v1.deployment.InfrastructureStateB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x13infrastructureState\"\x7f\n" +
 	"%ExecuteDeploymentPlanWorkflowResponse\x12V\n" +
-	"\x0fdeployment_plan\x18\x01 \x01(\v2#.cloud.v1.deployment.DeploymentPlanB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x0edeploymentPlan2\xef\x10\n" +
+	"\x0fdeployment_plan\x18\x01 \x01(\v2#.cloud.v1.deployment.DeploymentPlanB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x0edeploymentPlan2\x9c\x13\n" +
 	"\x11DeploymentService\x12\xbb\x01\n" +
 	"\x1dProcessInfrastructureWorkflow\x127.cloud.v1.workflow.ProcessInfrastructureWorkflowRequest\x1a8.cloud.v1.workflow.ProcessInfrastructureWorkflowResponse\"'\x8a\xc4\x03#J\x02 \x01r\x1dProcessInfrastructureWorkflow\x12\xa8\x01\n" +
 	"\x17CalculateQuotasWorkflow\x121.cloud.v1.workflow.CalculateQuotasWorkflowRequest\x1a2.cloud.v1.workflow.CalculateQuotasWorkflowResponse\"&\x8a\xc4\x03\"J\x02 \x03R\x03\b\xac\x02r\x17CalculateQuotasWorkflow\x12\x99\x01\n" +
 	"\x16AcquireNetworkActivity\x120.cloud.v1.workflow.AcquireNetworkActivityRequest\x1a1.cloud.v1.workflow.AcquireNetworkActivityResponse\"\x1a\x92\xc4\x03\x16\"\x03\b\xac\x022\x0f\n" +
 	"\x02\b\x05\x11\x00\x00\x00\x00\x00\x00\x00@ \x03\x12\x96\x01\n" +
 	"\x15AcquireQuotasActivity\x12/.cloud.v1.workflow.AcquireQuotasActivityRequest\x1a0.cloud.v1.workflow.AcquireQuotasActivityResponse\"\x1a\x92\xc4\x03\x16\"\x03\b\xac\x022\x0f\n" +
-	"\x02\b\x05\x11\x00\x00\x00\x00\x00\x00\x00@ \x03\x12\x9c\x01\n" +
+	"\x02\b\x05\x11\x00\x00\x00\x00\x00\x00\x00@ \x03\x12\x92\x01\n" +
+	"\x14CommitQuotasActivity\x12..cloud.v1.workflow.CommitQuotasActivityRequest\x1a/.cloud.v1.workflow.CommitQuotasActivityResponse\"\x19\x92\xc4\x03\x15\"\x02\b<2\x0f\n" +
+	"\x02\b\x02\x11\x00\x00\x00\x00\x00\x00\x00@ \x05\x12\x95\x01\n" +
+	"\x15ReleaseQuotasActivity\x12/.cloud.v1.workflow.ReleaseQuotasActivityRequest\x1a0.cloud.v1.workflow.ReleaseQuotasActivityResponse\"\x19\x92\xc4\x03\x15\"\x02\b<2\x0f\n" +
+	"\x02\b\x02\x11\x00\x00\x00\x00\x00\x00\x00@ \x05\x12\x9c\x01\n" +
 	"\x19RenderDockerInputWorkflow\x123.cloud.v1.workflow.RenderDockerInputWorkflowRequest\x1a!.cloud.v1.deployment.Docker.Input\"'\x8a\xc4\x03#J\x02 \x03R\x02\b<r\x19RenderDockerInputWorkflow\x12w\n" +
 	"\x12DockerPullActivity\x12!.cloud.v1.deployment.Docker.Input\x1a\".cloud.v1.deployment.Docker.Output\"\x1a\x92\xc4\x03\x16\"\x03\b\xd8\x042\x0f\n" +
 	"\x02\b\x05\x11\x00\x00\x00\x00\x00\x00\x00@ \x03\x12p\n" +
@@ -996,106 +1345,114 @@ func file_cloud_v1_workflow_deployment_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_workflow_deployment_proto_rawDescData
 }
 
-var file_cloud_v1_workflow_deployment_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_cloud_v1_workflow_deployment_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_cloud_v1_workflow_deployment_proto_goTypes = []any{
 	(*ProcessInfrastructureWorkflowRequest)(nil),    // 0: cloud.v1.workflow.ProcessInfrastructureWorkflowRequest
 	(*ProcessInfrastructureWorkflowResponse)(nil),   // 1: cloud.v1.workflow.ProcessInfrastructureWorkflowResponse
 	(*CalculateQuotasWorkflowRequest)(nil),          // 2: cloud.v1.workflow.CalculateQuotasWorkflowRequest
-	(*CalculateQuotasWorkflowResponse)(nil),         // 3: cloud.v1.workflow.CalculateQuotasWorkflowResponse
-	(*AcquireNetworkActivityRequest)(nil),           // 4: cloud.v1.workflow.AcquireNetworkActivityRequest
-	(*AcquireNetworkActivityResponse)(nil),          // 5: cloud.v1.workflow.AcquireNetworkActivityResponse
-	(*AcquireQuotasActivityRequest)(nil),            // 6: cloud.v1.workflow.AcquireQuotasActivityRequest
-	(*AcquireQuotasActivityResponse)(nil),           // 7: cloud.v1.workflow.AcquireQuotasActivityResponse
-	(*AgentBootstrap)(nil),                          // 8: cloud.v1.workflow.AgentBootstrap
-	(*RenderDockerInputWorkflowRequest)(nil),        // 9: cloud.v1.workflow.RenderDockerInputWorkflowRequest
-	(*RenderTerraformVariablesWorkflowRequest)(nil), // 10: cloud.v1.workflow.RenderTerraformVariablesWorkflowRequest
-	(*RenderDeploymentPlanWorkflowRequest)(nil),     // 11: cloud.v1.workflow.RenderDeploymentPlanWorkflowRequest
-	(*RenderDeploymentPlanWorkflowResponse)(nil),    // 12: cloud.v1.workflow.RenderDeploymentPlanWorkflowResponse
-	(*ExecuteDeploymentPlanWorkflowRequest)(nil),    // 13: cloud.v1.workflow.ExecuteDeploymentPlanWorkflowRequest
-	(*ExecuteDeploymentPlanWorkflowResponse)(nil),   // 14: cloud.v1.workflow.ExecuteDeploymentPlanWorkflowResponse
-	nil,                                    // 15: cloud.v1.workflow.CalculateQuotasWorkflowResponse.QuotaRequestsEntry
-	nil,                                    // 16: cloud.v1.workflow.AcquireQuotasActivityRequest.QuotaRequestsEntry
-	nil,                                    // 17: cloud.v1.workflow.AcquireQuotasActivityResponse.QuotaAllocationsEntry
-	nil,                                    // 18: cloud.v1.workflow.AgentBootstrap.ExtraEnvEntry
-	(*deployment.InfrastructurePlan)(nil),  // 19: cloud.v1.deployment.InfrastructurePlan
-	(*deployment.InfrastructureState)(nil), // 20: cloud.v1.deployment.InfrastructureState
-	(*common.Net)(nil),                     // 21: cloud.v1.common.Net
-	(deployment.Terraform_Action)(0),       // 22: cloud.v1.deployment.Terraform.Action
-	(*topology.TopologySpec)(nil),          // 23: cloud.v1.topology.TopologySpec
-	(*deployment.RenderOverrideSet)(nil),   // 24: cloud.v1.deployment.RenderOverrideSet
-	(*domain.Database)(nil),                // 25: cloud.v1.domain.Database
-	(*domain.Workload)(nil),                // 26: cloud.v1.domain.Workload
-	(*deployment.DeploymentPlan)(nil),      // 27: cloud.v1.deployment.DeploymentPlan
-	(*deployment.Quota_Request)(nil),       // 28: cloud.v1.deployment.Quota.Request
-	(*deployment.Quota_Allocation)(nil),    // 29: cloud.v1.deployment.Quota.Allocation
-	(*deployment.Docker_Input)(nil),        // 30: cloud.v1.deployment.Docker.Input
-	(*deployment.Terraform_Input)(nil),     // 31: cloud.v1.deployment.Terraform.Input
-	(*deployment.Docker_Output)(nil),       // 32: cloud.v1.deployment.Docker.Output
-	(*deployment.Terraform_Output)(nil),    // 33: cloud.v1.deployment.Terraform.Output
+	(*QuotaRequestRef)(nil),                         // 3: cloud.v1.workflow.QuotaRequestRef
+	(*QuotaAllocationRef)(nil),                      // 4: cloud.v1.workflow.QuotaAllocationRef
+	(*CalculateQuotasWorkflowResponse)(nil),         // 5: cloud.v1.workflow.CalculateQuotasWorkflowResponse
+	(*AcquireNetworkActivityRequest)(nil),           // 6: cloud.v1.workflow.AcquireNetworkActivityRequest
+	(*AcquireNetworkActivityResponse)(nil),          // 7: cloud.v1.workflow.AcquireNetworkActivityResponse
+	(*AcquireQuotasActivityRequest)(nil),            // 8: cloud.v1.workflow.AcquireQuotasActivityRequest
+	(*AcquireQuotasActivityResponse)(nil),           // 9: cloud.v1.workflow.AcquireQuotasActivityResponse
+	(*CommitQuotasActivityRequest)(nil),             // 10: cloud.v1.workflow.CommitQuotasActivityRequest
+	(*CommitQuotasActivityResponse)(nil),            // 11: cloud.v1.workflow.CommitQuotasActivityResponse
+	(*ReleaseQuotasActivityRequest)(nil),            // 12: cloud.v1.workflow.ReleaseQuotasActivityRequest
+	(*ReleaseQuotasActivityResponse)(nil),           // 13: cloud.v1.workflow.ReleaseQuotasActivityResponse
+	(*AgentBootstrap)(nil),                          // 14: cloud.v1.workflow.AgentBootstrap
+	(*RenderDockerInputWorkflowRequest)(nil),        // 15: cloud.v1.workflow.RenderDockerInputWorkflowRequest
+	(*RenderTerraformVariablesWorkflowRequest)(nil), // 16: cloud.v1.workflow.RenderTerraformVariablesWorkflowRequest
+	(*RenderDeploymentPlanWorkflowRequest)(nil),     // 17: cloud.v1.workflow.RenderDeploymentPlanWorkflowRequest
+	(*RenderDeploymentPlanWorkflowResponse)(nil),    // 18: cloud.v1.workflow.RenderDeploymentPlanWorkflowResponse
+	(*ExecuteDeploymentPlanWorkflowRequest)(nil),    // 19: cloud.v1.workflow.ExecuteDeploymentPlanWorkflowRequest
+	(*ExecuteDeploymentPlanWorkflowResponse)(nil),   // 20: cloud.v1.workflow.ExecuteDeploymentPlanWorkflowResponse
+	nil,                                    // 21: cloud.v1.workflow.AgentBootstrap.ExtraEnvEntry
+	(*deployment.InfrastructurePlan)(nil),  // 22: cloud.v1.deployment.InfrastructurePlan
+	(*deployment.InfrastructureState)(nil), // 23: cloud.v1.deployment.InfrastructureState
+	(*deployment.Quota_Request)(nil),       // 24: cloud.v1.deployment.Quota.Request
+	(*deployment.Quota_Allocation)(nil),    // 25: cloud.v1.deployment.Quota.Allocation
+	(*common.Net)(nil),                     // 26: cloud.v1.common.Net
+	(deployment.Terraform_Action)(0),       // 27: cloud.v1.deployment.Terraform.Action
+	(*topology.TopologySpec)(nil),          // 28: cloud.v1.topology.TopologySpec
+	(*deployment.RenderOverrideSet)(nil),   // 29: cloud.v1.deployment.RenderOverrideSet
+	(*domain.Database)(nil),                // 30: cloud.v1.domain.Database
+	(*domain.Workload)(nil),                // 31: cloud.v1.domain.Workload
+	(*deployment.DeploymentPlan)(nil),      // 32: cloud.v1.deployment.DeploymentPlan
+	(*deployment.Docker_Input)(nil),        // 33: cloud.v1.deployment.Docker.Input
+	(*deployment.Terraform_Input)(nil),     // 34: cloud.v1.deployment.Terraform.Input
+	(*deployment.Docker_Output)(nil),       // 35: cloud.v1.deployment.Docker.Output
+	(*deployment.Terraform_Output)(nil),    // 36: cloud.v1.deployment.Terraform.Output
 }
 var file_cloud_v1_workflow_deployment_proto_depIdxs = []int32{
-	19, // 0: cloud.v1.workflow.ProcessInfrastructureWorkflowRequest.plan:type_name -> cloud.v1.deployment.InfrastructurePlan
-	8,  // 1: cloud.v1.workflow.ProcessInfrastructureWorkflowRequest.agent_bootstrap:type_name -> cloud.v1.workflow.AgentBootstrap
-	20, // 2: cloud.v1.workflow.ProcessInfrastructureWorkflowResponse.state:type_name -> cloud.v1.deployment.InfrastructureState
-	19, // 3: cloud.v1.workflow.CalculateQuotasWorkflowRequest.plan:type_name -> cloud.v1.deployment.InfrastructurePlan
-	19, // 4: cloud.v1.workflow.CalculateQuotasWorkflowResponse.plan:type_name -> cloud.v1.deployment.InfrastructurePlan
-	15, // 5: cloud.v1.workflow.CalculateQuotasWorkflowResponse.quota_requests:type_name -> cloud.v1.workflow.CalculateQuotasWorkflowResponse.QuotaRequestsEntry
-	19, // 6: cloud.v1.workflow.AcquireNetworkActivityRequest.plan:type_name -> cloud.v1.deployment.InfrastructurePlan
-	21, // 7: cloud.v1.workflow.AcquireNetworkActivityResponse.net:type_name -> cloud.v1.common.Net
-	16, // 8: cloud.v1.workflow.AcquireQuotasActivityRequest.quota_requests:type_name -> cloud.v1.workflow.AcquireQuotasActivityRequest.QuotaRequestsEntry
-	17, // 9: cloud.v1.workflow.AcquireQuotasActivityResponse.quota_allocations:type_name -> cloud.v1.workflow.AcquireQuotasActivityResponse.QuotaAllocationsEntry
-	18, // 10: cloud.v1.workflow.AgentBootstrap.extra_env:type_name -> cloud.v1.workflow.AgentBootstrap.ExtraEnvEntry
-	19, // 11: cloud.v1.workflow.RenderDockerInputWorkflowRequest.plan:type_name -> cloud.v1.deployment.InfrastructurePlan
-	8,  // 12: cloud.v1.workflow.RenderDockerInputWorkflowRequest.agent_bootstrap:type_name -> cloud.v1.workflow.AgentBootstrap
-	19, // 13: cloud.v1.workflow.RenderTerraformVariablesWorkflowRequest.plan:type_name -> cloud.v1.deployment.InfrastructurePlan
-	22, // 14: cloud.v1.workflow.RenderTerraformVariablesWorkflowRequest.action:type_name -> cloud.v1.deployment.Terraform.Action
-	8,  // 15: cloud.v1.workflow.RenderTerraformVariablesWorkflowRequest.agent_bootstrap:type_name -> cloud.v1.workflow.AgentBootstrap
-	23, // 16: cloud.v1.workflow.RenderDeploymentPlanWorkflowRequest.topology_spec:type_name -> cloud.v1.topology.TopologySpec
-	19, // 17: cloud.v1.workflow.RenderDeploymentPlanWorkflowRequest.infrastructure_plan:type_name -> cloud.v1.deployment.InfrastructurePlan
-	20, // 18: cloud.v1.workflow.RenderDeploymentPlanWorkflowRequest.infrastructure_state:type_name -> cloud.v1.deployment.InfrastructureState
-	24, // 19: cloud.v1.workflow.RenderDeploymentPlanWorkflowRequest.render_overrides:type_name -> cloud.v1.deployment.RenderOverrideSet
-	25, // 20: cloud.v1.workflow.RenderDeploymentPlanWorkflowRequest.database:type_name -> cloud.v1.domain.Database
-	26, // 21: cloud.v1.workflow.RenderDeploymentPlanWorkflowRequest.workload:type_name -> cloud.v1.domain.Workload
-	27, // 22: cloud.v1.workflow.RenderDeploymentPlanWorkflowResponse.deployment_plan:type_name -> cloud.v1.deployment.DeploymentPlan
-	27, // 23: cloud.v1.workflow.ExecuteDeploymentPlanWorkflowRequest.deployment_plan:type_name -> cloud.v1.deployment.DeploymentPlan
-	20, // 24: cloud.v1.workflow.ExecuteDeploymentPlanWorkflowRequest.infrastructure_state:type_name -> cloud.v1.deployment.InfrastructureState
-	27, // 25: cloud.v1.workflow.ExecuteDeploymentPlanWorkflowResponse.deployment_plan:type_name -> cloud.v1.deployment.DeploymentPlan
-	28, // 26: cloud.v1.workflow.CalculateQuotasWorkflowResponse.QuotaRequestsEntry.value:type_name -> cloud.v1.deployment.Quota.Request
-	28, // 27: cloud.v1.workflow.AcquireQuotasActivityRequest.QuotaRequestsEntry.value:type_name -> cloud.v1.deployment.Quota.Request
-	29, // 28: cloud.v1.workflow.AcquireQuotasActivityResponse.QuotaAllocationsEntry.value:type_name -> cloud.v1.deployment.Quota.Allocation
-	0,  // 29: cloud.v1.workflow.DeploymentService.ProcessInfrastructureWorkflow:input_type -> cloud.v1.workflow.ProcessInfrastructureWorkflowRequest
-	2,  // 30: cloud.v1.workflow.DeploymentService.CalculateQuotasWorkflow:input_type -> cloud.v1.workflow.CalculateQuotasWorkflowRequest
-	4,  // 31: cloud.v1.workflow.DeploymentService.AcquireNetworkActivity:input_type -> cloud.v1.workflow.AcquireNetworkActivityRequest
-	6,  // 32: cloud.v1.workflow.DeploymentService.AcquireQuotasActivity:input_type -> cloud.v1.workflow.AcquireQuotasActivityRequest
-	9,  // 33: cloud.v1.workflow.DeploymentService.RenderDockerInputWorkflow:input_type -> cloud.v1.workflow.RenderDockerInputWorkflowRequest
-	30, // 34: cloud.v1.workflow.DeploymentService.DockerPullActivity:input_type -> cloud.v1.deployment.Docker.Input
-	30, // 35: cloud.v1.workflow.DeploymentService.DockerUpActivity:input_type -> cloud.v1.deployment.Docker.Input
-	30, // 36: cloud.v1.workflow.DeploymentService.DockerDownActivity:input_type -> cloud.v1.deployment.Docker.Input
-	10, // 37: cloud.v1.workflow.DeploymentService.RenderTerraformVariablesWorkflow:input_type -> cloud.v1.workflow.RenderTerraformVariablesWorkflowRequest
-	31, // 38: cloud.v1.workflow.DeploymentService.TerraformPlanActivity:input_type -> cloud.v1.deployment.Terraform.Input
-	31, // 39: cloud.v1.workflow.DeploymentService.TerraformApplyActivity:input_type -> cloud.v1.deployment.Terraform.Input
-	31, // 40: cloud.v1.workflow.DeploymentService.TerraformDestroyActivity:input_type -> cloud.v1.deployment.Terraform.Input
-	11, // 41: cloud.v1.workflow.DeploymentService.RenderDeploymentPlanWorkflow:input_type -> cloud.v1.workflow.RenderDeploymentPlanWorkflowRequest
-	13, // 42: cloud.v1.workflow.DeploymentService.ExecuteDeploymentPlanWorkflow:input_type -> cloud.v1.workflow.ExecuteDeploymentPlanWorkflowRequest
-	1,  // 43: cloud.v1.workflow.DeploymentService.ProcessInfrastructureWorkflow:output_type -> cloud.v1.workflow.ProcessInfrastructureWorkflowResponse
-	3,  // 44: cloud.v1.workflow.DeploymentService.CalculateQuotasWorkflow:output_type -> cloud.v1.workflow.CalculateQuotasWorkflowResponse
-	5,  // 45: cloud.v1.workflow.DeploymentService.AcquireNetworkActivity:output_type -> cloud.v1.workflow.AcquireNetworkActivityResponse
-	7,  // 46: cloud.v1.workflow.DeploymentService.AcquireQuotasActivity:output_type -> cloud.v1.workflow.AcquireQuotasActivityResponse
-	30, // 47: cloud.v1.workflow.DeploymentService.RenderDockerInputWorkflow:output_type -> cloud.v1.deployment.Docker.Input
-	32, // 48: cloud.v1.workflow.DeploymentService.DockerPullActivity:output_type -> cloud.v1.deployment.Docker.Output
-	32, // 49: cloud.v1.workflow.DeploymentService.DockerUpActivity:output_type -> cloud.v1.deployment.Docker.Output
-	32, // 50: cloud.v1.workflow.DeploymentService.DockerDownActivity:output_type -> cloud.v1.deployment.Docker.Output
-	31, // 51: cloud.v1.workflow.DeploymentService.RenderTerraformVariablesWorkflow:output_type -> cloud.v1.deployment.Terraform.Input
-	33, // 52: cloud.v1.workflow.DeploymentService.TerraformPlanActivity:output_type -> cloud.v1.deployment.Terraform.Output
-	33, // 53: cloud.v1.workflow.DeploymentService.TerraformApplyActivity:output_type -> cloud.v1.deployment.Terraform.Output
-	33, // 54: cloud.v1.workflow.DeploymentService.TerraformDestroyActivity:output_type -> cloud.v1.deployment.Terraform.Output
-	12, // 55: cloud.v1.workflow.DeploymentService.RenderDeploymentPlanWorkflow:output_type -> cloud.v1.workflow.RenderDeploymentPlanWorkflowResponse
-	14, // 56: cloud.v1.workflow.DeploymentService.ExecuteDeploymentPlanWorkflow:output_type -> cloud.v1.workflow.ExecuteDeploymentPlanWorkflowResponse
-	43, // [43:57] is the sub-list for method output_type
-	29, // [29:43] is the sub-list for method input_type
-	29, // [29:29] is the sub-list for extension type_name
-	29, // [29:29] is the sub-list for extension extendee
-	0,  // [0:29] is the sub-list for field type_name
+	22, // 0: cloud.v1.workflow.ProcessInfrastructureWorkflowRequest.plan:type_name -> cloud.v1.deployment.InfrastructurePlan
+	14, // 1: cloud.v1.workflow.ProcessInfrastructureWorkflowRequest.agent_bootstrap:type_name -> cloud.v1.workflow.AgentBootstrap
+	23, // 2: cloud.v1.workflow.ProcessInfrastructureWorkflowResponse.state:type_name -> cloud.v1.deployment.InfrastructureState
+	22, // 3: cloud.v1.workflow.CalculateQuotasWorkflowRequest.plan:type_name -> cloud.v1.deployment.InfrastructurePlan
+	24, // 4: cloud.v1.workflow.QuotaRequestRef.request:type_name -> cloud.v1.deployment.Quota.Request
+	25, // 5: cloud.v1.workflow.QuotaAllocationRef.allocation:type_name -> cloud.v1.deployment.Quota.Allocation
+	22, // 6: cloud.v1.workflow.CalculateQuotasWorkflowResponse.plan:type_name -> cloud.v1.deployment.InfrastructurePlan
+	3,  // 7: cloud.v1.workflow.CalculateQuotasWorkflowResponse.quota_requests:type_name -> cloud.v1.workflow.QuotaRequestRef
+	22, // 8: cloud.v1.workflow.AcquireNetworkActivityRequest.plan:type_name -> cloud.v1.deployment.InfrastructurePlan
+	26, // 9: cloud.v1.workflow.AcquireNetworkActivityResponse.net:type_name -> cloud.v1.common.Net
+	22, // 10: cloud.v1.workflow.AcquireQuotasActivityRequest.plan:type_name -> cloud.v1.deployment.InfrastructurePlan
+	3,  // 11: cloud.v1.workflow.AcquireQuotasActivityRequest.quota_requests:type_name -> cloud.v1.workflow.QuotaRequestRef
+	4,  // 12: cloud.v1.workflow.AcquireQuotasActivityResponse.quota_allocations:type_name -> cloud.v1.workflow.QuotaAllocationRef
+	4,  // 13: cloud.v1.workflow.CommitQuotasActivityResponse.quota_allocations:type_name -> cloud.v1.workflow.QuotaAllocationRef
+	21, // 14: cloud.v1.workflow.AgentBootstrap.extra_env:type_name -> cloud.v1.workflow.AgentBootstrap.ExtraEnvEntry
+	22, // 15: cloud.v1.workflow.RenderDockerInputWorkflowRequest.plan:type_name -> cloud.v1.deployment.InfrastructurePlan
+	14, // 16: cloud.v1.workflow.RenderDockerInputWorkflowRequest.agent_bootstrap:type_name -> cloud.v1.workflow.AgentBootstrap
+	22, // 17: cloud.v1.workflow.RenderTerraformVariablesWorkflowRequest.plan:type_name -> cloud.v1.deployment.InfrastructurePlan
+	27, // 18: cloud.v1.workflow.RenderTerraformVariablesWorkflowRequest.action:type_name -> cloud.v1.deployment.Terraform.Action
+	14, // 19: cloud.v1.workflow.RenderTerraformVariablesWorkflowRequest.agent_bootstrap:type_name -> cloud.v1.workflow.AgentBootstrap
+	28, // 20: cloud.v1.workflow.RenderDeploymentPlanWorkflowRequest.topology_spec:type_name -> cloud.v1.topology.TopologySpec
+	22, // 21: cloud.v1.workflow.RenderDeploymentPlanWorkflowRequest.infrastructure_plan:type_name -> cloud.v1.deployment.InfrastructurePlan
+	23, // 22: cloud.v1.workflow.RenderDeploymentPlanWorkflowRequest.infrastructure_state:type_name -> cloud.v1.deployment.InfrastructureState
+	29, // 23: cloud.v1.workflow.RenderDeploymentPlanWorkflowRequest.render_overrides:type_name -> cloud.v1.deployment.RenderOverrideSet
+	30, // 24: cloud.v1.workflow.RenderDeploymentPlanWorkflowRequest.database:type_name -> cloud.v1.domain.Database
+	31, // 25: cloud.v1.workflow.RenderDeploymentPlanWorkflowRequest.workload:type_name -> cloud.v1.domain.Workload
+	32, // 26: cloud.v1.workflow.RenderDeploymentPlanWorkflowResponse.deployment_plan:type_name -> cloud.v1.deployment.DeploymentPlan
+	32, // 27: cloud.v1.workflow.ExecuteDeploymentPlanWorkflowRequest.deployment_plan:type_name -> cloud.v1.deployment.DeploymentPlan
+	23, // 28: cloud.v1.workflow.ExecuteDeploymentPlanWorkflowRequest.infrastructure_state:type_name -> cloud.v1.deployment.InfrastructureState
+	32, // 29: cloud.v1.workflow.ExecuteDeploymentPlanWorkflowResponse.deployment_plan:type_name -> cloud.v1.deployment.DeploymentPlan
+	0,  // 30: cloud.v1.workflow.DeploymentService.ProcessInfrastructureWorkflow:input_type -> cloud.v1.workflow.ProcessInfrastructureWorkflowRequest
+	2,  // 31: cloud.v1.workflow.DeploymentService.CalculateQuotasWorkflow:input_type -> cloud.v1.workflow.CalculateQuotasWorkflowRequest
+	6,  // 32: cloud.v1.workflow.DeploymentService.AcquireNetworkActivity:input_type -> cloud.v1.workflow.AcquireNetworkActivityRequest
+	8,  // 33: cloud.v1.workflow.DeploymentService.AcquireQuotasActivity:input_type -> cloud.v1.workflow.AcquireQuotasActivityRequest
+	10, // 34: cloud.v1.workflow.DeploymentService.CommitQuotasActivity:input_type -> cloud.v1.workflow.CommitQuotasActivityRequest
+	12, // 35: cloud.v1.workflow.DeploymentService.ReleaseQuotasActivity:input_type -> cloud.v1.workflow.ReleaseQuotasActivityRequest
+	15, // 36: cloud.v1.workflow.DeploymentService.RenderDockerInputWorkflow:input_type -> cloud.v1.workflow.RenderDockerInputWorkflowRequest
+	33, // 37: cloud.v1.workflow.DeploymentService.DockerPullActivity:input_type -> cloud.v1.deployment.Docker.Input
+	33, // 38: cloud.v1.workflow.DeploymentService.DockerUpActivity:input_type -> cloud.v1.deployment.Docker.Input
+	33, // 39: cloud.v1.workflow.DeploymentService.DockerDownActivity:input_type -> cloud.v1.deployment.Docker.Input
+	16, // 40: cloud.v1.workflow.DeploymentService.RenderTerraformVariablesWorkflow:input_type -> cloud.v1.workflow.RenderTerraformVariablesWorkflowRequest
+	34, // 41: cloud.v1.workflow.DeploymentService.TerraformPlanActivity:input_type -> cloud.v1.deployment.Terraform.Input
+	34, // 42: cloud.v1.workflow.DeploymentService.TerraformApplyActivity:input_type -> cloud.v1.deployment.Terraform.Input
+	34, // 43: cloud.v1.workflow.DeploymentService.TerraformDestroyActivity:input_type -> cloud.v1.deployment.Terraform.Input
+	17, // 44: cloud.v1.workflow.DeploymentService.RenderDeploymentPlanWorkflow:input_type -> cloud.v1.workflow.RenderDeploymentPlanWorkflowRequest
+	19, // 45: cloud.v1.workflow.DeploymentService.ExecuteDeploymentPlanWorkflow:input_type -> cloud.v1.workflow.ExecuteDeploymentPlanWorkflowRequest
+	1,  // 46: cloud.v1.workflow.DeploymentService.ProcessInfrastructureWorkflow:output_type -> cloud.v1.workflow.ProcessInfrastructureWorkflowResponse
+	5,  // 47: cloud.v1.workflow.DeploymentService.CalculateQuotasWorkflow:output_type -> cloud.v1.workflow.CalculateQuotasWorkflowResponse
+	7,  // 48: cloud.v1.workflow.DeploymentService.AcquireNetworkActivity:output_type -> cloud.v1.workflow.AcquireNetworkActivityResponse
+	9,  // 49: cloud.v1.workflow.DeploymentService.AcquireQuotasActivity:output_type -> cloud.v1.workflow.AcquireQuotasActivityResponse
+	11, // 50: cloud.v1.workflow.DeploymentService.CommitQuotasActivity:output_type -> cloud.v1.workflow.CommitQuotasActivityResponse
+	13, // 51: cloud.v1.workflow.DeploymentService.ReleaseQuotasActivity:output_type -> cloud.v1.workflow.ReleaseQuotasActivityResponse
+	33, // 52: cloud.v1.workflow.DeploymentService.RenderDockerInputWorkflow:output_type -> cloud.v1.deployment.Docker.Input
+	35, // 53: cloud.v1.workflow.DeploymentService.DockerPullActivity:output_type -> cloud.v1.deployment.Docker.Output
+	35, // 54: cloud.v1.workflow.DeploymentService.DockerUpActivity:output_type -> cloud.v1.deployment.Docker.Output
+	35, // 55: cloud.v1.workflow.DeploymentService.DockerDownActivity:output_type -> cloud.v1.deployment.Docker.Output
+	34, // 56: cloud.v1.workflow.DeploymentService.RenderTerraformVariablesWorkflow:output_type -> cloud.v1.deployment.Terraform.Input
+	36, // 57: cloud.v1.workflow.DeploymentService.TerraformPlanActivity:output_type -> cloud.v1.deployment.Terraform.Output
+	36, // 58: cloud.v1.workflow.DeploymentService.TerraformApplyActivity:output_type -> cloud.v1.deployment.Terraform.Output
+	36, // 59: cloud.v1.workflow.DeploymentService.TerraformDestroyActivity:output_type -> cloud.v1.deployment.Terraform.Output
+	18, // 60: cloud.v1.workflow.DeploymentService.RenderDeploymentPlanWorkflow:output_type -> cloud.v1.workflow.RenderDeploymentPlanWorkflowResponse
+	20, // 61: cloud.v1.workflow.DeploymentService.ExecuteDeploymentPlanWorkflow:output_type -> cloud.v1.workflow.ExecuteDeploymentPlanWorkflowResponse
+	46, // [46:62] is the sub-list for method output_type
+	30, // [30:46] is the sub-list for method input_type
+	30, // [30:30] is the sub-list for extension type_name
+	30, // [30:30] is the sub-list for extension extendee
+	0,  // [0:30] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_workflow_deployment_proto_init() }
@@ -1109,7 +1466,7 @@ func file_cloud_v1_workflow_deployment_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_workflow_deployment_proto_rawDesc), len(file_cloud_v1_workflow_deployment_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   19,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

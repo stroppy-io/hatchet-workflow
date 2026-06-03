@@ -42,18 +42,17 @@ type SuiteCellResolver interface {
 	TestPreset(ctx context.Context, tenantID, presetID string) (*domain.Test, error)
 }
 
-// SuiteBaker is the consumer interface the engine persists/launches a baked suite
-// through. It crosses the storage + execution boundary (handled by other
-// workers), so the engine assembles the records and delegates the write/launch:
+// SuiteBaker is the consumer interface the engine persists/prepares a baked
+// suite through. It crosses the storage + execution boundary (handled by other
+// workers), so the engine assembles the records and delegates the write/start:
 //   - SaveSuite persists the reusable SuiteRecord (returns the stored record with
 //     its server-owned identity filled in).
-//   - StartSuiteRun persists and launches a SuiteRunRecord whose children are the
-//     supplied baked child runs, returning the launched record. Called only when
-//     the wizard requested start=true. Both participate in the ambient ctx
-//     transaction the service opened.
+//   - StartSuiteRun persists a SuiteRunRecord whose children are the supplied
+//     baked child runs, returning the record and a post-commit starter. Called
+//     only when the wizard requested start=true.
 type SuiteBaker interface {
 	SaveSuite(ctx context.Context, suite *models.SuiteRecord) (*models.SuiteRecord, error)
-	StartSuiteRun(ctx context.Context, suite *models.SuiteRecord, children []*BakedSuiteChild, trigger common.Trigger, maxParallel uint32) (*models.SuiteRunRecord, error)
+	StartSuiteRun(ctx context.Context, suite *models.SuiteRecord, children []*BakedSuiteChild, trigger common.Trigger, maxParallel uint32) (*models.SuiteRunRecord, func(context.Context) error, error)
 }
 
 // BakedSuiteChild is one fully-baked suite cell ready to become a child TestRun.
@@ -248,11 +247,11 @@ func (e *SuiteWizardEngine) resolveSource(ctx context.Context, tenantID string, 
 }
 
 // Bake turns a ready draft into the persisted SuiteRecord and, when start=true, a
-// launched SuiteRunRecord. Every compatible+ready ENABLED cell becomes a baked
+// prepared SuiteRunRecord. Every compatible+ready ENABLED cell becomes a baked
 // child TestRun. It rejects a draft that is not ready.
-func (e *SuiteWizardEngine) Bake(ctx context.Context, draft *models.SuiteWizardDraftRecord, req *api.FinishSuiteWizardRequest) (*models.SuiteRecord, *models.SuiteRunRecord, error) {
+func (e *SuiteWizardEngine) Bake(ctx context.Context, draft *models.SuiteWizardDraftRecord, req *api.FinishSuiteWizardRequest) (*models.SuiteRecord, *models.SuiteRunRecord, func(context.Context) error, error) {
 	if !draft.GetReady() {
-		return nil, nil, derrors.FailedPrecondition("draft_not_ready", "draft is not ready")
+		return nil, nil, nil, derrors.FailedPrecondition("draft_not_ready", "draft is not ready")
 	}
 
 	suiteCells := make([]*domain.SuiteCell, 0, len(draft.GetCells()))
@@ -285,7 +284,7 @@ func (e *SuiteWizardEngine) Bake(ctx context.Context, draft *models.SuiteWizardD
 			RenderOverrides: cell.GetSpec().GetRenderOverrides(),
 		})
 		if err != nil {
-			return nil, nil, derrors.Invalid("cells", err.Error()).Wrap(err)
+			return nil, nil, nil, derrors.Invalid("cells", err.Error()).Wrap(err)
 		}
 		children = append(children, &BakedSuiteChild{
 			CellID:         cell.GetSpec().GetId(),
@@ -335,18 +334,18 @@ func (e *SuiteWizardEngine) Bake(ctx context.Context, draft *models.SuiteWizardD
 
 	savedSuite, err := e.baker.SaveSuite(ctx, suite)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	if !req.GetStart() {
-		return savedSuite, nil, nil
+		return savedSuite, nil, nil, nil
 	}
 
-	suiteRun, err := e.baker.StartSuiteRun(ctx, savedSuite, children, common.Trigger_TRIGGER_MANUAL, draft.GetMaxParallel())
+	suiteRun, starter, err := e.baker.StartSuiteRun(ctx, savedSuite, children, common.Trigger_TRIGGER_MANUAL, draft.GetMaxParallel())
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
-	return savedSuite, suiteRun, nil
+	return savedSuite, suiteRun, starter, nil
 }
 
 // boolPtr returns a pointer to b for the optional rating defaults.

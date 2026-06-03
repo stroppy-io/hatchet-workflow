@@ -31,6 +31,10 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
  */
 message TestWorkflowRequest {
     /*
+        tenant_id scopes quota reservations and provider settings lookup.
+     */
+    string tenant_id = 3 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
         test_run is the full description of the test run to execute.
      */
     domain.TestRun test_run = 1 [(validate.rules).message.required = true];

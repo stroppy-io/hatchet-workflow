@@ -27,8 +27,8 @@ import (
 	canonical protojson in the data column. Lookup-by-secondary-key (share token,
 	favorite target) uses its own indexed column. Repo calls go through the
 	sqld-generated query set bound to db.TxDB so they pick up the ambient
-	transaction; List returns all rows for the tenant (filters/sort/paging
-	ignored, empty next token), matching the demo semantics.
+	transaction; List loads tenant-scoped rows and applies the API's filter,
+	sort and pagination contract before returning them.
 */
 
 // Suites returns the suite.SuiteRepo.
@@ -101,7 +101,7 @@ func (r *SuiteRepo) Get(ctx context.Context, tenantID, id string) (*models.Suite
 	return rec, nil
 }
 
-// List returns every suite for the query tenant (filters/sort/paging ignored).
+// List returns the matching suite page for the query tenant.
 func (r *SuiteRepo) List(ctx context.Context, query suite.SuiteListQuery) ([]*models.SuiteRecord, string, error) {
 	rows, err := r.db.q().ListSuiteRecords(ctx, query.TenantID)
 	if err != nil {
@@ -115,7 +115,7 @@ func (r *SuiteRepo) List(ctx context.Context, query suite.SuiteListQuery) ([]*mo
 		}
 		out = append(out, rec)
 	}
-	return out, "", nil
+	return filterSuiteRecords(ctx, r.db, out, query)
 }
 
 func (r *SuiteRepo) Update(ctx context.Context, rec *models.SuiteRecord) error {
@@ -171,9 +171,8 @@ func (r *SuiteRunRepo) Get(ctx context.Context, id string) (*models.SuiteRunReco
 	return rec, nil
 }
 
-// List returns every suite run for the request tenant (filters/sort/paging
-// ignored, empty next token).
-func (r *SuiteRunRepo) List(ctx context.Context, req *api.ListSuiteRunsRequest) ([]*models.SuiteRunRecord, string, error) {
+// List returns the matching suite-run page for the request tenant.
+func (r *SuiteRunRepo) List(ctx context.Context, req *api.ListSuiteRunsRequest, callerID string) ([]*models.SuiteRunRecord, string, error) {
 	rows, err := r.db.q().ListSuiteRunRecords(ctx, req.GetTenantId())
 	if err != nil {
 		return nil, "", err
@@ -186,7 +185,7 @@ func (r *SuiteRunRepo) List(ctx context.Context, req *api.ListSuiteRunsRequest) 
 		}
 		out = append(out, rec)
 	}
-	return out, "", nil
+	return filterSuiteRunRecords(ctx, r.db, out, req, callerID)
 }
 
 // Update doubles as upsert on first persist of an expanded suite run.
@@ -278,7 +277,7 @@ func (r *SuiteDraftRepo) Get(ctx context.Context, tenantID, id string) (*models.
 	return rec, nil
 }
 
-func (r *SuiteDraftRepo) List(ctx context.Context, tenantID string, _ *commonpb.EntityFilter, _ *commonpb.EntitySort, _ *commonpb.Page) ([]*models.SuiteWizardDraftRecord, string, error) {
+func (r *SuiteDraftRepo) List(ctx context.Context, tenantID string, filter *commonpb.EntityFilter, sort *commonpb.EntitySort, page *commonpb.Page) ([]*models.SuiteWizardDraftRecord, string, error) {
 	rows, err := r.db.q().ListSuiteWizardDrafts(ctx, tenantID)
 	if err != nil {
 		return nil, "", err
@@ -291,7 +290,8 @@ func (r *SuiteDraftRepo) List(ctx context.Context, tenantID string, _ *commonpb.
 		}
 		out = append(out, rec)
 	}
-	return out, "", nil
+	pageRecords, next := filterDraftRecords(out, filter, sort, page)
+	return pageRecords, next, nil
 }
 
 func (r *SuiteDraftRepo) Update(ctx context.Context, draft *models.SuiteWizardDraftRecord) error {
@@ -375,9 +375,8 @@ func (r *ShareRepo) GetByToken(ctx context.Context, token string) (*models.Share
 	return decodeShare(row.Data)
 }
 
-// List returns the tenant's shares, optionally narrowed to a single target run
-// (target id matched on the persisted blob). filter/sort/page are ignored.
-func (r *ShareRepo) List(ctx context.Context, tenantID, targetID string, _ *commonpb.EntityFilter, _ *commonpb.EntitySort, _ *commonpb.Page) ([]*models.ShareRecord, string, error) {
+// List returns the tenant's shares, optionally narrowed to a single target run.
+func (r *ShareRepo) List(ctx context.Context, tenantID, targetID string, filter *commonpb.EntityFilter, sort *commonpb.EntitySort, page *commonpb.Page) ([]*models.ShareRecord, string, error) {
 	rows, err := r.db.q().ListShareRecords(ctx, tenantID)
 	if err != nil {
 		return nil, "", err
@@ -388,12 +387,10 @@ func (r *ShareRepo) List(ctx context.Context, tenantID, targetID string, _ *comm
 		if err != nil {
 			return nil, "", err
 		}
-		if targetID != "" && rec.GetTarget().GetId() != targetID {
-			continue
-		}
 		out = append(out, rec)
 	}
-	return out, "", nil
+	pageRecords, next := filterShareRecords(out, targetID, filter, sort, page)
+	return pageRecords, next, nil
 }
 
 func (r *ShareRepo) Update(ctx context.Context, rec *models.ShareRecord) error {
@@ -499,8 +496,8 @@ func (r *FavoriteRepo) Delete(ctx context.Context, accountID string, kind common
 }
 
 // List returns the account's favorites in the tenant, optionally narrowed to a
-// single kind (FAVORITE_KIND_UNSPECIFIED = all). Paging ignored.
-func (r *FavoriteRepo) List(ctx context.Context, accountID, tenantID string, kind commonpb.FavoriteKind, _ uint32, _ string) ([]*models.FavoriteRecord, string, error) {
+// single kind (FAVORITE_KIND_UNSPECIFIED = all).
+func (r *FavoriteRepo) List(ctx context.Context, accountID, tenantID string, kind commonpb.FavoriteKind, pageSize uint32, pageToken string) ([]*models.FavoriteRecord, string, error) {
 	rows, err := r.db.q().ListFavoriteRecords(ctx, dbgen.ListFavoriteRecordsParams{
 		AccountID: accountID,
 		TenantID:  tenantID,
@@ -517,7 +514,8 @@ func (r *FavoriteRepo) List(ctx context.Context, accountID, tenantID string, kin
 		}
 		out = append(out, rec)
 	}
-	return out, "", nil
+	page, next := pageRecords(out, pageSize, pageToken)
+	return page, next, nil
 }
 
 /*
@@ -559,7 +557,7 @@ func (r *PackageRepo) Get(ctx context.Context, tenantID, id string) (*models.Pac
 	return rec, nil
 }
 
-// List returns every package for the query tenant (filters/sort/paging ignored).
+// List returns the matching package page for the query tenant.
 func (r *PackageRepo) List(ctx context.Context, q packages.PackageQuery) ([]*models.PackageRecord, string, error) {
 	rows, err := r.db.q().ListPackageRecords(ctx, q.TenantID)
 	if err != nil {
@@ -573,7 +571,8 @@ func (r *PackageRepo) List(ctx context.Context, q packages.PackageQuery) ([]*mod
 		}
 		out = append(out, rec)
 	}
-	return out, "", nil
+	page, next := filterPackageRecords(out, q)
+	return page, next, nil
 }
 
 func (r *PackageRepo) Update(ctx context.Context, pkg *models.PackageRecord) error {
@@ -633,7 +632,7 @@ func (r *DatabasePresetRepo) Create(ctx context.Context, p *models.DatabasePrese
 	return nil
 }
 
-func (r *DatabasePresetRepo) Get(ctx context.Context, tenantID, id, _ string) (*models.DatabasePresetRecord, error) {
+func (r *DatabasePresetRepo) Get(ctx context.Context, tenantID, id, callerID string) (*models.DatabasePresetRecord, error) {
 	row, err := r.db.q().GetDatabasePresetRecord(ctx, dbgen.GetDatabasePresetRecordParams{TenantID: tenantID, ID: id})
 	if err != nil {
 		return nil, translatePgErr("database_preset", err)
@@ -642,11 +641,19 @@ func (r *DatabasePresetRepo) Get(ctx context.Context, tenantID, id, _ string) (*
 	if err := unmarshal(row.Data, rec); err != nil {
 		return nil, err
 	}
+	ensureDatabasePresetSummary(rec)
+	favorites, err := favoriteIDs(ctx, r.db, tenantID, callerID, commonpb.FavoriteKind_FAVORITE_KIND_DATABASE_PRESET)
+	if err != nil {
+		return nil, err
+	}
+	if rec.Entity != nil {
+		rec.Entity.IsFavorite = favorites != nil && favorites[rec.GetEntity().GetId()]
+	}
 	return rec, nil
 }
 
-// List returns every database preset for the request tenant (filters ignored).
-func (r *DatabasePresetRepo) List(ctx context.Context, req *api.ListDatabasePresetsRequest, _ string) ([]*models.DatabasePresetRecord, string, error) {
+// List returns the matching database preset page for the request tenant.
+func (r *DatabasePresetRepo) List(ctx context.Context, req *api.ListDatabasePresetsRequest, callerID string) ([]*models.DatabasePresetRecord, string, error) {
 	rows, err := r.db.q().ListDatabasePresetRecords(ctx, req.GetTenantId())
 	if err != nil {
 		return nil, "", err
@@ -659,7 +666,7 @@ func (r *DatabasePresetRepo) List(ctx context.Context, req *api.ListDatabasePres
 		}
 		out = append(out, rec)
 	}
-	return out, "", nil
+	return filterDatabasePresetRecords(ctx, r.db, out, req, callerID)
 }
 
 func (r *DatabasePresetRepo) Update(ctx context.Context, p *models.DatabasePresetRecord) error {
@@ -719,7 +726,7 @@ func (r *WorkloadPresetRepo) Create(ctx context.Context, p *models.WorkloadPrese
 	return nil
 }
 
-func (r *WorkloadPresetRepo) Get(ctx context.Context, tenantID, id, _ string) (*models.WorkloadPresetRecord, error) {
+func (r *WorkloadPresetRepo) Get(ctx context.Context, tenantID, id, callerID string) (*models.WorkloadPresetRecord, error) {
 	row, err := r.db.q().GetWorkloadPresetRecord(ctx, dbgen.GetWorkloadPresetRecordParams{TenantID: tenantID, ID: id})
 	if err != nil {
 		return nil, translatePgErr("workload_preset", err)
@@ -728,11 +735,19 @@ func (r *WorkloadPresetRepo) Get(ctx context.Context, tenantID, id, _ string) (*
 	if err := unmarshal(row.Data, rec); err != nil {
 		return nil, err
 	}
+	ensureWorkloadPresetSummary(rec)
+	favorites, err := favoriteIDs(ctx, r.db, tenantID, callerID, commonpb.FavoriteKind_FAVORITE_KIND_WORKLOAD_PRESET)
+	if err != nil {
+		return nil, err
+	}
+	if rec.Entity != nil {
+		rec.Entity.IsFavorite = favorites != nil && favorites[rec.GetEntity().GetId()]
+	}
 	return rec, nil
 }
 
-// List returns every workload preset for the request tenant (filters ignored).
-func (r *WorkloadPresetRepo) List(ctx context.Context, req *api.ListWorkloadPresetsRequest, _ string) ([]*models.WorkloadPresetRecord, string, error) {
+// List returns the matching workload preset page for the request tenant.
+func (r *WorkloadPresetRepo) List(ctx context.Context, req *api.ListWorkloadPresetsRequest, callerID string) ([]*models.WorkloadPresetRecord, string, error) {
 	rows, err := r.db.q().ListWorkloadPresetRecords(ctx, req.GetTenantId())
 	if err != nil {
 		return nil, "", err
@@ -745,7 +760,7 @@ func (r *WorkloadPresetRepo) List(ctx context.Context, req *api.ListWorkloadPres
 		}
 		out = append(out, rec)
 	}
-	return out, "", nil
+	return filterWorkloadPresetRecords(ctx, r.db, out, req, callerID)
 }
 
 func (r *WorkloadPresetRepo) Update(ctx context.Context, p *models.WorkloadPresetRecord) error {
@@ -809,7 +824,7 @@ func (r *TestPresetRepo) Create(ctx context.Context, p *models.TestPresetRecord)
 	return nil
 }
 
-func (r *TestPresetRepo) Get(ctx context.Context, tenantID, id, _ string) (*models.TestPresetRecord, error) {
+func (r *TestPresetRepo) Get(ctx context.Context, tenantID, id, callerID string) (*models.TestPresetRecord, error) {
 	row, err := r.db.q().GetTestPresetRecord(ctx, dbgen.GetTestPresetRecordParams{TenantID: tenantID, ID: id})
 	if err != nil {
 		return nil, translatePgErr("test_preset", err)
@@ -818,11 +833,19 @@ func (r *TestPresetRepo) Get(ctx context.Context, tenantID, id, _ string) (*mode
 	if err := unmarshal(row.Data, rec); err != nil {
 		return nil, err
 	}
+	ensureTestPresetSummary(rec)
+	favorites, err := favoriteIDs(ctx, r.db, tenantID, callerID, commonpb.FavoriteKind_FAVORITE_KIND_TEST_PRESET)
+	if err != nil {
+		return nil, err
+	}
+	if rec.Entity != nil {
+		rec.Entity.IsFavorite = favorites != nil && favorites[rec.GetEntity().GetId()]
+	}
 	return rec, nil
 }
 
-// List returns every test preset for the request tenant (filters ignored).
-func (r *TestPresetRepo) List(ctx context.Context, req *api.ListTestPresetsRequest, _ string) ([]*models.TestPresetRecord, string, error) {
+// List returns the matching test preset page for the request tenant.
+func (r *TestPresetRepo) List(ctx context.Context, req *api.ListTestPresetsRequest, callerID string) ([]*models.TestPresetRecord, string, error) {
 	rows, err := r.db.q().ListTestPresetRecords(ctx, req.GetTenantId())
 	if err != nil {
 		return nil, "", err
@@ -835,7 +858,7 @@ func (r *TestPresetRepo) List(ctx context.Context, req *api.ListTestPresetsReque
 		}
 		out = append(out, rec)
 	}
-	return out, "", nil
+	return filterTestPresetRecords(ctx, r.db, out, req, callerID)
 }
 
 func (r *TestPresetRepo) Update(ctx context.Context, p *models.TestPresetRecord) error {

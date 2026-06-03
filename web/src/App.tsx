@@ -1,32 +1,26 @@
-import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
-import { Layout } from "@/components/Layout";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { TenantGate } from "@/components/TenantGate";
-import { Runs } from "@/pages/Runs";
-import { NewRun } from "@/pages/NewRun";
-import { RunDetail } from "@/pages/RunDetail";
-import { Compare } from "@/pages/Compare";
-import { SettingsPage } from "@/pages/Settings";
-import { Presets } from "@/pages/Presets";
-import { RunPresets } from "@/pages/RunPresets";
-import { Suites } from "@/pages/Suites";
-import { SuiteDetail } from "@/pages/SuiteDetail";
-import { SuiteBuilder } from "@/pages/SuiteBuilder";
-import { WorkloadEditor } from "@/pages/WorkloadEditor";
-import { Packages } from "@/pages/Packages";
-import { PresetDesigner } from "@/pages/PresetDesigner";
-import { ServerHealth } from "@/pages/ServerHealth";
-import { SharedRun } from "@/pages/SharedRun";
-
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { AppLayout } from "@/components/AppLayout";
+import { PlainLayout } from "@/components/PlainLayout";
+import { RequireAdmin, RequireAuth, RequireTenant } from "@/components/guards";
+import { BreadcrumbProvider } from "@/lib/breadcrumbs";
 import { Login } from "@/pages/Login";
 import { SelectTenant } from "@/pages/SelectTenant";
-import { AdminTenants } from "@/pages/AdminTenants";
-import { AdminUsers } from "@/pages/AdminUsers";
-import { TenantMembers } from "@/pages/TenantMembers";
-import { TenantTokens } from "@/pages/TenantTokens";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { useAuth } from "@/hooks/useAuth";
+import { Profile } from "@/pages/Profile";
+import { Dashboard } from "@/pages/Dashboard";
+import { Runs } from "@/pages/Runs";
+import { Suites } from "@/pages/Suites";
+import { Quotas } from "@/pages/Quotas";
+import { NewRun } from "@/pages/NewRun";
+import { Placeholder } from "@/pages/Placeholder";
+import { DatabasePresets } from "@/pages/library/DatabasePresets";
+import { WorkloadPresets } from "@/pages/library/WorkloadPresets";
+import { TestPresets } from "@/pages/library/TestPresets";
+import { Packages } from "@/pages/library/Packages";
+import { AdminAccounts } from "@/pages/admin/AdminAccounts";
+import { AdminSystemSettings } from "@/pages/admin/AdminSystemSettings";
+import { Orgs } from "@/pages/orgs/Orgs";
+import { OrgDetail } from "@/pages/orgs/OrgDetail";
 
 function Loading() {
   return (
@@ -36,136 +30,103 @@ function Loading() {
   );
 }
 
-// Where "/" and unknown paths land once authenticated.
+// Where "/" and unknown paths land (logo/brand click too): unauthenticated ->
+// login; otherwise the user's first org dashboard (by slug), else the
+// Organizations area, else login. This matches Variant D's default-landing rule.
 function RootRedirect() {
   const { user } = useAuth();
-  if (user?.tenant_id) return <Navigate to={`/t/${user.tenant_id}`} replace />;
-  if (user?.is_root) return <Navigate to="/admin/tenants" replace />;
-  return <Navigate to="/select-tenant" replace />;
+  if (!user) return <Navigate to="/login" replace />;
+  const first = user.tenants[0];
+  if (first) return <Navigate to={`/t/${first.slug}`} replace />;
+  return <Navigate to="/orgs" replace />;
 }
 
-function AppRoutes() {
-  const { isAuthenticated, isLoading, user, selectTenant } = useAuth();
-  const location = useLocation();
-  const navigate = useNavigate();
+// Tenant-scoped placeholder pages — WORK ENTITIES ONLY. Real pages are rebuilt
+// in later tasks. The index route (/t/:slug) is the Organization Dashboard,
+// declared separately. Org settings/members/roles live under /orgs/:slug, NOT
+// here. Account API tokens live under /profile.
+const tenantPages: { path: string; title: string; crumbParam?: string }[] = [
+  // `runs` (the index list) and `runs/new` (the wizard) are real pages now —
+  // declared explicitly below. `suites` is also real now.
+  { path: "runs/:id", title: "Run Detail", crumbParam: "id" },
+  { path: "compare", title: "Compare" },
+  { path: "suites/:id", title: "Suite Detail", crumbParam: "id" },
+];
 
-  // After login with no tenant in context: auto-select the only tenant, or
-  // route to the selector / admin. Tenant-scoped paths (/t/...) are handled by
-  // TenantGate, so skip them here.
-  useEffect(() => {
-    if (!user || !isAuthenticated) return;
-    const p = location.pathname;
-    if (p === "/select-tenant" || p.startsWith("/admin") || p.startsWith("/t/")) return;
-    if (user.tenant_id) return; // tenant already selected
-
-    const tenants = user.tenants || [];
-    if (tenants.length === 1) {
-      selectTenant(tenants[0].id);
-    } else if (tenants.length > 1) {
-      navigate("/select-tenant", { replace: true });
-    } else if (user.is_root) {
-      navigate("/admin/tenants", { replace: true });
-    } else {
-      navigate("/select-tenant", { replace: true });
-    }
-  }, [user, isAuthenticated, selectTenant, navigate, location.pathname]);
+export default function App() {
+  const { isLoading } = useAuth();
 
   if (isLoading) return <Loading />;
 
-  // Share pages are always accessible, regardless of auth.
-  if (location.pathname.startsWith("/share/")) {
-    return (
-      <Routes>
-        <Route path="/share/:token" element={<SharedRun />} />
-      </Routes>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
+  return (
+    <BreadcrumbProvider>
       <Routes>
         <Route path="/login" element={<Login />} />
-        <Route
-          path="*"
-          element={
-            <Navigate
-              to={`/login?redirect=${encodeURIComponent(location.pathname)}`}
-              replace
-            />
-          }
-        />
+
+        <Route element={<RequireAuth />}>
+          <Route path="/select-tenant" element={<SelectTenant />} />
+
+          {/* Outside-tenant: header-only shell. */}
+          <Route element={<PlainLayout />}>
+            <Route path="/profile" element={<Profile />} />
+            {/* Organizations area — org management lives here, reached from the
+                account menu. Single-org sub-nav sections are role-gated inside. */}
+            <Route path="/orgs" element={<Orgs />} />
+            <Route path="/orgs/:slug" element={<OrgDetail />} />
+            <Route element={<RequireAdmin />}>
+              <Route
+                path="/admin"
+                element={<Navigate to="/admin/accounts" replace />}
+              />
+              <Route path="/admin/accounts" element={<AdminAccounts />} />
+              <Route path="/admin/system" element={<AdminSystemSettings />} />
+              <Route
+                path="/admin/users"
+                element={<Navigate to="/admin/accounts" replace />}
+              />
+              <Route
+                path="/admin/server"
+                element={<Navigate to="/admin/system" replace />}
+              />
+              <Route
+                path="/admin/tenants"
+                element={<Navigate to="/orgs" replace />}
+              />
+            </Route>
+          </Route>
+
+          {/* Tenant scope: header + sidebar shell, routed by slug. */}
+          <Route path="/t/:slug" element={<RequireTenant />}>
+            <Route element={<AppLayout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="runs" element={<Runs />} />
+              <Route path="runs/new" element={<NewRun />} />
+              <Route path="suites" element={<Suites />} />
+              <Route path="quotas" element={<Quotas />} />
+              {/* Library — 3 preset tables + packages. */}
+              <Route
+                path="presets"
+                element={<Navigate to="database" replace />}
+              />
+              <Route path="presets/database" element={<DatabasePresets />} />
+              <Route path="presets/workload" element={<WorkloadPresets />} />
+              <Route path="presets/test" element={<TestPresets />} />
+              <Route path="packages" element={<Packages />} />
+              {tenantPages.map((p) => (
+                <Route
+                  key={p.path}
+                  path={p.path}
+                  element={
+                    <Placeholder title={p.title} crumbParam={p.crumbParam} />
+                  }
+                />
+              ))}
+            </Route>
+          </Route>
+        </Route>
+
+        <Route path="*" element={<RootRedirect />} />
       </Routes>
-    );
-  }
-
-  // Authenticated but no tenant chosen yet (and not on a route that handles
-  // that itself): let the auto-select effect above run before redirecting.
-  if (
-    !user?.tenant_id &&
-    location.pathname !== "/select-tenant" &&
-    !location.pathname.startsWith("/admin") &&
-    !location.pathname.startsWith("/t/")
-  ) {
-    return <Loading />;
-  }
-
-  return (
-    <Routes>
-      <Route path="/login" element={<RootRedirect />} />
-      <Route path="/select-tenant" element={<SelectTenant />} />
-
-      {/* System scope: root only, tenant-independent. */}
-      <Route element={<Layout />}>
-        <Route element={<ProtectedRoute requireRoot />}>
-          <Route path="/admin/tenants" element={<AdminTenants />} />
-          <Route path="/admin/users" element={<AdminUsers />} />
-          <Route path="/admin/server" element={<ServerHealth />} />
-        </Route>
-      </Route>
-
-      {/* Tenant scope: everything lives under /t/:tenantId. */}
-      <Route path="/t/:tenantId" element={<TenantGate />}>
-        <Route element={<Layout />}>
-          {/* Everyone */}
-          <Route index element={<Runs />} />
-          <Route path="runs" element={<Runs />} />
-          <Route path="runs/:id" element={<RunDetail />} />
-          <Route path="compare" element={<Compare />} />
-          <Route path="packages" element={<Packages />} />
-          <Route path="presets" element={<Presets />} />
-          <Route path="run-presets" element={<RunPresets />} />
-          <Route path="suites" element={<Suites />} />
-          <Route path="suites/new" element={<SuiteBuilder />} />
-          <Route path="suites/:id" element={<SuiteDetail />} />
-          <Route path="suites/:id/edit" element={<SuiteBuilder />} />
-          <Route path="suites/:id/items/new" element={<WorkloadEditor />} />
-          <Route path="suites/:id/items/:itemId/edit" element={<WorkloadEditor />} />
-          <Route path="settings" element={<SettingsPage />} />
-
-          {/* Operator+ */}
-          <Route element={<ProtectedRoute minRole="operator" />}>
-            <Route path="runs/new" element={<NewRun />} />
-            <Route path="presets/new" element={<PresetDesigner />} />
-            <Route path="presets/:id/edit" element={<PresetDesigner />} />
-          </Route>
-
-          {/* Owner+ */}
-          <Route element={<ProtectedRoute minRole="owner" />}>
-            <Route path="members" element={<TenantMembers />} />
-            <Route path="tokens" element={<TenantTokens />} />
-          </Route>
-        </Route>
-      </Route>
-
-      <Route path="*" element={<RootRedirect />} />
-    </Routes>
-  );
-}
-
-export default function App() {
-  return (
-    <AuthProvider>
-      <AppRoutes />
-    </AuthProvider>
+    </BreadcrumbProvider>
   );
 }

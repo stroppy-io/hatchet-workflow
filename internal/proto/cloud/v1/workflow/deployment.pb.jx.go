@@ -191,6 +191,138 @@ func (m *CalculateQuotasWorkflowRequest) UnmarshalJSON(data []byte) error {
 	return m.Decode(d)
 }
 
+func (m *QuotaRequestRef) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.NodeId != "" {
+		e.FieldStart("nodeId")
+		e.Str(m.NodeId)
+	}
+	if m.Request != nil {
+		e.FieldStart("request")
+		jxpb.EncMessage(e, m.Request)
+	}
+	e.ObjEnd()
+}
+
+func (m *QuotaRequestRef) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "nodeId", "node_id":
+			if seen["NodeId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["NodeId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.NodeId = v
+			return nil
+		case "request":
+			if seen["Request"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Request"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Request = &deployment.Quota_Request{}
+			if err := jxpb.DecMessage(d, m.Request); err != nil {
+				return err
+			}
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *QuotaRequestRef) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *QuotaRequestRef) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *QuotaAllocationRef) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.NodeId != "" {
+		e.FieldStart("nodeId")
+		e.Str(m.NodeId)
+	}
+	if m.Allocation != nil {
+		e.FieldStart("allocation")
+		jxpb.EncMessage(e, m.Allocation)
+	}
+	e.ObjEnd()
+}
+
+func (m *QuotaAllocationRef) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "nodeId", "node_id":
+			if seen["NodeId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["NodeId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.NodeId = v
+			return nil
+		case "allocation":
+			if seen["Allocation"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Allocation"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Allocation = &deployment.Quota_Allocation{}
+			if err := jxpb.DecMessage(d, m.Allocation); err != nil {
+				return err
+			}
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *QuotaAllocationRef) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *QuotaAllocationRef) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
 func (m *CalculateQuotasWorkflowResponse) Encode(e *jx.Encoder) {
 	if m == nil {
 		e.ObjStart()
@@ -204,12 +336,11 @@ func (m *CalculateQuotasWorkflowResponse) Encode(e *jx.Encoder) {
 	}
 	if len(m.QuotaRequests) > 0 {
 		e.FieldStart("quotaRequests")
-		e.ObjStart()
-		for k, v := range m.QuotaRequests {
-			e.FieldStart(k)
-			jxpb.EncMessage(e, v)
+		e.ArrStart()
+		for _, v := range m.QuotaRequests {
+			v.Encode(e)
 		}
-		e.ObjEnd()
+		e.ArrEnd()
 	}
 	e.ObjEnd()
 }
@@ -239,17 +370,12 @@ func (m *CalculateQuotasWorkflowResponse) Decode(d *jx.Decoder) error {
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			if m.QuotaRequests == nil {
-				m.QuotaRequests = make(map[string]*deployment.Quota_Request)
-			}
-			return d.Obj(func(d *jx.Decoder, ks string) error {
-				mk := ks
-				var mv *deployment.Quota_Request
-				mv = &deployment.Quota_Request{}
-				if err := jxpb.DecMessage(d, mv); err != nil {
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &QuotaRequestRef{}
+				if err := el.Decode(d); err != nil {
 					return err
 				}
-				m.QuotaRequests[mk] = mv
+				m.QuotaRequests = append(m.QuotaRequests, el)
 				return nil
 			})
 		default:
@@ -372,14 +498,25 @@ func (m *AcquireQuotasActivityRequest) Encode(e *jx.Encoder) {
 		return
 	}
 	e.ObjStart()
+	if m.TenantId != "" {
+		e.FieldStart("tenantId")
+		e.Str(m.TenantId)
+	}
+	if m.RunId != "" {
+		e.FieldStart("runId")
+		e.Str(m.RunId)
+	}
+	if m.Plan != nil {
+		e.FieldStart("plan")
+		jxpb.EncMessage(e, m.Plan)
+	}
 	if len(m.QuotaRequests) > 0 {
 		e.FieldStart("quotaRequests")
-		e.ObjStart()
-		for k, v := range m.QuotaRequests {
-			e.FieldStart(k)
-			jxpb.EncMessage(e, v)
+		e.ArrStart()
+		for _, v := range m.QuotaRequests {
+			v.Encode(e)
 		}
-		e.ObjEnd()
+		e.ArrEnd()
 	}
 	e.ObjEnd()
 }
@@ -388,6 +525,47 @@ func (m *AcquireQuotasActivityRequest) Decode(d *jx.Decoder) error {
 	seen := map[string]bool{}
 	return d.Obj(func(d *jx.Decoder, key string) error {
 		switch key {
+		case "tenantId", "tenant_id":
+			if seen["TenantId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["TenantId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.TenantId = v
+			return nil
+		case "runId", "run_id":
+			if seen["RunId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["RunId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.RunId = v
+			return nil
+		case "plan":
+			if seen["Plan"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Plan"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Plan = &deployment.InfrastructurePlan{}
+			if err := jxpb.DecMessage(d, m.Plan); err != nil {
+				return err
+			}
+			return nil
 		case "quotaRequests", "quota_requests":
 			if seen["QuotaRequests"] {
 				return fmt.Errorf("duplicate field %q", key)
@@ -396,17 +574,12 @@ func (m *AcquireQuotasActivityRequest) Decode(d *jx.Decoder) error {
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			if m.QuotaRequests == nil {
-				m.QuotaRequests = make(map[string]*deployment.Quota_Request)
-			}
-			return d.Obj(func(d *jx.Decoder, ks string) error {
-				mk := ks
-				var mv *deployment.Quota_Request
-				mv = &deployment.Quota_Request{}
-				if err := jxpb.DecMessage(d, mv); err != nil {
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &QuotaRequestRef{}
+				if err := el.Decode(d); err != nil {
 					return err
 				}
-				m.QuotaRequests[mk] = mv
+				m.QuotaRequests = append(m.QuotaRequests, el)
 				return nil
 			})
 		default:
@@ -435,12 +608,11 @@ func (m *AcquireQuotasActivityResponse) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	if len(m.QuotaAllocations) > 0 {
 		e.FieldStart("quotaAllocations")
-		e.ObjStart()
-		for k, v := range m.QuotaAllocations {
-			e.FieldStart(k)
-			jxpb.EncMessage(e, v)
+		e.ArrStart()
+		for _, v := range m.QuotaAllocations {
+			v.Encode(e)
 		}
-		e.ObjEnd()
+		e.ArrEnd()
 	}
 	e.ObjEnd()
 }
@@ -457,17 +629,12 @@ func (m *AcquireQuotasActivityResponse) Decode(d *jx.Decoder) error {
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			if m.QuotaAllocations == nil {
-				m.QuotaAllocations = make(map[string]*deployment.Quota_Allocation)
-			}
-			return d.Obj(func(d *jx.Decoder, ks string) error {
-				mk := ks
-				var mv *deployment.Quota_Allocation
-				mv = &deployment.Quota_Allocation{}
-				if err := jxpb.DecMessage(d, mv); err != nil {
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &QuotaAllocationRef{}
+				if err := el.Decode(d); err != nil {
 					return err
 				}
-				m.QuotaAllocations[mk] = mv
+				m.QuotaAllocations = append(m.QuotaAllocations, el)
 				return nil
 			})
 		default:
@@ -483,6 +650,244 @@ func (m *AcquireQuotasActivityResponse) MarshalJSON() ([]byte, error) {
 }
 
 func (m *AcquireQuotasActivityResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *CommitQuotasActivityRequest) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.TenantId != "" {
+		e.FieldStart("tenantId")
+		e.Str(m.TenantId)
+	}
+	if m.RunId != "" {
+		e.FieldStart("runId")
+		e.Str(m.RunId)
+	}
+	e.ObjEnd()
+}
+
+func (m *CommitQuotasActivityRequest) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "tenantId", "tenant_id":
+			if seen["TenantId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["TenantId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.TenantId = v
+			return nil
+		case "runId", "run_id":
+			if seen["RunId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["RunId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.RunId = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *CommitQuotasActivityRequest) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *CommitQuotasActivityRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *CommitQuotasActivityResponse) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if len(m.QuotaAllocations) > 0 {
+		e.FieldStart("quotaAllocations")
+		e.ArrStart()
+		for _, v := range m.QuotaAllocations {
+			v.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	e.ObjEnd()
+}
+
+func (m *CommitQuotasActivityResponse) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "quotaAllocations", "quota_allocations":
+			if seen["QuotaAllocations"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["QuotaAllocations"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &QuotaAllocationRef{}
+				if err := el.Decode(d); err != nil {
+					return err
+				}
+				m.QuotaAllocations = append(m.QuotaAllocations, el)
+				return nil
+			})
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *CommitQuotasActivityResponse) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *CommitQuotasActivityResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *ReleaseQuotasActivityRequest) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.TenantId != "" {
+		e.FieldStart("tenantId")
+		e.Str(m.TenantId)
+	}
+	if m.RunId != "" {
+		e.FieldStart("runId")
+		e.Str(m.RunId)
+	}
+	e.ObjEnd()
+}
+
+func (m *ReleaseQuotasActivityRequest) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "tenantId", "tenant_id":
+			if seen["TenantId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["TenantId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.TenantId = v
+			return nil
+		case "runId", "run_id":
+			if seen["RunId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["RunId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.RunId = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *ReleaseQuotasActivityRequest) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *ReleaseQuotasActivityRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *ReleaseQuotasActivityResponse) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Released != 0 {
+		e.FieldStart("released")
+		e.UInt32(m.Released)
+	}
+	e.ObjEnd()
+}
+
+func (m *ReleaseQuotasActivityResponse) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "released":
+			if seen["Released"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Released"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint32(d)
+			if err != nil {
+				return err
+			}
+			m.Released = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *ReleaseQuotasActivityResponse) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *ReleaseQuotasActivityResponse) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return m.Decode(d)
 }

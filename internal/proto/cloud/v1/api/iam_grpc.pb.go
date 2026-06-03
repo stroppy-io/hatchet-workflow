@@ -98,7 +98,8 @@ type IamServiceClient interface {
 	// CreateAccount is the admin-only account path (the public path is
 	// Register). Not idempotent: each call creates a new account.
 	CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*CreateAccountResponse, error)
-	// GetAccount fetches one account by id. Read-only.
+	// GetAccount fetches one account by id. The handler allows platform admins,
+	// the account itself, or callers sharing a tenant with the target account.
 	GetAccount(ctx context.Context, in *GetAccountRequest, opts ...grpc.CallOption) (*GetAccountResponse, error)
 	// GetMyAccount returns the caller's own profile — authenticated, no
 	// permission (self-read).
@@ -106,6 +107,7 @@ type IamServiceClient interface {
 	// ListAccounts lists accounts platform-wide. Read-only.
 	ListAccounts(ctx context.Context, in *ListAccountsRequest, opts ...grpc.CallOption) (*ListAccountsResponse, error)
 	// UpdateAccount is idempotent: a wholesale field set converges on retry.
+	// The handler allows platform admins or the account itself.
 	UpdateAccount(ctx context.Context, in *UpdateAccountRequest, opts ...grpc.CallOption) (*UpdateAccountResponse, error)
 	// DeleteAccount is idempotent: deleting an absent account is a no-op.
 	DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*DeleteAccountResponse, error)
@@ -120,7 +122,9 @@ type IamServiceClient interface {
 	// CreateTenant is gated by PlatformSettings.allow_member_tenant_creation.
 	// Not idempotent: each call creates a new tenant.
 	CreateTenant(ctx context.Context, in *CreateTenantRequest, opts ...grpc.CallOption) (*CreateTenantResponse, error)
-	// GetTenant fetches by id or slug; slug is the routing-resolve path.
+	// GetTenant fetches by id or slug; slug is the routing-resolve path. The
+	// handler resolves the tenant first and then allows platform admins or
+	// tenant members.
 	GetTenant(ctx context.Context, in *GetTenantRequest, opts ...grpc.CallOption) (*GetTenantResponse, error)
 	// ListMyTenants returns the caller's tenants — authenticated, no permission.
 	ListMyTenants(ctx context.Context, in *ListMyTenantsRequest, opts ...grpc.CallOption) (*ListMyTenantsResponse, error)
@@ -721,7 +725,8 @@ type IamServiceServer interface {
 	// CreateAccount is the admin-only account path (the public path is
 	// Register). Not idempotent: each call creates a new account.
 	CreateAccount(context.Context, *CreateAccountRequest) (*CreateAccountResponse, error)
-	// GetAccount fetches one account by id. Read-only.
+	// GetAccount fetches one account by id. The handler allows platform admins,
+	// the account itself, or callers sharing a tenant with the target account.
 	GetAccount(context.Context, *GetAccountRequest) (*GetAccountResponse, error)
 	// GetMyAccount returns the caller's own profile — authenticated, no
 	// permission (self-read).
@@ -729,6 +734,7 @@ type IamServiceServer interface {
 	// ListAccounts lists accounts platform-wide. Read-only.
 	ListAccounts(context.Context, *ListAccountsRequest) (*ListAccountsResponse, error)
 	// UpdateAccount is idempotent: a wholesale field set converges on retry.
+	// The handler allows platform admins or the account itself.
 	UpdateAccount(context.Context, *UpdateAccountRequest) (*UpdateAccountResponse, error)
 	// DeleteAccount is idempotent: deleting an absent account is a no-op.
 	DeleteAccount(context.Context, *DeleteAccountRequest) (*DeleteAccountResponse, error)
@@ -743,7 +749,9 @@ type IamServiceServer interface {
 	// CreateTenant is gated by PlatformSettings.allow_member_tenant_creation.
 	// Not idempotent: each call creates a new tenant.
 	CreateTenant(context.Context, *CreateTenantRequest) (*CreateTenantResponse, error)
-	// GetTenant fetches by id or slug; slug is the routing-resolve path.
+	// GetTenant fetches by id or slug; slug is the routing-resolve path. The
+	// handler resolves the tenant first and then allows platform admins or
+	// tenant members.
 	GetTenant(context.Context, *GetTenantRequest) (*GetTenantResponse, error)
 	// ListMyTenants returns the caller's tenants — authenticated, no permission.
 	ListMyTenants(context.Context, *ListMyTenantsRequest) (*ListMyTenantsResponse, error)

@@ -445,6 +445,110 @@ func (x *ListSuitesResponse) GetNextPageToken() string {
 	return ""
 }
 
+// ListSuiteFacetsRequest returns distinct values used by suite-list facet
+// controls. It is tenant-scoped and honors EntityFilter.include_deleted.
+type ListSuiteFacetsRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// filter holds shared Entity-level filters. include_deleted controls
+	// whether soft-deleted suites contribute to facet values.
+	Filter        *common.EntityFilter `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListSuiteFacetsRequest) Reset() {
+	*x = ListSuiteFacetsRequest{}
+	mi := &file_cloud_v1_api_suite_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListSuiteFacetsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListSuiteFacetsRequest) ProtoMessage() {}
+
+func (x *ListSuiteFacetsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_suite_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListSuiteFacetsRequest.ProtoReflect.Descriptor instead.
+func (*ListSuiteFacetsRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_suite_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *ListSuiteFacetsRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *ListSuiteFacetsRequest) GetFilter() *common.EntityFilter {
+	if x != nil {
+		return x.Filter
+	}
+	return nil
+}
+
+// ListSuiteFacetsResponse returns distinct non-empty values present in the
+// matching tenant's suite definitions.
+type ListSuiteFacetsResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// author_ids are distinct entity.author_id values.
+	AuthorIds     []string `protobuf:"bytes,1,rep,name=author_ids,json=authorIds,proto3" json:"author_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListSuiteFacetsResponse) Reset() {
+	*x = ListSuiteFacetsResponse{}
+	mi := &file_cloud_v1_api_suite_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListSuiteFacetsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListSuiteFacetsResponse) ProtoMessage() {}
+
+func (x *ListSuiteFacetsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_suite_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListSuiteFacetsResponse.ProtoReflect.Descriptor instead.
+func (*ListSuiteFacetsResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_suite_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *ListSuiteFacetsResponse) GetAuthorIds() []string {
+	if x != nil {
+		return x.AuthorIds
+	}
+	return nil
+}
+
 // UpdateSuiteRequest wholesale-replaces an existing suite definition.
 type UpdateSuiteRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -458,7 +562,7 @@ type UpdateSuiteRequest struct {
 
 func (x *UpdateSuiteRequest) Reset() {
 	*x = UpdateSuiteRequest{}
-	mi := &file_cloud_v1_api_suite_proto_msgTypes[6]
+	mi := &file_cloud_v1_api_suite_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -470,7 +574,7 @@ func (x *UpdateSuiteRequest) String() string {
 func (*UpdateSuiteRequest) ProtoMessage() {}
 
 func (x *UpdateSuiteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_suite_proto_msgTypes[6]
+	mi := &file_cloud_v1_api_suite_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -483,7 +587,7 @@ func (x *UpdateSuiteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateSuiteRequest.ProtoReflect.Descriptor instead.
 func (*UpdateSuiteRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_suite_proto_rawDescGZIP(), []int{6}
+	return file_cloud_v1_api_suite_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *UpdateSuiteRequest) GetTenantId() string {
@@ -511,7 +615,7 @@ type UpdateSuiteResponse struct {
 
 func (x *UpdateSuiteResponse) Reset() {
 	*x = UpdateSuiteResponse{}
-	mi := &file_cloud_v1_api_suite_proto_msgTypes[7]
+	mi := &file_cloud_v1_api_suite_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -523,7 +627,7 @@ func (x *UpdateSuiteResponse) String() string {
 func (*UpdateSuiteResponse) ProtoMessage() {}
 
 func (x *UpdateSuiteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_suite_proto_msgTypes[7]
+	mi := &file_cloud_v1_api_suite_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -536,7 +640,7 @@ func (x *UpdateSuiteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateSuiteResponse.ProtoReflect.Descriptor instead.
 func (*UpdateSuiteResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_suite_proto_rawDescGZIP(), []int{7}
+	return file_cloud_v1_api_suite_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *UpdateSuiteResponse) GetSuite() *models.SuiteRecord {
@@ -546,7 +650,7 @@ func (x *UpdateSuiteResponse) GetSuite() *models.SuiteRecord {
 	return nil
 }
 
-// DeleteSuiteRequest deletes a suite definition by id.
+// DeleteSuiteRequest soft-deletes a suite definition by id.
 type DeleteSuiteRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// tenant_id scopes the request to the owning tenant.
@@ -559,7 +663,7 @@ type DeleteSuiteRequest struct {
 
 func (x *DeleteSuiteRequest) Reset() {
 	*x = DeleteSuiteRequest{}
-	mi := &file_cloud_v1_api_suite_proto_msgTypes[8]
+	mi := &file_cloud_v1_api_suite_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -571,7 +675,7 @@ func (x *DeleteSuiteRequest) String() string {
 func (*DeleteSuiteRequest) ProtoMessage() {}
 
 func (x *DeleteSuiteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_suite_proto_msgTypes[8]
+	mi := &file_cloud_v1_api_suite_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -584,7 +688,7 @@ func (x *DeleteSuiteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteSuiteRequest.ProtoReflect.Descriptor instead.
 func (*DeleteSuiteRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_suite_proto_rawDescGZIP(), []int{8}
+	return file_cloud_v1_api_suite_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *DeleteSuiteRequest) GetTenantId() string {
@@ -601,7 +705,8 @@ func (x *DeleteSuiteRequest) GetId() string {
 	return ""
 }
 
-// DeleteSuiteResponse is empty; deletion success is signalled by a non-error reply.
+// DeleteSuiteResponse is empty; soft-delete success is signalled by a
+// non-error reply.
 type DeleteSuiteResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -610,7 +715,7 @@ type DeleteSuiteResponse struct {
 
 func (x *DeleteSuiteResponse) Reset() {
 	*x = DeleteSuiteResponse{}
-	mi := &file_cloud_v1_api_suite_proto_msgTypes[9]
+	mi := &file_cloud_v1_api_suite_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -622,7 +727,7 @@ func (x *DeleteSuiteResponse) String() string {
 func (*DeleteSuiteResponse) ProtoMessage() {}
 
 func (x *DeleteSuiteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_suite_proto_msgTypes[9]
+	mi := &file_cloud_v1_api_suite_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -635,7 +740,7 @@ func (x *DeleteSuiteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteSuiteResponse.ProtoReflect.Descriptor instead.
 func (*DeleteSuiteResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_suite_proto_rawDescGZIP(), []int{9}
+	return file_cloud_v1_api_suite_proto_rawDescGZIP(), []int{11}
 }
 
 // CloneSuite copies a suite definition into a new editable one owned by the
@@ -654,7 +759,7 @@ type CloneSuiteRequest struct {
 
 func (x *CloneSuiteRequest) Reset() {
 	*x = CloneSuiteRequest{}
-	mi := &file_cloud_v1_api_suite_proto_msgTypes[10]
+	mi := &file_cloud_v1_api_suite_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -666,7 +771,7 @@ func (x *CloneSuiteRequest) String() string {
 func (*CloneSuiteRequest) ProtoMessage() {}
 
 func (x *CloneSuiteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_suite_proto_msgTypes[10]
+	mi := &file_cloud_v1_api_suite_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -679,7 +784,7 @@ func (x *CloneSuiteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CloneSuiteRequest.ProtoReflect.Descriptor instead.
 func (*CloneSuiteRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_suite_proto_rawDescGZIP(), []int{10}
+	return file_cloud_v1_api_suite_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *CloneSuiteRequest) GetTenantId() string {
@@ -714,7 +819,7 @@ type CloneSuiteResponse struct {
 
 func (x *CloneSuiteResponse) Reset() {
 	*x = CloneSuiteResponse{}
-	mi := &file_cloud_v1_api_suite_proto_msgTypes[11]
+	mi := &file_cloud_v1_api_suite_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -726,7 +831,7 @@ func (x *CloneSuiteResponse) String() string {
 func (*CloneSuiteResponse) ProtoMessage() {}
 
 func (x *CloneSuiteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_suite_proto_msgTypes[11]
+	mi := &file_cloud_v1_api_suite_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -739,7 +844,7 @@ func (x *CloneSuiteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CloneSuiteResponse.ProtoReflect.Descriptor instead.
 func (*CloneSuiteResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_suite_proto_rawDescGZIP(), []int{11}
+	return file_cloud_v1_api_suite_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *CloneSuiteResponse) GetSuite() *models.SuiteRecord {
@@ -765,7 +870,7 @@ type SetSuiteScheduleRequest struct {
 
 func (x *SetSuiteScheduleRequest) Reset() {
 	*x = SetSuiteScheduleRequest{}
-	mi := &file_cloud_v1_api_suite_proto_msgTypes[12]
+	mi := &file_cloud_v1_api_suite_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -777,7 +882,7 @@ func (x *SetSuiteScheduleRequest) String() string {
 func (*SetSuiteScheduleRequest) ProtoMessage() {}
 
 func (x *SetSuiteScheduleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_suite_proto_msgTypes[12]
+	mi := &file_cloud_v1_api_suite_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -790,7 +895,7 @@ func (x *SetSuiteScheduleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetSuiteScheduleRequest.ProtoReflect.Descriptor instead.
 func (*SetSuiteScheduleRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_suite_proto_rawDescGZIP(), []int{12}
+	return file_cloud_v1_api_suite_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *SetSuiteScheduleRequest) GetTenantId() string {
@@ -825,7 +930,7 @@ type SetSuiteScheduleResponse struct {
 
 func (x *SetSuiteScheduleResponse) Reset() {
 	*x = SetSuiteScheduleResponse{}
-	mi := &file_cloud_v1_api_suite_proto_msgTypes[13]
+	mi := &file_cloud_v1_api_suite_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -837,7 +942,7 @@ func (x *SetSuiteScheduleResponse) String() string {
 func (*SetSuiteScheduleResponse) ProtoMessage() {}
 
 func (x *SetSuiteScheduleResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_suite_proto_msgTypes[13]
+	mi := &file_cloud_v1_api_suite_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -850,7 +955,7 @@ func (x *SetSuiteScheduleResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetSuiteScheduleResponse.ProtoReflect.Descriptor instead.
 func (*SetSuiteScheduleResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_suite_proto_rawDescGZIP(), []int{13}
+	return file_cloud_v1_api_suite_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *SetSuiteScheduleResponse) GetSuite() *models.SuiteRecord {
@@ -860,9 +965,10 @@ func (x *SetSuiteScheduleResponse) GetSuite() *models.SuiteRecord {
 	return nil
 }
 
-// StartSuite expands a suite definition into a SuiteRunRecord (one TestRunRecord
-// per enabled compatible cell) and launches SuiteWorkflow. Provide a stored
-// `suite_id` or an inline `suite` definition directly (CLI/API).
+// StartSuite expands a non-deleted suite definition into a SuiteRunRecord (one
+// TestRunRecord per enabled compatible cell) and launches SuiteWorkflow.
+// Provide a stored `suite_id` or an inline `suite` definition directly
+// (CLI/API).
 type StartSuiteRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// tenant_id scopes the request to the owning tenant.
@@ -890,7 +996,7 @@ type StartSuiteRequest struct {
 
 func (x *StartSuiteRequest) Reset() {
 	*x = StartSuiteRequest{}
-	mi := &file_cloud_v1_api_suite_proto_msgTypes[14]
+	mi := &file_cloud_v1_api_suite_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -902,7 +1008,7 @@ func (x *StartSuiteRequest) String() string {
 func (*StartSuiteRequest) ProtoMessage() {}
 
 func (x *StartSuiteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_suite_proto_msgTypes[14]
+	mi := &file_cloud_v1_api_suite_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -915,7 +1021,7 @@ func (x *StartSuiteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartSuiteRequest.ProtoReflect.Descriptor instead.
 func (*StartSuiteRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_suite_proto_rawDescGZIP(), []int{14}
+	return file_cloud_v1_api_suite_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *StartSuiteRequest) GetTenantId() string {
@@ -1000,7 +1106,7 @@ type StartSuiteResponse struct {
 
 func (x *StartSuiteResponse) Reset() {
 	*x = StartSuiteResponse{}
-	mi := &file_cloud_v1_api_suite_proto_msgTypes[15]
+	mi := &file_cloud_v1_api_suite_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1012,7 +1118,7 @@ func (x *StartSuiteResponse) String() string {
 func (*StartSuiteResponse) ProtoMessage() {}
 
 func (x *StartSuiteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_suite_proto_msgTypes[15]
+	mi := &file_cloud_v1_api_suite_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1025,7 +1131,7 @@ func (x *StartSuiteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartSuiteResponse.ProtoReflect.Descriptor instead.
 func (*StartSuiteResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_suite_proto_rawDescGZIP(), []int{15}
+	return file_cloud_v1_api_suite_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *StartSuiteResponse) GetSuiteRun() *models.SuiteRunRecord {
@@ -1053,7 +1159,7 @@ type ListSuitesRequest_Sort struct {
 
 func (x *ListSuitesRequest_Sort) Reset() {
 	*x = ListSuitesRequest_Sort{}
-	mi := &file_cloud_v1_api_suite_proto_msgTypes[16]
+	mi := &file_cloud_v1_api_suite_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1065,7 +1171,7 @@ func (x *ListSuitesRequest_Sort) String() string {
 func (*ListSuitesRequest_Sort) ProtoMessage() {}
 
 func (x *ListSuitesRequest_Sort) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_suite_proto_msgTypes[16]
+	mi := &file_cloud_v1_api_suite_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1168,7 +1274,13 @@ const file_cloud_v1_api_suite_proto_rawDesc = "" +
 	"\x11_schedule_enabled\"r\n" +
 	"\x12ListSuitesResponse\x124\n" +
 	"\x06suites\x18\x01 \x03(\v2\x1c.cloud.v1.models.SuiteRecordR\x06suites\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"z\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"w\n" +
+	"\x16ListSuiteFacetsRequest\x12&\n" +
+	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x125\n" +
+	"\x06filter\x18\x02 \x01(\v2\x1d.cloud.v1.common.EntityFilterR\x06filter\"8\n" +
+	"\x17ListSuiteFacetsResponse\x12\x1d\n" +
+	"\n" +
+	"author_ids\x18\x01 \x03(\tR\tauthorIds\"z\n" +
 	"\x12UpdateSuiteRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12<\n" +
 	"\x05suite\x18\x02 \x01(\v2\x1c.cloud.v1.models.SuiteRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x05suite\"S\n" +
@@ -1201,13 +1313,14 @@ const file_cloud_v1_api_suite_proto_rawDesc = "" +
 	"\x11_in_tenant_ratingB\x13\n" +
 	"\x11_in_global_rating\"\\\n" +
 	"\x12StartSuiteResponse\x12F\n" +
-	"\tsuite_run\x18\x01 \x01(\v2\x1f.cloud.v1.models.SuiteRunRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bsuiteRun2\x9a\x06\n" +
+	"\tsuite_run\x18\x01 \x01(\v2\x1f.cloud.v1.models.SuiteRunRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bsuiteRun2\x89\a\n" +
 	"\fSuiteService\x12^\n" +
 	"\vCreateSuite\x12 .cloud.v1.api.CreateSuiteRequest\x1a!.cloud.v1.api.CreateSuiteResponse\"\n" +
 	"\x8a\xb5\x18\x06\x12\x04\b\t\x10\x01\x12X\n" +
 	"\bGetSuite\x12\x1d.cloud.v1.api.GetSuiteRequest\x1a\x1e.cloud.v1.api.GetSuiteResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\t\x10\x02\x90\x02\x01\x12^\n" +
 	"\n" +
-	"ListSuites\x12\x1f.cloud.v1.api.ListSuitesRequest\x1a .cloud.v1.api.ListSuitesResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\t\x10\x05\x90\x02\x01\x12a\n" +
+	"ListSuites\x12\x1f.cloud.v1.api.ListSuitesRequest\x1a .cloud.v1.api.ListSuitesResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\t\x10\x05\x90\x02\x01\x12m\n" +
+	"\x0fListSuiteFacets\x12$.cloud.v1.api.ListSuiteFacetsRequest\x1a%.cloud.v1.api.ListSuiteFacetsResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\t\x10\x05\x90\x02\x01\x12a\n" +
 	"\vUpdateSuite\x12 .cloud.v1.api.UpdateSuiteRequest\x1a!.cloud.v1.api.UpdateSuiteResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\t\x10\x03\x90\x02\x02\x12a\n" +
 	"\vDeleteSuite\x12 .cloud.v1.api.DeleteSuiteRequest\x1a!.cloud.v1.api.DeleteSuiteResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\t\x10\x04\x90\x02\x02\x12[\n" +
 	"\n" +
@@ -1232,7 +1345,7 @@ func file_cloud_v1_api_suite_proto_rawDescGZIP() []byte {
 }
 
 var file_cloud_v1_api_suite_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_cloud_v1_api_suite_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_cloud_v1_api_suite_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
 var file_cloud_v1_api_suite_proto_goTypes = []any{
 	(ListSuitesRequest_Sort_Kind)(0), // 0: cloud.v1.api.ListSuitesRequest.Sort.Kind
 	(*CreateSuiteRequest)(nil),       // 1: cloud.v1.api.CreateSuiteRequest
@@ -1241,65 +1354,70 @@ var file_cloud_v1_api_suite_proto_goTypes = []any{
 	(*GetSuiteResponse)(nil),         // 4: cloud.v1.api.GetSuiteResponse
 	(*ListSuitesRequest)(nil),        // 5: cloud.v1.api.ListSuitesRequest
 	(*ListSuitesResponse)(nil),       // 6: cloud.v1.api.ListSuitesResponse
-	(*UpdateSuiteRequest)(nil),       // 7: cloud.v1.api.UpdateSuiteRequest
-	(*UpdateSuiteResponse)(nil),      // 8: cloud.v1.api.UpdateSuiteResponse
-	(*DeleteSuiteRequest)(nil),       // 9: cloud.v1.api.DeleteSuiteRequest
-	(*DeleteSuiteResponse)(nil),      // 10: cloud.v1.api.DeleteSuiteResponse
-	(*CloneSuiteRequest)(nil),        // 11: cloud.v1.api.CloneSuiteRequest
-	(*CloneSuiteResponse)(nil),       // 12: cloud.v1.api.CloneSuiteResponse
-	(*SetSuiteScheduleRequest)(nil),  // 13: cloud.v1.api.SetSuiteScheduleRequest
-	(*SetSuiteScheduleResponse)(nil), // 14: cloud.v1.api.SetSuiteScheduleResponse
-	(*StartSuiteRequest)(nil),        // 15: cloud.v1.api.StartSuiteRequest
-	(*StartSuiteResponse)(nil),       // 16: cloud.v1.api.StartSuiteResponse
-	(*ListSuitesRequest_Sort)(nil),   // 17: cloud.v1.api.ListSuitesRequest.Sort
-	(*models.SuiteRecord)(nil),       // 18: cloud.v1.models.SuiteRecord
-	(*common.EntityFilter)(nil),      // 19: cloud.v1.common.EntityFilter
-	(deployment.Provider)(0),         // 20: cloud.v1.deployment.Provider
-	(*common.Page)(nil),              // 21: cloud.v1.common.Page
-	(*domain.Schedule)(nil),          // 22: cloud.v1.domain.Schedule
-	(*domain.Suite)(nil),             // 23: cloud.v1.domain.Suite
-	(*models.SuiteRunRecord)(nil),    // 24: cloud.v1.models.SuiteRunRecord
-	(common.EntitySortField)(0),      // 25: cloud.v1.common.EntitySortField
+	(*ListSuiteFacetsRequest)(nil),   // 7: cloud.v1.api.ListSuiteFacetsRequest
+	(*ListSuiteFacetsResponse)(nil),  // 8: cloud.v1.api.ListSuiteFacetsResponse
+	(*UpdateSuiteRequest)(nil),       // 9: cloud.v1.api.UpdateSuiteRequest
+	(*UpdateSuiteResponse)(nil),      // 10: cloud.v1.api.UpdateSuiteResponse
+	(*DeleteSuiteRequest)(nil),       // 11: cloud.v1.api.DeleteSuiteRequest
+	(*DeleteSuiteResponse)(nil),      // 12: cloud.v1.api.DeleteSuiteResponse
+	(*CloneSuiteRequest)(nil),        // 13: cloud.v1.api.CloneSuiteRequest
+	(*CloneSuiteResponse)(nil),       // 14: cloud.v1.api.CloneSuiteResponse
+	(*SetSuiteScheduleRequest)(nil),  // 15: cloud.v1.api.SetSuiteScheduleRequest
+	(*SetSuiteScheduleResponse)(nil), // 16: cloud.v1.api.SetSuiteScheduleResponse
+	(*StartSuiteRequest)(nil),        // 17: cloud.v1.api.StartSuiteRequest
+	(*StartSuiteResponse)(nil),       // 18: cloud.v1.api.StartSuiteResponse
+	(*ListSuitesRequest_Sort)(nil),   // 19: cloud.v1.api.ListSuitesRequest.Sort
+	(*models.SuiteRecord)(nil),       // 20: cloud.v1.models.SuiteRecord
+	(*common.EntityFilter)(nil),      // 21: cloud.v1.common.EntityFilter
+	(deployment.Provider)(0),         // 22: cloud.v1.deployment.Provider
+	(*common.Page)(nil),              // 23: cloud.v1.common.Page
+	(*domain.Schedule)(nil),          // 24: cloud.v1.domain.Schedule
+	(*domain.Suite)(nil),             // 25: cloud.v1.domain.Suite
+	(*models.SuiteRunRecord)(nil),    // 26: cloud.v1.models.SuiteRunRecord
+	(common.EntitySortField)(0),      // 27: cloud.v1.common.EntitySortField
 }
 var file_cloud_v1_api_suite_proto_depIdxs = []int32{
-	18, // 0: cloud.v1.api.CreateSuiteRequest.suite:type_name -> cloud.v1.models.SuiteRecord
-	18, // 1: cloud.v1.api.CreateSuiteResponse.suite:type_name -> cloud.v1.models.SuiteRecord
-	18, // 2: cloud.v1.api.GetSuiteResponse.suite:type_name -> cloud.v1.models.SuiteRecord
-	19, // 3: cloud.v1.api.ListSuitesRequest.filter:type_name -> cloud.v1.common.EntityFilter
-	20, // 4: cloud.v1.api.ListSuitesRequest.providers:type_name -> cloud.v1.deployment.Provider
-	17, // 5: cloud.v1.api.ListSuitesRequest.sort:type_name -> cloud.v1.api.ListSuitesRequest.Sort
-	21, // 6: cloud.v1.api.ListSuitesRequest.page:type_name -> cloud.v1.common.Page
-	18, // 7: cloud.v1.api.ListSuitesResponse.suites:type_name -> cloud.v1.models.SuiteRecord
-	18, // 8: cloud.v1.api.UpdateSuiteRequest.suite:type_name -> cloud.v1.models.SuiteRecord
-	18, // 9: cloud.v1.api.UpdateSuiteResponse.suite:type_name -> cloud.v1.models.SuiteRecord
-	18, // 10: cloud.v1.api.CloneSuiteResponse.suite:type_name -> cloud.v1.models.SuiteRecord
-	22, // 11: cloud.v1.api.SetSuiteScheduleRequest.schedule:type_name -> cloud.v1.domain.Schedule
-	18, // 12: cloud.v1.api.SetSuiteScheduleResponse.suite:type_name -> cloud.v1.models.SuiteRecord
-	23, // 13: cloud.v1.api.StartSuiteRequest.suite:type_name -> cloud.v1.domain.Suite
-	24, // 14: cloud.v1.api.StartSuiteResponse.suite_run:type_name -> cloud.v1.models.SuiteRunRecord
-	25, // 15: cloud.v1.api.ListSuitesRequest.Sort.entity:type_name -> cloud.v1.common.EntitySortField
-	0,  // 16: cloud.v1.api.ListSuitesRequest.Sort.kind:type_name -> cloud.v1.api.ListSuitesRequest.Sort.Kind
-	1,  // 17: cloud.v1.api.SuiteService.CreateSuite:input_type -> cloud.v1.api.CreateSuiteRequest
-	3,  // 18: cloud.v1.api.SuiteService.GetSuite:input_type -> cloud.v1.api.GetSuiteRequest
-	5,  // 19: cloud.v1.api.SuiteService.ListSuites:input_type -> cloud.v1.api.ListSuitesRequest
-	7,  // 20: cloud.v1.api.SuiteService.UpdateSuite:input_type -> cloud.v1.api.UpdateSuiteRequest
-	9,  // 21: cloud.v1.api.SuiteService.DeleteSuite:input_type -> cloud.v1.api.DeleteSuiteRequest
-	11, // 22: cloud.v1.api.SuiteService.CloneSuite:input_type -> cloud.v1.api.CloneSuiteRequest
-	13, // 23: cloud.v1.api.SuiteService.SetSuiteSchedule:input_type -> cloud.v1.api.SetSuiteScheduleRequest
-	15, // 24: cloud.v1.api.SuiteService.StartSuite:input_type -> cloud.v1.api.StartSuiteRequest
-	2,  // 25: cloud.v1.api.SuiteService.CreateSuite:output_type -> cloud.v1.api.CreateSuiteResponse
-	4,  // 26: cloud.v1.api.SuiteService.GetSuite:output_type -> cloud.v1.api.GetSuiteResponse
-	6,  // 27: cloud.v1.api.SuiteService.ListSuites:output_type -> cloud.v1.api.ListSuitesResponse
-	8,  // 28: cloud.v1.api.SuiteService.UpdateSuite:output_type -> cloud.v1.api.UpdateSuiteResponse
-	10, // 29: cloud.v1.api.SuiteService.DeleteSuite:output_type -> cloud.v1.api.DeleteSuiteResponse
-	12, // 30: cloud.v1.api.SuiteService.CloneSuite:output_type -> cloud.v1.api.CloneSuiteResponse
-	14, // 31: cloud.v1.api.SuiteService.SetSuiteSchedule:output_type -> cloud.v1.api.SetSuiteScheduleResponse
-	16, // 32: cloud.v1.api.SuiteService.StartSuite:output_type -> cloud.v1.api.StartSuiteResponse
-	25, // [25:33] is the sub-list for method output_type
-	17, // [17:25] is the sub-list for method input_type
-	17, // [17:17] is the sub-list for extension type_name
-	17, // [17:17] is the sub-list for extension extendee
-	0,  // [0:17] is the sub-list for field type_name
+	20, // 0: cloud.v1.api.CreateSuiteRequest.suite:type_name -> cloud.v1.models.SuiteRecord
+	20, // 1: cloud.v1.api.CreateSuiteResponse.suite:type_name -> cloud.v1.models.SuiteRecord
+	20, // 2: cloud.v1.api.GetSuiteResponse.suite:type_name -> cloud.v1.models.SuiteRecord
+	21, // 3: cloud.v1.api.ListSuitesRequest.filter:type_name -> cloud.v1.common.EntityFilter
+	22, // 4: cloud.v1.api.ListSuitesRequest.providers:type_name -> cloud.v1.deployment.Provider
+	19, // 5: cloud.v1.api.ListSuitesRequest.sort:type_name -> cloud.v1.api.ListSuitesRequest.Sort
+	23, // 6: cloud.v1.api.ListSuitesRequest.page:type_name -> cloud.v1.common.Page
+	20, // 7: cloud.v1.api.ListSuitesResponse.suites:type_name -> cloud.v1.models.SuiteRecord
+	21, // 8: cloud.v1.api.ListSuiteFacetsRequest.filter:type_name -> cloud.v1.common.EntityFilter
+	20, // 9: cloud.v1.api.UpdateSuiteRequest.suite:type_name -> cloud.v1.models.SuiteRecord
+	20, // 10: cloud.v1.api.UpdateSuiteResponse.suite:type_name -> cloud.v1.models.SuiteRecord
+	20, // 11: cloud.v1.api.CloneSuiteResponse.suite:type_name -> cloud.v1.models.SuiteRecord
+	24, // 12: cloud.v1.api.SetSuiteScheduleRequest.schedule:type_name -> cloud.v1.domain.Schedule
+	20, // 13: cloud.v1.api.SetSuiteScheduleResponse.suite:type_name -> cloud.v1.models.SuiteRecord
+	25, // 14: cloud.v1.api.StartSuiteRequest.suite:type_name -> cloud.v1.domain.Suite
+	26, // 15: cloud.v1.api.StartSuiteResponse.suite_run:type_name -> cloud.v1.models.SuiteRunRecord
+	27, // 16: cloud.v1.api.ListSuitesRequest.Sort.entity:type_name -> cloud.v1.common.EntitySortField
+	0,  // 17: cloud.v1.api.ListSuitesRequest.Sort.kind:type_name -> cloud.v1.api.ListSuitesRequest.Sort.Kind
+	1,  // 18: cloud.v1.api.SuiteService.CreateSuite:input_type -> cloud.v1.api.CreateSuiteRequest
+	3,  // 19: cloud.v1.api.SuiteService.GetSuite:input_type -> cloud.v1.api.GetSuiteRequest
+	5,  // 20: cloud.v1.api.SuiteService.ListSuites:input_type -> cloud.v1.api.ListSuitesRequest
+	7,  // 21: cloud.v1.api.SuiteService.ListSuiteFacets:input_type -> cloud.v1.api.ListSuiteFacetsRequest
+	9,  // 22: cloud.v1.api.SuiteService.UpdateSuite:input_type -> cloud.v1.api.UpdateSuiteRequest
+	11, // 23: cloud.v1.api.SuiteService.DeleteSuite:input_type -> cloud.v1.api.DeleteSuiteRequest
+	13, // 24: cloud.v1.api.SuiteService.CloneSuite:input_type -> cloud.v1.api.CloneSuiteRequest
+	15, // 25: cloud.v1.api.SuiteService.SetSuiteSchedule:input_type -> cloud.v1.api.SetSuiteScheduleRequest
+	17, // 26: cloud.v1.api.SuiteService.StartSuite:input_type -> cloud.v1.api.StartSuiteRequest
+	2,  // 27: cloud.v1.api.SuiteService.CreateSuite:output_type -> cloud.v1.api.CreateSuiteResponse
+	4,  // 28: cloud.v1.api.SuiteService.GetSuite:output_type -> cloud.v1.api.GetSuiteResponse
+	6,  // 29: cloud.v1.api.SuiteService.ListSuites:output_type -> cloud.v1.api.ListSuitesResponse
+	8,  // 30: cloud.v1.api.SuiteService.ListSuiteFacets:output_type -> cloud.v1.api.ListSuiteFacetsResponse
+	10, // 31: cloud.v1.api.SuiteService.UpdateSuite:output_type -> cloud.v1.api.UpdateSuiteResponse
+	12, // 32: cloud.v1.api.SuiteService.DeleteSuite:output_type -> cloud.v1.api.DeleteSuiteResponse
+	14, // 33: cloud.v1.api.SuiteService.CloneSuite:output_type -> cloud.v1.api.CloneSuiteResponse
+	16, // 34: cloud.v1.api.SuiteService.SetSuiteSchedule:output_type -> cloud.v1.api.SetSuiteScheduleResponse
+	18, // 35: cloud.v1.api.SuiteService.StartSuite:output_type -> cloud.v1.api.StartSuiteResponse
+	27, // [27:36] is the sub-list for method output_type
+	18, // [18:27] is the sub-list for method input_type
+	18, // [18:18] is the sub-list for extension type_name
+	18, // [18:18] is the sub-list for extension extendee
+	0,  // [0:18] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_api_suite_proto_init() }
@@ -1308,11 +1426,11 @@ func file_cloud_v1_api_suite_proto_init() {
 		return
 	}
 	file_cloud_v1_api_suite_proto_msgTypes[4].OneofWrappers = []any{}
-	file_cloud_v1_api_suite_proto_msgTypes[14].OneofWrappers = []any{
+	file_cloud_v1_api_suite_proto_msgTypes[16].OneofWrappers = []any{
 		(*StartSuiteRequest_SuiteId)(nil),
 		(*StartSuiteRequest_Suite)(nil),
 	}
-	file_cloud_v1_api_suite_proto_msgTypes[16].OneofWrappers = []any{
+	file_cloud_v1_api_suite_proto_msgTypes[18].OneofWrappers = []any{
 		(*ListSuitesRequest_Sort_Entity)(nil),
 		(*ListSuitesRequest_Sort_Kind_)(nil),
 	}
@@ -1322,7 +1440,7 @@ func file_cloud_v1_api_suite_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_api_suite_proto_rawDesc), len(file_cloud_v1_api_suite_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   17,
+			NumMessages:   19,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

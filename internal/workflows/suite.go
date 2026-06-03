@@ -2,8 +2,13 @@ package workflows
 
 import (
 	"errors"
+	"fmt"
 
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
+	domainpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
+	enumsv1 "go.temporal.io/api/enums/v1"
+	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 )
 
@@ -17,11 +22,27 @@ type suiteWorkflow struct {
 	req *workflowpb.SuiteWorkflowRequest
 }
 
-func (w *suiteWorkflow) Execute(ctx workflow.Context) (*workflowpb.SuiteWorkflowResponse, error) {
+func (w *suiteWorkflow) Execute(ctx workflow.Context) (resp *workflowpb.SuiteWorkflowResponse, err error) {
+	defer func() {
+		if err == nil || !temporal.IsCanceledError(err) {
+			return
+		}
+		disconnected, _ := workflow.NewDisconnectedContext(ctx)
+		if perr := persistSuiteRun(disconnected, w.req.GetSuiteRunId(), common.Status_STATUS_CANCELLED); perr != nil {
+			err = fmt.Errorf("persist cancelled suite run: %w", perr)
+		}
+	}()
+
 	if w.req == nil {
 		return nil, errors.New("suite workflow request is required")
 	}
 	if err := w.req.Validate(); err != nil {
+		if perr := persistSuiteRun(ctx, w.req.GetSuiteRunId(), common.Status_STATUS_FAILED); perr != nil {
+			return nil, fmt.Errorf("persist failed suite run: %w", perr)
+		}
+		return nil, err
+	}
+	if err := persistSuiteRun(ctx, w.req.GetSuiteRunId(), common.Status_STATUS_RUNNING); err != nil {
 		return nil, err
 	}
 
@@ -42,7 +63,7 @@ func (w *suiteWorkflow) Execute(ctx workflow.Context) (*workflowpb.SuiteWorkflow
 		started++
 		inFlight++
 
-		child, err := workflowpb.TestRunWorkflowChildAsync(ctx, run)
+		child, err := workflowpb.TestWorkflowChildAsync(ctx, testWorkflowRequest(run), suiteChildOptions())
 		if err != nil {
 			return err
 		}
@@ -58,6 +79,9 @@ func (w *suiteWorkflow) Execute(ctx workflow.Context) (*workflowpb.SuiteWorkflow
 
 	for started < len(runs) && inFlight < maxParallel {
 		if err := startNext(); err != nil {
+			if perr := persistSuiteRun(ctx, w.req.GetSuiteRunId(), common.Status_STATUS_FAILED); perr != nil {
+				return nil, fmt.Errorf("persist failed suite run: %w", perr)
+			}
 			return nil, err
 		}
 	}
@@ -65,14 +89,47 @@ func (w *suiteWorkflow) Execute(ctx workflow.Context) (*workflowpb.SuiteWorkflow
 	for completed < len(runs) {
 		selector.Select(ctx)
 		if firstErr != nil {
+			if err := persistSuiteRun(ctx, w.req.GetSuiteRunId(), common.Status_STATUS_FAILED); err != nil {
+				return nil, err
+			}
 			return nil, firstErr
+		}
+		if err := persistSuiteRun(ctx, w.req.GetSuiteRunId(), common.Status_STATUS_UNSPECIFIED); err != nil {
+			return nil, err
 		}
 		for started < len(runs) && inFlight < maxParallel {
 			if err := startNext(); err != nil {
+				if perr := persistSuiteRun(ctx, w.req.GetSuiteRunId(), common.Status_STATUS_FAILED); perr != nil {
+					return nil, fmt.Errorf("persist failed suite run: %w", perr)
+				}
 				return nil, err
 			}
 		}
 	}
 
+	if err := persistSuiteRun(ctx, w.req.GetSuiteRunId(), common.Status_STATUS_COMPLETED); err != nil {
+		return nil, err
+	}
 	return &workflowpb.SuiteWorkflowResponse{}, nil
+}
+
+func suiteChildOptions() *workflowpb.TestWorkflowChildOptions {
+	return workflowpb.NewTestWorkflowChildOptions().
+		WithParentClosePolicy(enumsv1.PARENT_CLOSE_POLICY_REQUEST_CANCEL).
+		WithWaitForCancellation(true)
+}
+
+func testWorkflowRequest(run *workflowpb.RunConfig) *workflowpb.TestWorkflowRequest {
+	return &workflowpb.TestWorkflowRequest{
+		TenantId: run.GetTenantId(),
+		TestRun: &domainpb.TestRun{
+			Id:                 run.GetId(),
+			Database:           run.GetDatabase(),
+			Workload:           run.GetWorkload(),
+			TopologySpec:       run.GetTopologySpec(),
+			InfrastructurePlan: run.GetInfrastructurePlan(),
+			RenderOverrides:    run.GetRenderOverrides(),
+		},
+		AgentBootstrap: run.GetAgentBootstrap(),
+	}
 }

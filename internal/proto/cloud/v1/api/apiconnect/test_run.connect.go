@@ -42,6 +42,9 @@ const (
 	// TestRunServiceListTestRunsProcedure is the fully-qualified name of the TestRunService's
 	// ListTestRuns RPC.
 	TestRunServiceListTestRunsProcedure = "/cloud.v1.api.TestRunService/ListTestRuns"
+	// TestRunServiceListTestRunFacetsProcedure is the fully-qualified name of the TestRunService's
+	// ListTestRunFacets RPC.
+	TestRunServiceListTestRunFacetsProcedure = "/cloud.v1.api.TestRunService/ListTestRunFacets"
 	// TestRunServiceCancelTestRunProcedure is the fully-qualified name of the TestRunService's
 	// CancelTestRun RPC.
 	TestRunServiceCancelTestRunProcedure = "/cloud.v1.api.TestRunService/CancelTestRun"
@@ -61,9 +64,13 @@ type TestRunServiceClient interface {
 	GetTestRun(context.Context, *api.GetTestRunRequest) (*api.GetTestRunResponse, error)
 	// ListTestRuns lists runs with filtering and pagination. Read-only.
 	ListTestRuns(context.Context, *api.ListTestRunsRequest) (*api.ListTestRunsResponse, error)
+	// ListTestRunFacets lists distinct values for run-list facet controls.
+	// Read-only.
+	ListTestRunFacets(context.Context, *api.ListTestRunFacetsRequest) (*api.ListTestRunFacetsResponse, error)
 	// CancelTestRun is idempotent: cancelling a finished/cancelled run is a no-op.
 	CancelTestRun(context.Context, *api.CancelTestRunRequest) (*api.CancelTestRunResponse, error)
-	// DeleteTestRun is idempotent: deleting an absent run is a no-op.
+	// DeleteTestRun is idempotent: soft-deleting an absent or already-deleted
+	// run is a no-op.
 	DeleteTestRun(context.Context, *api.DeleteTestRunRequest) (*api.DeleteTestRunResponse, error)
 	// ExtractToPreset mints a new preset. Not idempotent.
 	ExtractToPreset(context.Context, *api.ExtractToPresetRequest) (*api.ExtractToPresetResponse, error)
@@ -100,6 +107,13 @@ func NewTestRunServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 			connect.WithClientOptions(opts...),
 		),
+		listTestRunFacets: connect.NewClient[api.ListTestRunFacetsRequest, api.ListTestRunFacetsResponse](
+			httpClient,
+			baseURL+TestRunServiceListTestRunFacetsProcedure,
+			connect.WithSchema(testRunServiceMethods.ByName("ListTestRunFacets")),
+			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+			connect.WithClientOptions(opts...),
+		),
 		cancelTestRun: connect.NewClient[api.CancelTestRunRequest, api.CancelTestRunResponse](
 			httpClient,
 			baseURL+TestRunServiceCancelTestRunProcedure,
@@ -125,12 +139,13 @@ func NewTestRunServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 
 // testRunServiceClient implements TestRunServiceClient.
 type testRunServiceClient struct {
-	startTestRun    *connect.Client[api.StartTestRunRequest, api.StartTestRunResponse]
-	getTestRun      *connect.Client[api.GetTestRunRequest, api.GetTestRunResponse]
-	listTestRuns    *connect.Client[api.ListTestRunsRequest, api.ListTestRunsResponse]
-	cancelTestRun   *connect.Client[api.CancelTestRunRequest, api.CancelTestRunResponse]
-	deleteTestRun   *connect.Client[api.DeleteTestRunRequest, api.DeleteTestRunResponse]
-	extractToPreset *connect.Client[api.ExtractToPresetRequest, api.ExtractToPresetResponse]
+	startTestRun      *connect.Client[api.StartTestRunRequest, api.StartTestRunResponse]
+	getTestRun        *connect.Client[api.GetTestRunRequest, api.GetTestRunResponse]
+	listTestRuns      *connect.Client[api.ListTestRunsRequest, api.ListTestRunsResponse]
+	listTestRunFacets *connect.Client[api.ListTestRunFacetsRequest, api.ListTestRunFacetsResponse]
+	cancelTestRun     *connect.Client[api.CancelTestRunRequest, api.CancelTestRunResponse]
+	deleteTestRun     *connect.Client[api.DeleteTestRunRequest, api.DeleteTestRunResponse]
+	extractToPreset   *connect.Client[api.ExtractToPresetRequest, api.ExtractToPresetResponse]
 }
 
 // StartTestRun calls cloud.v1.api.TestRunService.StartTestRun.
@@ -154,6 +169,15 @@ func (c *testRunServiceClient) GetTestRun(ctx context.Context, req *api.GetTestR
 // ListTestRuns calls cloud.v1.api.TestRunService.ListTestRuns.
 func (c *testRunServiceClient) ListTestRuns(ctx context.Context, req *api.ListTestRunsRequest) (*api.ListTestRunsResponse, error) {
 	response, err := c.listTestRuns.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// ListTestRunFacets calls cloud.v1.api.TestRunService.ListTestRunFacets.
+func (c *testRunServiceClient) ListTestRunFacets(ctx context.Context, req *api.ListTestRunFacetsRequest) (*api.ListTestRunFacetsResponse, error) {
+	response, err := c.listTestRunFacets.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
 	}
@@ -195,9 +219,13 @@ type TestRunServiceHandler interface {
 	GetTestRun(context.Context, *api.GetTestRunRequest) (*api.GetTestRunResponse, error)
 	// ListTestRuns lists runs with filtering and pagination. Read-only.
 	ListTestRuns(context.Context, *api.ListTestRunsRequest) (*api.ListTestRunsResponse, error)
+	// ListTestRunFacets lists distinct values for run-list facet controls.
+	// Read-only.
+	ListTestRunFacets(context.Context, *api.ListTestRunFacetsRequest) (*api.ListTestRunFacetsResponse, error)
 	// CancelTestRun is idempotent: cancelling a finished/cancelled run is a no-op.
 	CancelTestRun(context.Context, *api.CancelTestRunRequest) (*api.CancelTestRunResponse, error)
-	// DeleteTestRun is idempotent: deleting an absent run is a no-op.
+	// DeleteTestRun is idempotent: soft-deleting an absent or already-deleted
+	// run is a no-op.
 	DeleteTestRun(context.Context, *api.DeleteTestRunRequest) (*api.DeleteTestRunResponse, error)
 	// ExtractToPreset mints a new preset. Not idempotent.
 	ExtractToPreset(context.Context, *api.ExtractToPresetRequest) (*api.ExtractToPresetResponse, error)
@@ -230,6 +258,13 @@ func NewTestRunServiceHandler(svc TestRunServiceHandler, opts ...connect.Handler
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
+	testRunServiceListTestRunFacetsHandler := connect.NewUnaryHandlerSimple(
+		TestRunServiceListTestRunFacetsProcedure,
+		svc.ListTestRunFacets,
+		connect.WithSchema(testRunServiceMethods.ByName("ListTestRunFacets")),
+		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+		connect.WithHandlerOptions(opts...),
+	)
 	testRunServiceCancelTestRunHandler := connect.NewUnaryHandlerSimple(
 		TestRunServiceCancelTestRunProcedure,
 		svc.CancelTestRun,
@@ -258,6 +293,8 @@ func NewTestRunServiceHandler(svc TestRunServiceHandler, opts ...connect.Handler
 			testRunServiceGetTestRunHandler.ServeHTTP(w, r)
 		case TestRunServiceListTestRunsProcedure:
 			testRunServiceListTestRunsHandler.ServeHTTP(w, r)
+		case TestRunServiceListTestRunFacetsProcedure:
+			testRunServiceListTestRunFacetsHandler.ServeHTTP(w, r)
 		case TestRunServiceCancelTestRunProcedure:
 			testRunServiceCancelTestRunHandler.ServeHTTP(w, r)
 		case TestRunServiceDeleteTestRunProcedure:
@@ -283,6 +320,10 @@ func (UnimplementedTestRunServiceHandler) GetTestRun(context.Context, *api.GetTe
 
 func (UnimplementedTestRunServiceHandler) ListTestRuns(context.Context, *api.ListTestRunsRequest) (*api.ListTestRunsResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.TestRunService.ListTestRuns is not implemented"))
+}
+
+func (UnimplementedTestRunServiceHandler) ListTestRunFacets(context.Context, *api.ListTestRunFacetsRequest) (*api.ListTestRunFacetsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.TestRunService.ListTestRunFacets is not implemented"))
 }
 
 func (UnimplementedTestRunServiceHandler) CancelTestRun(context.Context, *api.CancelTestRunRequest) (*api.CancelTestRunResponse, error) {

@@ -19,12 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	TestRunService_StartTestRun_FullMethodName    = "/cloud.v1.api.TestRunService/StartTestRun"
-	TestRunService_GetTestRun_FullMethodName      = "/cloud.v1.api.TestRunService/GetTestRun"
-	TestRunService_ListTestRuns_FullMethodName    = "/cloud.v1.api.TestRunService/ListTestRuns"
-	TestRunService_CancelTestRun_FullMethodName   = "/cloud.v1.api.TestRunService/CancelTestRun"
-	TestRunService_DeleteTestRun_FullMethodName   = "/cloud.v1.api.TestRunService/DeleteTestRun"
-	TestRunService_ExtractToPreset_FullMethodName = "/cloud.v1.api.TestRunService/ExtractToPreset"
+	TestRunService_StartTestRun_FullMethodName      = "/cloud.v1.api.TestRunService/StartTestRun"
+	TestRunService_GetTestRun_FullMethodName        = "/cloud.v1.api.TestRunService/GetTestRun"
+	TestRunService_ListTestRuns_FullMethodName      = "/cloud.v1.api.TestRunService/ListTestRuns"
+	TestRunService_ListTestRunFacets_FullMethodName = "/cloud.v1.api.TestRunService/ListTestRunFacets"
+	TestRunService_CancelTestRun_FullMethodName     = "/cloud.v1.api.TestRunService/CancelTestRun"
+	TestRunService_DeleteTestRun_FullMethodName     = "/cloud.v1.api.TestRunService/DeleteTestRun"
+	TestRunService_ExtractToPreset_FullMethodName   = "/cloud.v1.api.TestRunService/ExtractToPreset"
 )
 
 // TestRunServiceClient is the client API for TestRunService service.
@@ -39,9 +40,13 @@ type TestRunServiceClient interface {
 	GetTestRun(ctx context.Context, in *GetTestRunRequest, opts ...grpc.CallOption) (*GetTestRunResponse, error)
 	// ListTestRuns lists runs with filtering and pagination. Read-only.
 	ListTestRuns(ctx context.Context, in *ListTestRunsRequest, opts ...grpc.CallOption) (*ListTestRunsResponse, error)
+	// ListTestRunFacets lists distinct values for run-list facet controls.
+	// Read-only.
+	ListTestRunFacets(ctx context.Context, in *ListTestRunFacetsRequest, opts ...grpc.CallOption) (*ListTestRunFacetsResponse, error)
 	// CancelTestRun is idempotent: cancelling a finished/cancelled run is a no-op.
 	CancelTestRun(ctx context.Context, in *CancelTestRunRequest, opts ...grpc.CallOption) (*CancelTestRunResponse, error)
-	// DeleteTestRun is idempotent: deleting an absent run is a no-op.
+	// DeleteTestRun is idempotent: soft-deleting an absent or already-deleted
+	// run is a no-op.
 	DeleteTestRun(ctx context.Context, in *DeleteTestRunRequest, opts ...grpc.CallOption) (*DeleteTestRunResponse, error)
 	// ExtractToPreset mints a new preset. Not idempotent.
 	ExtractToPreset(ctx context.Context, in *ExtractToPresetRequest, opts ...grpc.CallOption) (*ExtractToPresetResponse, error)
@@ -79,6 +84,16 @@ func (c *testRunServiceClient) ListTestRuns(ctx context.Context, in *ListTestRun
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListTestRunsResponse)
 	err := c.cc.Invoke(ctx, TestRunService_ListTestRuns_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *testRunServiceClient) ListTestRunFacets(ctx context.Context, in *ListTestRunFacetsRequest, opts ...grpc.CallOption) (*ListTestRunFacetsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListTestRunFacetsResponse)
+	err := c.cc.Invoke(ctx, TestRunService_ListTestRunFacets_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -127,9 +142,13 @@ type TestRunServiceServer interface {
 	GetTestRun(context.Context, *GetTestRunRequest) (*GetTestRunResponse, error)
 	// ListTestRuns lists runs with filtering and pagination. Read-only.
 	ListTestRuns(context.Context, *ListTestRunsRequest) (*ListTestRunsResponse, error)
+	// ListTestRunFacets lists distinct values for run-list facet controls.
+	// Read-only.
+	ListTestRunFacets(context.Context, *ListTestRunFacetsRequest) (*ListTestRunFacetsResponse, error)
 	// CancelTestRun is idempotent: cancelling a finished/cancelled run is a no-op.
 	CancelTestRun(context.Context, *CancelTestRunRequest) (*CancelTestRunResponse, error)
-	// DeleteTestRun is idempotent: deleting an absent run is a no-op.
+	// DeleteTestRun is idempotent: soft-deleting an absent or already-deleted
+	// run is a no-op.
 	DeleteTestRun(context.Context, *DeleteTestRunRequest) (*DeleteTestRunResponse, error)
 	// ExtractToPreset mints a new preset. Not idempotent.
 	ExtractToPreset(context.Context, *ExtractToPresetRequest) (*ExtractToPresetResponse, error)
@@ -151,6 +170,9 @@ func (UnimplementedTestRunServiceServer) GetTestRun(context.Context, *GetTestRun
 }
 func (UnimplementedTestRunServiceServer) ListTestRuns(context.Context, *ListTestRunsRequest) (*ListTestRunsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListTestRuns not implemented")
+}
+func (UnimplementedTestRunServiceServer) ListTestRunFacets(context.Context, *ListTestRunFacetsRequest) (*ListTestRunFacetsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListTestRunFacets not implemented")
 }
 func (UnimplementedTestRunServiceServer) CancelTestRun(context.Context, *CancelTestRunRequest) (*CancelTestRunResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CancelTestRun not implemented")
@@ -236,6 +258,24 @@ func _TestRunService_ListTestRuns_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TestRunService_ListTestRunFacets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListTestRunFacetsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TestRunServiceServer).ListTestRunFacets(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TestRunService_ListTestRunFacets_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TestRunServiceServer).ListTestRunFacets(ctx, req.(*ListTestRunFacetsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _TestRunService_CancelTestRun_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CancelTestRunRequest)
 	if err := dec(in); err != nil {
@@ -308,6 +348,10 @@ var TestRunService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListTestRuns",
 			Handler:    _TestRunService_ListTestRuns_Handler,
+		},
+		{
+			MethodName: "ListTestRunFacets",
+			Handler:    _TestRunService_ListTestRunFacets_Handler,
 		},
 		{
 			MethodName: "CancelTestRun",

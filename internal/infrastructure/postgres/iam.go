@@ -102,7 +102,7 @@ func (r *AccountRepo) GetByNickname(ctx context.Context, nickname string) (*iam.
 	return decodeAccount(row.Data)
 }
 
-func (r *AccountRepo) List(ctx context.Context, _ uint32, _ string) ([]*iam.Account, string, error) {
+func (r *AccountRepo) List(ctx context.Context, pageSize uint32, pageToken string) ([]*iam.Account, string, error) {
 	rows, err := r.db.q().ListIamAccounts(ctx)
 	if err != nil {
 		return nil, "", err
@@ -115,7 +115,8 @@ func (r *AccountRepo) List(ctx context.Context, _ uint32, _ string) ([]*iam.Acco
 		}
 		out = append(out, acc)
 	}
-	return out, "", nil
+	page, next := pageRecords(out, pageSize, pageToken)
+	return page, next, nil
 }
 
 func (r *AccountRepo) Update(ctx context.Context, account *iam.Account) error {
@@ -228,6 +229,32 @@ func (r *ApiTokenRepo) Get(ctx context.Context, id string) (*iam.ApiToken, error
 		return nil, err
 	}
 	return rec, nil
+}
+
+func (r *ApiTokenRepo) GetByPrefix(ctx context.Context, prefix string) (*iam.ApiToken, error) {
+	const query = `select data from iam_api_tokens where data->>'prefix' = $1;`
+	var data []byte
+	if err := r.db.TxDB.QueryRow(ctx, query, prefix).Scan(&data); err != nil {
+		return nil, translatePgErr("api_token", err)
+	}
+	rec := &iam.ApiToken{}
+	if err := unmarshal(data, rec); err != nil {
+		return nil, err
+	}
+	return rec, nil
+}
+
+func (r *ApiTokenRepo) TouchLastUsed(ctx context.Context, id string, at time.Time) error {
+	const query = `
+update iam_api_tokens
+set updated_at = now(),
+    data = jsonb_set(
+        jsonb_set(data, '{lastUsedAt}', to_jsonb($2::text), true),
+        '{updatedAt}', to_jsonb($2::text), true
+    )
+where id = $1;`
+	_, err := r.db.TxDB.Exec(ctx, query, id, at.UTC().Format(time.RFC3339Nano))
+	return err
 }
 
 func (r *ApiTokenRepo) ListByAccount(ctx context.Context, accountID string) ([]*iam.ApiToken, error) {
@@ -420,7 +447,7 @@ func (r *RoleRepo) GetMany(ctx context.Context, ids []string) ([]*iam.Role, erro
 	return out, nil
 }
 
-func (r *RoleRepo) List(ctx context.Context, tenantID string, _ uint32, _ string) ([]*iam.Role, string, error) {
+func (r *RoleRepo) List(ctx context.Context, tenantID string, pageSize uint32, pageToken string) ([]*iam.Role, string, error) {
 	rows, err := r.db.q().ListIamRoles(ctx, tenantID)
 	if err != nil {
 		return nil, "", err
@@ -433,7 +460,8 @@ func (r *RoleRepo) List(ctx context.Context, tenantID string, _ uint32, _ string
 		}
 		out = append(out, role)
 	}
-	return out, "", nil
+	page, next := pageRecords(out, pageSize, pageToken)
+	return page, next, nil
 }
 
 func (r *RoleRepo) Update(ctx context.Context, role *iam.Role) error {
@@ -524,7 +552,31 @@ func (r *MembershipRepo) GetByAccountTenant(ctx context.Context, accountID, tena
 	return decodeMembership(row.Data)
 }
 
-func (r *MembershipRepo) List(ctx context.Context, tenantID string, _ uint32, _ string) ([]*iam.Membership, string, error) {
+func (r *MembershipRepo) ShareTenant(ctx context.Context, accountID, otherAccountID string) (bool, error) {
+	const query = `
+select exists (
+  select 1
+  from iam_memberships caller
+  join iam_memberships target on target.tenant_id = caller.tenant_id
+  where caller.account_id = $1 and target.account_id = $2
+)`
+	var shared bool
+	if err := r.db.TxDB.QueryRow(ctx, query, accountID, otherAccountID).Scan(&shared); err != nil {
+		return false, err
+	}
+	return shared, nil
+}
+
+func (r *MembershipRepo) RoleInUse(ctx context.Context, roleID string) (bool, error) {
+	const query = `select exists (select 1 from iam_memberships where data->'roleIds' ? $1)`
+	var inUse bool
+	if err := r.db.TxDB.QueryRow(ctx, query, roleID).Scan(&inUse); err != nil {
+		return false, err
+	}
+	return inUse, nil
+}
+
+func (r *MembershipRepo) List(ctx context.Context, tenantID string, pageSize uint32, pageToken string) ([]*iam.Membership, string, error) {
 	rows, err := r.db.q().ListIamMemberships(ctx, tenantID)
 	if err != nil {
 		return nil, "", err
@@ -537,7 +589,8 @@ func (r *MembershipRepo) List(ctx context.Context, tenantID string, _ uint32, _ 
 		}
 		out = append(out, m)
 	}
-	return out, "", nil
+	page, next := pageRecords(out, pageSize, pageToken)
+	return page, next, nil
 }
 
 func (r *MembershipRepo) Update(ctx context.Context, membership *iam.Membership) error {

@@ -35,16 +35,24 @@ type CellResolver interface {
 // child rows commit atomically with the SuiteRunRecord.
 type ChildRunPersister interface {
 	CreateChildRun(ctx context.Context, run *models.TestRunRecord) error
+	UpdateChildRun(ctx context.Context, run *models.TestRunRecord) error
+}
+
+// SuiteRunPersister persists the parent SuiteRunRecord after child expansion and
+// before the SuiteWorkflow is started.
+type SuiteRunPersister interface {
+	SaveSuiteRun(ctx context.Context, run *models.SuiteRunRecord) error
 }
 
 // SuiteRunLauncher implements suite.SuiteRunLauncher. It expands a baked
 // domain.Suite into one child TestRunRecord per compatible+enabled cell,
-// persists them, fills the SuiteRunRecord children + summary, and starts
-// SuiteWorkflow with one RunConfig per child.
+// persists them, fills the SuiteRunRecord children + summary, and builds a
+// post-commit SuiteWorkflow starter with one RunConfig per child.
 type SuiteRunLauncher struct {
 	tc       workflowpb.SuiteWorkflowServiceClient
 	resolver CellResolver
 	children ChildRunPersister
+	suites   SuiteRunPersister
 	settings runbuilder.SettingsSource
 }
 
@@ -55,13 +63,15 @@ var _ suite.SuiteRunLauncher = (*SuiteRunLauncher)(nil)
 //   - c        Temporal client used to start SuiteWorkflow.
 //   - resolver resolves each cell's preset/inline source into a db+workload Test.
 //   - children persists the expanded child TestRunRecords.
+//   - suites persists the parent SuiteRunRecord after children are attached.
 //   - settings supplies per-provider settings + agent bootstrap for the RunConfigs
 //     (may be nil to build RunConfigs without provider settings / bootstrap).
-func NewSuiteRunLauncher(c client.Client, resolver CellResolver, children ChildRunPersister, settings runbuilder.SettingsSource) *SuiteRunLauncher {
+func NewSuiteRunLauncher(c client.Client, resolver CellResolver, children ChildRunPersister, suites SuiteRunPersister, settings runbuilder.SettingsSource) *SuiteRunLauncher {
 	return &SuiteRunLauncher{
 		tc:       workflowpb.NewSuiteWorkflowServiceClient(c),
 		resolver: resolver,
 		children: children,
+		suites:   suites,
 		settings: settings,
 	}
 }
@@ -88,13 +98,13 @@ func (l *SuiteRunLauncher) Validate(ctx context.Context, tenantID string, spec *
 	return nil
 }
 
-// Launch expands + persists the SuiteRunRecord's children and starts
-// SuiteWorkflow. The handler has already filled the run's identity/tenant/
-// trigger/timing; this fills children + summary and carries the suite's resolved
-// rating defaults onto each child.
-func (l *SuiteRunLauncher) Launch(ctx context.Context, run *models.SuiteRunRecord, spec *domain.Suite) error {
+// Launch expands + persists the SuiteRunRecord's children and returns a
+// post-commit SuiteWorkflow starter. The handler has already filled the run's
+// identity/tenant/trigger/timing; this fills children + summary and carries the
+// suite's resolved rating defaults onto each child.
+func (l *SuiteRunLauncher) Launch(ctx context.Context, run *models.SuiteRunRecord, spec *domain.Suite) (func(context.Context) error, error) {
 	if spec == nil {
-		return errors.New("suite spec is required")
+		return nil, errors.New("suite spec is required")
 	}
 
 	now := timestamppb.New(time.Now())
@@ -102,9 +112,10 @@ func (l *SuiteRunLauncher) Launch(ctx context.Context, run *models.SuiteRunRecor
 	inGlobal := spec.GetDefaultInGlobalRating()
 
 	var (
-		children []*models.SuiteRunRecord_ChildRun
-		configs  []*workflowpb.RunConfig
-		dbKinds  []domain.Database_Kind
+		children     []*models.SuiteRunRecord_ChildRun
+		childRecords []*models.TestRunRecord
+		configs      []*workflowpb.RunConfig
+		dbKinds      []domain.Database_Kind
 	)
 
 	for _, cell := range spec.GetCells() {
@@ -113,7 +124,7 @@ func (l *SuiteRunLauncher) Launch(ctx context.Context, run *models.SuiteRunRecor
 		}
 		testRun, err := l.bakeCell(ctx, runTenantID(run), spec, cell)
 		if err != nil {
-			return fmt.Errorf("cell %q: %w", cellLabel(cell), err)
+			return nil, fmt.Errorf("cell %q: %w", cellLabel(cell), err)
 		}
 
 		childID := testRun.GetId()
@@ -135,8 +146,9 @@ func (l *SuiteRunLauncher) Launch(ctx context.Context, run *models.SuiteRunRecor
 			Summary:        RunSummarizer{}.Summarize(testRun),
 		}
 		if err := l.children.CreateChildRun(ctx, childRec); err != nil {
-			return err
+			return nil, err
 		}
+		childRecords = append(childRecords, childRec)
 
 		children = append(children, &models.SuiteRunRecord_ChildRun{
 			SuiteCellId: cell.GetId(),
@@ -148,7 +160,7 @@ func (l *SuiteRunLauncher) Launch(ctx context.Context, run *models.SuiteRunRecor
 
 		cfg, err := l.runConfig(ctx, runTenantID(run), spec.GetProvider(), testRun)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		configs = append(configs, cfg)
 	}
@@ -162,15 +174,81 @@ func (l *SuiteRunLauncher) Launch(ctx context.Context, run *models.SuiteRunRecor
 		Pending:   uint32(len(children)),
 		StartedAt: now,
 	}
+	if l.suites == nil {
+		return nil, errors.New("suite run persister is required")
+	}
+	if err := l.suites.SaveSuiteRun(ctx, run); err != nil {
+		return nil, err
+	}
 
-	// Start the suite workflow. The id is derived from suite_run_id by the
-	// generated options, so a retry that re-runs Launch dedupes by it.
-	if _, err := l.tc.SuiteWorkflowAsync(ctx, &workflowpb.SuiteWorkflowRequest{
+	req := &workflowpb.SuiteWorkflowRequest{
 		SuiteRunId:  run.GetEntity().GetId(),
 		Runs:        configs,
 		MaxParallel: run.GetMaxParallel(),
-	}); err != nil {
+	}
+	start := func(ctx context.Context) error {
+		if _, err := l.tc.SuiteWorkflowAsync(ctx, req); err != nil {
+			if ferr := l.failPreparedSuite(ctx, run, childRecords); ferr != nil {
+				return ferr
+			}
+			return err
+		}
+		return nil
+	}
+	return start, nil
+}
+
+func (l *SuiteRunLauncher) failPreparedSuite(ctx context.Context, run *models.SuiteRunRecord, children []*models.TestRunRecord) error {
+	now := timestamppb.New(time.Now())
+	run.Status = commonpb.Status_STATUS_FAILED
+	if run.Summary == nil {
+		run.Summary = &models.SuiteRunRecord_Summary{}
+	}
+	var failed uint32
+	for _, child := range run.GetChildren() {
+		if isTerminalStatus(child.GetStatus()) {
+			continue
+		}
+		child.Status = commonpb.Status_STATUS_FAILED
+		failed++
+	}
+	run.Summary.Total = uint32(len(run.GetChildren()))
+	run.Summary.Failed = failed
+	run.Summary.Pending = 0
+	run.Summary.Running = 0
+	run.Summary.ProgressPct = progressPct(int(failed+run.Summary.GetCompleted()), len(run.GetChildren()))
+	if run.Summary.StartedAt == nil {
+		run.Summary.StartedAt = now
+	}
+	if run.Summary.FinishedAt == nil {
+		run.Summary.FinishedAt = now
+	}
+	run.Summary.Duration = suiteDuration(run.Summary.GetStartedAt(), run.Summary.GetFinishedAt(), time.Now())
+	touchRecordUpdated(run.GetEntity(), time.Now())
+	if err := l.suites.SaveSuiteRun(ctx, run); err != nil {
 		return err
+	}
+
+	for _, child := range children {
+		if isTerminalStatus(child.GetStatus()) {
+			continue
+		}
+		child.Status = commonpb.Status_STATUS_FAILED
+		if child.Summary == nil {
+			child.Summary = &models.TestRunRecord_Summary{}
+		}
+		if child.Summary.StartedAt == nil {
+			child.Summary.StartedAt = now
+		}
+		if child.Summary.FinishedAt == nil {
+			child.Summary.FinishedAt = now
+		}
+		child.Summary.Duration = spanDuration(child.Summary.GetStartedAt(), child.Summary.GetFinishedAt(), time.Now())
+		child.Summary.ProgressPct = 100
+		touchRecordUpdated(child.GetEntity(), time.Now())
+		if err := l.children.UpdateChildRun(ctx, child); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -209,6 +287,7 @@ func (l *SuiteRunLauncher) bakeCell(ctx context.Context, tenantID string, spec *
 // resolving provider settings + agent bootstrap through the settings source.
 func (l *SuiteRunLauncher) runConfig(ctx context.Context, tenantID string, provider deployment.Provider, testRun *domain.TestRun) (*workflowpb.RunConfig, error) {
 	cfg := &workflowpb.RunConfig{
+		TenantId:           tenantID,
 		Id:                 testRun.GetId(),
 		Database:           testRun.GetDatabase(),
 		Workload:           testRun.GetWorkload(),

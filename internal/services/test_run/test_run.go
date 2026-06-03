@@ -87,9 +87,12 @@ func (s *TestRunService) StartTestRun(ctx context.Context, req *api.StartTestRun
 	}
 
 	// Launch is external IO: it MUST happen after the record commits, outside the
-	// transaction. A launch failure surfaces as Internal; the record stays PENDING
-	// for a reconciler/retry to pick up.
+	// transaction. If launch fails, close the already-visible record as FAILED so
+	// list/overview do not expose an unrecoverable PENDING run forever.
 	if err := s.d.Workflows.LaunchTest(ctx, rec); err != nil {
+		if ferr := s.finishFailedRun(ctx, req.GetTenantId(), rec.GetEntity().GetId()); ferr != nil {
+			return nil, ferr
+		}
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	return &api.StartTestRunResponse{Run: rec}, nil
@@ -110,11 +113,32 @@ func (s *TestRunService) ListTestRuns(ctx context.Context, req *api.ListTestRuns
 	if req.GetTenantId() == "" {
 		return nil, status.Error(codes.InvalidArgument, "tenant_id is required")
 	}
-	runs, next, err := s.d.Runs.List(ctx, req)
+	c, err := s.caller(ctx)
+	if err != nil {
+		return nil, err
+	}
+	runs, next, err := s.d.Runs.List(ctx, req, c.GetAccountId())
 	if err != nil {
 		return nil, utils.MapErr(err)
 	}
 	return &api.ListTestRunsResponse{Runs: runs, NextPageToken: next}, nil
+}
+
+// ListTestRunFacets returns distinct values for the run-list filters using the
+// same tenant and entity-filter semantics as ListTestRuns.
+func (s *TestRunService) ListTestRunFacets(ctx context.Context, req *api.ListTestRunFacetsRequest) (*api.ListTestRunFacetsResponse, error) {
+	if req.GetTenantId() == "" {
+		return nil, status.Error(codes.InvalidArgument, "tenant_id is required")
+	}
+	c, err := s.caller(ctx)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := s.d.Runs.ListFacets(ctx, req, c.GetAccountId())
+	if err != nil {
+		return nil, utils.MapErr(err)
+	}
+	return resp, nil
 }
 
 /*
@@ -148,17 +172,54 @@ func (s *TestRunService) CancelTestRun(ctx context.Context, req *api.CancelTestR
 	}
 	// Signal the workflow outside the transaction; a not-running workflow is a no-op.
 	if rec.GetStatus() == commonpb.Status_STATUS_CANCELLING {
-		if err := s.d.Workflows.CancelTest(ctx, rec.GetEntity().GetId()); err != nil && !errors.Is(err, derrors.ErrNotFound) {
-			return nil, status.Error(codes.Internal, err.Error())
+		if err := s.d.Workflows.CancelTest(ctx, rec.GetEntity().GetId()); err != nil {
+			if !errors.Is(err, derrors.ErrNotFound) {
+				return nil, status.Error(codes.Internal, err.Error())
+			}
+			rec, err = s.finishCancelledRun(ctx, req.GetTenantId(), req.GetId())
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	return &api.CancelTestRunResponse{Run: rec}, nil
 }
 
+func (s *TestRunService) finishCancelledRun(ctx context.Context, tenantID, runID string) (*models.TestRunRecord, error) {
+	return doTxRet(ctx, s, func(ctx context.Context) (*models.TestRunRecord, error) {
+		rec, err := s.d.Runs.Get(ctx, tenantID, runID)
+		if err != nil {
+			return nil, utils.MapErr(err)
+		}
+		if isTerminal(rec.GetStatus()) {
+			return rec, nil
+		}
+		markCancelled(rec, s.now())
+		if err := s.d.Runs.Update(ctx, rec); err != nil {
+			return nil, utils.MapErr(err)
+		}
+		return rec, nil
+	})
+}
+
+func (s *TestRunService) finishFailedRun(ctx context.Context, tenantID, runID string) error {
+	return s.doTx(ctx, func(ctx context.Context) error {
+		rec, err := s.d.Runs.Get(ctx, tenantID, runID)
+		if err != nil {
+			return utils.MapErr(err)
+		}
+		if isTerminal(rec.GetStatus()) {
+			return nil
+		}
+		markFailed(rec, s.now())
+		return utils.MapErr(s.d.Runs.Update(ctx, rec))
+	})
+}
+
 /*
-DeleteTestRun removes a run. Idempotent: deleting an absent run is a no-op.
-A still-active run is best-effort cancelled first so we never orphan a running
-workflow behind a deleted record.
+DeleteTestRun soft-deletes a run. Idempotent: deleting an absent or already
+deleted run is a no-op. A still-active run is best-effort cancelled first so we
+never hide a row while leaving its workflow running unnoticed.
 */
 func (s *TestRunService) DeleteTestRun(ctx context.Context, req *api.DeleteTestRunRequest) (*api.DeleteTestRunResponse, error) {
 	if req.GetTenantId() == "" {
@@ -171,13 +232,41 @@ func (s *TestRunService) DeleteTestRun(ctx context.Context, req *api.DeleteTestR
 	if err != nil {
 		return nil, utils.MapErr(err)
 	}
+	cancelMissing := false
 	if !isTerminal(rec.GetStatus()) {
-		if err := s.d.Workflows.CancelTest(ctx, rec.GetEntity().GetId()); err != nil && !errors.Is(err, derrors.ErrNotFound) {
-			return nil, status.Error(codes.Internal, err.Error())
+		if err := s.d.Workflows.CancelTest(ctx, rec.GetEntity().GetId()); err != nil {
+			if errors.Is(err, derrors.ErrNotFound) {
+				cancelMissing = true
+			} else {
+				return nil, status.Error(codes.Internal, err.Error())
+			}
 		}
 	}
 	if err := s.doTx(ctx, func(ctx context.Context) error {
-		return utils.MapErr(derrors.IgnoreNotFound(s.d.Runs.Delete(ctx, req.GetTenantId(), req.GetId())))
+		current, err := s.d.Runs.Get(ctx, req.GetTenantId(), req.GetId())
+		if errors.Is(err, derrors.ErrNotFound) {
+			return nil
+		}
+		if err != nil {
+			return utils.MapErr(err)
+		}
+		if current.GetEntity().GetTimings().GetDeletedAt() != nil {
+			return nil
+		}
+		now := s.now()
+		if !isTerminal(current.GetStatus()) {
+			if cancelMissing {
+				markCancelled(current, now)
+			} else {
+				current.Status = commonpb.Status_STATUS_CANCELLING
+				touchUpdated(current, now)
+			}
+		}
+		markDeleted(current, now)
+		if err := s.d.Runs.Update(ctx, current); err != nil {
+			return utils.MapErr(err)
+		}
+		return nil
 	}); err != nil {
 		return nil, err
 	}

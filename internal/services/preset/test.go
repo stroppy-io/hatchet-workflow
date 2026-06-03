@@ -21,7 +21,6 @@ type TestPresetRepo interface {
 	Get(ctx context.Context, tenantID, id, callerAccountID string) (*models.TestPresetRecord, error)
 	List(ctx context.Context, req *api.ListTestPresetsRequest, callerAccountID string) (presets []*models.TestPresetRecord, nextPageToken string, err error)
 	Update(ctx context.Context, preset *models.TestPresetRecord) error
-	Delete(ctx context.Context, tenantID, id string) error
 }
 
 func (s *TestPresetService) CreateTestPreset(ctx context.Context, req *api.CreateTestPresetRequest) (*api.CreateTestPresetResponse, error) {
@@ -35,6 +34,7 @@ func (s *TestPresetService) CreateTestPreset(ctx context.Context, req *api.Creat
 	}
 	preset.Entity = s.d.stampNew(preset.GetEntity(), req.GetTenantId(), c.GetAccountId())
 	preset.IsSystem = false
+	fillTestPresetSummary(preset)
 	if err := s.d.Tests.Create(ctx, preset); err != nil {
 		return nil, utils.MapErr(err)
 	}
@@ -87,6 +87,7 @@ func (s *TestPresetService) UpdateTestPreset(ctx context.Context, req *api.Updat
 			Test:     in.GetTest(),
 			IsSystem: false,
 		}
+		fillTestPresetSummary(out)
 		if err := s.d.Tests.Update(ctx, out); err != nil {
 			return nil, utils.MapErr(err)
 		}
@@ -111,7 +112,14 @@ func (s *TestPresetService) DeleteTestPreset(ctx context.Context, req *api.Delet
 		if existing.GetIsSystem() {
 			return status.Error(codes.FailedPrecondition, "system presets cannot be deleted")
 		}
-		return ignoreNotFound(s.d.Tests.Delete(ctx, req.GetTenantId(), req.GetId()))
+		if existing.GetEntity().GetTimings().GetDeletedAt() != nil {
+			return nil
+		}
+		markEntityDeleted(existing.GetEntity(), s.d.now())
+		if err := s.d.Tests.Update(ctx, existing); err != nil {
+			return utils.MapErr(err)
+		}
+		return nil
 	}); err != nil {
 		return nil, err
 	}
@@ -136,6 +144,7 @@ func (s *TestPresetService) CloneTestPreset(ctx context.Context, req *api.CloneT
 			Test:     src.GetTest(),
 			IsSystem: false,
 		}
+		fillTestPresetSummary(out)
 		if err := s.d.Tests.Create(ctx, out); err != nil {
 			return nil, utils.MapErr(err)
 		}

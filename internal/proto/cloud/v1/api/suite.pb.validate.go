@@ -942,6 +942,250 @@ var _ interface {
 	ErrorName() string
 } = ListSuitesResponseValidationError{}
 
+// Validate checks the field values on ListSuiteFacetsRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListSuiteFacetsRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListSuiteFacetsRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListSuiteFacetsRequestMultiError, or nil if none found.
+func (m *ListSuiteFacetsRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListSuiteFacetsRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetTenantId()); l < 1 || l > 64 {
+		err := ListSuiteFacetsRequestValidationError{
+			field:  "TenantId",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetFilter()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListSuiteFacetsRequestValidationError{
+					field:  "Filter",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListSuiteFacetsRequestValidationError{
+					field:  "Filter",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetFilter()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListSuiteFacetsRequestValidationError{
+				field:  "Filter",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return ListSuiteFacetsRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListSuiteFacetsRequestMultiError is an error wrapping multiple validation
+// errors returned by ListSuiteFacetsRequest.ValidateAll() if the designated
+// constraints aren't met.
+type ListSuiteFacetsRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListSuiteFacetsRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListSuiteFacetsRequestMultiError) AllErrors() []error { return m }
+
+// ListSuiteFacetsRequestValidationError is the validation error returned by
+// ListSuiteFacetsRequest.Validate if the designated constraints aren't met.
+type ListSuiteFacetsRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListSuiteFacetsRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListSuiteFacetsRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListSuiteFacetsRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListSuiteFacetsRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListSuiteFacetsRequestValidationError) ErrorName() string {
+	return "ListSuiteFacetsRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListSuiteFacetsRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListSuiteFacetsRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListSuiteFacetsRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListSuiteFacetsRequestValidationError{}
+
+// Validate checks the field values on ListSuiteFacetsResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListSuiteFacetsResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListSuiteFacetsResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListSuiteFacetsResponseMultiError, or nil if none found.
+func (m *ListSuiteFacetsResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListSuiteFacetsResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return ListSuiteFacetsResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListSuiteFacetsResponseMultiError is an error wrapping multiple validation
+// errors returned by ListSuiteFacetsResponse.ValidateAll() if the designated
+// constraints aren't met.
+type ListSuiteFacetsResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListSuiteFacetsResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListSuiteFacetsResponseMultiError) AllErrors() []error { return m }
+
+// ListSuiteFacetsResponseValidationError is the validation error returned by
+// ListSuiteFacetsResponse.Validate if the designated constraints aren't met.
+type ListSuiteFacetsResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListSuiteFacetsResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListSuiteFacetsResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListSuiteFacetsResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListSuiteFacetsResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListSuiteFacetsResponseValidationError) ErrorName() string {
+	return "ListSuiteFacetsResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListSuiteFacetsResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListSuiteFacetsResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListSuiteFacetsResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListSuiteFacetsResponseValidationError{}
+
 // Validate checks the field values on UpdateSuiteRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.

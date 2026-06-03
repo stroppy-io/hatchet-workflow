@@ -5,7 +5,6 @@ import (
 
 	derrors "github.com/stroppy-io/stroppy-cloud/internal/domain/errors"
 	dbgen "github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres/gen/db"
-	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	commonpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
@@ -80,23 +79,8 @@ func (r *TestRunRepo) Get(ctx context.Context, tenantID, id string) (*models.Tes
 	return rec, nil
 }
 
-// List returns every run for the request tenant, ignoring filters/sort/paging
-// (demo). The next-page token is always empty.
-func (r *TestRunRepo) List(ctx context.Context, query *api.ListTestRunsRequest) ([]*models.TestRunRecord, string, error) {
-	rows, err := r.db.q().ListTestRunRecords(ctx, query.GetTenantId())
-	if err != nil {
-		return nil, "", err
-	}
-	out := make([]*models.TestRunRecord, 0, len(rows))
-	for _, row := range rows {
-		rec := &models.TestRunRecord{}
-		if err := unmarshal(row.Data, rec); err != nil {
-			return nil, "", err
-		}
-		out = append(out, rec)
-	}
-	return out, "", nil
-}
+// List is implemented in test_run_list.go: it honors the full
+// ListTestRunsRequest (filters/facets/sort/pagination) against postgres.
 
 func (r *TestRunRepo) Update(ctx context.Context, run *models.TestRunRecord) error {
 	data, err := marshal(run)
@@ -177,8 +161,8 @@ func (r *DraftRepo) Get(ctx context.Context, tenantID, id string) (*models.TestW
 	return rec, nil
 }
 
-// List returns every draft for the tenant, ignoring filter/sort/page (demo).
-func (r *DraftRepo) List(ctx context.Context, tenantID string, _ *commonpb.EntityFilter, _ *commonpb.EntitySort, _ *commonpb.Page) ([]*models.TestWizardDraftRecord, string, error) {
+// List returns the matching draft page for the tenant.
+func (r *DraftRepo) List(ctx context.Context, tenantID string, filter *commonpb.EntityFilter, sort *commonpb.EntitySort, page *commonpb.Page) ([]*models.TestWizardDraftRecord, string, error) {
 	rows, err := r.db.q().ListTestWizardDrafts(ctx, tenantID)
 	if err != nil {
 		return nil, "", err
@@ -191,7 +175,8 @@ func (r *DraftRepo) List(ctx context.Context, tenantID string, _ *commonpb.Entit
 		}
 		out = append(out, rec)
 	}
-	return out, "", nil
+	pageRecords, next := filterDraftRecords(out, filter, sort, page)
+	return pageRecords, next, nil
 }
 
 func (r *DraftRepo) Update(ctx context.Context, draft *models.TestWizardDraftRecord) error {
@@ -242,6 +227,7 @@ var (
 )
 
 func (r *PresetRepo) CreateTestPreset(ctx context.Context, preset *models.TestPresetRecord) error {
+	ensureTestPresetSummary(preset)
 	return r.create(ctx, preset)
 }
 
@@ -294,6 +280,7 @@ func (r *PresetRepo) Save(ctx context.Context, tenantID, authorID, name string, 
 		},
 		IsSystem: false,
 	}
+	ensureTestPresetSummary(preset)
 	if err := r.create(ctx, preset); err != nil {
 		return nil, err
 	}

@@ -37,7 +37,8 @@ type SuiteRunServiceClient interface {
 	ListSuiteRuns(ctx context.Context, in *ListSuiteRunsRequest, opts ...grpc.CallOption) (*ListSuiteRunsResponse, error)
 	// CancelSuiteRun is idempotent: cancelling a finished/cancelled run is a no-op.
 	CancelSuiteRun(ctx context.Context, in *CancelSuiteRunRequest, opts ...grpc.CallOption) (*CancelSuiteRunResponse, error)
-	// DeleteSuiteRun is idempotent: deleting an absent suite run is a no-op.
+	// DeleteSuiteRun is idempotent: soft-deleting an absent or already-deleted
+	// suite run is a no-op.
 	DeleteSuiteRun(ctx context.Context, in *DeleteSuiteRunRequest, opts ...grpc.CallOption) (*DeleteSuiteRunResponse, error)
 }
 
@@ -101,7 +102,8 @@ type SuiteRunServiceServer interface {
 	ListSuiteRuns(context.Context, *ListSuiteRunsRequest) (*ListSuiteRunsResponse, error)
 	// CancelSuiteRun is idempotent: cancelling a finished/cancelled run is a no-op.
 	CancelSuiteRun(context.Context, *CancelSuiteRunRequest) (*CancelSuiteRunResponse, error)
-	// DeleteSuiteRun is idempotent: deleting an absent suite run is a no-op.
+	// DeleteSuiteRun is idempotent: soft-deleting an absent or already-deleted
+	// suite run is a no-op.
 	DeleteSuiteRun(context.Context, *DeleteSuiteRunRequest) (*DeleteSuiteRunResponse, error)
 	mustEmbedUnimplementedSuiteRunServiceServer()
 }

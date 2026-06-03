@@ -25,6 +25,10 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
  */
 message RunConfig {
     /*
+        tenant_id scopes quota reservations and provider settings lookup.
+     */
+    string tenant_id = 10 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
         id is the stable run identifier.
      */
     string id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];

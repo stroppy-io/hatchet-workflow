@@ -41,11 +41,10 @@ type TestRunRepo interface {
 	Create(ctx context.Context, run *models.TestRunRecord) error
 	// Get fetches one run scoped to tenantID; a row of another tenant -> ErrNotFound.
 	Get(ctx context.Context, tenantID, id string) (*models.TestRunRecord, error)
-	List(ctx context.Context, query *api.ListTestRunsRequest) (runs []*models.TestRunRecord, nextPageToken string, err error)
+	List(ctx context.Context, query *api.ListTestRunsRequest, callerAccountID string) (runs []*models.TestRunRecord, nextPageToken string, err error)
+	ListFacets(ctx context.Context, query *api.ListTestRunFacetsRequest, callerAccountID string) (*api.ListTestRunFacetsResponse, error)
 	// Update persists a mutated record (status/summary changes).
 	Update(ctx context.Context, run *models.TestRunRecord) error
-	// Delete removes the run scoped to tenantID; absent -> ErrNotFound.
-	Delete(ctx context.Context, tenantID, id string) error
 }
 
 // PresetRepo persists models.TestPresetRecord rows for ExtractToPreset.

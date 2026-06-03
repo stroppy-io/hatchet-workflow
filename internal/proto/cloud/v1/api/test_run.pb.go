@@ -58,6 +58,8 @@ const (
 	ListTestRunsRequest_Sort_KIND_PROTOCOL ListTestRunsRequest_Sort_Kind = 10
 	// KIND_TEST_PRESET orders by test preset name/id.
 	ListTestRunsRequest_Sort_KIND_TEST_PRESET ListTestRunsRequest_Sort_Kind = 11
+	// KIND_TRIGGER orders by how the run was launched (manual/cron/api).
+	ListTestRunsRequest_Sort_KIND_TRIGGER ListTestRunsRequest_Sort_Kind = 12
 )
 
 // Enum value maps for ListTestRunsRequest_Sort_Kind.
@@ -75,6 +77,7 @@ var (
 		9:  "KIND_NODE_COUNT",
 		10: "KIND_PROTOCOL",
 		11: "KIND_TEST_PRESET",
+		12: "KIND_TRIGGER",
 	}
 	ListTestRunsRequest_Sort_Kind_value = map[string]int32{
 		"KIND_UNSPECIFIED": 0,
@@ -89,6 +92,7 @@ var (
 		"KIND_NODE_COUNT":  9,
 		"KIND_PROTOCOL":    10,
 		"KIND_TEST_PRESET": 11,
+		"KIND_TRIGGER":     12,
 	}
 )
 
@@ -698,6 +702,147 @@ func (x *ListTestRunsResponse) GetNextPageToken() string {
 	return ""
 }
 
+// ListTestRunFacetsRequest returns distinct values used by run-list facet
+// controls. It is tenant-scoped and honors the shared EntityFilter so clients
+// can exclude deleted rows by default or ask for deleted-inclusive facets.
+type ListTestRunFacetsRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// filter holds shared Entity-level filters. include_deleted controls
+	// whether soft-deleted runs contribute to facet values.
+	Filter        *common.EntityFilter `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListTestRunFacetsRequest) Reset() {
+	*x = ListTestRunFacetsRequest{}
+	mi := &file_cloud_v1_api_test_run_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListTestRunFacetsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListTestRunFacetsRequest) ProtoMessage() {}
+
+func (x *ListTestRunFacetsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_test_run_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListTestRunFacetsRequest.ProtoReflect.Descriptor instead.
+func (*ListTestRunFacetsRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_test_run_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *ListTestRunFacetsRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *ListTestRunFacetsRequest) GetFilter() *common.EntityFilter {
+	if x != nil {
+		return x.Filter
+	}
+	return nil
+}
+
+// ListTestRunFacetsResponse returns distinct non-empty values present in the
+// matching tenant's runs.
+type ListTestRunFacetsResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// author_ids are distinct entity.author_id values.
+	AuthorIds []string `protobuf:"bytes,1,rep,name=author_ids,json=authorIds,proto3" json:"author_ids,omitempty"`
+	// stroppy_versions are distinct summary.stroppy_version values.
+	StroppyVersions []string `protobuf:"bytes,2,rep,name=stroppy_versions,json=stroppyVersions,proto3" json:"stroppy_versions,omitempty"`
+	// db_preset_ids are distinct summary.db_preset_id values.
+	DbPresetIds []string `protobuf:"bytes,3,rep,name=db_preset_ids,json=dbPresetIds,proto3" json:"db_preset_ids,omitempty"`
+	// workload_preset_ids are distinct summary.workload_preset_id values.
+	WorkloadPresetIds []string `protobuf:"bytes,4,rep,name=workload_preset_ids,json=workloadPresetIds,proto3" json:"workload_preset_ids,omitempty"`
+	// test_preset_ids are distinct summary.test_preset_id values.
+	TestPresetIds []string `protobuf:"bytes,5,rep,name=test_preset_ids,json=testPresetIds,proto3" json:"test_preset_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListTestRunFacetsResponse) Reset() {
+	*x = ListTestRunFacetsResponse{}
+	mi := &file_cloud_v1_api_test_run_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListTestRunFacetsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListTestRunFacetsResponse) ProtoMessage() {}
+
+func (x *ListTestRunFacetsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_test_run_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListTestRunFacetsResponse.ProtoReflect.Descriptor instead.
+func (*ListTestRunFacetsResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_test_run_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *ListTestRunFacetsResponse) GetAuthorIds() []string {
+	if x != nil {
+		return x.AuthorIds
+	}
+	return nil
+}
+
+func (x *ListTestRunFacetsResponse) GetStroppyVersions() []string {
+	if x != nil {
+		return x.StroppyVersions
+	}
+	return nil
+}
+
+func (x *ListTestRunFacetsResponse) GetDbPresetIds() []string {
+	if x != nil {
+		return x.DbPresetIds
+	}
+	return nil
+}
+
+func (x *ListTestRunFacetsResponse) GetWorkloadPresetIds() []string {
+	if x != nil {
+		return x.WorkloadPresetIds
+	}
+	return nil
+}
+
+func (x *ListTestRunFacetsResponse) GetTestPresetIds() []string {
+	if x != nil {
+		return x.TestPresetIds
+	}
+	return nil
+}
+
 // CancelTestRun requests cancellation (status -> CANCELLING, then CANCELLED when
 // the workflow stops). Idempotent: cancelling a finished/cancelled run is a no-op.
 type CancelTestRunRequest struct {
@@ -712,7 +857,7 @@ type CancelTestRunRequest struct {
 
 func (x *CancelTestRunRequest) Reset() {
 	*x = CancelTestRunRequest{}
-	mi := &file_cloud_v1_api_test_run_proto_msgTypes[6]
+	mi := &file_cloud_v1_api_test_run_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -724,7 +869,7 @@ func (x *CancelTestRunRequest) String() string {
 func (*CancelTestRunRequest) ProtoMessage() {}
 
 func (x *CancelTestRunRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_test_run_proto_msgTypes[6]
+	mi := &file_cloud_v1_api_test_run_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -737,7 +882,7 @@ func (x *CancelTestRunRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelTestRunRequest.ProtoReflect.Descriptor instead.
 func (*CancelTestRunRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_test_run_proto_rawDescGZIP(), []int{6}
+	return file_cloud_v1_api_test_run_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *CancelTestRunRequest) GetTenantId() string {
@@ -765,7 +910,7 @@ type CancelTestRunResponse struct {
 
 func (x *CancelTestRunResponse) Reset() {
 	*x = CancelTestRunResponse{}
-	mi := &file_cloud_v1_api_test_run_proto_msgTypes[7]
+	mi := &file_cloud_v1_api_test_run_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -777,7 +922,7 @@ func (x *CancelTestRunResponse) String() string {
 func (*CancelTestRunResponse) ProtoMessage() {}
 
 func (x *CancelTestRunResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_test_run_proto_msgTypes[7]
+	mi := &file_cloud_v1_api_test_run_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -790,7 +935,7 @@ func (x *CancelTestRunResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelTestRunResponse.ProtoReflect.Descriptor instead.
 func (*CancelTestRunResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_test_run_proto_rawDescGZIP(), []int{7}
+	return file_cloud_v1_api_test_run_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *CancelTestRunResponse) GetRun() *models.TestRunRecord {
@@ -800,7 +945,7 @@ func (x *CancelTestRunResponse) GetRun() *models.TestRunRecord {
 	return nil
 }
 
-// DeleteTestRunRequest deletes a test run by id.
+// DeleteTestRunRequest soft-deletes a test run by id (sets entity.timings.deleted_at).
 type DeleteTestRunRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// tenant_id scopes the request to the owning tenant.
@@ -813,7 +958,7 @@ type DeleteTestRunRequest struct {
 
 func (x *DeleteTestRunRequest) Reset() {
 	*x = DeleteTestRunRequest{}
-	mi := &file_cloud_v1_api_test_run_proto_msgTypes[8]
+	mi := &file_cloud_v1_api_test_run_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -825,7 +970,7 @@ func (x *DeleteTestRunRequest) String() string {
 func (*DeleteTestRunRequest) ProtoMessage() {}
 
 func (x *DeleteTestRunRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_test_run_proto_msgTypes[8]
+	mi := &file_cloud_v1_api_test_run_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -838,7 +983,7 @@ func (x *DeleteTestRunRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteTestRunRequest.ProtoReflect.Descriptor instead.
 func (*DeleteTestRunRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_test_run_proto_rawDescGZIP(), []int{8}
+	return file_cloud_v1_api_test_run_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *DeleteTestRunRequest) GetTenantId() string {
@@ -855,8 +1000,8 @@ func (x *DeleteTestRunRequest) GetId() string {
 	return ""
 }
 
-// DeleteTestRunResponse is empty; deletion success is signalled by a non-error
-// reply.
+// DeleteTestRunResponse is empty; soft-delete success is signalled by a
+// non-error reply.
 type DeleteTestRunResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -865,7 +1010,7 @@ type DeleteTestRunResponse struct {
 
 func (x *DeleteTestRunResponse) Reset() {
 	*x = DeleteTestRunResponse{}
-	mi := &file_cloud_v1_api_test_run_proto_msgTypes[9]
+	mi := &file_cloud_v1_api_test_run_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -877,7 +1022,7 @@ func (x *DeleteTestRunResponse) String() string {
 func (*DeleteTestRunResponse) ProtoMessage() {}
 
 func (x *DeleteTestRunResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_test_run_proto_msgTypes[9]
+	mi := &file_cloud_v1_api_test_run_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -890,7 +1035,7 @@ func (x *DeleteTestRunResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteTestRunResponse.ProtoReflect.Descriptor instead.
 func (*DeleteTestRunResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_test_run_proto_rawDescGZIP(), []int{9}
+	return file_cloud_v1_api_test_run_proto_rawDescGZIP(), []int{11}
 }
 
 // ExtractToPreset saves a run's database+workload as a reusable TestPresetRecord,
@@ -909,7 +1054,7 @@ type ExtractToPresetRequest struct {
 
 func (x *ExtractToPresetRequest) Reset() {
 	*x = ExtractToPresetRequest{}
-	mi := &file_cloud_v1_api_test_run_proto_msgTypes[10]
+	mi := &file_cloud_v1_api_test_run_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -921,7 +1066,7 @@ func (x *ExtractToPresetRequest) String() string {
 func (*ExtractToPresetRequest) ProtoMessage() {}
 
 func (x *ExtractToPresetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_test_run_proto_msgTypes[10]
+	mi := &file_cloud_v1_api_test_run_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -934,7 +1079,7 @@ func (x *ExtractToPresetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExtractToPresetRequest.ProtoReflect.Descriptor instead.
 func (*ExtractToPresetRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_test_run_proto_rawDescGZIP(), []int{10}
+	return file_cloud_v1_api_test_run_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ExtractToPresetRequest) GetTenantId() string {
@@ -969,7 +1114,7 @@ type ExtractToPresetResponse struct {
 
 func (x *ExtractToPresetResponse) Reset() {
 	*x = ExtractToPresetResponse{}
-	mi := &file_cloud_v1_api_test_run_proto_msgTypes[11]
+	mi := &file_cloud_v1_api_test_run_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -981,7 +1126,7 @@ func (x *ExtractToPresetResponse) String() string {
 func (*ExtractToPresetResponse) ProtoMessage() {}
 
 func (x *ExtractToPresetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_test_run_proto_msgTypes[11]
+	mi := &file_cloud_v1_api_test_run_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -994,7 +1139,7 @@ func (x *ExtractToPresetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExtractToPresetResponse.ProtoReflect.Descriptor instead.
 func (*ExtractToPresetResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_test_run_proto_rawDescGZIP(), []int{11}
+	return file_cloud_v1_api_test_run_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ExtractToPresetResponse) GetPreset() *models.TestPresetRecord {
@@ -1023,7 +1168,7 @@ type ListTestRunsRequest_Sort struct {
 
 func (x *ListTestRunsRequest_Sort) Reset() {
 	*x = ListTestRunsRequest_Sort{}
-	mi := &file_cloud_v1_api_test_run_proto_msgTypes[12]
+	mi := &file_cloud_v1_api_test_run_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1035,7 +1180,7 @@ func (x *ListTestRunsRequest_Sort) String() string {
 func (*ListTestRunsRequest_Sort) ProtoMessage() {}
 
 func (x *ListTestRunsRequest_Sort) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_test_run_proto_msgTypes[12]
+	mi := &file_cloud_v1_api_test_run_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1121,7 +1266,7 @@ const file_cloud_v1_api_test_run_proto_rawDesc = "" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x19\n" +
 	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"P\n" +
 	"\x12GetTestRunResponse\x12:\n" +
-	"\x03run\x18\x01 \x01(\v2\x1e.cloud.v1.models.TestRunRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x03run\"\xa5\x0e\n" +
+	"\x03run\x18\x01 \x01(\v2\x1e.cloud.v1.models.TestRunRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x03run\"\xb7\x0e\n" +
 	"\x13ListTestRunsRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x125\n" +
 	"\x06filter\x18\x02 \x01(\v2\x1d.cloud.v1.common.EntityFilterR\x06filter\x123\n" +
@@ -1150,11 +1295,11 @@ const file_cloud_v1_api_test_run_proto_rawDesc = "" +
 	"\x0ffinished_before\x18\x12 \x01(\v2\x1a.google.protobuf.TimestampR\x0efinishedBefore\x124\n" +
 	"\btriggers\x18\x15 \x03(\x0e2\x18.cloud.v1.common.TriggerR\btriggers\x12:\n" +
 	"\x04sort\x18\x13 \x01(\v2&.cloud.v1.api.ListTestRunsRequest.SortR\x04sort\x12)\n" +
-	"\x04page\x18\x14 \x01(\v2\x15.cloud.v1.common.PageR\x04page\x1a\x96\x03\n" +
+	"\x04page\x18\x14 \x01(\v2\x15.cloud.v1.common.PageR\x04page\x1a\xa8\x03\n" +
 	"\x04Sort\x12:\n" +
 	"\x06entity\x18\x01 \x01(\x0e2 .cloud.v1.common.EntitySortFieldH\x00R\x06entity\x12A\n" +
 	"\x04kind\x18\x02 \x01(\x0e2+.cloud.v1.api.ListTestRunsRequest.Sort.KindH\x00R\x04kind\x12\x12\n" +
-	"\x04desc\x18\x03 \x01(\bR\x04desc\"\xf4\x01\n" +
+	"\x04desc\x18\x03 \x01(\bR\x04desc\"\x86\x02\n" +
 	"\x04Kind\x12\x14\n" +
 	"\x10KIND_UNSPECIFIED\x10\x00\x12\x0f\n" +
 	"\vKIND_STATUS\x10\x01\x12\x10\n" +
@@ -1168,14 +1313,25 @@ const file_cloud_v1_api_test_run_proto_rawDesc = "" +
 	"\x0fKIND_NODE_COUNT\x10\t\x12\x11\n" +
 	"\rKIND_PROTOCOL\x10\n" +
 	"\x12\x14\n" +
-	"\x10KIND_TEST_PRESET\x10\vB\x04\n" +
+	"\x10KIND_TEST_PRESET\x10\v\x12\x10\n" +
+	"\fKIND_TRIGGER\x10\fB\x04\n" +
 	"\x02byB\r\n" +
 	"\v_standaloneB\x0f\n" +
 	"\r_progress_minB\x0f\n" +
 	"\r_progress_max\"r\n" +
 	"\x14ListTestRunsResponse\x122\n" +
 	"\x04runs\x18\x01 \x03(\v2\x1e.cloud.v1.models.TestRunRecordR\x04runs\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"Y\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"y\n" +
+	"\x18ListTestRunFacetsRequest\x12&\n" +
+	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x125\n" +
+	"\x06filter\x18\x02 \x01(\v2\x1d.cloud.v1.common.EntityFilterR\x06filter\"\xe1\x01\n" +
+	"\x19ListTestRunFacetsResponse\x12\x1d\n" +
+	"\n" +
+	"author_ids\x18\x01 \x03(\tR\tauthorIds\x12)\n" +
+	"\x10stroppy_versions\x18\x02 \x03(\tR\x0fstroppyVersions\x12\"\n" +
+	"\rdb_preset_ids\x18\x03 \x03(\tR\vdbPresetIds\x12.\n" +
+	"\x13workload_preset_ids\x18\x04 \x03(\tR\x11workloadPresetIds\x12&\n" +
+	"\x0ftest_preset_ids\x18\x05 \x03(\tR\rtestPresetIds\"Y\n" +
 	"\x14CancelTestRunRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x19\n" +
 	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"S\n" +
@@ -1190,13 +1346,14 @@ const file_cloud_v1_api_test_run_proto_rawDesc = "" +
 	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\x12\x1c\n" +
 	"\x04name\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\xff\x01R\x04name\"^\n" +
 	"\x17ExtractToPresetResponse\x12C\n" +
-	"\x06preset\x18\x01 \x01(\v2!.cloud.v1.models.TestPresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset2\xf7\x04\n" +
+	"\x06preset\x18\x01 \x01(\v2!.cloud.v1.models.TestPresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset2\xec\x05\n" +
 	"\x0eTestRunService\x12a\n" +
 	"\fStartTestRun\x12!.cloud.v1.api.StartTestRunRequest\x1a\".cloud.v1.api.StartTestRunResponse\"\n" +
 	"\x8a\xb5\x18\x06\x12\x04\b\b\x10\x01\x12^\n" +
 	"\n" +
 	"GetTestRun\x12\x1f.cloud.v1.api.GetTestRunRequest\x1a .cloud.v1.api.GetTestRunResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\b\x10\x02\x90\x02\x01\x12d\n" +
-	"\fListTestRuns\x12!.cloud.v1.api.ListTestRunsRequest\x1a\".cloud.v1.api.ListTestRunsResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\b\x10\x05\x90\x02\x01\x12g\n" +
+	"\fListTestRuns\x12!.cloud.v1.api.ListTestRunsRequest\x1a\".cloud.v1.api.ListTestRunsResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\b\x10\x05\x90\x02\x01\x12s\n" +
+	"\x11ListTestRunFacets\x12&.cloud.v1.api.ListTestRunFacetsRequest\x1a'.cloud.v1.api.ListTestRunFacetsResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\b\x10\x05\x90\x02\x01\x12g\n" +
 	"\rCancelTestRun\x12\".cloud.v1.api.CancelTestRunRequest\x1a#.cloud.v1.api.CancelTestRunResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\b\x10\x03\x90\x02\x02\x12g\n" +
 	"\rDeleteTestRun\x12\".cloud.v1.api.DeleteTestRunRequest\x1a#.cloud.v1.api.DeleteTestRunResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\b\x10\x04\x90\x02\x02\x12j\n" +
 	"\x0fExtractToPreset\x12$.cloud.v1.api.ExtractToPresetRequest\x1a%.cloud.v1.api.ExtractToPresetResponse\"\n" +
@@ -1215,7 +1372,7 @@ func file_cloud_v1_api_test_run_proto_rawDescGZIP() []byte {
 }
 
 var file_cloud_v1_api_test_run_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_cloud_v1_api_test_run_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_cloud_v1_api_test_run_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_cloud_v1_api_test_run_proto_goTypes = []any{
 	(ListTestRunsRequest_Sort_Kind)(0), // 0: cloud.v1.api.ListTestRunsRequest.Sort.Kind
 	(*StartTestRunRequest)(nil),        // 1: cloud.v1.api.StartTestRunRequest
@@ -1224,67 +1381,72 @@ var file_cloud_v1_api_test_run_proto_goTypes = []any{
 	(*GetTestRunResponse)(nil),         // 4: cloud.v1.api.GetTestRunResponse
 	(*ListTestRunsRequest)(nil),        // 5: cloud.v1.api.ListTestRunsRequest
 	(*ListTestRunsResponse)(nil),       // 6: cloud.v1.api.ListTestRunsResponse
-	(*CancelTestRunRequest)(nil),       // 7: cloud.v1.api.CancelTestRunRequest
-	(*CancelTestRunResponse)(nil),      // 8: cloud.v1.api.CancelTestRunResponse
-	(*DeleteTestRunRequest)(nil),       // 9: cloud.v1.api.DeleteTestRunRequest
-	(*DeleteTestRunResponse)(nil),      // 10: cloud.v1.api.DeleteTestRunResponse
-	(*ExtractToPresetRequest)(nil),     // 11: cloud.v1.api.ExtractToPresetRequest
-	(*ExtractToPresetResponse)(nil),    // 12: cloud.v1.api.ExtractToPresetResponse
-	(*ListTestRunsRequest_Sort)(nil),   // 13: cloud.v1.api.ListTestRunsRequest.Sort
-	(*domain.TestRun)(nil),             // 14: cloud.v1.domain.TestRun
-	(*models.TestRunRecord)(nil),       // 15: cloud.v1.models.TestRunRecord
-	(*common.EntityFilter)(nil),        // 16: cloud.v1.common.EntityFilter
-	(common.Status)(0),                 // 17: cloud.v1.common.Status
-	(domain.Database_Kind)(0),          // 18: cloud.v1.domain.Database.Kind
-	(deployment.Provider)(0),           // 19: cloud.v1.deployment.Provider
-	(domain.Workload_Protocol)(0),      // 20: cloud.v1.domain.Workload.Protocol
-	(*durationpb.Duration)(nil),        // 21: google.protobuf.Duration
-	(*timestamppb.Timestamp)(nil),      // 22: google.protobuf.Timestamp
-	(common.Trigger)(0),                // 23: cloud.v1.common.Trigger
-	(*common.Page)(nil),                // 24: cloud.v1.common.Page
-	(*models.TestPresetRecord)(nil),    // 25: cloud.v1.models.TestPresetRecord
-	(common.EntitySortField)(0),        // 26: cloud.v1.common.EntitySortField
+	(*ListTestRunFacetsRequest)(nil),   // 7: cloud.v1.api.ListTestRunFacetsRequest
+	(*ListTestRunFacetsResponse)(nil),  // 8: cloud.v1.api.ListTestRunFacetsResponse
+	(*CancelTestRunRequest)(nil),       // 9: cloud.v1.api.CancelTestRunRequest
+	(*CancelTestRunResponse)(nil),      // 10: cloud.v1.api.CancelTestRunResponse
+	(*DeleteTestRunRequest)(nil),       // 11: cloud.v1.api.DeleteTestRunRequest
+	(*DeleteTestRunResponse)(nil),      // 12: cloud.v1.api.DeleteTestRunResponse
+	(*ExtractToPresetRequest)(nil),     // 13: cloud.v1.api.ExtractToPresetRequest
+	(*ExtractToPresetResponse)(nil),    // 14: cloud.v1.api.ExtractToPresetResponse
+	(*ListTestRunsRequest_Sort)(nil),   // 15: cloud.v1.api.ListTestRunsRequest.Sort
+	(*domain.TestRun)(nil),             // 16: cloud.v1.domain.TestRun
+	(*models.TestRunRecord)(nil),       // 17: cloud.v1.models.TestRunRecord
+	(*common.EntityFilter)(nil),        // 18: cloud.v1.common.EntityFilter
+	(common.Status)(0),                 // 19: cloud.v1.common.Status
+	(domain.Database_Kind)(0),          // 20: cloud.v1.domain.Database.Kind
+	(deployment.Provider)(0),           // 21: cloud.v1.deployment.Provider
+	(domain.Workload_Protocol)(0),      // 22: cloud.v1.domain.Workload.Protocol
+	(*durationpb.Duration)(nil),        // 23: google.protobuf.Duration
+	(*timestamppb.Timestamp)(nil),      // 24: google.protobuf.Timestamp
+	(common.Trigger)(0),                // 25: cloud.v1.common.Trigger
+	(*common.Page)(nil),                // 26: cloud.v1.common.Page
+	(*models.TestPresetRecord)(nil),    // 27: cloud.v1.models.TestPresetRecord
+	(common.EntitySortField)(0),        // 28: cloud.v1.common.EntitySortField
 }
 var file_cloud_v1_api_test_run_proto_depIdxs = []int32{
-	14, // 0: cloud.v1.api.StartTestRunRequest.run:type_name -> cloud.v1.domain.TestRun
-	15, // 1: cloud.v1.api.StartTestRunResponse.run:type_name -> cloud.v1.models.TestRunRecord
-	15, // 2: cloud.v1.api.GetTestRunResponse.run:type_name -> cloud.v1.models.TestRunRecord
-	16, // 3: cloud.v1.api.ListTestRunsRequest.filter:type_name -> cloud.v1.common.EntityFilter
-	17, // 4: cloud.v1.api.ListTestRunsRequest.statuses:type_name -> cloud.v1.common.Status
-	18, // 5: cloud.v1.api.ListTestRunsRequest.db_kinds:type_name -> cloud.v1.domain.Database.Kind
-	19, // 6: cloud.v1.api.ListTestRunsRequest.providers:type_name -> cloud.v1.deployment.Provider
-	20, // 7: cloud.v1.api.ListTestRunsRequest.protocols:type_name -> cloud.v1.domain.Workload.Protocol
-	21, // 8: cloud.v1.api.ListTestRunsRequest.duration_min:type_name -> google.protobuf.Duration
-	21, // 9: cloud.v1.api.ListTestRunsRequest.duration_max:type_name -> google.protobuf.Duration
-	22, // 10: cloud.v1.api.ListTestRunsRequest.started_after:type_name -> google.protobuf.Timestamp
-	22, // 11: cloud.v1.api.ListTestRunsRequest.started_before:type_name -> google.protobuf.Timestamp
-	22, // 12: cloud.v1.api.ListTestRunsRequest.finished_after:type_name -> google.protobuf.Timestamp
-	22, // 13: cloud.v1.api.ListTestRunsRequest.finished_before:type_name -> google.protobuf.Timestamp
-	23, // 14: cloud.v1.api.ListTestRunsRequest.triggers:type_name -> cloud.v1.common.Trigger
-	13, // 15: cloud.v1.api.ListTestRunsRequest.sort:type_name -> cloud.v1.api.ListTestRunsRequest.Sort
-	24, // 16: cloud.v1.api.ListTestRunsRequest.page:type_name -> cloud.v1.common.Page
-	15, // 17: cloud.v1.api.ListTestRunsResponse.runs:type_name -> cloud.v1.models.TestRunRecord
-	15, // 18: cloud.v1.api.CancelTestRunResponse.run:type_name -> cloud.v1.models.TestRunRecord
-	25, // 19: cloud.v1.api.ExtractToPresetResponse.preset:type_name -> cloud.v1.models.TestPresetRecord
-	26, // 20: cloud.v1.api.ListTestRunsRequest.Sort.entity:type_name -> cloud.v1.common.EntitySortField
-	0,  // 21: cloud.v1.api.ListTestRunsRequest.Sort.kind:type_name -> cloud.v1.api.ListTestRunsRequest.Sort.Kind
-	1,  // 22: cloud.v1.api.TestRunService.StartTestRun:input_type -> cloud.v1.api.StartTestRunRequest
-	3,  // 23: cloud.v1.api.TestRunService.GetTestRun:input_type -> cloud.v1.api.GetTestRunRequest
-	5,  // 24: cloud.v1.api.TestRunService.ListTestRuns:input_type -> cloud.v1.api.ListTestRunsRequest
-	7,  // 25: cloud.v1.api.TestRunService.CancelTestRun:input_type -> cloud.v1.api.CancelTestRunRequest
-	9,  // 26: cloud.v1.api.TestRunService.DeleteTestRun:input_type -> cloud.v1.api.DeleteTestRunRequest
-	11, // 27: cloud.v1.api.TestRunService.ExtractToPreset:input_type -> cloud.v1.api.ExtractToPresetRequest
-	2,  // 28: cloud.v1.api.TestRunService.StartTestRun:output_type -> cloud.v1.api.StartTestRunResponse
-	4,  // 29: cloud.v1.api.TestRunService.GetTestRun:output_type -> cloud.v1.api.GetTestRunResponse
-	6,  // 30: cloud.v1.api.TestRunService.ListTestRuns:output_type -> cloud.v1.api.ListTestRunsResponse
-	8,  // 31: cloud.v1.api.TestRunService.CancelTestRun:output_type -> cloud.v1.api.CancelTestRunResponse
-	10, // 32: cloud.v1.api.TestRunService.DeleteTestRun:output_type -> cloud.v1.api.DeleteTestRunResponse
-	12, // 33: cloud.v1.api.TestRunService.ExtractToPreset:output_type -> cloud.v1.api.ExtractToPresetResponse
-	28, // [28:34] is the sub-list for method output_type
-	22, // [22:28] is the sub-list for method input_type
-	22, // [22:22] is the sub-list for extension type_name
-	22, // [22:22] is the sub-list for extension extendee
-	0,  // [0:22] is the sub-list for field type_name
+	16, // 0: cloud.v1.api.StartTestRunRequest.run:type_name -> cloud.v1.domain.TestRun
+	17, // 1: cloud.v1.api.StartTestRunResponse.run:type_name -> cloud.v1.models.TestRunRecord
+	17, // 2: cloud.v1.api.GetTestRunResponse.run:type_name -> cloud.v1.models.TestRunRecord
+	18, // 3: cloud.v1.api.ListTestRunsRequest.filter:type_name -> cloud.v1.common.EntityFilter
+	19, // 4: cloud.v1.api.ListTestRunsRequest.statuses:type_name -> cloud.v1.common.Status
+	20, // 5: cloud.v1.api.ListTestRunsRequest.db_kinds:type_name -> cloud.v1.domain.Database.Kind
+	21, // 6: cloud.v1.api.ListTestRunsRequest.providers:type_name -> cloud.v1.deployment.Provider
+	22, // 7: cloud.v1.api.ListTestRunsRequest.protocols:type_name -> cloud.v1.domain.Workload.Protocol
+	23, // 8: cloud.v1.api.ListTestRunsRequest.duration_min:type_name -> google.protobuf.Duration
+	23, // 9: cloud.v1.api.ListTestRunsRequest.duration_max:type_name -> google.protobuf.Duration
+	24, // 10: cloud.v1.api.ListTestRunsRequest.started_after:type_name -> google.protobuf.Timestamp
+	24, // 11: cloud.v1.api.ListTestRunsRequest.started_before:type_name -> google.protobuf.Timestamp
+	24, // 12: cloud.v1.api.ListTestRunsRequest.finished_after:type_name -> google.protobuf.Timestamp
+	24, // 13: cloud.v1.api.ListTestRunsRequest.finished_before:type_name -> google.protobuf.Timestamp
+	25, // 14: cloud.v1.api.ListTestRunsRequest.triggers:type_name -> cloud.v1.common.Trigger
+	15, // 15: cloud.v1.api.ListTestRunsRequest.sort:type_name -> cloud.v1.api.ListTestRunsRequest.Sort
+	26, // 16: cloud.v1.api.ListTestRunsRequest.page:type_name -> cloud.v1.common.Page
+	17, // 17: cloud.v1.api.ListTestRunsResponse.runs:type_name -> cloud.v1.models.TestRunRecord
+	18, // 18: cloud.v1.api.ListTestRunFacetsRequest.filter:type_name -> cloud.v1.common.EntityFilter
+	17, // 19: cloud.v1.api.CancelTestRunResponse.run:type_name -> cloud.v1.models.TestRunRecord
+	27, // 20: cloud.v1.api.ExtractToPresetResponse.preset:type_name -> cloud.v1.models.TestPresetRecord
+	28, // 21: cloud.v1.api.ListTestRunsRequest.Sort.entity:type_name -> cloud.v1.common.EntitySortField
+	0,  // 22: cloud.v1.api.ListTestRunsRequest.Sort.kind:type_name -> cloud.v1.api.ListTestRunsRequest.Sort.Kind
+	1,  // 23: cloud.v1.api.TestRunService.StartTestRun:input_type -> cloud.v1.api.StartTestRunRequest
+	3,  // 24: cloud.v1.api.TestRunService.GetTestRun:input_type -> cloud.v1.api.GetTestRunRequest
+	5,  // 25: cloud.v1.api.TestRunService.ListTestRuns:input_type -> cloud.v1.api.ListTestRunsRequest
+	7,  // 26: cloud.v1.api.TestRunService.ListTestRunFacets:input_type -> cloud.v1.api.ListTestRunFacetsRequest
+	9,  // 27: cloud.v1.api.TestRunService.CancelTestRun:input_type -> cloud.v1.api.CancelTestRunRequest
+	11, // 28: cloud.v1.api.TestRunService.DeleteTestRun:input_type -> cloud.v1.api.DeleteTestRunRequest
+	13, // 29: cloud.v1.api.TestRunService.ExtractToPreset:input_type -> cloud.v1.api.ExtractToPresetRequest
+	2,  // 30: cloud.v1.api.TestRunService.StartTestRun:output_type -> cloud.v1.api.StartTestRunResponse
+	4,  // 31: cloud.v1.api.TestRunService.GetTestRun:output_type -> cloud.v1.api.GetTestRunResponse
+	6,  // 32: cloud.v1.api.TestRunService.ListTestRuns:output_type -> cloud.v1.api.ListTestRunsResponse
+	8,  // 33: cloud.v1.api.TestRunService.ListTestRunFacets:output_type -> cloud.v1.api.ListTestRunFacetsResponse
+	10, // 34: cloud.v1.api.TestRunService.CancelTestRun:output_type -> cloud.v1.api.CancelTestRunResponse
+	12, // 35: cloud.v1.api.TestRunService.DeleteTestRun:output_type -> cloud.v1.api.DeleteTestRunResponse
+	14, // 36: cloud.v1.api.TestRunService.ExtractToPreset:output_type -> cloud.v1.api.ExtractToPresetResponse
+	30, // [30:37] is the sub-list for method output_type
+	23, // [23:30] is the sub-list for method input_type
+	23, // [23:23] is the sub-list for extension type_name
+	23, // [23:23] is the sub-list for extension extendee
+	0,  // [0:23] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_api_test_run_proto_init() }
@@ -1297,7 +1459,7 @@ func file_cloud_v1_api_test_run_proto_init() {
 		(*StartTestRunRequest_TestRunId)(nil),
 	}
 	file_cloud_v1_api_test_run_proto_msgTypes[4].OneofWrappers = []any{}
-	file_cloud_v1_api_test_run_proto_msgTypes[12].OneofWrappers = []any{
+	file_cloud_v1_api_test_run_proto_msgTypes[14].OneofWrappers = []any{
 		(*ListTestRunsRequest_Sort_Entity)(nil),
 		(*ListTestRunsRequest_Sort_Kind_)(nil),
 	}
@@ -1307,7 +1469,7 @@ func file_cloud_v1_api_test_run_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_api_test_run_proto_rawDesc), len(file_cloud_v1_api_test_run_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   13,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

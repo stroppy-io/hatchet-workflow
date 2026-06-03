@@ -55,7 +55,8 @@ type SuiteRunServiceClient interface {
 	ListSuiteRuns(context.Context, *api.ListSuiteRunsRequest) (*api.ListSuiteRunsResponse, error)
 	// CancelSuiteRun is idempotent: cancelling a finished/cancelled run is a no-op.
 	CancelSuiteRun(context.Context, *api.CancelSuiteRunRequest) (*api.CancelSuiteRunResponse, error)
-	// DeleteSuiteRun is idempotent: deleting an absent suite run is a no-op.
+	// DeleteSuiteRun is idempotent: soft-deleting an absent or already-deleted
+	// suite run is a no-op.
 	DeleteSuiteRun(context.Context, *api.DeleteSuiteRunRequest) (*api.DeleteSuiteRunResponse, error)
 }
 
@@ -153,7 +154,8 @@ type SuiteRunServiceHandler interface {
 	ListSuiteRuns(context.Context, *api.ListSuiteRunsRequest) (*api.ListSuiteRunsResponse, error)
 	// CancelSuiteRun is idempotent: cancelling a finished/cancelled run is a no-op.
 	CancelSuiteRun(context.Context, *api.CancelSuiteRunRequest) (*api.CancelSuiteRunResponse, error)
-	// DeleteSuiteRun is idempotent: deleting an absent suite run is a no-op.
+	// DeleteSuiteRun is idempotent: soft-deleting an absent or already-deleted
+	// suite run is a no-op.
 	DeleteSuiteRun(context.Context, *api.DeleteSuiteRunRequest) (*api.DeleteSuiteRunResponse, error)
 }
 

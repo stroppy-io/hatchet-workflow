@@ -70,6 +70,30 @@ func (c *Catalog) Grantable(_ context.Context) ([]*api.CatalogEntry, error) {
 	return entries, nil
 }
 
+func catalogManagePermissions(ctx context.Context, catalog PermissionCatalog) ([]*iam.Permission, error) {
+	entries, err := catalog.Grantable(ctx)
+	if err != nil {
+		return nil, err
+	}
+	seen := make(map[iam.Resource]bool, len(entries))
+	perms := make([]*iam.Permission, 0, len(entries))
+	for _, entry := range entries {
+		p := entry.GetPermission()
+		if p.GetAction() != iam.Action_ACTION_MANAGE {
+			continue
+		}
+		if seen[p.GetResource()] {
+			continue
+		}
+		seen[p.GetResource()] = true
+		perms = append(perms, &iam.Permission{
+			Resource: p.GetResource(),
+			Action:   iam.Action_ACTION_MANAGE,
+		})
+	}
+	return perms, nil
+}
+
 func catalogLabel(p *iam.Permission) string {
 	return actionWord(p.GetAction()) + " " + resourceWord(p.GetResource())
 }

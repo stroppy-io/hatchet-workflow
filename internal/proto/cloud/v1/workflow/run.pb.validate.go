@@ -57,6 +57,17 @@ func (m *RunConfig) validate(all bool) error {
 
 	var errors []error
 
+	if l := utf8.RuneCountInString(m.GetTenantId()); l < 1 || l > 64 {
+		err := RunConfigValidationError{
+			field:  "TenantId",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if l := utf8.RuneCountInString(m.GetId()); l < 1 || l > 128 {
 		err := RunConfigValidationError{
 			field:  "Id",

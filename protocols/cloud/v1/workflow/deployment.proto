@@ -65,7 +65,26 @@ message CalculateQuotasWorkflowRequest {
 }
 
 /*
-    CalculateQuotasWorkflowResponse returns quota requests keyed by node id.
+    QuotaRequestRef keeps the topology node id together with one quota request.
+    One node usually asks for several quotas (instances, CPU, memory, disk), so
+    this must be repeated rather than map<node_id, request>.
+ */
+message QuotaRequestRef {
+    string node_id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    deployment.Quota.Request request = 2 [(validate.rules).message.required = true];
+}
+
+/*
+    QuotaAllocationRef keeps the topology node id together with one granted
+    quota allocation.
+ */
+message QuotaAllocationRef {
+    string node_id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    deployment.Quota.Allocation allocation = 2 [(validate.rules).message.required = true];
+}
+
+/*
+    CalculateQuotasWorkflowResponse returns all quota requests with node ids.
  */
 message CalculateQuotasWorkflowResponse {
     /*
@@ -73,9 +92,9 @@ message CalculateQuotasWorkflowResponse {
      */
     deployment.InfrastructurePlan plan = 1 [(validate.rules).message.required = true];
     /*
-        quota_requests are requested quotas keyed by topology node id.
+        quota_requests are requested quotas with topology node ids.
      */
-    map<string, deployment.Quota.Request> quota_requests = 2;
+    repeated QuotaRequestRef quota_requests = 2 [(validate.rules).repeated.max_items = 1024];
 }
 
 /*
@@ -103,20 +122,48 @@ message AcquireNetworkActivityResponse {
     AcquireQuotasActivityRequest asks the provider to acquire requested quotas.
  */
 message AcquireQuotasActivityRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string run_id = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    deployment.InfrastructurePlan plan = 3 [(validate.rules).message.required = true];
     /*
-        quota_requests are requested quotas keyed by topology node id.
+        quota_requests are requested quotas with topology node ids.
      */
-    map<string, deployment.Quota.Request> quota_requests = 1;
+    repeated QuotaRequestRef quota_requests = 4 [(validate.rules).repeated.max_items = 1024];
 }
 
 /*
-    AcquireQuotasActivityResponse returns granted allocations keyed by node id.
+    AcquireQuotasActivityResponse returns granted allocations with node ids.
  */
 message AcquireQuotasActivityResponse {
     /*
-        quota_allocations are granted allocations keyed by topology node id.
+        quota_allocations are granted allocations with topology node ids.
      */
-    map<string, deployment.Quota.Allocation> quota_allocations = 1;
+    repeated QuotaAllocationRef quota_allocations = 1 [(validate.rules).repeated.max_items = 1024];
+}
+
+/*
+    CommitQuotasActivityRequest marks a run's reserved quotas as provider-backed
+    allocations after infrastructure was successfully provisioned.
+ */
+message CommitQuotasActivityRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string run_id = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+}
+
+message CommitQuotasActivityResponse {
+    repeated QuotaAllocationRef quota_allocations = 1 [(validate.rules).repeated.max_items = 1024];
+}
+
+/*
+    ReleaseQuotasActivityRequest releases pre-deploy reservations for a run.
+ */
+message ReleaseQuotasActivityRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string run_id = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+}
+
+message ReleaseQuotasActivityResponse {
+    uint32 released = 1;
 }
 
 /*
@@ -311,6 +358,26 @@ service DeploymentService {
         option (temporal.v1.activity) = {
             start_to_close_timeout: {seconds: 300}
             retry_policy: {max_attempts: 3, initial_interval: {seconds: 5}, backoff_coefficient: 2.0}
+        };
+    }
+
+    /*
+        CommitQuotasActivity marks a successful reservation as allocated.
+     */
+    rpc CommitQuotasActivity (CommitQuotasActivityRequest) returns (CommitQuotasActivityResponse) {
+        option (temporal.v1.activity) = {
+            start_to_close_timeout: {seconds: 60}
+            retry_policy: {max_attempts: 5, initial_interval: {seconds: 2}, backoff_coefficient: 2.0}
+        };
+    }
+
+    /*
+        ReleaseQuotasActivity releases a run's pre-deploy reservations.
+     */
+    rpc ReleaseQuotasActivity (ReleaseQuotasActivityRequest) returns (ReleaseQuotasActivityResponse) {
+        option (temporal.v1.activity) = {
+            start_to_close_timeout: {seconds: 60}
+            retry_policy: {max_attempts: 5, initial_interval: {seconds: 2}, backoff_coefficient: 2.0}
         };
     }
 

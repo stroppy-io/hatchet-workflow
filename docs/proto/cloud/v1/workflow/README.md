@@ -23,9 +23,11 @@
   - [Activities](#cloud-v1-workflow-deploymentservice-activities)
     - [cloud.v1.workflow.DeploymentService.AcquireNetworkActivity](#cloud-v1-workflow-deploymentservice-acquirenetworkactivity-activity)
     - [cloud.v1.workflow.DeploymentService.AcquireQuotasActivity](#cloud-v1-workflow-deploymentservice-acquirequotasactivity-activity)
+    - [cloud.v1.workflow.DeploymentService.CommitQuotasActivity](#cloud-v1-workflow-deploymentservice-commitquotasactivity-activity)
     - [cloud.v1.workflow.DeploymentService.DockerDownActivity](#cloud-v1-workflow-deploymentservice-dockerdownactivity-activity)
     - [cloud.v1.workflow.DeploymentService.DockerPullActivity](#cloud-v1-workflow-deploymentservice-dockerpullactivity-activity)
     - [cloud.v1.workflow.DeploymentService.DockerUpActivity](#cloud-v1-workflow-deploymentservice-dockerupactivity-activity)
+    - [cloud.v1.workflow.DeploymentService.ReleaseQuotasActivity](#cloud-v1-workflow-deploymentservice-releasequotasactivity-activity)
     - [cloud.v1.workflow.DeploymentService.TerraformApplyActivity](#cloud-v1-workflow-deploymentservice-terraformapplyactivity-activity)
     - [cloud.v1.workflow.DeploymentService.TerraformDestroyActivity](#cloud-v1-workflow-deploymentservice-terraformdestroyactivity-activity)
     - [cloud.v1.workflow.DeploymentService.TerraformPlanActivity](#cloud-v1-workflow-deploymentservice-terraformplanactivity-activity)
@@ -47,14 +49,13 @@
   - [cloud.v1.workflow.AcquireNetworkActivityRequest](#cloud-v1-workflow-acquirenetworkactivityrequest)
   - [cloud.v1.workflow.AcquireNetworkActivityResponse](#cloud-v1-workflow-acquirenetworkactivityresponse)
   - [cloud.v1.workflow.AcquireQuotasActivityRequest](#cloud-v1-workflow-acquirequotasactivityrequest)
-  - [cloud.v1.workflow.AcquireQuotasActivityRequest.QuotaRequestsEntry](#cloud-v1-workflow-acquirequotasactivityrequest-quotarequestsentry)
   - [cloud.v1.workflow.AcquireQuotasActivityResponse](#cloud-v1-workflow-acquirequotasactivityresponse)
-  - [cloud.v1.workflow.AcquireQuotasActivityResponse.QuotaAllocationsEntry](#cloud-v1-workflow-acquirequotasactivityresponse-quotaallocationsentry)
   - [cloud.v1.workflow.AgentBootstrap](#cloud-v1-workflow-agentbootstrap)
   - [cloud.v1.workflow.AgentBootstrap.ExtraEnvEntry](#cloud-v1-workflow-agentbootstrap-extraenventry)
   - [cloud.v1.workflow.CalculateQuotasWorkflowRequest](#cloud-v1-workflow-calculatequotasworkflowrequest)
   - [cloud.v1.workflow.CalculateQuotasWorkflowResponse](#cloud-v1-workflow-calculatequotasworkflowresponse)
-  - [cloud.v1.workflow.CalculateQuotasWorkflowResponse.QuotaRequestsEntry](#cloud-v1-workflow-calculatequotasworkflowresponse-quotarequestsentry)
+  - [cloud.v1.workflow.CommitQuotasActivityRequest](#cloud-v1-workflow-commitquotasactivityrequest)
+  - [cloud.v1.workflow.CommitQuotasActivityResponse](#cloud-v1-workflow-commitquotasactivityresponse)
   - [cloud.v1.workflow.ExecuteDeploymentPlanWorkflowRequest](#cloud-v1-workflow-executedeploymentplanworkflowrequest)
   - [cloud.v1.workflow.ExecuteDeploymentPlanWorkflowResponse](#cloud-v1-workflow-executedeploymentplanworkflowresponse)
   - [cloud.v1.workflow.InstallDatabaseWorkflowRequest](#cloud-v1-workflow-installdatabaseworkflowrequest)
@@ -63,6 +64,10 @@
   - [cloud.v1.workflow.InstallStroppyWorkflowResponse](#cloud-v1-workflow-installstroppyworkflowresponse)
   - [cloud.v1.workflow.ProcessInfrastructureWorkflowRequest](#cloud-v1-workflow-processinfrastructureworkflowrequest)
   - [cloud.v1.workflow.ProcessInfrastructureWorkflowResponse](#cloud-v1-workflow-processinfrastructureworkflowresponse)
+  - [cloud.v1.workflow.QuotaAllocationRef](#cloud-v1-workflow-quotaallocationref)
+  - [cloud.v1.workflow.QuotaRequestRef](#cloud-v1-workflow-quotarequestref)
+  - [cloud.v1.workflow.ReleaseQuotasActivityRequest](#cloud-v1-workflow-releasequotasactivityrequest)
+  - [cloud.v1.workflow.ReleaseQuotasActivityResponse](#cloud-v1-workflow-releasequotasactivityresponse)
   - [cloud.v1.workflow.RenderDeploymentPlanWorkflowRequest](#cloud-v1-workflow-renderdeploymentplanworkflowrequest)
   - [cloud.v1.workflow.RenderDeploymentPlanWorkflowResponse](#cloud-v1-workflow-renderdeploymentplanworkflowresponse)
   - [cloud.v1.workflow.RenderDockerInputWorkflowRequest](#cloud-v1-workflow-renderdockerinputworkflowrequest)
@@ -500,9 +505,9 @@ json_name: plan
 go_name: Plan</pre></td>
 </tr><tr>
 <td>quota_requests</td>
-<td><a href="#cloud-v1-workflow-calculatequotasworkflowresponse-quotarequestsentry">cloud.v1.workflow.CalculateQuotasWorkflowResponse.QuotaRequestsEntry</a></td>
+<td><a href="#cloud-v1-workflow-quotarequestref">cloud.v1.workflow.QuotaRequestRef</a></td>
 <td><pre>
-//quota_requests are requested quotas keyed by topology node id.<br>
+//quota_requests are requested quotas with topology node ids.<br>
 
 json_name: quotaRequests
 go_name: QuotaRequests</pre></td>
@@ -975,13 +980,31 @@ go_name: Net</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>quota_requests</td>
-<td><a href="#cloud-v1-workflow-acquirequotasactivityrequest-quotarequestsentry">cloud.v1.workflow.AcquireQuotasActivityRequest.QuotaRequestsEntry</a></td>
+<td>plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructureplan">cloud.v1.deployment.InfrastructurePlan</a></td>
 <td><pre>
-//quota_requests are requested quotas keyed by topology node id.<br>
+json_name: plan
+go_name: Plan</pre></td>
+</tr><tr>
+<td>quota_requests</td>
+<td><a href="#cloud-v1-workflow-quotarequestref">cloud.v1.workflow.QuotaRequestRef</a></td>
+<td><pre>
+//quota_requests are requested quotas with topology node ids.<br>
 
 json_name: quotaRequests
 go_name: QuotaRequests</pre></td>
+</tr><tr>
+<td>run_id</td>
+<td>string</td>
+<td><pre>
+json_name: runId
+go_name: RunId</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+json_name: tenantId
+go_name: TenantId</pre></td>
 </tr>
 </table>
 
@@ -995,9 +1018,9 @@ go_name: QuotaRequests</pre></td>
 </tr>
 <tr>
 <td>quota_allocations</td>
-<td><a href="#cloud-v1-workflow-acquirequotasactivityresponse-quotaallocationsentry">cloud.v1.workflow.AcquireQuotasActivityResponse.QuotaAllocationsEntry</a></td>
+<td><a href="#cloud-v1-workflow-quotaallocationref">cloud.v1.workflow.QuotaAllocationRef</a></td>
 <td><pre>
-//quota_allocations are granted allocations keyed by topology node id.<br>
+//quota_allocations are granted allocations with topology node ids.<br>
 
 json_name: quotaAllocations
 go_name: QuotaAllocations</pre></td>
@@ -1012,6 +1035,64 @@ go_name: QuotaAllocations</pre></td>
 <tr><td>retry_policy.initial_interval</td><td>5 seconds</td></tr>
 <tr><td>retry_policy.max_attempts</td><td>3</td></tr>
 <tr><td>start_to_close_timeout</td><td>5 minutes</td></tr>
+</table> 
+
+---
+<a name="cloud-v1-workflow-deploymentservice-commitquotasactivity-activity"></a>
+### cloud.v1.workflow.DeploymentService.CommitQuotasActivity
+
+<pre>
+//CommitQuotasActivity marks a successful reservation as allocated.
+</pre>
+
+**Input:** [cloud.v1.workflow.CommitQuotasActivityRequest](#cloud-v1-workflow-commitquotasactivityrequest)
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>run_id</td>
+<td>string</td>
+<td><pre>
+json_name: runId
+go_name: RunId</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+json_name: tenantId
+go_name: TenantId</pre></td>
+</tr>
+</table>
+
+**Output:** [cloud.v1.workflow.CommitQuotasActivityResponse](#cloud-v1-workflow-commitquotasactivityresponse)
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>quota_allocations</td>
+<td><a href="#cloud-v1-workflow-quotaallocationref">cloud.v1.workflow.QuotaAllocationRef</a></td>
+<td><pre>
+json_name: quotaAllocations
+go_name: QuotaAllocations</pre></td>
+</tr>
+</table>
+
+**Defaults:**
+
+<table>
+<tr><th>Name</th><th>Value</th></tr>
+<tr><td>retry_policy.backoff_coefficient</td><td>2</td></tr>
+<tr><td>retry_policy.initial_interval</td><td>2 seconds</td></tr>
+<tr><td>retry_policy.max_attempts</td><td>5</td></tr>
+<tr><td>start_to_close_timeout</td><td>1 minute</td></tr>
 </table> 
 
 ---
@@ -1231,6 +1312,64 @@ go_name: NetworkId</pre></td>
 </table> 
 
 ---
+<a name="cloud-v1-workflow-deploymentservice-releasequotasactivity-activity"></a>
+### cloud.v1.workflow.DeploymentService.ReleaseQuotasActivity
+
+<pre>
+//ReleaseQuotasActivity releases a run's pre-deploy reservations.
+</pre>
+
+**Input:** [cloud.v1.workflow.ReleaseQuotasActivityRequest](#cloud-v1-workflow-releasequotasactivityrequest)
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>run_id</td>
+<td>string</td>
+<td><pre>
+json_name: runId
+go_name: RunId</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+json_name: tenantId
+go_name: TenantId</pre></td>
+</tr>
+</table>
+
+**Output:** [cloud.v1.workflow.ReleaseQuotasActivityResponse](#cloud-v1-workflow-releasequotasactivityresponse)
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>released</td>
+<td>uint32</td>
+<td><pre>
+json_name: released
+go_name: Released</pre></td>
+</tr>
+</table>
+
+**Defaults:**
+
+<table>
+<tr><th>Name</th><th>Value</th></tr>
+<tr><td>retry_policy.backoff_coefficient</td><td>2</td></tr>
+<tr><td>retry_policy.initial_interval</td><td>2 seconds</td></tr>
+<tr><td>retry_policy.max_attempts</td><td>5</td></tr>
+<tr><td>start_to_close_timeout</td><td>1 minute</td></tr>
+</table> 
+
+---
 <a name="cloud-v1-workflow-deploymentservice-terraformapplyactivity-activity"></a>
 ### cloud.v1.workflow.DeploymentService.TerraformApplyActivity
 
@@ -1398,6 +1537,14 @@ go_name: InfrastructureState</pre></td>
 
 json_name: renderOverrides
 go_name: RenderOverrides</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+//tenant_id scopes quota reservations and provider settings lookup.<br>
+
+json_name: tenantId
+go_name: TenantId</pre></td>
 </tr><tr>
 <td>topology_spec</td>
 <td><a href="../topology/README.md#cloud-v1-topology-topologyspec">cloud.v1.topology.TopologySpec</a></td>
@@ -1700,6 +1847,14 @@ go_name: Workload</pre></td>
 json_name: agentBootstrap
 go_name: AgentBootstrap</pre></td>
 </tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+//tenant_id scopes quota reservations and provider settings lookup.<br>
+
+json_name: tenantId
+go_name: TenantId</pre></td>
+</tr><tr>
 <td>test_run</td>
 <td><a href="../domain/README.md#cloud-v1-domain-testrun">cloud.v1.domain.TestRun</a></td>
 <td><pre>
@@ -1840,39 +1995,31 @@ go_name: Net</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>quota_requests</td>
-<td><a href="#cloud-v1-workflow-acquirequotasactivityrequest-quotarequestsentry">cloud.v1.workflow.AcquireQuotasActivityRequest.QuotaRequestsEntry</a></td>
+<td>plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructureplan">cloud.v1.deployment.InfrastructurePlan</a></td>
 <td><pre>
-//quota_requests are requested quotas keyed by topology node id.<br>
+json_name: plan
+go_name: Plan</pre></td>
+</tr><tr>
+<td>quota_requests</td>
+<td><a href="#cloud-v1-workflow-quotarequestref">cloud.v1.workflow.QuotaRequestRef</a></td>
+<td><pre>
+//quota_requests are requested quotas with topology node ids.<br>
 
 json_name: quotaRequests
 go_name: QuotaRequests</pre></td>
-</tr>
-</table>
-
-
-
-<a name="cloud-v1-workflow-acquirequotasactivityrequest-quotarequestsentry"></a>
-### cloud.v1.workflow.AcquireQuotasActivityRequest.QuotaRequestsEntry
-
-<table>
-<tr>
-<th>Attribute</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-<tr>
-<td>key</td>
+</tr><tr>
+<td>run_id</td>
 <td>string</td>
 <td><pre>
-json_name: key
-go_name: Key</pre></td>
+json_name: runId
+go_name: RunId</pre></td>
 </tr><tr>
-<td>value</td>
-<td><a href="../deployment/README.md#cloud-v1-deployment-quota-request">cloud.v1.deployment.Quota.Request</a></td>
+<td>tenant_id</td>
+<td>string</td>
 <td><pre>
-json_name: value
-go_name: Value</pre></td>
+json_name: tenantId
+go_name: TenantId</pre></td>
 </tr>
 </table>
 
@@ -1882,7 +2029,7 @@ go_name: Value</pre></td>
 ### cloud.v1.workflow.AcquireQuotasActivityResponse
 
 <pre>
-//AcquireQuotasActivityResponse returns granted allocations keyed by node id.
+//AcquireQuotasActivityResponse returns granted allocations with node ids.
 </pre>
 
 <table>
@@ -1893,38 +2040,12 @@ go_name: Value</pre></td>
 </tr>
 <tr>
 <td>quota_allocations</td>
-<td><a href="#cloud-v1-workflow-acquirequotasactivityresponse-quotaallocationsentry">cloud.v1.workflow.AcquireQuotasActivityResponse.QuotaAllocationsEntry</a></td>
+<td><a href="#cloud-v1-workflow-quotaallocationref">cloud.v1.workflow.QuotaAllocationRef</a></td>
 <td><pre>
-//quota_allocations are granted allocations keyed by topology node id.<br>
+//quota_allocations are granted allocations with topology node ids.<br>
 
 json_name: quotaAllocations
 go_name: QuotaAllocations</pre></td>
-</tr>
-</table>
-
-
-
-<a name="cloud-v1-workflow-acquirequotasactivityresponse-quotaallocationsentry"></a>
-### cloud.v1.workflow.AcquireQuotasActivityResponse.QuotaAllocationsEntry
-
-<table>
-<tr>
-<th>Attribute</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-<tr>
-<td>key</td>
-<td>string</td>
-<td><pre>
-json_name: key
-go_name: Key</pre></td>
-</tr><tr>
-<td>value</td>
-<td><a href="../deployment/README.md#cloud-v1-deployment-quota-allocation">cloud.v1.deployment.Quota.Allocation</a></td>
-<td><pre>
-json_name: value
-go_name: Value</pre></td>
 </tr>
 </table>
 
@@ -2041,7 +2162,7 @@ go_name: Plan</pre></td>
 ### cloud.v1.workflow.CalculateQuotasWorkflowResponse
 
 <pre>
-//CalculateQuotasWorkflowResponse returns quota requests keyed by node id.
+//CalculateQuotasWorkflowResponse returns all quota requests with node ids.
 </pre>
 
 <table>
@@ -2060,9 +2181,9 @@ json_name: plan
 go_name: Plan</pre></td>
 </tr><tr>
 <td>quota_requests</td>
-<td><a href="#cloud-v1-workflow-calculatequotasworkflowresponse-quotarequestsentry">cloud.v1.workflow.CalculateQuotasWorkflowResponse.QuotaRequestsEntry</a></td>
+<td><a href="#cloud-v1-workflow-quotarequestref">cloud.v1.workflow.QuotaRequestRef</a></td>
 <td><pre>
-//quota_requests are requested quotas keyed by topology node id.<br>
+//quota_requests are requested quotas with topology node ids.<br>
 
 json_name: quotaRequests
 go_name: QuotaRequests</pre></td>
@@ -2071,8 +2192,13 @@ go_name: QuotaRequests</pre></td>
 
 
 
-<a name="cloud-v1-workflow-calculatequotasworkflowresponse-quotarequestsentry"></a>
-### cloud.v1.workflow.CalculateQuotasWorkflowResponse.QuotaRequestsEntry
+<a name="cloud-v1-workflow-commitquotasactivityrequest"></a>
+### cloud.v1.workflow.CommitQuotasActivityRequest
+
+<pre>
+//CommitQuotasActivityRequest marks a run's reserved quotas as provider-backed
+//allocations after infrastructure was successfully provisioned.
+</pre>
 
 <table>
 <tr>
@@ -2081,17 +2207,37 @@ go_name: QuotaRequests</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>key</td>
+<td>run_id</td>
 <td>string</td>
 <td><pre>
-json_name: key
-go_name: Key</pre></td>
+json_name: runId
+go_name: RunId</pre></td>
 </tr><tr>
-<td>value</td>
-<td><a href="../deployment/README.md#cloud-v1-deployment-quota-request">cloud.v1.deployment.Quota.Request</a></td>
+<td>tenant_id</td>
+<td>string</td>
 <td><pre>
-json_name: value
-go_name: Value</pre></td>
+json_name: tenantId
+go_name: TenantId</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-workflow-commitquotasactivityresponse"></a>
+### cloud.v1.workflow.CommitQuotasActivityResponse
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>quota_allocations</td>
+<td><a href="#cloud-v1-workflow-quotaallocationref">cloud.v1.workflow.QuotaAllocationRef</a></td>
+<td><pre>
+json_name: quotaAllocations
+go_name: QuotaAllocations</pre></td>
 </tr>
 </table>
 
@@ -2320,6 +2466,119 @@ go_name: RunId</pre></td>
 
 json_name: state
 go_name: State</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-workflow-quotaallocationref"></a>
+### cloud.v1.workflow.QuotaAllocationRef
+
+<pre>
+//QuotaAllocationRef keeps the topology node id together with one granted
+//quota allocation.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>allocation</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-quota-allocation">cloud.v1.deployment.Quota.Allocation</a></td>
+<td><pre>
+json_name: allocation
+go_name: Allocation</pre></td>
+</tr><tr>
+<td>node_id</td>
+<td>string</td>
+<td><pre>
+json_name: nodeId
+go_name: NodeId</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-workflow-quotarequestref"></a>
+### cloud.v1.workflow.QuotaRequestRef
+
+<pre>
+//QuotaRequestRef keeps the topology node id together with one quota request.
+//One node usually asks for several quotas (instances, CPU, memory, disk), so
+//this must be repeated rather than map<node_id, request>.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>node_id</td>
+<td>string</td>
+<td><pre>
+json_name: nodeId
+go_name: NodeId</pre></td>
+</tr><tr>
+<td>request</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-quota-request">cloud.v1.deployment.Quota.Request</a></td>
+<td><pre>
+json_name: request
+go_name: Request</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-workflow-releasequotasactivityrequest"></a>
+### cloud.v1.workflow.ReleaseQuotasActivityRequest
+
+<pre>
+//ReleaseQuotasActivityRequest releases pre-deploy reservations for a run.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>run_id</td>
+<td>string</td>
+<td><pre>
+json_name: runId
+go_name: RunId</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+json_name: tenantId
+go_name: TenantId</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-workflow-releasequotasactivityresponse"></a>
+### cloud.v1.workflow.ReleaseQuotasActivityResponse
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>released</td>
+<td>uint32</td>
+<td><pre>
+json_name: released
+go_name: Released</pre></td>
 </tr>
 </table>
 
@@ -2591,6 +2850,14 @@ go_name: InfrastructureState</pre></td>
 json_name: renderOverrides
 go_name: RenderOverrides</pre></td>
 </tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+//tenant_id scopes quota reservations and provider settings lookup.<br>
+
+json_name: tenantId
+go_name: TenantId</pre></td>
+</tr><tr>
 <td>topology_spec</td>
 <td><a href="../topology/README.md#cloud-v1-topology-topologyspec">cloud.v1.topology.TopologySpec</a></td>
 <td><pre>
@@ -2843,6 +3110,14 @@ go_name: SuiteRunId</pre></td>
 
 json_name: agentBootstrap
 go_name: AgentBootstrap</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+//tenant_id scopes quota reservations and provider settings lookup.<br>
+
+json_name: tenantId
+go_name: TenantId</pre></td>
 </tr><tr>
 <td>test_run</td>
 <td><a href="../domain/README.md#cloud-v1-domain-testrun">cloud.v1.domain.TestRun</a></td>

@@ -21,7 +21,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/api/suite.proto.
  */
 export const file_cloud_v1_api_suite: GenFile = /*@__PURE__*/
-  fileDesc("ChhjbG91ZC92MS9hcGkvc3VpdGUucHJvdG8SDGNsb3VkLnYxLmFwaSJpChJDcmVhdGVTdWl0ZVJlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBhAEAESNQoFc3VpdGUYAiABKAsyHC5jbG91ZC52MS5tb2RlbHMuU3VpdGVSZWNvcmRCCPpCBYoBAhABIkwKE0NyZWF0ZVN1aXRlUmVzcG9uc2USNQoFc3VpdGUYASABKAsyHC5jbG91ZC52MS5tb2RlbHMuU3VpdGVSZWNvcmRCCPpCBYoBAhABIkYKD0dldFN1aXRlUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIVCgJpZBgCIAEoCUIJ+kIGcgQQARhAIkkKEEdldFN1aXRlUmVzcG9uc2USNQoFc3VpdGUYASABKAsyHC5jbG91ZC52MS5tb2RlbHMuU3VpdGVSZWNvcmRCCPpCBYoBAhABIrgEChFMaXN0U3VpdGVzUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBItCgZmaWx0ZXIYAiABKAsyHS5jbG91ZC52MS5jb21tb24uRW50aXR5RmlsdGVyEjAKCXByb3ZpZGVycxgDIAMoDjIdLmNsb3VkLnYxLmRlcGxveW1lbnQuUHJvdmlkZXISHQoQc2NoZWR1bGVfZW5hYmxlZBgEIAEoCEgAiAEBEjIKBHNvcnQYBSABKAsyJC5jbG91ZC52MS5hcGkuTGlzdFN1aXRlc1JlcXVlc3QuU29ydBIjCgRwYWdlGAYgASgLMhUuY2xvdWQudjEuY29tbW9uLlBhZ2UalgIKBFNvcnQSMgoGZW50aXR5GAEgASgOMiAuY2xvdWQudjEuY29tbW9uLkVudGl0eVNvcnRGaWVsZEgAEjkKBGtpbmQYAiABKA4yKS5jbG91ZC52MS5hcGkuTGlzdFN1aXRlc1JlcXVlc3QuU29ydC5LaW5kSAASDAoEZGVzYxgDIAEoCCKKAQoES2luZBIUChBLSU5EX1VOU1BFQ0lGSUVEEAASEQoNS0lORF9QUk9WSURFUhABEhkKFUtJTkRfU0NIRURVTEVfRU5BQkxFRBACEhQKEEtJTkRfTkVYVF9SVU5fQVQQAxIUChBLSU5EX0xBU1RfUlVOX0FUEAQSEgoOS0lORF9SVU5fQ09VTlQQBUIECgJieUITChFfc2NoZWR1bGVfZW5hYmxlZCJbChJMaXN0U3VpdGVzUmVzcG9uc2USLAoGc3VpdGVzGAEgAygLMhwuY2xvdWQudjEubW9kZWxzLlN1aXRlUmVjb3JkEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSJpChJVcGRhdGVTdWl0ZVJlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASNQoFc3VpdGUYAiABKAsyHC5jbG91ZC52MS5tb2RlbHMuU3VpdGVSZWNvcmRCCPpCBYoBAhABIkwKE1VwZGF0ZVN1aXRlUmVzcG9uc2USNQoFc3VpdGUYASABKAsyHC5jbG91ZC52MS5tb2RlbHMuU3VpdGVSZWNvcmRCCPpCBYoBAhABIkkKEkRlbGV0ZVN1aXRlUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEGEAQARIVCgJpZBgCIAEoCUIJ+kIGcgQQARhAIhUKE0RlbGV0ZVN1aXRlUmVzcG9uc2UiYAoRQ2xvbmVTdWl0ZVJlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASFQoCaWQYAiABKAlCCfpCBnIEEAEYQBIWCgRuYW1lGAMgASgJQgj6QgVyAxj/ASJLChJDbG9uZVN1aXRlUmVzcG9uc2USNQoFc3VpdGUYASABKAsyHC5jbG91ZC52MS5tb2RlbHMuU3VpdGVSZWNvcmRCCPpCBYoBAhABIoUBChdTZXRTdWl0ZVNjaGVkdWxlUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEGEAQARIVCgJpZBgCIAEoCUIJ+kIGcgQQARhAEjUKCHNjaGVkdWxlGAMgASgLMhkuY2xvdWQudjEuZG9tYWluLlNjaGVkdWxlQgj6QgWKAQIQASJRChhTZXRTdWl0ZVNjaGVkdWxlUmVzcG9uc2USNQoFc3VpdGUYASABKAsyHC5jbG91ZC52MS5tb2RlbHMuU3VpdGVSZWNvcmRCCPpCBYoBAhABIoYCChFTdGFydFN1aXRlUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEGEAQARIdCghzdWl0ZV9pZBgCIAEoCUIJ+kIGcgQQARhASAASJwoFc3VpdGUYAyABKAsyFi5jbG91ZC52MS5kb21haW4uU3VpdGVIABIUCgxtYXhfcGFyYWxsZWwYBCABKA0SHQoQaW5fdGVuYW50X3JhdGluZxgFIAEoCEgBiAEBEh0KEGluX2dsb2JhbF9yYXRpbmcYBiABKAhIAogBAUINCgZzb3VyY2USA/hCAUITChFfaW5fdGVuYW50X3JhdGluZ0ITChFfaW5fZ2xvYmFsX3JhdGluZyJSChJTdGFydFN1aXRlUmVzcG9uc2USPAoJc3VpdGVfcnVuGAEgASgLMh8uY2xvdWQudjEubW9kZWxzLlN1aXRlUnVuUmVjb3JkQgj6QgWKAQIQATKaBgoMU3VpdGVTZXJ2aWNlEl4KC0NyZWF0ZVN1aXRlEiAuY2xvdWQudjEuYXBpLkNyZWF0ZVN1aXRlUmVxdWVzdBohLmNsb3VkLnYxLmFwaS5DcmVhdGVTdWl0ZVJlc3BvbnNlIgqKtRgGEgQICRABElgKCEdldFN1aXRlEh0uY2xvdWQudjEuYXBpLkdldFN1aXRlUmVxdWVzdBoeLmNsb3VkLnYxLmFwaS5HZXRTdWl0ZVJlc3BvbnNlIg2QAgGKtRgGEgQICRACEl4KCkxpc3RTdWl0ZXMSHy5jbG91ZC52MS5hcGkuTGlzdFN1aXRlc1JlcXVlc3QaIC5jbG91ZC52MS5hcGkuTGlzdFN1aXRlc1Jlc3BvbnNlIg2QAgGKtRgGEgQICRAFEmEKC1VwZGF0ZVN1aXRlEiAuY2xvdWQudjEuYXBpLlVwZGF0ZVN1aXRlUmVxdWVzdBohLmNsb3VkLnYxLmFwaS5VcGRhdGVTdWl0ZVJlc3BvbnNlIg2QAgKKtRgGEgQICRADEmEKC0RlbGV0ZVN1aXRlEiAuY2xvdWQudjEuYXBpLkRlbGV0ZVN1aXRlUmVxdWVzdBohLmNsb3VkLnYxLmFwaS5EZWxldGVTdWl0ZVJlc3BvbnNlIg2QAgKKtRgGEgQICRAEElsKCkNsb25lU3VpdGUSHy5jbG91ZC52MS5hcGkuQ2xvbmVTdWl0ZVJlcXVlc3QaIC5jbG91ZC52MS5hcGkuQ2xvbmVTdWl0ZVJlc3BvbnNlIgqKtRgGEgQICRABEnAKEFNldFN1aXRlU2NoZWR1bGUSJS5jbG91ZC52MS5hcGkuU2V0U3VpdGVTY2hlZHVsZVJlcXVlc3QaJi5jbG91ZC52MS5hcGkuU2V0U3VpdGVTY2hlZHVsZVJlc3BvbnNlIg2QAgKKtRgGEgQICRADElsKClN0YXJ0U3VpdGUSHy5jbG91ZC52MS5hcGkuU3RhcnRTdWl0ZVJlcXVlc3QaIC5jbG91ZC52MS5hcGkuU3RhcnRTdWl0ZVJlc3BvbnNlIgqKtRgGEgQIChABQkFaP2dpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2FwaWIGcHJvdG8z", [file_cloud_v1_common_entity, file_cloud_v1_deployment_provider, file_cloud_v1_domain_suite, file_cloud_v1_iam_options, file_cloud_v1_iam_permission, file_cloud_v1_models_suite, file_validate_validate]);
+  fileDesc("ChhjbG91ZC92MS9hcGkvc3VpdGUucHJvdG8SDGNsb3VkLnYxLmFwaSJpChJDcmVhdGVTdWl0ZVJlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASNQoFc3VpdGUYAiABKAsyHC5jbG91ZC52MS5tb2RlbHMuU3VpdGVSZWNvcmRCCPpCBYoBAhABIkwKE0NyZWF0ZVN1aXRlUmVzcG9uc2USNQoFc3VpdGUYASABKAsyHC5jbG91ZC52MS5tb2RlbHMuU3VpdGVSZWNvcmRCCPpCBYoBAhABIkYKD0dldFN1aXRlUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIVCgJpZBgCIAEoCUIJ+kIGcgQYQBABIkkKEEdldFN1aXRlUmVzcG9uc2USNQoFc3VpdGUYASABKAsyHC5jbG91ZC52MS5tb2RlbHMuU3VpdGVSZWNvcmRCCPpCBYoBAhABIrgEChFMaXN0U3VpdGVzUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBItCgZmaWx0ZXIYAiABKAsyHS5jbG91ZC52MS5jb21tb24uRW50aXR5RmlsdGVyEjAKCXByb3ZpZGVycxgDIAMoDjIdLmNsb3VkLnYxLmRlcGxveW1lbnQuUHJvdmlkZXISHQoQc2NoZWR1bGVfZW5hYmxlZBgEIAEoCEgAiAEBEjIKBHNvcnQYBSABKAsyJC5jbG91ZC52MS5hcGkuTGlzdFN1aXRlc1JlcXVlc3QuU29ydBIjCgRwYWdlGAYgASgLMhUuY2xvdWQudjEuY29tbW9uLlBhZ2UalgIKBFNvcnQSMgoGZW50aXR5GAEgASgOMiAuY2xvdWQudjEuY29tbW9uLkVudGl0eVNvcnRGaWVsZEgAEjkKBGtpbmQYAiABKA4yKS5jbG91ZC52MS5hcGkuTGlzdFN1aXRlc1JlcXVlc3QuU29ydC5LaW5kSAASDAoEZGVzYxgDIAEoCCKKAQoES2luZBIUChBLSU5EX1VOU1BFQ0lGSUVEEAASEQoNS0lORF9QUk9WSURFUhABEhkKFUtJTkRfU0NIRURVTEVfRU5BQkxFRBACEhQKEEtJTkRfTkVYVF9SVU5fQVQQAxIUChBLSU5EX0xBU1RfUlVOX0FUEAQSEgoOS0lORF9SVU5fQ09VTlQQBUIECgJieUITChFfc2NoZWR1bGVfZW5hYmxlZCJbChJMaXN0U3VpdGVzUmVzcG9uc2USLAoGc3VpdGVzGAEgAygLMhwuY2xvdWQudjEubW9kZWxzLlN1aXRlUmVjb3JkEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSJlChZMaXN0U3VpdGVGYWNldHNSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEi0KBmZpbHRlchgCIAEoCzIdLmNsb3VkLnYxLmNvbW1vbi5FbnRpdHlGaWx0ZXIiLQoXTGlzdFN1aXRlRmFjZXRzUmVzcG9uc2USEgoKYXV0aG9yX2lkcxgBIAMoCSJpChJVcGRhdGVTdWl0ZVJlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASNQoFc3VpdGUYAiABKAsyHC5jbG91ZC52MS5tb2RlbHMuU3VpdGVSZWNvcmRCCPpCBYoBAhABIkwKE1VwZGF0ZVN1aXRlUmVzcG9uc2USNQoFc3VpdGUYASABKAsyHC5jbG91ZC52MS5tb2RlbHMuU3VpdGVSZWNvcmRCCPpCBYoBAhABIkkKEkRlbGV0ZVN1aXRlUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIVCgJpZBgCIAEoCUIJ+kIGcgQYQBABIhUKE0RlbGV0ZVN1aXRlUmVzcG9uc2UiYAoRQ2xvbmVTdWl0ZVJlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBhAEAESFQoCaWQYAiABKAlCCfpCBnIEEAEYQBIWCgRuYW1lGAMgASgJQgj6QgVyAxj/ASJLChJDbG9uZVN1aXRlUmVzcG9uc2USNQoFc3VpdGUYASABKAsyHC5jbG91ZC52MS5tb2RlbHMuU3VpdGVSZWNvcmRCCPpCBYoBAhABIoUBChdTZXRTdWl0ZVNjaGVkdWxlUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIVCgJpZBgCIAEoCUIJ+kIGcgQQARhAEjUKCHNjaGVkdWxlGAMgASgLMhkuY2xvdWQudjEuZG9tYWluLlNjaGVkdWxlQgj6QgWKAQIQASJRChhTZXRTdWl0ZVNjaGVkdWxlUmVzcG9uc2USNQoFc3VpdGUYASABKAsyHC5jbG91ZC52MS5tb2RlbHMuU3VpdGVSZWNvcmRCCPpCBYoBAhABIoYCChFTdGFydFN1aXRlUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIdCghzdWl0ZV9pZBgCIAEoCUIJ+kIGcgQQARhASAASJwoFc3VpdGUYAyABKAsyFi5jbG91ZC52MS5kb21haW4uU3VpdGVIABIUCgxtYXhfcGFyYWxsZWwYBCABKA0SHQoQaW5fdGVuYW50X3JhdGluZxgFIAEoCEgBiAEBEh0KEGluX2dsb2JhbF9yYXRpbmcYBiABKAhIAogBAUINCgZzb3VyY2USA/hCAUITChFfaW5fdGVuYW50X3JhdGluZ0ITChFfaW5fZ2xvYmFsX3JhdGluZyJSChJTdGFydFN1aXRlUmVzcG9uc2USPAoJc3VpdGVfcnVuGAEgASgLMh8uY2xvdWQudjEubW9kZWxzLlN1aXRlUnVuUmVjb3JkQgj6QgWKAQIQATKJBwoMU3VpdGVTZXJ2aWNlEl4KC0NyZWF0ZVN1aXRlEiAuY2xvdWQudjEuYXBpLkNyZWF0ZVN1aXRlUmVxdWVzdBohLmNsb3VkLnYxLmFwaS5DcmVhdGVTdWl0ZVJlc3BvbnNlIgqKtRgGEgQICRABElgKCEdldFN1aXRlEh0uY2xvdWQudjEuYXBpLkdldFN1aXRlUmVxdWVzdBoeLmNsb3VkLnYxLmFwaS5HZXRTdWl0ZVJlc3BvbnNlIg2QAgGKtRgGEgQICRACEl4KCkxpc3RTdWl0ZXMSHy5jbG91ZC52MS5hcGkuTGlzdFN1aXRlc1JlcXVlc3QaIC5jbG91ZC52MS5hcGkuTGlzdFN1aXRlc1Jlc3BvbnNlIg2QAgGKtRgGEgQQBQgJEm0KD0xpc3RTdWl0ZUZhY2V0cxIkLmNsb3VkLnYxLmFwaS5MaXN0U3VpdGVGYWNldHNSZXF1ZXN0GiUuY2xvdWQudjEuYXBpLkxpc3RTdWl0ZUZhY2V0c1Jlc3BvbnNlIg2QAgGKtRgGEgQQBQgJEmEKC1VwZGF0ZVN1aXRlEiAuY2xvdWQudjEuYXBpLlVwZGF0ZVN1aXRlUmVxdWVzdBohLmNsb3VkLnYxLmFwaS5VcGRhdGVTdWl0ZVJlc3BvbnNlIg2QAgKKtRgGEgQICRADEmEKC0RlbGV0ZVN1aXRlEiAuY2xvdWQudjEuYXBpLkRlbGV0ZVN1aXRlUmVxdWVzdBohLmNsb3VkLnYxLmFwaS5EZWxldGVTdWl0ZVJlc3BvbnNlIg2QAgKKtRgGEgQICRAEElsKCkNsb25lU3VpdGUSHy5jbG91ZC52MS5hcGkuQ2xvbmVTdWl0ZVJlcXVlc3QaIC5jbG91ZC52MS5hcGkuQ2xvbmVTdWl0ZVJlc3BvbnNlIgqKtRgGEgQICRABEnAKEFNldFN1aXRlU2NoZWR1bGUSJS5jbG91ZC52MS5hcGkuU2V0U3VpdGVTY2hlZHVsZVJlcXVlc3QaJi5jbG91ZC52MS5hcGkuU2V0U3VpdGVTY2hlZHVsZVJlc3BvbnNlIg2QAgKKtRgGEgQICRADElsKClN0YXJ0U3VpdGUSHy5jbG91ZC52MS5hcGkuU3RhcnRTdWl0ZVJlcXVlc3QaIC5jbG91ZC52MS5hcGkuU3RhcnRTdWl0ZVJlc3BvbnNlIgqKtRgGEgQQAQgKQkFaP2dpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2FwaWIGcHJvdG8z", [file_cloud_v1_common_entity, file_cloud_v1_deployment_provider, file_cloud_v1_domain_suite, file_cloud_v1_iam_options, file_cloud_v1_iam_permission, file_cloud_v1_models_suite, file_validate_validate]);
 
 /**
  *
@@ -562,6 +562,110 @@ export const ListSuitesResponseSchema: GenMessage<ListSuitesResponse, {jsonType:
 
 /**
  *
+ * ListSuiteFacetsRequest returns distinct values used by suite-list facet
+ * controls. It is tenant-scoped and honors EntityFilter.include_deleted.
+ *
+ * @generated from message cloud.v1.api.ListSuiteFacetsRequest
+ */
+export type ListSuiteFacetsRequest = Message<"cloud.v1.api.ListSuiteFacetsRequest"> & {
+  /**
+   *
+   * tenant_id scopes the request to the owning tenant.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   *
+   * filter holds shared Entity-level filters. include_deleted controls
+   * whether soft-deleted suites contribute to facet values.
+   *
+   * @generated from field: cloud.v1.common.EntityFilter filter = 2;
+   */
+  filter?: EntityFilter;
+};
+
+/**
+ *
+ * ListSuiteFacetsRequest returns distinct values used by suite-list facet
+ * controls. It is tenant-scoped and honors EntityFilter.include_deleted.
+ *
+ * @generated from message cloud.v1.api.ListSuiteFacetsRequest
+ */
+export type ListSuiteFacetsRequestJson = {
+  /**
+   *
+   * tenant_id scopes the request to the owning tenant.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId?: string;
+
+  /**
+   *
+   * filter holds shared Entity-level filters. include_deleted controls
+   * whether soft-deleted suites contribute to facet values.
+   *
+   * @generated from field: cloud.v1.common.EntityFilter filter = 2;
+   */
+  filter?: EntityFilterJson;
+};
+
+export type ListSuiteFacetsRequestValid = ListSuiteFacetsRequest;
+
+/**
+ * Describes the message cloud.v1.api.ListSuiteFacetsRequest.
+ * Use `create(ListSuiteFacetsRequestSchema)` to create a new message.
+ */
+export const ListSuiteFacetsRequestSchema: GenMessage<ListSuiteFacetsRequest, {jsonType: ListSuiteFacetsRequestJson, validType: ListSuiteFacetsRequestValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_suite, 6);
+
+/**
+ *
+ * ListSuiteFacetsResponse returns distinct non-empty values present in the
+ * matching tenant's suite definitions.
+ *
+ * @generated from message cloud.v1.api.ListSuiteFacetsResponse
+ */
+export type ListSuiteFacetsResponse = Message<"cloud.v1.api.ListSuiteFacetsResponse"> & {
+  /**
+   *
+   * author_ids are distinct entity.author_id values.
+   *
+   * @generated from field: repeated string author_ids = 1;
+   */
+  authorIds: string[];
+};
+
+/**
+ *
+ * ListSuiteFacetsResponse returns distinct non-empty values present in the
+ * matching tenant's suite definitions.
+ *
+ * @generated from message cloud.v1.api.ListSuiteFacetsResponse
+ */
+export type ListSuiteFacetsResponseJson = {
+  /**
+   *
+   * author_ids are distinct entity.author_id values.
+   *
+   * @generated from field: repeated string author_ids = 1;
+   */
+  authorIds?: string[];
+};
+
+export type ListSuiteFacetsResponseValid = ListSuiteFacetsResponse;
+
+/**
+ * Describes the message cloud.v1.api.ListSuiteFacetsResponse.
+ * Use `create(ListSuiteFacetsResponseSchema)` to create a new message.
+ */
+export const ListSuiteFacetsResponseSchema: GenMessage<ListSuiteFacetsResponse, {jsonType: ListSuiteFacetsResponseJson, validType: ListSuiteFacetsResponseValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_suite, 7);
+
+/**
+ *
  * UpdateSuiteRequest wholesale-replaces an existing suite definition.
  *
  * @generated from message cloud.v1.api.UpdateSuiteRequest
@@ -615,7 +719,7 @@ export type UpdateSuiteRequestValid = UpdateSuiteRequest;
  * Use `create(UpdateSuiteRequestSchema)` to create a new message.
  */
 export const UpdateSuiteRequestSchema: GenMessage<UpdateSuiteRequest, {jsonType: UpdateSuiteRequestJson, validType: UpdateSuiteRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_suite, 6);
+  messageDesc(file_cloud_v1_api_suite, 8);
 
 /**
  *
@@ -656,11 +760,11 @@ export type UpdateSuiteResponseValid = UpdateSuiteResponse;
  * Use `create(UpdateSuiteResponseSchema)` to create a new message.
  */
 export const UpdateSuiteResponseSchema: GenMessage<UpdateSuiteResponse, {jsonType: UpdateSuiteResponseJson, validType: UpdateSuiteResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_suite, 7);
+  messageDesc(file_cloud_v1_api_suite, 9);
 
 /**
  *
- * DeleteSuiteRequest deletes a suite definition by id.
+ * DeleteSuiteRequest soft-deletes a suite definition by id.
  *
  * @generated from message cloud.v1.api.DeleteSuiteRequest
  */
@@ -684,7 +788,7 @@ export type DeleteSuiteRequest = Message<"cloud.v1.api.DeleteSuiteRequest"> & {
 
 /**
  *
- * DeleteSuiteRequest deletes a suite definition by id.
+ * DeleteSuiteRequest soft-deletes a suite definition by id.
  *
  * @generated from message cloud.v1.api.DeleteSuiteRequest
  */
@@ -713,11 +817,12 @@ export type DeleteSuiteRequestValid = DeleteSuiteRequest;
  * Use `create(DeleteSuiteRequestSchema)` to create a new message.
  */
 export const DeleteSuiteRequestSchema: GenMessage<DeleteSuiteRequest, {jsonType: DeleteSuiteRequestJson, validType: DeleteSuiteRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_suite, 8);
+  messageDesc(file_cloud_v1_api_suite, 10);
 
 /**
  *
- * DeleteSuiteResponse is empty; deletion success is signalled by a non-error reply.
+ * DeleteSuiteResponse is empty; soft-delete success is signalled by a
+ * non-error reply.
  *
  * @generated from message cloud.v1.api.DeleteSuiteResponse
  */
@@ -726,7 +831,8 @@ export type DeleteSuiteResponse = Message<"cloud.v1.api.DeleteSuiteResponse"> & 
 
 /**
  *
- * DeleteSuiteResponse is empty; deletion success is signalled by a non-error reply.
+ * DeleteSuiteResponse is empty; soft-delete success is signalled by a
+ * non-error reply.
  *
  * @generated from message cloud.v1.api.DeleteSuiteResponse
  */
@@ -740,7 +846,7 @@ export type DeleteSuiteResponseValid = DeleteSuiteResponse;
  * Use `create(DeleteSuiteResponseSchema)` to create a new message.
  */
 export const DeleteSuiteResponseSchema: GenMessage<DeleteSuiteResponse, {jsonType: DeleteSuiteResponseJson, validType: DeleteSuiteResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_suite, 9);
+  messageDesc(file_cloud_v1_api_suite, 11);
 
 /**
  *
@@ -815,7 +921,7 @@ export type CloneSuiteRequestValid = CloneSuiteRequest;
  * Use `create(CloneSuiteRequestSchema)` to create a new message.
  */
 export const CloneSuiteRequestSchema: GenMessage<CloneSuiteRequest, {jsonType: CloneSuiteRequestJson, validType: CloneSuiteRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_suite, 10);
+  messageDesc(file_cloud_v1_api_suite, 12);
 
 /**
  *
@@ -856,7 +962,7 @@ export type CloneSuiteResponseValid = CloneSuiteResponse;
  * Use `create(CloneSuiteResponseSchema)` to create a new message.
  */
 export const CloneSuiteResponseSchema: GenMessage<CloneSuiteResponse, {jsonType: CloneSuiteResponseJson, validType: CloneSuiteResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_suite, 11);
+  messageDesc(file_cloud_v1_api_suite, 13);
 
 /**
  *
@@ -931,7 +1037,7 @@ export type SetSuiteScheduleRequestValid = SetSuiteScheduleRequest;
  * Use `create(SetSuiteScheduleRequestSchema)` to create a new message.
  */
 export const SetSuiteScheduleRequestSchema: GenMessage<SetSuiteScheduleRequest, {jsonType: SetSuiteScheduleRequestJson, validType: SetSuiteScheduleRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_suite, 12);
+  messageDesc(file_cloud_v1_api_suite, 14);
 
 /**
  *
@@ -972,13 +1078,14 @@ export type SetSuiteScheduleResponseValid = SetSuiteScheduleResponse;
  * Use `create(SetSuiteScheduleResponseSchema)` to create a new message.
  */
 export const SetSuiteScheduleResponseSchema: GenMessage<SetSuiteScheduleResponse, {jsonType: SetSuiteScheduleResponseJson, validType: SetSuiteScheduleResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_suite, 13);
+  messageDesc(file_cloud_v1_api_suite, 15);
 
 /**
  *
- * StartSuite expands a suite definition into a SuiteRunRecord (one TestRunRecord
- * per enabled compatible cell) and launches SuiteWorkflow. Provide a stored
- * `suite_id` or an inline `suite` definition directly (CLI/API).
+ * StartSuite expands a non-deleted suite definition into a SuiteRunRecord (one
+ * TestRunRecord per enabled compatible cell) and launches SuiteWorkflow.
+ * Provide a stored `suite_id` or an inline `suite` definition directly
+ * (CLI/API).
  *
  * @generated from message cloud.v1.api.StartSuiteRequest
  */
@@ -1048,9 +1155,10 @@ export type StartSuiteRequest = Message<"cloud.v1.api.StartSuiteRequest"> & {
 
 /**
  *
- * StartSuite expands a suite definition into a SuiteRunRecord (one TestRunRecord
- * per enabled compatible cell) and launches SuiteWorkflow. Provide a stored
- * `suite_id` or an inline `suite` definition directly (CLI/API).
+ * StartSuite expands a non-deleted suite definition into a SuiteRunRecord (one
+ * TestRunRecord per enabled compatible cell) and launches SuiteWorkflow.
+ * Provide a stored `suite_id` or an inline `suite` definition directly
+ * (CLI/API).
  *
  * @generated from message cloud.v1.api.StartSuiteRequest
  */
@@ -1114,7 +1222,7 @@ export type StartSuiteRequestValid = StartSuiteRequest;
  * Use `create(StartSuiteRequestSchema)` to create a new message.
  */
 export const StartSuiteRequestSchema: GenMessage<StartSuiteRequest, {jsonType: StartSuiteRequestJson, validType: StartSuiteRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_suite, 14);
+  messageDesc(file_cloud_v1_api_suite, 16);
 
 /**
  *
@@ -1155,7 +1263,7 @@ export type StartSuiteResponseValid = StartSuiteResponse;
  * Use `create(StartSuiteResponseSchema)` to create a new message.
  */
 export const StartSuiteResponseSchema: GenMessage<StartSuiteResponse, {jsonType: StartSuiteResponseJson, validType: StartSuiteResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_suite, 15);
+  messageDesc(file_cloud_v1_api_suite, 17);
 
 /**
  *
@@ -1199,6 +1307,18 @@ export const SuiteService: GenService<{
   },
   /**
    *
+   * ListSuiteFacets lists distinct values for suite-list facet controls.
+   * Read-only.
+   *
+   * @generated from rpc cloud.v1.api.SuiteService.ListSuiteFacets
+   */
+  listSuiteFacets: {
+    methodKind: "unary";
+    input: typeof ListSuiteFacetsRequestSchema;
+    output: typeof ListSuiteFacetsResponseSchema;
+  },
+  /**
+   *
    * UpdateSuite is idempotent: a wholesale field set converges on retry.
    *
    * @generated from rpc cloud.v1.api.SuiteService.UpdateSuite
@@ -1210,7 +1330,8 @@ export const SuiteService: GenService<{
   },
   /**
    *
-   * DeleteSuite is idempotent: deleting an absent suite is a no-op.
+   * DeleteSuite is idempotent: soft-deleting an absent or already-deleted
+   * suite is a no-op.
    *
    * @generated from rpc cloud.v1.api.SuiteService.DeleteSuite
    */

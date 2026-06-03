@@ -1,4 +1,4 @@
-import type { DatabaseKind } from "@/api/types";
+import type { DatabaseKind } from "@/services/types";
 
 // Corporate brand colors for each database engine.
 // PostgreSQL: elephant blue — #336791

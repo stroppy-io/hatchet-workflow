@@ -46,6 +46,7 @@ func BuildRunConfig(ctx context.Context, tenantID string, settings SettingsSourc
 	stampMonitorLabels(testRun.GetTopologySpec(), testRun.GetId(), bootstrap)
 
 	cfg := &workflowpb.RunConfig{
+		TenantId:           tenantID,
 		Id:                 testRun.GetId(),
 		Database:           testRun.GetDatabase(),
 		Workload:           testRun.GetWorkload(),

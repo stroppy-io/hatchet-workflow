@@ -20,6 +20,7 @@ import (
 type ApiTokenRepo interface {
 	Create(ctx context.Context, token *iam.ApiToken) error
 	Get(ctx context.Context, id string) (*iam.ApiToken, error)
+	GetByPrefix(ctx context.Context, prefix string) (*iam.ApiToken, error)
 	ListByAccount(ctx context.Context, accountID string) ([]*iam.ApiToken, error)
 	Delete(ctx context.Context, id string) error
 }
@@ -28,6 +29,7 @@ type ApiTokenRepo interface {
 // the metadata. Verification (lookup by prefix) is the auth layer's concern.
 type ApiTokenSecrets interface {
 	SetHash(ctx context.Context, tokenID, hash string) error
+	GetHash(ctx context.Context, tokenID string) (string, error)
 	Delete(ctx context.Context, tokenID string) error
 }
 
@@ -55,9 +57,17 @@ func (s *IamService) CreateApiToken(ctx context.Context, req *api.CreateApiToken
 		if req.GetTtl().AsDuration() <= 0 {
 			return nil, status.Error(codes.InvalidArgument, "personal tokens require an expiry (ttl)")
 		}
+	} else if req.GetType() != iam.ApiTokenType_API_TOKEN_TYPE_SERVICE {
+		return nil, status.Error(codes.InvalidArgument, "api token type is required")
 	}
-	if _, err := s.d.Accounts.Get(ctx, req.GetAccountId()); err != nil {
+	owner, err := s.d.Accounts.Get(ctx, req.GetAccountId())
+	if err != nil {
 		return nil, utils.MapErr(err)
+	}
+	if req.GetType() == iam.ApiTokenType_API_TOKEN_TYPE_SERVICE {
+		if err := s.validateServiceTokenPermissions(ctx, owner, req.GetPermissions()); err != nil {
+			return nil, err
+		}
 	}
 
 	secret, prefix, hash, err := s.d.ApiTokenMinter.Mint()
@@ -88,6 +98,40 @@ func (s *IamService) CreateApiToken(ctx context.Context, req *api.CreateApiToken
 		return nil, err
 	}
 	return &api.CreateApiTokenResponse{Token: tok, Secret: secret}, nil
+}
+
+func (s *IamService) validateServiceTokenPermissions(ctx context.Context, owner *iam.Account, requested []*iam.Permission) error {
+	for _, p := range requested {
+		if p == nil ||
+			p.GetResource() == iam.Resource_RESOURCE_UNSPECIFIED ||
+			p.GetAction() == iam.Action_ACTION_UNSPECIFIED ||
+			iam.Resource_name[int32(p.GetResource())] == "" ||
+			iam.Action_name[int32(p.GetAction())] == "" {
+			return status.Error(codes.InvalidArgument, "service token permissions must use defined resource and action values")
+		}
+	}
+	if len(requested) == 0 || owner.GetIsAdmin() {
+		return nil
+	}
+	if s.d.Tenants == nil || s.d.Authz == nil {
+		return status.Error(codes.Internal, "service token permission resolver is not configured")
+	}
+	tenants, err := s.d.Tenants.ListByMember(ctx, owner.GetId())
+	if err != nil {
+		return utils.MapErr(err)
+	}
+	var granted []*iam.Permission
+	for _, tenant := range tenants {
+		perms, err := s.d.Authz.EffectivePermissions(ctx, owner.GetId(), tenant.GetId())
+		if err != nil {
+			return utils.MapErr(err)
+		}
+		granted = append(granted, perms...)
+	}
+	if !hasAll(granted, requested) {
+		return status.Error(codes.PermissionDenied, "service token permissions exceed the owner's permissions")
+	}
+	return nil
 }
 
 func (s *IamService) ListApiTokens(ctx context.Context, req *api.ListApiTokensRequest) (*api.ListApiTokensResponse, error) {

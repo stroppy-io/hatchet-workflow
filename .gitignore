@@ -22,3 +22,4 @@ tests/e2e/report
 tests/e2e/test-results
 protocols/easyp_vendor
 /cli
+.superpowers/

@@ -20,7 +20,6 @@ type WorkloadPresetRepo interface {
 	Get(ctx context.Context, tenantID, id, callerAccountID string) (*models.WorkloadPresetRecord, error)
 	List(ctx context.Context, req *api.ListWorkloadPresetsRequest, callerAccountID string) (presets []*models.WorkloadPresetRecord, nextPageToken string, err error)
 	Update(ctx context.Context, preset *models.WorkloadPresetRecord) error
-	Delete(ctx context.Context, tenantID, id string) error
 }
 
 func (s *WorkloadPresetService) CreateWorkloadPreset(ctx context.Context, req *api.CreateWorkloadPresetRequest) (*api.CreateWorkloadPresetResponse, error) {
@@ -34,6 +33,7 @@ func (s *WorkloadPresetService) CreateWorkloadPreset(ctx context.Context, req *a
 	}
 	preset.Entity = s.d.stampNew(preset.GetEntity(), req.GetTenantId(), c.GetAccountId())
 	preset.IsSystem = false
+	fillWorkloadPresetSummary(preset)
 	if err := s.d.Workloads.Create(ctx, preset); err != nil {
 		return nil, utils.MapErr(err)
 	}
@@ -86,6 +86,7 @@ func (s *WorkloadPresetService) UpdateWorkloadPreset(ctx context.Context, req *a
 			Workload: in.GetWorkload(),
 			IsSystem: false,
 		}
+		fillWorkloadPresetSummary(out)
 		if err := s.d.Workloads.Update(ctx, out); err != nil {
 			return nil, utils.MapErr(err)
 		}
@@ -110,7 +111,14 @@ func (s *WorkloadPresetService) DeleteWorkloadPreset(ctx context.Context, req *a
 		if existing.GetIsSystem() {
 			return status.Error(codes.FailedPrecondition, "system presets cannot be deleted")
 		}
-		return ignoreNotFound(s.d.Workloads.Delete(ctx, req.GetTenantId(), req.GetId()))
+		if existing.GetEntity().GetTimings().GetDeletedAt() != nil {
+			return nil
+		}
+		markEntityDeleted(existing.GetEntity(), s.d.now())
+		if err := s.d.Workloads.Update(ctx, existing); err != nil {
+			return utils.MapErr(err)
+		}
+		return nil
 	}); err != nil {
 		return nil, err
 	}
@@ -135,6 +143,7 @@ func (s *WorkloadPresetService) CloneWorkloadPreset(ctx context.Context, req *ap
 			Workload: src.GetWorkload(),
 			IsSystem: false,
 		}
+		fillWorkloadPresetSummary(out)
 		if err := s.d.Workloads.Create(ctx, out); err != nil {
 			return nil, utils.MapErr(err)
 		}

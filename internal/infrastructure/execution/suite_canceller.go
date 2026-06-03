@@ -5,6 +5,7 @@ import (
 
 	"go.temporal.io/sdk/client"
 
+	derrors "github.com/stroppy-io/stroppy-cloud/internal/domain/errors"
 	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
 	"github.com/stroppy-io/stroppy-cloud/internal/services/suite_run"
 )
@@ -29,7 +30,7 @@ func NewSuiteRunCanceller(c client.Client) *SuiteRunCanceller {
 func (c *SuiteRunCanceller) CancelSuiteRun(ctx context.Context, suiteRunID string) error {
 	if err := c.tc.CancelWorkflow(ctx, suiteWorkflowID(suiteRunID), ""); err != nil {
 		if isWorkflowNotFound(err) {
-			return nil
+			return derrors.ErrNotFound
 		}
 		return err
 	}

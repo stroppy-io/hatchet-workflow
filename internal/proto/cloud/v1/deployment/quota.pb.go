@@ -22,6 +22,67 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// ReservationStatus is the control-plane lifecycle of our own quota ledger.
+// Provider usage is observed separately through quota snapshots; RESERVED
+// rows are the only rows subtracted from provider headroom for new runs.
+type Quota_ReservationStatus int32
+
+const (
+	Quota_RESERVATION_STATUS_UNSPECIFIED Quota_ReservationStatus = 0
+	Quota_RESERVATION_STATUS_RESERVED    Quota_ReservationStatus = 1
+	Quota_RESERVATION_STATUS_ALLOCATED   Quota_ReservationStatus = 2
+	Quota_RESERVATION_STATUS_RELEASED    Quota_ReservationStatus = 3
+	Quota_RESERVATION_STATUS_EXPIRED     Quota_ReservationStatus = 4
+	Quota_RESERVATION_STATUS_FAILED      Quota_ReservationStatus = 5
+)
+
+// Enum value maps for Quota_ReservationStatus.
+var (
+	Quota_ReservationStatus_name = map[int32]string{
+		0: "RESERVATION_STATUS_UNSPECIFIED",
+		1: "RESERVATION_STATUS_RESERVED",
+		2: "RESERVATION_STATUS_ALLOCATED",
+		3: "RESERVATION_STATUS_RELEASED",
+		4: "RESERVATION_STATUS_EXPIRED",
+		5: "RESERVATION_STATUS_FAILED",
+	}
+	Quota_ReservationStatus_value = map[string]int32{
+		"RESERVATION_STATUS_UNSPECIFIED": 0,
+		"RESERVATION_STATUS_RESERVED":    1,
+		"RESERVATION_STATUS_ALLOCATED":   2,
+		"RESERVATION_STATUS_RELEASED":    3,
+		"RESERVATION_STATUS_EXPIRED":     4,
+		"RESERVATION_STATUS_FAILED":      5,
+	}
+)
+
+func (x Quota_ReservationStatus) Enum() *Quota_ReservationStatus {
+	p := new(Quota_ReservationStatus)
+	*p = x
+	return p
+}
+
+func (x Quota_ReservationStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Quota_ReservationStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_cloud_v1_deployment_quota_proto_enumTypes[0].Descriptor()
+}
+
+func (Quota_ReservationStatus) Type() protoreflect.EnumType {
+	return &file_cloud_v1_deployment_quota_proto_enumTypes[0]
+}
+
+func (x Quota_ReservationStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Quota_ReservationStatus.Descriptor instead.
+func (Quota_ReservationStatus) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_deployment_quota_proto_rawDescGZIP(), []int{0, 0}
+}
+
 // Quota is one provider quota reading captured during a preflight check.
 // The reading is provider-agnostic: provider selects which QuotaKind enum
 // quota_kind_enum_value refers to, since Docker.QuotaKind and
@@ -321,7 +382,7 @@ var File_cloud_v1_deployment_quota_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_deployment_quota_proto_rawDesc = "" +
 	"\n" +
-	"\x1fcloud/v1/deployment/quota.proto\x12\x13cloud.v1.deployment\x1a\"cloud/v1/deployment/provider.proto\x1a\x17validate/validate.proto\"\xeb\x03\n" +
+	"\x1fcloud/v1/deployment/quota.proto\x12\x13cloud.v1.deployment\x1a\"cloud/v1/deployment/provider.proto\x1a\x17validate/validate.proto\"\xc8\x05\n" +
 	"\x05Quota\x1a\x8b\x01\n" +
 	"\x04Info\x12E\n" +
 	"\bprovider\x18\x01 \x01(\x0e2\x1d.cloud.v1.deployment.ProviderB\n" +
@@ -339,7 +400,14 @@ const file_cloud_v1_deployment_quota_proto_rawDesc = "" +
 	"\n" +
 	"Allocation\x12=\n" +
 	"\x04info\x18\x01 \x01(\v2\x1f.cloud.v1.deployment.Quota.InfoB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04info\x12\x12\n" +
-	"\x04used\x18\x03 \x01(\x04R\x04usedBHZFgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deploymentb\x06proto3"
+	"\x04used\x18\x03 \x01(\x04R\x04used\"\xda\x01\n" +
+	"\x11ReservationStatus\x12\"\n" +
+	"\x1eRESERVATION_STATUS_UNSPECIFIED\x10\x00\x12\x1f\n" +
+	"\x1bRESERVATION_STATUS_RESERVED\x10\x01\x12 \n" +
+	"\x1cRESERVATION_STATUS_ALLOCATED\x10\x02\x12\x1f\n" +
+	"\x1bRESERVATION_STATUS_RELEASED\x10\x03\x12\x1e\n" +
+	"\x1aRESERVATION_STATUS_EXPIRED\x10\x04\x12\x1d\n" +
+	"\x19RESERVATION_STATUS_FAILED\x10\x05BHZFgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deploymentb\x06proto3"
 
 var (
 	file_cloud_v1_deployment_quota_proto_rawDescOnce sync.Once
@@ -353,20 +421,22 @@ func file_cloud_v1_deployment_quota_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_deployment_quota_proto_rawDescData
 }
 
+var file_cloud_v1_deployment_quota_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_cloud_v1_deployment_quota_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_cloud_v1_deployment_quota_proto_goTypes = []any{
-	(*Quota)(nil),            // 0: cloud.v1.deployment.Quota
-	(*Quota_Info)(nil),       // 1: cloud.v1.deployment.Quota.Info
-	(*Quota_State)(nil),      // 2: cloud.v1.deployment.Quota.State
-	(*Quota_Request)(nil),    // 3: cloud.v1.deployment.Quota.Request
-	(*Quota_Allocation)(nil), // 4: cloud.v1.deployment.Quota.Allocation
-	(Provider)(0),            // 5: cloud.v1.deployment.Provider
+	(Quota_ReservationStatus)(0), // 0: cloud.v1.deployment.Quota.ReservationStatus
+	(*Quota)(nil),                // 1: cloud.v1.deployment.Quota
+	(*Quota_Info)(nil),           // 2: cloud.v1.deployment.Quota.Info
+	(*Quota_State)(nil),          // 3: cloud.v1.deployment.Quota.State
+	(*Quota_Request)(nil),        // 4: cloud.v1.deployment.Quota.Request
+	(*Quota_Allocation)(nil),     // 5: cloud.v1.deployment.Quota.Allocation
+	(Provider)(0),                // 6: cloud.v1.deployment.Provider
 }
 var file_cloud_v1_deployment_quota_proto_depIdxs = []int32{
-	5, // 0: cloud.v1.deployment.Quota.Info.provider:type_name -> cloud.v1.deployment.Provider
-	1, // 1: cloud.v1.deployment.Quota.State.info:type_name -> cloud.v1.deployment.Quota.Info
-	1, // 2: cloud.v1.deployment.Quota.Request.info:type_name -> cloud.v1.deployment.Quota.Info
-	1, // 3: cloud.v1.deployment.Quota.Allocation.info:type_name -> cloud.v1.deployment.Quota.Info
+	6, // 0: cloud.v1.deployment.Quota.Info.provider:type_name -> cloud.v1.deployment.Provider
+	2, // 1: cloud.v1.deployment.Quota.State.info:type_name -> cloud.v1.deployment.Quota.Info
+	2, // 2: cloud.v1.deployment.Quota.Request.info:type_name -> cloud.v1.deployment.Quota.Info
+	2, // 3: cloud.v1.deployment.Quota.Allocation.info:type_name -> cloud.v1.deployment.Quota.Info
 	4, // [4:4] is the sub-list for method output_type
 	4, // [4:4] is the sub-list for method input_type
 	4, // [4:4] is the sub-list for extension type_name
@@ -385,13 +455,14 @@ func file_cloud_v1_deployment_quota_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_deployment_quota_proto_rawDesc), len(file_cloud_v1_deployment_quota_proto_rawDesc)),
-			NumEnums:      0,
+			NumEnums:      1,
 			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_cloud_v1_deployment_quota_proto_goTypes,
 		DependencyIndexes: file_cloud_v1_deployment_quota_proto_depIdxs,
+		EnumInfos:         file_cloud_v1_deployment_quota_proto_enumTypes,
 		MessageInfos:      file_cloud_v1_deployment_quota_proto_msgTypes,
 	}.Build()
 	File_cloud_v1_deployment_quota_proto = out.File

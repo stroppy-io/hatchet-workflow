@@ -1464,11 +1464,12 @@ service IamService {
         option (cloud.v1.iam.auth) = {admin_only: true};
     }
     /*
-        GetAccount fetches one account by id. Read-only.
+        GetAccount fetches one account by id. The handler allows platform admins,
+        the account itself, or callers sharing a tenant with the target account.
      */
     rpc GetAccount (GetAccountRequest) returns (GetAccountResponse) {
         option idempotency_level = NO_SIDE_EFFECTS;
-        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_ACCOUNT, action: ACTION_READ}]};
+        option (cloud.v1.iam.auth) = {};
     }
     /*
         GetMyAccount returns the caller's own profile — authenticated, no
@@ -1487,10 +1488,11 @@ service IamService {
     }
     /*
         UpdateAccount is idempotent: a wholesale field set converges on retry.
+        The handler allows platform admins or the account itself.
      */
     rpc UpdateAccount (UpdateAccountRequest) returns (UpdateAccountResponse) {
         option idempotency_level = IDEMPOTENT;
-        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_ACCOUNT, action: ACTION_UPDATE}]};
+        option (cloud.v1.iam.auth) = {};
     }
     /*
         DeleteAccount is idempotent: deleting an absent account is a no-op.
@@ -1529,14 +1531,16 @@ service IamService {
         Not idempotent: each call creates a new tenant.
      */
     rpc CreateTenant (CreateTenantRequest) returns (CreateTenantResponse) {
-        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TENANT, action: ACTION_CREATE}]};
+        option (cloud.v1.iam.auth) = {};
     }
     /*
-        GetTenant fetches by id or slug; slug is the routing-resolve path.
+        GetTenant fetches by id or slug; slug is the routing-resolve path. The
+        handler resolves the tenant first and then allows platform admins or
+        tenant members.
      */
     rpc GetTenant (GetTenantRequest) returns (GetTenantResponse) {
         option idempotency_level = NO_SIDE_EFFECTS;
-        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TENANT, action: ACTION_READ}], tenant_field: "id"};
+        option (cloud.v1.iam.auth) = {};
     }
     /*
         ListMyTenants returns the caller's tenants — authenticated, no permission.

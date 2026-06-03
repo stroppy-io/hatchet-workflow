@@ -93,6 +93,27 @@ func (s *SuiteService) ListSuites(ctx context.Context, req *api.ListSuitesReques
 	return &api.ListSuitesResponse{Suites: suites, NextPageToken: next}, nil
 }
 
+// ListSuiteFacets returns distinct values for suite-list filters using the same
+// tenant and entity-filter semantics as ListSuites.
+func (s *SuiteService) ListSuiteFacets(ctx context.Context, req *api.ListSuiteFacetsRequest) (*api.ListSuiteFacetsResponse, error) {
+	if req.GetTenantId() == "" {
+		return nil, status.Error(codes.InvalidArgument, "tenant_id is required")
+	}
+	c, err := s.caller(ctx)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := s.d.Suites.ListFacets(ctx, SuiteFacetQuery{
+		TenantID: req.GetTenantId(),
+		Filter:   req.GetFilter(),
+		CallerID: c.GetAccountId(),
+	})
+	if err != nil {
+		return nil, utils.MapErr(err)
+	}
+	return resp, nil
+}
+
 // UpdateSuite wholesale-replaces a definition (idempotent: a repeated identical
 // set converges). entity.id selects the row; the server preserves immutable
 // fields (id, tenant_id, author, created_at) from the stored row and refreshes
@@ -109,6 +130,9 @@ func (s *SuiteService) UpdateSuite(ctx context.Context, req *api.UpdateSuiteRequ
 		if err != nil {
 			return nil, utils.MapErr(err)
 		}
+		if err := rejectDeletedSuite(existing); err != nil {
+			return nil, err
+		}
 		// Preserve immutable identity/ownership/creation facts from the stored row.
 		rec.Entity.Id = existing.GetEntity().GetId()
 		rec.Entity.TenantId = existing.GetEntity().GetTenantId()
@@ -116,6 +140,7 @@ func (s *SuiteService) UpdateSuite(ctx context.Context, req *api.UpdateSuiteRequ
 		rec.Entity.Timings = &common.Timings{
 			CreatedAt: existing.GetEntity().GetTimings().GetCreatedAt(),
 			UpdatedAt: s.now(),
+			DeletedAt: existing.GetEntity().GetTimings().GetDeletedAt(),
 		}
 		rec.GetSpec().Id = existing.GetEntity().GetId()
 		rec.Summary = scheduleSummary(rec.GetSpec(), existing.GetSummary())
@@ -130,12 +155,25 @@ func (s *SuiteService) UpdateSuite(ctx context.Context, req *api.UpdateSuiteRequ
 	return &api.UpdateSuiteResponse{Suite: updated}, nil
 }
 
-// DeleteSuite removes a definition (idempotent: deleting an absent suite is a
-// no-op). The repo's tenant scoping means a wrong-tenant id behaves exactly like
-// an absent one.
+// DeleteSuite soft-deletes a definition (idempotent: deleting an absent or
+// already-deleted suite is a no-op). The repo's tenant scoping means a
+// wrong-tenant id behaves exactly like an absent one.
 func (s *SuiteService) DeleteSuite(ctx context.Context, req *api.DeleteSuiteRequest) (*api.DeleteSuiteResponse, error) {
-	if err := derrors.IgnoreNotFound(s.d.Suites.Delete(ctx, req.GetTenantId(), req.GetId())); err != nil {
-		return nil, utils.MapErr(err)
+	if err := s.doTx(ctx, func(ctx context.Context) error {
+		rec, err := s.d.Suites.Get(ctx, req.GetTenantId(), req.GetId())
+		if err != nil {
+			return derrors.IgnoreNotFound(err)
+		}
+		if suiteDeleted(rec) {
+			return nil
+		}
+		markSuiteDefinitionDeleted(rec, s.now())
+		if err := s.d.Suites.Update(ctx, rec); err != nil {
+			return utils.MapErr(err)
+		}
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 	return &api.DeleteSuiteResponse{}, nil
 }
@@ -152,6 +190,9 @@ func (s *SuiteService) CloneSuite(ctx context.Context, req *api.CloneSuiteReques
 		src, err := s.d.Suites.Get(ctx, req.GetTenantId(), req.GetId())
 		if err != nil {
 			return nil, utils.MapErr(err)
+		}
+		if err := rejectDeletedSuite(src); err != nil {
+			return nil, err
 		}
 		dst := proto.Clone(src).(*models.SuiteRecord)
 		id := uuid.NewString()
@@ -200,6 +241,9 @@ func (s *SuiteService) SetSuiteSchedule(ctx context.Context, req *api.SetSuiteSc
 		if err != nil {
 			return nil, utils.MapErr(err)
 		}
+		if err := rejectDeletedSuite(rec); err != nil {
+			return nil, err
+		}
 		if rec.Spec == nil {
 			rec.Spec = &domain.Suite{Id: rec.GetEntity().GetId()}
 		}
@@ -231,6 +275,7 @@ func scheduleSummary(spec *domain.Suite, prev *models.SuiteRecord_Summary) *mode
 		out.LastRunStatus = prev.GetLastRunStatus()
 		out.NextRunAt = prev.GetNextRunAt()
 	}
+	out.CellCount = enabledCellCount(spec)
 	if sched := spec.GetSchedule(); sched != nil {
 		out.ScheduleEnabled = sched.GetEnabled()
 		out.Cron = sched.GetCron()
@@ -243,4 +288,14 @@ func scheduleSummary(spec *domain.Suite, prev *models.SuiteRecord_Summary) *mode
 		out.NextRunAt = nil
 	}
 	return out
+}
+
+func enabledCellCount(spec *domain.Suite) uint32 {
+	var count uint32
+	for _, cell := range spec.GetCells() {
+		if cell.GetEnabled() {
+			count++
+		}
+	}
+	return count
 }

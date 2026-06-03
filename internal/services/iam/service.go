@@ -137,6 +137,8 @@ type MembershipRepo interface {
 	Create(ctx context.Context, membership *iam.Membership) error
 	Get(ctx context.Context, id string) (*iam.Membership, error)
 	GetByAccountTenant(ctx context.Context, accountID, tenantID string) (*iam.Membership, error)
+	ShareTenant(ctx context.Context, accountID, otherAccountID string) (bool, error)
+	RoleInUse(ctx context.Context, roleID string) (bool, error)
 	List(ctx context.Context, tenantID string, pageSize uint32, pageToken string) (memberships []*iam.Membership, nextPageToken string, err error)
 	Update(ctx context.Context, membership *iam.Membership) error
 	Delete(ctx context.Context, id string) error
@@ -510,9 +512,16 @@ func (s *IamService) linkIdentity(ctx context.Context, accountID string, link *a
 }
 
 func (s *IamService) GetAccount(ctx context.Context, req *api.GetAccountRequest) (*api.GetAccountResponse, error) {
+	c, err := s.caller(ctx)
+	if err != nil {
+		return nil, err
+	}
 	acc, err := s.d.Accounts.Get(ctx, req.GetId())
 	if err != nil {
 		return nil, utils.MapErr(err)
+	}
+	if err := s.canReadAccount(ctx, c, acc.GetId()); err != nil {
+		return nil, err
 	}
 	return &api.GetAccountResponse{Account: acc}, nil
 }
@@ -538,6 +547,13 @@ func (s *IamService) ListAccounts(ctx context.Context, req *api.ListAccountsRequ
 }
 
 func (s *IamService) UpdateAccount(ctx context.Context, req *api.UpdateAccountRequest) (*api.UpdateAccountResponse, error) {
+	c, err := s.caller(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !selfOrAdmin(c, req.GetId()) {
+		return nil, status.Error(codes.PermissionDenied, "not allowed to update this account")
+	}
 	acc, err := s.d.Accounts.Get(ctx, req.GetId())
 	if err != nil {
 		return nil, utils.MapErr(err)
@@ -685,19 +701,20 @@ func (s *IamService) CreateTenant(ctx context.Context, req *api.CreateTenantRequ
 			return nil, utils.MapErr(err)
 		}
 		// Seed an owner role + membership so the creator can enter immediately.
+		// It must cover the whole tenant API surface, matching first-boot seeding.
+		perms, err := catalogManagePermissions(ctx, s.d.Catalog)
+		if err != nil {
+			return nil, utils.MapErr(err)
+		}
 		ownerRole := &iam.Role{
-			Id:       uuid.NewString(),
-			Name:     "owner",
-			Scope:    iam.Scope_SCOPE_TENANT,
-			TenantId: tenant.Id,
-			IsSystem: true,
-			Permissions: []*iam.Permission{
-				{Resource: iam.Resource_RESOURCE_TENANT, Action: iam.Action_ACTION_MANAGE},
-				{Resource: iam.Resource_RESOURCE_ROLE, Action: iam.Action_ACTION_MANAGE},
-				{Resource: iam.Resource_RESOURCE_MEMBERSHIP, Action: iam.Action_ACTION_MANAGE},
-			},
-			CreatedAt: s.now(),
-			UpdatedAt: s.now(),
+			Id:          uuid.NewString(),
+			Name:        "owner",
+			Scope:       iam.Scope_SCOPE_TENANT,
+			TenantId:    tenant.Id,
+			IsSystem:    true,
+			Permissions: perms,
+			CreatedAt:   s.now(),
+			UpdatedAt:   s.now(),
 		}
 		if err := s.d.Roles.Create(ctx, ownerRole); err != nil {
 			return nil, utils.MapErr(err)
@@ -718,9 +735,12 @@ func (s *IamService) CreateTenant(ctx context.Context, req *api.CreateTenantRequ
 }
 
 func (s *IamService) GetTenant(ctx context.Context, req *api.GetTenantRequest) (*api.GetTenantResponse, error) {
+	c, err := s.caller(ctx)
+	if err != nil {
+		return nil, err
+	}
 	var (
 		tenant *iam.Tenant
-		err    error
 	)
 	switch {
 	case req.GetId() != "":
@@ -732,6 +752,14 @@ func (s *IamService) GetTenant(ctx context.Context, req *api.GetTenantRequest) (
 	}
 	if err != nil {
 		return nil, utils.MapErr(err)
+	}
+	if !c.GetIsAdmin() {
+		if _, err := s.d.Memberships.GetByAccountTenant(ctx, c.GetAccountId(), tenant.GetId()); err != nil {
+			if errors.Is(err, derrors.ErrNotFound) {
+				return nil, status.Error(codes.PermissionDenied, "not a member of tenant")
+			}
+			return nil, utils.MapErr(err)
+		}
 	}
 	return &api.GetTenantResponse{Tenant: tenant}, nil
 }
@@ -876,6 +904,20 @@ func validateScopeTenant(scope iam.Scope, tenantID string) error {
 	return nil
 }
 
+func (s *IamService) canReadAccount(ctx context.Context, c *iam.AccessClaims, accountID string) error {
+	if selfOrAdmin(c, accountID) {
+		return nil
+	}
+	shared, err := s.d.Memberships.ShareTenant(ctx, c.GetAccountId(), accountID)
+	if err != nil {
+		return utils.MapErr(err)
+	}
+	if !shared {
+		return status.Error(codes.PermissionDenied, "not allowed to view this account")
+	}
+	return nil
+}
+
 func (s *IamService) GetRole(ctx context.Context, req *api.GetRoleRequest) (*api.GetRoleResponse, error) {
 	role, err := s.d.Roles.Get(ctx, req.GetId())
 	if err != nil {
@@ -924,6 +966,13 @@ func (s *IamService) DeleteRole(ctx context.Context, req *api.DeleteRoleRequest)
 	if role.IsSystem {
 		return nil, status.Error(codes.FailedPrecondition, "system roles cannot be deleted")
 	}
+	inUse, err := s.d.Memberships.RoleInUse(ctx, role.Id)
+	if err != nil {
+		return nil, utils.MapErr(err)
+	}
+	if inUse {
+		return nil, status.Error(codes.FailedPrecondition, "role is still assigned to a membership")
+	}
 	if err := derrors.IgnoreNotFound(s.d.Roles.Delete(ctx, role.Id)); err != nil {
 		return nil, utils.MapErr(err)
 	}
@@ -935,6 +984,12 @@ func (s *IamService) DeleteRole(ctx context.Context, req *api.DeleteRoleRequest)
 */
 
 func (s *IamService) CreateMembership(ctx context.Context, req *api.CreateMembershipRequest) (*api.CreateMembershipResponse, error) {
+	if _, err := s.d.Accounts.Get(ctx, req.GetAccountId()); err != nil {
+		return nil, utils.MapErr(err)
+	}
+	if _, err := s.d.Tenants.Get(ctx, req.GetTenantId()); err != nil {
+		return nil, utils.MapErr(err)
+	}
 	if err := s.validateMembershipRoles(ctx, req.GetTenantId(), req.GetRoleIds()); err != nil {
 		return nil, err
 	}
@@ -1003,6 +1058,20 @@ func (s *IamService) UpdateMembership(ctx context.Context, req *api.UpdateMember
 }
 
 func (s *IamService) DeleteMembership(ctx context.Context, req *api.DeleteMembershipRequest) (*api.DeleteMembershipResponse, error) {
+	m, err := s.d.Memberships.Get(ctx, req.GetId())
+	if errors.Is(err, derrors.ErrNotFound) {
+		return &api.DeleteMembershipResponse{}, nil
+	}
+	if err != nil {
+		return nil, utils.MapErr(err)
+	}
+	tenant, err := s.d.Tenants.Get(ctx, m.GetTenantId())
+	if err != nil {
+		return nil, utils.MapErr(err)
+	}
+	if tenant.GetOwnerAccountId() == m.GetAccountId() {
+		return nil, status.Error(codes.FailedPrecondition, "owner membership cannot be removed; transfer ownership first")
+	}
 	if err := derrors.IgnoreNotFound(s.d.Memberships.Delete(ctx, req.GetId())); err != nil {
 		return nil, utils.MapErr(err)
 	}

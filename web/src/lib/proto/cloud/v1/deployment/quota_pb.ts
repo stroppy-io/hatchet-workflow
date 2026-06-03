@@ -2,8 +2,8 @@
 // @generated from file cloud/v1/deployment/quota.proto (package cloud.v1.deployment, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenEnum, GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
+import { enumDesc, fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Provider, ProviderJson } from "./provider_pb.ts";
 import { file_cloud_v1_deployment_provider } from "./provider_pb.ts";
 import { file_validate_validate } from "../../../validate/validate_pb.ts";
@@ -13,7 +13,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/deployment/quota.proto.
  */
 export const file_cloud_v1_deployment_quota: GenFile = /*@__PURE__*/
-  fileDesc("Ch9jbG91ZC92MS9kZXBsb3ltZW50L3F1b3RhLnByb3RvEhNjbG91ZC52MS5kZXBsb3ltZW50IpkDCgVRdW90YRp0CgRJbmZvEjsKCHByb3ZpZGVyGAEgASgOMh0uY2xvdWQudjEuZGVwbG95bWVudC5Qcm92aWRlckIK+kIHggEEEAEgABIVCgRuYW1lGAIgASgJQgf6QgRyAhABEhgKBXVuaXRzGAYgASgJQgn6QgZyBBggEAEacAoFU3RhdGUSNwoEaW5mbxgBIAEoCzIfLmNsb3VkLnYxLmRlcGxveW1lbnQuUXVvdGEuSW5mb0II+kIFigECEAESDAoEdXNlZBgDIAEoBBIRCglhdmFpbGFibGUYBSABKAQSDQoFbGltaXQYBCABKAQaUwoHUmVxdWVzdBI3CgRpbmZvGAEgASgLMh8uY2xvdWQudjEuZGVwbG95bWVudC5RdW90YS5JbmZvQgj6QgWKAQIQARIPCgdyZXF1ZXN0GAMgASgEGlMKCkFsbG9jYXRpb24SNwoEaW5mbxgBIAEoCzIfLmNsb3VkLnYxLmRlcGxveW1lbnQuUXVvdGEuSW5mb0II+kIFigECEAESDAoEdXNlZBgDIAEoBEJIWkZnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9kZXBsb3ltZW50YgZwcm90bzM", [file_cloud_v1_deployment_provider, file_validate_validate]);
+  fileDesc("Ch9jbG91ZC92MS9kZXBsb3ltZW50L3F1b3RhLnByb3RvEhNjbG91ZC52MS5kZXBsb3ltZW50IvYECgVRdW90YRp0CgRJbmZvEjsKCHByb3ZpZGVyGAEgASgOMh0uY2xvdWQudjEuZGVwbG95bWVudC5Qcm92aWRlckIK+kIHggEEEAEgABIVCgRuYW1lGAIgASgJQgf6QgRyAhABEhgKBXVuaXRzGAYgASgJQgn6QgZyBBABGCAacAoFU3RhdGUSNwoEaW5mbxgBIAEoCzIfLmNsb3VkLnYxLmRlcGxveW1lbnQuUXVvdGEuSW5mb0II+kIFigECEAESDAoEdXNlZBgDIAEoBBIRCglhdmFpbGFibGUYBSABKAQSDQoFbGltaXQYBCABKAQaUwoHUmVxdWVzdBI3CgRpbmZvGAEgASgLMh8uY2xvdWQudjEuZGVwbG95bWVudC5RdW90YS5JbmZvQgj6QgWKAQIQARIPCgdyZXF1ZXN0GAMgASgEGlMKCkFsbG9jYXRpb24SNwoEaW5mbxgBIAEoCzIfLmNsb3VkLnYxLmRlcGxveW1lbnQuUXVvdGEuSW5mb0II+kIFigECEAESDAoEdXNlZBgDIAEoBCLaAQoRUmVzZXJ2YXRpb25TdGF0dXMSIgoeUkVTRVJWQVRJT05fU1RBVFVTX1VOU1BFQ0lGSUVEEAASHwobUkVTRVJWQVRJT05fU1RBVFVTX1JFU0VSVkVEEAESIAocUkVTRVJWQVRJT05fU1RBVFVTX0FMTE9DQVRFRBACEh8KG1JFU0VSVkFUSU9OX1NUQVRVU19SRUxFQVNFRBADEh4KGlJFU0VSVkFUSU9OX1NUQVRVU19FWFBJUkVEEAQSHQoZUkVTRVJWQVRJT05fU1RBVFVTX0ZBSUxFRBAFQkhaRmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2RlcGxveW1lbnRiBnByb3RvMw", [file_cloud_v1_deployment_provider, file_validate_validate]);
 
 /**
  *
@@ -317,4 +317,60 @@ export type Quota_AllocationValid = Quota_Allocation;
  */
 export const Quota_AllocationSchema: GenMessage<Quota_Allocation, {jsonType: Quota_AllocationJson, validType: Quota_AllocationValid}> = /*@__PURE__*/
   messageDesc(file_cloud_v1_deployment_quota, 0, 3);
+
+/**
+ *
+ * ReservationStatus is the control-plane lifecycle of our own quota ledger.
+ * Provider usage is observed separately through quota snapshots; RESERVED
+ * rows are the only rows subtracted from provider headroom for new runs.
+ *
+ * @generated from enum cloud.v1.deployment.Quota.ReservationStatus
+ */
+export enum Quota_ReservationStatus {
+  /**
+   * @generated from enum value: RESERVATION_STATUS_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: RESERVATION_STATUS_RESERVED = 1;
+   */
+  RESERVED = 1,
+
+  /**
+   * @generated from enum value: RESERVATION_STATUS_ALLOCATED = 2;
+   */
+  ALLOCATED = 2,
+
+  /**
+   * @generated from enum value: RESERVATION_STATUS_RELEASED = 3;
+   */
+  RELEASED = 3,
+
+  /**
+   * @generated from enum value: RESERVATION_STATUS_EXPIRED = 4;
+   */
+  EXPIRED = 4,
+
+  /**
+   * @generated from enum value: RESERVATION_STATUS_FAILED = 5;
+   */
+  FAILED = 5,
+}
+
+/**
+ *
+ * ReservationStatus is the control-plane lifecycle of our own quota ledger.
+ * Provider usage is observed separately through quota snapshots; RESERVED
+ * rows are the only rows subtracted from provider headroom for new runs.
+ *
+ * @generated from enum cloud.v1.deployment.Quota.ReservationStatus
+ */
+export type Quota_ReservationStatusJson = "RESERVATION_STATUS_UNSPECIFIED" | "RESERVATION_STATUS_RESERVED" | "RESERVATION_STATUS_ALLOCATED" | "RESERVATION_STATUS_RELEASED" | "RESERVATION_STATUS_EXPIRED" | "RESERVATION_STATUS_FAILED";
+
+/**
+ * Describes the enum cloud.v1.deployment.Quota.ReservationStatus.
+ */
+export const Quota_ReservationStatusSchema: GenEnum<Quota_ReservationStatus, Quota_ReservationStatusJson> = /*@__PURE__*/
+  enumDesc(file_cloud_v1_deployment_quota, 0, 0);
 

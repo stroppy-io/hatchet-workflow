@@ -730,7 +730,7 @@ func (x *UpdateDatabasePresetResponse) GetPreset() *models.DatabasePresetRecord 
 	return nil
 }
 
-// DeleteDatabasePresetRequest removes one database preset by id.
+// DeleteDatabasePresetRequest soft-deletes one database preset by id.
 type DeleteDatabasePresetRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// tenant_id scopes the request to the preset's tenant.
@@ -785,8 +785,8 @@ func (x *DeleteDatabasePresetRequest) GetId() string {
 	return ""
 }
 
-// DeleteDatabasePresetResponse is empty; success is signalled by the absence of
-// error.
+// DeleteDatabasePresetResponse is empty; soft-delete success is signalled by
+// the absence of error.
 type DeleteDatabasePresetResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -1417,7 +1417,7 @@ func (x *UpdateWorkloadPresetResponse) GetPreset() *models.WorkloadPresetRecord 
 	return nil
 }
 
-// DeleteWorkloadPresetRequest removes one workload preset by id.
+// DeleteWorkloadPresetRequest soft-deletes one workload preset by id.
 type DeleteWorkloadPresetRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// tenant_id scopes the request to the preset's tenant.
@@ -1472,8 +1472,8 @@ func (x *DeleteWorkloadPresetRequest) GetId() string {
 	return ""
 }
 
-// DeleteWorkloadPresetResponse is empty; success is signalled by the absence of
-// error.
+// DeleteWorkloadPresetResponse is empty; soft-delete success is signalled by
+// the absence of error.
 type DeleteWorkloadPresetResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -2104,7 +2104,7 @@ func (x *UpdateTestPresetResponse) GetPreset() *models.TestPresetRecord {
 	return nil
 }
 
-// DeleteTestPresetRequest removes one test preset by id.
+// DeleteTestPresetRequest soft-deletes one test preset by id.
 type DeleteTestPresetRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// tenant_id scopes the request to the preset's tenant.
@@ -2159,8 +2159,8 @@ func (x *DeleteTestPresetRequest) GetId() string {
 	return ""
 }
 
-// DeleteTestPresetResponse is empty; success is signalled by the absence of
-// error.
+// DeleteTestPresetResponse is empty; soft-delete success is signalled by the
+// absence of error.
 type DeleteTestPresetResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields

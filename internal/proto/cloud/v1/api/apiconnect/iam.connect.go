@@ -186,7 +186,8 @@ type IamServiceClient interface {
 	// CreateAccount is the admin-only account path (the public path is
 	// Register). Not idempotent: each call creates a new account.
 	CreateAccount(context.Context, *api.CreateAccountRequest) (*api.CreateAccountResponse, error)
-	// GetAccount fetches one account by id. Read-only.
+	// GetAccount fetches one account by id. The handler allows platform admins,
+	// the account itself, or callers sharing a tenant with the target account.
 	GetAccount(context.Context, *api.GetAccountRequest) (*api.GetAccountResponse, error)
 	// GetMyAccount returns the caller's own profile — authenticated, no
 	// permission (self-read).
@@ -194,6 +195,7 @@ type IamServiceClient interface {
 	// ListAccounts lists accounts platform-wide. Read-only.
 	ListAccounts(context.Context, *api.ListAccountsRequest) (*api.ListAccountsResponse, error)
 	// UpdateAccount is idempotent: a wholesale field set converges on retry.
+	// The handler allows platform admins or the account itself.
 	UpdateAccount(context.Context, *api.UpdateAccountRequest) (*api.UpdateAccountResponse, error)
 	// DeleteAccount is idempotent: deleting an absent account is a no-op.
 	DeleteAccount(context.Context, *api.DeleteAccountRequest) (*api.DeleteAccountResponse, error)
@@ -208,7 +210,9 @@ type IamServiceClient interface {
 	// CreateTenant is gated by PlatformSettings.allow_member_tenant_creation.
 	// Not idempotent: each call creates a new tenant.
 	CreateTenant(context.Context, *api.CreateTenantRequest) (*api.CreateTenantResponse, error)
-	// GetTenant fetches by id or slug; slug is the routing-resolve path.
+	// GetTenant fetches by id or slug; slug is the routing-resolve path. The
+	// handler resolves the tenant first and then allows platform admins or
+	// tenant members.
 	GetTenant(context.Context, *api.GetTenantRequest) (*api.GetTenantResponse, error)
 	// ListMyTenants returns the caller's tenants — authenticated, no permission.
 	ListMyTenants(context.Context, *api.ListMyTenantsRequest) (*api.ListMyTenantsResponse, error)
@@ -1137,7 +1141,8 @@ type IamServiceHandler interface {
 	// CreateAccount is the admin-only account path (the public path is
 	// Register). Not idempotent: each call creates a new account.
 	CreateAccount(context.Context, *api.CreateAccountRequest) (*api.CreateAccountResponse, error)
-	// GetAccount fetches one account by id. Read-only.
+	// GetAccount fetches one account by id. The handler allows platform admins,
+	// the account itself, or callers sharing a tenant with the target account.
 	GetAccount(context.Context, *api.GetAccountRequest) (*api.GetAccountResponse, error)
 	// GetMyAccount returns the caller's own profile — authenticated, no
 	// permission (self-read).
@@ -1145,6 +1150,7 @@ type IamServiceHandler interface {
 	// ListAccounts lists accounts platform-wide. Read-only.
 	ListAccounts(context.Context, *api.ListAccountsRequest) (*api.ListAccountsResponse, error)
 	// UpdateAccount is idempotent: a wholesale field set converges on retry.
+	// The handler allows platform admins or the account itself.
 	UpdateAccount(context.Context, *api.UpdateAccountRequest) (*api.UpdateAccountResponse, error)
 	// DeleteAccount is idempotent: deleting an absent account is a no-op.
 	DeleteAccount(context.Context, *api.DeleteAccountRequest) (*api.DeleteAccountResponse, error)
@@ -1159,7 +1165,9 @@ type IamServiceHandler interface {
 	// CreateTenant is gated by PlatformSettings.allow_member_tenant_creation.
 	// Not idempotent: each call creates a new tenant.
 	CreateTenant(context.Context, *api.CreateTenantRequest) (*api.CreateTenantResponse, error)
-	// GetTenant fetches by id or slug; slug is the routing-resolve path.
+	// GetTenant fetches by id or slug; slug is the routing-resolve path. The
+	// handler resolves the tenant first and then allows platform admins or
+	// tenant members.
 	GetTenant(context.Context, *api.GetTenantRequest) (*api.GetTenantResponse, error)
 	// ListMyTenants returns the caller's tenants — authenticated, no permission.
 	ListMyTenants(context.Context, *api.ListMyTenantsRequest) (*api.ListMyTenantsResponse, error)

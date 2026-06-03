@@ -1,54 +1,44 @@
-import { useNavigate } from "@/lib/router";
+import { Building2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { Activity, Building2 } from "lucide-react";
 
+// Organization picker, keyed by slug. Listed when the user has multiple
+// tenants and none is active in the URL.
 export function SelectTenant() {
-  const { user, selectTenant } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
-
-  if (!user) return null;
-
-  async function handleSelect(tenantId: string) {
-    await selectTenant(tenantId);
-    navigate(`/t/${tenantId}`, { replace: true });
-  }
+  const tenants = user?.tenants ?? [];
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="w-full max-w-md space-y-6 rounded-lg border border-border bg-card p-8">
-        <div className="flex flex-col items-center gap-2">
-          <Activity className="h-8 w-8 text-primary" />
-          <h1 className="text-lg font-semibold tracking-tight">
-            Select Tenant
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Choose a workspace to continue
-          </p>
+    <div className="flex h-screen items-center justify-center bg-background p-6">
+      <div className="w-full max-w-md">
+        <div className="mb-4 text-[10px] font-mono uppercase tracking-wider text-zinc-600">
+          Choose organization
         </div>
-
-        {(user.tenants || []).length === 0 ? (
-          <div className="text-center text-sm text-muted-foreground py-8">
-            No tenants assigned. Contact admin.
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {(user.tenants || []).map((t) => (
-              <button
-                key={t.id}
-                onClick={() => handleSelect(t.id)}
-                className="w-full flex items-center gap-3 rounded-md border border-border p-4 text-left transition-colors hover:bg-muted/50"
-              >
-                <Building2 className="h-5 w-5 text-muted-foreground shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate">
-                    {t.tenant_name}
-                  </div>
-                  <div className="text-xs text-muted-foreground">{t.role}</div>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
+        <div className="border border-border bg-card">
+          {tenants.length === 0 && (
+            <div className="p-6 text-sm text-muted-foreground">
+              You don't belong to any organization yet.
+            </div>
+          )}
+          {tenants.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => navigate(`/t/${t.slug}`)}
+              className="flex w-full items-center gap-3 border-b border-border px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-muted"
+            >
+              <Building2 className="h-4 w-4 text-muted-foreground" />
+              <span className="flex min-w-0 flex-col">
+                <span className="truncate font-mono text-sm text-foreground">
+                  {t.slug}
+                </span>
+                <span className="truncate text-xs text-muted-foreground">
+                  {t.name} · {t.role}
+                </span>
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

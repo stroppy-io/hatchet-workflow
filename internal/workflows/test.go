@@ -2,9 +2,12 @@ package workflows
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
+	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
+	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -97,12 +100,45 @@ func newDomainTestWorkflow(req *workflowpb.TestWorkflowRequest) *domainTestWorkf
 	}
 }
 
-func (w *domainTestWorkflow) Execute(ctx workflow.Context) (*workflowpb.TestWorkflowResponse, error) {
+func (w *domainTestWorkflow) Execute(ctx workflow.Context) (resp *workflowpb.TestWorkflowResponse, err error) {
+	var (
+		infrastructureState *deploymentpb.InfrastructureState
+		deploymentPlan      *deploymentpb.DeploymentPlan
+		quotaReserved       bool
+		quotaCommitted      bool
+		quotaAllocations    []*workflowpb.QuotaAllocationRef
+	)
+	defer func() {
+		if err != nil && quotaReserved && !quotaCommitted {
+			releaseCtx := ctx
+			if temporal.IsCanceledError(err) {
+				releaseCtx, _ = workflow.NewDisconnectedContext(ctx)
+			}
+			if _, perr := workflowpb.ReleaseQuotasActivity(releaseCtx, &workflowpb.ReleaseQuotasActivityRequest{
+				TenantId: w.req.GetTenantId(),
+				RunId:    w.req.GetTestRun().GetId(),
+			}); perr != nil {
+				err = fmt.Errorf("%w; release quotas: %v", err, perr)
+			}
+		}
+		if err == nil || !temporal.IsCanceledError(err) {
+			return
+		}
+		w.cancel(ctx)
+		disconnected, _ := workflow.NewDisconnectedContext(ctx)
+		if perr := w.persist(disconnected, infrastructureState, deploymentPlan); perr != nil {
+			err = fmt.Errorf("persist cancelled run state: %w", perr)
+		}
+	}()
+
 	if w.req == nil {
 		return nil, errors.New("test workflow request is required")
 	}
 	if err := w.req.Validate(); err != nil {
 		w.fail(ctx)
+		if perr := w.persist(ctx, infrastructureState, deploymentPlan); perr != nil {
+			return nil, fmt.Errorf("persist failed run state: %w", perr)
+		}
 		return nil, err
 	}
 
@@ -110,55 +146,157 @@ func (w *domainTestWorkflow) Execute(ctx workflow.Context) (*workflowpb.TestWork
 	w.state.Status = common.Status_STATUS_RUNNING
 
 	w.startStage(ctx, 0)
+	if err := w.persist(ctx, infrastructureState, deploymentPlan); err != nil {
+		return nil, err
+	}
+	quotaResp, err := workflowpb.CalculateQuotasWorkflowChild(ctx, &workflowpb.CalculateQuotasWorkflowRequest{
+		Plan: testRun.GetInfrastructurePlan(),
+	})
+	if err != nil {
+		w.failStage(ctx, 0)
+		if perr := w.persist(ctx, infrastructureState, deploymentPlan); perr != nil {
+			return nil, fmt.Errorf("persist failed run state: %w", perr)
+		}
+		return nil, err
+	}
+	acquireResp, err := workflowpb.AcquireQuotasActivity(ctx, &workflowpb.AcquireQuotasActivityRequest{
+		TenantId:      w.req.GetTenantId(),
+		RunId:         testRun.GetId(),
+		Plan:          quotaResp.GetPlan(),
+		QuotaRequests: quotaResp.GetQuotaRequests(),
+	})
+	if err != nil {
+		w.failStage(ctx, 0)
+		if perr := w.persist(ctx, infrastructureState, deploymentPlan); perr != nil {
+			return nil, fmt.Errorf("persist failed run state: %w", perr)
+		}
+		return nil, err
+	}
+	quotaReserved = len(acquireResp.GetQuotaAllocations()) > 0
+	quotaAllocations = acquireResp.GetQuotaAllocations()
 	infrastructureResp, err := workflowpb.ProcessInfrastructureWorkflowChild(ctx, &workflowpb.ProcessInfrastructureWorkflowRequest{
 		RunId:          testRun.GetId(),
-		Plan:           testRun.GetInfrastructurePlan(),
+		Plan:           quotaResp.GetPlan(),
 		AgentBootstrap: w.req.GetAgentBootstrap(),
 	})
 	if err != nil {
 		w.failStage(ctx, 0)
+		if perr := w.persist(ctx, infrastructureState, deploymentPlan); perr != nil {
+			return nil, fmt.Errorf("persist failed run state: %w", perr)
+		}
 		return nil, err
 	}
+	infrastructureState = infrastructureResp.GetState()
+	commitResp, err := workflowpb.CommitQuotasActivity(ctx, &workflowpb.CommitQuotasActivityRequest{
+		TenantId: w.req.GetTenantId(),
+		RunId:    testRun.GetId(),
+	})
+	if err != nil {
+		w.failStage(ctx, 0)
+		if perr := w.persist(ctx, infrastructureState, deploymentPlan); perr != nil {
+			return nil, fmt.Errorf("persist failed run state: %w", perr)
+		}
+		return nil, err
+	}
+	if len(commitResp.GetQuotaAllocations()) > 0 {
+		quotaAllocations = commitResp.GetQuotaAllocations()
+	}
+	attachQuotaAllocations(infrastructureState, quotaAllocations)
+	quotaCommitted = true
 	w.completeStage(ctx, 0)
+	if err := w.persist(ctx, infrastructureState, deploymentPlan); err != nil {
+		return nil, err
+	}
 
 	w.startStage(ctx, 1)
+	if err := w.persist(ctx, infrastructureState, deploymentPlan); err != nil {
+		return nil, err
+	}
 	renderResp, err := workflowpb.RenderDeploymentPlanWorkflowChild(ctx, &workflowpb.RenderDeploymentPlanWorkflowRequest{
 		TopologySpec:        testRun.GetTopologySpec(),
 		InfrastructurePlan:  testRun.GetInfrastructurePlan(),
-		InfrastructureState: infrastructureResp.GetState(),
+		InfrastructureState: infrastructureState,
 		RenderOverrides:     testRun.GetRenderOverrides(),
 		Database:            testRun.GetDatabase(),
 		Workload:            testRun.GetWorkload(),
 	})
 	if err != nil {
 		w.failStage(ctx, 1)
+		if perr := w.persist(ctx, infrastructureState, deploymentPlan); perr != nil {
+			return nil, fmt.Errorf("persist failed run state: %w", perr)
+		}
 		return nil, err
 	}
+	deploymentPlan = renderResp.GetDeploymentPlan()
 	w.completeStage(ctx, 1)
+	if err := w.persist(ctx, infrastructureState, deploymentPlan); err != nil {
+		return nil, err
+	}
 
 	w.startStage(ctx, 2)
-	if _, err := workflowpb.ExecuteDeploymentPlanWorkflowChild(ctx, &workflowpb.ExecuteDeploymentPlanWorkflowRequest{
-		DeploymentPlan:      renderResp.GetDeploymentPlan(),
-		InfrastructureState: infrastructureResp.GetState(),
-	}); err != nil {
-		w.failStage(ctx, 2)
+	if err := w.persist(ctx, infrastructureState, deploymentPlan); err != nil {
 		return nil, err
 	}
+	executeResp, err := workflowpb.ExecuteDeploymentPlanWorkflowChild(ctx, &workflowpb.ExecuteDeploymentPlanWorkflowRequest{
+		DeploymentPlan:      deploymentPlan,
+		InfrastructureState: infrastructureState,
+	})
+	if err != nil {
+		w.failStage(ctx, 2)
+		if perr := w.persist(ctx, infrastructureState, deploymentPlan); perr != nil {
+			return nil, fmt.Errorf("persist failed run state: %w", perr)
+		}
+		return nil, err
+	}
+	deploymentPlan = executeResp.GetDeploymentPlan()
 	w.completeStage(ctx, 2)
+	if err := w.persist(ctx, infrastructureState, deploymentPlan); err != nil {
+		return nil, err
+	}
 
 	w.startStage(ctx, 3)
+	if err := w.persist(ctx, infrastructureState, deploymentPlan); err != nil {
+		return nil, err
+	}
 	if _, err := workflowpb.RunWorkloadWorkflowChild(ctx, &workflowpb.RunWorkloadWorkflowRequest{
 		TopologySpec:        testRun.GetTopologySpec(),
 		Workload:            testRun.GetWorkload(),
-		InfrastructureState: infrastructureResp.GetState(),
+		InfrastructureState: infrastructureState,
 	}); err != nil {
 		w.failStage(ctx, 3)
+		if perr := w.persist(ctx, infrastructureState, deploymentPlan); perr != nil {
+			return nil, fmt.Errorf("persist failed run state: %w", perr)
+		}
 		return nil, err
 	}
 	w.completeStage(ctx, 3)
 
 	w.state.Status = common.Status_STATUS_COMPLETED
+	if err := w.persist(ctx, infrastructureState, deploymentPlan); err != nil {
+		return nil, err
+	}
 	return &workflowpb.TestWorkflowResponse{}, nil
+}
+
+func attachQuotaAllocations(state *deploymentpb.InfrastructureState, refs []*workflowpb.QuotaAllocationRef) {
+	if state == nil || len(refs) == 0 {
+		return
+	}
+	byNode := make(map[string][]*deploymentpb.Quota_Allocation)
+	for _, ref := range refs {
+		allocation := ref.GetAllocation()
+		if allocation == nil {
+			continue
+		}
+		byNode[ref.GetNodeId()] = append(byNode[ref.GetNodeId()], proto.Clone(allocation).(*deploymentpb.Quota_Allocation))
+	}
+	for _, machine := range state.GetMachines() {
+		allocations := byNode[machine.GetNodeId()]
+		if len(allocations) == 0 {
+			continue
+		}
+		machine.AllocatedQuotas = allocations
+	}
 }
 
 func (w *domainTestWorkflow) GetRunState() (*workflowpb.RunState, error) {
@@ -191,6 +329,22 @@ func (w *domainTestWorkflow) fail(ctx workflow.Context) {
 			return
 		}
 	}
+}
+
+func (w *domainTestWorkflow) cancel(ctx workflow.Context) {
+	w.state.Status = common.Status_STATUS_CANCELLED
+	now := timestamppb.New(workflow.Now(ctx))
+	for _, stage := range w.state.GetStages() {
+		if stage.GetStatus() == common.Status_STATUS_RUNNING || stage.GetStatus() == common.Status_STATUS_PENDING {
+			stage.Status = common.Status_STATUS_CANCELLED
+			stage.FinishedAt = now
+			return
+		}
+	}
+}
+
+func (w *domainTestWorkflow) persist(ctx workflow.Context, infrastructureState *deploymentpb.InfrastructureState, deploymentPlan *deploymentpb.DeploymentPlan) error {
+	return persistRunState(ctx, w.req.GetTestRun().GetId(), w.state, infrastructureState, deploymentPlan)
 }
 
 func stage(name string) *workflowpb.Stage {

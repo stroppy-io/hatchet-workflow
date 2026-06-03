@@ -1,103 +1,236 @@
-import { useEffect, useState, useMemo, useRef } from "react";
-import { Link, useNavigate, useSearchParams } from "@/lib/router";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  useReactTable,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
   flexRender,
+  getCoreRowModel,
+  useReactTable,
   type ColumnDef,
-  type SortingState,
-  type ColumnFiltersState,
-  type RowSelectionState,
+  type RowData,
 } from "@tanstack/react-table";
-import { listRuns, deleteRun, cancelRun, getRunStatus, listPresets, getSuite, listSuites } from "@/api/client";
-import type { RunSummary, RunConfig } from "@/api/types";
+
+// Per-column metadata: optional className applied to both the <th> and <td> so
+// a column (e.g. the thin trigger-icon column) can carry its own width/padding.
+declare module "@tanstack/react-table" {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface ColumnMeta<TData extends RowData, TValue> {
+    className?: string;
+    // `group` marks which parent header block a leaf column belongs to so the
+    // body cells can carry the subtle banding that visually ties each block
+    // together. Every leaf lives in one of the table-specific groups below.
+    group?:
+      | "controls"
+      | "run"
+      | "target"
+      | "execution"
+      | "definition"
+      | "configuration"
+      | "activity";
+    // `groupEdge` paints the left / right divider that brackets a group: set on
+    // the FIRST leaf of a block ("left"), the LAST ("right"), or "both" if a
+    // block has a single member.
+    groupEdge?: "left" | "right" | "both";
+    // Whole-cell dead zone for utility columns: clicks in checkbox/actions
+    // padding should not fall through to the row-level run navigation.
+    disableRowNavigation?: boolean;
+  }
+}
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { useConfirm } from "@/components/ui/confirm-dialog";
-import {
-  RefreshCw,
-  Trash2,
+  AlertCircle,
+  Ban,
+  Bookmark,
+  CalendarClock,
+  Check,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
+  ChevronUp,
+  ChevronsUpDown,
+  Circle,
+  Eye,
+  Filter,
   GitCompare,
-  X,
-  Play,
-  AlertCircle,
-  StopCircle,
+  Link2,
+  Loader2,
+  MoreHorizontal,
+  MousePointerClick,
+  Plus,
+  RefreshCw,
   RotateCcw,
-  Boxes,
+  Star,
+  Trash2,
+  Webhook,
+  X,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { Link, useNavigate, useSearchParams, useTenantSlug } from "@/lib/router";
+import { Avatar } from "@/components/Avatar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useConfirm } from "@/components/ui/confirm-dialog";
+import { cn } from "@/lib/utils";
+import {
+  DB_KINDS,
+  PROTOCOLS,
+  RUN_STATUSES,
+  TRIGGERS,
+  actionsForStatus,
+  getRunsProvider,
+  type DbKind,
+  type Protocol,
+  type RunAction,
+  type RunFacets,
+  type RunStatus,
+  type RunTrigger,
+  type RunsQuery,
+  type RunVM,
+  type SortField,
+} from "@/services/runs";
 
-// --- Helpers ---
+// Test Runs — the runs list/table. Built around the slice of
+// cloud.v1.api.ListTestRunsRequest the provider wires (search, statuses[],
+// db_kinds[], stroppy_versions[], protocols[], triggers[], started/finished
+// windows, sort{entity|kind,desc}, page{size,token}). EVERY filterable column
+// carries its own header-dropdown filter affordance; all filter/sort/page state
+// lives in the URL query string so browser Back works and views are shareable
+// (per the back-button convention in src/lib/router.tsx). Data comes through the
+// RunsProvider — mock in standalone preview, real connectrpc once wired.
 
-type RunStatus = "queued" | "done" | "failed" | "running" | "pending" | "cancelled" | "cancelling";
+// --- status presentation (consistent with the dashboard's status→colour map).
 
-function deriveStatus(r: RunSummary, cancellingIds?: Set<string>): RunStatus {
-  if (cancellingIds?.has(r.id)) {
-    // Still cancelling — check if teardown finished yet.
-    if (r.cancelled || (r.failed > 0 && r.done === r.total - r.failed - r.pending)) return "cancelled";
-    return "cancelling";
-  }
-  if (r.cancelled) return "cancelled";
-  if (r.failed > 0) return "failed";
-  if (r.done === r.total && r.total > 0) return "done";
-  if (r.done > 0) return "running";
-  // Queued runs have no snapshot yet — listRuns synthesises a row with
-  // total=0, done=0, pending=1 so we can tell them apart from "ran but
-  // produced no nodes".
-  if (r.total === 0 && r.pending > 0) return "queued";
-  return "pending";
-}
-
-const STATUS_CONFIG: Record<RunStatus, { label: string; variant: "success" | "destructive" | "warning" | "pending" | "secondary" }> = {
-  queued: { label: "Queued", variant: "secondary" },
-  done: { label: "Done", variant: "success" },
-  failed: { label: "Failed", variant: "destructive" },
-  cancelling: { label: "Cancelling", variant: "warning" },
-  running: { label: "Running", variant: "warning" },
-  pending: { label: "Pending", variant: "pending" },
-  cancelled: { label: "Cancelled", variant: "secondary" },
+// Status accent hue — the single colour that tints the merged Status+Progress
+// cell (dot, inline label, progress fill, and the low-opacity track groove via
+// an appended alpha). Values mirror the design tokens in index.css
+// (primary/success/destructive/pending) with zinc-500 for cancelled, so the
+// cell stays on-palette without introducing any new colours.
+const STATUS_TINT: Record<RunStatus, string> = {
+  pending: "#6b7280", // --color-pending
+  running: "#3b82f6", // --color-primary
+  cancelling: "#eab308", // --color-warning
+  completed: "#22c55e", // --color-success
+  failed: "#ef4444", // --color-destructive
+  cancelled: "#71717a", // zinc-500 (muted)
 };
 
-function formatTimestamp(ts?: string): string {
-  if (!ts) return "\u2014";
-  const d = new Date(ts);
-  if (isNaN(d.getTime())) return "\u2014";
-  // Zero-value Go time
-  if (d.getFullYear() < 2000) return "\u2014";
-  return d.toLocaleString("en-GB", {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  });
+const STATUS_LABEL: Record<RunStatus, string> = {
+  pending: "Pending",
+  running: "Running",
+  cancelling: "Cancelling",
+  completed: "Completed",
+  failed: "Failed",
+  cancelled: "Cancelled",
+};
+
+const DB_LABEL: Record<Exclude<DbKind, "">, string> = {
+  postgres: "PostgreSQL",
+  mysql: "MySQL",
+  mariadb: "MariaDB",
+  ydb: "YDB",
+  ydb_managed: "YDB Managed",
+  cockroach: "CockroachDB",
+  picodata: "Picodata",
+  external: "External",
+};
+
+// Per-database accent colour. Each engine gets its OWN distinct hue that sits
+// well on the near-black table (#080808). Used for the dot + label in the
+// Database column so rows are scannable by engine at a glance.
+const DB_COLOR: Record<Exclude<DbKind, "">, string> = {
+  postgres: "#38bdf8", // sky — Postgres elephant blue
+  mysql: "#f59e0b", // amber — MySQL dolphin
+  mariadb: "#a78bfa", // violet — MariaDB
+  ydb: "#34d399", // emerald — YDB
+  ydb_managed: "#2dd4bf", // teal — YDB managed (sibling hue of ydb)
+  cockroach: "#f472b6", // pink — CockroachDB
+  picodata: "#fb7185", // rose — Picodata
+  external: "#9ca3af", // grey — external / unmanaged
+};
+
+const PROTOCOL_LABEL: Record<Exclude<Protocol, "">, string> = {
+  pg: "PG",
+  mysql: "MySQL",
+  picodata: "Picodata",
+  ydb_grpc: "YDB gRPC",
+  ydb_grpcs: "YDB gRPCs",
+  cockroach: "CockroachDB",
+};
+
+const TRIGGER_LABEL: Record<Exclude<RunTrigger, "">, string> = {
+  manual: "Manual",
+  cron: "Cron",
+  api: "Api",
+};
+
+// Per-trigger icon for the thin first column. Each real cloud.v1.common.Trigger
+// value gets a distinct lucide glyph; an unknown / UNSPECIFIED trigger falls
+// back to a generic dot. The icon carries the trigger name as its title.
+const TRIGGER_ICON: Record<Exclude<RunTrigger, "">, LucideIcon> = {
+  manual: MousePointerClick, // a person clicked "run"
+  cron: CalendarClock, // scheduled / recurring
+  api: Webhook, // kicked off programmatically
+};
+
+// Stroppy versions we expose in the version facet. These are a fixed catalog in
+// the preview; the real provider can derive the option list from a facet RPC.
+const STROPPY_VERSIONS = ["5.1.2", "5.1.1", "5.1.0", "5.0.9"];
+
+const PAGE_SIZES = [15, 25, 50, 100, 150];
+const DEFAULT_SIZE = 25;
+
+// Auto-refresh intervals (ms). 0 = off. Default 5s.
+const REFRESH_OPTIONS: { label: string; ms: number }[] = [
+  { label: "Off", ms: 0 },
+  { label: "5s", ms: 5_000 },
+  { label: "15s", ms: 15_000 },
+  { label: "30s", ms: 30_000 },
+  { label: "1m", ms: 60_000 },
+];
+const DEFAULT_REFRESH_MS = 5_000;
+
+// Relative column proportions for the runs table. These are not fixed pixel
+// widths: table-auto still lets content negotiate, while colgroup keeps the
+// free space distributed by intent instead of letting grouped headers skew it.
+const RUN_TABLE_COLUMN_WIDTHS: Record<string, string> = {
+  select: "3%",
+  name: "11%",
+  suite: "8%",
+  authorId: "7%",
+  dbKind: "13%",
+  workload: "15%",
+  trigger: "2%",
+  status: "23%",
+  time: "8%",
+  actions: "10%",
+};
+
+// --- time / duration formatting (em dash for unset, like the old page). ------
+
+function relTime(iso?: string): string {
+  if (!iso) return "—";
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return "—";
+  const diff = Date.now() - t;
+  const m = Math.round(diff / 60_000);
+  const h = Math.round(diff / 3_600_000);
+  const d = Math.round(diff / 86_400_000);
+  if (d >= 1) return `${d}d ago`;
+  if (h >= 1) return `${h}h ago`;
+  return `${Math.max(m, 1)}m ago`;
 }
 
-function durationBetween(start?: string, end?: string): string {
-  if (!start) return "\u2014";
-  const s = new Date(start);
-  if (isNaN(s.getTime()) || s.getFullYear() < 2000) return "\u2014";
-  const e = end ? new Date(end) : new Date();
-  if (isNaN(e.getTime()) || e.getFullYear() < 2000) return "\u2014";
-  const sec = Math.max(0, Math.round((e.getTime() - s.getTime()) / 1000));
+function formatDuration(sec?: number): string {
+  if (sec === undefined || sec < 0) return "—";
   if (sec < 60) return `${sec}s`;
   if (sec < 3600) return `${Math.floor(sec / 60)}m ${sec % 60}s`;
   const h = Math.floor(sec / 3600);
@@ -105,656 +238,2065 @@ function durationBetween(start?: string, end?: string): string {
   return `${h}h ${m}m`;
 }
 
-// --- Filter button component ---
+// ISO datetime (proto Timestamp) <-> <input type="date"> value (YYYY-MM-DD).
+function isoToDateInput(iso?: string): string {
+  if (!iso) return "";
+  return iso.slice(0, 10);
+}
+function dateInputToIso(value: string, endOfDay: boolean): string | null {
+  if (!value) return null;
+  return endOfDay ? `${value}T23:59:59.999Z` : `${value}T00:00:00.000Z`;
+}
 
-function FilterChip({
-  label,
+// --- URL <-> query encoding. -------------------------------------------------
+//
+// Column / sort / paging:
+//   ?q=&status=&db=&sv=&proto=&trigger=&sa=&sb=&fa=&fb=&sort=&dir=&size=&page=&iv=
+// Added column-header filters:
+//   ?author= (csv author ids) &pmin=&pmax= (progress 0..100) &dmin=&dmax= (duration secs)
+// Above-table checkbox toggles:
+//   ?sa_only=true (Standalone — only non-suite runs) &fav=1 (Favorites) &del=1 (Deleted)
+// View-only table preferences:
+//   ?ff=0 disables the default "favorites first" partition (no API field).
+
+interface ParsedQuery extends RunsQuery {
+  pageSize: number;
+  // `sort` is undefined in the NEUTRAL tri-state (no ?sort= in the URL): no sort
+  // param is sent and the provider falls back to its own default ordering.
+  sort?: SortField;
+  desc: boolean;
+  refreshMs: number;
+  favoritesFirst: boolean;
+}
+
+const SORTABLE_FIELDS: readonly SortField[] = [
+  "name",
+  "created_at",
+  "status",
+  "db_kind",
+  "workload",
+  "trigger",
+  "duration",
+  "started_at",
+  "finished_at",
+];
+
+function parseQuery(sp: URLSearchParams): ParsedQuery {
+  const csv = (key: string): string[] =>
+    (sp.get(key) ?? "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+  const statuses = csv("status").filter((s): s is RunStatus =>
+    (RUN_STATUSES as string[]).includes(s),
+  );
+  const dbKinds = csv("db").filter((s): s is Exclude<DbKind, ""> =>
+    (DB_KINDS as string[]).includes(s),
+  );
+  const protocols = csv("proto").filter((s): s is Exclude<Protocol, ""> =>
+    (PROTOCOLS as string[]).includes(s),
+  );
+  const triggers = csv("trigger").filter((s): s is Exclude<RunTrigger, ""> =>
+    (TRIGGERS as string[]).includes(s),
+  );
+  const stroppyVersions = csv("sv").filter((s) =>
+    STROPPY_VERSIONS.includes(s),
+  );
+  // Tri-state sort: no ?sort= → NEUTRAL (undefined). Only an explicit, known
+  // field counts as an active sort; ?dir= defaults to desc when sort is set.
+  const sortRaw = sp.get("sort");
+  const sort: SortField | undefined =
+    sortRaw && SORTABLE_FIELDS.includes(sortRaw as SortField)
+      ? (sortRaw as SortField)
+      : undefined;
+  const desc = sp.get("dir") ? sp.get("dir") === "desc" : true;
+  const size = Number.parseInt(sp.get("size") ?? "", 10);
+  const pageSize = PAGE_SIZES.includes(size) ? size : DEFAULT_SIZE;
+  const ivRaw = Number.parseInt(sp.get("iv") ?? "", 10);
+  const refreshMs = REFRESH_OPTIONS.some((o) => o.ms === ivRaw)
+    ? ivRaw
+    : DEFAULT_REFRESH_MS;
+
+  const authorIds = csv("author");
+
+  // Bounded integer parse for the progress / duration range params.
+  const intIn = (key: string, lo: number, hi: number): number | undefined => {
+    const n = Number.parseInt(sp.get(key) ?? "", 10);
+    if (Number.isNaN(n)) return undefined;
+    return Math.max(lo, Math.min(hi, n));
+  };
+  const progressMin = intIn("pmin", 0, 100);
+  const progressMax = intIn("pmax", 0, 100);
+  const durationMinSec = intIn("dmin", 0, Number.MAX_SAFE_INTEGER);
+  const durationMaxSec = intIn("dmax", 0, Number.MAX_SAFE_INTEGER);
+
+  // standalone checkbox: ?sa_only=true → only non-suite runs; otherwise all.
+  const standalone = sp.get("sa_only") === "true" ? true : undefined;
+
+  return {
+    search: sp.get("q") ?? undefined,
+    statuses,
+    dbKinds,
+    stroppyVersions,
+    protocols,
+    triggers,
+    authorIds: authorIds.length ? authorIds : undefined,
+    progressMin,
+    progressMax,
+    durationMinSec,
+    durationMaxSec,
+    standalone,
+    favoritesOnly: sp.get("fav") === "1" ? true : undefined,
+    includeDeleted: sp.get("del") === "1" ? true : undefined,
+    startedAfter: sp.get("sa") ?? undefined,
+    startedBefore: sp.get("sb") ?? undefined,
+    finishedAfter: sp.get("fa") ?? undefined,
+    finishedBefore: sp.get("fb") ?? undefined,
+    sort,
+    desc,
+    pageSize,
+    pageToken: sp.get("page") ?? undefined,
+    refreshMs,
+    favoritesFirst: sp.get("ff") !== "0",
+  };
+}
+
+// Left/right divider classes that bracket a grouped block. Applied to the FIRST
+// ("left") and LAST ("right") leaf of each group (and to "both" for a single
+// member) on both the header <th> and the body <td> so the blocks read as
+// visually distinct, contiguous brackets.
+function groupEdgeClass(edge?: "left" | "right" | "both"): string {
+  switch (edge) {
+    case "left":
+      return "border-l border-zinc-800/70";
+    case "right":
+      return "border-r border-zinc-800/70";
+    case "both":
+      return "border-l border-r border-zinc-800/70";
+    default:
+      return "";
+  }
+}
+
+// --- header building blocks. -------------------------------------------------
+
+// Shared hit-area + icon sizing for BOTH the sort and filter header buttons so
+// they line up on the same center line across every header and stay tidy. Bumped
+// a notch (icons ~14px, h-6/w-6 hit-area) per the polish pass.
+const HEADER_BTN =
+  "flex h-6 w-6 items-center justify-center rounded transition-colors cursor-pointer shrink-0";
+const HEADER_ICON = "h-3.5 w-3.5";
+
+/**
+ * SortButton — the LEFT-side tri-state sort control. Cycles
+ * ascending → descending → NEUTRAL on click; the icon reflects all three:
+ * chevron-up (asc) / chevron-down (desc) / dimmed up-down (neutral, no sort).
+ */
+function SortButton({
+  field,
   active,
-  onClick,
+  desc,
+  onSort,
 }: {
-  label: string;
+  field: SortField;
   active: boolean;
-  onClick: () => void;
+  desc: boolean;
+  onSort: (field: SortField) => void;
 }) {
+  const Icon = !active ? ChevronsUpDown : desc ? ChevronDown : ChevronUp;
   return (
     <button
-      onClick={onClick}
-      className={`px-2.5 py-1 text-[11px] font-mono border transition-colors cursor-pointer ${
-        active
-          ? "border-primary/60 text-primary bg-primary/8"
-          : "border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700"
-      }`}
-    >
-      {label}
-    </button>
-  );
-}
-
-// --- Column definitions ---
-
-function makeColumns(onDelete: (id: string) => void, onCancel: (id: string) => void, onRerun: (id: string) => void, cancellingIds: Set<string>, presetNames: Map<string, string>): ColumnDef<RunSummary>[] {
-  return [
-    // Checkbox
-    {
-      id: "select",
-      header: ({ table }) => (
-        <input
-          type="checkbox"
-          className="accent-primary w-3.5 h-3.5 cursor-pointer"
-          checked={table.getIsAllPageRowsSelected()}
-          onChange={table.getToggleAllPageRowsSelectedHandler()}
-        />
-      ),
-      cell: ({ row }) => (
-        <input
-          type="checkbox"
-          className="accent-primary w-3.5 h-3.5 cursor-pointer"
-          checked={row.getIsSelected()}
-          onChange={row.getToggleSelectedHandler()}
-        />
-      ),
-      enableSorting: false,
-      size: 36,
-    },
-    // ID (truncated to last 8 chars). Whole row is clickable; this column
-    // just renders the short id text — the navigation is handled by the
-    // TableRow onClick. Title attr keeps the full id discoverable on hover.
-    {
-      accessorKey: "id",
-      header: ({ column }) => (
-        <SortableHeader column={column} label="ID" />
-      ),
-      cell: ({ row }) => {
-        const r = row.original;
-        const short = r.id.length > 8 ? r.id.slice(-8) : r.id;
-        return (
-          <span className="font-mono text-xs text-primary" title={r.id}>
-            {short}
-          </span>
-        );
-      },
-    },
-    // Name (separate column — sortable, falls back to em dash when unset).
-    {
-      accessorKey: "name",
-      header: ({ column }) => (
-        <SortableHeader column={column} label="Name" />
-      ),
-      cell: ({ row }) => {
-        const r = row.original;
-        if (!r.name) {
-          return <span className="text-xs text-zinc-700">—</span>;
-        }
-        const titleAttr = r.description ? `${r.name}\n\n${r.description}` : r.name;
-        return (
-          <span className="text-xs text-zinc-200 truncate block max-w-[18rem]" title={titleAttr}>
-            {r.name}
-          </span>
-        );
-      },
-    },
-    // Status
-    {
-      id: "status",
-      accessorFn: (row) => deriveStatus(row, cancellingIds),
-      header: ({ column }) => (
-        <SortableHeader column={column} label="Status" />
-      ),
-      cell: ({ row }) => {
-        const status = deriveStatus(row.original, cancellingIds);
-        const cfg = STATUS_CONFIG[status];
-        return <Badge variant={cfg.variant}>{cfg.label}</Badge>;
-      },
-      filterFn: (row, _id, value) => {
-        if (!value || value === "all") return true;
-        return deriveStatus(row.original, cancellingIds) === value;
-      },
-    },
-    // Database (kind + version + node count)
-    {
-      accessorKey: "db_kind",
-      header: ({ column }) => (
-        <SortableHeader column={column} label="Database" />
-      ),
-      cell: ({ row }) => {
-        const r = row.original;
-        if (!r.db_kind) return <span className="font-mono text-xs text-zinc-600">{"\u2014"}</span>;
-        const parts = [r.db_kind];
-        if (r.db_version) parts.push(r.db_version);
-        const label = parts.join(" ");
-        const nodes = r.node_count ? `${r.node_count} node${r.node_count > 1 ? "s" : ""}` : null;
-        return (
-          <span className="font-mono text-xs text-zinc-400">
-            {label}{nodes && <span className="text-zinc-600"> &middot; {nodes}</span>}
-          </span>
-        );
-      },
-      filterFn: (row, _id, value) => {
-        if (!value || value === "all") return true;
-        return row.original.db_kind === value;
-      },
-    },
-    // Preset (resolved from preset_id)
-    {
-      accessorKey: "preset_id",
-      header: ({ column }) => (
-        <SortableHeader column={column} label="Preset" />
-      ),
-      cell: ({ row }) => {
-        const id = row.original.preset_id;
-        if (!id) return <span className="font-mono text-xs text-zinc-600">{"—"}</span>;
-        const name = presetNames.get(id);
-        return (
-          <span className="font-mono text-xs text-zinc-400" title={id}>
-            {name ?? id.slice(0, 8)}
-          </span>
-        );
-      },
-      enableSorting: false,
-    },
-    // Workload (script + duration + VUs)
-    {
-      id: "workload",
-      header: "Workload",
-      cell: ({ row }) => {
-        const r = row.original;
-        if (!r.script) return <span className="font-mono text-xs text-zinc-600">{"\u2014"}</span>;
-        const parts = [r.script];
-        if (r.duration) parts.push(r.duration);
-        if (r.vus) parts.push(`${r.vus} VUs`);
-        return (
-          <span className="font-mono text-xs text-zinc-400">
-            {parts.join(" \u00b7 ")}
-          </span>
-        );
-      },
-      enableSorting: false,
-    },
-    // Provider
-    {
-      accessorKey: "provider",
-      header: ({ column }) => (
-        <SortableHeader column={column} label="Provider" />
-      ),
-      cell: ({ row }) => (
-        <span className="font-mono text-xs text-zinc-400">
-          {row.original.provider || "\u2014"}
-        </span>
-      ),
-      filterFn: (row, _id, value) => {
-        if (!value || value === "all") return true;
-        return row.original.provider === value;
-      },
-    },
-    // Progress (amber bar for cancelled)
-    {
-      id: "progress",
-      header: "Progress",
-      cell: ({ row }) => {
-        const r = row.original;
-        const pct = r.total > 0 ? (r.done / r.total) * 100 : 0;
-        const barColor = r.cancelled
-          ? "bg-zinc-500"
-          : r.failed > 0
-            ? "bg-destructive"
-            : "bg-emerald-500";
-        return (
-          <div className="flex items-center gap-2 min-w-[120px]">
-            <div className="flex-1 bg-zinc-900 h-1.5 overflow-hidden">
-              <div
-                className={`h-full transition-all duration-500 ${barColor}`}
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-            <span className="text-[10px] font-mono text-zinc-500 tabular-nums w-12 text-right">
-              {r.done}/{r.total}
-            </span>
-          </div>
-        );
-      },
-      enableSorting: false,
-    },
-    // Duration
-    {
-      id: "duration",
-      header: "Duration",
-      cell: ({ row }) => (
-        <span className="text-xs text-zinc-500 font-mono tabular-nums">
-          {durationBetween(row.original.started_at, row.original.finished_at)}
-        </span>
-      ),
-      enableSorting: false,
-    },
-    // Actions: cancel (for running) + delete
-    {
-      id: "actions",
-      header: "",
-      cell: ({ row }) => {
-        const status = deriveStatus(row.original, cancellingIds);
-        const isFinished = status === "done" || status === "failed" || status === "cancelled";
-        return (
-          <div className="flex items-center gap-0.5">
-            {status === "running" && (
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-7 w-7 p-0 text-amber-600 hover:text-amber-400 cursor-pointer"
-                title="Cancel run"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onCancel(row.original.id);
-                }}
-              >
-                <StopCircle className="h-3.5 w-3.5" />
-              </Button>
-            )}
-            {isFinished && (
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-7 w-7 p-0 text-zinc-500 hover:text-primary cursor-pointer"
-                title="Rerun with same config"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onRerun(row.original.id);
-                }}
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-              </Button>
-            )}
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-7 w-7 p-0 text-zinc-600 hover:text-destructive cursor-pointer"
-              title="Delete run"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onDelete(row.original.id);
-              }}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-        );
-      },
-      enableSorting: false,
-      size: 100,
-    },
-  ];
-}
-
-function SortableHeader({
-  column,
-  label,
-}: {
-  column: { getIsSorted: () => false | "asc" | "desc"; toggleSorting: () => void };
-  label: string;
-}) {
-  const sorted = column.getIsSorted();
-  return (
-    <button
-      className="flex items-center gap-1 hover:text-foreground transition-colors cursor-pointer"
-      onClick={() => column.toggleSorting()}
-    >
-      {label}
-      {sorted === "asc" ? (
-        <ArrowUp className="h-3 w-3" />
-      ) : sorted === "desc" ? (
-        <ArrowDown className="h-3 w-3" />
-      ) : (
-        <ArrowUpDown className="h-3 w-3 opacity-40" />
+      type="button"
+      onClick={() => onSort(field)}
+      className={cn(
+        HEADER_BTN,
+        active ? "text-primary" : "text-zinc-600 hover:text-zinc-400",
       )}
+      title={
+        !active
+          ? "Sort"
+          : desc
+            ? "Sorted descending — click for neutral"
+            : "Sorted ascending — click for descending"
+      }
+      aria-label="Toggle sort"
+    >
+      <Icon className={HEADER_ICON} />
     </button>
   );
 }
 
-// --- Page size options ---
-const PAGE_SIZES = [10, 25, 50, 100];
+/**
+ * ColumnHeader — a three-slot leaf header: `[⇅ sort]  Label  [⛃ filter]`. The
+ * sort button (LEFT) and filter button (RIGHT) share one hit-area/icon size so
+ * they align on a single center line across all headers; the label sits centered
+ * between them. Columns without `field` omit the sort slot; columns without
+ * `children` omit the filter slot — but both slots reserve their width so labels
+ * stay aligned column-to-column.
+ *
+ * The filter popover open-state is LIFTED to the page (`openFilterColumnId`):
+ * this header is controlled (`open`/`onOpenChange` keyed by `columnId`), so a
+ * table re-render / refetch can't reset it and the input keeps focus while
+ * typing. Auto-refresh pauses while any popover is open (page-level).
+ */
+function ColumnHeader({
+  label,
+  field,
+  sort,
+  desc,
+  onSort,
+  active,
+  children,
+  columnId,
+  openColumnId,
+  onOpenChange,
+}: {
+  label: string;
+  field?: SortField;
+  sort?: SortField;
+  desc: boolean;
+  onSort: (field: SortField) => void;
+  active?: boolean;
+  children?: React.ReactNode;
+  columnId?: string;
+  openColumnId?: string | null;
+  onOpenChange?: (columnId: string, open: boolean) => void;
+}) {
+  const isActiveSort = field !== undefined && sort === field;
+  const isOpen = !!columnId && openColumnId === columnId;
+  return (
+    <div className="flex items-center justify-start gap-1.5">
+      {/* LEFT slot: tri-state sort (reserve width when absent for alignment). */}
+      {field ? (
+        <SortButton
+          field={field}
+          active={isActiveSort}
+          desc={desc}
+          onSort={onSort}
+        />
+      ) : (
+        <span className="h-6 w-6 shrink-0" aria-hidden />
+      )}
 
-// --- Main component ---
+      <span className="whitespace-nowrap leading-none">{label}</span>
+
+      {/* RIGHT slot: filter popover (reserve width when absent for alignment). */}
+      {children && columnId ? (
+        <Popover
+          open={isOpen}
+          onOpenChange={(o) => onOpenChange?.(columnId, o)}
+        >
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className={cn(
+                HEADER_BTN,
+                active
+                  ? "text-primary"
+                  : "text-zinc-600 hover:text-zinc-400",
+              )}
+              title={active ? `${label} filter active` : `Filter ${label}`}
+            >
+              <Filter
+                className={HEADER_ICON}
+                fill={active ? "currentColor" : "none"}
+              />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            align="center"
+            className="w-60 p-0 bg-zinc-950 border-zinc-800"
+          >
+            {children}
+          </PopoverContent>
+        </Popover>
+      ) : (
+        <span className="h-6 w-6 shrink-0" aria-hidden />
+      )}
+    </div>
+  );
+}
+
+/** Multi-select checklist body (status, db, protocol, trigger, version). */
+function ChecklistFilter({
+  options,
+  selected,
+  onChange,
+}: {
+  options: { value: string; label: string; color?: string }[];
+  selected: Set<string>;
+  onChange: (next: Set<string>) => void;
+}) {
+  const allSelected = selected.size === 0;
+  const toggle = (value: string) => {
+    const next = new Set(selected);
+    if (next.has(value)) next.delete(value);
+    else next.add(value);
+    onChange(next);
+  };
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => onChange(new Set())}
+        className={cn(
+          "w-full flex items-center gap-2 px-3 py-1.5 text-[11px] font-mono hover:bg-zinc-900 transition-colors border-b border-zinc-800 cursor-pointer",
+          allSelected && "text-primary",
+        )}
+      >
+        <div
+          className={cn(
+            "h-3.5 w-3.5 rounded-sm border border-zinc-700 flex items-center justify-center shrink-0",
+            allSelected && "bg-primary border-primary",
+          )}
+        >
+          {allSelected && <Check className="h-2.5 w-2.5 text-primary-foreground" />}
+        </div>
+        All
+      </button>
+      <div className="max-h-60 overflow-y-auto py-1">
+        {options.map((opt) => {
+          const isSelected = selected.has(opt.value);
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => toggle(opt.value)}
+              className="w-full flex items-center gap-2 px-3 py-1 text-[11px] font-mono hover:bg-zinc-900 transition-colors cursor-pointer"
+            >
+              <div
+                className={cn(
+                  "h-3.5 w-3.5 rounded-sm border border-zinc-700 flex items-center justify-center shrink-0",
+                  isSelected && "bg-primary border-primary",
+                )}
+              >
+                {isSelected && (
+                  <Check className="h-2.5 w-2.5 text-primary-foreground" />
+                )}
+              </div>
+              {opt.color && (
+                <span
+                  className="h-2 w-2 rounded-full shrink-0"
+                  style={{ backgroundColor: opt.color }}
+                />
+              )}
+              <span className="truncate text-zinc-300" title={opt.label}>
+                {opt.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Free-text filter body (used by the Name column header). Debounces into the URL
+ * query. The input keeps its OWN local state and a stable ref; after the
+ * debounced commit triggers a refetch + table re-render, an effect re-focuses
+ * the input and restores the caret so typing is never interrupted (the popover
+ * itself no longer remounts because its open-state lives on the page).
+ */
+function TextFilter({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+  placeholder: string;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [local, setLocal] = useState(value);
+  useEffect(() => setLocal(value), [value]);
+  useEffect(() => {
+    if (local === value) return;
+    const id = setTimeout(() => onChange(local), 300);
+    return () => clearTimeout(id);
+  }, [local, value, onChange]);
+  // Re-assert focus after any re-render that may have stolen it (debounced
+  // refetch). Restore the caret to the end so the next keystroke lands right.
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    if (document.activeElement !== el) {
+      el.focus();
+      const end = el.value.length;
+      el.setSelectionRange(end, end);
+    }
+  });
+  return (
+    <div className="p-2">
+      <Input
+        ref={inputRef}
+        autoFocus
+        value={local}
+        onChange={(e) => setLocal(e.target.value)}
+        placeholder={placeholder}
+        className="h-8 w-full text-xs font-mono border-zinc-800 bg-transparent focus-visible:ring-primary/40"
+      />
+    </div>
+  );
+}
+
+/** Date-range filter body (used by Started / Finished column headers). */
+function DateRangeFilter({
+  after,
+  before,
+  onChange,
+}: {
+  after?: string;
+  before?: string;
+  onChange: (after: string | null, before: string | null) => void;
+}) {
+  return (
+    <div className="p-3 flex flex-col gap-2">
+      <label className="flex flex-col gap-1">
+        <span className="text-[9px] font-mono uppercase tracking-wider text-zinc-500">
+          From
+        </span>
+        <input
+          type="date"
+          value={isoToDateInput(after)}
+          onChange={(e) =>
+            onChange(
+              dateInputToIso(e.target.value, false),
+              before ?? null,
+            )
+          }
+          className="h-8 px-2 text-xs font-mono border border-zinc-800 bg-transparent text-zinc-300 focus:outline-none focus:ring-1 focus:ring-primary/40 [color-scheme:dark]"
+        />
+      </label>
+      <label className="flex flex-col gap-1">
+        <span className="text-[9px] font-mono uppercase tracking-wider text-zinc-500">
+          To
+        </span>
+        <input
+          type="date"
+          value={isoToDateInput(before)}
+          onChange={(e) =>
+            onChange(after ?? null, dateInputToIso(e.target.value, true))
+          }
+          className="h-8 px-2 text-xs font-mono border border-zinc-800 bg-transparent text-zinc-300 focus:outline-none focus:ring-1 focus:ring-primary/40 [color-scheme:dark]"
+        />
+      </label>
+      {(after || before) && (
+        <button
+          type="button"
+          onClick={() => onChange(null, null)}
+          className="flex items-center gap-1 text-[10px] text-zinc-500 hover:text-zinc-300 font-mono underline underline-offset-2 cursor-pointer self-start"
+        >
+          <X className="h-3 w-3" /> clear
+        </button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Numeric min/max range filter body (used for the progress window 0..100 on the
+ * Status header and the duration window in seconds on the Time header). Keeps
+ * local input state and commits on change; empty input clears that bound.
+ */
+function NumberRangeFilter({
+  min,
+  max,
+  lo,
+  hi,
+  unit,
+  onChange,
+}: {
+  min?: number;
+  max?: number;
+  lo: number;
+  hi: number;
+  unit?: string;
+  onChange: (min: number | null, max: number | null) => void;
+}) {
+  const parse = (v: string): number | null => {
+    if (v.trim() === "") return null;
+    const n = Number.parseInt(v, 10);
+    if (Number.isNaN(n)) return null;
+    return Math.max(lo, Math.min(hi, n));
+  };
+  return (
+    <div className="p-3 flex flex-col gap-2">
+      <div className="flex items-end gap-2">
+        <label className="flex flex-col gap-1 flex-1 min-w-0">
+          <span className="text-[9px] font-mono uppercase tracking-wider text-zinc-500">
+            Min{unit ? ` (${unit})` : ""}
+          </span>
+          <input
+            type="number"
+            inputMode="numeric"
+            value={min ?? ""}
+            min={lo}
+            max={hi}
+            onChange={(e) => onChange(parse(e.target.value), max ?? null)}
+            className="h-8 px-2 text-xs font-mono border border-zinc-800 bg-transparent text-zinc-300 focus:outline-none focus:ring-1 focus:ring-primary/40 w-full"
+          />
+        </label>
+        <span className="pb-2 text-zinc-600 font-mono text-xs">–</span>
+        <label className="flex flex-col gap-1 flex-1 min-w-0">
+          <span className="text-[9px] font-mono uppercase tracking-wider text-zinc-500">
+            Max{unit ? ` (${unit})` : ""}
+          </span>
+          <input
+            type="number"
+            inputMode="numeric"
+            value={max ?? ""}
+            min={lo}
+            max={hi}
+            onChange={(e) => onChange(min ?? null, parse(e.target.value))}
+            className="h-8 px-2 text-xs font-mono border border-zinc-800 bg-transparent text-zinc-300 focus:outline-none focus:ring-1 focus:ring-primary/40 w-full"
+          />
+        </label>
+      </div>
+      {(min !== undefined || max !== undefined) && (
+        <button
+          type="button"
+          onClick={() => onChange(null, null)}
+          className="flex items-center gap-1 text-[10px] text-zinc-500 hover:text-zinc-300 font-mono underline underline-offset-2 cursor-pointer self-start"
+        >
+          <X className="h-3 w-3" /> clear
+        </button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * ToolbarCheckbox — a small square checkbox + label, matching the on-brand
+ * square check used by ChecklistFilter, rendered inline ABOVE the table. Drives
+ * one boolean filter toggle (Standalone / Favorites / Deleted).
+ */
+function ToolbarCheckbox({
+  checked,
+  onChange,
+  label,
+  title,
+}: {
+  checked: boolean;
+  onChange: (next: boolean) => void;
+  label: string;
+  title?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      title={title}
+      aria-pressed={checked}
+      className={cn(
+        "flex h-5 items-center gap-1.5 text-[10px] font-mono transition-colors cursor-pointer",
+        checked ? "text-primary" : "text-zinc-500 hover:text-zinc-300",
+      )}
+    >
+      <span
+        className={cn(
+          "h-3.5 w-3.5 rounded-sm border flex items-center justify-center shrink-0 transition-colors",
+          checked ? "bg-primary border-primary" : "border-zinc-700",
+        )}
+      >
+        {checked && <Check className="h-2.5 w-2.5 text-primary-foreground" />}
+      </span>
+      {label}
+    </button>
+  );
+}
+
+/**
+ * SelectCheckbox — compact dark checkbox matching the filter checklist style.
+ * The header uses the same control with a dash when only part of the visible
+ * page is selected.
+ */
+function SelectCheckbox({
+  checked,
+  indeterminate = false,
+  onCheckedChange,
+  title,
+  ariaLabel,
+}: {
+  checked: boolean;
+  indeterminate?: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  title: string;
+  ariaLabel: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={indeterminate ? "mixed" : checked}
+      onClick={(e) => {
+        e.stopPropagation();
+        onCheckedChange(indeterminate ? true : !checked);
+      }}
+      title={title}
+      aria-label={ariaLabel}
+      className="mx-auto flex h-6 w-6 items-center justify-center rounded transition-colors cursor-pointer hover:bg-zinc-800/60"
+    >
+      <span
+        className={cn(
+          "flex h-3.5 w-3.5 items-center justify-center rounded-sm border transition-colors",
+          checked || indeterminate
+            ? "border-primary bg-primary"
+            : "border-zinc-700 bg-zinc-950/80",
+        )}
+      >
+        {checked ? (
+          <Check className="h-2.5 w-2.5 text-primary-foreground" />
+        ) : indeterminate ? (
+          <span className="h-px w-2 bg-primary-foreground" />
+        ) : null}
+      </span>
+    </button>
+  );
+}
+
+// --- row Actions menu. -------------------------------------------------------
+
+// The full action catalog, in menu order. Each entry maps to a RunAction that
+// itself resolves to a real TestRunService RPC / route (see actionsForStatus +
+// RunsProvider). `danger` flags destructive items for the red treatment.
+const ACTION_ITEMS: {
+  action: RunAction;
+  label: string;
+  icon: LucideIcon;
+  danger?: boolean;
+}[] = [
+  { action: "view", label: "View detail", icon: Eye },
+  { action: "share", label: "Share link", icon: Link2 },
+  { action: "rerun", label: "Re-run", icon: RotateCcw },
+  { action: "extract", label: "Save as preset", icon: Bookmark },
+  { action: "cancel", label: "Cancel run", icon: Ban },
+  { action: "delete", label: "Delete", icon: Trash2, danger: true },
+];
+
+// Why an action is greyed out, per status — shown as the disabled item's title.
+const DISABLED_REASON: Record<Exclude<RunAction, "view" | "share">, string> = {
+  cancel: "Only running or pending runs can be cancelled",
+  rerun: "Only finished runs can be re-run",
+  extract: "Only completed runs can be saved as a preset",
+  delete: "A running run can't be deleted — cancel it first",
+};
+
+function disabledReason(action: RunAction): string | undefined {
+  if (action === "view" || action === "share") return undefined;
+  return DISABLED_REASON[action];
+}
+
+/**
+ * ActionsMenu — the compact "⋯" (kebab) cell. Opens a radix dropdown listing
+ * EVERY run action; items invalid for the row's current status are DISABLED
+ * (greyed, with a reason) rather than hidden, per actionsForStatus(). The
+ * trigger stopPropagation's so it never fires the row's name-link navigation,
+ * and the menu's open-state is CONTROLLED by the page (keyed by run id) so the
+ * 5s auto-refresh re-render can't close it mid-interaction.
+ */
+function ActionsMenu({
+  run,
+  open,
+  onOpenChange,
+  onAction,
+}: {
+  run: RunVM;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onAction: (action: RunAction, run: RunVM) => void;
+}) {
+  const allowed = actionsForStatus(run.status);
+  return (
+    <DropdownMenu open={open} onOpenChange={onOpenChange}>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          // Stop the row's onClick (name-link navigation) from firing.
+          onClick={(e) => e.stopPropagation()}
+          className={cn(
+            "flex h-6 w-6 items-center justify-center rounded transition-colors cursor-pointer",
+            open
+              ? "text-zinc-200 bg-zinc-800"
+              : "text-zinc-600 hover:text-zinc-300 hover:bg-zinc-800/60",
+          )}
+          title="Run actions"
+          aria-label="Run actions"
+        >
+          <MoreHorizontal className="h-4 w-4" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        // Stop row-level clicks from bubbling out of the portalled menu.
+        onClick={(e) => e.stopPropagation()}
+        className="min-w-[11rem] bg-zinc-950 border-zinc-800"
+      >
+        <DropdownMenuLabel className="truncate" title={run.name || run.id}>
+          {run.name || run.id}
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {ACTION_ITEMS.map((item) => {
+          const enabled = allowed.has(item.action);
+          const reason = disabledReason(item.action);
+          return (
+            <DropdownMenuItem
+              key={item.action}
+              disabled={!enabled}
+              title={enabled ? undefined : reason}
+              onSelect={(e) => {
+                // Keep the row click from firing; route through the page handler.
+                e.preventDefault();
+                if (enabled) onAction(item.action, run);
+              }}
+              className={cn(
+                item.danger &&
+                  "text-destructive focus:text-destructive focus:bg-destructive/10",
+              )}
+            >
+              <item.icon className="h-3.5 w-3.5 shrink-0" />
+              {item.label}
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 export function Runs() {
+  const slug = useTenantSlug();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  // Suite + batch filtering — populated from URL so links from the Suites
-  // page deep-link straight to "all runs from suite X" or "batch Y of suite X".
-  const suiteFilter = searchParams.get("suite") || "";
-  const batchFilter = searchParams.get("batch") || "";
-  const [runs, setRuns] = useState<RunSummary[]>([]);
-  const [presetNames, setPresetNames] = useState<Map<string, string>>(new Map());
+  const query = useMemo(() => parseQuery(searchParams), [searchParams]);
+
+  const [runs, setRuns] = useState<RunVM[]>([]);
+  const [nextPageToken, setNextPageToken] = useState("");
   const [loading, setLoading] = useState(true);
+  // `refreshing` is a background re-fetch (auto-refresh / manual) that keeps the
+  // current rows on screen and only shows a subtle "updating" pulse.
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [cancellingIds, setCancellingIds] = useState<Set<string>>(new Set());
+
+  // Token stack so the Prev button can walk back through opaque cursors (the
+  // API only hands forward tokens). Reset (in patchParams) whenever a
+  // facet/sort/size change sends us back to the first page.
+  const tokenStackRef = useRef<string[]>([]);
+
+  // Which column's filter popover is open, keyed by column id (null = none).
+  // LIFTED out of the per-cell header render so a table re-render / refetch (or
+  // the 5s auto-refresh) can't reset it and close the popover mid-type. A single
+  // page-level handler drives the controlled radix Popover for every header.
+  const [openFilterColumnId, setOpenFilterColumnId] = useState<string | null>(
+    null,
+  );
+  const handleFilterOpenChange = useCallback(
+    (columnId: string, open: boolean) => {
+      setOpenFilterColumnId(open ? columnId : (cur) => (cur === columnId ? null : cur));
+    },
+    [],
+  );
+  // Which row's Actions (⋯) dropdown is open, keyed by run id (null = none).
+  // Controlled with the SAME discipline as the filter popovers: lifted to the
+  // page so a table re-render / 5s auto-refresh can't reset it mid-interaction,
+  // and refresh pauses while it's open (see popoverOpen below).
+  const [openActionRunId, setOpenActionRunId] = useState<string | null>(null);
   const confirm = useConfirm();
 
-  // Load presets once for id→name lookup in the table.
-  useEffect(() => {
-    listPresets()
-      .then((ps) => {
-        const m = new Map<string, string>();
-        for (const p of ps ?? []) m.set(p.id, p.name);
-        setPresetNames(m);
-      })
-      .catch(() => {/* preset list optional — column falls back to id slice */});
-  }, []);
+  // Distinct author ids present in the data, for the Author column pick-list;
+  // sourced through the provider so the mock stays isolated. Fetched once per
+  // slug (best-effort: a failure just leaves an empty pick-list).
+  const [facets, setFacets] = useState<RunFacets>({ authorIds: [] });
 
-  // Suite name + batch run_id allowlist, populated when ?suite= / ?batch=
-  // query params are present. Lets the active-filter chip show a real name
-  // and lets the batch filter narrow rows to exactly the runs of that batch.
-  const [suiteName, setSuiteName] = useState<string>("");
-  const [batchRunIds, setBatchRunIds] = useState<Set<string> | null>(null);
-  useEffect(() => {
-    if (!suiteFilter) {
-      setSuiteName(""); setBatchRunIds(null);
-      return;
-    }
-    let cancelled = false;
-    if (batchFilter) {
-      // Resolve the batch's runs through getSuite; the runs[] field is
-      // populated by the API for individual suite GETs (not list).
-      getSuite(suiteFilter)
-        .then((s) => {
-          if (cancelled) return;
-          setSuiteName(s.name);
-          const ids = new Set<string>();
-          for (const b of s.batches ?? []) {
-            if (b.batch_id !== batchFilter) continue;
-            for (const r of b.runs) ids.add(r.run_id);
+  // Row selection is local UI state for the future Compare page. It intentionally
+  // stores stable run ids, not row indexes, so refetches/re-sorts keep selection.
+  const [selectedRunIds, setSelectedRunIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  // A header filter popover OR a row action menu is open → auto-refresh pauses
+  // so an in-flight selection / search / action isn't disrupted by a row swap.
+  const popoverOpen = openFilterColumnId !== null || openActionRunId !== null;
+
+  const fetchRuns = useCallback(
+    async (background = false) => {
+      if (!slug) return;
+      if (background) setRefreshing(true);
+      else setLoading(true);
+      setError(null);
+      try {
+        const page = await getRunsProvider().listRuns(slug, {
+          search: query.search,
+          statuses: query.statuses,
+          dbKinds: query.dbKinds,
+          stroppyVersions: query.stroppyVersions,
+          protocols: query.protocols,
+          triggers: query.triggers,
+          authorIds: query.authorIds,
+          progressMin: query.progressMin,
+          progressMax: query.progressMax,
+          durationMinSec: query.durationMinSec,
+          durationMaxSec: query.durationMaxSec,
+          standalone: query.standalone,
+          favoritesOnly: query.favoritesOnly,
+          includeDeleted: query.includeDeleted,
+          startedAfter: query.startedAfter,
+          startedBefore: query.startedBefore,
+          finishedAfter: query.finishedAfter,
+          finishedBefore: query.finishedBefore,
+          sort: query.sort,
+          desc: query.desc,
+          pageSize: query.pageSize,
+          pageToken: query.pageToken,
+        });
+        setRuns(page.runs);
+        setNextPageToken(page.nextPageToken);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load runs");
+        setRuns([]);
+        setNextPageToken("");
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [
+      slug,
+      query.search,
+      query.statuses,
+      query.dbKinds,
+      query.stroppyVersions,
+      query.protocols,
+      query.triggers,
+      query.authorIds,
+      query.progressMin,
+      query.progressMax,
+      query.durationMinSec,
+      query.durationMaxSec,
+      query.standalone,
+      query.favoritesOnly,
+      query.includeDeleted,
+      query.startedAfter,
+      query.startedBefore,
+      query.finishedAfter,
+      query.finishedBefore,
+      query.sort,
+      query.desc,
+      query.pageSize,
+      query.pageToken,
+    ],
+  );
+
+  // Run a per-row action through the provider, then refresh in the background so
+  // the row reflects the new state (cancelled / removed / re-run). Errors surface
+  // in the page-level error banner; the menu closes regardless.
+  const runAction = useCallback(
+    async (action: RunAction, run: RunVM) => {
+      if (!slug) return;
+      setOpenActionRunId(null);
+      const provider = getRunsProvider();
+      try {
+        switch (action) {
+          case "view":
+            navigate(`/runs/${run.id}`);
+            return;
+          case "share": {
+            const url = new URL(
+              `/t/${encodeURIComponent(slug)}/runs/${encodeURIComponent(run.id)}`,
+              window.location.origin,
+            );
+            await navigator.clipboard.writeText(url.href);
+            return;
           }
-          setBatchRunIds(ids);
-        })
-        .catch(() => { if (!cancelled) setBatchRunIds(new Set()); });
-    } else {
-      // Just need a name for the chip — list call is cheap.
-      listSuites()
-        .then((all) => {
-          if (cancelled) return;
-          const found = all.find((s) => s.id === suiteFilter);
-          setSuiteName(found?.name || "");
-          setBatchRunIds(null);
-        })
-        .catch(() => { /* leave name empty */ });
-    }
-    return () => { cancelled = true; };
-  }, [suiteFilter, batchFilter]);
+          case "cancel":
+            await provider.cancelRun(slug, run.id);
+            break;
+          case "rerun":
+            await provider.rerunRun(slug, run.id);
+            break;
+          case "extract":
+            await provider.extractToPreset(slug, run.id);
+            break;
+          case "delete": {
+            const ok = await confirm({
+              title: "Delete run?",
+              description: `“${run.name || run.id}” will be permanently removed. This cannot be undone.`,
+              danger: true,
+              confirmLabel: "Delete",
+            });
+            if (!ok) return;
+            await provider.deleteRun(slug, run.id);
+            setSelectedRunIds((current) => {
+              const next = new Set(current);
+              next.delete(run.id);
+              return next;
+            });
+            break;
+          }
+        }
+        await fetchRuns(true);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : `Failed to ${action} run`);
+      }
+    },
+    [slug, navigate, confirm, fetchRuns],
+  );
 
-  // Auto-refresh
-  const REFRESH_OPTIONS = [
-    { label: "Off", value: 0 },
-    { label: "3s", value: 3 },
-    { label: "5s", value: 5 },
-    { label: "10s", value: 10 },
-    { label: "30s", value: 30 },
-  ];
-  const [refreshInterval, setRefreshInterval] = useState(5); // default 5s
-  const refreshRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Foreground fetch whenever the query changes (filters / sort / page).
+  useEffect(() => {
+    void fetchRuns(false);
+  }, [fetchRuns]);
 
-  // Table state
-  const [sorting, setSorting] = useState<SortingState>([{ id: "started_at", desc: true }]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-
-
-  // Derive unique filter values
-  const filterValues = useMemo(() => {
-    const statuses = new Set<string>();
-    const dbKinds = new Set<string>();
-    const providers = new Set<string>();
-    for (const r of runs) {
-      statuses.add(deriveStatus(r, cancellingIds));
-      if (r.db_kind) dbKinds.add(r.db_kind);
-      if (r.provider) providers.add(r.provider);
-    }
-    return {
-      statuses: Array.from(statuses).sort(),
-      dbKinds: Array.from(dbKinds).sort(),
-      providers: Array.from(providers).sort(),
+  // Load the author pick-list once per slug. Best-effort: a provider that hasn't
+  // wired faceting (the real one throws) just leaves an empty option list, so
+  // the Author header falls back to free-text entry without breaking the page.
+  useEffect(() => {
+    if (!slug) return;
+    let cancelled = false;
+    void getRunsProvider()
+      .listFacets(slug)
+      .then((f) => {
+        if (!cancelled) setFacets(f);
+      })
+      .catch(() => {
+        if (!cancelled) setFacets({ authorIds: [] });
+      });
+    return () => {
+      cancelled = true;
     };
-  }, [runs]);
+  }, [slug]);
 
-  // Active filter helpers
-  const activeStatus = columnFilters.find((f) => f.id === "status")?.value as string | undefined;
-  const activeDbKind = columnFilters.find((f) => f.id === "db_kind")?.value as string | undefined;
-  const activeProvider = columnFilters.find((f) => f.id === "provider")?.value as string | undefined;
+  // Auto-refresh: background re-fetch on the selected interval. Paused while a
+  // header filter popover is open. Cleans up on unmount / dependency change.
+  useEffect(() => {
+    if (query.refreshMs <= 0) return;
+    if (popoverOpen) return;
+    const id = setInterval(() => {
+      void fetchRuns(true);
+    }, query.refreshMs);
+    return () => clearInterval(id);
+  }, [query.refreshMs, popoverOpen, fetchRuns]);
 
-  function setFilter(id: string, value: string | undefined) {
-    setColumnFilters((prev) => {
-      const without = prev.filter((f) => f.id !== id);
-      if (!value || value === "all") return without;
-      return [...without, { id, value }];
+  // Patch the URL query string. Any facet/sort change clears the page token
+  // (back to first page) and the token stack — but NEVER touches `size` (page
+  // size) or `iv` (refresh interval), so those survive a filter change.
+  const patchParams = useCallback(
+    (patch: Record<string, string | null>, resetPage = true) => {
+      const next = new URLSearchParams(searchParams);
+      for (const [k, v] of Object.entries(patch)) {
+        if (v === null || v === "") next.delete(k);
+        else next.set(k, v);
+      }
+      if (resetPage) {
+        next.delete("page");
+        tokenStackRef.current = [];
+      }
+      setSearchParams(next);
+    },
+    [searchParams, setSearchParams],
+  );
+
+  const toggleFavoritesFirst = useCallback(() => {
+    patchParams({ ff: query.favoritesFirst ? "0" : null }, false);
+  }, [patchParams, query.favoritesFirst]);
+
+  // Tri-state cycle: ascending → descending → NEUTRAL → ascending …
+  //   - not this column / neutral  → ascending  (sort=field, dir=asc)
+  //   - ascending                  → descending (sort=field, dir=desc)
+  //   - descending                 → NEUTRAL    (clear sort & dir from URL)
+  // `enableSortingRemoval` semantics: the third click removes the sort entirely
+  // so no sort param is sent and the provider falls back to its default order.
+  function toggleSort(field: SortField) {
+    const active = query.sort === field;
+    if (!active) {
+      patchParams({ sort: field, dir: "asc" });
+    } else if (!query.desc) {
+      patchParams({ sort: field, dir: "desc" });
+    } else {
+      patchParams({ sort: null, dir: null });
+    }
+  }
+
+  // Facet setters — each resets to page 1 but preserves size + interval.
+  const setCsv = useCallback(
+    (key: string, selected: Set<string>) => {
+      patchParams({ [key]: [...selected].join(",") || null });
+    },
+    [patchParams],
+  );
+  function setPageSize(size: number) {
+    // Page-size change is itself a paging change → reset cursor, keep filters.
+    patchParams({ size: size === DEFAULT_SIZE ? null : String(size) });
+  }
+  function setRefreshMs(ms: number) {
+    // Interval change must not disturb paging or filters.
+    patchParams({ iv: String(ms) }, false);
+  }
+
+  function goNext() {
+    if (!nextPageToken) return;
+    tokenStackRef.current = [...tokenStackRef.current, query.pageToken ?? ""];
+    patchParams({ page: nextPageToken }, false);
+  }
+  function goPrev() {
+    const stack = tokenStackRef.current;
+    if (stack.length === 0) return;
+    const prevToken = stack[stack.length - 1];
+    tokenStackRef.current = stack.slice(0, -1);
+    patchParams({ page: prevToken || null }, false);
+  }
+
+  const statusSet = useMemo(
+    () => new Set<string>(query.statuses ?? []),
+    [query.statuses],
+  );
+  const dbSet = useMemo(
+    () => new Set<string>(query.dbKinds ?? []),
+    [query.dbKinds],
+  );
+  const versionSet = useMemo(
+    () => new Set<string>(query.stroppyVersions ?? []),
+    [query.stroppyVersions],
+  );
+  const protocolSet = useMemo(
+    () => new Set<string>(query.protocols ?? []),
+    [query.protocols],
+  );
+  const triggerSet = useMemo(
+    () => new Set<string>(query.triggers ?? []),
+    [query.triggers],
+  );
+  const authorSet = useMemo(
+    () => new Set<string>(query.authorIds ?? []),
+    [query.authorIds],
+  );
+
+  const hasTableFilters =
+    !!query.search ||
+    (query.statuses?.length ?? 0) > 0 ||
+    (query.dbKinds?.length ?? 0) > 0 ||
+    (query.stroppyVersions?.length ?? 0) > 0 ||
+    (query.protocols?.length ?? 0) > 0 ||
+    (query.triggers?.length ?? 0) > 0 ||
+    (query.authorIds?.length ?? 0) > 0 ||
+    query.progressMin !== undefined ||
+    query.progressMax !== undefined ||
+    query.durationMinSec !== undefined ||
+    query.durationMaxSec !== undefined ||
+    !!query.startedAfter ||
+    !!query.startedBefore ||
+    !!query.finishedAfter ||
+    !!query.finishedBefore;
+  const hasGlobalFilters =
+    query.standalone !== undefined ||
+    !!query.favoritesOnly ||
+    !!query.includeDeleted;
+  const hasActiveFilters = hasTableFilters || hasGlobalFilters;
+
+  function clearTableFilters() {
+    patchParams({
+      q: null,
+      status: null,
+      db: null,
+      sv: null,
+      proto: null,
+      trigger: null,
+      author: null,
+      pmin: null,
+      pmax: null,
+      dmin: null,
+      dmax: null,
+      sa: null,
+      sb: null,
+      fa: null,
+      fb: null,
     });
   }
 
-  async function fetchRuns() {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await listRuns();
-      setRuns(result ?? []);
-      // Clear cancellingIds for runs that reached cancelled state.
-      setCancellingIds((prev) => {
-        if (prev.size === 0) return prev;
-        const next = new Set(prev);
-        for (const r of result ?? []) {
-          if (next.has(r.id) && r.cancelled) next.delete(r.id);
-        }
-        return next.size === prev.size ? prev : next;
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load runs");
-    } finally {
-      setLoading(false);
-    }
-  }
+  const pageIndex = tokenStackRef.current.length; // 0-based page number
+  const canPrev = pageIndex > 0;
+  const canNext = !!nextPageToken;
 
-  async function handleDelete(runID: string) {
-    if (!(await confirm({ title: `Delete run "${runID}"?`, description: "This will also remove its Docker resources. Cannot be undone.", danger: true }))) return;
-    try {
-      await deleteRun(runID);
-      await fetchRuns();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete run");
+  const visibleRuns = useMemo(() => {
+    if (!query.favoritesFirst) return runs;
+    const favoriteRuns: RunVM[] = [];
+    const otherRuns: RunVM[] = [];
+    for (const run of runs) {
+      if (run.favorite) favoriteRuns.push(run);
+      else otherRuns.push(run);
     }
-  }
+    return [...favoriteRuns, ...otherRuns];
+  }, [runs, query.favoritesFirst]);
 
-  async function handleCancel(runID: string) {
-    setCancellingIds((prev) => new Set(prev).add(runID));
-    try {
-      await cancelRun(runID);
-      // Don't fetchRuns immediately — let auto-refresh pick up the transition.
-      // This ensures "Cancelling" is visible before it becomes "Cancelled".
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to cancel run");
-      setCancellingIds((prev) => { const n = new Set(prev); n.delete(runID); return n; });
-    }
-  }
+  const selectedRunIdList = useMemo(
+    () => [...selectedRunIds],
+    [selectedRunIds],
+  );
+  const selectedCount = selectedRunIds.size;
+  const compareTo = useMemo(
+    () => ({
+      pathname: "/compare",
+      search: `?runs=${selectedRunIdList.map(encodeURIComponent).join(",")}`,
+    }),
+    [selectedRunIdList],
+  );
+  const visibleRunIds = useMemo(
+    () => visibleRuns.map((run) => run.id),
+    [visibleRuns],
+  );
+  const selectedVisibleCount = useMemo(
+    () => visibleRunIds.filter((id) => selectedRunIds.has(id)).length,
+    [visibleRunIds, selectedRunIds],
+  );
+  const allVisibleSelected =
+    visibleRunIds.length > 0 && selectedVisibleCount === visibleRunIds.length;
+  const someVisibleSelected =
+    selectedVisibleCount > 0 && selectedVisibleCount < visibleRunIds.length;
 
-  // Rerun: fetch the run snapshot to extract its RunConfig, drop it into
-  // sessionStorage under the same key NewRun reads on mount, then navigate
-  // to /runs/new. Same shape as the per-run-detail Rerun button.
-  async function handleRerun(runID: string) {
-    try {
-      const snap = await getRunStatus(runID);
-      const rc = snap?.state?.run_config;
-      let cfg: RunConfig | null = null;
-      if (typeof rc === "string") {
-        cfg = JSON.parse(rc) as RunConfig;
-      } else if (rc && typeof rc === "object") {
-        cfg = rc as unknown as RunConfig;
-      }
-      if (!cfg) {
-        setError(`Run ${runID} has no saved config to rerun`);
-        return;
-      }
-      sessionStorage.setItem("rerun_config", JSON.stringify(cfg));
-      navigate(`/runs/new?kind=${cfg.database?.kind || "postgres"}`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load run for rerun");
-    }
-  }
-
-  // Initial fetch + auto-refresh interval
-  useEffect(() => {
-    fetchRuns();
+  const toggleRunSelection = useCallback((runId: string, selected: boolean) => {
+    setSelectedRunIds((current) => {
+      const next = new Set(current);
+      if (selected) next.add(runId);
+      else next.delete(runId);
+      return next;
+    });
   }, []);
 
-  useEffect(() => {
-    if (refreshRef.current) clearInterval(refreshRef.current);
-    if (refreshInterval > 0) {
-      refreshRef.current = setInterval(() => {
-        fetchRuns();
-      }, refreshInterval * 1000);
-    }
-    return () => {
-      if (refreshRef.current) clearInterval(refreshRef.current);
-    };
-  }, [refreshInterval]);
+  const toggleVisibleSelection = useCallback(
+    (selected: boolean) => {
+      setSelectedRunIds((current) => {
+        const next = new Set(current);
+        for (const runId of visibleRunIds) {
+          if (selected) next.add(runId);
+          else next.delete(runId);
+        }
+        return next;
+      });
+    },
+    [visibleRunIds],
+  );
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const columns = useMemo(() => makeColumns(handleDelete, handleCancel, handleRerun, cancellingIds, presetNames), [cancellingIds, presetNames]);
+  const toggleFavorite = useCallback(
+    async (run: RunVM) => {
+      if (!slug) return;
+      const nextFavorite = !run.favorite;
+      try {
+        await getRunsProvider().setFavorite(slug, run.id, nextFavorite);
+        setRuns((current) => {
+          const next = current.map((item) =>
+            item.id === run.id ? { ...item, favorite: nextFavorite } : item,
+          );
+          if (query.favoritesOnly && !nextFavorite) {
+            return next.filter((item) => item.id !== run.id);
+          }
+          return next;
+        });
+        if (query.favoritesOnly && !nextFavorite) {
+          await fetchRuns(true);
+        }
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Failed to update favorite",
+        );
+      }
+    },
+    [slug, query.favoritesOnly, fetchRuns],
+  );
 
-  // Apply the URL-driven suite/batch filters before handing rows to the
-  // table — so per-column filters (status, db, provider) compose with the
-  // suite scope rather than fighting it.
-  const scopedRuns = useMemo(() => {
-    let out = runs;
-    if (suiteFilter) out = out.filter((r) => r.suite_id === suiteFilter);
-    if (batchRunIds) out = out.filter((r) => batchRunIds!.has(r.id));
-    return out;
-  }, [runs, suiteFilter, batchRunIds]);
+  // --- columns (each cell renders a real TestRunRecord field). ---------------
+  //
+  // FOUR grouped-header blocks read left → right; every leaf lives under one
+  // parent header (Controls | Run | Target | Execution). Each block carries the
+  // same visual treatment: a spanning parent label in row 1 of the sticky
+  // header, a subtle background band behind its body cells, and left/right
+  // dividers bracketing the block so they read as distinct contiguous groups.
+  //
+  //   * Controls group
+  //       - Select    = local compare selection checkbox
+  //   * Run group
+  //       - Name      = name (link) + id subtext  (text filter, name sort)
+  //       - Author    = identicon avatar + author id  (author sort)
+  //   * Target group
+  //       - Database  = coloured dot + db_kind + topology/node-count subtext
+  //                     (db multi-select filter, db_kind sort)
+  //       - Workload  = workload_name (plain foreground, NO per-workload hue) +
+  //                     protocol + stroppy_version subtext (protocol+version
+  //                     multi-select filters, workload sort)
+  //   * Execution group
+  //       - Trigger   = NORMAL labeled column — small icon + the trigger name in
+  //                     PascalCase ("Manual"/"Cron"/"Api", unknown → "—"); the
+  //                     trigger multi-select filter lives in its header popover.
+  //       - Status    = lifecycle badge (status multi-select filter)
+  //       - Progress  = status-tinted bar + percent (progress sort)
+  //       - Time      = started (relative) + finished/duration subtext; started
+  //                     AND finished date-range filters both hang off this
+  //                     sub-header's popover.
+  //       - Actions   = row action menu + per-caller favorite toggle; header
+  //                     star toggles favorites-first
+  // Each leaf keeps its OWN sort + header filter.
+
+  const columns = useMemo<ColumnDef<RunVM>[]>(
+    () => [
+      // --- utility column: Compare selection. -------------------------------
+      {
+        id: "controls",
+        header: () => <span className="sr-only">Run controls</span>,
+        columns: [
+          {
+            id: "select",
+            enableSorting: false,
+            meta: {
+              group: "controls",
+              className: "px-1 text-center",
+              disableRowNavigation: true,
+            },
+            header: () => (
+              <SelectCheckbox
+                checked={allVisibleSelected}
+                indeterminate={someVisibleSelected}
+                onCheckedChange={toggleVisibleSelection}
+                title="Select visible runs"
+                ariaLabel="Select visible runs"
+              />
+            ),
+            cell: ({ row }) => (
+              <SelectCheckbox
+                checked={selectedRunIds.has(row.original.id)}
+                onCheckedChange={(selected) =>
+                  toggleRunSelection(row.original.id, selected)
+                }
+                title="Select run for compare"
+                ariaLabel="Select run for compare"
+              />
+            ),
+          },
+        ],
+      },
+      // --- "Run" group: Name · Author. ---------------------------------------
+      {
+        id: "run",
+        meta: { groupEdge: "right" },
+        header: () => (
+          <span className="text-[10px] font-mono uppercase tracking-[0.15em] text-zinc-600">
+            Run
+          </span>
+        ),
+        columns: [
+      {
+        accessorKey: "name",
+        meta: { group: "run" },
+        header: () => (
+          <ColumnHeader
+            label="Name"
+            field="name"
+            sort={query.sort}
+            desc={query.desc}
+            onSort={toggleSort}
+            active={!!query.search}
+            columnId="name"
+            openColumnId={openFilterColumnId}
+            onOpenChange={handleFilterOpenChange}
+          >
+            <TextFilter
+              value={query.search ?? ""}
+              onChange={(v) => patchParams({ q: v || null })}
+              placeholder="Search name / id..."
+            />
+          </ColumnHeader>
+        ),
+        cell: ({ row }) => {
+          const r = row.original;
+          return (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/runs/${r.id}`);
+              }}
+              className="flex flex-col gap-0.5 min-w-0 text-left group/name cursor-pointer"
+            >
+              <span
+                className="block max-w-full text-xs text-primary group-hover/name:underline underline-offset-2 truncate"
+                title={r.name || r.id}
+              >
+                {r.name || r.id}
+              </span>
+              <span
+                className="font-mono text-[10px] text-zinc-600"
+                title={r.id}
+              >
+                {r.id}
+              </span>
+            </button>
+          );
+        },
+      },
+      {
+        // Suite membership: the run's suite_run_id (record.suite_run_id) when it
+        // belongs to a suite, or a muted dash for standalone runs. No sort/filter
+        // of its own (suite scoping is governed by the Standalone checkbox).
+        id: "suite",
+        accessorKey: "suiteRunId",
+        enableSorting: false,
+        meta: {
+          group: "run",
+          className: "text-center",
+          disableRowNavigation: true,
+        },
+        header: () => (
+          <div className="flex justify-center">
+            <ColumnHeader
+              label="Suite"
+              sort={query.sort}
+              desc={query.desc}
+              onSort={toggleSort}
+            />
+          </div>
+        ),
+        cell: ({ row }) => {
+          const suite = row.original.suiteRunId;
+          if (!suite)
+            return <span className="font-mono text-xs text-zinc-600">—</span>;
+          return (
+            <Link
+              to={`/suites/${suite}`}
+              onClick={(e) => e.stopPropagation()}
+              className="mx-auto block max-w-full truncate font-mono text-xs text-primary underline-offset-2 hover:underline"
+              title={suite}
+            >
+              {suite}
+            </Link>
+          );
+        },
+      },
+      {
+        accessorKey: "authorId",
+        // Last member of the "Run" group → right divider + group band.
+        meta: { group: "run", groupEdge: "right" },
+        header: () => (
+          <ColumnHeader
+            label="Author"
+            sort={query.sort}
+            desc={query.desc}
+            onSort={toggleSort}
+            active={authorSet.size > 0}
+            columnId="author"
+            openColumnId={openFilterColumnId}
+            onOpenChange={handleFilterOpenChange}
+          >
+            {facets.authorIds.length > 0 ? (
+              <ChecklistFilter
+                options={facets.authorIds.map((a) => ({ value: a, label: a }))}
+                selected={authorSet}
+                onChange={(next) => setCsv("author", next)}
+              />
+            ) : (
+              // No author catalog yet (real provider): fall back to free-text
+              // entry of a single author id so the facet is still reachable.
+              <TextFilter
+                value={query.authorIds?.[0] ?? ""}
+                onChange={(v) => patchParams({ author: v || null })}
+                placeholder="Author id..."
+              />
+            )}
+          </ColumnHeader>
+        ),
+        cell: ({ row }) => {
+          const author = row.original.authorId;
+          if (!author)
+            return <span className="font-mono text-xs text-zinc-600">—</span>;
+          return (
+            <div className="flex items-center gap-2 min-w-0">
+              <Avatar name={author} size={22} className="shrink-0" />
+              <span
+                className="font-mono text-xs text-zinc-400 truncate"
+                title={author}
+              >
+                {author}
+              </span>
+            </div>
+          );
+        },
+      },
+        ],
+      },
+      // --- "Target" group: Database · Workload. ------------------------------
+      {
+        id: "target",
+        meta: { groupEdge: "both" },
+        header: () => (
+          <span className="text-[10px] font-mono uppercase tracking-[0.15em] text-zinc-600">
+            Target
+          </span>
+        ),
+        columns: [
+      {
+        accessorKey: "dbKind",
+        // First member of the "Target" group → left divider + group band.
+        meta: { group: "target", groupEdge: "left", className: "pl-4" },
+        header: () => (
+          <ColumnHeader
+            label="Database"
+            field="db_kind"
+            sort={query.sort}
+            desc={query.desc}
+            onSort={toggleSort}
+            active={dbSet.size > 0}
+            columnId="dbKind"
+            openColumnId={openFilterColumnId}
+            onOpenChange={handleFilterOpenChange}
+          >
+            <ChecklistFilter
+              options={DB_KINDS.map((k) => ({
+                value: k,
+                label: DB_LABEL[k],
+                color: DB_COLOR[k],
+              }))}
+              selected={dbSet}
+              onChange={(next) => setCsv("db", next)}
+            />
+          </ColumnHeader>
+        ),
+        cell: ({ row }) => {
+          const r = row.original;
+          if (!r.dbKind)
+            return <span className="font-mono text-xs text-zinc-600">—</span>;
+          const color = DB_COLOR[r.dbKind];
+          const nodes = r.nodeCount
+            ? `${r.nodeCount} node${r.nodeCount > 1 ? "s" : ""}`
+            : null;
+          return (
+            <div className="flex items-center gap-2">
+              <span
+                className="h-2 w-2 rounded-full shrink-0"
+                style={{ backgroundColor: color }}
+              />
+              <div className="flex flex-col gap-0.5 min-w-0">
+                <span
+                  className="font-mono text-xs"
+                  style={{ color }}
+                >
+                  {DB_LABEL[r.dbKind]}
+                </span>
+                {(r.topologyLabel || nodes) && (
+                  <span className="font-mono text-[10px] text-zinc-600 truncate">
+                    {r.topologyLabel || nodes}
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "workload",
+        // Last member of the "Target" group → right divider + group band.
+        meta: { group: "target", groupEdge: "right" },
+        header: () => (
+          <ColumnHeader
+            label="Workload"
+            field="workload"
+            sort={query.sort}
+            desc={query.desc}
+            onSort={toggleSort}
+            active={versionSet.size > 0 || protocolSet.size > 0}
+            columnId="workload"
+            openColumnId={openFilterColumnId}
+            onOpenChange={handleFilterOpenChange}
+          >
+            <div>
+              <div className="px-3 pt-2 pb-1 text-[9px] font-mono uppercase tracking-wider text-zinc-500">
+                Protocol
+              </div>
+              <ChecklistFilter
+                options={PROTOCOLS.map((p) => ({
+                  value: p,
+                  label: PROTOCOL_LABEL[p],
+                }))}
+                selected={protocolSet}
+                onChange={(next) => setCsv("proto", next)}
+              />
+              <div className="px-3 pt-2 pb-1 text-[9px] font-mono uppercase tracking-wider text-zinc-500 border-t border-zinc-800">
+                Stroppy version
+              </div>
+              <ChecklistFilter
+                options={STROPPY_VERSIONS.map((v) => ({ value: v, label: v }))}
+                selected={versionSet}
+                onChange={(next) => setCsv("sv", next)}
+              />
+            </div>
+          </ColumnHeader>
+        ),
+        cell: ({ row }) => {
+          const r = row.original;
+          if (!r.workload)
+            return <span className="font-mono text-xs text-zinc-600">—</span>;
+          const proto = r.protocol ? PROTOCOL_LABEL[r.protocol] : null;
+          const sub = [proto, r.stroppyVersion ? `stroppy ${r.stroppyVersion}` : null]
+            .filter(Boolean)
+            .join(" · ");
+          // Workload renders as plain text in the normal foreground colour — no
+          // per-workload hue (database colours stay; workloads do not).
+          return (
+            <div className="flex flex-col gap-0.5">
+              <span className="font-mono text-xs text-zinc-300">
+                {r.workload}
+              </span>
+              {sub && (
+                <span className="font-mono text-[10px] text-zinc-600">{sub}</span>
+              )}
+            </div>
+          );
+        },
+      },
+        ],
+      },
+      // --- "Execution" group: Trigger · Status+Progress · Time read as ONE
+      // contiguous block, anchored at the right. A spanning parent header sits
+      // over the three sub-columns and a subtle background band + left/right
+      // group dividers tie them together. Status & Progress are MERGED into one
+      // animated cell. Each sub-column keeps its OWN sort + header filter
+      // (trigger multi-select on Trigger, status multi-select + status/progress
+      // sort on the merged Status column, started/finished windows on Time).
+      {
+        id: "execution",
+        meta: { groupEdge: "both" },
+        // Parent header label, spanning the three leaf columns below it.
+        header: () => (
+          <span className="text-[10px] font-mono uppercase tracking-[0.15em] text-zinc-600">
+            Execution
+          </span>
+        ),
+        columns: [
+          {
+            id: "trigger",
+            // First member of the group → left divider + group band. A NORMAL
+            // labeled column (sized like the others): a small icon followed by
+            // the trigger name in PascalCase. The trigger multi-select filter
+            // lives in this header's popover.
+            meta: { group: "execution", groupEdge: "left", className: "pl-4" },
+            header: () => (
+              <ColumnHeader
+                label="Trigger"
+                field="trigger"
+                sort={query.sort}
+                desc={query.desc}
+                onSort={toggleSort}
+                active={triggerSet.size > 0}
+                columnId="trigger"
+                openColumnId={openFilterColumnId}
+                onOpenChange={handleFilterOpenChange}
+              >
+                <ChecklistFilter
+                  options={TRIGGERS.map((t) => ({
+                    value: t,
+                    label: TRIGGER_LABEL[t],
+                  }))}
+                  selected={triggerSet}
+                  onChange={(next) => setCsv("trigger", next)}
+                />
+              </ColumnHeader>
+            ),
+            cell: ({ row }) => {
+              const t = row.original.trigger;
+              if (!t)
+                return (
+                  <div className="flex items-center gap-1.5">
+                    <Circle
+                      className="h-4 w-4 text-zinc-600 shrink-0"
+                      aria-label="Unknown trigger"
+                    >
+                      <title>Unknown trigger</title>
+                    </Circle>
+                    <span className="text-[11px] font-mono text-zinc-600">
+                      —
+                    </span>
+                  </div>
+                );
+              const Icon = TRIGGER_ICON[t];
+              return (
+                <div className="flex items-center gap-1.5">
+                  <Icon
+                    className="h-4 w-4 text-zinc-500 shrink-0"
+                    aria-label={`${TRIGGER_LABEL[t]} trigger`}
+                  >
+                    <title>{`${TRIGGER_LABEL[t]} trigger`}</title>
+                  </Icon>
+                  <span className="text-[11px] font-mono text-zinc-400">
+                    {TRIGGER_LABEL[t]}
+                  </span>
+                </div>
+              );
+            },
+          },
+          {
+            // MERGED Status + Progress: the lifecycle badge on top, a
+            // status-tinted progress bar with % beneath it — one cell, one
+            // header. The header keeps the status multi-select filter AND sorts
+            // on status. The bar width animates (CSS width transition) so it
+            // glides on each refresh/update rather than jumping.
+            accessorKey: "status",
+            id: "status",
+            meta: { group: "execution" },
+            header: () => (
+              <ColumnHeader
+                label="Status"
+                field="status"
+                sort={query.sort}
+                desc={query.desc}
+                onSort={toggleSort}
+                active={
+                  statusSet.size > 0 ||
+                  query.progressMin !== undefined ||
+                  query.progressMax !== undefined
+                }
+                columnId="status"
+                openColumnId={openFilterColumnId}
+                onOpenChange={handleFilterOpenChange}
+              >
+                <div>
+                  <div className="px-3 pt-2 pb-1 text-[9px] font-mono uppercase tracking-wider text-zinc-500">
+                    Status
+                  </div>
+                  <ChecklistFilter
+                    options={RUN_STATUSES.map((s) => ({
+                      value: s,
+                      label: STATUS_LABEL[s],
+                    }))}
+                    selected={statusSet}
+                    onChange={(next) => setCsv("status", next)}
+                  />
+                  <div className="px-3 pt-2 pb-1 text-[9px] font-mono uppercase tracking-wider text-zinc-500 border-t border-zinc-800">
+                    Progress %
+                  </div>
+                  <NumberRangeFilter
+                    min={query.progressMin}
+                    max={query.progressMax}
+                    lo={0}
+                    hi={100}
+                    onChange={(lo, hi) =>
+                      patchParams({
+                        pmin: lo === null ? null : String(lo),
+                        pmax: hi === null ? null : String(hi),
+                      })
+                    }
+                  />
+                </div>
+              </ColumnHeader>
+            ),
+            cell: ({ row }) => {
+              const r = row.original;
+              const s = r.status;
+              const pct = Math.max(0, Math.min(100, r.progressPct));
+              // One status hue drives the dot, the label text and the bar fill,
+              // so the whole cell reads as a single status-tinted element.
+              const tint = STATUS_TINT[s];
+              const isNonTerminalStatus =
+                s === "pending" || s === "running" || s === "cancelling";
+              return (
+                // ONE cohesive row: [● Label] · [▓▓░ track] · [right-aligned %].
+                // The dot, label, track fill and % all share the same baseline
+                // and the same status hue; nothing is a chunky stacked badge.
+                <div className="flex items-center gap-2 min-w-0">
+                  {/* Status: a small filled dot + a compact label in the status
+                      hue — tasteful, inline, not a separate boxed badge. */}
+                  <span className="flex items-center gap-1.5 shrink-0 w-[4.75rem]">
+                    <span
+                      className={cn(
+                        "h-1.5 w-1.5 rounded-full shrink-0",
+                        isNonTerminalStatus && "animate-pulse",
+                      )}
+                      style={{ backgroundColor: tint }}
+                    />
+                    <span
+                      className="text-[11px] font-mono leading-none truncate"
+                      style={{ color: tint }}
+                      title={STATUS_LABEL[s]}
+                    >
+                      {STATUS_LABEL[s]}
+                    </span>
+                  </span>
+                  {/* Slim status-tinted track. The faint inset groove uses the
+                      same hue at low opacity so the unfilled remainder still
+                      belongs to the status; the fill width animates. */}
+                  <div
+                    className="flex-1 min-w-0 h-1 overflow-hidden rounded-full"
+                    style={{ backgroundColor: `${tint}1f` }}
+                  >
+                    <div
+                      className="h-full rounded-full transition-[width] duration-500 ease-out"
+                      style={{ width: `${pct}%`, backgroundColor: tint }}
+                    />
+                  </div>
+                  {/* % aligned right, sharing the row baseline. */}
+                  <span className="text-[10px] font-mono text-zinc-500 tabular-nums w-8 text-right shrink-0">
+                    {pct}%
+                  </span>
+                </div>
+              );
+            },
+          },
+          {
+            // Time column inside the Execution group: started (relative, primary,
+            // sorts on started_at) with finished + duration as subtext. Both the
+            // started AND finished date-range filters hang off this single header
+            // popover, so neither wired window filter is lost.
+            // Last column of the group → group banding + right divider.
+            id: "time",
+            // Relative start + finished/duration subtext — content-rich, sized
+            // by table proportions and content rather than fixed pixels.
+            meta: { group: "execution" },
+            header: () => (
+              <ColumnHeader
+                label="Time"
+                field="started_at"
+                sort={query.sort}
+                desc={query.desc}
+                onSort={toggleSort}
+                active={
+                  !!query.startedAfter ||
+                  !!query.startedBefore ||
+                  !!query.finishedAfter ||
+                  !!query.finishedBefore ||
+                  query.durationMinSec !== undefined ||
+                  query.durationMaxSec !== undefined
+                }
+                columnId="time"
+                openColumnId={openFilterColumnId}
+                onOpenChange={handleFilterOpenChange}
+              >
+                <div>
+                  <div className="px-3 pt-2 pb-1 text-[9px] font-mono uppercase tracking-wider text-zinc-500">
+                    Started
+                  </div>
+                  <DateRangeFilter
+                    after={query.startedAfter}
+                    before={query.startedBefore}
+                    onChange={(after, before) =>
+                      patchParams({ sa: after, sb: before })
+                    }
+                  />
+                  <div className="px-3 pt-2 pb-1 text-[9px] font-mono uppercase tracking-wider text-zinc-500 border-t border-zinc-800">
+                    Finished
+                  </div>
+                  <DateRangeFilter
+                    after={query.finishedAfter}
+                    before={query.finishedBefore}
+                    onChange={(after, before) =>
+                      patchParams({ fa: after, fb: before })
+                    }
+                  />
+                  <div className="px-3 pt-2 pb-1 text-[9px] font-mono uppercase tracking-wider text-zinc-500 border-t border-zinc-800">
+                    Duration (seconds)
+                  </div>
+                  <NumberRangeFilter
+                    min={query.durationMinSec}
+                    max={query.durationMaxSec}
+                    lo={0}
+                    hi={Number.MAX_SAFE_INTEGER}
+                    unit="s"
+                    onChange={(lo, hi) =>
+                      patchParams({
+                        dmin: lo === null ? null : String(lo),
+                        dmax: hi === null ? null : String(hi),
+                      })
+                    }
+                  />
+                </div>
+              </ColumnHeader>
+            ),
+            cell: ({ row }) => {
+              const r = row.original;
+              const sub = [
+                r.finishedAt ? `→ ${relTime(r.finishedAt)}` : null,
+                r.durationSec !== undefined ? formatDuration(r.durationSec) : null,
+              ]
+                .filter(Boolean)
+                .join(" · ");
+              return (
+                <div className="flex flex-col gap-0.5">
+                  <span
+                    className="text-xs text-zinc-400 font-mono"
+                    title={r.startedAt ?? ""}
+                  >
+                    {relTime(r.startedAt)}
+                  </span>
+                  {sub && (
+                    <span
+                      className="text-[10px] text-zinc-600 font-mono tabular-nums"
+                      title={r.finishedAt ?? ""}
+                    >
+                      {sub}
+                    </span>
+                  )}
+                </div>
+              );
+            },
+          },
+          {
+            // Actions: one trailing cell containing row actions and the favorite
+            // toggle, with favorite visually to the right of the kebab. The
+            // header star toggles local favorites-first ordering.
+            id: "actions",
+            enableSorting: false,
+            meta: {
+              group: "execution",
+              groupEdge: "right",
+              className: "px-1",
+              disableRowNavigation: true,
+            },
+            header: () => (
+              <div className="flex h-full items-center justify-center gap-2">
+                <span className="whitespace-nowrap leading-none">Actions</span>
+                <button
+                  type="button"
+                  onClick={toggleFavoritesFirst}
+                  className={cn(
+                    HEADER_BTN,
+                    query.favoritesFirst
+                      ? "bg-warning/10 text-warning"
+                      : "text-zinc-600 hover:bg-zinc-800/60 hover:text-warning",
+                  )}
+                  title={
+                    query.favoritesFirst
+                      ? "Favorites are shown first"
+                      : "Show favorites first"
+                  }
+                  aria-label="Show favorites first"
+                  aria-pressed={query.favoritesFirst}
+                >
+                  <Star
+                    className={HEADER_ICON}
+                    fill={query.favoritesFirst ? "currentColor" : "none"}
+                  />
+                </button>
+              </div>
+            ),
+            cell: ({ row }) => {
+              const run = row.original;
+              return (
+                <div className="flex h-full items-center justify-center gap-2">
+                  <ActionsMenu
+                    run={run}
+                    open={openActionRunId === run.id}
+                    onOpenChange={(o) => setOpenActionRunId(o ? run.id : null)}
+                    onAction={runAction}
+                  />
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void toggleFavorite(run);
+                    }}
+                    className={cn(
+                      "flex h-6 w-6 items-center justify-center rounded transition-colors cursor-pointer",
+                      run.favorite
+                        ? "text-warning"
+                        : "text-zinc-600 hover:bg-zinc-800/60 hover:text-warning",
+                    )}
+                    title={
+                      run.favorite
+                        ? "Remove from favorites"
+                        : "Add to favorites"
+                    }
+                    aria-label={
+                      run.favorite
+                        ? "Remove from favorites"
+                        : "Add to favorites"
+                    }
+                    aria-pressed={run.favorite}
+                  >
+                    <Star
+                      className="h-3.5 w-3.5"
+                      fill={run.favorite ? "currentColor" : "none"}
+                    />
+                  </button>
+                </div>
+              );
+            },
+          },
+        ],
+      },
+    ],
+    // Re-build columns when sort/filter state changes so headers reflect it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      query.sort,
+      query.desc,
+      query.search,
+      query.startedAfter,
+      query.startedBefore,
+      query.finishedAfter,
+      query.finishedBefore,
+      query.progressMin,
+      query.progressMax,
+      query.durationMinSec,
+      query.durationMaxSec,
+      query.authorIds,
+      statusSet,
+      dbSet,
+      versionSet,
+      protocolSet,
+      triggerSet,
+      authorSet,
+      facets,
+      query.favoritesFirst,
+      toggleFavoritesFirst,
+      allVisibleSelected,
+      someVisibleSelected,
+      selectedRunIds,
+      toggleVisibleSelection,
+      toggleRunSelection,
+      toggleFavorite,
+      openFilterColumnId,
+      openActionRunId,
+      runAction,
+    ],
+  );
 
   const table = useReactTable({
-    data: scopedRuns,
+    data: visibleRuns,
     columns,
-    state: { sorting, columnFilters, rowSelection },
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     getRowId: (row) => row.id,
-    initialState: {
-      pagination: { pageSize: 25 },
-    },
+    manualSorting: true,
+    manualFiltering: true,
+    manualPagination: true,
+    // Tri-state sort: allow the sort to be removed entirely (neutral state) —
+    // the page mirrors this in the URL (clears ?sort=&dir=).
+    enableSortingRemoval: true,
   });
 
-  // Selected runs for comparison
-  const selectedRunIds = Object.keys(rowSelection).filter((k) => rowSelection[k]);
-  const canCompare = selectedRunIds.length === 2;
-
-  function handleCompare() {
-    if (!canCompare) return;
-    const [a, b] = selectedRunIds;
-    navigate(`/compare?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`);
-  }
-
-  const hasActiveFilters = activeStatus || activeDbKind || activeProvider;
-
   return (
-    <div className="p-5 flex flex-col gap-4 min-h-full">
-      {/* Active suite filter chip — clicking the X clears both query
-          params at once so a stuck batch filter doesn't outlive its suite. */}
-      {suiteFilter && (
-        <div className="flex items-center gap-2 px-2.5 py-1.5 border border-primary/30 bg-primary/[0.04] text-[11px] font-mono">
-          <Boxes className="h-3.5 w-3.5 text-primary" />
-          <span className="text-zinc-400">Suite:</span>
-          <Link to={`/suites/${suiteFilter}`} className="text-primary hover:underline">
-            {suiteName || suiteFilter.slice(0, 8)}
-          </Link>
-          {batchFilter && (
-            <>
-              <span className="text-zinc-600">·</span>
-              <span className="text-zinc-400">batch</span>
-              <span className="text-primary">{batchFilter.slice(0, 8)}</span>
-            </>
-          )}
-          <button
-            onClick={() => setSearchParams(new URLSearchParams())}
-            className="ml-2 text-zinc-500 hover:text-destructive"
-            title="Clear suite filter"
-          >
-            <X className="h-3 w-3" />
-          </button>
-        </div>
-      )}
-
+    <div className="p-5 flex flex-col gap-4 h-full min-h-0">
       {/* Header bar */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <h1 className="text-base font-semibold font-mono tracking-tight">Test Runs</h1>
-          <span className="text-[11px] text-zinc-600 font-mono tabular-nums">
-            {table.getFilteredRowModel().rows.length} of {runs.length}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Compare button */}
-          {selectedRunIds.length > 0 && (
-            <div className="flex items-center gap-2 mr-2">
-              <span className="text-[11px] text-zinc-500 font-mono">
-                {selectedRunIds.length} selected
-              </span>
-              {canCompare && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleCompare}
-                  className="border-primary/40 text-primary hover:bg-primary/10"
-                >
-                  <GitCompare className="h-3.5 w-3.5" />
-                  Compare
-                </Button>
-              )}
+          <h1 className="text-base font-semibold font-mono tracking-tight">
+            Test Runs
+          </h1>
+          <div className="flex items-center gap-2">
+            <Button
+              asChild
+              size="sm"
+              className="h-6 px-2 text-[11px] font-mono"
+            >
+              <Link to="/runs/new">
+                <Plus className="h-3.5 w-3.5" />
+                New
+              </Link>
+            </Button>
+            {hasTableFilters && (
               <Button
+                type="button"
+                variant="outline"
                 size="sm"
-                variant="ghost"
-                onClick={() => setRowSelection({})}
-                className="h-7 w-7 p-0 text-zinc-500"
+                onClick={clearTableFilters}
+                className="h-6 px-2 text-[11px] font-mono border-zinc-800 bg-transparent text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100"
               >
                 <X className="h-3.5 w-3.5" />
+                Clear filters
               </Button>
-            </div>
+            )}
+            {selectedCount >= 2 && (
+              <>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="h-6 px-2 text-[11px] font-mono border-zinc-800 bg-transparent text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100"
+                >
+                  <Link to={compareTo}>
+                    <GitCompare className="h-3.5 w-3.5" />
+                    Compare
+                  </Link>
+                </Button>
+                <span className="text-[11px] text-zinc-500 font-mono tabular-nums">
+                  {selectedCount} selected
+                </span>
+              </>
+            )}
+          </div>
+          {!loading && (
+            <span className="text-[11px] text-zinc-600 font-mono tabular-nums">
+              {runs.length} shown
+            </span>
           )}
+          {refreshing && (
+            <span className="flex items-center gap-1 text-[10px] text-primary/70 font-mono">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              updating
+            </span>
+          )}
+        </div>
 
-          <button
-            type="button"
-            onClick={() => navigate("/runs/new")}
-            className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-mono border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700 transition-colors cursor-pointer"
-          >
-            <Play className="h-3 w-3" />
-            New Run
-          </button>
+        <div className="flex items-center gap-3">
+          {/* Inline boolean toggles, visible above the table (NOT in a
+              dropdown): Standalone (only non-suite runs), Favorites, Deleted
+              (include soft-deleted). Each wires a single URL param + query
+              field and is applied by the provider. */}
+          <div className="flex items-center gap-3">
+            <ToolbarCheckbox
+              checked={!!query.standalone}
+              onChange={(on) => patchParams({ sa_only: on ? "true" : null })}
+              label="Standalone"
+              title="Show only standalone runs (not part of a suite)"
+            />
+            <ToolbarCheckbox
+              checked={!!query.favoritesOnly}
+              onChange={(on) => patchParams({ fav: on ? "1" : null })}
+              label="Favorites"
+              title="Show only runs you've favorited"
+            />
+            <ToolbarCheckbox
+              checked={!!query.includeDeleted}
+              onChange={(on) => patchParams({ del: on ? "1" : null })}
+              label="Deleted"
+              title="Include soft-deleted runs"
+            />
+          </div>
 
-          {/* Auto-refresh selector */}
-          <div className="flex items-center gap-0.5 border border-zinc-800 px-1 py-0.5">
+          {/* Auto-refresh: the manual "refresh now" button sits to the LEFT of
+              the interval segmented control, sized to match the pills (same
+              h-5 height + proportionate padding) so the cluster reads as one
+              balanced row: [⟳]  [Off 5s 15s 30s 1m]. */}
+          <div className="flex items-center gap-1.5">
             <button
               type="button"
-              onClick={fetchRuns}
-              disabled={loading}
-              className="p-1 text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer disabled:opacity-50"
+              onClick={() => void fetchRuns(true)}
+              disabled={loading || refreshing}
+              className="flex h-5 w-6 items-center justify-center text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer disabled:opacity-50 border border-zinc-800 hover:border-zinc-700"
               title="Refresh now"
             >
-              <RefreshCw className={`h-3.5 w-3.5 ${loading || refreshInterval > 0 ? "animate-spin" : ""}`} />
+              <RefreshCw
+                className={cn(
+                  "h-3 w-3",
+                  (loading || refreshing) && "animate-spin",
+                )}
+              />
             </button>
-            {REFRESH_OPTIONS.map((opt) => (
-              <button
-                type="button"
-                key={opt.value}
-                onClick={() => setRefreshInterval(opt.value)}
-                className={`px-1.5 py-0.5 text-[10px] font-mono transition-colors cursor-pointer ${
-                  refreshInterval === opt.value
-                    ? "text-primary bg-primary/10"
-                    : "text-zinc-600 hover:text-zinc-400"
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
+            <div className="flex gap-0.5">
+              {REFRESH_OPTIONS.map((opt) => (
+                <button
+                  key={opt.ms}
+                  type="button"
+                  onClick={() => setRefreshMs(opt.ms)}
+                  className={cn(
+                    "flex h-5 items-center px-1.5 text-[10px] font-mono border transition-colors cursor-pointer",
+                    query.refreshMs === opt.ms
+                      ? "border-primary/40 text-primary bg-primary/5"
+                      : "border-transparent text-zinc-600 hover:text-zinc-400",
+                  )}
+                  title={
+                    opt.ms === 0
+                      ? "Auto-refresh off"
+                      : `Auto-refresh every ${opt.label}`
+                  }
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -766,204 +2308,189 @@ export function Runs() {
         </div>
       )}
 
-      {/* Filters */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        {/* Status filter */}
-        {filterValues.statuses.length > 1 && (
-          <div className="flex items-center gap-1.5">
-            <span className="text-[10px] text-zinc-600 font-mono uppercase tracking-wider">Status</span>
-            <FilterChip label="all" active={!activeStatus} onClick={() => setFilter("status", undefined)} />
-            {filterValues.statuses.map((s) => (
-              <FilterChip
-                key={s}
-                label={s}
-                active={activeStatus === s}
-                onClick={() => setFilter("status", activeStatus === s ? undefined : s)}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* DB Kind filter */}
-        {filterValues.dbKinds.length > 1 && (
-          <div className="flex items-center gap-1.5">
-            <span className="text-[10px] text-zinc-600 font-mono uppercase tracking-wider">DB</span>
-            <FilterChip label="all" active={!activeDbKind} onClick={() => setFilter("db_kind", undefined)} />
-            {filterValues.dbKinds.map((k) => (
-              <FilterChip
-                key={k}
-                label={k}
-                active={activeDbKind === k}
-                onClick={() => setFilter("db_kind", activeDbKind === k ? undefined : k)}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Provider filter */}
-        {filterValues.providers.length > 1 && (
-          <div className="flex items-center gap-1.5">
-            <span className="text-[10px] text-zinc-600 font-mono uppercase tracking-wider">Provider</span>
-            <FilterChip label="all" active={!activeProvider} onClick={() => setFilter("provider", undefined)} />
-            {filterValues.providers.map((p) => (
-              <FilterChip
-                key={p}
-                label={p}
-                active={activeProvider === p}
-                onClick={() => setFilter("provider", activeProvider === p ? undefined : p)}
-              />
-            ))}
-          </div>
-        )}
-
-        {hasActiveFilters && (
-          <button
-            onClick={() => setColumnFilters([])}
-            className="text-[10px] text-zinc-500 hover:text-zinc-300 font-mono underline underline-offset-2 cursor-pointer"
-          >
-            clear filters
-          </button>
-        )}
-      </div>
-
-      {/* Table */}
+      {/* Table — internal scroll: the body scrolls INSIDE this region with a
+          sticky header; the page itself stays put. This region IS the scroll
+          container, so the <thead>/<th> stick to its top. The table uses
+          proportional colgroup hints with table-auto: content can still
+          negotiate, but free space follows the intended column weights. It uses
+          border-separate + border-spacing-0 (NOT
+          border-collapse) so the sticky <th> keeps its divider — collapsed
+          borders drop off sticky cells when they detach. Cell borders live on
+          the cells themselves; the header carries an opaque bg + bottom border
+          so scrolled rows never show through. */}
       <div className="border border-zinc-800/80 bg-[#080808] flex-1 min-h-0 overflow-auto">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="border-zinc-800/80 hover:bg-transparent">
-                {headerGroup.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    className="text-[11px] font-mono uppercase tracking-wider text-zinc-500 h-9 bg-zinc-900/50"
-                    style={header.column.getSize() !== 150 ? { width: header.column.getSize() } : undefined}
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
-                  </TableHead>
-                ))}
-              </TableRow>
+        <table className="w-full table-auto caption-bottom text-sm border-separate border-spacing-0">
+          <colgroup>
+            {table.getVisibleLeafColumns().map((column) => (
+              <col
+                key={column.id}
+                style={{ width: RUN_TABLE_COLUMN_WIDTHS[column.id] }}
+              />
             ))}
-          </TableHeader>
-          <TableBody>
+          </colgroup>
+          <thead>
+            {/* Two header rows: the top row carries the parent GROUP labels
+                (Controls | Run | Target | Execution), each spanning its leaf columns; the
+                bottom row carries every leaf column's own sortable label + filter
+                popover. Every leaf belongs to one group, so the grid stays
+                rectangular and both rows can stay sticky. Row 1 sticks at top-0
+                (h-6 ≈ 24px), row 2 sticks at top-6 right beneath it. */}
+            {table.getHeaderGroups().map((hg, hgIndex) => {
+              const isGroupRow = hgIndex === 0 && table.getHeaderGroups().length > 1;
+              return (
+                <tr key={hg.id}>
+                  {hg.headers.map((header) => {
+                    // Row 1 = the parent group labels (Run | Target | Execution):
+                    // each spanning <th> brackets its whole block with BOTH side
+                    // dividers + the group band. Row 2 = the leaf headers: each
+                    // carries its own edge divider (left on the first leaf, right
+                    // on the last) + the band, matching the body cells below.
+                    const leafMeta = header.column.columnDef.meta;
+                    const edgeClass = groupEdgeClass(leafMeta?.groupEdge);
+                    return (
+                    <th
+                      key={header.id}
+                      colSpan={header.colSpan}
+                      className={cn(
+                        // Headers are LEFT-aligned, pinned to the left edge of
+                        // their column: the three group labels (row 1) and every
+                        // leaf control row (row 2, rendered by ColumnHeader's own
+                        // left-justified flex) sit flush-left over their members,
+                        // matching the left-aligned body cells beneath them.
+                        "text-left align-middle font-medium px-3",
+                        "font-mono uppercase tracking-wider text-zinc-500",
+                        "sticky z-20 bg-zinc-900",
+                        "border-b border-zinc-800",
+                        isGroupRow
+                          ? "top-0 h-6 text-[10px]"
+                          : "top-6 h-9 text-[11px]",
+                        edgeClass,
+                        leafMeta?.className,
+                      )}
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                    </th>
+                    );
+                  })}
+                </tr>
+              );
+            })}
+          </thead>
+          <tbody>
             {table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
+                <tr
                   key={row.id}
-                  data-state={row.getIsSelected() ? "selected" : undefined}
-                  className="border-zinc-800/50 hover:bg-zinc-900/60 data-[state=selected]:bg-primary/[0.04] cursor-pointer transition-colors"
-                  onClick={(e) => {
-                    // Ignore clicks originating in interactive cells (checkbox,
-                    // action buttons, links). Lets row click be the dominant
-                    // gesture without trapping the existing controls.
-                    const target = e.target as HTMLElement;
-                    if (target.closest("button, a, input, [data-row-stop]")) return;
-                    navigate(`/runs/${row.original.id}`);
-                  }}
+                  className="group/run-row cursor-pointer transition-colors [&>td]:border-b [&>td]:border-zinc-800/50"
+                  onClick={() => navigate(`/runs/${row.original.id}`)}
                 >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="py-2.5">
+                  {row.getVisibleCells().map((cell) => {
+                    const meta = cell.column.columnDef.meta;
+                    return (
+                    <td
+                      key={cell.id}
+                      onClick={
+                        meta?.disableRowNavigation
+                          ? (e) => e.stopPropagation()
+                          : undefined
+                      }
+                      className={cn(
+                        // Uniform body-cell box: left-aligned textual content,
+                        // vertically centered, consistent padding across columns.
+                        "px-3 py-2.5 align-middle text-left",
+                        // Subtle band behind EVERY group's body cells so each of
+                        // the blocks (Controls | Run | Target | Execution) read as one
+                        // unit. Hover lives on the cells themselves because cell
+                        // backgrounds cover the <tr> background.
+                        meta?.group && "bg-zinc-950/40",
+                        "transition-colors group-hover/run-row:bg-zinc-800/60 group-hover/run-row:border-zinc-700/80",
+                        meta?.disableRowNavigation && "cursor-default",
+                        groupEdgeClass(meta?.groupEdge),
+                        meta?.className,
+                      )}
+                    >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
+                    </td>
+                    );
+                  })}
+                </tr>
               ))
             ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-32 text-center">
-                  <span className="text-xs text-zinc-600 font-mono">
-                    {loading
-                      ? "Loading runs..."
-                      : runs.length === 0
-                        ? "No runs yet"
-                        : "No runs matching filters"}
+              <tr>
+                <td
+                  colSpan={table.getVisibleLeafColumns().length}
+                  className="h-32 text-center px-3 align-middle"
+                >
+                  <span className="inline-flex items-center gap-2 text-xs text-zinc-600 font-mono">
+                    {loading ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Loading runs...
+                      </>
+                    ) : hasActiveFilters ? (
+                      "No runs matching filters"
+                    ) : (
+                      "No runs yet"
+                    )}
                   </span>
-                </TableCell>
-              </TableRow>
+                </td>
+              </tr>
             )}
-          </TableBody>
-        </Table>
+          </tbody>
+        </table>
       </div>
 
       {/* Pagination */}
-      {runs.length > 0 && (
-        <div className="flex items-center justify-between mt-auto">
-          {/* Page size selector */}
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] text-zinc-600 font-mono">Rows</span>
-            <div className="flex gap-0.5">
-              {PAGE_SIZES.map((size) => (
-                <button
-                  key={size}
-                  onClick={() => table.setPageSize(size)}
-                  className={`px-2 py-0.5 text-[11px] font-mono border transition-colors cursor-pointer ${
-                    table.getState().pagination.pageSize === size
-                      ? "border-zinc-600 text-zinc-300 bg-zinc-800"
-                      : "border-transparent text-zinc-600 hover:text-zinc-400"
-                  }`}
-                >
-                  {size}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Page navigation */}
-          <div className="flex items-center gap-1">
-            <span className="text-[11px] text-zinc-600 font-mono tabular-nums mr-2">
-              {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}
-              {"\u2013"}
-              {Math.min(
-                (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
-                table.getFilteredRowModel().rows.length
-              )}
-              {" of "}
-              {table.getFilteredRowModel().rows.length}
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0"
-              onClick={() => table.setPageIndex(0)}
-              disabled={!table.getCanPreviousPage()}
-            >
-              <ChevronsLeft className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              <ChevronLeft className="h-3.5 w-3.5" />
-            </Button>
-            <span className="text-[11px] text-zinc-500 font-mono tabular-nums px-2">
-              {table.getState().pagination.pageIndex + 1}/{table.getPageCount()}
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              <ChevronRight className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0"
-              onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-              disabled={!table.getCanNextPage()}
-            >
-              <ChevronsRight className="h-3.5 w-3.5" />
-            </Button>
+      <div className="flex items-center justify-between mt-auto">
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] text-zinc-600 font-mono">Rows</span>
+          <div className="flex gap-0.5">
+            {PAGE_SIZES.map((size) => (
+              <button
+                key={size}
+                type="button"
+                onClick={() => setPageSize(size)}
+                className={`px-2 py-0.5 text-[11px] font-mono border transition-colors cursor-pointer ${
+                  query.pageSize === size
+                    ? "border-zinc-600 text-zinc-300 bg-zinc-800"
+                    : "border-transparent text-zinc-600 hover:text-zinc-400"
+                }`}
+              >
+                {size}
+              </button>
+            ))}
           </div>
         </div>
-      )}
 
+        <div className="flex items-center gap-1">
+          <span className="text-[11px] text-zinc-600 font-mono tabular-nums px-2">
+            Page {pageIndex + 1}
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0"
+            onClick={goPrev}
+            disabled={!canPrev || loading}
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0"
+            onClick={goNext}
+            disabled={!canNext || loading}
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

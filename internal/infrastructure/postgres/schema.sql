@@ -123,6 +123,49 @@ CREATE TABLE tenant_settings_records (
   data       jsonb NOT NULL
 );
 
+-- ===== quota snapshots + reservation ledger (quota.go) =====
+
+CREATE TABLE quota_snapshots (
+  tenant_id          text NOT NULL,
+  provider           integer NOT NULL,
+  resource_type      text NOT NULL,
+  resource_id        text NOT NULL,
+  service            text NOT NULL DEFAULT '',
+  quota_name         text NOT NULL,
+  units              text NOT NULL DEFAULT '',
+  provider_used      numeric NOT NULL DEFAULT 0,
+  quota_limit        numeric NOT NULL DEFAULT 0,
+  provider_available numeric NOT NULL DEFAULT 0,
+  observed_at        timestamptz NOT NULL,
+  stale_after        timestamptz NOT NULL,
+  raw                jsonb NOT NULL DEFAULT '{}'::jsonb,
+  PRIMARY KEY (tenant_id, provider, resource_type, resource_id, quota_name)
+);
+CREATE INDEX idx_quota_snapshots_tenant_provider ON quota_snapshots (tenant_id, provider);
+CREATE INDEX idx_quota_snapshots_stale ON quota_snapshots (stale_after);
+
+CREATE TABLE quota_reservations (
+  id            text PRIMARY KEY,
+  tenant_id     text NOT NULL,
+  run_id        text NOT NULL,
+  node_id       text NOT NULL,
+  provider      integer NOT NULL,
+  resource_type text NOT NULL,
+  resource_id   text NOT NULL,
+  service       text NOT NULL DEFAULT '',
+  quota_name    text NOT NULL,
+  units         text NOT NULL DEFAULT '',
+  amount        numeric NOT NULL,
+  status        integer NOT NULL,
+  workflow_id   text NOT NULL DEFAULT '',
+  expires_at    timestamptz,
+  created_at    timestamptz NOT NULL DEFAULT now(),
+  updated_at    timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (tenant_id, run_id, node_id, provider, resource_type, resource_id, quota_name)
+);
+CREATE INDEX idx_quota_reservations_run ON quota_reservations (tenant_id, run_id);
+CREATE INDEX idx_quota_reservations_scope_status ON quota_reservations (tenant_id, provider, resource_type, resource_id, status);
+
 -- ===== IAM tables (iam.go) =====
 
 CREATE TABLE iam_accounts (

@@ -65,9 +65,11 @@ func NewOverviewReader(c client.Client, store SnapshotRunReader) *OverviewReader
 // only context cancellation is surfaced as an error.
 func (r *OverviewReader) Get(ctx context.Context, runID string) (*api.TestRunOverviewSnapshot, error) {
 	snap := &api.TestRunOverviewSnapshot{}
+	var rec *models.TestRunRecord
 
 	if r.store != nil {
-		rec, err := r.store.RunRecord(ctx, runID)
+		var err error
+		rec, err = r.store.RunRecord(ctx, runID)
 		if err != nil {
 			return nil, err
 		}
@@ -87,12 +89,14 @@ func (r *OverviewReader) Get(ctx context.Context, runID string) (*api.TestRunOve
 		if ctxErr := ctx.Err(); ctxErr != nil {
 			return nil, ctxErr
 		}
-		// The workflow may simply not be running yet: degrade to a PENDING
-		// Overview rather than fail the whole snapshot.
-		snap.Overview = pendingOverview(runID)
+		// The workflow may not be queryable yet or may already be closed. The
+		// persisted record is the durable fallback; only a never-started record
+		// degrades to PENDING.
+		snap.Overview = overviewFromRecord(runID, rec)
 		return snap, nil
 	}
-	snap.Overview = projectOverview(runID, rs)
+	snap.Overview = mergeOverviewWithRecord(projectOverview(runID, rs), rec)
+	overlayRunFromOverview(snap.Run, snap.Overview)
 	return snap, nil
 }
 
@@ -189,6 +193,79 @@ func pendingOverview(runID string) *monitor.Overview {
 		Pipeline: &monitor.PipelineView{},
 		Workers:  []*monitor.WorkerInfo{},
 		Timeline: []*monitor.Event{},
+	}
+}
+
+func overviewFromRecord(runID string, rec *models.TestRunRecord) *monitor.Overview {
+	if rec == nil {
+		return pendingOverview(runID)
+	}
+	status := rec.GetStatus()
+	if status == common.Status_STATUS_UNSPECIFIED {
+		status = common.Status_STATUS_PENDING
+	}
+	sum := rec.GetSummary()
+	return &monitor.Overview{
+		RunId:       runID,
+		Status:      status,
+		StartedAt:   sum.GetStartedAt(),
+		FinishedAt:  sum.GetFinishedAt(),
+		Duration:    sum.GetDuration(),
+		ProgressPct: sum.GetProgressPct(),
+		Pipeline:    &monitor.PipelineView{},
+		Workers:     []*monitor.WorkerInfo{},
+		Timeline:    []*monitor.Event{},
+	}
+}
+
+func mergeOverviewWithRecord(overview *monitor.Overview, rec *models.TestRunRecord) *monitor.Overview {
+	if overview == nil {
+		return overviewFromRecord("", rec)
+	}
+	if rec == nil {
+		return overview
+	}
+	stored := rec.GetStatus()
+	if stored == common.Status_STATUS_CANCELLING || isTerminalStatus(stored) {
+		sum := rec.GetSummary()
+		overview.Status = stored
+		if sum.GetStartedAt() != nil {
+			overview.StartedAt = sum.GetStartedAt()
+		}
+		if sum.GetFinishedAt() != nil {
+			overview.FinishedAt = sum.GetFinishedAt()
+		}
+		if sum.GetDuration() != nil {
+			overview.Duration = sum.GetDuration()
+		}
+		if sum.GetProgressPct() > overview.GetProgressPct() {
+			overview.ProgressPct = sum.GetProgressPct()
+		}
+	}
+	return overview
+}
+
+func overlayRunFromOverview(rec *models.TestRunRecord, overview *monitor.Overview) {
+	if rec == nil || overview == nil {
+		return
+	}
+	if rec.GetStatus() != common.Status_STATUS_CANCELLING && !isTerminalStatus(rec.GetStatus()) {
+		rec.Status = overview.GetStatus()
+	}
+	if rec.Summary == nil {
+		rec.Summary = &models.TestRunRecord_Summary{}
+	}
+	if overview.GetStartedAt() != nil {
+		rec.Summary.StartedAt = overview.GetStartedAt()
+	}
+	if overview.GetFinishedAt() != nil {
+		rec.Summary.FinishedAt = overview.GetFinishedAt()
+	}
+	if overview.GetDuration() != nil {
+		rec.Summary.Duration = overview.GetDuration()
+	}
+	if overview.GetProgressPct() > rec.Summary.GetProgressPct() {
+		rec.Summary.ProgressPct = overview.GetProgressPct()
 	}
 }
 

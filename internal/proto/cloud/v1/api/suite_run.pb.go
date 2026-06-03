@@ -554,7 +554,8 @@ func (x *CancelSuiteRunResponse) GetSuiteRun() *models.SuiteRunRecord {
 	return nil
 }
 
-// DeleteSuiteRunRequest deletes a suite run by id.
+// DeleteSuiteRunRequest soft-deletes a suite run by id (sets
+// entity.timings.deleted_at).
 type DeleteSuiteRunRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// tenant_id scopes the request to the owning tenant.
@@ -609,8 +610,8 @@ func (x *DeleteSuiteRunRequest) GetId() string {
 	return ""
 }
 
-// DeleteSuiteRunResponse is empty; deletion success is signalled by a non-error
-// reply.
+// DeleteSuiteRunResponse is empty; soft-delete success is signalled by a
+// non-error reply.
 type DeleteSuiteRunResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields

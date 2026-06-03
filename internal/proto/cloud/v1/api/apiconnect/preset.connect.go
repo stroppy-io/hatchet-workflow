@@ -105,7 +105,8 @@ type DatabasePresetServiceClient interface {
 	// UpdateDatabasePreset is idempotent: a wholesale field set converges on retry.
 	// System presets (is_system) are read-only and rejected — clone instead.
 	UpdateDatabasePreset(context.Context, *api.UpdateDatabasePresetRequest) (*api.UpdateDatabasePresetResponse, error)
-	// DeleteDatabasePreset is idempotent: deleting an absent preset is a no-op.
+	// DeleteDatabasePreset is idempotent: soft-deleting an absent or
+	// already-deleted preset is a no-op.
 	// System presets (is_system) are rejected.
 	DeleteDatabasePreset(context.Context, *api.DeleteDatabasePresetRequest) (*api.DeleteDatabasePresetResponse, error)
 	// CloneDatabasePreset creates a new editable copy. Not idempotent: each call
@@ -244,7 +245,8 @@ type DatabasePresetServiceHandler interface {
 	// UpdateDatabasePreset is idempotent: a wholesale field set converges on retry.
 	// System presets (is_system) are read-only and rejected — clone instead.
 	UpdateDatabasePreset(context.Context, *api.UpdateDatabasePresetRequest) (*api.UpdateDatabasePresetResponse, error)
-	// DeleteDatabasePreset is idempotent: deleting an absent preset is a no-op.
+	// DeleteDatabasePreset is idempotent: soft-deleting an absent or
+	// already-deleted preset is a no-op.
 	// System presets (is_system) are rejected.
 	DeleteDatabasePreset(context.Context, *api.DeleteDatabasePresetRequest) (*api.DeleteDatabasePresetResponse, error)
 	// CloneDatabasePreset creates a new editable copy. Not idempotent: each call
@@ -359,7 +361,8 @@ type WorkloadPresetServiceClient interface {
 	// retry. System presets (is_system) are read-only and rejected — clone
 	// instead.
 	UpdateWorkloadPreset(context.Context, *api.UpdateWorkloadPresetRequest) (*api.UpdateWorkloadPresetResponse, error)
-	// DeleteWorkloadPreset is idempotent: deleting an absent preset is a no-op.
+	// DeleteWorkloadPreset is idempotent: soft-deleting an absent or
+	// already-deleted preset is a no-op.
 	// System presets (is_system) are rejected.
 	DeleteWorkloadPreset(context.Context, *api.DeleteWorkloadPresetRequest) (*api.DeleteWorkloadPresetResponse, error)
 	// CloneWorkloadPreset creates a new editable copy. Not idempotent: each call
@@ -499,7 +502,8 @@ type WorkloadPresetServiceHandler interface {
 	// retry. System presets (is_system) are read-only and rejected — clone
 	// instead.
 	UpdateWorkloadPreset(context.Context, *api.UpdateWorkloadPresetRequest) (*api.UpdateWorkloadPresetResponse, error)
-	// DeleteWorkloadPreset is idempotent: deleting an absent preset is a no-op.
+	// DeleteWorkloadPreset is idempotent: soft-deleting an absent or
+	// already-deleted preset is a no-op.
 	// System presets (is_system) are rejected.
 	DeleteWorkloadPreset(context.Context, *api.DeleteWorkloadPresetRequest) (*api.DeleteWorkloadPresetResponse, error)
 	// CloneWorkloadPreset creates a new editable copy. Not idempotent: each call
@@ -613,7 +617,8 @@ type TestPresetServiceClient interface {
 	// UpdateTestPreset is idempotent: a wholesale field set converges on retry.
 	// System presets (is_system) are read-only and rejected — clone instead.
 	UpdateTestPreset(context.Context, *api.UpdateTestPresetRequest) (*api.UpdateTestPresetResponse, error)
-	// DeleteTestPreset is idempotent: deleting an absent preset is a no-op.
+	// DeleteTestPreset is idempotent: soft-deleting an absent or
+	// already-deleted preset is a no-op.
 	// System presets (is_system) are rejected.
 	DeleteTestPreset(context.Context, *api.DeleteTestPresetRequest) (*api.DeleteTestPresetResponse, error)
 	// CloneTestPreset creates a new editable copy. Not idempotent: each call
@@ -751,7 +756,8 @@ type TestPresetServiceHandler interface {
 	// UpdateTestPreset is idempotent: a wholesale field set converges on retry.
 	// System presets (is_system) are read-only and rejected — clone instead.
 	UpdateTestPreset(context.Context, *api.UpdateTestPresetRequest) (*api.UpdateTestPresetResponse, error)
-	// DeleteTestPreset is idempotent: deleting an absent preset is a no-op.
+	// DeleteTestPreset is idempotent: soft-deleting an absent or
+	// already-deleted preset is a no-op.
 	// System presets (is_system) are rejected.
 	DeleteTestPreset(context.Context, *api.DeleteTestPresetRequest) (*api.DeleteTestPresetResponse, error)
 	// CloneTestPreset creates a new editable copy. Not idempotent: each call

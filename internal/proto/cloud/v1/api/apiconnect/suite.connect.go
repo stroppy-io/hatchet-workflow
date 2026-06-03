@@ -40,6 +40,9 @@ const (
 	SuiteServiceGetSuiteProcedure = "/cloud.v1.api.SuiteService/GetSuite"
 	// SuiteServiceListSuitesProcedure is the fully-qualified name of the SuiteService's ListSuites RPC.
 	SuiteServiceListSuitesProcedure = "/cloud.v1.api.SuiteService/ListSuites"
+	// SuiteServiceListSuiteFacetsProcedure is the fully-qualified name of the SuiteService's
+	// ListSuiteFacets RPC.
+	SuiteServiceListSuiteFacetsProcedure = "/cloud.v1.api.SuiteService/ListSuiteFacets"
 	// SuiteServiceUpdateSuiteProcedure is the fully-qualified name of the SuiteService's UpdateSuite
 	// RPC.
 	SuiteServiceUpdateSuiteProcedure = "/cloud.v1.api.SuiteService/UpdateSuite"
@@ -63,9 +66,13 @@ type SuiteServiceClient interface {
 	GetSuite(context.Context, *api.GetSuiteRequest) (*api.GetSuiteResponse, error)
 	// ListSuites lists suite definitions with filtering and pagination. Read-only.
 	ListSuites(context.Context, *api.ListSuitesRequest) (*api.ListSuitesResponse, error)
+	// ListSuiteFacets lists distinct values for suite-list facet controls.
+	// Read-only.
+	ListSuiteFacets(context.Context, *api.ListSuiteFacetsRequest) (*api.ListSuiteFacetsResponse, error)
 	// UpdateSuite is idempotent: a wholesale field set converges on retry.
 	UpdateSuite(context.Context, *api.UpdateSuiteRequest) (*api.UpdateSuiteResponse, error)
-	// DeleteSuite is idempotent: deleting an absent suite is a no-op.
+	// DeleteSuite is idempotent: soft-deleting an absent or already-deleted
+	// suite is a no-op.
 	DeleteSuite(context.Context, *api.DeleteSuiteRequest) (*api.DeleteSuiteResponse, error)
 	// CloneSuite mints a new definition. Not idempotent.
 	CloneSuite(context.Context, *api.CloneSuiteRequest) (*api.CloneSuiteResponse, error)
@@ -103,6 +110,13 @@ func NewSuiteServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			httpClient,
 			baseURL+SuiteServiceListSuitesProcedure,
 			connect.WithSchema(suiteServiceMethods.ByName("ListSuites")),
+			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+			connect.WithClientOptions(opts...),
+		),
+		listSuiteFacets: connect.NewClient[api.ListSuiteFacetsRequest, api.ListSuiteFacetsResponse](
+			httpClient,
+			baseURL+SuiteServiceListSuiteFacetsProcedure,
+			connect.WithSchema(suiteServiceMethods.ByName("ListSuiteFacets")),
 			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 			connect.WithClientOptions(opts...),
 		),
@@ -147,6 +161,7 @@ type suiteServiceClient struct {
 	createSuite      *connect.Client[api.CreateSuiteRequest, api.CreateSuiteResponse]
 	getSuite         *connect.Client[api.GetSuiteRequest, api.GetSuiteResponse]
 	listSuites       *connect.Client[api.ListSuitesRequest, api.ListSuitesResponse]
+	listSuiteFacets  *connect.Client[api.ListSuiteFacetsRequest, api.ListSuiteFacetsResponse]
 	updateSuite      *connect.Client[api.UpdateSuiteRequest, api.UpdateSuiteResponse]
 	deleteSuite      *connect.Client[api.DeleteSuiteRequest, api.DeleteSuiteResponse]
 	cloneSuite       *connect.Client[api.CloneSuiteRequest, api.CloneSuiteResponse]
@@ -175,6 +190,15 @@ func (c *suiteServiceClient) GetSuite(ctx context.Context, req *api.GetSuiteRequ
 // ListSuites calls cloud.v1.api.SuiteService.ListSuites.
 func (c *suiteServiceClient) ListSuites(ctx context.Context, req *api.ListSuitesRequest) (*api.ListSuitesResponse, error) {
 	response, err := c.listSuites.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// ListSuiteFacets calls cloud.v1.api.SuiteService.ListSuiteFacets.
+func (c *suiteServiceClient) ListSuiteFacets(ctx context.Context, req *api.ListSuiteFacetsRequest) (*api.ListSuiteFacetsResponse, error) {
+	response, err := c.listSuiteFacets.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
 	}
@@ -234,9 +258,13 @@ type SuiteServiceHandler interface {
 	GetSuite(context.Context, *api.GetSuiteRequest) (*api.GetSuiteResponse, error)
 	// ListSuites lists suite definitions with filtering and pagination. Read-only.
 	ListSuites(context.Context, *api.ListSuitesRequest) (*api.ListSuitesResponse, error)
+	// ListSuiteFacets lists distinct values for suite-list facet controls.
+	// Read-only.
+	ListSuiteFacets(context.Context, *api.ListSuiteFacetsRequest) (*api.ListSuiteFacetsResponse, error)
 	// UpdateSuite is idempotent: a wholesale field set converges on retry.
 	UpdateSuite(context.Context, *api.UpdateSuiteRequest) (*api.UpdateSuiteResponse, error)
-	// DeleteSuite is idempotent: deleting an absent suite is a no-op.
+	// DeleteSuite is idempotent: soft-deleting an absent or already-deleted
+	// suite is a no-op.
 	DeleteSuite(context.Context, *api.DeleteSuiteRequest) (*api.DeleteSuiteResponse, error)
 	// CloneSuite mints a new definition. Not idempotent.
 	CloneSuite(context.Context, *api.CloneSuiteRequest) (*api.CloneSuiteResponse, error)
@@ -270,6 +298,13 @@ func NewSuiteServiceHandler(svc SuiteServiceHandler, opts ...connect.HandlerOpti
 		SuiteServiceListSuitesProcedure,
 		svc.ListSuites,
 		connect.WithSchema(suiteServiceMethods.ByName("ListSuites")),
+		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+		connect.WithHandlerOptions(opts...),
+	)
+	suiteServiceListSuiteFacetsHandler := connect.NewUnaryHandlerSimple(
+		SuiteServiceListSuiteFacetsProcedure,
+		svc.ListSuiteFacets,
+		connect.WithSchema(suiteServiceMethods.ByName("ListSuiteFacets")),
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
@@ -314,6 +349,8 @@ func NewSuiteServiceHandler(svc SuiteServiceHandler, opts ...connect.HandlerOpti
 			suiteServiceGetSuiteHandler.ServeHTTP(w, r)
 		case SuiteServiceListSuitesProcedure:
 			suiteServiceListSuitesHandler.ServeHTTP(w, r)
+		case SuiteServiceListSuiteFacetsProcedure:
+			suiteServiceListSuiteFacetsHandler.ServeHTTP(w, r)
 		case SuiteServiceUpdateSuiteProcedure:
 			suiteServiceUpdateSuiteHandler.ServeHTTP(w, r)
 		case SuiteServiceDeleteSuiteProcedure:
@@ -343,6 +380,10 @@ func (UnimplementedSuiteServiceHandler) GetSuite(context.Context, *api.GetSuiteR
 
 func (UnimplementedSuiteServiceHandler) ListSuites(context.Context, *api.ListSuitesRequest) (*api.ListSuitesResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.SuiteService.ListSuites is not implemented"))
+}
+
+func (UnimplementedSuiteServiceHandler) ListSuiteFacets(context.Context, *api.ListSuiteFacetsRequest) (*api.ListSuiteFacetsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.SuiteService.ListSuiteFacets is not implemented"))
 }
 
 func (UnimplementedSuiteServiceHandler) UpdateSuite(context.Context, *api.UpdateSuiteRequest) (*api.UpdateSuiteResponse, error) {

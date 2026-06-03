@@ -225,7 +225,8 @@ message CancelSuiteRunResponse {
 }
 
 /*
-    DeleteSuiteRunRequest deletes a suite run by id.
+    DeleteSuiteRunRequest soft-deletes a suite run by id (sets
+    entity.timings.deleted_at).
  */
 message DeleteSuiteRunRequest {
     /*
@@ -238,8 +239,8 @@ message DeleteSuiteRunRequest {
     string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
 /*
-    DeleteSuiteRunResponse is empty; deletion success is signalled by a non-error
-    reply.
+    DeleteSuiteRunResponse is empty; soft-delete success is signalled by a
+    non-error reply.
  */
 message DeleteSuiteRunResponse {}
 
@@ -269,7 +270,8 @@ service SuiteRunService {
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SUITE_RUN, action: ACTION_UPDATE}]};
     }
     /*
-        DeleteSuiteRun is idempotent: deleting an absent suite run is a no-op.
+        DeleteSuiteRun is idempotent: soft-deleting an absent or already-deleted
+        suite run is a no-op.
      */
     rpc DeleteSuiteRun (DeleteSuiteRunRequest) returns (DeleteSuiteRunResponse) {
         option idempotency_level = IDEMPOTENT;

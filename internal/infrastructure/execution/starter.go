@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	commonpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
@@ -24,15 +25,14 @@ type CallerSource interface {
 
 // TestRunStarter implements test_wizard.TestRunStarter: the wizard's
 // Finish(start=true) path. It mirrors test_run.StartTestRun — mint a fresh record
-// (new id, PENDING, summarized), persist it through the run repo, then launch the
-// TestWorkflow. It deliberately reuses the same TestRunRepo / Summarizer /
+// (new id, PENDING, summarized), persist it through the run repo, then return a
+// post-commit TestWorkflow starter. It deliberately reuses the same TestRunRepo / Summarizer /
 // Workflows ports the TestRun service uses, so the started run is observable by
 // the overview service exactly like an API-started one.
 //
 // Start participates in the ambient ctx transaction for the persist; the launch
-// is external IO performed after the record is created (the wizard service runs
-// Finish in a serializable tx, so the launch must remain idempotent — Temporal
-// dedupes by the deterministic workflow id derived from the run id).
+// is returned as a post-commit callback. Temporal must not be called from the
+// wizard service's serializable transaction callback.
 type TestRunStarter struct {
 	runs       test_run.TestRunRepo
 	summarizer test_run.Summarizer
@@ -49,16 +49,16 @@ func NewTestRunStarter(runs test_run.TestRunRepo, summarizer test_run.Summarizer
 	return &TestRunStarter{runs: runs, summarizer: summarizer, workflows: workflows, caller: caller}
 }
 
-// Start persists a brand-new run record for the baked spec and launches its
-// TestWorkflow. The spec is cloned and given the server-minted run id so runtime
-// observations key off it.
+// Start persists a brand-new run record for the baked spec and returns its
+// post-commit TestWorkflow starter. The spec is cloned and given the
+// server-minted run id so runtime observations key off it.
 func (s *TestRunStarter) Start(
 	ctx context.Context,
 	tenantID string,
 	run *domain.TestRun,
 	trigger commonpb.Trigger,
 	inTenant, inGlobal bool,
-) (*models.TestRunRecord, error) {
+) (*models.TestRunRecord, func(context.Context) error, error) {
 	spec := proto.Clone(run).(*domain.TestRun)
 	runID := uuid.NewString()
 	spec.Id = runID
@@ -67,7 +67,7 @@ func (s *TestRunStarter) Start(
 	if s.caller != nil {
 		id, err := s.caller.AccountID(ctx)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		authorID = id
 	}
@@ -91,14 +91,46 @@ func (s *TestRunStarter) Start(
 
 	// Persist inside the ambient transaction.
 	if err := s.runs.Create(ctx, rec); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	// Launch the workflow. A duplicate is deduplicated by the deterministic id, so
-	// a tx retry that re-runs Start does not double-launch.
-	if err := s.workflows.LaunchTest(ctx, rec); err != nil {
-		return nil, err
+	start := func(ctx context.Context) error {
+		if err := s.workflows.LaunchTest(ctx, rec); err != nil {
+			if ferr := s.finishFailed(ctx, rec); ferr != nil {
+				return ferr
+			}
+			return err
+		}
+		return nil
 	}
-	return rec, nil
+	return rec, start, nil
+}
+
+func (s *TestRunStarter) finishFailed(ctx context.Context, rec *models.TestRunRecord) error {
+	now := timestamppb.New(time.Now())
+	rec.Status = commonpb.Status_STATUS_FAILED
+	if rec.Summary == nil {
+		rec.Summary = &models.TestRunRecord_Summary{}
+	}
+	if rec.Summary.StartedAt == nil {
+		rec.Summary.StartedAt = now
+	}
+	if rec.Summary.FinishedAt == nil {
+		rec.Summary.FinishedAt = now
+	}
+	if start := rec.Summary.GetStartedAt(); start != nil {
+		d := now.AsTime().Sub(start.AsTime())
+		if d < 0 {
+			d = 0
+		}
+		rec.Summary.Duration = durationpb.New(d)
+	}
+	if rec.Entity != nil {
+		if rec.Entity.Timings == nil {
+			rec.Entity.Timings = &commonpb.Timings{}
+		}
+		rec.Entity.Timings.UpdatedAt = now
+	}
+	return s.runs.Update(ctx, rec)
 }
 
 // specName derives a human label for the run record from the baked workload

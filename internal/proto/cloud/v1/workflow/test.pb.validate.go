@@ -61,6 +61,17 @@ func (m *TestWorkflowRequest) validate(all bool) error {
 
 	var errors []error
 
+	if l := utf8.RuneCountInString(m.GetTenantId()); l < 1 || l > 64 {
+		err := TestWorkflowRequestValidationError{
+			field:  "TenantId",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if m.GetTestRun() == nil {
 		err := TestWorkflowRequestValidationError{
 			field:  "TestRun",

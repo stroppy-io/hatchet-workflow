@@ -74,15 +74,17 @@ type SuiteReader interface {
 //     transaction. It returns the fully-derived cell list plus the draft-level
 //     errors and ready flag.
 //   - Bake turns a ready draft into the persisted reusable suite and, when start
-//     is requested, a launched SuiteRun. Every compatible+ready enabled cell
-//     becomes a fully baked TestRun (preset params + provider settings +
-//     generated topology). It MUST reject a draft that is not ready.
+//     is requested, a prepared SuiteRun plus post-commit starter. Every
+//     compatible+ready enabled cell becomes a fully baked TestRun (preset params
+//   - provider settings + generated topology). It MUST reject a draft that is
+//     not ready.
 type WizardEngine interface {
 	Initial(ctx context.Context, tenantID, name string, seed *domain.Suite) (provider deployment.Provider, cells []*models.SuiteWizardDraftRecord_Cell, err error)
 	Recompute(ctx context.Context, tenantID string, draft *models.SuiteWizardDraftRecord) (cells []*models.SuiteWizardDraftRecord_Cell, errs []*schemapb.FieldError, ready bool, err error)
-	// Bake persists the suite definition and, when start=true, launches a
-	// SuiteRun. suiteRun is nil when start=false.
-	Bake(ctx context.Context, draft *models.SuiteWizardDraftRecord, req *api.FinishSuiteWizardRequest) (suite *models.SuiteRecord, suiteRun *models.SuiteRunRecord, err error)
+	// Bake persists the suite definition and, when start=true, prepares a
+	// SuiteRun. suiteRun is nil when start=false. starter must be called only
+	// after the surrounding transaction commits.
+	Bake(ctx context.Context, draft *models.SuiteWizardDraftRecord, req *api.FinishSuiteWizardRequest) (suite *models.SuiteRecord, suiteRun *models.SuiteRunRecord, starter func(context.Context) error, err error)
 }
 
 // SuiteWizardDeps bundles every dependency for the constructor.
@@ -398,12 +400,14 @@ func (s *SuiteWizardService) DeleteSuiteWizardDraft(ctx context.Context, req *ap
 type finishResult struct {
 	suite    *models.SuiteRecord
 	suiteRun *models.SuiteRunRecord
+	starter  func(context.Context) error
 }
 
 // FinishSuiteWizard bakes a ready draft into the persisted reusable suite and,
-// when req.start is set, a launched SuiteRun. Rejected unless the draft is ready.
-// The recompute + readiness check + bake run in one serializable transaction so
-// the readiness gate cannot race a concurrent patch.
+// when req.start is set, a prepared SuiteRun. SuiteWorkflow starts only after
+// the transaction commits. Rejected unless the draft is ready. The recompute +
+// readiness check + bake run in one serializable transaction so the readiness
+// gate cannot race a concurrent patch.
 func (s *SuiteWizardService) FinishSuiteWizard(ctx context.Context, req *api.FinishSuiteWizardRequest) (*api.FinishSuiteWizardResponse, error) {
 	res, err := doTxRet(ctx, s, func(ctx context.Context) (finishResult, error) {
 		draft, err := s.loadDraft(ctx, req.GetTenantId(), req.GetDraftId())
@@ -422,14 +426,19 @@ func (s *SuiteWizardService) FinishSuiteWizard(ctx context.Context, req *api.Fin
 		if !ready {
 			return finishResult{}, status.Error(codes.FailedPrecondition, "draft is not ready: resolve the validation errors and provider settings first")
 		}
-		suite, suiteRun, err := s.d.Engine.Bake(ctx, draft, req)
+		suite, suiteRun, starter, err := s.d.Engine.Bake(ctx, draft, req)
 		if err != nil {
 			return finishResult{}, utils.MapErr(err)
 		}
-		return finishResult{suite: suite, suiteRun: suiteRun}, nil
+		return finishResult{suite: suite, suiteRun: suiteRun, starter: starter}, nil
 	})
 	if err != nil {
 		return nil, err
+	}
+	if res.starter != nil {
+		if err := res.starter(ctx); err != nil {
+			return nil, status.Error(codes.Internal, err.Error())
+		}
 	}
 	return &api.FinishSuiteWizardResponse{Suite: res.suite, SuiteRun: res.suiteRun}, nil
 }

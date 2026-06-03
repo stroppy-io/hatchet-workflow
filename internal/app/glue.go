@@ -121,6 +121,42 @@ func (s snapshotRunReader) SuiteRun(ctx context.Context, suiteRunID string) (*mo
 	return s.suiteRuns.Get(ctx, suiteRunID)
 }
 
+// runtimePersistenceStore backs workflow runtime persistence activities. Reads are
+// by id because workflows know the run id, then writes go through the typed repos
+// using the tenant carried in each record.
+type runtimePersistenceStore struct {
+	r         byIDReader
+	runs      *postgres.TestRunRepo
+	suiteRuns *postgres.SuiteRunRepo
+	suites    *postgres.SuiteRepo
+}
+
+var _ execution.RunPersistenceStore = runtimePersistenceStore{}
+
+func (s runtimePersistenceStore) RunRecord(ctx context.Context, runID string) (*modelspb.TestRunRecord, error) {
+	return s.r.testRun(ctx, runID)
+}
+
+func (s runtimePersistenceStore) SaveRunRecord(ctx context.Context, run *modelspb.TestRunRecord) error {
+	return s.runs.Update(ctx, run)
+}
+
+func (s runtimePersistenceStore) SuiteRun(ctx context.Context, suiteRunID string) (*modelspb.SuiteRunRecord, error) {
+	return s.suiteRuns.Get(ctx, suiteRunID)
+}
+
+func (s runtimePersistenceStore) SaveSuiteRun(ctx context.Context, suiteRun *modelspb.SuiteRunRecord) error {
+	return s.suiteRuns.Update(ctx, suiteRun)
+}
+
+func (s runtimePersistenceStore) SuiteRecord(ctx context.Context, tenantID, suiteID string) (*modelspb.SuiteRecord, error) {
+	return s.suites.Get(ctx, tenantID, suiteID)
+}
+
+func (s runtimePersistenceStore) SaveSuiteRecord(ctx context.Context, suite *modelspb.SuiteRecord) error {
+	return s.suites.Update(ctx, suite)
+}
+
 /*
 	===== caller source =====
 
@@ -175,7 +211,7 @@ var _ adapters.RatingRunsLister = ratingRunsLister{}
 func (l ratingRunsLister) ListRatingRuns(ctx context.Context, scope adapters.RatingRunsScope, tenantID string) ([]*modelspb.TestRunRecord, error) {
 	switch scope {
 	case adapters.RatingScopeTenant:
-		all, _, err := l.runs.List(ctx, &apipb.ListTestRunsRequest{TenantId: tenantID})
+		all, _, err := l.runs.List(ctx, &apipb.ListTestRunsRequest{TenantId: tenantID}, "")
 		if err != nil {
 			return nil, err
 		}
@@ -187,7 +223,7 @@ func (l ratingRunsLister) ListRatingRuns(ctx context.Context, scope adapters.Rat
 		}
 		return out, nil
 	default: // global, cross-tenant
-		rows, err := l.db.TxDB.Query(ctx, `select data from test_run_records`)
+		rows, err := l.db.TxDB.Query(ctx, `select data from test_run_records where data->'entity'->'timings'->>'deletedAt' is null`)
 		if err != nil {
 			return nil, err
 		}
@@ -283,12 +319,12 @@ type dashboardRuns struct {
 var _ adapters.DashboardRunsReader = dashboardRuns{}
 
 func (d dashboardRuns) ListTenantRuns(ctx context.Context, tenantID string) ([]*modelspb.TestRunRecord, error) {
-	out, _, err := d.runs.List(ctx, &apipb.ListTestRunsRequest{TenantId: tenantID})
+	out, _, err := d.runs.List(ctx, &apipb.ListTestRunsRequest{TenantId: tenantID}, "")
 	return out, err
 }
 
 func (d dashboardRuns) ListTenantSuiteRuns(ctx context.Context, tenantID string) ([]*modelspb.SuiteRunRecord, error) {
-	out, _, err := d.suiteRuns.List(ctx, &apipb.ListSuiteRunsRequest{TenantId: tenantID})
+	out, _, err := d.suiteRuns.List(ctx, &apipb.ListSuiteRunsRequest{TenantId: tenantID}, "")
 	return out, err
 }
 
@@ -371,10 +407,10 @@ func (c cellResolver) TestPreset(ctx context.Context, tenantID, presetID string)
 	===== suite baker (suite_wizard) =====
 
 	The suite wizard's Finish path persists the reusable SuiteRecord and, on
-	start=true, persists+launches a SuiteRunRecord. The launch reuses the shared
-	execution.SuiteRunLauncher, which deterministically re-expands the suite spec
-	(the same children the wizard baked), so the pre-baked children list is not
-	re-persisted here.
+	start=true, prepares a SuiteRunRecord plus post-commit starter. Preparation
+	reuses the shared execution.SuiteRunLauncher, which deterministically
+	re-expands the suite spec (the same children the wizard baked), so the
+	pre-baked children list is not re-persisted here.
 */
 
 type suiteBaker struct {
@@ -399,7 +435,7 @@ func (b *suiteBaker) StartSuiteRun(
 	_ []*adapters.BakedSuiteChild,
 	trigger commonpb.Trigger,
 	maxParallel uint32,
-) (*modelspb.SuiteRunRecord, error) {
+) (*modelspb.SuiteRunRecord, func(context.Context) error, error) {
 	authorID := suiteRec.GetEntity().GetAuthorId()
 	if authorID == "" && b.caller != nil {
 		if id, err := b.caller.AccountID(ctx); err == nil {
@@ -420,16 +456,28 @@ func (b *suiteBaker) StartSuiteRun(
 		Trigger:     trigger,
 		MaxParallel: maxParallel,
 	}
-	// Launch expands children + starts SuiteWorkflow, filling run.Children/Summary.
-	if err := b.launcher.Launch(ctx, run, suiteRec.GetSpec()); err != nil {
-		return nil, err
+	// Launch expands children, persists the parent, and returns the post-commit
+	// SuiteWorkflow starter.
+	starter, err := b.launcher.Launch(ctx, run, suiteRec.GetSpec())
+	if err != nil {
+		return nil, nil, err
 	}
-	// Persist the parent so the overview/dashboard observe it (Update upserts on a
-	// missing row).
-	if err := b.suiteRuns.Update(ctx, run); err != nil {
-		return nil, err
+	if suiteRec.Summary == nil {
+		suiteRec.Summary = &modelspb.SuiteRecord_Summary{}
 	}
-	return run, nil
+	suiteRec.Summary.RunCount++
+	suiteRec.Summary.LastRunAt = now
+	suiteRec.Summary.LastRunStatus = run.GetStatus()
+	if suiteRec.Entity != nil {
+		if suiteRec.Entity.Timings == nil {
+			suiteRec.Entity.Timings = &commonpb.Timings{}
+		}
+		suiteRec.Entity.Timings.UpdatedAt = now
+	}
+	if err := b.suites.Update(ctx, suiteRec); err != nil {
+		return nil, nil, err
+	}
+	return run, starter, nil
 }
 
 // suiteListQuery builds a tenant-scoped suite list query for the dashboard's
@@ -452,6 +500,18 @@ var _ execution.ChildRunPersister = childRunPersister{}
 
 func (p childRunPersister) CreateChildRun(ctx context.Context, run *modelspb.TestRunRecord) error {
 	return p.runs.Create(ctx, run)
+}
+
+func (p childRunPersister) UpdateChildRun(ctx context.Context, run *modelspb.TestRunRecord) error {
+	return p.runs.Update(ctx, run)
+}
+
+type suiteRunPersister struct{ suiteRuns *postgres.SuiteRunRepo }
+
+var _ execution.SuiteRunPersister = suiteRunPersister{}
+
+func (p suiteRunPersister) SaveSuiteRun(ctx context.Context, run *modelspb.SuiteRunRecord) error {
+	return p.suiteRuns.Update(ctx, run)
 }
 
 /*

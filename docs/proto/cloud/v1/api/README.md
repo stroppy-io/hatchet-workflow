@@ -112,6 +112,8 @@
   - [cloud.v1.api.GetRoleResponse](#cloud-v1-api-getroleresponse)
   - [cloud.v1.api.GetRunMetricsRequest](#cloud-v1-api-getrunmetricsrequest)
   - [cloud.v1.api.GetRunMetricsResponse](#cloud-v1-api-getrunmetricsresponse)
+  - [cloud.v1.api.GetRunQuotaUsageRequest](#cloud-v1-api-getrunquotausagerequest)
+  - [cloud.v1.api.GetRunQuotaUsageResponse](#cloud-v1-api-getrunquotausageresponse)
   - [cloud.v1.api.GetShareRequest](#cloud-v1-api-getsharerequest)
   - [cloud.v1.api.GetShareResponse](#cloud-v1-api-getshareresponse)
   - [cloud.v1.api.GetSharedRunRequest](#cloud-v1-api-getsharedrunrequest)
@@ -172,10 +174,16 @@
   - [cloud.v1.api.ListPackagesResponse](#cloud-v1-api-listpackagesresponse)
   - [cloud.v1.api.ListPermissionsRequest](#cloud-v1-api-listpermissionsrequest)
   - [cloud.v1.api.ListPermissionsResponse](#cloud-v1-api-listpermissionsresponse)
+  - [cloud.v1.api.ListQuotasRequest](#cloud-v1-api-listquotasrequest)
+  - [cloud.v1.api.ListQuotasResponse](#cloud-v1-api-listquotasresponse)
   - [cloud.v1.api.ListRolesRequest](#cloud-v1-api-listrolesrequest)
   - [cloud.v1.api.ListRolesResponse](#cloud-v1-api-listrolesresponse)
   - [cloud.v1.api.ListSharesRequest](#cloud-v1-api-listsharesrequest)
   - [cloud.v1.api.ListSharesResponse](#cloud-v1-api-listsharesresponse)
+  - [cloud.v1.api.ListStroppyVersionsRequest](#cloud-v1-api-liststroppyversionsrequest)
+  - [cloud.v1.api.ListStroppyVersionsResponse](#cloud-v1-api-liststroppyversionsresponse)
+  - [cloud.v1.api.ListSuiteFacetsRequest](#cloud-v1-api-listsuitefacetsrequest)
+  - [cloud.v1.api.ListSuiteFacetsResponse](#cloud-v1-api-listsuitefacetsresponse)
   - [cloud.v1.api.ListSuiteRunsRequest](#cloud-v1-api-listsuiterunsrequest)
   - [cloud.v1.api.ListSuiteRunsRequest.Sort](#cloud-v1-api-listsuiterunsrequest-sort)
   - [cloud.v1.api.ListSuiteRunsRequest.Sort.Kind](#cloud-v1-api-listsuiterunsrequest-sort-kind)
@@ -191,6 +199,8 @@
   - [cloud.v1.api.ListTestPresetsRequest.Sort.Kind](#cloud-v1-api-listtestpresetsrequest-sort-kind)
   - [cloud.v1.api.ListTestPresetsRequest.TagsEntry](#cloud-v1-api-listtestpresetsrequest-tagsentry)
   - [cloud.v1.api.ListTestPresetsResponse](#cloud-v1-api-listtestpresetsresponse)
+  - [cloud.v1.api.ListTestRunFacetsRequest](#cloud-v1-api-listtestrunfacetsrequest)
+  - [cloud.v1.api.ListTestRunFacetsResponse](#cloud-v1-api-listtestrunfacetsresponse)
   - [cloud.v1.api.ListTestRunsRequest](#cloud-v1-api-listtestrunsrequest)
   - [cloud.v1.api.ListTestRunsRequest.Sort](#cloud-v1-api-listtestrunsrequest-sort)
   - [cloud.v1.api.ListTestRunsRequest.Sort.Kind](#cloud-v1-api-listtestrunsrequest-sort-kind)
@@ -220,8 +230,13 @@
   - [cloud.v1.api.PublicRatingEntry](#cloud-v1-api-publicratingentry)
   - [cloud.v1.api.QueryLogsRequest](#cloud-v1-api-querylogsrequest)
   - [cloud.v1.api.QueryLogsResponse](#cloud-v1-api-querylogsresponse)
+  - [cloud.v1.api.QuotaRefreshPolicy](#cloud-v1-api-quotarefreshpolicy)
+  - [cloud.v1.api.QuotaReservationView](#cloud-v1-api-quotareservationview)
+  - [cloud.v1.api.QuotaView](#cloud-v1-api-quotaview)
   - [cloud.v1.api.RatingEntry](#cloud-v1-api-ratingentry)
   - [cloud.v1.api.RatingFilter](#cloud-v1-api-ratingfilter)
+  - [cloud.v1.api.RefreshQuotasRequest](#cloud-v1-api-refreshquotasrequest)
+  - [cloud.v1.api.RefreshQuotasResponse](#cloud-v1-api-refreshquotasresponse)
   - [cloud.v1.api.RefreshRequest](#cloud-v1-api-refreshrequest)
   - [cloud.v1.api.RefreshResponse](#cloud-v1-api-refreshresponse)
   - [cloud.v1.api.RegisterRequest](#cloud-v1-api-registerrequest)
@@ -2156,7 +2171,7 @@ go_name: Id</pre></td>
 ### cloud.v1.api.DeleteDatabasePresetRequest
 
 <pre>
-//DeleteDatabasePresetRequest removes one database preset by id.
+//DeleteDatabasePresetRequest soft-deletes one database preset by id.
 </pre>
 
 <table>
@@ -2190,8 +2205,8 @@ go_name: TenantId</pre></td>
 ### cloud.v1.api.DeleteDatabasePresetResponse
 
 <pre>
-//DeleteDatabasePresetResponse is empty; success is signalled by the absence of
-//error.
+//DeleteDatabasePresetResponse is empty; soft-delete success is signalled by
+//the absence of error.
 </pre>
 
 
@@ -2393,7 +2408,7 @@ go_name: TenantId</pre></td>
 ### cloud.v1.api.DeleteSuiteRequest
 
 <pre>
-//DeleteSuiteRequest deletes a suite definition by id.
+//DeleteSuiteRequest soft-deletes a suite definition by id.
 </pre>
 
 <table>
@@ -2427,7 +2442,8 @@ go_name: TenantId</pre></td>
 ### cloud.v1.api.DeleteSuiteResponse
 
 <pre>
-//DeleteSuiteResponse is empty; deletion success is signalled by a non-error reply.
+//DeleteSuiteResponse is empty; soft-delete success is signalled by a
+//non-error reply.
 </pre>
 
 
@@ -2436,7 +2452,8 @@ go_name: TenantId</pre></td>
 ### cloud.v1.api.DeleteSuiteRunRequest
 
 <pre>
-//DeleteSuiteRunRequest deletes a suite run by id.
+//DeleteSuiteRunRequest soft-deletes a suite run by id (sets
+//entity.timings.deleted_at).
 </pre>
 
 <table>
@@ -2470,8 +2487,8 @@ go_name: TenantId</pre></td>
 ### cloud.v1.api.DeleteSuiteRunResponse
 
 <pre>
-//DeleteSuiteRunResponse is empty; deletion success is signalled by a non-error
-//reply.
+//DeleteSuiteRunResponse is empty; soft-delete success is signalled by a
+//non-error reply.
 </pre>
 
 
@@ -2559,7 +2576,7 @@ go_name: Id</pre></td>
 ### cloud.v1.api.DeleteTestPresetRequest
 
 <pre>
-//DeleteTestPresetRequest removes one test preset by id.
+//DeleteTestPresetRequest soft-deletes one test preset by id.
 </pre>
 
 <table>
@@ -2593,8 +2610,8 @@ go_name: TenantId</pre></td>
 ### cloud.v1.api.DeleteTestPresetResponse
 
 <pre>
-//DeleteTestPresetResponse is empty; success is signalled by the absence of
-//error.
+//DeleteTestPresetResponse is empty; soft-delete success is signalled by the
+//absence of error.
 </pre>
 
 
@@ -2603,7 +2620,7 @@ go_name: TenantId</pre></td>
 ### cloud.v1.api.DeleteTestRunRequest
 
 <pre>
-//DeleteTestRunRequest deletes a test run by id.
+//DeleteTestRunRequest soft-deletes a test run by id (sets entity.timings.deleted_at).
 </pre>
 
 <table>
@@ -2637,8 +2654,8 @@ go_name: TenantId</pre></td>
 ### cloud.v1.api.DeleteTestRunResponse
 
 <pre>
-//DeleteTestRunResponse is empty; deletion success is signalled by a non-error
-//reply.
+//DeleteTestRunResponse is empty; soft-delete success is signalled by a
+//non-error reply.
 </pre>
 
 
@@ -2691,7 +2708,7 @@ go_name: TenantId</pre></td>
 ### cloud.v1.api.DeleteWorkloadPresetRequest
 
 <pre>
-//DeleteWorkloadPresetRequest removes one workload preset by id.
+//DeleteWorkloadPresetRequest soft-deletes one workload preset by id.
 </pre>
 
 <table>
@@ -2725,8 +2742,8 @@ go_name: TenantId</pre></td>
 ### cloud.v1.api.DeleteWorkloadPresetResponse
 
 <pre>
-//DeleteWorkloadPresetResponse is empty; success is signalled by the absence of
-//error.
+//DeleteWorkloadPresetResponse is empty; soft-delete success is signalled by
+//the absence of error.
 </pre>
 
 
@@ -3625,6 +3642,52 @@ go_name: TenantId</pre></td>
 
 json_name: metrics
 go_name: Metrics</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-getrunquotausagerequest"></a>
+### cloud.v1.api.GetRunQuotaUsageRequest
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>run_id</td>
+<td>string</td>
+<td><pre>
+json_name: runId
+go_name: RunId</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+json_name: tenantId
+go_name: TenantId</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-getrunquotausageresponse"></a>
+### cloud.v1.api.GetRunQuotaUsageResponse
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>reservations</td>
+<td><a href="#cloud-v1-api-quotareservationview">cloud.v1.api.QuotaReservationView</a></td>
+<td><pre>
+json_name: reservations
+go_name: Reservations</pre></td>
 </tr>
 </table>
 
@@ -5467,6 +5530,58 @@ go_name: Entries</pre></td>
 
 
 
+<a name="cloud-v1-api-listquotasrequest"></a>
+### cloud.v1.api.ListQuotasRequest
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>provider</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-provider">cloud.v1.deployment.Provider</a></td>
+<td><pre>
+json_name: provider
+go_name: Provider</pre></td>
+</tr><tr>
+<td>refresh_policy</td>
+<td><a href="#cloud-v1-api-quotarefreshpolicy">cloud.v1.api.QuotaRefreshPolicy</a></td>
+<td><pre>
+json_name: refreshPolicy
+go_name: RefreshPolicy</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+json_name: tenantId
+go_name: TenantId</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-listquotasresponse"></a>
+### cloud.v1.api.ListQuotasResponse
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>quotas</td>
+<td><a href="#cloud-v1-api-quotaview">cloud.v1.api.QuotaView</a></td>
+<td><pre>
+json_name: quotas
+go_name: Quotas</pre></td>
+</tr>
+</table>
+
+
+
 <a name="cloud-v1-api-listrolesrequest"></a>
 ### cloud.v1.api.ListRolesRequest
 
@@ -5628,6 +5743,123 @@ go_name: NextPageToken</pre></td>
 
 json_name: shares
 go_name: Shares</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-liststroppyversionsrequest"></a>
+### cloud.v1.api.ListStroppyVersionsRequest
+
+<pre>
+//ListStroppyVersionsRequest lists release tags accepted by the server
+//configuration.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+//tenant_id scopes the request to the caller's tenant.<br>
+
+json_name: tenantId
+go_name: TenantId</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-liststroppyversionsresponse"></a>
+### cloud.v1.api.ListStroppyVersionsResponse
+
+<pre>
+//ListStroppyVersionsResponse returns release tags sorted newest first.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>versions</td>
+<td>string</td>
+<td><pre>
+//versions are release tags from the configured GitHub repository, filtered
+//by the server's configured minimum version.<br>
+
+json_name: versions
+go_name: Versions</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-listsuitefacetsrequest"></a>
+### cloud.v1.api.ListSuiteFacetsRequest
+
+<pre>
+//ListSuiteFacetsRequest returns distinct values used by suite-list facet
+//controls. It is tenant-scoped and honors EntityFilter.include_deleted.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>filter</td>
+<td><a href="../common/README.md#cloud-v1-common-entityfilter">cloud.v1.common.EntityFilter</a></td>
+<td><pre>
+//filter holds shared Entity-level filters. include_deleted controls
+//whether soft-deleted suites contribute to facet values.<br>
+
+json_name: filter
+go_name: Filter</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+//tenant_id scopes the request to the owning tenant.<br>
+
+json_name: tenantId
+go_name: TenantId</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-listsuitefacetsresponse"></a>
+### cloud.v1.api.ListSuiteFacetsResponse
+
+<pre>
+//ListSuiteFacetsResponse returns distinct non-empty values present in the
+//matching tenant's suite definitions.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>author_ids</td>
+<td>string</td>
+<td><pre>
+//author_ids are distinct entity.author_id values.<br>
+
+json_name: authorIds
+go_name: AuthorIds</pre></td>
 </tr>
 </table>
 
@@ -6426,6 +6658,102 @@ go_name: Presets</pre></td>
 
 
 
+<a name="cloud-v1-api-listtestrunfacetsrequest"></a>
+### cloud.v1.api.ListTestRunFacetsRequest
+
+<pre>
+//ListTestRunFacetsRequest returns distinct values used by run-list facet
+//controls. It is tenant-scoped and honors the shared EntityFilter so clients
+//can exclude deleted rows by default or ask for deleted-inclusive facets.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>filter</td>
+<td><a href="../common/README.md#cloud-v1-common-entityfilter">cloud.v1.common.EntityFilter</a></td>
+<td><pre>
+//filter holds shared Entity-level filters. include_deleted controls
+//whether soft-deleted runs contribute to facet values.<br>
+
+json_name: filter
+go_name: Filter</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+//tenant_id scopes the request to the owning tenant.<br>
+
+json_name: tenantId
+go_name: TenantId</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-listtestrunfacetsresponse"></a>
+### cloud.v1.api.ListTestRunFacetsResponse
+
+<pre>
+//ListTestRunFacetsResponse returns distinct non-empty values present in the
+//matching tenant's runs.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>author_ids</td>
+<td>string</td>
+<td><pre>
+//author_ids are distinct entity.author_id values.<br>
+
+json_name: authorIds
+go_name: AuthorIds</pre></td>
+</tr><tr>
+<td>db_preset_ids</td>
+<td>string</td>
+<td><pre>
+//db_preset_ids are distinct summary.db_preset_id values.<br>
+
+json_name: dbPresetIds
+go_name: DbPresetIds</pre></td>
+</tr><tr>
+<td>stroppy_versions</td>
+<td>string</td>
+<td><pre>
+//stroppy_versions are distinct summary.stroppy_version values.<br>
+
+json_name: stroppyVersions
+go_name: StroppyVersions</pre></td>
+</tr><tr>
+<td>test_preset_ids</td>
+<td>string</td>
+<td><pre>
+//test_preset_ids are distinct summary.test_preset_id values.<br>
+
+json_name: testPresetIds
+go_name: TestPresetIds</pre></td>
+</tr><tr>
+<td>workload_preset_ids</td>
+<td>string</td>
+<td><pre>
+//workload_preset_ids are distinct summary.workload_preset_id values.<br>
+
+json_name: workloadPresetIds
+go_name: WorkloadPresetIds</pre></td>
+</tr>
+</table>
+
+
+
 <a name="cloud-v1-api-listtestrunsrequest"></a>
 ### cloud.v1.api.ListTestRunsRequest
 
@@ -6753,6 +7081,11 @@ go_name: Kind</pre></td>
 <td>KIND_TEST_PRESET</td>
 <td><pre>
 //KIND_TEST_PRESET orders by test preset name/id.
+</pre></td>
+</tr><tr>
+<td>KIND_TRIGGER</td>
+<td><pre>
+//KIND_TRIGGER orders by how the run was launched (manual/cron/api).
 </pre></td>
 </tr>
 </table>
@@ -8023,6 +8356,242 @@ go_name: Older</pre></td>
 
 
 
+<a name="cloud-v1-api-quotarefreshpolicy"></a>
+### cloud.v1.api.QuotaRefreshPolicy
+
+<pre>
+//QuotaRefreshPolicy controls whether a read may talk to the provider.
+</pre>
+
+<table>
+<tr><th>Value</th><th>Description</th></tr>
+<tr>
+<td>QUOTA_REFRESH_POLICY_UNSPECIFIED</td>
+<td><pre>
+//QUOTA_REFRESH_POLICY_UNSPECIFIED behaves as REFRESH_IF_STALE.
+</pre></td>
+</tr><tr>
+<td>QUOTA_REFRESH_POLICY_CACHE_ONLY</td>
+<td><pre>
+//QUOTA_REFRESH_POLICY_CACHE_ONLY returns stored snapshots only.
+</pre></td>
+</tr><tr>
+<td>QUOTA_REFRESH_POLICY_REFRESH_IF_STALE</td>
+<td><pre>
+//QUOTA_REFRESH_POLICY_REFRESH_IF_STALE refreshes stale/missing snapshots.
+</pre></td>
+</tr><tr>
+<td>QUOTA_REFRESH_POLICY_FORCE_REFRESH</td>
+<td><pre>
+//QUOTA_REFRESH_POLICY_FORCE_REFRESH always refreshes from the provider.
+</pre></td>
+</tr>
+</table>
+
+<a name="cloud-v1-api-quotareservationview"></a>
+### cloud.v1.api.QuotaReservationView
+
+<pre>
+//QuotaReservationView is one run reservation/allocation row.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>amount</td>
+<td>uint64</td>
+<td><pre>
+json_name: amount
+go_name: Amount</pre></td>
+</tr><tr>
+<td>created_at</td>
+<td><a href="../../../google/protobuf/README.md#google-protobuf-timestamp">google.protobuf.Timestamp</a></td>
+<td><pre>
+json_name: createdAt
+go_name: CreatedAt</pre></td>
+</tr><tr>
+<td>expires_at</td>
+<td><a href="../../../google/protobuf/README.md#google-protobuf-timestamp">google.protobuf.Timestamp</a></td>
+<td><pre>
+json_name: expiresAt
+go_name: ExpiresAt</pre></td>
+</tr><tr>
+<td>id</td>
+<td>string</td>
+<td><pre>
+json_name: id
+go_name: Id</pre></td>
+</tr><tr>
+<td>info</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-quota-info">cloud.v1.deployment.Quota.Info</a></td>
+<td><pre>
+json_name: info
+go_name: Info</pre></td>
+</tr><tr>
+<td>node_id</td>
+<td>string</td>
+<td><pre>
+json_name: nodeId
+go_name: NodeId</pre></td>
+</tr><tr>
+<td>resource_id</td>
+<td>string</td>
+<td><pre>
+json_name: resourceId
+go_name: ResourceId</pre></td>
+</tr><tr>
+<td>resource_type</td>
+<td>string</td>
+<td><pre>
+json_name: resourceType
+go_name: ResourceType</pre></td>
+</tr><tr>
+<td>run_id</td>
+<td>string</td>
+<td><pre>
+json_name: runId
+go_name: RunId</pre></td>
+</tr><tr>
+<td>service</td>
+<td>string</td>
+<td><pre>
+json_name: service
+go_name: Service</pre></td>
+</tr><tr>
+<td>status</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-quota-reservationstatus">cloud.v1.deployment.Quota.ReservationStatus</a></td>
+<td><pre>
+json_name: status
+go_name: Status</pre></td>
+</tr><tr>
+<td>updated_at</td>
+<td><a href="../../../google/protobuf/README.md#google-protobuf-timestamp">google.protobuf.Timestamp</a></td>
+<td><pre>
+json_name: updatedAt
+go_name: UpdatedAt</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-quotaview"></a>
+### cloud.v1.api.QuotaView
+
+<pre>
+//QuotaView is one quota row as shown to users/operators.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>available_for_runs</td>
+<td>double</td>
+<td><pre>
+//available_for_runs is max(provider_available - reserved, 0).<br>
+
+json_name: availableForRuns
+go_name: AvailableForRuns</pre></td>
+</tr><tr>
+<td>info</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-quota-info">cloud.v1.deployment.Quota.Info</a></td>
+<td><pre>
+//info identifies the provider quota.<br>
+
+json_name: info
+go_name: Info</pre></td>
+</tr><tr>
+<td>limit</td>
+<td>double</td>
+<td><pre>
+//limit is the provider quota limit.<br>
+
+json_name: limit
+go_name: Limit</pre></td>
+</tr><tr>
+<td>observed_at</td>
+<td><a href="../../../google/protobuf/README.md#google-protobuf-timestamp">google.protobuf.Timestamp</a></td>
+<td><pre>
+//observed_at is when the provider snapshot was fetched.<br>
+
+json_name: observedAt
+go_name: ObservedAt</pre></td>
+</tr><tr>
+<td>provider_available</td>
+<td>double</td>
+<td><pre>
+//provider_available is max(limit - provider_used, 0).<br>
+
+json_name: providerAvailable
+go_name: ProviderAvailable</pre></td>
+</tr><tr>
+<td>provider_used</td>
+<td>double</td>
+<td><pre>
+//provider_used is the usage value reported by the provider snapshot.<br>
+
+json_name: providerUsed
+go_name: ProviderUsed</pre></td>
+</tr><tr>
+<td>reserved</td>
+<td>double</td>
+<td><pre>
+//reserved is our active pre-deploy reservation amount.<br>
+
+json_name: reserved
+go_name: Reserved</pre></td>
+</tr><tr>
+<td>resource_id</td>
+<td>string</td>
+<td><pre>
+//resource_id is the provider scope id, e.g. YC cloud_id.<br>
+
+json_name: resourceId
+go_name: ResourceId</pre></td>
+</tr><tr>
+<td>resource_type</td>
+<td>string</td>
+<td><pre>
+//resource_type is the provider scope type, e.g. resource-manager.cloud.<br>
+
+json_name: resourceType
+go_name: ResourceType</pre></td>
+</tr><tr>
+<td>service</td>
+<td>string</td>
+<td><pre>
+//service is the provider service id, e.g. compute.<br>
+
+json_name: service
+go_name: Service</pre></td>
+</tr><tr>
+<td>stale</td>
+<td>bool</td>
+<td><pre>
+//stale is true when now >= stale_after or the row is synthetic.<br>
+
+json_name: stale
+go_name: Stale</pre></td>
+</tr><tr>
+<td>stale_after</td>
+<td><a href="../../../google/protobuf/README.md#google-protobuf-timestamp">google.protobuf.Timestamp</a></td>
+<td><pre>
+//stale_after is when the snapshot should be refreshed.<br>
+
+json_name: staleAfter
+go_name: StaleAfter</pre></td>
+</tr>
+</table>
+
+
+
 <a name="cloud-v1-api-ratingentry"></a>
 ### cloud.v1.api.RatingEntry
 
@@ -8210,6 +8779,52 @@ go_name: StartedBefore</pre></td>
 
 json_name: stroppyVersions
 go_name: StroppyVersions</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-refreshquotasrequest"></a>
+### cloud.v1.api.RefreshQuotasRequest
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>provider</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-provider">cloud.v1.deployment.Provider</a></td>
+<td><pre>
+json_name: provider
+go_name: Provider</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+json_name: tenantId
+go_name: TenantId</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-refreshquotasresponse"></a>
+### cloud.v1.api.RefreshQuotasResponse
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>quotas</td>
+<td><a href="#cloud-v1-api-quotaview">cloud.v1.api.QuotaView</a></td>
+<td><pre>
+json_name: quotas
+go_name: Quotas</pre></td>
 </tr>
 </table>
 
@@ -9243,9 +9858,10 @@ go_name: State</pre></td>
 ### cloud.v1.api.StartSuiteRequest
 
 <pre>
-//StartSuite expands a suite definition into a SuiteRunRecord (one TestRunRecord
-//per enabled compatible cell) and launches SuiteWorkflow. Provide a stored
-//`suite_id` or an inline `suite` definition directly (CLI/API).
+//StartSuite expands a non-deleted suite definition into a SuiteRunRecord (one
+//TestRunRecord per enabled compatible cell) and launches SuiteWorkflow.
+//Provide a stored `suite_id` or an inline `suite` definition directly
+//(CLI/API).
 </pre>
 
 <table>

@@ -512,6 +512,310 @@ var _ interface {
 	ErrorName() string
 } = CalculateQuotasWorkflowRequestValidationError{}
 
+// Validate checks the field values on QuotaRequestRef with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *QuotaRequestRef) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on QuotaRequestRef with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// QuotaRequestRefMultiError, or nil if none found.
+func (m *QuotaRequestRef) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *QuotaRequestRef) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetNodeId()); l < 1 || l > 128 {
+		err := QuotaRequestRefValidationError{
+			field:  "NodeId",
+			reason: "value length must be between 1 and 128 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetRequest() == nil {
+		err := QuotaRequestRefValidationError{
+			field:  "Request",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetRequest()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, QuotaRequestRefValidationError{
+					field:  "Request",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, QuotaRequestRefValidationError{
+					field:  "Request",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetRequest()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return QuotaRequestRefValidationError{
+				field:  "Request",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return QuotaRequestRefMultiError(errors)
+	}
+
+	return nil
+}
+
+// QuotaRequestRefMultiError is an error wrapping multiple validation errors
+// returned by QuotaRequestRef.ValidateAll() if the designated constraints
+// aren't met.
+type QuotaRequestRefMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m QuotaRequestRefMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m QuotaRequestRefMultiError) AllErrors() []error { return m }
+
+// QuotaRequestRefValidationError is the validation error returned by
+// QuotaRequestRef.Validate if the designated constraints aren't met.
+type QuotaRequestRefValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e QuotaRequestRefValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e QuotaRequestRefValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e QuotaRequestRefValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e QuotaRequestRefValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e QuotaRequestRefValidationError) ErrorName() string { return "QuotaRequestRefValidationError" }
+
+// Error satisfies the builtin error interface
+func (e QuotaRequestRefValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sQuotaRequestRef.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = QuotaRequestRefValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = QuotaRequestRefValidationError{}
+
+// Validate checks the field values on QuotaAllocationRef with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *QuotaAllocationRef) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on QuotaAllocationRef with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// QuotaAllocationRefMultiError, or nil if none found.
+func (m *QuotaAllocationRef) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *QuotaAllocationRef) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetNodeId()); l < 1 || l > 128 {
+		err := QuotaAllocationRefValidationError{
+			field:  "NodeId",
+			reason: "value length must be between 1 and 128 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetAllocation() == nil {
+		err := QuotaAllocationRefValidationError{
+			field:  "Allocation",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetAllocation()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, QuotaAllocationRefValidationError{
+					field:  "Allocation",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, QuotaAllocationRefValidationError{
+					field:  "Allocation",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetAllocation()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return QuotaAllocationRefValidationError{
+				field:  "Allocation",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return QuotaAllocationRefMultiError(errors)
+	}
+
+	return nil
+}
+
+// QuotaAllocationRefMultiError is an error wrapping multiple validation errors
+// returned by QuotaAllocationRef.ValidateAll() if the designated constraints
+// aren't met.
+type QuotaAllocationRefMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m QuotaAllocationRefMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m QuotaAllocationRefMultiError) AllErrors() []error { return m }
+
+// QuotaAllocationRefValidationError is the validation error returned by
+// QuotaAllocationRef.Validate if the designated constraints aren't met.
+type QuotaAllocationRefValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e QuotaAllocationRefValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e QuotaAllocationRefValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e QuotaAllocationRefValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e QuotaAllocationRefValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e QuotaAllocationRefValidationError) ErrorName() string {
+	return "QuotaAllocationRefValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e QuotaAllocationRefValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sQuotaAllocationRef.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = QuotaAllocationRefValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = QuotaAllocationRefValidationError{}
+
 // Validate checks the field values on CalculateQuotasWorkflowResponse with the
 // rules defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
@@ -574,50 +878,49 @@ func (m *CalculateQuotasWorkflowResponse) validate(all bool) error {
 		}
 	}
 
-	{
-		sorted_keys := make([]string, len(m.GetQuotaRequests()))
-		i := 0
-		for key := range m.GetQuotaRequests() {
-			sorted_keys[i] = key
-			i++
+	if len(m.GetQuotaRequests()) > 1024 {
+		err := CalculateQuotasWorkflowResponseValidationError{
+			field:  "QuotaRequests",
+			reason: "value must contain no more than 1024 item(s)",
 		}
-		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
-		for _, key := range sorted_keys {
-			val := m.GetQuotaRequests()[key]
-			_ = val
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-			// no validation rules for QuotaRequests[key]
+	for idx, item := range m.GetQuotaRequests() {
+		_, _ = idx, item
 
-			if all {
-				switch v := interface{}(val).(type) {
-				case interface{ ValidateAll() error }:
-					if err := v.ValidateAll(); err != nil {
-						errors = append(errors, CalculateQuotasWorkflowResponseValidationError{
-							field:  fmt.Sprintf("QuotaRequests[%v]", key),
-							reason: "embedded message failed validation",
-							cause:  err,
-						})
-					}
-				case interface{ Validate() error }:
-					if err := v.Validate(); err != nil {
-						errors = append(errors, CalculateQuotasWorkflowResponseValidationError{
-							field:  fmt.Sprintf("QuotaRequests[%v]", key),
-							reason: "embedded message failed validation",
-							cause:  err,
-						})
-					}
-				}
-			} else if v, ok := interface{}(val).(interface{ Validate() error }); ok {
-				if err := v.Validate(); err != nil {
-					return CalculateQuotasWorkflowResponseValidationError{
-						field:  fmt.Sprintf("QuotaRequests[%v]", key),
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, CalculateQuotasWorkflowResponseValidationError{
+						field:  fmt.Sprintf("QuotaRequests[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
-					}
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, CalculateQuotasWorkflowResponseValidationError{
+						field:  fmt.Sprintf("QuotaRequests[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
 				}
 			}
-
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return CalculateQuotasWorkflowResponseValidationError{
+					field:  fmt.Sprintf("QuotaRequests[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
 		}
+
 	}
 
 	if len(errors) > 0 {
@@ -998,50 +1301,111 @@ func (m *AcquireQuotasActivityRequest) validate(all bool) error {
 
 	var errors []error
 
-	{
-		sorted_keys := make([]string, len(m.GetQuotaRequests()))
-		i := 0
-		for key := range m.GetQuotaRequests() {
-			sorted_keys[i] = key
-			i++
+	if l := utf8.RuneCountInString(m.GetTenantId()); l < 1 || l > 64 {
+		err := AcquireQuotasActivityRequestValidationError{
+			field:  "TenantId",
+			reason: "value length must be between 1 and 64 runes, inclusive",
 		}
-		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
-		for _, key := range sorted_keys {
-			val := m.GetQuotaRequests()[key]
-			_ = val
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-			// no validation rules for QuotaRequests[key]
+	if l := utf8.RuneCountInString(m.GetRunId()); l < 1 || l > 128 {
+		err := AcquireQuotasActivityRequestValidationError{
+			field:  "RunId",
+			reason: "value length must be between 1 and 128 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-			if all {
-				switch v := interface{}(val).(type) {
-				case interface{ ValidateAll() error }:
-					if err := v.ValidateAll(); err != nil {
-						errors = append(errors, AcquireQuotasActivityRequestValidationError{
-							field:  fmt.Sprintf("QuotaRequests[%v]", key),
-							reason: "embedded message failed validation",
-							cause:  err,
-						})
-					}
-				case interface{ Validate() error }:
-					if err := v.Validate(); err != nil {
-						errors = append(errors, AcquireQuotasActivityRequestValidationError{
-							field:  fmt.Sprintf("QuotaRequests[%v]", key),
-							reason: "embedded message failed validation",
-							cause:  err,
-						})
-					}
-				}
-			} else if v, ok := interface{}(val).(interface{ Validate() error }); ok {
-				if err := v.Validate(); err != nil {
-					return AcquireQuotasActivityRequestValidationError{
-						field:  fmt.Sprintf("QuotaRequests[%v]", key),
+	if m.GetPlan() == nil {
+		err := AcquireQuotasActivityRequestValidationError{
+			field:  "Plan",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetPlan()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, AcquireQuotasActivityRequestValidationError{
+					field:  "Plan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, AcquireQuotasActivityRequestValidationError{
+					field:  "Plan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPlan()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return AcquireQuotasActivityRequestValidationError{
+				field:  "Plan",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(m.GetQuotaRequests()) > 1024 {
+		err := AcquireQuotasActivityRequestValidationError{
+			field:  "QuotaRequests",
+			reason: "value must contain no more than 1024 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetQuotaRequests() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, AcquireQuotasActivityRequestValidationError{
+						field:  fmt.Sprintf("QuotaRequests[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
-					}
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, AcquireQuotasActivityRequestValidationError{
+						field:  fmt.Sprintf("QuotaRequests[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
 				}
 			}
-
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return AcquireQuotasActivityRequestValidationError{
+					field:  fmt.Sprintf("QuotaRequests[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
 		}
+
 	}
 
 	if len(errors) > 0 {
@@ -1147,50 +1511,49 @@ func (m *AcquireQuotasActivityResponse) validate(all bool) error {
 
 	var errors []error
 
-	{
-		sorted_keys := make([]string, len(m.GetQuotaAllocations()))
-		i := 0
-		for key := range m.GetQuotaAllocations() {
-			sorted_keys[i] = key
-			i++
+	if len(m.GetQuotaAllocations()) > 1024 {
+		err := AcquireQuotasActivityResponseValidationError{
+			field:  "QuotaAllocations",
+			reason: "value must contain no more than 1024 item(s)",
 		}
-		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
-		for _, key := range sorted_keys {
-			val := m.GetQuotaAllocations()[key]
-			_ = val
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-			// no validation rules for QuotaAllocations[key]
+	for idx, item := range m.GetQuotaAllocations() {
+		_, _ = idx, item
 
-			if all {
-				switch v := interface{}(val).(type) {
-				case interface{ ValidateAll() error }:
-					if err := v.ValidateAll(); err != nil {
-						errors = append(errors, AcquireQuotasActivityResponseValidationError{
-							field:  fmt.Sprintf("QuotaAllocations[%v]", key),
-							reason: "embedded message failed validation",
-							cause:  err,
-						})
-					}
-				case interface{ Validate() error }:
-					if err := v.Validate(); err != nil {
-						errors = append(errors, AcquireQuotasActivityResponseValidationError{
-							field:  fmt.Sprintf("QuotaAllocations[%v]", key),
-							reason: "embedded message failed validation",
-							cause:  err,
-						})
-					}
-				}
-			} else if v, ok := interface{}(val).(interface{ Validate() error }); ok {
-				if err := v.Validate(); err != nil {
-					return AcquireQuotasActivityResponseValidationError{
-						field:  fmt.Sprintf("QuotaAllocations[%v]", key),
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, AcquireQuotasActivityResponseValidationError{
+						field:  fmt.Sprintf("QuotaAllocations[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
-					}
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, AcquireQuotasActivityResponseValidationError{
+						field:  fmt.Sprintf("QuotaAllocations[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
 				}
 			}
-
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return AcquireQuotasActivityResponseValidationError{
+					field:  fmt.Sprintf("QuotaAllocations[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
 		}
+
 	}
 
 	if len(errors) > 0 {
@@ -1273,6 +1636,509 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = AcquireQuotasActivityResponseValidationError{}
+
+// Validate checks the field values on CommitQuotasActivityRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CommitQuotasActivityRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CommitQuotasActivityRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CommitQuotasActivityRequestMultiError, or nil if none found.
+func (m *CommitQuotasActivityRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CommitQuotasActivityRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetTenantId()); l < 1 || l > 64 {
+		err := CommitQuotasActivityRequestValidationError{
+			field:  "TenantId",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetRunId()); l < 1 || l > 128 {
+		err := CommitQuotasActivityRequestValidationError{
+			field:  "RunId",
+			reason: "value length must be between 1 and 128 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return CommitQuotasActivityRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// CommitQuotasActivityRequestMultiError is an error wrapping multiple
+// validation errors returned by CommitQuotasActivityRequest.ValidateAll() if
+// the designated constraints aren't met.
+type CommitQuotasActivityRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CommitQuotasActivityRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CommitQuotasActivityRequestMultiError) AllErrors() []error { return m }
+
+// CommitQuotasActivityRequestValidationError is the validation error returned
+// by CommitQuotasActivityRequest.Validate if the designated constraints
+// aren't met.
+type CommitQuotasActivityRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CommitQuotasActivityRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CommitQuotasActivityRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CommitQuotasActivityRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CommitQuotasActivityRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CommitQuotasActivityRequestValidationError) ErrorName() string {
+	return "CommitQuotasActivityRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CommitQuotasActivityRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCommitQuotasActivityRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CommitQuotasActivityRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CommitQuotasActivityRequestValidationError{}
+
+// Validate checks the field values on CommitQuotasActivityResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CommitQuotasActivityResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CommitQuotasActivityResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CommitQuotasActivityResponseMultiError, or nil if none found.
+func (m *CommitQuotasActivityResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CommitQuotasActivityResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(m.GetQuotaAllocations()) > 1024 {
+		err := CommitQuotasActivityResponseValidationError{
+			field:  "QuotaAllocations",
+			reason: "value must contain no more than 1024 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetQuotaAllocations() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, CommitQuotasActivityResponseValidationError{
+						field:  fmt.Sprintf("QuotaAllocations[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, CommitQuotasActivityResponseValidationError{
+						field:  fmt.Sprintf("QuotaAllocations[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return CommitQuotasActivityResponseValidationError{
+					field:  fmt.Sprintf("QuotaAllocations[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return CommitQuotasActivityResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// CommitQuotasActivityResponseMultiError is an error wrapping multiple
+// validation errors returned by CommitQuotasActivityResponse.ValidateAll() if
+// the designated constraints aren't met.
+type CommitQuotasActivityResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CommitQuotasActivityResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CommitQuotasActivityResponseMultiError) AllErrors() []error { return m }
+
+// CommitQuotasActivityResponseValidationError is the validation error returned
+// by CommitQuotasActivityResponse.Validate if the designated constraints
+// aren't met.
+type CommitQuotasActivityResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CommitQuotasActivityResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CommitQuotasActivityResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CommitQuotasActivityResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CommitQuotasActivityResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CommitQuotasActivityResponseValidationError) ErrorName() string {
+	return "CommitQuotasActivityResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CommitQuotasActivityResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCommitQuotasActivityResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CommitQuotasActivityResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CommitQuotasActivityResponseValidationError{}
+
+// Validate checks the field values on ReleaseQuotasActivityRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ReleaseQuotasActivityRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ReleaseQuotasActivityRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ReleaseQuotasActivityRequestMultiError, or nil if none found.
+func (m *ReleaseQuotasActivityRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ReleaseQuotasActivityRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetTenantId()); l < 1 || l > 64 {
+		err := ReleaseQuotasActivityRequestValidationError{
+			field:  "TenantId",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetRunId()); l < 1 || l > 128 {
+		err := ReleaseQuotasActivityRequestValidationError{
+			field:  "RunId",
+			reason: "value length must be between 1 and 128 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return ReleaseQuotasActivityRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// ReleaseQuotasActivityRequestMultiError is an error wrapping multiple
+// validation errors returned by ReleaseQuotasActivityRequest.ValidateAll() if
+// the designated constraints aren't met.
+type ReleaseQuotasActivityRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ReleaseQuotasActivityRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ReleaseQuotasActivityRequestMultiError) AllErrors() []error { return m }
+
+// ReleaseQuotasActivityRequestValidationError is the validation error returned
+// by ReleaseQuotasActivityRequest.Validate if the designated constraints
+// aren't met.
+type ReleaseQuotasActivityRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ReleaseQuotasActivityRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ReleaseQuotasActivityRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ReleaseQuotasActivityRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ReleaseQuotasActivityRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ReleaseQuotasActivityRequestValidationError) ErrorName() string {
+	return "ReleaseQuotasActivityRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ReleaseQuotasActivityRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sReleaseQuotasActivityRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ReleaseQuotasActivityRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ReleaseQuotasActivityRequestValidationError{}
+
+// Validate checks the field values on ReleaseQuotasActivityResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ReleaseQuotasActivityResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ReleaseQuotasActivityResponse with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// ReleaseQuotasActivityResponseMultiError, or nil if none found.
+func (m *ReleaseQuotasActivityResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ReleaseQuotasActivityResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Released
+
+	if len(errors) > 0 {
+		return ReleaseQuotasActivityResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ReleaseQuotasActivityResponseMultiError is an error wrapping multiple
+// validation errors returned by ReleaseQuotasActivityResponse.ValidateAll()
+// if the designated constraints aren't met.
+type ReleaseQuotasActivityResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ReleaseQuotasActivityResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ReleaseQuotasActivityResponseMultiError) AllErrors() []error { return m }
+
+// ReleaseQuotasActivityResponseValidationError is the validation error
+// returned by ReleaseQuotasActivityResponse.Validate if the designated
+// constraints aren't met.
+type ReleaseQuotasActivityResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ReleaseQuotasActivityResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ReleaseQuotasActivityResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ReleaseQuotasActivityResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ReleaseQuotasActivityResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ReleaseQuotasActivityResponseValidationError) ErrorName() string {
+	return "ReleaseQuotasActivityResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ReleaseQuotasActivityResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sReleaseQuotasActivityResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ReleaseQuotasActivityResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ReleaseQuotasActivityResponseValidationError{}
 
 // Validate checks the field values on AgentBootstrap with the rules defined in
 // the proto definition for this message. If any rules are violated, the first

@@ -24,7 +24,6 @@ type DatabasePresetRepo interface {
 	Get(ctx context.Context, tenantID, id, callerAccountID string) (*models.DatabasePresetRecord, error)
 	List(ctx context.Context, req *api.ListDatabasePresetsRequest, callerAccountID string) (presets []*models.DatabasePresetRecord, nextPageToken string, err error)
 	Update(ctx context.Context, preset *models.DatabasePresetRecord) error
-	Delete(ctx context.Context, tenantID, id string) error
 }
 
 func (s *DatabasePresetService) CreateDatabasePreset(ctx context.Context, req *api.CreateDatabasePresetRequest) (*api.CreateDatabasePresetResponse, error) {
@@ -40,6 +39,7 @@ func (s *DatabasePresetService) CreateDatabasePreset(ctx context.Context, req *a
 	// mint a system preset.
 	preset.Entity = s.d.stampNew(preset.GetEntity(), req.GetTenantId(), c.GetAccountId())
 	preset.IsSystem = false
+	fillDatabasePresetSummary(preset)
 	if err := s.d.Databases.Create(ctx, preset); err != nil {
 		return nil, utils.MapErr(err)
 	}
@@ -95,6 +95,7 @@ func (s *DatabasePresetService) UpdateDatabasePreset(ctx context.Context, req *a
 			Database: in.GetDatabase(),
 			IsSystem: false,
 		}
+		fillDatabasePresetSummary(out)
 		if err := s.d.Databases.Update(ctx, out); err != nil {
 			return nil, utils.MapErr(err)
 		}
@@ -120,7 +121,14 @@ func (s *DatabasePresetService) DeleteDatabasePreset(ctx context.Context, req *a
 		if existing.GetIsSystem() {
 			return status.Error(codes.FailedPrecondition, "system presets cannot be deleted")
 		}
-		return ignoreNotFound(s.d.Databases.Delete(ctx, req.GetTenantId(), req.GetId()))
+		if existing.GetEntity().GetTimings().GetDeletedAt() != nil {
+			return nil
+		}
+		markEntityDeleted(existing.GetEntity(), s.d.now())
+		if err := s.d.Databases.Update(ctx, existing); err != nil {
+			return utils.MapErr(err)
+		}
+		return nil
 	}); err != nil {
 		return nil, err
 	}
@@ -145,6 +153,7 @@ func (s *DatabasePresetService) CloneDatabasePreset(ctx context.Context, req *ap
 			Database: src.GetDatabase(),
 			IsSystem: false,
 		}
+		fillDatabasePresetSummary(out)
 		if err := s.d.Databases.Create(ctx, out); err != nil {
 			return nil, utils.MapErr(err)
 		}

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strings"
 
+	"connectrpc.com/connect"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -13,6 +14,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
 
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 )
 
@@ -46,10 +48,20 @@ type TokenVerifier interface {
 	Verify(ctx context.Context, token string) (*iam.AccessClaims, error)
 }
 
+type RestrictedTokenVerifier interface {
+	VerifyWithRestrictions(ctx context.Context, token string) (*iam.AccessClaims, []*iam.Permission, bool, error)
+}
+
 // PermissionResolver resolves the caller's effective permissions in one tenant
 // (the live union; an empty tenantID means platform-scoped only).
 type PermissionResolver interface {
 	EffectivePermissions(ctx context.Context, accountID, tenantID string) ([]*iam.Permission, error)
+}
+
+type verifiedCaller struct {
+	claims      *iam.AccessClaims
+	permissions []*iam.Permission
+	restricted  bool
 }
 
 type AuthInterceptor struct {
@@ -74,21 +86,21 @@ func (a *AuthInterceptor) Unary() grpc.UnaryServerInterceptor {
 			return handler(ctx, req)
 		}
 
-		claims, err := a.authenticate(ctx)
+		verified, err := a.authenticate(ctx)
 		if err != nil {
 			return nil, err
 		}
-		ctx = ContextWithClaims(ctx, claims)
+		ctx = contextWithVerifiedCaller(ctx, verified)
 
 		if auth.GetAdminOnly() {
-			if !claims.GetIsAdmin() {
+			if verified.restricted || !verified.claims.GetIsAdmin() {
 				return nil, status.Error(codes.PermissionDenied, "admin only")
 			}
 			return handler(ctx, req)
 		}
 
 		if len(auth.GetAllOf()) > 0 {
-			if err := a.authorize(ctx, claims, req, auth); err != nil {
+			if err := a.authorize(ctx, verified, req, auth); err != nil {
 				return nil, err
 			}
 		}
@@ -98,29 +110,161 @@ func (a *AuthInterceptor) Unary() grpc.UnaryServerInterceptor {
 	}
 }
 
-func (a *AuthInterceptor) authenticate(ctx context.Context) (*iam.AccessClaims, error) {
+// ConnectUnary returns the equivalent Connect handler interceptor. Connect
+// handlers are the browser/API path, so they must use the same proto auth
+// annotations as native gRPC handlers.
+func (a *AuthInterceptor) ConnectUnary() connect.UnaryInterceptorFunc {
+	return connect.UnaryInterceptorFunc(func(next connect.UnaryFunc) connect.UnaryFunc {
+		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
+			auth := methodAuth(req.Spec().Procedure)
+			if auth == nil {
+				auth = &iam.MethodAuth{AdminOnly: true}
+			}
+			if auth.GetPublic() {
+				return next(ctx, req)
+			}
+			verified, err := a.authenticate(ctx)
+			if err != nil {
+				return nil, err
+			}
+			ctx = contextWithVerifiedCaller(ctx, verified)
+
+			if auth.GetAdminOnly() {
+				if verified.restricted || !verified.claims.GetIsAdmin() {
+					return nil, status.Error(codes.PermissionDenied, "admin only")
+				}
+				return next(ctx, req)
+			}
+			if len(auth.GetAllOf()) > 0 {
+				if err := a.authorize(ctx, verified, req.Any(), auth); err != nil {
+					return nil, err
+				}
+			}
+			return next(ctx, req)
+		}
+	})
+}
+
+// Stream returns the native gRPC streaming interceptor. It authenticates before
+// the handler runs, then authorizes on the first received request message so
+// tenant-scoped stream RPCs can still use MethodAuth. Server-streaming handlers
+// receive exactly one request message; bidi/client streams are authorized on
+// their first inbound message.
+func (a *AuthInterceptor) Stream() grpc.StreamServerInterceptor {
+	return func(srv any, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+		auth := methodAuth(info.FullMethod)
+		if auth == nil {
+			auth = &iam.MethodAuth{AdminOnly: true}
+		}
+		if auth.GetPublic() {
+			return handler(srv, stream)
+		}
+		verified, err := a.authenticate(stream.Context())
+		if err != nil {
+			return err
+		}
+		ctx := contextWithVerifiedCaller(stream.Context(), verified)
+		wrapped := &contextServerStream{ServerStream: stream, ctx: ctx}
+
+		if auth.GetAdminOnly() {
+			if verified.restricted || !verified.claims.GetIsAdmin() {
+				return status.Error(codes.PermissionDenied, "admin only")
+			}
+			return handler(srv, wrapped)
+		}
+		if len(auth.GetAllOf()) == 0 {
+			return handler(srv, wrapped)
+		}
+		return handler(srv, &authzServerStream{
+			contextServerStream: wrapped,
+			auth:                auth,
+			verified:            verified,
+			interceptor:         a,
+		})
+	}
+}
+
+func (a *AuthInterceptor) authenticate(ctx context.Context) (verifiedCaller, error) {
 	token, err := bearerToken(ctx)
 	if err != nil {
-		return nil, err
+		return verifiedCaller{}, err
+	}
+	if v, ok := a.tokens.(RestrictedTokenVerifier); ok {
+		claims, permissions, restricted, err := v.VerifyWithRestrictions(ctx, token)
+		if err != nil {
+			return verifiedCaller{}, status.Error(codes.Unauthenticated, "invalid access token")
+		}
+		return verifiedCaller{claims: claims, permissions: permissions, restricted: restricted}, nil
 	}
 	claims, err := a.tokens.Verify(ctx, token)
 	if err != nil {
-		return nil, status.Error(codes.Unauthenticated, "invalid access token")
+		return verifiedCaller{}, status.Error(codes.Unauthenticated, "invalid access token")
 	}
-	return claims, nil
+	return verifiedCaller{claims: claims}, nil
 }
 
-func (a *AuthInterceptor) authorize(ctx context.Context, claims *iam.AccessClaims, req any, auth *iam.MethodAuth) error {
-	if claims.GetIsAdmin() {
+func (a *AuthInterceptor) authorize(ctx context.Context, verified verifiedCaller, req any, auth *iam.MethodAuth) error {
+	if verified.claims.GetIsAdmin() && !verified.restricted {
 		return nil // platform super-user short-circuits to allow.
 	}
+	switch req.(type) {
+	case *api.CreateTenantRequest:
+		// Tenant creation is governed by PlatformSettings.allow_member_tenant_creation
+		// in the handler; a tenant-scoped RBAC check cannot apply before the tenant
+		// exists.
+		return nil
+	case *api.GetTenantRequest:
+		// GetTenant supports slug lookup. The handler resolves slug->id and
+		// enforces admin/member access there.
+		return nil
+	case *api.GetAccountRequest, *api.UpdateAccountRequest:
+		// Account self-service and tenant-member account joins need request-aware
+		// checks (self/admin/co-tenant), not platform-wide RESOURCE_ACCOUNT grants.
+		// The handlers enforce the narrower policy after loading the target.
+		return nil
+	}
 	tenantID := tenantIDFromRequest(req, auth.GetTenantField())
-	granted, err := a.perms.EffectivePermissions(ctx, claims.GetAccountId(), tenantID)
+	granted, err := a.perms.EffectivePermissions(ctx, verified.claims.GetAccountId(), tenantID)
 	if err != nil {
 		return status.Error(codes.Internal, err.Error())
 	}
 	if !hasAll(granted, auth.GetAllOf()) {
 		return status.Error(codes.PermissionDenied, "missing required permission")
+	}
+	if verified.restricted && !hasAll(verified.permissions, auth.GetAllOf()) {
+		return status.Error(codes.PermissionDenied, "token missing required permission")
+	}
+	return nil
+}
+
+func contextWithVerifiedCaller(ctx context.Context, verified verifiedCaller) context.Context {
+	return ContextWithClaims(ctx, verified.claims)
+}
+
+type contextServerStream struct {
+	grpc.ServerStream
+	ctx context.Context
+}
+
+func (s *contextServerStream) Context() context.Context { return s.ctx }
+
+type authzServerStream struct {
+	*contextServerStream
+	auth        *iam.MethodAuth
+	verified    verifiedCaller
+	interceptor *AuthInterceptor
+	authorized  bool
+}
+
+func (s *authzServerStream) RecvMsg(m any) error {
+	if err := s.ServerStream.RecvMsg(m); err != nil {
+		return err
+	}
+	if !s.authorized {
+		if err := s.interceptor.authorize(s.ctx, s.verified, m, s.auth); err != nil {
+			return err
+		}
+		s.authorized = true
 	}
 	return nil
 }

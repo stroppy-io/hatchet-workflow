@@ -9,7 +9,9 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"time"
 
+	"connectrpc.com/connect"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
 	"golang.org/x/net/http2"
@@ -22,8 +24,10 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/execution"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/identity"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres"
+	quotainfra "github.com/stroppy-io/stroppy-cloud/internal/infrastructure/quotas"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/apiconnect"
+	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/services/agent_shell"
 	"github.com/stroppy-io/stroppy-cloud/internal/services/compare"
 	"github.com/stroppy-io/stroppy-cloud/internal/services/favorite"
@@ -32,8 +36,10 @@ import (
 	presetsvc "github.com/stroppy-io/stroppy-cloud/internal/services/preset"
 	publicrating "github.com/stroppy-io/stroppy-cloud/internal/services/public_rating"
 	publicshare "github.com/stroppy-io/stroppy-cloud/internal/services/public_share"
+	quotasvc "github.com/stroppy-io/stroppy-cloud/internal/services/quota"
 	ratingsvc "github.com/stroppy-io/stroppy-cloud/internal/services/rating"
 	sharesvc "github.com/stroppy-io/stroppy-cloud/internal/services/share"
+	stroppysvc "github.com/stroppy-io/stroppy-cloud/internal/services/stroppy"
 	suitesvc "github.com/stroppy-io/stroppy-cloud/internal/services/suite"
 	suiterunsvc "github.com/stroppy-io/stroppy-cloud/internal/services/suite_run"
 	suitewizardsvc "github.com/stroppy-io/stroppy-cloud/internal/services/suite_wizard"
@@ -85,10 +91,6 @@ func Run(ctx context.Context, cfg Config) error {
 		// provider secrets can be sealed without a second configured key.
 		SecretEncryptionKey: deriveSecretKey(cfg.JWTSecret),
 	}
-	authn, err := identity.NewJWTAuthn(idCfg)
-	if err != nil {
-		return fmt.Errorf("identity authn: %w", err)
-	}
 	tokenSvc, err := identity.NewJWTTokenService(idCfg, store.RefreshSessions())
 	if err != nil {
 		return fmt.Errorf("identity token service: %w", err)
@@ -104,6 +106,10 @@ func Run(ctx context.Context, cfg Config) error {
 	hasher := identity.NewBcryptHasher(0)
 	apiTokenMinter := identity.NewApiTokenMinter()
 	apiTokenSecrets := identity.NewApiTokenSecrets(store.Secrets())
+	apiTokenVerifier := identity.NewApiTokenVerifier(store.ApiTokens(), store.Accounts(), apiTokenSecrets)
+	bearerVerifier := identity.NewCompositeTokenVerifier(tokenSvc, apiTokenVerifier)
+	authn := identity.NewJWTAuthnWithVerifier(bearerVerifier)
+	authzGate := iamsvc.NewAuthInterceptor(bearerVerifier, permResolver)
 	oidc := identity.NewOIDCFlows(idCfg, store.SSOStates())
 	notifier := identity.NewSlogNotifier(log)
 	catalog := identity.NewCatalog()
@@ -135,6 +141,8 @@ func Run(ctx context.Context, cfg Config) error {
 	testWorkflows := execution.NewTestWorkflows(tc, resolver, log)
 	summarizer := execution.NewRunSummarizer()
 	snapReader := snapshotRunReader{r: bid, suiteRuns: store.SuiteRuns()}
+	runtimeStore := runtimePersistenceStore{r: bid, runs: store.TestRuns(), suiteRuns: store.SuiteRuns(), suites: store.Suites()}
+	runtimeActivities := execution.NewRunPersistenceActivities(runtimeStore)
 	overviewReader := execution.NewOverviewReader(tc, snapReader)
 	logReader := execution.NewLogReader(cfg.MonitoringURL, log)
 	metricsReader := execution.NewMetricsReader(cfg.MonitoringURL, snapReader, log)
@@ -152,13 +160,47 @@ func Run(ctx context.Context, cfg Config) error {
 	// stroppyProberAdapter (a cycle-free port: the service must not import
 	// execution), injected into the wizard service's Deps below.
 	stroppyProber := execution.NewStroppyProber(cfg.StroppyUpstream, probeBinaryCacheDir(cfg.CacheDir))
+	stroppyVersions, err := adapters.NewGitHubStroppyVersionSource(adapters.GitHubStroppyVersionConfig{
+		Repo:       cfg.StroppyGitHubRepo,
+		MinVersion: cfg.StroppyMinVersion,
+		Token:      cfg.StroppyGitHubToken,
+	})
+	if err != nil {
+		return fmt.Errorf("stroppy versions: %w", err)
+	}
+	quotaSnapshotTTL, err := parseDurationDefault(cfg.QuotaSnapshotTTL, 5*time.Minute)
+	if err != nil {
+		return fmt.Errorf("quota snapshot ttl: %w", err)
+	}
+	quotaReservationTTL, err := parseDurationDefault(cfg.QuotaReservationTTL, 30*time.Minute)
+	if err != nil {
+		return fmt.Errorf("quota reservation ttl: %w", err)
+	}
+	quotaRefreshInterval, err := parseDurationDefault(cfg.QuotaRefreshInterval, 5*time.Minute)
+	if err != nil {
+		return fmt.Errorf("quota refresh interval: %w", err)
+	}
+	quotaStore := quotainfra.NewStore(db)
+	quotaManager := quotainfra.NewManager(
+		quotaStore,
+		store.TenantSettings(),
+		map[deploymentpb.Provider]quotainfra.ProviderSource{
+			deploymentpb.Provider_PROVIDER_YANDEX: quotainfra.NewYandexSource(quotaSnapshotTTL),
+			deploymentpb.Provider_PROVIDER_DOCKER: quotainfra.NewDockerSource(quotaSnapshotTTL),
+		},
+		quotainfra.ManagerConfig{
+			SnapshotTTL:    quotaSnapshotTTL,
+			ReservationTTL: quotaReservationTTL,
+		},
+	)
+	quotainfra.StartRefresher(ctx, quotaManager, quotaRefreshInterval, log)
 
 	cells := cellResolver{
 		dbPresets:       store.DatabasePresets(),
 		workloadPresets: store.WorkloadPresets(),
 		testPresets:     store.TestPresets(),
 	}
-	suiteLauncher := execution.NewSuiteRunLauncher(tc, cells, childRunPersister{runs: store.TestRuns()}, resolver)
+	suiteLauncher := execution.NewSuiteRunLauncher(tc, cells, childRunPersister{runs: store.TestRuns()}, suiteRunPersister{suiteRuns: store.SuiteRuns()}, resolver)
 	suiteCanceller := execution.NewSuiteRunCanceller(tc)
 
 	// 5) Adapters layer.
@@ -286,6 +328,13 @@ func Run(ctx context.Context, cfg Config) error {
 		Tx:       trm,
 	})
 
+	quotaService := quotasvc.NewService(quotasvc.Deps{
+		Authn:   authn,
+		Tenants: tenantReader,
+		Runs:    store.TestRuns(),
+		Quotas:  quotaManager,
+	})
+
 	databasePresetService := presetsvc.NewDatabasePresetService(presetsvc.Deps{
 		Authn:     authn,
 		Databases: store.DatabasePresets(),
@@ -347,6 +396,11 @@ func Run(ctx context.Context, cfg Config) error {
 		Tx:      trm,
 	})
 
+	stroppyService := stroppysvc.NewService(stroppysvc.Deps{
+		Authn:    authn,
+		Versions: stroppyVersions,
+	})
+
 	suiteService := suitesvc.NewSuiteService(suitesvc.SuiteDeps{
 		Authn:    authn,
 		Suites:   store.Suites(),
@@ -357,6 +411,7 @@ func Run(ctx context.Context, cfg Config) error {
 	suiteRunService := suiterunsvc.NewSuiteRunService(suiterunsvc.SuiteRunDeps{
 		Authn:     authn,
 		SuiteRuns: store.SuiteRuns(),
+		Runs:      store.TestRuns(),
 		Canceller: suiteCanceller,
 		Tx:        trm,
 	})
@@ -429,41 +484,64 @@ func Run(ctx context.Context, cfg Config) error {
 
 	// 7) Connect handlers + embedded SPA on one mux.
 	mux := http.NewServeMux()
+	handlerOpts := []connect.HandlerOption{connect.WithInterceptors(authzGate.ConnectUnary())}
 	register(mux,
-		func() (string, http.Handler) { return apiconnect.NewIamServiceHandler(iamService) },
+		func() (string, http.Handler) { return apiconnect.NewIamServiceHandler(iamService, handlerOpts...) },
 		func() (string, http.Handler) {
-			return apiconnect.NewSystemSettingsServiceHandler(systemSettingsService)
+			return apiconnect.NewSystemSettingsServiceHandler(systemSettingsService, handlerOpts...)
 		},
 		func() (string, http.Handler) {
-			return apiconnect.NewTenantSettingsServiceHandler(tenantSettingsService)
+			return apiconnect.NewTenantSettingsServiceHandler(tenantSettingsService, handlerOpts...)
 		},
 		func() (string, http.Handler) {
-			return apiconnect.NewDatabasePresetServiceHandler(databasePresetService)
+			return apiconnect.NewQuotaServiceHandler(quotaService, handlerOpts...)
 		},
 		func() (string, http.Handler) {
-			return apiconnect.NewWorkloadPresetServiceHandler(workloadPresetService)
+			return apiconnect.NewDatabasePresetServiceHandler(databasePresetService, handlerOpts...)
 		},
-		func() (string, http.Handler) { return apiconnect.NewTestPresetServiceHandler(testPresetService) },
-		func() (string, http.Handler) { return apiconnect.NewPackageServiceHandler(packageService) },
-		func() (string, http.Handler) { return apiconnect.NewTestRunServiceHandler(testRunService) },
-		func() (string, http.Handler) { return apiconnect.NewTestWizardServiceHandler(testWizardService) },
-		func() (string, http.Handler) { return apiconnect.NewSuiteServiceHandler(suiteService) },
-		func() (string, http.Handler) { return apiconnect.NewSuiteRunServiceHandler(suiteRunService) },
 		func() (string, http.Handler) {
-			return apiconnect.NewSuiteWizardServiceHandler(suiteWizardService)
+			return apiconnect.NewWorkloadPresetServiceHandler(workloadPresetService, handlerOpts...)
 		},
-		func() (string, http.Handler) { return apiconnect.NewCompareServiceHandler(compareService) },
-		func() (string, http.Handler) { return apiconnect.NewRatingServiceHandler(ratingService) },
 		func() (string, http.Handler) {
-			return apiconnect.NewPublicRatingServiceHandler(publicRatingService)
+			return apiconnect.NewTestPresetServiceHandler(testPresetService, handlerOpts...)
 		},
-		func() (string, http.Handler) { return apiconnect.NewShareServiceHandler(shareService) },
 		func() (string, http.Handler) {
-			return apiconnect.NewPublicShareServiceHandler(publicShareService)
+			return apiconnect.NewPackageServiceHandler(packageService, handlerOpts...)
 		},
-		func() (string, http.Handler) { return apiconnect.NewFavoriteServiceHandler(favoriteService) },
 		func() (string, http.Handler) {
-			return apiconnect.NewTenantDashboardServiceHandler(tenantDashboardService)
+			return apiconnect.NewTestRunServiceHandler(testRunService, handlerOpts...)
+		},
+		func() (string, http.Handler) {
+			return apiconnect.NewTestWizardServiceHandler(testWizardService, handlerOpts...)
+		},
+		func() (string, http.Handler) {
+			return apiconnect.NewStroppyServiceHandler(stroppyService, handlerOpts...)
+		},
+		func() (string, http.Handler) { return apiconnect.NewSuiteServiceHandler(suiteService, handlerOpts...) },
+		func() (string, http.Handler) {
+			return apiconnect.NewSuiteRunServiceHandler(suiteRunService, handlerOpts...)
+		},
+		func() (string, http.Handler) {
+			return apiconnect.NewSuiteWizardServiceHandler(suiteWizardService, handlerOpts...)
+		},
+		func() (string, http.Handler) {
+			return apiconnect.NewCompareServiceHandler(compareService, handlerOpts...)
+		},
+		func() (string, http.Handler) {
+			return apiconnect.NewRatingServiceHandler(ratingService, handlerOpts...)
+		},
+		func() (string, http.Handler) {
+			return apiconnect.NewPublicRatingServiceHandler(publicRatingService, handlerOpts...)
+		},
+		func() (string, http.Handler) { return apiconnect.NewShareServiceHandler(shareService, handlerOpts...) },
+		func() (string, http.Handler) {
+			return apiconnect.NewPublicShareServiceHandler(publicShareService, handlerOpts...)
+		},
+		func() (string, http.Handler) {
+			return apiconnect.NewFavoriteServiceHandler(favoriteService, handlerOpts...)
+		},
+		func() (string, http.Handler) {
+			return apiconnect.NewTenantDashboardServiceHandler(tenantDashboardService, handlerOpts...)
 		},
 	)
 
@@ -478,7 +556,7 @@ func Run(ctx context.Context, cfg Config) error {
 	// grpc.ServerStream / grpc.BidiStream, which the connect handler interfaces do
 	// not accept. They are served by a real grpc.Server multiplexed onto the same
 	// HTTP/2 cleartext handler by content-type ("application/grpc").
-	grpcSrv := grpc.NewServer()
+	grpcSrv := grpc.NewServer(grpc.UnaryInterceptor(authzGate.Unary()), grpc.StreamInterceptor(authzGate.Stream()))
 	api.RegisterTestRunOverviewServiceServer(grpcSrv, testRunOverviewService)
 	api.RegisterAgentShellServiceServer(grpcSrv, agentShellService)
 
@@ -489,7 +567,7 @@ func Run(ctx context.Context, cfg Config) error {
 	// 8) Temporal server worker.
 	w := worker.New(tc, "stroppy-cloud", worker.Options{})
 	workflows.RegisterWorkflows(w, workflows.DefaultOptions())
-	workflows.RegisterActivities(w)
+	workflows.RegisterActivities(w, runtimeActivities, workflows.ActivityOptions{Quotas: quotaManager})
 	if err := w.Start(); err != nil {
 		return fmt.Errorf("start temporal worker: %w", err)
 	}
@@ -582,4 +660,11 @@ func trimLeadingSlash(p string) string {
 		return p[1:]
 	}
 	return p
+}
+
+func parseDurationDefault(raw string, fallback time.Duration) (time.Duration, error) {
+	if raw == "" {
+		return fallback, nil
+	}
+	return time.ParseDuration(raw)
 }

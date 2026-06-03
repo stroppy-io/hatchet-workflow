@@ -1104,6 +1104,223 @@ func (m *ListTestRunsResponse) UnmarshalJSON(data []byte) error {
 	return m.Decode(d)
 }
 
+func (m *ListTestRunFacetsRequest) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.TenantId != "" {
+		e.FieldStart("tenantId")
+		e.Str(m.TenantId)
+	}
+	if m.Filter != nil {
+		e.FieldStart("filter")
+		jxpb.EncMessage(e, m.Filter)
+	}
+	e.ObjEnd()
+}
+
+func (m *ListTestRunFacetsRequest) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "tenantId", "tenant_id":
+			if seen["TenantId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["TenantId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.TenantId = v
+			return nil
+		case "filter":
+			if seen["Filter"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Filter"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Filter = &common.EntityFilter{}
+			if err := jxpb.DecMessage(d, m.Filter); err != nil {
+				return err
+			}
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *ListTestRunFacetsRequest) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *ListTestRunFacetsRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *ListTestRunFacetsResponse) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if len(m.AuthorIds) > 0 {
+		e.FieldStart("authorIds")
+		e.ArrStart()
+		for _, v := range m.AuthorIds {
+			e.Str(v)
+		}
+		e.ArrEnd()
+	}
+	if len(m.StroppyVersions) > 0 {
+		e.FieldStart("stroppyVersions")
+		e.ArrStart()
+		for _, v := range m.StroppyVersions {
+			e.Str(v)
+		}
+		e.ArrEnd()
+	}
+	if len(m.DbPresetIds) > 0 {
+		e.FieldStart("dbPresetIds")
+		e.ArrStart()
+		for _, v := range m.DbPresetIds {
+			e.Str(v)
+		}
+		e.ArrEnd()
+	}
+	if len(m.WorkloadPresetIds) > 0 {
+		e.FieldStart("workloadPresetIds")
+		e.ArrStart()
+		for _, v := range m.WorkloadPresetIds {
+			e.Str(v)
+		}
+		e.ArrEnd()
+	}
+	if len(m.TestPresetIds) > 0 {
+		e.FieldStart("testPresetIds")
+		e.ArrStart()
+		for _, v := range m.TestPresetIds {
+			e.Str(v)
+		}
+		e.ArrEnd()
+	}
+	e.ObjEnd()
+}
+
+func (m *ListTestRunFacetsResponse) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "authorIds", "author_ids":
+			if seen["AuthorIds"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["AuthorIds"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				v, err := d.Str()
+				if err != nil {
+					return err
+				}
+				m.AuthorIds = append(m.AuthorIds, v)
+				return nil
+			})
+		case "stroppyVersions", "stroppy_versions":
+			if seen["StroppyVersions"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["StroppyVersions"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				v, err := d.Str()
+				if err != nil {
+					return err
+				}
+				m.StroppyVersions = append(m.StroppyVersions, v)
+				return nil
+			})
+		case "dbPresetIds", "db_preset_ids":
+			if seen["DbPresetIds"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["DbPresetIds"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				v, err := d.Str()
+				if err != nil {
+					return err
+				}
+				m.DbPresetIds = append(m.DbPresetIds, v)
+				return nil
+			})
+		case "workloadPresetIds", "workload_preset_ids":
+			if seen["WorkloadPresetIds"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["WorkloadPresetIds"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				v, err := d.Str()
+				if err != nil {
+					return err
+				}
+				m.WorkloadPresetIds = append(m.WorkloadPresetIds, v)
+				return nil
+			})
+		case "testPresetIds", "test_preset_ids":
+			if seen["TestPresetIds"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["TestPresetIds"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				v, err := d.Str()
+				if err != nil {
+					return err
+				}
+				m.TestPresetIds = append(m.TestPresetIds, v)
+				return nil
+			})
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *ListTestRunFacetsResponse) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *ListTestRunFacetsResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
 func (m *CancelTestRunRequest) Encode(e *jx.Encoder) {
 	if m == nil {
 		e.ObjStart()

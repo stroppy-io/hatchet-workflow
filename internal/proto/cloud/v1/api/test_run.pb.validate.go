@@ -1350,6 +1350,250 @@ var _ interface {
 	ErrorName() string
 } = ListTestRunsResponseValidationError{}
 
+// Validate checks the field values on ListTestRunFacetsRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListTestRunFacetsRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListTestRunFacetsRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListTestRunFacetsRequestMultiError, or nil if none found.
+func (m *ListTestRunFacetsRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListTestRunFacetsRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetTenantId()); l < 1 || l > 64 {
+		err := ListTestRunFacetsRequestValidationError{
+			field:  "TenantId",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetFilter()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListTestRunFacetsRequestValidationError{
+					field:  "Filter",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListTestRunFacetsRequestValidationError{
+					field:  "Filter",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetFilter()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListTestRunFacetsRequestValidationError{
+				field:  "Filter",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return ListTestRunFacetsRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListTestRunFacetsRequestMultiError is an error wrapping multiple validation
+// errors returned by ListTestRunFacetsRequest.ValidateAll() if the designated
+// constraints aren't met.
+type ListTestRunFacetsRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListTestRunFacetsRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListTestRunFacetsRequestMultiError) AllErrors() []error { return m }
+
+// ListTestRunFacetsRequestValidationError is the validation error returned by
+// ListTestRunFacetsRequest.Validate if the designated constraints aren't met.
+type ListTestRunFacetsRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListTestRunFacetsRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListTestRunFacetsRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListTestRunFacetsRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListTestRunFacetsRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListTestRunFacetsRequestValidationError) ErrorName() string {
+	return "ListTestRunFacetsRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListTestRunFacetsRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListTestRunFacetsRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListTestRunFacetsRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListTestRunFacetsRequestValidationError{}
+
+// Validate checks the field values on ListTestRunFacetsResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListTestRunFacetsResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListTestRunFacetsResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListTestRunFacetsResponseMultiError, or nil if none found.
+func (m *ListTestRunFacetsResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListTestRunFacetsResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return ListTestRunFacetsResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListTestRunFacetsResponseMultiError is an error wrapping multiple validation
+// errors returned by ListTestRunFacetsResponse.ValidateAll() if the
+// designated constraints aren't met.
+type ListTestRunFacetsResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListTestRunFacetsResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListTestRunFacetsResponseMultiError) AllErrors() []error { return m }
+
+// ListTestRunFacetsResponseValidationError is the validation error returned by
+// ListTestRunFacetsResponse.Validate if the designated constraints aren't met.
+type ListTestRunFacetsResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListTestRunFacetsResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListTestRunFacetsResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListTestRunFacetsResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListTestRunFacetsResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListTestRunFacetsResponseValidationError) ErrorName() string {
+	return "ListTestRunFacetsResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListTestRunFacetsResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListTestRunFacetsResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListTestRunFacetsResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListTestRunFacetsResponseValidationError{}
+
 // Validate checks the field values on CancelTestRunRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.

@@ -33,7 +33,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/api/test_run.proto.
  */
 export const file_cloud_v1_api_test_run: GenFile = /*@__PURE__*/
-  fileDesc("ChtjbG91ZC92MS9hcGkvdGVzdF9ydW4ucHJvdG8SDGNsb3VkLnYxLmFwaSL1AQoTU3RhcnRUZXN0UnVuUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBInCgNydW4YAiABKAsyGC5jbG91ZC52MS5kb21haW4uVGVzdFJ1bkgAEiAKC3Rlc3RfcnVuX2lkGAMgASgJQgn6QgZyBBABGEBIABIdChBpbl90ZW5hbnRfcmF0aW5nGAQgASgISAGIAQESHQoQaW5fZ2xvYmFsX3JhdGluZxgFIAEoCEgCiAEBQg0KBnNvdXJjZRID+EIBQhMKEV9pbl90ZW5hbnRfcmF0aW5nQhMKEV9pbl9nbG9iYWxfcmF0aW5nIk0KFFN0YXJ0VGVzdFJ1blJlc3BvbnNlEjUKA3J1bhgBIAEoCzIeLmNsb3VkLnYxLm1vZGVscy5UZXN0UnVuUmVjb3JkQgj6QgWKAQIQASJIChFHZXRUZXN0UnVuUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIVCgJpZBgCIAEoCUIJ+kIGcgQQARhAIksKEkdldFRlc3RSdW5SZXNwb25zZRI1CgNydW4YASABKAsyHi5jbG91ZC52MS5tb2RlbHMuVGVzdFJ1blJlY29yZEII+kIFigECEAEi6gsKE0xpc3RUZXN0UnVuc1JlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASLQoGZmlsdGVyGAIgASgLMh0uY2xvdWQudjEuY29tbW9uLkVudGl0eUZpbHRlchIpCghzdGF0dXNlcxgDIAMoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXMSMAoIZGJfa2luZHMYBCADKA4yHi5jbG91ZC52MS5kb21haW4uRGF0YWJhc2UuS2luZBIwCglwcm92aWRlcnMYBSADKA4yHS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyEiYKDWRiX3ByZXNldF9pZHMYBiADKAlCD/pCDJIBCRDIASIEcgIYQBIsChN3b3JrbG9hZF9wcmVzZXRfaWRzGAcgAygJQg/6QgySAQkQyAEiBHICGEASKAoPdGVzdF9wcmVzZXRfaWRzGBcgAygJQg/6QgySAQkQyAEiBHICGEASKAoQc3Ryb3BweV92ZXJzaW9ucxgIIAMoCUIO+kILkgEIIgRyAhhAEGQSNQoJcHJvdG9jb2xzGBYgAygOMiIuY2xvdWQudjEuZG9tYWluLldvcmtsb2FkLlByb3RvY29sEh0KDHN1aXRlX3J1bl9pZBgJIAEoCUIH+kIEcgIYQBInCg5zdWl0ZV9jZWxsX2lkcxgYIAMoCUIP+kIMkgEJEMgBIgRyAhhAEhcKCnN0YW5kYWxvbmUYCiABKAhIAIgBARIiCgxwcm9ncmVzc19taW4YCyABKA1CB/pCBCoCGGRIAYgBARIiCgxwcm9ncmVzc19tYXgYDCABKA1CB/pCBCoCGGRIAogBARIvCgxkdXJhdGlvbl9taW4YDSABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb24SLwoMZHVyYXRpb25fbWF4GA4gASgLMhkuZ29vZ2xlLnByb3RvYnVmLkR1cmF0aW9uEjEKDXN0YXJ0ZWRfYWZ0ZXIYDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjIKDnN0YXJ0ZWRfYmVmb3JlGBAgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIyCg5maW5pc2hlZF9hZnRlchgRIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASMwoPZmluaXNoZWRfYmVmb3JlGBIgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIqCgh0cmlnZ2VycxgVIAMoDjIYLmNsb3VkLnYxLmNvbW1vbi5UcmlnZ2VyEjQKBHNvcnQYEyABKAsyJi5jbG91ZC52MS5hcGkuTGlzdFRlc3RSdW5zUmVxdWVzdC5Tb3J0EiMKBHBhZ2UYFCABKAsyFS5jbG91ZC52MS5jb21tb24uUGFnZRqCAwoEU29ydBIyCgZlbnRpdHkYASABKA4yIC5jbG91ZC52MS5jb21tb24uRW50aXR5U29ydEZpZWxkSAASOwoEa2luZBgCIAEoDjIrLmNsb3VkLnYxLmFwaS5MaXN0VGVzdFJ1bnNSZXF1ZXN0LlNvcnQuS2luZEgAEgwKBGRlc2MYAyABKAgi9AEKBEtpbmQSFAoQS0lORF9VTlNQRUNJRklFRBAAEg8KC0tJTkRfU1RBVFVTEAESEAoMS0lORF9EQl9LSU5EEAISEQoNS0lORF9XT1JLTE9BRBADEhEKDUtJTkRfUFJPVklERVIQBBIRCg1LSU5EX1BST0dSRVNTEAUSEQoNS0lORF9EVVJBVElPThAGEhMKD0tJTkRfU1RBUlRFRF9BVBAHEhQKEEtJTkRfRklOSVNIRURfQVQQCBITCg9LSU5EX05PREVfQ09VTlQQCRIRCg1LSU5EX1BST1RPQ09MEAoSFAoQS0lORF9URVNUX1BSRVNFVBALQgQKAmJ5Qg0KC19zdGFuZGFsb25lQg8KDV9wcm9ncmVzc19taW5CDwoNX3Byb2dyZXNzX21heCJdChRMaXN0VGVzdFJ1bnNSZXNwb25zZRIsCgRydW5zGAEgAygLMh4uY2xvdWQudjEubW9kZWxzLlRlc3RSdW5SZWNvcmQSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIksKFENhbmNlbFRlc3RSdW5SZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhUKAmlkGAIgASgJQgn6QgZyBBhAEAEiTgoVQ2FuY2VsVGVzdFJ1blJlc3BvbnNlEjUKA3J1bhgBIAEoCzIeLmNsb3VkLnYxLm1vZGVscy5UZXN0UnVuUmVjb3JkQgj6QgWKAQIQASJLChREZWxldGVUZXN0UnVuUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIVCgJpZBgCIAEoCUIJ+kIGcgQQARhAIhcKFURlbGV0ZVRlc3RSdW5SZXNwb25zZSJlChZFeHRyYWN0VG9QcmVzZXRSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhUKAmlkGAIgASgJQgn6QgZyBBABGEASFgoEbmFtZRgDIAEoCUII+kIFcgMY/wEiVgoXRXh0cmFjdFRvUHJlc2V0UmVzcG9uc2USOwoGcHJlc2V0GAEgASgLMiEuY2xvdWQudjEubW9kZWxzLlRlc3RQcmVzZXRSZWNvcmRCCPpCBYoBAhABMvcECg5UZXN0UnVuU2VydmljZRJhCgxTdGFydFRlc3RSdW4SIS5jbG91ZC52MS5hcGkuU3RhcnRUZXN0UnVuUmVxdWVzdBoiLmNsb3VkLnYxLmFwaS5TdGFydFRlc3RSdW5SZXNwb25zZSIKirUYBhIECAgQARJeCgpHZXRUZXN0UnVuEh8uY2xvdWQudjEuYXBpLkdldFRlc3RSdW5SZXF1ZXN0GiAuY2xvdWQudjEuYXBpLkdldFRlc3RSdW5SZXNwb25zZSINkAIBirUYBhIECAgQAhJkCgxMaXN0VGVzdFJ1bnMSIS5jbG91ZC52MS5hcGkuTGlzdFRlc3RSdW5zUmVxdWVzdBoiLmNsb3VkLnYxLmFwaS5MaXN0VGVzdFJ1bnNSZXNwb25zZSINkAIBirUYBhIEEAUICBJnCg1DYW5jZWxUZXN0UnVuEiIuY2xvdWQudjEuYXBpLkNhbmNlbFRlc3RSdW5SZXF1ZXN0GiMuY2xvdWQudjEuYXBpLkNhbmNlbFRlc3RSdW5SZXNwb25zZSINkAICirUYBhIECAgQAxJnCg1EZWxldGVUZXN0UnVuEiIuY2xvdWQudjEuYXBpLkRlbGV0ZVRlc3RSdW5SZXF1ZXN0GiMuY2xvdWQudjEuYXBpLkRlbGV0ZVRlc3RSdW5SZXNwb25zZSINkAICirUYBhIECAgQBBJqCg9FeHRyYWN0VG9QcmVzZXQSJC5jbG91ZC52MS5hcGkuRXh0cmFjdFRvUHJlc2V0UmVxdWVzdBolLmNsb3VkLnYxLmFwaS5FeHRyYWN0VG9QcmVzZXRSZXNwb25zZSIKirUYBhIECAYQAUJBWj9naXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9hcGliBnByb3RvMw", [file_cloud_v1_common_entity, file_cloud_v1_common_status, file_cloud_v1_common_trigger, file_cloud_v1_deployment_provider, file_cloud_v1_domain_database, file_cloud_v1_domain_test, file_cloud_v1_domain_workload, file_cloud_v1_iam_options, file_cloud_v1_iam_permission, file_cloud_v1_models_preset, file_cloud_v1_models_test_run, file_google_protobuf_duration, file_google_protobuf_timestamp, file_validate_validate]);
+  fileDesc("ChtjbG91ZC92MS9hcGkvdGVzdF9ydW4ucHJvdG8SDGNsb3VkLnYxLmFwaSL1AQoTU3RhcnRUZXN0UnVuUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBInCgNydW4YAiABKAsyGC5jbG91ZC52MS5kb21haW4uVGVzdFJ1bkgAEiAKC3Rlc3RfcnVuX2lkGAMgASgJQgn6QgZyBBABGEBIABIdChBpbl90ZW5hbnRfcmF0aW5nGAQgASgISAGIAQESHQoQaW5fZ2xvYmFsX3JhdGluZxgFIAEoCEgCiAEBQg0KBnNvdXJjZRID+EIBQhMKEV9pbl90ZW5hbnRfcmF0aW5nQhMKEV9pbl9nbG9iYWxfcmF0aW5nIk0KFFN0YXJ0VGVzdFJ1blJlc3BvbnNlEjUKA3J1bhgBIAEoCzIeLmNsb3VkLnYxLm1vZGVscy5UZXN0UnVuUmVjb3JkQgj6QgWKAQIQASJIChFHZXRUZXN0UnVuUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIVCgJpZBgCIAEoCUIJ+kIGcgQQARhAIksKEkdldFRlc3RSdW5SZXNwb25zZRI1CgNydW4YASABKAsyHi5jbG91ZC52MS5tb2RlbHMuVGVzdFJ1blJlY29yZEII+kIFigECEAEi/AsKE0xpc3RUZXN0UnVuc1JlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASLQoGZmlsdGVyGAIgASgLMh0uY2xvdWQudjEuY29tbW9uLkVudGl0eUZpbHRlchIpCghzdGF0dXNlcxgDIAMoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXMSMAoIZGJfa2luZHMYBCADKA4yHi5jbG91ZC52MS5kb21haW4uRGF0YWJhc2UuS2luZBIwCglwcm92aWRlcnMYBSADKA4yHS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyEiYKDWRiX3ByZXNldF9pZHMYBiADKAlCD/pCDJIBCRDIASIEcgIYQBIsChN3b3JrbG9hZF9wcmVzZXRfaWRzGAcgAygJQg/6QgySAQkQyAEiBHICGEASKAoPdGVzdF9wcmVzZXRfaWRzGBcgAygJQg/6QgySAQkQyAEiBHICGEASKAoQc3Ryb3BweV92ZXJzaW9ucxgIIAMoCUIO+kILkgEIEGQiBHICGEASNQoJcHJvdG9jb2xzGBYgAygOMiIuY2xvdWQudjEuZG9tYWluLldvcmtsb2FkLlByb3RvY29sEh0KDHN1aXRlX3J1bl9pZBgJIAEoCUIH+kIEcgIYQBInCg5zdWl0ZV9jZWxsX2lkcxgYIAMoCUIP+kIMkgEJEMgBIgRyAhhAEhcKCnN0YW5kYWxvbmUYCiABKAhIAIgBARIiCgxwcm9ncmVzc19taW4YCyABKA1CB/pCBCoCGGRIAYgBARIiCgxwcm9ncmVzc19tYXgYDCABKA1CB/pCBCoCGGRIAogBARIvCgxkdXJhdGlvbl9taW4YDSABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb24SLwoMZHVyYXRpb25fbWF4GA4gASgLMhkuZ29vZ2xlLnByb3RvYnVmLkR1cmF0aW9uEjEKDXN0YXJ0ZWRfYWZ0ZXIYDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjIKDnN0YXJ0ZWRfYmVmb3JlGBAgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIyCg5maW5pc2hlZF9hZnRlchgRIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASMwoPZmluaXNoZWRfYmVmb3JlGBIgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIqCgh0cmlnZ2VycxgVIAMoDjIYLmNsb3VkLnYxLmNvbW1vbi5UcmlnZ2VyEjQKBHNvcnQYEyABKAsyJi5jbG91ZC52MS5hcGkuTGlzdFRlc3RSdW5zUmVxdWVzdC5Tb3J0EiMKBHBhZ2UYFCABKAsyFS5jbG91ZC52MS5jb21tb24uUGFnZRqUAwoEU29ydBIyCgZlbnRpdHkYASABKA4yIC5jbG91ZC52MS5jb21tb24uRW50aXR5U29ydEZpZWxkSAASOwoEa2luZBgCIAEoDjIrLmNsb3VkLnYxLmFwaS5MaXN0VGVzdFJ1bnNSZXF1ZXN0LlNvcnQuS2luZEgAEgwKBGRlc2MYAyABKAgihgIKBEtpbmQSFAoQS0lORF9VTlNQRUNJRklFRBAAEg8KC0tJTkRfU1RBVFVTEAESEAoMS0lORF9EQl9LSU5EEAISEQoNS0lORF9XT1JLTE9BRBADEhEKDUtJTkRfUFJPVklERVIQBBIRCg1LSU5EX1BST0dSRVNTEAUSEQoNS0lORF9EVVJBVElPThAGEhMKD0tJTkRfU1RBUlRFRF9BVBAHEhQKEEtJTkRfRklOSVNIRURfQVQQCBITCg9LSU5EX05PREVfQ09VTlQQCRIRCg1LSU5EX1BST1RPQ09MEAoSFAoQS0lORF9URVNUX1BSRVNFVBALEhAKDEtJTkRfVFJJR0dFUhAMQgQKAmJ5Qg0KC19zdGFuZGFsb25lQg8KDV9wcm9ncmVzc19taW5CDwoNX3Byb2dyZXNzX21heCJdChRMaXN0VGVzdFJ1bnNSZXNwb25zZRIsCgRydW5zGAEgAygLMh4uY2xvdWQudjEubW9kZWxzLlRlc3RSdW5SZWNvcmQSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJImcKGExpc3RUZXN0UnVuRmFjZXRzUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBItCgZmaWx0ZXIYAiABKAsyHS5jbG91ZC52MS5jb21tb24uRW50aXR5RmlsdGVyIpYBChlMaXN0VGVzdFJ1bkZhY2V0c1Jlc3BvbnNlEhIKCmF1dGhvcl9pZHMYASADKAkSGAoQc3Ryb3BweV92ZXJzaW9ucxgCIAMoCRIVCg1kYl9wcmVzZXRfaWRzGAMgAygJEhsKE3dvcmtsb2FkX3ByZXNldF9pZHMYBCADKAkSFwoPdGVzdF9wcmVzZXRfaWRzGAUgAygJIksKFENhbmNlbFRlc3RSdW5SZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhUKAmlkGAIgASgJQgn6QgZyBBABGEAiTgoVQ2FuY2VsVGVzdFJ1blJlc3BvbnNlEjUKA3J1bhgBIAEoCzIeLmNsb3VkLnYxLm1vZGVscy5UZXN0UnVuUmVjb3JkQgj6QgWKAQIQASJLChREZWxldGVUZXN0UnVuUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEGEAQARIVCgJpZBgCIAEoCUIJ+kIGcgQQARhAIhcKFURlbGV0ZVRlc3RSdW5SZXNwb25zZSJlChZFeHRyYWN0VG9QcmVzZXRSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhUKAmlkGAIgASgJQgn6QgZyBBhAEAESFgoEbmFtZRgDIAEoCUII+kIFcgMY/wEiVgoXRXh0cmFjdFRvUHJlc2V0UmVzcG9uc2USOwoGcHJlc2V0GAEgASgLMiEuY2xvdWQudjEubW9kZWxzLlRlc3RQcmVzZXRSZWNvcmRCCPpCBYoBAhABMuwFCg5UZXN0UnVuU2VydmljZRJhCgxTdGFydFRlc3RSdW4SIS5jbG91ZC52MS5hcGkuU3RhcnRUZXN0UnVuUmVxdWVzdBoiLmNsb3VkLnYxLmFwaS5TdGFydFRlc3RSdW5SZXNwb25zZSIKirUYBhIECAgQARJeCgpHZXRUZXN0UnVuEh8uY2xvdWQudjEuYXBpLkdldFRlc3RSdW5SZXF1ZXN0GiAuY2xvdWQudjEuYXBpLkdldFRlc3RSdW5SZXNwb25zZSINkAIBirUYBhIEEAIICBJkCgxMaXN0VGVzdFJ1bnMSIS5jbG91ZC52MS5hcGkuTGlzdFRlc3RSdW5zUmVxdWVzdBoiLmNsb3VkLnYxLmFwaS5MaXN0VGVzdFJ1bnNSZXNwb25zZSINkAIBirUYBhIECAgQBRJzChFMaXN0VGVzdFJ1bkZhY2V0cxImLmNsb3VkLnYxLmFwaS5MaXN0VGVzdFJ1bkZhY2V0c1JlcXVlc3QaJy5jbG91ZC52MS5hcGkuTGlzdFRlc3RSdW5GYWNldHNSZXNwb25zZSINkAIBirUYBhIEEAUICBJnCg1DYW5jZWxUZXN0UnVuEiIuY2xvdWQudjEuYXBpLkNhbmNlbFRlc3RSdW5SZXF1ZXN0GiMuY2xvdWQudjEuYXBpLkNhbmNlbFRlc3RSdW5SZXNwb25zZSINkAICirUYBhIECAgQAxJnCg1EZWxldGVUZXN0UnVuEiIuY2xvdWQudjEuYXBpLkRlbGV0ZVRlc3RSdW5SZXF1ZXN0GiMuY2xvdWQudjEuYXBpLkRlbGV0ZVRlc3RSdW5SZXNwb25zZSINkAICirUYBhIECAgQBBJqCg9FeHRyYWN0VG9QcmVzZXQSJC5jbG91ZC52MS5hcGkuRXh0cmFjdFRvUHJlc2V0UmVxdWVzdBolLmNsb3VkLnYxLmFwaS5FeHRyYWN0VG9QcmVzZXRSZXNwb25zZSIKirUYBhIEEAEIBkJBWj9naXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9hcGliBnByb3RvMw", [file_cloud_v1_common_entity, file_cloud_v1_common_status, file_cloud_v1_common_trigger, file_cloud_v1_deployment_provider, file_cloud_v1_domain_database, file_cloud_v1_domain_test, file_cloud_v1_domain_workload, file_cloud_v1_iam_options, file_cloud_v1_iam_permission, file_cloud_v1_models_preset, file_cloud_v1_models_test_run, file_google_protobuf_duration, file_google_protobuf_timestamp, file_validate_validate]);
 
 /**
  *
@@ -905,6 +905,14 @@ export enum ListTestRunsRequest_Sort_Kind {
    * @generated from enum value: KIND_TEST_PRESET = 11;
    */
   TEST_PRESET = 11,
+
+  /**
+   *
+   * KIND_TRIGGER orders by how the run was launched (manual/cron/api).
+   *
+   * @generated from enum value: KIND_TRIGGER = 12;
+   */
+  TRIGGER = 12,
 }
 
 /**
@@ -914,7 +922,7 @@ export enum ListTestRunsRequest_Sort_Kind {
  *
  * @generated from enum cloud.v1.api.ListTestRunsRequest.Sort.Kind
  */
-export type ListTestRunsRequest_Sort_KindJson = "KIND_UNSPECIFIED" | "KIND_STATUS" | "KIND_DB_KIND" | "KIND_WORKLOAD" | "KIND_PROVIDER" | "KIND_PROGRESS" | "KIND_DURATION" | "KIND_STARTED_AT" | "KIND_FINISHED_AT" | "KIND_NODE_COUNT" | "KIND_PROTOCOL" | "KIND_TEST_PRESET";
+export type ListTestRunsRequest_Sort_KindJson = "KIND_UNSPECIFIED" | "KIND_STATUS" | "KIND_DB_KIND" | "KIND_WORKLOAD" | "KIND_PROVIDER" | "KIND_PROGRESS" | "KIND_DURATION" | "KIND_STARTED_AT" | "KIND_FINISHED_AT" | "KIND_NODE_COUNT" | "KIND_PROTOCOL" | "KIND_TEST_PRESET" | "KIND_TRIGGER";
 
 /**
  * Describes the enum cloud.v1.api.ListTestRunsRequest.Sort.Kind.
@@ -981,6 +989,176 @@ export const ListTestRunsResponseSchema: GenMessage<ListTestRunsResponse, {jsonT
 
 /**
  *
+ * ListTestRunFacetsRequest returns distinct values used by run-list facet
+ * controls. It is tenant-scoped and honors the shared EntityFilter so clients
+ * can exclude deleted rows by default or ask for deleted-inclusive facets.
+ *
+ * @generated from message cloud.v1.api.ListTestRunFacetsRequest
+ */
+export type ListTestRunFacetsRequest = Message<"cloud.v1.api.ListTestRunFacetsRequest"> & {
+  /**
+   *
+   * tenant_id scopes the request to the owning tenant.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   *
+   * filter holds shared Entity-level filters. include_deleted controls
+   * whether soft-deleted runs contribute to facet values.
+   *
+   * @generated from field: cloud.v1.common.EntityFilter filter = 2;
+   */
+  filter?: EntityFilter;
+};
+
+/**
+ *
+ * ListTestRunFacetsRequest returns distinct values used by run-list facet
+ * controls. It is tenant-scoped and honors the shared EntityFilter so clients
+ * can exclude deleted rows by default or ask for deleted-inclusive facets.
+ *
+ * @generated from message cloud.v1.api.ListTestRunFacetsRequest
+ */
+export type ListTestRunFacetsRequestJson = {
+  /**
+   *
+   * tenant_id scopes the request to the owning tenant.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId?: string;
+
+  /**
+   *
+   * filter holds shared Entity-level filters. include_deleted controls
+   * whether soft-deleted runs contribute to facet values.
+   *
+   * @generated from field: cloud.v1.common.EntityFilter filter = 2;
+   */
+  filter?: EntityFilterJson;
+};
+
+export type ListTestRunFacetsRequestValid = ListTestRunFacetsRequest;
+
+/**
+ * Describes the message cloud.v1.api.ListTestRunFacetsRequest.
+ * Use `create(ListTestRunFacetsRequestSchema)` to create a new message.
+ */
+export const ListTestRunFacetsRequestSchema: GenMessage<ListTestRunFacetsRequest, {jsonType: ListTestRunFacetsRequestJson, validType: ListTestRunFacetsRequestValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_test_run, 6);
+
+/**
+ *
+ * ListTestRunFacetsResponse returns distinct non-empty values present in the
+ * matching tenant's runs.
+ *
+ * @generated from message cloud.v1.api.ListTestRunFacetsResponse
+ */
+export type ListTestRunFacetsResponse = Message<"cloud.v1.api.ListTestRunFacetsResponse"> & {
+  /**
+   *
+   * author_ids are distinct entity.author_id values.
+   *
+   * @generated from field: repeated string author_ids = 1;
+   */
+  authorIds: string[];
+
+  /**
+   *
+   * stroppy_versions are distinct summary.stroppy_version values.
+   *
+   * @generated from field: repeated string stroppy_versions = 2;
+   */
+  stroppyVersions: string[];
+
+  /**
+   *
+   * db_preset_ids are distinct summary.db_preset_id values.
+   *
+   * @generated from field: repeated string db_preset_ids = 3;
+   */
+  dbPresetIds: string[];
+
+  /**
+   *
+   * workload_preset_ids are distinct summary.workload_preset_id values.
+   *
+   * @generated from field: repeated string workload_preset_ids = 4;
+   */
+  workloadPresetIds: string[];
+
+  /**
+   *
+   * test_preset_ids are distinct summary.test_preset_id values.
+   *
+   * @generated from field: repeated string test_preset_ids = 5;
+   */
+  testPresetIds: string[];
+};
+
+/**
+ *
+ * ListTestRunFacetsResponse returns distinct non-empty values present in the
+ * matching tenant's runs.
+ *
+ * @generated from message cloud.v1.api.ListTestRunFacetsResponse
+ */
+export type ListTestRunFacetsResponseJson = {
+  /**
+   *
+   * author_ids are distinct entity.author_id values.
+   *
+   * @generated from field: repeated string author_ids = 1;
+   */
+  authorIds?: string[];
+
+  /**
+   *
+   * stroppy_versions are distinct summary.stroppy_version values.
+   *
+   * @generated from field: repeated string stroppy_versions = 2;
+   */
+  stroppyVersions?: string[];
+
+  /**
+   *
+   * db_preset_ids are distinct summary.db_preset_id values.
+   *
+   * @generated from field: repeated string db_preset_ids = 3;
+   */
+  dbPresetIds?: string[];
+
+  /**
+   *
+   * workload_preset_ids are distinct summary.workload_preset_id values.
+   *
+   * @generated from field: repeated string workload_preset_ids = 4;
+   */
+  workloadPresetIds?: string[];
+
+  /**
+   *
+   * test_preset_ids are distinct summary.test_preset_id values.
+   *
+   * @generated from field: repeated string test_preset_ids = 5;
+   */
+  testPresetIds?: string[];
+};
+
+export type ListTestRunFacetsResponseValid = ListTestRunFacetsResponse;
+
+/**
+ * Describes the message cloud.v1.api.ListTestRunFacetsResponse.
+ * Use `create(ListTestRunFacetsResponseSchema)` to create a new message.
+ */
+export const ListTestRunFacetsResponseSchema: GenMessage<ListTestRunFacetsResponse, {jsonType: ListTestRunFacetsResponseJson, validType: ListTestRunFacetsResponseValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_test_run, 7);
+
+/**
+ *
  * CancelTestRun requests cancellation (status -> CANCELLING, then CANCELLED when
  * the workflow stops). Idempotent: cancelling a finished/cancelled run is a no-op.
  *
@@ -1036,7 +1214,7 @@ export type CancelTestRunRequestValid = CancelTestRunRequest;
  * Use `create(CancelTestRunRequestSchema)` to create a new message.
  */
 export const CancelTestRunRequestSchema: GenMessage<CancelTestRunRequest, {jsonType: CancelTestRunRequestJson, validType: CancelTestRunRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_test_run, 6);
+  messageDesc(file_cloud_v1_api_test_run, 8);
 
 /**
  *
@@ -1077,11 +1255,11 @@ export type CancelTestRunResponseValid = CancelTestRunResponse;
  * Use `create(CancelTestRunResponseSchema)` to create a new message.
  */
 export const CancelTestRunResponseSchema: GenMessage<CancelTestRunResponse, {jsonType: CancelTestRunResponseJson, validType: CancelTestRunResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_test_run, 7);
+  messageDesc(file_cloud_v1_api_test_run, 9);
 
 /**
  *
- * DeleteTestRunRequest deletes a test run by id.
+ * DeleteTestRunRequest soft-deletes a test run by id (sets entity.timings.deleted_at).
  *
  * @generated from message cloud.v1.api.DeleteTestRunRequest
  */
@@ -1105,7 +1283,7 @@ export type DeleteTestRunRequest = Message<"cloud.v1.api.DeleteTestRunRequest"> 
 
 /**
  *
- * DeleteTestRunRequest deletes a test run by id.
+ * DeleteTestRunRequest soft-deletes a test run by id (sets entity.timings.deleted_at).
  *
  * @generated from message cloud.v1.api.DeleteTestRunRequest
  */
@@ -1134,12 +1312,12 @@ export type DeleteTestRunRequestValid = DeleteTestRunRequest;
  * Use `create(DeleteTestRunRequestSchema)` to create a new message.
  */
 export const DeleteTestRunRequestSchema: GenMessage<DeleteTestRunRequest, {jsonType: DeleteTestRunRequestJson, validType: DeleteTestRunRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_test_run, 8);
+  messageDesc(file_cloud_v1_api_test_run, 10);
 
 /**
  *
- * DeleteTestRunResponse is empty; deletion success is signalled by a non-error
- * reply.
+ * DeleteTestRunResponse is empty; soft-delete success is signalled by a
+ * non-error reply.
  *
  * @generated from message cloud.v1.api.DeleteTestRunResponse
  */
@@ -1148,8 +1326,8 @@ export type DeleteTestRunResponse = Message<"cloud.v1.api.DeleteTestRunResponse"
 
 /**
  *
- * DeleteTestRunResponse is empty; deletion success is signalled by a non-error
- * reply.
+ * DeleteTestRunResponse is empty; soft-delete success is signalled by a
+ * non-error reply.
  *
  * @generated from message cloud.v1.api.DeleteTestRunResponse
  */
@@ -1163,7 +1341,7 @@ export type DeleteTestRunResponseValid = DeleteTestRunResponse;
  * Use `create(DeleteTestRunResponseSchema)` to create a new message.
  */
 export const DeleteTestRunResponseSchema: GenMessage<DeleteTestRunResponse, {jsonType: DeleteTestRunResponseJson, validType: DeleteTestRunResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_test_run, 9);
+  messageDesc(file_cloud_v1_api_test_run, 11);
 
 /**
  *
@@ -1238,7 +1416,7 @@ export type ExtractToPresetRequestValid = ExtractToPresetRequest;
  * Use `create(ExtractToPresetRequestSchema)` to create a new message.
  */
 export const ExtractToPresetRequestSchema: GenMessage<ExtractToPresetRequest, {jsonType: ExtractToPresetRequestJson, validType: ExtractToPresetRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_test_run, 10);
+  messageDesc(file_cloud_v1_api_test_run, 12);
 
 /**
  *
@@ -1279,7 +1457,7 @@ export type ExtractToPresetResponseValid = ExtractToPresetResponse;
  * Use `create(ExtractToPresetResponseSchema)` to create a new message.
  */
 export const ExtractToPresetResponseSchema: GenMessage<ExtractToPresetResponse, {jsonType: ExtractToPresetResponseJson, validType: ExtractToPresetResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_test_run, 11);
+  messageDesc(file_cloud_v1_api_test_run, 13);
 
 /**
  *
@@ -1323,6 +1501,18 @@ export const TestRunService: GenService<{
   },
   /**
    *
+   * ListTestRunFacets lists distinct values for run-list facet controls.
+   * Read-only.
+   *
+   * @generated from rpc cloud.v1.api.TestRunService.ListTestRunFacets
+   */
+  listTestRunFacets: {
+    methodKind: "unary";
+    input: typeof ListTestRunFacetsRequestSchema;
+    output: typeof ListTestRunFacetsResponseSchema;
+  },
+  /**
+   *
    * CancelTestRun is idempotent: cancelling a finished/cancelled run is a no-op.
    *
    * @generated from rpc cloud.v1.api.TestRunService.CancelTestRun
@@ -1334,7 +1524,8 @@ export const TestRunService: GenService<{
   },
   /**
    *
-   * DeleteTestRun is idempotent: deleting an absent run is a no-op.
+   * DeleteTestRun is idempotent: soft-deleting an absent or already-deleted
+   * run is a no-op.
    *
    * @generated from rpc cloud.v1.api.TestRunService.DeleteTestRun
    */

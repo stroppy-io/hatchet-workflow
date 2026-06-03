@@ -49,6 +49,7 @@
   - [cloud.v1.deployment.Quota.Allocation](#cloud-v1-deployment-quota-allocation)
   - [cloud.v1.deployment.Quota.Info](#cloud-v1-deployment-quota-info)
   - [cloud.v1.deployment.Quota.Request](#cloud-v1-deployment-quota-request)
+  - [cloud.v1.deployment.Quota.ReservationStatus](#cloud-v1-deployment-quota-reservationstatus)
   - [cloud.v1.deployment.RenderArtifact](#cloud-v1-deployment-renderartifact)
   - [cloud.v1.deployment.RenderArtifact.Kind](#cloud-v1-deployment-renderartifact-kind)
   - [cloud.v1.deployment.RenderArtifact.LabelsEntry](#cloud-v1-deployment-renderartifact-labelsentry)
@@ -1925,6 +1926,38 @@ go_name: Request</pre></td>
 </table>
 
 
+
+<a name="cloud-v1-deployment-quota-reservationstatus"></a>
+### cloud.v1.deployment.Quota.ReservationStatus
+
+<pre>
+//ReservationStatus is the control-plane lifecycle of our own quota ledger.
+//Provider usage is observed separately through quota snapshots; RESERVED
+//rows are the only rows subtracted from provider headroom for new runs.
+</pre>
+
+<table>
+<tr><th>Value</th><th>Description</th></tr>
+<tr>
+<td>RESERVATION_STATUS_UNSPECIFIED</td>
+<td></td>
+</tr><tr>
+<td>RESERVATION_STATUS_RESERVED</td>
+<td></td>
+</tr><tr>
+<td>RESERVATION_STATUS_ALLOCATED</td>
+<td></td>
+</tr><tr>
+<td>RESERVATION_STATUS_RELEASED</td>
+<td></td>
+</tr><tr>
+<td>RESERVATION_STATUS_EXPIRED</td>
+<td></td>
+</tr><tr>
+<td>RESERVATION_STATUS_FAILED</td>
+<td></td>
+</tr>
+</table>
 
 <a name="cloud-v1-deployment-renderartifact"></a>
 ### cloud.v1.deployment.RenderArtifact

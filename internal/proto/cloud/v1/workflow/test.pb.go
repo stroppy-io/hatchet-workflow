@@ -32,6 +32,8 @@ const (
 // TestWorkflowRequest is the input to a single test run.
 type TestWorkflowRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes quota reservations and provider settings lookup.
+	TenantId string `protobuf:"bytes,3,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	// test_run is the full description of the test run to execute.
 	TestRun *domain.TestRun `protobuf:"bytes,1,opt,name=test_run,json=testRun,proto3" json:"test_run,omitempty"`
 	// agent_bootstrap is runtime control-plane data delivered to provisioned
@@ -69,6 +71,13 @@ func (x *TestWorkflowRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use TestWorkflowRequest.ProtoReflect.Descriptor instead.
 func (*TestWorkflowRequest) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_workflow_test_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *TestWorkflowRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
 }
 
 func (x *TestWorkflowRequest) GetTestRun() *domain.TestRun {
@@ -678,8 +687,9 @@ var File_cloud_v1_workflow_test_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_workflow_test_proto_rawDesc = "" +
 	"\n" +
-	"\x1ccloud/v1/workflow/test.proto\x12\x11cloud.v1.workflow\x1a\x1ccloud/v1/common/status.proto\x1a(cloud/v1/deployment/infrastructure.proto\x1a\x1ecloud/v1/deployment/plan.proto\x1a\"cloud/v1/workflow/deployment.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1bcloud/v1/domain/suite.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a cloud/v1/topology/topology.proto\x1a\x1bcloud/v1/workflow/run.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1atemporal/v1/temporal.proto\x1a\x17validate/validate.proto\"\xa0\x01\n" +
-	"\x13TestWorkflowRequest\x12=\n" +
+	"\x1ccloud/v1/workflow/test.proto\x12\x11cloud.v1.workflow\x1a\x1ccloud/v1/common/status.proto\x1a(cloud/v1/deployment/infrastructure.proto\x1a\x1ecloud/v1/deployment/plan.proto\x1a\"cloud/v1/workflow/deployment.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1bcloud/v1/domain/suite.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a cloud/v1/topology/topology.proto\x1a\x1bcloud/v1/workflow/run.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1atemporal/v1/temporal.proto\x1a\x17validate/validate.proto\"\xc8\x01\n" +
+	"\x13TestWorkflowRequest\x12&\n" +
+	"\ttenant_id\x18\x03 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12=\n" +
 	"\btest_run\x18\x01 \x01(\v2\x18.cloud.v1.domain.TestRunB\b\xfaB\x05\x8a\x01\x02\x10\x01R\atestRun\x12J\n" +
 	"\x0fagent_bootstrap\x18\x02 \x01(\v2!.cloud.v1.workflow.AgentBootstrapR\x0eagentBootstrap\"\x16\n" +
 	"\x14TestWorkflowResponse\"m\n" +

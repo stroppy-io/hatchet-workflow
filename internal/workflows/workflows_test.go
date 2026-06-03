@@ -3,6 +3,7 @@ package workflows
 import (
 	"context"
 	"fmt"
+	"sync"
 	"testing"
 
 	infrastructurebuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/infrastructure"
@@ -11,9 +12,11 @@ import (
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	domainpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
+	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/converter"
 	"go.temporal.io/sdk/testsuite"
 	temporalworkflow "go.temporal.io/sdk/workflow"
+	"google.golang.org/protobuf/proto"
 )
 
 func TestRenderDeploymentPlanWorkflowAppliesRenderOverrides(t *testing.T) {
@@ -74,6 +77,7 @@ func TestTestRunWorkflowOrchestratesDeploymentStages(t *testing.T) {
 	}
 
 	want := []string{
+		workflowpb.CalculateQuotasWorkflowWorkflowName,
 		workflowpb.ProcessInfrastructureWorkflowWorkflowName,
 		workflowpb.RenderDockerInputWorkflowWorkflowName,
 		workflowpb.RenderDeploymentPlanWorkflowWorkflowName,
@@ -91,9 +95,12 @@ func TestTestWorkflowExposesRunStateQuery(t *testing.T) {
 	RegisterWorkflows(env, DefaultOptions())
 	registerFakeDeploymentActivities(env)
 	registerFakeAgentActivities(env)
+	runtime := &fakeRuntimeActivities{}
+	registerFakeRuntimeActivities(env, runtime)
 
 	testRun := domainTestRun(t, nil)
 	env.ExecuteWorkflow(workflowpb.TestWorkflowWorkflowName, &workflowpb.TestWorkflowRequest{
+		TenantId:       "tenant-1",
 		TestRun:        testRun,
 		AgentBootstrap: testAgentBootstrap(),
 	})
@@ -122,6 +129,10 @@ func TestTestWorkflowExposesRunStateQuery(t *testing.T) {
 			t.Fatalf("stage %q status = %s, want %s", stage.GetName(), got, want)
 		}
 	}
+
+	if got := runtime.lastRunStatus(); got != common.Status_STATUS_COMPLETED {
+		t.Fatalf("persisted run state status = %s, want %s", got, common.Status_STATUS_COMPLETED)
+	}
 }
 
 func TestSuiteWorkflowFansOutRunConfigs(t *testing.T) {
@@ -130,6 +141,8 @@ func TestSuiteWorkflowFansOutRunConfigs(t *testing.T) {
 	RegisterWorkflows(env, DefaultOptions())
 	registerFakeDeploymentActivities(env)
 	registerFakeAgentActivities(env)
+	runtime := &fakeRuntimeActivities{}
+	registerFakeRuntimeActivities(env, runtime)
 
 	cfg1 := workflowRunConfig(t, nil)
 	cfg2 := workflowRunConfig(t, nil)
@@ -137,7 +150,7 @@ func TestSuiteWorkflowFansOutRunConfigs(t *testing.T) {
 
 	var runChildren int
 	env.SetOnChildWorkflowStartedListener(func(info *temporalworkflow.Info, _ temporalworkflow.Context, _ converter.EncodedValues) {
-		if info.WorkflowType.Name == workflowpb.TestRunWorkflowWorkflowName {
+		if info.WorkflowType.Name == workflowpb.TestWorkflowWorkflowName {
 			runChildren++
 		}
 	})
@@ -157,6 +170,12 @@ func TestSuiteWorkflowFansOutRunConfigs(t *testing.T) {
 	if got, want := runChildren, 2; got != want {
 		t.Fatalf("child run workflows = %d, want %d", got, want)
 	}
+	if !runtime.hasSuiteStatus(common.Status_STATUS_RUNNING) {
+		t.Fatal("suite runtime persistence did not record RUNNING")
+	}
+	if got := runtime.lastSuiteStatus(); got != common.Status_STATUS_COMPLETED {
+		t.Fatalf("last persisted suite status = %s, want %s", got, common.Status_STATUS_COMPLETED)
+	}
 }
 
 func workflowRunConfig(t *testing.T, overrides *deploymentpb.RenderOverrideSet) *workflowpb.RunConfig {
@@ -164,6 +183,7 @@ func workflowRunConfig(t *testing.T, overrides *deploymentpb.RenderOverrideSet) 
 
 	testRun := domainTestRun(t, overrides)
 	return &workflowpb.RunConfig{
+		TenantId:           "tenant-1",
 		Id:                 testRun.GetId(),
 		Database:           testRun.GetDatabase(),
 		Workload:           testRun.GetWorkload(),
@@ -299,7 +319,15 @@ func (fakeDeploymentActivities) AcquireNetworkActivity(context.Context, *workflo
 }
 
 func (fakeDeploymentActivities) AcquireQuotasActivity(_ context.Context, req *workflowpb.AcquireQuotasActivityRequest) (*workflowpb.AcquireQuotasActivityResponse, error) {
-	return &workflowpb.AcquireQuotasActivityResponse{QuotaAllocations: map[string]*deploymentpb.Quota_Allocation{}}, nil
+	return &workflowpb.AcquireQuotasActivityResponse{QuotaAllocations: echoQuotaAllocations(req.GetQuotaRequests())}, nil
+}
+
+func (fakeDeploymentActivities) CommitQuotasActivity(context.Context, *workflowpb.CommitQuotasActivityRequest) (*workflowpb.CommitQuotasActivityResponse, error) {
+	return &workflowpb.CommitQuotasActivityResponse{}, nil
+}
+
+func (fakeDeploymentActivities) ReleaseQuotasActivity(context.Context, *workflowpb.ReleaseQuotasActivityRequest) (*workflowpb.ReleaseQuotasActivityResponse, error) {
+	return &workflowpb.ReleaseQuotasActivityResponse{}, nil
 }
 
 func (fakeDeploymentActivities) DockerPullActivity(context.Context, *deploymentpb.Docker_Input) (*deploymentpb.Docker_Output, error) {
@@ -348,6 +376,75 @@ func registerFakeAgentActivities(env *testsuite.TestWorkflowEnvironment) {
 	workflowpb.RegisterCallCmdActivityActivity(env, func(_ context.Context, _ *common.Cmd) (*common.Cmd_Result, error) {
 		return &common.Cmd_Result{ExitCode: 0}, nil
 	})
+}
+
+func registerFakeRuntimeActivities(env *testsuite.TestWorkflowEnvironment, fake *fakeRuntimeActivities) {
+	env.RegisterActivityWithOptions(fake.PersistRunState, activity.RegisterOptions{Name: PersistRunStateActivityName})
+	env.RegisterActivityWithOptions(fake.PersistSuiteRun, activity.RegisterOptions{Name: PersistSuiteRunActivityName})
+}
+
+type fakeRuntimeActivities struct {
+	mu            sync.Mutex
+	runStates     []*workflowpb.RunState
+	suiteStatuses []common.Status
+}
+
+func (f *fakeRuntimeActivities) PersistRunState(
+	_ context.Context,
+	_ string,
+	state *workflowpb.RunState,
+	_ *deploymentpb.InfrastructureState,
+	_ *deploymentpb.DeploymentPlan,
+) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	if state == nil {
+		f.runStates = append(f.runStates, nil)
+		return nil
+	}
+	f.runStates = append(f.runStates, proto.Clone(state).(*workflowpb.RunState))
+	return nil
+}
+
+func (f *fakeRuntimeActivities) PersistSuiteRun(_ context.Context, _ string, status common.Status) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	f.suiteStatuses = append(f.suiteStatuses, status)
+	return nil
+}
+
+func (f *fakeRuntimeActivities) lastRunStatus() common.Status {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	if len(f.runStates) == 0 {
+		return common.Status_STATUS_UNSPECIFIED
+	}
+	return f.runStates[len(f.runStates)-1].GetStatus()
+}
+
+func (f *fakeRuntimeActivities) hasSuiteStatus(status common.Status) bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	for _, got := range f.suiteStatuses {
+		if got == status {
+			return true
+		}
+	}
+	return false
+}
+
+func (f *fakeRuntimeActivities) lastSuiteStatus() common.Status {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	if len(f.suiteStatuses) == 0 {
+		return common.Status_STATUS_UNSPECIFIED
+	}
+	return f.suiteStatuses[len(f.suiteStatuses)-1]
 }
 
 func componentDeploymentByID(plan *deploymentpb.DeploymentPlan, componentID string) *deploymentpb.ComponentDeployment {

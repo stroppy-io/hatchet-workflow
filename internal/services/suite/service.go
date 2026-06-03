@@ -46,11 +46,11 @@ type SuiteRepo interface {
 	Create(ctx context.Context, suite *models.SuiteRecord) error
 	Get(ctx context.Context, tenantID, id string) (*models.SuiteRecord, error)
 	List(ctx context.Context, query SuiteListQuery) (suites []*models.SuiteRecord, nextPageToken string, err error)
+	ListFacets(ctx context.Context, query SuiteFacetQuery) (*api.ListSuiteFacetsResponse, error)
 	// Update wholesale-replaces an existing row (addressed by
 	// suite.entity.tenant_id + suite.entity.id). Returns derrors.ErrNotFound if
 	// the row is gone.
 	Update(ctx context.Context, suite *models.SuiteRecord) error
-	Delete(ctx context.Context, tenantID, id string) error
 }
 
 // SuiteListQuery is the resolved, tenant-scoped query the handler hands to the
@@ -69,24 +69,29 @@ type SuiteListQuery struct {
 	CallerID string
 }
 
+// SuiteFacetQuery is the resolved, tenant-scoped facet query for ListSuiteFacets.
+type SuiteFacetQuery struct {
+	TenantID string
+	Filter   *common.EntityFilter
+	CallerID string
+}
+
 // SuiteRunLauncher expands a fully-baked suite definition into a
 // models.SuiteRunRecord (one child models.TestRunRecord per compatible cell),
-// persists them and launches SuiteWorkflow. It runs inside the ambient ctx
-// transaction so the run rows commit atomically with the surrounding writes; the
-// workflow handle itself is started transactionally (an outbox row a relay picks
-// up), never via synchronous IO while the transaction is open. Validate reports
-// a derrors error (Invalid / FailedPrecondition) when the suite cannot expand
-// into at least one runnable cell so the handler can surface a precise code
-// before any write.
+// persists them and returns a post-commit starter for SuiteWorkflow. Validate
+// reports a derrors error (Invalid / FailedPrecondition) when the suite cannot
+// expand into at least one runnable cell so the handler can surface a precise
+// code before any write.
 type SuiteRunLauncher interface {
 	// Validate checks the suite expands into >=1 runnable cell and that every
 	// referenced preset exists and is compatible with the chosen provider. It
 	// performs no writes.
 	Validate(ctx context.Context, tenantID string, spec *domain.Suite) error
-	// Launch expands + persists the SuiteRunRecord and its children and starts
-	// SuiteWorkflow. The handler pre-fills the run's identity/tenant/trigger/
-	// timing/rating; the launcher fills the expanded children + summary.
-	Launch(ctx context.Context, run *models.SuiteRunRecord, spec *domain.Suite) error
+	// Launch expands + persists the SuiteRunRecord and its children. The handler
+	// pre-fills the run's identity/tenant/trigger/timing/rating; the launcher
+	// fills the expanded children + summary and returns a post-commit workflow
+	// starter.
+	Launch(ctx context.Context, run *models.SuiteRunRecord, spec *domain.Suite) (func(context.Context) error, error)
 }
 
 // SuiteDeps bundles every dependency for the constructor.
@@ -137,4 +142,27 @@ func (s *SuiteService) doTx(ctx context.Context, fn func(ctx context.Context) er
 // fn must be safe to re-run.
 func doTxRet[T any](ctx context.Context, s *SuiteService, fn func(ctx context.Context) (T, error)) (T, error) {
 	return tx.DoSerializableRet(ctx, s.d.Tx, fn, tx.WithRetry(tx.DefaultRetryPolicy))
+}
+
+func suiteDeleted(rec *models.SuiteRecord) bool {
+	return rec.GetEntity().GetTimings().GetDeletedAt() != nil
+}
+
+func rejectDeletedSuite(rec *models.SuiteRecord) error {
+	if suiteDeleted(rec) {
+		return status.Error(codes.FailedPrecondition, "suite is deleted")
+	}
+	return nil
+}
+
+func markSuiteDefinitionDeleted(rec *models.SuiteRecord, now *timestamppb.Timestamp) {
+	if rec.Entity == nil {
+		rec.Entity = &common.Entity{}
+	}
+	rec.Entity.IsFavorite = false
+	if rec.Entity.Timings == nil {
+		rec.Entity.Timings = &common.Timings{}
+	}
+	rec.Entity.Timings.UpdatedAt = now
+	rec.Entity.Timings.DeletedAt = now
 }

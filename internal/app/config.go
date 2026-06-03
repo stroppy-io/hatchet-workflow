@@ -35,6 +35,24 @@ type Config struct {
 	CacheDir string
 	// StroppyUpstream is the upstream URL for the "stroppy" artifact.
 	StroppyUpstream string
+	// StroppyGitHubRepo is the GitHub repository used to list suggested Stroppy
+	// release versions ("owner/name"). Empty defaults to "stroppy-io/stroppy".
+	StroppyGitHubRepo string
+	// StroppyMinVersion is the inclusive minimum release version shown by
+	// ListStroppyVersions. Empty disables the floor.
+	StroppyMinVersion string
+	// StroppyGitHubToken is an optional GitHub token for release listing API
+	// limits.
+	StroppyGitHubToken string
+	// QuotaRefreshInterval controls the periodic provider quota snapshot refresh.
+	// Empty defaults to 5m; "0" disables the background refresher.
+	QuotaRefreshInterval string
+	// QuotaSnapshotTTL controls when cached provider quota snapshots are stale.
+	// Empty defaults to 5m.
+	QuotaSnapshotTTL string
+	// QuotaReservationTTL controls how long pre-provision reservations can stay
+	// active before they expire. Empty defaults to 30m.
+	QuotaReservationTTL string
 	// AptBackend is the apt-cacher-ng backend the gateway relays agent apt traffic
 	// to.
 	AptBackend string

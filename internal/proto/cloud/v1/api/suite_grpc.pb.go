@@ -22,6 +22,7 @@ const (
 	SuiteService_CreateSuite_FullMethodName      = "/cloud.v1.api.SuiteService/CreateSuite"
 	SuiteService_GetSuite_FullMethodName         = "/cloud.v1.api.SuiteService/GetSuite"
 	SuiteService_ListSuites_FullMethodName       = "/cloud.v1.api.SuiteService/ListSuites"
+	SuiteService_ListSuiteFacets_FullMethodName  = "/cloud.v1.api.SuiteService/ListSuiteFacets"
 	SuiteService_UpdateSuite_FullMethodName      = "/cloud.v1.api.SuiteService/UpdateSuite"
 	SuiteService_DeleteSuite_FullMethodName      = "/cloud.v1.api.SuiteService/DeleteSuite"
 	SuiteService_CloneSuite_FullMethodName       = "/cloud.v1.api.SuiteService/CloneSuite"
@@ -41,9 +42,13 @@ type SuiteServiceClient interface {
 	GetSuite(ctx context.Context, in *GetSuiteRequest, opts ...grpc.CallOption) (*GetSuiteResponse, error)
 	// ListSuites lists suite definitions with filtering and pagination. Read-only.
 	ListSuites(ctx context.Context, in *ListSuitesRequest, opts ...grpc.CallOption) (*ListSuitesResponse, error)
+	// ListSuiteFacets lists distinct values for suite-list facet controls.
+	// Read-only.
+	ListSuiteFacets(ctx context.Context, in *ListSuiteFacetsRequest, opts ...grpc.CallOption) (*ListSuiteFacetsResponse, error)
 	// UpdateSuite is idempotent: a wholesale field set converges on retry.
 	UpdateSuite(ctx context.Context, in *UpdateSuiteRequest, opts ...grpc.CallOption) (*UpdateSuiteResponse, error)
-	// DeleteSuite is idempotent: deleting an absent suite is a no-op.
+	// DeleteSuite is idempotent: soft-deleting an absent or already-deleted
+	// suite is a no-op.
 	DeleteSuite(ctx context.Context, in *DeleteSuiteRequest, opts ...grpc.CallOption) (*DeleteSuiteResponse, error)
 	// CloneSuite mints a new definition. Not idempotent.
 	CloneSuite(ctx context.Context, in *CloneSuiteRequest, opts ...grpc.CallOption) (*CloneSuiteResponse, error)
@@ -85,6 +90,16 @@ func (c *suiteServiceClient) ListSuites(ctx context.Context, in *ListSuitesReque
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListSuitesResponse)
 	err := c.cc.Invoke(ctx, SuiteService_ListSuites_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *suiteServiceClient) ListSuiteFacets(ctx context.Context, in *ListSuiteFacetsRequest, opts ...grpc.CallOption) (*ListSuiteFacetsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListSuiteFacetsResponse)
+	err := c.cc.Invoke(ctx, SuiteService_ListSuiteFacets_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -153,9 +168,13 @@ type SuiteServiceServer interface {
 	GetSuite(context.Context, *GetSuiteRequest) (*GetSuiteResponse, error)
 	// ListSuites lists suite definitions with filtering and pagination. Read-only.
 	ListSuites(context.Context, *ListSuitesRequest) (*ListSuitesResponse, error)
+	// ListSuiteFacets lists distinct values for suite-list facet controls.
+	// Read-only.
+	ListSuiteFacets(context.Context, *ListSuiteFacetsRequest) (*ListSuiteFacetsResponse, error)
 	// UpdateSuite is idempotent: a wholesale field set converges on retry.
 	UpdateSuite(context.Context, *UpdateSuiteRequest) (*UpdateSuiteResponse, error)
-	// DeleteSuite is idempotent: deleting an absent suite is a no-op.
+	// DeleteSuite is idempotent: soft-deleting an absent or already-deleted
+	// suite is a no-op.
 	DeleteSuite(context.Context, *DeleteSuiteRequest) (*DeleteSuiteResponse, error)
 	// CloneSuite mints a new definition. Not idempotent.
 	CloneSuite(context.Context, *CloneSuiteRequest) (*CloneSuiteResponse, error)
@@ -181,6 +200,9 @@ func (UnimplementedSuiteServiceServer) GetSuite(context.Context, *GetSuiteReques
 }
 func (UnimplementedSuiteServiceServer) ListSuites(context.Context, *ListSuitesRequest) (*ListSuitesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListSuites not implemented")
+}
+func (UnimplementedSuiteServiceServer) ListSuiteFacets(context.Context, *ListSuiteFacetsRequest) (*ListSuiteFacetsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListSuiteFacets not implemented")
 }
 func (UnimplementedSuiteServiceServer) UpdateSuite(context.Context, *UpdateSuiteRequest) (*UpdateSuiteResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateSuite not implemented")
@@ -268,6 +290,24 @@ func _SuiteService_ListSuites_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SuiteServiceServer).ListSuites(ctx, req.(*ListSuitesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SuiteService_ListSuiteFacets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListSuiteFacetsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SuiteServiceServer).ListSuiteFacets(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SuiteService_ListSuiteFacets_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SuiteServiceServer).ListSuiteFacets(ctx, req.(*ListSuiteFacetsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -380,6 +420,10 @@ var SuiteService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListSuites",
 			Handler:    _SuiteService_ListSuites_Handler,
+		},
+		{
+			MethodName: "ListSuiteFacets",
+			Handler:    _SuiteService_ListSuiteFacets_Handler,
 		},
 		{
 			MethodName: "UpdateSuite",

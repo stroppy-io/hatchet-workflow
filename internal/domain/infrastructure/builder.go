@@ -119,20 +119,20 @@ func buildMachine(node *topologypb.Node, provider deployment.Provider, options B
 	})
 
 	machine := &deployment.MachinePlan{
-		NodeId:        node.GetId(),
-		QuotaRequests: quotaRequests(provider, sizing, 0),
-		Labels:        labels,
-		Tags:          node.GetTags(),
+		NodeId: node.GetId(),
+		Labels: labels,
+		Tags:   node.GetTags(),
 	}
 
 	switch provider {
 	case deployment.Provider_PROVIDER_DOCKER:
 		container := dockerContainer(node, sizing, options.Docker)
 		machine.ProviderParams = &deployment.MachinePlan_Docker{Docker: container}
-		machine.QuotaRequests = quotaRequests(provider, sizing, len(container.GetPorts()))
+		machine.QuotaRequests = dockerQuotaRequests(sizing, len(container.GetPorts()))
 	case deployment.Provider_PROVIDER_YANDEX:
-		machine.ProviderParams = &deployment.MachinePlan_Yandex{Yandex: yandexVM(sizing, options.Yandex)}
-		machine.QuotaRequests = quotaRequests(provider, sizing, 0)
+		vm := yandexVM(sizing, options.Yandex)
+		machine.ProviderParams = &deployment.MachinePlan_Yandex{Yandex: vm}
+		machine.QuotaRequests = yandexQuotaRequests(vm)
 	default:
 		return nil, fmt.Errorf("provider %s is not supported", provider)
 	}
@@ -247,29 +247,43 @@ func normalizeSizing(sizing MachineSizing) MachineSizing {
 	return sizing
 }
 
-func quotaRequests(provider deployment.Provider, sizing MachineSizing, publishedPorts int) []*deployment.Quota_Request {
-	switch provider {
-	case deployment.Provider_PROVIDER_DOCKER:
-		requests := []*deployment.Quota_Request{
-			quotaRequest(provider, "host.containers.count", "count", 1),
-			quotaRequest(provider, "host.cpuCores", "cores", uint64(sizing.CPUCores)),
-			quotaRequest(provider, "host.memory.size", "MiB", sizing.MemoryMB),
-			quotaRequest(provider, "host.disk.size", "GiB", sizing.DiskGB),
-		}
-		if publishedPorts > 0 {
-			requests = append(requests, quotaRequest(provider, "host.ports.count", "count", uint64(publishedPorts)))
-		}
-		return requests
-	case deployment.Provider_PROVIDER_YANDEX:
-		return []*deployment.Quota_Request{
-			quotaRequest(provider, "compute.instances.count", "count", 1),
-			quotaRequest(provider, "compute.cores.count", "cores", uint64(sizing.CPUCores)),
-			quotaRequest(provider, "compute.memory.size", "GiB", uint64(math.Ceil(float64(sizing.MemoryMB)/1024))),
-			quotaRequest(provider, "compute.disks.size", "GiB", sizing.DiskGB),
-		}
-	default:
+func dockerQuotaRequests(sizing MachineSizing, publishedPorts int) []*deployment.Quota_Request {
+	requests := []*deployment.Quota_Request{
+		quotaRequest(deployment.Provider_PROVIDER_DOCKER, "host.containers.count", "count", 1),
+		quotaRequest(deployment.Provider_PROVIDER_DOCKER, "host.cpuCores", "cores", uint64(sizing.CPUCores)),
+		quotaRequest(deployment.Provider_PROVIDER_DOCKER, "host.memory.size", "MiB", sizing.MemoryMB),
+		quotaRequest(deployment.Provider_PROVIDER_DOCKER, "host.disk.size", "GiB", sizing.DiskGB),
+	}
+	if publishedPorts > 0 {
+		requests = append(requests, quotaRequest(deployment.Provider_PROVIDER_DOCKER, "host.ports.count", "count", uint64(publishedPorts)))
+	}
+	return requests
+}
+
+func yandexQuotaRequests(vm *deployment.Yandex_Vm) []*deployment.Quota_Request {
+	if vm == nil {
 		return nil
 	}
+	requests := []*deployment.Quota_Request{
+		quotaRequest(deployment.Provider_PROVIDER_YANDEX, "compute.instances.count", "count", 1),
+		quotaRequest(deployment.Provider_PROVIDER_YANDEX, "compute.instanceCores.count", "cores", uint64(vm.GetCores())),
+		quotaRequest(deployment.Provider_PROVIDER_YANDEX, "compute.instanceMemory.size", "GiB", vm.GetMemoryGb()),
+		quotaRequest(deployment.Provider_PROVIDER_YANDEX, yandexDiskQuotaName(vm.GetBootDiskType()), "GiB", vm.GetBootDiskGb()),
+	}
+	for _, disk := range vm.GetSecondaryDisks() {
+		if disk.GetSizeGb() == 0 {
+			continue
+		}
+		requests = append(requests, quotaRequest(deployment.Provider_PROVIDER_YANDEX, yandexDiskQuotaName(disk.GetType()), "GiB", uint64(disk.GetSizeGb())))
+	}
+	return requests
+}
+
+func yandexDiskQuotaName(diskType string) string {
+	if strings.Contains(strings.ToLower(diskType), "hdd") {
+		return "compute.hddDisks.size"
+	}
+	return "compute.ssdDisks.size"
 }
 
 func quotaRequest(provider deployment.Provider, name, units string, request uint64) *deployment.Quota_Request {

@@ -46,6 +46,10 @@ func (s *ApiTokenSecrets) SetHash(ctx context.Context, tokenID, hash string) err
 	return s.store.Put(ctx, nsApiTokenHash, tokenID, hash)
 }
 
+func (s *ApiTokenSecrets) GetHash(ctx context.Context, tokenID string) (string, error) {
+	return s.store.Fetch(ctx, nsApiTokenHash, tokenID)
+}
+
 func (s *ApiTokenSecrets) Delete(ctx context.Context, tokenID string) error {
 	return s.store.Remove(ctx, nsApiTokenHash, tokenID)
 }

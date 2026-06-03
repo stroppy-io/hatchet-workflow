@@ -46,9 +46,11 @@ const (
 const (
 	AcquireNetworkActivityActivityName   = "cloud.v1.workflow.DeploymentService.AcquireNetworkActivity"
 	AcquireQuotasActivityActivityName    = "cloud.v1.workflow.DeploymentService.AcquireQuotasActivity"
+	CommitQuotasActivityActivityName     = "cloud.v1.workflow.DeploymentService.CommitQuotasActivity"
 	DockerDownActivityActivityName       = "cloud.v1.workflow.DeploymentService.DockerDownActivity"
 	DockerPullActivityActivityName       = "cloud.v1.workflow.DeploymentService.DockerPullActivity"
 	DockerUpActivityActivityName         = "cloud.v1.workflow.DeploymentService.DockerUpActivity"
+	ReleaseQuotasActivityActivityName    = "cloud.v1.workflow.DeploymentService.ReleaseQuotasActivity"
 	TerraformApplyActivityActivityName   = "cloud.v1.workflow.DeploymentService.TerraformApplyActivity"
 	TerraformDestroyActivityActivityName = "cloud.v1.workflow.DeploymentService.TerraformDestroyActivity"
 	TerraformPlanActivityActivityName    = "cloud.v1.workflow.DeploymentService.TerraformPlanActivity"
@@ -3388,6 +3390,9 @@ type DeploymentServiceActivities interface {
 	// AcquireQuotasActivity acquires requested quotas.
 	AcquireQuotasActivity(ctx context.Context, req *AcquireQuotasActivityRequest) (*AcquireQuotasActivityResponse, error)
 
+	// CommitQuotasActivity marks a successful reservation as allocated.
+	CommitQuotasActivity(ctx context.Context, req *CommitQuotasActivityRequest) (*CommitQuotasActivityResponse, error)
+
 	// DockerDownActivity tears down the Docker topology.
 	DockerDownActivity(ctx context.Context, req *deployment.Docker_Input) (*deployment.Docker_Output, error)
 
@@ -3396,6 +3401,9 @@ type DeploymentServiceActivities interface {
 
 	// DockerUpActivity starts the Docker topology.
 	DockerUpActivity(ctx context.Context, req *deployment.Docker_Input) (*deployment.Docker_Output, error)
+
+	// ReleaseQuotasActivity releases a run's pre-deploy reservations.
+	ReleaseQuotasActivity(ctx context.Context, req *ReleaseQuotasActivityRequest) (*ReleaseQuotasActivityResponse, error)
 
 	// TerraformApplyActivity runs terraform apply.
 	TerraformApplyActivity(ctx context.Context, req *deployment.Terraform_Input) (*deployment.Terraform_Output, error)
@@ -3411,9 +3419,11 @@ type DeploymentServiceActivities interface {
 func RegisterDeploymentServiceActivities(r worker.ActivityRegistry, activities DeploymentServiceActivities) {
 	RegisterAcquireNetworkActivityActivity(r, activities.AcquireNetworkActivity)
 	RegisterAcquireQuotasActivityActivity(r, activities.AcquireQuotasActivity)
+	RegisterCommitQuotasActivityActivity(r, activities.CommitQuotasActivity)
 	RegisterDockerDownActivityActivity(r, activities.DockerDownActivity)
 	RegisterDockerPullActivityActivity(r, activities.DockerPullActivity)
 	RegisterDockerUpActivityActivity(r, activities.DockerUpActivity)
+	RegisterReleaseQuotasActivityActivity(r, activities.ReleaseQuotasActivity)
 	RegisterTerraformApplyActivityActivity(r, activities.TerraformApplyActivity)
 	RegisterTerraformDestroyActivityActivity(r, activities.TerraformDestroyActivity)
 	RegisterTerraformPlanActivityActivity(r, activities.TerraformPlanActivity)
@@ -3943,6 +3953,270 @@ func (o *AcquireQuotasActivityLocalActivityOptions) WithScheduleToCloseTimeout(d
 
 // WithStartToCloseTimeout sets the StartToCloseTimeout value
 func (o *AcquireQuotasActivityLocalActivityOptions) WithStartToCloseTimeout(d time.Duration) *AcquireQuotasActivityLocalActivityOptions {
+	o.startToCloseTimeout = &d
+	return o
+}
+
+// RegisterCommitQuotasActivityActivity registers a cloud.v1.workflow.DeploymentService.CommitQuotasActivity activity
+func RegisterCommitQuotasActivityActivity(r worker.ActivityRegistry, fn func(context.Context, *CommitQuotasActivityRequest) (*CommitQuotasActivityResponse, error)) {
+	r.RegisterActivityWithOptions(fn, activity.RegisterOptions{
+		Name: CommitQuotasActivityActivityName,
+	})
+}
+
+// CommitQuotasActivityFuture describes a(n) cloud.v1.workflow.DeploymentService.CommitQuotasActivity activity execution
+type CommitQuotasActivityFuture struct {
+	Future workflow.Future
+}
+
+// Get blocks on the activity's completion, returning the response
+func (f *CommitQuotasActivityFuture) Get(ctx workflow.Context) (*CommitQuotasActivityResponse, error) {
+	var resp CommitQuotasActivityResponse
+	if err := f.Future.Get(ctx, &resp); err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
+// Select adds the activity's completion to the selector, callback can be nil
+func (f *CommitQuotasActivityFuture) Select(sel workflow.Selector, fn func(*CommitQuotasActivityFuture)) workflow.Selector {
+	return sel.AddFuture(f.Future, func(workflow.Future) {
+		if fn != nil {
+			fn(f)
+		}
+	})
+}
+
+// CommitQuotasActivity marks a successful reservation as allocated.
+func CommitQuotasActivity(ctx workflow.Context, req *CommitQuotasActivityRequest, options ...*CommitQuotasActivityActivityOptions) (*CommitQuotasActivityResponse, error) {
+	return CommitQuotasActivityAsync(ctx, req, options...).Get(ctx)
+}
+
+// CommitQuotasActivity marks a successful reservation as allocated.
+func CommitQuotasActivityAsync(ctx workflow.Context, req *CommitQuotasActivityRequest, options ...*CommitQuotasActivityActivityOptions) *CommitQuotasActivityFuture {
+	var o *CommitQuotasActivityActivityOptions
+	if len(options) > 0 && options[0] != nil {
+		o = options[0]
+	} else {
+		o = NewCommitQuotasActivityActivityOptions()
+	}
+	var err error
+	if ctx, err = o.Build(ctx); err != nil {
+		errF, errS := workflow.NewFuture(ctx)
+		errS.SetError(err)
+		return &CommitQuotasActivityFuture{Future: errF}
+	}
+	activity := CommitQuotasActivityActivityName
+	if o.dc != nil {
+		ctx = workflow.WithDataConverter(ctx, o.dc)
+	}
+	future := &CommitQuotasActivityFuture{Future: workflow.ExecuteActivity(ctx, activity, req)}
+	return future
+}
+
+// CommitQuotasActivity marks a successful reservation as allocated.
+func CommitQuotasActivityLocal(ctx workflow.Context, req *CommitQuotasActivityRequest, options ...*CommitQuotasActivityLocalActivityOptions) (*CommitQuotasActivityResponse, error) {
+	return CommitQuotasActivityLocalAsync(ctx, req, options...).Get(ctx)
+}
+
+// CommitQuotasActivity marks a successful reservation as allocated.
+func CommitQuotasActivityLocalAsync(ctx workflow.Context, req *CommitQuotasActivityRequest, options ...*CommitQuotasActivityLocalActivityOptions) *CommitQuotasActivityFuture {
+	var o *CommitQuotasActivityLocalActivityOptions
+	if len(options) > 0 && options[0] != nil {
+		o = options[0]
+	} else {
+		o = NewCommitQuotasActivityLocalActivityOptions()
+	}
+	var err error
+	if ctx, err = o.Build(ctx); err != nil {
+		errF, errS := workflow.NewFuture(ctx)
+		errS.SetError(err)
+		return &CommitQuotasActivityFuture{Future: errF}
+	}
+	var activity any
+	if o.fn != nil {
+		activity = o.fn
+	} else {
+		activity = CommitQuotasActivityActivityName
+	}
+	if o.dc != nil {
+		ctx = workflow.WithDataConverter(ctx, o.dc)
+	}
+	future := &CommitQuotasActivityFuture{Future: workflow.ExecuteLocalActivity(ctx, activity, req)}
+	return future
+}
+
+// CommitQuotasActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentService.CommitQuotasActivity activity
+type CommitQuotasActivityActivityOptions struct {
+	options                workflow.ActivityOptions
+	retryPolicy            *temporal.RetryPolicy
+	scheduleToCloseTimeout *time.Duration
+	startToCloseTimeout    *time.Duration
+	dc                     converter.DataConverter
+	heartbeatTimeout       *time.Duration
+	scheduleToStartTimeout *time.Duration
+	taskQueue              *string
+	waitForCancellation    *bool
+}
+
+// NewCommitQuotasActivityActivityOptions initializes a new CommitQuotasActivityActivityOptions value
+func NewCommitQuotasActivityActivityOptions() *CommitQuotasActivityActivityOptions {
+	return &CommitQuotasActivityActivityOptions{}
+}
+
+// Build initializes a workflow.Context with appropriate ActivityOptions values derived from schema defaults and any user-defined overrides
+func (o *CommitQuotasActivityActivityOptions) Build(ctx workflow.Context) (workflow.Context, error) {
+	opts := o.options
+	if v := o.heartbeatTimeout; v != nil {
+		opts.HeartbeatTimeout = *v
+	}
+	if v := o.retryPolicy; v != nil {
+		opts.RetryPolicy = v
+	} else if opts.RetryPolicy == nil {
+		opts.RetryPolicy = &temporal.RetryPolicy{InitialInterval: 2000000000, BackoffCoefficient: 2.0, MaximumAttempts: int32(5)}
+	}
+	if v := o.scheduleToCloseTimeout; v != nil {
+		opts.ScheduleToCloseTimeout = *v
+	}
+	if v := o.scheduleToStartTimeout; v != nil {
+		opts.ScheduleToStartTimeout = *v
+	}
+	if v := o.startToCloseTimeout; v != nil {
+		opts.StartToCloseTimeout = *v
+	} else if opts.StartToCloseTimeout == 0 {
+		opts.StartToCloseTimeout = 60000000000 // 1 minute
+	}
+	if v := o.taskQueue; v != nil {
+		opts.TaskQueue = *v
+	} else if opts.TaskQueue == "" {
+		opts.TaskQueue = DeploymentServiceTaskQueue
+	}
+	if v := o.waitForCancellation; v != nil {
+		opts.WaitForCancellation = *v
+	}
+	return workflow.WithActivityOptions(ctx, opts), nil
+}
+
+// WithActivityOptions specifies an initial ActivityOptions value to which defaults will be applied
+func (o *CommitQuotasActivityActivityOptions) WithActivityOptions(options workflow.ActivityOptions) *CommitQuotasActivityActivityOptions {
+	o.options = options
+	return o
+}
+
+// WithDataConverter registers a DataConverter for the (local) activity
+func (o *CommitQuotasActivityActivityOptions) WithDataConverter(dc converter.DataConverter) *CommitQuotasActivityActivityOptions {
+	o.dc = dc
+	return o
+}
+
+// WithHeartbeatTimeout sets the HeartbeatTimeout value
+func (o *CommitQuotasActivityActivityOptions) WithHeartbeatTimeout(d time.Duration) *CommitQuotasActivityActivityOptions {
+	o.heartbeatTimeout = &d
+	return o
+}
+
+// WithRetryPolicy sets the RetryPolicy value
+func (o *CommitQuotasActivityActivityOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *CommitQuotasActivityActivityOptions {
+	o.retryPolicy = policy
+	return o
+}
+
+// WithScheduleToCloseTimeout sets the ScheduleToCloseTimeout value
+func (o *CommitQuotasActivityActivityOptions) WithScheduleToCloseTimeout(d time.Duration) *CommitQuotasActivityActivityOptions {
+	o.scheduleToCloseTimeout = &d
+	return o
+}
+
+// WithScheduleToStartTimeout sets the ScheduleToStartTimeout value
+func (o *CommitQuotasActivityActivityOptions) WithScheduleToStartTimeout(d time.Duration) *CommitQuotasActivityActivityOptions {
+	o.scheduleToStartTimeout = &d
+	return o
+}
+
+// WithStartToCloseTimeout sets the StartToCloseTimeout value
+func (o *CommitQuotasActivityActivityOptions) WithStartToCloseTimeout(d time.Duration) *CommitQuotasActivityActivityOptions {
+	o.startToCloseTimeout = &d
+	return o
+}
+
+// WithTaskQueue sets the TaskQueue value
+func (o *CommitQuotasActivityActivityOptions) WithTaskQueue(tq string) *CommitQuotasActivityActivityOptions {
+	o.taskQueue = &tq
+	return o
+}
+
+// WithWaitForCancellation sets the WaitForCancellation value
+func (o *CommitQuotasActivityActivityOptions) WithWaitForCancellation(wait bool) *CommitQuotasActivityActivityOptions {
+	o.waitForCancellation = &wait
+	return o
+}
+
+// CommitQuotasActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentService.CommitQuotasActivity activity
+type CommitQuotasActivityLocalActivityOptions struct {
+	options                workflow.LocalActivityOptions
+	retryPolicy            *temporal.RetryPolicy
+	scheduleToCloseTimeout *time.Duration
+	startToCloseTimeout    *time.Duration
+	dc                     converter.DataConverter
+	fn                     func(context.Context, *CommitQuotasActivityRequest) (*CommitQuotasActivityResponse, error)
+}
+
+// NewCommitQuotasActivityLocalActivityOptions initializes a new CommitQuotasActivityLocalActivityOptions value
+func NewCommitQuotasActivityLocalActivityOptions() *CommitQuotasActivityLocalActivityOptions {
+	return &CommitQuotasActivityLocalActivityOptions{}
+}
+
+// Build initializes a workflow.Context with appropriate LocalActivityOptions values derived from schema defaults and any user-defined overrides
+func (o *CommitQuotasActivityLocalActivityOptions) Build(ctx workflow.Context) (workflow.Context, error) {
+	opts := o.options
+	if v := o.retryPolicy; v != nil {
+		opts.RetryPolicy = v
+	} else if opts.RetryPolicy == nil {
+		opts.RetryPolicy = &temporal.RetryPolicy{InitialInterval: 2000000000, BackoffCoefficient: 2.0, MaximumAttempts: int32(5)}
+	}
+	if v := o.scheduleToCloseTimeout; v != nil {
+		opts.ScheduleToCloseTimeout = *v
+	}
+	if v := o.startToCloseTimeout; v != nil {
+		opts.StartToCloseTimeout = *v
+	} else if opts.StartToCloseTimeout == 0 {
+		opts.StartToCloseTimeout = 60000000000 // 1 minute
+	}
+	return workflow.WithLocalActivityOptions(ctx, opts), nil
+}
+
+// Local specifies a custom cloud.v1.workflow.DeploymentService.CommitQuotasActivity implementation
+func (o *CommitQuotasActivityLocalActivityOptions) Local(fn func(context.Context, *CommitQuotasActivityRequest) (*CommitQuotasActivityResponse, error)) *CommitQuotasActivityLocalActivityOptions {
+	o.fn = fn
+	return o
+}
+
+// WithLocalActivityOptions specifies an initial LocalActivityOptions value to which defaults will be applied
+func (o *CommitQuotasActivityLocalActivityOptions) WithLocalActivityOptions(options workflow.LocalActivityOptions) *CommitQuotasActivityLocalActivityOptions {
+	o.options = options
+	return o
+}
+
+// WithDataConverter registers a DataConverter for the (local) activity
+func (o *CommitQuotasActivityLocalActivityOptions) WithDataConverter(dc converter.DataConverter) *CommitQuotasActivityLocalActivityOptions {
+	o.dc = dc
+	return o
+}
+
+// WithRetryPolicy sets the RetryPolicy value
+func (o *CommitQuotasActivityLocalActivityOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *CommitQuotasActivityLocalActivityOptions {
+	o.retryPolicy = policy
+	return o
+}
+
+// WithScheduleToCloseTimeout sets the ScheduleToCloseTimeout value
+func (o *CommitQuotasActivityLocalActivityOptions) WithScheduleToCloseTimeout(d time.Duration) *CommitQuotasActivityLocalActivityOptions {
+	o.scheduleToCloseTimeout = &d
+	return o
+}
+
+// WithStartToCloseTimeout sets the StartToCloseTimeout value
+func (o *CommitQuotasActivityLocalActivityOptions) WithStartToCloseTimeout(d time.Duration) *CommitQuotasActivityLocalActivityOptions {
 	o.startToCloseTimeout = &d
 	return o
 }
@@ -4737,6 +5011,270 @@ func (o *DockerUpActivityLocalActivityOptions) WithScheduleToCloseTimeout(d time
 
 // WithStartToCloseTimeout sets the StartToCloseTimeout value
 func (o *DockerUpActivityLocalActivityOptions) WithStartToCloseTimeout(d time.Duration) *DockerUpActivityLocalActivityOptions {
+	o.startToCloseTimeout = &d
+	return o
+}
+
+// RegisterReleaseQuotasActivityActivity registers a cloud.v1.workflow.DeploymentService.ReleaseQuotasActivity activity
+func RegisterReleaseQuotasActivityActivity(r worker.ActivityRegistry, fn func(context.Context, *ReleaseQuotasActivityRequest) (*ReleaseQuotasActivityResponse, error)) {
+	r.RegisterActivityWithOptions(fn, activity.RegisterOptions{
+		Name: ReleaseQuotasActivityActivityName,
+	})
+}
+
+// ReleaseQuotasActivityFuture describes a(n) cloud.v1.workflow.DeploymentService.ReleaseQuotasActivity activity execution
+type ReleaseQuotasActivityFuture struct {
+	Future workflow.Future
+}
+
+// Get blocks on the activity's completion, returning the response
+func (f *ReleaseQuotasActivityFuture) Get(ctx workflow.Context) (*ReleaseQuotasActivityResponse, error) {
+	var resp ReleaseQuotasActivityResponse
+	if err := f.Future.Get(ctx, &resp); err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
+// Select adds the activity's completion to the selector, callback can be nil
+func (f *ReleaseQuotasActivityFuture) Select(sel workflow.Selector, fn func(*ReleaseQuotasActivityFuture)) workflow.Selector {
+	return sel.AddFuture(f.Future, func(workflow.Future) {
+		if fn != nil {
+			fn(f)
+		}
+	})
+}
+
+// ReleaseQuotasActivity releases a run's pre-deploy reservations.
+func ReleaseQuotasActivity(ctx workflow.Context, req *ReleaseQuotasActivityRequest, options ...*ReleaseQuotasActivityActivityOptions) (*ReleaseQuotasActivityResponse, error) {
+	return ReleaseQuotasActivityAsync(ctx, req, options...).Get(ctx)
+}
+
+// ReleaseQuotasActivity releases a run's pre-deploy reservations.
+func ReleaseQuotasActivityAsync(ctx workflow.Context, req *ReleaseQuotasActivityRequest, options ...*ReleaseQuotasActivityActivityOptions) *ReleaseQuotasActivityFuture {
+	var o *ReleaseQuotasActivityActivityOptions
+	if len(options) > 0 && options[0] != nil {
+		o = options[0]
+	} else {
+		o = NewReleaseQuotasActivityActivityOptions()
+	}
+	var err error
+	if ctx, err = o.Build(ctx); err != nil {
+		errF, errS := workflow.NewFuture(ctx)
+		errS.SetError(err)
+		return &ReleaseQuotasActivityFuture{Future: errF}
+	}
+	activity := ReleaseQuotasActivityActivityName
+	if o.dc != nil {
+		ctx = workflow.WithDataConverter(ctx, o.dc)
+	}
+	future := &ReleaseQuotasActivityFuture{Future: workflow.ExecuteActivity(ctx, activity, req)}
+	return future
+}
+
+// ReleaseQuotasActivity releases a run's pre-deploy reservations.
+func ReleaseQuotasActivityLocal(ctx workflow.Context, req *ReleaseQuotasActivityRequest, options ...*ReleaseQuotasActivityLocalActivityOptions) (*ReleaseQuotasActivityResponse, error) {
+	return ReleaseQuotasActivityLocalAsync(ctx, req, options...).Get(ctx)
+}
+
+// ReleaseQuotasActivity releases a run's pre-deploy reservations.
+func ReleaseQuotasActivityLocalAsync(ctx workflow.Context, req *ReleaseQuotasActivityRequest, options ...*ReleaseQuotasActivityLocalActivityOptions) *ReleaseQuotasActivityFuture {
+	var o *ReleaseQuotasActivityLocalActivityOptions
+	if len(options) > 0 && options[0] != nil {
+		o = options[0]
+	} else {
+		o = NewReleaseQuotasActivityLocalActivityOptions()
+	}
+	var err error
+	if ctx, err = o.Build(ctx); err != nil {
+		errF, errS := workflow.NewFuture(ctx)
+		errS.SetError(err)
+		return &ReleaseQuotasActivityFuture{Future: errF}
+	}
+	var activity any
+	if o.fn != nil {
+		activity = o.fn
+	} else {
+		activity = ReleaseQuotasActivityActivityName
+	}
+	if o.dc != nil {
+		ctx = workflow.WithDataConverter(ctx, o.dc)
+	}
+	future := &ReleaseQuotasActivityFuture{Future: workflow.ExecuteLocalActivity(ctx, activity, req)}
+	return future
+}
+
+// ReleaseQuotasActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentService.ReleaseQuotasActivity activity
+type ReleaseQuotasActivityActivityOptions struct {
+	options                workflow.ActivityOptions
+	retryPolicy            *temporal.RetryPolicy
+	scheduleToCloseTimeout *time.Duration
+	startToCloseTimeout    *time.Duration
+	dc                     converter.DataConverter
+	heartbeatTimeout       *time.Duration
+	scheduleToStartTimeout *time.Duration
+	taskQueue              *string
+	waitForCancellation    *bool
+}
+
+// NewReleaseQuotasActivityActivityOptions initializes a new ReleaseQuotasActivityActivityOptions value
+func NewReleaseQuotasActivityActivityOptions() *ReleaseQuotasActivityActivityOptions {
+	return &ReleaseQuotasActivityActivityOptions{}
+}
+
+// Build initializes a workflow.Context with appropriate ActivityOptions values derived from schema defaults and any user-defined overrides
+func (o *ReleaseQuotasActivityActivityOptions) Build(ctx workflow.Context) (workflow.Context, error) {
+	opts := o.options
+	if v := o.heartbeatTimeout; v != nil {
+		opts.HeartbeatTimeout = *v
+	}
+	if v := o.retryPolicy; v != nil {
+		opts.RetryPolicy = v
+	} else if opts.RetryPolicy == nil {
+		opts.RetryPolicy = &temporal.RetryPolicy{InitialInterval: 2000000000, BackoffCoefficient: 2.0, MaximumAttempts: int32(5)}
+	}
+	if v := o.scheduleToCloseTimeout; v != nil {
+		opts.ScheduleToCloseTimeout = *v
+	}
+	if v := o.scheduleToStartTimeout; v != nil {
+		opts.ScheduleToStartTimeout = *v
+	}
+	if v := o.startToCloseTimeout; v != nil {
+		opts.StartToCloseTimeout = *v
+	} else if opts.StartToCloseTimeout == 0 {
+		opts.StartToCloseTimeout = 60000000000 // 1 minute
+	}
+	if v := o.taskQueue; v != nil {
+		opts.TaskQueue = *v
+	} else if opts.TaskQueue == "" {
+		opts.TaskQueue = DeploymentServiceTaskQueue
+	}
+	if v := o.waitForCancellation; v != nil {
+		opts.WaitForCancellation = *v
+	}
+	return workflow.WithActivityOptions(ctx, opts), nil
+}
+
+// WithActivityOptions specifies an initial ActivityOptions value to which defaults will be applied
+func (o *ReleaseQuotasActivityActivityOptions) WithActivityOptions(options workflow.ActivityOptions) *ReleaseQuotasActivityActivityOptions {
+	o.options = options
+	return o
+}
+
+// WithDataConverter registers a DataConverter for the (local) activity
+func (o *ReleaseQuotasActivityActivityOptions) WithDataConverter(dc converter.DataConverter) *ReleaseQuotasActivityActivityOptions {
+	o.dc = dc
+	return o
+}
+
+// WithHeartbeatTimeout sets the HeartbeatTimeout value
+func (o *ReleaseQuotasActivityActivityOptions) WithHeartbeatTimeout(d time.Duration) *ReleaseQuotasActivityActivityOptions {
+	o.heartbeatTimeout = &d
+	return o
+}
+
+// WithRetryPolicy sets the RetryPolicy value
+func (o *ReleaseQuotasActivityActivityOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *ReleaseQuotasActivityActivityOptions {
+	o.retryPolicy = policy
+	return o
+}
+
+// WithScheduleToCloseTimeout sets the ScheduleToCloseTimeout value
+func (o *ReleaseQuotasActivityActivityOptions) WithScheduleToCloseTimeout(d time.Duration) *ReleaseQuotasActivityActivityOptions {
+	o.scheduleToCloseTimeout = &d
+	return o
+}
+
+// WithScheduleToStartTimeout sets the ScheduleToStartTimeout value
+func (o *ReleaseQuotasActivityActivityOptions) WithScheduleToStartTimeout(d time.Duration) *ReleaseQuotasActivityActivityOptions {
+	o.scheduleToStartTimeout = &d
+	return o
+}
+
+// WithStartToCloseTimeout sets the StartToCloseTimeout value
+func (o *ReleaseQuotasActivityActivityOptions) WithStartToCloseTimeout(d time.Duration) *ReleaseQuotasActivityActivityOptions {
+	o.startToCloseTimeout = &d
+	return o
+}
+
+// WithTaskQueue sets the TaskQueue value
+func (o *ReleaseQuotasActivityActivityOptions) WithTaskQueue(tq string) *ReleaseQuotasActivityActivityOptions {
+	o.taskQueue = &tq
+	return o
+}
+
+// WithWaitForCancellation sets the WaitForCancellation value
+func (o *ReleaseQuotasActivityActivityOptions) WithWaitForCancellation(wait bool) *ReleaseQuotasActivityActivityOptions {
+	o.waitForCancellation = &wait
+	return o
+}
+
+// ReleaseQuotasActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentService.ReleaseQuotasActivity activity
+type ReleaseQuotasActivityLocalActivityOptions struct {
+	options                workflow.LocalActivityOptions
+	retryPolicy            *temporal.RetryPolicy
+	scheduleToCloseTimeout *time.Duration
+	startToCloseTimeout    *time.Duration
+	dc                     converter.DataConverter
+	fn                     func(context.Context, *ReleaseQuotasActivityRequest) (*ReleaseQuotasActivityResponse, error)
+}
+
+// NewReleaseQuotasActivityLocalActivityOptions initializes a new ReleaseQuotasActivityLocalActivityOptions value
+func NewReleaseQuotasActivityLocalActivityOptions() *ReleaseQuotasActivityLocalActivityOptions {
+	return &ReleaseQuotasActivityLocalActivityOptions{}
+}
+
+// Build initializes a workflow.Context with appropriate LocalActivityOptions values derived from schema defaults and any user-defined overrides
+func (o *ReleaseQuotasActivityLocalActivityOptions) Build(ctx workflow.Context) (workflow.Context, error) {
+	opts := o.options
+	if v := o.retryPolicy; v != nil {
+		opts.RetryPolicy = v
+	} else if opts.RetryPolicy == nil {
+		opts.RetryPolicy = &temporal.RetryPolicy{InitialInterval: 2000000000, BackoffCoefficient: 2.0, MaximumAttempts: int32(5)}
+	}
+	if v := o.scheduleToCloseTimeout; v != nil {
+		opts.ScheduleToCloseTimeout = *v
+	}
+	if v := o.startToCloseTimeout; v != nil {
+		opts.StartToCloseTimeout = *v
+	} else if opts.StartToCloseTimeout == 0 {
+		opts.StartToCloseTimeout = 60000000000 // 1 minute
+	}
+	return workflow.WithLocalActivityOptions(ctx, opts), nil
+}
+
+// Local specifies a custom cloud.v1.workflow.DeploymentService.ReleaseQuotasActivity implementation
+func (o *ReleaseQuotasActivityLocalActivityOptions) Local(fn func(context.Context, *ReleaseQuotasActivityRequest) (*ReleaseQuotasActivityResponse, error)) *ReleaseQuotasActivityLocalActivityOptions {
+	o.fn = fn
+	return o
+}
+
+// WithLocalActivityOptions specifies an initial LocalActivityOptions value to which defaults will be applied
+func (o *ReleaseQuotasActivityLocalActivityOptions) WithLocalActivityOptions(options workflow.LocalActivityOptions) *ReleaseQuotasActivityLocalActivityOptions {
+	o.options = options
+	return o
+}
+
+// WithDataConverter registers a DataConverter for the (local) activity
+func (o *ReleaseQuotasActivityLocalActivityOptions) WithDataConverter(dc converter.DataConverter) *ReleaseQuotasActivityLocalActivityOptions {
+	o.dc = dc
+	return o
+}
+
+// WithRetryPolicy sets the RetryPolicy value
+func (o *ReleaseQuotasActivityLocalActivityOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *ReleaseQuotasActivityLocalActivityOptions {
+	o.retryPolicy = policy
+	return o
+}
+
+// WithScheduleToCloseTimeout sets the ScheduleToCloseTimeout value
+func (o *ReleaseQuotasActivityLocalActivityOptions) WithScheduleToCloseTimeout(d time.Duration) *ReleaseQuotasActivityLocalActivityOptions {
+	o.scheduleToCloseTimeout = &d
+	return o
+}
+
+// WithStartToCloseTimeout sets the StartToCloseTimeout value
+func (o *ReleaseQuotasActivityLocalActivityOptions) WithStartToCloseTimeout(d time.Duration) *ReleaseQuotasActivityLocalActivityOptions {
 	o.startToCloseTimeout = &d
 	return o
 }
@@ -6097,18 +6635,19 @@ func WithDeploymentServiceSchemeTypes() scheme.Option {
 		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("AcquireNetworkActivityRequest"))
 		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("AcquireNetworkActivityResponse"))
 		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("AcquireQuotasActivityRequest"))
-		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("AcquireQuotasActivityRequest").Messages().ByName("QuotaRequestsEntry"))
 		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("AcquireQuotasActivityResponse"))
-		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("AcquireQuotasActivityResponse").Messages().ByName("QuotaAllocationsEntry"))
+		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("CommitQuotasActivityRequest"))
+		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("CommitQuotasActivityResponse"))
 		s.RegisterType(deployment.File_cloud_v1_deployment_docker_proto.Messages().ByName("Input"))
 		s.RegisterType(deployment.File_cloud_v1_deployment_docker_proto.Messages().ByName("Input").Messages().ByName("ContainersEntry"))
 		s.RegisterType(deployment.File_cloud_v1_deployment_docker_proto.Messages().ByName("Output"))
 		s.RegisterType(deployment.File_cloud_v1_deployment_docker_proto.Messages().ByName("Output").Messages().ByName("ContainersEntry"))
+		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("ReleaseQuotasActivityRequest"))
+		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("ReleaseQuotasActivityResponse"))
 		s.RegisterType(deployment.File_cloud_v1_deployment_terraform_proto.Messages().ByName("Input"))
 		s.RegisterType(deployment.File_cloud_v1_deployment_terraform_proto.Messages().ByName("Output"))
 		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("CalculateQuotasWorkflowRequest"))
 		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("CalculateQuotasWorkflowResponse"))
-		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("CalculateQuotasWorkflowResponse").Messages().ByName("QuotaRequestsEntry"))
 		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("ExecuteDeploymentPlanWorkflowRequest"))
 		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("ExecuteDeploymentPlanWorkflowResponse"))
 		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("ProcessInfrastructureWorkflowRequest"))

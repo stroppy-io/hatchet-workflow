@@ -16,6 +16,20 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
  */
 message Quota {
     /*
+        ReservationStatus is the control-plane lifecycle of our own quota ledger.
+        Provider usage is observed separately through quota snapshots; RESERVED
+        rows are the only rows subtracted from provider headroom for new runs.
+     */
+    enum ReservationStatus {
+        RESERVATION_STATUS_UNSPECIFIED = 0;
+        RESERVATION_STATUS_RESERVED = 1;
+        RESERVATION_STATUS_ALLOCATED = 2;
+        RESERVATION_STATUS_RELEASED = 3;
+        RESERVATION_STATUS_EXPIRED = 4;
+        RESERVATION_STATUS_FAILED = 5;
+    }
+
+    /*
         Info identifies which quota a reading refers to, independent of any
         numbers. It is the shared key embedded in both State and Allocation.
      */

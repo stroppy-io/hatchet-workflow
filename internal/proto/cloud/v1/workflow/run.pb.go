@@ -30,6 +30,8 @@ const (
 // RunConfig is the durable input to one benchmark run workflow.
 type RunConfig struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes quota reservations and provider settings lookup.
+	TenantId string `protobuf:"bytes,10,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	// id is the stable run identifier.
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// database is the database under test.
@@ -84,6 +86,13 @@ func (x *RunConfig) ProtoReflect() protoreflect.Message {
 // Deprecated: Use RunConfig.ProtoReflect.Descriptor instead.
 func (*RunConfig) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_workflow_run_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *RunConfig) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
 }
 
 func (x *RunConfig) GetId() string {
@@ -153,8 +162,10 @@ var File_cloud_v1_workflow_run_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_workflow_run_proto_rawDesc = "" +
 	"\n" +
-	"\x1bcloud/v1/workflow/run.proto\x12\x11cloud.v1.workflow\x1a(cloud/v1/deployment/infrastructure.proto\x1a\x1ecloud/v1/deployment/plan.proto\x1a cloud/v1/deployment/render.proto\x1a\"cloud/v1/workflow/deployment.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a cloud/v1/topology/topology.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1atemporal/v1/temporal.proto\x1a\x17validate/validate.proto\"\xa7\x05\n" +
-	"\tRunConfig\x12\x1a\n" +
+	"\x1bcloud/v1/workflow/run.proto\x12\x11cloud.v1.workflow\x1a(cloud/v1/deployment/infrastructure.proto\x1a\x1ecloud/v1/deployment/plan.proto\x1a cloud/v1/deployment/render.proto\x1a\"cloud/v1/workflow/deployment.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a cloud/v1/topology/topology.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1atemporal/v1/temporal.proto\x1a\x17validate/validate.proto\"\xcf\x05\n" +
+	"\tRunConfig\x12&\n" +
+	"\ttenant_id\x18\n" +
+	" \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x1a\n" +
 	"\x02id\x18\x01 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x02id\x12?\n" +
 	"\bdatabase\x18\x02 \x01(\v2\x19.cloud.v1.domain.DatabaseB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bdatabase\x12?\n" +

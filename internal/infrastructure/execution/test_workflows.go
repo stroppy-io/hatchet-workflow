@@ -50,7 +50,7 @@ func (w *TestWorkflows) LaunchTest(ctx context.Context, run *models.TestRunRecor
 		return errors.New("test run record has no baked spec to launch")
 	}
 
-	req := &workflowpb.TestWorkflowRequest{TestRun: spec}
+	req := &workflowpb.TestWorkflowRequest{TenantId: run.GetEntity().GetTenantId(), TestRun: spec}
 	if w.bootstrap != nil {
 		boot, err := w.bootstrap.AgentBootstrap(ctx)
 		if err != nil {

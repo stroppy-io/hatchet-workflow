@@ -32,7 +32,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/workflow/deployment.proto.
  */
 export const file_cloud_v1_workflow_deployment: GenFile = /*@__PURE__*/
-  fileDesc("CiJjbG91ZC92MS93b3JrZmxvdy9kZXBsb3ltZW50LnByb3RvEhFjbG91ZC52MS53b3JrZmxvdyK/AQokUHJvY2Vzc0luZnJhc3RydWN0dXJlV29ya2Zsb3dSZXF1ZXN0EhoKBnJ1bl9pZBgBIAEoCUIK+kIHcgUQARiAARI/CgRwbGFuGAIgASgLMicuY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVBsYW5CCPpCBYoBAhABEjoKD2FnZW50X2Jvb3RzdHJhcBgDIAEoCzIhLmNsb3VkLnYxLndvcmtmbG93LkFnZW50Qm9vdHN0cmFwImoKJVByb2Nlc3NJbmZyYXN0cnVjdHVyZVdvcmtmbG93UmVzcG9uc2USQQoFc3RhdGUYASABKAsyKC5jbG91ZC52MS5kZXBsb3ltZW50LkluZnJhc3RydWN0dXJlU3RhdGVCCPpCBYoBAhABImEKHkNhbGN1bGF0ZVF1b3Rhc1dvcmtmbG93UmVxdWVzdBI/CgRwbGFuGAEgASgLMicuY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVBsYW5CCPpCBYoBAhABIpsCCh9DYWxjdWxhdGVRdW90YXNXb3JrZmxvd1Jlc3BvbnNlEj8KBHBsYW4YASABKAsyJy5jbG91ZC52MS5kZXBsb3ltZW50LkluZnJhc3RydWN0dXJlUGxhbkII+kIFigECEAESXQoOcXVvdGFfcmVxdWVzdHMYAiADKAsyRS5jbG91ZC52MS53b3JrZmxvdy5DYWxjdWxhdGVRdW90YXNXb3JrZmxvd1Jlc3BvbnNlLlF1b3RhUmVxdWVzdHNFbnRyeRpYChJRdW90YVJlcXVlc3RzRW50cnkSCwoDa2V5GAEgASgJEjEKBXZhbHVlGAIgASgLMiIuY2xvdWQudjEuZGVwbG95bWVudC5RdW90YS5SZXF1ZXN0OgI4ASJgCh1BY3F1aXJlTmV0d29ya0FjdGl2aXR5UmVxdWVzdBI/CgRwbGFuGAEgASgLMicuY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVBsYW5CCPpCBYoBAhABIkMKHkFjcXVpcmVOZXR3b3JrQWN0aXZpdHlSZXNwb25zZRIhCgNuZXQYASABKAsyFC5jbG91ZC52MS5jb21tb24uTmV0ItQBChxBY3F1aXJlUXVvdGFzQWN0aXZpdHlSZXF1ZXN0EloKDnF1b3RhX3JlcXVlc3RzGAEgAygLMkIuY2xvdWQudjEud29ya2Zsb3cuQWNxdWlyZVF1b3Rhc0FjdGl2aXR5UmVxdWVzdC5RdW90YVJlcXVlc3RzRW50cnkaWAoSUXVvdGFSZXF1ZXN0c0VudHJ5EgsKA2tleRgBIAEoCRIxCgV2YWx1ZRgCIAEoCzIiLmNsb3VkLnYxLmRlcGxveW1lbnQuUXVvdGEuUmVxdWVzdDoCOAEi4gEKHUFjcXVpcmVRdW90YXNBY3Rpdml0eVJlc3BvbnNlEmEKEXF1b3RhX2FsbG9jYXRpb25zGAEgAygLMkYuY2xvdWQudjEud29ya2Zsb3cuQWNxdWlyZVF1b3Rhc0FjdGl2aXR5UmVzcG9uc2UuUXVvdGFBbGxvY2F0aW9uc0VudHJ5Gl4KFVF1b3RhQWxsb2NhdGlvbnNFbnRyeRILCgNrZXkYASABKAkSNAoFdmFsdWUYAiABKAsyJS5jbG91ZC52MS5kZXBsb3ltZW50LlF1b3RhLkFsbG9jYXRpb246AjgBIpYCCg5BZ2VudEJvb3RzdHJhcBIdCgtzZXJ2ZXJfYWRkchgBIAEoCUII+kIFcgMYgBASHAoKYmluYXJ5X3VybBgCIAEoCUII+kIFcgMYgBASJAoSdGVtcG9yYWxfbmFtZXNwYWNlGAMgASgJQgj6QgVyAxiAARJwCglleHRyYV9lbnYYBCADKAsyLy5jbG91ZC52MS53b3JrZmxvdy5BZ2VudEJvb3RzdHJhcC5FeHRyYUVudkVudHJ5Qiz6QimaASYQQCIbchkQARiAAjISXltBLVpfXVtBLVowLTlfXSokKgVyAxiAQBovCg1FeHRyYUVudkVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiuwEKIFJlbmRlckRvY2tlcklucHV0V29ya2Zsb3dSZXF1ZXN0EhoKBnJ1bl9pZBgBIAEoCUIK+kIHcgUQARiAARI/CgRwbGFuGAIgASgLMicuY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVBsYW5CCPpCBYoBAhABEjoKD2FnZW50X2Jvb3RzdHJhcBgDIAEoCzIhLmNsb3VkLnYxLndvcmtmbG93LkFnZW50Qm9vdHN0cmFwIoMCCidSZW5kZXJUZXJyYWZvcm1WYXJpYWJsZXNXb3JrZmxvd1JlcXVlc3QSGgoGcnVuX2lkGAEgASgJQgr6QgdyBRABGIABEj8KBHBsYW4YAiABKAsyJy5jbG91ZC52MS5kZXBsb3ltZW50LkluZnJhc3RydWN0dXJlUGxhbkII+kIFigECEAESPwoGYWN0aW9uGAMgASgOMiUuY2xvdWQudjEuZGVwbG95bWVudC5UZXJyYWZvcm0uQWN0aW9uQgj6QgWCAQIQARI6Cg9hZ2VudF9ib290c3RyYXAYBCABKAsyIS5jbG91ZC52MS53b3JrZmxvdy5BZ2VudEJvb3RzdHJhcCKlAwojUmVuZGVyRGVwbG95bWVudFBsYW5Xb3JrZmxvd1JlcXVlc3QSQAoNdG9wb2xvZ3lfc3BlYxgBIAEoCzIfLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5U3BlY0II+kIFigECEAESTgoTaW5mcmFzdHJ1Y3R1cmVfcGxhbhgCIAEoCzInLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVQbGFuQgj6QgWKAQIQARJGChRpbmZyYXN0cnVjdHVyZV9zdGF0ZRgDIAEoCzIoLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVTdGF0ZRJAChByZW5kZXJfb3ZlcnJpZGVzGAQgASgLMiYuY2xvdWQudjEuZGVwbG95bWVudC5SZW5kZXJPdmVycmlkZVNldBI1CghkYXRhYmFzZRgFIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5EYXRhYmFzZUII+kIFigECEAESKwoId29ya2xvYWQYBiABKAsyGS5jbG91ZC52MS5kb21haW4uV29ya2xvYWQibgokUmVuZGVyRGVwbG95bWVudFBsYW5Xb3JrZmxvd1Jlc3BvbnNlEkYKD2RlcGxveW1lbnRfcGxhbhgBIAEoCzIjLmNsb3VkLnYxLmRlcGxveW1lbnQuRGVwbG95bWVudFBsYW5CCPpCBYoBAhABIsABCiRFeGVjdXRlRGVwbG95bWVudFBsYW5Xb3JrZmxvd1JlcXVlc3QSRgoPZGVwbG95bWVudF9wbGFuGAEgASgLMiMuY2xvdWQudjEuZGVwbG95bWVudC5EZXBsb3ltZW50UGxhbkII+kIFigECEAESUAoUaW5mcmFzdHJ1Y3R1cmVfc3RhdGUYAiABKAsyKC5jbG91ZC52MS5kZXBsb3ltZW50LkluZnJhc3RydWN0dXJlU3RhdGVCCPpCBYoBAhABIm8KJUV4ZWN1dGVEZXBsb3ltZW50UGxhbldvcmtmbG93UmVzcG9uc2USRgoPZGVwbG95bWVudF9wbGFuGAEgASgLMiMuY2xvdWQudjEuZGVwbG95bWVudC5EZXBsb3ltZW50UGxhbkII+kIFigECEAEy7xAKEURlcGxveW1lbnRTZXJ2aWNlErsBCh1Qcm9jZXNzSW5mcmFzdHJ1Y3R1cmVXb3JrZmxvdxI3LmNsb3VkLnYxLndvcmtmbG93LlByb2Nlc3NJbmZyYXN0cnVjdHVyZVdvcmtmbG93UmVxdWVzdBo4LmNsb3VkLnYxLndvcmtmbG93LlByb2Nlc3NJbmZyYXN0cnVjdHVyZVdvcmtmbG93UmVzcG9uc2UiJ4rEAyNyHVByb2Nlc3NJbmZyYXN0cnVjdHVyZVdvcmtmbG93SgIgARKoAQoXQ2FsY3VsYXRlUXVvdGFzV29ya2Zsb3cSMS5jbG91ZC52MS53b3JrZmxvdy5DYWxjdWxhdGVRdW90YXNXb3JrZmxvd1JlcXVlc3QaMi5jbG91ZC52MS53b3JrZmxvdy5DYWxjdWxhdGVRdW90YXNXb3JrZmxvd1Jlc3BvbnNlIiaKxAMiSgIgA3IXQ2FsY3VsYXRlUXVvdGFzV29ya2Zsb3dSAwisAhKZAQoWQWNxdWlyZU5ldHdvcmtBY3Rpdml0eRIwLmNsb3VkLnYxLndvcmtmbG93LkFjcXVpcmVOZXR3b3JrQWN0aXZpdHlSZXF1ZXN0GjEuY2xvdWQudjEud29ya2Zsb3cuQWNxdWlyZU5ldHdvcmtBY3Rpdml0eVJlc3BvbnNlIhqSxAMWMg8gAwoCCAURAAAAAAAAAEAiAwisAhKWAQoVQWNxdWlyZVF1b3Rhc0FjdGl2aXR5Ei8uY2xvdWQudjEud29ya2Zsb3cuQWNxdWlyZVF1b3Rhc0FjdGl2aXR5UmVxdWVzdBowLmNsb3VkLnYxLndvcmtmbG93LkFjcXVpcmVRdW90YXNBY3Rpdml0eVJlc3BvbnNlIhqSxAMWIgMIrAIyDyADCgIIBREAAAAAAAAAQBKcAQoZUmVuZGVyRG9ja2VySW5wdXRXb3JrZmxvdxIzLmNsb3VkLnYxLndvcmtmbG93LlJlbmRlckRvY2tlcklucHV0V29ya2Zsb3dSZXF1ZXN0GiEuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuSW5wdXQiJ4rEAyNKAiADchlSZW5kZXJEb2NrZXJJbnB1dFdvcmtmbG93UgIIPBJ3ChJEb2NrZXJQdWxsQWN0aXZpdHkSIS5jbG91ZC52MS5kZXBsb3ltZW50LkRvY2tlci5JbnB1dBoiLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLk91dHB1dCIaksQDFiIDCNgEMg8gAwoCCAURAAAAAAAAAEAScAoQRG9ja2VyVXBBY3Rpdml0eRIhLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLklucHV0GiIuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuT3V0cHV0IhWSxAMRKgIIPDIGIAMKAggFIgMI2AQSbgoSRG9ja2VyRG93bkFjdGl2aXR5EiEuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuSW5wdXQaIi5jbG91ZC52MS5kZXBsb3ltZW50LkRvY2tlci5PdXRwdXQiEZLEAw0iAwisAjIGIAMKAggFErQBCiBSZW5kZXJUZXJyYWZvcm1WYXJpYWJsZXNXb3JrZmxvdxI6LmNsb3VkLnYxLndvcmtmbG93LlJlbmRlclRlcnJhZm9ybVZhcmlhYmxlc1dvcmtmbG93UmVxdWVzdBokLmNsb3VkLnYxLmRlcGxveW1lbnQuVGVycmFmb3JtLklucHV0Ii6KxAMqciBSZW5kZXJUZXJyYWZvcm1WYXJpYWJsZXNXb3JrZmxvd1ICCDxKAiADEnsKFVRlcnJhZm9ybVBsYW5BY3Rpdml0eRIkLmNsb3VkLnYxLmRlcGxveW1lbnQuVGVycmFmb3JtLklucHV0GiUuY2xvdWQudjEuZGVwbG95bWVudC5UZXJyYWZvcm0uT3V0cHV0IhWSxAMRMgYKAggKIAIiAwiEByoCCDwSfAoWVGVycmFmb3JtQXBwbHlBY3Rpdml0eRIkLmNsb3VkLnYxLmRlcGxveW1lbnQuVGVycmFmb3JtLklucHV0GiUuY2xvdWQudjEuZGVwbG95bWVudC5UZXJyYWZvcm0uT3V0cHV0IhWSxAMRMgYgAgoCCAoiAwiIDioCCDwSfgoYVGVycmFmb3JtRGVzdHJveUFjdGl2aXR5EiQuY2xvdWQudjEuZGVwbG95bWVudC5UZXJyYWZvcm0uSW5wdXQaJS5jbG91ZC52MS5kZXBsb3ltZW50LlRlcnJhZm9ybS5PdXRwdXQiFZLEAxEiAwiIDioCCDwyBiADCgIIChK8AQocUmVuZGVyRGVwbG95bWVudFBsYW5Xb3JrZmxvdxI2LmNsb3VkLnYxLndvcmtmbG93LlJlbmRlckRlcGxveW1lbnRQbGFuV29ya2Zsb3dSZXF1ZXN0GjcuY2xvdWQudjEud29ya2Zsb3cuUmVuZGVyRGVwbG95bWVudFBsYW5Xb3JrZmxvd1Jlc3BvbnNlIiuKxAMnUgMIrAJKAiADchxSZW5kZXJEZXBsb3ltZW50UGxhbldvcmtmbG93ErsBCh1FeGVjdXRlRGVwbG95bWVudFBsYW5Xb3JrZmxvdxI3LmNsb3VkLnYxLndvcmtmbG93LkV4ZWN1dGVEZXBsb3ltZW50UGxhbldvcmtmbG93UmVxdWVzdBo4LmNsb3VkLnYxLndvcmtmbG93LkV4ZWN1dGVEZXBsb3ltZW50UGxhbldvcmtmbG93UmVzcG9uc2UiJ4rEAyNKAiABch1FeGVjdXRlRGVwbG95bWVudFBsYW5Xb3JrZmxvdxoTisQDDwoNc3Ryb3BweS1jbG91ZEJGWkRnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS93b3JrZmxvd2IGcHJvdG8z", [file_cloud_v1_common_ip, file_cloud_v1_deployment_docker, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_plan, file_cloud_v1_deployment_quota, file_cloud_v1_deployment_render, file_cloud_v1_deployment_terraform, file_cloud_v1_domain_database, file_cloud_v1_domain_workload, file_cloud_v1_topology_topology, file_temporal_v1_temporal, file_validate_validate]);
+  fileDesc("CiJjbG91ZC92MS93b3JrZmxvdy9kZXBsb3ltZW50LnByb3RvEhFjbG91ZC52MS53b3JrZmxvdyK/AQokUHJvY2Vzc0luZnJhc3RydWN0dXJlV29ya2Zsb3dSZXF1ZXN0EhoKBnJ1bl9pZBgBIAEoCUIK+kIHcgUQARiAARI/CgRwbGFuGAIgASgLMicuY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVBsYW5CCPpCBYoBAhABEjoKD2FnZW50X2Jvb3RzdHJhcBgDIAEoCzIhLmNsb3VkLnYxLndvcmtmbG93LkFnZW50Qm9vdHN0cmFwImoKJVByb2Nlc3NJbmZyYXN0cnVjdHVyZVdvcmtmbG93UmVzcG9uc2USQQoFc3RhdGUYASABKAsyKC5jbG91ZC52MS5kZXBsb3ltZW50LkluZnJhc3RydWN0dXJlU3RhdGVCCPpCBYoBAhABImEKHkNhbGN1bGF0ZVF1b3Rhc1dvcmtmbG93UmVxdWVzdBI/CgRwbGFuGAEgASgLMicuY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVBsYW5CCPpCBYoBAhABIm0KD1F1b3RhUmVxdWVzdFJlZhIbCgdub2RlX2lkGAEgASgJQgr6QgdyBRiAARABEj0KB3JlcXVlc3QYAiABKAsyIi5jbG91ZC52MS5kZXBsb3ltZW50LlF1b3RhLlJlcXVlc3RCCPpCBYoBAhABInYKElF1b3RhQWxsb2NhdGlvblJlZhIbCgdub2RlX2lkGAEgASgJQgr6QgdyBRABGIABEkMKCmFsbG9jYXRpb24YAiABKAsyJS5jbG91ZC52MS5kZXBsb3ltZW50LlF1b3RhLkFsbG9jYXRpb25CCPpCBYoBAhABIqkBCh9DYWxjdWxhdGVRdW90YXNXb3JrZmxvd1Jlc3BvbnNlEj8KBHBsYW4YASABKAsyJy5jbG91ZC52MS5kZXBsb3ltZW50LkluZnJhc3RydWN0dXJlUGxhbkII+kIFigECEAESRQoOcXVvdGFfcmVxdWVzdHMYAiADKAsyIi5jbG91ZC52MS53b3JrZmxvdy5RdW90YVJlcXVlc3RSZWZCCfpCBpIBAxCACCJgCh1BY3F1aXJlTmV0d29ya0FjdGl2aXR5UmVxdWVzdBI/CgRwbGFuGAEgASgLMicuY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVBsYW5CCPpCBYoBAhABIkMKHkFjcXVpcmVOZXR3b3JrQWN0aXZpdHlSZXNwb25zZRIhCgNuZXQYASABKAsyFC5jbG91ZC52MS5jb21tb24uTmV0IuABChxBY3F1aXJlUXVvdGFzQWN0aXZpdHlSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhoKBnJ1bl9pZBgCIAEoCUIK+kIHcgUQARiAARI/CgRwbGFuGAMgASgLMicuY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVBsYW5CCPpCBYoBAhABEkUKDnF1b3RhX3JlcXVlc3RzGAQgAygLMiIuY2xvdWQudjEud29ya2Zsb3cuUXVvdGFSZXF1ZXN0UmVmQgn6QgaSAQMQgAgibAodQWNxdWlyZVF1b3Rhc0FjdGl2aXR5UmVzcG9uc2USSwoRcXVvdGFfYWxsb2NhdGlvbnMYASADKAsyJS5jbG91ZC52MS53b3JrZmxvdy5RdW90YUFsbG9jYXRpb25SZWZCCfpCBpIBAxCACCJXChtDb21taXRRdW90YXNBY3Rpdml0eVJlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASGgoGcnVuX2lkGAIgASgJQgr6QgdyBRiAARABImsKHENvbW1pdFF1b3Rhc0FjdGl2aXR5UmVzcG9uc2USSwoRcXVvdGFfYWxsb2NhdGlvbnMYASADKAsyJS5jbG91ZC52MS53b3JrZmxvdy5RdW90YUFsbG9jYXRpb25SZWZCCfpCBpIBAxCACCJYChxSZWxlYXNlUXVvdGFzQWN0aXZpdHlSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhoKBnJ1bl9pZBgCIAEoCUIK+kIHcgUQARiAASIxCh1SZWxlYXNlUXVvdGFzQWN0aXZpdHlSZXNwb25zZRIQCghyZWxlYXNlZBgBIAEoDSKWAgoOQWdlbnRCb290c3RyYXASHQoLc2VydmVyX2FkZHIYASABKAlCCPpCBXIDGIAQEhwKCmJpbmFyeV91cmwYAiABKAlCCPpCBXIDGIAQEiQKEnRlbXBvcmFsX25hbWVzcGFjZRgDIAEoCUII+kIFcgMYgAEScAoJZXh0cmFfZW52GAQgAygLMi8uY2xvdWQudjEud29ya2Zsb3cuQWdlbnRCb290c3RyYXAuRXh0cmFFbnZFbnRyeUIs+kIpmgEmEEAiG3IZGIACMhJeW0EtWl9dW0EtWjAtOV9dKiQQASoFcgMYgEAaLwoNRXh0cmFFbnZFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIrsBCiBSZW5kZXJEb2NrZXJJbnB1dFdvcmtmbG93UmVxdWVzdBIaCgZydW5faWQYASABKAlCCvpCB3IFEAEYgAESPwoEcGxhbhgCIAEoCzInLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVQbGFuQgj6QgWKAQIQARI6Cg9hZ2VudF9ib290c3RyYXAYAyABKAsyIS5jbG91ZC52MS53b3JrZmxvdy5BZ2VudEJvb3RzdHJhcCKDAgonUmVuZGVyVGVycmFmb3JtVmFyaWFibGVzV29ya2Zsb3dSZXF1ZXN0EhoKBnJ1bl9pZBgBIAEoCUIK+kIHcgUQARiAARI/CgRwbGFuGAIgASgLMicuY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVBsYW5CCPpCBYoBAhABEj8KBmFjdGlvbhgDIAEoDjIlLmNsb3VkLnYxLmRlcGxveW1lbnQuVGVycmFmb3JtLkFjdGlvbkII+kIFggECEAESOgoPYWdlbnRfYm9vdHN0cmFwGAQgASgLMiEuY2xvdWQudjEud29ya2Zsb3cuQWdlbnRCb290c3RyYXAipQMKI1JlbmRlckRlcGxveW1lbnRQbGFuV29ya2Zsb3dSZXF1ZXN0EkAKDXRvcG9sb2d5X3NwZWMYASABKAsyHy5jbG91ZC52MS50b3BvbG9neS5Ub3BvbG9neVNwZWNCCPpCBYoBAhABEk4KE2luZnJhc3RydWN0dXJlX3BsYW4YAiABKAsyJy5jbG91ZC52MS5kZXBsb3ltZW50LkluZnJhc3RydWN0dXJlUGxhbkII+kIFigECEAESRgoUaW5mcmFzdHJ1Y3R1cmVfc3RhdGUYAyABKAsyKC5jbG91ZC52MS5kZXBsb3ltZW50LkluZnJhc3RydWN0dXJlU3RhdGUSQAoQcmVuZGVyX292ZXJyaWRlcxgEIAEoCzImLmNsb3VkLnYxLmRlcGxveW1lbnQuUmVuZGVyT3ZlcnJpZGVTZXQSNQoIZGF0YWJhc2UYBSABKAsyGS5jbG91ZC52MS5kb21haW4uRGF0YWJhc2VCCPpCBYoBAhABEisKCHdvcmtsb2FkGAYgASgLMhkuY2xvdWQudjEuZG9tYWluLldvcmtsb2FkIm4KJFJlbmRlckRlcGxveW1lbnRQbGFuV29ya2Zsb3dSZXNwb25zZRJGCg9kZXBsb3ltZW50X3BsYW4YASABKAsyIy5jbG91ZC52MS5kZXBsb3ltZW50LkRlcGxveW1lbnRQbGFuQgj6QgWKAQIQASLAAQokRXhlY3V0ZURlcGxveW1lbnRQbGFuV29ya2Zsb3dSZXF1ZXN0EkYKD2RlcGxveW1lbnRfcGxhbhgBIAEoCzIjLmNsb3VkLnYxLmRlcGxveW1lbnQuRGVwbG95bWVudFBsYW5CCPpCBYoBAhABElAKFGluZnJhc3RydWN0dXJlX3N0YXRlGAIgASgLMiguY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVN0YXRlQgj6QgWKAQIQASJvCiVFeGVjdXRlRGVwbG95bWVudFBsYW5Xb3JrZmxvd1Jlc3BvbnNlEkYKD2RlcGxveW1lbnRfcGxhbhgBIAEoCzIjLmNsb3VkLnYxLmRlcGxveW1lbnQuRGVwbG95bWVudFBsYW5CCPpCBYoBAhABMpwTChFEZXBsb3ltZW50U2VydmljZRK7AQodUHJvY2Vzc0luZnJhc3RydWN0dXJlV29ya2Zsb3cSNy5jbG91ZC52MS53b3JrZmxvdy5Qcm9jZXNzSW5mcmFzdHJ1Y3R1cmVXb3JrZmxvd1JlcXVlc3QaOC5jbG91ZC52MS53b3JrZmxvdy5Qcm9jZXNzSW5mcmFzdHJ1Y3R1cmVXb3JrZmxvd1Jlc3BvbnNlIieKxAMjch1Qcm9jZXNzSW5mcmFzdHJ1Y3R1cmVXb3JrZmxvd0oCIAESqAEKF0NhbGN1bGF0ZVF1b3Rhc1dvcmtmbG93EjEuY2xvdWQudjEud29ya2Zsb3cuQ2FsY3VsYXRlUXVvdGFzV29ya2Zsb3dSZXF1ZXN0GjIuY2xvdWQudjEud29ya2Zsb3cuQ2FsY3VsYXRlUXVvdGFzV29ya2Zsb3dSZXNwb25zZSImisQDIlIDCKwCSgIgA3IXQ2FsY3VsYXRlUXVvdGFzV29ya2Zsb3cSmQEKFkFjcXVpcmVOZXR3b3JrQWN0aXZpdHkSMC5jbG91ZC52MS53b3JrZmxvdy5BY3F1aXJlTmV0d29ya0FjdGl2aXR5UmVxdWVzdBoxLmNsb3VkLnYxLndvcmtmbG93LkFjcXVpcmVOZXR3b3JrQWN0aXZpdHlSZXNwb25zZSIaksQDFiIDCKwCMg8gAwoCCAURAAAAAAAAAEASlgEKFUFjcXVpcmVRdW90YXNBY3Rpdml0eRIvLmNsb3VkLnYxLndvcmtmbG93LkFjcXVpcmVRdW90YXNBY3Rpdml0eVJlcXVlc3QaMC5jbG91ZC52MS53b3JrZmxvdy5BY3F1aXJlUXVvdGFzQWN0aXZpdHlSZXNwb25zZSIaksQDFiIDCKwCMg8gAwoCCAURAAAAAAAAAEASkgEKFENvbW1pdFF1b3Rhc0FjdGl2aXR5Ei4uY2xvdWQudjEud29ya2Zsb3cuQ29tbWl0UXVvdGFzQWN0aXZpdHlSZXF1ZXN0Gi8uY2xvdWQudjEud29ya2Zsb3cuQ29tbWl0UXVvdGFzQWN0aXZpdHlSZXNwb25zZSIZksQDFSICCDwyDyAFCgIIAhEAAAAAAAAAQBKVAQoVUmVsZWFzZVF1b3Rhc0FjdGl2aXR5Ei8uY2xvdWQudjEud29ya2Zsb3cuUmVsZWFzZVF1b3Rhc0FjdGl2aXR5UmVxdWVzdBowLmNsb3VkLnYxLndvcmtmbG93LlJlbGVhc2VRdW90YXNBY3Rpdml0eVJlc3BvbnNlIhmSxAMVIgIIPDIPIAUKAggCEQAAAAAAAABAEpwBChlSZW5kZXJEb2NrZXJJbnB1dFdvcmtmbG93EjMuY2xvdWQudjEud29ya2Zsb3cuUmVuZGVyRG9ja2VySW5wdXRXb3JrZmxvd1JlcXVlc3QaIS5jbG91ZC52MS5kZXBsb3ltZW50LkRvY2tlci5JbnB1dCInisQDI3IZUmVuZGVyRG9ja2VySW5wdXRXb3JrZmxvd1ICCDxKAiADEncKEkRvY2tlclB1bGxBY3Rpdml0eRIhLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLklucHV0GiIuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuT3V0cHV0IhqSxAMWIgMI2AQyDyADCgIIBREAAAAAAAAAQBJwChBEb2NrZXJVcEFjdGl2aXR5EiEuY2xvdWQudjEuZGVwbG95bWVudC5Eb2NrZXIuSW5wdXQaIi5jbG91ZC52MS5kZXBsb3ltZW50LkRvY2tlci5PdXRwdXQiFZLEAxEiAwjYBCoCCDwyBiADCgIIBRJuChJEb2NrZXJEb3duQWN0aXZpdHkSIS5jbG91ZC52MS5kZXBsb3ltZW50LkRvY2tlci5JbnB1dBoiLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLk91dHB1dCIRksQDDSIDCKwCMgYgAwoCCAUStAEKIFJlbmRlclRlcnJhZm9ybVZhcmlhYmxlc1dvcmtmbG93EjouY2xvdWQudjEud29ya2Zsb3cuUmVuZGVyVGVycmFmb3JtVmFyaWFibGVzV29ya2Zsb3dSZXF1ZXN0GiQuY2xvdWQudjEuZGVwbG95bWVudC5UZXJyYWZvcm0uSW5wdXQiLorEAypyIFJlbmRlclRlcnJhZm9ybVZhcmlhYmxlc1dvcmtmbG93UgIIPEoCIAMSewoVVGVycmFmb3JtUGxhbkFjdGl2aXR5EiQuY2xvdWQudjEuZGVwbG95bWVudC5UZXJyYWZvcm0uSW5wdXQaJS5jbG91ZC52MS5kZXBsb3ltZW50LlRlcnJhZm9ybS5PdXRwdXQiFZLEAxEiAwiEByoCCDwyBgoCCAogAhJ8ChZUZXJyYWZvcm1BcHBseUFjdGl2aXR5EiQuY2xvdWQudjEuZGVwbG95bWVudC5UZXJyYWZvcm0uSW5wdXQaJS5jbG91ZC52MS5kZXBsb3ltZW50LlRlcnJhZm9ybS5PdXRwdXQiFZLEAxEqAgg8MgYgAgoCCAoiAwiIDhJ+ChhUZXJyYWZvcm1EZXN0cm95QWN0aXZpdHkSJC5jbG91ZC52MS5kZXBsb3ltZW50LlRlcnJhZm9ybS5JbnB1dBolLmNsb3VkLnYxLmRlcGxveW1lbnQuVGVycmFmb3JtLk91dHB1dCIVksQDESIDCIgOKgIIPDIGIAMKAggKErwBChxSZW5kZXJEZXBsb3ltZW50UGxhbldvcmtmbG93EjYuY2xvdWQudjEud29ya2Zsb3cuUmVuZGVyRGVwbG95bWVudFBsYW5Xb3JrZmxvd1JlcXVlc3QaNy5jbG91ZC52MS53b3JrZmxvdy5SZW5kZXJEZXBsb3ltZW50UGxhbldvcmtmbG93UmVzcG9uc2UiK4rEAydKAiADchxSZW5kZXJEZXBsb3ltZW50UGxhbldvcmtmbG93UgMIrAISuwEKHUV4ZWN1dGVEZXBsb3ltZW50UGxhbldvcmtmbG93EjcuY2xvdWQudjEud29ya2Zsb3cuRXhlY3V0ZURlcGxveW1lbnRQbGFuV29ya2Zsb3dSZXF1ZXN0GjguY2xvdWQudjEud29ya2Zsb3cuRXhlY3V0ZURlcGxveW1lbnRQbGFuV29ya2Zsb3dSZXNwb25zZSInisQDI3IdRXhlY3V0ZURlcGxveW1lbnRQbGFuV29ya2Zsb3dKAiABGhOKxAMPCg1zdHJvcHB5LWNsb3VkQkZaRGdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL3dvcmtmbG93YgZwcm90bzM", [file_cloud_v1_common_ip, file_cloud_v1_deployment_docker, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_plan, file_cloud_v1_deployment_quota, file_cloud_v1_deployment_render, file_cloud_v1_deployment_terraform, file_cloud_v1_domain_database, file_cloud_v1_domain_workload, file_cloud_v1_topology_topology, file_temporal_v1_temporal, file_validate_validate]);
 
 /**
  *
@@ -197,7 +197,103 @@ export const CalculateQuotasWorkflowRequestSchema: GenMessage<CalculateQuotasWor
 
 /**
  *
- * CalculateQuotasWorkflowResponse returns quota requests keyed by node id.
+ * QuotaRequestRef keeps the topology node id together with one quota request.
+ * One node usually asks for several quotas (instances, CPU, memory, disk), so
+ * this must be repeated rather than map<node_id, request>.
+ *
+ * @generated from message cloud.v1.workflow.QuotaRequestRef
+ */
+export type QuotaRequestRef = Message<"cloud.v1.workflow.QuotaRequestRef"> & {
+  /**
+   * @generated from field: string node_id = 1;
+   */
+  nodeId: string;
+
+  /**
+   * @generated from field: cloud.v1.deployment.Quota.Request request = 2;
+   */
+  request?: Quota_Request;
+};
+
+/**
+ *
+ * QuotaRequestRef keeps the topology node id together with one quota request.
+ * One node usually asks for several quotas (instances, CPU, memory, disk), so
+ * this must be repeated rather than map<node_id, request>.
+ *
+ * @generated from message cloud.v1.workflow.QuotaRequestRef
+ */
+export type QuotaRequestRefJson = {
+  /**
+   * @generated from field: string node_id = 1;
+   */
+  nodeId?: string;
+
+  /**
+   * @generated from field: cloud.v1.deployment.Quota.Request request = 2;
+   */
+  request?: Quota_RequestJson;
+};
+
+export type QuotaRequestRefValid = QuotaRequestRef;
+
+/**
+ * Describes the message cloud.v1.workflow.QuotaRequestRef.
+ * Use `create(QuotaRequestRefSchema)` to create a new message.
+ */
+export const QuotaRequestRefSchema: GenMessage<QuotaRequestRef, {jsonType: QuotaRequestRefJson, validType: QuotaRequestRefValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_workflow_deployment, 3);
+
+/**
+ *
+ * QuotaAllocationRef keeps the topology node id together with one granted
+ * quota allocation.
+ *
+ * @generated from message cloud.v1.workflow.QuotaAllocationRef
+ */
+export type QuotaAllocationRef = Message<"cloud.v1.workflow.QuotaAllocationRef"> & {
+  /**
+   * @generated from field: string node_id = 1;
+   */
+  nodeId: string;
+
+  /**
+   * @generated from field: cloud.v1.deployment.Quota.Allocation allocation = 2;
+   */
+  allocation?: Quota_Allocation;
+};
+
+/**
+ *
+ * QuotaAllocationRef keeps the topology node id together with one granted
+ * quota allocation.
+ *
+ * @generated from message cloud.v1.workflow.QuotaAllocationRef
+ */
+export type QuotaAllocationRefJson = {
+  /**
+   * @generated from field: string node_id = 1;
+   */
+  nodeId?: string;
+
+  /**
+   * @generated from field: cloud.v1.deployment.Quota.Allocation allocation = 2;
+   */
+  allocation?: Quota_AllocationJson;
+};
+
+export type QuotaAllocationRefValid = QuotaAllocationRef;
+
+/**
+ * Describes the message cloud.v1.workflow.QuotaAllocationRef.
+ * Use `create(QuotaAllocationRefSchema)` to create a new message.
+ */
+export const QuotaAllocationRefSchema: GenMessage<QuotaAllocationRef, {jsonType: QuotaAllocationRefJson, validType: QuotaAllocationRefValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_workflow_deployment, 4);
+
+/**
+ *
+ * CalculateQuotasWorkflowResponse returns all quota requests with node ids.
  *
  * @generated from message cloud.v1.workflow.CalculateQuotasWorkflowResponse
  */
@@ -212,16 +308,16 @@ export type CalculateQuotasWorkflowResponse = Message<"cloud.v1.workflow.Calcula
 
   /**
    *
-   * quota_requests are requested quotas keyed by topology node id.
+   * quota_requests are requested quotas with topology node ids.
    *
-   * @generated from field: map<string, cloud.v1.deployment.Quota.Request> quota_requests = 2;
+   * @generated from field: repeated cloud.v1.workflow.QuotaRequestRef quota_requests = 2;
    */
-  quotaRequests: { [key: string]: Quota_Request };
+  quotaRequests: QuotaRequestRef[];
 };
 
 /**
  *
- * CalculateQuotasWorkflowResponse returns quota requests keyed by node id.
+ * CalculateQuotasWorkflowResponse returns all quota requests with node ids.
  *
  * @generated from message cloud.v1.workflow.CalculateQuotasWorkflowResponse
  */
@@ -236,11 +332,11 @@ export type CalculateQuotasWorkflowResponseJson = {
 
   /**
    *
-   * quota_requests are requested quotas keyed by topology node id.
+   * quota_requests are requested quotas with topology node ids.
    *
-   * @generated from field: map<string, cloud.v1.deployment.Quota.Request> quota_requests = 2;
+   * @generated from field: repeated cloud.v1.workflow.QuotaRequestRef quota_requests = 2;
    */
-  quotaRequests?: { [key: string]: Quota_RequestJson };
+  quotaRequests?: QuotaRequestRefJson[];
 };
 
 export type CalculateQuotasWorkflowResponseValid = CalculateQuotasWorkflowResponse;
@@ -250,7 +346,7 @@ export type CalculateQuotasWorkflowResponseValid = CalculateQuotasWorkflowRespon
  * Use `create(CalculateQuotasWorkflowResponseSchema)` to create a new message.
  */
 export const CalculateQuotasWorkflowResponseSchema: GenMessage<CalculateQuotasWorkflowResponse, {jsonType: CalculateQuotasWorkflowResponseJson, validType: CalculateQuotasWorkflowResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_deployment, 3);
+  messageDesc(file_cloud_v1_workflow_deployment, 5);
 
 /**
  *
@@ -293,7 +389,7 @@ export type AcquireNetworkActivityRequestValid = AcquireNetworkActivityRequest;
  * Use `create(AcquireNetworkActivityRequestSchema)` to create a new message.
  */
 export const AcquireNetworkActivityRequestSchema: GenMessage<AcquireNetworkActivityRequest, {jsonType: AcquireNetworkActivityRequestJson, validType: AcquireNetworkActivityRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_deployment, 4);
+  messageDesc(file_cloud_v1_workflow_deployment, 6);
 
 /**
  *
@@ -334,7 +430,7 @@ export type AcquireNetworkActivityResponseValid = AcquireNetworkActivityResponse
  * Use `create(AcquireNetworkActivityResponseSchema)` to create a new message.
  */
 export const AcquireNetworkActivityResponseSchema: GenMessage<AcquireNetworkActivityResponse, {jsonType: AcquireNetworkActivityResponseJson, validType: AcquireNetworkActivityResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_deployment, 5);
+  messageDesc(file_cloud_v1_workflow_deployment, 7);
 
 /**
  *
@@ -344,12 +440,27 @@ export const AcquireNetworkActivityResponseSchema: GenMessage<AcquireNetworkActi
  */
 export type AcquireQuotasActivityRequest = Message<"cloud.v1.workflow.AcquireQuotasActivityRequest"> & {
   /**
-   *
-   * quota_requests are requested quotas keyed by topology node id.
-   *
-   * @generated from field: map<string, cloud.v1.deployment.Quota.Request> quota_requests = 1;
+   * @generated from field: string tenant_id = 1;
    */
-  quotaRequests: { [key: string]: Quota_Request };
+  tenantId: string;
+
+  /**
+   * @generated from field: string run_id = 2;
+   */
+  runId: string;
+
+  /**
+   * @generated from field: cloud.v1.deployment.InfrastructurePlan plan = 3;
+   */
+  plan?: InfrastructurePlan;
+
+  /**
+   *
+   * quota_requests are requested quotas with topology node ids.
+   *
+   * @generated from field: repeated cloud.v1.workflow.QuotaRequestRef quota_requests = 4;
+   */
+  quotaRequests: QuotaRequestRef[];
 };
 
 /**
@@ -360,12 +471,27 @@ export type AcquireQuotasActivityRequest = Message<"cloud.v1.workflow.AcquireQuo
  */
 export type AcquireQuotasActivityRequestJson = {
   /**
-   *
-   * quota_requests are requested quotas keyed by topology node id.
-   *
-   * @generated from field: map<string, cloud.v1.deployment.Quota.Request> quota_requests = 1;
+   * @generated from field: string tenant_id = 1;
    */
-  quotaRequests?: { [key: string]: Quota_RequestJson };
+  tenantId?: string;
+
+  /**
+   * @generated from field: string run_id = 2;
+   */
+  runId?: string;
+
+  /**
+   * @generated from field: cloud.v1.deployment.InfrastructurePlan plan = 3;
+   */
+  plan?: InfrastructurePlanJson;
+
+  /**
+   *
+   * quota_requests are requested quotas with topology node ids.
+   *
+   * @generated from field: repeated cloud.v1.workflow.QuotaRequestRef quota_requests = 4;
+   */
+  quotaRequests?: QuotaRequestRefJson[];
 };
 
 export type AcquireQuotasActivityRequestValid = AcquireQuotasActivityRequest;
@@ -375,38 +501,38 @@ export type AcquireQuotasActivityRequestValid = AcquireQuotasActivityRequest;
  * Use `create(AcquireQuotasActivityRequestSchema)` to create a new message.
  */
 export const AcquireQuotasActivityRequestSchema: GenMessage<AcquireQuotasActivityRequest, {jsonType: AcquireQuotasActivityRequestJson, validType: AcquireQuotasActivityRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_deployment, 6);
+  messageDesc(file_cloud_v1_workflow_deployment, 8);
 
 /**
  *
- * AcquireQuotasActivityResponse returns granted allocations keyed by node id.
+ * AcquireQuotasActivityResponse returns granted allocations with node ids.
  *
  * @generated from message cloud.v1.workflow.AcquireQuotasActivityResponse
  */
 export type AcquireQuotasActivityResponse = Message<"cloud.v1.workflow.AcquireQuotasActivityResponse"> & {
   /**
    *
-   * quota_allocations are granted allocations keyed by topology node id.
+   * quota_allocations are granted allocations with topology node ids.
    *
-   * @generated from field: map<string, cloud.v1.deployment.Quota.Allocation> quota_allocations = 1;
+   * @generated from field: repeated cloud.v1.workflow.QuotaAllocationRef quota_allocations = 1;
    */
-  quotaAllocations: { [key: string]: Quota_Allocation };
+  quotaAllocations: QuotaAllocationRef[];
 };
 
 /**
  *
- * AcquireQuotasActivityResponse returns granted allocations keyed by node id.
+ * AcquireQuotasActivityResponse returns granted allocations with node ids.
  *
  * @generated from message cloud.v1.workflow.AcquireQuotasActivityResponse
  */
 export type AcquireQuotasActivityResponseJson = {
   /**
    *
-   * quota_allocations are granted allocations keyed by topology node id.
+   * quota_allocations are granted allocations with topology node ids.
    *
-   * @generated from field: map<string, cloud.v1.deployment.Quota.Allocation> quota_allocations = 1;
+   * @generated from field: repeated cloud.v1.workflow.QuotaAllocationRef quota_allocations = 1;
    */
-  quotaAllocations?: { [key: string]: Quota_AllocationJson };
+  quotaAllocations?: QuotaAllocationRefJson[];
 };
 
 export type AcquireQuotasActivityResponseValid = AcquireQuotasActivityResponse;
@@ -416,7 +542,157 @@ export type AcquireQuotasActivityResponseValid = AcquireQuotasActivityResponse;
  * Use `create(AcquireQuotasActivityResponseSchema)` to create a new message.
  */
 export const AcquireQuotasActivityResponseSchema: GenMessage<AcquireQuotasActivityResponse, {jsonType: AcquireQuotasActivityResponseJson, validType: AcquireQuotasActivityResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_deployment, 7);
+  messageDesc(file_cloud_v1_workflow_deployment, 9);
+
+/**
+ *
+ * CommitQuotasActivityRequest marks a run's reserved quotas as provider-backed
+ * allocations after infrastructure was successfully provisioned.
+ *
+ * @generated from message cloud.v1.workflow.CommitQuotasActivityRequest
+ */
+export type CommitQuotasActivityRequest = Message<"cloud.v1.workflow.CommitQuotasActivityRequest"> & {
+  /**
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * @generated from field: string run_id = 2;
+   */
+  runId: string;
+};
+
+/**
+ *
+ * CommitQuotasActivityRequest marks a run's reserved quotas as provider-backed
+ * allocations after infrastructure was successfully provisioned.
+ *
+ * @generated from message cloud.v1.workflow.CommitQuotasActivityRequest
+ */
+export type CommitQuotasActivityRequestJson = {
+  /**
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId?: string;
+
+  /**
+   * @generated from field: string run_id = 2;
+   */
+  runId?: string;
+};
+
+export type CommitQuotasActivityRequestValid = CommitQuotasActivityRequest;
+
+/**
+ * Describes the message cloud.v1.workflow.CommitQuotasActivityRequest.
+ * Use `create(CommitQuotasActivityRequestSchema)` to create a new message.
+ */
+export const CommitQuotasActivityRequestSchema: GenMessage<CommitQuotasActivityRequest, {jsonType: CommitQuotasActivityRequestJson, validType: CommitQuotasActivityRequestValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_workflow_deployment, 10);
+
+/**
+ * @generated from message cloud.v1.workflow.CommitQuotasActivityResponse
+ */
+export type CommitQuotasActivityResponse = Message<"cloud.v1.workflow.CommitQuotasActivityResponse"> & {
+  /**
+   * @generated from field: repeated cloud.v1.workflow.QuotaAllocationRef quota_allocations = 1;
+   */
+  quotaAllocations: QuotaAllocationRef[];
+};
+
+/**
+ * @generated from message cloud.v1.workflow.CommitQuotasActivityResponse
+ */
+export type CommitQuotasActivityResponseJson = {
+  /**
+   * @generated from field: repeated cloud.v1.workflow.QuotaAllocationRef quota_allocations = 1;
+   */
+  quotaAllocations?: QuotaAllocationRefJson[];
+};
+
+export type CommitQuotasActivityResponseValid = CommitQuotasActivityResponse;
+
+/**
+ * Describes the message cloud.v1.workflow.CommitQuotasActivityResponse.
+ * Use `create(CommitQuotasActivityResponseSchema)` to create a new message.
+ */
+export const CommitQuotasActivityResponseSchema: GenMessage<CommitQuotasActivityResponse, {jsonType: CommitQuotasActivityResponseJson, validType: CommitQuotasActivityResponseValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_workflow_deployment, 11);
+
+/**
+ *
+ * ReleaseQuotasActivityRequest releases pre-deploy reservations for a run.
+ *
+ * @generated from message cloud.v1.workflow.ReleaseQuotasActivityRequest
+ */
+export type ReleaseQuotasActivityRequest = Message<"cloud.v1.workflow.ReleaseQuotasActivityRequest"> & {
+  /**
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * @generated from field: string run_id = 2;
+   */
+  runId: string;
+};
+
+/**
+ *
+ * ReleaseQuotasActivityRequest releases pre-deploy reservations for a run.
+ *
+ * @generated from message cloud.v1.workflow.ReleaseQuotasActivityRequest
+ */
+export type ReleaseQuotasActivityRequestJson = {
+  /**
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId?: string;
+
+  /**
+   * @generated from field: string run_id = 2;
+   */
+  runId?: string;
+};
+
+export type ReleaseQuotasActivityRequestValid = ReleaseQuotasActivityRequest;
+
+/**
+ * Describes the message cloud.v1.workflow.ReleaseQuotasActivityRequest.
+ * Use `create(ReleaseQuotasActivityRequestSchema)` to create a new message.
+ */
+export const ReleaseQuotasActivityRequestSchema: GenMessage<ReleaseQuotasActivityRequest, {jsonType: ReleaseQuotasActivityRequestJson, validType: ReleaseQuotasActivityRequestValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_workflow_deployment, 12);
+
+/**
+ * @generated from message cloud.v1.workflow.ReleaseQuotasActivityResponse
+ */
+export type ReleaseQuotasActivityResponse = Message<"cloud.v1.workflow.ReleaseQuotasActivityResponse"> & {
+  /**
+   * @generated from field: uint32 released = 1;
+   */
+  released: number;
+};
+
+/**
+ * @generated from message cloud.v1.workflow.ReleaseQuotasActivityResponse
+ */
+export type ReleaseQuotasActivityResponseJson = {
+  /**
+   * @generated from field: uint32 released = 1;
+   */
+  released?: number;
+};
+
+export type ReleaseQuotasActivityResponseValid = ReleaseQuotasActivityResponse;
+
+/**
+ * Describes the message cloud.v1.workflow.ReleaseQuotasActivityResponse.
+ * Use `create(ReleaseQuotasActivityResponseSchema)` to create a new message.
+ */
+export const ReleaseQuotasActivityResponseSchema: GenMessage<ReleaseQuotasActivityResponse, {jsonType: ReleaseQuotasActivityResponseJson, validType: ReleaseQuotasActivityResponseValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_workflow_deployment, 13);
 
 /**
  *
@@ -515,7 +791,7 @@ export type AgentBootstrapValid = AgentBootstrap;
  * Use `create(AgentBootstrapSchema)` to create a new message.
  */
 export const AgentBootstrapSchema: GenMessage<AgentBootstrap, {jsonType: AgentBootstrapJson, validType: AgentBootstrapValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_deployment, 8);
+  messageDesc(file_cloud_v1_workflow_deployment, 14);
 
 /**
  *
@@ -592,7 +868,7 @@ export type RenderDockerInputWorkflowRequestValid = RenderDockerInputWorkflowReq
  * Use `create(RenderDockerInputWorkflowRequestSchema)` to create a new message.
  */
 export const RenderDockerInputWorkflowRequestSchema: GenMessage<RenderDockerInputWorkflowRequest, {jsonType: RenderDockerInputWorkflowRequestJson, validType: RenderDockerInputWorkflowRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_deployment, 9);
+  messageDesc(file_cloud_v1_workflow_deployment, 15);
 
 /**
  *
@@ -683,7 +959,7 @@ export type RenderTerraformVariablesWorkflowRequestValid = RenderTerraformVariab
  * Use `create(RenderTerraformVariablesWorkflowRequestSchema)` to create a new message.
  */
 export const RenderTerraformVariablesWorkflowRequestSchema: GenMessage<RenderTerraformVariablesWorkflowRequest, {jsonType: RenderTerraformVariablesWorkflowRequestJson, validType: RenderTerraformVariablesWorkflowRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_deployment, 10);
+  messageDesc(file_cloud_v1_workflow_deployment, 16);
 
 /**
  *
@@ -814,7 +1090,7 @@ export type RenderDeploymentPlanWorkflowRequestValid = RenderDeploymentPlanWorkf
  * Use `create(RenderDeploymentPlanWorkflowRequestSchema)` to create a new message.
  */
 export const RenderDeploymentPlanWorkflowRequestSchema: GenMessage<RenderDeploymentPlanWorkflowRequest, {jsonType: RenderDeploymentPlanWorkflowRequestJson, validType: RenderDeploymentPlanWorkflowRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_deployment, 11);
+  messageDesc(file_cloud_v1_workflow_deployment, 17);
 
 /**
  *
@@ -855,7 +1131,7 @@ export type RenderDeploymentPlanWorkflowResponseValid = RenderDeploymentPlanWork
  * Use `create(RenderDeploymentPlanWorkflowResponseSchema)` to create a new message.
  */
 export const RenderDeploymentPlanWorkflowResponseSchema: GenMessage<RenderDeploymentPlanWorkflowResponse, {jsonType: RenderDeploymentPlanWorkflowResponseJson, validType: RenderDeploymentPlanWorkflowResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_deployment, 12);
+  messageDesc(file_cloud_v1_workflow_deployment, 18);
 
 /**
  *
@@ -912,7 +1188,7 @@ export type ExecuteDeploymentPlanWorkflowRequestValid = ExecuteDeploymentPlanWor
  * Use `create(ExecuteDeploymentPlanWorkflowRequestSchema)` to create a new message.
  */
 export const ExecuteDeploymentPlanWorkflowRequestSchema: GenMessage<ExecuteDeploymentPlanWorkflowRequest, {jsonType: ExecuteDeploymentPlanWorkflowRequestJson, validType: ExecuteDeploymentPlanWorkflowRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_deployment, 13);
+  messageDesc(file_cloud_v1_workflow_deployment, 19);
 
 /**
  *
@@ -953,7 +1229,7 @@ export type ExecuteDeploymentPlanWorkflowResponseValid = ExecuteDeploymentPlanWo
  * Use `create(ExecuteDeploymentPlanWorkflowResponseSchema)` to create a new message.
  */
 export const ExecuteDeploymentPlanWorkflowResponseSchema: GenMessage<ExecuteDeploymentPlanWorkflowResponse, {jsonType: ExecuteDeploymentPlanWorkflowResponseJson, validType: ExecuteDeploymentPlanWorkflowResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_deployment, 14);
+  messageDesc(file_cloud_v1_workflow_deployment, 20);
 
 /**
  *
@@ -1007,6 +1283,28 @@ export const DeploymentService: GenService<{
     methodKind: "unary";
     input: typeof AcquireQuotasActivityRequestSchema;
     output: typeof AcquireQuotasActivityResponseSchema;
+  },
+  /**
+   *
+   * CommitQuotasActivity marks a successful reservation as allocated.
+   *
+   * @generated from rpc cloud.v1.workflow.DeploymentService.CommitQuotasActivity
+   */
+  commitQuotasActivity: {
+    methodKind: "unary";
+    input: typeof CommitQuotasActivityRequestSchema;
+    output: typeof CommitQuotasActivityResponseSchema;
+  },
+  /**
+   *
+   * ReleaseQuotasActivity releases a run's pre-deploy reservations.
+   *
+   * @generated from rpc cloud.v1.workflow.DeploymentService.ReleaseQuotasActivity
+   */
+  releaseQuotasActivity: {
+    methodKind: "unary";
+    input: typeof ReleaseQuotasActivityRequestSchema;
+    output: typeof ReleaseQuotasActivityResponseSchema;
   },
   /**
    *

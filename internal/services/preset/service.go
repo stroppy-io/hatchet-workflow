@@ -169,8 +169,24 @@ func preserveEntity(existing, incoming *common.Entity, d Deps) *common.Entity {
 		Description: incoming.GetDescription(),
 		AuthorId:    existing.GetAuthorId(),
 		IsFavorite:  false,
-		Timings:     &common.Timings{CreatedAt: createdAt, UpdatedAt: d.now()},
+		Timings: &common.Timings{
+			CreatedAt: createdAt,
+			UpdatedAt: d.now(),
+			DeletedAt: existing.GetTimings().GetDeletedAt(),
+		},
 	}
+}
+
+func markEntityDeleted(entity *common.Entity, now *timestamppb.Timestamp) {
+	if entity == nil {
+		return
+	}
+	entity.IsFavorite = false
+	if entity.Timings == nil {
+		entity.Timings = &common.Timings{}
+	}
+	entity.Timings.UpdatedAt = now
+	entity.Timings.DeletedAt = now
 }
 
 // ignoreNotFound returns nil for a not-found error (so idempotent deletes are

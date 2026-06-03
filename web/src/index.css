@@ -60,3 +60,69 @@ body {
 .font-mono {
   font-family: var(--font-mono);
 }
+
+/* Dashboard entrance motion ------------------------------------------------ */
+/* Staggered fade/slide-up on mount. Elements set --reveal-delay inline; the
+   parent gets .reveal-ready once mounted so SSR/first-paint shows content even
+   if JS is slow. prefers-reduced-motion disables the transform + transition. */
+@keyframes dash-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reveal-item {
+  opacity: 0;
+  animation: dash-reveal 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+
+/* Wizard progressive panes — slide+fade in from the right as each is revealed. */
+@keyframes pane-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.pane-reveal {
+  animation: pane-slide-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: opacity, transform;
+}
+
+.hover-lift {
+  transition:
+    transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.18s ease,
+    background-color 0.18s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--color-border) 60%, var(--color-foreground) 18%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-item {
+    opacity: 1;
+    animation: none;
+  }
+  .pane-reveal {
+    animation: none;
+  }
+  .hover-lift {
+    transition: none;
+  }
+  .hover-lift:hover {
+    transform: none;
+  }
+}

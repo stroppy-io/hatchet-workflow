@@ -598,6 +598,127 @@ func (m *ListSuitesResponse) UnmarshalJSON(data []byte) error {
 	return m.Decode(d)
 }
 
+func (m *ListSuiteFacetsRequest) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.TenantId != "" {
+		e.FieldStart("tenantId")
+		e.Str(m.TenantId)
+	}
+	if m.Filter != nil {
+		e.FieldStart("filter")
+		jxpb.EncMessage(e, m.Filter)
+	}
+	e.ObjEnd()
+}
+
+func (m *ListSuiteFacetsRequest) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "tenantId", "tenant_id":
+			if seen["TenantId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["TenantId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.TenantId = v
+			return nil
+		case "filter":
+			if seen["Filter"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Filter"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Filter = &common.EntityFilter{}
+			if err := jxpb.DecMessage(d, m.Filter); err != nil {
+				return err
+			}
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *ListSuiteFacetsRequest) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *ListSuiteFacetsRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *ListSuiteFacetsResponse) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if len(m.AuthorIds) > 0 {
+		e.FieldStart("authorIds")
+		e.ArrStart()
+		for _, v := range m.AuthorIds {
+			e.Str(v)
+		}
+		e.ArrEnd()
+	}
+	e.ObjEnd()
+}
+
+func (m *ListSuiteFacetsResponse) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "authorIds", "author_ids":
+			if seen["AuthorIds"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["AuthorIds"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				v, err := d.Str()
+				if err != nil {
+					return err
+				}
+				m.AuthorIds = append(m.AuthorIds, v)
+				return nil
+			})
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *ListSuiteFacetsResponse) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *ListSuiteFacetsResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
 func (m *UpdateSuiteRequest) Encode(e *jx.Encoder) {
 	if m == nil {
 		e.ObjStart()

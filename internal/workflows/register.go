@@ -1,6 +1,8 @@
 package workflows
 
 import (
+	"context"
+
 	databasecockroach "github.com/stroppy-io/stroppy-cloud/internal/domain/database/cockroach"
 	databasemysql "github.com/stroppy-io/stroppy-cloud/internal/domain/database/mysql"
 	databasepicodata "github.com/stroppy-io/stroppy-cloud/internal/domain/database/picodata"
@@ -10,13 +12,30 @@ import (
 	deploymentbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/packages"
 	workloadbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/workload"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
+	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
+	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/worker"
 )
+
+const (
+	PersistRunStateActivityName = "stroppy.runtime.PersistRunState"
+	PersistSuiteRunActivityName = "stroppy.runtime.PersistSuiteRun"
+)
+
+type RuntimeActivities interface {
+	PersistRunState(context.Context, string, *workflowpb.RunState, *deploymentpb.InfrastructureState, *deploymentpb.DeploymentPlan) error
+	PersistSuiteRun(context.Context, string, common.Status) error
+}
 
 type Options struct {
 	PackageResolver     packages.Resolver
 	DeploymentRenderers deploymentbuilder.Registry
+}
+
+type ActivityOptions struct {
+	Quotas QuotaManager
 }
 
 func DefaultOptions() Options {
@@ -48,8 +67,16 @@ func RegisterWorkflows(registry worker.WorkflowRegistry, options Options) {
 	workflowpb.RegisterSuiteWorkflowServiceWorkflows(registry, NewSuiteWorkflows())
 }
 
-func RegisterActivities(registry worker.ActivityRegistry) {
-	workflowpb.RegisterDeploymentServiceActivities(registry, NewDeploymentActivities())
+func RegisterActivities(registry worker.ActivityRegistry, runtime RuntimeActivities, options ...ActivityOptions) {
+	opts := ActivityOptions{}
+	if len(options) > 0 {
+		opts = options[0]
+	}
+	workflowpb.RegisterDeploymentServiceActivities(registry, NewDeploymentActivities(opts.Quotas))
+	if runtime != nil {
+		registry.RegisterActivityWithOptions(runtime.PersistRunState, activity.RegisterOptions{Name: PersistRunStateActivityName})
+		registry.RegisterActivityWithOptions(runtime.PersistSuiteRun, activity.RegisterOptions{Name: PersistSuiteRunActivityName})
+	}
 }
 
 func NewDeploymentWorkflows(options Options) workflowpb.DeploymentServiceWorkflows {

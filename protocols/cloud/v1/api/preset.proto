@@ -216,7 +216,7 @@ message UpdateDatabasePresetResponse {
 }
 
 /*
-    DeleteDatabasePresetRequest removes one database preset by id.
+    DeleteDatabasePresetRequest soft-deletes one database preset by id.
  */
 message DeleteDatabasePresetRequest {
     /*
@@ -229,8 +229,8 @@ message DeleteDatabasePresetRequest {
     string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
 /*
-    DeleteDatabasePresetResponse is empty; success is signalled by the absence of
-    error.
+    DeleteDatabasePresetResponse is empty; soft-delete success is signalled by
+    the absence of error.
  */
 message DeleteDatabasePresetResponse {}
 
@@ -298,7 +298,8 @@ service DatabasePresetService {
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_UPDATE}]};
     }
     /*
-        DeleteDatabasePreset is idempotent: deleting an absent preset is a no-op.
+        DeleteDatabasePreset is idempotent: soft-deleting an absent or
+        already-deleted preset is a no-op.
         System presets (is_system) are rejected.
      */
     rpc DeleteDatabasePreset (DeleteDatabasePresetRequest) returns (DeleteDatabasePresetResponse) {
@@ -496,7 +497,7 @@ message UpdateWorkloadPresetResponse {
 }
 
 /*
-    DeleteWorkloadPresetRequest removes one workload preset by id.
+    DeleteWorkloadPresetRequest soft-deletes one workload preset by id.
  */
 message DeleteWorkloadPresetRequest {
     /*
@@ -509,8 +510,8 @@ message DeleteWorkloadPresetRequest {
     string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
 /*
-    DeleteWorkloadPresetResponse is empty; success is signalled by the absence of
-    error.
+    DeleteWorkloadPresetResponse is empty; soft-delete success is signalled by
+    the absence of error.
  */
 message DeleteWorkloadPresetResponse {}
 
@@ -579,7 +580,8 @@ service WorkloadPresetService {
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_UPDATE}]};
     }
     /*
-        DeleteWorkloadPreset is idempotent: deleting an absent preset is a no-op.
+        DeleteWorkloadPreset is idempotent: soft-deleting an absent or
+        already-deleted preset is a no-op.
         System presets (is_system) are rejected.
      */
     rpc DeleteWorkloadPreset (DeleteWorkloadPresetRequest) returns (DeleteWorkloadPresetResponse) {
@@ -777,7 +779,7 @@ message UpdateTestPresetResponse {
 }
 
 /*
-    DeleteTestPresetRequest removes one test preset by id.
+    DeleteTestPresetRequest soft-deletes one test preset by id.
  */
 message DeleteTestPresetRequest {
     /*
@@ -790,8 +792,8 @@ message DeleteTestPresetRequest {
     string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
 /*
-    DeleteTestPresetResponse is empty; success is signalled by the absence of
-    error.
+    DeleteTestPresetResponse is empty; soft-delete success is signalled by the
+    absence of error.
  */
 message DeleteTestPresetResponse {}
 
@@ -859,7 +861,8 @@ service TestPresetService {
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PRESET, action: ACTION_UPDATE}]};
     }
     /*
-        DeleteTestPreset is idempotent: deleting an absent preset is a no-op.
+        DeleteTestPreset is idempotent: soft-deleting an absent or
+        already-deleted preset is a no-op.
         System presets (is_system) are rejected.
      */
     rpc DeleteTestPreset (DeleteTestPresetRequest) returns (DeleteTestPresetResponse) {

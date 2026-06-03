@@ -18,6 +18,10 @@ func (m *RunConfig) Encode(e *jx.Encoder) {
 		return
 	}
 	e.ObjStart()
+	if m.TenantId != "" {
+		e.FieldStart("tenantId")
+		e.Str(m.TenantId)
+	}
 	if m.Id != "" {
 		e.FieldStart("id")
 		e.Str(m.Id)
@@ -61,6 +65,20 @@ func (m *RunConfig) Decode(d *jx.Decoder) error {
 	seen := map[string]bool{}
 	return d.Obj(func(d *jx.Decoder, key string) error {
 		switch key {
+		case "tenantId", "tenant_id":
+			if seen["TenantId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["TenantId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.TenantId = v
+			return nil
 		case "id":
 			if seen["Id"] {
 				return fmt.Errorf("duplicate field %q", key)
