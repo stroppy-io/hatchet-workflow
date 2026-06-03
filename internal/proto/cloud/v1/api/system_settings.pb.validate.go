@@ -564,3 +564,211 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = UpdateSystemSettingsResponseValidationError{}
+
+// Validate checks the field values on GetPublicConfigRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetPublicConfigRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetPublicConfigRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetPublicConfigRequestMultiError, or nil if none found.
+func (m *GetPublicConfigRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetPublicConfigRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return GetPublicConfigRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetPublicConfigRequestMultiError is an error wrapping multiple validation
+// errors returned by GetPublicConfigRequest.ValidateAll() if the designated
+// constraints aren't met.
+type GetPublicConfigRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetPublicConfigRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetPublicConfigRequestMultiError) AllErrors() []error { return m }
+
+// GetPublicConfigRequestValidationError is the validation error returned by
+// GetPublicConfigRequest.Validate if the designated constraints aren't met.
+type GetPublicConfigRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetPublicConfigRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetPublicConfigRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetPublicConfigRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetPublicConfigRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetPublicConfigRequestValidationError) ErrorName() string {
+	return "GetPublicConfigRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetPublicConfigRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetPublicConfigRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetPublicConfigRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetPublicConfigRequestValidationError{}
+
+// Validate checks the field values on GetPublicConfigResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetPublicConfigResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetPublicConfigResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetPublicConfigResponseMultiError, or nil if none found.
+func (m *GetPublicConfigResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetPublicConfigResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for AllowSelfRegistration
+
+	// no validation rules for AllowMemberTenantCreation
+
+	if len(errors) > 0 {
+		return GetPublicConfigResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetPublicConfigResponseMultiError is an error wrapping multiple validation
+// errors returned by GetPublicConfigResponse.ValidateAll() if the designated
+// constraints aren't met.
+type GetPublicConfigResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetPublicConfigResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetPublicConfigResponseMultiError) AllErrors() []error { return m }
+
+// GetPublicConfigResponseValidationError is the validation error returned by
+// GetPublicConfigResponse.Validate if the designated constraints aren't met.
+type GetPublicConfigResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetPublicConfigResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetPublicConfigResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetPublicConfigResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetPublicConfigResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetPublicConfigResponseValidationError) ErrorName() string {
+	return "GetPublicConfigResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetPublicConfigResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetPublicConfigResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetPublicConfigResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetPublicConfigResponseValidationError{}

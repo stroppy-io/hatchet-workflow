@@ -4,6 +4,7 @@ package cloud.v1.domain;
 
 import "cloud/v1/common/tags.proto";
 import "validate/validate.proto";
+import "ogen/ogen.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain";
 
@@ -56,6 +57,7 @@ message Workload {
         /* vus is virtual users (k6 --vus). */
         uint32 vus = 1 [(validate.rules).uint32 = {gte: 1, lte: 100000}];
         oneof limit {
+            option (ogen.oneof) = { schema_mode: ONEOF_SCHEMA_MODE_OBJECT };
             option (validate.required) = true;
             /* duration maps to k6 --duration, format like "10m", "1h30m". */
             string duration = 2 [(validate.rules).string = {max_len: 32, pattern: "^([0-9]+(ns|us|ms|s|m|h))+$"}];

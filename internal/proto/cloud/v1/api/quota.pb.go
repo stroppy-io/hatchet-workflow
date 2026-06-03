@@ -8,6 +8,7 @@ package api
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	_ "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -660,7 +661,7 @@ var File_cloud_v1_api_quota_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_quota_proto_rawDesc = "" +
 	"\n" +
-	"\x18cloud/v1/api/quota.proto\x12\fcloud.v1.api\x1a\"cloud/v1/deployment/provider.proto\x1a\x1fcloud/v1/deployment/quota.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\x90\x04\n" +
+	"\x18cloud/v1/api/quota.proto\x12\fcloud.v1.api\x1a\"cloud/v1/deployment/provider.proto\x1a\x1fcloud/v1/deployment/quota.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\x90\x04\n" +
 	"\tQuotaView\x12=\n" +
 	"\x04info\x18\x01 \x01(\v2\x1f.cloud.v1.deployment.Quota.InfoB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04info\x12/\n" +
 	"\rresource_type\x18\x02 \x01(\tB\n" +
@@ -726,12 +727,16 @@ const file_cloud_v1_api_quota_proto_rawDesc = "" +
 	" QUOTA_REFRESH_POLICY_UNSPECIFIED\x10\x00\x12#\n" +
 	"\x1fQUOTA_REFRESH_POLICY_CACHE_ONLY\x10\x01\x12)\n" +
 	"%QUOTA_REFRESH_POLICY_REFRESH_IF_STALE\x10\x02\x12&\n" +
-	"\"QUOTA_REFRESH_POLICY_FORCE_REFRESH\x10\x032\xc9\x02\n" +
-	"\fQuotaService\x12^\n" +
+	"\"QUOTA_REFRESH_POLICY_FORCE_REFRESH\x10\x032\xa5\x05\n" +
+	"\fQuotaService\x12\xc1\x01\n" +
 	"\n" +
-	"ListQuotas\x12\x1f.cloud.v1.api.ListQuotasRequest\x1a .cloud.v1.api.ListQuotasResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x05\x10\x02\x90\x02\x01\x12g\n" +
-	"\rRefreshQuotas\x12\".cloud.v1.api.RefreshQuotasRequest\x1a#.cloud.v1.api.RefreshQuotasResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x05\x10\x03\x90\x02\x02\x12p\n" +
-	"\x10GetRunQuotaUsage\x12%.cloud.v1.api.GetRunQuotaUsageRequest\x1a&.cloud.v1.api.GetRunQuotaUsageResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\b\x10\x02\x90\x02\x01BAZ?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
+	"ListQuotas\x12\x1f.cloud.v1.api.ListQuotasRequest\x1a .cloud.v1.api.ListQuotasResponse\"p\x8a\xb5\x18\x06\x12\x04\b\x05\x10\x02\xf2\xa7\x1d_\x10\x01\x1a\f/list-quotas\"\n" +
+	"listQuotas\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xd0\x01\n" +
+	"\rRefreshQuotas\x12\".cloud.v1.api.RefreshQuotasRequest\x1a#.cloud.v1.api.RefreshQuotasResponse\"v\x8a\xb5\x18\x06\x12\x04\b\x05\x10\x03\xf2\xa7\x1de\x10\x02\x1a\x0f/refresh-quotas\"\rrefreshQuotas\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xe1\x01\n" +
+	"\x10GetRunQuotaUsage\x12%.cloud.v1.api.GetRunQuotaUsageRequest\x1a&.cloud.v1.api.GetRunQuotaUsageResponse\"~\x8a\xb5\x18\x06\x12\x04\b\b\x10\x02\xf2\xa7\x1dm\x10\x01\x1a\x14/get-run-quota-usage\"\x10getRunQuotaUsage\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x1a\x1a\xf2\xa7\x1d\x16\x12\r/api/v1/quota\x1a\x05quotaBG\xf2\xa7\x1d\x02\b\x01Z?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
 
 var (
 	file_cloud_v1_api_quota_proto_rawDescOnce sync.Once

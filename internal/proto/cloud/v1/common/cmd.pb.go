@@ -8,6 +8,7 @@ package common
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
@@ -523,10 +524,10 @@ var File_cloud_v1_common_cmd_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_common_cmd_proto_rawDesc = "" +
 	"\n" +
-	"\x19cloud/v1/common/cmd.proto\x12\x0fcloud.v1.common\x1a\x1egoogle/protobuf/duration.proto\x1a\x17validate/validate.proto\"\xbd\t\n" +
+	"\x19cloud/v1/common/cmd.proto\x12\x0fcloud.v1.common\x1a\x1egoogle/protobuf/duration.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\xc3\t\n" +
 	"\x03Cmd\x127\n" +
 	"\x04spec\x18\x01 \x01(\v2\x19.cloud.v1.common.Cmd.SpecB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04spec\x128\n" +
-	"\x06result\x18\x02 \x01(\v2\x1b.cloud.v1.common.Cmd.ResultH\x00R\x06result\x88\x01\x01\x1a\xf4\x03\n" +
+	"\x06result\x18\x02 \x01(\v2\x1b.cloud.v1.common.Cmd.ResultH\x00R\x06result\x88\x01\x01\x1a\xfa\x03\n" +
 	"\x04Spec\x129\n" +
 	"\x04argv\x18\x01 \x01(\v2\x19.cloud.v1.common.Cmd.ArgvB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\x04argv\x12?\n" +
 	"\x06script\x18\x02 \x01(\v2\x1b.cloud.v1.common.Cmd.ScriptB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\x06script\x12\x1a\n" +
@@ -538,8 +539,8 @@ const file_cloud_v1_common_cmd_proto_rawDesc = "" +
 	"\astreams\x18\b \x01(\v2\x1c.cloud.v1.common.Cmd.StreamsR\astreams\x1a6\n" +
 	"\bEnvEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\x0e\n" +
-	"\acommand\x12\x03\xf8B\x01\x1a'\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\x14\n" +
+	"\acommand\x12\t\xf8B\x01\xf2\xa7\x1d\x02\b\x03\x1a'\n" +
 	"\x04Argv\x12\x1f\n" +
 	"\x04args\x18\x01 \x03(\tB\v\xfaB\b\x92\x01\x05\b\x01\x10\x80\x04R\x04args\x1aI\n" +
 	"\x06Script\x12\x1f\n" +

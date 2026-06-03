@@ -8,6 +8,7 @@ package api
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	_ "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
@@ -686,7 +687,7 @@ var File_cloud_v1_api_share_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_share_proto_rawDesc = "" +
 	"\n" +
-	"\x18cloud/v1/api/share.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1bcloud/v1/models/share.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x17validate/validate.proto\"\xb0\x01\n" +
+	"\x18cloud/v1/api/share.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1bcloud/v1/models/share.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\xb0\x01\n" +
 	"\x12CreateShareRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12E\n" +
 	"\x06target\x18\x02 \x01(\v2#.cloud.v1.models.ShareRecord.TargetB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06target\x12+\n" +
@@ -721,16 +722,23 @@ const file_cloud_v1_api_share_proto_rawDesc = "" +
 	"\x12DeleteShareRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x19\n" +
 	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"\x15\n" +
-	"\x13DeleteShareResponse2\xda\x04\n" +
-	"\fShareService\x12^\n" +
-	"\vCreateShare\x12 .cloud.v1.api.CreateShareRequest\x1a!.cloud.v1.api.CreateShareResponse\"\n" +
-	"\x8a\xb5\x18\x06\x12\x04\b\r\x10\x01\x12X\n" +
-	"\bGetShare\x12\x1d.cloud.v1.api.GetShareRequest\x1a\x1e.cloud.v1.api.GetShareResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\r\x10\x02\x90\x02\x01\x12^\n" +
+	"\x13DeleteShareResponse2\xd9\t\n" +
+	"\fShareService\x12\xc3\x01\n" +
+	"\vCreateShare\x12 .cloud.v1.api.CreateShareRequest\x1a!.cloud.v1.api.CreateShareResponse\"o\x8a\xb5\x18\x06\x12\x04\b\r\x10\x01\xf2\xa7\x1da\x10\x02\x1a\r/create-share\"\vcreateShare\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x12\xb7\x01\n" +
+	"\bGetShare\x12\x1d.cloud.v1.api.GetShareRequest\x1a\x1e.cloud.v1.api.GetShareResponse\"l\x8a\xb5\x18\x06\x12\x04\b\r\x10\x02\xf2\xa7\x1d[\x10\x01\x1a\n" +
+	"/get-share\"\bgetShare\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xc1\x01\n" +
 	"\n" +
-	"ListShares\x12\x1f.cloud.v1.api.ListSharesRequest\x1a .cloud.v1.api.ListSharesResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\r\x10\x05\x90\x02\x01\x12a\n" +
-	"\vRevokeShare\x12 .cloud.v1.api.RevokeShareRequest\x1a!.cloud.v1.api.RevokeShareResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\r\x10\x03\x90\x02\x02\x12j\n" +
-	"\x0eSetShareExpiry\x12#.cloud.v1.api.SetShareExpiryRequest\x1a$.cloud.v1.api.SetShareExpiryResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\r\x10\x03\x90\x02\x02\x12a\n" +
-	"\vDeleteShare\x12 .cloud.v1.api.DeleteShareRequest\x1a!.cloud.v1.api.DeleteShareResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\r\x10\x04\x90\x02\x02BAZ?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
+	"ListShares\x12\x1f.cloud.v1.api.ListSharesRequest\x1a .cloud.v1.api.ListSharesResponse\"p\x8a\xb5\x18\x06\x12\x04\b\r\x10\x05\xf2\xa7\x1d_\x10\x01\x1a\f/list-shares\"\n" +
+	"listShares\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xc6\x01\n" +
+	"\vRevokeShare\x12 .cloud.v1.api.RevokeShareRequest\x1a!.cloud.v1.api.RevokeShareResponse\"r\x8a\xb5\x18\x06\x12\x04\b\r\x10\x03\xf2\xa7\x1da\x10\x02\x1a\r/revoke-share\"\vrevokeShare\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xd6\x01\n" +
+	"\x0eSetShareExpiry\x12#.cloud.v1.api.SetShareExpiryRequest\x1a$.cloud.v1.api.SetShareExpiryResponse\"y\x8a\xb5\x18\x06\x12\x04\b\r\x10\x03\xf2\xa7\x1dh\x10\x02\x1a\x11/set-share-expiry\"\x0esetShareExpiry\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xc6\x01\n" +
+	"\vDeleteShare\x12 .cloud.v1.api.DeleteShareRequest\x1a!.cloud.v1.api.DeleteShareResponse\"r\x8a\xb5\x18\x06\x12\x04\b\r\x10\x04\xf2\xa7\x1da\x10\x02\x1a\r/delete-share\"\vdeleteShare\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x1a\x1a\xf2\xa7\x1d\x16\x12\r/api/v1/share\x1a\x05shareBG\xf2\xa7\x1d\x02\b\x01Z?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
 
 var (
 	file_cloud_v1_api_share_proto_rawDescOnce sync.Once

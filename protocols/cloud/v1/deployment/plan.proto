@@ -8,6 +8,7 @@ import "cloud/v1/common/file.proto";
 import "cloud/v1/common/status.proto";
 import "cloud/v1/common/tags.proto";
 import "validate/validate.proto";
+import "ogen/ogen.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment";
 
@@ -95,6 +96,7 @@ message AgentStep {
         action is the actual agent operation.
      */
     oneof action {
+        option (ogen.oneof) = { schema_mode: ONEOF_SCHEMA_MODE_OBJECT };
         option (validate.required) = true;
         common.Dir create_dir = 10;
         common.File write_file = 11;

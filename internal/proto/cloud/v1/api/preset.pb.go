@@ -8,6 +8,7 @@ package api
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	_ "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
@@ -2605,7 +2606,7 @@ var File_cloud_v1_api_preset_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_preset_proto_rawDesc = "" +
 	"\n" +
-	"\x19cloud/v1/api/preset.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1ccloud/v1/models/preset.proto\x1a\x17validate/validate.proto\"\x8e\x01\n" +
+	"\x19cloud/v1/api/preset.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1ccloud/v1/models/preset.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\x8e\x01\n" +
 	"\x1bCreateDatabasePresetRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12G\n" +
 	"\x06preset\x18\x02 \x01(\v2%.cloud.v1.models.DatabasePresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"g\n" +
@@ -2615,7 +2616,7 @@ const file_cloud_v1_api_preset_proto_rawDesc = "" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x19\n" +
 	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"d\n" +
 	"\x19GetDatabasePresetResponse\x12G\n" +
-	"\x06preset\x18\x01 \x01(\v2%.cloud.v1.models.DatabasePresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"\x8a\a\n" +
+	"\x06preset\x18\x01 \x01(\v2%.cloud.v1.models.DatabasePresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"\x92\a\n" +
 	"\x1aListDatabasePresetsRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x125\n" +
 	"\x06filter\x18\x02 \x01(\v2\x1d.cloud.v1.common.EntityFilterR\x06filter\x12F\n" +
@@ -2624,7 +2625,7 @@ const file_cloud_v1_api_preset_proto_rawDesc = "" +
 	"\asources\x18\x05 \x03(\x0e23.cloud.v1.api.ListDatabasePresetsRequest.SourceKindR\asources\x12 \n" +
 	"\tis_system\x18\x06 \x01(\bH\x00R\bisSystem\x88\x01\x01\x12A\n" +
 	"\x04sort\x18\a \x01(\v2-.cloud.v1.api.ListDatabasePresetsRequest.SortR\x04sort\x12)\n" +
-	"\x04page\x18\b \x01(\v2\x15.cloud.v1.common.PageR\x04page\x1a\xea\x01\n" +
+	"\x04page\x18\b \x01(\v2\x15.cloud.v1.common.PageR\x04page\x1a\xf2\x01\n" +
 	"\x04Sort\x12:\n" +
 	"\x06entity\x18\x01 \x01(\x0e2 .cloud.v1.common.EntitySortFieldH\x00R\x06entity\x12H\n" +
 	"\x04kind\x18\x02 \x01(\x0e22.cloud.v1.api.ListDatabasePresetsRequest.Sort.KindH\x00R\x04kind\x12\x12\n" +
@@ -2632,8 +2633,8 @@ const file_cloud_v1_api_preset_proto_rawDesc = "" +
 	"\x04Kind\x12\x14\n" +
 	"\x10KIND_UNSPECIFIED\x10\x00\x12\x10\n" +
 	"\fKIND_DB_KIND\x10\x01\x12\x12\n" +
-	"\x0eKIND_IS_SYSTEM\x10\x02B\x04\n" +
-	"\x02by\x1a7\n" +
+	"\x0eKIND_IS_SYSTEM\x10\x02B\f\n" +
+	"\x02by\x12\x06\xf2\xa7\x1d\x02\b\x03\x1a7\n" +
 	"\tTagsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"w\n" +
@@ -2672,7 +2673,7 @@ const file_cloud_v1_api_preset_proto_rawDesc = "" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x19\n" +
 	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"d\n" +
 	"\x19GetWorkloadPresetResponse\x12G\n" +
-	"\x06preset\x18\x01 \x01(\v2%.cloud.v1.models.WorkloadPresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"\xdb\x06\n" +
+	"\x06preset\x18\x01 \x01(\v2%.cloud.v1.models.WorkloadPresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"\xe3\x06\n" +
 	"\x1aListWorkloadPresetsRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x125\n" +
 	"\x06filter\x18\x02 \x01(\v2\x1d.cloud.v1.common.EntityFilterR\x06filter\x12F\n" +
@@ -2682,7 +2683,7 @@ const file_cloud_v1_api_preset_proto_rawDesc = "" +
 	"\x04sort\x18\x06 \x01(\v2-.cloud.v1.api.ListWorkloadPresetsRequest.SortR\x04sort\x12)\n" +
 	"\x04page\x18\a \x01(\v2\x15.cloud.v1.common.PageR\x04page\x12@\n" +
 	"\tprotocols\x18\b \x03(\x0e2\".cloud.v1.domain.Workload.ProtocolR\tprotocols\x12)\n" +
-	"\ascripts\x18\t \x03(\tB\x0f\xfaB\f\x92\x01\t\x10d\"\x05r\x03\x18\x80\x04R\ascripts\x1a\x96\x02\n" +
+	"\ascripts\x18\t \x03(\tB\x0f\xfaB\f\x92\x01\t\x10d\"\x05r\x03\x18\x80\x04R\ascripts\x1a\x9e\x02\n" +
 	"\x04Sort\x12:\n" +
 	"\x06entity\x18\x01 \x01(\x0e2 .cloud.v1.common.EntitySortFieldH\x00R\x06entity\x12H\n" +
 	"\x04kind\x18\x02 \x01(\x0e22.cloud.v1.api.ListWorkloadPresetsRequest.Sort.KindH\x00R\x04kind\x12\x12\n" +
@@ -2692,8 +2693,8 @@ const file_cloud_v1_api_preset_proto_rawDesc = "" +
 	"\x14KIND_STROPPY_VERSION\x10\x01\x12\x12\n" +
 	"\x0eKIND_IS_SYSTEM\x10\x02\x12\x11\n" +
 	"\rKIND_PROTOCOL\x10\x03\x12\x0f\n" +
-	"\vKIND_SCRIPT\x10\x04B\x04\n" +
-	"\x02by\x1a7\n" +
+	"\vKIND_SCRIPT\x10\x04B\f\n" +
+	"\x02by\x12\x06\xf2\xa7\x1d\x02\b\x03\x1a7\n" +
 	"\tTagsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\f\n" +
@@ -2726,7 +2727,7 @@ const file_cloud_v1_api_preset_proto_rawDesc = "" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x19\n" +
 	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"\\\n" +
 	"\x15GetTestPresetResponse\x12C\n" +
-	"\x06preset\x18\x01 \x01(\v2!.cloud.v1.models.TestPresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"\xdc\x06\n" +
+	"\x06preset\x18\x01 \x01(\v2!.cloud.v1.models.TestPresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset\"\xe4\x06\n" +
 	"\x16ListTestPresetsRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x125\n" +
 	"\x06filter\x18\x02 \x01(\v2\x1d.cloud.v1.common.EntityFilterR\x06filter\x12B\n" +
@@ -2736,7 +2737,7 @@ const file_cloud_v1_api_preset_proto_rawDesc = "" +
 	"\tis_system\x18\x06 \x01(\bH\x00R\bisSystem\x88\x01\x01\x12=\n" +
 	"\x04sort\x18\a \x01(\v2).cloud.v1.api.ListTestPresetsRequest.SortR\x04sort\x12)\n" +
 	"\x04page\x18\b \x01(\v2\x15.cloud.v1.common.PageR\x04page\x12@\n" +
-	"\tprotocols\x18\t \x03(\x0e2\".cloud.v1.domain.Workload.ProtocolR\tprotocols\x1a\x93\x02\n" +
+	"\tprotocols\x18\t \x03(\x0e2\".cloud.v1.domain.Workload.ProtocolR\tprotocols\x1a\x9b\x02\n" +
 	"\x04Sort\x12:\n" +
 	"\x06entity\x18\x01 \x01(\x0e2 .cloud.v1.common.EntitySortFieldH\x00R\x06entity\x12D\n" +
 	"\x04kind\x18\x02 \x01(\x0e2..cloud.v1.api.ListTestPresetsRequest.Sort.KindH\x00R\x04kind\x12\x12\n" +
@@ -2746,8 +2747,8 @@ const file_cloud_v1_api_preset_proto_rawDesc = "" +
 	"\fKIND_DB_KIND\x10\x01\x12\x18\n" +
 	"\x14KIND_STROPPY_VERSION\x10\x02\x12\x12\n" +
 	"\x0eKIND_IS_SYSTEM\x10\x03\x12\x11\n" +
-	"\rKIND_PROTOCOL\x10\x04B\x04\n" +
-	"\x02by\x1a7\n" +
+	"\rKIND_PROTOCOL\x10\x04B\f\n" +
+	"\x02by\x12\x06\xf2\xa7\x1d\x02\b\x03\x1a7\n" +
 	"\tTagsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\f\n" +
@@ -2770,34 +2771,47 @@ const file_cloud_v1_api_preset_proto_rawDesc = "" +
 	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\x12\x1c\n" +
 	"\x04name\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\xff\x01R\x04name\"^\n" +
 	"\x17CloneTestPresetResponse\x12C\n" +
-	"\x06preset\x18\x01 \x01(\v2!.cloud.v1.models.TestPresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset2\xf6\x05\n" +
-	"\x15DatabasePresetService\x12y\n" +
-	"\x14CreateDatabasePreset\x12).cloud.v1.api.CreateDatabasePresetRequest\x1a*.cloud.v1.api.CreateDatabasePresetResponse\"\n" +
-	"\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x01\x12s\n" +
-	"\x11GetDatabasePreset\x12&.cloud.v1.api.GetDatabasePresetRequest\x1a'.cloud.v1.api.GetDatabasePresetResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x02\x90\x02\x01\x12y\n" +
-	"\x13ListDatabasePresets\x12(.cloud.v1.api.ListDatabasePresetsRequest\x1a).cloud.v1.api.ListDatabasePresetsResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x05\x90\x02\x01\x12|\n" +
-	"\x14UpdateDatabasePreset\x12).cloud.v1.api.UpdateDatabasePresetRequest\x1a*.cloud.v1.api.UpdateDatabasePresetResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x03\x90\x02\x02\x12|\n" +
-	"\x14DeleteDatabasePreset\x12).cloud.v1.api.DeleteDatabasePresetRequest\x1a*.cloud.v1.api.DeleteDatabasePresetResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x04\x90\x02\x02\x12v\n" +
-	"\x13CloneDatabasePreset\x12(.cloud.v1.api.CloneDatabasePresetRequest\x1a).cloud.v1.api.CloneDatabasePresetResponse\"\n" +
-	"\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x012\xf6\x05\n" +
-	"\x15WorkloadPresetService\x12y\n" +
-	"\x14CreateWorkloadPreset\x12).cloud.v1.api.CreateWorkloadPresetRequest\x1a*.cloud.v1.api.CreateWorkloadPresetResponse\"\n" +
-	"\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x01\x12s\n" +
-	"\x11GetWorkloadPreset\x12&.cloud.v1.api.GetWorkloadPresetRequest\x1a'.cloud.v1.api.GetWorkloadPresetResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x02\x90\x02\x01\x12y\n" +
-	"\x13ListWorkloadPresets\x12(.cloud.v1.api.ListWorkloadPresetsRequest\x1a).cloud.v1.api.ListWorkloadPresetsResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x05\x90\x02\x01\x12|\n" +
-	"\x14UpdateWorkloadPreset\x12).cloud.v1.api.UpdateWorkloadPresetRequest\x1a*.cloud.v1.api.UpdateWorkloadPresetResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x03\x90\x02\x02\x12|\n" +
-	"\x14DeleteWorkloadPreset\x12).cloud.v1.api.DeleteWorkloadPresetRequest\x1a*.cloud.v1.api.DeleteWorkloadPresetResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x04\x90\x02\x02\x12v\n" +
-	"\x13CloneWorkloadPreset\x12(.cloud.v1.api.CloneWorkloadPresetRequest\x1a).cloud.v1.api.CloneWorkloadPresetResponse\"\n" +
-	"\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x012\xaa\x05\n" +
-	"\x11TestPresetService\x12m\n" +
-	"\x10CreateTestPreset\x12%.cloud.v1.api.CreateTestPresetRequest\x1a&.cloud.v1.api.CreateTestPresetResponse\"\n" +
-	"\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x01\x12g\n" +
-	"\rGetTestPreset\x12\".cloud.v1.api.GetTestPresetRequest\x1a#.cloud.v1.api.GetTestPresetResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x02\x90\x02\x01\x12m\n" +
-	"\x0fListTestPresets\x12$.cloud.v1.api.ListTestPresetsRequest\x1a%.cloud.v1.api.ListTestPresetsResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x05\x90\x02\x01\x12p\n" +
-	"\x10UpdateTestPreset\x12%.cloud.v1.api.UpdateTestPresetRequest\x1a&.cloud.v1.api.UpdateTestPresetResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x03\x90\x02\x02\x12p\n" +
-	"\x10DeleteTestPreset\x12%.cloud.v1.api.DeleteTestPresetRequest\x1a&.cloud.v1.api.DeleteTestPresetResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x04\x90\x02\x02\x12j\n" +
-	"\x0fCloneTestPreset\x12$.cloud.v1.api.CloneTestPresetRequest\x1a%.cloud.v1.api.CloneTestPresetResponse\"\n" +
-	"\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x01BAZ?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
+	"\x06preset\x18\x01 \x01(\v2!.cloud.v1.models.TestPresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset2\xf7\v\n" +
+	"\x15DatabasePresetService\x12\xf2\x01\n" +
+	"\x14CreateDatabasePreset\x12).cloud.v1.api.CreateDatabasePresetRequest\x1a*.cloud.v1.api.CreateDatabasePresetResponse\"\x82\x01\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x01\xf2\xa7\x1dt\x10\x02\x1a\x17/create-database-preset\"\x14createDatabasePreset\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x12\xe5\x01\n" +
+	"\x11GetDatabasePreset\x12&.cloud.v1.api.GetDatabasePresetRequest\x1a'.cloud.v1.api.GetDatabasePresetResponse\"\x7f\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x02\xf2\xa7\x1dn\x10\x01\x1a\x14/get-database-preset\"\x11getDatabasePreset\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xf0\x01\n" +
+	"\x13ListDatabasePresets\x12(.cloud.v1.api.ListDatabasePresetsRequest\x1a).cloud.v1.api.ListDatabasePresetsResponse\"\x83\x01\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x05\xf2\xa7\x1dr\x10\x01\x1a\x16/list-database-presets\"\x13listDatabasePresets\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xf5\x01\n" +
+	"\x14UpdateDatabasePreset\x12).cloud.v1.api.UpdateDatabasePresetRequest\x1a*.cloud.v1.api.UpdateDatabasePresetResponse\"\x85\x01\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x03\xf2\xa7\x1dt\x10\x02\x1a\x17/update-database-preset\"\x14updateDatabasePreset\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xf5\x01\n" +
+	"\x14DeleteDatabasePreset\x12).cloud.v1.api.DeleteDatabasePresetRequest\x1a*.cloud.v1.api.DeleteDatabasePresetResponse\"\x85\x01\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x04\xf2\xa7\x1dt\x10\x02\x1a\x17/delete-database-preset\"\x14deleteDatabasePreset\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xed\x01\n" +
+	"\x13CloneDatabasePreset\x12(.cloud.v1.api.CloneDatabasePresetRequest\x1a).cloud.v1.api.CloneDatabasePresetResponse\"\x80\x01\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x01\xf2\xa7\x1dr\x10\x02\x1a\x16/clone-database-preset\"\x13cloneDatabasePreset\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x1a.\xf2\xa7\x1d*\x12\x17/api/v1/database-preset\x1a\x0fdatabase-preset2\xf7\v\n" +
+	"\x15WorkloadPresetService\x12\xf2\x01\n" +
+	"\x14CreateWorkloadPreset\x12).cloud.v1.api.CreateWorkloadPresetRequest\x1a*.cloud.v1.api.CreateWorkloadPresetResponse\"\x82\x01\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x01\xf2\xa7\x1dt\x10\x02\x1a\x17/create-workload-preset\"\x14createWorkloadPreset\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x12\xe5\x01\n" +
+	"\x11GetWorkloadPreset\x12&.cloud.v1.api.GetWorkloadPresetRequest\x1a'.cloud.v1.api.GetWorkloadPresetResponse\"\x7f\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x02\xf2\xa7\x1dn\x10\x01\x1a\x14/get-workload-preset\"\x11getWorkloadPreset\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xf0\x01\n" +
+	"\x13ListWorkloadPresets\x12(.cloud.v1.api.ListWorkloadPresetsRequest\x1a).cloud.v1.api.ListWorkloadPresetsResponse\"\x83\x01\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x05\xf2\xa7\x1dr\x10\x01\x1a\x16/list-workload-presets\"\x13listWorkloadPresets\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xf5\x01\n" +
+	"\x14UpdateWorkloadPreset\x12).cloud.v1.api.UpdateWorkloadPresetRequest\x1a*.cloud.v1.api.UpdateWorkloadPresetResponse\"\x85\x01\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x03\xf2\xa7\x1dt\x10\x02\x1a\x17/update-workload-preset\"\x14updateWorkloadPreset\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xf5\x01\n" +
+	"\x14DeleteWorkloadPreset\x12).cloud.v1.api.DeleteWorkloadPresetRequest\x1a*.cloud.v1.api.DeleteWorkloadPresetResponse\"\x85\x01\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x04\xf2\xa7\x1dt\x10\x02\x1a\x17/delete-workload-preset\"\x14deleteWorkloadPreset\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xed\x01\n" +
+	"\x13CloneWorkloadPreset\x12(.cloud.v1.api.CloneWorkloadPresetRequest\x1a).cloud.v1.api.CloneWorkloadPresetResponse\"\x80\x01\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x01\xf2\xa7\x1dr\x10\x02\x1a\x16/clone-workload-preset\"\x13cloneWorkloadPreset\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x1a.\xf2\xa7\x1d*\x12\x17/api/v1/workload-preset\x1a\x0fworkload-preset2\xee\n" +
+	"\n" +
+	"\x11TestPresetService\x12\xdd\x01\n" +
+	"\x10CreateTestPreset\x12%.cloud.v1.api.CreateTestPresetRequest\x1a&.cloud.v1.api.CreateTestPresetResponse\"z\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x01\xf2\xa7\x1dl\x10\x02\x1a\x13/create-test-preset\"\x10createTestPreset\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x12\xd1\x01\n" +
+	"\rGetTestPreset\x12\".cloud.v1.api.GetTestPresetRequest\x1a#.cloud.v1.api.GetTestPresetResponse\"w\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x02\xf2\xa7\x1df\x10\x01\x1a\x10/get-test-preset\"\rgetTestPreset\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xdb\x01\n" +
+	"\x0fListTestPresets\x12$.cloud.v1.api.ListTestPresetsRequest\x1a%.cloud.v1.api.ListTestPresetsResponse\"{\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x05\xf2\xa7\x1dj\x10\x01\x1a\x12/list-test-presets\"\x0flistTestPresets\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xe0\x01\n" +
+	"\x10UpdateTestPreset\x12%.cloud.v1.api.UpdateTestPresetRequest\x1a&.cloud.v1.api.UpdateTestPresetResponse\"}\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x03\xf2\xa7\x1dl\x10\x02\x1a\x13/update-test-preset\"\x10updateTestPreset\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xe0\x01\n" +
+	"\x10DeleteTestPreset\x12%.cloud.v1.api.DeleteTestPresetRequest\x1a&.cloud.v1.api.DeleteTestPresetResponse\"}\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x04\xf2\xa7\x1dl\x10\x02\x1a\x13/delete-test-preset\"\x10deleteTestPreset\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xd8\x01\n" +
+	"\x0fCloneTestPreset\x12$.cloud.v1.api.CloneTestPresetRequest\x1a%.cloud.v1.api.CloneTestPresetResponse\"x\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x01\xf2\xa7\x1dj\x10\x02\x1a\x12/clone-test-preset\"\x0fcloneTestPreset\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x1a&\xf2\xa7\x1d\"\x12\x13/api/v1/test-preset\x1a\vtest-presetBG\xf2\xa7\x1d\x02\b\x01Z?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
 
 var (
 	file_cloud_v1_api_preset_proto_rawDescOnce sync.Once

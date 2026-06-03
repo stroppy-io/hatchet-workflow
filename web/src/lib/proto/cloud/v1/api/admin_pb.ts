@@ -4,15 +4,17 @@
 
 import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
-import { file_google_protobuf_duration } from "@bufbuild/protobuf/wkt";
+import type { StructJson } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_duration, file_google_protobuf_struct } from "@bufbuild/protobuf/wkt";
+import { file_ogen_ogen } from "../../../ogen/ogen_pb.ts";
 import { file_validate_validate } from "../../../validate/validate_pb.ts";
-import type { Message } from "@bufbuild/protobuf";
+import type { JsonObject, Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file cloud/v1/api/admin.proto.
  */
 export const file_cloud_v1_api_admin: GenFile = /*@__PURE__*/
-  fileDesc("ChhjbG91ZC92MS9hcGkvYWRtaW4ucHJvdG8SDGNsb3VkLnYxLmFwaSJ+ChBQbGF0Zm9ybVNldHRpbmdzEh0KC3NlcnZlcl9hZGRyGAogASgJQgj6QgVyAxiAEBIfChdhbGxvd19zZWxmX3JlZ2lzdHJhdGlvbhgBIAEoCBIkChxhbGxvd19tZW1iZXJfdGVuYW50X2NyZWF0aW9uGAMgASgISgQIAhADQkFaP2dpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2FwaWIGcHJvdG8z", [file_google_protobuf_duration, file_validate_validate]);
+  fileDesc("ChhjbG91ZC92MS9hcGkvYWRtaW4ucHJvdG8SDGNsb3VkLnYxLmFwaSJ+ChBQbGF0Zm9ybVNldHRpbmdzEh0KC3NlcnZlcl9hZGRyGAogASgJQgj6QgVyAxiAEBIfChdhbGxvd19zZWxmX3JlZ2lzdHJhdGlvbhgBIAEoCBIkChxhbGxvd19tZW1iZXJfdGVuYW50X2NyZWF0aW9uGAMgASgISgQIAhADIm0KBUVycm9yEhQKBGNvZGUYASABKAlCBvKnHQIQARIXCgdtZXNzYWdlGAIgASgJQgbypx0CEAESKAoHZGV0YWlscxgDIAMoCzIXLmdvb2dsZS5wcm90b2J1Zi5TdHJ1Y3Q6C/KnHQcSBUVycm9yQrACWj9naXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9hcGnypx3qAQgBEAEgAVoRU3Ryb3BweSBDbG91ZCBBUEnyARpzdHJvcHB5LWNsb3VkLm9wZW5hcGkueWFtbHJHR2VuZXJhdGVkIFJFU1QvT3BlbkFQSSBzdXJmYWNlIGZvciB0aGUgU3Ryb3BweSBDbG91ZCBjb250cm9sLXBsYW5lIEFQSS6CAkRnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9hcGkvcmVzdBgBYgUwLjAuMJICBHJlc3T6ARFjbG91ZC92MS9hcGkvcmVzdGIGcHJvdG8z", [file_google_protobuf_duration, file_google_protobuf_struct, file_ogen_ogen, file_validate_validate]);
 
 /**
  *
@@ -130,4 +132,63 @@ export type PlatformSettingsValid = PlatformSettings;
  */
 export const PlatformSettingsSchema: GenMessage<PlatformSettings, {jsonType: PlatformSettingsJson, validType: PlatformSettingsValid}> = /*@__PURE__*/
   messageDesc(file_cloud_v1_api_admin, 0);
+
+/**
+ *
+ * Error is the reusable REST error envelope used by the generated ogen adapter.
+ * code/message mirror google.rpc.Status; details contain protojson-encoded
+ * google.rpc details with their @type discriminator.
+ *
+ * @generated from message cloud.v1.api.Error
+ */
+export type Error = Message<"cloud.v1.api.Error"> & {
+  /**
+   * @generated from field: string code = 1;
+   */
+  code: string;
+
+  /**
+   * @generated from field: string message = 2;
+   */
+  message: string;
+
+  /**
+   * @generated from field: repeated google.protobuf.Struct details = 3;
+   */
+  details: JsonObject[];
+};
+
+/**
+ *
+ * Error is the reusable REST error envelope used by the generated ogen adapter.
+ * code/message mirror google.rpc.Status; details contain protojson-encoded
+ * google.rpc details with their @type discriminator.
+ *
+ * @generated from message cloud.v1.api.Error
+ */
+export type ErrorJson = {
+  /**
+   * @generated from field: string code = 1;
+   */
+  code?: string;
+
+  /**
+   * @generated from field: string message = 2;
+   */
+  message?: string;
+
+  /**
+   * @generated from field: repeated google.protobuf.Struct details = 3;
+   */
+  details?: StructJson[];
+};
+
+export type ErrorValid = Error;
+
+/**
+ * Describes the message cloud.v1.api.Error.
+ * Use `create(ErrorSchema)` to create a new message.
+ */
+export const ErrorSchema: GenMessage<Error, {jsonType: ErrorJson, validType: ErrorValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_admin, 1);
 

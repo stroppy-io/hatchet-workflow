@@ -1,8 +1,9 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Activity } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { ConnectError } from "@connectrpc/connect";
+import { getPublicConfig } from "@/services/publicConfig";
 
 // Public self-signup. Register auto-logs-in (RegisterResponse carries a
 // TokenPair), so on success we land on the root which resolves to the user's
@@ -16,10 +17,27 @@ export function Register() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // null = still loading the instance config; true/false once known.
+  const [allowed, setAllowed] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getPublicConfig()
+      .then((cfg) => {
+        if (!cancelled) setAllowed(cfg.allowSelfRegistration);
+      })
+      // Config unreachable — let the form through; the server still gates Register.
+      .catch(() => {
+        if (!cancelled) setAllowed(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    if (busy) return;
+    if (busy || allowed === false) return;
     setError(null);
     setBusy(true);
     try {
@@ -59,6 +77,23 @@ export function Register() {
           Create account
         </div>
 
+        {allowed === false && (
+          <div className="mt-4 border border-border bg-background p-3 text-xs text-muted-foreground">
+            Open registration is disabled on this instance. Ask a platform
+            administrator to create your account.
+            <div className="mt-3">
+              <Link to="/login" className="text-primary hover:underline">
+                Back to sign in
+              </Link>
+            </div>
+          </div>
+        )}
+
+        <fieldset
+          disabled={allowed === false}
+          className="contents disabled:opacity-50"
+          hidden={allowed === false}
+        >
         <label className="mt-4 block text-xs font-medium text-muted-foreground">
           Email
           <input
@@ -112,6 +147,7 @@ export function Register() {
             Sign in
           </Link>
         </div>
+        </fieldset>
       </form>
     </div>
   );

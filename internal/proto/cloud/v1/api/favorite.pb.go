@@ -8,6 +8,7 @@ package api
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	_ "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
@@ -362,7 +363,7 @@ var File_cloud_v1_api_favorite_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_favorite_proto_rawDesc = "" +
 	"\n" +
-	"\x1bcloud/v1/api/favorite.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ecloud/v1/common/favorite.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1ecloud/v1/models/favorite.proto\x1a\x17validate/validate.proto\"\xa3\x01\n" +
+	"\x1bcloud/v1/api/favorite.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ecloud/v1/common/favorite.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1ecloud/v1/models/favorite.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\xa3\x01\n" +
 	"\x12AddFavoriteRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12=\n" +
 	"\x04kind\x18\x02 \x01(\x0e2\x1d.cloud.v1.common.FavoriteKindB\n" +
@@ -382,11 +383,14 @@ const file_cloud_v1_api_favorite_proto_rawDesc = "" +
 	"\x04page\x18\x03 \x01(\v2\x15.cloud.v1.common.PageR\x04page\"~\n" +
 	"\x15ListFavoritesResponse\x12=\n" +
 	"\tfavorites\x18\x01 \x03(\v2\x1f.cloud.v1.models.FavoriteRecordR\tfavorites\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken2\xc9\x02\n" +
-	"\x0fFavoriteService\x12a\n" +
-	"\vAddFavorite\x12 .cloud.v1.api.AddFavoriteRequest\x1a!.cloud.v1.api.AddFavoriteResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\v\x10\x01\x90\x02\x02\x12j\n" +
-	"\x0eRemoveFavorite\x12#.cloud.v1.api.RemoveFavoriteRequest\x1a$.cloud.v1.api.RemoveFavoriteResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\v\x10\x04\x90\x02\x02\x12g\n" +
-	"\rListFavorites\x12\".cloud.v1.api.ListFavoritesRequest\x1a#.cloud.v1.api.ListFavoritesResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\v\x10\x05\x90\x02\x01BAZ?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken2\xa7\x05\n" +
+	"\x0fFavoriteService\x12\xc6\x01\n" +
+	"\vAddFavorite\x12 .cloud.v1.api.AddFavoriteRequest\x1a!.cloud.v1.api.AddFavoriteResponse\"r\x8a\xb5\x18\x06\x12\x04\b\v\x10\x01\xf2\xa7\x1da\x10\x02\x1a\r/add-favorite\"\vaddFavorite\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xd5\x01\n" +
+	"\x0eRemoveFavorite\x12#.cloud.v1.api.RemoveFavoriteRequest\x1a$.cloud.v1.api.RemoveFavoriteResponse\"x\x8a\xb5\x18\x06\x12\x04\b\v\x10\x04\xf2\xa7\x1dg\x10\x02\x1a\x10/remove-favorite\"\x0eremoveFavorite\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xd0\x01\n" +
+	"\rListFavorites\x12\".cloud.v1.api.ListFavoritesRequest\x1a#.cloud.v1.api.ListFavoritesResponse\"v\x8a\xb5\x18\x06\x12\x04\b\v\x10\x05\xf2\xa7\x1de\x10\x01\x1a\x0f/list-favorites\"\rlistFavorites\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x1a \xf2\xa7\x1d\x1c\x12\x10/api/v1/favorite\x1a\bfavoriteBG\xf2\xa7\x1d\x02\b\x01Z?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
 
 var (
 	file_cloud_v1_api_favorite_proto_rawDescOnce sync.Once

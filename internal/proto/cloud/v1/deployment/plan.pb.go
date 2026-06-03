@@ -8,6 +8,7 @@ package deployment
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -373,7 +374,7 @@ var File_cloud_v1_deployment_plan_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_deployment_plan_proto_rawDesc = "" +
 	"\n" +
-	"\x1ecloud/v1/deployment/plan.proto\x12\x13cloud.v1.deployment\x1a\x19cloud/v1/common/cmd.proto\x1a\x19cloud/v1/common/dir.proto\x1a\x1acloud/v1/common/file.proto\x1a\x1ccloud/v1/common/status.proto\x1a\x1acloud/v1/common/tags.proto\x1a\x17validate/validate.proto\"\x9e\x02\n" +
+	"\x1ecloud/v1/deployment/plan.proto\x12\x13cloud.v1.deployment\x1a\x19cloud/v1/common/cmd.proto\x1a\x19cloud/v1/common/dir.proto\x1a\x1acloud/v1/common/file.proto\x1a\x1ccloud/v1/common/status.proto\x1a\x1acloud/v1/common/tags.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\x9e\x02\n" +
 	"\x0eDeploymentPlan\x12R\n" +
 	"\n" +
 	"components\x18\x01 \x03(\v2(.cloud.v1.deployment.ComponentDeploymentB\b\xfaB\x05\x92\x01\x02\b\x01R\n" +
@@ -397,7 +398,7 @@ const file_cloud_v1_deployment_plan_proto_rawDesc = "" +
 	"\x04tags\x18\t \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x8b\x04\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x91\x04\n" +
 	"\tAgentStep\x12\x1a\n" +
 	"\x02id\x18\x01 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x02id\x12\x14\n" +
@@ -415,8 +416,8 @@ const file_cloud_v1_deployment_plan_proto_rawDesc = "" +
 	"\x04tags\x18\x16 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\r\n" +
-	"\x06action\x12\x03\xf8B\x01BHZFgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deploymentb\x06proto3"
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\x13\n" +
+	"\x06action\x12\t\xf8B\x01\xf2\xa7\x1d\x02\b\x03BHZFgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deploymentb\x06proto3"
 
 var (
 	file_cloud_v1_deployment_plan_proto_rawDescOnce sync.Once

@@ -8,6 +8,7 @@ package domain
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -495,7 +496,7 @@ var File_cloud_v1_domain_workload_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_domain_workload_proto_rawDesc = "" +
 	"\n" +
-	"\x1ecloud/v1/domain/workload.proto\x12\x0fcloud.v1.domain\x1a\x1acloud/v1/common/tags.proto\x1a\x17validate/validate.proto\"\xb5\v\n" +
+	"\x1ecloud/v1/domain/workload.proto\x12\x0fcloud.v1.domain\x1a\x1acloud/v1/common/tags.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\xbb\v\n" +
 	"\bWorkload\x120\n" +
 	"\x0fstroppy_version\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x18@R\x0estroppyVersion\x12\"\n" +
 	"\x06script\x18\x02 \x01(\tB\n" +
@@ -507,7 +508,7 @@ const file_cloud_v1_domain_workload_proto_rawDesc = "" +
 	"parameters\x18\x06 \x01(\v2$.cloud.v1.domain.Workload.ParametersR\n" +
 	"parameters\x12F\n" +
 	"\x05files\x18\a \x03(\v2&.cloud.v1.domain.Workload.WorkloadFileB\b\xfaB\x05\x92\x01\x02\x10@R\x05files\x12)\n" +
-	"\x04tags\x18\b \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1a\xe2\x01\n" +
+	"\x04tags\x18\b \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1a\xe8\x01\n" +
 	"\tExecution\x12\x1d\n" +
 	"\x03vus\x18\x01 \x01(\rB\v\xfaB\b*\x06\x18\xa0\x8d\x06(\x01R\x03vus\x12B\n" +
 	"\bduration\x18\x02 \x01(\tB$\xfaB!r\x1f\x18 2\x1b^([0-9]+(ns|us|ms|s|m|h))+$H\x00R\bduration\x12)\n" +
@@ -515,8 +516,8 @@ const file_cloud_v1_domain_workload_proto_rawDesc = "" +
 	"iterations\x18\x03 \x01(\rB\a\xfaB\x04*\x02(\x01H\x00R\n" +
 	"iterations\x12\x14\n" +
 	"\x05quiet\x18\x04 \x01(\bR\x05quiet\x12#\n" +
-	"\rno_thresholds\x18\x05 \x01(\bR\fnoThresholdsB\f\n" +
-	"\x05limit\x12\x03\xf8B\x01\x1a\xd0\x03\n" +
+	"\rno_thresholds\x18\x05 \x01(\bR\fnoThresholdsB\x12\n" +
+	"\x05limit\x12\t\xf8B\x01\xf2\xa7\x1d\x02\b\x03\x1a\xd0\x03\n" +
 	"\n" +
 	"Parameters\x12&\n" +
 	"\tpool_size\x18\x01 \x01(\rB\t\xfaB\x06*\x04\x18\xff\xff\x03R\bpoolSize\x12:\n" +

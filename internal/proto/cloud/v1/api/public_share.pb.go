@@ -8,6 +8,7 @@ package api
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
 	_ "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -121,14 +122,15 @@ var File_cloud_v1_api_public_share_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_public_share_proto_rawDesc = "" +
 	"\n" +
-	"\x1fcloud/v1/api/public_share.proto\x12\fcloud.v1.api\x1a\x1acloud/v1/iam/options.proto\x1a\x1bcloud/v1/models/share.proto\x1a\x17validate/validate.proto\"7\n" +
+	"\x1fcloud/v1/api/public_share.proto\x12\fcloud.v1.api\x1a\x1acloud/v1/iam/options.proto\x1a\x1bcloud/v1/models/share.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"7\n" +
 	"\x13GetSharedRunRequest\x12 \n" +
 	"\x05token\x18\x01 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x10\x18\x80\x01R\x05token\"c\n" +
 	"\x14GetSharedRunResponse\x12K\n" +
-	"\bsnapshot\x18\x01 \x01(\v2%.cloud.v1.models.ShareRecord.SnapshotB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bsnapshot2v\n" +
-	"\x12PublicShareService\x12`\n" +
-	"\fGetSharedRun\x12!.cloud.v1.api.GetSharedRunRequest\x1a\".cloud.v1.api.GetSharedRunResponse\"\t\x8a\xb5\x18\x02\b\x01\x90\x02\x01BAZ?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
+	"\bsnapshot\x18\x01 \x01(\v2%.cloud.v1.models.ShareRecord.SnapshotB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bsnapshot2\x89\x02\n" +
+	"\x12PublicShareService\x12\xc8\x01\n" +
+	"\fGetSharedRun\x12!.cloud.v1.api.GetSharedRunRequest\x1a\".cloud.v1.api.GetSharedRunResponse\"q\x8a\xb5\x18\x02\b\x01\xf2\xa7\x1dd\x10\x01\x1a\x0f/get-shared-run\"\fgetSharedRun\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x1a(\xf2\xa7\x1d$\x12\x14/api/v1/public-share\x1a\fpublic-shareBG\xf2\xa7\x1d\x02\b\x01Z?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
 
 var (
 	file_cloud_v1_api_public_share_proto_rawDescOnce sync.Once

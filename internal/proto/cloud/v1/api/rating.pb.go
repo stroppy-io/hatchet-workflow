@@ -8,6 +8,7 @@ package api
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	_ "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
@@ -526,7 +527,7 @@ var File_cloud_v1_api_rating_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_rating_proto_rawDesc = "" +
 	"\n" +
-	"\x19cloud/v1/api/rating.proto\x12\fcloud.v1.api\x1a\"cloud/v1/deployment/provider.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\xf0\x02\n" +
+	"\x19cloud/v1/api/rating.proto\x12\fcloud.v1.api\x1a\"cloud/v1/deployment/provider.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\xf0\x02\n" +
 	"\fRatingFilter\x12)\n" +
 	"\n" +
 	"metric_key\x18\x01 \x01(\tB\n" +
@@ -571,10 +572,12 @@ const file_cloud_v1_api_rating_proto_rawDesc = "" +
 	"page_token\x18\x04 \x01(\tR\tpageToken\"v\n" +
 	"\x17GetTenantRatingResponse\x123\n" +
 	"\aentries\x18\x01 \x03(\v2\x19.cloud.v1.api.RatingEntryR\aentries\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken2\xe7\x01\n" +
-	"\rRatingService\x12g\n" +
-	"\x0fGetSystemRating\x12$.cloud.v1.api.GetSystemRatingRequest\x1a%.cloud.v1.api.GetSystemRatingResponse\"\a\x8a\xb5\x18\x00\x90\x02\x01\x12m\n" +
-	"\x0fGetTenantRating\x12$.cloud.v1.api.GetTenantRatingRequest\x1a%.cloud.v1.api.GetTenantRatingResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\b\x10\x05\x90\x02\x01BAZ?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken2\xe3\x03\n" +
+	"\rRatingService\x12\xd5\x01\n" +
+	"\x0fGetSystemRating\x12$.cloud.v1.api.GetSystemRatingRequest\x1a%.cloud.v1.api.GetSystemRatingResponse\"u\x8a\xb5\x18\x00\xf2\xa7\x1dj\x10\x01\x1a\x12/get-system-rating\"\x0fgetSystemRating\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xdb\x01\n" +
+	"\x0fGetTenantRating\x12$.cloud.v1.api.GetTenantRatingRequest\x1a%.cloud.v1.api.GetTenantRatingResponse\"{\x8a\xb5\x18\x06\x12\x04\b\b\x10\x05\xf2\xa7\x1dj\x10\x01\x1a\x12/get-tenant-rating\"\x0fgetTenantRating\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x1a\x1c\xf2\xa7\x1d\x18\x12\x0e/api/v1/rating\x1a\x06ratingBG\xf2\xa7\x1d\x02\b\x01Z?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
 
 var (
 	file_cloud_v1_api_rating_proto_rawDescOnce sync.Once

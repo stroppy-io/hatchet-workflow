@@ -8,6 +8,7 @@ package api
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
@@ -1034,7 +1035,7 @@ var File_cloud_v1_api_test_wizard_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_test_wizard_proto_rawDesc = "" +
 	"\n" +
-	"\x1ecloud/v1/api/test_wizard.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a(cloud/v1/deployment/infrastructure.proto\x1a\"cloud/v1/deployment/provider.proto\x1a cloud/v1/deployment/render.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1ccloud/v1/models/preset.proto\x1a\x1ecloud/v1/models/test_run.proto\x1a!cloud/v1/models/test_wizard.proto\x1a cloud/v1/topology/topology.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x17validate/validate.proto\"\x8d\x01\n" +
+	"\x1ecloud/v1/api/test_wizard.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a(cloud/v1/deployment/infrastructure.proto\x1a\"cloud/v1/deployment/provider.proto\x1a cloud/v1/deployment/render.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1ccloud/v1/models/preset.proto\x1a\x1ecloud/v1/models/test_run.proto\x1a!cloud/v1/models/test_wizard.proto\x1a cloud/v1/topology/topology.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\x8d\x01\n" +
 	"\x16StartTestWizardRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x1c\n" +
 	"\x04name\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\xff\x01R\x04name\x12-\n" +
@@ -1103,17 +1104,22 @@ const file_cloud_v1_api_test_wizard_proto_rawDesc = "" +
 	"\acontent\x18\x02 \x01(\tR\acontent\"`\n" +
 	"\x13ProbeScriptResponse\x123\n" +
 	"\bmetadata\x18\x01 \x01(\v2\x17.google.protobuf.StructR\bmetadata\x12\x14\n" +
-	"\x05human\x18\x02 \x01(\tR\x05human2\xb7\x06\n" +
-	"\x11TestWizardService\x12j\n" +
-	"\x0fStartTestWizard\x12$.cloud.v1.api.StartTestWizardRequest\x1a%.cloud.v1.api.StartTestWizardResponse\"\n" +
-	"\x8a\xb5\x18\x06\x12\x04\b\a\x10\x01\x12v\n" +
-	"\x12GetTestWizardDraft\x12'.cloud.v1.api.GetTestWizardDraftRequest\x1a(.cloud.v1.api.GetTestWizardDraftResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\a\x10\x02\x90\x02\x01\x12|\n" +
-	"\x14ListTestWizardDrafts\x12).cloud.v1.api.ListTestWizardDraftsRequest\x1a*.cloud.v1.api.ListTestWizardDraftsResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\a\x10\x05\x90\x02\x01\x12m\n" +
-	"\x0fPatchTestWizard\x12$.cloud.v1.api.PatchTestWizardRequest\x1a%.cloud.v1.api.PatchTestWizardResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\a\x10\x03\x90\x02\x02\x12\x7f\n" +
-	"\x15DeleteTestWizardDraft\x12*.cloud.v1.api.DeleteTestWizardDraftRequest\x1a+.cloud.v1.api.DeleteTestWizardDraftResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\a\x10\x04\x90\x02\x02\x12m\n" +
-	"\x10FinishTestWizard\x12%.cloud.v1.api.FinishTestWizardRequest\x1a&.cloud.v1.api.FinishTestWizardResponse\"\n" +
-	"\x8a\xb5\x18\x06\x12\x04\b\a\x10\x03\x12a\n" +
-	"\vProbeScript\x12 .cloud.v1.api.ProbeScriptRequest\x1a!.cloud.v1.api.ProbeScriptResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\a\x10\x02\x90\x02\x01BAZ?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
+	"\x05human\x18\x02 \x01(\tR\x05human2\x83\r\n" +
+	"\x11TestWizardService\x12\xd8\x01\n" +
+	"\x0fStartTestWizard\x12$.cloud.v1.api.StartTestWizardRequest\x1a%.cloud.v1.api.StartTestWizardResponse\"x\x8a\xb5\x18\x06\x12\x04\b\a\x10\x01\xf2\xa7\x1dj\x10\x02\x1a\x12/start-test-wizard\"\x0fstartTestWizard\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x12\xec\x01\n" +
+	"\x12GetTestWizardDraft\x12'.cloud.v1.api.GetTestWizardDraftRequest\x1a(.cloud.v1.api.GetTestWizardDraftResponse\"\x82\x01\x8a\xb5\x18\x06\x12\x04\b\a\x10\x02\xf2\xa7\x1dq\x10\x01\x1a\x16/get-test-wizard-draft\"\x12getTestWizardDraft\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xf6\x01\n" +
+	"\x14ListTestWizardDrafts\x12).cloud.v1.api.ListTestWizardDraftsRequest\x1a*.cloud.v1.api.ListTestWizardDraftsResponse\"\x86\x01\x8a\xb5\x18\x06\x12\x04\b\a\x10\x05\xf2\xa7\x1du\x10\x01\x1a\x18/list-test-wizard-drafts\"\x14listTestWizardDrafts\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xdb\x01\n" +
+	"\x0fPatchTestWizard\x12$.cloud.v1.api.PatchTestWizardRequest\x1a%.cloud.v1.api.PatchTestWizardResponse\"{\x8a\xb5\x18\x06\x12\x04\b\a\x10\x03\xf2\xa7\x1dj\x10\x02\x1a\x12/patch-test-wizard\"\x0fpatchTestWizard\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xfb\x01\n" +
+	"\x15DeleteTestWizardDraft\x12*.cloud.v1.api.DeleteTestWizardDraftRequest\x1a+.cloud.v1.api.DeleteTestWizardDraftResponse\"\x88\x01\x8a\xb5\x18\x06\x12\x04\b\a\x10\x04\xf2\xa7\x1dw\x10\x02\x1a\x19/delete-test-wizard-draft\"\x15deleteTestWizardDraft\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xdd\x01\n" +
+	"\x10FinishTestWizard\x12%.cloud.v1.api.FinishTestWizardRequest\x1a&.cloud.v1.api.FinishTestWizardResponse\"z\x8a\xb5\x18\x06\x12\x04\b\a\x10\x03\xf2\xa7\x1dl\x10\x02\x1a\x13/finish-test-wizard\"\x10finishTestWizard\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x12\xc6\x01\n" +
+	"\vProbeScript\x12 .cloud.v1.api.ProbeScriptRequest\x1a!.cloud.v1.api.ProbeScriptResponse\"r\x8a\xb5\x18\x06\x12\x04\b\a\x10\x02\xf2\xa7\x1da\x10\x01\x1a\r/probe-script\"\vprobeScript\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x1a&\xf2\xa7\x1d\"\x12\x13/api/v1/test-wizard\x1a\vtest-wizardBG\xf2\xa7\x1d\x02\b\x01Z?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
 
 var (
 	file_cloud_v1_api_test_wizard_proto_rawDescOnce sync.Once

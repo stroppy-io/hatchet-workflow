@@ -8,6 +8,7 @@ package api
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
@@ -940,7 +941,7 @@ var File_cloud_v1_api_suite_wizard_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_suite_wizard_proto_rawDesc = "" +
 	"\n" +
-	"\x1fcloud/v1/api/suite_wizard.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a(cloud/v1/deployment/infrastructure.proto\x1a\"cloud/v1/deployment/provider.proto\x1a cloud/v1/deployment/render.proto\x1a\x1bcloud/v1/domain/suite.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1bcloud/v1/models/suite.proto\x1a\"cloud/v1/models/suite_wizard.proto\x1a\x17validate/validate.proto\"\xa9\x04\n" +
+	"\x1fcloud/v1/api/suite_wizard.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a(cloud/v1/deployment/infrastructure.proto\x1a\"cloud/v1/deployment/provider.proto\x1a cloud/v1/deployment/render.proto\x1a\x1bcloud/v1/domain/suite.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1bcloud/v1/models/suite.proto\x1a\"cloud/v1/models/suite_wizard.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\xb1\x04\n" +
 	"\x14SuiteWizardCellPatch\x12 \n" +
 	"\acell_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x18@R\x06cellId\x12\x16\n" +
 	"\x06remove\x18\x02 \x01(\bR\x06remove\x12\x1d\n" +
@@ -953,8 +954,8 @@ const file_cloud_v1_api_suite_wizard_proto_rawDesc = "" +
 	"\vinline_test\x18\f \x01(\v2\x15.cloud.v1.domain.TestB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\n" +
 	"inlineTest\x12X\n" +
 	"\x11machine_overrides\x18\x14 \x03(\v2 .cloud.v1.deployment.MachinePlanB\t\xfaB\x06\x92\x01\x03\x10\x80\x02R\x10machineOverrides\x12Q\n" +
-	"\x10render_overrides\x18\x15 \x01(\v2&.cloud.v1.deployment.RenderOverrideSetR\x0frenderOverridesB\b\n" +
-	"\x06sourceB\n" +
+	"\x10render_overrides\x18\x15 \x01(\v2&.cloud.v1.deployment.RenderOverrideSetR\x0frenderOverridesB\x10\n" +
+	"\x06source\x12\x06\xf2\xa7\x1d\x02\b\x03B\n" +
 	"\n" +
 	"\b_enabledB\a\n" +
 	"\x05_name\"\x83\x01\n" +
@@ -1008,16 +1009,20 @@ const file_cloud_v1_api_suite_wizard_proto_rawDesc = "" +
 	"\x11_in_global_rating\"\x97\x01\n" +
 	"\x19FinishSuiteWizardResponse\x12<\n" +
 	"\x05suite\x18\x01 \x01(\v2\x1c.cloud.v1.models.SuiteRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x05suite\x12<\n" +
-	"\tsuite_run\x18\x02 \x01(\v2\x1f.cloud.v1.models.SuiteRunRecordR\bsuiteRun2\xe8\x05\n" +
-	"\x12SuiteWizardService\x12m\n" +
-	"\x10StartSuiteWizard\x12%.cloud.v1.api.StartSuiteWizardRequest\x1a&.cloud.v1.api.StartSuiteWizardResponse\"\n" +
-	"\x8a\xb5\x18\x06\x12\x04\b\a\x10\x01\x12y\n" +
-	"\x13GetSuiteWizardDraft\x12(.cloud.v1.api.GetSuiteWizardDraftRequest\x1a).cloud.v1.api.GetSuiteWizardDraftResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\a\x10\x02\x90\x02\x01\x12\x7f\n" +
-	"\x15ListSuiteWizardDrafts\x12*.cloud.v1.api.ListSuiteWizardDraftsRequest\x1a+.cloud.v1.api.ListSuiteWizardDraftsResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\a\x10\x05\x90\x02\x01\x12p\n" +
-	"\x10PatchSuiteWizard\x12%.cloud.v1.api.PatchSuiteWizardRequest\x1a&.cloud.v1.api.PatchSuiteWizardResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\a\x10\x03\x90\x02\x02\x12\x82\x01\n" +
-	"\x16DeleteSuiteWizardDraft\x12+.cloud.v1.api.DeleteSuiteWizardDraftRequest\x1a,.cloud.v1.api.DeleteSuiteWizardDraftResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\a\x10\x04\x90\x02\x02\x12p\n" +
-	"\x11FinishSuiteWizard\x12&.cloud.v1.api.FinishSuiteWizardRequest\x1a'.cloud.v1.api.FinishSuiteWizardResponse\"\n" +
-	"\x8a\xb5\x18\x06\x12\x04\b\a\x10\x03BAZ?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
+	"\tsuite_run\x18\x02 \x01(\v2\x1f.cloud.v1.models.SuiteRunRecordR\bsuiteRun2\xdb\v\n" +
+	"\x12SuiteWizardService\x12\xdd\x01\n" +
+	"\x10StartSuiteWizard\x12%.cloud.v1.api.StartSuiteWizardRequest\x1a&.cloud.v1.api.StartSuiteWizardResponse\"z\x8a\xb5\x18\x06\x12\x04\b\a\x10\x01\xf2\xa7\x1dl\x10\x02\x1a\x13/start-suite-wizard\"\x10startSuiteWizard\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x12\xf1\x01\n" +
+	"\x13GetSuiteWizardDraft\x12(.cloud.v1.api.GetSuiteWizardDraftRequest\x1a).cloud.v1.api.GetSuiteWizardDraftResponse\"\x84\x01\x8a\xb5\x18\x06\x12\x04\b\a\x10\x02\xf2\xa7\x1ds\x10\x01\x1a\x17/get-suite-wizard-draft\"\x13getSuiteWizardDraft\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xfb\x01\n" +
+	"\x15ListSuiteWizardDrafts\x12*.cloud.v1.api.ListSuiteWizardDraftsRequest\x1a+.cloud.v1.api.ListSuiteWizardDraftsResponse\"\x88\x01\x8a\xb5\x18\x06\x12\x04\b\a\x10\x05\xf2\xa7\x1dw\x10\x01\x1a\x19/list-suite-wizard-drafts\"\x15listSuiteWizardDrafts\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xe0\x01\n" +
+	"\x10PatchSuiteWizard\x12%.cloud.v1.api.PatchSuiteWizardRequest\x1a&.cloud.v1.api.PatchSuiteWizardResponse\"}\x8a\xb5\x18\x06\x12\x04\b\a\x10\x03\xf2\xa7\x1dl\x10\x02\x1a\x13/patch-suite-wizard\"\x10patchSuiteWizard\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\x80\x02\n" +
+	"\x16DeleteSuiteWizardDraft\x12+.cloud.v1.api.DeleteSuiteWizardDraftRequest\x1a,.cloud.v1.api.DeleteSuiteWizardDraftResponse\"\x8a\x01\x8a\xb5\x18\x06\x12\x04\b\a\x10\x04\xf2\xa7\x1dy\x10\x02\x1a\x1a/delete-suite-wizard-draft\"\x16deleteSuiteWizardDraft\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xe2\x01\n" +
+	"\x11FinishSuiteWizard\x12&.cloud.v1.api.FinishSuiteWizardRequest\x1a'.cloud.v1.api.FinishSuiteWizardResponse\"|\x8a\xb5\x18\x06\x12\x04\b\a\x10\x03\xf2\xa7\x1dn\x10\x02\x1a\x14/finish-suite-wizard\"\x11finishSuiteWizard\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x1a(\xf2\xa7\x1d$\x12\x14/api/v1/suite-wizard\x1a\fsuite-wizardBG\xf2\xa7\x1d\x02\b\x01Z?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
 
 var (
 	file_cloud_v1_api_suite_wizard_proto_rawDescOnce sync.Once

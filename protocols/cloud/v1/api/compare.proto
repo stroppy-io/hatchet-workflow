@@ -12,7 +12,11 @@ import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 import "validate/validate.proto";
 
+import "ogen/ogen.proto";
+
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+option (ogen.file) = { generate_openapi: true };
 
 /*
     compare.proto is the side-by-side comparison of N test runs (the compare page).
@@ -119,11 +123,35 @@ message CompareRunsResponse {
     CompareService serves the side-by-side comparison page over N test runs.
  */
 service CompareService {
+    option (ogen.service) = {
+        path_prefix: "/api/v1/compare"
+        tags: "compare"
+    };
+
     /*
         CompareRuns returns each run's config column plus the per-metric diff
         baselined on run_ids[0]. Read-only; gated by RESOURCE_TEST_RUN/READ.
      */
     rpc CompareRuns (CompareRunsRequest) returns (CompareRunsResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/compare-runs"
+            operation_id: "compareRuns"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TEST_RUN, action: ACTION_READ}]};
     }

@@ -13,7 +13,11 @@ import "cloud/v1/iam/options.proto";
 import "cloud/v1/iam/sso.proto";
 import "cloud/v1/iam/apitoken.proto";
 
+import "ogen/ogen.proto";
+
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+option (ogen.file) = { generate_openapi: true };
 
 /*
     iam.proto is the single public API surface of the IAM subsystem. One service
@@ -529,6 +533,7 @@ message GetTenantRequest {
         ref selects the tenant by EITHER id or slug.
      */
     oneof ref {
+        option (ogen.oneof) = { schema_mode: ONEOF_SCHEMA_MODE_OBJECT };
         option (validate.required) = true;
         /*
             id is the tenant's stable identifier.
@@ -1398,6 +1403,11 @@ message RevokeApiTokenResponse {}
  */
 
 service IamService {
+    option (ogen.service) = {
+        path_prefix: "/api/v1/iam"
+        tags: "iam"
+    };
+
     /*
         --- Auth (public: no bearer token) ---
      */
@@ -1407,6 +1417,25 @@ service IamService {
         creates a new account.
      */
     rpc Register (RegisterRequest) returns (RegisterResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/register"
+            operation_id: "register"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option (cloud.v1.iam.auth) = {public: true};
     }
     /*
@@ -1414,6 +1443,25 @@ service IamService {
         Not idempotent: each call mints a new session/TokenPair.
      */
     rpc Login (LoginRequest) returns (LoginResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/login"
+            operation_id: "login"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option (cloud.v1.iam.auth) = {public: true};
     }
     /*
@@ -1421,6 +1469,25 @@ service IamService {
         refresh_token is single-use; a replay fails.
      */
     rpc Refresh (RefreshRequest) returns (RefreshResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/refresh"
+            operation_id: "refresh"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option (cloud.v1.iam.auth) = {public: true};
     }
     /*
@@ -1428,6 +1495,25 @@ service IamService {
         revoking an already-revoked session is a no-op.
      */
     rpc Logout (LogoutRequest) returns (LogoutResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/logout"
+            operation_id: "logout"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {public: true};
     }
@@ -1436,6 +1522,25 @@ service IamService {
         Public. Always succeeds (no account-existence leak).
      */
     rpc RequestPasswordReset (RequestPasswordResetRequest) returns (RequestPasswordResetResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/request-password-reset"
+            operation_id: "requestPasswordReset"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option (cloud.v1.iam.auth) = {public: true};
     }
     /*
@@ -1443,6 +1548,25 @@ service IamService {
         Public. Not idempotent: the token is single-use.
      */
     rpc ConfirmPasswordReset (ConfirmPasswordResetRequest) returns (ConfirmPasswordResetResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/confirm-password-reset"
+            operation_id: "confirmPasswordReset"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option (cloud.v1.iam.auth) = {public: true};
     }
     /*
@@ -1450,6 +1574,25 @@ service IamService {
         the credential and the user may be logged out.
      */
     rpc VerifyEmail (VerifyEmailRequest) returns (VerifyEmailResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/verify-email"
+            operation_id: "verifyEmail"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option (cloud.v1.iam.auth) = {public: true};
     }
 
@@ -1461,6 +1604,25 @@ service IamService {
         Register). Not idempotent: each call creates a new account.
      */
     rpc CreateAccount (CreateAccountRequest) returns (CreateAccountResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/create-account"
+            operation_id: "createAccount"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option (cloud.v1.iam.auth) = {admin_only: true};
     }
     /*
@@ -1468,6 +1630,25 @@ service IamService {
         the account itself, or callers sharing a tenant with the target account.
      */
     rpc GetAccount (GetAccountRequest) returns (GetAccountResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/get-account"
+            operation_id: "getAccount"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {};
     }
@@ -1476,6 +1657,22 @@ service IamService {
         permission (self-read).
      */
     rpc GetMyAccount (GetMyAccountRequest) returns (GetMyAccountResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/get-my-account"
+            operation_id: "getMyAccount"
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {};
     }
@@ -1483,6 +1680,25 @@ service IamService {
         ListAccounts lists accounts platform-wide. Read-only.
      */
     rpc ListAccounts (ListAccountsRequest) returns (ListAccountsResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/list-accounts"
+            operation_id: "listAccounts"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_ACCOUNT, action: ACTION_LIST}]};
     }
@@ -1491,6 +1707,25 @@ service IamService {
         The handler allows platform admins or the account itself.
      */
     rpc UpdateAccount (UpdateAccountRequest) returns (UpdateAccountResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/update-account"
+            operation_id: "updateAccount"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {};
     }
@@ -1498,6 +1733,25 @@ service IamService {
         DeleteAccount is idempotent: deleting an absent account is a no-op.
      */
     rpc DeleteAccount (DeleteAccountRequest) returns (DeleteAccountResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/delete-account"
+            operation_id: "deleteAccount"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_ACCOUNT, action: ACTION_DELETE}]};
     }
@@ -1505,6 +1759,25 @@ service IamService {
         ChangePassword is authenticated self-service (old + new). Not idempotent.
      */
     rpc ChangePassword (ChangePasswordRequest) returns (ChangePasswordResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/change-password"
+            operation_id: "changePassword"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option (cloud.v1.iam.auth) = {};
     }
     /*
@@ -1512,6 +1785,25 @@ service IamService {
         Idempotent: setting the same password twice converges.
      */
     rpc ResetPassword (ResetPasswordRequest) returns (ResetPasswordResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/reset-password"
+            operation_id: "resetPassword"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {admin_only: true};
     }
@@ -1520,6 +1812,22 @@ service IamService {
         Authenticated.
      */
     rpc ResendVerification (ResendVerificationRequest) returns (ResendVerificationResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/resend-verification"
+            operation_id: "resendVerification"
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option (cloud.v1.iam.auth) = {};
     }
 
@@ -1531,6 +1839,25 @@ service IamService {
         Not idempotent: each call creates a new tenant.
      */
     rpc CreateTenant (CreateTenantRequest) returns (CreateTenantResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/create-tenant"
+            operation_id: "createTenant"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option (cloud.v1.iam.auth) = {};
     }
     /*
@@ -1539,6 +1866,25 @@ service IamService {
         tenant members.
      */
     rpc GetTenant (GetTenantRequest) returns (GetTenantResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/get-tenant"
+            operation_id: "getTenant"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {};
     }
@@ -1546,6 +1892,22 @@ service IamService {
         ListMyTenants returns the caller's tenants — authenticated, no permission.
      */
     rpc ListMyTenants (ListMyTenantsRequest) returns (ListMyTenantsResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/list-my-tenants"
+            operation_id: "listMyTenants"
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {};
     }
@@ -1554,6 +1916,25 @@ service IamService {
         on retry.
      */
     rpc UpdateTenant (UpdateTenantRequest) returns (UpdateTenantResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/update-tenant"
+            operation_id: "updateTenant"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TENANT, action: ACTION_UPDATE}], tenant_field: "id"};
     }
@@ -1562,6 +1943,25 @@ service IamService {
         no-op.
      */
     rpc DeleteTenant (DeleteTenantRequest) returns (DeleteTenantResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/delete-tenant"
+            operation_id: "deleteTenant"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TENANT, action: ACTION_DELETE}], tenant_field: "id"};
     }
@@ -1570,6 +1970,25 @@ service IamService {
         the current owner is a no-op.
      */
     rpc TransferTenantOwnership (TransferTenantOwnershipRequest) returns (TransferTenantOwnershipResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/transfer-tenant-ownership"
+            operation_id: "transferTenantOwnership"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TENANT, action: ACTION_UPDATE}]};
     }
@@ -1578,6 +1997,25 @@ service IamService {
         permission. Idempotent: leaving a tenant you are not in is a no-op.
      */
     rpc LeaveTenant (LeaveTenantRequest) returns (LeaveTenantResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/leave-tenant"
+            operation_id: "leaveTenant"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {};
     }
@@ -1589,12 +2027,50 @@ service IamService {
         CreateRole is not idempotent: each call creates a new role.
      */
     rpc CreateRole (CreateRoleRequest) returns (CreateRoleResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/create-role"
+            operation_id: "createRole"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_ROLE, action: ACTION_CREATE}]};
     }
     /*
         GetRole fetches one role by id. Read-only.
      */
     rpc GetRole (GetRoleRequest) returns (GetRoleResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/get-role"
+            operation_id: "getRole"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_ROLE, action: ACTION_READ}]};
     }
@@ -1603,6 +2079,25 @@ service IamService {
         Read-only.
      */
     rpc ListRoles (ListRolesRequest) returns (ListRolesResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/list-roles"
+            operation_id: "listRoles"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_ROLE, action: ACTION_LIST}]};
     }
@@ -1610,6 +2105,25 @@ service IamService {
         UpdateRole is idempotent: permissions REPLACES wholesale, converging on retry.
      */
     rpc UpdateRole (UpdateRoleRequest) returns (UpdateRoleResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/update-role"
+            operation_id: "updateRole"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_ROLE, action: ACTION_UPDATE}]};
     }
@@ -1618,6 +2132,25 @@ service IamService {
         no-op.
      */
     rpc DeleteRole (DeleteRoleRequest) returns (DeleteRoleResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/delete-role"
+            operation_id: "deleteRole"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_ROLE, action: ACTION_DELETE}]};
     }
@@ -1629,12 +2162,50 @@ service IamService {
         CreateMembership is not idempotent: each call creates a new membership row.
      */
     rpc CreateMembership (CreateMembershipRequest) returns (CreateMembershipResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/create-membership"
+            operation_id: "createMembership"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_MEMBERSHIP, action: ACTION_CREATE}]};
     }
     /*
         GetMembership fetches one membership by id. Read-only.
      */
     rpc GetMembership (GetMembershipRequest) returns (GetMembershipResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/get-membership"
+            operation_id: "getMembership"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_MEMBERSHIP, action: ACTION_READ}]};
     }
@@ -1642,6 +2213,25 @@ service IamService {
         ListMemberships lists one tenant's members. Read-only.
      */
     rpc ListMemberships (ListMembershipsRequest) returns (ListMembershipsResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/list-memberships"
+            operation_id: "listMemberships"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_MEMBERSHIP, action: ACTION_LIST}]};
     }
@@ -1649,6 +2239,25 @@ service IamService {
         UpdateMembership is idempotent: role_ids REPLACES wholesale, converging on retry.
      */
     rpc UpdateMembership (UpdateMembershipRequest) returns (UpdateMembershipResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/update-membership"
+            operation_id: "updateMembership"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_MEMBERSHIP, action: ACTION_UPDATE}]};
     }
@@ -1657,6 +2266,25 @@ service IamService {
         Idempotent: removing an absent membership is a no-op.
      */
     rpc DeleteMembership (DeleteMembershipRequest) returns (DeleteMembershipResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/delete-membership"
+            operation_id: "deleteMembership"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_MEMBERSHIP, action: ACTION_DELETE}]};
     }
@@ -1664,6 +2292,25 @@ service IamService {
         GetMyPermissions resolves the caller's own permissions — authenticated, no permission.
      */
     rpc GetMyPermissions (GetMyPermissionsRequest) returns (GetMyPermissionsResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/get-my-permissions"
+            operation_id: "getMyPermissions"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {};
     }
@@ -1671,6 +2318,22 @@ service IamService {
         ListPermissions returns the grantable-permission catalog — authenticated, no permission.
      */
     rpc ListPermissions (ListPermissionsRequest) returns (ListPermissionsResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/list-permissions"
+            operation_id: "listPermissions"
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {};
     }
@@ -1683,12 +2346,50 @@ service IamService {
         idempotent: each call creates a new provider.
      */
     rpc CreateIdentityProvider (CreateIdentityProviderRequest) returns (CreateIdentityProviderResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/create-identity-provider"
+            operation_id: "createIdentityProvider"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option (cloud.v1.iam.auth) = {admin_only: true};
     }
     /*
         GetIdentityProvider fetches one provider by id. Admin-only, read-only.
      */
     rpc GetIdentityProvider (GetIdentityProviderRequest) returns (GetIdentityProviderResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/get-identity-provider"
+            operation_id: "getIdentityProvider"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {admin_only: true};
     }
@@ -1697,6 +2398,25 @@ service IamService {
         Admin-only. Idempotent: a wholesale field set converges on retry.
      */
     rpc UpdateIdentityProvider (UpdateIdentityProviderRequest) returns (UpdateIdentityProviderResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/update-identity-provider"
+            operation_id: "updateIdentityProvider"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {admin_only: true};
     }
@@ -1705,6 +2425,25 @@ service IamService {
         an absent provider is a no-op.
      */
     rpc DeleteIdentityProvider (DeleteIdentityProviderRequest) returns (DeleteIdentityProviderResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/delete-identity-provider"
+            operation_id: "deleteIdentityProvider"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {admin_only: true};
     }
@@ -1716,6 +2455,22 @@ service IamService {
         ListIdentityProviders returns the login-page buttons. Public, read-only.
      */
     rpc ListIdentityProviders (ListIdentityProvidersRequest) returns (ListIdentityProvidersResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/list-identity-providers"
+            operation_id: "listIdentityProviders"
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {public: true};
     }
@@ -1724,6 +2479,25 @@ service IamService {
         mints fresh state + PKCE stashed server-side.
      */
     rpc StartSSO (StartSSORequest) returns (StartSSOResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/start-sso"
+            operation_id: "startSSO"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option (cloud.v1.iam.auth) = {public: true};
     }
     /*
@@ -1731,6 +2505,25 @@ service IamService {
         single-use and a replay fails.
      */
     rpc CompleteSSO (CompleteSSORequest) returns (CompleteSSOResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/complete-sso"
+            operation_id: "completeSSO"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option (cloud.v1.iam.auth) = {public: true};
     }
 
@@ -1742,6 +2535,25 @@ service IamService {
         on (provider, subject).
      */
     rpc LinkExternalIdentity (LinkExternalIdentityRequest) returns (LinkExternalIdentityResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/link-external-identity"
+            operation_id: "linkExternalIdentity"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {admin_only: true};
     }
@@ -1750,6 +2562,25 @@ service IamService {
         account-owner-or-admin. Idempotent: unlinking an absent link is a no-op.
      */
     rpc UnlinkExternalIdentity (UnlinkExternalIdentityRequest) returns (UnlinkExternalIdentityResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/unlink-external-identity"
+            operation_id: "unlinkExternalIdentity"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {};
     }
@@ -1758,6 +2589,25 @@ service IamService {
         account-owner-or-admin (the "my linked logins" view).
      */
     rpc ListExternalIdentities (ListExternalIdentitiesRequest) returns (ListExternalIdentitiesResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/list-external-identities"
+            operation_id: "listExternalIdentities"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {};
     }
@@ -1771,6 +2621,25 @@ service IamService {
         permissions. Not idempotent: each call mints a new token + secret.
      */
     rpc CreateApiToken (CreateApiTokenRequest) returns (CreateApiTokenResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/create-api-token"
+            operation_id: "createApiToken"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option (cloud.v1.iam.auth) = {};
     }
     /*
@@ -1778,6 +2647,25 @@ service IamService {
         the service enforces account-owner-or-admin.
      */
     rpc ListApiTokens (ListApiTokensRequest) returns (ListApiTokensResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/list-api-tokens"
+            operation_id: "listApiTokens"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {};
     }
@@ -1787,6 +2675,25 @@ service IamService {
         token is a no-op.
      */
     rpc RevokeApiToken (RevokeApiTokenRequest) returns (RevokeApiTokenResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/revoke-api-token"
+            operation_id: "revokeApiToken"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {};
     }

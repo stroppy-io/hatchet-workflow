@@ -8,6 +8,7 @@ package api
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
 	_ "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -27,7 +28,7 @@ var File_cloud_v1_api_test_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_test_proto_rawDesc = "" +
 	"\n" +
-	"\x17cloud/v1/api/test.proto\x12\fcloud.v1.api\x1a\x1egoogle/protobuf/duration.proto\x1a\x17validate/validate.proto\x1a\x1acloud/v1/iam/account.proto\x1a\x19cloud/v1/iam/tenant.proto\x1a\x17cloud/v1/iam/role.proto\x1a\x1dcloud/v1/iam/membership.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x16cloud/v1/iam/sso.protoBAZ?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
+	"\x17cloud/v1/api/test.proto\x12\fcloud.v1.api\x1a\x1egoogle/protobuf/duration.proto\x1a\x17validate/validate.proto\x1a\x1acloud/v1/iam/account.proto\x1a\x19cloud/v1/iam/tenant.proto\x1a\x17cloud/v1/iam/role.proto\x1a\x1dcloud/v1/iam/membership.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x16cloud/v1/iam/sso.proto\x1a\x0fogen/ogen.protoBG\xf2\xa7\x1d\x02\b\x01Z?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
 
 var file_cloud_v1_api_test_proto_goTypes = []any{}
 var file_cloud_v1_api_test_proto_depIdxs = []int32{

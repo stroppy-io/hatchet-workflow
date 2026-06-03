@@ -6,7 +6,11 @@ import "cloud/v1/iam/options.proto";
 import "cloud/v1/models/share.proto";
 import "validate/validate.proto";
 
+import "ogen/ogen.proto";
+
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+option (ogen.file) = { generate_openapi: true };
 
 /*
     public_share.proto is the PUBLIC, UNAUTHENTICATED resolve side of run shares —
@@ -40,11 +44,35 @@ message GetSharedRunResponse {
     PublicShareService is the public, unauthenticated resolve side of run shares.
  */
 service PublicShareService {
+    option (ogen.service) = {
+        path_prefix: "/api/v1/public-share"
+        tags: "public-share"
+    };
+
     /*
         GetSharedRun resolves a share token to its limited snapshot. PUBLIC: no
         bearer token. Returns gone if revoked/expired.
      */
     rpc GetSharedRun (GetSharedRunRequest) returns (GetSharedRunResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/get-shared-run"
+            operation_id: "getSharedRun"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {public: true};
     }

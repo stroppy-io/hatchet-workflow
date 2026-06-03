@@ -9,6 +9,7 @@ import "cloud/v1/deployment/provider.proto";
 import "cloud/v1/deployment/quota.proto";
 import "cloud/v1/deployment/yandex.proto";
 import "validate/validate.proto";
+import "ogen/ogen.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment";
 
@@ -56,6 +57,7 @@ message MachinePlan {
         provider_params are typed provider-specific inputs.
      */
     oneof provider_params {
+        option (ogen.oneof) = { schema_mode: ONEOF_SCHEMA_MODE_OBJECT };
         option (validate.required) = true;
         deployment.Docker.Container docker = 10;
         deployment.Yandex.Vm yandex = 11;
@@ -143,6 +145,7 @@ message MachineState {
         provider_output is typed provider-specific runtime output.
      */
     oneof provider_output {
+        option (ogen.oneof) = { schema_mode: ONEOF_SCHEMA_MODE_OBJECT };
         deployment.Docker.ContainerOutput docker = 10;
         deployment.Yandex.VmOutput yandex = 11;
     }

@@ -7,6 +7,7 @@
 package deployment
 
 import (
+	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -162,12 +163,11 @@ var File_cloud_v1_deployment_provider_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_deployment_provider_proto_rawDesc = "" +
 	"\n" +
-	"\"cloud/v1/deployment/provider.proto\x12\x13cloud.v1.deployment\x1a cloud/v1/deployment/docker.proto\x1a cloud/v1/deployment/yandex.proto\"\x9e\x01\n" +
+	"\"cloud/v1/deployment/provider.proto\x12\x13cloud.v1.deployment\x1a cloud/v1/deployment/docker.proto\x1a cloud/v1/deployment/yandex.proto\x1a\x0fogen/ogen.proto\"\xa6\x01\n" +
 	"\x10ProviderSettings\x12>\n" +
 	"\x06docker\x18\x01 \x01(\v2$.cloud.v1.deployment.Docker.SettingsH\x00R\x06docker\x12>\n" +
-	"\x06yandex\x18\x02 \x01(\v2$.cloud.v1.deployment.Yandex.SettingsH\x00R\x06yandexB\n" +
-	"\n" +
-	"\bsettings*N\n" +
+	"\x06yandex\x18\x02 \x01(\v2$.cloud.v1.deployment.Yandex.SettingsH\x00R\x06yandexB\x12\n" +
+	"\bsettings\x12\x06\xf2\xa7\x1d\x02\b\x03*N\n" +
 	"\bProvider\x12\x18\n" +
 	"\x14PROVIDER_UNSPECIFIED\x10\x00\x12\x13\n" +
 	"\x0fPROVIDER_DOCKER\x10\x01\x12\x13\n" +

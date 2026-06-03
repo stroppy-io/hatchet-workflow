@@ -8,6 +8,7 @@ package api
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
@@ -1250,14 +1251,14 @@ var File_cloud_v1_api_test_run_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_test_run_proto_rawDesc = "" +
 	"\n" +
-	"\x1bcloud/v1/api/test_run.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ccloud/v1/common/status.proto\x1a\x1dcloud/v1/common/trigger.proto\x1a\"cloud/v1/deployment/provider.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1ccloud/v1/models/preset.proto\x1a\x1ecloud/v1/models/test_run.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\xaf\x02\n" +
+	"\x1bcloud/v1/api/test_run.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ccloud/v1/common/status.proto\x1a\x1dcloud/v1/common/trigger.proto\x1a\"cloud/v1/deployment/provider.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1ccloud/v1/models/preset.proto\x1a\x1ecloud/v1/models/test_run.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\xb5\x02\n" +
 	"\x13StartTestRunRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12,\n" +
 	"\x03run\x18\x02 \x01(\v2\x18.cloud.v1.domain.TestRunH\x00R\x03run\x12+\n" +
 	"\vtest_run_id\x18\x03 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@H\x00R\ttestRunId\x12-\n" +
 	"\x10in_tenant_rating\x18\x04 \x01(\bH\x01R\x0einTenantRating\x88\x01\x01\x12-\n" +
-	"\x10in_global_rating\x18\x05 \x01(\bH\x02R\x0einGlobalRating\x88\x01\x01B\r\n" +
-	"\x06source\x12\x03\xf8B\x01B\x13\n" +
+	"\x10in_global_rating\x18\x05 \x01(\bH\x02R\x0einGlobalRating\x88\x01\x01B\x13\n" +
+	"\x06source\x12\t\xf8B\x01\xf2\xa7\x1d\x02\b\x03B\x13\n" +
 	"\x11_in_tenant_ratingB\x13\n" +
 	"\x11_in_global_rating\"R\n" +
 	"\x14StartTestRunResponse\x12:\n" +
@@ -1266,7 +1267,7 @@ const file_cloud_v1_api_test_run_proto_rawDesc = "" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x19\n" +
 	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"P\n" +
 	"\x12GetTestRunResponse\x12:\n" +
-	"\x03run\x18\x01 \x01(\v2\x1e.cloud.v1.models.TestRunRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x03run\"\xb7\x0e\n" +
+	"\x03run\x18\x01 \x01(\v2\x1e.cloud.v1.models.TestRunRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x03run\"\xbf\x0e\n" +
 	"\x13ListTestRunsRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x125\n" +
 	"\x06filter\x18\x02 \x01(\v2\x1d.cloud.v1.common.EntityFilterR\x06filter\x123\n" +
@@ -1295,7 +1296,7 @@ const file_cloud_v1_api_test_run_proto_rawDesc = "" +
 	"\x0ffinished_before\x18\x12 \x01(\v2\x1a.google.protobuf.TimestampR\x0efinishedBefore\x124\n" +
 	"\btriggers\x18\x15 \x03(\x0e2\x18.cloud.v1.common.TriggerR\btriggers\x12:\n" +
 	"\x04sort\x18\x13 \x01(\v2&.cloud.v1.api.ListTestRunsRequest.SortR\x04sort\x12)\n" +
-	"\x04page\x18\x14 \x01(\v2\x15.cloud.v1.common.PageR\x04page\x1a\xa8\x03\n" +
+	"\x04page\x18\x14 \x01(\v2\x15.cloud.v1.common.PageR\x04page\x1a\xb0\x03\n" +
 	"\x04Sort\x12:\n" +
 	"\x06entity\x18\x01 \x01(\x0e2 .cloud.v1.common.EntitySortFieldH\x00R\x06entity\x12A\n" +
 	"\x04kind\x18\x02 \x01(\x0e2+.cloud.v1.api.ListTestRunsRequest.Sort.KindH\x00R\x04kind\x12\x12\n" +
@@ -1314,8 +1315,8 @@ const file_cloud_v1_api_test_run_proto_rawDesc = "" +
 	"\rKIND_PROTOCOL\x10\n" +
 	"\x12\x14\n" +
 	"\x10KIND_TEST_PRESET\x10\v\x12\x10\n" +
-	"\fKIND_TRIGGER\x10\fB\x04\n" +
-	"\x02byB\r\n" +
+	"\fKIND_TRIGGER\x10\fB\f\n" +
+	"\x02by\x12\x06\xf2\xa7\x1d\x02\b\x03B\r\n" +
 	"\v_standaloneB\x0f\n" +
 	"\r_progress_minB\x0f\n" +
 	"\r_progress_max\"r\n" +
@@ -1346,18 +1347,24 @@ const file_cloud_v1_api_test_run_proto_rawDesc = "" +
 	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\x12\x1c\n" +
 	"\x04name\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\xff\x01R\x04name\"^\n" +
 	"\x17ExtractToPresetResponse\x12C\n" +
-	"\x06preset\x18\x01 \x01(\v2!.cloud.v1.models.TestPresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset2\xec\x05\n" +
-	"\x0eTestRunService\x12a\n" +
-	"\fStartTestRun\x12!.cloud.v1.api.StartTestRunRequest\x1a\".cloud.v1.api.StartTestRunResponse\"\n" +
-	"\x8a\xb5\x18\x06\x12\x04\b\b\x10\x01\x12^\n" +
+	"\x06preset\x18\x01 \x01(\v2!.cloud.v1.models.TestPresetRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06preset2\xff\v\n" +
+	"\x0eTestRunService\x12\xc9\x01\n" +
+	"\fStartTestRun\x12!.cloud.v1.api.StartTestRunRequest\x1a\".cloud.v1.api.StartTestRunResponse\"r\x8a\xb5\x18\x06\x12\x04\b\b\x10\x01\xf2\xa7\x1dd\x10\x02\x1a\x0f/start-test-run\"\fstartTestRun\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x12\xc2\x01\n" +
 	"\n" +
-	"GetTestRun\x12\x1f.cloud.v1.api.GetTestRunRequest\x1a .cloud.v1.api.GetTestRunResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\b\x10\x02\x90\x02\x01\x12d\n" +
-	"\fListTestRuns\x12!.cloud.v1.api.ListTestRunsRequest\x1a\".cloud.v1.api.ListTestRunsResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\b\x10\x05\x90\x02\x01\x12s\n" +
-	"\x11ListTestRunFacets\x12&.cloud.v1.api.ListTestRunFacetsRequest\x1a'.cloud.v1.api.ListTestRunFacetsResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\b\x10\x05\x90\x02\x01\x12g\n" +
-	"\rCancelTestRun\x12\".cloud.v1.api.CancelTestRunRequest\x1a#.cloud.v1.api.CancelTestRunResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\b\x10\x03\x90\x02\x02\x12g\n" +
-	"\rDeleteTestRun\x12\".cloud.v1.api.DeleteTestRunRequest\x1a#.cloud.v1.api.DeleteTestRunResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\b\x10\x04\x90\x02\x02\x12j\n" +
-	"\x0fExtractToPreset\x12$.cloud.v1.api.ExtractToPresetRequest\x1a%.cloud.v1.api.ExtractToPresetResponse\"\n" +
-	"\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x01BAZ?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
+	"GetTestRun\x12\x1f.cloud.v1.api.GetTestRunRequest\x1a .cloud.v1.api.GetTestRunResponse\"q\x8a\xb5\x18\x06\x12\x04\b\b\x10\x02\xf2\xa7\x1d`\x10\x01\x1a\r/get-test-run\"\n" +
+	"getTestRun\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xcc\x01\n" +
+	"\fListTestRuns\x12!.cloud.v1.api.ListTestRunsRequest\x1a\".cloud.v1.api.ListTestRunsResponse\"u\x8a\xb5\x18\x06\x12\x04\b\b\x10\x05\xf2\xa7\x1dd\x10\x01\x1a\x0f/list-test-runs\"\flistTestRuns\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xe7\x01\n" +
+	"\x11ListTestRunFacets\x12&.cloud.v1.api.ListTestRunFacetsRequest\x1a'.cloud.v1.api.ListTestRunFacetsResponse\"\x80\x01\x8a\xb5\x18\x06\x12\x04\b\b\x10\x05\xf2\xa7\x1do\x10\x01\x1a\x15/list-test-run-facets\"\x11listTestRunFacets\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xd1\x01\n" +
+	"\rCancelTestRun\x12\".cloud.v1.api.CancelTestRunRequest\x1a#.cloud.v1.api.CancelTestRunResponse\"w\x8a\xb5\x18\x06\x12\x04\b\b\x10\x03\xf2\xa7\x1df\x10\x02\x1a\x10/cancel-test-run\"\rcancelTestRun\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xd1\x01\n" +
+	"\rDeleteTestRun\x12\".cloud.v1.api.DeleteTestRunRequest\x1a#.cloud.v1.api.DeleteTestRunResponse\"w\x8a\xb5\x18\x06\x12\x04\b\b\x10\x04\xf2\xa7\x1df\x10\x02\x1a\x10/delete-test-run\"\rdeleteTestRun\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xd8\x01\n" +
+	"\x0fExtractToPreset\x12$.cloud.v1.api.ExtractToPresetRequest\x1a%.cloud.v1.api.ExtractToPresetResponse\"x\x8a\xb5\x18\x06\x12\x04\b\x06\x10\x01\xf2\xa7\x1dj\x10\x02\x1a\x12/extract-to-preset\"\x0fextractToPreset\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x1a \xf2\xa7\x1d\x1c\x12\x10/api/v1/test-run\x1a\btest-runBG\xf2\xa7\x1d\x02\b\x01Z?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
 
 var (
 	file_cloud_v1_api_test_run_proto_rawDescOnce sync.Once

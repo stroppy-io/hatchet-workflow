@@ -8,6 +8,7 @@ package api
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
 	_ "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -376,7 +377,7 @@ var File_cloud_v1_api_tenant_dashboard_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_tenant_dashboard_proto_rawDesc = "" +
 	"\n" +
-	"#cloud/v1/api/tenant_dashboard.proto\x12\fcloud.v1.api\x1a\x19cloud/v1/api/rating.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1bcloud/v1/models/suite.proto\x1a\x1ecloud/v1/models/test_run.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\xac\x01\n" +
+	"#cloud/v1/api/tenant_dashboard.proto\x12\fcloud.v1.api\x1a\x19cloud/v1/api/rating.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1bcloud/v1/models/suite.proto\x1a\x1ecloud/v1/models/test_run.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\xac\x01\n" +
 	"\fStatusCounts\x12\x14\n" +
 	"\x05total\x18\x01 \x01(\rR\x05total\x12\x18\n" +
 	"\apending\x18\x02 \x01(\rR\apending\x12\x18\n" +
@@ -401,9 +402,10 @@ const file_cloud_v1_api_tenant_dashboard_proto_rawDesc = "" +
 	"\x19GetTenantDashboardRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\"c\n" +
 	"\x1aGetTenantDashboardResponse\x12E\n" +
-	"\tdashboard\x18\x01 \x01(\v2\x1d.cloud.v1.api.TenantDashboardB\b\xfaB\x05\x8a\x01\x02\x10\x01R\tdashboard2\x90\x01\n" +
-	"\x16TenantDashboardService\x12v\n" +
-	"\x12GetTenantDashboard\x12'.cloud.v1.api.GetTenantDashboardRequest\x1a(.cloud.v1.api.GetTenantDashboardResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\b\x10\x05\x90\x02\x01BAZ?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
+	"\tdashboard\x18\x01 \x01(\v2\x1d.cloud.v1.api.TenantDashboardB\b\xfaB\x05\x8a\x01\x02\x10\x01R\tdashboard2\xb8\x02\n" +
+	"\x16TenantDashboardService\x12\xeb\x01\n" +
+	"\x12GetTenantDashboard\x12'.cloud.v1.api.GetTenantDashboardRequest\x1a(.cloud.v1.api.GetTenantDashboardResponse\"\x81\x01\x8a\xb5\x18\x06\x12\x04\b\b\x10\x05\xf2\xa7\x1dp\x10\x01\x1a\x15/get-tenant-dashboard\"\x12getTenantDashboard\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x1a0\xf2\xa7\x1d,\x12\x18/api/v1/tenant-dashboard\x1a\x10tenant-dashboardBG\xf2\xa7\x1d\x02\b\x01Z?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
 
 var (
 	file_cloud_v1_api_tenant_dashboard_proto_rawDescOnce sync.Once

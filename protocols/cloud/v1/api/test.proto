@@ -12,7 +12,11 @@ import "cloud/v1/iam/permission.proto";
 import "cloud/v1/iam/options.proto";
 import "cloud/v1/iam/sso.proto";
 
+import "ogen/ogen.proto";
+
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+option (ogen.file) = { generate_openapi: true };
 
 /*
     test.proto is the aggregation point for the tenant-scoped IAM-adjacent API

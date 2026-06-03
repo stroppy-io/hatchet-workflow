@@ -8,6 +8,7 @@ package deployment
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -702,7 +703,7 @@ var File_cloud_v1_deployment_render_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_deployment_render_proto_rawDesc = "" +
 	"\n" +
-	" cloud/v1/deployment/render.proto\x12\x13cloud.v1.deployment\x1a\x19cloud/v1/common/cmd.proto\x1a\x19cloud/v1/common/dir.proto\x1a\x1acloud/v1/common/file.proto\x1a\x1acloud/v1/common/tags.proto\x1a\x17validate/validate.proto\"\xad\x03\n" +
+	" cloud/v1/deployment/render.proto\x12\x13cloud.v1.deployment\x1a\x19cloud/v1/common/cmd.proto\x1a\x19cloud/v1/common/dir.proto\x1a\x1acloud/v1/common/file.proto\x1a\x1acloud/v1/common/tags.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\xad\x03\n" +
 	"\rRenderPreview\x12O\n" +
 	"\n" +
 	"components\x18\x01 \x03(\v2$.cloud.v1.deployment.ComponentRenderB\t\xfaB\x06\x92\x01\x03\x10\x80\bR\n" +
@@ -723,7 +724,7 @@ const file_cloud_v1_deployment_render_proto_rawDesc = "" +
 	"\x06labels\x18\x04 \x03(\v20.cloud.v1.deployment.ComponentRender.LabelsEntryB\t\xfaB\x06\x9a\x01\x03\x10\x80\x01R\x06labels\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xd6\t\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xdc\t\n" +
 	"\x0eRenderArtifact\x12\x1a\n" +
 	"\x02id\x18\x01 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\x80\x02R\x02id\x12-\n" +
@@ -770,8 +771,8 @@ const file_cloud_v1_deployment_render_proto_rawDesc = "" +
 	"\x16MUTABILITY_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14MUTABILITY_READ_ONLY\x10\x01\x12\x17\n" +
 	"\x13MUTABILITY_EDITABLE\x10\x02\x12\x1b\n" +
-	"\x17MUTABILITY_RUNTIME_ONLY\x10\x03B\x0f\n" +
-	"\bartifact\x12\x03\xf8B\x01\"\x94\x02\n" +
+	"\x17MUTABILITY_RUNTIME_ONLY\x10\x03B\x15\n" +
+	"\bartifact\x12\t\xf8B\x01\xf2\xa7\x1d\x02\b\x03\"\x94\x02\n" +
 	"\x11RenderOverrideSet\x12B\n" +
 	"\x05files\x18\x01 \x03(\v2!.cloud.v1.deployment.FileOverrideB\t\xfaB\x06\x92\x01\x03\x10\x80\bR\x05files\x12U\n" +
 	"\x06labels\x18\x02 \x03(\v22.cloud.v1.deployment.RenderOverrideSet.LabelsEntryB\t\xfaB\x06\x9a\x01\x03\x10\x80\x01R\x06labels\x12)\n" +

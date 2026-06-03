@@ -8,6 +8,7 @@ package models
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
@@ -665,7 +666,7 @@ var File_cloud_v1_models_share_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_models_share_proto_rawDesc = "" +
 	"\n" +
-	"\x1bcloud/v1/models/share.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ccloud/v1/common/status.proto\x1a\"cloud/v1/deployment/provider.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1ecloud/v1/monitor/metrics.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\xcd\x05\n" +
+	"\x1bcloud/v1/models/share.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ccloud/v1/common/status.proto\x1a\"cloud/v1/deployment/provider.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1ecloud/v1/monitor/metrics.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\xd5\x05\n" +
 	"\vShareRecord\x129\n" +
 	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.common.EntityB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06entity\x12E\n" +
 	"\x06target\x18\x02 \x01(\v2#.cloud.v1.models.ShareRecord.TargetB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06target\x12 \n" +
@@ -682,13 +683,13 @@ const file_cloud_v1_models_share_proto_rawDesc = "" +
 	"\x04Kind\x12\x14\n" +
 	"\x10KIND_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rKIND_TEST_RUN\x10\x01\x12\x12\n" +
-	"\x0eKIND_SUITE_RUN\x10\x02\x1a\xcc\x01\n" +
+	"\x0eKIND_SUITE_RUN\x10\x02\x1a\xd4\x01\n" +
 	"\bSnapshot\x12;\n" +
 	"\vcaptured_at\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"capturedAt\x12;\n" +
 	"\btest_run\x18\x02 \x01(\v2\x1e.cloud.v1.models.SharedTestRunH\x00R\atestRun\x12>\n" +
-	"\tsuite_run\x18\x03 \x01(\v2\x1f.cloud.v1.models.SharedSuiteRunH\x00R\bsuiteRunB\x06\n" +
-	"\x04view\"\x88\x05\n" +
+	"\tsuite_run\x18\x03 \x01(\v2\x1f.cloud.v1.models.SharedSuiteRunH\x00R\bsuiteRunB\x0e\n" +
+	"\x04view\x12\x06\xf2\xa7\x1d\x02\b\x03\"\x88\x05\n" +
 	"\rSharedTestRun\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12/\n" +
 	"\x06status\x18\x02 \x01(\x0e2\x17.cloud.v1.common.StatusR\x06status\x127\n" +

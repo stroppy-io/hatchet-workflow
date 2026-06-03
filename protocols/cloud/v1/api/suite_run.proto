@@ -14,7 +14,11 @@ import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 import "validate/validate.proto";
 
+import "ogen/ogen.proto";
+
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+option (ogen.file) = { generate_openapi: true };
 
 /*
     suite_run.proto is the tenant-scoped API over models.SuiteRunRecord — the suite
@@ -98,6 +102,7 @@ message ListSuiteRunsRequest {
             Kind.
          */
         oneof by {
+            option (ogen.oneof) = { schema_mode: ONEOF_SCHEMA_MODE_OBJECT };
             /*
                 entity orders by a shared Entity column (name, created_at, ...).
              */
@@ -248,10 +253,34 @@ message DeleteSuiteRunResponse {}
     SuiteRunService is the tenant-scoped read/cancel/delete API for suite runs.
  */
 service SuiteRunService {
+    option (ogen.service) = {
+        path_prefix: "/api/v1/suite-run"
+        tags: "suite-run"
+    };
+
     /*
         GetSuiteRun fetches a single suite run by id. Read-only.
      */
     rpc GetSuiteRun (GetSuiteRunRequest) returns (GetSuiteRunResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/get-suite-run"
+            operation_id: "getSuiteRun"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SUITE_RUN, action: ACTION_READ}]};
     }
@@ -259,6 +288,25 @@ service SuiteRunService {
         ListSuiteRuns lists suite runs with filtering and pagination. Read-only.
      */
     rpc ListSuiteRuns (ListSuiteRunsRequest) returns (ListSuiteRunsResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/list-suite-runs"
+            operation_id: "listSuiteRuns"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SUITE_RUN, action: ACTION_LIST}]};
     }
@@ -266,6 +314,25 @@ service SuiteRunService {
         CancelSuiteRun is idempotent: cancelling a finished/cancelled run is a no-op.
      */
     rpc CancelSuiteRun (CancelSuiteRunRequest) returns (CancelSuiteRunResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/cancel-suite-run"
+            operation_id: "cancelSuiteRun"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SUITE_RUN, action: ACTION_UPDATE}]};
     }
@@ -274,6 +341,25 @@ service SuiteRunService {
         suite run is a no-op.
      */
     rpc DeleteSuiteRun (DeleteSuiteRunRequest) returns (DeleteSuiteRunResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/delete-suite-run"
+            operation_id: "deleteSuiteRun"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SUITE_RUN, action: ACTION_DELETE}]};
     }

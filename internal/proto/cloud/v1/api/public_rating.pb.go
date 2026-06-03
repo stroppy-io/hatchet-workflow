@@ -8,6 +8,7 @@ package api
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	_ "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
@@ -267,7 +268,7 @@ var File_cloud_v1_api_public_rating_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_public_rating_proto_rawDesc = "" +
 	"\n" +
-	" cloud/v1/api/public_rating.proto\x12\fcloud.v1.api\x1a\x19cloud/v1/api/rating.proto\x1a\"cloud/v1/deployment/provider.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x17validate/validate.proto\"\x99\x03\n" +
+	" cloud/v1/api/public_rating.proto\x12\fcloud.v1.api\x1a\x19cloud/v1/api/rating.proto\x1a\"cloud/v1/deployment/provider.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\x99\x03\n" +
 	"\x11PublicRatingEntry\x12\x12\n" +
 	"\x04rank\x18\x01 \x01(\rR\x04rank\x12!\n" +
 	"\fmetric_value\x18\x02 \x01(\x01R\vmetricValue\x12(\n" +
@@ -287,9 +288,10 @@ const file_cloud_v1_api_public_rating_proto_rawDesc = "" +
 	"page_token\x18\x03 \x01(\tR\tpageToken\"|\n" +
 	"\x17GetPublicRatingResponse\x129\n" +
 	"\aentries\x18\x01 \x03(\v2\x1f.cloud.v1.api.PublicRatingEntryR\aentries\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken2\x80\x01\n" +
-	"\x13PublicRatingService\x12i\n" +
-	"\x0fGetPublicRating\x12$.cloud.v1.api.GetPublicRatingRequest\x1a%.cloud.v1.api.GetPublicRatingResponse\"\t\x8a\xb5\x18\x02\b\x01\x90\x02\x01BAZ?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken2\x9b\x02\n" +
+	"\x13PublicRatingService\x12\xd7\x01\n" +
+	"\x0fGetPublicRating\x12$.cloud.v1.api.GetPublicRatingRequest\x1a%.cloud.v1.api.GetPublicRatingResponse\"w\x8a\xb5\x18\x02\b\x01\xf2\xa7\x1dj\x10\x01\x1a\x12/get-public-rating\"\x0fgetPublicRating\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x1a*\xf2\xa7\x1d&\x12\x15/api/v1/public-rating\x1a\rpublic-ratingBG\xf2\xa7\x1d\x02\b\x01Z?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
 
 var (
 	file_cloud_v1_api_public_rating_proto_rawDescOnce sync.Once

@@ -13,7 +13,11 @@ import "cloud/v1/topology/topology.proto";
 import "google/protobuf/timestamp.proto";
 import "validate/validate.proto";
 
+import "ogen/ogen.proto";
+
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+option (ogen.file) = { generate_openapi: true };
 
 /*
     test_run_overview.proto is the single API behind the test-run overview page
@@ -305,10 +309,34 @@ message GetRunMetricsResponse {
     single run.
  */
 service TestRunOverviewService {
+    option (ogen.service) = {
+        path_prefix: "/api/v1/test-run-overview"
+        tags: "test-run-overview"
+    };
+
     /*
         GetTestRunOverview fetches the Overview snapshot. Read-only.
      */
     rpc GetTestRunOverview (GetTestRunOverviewRequest) returns (GetTestRunOverviewResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/get-test-run-overview"
+            operation_id: "getTestRunOverview"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TEST_RUN, action: ACTION_READ}]};
     }
@@ -316,12 +344,50 @@ service TestRunOverviewService {
         StreamTestRunOverview streams full staged snapshots as the run progresses.
      */
     rpc StreamTestRunOverview (StreamTestRunOverviewRequest) returns (stream TestRunOverviewSnapshot) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/stream-test-run-overview"
+            operation_id: "streamTestRunOverview"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TEST_RUN, action: ACTION_READ}]};
     }
     /*
         QueryLogs fetches a cursor-paged window of historical log lines. Read-only.
      */
     rpc QueryLogs (QueryLogsRequest) returns (QueryLogsResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/query-logs"
+            operation_id: "queryLogs"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TEST_RUN, action: ACTION_READ}]};
     }
@@ -329,12 +395,50 @@ service TestRunOverviewService {
         StreamLogs streams a live log tail (server may coalesce/rate-limit).
      */
     rpc StreamLogs (StreamLogsRequest) returns (stream monitor.LogLine) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/stream-logs"
+            operation_id: "streamLogs"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TEST_RUN, action: ACTION_READ}]};
     }
     /*
         ResolveLogRef resolves a shareable LogRef into a filter + anchor. Read-only.
      */
     rpc ResolveLogRef (ResolveLogRefRequest) returns (ResolveLogRefResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/resolve-log-ref"
+            operation_id: "resolveLogRef"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TEST_RUN, action: ACTION_READ}]};
     }
@@ -342,6 +446,25 @@ service TestRunOverviewService {
         GetRunMetrics fetches the run's metrics. Read-only.
      */
     rpc GetRunMetrics (GetRunMetricsRequest) returns (GetRunMetricsResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/get-run-metrics"
+            operation_id: "getRunMetrics"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TEST_RUN, action: ACTION_READ}]};
     }

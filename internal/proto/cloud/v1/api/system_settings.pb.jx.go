@@ -180,3 +180,100 @@ func (m *UpdateSystemSettingsResponse) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return m.Decode(d)
 }
+
+func (m *GetPublicConfigRequest) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	e.ObjEnd()
+}
+
+func (m *GetPublicConfigRequest) Decode(d *jx.Decoder) error {
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *GetPublicConfigRequest) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *GetPublicConfigRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *GetPublicConfigResponse) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.AllowSelfRegistration != false {
+		e.FieldStart("allowSelfRegistration")
+		e.Bool(m.AllowSelfRegistration)
+	}
+	if m.AllowMemberTenantCreation != false {
+		e.FieldStart("allowMemberTenantCreation")
+		e.Bool(m.AllowMemberTenantCreation)
+	}
+	e.ObjEnd()
+}
+
+func (m *GetPublicConfigResponse) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "allowSelfRegistration", "allow_self_registration":
+			if seen["AllowSelfRegistration"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["AllowSelfRegistration"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Bool()
+			if err != nil {
+				return err
+			}
+			m.AllowSelfRegistration = v
+			return nil
+		case "allowMemberTenantCreation", "allow_member_tenant_creation":
+			if seen["AllowMemberTenantCreation"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["AllowMemberTenantCreation"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Bool()
+			if err != nil {
+				return err
+			}
+			m.AllowMemberTenantCreation = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *GetPublicConfigResponse) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *GetPublicConfigResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}

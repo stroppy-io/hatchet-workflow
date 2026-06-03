@@ -8,6 +8,7 @@ package api
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
 	iam "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -5209,7 +5210,7 @@ var File_cloud_v1_api_iam_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_iam_proto_rawDesc = "" +
 	"\n" +
-	"\x16cloud/v1/api/iam.proto\x12\fcloud.v1.api\x1a\x1egoogle/protobuf/duration.proto\x1a\x17validate/validate.proto\x1a\x1acloud/v1/iam/account.proto\x1a\x19cloud/v1/iam/tenant.proto\x1a\x17cloud/v1/iam/role.proto\x1a\x1dcloud/v1/iam/membership.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x16cloud/v1/iam/sso.proto\x1a\x1bcloud/v1/iam/apitoken.proto\"\xfb\x01\n" +
+	"\x16cloud/v1/api/iam.proto\x12\fcloud.v1.api\x1a\x1egoogle/protobuf/duration.proto\x1a\x17validate/validate.proto\x1a\x1acloud/v1/iam/account.proto\x1a\x19cloud/v1/iam/tenant.proto\x1a\x17cloud/v1/iam/role.proto\x1a\x1dcloud/v1/iam/membership.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x16cloud/v1/iam/sso.proto\x1a\x1bcloud/v1/iam/apitoken.proto\x1a\x0fogen/ogen.proto\"\xfb\x01\n" +
 	"\tTokenPair\x12-\n" +
 	"\faccess_token\x18\x01 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\x80 R\vaccessToken\x12/\n" +
@@ -5313,12 +5314,11 @@ const file_cloud_v1_api_iam_proto_rawDesc = "" +
 	"\xfaB\ar\x05\x10\x01\x18\xff\x01R\x04name\x12,\n" +
 	"\x04slug\x18\x02 \x01(\tB\x18\xfaB\x15r\x13\x10\x03\x18@2\r^[a-z0-9_-]+$R\x04slug\"N\n" +
 	"\x14CreateTenantResponse\x126\n" +
-	"\x06tenant\x18\x01 \x01(\v2\x14.cloud.v1.iam.TenantB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06tenant\"k\n" +
+	"\x06tenant\x18\x01 \x01(\v2\x14.cloud.v1.iam.TenantB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06tenant\"q\n" +
 	"\x10GetTenantRequest\x12\x1b\n" +
 	"\x02id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@H\x00R\x02id\x12.\n" +
-	"\x04slug\x18\x02 \x01(\tB\x18\xfaB\x15r\x13\x10\x03\x18@2\r^[a-z0-9_-]+$H\x00R\x04slugB\n" +
-	"\n" +
-	"\x03ref\x12\x03\xf8B\x01\"K\n" +
+	"\x04slug\x18\x02 \x01(\tB\x18\xfaB\x15r\x13\x10\x03\x18@2\r^[a-z0-9_-]+$H\x00R\x04slugB\x10\n" +
+	"\x03ref\x12\t\xf8B\x01\xf2\xa7\x1d\x02\b\x03\"K\n" +
 	"\x11GetTenantResponse\x126\n" +
 	"\x06tenant\x18\x01 \x01(\v2\x14.cloud.v1.iam.TenantB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06tenant\"\x16\n" +
 	"\x14ListMyTenantsRequest\"G\n" +
@@ -5526,65 +5526,116 @@ const file_cloud_v1_api_iam_proto_rawDesc = "" +
 	"\x06tokens\x18\x01 \x03(\v2\x16.cloud.v1.iam.ApiTokenR\x06tokens\"2\n" +
 	"\x15RevokeApiTokenRequest\x12\x19\n" +
 	"\x02id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"\x18\n" +
-	"\x16RevokeApiTokenResponse2\xfb&\n" +
+	"\x16RevokeApiTokenResponse2\xc9O\n" +
 	"\n" +
-	"IamService\x12Q\n" +
-	"\bRegister\x12\x1d.cloud.v1.api.RegisterRequest\x1a\x1e.cloud.v1.api.RegisterResponse\"\x06\x8a\xb5\x18\x02\b\x01\x12H\n" +
-	"\x05Login\x12\x1a.cloud.v1.api.LoginRequest\x1a\x1b.cloud.v1.api.LoginResponse\"\x06\x8a\xb5\x18\x02\b\x01\x12N\n" +
-	"\aRefresh\x12\x1c.cloud.v1.api.RefreshRequest\x1a\x1d.cloud.v1.api.RefreshResponse\"\x06\x8a\xb5\x18\x02\b\x01\x12N\n" +
-	"\x06Logout\x12\x1b.cloud.v1.api.LogoutRequest\x1a\x1c.cloud.v1.api.LogoutResponse\"\t\x8a\xb5\x18\x02\b\x01\x90\x02\x02\x12u\n" +
-	"\x14RequestPasswordReset\x12).cloud.v1.api.RequestPasswordResetRequest\x1a*.cloud.v1.api.RequestPasswordResetResponse\"\x06\x8a\xb5\x18\x02\b\x01\x12u\n" +
-	"\x14ConfirmPasswordReset\x12).cloud.v1.api.ConfirmPasswordResetRequest\x1a*.cloud.v1.api.ConfirmPasswordResetResponse\"\x06\x8a\xb5\x18\x02\b\x01\x12Z\n" +
-	"\vVerifyEmail\x12 .cloud.v1.api.VerifyEmailRequest\x1a!.cloud.v1.api.VerifyEmailResponse\"\x06\x8a\xb5\x18\x02\b\x01\x12`\n" +
-	"\rCreateAccount\x12\".cloud.v1.api.CreateAccountRequest\x1a#.cloud.v1.api.CreateAccountResponse\"\x06\x8a\xb5\x18\x02\x18\x01\x12X\n" +
+	"IamService\x12\xaf\x01\n" +
+	"\bRegister\x12\x1d.cloud.v1.api.RegisterRequest\x1a\x1e.cloud.v1.api.RegisterResponse\"d\x8a\xb5\x18\x02\b\x01\xf2\xa7\x1dZ\x10\x02\x1a\t/register\"\bregister\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x12\xa0\x01\n" +
+	"\x05Login\x12\x1a.cloud.v1.api.LoginRequest\x1a\x1b.cloud.v1.api.LoginResponse\"^\x8a\xb5\x18\x02\b\x01\xf2\xa7\x1dT\x10\x02\x1a\x06/login\"\x05login\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x12\xaa\x01\n" +
+	"\aRefresh\x12\x1c.cloud.v1.api.RefreshRequest\x1a\x1d.cloud.v1.api.RefreshResponse\"b\x8a\xb5\x18\x02\b\x01\xf2\xa7\x1dX\x10\x02\x1a\b/refresh\"\arefresh\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x12\xa8\x01\n" +
+	"\x06Logout\x12\x1b.cloud.v1.api.LogoutRequest\x1a\x1c.cloud.v1.api.LogoutResponse\"c\x8a\xb5\x18\x02\b\x01\xf2\xa7\x1dV\x10\x02\x1a\a/logout\"\x06logout\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xed\x01\n" +
+	"\x14RequestPasswordReset\x12).cloud.v1.api.RequestPasswordResetRequest\x1a*.cloud.v1.api.RequestPasswordResetResponse\"~\x8a\xb5\x18\x02\b\x01\xf2\xa7\x1dt\x10\x02\x1a\x17/request-password-reset\"\x14requestPasswordReset\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x12\xed\x01\n" +
+	"\x14ConfirmPasswordReset\x12).cloud.v1.api.ConfirmPasswordResetRequest\x1a*.cloud.v1.api.ConfirmPasswordResetResponse\"~\x8a\xb5\x18\x02\b\x01\xf2\xa7\x1dt\x10\x02\x1a\x17/confirm-password-reset\"\x14confirmPasswordReset\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x12\xbf\x01\n" +
+	"\vVerifyEmail\x12 .cloud.v1.api.VerifyEmailRequest\x1a!.cloud.v1.api.VerifyEmailResponse\"k\x8a\xb5\x18\x02\b\x01\xf2\xa7\x1da\x10\x02\x1a\r/verify-email\"\vverifyEmail\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x12\xc9\x01\n" +
+	"\rCreateAccount\x12\".cloud.v1.api.CreateAccountRequest\x1a#.cloud.v1.api.CreateAccountResponse\"o\x8a\xb5\x18\x02\x18\x01\xf2\xa7\x1de\x10\x02\x1a\x0f/create-account\"\rcreateAccount\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x12\xbb\x01\n" +
 	"\n" +
-	"GetAccount\x12\x1f.cloud.v1.api.GetAccountRequest\x1a .cloud.v1.api.GetAccountResponse\"\a\x8a\xb5\x18\x00\x90\x02\x01\x12^\n" +
-	"\fGetMyAccount\x12!.cloud.v1.api.GetMyAccountRequest\x1a\".cloud.v1.api.GetMyAccountResponse\"\a\x8a\xb5\x18\x00\x90\x02\x01\x12d\n" +
-	"\fListAccounts\x12!.cloud.v1.api.ListAccountsRequest\x1a\".cloud.v1.api.ListAccountsResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x01\x10\x05\x90\x02\x01\x12a\n" +
-	"\rUpdateAccount\x12\".cloud.v1.api.UpdateAccountRequest\x1a#.cloud.v1.api.UpdateAccountResponse\"\a\x8a\xb5\x18\x00\x90\x02\x02\x12g\n" +
-	"\rDeleteAccount\x12\".cloud.v1.api.DeleteAccountRequest\x1a#.cloud.v1.api.DeleteAccountResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x01\x10\x04\x90\x02\x02\x12a\n" +
-	"\x0eChangePassword\x12#.cloud.v1.api.ChangePasswordRequest\x1a$.cloud.v1.api.ChangePasswordResponse\"\x04\x8a\xb5\x18\x00\x12c\n" +
-	"\rResetPassword\x12\".cloud.v1.api.ResetPasswordRequest\x1a#.cloud.v1.api.ResetPasswordResponse\"\t\x8a\xb5\x18\x02\x18\x01\x90\x02\x02\x12m\n" +
-	"\x12ResendVerification\x12'.cloud.v1.api.ResendVerificationRequest\x1a(.cloud.v1.api.ResendVerificationResponse\"\x04\x8a\xb5\x18\x00\x12[\n" +
-	"\fCreateTenant\x12!.cloud.v1.api.CreateTenantRequest\x1a\".cloud.v1.api.CreateTenantResponse\"\x04\x8a\xb5\x18\x00\x12U\n" +
-	"\tGetTenant\x12\x1e.cloud.v1.api.GetTenantRequest\x1a\x1f.cloud.v1.api.GetTenantResponse\"\a\x8a\xb5\x18\x00\x90\x02\x01\x12a\n" +
-	"\rListMyTenants\x12\".cloud.v1.api.ListMyTenantsRequest\x1a#.cloud.v1.api.ListMyTenantsResponse\"\a\x8a\xb5\x18\x00\x90\x02\x01\x12h\n" +
-	"\fUpdateTenant\x12!.cloud.v1.api.UpdateTenantRequest\x1a\".cloud.v1.api.UpdateTenantResponse\"\x11\x8a\xb5\x18\n" +
-	"\x12\x04\b\x02\x10\x03\"\x02id\x90\x02\x02\x12h\n" +
-	"\fDeleteTenant\x12!.cloud.v1.api.DeleteTenantRequest\x1a\".cloud.v1.api.DeleteTenantResponse\"\x11\x8a\xb5\x18\n" +
-	"\x12\x04\b\x02\x10\x04\"\x02id\x90\x02\x02\x12\x85\x01\n" +
-	"\x17TransferTenantOwnership\x12,.cloud.v1.api.TransferTenantOwnershipRequest\x1a-.cloud.v1.api.TransferTenantOwnershipResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x02\x10\x03\x90\x02\x02\x12[\n" +
-	"\vLeaveTenant\x12 .cloud.v1.api.LeaveTenantRequest\x1a!.cloud.v1.api.LeaveTenantResponse\"\a\x8a\xb5\x18\x00\x90\x02\x02\x12[\n" +
+	"GetAccount\x12\x1f.cloud.v1.api.GetAccountRequest\x1a .cloud.v1.api.GetAccountResponse\"j\x8a\xb5\x18\x00\xf2\xa7\x1d_\x10\x01\x1a\f/get-account\"\n" +
+	"getAccount\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xc1\x01\n" +
+	"\fGetMyAccount\x12!.cloud.v1.api.GetMyAccountRequest\x1a\".cloud.v1.api.GetMyAccountResponse\"j\x8a\xb5\x18\x00\xf2\xa7\x1d_\x10\x01\x1a\x0f/get-my-account\"\fgetMyAccount\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xcb\x01\n" +
+	"\fListAccounts\x12!.cloud.v1.api.ListAccountsRequest\x1a\".cloud.v1.api.ListAccountsResponse\"t\x8a\xb5\x18\x06\x12\x04\b\x01\x10\x05\xf2\xa7\x1dc\x10\x01\x1a\x0e/list-accounts\"\flistAccounts\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xca\x01\n" +
+	"\rUpdateAccount\x12\".cloud.v1.api.UpdateAccountRequest\x1a#.cloud.v1.api.UpdateAccountResponse\"p\x8a\xb5\x18\x00\xf2\xa7\x1de\x10\x02\x1a\x0f/update-account\"\rupdateAccount\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xd0\x01\n" +
+	"\rDeleteAccount\x12\".cloud.v1.api.DeleteAccountRequest\x1a#.cloud.v1.api.DeleteAccountResponse\"v\x8a\xb5\x18\x06\x12\x04\b\x01\x10\x04\xf2\xa7\x1de\x10\x02\x1a\x0f/delete-account\"\rdeleteAccount\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xcc\x01\n" +
+	"\x0eChangePassword\x12#.cloud.v1.api.ChangePasswordRequest\x1a$.cloud.v1.api.ChangePasswordResponse\"o\x8a\xb5\x18\x00\xf2\xa7\x1dg\x10\x02\x1a\x10/change-password\"\x0echangePassword\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x12\xcc\x01\n" +
+	"\rResetPassword\x12\".cloud.v1.api.ResetPasswordRequest\x1a#.cloud.v1.api.ResetPasswordResponse\"r\x8a\xb5\x18\x02\x18\x01\xf2\xa7\x1de\x10\x02\x1a\x0f/reset-password\"\rresetPassword\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xdb\x01\n" +
+	"\x12ResendVerification\x12'.cloud.v1.api.ResendVerificationRequest\x1a(.cloud.v1.api.ResendVerificationResponse\"r\x8a\xb5\x18\x00\xf2\xa7\x1dj\x10\x02\x1a\x14/resend-verification\"\x12resendVerification\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x12\xc2\x01\n" +
+	"\fCreateTenant\x12!.cloud.v1.api.CreateTenantRequest\x1a\".cloud.v1.api.CreateTenantResponse\"k\x8a\xb5\x18\x00\xf2\xa7\x1dc\x10\x02\x1a\x0e/create-tenant\"\fcreateTenant\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x12\xb6\x01\n" +
+	"\tGetTenant\x12\x1e.cloud.v1.api.GetTenantRequest\x1a\x1f.cloud.v1.api.GetTenantResponse\"h\x8a\xb5\x18\x00\xf2\xa7\x1d]\x10\x01\x1a\v/get-tenant\"\tgetTenant\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xc6\x01\n" +
+	"\rListMyTenants\x12\".cloud.v1.api.ListMyTenantsRequest\x1a#.cloud.v1.api.ListMyTenantsResponse\"l\x8a\xb5\x18\x00\xf2\xa7\x1da\x10\x01\x1a\x10/list-my-tenants\"\rlistMyTenants\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xcf\x01\n" +
+	"\fUpdateTenant\x12!.cloud.v1.api.UpdateTenantRequest\x1a\".cloud.v1.api.UpdateTenantResponse\"x\x8a\xb5\x18\n" +
+	"\x12\x04\b\x02\x10\x03\"\x02id\xf2\xa7\x1dc\x10\x02\x1a\x0e/update-tenant\"\fupdateTenant\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xcf\x01\n" +
+	"\fDeleteTenant\x12!.cloud.v1.api.DeleteTenantRequest\x1a\".cloud.v1.api.DeleteTenantResponse\"x\x8a\xb5\x18\n" +
+	"\x12\x04\b\x02\x10\x04\"\x02id\xf2\xa7\x1dc\x10\x02\x1a\x0e/delete-tenant\"\fdeleteTenant\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\x84\x02\n" +
+	"\x17TransferTenantOwnership\x12,.cloud.v1.api.TransferTenantOwnershipRequest\x1a-.cloud.v1.api.TransferTenantOwnershipResponse\"\x8b\x01\x8a\xb5\x18\x06\x12\x04\b\x02\x10\x03\xf2\xa7\x1dz\x10\x02\x1a\x1a/transfer-tenant-ownership\"\x17transferTenantOwnership\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xc0\x01\n" +
+	"\vLeaveTenant\x12 .cloud.v1.api.LeaveTenantRequest\x1a!.cloud.v1.api.LeaveTenantResponse\"l\x8a\xb5\x18\x00\xf2\xa7\x1da\x10\x02\x1a\r/leave-tenant\"\vleaveTenant\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xbe\x01\n" +
 	"\n" +
-	"CreateRole\x12\x1f.cloud.v1.api.CreateRoleRequest\x1a .cloud.v1.api.CreateRoleResponse\"\n" +
-	"\x8a\xb5\x18\x06\x12\x04\b\x03\x10\x01\x12U\n" +
-	"\aGetRole\x12\x1c.cloud.v1.api.GetRoleRequest\x1a\x1d.cloud.v1.api.GetRoleResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x03\x10\x02\x90\x02\x01\x12[\n" +
-	"\tListRoles\x12\x1e.cloud.v1.api.ListRolesRequest\x1a\x1f.cloud.v1.api.ListRolesResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x03\x10\x05\x90\x02\x01\x12^\n" +
+	"CreateRole\x12\x1f.cloud.v1.api.CreateRoleRequest\x1a .cloud.v1.api.CreateRoleResponse\"m\x8a\xb5\x18\x06\x12\x04\b\x03\x10\x01\xf2\xa7\x1d_\x10\x02\x1a\f/create-role\"\n" +
+	"createRole\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x12\xb2\x01\n" +
+	"\aGetRole\x12\x1c.cloud.v1.api.GetRoleRequest\x1a\x1d.cloud.v1.api.GetRoleResponse\"j\x8a\xb5\x18\x06\x12\x04\b\x03\x10\x02\xf2\xa7\x1dY\x10\x01\x1a\t/get-role\"\agetRole\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xbc\x01\n" +
+	"\tListRoles\x12\x1e.cloud.v1.api.ListRolesRequest\x1a\x1f.cloud.v1.api.ListRolesResponse\"n\x8a\xb5\x18\x06\x12\x04\b\x03\x10\x05\xf2\xa7\x1d]\x10\x01\x1a\v/list-roles\"\tlistRoles\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xc1\x01\n" +
 	"\n" +
-	"UpdateRole\x12\x1f.cloud.v1.api.UpdateRoleRequest\x1a .cloud.v1.api.UpdateRoleResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x03\x10\x03\x90\x02\x02\x12^\n" +
+	"UpdateRole\x12\x1f.cloud.v1.api.UpdateRoleRequest\x1a .cloud.v1.api.UpdateRoleResponse\"p\x8a\xb5\x18\x06\x12\x04\b\x03\x10\x03\xf2\xa7\x1d_\x10\x02\x1a\f/update-role\"\n" +
+	"updateRole\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xc1\x01\n" +
 	"\n" +
-	"DeleteRole\x12\x1f.cloud.v1.api.DeleteRoleRequest\x1a .cloud.v1.api.DeleteRoleResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x03\x10\x04\x90\x02\x02\x12m\n" +
-	"\x10CreateMembership\x12%.cloud.v1.api.CreateMembershipRequest\x1a&.cloud.v1.api.CreateMembershipResponse\"\n" +
-	"\x8a\xb5\x18\x06\x12\x04\b\x04\x10\x01\x12g\n" +
-	"\rGetMembership\x12\".cloud.v1.api.GetMembershipRequest\x1a#.cloud.v1.api.GetMembershipResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x04\x10\x02\x90\x02\x01\x12m\n" +
-	"\x0fListMemberships\x12$.cloud.v1.api.ListMembershipsRequest\x1a%.cloud.v1.api.ListMembershipsResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x04\x10\x05\x90\x02\x01\x12p\n" +
-	"\x10UpdateMembership\x12%.cloud.v1.api.UpdateMembershipRequest\x1a&.cloud.v1.api.UpdateMembershipResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x04\x10\x03\x90\x02\x02\x12p\n" +
-	"\x10DeleteMembership\x12%.cloud.v1.api.DeleteMembershipRequest\x1a&.cloud.v1.api.DeleteMembershipResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x04\x10\x04\x90\x02\x02\x12j\n" +
-	"\x10GetMyPermissions\x12%.cloud.v1.api.GetMyPermissionsRequest\x1a&.cloud.v1.api.GetMyPermissionsResponse\"\a\x8a\xb5\x18\x00\x90\x02\x01\x12g\n" +
-	"\x0fListPermissions\x12$.cloud.v1.api.ListPermissionsRequest\x1a%.cloud.v1.api.ListPermissionsResponse\"\a\x8a\xb5\x18\x00\x90\x02\x01\x12{\n" +
-	"\x16CreateIdentityProvider\x12+.cloud.v1.api.CreateIdentityProviderRequest\x1a,.cloud.v1.api.CreateIdentityProviderResponse\"\x06\x8a\xb5\x18\x02\x18\x01\x12u\n" +
-	"\x13GetIdentityProvider\x12(.cloud.v1.api.GetIdentityProviderRequest\x1a).cloud.v1.api.GetIdentityProviderResponse\"\t\x8a\xb5\x18\x02\x18\x01\x90\x02\x01\x12~\n" +
-	"\x16UpdateIdentityProvider\x12+.cloud.v1.api.UpdateIdentityProviderRequest\x1a,.cloud.v1.api.UpdateIdentityProviderResponse\"\t\x8a\xb5\x18\x02\x18\x01\x90\x02\x02\x12~\n" +
-	"\x16DeleteIdentityProvider\x12+.cloud.v1.api.DeleteIdentityProviderRequest\x1a,.cloud.v1.api.DeleteIdentityProviderResponse\"\t\x8a\xb5\x18\x02\x18\x01\x90\x02\x02\x12{\n" +
-	"\x15ListIdentityProviders\x12*.cloud.v1.api.ListIdentityProvidersRequest\x1a+.cloud.v1.api.ListIdentityProvidersResponse\"\t\x8a\xb5\x18\x02\b\x01\x90\x02\x01\x12Q\n" +
-	"\bStartSSO\x12\x1d.cloud.v1.api.StartSSORequest\x1a\x1e.cloud.v1.api.StartSSOResponse\"\x06\x8a\xb5\x18\x02\b\x01\x12Z\n" +
-	"\vCompleteSSO\x12 .cloud.v1.api.CompleteSSORequest\x1a!.cloud.v1.api.CompleteSSOResponse\"\x06\x8a\xb5\x18\x02\b\x01\x12x\n" +
-	"\x14LinkExternalIdentity\x12).cloud.v1.api.LinkExternalIdentityRequest\x1a*.cloud.v1.api.LinkExternalIdentityResponse\"\t\x8a\xb5\x18\x02\x18\x01\x90\x02\x02\x12|\n" +
-	"\x16UnlinkExternalIdentity\x12+.cloud.v1.api.UnlinkExternalIdentityRequest\x1a,.cloud.v1.api.UnlinkExternalIdentityResponse\"\a\x8a\xb5\x18\x00\x90\x02\x02\x12|\n" +
-	"\x16ListExternalIdentities\x12+.cloud.v1.api.ListExternalIdentitiesRequest\x1a,.cloud.v1.api.ListExternalIdentitiesResponse\"\a\x8a\xb5\x18\x00\x90\x02\x01\x12a\n" +
-	"\x0eCreateApiToken\x12#.cloud.v1.api.CreateApiTokenRequest\x1a$.cloud.v1.api.CreateApiTokenResponse\"\x04\x8a\xb5\x18\x00\x12a\n" +
-	"\rListApiTokens\x12\".cloud.v1.api.ListApiTokensRequest\x1a#.cloud.v1.api.ListApiTokensResponse\"\a\x8a\xb5\x18\x00\x90\x02\x01\x12d\n" +
-	"\x0eRevokeApiToken\x12#.cloud.v1.api.RevokeApiTokenRequest\x1a$.cloud.v1.api.RevokeApiTokenResponse\"\a\x8a\xb5\x18\x00\x90\x02\x02BAZ?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
+	"DeleteRole\x12\x1f.cloud.v1.api.DeleteRoleRequest\x1a .cloud.v1.api.DeleteRoleResponse\"p\x8a\xb5\x18\x06\x12\x04\b\x03\x10\x04\xf2\xa7\x1d_\x10\x02\x1a\f/delete-role\"\n" +
+	"deleteRole\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xdc\x01\n" +
+	"\x10CreateMembership\x12%.cloud.v1.api.CreateMembershipRequest\x1a&.cloud.v1.api.CreateMembershipResponse\"y\x8a\xb5\x18\x06\x12\x04\b\x04\x10\x01\xf2\xa7\x1dk\x10\x02\x1a\x12/create-membership\"\x10createMembership\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x12\xd0\x01\n" +
+	"\rGetMembership\x12\".cloud.v1.api.GetMembershipRequest\x1a#.cloud.v1.api.GetMembershipResponse\"v\x8a\xb5\x18\x06\x12\x04\b\x04\x10\x02\xf2\xa7\x1de\x10\x01\x1a\x0f/get-membership\"\rgetMembership\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xda\x01\n" +
+	"\x0fListMemberships\x12$.cloud.v1.api.ListMembershipsRequest\x1a%.cloud.v1.api.ListMembershipsResponse\"z\x8a\xb5\x18\x06\x12\x04\b\x04\x10\x05\xf2\xa7\x1di\x10\x01\x1a\x11/list-memberships\"\x0flistMemberships\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xdf\x01\n" +
+	"\x10UpdateMembership\x12%.cloud.v1.api.UpdateMembershipRequest\x1a&.cloud.v1.api.UpdateMembershipResponse\"|\x8a\xb5\x18\x06\x12\x04\b\x04\x10\x03\xf2\xa7\x1dk\x10\x02\x1a\x12/update-membership\"\x10updateMembership\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xdf\x01\n" +
+	"\x10DeleteMembership\x12%.cloud.v1.api.DeleteMembershipRequest\x1a&.cloud.v1.api.DeleteMembershipResponse\"|\x8a\xb5\x18\x06\x12\x04\b\x04\x10\x04\xf2\xa7\x1dk\x10\x02\x1a\x12/delete-membership\"\x10deleteMembership\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xda\x01\n" +
+	"\x10GetMyPermissions\x12%.cloud.v1.api.GetMyPermissionsRequest\x1a&.cloud.v1.api.GetMyPermissionsResponse\"w\x8a\xb5\x18\x00\xf2\xa7\x1dl\x10\x01\x1a\x13/get-my-permissions\"\x10getMyPermissions\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xcf\x01\n" +
+	"\x0fListPermissions\x12$.cloud.v1.api.ListPermissionsRequest\x1a%.cloud.v1.api.ListPermissionsResponse\"o\x8a\xb5\x18\x00\xf2\xa7\x1dd\x10\x01\x1a\x11/list-permissions\"\x0flistPermissions\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xf8\x01\n" +
+	"\x16CreateIdentityProvider\x12+.cloud.v1.api.CreateIdentityProviderRequest\x1a,.cloud.v1.api.CreateIdentityProviderResponse\"\x82\x01\x8a\xb5\x18\x02\x18\x01\xf2\xa7\x1dx\x10\x02\x1a\x19/create-identity-provider\"\x16createIdentityProvider\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x12\xeb\x01\n" +
+	"\x13GetIdentityProvider\x12(.cloud.v1.api.GetIdentityProviderRequest\x1a).cloud.v1.api.GetIdentityProviderResponse\"\x7f\x8a\xb5\x18\x02\x18\x01\xf2\xa7\x1dr\x10\x01\x1a\x16/get-identity-provider\"\x13getIdentityProvider\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xfb\x01\n" +
+	"\x16UpdateIdentityProvider\x12+.cloud.v1.api.UpdateIdentityProviderRequest\x1a,.cloud.v1.api.UpdateIdentityProviderResponse\"\x85\x01\x8a\xb5\x18\x02\x18\x01\xf2\xa7\x1dx\x10\x02\x1a\x19/update-identity-provider\"\x16updateIdentityProvider\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xfb\x01\n" +
+	"\x16DeleteIdentityProvider\x12+.cloud.v1.api.DeleteIdentityProviderRequest\x1a,.cloud.v1.api.DeleteIdentityProviderResponse\"\x85\x01\x8a\xb5\x18\x02\x18\x01\xf2\xa7\x1dx\x10\x02\x1a\x19/delete-identity-provider\"\x16deleteIdentityProvider\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xf0\x01\n" +
+	"\x15ListIdentityProviders\x12*.cloud.v1.api.ListIdentityProvidersRequest\x1a+.cloud.v1.api.ListIdentityProvidersResponse\"~\x8a\xb5\x18\x02\b\x01\xf2\xa7\x1dq\x10\x01\x1a\x18/list-identity-providers\"\x15listIdentityProviders\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xb0\x01\n" +
+	"\bStartSSO\x12\x1d.cloud.v1.api.StartSSORequest\x1a\x1e.cloud.v1.api.StartSSOResponse\"e\x8a\xb5\x18\x02\b\x01\xf2\xa7\x1d[\x10\x02\x1a\n" +
+	"/start-sso\"\bstartSSO\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x12\xbf\x01\n" +
+	"\vCompleteSSO\x12 .cloud.v1.api.CompleteSSORequest\x1a!.cloud.v1.api.CompleteSSOResponse\"k\x8a\xb5\x18\x02\b\x01\xf2\xa7\x1da\x10\x02\x1a\r/complete-sso\"\vcompleteSSO\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x12\xf1\x01\n" +
+	"\x14LinkExternalIdentity\x12).cloud.v1.api.LinkExternalIdentityRequest\x1a*.cloud.v1.api.LinkExternalIdentityResponse\"\x81\x01\x8a\xb5\x18\x02\x18\x01\xf2\xa7\x1dt\x10\x02\x1a\x17/link-external-identity\"\x14linkExternalIdentity\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xf9\x01\n" +
+	"\x16UnlinkExternalIdentity\x12+.cloud.v1.api.UnlinkExternalIdentityRequest\x1a,.cloud.v1.api.UnlinkExternalIdentityResponse\"\x83\x01\x8a\xb5\x18\x00\xf2\xa7\x1dx\x10\x02\x1a\x19/unlink-external-identity\"\x16unlinkExternalIdentity\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xf9\x01\n" +
+	"\x16ListExternalIdentities\x12+.cloud.v1.api.ListExternalIdentitiesRequest\x1a,.cloud.v1.api.ListExternalIdentitiesResponse\"\x83\x01\x8a\xb5\x18\x00\xf2\xa7\x1dx\x10\x01\x1a\x19/list-external-identities\"\x16listExternalIdentities\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xcd\x01\n" +
+	"\x0eCreateApiToken\x12#.cloud.v1.api.CreateApiTokenRequest\x1a$.cloud.v1.api.CreateApiTokenResponse\"p\x8a\xb5\x18\x00\xf2\xa7\x1dh\x10\x02\x1a\x11/create-api-token\"\x0ecreateApiToken\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x12\xcb\x01\n" +
+	"\rListApiTokens\x12\".cloud.v1.api.ListApiTokensRequest\x1a#.cloud.v1.api.ListApiTokensResponse\"q\x8a\xb5\x18\x00\xf2\xa7\x1df\x10\x01\x1a\x10/list-api-tokens\"\rlistApiTokens\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xd0\x01\n" +
+	"\x0eRevokeApiToken\x12#.cloud.v1.api.RevokeApiTokenRequest\x1a$.cloud.v1.api.RevokeApiTokenResponse\"s\x8a\xb5\x18\x00\xf2\xa7\x1dh\x10\x02\x1a\x11/revoke-api-token\"\x0erevokeApiToken\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x1a\x16\xf2\xa7\x1d\x12\x12\v/api/v1/iam\x1a\x03iamBG\xf2\xa7\x1d\x02\b\x01Z?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
 
 var (
 	file_cloud_v1_api_iam_proto_rawDescOnce sync.Once

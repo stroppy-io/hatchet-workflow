@@ -8,6 +8,7 @@ package common
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
 	schemapb "github.com/stroppy-io/schemapb/schemapb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -357,7 +358,7 @@ var File_cloud_v1_common_file_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_common_file_proto_rawDesc = "" +
 	"\n" +
-	"\x1acloud/v1/common/file.proto\x12\x0fcloud.v1.common\x1a\x15schemapb/schema.proto\x1a\x17validate/validate.proto\"\xe7\x03\n" +
+	"\x1acloud/v1/common/file.proto\x12\x0fcloud.v1.common\x1a\x15schemapb/schema.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\xed\x03\n" +
 	"\x04File\x128\n" +
 	"\x04info\x18\x01 \x01(\v2\x1a.cloud.v1.common.File.InfoB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04info\x12\x16\n" +
 	"\x06append\x18\x02 \x01(\bR\x06append\x12 \n" +
@@ -377,8 +378,8 @@ const file_cloud_v1_common_file_proto_rawDesc = "" +
 	"\x05AsRef\x12\x1c\n" +
 	"\x03uri\x18\x02 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\x80 R\x03uri\x12$\n" +
-	"\bchecksum\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x02R\bchecksumB\x0e\n" +
-	"\acontent\x12\x03\xf8B\x01\"\x80\x01\n" +
+	"\bchecksum\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x02R\bchecksumB\x14\n" +
+	"\acontent\x12\t\xf8B\x01\xf2\xa7\x1d\x02\b\x03\"\x80\x01\n" +
 	"\tBakedFile\x12)\n" +
 	"\x04file\x18\x01 \x01(\v2\x15.cloud.v1.common.FileR\x04file\x12#\n" +
 	"\rresolver_name\x18\x02 \x01(\tR\fresolverName\x12#\n" +

@@ -13,7 +13,11 @@ import "cloud/v1/models/suite.proto";
 import "cloud/v1/models/suite_wizard.proto";
 import "validate/validate.proto";
 
+import "ogen/ogen.proto";
+
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+option (ogen.file) = { generate_openapi: true };
 
 /*
     suite_wizard.proto is the typed SUITE wizard API. It follows the test wizard:
@@ -50,6 +54,7 @@ message SuiteWizardCellPatch {
         source updates where the cell's database/workload definition comes from.
      */
     oneof source {
+        option (ogen.oneof) = { schema_mode: ONEOF_SCHEMA_MODE_OBJECT };
         /*
             preset_pair selects a database preset and workload preset.
          */
@@ -285,16 +290,59 @@ message FinishSuiteWizardResponse {
     SuiteWizardService drives the suite wizard.
  */
 service SuiteWizardService {
+    option (ogen.service) = {
+        path_prefix: "/api/v1/suite-wizard"
+        tags: "suite-wizard"
+    };
+
     /*
         StartSuiteWizard opens a new draft. Not idempotent.
      */
     rpc StartSuiteWizard (StartSuiteWizardRequest) returns (StartSuiteWizardResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/start-suite-wizard"
+            operation_id: "startSuiteWizard"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_WIZARD, action: ACTION_CREATE}]};
     }
     /*
         GetSuiteWizardDraft fetches a single draft by id. Read-only.
      */
     rpc GetSuiteWizardDraft (GetSuiteWizardDraftRequest) returns (GetSuiteWizardDraftResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/get-suite-wizard-draft"
+            operation_id: "getSuiteWizardDraft"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_WIZARD, action: ACTION_READ}]};
     }
@@ -302,6 +350,25 @@ service SuiteWizardService {
         ListSuiteWizardDrafts lists drafts with filtering and pagination. Read-only.
      */
     rpc ListSuiteWizardDrafts (ListSuiteWizardDraftsRequest) returns (ListSuiteWizardDraftsResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/list-suite-wizard-drafts"
+            operation_id: "listSuiteWizardDrafts"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_WIZARD, action: ACTION_LIST}]};
     }
@@ -309,6 +376,25 @@ service SuiteWizardService {
         PatchSuiteWizard is idempotent: re-submitting the same patch converges.
      */
     rpc PatchSuiteWizard (PatchSuiteWizardRequest) returns (PatchSuiteWizardResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/patch-suite-wizard"
+            operation_id: "patchSuiteWizard"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_WIZARD, action: ACTION_UPDATE}]};
     }
@@ -316,6 +402,25 @@ service SuiteWizardService {
         DeleteSuiteWizardDraft is idempotent.
      */
     rpc DeleteSuiteWizardDraft (DeleteSuiteWizardDraftRequest) returns (DeleteSuiteWizardDraftResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/delete-suite-wizard-draft"
+            operation_id: "deleteSuiteWizardDraft"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_WIZARD, action: ACTION_DELETE}]};
     }
@@ -323,6 +428,25 @@ service SuiteWizardService {
         FinishSuiteWizard persists a suite and optionally launches it.
      */
     rpc FinishSuiteWizard (FinishSuiteWizardRequest) returns (FinishSuiteWizardResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/finish-suite-wizard"
+            operation_id: "finishSuiteWizard"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_WIZARD, action: ACTION_UPDATE}]};
     }
 }

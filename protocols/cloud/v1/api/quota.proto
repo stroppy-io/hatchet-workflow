@@ -9,7 +9,11 @@ import "cloud/v1/iam/permission.proto";
 import "google/protobuf/timestamp.proto";
 import "validate/validate.proto";
 
+import "ogen/ogen.proto";
+
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+option (ogen.file) = { generate_openapi: true };
 
 /*
     quota.proto exposes provider quota snapshots and the control-plane
@@ -140,17 +144,79 @@ message GetRunQuotaUsageResponse {
 }
 
 service QuotaService {
+    option (ogen.service) = {
+        path_prefix: "/api/v1/quota"
+        tags: "quota"
+    };
+
     rpc ListQuotas (ListQuotasRequest) returns (ListQuotasResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/list-quotas"
+            operation_id: "listQuotas"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SETTINGS, action: ACTION_READ}]};
     }
 
     rpc RefreshQuotas (RefreshQuotasRequest) returns (RefreshQuotasResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/refresh-quotas"
+            operation_id: "refreshQuotas"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SETTINGS, action: ACTION_UPDATE}]};
     }
 
     rpc GetRunQuotaUsage (GetRunQuotaUsageRequest) returns (GetRunQuotaUsageResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/get-run-quota-usage"
+            operation_id: "getRunQuotaUsage"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TEST_RUN, action: ACTION_READ}]};
     }

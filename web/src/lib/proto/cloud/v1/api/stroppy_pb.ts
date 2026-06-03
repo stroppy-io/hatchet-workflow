@@ -7,13 +7,14 @@ import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2
 import { file_cloud_v1_iam_options } from "../iam/options_pb.ts";
 import { file_cloud_v1_iam_permission } from "../iam/permission_pb.ts";
 import { file_validate_validate } from "../../../validate/validate_pb.ts";
+import { file_ogen_ogen } from "../../../ogen/ogen_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file cloud/v1/api/stroppy.proto.
  */
 export const file_cloud_v1_api_stroppy: GenFile = /*@__PURE__*/
-  fileDesc("ChpjbG91ZC92MS9hcGkvc3Ryb3BweS5wcm90bxIMY2xvdWQudjEuYXBpIjoKGkxpc3RTdHJvcHB5VmVyc2lvbnNSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAIi8KG0xpc3RTdHJvcHB5VmVyc2lvbnNSZXNwb25zZRIQCgh2ZXJzaW9ucxgBIAMoCTKLAQoOU3Ryb3BweVNlcnZpY2USeQoTTGlzdFN0cm9wcHlWZXJzaW9ucxIoLmNsb3VkLnYxLmFwaS5MaXN0U3Ryb3BweVZlcnNpb25zUmVxdWVzdBopLmNsb3VkLnYxLmFwaS5MaXN0U3Ryb3BweVZlcnNpb25zUmVzcG9uc2UiDZACAYq1GAYSBAgHEAJCQVo/Z2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvYXBpYgZwcm90bzM", [file_cloud_v1_iam_options, file_cloud_v1_iam_permission, file_validate_validate]);
+  fileDesc("ChpjbG91ZC92MS9hcGkvc3Ryb3BweS5wcm90bxIMY2xvdWQudjEuYXBpIjoKGkxpc3RTdHJvcHB5VmVyc2lvbnNSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAIi8KG0xpc3RTdHJvcHB5VmVyc2lvbnNSZXNwb25zZRIQCgh2ZXJzaW9ucxgBIAMoCTKjAgoOU3Ryb3BweVNlcnZpY2US8AEKE0xpc3RTdHJvcHB5VmVyc2lvbnMSKC5jbG91ZC52MS5hcGkuTGlzdFN0cm9wcHlWZXJzaW9uc1JlcXVlc3QaKS5jbG91ZC52MS5hcGkuTGlzdFN0cm9wcHlWZXJzaW9uc1Jlc3BvbnNlIoMBkAIBirUYBhIEEAIIB/KnHXIQARoWL2xpc3Qtc3Ryb3BweS12ZXJzaW9ucyITbGlzdFN0cm9wcHlWZXJzaW9uc6IBAhABsgEHCMgBEgJPS7IBMRIRVW5leHBlY3RlZCBlcnJvci4qHAoaIy9jb21wb25lbnRzL3NjaGVtYXMvRXJyb3IaHvKnHRoSDy9hcGkvdjEvc3Ryb3BweRoHc3Ryb3BweUJHWj9naXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9hcGnypx0CCAFiBnByb3RvMw", [file_cloud_v1_iam_options, file_cloud_v1_iam_permission, file_validate_validate, file_ogen_ogen]);
 
 /**
  *

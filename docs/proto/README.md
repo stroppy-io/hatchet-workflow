@@ -203,6 +203,8 @@
     - [cloud.v1.api.GetMyPermissionsResponse](cloud/v1/api/README.md#cloud-v1-api-getmypermissionsresponse)
     - [cloud.v1.api.GetPackageRequest](cloud/v1/api/README.md#cloud-v1-api-getpackagerequest)
     - [cloud.v1.api.GetPackageResponse](cloud/v1/api/README.md#cloud-v1-api-getpackageresponse)
+    - [cloud.v1.api.GetPublicConfigRequest](cloud/v1/api/README.md#cloud-v1-api-getpublicconfigrequest)
+    - [cloud.v1.api.GetPublicConfigResponse](cloud/v1/api/README.md#cloud-v1-api-getpublicconfigresponse)
     - [cloud.v1.api.GetPublicRatingRequest](cloud/v1/api/README.md#cloud-v1-api-getpublicratingrequest)
     - [cloud.v1.api.GetPublicRatingResponse](cloud/v1/api/README.md#cloud-v1-api-getpublicratingresponse)
     - [cloud.v1.api.GetRoleRequest](cloud/v1/api/README.md#cloud-v1-api-getrolerequest)

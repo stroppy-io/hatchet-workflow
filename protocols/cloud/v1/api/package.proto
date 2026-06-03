@@ -10,7 +10,11 @@ import "cloud/v1/models/package.proto";
 import "google/protobuf/timestamp.proto";
 import "validate/validate.proto";
 
+import "ogen/ogen.proto";
+
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+option (ogen.file) = { generate_openapi: true };
 
 /*
     package.proto is the tenant package registry (custom DB builds: .deb / binary).
@@ -204,10 +208,34 @@ message DeletePackageResponse {}
     PackageService is the tenant package registry (custom DB builds).
  */
 service PackageService {
+    option (ogen.service) = {
+        path_prefix: "/api/v1/package"
+        tags: "package"
+    };
+
     /*
         CreatePackageUpload mints a record + presigned PUT url. Not idempotent.
      */
     rpc CreatePackageUpload (CreatePackageUploadRequest) returns (CreatePackageUploadResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/create-package-upload"
+            operation_id: "createPackageUpload"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PACKAGE, action: ACTION_CREATE}]};
     }
     /*
@@ -215,6 +243,25 @@ service PackageService {
         FAILED). Idempotent.
      */
     rpc CompleteUpload (CompleteUploadRequest) returns (CompleteUploadResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/complete-upload"
+            operation_id: "completeUpload"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PACKAGE, action: ACTION_UPDATE}]};
     }
@@ -222,6 +269,25 @@ service PackageService {
         GetPackage fetches one package by id. Read-only.
      */
     rpc GetPackage (GetPackageRequest) returns (GetPackageResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/get-package"
+            operation_id: "getPackage"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PACKAGE, action: ACTION_READ}]};
     }
@@ -229,6 +295,25 @@ service PackageService {
         ListPackages lists a tenant's packages. Read-only.
      */
     rpc ListPackages (ListPackagesRequest) returns (ListPackagesResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/list-packages"
+            operation_id: "listPackages"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PACKAGE, action: ACTION_LIST}]};
     }
@@ -236,6 +321,25 @@ service PackageService {
         DeletePackage is idempotent: deleting an absent package is a no-op.
      */
     rpc DeletePackage (DeletePackageRequest) returns (DeletePackageResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/delete-package"
+            operation_id: "deletePackage"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_PACKAGE, action: ACTION_DELETE}]};
     }

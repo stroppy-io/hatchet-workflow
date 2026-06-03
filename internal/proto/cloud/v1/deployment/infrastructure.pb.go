@@ -8,6 +8,7 @@ package deployment
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -525,7 +526,7 @@ var File_cloud_v1_deployment_infrastructure_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_deployment_infrastructure_proto_rawDesc = "" +
 	"\n" +
-	"(cloud/v1/deployment/infrastructure.proto\x12\x13cloud.v1.deployment\x1a\x1ccloud/v1/common/status.proto\x1a\x1acloud/v1/common/tags.proto\x1a cloud/v1/deployment/docker.proto\x1a\"cloud/v1/deployment/provider.proto\x1a\x1fcloud/v1/deployment/quota.proto\x1a cloud/v1/deployment/yandex.proto\x1a\x17validate/validate.proto\"\xa4\x03\n" +
+	"(cloud/v1/deployment/infrastructure.proto\x12\x13cloud.v1.deployment\x1a\x1ccloud/v1/common/status.proto\x1a\x1acloud/v1/common/tags.proto\x1a cloud/v1/deployment/docker.proto\x1a\"cloud/v1/deployment/provider.proto\x1a\x1fcloud/v1/deployment/quota.proto\x1a cloud/v1/deployment/yandex.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\xa4\x03\n" +
 	"\x12InfrastructurePlan\x12E\n" +
 	"\bprovider\x18\x01 \x01(\x0e2\x1d.cloud.v1.deployment.ProviderB\n" +
 	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\bprovider\x12A\n" +
@@ -535,7 +536,7 @@ const file_cloud_v1_deployment_infrastructure_proto_rawDesc = "" +
 	"\x04tags\x18\x05 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xd1\x03\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xd7\x03\n" +
 	"\vMachinePlan\x12#\n" +
 	"\anode_id\x18\x01 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x06nodeId\x12?\n" +
@@ -547,8 +548,8 @@ const file_cloud_v1_deployment_infrastructure_proto_rawDesc = "" +
 	"\x04tags\x18\x16 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\x16\n" +
-	"\x0fprovider_params\x12\x03\xf8B\x01\"\xe4\x02\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\x1c\n" +
+	"\x0fprovider_params\x12\t\xf8B\x01\xf2\xa7\x1d\x02\b\x03\"\xe4\x02\n" +
 	"\x13InfrastructureState\x12E\n" +
 	"\bprovider\x18\x01 \x01(\x0e2\x1d.cloud.v1.deployment.ProviderB\n" +
 	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\bprovider\x12G\n" +
@@ -567,7 +568,7 @@ const file_cloud_v1_deployment_infrastructure_proto_rawDesc = "" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\a\n" +
-	"\x05_port\"\x95\x05\n" +
+	"\x05_port\"\x9d\x05\n" +
 	"\fMachineState\x12#\n" +
 	"\anode_id\x18\x01 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x06nodeId\x12:\n" +
@@ -582,8 +583,8 @@ const file_cloud_v1_deployment_infrastructure_proto_rawDesc = "" +
 	"\x04tags\x18\x16 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\x11\n" +
-	"\x0fprovider_outputBHZFgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deploymentb\x06proto3"
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\x19\n" +
+	"\x0fprovider_output\x12\x06\xf2\xa7\x1d\x02\b\x03BHZFgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deploymentb\x06proto3"
 
 var (
 	file_cloud_v1_deployment_infrastructure_proto_rawDescOnce sync.Once

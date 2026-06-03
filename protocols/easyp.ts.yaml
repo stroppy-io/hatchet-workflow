@@ -12,6 +12,8 @@ deps:
   - github.com/cludden/protoc-gen-go-temporal@v1.23.1
   - github.com/temporalio/api@v1.62.12
   - github.com/stroppy-io/schemapb@v1.3.0
+  - github.com/gopherex/protoc-gen-go-ogen@v1.1.3
+  - github.com/gopherex/protoc-gen-go-graphql@v1.0.1
 #  - github.com/yaroher/protoc-gen-go-plain@v0.7.13
 #  - github.com/yaroher/ratel@v0.4.26
 generate:
@@ -29,6 +31,12 @@ generate:
     - git_repo:
         url: github.com/temporalio/api
         sub_directory: temporal/api/enums
+    - git_repo:
+        url: github.com/gopherex/protoc-gen-go-ogen
+        sub_directory: ogen
+    - git_repo:
+        url: github.com/gopherex/protoc-gen-go-graphql
+        sub_directory: graphqlopt
 #    - git_repo:
 #        url: github.com/yaroher/protoc-gen-go-plain
 #        sub_directory: goplain

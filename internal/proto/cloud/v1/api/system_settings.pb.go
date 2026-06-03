@@ -8,6 +8,7 @@ package api
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
 	_ "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -198,21 +199,128 @@ func (x *UpdateSystemSettingsResponse) GetSettings() *PlatformSettings {
 	return nil
 }
 
+// GetPublicConfigRequest takes no arguments: it reads the public-safe subset of
+// the singleton settings, with NO authentication. It exists so the sign-in /
+// sign-up screens (which run before any token exists) can learn whether open
+// self-registration and member tenant creation are enabled, and hide the
+// affordances up front instead of only failing on submit.
+type GetPublicConfigRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPublicConfigRequest) Reset() {
+	*x = GetPublicConfigRequest{}
+	mi := &file_cloud_v1_api_system_settings_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPublicConfigRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPublicConfigRequest) ProtoMessage() {}
+
+func (x *GetPublicConfigRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_system_settings_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPublicConfigRequest.ProtoReflect.Descriptor instead.
+func (*GetPublicConfigRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_system_settings_proto_rawDescGZIP(), []int{4}
+}
+
+// GetPublicConfigResponse returns only the non-sensitive flags safe to expose
+// to an unauthenticated caller — never server_addr or any internal config.
+type GetPublicConfigResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// allow_self_registration mirrors PlatformSettings.allow_self_registration:
+	// when false the public Register endpoint is closed.
+	AllowSelfRegistration bool `protobuf:"varint,1,opt,name=allow_self_registration,json=allowSelfRegistration,proto3" json:"allow_self_registration,omitempty"`
+	// allow_member_tenant_creation mirrors
+	// PlatformSettings.allow_member_tenant_creation.
+	AllowMemberTenantCreation bool `protobuf:"varint,2,opt,name=allow_member_tenant_creation,json=allowMemberTenantCreation,proto3" json:"allow_member_tenant_creation,omitempty"`
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
+}
+
+func (x *GetPublicConfigResponse) Reset() {
+	*x = GetPublicConfigResponse{}
+	mi := &file_cloud_v1_api_system_settings_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPublicConfigResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPublicConfigResponse) ProtoMessage() {}
+
+func (x *GetPublicConfigResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_system_settings_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPublicConfigResponse.ProtoReflect.Descriptor instead.
+func (*GetPublicConfigResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_system_settings_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *GetPublicConfigResponse) GetAllowSelfRegistration() bool {
+	if x != nil {
+		return x.AllowSelfRegistration
+	}
+	return false
+}
+
+func (x *GetPublicConfigResponse) GetAllowMemberTenantCreation() bool {
+	if x != nil {
+		return x.AllowMemberTenantCreation
+	}
+	return false
+}
+
 var File_cloud_v1_api_system_settings_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_system_settings_proto_rawDesc = "" +
 	"\n" +
-	"\"cloud/v1/api/system_settings.proto\x12\fcloud.v1.api\x1a\x18cloud/v1/api/admin.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x17validate/validate.proto\"\x1a\n" +
+	"\"cloud/v1/api/system_settings.proto\x12\fcloud.v1.api\x1a\x18cloud/v1/api/admin.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\x1a\n" +
 	"\x18GetSystemSettingsRequest\"a\n" +
 	"\x19GetSystemSettingsResponse\x12D\n" +
 	"\bsettings\x18\x01 \x01(\v2\x1e.cloud.v1.api.PlatformSettingsB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bsettings\"c\n" +
 	"\x1bUpdateSystemSettingsRequest\x12D\n" +
 	"\bsettings\x18\x01 \x01(\v2\x1e.cloud.v1.api.PlatformSettingsB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bsettings\"d\n" +
 	"\x1cUpdateSystemSettingsResponse\x12D\n" +
-	"\bsettings\x18\x01 \x01(\v2\x1e.cloud.v1.api.PlatformSettingsB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bsettings2\x82\x02\n" +
-	"\x15SystemSettingsService\x12o\n" +
-	"\x11GetSystemSettings\x12&.cloud.v1.api.GetSystemSettingsRequest\x1a'.cloud.v1.api.GetSystemSettingsResponse\"\t\x8a\xb5\x18\x02\x18\x01\x90\x02\x01\x12x\n" +
-	"\x14UpdateSystemSettings\x12).cloud.v1.api.UpdateSystemSettingsRequest\x1a*.cloud.v1.api.UpdateSystemSettingsResponse\"\t\x8a\xb5\x18\x02\x18\x01\x90\x02\x02BAZ?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
+	"\bsettings\x18\x01 \x01(\v2\x1e.cloud.v1.api.PlatformSettingsB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bsettings\"\x18\n" +
+	"\x16GetPublicConfigRequest\"\x92\x01\n" +
+	"\x17GetPublicConfigResponse\x126\n" +
+	"\x17allow_self_registration\x18\x01 \x01(\bR\x15allowSelfRegistration\x12?\n" +
+	"\x1callow_member_tenant_creation\x18\x02 \x01(\bR\x19allowMemberTenantCreation2\xcf\x05\n" +
+	"\x15SystemSettingsService\x12\xce\x01\n" +
+	"\x0fGetPublicConfig\x12$.cloud.v1.api.GetPublicConfigRequest\x1a%.cloud.v1.api.GetPublicConfigResponse\"n\x8a\xb5\x18\x02\b\x01\xf2\xa7\x1da\x10\x01\x1a\x0e/public-config\"\x0fgetPublicConfig\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xd8\x01\n" +
+	"\x11GetSystemSettings\x12&.cloud.v1.api.GetSystemSettingsRequest\x1a'.cloud.v1.api.GetSystemSettingsResponse\"r\x8a\xb5\x18\x02\x18\x01\xf2\xa7\x1de\x10\x01\x1a\x10/system/settings\"\x11getSystemSettings\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xe9\x01\n" +
+	"\x14UpdateSystemSettings\x12).cloud.v1.api.UpdateSystemSettingsRequest\x1a*.cloud.v1.api.UpdateSystemSettingsResponse\"z\x8a\xb5\x18\x02\x18\x01\xf2\xa7\x1dm\x10\x03\x1a\x10/system/settings\"\x14updateSystemSettings\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x1a\x1e\xf2\xa7\x1d\x1a\x12\a/api/v1\x1a\x0fsystem-settingsBG\xf2\xa7\x1d\x02\b\x01Z?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
 
 var (
 	file_cloud_v1_api_system_settings_proto_rawDescOnce sync.Once
@@ -226,24 +334,28 @@ func file_cloud_v1_api_system_settings_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_api_system_settings_proto_rawDescData
 }
 
-var file_cloud_v1_api_system_settings_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_cloud_v1_api_system_settings_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_cloud_v1_api_system_settings_proto_goTypes = []any{
 	(*GetSystemSettingsRequest)(nil),     // 0: cloud.v1.api.GetSystemSettingsRequest
 	(*GetSystemSettingsResponse)(nil),    // 1: cloud.v1.api.GetSystemSettingsResponse
 	(*UpdateSystemSettingsRequest)(nil),  // 2: cloud.v1.api.UpdateSystemSettingsRequest
 	(*UpdateSystemSettingsResponse)(nil), // 3: cloud.v1.api.UpdateSystemSettingsResponse
-	(*PlatformSettings)(nil),             // 4: cloud.v1.api.PlatformSettings
+	(*GetPublicConfigRequest)(nil),       // 4: cloud.v1.api.GetPublicConfigRequest
+	(*GetPublicConfigResponse)(nil),      // 5: cloud.v1.api.GetPublicConfigResponse
+	(*PlatformSettings)(nil),             // 6: cloud.v1.api.PlatformSettings
 }
 var file_cloud_v1_api_system_settings_proto_depIdxs = []int32{
-	4, // 0: cloud.v1.api.GetSystemSettingsResponse.settings:type_name -> cloud.v1.api.PlatformSettings
-	4, // 1: cloud.v1.api.UpdateSystemSettingsRequest.settings:type_name -> cloud.v1.api.PlatformSettings
-	4, // 2: cloud.v1.api.UpdateSystemSettingsResponse.settings:type_name -> cloud.v1.api.PlatformSettings
-	0, // 3: cloud.v1.api.SystemSettingsService.GetSystemSettings:input_type -> cloud.v1.api.GetSystemSettingsRequest
-	2, // 4: cloud.v1.api.SystemSettingsService.UpdateSystemSettings:input_type -> cloud.v1.api.UpdateSystemSettingsRequest
-	1, // 5: cloud.v1.api.SystemSettingsService.GetSystemSettings:output_type -> cloud.v1.api.GetSystemSettingsResponse
-	3, // 6: cloud.v1.api.SystemSettingsService.UpdateSystemSettings:output_type -> cloud.v1.api.UpdateSystemSettingsResponse
-	5, // [5:7] is the sub-list for method output_type
-	3, // [3:5] is the sub-list for method input_type
+	6, // 0: cloud.v1.api.GetSystemSettingsResponse.settings:type_name -> cloud.v1.api.PlatformSettings
+	6, // 1: cloud.v1.api.UpdateSystemSettingsRequest.settings:type_name -> cloud.v1.api.PlatformSettings
+	6, // 2: cloud.v1.api.UpdateSystemSettingsResponse.settings:type_name -> cloud.v1.api.PlatformSettings
+	4, // 3: cloud.v1.api.SystemSettingsService.GetPublicConfig:input_type -> cloud.v1.api.GetPublicConfigRequest
+	0, // 4: cloud.v1.api.SystemSettingsService.GetSystemSettings:input_type -> cloud.v1.api.GetSystemSettingsRequest
+	2, // 5: cloud.v1.api.SystemSettingsService.UpdateSystemSettings:input_type -> cloud.v1.api.UpdateSystemSettingsRequest
+	5, // 6: cloud.v1.api.SystemSettingsService.GetPublicConfig:output_type -> cloud.v1.api.GetPublicConfigResponse
+	1, // 7: cloud.v1.api.SystemSettingsService.GetSystemSettings:output_type -> cloud.v1.api.GetSystemSettingsResponse
+	3, // 8: cloud.v1.api.SystemSettingsService.UpdateSystemSettings:output_type -> cloud.v1.api.UpdateSystemSettingsResponse
+	6, // [6:9] is the sub-list for method output_type
+	3, // [3:6] is the sub-list for method input_type
 	3, // [3:3] is the sub-list for extension type_name
 	3, // [3:3] is the sub-list for extension extendee
 	0, // [0:3] is the sub-list for field type_name
@@ -261,7 +373,7 @@ func file_cloud_v1_api_system_settings_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_api_system_settings_proto_rawDesc), len(file_cloud_v1_api_system_settings_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

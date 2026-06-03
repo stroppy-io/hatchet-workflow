@@ -9,7 +9,11 @@ import "cloud/v1/iam/permission.proto";
 import "google/protobuf/timestamp.proto";
 import "validate/validate.proto";
 
+import "ogen/ogen.proto";
+
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+option (ogen.file) = { generate_openapi: true };
 
 /*
     rating.proto is the benchmark leaderboard, AUTHENTICATED scopes (the public
@@ -187,11 +191,35 @@ message GetTenantRatingResponse {
     scopes).
  */
 service RatingService {
+    option (ogen.service) = {
+        path_prefix: "/api/v1/rating"
+        tags: "rating"
+    };
+
     /*
         GetSystemRating: cross-system private board over in_global_rating runs. Any
         authenticated account (no specific permission).
      */
     rpc GetSystemRating (GetSystemRatingRequest) returns (GetSystemRatingResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/get-system-rating"
+            operation_id: "getSystemRating"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {};
     }
@@ -199,6 +227,25 @@ service RatingService {
         GetTenantRating: this tenant's board over in_tenant_rating runs.
      */
     rpc GetTenantRating (GetTenantRatingRequest) returns (GetTenantRatingResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/get-tenant-rating"
+            operation_id: "getTenantRating"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TEST_RUN, action: ACTION_LIST}]};
     }

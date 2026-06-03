@@ -2152,7 +2152,7 @@ func (i *TestWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Context, input *T
 // TestWorkflow runs one full test cycle, deduplicated by a deterministic id
 // derived from TestRun.id and never auto-retried as a whole.
 //
-// workflow details: (id: "test-run/${! test_run.id }")
+// workflow details: (id: "test-run/${! testRun.id }")
 type TestWorkflowWorkflow interface {
 	// Execute defines the entrypoint to a(n) TestWorkflow workflow
 	Execute(ctx workflow.Context) (*TestWorkflowResponse, error)
@@ -3274,7 +3274,7 @@ func (i *SuiteWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Context, input *
 // SuiteWorkflow fans out a child TestWorkflow per run in the suite,
 // deduplicated by a deterministic id derived from suite_run_id.
 //
-// workflow details: (id: "suite-run/${! suite_run_id }")
+// workflow details: (id: "suite-run/${! suiteRunId }")
 type SuiteWorkflowWorkflow interface {
 	// Execute defines the entrypoint to a(n) SuiteWorkflow workflow
 	Execute(ctx workflow.Context) (*SuiteWorkflowResponse, error)

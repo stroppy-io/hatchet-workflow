@@ -8,6 +8,7 @@ package api
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
@@ -749,12 +750,12 @@ var File_cloud_v1_api_suite_run_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_suite_run_proto_rawDesc = "" +
 	"\n" +
-	"\x1ccloud/v1/api/suite_run.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ccloud/v1/common/status.proto\x1a\x1dcloud/v1/common/trigger.proto\x1a\"cloud/v1/deployment/provider.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1bcloud/v1/models/suite.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"W\n" +
+	"\x1ccloud/v1/api/suite_run.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ccloud/v1/common/status.proto\x1a\x1dcloud/v1/common/trigger.proto\x1a\"cloud/v1/deployment/provider.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1bcloud/v1/models/suite.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"W\n" +
 	"\x12GetSuiteRunRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x19\n" +
 	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"]\n" +
 	"\x13GetSuiteRunResponse\x12F\n" +
-	"\tsuite_run\x18\x01 \x01(\v2\x1f.cloud.v1.models.SuiteRunRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bsuiteRun\"\xb7\n" +
+	"\tsuite_run\x18\x01 \x01(\v2\x1f.cloud.v1.models.SuiteRunRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bsuiteRun\"\xbf\n" +
 	"\n" +
 	"\x14ListSuiteRunsRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x125\n" +
@@ -774,7 +775,7 @@ const file_cloud_v1_api_suite_run_proto_rawDesc = "" +
 	"\x0efinished_after\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\rfinishedAfter\x12C\n" +
 	"\x0ffinished_before\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\x0efinishedBefore\x12;\n" +
 	"\x04sort\x18\x0f \x01(\v2'.cloud.v1.api.ListSuiteRunsRequest.SortR\x04sort\x12)\n" +
-	"\x04page\x18\x10 \x01(\v2\x15.cloud.v1.common.PageR\x04page\x1a\xc4\x02\n" +
+	"\x04page\x18\x10 \x01(\v2\x15.cloud.v1.common.PageR\x04page\x1a\xcc\x02\n" +
 	"\x04Sort\x12:\n" +
 	"\x06entity\x18\x01 \x01(\x0e2 .cloud.v1.common.EntitySortFieldH\x00R\x06entity\x12B\n" +
 	"\x04kind\x18\x02 \x01(\x0e2,.cloud.v1.api.ListSuiteRunsRequest.Sort.KindH\x00R\x04kind\x12\x12\n" +
@@ -788,8 +789,8 @@ const file_cloud_v1_api_suite_run_proto_rawDesc = "" +
 	"\x0fKIND_STARTED_AT\x10\x05\x12\x14\n" +
 	"\x10KIND_FINISHED_AT\x10\x06\x12\x0e\n" +
 	"\n" +
-	"KIND_TOTAL\x10\aB\x04\n" +
-	"\x02byB\x0f\n" +
+	"KIND_TOTAL\x10\aB\f\n" +
+	"\x02by\x12\x06\xf2\xa7\x1d\x02\b\x03B\x0f\n" +
 	"\r_progress_minB\x0f\n" +
 	"\r_progress_max\"\x7f\n" +
 	"\x15ListSuiteRunsResponse\x12>\n" +
@@ -804,16 +805,20 @@ const file_cloud_v1_api_suite_run_proto_rawDesc = "" +
 	"\x15DeleteSuiteRunRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x19\n" +
 	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"\x18\n" +
-	"\x16DeleteSuiteRunResponse2\xb5\x03\n" +
-	"\x0fSuiteRunService\x12a\n" +
-	"\vGetSuiteRun\x12 .cloud.v1.api.GetSuiteRunRequest\x1a!.cloud.v1.api.GetSuiteRunResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\n" +
-	"\x10\x02\x90\x02\x01\x12g\n" +
-	"\rListSuiteRuns\x12\".cloud.v1.api.ListSuiteRunsRequest\x1a#.cloud.v1.api.ListSuiteRunsResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\n" +
-	"\x10\x05\x90\x02\x01\x12j\n" +
-	"\x0eCancelSuiteRun\x12#.cloud.v1.api.CancelSuiteRunRequest\x1a$.cloud.v1.api.CancelSuiteRunResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\n" +
-	"\x10\x03\x90\x02\x02\x12j\n" +
-	"\x0eDeleteSuiteRun\x12#.cloud.v1.api.DeleteSuiteRunRequest\x1a$.cloud.v1.api.DeleteSuiteRunResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\n" +
-	"\x10\x04\x90\x02\x02BAZ?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
+	"\x16DeleteSuiteRunResponse2\x85\a\n" +
+	"\x0fSuiteRunService\x12\xc7\x01\n" +
+	"\vGetSuiteRun\x12 .cloud.v1.api.GetSuiteRunRequest\x1a!.cloud.v1.api.GetSuiteRunResponse\"s\x8a\xb5\x18\x06\x12\x04\b\n" +
+	"\x10\x02\xf2\xa7\x1db\x10\x01\x1a\x0e/get-suite-run\"\vgetSuiteRun\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xd1\x01\n" +
+	"\rListSuiteRuns\x12\".cloud.v1.api.ListSuiteRunsRequest\x1a#.cloud.v1.api.ListSuiteRunsResponse\"w\x8a\xb5\x18\x06\x12\x04\b\n" +
+	"\x10\x05\xf2\xa7\x1df\x10\x01\x1a\x10/list-suite-runs\"\rlistSuiteRuns\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xd6\x01\n" +
+	"\x0eCancelSuiteRun\x12#.cloud.v1.api.CancelSuiteRunRequest\x1a$.cloud.v1.api.CancelSuiteRunResponse\"y\x8a\xb5\x18\x06\x12\x04\b\n" +
+	"\x10\x03\xf2\xa7\x1dh\x10\x02\x1a\x11/cancel-suite-run\"\x0ecancelSuiteRun\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xd6\x01\n" +
+	"\x0eDeleteSuiteRun\x12#.cloud.v1.api.DeleteSuiteRunRequest\x1a$.cloud.v1.api.DeleteSuiteRunResponse\"y\x8a\xb5\x18\x06\x12\x04\b\n" +
+	"\x10\x04\xf2\xa7\x1dh\x10\x02\x1a\x11/delete-suite-run\"\x0edeleteSuiteRun\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x1a\"\xf2\xa7\x1d\x1e\x12\x11/api/v1/suite-run\x1a\tsuite-runBG\xf2\xa7\x1d\x02\b\x01Z?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
 
 var (
 	file_cloud_v1_api_suite_run_proto_rawDescOnce sync.Once

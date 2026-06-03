@@ -10,7 +10,11 @@ import "cloud/v1/iam/permission.proto";
 import "cloud/v1/models/suite.proto";
 import "validate/validate.proto";
 
+import "ogen/ogen.proto";
+
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+option (ogen.file) = { generate_openapi: true };
 
 /*
     suite.proto is the tenant-scoped API over models.SuiteRecord — the reusable
@@ -110,6 +114,7 @@ message ListSuitesRequest {
             by selects either a common Entity sort field or a suite-specific Kind.
          */
         oneof by {
+            option (ogen.oneof) = { schema_mode: ONEOF_SCHEMA_MODE_OBJECT };
             /*
                 entity orders by a shared Entity column (name, created_at, ...).
              */
@@ -306,6 +311,7 @@ message StartSuiteRequest {
         or an inline definition supplied directly.
      */
     oneof source {
+        option (ogen.oneof) = { schema_mode: ONEOF_SCHEMA_MODE_OBJECT };
         option (validate.required) = true;
         /*
             suite_id re-runs a stored suite definition by id.
@@ -346,16 +352,59 @@ message StartSuiteResponse {
     SuiteService is the tenant-scoped CRUD + lifecycle API for suite definitions.
  */
 service SuiteService {
+    option (ogen.service) = {
+        path_prefix: "/api/v1/suite"
+        tags: "suite"
+    };
+
     /*
         CreateSuite persists a new suite definition. Not idempotent.
      */
     rpc CreateSuite (CreateSuiteRequest) returns (CreateSuiteResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/create-suite"
+            operation_id: "createSuite"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SUITE, action: ACTION_CREATE}]};
     }
     /*
         GetSuite fetches a single suite definition by id. Read-only.
      */
     rpc GetSuite (GetSuiteRequest) returns (GetSuiteResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/get-suite"
+            operation_id: "getSuite"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SUITE, action: ACTION_READ}]};
     }
@@ -363,6 +412,25 @@ service SuiteService {
         ListSuites lists suite definitions with filtering and pagination. Read-only.
      */
     rpc ListSuites (ListSuitesRequest) returns (ListSuitesResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/list-suites"
+            operation_id: "listSuites"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SUITE, action: ACTION_LIST}]};
     }
@@ -371,6 +439,25 @@ service SuiteService {
         Read-only.
      */
     rpc ListSuiteFacets (ListSuiteFacetsRequest) returns (ListSuiteFacetsResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/list-suite-facets"
+            operation_id: "listSuiteFacets"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SUITE, action: ACTION_LIST}]};
     }
@@ -378,6 +465,25 @@ service SuiteService {
         UpdateSuite is idempotent: a wholesale field set converges on retry.
      */
     rpc UpdateSuite (UpdateSuiteRequest) returns (UpdateSuiteResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/update-suite"
+            operation_id: "updateSuite"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SUITE, action: ACTION_UPDATE}]};
     }
@@ -386,6 +492,25 @@ service SuiteService {
         suite is a no-op.
      */
     rpc DeleteSuite (DeleteSuiteRequest) returns (DeleteSuiteResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/delete-suite"
+            operation_id: "deleteSuite"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SUITE, action: ACTION_DELETE}]};
     }
@@ -393,12 +518,50 @@ service SuiteService {
         CloneSuite mints a new definition. Not idempotent.
      */
     rpc CloneSuite (CloneSuiteRequest) returns (CloneSuiteResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/clone-suite"
+            operation_id: "cloneSuite"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SUITE, action: ACTION_CREATE}]};
     }
     /*
         SetSuiteSchedule is idempotent: setting the same schedule converges.
      */
     rpc SetSuiteSchedule (SetSuiteScheduleRequest) returns (SetSuiteScheduleResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/set-suite-schedule"
+            operation_id: "setSuiteSchedule"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SUITE, action: ACTION_UPDATE}]};
     }
@@ -406,6 +569,25 @@ service SuiteService {
         StartSuite mints a SuiteRunRecord. Not idempotent: each call launches a run.
      */
     rpc StartSuite (StartSuiteRequest) returns (StartSuiteResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/start-suite"
+            operation_id: "startSuite"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SUITE_RUN, action: ACTION_CREATE}]};
     }
 }

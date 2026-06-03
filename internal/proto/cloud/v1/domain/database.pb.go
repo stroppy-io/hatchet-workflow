@@ -8,6 +8,7 @@ package domain
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -1743,7 +1744,7 @@ var File_cloud_v1_domain_database_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_domain_database_proto_rawDesc = "" +
 	"\n" +
-	"\x1ecloud/v1/domain/database.proto\x12\x0fcloud.v1.domain\x1a\x1acloud/v1/common/tags.proto\x1a\x17validate/validate.proto\"\x96\x03\n" +
+	"\x1ecloud/v1/domain/database.proto\x12\x0fcloud.v1.domain\x1a\x1acloud/v1/common/tags.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\x96\x03\n" +
 	"\aPackage\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12C\n" +
@@ -1899,7 +1900,7 @@ const file_cloud_v1_domain_database_proto_rawDesc = "" +
 	"\aoptions\x18\x02 \x03(\v2-.cloud.v1.domain.CockroachParams.OptionsEntryR\aoptions\x1a:\n" +
 	"\fOptionsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x93\x04\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x99\x04\n" +
 	"\x0eDatabaseParams\x12\x18\n" +
 	"\aversion\x18\x01 \x01(\tR\aversion\x122\n" +
 	"\apackage\x18\x02 \x01(\v2\x18.cloud.v1.domain.PackageR\apackage\x12=\n" +
@@ -1911,8 +1912,8 @@ const file_cloud_v1_domain_database_proto_rawDesc = "" +
 	"\x03ydb\x18\x0e \x01(\v2\x1a.cloud.v1.domain.YdbParamsH\x00R\x03ydb\x12D\n" +
 	"\vydb_managed\x18\x0f \x01(\v2!.cloud.v1.domain.YdbManagedParamsH\x00R\n" +
 	"ydbManaged\x12@\n" +
-	"\tcockroach\x18\x10 \x01(\v2 .cloud.v1.domain.CockroachParamsH\x00R\tcockroachB\r\n" +
-	"\x06engine\x12\x03\xf8B\x01\"\x9d\x05\n" +
+	"\tcockroach\x18\x10 \x01(\v2 .cloud.v1.domain.CockroachParamsH\x00R\tcockroachB\x13\n" +
+	"\x06engine\x12\t\xf8B\x01\xf2\xa7\x1d\x02\b\x03\"\xa3\x05\n" +
 	"\bDatabase\x12>\n" +
 	"\x04kind\x18\x01 \x01(\x0e2\x1e.cloud.v1.domain.Database.KindB\n" +
 	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x04kind\x129\n" +
@@ -1937,8 +1938,8 @@ const file_cloud_v1_domain_database_proto_rawDesc = "" +
 	"\x10KIND_YDB_MANAGED\x10\x05\x12\x12\n" +
 	"\x0eKIND_COCKROACH\x10\x06\x12\x11\n" +
 	"\rKIND_PICODATA\x10\a\x12\x11\n" +
-	"\rKIND_EXTERNAL\x10\bB\r\n" +
-	"\x06source\x12\x03\xf8B\x01BDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domainb\x06proto3"
+	"\rKIND_EXTERNAL\x10\bB\x13\n" +
+	"\x06source\x12\t\xf8B\x01\xf2\xa7\x1d\x02\b\x03BDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domainb\x06proto3"
 
 var (
 	file_cloud_v1_domain_database_proto_rawDescOnce sync.Once

@@ -6,7 +6,11 @@ import "cloud/v1/iam/options.proto";
 import "cloud/v1/iam/permission.proto";
 import "validate/validate.proto";
 
+import "ogen/ogen.proto";
+
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+option (ogen.file) = { generate_openapi: true };
 
 /*
     stroppy.proto exposes control-plane metadata about upstream Stroppy builds.
@@ -41,10 +45,34 @@ message ListStroppyVersionsResponse {
     StroppyService exposes Stroppy metadata needed by run/suite wizards.
  */
 service StroppyService {
+    option (ogen.service) = {
+        path_prefix: "/api/v1/stroppy"
+        tags: "stroppy"
+    };
+
     /*
         ListStroppyVersions returns suggested release versions. Read-only.
      */
     rpc ListStroppyVersions (ListStroppyVersionsRequest) returns (ListStroppyVersionsResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/list-stroppy-versions"
+            operation_id: "listStroppyVersions"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_WIZARD, action: ACTION_READ}]};
     }

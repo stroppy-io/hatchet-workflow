@@ -106,6 +106,8 @@
   - [cloud.v1.api.GetMyPermissionsResponse](#cloud-v1-api-getmypermissionsresponse)
   - [cloud.v1.api.GetPackageRequest](#cloud-v1-api-getpackagerequest)
   - [cloud.v1.api.GetPackageResponse](#cloud-v1-api-getpackageresponse)
+  - [cloud.v1.api.GetPublicConfigRequest](#cloud-v1-api-getpublicconfigrequest)
+  - [cloud.v1.api.GetPublicConfigResponse](#cloud-v1-api-getpublicconfigresponse)
   - [cloud.v1.api.GetPublicRatingRequest](#cloud-v1-api-getpublicratingrequest)
   - [cloud.v1.api.GetPublicRatingResponse](#cloud-v1-api-getpublicratingresponse)
   - [cloud.v1.api.GetRoleRequest](#cloud-v1-api-getrolerequest)
@@ -3452,6 +3454,56 @@ go_name: TenantId</pre></td>
 
 json_name: package
 go_name: Package</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-getpublicconfigrequest"></a>
+### cloud.v1.api.GetPublicConfigRequest
+
+<pre>
+//GetPublicConfigRequest takes no arguments: it reads the public-safe subset of
+//the singleton settings, with NO authentication. It exists so the sign-in /
+//sign-up screens (which run before any token exists) can learn whether open
+//self-registration and member tenant creation are enabled, and hide the
+//affordances up front instead of only failing on submit.
+</pre>
+
+
+
+<a name="cloud-v1-api-getpublicconfigresponse"></a>
+### cloud.v1.api.GetPublicConfigResponse
+
+<pre>
+//GetPublicConfigResponse returns only the non-sensitive flags safe to expose
+//to an unauthenticated caller — never server_addr or any internal config.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>allow_member_tenant_creation</td>
+<td>bool</td>
+<td><pre>
+//allow_member_tenant_creation mirrors
+//PlatformSettings.allow_member_tenant_creation.<br>
+
+json_name: allowMemberTenantCreation
+go_name: AllowMemberTenantCreation</pre></td>
+</tr><tr>
+<td>allow_self_registration</td>
+<td>bool</td>
+<td><pre>
+//allow_self_registration mirrors PlatformSettings.allow_self_registration:
+//when false the public Register endpoint is closed.<br>
+
+json_name: allowSelfRegistration
+go_name: AllowSelfRegistration</pre></td>
 </tr>
 </table>
 

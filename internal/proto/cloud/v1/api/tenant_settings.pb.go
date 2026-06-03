@@ -8,6 +8,7 @@ package api
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	_ "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
@@ -283,7 +284,7 @@ var File_cloud_v1_api_tenant_settings_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_tenant_settings_proto_rawDesc = "" +
 	"\n" +
-	"\"cloud/v1/api/tenant_settings.proto\x12\fcloud.v1.api\x1a\"cloud/v1/deployment/provider.proto\x1a\x1acloud/v1/iam/options.proto\x1a%cloud/v1/models/tenant_settings.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x17validate/validate.proto\"B\n" +
+	"\"cloud/v1/api/tenant_settings.proto\x12\fcloud.v1.api\x1a\"cloud/v1/deployment/provider.proto\x1a\x1acloud/v1/iam/options.proto\x1a%cloud/v1/models/tenant_settings.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"B\n" +
 	"\x18GetTenantSettingsRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\"h\n" +
 	"\x19GetTenantSettingsResponse\x12K\n" +
@@ -295,11 +296,14 @@ const file_cloud_v1_api_tenant_settings_proto_rawDesc = "" +
 	"\bsettings\x18\x01 \x01(\v2%.cloud.v1.models.TenantSettingsRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bsettings\"\x8d\x01\n" +
 	" SetTenantProviderSettingsRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12A\n" +
-	"\bsettings\x18\x02 \x01(\v2%.cloud.v1.deployment.ProviderSettingsR\bsettings2\xfe\x02\n" +
-	"\x15TenantSettingsService\x12s\n" +
-	"\x11GetTenantSettings\x12&.cloud.v1.api.GetTenantSettingsRequest\x1a'.cloud.v1.api.GetTenantSettingsResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x05\x10\x02\x90\x02\x01\x12|\n" +
-	"\x14UpdateTenantSettings\x12).cloud.v1.api.UpdateTenantSettingsRequest\x1a*.cloud.v1.api.UpdateTenantSettingsResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x05\x10\x03\x90\x02\x02\x12r\n" +
-	"\x19SetTenantProviderSettings\x12..cloud.v1.api.SetTenantProviderSettingsRequest\x1a\x16.google.protobuf.Empty\"\r\x8a\xb5\x18\x06\x12\x04\b\x05\x10\x03\x90\x02\x02BAZ?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
+	"\bsettings\x18\x02 \x01(\v2%.cloud.v1.deployment.ProviderSettingsR\bsettings2\xa0\x06\n" +
+	"\x15TenantSettingsService\x12\xe5\x01\n" +
+	"\x11GetTenantSettings\x12&.cloud.v1.api.GetTenantSettingsRequest\x1a'.cloud.v1.api.GetTenantSettingsResponse\"\x7f\x8a\xb5\x18\x06\x12\x04\b\x05\x10\x02\xf2\xa7\x1dn\x10\x01\x1a\x14/get-tenant-settings\"\x11getTenantSettings\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xf5\x01\n" +
+	"\x14UpdateTenantSettings\x12).cloud.v1.api.UpdateTenantSettingsRequest\x1a*.cloud.v1.api.UpdateTenantSettingsResponse\"\x85\x01\x8a\xb5\x18\x06\x12\x04\b\x05\x10\x03\xf2\xa7\x1dt\x10\x02\x1a\x17/update-tenant-settings\"\x14updateTenantSettings\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xf6\x01\n" +
+	"\x19SetTenantProviderSettings\x12..cloud.v1.api.SetTenantProviderSettingsRequest\x1a\x16.google.protobuf.Empty\"\x90\x01\x8a\xb5\x18\x06\x12\x04\b\x05\x10\x03\xf2\xa7\x1d\x7f\x10\x02\x1a\x1d/set-tenant-provider-settings\"\x19setTenantProviderSettings\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x1a.\xf2\xa7\x1d*\x12\x17/api/v1/tenant-settings\x1a\x0ftenant-settingsBG\xf2\xa7\x1d\x02\b\x01Z?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
 
 var (
 	file_cloud_v1_api_tenant_settings_proto_rawDescOnce sync.Once

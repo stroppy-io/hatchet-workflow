@@ -1675,7 +1675,7 @@ go_name: SuiteRunId</pre></td>
 
 <table>
 <tr><th>Name</th><th>Value</th></tr>
-<tr><td>id</td><td><pre><code>suite-run/${! suite_run_id }</code></pre></td></tr>
+<tr><td>id</td><td><pre><code>suite-run/${! suiteRunId }</code></pre></td></tr>
 <tr><td>id_reuse_policy</td><td><pre><code>WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY</code></pre></td></tr>
 <tr><td>retry_policy.max_attempts</td><td>1</td></tr>
 </table>     
@@ -1911,7 +1911,7 @@ go_name: TestRun</pre></td>
 
 <table>
 <tr><th>Name</th><th>Value</th></tr>
-<tr><td>id</td><td><pre><code>test-run/${! test_run.id }</code></pre></td></tr>
+<tr><td>id</td><td><pre><code>test-run/${! testRun.id }</code></pre></td></tr>
 <tr><td>id_reuse_policy</td><td><pre><code>WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY</code></pre></td></tr>
 <tr><td>retry_policy.max_attempts</td><td>1</td></tr>
 </table>

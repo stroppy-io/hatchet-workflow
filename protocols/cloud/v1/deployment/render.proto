@@ -7,6 +7,7 @@ import "cloud/v1/common/dir.proto";
 import "cloud/v1/common/file.proto";
 import "cloud/v1/common/tags.proto";
 import "validate/validate.proto";
+import "ogen/ogen.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment";
 
@@ -133,6 +134,7 @@ message RenderArtifact {
         artifact contains exactly one payload or runtime placeholder.
      */
     oneof artifact {
+        option (ogen.oneof) = { schema_mode: ONEOF_SCHEMA_MODE_OBJECT };
         option (validate.required) = true;
         common.File file = 10 [(validate.rules).message.required = true];
         common.Cmd cmd = 11 [(validate.rules).message.required = true];

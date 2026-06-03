@@ -13,10 +13,11 @@ import { file_cloud_v1_iam_membership } from "../iam/membership_pb.ts";
 import { file_cloud_v1_iam_permission } from "../iam/permission_pb.ts";
 import { file_cloud_v1_iam_options } from "../iam/options_pb.ts";
 import { file_cloud_v1_iam_sso } from "../iam/sso_pb.ts";
+import { file_ogen_ogen } from "../../../ogen/ogen_pb.ts";
 
 /**
  * Describes the file cloud/v1/api/test.proto.
  */
 export const file_cloud_v1_api_test: GenFile = /*@__PURE__*/
-  fileDesc("ChdjbG91ZC92MS9hcGkvdGVzdC5wcm90bxIMY2xvdWQudjEuYXBpQkFaP2dpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2FwaWIGcHJvdG8z", [file_google_protobuf_duration, file_validate_validate, file_cloud_v1_iam_account, file_cloud_v1_iam_tenant, file_cloud_v1_iam_role, file_cloud_v1_iam_membership, file_cloud_v1_iam_permission, file_cloud_v1_iam_options, file_cloud_v1_iam_sso]);
+  fileDesc("ChdjbG91ZC92MS9hcGkvdGVzdC5wcm90bxIMY2xvdWQudjEuYXBpQkdaP2dpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2FwafKnHQIIAWIGcHJvdG8z", [file_google_protobuf_duration, file_validate_validate, file_cloud_v1_iam_account, file_cloud_v1_iam_tenant, file_cloud_v1_iam_role, file_cloud_v1_iam_membership, file_cloud_v1_iam_permission, file_cloud_v1_iam_options, file_cloud_v1_iam_sso, file_ogen_ogen]);
 

@@ -8,6 +8,7 @@ package api
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
@@ -337,7 +338,7 @@ var File_cloud_v1_api_compare_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_compare_proto_rawDesc = "" +
 	"\n" +
-	"\x1acloud/v1/api/compare.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/status.proto\x1a\"cloud/v1/deployment/provider.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1ecloud/v1/monitor/metrics.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\xb6\x04\n" +
+	"\x1acloud/v1/api/compare.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/status.proto\x1a\"cloud/v1/deployment/provider.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1ecloud/v1/monitor/metrics.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\xb6\x04\n" +
 	"\tRunColumn\x12 \n" +
 	"\x06run_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x05runId\x12\x1c\n" +
 	"\x04name\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\xff\x01R\x04name\x12/\n" +
@@ -361,9 +362,10 @@ const file_cloud_v1_api_compare_proto_rawDesc = "" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12+\n" +
 	"\arun_ids\x18\x02 \x03(\tB\x12\xfaB\x0f\x92\x01\f\b\x02\x10\x10\"\x06r\x04\x10\x01\x18@R\x06runIds\"N\n" +
 	"\x13CompareRunsResponse\x127\n" +
-	"\x04view\x18\x01 \x01(\v2\x19.cloud.v1.api.CompareViewB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04view2s\n" +
-	"\x0eCompareService\x12a\n" +
-	"\vCompareRuns\x12 .cloud.v1.api.CompareRunsRequest\x1a!.cloud.v1.api.CompareRunsResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\b\x10\x02\x90\x02\x01BAZ?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
+	"\x04view\x18\x01 \x01(\v2\x19.cloud.v1.api.CompareViewB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04view2\xf9\x01\n" +
+	"\x0eCompareService\x12\xc6\x01\n" +
+	"\vCompareRuns\x12 .cloud.v1.api.CompareRunsRequest\x1a!.cloud.v1.api.CompareRunsResponse\"r\x8a\xb5\x18\x06\x12\x04\b\b\x10\x02\xf2\xa7\x1da\x10\x01\x1a\r/compare-runs\"\vcompareRuns\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x1a\x1e\xf2\xa7\x1d\x1a\x12\x0f/api/v1/compare\x1a\acompareBG\xf2\xa7\x1d\x02\b\x01Z?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
 
 var (
 	file_cloud_v1_api_compare_proto_rawDescOnce sync.Once

@@ -13,18 +13,14 @@ export default defineConfig({
   server: {
     port: 3000,
     proxy: {
-      "/api": {
+      // connect-rpc: the client posts to /cloud.v1.<pkg>.<Service>/<Method>
+      // (api + agent-log). Forward to the backend so dev stays same-origin and
+      // needs no CORS — the prod build is served by that same backend on one mux.
+      "/cloud.v1.": {
         target: "http://localhost:8080",
         changeOrigin: true,
       },
-      "/ws": {
-        target: "ws://localhost:8080",
-        ws: true,
-      },
-      "/health": {
-        target: "http://localhost:8080",
-        changeOrigin: true,
-      },
+      // package blob serving — storage_uri download links resolve here.
       "/packages": {
         target: "http://localhost:8080",
         changeOrigin: true,

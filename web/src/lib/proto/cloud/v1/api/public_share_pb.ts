@@ -8,13 +8,14 @@ import { file_cloud_v1_iam_options } from "../iam/options_pb.ts";
 import type { ShareRecord_Snapshot, ShareRecord_SnapshotJson } from "../models/share_pb.ts";
 import { file_cloud_v1_models_share } from "../models/share_pb.ts";
 import { file_validate_validate } from "../../../validate/validate_pb.ts";
+import { file_ogen_ogen } from "../../../ogen/ogen_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file cloud/v1/api/public_share.proto.
  */
 export const file_cloud_v1_api_public_share: GenFile = /*@__PURE__*/
-  fileDesc("Ch9jbG91ZC92MS9hcGkvcHVibGljX3NoYXJlLnByb3RvEgxjbG91ZC52MS5hcGkiMAoTR2V0U2hhcmVkUnVuUmVxdWVzdBIZCgV0b2tlbhgBIAEoCUIK+kIHcgUQEBiAASJZChRHZXRTaGFyZWRSdW5SZXNwb25zZRJBCghzbmFwc2hvdBgBIAEoCzIlLmNsb3VkLnYxLm1vZGVscy5TaGFyZVJlY29yZC5TbmFwc2hvdEII+kIFigECEAEydgoSUHVibGljU2hhcmVTZXJ2aWNlEmAKDEdldFNoYXJlZFJ1bhIhLmNsb3VkLnYxLmFwaS5HZXRTaGFyZWRSdW5SZXF1ZXN0GiIuY2xvdWQudjEuYXBpLkdldFNoYXJlZFJ1blJlc3BvbnNlIgmQAgGKtRgCCAFCQVo/Z2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvYXBpYgZwcm90bzM", [file_cloud_v1_iam_options, file_cloud_v1_models_share, file_validate_validate]);
+  fileDesc("Ch9jbG91ZC92MS9hcGkvcHVibGljX3NoYXJlLnByb3RvEgxjbG91ZC52MS5hcGkiMAoTR2V0U2hhcmVkUnVuUmVxdWVzdBIZCgV0b2tlbhgBIAEoCUIK+kIHcgUQEBiAASJZChRHZXRTaGFyZWRSdW5SZXNwb25zZRJBCghzbmFwc2hvdBgBIAEoCzIlLmNsb3VkLnYxLm1vZGVscy5TaGFyZVJlY29yZC5TbmFwc2hvdEII+kIFigECEAEyiQIKElB1YmxpY1NoYXJlU2VydmljZRLIAQoMR2V0U2hhcmVkUnVuEiEuY2xvdWQudjEuYXBpLkdldFNoYXJlZFJ1blJlcXVlc3QaIi5jbG91ZC52MS5hcGkuR2V0U2hhcmVkUnVuUmVzcG9uc2UicZACAYq1GAIIAfKnHWQaDy9nZXQtc2hhcmVkLXJ1biIMZ2V0U2hhcmVkUnVuogECEAGyAQcIyAESAk9LsgExEhFVbmV4cGVjdGVkIGVycm9yLiocChojL2NvbXBvbmVudHMvc2NoZW1hcy9FcnJvchABGijypx0kEhQvYXBpL3YxL3B1YmxpYy1zaGFyZRoMcHVibGljLXNoYXJlQkdaP2dpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2FwafKnHQIIAWIGcHJvdG8z", [file_cloud_v1_iam_options, file_cloud_v1_models_share, file_validate_validate, file_ogen_ogen]);
 
 /**
  *

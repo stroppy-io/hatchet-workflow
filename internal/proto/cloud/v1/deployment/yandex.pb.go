@@ -8,6 +8,7 @@ package deployment
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -1972,7 +1973,7 @@ var File_cloud_v1_deployment_yandex_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_deployment_yandex_proto_rawDesc = "" +
 	"\n" +
-	" cloud/v1/deployment/yandex.proto\x12\x13cloud.v1.deployment\x1a\x17validate/validate.proto\"\xa35\n" +
+	" cloud/v1/deployment/yandex.proto\x12\x13cloud.v1.deployment\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\xaf5\n" +
 	"\x06Yandex\x12A\n" +
 	"\x05input\x18\x01 \x01(\v2!.cloud.v1.deployment.Yandex.InputB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x05input\x12:\n" +
 	"\x06output\x18\x02 \x01(\v2\".cloud.v1.deployment.Yandex.OutputR\x06output\x1a\xed\a\n" +
@@ -2062,7 +2063,7 @@ const file_cloud_v1_deployment_yandex_proto_rawDesc = "" +
 	"\vdevice_name\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\n" +
 	"deviceName\x12 \n" +
 	"\asize_gb\x18\x02 \x01(\rB\a\xfaB\x04*\x02 \x00R\x06sizeGb\x12a\n" +
-	"\x04type\x18\x03 \x01(\tBM\xfaBJrHR\vnetwork-ssdR\vnetwork-hddR\x19network-ssd-nonreplicatedR\x11network-ssd-io-m3R\x04type\x1a\xd9\r\n" +
+	"\x04type\x18\x03 \x01(\tBM\xfaBJrHR\vnetwork-ssdR\vnetwork-hddR\x19network-ssd-nonreplicatedR\x11network-ssd-io-m3R\x04type\x1a\xe5\r\n" +
 	"\n" +
 	"ManagedYdb\x12\x1d\n" +
 	"\x04name\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x03\x18?R\x04name\x12$\n" +
@@ -2093,7 +2094,7 @@ const file_cloud_v1_deployment_yandex_proto_rawDesc = "" +
 	"\n" +
 	"subnet_ids\x18\x04 \x03(\tB\b\xfaB\x05\x92\x01\x02\x10\x10R\tsubnetIds\x126\n" +
 	"\x12security_group_ids\x18\x05 \x03(\tB\b\xfaB\x05\x92\x01\x02\x10\x10R\x10securityGroupIds\x12*\n" +
-	"\x11assign_public_ips\x18\x06 \x01(\bR\x0fassignPublicIps\x1a\x8b\x03\n" +
+	"\x11assign_public_ips\x18\x06 \x01(\bR\x0fassignPublicIps\x1a\x91\x03\n" +
 	"\vScalePolicy\x12Z\n" +
 	"\x05fixed\x18\x01 \x01(\v28.cloud.v1.deployment.Yandex.ManagedYdb.ScalePolicy.FixedB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\x05fixed\x12W\n" +
 	"\x04auto\x18\x02 \x01(\v27.cloud.v1.deployment.Yandex.ManagedYdb.ScalePolicy.AutoB\b\xfaB\x05\x8a\x01\x02\x10\x01H\x00R\x04auto\x1a$\n" +
@@ -2102,13 +2103,13 @@ const file_cloud_v1_deployment_yandex_proto_rawDesc = "" +
 	"\x04Auto\x12\"\n" +
 	"\bmin_size\x18\x01 \x01(\rB\a\xfaB\x04*\x02(\x01R\aminSize\x12\"\n" +
 	"\bmax_size\x18\x02 \x01(\rB\a\xfaB\x04*\x02(\x01R\amaxSize\x12A\n" +
-	"\x17cpu_utilization_percent\x18\x03 \x01(\rB\t\xfaB\x06*\x04\x18d(\x01R\x15cpuUtilizationPercentB\r\n" +
-	"\x06policy\x12\x03\xf8B\x01\x1a}\n" +
+	"\x17cpu_utilization_percent\x18\x03 \x01(\rB\t\xfaB\x06*\x04\x18d(\x01R\x15cpuUtilizationPercentB\x13\n" +
+	"\x06policy\x12\t\xf8B\x01\xf2\xa7\x1d\x02\b\x03\x1a}\n" +
 	"\rStorageConfig\x12(\n" +
 	"\vgroup_count\x18\x01 \x01(\rB\a\xfaB\x04*\x02(\x01R\n" +
 	"groupCount\x12B\n" +
-	"\x0fstorage_type_id\x18\x02 \x01(\tB\x1a\xfaB\x17r\x15R\x03ssdR\x03rotR\tlocal-ssdR\rstorageTypeIdB\v\n" +
-	"\x04kind\x12\x03\xf8B\x01\x1a\xa2\x02\n" +
+	"\x0fstorage_type_id\x18\x02 \x01(\tB\x1a\xfaB\x17r\x15R\x03ssdR\x03rotR\tlocal-ssdR\rstorageTypeIdB\x11\n" +
+	"\x04kind\x12\t\xf8B\x01\xf2\xa7\x1d\x02\b\x03\x1a\xa2\x02\n" +
 	"\x06Output\x12=\n" +
 	"\x03vms\x18\x01 \x03(\v2+.cloud.v1.deployment.Yandex.Output.VmsEntryR\x03vms\x12M\n" +
 	"\vmanaged_ydb\x18\x02 \x01(\v2,.cloud.v1.deployment.Yandex.ManagedYdbOutputR\n" +

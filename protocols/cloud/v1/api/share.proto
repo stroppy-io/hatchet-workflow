@@ -9,7 +9,11 @@ import "cloud/v1/models/share.proto";
 import "google/protobuf/duration.proto";
 import "validate/validate.proto";
 
+import "ogen/ogen.proto";
+
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+option (ogen.file) = { generate_openapi: true };
 
 /*
     share.proto is the AUTHENTICATED management side of run shares (the public
@@ -184,16 +188,59 @@ message DeleteShareResponse {}
     ShareService is the authenticated management side of run shares.
  */
 service ShareService {
+    option (ogen.service) = {
+        path_prefix: "/api/v1/share"
+        tags: "share"
+    };
+
     /*
         CreateShare is not idempotent: each call mints a new token + snapshot.
      */
     rpc CreateShare (CreateShareRequest) returns (CreateShareResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/create-share"
+            operation_id: "createShare"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SHARE, action: ACTION_CREATE}]};
     }
     /*
         GetShare fetches one share by id. Read-only.
      */
     rpc GetShare (GetShareRequest) returns (GetShareResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/get-share"
+            operation_id: "getShare"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SHARE, action: ACTION_READ}]};
     }
@@ -201,6 +248,25 @@ service ShareService {
         ListShares lists a tenant's shares. Read-only.
      */
     rpc ListShares (ListSharesRequest) returns (ListSharesResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/list-shares"
+            operation_id: "listShares"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SHARE, action: ACTION_LIST}]};
     }
@@ -208,6 +274,25 @@ service ShareService {
         RevokeShare is idempotent: revoking an already-revoked share is a no-op.
      */
     rpc RevokeShare (RevokeShareRequest) returns (RevokeShareResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/revoke-share"
+            operation_id: "revokeShare"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SHARE, action: ACTION_UPDATE}]};
     }
@@ -215,6 +300,25 @@ service ShareService {
         SetShareExpiry is idempotent: setting the same lifetime converges.
      */
     rpc SetShareExpiry (SetShareExpiryRequest) returns (SetShareExpiryResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/set-share-expiry"
+            operation_id: "setShareExpiry"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SHARE, action: ACTION_UPDATE}]};
     }
@@ -222,6 +326,25 @@ service ShareService {
         DeleteShare is idempotent: deleting an absent share is a no-op.
      */
     rpc DeleteShare (DeleteShareRequest) returns (DeleteShareResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/delete-share"
+            operation_id: "deleteShare"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SHARE, action: ACTION_DELETE}]};
     }

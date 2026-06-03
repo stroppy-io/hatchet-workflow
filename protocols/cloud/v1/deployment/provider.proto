@@ -4,6 +4,7 @@ package cloud.v1.deployment;
 
 import "cloud/v1/deployment/docker.proto";
 import "cloud/v1/deployment/yandex.proto";
+import "ogen/ogen.proto";
 
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment";
@@ -30,6 +31,7 @@ enum Provider {
 
 message ProviderSettings {
     oneof settings {
+        option (ogen.oneof) = { schema_mode: ONEOF_SCHEMA_MODE_OBJECT };
         Docker.Settings docker = 1;
         Yandex.Settings yandex = 2;
     }

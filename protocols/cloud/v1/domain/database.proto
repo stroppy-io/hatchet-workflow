@@ -4,6 +4,7 @@ package cloud.v1.domain;
 
 import "cloud/v1/common/tags.proto";
 import "validate/validate.proto";
+import "ogen/ogen.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain";
 
@@ -288,6 +289,7 @@ message DatabaseParams {
     /* engine is the engine-specific self-deploy params. Exactly one must be set
        and must match Database.kind. */
     oneof engine {
+        option (ogen.oneof) = { schema_mode: ONEOF_SCHEMA_MODE_OBJECT };
         option (validate.required) = true;
 
         PostgresParams postgres = 10;
@@ -356,6 +358,7 @@ message Database {
     /* source selects how the database is provided for a test run. Exactly one
        variant must be set. */
     oneof source {
+        option (ogen.oneof) = { schema_mode: ONEOF_SCHEMA_MODE_OBJECT };
         option (validate.required) = true;
 
         /* params is the typed self-deploy variant: deploy a DB instance into the

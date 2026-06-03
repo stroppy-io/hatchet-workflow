@@ -3,6 +3,7 @@ syntax = "proto3";
 package cloud.v1.deployment;
 
 import "validate/validate.proto";
+import "ogen/ogen.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment";
 
@@ -292,6 +293,8 @@ message Yandex {
         string service_account_name = 6 [(validate.rules).string.max_len = 63];
 
         oneof kind {
+
+            option (ogen.oneof) = { schema_mode: ONEOF_SCHEMA_MODE_OBJECT };
             option (validate.required) = true;
             /* serverless creates yandex_ydb_database_serverless. */
             Serverless serverless = 10 [(validate.rules).message.required = true];
@@ -332,6 +335,7 @@ message Yandex {
         /* ScalePolicy maps to yandex_ydb_database_dedicated.scale_policy. */
         message ScalePolicy {
             oneof policy {
+                option (ogen.oneof) = { schema_mode: ONEOF_SCHEMA_MODE_OBJECT };
                 option (validate.required) = true;
                 /* fixed creates scale_policy.fixed_scale. */
                 Fixed fixed = 1 [(validate.rules).message.required = true];

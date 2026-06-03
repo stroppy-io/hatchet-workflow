@@ -8,9 +8,11 @@ package api
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	_ "google.golang.org/protobuf/types/known/durationpb"
+	structpb "google.golang.org/protobuf/types/known/structpb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -109,17 +111,84 @@ func (x *PlatformSettings) GetAllowMemberTenantCreation() bool {
 	return false
 }
 
+// Error is the reusable REST error envelope used by the generated ogen adapter.
+// code/message mirror google.rpc.Status; details contain protojson-encoded
+// google.rpc details with their @type discriminator.
+type Error struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Code          string                 `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	Details       []*structpb.Struct     `protobuf:"bytes,3,rep,name=details,proto3" json:"details,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Error) Reset() {
+	*x = Error{}
+	mi := &file_cloud_v1_api_admin_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Error) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Error) ProtoMessage() {}
+
+func (x *Error) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_admin_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Error.ProtoReflect.Descriptor instead.
+func (*Error) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_admin_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *Error) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+func (x *Error) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *Error) GetDetails() []*structpb.Struct {
+	if x != nil {
+		return x.Details
+	}
+	return nil
+}
+
 var File_cloud_v1_api_admin_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_admin_proto_rawDesc = "" +
 	"\n" +
-	"\x18cloud/v1/api/admin.proto\x12\fcloud.v1.api\x1a\x1egoogle/protobuf/duration.proto\x1a\x17validate/validate.proto\"\xbc\x01\n" +
+	"\x18cloud/v1/api/admin.proto\x12\fcloud.v1.api\x1a\x1egoogle/protobuf/duration.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x0fogen/ogen.proto\x1a\x17validate/validate.proto\"\xbc\x01\n" +
 	"\x10PlatformSettings\x12)\n" +
 	"\vserver_addr\x18\n" +
 	" \x01(\tB\b\xfaB\x05r\x03\x18\x80\x10R\n" +
 	"serverAddr\x126\n" +
 	"\x17allow_self_registration\x18\x01 \x01(\bR\x15allowSelfRegistration\x12?\n" +
-	"\x1callow_member_tenant_creation\x18\x03 \x01(\bR\x19allowMemberTenantCreationJ\x04\b\x02\x10\x03BAZ?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
+	"\x1callow_member_tenant_creation\x18\x03 \x01(\bR\x19allowMemberTenantCreationJ\x04\b\x02\x10\x03\"\x85\x01\n" +
+	"\x05Error\x12\x1a\n" +
+	"\x04code\x18\x01 \x01(\tB\x06\xf2\xa7\x1d\x02\x10\x01R\x04code\x12 \n" +
+	"\amessage\x18\x02 \x01(\tB\x06\xf2\xa7\x1d\x02\x10\x01R\amessage\x121\n" +
+	"\adetails\x18\x03 \x03(\v2\x17.google.protobuf.StructR\adetails:\v\xf2\xa7\x1d\a\x12\x05ErrorB\xb0\x02\xf2\xa7\x1d\xea\x01\b\x01\x10\x01\x18\x01 \x01Z\x11Stroppy Cloud APIb\x050.0.0rGGenerated REST/OpenAPI surface for the Stroppy Cloud control-plane API.\xf2\x01\x1astroppy-cloud.openapi.yaml\xfa\x01\x11cloud/v1/api/rest\x82\x02Dgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/rest\x92\x02\x04restZ?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
 
 var (
 	file_cloud_v1_api_admin_proto_rawDescOnce sync.Once
@@ -133,16 +202,19 @@ func file_cloud_v1_api_admin_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_api_admin_proto_rawDescData
 }
 
-var file_cloud_v1_api_admin_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_cloud_v1_api_admin_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_cloud_v1_api_admin_proto_goTypes = []any{
 	(*PlatformSettings)(nil), // 0: cloud.v1.api.PlatformSettings
+	(*Error)(nil),            // 1: cloud.v1.api.Error
+	(*structpb.Struct)(nil),  // 2: google.protobuf.Struct
 }
 var file_cloud_v1_api_admin_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	2, // 0: cloud.v1.api.Error.details:type_name -> google.protobuf.Struct
+	1, // [1:1] is the sub-list for method output_type
+	1, // [1:1] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_api_admin_proto_init() }
@@ -156,7 +228,7 @@ func file_cloud_v1_api_admin_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_api_admin_proto_rawDesc), len(file_cloud_v1_api_admin_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   1,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

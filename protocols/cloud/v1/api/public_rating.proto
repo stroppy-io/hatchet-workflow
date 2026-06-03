@@ -8,7 +8,11 @@ import "cloud/v1/domain/database.proto";
 import "cloud/v1/iam/options.proto";
 import "validate/validate.proto";
 
+import "ogen/ogen.proto";
+
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+option (ogen.file) = { generate_openapi: true };
 
 /*
     public_rating.proto is the PUBLIC, UNAUTHENTICATED benchmark leaderboard (over
@@ -98,10 +102,34 @@ message GetPublicRatingResponse {
     PublicRatingService serves the public, unauthenticated benchmark leaderboard.
  */
 service PublicRatingService {
+    option (ogen.service) = {
+        path_prefix: "/api/v1/public-rating"
+        tags: "public-rating"
+    };
+
     /*
         GetPublicRating resolves the public leaderboard. PUBLIC: no bearer token.
      */
     rpc GetPublicRating (GetPublicRatingRequest) returns (GetPublicRatingResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/get-public-rating"
+            operation_id: "getPublicRating"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {public: true};
     }

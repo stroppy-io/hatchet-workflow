@@ -4,6 +4,7 @@ package cloud.v1.common;
 
 import "google/protobuf/duration.proto";
 import "validate/validate.proto";
+import "ogen/ogen.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common";
 
@@ -29,6 +30,7 @@ message Cmd {
     message Spec {
         /* command selects exactly one execution form: direct argv or shell script. */
         oneof command {
+            option (ogen.oneof) = { schema_mode: ONEOF_SCHEMA_MODE_OBJECT };
             option (validate.required) = true;
             /* argv executes a command directly without shell parsing. */
             Argv argv = 1 [(validate.rules).message.required = true];

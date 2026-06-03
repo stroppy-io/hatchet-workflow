@@ -3,9 +3,25 @@ syntax = "proto3";
 package cloud.v1.api;
 
 import "google/protobuf/duration.proto";
+import "google/protobuf/struct.proto";
+import "ogen/ogen.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+option (ogen.file) = {
+  generate_openapi: true
+  generate_ogen: true
+  generate_converters: true
+  generate_grpc_adapter: true
+  title: "Stroppy Cloud API"
+  version: "0.0.0"
+  description: "Generated REST/OpenAPI surface for the Stroppy Cloud control-plane API."
+  openapi_output: "stroppy-cloud.openapi.yaml"
+  ogen_target: "cloud/v1/api/rest"
+  ogen_package: "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/rest"
+  ogen_package_name: "rest"
+};
 
 /*
     PlatformSettings is the GLOBAL (singleton) control-plane configuration, changed
@@ -54,4 +70,29 @@ message PlatformSettings {
         check applies and ordinary members can spin up tenants.
      */
     bool allow_member_tenant_creation = 3;
+}
+
+/*
+    Error is the reusable REST error envelope used by the generated ogen adapter.
+    code/message mirror google.rpc.Status; details contain protojson-encoded
+    google.rpc details with their @type discriminator.
+ */
+message Error {
+    option (ogen.message) = {
+        schema_name: "Error"
+    };
+
+    string code = 1 [
+        (ogen.field) = {
+            required: true
+        }
+    ];
+
+    string message = 2 [
+        (ogen.field) = {
+            required: true
+        }
+    ];
+
+    repeated google.protobuf.Struct details = 3;
 }

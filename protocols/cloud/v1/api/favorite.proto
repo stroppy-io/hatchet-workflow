@@ -9,7 +9,11 @@ import "cloud/v1/iam/permission.proto";
 import "cloud/v1/models/favorite.proto";
 import "validate/validate.proto";
 
+import "ogen/ogen.proto";
+
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+option (ogen.file) = { generate_openapi: true };
 
 /*
     favorite.proto is the generic, per-user favorite API. One mechanic covers every
@@ -110,10 +114,34 @@ message ListFavoritesResponse {
     FavoriteService is the per-user favorite API covering every favoritable kind.
  */
 service FavoriteService {
+    option (ogen.service) = {
+        path_prefix: "/api/v1/favorite"
+        tags: "favorite"
+    };
+
     /*
         AddFavorite is idempotent.
      */
     rpc AddFavorite (AddFavoriteRequest) returns (AddFavoriteResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/add-favorite"
+            operation_id: "addFavorite"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_FAVORITE, action: ACTION_CREATE}]};
     }
@@ -121,6 +149,25 @@ service FavoriteService {
         RemoveFavorite is idempotent.
      */
     rpc RemoveFavorite (RemoveFavoriteRequest) returns (RemoveFavoriteResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/remove-favorite"
+            operation_id: "removeFavorite"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_FAVORITE, action: ACTION_DELETE}]};
     }
@@ -129,6 +176,25 @@ service FavoriteService {
         to one kind. Read-only.
      */
     rpc ListFavorites (ListFavoritesRequest) returns (ListFavoritesResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/list-favorites"
+            operation_id: "listFavorites"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_FAVORITE, action: ACTION_LIST}]};
     }

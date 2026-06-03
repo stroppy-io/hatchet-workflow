@@ -8,6 +8,7 @@ package domain
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -616,7 +617,7 @@ var File_cloud_v1_domain_suite_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_domain_suite_proto_rawDesc = "" +
 	"\n" +
-	"\x1bcloud/v1/domain/suite.proto\x12\x0fcloud.v1.domain\x1a\x1acloud/v1/common/tags.proto\x1a(cloud/v1/deployment/infrastructure.proto\x1a\"cloud/v1/deployment/provider.proto\x1a cloud/v1/deployment/render.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x17validate/validate.proto\"\x84\x05\n" +
+	"\x1bcloud/v1/domain/suite.proto\x12\x0fcloud.v1.domain\x1a\x1acloud/v1/common/tags.proto\x1a(cloud/v1/deployment/infrastructure.proto\x1a\"cloud/v1/deployment/provider.proto\x1a cloud/v1/deployment/render.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\x8a\x05\n" +
 	"\tSuiteCell\x12\x19\n" +
 	"\x02id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\x12\x1c\n" +
 	"\x04name\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\xff\x01R\x04name\x12\x18\n" +
@@ -634,8 +635,8 @@ const file_cloud_v1_domain_suite_proto_rawDesc = "" +
 	"PresetPair\x12+\n" +
 	"\fdb_preset_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\n" +
 	"dbPresetId\x127\n" +
-	"\x12workload_preset_id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x10workloadPresetIdB\r\n" +
-	"\x06source\x12\x03\xf8B\x01\"\xf2\x03\n" +
+	"\x12workload_preset_id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x10workloadPresetIdB\x13\n" +
+	"\x06source\x12\t\xf8B\x01\xf2\xa7\x1d\x02\b\x03\"\xf2\x03\n" +
 	"\x05Suite\x12\x19\n" +
 	"\x02id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\x12=\n" +
 	"\x05cells\x18\x02 \x03(\v2\x1a.cloud.v1.domain.SuiteCellB\v\xfaB\b\x92\x01\x05\b\x01\x10\xe8\aR\x05cells\x12E\n" +

@@ -19,6 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	SystemSettingsService_GetPublicConfig_FullMethodName      = "/cloud.v1.api.SystemSettingsService/GetPublicConfig"
 	SystemSettingsService_GetSystemSettings_FullMethodName    = "/cloud.v1.api.SystemSettingsService/GetSystemSettings"
 	SystemSettingsService_UpdateSystemSettings_FullMethodName = "/cloud.v1.api.SystemSettingsService/UpdateSystemSettings"
 )
@@ -28,8 +29,11 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
 // SystemSettingsService manages the global, singleton control-plane settings.
-// Admin-only on both read and write.
+// Admin-only on both read and write, EXCEPT GetPublicConfig which is public.
 type SystemSettingsServiceClient interface {
+	// GetPublicConfig reads the public-safe flags with no auth, for the
+	// pre-login UI. Read-only.
+	GetPublicConfig(ctx context.Context, in *GetPublicConfigRequest, opts ...grpc.CallOption) (*GetPublicConfigResponse, error)
 	// GetSystemSettings reads the singleton platform settings. Admin-only,
 	// read-only.
 	GetSystemSettings(ctx context.Context, in *GetSystemSettingsRequest, opts ...grpc.CallOption) (*GetSystemSettingsResponse, error)
@@ -44,6 +48,16 @@ type systemSettingsServiceClient struct {
 
 func NewSystemSettingsServiceClient(cc grpc.ClientConnInterface) SystemSettingsServiceClient {
 	return &systemSettingsServiceClient{cc}
+}
+
+func (c *systemSettingsServiceClient) GetPublicConfig(ctx context.Context, in *GetPublicConfigRequest, opts ...grpc.CallOption) (*GetPublicConfigResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetPublicConfigResponse)
+	err := c.cc.Invoke(ctx, SystemSettingsService_GetPublicConfig_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *systemSettingsServiceClient) GetSystemSettings(ctx context.Context, in *GetSystemSettingsRequest, opts ...grpc.CallOption) (*GetSystemSettingsResponse, error) {
@@ -71,8 +85,11 @@ func (c *systemSettingsServiceClient) UpdateSystemSettings(ctx context.Context, 
 // for forward compatibility.
 //
 // SystemSettingsService manages the global, singleton control-plane settings.
-// Admin-only on both read and write.
+// Admin-only on both read and write, EXCEPT GetPublicConfig which is public.
 type SystemSettingsServiceServer interface {
+	// GetPublicConfig reads the public-safe flags with no auth, for the
+	// pre-login UI. Read-only.
+	GetPublicConfig(context.Context, *GetPublicConfigRequest) (*GetPublicConfigResponse, error)
 	// GetSystemSettings reads the singleton platform settings. Admin-only,
 	// read-only.
 	GetSystemSettings(context.Context, *GetSystemSettingsRequest) (*GetSystemSettingsResponse, error)
@@ -89,6 +106,9 @@ type SystemSettingsServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedSystemSettingsServiceServer struct{}
 
+func (UnimplementedSystemSettingsServiceServer) GetPublicConfig(context.Context, *GetPublicConfigRequest) (*GetPublicConfigResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetPublicConfig not implemented")
+}
 func (UnimplementedSystemSettingsServiceServer) GetSystemSettings(context.Context, *GetSystemSettingsRequest) (*GetSystemSettingsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetSystemSettings not implemented")
 }
@@ -114,6 +134,24 @@ func RegisterSystemSettingsServiceServer(s grpc.ServiceRegistrar, srv SystemSett
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&SystemSettingsService_ServiceDesc, srv)
+}
+
+func _SystemSettingsService_GetPublicConfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPublicConfigRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SystemSettingsServiceServer).GetPublicConfig(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SystemSettingsService_GetPublicConfig_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SystemSettingsServiceServer).GetPublicConfig(ctx, req.(*GetPublicConfigRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _SystemSettingsService_GetSystemSettings_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -159,6 +197,10 @@ var SystemSettingsService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "cloud.v1.api.SystemSettingsService",
 	HandlerType: (*SystemSettingsServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetPublicConfig",
+			Handler:    _SystemSettingsService_GetPublicConfig_Handler,
+		},
 		{
 			MethodName: "GetSystemSettings",
 			Handler:    _SystemSettingsService_GetSystemSettings_Handler,

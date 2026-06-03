@@ -6,6 +6,7 @@ import { ConnectError } from "@connectrpc/connect";
 import { iamClient } from "@/services/client";
 import type { SsoButton } from "@/lib/proto/cloud/v1/api/iam_pb";
 import { SSO_PROVIDER_KEY } from "@/pages/SSOCallback";
+import { getPublicConfig } from "@/services/publicConfig";
 
 // Real sign-in screen. Authenticates via IamService.Login (login = nickname OR
 // email + password), then lands on the requested redirect or the root, which
@@ -21,6 +22,8 @@ export function Login() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [ssoButtons, setSsoButtons] = useState<SsoButton[]>([]);
+  // null = unknown yet; default to allowing the link until the instance says no.
+  const [allowRegister, setAllowRegister] = useState(true);
 
   // ListIdentityProviders is PUBLIC — populate the SSO buttons up front.
   useEffect(() => {
@@ -32,6 +35,14 @@ export function Login() {
       })
       .catch(() => {
         /* no providers configured / endpoint unavailable — hide SSO */
+      });
+    // Public instance config — hide self-signup when the admin disabled it.
+    getPublicConfig()
+      .then((cfg) => {
+        if (!cancelled) setAllowRegister(cfg.allowSelfRegistration);
+      })
+      .catch(() => {
+        /* config unavailable — leave the link visible, Register gates again */
       });
     return () => {
       cancelled = true;
@@ -137,9 +148,13 @@ export function Login() {
         </button>
 
         <div className="mt-3 flex items-center justify-between text-xs">
-          <Link to="/register" className="text-primary hover:underline">
-            Create account
-          </Link>
+          {allowRegister ? (
+            <Link to="/register" className="text-primary hover:underline">
+              Create account
+            </Link>
+          ) : (
+            <span />
+          )}
           <Link
             to="/forgot-password"
             className="text-muted-foreground hover:underline"

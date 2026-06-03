@@ -8,6 +8,7 @@ package api
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
@@ -1241,7 +1242,7 @@ var File_cloud_v1_api_suite_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_suite_proto_rawDesc = "" +
 	"\n" +
-	"\x18cloud/v1/api/suite.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a\"cloud/v1/deployment/provider.proto\x1a\x1bcloud/v1/domain/suite.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1bcloud/v1/models/suite.proto\x1a\x17validate/validate.proto\"z\n" +
+	"\x18cloud/v1/api/suite.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a\"cloud/v1/deployment/provider.proto\x1a\x1bcloud/v1/domain/suite.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1bcloud/v1/models/suite.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"z\n" +
 	"\x12CreateSuiteRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12<\n" +
 	"\x05suite\x18\x02 \x01(\v2\x1c.cloud.v1.models.SuiteRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x05suite\"S\n" +
@@ -1251,14 +1252,14 @@ const file_cloud_v1_api_suite_proto_rawDesc = "" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x19\n" +
 	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"P\n" +
 	"\x10GetSuiteResponse\x12<\n" +
-	"\x05suite\x18\x01 \x01(\v2\x1c.cloud.v1.models.SuiteRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x05suite\"\x86\x05\n" +
+	"\x05suite\x18\x01 \x01(\v2\x1c.cloud.v1.models.SuiteRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x05suite\"\x8e\x05\n" +
 	"\x11ListSuitesRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x125\n" +
 	"\x06filter\x18\x02 \x01(\v2\x1d.cloud.v1.common.EntityFilterR\x06filter\x12;\n" +
 	"\tproviders\x18\x03 \x03(\x0e2\x1d.cloud.v1.deployment.ProviderR\tproviders\x12.\n" +
 	"\x10schedule_enabled\x18\x04 \x01(\bH\x00R\x0fscheduleEnabled\x88\x01\x01\x128\n" +
 	"\x04sort\x18\x05 \x01(\v2$.cloud.v1.api.ListSuitesRequest.SortR\x04sort\x12)\n" +
-	"\x04page\x18\x06 \x01(\v2\x15.cloud.v1.common.PageR\x04page\x1a\xaa\x02\n" +
+	"\x04page\x18\x06 \x01(\v2\x15.cloud.v1.common.PageR\x04page\x1a\xb2\x02\n" +
 	"\x04Sort\x12:\n" +
 	"\x06entity\x18\x01 \x01(\x0e2 .cloud.v1.common.EntitySortFieldH\x00R\x06entity\x12?\n" +
 	"\x04kind\x18\x02 \x01(\x0e2).cloud.v1.api.ListSuitesRequest.Sort.KindH\x00R\x04kind\x12\x12\n" +
@@ -1269,8 +1270,8 @@ const file_cloud_v1_api_suite_proto_rawDesc = "" +
 	"\x15KIND_SCHEDULE_ENABLED\x10\x02\x12\x14\n" +
 	"\x10KIND_NEXT_RUN_AT\x10\x03\x12\x14\n" +
 	"\x10KIND_LAST_RUN_AT\x10\x04\x12\x12\n" +
-	"\x0eKIND_RUN_COUNT\x10\x05B\x04\n" +
-	"\x02byB\x13\n" +
+	"\x0eKIND_RUN_COUNT\x10\x05B\f\n" +
+	"\x02by\x12\x06\xf2\xa7\x1d\x02\b\x03B\x13\n" +
 	"\x11_schedule_enabled\"r\n" +
 	"\x12ListSuitesResponse\x124\n" +
 	"\x06suites\x18\x01 \x03(\v2\x1c.cloud.v1.models.SuiteRecordR\x06suites\x12&\n" +
@@ -1301,36 +1302,46 @@ const file_cloud_v1_api_suite_proto_rawDesc = "" +
 	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\x12?\n" +
 	"\bschedule\x18\x03 \x01(\v2\x19.cloud.v1.domain.ScheduleB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bschedule\"X\n" +
 	"\x18SetSuiteScheduleResponse\x12<\n" +
-	"\x05suite\x18\x01 \x01(\v2\x1c.cloud.v1.models.SuiteRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x05suite\"\xcd\x02\n" +
+	"\x05suite\x18\x01 \x01(\v2\x1c.cloud.v1.models.SuiteRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x05suite\"\xd3\x02\n" +
 	"\x11StartSuiteRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12&\n" +
 	"\bsuite_id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@H\x00R\asuiteId\x12.\n" +
 	"\x05suite\x18\x03 \x01(\v2\x16.cloud.v1.domain.SuiteH\x00R\x05suite\x12!\n" +
 	"\fmax_parallel\x18\x04 \x01(\rR\vmaxParallel\x12-\n" +
 	"\x10in_tenant_rating\x18\x05 \x01(\bH\x01R\x0einTenantRating\x88\x01\x01\x12-\n" +
-	"\x10in_global_rating\x18\x06 \x01(\bH\x02R\x0einGlobalRating\x88\x01\x01B\r\n" +
-	"\x06source\x12\x03\xf8B\x01B\x13\n" +
+	"\x10in_global_rating\x18\x06 \x01(\bH\x02R\x0einGlobalRating\x88\x01\x01B\x13\n" +
+	"\x06source\x12\t\xf8B\x01\xf2\xa7\x1d\x02\b\x03B\x13\n" +
 	"\x11_in_tenant_ratingB\x13\n" +
 	"\x11_in_global_rating\"\\\n" +
 	"\x12StartSuiteResponse\x12F\n" +
-	"\tsuite_run\x18\x01 \x01(\v2\x1f.cloud.v1.models.SuiteRunRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bsuiteRun2\x89\a\n" +
-	"\fSuiteService\x12^\n" +
-	"\vCreateSuite\x12 .cloud.v1.api.CreateSuiteRequest\x1a!.cloud.v1.api.CreateSuiteResponse\"\n" +
-	"\x8a\xb5\x18\x06\x12\x04\b\t\x10\x01\x12X\n" +
-	"\bGetSuite\x12\x1d.cloud.v1.api.GetSuiteRequest\x1a\x1e.cloud.v1.api.GetSuiteResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\t\x10\x02\x90\x02\x01\x12^\n" +
+	"\tsuite_run\x18\x01 \x01(\v2\x1f.cloud.v1.models.SuiteRunRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bsuiteRun2\xc3\x0e\n" +
+	"\fSuiteService\x12\xc3\x01\n" +
+	"\vCreateSuite\x12 .cloud.v1.api.CreateSuiteRequest\x1a!.cloud.v1.api.CreateSuiteResponse\"o\x8a\xb5\x18\x06\x12\x04\b\t\x10\x01\xf2\xa7\x1da\x10\x02\x1a\r/create-suite\"\vcreateSuite\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x12\xb7\x01\n" +
+	"\bGetSuite\x12\x1d.cloud.v1.api.GetSuiteRequest\x1a\x1e.cloud.v1.api.GetSuiteResponse\"l\x8a\xb5\x18\x06\x12\x04\b\t\x10\x02\xf2\xa7\x1d[\x10\x01\x1a\n" +
+	"/get-suite\"\bgetSuite\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xc1\x01\n" +
 	"\n" +
-	"ListSuites\x12\x1f.cloud.v1.api.ListSuitesRequest\x1a .cloud.v1.api.ListSuitesResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\t\x10\x05\x90\x02\x01\x12m\n" +
-	"\x0fListSuiteFacets\x12$.cloud.v1.api.ListSuiteFacetsRequest\x1a%.cloud.v1.api.ListSuiteFacetsResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\t\x10\x05\x90\x02\x01\x12a\n" +
-	"\vUpdateSuite\x12 .cloud.v1.api.UpdateSuiteRequest\x1a!.cloud.v1.api.UpdateSuiteResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\t\x10\x03\x90\x02\x02\x12a\n" +
-	"\vDeleteSuite\x12 .cloud.v1.api.DeleteSuiteRequest\x1a!.cloud.v1.api.DeleteSuiteResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\t\x10\x04\x90\x02\x02\x12[\n" +
+	"ListSuites\x12\x1f.cloud.v1.api.ListSuitesRequest\x1a .cloud.v1.api.ListSuitesResponse\"p\x8a\xb5\x18\x06\x12\x04\b\t\x10\x05\xf2\xa7\x1d_\x10\x01\x1a\f/list-suites\"\n" +
+	"listSuites\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xdb\x01\n" +
+	"\x0fListSuiteFacets\x12$.cloud.v1.api.ListSuiteFacetsRequest\x1a%.cloud.v1.api.ListSuiteFacetsResponse\"{\x8a\xb5\x18\x06\x12\x04\b\t\x10\x05\xf2\xa7\x1dj\x10\x01\x1a\x12/list-suite-facets\"\x0flistSuiteFacets\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xc6\x01\n" +
+	"\vUpdateSuite\x12 .cloud.v1.api.UpdateSuiteRequest\x1a!.cloud.v1.api.UpdateSuiteResponse\"r\x8a\xb5\x18\x06\x12\x04\b\t\x10\x03\xf2\xa7\x1da\x10\x02\x1a\r/update-suite\"\vupdateSuite\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xc6\x01\n" +
+	"\vDeleteSuite\x12 .cloud.v1.api.DeleteSuiteRequest\x1a!.cloud.v1.api.DeleteSuiteResponse\"r\x8a\xb5\x18\x06\x12\x04\b\t\x10\x04\xf2\xa7\x1da\x10\x02\x1a\r/delete-suite\"\vdeleteSuite\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xbe\x01\n" +
 	"\n" +
-	"CloneSuite\x12\x1f.cloud.v1.api.CloneSuiteRequest\x1a .cloud.v1.api.CloneSuiteResponse\"\n" +
-	"\x8a\xb5\x18\x06\x12\x04\b\t\x10\x01\x12p\n" +
-	"\x10SetSuiteSchedule\x12%.cloud.v1.api.SetSuiteScheduleRequest\x1a&.cloud.v1.api.SetSuiteScheduleResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\t\x10\x03\x90\x02\x02\x12[\n" +
+	"CloneSuite\x12\x1f.cloud.v1.api.CloneSuiteRequest\x1a .cloud.v1.api.CloneSuiteResponse\"m\x8a\xb5\x18\x06\x12\x04\b\t\x10\x01\xf2\xa7\x1d_\x10\x02\x1a\f/clone-suite\"\n" +
+	"cloneSuite\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x12\xe0\x01\n" +
+	"\x10SetSuiteSchedule\x12%.cloud.v1.api.SetSuiteScheduleRequest\x1a&.cloud.v1.api.SetSuiteScheduleResponse\"}\x8a\xb5\x18\x06\x12\x04\b\t\x10\x03\xf2\xa7\x1dl\x10\x02\x1a\x13/set-suite-schedule\"\x10setSuiteSchedule\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xbe\x01\n" +
 	"\n" +
-	"StartSuite\x12\x1f.cloud.v1.api.StartSuiteRequest\x1a .cloud.v1.api.StartSuiteResponse\"\n" +
-	"\x8a\xb5\x18\x06\x12\x04\b\n" +
-	"\x10\x01BAZ?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
+	"StartSuite\x12\x1f.cloud.v1.api.StartSuiteRequest\x1a .cloud.v1.api.StartSuiteResponse\"m\x8a\xb5\x18\x06\x12\x04\b\n" +
+	"\x10\x01\xf2\xa7\x1d_\x10\x02\x1a\f/start-suite\"\n" +
+	"startSuite\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x1a\x1a\xf2\xa7\x1d\x16\x12\r/api/v1/suite\x1a\x05suiteBG\xf2\xa7\x1d\x02\b\x01Z?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
 
 var (
 	file_cloud_v1_api_suite_proto_rawDescOnce sync.Once

@@ -8,13 +8,14 @@ import type { PlatformSettings, PlatformSettingsJson } from "./admin_pb.ts";
 import { file_cloud_v1_api_admin } from "./admin_pb.ts";
 import { file_cloud_v1_iam_options } from "../iam/options_pb.ts";
 import { file_validate_validate } from "../../../validate/validate_pb.ts";
+import { file_ogen_ogen } from "../../../ogen/ogen_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file cloud/v1/api/system_settings.proto.
  */
 export const file_cloud_v1_api_system_settings: GenFile = /*@__PURE__*/
-  fileDesc("CiJjbG91ZC92MS9hcGkvc3lzdGVtX3NldHRpbmdzLnByb3RvEgxjbG91ZC52MS5hcGkiGgoYR2V0U3lzdGVtU2V0dGluZ3NSZXF1ZXN0IlcKGUdldFN5c3RlbVNldHRpbmdzUmVzcG9uc2USOgoIc2V0dGluZ3MYASABKAsyHi5jbG91ZC52MS5hcGkuUGxhdGZvcm1TZXR0aW5nc0II+kIFigECEAEiWQobVXBkYXRlU3lzdGVtU2V0dGluZ3NSZXF1ZXN0EjoKCHNldHRpbmdzGAEgASgLMh4uY2xvdWQudjEuYXBpLlBsYXRmb3JtU2V0dGluZ3NCCPpCBYoBAhABIloKHFVwZGF0ZVN5c3RlbVNldHRpbmdzUmVzcG9uc2USOgoIc2V0dGluZ3MYASABKAsyHi5jbG91ZC52MS5hcGkuUGxhdGZvcm1TZXR0aW5nc0II+kIFigECEAEyggIKFVN5c3RlbVNldHRpbmdzU2VydmljZRJvChFHZXRTeXN0ZW1TZXR0aW5ncxImLmNsb3VkLnYxLmFwaS5HZXRTeXN0ZW1TZXR0aW5nc1JlcXVlc3QaJy5jbG91ZC52MS5hcGkuR2V0U3lzdGVtU2V0dGluZ3NSZXNwb25zZSIJkAIBirUYAhgBEngKFFVwZGF0ZVN5c3RlbVNldHRpbmdzEikuY2xvdWQudjEuYXBpLlVwZGF0ZVN5c3RlbVNldHRpbmdzUmVxdWVzdBoqLmNsb3VkLnYxLmFwaS5VcGRhdGVTeXN0ZW1TZXR0aW5nc1Jlc3BvbnNlIgmQAgKKtRgCGAFCQVo/Z2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvYXBpYgZwcm90bzM", [file_cloud_v1_api_admin, file_cloud_v1_iam_options, file_validate_validate]);
+  fileDesc("CiJjbG91ZC92MS9hcGkvc3lzdGVtX3NldHRpbmdzLnByb3RvEgxjbG91ZC52MS5hcGkiGgoYR2V0U3lzdGVtU2V0dGluZ3NSZXF1ZXN0IlcKGUdldFN5c3RlbVNldHRpbmdzUmVzcG9uc2USOgoIc2V0dGluZ3MYASABKAsyHi5jbG91ZC52MS5hcGkuUGxhdGZvcm1TZXR0aW5nc0II+kIFigECEAEiWQobVXBkYXRlU3lzdGVtU2V0dGluZ3NSZXF1ZXN0EjoKCHNldHRpbmdzGAEgASgLMh4uY2xvdWQudjEuYXBpLlBsYXRmb3JtU2V0dGluZ3NCCPpCBYoBAhABIloKHFVwZGF0ZVN5c3RlbVNldHRpbmdzUmVzcG9uc2USOgoIc2V0dGluZ3MYASABKAsyHi5jbG91ZC52MS5hcGkuUGxhdGZvcm1TZXR0aW5nc0II+kIFigECEAEiGAoWR2V0UHVibGljQ29uZmlnUmVxdWVzdCJgChdHZXRQdWJsaWNDb25maWdSZXNwb25zZRIfChdhbGxvd19zZWxmX3JlZ2lzdHJhdGlvbhgBIAEoCBIkChxhbGxvd19tZW1iZXJfdGVuYW50X2NyZWF0aW9uGAIgASgIMs8FChVTeXN0ZW1TZXR0aW5nc1NlcnZpY2USzgEKD0dldFB1YmxpY0NvbmZpZxIkLmNsb3VkLnYxLmFwaS5HZXRQdWJsaWNDb25maWdSZXF1ZXN0GiUuY2xvdWQudjEuYXBpLkdldFB1YmxpY0NvbmZpZ1Jlc3BvbnNlIm6QAgGKtRgCCAHypx1hGg4vcHVibGljLWNvbmZpZyIPZ2V0UHVibGljQ29uZmlnsgEHCMgBEgJPS7IBMRIRVW5leHBlY3RlZCBlcnJvci4qHAoaIy9jb21wb25lbnRzL3NjaGVtYXMvRXJyb3IQARLYAQoRR2V0U3lzdGVtU2V0dGluZ3MSJi5jbG91ZC52MS5hcGkuR2V0U3lzdGVtU2V0dGluZ3NSZXF1ZXN0GicuY2xvdWQudjEuYXBpLkdldFN5c3RlbVNldHRpbmdzUmVzcG9uc2UicpACAYq1GAIYAfKnHWUaEC9zeXN0ZW0vc2V0dGluZ3MiEWdldFN5c3RlbVNldHRpbmdzsgEHEgJPSwjIAbIBMRIRVW5leHBlY3RlZCBlcnJvci4qHAoaIy9jb21wb25lbnRzL3NjaGVtYXMvRXJyb3IQARLpAQoUVXBkYXRlU3lzdGVtU2V0dGluZ3MSKS5jbG91ZC52MS5hcGkuVXBkYXRlU3lzdGVtU2V0dGluZ3NSZXF1ZXN0GiouY2xvdWQudjEuYXBpLlVwZGF0ZVN5c3RlbVNldHRpbmdzUmVzcG9uc2UiepACAoq1GAIYAfKnHW0aEC9zeXN0ZW0vc2V0dGluZ3MiFHVwZGF0ZVN5c3RlbVNldHRpbmdzogECEAGyAQcIyAESAk9LsgExEhFVbmV4cGVjdGVkIGVycm9yLiocChojL2NvbXBvbmVudHMvc2NoZW1hcy9FcnJvchADGh7ypx0aEgcvYXBpL3YxGg9zeXN0ZW0tc2V0dGluZ3NCR1o/Z2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvYXBp8qcdAggBYgZwcm90bzM", [file_cloud_v1_api_admin, file_cloud_v1_iam_options, file_validate_validate, file_ogen_ogen]);
 
 /**
  *
@@ -168,12 +169,122 @@ export const UpdateSystemSettingsResponseSchema: GenMessage<UpdateSystemSettings
 
 /**
  *
+ * GetPublicConfigRequest takes no arguments: it reads the public-safe subset of
+ * the singleton settings, with NO authentication. It exists so the sign-in /
+ * sign-up screens (which run before any token exists) can learn whether open
+ * self-registration and member tenant creation are enabled, and hide the
+ * affordances up front instead of only failing on submit.
+ *
+ * @generated from message cloud.v1.api.GetPublicConfigRequest
+ */
+export type GetPublicConfigRequest = Message<"cloud.v1.api.GetPublicConfigRequest"> & {
+};
+
+/**
+ *
+ * GetPublicConfigRequest takes no arguments: it reads the public-safe subset of
+ * the singleton settings, with NO authentication. It exists so the sign-in /
+ * sign-up screens (which run before any token exists) can learn whether open
+ * self-registration and member tenant creation are enabled, and hide the
+ * affordances up front instead of only failing on submit.
+ *
+ * @generated from message cloud.v1.api.GetPublicConfigRequest
+ */
+export type GetPublicConfigRequestJson = {
+};
+
+export type GetPublicConfigRequestValid = GetPublicConfigRequest;
+
+/**
+ * Describes the message cloud.v1.api.GetPublicConfigRequest.
+ * Use `create(GetPublicConfigRequestSchema)` to create a new message.
+ */
+export const GetPublicConfigRequestSchema: GenMessage<GetPublicConfigRequest, {jsonType: GetPublicConfigRequestJson, validType: GetPublicConfigRequestValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_system_settings, 4);
+
+/**
+ *
+ * GetPublicConfigResponse returns only the non-sensitive flags safe to expose
+ * to an unauthenticated caller — never server_addr or any internal config.
+ *
+ * @generated from message cloud.v1.api.GetPublicConfigResponse
+ */
+export type GetPublicConfigResponse = Message<"cloud.v1.api.GetPublicConfigResponse"> & {
+  /**
+   *
+   * allow_self_registration mirrors PlatformSettings.allow_self_registration:
+   * when false the public Register endpoint is closed.
+   *
+   * @generated from field: bool allow_self_registration = 1;
+   */
+  allowSelfRegistration: boolean;
+
+  /**
+   *
+   * allow_member_tenant_creation mirrors
+   * PlatformSettings.allow_member_tenant_creation.
+   *
+   * @generated from field: bool allow_member_tenant_creation = 2;
+   */
+  allowMemberTenantCreation: boolean;
+};
+
+/**
+ *
+ * GetPublicConfigResponse returns only the non-sensitive flags safe to expose
+ * to an unauthenticated caller — never server_addr or any internal config.
+ *
+ * @generated from message cloud.v1.api.GetPublicConfigResponse
+ */
+export type GetPublicConfigResponseJson = {
+  /**
+   *
+   * allow_self_registration mirrors PlatformSettings.allow_self_registration:
+   * when false the public Register endpoint is closed.
+   *
+   * @generated from field: bool allow_self_registration = 1;
+   */
+  allowSelfRegistration?: boolean;
+
+  /**
+   *
+   * allow_member_tenant_creation mirrors
+   * PlatformSettings.allow_member_tenant_creation.
+   *
+   * @generated from field: bool allow_member_tenant_creation = 2;
+   */
+  allowMemberTenantCreation?: boolean;
+};
+
+export type GetPublicConfigResponseValid = GetPublicConfigResponse;
+
+/**
+ * Describes the message cloud.v1.api.GetPublicConfigResponse.
+ * Use `create(GetPublicConfigResponseSchema)` to create a new message.
+ */
+export const GetPublicConfigResponseSchema: GenMessage<GetPublicConfigResponse, {jsonType: GetPublicConfigResponseJson, validType: GetPublicConfigResponseValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_system_settings, 5);
+
+/**
+ *
  * SystemSettingsService manages the global, singleton control-plane settings.
- * Admin-only on both read and write.
+ * Admin-only on both read and write, EXCEPT GetPublicConfig which is public.
  *
  * @generated from service cloud.v1.api.SystemSettingsService
  */
 export const SystemSettingsService: GenService<{
+  /**
+   *
+   * GetPublicConfig reads the public-safe flags with no auth, for the
+   * pre-login UI. Read-only.
+   *
+   * @generated from rpc cloud.v1.api.SystemSettingsService.GetPublicConfig
+   */
+  getPublicConfig: {
+    methodKind: "unary";
+    input: typeof GetPublicConfigRequestSchema;
+    output: typeof GetPublicConfigResponseSchema;
+  },
   /**
    *
    * GetSystemSettings reads the singleton platform settings. Admin-only,

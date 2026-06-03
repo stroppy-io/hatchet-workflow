@@ -8,6 +8,7 @@ package api
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	_ "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
@@ -658,7 +659,7 @@ var File_cloud_v1_api_package_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_package_proto_rawDesc = "" +
 	"\n" +
-	"\x1acloud/v1/api/package.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1dcloud/v1/models/package.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\x9a\x03\n" +
+	"\x1acloud/v1/api/package.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1dcloud/v1/models/package.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\x9a\x03\n" +
 	"\x1aCreatePackageUploadRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x1e\n" +
 	"\x04name\x18\x02 \x01(\tB\n" +
@@ -701,15 +702,20 @@ const file_cloud_v1_api_package_proto_rawDesc = "" +
 	"\x14DeletePackageRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x19\n" +
 	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"\x17\n" +
-	"\x15DeletePackageResponse2\xa3\x04\n" +
-	"\x0ePackageService\x12v\n" +
-	"\x13CreatePackageUpload\x12(.cloud.v1.api.CreatePackageUploadRequest\x1a).cloud.v1.api.CreatePackageUploadResponse\"\n" +
-	"\x8a\xb5\x18\x06\x12\x04\b\x0e\x10\x01\x12j\n" +
-	"\x0eCompleteUpload\x12#.cloud.v1.api.CompleteUploadRequest\x1a$.cloud.v1.api.CompleteUploadResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x0e\x10\x03\x90\x02\x02\x12^\n" +
+	"\x15DeletePackageResponse2\xdd\b\n" +
+	"\x0ePackageService\x12\xed\x01\n" +
+	"\x13CreatePackageUpload\x12(.cloud.v1.api.CreatePackageUploadRequest\x1a).cloud.v1.api.CreatePackageUploadResponse\"\x80\x01\x8a\xb5\x18\x06\x12\x04\b\x0e\x10\x01\xf2\xa7\x1dr\x10\x02\x1a\x16/create-package-upload\"\x13createPackageUpload\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x12\xd5\x01\n" +
+	"\x0eCompleteUpload\x12#.cloud.v1.api.CompleteUploadRequest\x1a$.cloud.v1.api.CompleteUploadResponse\"x\x8a\xb5\x18\x06\x12\x04\b\x0e\x10\x03\xf2\xa7\x1dg\x10\x02\x1a\x10/complete-upload\"\x0ecompleteUpload\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xc1\x01\n" +
 	"\n" +
-	"GetPackage\x12\x1f.cloud.v1.api.GetPackageRequest\x1a .cloud.v1.api.GetPackageResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x0e\x10\x02\x90\x02\x01\x12d\n" +
-	"\fListPackages\x12!.cloud.v1.api.ListPackagesRequest\x1a\".cloud.v1.api.ListPackagesResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x0e\x10\x05\x90\x02\x01\x12g\n" +
-	"\rDeletePackage\x12\".cloud.v1.api.DeletePackageRequest\x1a#.cloud.v1.api.DeletePackageResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\x0e\x10\x04\x90\x02\x02BAZ?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
+	"GetPackage\x12\x1f.cloud.v1.api.GetPackageRequest\x1a .cloud.v1.api.GetPackageResponse\"p\x8a\xb5\x18\x06\x12\x04\b\x0e\x10\x02\xf2\xa7\x1d_\x10\x01\x1a\f/get-package\"\n" +
+	"getPackage\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xcb\x01\n" +
+	"\fListPackages\x12!.cloud.v1.api.ListPackagesRequest\x1a\".cloud.v1.api.ListPackagesResponse\"t\x8a\xb5\x18\x06\x12\x04\b\x0e\x10\x05\xf2\xa7\x1dc\x10\x01\x1a\x0e/list-packages\"\flistPackages\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xd0\x01\n" +
+	"\rDeletePackage\x12\".cloud.v1.api.DeletePackageRequest\x1a#.cloud.v1.api.DeletePackageResponse\"v\x8a\xb5\x18\x06\x12\x04\b\x0e\x10\x04\xf2\xa7\x1de\x10\x02\x1a\x0f/delete-package\"\rdeletePackage\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x1a\x1e\xf2\xa7\x1d\x1a\x12\x0f/api/v1/package\x1a\apackageBG\xf2\xa7\x1d\x02\b\x01Z?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
 
 var (
 	file_cloud_v1_api_package_proto_rawDescOnce sync.Once

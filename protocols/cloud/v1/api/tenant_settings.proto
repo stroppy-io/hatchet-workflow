@@ -8,7 +8,11 @@ import "cloud/v1/models/tenant_settings.proto";
 import "google/protobuf/empty.proto";
 import "validate/validate.proto";
 
+import "ogen/ogen.proto";
+
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+option (ogen.file) = { generate_openapi: true };
 
 /*
     tenant_settings.proto manages the per-tenant settings (models.TenantSettingsRecord,
@@ -83,10 +87,34 @@ message SetTenantProviderSettingsRequest {
     per-tenant settings and provider configs.
  */
 service TenantSettingsService {
+    option (ogen.service) = {
+        path_prefix: "/api/v1/tenant-settings"
+        tags: "tenant-settings"
+    };
+
     /*
         GetTenantSettings fetches the tenant's settings. Read-only.
      */
     rpc GetTenantSettings (GetTenantSettingsRequest) returns (GetTenantSettingsResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/get-tenant-settings"
+            operation_id: "getTenantSettings"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SETTINGS, action: ACTION_READ}]};
     }
@@ -94,6 +122,25 @@ service TenantSettingsService {
         UpdateTenantSettings is idempotent: a wholesale field set converges on retry.
      */
     rpc UpdateTenantSettings (UpdateTenantSettingsRequest) returns (UpdateTenantSettingsResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/update-tenant-settings"
+            operation_id: "updateTenantSettings"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SETTINGS, action: ACTION_UPDATE}]};
     }
@@ -102,6 +149,25 @@ service TenantSettingsService {
         converges.
      */
     rpc SetTenantProviderSettings (SetTenantProviderSettingsRequest) returns (google.protobuf.Empty) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/set-tenant-provider-settings"
+            operation_id: "setTenantProviderSettings"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
         option idempotency_level = IDEMPOTENT;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_SETTINGS, action: ACTION_UPDATE}]};
     }

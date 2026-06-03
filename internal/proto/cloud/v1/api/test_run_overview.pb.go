@@ -8,6 +8,7 @@ package api
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
 	_ "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	monitor "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
@@ -909,7 +910,7 @@ var File_cloud_v1_api_test_run_overview_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_test_run_overview_proto_rawDesc = "" +
 	"\n" +
-	"$cloud/v1/api/test_run_overview.proto\x12\fcloud.v1.api\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1bcloud/v1/models/suite.proto\x1a\x1ecloud/v1/models/test_run.proto\x1a\x1bcloud/v1/monitor/logs.proto\x1a\x1ecloud/v1/monitor/metrics.proto\x1a\x1fcloud/v1/monitor/overview.proto\x1a cloud/v1/topology/topology.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\xd7\x03\n" +
+	"$cloud/v1/api/test_run_overview.proto\x12\fcloud.v1.api\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1bcloud/v1/models/suite.proto\x1a\x1ecloud/v1/models/test_run.proto\x1a\x1bcloud/v1/monitor/logs.proto\x1a\x1ecloud/v1/monitor/metrics.proto\x1a\x1fcloud/v1/monitor/overview.proto\x1a cloud/v1/topology/topology.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\xd7\x03\n" +
 	"\tLogFilter\x12>\n" +
 	"\x12node_execution_ids\x18\x01 \x03(\tB\x10\xfaB\r\x92\x01\n" +
 	"\x10\x80\x02\"\x05r\x03\x18\x80\x01R\x10nodeExecutionIds\x125\n" +
@@ -974,17 +975,23 @@ const file_cloud_v1_api_test_run_overview_proto_rawDesc = "" +
 	"\x12LogScrollDirection\x12$\n" +
 	" LOG_SCROLL_DIRECTION_UNSPECIFIED\x10\x00\x12\x1e\n" +
 	"\x1aLOG_SCROLL_DIRECTION_OLDER\x10\x01\x12\x1e\n" +
-	"\x1aLOG_SCROLL_DIRECTION_NEWER\x10\x022\x91\x05\n" +
-	"\x16TestRunOverviewService\x12v\n" +
-	"\x12GetTestRunOverview\x12'.cloud.v1.api.GetTestRunOverviewRequest\x1a(.cloud.v1.api.GetTestRunOverviewResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\b\x10\x02\x90\x02\x01\x12x\n" +
-	"\x15StreamTestRunOverview\x12*.cloud.v1.api.StreamTestRunOverviewRequest\x1a%.cloud.v1.api.TestRunOverviewSnapshot\"\n" +
-	"\x8a\xb5\x18\x06\x12\x04\b\b\x10\x020\x01\x12[\n" +
-	"\tQueryLogs\x12\x1e.cloud.v1.api.QueryLogsRequest\x1a\x1f.cloud.v1.api.QueryLogsResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\b\x10\x02\x90\x02\x01\x12V\n" +
+	"\x1aLOG_SCROLL_DIRECTION_NEWER\x10\x022\xd5\n" +
 	"\n" +
-	"StreamLogs\x12\x1f.cloud.v1.api.StreamLogsRequest\x1a\x19.cloud.v1.monitor.LogLine\"\n" +
-	"\x8a\xb5\x18\x06\x12\x04\b\b\x10\x020\x01\x12g\n" +
-	"\rResolveLogRef\x12\".cloud.v1.api.ResolveLogRefRequest\x1a#.cloud.v1.api.ResolveLogRefResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\b\x10\x02\x90\x02\x01\x12g\n" +
-	"\rGetRunMetrics\x12\".cloud.v1.api.GetRunMetricsRequest\x1a#.cloud.v1.api.GetRunMetricsResponse\"\r\x8a\xb5\x18\x06\x12\x04\b\b\x10\x02\x90\x02\x01BAZ?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
+	"\x16TestRunOverviewService\x12\xec\x01\n" +
+	"\x12GetTestRunOverview\x12'.cloud.v1.api.GetTestRunOverviewRequest\x1a(.cloud.v1.api.GetTestRunOverviewResponse\"\x82\x01\x8a\xb5\x18\x06\x12\x04\b\b\x10\x02\xf2\xa7\x1dq\x10\x01\x1a\x16/get-test-run-overview\"\x12getTestRunOverview\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xf4\x01\n" +
+	"\x15StreamTestRunOverview\x12*.cloud.v1.api.StreamTestRunOverviewRequest\x1a%.cloud.v1.api.TestRunOverviewSnapshot\"\x85\x01\x8a\xb5\x18\x06\x12\x04\b\b\x10\x02\xf2\xa7\x1dw\x10\x02\x1a\x19/stream-test-run-overview\"\x15streamTestRunOverview\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error0\x01\x12\xbc\x01\n" +
+	"\tQueryLogs\x12\x1e.cloud.v1.api.QueryLogsRequest\x1a\x1f.cloud.v1.api.QueryLogsResponse\"n\x8a\xb5\x18\x06\x12\x04\b\b\x10\x02\xf2\xa7\x1d]\x10\x01\x1a\v/query-logs\"\tqueryLogs\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xb9\x01\n" +
+	"\n" +
+	"StreamLogs\x12\x1f.cloud.v1.api.StreamLogsRequest\x1a\x19.cloud.v1.monitor.LogLine\"m\x8a\xb5\x18\x06\x12\x04\b\b\x10\x02\xf2\xa7\x1d_\x10\x02\x1a\f/stream-logs\"\n" +
+	"streamLogs\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error0\x01\x12\xd1\x01\n" +
+	"\rResolveLogRef\x12\".cloud.v1.api.ResolveLogRefRequest\x1a#.cloud.v1.api.ResolveLogRefResponse\"w\x8a\xb5\x18\x06\x12\x04\b\b\x10\x02\xf2\xa7\x1df\x10\x01\x1a\x10/resolve-log-ref\"\rresolveLogRef\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xd1\x01\n" +
+	"\rGetRunMetrics\x12\".cloud.v1.api.GetRunMetricsRequest\x1a#.cloud.v1.api.GetRunMetricsResponse\"w\x8a\xb5\x18\x06\x12\x04\b\b\x10\x02\xf2\xa7\x1df\x10\x01\x1a\x10/get-run-metrics\"\rgetRunMetrics\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x1a2\xf2\xa7\x1d.\x12\x19/api/v1/test-run-overview\x1a\x11test-run-overviewBG\xf2\xa7\x1d\x02\b\x01Z?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
 
 var (
 	file_cloud_v1_api_test_run_overview_proto_rawDescOnce sync.Once

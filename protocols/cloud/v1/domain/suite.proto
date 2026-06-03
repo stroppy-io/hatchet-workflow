@@ -8,6 +8,7 @@ import "cloud/v1/deployment/provider.proto";
 import "cloud/v1/deployment/render.proto";
 import "cloud/v1/domain/test.proto";
 import "validate/validate.proto";
+import "ogen/ogen.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain";
 
@@ -62,6 +63,7 @@ message SuiteCell {
         source selects how the test definition for this cell is obtained.
      */
     oneof source {
+        option (ogen.oneof) = { schema_mode: ONEOF_SCHEMA_MODE_OBJECT };
         option (validate.required) = true;
         /*
             preset_pair expands database preset x workload preset.

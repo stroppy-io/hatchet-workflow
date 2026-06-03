@@ -24,6 +24,7 @@ import { Favorites } from "@/pages/Favorites";
 import { Compare } from "@/pages/Compare";
 import { Shares } from "@/pages/Shares";
 import { SharedRun } from "@/pages/SharedRun";
+import { Landing } from "@/pages/Landing";
 import { Leaderboard } from "@/pages/Leaderboard";
 import { Shell } from "@/pages/Shell";
 import { DatabasePresets } from "@/pages/library/DatabasePresets";
@@ -63,6 +64,14 @@ function RootRedirect() {
   return <Navigate to="/orgs" replace />;
 }
 
+// "/" — public landing for visitors; authenticated users skip straight to their
+// first org dashboard (RootRedirect handles the signed-in routing).
+function RootEntry() {
+  const { user } = useAuth();
+  if (!user) return <Landing />;
+  return <RootRedirect />;
+}
+
 export default function App() {
   const { isLoading } = useAuth();
 
@@ -71,6 +80,9 @@ export default function App() {
   return (
     <BreadcrumbProvider>
       <Routes>
+        {/* Public landing at root (unauthenticated). */}
+        <Route path="/" element={<RootEntry />} />
+
         <Route path="/login" element={<Login />} />
 
         {/* Public auth flows (outside RequireAuth, next to /login). */}

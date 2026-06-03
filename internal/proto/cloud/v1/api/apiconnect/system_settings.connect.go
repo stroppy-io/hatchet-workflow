@@ -33,6 +33,9 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// SystemSettingsServiceGetPublicConfigProcedure is the fully-qualified name of the
+	// SystemSettingsService's GetPublicConfig RPC.
+	SystemSettingsServiceGetPublicConfigProcedure = "/cloud.v1.api.SystemSettingsService/GetPublicConfig"
 	// SystemSettingsServiceGetSystemSettingsProcedure is the fully-qualified name of the
 	// SystemSettingsService's GetSystemSettings RPC.
 	SystemSettingsServiceGetSystemSettingsProcedure = "/cloud.v1.api.SystemSettingsService/GetSystemSettings"
@@ -43,6 +46,9 @@ const (
 
 // SystemSettingsServiceClient is a client for the cloud.v1.api.SystemSettingsService service.
 type SystemSettingsServiceClient interface {
+	// GetPublicConfig reads the public-safe flags with no auth, for the
+	// pre-login UI. Read-only.
+	GetPublicConfig(context.Context, *api.GetPublicConfigRequest) (*api.GetPublicConfigResponse, error)
 	// GetSystemSettings reads the singleton platform settings. Admin-only,
 	// read-only.
 	GetSystemSettings(context.Context, *api.GetSystemSettingsRequest) (*api.GetSystemSettingsResponse, error)
@@ -62,6 +68,13 @@ func NewSystemSettingsServiceClient(httpClient connect.HTTPClient, baseURL strin
 	baseURL = strings.TrimRight(baseURL, "/")
 	systemSettingsServiceMethods := api.File_cloud_v1_api_system_settings_proto.Services().ByName("SystemSettingsService").Methods()
 	return &systemSettingsServiceClient{
+		getPublicConfig: connect.NewClient[api.GetPublicConfigRequest, api.GetPublicConfigResponse](
+			httpClient,
+			baseURL+SystemSettingsServiceGetPublicConfigProcedure,
+			connect.WithSchema(systemSettingsServiceMethods.ByName("GetPublicConfig")),
+			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+			connect.WithClientOptions(opts...),
+		),
 		getSystemSettings: connect.NewClient[api.GetSystemSettingsRequest, api.GetSystemSettingsResponse](
 			httpClient,
 			baseURL+SystemSettingsServiceGetSystemSettingsProcedure,
@@ -81,8 +94,18 @@ func NewSystemSettingsServiceClient(httpClient connect.HTTPClient, baseURL strin
 
 // systemSettingsServiceClient implements SystemSettingsServiceClient.
 type systemSettingsServiceClient struct {
+	getPublicConfig      *connect.Client[api.GetPublicConfigRequest, api.GetPublicConfigResponse]
 	getSystemSettings    *connect.Client[api.GetSystemSettingsRequest, api.GetSystemSettingsResponse]
 	updateSystemSettings *connect.Client[api.UpdateSystemSettingsRequest, api.UpdateSystemSettingsResponse]
+}
+
+// GetPublicConfig calls cloud.v1.api.SystemSettingsService.GetPublicConfig.
+func (c *systemSettingsServiceClient) GetPublicConfig(ctx context.Context, req *api.GetPublicConfigRequest) (*api.GetPublicConfigResponse, error) {
+	response, err := c.getPublicConfig.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // GetSystemSettings calls cloud.v1.api.SystemSettingsService.GetSystemSettings.
@@ -106,6 +129,9 @@ func (c *systemSettingsServiceClient) UpdateSystemSettings(ctx context.Context, 
 // SystemSettingsServiceHandler is an implementation of the cloud.v1.api.SystemSettingsService
 // service.
 type SystemSettingsServiceHandler interface {
+	// GetPublicConfig reads the public-safe flags with no auth, for the
+	// pre-login UI. Read-only.
+	GetPublicConfig(context.Context, *api.GetPublicConfigRequest) (*api.GetPublicConfigResponse, error)
 	// GetSystemSettings reads the singleton platform settings. Admin-only,
 	// read-only.
 	GetSystemSettings(context.Context, *api.GetSystemSettingsRequest) (*api.GetSystemSettingsResponse, error)
@@ -121,6 +147,13 @@ type SystemSettingsServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewSystemSettingsServiceHandler(svc SystemSettingsServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	systemSettingsServiceMethods := api.File_cloud_v1_api_system_settings_proto.Services().ByName("SystemSettingsService").Methods()
+	systemSettingsServiceGetPublicConfigHandler := connect.NewUnaryHandlerSimple(
+		SystemSettingsServiceGetPublicConfigProcedure,
+		svc.GetPublicConfig,
+		connect.WithSchema(systemSettingsServiceMethods.ByName("GetPublicConfig")),
+		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+		connect.WithHandlerOptions(opts...),
+	)
 	systemSettingsServiceGetSystemSettingsHandler := connect.NewUnaryHandlerSimple(
 		SystemSettingsServiceGetSystemSettingsProcedure,
 		svc.GetSystemSettings,
@@ -137,6 +170,8 @@ func NewSystemSettingsServiceHandler(svc SystemSettingsServiceHandler, opts ...c
 	)
 	return "/cloud.v1.api.SystemSettingsService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case SystemSettingsServiceGetPublicConfigProcedure:
+			systemSettingsServiceGetPublicConfigHandler.ServeHTTP(w, r)
 		case SystemSettingsServiceGetSystemSettingsProcedure:
 			systemSettingsServiceGetSystemSettingsHandler.ServeHTTP(w, r)
 		case SystemSettingsServiceUpdateSystemSettingsProcedure:
@@ -149,6 +184,10 @@ func NewSystemSettingsServiceHandler(svc SystemSettingsServiceHandler, opts ...c
 
 // UnimplementedSystemSettingsServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedSystemSettingsServiceHandler struct{}
+
+func (UnimplementedSystemSettingsServiceHandler) GetPublicConfig(context.Context, *api.GetPublicConfigRequest) (*api.GetPublicConfigResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.SystemSettingsService.GetPublicConfig is not implemented"))
+}
 
 func (UnimplementedSystemSettingsServiceHandler) GetSystemSettings(context.Context, *api.GetSystemSettingsRequest) (*api.GetSystemSettingsResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.SystemSettingsService.GetSystemSettings is not implemented"))

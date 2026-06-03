@@ -8,13 +8,14 @@ import type { Docker_Settings, Docker_SettingsJson } from "./docker_pb.ts";
 import { file_cloud_v1_deployment_docker } from "./docker_pb.ts";
 import type { Yandex_Settings, Yandex_SettingsJson } from "./yandex_pb.ts";
 import { file_cloud_v1_deployment_yandex } from "./yandex_pb.ts";
+import { file_ogen_ogen } from "../../../ogen/ogen_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file cloud/v1/deployment/provider.proto.
  */
 export const file_cloud_v1_deployment_provider: GenFile = /*@__PURE__*/
-  fileDesc("CiJjbG91ZC92MS9kZXBsb3ltZW50L3Byb3ZpZGVyLnByb3RvEhNjbG91ZC52MS5kZXBsb3ltZW50Io4BChBQcm92aWRlclNldHRpbmdzEjYKBmRvY2tlchgBIAEoCzIkLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLlNldHRpbmdzSAASNgoGeWFuZGV4GAIgASgLMiQuY2xvdWQudjEuZGVwbG95bWVudC5ZYW5kZXguU2V0dGluZ3NIAEIKCghzZXR0aW5ncypOCghQcm92aWRlchIYChRQUk9WSURFUl9VTlNQRUNJRklFRBAAEhMKD1BST1ZJREVSX0RPQ0tFUhABEhMKD1BST1ZJREVSX1lBTkRFWBACQkhaRmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2RlcGxveW1lbnRiBnByb3RvMw", [file_cloud_v1_deployment_docker, file_cloud_v1_deployment_yandex]);
+  fileDesc("CiJjbG91ZC92MS9kZXBsb3ltZW50L3Byb3ZpZGVyLnByb3RvEhNjbG91ZC52MS5kZXBsb3ltZW50IpYBChBQcm92aWRlclNldHRpbmdzEjYKBmRvY2tlchgBIAEoCzIkLmNsb3VkLnYxLmRlcGxveW1lbnQuRG9ja2VyLlNldHRpbmdzSAASNgoGeWFuZGV4GAIgASgLMiQuY2xvdWQudjEuZGVwbG95bWVudC5ZYW5kZXguU2V0dGluZ3NIAEISCghzZXR0aW5ncxIG8qcdAggDKk4KCFByb3ZpZGVyEhgKFFBST1ZJREVSX1VOU1BFQ0lGSUVEEAASEwoPUFJPVklERVJfRE9DS0VSEAESEwoPUFJPVklERVJfWUFOREVYEAJCSFpGZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvZGVwbG95bWVudGIGcHJvdG8z", [file_cloud_v1_deployment_docker, file_cloud_v1_deployment_yandex, file_ogen_ogen]);
 
 /**
  * @generated from message cloud.v1.deployment.ProviderSettings

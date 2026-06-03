@@ -10,6 +10,7 @@ import "cloud/v1/monitor/metrics.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 import "validate/validate.proto";
+import "ogen/ogen.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models";
 
@@ -109,6 +110,7 @@ message ShareRecord {
             test-run view or a suite-run view.
          */
         oneof view {
+            option (ogen.oneof) = { schema_mode: ONEOF_SCHEMA_MODE_OBJECT };
             /*
                 test_run is the limited projection for a single test run.
              */

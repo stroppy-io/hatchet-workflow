@@ -28,6 +28,25 @@ func (s *SystemSettingsService) GetSystemSettings(ctx context.Context, _ *api.Ge
 	return &api.GetSystemSettingsResponse{Settings: settings}, nil
 }
 
+// GetPublicConfig returns the public-safe subset of the singleton settings with
+// NO authentication (the proto marks it public, the interceptor skips auth). It
+// powers the pre-login UI so sign-up/sign-in can hide closed affordances up
+// front. On a fresh install the row is absent (derrors.ErrNotFound) and we
+// return the safe defaults (everything false). Never expose server_addr here.
+func (s *SystemSettingsService) GetPublicConfig(ctx context.Context, _ *api.GetPublicConfigRequest) (*api.GetPublicConfigResponse, error) {
+	settings, err := s.d.Settings.Get(ctx)
+	if errors.Is(err, derrors.ErrNotFound) {
+		return &api.GetPublicConfigResponse{}, nil
+	}
+	if err != nil {
+		return nil, utils.MapErr(err)
+	}
+	return &api.GetPublicConfigResponse{
+		AllowSelfRegistration:     settings.GetAllowSelfRegistration(),
+		AllowMemberTenantCreation: settings.GetAllowMemberTenantCreation(),
+	}, nil
+}
+
 // UpdateSystemSettings replaces the singleton wholesale. admin_only and
 // IDEMPOTENT per the proto: re-sending the same payload yields the same row, so
 // Set is an upsert of the single row and the response echoes the stored value.
