@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	deploymentbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/deployment"
 	infrastructurebuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/infrastructure"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
@@ -29,6 +30,16 @@ func TestBuildRunConfigUsesSettingsSource(t *testing.T) {
 	if got, want := cfg.GetAgentBootstrap().GetServerAddr(), "https://control.example"; got != want {
 		t.Fatalf("server addr = %q, want %q", got, want)
 	}
+	labels := cfg.GetTopologySpec().GetLabels()
+	if got, want := labels[deploymentbuilder.LabelServerAddr], "https://control.example"; got != want {
+		t.Fatalf("monitor server label = %q, want %q", got, want)
+	}
+	if got, want := labels[deploymentbuilder.LabelRunID], "run-1"; got != want {
+		t.Fatalf("monitor run label = %q, want %q", got, want)
+	}
+	if _, ok := labels["stroppy.io/monitoring-bearer-token"]; ok {
+		t.Fatalf("monitor token label leaked into topology labels: %#v", labels)
+	}
 }
 
 type fakeSettingsSource struct{}
@@ -40,5 +51,7 @@ func (fakeSettingsSource) ProviderSettings(context.Context, string, deployment.P
 }
 
 func (fakeSettingsSource) AgentBootstrap(context.Context) (*workflowpb.AgentBootstrap, error) {
-	return &workflowpb.AgentBootstrap{ServerAddr: "https://control.example"}, nil
+	return &workflowpb.AgentBootstrap{
+		ServerAddr: "https://control.example",
+	}, nil
 }

@@ -16,6 +16,8 @@ import {
   type PackagesProvider,
   type PackagesQuery,
   type PackageSortField,
+  type PackageUploadInput,
+  type PackageUploadTarget,
 } from "@/services/packages";
 import type {
   DbKind,
@@ -139,6 +141,23 @@ function compare(a: PackageRow, b: PackageRow, sort: PackageSortField | undefine
 
 const DEFAULT_SIZE = 10;
 
+// A believable 64-hex sha256 derived deterministically from a seed, so a
+// completed upload shows a stable, copyable digest in the detail page.
+function fakeSha256(seed: string): string {
+  let h = 0x811c9dc5;
+  const out: string[] = [];
+  for (let i = 0; i < 64; i++) {
+    const c = seed.charCodeAt(i % seed.length) + i * 31;
+    h = (h ^ c) >>> 0;
+    h = (h * 0x01000193) >>> 0;
+    out.push((h & 0xff).toString(16).padStart(2, "0"));
+  }
+  return out.join("").slice(0, 64);
+}
+
+// Monotonic suffix so two uploads of the same name get distinct ids.
+let uploadSeq = 0;
+
 export const mockPackagesProvider: PackagesProvider = {
   async listPackages(tenantSlug: string, query: PackagesQuery): Promise<PackagesPage> {
     await delay();
@@ -155,6 +174,72 @@ export const mockPackagesProvider: PackagesProvider = {
     const nextPageToken = nextOffset < filtered.length ? String(nextOffset) : "";
 
     return { rows: slice, nextPageToken };
+  },
+
+  // PackageService.CreatePackageUpload (mock): mint a pending row (uploading)
+  // and a fake presigned PUT target, and prepend it to the tenant store so it
+  // appears immediately in the Packages list.
+  async createPackageUpload(
+    tenantSlug: string,
+    input: PackageUploadInput,
+  ): Promise<PackageUploadTarget> {
+    await delay();
+    const list = rows(tenantSlug);
+    uploadSeq += 1;
+    const slugName = (input.name || "package")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    const id = `pkg-${slugName || "package"}-${Date.now().toString(36)}${uploadSeq}`;
+    const now = new Date().toISOString();
+    const pending: PackageRow = {
+      id,
+      name: input.name,
+      authorId: "you",
+      format: input.format,
+      version: input.version,
+      dbKind: input.dbKind,
+      os: input.os,
+      arch: input.arch,
+      // size is declared up front; sha256 + storage_uri are filled on complete.
+      sizeBytes: Math.max(0, Math.round(input.fileSize)),
+      sha256: "",
+      storageUri: "",
+      status: "uploading",
+      createdAt: now,
+      updatedAt: now,
+    };
+    list.unshift(pending);
+    const expires = new Date(Date.now() + 15 * 60_000).toISOString();
+    return {
+      pkg: { ...pending },
+      uploadUrl: `https://mock-blob.local/upload/${tenantSlug}/${id}?sig=presigned`,
+      uploadUrlExpiresAt: expires,
+    };
+  },
+
+  // PackageService.CompleteUpload (mock): flip the pending row to READY,
+  // filling size_bytes / sha256 / storage_uri as the server would after
+  // verifying the blob. Idempotent — completing a READY row is a no-op.
+  async completeUpload(tenantSlug: string, id: string): Promise<PackageRow> {
+    await delay();
+    const list = rows(tenantSlug);
+    const row = list.find((r) => r.id === id);
+    if (!row) throw new Error(`package ${id} not found`);
+    if (row.status !== "ready") {
+      row.status = "ready";
+      row.sha256 = fakeSha256(id + row.version + row.name);
+      row.storageUri = `/packages/${id}/download`;
+      row.updatedAt = new Date().toISOString();
+    }
+    return { ...row };
+  },
+
+  // PackageService.GetPackage (mock): return a copy of the row, or null.
+  async getPackage(tenantSlug: string, id: string): Promise<PackageRow | null> {
+    await delay();
+    const row = rows(tenantSlug).find((r) => r.id === id);
+    return row ? { ...row } : null;
   },
 
   // PackageService.DeletePackage (mock): drop the row from its tenant store.

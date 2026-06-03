@@ -34,10 +34,14 @@ type Config struct {
 	// to, so cloud VMs reach monitoring through the one public gateway address.
 	// Empty disables it (those paths 503).
 	MonitoringBackend string
-	// MonitoringToken is the bearer token the gateway injects on every relayed
-	// monitoring request so it authenticates to vmauth on the agent's behalf.
-	// Empty forwards the agent's request unchanged.
+	// MonitoringToken is the backend bearer the gateway injects on relayed
+	// monitoring requests so vmauth authenticates the server-side relay. It is
+	// not accepted as an agent credential.
 	MonitoringToken string
+	// AgentTokens verifies per-agent JWTs on agent-facing ingress: Temporal
+	// proxy and monitoring relay. Empty disables those checks and is intended
+	// only for tests/local unsecured wiring.
+	AgentTokens AgentTokenVerifier
 	// GrafanaBackend is the internal Grafana base URL (e.g. "http://grafana:3001")
 	// the gateway reverse-proxies /grafana/* to, so the embedded dashboards are
 	// served from the SAME server origin — no separate public Grafana URL needed.
@@ -84,7 +88,7 @@ func New(cfg Config) (*Gateway, error) {
 		logger = slog.Default()
 	}
 
-	proxySrv, backend, err := newTemporalProxy(cfg.TemporalHostPort)
+	proxySrv, backend, err := newTemporalProxy(cfg.TemporalHostPort, cfg.AgentTokens)
 	if err != nil {
 		return nil, err
 	}
@@ -100,14 +104,14 @@ func New(cfg Config) (*Gateway, error) {
 		backend:         backend,
 	}
 	if cfg.MonitoringBackend != "" {
-		mp, err := newMonitorProxy(cfg.MonitoringBackend, cfg.MonitoringToken)
+		mp, err := newMonitorProxy(cfg.MonitoringBackend, cfg.MonitoringToken, cfg.AgentTokens)
 		if err != nil {
 			return nil, fmt.Errorf("gateway: monitoring backend %q: %w", cfg.MonitoringBackend, err)
 		}
 		g.monitorProxy = mp
 	}
 	if cfg.GrafanaBackend != "" {
-		gp, err := newMonitorProxy(cfg.GrafanaBackend, "") // same single-host reverse proxy, no bearer
+		gp, err := newMonitorProxy(cfg.GrafanaBackend, "", nil) // same single-host reverse proxy, no bearer
 		if err != nil {
 			return nil, fmt.Errorf("gateway: grafana backend %q: %w", cfg.GrafanaBackend, err)
 		}

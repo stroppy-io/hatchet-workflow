@@ -9,6 +9,8 @@ func TestEnvBuildsProviderIndependentAgentContract(t *testing.T) {
 	env, err := Env("postgres-master", Bootstrap{
 		ServerAddr:        "http://server:8080",
 		TemporalNamespace: "bench",
+		AgentToken:        "agent-jwt",
+		AgentTaskQueue:    "secret-queue-postgres-master",
 		ExtraEnv: map[string]string{
 			"STROPPY_SERVER_ADDR": "http://wrong",
 			"CUSTOM_ENV":          "value",
@@ -24,9 +26,64 @@ func TestEnvBuildsProviderIndependentAgentContract(t *testing.T) {
 		"STROPPY_MACHINE_ID":       "postgres-master",
 		"STROPPY_NODE_ID":          "postgres-master",
 		"AGENT_MACHINE_ID":         "postgres-master",
-		"AGENT_TASK_QUEUE":         "stroppy-agent-postgres-master",
+		"AGENT_TASK_QUEUE":         "secret-queue-postgres-master",
 		"TEMPORAL_NAMESPACE":       "bench",
+		"STROPPY_AGENT_TOKEN":      "agent-jwt",
 		"CUSTOM_ENV":               "value",
+	}
+	for key, want := range checks {
+		if got := env[key]; got != want {
+			t.Fatalf("%s = %q, want %q", key, got, want)
+		}
+	}
+}
+
+func TestEnvDoesNotLeakDirectBackendAddresses(t *testing.T) {
+	env, err := Env("node-1", Bootstrap{
+		ServerAddr: "https://control.stage",
+		ExtraEnv: map[string]string{
+			"APT_BACKEND":              "http://apt:3142",
+			"GRAFANA_BACKEND":          "http://grafana:3000",
+			"MONITORING_TOKEN":         "raw-token",
+			"MONITORING_URL":           "http://vmauth:8427",
+			"STROPPY_MONITORING_TOKEN": "agent-token",
+			"TEMPORAL_HOSTPORT":        "temporal:7233",
+			"TEMPORAL_URL":             "http://temporal:7233",
+			"VICTORIA_LOGS_URL":        "http://victoria-logs:9428",
+			"VICTORIA_METRICS_URL":     "http://victoria-metrics:8428",
+			"VICTORIA_URL":             "http://victoria:8428",
+			"WORKLOAD_CUSTOM_ENV":      "kept",
+			"STROPPY_AGENT_BINARY_URL": "http://wrong/agent",
+			"STROPPY_SERVER_ADDR":      "http://wrong",
+			"TEMPORAL_NAMESPACE":       "wrong",
+		},
+	})
+	if err != nil {
+		t.Fatalf("build env: %v", err)
+	}
+
+	for _, key := range []string{
+		"APT_BACKEND",
+		"GRAFANA_BACKEND",
+		"MONITORING_TOKEN",
+		"MONITORING_URL",
+		"STROPPY_MONITORING_TOKEN",
+		"TEMPORAL_HOSTPORT",
+		"TEMPORAL_URL",
+		"VICTORIA_LOGS_URL",
+		"VICTORIA_METRICS_URL",
+		"VICTORIA_URL",
+	} {
+		if _, ok := env[key]; ok {
+			t.Fatalf("%s leaked into agent env: %#v", key, env)
+		}
+	}
+
+	checks := map[string]string{
+		"STROPPY_SERVER_ADDR":      "https://control.stage",
+		"STROPPY_AGENT_BINARY_URL": "https://control.stage/agent/binary",
+		"TEMPORAL_NAMESPACE":       DefaultTemporalNamespace,
+		"WORKLOAD_CUSTOM_ENV":      "kept",
 	}
 	for key, want := range checks {
 		if got := env[key]; got != want {

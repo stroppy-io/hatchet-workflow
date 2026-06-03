@@ -187,10 +187,11 @@ func (e *SuiteWizardEngine) recomputeCell(ctx context.Context, tenantID string, 
 
 	if len(errs) == 0 {
 		run, err := runbuilder.BuildTestRun(runbuilder.BuildOptions{
+			ID:              previewCellRunID(in.GetSpec()),
 			Database:        db,
 			Workload:        wl,
 			Provider:        provider,
-			Infrastructure:  infrastructurebuilder.BuildOptions{},
+			Infrastructure:  infrastructurebuilder.BuildOptionsFromMachineOverrides(provider, in.GetSpec().GetMachineOverrides()),
 			RenderOverrides: in.GetSpec().GetRenderOverrides(),
 		})
 		if err != nil {
@@ -277,10 +278,11 @@ func (e *SuiteWizardEngine) Bake(ctx context.Context, draft *models.SuiteWizardD
 			continue
 		}
 		run, err := runbuilder.BuildTestRun(runbuilder.BuildOptions{
+			ID:              uuid.NewString(),
 			Database:        cell.GetDatabase(),
 			Workload:        cell.GetWorkload(),
 			Provider:        draft.GetProvider(),
-			Infrastructure:  infrastructurebuilder.BuildOptions{},
+			Infrastructure:  infrastructurebuilder.BuildOptionsFromMachineOverrides(draft.GetProvider(), cell.GetSpec().GetMachineOverrides()),
 			RenderOverrides: cell.GetSpec().GetRenderOverrides(),
 		})
 		if err != nil {
@@ -350,3 +352,10 @@ func (e *SuiteWizardEngine) Bake(ctx context.Context, draft *models.SuiteWizardD
 
 // boolPtr returns a pointer to b for the optional rating defaults.
 func boolPtr(b bool) *bool { return &b }
+
+func previewCellRunID(cell *domain.SuiteCell) string {
+	if id := cell.GetId(); id != "" {
+		return id
+	}
+	return "preview"
+}

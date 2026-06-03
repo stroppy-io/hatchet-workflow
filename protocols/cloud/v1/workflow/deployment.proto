@@ -2,7 +2,6 @@ syntax = "proto3";
 
 package cloud.v1.workflow;
 
-import "cloud/v1/common/ip.proto";
 import "cloud/v1/deployment/docker.proto";
 import "cloud/v1/deployment/infrastructure.proto";
 import "cloud/v1/deployment/plan.proto";
@@ -101,11 +100,13 @@ message CalculateQuotasWorkflowResponse {
     AcquireNetworkActivityRequest asks the provider to acquire a network.
  */
 message AcquireNetworkActivityRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string run_id = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
     /*
         plan is the infrastructure plan whose provider settings drive network
         acquisition.
      */
-    deployment.InfrastructurePlan plan = 1 [(validate.rules).message.required = true];
+    deployment.InfrastructurePlan plan = 3 [(validate.rules).message.required = true];
 }
 
 /*
@@ -113,9 +114,34 @@ message AcquireNetworkActivityRequest {
  */
 message AcquireNetworkActivityResponse {
     /*
-        net is the network acquired from the provider.
+        network_cidr is the run CIDR reserved for provider subnets.
      */
-    common.Net net = 1;
+    string network_cidr = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+
+/*
+    CommitNetworkActivityRequest marks a successful network reservation as
+    provider-backed after infrastructure was provisioned.
+ */
+message CommitNetworkActivityRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string run_id = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+}
+
+message CommitNetworkActivityResponse {
+    string network_cidr = 1 [(validate.rules).string.max_len = 64];
+}
+
+/*
+    ReleaseNetworkActivityRequest releases pre-deploy network reservations.
+ */
+message ReleaseNetworkActivityRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string run_id = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+}
+
+message ReleaseNetworkActivityResponse {
+    uint32 released = 1;
 }
 
 /*
@@ -195,6 +221,27 @@ message AgentBootstrap {
         keys: {string: {min_len: 1, max_len: 256, pattern: "^[A-Z_][A-Z0-9_]*$"}},
         values: {string: {max_len: 8192}}
     }];
+    /*
+        agent_tokens carries per-node bearer tokens. The renderer injects only
+        the token matching the current node into that node's env as
+        STROPPY_AGENT_TOKEN; it must not be rendered as generic extra env.
+     */
+    map<string, string> agent_tokens = 5 [(validate.rules).map = {
+        max_pairs: 1024,
+        keys: {string: {min_len: 1, max_len: 256}},
+        values: {string: {min_len: 1, max_len: 8192}}
+    }];
+    /*
+        agent_task_queues carries the per-node Temporal task queue name. It is
+        generated with a per-run secret suffix and rendered only to the matching
+        node so a valid agent token alone is not enough to poll another node's
+        work.
+     */
+    map<string, string> agent_task_queues = 6 [(validate.rules).map = {
+        max_pairs: 1024,
+        keys: {string: {min_len: 1, max_len: 256}},
+        values: {string: {min_len: 1, max_len: 512}}
+    }];
 }
 
 /*
@@ -273,6 +320,12 @@ message RenderDeploymentPlanWorkflowRequest {
         topology contains a stroppy workload component.
      */
     domain.Workload workload = 6;
+    /*
+        agent_bootstrap carries per-node agent tokens for rendering monitor and
+        workload OTLP bearer credentials without leaking them through topology
+        labels.
+     */
+    AgentBootstrap agent_bootstrap = 7;
 }
 
 /*
@@ -297,6 +350,16 @@ message ExecuteDeploymentPlanWorkflowRequest {
         infrastructure_state is used to route steps to node agents.
      */
     deployment.InfrastructureState infrastructure_state = 2 [(validate.rules).message.required = true];
+    /*
+        run_id is the persisted test run id. It lets the child workflow persist
+        live deployment-plan action statuses and stamp log correlation labels.
+     */
+    string run_id = 3 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /*
+        agent_bootstrap carries the per-node task queue map used to route agent
+        activities to the queue rendered into each node's bootstrap.
+     */
+    AgentBootstrap agent_bootstrap = 4;
 }
 
 /*
@@ -348,6 +411,26 @@ service DeploymentService {
         option (temporal.v1.activity) = {
             start_to_close_timeout: {seconds: 300}
             retry_policy: {max_attempts: 3, initial_interval: {seconds: 5}, backoff_coefficient: 2.0}
+        };
+    }
+
+    /*
+        CommitNetworkActivity marks a successful network reservation as allocated.
+     */
+    rpc CommitNetworkActivity (CommitNetworkActivityRequest) returns (CommitNetworkActivityResponse) {
+        option (temporal.v1.activity) = {
+            start_to_close_timeout: {seconds: 60}
+            retry_policy: {max_attempts: 5, initial_interval: {seconds: 2}, backoff_coefficient: 2.0}
+        };
+    }
+
+    /*
+        ReleaseNetworkActivity releases a run's pre-deploy network reservations.
+     */
+    rpc ReleaseNetworkActivity (ReleaseNetworkActivityRequest) returns (ReleaseNetworkActivityResponse) {
+        option (temporal.v1.activity) = {
+            start_to_close_timeout: {seconds: 60}
+            retry_policy: {max_attempts: 5, initial_interval: {seconds: 2}, backoff_coefficient: 2.0}
         };
     }
 

@@ -23,7 +23,7 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
     test_run.proto is the tenant-scoped API over models.TestRunRecord. A run is
     started from a domain.TestRun staged spec (database + workload +
     topology_spec + infrastructure_plan), or re-run by id. Starting persists the
-    record and launches TestRunWorkflow. Runtime logs/metrics are keyed by the run id
+    record and launches TestWorkflow. Runtime logs/metrics are keyed by the run id
     (see monitor/*). Every request is tenant-scoped (tenant_id) and gated by
     RESOURCE_TEST_RUN (ExtractToPreset is gated by RESOURCE_PRESET).
  */
@@ -31,7 +31,7 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
 /*
     StartTestRun launches a run. Provide a staged `run` spec (CLI / wizard
     finish) to persist a new record and start it; or `test_run_id` to re-run an
-    existing record's spec as a new run. Launches TestRunWorkflow.
+    existing record's spec as a new run. Launches TestWorkflow.
  */
 message StartTestRunRequest {
     /*

@@ -7,14 +7,12 @@
 package workflow
 
 import (
-	_ "github.com/cludden/protoc-gen-go-temporal/gen/temporal/v1"
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	topology "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -27,7 +25,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// RunConfig is the durable input to one benchmark run workflow.
+// RunConfig is the durable baked input for one benchmark run.
 type RunConfig struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// tenant_id scopes quota reservations and provider settings lookup.
@@ -162,7 +160,7 @@ var File_cloud_v1_workflow_run_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_workflow_run_proto_rawDesc = "" +
 	"\n" +
-	"\x1bcloud/v1/workflow/run.proto\x12\x11cloud.v1.workflow\x1a(cloud/v1/deployment/infrastructure.proto\x1a\x1ecloud/v1/deployment/plan.proto\x1a cloud/v1/deployment/render.proto\x1a\"cloud/v1/workflow/deployment.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a cloud/v1/topology/topology.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1atemporal/v1/temporal.proto\x1a\x17validate/validate.proto\"\xcf\x05\n" +
+	"\x1bcloud/v1/workflow/run.proto\x12\x11cloud.v1.workflow\x1a(cloud/v1/deployment/infrastructure.proto\x1a\x1ecloud/v1/deployment/plan.proto\x1a cloud/v1/deployment/render.proto\x1a\"cloud/v1/workflow/deployment.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a cloud/v1/topology/topology.proto\x1a\x17validate/validate.proto\"\xcf\x05\n" +
 	"\tRunConfig\x12&\n" +
 	"\ttenant_id\x18\n" +
 	" \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x1a\n" +
@@ -175,10 +173,7 @@ const file_cloud_v1_workflow_run_proto_rawDesc = "" +
 	"\x14infrastructure_state\x18\x06 \x01(\v2(.cloud.v1.deployment.InfrastructureStateR\x13infrastructureState\x12L\n" +
 	"\x0fdeployment_plan\x18\a \x01(\v2#.cloud.v1.deployment.DeploymentPlanR\x0edeploymentPlan\x12Q\n" +
 	"\x10render_overrides\x18\b \x01(\v2&.cloud.v1.deployment.RenderOverrideSetR\x0frenderOverrides\x12J\n" +
-	"\x0fagent_bootstrap\x18\t \x01(\v2!.cloud.v1.workflow.AgentBootstrapR\x0eagentBootstrap2\x9d\x01\n" +
-	"\x12RunWorkflowService\x12r\n" +
-	"\x0fTestRunWorkflow\x12\x1c.cloud.v1.workflow.RunConfig\x1a\x16.google.protobuf.Empty\")\x8a\xc4\x03%*\frun/${! id }0\x02J\x02 \x01r\x0fTestRunWorkflow\x1a\x13\x8a\xc4\x03\x0f\n" +
-	"\rstroppy-cloudBFZDgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflowb\x06proto3"
+	"\x0fagent_bootstrap\x18\t \x01(\v2!.cloud.v1.workflow.AgentBootstrapR\x0eagentBootstrapBFZDgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflowb\x06proto3"
 
 var (
 	file_cloud_v1_workflow_run_proto_rawDescOnce sync.Once
@@ -203,7 +198,6 @@ var file_cloud_v1_workflow_run_proto_goTypes = []any{
 	(*deployment.DeploymentPlan)(nil),      // 6: cloud.v1.deployment.DeploymentPlan
 	(*deployment.RenderOverrideSet)(nil),   // 7: cloud.v1.deployment.RenderOverrideSet
 	(*AgentBootstrap)(nil),                 // 8: cloud.v1.workflow.AgentBootstrap
-	(*emptypb.Empty)(nil),                  // 9: google.protobuf.Empty
 }
 var file_cloud_v1_workflow_run_proto_depIdxs = []int32{
 	1, // 0: cloud.v1.workflow.RunConfig.database:type_name -> cloud.v1.domain.Database
@@ -214,10 +208,8 @@ var file_cloud_v1_workflow_run_proto_depIdxs = []int32{
 	6, // 5: cloud.v1.workflow.RunConfig.deployment_plan:type_name -> cloud.v1.deployment.DeploymentPlan
 	7, // 6: cloud.v1.workflow.RunConfig.render_overrides:type_name -> cloud.v1.deployment.RenderOverrideSet
 	8, // 7: cloud.v1.workflow.RunConfig.agent_bootstrap:type_name -> cloud.v1.workflow.AgentBootstrap
-	0, // 8: cloud.v1.workflow.RunWorkflowService.TestRunWorkflow:input_type -> cloud.v1.workflow.RunConfig
-	9, // 9: cloud.v1.workflow.RunWorkflowService.TestRunWorkflow:output_type -> google.protobuf.Empty
-	9, // [9:10] is the sub-list for method output_type
-	8, // [8:9] is the sub-list for method input_type
+	8, // [8:8] is the sub-list for method output_type
+	8, // [8:8] is the sub-list for method input_type
 	8, // [8:8] is the sub-list for extension type_name
 	8, // [8:8] is the sub-list for extension extendee
 	0, // [0:8] is the sub-list for field type_name
@@ -237,7 +229,7 @@ func file_cloud_v1_workflow_run_proto_init() {
 			NumEnums:      0,
 			NumMessages:   1,
 			NumExtensions: 0,
-			NumServices:   1,
+			NumServices:   0,
 		},
 		GoTypes:           file_cloud_v1_workflow_run_proto_goTypes,
 		DependencyIndexes: file_cloud_v1_workflow_run_proto_depIdxs,

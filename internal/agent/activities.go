@@ -22,6 +22,7 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
 )
 
@@ -36,6 +37,8 @@ type Activities struct {
 	cacheDir string
 	// logger is used to stream command stdout/stderr and lifecycle events.
 	logger *slog.Logger
+	// logSink ships command stdout/stderr to the control-plane log ingest.
+	logSink LogSink
 	// heartbeat records a Temporal heartbeat; overridable for tests.
 	heartbeat heartbeater
 	// httpClient downloads referenced files; overridable for tests.
@@ -56,6 +59,11 @@ func WithCacheDir(dir string) Option {
 // WithLogger sets the logger used for stream/lifecycle output.
 func WithLogger(l *slog.Logger) Option {
 	return func(a *Activities) { a.logger = l }
+}
+
+// WithLogSink sets the sink used to ship command stdout/stderr.
+func WithLogSink(s LogSink) Option {
+	return func(a *Activities) { a.logSink = s }
 }
 
 // WithHeartbeater overrides the heartbeat function (used by tests).
@@ -249,16 +257,15 @@ func (a *Activities) CallCmdActivity(ctx context.Context, req *common.Cmd) (*com
 	}
 
 	// stdout/stderr handling. We always capture (CAPTURE is the useful default)
-	// and additionally stream to the agent logger.
-	// TODO: ship streams to a dedicated AgentLogService instead of the local
-	// logger once that service exists.
+	// and additionally stream to the agent logger + AgentLogService when the
+	// workflow stamped log correlation env vars on the command.
 	streams := spec.GetStreams()
 	var stdoutBuf, stderrBuf bytes.Buffer
-	cmd.Stdout = streamWriter(&stdoutBuf, a.streamLogger(ctx, "stdout"), streamMode(streams.GetStdout()))
+	cmd.Stdout = streamWriter(&stdoutBuf, a.streamLogger(ctx, spec.GetEnv(), "stdout"), streamMode(streams.GetStdout()))
 	if streamMode(streams.GetStderr()) == common.Cmd_Streams_MODE_STDERR_TO_STDOUT {
 		cmd.Stderr = cmd.Stdout
 	} else {
-		cmd.Stderr = streamWriter(&stderrBuf, a.streamLogger(ctx, "stderr"), streamMode(streams.GetStderr()))
+		cmd.Stderr = streamWriter(&stderrBuf, a.streamLogger(ctx, spec.GetEnv(), "stderr"), streamMode(streams.GetStderr()))
 	}
 
 	start := time.Now()
@@ -405,12 +412,31 @@ func (a *Activities) download(ctx context.Context, uri string, w io.Writer) (str
 }
 
 // streamLogger returns an io.Writer that forwards process output lines to the
-// agent logger, or nil when no logger is configured.
-func (a *Activities) streamLogger(ctx context.Context, stream string) io.Writer {
-	if a.logger == nil {
+// local agent logger and the remote log sink when either is configured.
+func (a *Activities) streamLogger(ctx context.Context, env map[string]string, stream string) io.Writer {
+	if a.logger == nil && a.logSink == nil {
 		return nil
 	}
-	return &slogWriter{ctx: ctx, logger: a.logger, stream: stream}
+	writers := make([]io.Writer, 0, 2)
+	if a.logger != nil {
+		writers = append(writers, &slogWriter{ctx: ctx, logger: a.logger, stream: stream})
+	}
+	if a.logSink != nil {
+		logStream := monitorStream(stream)
+		if logStream != monitor.Stream_STREAM_UNSPECIFIED {
+			writers = append(writers, &logSinkWriter{
+				ctx:     ctx,
+				logger:  a.logger,
+				sink:    a.logSink,
+				context: commandLogContextFromEnv(env),
+				stream:  logStream,
+			})
+		}
+	}
+	if len(writers) == 1 {
+		return writers[0]
+	}
+	return io.MultiWriter(writers...)
 }
 
 // --- helpers -------------------------------------------------------------
@@ -434,6 +460,17 @@ func streamMode(m common.Cmd_Streams_Mode) common.Cmd_Streams_Mode {
 		return common.Cmd_Streams_MODE_CAPTURE
 	}
 	return m
+}
+
+func monitorStream(stream string) monitor.Stream {
+	switch stream {
+	case "stdout":
+		return monitor.Stream_STREAM_STDOUT
+	case "stderr":
+		return monitor.Stream_STREAM_STDERR
+	default:
+		return monitor.Stream_STREAM_UNSPECIFIED
+	}
 }
 
 // streamWriter builds the destination for a process stream honoring its mode.

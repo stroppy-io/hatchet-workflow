@@ -105,16 +105,17 @@ export function usePresetRowActions<T extends PresetRowLike>({
       try {
         switch (action) {
           case "view":
-            navigate(KIND_ROUTE[kind]);
+            // Route to the preset's detail page (KIND_ROUTE/:id).
+            navigate(`${KIND_ROUTE[kind]}/${encodeURIComponent(row.id)}`);
             return;
           case "use":
             navigate(`/runs/new?preset=${encodeURIComponent(row.id)}&kind=${kind}`);
             return;
           case "edit":
             // Update<Kind>Preset — route to the authoring surface seeded with
-            // this preset (the editor consumes ?edit=:id). System presets are
-            // gated out before we get here.
-            navigate(`${KIND_ROUTE[kind]}?edit=${encodeURIComponent(row.id)}`);
+            // this preset (KIND_ROUTE/:id/edit). System presets are gated out
+            // before we get here.
+            navigate(`${KIND_ROUTE[kind]}/${encodeURIComponent(row.id)}/edit`);
             return;
           case "duplicate": {
             await provider.clonePreset(slug, kind, row.id, `${row.name} (copy)`);

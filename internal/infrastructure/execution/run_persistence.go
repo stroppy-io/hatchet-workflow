@@ -9,6 +9,7 @@ import (
 	commonpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
 	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -26,10 +27,15 @@ type RunPersistenceStore interface {
 
 type RunPersistenceActivities struct {
 	store RunPersistenceStore
+	logs  *RunLogWriter
 }
 
-func NewRunPersistenceActivities(store RunPersistenceStore) *RunPersistenceActivities {
-	return &RunPersistenceActivities{store: store}
+func NewRunPersistenceActivities(store RunPersistenceStore, logs ...*RunLogWriter) *RunPersistenceActivities {
+	a := &RunPersistenceActivities{store: store}
+	if len(logs) > 0 {
+		a.logs = logs[0]
+	}
+	return a
 }
 
 func (a *RunPersistenceActivities) PersistRunState(
@@ -68,6 +74,33 @@ func (a *RunPersistenceActivities) PersistRunState(
 		return a.PersistSuiteRun(ctx, rec.GetSuiteRunId(), commonpb.Status_STATUS_UNSPECIFIED)
 	}
 	return nil
+}
+
+func (a *RunPersistenceActivities) PersistDeploymentPlan(ctx context.Context, runID string, deploymentPlan *deploymentpb.DeploymentPlan) error {
+	if a == nil || a.store == nil || runID == "" || deploymentPlan == nil {
+		return nil
+	}
+	rec, err := a.store.RunRecord(ctx, runID)
+	if err != nil {
+		return err
+	}
+	now := time.Now()
+	rec.DeploymentPlan = proto.Clone(deploymentPlan).(*deploymentpb.DeploymentPlan)
+	touchRecordUpdated(rec.GetEntity(), now)
+	if err := a.store.SaveRunRecord(ctx, rec); err != nil {
+		return err
+	}
+	if rec.GetSuiteRunId() != "" {
+		return a.PersistSuiteRun(ctx, rec.GetSuiteRunId(), commonpb.Status_STATUS_UNSPECIFIED)
+	}
+	return nil
+}
+
+func (a *RunPersistenceActivities) AppendRunLogs(ctx context.Context, lines []*monitor.LogLine) error {
+	if a == nil || a.logs == nil {
+		return nil
+	}
+	return a.logs.Write(ctx, lines)
 }
 
 func (a *RunPersistenceActivities) PersistSuiteRun(ctx context.Context, suiteRunID string, statusHint commonpb.Status) error {

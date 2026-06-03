@@ -11,7 +11,7 @@ import (
 )
 
 // SuiteRunCanceller implements suite_run.SuiteRunCanceller over a Temporal
-// client. Cancelling the SuiteWorkflow propagates to its child TestRunWorkflows.
+// client. Cancelling the SuiteWorkflow propagates to its child TestWorkflows.
 // Idempotent for the runtime: signalling an already-finished / never-started
 // workflow is a no-op (a not-found cancel is swallowed).
 type SuiteRunCanceller struct {

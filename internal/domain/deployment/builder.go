@@ -70,6 +70,7 @@ type RenderContext struct {
 	Workload        *domain.Workload
 	DatabasePackage *domain.Package
 	RenderOverrides *deploymentpb.RenderOverrideSet
+	AgentToken      string
 }
 
 type RuntimeEndpoint struct {
@@ -151,6 +152,7 @@ type BuildOptions struct {
 	PackageResolver packages.Resolver
 	Renderers       Registry
 	RenderOverrides *deploymentpb.RenderOverrideSet
+	AgentTokens     map[string]string
 	Labels          map[string]string
 	Tags            *common.Tags
 }
@@ -221,6 +223,7 @@ func BuildPlan(spec *topologypb.TopologySpec, state *deploymentpb.Infrastructure
 			Workload:        options.Workload,
 			DatabasePackage: dbPackage,
 			RenderOverrides: options.RenderOverrides,
+			AgentToken:      options.AgentTokens[node.GetId()],
 		}
 		if _, err := DependencyTargets(renderCtx, nil); err != nil {
 			return nil, fmt.Errorf("resolve runtime dependencies for component %q: %w", component.GetId(), err)

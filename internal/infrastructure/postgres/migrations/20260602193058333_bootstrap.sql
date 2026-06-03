@@ -162,6 +162,22 @@ CREATE TABLE "public"."quota_reservations" (
   PRIMARY KEY ("id"),
   UNIQUE ("tenant_id", "run_id", "node_id", "provider", "resource_type", "resource_id", "quota_name")
 );
+CREATE TABLE "public"."network_reservations" (
+  "id" text NOT NULL,
+  "tenant_id" text NOT NULL,
+  "run_id" text NOT NULL,
+  "provider" integer NOT NULL,
+  "resource_type" text NOT NULL,
+  "resource_id" text NOT NULL,
+  "cidr" text NOT NULL,
+  "status" integer NOT NULL,
+  "workflow_id" text NOT NULL DEFAULT ''::text,
+  "expires_at" timestamptz,
+  "created_at" timestamptz NOT NULL DEFAULT now(),
+  "updated_at" timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY ("id"),
+  UNIQUE ("tenant_id", "run_id", "provider", "resource_type", "resource_id")
+);
 CREATE TABLE "public"."share_records" (
   "id" text NOT NULL,
   "tenant_id" text NOT NULL,
@@ -249,6 +265,8 @@ CREATE INDEX "idx_iam_roles_tenant" ON "public"."iam_roles" ("tenant_id");
 CREATE INDEX "idx_iam_tenants_owner" ON "public"."iam_tenants" ("owner_account_id");
 CREATE INDEX "idx_iam_tenants_slug" ON "public"."iam_tenants" ("slug");
 CREATE INDEX "idx_package_records_tenant" ON "public"."package_records" ("tenant_id");
+CREATE INDEX "idx_network_reservations_run" ON "public"."network_reservations" ("tenant_id", "run_id");
+CREATE INDEX "idx_network_reservations_scope_status" ON "public"."network_reservations" ("tenant_id", "provider", "resource_type", "resource_id", "status");
 CREATE INDEX "idx_quota_reservations_run" ON "public"."quota_reservations" ("tenant_id", "run_id");
 CREATE INDEX "idx_quota_reservations_scope_status" ON "public"."quota_reservations" ("tenant_id", "provider", "resource_type", "resource_id", "status");
 CREATE INDEX "idx_quota_snapshots_stale" ON "public"."quota_snapshots" ("stale_after");

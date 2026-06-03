@@ -27,9 +27,9 @@ import (
 // (the gateway relays /insert/* to vmauth). AccountID is 0 for both metrics and
 // logs; per-run isolation is by the stroppy_run_id label / run_id field.
 //
-// The server address / run id / optional bearer token travel from the run
-// config into the TopologySpec labels (see internal/domain/run/workflow_config.go)
-// because the deployment render request does not carry the agent bootstrap.
+// The server address / run id travel from the run config into the TopologySpec
+// labels (see internal/domain/run/workflow_config.go). The bearer token is the
+// per-node agent token passed through RenderContext, never topology labels.
 
 const (
 	// LabelServerAddr is the topology-spec label carrying the control-plane
@@ -38,10 +38,6 @@ const (
 	// LabelRunID is the topology-spec label carrying the run id, stamped as an
 	// external metrics label (stroppy_run_id) and a log field (run_id).
 	LabelRunID = "stroppy.io/run-id"
-	// LabelMonitorBearerToken is the optional topology-spec label carrying the
-	// bearer token the gateway/vmauth expects for the /insert/* relay.
-	LabelMonitorBearerToken = "stroppy.io/monitoring-bearer-token"
-
 	// monitorAccountID is the VictoriaMetrics / VictoriaLogs account both the
 	// write path (here) and the read path use. Isolation is by run id label.
 	monitorAccountID = 0
@@ -98,7 +94,7 @@ func monitorParamsFor(ctx RenderContext) (monitorParams, bool) {
 		machineID:   ctx.Node.GetId(),
 		runID:       labels[LabelRunID],
 		serverAddr:  serverAddr,
-		bearerToken: labels[LabelMonitorBearerToken],
+		bearerToken: ctx.AgentToken,
 		role:        ctx.Component.GetRole(),
 		dbKind:      dbKind,
 	}, true

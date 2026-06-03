@@ -13,6 +13,13 @@ import (
 
 func TestRenderDockerInputInjectsAgentBootstrap(t *testing.T) {
 	cfg := workflowRunConfig(t, nil)
+	firstMachine := cfg.GetInfrastructurePlan().GetMachines()[0]
+	cfg.GetAgentBootstrap().AgentTokens = map[string]string{
+		firstMachine.GetNodeId(): "agent-token-" + firstMachine.GetNodeId(),
+	}
+	cfg.GetAgentBootstrap().AgentTaskQueues = map[string]string{
+		firstMachine.GetNodeId(): "secret-queue-" + firstMachine.GetNodeId(),
+	}
 	input, err := renderDockerInput(&workflowpb.RenderDockerInputWorkflowRequest{
 		RunId:          cfg.GetId(),
 		Plan:           cfg.GetInfrastructurePlan(),
@@ -27,7 +34,7 @@ func TestRenderDockerInputInjectsAgentBootstrap(t *testing.T) {
 	if container == nil {
 		t.Fatalf("container for %q is missing", machine.GetNodeId())
 	}
-	if got, want := container.GetEnv()["AGENT_TASK_QUEUE"], AgentQueue(machine.GetNodeId()); got != want {
+	if got, want := container.GetEnv()["AGENT_TASK_QUEUE"], "secret-queue-"+machine.GetNodeId(); got != want {
 		t.Fatalf("AGENT_TASK_QUEUE = %q, want %q", got, want)
 	}
 	file := dockerFileByPath(container.GetFiles(), agentdomain.DockerEnvFilePath)
@@ -39,7 +46,8 @@ func TestRenderDockerInputInjectsAgentBootstrap(t *testing.T) {
 		"STROPPY_SERVER_ADDR=http://127.0.0.1:8080",
 		"STROPPY_AGENT_BINARY_URL=http://127.0.0.1:8080/agent/binary",
 		"STROPPY_MACHINE_ID=" + machine.GetNodeId(),
-		"AGENT_TASK_QUEUE=" + AgentQueue(machine.GetNodeId()),
+		"STROPPY_AGENT_TOKEN=agent-token-" + machine.GetNodeId(),
+		"AGENT_TASK_QUEUE=secret-queue-" + machine.GetNodeId(),
 		"TEMPORAL_NAMESPACE=default",
 	} {
 		if !strings.Contains(content, want) {
@@ -50,10 +58,19 @@ func TestRenderDockerInputInjectsAgentBootstrap(t *testing.T) {
 
 func TestRenderTerraformInputInjectsYandexCloudInit(t *testing.T) {
 	plan := yandexInfrastructurePlan(t)
+	bootstrap := testAgentBootstrap()
+	bootstrap.AgentTokens = make(map[string]string, len(plan.GetMachines()))
+	for _, machine := range plan.GetMachines() {
+		bootstrap.AgentTokens[machine.GetNodeId()] = "agent-token-" + machine.GetNodeId()
+	}
+	bootstrap.AgentTaskQueues = make(map[string]string, len(plan.GetMachines()))
+	for _, machine := range plan.GetMachines() {
+		bootstrap.AgentTaskQueues[machine.GetNodeId()] = "secret-queue-" + machine.GetNodeId()
+	}
 	tfInput, err := renderTerraformInput(&workflowpb.RenderTerraformVariablesWorkflowRequest{
 		RunId:          "run-1",
 		Plan:           plan,
-		AgentBootstrap: testAgentBootstrap(),
+		AgentBootstrap: bootstrap,
 	})
 	if err != nil {
 		t.Fatalf("render terraform input: %v", err)
@@ -70,7 +87,8 @@ func TestRenderTerraformInputInjectsYandexCloudInit(t *testing.T) {
 			"STROPPY_SERVER_ADDR=http://127.0.0.1:8080",
 			"STROPPY_AGENT_BINARY_URL=http://127.0.0.1:8080/agent/binary",
 			"STROPPY_MACHINE_ID=" + machine.GetNodeId(),
-			"AGENT_TASK_QUEUE=" + AgentQueue(machine.GetNodeId()),
+			"STROPPY_AGENT_TOKEN=agent-token-" + machine.GetNodeId(),
+			"AGENT_TASK_QUEUE=secret-queue-" + machine.GetNodeId(),
 			"EnvironmentFile=/etc/stroppy/agent.env",
 			"ExecStart=/usr/local/bin/stroppy-agent agent",
 		} {
@@ -78,6 +96,24 @@ func TestRenderTerraformInputInjectsYandexCloudInit(t *testing.T) {
 				t.Fatalf("cloud-init for %q missing %q:\n%s", machine.GetNodeId(), want, userData)
 			}
 		}
+	}
+}
+
+func TestRenderTerraformInputUsesReservedNetworkCIDR(t *testing.T) {
+	plan := planWithReservedNetworkCIDR(yandexInfrastructurePlan(t), "10.42.0.0/16")
+	tfInput, err := renderTerraformInput(&workflowpb.RenderTerraformVariablesWorkflowRequest{
+		RunId:          "run-1",
+		Plan:           plan,
+		AgentBootstrap: testAgentBootstrap(),
+	})
+	if err != nil {
+		t.Fatalf("render terraform input: %v", err)
+	}
+
+	values := tfInput.GetTfvars().GetValues().AsMap()
+	network := values["network"].(map[string]any)
+	if got, want := network["cidr"].(string), "10.42.0.0/16"; got != want {
+		t.Fatalf("network cidr = %q, want %q", got, want)
 	}
 }
 

@@ -11,9 +11,11 @@ import (
 	deploymentbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
 	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
 	"go.temporal.io/sdk/workflow"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type deploymentWorkflows struct {
@@ -151,6 +153,7 @@ func (w *renderDeploymentPlanWorkflow) Execute(workflow.Context) (*workflowpb.Re
 		PackageResolver: w.options.PackageResolver,
 		Renderers:       w.options.DeploymentRenderers,
 		RenderOverrides: w.req.GetRenderOverrides(),
+		AgentTokens:     w.req.GetAgentBootstrap().GetAgentTokens(),
 	})
 	if err != nil {
 		return nil, err
@@ -168,15 +171,29 @@ func (w *executeDeploymentPlanWorkflow) Execute(ctx workflow.Context) (*workflow
 		return nil, err
 	}
 
+	runID := w.req.GetRunId()
 	plan := proto.Clone(w.req.GetDeploymentPlan()).(*deploymentpb.DeploymentPlan)
+	deploymentbuilder.StampDeploymentPlanExecutionContext(runID, plan)
+	persistPlan := func() error {
+		return persistDeploymentPlan(ctx, runID, plan)
+	}
 	sortComponentExecution(plan.GetComponents())
 	for _, component := range plan.GetComponents() {
 		component.Status = common.Status_STATUS_DEPLOYMENT
-		if err := executeComponentDeployment(ctx, component); err != nil {
+		if err := persistPlan(); err != nil {
+			return nil, err
+		}
+		if err := executeComponentDeployment(ctx, runID, plan, component, w.req.GetAgentBootstrap()); err != nil {
 			component.Status = common.Status_STATUS_FAILED
+			if perr := persistPlan(); perr != nil {
+				return nil, fmt.Errorf("persist failed deployment plan: %w", perr)
+			}
 			return nil, err
 		}
 		component.Status = common.Status_STATUS_DEPLOYED
+		if err := persistPlan(); err != nil {
+			return nil, err
+		}
 	}
 
 	if err := plan.Validate(); err != nil {
@@ -379,19 +396,19 @@ func privateEndpoints(privateAddress, publicAddress string) []*deploymentpb.Endp
 	return endpoints
 }
 
-func AgentQueue(nodeID string) string {
-	return "stroppy-agent-" + nodeID
-}
-
-func executeComponentDeployment(ctx workflow.Context, component *deploymentpb.ComponentDeployment) error {
+func executeComponentDeployment(ctx workflow.Context, runID string, plan *deploymentpb.DeploymentPlan, component *deploymentpb.ComponentDeployment, bootstrap *workflowpb.AgentBootstrap) error {
 	sort.SliceStable(component.Steps, func(i, j int) bool {
 		if component.Steps[i].GetOrder() != component.Steps[j].GetOrder() {
 			return component.Steps[i].GetOrder() < component.Steps[j].GetOrder()
 		}
 		return component.Steps[i].GetId() < component.Steps[j].GetId()
 	})
+	taskQueue, err := agentTaskQueue(bootstrap, component.GetNodeId())
+	if err != nil {
+		return err
+	}
 	activityCtx := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
-		TaskQueue:           AgentQueue(component.GetNodeId()),
+		TaskQueue:           taskQueue,
 		StartToCloseTimeout: 60 * time.Minute,
 		HeartbeatTimeout:    time.Minute,
 	})
@@ -399,14 +416,87 @@ func executeComponentDeployment(ctx workflow.Context, component *deploymentpb.Co
 		return fmt.Errorf("agent %s is not online: %w", component.GetNodeId(), err)
 	}
 	for _, step := range component.GetSteps() {
+		deploymentbuilder.StampAgentStepExecutionContext(runID, component, step)
 		step.Status = common.Status_STATUS_DEPLOYMENT
+		if err := appendDeploymentStepLog(ctx, runID, component, step, monitor.Stream_STREAM_STDOUT, "started "+agentStepDescription(step)); err != nil {
+			return err
+		}
+		if err := persistDeploymentPlan(ctx, runID, plan); err != nil {
+			return err
+		}
 		if err := executeAgentStep(activityCtx, step); err != nil {
 			step.Status = common.Status_STATUS_FAILED
+			if lerr := appendDeploymentStepLog(ctx, runID, component, step, monitor.Stream_STREAM_STDERR, "failed "+agentStepDescription(step)+": "+err.Error()); lerr != nil {
+				return lerr
+			}
+			if perr := persistDeploymentPlan(ctx, runID, plan); perr != nil {
+				return perr
+			}
 			return fmt.Errorf("component %s step %s: %w", component.GetComponentId(), step.GetId(), err)
 		}
 		step.Status = common.Status_STATUS_DEPLOYED
+		if err := appendDeploymentStepLog(ctx, runID, component, step, monitor.Stream_STREAM_STDOUT, "completed "+agentStepDescription(step)); err != nil {
+			return err
+		}
+		if err := persistDeploymentPlan(ctx, runID, plan); err != nil {
+			return err
+		}
 	}
 	return nil
+}
+
+func agentTaskQueue(bootstrap *workflowpb.AgentBootstrap, nodeID string) (string, error) {
+	if bootstrap == nil {
+		return "", fmt.Errorf("agent task queue for node %q is missing: agent bootstrap is not configured", nodeID)
+	}
+	queue := bootstrap.GetAgentTaskQueues()[nodeID]
+	if queue == "" {
+		return "", fmt.Errorf("agent task queue for node %q is missing", nodeID)
+	}
+	return queue, nil
+}
+
+func appendDeploymentStepLog(ctx workflow.Context, runID string, component *deploymentpb.ComponentDeployment, step *deploymentpb.AgentStep, stream monitor.Stream, line string) error {
+	if runID == "" || component == nil || step == nil || line == "" {
+		return nil
+	}
+	return appendRunLogs(ctx, &monitor.LogLine{
+		ObservedAt:      timestamppb.New(workflow.Now(ctx)),
+		RunId:           runID,
+		NodeExecutionId: step.GetLabels()[deploymentbuilder.LabelNodeExecutionID],
+		ComponentId:     component.GetComponentId(),
+		MachineId:       component.GetNodeId(),
+		Source:          monitor.Source_SOURCE_COMMAND,
+		Unit:            deploymentbuilder.AgentStepActionKind(step),
+		Stream:          stream,
+		Line:            line,
+	})
+}
+
+func agentStepDescription(step *deploymentpb.AgentStep) string {
+	action := deploymentbuilder.AgentStepActionKind(step)
+	switch typed := step.GetAction().(type) {
+	case *deploymentpb.AgentStep_CreateDir:
+		return action + " " + typed.CreateDir.GetInfo().GetPath()
+	case *deploymentpb.AgentStep_WriteFile:
+		return action + " " + typed.WriteFile.GetInfo().GetPath()
+	case *deploymentpb.AgentStep_FetchFile:
+		return action + " " + typed.FetchFile.GetInfo().GetPath()
+	case *deploymentpb.AgentStep_CallCmd:
+		if argv := typed.CallCmd.GetSpec().GetArgv(); argv != nil {
+			return action + " " + strings.Join(argv.GetArgs(), " ")
+		}
+		if script := typed.CallCmd.GetSpec().GetScript(); script != nil {
+			text := strings.TrimSpace(script.GetText())
+			if i := strings.IndexByte(text, '\n'); i >= 0 {
+				text = text[:i]
+			}
+			return action + " " + text
+		}
+		return action
+	default:
+		return step.GetId()
+	}
 }
 
 func executeAgentStep(ctx workflow.Context, step *deploymentpb.AgentStep) error {

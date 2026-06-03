@@ -17,6 +17,12 @@ import {
   type PresetPage,
   type PresetSortField,
   type PresetKind,
+  type DatabasePresetDetail,
+  type DatabasePresetInput,
+  type WorkloadPresetDetail,
+  type WorkloadPresetInput,
+  type TestPresetDetail,
+  type TestPresetInput,
 } from "@/services/preset";
 import type { DbKind, Protocol } from "@/components/library-table/labels";
 import {
@@ -24,6 +30,7 @@ import {
   type WorkloadVM,
   type EngineKind,
   blankEngineParams,
+  defaultEngineParams,
   defaultPostgresParams,
   defaultMySqlParams,
   defaultPicodataParams,
@@ -35,6 +42,8 @@ import {
   YdbManagedParams_ComputeType,
   Workload_Protocol,
 } from "@/services/wizard";
+import { validateDatabase } from "@/components/database/DatabaseParamsForm";
+import { validateWorkload } from "@/components/workload/WorkloadParamsForm";
 
 function delay(): Promise<void> {
   return new Promise((r) => setTimeout(r, 120));
@@ -657,6 +666,269 @@ function storeFor(kind: PresetKind, slug: string): AnyRow[] {
 
 let cloneSeq = 0;
 
+// =====================================================================
+// Database-preset CRUD store (create / edit / detail) — OVER the same per-slug
+// row store the list reads (DB_BY_SLUG), so a created/edited preset shows up in
+// the Database Presets table immediately. The row only carries the denormalized
+// Summary (db_kind/version/external); the FULL typed domain.Database + tags live
+// in a parallel detail store keyed by slug -> id. getDatabasePreset() falls back
+// to synthesizing a believable DatabaseVM from the row's Summary for the
+// pre-seeded rows that have no stored detail yet (the builtins).
+// =====================================================================
+
+/** DbKind (proto-cased, underscore) <-> EngineKind (wizard, camel) bridges. */
+const DBKIND_TO_ENGINE: Record<Exclude<DbKind, "">, EngineKind> = {
+  postgres: "postgres",
+  mysql: "mysql",
+  mariadb: "mariadb",
+  ydb: "ydb",
+  ydb_managed: "ydbManaged",
+  cockroach: "cockroach",
+  picodata: "picodata",
+  external: "external",
+};
+const ENGINE_TO_DBKIND: Record<EngineKind, Exclude<DbKind, "">> = {
+  postgres: "postgres",
+  mysql: "mysql",
+  mariadb: "mariadb",
+  ydb: "ydb",
+  ydbManaged: "ydb_managed",
+  cockroach: "cockroach",
+  picodata: "picodata",
+  external: "external",
+};
+
+/** Full stored detail for a preset (typed database + tags). */
+interface StoredDetail {
+  tags: Record<string, string>;
+  database: DatabaseVM;
+}
+
+// slug -> (id -> StoredDetail). Lazily filled on create/update; reads fall back
+// to a synthesized DatabaseVM for rows that predate the detail store.
+const DETAIL_BY_SLUG: Record<string, Record<string, StoredDetail>> = {};
+
+function detailStore(slug: string): Record<string, StoredDetail> {
+  let m = DETAIL_BY_SLUG[slug];
+  if (!m) {
+    m = {};
+    DETAIL_BY_SLUG[slug] = m;
+  }
+  return m;
+}
+
+/** A believable typed DatabaseVM synthesized from a row's denormalized Summary. */
+function synthDatabase(row: DatabasePresetRow): DatabaseVM {
+  if (row.external || row.dbKind === "external") {
+    return { kind: "external", version: "", params: { kind: "external", external: { dsn: "" } } };
+  }
+  const engine = row.dbKind ? DBKIND_TO_ENGINE[row.dbKind] : "postgres";
+  return { kind: engine, version: row.version, params: defaultEngineParams(engine) };
+}
+
+/** Derive a row's denormalized Summary fields from a typed DatabaseVM. */
+function summaryOf(database: DatabaseVM): { dbKind: DbKind; version: string; external: boolean } {
+  return {
+    dbKind: ENGINE_TO_DBKIND[database.kind],
+    version: database.kind === "external" ? "" : database.version,
+    external: database.kind === "external",
+  };
+}
+
+let dbPresetSeq = 0;
+
+/**
+ * Mirror the server's domain.Database.Validate the way the wizard does — reuse
+ * the shared validator and surface only the blocking errors (warnings like a
+ * defaulted version don't block save), so a bad config is rejected the same way
+ * the real CreateDatabasePreset would reject it.
+ */
+function validateDatabaseInput(database: DatabaseVM): string[] {
+  return validateDatabase(database)
+    .filter((e) => e.severity === "error")
+    .map((e) => `${e.field}: ${e.message}`);
+}
+
+// =====================================================================
+// Workload-preset CRUD store (create / edit / detail) — OVER the same per-slug
+// row store the list reads (WL_BY_SLUG), so a created/edited preset shows up in
+// the Workload Presets table immediately. The row only carries the denormalized
+// Summary (protocol/stroppy_version/script); the FULL typed domain.Workload +
+// tags live in a parallel detail store keyed by slug -> id. getWorkloadPreset()
+// falls back to synthesizing a believable WorkloadVM from the row's Summary for
+// the pre-seeded rows that have no stored detail yet (the builtins).
+// =====================================================================
+
+/** Protocol (proto-cased label) <-> Workload_Protocol (enum) bridges. */
+const PROTOCOL_TO_ENUM: Record<Exclude<Protocol, "">, Workload_Protocol> = {
+  pg: Workload_Protocol.PG,
+  mysql: Workload_Protocol.MYSQL,
+  picodata: Workload_Protocol.PICODATA,
+  ydb_grpc: Workload_Protocol.YDB_GRPC,
+  ydb_grpcs: Workload_Protocol.YDB_GRPCS,
+  cockroach: Workload_Protocol.COCKROACH,
+};
+const ENUM_TO_PROTOCOL: Record<Workload_Protocol, Protocol> = {
+  [Workload_Protocol.UNSPECIFIED]: "",
+  [Workload_Protocol.PG]: "pg",
+  [Workload_Protocol.MYSQL]: "mysql",
+  [Workload_Protocol.PICODATA]: "picodata",
+  [Workload_Protocol.YDB_GRPC]: "ydb_grpc",
+  [Workload_Protocol.YDB_GRPCS]: "ydb_grpcs",
+  [Workload_Protocol.COCKROACH]: "cockroach",
+};
+
+/** Full stored detail for a workload preset (typed workload + tags). */
+interface StoredWorkloadDetail {
+  tags: Record<string, string>;
+  workload: WorkloadVM;
+}
+
+// slug -> (id -> StoredWorkloadDetail). Lazily filled on create/update; reads
+// fall back to a synthesized WorkloadVM for rows that predate the detail store.
+const WL_DETAIL_BY_SLUG: Record<string, Record<string, StoredWorkloadDetail>> = {};
+
+function wlDetailStore(slug: string): Record<string, StoredWorkloadDetail> {
+  let m = WL_DETAIL_BY_SLUG[slug];
+  if (!m) {
+    m = {};
+    WL_DETAIL_BY_SLUG[slug] = m;
+  }
+  return m;
+}
+
+/** A believable typed WorkloadVM synthesized from a row's denormalized Summary. */
+function synthWorkload(row: WorkloadPresetRow): WorkloadVM {
+  const protocol = row.protocol ? PROTOCOL_TO_ENUM[row.protocol] : Workload_Protocol.PG;
+  return {
+    stroppyVersion: row.stroppyVersion,
+    script: row.script,
+    sql: "",
+    protocol,
+    execution: {
+      vus: 16,
+      limit: { case: "duration", duration: "10m" },
+      quiet: false,
+      noThresholds: false,
+    },
+    parameters: {
+      poolSize: 16,
+      scaleFactor: 1,
+      defaultInsertMethod: "",
+      env: {},
+      steps: ["create_schema", "load_data", "workload"],
+      noSteps: [],
+    },
+    files: [],
+  };
+}
+
+/** Derive a row's denormalized Summary fields from a typed WorkloadVM. */
+function workloadSummaryOf(workload: WorkloadVM): {
+  protocol: Protocol;
+  stroppyVersion: string;
+  script: string;
+} {
+  return {
+    protocol: ENUM_TO_PROTOCOL[workload.protocol] ?? "",
+    stroppyVersion: workload.stroppyVersion,
+    script: workload.script,
+  };
+}
+
+let wlPresetSeq = 0;
+
+/**
+ * Mirror the server's domain.Workload.Validate the way the wizard does — reuse
+ * the shared validator and surface only the blocking errors, so a bad config is
+ * rejected the same way the real CreateWorkloadPreset would reject it.
+ */
+function validateWorkloadInput(workload: WorkloadVM): string[] {
+  return validateWorkload(workload)
+    .filter((e) => e.severity === "error")
+    .map((e) => `${e.field}: ${e.message}`);
+}
+
+// =====================================================================
+// Test-preset CRUD store (create / edit / detail) — OVER the same per-slug row
+// store the list reads (TP_BY_SLUG), so a created/edited preset shows up in the
+// Test Presets table immediately. A Test = a typed domain.Database + a typed
+// domain.Workload + tags. The row only carries the denormalized Summary
+// (db_kind/protocol/stroppy_version); the FULL typed database + workload + tags
+// live in a parallel detail store keyed by slug -> id. getTestPreset() falls
+// back to synthesizing a believable database + workload from the row's Summary
+// for the pre-seeded rows that have no stored detail yet (the builtins).
+// =====================================================================
+
+/** Full stored detail for a test preset (typed database + workload + tags). */
+interface StoredTestDetail {
+  tags: Record<string, string>;
+  database: DatabaseVM;
+  workload: WorkloadVM;
+}
+
+// slug -> (id -> StoredTestDetail). Lazily filled on create/update; reads fall
+// back to synthesized database + workload for rows that predate the detail store.
+const TP_DETAIL_BY_SLUG: Record<string, Record<string, StoredTestDetail>> = {};
+
+function tpDetailStore(slug: string): Record<string, StoredTestDetail> {
+  let m = TP_DETAIL_BY_SLUG[slug];
+  if (!m) {
+    m = {};
+    TP_DETAIL_BY_SLUG[slug] = m;
+  }
+  return m;
+}
+
+/** A believable typed DatabaseVM synthesized from a test row's db Summary. */
+function synthTestDatabase(row: TestPresetRow): DatabaseVM {
+  if (row.dbKind === "external") {
+    return { kind: "external", version: "", params: { kind: "external", external: { dsn: "" } } };
+  }
+  const engine = row.dbKind ? DBKIND_TO_ENGINE[row.dbKind] : "postgres";
+  return { kind: engine, version: DEFAULT_VERSION[engine], params: defaultEngineParams(engine) };
+}
+
+/** A believable typed WorkloadVM synthesized from a test row's workload Summary. */
+function synthTestWorkload(row: TestPresetRow): WorkloadVM {
+  const protocol = row.protocol ? PROTOCOL_TO_ENUM[row.protocol] : Workload_Protocol.PG;
+  return {
+    stroppyVersion: row.stroppyVersion,
+    script: "tpcc/tx",
+    sql: "",
+    protocol,
+    execution: {
+      vus: 32,
+      limit: { case: "duration", duration: "15m" },
+      quiet: false,
+      noThresholds: false,
+    },
+    parameters: {
+      poolSize: 32,
+      scaleFactor: 10,
+      defaultInsertMethod: "",
+      env: {},
+      steps: ["create_schema", "load_data", "warmup", "workload"],
+      noSteps: [],
+    },
+    files: [],
+  };
+}
+
+/** Derive a test row's denormalized Summary from its typed database + workload. */
+function testSummaryOf(
+  database: DatabaseVM,
+  workload: WorkloadVM,
+): { dbKind: DbKind; protocol: Protocol; stroppyVersion: string } {
+  return {
+    dbKind: ENGINE_TO_DBKIND[database.kind],
+    protocol: ENUM_TO_PROTOCOL[workload.protocol] ?? "",
+    stroppyVersion: workload.stroppyVersion,
+  };
+}
+
+let tpPresetSeq = 0;
+
 // --- Provider implementation -------------------------------------------------
 
 export const mockPresetProvider: PresetProvider = {
@@ -673,6 +945,225 @@ export const mockPresetProvider: PresetProvider = {
     void tenantSlug;
     // Builtins first, then the "Custom · configure from scratch" blank entry.
     return [...workloadPresets(), blankWorkloadPreset()];
+  },
+
+  // GetDatabasePreset (mock): build the full detail from the list row + the
+  // stored typed database (or a synthesized one for pre-seeded rows).
+  async getDatabasePreset(tenantSlug, id): Promise<DatabasePresetDetail> {
+    await delay();
+    const row = store(DB_BY_SLUG, tenantSlug).find((r) => r.id === id);
+    if (!row) throw new Error("database preset not found");
+    const stored = detailStore(tenantSlug)[id];
+    return {
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      tags: stored?.tags ?? {},
+      authorId: row.authorId,
+      isSystem: row.isSystem,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      database: stored?.database ?? synthDatabase(row),
+    };
+  },
+
+  // CreateDatabasePreset (mock): mirror domain.Database.Validate, then insert a
+  // non-system row at the front of the list store + record its typed detail.
+  async createDatabasePreset(tenantSlug, input): Promise<string> {
+    await delay();
+    if (!input.name.trim()) throw new Error("name is required");
+    const errs = validateDatabaseInput(input.database);
+    if (errs.length > 0) throw new Error(errs.join("; "));
+    dbPresetSeq += 1;
+    const id = `dbp-new-${dbPresetSeq}`;
+    const now = daysAgo(0);
+    const s = summaryOf(input.database);
+    store(DB_BY_SLUG, tenantSlug).unshift({
+      id,
+      name: input.name,
+      description: input.description,
+      authorId: "you",
+      isSystem: false,
+      isFavorite: false,
+      dbKind: s.dbKind,
+      version: s.version,
+      external: s.external,
+      createdAt: now,
+      updatedAt: now,
+    });
+    detailStore(tenantSlug)[id] = { tags: { ...input.tags }, database: input.database };
+    return id;
+  },
+
+  // UpdateDatabasePreset (mock): wholesale replace. System presets are read-only
+  // (the UI gates them out; we reject defensively too).
+  async updateDatabasePreset(tenantSlug, id, input): Promise<void> {
+    await delay();
+    const row = store(DB_BY_SLUG, tenantSlug).find((r) => r.id === id);
+    if (!row) throw new Error("database preset not found");
+    if (row.isSystem) throw new Error("system presets are read-only");
+    if (!input.name.trim()) throw new Error("name is required");
+    const errs = validateDatabaseInput(input.database);
+    if (errs.length > 0) throw new Error(errs.join("; "));
+    const s = summaryOf(input.database);
+    row.name = input.name;
+    row.description = input.description;
+    row.dbKind = s.dbKind;
+    row.version = s.version;
+    row.external = s.external;
+    row.updatedAt = daysAgo(0);
+    detailStore(tenantSlug)[id] = { tags: { ...input.tags }, database: input.database };
+  },
+
+  // GetWorkloadPreset (mock): build the full detail from the list row + the
+  // stored typed workload (or a synthesized one for pre-seeded rows).
+  async getWorkloadPreset(tenantSlug, id): Promise<WorkloadPresetDetail> {
+    await delay();
+    const row = store(WL_BY_SLUG, tenantSlug).find((r) => r.id === id);
+    if (!row) throw new Error("workload preset not found");
+    const stored = wlDetailStore(tenantSlug)[id];
+    return {
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      tags: stored?.tags ?? {},
+      authorId: row.authorId,
+      isSystem: row.isSystem,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      workload: stored?.workload ?? synthWorkload(row),
+    };
+  },
+
+  // CreateWorkloadPreset (mock): mirror domain.Workload.Validate, then insert a
+  // non-system row at the front of the list store + record its typed detail.
+  async createWorkloadPreset(tenantSlug, input): Promise<string> {
+    await delay();
+    if (!input.name.trim()) throw new Error("name is required");
+    const errs = validateWorkloadInput(input.workload);
+    if (errs.length > 0) throw new Error(errs.join("; "));
+    wlPresetSeq += 1;
+    const id = `wlp-new-${wlPresetSeq}`;
+    const now = daysAgo(0);
+    const s = workloadSummaryOf(input.workload);
+    store(WL_BY_SLUG, tenantSlug).unshift({
+      id,
+      name: input.name,
+      description: input.description,
+      authorId: "you",
+      isSystem: false,
+      isFavorite: false,
+      protocol: s.protocol,
+      stroppyVersion: s.stroppyVersion,
+      script: s.script,
+      createdAt: now,
+      updatedAt: now,
+    });
+    wlDetailStore(tenantSlug)[id] = { tags: { ...input.tags }, workload: input.workload };
+    return id;
+  },
+
+  // UpdateWorkloadPreset (mock): wholesale replace. System presets are read-only
+  // (the UI gates them out; we reject defensively too).
+  async updateWorkloadPreset(tenantSlug, id, input): Promise<void> {
+    await delay();
+    const row = store(WL_BY_SLUG, tenantSlug).find((r) => r.id === id);
+    if (!row) throw new Error("workload preset not found");
+    if (row.isSystem) throw new Error("system presets are read-only");
+    if (!input.name.trim()) throw new Error("name is required");
+    const errs = validateWorkloadInput(input.workload);
+    if (errs.length > 0) throw new Error(errs.join("; "));
+    const s = workloadSummaryOf(input.workload);
+    row.name = input.name;
+    row.description = input.description;
+    row.protocol = s.protocol;
+    row.stroppyVersion = s.stroppyVersion;
+    row.script = s.script;
+    row.updatedAt = daysAgo(0);
+    wlDetailStore(tenantSlug)[id] = { tags: { ...input.tags }, workload: input.workload };
+  },
+
+  // GetTestPreset (mock): build the full detail from the list row + the stored
+  // typed database + workload (or synthesized ones for pre-seeded rows).
+  async getTestPreset(tenantSlug, id): Promise<TestPresetDetail> {
+    await delay();
+    const row = store(TP_BY_SLUG, tenantSlug).find((r) => r.id === id);
+    if (!row) throw new Error("test preset not found");
+    const stored = tpDetailStore(tenantSlug)[id];
+    return {
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      tags: stored?.tags ?? {},
+      authorId: row.authorId,
+      isSystem: row.isSystem,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      database: stored?.database ?? synthTestDatabase(row),
+      workload: stored?.workload ?? synthTestWorkload(row),
+    };
+  },
+
+  // CreateTestPreset (mock): mirror domain.Database + domain.Workload Validate,
+  // then insert a non-system row at the front of the list store + record detail.
+  async createTestPreset(tenantSlug, input): Promise<string> {
+    await delay();
+    if (!input.name.trim()) throw new Error("name is required");
+    const errs = [
+      ...validateDatabaseInput(input.database),
+      ...validateWorkloadInput(input.workload),
+    ];
+    if (errs.length > 0) throw new Error(errs.join("; "));
+    tpPresetSeq += 1;
+    const id = `tp-new-${tpPresetSeq}`;
+    const now = daysAgo(0);
+    const s = testSummaryOf(input.database, input.workload);
+    store(TP_BY_SLUG, tenantSlug).unshift({
+      id,
+      name: input.name,
+      description: input.description,
+      authorId: "you",
+      isSystem: false,
+      isFavorite: false,
+      dbKind: s.dbKind,
+      protocol: s.protocol,
+      stroppyVersion: s.stroppyVersion,
+      createdAt: now,
+      updatedAt: now,
+    });
+    tpDetailStore(tenantSlug)[id] = {
+      tags: { ...input.tags },
+      database: input.database,
+      workload: input.workload,
+    };
+    return id;
+  },
+
+  // UpdateTestPreset (mock): wholesale replace. System presets are read-only
+  // (the UI gates them out; we reject defensively too).
+  async updateTestPreset(tenantSlug, id, input): Promise<void> {
+    await delay();
+    const row = store(TP_BY_SLUG, tenantSlug).find((r) => r.id === id);
+    if (!row) throw new Error("test preset not found");
+    if (row.isSystem) throw new Error("system presets are read-only");
+    if (!input.name.trim()) throw new Error("name is required");
+    const errs = [
+      ...validateDatabaseInput(input.database),
+      ...validateWorkloadInput(input.workload),
+    ];
+    if (errs.length > 0) throw new Error(errs.join("; "));
+    const s = testSummaryOf(input.database, input.workload);
+    row.name = input.name;
+    row.description = input.description;
+    row.dbKind = s.dbKind;
+    row.protocol = s.protocol;
+    row.stroppyVersion = s.stroppyVersion;
+    row.updatedAt = daysAgo(0);
+    tpDetailStore(tenantSlug)[id] = {
+      tags: { ...input.tags },
+      database: input.database,
+      workload: input.workload,
+    };
   },
 
   async listDatabasePresetRows(tenantSlug, query): Promise<PresetPage<DatabasePresetRow>> {

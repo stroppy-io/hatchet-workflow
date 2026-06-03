@@ -56,6 +56,7 @@ import {
   RefreshCw,
   RotateCcw,
   Star,
+  Boxes,
   Trash2,
   Webhook,
   X,
@@ -347,6 +348,7 @@ function parseQuery(sp: URLSearchParams): ParsedQuery {
     durationMinSec,
     durationMaxSec,
     standalone,
+    suiteRunId: sp.get("suiteRun") ?? undefined,
     favoritesOnly: sp.get("fav") === "1" ? true : undefined,
     includeDeleted: sp.get("del") === "1" ? true : undefined,
     startedAfter: sp.get("sa") ?? undefined,
@@ -1038,6 +1040,7 @@ export function Runs() {
           durationMinSec: query.durationMinSec,
           durationMaxSec: query.durationMaxSec,
           standalone: query.standalone,
+          suiteRunId: query.suiteRunId,
           favoritesOnly: query.favoritesOnly,
           includeDeleted: query.includeDeleted,
           startedAfter: query.startedAfter,
@@ -1074,6 +1077,7 @@ export function Runs() {
       query.durationMinSec,
       query.durationMaxSec,
       query.standalone,
+      query.suiteRunId,
       query.favoritesOnly,
       query.includeDeleted,
       query.startedAfter,
@@ -1289,6 +1293,7 @@ export function Runs() {
     !!query.finishedBefore;
   const hasGlobalFilters =
     query.standalone !== undefined ||
+    !!query.suiteRunId ||
     !!query.favoritesOnly ||
     !!query.includeDeleted;
   const hasActiveFilters = hasTableFilters || hasGlobalFilters;
@@ -1310,6 +1315,7 @@ export function Runs() {
       sb: null,
       fa: null,
       fb: null,
+      suiteRun: null,
     });
   }
 
@@ -2305,6 +2311,24 @@ export function Runs() {
         <div className="flex items-center gap-2 text-xs p-2.5 border border-destructive/30 text-destructive font-mono">
           <AlertCircle className="h-3.5 w-3.5 shrink-0" />
           {error}
+        </div>
+      )}
+
+      {query.suiteRunId && (
+        <div className="flex items-center gap-2 text-xs p-2 border border-primary/40 bg-primary/10 text-foreground font-mono">
+          <Boxes className="h-3.5 w-3.5 shrink-0 text-primary" />
+          <span>
+            Scoped to suite run{" "}
+            <span className="text-primary">{query.suiteRunId}</span> — child test runs only
+          </span>
+          <button
+            type="button"
+            onClick={() => patchParams({ suiteRun: null })}
+            className="ml-auto inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
+            title="Clear suite-run scope"
+          >
+            <X className="h-3.5 w-3.5" /> clear
+          </button>
         </div>
       )}
 

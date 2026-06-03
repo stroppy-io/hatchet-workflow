@@ -2,8 +2,8 @@
 // @generated from file cloud/v1/workflow/run.proto (package cloud.v1.workflow, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
+import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
 import type { InfrastructurePlan, InfrastructurePlanJson, InfrastructureState, InfrastructureStateJson } from "../deployment/infrastructure_pb.ts";
 import { file_cloud_v1_deployment_infrastructure } from "../deployment/infrastructure_pb.ts";
 import type { DeploymentPlan, DeploymentPlanJson } from "../deployment/plan_pb.ts";
@@ -18,9 +18,6 @@ import type { Workload, WorkloadJson } from "../domain/workload_pb.ts";
 import { file_cloud_v1_domain_workload } from "../domain/workload_pb.ts";
 import type { TopologySpec, TopologySpecJson } from "../topology/topology_pb.ts";
 import { file_cloud_v1_topology_topology } from "../topology/topology_pb.ts";
-import type { EmptySchema } from "@bufbuild/protobuf/wkt";
-import { file_google_protobuf_empty } from "@bufbuild/protobuf/wkt";
-import { file_temporal_v1_temporal } from "../../../temporal/v1/temporal_pb.ts";
 import { file_validate_validate } from "../../../validate/validate_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -28,11 +25,11 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/workflow/run.proto.
  */
 export const file_cloud_v1_workflow_run: GenFile = /*@__PURE__*/
-  fileDesc("ChtjbG91ZC92MS93b3JrZmxvdy9ydW4ucHJvdG8SEWNsb3VkLnYxLndvcmtmbG93IsUECglSdW5Db25maWcSHAoJdGVuYW50X2lkGAogASgJQgn6QgZyBBABGEASFgoCaWQYASABKAlCCvpCB3IFEAEYgAESNQoIZGF0YWJhc2UYAiABKAsyGS5jbG91ZC52MS5kb21haW4uRGF0YWJhc2VCCPpCBYoBAhABEjUKCHdvcmtsb2FkGAMgASgLMhkuY2xvdWQudjEuZG9tYWluLldvcmtsb2FkQgj6QgWKAQIQARJACg10b3BvbG9neV9zcGVjGAQgASgLMh8uY2xvdWQudjEudG9wb2xvZ3kuVG9wb2xvZ3lTcGVjQgj6QgWKAQIQARJOChNpbmZyYXN0cnVjdHVyZV9wbGFuGAUgASgLMicuY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVBsYW5CCPpCBYoBAhABEkYKFGluZnJhc3RydWN0dXJlX3N0YXRlGAYgASgLMiguY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVN0YXRlEjwKD2RlcGxveW1lbnRfcGxhbhgHIAEoCzIjLmNsb3VkLnYxLmRlcGxveW1lbnQuRGVwbG95bWVudFBsYW4SQAoQcmVuZGVyX292ZXJyaWRlcxgIIAEoCzImLmNsb3VkLnYxLmRlcGxveW1lbnQuUmVuZGVyT3ZlcnJpZGVTZXQSOgoPYWdlbnRfYm9vdHN0cmFwGAkgASgLMiEuY2xvdWQudjEud29ya2Zsb3cuQWdlbnRCb290c3RyYXAynQEKElJ1bldvcmtmbG93U2VydmljZRJyCg9UZXN0UnVuV29ya2Zsb3cSHC5jbG91ZC52MS53b3JrZmxvdy5SdW5Db25maWcaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiKYrEAyVyD1Rlc3RSdW5Xb3JrZmxvdyoMcnVuLyR7ISBpZCB9MAJKAiABGhOKxAMPCg1zdHJvcHB5LWNsb3VkQkZaRGdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL3dvcmtmbG93YgZwcm90bzM", [file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_plan, file_cloud_v1_deployment_render, file_cloud_v1_workflow_deployment, file_cloud_v1_domain_database, file_cloud_v1_domain_workload, file_cloud_v1_topology_topology, file_google_protobuf_empty, file_temporal_v1_temporal, file_validate_validate]);
+  fileDesc("ChtjbG91ZC92MS93b3JrZmxvdy9ydW4ucHJvdG8SEWNsb3VkLnYxLndvcmtmbG93IsUECglSdW5Db25maWcSHAoJdGVuYW50X2lkGAogASgJQgn6QgZyBBABGEASFgoCaWQYASABKAlCCvpCB3IFEAEYgAESNQoIZGF0YWJhc2UYAiABKAsyGS5jbG91ZC52MS5kb21haW4uRGF0YWJhc2VCCPpCBYoBAhABEjUKCHdvcmtsb2FkGAMgASgLMhkuY2xvdWQudjEuZG9tYWluLldvcmtsb2FkQgj6QgWKAQIQARJACg10b3BvbG9neV9zcGVjGAQgASgLMh8uY2xvdWQudjEudG9wb2xvZ3kuVG9wb2xvZ3lTcGVjQgj6QgWKAQIQARJOChNpbmZyYXN0cnVjdHVyZV9wbGFuGAUgASgLMicuY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVBsYW5CCPpCBYoBAhABEkYKFGluZnJhc3RydWN0dXJlX3N0YXRlGAYgASgLMiguY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVN0YXRlEjwKD2RlcGxveW1lbnRfcGxhbhgHIAEoCzIjLmNsb3VkLnYxLmRlcGxveW1lbnQuRGVwbG95bWVudFBsYW4SQAoQcmVuZGVyX292ZXJyaWRlcxgIIAEoCzImLmNsb3VkLnYxLmRlcGxveW1lbnQuUmVuZGVyT3ZlcnJpZGVTZXQSOgoPYWdlbnRfYm9vdHN0cmFwGAkgASgLMiEuY2xvdWQudjEud29ya2Zsb3cuQWdlbnRCb290c3RyYXBCRlpEZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvd29ya2Zsb3diBnByb3RvMw", [file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_plan, file_cloud_v1_deployment_render, file_cloud_v1_workflow_deployment, file_cloud_v1_domain_database, file_cloud_v1_domain_workload, file_cloud_v1_topology_topology, file_validate_validate]);
 
 /**
  *
- * RunConfig is the durable input to one benchmark run workflow.
+ * RunConfig is the durable baked input for one benchmark run.
  *
  * @generated from message cloud.v1.workflow.RunConfig
  */
@@ -124,7 +121,7 @@ export type RunConfig = Message<"cloud.v1.workflow.RunConfig"> & {
 
 /**
  *
- * RunConfig is the durable input to one benchmark run workflow.
+ * RunConfig is the durable baked input for one benchmark run.
  *
  * @generated from message cloud.v1.workflow.RunConfig
  */
@@ -222,26 +219,4 @@ export type RunConfigValid = RunConfig;
  */
 export const RunConfigSchema: GenMessage<RunConfig, {jsonType: RunConfigJson, validType: RunConfigValid}> = /*@__PURE__*/
   messageDesc(file_cloud_v1_workflow_run, 0);
-
-/**
- *
- * RunWorkflowService is the top-level Temporal workflow over all stages.
- *
- * @generated from service cloud.v1.workflow.RunWorkflowService
- */
-export const RunWorkflowService: GenService<{
-  /**
-   *
-   * TestRunWorkflow runs one full benchmark run:
-   * infrastructure -> deployment plan render -> agent execution -> workload.
-   *
-   * @generated from rpc cloud.v1.workflow.RunWorkflowService.TestRunWorkflow
-   */
-  testRunWorkflow: {
-    methodKind: "unary";
-    input: typeof RunConfigSchema;
-    output: typeof EmptySchema;
-  },
-}> = /*@__PURE__*/
-  serviceDesc(file_cloud_v1_workflow_run, 0);
 

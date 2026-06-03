@@ -166,6 +166,26 @@ CREATE TABLE quota_reservations (
 CREATE INDEX idx_quota_reservations_run ON quota_reservations (tenant_id, run_id);
 CREATE INDEX idx_quota_reservations_scope_status ON quota_reservations (tenant_id, provider, resource_type, resource_id, status);
 
+-- ===== network reservation ledger (network allocation) =====
+
+CREATE TABLE network_reservations (
+  id            text PRIMARY KEY,
+  tenant_id     text NOT NULL,
+  run_id        text NOT NULL,
+  provider      integer NOT NULL,
+  resource_type text NOT NULL,
+  resource_id   text NOT NULL,
+  cidr          text NOT NULL,
+  status        integer NOT NULL,
+  workflow_id   text NOT NULL DEFAULT '',
+  expires_at    timestamptz,
+  created_at    timestamptz NOT NULL DEFAULT now(),
+  updated_at    timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (tenant_id, run_id, provider, resource_type, resource_id)
+);
+CREATE INDEX idx_network_reservations_run ON network_reservations (tenant_id, run_id);
+CREATE INDEX idx_network_reservations_scope_status ON network_reservations (tenant_id, provider, resource_type, resource_id, status);
+
 -- ===== IAM tables (iam.go) =====
 
 CREATE TABLE iam_accounts (

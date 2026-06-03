@@ -6,6 +6,8 @@ import (
 	"math"
 	"strings"
 
+	"google.golang.org/protobuf/proto"
+
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/topology"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
@@ -62,12 +64,17 @@ type BuildOptions struct {
 
 	DefaultSizing MachineSizing
 	MachineSizing map[string]MachineSizing
+	// MachineOverrides are compatible user edits to provider-specific machine
+	// intent. They are matched by node_id and provider, then overlaid on the
+	// generated machine plan after topology-derived defaults are rebuilt.
+	MachineOverrides []*deployment.MachinePlan
 
 	Docker DockerOptions
 	Yandex YandexOptions
 }
 
 func BuildPlan(spec *topologypb.TopologySpec, provider deployment.Provider, options BuildOptions) (*deployment.InfrastructurePlan, error) {
+	options = withMachineSizingOverrides(provider, options)
 	idx, err := topology.NewIndex(spec)
 	if err != nil {
 		return nil, err
@@ -100,10 +107,273 @@ func BuildPlan(spec *topologypb.TopologySpec, provider deployment.Provider, opti
 		plan.Machines = append(plan.Machines, machine)
 	}
 
+	applyMachineOverrides(plan, provider, options.MachineOverrides)
+
 	if err := plan.Validate(); err != nil {
 		return nil, err
 	}
 	return plan, nil
+}
+
+// MachineSizingOverrides extracts the resource sizing encoded in a provider
+// plan. It is used by wizard/start paths to carry user machine edits back into
+// BuildOptions before a fresh topology-derived plan is generated.
+func MachineSizingOverrides(plan *deployment.InfrastructurePlan) map[string]MachineSizing {
+	if plan == nil {
+		return nil
+	}
+	return MachineSizingOverridesForProvider(plan.GetProvider(), plan.GetMachines())
+}
+
+// BuildOptionsFromPlanOverrides turns an edited InfrastructurePlan back into the
+// BuildOptions fields needed to rebuild a fresh compatible plan.
+func BuildOptionsFromPlanOverrides(plan *deployment.InfrastructurePlan) BuildOptions {
+	if plan == nil {
+		return BuildOptions{}
+	}
+	return BuildOptionsFromMachineOverrides(plan.GetProvider(), plan.GetMachines())
+}
+
+// BuildOptionsFromMachineOverrides turns per-node MachinePlan overrides into
+// provider-scoped BuildOptions.
+func BuildOptionsFromMachineOverrides(provider deployment.Provider, machines []*deployment.MachinePlan) BuildOptions {
+	return BuildOptions{
+		MachineSizing:    MachineSizingOverridesForProvider(provider, machines),
+		MachineOverrides: machines,
+	}
+}
+
+// MachineSizingOverridesForProvider extracts sizing from a list of machine
+// overrides, ignoring machines that do not match the active provider.
+func MachineSizingOverridesForProvider(provider deployment.Provider, machines []*deployment.MachinePlan) map[string]MachineSizing {
+	out := make(map[string]MachineSizing)
+	for _, machine := range machines {
+		if machine.GetNodeId() == "" {
+			continue
+		}
+		sizing, ok := machineSizingForProvider(provider, machine)
+		if !ok {
+			continue
+		}
+		out[machine.GetNodeId()] = sizing
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
+}
+
+func withMachineSizingOverrides(provider deployment.Provider, options BuildOptions) BuildOptions {
+	fromOverrides := MachineSizingOverridesForProvider(provider, options.MachineOverrides)
+	if len(fromOverrides) == 0 {
+		return options
+	}
+	merged := make(map[string]MachineSizing, len(fromOverrides)+len(options.MachineSizing))
+	for nodeID, sizing := range fromOverrides {
+		merged[nodeID] = sizing
+	}
+	for nodeID, sizing := range options.MachineSizing {
+		merged[nodeID] = sizing
+	}
+	options.MachineSizing = merged
+	return options
+}
+
+func applyMachineOverrides(plan *deployment.InfrastructurePlan, provider deployment.Provider, overrides []*deployment.MachinePlan) {
+	if plan == nil || len(overrides) == 0 {
+		return
+	}
+	byNode := make(map[string]*deployment.MachinePlan, len(overrides))
+	for _, override := range overrides {
+		if override.GetNodeId() == "" {
+			continue
+		}
+		byNode[override.GetNodeId()] = override
+	}
+	for _, machine := range plan.GetMachines() {
+		override := byNode[machine.GetNodeId()]
+		if override == nil {
+			continue
+		}
+		switch provider {
+		case deployment.Provider_PROVIDER_DOCKER:
+			applyDockerOverride(machine, override)
+		case deployment.Provider_PROVIDER_YANDEX:
+			applyYandexOverride(machine, override)
+		}
+	}
+}
+
+func applyDockerOverride(machine, override *deployment.MachinePlan) {
+	src := override.GetDocker()
+	if src == nil {
+		return
+	}
+	// Start from the generated container so runtime-critical fields the user
+	// never edits (privileged, init cmd, tmpfs, cgroupns, restart policy,
+	// hostname) survive; overlay only the user-editable fields from the
+	// override. A partial override must not strip the agent container's
+	// requirements.
+	base := machine.GetDocker()
+	if base == nil {
+		base = &deployment.Docker_Container{}
+	}
+	merged := proto.Clone(base).(*deployment.Docker_Container)
+	mergeDockerContainer(merged, proto.Clone(src).(*deployment.Docker_Container))
+	machine.ProviderParams = &deployment.MachinePlan_Docker{Docker: merged}
+
+	diskGB := dockerDiskGB(override)
+	if diskGB == 0 {
+		diskGB = dockerDiskGB(machine)
+	}
+	sizing, _ := machineSizingForDocker(machine.GetNodeId(), merged, diskGB)
+	machine.QuotaRequests = dockerQuotaRequests(sizing, len(merged.GetPorts()))
+}
+
+// mergeDockerContainer overlays user-editable fields from src onto base,
+// leaving base's runtime-critical fields intact when src leaves a field unset.
+func mergeDockerContainer(base, src *deployment.Docker_Container) {
+	if img := src.GetImage(); img != "" {
+		base.Image = img
+	}
+	if fb := src.GetFallbackImage(); fb != "" {
+		base.FallbackImage = fb
+	}
+	if res := src.GetResources(); res != nil {
+		if base.Resources == nil {
+			base.Resources = &deployment.Docker_Resources{}
+		}
+		if cpu := res.GetCpuCores(); cpu > 0 {
+			base.Resources.CpuCores = cpu
+		}
+		if mem := res.GetMemoryMb(); mem > 0 {
+			base.Resources.MemoryMb = mem
+		}
+	}
+	if ports := src.GetPorts(); len(ports) > 0 {
+		base.Ports = ports
+	}
+	for key, value := range src.GetEnv() {
+		if base.Env == nil {
+			base.Env = make(map[string]string, len(src.GetEnv()))
+		}
+		base.Env[key] = value
+	}
+	for key, value := range src.GetLabels() {
+		if base.Labels == nil {
+			base.Labels = make(map[string]string, len(src.GetLabels()))
+		}
+		base.Labels[key] = value
+	}
+}
+
+func applyYandexOverride(machine, override *deployment.MachinePlan) {
+	src := override.GetYandex()
+	if src == nil {
+		return
+	}
+	base := machine.GetYandex()
+	if base == nil {
+		base = &deployment.Yandex_Vm{}
+	}
+	merged := proto.Clone(base).(*deployment.Yandex_Vm)
+	mergeYandexVM(merged, proto.Clone(src).(*deployment.Yandex_Vm))
+	machine.ProviderParams = &deployment.MachinePlan_Yandex{Yandex: merged}
+	machine.QuotaRequests = yandexQuotaRequests(merged)
+}
+
+// mergeYandexVM overlays user-editable VM fields from src onto base, keeping
+// base's generated defaults for any field src leaves at its zero value.
+func mergeYandexVM(base, src *deployment.Yandex_Vm) {
+	if v := src.GetCores(); v != 0 {
+		base.Cores = v
+	}
+	if v := src.GetMemoryGb(); v != 0 {
+		base.MemoryGb = v
+	}
+	if v := src.GetBootDiskGb(); v != 0 {
+		base.BootDiskGb = v
+	}
+	if v := src.GetBootDiskType(); v != "" {
+		base.BootDiskType = v
+	}
+	if v := src.GetZone(); v != "" {
+		base.Zone = v
+	}
+	if v := src.GetInternalIp(); v != "" {
+		base.InternalIp = v
+	}
+	if v := src.GetNetworkAcceleration(); v != "" {
+		base.NetworkAcceleration = v
+	}
+	if v := src.GetUserData(); v != "" {
+		base.UserData = v
+	}
+	if disks := src.GetSecondaryDisks(); len(disks) > 0 {
+		base.SecondaryDisks = disks
+	}
+	// PublicIp is a toggle with no "unset"; the generated default is false, so
+	// taking the override's value never regresses and honors explicit intent.
+	base.PublicIp = src.GetPublicIp()
+}
+
+func machineSizingForProvider(provider deployment.Provider, machine *deployment.MachinePlan) (MachineSizing, bool) {
+	if machine == nil {
+		return MachineSizing{}, false
+	}
+	switch provider {
+	case deployment.Provider_PROVIDER_DOCKER:
+		return machineSizingForDocker(machine.GetNodeId(), machine.GetDocker(), dockerDiskGB(machine))
+	case deployment.Provider_PROVIDER_YANDEX:
+		return machineSizingForYandex(machine.GetNodeId(), machine.GetYandex())
+	default:
+		return MachineSizing{}, false
+	}
+}
+
+func machineSizingForDocker(nodeID string, container *deployment.Docker_Container, diskGB uint64) (MachineSizing, bool) {
+	if nodeID == "" || container == nil {
+		return MachineSizing{}, false
+	}
+	var sizing MachineSizing
+	if resources := container.GetResources(); resources != nil {
+		sizing.CPUCores = cpuCoresFromFloat(resources.GetCpuCores())
+		sizing.MemoryMB = resources.GetMemoryMb()
+	}
+	sizing.DiskGB = diskGB
+	return sizing, sizing.CPUCores != 0 || sizing.MemoryMB != 0 || sizing.DiskGB != 0
+}
+
+func machineSizingForYandex(nodeID string, vm *deployment.Yandex_Vm) (MachineSizing, bool) {
+	if nodeID == "" || vm == nil {
+		return MachineSizing{}, false
+	}
+	sizing := MachineSizing{
+		CPUCores: vm.GetCores(),
+		MemoryMB: vm.GetMemoryGb() * 1024,
+		DiskGB:   vm.GetBootDiskGb(),
+	}
+	return sizing, sizing.CPUCores != 0 || sizing.MemoryMB != 0 || sizing.DiskGB != 0
+}
+
+func cpuCoresFromFloat(value float64) uint32 {
+	if value <= 0 || math.IsNaN(value) || math.IsInf(value, 0) {
+		return 0
+	}
+	if value > float64(math.MaxUint32) {
+		return math.MaxUint32
+	}
+	return uint32(math.Ceil(value))
+}
+
+func dockerDiskGB(machine *deployment.MachinePlan) uint64 {
+	for _, req := range machine.GetQuotaRequests() {
+		info := req.GetInfo()
+		if info.GetProvider() == deployment.Provider_PROVIDER_DOCKER && info.GetName() == "host.disk.size" {
+			return req.GetRequest()
+		}
+	}
+	return 0
 }
 
 // isManagedNode reports whether the topology node represents a provider-managed

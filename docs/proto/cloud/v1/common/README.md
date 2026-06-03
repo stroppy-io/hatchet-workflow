@@ -5,7 +5,6 @@
 
 ## Table of Contents
 - Messages
-  - [cloud.v1.common.Cidr](#cloud-v1-common-cidr)
   - [cloud.v1.common.Cmd](#cloud-v1-common-cmd)
   - [cloud.v1.common.Cmd.Argv](#cloud-v1-common-cmd-argv)
   - [cloud.v1.common.Cmd.Result](#cloud-v1-common-cmd-result)
@@ -25,9 +24,6 @@
   - [cloud.v1.common.File](#cloud-v1-common-file)
   - [cloud.v1.common.File.AsRef](#cloud-v1-common-file-asref)
   - [cloud.v1.common.File.Info](#cloud-v1-common-file-info)
-  - [cloud.v1.common.IpAddress](#cloud-v1-common-ipaddress)
-  - [cloud.v1.common.IpAddress.Family](#cloud-v1-common-ipaddress-family)
-  - [cloud.v1.common.Net](#cloud-v1-common-net)
   - [cloud.v1.common.Page](#cloud-v1-common-page)
   - [cloud.v1.common.Status](#cloud-v1-common-status)
   - [cloud.v1.common.Tags](#cloud-v1-common-tags)
@@ -37,40 +33,6 @@
 
 <a name="cloud-v1-common-messages"></a>
 ## Messages
-
-<a name="cloud-v1-common-cidr"></a>
-### cloud.v1.common.Cidr
-
-<pre>
-Cidr describes a network block in CIDR notation.
-</pre>
-
-<table>
-<tr>
-<th>Attribute</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-<tr>
-<td>addresses</td>
-<td><a href="#cloud-v1-common-ipaddress">cloud.v1.common.IpAddress</a></td>
-<td><pre>
-addresses optionally denormalizes the addresses covered by this block.<br>
-
-json_name: addresses
-go_name: Addresses</pre></td>
-</tr><tr>
-<td>value</td>
-<td>string</td>
-<td><pre>
-value is the CIDR string, e.g. 10.0.0.0/24.<br>
-
-json_name: value
-go_name: Value</pre></td>
-</tr>
-</table>
-
-
 
 <a name="cloud-v1-common-cmd"></a>
 ### cloud.v1.common.Cmd
@@ -950,117 +912,6 @@ path is an absolute or executor-relative file path.<br>
 
 json_name: path
 go_name: Path</pre></td>
-</tr>
-</table>
-
-
-
-<a name="cloud-v1-common-ipaddress"></a>
-### cloud.v1.common.IpAddress
-
-<pre>
-IpAddress describes an address assigned to a network interface.
-</pre>
-
-<table>
-<tr>
-<th>Attribute</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-<tr>
-<td>address</td>
-<td>string</td>
-<td><pre>
-address is the textual IP address.<br>
-
-json_name: address
-go_name: Address</pre></td>
-</tr><tr>
-<td>family</td>
-<td><a href="#cloud-v1-common-ipaddress-family">cloud.v1.common.IpAddress.Family</a></td>
-<td><pre>
-family identifies IP protocol version.<br>
-
-json_name: family
-go_name: Family</pre></td>
-</tr><tr>
-<td>prefix_len</td>
-<td>uint32</td>
-<td><pre>
-prefix_len is CIDR prefix length.<br>
-
-json_name: prefixLen
-go_name: PrefixLen</pre></td>
-</tr><tr>
-<td>scope</td>
-<td>string</td>
-<td><pre>
-scope is address scope.<br>
-
-json_name: scope
-go_name: Scope</pre></td>
-</tr>
-</table>
-
-
-
-<a name="cloud-v1-common-ipaddress-family"></a>
-### cloud.v1.common.IpAddress.Family
-
-<pre>
-Family identifies IP protocol version.
-</pre>
-
-<table>
-<tr><th>Value</th><th>Description</th></tr>
-<tr>
-<td>FAMILY_UNSPECIFIED</td>
-<td><pre>
-UNSPECIFIED means unknown address family.
-</pre></td>
-</tr><tr>
-<td>FAMILY_IPV4</td>
-<td><pre>
-IPV4 is an IPv4 address.
-</pre></td>
-</tr><tr>
-<td>FAMILY_IPV6</td>
-<td><pre>
-IPV6 is an IPv6 address.
-</pre></td>
-</tr>
-</table>
-
-<a name="cloud-v1-common-net"></a>
-### cloud.v1.common.Net
-
-<pre>
-Net groups one or more CIDR blocks together with their member addresses.
-</pre>
-
-<table>
-<tr>
-<th>Attribute</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-<tr>
-<td>addresses</td>
-<td><a href="#cloud-v1-common-ipaddress">cloud.v1.common.IpAddress</a></td>
-<td><pre>
-addresses lists the IP addresses belonging to this network.<br>
-
-json_name: addresses
-go_name: Addresses</pre></td>
-</tr><tr>
-<td>cidrs</td>
-<td><a href="#cloud-v1-common-cidr">cloud.v1.common.Cidr</a></td>
-<td><pre>
-cidrs lists the CIDR blocks that make up this network.<br>
-
-json_name: cidrs
-go_name: Cidrs</pre></td>
 </tr>
 </table>
 

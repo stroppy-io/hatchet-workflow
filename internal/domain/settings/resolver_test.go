@@ -55,6 +55,9 @@ func TestResolverReadsProviderAndAgentSettingsThroughInterfaces(t *testing.T) {
 	if got, want := bootstrap.GetTemporalNamespace(), "bench"; got != want {
 		t.Fatalf("temporal namespace = %q, want %q", got, want)
 	}
+	if got := bootstrap.GetBinaryUrl(); got != "" {
+		t.Fatalf("binary url = %q, want empty so agent derives it from server addr", got)
+	}
 	if got, want := bootstrap.GetExtraEnv()["CUSTOM_ENV"], "value"; got != want {
 		t.Fatalf("extra env = %q, want %q", got, want)
 	}

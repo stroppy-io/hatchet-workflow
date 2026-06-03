@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"net/url"
@@ -27,13 +28,13 @@ func agentCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			serverAddr := envOrAgent("STROPPY_SERVER_ADDR", "http://127.0.0.1:8080")
 			namespace := envOrAgent("TEMPORAL_NAMESPACE", "default")
+			agentToken := os.Getenv("STROPPY_AGENT_TOKEN")
+			if agentToken == "" {
+				return fmt.Errorf("agent: STROPPY_AGENT_TOKEN is required")
+			}
 			taskQueue := os.Getenv("AGENT_TASK_QUEUE")
 			if taskQueue == "" {
-				if machineID := os.Getenv("STROPPY_MACHINE_ID"); machineID != "" {
-					taskQueue = "stroppy-agent-" + machineID
-				} else {
-					taskQueue = "stroppy-agent"
-				}
+				return fmt.Errorf("agent: AGENT_TASK_QUEUE is required")
 			}
 			hostPort := agentGRPCHostPort(serverAddr)
 
@@ -42,11 +43,15 @@ func agentCmd() *cobra.Command {
 				"server_addr", serverAddr, "temporal_hostport", hostPort,
 				"namespace", namespace, "task_queue", taskQueue)
 
-			c, err := temporalclient.Dial(temporalclient.Options{
+			clientOptions := temporalclient.Options{
 				HostPort:  hostPort,
 				Namespace: namespace,
 				Logger:    temporallog.NewStructuredLogger(logger),
-			})
+			}
+			clientOptions.HeadersProvider = staticHeadersProvider{
+				"authorization": "Bearer " + agentToken,
+			}
+			c, err := temporalclient.Dial(clientOptions)
 			if err != nil {
 				return fmt.Errorf("agent: dial temporal: %w", err)
 			}
@@ -55,12 +60,25 @@ func agentCmd() *cobra.Command {
 			// EnableSessionWorker lets the orchestrating workflow pin a sequence of
 			// activities (write configs, fetch binaries, run the load) to THIS agent.
 			w := temporalworker.New(c, taskQueue, temporalworker.Options{EnableSessionWorker: true})
-			impl := agentworker.NewActivities(agentworker.WithLogger(logger))
+			impl := agentworker.NewActivities(
+				agentworker.WithLogger(logger),
+				agentworker.WithLogSink(agentworker.NewConnectLogSink(serverAddr, agentToken)),
+			)
 			workflowpb.RegisterAgentCommandServiceActivities(w, impl)
 
 			return w.Run(temporalworker.InterruptCh())
 		},
 	}
+}
+
+type staticHeadersProvider map[string]string
+
+func (p staticHeadersProvider) GetHeaders(context.Context) (map[string]string, error) {
+	out := make(map[string]string, len(p))
+	for key, value := range p {
+		out[key] = value
+	}
+	return out, nil
 }
 
 func envOrAgent(key, def string) string {

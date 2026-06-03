@@ -177,30 +177,7 @@ func (s *TestRunOverviewService) GetTestRunOverview(ctx context.Context, req *ap
 // StreamTestRunOverview pushes a fresh full snapshot on every tick until the
 // stream ctx is cancelled or the run is terminal (the source channel closes).
 func (s *TestRunOverviewService) StreamTestRunOverview(req *api.StreamTestRunOverviewRequest, stream grpc.ServerStreamingServer[api.TestRunOverviewSnapshot]) error {
-	ctx := stream.Context()
-	if err := s.authorizeRun(ctx, req.GetTenantId(), req.GetRunId()); err != nil {
-		return err
-	}
-	ch, err := s.d.Overview.Stream(ctx, req.GetRunId())
-	if err != nil {
-		return utils.MapErr(err)
-	}
-	for {
-		select {
-		case <-ctx.Done():
-			return status.FromContextError(ctx.Err()).Err()
-		case snap, ok := <-ch:
-			if !ok {
-				return nil
-			}
-			if snap == nil {
-				continue
-			}
-			if err := stream.Send(snap); err != nil {
-				return err
-			}
-		}
-	}
+	return s.streamOverview(stream.Context(), req.GetTenantId(), req.GetRunId(), stream.Send)
 }
 
 /*
@@ -227,30 +204,7 @@ func (s *TestRunOverviewService) QueryLogs(ctx context.Context, req *api.QueryLo
 // StreamLogs is a bounded live tail (follow). The server MAY coalesce /
 // rate-limit; clients use QueryLogs for exact scrollback.
 func (s *TestRunOverviewService) StreamLogs(req *api.StreamLogsRequest, stream grpc.ServerStreamingServer[monitor.LogLine]) error {
-	ctx := stream.Context()
-	if err := s.authorizeRun(ctx, req.GetTenantId(), req.GetRunId()); err != nil {
-		return err
-	}
-	ch, err := s.d.Logs.Stream(ctx, req.GetRunId(), req.GetFilter(), req.GetFrom())
-	if err != nil {
-		return utils.MapErr(err)
-	}
-	for {
-		select {
-		case <-ctx.Done():
-			return status.FromContextError(ctx.Err()).Err()
-		case line, ok := <-ch:
-			if !ok {
-				return nil
-			}
-			if line == nil {
-				continue
-			}
-			if err := stream.Send(line); err != nil {
-				return err
-			}
-		}
-	}
+	return s.streamLogs(stream.Context(), req.GetTenantId(), req.GetRunId(), req.GetFilter(), req.GetFrom(), stream.Send)
 }
 
 // ResolveLogRef turns a shareable LogRef (deep-link) into a concrete run +
@@ -290,4 +244,63 @@ func (s *TestRunOverviewService) GetRunMetrics(ctx context.Context, req *api.Get
 		return nil, utils.MapErr(err)
 	}
 	return &api.GetRunMetricsResponse{Metrics: m}, nil
+}
+
+func (s *TestRunOverviewService) streamOverview(ctx context.Context, tenantID, runID string, send func(*api.TestRunOverviewSnapshot) error) error {
+	if err := s.authorizeRun(ctx, tenantID, runID); err != nil {
+		return err
+	}
+	ch, err := s.d.Overview.Stream(ctx, runID)
+	if err != nil {
+		return utils.MapErr(err)
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			return status.FromContextError(ctx.Err()).Err()
+		case snap, ok := <-ch:
+			if !ok {
+				return nil
+			}
+			if snap == nil {
+				continue
+			}
+			if err := send(snap); err != nil {
+				return err
+			}
+		}
+	}
+}
+
+func (s *TestRunOverviewService) streamLogs(
+	ctx context.Context,
+	tenantID string,
+	runID string,
+	filter *api.LogFilter,
+	from *monitor.LogCursor,
+	send func(*monitor.LogLine) error,
+) error {
+	if err := s.authorizeRun(ctx, tenantID, runID); err != nil {
+		return err
+	}
+	ch, err := s.d.Logs.Stream(ctx, runID, filter, from)
+	if err != nil {
+		return utils.MapErr(err)
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			return status.FromContextError(ctx.Err()).Err()
+		case line, ok := <-ch:
+			if !ok {
+				return nil
+			}
+			if line == nil {
+				continue
+			}
+			if err := send(line); err != nil {
+				return err
+			}
+		}
+	}
 }

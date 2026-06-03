@@ -1,13 +1,17 @@
 package victoria
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
 )
 
 // LogsClient queries VictoriaLogs via the LogsQL HTTP API.
@@ -73,4 +77,89 @@ func (c *LogsClient) Query(ctx context.Context, q LogsQuery) (io.ReadCloser, err
 		return nil, fmt.Errorf("vlogs: status %d: %s", resp.StatusCode, body)
 	}
 	return resp.Body, nil
+}
+
+// Write appends log lines to VictoriaLogs via /insert/jsonline. The caller is
+// responsible for setting run_id / node_execution_id / component_id on the
+// lines; this method only maps the proto shape to the JSONL wire fields used by
+// the read path.
+func (c *LogsClient) Write(ctx context.Context, lines []*monitor.LogLine) error {
+	if len(lines) == 0 {
+		return nil
+	}
+	var body bytes.Buffer
+	enc := json.NewEncoder(&body)
+	for _, line := range lines {
+		if line == nil || line.GetRunId() == "" || line.GetLine() == "" {
+			continue
+		}
+		row := map[string]any{
+			"_msg":              line.GetLine(),
+			"run_id":            line.GetRunId(),
+			"node_execution_id": line.GetNodeExecutionId(),
+			"component_id":      line.GetComponentId(),
+			"machine_id":        line.GetMachineId(),
+			"unit":              line.GetUnit(),
+			"source":            sourceName(line.GetSource()),
+			"stream":            streamName(line.GetStream()),
+		}
+		if line.GetObservedAt() != nil {
+			row["_time"] = line.GetObservedAt().AsTime().UTC().Format(time.RFC3339Nano)
+		}
+		if line.GetLineNo() > 0 {
+			row["line_no"] = line.GetLineNo()
+		}
+		if err := enc.Encode(row); err != nil {
+			return fmt.Errorf("vlogs: encode line: %w", err)
+		}
+	}
+	if body.Len() == 0 {
+		return nil
+	}
+
+	endpoint := c.baseURL + "/insert/jsonline"
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, &body)
+	if err != nil {
+		return fmt.Errorf("vlogs: build write request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/x-ndjson")
+	req.Header.Set("AccountID", "0")
+	if c.token != "" {
+		req.Header.Set("Authorization", "Bearer "+c.token)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("vlogs: write: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		return fmt.Errorf("vlogs: write status %d: %s", resp.StatusCode, body)
+	}
+	return nil
+}
+
+func sourceName(source monitor.Source) string {
+	switch source {
+	case monitor.Source_SOURCE_COMMAND:
+		return "command"
+	case monitor.Source_SOURCE_JOURNALD:
+		return "journald"
+	case monitor.Source_SOURCE_FILE:
+		return "file"
+	default:
+		return ""
+	}
+}
+
+func streamName(stream monitor.Stream) string {
+	switch stream {
+	case monitor.Stream_STREAM_STDOUT:
+		return "stdout"
+	case monitor.Stream_STREAM_STDERR:
+		return "stderr"
+	default:
+		return ""
+	}
 }

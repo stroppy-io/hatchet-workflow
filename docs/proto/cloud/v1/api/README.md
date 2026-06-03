@@ -10026,7 +10026,7 @@ go_name: Draft</pre></td>
 <pre>
 //StartTestRun launches a run. Provide a staged `run` spec (CLI / wizard
 //finish) to persist a new record and start it; or `test_run_id` to re-run an
-//existing record's spec as a new run. Launches TestRunWorkflow.
+//existing record's spec as a new run. Launches TestWorkflow.
 </pre>
 
 <table>

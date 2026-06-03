@@ -1,0 +1,152 @@
+package agent
+
+import (
+	"context"
+	"log/slog"
+	"net/http"
+	"strings"
+	"time"
+
+	"connectrpc.com/connect"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
+	deploymentbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/deployment"
+	agentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agent"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agent/agentconnect"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
+)
+
+type LogSink interface {
+	Ship(context.Context, []*monitor.LogLine) error
+}
+
+type ConnectLogSink struct {
+	client agentconnect.AgentLogServiceClient
+}
+
+func NewConnectLogSink(serverAddr, token string) *ConnectLogSink {
+	serverAddr = strings.TrimRight(serverAddr, "/")
+	if serverAddr == "" {
+		return nil
+	}
+	opts := []connect.ClientOption{}
+	if token != "" {
+		opts = append(opts, connect.WithInterceptors(bearerInterceptor{token: token}))
+	}
+	return &ConnectLogSink{
+		client: agentconnect.NewAgentLogServiceClient(http.DefaultClient, serverAddr, opts...),
+	}
+}
+
+func (s *ConnectLogSink) Ship(ctx context.Context, lines []*monitor.LogLine) error {
+	if s == nil || s.client == nil || len(lines) == 0 {
+		return nil
+	}
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	stream, err := s.client.ShipLogs(ctx)
+	if err != nil {
+		return err
+	}
+	if err := stream.Send(&agentpb.LogBatch{Lines: lines}); err != nil {
+		_, _ = stream.CloseAndReceive()
+		return err
+	}
+	_, err = stream.CloseAndReceive()
+	return err
+}
+
+type bearerInterceptor struct {
+	token string
+}
+
+func (i bearerInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
+	return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
+		req.Header().Set("Authorization", "Bearer "+i.token)
+		return next(ctx, req)
+	}
+}
+
+func (i bearerInterceptor) WrapStreamingClient(next connect.StreamingClientFunc) connect.StreamingClientFunc {
+	return func(ctx context.Context, spec connect.Spec) connect.StreamingClientConn {
+		conn := next(ctx, spec)
+		conn.RequestHeader().Set("Authorization", "Bearer "+i.token)
+		return conn
+	}
+}
+
+func (i bearerInterceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
+	return next
+}
+
+type logSinkWriter struct {
+	ctx     context.Context
+	logger  *slog.Logger
+	sink    LogSink
+	context commandLogContext
+	stream  monitor.Stream
+}
+
+func (w *logSinkWriter) Write(p []byte) (int, error) {
+	lines := logLinesFromChunk(w.context, w.stream, p)
+	if len(lines) == 0 || w.sink == nil {
+		return len(p), nil
+	}
+	if err := w.sink.Ship(w.ctx, lines); err != nil && w.logger != nil {
+		w.logger.DebugContext(w.ctx, "ship command logs failed", "err", err)
+	}
+	return len(p), nil
+}
+
+type commandLogContext struct {
+	runID           string
+	nodeExecutionID string
+	componentID     string
+	machineID       string
+	unit            string
+}
+
+func commandLogContextFromEnv(env map[string]string) commandLogContext {
+	unit := env[deploymentbuilder.EnvAction]
+	if unit == "" {
+		unit = "command"
+	}
+	machineID := env[deploymentbuilder.EnvNodeID]
+	if machineID == "" {
+		machineID = env["STROPPY_MACHINE_ID"]
+	}
+	return commandLogContext{
+		runID:           env[deploymentbuilder.EnvRunID],
+		nodeExecutionID: env[deploymentbuilder.EnvNodeExecutionID],
+		componentID:     env[deploymentbuilder.EnvComponentID],
+		machineID:       machineID,
+		unit:            unit,
+	}
+}
+
+func logLinesFromChunk(ctx commandLogContext, stream monitor.Stream, chunk []byte) []*monitor.LogLine {
+	text := strings.TrimRight(string(chunk), "\n")
+	if strings.TrimSpace(text) == "" || ctx.runID == "" {
+		return nil
+	}
+	parts := strings.Split(text, "\n")
+	lines := make([]*monitor.LogLine, 0, len(parts))
+	for _, part := range parts {
+		if part == "" {
+			continue
+		}
+		lines = append(lines, &monitor.LogLine{
+			ObservedAt:      timestamppb.Now(),
+			RunId:           ctx.runID,
+			NodeExecutionId: ctx.nodeExecutionID,
+			ComponentId:     ctx.componentID,
+			MachineId:       ctx.machineID,
+			Source:          monitor.Source_SOURCE_COMMAND,
+			Unit:            ctx.unit,
+			Stream:          stream,
+			Line:            part,
+		})
+	}
+	return lines
+}

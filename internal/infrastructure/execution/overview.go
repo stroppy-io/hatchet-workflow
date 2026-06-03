@@ -3,14 +3,19 @@ package execution
 import (
 	"context"
 	"math"
+	"sort"
+	"strings"
 	"time"
 
+	deploymentbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/deployment"
 	"go.temporal.io/sdk/client"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
+	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
+	domainpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology"
@@ -20,6 +25,8 @@ import (
 
 // streamInterval is how often Stream re-polls GetRunState and emits a snapshot.
 const streamInterval = time.Second
+
+const executeDeploymentPlanNodeName = "execute_deployment_plan"
 
 // runStateQuerier is the minimal slice of workflowpb.TestServiceClient the reader
 // depends on for the live run state. Kept narrow so the reader is unit-testable
@@ -212,8 +219,8 @@ func overviewFromRecord(runID string, rec *models.TestRunRecord) *monitor.Overvi
 		FinishedAt:  sum.GetFinishedAt(),
 		Duration:    sum.GetDuration(),
 		ProgressPct: sum.GetProgressPct(),
-		Pipeline:    &monitor.PipelineView{},
-		Workers:     []*monitor.WorkerInfo{},
+		Pipeline:    pipelineFromRecord(runID, rec),
+		Workers:     workersFromRecord(rec),
 		Timeline:    []*monitor.Event{},
 	}
 }
@@ -225,6 +232,8 @@ func mergeOverviewWithRecord(overview *monitor.Overview, rec *models.TestRunReco
 	if rec == nil {
 		return overview
 	}
+	overview = enrichDeploymentPipeline(overview, rec)
+	overview.Workers = workersFromRecord(rec)
 	stored := rec.GetStatus()
 	if stored == common.Status_STATUS_CANCELLING || isTerminalStatus(stored) {
 		sum := rec.GetSummary()
@@ -243,6 +252,342 @@ func mergeOverviewWithRecord(overview *monitor.Overview, rec *models.TestRunReco
 		}
 	}
 	return overview
+}
+
+func pipelineFromRecord(runID string, rec *models.TestRunRecord) *monitor.PipelineView {
+	pipeline := &monitor.PipelineView{}
+	if rec == nil || rec.GetDeploymentPlan() == nil {
+		return pipeline
+	}
+	root := deploymentPlanRoot(runID, rec.GetDeploymentPlan(), nil)
+	pipeline.Roots = []*monitor.PipelineNode{root}
+	return pipeline
+}
+
+func enrichDeploymentPipeline(overview *monitor.Overview, rec *models.TestRunRecord) *monitor.Overview {
+	if overview == nil || rec == nil || rec.GetDeploymentPlan() == nil {
+		return overview
+	}
+	if overview.Pipeline == nil {
+		overview.Pipeline = &monitor.PipelineView{}
+	}
+	root := findPipelineNode(overview.Pipeline.GetRoots(), executeDeploymentPlanNodeName)
+	if root == nil {
+		root = deploymentPlanRoot(overview.GetRunId(), rec.GetDeploymentPlan(), nil)
+		overview.Pipeline.Roots = append(overview.Pipeline.Roots, root)
+		return overview
+	}
+	deploymentPlanRoot(overview.GetRunId(), rec.GetDeploymentPlan(), root)
+	return overview
+}
+
+func workersFromRecord(rec *models.TestRunRecord) []*monitor.WorkerInfo {
+	if rec == nil {
+		return nil
+	}
+
+	machines := make(map[string]*deploymentpb.MachineState)
+	for _, machine := range rec.GetInfrastructureState().GetMachines() {
+		if machine == nil || machine.GetNodeId() == "" {
+			continue
+		}
+		machines[machine.GetNodeId()] = machine
+	}
+
+	current := currentExecutionByNode(rec.GetDeploymentPlan())
+	nodeIDs := make(map[string]struct{}, len(machines)+len(current))
+	for nodeID := range machines {
+		nodeIDs[nodeID] = struct{}{}
+	}
+	for _, component := range rec.GetDeploymentPlan().GetComponents() {
+		if component.GetNodeId() != "" {
+			nodeIDs[component.GetNodeId()] = struct{}{}
+		}
+	}
+
+	ordered := make([]string, 0, len(nodeIDs))
+	for nodeID := range nodeIDs {
+		ordered = append(ordered, nodeID)
+	}
+	sort.Strings(ordered)
+
+	workers := make([]*monitor.WorkerInfo, 0, len(ordered))
+	for _, nodeID := range ordered {
+		machine := machines[nodeID]
+		status := workerStatus(machine, current[nodeID])
+		workers = append(workers, &monitor.WorkerInfo{
+			Id:                     "agent/" + nodeID,
+			Kind:                   domainpb.Worker_KIND_AGENT,
+			MachineId:              nodeID,
+			Host:                   machineHost(machine),
+			Online:                 workerOnline(machine),
+			CurrentNodeExecutionId: current[nodeID],
+			Status:                 status,
+		})
+	}
+	return workers
+}
+
+func currentExecutionByNode(plan *deploymentpb.DeploymentPlan) map[string]string {
+	current := make(map[string]string)
+	if plan == nil {
+		return current
+	}
+	for _, component := range plan.GetComponents() {
+		if component == nil || component.GetNodeId() == "" {
+			continue
+		}
+		for _, step := range component.GetSteps() {
+			if step == nil || !activeStatus(step.GetStatus()) {
+				continue
+			}
+			current[component.GetNodeId()] = labelOr(step.GetLabels(), deploymentbuilder.LabelNodeExecutionID, deploymentbuilder.StepExecutionID(component.GetComponentId(), step.GetId()))
+			break
+		}
+		if current[component.GetNodeId()] == "" && activeStatus(component.GetStatus()) {
+			current[component.GetNodeId()] = labelOr(component.GetLabels(), deploymentbuilder.LabelNodeExecutionID, deploymentbuilder.ComponentExecutionID(component.GetComponentId()))
+		}
+	}
+	return current
+}
+
+func workerStatus(machine *deploymentpb.MachineState, currentNodeExecutionID string) common.Status {
+	if currentNodeExecutionID != "" {
+		return common.Status_STATUS_RUNNING
+	}
+	if machine == nil {
+		return common.Status_STATUS_PENDING
+	}
+	return pendingIfUnspecified(machine.GetStatus())
+}
+
+func workerOnline(machine *deploymentpb.MachineState) bool {
+	if machine == nil {
+		return false
+	}
+	switch pendingIfUnspecified(machine.GetStatus()) {
+	case common.Status_STATUS_DEPLOYED,
+		common.Status_STATUS_COMPLETED,
+		common.Status_STATUS_RUNNING,
+		common.Status_STATUS_DEPLOYMENT:
+		return true
+	default:
+		return false
+	}
+}
+
+func activeStatus(status common.Status) bool {
+	switch pendingIfUnspecified(status) {
+	case common.Status_STATUS_ALLOCATED,
+		common.Status_STATUS_DEPLOYMENT,
+		common.Status_STATUS_RUNNING,
+		common.Status_STATUS_RETRY_WAIT,
+		common.Status_STATUS_CANCELLING:
+		return true
+	default:
+		return false
+	}
+}
+
+func machineHost(machine *deploymentpb.MachineState) string {
+	if machine == nil {
+		return ""
+	}
+	for _, name := range []string{"private", "public"} {
+		for _, endpoint := range machine.GetEndpoints() {
+			if endpoint.GetName() == name && endpoint.GetAddress() != "" {
+				return endpoint.GetAddress()
+			}
+		}
+	}
+	for _, endpoint := range machine.GetEndpoints() {
+		if endpoint.GetAddress() != "" {
+			return endpoint.GetAddress()
+		}
+	}
+	return ""
+}
+
+func deploymentPlanRoot(runID string, plan *deploymentpb.DeploymentPlan, root *monitor.PipelineNode) *monitor.PipelineNode {
+	if root == nil {
+		id := deploymentbuilder.StageExecutionID(executeDeploymentPlanNodeName)
+		root = &monitor.PipelineNode{
+			NodeExecutionId: id,
+			Name:            executeDeploymentPlanNodeName,
+			Status:          deploymentPlanStatus(plan),
+			LogRef:          logRef(runID, id, ""),
+			Attempt:         1,
+		}
+	}
+	if root.GetNodeExecutionId() == "" {
+		root.NodeExecutionId = deploymentbuilder.StageExecutionID(executeDeploymentPlanNodeName)
+	}
+	if root.LogRef == nil {
+		root.LogRef = logRef(runID, root.GetNodeExecutionId(), "")
+	}
+	root.Children = deploymentPlanChildren(runID, plan)
+	return root
+}
+
+func deploymentPlanChildren(runID string, plan *deploymentpb.DeploymentPlan) []*monitor.PipelineNode {
+	components := append([]*deploymentpb.ComponentDeployment(nil), plan.GetComponents()...)
+	sort.SliceStable(components, func(i, j int) bool {
+		if components[i].GetGlobalPriority() != components[j].GetGlobalPriority() {
+			return components[i].GetGlobalPriority() < components[j].GetGlobalPriority()
+		}
+		if components[i].GetNodePriority() != components[j].GetNodePriority() {
+			return components[i].GetNodePriority() < components[j].GetNodePriority()
+		}
+		return components[i].GetComponentId() < components[j].GetComponentId()
+	})
+	nodes := make([]*monitor.PipelineNode, 0, len(components))
+	for _, component := range components {
+		if component == nil {
+			continue
+		}
+		componentID := component.GetComponentId()
+		nodeExecutionID := labelOr(component.GetLabels(), deploymentbuilder.LabelNodeExecutionID, deploymentbuilder.ComponentExecutionID(componentID))
+		nodes = append(nodes, &monitor.PipelineNode{
+			NodeExecutionId: nodeExecutionID,
+			Name:            componentID,
+			Status:          pendingIfUnspecified(component.GetStatus()),
+			Worker: &domainpb.Worker{
+				Id:   "agent/" + component.GetNodeId(),
+				Kind: domainpb.Worker_KIND_AGENT,
+			},
+			LogRef:   logRef(runID, nodeExecutionID, componentID),
+			Children: agentStepNodes(runID, component),
+			Attempt:  1,
+		})
+	}
+	return nodes
+}
+
+func agentStepNodes(runID string, component *deploymentpb.ComponentDeployment) []*monitor.PipelineNode {
+	steps := append([]*deploymentpb.AgentStep(nil), component.GetSteps()...)
+	sort.SliceStable(steps, func(i, j int) bool {
+		if steps[i].GetOrder() != steps[j].GetOrder() {
+			return steps[i].GetOrder() < steps[j].GetOrder()
+		}
+		return steps[i].GetId() < steps[j].GetId()
+	})
+	nodes := make([]*monitor.PipelineNode, 0, len(steps))
+	for _, step := range steps {
+		if step == nil {
+			continue
+		}
+		componentID := component.GetComponentId()
+		nodeExecutionID := labelOr(step.GetLabels(), deploymentbuilder.LabelNodeExecutionID, deploymentbuilder.StepExecutionID(componentID, step.GetId()))
+		nodes = append(nodes, &monitor.PipelineNode{
+			NodeExecutionId: nodeExecutionID,
+			Name:            agentStepName(step),
+			Status:          pendingIfUnspecified(step.GetStatus()),
+			Worker: &domainpb.Worker{
+				Id:   "agent/" + component.GetNodeId(),
+				Kind: domainpb.Worker_KIND_AGENT,
+			},
+			LogRef:  logRef(runID, nodeExecutionID, componentID),
+			Attempt: 1,
+		})
+	}
+	return nodes
+}
+
+func agentStepName(step *deploymentpb.AgentStep) string {
+	action := deploymentbuilder.AgentStepActionKind(step)
+	switch typed := step.GetAction().(type) {
+	case *deploymentpb.AgentStep_CreateDir:
+		return shortNodeName(action, typed.CreateDir.GetInfo().GetPath())
+	case *deploymentpb.AgentStep_WriteFile:
+		return shortNodeName(action, typed.WriteFile.GetInfo().GetPath())
+	case *deploymentpb.AgentStep_FetchFile:
+		return shortNodeName(action, typed.FetchFile.GetInfo().GetPath())
+	case *deploymentpb.AgentStep_CallCmd:
+		return shortNodeName(action, commandSummary(typed.CallCmd))
+	default:
+		return step.GetId()
+	}
+}
+
+func commandSummary(cmd *common.Cmd) string {
+	if cmd == nil || cmd.GetSpec() == nil {
+		return ""
+	}
+	switch typed := cmd.GetSpec().GetCommand().(type) {
+	case *common.Cmd_Spec_Argv:
+		return strings.Join(typed.Argv.GetArgs(), " ")
+	case *common.Cmd_Spec_Script:
+		text := strings.TrimSpace(typed.Script.GetText())
+		if i := strings.IndexByte(text, '\n'); i >= 0 {
+			return text[:i]
+		}
+		return text
+	default:
+		return ""
+	}
+}
+
+func shortNodeName(action, detail string) string {
+	const maxDetail = 96
+	if detail == "" {
+		return action
+	}
+	if len(detail) > maxDetail {
+		detail = detail[:maxDetail-1] + "..."
+	}
+	return action + ": " + detail
+}
+
+func deploymentPlanStatus(plan *deploymentpb.DeploymentPlan) common.Status {
+	if plan == nil || len(plan.GetComponents()) == 0 {
+		return common.Status_STATUS_PENDING
+	}
+	var completed int
+	for _, component := range plan.GetComponents() {
+		switch pendingIfUnspecified(component.GetStatus()) {
+		case common.Status_STATUS_FAILED, common.Status_STATUS_CANCELLED, common.Status_STATUS_SKIPPED:
+			return component.GetStatus()
+		case common.Status_STATUS_DEPLOYMENT, common.Status_STATUS_RUNNING, common.Status_STATUS_ALLOCATED:
+			return common.Status_STATUS_RUNNING
+		case common.Status_STATUS_DEPLOYED, common.Status_STATUS_COMPLETED:
+			completed++
+		}
+	}
+	if completed == len(plan.GetComponents()) {
+		return common.Status_STATUS_COMPLETED
+	}
+	return common.Status_STATUS_PENDING
+}
+
+func pendingIfUnspecified(status common.Status) common.Status {
+	if status == common.Status_STATUS_UNSPECIFIED {
+		return common.Status_STATUS_PENDING
+	}
+	return status
+}
+
+func findPipelineNode(nodes []*monitor.PipelineNode, name string) *monitor.PipelineNode {
+	for _, node := range nodes {
+		if node.GetName() == name {
+			return node
+		}
+	}
+	return nil
+}
+
+func labelOr(labels map[string]string, key, fallback string) string {
+	if value := labels[key]; value != "" {
+		return value
+	}
+	return fallback
+}
+
+func logRef(runID, nodeExecutionID, componentID string) *monitor.LogRef {
+	return &monitor.LogRef{
+		RunId:           runID,
+		NodeExecutionId: refString(nodeExecutionID),
+		ComponentId:     refString(componentID),
+	}
 }
 
 func overlayRunFromOverview(rec *models.TestRunRecord, overview *monitor.Overview) {

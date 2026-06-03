@@ -111,7 +111,7 @@ type SuiteRunRecord struct {
 	Status common.Status `protobuf:"varint,3,opt,name=status,proto3,enum=cloud.v1.common.Status" json:"status,omitempty"`
 	// trigger records how this run was triggered (MANUAL / CRON / API).
 	Trigger common.Trigger `protobuf:"varint,7,opt,name=trigger,proto3,enum=cloud.v1.common.Trigger" json:"trigger,omitempty"`
-	// max_parallel is the max number of concurrent child TestRunWorkflows.
+	// max_parallel is the max number of concurrent child TestWorkflows.
 	// 0 = unlimited.
 	MaxParallel uint32 `protobuf:"varint,4,opt,name=max_parallel,json=maxParallel,proto3" json:"max_parallel,omitempty"`
 	// children are child TestRunRecord ids keyed back to the originating suite

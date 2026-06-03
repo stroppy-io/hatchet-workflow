@@ -14,18 +14,23 @@ import (
 	workloadbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/workload"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
 	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/worker"
 )
 
 const (
-	PersistRunStateActivityName = "stroppy.runtime.PersistRunState"
-	PersistSuiteRunActivityName = "stroppy.runtime.PersistSuiteRun"
+	PersistRunStateActivityName       = "stroppy.runtime.PersistRunState"
+	PersistDeploymentPlanActivityName = "stroppy.runtime.PersistDeploymentPlan"
+	AppendRunLogsActivityName         = "stroppy.runtime.AppendRunLogs"
+	PersistSuiteRunActivityName       = "stroppy.runtime.PersistSuiteRun"
 )
 
 type RuntimeActivities interface {
 	PersistRunState(context.Context, string, *workflowpb.RunState, *deploymentpb.InfrastructureState, *deploymentpb.DeploymentPlan) error
+	PersistDeploymentPlan(context.Context, string, *deploymentpb.DeploymentPlan) error
+	AppendRunLogs(context.Context, []*monitor.LogLine) error
 	PersistSuiteRun(context.Context, string, common.Status) error
 }
 
@@ -35,7 +40,8 @@ type Options struct {
 }
 
 type ActivityOptions struct {
-	Quotas QuotaManager
+	Quotas   QuotaManager
+	Networks NetworkManager
 }
 
 func DefaultOptions() Options {
@@ -63,7 +69,6 @@ func DefaultOptions() Options {
 func RegisterWorkflows(registry worker.WorkflowRegistry, options Options) {
 	workflowpb.RegisterDeploymentServiceWorkflows(registry, NewDeploymentWorkflows(options))
 	workflowpb.RegisterTestServiceWorkflows(registry, NewTestWorkflows())
-	workflowpb.RegisterRunWorkflowServiceWorkflows(registry, NewRunWorkflows())
 	workflowpb.RegisterSuiteWorkflowServiceWorkflows(registry, NewSuiteWorkflows())
 }
 
@@ -72,19 +77,17 @@ func RegisterActivities(registry worker.ActivityRegistry, runtime RuntimeActivit
 	if len(options) > 0 {
 		opts = options[0]
 	}
-	workflowpb.RegisterDeploymentServiceActivities(registry, NewDeploymentActivities(opts.Quotas))
+	workflowpb.RegisterDeploymentServiceActivities(registry, NewDeploymentActivities(opts.Quotas, opts.Networks))
 	if runtime != nil {
 		registry.RegisterActivityWithOptions(runtime.PersistRunState, activity.RegisterOptions{Name: PersistRunStateActivityName})
+		registry.RegisterActivityWithOptions(runtime.PersistDeploymentPlan, activity.RegisterOptions{Name: PersistDeploymentPlanActivityName})
+		registry.RegisterActivityWithOptions(runtime.AppendRunLogs, activity.RegisterOptions{Name: AppendRunLogsActivityName})
 		registry.RegisterActivityWithOptions(runtime.PersistSuiteRun, activity.RegisterOptions{Name: PersistSuiteRunActivityName})
 	}
 }
 
 func NewDeploymentWorkflows(options Options) workflowpb.DeploymentServiceWorkflows {
 	return &deploymentWorkflows{options: normalizeOptions(options)}
-}
-
-func NewRunWorkflows() workflowpb.RunWorkflowServiceWorkflows {
-	return &runWorkflows{}
 }
 
 func NewTestWorkflows() workflowpb.TestServiceWorkflows {

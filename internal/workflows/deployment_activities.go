@@ -18,19 +18,62 @@ type QuotaManager interface {
 	Release(ctx context.Context, tenantID, runID string) (uint32, error)
 }
 
+type NetworkManager interface {
+	Reserve(ctx context.Context, tenantID, runID, workflowID string, plan *deploymentpb.InfrastructurePlan) (string, error)
+	Commit(ctx context.Context, tenantID, runID string) (string, error)
+	Release(ctx context.Context, tenantID, runID string) (uint32, error)
+}
+
 type deploymentActivities struct {
-	quotas QuotaManager
+	quotas   QuotaManager
+	networks NetworkManager
 }
 
-func NewDeploymentActivities(quotas QuotaManager) workflowpb.DeploymentServiceActivities {
-	return &deploymentActivities{quotas: quotas}
+func NewDeploymentActivities(quotas QuotaManager, networks NetworkManager) workflowpb.DeploymentServiceActivities {
+	return &deploymentActivities{quotas: quotas, networks: networks}
 }
 
-func (a *deploymentActivities) AcquireNetworkActivity(_ context.Context, req *workflowpb.AcquireNetworkActivityRequest) (*workflowpb.AcquireNetworkActivityResponse, error) {
+func (a *deploymentActivities) AcquireNetworkActivity(ctx context.Context, req *workflowpb.AcquireNetworkActivityRequest) (*workflowpb.AcquireNetworkActivityResponse, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return &workflowpb.AcquireNetworkActivityResponse{}, nil
+	if a.networks == nil || req.GetPlan().GetProvider() != deploymentpb.Provider_PROVIDER_YANDEX {
+		return &workflowpb.AcquireNetworkActivityResponse{}, nil
+	}
+	info := activity.GetInfo(ctx)
+	cidr, err := a.networks.Reserve(ctx, req.GetTenantId(), req.GetRunId(), info.WorkflowExecution.ID, req.GetPlan())
+	if err != nil {
+		return nil, err
+	}
+	return &workflowpb.AcquireNetworkActivityResponse{NetworkCidr: cidr}, nil
+}
+
+func (a *deploymentActivities) CommitNetworkActivity(ctx context.Context, req *workflowpb.CommitNetworkActivityRequest) (*workflowpb.CommitNetworkActivityResponse, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	if a.networks == nil {
+		return &workflowpb.CommitNetworkActivityResponse{}, nil
+	}
+	cidr, err := a.networks.Commit(ctx, req.GetTenantId(), req.GetRunId())
+	if err != nil {
+		return nil, err
+	}
+	return &workflowpb.CommitNetworkActivityResponse{NetworkCidr: cidr}, nil
+}
+
+func (a *deploymentActivities) ReleaseNetworkActivity(ctx context.Context, req *workflowpb.ReleaseNetworkActivityRequest) (*workflowpb.ReleaseNetworkActivityResponse, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	if a.networks == nil {
+		return &workflowpb.ReleaseNetworkActivityResponse{}, nil
+	}
+	released, err := a.networks.Release(ctx, req.GetTenantId(), req.GetRunId())
+	if err != nil {
+		return nil, err
+	}
+	return &workflowpb.ReleaseNetworkActivityResponse{Released: released}, nil
 }
 
 func (a *deploymentActivities) AcquireQuotasActivity(ctx context.Context, req *workflowpb.AcquireQuotasActivityRequest) (*workflowpb.AcquireQuotasActivityResponse, error) {

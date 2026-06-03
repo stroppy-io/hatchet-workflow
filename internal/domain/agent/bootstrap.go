@@ -16,11 +16,29 @@ const (
 	DefaultAgentBinaryPathURL = "/agent/binary"
 )
 
+var blockedExtraEnv = map[string]struct{}{
+	"APT_BACKEND":              {},
+	"GRAFANA_BACKEND":          {},
+	"MONITORING_TOKEN":         {},
+	"MONITORING_URL":           {},
+	EnvAgentToken:              {},
+	"STROPPY_MONITORING_TOKEN": {},
+	"TEMPORAL_ADDR":            {},
+	"TEMPORAL_ADDRESS":         {},
+	"TEMPORAL_HOSTPORT":        {},
+	"TEMPORAL_URL":             {},
+	"VICTORIA_LOGS_URL":        {},
+	"VICTORIA_METRICS_URL":     {},
+	"VICTORIA_URL":             {},
+}
+
 type Bootstrap struct {
 	ServerAddr        string
 	BinaryURL         string
 	TemporalNamespace string
 	ExtraEnv          map[string]string
+	AgentToken        string
+	AgentTaskQueue    string
 }
 
 type CloudInitOptions struct {
@@ -45,13 +63,23 @@ func Env(machineID string, bootstrap Bootstrap) (map[string]string, error) {
 		binaryURL = strings.TrimRight(bootstrap.ServerAddr, "/") + DefaultAgentBinaryPathURL
 	}
 
-	env := copyStringMap(bootstrap.ExtraEnv)
+	env := copyExtraEnv(bootstrap.ExtraEnv)
 	env["STROPPY_SERVER_ADDR"] = bootstrap.ServerAddr
 	env["STROPPY_AGENT_BINARY_URL"] = binaryURL
+	if bootstrap.AgentToken != "" {
+		env[EnvAgentToken] = bootstrap.AgentToken
+	}
+	taskQueue := bootstrap.AgentTaskQueue
+	if taskQueue == "" {
+		if bootstrap.AgentToken != "" {
+			return nil, fmt.Errorf("agent bootstrap: task queue is required when agent token is set")
+		}
+		taskQueue = TaskQueue(machineID)
+	}
 	env["STROPPY_MACHINE_ID"] = machineID
 	env["STROPPY_NODE_ID"] = machineID
 	env["AGENT_MACHINE_ID"] = machineID
-	env["AGENT_TASK_QUEUE"] = "stroppy-agent-" + machineID
+	env["AGENT_TASK_QUEUE"] = taskQueue
 	env["TEMPORAL_NAMESPACE"] = namespace
 	return env, nil
 }
@@ -159,9 +187,12 @@ func indent(s string, spaces int) string {
 	return strings.Join(lines, "\n")
 }
 
-func copyStringMap(in map[string]string) map[string]string {
+func copyExtraEnv(in map[string]string) map[string]string {
 	out := make(map[string]string, len(in))
 	for key, value := range in {
+		if _, ok := blockedExtraEnv[key]; ok {
+			continue
+		}
 		out[key] = value
 	}
 	return out

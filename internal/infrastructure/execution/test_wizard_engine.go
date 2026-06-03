@@ -3,6 +3,7 @@ package execution
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/stroppy-io/schemapb/schemapb"
 	"google.golang.org/protobuf/proto"
 
@@ -83,6 +84,8 @@ func (e *TestWizardEngine) InitialDraft(ctx context.Context, tenantID, name stri
 // authoritative errors and the ready flag. A build failure is reported as a
 // field error rather than a hard error so the wizard can surface it to the user.
 func (e *TestWizardEngine) Compute(_ context.Context, _ string, draft *models.TestWizardDraftRecord) error {
+	machineOverrides := infrastructurebuilder.BuildOptionsFromPlanOverrides(draft.GetInfrastructurePlan())
+
 	// Reset derived sections; they are wholly recomputed below.
 	draft.TopologySpec = nil
 	draft.InfrastructurePlan = nil
@@ -107,10 +110,11 @@ func (e *TestWizardEngine) Compute(_ context.Context, _ string, draft *models.Te
 
 	if len(errs) == 0 {
 		run, err := runbuilder.BuildTestRun(runbuilder.BuildOptions{
+			ID:              previewRunID(draft),
 			Database:        draft.GetDatabase(),
 			Workload:        draft.GetWorkload(),
 			Provider:        draft.GetProvider(),
-			Infrastructure:  infrastructurebuilder.BuildOptions{},
+			Infrastructure:  machineOverrides,
 			RenderOverrides: draft.GetRenderOverrides(),
 		})
 		if err != nil {
@@ -141,17 +145,25 @@ func (e *TestWizardEngine) Compute(_ context.Context, _ string, draft *models.Te
 
 // Bake turns a ready draft into the materialized domain.TestRun (database +
 // workload + generated topology + infrastructure plan). It rejects a draft that
-// is not ready. The id is left empty for the caller (StartTestRun / the starter)
-// to mint.
+// is not ready. Start paths mint a fresh record id and overwrite this spec id;
+// non-start callers still receive a valid baked TestRun.
 func (e *TestWizardEngine) Bake(_ context.Context, draft *models.TestWizardDraftRecord) (*domain.TestRun, error) {
 	if !draft.GetReady() {
 		return nil, errDraftNotReady
 	}
 	return runbuilder.BuildTestRun(runbuilder.BuildOptions{
+		ID:              uuid.NewString(),
 		Database:        draft.GetDatabase(),
 		Workload:        draft.GetWorkload(),
 		Provider:        draft.GetProvider(),
-		Infrastructure:  infrastructurebuilder.BuildOptions{},
+		Infrastructure:  infrastructurebuilder.BuildOptionsFromPlanOverrides(draft.GetInfrastructurePlan()),
 		RenderOverrides: draft.GetRenderOverrides(),
 	})
+}
+
+func previewRunID(draft *models.TestWizardDraftRecord) string {
+	if id := draft.GetEntity().GetId(); id != "" {
+		return id
+	}
+	return "preview"
 }

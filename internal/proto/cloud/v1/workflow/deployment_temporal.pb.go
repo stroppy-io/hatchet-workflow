@@ -46,10 +46,12 @@ const (
 const (
 	AcquireNetworkActivityActivityName   = "cloud.v1.workflow.DeploymentService.AcquireNetworkActivity"
 	AcquireQuotasActivityActivityName    = "cloud.v1.workflow.DeploymentService.AcquireQuotasActivity"
+	CommitNetworkActivityActivityName    = "cloud.v1.workflow.DeploymentService.CommitNetworkActivity"
 	CommitQuotasActivityActivityName     = "cloud.v1.workflow.DeploymentService.CommitQuotasActivity"
 	DockerDownActivityActivityName       = "cloud.v1.workflow.DeploymentService.DockerDownActivity"
 	DockerPullActivityActivityName       = "cloud.v1.workflow.DeploymentService.DockerPullActivity"
 	DockerUpActivityActivityName         = "cloud.v1.workflow.DeploymentService.DockerUpActivity"
+	ReleaseNetworkActivityActivityName   = "cloud.v1.workflow.DeploymentService.ReleaseNetworkActivity"
 	ReleaseQuotasActivityActivityName    = "cloud.v1.workflow.DeploymentService.ReleaseQuotasActivity"
 	TerraformApplyActivityActivityName   = "cloud.v1.workflow.DeploymentService.TerraformApplyActivity"
 	TerraformDestroyActivityActivityName = "cloud.v1.workflow.DeploymentService.TerraformDestroyActivity"
@@ -3390,6 +3392,9 @@ type DeploymentServiceActivities interface {
 	// AcquireQuotasActivity acquires requested quotas.
 	AcquireQuotasActivity(ctx context.Context, req *AcquireQuotasActivityRequest) (*AcquireQuotasActivityResponse, error)
 
+	// CommitNetworkActivity marks a successful network reservation as allocated.
+	CommitNetworkActivity(ctx context.Context, req *CommitNetworkActivityRequest) (*CommitNetworkActivityResponse, error)
+
 	// CommitQuotasActivity marks a successful reservation as allocated.
 	CommitQuotasActivity(ctx context.Context, req *CommitQuotasActivityRequest) (*CommitQuotasActivityResponse, error)
 
@@ -3401,6 +3406,9 @@ type DeploymentServiceActivities interface {
 
 	// DockerUpActivity starts the Docker topology.
 	DockerUpActivity(ctx context.Context, req *deployment.Docker_Input) (*deployment.Docker_Output, error)
+
+	// ReleaseNetworkActivity releases a run's pre-deploy network reservations.
+	ReleaseNetworkActivity(ctx context.Context, req *ReleaseNetworkActivityRequest) (*ReleaseNetworkActivityResponse, error)
 
 	// ReleaseQuotasActivity releases a run's pre-deploy reservations.
 	ReleaseQuotasActivity(ctx context.Context, req *ReleaseQuotasActivityRequest) (*ReleaseQuotasActivityResponse, error)
@@ -3419,10 +3427,12 @@ type DeploymentServiceActivities interface {
 func RegisterDeploymentServiceActivities(r worker.ActivityRegistry, activities DeploymentServiceActivities) {
 	RegisterAcquireNetworkActivityActivity(r, activities.AcquireNetworkActivity)
 	RegisterAcquireQuotasActivityActivity(r, activities.AcquireQuotasActivity)
+	RegisterCommitNetworkActivityActivity(r, activities.CommitNetworkActivity)
 	RegisterCommitQuotasActivityActivity(r, activities.CommitQuotasActivity)
 	RegisterDockerDownActivityActivity(r, activities.DockerDownActivity)
 	RegisterDockerPullActivityActivity(r, activities.DockerPullActivity)
 	RegisterDockerUpActivityActivity(r, activities.DockerUpActivity)
+	RegisterReleaseNetworkActivityActivity(r, activities.ReleaseNetworkActivity)
 	RegisterReleaseQuotasActivityActivity(r, activities.ReleaseQuotasActivity)
 	RegisterTerraformApplyActivityActivity(r, activities.TerraformApplyActivity)
 	RegisterTerraformDestroyActivityActivity(r, activities.TerraformDestroyActivity)
@@ -3953,6 +3963,270 @@ func (o *AcquireQuotasActivityLocalActivityOptions) WithScheduleToCloseTimeout(d
 
 // WithStartToCloseTimeout sets the StartToCloseTimeout value
 func (o *AcquireQuotasActivityLocalActivityOptions) WithStartToCloseTimeout(d time.Duration) *AcquireQuotasActivityLocalActivityOptions {
+	o.startToCloseTimeout = &d
+	return o
+}
+
+// RegisterCommitNetworkActivityActivity registers a cloud.v1.workflow.DeploymentService.CommitNetworkActivity activity
+func RegisterCommitNetworkActivityActivity(r worker.ActivityRegistry, fn func(context.Context, *CommitNetworkActivityRequest) (*CommitNetworkActivityResponse, error)) {
+	r.RegisterActivityWithOptions(fn, activity.RegisterOptions{
+		Name: CommitNetworkActivityActivityName,
+	})
+}
+
+// CommitNetworkActivityFuture describes a(n) cloud.v1.workflow.DeploymentService.CommitNetworkActivity activity execution
+type CommitNetworkActivityFuture struct {
+	Future workflow.Future
+}
+
+// Get blocks on the activity's completion, returning the response
+func (f *CommitNetworkActivityFuture) Get(ctx workflow.Context) (*CommitNetworkActivityResponse, error) {
+	var resp CommitNetworkActivityResponse
+	if err := f.Future.Get(ctx, &resp); err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
+// Select adds the activity's completion to the selector, callback can be nil
+func (f *CommitNetworkActivityFuture) Select(sel workflow.Selector, fn func(*CommitNetworkActivityFuture)) workflow.Selector {
+	return sel.AddFuture(f.Future, func(workflow.Future) {
+		if fn != nil {
+			fn(f)
+		}
+	})
+}
+
+// CommitNetworkActivity marks a successful network reservation as allocated.
+func CommitNetworkActivity(ctx workflow.Context, req *CommitNetworkActivityRequest, options ...*CommitNetworkActivityActivityOptions) (*CommitNetworkActivityResponse, error) {
+	return CommitNetworkActivityAsync(ctx, req, options...).Get(ctx)
+}
+
+// CommitNetworkActivity marks a successful network reservation as allocated.
+func CommitNetworkActivityAsync(ctx workflow.Context, req *CommitNetworkActivityRequest, options ...*CommitNetworkActivityActivityOptions) *CommitNetworkActivityFuture {
+	var o *CommitNetworkActivityActivityOptions
+	if len(options) > 0 && options[0] != nil {
+		o = options[0]
+	} else {
+		o = NewCommitNetworkActivityActivityOptions()
+	}
+	var err error
+	if ctx, err = o.Build(ctx); err != nil {
+		errF, errS := workflow.NewFuture(ctx)
+		errS.SetError(err)
+		return &CommitNetworkActivityFuture{Future: errF}
+	}
+	activity := CommitNetworkActivityActivityName
+	if o.dc != nil {
+		ctx = workflow.WithDataConverter(ctx, o.dc)
+	}
+	future := &CommitNetworkActivityFuture{Future: workflow.ExecuteActivity(ctx, activity, req)}
+	return future
+}
+
+// CommitNetworkActivity marks a successful network reservation as allocated.
+func CommitNetworkActivityLocal(ctx workflow.Context, req *CommitNetworkActivityRequest, options ...*CommitNetworkActivityLocalActivityOptions) (*CommitNetworkActivityResponse, error) {
+	return CommitNetworkActivityLocalAsync(ctx, req, options...).Get(ctx)
+}
+
+// CommitNetworkActivity marks a successful network reservation as allocated.
+func CommitNetworkActivityLocalAsync(ctx workflow.Context, req *CommitNetworkActivityRequest, options ...*CommitNetworkActivityLocalActivityOptions) *CommitNetworkActivityFuture {
+	var o *CommitNetworkActivityLocalActivityOptions
+	if len(options) > 0 && options[0] != nil {
+		o = options[0]
+	} else {
+		o = NewCommitNetworkActivityLocalActivityOptions()
+	}
+	var err error
+	if ctx, err = o.Build(ctx); err != nil {
+		errF, errS := workflow.NewFuture(ctx)
+		errS.SetError(err)
+		return &CommitNetworkActivityFuture{Future: errF}
+	}
+	var activity any
+	if o.fn != nil {
+		activity = o.fn
+	} else {
+		activity = CommitNetworkActivityActivityName
+	}
+	if o.dc != nil {
+		ctx = workflow.WithDataConverter(ctx, o.dc)
+	}
+	future := &CommitNetworkActivityFuture{Future: workflow.ExecuteLocalActivity(ctx, activity, req)}
+	return future
+}
+
+// CommitNetworkActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentService.CommitNetworkActivity activity
+type CommitNetworkActivityActivityOptions struct {
+	options                workflow.ActivityOptions
+	retryPolicy            *temporal.RetryPolicy
+	scheduleToCloseTimeout *time.Duration
+	startToCloseTimeout    *time.Duration
+	dc                     converter.DataConverter
+	heartbeatTimeout       *time.Duration
+	scheduleToStartTimeout *time.Duration
+	taskQueue              *string
+	waitForCancellation    *bool
+}
+
+// NewCommitNetworkActivityActivityOptions initializes a new CommitNetworkActivityActivityOptions value
+func NewCommitNetworkActivityActivityOptions() *CommitNetworkActivityActivityOptions {
+	return &CommitNetworkActivityActivityOptions{}
+}
+
+// Build initializes a workflow.Context with appropriate ActivityOptions values derived from schema defaults and any user-defined overrides
+func (o *CommitNetworkActivityActivityOptions) Build(ctx workflow.Context) (workflow.Context, error) {
+	opts := o.options
+	if v := o.heartbeatTimeout; v != nil {
+		opts.HeartbeatTimeout = *v
+	}
+	if v := o.retryPolicy; v != nil {
+		opts.RetryPolicy = v
+	} else if opts.RetryPolicy == nil {
+		opts.RetryPolicy = &temporal.RetryPolicy{InitialInterval: 2000000000, BackoffCoefficient: 2.0, MaximumAttempts: int32(5)}
+	}
+	if v := o.scheduleToCloseTimeout; v != nil {
+		opts.ScheduleToCloseTimeout = *v
+	}
+	if v := o.scheduleToStartTimeout; v != nil {
+		opts.ScheduleToStartTimeout = *v
+	}
+	if v := o.startToCloseTimeout; v != nil {
+		opts.StartToCloseTimeout = *v
+	} else if opts.StartToCloseTimeout == 0 {
+		opts.StartToCloseTimeout = 60000000000 // 1 minute
+	}
+	if v := o.taskQueue; v != nil {
+		opts.TaskQueue = *v
+	} else if opts.TaskQueue == "" {
+		opts.TaskQueue = DeploymentServiceTaskQueue
+	}
+	if v := o.waitForCancellation; v != nil {
+		opts.WaitForCancellation = *v
+	}
+	return workflow.WithActivityOptions(ctx, opts), nil
+}
+
+// WithActivityOptions specifies an initial ActivityOptions value to which defaults will be applied
+func (o *CommitNetworkActivityActivityOptions) WithActivityOptions(options workflow.ActivityOptions) *CommitNetworkActivityActivityOptions {
+	o.options = options
+	return o
+}
+
+// WithDataConverter registers a DataConverter for the (local) activity
+func (o *CommitNetworkActivityActivityOptions) WithDataConverter(dc converter.DataConverter) *CommitNetworkActivityActivityOptions {
+	o.dc = dc
+	return o
+}
+
+// WithHeartbeatTimeout sets the HeartbeatTimeout value
+func (o *CommitNetworkActivityActivityOptions) WithHeartbeatTimeout(d time.Duration) *CommitNetworkActivityActivityOptions {
+	o.heartbeatTimeout = &d
+	return o
+}
+
+// WithRetryPolicy sets the RetryPolicy value
+func (o *CommitNetworkActivityActivityOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *CommitNetworkActivityActivityOptions {
+	o.retryPolicy = policy
+	return o
+}
+
+// WithScheduleToCloseTimeout sets the ScheduleToCloseTimeout value
+func (o *CommitNetworkActivityActivityOptions) WithScheduleToCloseTimeout(d time.Duration) *CommitNetworkActivityActivityOptions {
+	o.scheduleToCloseTimeout = &d
+	return o
+}
+
+// WithScheduleToStartTimeout sets the ScheduleToStartTimeout value
+func (o *CommitNetworkActivityActivityOptions) WithScheduleToStartTimeout(d time.Duration) *CommitNetworkActivityActivityOptions {
+	o.scheduleToStartTimeout = &d
+	return o
+}
+
+// WithStartToCloseTimeout sets the StartToCloseTimeout value
+func (o *CommitNetworkActivityActivityOptions) WithStartToCloseTimeout(d time.Duration) *CommitNetworkActivityActivityOptions {
+	o.startToCloseTimeout = &d
+	return o
+}
+
+// WithTaskQueue sets the TaskQueue value
+func (o *CommitNetworkActivityActivityOptions) WithTaskQueue(tq string) *CommitNetworkActivityActivityOptions {
+	o.taskQueue = &tq
+	return o
+}
+
+// WithWaitForCancellation sets the WaitForCancellation value
+func (o *CommitNetworkActivityActivityOptions) WithWaitForCancellation(wait bool) *CommitNetworkActivityActivityOptions {
+	o.waitForCancellation = &wait
+	return o
+}
+
+// CommitNetworkActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentService.CommitNetworkActivity activity
+type CommitNetworkActivityLocalActivityOptions struct {
+	options                workflow.LocalActivityOptions
+	retryPolicy            *temporal.RetryPolicy
+	scheduleToCloseTimeout *time.Duration
+	startToCloseTimeout    *time.Duration
+	dc                     converter.DataConverter
+	fn                     func(context.Context, *CommitNetworkActivityRequest) (*CommitNetworkActivityResponse, error)
+}
+
+// NewCommitNetworkActivityLocalActivityOptions initializes a new CommitNetworkActivityLocalActivityOptions value
+func NewCommitNetworkActivityLocalActivityOptions() *CommitNetworkActivityLocalActivityOptions {
+	return &CommitNetworkActivityLocalActivityOptions{}
+}
+
+// Build initializes a workflow.Context with appropriate LocalActivityOptions values derived from schema defaults and any user-defined overrides
+func (o *CommitNetworkActivityLocalActivityOptions) Build(ctx workflow.Context) (workflow.Context, error) {
+	opts := o.options
+	if v := o.retryPolicy; v != nil {
+		opts.RetryPolicy = v
+	} else if opts.RetryPolicy == nil {
+		opts.RetryPolicy = &temporal.RetryPolicy{InitialInterval: 2000000000, BackoffCoefficient: 2.0, MaximumAttempts: int32(5)}
+	}
+	if v := o.scheduleToCloseTimeout; v != nil {
+		opts.ScheduleToCloseTimeout = *v
+	}
+	if v := o.startToCloseTimeout; v != nil {
+		opts.StartToCloseTimeout = *v
+	} else if opts.StartToCloseTimeout == 0 {
+		opts.StartToCloseTimeout = 60000000000 // 1 minute
+	}
+	return workflow.WithLocalActivityOptions(ctx, opts), nil
+}
+
+// Local specifies a custom cloud.v1.workflow.DeploymentService.CommitNetworkActivity implementation
+func (o *CommitNetworkActivityLocalActivityOptions) Local(fn func(context.Context, *CommitNetworkActivityRequest) (*CommitNetworkActivityResponse, error)) *CommitNetworkActivityLocalActivityOptions {
+	o.fn = fn
+	return o
+}
+
+// WithLocalActivityOptions specifies an initial LocalActivityOptions value to which defaults will be applied
+func (o *CommitNetworkActivityLocalActivityOptions) WithLocalActivityOptions(options workflow.LocalActivityOptions) *CommitNetworkActivityLocalActivityOptions {
+	o.options = options
+	return o
+}
+
+// WithDataConverter registers a DataConverter for the (local) activity
+func (o *CommitNetworkActivityLocalActivityOptions) WithDataConverter(dc converter.DataConverter) *CommitNetworkActivityLocalActivityOptions {
+	o.dc = dc
+	return o
+}
+
+// WithRetryPolicy sets the RetryPolicy value
+func (o *CommitNetworkActivityLocalActivityOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *CommitNetworkActivityLocalActivityOptions {
+	o.retryPolicy = policy
+	return o
+}
+
+// WithScheduleToCloseTimeout sets the ScheduleToCloseTimeout value
+func (o *CommitNetworkActivityLocalActivityOptions) WithScheduleToCloseTimeout(d time.Duration) *CommitNetworkActivityLocalActivityOptions {
+	o.scheduleToCloseTimeout = &d
+	return o
+}
+
+// WithStartToCloseTimeout sets the StartToCloseTimeout value
+func (o *CommitNetworkActivityLocalActivityOptions) WithStartToCloseTimeout(d time.Duration) *CommitNetworkActivityLocalActivityOptions {
 	o.startToCloseTimeout = &d
 	return o
 }
@@ -5011,6 +5285,270 @@ func (o *DockerUpActivityLocalActivityOptions) WithScheduleToCloseTimeout(d time
 
 // WithStartToCloseTimeout sets the StartToCloseTimeout value
 func (o *DockerUpActivityLocalActivityOptions) WithStartToCloseTimeout(d time.Duration) *DockerUpActivityLocalActivityOptions {
+	o.startToCloseTimeout = &d
+	return o
+}
+
+// RegisterReleaseNetworkActivityActivity registers a cloud.v1.workflow.DeploymentService.ReleaseNetworkActivity activity
+func RegisterReleaseNetworkActivityActivity(r worker.ActivityRegistry, fn func(context.Context, *ReleaseNetworkActivityRequest) (*ReleaseNetworkActivityResponse, error)) {
+	r.RegisterActivityWithOptions(fn, activity.RegisterOptions{
+		Name: ReleaseNetworkActivityActivityName,
+	})
+}
+
+// ReleaseNetworkActivityFuture describes a(n) cloud.v1.workflow.DeploymentService.ReleaseNetworkActivity activity execution
+type ReleaseNetworkActivityFuture struct {
+	Future workflow.Future
+}
+
+// Get blocks on the activity's completion, returning the response
+func (f *ReleaseNetworkActivityFuture) Get(ctx workflow.Context) (*ReleaseNetworkActivityResponse, error) {
+	var resp ReleaseNetworkActivityResponse
+	if err := f.Future.Get(ctx, &resp); err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
+// Select adds the activity's completion to the selector, callback can be nil
+func (f *ReleaseNetworkActivityFuture) Select(sel workflow.Selector, fn func(*ReleaseNetworkActivityFuture)) workflow.Selector {
+	return sel.AddFuture(f.Future, func(workflow.Future) {
+		if fn != nil {
+			fn(f)
+		}
+	})
+}
+
+// ReleaseNetworkActivity releases a run's pre-deploy network reservations.
+func ReleaseNetworkActivity(ctx workflow.Context, req *ReleaseNetworkActivityRequest, options ...*ReleaseNetworkActivityActivityOptions) (*ReleaseNetworkActivityResponse, error) {
+	return ReleaseNetworkActivityAsync(ctx, req, options...).Get(ctx)
+}
+
+// ReleaseNetworkActivity releases a run's pre-deploy network reservations.
+func ReleaseNetworkActivityAsync(ctx workflow.Context, req *ReleaseNetworkActivityRequest, options ...*ReleaseNetworkActivityActivityOptions) *ReleaseNetworkActivityFuture {
+	var o *ReleaseNetworkActivityActivityOptions
+	if len(options) > 0 && options[0] != nil {
+		o = options[0]
+	} else {
+		o = NewReleaseNetworkActivityActivityOptions()
+	}
+	var err error
+	if ctx, err = o.Build(ctx); err != nil {
+		errF, errS := workflow.NewFuture(ctx)
+		errS.SetError(err)
+		return &ReleaseNetworkActivityFuture{Future: errF}
+	}
+	activity := ReleaseNetworkActivityActivityName
+	if o.dc != nil {
+		ctx = workflow.WithDataConverter(ctx, o.dc)
+	}
+	future := &ReleaseNetworkActivityFuture{Future: workflow.ExecuteActivity(ctx, activity, req)}
+	return future
+}
+
+// ReleaseNetworkActivity releases a run's pre-deploy network reservations.
+func ReleaseNetworkActivityLocal(ctx workflow.Context, req *ReleaseNetworkActivityRequest, options ...*ReleaseNetworkActivityLocalActivityOptions) (*ReleaseNetworkActivityResponse, error) {
+	return ReleaseNetworkActivityLocalAsync(ctx, req, options...).Get(ctx)
+}
+
+// ReleaseNetworkActivity releases a run's pre-deploy network reservations.
+func ReleaseNetworkActivityLocalAsync(ctx workflow.Context, req *ReleaseNetworkActivityRequest, options ...*ReleaseNetworkActivityLocalActivityOptions) *ReleaseNetworkActivityFuture {
+	var o *ReleaseNetworkActivityLocalActivityOptions
+	if len(options) > 0 && options[0] != nil {
+		o = options[0]
+	} else {
+		o = NewReleaseNetworkActivityLocalActivityOptions()
+	}
+	var err error
+	if ctx, err = o.Build(ctx); err != nil {
+		errF, errS := workflow.NewFuture(ctx)
+		errS.SetError(err)
+		return &ReleaseNetworkActivityFuture{Future: errF}
+	}
+	var activity any
+	if o.fn != nil {
+		activity = o.fn
+	} else {
+		activity = ReleaseNetworkActivityActivityName
+	}
+	if o.dc != nil {
+		ctx = workflow.WithDataConverter(ctx, o.dc)
+	}
+	future := &ReleaseNetworkActivityFuture{Future: workflow.ExecuteLocalActivity(ctx, activity, req)}
+	return future
+}
+
+// ReleaseNetworkActivityActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentService.ReleaseNetworkActivity activity
+type ReleaseNetworkActivityActivityOptions struct {
+	options                workflow.ActivityOptions
+	retryPolicy            *temporal.RetryPolicy
+	scheduleToCloseTimeout *time.Duration
+	startToCloseTimeout    *time.Duration
+	dc                     converter.DataConverter
+	heartbeatTimeout       *time.Duration
+	scheduleToStartTimeout *time.Duration
+	taskQueue              *string
+	waitForCancellation    *bool
+}
+
+// NewReleaseNetworkActivityActivityOptions initializes a new ReleaseNetworkActivityActivityOptions value
+func NewReleaseNetworkActivityActivityOptions() *ReleaseNetworkActivityActivityOptions {
+	return &ReleaseNetworkActivityActivityOptions{}
+}
+
+// Build initializes a workflow.Context with appropriate ActivityOptions values derived from schema defaults and any user-defined overrides
+func (o *ReleaseNetworkActivityActivityOptions) Build(ctx workflow.Context) (workflow.Context, error) {
+	opts := o.options
+	if v := o.heartbeatTimeout; v != nil {
+		opts.HeartbeatTimeout = *v
+	}
+	if v := o.retryPolicy; v != nil {
+		opts.RetryPolicy = v
+	} else if opts.RetryPolicy == nil {
+		opts.RetryPolicy = &temporal.RetryPolicy{InitialInterval: 2000000000, BackoffCoefficient: 2.0, MaximumAttempts: int32(5)}
+	}
+	if v := o.scheduleToCloseTimeout; v != nil {
+		opts.ScheduleToCloseTimeout = *v
+	}
+	if v := o.scheduleToStartTimeout; v != nil {
+		opts.ScheduleToStartTimeout = *v
+	}
+	if v := o.startToCloseTimeout; v != nil {
+		opts.StartToCloseTimeout = *v
+	} else if opts.StartToCloseTimeout == 0 {
+		opts.StartToCloseTimeout = 60000000000 // 1 minute
+	}
+	if v := o.taskQueue; v != nil {
+		opts.TaskQueue = *v
+	} else if opts.TaskQueue == "" {
+		opts.TaskQueue = DeploymentServiceTaskQueue
+	}
+	if v := o.waitForCancellation; v != nil {
+		opts.WaitForCancellation = *v
+	}
+	return workflow.WithActivityOptions(ctx, opts), nil
+}
+
+// WithActivityOptions specifies an initial ActivityOptions value to which defaults will be applied
+func (o *ReleaseNetworkActivityActivityOptions) WithActivityOptions(options workflow.ActivityOptions) *ReleaseNetworkActivityActivityOptions {
+	o.options = options
+	return o
+}
+
+// WithDataConverter registers a DataConverter for the (local) activity
+func (o *ReleaseNetworkActivityActivityOptions) WithDataConverter(dc converter.DataConverter) *ReleaseNetworkActivityActivityOptions {
+	o.dc = dc
+	return o
+}
+
+// WithHeartbeatTimeout sets the HeartbeatTimeout value
+func (o *ReleaseNetworkActivityActivityOptions) WithHeartbeatTimeout(d time.Duration) *ReleaseNetworkActivityActivityOptions {
+	o.heartbeatTimeout = &d
+	return o
+}
+
+// WithRetryPolicy sets the RetryPolicy value
+func (o *ReleaseNetworkActivityActivityOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *ReleaseNetworkActivityActivityOptions {
+	o.retryPolicy = policy
+	return o
+}
+
+// WithScheduleToCloseTimeout sets the ScheduleToCloseTimeout value
+func (o *ReleaseNetworkActivityActivityOptions) WithScheduleToCloseTimeout(d time.Duration) *ReleaseNetworkActivityActivityOptions {
+	o.scheduleToCloseTimeout = &d
+	return o
+}
+
+// WithScheduleToStartTimeout sets the ScheduleToStartTimeout value
+func (o *ReleaseNetworkActivityActivityOptions) WithScheduleToStartTimeout(d time.Duration) *ReleaseNetworkActivityActivityOptions {
+	o.scheduleToStartTimeout = &d
+	return o
+}
+
+// WithStartToCloseTimeout sets the StartToCloseTimeout value
+func (o *ReleaseNetworkActivityActivityOptions) WithStartToCloseTimeout(d time.Duration) *ReleaseNetworkActivityActivityOptions {
+	o.startToCloseTimeout = &d
+	return o
+}
+
+// WithTaskQueue sets the TaskQueue value
+func (o *ReleaseNetworkActivityActivityOptions) WithTaskQueue(tq string) *ReleaseNetworkActivityActivityOptions {
+	o.taskQueue = &tq
+	return o
+}
+
+// WithWaitForCancellation sets the WaitForCancellation value
+func (o *ReleaseNetworkActivityActivityOptions) WithWaitForCancellation(wait bool) *ReleaseNetworkActivityActivityOptions {
+	o.waitForCancellation = &wait
+	return o
+}
+
+// ReleaseNetworkActivityLocalActivityOptions provides configuration for a(n) cloud.v1.workflow.DeploymentService.ReleaseNetworkActivity activity
+type ReleaseNetworkActivityLocalActivityOptions struct {
+	options                workflow.LocalActivityOptions
+	retryPolicy            *temporal.RetryPolicy
+	scheduleToCloseTimeout *time.Duration
+	startToCloseTimeout    *time.Duration
+	dc                     converter.DataConverter
+	fn                     func(context.Context, *ReleaseNetworkActivityRequest) (*ReleaseNetworkActivityResponse, error)
+}
+
+// NewReleaseNetworkActivityLocalActivityOptions initializes a new ReleaseNetworkActivityLocalActivityOptions value
+func NewReleaseNetworkActivityLocalActivityOptions() *ReleaseNetworkActivityLocalActivityOptions {
+	return &ReleaseNetworkActivityLocalActivityOptions{}
+}
+
+// Build initializes a workflow.Context with appropriate LocalActivityOptions values derived from schema defaults and any user-defined overrides
+func (o *ReleaseNetworkActivityLocalActivityOptions) Build(ctx workflow.Context) (workflow.Context, error) {
+	opts := o.options
+	if v := o.retryPolicy; v != nil {
+		opts.RetryPolicy = v
+	} else if opts.RetryPolicy == nil {
+		opts.RetryPolicy = &temporal.RetryPolicy{InitialInterval: 2000000000, BackoffCoefficient: 2.0, MaximumAttempts: int32(5)}
+	}
+	if v := o.scheduleToCloseTimeout; v != nil {
+		opts.ScheduleToCloseTimeout = *v
+	}
+	if v := o.startToCloseTimeout; v != nil {
+		opts.StartToCloseTimeout = *v
+	} else if opts.StartToCloseTimeout == 0 {
+		opts.StartToCloseTimeout = 60000000000 // 1 minute
+	}
+	return workflow.WithLocalActivityOptions(ctx, opts), nil
+}
+
+// Local specifies a custom cloud.v1.workflow.DeploymentService.ReleaseNetworkActivity implementation
+func (o *ReleaseNetworkActivityLocalActivityOptions) Local(fn func(context.Context, *ReleaseNetworkActivityRequest) (*ReleaseNetworkActivityResponse, error)) *ReleaseNetworkActivityLocalActivityOptions {
+	o.fn = fn
+	return o
+}
+
+// WithLocalActivityOptions specifies an initial LocalActivityOptions value to which defaults will be applied
+func (o *ReleaseNetworkActivityLocalActivityOptions) WithLocalActivityOptions(options workflow.LocalActivityOptions) *ReleaseNetworkActivityLocalActivityOptions {
+	o.options = options
+	return o
+}
+
+// WithDataConverter registers a DataConverter for the (local) activity
+func (o *ReleaseNetworkActivityLocalActivityOptions) WithDataConverter(dc converter.DataConverter) *ReleaseNetworkActivityLocalActivityOptions {
+	o.dc = dc
+	return o
+}
+
+// WithRetryPolicy sets the RetryPolicy value
+func (o *ReleaseNetworkActivityLocalActivityOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *ReleaseNetworkActivityLocalActivityOptions {
+	o.retryPolicy = policy
+	return o
+}
+
+// WithScheduleToCloseTimeout sets the ScheduleToCloseTimeout value
+func (o *ReleaseNetworkActivityLocalActivityOptions) WithScheduleToCloseTimeout(d time.Duration) *ReleaseNetworkActivityLocalActivityOptions {
+	o.scheduleToCloseTimeout = &d
+	return o
+}
+
+// WithStartToCloseTimeout sets the StartToCloseTimeout value
+func (o *ReleaseNetworkActivityLocalActivityOptions) WithStartToCloseTimeout(d time.Duration) *ReleaseNetworkActivityLocalActivityOptions {
 	o.startToCloseTimeout = &d
 	return o
 }
@@ -6636,12 +7174,16 @@ func WithDeploymentServiceSchemeTypes() scheme.Option {
 		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("AcquireNetworkActivityResponse"))
 		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("AcquireQuotasActivityRequest"))
 		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("AcquireQuotasActivityResponse"))
+		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("CommitNetworkActivityRequest"))
+		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("CommitNetworkActivityResponse"))
 		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("CommitQuotasActivityRequest"))
 		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("CommitQuotasActivityResponse"))
 		s.RegisterType(deployment.File_cloud_v1_deployment_docker_proto.Messages().ByName("Input"))
 		s.RegisterType(deployment.File_cloud_v1_deployment_docker_proto.Messages().ByName("Input").Messages().ByName("ContainersEntry"))
 		s.RegisterType(deployment.File_cloud_v1_deployment_docker_proto.Messages().ByName("Output"))
 		s.RegisterType(deployment.File_cloud_v1_deployment_docker_proto.Messages().ByName("Output").Messages().ByName("ContainersEntry"))
+		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("ReleaseNetworkActivityRequest"))
+		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("ReleaseNetworkActivityResponse"))
 		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("ReleaseQuotasActivityRequest"))
 		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("ReleaseQuotasActivityResponse"))
 		s.RegisterType(deployment.File_cloud_v1_deployment_terraform_proto.Messages().ByName("Input"))

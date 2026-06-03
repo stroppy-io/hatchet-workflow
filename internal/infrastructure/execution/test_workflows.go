@@ -19,9 +19,10 @@ import (
 // the per-run TestWorkflow (deduplicated by the deterministic id derived from the
 // run id) and cancels a running one.
 type TestWorkflows struct {
-	tc        workflowpb.TestServiceClient
-	bootstrap settings.AgentBootstrapSource
-	log       *slog.Logger
+	tc          workflowpb.TestServiceClient
+	bootstrap   settings.AgentBootstrapSource
+	agentTokens AgentTokenIssuer
+	log         *slog.Logger
 }
 
 var _ test_run.Workflows = (*TestWorkflows)(nil)
@@ -29,14 +30,15 @@ var _ test_run.Workflows = (*TestWorkflows)(nil)
 // NewTestWorkflows builds the test_run.Workflows adapter. bootstrap supplies the
 // AgentBootstrap delivered to provisioned agents; pass nil to launch without one
 // (e.g. a topology that needs no remote agents). log may be nil.
-func NewTestWorkflows(c client.Client, bootstrap settings.AgentBootstrapSource, log *slog.Logger) *TestWorkflows {
+func NewTestWorkflows(c client.Client, bootstrap settings.AgentBootstrapSource, agentTokens AgentTokenIssuer, log *slog.Logger) *TestWorkflows {
 	if log == nil {
 		log = slog.Default()
 	}
 	return &TestWorkflows{
-		tc:        workflowpb.NewTestServiceClient(c, workflowpb.NewTestServiceClientOptions().WithLogger(log)),
-		bootstrap: bootstrap,
-		log:       log,
+		tc:          workflowpb.NewTestServiceClient(c, workflowpb.NewTestServiceClientOptions().WithLogger(log)),
+		bootstrap:   bootstrap,
+		agentTokens: agentTokens,
+		log:         log,
 	}
 }
 
@@ -53,6 +55,10 @@ func (w *TestWorkflows) LaunchTest(ctx context.Context, run *models.TestRunRecor
 	req := &workflowpb.TestWorkflowRequest{TenantId: run.GetEntity().GetTenantId(), TestRun: spec}
 	if w.bootstrap != nil {
 		boot, err := w.bootstrap.AgentBootstrap(ctx)
+		if err != nil {
+			return err
+		}
+		boot, err = attachAgentTokens(boot, w.agentTokens, req.GetTenantId(), spec.GetId(), spec.GetInfrastructurePlan())
 		if err != nil {
 			return err
 		}

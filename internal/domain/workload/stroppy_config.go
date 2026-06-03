@@ -43,7 +43,7 @@ const monitorAccountID = 0
 // binary's RunConfig (the JSON the stroppy CLI consumes) and injects the OTLP
 // exporter so the k6/stroppy metrics (`<runID>_vus`, `_iterations`, …) reach
 // VictoriaMetrics. serverAddr/runID/bearerToken are read from the topology-spec
-// labels (the same channel the monitor collector phase uses).
+// labels plus the per-node agent token from deployment RenderContext.
 func buildStroppyRunConfig(input *domain.Workload, serverAddr, runID, bearerToken, databasePath string) *stroppypb.RunConfig {
 	script := strings.TrimSpace(input.GetScript())
 	if script == "" {
@@ -264,10 +264,9 @@ func trimFloat(f float64) string {
 // renderStroppyConfigJSON marshals the stroppy RunConfig built from the workload
 // (with OTLP injected from the topology labels) to the protojson the stroppy
 // binary loads.
-func renderStroppyConfigJSON(input *domain.Workload, labels map[string]string, databasePath string) string {
+func renderStroppyConfigJSON(input *domain.Workload, labels map[string]string, databasePath, bearerToken string) string {
 	serverAddr := strings.TrimRight(labels[deploymentbuilder.LabelServerAddr], "/")
 	runID := labels[deploymentbuilder.LabelRunID]
-	bearerToken := labels[deploymentbuilder.LabelMonitorBearerToken]
 
 	rc := buildStroppyRunConfig(input, serverAddr, runID, bearerToken, databasePath)
 	data, err := protojson.MarshalOptions{Multiline: true, Indent: "  "}.Marshal(rc)

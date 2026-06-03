@@ -21,9 +21,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { CheckCircle2, Lock } from "lucide-react";
-import { useTenantSlug } from "@/lib/router";
+import { CheckCircle2, Lock, Plus } from "lucide-react";
+import { useNavigate, useTenantSlug } from "@/lib/router";
 import { Avatar } from "@/components/Avatar";
+import { Button } from "@/components/ui/button";
 import {
   ChecklistFilter,
   ColumnHeader,
@@ -67,6 +68,7 @@ const SORTABLE: readonly PresetSortField[] = [
 
 export function TestPresets() {
   const slug = useTenantSlug();
+  const navigate = useNavigate();
   const {
     state,
     patch,
@@ -510,11 +512,19 @@ export function TestPresets() {
             checked={favoritesOnly}
             onChange={(next) => patch({ fav: next ? "1" : null })}
           />
+          <Button
+            size="sm"
+            className="ml-auto"
+            onClick={() => navigate("/presets/test/new")}
+          >
+            <Plus className="h-3.5 w-3.5" /> New preset
+          </Button>
         </div>
         <LibraryTable
           columns={columns}
           rows={rows}
           getRowId={(r) => r.id}
+          onRowClick={(r) => navigate(`/presets/test/${r.id}`)}
           columnWidths={TEST_PRESET_WIDTHS}
           loading={loading}
           error={error}

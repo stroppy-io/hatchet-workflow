@@ -23,7 +23,7 @@ func (r DeploymentRenderer) RenderComponent(ctx deploymentbuilder.RenderContext)
 		return nil, fmt.Errorf("workload renderer requires workload input")
 	}
 	dependencies := deploymentbuilder.DependencyIDs(ctx, nil)
-	configFile, _ := effectiveConfigFile(ctx.Component.GetId(), ctx.Workload, ctx.RenderOverrides, ctx.Topology.Spec().GetLabels(), resolveDatabasePathLabel(ctx))
+	configFile, _ := effectiveConfigFile(ctx.Component.GetId(), ctx.Workload, ctx.RenderOverrides, ctx.Topology.Spec().GetLabels(), resolveDatabasePathLabel(ctx), ctx.AgentToken)
 
 	steps := []*deploymentpb.AgentStep{
 		deploymentbuilder.CreateDirStep("010_create_config_dir", 10, deploymentbuilder.ConfigDir(ctx.Component.GetId()), 0755),
@@ -72,8 +72,8 @@ func (r DeploymentRenderer) RenderPreview(ctx deploymentbuilder.PreviewContext) 
 	// the URL free of a `?database=` (consistent with the address placeholders
 	// the preview also leaves unresolved). The real path is substituted in
 	// RenderComponent once the DB endpoint is resolved.
-	configFile, configOrigin := effectiveConfigFile(ctx.Component.GetId(), ctx.Workload, ctx.RenderOverrides, labels, "")
-	defaultConfigFile := defaultConfigFile(ctx.Component.GetId(), ctx.Workload, labels, "")
+	configFile, configOrigin := effectiveConfigFile(ctx.Component.GetId(), ctx.Workload, ctx.RenderOverrides, labels, "", "")
+	defaultConfigFile := defaultConfigFile(ctx.Component.GetId(), ctx.Workload, labels, "", "")
 
 	artifacts := []*deploymentpb.RenderArtifact{
 		deploymentbuilder.DirArtifact(ctx, Engine, "config-dir", &common.Dir{
@@ -94,22 +94,22 @@ func (r DeploymentRenderer) RenderPreview(ctx deploymentbuilder.PreviewContext) 
 	return artifacts, nil
 }
 
-func effectiveConfigFile(componentID string, input *domain.Workload, overrides *deploymentpb.RenderOverrideSet, labels map[string]string, databasePath string) (*common.File, deploymentpb.RenderArtifact_Origin) {
+func effectiveConfigFile(componentID string, input *domain.Workload, overrides *deploymentpb.RenderOverrideSet, labels map[string]string, databasePath, bearerToken string) (*common.File, deploymentpb.RenderArtifact_Origin) {
 	artifactID := configArtifactID(componentID)
 	if override, ok := deploymentbuilder.OverrideFile(overrides, componentID, artifactID); ok && override.GetFile() != nil {
 		return override.GetFile(), deploymentpb.RenderArtifact_ORIGIN_USER_OVERRIDE
 	}
-	return defaultConfigFile(componentID, input, labels, databasePath), deploymentpb.RenderArtifact_ORIGIN_RENDERED_DEFAULT
+	return defaultConfigFile(componentID, input, labels, databasePath, bearerToken), deploymentpb.RenderArtifact_ORIGIN_RENDERED_DEFAULT
 }
 
-func defaultConfigFile(componentID string, input *domain.Workload, labels map[string]string, databasePath string) *common.File {
+func defaultConfigFile(componentID string, input *domain.Workload, labels map[string]string, databasePath, bearerToken string) *common.File {
 	return &common.File{
 		Info: &common.File_Info{
 			Path:          configPath(componentID),
 			Mode:          0644,
 			CreateParents: true,
 		},
-		Content: &common.File_Text{Text: renderStroppyConfigJSON(input, labels, databasePath)},
+		Content: &common.File_Text{Text: renderStroppyConfigJSON(input, labels, databasePath, bearerToken)},
 	}
 }
 

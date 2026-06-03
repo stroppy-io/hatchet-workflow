@@ -39,10 +39,6 @@ import {
   ENGINES,
   Provider,
   Workload_Protocol,
-  YdbParams_FaultTolerance,
-  YdbParams_DiskType,
-  YdbManagedParams_Type,
-  YdbManagedParams_ComputeType,
   RenderArtifact_Kind,
   RenderArtifact_Origin,
   RenderArtifact_Mutability,
@@ -55,12 +51,6 @@ import {
   type WorkloadVM,
   type EngineKind,
   type ProbeMetaVM,
-  type PostgresParamsVM,
-  type MySqlParamsVM,
-  type PicodataParamsVM,
-  type YdbParamsVM,
-  type YdbManagedParamsVM,
-  type CockroachParamsVM,
   type DraftErrorVM,
   type InfrastructurePlanVM,
   type MachineVM,
@@ -80,10 +70,18 @@ import {
   isCommitVersion,
   commitSha,
 } from "@/services/stroppy";
+import {
+  NumField,
+  ToggleRow,
+  FieldErrors,
+  errorsFor,
+  EngineParamsForm,
+  EngineVersionSelect,
+} from "@/components/database/DatabaseParamsForm";
+import { WorkloadParamsForm } from "@/components/workload/WorkloadParamsForm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectTrigger,
@@ -157,10 +155,6 @@ const ENGINE_ICON: Record<EngineKind, typeof Database> = {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function errorsFor(errs: DraftErrorVM[], prefix: string): DraftErrorVM[] {
-  return errs.filter((e) => e.field === prefix || e.field.startsWith(prefix + "."));
-}
-
 /** Which top-level draft sections a step is responsible for (for the dot). */
 const STEP_FIELDS: Record<StepKey, string[]> = {
   infra: ["provider", "infrastructure_plan", "name"],
@@ -169,99 +163,12 @@ const STEP_FIELDS: Record<StepKey, string[]> = {
   review: [],
 };
 
-function FieldErrors({ errs }: { errs: DraftErrorVM[] }) {
-  if (errs.length === 0) return null;
-  return (
-    <div className="mt-2 space-y-1">
-      {errs.map((e, i) => (
-        <div
-          key={i}
-          className={`flex items-start gap-1.5 text-[11px] ${
-            e.severity === "error"
-              ? "text-red-400"
-              : e.severity === "warning"
-                ? "text-amber-400"
-                : "text-zinc-400"
-          }`}
-        >
-          {e.severity === "error" ? (
-            <AlertCircle className="mt-px h-3 w-3 shrink-0" />
-          ) : e.severity === "warning" ? (
-            <AlertTriangle className="mt-px h-3 w-3 shrink-0" />
-          ) : (
-            <Info className="mt-px h-3 w-3 shrink-0" />
-          )}
-          <span>
-            <span className="font-mono text-[10px] text-zinc-600">{e.field}</span> · {e.message}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 function SectionTitle({ children, hint }: { children: React.ReactNode; hint?: string }) {
   return (
     <div className="mb-4">
       <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">Step</div>
       <h2 className="text-lg font-semibold tracking-tight text-foreground">{children}</h2>
       {hint && <p className="mt-1 text-sm text-muted-foreground">{hint}</p>}
-    </div>
-  );
-}
-
-function NumField({
-  label,
-  value,
-  onChange,
-  min = 0,
-  max,
-  hint,
-}: {
-  label: string;
-  value: number;
-  onChange: (n: number) => void;
-  min?: number;
-  max?: number;
-  hint?: string;
-}) {
-  return (
-    <div>
-      <Label>{label}</Label>
-      <Input
-        type="number"
-        className="mt-1"
-        min={min}
-        max={max}
-        value={String(value)}
-        onChange={(e) => {
-          const n = Number.parseInt(e.target.value, 10);
-          onChange(Number.isNaN(n) ? 0 : n);
-        }}
-      />
-      {hint && <p className="mt-1 text-[11px] text-zinc-600">{hint}</p>}
-    </div>
-  );
-}
-
-function ToggleRow({
-  label,
-  hint,
-  checked,
-  onChange,
-}: {
-  label: string;
-  hint?: string;
-  checked: boolean;
-  onChange: (b: boolean) => void;
-}) {
-  return (
-    <div className="flex items-center justify-between border border-zinc-800/60 bg-[#0a0a0a] px-3 py-2.5">
-      <div>
-        <div className="text-sm text-foreground">{label}</div>
-        {hint && <div className="text-[11px] text-zinc-600">{hint}</div>}
-      </div>
-      <Switch checked={checked} onCheckedChange={onChange} />
     </div>
   );
 }
@@ -896,17 +803,6 @@ function MachineRow({
 
 // ─── Step 2: Database (+ topology diagram) ─────────────────────────────────────
 
-const DB_VERSIONS: Record<EngineKind, string[]> = {
-  postgres: ["17", "16", "15"],
-  mysql: ["8.4", "8.0"],
-  mariadb: ["11.4", "10.11"],
-  picodata: ["25.3"],
-  ydb: ["25.2", "24.4"],
-  ydbManaged: ["managed"],
-  cockroach: ["24.2", "23.2"],
-  external: [],
-};
-
 // The Database step is a three-pane PROGRESSIVE flow laid out horizontally,
 // each pane sliding in from the right once the previous is chosen:
 //
@@ -1143,23 +1039,7 @@ function SettingsPane({
       <PaneHeader index={3} title="Settings" subtitle="Typed domain.Database — pre-filled, editable" />
       <div className="grid min-h-0 flex-1 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] xl:items-stretch">
         <div className="min-h-0 space-y-6 overflow-y-auto pr-1">
-          {db.kind !== "external" && db.kind !== "ydbManaged" && (
-            <div className="max-w-xs">
-              <Label>Engine version</Label>
-              <Select value={db.version} onValueChange={(v) => apply({ ...db, version: v })}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Pick a version" />
-                </SelectTrigger>
-                <SelectContent>
-                  {DB_VERSIONS[db.kind].map((v) => (
-                    <SelectItem key={v} value={v}>
-                      {v}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+          <EngineVersionSelect db={db} apply={apply} />
 
           <EngineParamsForm db={db} apply={apply} />
           <FieldErrors errs={errs} />
@@ -1235,264 +1115,7 @@ function specSummary(spec: MachineSpecVM | undefined): string {
   return `${d.cpuCores} cpu / ${(d.memoryMb / 1024).toFixed(d.memoryMb % 1024 ? 1 : 0)} GB`;
 }
 
-function EngineParamsForm({ db, apply }: { db: DatabaseVM; apply: (d: DatabaseVM) => void }) {
-  const e = db.params;
-  switch (e.kind) {
-    case "postgres": {
-      const p = e.postgres;
-      const set = (patch: Partial<PostgresParamsVM>) =>
-        apply({ ...db, params: { kind: "postgres", postgres: { ...p, ...patch } } });
-      return (
-        <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-3">
-            <NumField label="Replicas" value={p.replicas} onChange={(n) => set({ replicas: n })} hint="streaming standbys" />
-            <NumField label="Sync replicas" value={p.syncReplicas} onChange={(n) => set({ syncReplicas: n })} hint="synchronous standbys" />
-            <NumField label="HAProxy nodes" value={p.haproxy} onChange={(n) => set({ haproxy: n })} hint="dedicated LB" />
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            <ToggleRow label="PgBouncer" hint="colocated pooler" checked={p.pgbouncer} onChange={(b) => set({ pgbouncer: b })} />
-            <ToggleRow label="Patroni HA" hint="needs etcd" checked={p.patroni} onChange={(b) => set({ patroni: b })} />
-            <ToggleRow label="etcd" hint="DCS for Patroni" checked={p.etcd} onChange={(b) => set({ etcd: b })} />
-          </div>
-          <ConfigField filename="postgresql.conf" label="postgresql.conf (master)" value={p.masterOptions} onChange={(m) => set({ masterOptions: m })} />
-        </div>
-      );
-    }
-    case "mysql":
-    case "mariadb": {
-      const p = e.kind === "mysql" ? e.mysql : e.mariadb;
-      const set = (patch: Partial<MySqlParamsVM>) =>
-        apply({ ...db, params: e.kind === "mysql" ? { kind: "mysql", mysql: { ...p, ...patch } } : { kind: "mariadb", mariadb: { ...p, ...patch } } });
-      return (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <NumField label="Replicas" value={p.replicas} onChange={(n) => set({ replicas: n })} />
-            <NumField label="ProxySQL nodes" value={p.proxysql} onChange={(n) => set({ proxysql: n })} hint="dedicated proxy" />
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <ToggleRow label="Group replication" checked={p.groupReplication} onChange={(b) => set({ groupReplication: b })} />
-            <ToggleRow label="Semi-sync" hint="when group repl off" checked={p.semiSync} onChange={(b) => set({ semiSync: b })} />
-          </div>
-          <ConfigField filename="my.cnf" label="my.cnf (primary)" value={p.primaryOptions} onChange={(m) => set({ primaryOptions: m })} />
-        </div>
-      );
-    }
-    case "picodata": {
-      const p = e.picodata;
-      const set = (patch: Partial<PicodataParamsVM>) =>
-        apply({ ...db, params: { kind: "picodata", picodata: { ...p, ...patch } } });
-      return (
-        <div className="space-y-4">
-          <div className="grid grid-cols-4 gap-3">
-            <NumField label="Instances" value={p.instances} onChange={(n) => set({ instances: n })} min={1} />
-            <NumField label="Replication" value={p.replicationFactor} onChange={(n) => set({ replicationFactor: n })} hint="factor" />
-            <NumField label="Shards" value={p.shards} onChange={(n) => set({ shards: n })} />
-            <NumField label="HAProxy" value={p.haproxy} onChange={(n) => set({ haproxy: n })} />
-          </div>
-          <ConfigField filename="picodata.yaml" label="instance options" value={p.instanceOptions} onChange={(m) => set({ instanceOptions: m })} />
-        </div>
-      );
-    }
-    case "ydb": {
-      const p = e.ydb;
-      const set = (patch: Partial<YdbParamsVM>) =>
-        apply({ ...db, params: { kind: "ydb", ydb: { ...p, ...patch } } });
-      return (
-        <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-3">
-            <NumField label="Storage nodes" value={p.storageNodes} onChange={(n) => set({ storageNodes: n })} min={1} />
-            <NumField label="Database nodes" value={p.databaseNodes} onChange={(n) => set({ databaseNodes: n })} hint="0 = combined" />
-            <NumField label="HAProxy" value={p.haproxy} onChange={(n) => set({ haproxy: n })} />
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            <NumField label="pdisks / node" value={p.pdisksPerStorageNode} onChange={(n) => set({ pdisksPerStorageNode: n })} />
-            <NumField label="Storage groups" value={p.storageGroups} onChange={(n) => set({ storageGroups: n })} />
-            <div>
-              <Label>Fault tolerance</Label>
-              <Select value={String(p.faultTolerance)} onValueChange={(v) => set({ faultTolerance: Number(v) as YdbParams_FaultTolerance })}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={String(YdbParams_FaultTolerance.NONE)}>none</SelectItem>
-                  <SelectItem value={String(YdbParams_FaultTolerance.BLOCK_4_2)}>block-4-2</SelectItem>
-                  <SelectItem value={String(YdbParams_FaultTolerance.MIRROR_3_DC)}>mirror-3-dc</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Disk type</Label>
-              <Select value={String(p.defaultDiskType)} onValueChange={(v) => set({ defaultDiskType: Number(v) as YdbParams_DiskType })}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={String(YdbParams_DiskType.SSD)}>SSD</SelectItem>
-                  <SelectItem value={String(YdbParams_DiskType.NVME)}>NVMe</SelectItem>
-                  <SelectItem value={String(YdbParams_DiskType.ROT)}>ROT</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Database path</Label>
-              <Input className="mt-1" value={p.databasePath} onChange={(ev) => set({ databasePath: ev.target.value })} />
-            </div>
-          </div>
-          <ToggleRow label="Auto-size pdisks" hint="dry-run resize from workload" checked={p.autoSizePdisks} onChange={(b) => set({ autoSizePdisks: b })} />
-        </div>
-      );
-    }
-    case "ydbManaged": {
-      const p = e.ydbManaged;
-      const set = (patch: Partial<YdbManagedParamsVM>) =>
-        apply({ ...db, params: { kind: "ydbManaged", ydbManaged: { ...p, ...patch } } });
-      const dedicated = p.type === YdbManagedParams_Type.DEDICATED;
-      return (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Flavor</Label>
-              <Select value={String(p.type)} onValueChange={(v) => set({ type: Number(v) as YdbManagedParams_Type })}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={String(YdbManagedParams_Type.SERVERLESS)}>Serverless</SelectItem>
-                  <SelectItem value={String(YdbManagedParams_Type.DEDICATED)}>Dedicated</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Compute class</Label>
-              <Select value={String(p.computeType)} onValueChange={(v) => set({ computeType: Number(v) as YdbManagedParams_ComputeType })}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={String(YdbManagedParams_ComputeType.OLTP)}>OLTP</SelectItem>
-                  <SelectItem value={String(YdbManagedParams_ComputeType.OLAP)}>OLAP</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          {dedicated ? (
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <Label>Resource preset</Label>
-                <Input className="mt-1" placeholder="medium" value={p.resourcePresetId} onChange={(ev) => set({ resourcePresetId: ev.target.value })} />
-              </div>
-              <NumField label="Node count" value={p.nodeCount} onChange={(n) => set({ nodeCount: n })} min={1} />
-              <NumField label="Storage groups" value={p.storageGroups} onChange={(n) => set({ storageGroups: n })} />
-            </div>
-          ) : (
-            <NumField label="Throttling RCUs" value={p.throttlingRcus} onChange={(n) => set({ throttlingRcus: n })} hint="0 = provider default" />
-          )}
-          <p className="text-[11px] text-zinc-600">
-            Managed YDB has no self-deployed nodes — only the stroppy client runs in the topology.
-          </p>
-        </div>
-      );
-    }
-    case "cockroach": {
-      const p = e.cockroach;
-      const set = (patch: Partial<CockroachParamsVM>) =>
-        apply({ ...db, params: { kind: "cockroach", cockroach: { ...p, ...patch } } });
-      return (
-        <div className="space-y-4">
-          <div className="max-w-xs">
-            <NumField label="Nodes" value={p.nodes} onChange={(n) => set({ nodes: n })} min={1} hint="homogeneous cluster" />
-          </div>
-          <ConfigField filename="cluster.settings" label="cluster settings (k=v, or flag:k=v)" value={p.options} onChange={(m) => set({ options: m })} />
-        </div>
-      );
-    }
-    case "external": {
-      const p = e.external;
-      return (
-        <div className="space-y-3">
-          <div>
-            <Label>DSN</Label>
-            <Input
-              className="mt-1 font-mono text-xs"
-              placeholder="postgres://user:pass@host:5432/db"
-              value={p.dsn}
-              onChange={(ev) => apply({ ...db, params: { kind: "external", external: { dsn: ev.target.value } } })}
-            />
-            <p className="mt-1 text-[11px] text-zinc-600">The workflow connects to this endpoint and skips deploy/teardown.</p>
-          </div>
-        </div>
-      );
-    }
-  }
-}
-
-// A key=value config field backed by the dark ConfigEditor.
-function ConfigField({
-  filename,
-  label,
-  value,
-  onChange,
-}: {
-  filename: string;
-  label: string;
-  value: Record<string, string>;
-  onChange: (m: Record<string, string>) => void;
-}) {
-  const text = useMemo(
-    () =>
-      Object.entries(value)
-        .map(([k, v]) => `${k} = ${v}`)
-        .join("\n"),
-    [value],
-  );
-  const [draftText, setDraftText] = useState(text);
-  const lastApplied = useRef(text);
-  useEffect(() => {
-    if (text !== lastApplied.current) {
-      setDraftText(text);
-      lastApplied.current = text;
-    }
-  }, [text]);
-
-  return (
-    <div>
-      <Label>{label}</Label>
-      <div className="mt-1">
-        <ConfigEditor
-          filename={filename}
-          value={draftText}
-          height="clamp(14rem, 32vh, 28rem)"
-          onChange={(next) => {
-            setDraftText(next);
-            const map: Record<string, string> = {};
-            for (const line of next.split("\n")) {
-              const t = line.trim();
-              if (!t || t.startsWith("#") || t.startsWith("[")) continue;
-              const idx = t.indexOf("=");
-              if (idx < 0) continue;
-              map[t.slice(0, idx).trim()] = t.slice(idx + 1).trim();
-            }
-            lastApplied.current = next;
-            onChange(map);
-          }}
-        />
-      </div>
-    </div>
-  );
-}
-
 // ─── Step 3: Workload + ProbeScript ───────────────────────────────────────────
-
-const PROTOCOLS: { v: Workload_Protocol; label: string }[] = [
-  { v: Workload_Protocol.PG, label: "PostgreSQL wire (pg)" },
-  { v: Workload_Protocol.MYSQL, label: "MySQL" },
-  { v: Workload_Protocol.PICODATA, label: "Picodata" },
-  { v: Workload_Protocol.YDB_GRPC, label: "YDB gRPC" },
-  { v: Workload_Protocol.YDB_GRPCS, label: "YDB gRPC (TLS)" },
-  { v: Workload_Protocol.COCKROACH, label: "CockroachDB" },
-];
 
 // The Workload step mirrors the Database step: a PROGRESSIVE flow laid out
 // horizontally, each pane sliding in (pane-reveal) once enough of the previous
@@ -1903,159 +1526,12 @@ function WorkloadParametersPane({
   apply: (w: WorkloadVM) => void;
   errs: DraftErrorVM[];
 }) {
-  const limit = w.execution.limit;
   return (
     <div className="pane-reveal flex min-h-0 min-w-0 flex-1 flex-col lg:max-w-2xl">
       <PaneHeader index={3} title="Parameters" subtitle="Typed domain.Workload — editable" />
-      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto pr-1">
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-          <div>
-            <Label>Script</Label>
-            <Input className="mt-1 font-mono text-xs" value={w.script} onChange={(e) => apply({ ...w, script: e.target.value })} placeholder="tpcc/tx" />
-          </div>
-          <div>
-            <Label>SQL arg (optional)</Label>
-            <Input className="mt-1 font-mono text-xs" value={w.sql} onChange={(e) => apply({ ...w, sql: e.target.value })} placeholder="queries.sql" />
-          </div>
-          <div>
-            <Label>Protocol</Label>
-            <Select value={String(w.protocol)} onValueChange={(v) => apply({ ...w, protocol: Number(v) as Workload_Protocol })}>
-              <SelectTrigger className="mt-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PROTOCOLS.map((p) => (
-                  <SelectItem key={p.v} value={String(p.v)}>
-                    {p.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="border border-zinc-800/60 bg-[#0a0a0a] p-4">
-          <div className="mb-3 text-[10px] font-mono uppercase tracking-wider text-zinc-600">k6 execution</div>
-          <div className="grid grid-cols-3 gap-3">
-            <NumField label="Virtual users" value={w.execution.vus} onChange={(n) => apply({ ...w, execution: { ...w.execution, vus: n } })} min={1} />
-            <div>
-              <Label>Limit by</Label>
-              <Select
-                value={limit.case}
-                onValueChange={(v) =>
-                  apply({
-                    ...w,
-                    execution: {
-                      ...w.execution,
-                      limit: v === "duration" ? { case: "duration", duration: "5m" } : { case: "iterations", iterations: 10000 },
-                    },
-                  })
-                }
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="duration">Duration</SelectItem>
-                  <SelectItem value="iterations">Iterations</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {limit.case === "duration" ? (
-              <div>
-                <Label>Duration</Label>
-                <Input className="mt-1" value={limit.duration} onChange={(e) => apply({ ...w, execution: { ...w.execution, limit: { case: "duration", duration: e.target.value } } })} placeholder="10m" />
-              </div>
-            ) : (
-              <NumField label="Iterations" value={limit.iterations} min={1} onChange={(n) => apply({ ...w, execution: { ...w.execution, limit: { case: "iterations", iterations: n } } })} />
-            )}
-          </div>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <ToggleRow label="Quiet" hint="k6 -q" checked={w.execution.quiet} onChange={(b) => apply({ ...w, execution: { ...w.execution, quiet: b } })} />
-            <ToggleRow label="No thresholds" hint="k6 --no-thresholds" checked={w.execution.noThresholds} onChange={(b) => apply({ ...w, execution: { ...w.execution, noThresholds: b } })} />
-          </div>
-        </div>
-
-        <div className="border border-zinc-800/60 bg-[#0a0a0a] p-4">
-          <div className="mb-3 text-[10px] font-mono uppercase tracking-wider text-zinc-600">data parameters</div>
-          <div className="grid grid-cols-3 gap-3">
-            <NumField label="Pool size" value={w.parameters.poolSize} onChange={(n) => apply({ ...w, parameters: { ...w.parameters, poolSize: n } })} />
-            <div>
-              <Label>Scale factor</Label>
-              <Input
-                type="number"
-                step="0.01"
-                className="mt-1"
-                value={String(w.parameters.scaleFactor)}
-                onChange={(e) => {
-                  const n = Number.parseFloat(e.target.value);
-                  apply({ ...w, parameters: { ...w.parameters, scaleFactor: Number.isNaN(n) ? 0 : n } });
-                }}
-              />
-            </div>
-            <div>
-              <Label>Insert method</Label>
-              <Input className="mt-1" value={w.parameters.defaultInsertMethod} onChange={(e) => apply({ ...w, parameters: { ...w.parameters, defaultInsertMethod: e.target.value } })} placeholder="native" />
-            </div>
-          </div>
-          <EnvMapEditor
-            env={w.parameters.env}
-            onChange={(env) => apply({ ...w, parameters: { ...w.parameters, env } })}
-          />
-        </div>
-
+      <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+        <WorkloadParamsForm w={w} apply={apply} />
         <FieldErrors errs={errs} />
-      </div>
-    </div>
-  );
-}
-
-/** Free-form env map editor (KEY=value lines), backed by the dark ConfigEditor. */
-function EnvMapEditor({
-  env,
-  onChange,
-}: {
-  env: Record<string, string>;
-  onChange: (m: Record<string, string>) => void;
-}) {
-  const text = useMemo(
-    () =>
-      Object.entries(env)
-        .map(([k, v]) => `${k}=${v}`)
-        .join("\n"),
-    [env],
-  );
-  const [draftText, setDraftText] = useState(text);
-  const lastApplied = useRef(text);
-  useEffect(() => {
-    if (text !== lastApplied.current) {
-      setDraftText(text);
-      lastApplied.current = text;
-    }
-  }, [text]);
-
-  return (
-    <div className="mt-3">
-      <Label>Environment (KEY=value)</Label>
-      <div className="mt-1">
-        <ConfigEditor
-          filename=".env"
-          value={draftText}
-          height="clamp(8rem, 18vh, 16rem)"
-          onChange={(next) => {
-            setDraftText(next);
-            const map: Record<string, string> = {};
-            for (const line of next.split("\n")) {
-              const t = line.trim();
-              if (!t || t.startsWith("#")) continue;
-              const idx = t.indexOf("=");
-              if (idx < 0) continue;
-              map[t.slice(0, idx).trim()] = t.slice(idx + 1).trim();
-            }
-            lastApplied.current = next;
-            onChange(map);
-          }}
-        />
       </div>
     </div>
   );

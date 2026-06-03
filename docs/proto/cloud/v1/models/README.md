@@ -960,7 +960,7 @@ go_name: Entity</pre></td>
 <td>max_parallel</td>
 <td>uint32</td>
 <td><pre>
-//max_parallel is the max number of concurrent child TestRunWorkflows.
+//max_parallel is the max number of concurrent child TestWorkflows.
 //0 = unlimited.<br>
 
 json_name: maxParallel

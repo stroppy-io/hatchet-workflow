@@ -1,6 +1,7 @@
 package execution
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -77,13 +78,13 @@ var _ test_run_overview.LogReader = (*LogReader)(nil)
 // shared account-0 LogsQL endpoint under it. An empty monitoringURL yields a
 // reader that returns empty results (no monitoring backend configured). log may
 // be nil.
-func NewLogReader(monitoringURL string, log *slog.Logger) *LogReader {
+func NewLogReader(monitoringURL, token string, log *slog.Logger) *LogReader {
 	if log == nil {
 		log = slog.Default()
 	}
 	r := &LogReader{log: log}
 	if base := strings.TrimRight(monitoringURL, "/"); base != "" {
-		r.client = victoria.NewLogsClient(base, "")
+		r.client = victoria.NewLogsClient(base, token)
 	}
 	return r
 }
@@ -159,7 +160,7 @@ func (r *LogReader) Stream(
 
 	go func() {
 		defer close(out)
-		cursor := from
+		cursor := initialStreamCursor(from, filter)
 		ticker := time.NewTicker(time.Second)
 		defer ticker.Stop()
 		for {
@@ -185,6 +186,16 @@ func (r *LogReader) Stream(
 		}
 	}()
 	return out, nil
+}
+
+func initialStreamCursor(from *monitor.LogCursor, filter *api.LogFilter) *monitor.LogCursor {
+	if from != nil {
+		return from
+	}
+	if filter.GetStart() != nil {
+		return nil
+	}
+	return &monitor.LogCursor{ObservedAt: timestamppb.Now()}
 }
 
 // Resolve turns a shareable LogRef into the concrete filter + anchor cursor used
@@ -235,12 +246,13 @@ var _ test_run_overview.MetricsReader = (*MetricsReader)(nil)
 // in which case the reader falls back to the default (postgres) query set and a
 // best-effort trailing window. An empty monitoringURL yields a reader that
 // returns an empty RunMetrics (no monitoring backend configured). log may be nil.
-func NewMetricsReader(monitoringURL string, store RunRecordReader, log *slog.Logger) *MetricsReader {
+func NewMetricsReader(monitoringURL, token string, store RunRecordReader, log *slog.Logger) *MetricsReader {
 	if log == nil {
 		log = slog.Default()
 	}
 	return &MetricsReader{
 		base:  strings.TrimRight(monitoringURL, "/"),
+		token: strings.TrimSpace(token),
 		store: store,
 		log:   log,
 	}
@@ -339,14 +351,18 @@ func buildLogsQuery(runID string, filter *api.LogFilter, direction api.LogScroll
 
 	parts = appendOrFilter(parts, "node_execution_id", filter.GetNodeExecutionIds())
 	parts = appendOrFilter(parts, "component_id", filter.GetComponentIds())
-	parts = appendOrFilter(parts, "node_id", filter.GetNodeIds())
+	// API calls this field node_ids because the UI thinks in topology nodes.
+	// LogLine stores the same stable host id as machine_id.
+	parts = appendOrFilter(parts, "machine_id", filter.GetNodeIds())
+	parts = appendEnumFilter(parts, "source", filter.GetSources(), logSourceName)
+	parts = appendEnumFilter(parts, "stream", filter.GetStreams(), logStreamName)
 
 	if u := filter.GetUnit(); u != "" {
 		parts = append(parts, fmt.Sprintf("unit:%q", u))
 	}
 	if s := filter.GetSearch(); s != "" {
 		// Substring match over _msg.
-		parts = append(parts, fmt.Sprintf("_msg:%q", strings.ReplaceAll(s, `"`, `\"`)))
+		parts = append(parts, fmt.Sprintf("_msg:%q", s))
 	}
 	if q := filter.GetQuery(); q != "" {
 		// Raw LogsQL fragment, AND-ed with the structured filters.
@@ -372,12 +388,56 @@ func appendOrFilter(parts []string, field string, values []string) []string {
 	}
 	terms := make([]string, len(values))
 	for i, v := range values {
-		terms[i] = fmt.Sprintf("%s:%q", field, strings.ReplaceAll(v, `"`, `\"`))
+		terms[i] = fmt.Sprintf("%s:%q", field, v)
 	}
 	if len(terms) == 1 {
 		return append(parts, terms[0])
 	}
 	return append(parts, "("+strings.Join(terms, " OR ")+")")
+}
+
+func appendEnumFilter[T comparable](parts []string, field string, values []T, name func(T) string) []string {
+	if len(values) == 0 {
+		return parts
+	}
+	names := make([]string, 0, len(values))
+	seen := make(map[string]struct{}, len(values))
+	for _, value := range values {
+		n := name(value)
+		if n == "" {
+			continue
+		}
+		if _, ok := seen[n]; ok {
+			continue
+		}
+		seen[n] = struct{}{}
+		names = append(names, n)
+	}
+	return appendOrFilter(parts, field, names)
+}
+
+func logSourceName(source monitor.Source) string {
+	switch source {
+	case monitor.Source_SOURCE_COMMAND:
+		return "command"
+	case monitor.Source_SOURCE_JOURNALD:
+		return "journald"
+	case monitor.Source_SOURCE_FILE:
+		return "file"
+	default:
+		return ""
+	}
+}
+
+func logStreamName(stream monitor.Stream) string {
+	switch stream {
+	case monitor.Stream_STREAM_STDOUT:
+		return "stdout"
+	case monitor.Stream_STREAM_STDERR:
+		return "stderr"
+	default:
+		return ""
+	}
 }
 
 // logRow is one VictoriaLogs JSON-lines record (a flat map of the streamed
@@ -386,19 +446,29 @@ type logRow struct {
 	Time            string `json:"_time"`
 	Message         string `json:"_msg"`
 	RunID           string `json:"run_id"`
+	LineNo          uint64 `json:"line_no"`
 	NodeExecutionID string `json:"node_execution_id"`
 	ComponentID     string `json:"component_id"`
 	MachineID       string `json:"machine_id"`
+	Source          string `json:"source"`
+	Unit            string `json:"unit"`
+	Stream          string `json:"stream"`
 }
 
 // decodeLogLines parses the JSON-lines logs response into LogLine protos.
 func decodeLogLines(body io.Reader, runID string) ([]*monitor.LogLine, error) {
-	dec := json.NewDecoder(body)
 	var lines []*monitor.LogLine
 	var seq uint64
-	for dec.More() {
+
+	scanner := bufio.NewScanner(body)
+	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
+	for scanner.Scan() {
+		raw := strings.TrimSpace(scanner.Text())
+		if raw == "" {
+			continue
+		}
 		var row logRow
-		if err := dec.Decode(&row); err != nil {
+		if err := json.Unmarshal([]byte(raw), &row); err != nil {
 			// Skip a malformed row rather than fabricating or aborting the page.
 			continue
 		}
@@ -408,18 +478,52 @@ func decodeLogLines(body io.Reader, runID string) ([]*monitor.LogLine, error) {
 		if rid == "" {
 			rid = runID
 		}
+		lineNo := row.LineNo
+		if lineNo == 0 {
+			lineNo = seq
+		}
 		lines = append(lines, &monitor.LogLine{
 			ObservedAt:      observed,
 			RunId:           rid,
-			LineNo:          seq,
+			LineNo:          lineNo,
 			NodeExecutionId: row.NodeExecutionID,
 			ComponentId:     row.ComponentID,
 			MachineId:       row.MachineID,
+			Source:          parseLogSource(row.Source),
+			Unit:            row.Unit,
+			Stream:          parseLogStream(row.Stream),
 			Line:            row.Message,
-			Cursor:          &monitor.LogCursor{ObservedAt: observed, Seq: seq},
+			Cursor:          &monitor.LogCursor{ObservedAt: observed, Seq: lineNo},
 		})
 	}
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
 	return lines, nil
+}
+
+func parseLogSource(value string) monitor.Source {
+	switch strings.ToLower(value) {
+	case "command", "cmd", "source_command":
+		return monitor.Source_SOURCE_COMMAND
+	case "journald", "journal", "source_journald":
+		return monitor.Source_SOURCE_JOURNALD
+	case "file", "source_file":
+		return monitor.Source_SOURCE_FILE
+	default:
+		return monitor.Source_SOURCE_UNSPECIFIED
+	}
+}
+
+func parseLogStream(value string) monitor.Stream {
+	switch strings.ToLower(value) {
+	case "stdout", "stream_stdout":
+		return monitor.Stream_STREAM_STDOUT
+	case "stderr", "stream_stderr":
+		return monitor.Stream_STREAM_STDERR
+	default:
+		return monitor.Stream_STREAM_UNSPECIFIED
+	}
 }
 
 // cursorBounds returns the older (first) and newer (last) cursors of a page.

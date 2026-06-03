@@ -87,6 +87,147 @@ export interface WorkloadPresetVM {
 }
 
 // =====================================================================
+// Database-preset CRUD surface (the create / edit / detail authoring pages).
+//
+// One DatabasePresetDetail is the full cloud.v1.models.DatabasePresetRecord the
+// detail page renders read-only; DatabasePresetInput is the editable slice the
+// create/edit form submits (it becomes the `preset` of a Create/Update request —
+// the server assigns entity.id / tenant_id / timings / author / is_system).
+//
+//   DatabasePresetDetail field   DatabasePresetRecord field
+//   --------------------------   ----------------------------------------------
+//   id / name / description      entity{.id,.name,.description}
+//   tags                         entity.labels (or tags)
+//   authorId                     entity.author_id
+//   isSystem                     is_system  (platform-seeded, read-only)
+//   createdAt / updatedAt        entity.timings{.created_at,.updated_at}
+//   database                     database   (cloud.v1.domain.Database, typed)
+// =====================================================================
+
+/** Full database-preset record for the detail page (read-only projection). */
+export interface DatabasePresetDetail {
+  id: string;
+  name: string;
+  description: string;
+  /** entity.labels — free-form key/value tags. */
+  tags: Record<string, string>;
+  authorId: string;
+  isSystem: boolean;
+  createdAt: string;
+  updatedAt: string;
+  /** the typed domain.Database this preset carries. */
+  database: DatabaseVM;
+}
+
+/**
+ * Editable slice the create/edit form submits — the `preset` half of a
+ * CreateDatabasePreset / UpdateDatabasePreset request. The server owns id /
+ * tenant_id / author / timings / is_system, so they are NOT in the input.
+ */
+export interface DatabasePresetInput {
+  name: string;
+  description: string;
+  tags: Record<string, string>;
+  database: DatabaseVM;
+}
+
+// =====================================================================
+// Workload-preset CRUD surface (the create / edit / detail authoring pages).
+//
+// One WorkloadPresetDetail is the full cloud.v1.models.WorkloadPresetRecord the
+// detail page renders read-only; WorkloadPresetInput is the editable slice the
+// create/edit form submits (it becomes the `preset` of a Create/Update request —
+// the server assigns entity.id / tenant_id / timings / author / is_system).
+//
+//   WorkloadPresetDetail field   WorkloadPresetRecord field
+//   --------------------------   ----------------------------------------------
+//   id / name / description      entity{.id,.name,.description}
+//   tags                         entity.labels (or tags)
+//   authorId                     entity.author_id
+//   isSystem                     is_system  (platform-seeded, read-only)
+//   createdAt / updatedAt        entity.timings{.created_at,.updated_at}
+//   workload                     workload   (cloud.v1.domain.Workload, typed)
+// =====================================================================
+
+/** Full workload-preset record for the detail page (read-only projection). */
+export interface WorkloadPresetDetail {
+  id: string;
+  name: string;
+  description: string;
+  /** entity.labels — free-form key/value tags. */
+  tags: Record<string, string>;
+  authorId: string;
+  isSystem: boolean;
+  createdAt: string;
+  updatedAt: string;
+  /** the typed domain.Workload this preset carries. */
+  workload: WorkloadVM;
+}
+
+/**
+ * Editable slice the create/edit form submits — the `preset` half of a
+ * CreateWorkloadPreset / UpdateWorkloadPreset request. The server owns id /
+ * tenant_id / author / timings / is_system, so they are NOT in the input.
+ */
+export interface WorkloadPresetInput {
+  name: string;
+  description: string;
+  tags: Record<string, string>;
+  workload: WorkloadVM;
+}
+
+// =====================================================================
+// Test-preset CRUD surface (the create / edit / detail authoring pages).
+//
+// One TestPresetDetail is the full cloud.v1.models.TestPresetRecord the detail
+// page renders read-only; TestPresetInput is the editable slice the create/edit
+// form submits (it becomes the `preset` of a Create/Update request — the server
+// assigns entity.id / tenant_id / timings / author / is_system). A Test is the
+// COMBINED cloud.v1.domain.Test = a database (domain.Database) + a workload
+// (domain.Workload) + tags.
+//
+//   TestPresetDetail field   TestPresetRecord field
+//   --------------------     ----------------------------------------------
+//   id / name / description  entity{.id,.name,.description}
+//   tags                     entity.labels (or tags)
+//   authorId                 entity.author_id
+//   isSystem                 is_system  (platform-seeded, read-only)
+//   createdAt / updatedAt    entity.timings{.created_at,.updated_at}
+//   database                 test.database  (cloud.v1.domain.Database, typed)
+//   workload                 test.workload  (cloud.v1.domain.Workload, typed)
+// =====================================================================
+
+/** Full test-preset record for the detail page (read-only projection). */
+export interface TestPresetDetail {
+  id: string;
+  name: string;
+  description: string;
+  /** entity.labels — free-form key/value tags. */
+  tags: Record<string, string>;
+  authorId: string;
+  isSystem: boolean;
+  createdAt: string;
+  updatedAt: string;
+  /** the typed domain.Database half of the test. */
+  database: DatabaseVM;
+  /** the typed domain.Workload half of the test. */
+  workload: WorkloadVM;
+}
+
+/**
+ * Editable slice the create/edit form submits — the `preset` half of a
+ * CreateTestPreset / UpdateTestPreset request. The server owns id / tenant_id /
+ * author / timings / is_system, so they are NOT in the input.
+ */
+export interface TestPresetInput {
+  name: string;
+  description: string;
+  tags: Record<string, string>;
+  database: DatabaseVM;
+  workload: WorkloadVM;
+}
+
+// =====================================================================
 // Library list/table surface (the Database / Workload / Test preset pages).
 //
 // The wizard panes above consume the WHOLE catalog for one engine. The Library
@@ -244,6 +385,60 @@ export interface PresetProvider {
    */
   listWorkloadPresets(tenantSlug: string): Promise<WorkloadPresetVM[]>;
 
+  // --- Database-preset CRUD (create / edit / detail authoring pages). ------
+  /** GetDatabasePreset -> the full record the detail/edit pages render. */
+  getDatabasePreset(tenantSlug: string, id: string): Promise<DatabasePresetDetail>;
+  /**
+   * CreateDatabasePreset(tenant_id, preset) -> the new preset's id. The server
+   * assigns entity.id / tenant_id / timings / author and forces is_system=false.
+   */
+  createDatabasePreset(tenantSlug: string, input: DatabasePresetInput): Promise<string>;
+  /**
+   * UpdateDatabasePreset(tenant_id, preset) -> wholesale replace. preset.entity.id
+   * selects the row; system presets cannot be edited (gated in the UI).
+   */
+  updateDatabasePreset(
+    tenantSlug: string,
+    id: string,
+    input: DatabasePresetInput,
+  ): Promise<void>;
+
+  // --- Workload-preset CRUD (create / edit / detail authoring pages). ------
+  /** GetWorkloadPreset -> the full record the detail/edit pages render. */
+  getWorkloadPreset(tenantSlug: string, id: string): Promise<WorkloadPresetDetail>;
+  /**
+   * CreateWorkloadPreset(tenant_id, preset) -> the new preset's id. The server
+   * assigns entity.id / tenant_id / timings / author and forces is_system=false.
+   */
+  createWorkloadPreset(tenantSlug: string, input: WorkloadPresetInput): Promise<string>;
+  /**
+   * UpdateWorkloadPreset(tenant_id, preset) -> wholesale replace. preset.entity.id
+   * selects the row; system presets cannot be edited (gated in the UI).
+   */
+  updateWorkloadPreset(
+    tenantSlug: string,
+    id: string,
+    input: WorkloadPresetInput,
+  ): Promise<void>;
+
+  // --- Test-preset CRUD (create / edit / detail authoring pages). ---------
+  /** GetTestPreset -> the full record (db + workload) the detail/edit pages render. */
+  getTestPreset(tenantSlug: string, id: string): Promise<TestPresetDetail>;
+  /**
+   * CreateTestPreset(tenant_id, preset) -> the new preset's id. The server
+   * assigns entity.id / tenant_id / timings / author and forces is_system=false.
+   */
+  createTestPreset(tenantSlug: string, input: TestPresetInput): Promise<string>;
+  /**
+   * UpdateTestPreset(tenant_id, preset) -> wholesale replace. preset.entity.id
+   * selects the row; system presets cannot be edited (gated in the UI).
+   */
+  updateTestPreset(
+    tenantSlug: string,
+    id: string,
+    input: TestPresetInput,
+  ): Promise<void>;
+
   // --- Library table surface (paged + filtered + sorted). -----------------
   /** ListDatabasePresets oriented to the Database Presets table. */
   listDatabasePresetRows(
@@ -341,6 +536,152 @@ const realPresetProvider: PresetProvider = {
     //   isSystem: p.isSystem,
     //   workload: workloadProtoToVM(p.workload),   // domain.Workload -> WorkloadVM
     // }));
+    throw new Error(NOT_WIRED);
+  },
+
+  // --- Database-preset CRUD. ---------------------------------------------
+  // Each throws until the connect transport is wired. The wired call maps the
+  // proto DatabasePresetRecord <-> the flat VMs above.
+  async getDatabasePreset() {
+    // const tenantId = await resolveTenantId(tenantSlug);
+    // const { preset } = await databasePresetClient.getDatabasePreset({ tenantId, id });
+    //   // cloud.v1.api.DatabasePresetService.GetDatabasePreset
+    // return {
+    //   id: preset?.entity?.id ?? "",
+    //   name: preset?.entity?.name ?? "",
+    //   description: preset?.entity?.description ?? "",
+    //   tags: preset?.entity?.labels ?? {},
+    //   authorId: preset?.entity?.authorId ?? "",
+    //   isSystem: preset?.isSystem ?? false,
+    //   createdAt: preset?.entity?.timings?.createdAt ?? "",
+    //   updatedAt: preset?.entity?.timings?.updatedAt ?? "",
+    //   database: databaseProtoToVM(preset?.database),   // domain.Database -> DatabaseVM
+    // };
+    throw new Error(NOT_WIRED);
+  },
+  async createDatabasePreset() {
+    // const tenantId = await resolveTenantId(tenantSlug);
+    // const { preset } = await databasePresetClient.createDatabasePreset({
+    //   tenantId,
+    //   preset: create(DatabasePresetRecordSchema, {
+    //     entity: create(EntitySchema, { name: input.name, description: input.description,
+    //       labels: input.tags }),
+    //     database: databaseVMToProto(input.database),   // DatabaseVM -> domain.Database
+    //   }),
+    // });  // cloud.v1.api.DatabasePresetService.CreateDatabasePreset
+    // return preset?.entity?.id ?? "";
+    throw new Error(NOT_WIRED);
+  },
+  async updateDatabasePreset() {
+    // const tenantId = await resolveTenantId(tenantSlug);
+    // await databasePresetClient.updateDatabasePreset({
+    //   tenantId,
+    //   preset: create(DatabasePresetRecordSchema, {
+    //     entity: create(EntitySchema, { id, name: input.name,
+    //       description: input.description, labels: input.tags }),
+    //     database: databaseVMToProto(input.database),
+    //   }),
+    // });  // cloud.v1.api.DatabasePresetService.UpdateDatabasePreset
+    throw new Error(NOT_WIRED);
+  },
+
+  // --- Workload-preset CRUD. ---------------------------------------------
+  // Each throws until the connect transport is wired. The wired call maps the
+  // proto WorkloadPresetRecord <-> the flat VMs above.
+  async getWorkloadPreset() {
+    // const tenantId = await resolveTenantId(tenantSlug);
+    // const { preset } = await workloadPresetClient.getWorkloadPreset({ tenantId, id });
+    //   // cloud.v1.api.WorkloadPresetService.GetWorkloadPreset
+    // return {
+    //   id: preset?.entity?.id ?? "",
+    //   name: preset?.entity?.name ?? "",
+    //   description: preset?.entity?.description ?? "",
+    //   tags: preset?.entity?.labels ?? {},
+    //   authorId: preset?.entity?.authorId ?? "",
+    //   isSystem: preset?.isSystem ?? false,
+    //   createdAt: preset?.entity?.timings?.createdAt ?? "",
+    //   updatedAt: preset?.entity?.timings?.updatedAt ?? "",
+    //   workload: workloadProtoToVM(preset?.workload),   // domain.Workload -> WorkloadVM
+    // };
+    throw new Error(NOT_WIRED);
+  },
+  async createWorkloadPreset() {
+    // const tenantId = await resolveTenantId(tenantSlug);
+    // const { preset } = await workloadPresetClient.createWorkloadPreset({
+    //   tenantId,
+    //   preset: create(WorkloadPresetRecordSchema, {
+    //     entity: create(EntitySchema, { name: input.name, description: input.description,
+    //       labels: input.tags }),
+    //     workload: workloadVMToProto(input.workload),   // WorkloadVM -> domain.Workload
+    //   }),
+    // });  // cloud.v1.api.WorkloadPresetService.CreateWorkloadPreset
+    // return preset?.entity?.id ?? "";
+    throw new Error(NOT_WIRED);
+  },
+  async updateWorkloadPreset() {
+    // const tenantId = await resolveTenantId(tenantSlug);
+    // await workloadPresetClient.updateWorkloadPreset({
+    //   tenantId,
+    //   preset: create(WorkloadPresetRecordSchema, {
+    //     entity: create(EntitySchema, { id, name: input.name,
+    //       description: input.description, labels: input.tags }),
+    //     workload: workloadVMToProto(input.workload),
+    //   }),
+    // });  // cloud.v1.api.WorkloadPresetService.UpdateWorkloadPreset
+    throw new Error(NOT_WIRED);
+  },
+
+  // --- Test-preset CRUD. -------------------------------------------------
+  // Each throws until the connect transport is wired. The wired call maps the
+  // proto TestPresetRecord <-> the flat VMs above; a Test carries BOTH a typed
+  // domain.Database and a typed domain.Workload.
+  async getTestPreset() {
+    // const tenantId = await resolveTenantId(tenantSlug);
+    // const { preset } = await testPresetClient.getTestPreset({ tenantId, id });
+    //   // cloud.v1.api.TestPresetService.GetTestPreset
+    // return {
+    //   id: preset?.entity?.id ?? "",
+    //   name: preset?.entity?.name ?? "",
+    //   description: preset?.entity?.description ?? "",
+    //   tags: preset?.entity?.labels ?? {},
+    //   authorId: preset?.entity?.authorId ?? "",
+    //   isSystem: preset?.isSystem ?? false,
+    //   createdAt: preset?.entity?.timings?.createdAt ?? "",
+    //   updatedAt: preset?.entity?.timings?.updatedAt ?? "",
+    //   database: databaseProtoToVM(preset?.test?.database),   // domain.Database -> DatabaseVM
+    //   workload: workloadProtoToVM(preset?.test?.workload),   // domain.Workload -> WorkloadVM
+    // };
+    throw new Error(NOT_WIRED);
+  },
+  async createTestPreset() {
+    // const tenantId = await resolveTenantId(tenantSlug);
+    // const { preset } = await testPresetClient.createTestPreset({
+    //   tenantId,
+    //   preset: create(TestPresetRecordSchema, {
+    //     entity: create(EntitySchema, { name: input.name, description: input.description,
+    //       labels: input.tags }),
+    //     test: create(TestSchema, {
+    //       database: databaseVMToProto(input.database),   // DatabaseVM -> domain.Database
+    //       workload: workloadVMToProto(input.workload),   // WorkloadVM -> domain.Workload
+    //     }),
+    //   }),
+    // });  // cloud.v1.api.TestPresetService.CreateTestPreset
+    // return preset?.entity?.id ?? "";
+    throw new Error(NOT_WIRED);
+  },
+  async updateTestPreset() {
+    // const tenantId = await resolveTenantId(tenantSlug);
+    // await testPresetClient.updateTestPreset({
+    //   tenantId,
+    //   preset: create(TestPresetRecordSchema, {
+    //     entity: create(EntitySchema, { id, name: input.name,
+    //       description: input.description, labels: input.tags }),
+    //     test: create(TestSchema, {
+    //       database: databaseVMToProto(input.database),
+    //       workload: workloadVMToProto(input.workload),
+    //     }),
+    //   }),
+    // });  // cloud.v1.api.TestPresetService.UpdateTestPreset
     throw new Error(NOT_WIRED);
   },
 

@@ -97,9 +97,39 @@ const CRUMB_REGISTRY: CrumbDef[] = [
   // redirects to the Database tab) + a leaf per tab; Packages is a sibling.
   { pattern: "/t/:slug/presets", label: "Library" },
   { pattern: "/t/:slug/presets/database", label: "Database Presets" },
+  // `:id` is registered BEFORE `new` so that on the /new route (where `:id`
+  // would also match the literal "new") the more specific "New preset" crumb
+  // wins the dedup by appearing later in registry order.
+  {
+    pattern: "/t/:slug/presets/database/:id",
+    label: ({ params, overrides }) => overrides.id ?? params.id ?? "",
+  },
+  { pattern: "/t/:slug/presets/database/new", label: "New preset" },
+  { pattern: "/t/:slug/presets/database/:id/edit", label: "Edit" },
   { pattern: "/t/:slug/presets/workload", label: "Workload Presets" },
+  // `:id` registered BEFORE `new`/`edit` so the more specific literal crumbs win
+  // dedup (same convention as the database preset crumbs above).
+  {
+    pattern: "/t/:slug/presets/workload/:id",
+    label: ({ params, overrides }) => overrides.id ?? params.id ?? "",
+  },
+  { pattern: "/t/:slug/presets/workload/new", label: "New preset" },
+  { pattern: "/t/:slug/presets/workload/:id/edit", label: "Edit" },
   { pattern: "/t/:slug/presets/test", label: "Test Presets" },
+  // `:id` registered BEFORE `new`/`edit` so the more specific literal crumbs win
+  // dedup (same convention as the database/workload preset crumbs above).
+  {
+    pattern: "/t/:slug/presets/test/:id",
+    label: ({ params, overrides }) => overrides.id ?? params.id ?? "",
+  },
+  { pattern: "/t/:slug/presets/test/new", label: "New preset" },
+  { pattern: "/t/:slug/presets/test/:id/edit", label: "Edit" },
   { pattern: "/t/:slug/packages", label: "Packages" },
+  { pattern: "/t/:slug/packages/new", label: "Upload package" },
+  {
+    pattern: "/t/:slug/packages/:id",
+    label: ({ params, overrides }) => overrides.id ?? params.id ?? "",
+  },
 
   // Outside-tenant areas. The first crumb here is a plain label (no switcher).
   { pattern: "/profile", label: "Profile" },

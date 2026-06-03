@@ -3,6 +3,8 @@ package run
 import (
 	"errors"
 
+	"google.golang.org/protobuf/proto"
+
 	databasebuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/database"
 	infrastructurebuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/infrastructure"
 	workloadbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/workload"
@@ -47,6 +49,7 @@ func BuildTestRun(options BuildOptions) (*domain.TestRun, error) {
 
 	infrastructureOptions := options.Infrastructure
 	infrastructureOptions.MachineSizing = cloneMachineSizing(options.Infrastructure.MachineSizing)
+	infrastructureOptions.MachineOverrides = cloneMachineOverrides(options.Infrastructure.MachineOverrides)
 	workloadbuilder.ApplyRunnerSizing(&infrastructureOptions, options.Workload)
 
 	infrastructurePlan, err := infrastructurebuilder.BuildPlan(spec, options.Provider, infrastructureOptions)
@@ -77,6 +80,20 @@ func cloneMachineSizing(input map[string]infrastructurebuilder.MachineSizing) ma
 	output := make(map[string]infrastructurebuilder.MachineSizing, len(input))
 	for key, value := range input {
 		output[key] = value
+	}
+	return output
+}
+
+func cloneMachineOverrides(input []*deployment.MachinePlan) []*deployment.MachinePlan {
+	if len(input) == 0 {
+		return nil
+	}
+	output := make([]*deployment.MachinePlan, 0, len(input))
+	for _, machine := range input {
+		if machine == nil {
+			continue
+		}
+		output = append(output, proto.Clone(machine).(*deployment.MachinePlan))
 	}
 	return output
 }

@@ -20,8 +20,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Check, Copy, Download, Eye, Trash2 } from "lucide-react";
-import { useTenantSlug } from "@/lib/router";
+import { Check, Copy, Download, Eye, Trash2, UploadCloud } from "lucide-react";
+import { Link, useNavigate, useTenantSlug } from "@/lib/router";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { roleLevel } from "@/lib/roles";
 import { useConfirm } from "@/components/ui/confirm-dialog";
@@ -74,6 +75,7 @@ const SORTABLE: readonly PackageSortField[] = [
 
 export function Packages() {
   const slug = useTenantSlug();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const confirm = useConfirm();
   const {
@@ -169,7 +171,10 @@ export function Packages() {
       setOpenActionId(null);
       try {
         switch (action) {
-          case "view":
+          case "view": {
+            navigate(`/packages/${row.id}`);
+            return;
+          }
           case "download": {
             // Open the blob behind storage_uri (the gateway serves the binary).
             if (row.storageUri) window.open(row.storageUri, "_blank", "noopener");
@@ -195,7 +200,7 @@ export function Packages() {
         );
       }
     },
-    [slug, confirm, fetchRows],
+    [slug, confirm, fetchRows, navigate],
   );
 
   const actionItemsFor = useCallback(
@@ -567,11 +572,23 @@ export function Packages() {
   );
 
   return (
-    <LibraryShell shownCount={loading ? undefined : rows.length}>
+    <LibraryShell
+      shownCount={loading ? undefined : rows.length}
+      action={
+        canMutate ? (
+          <Button asChild size="sm">
+            <Link to="/packages/new">
+              <UploadCloud className="h-3.5 w-3.5" /> Upload package
+            </Link>
+          </Button>
+        ) : undefined
+      }
+    >
       <LibraryTable
         columns={columns}
         rows={rows}
         getRowId={(r) => r.id}
+        onRowClick={(r) => navigate(`/packages/${r.id}`)}
         columnWidths={PACKAGE_WIDTHS}
         loading={loading}
         error={error}

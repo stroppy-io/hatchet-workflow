@@ -588,7 +588,7 @@ type SuiteWorkflowRequest struct {
 	SuiteRunId string `protobuf:"bytes,1,opt,name=suite_run_id,json=suiteRunId,proto3" json:"suite_run_id,omitempty"`
 	// runs are the child run workflow inputs.
 	Runs []*RunConfig `protobuf:"bytes,2,rep,name=runs,proto3" json:"runs,omitempty"`
-	// max_parallel caps concurrent child TestRunWorkflow executions. 0 =
+	// max_parallel caps concurrent child TestWorkflow executions. 0 =
 	// unlimited.
 	MaxParallel   uint32 `protobuf:"varint,3,opt,name=max_parallel,json=maxParallel,proto3" json:"max_parallel,omitempty"`
 	unknownFields protoimpl.UnknownFields

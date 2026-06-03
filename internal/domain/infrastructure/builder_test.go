@@ -77,6 +77,142 @@ func TestBuildPlanYandex(t *testing.T) {
 	}
 }
 
+func TestBuildPlanAppliesDockerMachineOverride(t *testing.T) {
+	spec := postgresSpec(t)
+	nodeID := spec.GetNodes()[0].GetId()
+
+	plan, err := BuildPlan(spec, deployment.Provider_PROVIDER_DOCKER, BuildOptions{
+		DefaultSizing: MachineSizing{CPUCores: 1, MemoryMB: 1024, DiskGB: 20},
+		MachineOverrides: []*deployment.MachinePlan{
+			{
+				NodeId: nodeID,
+				ProviderParams: &deployment.MachinePlan_Docker{Docker: &deployment.Docker_Container{
+					Image: "custom-postgres:16",
+					Resources: &deployment.Docker_Resources{
+						CpuCores: 6,
+						MemoryMb: 12288,
+					},
+				}},
+				QuotaRequests: []*deployment.Quota_Request{
+					quotaRequest(deployment.Provider_PROVIDER_DOCKER, "host.disk.size", "GiB", 90),
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("build infrastructure plan: %v", err)
+	}
+
+	machine := machineByNodeID(plan.GetMachines(), nodeID)
+	if machine == nil {
+		t.Fatalf("machine %q is missing", nodeID)
+	}
+	if got, want := machine.GetDocker().GetImage(), "custom-postgres:16"; got != want {
+		t.Fatalf("docker image = %q, want %q", got, want)
+	}
+	if got, want := machine.GetDocker().GetResources().GetCpuCores(), float64(6); got != want {
+		t.Fatalf("docker cpu = %v, want %v", got, want)
+	}
+	if got, want := machine.GetDocker().GetResources().GetMemoryMb(), uint64(12288); got != want {
+		t.Fatalf("docker memory = %d, want %d", got, want)
+	}
+	if got, want := quotaRequestValue(machine, "host.disk.size"), uint64(90); got != want {
+		t.Fatalf("docker disk quota = %d, want %d", got, want)
+	}
+}
+
+func TestBuildPlanDockerOverridePreservesRuntimeFields(t *testing.T) {
+	spec := postgresSpec(t)
+	nodeID := spec.GetNodes()[0].GetId()
+
+	// A partial override that touches only sizing must not strip the agent
+	// container's runtime-critical fields (privileged, init cmd, tmpfs).
+	plan, err := BuildPlan(spec, deployment.Provider_PROVIDER_DOCKER, BuildOptions{
+		MachineOverrides: []*deployment.MachinePlan{
+			{
+				NodeId: nodeID,
+				ProviderParams: &deployment.MachinePlan_Docker{Docker: &deployment.Docker_Container{
+					Resources: &deployment.Docker_Resources{CpuCores: 6, MemoryMb: 12288},
+				}},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("build infrastructure plan: %v", err)
+	}
+
+	container := machineByNodeID(plan.GetMachines(), nodeID).GetDocker()
+	if !container.GetPrivileged() {
+		t.Fatal("privileged was stripped by a partial override")
+	}
+	if got := container.GetCmd(); len(got) != 1 || got[0] != "/sbin/init" {
+		t.Fatalf("init cmd = %v, want [/sbin/init]", got)
+	}
+	if _, ok := container.GetTmpfs()["/run"]; !ok {
+		t.Fatalf("tmpfs mounts were stripped: %v", container.GetTmpfs())
+	}
+	if got, want := container.GetImage(), DefaultDockerImage; got != want {
+		t.Fatalf("image = %q, want generated default %q", got, want)
+	}
+	if got, want := container.GetResources().GetCpuCores(), float64(6); got != want {
+		t.Fatalf("override cpu = %v, want %v", got, want)
+	}
+}
+
+func TestBuildPlanAppliesYandexMachineOverride(t *testing.T) {
+	spec := postgresSpec(t)
+	nodeID := spec.GetNodes()[0].GetId()
+
+	plan, err := BuildPlan(spec, deployment.Provider_PROVIDER_YANDEX, BuildOptions{
+		DefaultSizing: MachineSizing{CPUCores: 1, MemoryMB: 1024, DiskGB: 20},
+		MachineOverrides: []*deployment.MachinePlan{
+			{
+				NodeId: nodeID,
+				ProviderParams: &deployment.MachinePlan_Yandex{Yandex: &deployment.Yandex_Vm{
+					Cores:               8,
+					MemoryGb:            32,
+					BootDiskGb:          200,
+					BootDiskType:        "network-hdd",
+					Zone:                "ru-central1-b",
+					InternalIp:          "auto",
+					PublicIp:            true,
+					NetworkAcceleration: "standard",
+				}},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("build infrastructure plan: %v", err)
+	}
+
+	machine := machineByNodeID(plan.GetMachines(), nodeID)
+	if machine == nil {
+		t.Fatalf("machine %q is missing", nodeID)
+	}
+	vm := machine.GetYandex()
+	if got, want := vm.GetCores(), uint32(8); got != want {
+		t.Fatalf("yandex cores = %d, want %d", got, want)
+	}
+	if got, want := vm.GetMemoryGb(), uint64(32); got != want {
+		t.Fatalf("yandex memory = %d, want %d", got, want)
+	}
+	if got, want := vm.GetBootDiskGb(), uint64(200); got != want {
+		t.Fatalf("yandex boot disk = %d, want %d", got, want)
+	}
+	if got, want := vm.GetBootDiskType(), "network-hdd"; got != want {
+		t.Fatalf("yandex boot disk type = %q, want %q", got, want)
+	}
+	if got, want := vm.GetZone(), "ru-central1-b"; got != want {
+		t.Fatalf("yandex zone = %q, want %q", got, want)
+	}
+	if !vm.GetPublicIp() {
+		t.Fatal("yandex public ip override was not applied")
+	}
+	if got, want := quotaRequestValue(machine, "compute.hddDisks.size"), uint64(200); got != want {
+		t.Fatalf("yandex disk quota = %d, want %d", got, want)
+	}
+}
+
 func postgresSpec(t *testing.T) *topologypb.TopologySpec {
 	t.Helper()
 
@@ -94,4 +230,22 @@ func postgresSpec(t *testing.T) *topologypb.TopologySpec {
 		t.Fatalf("build postgres spec: %v", err)
 	}
 	return spec
+}
+
+func machineByNodeID(machines []*deployment.MachinePlan, nodeID string) *deployment.MachinePlan {
+	for _, machine := range machines {
+		if machine.GetNodeId() == nodeID {
+			return machine
+		}
+	}
+	return nil
+}
+
+func quotaRequestValue(machine *deployment.MachinePlan, name string) uint64 {
+	for _, req := range machine.GetQuotaRequests() {
+		if req.GetInfo().GetName() == name {
+			return req.GetRequest()
+		}
+	}
+	return 0
 }

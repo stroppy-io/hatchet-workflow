@@ -73,6 +73,13 @@ func NewAuthInterceptor(tokens TokenVerifier, perms PermissionResolver) *AuthInt
 	return &AuthInterceptor{tokens: tokens, perms: perms}
 }
 
+// Connect returns the Connect handler interceptor enforcing the auth annotation
+// for both unary and streaming RPCs. Server-stream RPCs carry one request
+// message; authorization is applied when that first message is received.
+func (a *AuthInterceptor) Connect() connect.Interceptor {
+	return connectAuthInterceptor{auth: a}
+}
+
 // Unary returns the gRPC interceptor enforcing the auth annotation.
 func (a *AuthInterceptor) Unary() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
@@ -116,33 +123,107 @@ func (a *AuthInterceptor) Unary() grpc.UnaryServerInterceptor {
 func (a *AuthInterceptor) ConnectUnary() connect.UnaryInterceptorFunc {
 	return connect.UnaryInterceptorFunc(func(next connect.UnaryFunc) connect.UnaryFunc {
 		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
-			auth := methodAuth(req.Spec().Procedure)
-			if auth == nil {
-				auth = &iam.MethodAuth{AdminOnly: true}
-			}
-			if auth.GetPublic() {
-				return next(ctx, req)
-			}
-			verified, err := a.authenticate(ctx)
-			if err != nil {
-				return nil, err
-			}
-			ctx = contextWithVerifiedCaller(ctx, verified)
-
-			if auth.GetAdminOnly() {
-				if verified.restricted || !verified.claims.GetIsAdmin() {
-					return nil, status.Error(codes.PermissionDenied, "admin only")
-				}
-				return next(ctx, req)
-			}
-			if len(auth.GetAllOf()) > 0 {
-				if err := a.authorize(ctx, verified, req.Any(), auth); err != nil {
-					return nil, err
-				}
-			}
-			return next(ctx, req)
+			return a.connectUnary(ctx, req, next)
 		}
 	})
+}
+
+func (a *AuthInterceptor) connectUnary(ctx context.Context, req connect.AnyRequest, next connect.UnaryFunc) (connect.AnyResponse, error) {
+	auth := methodAuth(req.Spec().Procedure)
+	if auth == nil {
+		auth = &iam.MethodAuth{AdminOnly: true}
+	}
+	if auth.GetPublic() {
+		return next(ctx, req)
+	}
+	verified, err := a.authenticate(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ctx = contextWithVerifiedCaller(ctx, verified)
+
+	if auth.GetAdminOnly() {
+		if verified.restricted || !verified.claims.GetIsAdmin() {
+			return nil, status.Error(codes.PermissionDenied, "admin only")
+		}
+		return next(ctx, req)
+	}
+	if len(auth.GetAllOf()) > 0 {
+		if err := a.authorize(ctx, verified, req.Any(), auth); err != nil {
+			return nil, err
+		}
+	}
+	return next(ctx, req)
+}
+
+type connectAuthInterceptor struct {
+	auth *AuthInterceptor
+}
+
+func (i connectAuthInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
+	return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
+		return i.auth.connectUnary(ctx, req, next)
+	}
+}
+
+func (i connectAuthInterceptor) WrapStreamingClient(next connect.StreamingClientFunc) connect.StreamingClientFunc {
+	return next
+}
+
+func (i connectAuthInterceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
+	return func(ctx context.Context, conn connect.StreamingHandlerConn) error {
+		auth := methodAuth(conn.Spec().Procedure)
+		if auth == nil {
+			auth = &iam.MethodAuth{AdminOnly: true}
+		}
+		if auth.GetPublic() {
+			return next(ctx, conn)
+		}
+		verified, err := i.auth.authenticate(ctx)
+		if err != nil {
+			return err
+		}
+		ctx = contextWithVerifiedCaller(ctx, verified)
+
+		if auth.GetAdminOnly() {
+			if verified.restricted || !verified.claims.GetIsAdmin() {
+				return status.Error(codes.PermissionDenied, "admin only")
+			}
+			return next(ctx, conn)
+		}
+		if len(auth.GetAllOf()) == 0 {
+			return next(ctx, conn)
+		}
+		return next(ctx, &authzConnectStream{
+			StreamingHandlerConn: conn,
+			ctx:                  ctx,
+			auth:                 auth,
+			verified:             verified,
+			interceptor:          i.auth,
+		})
+	}
+}
+
+type authzConnectStream struct {
+	connect.StreamingHandlerConn
+	ctx         context.Context
+	auth        *iam.MethodAuth
+	verified    verifiedCaller
+	interceptor *AuthInterceptor
+	authorized  bool
+}
+
+func (s *authzConnectStream) Receive(msg any) error {
+	if err := s.StreamingHandlerConn.Receive(msg); err != nil {
+		return err
+	}
+	if !s.authorized {
+		if err := s.interceptor.authorize(s.ctx, s.verified, msg, s.auth); err != nil {
+			return err
+		}
+		s.authorized = true
+	}
+	return nil
 }
 
 // Stream returns the native gRPC streaming interceptor. It authenticates before

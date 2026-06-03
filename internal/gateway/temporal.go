@@ -24,8 +24,10 @@ import (
 
 	"github.com/siderolabs/grpc-proxy/proxy"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 // newTemporalProxy builds a gRPC server that transparently forwards every RPC to
@@ -33,7 +35,7 @@ import (
 // own: a raw passthrough codec + UnknownServiceHandler proxies the bytes through
 // untouched, so the agent's Temporal worker (polls, sessions, signals, queries)
 // works exactly as if connected directly.
-func newTemporalProxy(temporalHostPort string) (*grpc.Server, *grpc.ClientConn, error) {
+func newTemporalProxy(temporalHostPort string, agentTokens AgentTokenVerifier) (*grpc.Server, *grpc.ClientConn, error) {
 	backend, err := grpc.NewClient(
 		temporalHostPort,
 		grpc.WithDefaultCallOptions(grpc.ForceCodecV2(proxy.Codec())),
@@ -45,7 +47,12 @@ func newTemporalProxy(temporalHostPort string) (*grpc.Server, *grpc.ClientConn, 
 
 	director := func(ctx context.Context, _ string) (proxy.Mode, []proxy.Backend, error) {
 		md, _ := metadata.FromIncomingContext(ctx)
-		outCtx := metadata.NewOutgoingContext(ctx, md.Copy())
+		if agentTokens != nil && !validAgentGRPCBearer(md, agentTokens) {
+			return proxy.One2One, nil, status.Error(codes.Unauthenticated, "invalid temporal proxy token")
+		}
+		outMD := md.Copy()
+		delete(outMD, "authorization")
+		outCtx := metadata.NewOutgoingContext(ctx, outMD)
 		return proxy.One2One, []proxy.Backend{
 			&proxy.SingleBackend{
 				GetConn: func(context.Context) (context.Context, *grpc.ClientConn, error) {

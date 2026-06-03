@@ -23,17 +23,16 @@
   - [Activities](#cloud-v1-workflow-deploymentservice-activities)
     - [cloud.v1.workflow.DeploymentService.AcquireNetworkActivity](#cloud-v1-workflow-deploymentservice-acquirenetworkactivity-activity)
     - [cloud.v1.workflow.DeploymentService.AcquireQuotasActivity](#cloud-v1-workflow-deploymentservice-acquirequotasactivity-activity)
+    - [cloud.v1.workflow.DeploymentService.CommitNetworkActivity](#cloud-v1-workflow-deploymentservice-commitnetworkactivity-activity)
     - [cloud.v1.workflow.DeploymentService.CommitQuotasActivity](#cloud-v1-workflow-deploymentservice-commitquotasactivity-activity)
     - [cloud.v1.workflow.DeploymentService.DockerDownActivity](#cloud-v1-workflow-deploymentservice-dockerdownactivity-activity)
     - [cloud.v1.workflow.DeploymentService.DockerPullActivity](#cloud-v1-workflow-deploymentservice-dockerpullactivity-activity)
     - [cloud.v1.workflow.DeploymentService.DockerUpActivity](#cloud-v1-workflow-deploymentservice-dockerupactivity-activity)
+    - [cloud.v1.workflow.DeploymentService.ReleaseNetworkActivity](#cloud-v1-workflow-deploymentservice-releasenetworkactivity-activity)
     - [cloud.v1.workflow.DeploymentService.ReleaseQuotasActivity](#cloud-v1-workflow-deploymentservice-releasequotasactivity-activity)
     - [cloud.v1.workflow.DeploymentService.TerraformApplyActivity](#cloud-v1-workflow-deploymentservice-terraformapplyactivity-activity)
     - [cloud.v1.workflow.DeploymentService.TerraformDestroyActivity](#cloud-v1-workflow-deploymentservice-terraformdestroyactivity-activity)
     - [cloud.v1.workflow.DeploymentService.TerraformPlanActivity](#cloud-v1-workflow-deploymentservice-terraformplanactivity-activity)
-- [cloud.v1.workflow.RunWorkflowService](#cloud-v1-workflow-runworkflowservice)
-  - [Workflows](#cloud-v1-workflow-runworkflowservice-workflows)
-    - [TestRunWorkflow](#testrunworkflow-workflow)
 - [cloud.v1.workflow.SuiteWorkflowService](#cloud-v1-workflow-suiteworkflowservice)
   - [Workflows](#cloud-v1-workflow-suiteworkflowservice-workflows)
     - [SuiteWorkflow](#suiteworkflow-workflow)
@@ -51,9 +50,13 @@
   - [cloud.v1.workflow.AcquireQuotasActivityRequest](#cloud-v1-workflow-acquirequotasactivityrequest)
   - [cloud.v1.workflow.AcquireQuotasActivityResponse](#cloud-v1-workflow-acquirequotasactivityresponse)
   - [cloud.v1.workflow.AgentBootstrap](#cloud-v1-workflow-agentbootstrap)
+  - [cloud.v1.workflow.AgentBootstrap.AgentTaskQueuesEntry](#cloud-v1-workflow-agentbootstrap-agenttaskqueuesentry)
+  - [cloud.v1.workflow.AgentBootstrap.AgentTokensEntry](#cloud-v1-workflow-agentbootstrap-agenttokensentry)
   - [cloud.v1.workflow.AgentBootstrap.ExtraEnvEntry](#cloud-v1-workflow-agentbootstrap-extraenventry)
   - [cloud.v1.workflow.CalculateQuotasWorkflowRequest](#cloud-v1-workflow-calculatequotasworkflowrequest)
   - [cloud.v1.workflow.CalculateQuotasWorkflowResponse](#cloud-v1-workflow-calculatequotasworkflowresponse)
+  - [cloud.v1.workflow.CommitNetworkActivityRequest](#cloud-v1-workflow-commitnetworkactivityrequest)
+  - [cloud.v1.workflow.CommitNetworkActivityResponse](#cloud-v1-workflow-commitnetworkactivityresponse)
   - [cloud.v1.workflow.CommitQuotasActivityRequest](#cloud-v1-workflow-commitquotasactivityrequest)
   - [cloud.v1.workflow.CommitQuotasActivityResponse](#cloud-v1-workflow-commitquotasactivityresponse)
   - [cloud.v1.workflow.ExecuteDeploymentPlanWorkflowRequest](#cloud-v1-workflow-executedeploymentplanworkflowrequest)
@@ -66,6 +69,8 @@
   - [cloud.v1.workflow.ProcessInfrastructureWorkflowResponse](#cloud-v1-workflow-processinfrastructureworkflowresponse)
   - [cloud.v1.workflow.QuotaAllocationRef](#cloud-v1-workflow-quotaallocationref)
   - [cloud.v1.workflow.QuotaRequestRef](#cloud-v1-workflow-quotarequestref)
+  - [cloud.v1.workflow.ReleaseNetworkActivityRequest](#cloud-v1-workflow-releasenetworkactivityrequest)
+  - [cloud.v1.workflow.ReleaseNetworkActivityResponse](#cloud-v1-workflow-releasenetworkactivityresponse)
   - [cloud.v1.workflow.ReleaseQuotasActivityRequest](#cloud-v1-workflow-releasequotasactivityrequest)
   - [cloud.v1.workflow.ReleaseQuotasActivityResponse](#cloud-v1-workflow-releasequotasactivityresponse)
   - [cloud.v1.workflow.RenderDeploymentPlanWorkflowRequest](#cloud-v1-workflow-renderdeploymentplanworkflowrequest)
@@ -540,6 +545,15 @@ go_name: QuotaRequests</pre></td>
 <th>Description</th>
 </tr>
 <tr>
+<td>agent_bootstrap</td>
+<td><a href="#cloud-v1-workflow-agentbootstrap">cloud.v1.workflow.AgentBootstrap</a></td>
+<td><pre>
+//agent_bootstrap carries the per-node task queue map used to route agent
+//activities to the queue rendered into each node's bootstrap.<br>
+
+json_name: agentBootstrap
+go_name: AgentBootstrap</pre></td>
+</tr><tr>
 <td>deployment_plan</td>
 <td><a href="../deployment/README.md#cloud-v1-deployment-deploymentplan">cloud.v1.deployment.DeploymentPlan</a></td>
 <td><pre>
@@ -555,6 +569,15 @@ go_name: DeploymentPlan</pre></td>
 
 json_name: infrastructureState
 go_name: InfrastructureState</pre></td>
+</tr><tr>
+<td>run_id</td>
+<td>string</td>
+<td><pre>
+//run_id is the persisted test run id. It lets the child workflow persist
+//live deployment-plan action statuses and stamp log correlation labels.<br>
+
+json_name: runId
+go_name: RunId</pre></td>
 </tr>
 </table>
 
@@ -675,6 +698,16 @@ go_name: State</pre></td>
 <th>Description</th>
 </tr>
 <tr>
+<td>agent_bootstrap</td>
+<td><a href="#cloud-v1-workflow-agentbootstrap">cloud.v1.workflow.AgentBootstrap</a></td>
+<td><pre>
+//agent_bootstrap carries per-node agent tokens for rendering monitor and
+//workload OTLP bearer credentials without leaking them through topology
+//labels.<br>
+
+json_name: agentBootstrap
+go_name: AgentBootstrap</pre></td>
+</tr><tr>
 <td>database</td>
 <td><a href="../domain/README.md#cloud-v1-domain-database">cloud.v1.domain.Database</a></td>
 <td><pre>
@@ -931,6 +964,18 @@ go_name: RunId</pre></td>
 
 json_name: plan
 go_name: Plan</pre></td>
+</tr><tr>
+<td>run_id</td>
+<td>string</td>
+<td><pre>
+json_name: runId
+go_name: RunId</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+json_name: tenantId
+go_name: TenantId</pre></td>
 </tr>
 </table>
 
@@ -943,13 +988,13 @@ go_name: Plan</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>net</td>
-<td><a href="../common/README.md#cloud-v1-common-net">cloud.v1.common.Net</a></td>
+<td>network_cidr</td>
+<td>string</td>
 <td><pre>
-//net is the network acquired from the provider.<br>
+//network_cidr is the run CIDR reserved for provider subnets.<br>
 
-json_name: net
-go_name: Net</pre></td>
+json_name: networkCidr
+go_name: NetworkCidr</pre></td>
 </tr>
 </table>
 
@@ -1035,6 +1080,64 @@ go_name: QuotaAllocations</pre></td>
 <tr><td>retry_policy.initial_interval</td><td>5 seconds</td></tr>
 <tr><td>retry_policy.max_attempts</td><td>3</td></tr>
 <tr><td>start_to_close_timeout</td><td>5 minutes</td></tr>
+</table> 
+
+---
+<a name="cloud-v1-workflow-deploymentservice-commitnetworkactivity-activity"></a>
+### cloud.v1.workflow.DeploymentService.CommitNetworkActivity
+
+<pre>
+//CommitNetworkActivity marks a successful network reservation as allocated.
+</pre>
+
+**Input:** [cloud.v1.workflow.CommitNetworkActivityRequest](#cloud-v1-workflow-commitnetworkactivityrequest)
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>run_id</td>
+<td>string</td>
+<td><pre>
+json_name: runId
+go_name: RunId</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+json_name: tenantId
+go_name: TenantId</pre></td>
+</tr>
+</table>
+
+**Output:** [cloud.v1.workflow.CommitNetworkActivityResponse](#cloud-v1-workflow-commitnetworkactivityresponse)
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>network_cidr</td>
+<td>string</td>
+<td><pre>
+json_name: networkCidr
+go_name: NetworkCidr</pre></td>
+</tr>
+</table>
+
+**Defaults:**
+
+<table>
+<tr><th>Name</th><th>Value</th></tr>
+<tr><td>retry_policy.backoff_coefficient</td><td>2</td></tr>
+<tr><td>retry_policy.initial_interval</td><td>2 seconds</td></tr>
+<tr><td>retry_policy.max_attempts</td><td>5</td></tr>
+<tr><td>start_to_close_timeout</td><td>1 minute</td></tr>
 </table> 
 
 ---
@@ -1312,6 +1415,64 @@ go_name: NetworkId</pre></td>
 </table> 
 
 ---
+<a name="cloud-v1-workflow-deploymentservice-releasenetworkactivity-activity"></a>
+### cloud.v1.workflow.DeploymentService.ReleaseNetworkActivity
+
+<pre>
+//ReleaseNetworkActivity releases a run's pre-deploy network reservations.
+</pre>
+
+**Input:** [cloud.v1.workflow.ReleaseNetworkActivityRequest](#cloud-v1-workflow-releasenetworkactivityrequest)
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>run_id</td>
+<td>string</td>
+<td><pre>
+json_name: runId
+go_name: RunId</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+json_name: tenantId
+go_name: TenantId</pre></td>
+</tr>
+</table>
+
+**Output:** [cloud.v1.workflow.ReleaseNetworkActivityResponse](#cloud-v1-workflow-releasenetworkactivityresponse)
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>released</td>
+<td>uint32</td>
+<td><pre>
+json_name: released
+go_name: Released</pre></td>
+</tr>
+</table>
+
+**Defaults:**
+
+<table>
+<tr><th>Name</th><th>Value</th></tr>
+<tr><td>retry_policy.backoff_coefficient</td><td>2</td></tr>
+<tr><td>retry_policy.initial_interval</td><td>2 seconds</td></tr>
+<tr><td>retry_policy.max_attempts</td><td>5</td></tr>
+<tr><td>start_to_close_timeout</td><td>1 minute</td></tr>
+</table> 
+
+---
 <a name="cloud-v1-workflow-deploymentservice-releasequotasactivity-activity"></a>
 ### cloud.v1.workflow.DeploymentService.ReleaseQuotasActivity
 
@@ -1450,134 +1611,11 @@ go_name: Released</pre></td>
 <tr><td>start_to_close_timeout</td><td>15 minutes</td></tr>
 </table>   
 
-<a name="cloud-v1-workflow-runworkflowservice"></a>
-## cloud.v1.workflow.RunWorkflowService
-
-<pre>
-//RunWorkflowService is the top-level Temporal workflow over all stages.
-</pre>
-
-<a name="cloud-v1-workflow-runworkflowservice-workflows"></a>
-### Workflows
-
----
-<a name="testrunworkflow-workflow"></a>
-### TestRunWorkflow
-
-<pre>
-//TestRunWorkflow runs one full benchmark run:
-//infrastructure -> deployment plan render -> agent execution -> workload.
-</pre>
-
-**Input:** [cloud.v1.workflow.RunConfig](#cloud-v1-workflow-runconfig)
-
-<table>
-<tr>
-<th>Attribute</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-<tr>
-<td>agent_bootstrap</td>
-<td><a href="#cloud-v1-workflow-agentbootstrap">cloud.v1.workflow.AgentBootstrap</a></td>
-<td><pre>
-//agent_bootstrap is runtime control-plane data delivered to provisioned
-//agents through the provider-specific carrier.<br>
-
-json_name: agentBootstrap
-go_name: AgentBootstrap</pre></td>
-</tr><tr>
-<td>database</td>
-<td><a href="../domain/README.md#cloud-v1-domain-database">cloud.v1.domain.Database</a></td>
-<td><pre>
-//database is the database under test.<br>
-
-json_name: database
-go_name: Database</pre></td>
-</tr><tr>
-<td>deployment_plan</td>
-<td><a href="../deployment/README.md#cloud-v1-deployment-deploymentplan">cloud.v1.deployment.DeploymentPlan</a></td>
-<td><pre>
-//deployment_plan is filled after package/config rendering. It may be empty
-//at workflow start and carried forward by the workflow.<br>
-
-json_name: deploymentPlan
-go_name: DeploymentPlan</pre></td>
-</tr><tr>
-<td>id</td>
-<td>string</td>
-<td><pre>
-//id is the stable run identifier.<br>
-
-json_name: id
-go_name: Id</pre></td>
-</tr><tr>
-<td>infrastructure_plan</td>
-<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructureplan">cloud.v1.deployment.InfrastructurePlan</a></td>
-<td><pre>
-//infrastructure_plan is the provider-specific machine/resource intent.<br>
-
-json_name: infrastructurePlan
-go_name: InfrastructurePlan</pre></td>
-</tr><tr>
-<td>infrastructure_state</td>
-<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructurestate">cloud.v1.deployment.InfrastructureState</a></td>
-<td><pre>
-//infrastructure_state is filled after provider provisioning. It may be
-//empty at workflow start and carried forward by the workflow.<br>
-
-json_name: infrastructureState
-go_name: InfrastructureState</pre></td>
-</tr><tr>
-<td>render_overrides</td>
-<td><a href="../deployment/README.md#cloud-v1-deployment-renderoverrideset">cloud.v1.deployment.RenderOverrideSet</a></td>
-<td><pre>
-//render_overrides are user edits to editable render artifacts. Workflow
-//renderers apply them when producing deployment_plan.<br>
-
-json_name: renderOverrides
-go_name: RenderOverrides</pre></td>
-</tr><tr>
-<td>tenant_id</td>
-<td>string</td>
-<td><pre>
-//tenant_id scopes quota reservations and provider settings lookup.<br>
-
-json_name: tenantId
-go_name: TenantId</pre></td>
-</tr><tr>
-<td>topology_spec</td>
-<td><a href="../topology/README.md#cloud-v1-topology-topologyspec">cloud.v1.topology.TopologySpec</a></td>
-<td><pre>
-//topology_spec is the provider-agnostic logical graph.<br>
-
-json_name: topologySpec
-go_name: TopologySpec</pre></td>
-</tr><tr>
-<td>workload</td>
-<td><a href="../domain/README.md#cloud-v1-domain-workload">cloud.v1.domain.Workload</a></td>
-<td><pre>
-//workload is the workload to run against the database.<br>
-
-json_name: workload
-go_name: Workload</pre></td>
-</tr>
-</table>
-
-**Defaults:**
-
-<table>
-<tr><th>Name</th><th>Value</th></tr>
-<tr><td>id</td><td><pre><code>run/${! id }</code></pre></td></tr>
-<tr><td>id_reuse_policy</td><td><pre><code>WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY</code></pre></td></tr>
-<tr><td>retry_policy.max_attempts</td><td>1</td></tr>
-</table>     
-
 <a name="cloud-v1-workflow-suiteworkflowservice"></a>
 ## cloud.v1.workflow.SuiteWorkflowService
 
 <pre>
-//SuiteWorkflowService runs a child TestRunWorkflow per RunConfig, honoring
+//SuiteWorkflowService runs a child TestWorkflow per RunConfig, honoring
 //max_parallel.
 </pre>
 
@@ -1589,7 +1627,7 @@ go_name: Workload</pre></td>
 ### SuiteWorkflow
 
 <pre>
-//SuiteWorkflow fans out a child TestRunWorkflow per run in the suite,
+//SuiteWorkflow fans out a child TestWorkflow per run in the suite,
 //deduplicated by a deterministic id derived from suite_run_id.
 </pre>
 
@@ -1605,7 +1643,7 @@ go_name: Workload</pre></td>
 <td>max_parallel</td>
 <td>uint32</td>
 <td><pre>
-//max_parallel caps concurrent child TestRunWorkflow executions. 0 =
+//max_parallel caps concurrent child TestWorkflow executions. 0 =
 //unlimited.<br>
 
 json_name: maxParallel
@@ -1950,6 +1988,18 @@ go_name: Status</pre></td>
 
 json_name: plan
 go_name: Plan</pre></td>
+</tr><tr>
+<td>run_id</td>
+<td>string</td>
+<td><pre>
+json_name: runId
+go_name: RunId</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+json_name: tenantId
+go_name: TenantId</pre></td>
 </tr>
 </table>
 
@@ -1969,13 +2019,13 @@ go_name: Plan</pre></td>
 <th>Description</th>
 </tr>
 <tr>
-<td>net</td>
-<td><a href="../common/README.md#cloud-v1-common-net">cloud.v1.common.Net</a></td>
+<td>network_cidr</td>
+<td>string</td>
 <td><pre>
-//net is the network acquired from the provider.<br>
+//network_cidr is the run CIDR reserved for provider subnets.<br>
 
-json_name: net
-go_name: Net</pre></td>
+json_name: networkCidr
+go_name: NetworkCidr</pre></td>
 </tr>
 </table>
 
@@ -2066,6 +2116,27 @@ go_name: QuotaAllocations</pre></td>
 <th>Description</th>
 </tr>
 <tr>
+<td>agent_task_queues</td>
+<td><a href="#cloud-v1-workflow-agentbootstrap-agenttaskqueuesentry">cloud.v1.workflow.AgentBootstrap.AgentTaskQueuesEntry</a></td>
+<td><pre>
+//agent_task_queues carries the per-node Temporal task queue name. It is
+//generated with a per-run secret suffix and rendered only to the matching
+//node so a valid agent token alone is not enough to poll another node's
+//work.<br>
+
+json_name: agentTaskQueues
+go_name: AgentTaskQueues</pre></td>
+</tr><tr>
+<td>agent_tokens</td>
+<td><a href="#cloud-v1-workflow-agentbootstrap-agenttokensentry">cloud.v1.workflow.AgentBootstrap.AgentTokensEntry</a></td>
+<td><pre>
+//agent_tokens carries per-node bearer tokens. The renderer injects only
+//the token matching the current node into that node's env as
+//STROPPY_AGENT_TOKEN; it must not be rendered as generic extra env.<br>
+
+json_name: agentTokens
+go_name: AgentTokens</pre></td>
+</tr><tr>
 <td>binary_url</td>
 <td>string</td>
 <td><pre>
@@ -2101,6 +2172,58 @@ go_name: ServerAddr</pre></td>
 
 json_name: temporalNamespace
 go_name: TemporalNamespace</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-workflow-agentbootstrap-agenttaskqueuesentry"></a>
+### cloud.v1.workflow.AgentBootstrap.AgentTaskQueuesEntry
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>key</td>
+<td>string</td>
+<td><pre>
+json_name: key
+go_name: Key</pre></td>
+</tr><tr>
+<td>value</td>
+<td>string</td>
+<td><pre>
+json_name: value
+go_name: Value</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-workflow-agentbootstrap-agenttokensentry"></a>
+### cloud.v1.workflow.AgentBootstrap.AgentTokensEntry
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>key</td>
+<td>string</td>
+<td><pre>
+json_name: key
+go_name: Key</pre></td>
+</tr><tr>
+<td>value</td>
+<td>string</td>
+<td><pre>
+json_name: value
+go_name: Value</pre></td>
 </tr>
 </table>
 
@@ -2192,6 +2315,57 @@ go_name: QuotaRequests</pre></td>
 
 
 
+<a name="cloud-v1-workflow-commitnetworkactivityrequest"></a>
+### cloud.v1.workflow.CommitNetworkActivityRequest
+
+<pre>
+//CommitNetworkActivityRequest marks a successful network reservation as
+//provider-backed after infrastructure was provisioned.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>run_id</td>
+<td>string</td>
+<td><pre>
+json_name: runId
+go_name: RunId</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+json_name: tenantId
+go_name: TenantId</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-workflow-commitnetworkactivityresponse"></a>
+### cloud.v1.workflow.CommitNetworkActivityResponse
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>network_cidr</td>
+<td>string</td>
+<td><pre>
+json_name: networkCidr
+go_name: NetworkCidr</pre></td>
+</tr>
+</table>
+
+
+
 <a name="cloud-v1-workflow-commitquotasactivityrequest"></a>
 ### cloud.v1.workflow.CommitQuotasActivityRequest
 
@@ -2257,6 +2431,15 @@ go_name: QuotaAllocations</pre></td>
 <th>Description</th>
 </tr>
 <tr>
+<td>agent_bootstrap</td>
+<td><a href="#cloud-v1-workflow-agentbootstrap">cloud.v1.workflow.AgentBootstrap</a></td>
+<td><pre>
+//agent_bootstrap carries the per-node task queue map used to route agent
+//activities to the queue rendered into each node's bootstrap.<br>
+
+json_name: agentBootstrap
+go_name: AgentBootstrap</pre></td>
+</tr><tr>
 <td>deployment_plan</td>
 <td><a href="../deployment/README.md#cloud-v1-deployment-deploymentplan">cloud.v1.deployment.DeploymentPlan</a></td>
 <td><pre>
@@ -2272,6 +2455,15 @@ go_name: DeploymentPlan</pre></td>
 
 json_name: infrastructureState
 go_name: InfrastructureState</pre></td>
+</tr><tr>
+<td>run_id</td>
+<td>string</td>
+<td><pre>
+//run_id is the persisted test run id. It lets the child workflow persist
+//live deployment-plan action statuses and stamp log correlation labels.<br>
+
+json_name: runId
+go_name: RunId</pre></td>
 </tr>
 </table>
 
@@ -2534,6 +2726,56 @@ go_name: Request</pre></td>
 
 
 
+<a name="cloud-v1-workflow-releasenetworkactivityrequest"></a>
+### cloud.v1.workflow.ReleaseNetworkActivityRequest
+
+<pre>
+//ReleaseNetworkActivityRequest releases pre-deploy network reservations.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>run_id</td>
+<td>string</td>
+<td><pre>
+json_name: runId
+go_name: RunId</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+json_name: tenantId
+go_name: TenantId</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-workflow-releasenetworkactivityresponse"></a>
+### cloud.v1.workflow.ReleaseNetworkActivityResponse
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>released</td>
+<td>uint32</td>
+<td><pre>
+json_name: released
+go_name: Released</pre></td>
+</tr>
+</table>
+
+
+
 <a name="cloud-v1-workflow-releasequotasactivityrequest"></a>
 ### cloud.v1.workflow.ReleaseQuotasActivityRequest
 
@@ -2598,6 +2840,16 @@ go_name: Released</pre></td>
 <th>Description</th>
 </tr>
 <tr>
+<td>agent_bootstrap</td>
+<td><a href="#cloud-v1-workflow-agentbootstrap">cloud.v1.workflow.AgentBootstrap</a></td>
+<td><pre>
+//agent_bootstrap carries per-node agent tokens for rendering monitor and
+//workload OTLP bearer credentials without leaking them through topology
+//labels.<br>
+
+json_name: agentBootstrap
+go_name: AgentBootstrap</pre></td>
+</tr><tr>
 <td>database</td>
 <td><a href="../domain/README.md#cloud-v1-domain-database">cloud.v1.domain.Database</a></td>
 <td><pre>
@@ -2780,7 +3032,7 @@ go_name: RunId</pre></td>
 ### cloud.v1.workflow.RunConfig
 
 <pre>
-//RunConfig is the durable input to one benchmark run workflow.
+//RunConfig is the durable baked input for one benchmark run.
 </pre>
 
 <table>
@@ -3053,7 +3305,7 @@ go_name: Status</pre></td>
 <td>max_parallel</td>
 <td>uint32</td>
 <td><pre>
-//max_parallel caps concurrent child TestRunWorkflow executions. 0 =
+//max_parallel caps concurrent child TestWorkflow executions. 0 =
 //unlimited.<br>
 
 json_name: maxParallel

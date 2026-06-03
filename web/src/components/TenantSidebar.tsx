@@ -48,6 +48,11 @@ const navGroups: NavGroup[] = [
     items: [
       { to: "/suites", icon: Boxes, label: "Suites", minLevel: 1 },
       { to: "/runs", icon: List, label: "Test Runs", minLevel: 1 },
+    ],
+  },
+  {
+    label: "Actions",
+    items: [
       { to: "/runs/new", icon: Play, label: "New Run", minLevel: 2 },
       { to: "/compare", icon: GitCompare, label: "Compare", minLevel: 1 },
     ],

@@ -6,11 +6,13 @@ import (
 	"sync"
 	"testing"
 
+	deploymentbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/deployment"
 	infrastructurebuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/infrastructure"
 	runbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/run"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	domainpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
 	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/converter"
@@ -55,19 +57,26 @@ func TestRenderDeploymentPlanWorkflowAppliesRenderOverrides(t *testing.T) {
 	}
 }
 
-func TestTestRunWorkflowOrchestratesDeploymentStages(t *testing.T) {
+func TestTestWorkflowOrchestratesDeploymentStages(t *testing.T) {
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
 	RegisterWorkflows(env, DefaultOptions())
 	registerFakeDeploymentActivities(env)
 	registerFakeAgentActivities(env)
+	runtime := &fakeRuntimeActivities{}
+	registerFakeRuntimeActivities(env, runtime)
 
 	var childStarts []string
 	env.SetOnChildWorkflowStartedListener(func(info *temporalworkflow.Info, _ temporalworkflow.Context, _ converter.EncodedValues) {
 		childStarts = append(childStarts, info.WorkflowType.Name)
 	})
 
-	env.ExecuteWorkflow(workflowpb.TestRunWorkflowWorkflowName, workflowRunConfig(t, renderOverrides()))
+	testRun := domainTestRun(t, renderOverrides())
+	env.ExecuteWorkflow(workflowpb.TestWorkflowWorkflowName, &workflowpb.TestWorkflowRequest{
+		TenantId:       "tenant-1",
+		TestRun:        testRun,
+		AgentBootstrap: testAgentBootstrapForPlan(testRun.GetInfrastructurePlan()),
+	})
 
 	if !env.IsWorkflowCompleted() {
 		t.Fatal("workflow did not complete")
@@ -102,7 +111,7 @@ func TestTestWorkflowExposesRunStateQuery(t *testing.T) {
 	env.ExecuteWorkflow(workflowpb.TestWorkflowWorkflowName, &workflowpb.TestWorkflowRequest{
 		TenantId:       "tenant-1",
 		TestRun:        testRun,
-		AgentBootstrap: testAgentBootstrap(),
+		AgentBootstrap: testAgentBootstrapForPlan(testRun.GetInfrastructurePlan()),
 	})
 
 	if !env.IsWorkflowCompleted() {
@@ -132,6 +141,98 @@ func TestTestWorkflowExposesRunStateQuery(t *testing.T) {
 
 	if got := runtime.lastRunStatus(); got != common.Status_STATUS_COMPLETED {
 		t.Fatalf("persisted run state status = %s, want %s", got, common.Status_STATUS_COMPLETED)
+	}
+}
+
+func TestExecuteDeploymentPlanWorkflowPersistsActionStatusAndExecutionContext(t *testing.T) {
+	var suite testsuite.WorkflowTestSuite
+	env := suite.NewTestWorkflowEnvironment()
+	RegisterWorkflows(env, DefaultOptions())
+	registerFakeAgentActivities(env)
+	runtime := &fakeRuntimeActivities{}
+	registerFakeRuntimeActivities(env, runtime)
+
+	plan := &deploymentpb.DeploymentPlan{
+		Components: []*deploymentpb.ComponentDeployment{
+			{
+				ComponentId:    "postgres-master",
+				NodeId:         "node-1",
+				GlobalPriority: 1,
+				Steps: []*deploymentpb.AgentStep{
+					{
+						Id:    "010_create_data_dir",
+						Order: 10,
+						Action: &deploymentpb.AgentStep_CreateDir{CreateDir: &common.Dir{
+							Info:          &common.Dir_Info{Path: "/var/lib/postgresql/data", Mode: 0755},
+							CreateParents: true,
+						}},
+					},
+					{
+						Id:    "020_start",
+						Order: 20,
+						Action: &deploymentpb.AgentStep_CallCmd{CallCmd: &common.Cmd{
+							Spec: &common.Cmd_Spec{
+								Command: &common.Cmd_Spec_Argv{Argv: &common.Cmd_Argv{Args: []string{"systemctl", "start", "postgresql"}}},
+							},
+						}},
+					},
+				},
+			},
+		},
+	}
+
+	env.ExecuteWorkflow(workflowpb.ExecuteDeploymentPlanWorkflowWorkflowName, &workflowpb.ExecuteDeploymentPlanWorkflowRequest{
+		RunId:          "run-1",
+		DeploymentPlan: plan,
+		AgentBootstrap: &workflowpb.AgentBootstrap{
+			AgentTaskQueues: map[string]string{"node-1": "secret-queue-node-1"},
+		},
+		InfrastructureState: &deploymentpb.InfrastructureState{
+			Provider: deploymentpb.Provider_PROVIDER_DOCKER,
+			Machines: []*deploymentpb.MachineState{
+				{NodeId: "node-1", Status: common.Status_STATUS_DEPLOYED},
+			},
+		},
+	})
+
+	if !env.IsWorkflowCompleted() {
+		t.Fatal("workflow did not complete")
+	}
+	if err := env.GetWorkflowError(); err != nil {
+		t.Fatalf("workflow failed: %v", err)
+	}
+
+	var resp workflowpb.ExecuteDeploymentPlanWorkflowResponse
+	if err := env.GetWorkflowResult(&resp); err != nil {
+		t.Fatalf("get workflow result: %v", err)
+	}
+	component := resp.GetDeploymentPlan().GetComponents()[0]
+	if got, want := component.GetStatus(), common.Status_STATUS_DEPLOYED; got != want {
+		t.Fatalf("component status = %s, want %s", got, want)
+	}
+	if got, want := component.GetLabels()[deploymentbuilder.LabelNodeExecutionID], deploymentbuilder.ComponentExecutionID("postgres-master"); got != want {
+		t.Fatalf("component node_execution_id = %q, want %q", got, want)
+	}
+	for _, step := range component.GetSteps() {
+		if got, want := step.GetStatus(), common.Status_STATUS_DEPLOYED; got != want {
+			t.Fatalf("step %s status = %s, want %s", step.GetId(), got, want)
+		}
+		if got, want := step.GetLabels()[deploymentbuilder.LabelNodeExecutionID], deploymentbuilder.StepExecutionID("postgres-master", step.GetId()); got != want {
+			t.Fatalf("step %s node_execution_id = %q, want %q", step.GetId(), got, want)
+		}
+	}
+	envVars := component.GetSteps()[1].GetCallCmd().GetSpec().GetEnv()
+	if got, want := envVars[deploymentbuilder.EnvNodeExecutionID], deploymentbuilder.StepExecutionID("postgres-master", "020_start"); got != want {
+		t.Fatalf("command env node_execution_id = %q, want %q", got, want)
+	}
+	if got := len(runtime.deploymentPlans); got < 4 {
+		t.Fatalf("deployment plan persist calls = %d, want live status updates", got)
+	}
+	if got := len(runtime.logLines); got < 4 {
+		t.Fatalf("synthetic action log lines = %d, want start/completed per step", got)
+	}
+	if got, want := runtime.logLines[0].GetNodeExecutionId(), deploymentbuilder.StepExecutionID("postgres-master", "010_create_data_dir"); got != want {
+		t.Fatalf("first log node_execution_id = %q, want %q", got, want)
 	}
 }
 
@@ -190,7 +291,7 @@ func workflowRunConfig(t *testing.T, overrides *deploymentpb.RenderOverrideSet) 
 		TopologySpec:       testRun.GetTopologySpec(),
 		InfrastructurePlan: testRun.GetInfrastructurePlan(),
 		RenderOverrides:    testRun.GetRenderOverrides(),
-		AgentBootstrap:     testAgentBootstrap(),
+		AgentBootstrap:     testAgentBootstrapForPlan(testRun.GetInfrastructurePlan()),
 	}
 }
 
@@ -202,6 +303,17 @@ func testAgentBootstrap() *workflowpb.AgentBootstrap {
 			"STROPPY_TEST_ENV": "test",
 		},
 	}
+}
+
+func testAgentBootstrapForPlan(plan *deploymentpb.InfrastructurePlan) *workflowpb.AgentBootstrap {
+	bootstrap := testAgentBootstrap()
+	bootstrap.AgentTokens = make(map[string]string, len(plan.GetMachines()))
+	bootstrap.AgentTaskQueues = make(map[string]string, len(plan.GetMachines()))
+	for _, machine := range plan.GetMachines() {
+		bootstrap.AgentTokens[machine.GetNodeId()] = "agent-token-" + machine.GetNodeId()
+		bootstrap.AgentTaskQueues[machine.GetNodeId()] = "secret-queue-" + machine.GetNodeId()
+	}
+	return bootstrap
 }
 
 func domainTestRun(t *testing.T, overrides *deploymentpb.RenderOverrideSet) *domainpb.TestRun {
@@ -318,6 +430,14 @@ func (fakeDeploymentActivities) AcquireNetworkActivity(context.Context, *workflo
 	return &workflowpb.AcquireNetworkActivityResponse{}, nil
 }
 
+func (fakeDeploymentActivities) CommitNetworkActivity(context.Context, *workflowpb.CommitNetworkActivityRequest) (*workflowpb.CommitNetworkActivityResponse, error) {
+	return &workflowpb.CommitNetworkActivityResponse{}, nil
+}
+
+func (fakeDeploymentActivities) ReleaseNetworkActivity(context.Context, *workflowpb.ReleaseNetworkActivityRequest) (*workflowpb.ReleaseNetworkActivityResponse, error) {
+	return &workflowpb.ReleaseNetworkActivityResponse{}, nil
+}
+
 func (fakeDeploymentActivities) AcquireQuotasActivity(_ context.Context, req *workflowpb.AcquireQuotasActivityRequest) (*workflowpb.AcquireQuotasActivityResponse, error) {
 	return &workflowpb.AcquireQuotasActivityResponse{QuotaAllocations: echoQuotaAllocations(req.GetQuotaRequests())}, nil
 }
@@ -380,13 +500,17 @@ func registerFakeAgentActivities(env *testsuite.TestWorkflowEnvironment) {
 
 func registerFakeRuntimeActivities(env *testsuite.TestWorkflowEnvironment, fake *fakeRuntimeActivities) {
 	env.RegisterActivityWithOptions(fake.PersistRunState, activity.RegisterOptions{Name: PersistRunStateActivityName})
+	env.RegisterActivityWithOptions(fake.PersistDeploymentPlan, activity.RegisterOptions{Name: PersistDeploymentPlanActivityName})
+	env.RegisterActivityWithOptions(fake.AppendRunLogs, activity.RegisterOptions{Name: AppendRunLogsActivityName})
 	env.RegisterActivityWithOptions(fake.PersistSuiteRun, activity.RegisterOptions{Name: PersistSuiteRunActivityName})
 }
 
 type fakeRuntimeActivities struct {
-	mu            sync.Mutex
-	runStates     []*workflowpb.RunState
-	suiteStatuses []common.Status
+	mu              sync.Mutex
+	runStates       []*workflowpb.RunState
+	deploymentPlans []*deploymentpb.DeploymentPlan
+	logLines        []*monitor.LogLine
+	suiteStatuses   []common.Status
 }
 
 func (f *fakeRuntimeActivities) PersistRunState(
@@ -404,6 +528,36 @@ func (f *fakeRuntimeActivities) PersistRunState(
 		return nil
 	}
 	f.runStates = append(f.runStates, proto.Clone(state).(*workflowpb.RunState))
+	return nil
+}
+
+func (f *fakeRuntimeActivities) PersistDeploymentPlan(
+	_ context.Context,
+	_ string,
+	plan *deploymentpb.DeploymentPlan,
+) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	if plan == nil {
+		f.deploymentPlans = append(f.deploymentPlans, nil)
+		return nil
+	}
+	f.deploymentPlans = append(f.deploymentPlans, proto.Clone(plan).(*deploymentpb.DeploymentPlan))
+	return nil
+}
+
+func (f *fakeRuntimeActivities) AppendRunLogs(_ context.Context, lines []*monitor.LogLine) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	for _, line := range lines {
+		if line == nil {
+			f.logLines = append(f.logLines, nil)
+			continue
+		}
+		f.logLines = append(f.logLines, proto.Clone(line).(*monitor.LogLine))
+	}
 	return nil
 }
 

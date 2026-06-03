@@ -107,8 +107,71 @@ export interface PackagesPage {
   nextPageToken: string;
 }
 
+/**
+ * Metadata the client declares when starting an upload — the wired slice of
+ * cloud.v1.api.CreatePackageUploadRequest (the page never sets tenant_id here;
+ * the provider resolves it from the slug, and size_bytes/sha256 are
+ * server-verified on CompleteUpload, so they are NOT part of this input):
+ *
+ *   name           -> CreatePackageUploadRequest.name
+ *   format         -> CreatePackageUploadRequest.format       (PackageRecord.Format)
+ *   version        -> CreatePackageUploadRequest.version
+ *   dbKind         -> CreatePackageUploadRequest.target_db_kind (domain.Database.Kind)
+ *   os             -> CreatePackageUploadRequest.os
+ *   arch           -> CreatePackageUploadRequest.arch
+ *   fileName/fileSize describe the chosen blob (used to seed size_bytes the
+ *   server verifies on CompleteUpload).
+ *
+ * NOTE: there is NO UpdatePackage RPC — a package is created via this upload
+ * flow and deleted, never edited. The UI therefore offers no edit form.
+ */
+export interface PackageUploadInput {
+  name: string;
+  format: Exclude<PackageFormat, "">;
+  version: string;
+  dbKind: Exclude<DbKind, "">;
+  os: string;
+  arch: string;
+  /** The chosen blob's file name (informational). */
+  fileName: string;
+  /** The chosen blob's size, in bytes (declared; verified on CompleteUpload). */
+  fileSize: number;
+}
+
+/**
+ * The pending upload target returned by CreatePackageUpload — the freshly
+ * created PackageRecord (STATUS_UPLOADING) plus the presigned PUT url and its
+ * expiry. Mirrors cloud.v1.api.CreatePackageUploadResponse.
+ */
+export interface PackageUploadTarget {
+  /** The pending record (status === "uploading"). */
+  pkg: PackageRow;
+  /** upload_url — the presigned PUT target the blob is uploaded to. */
+  uploadUrl: string;
+  /** upload_url_expires_at (ISO), or "" when unset. */
+  uploadUrlExpiresAt: string;
+}
+
 export interface PackagesProvider {
   listPackages(tenantSlug: string, query: PackagesQuery): Promise<PackagesPage>;
+  /**
+   * Step 1 of the upload flow -> PackageService.CreatePackageUpload. Mints a
+   * pending PackageRecord (STATUS_UPLOADING) + a presigned PUT url. Operator+
+   * role required. Not idempotent.
+   */
+  createPackageUpload(
+    tenantSlug: string,
+    input: PackageUploadInput,
+  ): Promise<PackageUploadTarget>;
+  /**
+   * Step 2 of the upload flow -> PackageService.CompleteUpload. Run after the
+   * blob has been PUT to the upload url; the server verifies size + sha256 and
+   * flips the record to READY (or FAILED), filling size_bytes/sha256/storage_uri.
+   * Idempotent. Returns the finalized record.
+   */
+  completeUpload(tenantSlug: string, id: string): Promise<PackageRow>;
+  /** Fetch one package by id -> PackageService.GetPackage. Null when absent. */
+  getPackage(tenantSlug: string, id: string): Promise<PackageRow | null>;
   /** Delete a package -> PackageService.DeletePackage. Operator+ role required. */
   deletePackage(tenantSlug: string, id: string): Promise<void>;
 }
@@ -133,6 +196,42 @@ const realPackagesProvider: PackagesProvider = {
     //   page: { size: query.pageSize, token: query.pageToken },
     // });  // cloud.v1.api.PackageService.ListPackages
     // return { rows: packages.map(packageRecordToRow), nextPageToken };
+    throw new Error(NOT_WIRED);
+  },
+  async createPackageUpload() {
+    // const tenantId = await resolveTenantId(tenantSlug);
+    // const { package: rec, uploadUrl, uploadUrlExpiresAt } =
+    //   await packageClient.createPackageUpload({
+    //     tenantId,
+    //     name: input.name,
+    //     format: formatToProto(input.format),
+    //     version: input.version,
+    //     targetDbKind: kindToProto(input.dbKind),
+    //     os: input.os,
+    //     arch: input.arch,
+    //     sizeBytes: BigInt(input.fileSize),
+    //     // sha256 is hashed client-side / verified server-side on CompleteUpload.
+    //   });  // cloud.v1.api.PackageService.CreatePackageUpload
+    // // The client then PUTs the blob to uploadUrl, then calls completeUpload().
+    // return {
+    //   pkg: packageRecordToRow(rec!),
+    //   uploadUrl,
+    //   uploadUrlExpiresAt: uploadUrlExpiresAt ? toIso(uploadUrlExpiresAt) : "",
+    // };
+    throw new Error(NOT_WIRED);
+  },
+  async completeUpload() {
+    // const tenantId = await resolveTenantId(tenantSlug);
+    // const { package: rec } = await packageClient.completeUpload({ tenantId, id });
+    //   // cloud.v1.api.PackageService.CompleteUpload
+    // return packageRecordToRow(rec!);
+    throw new Error(NOT_WIRED);
+  },
+  async getPackage() {
+    // const tenantId = await resolveTenantId(tenantSlug);
+    // const { package: rec } = await packageClient.getPackage({ tenantId, id });
+    //   // cloud.v1.api.PackageService.GetPackage
+    // return rec ? packageRecordToRow(rec) : null;
     throw new Error(NOT_WIRED);
   },
   async deletePackage() {

@@ -18,13 +18,16 @@ import (
 	"golang.org/x/net/http2/h2c"
 	"google.golang.org/grpc"
 
+	agentdomain "github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
 	domsettings "github.com/stroppy-io/stroppy-cloud/internal/domain/settings"
 	"github.com/stroppy-io/stroppy-cloud/internal/gateway"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/adapters"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/execution"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/identity"
+	networkinfra "github.com/stroppy-io/stroppy-cloud/internal/infrastructure/networks"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres"
 	quotainfra "github.com/stroppy-io/stroppy-cloud/internal/infrastructure/quotas"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agent/agentconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/apiconnect"
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
@@ -95,6 +98,10 @@ func Run(ctx context.Context, cfg Config) error {
 	if err != nil {
 		return fmt.Errorf("identity token service: %w", err)
 	}
+	agentTokens, err := agentdomain.NewTokenService(cfg.JWTSecret)
+	if err != nil {
+		return fmt.Errorf("agent token service: %w", err)
+	}
 	providerSecrets, err := identity.NewProviderSecrets(store.Secrets(), idCfg)
 	if err != nil {
 		return fmt.Errorf("identity provider secrets: %w", err)
@@ -135,17 +142,18 @@ func Run(ctx context.Context, cfg Config) error {
 		TenantSource:             tenantSettingsSource{repo: store.TenantSettings()},
 		DefaultServerAddr:        cfg.AgentServerAddr,
 		DefaultTemporalNamespace: cfg.TemporalNS,
-		DefaultBinaryURL:         cfg.AgentServerAddr + "/agent/binary",
 	}
 
-	testWorkflows := execution.NewTestWorkflows(tc, resolver, log)
+	testWorkflows := execution.NewTestWorkflows(tc, resolver, agentTokens, log)
 	summarizer := execution.NewRunSummarizer()
 	snapReader := snapshotRunReader{r: bid, suiteRuns: store.SuiteRuns()}
 	runtimeStore := runtimePersistenceStore{r: bid, runs: store.TestRuns(), suiteRuns: store.SuiteRuns(), suites: store.Suites()}
-	runtimeActivities := execution.NewRunPersistenceActivities(runtimeStore)
+	runLogWriter := execution.NewRunLogWriter(cfg.MonitoringURL, cfg.MonitoringToken)
+	runtimeActivities := execution.NewRunPersistenceActivities(runtimeStore, runLogWriter)
 	overviewReader := execution.NewOverviewReader(tc, snapReader)
-	logReader := execution.NewLogReader(cfg.MonitoringURL, log)
-	metricsReader := execution.NewMetricsReader(cfg.MonitoringURL, snapReader, log)
+	logReader := execution.NewLogReader(cfg.MonitoringURL, cfg.MonitoringToken, log)
+	agentLogIngest := execution.NewAgentLogIngestService(cfg.MonitoringURL, cfg.MonitoringToken, agentTokens, log)
+	metricsReader := execution.NewMetricsReader(cfg.MonitoringURL, cfg.MonitoringToken, snapReader, log)
 	runStarter := execution.NewTestRunStarter(store.TestRuns(), summarizer, testWorkflows, caller)
 	testWizardEngine := execution.NewTestWizardEngine()
 
@@ -193,6 +201,17 @@ func Run(ctx context.Context, cfg Config) error {
 			ReservationTTL: quotaReservationTTL,
 		},
 	)
+	networkStore := networkinfra.NewStore(db)
+	networkManager := networkinfra.NewManager(
+		networkStore,
+		store.TenantSettings(),
+		map[deploymentpb.Provider]networkinfra.ProviderSource{
+			deploymentpb.Provider_PROVIDER_YANDEX: networkinfra.NewYandexSource(),
+		},
+		networkinfra.ManagerConfig{
+			ReservationTTL: quotaReservationTTL,
+		},
+	)
 	quotainfra.StartRefresher(ctx, quotaManager, quotaRefreshInterval, log)
 
 	cells := cellResolver{
@@ -200,7 +219,7 @@ func Run(ctx context.Context, cfg Config) error {
 		workloadPresets: store.WorkloadPresets(),
 		testPresets:     store.TestPresets(),
 	}
-	suiteLauncher := execution.NewSuiteRunLauncher(tc, cells, childRunPersister{runs: store.TestRuns()}, suiteRunPersister{suiteRuns: store.SuiteRuns()}, resolver)
+	suiteLauncher := execution.NewSuiteRunLauncher(tc, cells, childRunPersister{runs: store.TestRuns()}, suiteRunPersister{suiteRuns: store.SuiteRuns()}, resolver, agentTokens)
 	suiteCanceller := execution.NewSuiteRunCanceller(tc)
 
 	// 5) Adapters layer.
@@ -484,8 +503,11 @@ func Run(ctx context.Context, cfg Config) error {
 
 	// 7) Connect handlers + embedded SPA on one mux.
 	mux := http.NewServeMux()
-	handlerOpts := []connect.HandlerOption{connect.WithInterceptors(authzGate.ConnectUnary())}
+	handlerOpts := []connect.HandlerOption{connect.WithInterceptors(authzGate.Connect())}
 	register(mux,
+		func() (string, http.Handler) {
+			return agentconnect.NewAgentLogServiceHandler(agentLogIngest)
+		},
 		func() (string, http.Handler) { return apiconnect.NewIamServiceHandler(iamService, handlerOpts...) },
 		func() (string, http.Handler) {
 			return apiconnect.NewSystemSettingsServiceHandler(systemSettingsService, handlerOpts...)
@@ -510,6 +532,9 @@ func Run(ctx context.Context, cfg Config) error {
 		},
 		func() (string, http.Handler) {
 			return apiconnect.NewTestRunServiceHandler(testRunService, handlerOpts...)
+		},
+		func() (string, http.Handler) {
+			return apiconnect.NewTestRunOverviewServiceHandler(testrunoverview.NewConnectHandler(testRunOverviewService), handlerOpts...)
 		},
 		func() (string, http.Handler) {
 			return apiconnect.NewTestWizardServiceHandler(testWizardService, handlerOpts...)
@@ -567,7 +592,7 @@ func Run(ctx context.Context, cfg Config) error {
 	// 8) Temporal server worker.
 	w := worker.New(tc, "stroppy-cloud", worker.Options{})
 	workflows.RegisterWorkflows(w, workflows.DefaultOptions())
-	workflows.RegisterActivities(w, runtimeActivities, workflows.ActivityOptions{Quotas: quotaManager})
+	workflows.RegisterActivities(w, runtimeActivities, workflows.ActivityOptions{Quotas: quotaManager, Networks: networkManager})
 	if err := w.Start(); err != nil {
 		return fmt.Errorf("start temporal worker: %w", err)
 	}
@@ -580,9 +605,10 @@ func Run(ctx context.Context, cfg Config) error {
 		CacheDir:          cfg.CacheDir,
 		Artifacts:         map[string]string{"stroppy": cfg.StroppyUpstream},
 		AptBackend:        cfg.AptBackend,
-		MonitoringBackend: cfg.MonitoringURL,   // relay agent /insert/* + /select/* → vmauth
-		MonitoringToken:   cfg.MonitoringToken, // bearer injected on relayed monitoring requests
-		GrafanaBackend:    cfg.GrafanaBackend,  // serve /grafana/* from the server origin
+		MonitoringBackend: cfg.MonitoringURL,   // relay agent /insert/* + /select/* -> vmauth
+		MonitoringToken:   cfg.MonitoringToken, // backend monitoring bearer injected into vmauth
+		AgentTokens:       agentTokens,
+		GrafanaBackend:    cfg.GrafanaBackend, // serve /grafana/* from the server origin
 		HTTPFallback:      h2cHandler,
 		Logger:            log,
 	})

@@ -10,10 +10,6 @@ import (
 	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
 )
 
-// monitorTokenEnvKey is the optional agent-bootstrap extra-env key carrying the
-// bearer token the gateway/vmauth expects for the /insert/* monitoring relay.
-const monitorTokenEnvKey = "STROPPY_MONITORING_TOKEN"
-
 type SettingsSource interface {
 	ProviderSettings(ctx context.Context, tenantID string, provider deployment.Provider) (*deployment.ProviderSettings, error)
 	AgentBootstrap(ctx context.Context) (*workflowpb.AgentBootstrap, error)
@@ -39,10 +35,9 @@ func BuildRunConfig(ctx context.Context, tenantID string, settings SettingsSourc
 		return nil, err
 	}
 
-	// Stamp the monitoring context onto the topology-spec labels so the
-	// deployment renderer (which never receives the agent bootstrap) can build
-	// the agent-side metrics/logs collector phase. Agents reach monitoring only
-	// through the server/gateway address.
+	// Stamp the non-secret monitoring context onto the topology-spec labels so
+	// the deployment renderer can build the agent-side metrics/logs collector
+	// phase. Per-agent bearer tokens travel separately in AgentBootstrap.
 	stampMonitorLabels(testRun.GetTopologySpec(), testRun.GetId(), bootstrap)
 
 	cfg := &workflowpb.RunConfig{
@@ -61,11 +56,10 @@ func BuildRunConfig(ctx context.Context, tenantID string, settings SettingsSourc
 	return cfg, nil
 }
 
-// stampMonitorLabels writes the server address, run id, and optional monitoring
-// bearer token onto the topology-spec labels. The deployment renderer reads them
-// (deployment.LabelServerAddr / LabelRunID / LabelMonitorBearerToken) to build
-// the collector phase. A nil/empty bootstrap leaves labels untouched, so the
-// monitor phase is simply skipped (e.g. local/docker runs without a server addr).
+// stampMonitorLabels writes the server address and run id onto topology labels.
+// Per-node bearer tokens stay in AgentBootstrap.AgentTokens so they are not
+// exposed as topology/runtime metadata. A nil/empty bootstrap leaves labels
+// untouched, so the monitor phase is skipped.
 func stampMonitorLabels(spec *topology.TopologySpec, runID string, bootstrap *workflowpb.AgentBootstrap) {
 	if spec == nil || bootstrap == nil {
 		return
@@ -80,8 +74,5 @@ func stampMonitorLabels(spec *topology.TopologySpec, runID string, bootstrap *wo
 	spec.Labels[deploymentbuilder.LabelServerAddr] = serverAddr
 	if runID != "" {
 		spec.Labels[deploymentbuilder.LabelRunID] = runID
-	}
-	if token := bootstrap.GetExtraEnv()[monitorTokenEnvKey]; token != "" {
-		spec.Labels[deploymentbuilder.LabelMonitorBearerToken] = token
 	}
 }

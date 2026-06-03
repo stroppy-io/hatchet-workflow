@@ -6,7 +6,6 @@ import (
 	fmt "fmt"
 	jx "github.com/go-faster/jx"
 	jxpb "github.com/gopherex/protoc-gen-go-jx/jxpb"
-	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	topology "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology"
@@ -402,6 +401,14 @@ func (m *AcquireNetworkActivityRequest) Encode(e *jx.Encoder) {
 		return
 	}
 	e.ObjStart()
+	if m.TenantId != "" {
+		e.FieldStart("tenantId")
+		e.Str(m.TenantId)
+	}
+	if m.RunId != "" {
+		e.FieldStart("runId")
+		e.Str(m.RunId)
+	}
 	if m.Plan != nil {
 		e.FieldStart("plan")
 		jxpb.EncMessage(e, m.Plan)
@@ -413,6 +420,34 @@ func (m *AcquireNetworkActivityRequest) Decode(d *jx.Decoder) error {
 	seen := map[string]bool{}
 	return d.Obj(func(d *jx.Decoder, key string) error {
 		switch key {
+		case "tenantId", "tenant_id":
+			if seen["TenantId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["TenantId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.TenantId = v
+			return nil
+		case "runId", "run_id":
+			if seen["RunId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["RunId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.RunId = v
+			return nil
 		case "plan":
 			if seen["Plan"] {
 				return fmt.Errorf("duplicate field %q", key)
@@ -450,9 +485,9 @@ func (m *AcquireNetworkActivityResponse) Encode(e *jx.Encoder) {
 		return
 	}
 	e.ObjStart()
-	if m.Net != nil {
-		e.FieldStart("net")
-		jxpb.EncMessage(e, m.Net)
+	if m.NetworkCidr != "" {
+		e.FieldStart("networkCidr")
+		e.Str(m.NetworkCidr)
 	}
 	e.ObjEnd()
 }
@@ -461,18 +496,19 @@ func (m *AcquireNetworkActivityResponse) Decode(d *jx.Decoder) error {
 	seen := map[string]bool{}
 	return d.Obj(func(d *jx.Decoder, key string) error {
 		switch key {
-		case "net":
-			if seen["Net"] {
+		case "networkCidr", "network_cidr":
+			if seen["NetworkCidr"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["Net"] = true
+			seen["NetworkCidr"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			m.Net = &common.Net{}
-			if err := jxpb.DecMessage(d, m.Net); err != nil {
+			v, err := d.Str()
+			if err != nil {
 				return err
 			}
+			m.NetworkCidr = v
 			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)
@@ -487,6 +523,238 @@ func (m *AcquireNetworkActivityResponse) MarshalJSON() ([]byte, error) {
 }
 
 func (m *AcquireNetworkActivityResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *CommitNetworkActivityRequest) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.TenantId != "" {
+		e.FieldStart("tenantId")
+		e.Str(m.TenantId)
+	}
+	if m.RunId != "" {
+		e.FieldStart("runId")
+		e.Str(m.RunId)
+	}
+	e.ObjEnd()
+}
+
+func (m *CommitNetworkActivityRequest) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "tenantId", "tenant_id":
+			if seen["TenantId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["TenantId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.TenantId = v
+			return nil
+		case "runId", "run_id":
+			if seen["RunId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["RunId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.RunId = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *CommitNetworkActivityRequest) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *CommitNetworkActivityRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *CommitNetworkActivityResponse) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.NetworkCidr != "" {
+		e.FieldStart("networkCidr")
+		e.Str(m.NetworkCidr)
+	}
+	e.ObjEnd()
+}
+
+func (m *CommitNetworkActivityResponse) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "networkCidr", "network_cidr":
+			if seen["NetworkCidr"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["NetworkCidr"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.NetworkCidr = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *CommitNetworkActivityResponse) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *CommitNetworkActivityResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *ReleaseNetworkActivityRequest) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.TenantId != "" {
+		e.FieldStart("tenantId")
+		e.Str(m.TenantId)
+	}
+	if m.RunId != "" {
+		e.FieldStart("runId")
+		e.Str(m.RunId)
+	}
+	e.ObjEnd()
+}
+
+func (m *ReleaseNetworkActivityRequest) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "tenantId", "tenant_id":
+			if seen["TenantId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["TenantId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.TenantId = v
+			return nil
+		case "runId", "run_id":
+			if seen["RunId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["RunId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.RunId = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *ReleaseNetworkActivityRequest) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *ReleaseNetworkActivityRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *ReleaseNetworkActivityResponse) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Released != 0 {
+		e.FieldStart("released")
+		e.UInt32(m.Released)
+	}
+	e.ObjEnd()
+}
+
+func (m *ReleaseNetworkActivityResponse) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "released":
+			if seen["Released"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Released"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint32(d)
+			if err != nil {
+				return err
+			}
+			m.Released = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *ReleaseNetworkActivityResponse) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *ReleaseNetworkActivityResponse) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return m.Decode(d)
 }
@@ -920,6 +1188,24 @@ func (m *AgentBootstrap) Encode(e *jx.Encoder) {
 		}
 		e.ObjEnd()
 	}
+	if len(m.AgentTokens) > 0 {
+		e.FieldStart("agentTokens")
+		e.ObjStart()
+		for k, v := range m.AgentTokens {
+			e.FieldStart(k)
+			e.Str(v)
+		}
+		e.ObjEnd()
+	}
+	if len(m.AgentTaskQueues) > 0 {
+		e.FieldStart("agentTaskQueues")
+		e.ObjStart()
+		for k, v := range m.AgentTaskQueues {
+			e.FieldStart(k)
+			e.Str(v)
+		}
+		e.ObjEnd()
+	}
 	e.ObjEnd()
 }
 
@@ -989,6 +1275,50 @@ func (m *AgentBootstrap) Decode(d *jx.Decoder) error {
 				}
 				mv = tv
 				m.ExtraEnv[mk] = mv
+				return nil
+			})
+		case "agentTokens", "agent_tokens":
+			if seen["AgentTokens"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["AgentTokens"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			if m.AgentTokens == nil {
+				m.AgentTokens = make(map[string]string)
+			}
+			return d.Obj(func(d *jx.Decoder, ks string) error {
+				mk := ks
+				var mv string
+				tv, err := d.Str()
+				if err != nil {
+					return err
+				}
+				mv = tv
+				m.AgentTokens[mk] = mv
+				return nil
+			})
+		case "agentTaskQueues", "agent_task_queues":
+			if seen["AgentTaskQueues"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["AgentTaskQueues"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			if m.AgentTaskQueues == nil {
+				m.AgentTaskQueues = make(map[string]string)
+			}
+			return d.Obj(func(d *jx.Decoder, ks string) error {
+				mk := ks
+				var mv string
+				tv, err := d.Str()
+				if err != nil {
+					return err
+				}
+				mv = tv
+				m.AgentTaskQueues[mk] = mv
 				return nil
 			})
 		default:
@@ -1242,6 +1572,10 @@ func (m *RenderDeploymentPlanWorkflowRequest) Encode(e *jx.Encoder) {
 		e.FieldStart("workload")
 		jxpb.EncMessage(e, m.Workload)
 	}
+	if m.AgentBootstrap != nil {
+		e.FieldStart("agentBootstrap")
+		m.AgentBootstrap.Encode(e)
+	}
 	e.ObjEnd()
 }
 
@@ -1327,6 +1661,19 @@ func (m *RenderDeploymentPlanWorkflowRequest) Decode(d *jx.Decoder) error {
 				return err
 			}
 			return nil
+		case "agentBootstrap", "agent_bootstrap":
+			if seen["AgentBootstrap"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["AgentBootstrap"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.AgentBootstrap = &AgentBootstrap{}
+			if err := m.AgentBootstrap.Decode(d); err != nil {
+				return err
+			}
+			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}
@@ -1407,6 +1754,14 @@ func (m *ExecuteDeploymentPlanWorkflowRequest) Encode(e *jx.Encoder) {
 		e.FieldStart("infrastructureState")
 		jxpb.EncMessage(e, m.InfrastructureState)
 	}
+	if m.RunId != "" {
+		e.FieldStart("runId")
+		e.Str(m.RunId)
+	}
+	if m.AgentBootstrap != nil {
+		e.FieldStart("agentBootstrap")
+		m.AgentBootstrap.Encode(e)
+	}
 	e.ObjEnd()
 }
 
@@ -1437,6 +1792,33 @@ func (m *ExecuteDeploymentPlanWorkflowRequest) Decode(d *jx.Decoder) error {
 			}
 			m.InfrastructureState = &deployment.InfrastructureState{}
 			if err := jxpb.DecMessage(d, m.InfrastructureState); err != nil {
+				return err
+			}
+			return nil
+		case "runId", "run_id":
+			if seen["RunId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["RunId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.RunId = v
+			return nil
+		case "agentBootstrap", "agent_bootstrap":
+			if seen["AgentBootstrap"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["AgentBootstrap"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.AgentBootstrap = &AgentBootstrap{}
+			if err := m.AgentBootstrap.Decode(d); err != nil {
 				return err
 			}
 			return nil

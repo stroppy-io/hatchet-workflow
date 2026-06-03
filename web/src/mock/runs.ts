@@ -140,6 +140,12 @@ const ACME: RunVM[] = [
   run({ id: "r-1026", name: "mysql-pgbench-ro", author: "lee", status: "failed", db: "mysql", workload: "pgbench", stroppy: "5.0.9", topology: "MySQL HA x3", nodes: 3, progress: 7, startedHoursAgo: 200, durationSec: 60, trigger: "cron", suiteRunId: "suite-weekly" }),
   // A soft-deleted row: hidden unless include_deleted is on.
   run({ id: "r-1025", name: "tpcc-archived", author: "max", status: "completed", db: "postgres", workload: "tpcc", stroppy: "5.0.9", topology: "PG single", nodes: 1, progress: 100, startedHoursAgo: 240, durationSec: 900, trigger: "manual", deleted: true }),
+  // Children of the suite-ydb-smoke suite runs (deep-linked from the suite page
+  // via ?suiteRun=<id>); suiteRunId matches the ids seeded in mock/suiteRuns.ts.
+  run({ id: "tr-ydb-1", name: "ydb · read-heavy", author: "ada", status: "running", db: "ydb", workload: "ycsb", stroppy: "5.1.2", topology: "YDB x3", nodes: 3, progress: 48, startedHoursAgo: 0.3, trigger: "cron", suiteRunId: "sr-ydb-live" }),
+  run({ id: "tr-ydb-2", name: "ydb · write-heavy", author: "ada", status: "completed", db: "ydb", workload: "ycsb", stroppy: "5.1.2", topology: "YDB x3", nodes: 3, progress: 100, startedHoursAgo: 0.4, durationSec: 880, trigger: "cron", suiteRunId: "sr-ydb-live" }),
+  run({ id: "tr-ydb-3", name: "ydb-managed · mixed-oltp", author: "ada", status: "completed", db: "ydb_managed", workload: "tpcc", stroppy: "5.1.2", topology: "YDB managed", nodes: 0, progress: 100, startedHoursAgo: 24, durationSec: 1320, trigger: "cron", suiteRunId: "sr-ydb-prev" }),
+  run({ id: "tr-ydb-4", name: "ydb · read-heavy", author: "ada", status: "failed", db: "ydb", workload: "ycsb", stroppy: "5.1.1", topology: "YDB x3", nodes: 3, progress: 17, startedHoursAgo: 48, durationSec: 95, trigger: "cron", suiteRunId: "sr-ydb-fail" }),
 ];
 
 const GLOBEX: RunVM[] = [
@@ -183,6 +189,8 @@ function matchesQuery(r: RunVM, q: RunsQuery): boolean {
   }
   // standalone: undefined = all runs; true = only non-suite (no suite_run_id).
   if (q.standalone === true && r.suiteRunId !== "") return false;
+  // suite_run_id: scope to one suite run's child test runs (deep-link from a suite).
+  if (q.suiteRunId && r.suiteRunId !== q.suiteRunId) return false;
   // favorites_only: keep only rows the caller has favorited.
   if (q.favoritesOnly && !r.favorite) return false;
   // include_deleted: soft-deleted rows are hidden unless explicitly included.

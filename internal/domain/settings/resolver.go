@@ -36,7 +36,6 @@ type Resolver struct {
 
 	DefaultServerAddr        string
 	DefaultTemporalNamespace string
-	DefaultBinaryURL         string
 	DefaultAgentEnv          map[string]string
 }
 
@@ -84,7 +83,6 @@ func (r Resolver) AgentBootstrap(ctx context.Context) (*workflowpb.AgentBootstra
 
 	bootstrap := &workflowpb.AgentBootstrap{
 		ServerAddr:        serverAddr,
-		BinaryUrl:         r.DefaultBinaryURL,
 		TemporalNamespace: r.DefaultTemporalNamespace,
 		ExtraEnv:          copyStringMap(r.DefaultAgentEnv),
 	}

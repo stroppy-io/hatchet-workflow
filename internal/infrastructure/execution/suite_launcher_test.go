@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"testing"
 
+	workloadbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/workload"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
@@ -60,6 +61,46 @@ func TestSuiteRunLauncherPersistsParentBeforeWorkflowStart(t *testing.T) {
 	if len(client.req.GetRuns()) != 1 {
 		t.Fatalf("workflow request runs = %d, want 1", len(client.req.GetRuns()))
 	}
+}
+
+func TestSuiteRunLauncherPreservesCellMachineOverrides(t *testing.T) {
+	var events []string
+	children := &recordingChildPersister{events: &events}
+	client := &recordingSuiteWorkflowClient{events: &events}
+	launcher := &SuiteRunLauncher{
+		tc:       client,
+		resolver: staticCellResolver{},
+		children: children,
+		suites:   &recordingSuitePersister{events: &events},
+	}
+	run := &models.SuiteRunRecord{
+		Entity: &common.Entity{Id: "suite-run-1", TenantId: "tenant-1", AuthorId: "account-1"},
+	}
+
+	starter, err := launcher.Launch(context.Background(), run, &domain.Suite{
+		Id:       "suite-1",
+		Provider: deployment.Provider_PROVIDER_DOCKER,
+		Cells: []*domain.SuiteCell{
+			{
+				Id:               "cell-1",
+				Name:             "cell 1",
+				Enabled:          true,
+				MachineOverrides: []*deployment.MachinePlan{dockerMachineOverride(workloadbuilder.RunnerNodeID)},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("launch suite run: %v", err)
+	}
+	if len(children.created) != 1 {
+		t.Fatalf("created child records = %d, want 1", len(children.created))
+	}
+	assertDockerOverride(t, testMachineByNodeID(children.created[0].GetSpec().GetInfrastructurePlan().GetMachines(), workloadbuilder.RunnerNodeID))
+
+	if err := starter(context.Background()); err != nil {
+		t.Fatalf("start suite workflow: %v", err)
+	}
+	assertDockerOverride(t, testMachineByNodeID(client.req.GetRuns()[0].GetInfrastructurePlan().GetMachines(), workloadbuilder.RunnerNodeID))
 }
 
 func TestSuiteRunLauncherMarksRecordsFailedWhenWorkflowStartFails(t *testing.T) {
@@ -135,11 +176,13 @@ func (staticCellResolver) ResolveCell(context.Context, string, *domain.SuiteCell
 
 type recordingChildPersister struct {
 	events  *[]string
+	created []*models.TestRunRecord
 	updated *models.TestRunRecord
 }
 
-func (p *recordingChildPersister) CreateChildRun(context.Context, *models.TestRunRecord) error {
+func (p *recordingChildPersister) CreateChildRun(_ context.Context, run *models.TestRunRecord) error {
 	*p.events = append(*p.events, "child")
+	p.created = append(p.created, run)
 	return nil
 }
 

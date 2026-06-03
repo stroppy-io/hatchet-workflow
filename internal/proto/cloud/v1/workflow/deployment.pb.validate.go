@@ -1026,6 +1026,28 @@ func (m *AcquireNetworkActivityRequest) validate(all bool) error {
 
 	var errors []error
 
+	if l := utf8.RuneCountInString(m.GetTenantId()); l < 1 || l > 64 {
+		err := AcquireNetworkActivityRequestValidationError{
+			field:  "TenantId",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetRunId()); l < 1 || l > 128 {
+		err := AcquireNetworkActivityRequestValidationError{
+			field:  "RunId",
+			reason: "value length must be between 1 and 128 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if m.GetPlan() == nil {
 		err := AcquireNetworkActivityRequestValidationError{
 			field:  "Plan",
@@ -1169,33 +1191,15 @@ func (m *AcquireNetworkActivityResponse) validate(all bool) error {
 
 	var errors []error
 
-	if all {
-		switch v := interface{}(m.GetNet()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, AcquireNetworkActivityResponseValidationError{
-					field:  "Net",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, AcquireNetworkActivityResponseValidationError{
-					field:  "Net",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
+	if l := utf8.RuneCountInString(m.GetNetworkCidr()); l < 1 || l > 64 {
+		err := AcquireNetworkActivityResponseValidationError{
+			field:  "NetworkCidr",
+			reason: "value length must be between 1 and 64 runes, inclusive",
 		}
-	} else if v, ok := interface{}(m.GetNet()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return AcquireNetworkActivityResponseValidationError{
-				field:  "Net",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
+		if !all {
+			return err
 		}
+		errors = append(errors, err)
 	}
 
 	if len(errors) > 0 {
@@ -1278,6 +1282,475 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = AcquireNetworkActivityResponseValidationError{}
+
+// Validate checks the field values on CommitNetworkActivityRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CommitNetworkActivityRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CommitNetworkActivityRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CommitNetworkActivityRequestMultiError, or nil if none found.
+func (m *CommitNetworkActivityRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CommitNetworkActivityRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetTenantId()); l < 1 || l > 64 {
+		err := CommitNetworkActivityRequestValidationError{
+			field:  "TenantId",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetRunId()); l < 1 || l > 128 {
+		err := CommitNetworkActivityRequestValidationError{
+			field:  "RunId",
+			reason: "value length must be between 1 and 128 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return CommitNetworkActivityRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// CommitNetworkActivityRequestMultiError is an error wrapping multiple
+// validation errors returned by CommitNetworkActivityRequest.ValidateAll() if
+// the designated constraints aren't met.
+type CommitNetworkActivityRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CommitNetworkActivityRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CommitNetworkActivityRequestMultiError) AllErrors() []error { return m }
+
+// CommitNetworkActivityRequestValidationError is the validation error returned
+// by CommitNetworkActivityRequest.Validate if the designated constraints
+// aren't met.
+type CommitNetworkActivityRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CommitNetworkActivityRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CommitNetworkActivityRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CommitNetworkActivityRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CommitNetworkActivityRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CommitNetworkActivityRequestValidationError) ErrorName() string {
+	return "CommitNetworkActivityRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CommitNetworkActivityRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCommitNetworkActivityRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CommitNetworkActivityRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CommitNetworkActivityRequestValidationError{}
+
+// Validate checks the field values on CommitNetworkActivityResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CommitNetworkActivityResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CommitNetworkActivityResponse with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// CommitNetworkActivityResponseMultiError, or nil if none found.
+func (m *CommitNetworkActivityResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CommitNetworkActivityResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetNetworkCidr()) > 64 {
+		err := CommitNetworkActivityResponseValidationError{
+			field:  "NetworkCidr",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return CommitNetworkActivityResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// CommitNetworkActivityResponseMultiError is an error wrapping multiple
+// validation errors returned by CommitNetworkActivityResponse.ValidateAll()
+// if the designated constraints aren't met.
+type CommitNetworkActivityResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CommitNetworkActivityResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CommitNetworkActivityResponseMultiError) AllErrors() []error { return m }
+
+// CommitNetworkActivityResponseValidationError is the validation error
+// returned by CommitNetworkActivityResponse.Validate if the designated
+// constraints aren't met.
+type CommitNetworkActivityResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CommitNetworkActivityResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CommitNetworkActivityResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CommitNetworkActivityResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CommitNetworkActivityResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CommitNetworkActivityResponseValidationError) ErrorName() string {
+	return "CommitNetworkActivityResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CommitNetworkActivityResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCommitNetworkActivityResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CommitNetworkActivityResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CommitNetworkActivityResponseValidationError{}
+
+// Validate checks the field values on ReleaseNetworkActivityRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ReleaseNetworkActivityRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ReleaseNetworkActivityRequest with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// ReleaseNetworkActivityRequestMultiError, or nil if none found.
+func (m *ReleaseNetworkActivityRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ReleaseNetworkActivityRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetTenantId()); l < 1 || l > 64 {
+		err := ReleaseNetworkActivityRequestValidationError{
+			field:  "TenantId",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetRunId()); l < 1 || l > 128 {
+		err := ReleaseNetworkActivityRequestValidationError{
+			field:  "RunId",
+			reason: "value length must be between 1 and 128 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return ReleaseNetworkActivityRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// ReleaseNetworkActivityRequestMultiError is an error wrapping multiple
+// validation errors returned by ReleaseNetworkActivityRequest.ValidateAll()
+// if the designated constraints aren't met.
+type ReleaseNetworkActivityRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ReleaseNetworkActivityRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ReleaseNetworkActivityRequestMultiError) AllErrors() []error { return m }
+
+// ReleaseNetworkActivityRequestValidationError is the validation error
+// returned by ReleaseNetworkActivityRequest.Validate if the designated
+// constraints aren't met.
+type ReleaseNetworkActivityRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ReleaseNetworkActivityRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ReleaseNetworkActivityRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ReleaseNetworkActivityRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ReleaseNetworkActivityRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ReleaseNetworkActivityRequestValidationError) ErrorName() string {
+	return "ReleaseNetworkActivityRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ReleaseNetworkActivityRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sReleaseNetworkActivityRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ReleaseNetworkActivityRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ReleaseNetworkActivityRequestValidationError{}
+
+// Validate checks the field values on ReleaseNetworkActivityResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ReleaseNetworkActivityResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ReleaseNetworkActivityResponse with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// ReleaseNetworkActivityResponseMultiError, or nil if none found.
+func (m *ReleaseNetworkActivityResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ReleaseNetworkActivityResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Released
+
+	if len(errors) > 0 {
+		return ReleaseNetworkActivityResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ReleaseNetworkActivityResponseMultiError is an error wrapping multiple
+// validation errors returned by ReleaseNetworkActivityResponse.ValidateAll()
+// if the designated constraints aren't met.
+type ReleaseNetworkActivityResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ReleaseNetworkActivityResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ReleaseNetworkActivityResponseMultiError) AllErrors() []error { return m }
+
+// ReleaseNetworkActivityResponseValidationError is the validation error
+// returned by ReleaseNetworkActivityResponse.Validate if the designated
+// constraints aren't met.
+type ReleaseNetworkActivityResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ReleaseNetworkActivityResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ReleaseNetworkActivityResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ReleaseNetworkActivityResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ReleaseNetworkActivityResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ReleaseNetworkActivityResponseValidationError) ErrorName() string {
+	return "ReleaseNetworkActivityResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ReleaseNetworkActivityResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sReleaseNetworkActivityResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ReleaseNetworkActivityResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ReleaseNetworkActivityResponseValidationError{}
 
 // Validate checks the field values on AcquireQuotasActivityRequest with the
 // rules defined in the proto definition for this message. If any rules are
@@ -2254,6 +2727,102 @@ func (m *AgentBootstrap) validate(all bool) error {
 		}
 	}
 
+	if len(m.GetAgentTokens()) > 1024 {
+		err := AgentBootstrapValidationError{
+			field:  "AgentTokens",
+			reason: "value must contain no more than 1024 pair(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	{
+		sorted_keys := make([]string, len(m.GetAgentTokens()))
+		i := 0
+		for key := range m.GetAgentTokens() {
+			sorted_keys[i] = key
+			i++
+		}
+		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
+		for _, key := range sorted_keys {
+			val := m.GetAgentTokens()[key]
+			_ = val
+
+			if l := utf8.RuneCountInString(key); l < 1 || l > 256 {
+				err := AgentBootstrapValidationError{
+					field:  fmt.Sprintf("AgentTokens[%v]", key),
+					reason: "value length must be between 1 and 256 runes, inclusive",
+				}
+				if !all {
+					return err
+				}
+				errors = append(errors, err)
+			}
+
+			if l := utf8.RuneCountInString(val); l < 1 || l > 8192 {
+				err := AgentBootstrapValidationError{
+					field:  fmt.Sprintf("AgentTokens[%v]", key),
+					reason: "value length must be between 1 and 8192 runes, inclusive",
+				}
+				if !all {
+					return err
+				}
+				errors = append(errors, err)
+			}
+
+		}
+	}
+
+	if len(m.GetAgentTaskQueues()) > 1024 {
+		err := AgentBootstrapValidationError{
+			field:  "AgentTaskQueues",
+			reason: "value must contain no more than 1024 pair(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	{
+		sorted_keys := make([]string, len(m.GetAgentTaskQueues()))
+		i := 0
+		for key := range m.GetAgentTaskQueues() {
+			sorted_keys[i] = key
+			i++
+		}
+		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
+		for _, key := range sorted_keys {
+			val := m.GetAgentTaskQueues()[key]
+			_ = val
+
+			if l := utf8.RuneCountInString(key); l < 1 || l > 256 {
+				err := AgentBootstrapValidationError{
+					field:  fmt.Sprintf("AgentTaskQueues[%v]", key),
+					reason: "value length must be between 1 and 256 runes, inclusive",
+				}
+				if !all {
+					return err
+				}
+				errors = append(errors, err)
+			}
+
+			if l := utf8.RuneCountInString(val); l < 1 || l > 512 {
+				err := AgentBootstrapValidationError{
+					field:  fmt.Sprintf("AgentTaskQueues[%v]", key),
+					reason: "value length must be between 1 and 512 runes, inclusive",
+				}
+				if !all {
+					return err
+				}
+				errors = append(errors, err)
+			}
+
+		}
+	}
+
 	if len(errors) > 0 {
 		return AgentBootstrapMultiError(errors)
 	}
@@ -2946,6 +3515,35 @@ func (m *RenderDeploymentPlanWorkflowRequest) validate(all bool) error {
 		}
 	}
 
+	if all {
+		switch v := interface{}(m.GetAgentBootstrap()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RenderDeploymentPlanWorkflowRequestValidationError{
+					field:  "AgentBootstrap",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RenderDeploymentPlanWorkflowRequestValidationError{
+					field:  "AgentBootstrap",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetAgentBootstrap()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RenderDeploymentPlanWorkflowRequestValidationError{
+				field:  "AgentBootstrap",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	if len(errors) > 0 {
 		return RenderDeploymentPlanWorkflowRequestMultiError(errors)
 	}
@@ -3270,6 +3868,46 @@ func (m *ExecuteDeploymentPlanWorkflowRequest) validate(all bool) error {
 		if err := v.Validate(); err != nil {
 			return ExecuteDeploymentPlanWorkflowRequestValidationError{
 				field:  "InfrastructureState",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if l := utf8.RuneCountInString(m.GetRunId()); l < 1 || l > 128 {
+		err := ExecuteDeploymentPlanWorkflowRequestValidationError{
+			field:  "RunId",
+			reason: "value length must be between 1 and 128 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetAgentBootstrap()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ExecuteDeploymentPlanWorkflowRequestValidationError{
+					field:  "AgentBootstrap",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ExecuteDeploymentPlanWorkflowRequestValidationError{
+					field:  "AgentBootstrap",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetAgentBootstrap()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ExecuteDeploymentPlanWorkflowRequestValidationError{
+				field:  "AgentBootstrap",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}

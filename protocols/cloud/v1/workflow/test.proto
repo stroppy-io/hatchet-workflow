@@ -23,7 +23,7 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
     test.proto defines the Temporal workflows that run benchmarks: TestWorkflow
     orchestrates one full test cycle (deploy -> install stroppy -> install
     database -> run workload -> teardown) by composing child workflows, and
-    SuiteWorkflow fans out a TestRunWorkflow per child run in a suite.
+    SuiteWorkflow fans out a TestWorkflow per child run in a suite.
  */
 
 /*
@@ -304,7 +304,7 @@ message SuiteWorkflowRequest {
      */
     repeated RunConfig runs = 2 [(validate.rules).repeated = {min_items: 1, max_items: 1000}];
     /*
-        max_parallel caps concurrent child TestRunWorkflow executions. 0 =
+        max_parallel caps concurrent child TestWorkflow executions. 0 =
         unlimited.
      */
     uint32 max_parallel = 3;
@@ -315,7 +315,7 @@ message SuiteWorkflowRequest {
 message SuiteWorkflowResponse {}
 
 /*
-    SuiteWorkflowService runs a child TestRunWorkflow per RunConfig, honoring
+    SuiteWorkflowService runs a child TestWorkflow per RunConfig, honoring
     max_parallel.
  */
 service SuiteWorkflowService {
@@ -325,7 +325,7 @@ service SuiteWorkflowService {
     option (temporal.v1.service) = {task_queue: "stroppy-cloud"};
 
     /*
-        SuiteWorkflow fans out a child TestRunWorkflow per run in the suite,
+        SuiteWorkflow fans out a child TestWorkflow per run in the suite,
         deduplicated by a deterministic id derived from suite_run_id.
      */
     rpc SuiteWorkflow (SuiteWorkflowRequest) returns (SuiteWorkflowResponse) {
@@ -337,7 +337,7 @@ service SuiteWorkflowService {
             id: 'suite-run/${! suite_run_id }'
             id_reuse_policy: WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY
             /*
-                No execution_timeout: a suite runs N child TestRunWorkflows, each of
+                No execution_timeout: a suite runs N child TestWorkflows, each of
                 which can itself run for days. Capping here would kill a healthy
                 long suite. Liveness comes from the children's activity heartbeats.
             */

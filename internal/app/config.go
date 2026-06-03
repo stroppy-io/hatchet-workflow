@@ -59,8 +59,9 @@ type Config struct {
 	// MonitoringURL is the metrics/logs backend root (VictoriaMetrics/Logs /
 	// vmauth). The gateway relays agent /insert/* + /select/* traffic here.
 	MonitoringURL string
-	// MonitoringToken is the bearer token the gateway injects on every relayed
-	// monitoring request so it authenticates to vmauth on the agent's behalf.
+	// MonitoringToken is the bearer token agents present to the gateway for
+	// monitoring relay + Temporal proxy access; the gateway also injects it on
+	// every relayed monitoring request so it authenticates to vmauth.
 	MonitoringToken string
 	// GrafanaBackend is the embedded Grafana upstream the gateway reverse-proxies
 	// /grafana/* to, serving dashboards from the same server origin.

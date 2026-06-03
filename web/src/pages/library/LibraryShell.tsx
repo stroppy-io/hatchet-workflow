@@ -16,10 +16,13 @@ const TABS: { to: string; label: string }[] = [
 
 export function LibraryShell({
   shownCount,
+  action,
   children,
 }: {
   /** "N shown" count for the active table; omitted while loading. */
   shownCount?: number;
+  /** Optional right-aligned header action (e.g. the Packages "Upload" button). */
+  action?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -33,6 +36,7 @@ export function LibraryShell({
             {shownCount} shown
           </span>
         )}
+        {action && <div className="ml-auto">{action}</div>}
       </div>
 
       {/* Route-driven tab strip. */}

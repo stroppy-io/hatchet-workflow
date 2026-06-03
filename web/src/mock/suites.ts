@@ -1,15 +1,86 @@
-// TEMPORARY mock for SuiteService.ListSuites and row mutations.
+// TEMPORARY mock for SuiteService.ListSuites/GetSuite and row mutations.
 
+import type { DbKind, DeployProvider } from "@/services/runs";
 import {
   type RunStatus,
+  type SuiteCellInput,
   type SuiteCellVM,
   type SuiteFacets,
   type SuiteProviderKind,
+  type SuiteSchedulePatch,
   type SuitesPage,
   type SuitesProvider,
   type SuitesQuery,
   type SuiteVM,
 } from "@/services/suites";
+import { createSuiteRun } from "@/mock/suiteRuns";
+import { mockPresetProvider } from "@/mock/preset";
+
+// Default db kind per cell, used for the db×workload matrix axis when a seed
+// does not specify one explicitly.
+const DEFAULT_DB: DbKind = "postgres";
+
+function providerToDeploy(p: SuiteProviderKind): DeployProvider {
+  return p === "yandex" ? "yandex" : p === "docker" ? "docker" : "";
+}
+
+/**
+ * Resolve a cell's display axes (dbKind / workload) the way the server would:
+ * from the chosen preset(s). For preset_pair we read the db preset row's
+ * db_kind and the workload preset row's name; for test_preset_id we read the
+ * test preset row's db_kind + name; for inline_test the author supplied them.
+ * Returns "" / a placeholder when a preset is missing (unresolvable axis).
+ */
+async function resolveCell(
+  tenantSlug: string,
+  cellId: string,
+  input: SuiteCellInput,
+): Promise<SuiteCellVM> {
+  const base = {
+    id: cellId,
+    name: input.name,
+    enabled: input.enabled,
+  };
+  if (input.source === "presetPair") {
+    const dbPresetId = input.dbPresetId ?? "";
+    const workloadPresetId = input.workloadPresetId ?? "";
+    const [dbPage, wlPage] = await Promise.all([
+      mockPresetProvider.listDatabasePresetRows(tenantSlug, { pageSize: 500 }),
+      mockPresetProvider.listWorkloadPresetRows(tenantSlug, { pageSize: 500 }),
+    ]);
+    const db = dbPage.rows.find((r) => r.id === dbPresetId);
+    const wl = wlPage.rows.find((r) => r.id === workloadPresetId);
+    return {
+      ...base,
+      source: "presetPair",
+      presetPair: { dbPresetId, workloadPresetId },
+      dbKind: db?.dbKind ?? "",
+      workload: wl?.name ?? workloadPresetId,
+    };
+  }
+  if (input.source === "testPreset") {
+    const testPresetId = input.testPresetId ?? "";
+    const tpPage = await mockPresetProvider.listTestPresetRows(tenantSlug, {
+      pageSize: 500,
+    });
+    const tp = tpPage.rows.find((r) => r.id === testPresetId);
+    return {
+      ...base,
+      source: "testPreset",
+      testPresetId,
+      dbKind: tp?.dbKind ?? "",
+      workload: tp?.name ?? testPresetId,
+    };
+  }
+  // inline_test — author supplied the axes directly.
+  return {
+    ...base,
+    source: "inline",
+    inlineTest: true,
+    dbKind: input.inlineDbKind ?? "",
+    workload: input.inlineWorkload ?? "inline",
+  };
+}
 
 function hoursAgo(h: number): string {
   return new Date(Date.now() - h * 3600_000).toISOString();
@@ -19,16 +90,53 @@ function hoursFromNow(h: number): string {
   return new Date(Date.now() + h * 3600_000).toISOString();
 }
 
-function makeCells(count: number, prefix: string): SuiteCellVM[] {
-  return Array.from({ length: count }, (_, index) => ({
-    id: `${prefix}-cell-${index + 1}`,
-    name: `${prefix}-${index + 1}`,
-    enabled: true,
-    presetPair: {
-      dbPresetId: `${prefix}-db-${index + 1}`,
-      workloadPresetId: `${prefix}-workload-${index + 1}`,
-    },
-  }));
+/**
+ * Explicit matrix cell spec keyed by CATALOG preset ids so cells that share a
+ * database / workload preset collapse onto the same matrix row / column (a real
+ * database × workload grid, not a diagonal). dbKind / workload are display-only
+ * fallbacks; the live mock re-resolves them from the catalog on every mutation.
+ */
+interface CellSpec {
+  dbPresetId: string;
+  workloadPresetId: string;
+  dbKind: DbKind;
+  workload: string;
+  enabled?: boolean;
+}
+
+// Catalog preset ids the seeds draw from (acme tenant), so the matrix groups.
+const PG_SINGLE = "dbp-pg-single";
+const PG_HA = "dbp-pg-ha";
+const MYSQL = "dbp-mysql-group";
+const CRDB = "dbp-crdb-3";
+const YDB = "dbp-ydb-b42";
+const YDB_MANAGED = "dbp-ydb-managed";
+const W_TPCC = "wlp-tpcc";
+const W_YCSB_A = "wlp-ycsb-a";
+const W_YCSB_C = "wlp-ycsb-c";
+const W_PGBENCH = "wlp-pgbench";
+
+/** A small but real matrix: 2 db rows × N workload columns. */
+function makeCells(count: number, prefix: string, db: DbKind): SuiteCellVM[] {
+  const dbPresets = [PG_SINGLE, PG_HA];
+  const wlPresets = [W_TPCC, W_YCSB_A, W_YCSB_C, W_PGBENCH];
+  const wlNames = ["tpcc", "ycsb-a", "ycsb-c", "pgbench"];
+  return Array.from({ length: count }, (_, index) => {
+    const dbIdx = index % dbPresets.length;
+    const wlIdx = Math.floor(index / dbPresets.length) % wlPresets.length;
+    return {
+      id: `${prefix}-cell-${index + 1}`,
+      name: "",
+      enabled: true,
+      source: "presetPair" as const,
+      presetPair: {
+        dbPresetId: dbPresets[dbIdx],
+        workloadPresetId: wlPresets[wlIdx],
+      },
+      dbKind: db,
+      workload: wlNames[wlIdx],
+    };
+  });
 }
 
 function suite(p: {
@@ -39,6 +147,10 @@ function suite(p: {
   provider: SuiteProviderKind;
   cells: number;
   cellNames?: string[];
+  /** Explicit db×workload matrix cells (overrides cells/cellNames). */
+  cellSpecs?: CellSpec[];
+  /** Default db kind for makeCells / cellNames-derived cells. */
+  db?: DbKind;
   runs: number;
   schedule?: boolean;
   cron?: string;
@@ -56,17 +168,46 @@ function suite(p: {
 }): SuiteVM {
   const createdAt = hoursAgo((p.lastHoursAgo ?? 24) + 12);
   const updatedAt = hoursAgo(Math.max((p.lastHoursAgo ?? 4) - 0.2, 0.1));
-  const cells: SuiteCellVM[] = p.cellNames
-    ? p.cellNames.map((name, index) => ({
+  const db = p.db ?? DEFAULT_DB;
+  let cells: SuiteCellVM[];
+  if (p.cellSpecs) {
+    cells = p.cellSpecs.map((spec, index) => ({
+      id: `${p.id}-cell-${index + 1}`,
+      name: "",
+      enabled: spec.enabled ?? true,
+      source: "presetPair" as const,
+      presetPair: {
+        dbPresetId: spec.dbPresetId,
+        workloadPresetId: spec.workloadPresetId,
+      },
+      dbKind: spec.dbKind,
+      workload: spec.workload,
+    }));
+  } else if (p.cellNames) {
+    // Legacy name list — spread over a 2-row matrix of catalog presets so the
+    // grid still groups (db row × workload column) rather than a diagonal.
+    const dbPresets = [PG_SINGLE, PG_HA];
+    const wlPresets = [W_TPCC, W_YCSB_A, W_YCSB_C, W_PGBENCH];
+    const wlNames = ["tpcc", "ycsb-a", "ycsb-c", "pgbench"];
+    cells = p.cellNames.map((_name, index) => {
+      const dbIdx = index % dbPresets.length;
+      const wlIdx = Math.floor(index / dbPresets.length) % wlPresets.length;
+      return {
         id: `${p.id}-cell-${index + 1}`,
-        name,
+        name: "",
         enabled: true,
+        source: "presetPair" as const,
         presetPair: {
-          dbPresetId: `${p.name}-db-${index + 1}`,
-          workloadPresetId: `${p.name}-workload-${index + 1}`,
+          dbPresetId: dbPresets[dbIdx],
+          workloadPresetId: wlPresets[wlIdx],
         },
-      }))
-    : makeCells(p.cells, p.name);
+        dbKind: db,
+        workload: wlNames[wlIdx],
+      };
+    });
+  } else {
+    cells = makeCells(p.cells, p.name, db);
+  }
   return {
     id: p.id,
     name: p.name,
@@ -88,7 +229,7 @@ function suite(p: {
     lastRunAt: p.lastHoursAgo !== undefined ? hoursAgo(p.lastHoursAgo) : undefined,
     lastRunStatus: p.lastStatus,
     runCount: p.runs,
-    cellCount: p.cells,
+    cellCount: cells.filter((c) => c.enabled).length,
     defaultMaxParallel: p.maxParallel ?? 0,
     defaultInTenantRating: p.tenantRating,
     defaultInGlobalRating: p.globalRating,
@@ -98,8 +239,8 @@ function suite(p: {
 const ACME: SuiteVM[] = [
   suite({ id: "suite-nightly", name: "suite-nightly", description: "Nightly Postgres baseline checks", author: "ada", provider: "docker", cells: 6, cellNames: ["pg-ha-tpcc", "pg-ha-ycsb", "pg-single-tpcc", "pg-single-ycsb", "mysql-ycsb", "crdb-tpcc"], runs: 182, schedule: true, cron: "0 2 * * *", timezone: "UTC", nextInHours: 7, lastHoursAgo: 20, lastStatus: "completed", maxParallel: 2, tenantRating: true, globalRating: false, tags: ["nightly", "baseline"], labels: { env: "prod" }, favorite: true }),
   suite({ id: "suite-weekly", name: "suite-weekly", description: "Long weekly mixed workload suite", author: "grace", provider: "docker", cells: 9, runs: 41, schedule: true, cron: "0 3 * * 1", timezone: "UTC", nextInHours: 74, lastHoursAgo: 150, lastStatus: "failed", maxParallel: 3, tags: ["weekly", "long"] }),
-  suite({ id: "suite-ydb-smoke", name: "ydb-smoke", description: "Managed YDB quick compatibility check", author: "ada", provider: "yandex", cells: 4, runs: 57, schedule: true, cron: "*/30 * * * *", timezone: "Europe/Moscow", nextInHours: 0.4, lastHoursAgo: 0.6, lastStatus: "running", maxParallel: 1, labels: { provider: "yc" }, favorite: true }),
-  suite({ id: "suite-crdb-regression", name: "crdb-regression", description: "CockroachDB regression bundle", author: "max", provider: "docker", cells: 5, runs: 23, schedule: false, lastHoursAgo: 50, lastStatus: "cancelled", maxParallel: 0, tags: ["regression"] }),
+  suite({ id: "suite-ydb-smoke", name: "ydb-smoke", description: "Managed YDB quick compatibility check", author: "ada", provider: "yandex", cells: 4, cellSpecs: [{ dbPresetId: YDB, dbKind: "ydb", workloadPresetId: W_YCSB_C, workload: "ycsb-c" }, { dbPresetId: YDB, dbKind: "ydb", workloadPresetId: W_YCSB_A, workload: "ycsb-a" }, { dbPresetId: YDB_MANAGED, dbKind: "ydb_managed", workloadPresetId: W_YCSB_C, workload: "ycsb-c" }, { dbPresetId: YDB_MANAGED, dbKind: "ydb_managed", workloadPresetId: W_TPCC, workload: "tpcc" }], runs: 57, schedule: true, cron: "*/30 * * * *", timezone: "Europe/Moscow", nextInHours: 0.4, lastHoursAgo: 0.6, lastStatus: "running", maxParallel: 1, tenantRating: true, globalRating: false, tags: ["smoke", "ydb"], labels: { provider: "yc" }, favorite: true }),
+  suite({ id: "suite-crdb-regression", name: "crdb-regression", description: "CockroachDB + MySQL regression bundle", author: "max", provider: "docker", cells: 4, cellSpecs: [{ dbPresetId: CRDB, dbKind: "cockroach", workloadPresetId: W_TPCC, workload: "tpcc" }, { dbPresetId: CRDB, dbKind: "cockroach", workloadPresetId: W_YCSB_A, workload: "ycsb-a" }, { dbPresetId: MYSQL, dbKind: "mysql", workloadPresetId: W_TPCC, workload: "tpcc" }, { dbPresetId: MYSQL, dbKind: "mysql", workloadPresetId: W_YCSB_A, workload: "ycsb-a", enabled: false }], runs: 23, schedule: false, lastHoursAgo: 50, lastStatus: "cancelled", maxParallel: 0, tags: ["regression"] }),
   suite({ id: "suite-cancel-demo", name: "cancel-demo", description: "Cancellation path validation", author: "grace", provider: "docker", cells: 3, runs: 12, schedule: false, lastHoursAgo: 0.2, lastStatus: "cancelling", maxParallel: 1, tags: ["ops"] }),
   suite({ id: "suite-picodata-lab", name: "picodata-lab", description: "Picodata exploratory presets", author: "max", provider: "docker", cells: 7, runs: 9, schedule: false, lastHoursAgo: 96, lastStatus: "completed", maxParallel: 2, labels: { track: "lab" } }),
   suite({ id: "suite-empty-draft", name: "draft-api-suite", description: "API-created draft", author: "lee", provider: "docker", cells: 2, runs: 0, schedule: false, maxParallel: 0 }),
@@ -132,6 +273,10 @@ function delay(): Promise<void> {
 
 function distinct(values: string[]): string[] {
   return [...new Set(values.filter(Boolean))].sort();
+}
+
+function distinctDb(values: DbKind[]): DbKind[] {
+  return [...new Set(values.filter((v): v is Exclude<DbKind, ""> => v !== ""))];
 }
 
 function matchesQuery(s: SuiteVM, q: SuitesQuery): boolean {
@@ -209,15 +354,33 @@ export const mockSuitesProvider: SuitesProvider = {
     };
   },
 
+  async getSuite(tenantSlug: string, suiteId: string): Promise<SuiteVM | null> {
+    await delay();
+    const s = rows(tenantSlug).find((x) => x.id === suiteId);
+    if (!s) return null;
+    // Deep-ish copy so the page never mutates the store directly.
+    return { ...s, cells: s.cells.map((c) => ({ ...c })), tags: [...s.tags] };
+  },
+
   async startSuite(tenantSlug: string, suiteId: string): Promise<{ suiteRunId: string }> {
     await delay();
     const s = rows(tenantSlug).find((x) => x.id === suiteId);
     if (!s || s.deleted) throw new Error("Suite is deleted");
+    const run = createSuiteRun(tenantSlug, {
+      suiteId: s.id,
+      suiteName: s.name,
+      provider: providerToDeploy(s.provider),
+      dbKinds: distinctDb(s.cells.filter((c) => c.enabled).map((c) => c.dbKind)),
+      maxParallel: s.defaultMaxParallel,
+      cells: s.cells
+        .filter((c) => c.enabled)
+        .map((c) => ({ id: c.id, name: c.name })),
+    });
     s.runCount += 1;
     s.lastRunAt = new Date().toISOString();
     s.lastRunStatus = "running";
     s.updatedAt = s.lastRunAt;
-    return { suiteRunId: `sr-${Date.now().toString(36)}` };
+    return { suiteRunId: run.id };
   },
 
   async cloneSuite(
@@ -242,6 +405,7 @@ export const mockSuitesProvider: SuitesProvider = {
         ...cell,
         id: `${id}-cell-${index + 1}`,
       })),
+      tags: [...src.tags],
       favorite: false,
       deleted: false,
       deletedAt: undefined,
@@ -263,6 +427,142 @@ export const mockSuitesProvider: SuitesProvider = {
     s.scheduleEnabled = enabled;
     s.cron = s.cron || "0 2 * * *";
     s.nextRunAt = enabled ? hoursFromNow(12) : undefined;
+    s.updatedAt = new Date().toISOString();
+  },
+
+  async setSchedule(
+    tenantSlug: string,
+    suiteId: string,
+    schedule: SuiteSchedulePatch,
+  ): Promise<void> {
+    await delay();
+    const s = rows(tenantSlug).find((x) => x.id === suiteId);
+    if (!s || s.deleted) throw new Error("Suite is deleted");
+    s.scheduleEnabled = schedule.enabled;
+    s.cron = schedule.cron;
+    s.timezone = schedule.timezone;
+    s.nextRunAt = schedule.enabled ? hoursFromNow(12) : undefined;
+    s.updatedAt = new Date().toISOString();
+  },
+
+  async setRatingFlags(
+    tenantSlug: string,
+    suiteId: string,
+    flags: { inTenant?: boolean; inGlobal?: boolean },
+  ): Promise<void> {
+    await delay();
+    const s = rows(tenantSlug).find((x) => x.id === suiteId);
+    if (!s || s.deleted) throw new Error("Suite is deleted");
+    if (flags.inTenant !== undefined) s.defaultInTenantRating = flags.inTenant;
+    if (flags.inGlobal !== undefined) s.defaultInGlobalRating = flags.inGlobal;
+    s.updatedAt = new Date().toISOString();
+  },
+
+  async setMaxParallel(
+    tenantSlug: string,
+    suiteId: string,
+    maxParallel: number,
+  ): Promise<void> {
+    await delay();
+    const s = rows(tenantSlug).find((x) => x.id === suiteId);
+    if (!s || s.deleted) throw new Error("Suite is deleted");
+    s.defaultMaxParallel = Math.max(0, Math.floor(maxParallel));
+    s.updatedAt = new Date().toISOString();
+  },
+
+  async setCellEnabled(
+    tenantSlug: string,
+    suiteId: string,
+    cellId: string,
+    enabled: boolean,
+  ): Promise<void> {
+    await delay();
+    const s = rows(tenantSlug).find((x) => x.id === suiteId);
+    if (!s || s.deleted) throw new Error("Suite is deleted");
+    const cell = s.cells.find((c) => c.id === cellId);
+    if (cell) cell.enabled = enabled;
+    s.cellCount = s.cells.filter((c) => c.enabled).length;
+    s.updatedAt = new Date().toISOString();
+  },
+
+  async setDescription(
+    tenantSlug: string,
+    suiteId: string,
+    description: string,
+  ): Promise<void> {
+    await delay();
+    const s = rows(tenantSlug).find((x) => x.id === suiteId);
+    if (!s || s.deleted) throw new Error("Suite is deleted");
+    s.description = description;
+    s.updatedAt = new Date().toISOString();
+  },
+
+  async setProvider(
+    tenantSlug: string,
+    suiteId: string,
+    provider: SuiteProviderKind,
+  ): Promise<void> {
+    await delay();
+    const s = rows(tenantSlug).find((x) => x.id === suiteId);
+    if (!s || s.deleted) throw new Error("Suite is deleted");
+    s.provider = provider;
+    s.updatedAt = new Date().toISOString();
+  },
+
+  async setTags(
+    tenantSlug: string,
+    suiteId: string,
+    tags: string[],
+  ): Promise<void> {
+    await delay();
+    const s = rows(tenantSlug).find((x) => x.id === suiteId);
+    if (!s || s.deleted) throw new Error("Suite is deleted");
+    s.tags = [...new Set(tags.map((t) => t.trim()).filter(Boolean))];
+    s.updatedAt = new Date().toISOString();
+  },
+
+  async addCell(
+    tenantSlug: string,
+    suiteId: string,
+    cell: SuiteCellInput,
+  ): Promise<{ cellId: string }> {
+    await delay();
+    const s = rows(tenantSlug).find((x) => x.id === suiteId);
+    if (!s || s.deleted) throw new Error("Suite is deleted");
+    const cellId = `${s.id}-cell-${Date.now().toString(36)}`;
+    const resolved = await resolveCell(tenantSlug, cellId, cell);
+    s.cells.push(resolved);
+    s.cellCount = s.cells.filter((c) => c.enabled).length;
+    s.updatedAt = new Date().toISOString();
+    return { cellId };
+  },
+
+  async removeCell(
+    tenantSlug: string,
+    suiteId: string,
+    cellId: string,
+  ): Promise<void> {
+    await delay();
+    const s = rows(tenantSlug).find((x) => x.id === suiteId);
+    if (!s || s.deleted) throw new Error("Suite is deleted");
+    s.cells = s.cells.filter((c) => c.id !== cellId);
+    s.cellCount = s.cells.filter((c) => c.enabled).length;
+    s.updatedAt = new Date().toISOString();
+  },
+
+  async updateCell(
+    tenantSlug: string,
+    suiteId: string,
+    cellId: string,
+    cell: SuiteCellInput,
+  ): Promise<void> {
+    await delay();
+    const s = rows(tenantSlug).find((x) => x.id === suiteId);
+    if (!s || s.deleted) throw new Error("Suite is deleted");
+    const index = s.cells.findIndex((c) => c.id === cellId);
+    if (index < 0) return;
+    s.cells[index] = await resolveCell(tenantSlug, cellId, cell);
+    s.cellCount = s.cells.filter((c) => c.enabled).length;
     s.updatedAt = new Date().toISOString();
   },
 

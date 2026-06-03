@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"math"
 	"regexp"
-	"sort"
 	"strings"
 
 	schemapb "github.com/stroppy-io/schemapb/schemapb"
 	yandextf "github.com/stroppy-io/stroppy-cloud/deployments/terraform/yandex"
 	agentdomain "github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
+	networkinfra "github.com/stroppy-io/stroppy-cloud/internal/infrastructure/networks"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/terraform"
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
@@ -23,6 +23,7 @@ const (
 	defaultYandexPlatformID          = "standard-v2"
 	defaultYandexBootDiskType        = "network-ssd"
 	defaultYandexNetworkAcceleration = "standard"
+	reservedNetworkCIDRLabel         = "reserved_network_cidr"
 )
 
 func renderDockerInput(req *workflowpb.RenderDockerInputWorkflowRequest) (*deploymentpb.Docker_Input, error) {
@@ -169,7 +170,7 @@ func yandexInput(runID string, plan *deploymentpb.InfrastructurePlan, settings *
 			}
 		}
 		if clone.UserData == "" {
-			userData, err := agentdomain.CloudInit(machine.GetNodeId(), agentBootstrap(bootstrap), agentdomain.CloudInitOptions{
+			userData, err := agentdomain.CloudInit(machine.GetNodeId(), agentBootstrap(bootstrap, machine.GetNodeId()), agentdomain.CloudInitOptions{
 				SSHUser:      settings.GetSshUser(),
 				SSHPublicKey: settings.GetSshPublicKey(),
 			})
@@ -187,21 +188,35 @@ func yandexInput(runID string, plan *deploymentpb.InfrastructurePlan, settings *
 		vms[name] = clone
 	}
 
+	networkCIDR := plan.GetLabels()[reservedNetworkCIDRLabel]
+	if networkCIDR == "" {
+		var err error
+		networkCIDR, err = networkinfra.SelectRunCIDR(runID, settings.GetSubnetCidr(), nil)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	subnets := map[string]*deploymentpb.Yandex_Subnet{}
 	if len(zones) > 1 {
 		zoneList := make([]string, 0, len(zones))
 		for zone := range zones {
 			zoneList = append(zoneList, zone)
 		}
-		sort.Strings(zoneList)
-		subnets = runSubnetCIDRs(runID, zoneList)
+		zoneCIDRs, err := networkinfra.ZoneCIDRs(networkCIDR, zoneList)
+		if err != nil {
+			return nil, err
+		}
+		for zone, cidr := range zoneCIDRs {
+			subnets[zone] = &deploymentpb.Yandex_Subnet{Zone: zone, Cidr: cidr}
+		}
 	}
 
 	input := &deploymentpb.Yandex_Input{
 		Network: &deploymentpb.Yandex_Network{
 			Name:      yandexNetworkName(settings.GetNetworkName(), runID),
 			NetworkId: settings.GetNetworkId(),
-			Cidr:      runSubnetCIDR(runID, settings.GetSubnetCidr()),
+			Cidr:      networkCIDR,
 			Zone:      defaultZone,
 			Subnets:   subnets,
 		},
@@ -223,6 +238,18 @@ func yandexInput(runID string, plan *deploymentpb.InfrastructurePlan, settings *
 		return nil, err
 	}
 	return input, nil
+}
+
+func planWithReservedNetworkCIDR(plan *deploymentpb.InfrastructurePlan, cidr string) *deploymentpb.InfrastructurePlan {
+	if plan == nil {
+		return nil
+	}
+	clone := proto.Clone(plan).(*deploymentpb.InfrastructurePlan)
+	if clone.Labels == nil {
+		clone.Labels = map[string]string{}
+	}
+	clone.Labels[reservedNetworkCIDRLabel] = cidr
+	return clone
 }
 
 // managedYDBInputLabel is the plan-label key carrying the managed-YDB provider
@@ -287,7 +314,7 @@ func yandexEnv(settings *deploymentpb.Yandex_Settings) map[string]string {
 }
 
 func applyDockerAgentBootstrap(nodeID string, container *deploymentpb.Docker_Container, bootstrap *workflowpb.AgentBootstrap) error {
-	env, err := agentdomain.Env(nodeID, agentBootstrap(bootstrap))
+	env, err := agentdomain.Env(nodeID, agentBootstrap(bootstrap, nodeID))
 	if err != nil {
 		return fmt.Errorf("render docker agent env for %q: %w", nodeID, err)
 	}
@@ -301,7 +328,7 @@ func applyDockerAgentBootstrap(nodeID string, container *deploymentpb.Docker_Con
 	return nil
 }
 
-func agentBootstrap(input *workflowpb.AgentBootstrap) agentdomain.Bootstrap {
+func agentBootstrap(input *workflowpb.AgentBootstrap, nodeID string) agentdomain.Bootstrap {
 	if input == nil {
 		return agentdomain.Bootstrap{}
 	}
@@ -310,6 +337,8 @@ func agentBootstrap(input *workflowpb.AgentBootstrap) agentdomain.Bootstrap {
 		BinaryURL:         input.GetBinaryUrl(),
 		TemporalNamespace: input.GetTemporalNamespace(),
 		ExtraEnv:          input.GetExtraEnv(),
+		AgentToken:        input.GetAgentTokens()[nodeID],
+		AgentTaskQueue:    input.GetAgentTaskQueues()[nodeID],
 	}
 }
 
@@ -423,33 +452,6 @@ func roundIOM3GB(sizeGB int, diskType string) int {
 		return sizeGB
 	}
 	return int(math.Ceil(float64(sizeGB)/93.0)) * 93
-}
-
-func runSubnetCIDR(runID, base string) string {
-	if base == "" {
-		base = "10.0.0.0/8"
-	}
-	var hash byte
-	for _, b := range []byte(runID) {
-		hash = hash*31 + b
-	}
-	return fmt.Sprintf("10.%d.0.0/16", int(hash%254)+1)
-}
-
-func runSubnetCIDRs(runID string, zones []string) map[string]*deploymentpb.Yandex_Subnet {
-	var hash byte
-	for _, b := range []byte(runID) {
-		hash = hash*31 + b
-	}
-	octet := int(hash%254) + 1
-	out := make(map[string]*deploymentpb.Yandex_Subnet, len(zones))
-	for i, zone := range zones {
-		out[zone] = &deploymentpb.Yandex_Subnet{
-			Zone: zone,
-			Cidr: fmt.Sprintf("10.%d.%d.0/24", octet, i),
-		}
-	}
-	return out
 }
 
 func dockerNetworkName(runID string) string {

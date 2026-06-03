@@ -9,19 +9,17 @@ import "cloud/v1/workflow/deployment.proto";
 import "cloud/v1/domain/database.proto";
 import "cloud/v1/domain/workload.proto";
 import "cloud/v1/topology/topology.proto";
-import "google/protobuf/empty.proto";
-import "temporal/v1/temporal.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow";
 
 /*
-    run.proto defines the top-level workflow input. A run is staged: logical
-    topology -> infrastructure plan/state -> deployment plan -> workload.
+    run.proto defines the baked run input used by SuiteWorkflow and launch-time
+    expansion. Runtime orchestration is owned by TestWorkflow.
  */
 
 /*
-    RunConfig is the durable input to one benchmark run workflow.
+    RunConfig is the durable baked input for one benchmark run.
  */
 message RunConfig {
     /*
@@ -68,27 +66,4 @@ message RunConfig {
         agents through the provider-specific carrier.
      */
     AgentBootstrap agent_bootstrap = 9;
-}
-
-/*
-    RunWorkflowService is the top-level Temporal workflow over all stages.
- */
-service RunWorkflowService {
-    /*
-        task_queue: the shared server-side worker queue.
-     */
-    option (temporal.v1.service) = {task_queue: "stroppy-cloud"};
-
-    /*
-        TestRunWorkflow runs one full benchmark run:
-        infrastructure -> deployment plan render -> agent execution -> workload.
-     */
-    rpc TestRunWorkflow (RunConfig) returns (google.protobuf.Empty) {
-        option (temporal.v1.workflow) = {
-            name: "TestRunWorkflow"
-            id: 'run/${! id }'
-            id_reuse_policy: WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY
-            retry_policy: {max_attempts: 1}
-        };
-    }
 }

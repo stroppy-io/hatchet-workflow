@@ -240,6 +240,9 @@ export interface RunsQuery {
    * standalone runs (no suite_run_id).
    */
   standalone?: boolean;
+  /** suite_run_id — scope to a single suite run's child test runs (deep-link
+   * from a suite's runs table). Maps to ListTestRunsRequest.suite_run_id. */
+  suiteRunId?: string;
   /** filter.favorites_only — only runs the caller has favorited. */
   favoritesOnly?: boolean;
   /** filter.include_deleted — include soft-deleted runs. */

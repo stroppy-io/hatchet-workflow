@@ -10,13 +10,22 @@ import { Profile } from "@/pages/Profile";
 import { Dashboard } from "@/pages/Dashboard";
 import { Runs } from "@/pages/Runs";
 import { Suites } from "@/pages/Suites";
+import { SuiteDetail } from "@/pages/SuiteDetail";
 import { Quotas } from "@/pages/Quotas";
 import { NewRun } from "@/pages/NewRun";
 import { Placeholder } from "@/pages/Placeholder";
 import { DatabasePresets } from "@/pages/library/DatabasePresets";
+import { DatabasePresetForm } from "@/pages/library/DatabasePresetForm";
+import { DatabasePresetDetail } from "@/pages/library/DatabasePresetDetail";
 import { WorkloadPresets } from "@/pages/library/WorkloadPresets";
+import { WorkloadPresetForm } from "@/pages/library/WorkloadPresetForm";
+import { WorkloadPresetDetail } from "@/pages/library/WorkloadPresetDetail";
 import { TestPresets } from "@/pages/library/TestPresets";
+import { TestPresetForm } from "@/pages/library/TestPresetForm";
+import { TestPresetDetail } from "@/pages/library/TestPresetDetail";
 import { Packages } from "@/pages/library/Packages";
+import { PackageUploadForm } from "@/pages/library/PackageUploadForm";
+import { PackageDetail } from "@/pages/library/PackageDetail";
 import { AdminAccounts } from "@/pages/admin/AdminAccounts";
 import { AdminSystemSettings } from "@/pages/admin/AdminSystemSettings";
 import { Orgs } from "@/pages/orgs/Orgs";
@@ -50,7 +59,6 @@ const tenantPages: { path: string; title: string; crumbParam?: string }[] = [
   // declared explicitly below. `suites` is also real now.
   { path: "runs/:id", title: "Run Detail", crumbParam: "id" },
   { path: "compare", title: "Compare" },
-  { path: "suites/:id", title: "Suite Detail", crumbParam: "id" },
 ];
 
 export default function App() {
@@ -102,6 +110,7 @@ export default function App() {
               <Route path="runs" element={<Runs />} />
               <Route path="runs/new" element={<NewRun />} />
               <Route path="suites" element={<Suites />} />
+              <Route path="suites/:id" element={<SuiteDetail />} />
               <Route path="quotas" element={<Quotas />} />
               {/* Library — 3 preset tables + packages. */}
               <Route
@@ -109,9 +118,20 @@ export default function App() {
                 element={<Navigate to="database" replace />}
               />
               <Route path="presets/database" element={<DatabasePresets />} />
+              <Route path="presets/database/new" element={<DatabasePresetForm />} />
+              <Route path="presets/database/:id" element={<DatabasePresetDetail />} />
+              <Route path="presets/database/:id/edit" element={<DatabasePresetForm />} />
               <Route path="presets/workload" element={<WorkloadPresets />} />
+              <Route path="presets/workload/new" element={<WorkloadPresetForm />} />
+              <Route path="presets/workload/:id" element={<WorkloadPresetDetail />} />
+              <Route path="presets/workload/:id/edit" element={<WorkloadPresetForm />} />
               <Route path="presets/test" element={<TestPresets />} />
+              <Route path="presets/test/new" element={<TestPresetForm />} />
+              <Route path="presets/test/:id" element={<TestPresetDetail />} />
+              <Route path="presets/test/:id/edit" element={<TestPresetForm />} />
               <Route path="packages" element={<Packages />} />
+              <Route path="packages/new" element={<PackageUploadForm />} />
+              <Route path="packages/:id" element={<PackageDetail />} />
               {tenantPages.map((p) => (
                 <Route
                   key={p.path}

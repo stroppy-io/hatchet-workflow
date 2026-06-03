@@ -2838,7 +2838,7 @@ var (
 
 // SuiteWorkflowServiceClient describes a client for a(n) cloud.v1.workflow.SuiteWorkflowService worker
 type SuiteWorkflowServiceClient interface {
-	// SuiteWorkflow fans out a child TestRunWorkflow per run in the suite,
+	// SuiteWorkflow fans out a child TestWorkflow per run in the suite,
 	// deduplicated by a deterministic id derived from suite_run_id.
 	SuiteWorkflow(ctx context.Context, req *SuiteWorkflowRequest, opts ...*SuiteWorkflowOptions) (*SuiteWorkflowResponse, error)
 
@@ -2920,7 +2920,7 @@ func (opts *suiteWorkflowServiceClientOptions) getLogger() *slog.Logger {
 	return slog.Default()
 }
 
-// SuiteWorkflow fans out a child TestRunWorkflow per run in the suite,
+// SuiteWorkflow fans out a child TestWorkflow per run in the suite,
 // deduplicated by a deterministic id derived from suite_run_id.
 func (c *suiteWorkflowServiceClient) SuiteWorkflow(ctx context.Context, req *SuiteWorkflowRequest, options ...*SuiteWorkflowOptions) (*SuiteWorkflowResponse, error) {
 	run, err := c.SuiteWorkflowAsync(ctx, req, options...)
@@ -2930,7 +2930,7 @@ func (c *suiteWorkflowServiceClient) SuiteWorkflow(ctx context.Context, req *Sui
 	return run.Get(ctx)
 }
 
-// SuiteWorkflow fans out a child TestRunWorkflow per run in the suite,
+// SuiteWorkflow fans out a child TestWorkflow per run in the suite,
 // deduplicated by a deterministic id derived from suite_run_id.
 func (c *suiteWorkflowServiceClient) SuiteWorkflowAsync(ctx context.Context, req *SuiteWorkflowRequest, options ...*SuiteWorkflowOptions) (SuiteWorkflowRun, error) {
 	var o *SuiteWorkflowOptions
@@ -3185,7 +3185,7 @@ func (r *suiteWorkflowRun) Terminate(ctx context.Context, reason string, details
 var (
 	// suiteWorkflowServiceRegistrationMutex is a mutex for registering cloud.v1.workflow.SuiteWorkflowService workflows
 	suiteWorkflowServiceRegistrationMutex sync.Mutex
-	// SuiteWorkflow fans out a child TestRunWorkflow per run in the suite,
+	// SuiteWorkflow fans out a child TestWorkflow per run in the suite,
 	// deduplicated by a deterministic id derived from suite_run_id.
 	SuiteWorkflowFunction func(workflow.Context, *SuiteWorkflowRequest) (*SuiteWorkflowResponse, error)
 )
@@ -3194,7 +3194,7 @@ var (
 type (
 	// SuiteWorkflowServiceWorkflowFunctions describes a mockable dependency for inlining workflows within other workflows
 	SuiteWorkflowServiceWorkflowFunctions interface {
-		// SuiteWorkflow fans out a child TestRunWorkflow per run in the suite,
+		// SuiteWorkflow fans out a child TestWorkflow per run in the suite,
 		// deduplicated by a deterministic id derived from suite_run_id.
 		SuiteWorkflow(workflow.Context, *SuiteWorkflowRequest) (*SuiteWorkflowResponse, error)
 	}
@@ -3206,7 +3206,7 @@ func NewSuiteWorkflowServiceWorkflowFunctions() SuiteWorkflowServiceWorkflowFunc
 	return &suiteWorkflowServiceWorkflowFunctions{}
 }
 
-// SuiteWorkflow fans out a child TestRunWorkflow per run in the suite,
+// SuiteWorkflow fans out a child TestWorkflow per run in the suite,
 // deduplicated by a deterministic id derived from suite_run_id.
 func (f *suiteWorkflowServiceWorkflowFunctions) SuiteWorkflow(ctx workflow.Context, req *SuiteWorkflowRequest) (*SuiteWorkflowResponse, error) {
 	if SuiteWorkflowFunction == nil {
@@ -3217,7 +3217,7 @@ func (f *suiteWorkflowServiceWorkflowFunctions) SuiteWorkflow(ctx workflow.Conte
 
 // SuiteWorkflowServiceWorkflows provides methods for initializing new cloud.v1.workflow.SuiteWorkflowService workflow values
 type SuiteWorkflowServiceWorkflows interface {
-	// SuiteWorkflow fans out a child TestRunWorkflow per run in the suite,
+	// SuiteWorkflow fans out a child TestWorkflow per run in the suite,
 	// deduplicated by a deterministic id derived from suite_run_id.
 	SuiteWorkflow(ctx workflow.Context, input *SuiteWorkflowWorkflowInput) (SuiteWorkflowWorkflow, error)
 }
@@ -3271,7 +3271,7 @@ func (i *SuiteWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Context, input *
 	return nil, workflow.NewContinueAsNewError(ctx, SuiteWorkflowWorkflowName, next)
 }
 
-// SuiteWorkflow fans out a child TestRunWorkflow per run in the suite,
+// SuiteWorkflow fans out a child TestWorkflow per run in the suite,
 // deduplicated by a deterministic id derived from suite_run_id.
 //
 // workflow details: (id: "suite-run/${! suite_run_id }")
@@ -3280,7 +3280,7 @@ type SuiteWorkflowWorkflow interface {
 	Execute(ctx workflow.Context) (*SuiteWorkflowResponse, error)
 }
 
-// SuiteWorkflow fans out a child TestRunWorkflow per run in the suite,
+// SuiteWorkflow fans out a child TestWorkflow per run in the suite,
 // deduplicated by a deterministic id derived from suite_run_id.
 func SuiteWorkflowChild(ctx workflow.Context, req *SuiteWorkflowRequest, options ...*SuiteWorkflowChildOptions) (*SuiteWorkflowResponse, error) {
 	childRun, err := SuiteWorkflowChildAsync(ctx, req, options...)
@@ -3290,7 +3290,7 @@ func SuiteWorkflowChild(ctx workflow.Context, req *SuiteWorkflowRequest, options
 	return childRun.Get(ctx)
 }
 
-// SuiteWorkflow fans out a child TestRunWorkflow per run in the suite,
+// SuiteWorkflow fans out a child TestWorkflow per run in the suite,
 // deduplicated by a deterministic id derived from suite_run_id.
 func SuiteWorkflowChildAsync(ctx workflow.Context, req *SuiteWorkflowRequest, options ...*SuiteWorkflowChildOptions) (*SuiteWorkflowChildRun, error) {
 	var o *SuiteWorkflowChildOptions

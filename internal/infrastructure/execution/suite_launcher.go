@@ -49,11 +49,12 @@ type SuiteRunPersister interface {
 // persists them, fills the SuiteRunRecord children + summary, and builds a
 // post-commit SuiteWorkflow starter with one RunConfig per child.
 type SuiteRunLauncher struct {
-	tc       workflowpb.SuiteWorkflowServiceClient
-	resolver CellResolver
-	children ChildRunPersister
-	suites   SuiteRunPersister
-	settings runbuilder.SettingsSource
+	tc          workflowpb.SuiteWorkflowServiceClient
+	resolver    CellResolver
+	children    ChildRunPersister
+	suites      SuiteRunPersister
+	settings    runbuilder.SettingsSource
+	agentTokens AgentTokenIssuer
 }
 
 var _ suite.SuiteRunLauncher = (*SuiteRunLauncher)(nil)
@@ -66,13 +67,14 @@ var _ suite.SuiteRunLauncher = (*SuiteRunLauncher)(nil)
 //   - suites persists the parent SuiteRunRecord after children are attached.
 //   - settings supplies per-provider settings + agent bootstrap for the RunConfigs
 //     (may be nil to build RunConfigs without provider settings / bootstrap).
-func NewSuiteRunLauncher(c client.Client, resolver CellResolver, children ChildRunPersister, suites SuiteRunPersister, settings runbuilder.SettingsSource) *SuiteRunLauncher {
+func NewSuiteRunLauncher(c client.Client, resolver CellResolver, children ChildRunPersister, suites SuiteRunPersister, settings runbuilder.SettingsSource, agentTokens AgentTokenIssuer) *SuiteRunLauncher {
 	return &SuiteRunLauncher{
-		tc:       workflowpb.NewSuiteWorkflowServiceClient(c),
-		resolver: resolver,
-		children: children,
-		suites:   suites,
-		settings: settings,
+		tc:          workflowpb.NewSuiteWorkflowServiceClient(c),
+		resolver:    resolver,
+		children:    children,
+		suites:      suites,
+		settings:    settings,
+		agentTokens: agentTokens,
 	}
 }
 
@@ -264,7 +266,7 @@ func (l *SuiteRunLauncher) bakeCell(ctx context.Context, tenantID string, spec *
 		return nil, errors.New("resolved cell has no database+workload")
 	}
 
-	infraOpts := infrastructurebuilder.BuildOptions{}
+	infraOpts := infrastructurebuilder.BuildOptionsFromMachineOverrides(spec.GetProvider(), cell.GetMachineOverrides())
 	overrides := cell.GetRenderOverrides()
 
 	testRun, err := runbuilder.BuildTestRun(runbuilder.BuildOptions{
@@ -305,6 +307,10 @@ func (l *SuiteRunLauncher) runConfig(ctx context.Context, tenantID string, provi
 			cfg.InfrastructurePlan.Settings = providerSettings
 		}
 		bootstrap, err := l.settings.AgentBootstrap(ctx)
+		if err != nil {
+			return nil, err
+		}
+		bootstrap, err = attachAgentTokens(bootstrap, l.agentTokens, tenantID, testRun.GetId(), cfg.GetInfrastructurePlan())
 		if err != nil {
 			return nil, err
 		}
