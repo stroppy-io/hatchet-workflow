@@ -12,6 +12,7 @@ import {
   type YDBTopology,
   type YDBManagedTopology,
   type YDBManagedComputeType,
+  type TestingTopology,
   type MachineSpec,
   YDB_MANAGED_RESOURCE_PRESETS,
 } from "@/api/types";
@@ -35,6 +36,7 @@ import {
   Server,
   Cpu,
   Cloud,
+  FlaskConical,
   Plus,
   Trash2,
   Lock,
@@ -293,6 +295,14 @@ export function defaultYDBManaged(): YDBManagedTopology {
   };
 }
 
+export function defaultTesting(): TestingTopology {
+  return {
+    mode: "pg-noop",
+    database: { role: "database", count: 1, cpus: 2, memory_mb: 4096, disk_gb: 50, disk_type: "network-ssd" },
+    pg_noop: { version: "0.1.1", port: 5432 },
+  };
+}
+
 // ─── Machine Spec Editor ─────────────────────────────────────────
 
 function MachineEditor({
@@ -357,6 +367,102 @@ function MachineEditor({
         diskSizeGb={spec.disk_gb}
       />
       {children}
+    </div>
+  );
+}
+
+export function TestingForm({ topology, onChange, disabled }: {
+  topology: TestingTopology;
+  onChange: (t: TestingTopology) => void;
+  disabled?: boolean;
+}) {
+  const mode = topology.mode || "noop-driver";
+  const database = topology.database || { role: "database" as const, count: 1, cpus: 2, memory_mb: 4096, disk_gb: 50, disk_type: "network-ssd" };
+  const pgNoop = topology.pg_noop || { version: "0.1.1", port: 5432 };
+
+  function setMode(nextMode: TestingTopology["mode"]) {
+    if (nextMode === "noop-driver") {
+      onChange({ mode: "noop-driver" });
+      return;
+    }
+    onChange({ mode: "pg-noop", database, pg_noop: pgNoop });
+  }
+
+  function setPgNoop(next: NonNullable<TestingTopology["pg_noop"]>) {
+    onChange({ ...topology, mode: "pg-noop", database, pg_noop: next });
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-2">
+        {(["noop-driver", "pg-noop"] as const).map((m) => {
+          const active = mode === m;
+          return (
+            <button
+              key={m}
+              type="button"
+              disabled={disabled}
+              onClick={() => setMode(m)}
+              className={`border p-3 text-left transition-all ${
+                active ? "border-primary/40 bg-primary/[0.06] text-primary" : "border-zinc-800/60 text-zinc-500 hover:border-zinc-700"
+              } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+            >
+              <div className="text-xs font-mono font-semibold">{m}</div>
+              <div className="text-[10px] font-mono text-zinc-600 mt-1">
+                {m === "noop-driver" ? "No DB endpoint; stroppy uses driver_type=noop." : "Single pg-noop VM, PostgreSQL wire blackhole."}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {mode === "pg-noop" && (
+        <>
+          <MachineEditor
+            label="pg-noop machine"
+            spec={database}
+            countLocked
+            disabled={disabled}
+            onChange={(s) => onChange({ ...topology, mode: "pg-noop", database: { ...s, role: "database", count: 1 }, pg_noop: pgNoop })}
+          />
+          <div className="grid grid-cols-3 gap-3 border border-zinc-800/60 p-3">
+            <div className="space-y-1.5">
+              <Label className="text-[9px] font-mono text-zinc-600">pg-noop version</Label>
+              <Input
+                value={pgNoop.version || ""}
+                disabled={disabled}
+                onChange={(e) => setPgNoop({ ...pgNoop, version: e.target.value })}
+                className="h-7 text-xs font-mono"
+                placeholder="0.1.1"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-[9px] font-mono text-zinc-600">Port</Label>
+              <Input
+                type="number"
+                min={1}
+                max={65535}
+                value={pgNoop.port || 5432}
+                disabled={disabled}
+                onChange={(e) => setPgNoop({ ...pgNoop, port: Number(e.target.value) || 5432 })}
+                className="h-7 text-xs font-mono"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-[9px] font-mono text-zinc-600">Workers</Label>
+              <Input
+                type="number"
+                min={0}
+                value={pgNoop.workers || 0}
+                disabled={disabled}
+                onChange={(e) => setPgNoop({ ...pgNoop, workers: Number(e.target.value) || undefined })}
+                className="h-7 text-xs font-mono"
+                placeholder="auto"
+              />
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -1435,6 +1541,7 @@ const DB_META: Record<DatabaseKind, { icon: typeof Database; label: string }> = 
   ydb:       { icon: Database, label: "YDB" },
   "ydb-managed": { icon: Cloud, label: "YDB Managed" },
   cockroach: { icon: Database, label: "CockroachDB" },
+  testing:   { icon: FlaskConical, label: "Testing" },
 };
 
 export function PresetDesigner() {
@@ -1454,6 +1561,7 @@ export function PresetDesigner() {
   const [picoTopology, setPicoTopology] = useState<PicodataTopology>(defaultPicodata());
   const [ydbTopology, setYdbTopology] = useState<YDBTopology>(defaultYDB());
   const [ydbmTopology, setYdbmTopology] = useState<YDBManagedTopology>(defaultYDBManaged());
+  const [testingTopology, setTestingTopology] = useState<TestingTopology>(defaultTesting());
 
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -1471,6 +1579,7 @@ export function PresetDesigner() {
         else if (p.db_kind === "picodata") setPicoTopology(p.topology as PicodataTopology);
         else if (p.db_kind === "ydb") setYdbTopology(p.topology as YDBTopology);
         else if (p.db_kind === "ydb-managed") setYdbmTopology(p.topology as YDBManagedTopology);
+        else if (p.db_kind === "testing") setTestingTopology(p.topology as TestingTopology);
       })
       .catch(() => setMessage({ type: "error", text: "Failed to load preset" }))
       .finally(() => setLoading(false));
@@ -1481,8 +1590,9 @@ export function PresetDesigner() {
     if (dbKind === "mysql") return myTopology;
     if (dbKind === "ydb") return ydbTopology;
     if (dbKind === "ydb-managed") return ydbmTopology;
+    if (dbKind === "testing") return testingTopology;
     return picoTopology;
-  }, [dbKind, pgTopology, myTopology, picoTopology, ydbTopology, ydbmTopology]);
+  }, [dbKind, pgTopology, myTopology, picoTopology, ydbTopology, ydbmTopology, testingTopology]);
 
   const errors = useMemo((): ValidationError[] => {
     const errs: ValidationError[] = [];
@@ -1491,8 +1601,12 @@ export function PresetDesigner() {
     else if (dbKind === "mysql") errs.push(...validateMySQL(myTopology));
     else if (dbKind === "picodata") errs.push(...validatePicodata(picoTopology));
     else if (dbKind === "ydb") errs.push(...validateYDB(ydbTopology));
+    else if (dbKind === "testing" && testingTopology.mode === "pg-noop") {
+      if (!testingTopology.database) errs.push({ field: "database", message: "pg-noop database machine is required" });
+      else errs.push(...validateMachine(testingTopology.database, "pg-noop database"));
+    }
     return errs;
-  }, [name, dbKind, pgTopology, myTopology, picoTopology, ydbTopology]);
+  }, [name, dbKind, pgTopology, myTopology, picoTopology, ydbTopology, testingTopology]);
 
   const isValid = errors.length === 0;
 
@@ -1623,6 +1737,9 @@ export function PresetDesigner() {
               <div className="text-[11px] font-mono text-zinc-500 border border-zinc-800/60 bg-[#070707] p-3">
                 CockroachDB has no inline topology editor yet — edit via Raw JSON.
               </div>
+            )}
+            {dbKind === "testing" && (
+              <TestingForm topology={testingTopology} onChange={setTestingTopology} disabled={isBuiltin} />
             )}
           </div>
         </div>

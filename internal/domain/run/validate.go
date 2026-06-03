@@ -26,7 +26,7 @@ func ValidateConfig(cfg types.RunConfig) error {
 		if cfg.ExternalDB.Endpoint == "" {
 			return fmt.Errorf("external_db.endpoint is required")
 		}
-	} else if cfg.Database.Postgres == nil && cfg.Database.MySQL == nil && cfg.Database.MariaDB == nil && cfg.Database.Picodata == nil && cfg.Database.YDB == nil && cfg.Database.YDBManaged == nil && cfg.Database.Cockroach == nil && cfg.PresetID == "" {
+	} else if cfg.Database.Postgres == nil && cfg.Database.MySQL == nil && cfg.Database.MariaDB == nil && cfg.Database.Picodata == nil && cfg.Database.YDB == nil && cfg.Database.YDBManaged == nil && cfg.Database.Cockroach == nil && cfg.Database.Testing == nil && cfg.PresetID == "" {
 		return fmt.Errorf("database topology or preset_id is required")
 	}
 
@@ -38,13 +38,14 @@ func ValidateConfig(cfg types.RunConfig) error {
 		label    string
 	}
 	checks := []topoCheck{
-		{types.DatabasePostgres, cfg.Database.MySQL != nil || cfg.Database.MariaDB != nil || cfg.Database.Picodata != nil || cfg.Database.YDB != nil || cfg.Database.YDBManaged != nil || cfg.Database.Cockroach != nil, "postgres"},
-		{types.DatabaseMySQL, cfg.Database.Postgres != nil || cfg.Database.MariaDB != nil || cfg.Database.Picodata != nil || cfg.Database.YDB != nil || cfg.Database.YDBManaged != nil || cfg.Database.Cockroach != nil, "mysql"},
-		{types.DatabaseMariaDB, cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.Picodata != nil || cfg.Database.YDB != nil || cfg.Database.YDBManaged != nil || cfg.Database.Cockroach != nil, "mariadb"},
-		{types.DatabasePicodata, cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.MariaDB != nil || cfg.Database.YDB != nil || cfg.Database.YDBManaged != nil || cfg.Database.Cockroach != nil, "picodata"},
-		{types.DatabaseYDB, cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.MariaDB != nil || cfg.Database.Picodata != nil || cfg.Database.YDBManaged != nil || cfg.Database.Cockroach != nil, "ydb"},
-		{types.DatabaseYDBManaged, cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.MariaDB != nil || cfg.Database.Picodata != nil || cfg.Database.YDB != nil || cfg.Database.Cockroach != nil, "ydb-managed"},
-		{types.DatabaseCockroach, cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.MariaDB != nil || cfg.Database.Picodata != nil || cfg.Database.YDB != nil || cfg.Database.YDBManaged != nil, "cockroach"},
+		{types.DatabasePostgres, cfg.Database.MySQL != nil || cfg.Database.MariaDB != nil || cfg.Database.Picodata != nil || cfg.Database.YDB != nil || cfg.Database.YDBManaged != nil || cfg.Database.Cockroach != nil || cfg.Database.Testing != nil, "postgres"},
+		{types.DatabaseMySQL, cfg.Database.Postgres != nil || cfg.Database.MariaDB != nil || cfg.Database.Picodata != nil || cfg.Database.YDB != nil || cfg.Database.YDBManaged != nil || cfg.Database.Cockroach != nil || cfg.Database.Testing != nil, "mysql"},
+		{types.DatabaseMariaDB, cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.Picodata != nil || cfg.Database.YDB != nil || cfg.Database.YDBManaged != nil || cfg.Database.Cockroach != nil || cfg.Database.Testing != nil, "mariadb"},
+		{types.DatabasePicodata, cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.MariaDB != nil || cfg.Database.YDB != nil || cfg.Database.YDBManaged != nil || cfg.Database.Cockroach != nil || cfg.Database.Testing != nil, "picodata"},
+		{types.DatabaseYDB, cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.MariaDB != nil || cfg.Database.Picodata != nil || cfg.Database.YDBManaged != nil || cfg.Database.Cockroach != nil || cfg.Database.Testing != nil, "ydb"},
+		{types.DatabaseYDBManaged, cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.MariaDB != nil || cfg.Database.Picodata != nil || cfg.Database.YDB != nil || cfg.Database.Cockroach != nil || cfg.Database.Testing != nil, "ydb-managed"},
+		{types.DatabaseCockroach, cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.MariaDB != nil || cfg.Database.Picodata != nil || cfg.Database.YDB != nil || cfg.Database.YDBManaged != nil || cfg.Database.Testing != nil, "cockroach"},
+		{types.DatabaseTesting, cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.MariaDB != nil || cfg.Database.Picodata != nil || cfg.Database.YDB != nil || cfg.Database.YDBManaged != nil || cfg.Database.Cockroach != nil, "testing"},
 	}
 	for _, c := range checks {
 		if cfg.Database.Kind == c.ownKind && c.otherSet {
@@ -61,6 +62,14 @@ func ValidateConfig(cfg types.RunConfig) error {
 	protocol := cfg.Stroppy.Protocol
 	if protocol == "" {
 		protocol = types.DefaultProtocol(cfg.Database.Kind)
+	}
+	if cfg.Database.Kind == types.DatabaseTesting && cfg.Database.Testing != nil {
+		switch cfg.Database.Testing.Mode {
+		case types.TestingNoopDriver:
+			protocol = types.ProtocolNoop
+		case types.TestingPgNoop:
+			protocol = types.ProtocolPG
+		}
 	}
 	if protocol != "" && !types.KindSupportsProtocol(cfg.Database.Kind, protocol) {
 		return fmt.Errorf("protocol %q is not supported by database %q", protocol, cfg.Database.Kind)
@@ -159,8 +168,36 @@ func ValidateConfig(cfg types.RunConfig) error {
 			return err
 		}
 	}
+	if cfg.Database.Kind == types.DatabaseTesting && cfg.Database.Testing != nil {
+		if err := validateTestingTopology(cfg.Database.Testing); err != nil {
+			return err
+		}
+	}
 
 	return nil
+}
+
+func validateTestingTopology(t *types.TestingTopology) error {
+	switch t.Mode {
+	case types.TestingNoopDriver:
+		return nil
+	case types.TestingPgNoop:
+		if t.Database == nil {
+			return fmt.Errorf("testing.database is required for pg-noop mode")
+		}
+		if t.Database.CPUs < 1 {
+			return fmt.Errorf("testing.database.cpus must be >= 1")
+		}
+		if t.Database.MemoryMB < 512 {
+			return fmt.Errorf("testing.database.memory_mb must be >= 512")
+		}
+		if t.Database.DiskGB < 10 {
+			return fmt.Errorf("testing.database.disk_gb must be >= 10")
+		}
+		return nil
+	default:
+		return fmt.Errorf("testing.mode must be %q or %q", types.TestingNoopDriver, types.TestingPgNoop)
+	}
 }
 
 func validateYDBTopology(t *types.YDBTopology) error {

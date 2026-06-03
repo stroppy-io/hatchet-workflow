@@ -34,6 +34,7 @@ var binaryUpstreams = map[string]string{
 	"vector":            "https://packages.timber.io/vector/{ver}/{file}",
 	"postgres_exporter": "https://github.com/prometheus-community/postgres_exporter/releases/download/v{ver}/{file}",
 	"mysqld_exporter":   "https://github.com/prometheus/mysqld_exporter/releases/download/v{ver}/{file}",
+	"pgnoop":            "https://github.com/stroppy-io/pg-noop/releases/download/v{ver}/{file}",
 }
 
 // binaryCacheDir is the persistent location of cached artifacts. Backed by

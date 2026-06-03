@@ -181,6 +181,9 @@ func dbDriverURL(dbKind types.DatabaseKind, protocol types.Protocol, host, port 
 		// nonsense before we get here.
 		return fmt.Sprintf("%s:%s", host, port), string(dbKind)
 	}
+	if protocol == types.ProtocolNoop {
+		return "", meta.DriverType
+	}
 	url := meta.FormatURL(host, port)
 	// A couple of historical URLs carry credentials in the userinfo slot.
 	// Splice them in here so the Protocols registry stays simple.
@@ -221,6 +224,14 @@ func BuildStroppyConfigJSON(s types.StroppyConfig, dbKind types.DatabaseKind, db
 	protocol := s.Protocol
 	if protocol == "" {
 		protocol = types.DefaultProtocol(dbKind)
+	}
+	if dbKind == types.DatabaseTesting && dbCfg.Testing != nil {
+		switch dbCfg.Testing.Mode {
+		case types.TestingNoopDriver:
+			protocol = types.ProtocolNoop
+		case types.TestingPgNoop:
+			protocol = types.ProtocolPG
+		}
 	}
 
 	hostTok, portTok := dbHost, strconv.Itoa(dbPort)

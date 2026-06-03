@@ -672,9 +672,15 @@ func (s *Server) enqueueRun(ctx context.Context, tenantID string, cfg *types.Run
 }
 
 func (s *Server) runValidate(w http.ResponseWriter, r *http.Request) {
+	tenantID := auth.TenantID(r.Context())
 	var cfg types.RunConfig
 	if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := s.resolveRunPreset(r.Context(), tenantID, &cfg); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
 

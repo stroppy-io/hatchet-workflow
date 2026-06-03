@@ -1,7 +1,7 @@
 // --- Enums / constants ---
 
 export type Provider = "yandex" | "docker";
-export type DatabaseKind = "postgres" | "mysql" | "mariadb" | "picodata" | "ydb" | "ydb-managed" | "cockroach";
+export type DatabaseKind = "postgres" | "mysql" | "mariadb" | "picodata" | "ydb" | "ydb-managed" | "cockroach" | "testing";
 
 // Protocol is the wire format stroppy uses to talk to a database. Decoupled
 // from DatabaseKind because YDB and Picodata speak more than one. See
@@ -13,7 +13,8 @@ export type Protocol =
   | "ydb-grpc"
   | "ydb-pgwire"
   | "ydb-grpcs"
-  | "cockroach";
+  | "cockroach"
+  | "noop";
 
 // KindProtocols mirrors the Go-side registry. First entry is the default
 // when the user hasn't picked one explicitly. Single-protocol kinds don't
@@ -26,6 +27,7 @@ export const KIND_PROTOCOLS: Record<DatabaseKind, Protocol[]> = {
   ydb: ["ydb-grpc", "ydb-pgwire"],
   "ydb-managed": ["ydb-grpcs"],
   cockroach: ["cockroach"],
+  testing: ["noop", "pg"],
 };
 
 // SCRIPT_COMPAT keys (kind, protocol) and lists which scripts the wizard
@@ -39,10 +41,12 @@ export const SCRIPT_COMPAT: Record<string, string[]> = {
   "ydb:ydb-pgwire":   ["tpcc/tx-ydb-pgwire", "tpcb/tx-ydb-pgwire"],
   "ydb-managed:ydb-grpcs": ["tpcc/tx", "tpcb/tx", "tpch/tx"],
   "cockroach:cockroach": ["tpcc/tx", "tpcb/tx", "tpch/tx"],
+  "testing:noop":    ["tpcc/procs", "tpcc/tx", "tpcb/procs", "tpcb/tx", "tpch/tx", "tpcc/tx-ydb-pgwire", "tpcb/tx-ydb-pgwire"],
+  "testing:pg":      ["tpcc/procs", "tpcc/tx", "tpcb/procs", "tpcb/tx", "tpch/tx", "tpcc/tx-ydb-pgwire", "tpcb/tx-ydb-pgwire"],
 };
 
 /** All supported database kinds — single source of truth for UI iterations. */
-export const ALL_DB_KINDS: DatabaseKind[] = ["postgres", "mysql", "mariadb", "picodata", "ydb", "ydb-managed", "cockroach"];
+export const ALL_DB_KINDS: DatabaseKind[] = ["postgres", "mysql", "mariadb", "picodata", "ydb", "ydb-managed", "cockroach", "testing"];
 
 export type Phase =
   | "network"
@@ -238,6 +242,18 @@ export interface CockroachTopology {
   options?: Record<string, string>;
 }
 
+export interface PgNoopConfig {
+  version?: string;
+  port?: number;
+  workers?: number;
+}
+
+export interface TestingTopology {
+  mode: "noop-driver" | "pg-noop";
+  database?: MachineSpec;
+  pg_noop?: PgNoopConfig;
+}
+
 export interface DatabaseConfig {
   kind: DatabaseKind;
   version: string;
@@ -248,6 +264,7 @@ export interface DatabaseConfig {
   ydb?: YDBTopology;
   ydb_managed?: YDBManagedTopology;
   cockroach?: CockroachTopology;
+  testing?: TestingTopology;
   rendered_config_overrides?: Record<string, string>;
 }
 
@@ -565,7 +582,7 @@ export interface Preset {
   description: string;
   db_kind: DatabaseKind;
   is_builtin: boolean;
-  topology: PostgresTopology | MySQLTopology | PicodataTopology | YDBTopology | YDBManagedTopology | CockroachTopology;
+  topology: PostgresTopology | MySQLTopology | PicodataTopology | YDBTopology | YDBManagedTopology | CockroachTopology | TestingTopology;
   created_at?: string;
 }
 

@@ -89,6 +89,7 @@ export function probeDriverType(protocol: Protocol, dbKind: DatabaseKind): strin
     case "pg":
     case "ydb-pgwire":
     case "cockroach": return "postgres";
+    case "noop": return "noop";
     default: return dbKind;
   }
 }

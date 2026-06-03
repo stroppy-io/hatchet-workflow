@@ -35,11 +35,13 @@ import {
   PicodataForm,
   YDBForm,
   YDBManagedForm,
+  TestingForm,
   defaultPostgres,
   defaultMySQL,
   defaultPicodata,
   defaultYDB,
   defaultYDBManaged,
+  defaultTesting,
 } from "@/pages/PresetDesigner";
 import type {
   PostgresTopology,
@@ -47,6 +49,7 @@ import type {
   PicodataTopology,
   YDBTopology,
   YDBManagedTopology,
+  TestingTopology,
 } from "@/api/types";
 import { JsonEditor } from "@/components/ui/json-editor";
 import { ConfigEditor } from "@/components/ui/config-editor";
@@ -97,6 +100,7 @@ const DB_VERSIONS: Record<DatabaseKind, string[]> = {
   // wizard's required version field has something coherent to render.
   "ydb-managed": ["managed"],
   cockroach: ["24.2", "24.1", "23.2"],
+  testing: ["noop"],
 };
 
 const DB_META: Record<DatabaseKind, { icon: typeof Database; label: string }> = {
@@ -107,7 +111,16 @@ const DB_META: Record<DatabaseKind, { icon: typeof Database; label: string }> = 
   ydb:       { icon: Database, label: "YDB" },
   "ydb-managed": { icon: Cloud, label: "YDB Managed" },
   cockroach: { icon: Database, label: "CockroachDB" },
+  testing:   { icon: FlaskConical, label: "Testing" },
 };
+
+function protocolForPreset(kind: DatabaseKind, topology: Preset["topology"] | undefined): Protocol | null {
+  if (kind !== "testing" || !topology) return null;
+  const t = topology as TestingTopology;
+  if (t.mode === "pg-noop") return "pg";
+  if (t.mode === "noop-driver") return "noop";
+  return null;
+}
 
 function redactRunConfigForDisplay(cfg: RunConfig): RunConfig {
   if (!cfg.stroppy.files?.length) return cfg;
@@ -286,6 +299,12 @@ export function NewRun() {
       setProtocol(KIND_PROTOCOLS[kind][0]);
     }
   }, [kind, allPresets]);
+  useEffect(() => {
+    const preset = allPresets.find((p) => p.id === selectedPresetId);
+    const editedTopology = topologyEdits[kind] as Preset["topology"] | undefined;
+    const nextProtocol = protocolForPreset(kind, editedTopology ?? preset?.topology);
+    if (nextProtocol && protocol !== nextProtocol) setProtocol(nextProtocol);
+  }, [kind, selectedPresetId, allPresets, topologyEdits, protocol]);
   // Script compatibility now keys on (kind, protocol). Reset to the first
   // valid entry whenever the current pick falls off the matrix — both kind
   // changes and protocol toggles can break compatibility.
@@ -299,6 +318,11 @@ export function NewRun() {
   useEffect(() => {
     listPackages({ db_kind: kind, db_version: version }).then(setAvailablePackages).catch(() => {});
   }, [kind, version]);
+  useEffect(() => {
+    if ((kind === "ydb" || kind === "ydb-managed" || kind === "testing") && packageId) {
+      setPackageId("");
+    }
+  }, [kind, packageId]);
 
   const presetsForKind = useMemo(
     () => allPresets.filter((p) => p.db_kind === kind),
@@ -513,7 +537,7 @@ export function NewRun() {
     // live on the run, not the preset.
     const topology =
       db.postgres ?? db.mysql ?? db.mariadb ?? db.picodata ??
-      db.ydb ?? db.ydb_managed ?? db.cockroach;
+      db.ydb ?? db.ydb_managed ?? db.cockroach ?? db.testing;
     if (!topology) {
       const msg = "No topology to save — the current database config has no topology subtree.";
       setError(msg);
@@ -1009,7 +1033,7 @@ function StepDatabase({
             />
           )}
         </div>
-        {kind !== "ydb" && (
+        {kind !== "ydb" && kind !== "ydb-managed" && kind !== "testing" && (
           <div className="space-y-1.5">
             <Label className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">Package</Label>
             <Select value={packageId || "__default__"} onValueChange={(v) => setPackageId(v === "__default__" ? "" : v)}>
@@ -1038,7 +1062,11 @@ function StepDatabase({
           {presetsForKind.map((p) => {
             const active = selectedPresetId === p.id;
             return (
-              <button type="button" key={p.id} onClick={() => setSelectedPresetId(p.id)}
+              <button type="button" key={p.id} onClick={() => {
+                setSelectedPresetId(p.id);
+                const nextProtocol = protocolForPreset(kind, p.topology);
+                if (nextProtocol) setProtocol(nextProtocol);
+              }}
                 className={`border p-3 text-left transition-all cursor-pointer ${
                   active ? `${dbColor.accent}` : "border-zinc-800/60 hover:bg-zinc-900/50 hover:border-zinc-700"
                 }`}
@@ -1075,6 +1103,7 @@ function StepDatabase({
           defaultPresetDescription={defaultPresetDescription}
           onSaveAsTopologyPreset={onSaveAsTopologyPreset}
           onPresetCreated={onPresetCreated}
+          setProtocol={setProtocol}
         />
       )}
     </div>
@@ -1091,6 +1120,7 @@ function TopologyEditPanel({
   defaultPresetDescription,
   onSaveAsTopologyPreset,
   onPresetCreated,
+  setProtocol,
 }: {
   kind: DatabaseKind;
   presetsForKind: Preset[];
@@ -1101,6 +1131,7 @@ function TopologyEditPanel({
   defaultPresetDescription: string;
   onSaveAsTopologyPreset: (name: string, description: string) => Promise<void>;
   onPresetCreated: (id: string) => void;
+  setProtocol: (p: Protocol) => void;
 }) {
   const selectedPreset = presetsForKind.find((p) => p.id === selectedPresetId);
   const [editing, setEditing] = useState(false);
@@ -1112,8 +1143,9 @@ function TopologyEditPanel({
   const [pico, setPico] = useState<PicodataTopology>(defaultPicodata());
   const [ydb, setYdb] = useState<YDBTopology>(defaultYDB());
   const [ydbm, setYdbm] = useState<YDBManagedTopology>(defaultYDBManaged());
+  const [testing, setTesting] = useState<TestingTopology>(defaultTesting());
 
-  const editorSupported = kind === "postgres" || kind === "mysql" || kind === "mariadb" || kind === "picodata" || kind === "ydb" || kind === "ydb-managed";
+  const editorSupported = kind === "postgres" || kind === "mysql" || kind === "mariadb" || kind === "picodata" || kind === "ydb" || kind === "ydb-managed" || kind === "testing";
   const hasEdits = !!topologyEdits[kind];
 
   // Hydrate the engine state from the selected preset whenever it changes
@@ -1127,6 +1159,7 @@ function TopologyEditPanel({
     else if (kind === "picodata") setPico(t as PicodataTopology);
     else if (kind === "ydb") setYdb(t as YDBTopology);
     else if (kind === "ydb-managed") setYdbm(t as YDBManagedTopology);
+    else if (kind === "testing") setTesting(t as TestingTopology);
   }
 
   // Re-load whenever the selected preset id flips (different tile picked).
@@ -1163,6 +1196,13 @@ function TopologyEditPanel({
     }
     if (kind === "ydb-managed") {
       return <YDBManagedForm topology={ydbm} onChange={(t) => { setYdbm(t); pushEditsToParent(t); }} disabled={false} />;
+    }
+    if (kind === "testing") {
+      return <TestingForm topology={testing} onChange={(t) => {
+        setTesting(t);
+        pushEditsToParent(t);
+        setProtocol(t.mode === "pg-noop" ? "pg" : "noop");
+      }} disabled={false} />;
     }
     return null;
   }
@@ -1258,7 +1298,7 @@ function suggestDiskGb(script: string, scaleFactor: number): { diskGb: number; r
 // Returns null if the JSON is invalid or the topology shape doesn't match the kind.
 function extractDbDiskGb(dbCfgJSON: string): number | null {
   try {
-    const c = JSON.parse(dbCfgJSON) as { kind?: string; postgres?: { master?: { disk_gb?: number } }; mysql?: { primary?: { disk_gb?: number } }; picodata?: { instances?: Array<{ disk_gb?: number }> }; ydb?: { storage?: { disk_gb?: number } } };
+    const c = JSON.parse(dbCfgJSON) as { kind?: string; postgres?: { master?: { disk_gb?: number } }; mysql?: { primary?: { disk_gb?: number } }; picodata?: { instances?: Array<{ disk_gb?: number }> }; ydb?: { storage?: { disk_gb?: number } }; testing?: { database?: { disk_gb?: number } } };
     switch (c.kind) {
       case "postgres": return c.postgres?.master?.disk_gb ?? null;
       case "mysql": return c.mysql?.primary?.disk_gb ?? null;
@@ -1269,6 +1309,7 @@ function extractDbDiskGb(dbCfgJSON: string): number | null {
         return sizes.length ? Math.min(...sizes) : null;
       }
       case "ydb": return c.ydb?.storage?.disk_gb ?? null;
+      case "testing": return c.testing?.database?.disk_gb ?? null;
       default: return null;
     }
   } catch {

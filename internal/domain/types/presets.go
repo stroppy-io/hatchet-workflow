@@ -23,6 +23,7 @@ type Preset struct {
 	YDB        *YDBTopology        `json:"ydb,omitempty"`
 	YDBManaged *YDBManagedTopology `json:"ydb_managed,omitempty"`
 	Cockroach  *CockroachTopology  `json:"cockroach,omitempty"`
+	Testing    *TestingTopology    `json:"testing,omitempty"`
 }
 
 // TopologyJSON serializes the active topology field to JSON for DB storage.
@@ -48,6 +49,9 @@ func (p *Preset) TopologyJSON() (string, error) {
 		return string(b), err
 	case DatabaseCockroach:
 		b, err := json.Marshal(p.Cockroach)
+		return string(b), err
+	case DatabaseTesting:
+		b, err := json.Marshal(p.Testing)
 		return string(b), err
 	default:
 		return "", nil
@@ -99,6 +103,12 @@ func (p *Preset) ParseTopology(raw string) error {
 			return err
 		}
 		p.Cockroach = &t
+	case DatabaseTesting:
+		var t TestingTopology
+		if err := json.Unmarshal([]byte(raw), &t); err != nil {
+			return err
+		}
+		p.Testing = &t
 	}
 	return nil
 }
@@ -159,6 +169,13 @@ func BuiltinPresets() []Preset {
 		out = append(out, Preset{
 			Name: "CockroachDB " + string(name), Description: describeCockroachPreset(name),
 			DbKind: string(DatabaseCockroach), IsBuiltin: true, Cockroach: &t,
+		})
+	}
+	for name, topo := range TestingPresets {
+		t := topo
+		out = append(out, Preset{
+			Name: "Testing " + string(name), Description: describeTestingPreset(name),
+			DbKind: string(DatabaseTesting), IsBuiltin: true, Testing: &t,
 		})
 	}
 
@@ -409,6 +426,17 @@ func describeCockroachPreset(p CockroachPreset) string {
 		return "3-node CockroachDB cluster"
 	case CockroachCluster6:
 		return "6-node CockroachDB cluster (more parallel ranges)"
+	default:
+		return string(p)
+	}
+}
+
+func describeTestingPreset(p TestingPreset) string {
+	switch p {
+	case TestingPresetNoopDriver:
+		return "Stroppy noop driver only - no database endpoint is provisioned"
+	case TestingPresetPgNoop:
+		return "pg-noop PostgreSQL-compatible blackhole endpoint for network overhead tests"
 	default:
 		return string(p)
 	}

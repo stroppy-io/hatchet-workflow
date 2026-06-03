@@ -1470,6 +1470,7 @@ function defaultDBVersionTS(kind: DatabaseKind): string {
     case "ydb": return "25.3";
     case "ydb-managed": return "managed";
     case "cockroach": return "24.2";
+    case "testing": return "noop";
     default: return "latest";
   }
 }

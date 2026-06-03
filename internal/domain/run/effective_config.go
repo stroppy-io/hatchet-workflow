@@ -158,6 +158,28 @@ func ComputeEffectiveConfigs(cfg *types.RunConfig) map[string]map[string]string 
 			}
 			out["database"] = ec
 		}
+
+	case types.DatabaseTesting:
+		if db.Testing != nil {
+			ec := map[string]string{
+				"kind": "testing",
+				"mode": string(db.Testing.Mode),
+			}
+			if db.Testing.Mode == types.TestingPgNoop && db.Testing.Database != nil {
+				n := db.Testing.Database
+				ec["database"] = fmt.Sprintf("%d× %d vCPU / %d MB / %d GB", n.Count, n.CPUs, n.MemoryMB, n.DiskGB)
+				if db.Testing.PgNoop != nil {
+					ec["pg-noop"] = db.Testing.PgNoop.Version
+					if db.Testing.PgNoop.Port > 0 {
+						ec["port"] = fmt.Sprintf("%d", db.Testing.PgNoop.Port)
+					}
+					if db.Testing.PgNoop.Workers > 0 {
+						ec["workers"] = fmt.Sprintf("%d", db.Testing.PgNoop.Workers)
+					}
+				}
+			}
+			out["database"] = ec
+		}
 	}
 
 	// Benchmark

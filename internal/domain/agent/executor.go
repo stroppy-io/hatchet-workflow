@@ -326,6 +326,10 @@ func (e *Executor) Run(ctx context.Context, cmd Command) Report {
 		err = e.configCockroach(ctx, cmd)
 	case ActionInitCockroach:
 		err = e.initCockroach(ctx, cmd)
+	case ActionInstallPgNoop:
+		err = e.installPgNoop(ctx, cmd)
+	case ActionConfigPgNoop:
+		err = e.configPgNoop(ctx, cmd)
 	default:
 		err = fmt.Errorf("unknown action: %s", cmd.Action)
 	}
@@ -2185,5 +2189,84 @@ func (e *Executor) initCockroach(ctx context.Context, cmd Command) error {
 		}
 	}
 	e.emitLine("cockroach cluster initialised")
+	return nil
+}
+
+// ---------------------------------------------------------------------------
+// pg-noop handlers
+// ---------------------------------------------------------------------------
+
+func (e *Executor) installPgNoop(ctx context.Context, cmd Command) error {
+	var cfg PgNoopInstallConfig
+	if err := parseConfig(cmd, &cfg); err != nil {
+		return err
+	}
+	if _, err := exec.LookPath("pgnoop"); err == nil {
+		e.emitLine("pgnoop already installed, skipping download")
+		return nil
+	}
+	version := strings.TrimPrefix(strings.TrimSpace(cfg.Version), "v")
+	if version == "" {
+		version = "0.1.1"
+	}
+	file := "pgnoop-x86_64-unknown-linux-musl.tar.gz"
+	base := strings.TrimRight(os.Getenv("STROPPY_SERVER_ADDR"), "/")
+	url := fmt.Sprintf("https://github.com/stroppy-io/pg-noop/releases/download/v%s/%s", version, file)
+	if base != "" {
+		url = fmt.Sprintf("%s/api/binaries/pgnoop/%s/%s", base, version, file)
+	}
+	e.emitLine(fmt.Sprintf("downloading pgnoop v%s from %s...", version, url))
+	if _, err := e.shell(ctx, fmt.Sprintf(
+		`rm -rf /tmp/pgnoop-extract /tmp/pgnoop.tar.gz && mkdir -p /tmp/pgnoop-extract && `+
+			`curl -fsSL --connect-timeout 20 --max-time 120 --retry 3 --retry-delay 5 --retry-connrefused --retry-max-time 300 %q -o /tmp/pgnoop.tar.gz && `+
+			`tar xzf /tmp/pgnoop.tar.gz -C /tmp/pgnoop-extract && `+
+			`bin="$(find /tmp/pgnoop-extract -type f -name pgnoop | head -n1)" && test -n "$bin" && `+
+			`install -m 0755 "$bin" /usr/local/bin/pgnoop && `+
+			`rm -rf /tmp/pgnoop-extract /tmp/pgnoop.tar.gz`,
+		url)); err != nil {
+		return fmt.Errorf("install pgnoop: %w", err)
+	}
+	return nil
+}
+
+func (e *Executor) configPgNoop(ctx context.Context, cmd Command) error {
+	var cfg PgNoopConfig
+	if err := parseConfig(cmd, &cfg); err != nil {
+		return err
+	}
+	host := cfg.Host
+	if host == "" {
+		host = "0.0.0.0"
+	}
+	port := cfg.Port
+	if port == 0 {
+		port = 5432
+	}
+	body := map[string]any{
+		"host": host,
+		"port": port,
+	}
+	if cfg.Workers > 0 {
+		body["workers"] = cfg.Workers
+	}
+	b, err := json.MarshalIndent(body, "", "  ")
+	if err != nil {
+		return fmt.Errorf("marshal pgnoop config: %w", err)
+	}
+	confDir := "/etc/pgnoop"
+	confPath := filepath.Join(confDir, "pgnoop.json")
+	if err := os.MkdirAll(confDir, 0755); err != nil {
+		return fmt.Errorf("create pgnoop config dir: %w", err)
+	}
+	if err := os.WriteFile(confPath, b, 0644); err != nil {
+		return fmt.Errorf("write pgnoop config: %w", err)
+	}
+	if err := e.startDaemon("pgnoop", "/usr/local/bin/pgnoop", "--config", confPath); err != nil {
+		return err
+	}
+	if _, err := e.shell(ctx, fmt.Sprintf(`for i in $(seq 1 30); do (echo > /dev/tcp/localhost/%d) 2>/dev/null && exit 0; sleep 1; done; exit 1`, port)); err != nil {
+		return fmt.Errorf("pgnoop did not start on port %d: %w", port, err)
+	}
+	e.emitLine(fmt.Sprintf("pgnoop ready on %s:%d", host, port))
 	return nil
 }

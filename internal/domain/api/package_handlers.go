@@ -323,8 +323,9 @@ func (s *Server) resolveRunPackage(ctx context.Context, tenantID string, cfg *ty
 	// YDB doesn't use apt packages — it downloads the ydbd binary directly.
 	// Managed YDB skips the package layer entirely: YC manages the database
 	// and the run only provisions a client VM, which doesn't need a DB
-	// package installed.
-	if cfg.Database.Kind == types.DatabaseYDB || cfg.Database.Kind == types.DatabaseYDBManaged {
+	// package installed. Testing targets either have no DB or download a
+	// single pg-noop binary in their install task.
+	if cfg.Database.Kind == types.DatabaseYDB || cfg.Database.Kind == types.DatabaseYDBManaged || cfg.Database.Kind == types.DatabaseTesting {
 		return nil
 	}
 

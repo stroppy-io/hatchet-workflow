@@ -39,6 +39,9 @@ const (
 	// works, stored procedures don't (CRDB has limited PL/pgSQL support
 	// since v23 but the standard tpcc/procs script doesn't fit).
 	ProtocolCockroach Protocol = "cockroach"
+	// ProtocolNoop is stroppy's in-process noop driver. It does not connect to
+	// any database endpoint and is intended for runner/workload smoke tests.
+	ProtocolNoop Protocol = "noop"
 )
 
 // ProtocolMeta describes how to connect over a protocol — driver type for
@@ -77,6 +80,7 @@ var Protocols = map[Protocol]ProtocolMeta{
 	ProtocolYDBGRPCS:  {DriverType: "ydb", Port: 2135, URLScheme: "grpcs", URLTail: ""},
 	ProtocolYDBPgwire: {DriverType: "postgres", Port: 5432, URLScheme: "postgresql", URLTail: "/local?sslmode=disable"},
 	ProtocolCockroach: {DriverType: "postgres", Port: 26257, URLScheme: "postgresql", URLTail: "/defaultdb?sslmode=disable"},
+	ProtocolNoop:      {DriverType: "noop", Port: 0, URLScheme: "", URLTail: ""},
 }
 
 // KindProtocols lists the protocols each engine supports, in preference
@@ -90,6 +94,7 @@ var KindProtocols = map[DatabaseKind][]Protocol{
 	DatabaseYDB:        {ProtocolYDBGRPC, ProtocolYDBPgwire},
 	DatabaseYDBManaged: {ProtocolYDBGRPCS},
 	DatabaseCockroach:  {ProtocolCockroach},
+	DatabaseTesting:    {ProtocolNoop, ProtocolPG},
 }
 
 // DefaultProtocol returns the first protocol for a kind, or "" if the kind
@@ -136,6 +141,8 @@ var ScriptCompat = map[KindProtocolKey][]string{
 	{DatabaseYDB, ProtocolYDBPgwire}:       {"tpcc/tx-ydb-pgwire", "tpcb/tx-ydb-pgwire"},
 	{DatabaseYDBManaged, ProtocolYDBGRPCS}: {"tpcc/tx", "tpcb/tx", "tpch/tx"},
 	{DatabaseCockroach, ProtocolCockroach}: {"tpcc/tx", "tpcb/tx", "tpch/tx"},
+	{DatabaseTesting, ProtocolNoop}:        {"tpcc/procs", "tpcc/tx", "tpcb/procs", "tpcb/tx", "tpch/tx", "tpcc/tx-ydb-pgwire", "tpcb/tx-ydb-pgwire"},
+	{DatabaseTesting, ProtocolPG}:          {"tpcc/procs", "tpcc/tx", "tpcb/procs", "tpcb/tx", "tpch/tx", "tpcc/tx-ydb-pgwire", "tpcb/tx-ydb-pgwire"},
 }
 
 // ScriptSupported returns true if (kind, protocol) is registered in

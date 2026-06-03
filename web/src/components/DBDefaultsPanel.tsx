@@ -3,7 +3,7 @@ import { getDBDefaults } from "@/api/client";
 import type { DatabaseKind } from "@/api/types";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Database, Server, Cpu, Cloud } from "lucide-react";
+import { Database, Server, Cpu, Cloud, FlaskConical } from "lucide-react";
 
 interface DBDefaultsData {
   [version: string]: Record<string, string>;
@@ -17,6 +17,7 @@ const kindIcons: Record<DatabaseKind, typeof Database> = {
   ydb: Database,
   "ydb-managed": Cloud,
   cockroach: Database,
+  testing: FlaskConical,
 };
 
 const kindLabels: Record<DatabaseKind, string> = {
@@ -27,6 +28,7 @@ const kindLabels: Record<DatabaseKind, string> = {
   ydb: "YDB",
   "ydb-managed": "YDB Managed",
   cockroach: "CockroachDB",
+  testing: "Testing",
 };
 
 const highlightKeys: Record<DatabaseKind, string[]> = {
@@ -39,6 +41,7 @@ const highlightKeys: Record<DatabaseKind, string[]> = {
   // CRDB takes nearly all config via CLI flags or SQL CLUSTER SETTINGs;
   // these are the SQL settings most worth surfacing in the wizard.
   cockroach: ["kv.transaction.write_pipelining_enabled", "sql.defaults.statement_timeout", "kv.range_split.load_qps_threshold"],
+  testing: ["mode", "pg_noop.version", "pg_noop.port", "pg_noop.workers"],
 };
 
 interface DBDefaultsPanelProps {

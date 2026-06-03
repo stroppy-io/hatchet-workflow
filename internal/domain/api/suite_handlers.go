@@ -801,6 +801,8 @@ func defaultDBVersion(kind types.DatabaseKind) string {
 		return "managed"
 	case types.DatabaseCockroach:
 		return "24.2"
+	case types.DatabaseTesting:
+		return "noop"
 	}
 	return "latest"
 }

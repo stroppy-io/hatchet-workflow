@@ -422,6 +422,19 @@ func (b *builder) dbTasks() (install dag.Task, config dag.Task, err error) {
 		}
 		return &cockroachInstallTask{client: b.deps.Client, state: b.deps.State, version: db.Version},
 			&cockroachConfigTask{client: b.deps.Client, state: b.deps.State, topology: db.Cockroach}, nil
+	case types.DatabaseTesting:
+		if db.Testing == nil {
+			return nil, nil, fmt.Errorf("testing topology missing for database.kind=testing")
+		}
+		switch db.Testing.Mode {
+		case types.TestingNoopDriver:
+			return &noopTask{}, &noopTask{}, nil
+		case types.TestingPgNoop:
+			return &pgNoopInstallTask{client: b.deps.Client, state: b.deps.State, topology: db.Testing},
+				&pgNoopConfigTask{client: b.deps.Client, state: b.deps.State, topology: db.Testing}, nil
+		default:
+			return nil, nil, fmt.Errorf("unsupported testing mode %q", db.Testing.Mode)
+		}
 	default:
 		return nil, nil, fmt.Errorf("unsupported database kind %q", db.Kind)
 	}

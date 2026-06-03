@@ -1,11 +1,11 @@
-import type { DatabaseKind, MachineSpec, PostgresTopology, MySQLTopology, PicodataTopology, YDBTopology, YDBManagedTopology, CockroachTopology } from "@/api/types";
+import type { DatabaseKind, MachineSpec, PostgresTopology, MySQLTopology, PicodataTopology, YDBTopology, YDBManagedTopology, CockroachTopology, TestingTopology } from "@/api/types";
 import { DB_COLORS } from "@/lib/db-colors";
-import { Database, Server, Cpu, Shield, Layers, Globe, Cloud } from "lucide-react";
+import { Database, Server, Cpu, Shield, Layers, Globe, Cloud, FlaskConical } from "lucide-react";
 
 interface TopologyDiagramProps {
   kind: DatabaseKind;
   preset?: string;
-  topology?: PostgresTopology | MySQLTopology | PicodataTopology | YDBTopology | YDBManagedTopology | CockroachTopology;
+  topology?: PostgresTopology | MySQLTopology | PicodataTopology | YDBTopology | YDBManagedTopology | CockroachTopology | TestingTopology;
 }
 
 interface RoleDef {
@@ -42,7 +42,7 @@ function formatSpec(s: Partial<MachineSpec> | undefined): string {
 const INFRA_PROXY = "#A0860A";
 const INFRA_COORD = "#7C6CC8";
 
-function getRolesFromTopology(kind: DatabaseKind, topology: PostgresTopology | MySQLTopology | PicodataTopology | YDBTopology | YDBManagedTopology | CockroachTopology): RoleDef[] {
+function getRolesFromTopology(kind: DatabaseKind, topology: PostgresTopology | MySQLTopology | PicodataTopology | YDBTopology | YDBManagedTopology | CockroachTopology | TestingTopology): RoleDef[] {
   const c = DB_COLORS[kind];
 
   if (kind === "postgres") {
@@ -126,6 +126,14 @@ function getRolesFromTopology(kind: DatabaseKind, topology: PostgresTopology | M
   if (kind === "cockroach") {
     const t = topology as unknown as CockroachTopology;
     return [{ label: "Node", count: t.nodes.count || 1, color: c.hex, icon: Database, spec: formatSpec(t.nodes) }];
+  }
+
+  if (kind === "testing") {
+    const t = topology as TestingTopology;
+    if (t.mode === "pg-noop") {
+      return [{ label: "pg-noop", count: t.database?.count || 1, color: c.hex, icon: FlaskConical, spec: formatSpec(t.database) }];
+    }
+    return [{ label: "noop driver", count: 1, color: c.hex, icon: FlaskConical, spec: "stroppy runner only" }];
   }
 
   return [{ label: "Node", count: 1, color: "#6b7280", icon: Server }];
@@ -217,6 +225,15 @@ function getRolesFromPresetName(kind: DatabaseKind, preset: string): RoleDef[] {
         return [{ label: "Node", count: 3, color: c.hex, icon: Database }];
       case "cluster-6":
         return [{ label: "Node", count: 6, color: c.hex, icon: Database }];
+    }
+  }
+
+  if (kind === "testing") {
+    switch (preset) {
+      case "noop-driver":
+        return [{ label: "noop driver", count: 1, color: c.hex, icon: FlaskConical }];
+      case "pg-noop":
+        return [{ label: "pg-noop", count: 1, color: c.hex, icon: FlaskConical }];
     }
   }
 

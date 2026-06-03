@@ -252,7 +252,7 @@ func (s *Server) resolveRunPreset(ctx context.Context, tenantID string, cfg *typ
 	// Topology from request takes priority over preset.
 	if cfg.Database.Postgres != nil || cfg.Database.MySQL != nil || cfg.Database.MariaDB != nil ||
 		cfg.Database.Picodata != nil || cfg.Database.YDB != nil ||
-		cfg.Database.YDBManaged != nil || cfg.Database.Cockroach != nil {
+		cfg.Database.YDBManaged != nil || cfg.Database.Cockroach != nil || cfg.Database.Testing != nil {
 		return nil
 	}
 
@@ -277,6 +277,16 @@ func (s *Server) resolveRunPreset(ctx context.Context, tenantID string, cfg *typ
 		cfg.Database.YDBManaged = preset.YDBManaged
 	case types.DatabaseCockroach:
 		cfg.Database.Cockroach = preset.Cockroach
+	case types.DatabaseTesting:
+		cfg.Database.Testing = preset.Testing
+		if preset.Testing != nil {
+			switch preset.Testing.Mode {
+			case types.TestingNoopDriver:
+				cfg.Stroppy.Protocol = types.ProtocolNoop
+			case types.TestingPgNoop:
+				cfg.Stroppy.Protocol = types.ProtocolPG
+			}
+		}
 	}
 
 	return nil

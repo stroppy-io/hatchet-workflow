@@ -223,6 +223,14 @@ func (s *Server) probeRunWorkload(ctx context.Context, cfg types.RunConfig) erro
 	if protocol == "" {
 		protocol = types.DefaultProtocol(cfg.Database.Kind)
 	}
+	if cfg.Database.Kind == types.DatabaseTesting && cfg.Database.Testing != nil {
+		switch cfg.Database.Testing.Mode {
+		case types.TestingNoopDriver:
+			protocol = types.ProtocolNoop
+		case types.TestingPgNoop:
+			protocol = types.ProtocolPG
+		}
+	}
 	driverType := string(cfg.Database.Kind)
 	if meta, ok := types.Protocols[protocol]; ok && meta.DriverType != "" {
 		driverType = meta.DriverType
@@ -258,6 +266,8 @@ func defaultDriverURL(driverType string) string {
 		return "postgres://admin:T0psecret@localhost:1331"
 	case "ydb":
 		return "grpc://localhost:2136/Root/testdb"
+	case "noop":
+		return ""
 	default:
 		return "localhost"
 	}

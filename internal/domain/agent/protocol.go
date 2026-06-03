@@ -38,6 +38,8 @@ const (
 	ActionInstallCockroach Action = "install_cockroach"
 	ActionConfigCockroach  Action = "config_cockroach"
 	ActionInitCockroach    Action = "init_cockroach"
+	ActionInstallPgNoop    Action = "install_pgnoop"
+	ActionConfigPgNoop     Action = "config_pgnoop"
 	ActionShutdown         Action = "shutdown"
 )
 

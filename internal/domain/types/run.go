@@ -19,6 +19,7 @@ const (
 	DatabaseYDB        DatabaseKind = "ydb"
 	DatabaseYDBManaged DatabaseKind = "ydb-managed" // Yandex Cloud Managed YDB (serverless or dedicated)
 	DatabaseCockroach  DatabaseKind = "cockroach"
+	DatabaseTesting    DatabaseKind = "testing" // Synthetic targets: stroppy noop driver or pg-noop blackhole
 )
 
 // Phase is the DAG node type identifier for each run stage.
@@ -151,6 +152,32 @@ type PicodataTopology struct {
 type CockroachTopology struct {
 	Nodes   MachineSpec       `json:"nodes"`
 	Options map[string]string `json:"options,omitempty"`
+}
+
+// TestingMode selects which synthetic target a Testing preset runs.
+type TestingMode string
+
+const (
+	// TestingNoopDriver runs only the stroppy runner and uses stroppy's noop driver.
+	TestingNoopDriver TestingMode = "noop-driver"
+	// TestingPgNoop runs pg-noop, a PostgreSQL-compatible blackhole endpoint.
+	TestingPgNoop TestingMode = "pg-noop"
+)
+
+// PgNoopConfig configures the pg-noop blackhole server.
+type PgNoopConfig struct {
+	Version string `json:"version,omitempty"`
+	Port    int    `json:"port,omitempty"`
+	Workers int    `json:"workers,omitempty"`
+}
+
+// TestingTopology describes synthetic test targets used for tooling checks.
+// noop-driver provisions no database machine; pg-noop provisions one database
+// VM/container that accepts PostgreSQL wire-protocol traffic and discards it.
+type TestingTopology struct {
+	Mode     TestingMode   `json:"mode"`
+	Database *MachineSpec  `json:"database,omitempty"`
+	PgNoop   *PgNoopConfig `json:"pg_noop,omitempty"`
 }
 
 // YDBTopology describes a YDB cluster layout.
@@ -290,6 +317,7 @@ type DatabaseConfig struct {
 	YDB        *YDBTopology        `json:"ydb,omitempty"`
 	YDBManaged *YDBManagedTopology `json:"ydb_managed,omitempty"`
 	Cockroach  *CockroachTopology  `json:"cockroach,omitempty"`
+	Testing    *TestingTopology    `json:"testing,omitempty"`
 	// RenderedConfigOverrides lets the SPA submit raw config-file contents
 	// that replace the per-component generators on the agent. Keys identify
 	// the file by its on-host purpose (e.g. "postgresql.conf:master",
@@ -337,6 +365,14 @@ const (
 	PicodataSingle  PicodataPreset = "single"
 	PicodataCluster PicodataPreset = "cluster"
 	PicodataScale   PicodataPreset = "scale"
+)
+
+// TestingPreset identifies a synthetic testing topology preset.
+type TestingPreset string
+
+const (
+	TestingPresetNoopDriver TestingPreset = "noop-driver"
+	TestingPresetPgNoop     TestingPreset = "pg-noop"
 )
 
 // PostgresPresets contains all available Postgres topology presets.
@@ -435,6 +471,19 @@ var CockroachPresets = map[CockroachPreset]CockroachTopology{
 	},
 	CockroachCluster6: {
 		Nodes: MachineSpec{Role: RoleDatabase, Count: 6, CPUs: 8, MemoryMB: 16384, DiskGB: 200},
+	},
+}
+
+// TestingPresets contains built-in synthetic targets for smoke, runner, and
+// network overhead testing.
+var TestingPresets = map[TestingPreset]TestingTopology{
+	TestingPresetNoopDriver: {
+		Mode: TestingNoopDriver,
+	},
+	TestingPresetPgNoop: {
+		Mode:     TestingPgNoop,
+		Database: &MachineSpec{Role: RoleDatabase, Count: 1, CPUs: 2, MemoryMB: 4096, DiskGB: 50},
+		PgNoop:   &PgNoopConfig{Version: "0.1.1", Port: 5432},
 	},
 }
 
