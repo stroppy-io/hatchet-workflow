@@ -40,11 +40,94 @@
 //   NOTE: there is NO status facet on ListPackagesRequest, so the Status column
 //     sorts/displays only; it has no header filter (per schema).
 
+import { toJson } from "@bufbuild/protobuf";
+import { timestampFromDate } from "@bufbuild/protobuf/wkt";
 import type {
   DbKind,
   PackageFormat,
   PackageStatus,
 } from "@/components/library-table/labels";
+import {
+  PackageRecordSchema,
+  PackageRecord_Format,
+  type PackageRecord,
+} from "@/lib/proto/cloud/v1/models/package_pb";
+import { EntitySortField } from "@/lib/proto/cloud/v1/common/entity_pb";
+import { packageClient } from "@/services/client";
+import { resolveTenantId } from "@/services/tenant";
+import { dbKindLabelFromJson, dbKindProto } from "@/services/enums";
+
+// --- enum <-> label converters (package-local) -------------------------------
+
+function formatLabel(s: string | undefined): PackageFormat {
+  return s === "FORMAT_DEB" ? "deb" : s === "FORMAT_BINARY" ? "binary" : "";
+}
+function formatProto(f: Exclude<PackageFormat, "">): PackageRecord_Format {
+  return f === "deb" ? PackageRecord_Format.DEB : PackageRecord_Format.BINARY;
+}
+function statusLabel(s: string | undefined): PackageStatus {
+  switch (s) {
+    case "STATUS_UPLOADING":
+      return "uploading";
+    case "STATUS_READY":
+      return "ready";
+    case "STATUS_FAILED":
+      return "failed";
+    default:
+      return "";
+  }
+}
+function sortFieldToEntity(f?: PackageSortField): EntitySortField {
+  switch (f) {
+    case "name":
+      return EntitySortField.NAME;
+    case "created_at":
+      return EntitySortField.CREATED_AT;
+    case "updated_at":
+      return EntitySortField.UPDATED_AT;
+    case "author_id":
+      return EntitySortField.AUTHOR_ID;
+    default:
+      return EntitySortField.UNSPECIFIED;
+  }
+}
+
+// One PackageRecord -> one flat PackageRow (timestamps as ISO via toJson).
+function packageRecordToRow(rec: PackageRecord): PackageRow {
+  const j = toJson(PackageRecordSchema, rec) as {
+    entity?: {
+      id?: string;
+      name?: string;
+      authorId?: string;
+      timings?: { createdAt?: string; updatedAt?: string };
+    };
+    format?: string;
+    version?: string;
+    targetDbKind?: string;
+    os?: string;
+    arch?: string;
+    sizeBytes?: string | number;
+    sha256?: string;
+    storageUri?: string;
+    status?: string;
+  };
+  return {
+    id: j.entity?.id ?? "",
+    name: j.entity?.name ?? "",
+    authorId: j.entity?.authorId ?? "",
+    createdAt: j.entity?.timings?.createdAt ?? "",
+    updatedAt: j.entity?.timings?.updatedAt ?? "",
+    format: formatLabel(j.format),
+    version: j.version ?? "",
+    dbKind: dbKindLabelFromJson(j.targetDbKind),
+    os: j.os ?? "",
+    arch: j.arch ?? "",
+    sizeBytes: Number(j.sizeBytes ?? 0),
+    sha256: j.sha256 ?? "",
+    storageUri: j.storageUri ?? "",
+    status: statusLabel(j.status),
+  };
+}
 
 /** Sortable columns — all common Entity columns (ListPackagesRequest.sort). */
 export type PackageSortField =
@@ -177,67 +260,71 @@ export interface PackagesProvider {
 }
 
 // --- Real backend provider ---------------------------------------------------
-//
-// Throws until wired so a missing-backend misconfig is loud, not a silent
-// fake-success — the same convention as runs.ts / preset.ts.
-
-const NOT_WIRED =
-  "real PackagesProvider not wired yet — run with VITE_MOCK=1 to preview the packages table";
 
 const realPackagesProvider: PackagesProvider = {
-  async listPackages() {
-    // const tenantId = await resolveTenantId(tenantSlug);
-    // const { packages, nextPageToken } = await packageClient.listPackages({
-    //   tenantId,
-    //   filter: { search: query.search, createdAfter, createdBefore },
-    //   formats: query.formats?.map(formatToProto),
-    //   dbKinds: query.dbKinds?.map(kindToProto),
-    //   sort: { field: sortFieldToEntity(query.sort), desc: query.desc },
-    //   page: { size: query.pageSize, token: query.pageToken },
-    // });  // cloud.v1.api.PackageService.ListPackages
-    // return { rows: packages.map(packageRecordToRow), nextPageToken };
-    throw new Error(NOT_WIRED);
+  async listPackages(tenantSlug, query) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    const { packages, nextPageToken } = await packageClient.listPackages({
+      tenantId,
+      filter: {
+        search: query.search,
+        createdAfter: query.createdAfter
+          ? timestampFromDate(new Date(query.createdAfter))
+          : undefined,
+        createdBefore: query.createdBefore
+          ? timestampFromDate(new Date(query.createdBefore))
+          : undefined,
+      },
+      formats: query.formats?.map(formatProto),
+      dbKinds: query.dbKinds?.map(dbKindProto),
+      sort: { field: sortFieldToEntity(query.sort), desc: query.desc ?? false },
+      page: { size: query.pageSize ?? 0, token: query.pageToken ?? "" },
+    });
+    return { rows: packages.map(packageRecordToRow), nextPageToken };
   },
-  async createPackageUpload() {
-    // const tenantId = await resolveTenantId(tenantSlug);
-    // const { package: rec, uploadUrl, uploadUrlExpiresAt } =
-    //   await packageClient.createPackageUpload({
-    //     tenantId,
-    //     name: input.name,
-    //     format: formatToProto(input.format),
-    //     version: input.version,
-    //     targetDbKind: kindToProto(input.dbKind),
-    //     os: input.os,
-    //     arch: input.arch,
-    //     sizeBytes: BigInt(input.fileSize),
-    //     // sha256 is hashed client-side / verified server-side on CompleteUpload.
-    //   });  // cloud.v1.api.PackageService.CreatePackageUpload
-    // // The client then PUTs the blob to uploadUrl, then calls completeUpload().
-    // return {
-    //   pkg: packageRecordToRow(rec!),
-    //   uploadUrl,
-    //   uploadUrlExpiresAt: uploadUrlExpiresAt ? toIso(uploadUrlExpiresAt) : "",
-    // };
-    throw new Error(NOT_WIRED);
+
+  async createPackageUpload(tenantSlug, input) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    const {
+      package: rec,
+      uploadUrl,
+      uploadUrlExpiresAt,
+    } = await packageClient.createPackageUpload({
+      tenantId,
+      name: input.name,
+      format: formatProto(input.format),
+      version: input.version,
+      targetDbKind: dbKindProto(input.dbKind),
+      os: input.os,
+      arch: input.arch,
+      sizeBytes: BigInt(input.fileSize),
+    });
+    if (!rec) throw new Error("createPackageUpload returned no package");
+    return {
+      pkg: packageRecordToRow(rec),
+      uploadUrl,
+      uploadUrlExpiresAt: uploadUrlExpiresAt
+        ? new Date(Number(uploadUrlExpiresAt.seconds) * 1000).toISOString()
+        : "",
+    };
   },
-  async completeUpload() {
-    // const tenantId = await resolveTenantId(tenantSlug);
-    // const { package: rec } = await packageClient.completeUpload({ tenantId, id });
-    //   // cloud.v1.api.PackageService.CompleteUpload
-    // return packageRecordToRow(rec!);
-    throw new Error(NOT_WIRED);
+
+  async completeUpload(tenantSlug, id) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    const { package: rec } = await packageClient.completeUpload({ tenantId, id });
+    if (!rec) throw new Error("completeUpload returned no package");
+    return packageRecordToRow(rec);
   },
-  async getPackage() {
-    // const tenantId = await resolveTenantId(tenantSlug);
-    // const { package: rec } = await packageClient.getPackage({ tenantId, id });
-    //   // cloud.v1.api.PackageService.GetPackage
-    // return rec ? packageRecordToRow(rec) : null;
-    throw new Error(NOT_WIRED);
+
+  async getPackage(tenantSlug, id) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    const { package: rec } = await packageClient.getPackage({ tenantId, id });
+    return rec ? packageRecordToRow(rec) : null;
   },
-  async deletePackage() {
-    // const tenantId = await resolveTenantId(tenantSlug);
-    // await packageClient.deletePackage({ tenantId, id });  // PackageService.DeletePackage
-    throw new Error(NOT_WIRED);
+
+  async deletePackage(tenantSlug, id) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    await packageClient.deletePackage({ tenantId, id });
   },
 };
 

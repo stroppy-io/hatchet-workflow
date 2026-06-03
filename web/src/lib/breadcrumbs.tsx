@@ -82,10 +82,13 @@ const CRUMB_REGISTRY: CrumbDef[] = [
   },
   // Work entities only — org Settings/Members/Tokens moved to /orgs/:slug.
   { pattern: "/t/:slug/suites", label: "Suites" },
+  // `:id` registered BEFORE `new` so the more specific "New suite" literal wins
+  // the dedup (same convention as the preset crumbs below).
   {
     pattern: "/t/:slug/suites/:id",
     label: ({ params, overrides }) => overrides.id ?? params.id ?? "",
   },
+  { pattern: "/t/:slug/suites/new", label: "New Suite" },
   { pattern: "/t/:slug/runs", label: "Test Runs" },
   { pattern: "/t/:slug/runs/new", label: "New Run" },
   {

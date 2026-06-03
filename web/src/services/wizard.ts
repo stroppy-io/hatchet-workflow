@@ -52,6 +52,32 @@ import {
   Yandex_Settings_PlatformId,
 } from "@/lib/proto/cloud/v1/deployment/yandex_pb";
 
+import { create, toJson } from "@bufbuild/protobuf";
+import { testWizardClient } from "@/services/client";
+import { resolveTenantId } from "@/services/tenant";
+import {
+  databaseProtoToVM,
+  databaseVMToProto,
+  workloadProtoToVM,
+  workloadVMToProto,
+} from "@/services/domainMappers";
+import {
+  TestWizardDraftRecordSchema,
+  type TestWizardDraftRecord,
+} from "@/lib/proto/cloud/v1/models/test_wizard_pb";
+import {
+  InfrastructurePlanSchema,
+  MachinePlanSchema,
+} from "@/lib/proto/cloud/v1/deployment/infrastructure_pb";
+import { ProviderSettingsSchema } from "@/lib/proto/cloud/v1/deployment/provider_pb";
+import { Docker_ContainerSchema } from "@/lib/proto/cloud/v1/deployment/docker_pb";
+import { Yandex_VmSchema } from "@/lib/proto/cloud/v1/deployment/yandex_pb";
+import {
+  RenderOverrideSetSchema,
+  FileOverrideSchema,
+} from "@/lib/proto/cloud/v1/deployment/render_pb";
+import { FileSchema } from "@/lib/proto/cloud/v1/common/file_pb";
+
 // Re-export the proto enums the steps drive their selects from, so the page
 // imports a single module. Keeping the proto enums (not string unions) makes
 // the typed Patch payload trivially constructable by the real provider.
@@ -563,90 +589,511 @@ export interface WizardProvider {
 
 // --- Real backend provider ---------------------------------------------------
 //
-// TODO(real-api): wire the connect transport (testWizardClient) and map proto
-// <-> VM. Each method documents the exact RPC it will issue. Throws until wired
-// so a missing-backend misconfig is loud, not a silent fake-success — the same
-// convention as runs.ts / dashboard.ts.
+// Wires the connect transport (testWizardClient) and maps the proto
+// TestWizardDraftRecord <-> the flat VMs. Database/Workload reuse domainMappers;
+// topology/infrastructure/render are flattened via toJson and rebuilt from the
+// edited VMs on Patch. Every method resolves the tenant slug -> tenant_id first,
+// exactly like preset.ts / runs.ts.
 
-const NOT_WIRED =
-  "real WizardProvider not wired yet — run with VITE_MOCK=1 to preview the test wizard";
+// A topology.Component.Kind JSON-string enum -> the lower-cased label the VM
+// declares (no KIND_ prefix). Unknown -> "".
+function componentKindLabel(s: string | undefined): string {
+  return s ? s.replace(/^KIND_/, "").toLowerCase() : "";
+}
+
+// A RenderArtifact JSON-string enum -> its numeric proto enum. The toJson()
+// projection emits the JSON-string forms; map them back to the enums the VM
+// declares so the Review step can drive its mutability/origin gating.
+function artifactKind(s: string | undefined): RenderArtifact_Kind {
+  switch (s) {
+    case "KIND_FILE":
+      return RenderArtifact_Kind.FILE;
+    case "KIND_COMMAND":
+      return RenderArtifact_Kind.COMMAND;
+    case "KIND_DIRECTORY":
+      return RenderArtifact_Kind.DIRECTORY;
+    case "KIND_RUNTIME_VALUE":
+      return RenderArtifact_Kind.RUNTIME_VALUE;
+    default:
+      return RenderArtifact_Kind.UNSPECIFIED;
+  }
+}
+function artifactOrigin(s: string | undefined): RenderArtifact_Origin {
+  switch (s) {
+    case "ORIGIN_SYSTEM":
+      return RenderArtifact_Origin.SYSTEM;
+    case "ORIGIN_RENDERED_DEFAULT":
+      return RenderArtifact_Origin.RENDERED_DEFAULT;
+    case "ORIGIN_USER_OVERRIDE":
+      return RenderArtifact_Origin.USER_OVERRIDE;
+    case "ORIGIN_RUNTIME":
+      return RenderArtifact_Origin.RUNTIME;
+    default:
+      return RenderArtifact_Origin.UNSPECIFIED;
+  }
+}
+function artifactMutability(s: string | undefined): RenderArtifact_Mutability {
+  switch (s) {
+    case "MUTABILITY_READ_ONLY":
+      return RenderArtifact_Mutability.READ_ONLY;
+    case "MUTABILITY_EDITABLE":
+      return RenderArtifact_Mutability.EDITABLE;
+    case "MUTABILITY_RUNTIME_ONLY":
+      return RenderArtifact_Mutability.RUNTIME_ONLY;
+    default:
+      return RenderArtifact_Mutability.UNSPECIFIED;
+  }
+}
+
+// A FieldError.severity JSON-string enum -> the VM severity union.
+function errorSeverity(s: string | undefined): DraftErrorVM["severity"] {
+  switch (s) {
+    case "WARNING":
+      return "warning";
+    case "SEVERITY_UNSPECIFIED":
+      return "info";
+    default:
+      // ERROR (or unknown) is the blocking default.
+      return "error";
+  }
+}
+
+// A deployment.Provider JSON-string enum -> the numeric Provider enum.
+function providerFromJson(s: string | undefined): Provider {
+  return s === "PROVIDER_YANDEX"
+    ? Provider.YANDEX
+    : s === "PROVIDER_DOCKER"
+      ? Provider.DOCKER
+      : Provider.UNSPECIFIED;
+}
+
+// The JSON projection of a TestWizardDraftRecord; we only pluck the pieces the
+// VM exposes (database/workload are mapped from the typed message instead).
+type DraftJson = {
+  entity?: { id?: string; name?: string; timings?: { updatedAt?: string } };
+  provider?: string;
+  topologySpec?: {
+    nodes?: { id?: string; componentIds?: string[]; labels?: { [k: string]: string } }[];
+    components?: { id?: string; kind?: string; engine?: string; role?: string }[];
+  };
+  infrastructurePlan?: {
+    provider?: string;
+    settings?: {
+      docker?: Record<string, never>;
+      yandex?: {
+        cloudId?: string;
+        folderId?: string;
+        zone?: number;
+        networkName?: string;
+        subnetCidr?: string;
+        platformId?: number;
+        imageId?: string;
+        assignPublicIp?: boolean;
+        sshUser?: string;
+      };
+    };
+    machines?: {
+      nodeId?: string;
+      docker?: { image?: string; resources?: { cpuCores?: number; memoryMb?: string } };
+      yandex?: {
+        cores?: number;
+        memoryGb?: string;
+        bootDiskGb?: string;
+        bootDiskType?: string;
+        zone?: string;
+        publicIp?: boolean;
+      };
+    }[];
+  };
+  renderPreview?: {
+    components?: { componentId?: string; nodeId?: string; artifactIds?: string[] }[];
+    artifacts?: {
+      id?: string;
+      componentId?: string;
+      kind?: string;
+      origin?: string;
+      mutability?: string;
+      lockReason?: string;
+      baseHash?: string;
+      file?: { info?: { path?: string }; text?: string };
+      cmd?: { name?: string };
+      dir?: { path?: string };
+      runtimeValue?: string;
+    }[];
+  };
+  errors?: { field?: string; message?: string; severity?: string; code?: string }[];
+  ready?: boolean;
+  testPresetId?: string;
+};
+
+// Map a typed TestWizardDraftRecord onto the flat WizardDraftVM the wizard
+// renders. database/workload use domainMappers; the server-derived halves
+// (topology/infra/render/errors) are plucked from the JSON projection.
+function draftToVM(draft: TestWizardDraftRecord | undefined): WizardDraftVM {
+  const j = (draft ? toJson(TestWizardDraftRecordSchema, draft) : {}) as DraftJson;
+
+  const provider = providerFromJson(j.provider);
+
+  const topologyComponents: TopologyComponentVM[] = (j.topologySpec?.components ?? []).map(
+    (c) => {
+      const id = c.id ?? "";
+      // node placement: the node whose component_ids include this component.
+      const node = (j.topologySpec?.nodes ?? []).find((n) =>
+        (n.componentIds ?? []).includes(id),
+      );
+      return {
+        id,
+        kind: componentKindLabel(c.kind),
+        engine: c.engine ?? "",
+        role: c.role ?? "",
+        nodeId: node?.id ?? "",
+      };
+    },
+  );
+
+  const topologyNodes: TopologyNodeVM[] = (j.topologySpec?.nodes ?? []).map((n) => ({
+    id: n.id ?? "",
+    componentIds: [...(n.componentIds ?? [])],
+    labels: { ...(n.labels ?? {}) },
+  }));
+
+  // role/engine per node, denormalized from the colocated component (label only).
+  const componentById = new Map(topologyComponents.map((c) => [c.id, c]));
+  const nodeRoleEngine = (nodeId: string): { role: string; engine: string } => {
+    const node = topologyNodes.find((n) => n.id === nodeId);
+    for (const cid of node?.componentIds ?? []) {
+      const comp = componentById.get(cid);
+      if (comp) return { role: comp.role, engine: comp.engine };
+    }
+    return { role: "", engine: "" };
+  };
+
+  const ip = j.infrastructurePlan;
+  let settings: ProviderSettingsVM = { case: undefined };
+  if (ip?.settings?.yandex) {
+    const y = ip.settings.yandex;
+    settings = {
+      case: "yandex",
+      yandex: {
+        cloudId: y.cloudId ?? "",
+        folderId: y.folderId ?? "",
+        zone: y.zone ?? Yandex_Settings_Zone.UNSPECIFIED,
+        networkName: y.networkName ?? "",
+        subnetCidr: y.subnetCidr ?? "",
+        platformId: y.platformId ?? Yandex_Settings_PlatformId.UNSPECIFIED,
+        imageId: y.imageId ?? "",
+        assignPublicIp: y.assignPublicIp ?? false,
+        sshUser: y.sshUser ?? "",
+      },
+    };
+  } else if (ip?.settings?.docker) {
+    // Docker.Settings is empty in the proto; networkName has no wire home and
+    // is left empty (server-derived/runtime-only).
+    settings = { case: "docker", docker: { networkName: "" } };
+  }
+
+  const machines: MachineVM[] = (ip?.machines ?? []).map((m) => {
+    const nodeId = m.nodeId ?? "";
+    const { role, engine } = nodeRoleEngine(nodeId);
+    let spec: MachineSpecVM = { case: undefined };
+    if (m.yandex) {
+      spec = {
+        case: "yandex",
+        yandex: {
+          cores: m.yandex.cores ?? 0,
+          memoryGb: Number(m.yandex.memoryGb ?? 0),
+          bootDiskGb: Number(m.yandex.bootDiskGb ?? 0),
+          bootDiskType: m.yandex.bootDiskType ?? "",
+          zone: m.yandex.zone ?? "",
+          publicIp: m.yandex.publicIp ?? false,
+        },
+      };
+    } else if (m.docker) {
+      spec = {
+        case: "docker",
+        docker: {
+          image: m.docker.image ?? "",
+          cpuCores: m.docker.resources?.cpuCores ?? 0,
+          memoryMb: Number(m.docker.resources?.memoryMb ?? 0),
+        },
+      };
+    }
+    return { nodeId, role, engine, spec };
+  });
+
+  const infrastructurePlan: InfrastructurePlanVM = {
+    provider: providerFromJson(ip?.provider) || provider,
+    settings,
+    machines,
+  };
+
+  const renderComponents: ComponentRenderVM[] = (j.renderPreview?.components ?? []).map(
+    (c) => ({
+      componentId: c.componentId ?? "",
+      nodeId: c.nodeId ?? "",
+      artifactIds: [...(c.artifactIds ?? [])],
+    }),
+  );
+
+  const artifacts: RenderArtifactVM[] = (j.renderPreview?.artifacts ?? []).map((a) => {
+    // title: file/dir path or command/runtime title; content: the editable body.
+    let title = "";
+    let content = "";
+    if (a.file) {
+      title = a.file.info?.path ?? "";
+      content = a.file.text ?? "";
+    } else if (a.dir) {
+      title = a.dir.path ?? "";
+    } else if (a.cmd) {
+      title = a.cmd.name ?? "";
+    } else if (a.runtimeValue !== undefined) {
+      content = a.runtimeValue;
+    }
+    return {
+      id: a.id ?? "",
+      componentId: a.componentId ?? "",
+      kind: artifactKind(a.kind),
+      origin: artifactOrigin(a.origin),
+      mutability: artifactMutability(a.mutability),
+      lockReason: a.lockReason ?? "",
+      title,
+      content,
+      baseHash: a.baseHash ?? "",
+    };
+  });
+
+  const errors: DraftErrorVM[] = (j.errors ?? []).map((e) => ({
+    field: e.field ?? "",
+    message: e.message ?? "",
+    severity: errorSeverity(e.severity),
+    code: e.code ?? "",
+  }));
+
+  // database/workload only present once their step has been visited.
+  const database = draft?.database ? databaseProtoToVM(draft.database) : undefined;
+  const workload = draft?.workload ? workloadProtoToVM(draft.workload) : undefined;
+
+  return {
+    id: j.entity?.id ?? "",
+    name: j.entity?.name ?? "",
+    provider,
+    database,
+    workload,
+    topologyComponents,
+    topologyNodes,
+    infrastructurePlan,
+    renderComponents,
+    artifacts,
+    errors,
+    ready: j.ready ?? false,
+    testPresetId: j.testPresetId ?? "",
+    updatedAt: j.entity?.timings?.updatedAt ?? "",
+  };
+}
+
+// A draft summary row for the resume list.
+function draftToSummaryVM(draft: TestWizardDraftRecord): DraftSummaryVM {
+  const vm = draftToVM(draft);
+  return {
+    id: vm.id,
+    name: vm.name,
+    engine: vm.database?.kind ?? "",
+    ready: vm.ready,
+    updatedAt: vm.updatedAt,
+  };
+}
+
+// Build a deployment.InfrastructurePlan from the edited InfrastructurePlanVM.
+function infraPlanVMToProto(vm: InfrastructurePlanVM) {
+  const settings =
+    vm.settings.case === "yandex"
+      ? create(ProviderSettingsSchema, {
+          settings: {
+            case: "yandex",
+            value: {
+              cloudId: vm.settings.yandex.cloudId,
+              folderId: vm.settings.yandex.folderId,
+              zone: vm.settings.yandex.zone,
+              networkName: vm.settings.yandex.networkName,
+              subnetCidr: vm.settings.yandex.subnetCidr,
+              platformId: vm.settings.yandex.platformId,
+              imageId: vm.settings.yandex.imageId,
+              assignPublicIp: vm.settings.yandex.assignPublicIp,
+              sshUser: vm.settings.yandex.sshUser,
+            },
+          },
+        })
+      : vm.settings.case === "docker"
+        ? create(ProviderSettingsSchema, { settings: { case: "docker", value: {} } })
+        : undefined;
+
+  const machines = vm.machines.map((m) => {
+    if (m.spec.case === "yandex") {
+      return create(MachinePlanSchema, {
+        nodeId: m.nodeId,
+        providerParams: {
+          case: "yandex",
+          value: create(Yandex_VmSchema, {
+            cores: m.spec.yandex.cores,
+            memoryGb: BigInt(Math.trunc(m.spec.yandex.memoryGb)),
+            bootDiskGb: BigInt(Math.trunc(m.spec.yandex.bootDiskGb)),
+            bootDiskType: m.spec.yandex.bootDiskType,
+            zone: m.spec.yandex.zone,
+            publicIp: m.spec.yandex.publicIp,
+          }),
+        },
+      });
+    }
+    if (m.spec.case === "docker") {
+      return create(MachinePlanSchema, {
+        nodeId: m.nodeId,
+        providerParams: {
+          case: "docker",
+          value: create(Docker_ContainerSchema, {
+            image: m.spec.docker.image,
+            resources: {
+              cpuCores: m.spec.docker.cpuCores,
+              memoryMb: BigInt(Math.trunc(m.spec.docker.memoryMb)),
+            },
+          }),
+        },
+      });
+    }
+    return create(MachinePlanSchema, { nodeId: m.nodeId });
+  });
+
+  return create(InfrastructurePlanSchema, {
+    provider: vm.provider,
+    settings,
+    machines,
+  });
+}
 
 const realWizardProvider: WizardProvider = {
-  async start() {
-    // const tenantId = await resolveTenantId(tenantSlug);
-    // const { draft } = await testWizardClient.startTestWizard({
-    //   tenantId, name, testPresetId: testPresetId ?? "",
-    // });  // cloud.v1.api.TestWizardService.StartTestWizard
-    // return draftToVM(draft);
-    throw new Error(NOT_WIRED);
+  async start(tenantSlug, name, testPresetId) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    const { draft } = await testWizardClient.startTestWizard({
+      tenantId,
+      name,
+      testPresetId: testPresetId ?? "",
+    });
+    return draftToVM(draft);
   },
-  async get() {
-    // const { draft } = await testWizardClient.getTestWizardDraft({ tenantId, draftId });
-    throw new Error(NOT_WIRED);
+
+  async get(tenantSlug, draftId) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    const { draft } = await testWizardClient.getTestWizardDraft({ tenantId, draftId });
+    return draftToVM(draft);
   },
-  async list() {
-    // const { drafts } = await testWizardClient.listTestWizardDrafts({
-    //   tenantId,
-    //   filter: { authorIds: [meId] },                 // "my drafts"
-    //   sort: { /* updated_at desc */ },
-    //   page: { size: 20 },
-    // });
-    // return drafts.map(draftToSummaryVM);
-    throw new Error(NOT_WIRED);
+
+  async list(tenantSlug) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    const { drafts } = await testWizardClient.listTestWizardDrafts({
+      tenantId,
+      page: { size: 20 },
+    });
+    return drafts.map(draftToSummaryVM);
   },
-  async patch() {
-    // Build the typed sub-messages with create(...Schema, {...}) from PatchInput:
-    //   provider: input.provider,                                   // Provider enum
-    //   database: databaseVMToProto(input.database),                // domain.Database
-    //   workload: workloadVMToProto(input.workload),                // domain.Workload
-    //   infrastructurePlan: infraPlanVMToProto(input.infrastructurePlan),
-    //       // deployment.InfrastructurePlan: ProviderSettings (Docker.Settings |
-    //       // Yandex.Settings) + repeated MachinePlan (Docker.Container | Yandex.Vm)
-    //   renderOverrides: create(RenderOverrideSetSchema, {
-    //     files: input.renderOverrides?.map((o) => create(FileOverrideSchema, {
-    //       artifactId: o.artifactId, componentId: o.componentId,
-    //       baseHash: o.baseHash,                          // echo the artifact base_hash
-    //       file: create(FileSchema, {
-    //         info: create(File_InfoSchema, { path: o.path }),
-    //         content: { case: "text", value: o.content },
-    //       }),
-    //     })) ?? [],
-    //   }),                                                // deployment.RenderOverrideSet
-    // const { draft } = await testWizardClient.patchTestWizard({
-    //   tenantId, draftId, provider, database, workload,
-    //   infrastructurePlan, renderOverrides,
-    // });  // server re-derives topology_spec/infrastructure_plan/render_preview + ready;
-    //      // overridden artifacts come back with origin = ORIGIN_USER_OVERRIDE.
-    // return draftToVM(draft);
-    throw new Error(NOT_WIRED);
+
+  async patch(tenantSlug, draftId, input) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    const { draft } = await testWizardClient.patchTestWizard({
+      tenantId,
+      draftId,
+      provider: input.provider ?? Provider.UNSPECIFIED,
+      database: input.database ? databaseVMToProto(input.database) : undefined,
+      workload: input.workload ? workloadVMToProto(input.workload) : undefined,
+      infrastructurePlan: input.infrastructurePlan
+        ? infraPlanVMToProto(input.infrastructurePlan)
+        : undefined,
+      renderOverrides: input.renderOverrides
+        ? create(RenderOverrideSetSchema, {
+            files: input.renderOverrides.map((o) =>
+              create(FileOverrideSchema, {
+                artifactId: o.artifactId,
+                componentId: o.componentId,
+                baseHash: o.baseHash,
+                file: create(FileSchema, {
+                  info: { path: o.path },
+                  content: { case: "text", value: o.content },
+                }),
+              }),
+            ),
+          })
+        : undefined,
+    });
+    return draftToVM(draft);
   },
-  async remove() {
-    // await testWizardClient.deleteTestWizardDraft({ tenantId, draftId });
-    throw new Error(NOT_WIRED);
+
+  async remove(tenantSlug, draftId) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    await testWizardClient.deleteTestWizardDraft({ tenantId, draftId });
   },
-  async finish() {
-    // const resp = await testWizardClient.finishTestWizard({
-    //   tenantId, draftId,
-    //   start: input.start,
-    //   saveAsPreset: input.saveAsPreset,
-    //   presetName: input.presetName,
-    //   inTenantRating: input.inTenantRating,          // optional bool
-    //   inGlobalRating: input.inGlobalRating,          // optional bool
-    // });
-    // return { runId: resp.run?.entity?.id ?? "", presetId: resp.preset?.entity?.id ?? "",
-    //          testRunName: resp.testRun?.id ?? "" };
-    throw new Error(NOT_WIRED);
+
+  async finish(tenantSlug, draftId, input) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    const resp = await testWizardClient.finishTestWizard({
+      tenantId,
+      draftId,
+      start: input.start,
+      saveAsPreset: input.saveAsPreset,
+      presetName: input.presetName,
+      inTenantRating: input.inTenantRating,
+      inGlobalRating: input.inGlobalRating,
+    });
+    return {
+      runId: resp.run?.entity?.id ?? "",
+      presetId: resp.preset?.entity?.id ?? "",
+      testRunName: resp.testRun?.id ?? "",
+    };
   },
-  async probe() {
-    // const resp = await testWizardClient.probeScript({
-    //   version: input.version, script: input.script, sql: input.sql,
-    //   driverType: input.driverType, poolSize: input.poolSize,
-    //   scaleFactor: input.scaleFactor, includeHuman: input.includeHuman,
-    // });
-    // return probeMetaFromStruct(resp.metadata, resp.human);
-    throw new Error(NOT_WIRED);
+
+  async probe(tenantSlug, input) {
+    const resp = await testWizardClient.probeScript({
+      version: input.version,
+      script: input.script,
+      sql: input.sql,
+      driverType: input.driverType,
+      poolSize: input.poolSize,
+      scaleFactor: input.scaleFactor,
+      includeHuman: input.includeHuman,
+    });
+    return probeMetaFromStruct(resp.metadata, resp.human);
   },
 };
+
+// Map stroppy's `probe -o json` Struct (loosely typed) onto the believable
+// subset the Workload step reads. Unknown shapes degrade to empty defaults.
+function probeMetaFromStruct(
+  metadata: Record<string, unknown> | undefined,
+  human: string,
+): ProbeMetaVM {
+  const m = (metadata ?? {}) as Record<string, unknown>;
+  const asStringArray = (v: unknown): string[] =>
+    Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
+  const asNumber = (v: unknown): number => (typeof v === "number" ? v : 0);
+  const asString = (v: unknown): string => (typeof v === "string" ? v : "");
+
+  const envRaw = Array.isArray(m.env) ? m.env : [];
+  const env = envRaw.map((e) => {
+    const o = (e ?? {}) as Record<string, unknown>;
+    return {
+      name: asString(o.name),
+      description: asString(o.description),
+      default: asString(o.default),
+      required: o.required === true,
+    };
+  });
+
+  return {
+    steps: asStringArray(m.steps),
+    env,
+    sqlSections: asStringArray(m.sqlSections ?? m.sql_sections),
+    poolSize: asNumber(m.poolSize ?? m.pool_size),
+    driverType: asString(m.driverType ?? m.driver_type),
+    human,
+  };
+}
 
 // --- Provider injection ------------------------------------------------------
 //

@@ -5,6 +5,7 @@ import {
   Building2,
   CheckCircle2,
   Cloud,
+  Eye,
   KeyRound,
   LogOut,
   Pencil,
@@ -55,10 +56,13 @@ import {
   hasOrgPermission,
   roleListLabel,
   type OrgDetailVM,
+  type OrgMembership,
   type OrgMemberVM,
+  type OrgPermissionCatalogEntry,
   type OrgRole,
   type OrgSettings,
 } from "@/services/org";
+import type { ProviderSettingsJson } from "@/lib/proto/cloud/v1/deployment/provider_pb";
 
 const RESOURCES: NonNullable<PermissionJson["resource"]>[] = [
   "RESOURCE_ACCOUNT",
@@ -75,15 +79,6 @@ const RESOURCES: NonNullable<PermissionJson["resource"]>[] = [
   "RESOURCE_AGENT_SHELL",
   "RESOURCE_SHARE",
   "RESOURCE_PACKAGE",
-];
-
-const ACTIONS: NonNullable<PermissionJson["action"]>[] = [
-  "ACTION_CREATE",
-  "ACTION_READ",
-  "ACTION_UPDATE",
-  "ACTION_DELETE",
-  "ACTION_LIST",
-  "ACTION_MANAGE",
 ];
 
 function fmtDate(iso?: string): string {
@@ -199,6 +194,14 @@ function roleIdsEqual(a: string[], b: string[]) {
   return a.length === b.length && a.every((value) => b.includes(value));
 }
 
+/** Stable key for one {resource, action} pair, used by the catalog grid. */
+function permKey(resource: string | undefined, action: string | undefined) {
+  return `${resource ?? ""}|${action ?? ""}`;
+}
+
+const PROVIDER_PRESETS = ["docker", "yandex"] as const;
+type ProviderKind = (typeof PROVIDER_PRESETS)[number];
+
 export function OrgDetail() {
   const { slug = "" } = useParams<{ slug: string }>();
   const navigate = useNavigate();
@@ -232,6 +235,24 @@ export function OrgDetail() {
   const [transferOpen, setTransferOpen] = useState(false);
   const [newOwnerAccountId, setNewOwnerAccountId] = useState("");
 
+  // ListPermissions catalog, loaded once and surfaced as a checkbox grid in the
+  // role editor (replaces the free-form resource/action dropdown rows).
+  const [permCatalog, setPermCatalog] = useState<OrgPermissionCatalogEntry[]>([]);
+
+  // GetRole / GetMembership single-row detail drawer.
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailTitle, setDetailTitle] = useState("");
+  const [detailRole, setDetailRole] = useState<OrgRole | null>(null);
+  const [detailMembership, setDetailMembership] =
+    useState<OrgMembership | null>(null);
+
+  // SetTenantProviderSettings: one provider's config (Docker has no fields;
+  // Yandex carries credentials/placement). Kept separate from UpdateTenantSettings.
+  const [providerKind, setProviderKind] = useState<ProviderKind>("docker");
+  const [ycToken, setYcToken] = useState("");
+  const [ycCloudId, setYcCloudId] = useState("");
+  const [ycFolderId, setYcFolderId] = useState("");
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -255,6 +276,21 @@ export function OrgDetail() {
       cancelled = true;
     };
   }, [slug]);
+
+  useEffect(() => {
+    let cancelled = false;
+    getOrgProvider()
+      .listPermissionCatalog()
+      .then((catalog) => {
+        if (!cancelled) setPermCatalog(catalog);
+      })
+      .catch(() => {
+        /* catalog is best-effort; the role editor falls back to existing drafts */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useBreadcrumbLabel("slug", org?.tenant.name);
 
@@ -508,6 +544,71 @@ export function OrgDetail() {
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
+  }
+
+  async function saveProviderSettings() {
+    setError(null);
+    setNotice(null);
+    const settings: ProviderSettingsJson =
+      providerKind === "yandex"
+        ? {
+            yandex: {
+              token: ycToken,
+              cloudId: ycCloudId,
+              folderId: ycFolderId,
+            },
+          }
+        : { docker: {} };
+    try {
+      const next = await getOrgProvider().setProviderSettings({
+        tenantSlug: orgDetail.tenant.slug,
+        tenantId: orgDetail.tenant.id,
+        settings,
+      });
+      acceptDetail(next);
+      setNotice(`Provider settings saved (${providerKind}).`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  async function viewRoleDetail(role: OrgRole) {
+    setError(null);
+    try {
+      const full = await getOrgProvider().getRole(role.id);
+      setDetailMembership(null);
+      setDetailRole(full);
+      setDetailTitle(`GetRole — ${full.name}`);
+      setDetailOpen(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  async function viewMemberDetail(member: OrgMemberVM) {
+    setError(null);
+    try {
+      const full = await getOrgProvider().getMembership(member.membership.id);
+      setDetailRole(null);
+      setDetailMembership(full);
+      setDetailTitle(`GetMembership — ${member.account.nickname}`);
+      setDetailOpen(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  function togglePermission(entry: OrgPermissionCatalogEntry) {
+    setPermissionDrafts((prev) => {
+      const exists = prev.some(
+        (p) => p.resource === entry.resource && p.action === entry.action,
+      );
+      return exists
+        ? prev.filter(
+            (p) => !(p.resource === entry.resource && p.action === entry.action),
+          )
+        : [...prev, { resource: entry.resource, action: entry.action }];
+    });
   }
 
   async function transferOwnership() {
@@ -841,6 +942,15 @@ export function OrgDetail() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="inline-flex gap-1">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 text-muted-foreground"
+                            onClick={() => void viewMemberDetail(member)}
+                            title="GetMembership"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                          </Button>
                           {canUpdateMembership && (
                             <Button
                               size="icon"
@@ -925,6 +1035,15 @@ export function OrgDetail() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="inline-flex gap-1">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 text-muted-foreground"
+                            onClick={() => void viewRoleDetail(role)}
+                            title="GetRole"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                          </Button>
                           {canUpdateRole && !role.isSystem && (
                             <Button
                               size="icon"
@@ -1193,6 +1312,87 @@ export function OrgDetail() {
                 )}
               </div>
             </Panel>
+
+            <Panel
+              label="SetTenantProviderSettings"
+              className="mt-4"
+              action={
+                <Button
+                  size="sm"
+                  disabled={!canUpdateSettings}
+                  onClick={() => void saveProviderSettings()}
+                >
+                  <Save className="h-3.5 w-3.5" />
+                  Save provider
+                </Button>
+              }
+            >
+              <div className="text-xs text-muted-foreground">
+                Replaces ONE provider's config (deployment.ProviderSettings
+                oneof). Docker.Settings has no fields; Yandex.Settings carries
+                credentials sent as form values for the server to bake.
+              </div>
+              <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="flex flex-col gap-1.5">
+                  <Label>provider</Label>
+                  <Select
+                    value={providerKind}
+                    disabled={!canUpdateSettings}
+                    onValueChange={(value) =>
+                      setProviderKind(value as ProviderKind)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="docker">docker</SelectItem>
+                      <SelectItem value="yandex">yandex</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              {providerKind === "yandex" ? (
+                <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="ps-token">token</Label>
+                    <Input
+                      id="ps-token"
+                      type="password"
+                      disabled={!canUpdateSettings}
+                      value={ycToken}
+                      onChange={(e) => setYcToken(e.target.value)}
+                      className="font-mono"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="ps-cloud">cloud_id</Label>
+                    <Input
+                      id="ps-cloud"
+                      disabled={!canUpdateSettings}
+                      value={ycCloudId}
+                      onChange={(e) => setYcCloudId(e.target.value)}
+                      className="font-mono"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="ps-folder">folder_id</Label>
+                    <Input
+                      id="ps-folder"
+                      disabled={!canUpdateSettings}
+                      value={ycFolderId}
+                      onChange={(e) => setYcFolderId(e.target.value)}
+                      className="font-mono"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-3 border border-border bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
+                  Docker.Settings is an empty message — no fields to fill. Saving
+                  registers the docker provider config for this tenant.
+                </div>
+              )}
+            </Panel>
           </TabsContent>
 
           <TabsContent value="danger" className="mt-4">
@@ -1379,92 +1579,53 @@ export function OrgDetail() {
             </div>
             <div>
               <div className="flex items-center justify-between gap-2">
-                <SectionLabel>permissions</SectionLabel>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() =>
-                    setPermissionDrafts((prev) => [
-                      ...prev,
-                      { resource: "RESOURCE_TEST_RUN", action: "ACTION_LIST" },
-                    ])
-                  }
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  Add
-                </Button>
+                <SectionLabel>permissions (ListPermissions catalog)</SectionLabel>
+                <span className="text-[11px] text-muted-foreground">
+                  {permissionDrafts.length} selected
+                </span>
               </div>
-              <div className="mt-2 space-y-2">
-                {permissionDrafts.map((permission, index) => (
-                  <div key={index} className="grid grid-cols-[1fr_1fr_auto] gap-2">
-                    <Select
-                      value={permission.resource}
-                      onValueChange={(value) =>
-                        setPermissionDrafts((prev) =>
-                          prev.map((item, i) =>
-                            i === index
-                              ? {
-                                  ...item,
-                                  resource: value as PermissionJson["resource"],
-                                }
-                              : item,
-                          ),
-                        )
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {RESOURCES.map((resource) => (
-                          <SelectItem key={resource} value={resource}>
-                            {resource}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Select
-                      value={permission.action}
-                      onValueChange={(value) =>
-                        setPermissionDrafts((prev) =>
-                          prev.map((item, i) =>
-                            i === index
-                              ? {
-                                  ...item,
-                                  action: value as PermissionJson["action"],
-                                }
-                              : item,
-                          ),
-                        )
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {ACTIONS.map((action) => (
-                          <SelectItem key={action} value={action}>
-                            {action}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-9 w-9 text-muted-foreground hover:text-destructive"
-                      disabled={permissionDrafts.length === 1}
-                      onClick={() =>
-                        setPermissionDrafts((prev) =>
-                          prev.filter((_, i) => i !== index),
-                        )
-                      }
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
+              {permCatalog.length === 0 ? (
+                <div className="mt-2 border border-border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+                  Permission catalog unavailable. {permissionDrafts.length}{" "}
+                  permission(s) preserved as-is.
+                </div>
+              ) : (
+                <div className="mt-2 max-h-72 space-y-3 overflow-y-auto border border-border bg-muted/10 p-3">
+                  {RESOURCES.map((resource) => {
+                    const group = permCatalog.filter(
+                      (e) => e.resource === resource,
+                    );
+                    if (group.length === 0) return null;
+                    return (
+                      <div key={resource}>
+                        <div className="font-mono text-[10px] uppercase text-zinc-500">
+                          {shortEnum(resource)}
+                        </div>
+                        <div className="mt-1 flex flex-wrap gap-1.5">
+                          {group.map((entry) => {
+                            const active = permissionDrafts.some(
+                              (p) =>
+                                p.resource === entry.resource &&
+                                p.action === entry.action,
+                            );
+                            return (
+                              <Button
+                                key={permKey(entry.resource, entry.action)}
+                                size="sm"
+                                variant={active ? "default" : "outline"}
+                                onClick={() => togglePermission(entry)}
+                                title={entry.label}
+                              >
+                                {shortEnum(entry.action)}
+                              </Button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
             <div className="flex justify-end gap-2">
               <Button size="sm" variant="outline" onClick={() => setRoleDialogOpen(false)}>
@@ -1519,6 +1680,75 @@ export function OrgDetail() {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{detailTitle}</DialogTitle>
+            <DialogDescription>
+              {detailRole ? "GetRoleResponse" : "GetMembershipResponse"}
+            </DialogDescription>
+          </DialogHeader>
+          {detailRole && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 text-xs">
+                <div className="border border-border bg-muted/20 px-3 py-2">
+                  <div className="font-mono text-[10px] uppercase text-zinc-500">
+                    name
+                  </div>
+                  <div className="text-foreground">{detailRole.name}</div>
+                </div>
+                <div className="border border-border bg-muted/20 px-3 py-2">
+                  <div className="font-mono text-[10px] uppercase text-zinc-500">
+                    scope
+                  </div>
+                  <div className="font-mono text-foreground">
+                    {detailRole.scope}
+                  </div>
+                </div>
+                <div className="border border-border bg-muted/20 px-3 py-2 sm:col-span-2">
+                  <div className="font-mono text-[10px] uppercase text-zinc-500">
+                    id
+                  </div>
+                  <div className="font-mono text-foreground">{detailRole.id}</div>
+                </div>
+              </div>
+              <div>
+                <SectionLabel>permissions</SectionLabel>
+                <div className="mt-2">
+                  <PermissionBadges permissions={detailRole.permissions} />
+                </div>
+              </div>
+            </div>
+          )}
+          {detailMembership && (
+            <div className="grid grid-cols-1 gap-2 text-xs">
+              {(
+                [
+                  ["id", detailMembership.id],
+                  ["account_id", detailMembership.accountId],
+                  ["tenant_id", detailMembership.tenantId],
+                  ["role_ids", detailMembership.roleIds.join(", ") || "none"],
+                  ["created", fmtDate(detailMembership.createdAt)],
+                  ["updated", fmtDate(detailMembership.updatedAt)],
+                ] as const
+              ).map(([label, value]) => (
+                <div
+                  key={label}
+                  className="border border-border bg-muted/20 px-3 py-2"
+                >
+                  <div className="font-mono text-[10px] uppercase text-zinc-500">
+                    {label}
+                  </div>
+                  <div className="break-all font-mono text-foreground">
+                    {value}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

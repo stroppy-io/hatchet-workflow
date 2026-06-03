@@ -5,6 +5,11 @@ import { PlainLayout } from "@/components/PlainLayout";
 import { RequireAdmin, RequireAuth, RequireTenant } from "@/components/guards";
 import { BreadcrumbProvider } from "@/lib/breadcrumbs";
 import { Login } from "@/pages/Login";
+import { Register } from "@/pages/Register";
+import { ForgotPassword } from "@/pages/ForgotPassword";
+import { ResetPassword } from "@/pages/ResetPassword";
+import { VerifyEmail } from "@/pages/VerifyEmail";
+import { SSOCallback } from "@/pages/SSOCallback";
 import { SelectTenant } from "@/pages/SelectTenant";
 import { Profile } from "@/pages/Profile";
 import { Dashboard } from "@/pages/Dashboard";
@@ -13,7 +18,14 @@ import { Suites } from "@/pages/Suites";
 import { SuiteDetail } from "@/pages/SuiteDetail";
 import { Quotas } from "@/pages/Quotas";
 import { NewRun } from "@/pages/NewRun";
-import { Placeholder } from "@/pages/Placeholder";
+import { SuiteWizard } from "@/pages/SuiteWizard";
+import { RunDetail } from "@/pages/RunDetail";
+import { Favorites } from "@/pages/Favorites";
+import { Compare } from "@/pages/Compare";
+import { Shares } from "@/pages/Shares";
+import { SharedRun } from "@/pages/SharedRun";
+import { Leaderboard } from "@/pages/Leaderboard";
+import { Shell } from "@/pages/Shell";
 import { DatabasePresets } from "@/pages/library/DatabasePresets";
 import { DatabasePresetForm } from "@/pages/library/DatabasePresetForm";
 import { DatabasePresetDetail } from "@/pages/library/DatabasePresetDetail";
@@ -28,6 +40,7 @@ import { PackageUploadForm } from "@/pages/library/PackageUploadForm";
 import { PackageDetail } from "@/pages/library/PackageDetail";
 import { AdminAccounts } from "@/pages/admin/AdminAccounts";
 import { AdminSystemSettings } from "@/pages/admin/AdminSystemSettings";
+import { AdminIdentityProviders } from "@/pages/admin/AdminIdentityProviders";
 import { Orgs } from "@/pages/orgs/Orgs";
 import { OrgDetail } from "@/pages/orgs/OrgDetail";
 
@@ -50,17 +63,6 @@ function RootRedirect() {
   return <Navigate to="/orgs" replace />;
 }
 
-// Tenant-scoped placeholder pages — WORK ENTITIES ONLY. Real pages are rebuilt
-// in later tasks. The index route (/t/:slug) is the Organization Dashboard,
-// declared separately. Org settings/members/roles live under /orgs/:slug, NOT
-// here. Account API tokens live under /profile.
-const tenantPages: { path: string; title: string; crumbParam?: string }[] = [
-  // `runs` (the index list) and `runs/new` (the wizard) are real pages now —
-  // declared explicitly below. `suites` is also real now.
-  { path: "runs/:id", title: "Run Detail", crumbParam: "id" },
-  { path: "compare", title: "Compare" },
-];
-
 export default function App() {
   const { isLoading } = useAuth();
 
@@ -70,6 +72,16 @@ export default function App() {
     <BreadcrumbProvider>
       <Routes>
         <Route path="/login" element={<Login />} />
+
+        {/* Public auth flows (outside RequireAuth, next to /login). */}
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/sso/callback" element={<SSOCallback />} />
+
+        {/* Public, unauthenticated share view (outside RequireAuth). */}
+        <Route path="/shared/:token" element={<SharedRun />} />
 
         <Route element={<RequireAuth />}>
           <Route path="/select-tenant" element={<SelectTenant />} />
@@ -88,6 +100,10 @@ export default function App() {
               />
               <Route path="/admin/accounts" element={<AdminAccounts />} />
               <Route path="/admin/system" element={<AdminSystemSettings />} />
+              <Route
+                path="/admin/identity-providers"
+                element={<AdminIdentityProviders />}
+              />
               <Route
                 path="/admin/users"
                 element={<Navigate to="/admin/accounts" replace />}
@@ -109,7 +125,14 @@ export default function App() {
               <Route index element={<Dashboard />} />
               <Route path="runs" element={<Runs />} />
               <Route path="runs/new" element={<NewRun />} />
+              <Route path="runs/:id" element={<RunDetail />} />
+              <Route path="favorites" element={<Favorites />} />
+              <Route path="compare" element={<Compare />} />
+              <Route path="shares" element={<Shares />} />
+              <Route path="leaderboard" element={<Leaderboard />} />
+              <Route path="shell" element={<Shell />} />
               <Route path="suites" element={<Suites />} />
+              <Route path="suites/new" element={<SuiteWizard />} />
               <Route path="suites/:id" element={<SuiteDetail />} />
               <Route path="quotas" element={<Quotas />} />
               {/* Library — 3 preset tables + packages. */}
@@ -132,15 +155,6 @@ export default function App() {
               <Route path="packages" element={<Packages />} />
               <Route path="packages/new" element={<PackageUploadForm />} />
               <Route path="packages/:id" element={<PackageDetail />} />
-              {tenantPages.map((p) => (
-                <Route
-                  key={p.path}
-                  path={p.path}
-                  element={
-                    <Placeholder title={p.title} crumbParam={p.crumbParam} />
-                  }
-                />
-              ))}
             </Route>
           </Route>
         </Route>

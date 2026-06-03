@@ -144,17 +144,109 @@ export interface DashboardProvider {
   getDashboard(tenantSlug: string): Promise<DashboardVM>;
 }
 
-/**
- * Real backend provider. TODO(real-api): build the connect transport + call
- * tenantDashboardClient.getTenantDashboard({ tenantId }) and map the proto
- * TenantDashboard onto DashboardVM. Throws until wired so a missing-backend
- * misconfig is loud, not silent.
- */
+import { toJson } from "@bufbuild/protobuf";
+import {
+  TestRunRecordSchema,
+  type TestRunRecord,
+} from "@/lib/proto/cloud/v1/models/test_run_pb";
+import type {
+  StatusCounts,
+  UpcomingSuite,
+} from "@/lib/proto/cloud/v1/api/tenant_dashboard_pb";
+import type { RatingEntry } from "@/lib/proto/cloud/v1/api/rating_pb";
+import { tenantDashboardClient } from "@/services/client";
+import { resolveTenantId } from "@/services/tenant";
+
+/** Map the wire Status enum (JSON string form) onto the flat RunStatus union. */
+export function statusToVM(s: string | undefined): RunStatus {
+  switch (s) {
+    case "STATUS_PENDING":
+    case "STATUS_UNSPECIFIED":
+      return "pending";
+    case "STATUS_RUNNING":
+    case "STATUS_ALLOCATED":
+    case "STATUS_DEPLOYMENT":
+      return "running";
+    case "STATUS_CANCELLING":
+      return "cancelling";
+    case "STATUS_COMPLETED":
+      return "completed";
+    case "STATUS_FAILED":
+      return "failed";
+    case "STATUS_CANCELLED":
+    case "STATUS_SKIPPED":
+      return "cancelled";
+    default:
+      return "pending";
+  }
+}
+
+/** Flatten a TestRunRecord onto the dashboard's RecentRunVM. */
+export function recentRunFromRecord(rec: TestRunRecord): RecentRunVM {
+  const j = toJson(TestRunRecordSchema, rec) as {
+    entity?: { id?: string; name?: string; timings?: { createdAt?: string } };
+    status?: string;
+    summary?: { dbKind?: string; workloadName?: string; startedAt?: string };
+  };
+  return {
+    id: j.entity?.id ?? "",
+    name: j.entity?.name ?? "",
+    status: statusToVM(j.status),
+    startedAt: j.summary?.startedAt ?? j.entity?.timings?.createdAt ?? "",
+    dbKind: j.summary?.dbKind ?? "",
+    workload: j.summary?.workloadName ?? "",
+  };
+}
+
+function countsFromProto(c: StatusCounts | undefined): StatusCountsVM {
+  return {
+    total: c?.total ?? 0,
+    pending: c?.pending ?? 0,
+    running: c?.running ?? 0,
+    completed: c?.completed ?? 0,
+    failed: c?.failed ?? 0,
+    cancelled: c?.cancelled ?? 0,
+  };
+}
+
+function upcomingFromProto(u: UpcomingSuite): UpcomingSuiteVM {
+  return {
+    suiteId: u.suiteId,
+    name: u.name,
+    cron: u.cron,
+    nextRunAt: u.nextRunAt
+      ? new Date(Number(u.nextRunAt.seconds) * 1000).toISOString()
+      : "",
+  };
+}
+
+function benchmarkFromProto(r: RatingEntry): BenchmarkVM {
+  return {
+    rank: r.rank,
+    metricValue: r.metricValue,
+    metricUnit: r.metricUnit,
+    dbKind: String(r.dbKind),
+    workload: r.workloadName,
+    topology: r.topologyLabel,
+    author: r.authorName,
+  };
+}
+
 const realDashboardProvider: DashboardProvider = {
-  async getDashboard() {
-    throw new Error(
-      "real DashboardProvider not wired yet — run with VITE_MOCK=1 to preview the dashboard",
-    );
+  async getDashboard(tenantSlug) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    const { dashboard } = await tenantDashboardClient.getTenantDashboard({
+      tenantId,
+    });
+    const recentRuns = (dashboard?.recentRuns ?? []).map(recentRunFromRecord);
+    return {
+      runCounts: countsFromProto(dashboard?.runCounts),
+      successRate: dashboard?.successRate ?? 0,
+      recentRuns,
+      upcoming: (dashboard?.upcoming ?? []).map(upcomingFromProto),
+      topBenchmarks: (dashboard?.topBenchmarks ?? []).map(benchmarkFromProto),
+      runsOverTime: bucketRunsByDay(recentRuns),
+    };
   },
 };
 

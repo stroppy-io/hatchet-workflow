@@ -38,9 +38,28 @@
 // filter.updated_after/before, filter.created_after/before and filter.ids
 // (no visible column), providers[] / *_preset_ids[] (no UI surface).
 
-import type { RunStatus } from "@/services/dashboard";
-import { testRunClient } from "@/services/client";
+import { toJson } from "@bufbuild/protobuf";
+import { timestampFromDate } from "@bufbuild/protobuf/wkt";
+import {
+  TestRunRecordSchema,
+  type TestRunRecord,
+} from "@/lib/proto/cloud/v1/models/test_run_pb";
+import { EntitySortField } from "@/lib/proto/cloud/v1/common/entity_pb";
+import { ListTestRunsRequest_Sort_Kind } from "@/lib/proto/cloud/v1/api/test_run_pb";
+import { FavoriteKind } from "@/lib/proto/cloud/v1/common/favorite_pb";
+import { type RunStatus, statusToVM } from "@/services/dashboard";
+import { testRunClient, favoriteClient } from "@/services/client";
 import { resolveTenantId } from "@/services/tenant";
+import {
+  dbKindLabelFromJson,
+  dbKindProto,
+  providerLabelFromJson,
+  protocolLabelFromJson,
+  protocolProto,
+  triggerLabelFromJson,
+  triggerProto,
+  statusProto,
+} from "@/services/enums";
 
 export type { RunStatus };
 
@@ -366,71 +385,176 @@ export interface RunsProvider {
  * TestRunRecord[] onto RunVM[] (+ next_page_token). Throws until wired so a
  * missing-backend misconfig is loud, not silent.
  */
-const NOT_WIRED =
-  "real RunsProvider not wired yet — run with VITE_MOCK=1 to preview the runs table";
+// One TestRunRecord -> flat RunVM (string enums + ISO timestamps via toJson).
+export function testRunRecordToVM(rec: TestRunRecord): RunVM {
+  const j = toJson(TestRunRecordSchema, rec) as {
+    entity?: {
+      id?: string;
+      name?: string;
+      authorId?: string;
+      isFavorite?: boolean;
+      timings?: { createdAt?: string; deletedAt?: string };
+    };
+    status?: string;
+    trigger?: string;
+    suiteRunId?: string;
+    summary?: {
+      dbKind?: string;
+      workloadName?: string;
+      stroppyVersion?: string;
+      workloadProtocol?: string;
+      topologyLabel?: string;
+      nodeCount?: number;
+      provider?: string;
+      progressPct?: number;
+      startedAt?: string;
+      finishedAt?: string;
+      duration?: string;
+      dbPresetId?: string;
+      workloadPresetId?: string;
+      testPresetId?: string;
+    };
+  };
+  const e = j.entity ?? {};
+  const s = j.summary ?? {};
+  return {
+    id: e.id ?? "",
+    name: e.name ?? "",
+    authorId: e.authorId ?? "",
+    createdAt: e.timings?.createdAt ?? "",
+    status: statusToVM(j.status),
+    dbKind: dbKindLabelFromJson(s.dbKind),
+    workload: s.workloadName ?? "",
+    stroppyVersion: s.stroppyVersion ?? "",
+    protocol: protocolLabelFromJson(s.workloadProtocol),
+    trigger: triggerLabelFromJson(j.trigger),
+    topologyLabel: s.topologyLabel ?? "",
+    nodeCount: s.nodeCount ?? 0,
+    progressPct: s.progressPct ?? 0,
+    startedAt: s.startedAt,
+    finishedAt: s.finishedAt,
+    durationSec: s.duration ? parseFloat(s.duration) : undefined,
+    suiteRunId: j.suiteRunId ?? "",
+    provider: providerLabelFromJson(s.provider),
+    dbPresetId: s.dbPresetId ?? "",
+    workloadPresetId: s.workloadPresetId ?? "",
+    testPresetId: s.testPresetId ?? "",
+    favorite: e.isFavorite ?? false,
+    deleted: !!e.timings?.deletedAt,
+  };
+}
+
+function runSort(query: RunsQuery): {
+  entity: EntitySortField;
+  kind: ListTestRunsRequest_Sort_Kind;
+  desc: boolean;
+} {
+  const desc = query.desc ?? false;
+  const K = ListTestRunsRequest_Sort_Kind;
+  switch (query.sort) {
+    case "name":
+      return { entity: EntitySortField.NAME, kind: K.UNSPECIFIED, desc };
+    case "created_at":
+      return { entity: EntitySortField.CREATED_AT, kind: K.UNSPECIFIED, desc };
+    case "status":
+      return { entity: EntitySortField.UNSPECIFIED, kind: K.STATUS, desc };
+    case "db_kind":
+      return { entity: EntitySortField.UNSPECIFIED, kind: K.DB_KIND, desc };
+    case "workload":
+      return { entity: EntitySortField.UNSPECIFIED, kind: K.WORKLOAD, desc };
+    case "trigger":
+      return { entity: EntitySortField.UNSPECIFIED, kind: K.TRIGGER, desc };
+    case "duration":
+      return { entity: EntitySortField.UNSPECIFIED, kind: K.DURATION, desc };
+    case "started_at":
+      return { entity: EntitySortField.UNSPECIFIED, kind: K.STARTED_AT, desc };
+    case "finished_at":
+      return { entity: EntitySortField.UNSPECIFIED, kind: K.FINISHED_AT, desc };
+    default:
+      return { entity: EntitySortField.UNSPECIFIED, kind: K.UNSPECIFIED, desc };
+  }
+}
+
+const ts = (iso?: string) => (iso ? timestampFromDate(new Date(iso)) : undefined);
+const dur = (sec?: number) =>
+  sec === undefined ? undefined : { seconds: BigInt(Math.floor(sec)), nanos: 0 };
 
 const realRunsProvider: RunsProvider = {
-  async listRuns() {
-    // await testRunClient.listTestRuns({
-    //   tenantId,
-    //   filter: {
-    //     search: query.search,
-    //     authorIds: query.authorIds,                  // filter.author_ids
-    //     favoritesOnly: query.favoritesOnly,           // filter.favorites_only
-    //     includeDeleted: query.includeDeleted ?? false,// filter.include_deleted
-    //   },
-    //   statuses, dbKinds, protocols, triggers, stroppyVersions,
-    //   standalone: query.standalone,                            // optional bool standalone
-    //   progressMin: query.progressMin, progressMax: query.progressMax,
-    //   durationMin: durationFrom(query.durationMinSec),         // google.protobuf.Duration
-    //   durationMax: durationFrom(query.durationMaxSec),
-    //   startedAfter, startedBefore, finishedAfter, finishedBefore,
-    //   // sort.kind: trigger -> KIND_TRIGGER (status -> KIND_STATUS, etc.)
-    //   sort: { ... , desc }, page: { size, token },
-    // });
-    throw new Error(NOT_WIRED);
+  async listRuns(tenantSlug, query) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    const { runs, nextPageToken } = await testRunClient.listTestRuns({
+      tenantId,
+      filter: {
+        search: query.search,
+        authorIds: query.authorIds ?? [],
+        favoritesOnly: query.favoritesOnly,
+        includeDeleted: query.includeDeleted ?? false,
+      },
+      statuses: query.statuses?.map(statusProto),
+      dbKinds: query.dbKinds?.map(dbKindProto),
+      protocols: query.protocols?.map(protocolProto),
+      triggers: query.triggers?.map(triggerProto),
+      stroppyVersions: query.stroppyVersions ?? [],
+      suiteRunId: query.suiteRunId ?? "",
+      standalone: query.standalone,
+      progressMin: query.progressMin,
+      progressMax: query.progressMax,
+      durationMin: dur(query.durationMinSec),
+      durationMax: dur(query.durationMaxSec),
+      startedAfter: ts(query.startedAfter),
+      startedBefore: ts(query.startedBefore),
+      finishedAfter: ts(query.finishedAfter),
+      finishedBefore: ts(query.finishedBefore),
+      sort: runSort(query),
+      page: { size: query.pageSize ?? 0, token: query.pageToken ?? "" },
+    });
+    return { runs: runs.map(testRunRecordToVM), nextPageToken };
   },
+
   async listFacets(tenantSlug) {
     const tenantId = await resolveTenantId(tenantSlug);
     const resp = await testRunClient.listTestRunFacets({ tenantId });
     return { authorIds: resp.authorIds };
   },
-  // The mutations below follow the SAME convention as listRuns: each documents
-  // the exact connectrpc call it will make once the transport is wired, then
-  // throws so a missing-backend misconfig is loud, not a silent fake-success.
-  async cancelRun() {
-    // await testRunClient.cancelTestRun({ tenantId, id: runId });
-    // (cloud.v1.api.TestRunService.CancelTestRun — resolve tenantId from slug.)
-    throw new Error(NOT_WIRED);
+
+  async cancelRun(tenantSlug, runId) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    await testRunClient.cancelTestRun({ tenantId, id: runId });
   },
-  async rerunRun() {
-    // await testRunClient.startTestRun({
-    //   tenantId, source: { case: "testRunId", value: runId },
-    // });  // cloud.v1.api.TestRunService.StartTestRun
-    throw new Error(NOT_WIRED);
+
+  async rerunRun(tenantSlug, runId) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    await testRunClient.startTestRun({
+      tenantId,
+      source: { case: "testRunId", value: runId },
+    });
   },
-  async extractToPreset() {
-    // await testRunClient.extractToPreset({ tenantId, id: runId, name: "" });
-    // (cloud.v1.api.TestRunService.ExtractToPreset — empty name => server derives.)
-    throw new Error(NOT_WIRED);
+
+  async extractToPreset(tenantSlug, runId) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    await testRunClient.extractToPreset({ tenantId, id: runId, name: "" });
   },
-  async deleteRun() {
-    // await testRunClient.deleteTestRun({ tenantId, id: runId });
-    // (cloud.v1.api.TestRunService.DeleteTestRun — idempotent.)
-    throw new Error(NOT_WIRED);
+
+  async deleteRun(tenantSlug, runId) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    await testRunClient.deleteTestRun({ tenantId, id: runId });
   },
-  async setFavorite() {
-    // if (favorite) {
-    //   await favoriteClient.addFavorite({
-    //     tenantId, kind: FavoriteKind.TEST_RUN, targetId: runId,
-    //   });
-    // } else {
-    //   await favoriteClient.removeFavorite({
-    //     tenantId, kind: FavoriteKind.TEST_RUN, targetId: runId,
-    //   });
-    // }
-    // (cloud.v1.api.FavoriteService — resolve tenantId from slug.)
-    throw new Error(NOT_WIRED);
+
+  async setFavorite(tenantSlug, runId, favorite) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    if (favorite) {
+      await favoriteClient.addFavorite({
+        tenantId,
+        kind: FavoriteKind.TEST_RUN,
+        targetId: runId,
+      });
+    } else {
+      await favoriteClient.removeFavorite({
+        tenantId,
+        kind: FavoriteKind.TEST_RUN,
+        targetId: runId,
+      });
+    }
   },
 };
 

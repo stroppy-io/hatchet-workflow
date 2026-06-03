@@ -23,6 +23,8 @@
 // DatabasePresetRecord onto the flat DatabaseVM the wizard step edits. The mock
 // gate in main.tsx injects a stateful mock via setPresetProvider().
 
+import { create, toJson } from "@bufbuild/protobuf";
+import { timestampFromDate, timestampDate, type Timestamp } from "@bufbuild/protobuf/wkt";
 import {
   ENGINE_TO_KIND,
   type DatabaseVM,
@@ -33,6 +35,36 @@ import type {
   DbKind,
   Protocol,
 } from "@/components/library-table/labels";
+import {
+  DatabasePresetRecordSchema,
+  WorkloadPresetRecordSchema,
+  TestPresetRecordSchema,
+  type DatabasePresetRecord,
+  type WorkloadPresetRecord,
+  type TestPresetRecord,
+} from "@/lib/proto/cloud/v1/models/preset_pb";
+import { TestSchema } from "@/lib/proto/cloud/v1/domain/test_pb";
+import { EntitySortField } from "@/lib/proto/cloud/v1/common/entity_pb";
+import {
+  ListDatabasePresetsRequest_Sort_Kind,
+  ListWorkloadPresetsRequest_Sort_Kind,
+  ListTestPresetsRequest_Sort_Kind,
+} from "@/lib/proto/cloud/v1/api/preset_pb";
+import { FavoriteKind } from "@/lib/proto/cloud/v1/common/favorite_pb";
+import {
+  databasePresetClient,
+  workloadPresetClient,
+  testPresetClient,
+  favoriteClient,
+} from "@/services/client";
+import { resolveTenantId } from "@/services/tenant";
+import { dbKindLabelFromJson, dbKindProto, protocolLabelFromJson, protocolProto } from "@/services/enums";
+import {
+  databaseProtoToVM,
+  databaseVMToProto,
+  workloadProtoToVM,
+  workloadVMToProto,
+} from "@/services/domainMappers";
 
 /**
  * A single database preset, flattened for the picker pane. `database` is the
@@ -491,254 +523,436 @@ export interface PresetProvider {
 
 // --- Real backend provider ---------------------------------------------------
 //
-// TODO(real-api): wire the connect transport (databasePresetClient) and map
-// proto <-> VM. Throws until wired so a missing-backend misconfig is loud, not
-// a silent fake-success — the same convention as wizard.ts / runs.ts.
+// Wires the three preset Services + FavoriteService and maps proto <-> the flat
+// VMs via domainMappers. Every method resolves the tenant slug -> tenant_id
+// first, exactly like packages.ts / suites.ts.
 
-const NOT_WIRED =
-  "real PresetProvider not wired yet — run with VITE_MOCK=1 to preview the presets";
+// PresetKind -> the FavoriteService kind for that preset table.
+const PRESET_FAVORITE_KIND: Record<PresetKind, FavoriteKind> = {
+  database: FavoriteKind.DATABASE_PRESET,
+  workload: FavoriteKind.WORKLOAD_PRESET,
+  test: FavoriteKind.TEST_PRESET,
+};
+
+// A proto Timestamp -> ISO string ("" when unset).
+function timingsIso(ts: Timestamp | undefined): string {
+  return ts ? timestampDate(ts).toISOString() : "";
+}
+
+// Map the shared EntityFilter slice of a PresetListQuery onto the wire filter.
+function entityFilter(query: PresetListQuery) {
+  return {
+    search: query.search,
+    favoritesOnly: query.favoritesOnly,
+    createdAfter: query.createdAfter
+      ? timestampFromDate(new Date(query.createdAfter))
+      : undefined,
+    createdBefore: query.createdBefore
+      ? timestampFromDate(new Date(query.createdBefore))
+      : undefined,
+    updatedAfter: query.updatedAfter
+      ? timestampFromDate(new Date(query.updatedAfter))
+      : undefined,
+    updatedBefore: query.updatedBefore
+      ? timestampFromDate(new Date(query.updatedBefore))
+      : undefined,
+  };
+}
+
+// Common Entity sort column for a PresetSortField, or UNSPECIFIED when the
+// field is a kind-specific (table) column.
+function entitySortField(f?: PresetSortField): EntitySortField {
+  switch (f) {
+    case "name":
+      return EntitySortField.NAME;
+    case "created_at":
+      return EntitySortField.CREATED_AT;
+    case "updated_at":
+      return EntitySortField.UPDATED_AT;
+    case "author_id":
+      return EntitySortField.AUTHOR_ID;
+    default:
+      return EntitySortField.UNSPECIFIED;
+  }
+}
+
+// Sort builders per table — the `by` oneof is entity(column) XOR kind(column).
+function dbPresetSort(query: PresetListQuery) {
+  const desc = query.desc ?? false;
+  switch (query.sort) {
+    case "db_kind":
+      return { by: { case: "kind" as const, value: ListDatabasePresetsRequest_Sort_Kind.DB_KIND }, desc };
+    case "is_system":
+      return { by: { case: "kind" as const, value: ListDatabasePresetsRequest_Sort_Kind.IS_SYSTEM }, desc };
+    default:
+      return { by: { case: "entity" as const, value: entitySortField(query.sort) }, desc };
+  }
+}
+function workloadPresetSort(query: PresetListQuery) {
+  const desc = query.desc ?? false;
+  switch (query.sort) {
+    case "protocol":
+      return { by: { case: "kind" as const, value: ListWorkloadPresetsRequest_Sort_Kind.PROTOCOL }, desc };
+    case "stroppy_version":
+      return { by: { case: "kind" as const, value: ListWorkloadPresetsRequest_Sort_Kind.STROPPY_VERSION }, desc };
+    case "is_system":
+      return { by: { case: "kind" as const, value: ListWorkloadPresetsRequest_Sort_Kind.IS_SYSTEM }, desc };
+    default:
+      return { by: { case: "entity" as const, value: entitySortField(query.sort) }, desc };
+  }
+}
+function testPresetSort(query: PresetListQuery) {
+  const desc = query.desc ?? false;
+  switch (query.sort) {
+    case "db_kind":
+      return { by: { case: "kind" as const, value: ListTestPresetsRequest_Sort_Kind.DB_KIND }, desc };
+    case "protocol":
+      return { by: { case: "kind" as const, value: ListTestPresetsRequest_Sort_Kind.PROTOCOL }, desc };
+    case "stroppy_version":
+      return { by: { case: "kind" as const, value: ListTestPresetsRequest_Sort_Kind.STROPPY_VERSION }, desc };
+    case "is_system":
+      return { by: { case: "kind" as const, value: ListTestPresetsRequest_Sort_Kind.IS_SYSTEM }, desc };
+    default:
+      return { by: { case: "entity" as const, value: entitySortField(query.sort) }, desc };
+  }
+}
+
+// --- record -> row VM (entity + denormalized Summary, timestamps as ISO) -----
+
+function dbPresetRecordToRow(rec: DatabasePresetRecord): DatabasePresetRow {
+  const j = toJson(DatabasePresetRecordSchema, rec) as {
+    entity?: {
+      id?: string;
+      name?: string;
+      description?: string;
+      authorId?: string;
+      isFavorite?: boolean;
+      timings?: { createdAt?: string; updatedAt?: string };
+    };
+    isSystem?: boolean;
+    summary?: { dbKind?: string; version?: string; external?: boolean };
+  };
+  const e = j.entity ?? {};
+  const s = j.summary ?? {};
+  return {
+    id: e.id ?? "",
+    name: e.name ?? "",
+    description: e.description ?? "",
+    authorId: e.authorId ?? "",
+    isSystem: j.isSystem ?? false,
+    isFavorite: e.isFavorite ?? false,
+    createdAt: e.timings?.createdAt ?? "",
+    updatedAt: e.timings?.updatedAt ?? "",
+    dbKind: dbKindLabelFromJson(s.dbKind),
+    version: s.version ?? "",
+    external: s.external ?? false,
+  };
+}
+
+function workloadPresetRecordToRow(rec: WorkloadPresetRecord): WorkloadPresetRow {
+  const j = toJson(WorkloadPresetRecordSchema, rec) as {
+    entity?: {
+      id?: string;
+      name?: string;
+      description?: string;
+      authorId?: string;
+      isFavorite?: boolean;
+      timings?: { createdAt?: string; updatedAt?: string };
+    };
+    isSystem?: boolean;
+    summary?: { protocol?: string; stroppyVersion?: string; script?: string };
+  };
+  const e = j.entity ?? {};
+  const s = j.summary ?? {};
+  return {
+    id: e.id ?? "",
+    name: e.name ?? "",
+    description: e.description ?? "",
+    authorId: e.authorId ?? "",
+    isSystem: j.isSystem ?? false,
+    isFavorite: e.isFavorite ?? false,
+    createdAt: e.timings?.createdAt ?? "",
+    updatedAt: e.timings?.updatedAt ?? "",
+    protocol: protocolLabelFromJson(s.protocol),
+    stroppyVersion: s.stroppyVersion ?? "",
+    script: s.script ?? "",
+  };
+}
+
+function testPresetRecordToRow(rec: TestPresetRecord): TestPresetRow {
+  const j = toJson(TestPresetRecordSchema, rec) as {
+    entity?: {
+      id?: string;
+      name?: string;
+      description?: string;
+      authorId?: string;
+      isFavorite?: boolean;
+      timings?: { createdAt?: string; updatedAt?: string };
+    };
+    isSystem?: boolean;
+    summary?: { dbKind?: string; protocol?: string; stroppyVersion?: string };
+  };
+  const e = j.entity ?? {};
+  const s = j.summary ?? {};
+  return {
+    id: e.id ?? "",
+    name: e.name ?? "",
+    description: e.description ?? "",
+    authorId: e.authorId ?? "",
+    isSystem: j.isSystem ?? false,
+    isFavorite: e.isFavorite ?? false,
+    createdAt: e.timings?.createdAt ?? "",
+    updatedAt: e.timings?.updatedAt ?? "",
+    dbKind: dbKindLabelFromJson(s.dbKind),
+    protocol: protocolLabelFromJson(s.protocol),
+    stroppyVersion: s.stroppyVersion ?? "",
+  };
+}
 
 const realPresetProvider: PresetProvider = {
   async listDatabasePresets(tenantSlug, engine) {
-    void tenantSlug;
-    // const tenantId = await resolveTenantId(tenantSlug);
-    // const { presets } = await databasePresetClient.listDatabasePresets({
-    //   tenantId,
-    //   filter: { dbKinds: [ENGINE_TO_KIND[engine]] },   // scope to this engine
-    //   sources: [SOURCE_SYSTEM, SOURCE_TENANT],          // builtin + tenant
-    //   sort: { /* is_system first, then name */ },
-    //   page: { size: 50 },
-    // });  // cloud.v1.api.DatabasePresetService.ListDatabasePresets
-    // return presets.map((p) => ({
-    //   id: p.entity?.id ?? "",
-    //   name: p.entity?.name ?? "",
-    //   description: p.entity?.description ?? "",
-    //   isSystem: p.isSystem,
-    //   database: databaseProtoToVM(p.database),          // domain.Database -> DatabaseVM
-    // }));
-    void ENGINE_TO_KIND[engine];
-    throw new Error(NOT_WIRED);
+    const tenantId = await resolveTenantId(tenantSlug);
+    const { presets } = await databasePresetClient.listDatabasePresets({
+      tenantId,
+      dbKinds: [ENGINE_TO_KIND[engine]],
+      page: { size: 50 },
+    });
+    return presets.map((p) => ({
+      id: p.entity?.id ?? "",
+      name: p.entity?.name ?? "",
+      description: p.entity?.description ?? "",
+      isSystem: p.isSystem,
+      database: databaseProtoToVM(p.database),
+    }));
   },
 
   async listWorkloadPresets(tenantSlug) {
-    void tenantSlug;
-    // const tenantId = await resolveTenantId(tenantSlug);
-    // const { presets } = await workloadPresetClient.listWorkloadPresets({
-    //   tenantId,
-    //   sources: [SOURCE_SYSTEM, SOURCE_TENANT],   // builtin + tenant
-    //   sort: { /* is_system first, then name */ },
-    //   page: { size: 50 },
-    // });  // cloud.v1.api.WorkloadPresetService.ListWorkloadPresets
-    // return presets.map((p) => ({
-    //   id: p.entity?.id ?? "",
-    //   name: p.entity?.name ?? "",
-    //   description: p.entity?.description ?? "",
-    //   isSystem: p.isSystem,
-    //   workload: workloadProtoToVM(p.workload),   // domain.Workload -> WorkloadVM
-    // }));
-    throw new Error(NOT_WIRED);
+    const tenantId = await resolveTenantId(tenantSlug);
+    const { presets } = await workloadPresetClient.listWorkloadPresets({
+      tenantId,
+      page: { size: 50 },
+    });
+    return presets.map((p) => ({
+      id: p.entity?.id ?? "",
+      name: p.entity?.name ?? "",
+      description: p.entity?.description ?? "",
+      isSystem: p.isSystem,
+      workload: workloadProtoToVM(p.workload),
+    }));
   },
 
   // --- Database-preset CRUD. ---------------------------------------------
-  // Each throws until the connect transport is wired. The wired call maps the
-  // proto DatabasePresetRecord <-> the flat VMs above.
-  async getDatabasePreset() {
-    // const tenantId = await resolveTenantId(tenantSlug);
-    // const { preset } = await databasePresetClient.getDatabasePreset({ tenantId, id });
-    //   // cloud.v1.api.DatabasePresetService.GetDatabasePreset
-    // return {
-    //   id: preset?.entity?.id ?? "",
-    //   name: preset?.entity?.name ?? "",
-    //   description: preset?.entity?.description ?? "",
-    //   tags: preset?.entity?.labels ?? {},
-    //   authorId: preset?.entity?.authorId ?? "",
-    //   isSystem: preset?.isSystem ?? false,
-    //   createdAt: preset?.entity?.timings?.createdAt ?? "",
-    //   updatedAt: preset?.entity?.timings?.updatedAt ?? "",
-    //   database: databaseProtoToVM(preset?.database),   // domain.Database -> DatabaseVM
-    // };
-    throw new Error(NOT_WIRED);
+  async getDatabasePreset(tenantSlug, id) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    const { preset } = await databasePresetClient.getDatabasePreset({ tenantId, id });
+    return {
+      id: preset?.entity?.id ?? "",
+      name: preset?.entity?.name ?? "",
+      description: preset?.entity?.description ?? "",
+      tags: preset?.database?.tags?.labels ?? {},
+      authorId: preset?.entity?.authorId ?? "",
+      isSystem: preset?.isSystem ?? false,
+      createdAt: timingsIso(preset?.entity?.timings?.createdAt),
+      updatedAt: timingsIso(preset?.entity?.timings?.updatedAt),
+      database: databaseProtoToVM(preset?.database),
+    };
   },
-  async createDatabasePreset() {
-    // const tenantId = await resolveTenantId(tenantSlug);
-    // const { preset } = await databasePresetClient.createDatabasePreset({
-    //   tenantId,
-    //   preset: create(DatabasePresetRecordSchema, {
-    //     entity: create(EntitySchema, { name: input.name, description: input.description,
-    //       labels: input.tags }),
-    //     database: databaseVMToProto(input.database),   // DatabaseVM -> domain.Database
-    //   }),
-    // });  // cloud.v1.api.DatabasePresetService.CreateDatabasePreset
-    // return preset?.entity?.id ?? "";
-    throw new Error(NOT_WIRED);
+  async createDatabasePreset(tenantSlug, input) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    const database = databaseVMToProto(input.database);
+    database.tags = { $typeName: "cloud.v1.common.Tags", tags: [], labels: { ...input.tags } };
+    const { preset } = await databasePresetClient.createDatabasePreset({
+      tenantId,
+      preset: create(DatabasePresetRecordSchema, {
+        entity: { name: input.name, description: input.description },
+        database,
+      }),
+    });
+    return preset?.entity?.id ?? "";
   },
-  async updateDatabasePreset() {
-    // const tenantId = await resolveTenantId(tenantSlug);
-    // await databasePresetClient.updateDatabasePreset({
-    //   tenantId,
-    //   preset: create(DatabasePresetRecordSchema, {
-    //     entity: create(EntitySchema, { id, name: input.name,
-    //       description: input.description, labels: input.tags }),
-    //     database: databaseVMToProto(input.database),
-    //   }),
-    // });  // cloud.v1.api.DatabasePresetService.UpdateDatabasePreset
-    throw new Error(NOT_WIRED);
+  async updateDatabasePreset(tenantSlug, id, input) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    const database = databaseVMToProto(input.database);
+    database.tags = { $typeName: "cloud.v1.common.Tags", tags: [], labels: { ...input.tags } };
+    await databasePresetClient.updateDatabasePreset({
+      tenantId,
+      preset: create(DatabasePresetRecordSchema, {
+        entity: { id, name: input.name, description: input.description },
+        database,
+      }),
+    });
   },
 
   // --- Workload-preset CRUD. ---------------------------------------------
-  // Each throws until the connect transport is wired. The wired call maps the
-  // proto WorkloadPresetRecord <-> the flat VMs above.
-  async getWorkloadPreset() {
-    // const tenantId = await resolveTenantId(tenantSlug);
-    // const { preset } = await workloadPresetClient.getWorkloadPreset({ tenantId, id });
-    //   // cloud.v1.api.WorkloadPresetService.GetWorkloadPreset
-    // return {
-    //   id: preset?.entity?.id ?? "",
-    //   name: preset?.entity?.name ?? "",
-    //   description: preset?.entity?.description ?? "",
-    //   tags: preset?.entity?.labels ?? {},
-    //   authorId: preset?.entity?.authorId ?? "",
-    //   isSystem: preset?.isSystem ?? false,
-    //   createdAt: preset?.entity?.timings?.createdAt ?? "",
-    //   updatedAt: preset?.entity?.timings?.updatedAt ?? "",
-    //   workload: workloadProtoToVM(preset?.workload),   // domain.Workload -> WorkloadVM
-    // };
-    throw new Error(NOT_WIRED);
+  async getWorkloadPreset(tenantSlug, id) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    const { preset } = await workloadPresetClient.getWorkloadPreset({ tenantId, id });
+    return {
+      id: preset?.entity?.id ?? "",
+      name: preset?.entity?.name ?? "",
+      description: preset?.entity?.description ?? "",
+      tags: preset?.workload?.tags?.labels ?? {},
+      authorId: preset?.entity?.authorId ?? "",
+      isSystem: preset?.isSystem ?? false,
+      createdAt: timingsIso(preset?.entity?.timings?.createdAt),
+      updatedAt: timingsIso(preset?.entity?.timings?.updatedAt),
+      workload: workloadProtoToVM(preset?.workload),
+    };
   },
-  async createWorkloadPreset() {
-    // const tenantId = await resolveTenantId(tenantSlug);
-    // const { preset } = await workloadPresetClient.createWorkloadPreset({
-    //   tenantId,
-    //   preset: create(WorkloadPresetRecordSchema, {
-    //     entity: create(EntitySchema, { name: input.name, description: input.description,
-    //       labels: input.tags }),
-    //     workload: workloadVMToProto(input.workload),   // WorkloadVM -> domain.Workload
-    //   }),
-    // });  // cloud.v1.api.WorkloadPresetService.CreateWorkloadPreset
-    // return preset?.entity?.id ?? "";
-    throw new Error(NOT_WIRED);
+  async createWorkloadPreset(tenantSlug, input) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    const workload = workloadVMToProto(input.workload);
+    workload.tags = { $typeName: "cloud.v1.common.Tags", tags: [], labels: { ...input.tags } };
+    const { preset } = await workloadPresetClient.createWorkloadPreset({
+      tenantId,
+      preset: create(WorkloadPresetRecordSchema, {
+        entity: { name: input.name, description: input.description },
+        workload,
+      }),
+    });
+    return preset?.entity?.id ?? "";
   },
-  async updateWorkloadPreset() {
-    // const tenantId = await resolveTenantId(tenantSlug);
-    // await workloadPresetClient.updateWorkloadPreset({
-    //   tenantId,
-    //   preset: create(WorkloadPresetRecordSchema, {
-    //     entity: create(EntitySchema, { id, name: input.name,
-    //       description: input.description, labels: input.tags }),
-    //     workload: workloadVMToProto(input.workload),
-    //   }),
-    // });  // cloud.v1.api.WorkloadPresetService.UpdateWorkloadPreset
-    throw new Error(NOT_WIRED);
+  async updateWorkloadPreset(tenantSlug, id, input) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    const workload = workloadVMToProto(input.workload);
+    workload.tags = { $typeName: "cloud.v1.common.Tags", tags: [], labels: { ...input.tags } };
+    await workloadPresetClient.updateWorkloadPreset({
+      tenantId,
+      preset: create(WorkloadPresetRecordSchema, {
+        entity: { id, name: input.name, description: input.description },
+        workload,
+      }),
+    });
   },
 
   // --- Test-preset CRUD. -------------------------------------------------
-  // Each throws until the connect transport is wired. The wired call maps the
-  // proto TestPresetRecord <-> the flat VMs above; a Test carries BOTH a typed
-  // domain.Database and a typed domain.Workload.
-  async getTestPreset() {
-    // const tenantId = await resolveTenantId(tenantSlug);
-    // const { preset } = await testPresetClient.getTestPreset({ tenantId, id });
-    //   // cloud.v1.api.TestPresetService.GetTestPreset
-    // return {
-    //   id: preset?.entity?.id ?? "",
-    //   name: preset?.entity?.name ?? "",
-    //   description: preset?.entity?.description ?? "",
-    //   tags: preset?.entity?.labels ?? {},
-    //   authorId: preset?.entity?.authorId ?? "",
-    //   isSystem: preset?.isSystem ?? false,
-    //   createdAt: preset?.entity?.timings?.createdAt ?? "",
-    //   updatedAt: preset?.entity?.timings?.updatedAt ?? "",
-    //   database: databaseProtoToVM(preset?.test?.database),   // domain.Database -> DatabaseVM
-    //   workload: workloadProtoToVM(preset?.test?.workload),   // domain.Workload -> WorkloadVM
-    // };
-    throw new Error(NOT_WIRED);
+  async getTestPreset(tenantSlug, id) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    const { preset } = await testPresetClient.getTestPreset({ tenantId, id });
+    return {
+      id: preset?.entity?.id ?? "",
+      name: preset?.entity?.name ?? "",
+      description: preset?.entity?.description ?? "",
+      tags: preset?.test?.tags?.labels ?? {},
+      authorId: preset?.entity?.authorId ?? "",
+      isSystem: preset?.isSystem ?? false,
+      createdAt: timingsIso(preset?.entity?.timings?.createdAt),
+      updatedAt: timingsIso(preset?.entity?.timings?.updatedAt),
+      database: databaseProtoToVM(preset?.test?.database),
+      workload: workloadProtoToVM(preset?.test?.workload),
+    };
   },
-  async createTestPreset() {
-    // const tenantId = await resolveTenantId(tenantSlug);
-    // const { preset } = await testPresetClient.createTestPreset({
-    //   tenantId,
-    //   preset: create(TestPresetRecordSchema, {
-    //     entity: create(EntitySchema, { name: input.name, description: input.description,
-    //       labels: input.tags }),
-    //     test: create(TestSchema, {
-    //       database: databaseVMToProto(input.database),   // DatabaseVM -> domain.Database
-    //       workload: workloadVMToProto(input.workload),   // WorkloadVM -> domain.Workload
-    //     }),
-    //   }),
-    // });  // cloud.v1.api.TestPresetService.CreateTestPreset
-    // return preset?.entity?.id ?? "";
-    throw new Error(NOT_WIRED);
+  async createTestPreset(tenantSlug, input) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    const { preset } = await testPresetClient.createTestPreset({
+      tenantId,
+      preset: create(TestPresetRecordSchema, {
+        entity: { name: input.name, description: input.description },
+        test: create(TestSchema, {
+          database: databaseVMToProto(input.database),
+          workload: workloadVMToProto(input.workload),
+          tags: { tags: [], labels: { ...input.tags } },
+        }),
+      }),
+    });
+    return preset?.entity?.id ?? "";
   },
-  async updateTestPreset() {
-    // const tenantId = await resolveTenantId(tenantSlug);
-    // await testPresetClient.updateTestPreset({
-    //   tenantId,
-    //   preset: create(TestPresetRecordSchema, {
-    //     entity: create(EntitySchema, { id, name: input.name,
-    //       description: input.description, labels: input.tags }),
-    //     test: create(TestSchema, {
-    //       database: databaseVMToProto(input.database),
-    //       workload: workloadVMToProto(input.workload),
-    //     }),
-    //   }),
-    // });  // cloud.v1.api.TestPresetService.UpdateTestPreset
-    throw new Error(NOT_WIRED);
+  async updateTestPreset(tenantSlug, id, input) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    await testPresetClient.updateTestPreset({
+      tenantId,
+      preset: create(TestPresetRecordSchema, {
+        entity: { id, name: input.name, description: input.description },
+        test: create(TestSchema, {
+          database: databaseVMToProto(input.database),
+          workload: workloadVMToProto(input.workload),
+          tags: { tags: [], labels: { ...input.tags } },
+        }),
+      }),
+    });
   },
 
   // --- Library table surface. --------------------------------------------
-  // Each throws until the connect transport is wired. The wired call maps the
-  // PresetListQuery onto the matching List request and the record onto the row:
-  //   filter: { search, createdAfter/Before, updatedAfter/Before }
-  //   dbKinds / protocols / stroppyVersions / isSystem  (kind-specific facets)
-  //   sort:  { by: entity(NAME|CREATED_AT|UPDATED_AT|AUTHOR_ID) | kind(...), desc }
-  //   page:  { size, token }
-  async listDatabasePresetRows() {
-    // const tenantId = await resolveTenantId(tenantSlug);
-    // const { presets, nextPageToken } =
-    //   await databasePresetClient.listDatabasePresets({ tenantId, filter, dbKinds,
-    //     isSystem, sort, page });
-    // return { rows: presets.map(dbPresetRecordToRow), nextPageToken };
-    throw new Error(NOT_WIRED);
+  async listDatabasePresetRows(tenantSlug, query) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    const { presets, nextPageToken } = await databasePresetClient.listDatabasePresets({
+      tenantId,
+      filter: entityFilter(query),
+      dbKinds: query.dbKinds?.map(dbKindProto) ?? [],
+      isSystem: query.isSystem,
+      sort: dbPresetSort(query),
+      page: { size: query.pageSize ?? 0, token: query.pageToken ?? "" },
+    });
+    return { rows: presets.map(dbPresetRecordToRow), nextPageToken };
   },
-  async listWorkloadPresetRows() {
-    // const { presets, nextPageToken } =
-    //   await workloadPresetClient.listWorkloadPresets({ tenantId, filter,
-    //     protocols, stroppyVersions, isSystem, sort, page });
-    // return { rows: presets.map(workloadPresetRecordToRow), nextPageToken };
-    throw new Error(NOT_WIRED);
+  async listWorkloadPresetRows(tenantSlug, query) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    const { presets, nextPageToken } = await workloadPresetClient.listWorkloadPresets({
+      tenantId,
+      filter: entityFilter(query),
+      protocols: query.protocols?.map(protocolProto) ?? [],
+      stroppyVersions: query.stroppyVersions ?? [],
+      isSystem: query.isSystem,
+      sort: workloadPresetSort(query),
+      page: { size: query.pageSize ?? 0, token: query.pageToken ?? "" },
+    });
+    return { rows: presets.map(workloadPresetRecordToRow), nextPageToken };
   },
-  async listTestPresetRows() {
-    // const { presets, nextPageToken } =
-    //   await testPresetClient.listTestPresets({ tenantId, filter, dbKinds,
-    //     protocols, stroppyVersions, isSystem, sort, page });
-    // return { rows: presets.map(testPresetRecordToRow), nextPageToken };
-    throw new Error(NOT_WIRED);
+  async listTestPresetRows(tenantSlug, query) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    const { presets, nextPageToken } = await testPresetClient.listTestPresets({
+      tenantId,
+      filter: entityFilter(query),
+      dbKinds: query.dbKinds?.map(dbKindProto) ?? [],
+      protocols: query.protocols?.map(protocolProto) ?? [],
+      stroppyVersions: query.stroppyVersions ?? [],
+      isSystem: query.isSystem,
+      sort: testPresetSort(query),
+      page: { size: query.pageSize ?? 0, token: query.pageToken ?? "" },
+    });
+    return { rows: presets.map(testPresetRecordToRow), nextPageToken };
   },
 
   // --- Per-row mutations. ------------------------------------------------
-  // Each maps the PresetKind onto the matching FAVORITE_KIND_* / *PresetService
-  // RPC. Throws until the connect transport is wired.
-  async setPresetFavorite() {
-    // const tenantId = await resolveTenantId(tenantSlug);
-    // const kindEnum = PRESET_FAVORITE_KIND[kind];   // FAVORITE_KIND_*_PRESET
-    // if (favorite)
-    //   await favoriteClient.addFavorite({ tenantId, kind: kindEnum, targetId: id });
-    // else
-    //   await favoriteClient.removeFavorite({ tenantId, kind: kindEnum, targetId: id });
-    throw new Error(NOT_WIRED);
+  async setPresetFavorite(tenantSlug, kind, id, favorite) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    const kindEnum = PRESET_FAVORITE_KIND[kind];
+    if (favorite) {
+      await favoriteClient.addFavorite({ tenantId, kind: kindEnum, targetId: id });
+    } else {
+      await favoriteClient.removeFavorite({ tenantId, kind: kindEnum, targetId: id });
+    }
   },
-  async clonePreset() {
-    // const tenantId = await resolveTenantId(tenantSlug);
-    // const client = PRESET_CLIENT[kind];            // {database,workload,test}PresetClient
-    // const { preset } = await client.clone{Kind}Preset({ tenantId, id, name });
-    // return preset?.entity?.id ?? "";
-    throw new Error(NOT_WIRED);
+  async clonePreset(tenantSlug, kind, id, name) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    switch (kind) {
+      case "database": {
+        const { preset } = await databasePresetClient.cloneDatabasePreset({ tenantId, id, name });
+        return preset?.entity?.id ?? "";
+      }
+      case "workload": {
+        const { preset } = await workloadPresetClient.cloneWorkloadPreset({ tenantId, id, name });
+        return preset?.entity?.id ?? "";
+      }
+      case "test": {
+        const { preset } = await testPresetClient.cloneTestPreset({ tenantId, id, name });
+        return preset?.entity?.id ?? "";
+      }
+    }
   },
-  async deletePreset() {
-    // const tenantId = await resolveTenantId(tenantSlug);
-    // const client = PRESET_CLIENT[kind];
-    // await client.delete{Kind}Preset({ tenantId, id });
-    throw new Error(NOT_WIRED);
+  async deletePreset(tenantSlug, kind, id) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    switch (kind) {
+      case "database":
+        await databasePresetClient.deleteDatabasePreset({ tenantId, id });
+        return;
+      case "workload":
+        await workloadPresetClient.deleteWorkloadPreset({ tenantId, id });
+        return;
+      case "test":
+        await testPresetClient.deleteTestPreset({ tenantId, id });
+        return;
+    }
   },
 };
 

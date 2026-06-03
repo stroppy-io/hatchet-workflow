@@ -10,10 +10,20 @@
 // uses: suite_id (scope to one suite) + page{size,token}. Cancel/Delete map to
 // SuiteRunService.CancelSuiteRun / DeleteSuiteRun.
 
-import type { RunStatus } from "@/services/dashboard";
+import { toJson } from "@bufbuild/protobuf";
+import {
+  SuiteRunRecordSchema,
+  type SuiteRunRecord,
+} from "@/lib/proto/cloud/v1/models/suite_pb";
+import { type RunStatus, statusToVM } from "@/services/dashboard";
 import type { DbKind, DeployProvider } from "@/services/runs";
 import { suiteRunClient } from "@/services/client";
 import { resolveTenantId } from "@/services/tenant";
+import {
+  dbKindLabelFromJson,
+  providerLabelFromJson,
+  triggerLabelFromJson,
+} from "@/services/enums";
 
 export type { RunStatus };
 
@@ -112,34 +122,91 @@ export interface SuiteRunsProvider {
   deleteSuiteRun(tenantSlug: string, id: string): Promise<void>;
 }
 
-const NOT_WIRED =
-  "real SuiteRunsProvider not wired yet - run with VITE_MOCK=1 to preview suite runs";
+// One SuiteRunRecord -> flat SuiteRunVM (string enums + ISO timestamps via toJson).
+function suiteRunRecordToVM(rec: SuiteRunRecord): SuiteRunVM {
+  const j = toJson(SuiteRunRecordSchema, rec) as {
+    entity?: { id?: string; name?: string };
+    suiteId?: string;
+    status?: string;
+    trigger?: string;
+    maxParallel?: number;
+    children?: {
+      suiteCellId?: string;
+      testRunId?: string;
+      name?: string;
+      status?: string;
+    }[];
+    summary?: {
+      suiteName?: string;
+      provider?: string;
+      dbKinds?: string[];
+      total?: number;
+      completed?: number;
+      failed?: number;
+      running?: number;
+      pending?: number;
+      progressPct?: number;
+      startedAt?: string;
+      finishedAt?: string;
+      duration?: string;
+    };
+  };
+  const s = j.summary ?? {};
+  return {
+    id: j.entity?.id ?? "",
+    name: j.entity?.name ?? "",
+    suiteId: j.suiteId ?? "",
+    status: statusToVM(j.status),
+    trigger: triggerLabelFromJson(j.trigger),
+    maxParallel: j.maxParallel ?? 0,
+    suiteName: s.suiteName ?? "",
+    provider: providerLabelFromJson(s.provider),
+    dbKinds: (s.dbKinds ?? []).map(dbKindLabelFromJson),
+    total: s.total ?? 0,
+    completed: s.completed ?? 0,
+    failed: s.failed ?? 0,
+    running: s.running ?? 0,
+    pending: s.pending ?? 0,
+    progressPct: s.progressPct ?? 0,
+    startedAt: s.startedAt,
+    finishedAt: s.finishedAt,
+    durationSec: s.duration ? parseFloat(s.duration) : undefined,
+    children: (j.children ?? []).map((c) => ({
+      suiteCellId: c.suiteCellId ?? "",
+      testRunId: c.testRunId ?? "",
+      name: c.name ?? "",
+      status: statusToVM(c.status),
+    })),
+  };
+}
 
 const realSuiteRunsProvider: SuiteRunsProvider = {
-  async listSuiteRuns() {
-    // await suiteRunClient.listSuiteRuns({
-    //   tenantId, suiteId, page: { size, token },
-    // });
-    throw new Error(NOT_WIRED);
+  async listSuiteRuns(tenantSlug, query) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    const { suiteRuns, nextPageToken } = await suiteRunClient.listSuiteRuns({
+      tenantId,
+      suiteId: query.suiteId,
+      page: { size: query.pageSize ?? 0, token: query.pageToken ?? "" },
+    });
+    return { runs: suiteRuns.map(suiteRunRecordToVM), nextPageToken };
   },
-  async getSuiteRun() {
-    // await suiteRunClient.getSuiteRun({ tenantId, id });
-    throw new Error(NOT_WIRED);
+
+  async getSuiteRun(tenantSlug, id) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    const { suiteRun } = await suiteRunClient.getSuiteRun({ tenantId, id });
+    return suiteRun ? suiteRunRecordToVM(suiteRun) : null;
   },
-  async cancelSuiteRun() {
-    // await suiteRunClient.cancelSuiteRun({ tenantId, id });
-    throw new Error(NOT_WIRED);
+
+  async cancelSuiteRun(tenantSlug, id) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    await suiteRunClient.cancelSuiteRun({ tenantId, id });
   },
-  async deleteSuiteRun() {
-    // await suiteRunClient.deleteSuiteRun({ tenantId, id });
-    throw new Error(NOT_WIRED);
+
+  async deleteSuiteRun(tenantSlug, id) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    await suiteRunClient.deleteSuiteRun({ tenantId, id });
   },
 };
-
-// Touch the imports so the real wiring stays a thin client/tenant wrapper and
-// lint does not flag them as unused until the methods above are implemented.
-void suiteRunClient;
-void resolveTenantId;
 
 let active: SuiteRunsProvider = realSuiteRunsProvider;
 

@@ -889,6 +889,29 @@ export function Suites() {
     [slug, query.favoritesOnly, fetchSuites],
   );
 
+  // Quick (non-wizard) create — calls SuiteService.CreateSuite directly with a
+  // minimal empty-spec suite, then opens its detail page to fill it in. The
+  // wizard at /suites/new is the rich path; this is the one-click affordance.
+  const [creating, setCreating] = useState(false);
+  const quickCreate = useCallback(async () => {
+    if (!slug || creating) return;
+    setCreating(true);
+    setError(null);
+    try {
+      const { suiteId } = await getSuitesProvider().createSuite(slug, {
+        name: "Untitled suite",
+        provider: "docker",
+        cells: [],
+      });
+      if (suiteId) navigate(`/suites/${suiteId}`);
+      else await fetchSuites(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create suite");
+    } finally {
+      setCreating(false);
+    }
+  }, [slug, creating, navigate, fetchSuites]);
+
   const runAction = useCallback(
     async (action: SuiteAction, suite: SuiteVM) => {
       if (!slug) return;
@@ -1568,6 +1591,22 @@ export function Suites() {
                 <Plus className="h-3.5 w-3.5" />
                 New
               </Link>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={quickCreate}
+              disabled={creating}
+              title="Create an empty suite directly (CreateSuite), then edit it"
+              className="h-6 px-2 text-[11px] font-mono border-zinc-800 bg-transparent text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100"
+            >
+              {creating ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Plus className="h-3.5 w-3.5" />
+              )}
+              Quick create
             </Button>
             {hasTableFilters && (
               <Button

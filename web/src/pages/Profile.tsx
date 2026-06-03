@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   Copy,
   KeyRound,
+  Link2,
   Link2Off,
   LockKeyhole,
   Plus,
@@ -165,6 +166,11 @@ export function Profile() {
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [linkProviderId, setLinkProviderId] = useState("");
+  const [linkSubject, setLinkSubject] = useState("");
+  const [linkEmail, setLinkEmail] = useState("");
+
   const [tokenDialogOpen, setTokenDialogOpen] = useState(false);
   const [tokenName, setTokenName] = useState("");
   const [tokenType, setTokenType] = useState<AccountApiToken["type"]>(
@@ -264,6 +270,35 @@ export function Profile() {
     try {
       await getAccountProvider().resendVerification();
       setNotice("Verification email queued.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  function openLinkDialog() {
+    setLinkProviderId("");
+    setLinkSubject("");
+    setLinkEmail(account?.email ?? "");
+    setLinkDialogOpen(true);
+  }
+
+  async function linkIdentity() {
+    if (!account) return;
+    setError(null);
+    setNotice(null);
+    try {
+      const identity = await getAccountProvider().linkExternalIdentity({
+        accountId: account.id,
+        providerId: linkProviderId.trim(),
+        subject: linkSubject.trim(),
+        email: linkEmail.trim(),
+      });
+      setIdentities((prev) => {
+        const rest = prev.filter((item) => item.id !== identity.id);
+        return [identity, ...rest];
+      });
+      setLinkDialogOpen(false);
+      setNotice("External identity linked.");
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -578,7 +613,20 @@ export function Profile() {
                 </div>
               </Panel>
 
-              <Panel label="ListExternalIdentities" bodyClassName="">
+              <Panel
+                label="ListExternalIdentities"
+                action={
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={openLinkDialog}
+                  >
+                    <Link2 className="h-3.5 w-3.5" />
+                    Link
+                  </Button>
+                }
+                bodyClassName=""
+              >
                 {identities.length === 0 ? (
                   <div className="p-6 text-sm text-muted-foreground">
                     No external identities.
@@ -774,6 +822,62 @@ export function Profile() {
           </Tabs>
         </div>
       )}
+
+      <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>LinkExternalIdentity</DialogTitle>
+            <DialogDescription>
+              ExternalIdentityLink (provider_id, subject, email)
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="link-provider-id">provider_id</Label>
+              <Input
+                id="link-provider-id"
+                value={linkProviderId}
+                onChange={(e) => setLinkProviderId(e.target.value)}
+                className="font-mono"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="link-subject">subject</Label>
+              <Input
+                id="link-subject"
+                value={linkSubject}
+                onChange={(e) => setLinkSubject(e.target.value)}
+                className="font-mono"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="link-email">email</Label>
+              <Input
+                id="link-email"
+                value={linkEmail}
+                onChange={(e) => setLinkEmail(e.target.value)}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setLinkDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                disabled={!linkProviderId.trim() || !linkSubject.trim()}
+                onClick={() => void linkIdentity()}
+              >
+                Link
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={tokenDialogOpen} onOpenChange={resetTokenDialog}>
         <DialogContent className="max-w-2xl">
