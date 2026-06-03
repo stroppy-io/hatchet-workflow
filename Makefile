@@ -1,6 +1,6 @@
 # stroppy-cloud Makefile
-.PHONY: help configure build build-all protocols test test-integration test-e2e test-coverage \
-        test-unit test-db test-full smoke smoke-clean \
+.PHONY: help configure build build-all protocols test test-integration test-e2e test-e2e-core test-coverage \
+        agent-image test-unit test-db test-full smoke smoke-clean \
         tools db-gen migrate-generate migrate-clear \
         lint fmt docker-build docker-push docker-up docker-down docker-logs \
         serve docs-install docs-dev docs-build web-install web-dev web-build \
@@ -120,11 +120,26 @@ test-db: ## Run DB-backed integration tests (auto-starts postgres if needed)
 test-full: test-unit test-db ## Full Go test sweep (unit + DB-backed integration)
 	@echo "All Go tests passed."
 
-test-integration: build ## Run integration tests (requires Docker)
+test-integration: ## Run integration e2e tests against an ALREADY-running stack (localhost:8080)
 	go test -tags=integration -timeout 30m -v ./tests/
 
-test-e2e: build ## Run E2E tests for all databases
-	go test -tags=integration -timeout 60m -v ./tests/ -run TestE2E
+AGENT_IMAGE ?= stroppy-agent:latest
+E2E_BASE_URL ?= http://127.0.0.1:8080
+
+agent-image: ## Build the docker-provider agent image (stroppy-agent:latest)
+	docker build -f deployments/docker/agent.Dockerfile -t $(AGENT_IMAGE) .
+
+# Self-contained e2e: build the agent image, bring up the full stack (server is
+# rebuilt from source), wait until healthy, then run the Connect-API e2e tests
+# against the docker provider on localhost. Admin is seeded as admin/admin by the
+# compose defaults, so no extra setup is needed on a fresh checkout.
+test-e2e: agent-image ## Bring up the stack and run the full Connect-API e2e suite (docker provider)
+	docker compose up -d --build --wait
+	E2E_BASE_URL=$(E2E_BASE_URL) go test -tags=integration -timeout 60m -v -count=1 ./tests/
+
+test-e2e-core: agent-image ## Same as test-e2e but only the core run flow (TestE2E)
+	docker compose up -d --build --wait
+	E2E_BASE_URL=$(E2E_BASE_URL) go test -tags=integration -timeout 30m -v -count=1 -run 'TestE2E$$' ./tests/
 
 test-browser: ## Run Playwright browser E2E tests (requires running server at localhost:8080)
 	cd tests/e2e && npx playwright test
@@ -167,8 +182,7 @@ docker-logs: ## Show server logs
 # ============================================================
 # Smoke — full local stack + minimal docker run end-to-end
 # ============================================================
-smoke: ## End-to-end smoke: bring up stack, login, launch tiny postgres run
-	@./scripts/smoke.sh
+smoke: test-e2e-core ## End-to-end smoke: bring up stack + run the tiny docker postgres run via the Connect API
 
 smoke-clean: ## Tear down smoke stack + wipe volumes
 	docker compose down -v

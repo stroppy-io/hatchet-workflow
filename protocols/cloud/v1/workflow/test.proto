@@ -187,7 +187,7 @@ service TestService {
                 interpolation. Same TestRun => same id => duplicate concurrent
                 starts are deduplicated by the server.
             */
-            id: 'test-run/${! test_run.id }'
+            id: 'test-run/${! testRun.id }'
             /*
                 id_reuse_policy: re-running with the same id is allowed ONLY when
                 the previous run ended unsuccessfully (failed / terminated /
@@ -334,7 +334,7 @@ service SuiteWorkflowService {
             /*
                 id: deterministic, derived from suite_run_id.
             */
-            id: 'suite-run/${! suite_run_id }'
+            id: 'suite-run/${! suiteRunId }'
             id_reuse_policy: WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY
             /*
                 No execution_timeout: a suite runs N child TestWorkflows, each of

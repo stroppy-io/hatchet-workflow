@@ -175,7 +175,10 @@ services:
       # gateway (GRAFANA_BACKEND) — no separate public Grafana URL per environment.
       GRAFANA_URL: ${GRAFANA_URL:-/grafana}
       GRAFANA_BACKEND: ${GRAFANA_BACKEND:-http://grafana:3000}
-      STROPPY_ADMIN_PASSWORD: ${STROPPY_ADMIN_PASSWORD:-}
+      # Seed a root admin on first boot so a fresh `docker compose up` is
+      # immediately usable (login admin/admin). Override in prod via .env.
+      STROPPY_ADMIN_EMAIL: ${STROPPY_ADMIN_EMAIL:-admin@stroppy.local}
+      STROPPY_ADMIN_PASSWORD: ${STROPPY_ADMIN_PASSWORD:-admin}
       STROPPY_MIN_VERSION: ${STROPPY_MIN_VERSION:-5.1.2}
       # --- Temporal + gateway wiring ---
       TEMPORAL_HOSTPORT: temporal:7233

@@ -503,7 +503,7 @@ func Run(ctx context.Context, cfg Config) error {
 
 	// 7) Connect handlers + embedded SPA on one mux.
 	mux := http.NewServeMux()
-	handlerOpts := []connect.HandlerOption{connect.WithInterceptors(authzGate.Connect())}
+	handlerOpts := []connect.HandlerOption{connect.WithInterceptors(grpcStatusToConnect{}, authzGate.Connect())}
 	register(mux,
 		func() (string, http.Handler) {
 			return agentconnect.NewAgentLogServiceHandler(agentLogIngest)

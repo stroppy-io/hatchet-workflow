@@ -24,6 +24,11 @@ import (
 
 type Executor struct {
 	cli *client.Client
+	// attachNetwork, when set, is an additional docker network every agent
+	// container is connected to so it can reach the control-plane gateway
+	// (`server:8080`) for the agent binary, apt cache and monitoring. The
+	// per-run network only links the run's own nodes to each other.
+	attachNetwork string
 }
 
 func NewExecutor() (*Executor, error) {
@@ -31,7 +36,7 @@ func NewExecutor() (*Executor, error) {
 	if err != nil {
 		return nil, fmt.Errorf("docker client: %w", err)
 	}
-	return &Executor{cli: cli}, nil
+	return &Executor{cli: cli, attachNetwork: os.Getenv("AGENT_ATTACH_NETWORK")}, nil
 }
 
 func (e *Executor) Close() error {
@@ -97,6 +102,15 @@ func (e *Executor) Up(ctx context.Context, input *deployment.Docker_Input) (*dep
 		resp, err := e.cli.ContainerCreate(ctx, cfg, hostCfg, netCfg, nil, name)
 		if err != nil {
 			return nil, fmt.Errorf("docker create %s: %w", name, err)
+		}
+		// Connect the agent to the control-plane network (before start, so its
+		// embedded DNS resolves `server` at boot) in addition to the per-run
+		// network. Without this the agent cannot fetch its binary from the
+		// gateway and never comes online.
+		if e.attachNetwork != "" && e.attachNetwork != networkName {
+			if err := e.cli.NetworkConnect(ctx, e.attachNetwork, resp.ID, nil); err != nil {
+				return nil, fmt.Errorf("docker connect %s to %s: %w", name, e.attachNetwork, err)
+			}
 		}
 		for _, file := range spec.GetFiles() {
 			if err := e.copyFileToContainer(ctx, resp.ID, file); err != nil {

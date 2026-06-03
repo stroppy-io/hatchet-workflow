@@ -3,6 +3,7 @@ package iam
 import (
 	"context"
 	"errors"
+	"net/http"
 	"strings"
 
 	"connectrpc.com/connect"
@@ -136,6 +137,11 @@ func (a *AuthInterceptor) connectUnary(ctx context.Context, req connect.AnyReque
 	if auth.GetPublic() {
 		return next(ctx, req)
 	}
+	// Connect handlers run over plain HTTP, so the bearer credential arrives as
+	// an HTTP header rather than gRPC incoming metadata. Bridge it so the shared
+	// authenticate()/bearerToken() path (which reads grpc metadata) works for the
+	// browser/Connect API exactly as it does for native gRPC.
+	ctx = incomingMetadataFromHeader(ctx, req.Header())
 	verified, err := a.authenticate(ctx)
 	if err != nil {
 		return nil, err
@@ -179,6 +185,7 @@ func (i connectAuthInterceptor) WrapStreamingHandler(next connect.StreamingHandl
 		if auth.GetPublic() {
 			return next(ctx, conn)
 		}
+		ctx = incomingMetadataFromHeader(ctx, conn.RequestHeader())
 		verified, err := i.auth.authenticate(ctx)
 		if err != nil {
 			return err
@@ -348,6 +355,20 @@ func (s *authzServerStream) RecvMsg(m any) error {
 		s.authorized = true
 	}
 	return nil
+}
+
+// incomingMetadataFromHeader makes an HTTP Authorization header visible to the
+// gRPC-metadata based bearerToken() path. It is a no-op when grpc incoming
+// metadata already carries authorization (native gRPC) or no header is present.
+func incomingMetadataFromHeader(ctx context.Context, h http.Header) context.Context {
+	if md, ok := metadata.FromIncomingContext(ctx); ok && len(md.Get("authorization")) > 0 {
+		return ctx
+	}
+	authz := h.Get("Authorization")
+	if authz == "" {
+		return ctx
+	}
+	return metadata.NewIncomingContext(ctx, metadata.Pairs("authorization", authz))
 }
 
 func bearerToken(ctx context.Context) (string, error) {

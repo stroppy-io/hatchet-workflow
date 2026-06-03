@@ -435,6 +435,11 @@ func dockerContainer(node *topologypb.Node, sizing MachineSizing, options Docker
 		}),
 		Privileged:    true,
 		CgroupnsMode:  cgroupnsMode,
+		// The agent image declares VOLUME /sys/fs/cgroup; without an explicit
+		// bind, Docker shadows it with an empty anonymous volume and systemd
+		// (PID 1, /sbin/init) fails to boot -> container exits 255 immediately.
+		// Bind the host cgroupfs so systemd comes up (works on cgroup v1 and v2).
+		Binds:         []string{"/sys/fs/cgroup:/sys/fs/cgroup:rw"},
 		Tmpfs:         map[string]string{"/run": "rw,nosuid,nodev,mode=755", "/tmp": "rw,nosuid,nodev"},
 		RestartPolicy: restartPolicy,
 		Resources: &deployment.Docker_Resources{

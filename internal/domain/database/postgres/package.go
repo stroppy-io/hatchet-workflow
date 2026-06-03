@@ -21,8 +21,16 @@ func (r PackageResolver) ResolveDatabasePackage(database *domain.Database) (*dom
 	}
 
 	aptPackages := []string{"postgresql", "postgresql-contrib"}
+	preInstall := []string{"apt-get update"}
 	if version != "default" {
+		// A pinned version (e.g. "16") is not in the Ubuntu/Debian distro archive
+		// (jammy ships 14); pull it from the official PostgreSQL apt repository
+		// (PGDG). apt traffic is relayed through the gateway -> apt-cacher-ng, which
+		// caches PGDG like any other apt repo. The signing key is fetched directly
+		// over https (agents have outbound egress for that). The agent image already
+		// carries curl, ca-certificates and lsb-release.
 		aptPackages = []string{"postgresql-" + version, "postgresql-contrib-" + version}
+		preInstall = pgdgPreInstall()
 	}
 
 	return &domain.Package{
@@ -32,6 +40,18 @@ func (r PackageResolver) ResolveDatabasePackage(database *domain.Database) (*dom
 		DbVersion:   version,
 		IsBuiltin:   true,
 		AptPackages: aptPackages,
-		PreInstall:  []string{"apt-get update"},
+		PreInstall:  preInstall,
 	}, nil
+}
+
+// pgdgPreInstall returns the commands that register the PostgreSQL APT (PGDG)
+// repository for the running distro codename, then refresh the package index.
+func pgdgPreInstall() []string {
+	const keyring = "/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc"
+	return []string{
+		"install -d /usr/share/postgresql-common/pgdg",
+		"curl -fsSL -o " + keyring + " https://www.postgresql.org/media/keys/ACCC4CF8.asc",
+		`sh -c 'echo "deb [signed-by=` + keyring + `] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'`,
+		"apt-get update",
+	}
 }

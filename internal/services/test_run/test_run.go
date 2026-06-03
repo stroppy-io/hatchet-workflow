@@ -106,6 +106,11 @@ func (s *TestRunService) GetTestRun(ctx context.Context, req *api.GetTestRunRequ
 	if err != nil {
 		return nil, utils.MapErr(err)
 	}
+	// A soft-deleted run is hidden from clients, consistent with ListTestRuns
+	// (the repo Get still returns it for internal delete/idempotency checks).
+	if rec.GetEntity().GetTimings().GetDeletedAt() != nil {
+		return nil, utils.MapErr(derrors.ErrNotFound)
+	}
 	return &api.GetTestRunResponse{Run: rec}, nil
 }
 

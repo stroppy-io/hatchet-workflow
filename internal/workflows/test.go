@@ -111,8 +111,25 @@ func (w *domainTestWorkflow) Execute(ctx workflow.Context) (resp *workflowpb.Tes
 		networkCommitted    bool
 		infrastructureReady bool
 		quotaAllocations    []*workflowpb.QuotaAllocationRef
+		// teardownPlan is the infrastructure plan that was actually provisioned. It
+		// is set once ProcessInfrastructure succeeds and drives the teardown that
+		// MUST run on every terminal outcome (success, failure, cancel) so a run
+		// never leaks containers/VMs.
+		teardownPlan *deploymentpb.InfrastructurePlan
 	)
 	defer func() {
+		if teardownPlan != nil {
+			// Run teardown on a disconnected context so it completes even when the
+			// workflow context is already cancelled.
+			tctx, _ := workflow.NewDisconnectedContext(ctx)
+			if derr := w.teardownInfrastructure(tctx, teardownPlan); derr != nil {
+				if err != nil {
+					err = fmt.Errorf("%w; teardown infrastructure: %v", err, derr)
+				} else {
+					err = fmt.Errorf("teardown infrastructure: %w", derr)
+				}
+			}
+		}
 		if err != nil && !infrastructureReady && ((quotaReserved && !quotaCommitted) || (networkReserved && !networkCommitted)) {
 			releaseCtx := ctx
 			if temporal.IsCanceledError(err) {
@@ -223,6 +240,8 @@ func (w *domainTestWorkflow) Execute(ctx workflow.Context) (resp *workflowpb.Tes
 	}
 	infrastructureState = infrastructureResp.GetState()
 	infrastructureReady = true
+	// Infrastructure now exists; arm teardown for every terminal outcome.
+	teardownPlan = infrastructurePlan
 	commitResp, err := workflowpb.CommitQuotasActivity(ctx, &workflowpb.CommitQuotasActivityRequest{
 		TenantId: w.req.GetTenantId(),
 		RunId:    testRun.GetId(),
@@ -328,6 +347,40 @@ func (w *domainTestWorkflow) Execute(ctx workflow.Context) (resp *workflowpb.Tes
 		return nil, err
 	}
 	return &workflowpb.TestWorkflowResponse{}, nil
+}
+
+// teardownInfrastructure destroys the provisioned infrastructure for the run's
+// provider. Container/VM identities are deterministic from (runId, plan), so the
+// re-rendered provider input is enough to tear everything down. It is invoked
+// from the workflow's defer for every terminal outcome.
+func (w *domainTestWorkflow) teardownInfrastructure(ctx workflow.Context, plan *deploymentpb.InfrastructurePlan) error {
+	switch plan.GetProvider() {
+	case deploymentpb.Provider_PROVIDER_DOCKER:
+		input, err := workflowpb.RenderDockerInputWorkflowChild(ctx, &workflowpb.RenderDockerInputWorkflowRequest{
+			RunId:          w.req.GetTestRun().GetId(),
+			Plan:           plan,
+			AgentBootstrap: w.req.GetAgentBootstrap(),
+		})
+		if err != nil {
+			return err
+		}
+		_, err = workflowpb.DockerDownActivity(ctx, input)
+		return err
+	case deploymentpb.Provider_PROVIDER_YANDEX:
+		input, err := workflowpb.RenderTerraformVariablesWorkflowChild(ctx, &workflowpb.RenderTerraformVariablesWorkflowRequest{
+			RunId:          w.req.GetTestRun().GetId(),
+			Plan:           plan,
+			Action:         deploymentpb.Terraform_ACTION_DESTROY,
+			AgentBootstrap: w.req.GetAgentBootstrap(),
+		})
+		if err != nil {
+			return err
+		}
+		_, err = workflowpb.TerraformDestroyActivity(ctx, input)
+		return err
+	default:
+		return nil
+	}
 }
 
 func attachQuotaAllocations(state *deploymentpb.InfrastructureState, refs []*workflowpb.QuotaAllocationRef) {

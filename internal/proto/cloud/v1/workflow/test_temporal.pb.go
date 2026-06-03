@@ -41,7 +41,7 @@ const (
 
 // cloud.v1.workflow.TestService workflow id expressions
 var (
-	TestWorkflowIdexpression = expression.MustParseExpression("test-run/${! test_run.id }")
+	TestWorkflowIdexpression = expression.MustParseExpression("test-run/${! testRun.id }")
 )
 
 // cloud.v1.workflow.TestService query names
@@ -2833,7 +2833,7 @@ const (
 
 // cloud.v1.workflow.SuiteWorkflowService workflow id expressions
 var (
-	SuiteWorkflowIdexpression = expression.MustParseExpression("suite-run/${! suite_run_id }")
+	SuiteWorkflowIdexpression = expression.MustParseExpression("suite-run/${! suiteRunId }")
 )
 
 // SuiteWorkflowServiceClient describes a client for a(n) cloud.v1.workflow.SuiteWorkflowService worker
