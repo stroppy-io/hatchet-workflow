@@ -2201,8 +2201,16 @@ func (e *Executor) installPgNoop(ctx context.Context, cmd Command) error {
 	if err := parseConfig(cmd, &cfg); err != nil {
 		return err
 	}
-	if _, err := os.Stat("/usr/local/bin/pgnoop"); err == nil {
+	const binPath = "/usr/local/bin/pgnoop"
+	if _, err := os.Stat(binPath); err == nil {
 		e.emitLine("pgnoop already installed in /usr/local/bin, skipping download")
+		return nil
+	}
+	if found, err := exec.LookPath("pgnoop"); err == nil {
+		e.emitLine(fmt.Sprintf("pgnoop found at %s, copying to %s...", found, binPath))
+		if _, err := e.shell(ctx, fmt.Sprintf(`install -m 0755 %q %q`, found, binPath)); err != nil {
+			return fmt.Errorf("install existing pgnoop: %w", err)
+		}
 		return nil
 	}
 	version := strings.TrimPrefix(strings.TrimSpace(cfg.Version), "v")
@@ -2220,11 +2228,14 @@ func (e *Executor) installPgNoop(ctx context.Context, cmd Command) error {
 		`rm -rf /tmp/pgnoop-extract /tmp/pgnoop.tar.xz && mkdir -p /tmp/pgnoop-extract && `+
 			`curl -fsSL --connect-timeout 20 --max-time 120 --retry 3 --retry-delay 5 --retry-connrefused --retry-max-time 300 %q -o /tmp/pgnoop.tar.xz && `+
 			`tar xf /tmp/pgnoop.tar.xz --no-same-owner --strip-components 1 -C /tmp/pgnoop-extract && `+
-			`bin="$(find /tmp/pgnoop-extract -type f -name pgnoop | head -n1)" && test -n "$bin" && `+
-			`install -m 0755 "$bin" /usr/local/bin/pgnoop && `+
+			`test -x /tmp/pgnoop-extract/pgnoop && `+
+			`install -m 0755 /tmp/pgnoop-extract/pgnoop %q && `+
 			`rm -rf /tmp/pgnoop-extract /tmp/pgnoop.tar.xz`,
-		url)); err != nil {
+		url, binPath)); err != nil {
 		return fmt.Errorf("install pgnoop: %w", err)
+	}
+	if _, err := os.Stat(binPath); err != nil {
+		return fmt.Errorf("install pgnoop: %s missing after install: %w", binPath, err)
 	}
 	return nil
 }
