@@ -129,7 +129,7 @@ func TestPostgresDeploymentWiresClusterPeers(t *testing.T) {
 	if strings.Contains(master, "replication-setup.sql' || true") {
 		t.Fatalf("master unit ignores setup failure:\n%s", master)
 	}
-	if !strings.Contains(master, "psql -v ON_ERROR_STOP=1 -p 5432") {
+	if !strings.Contains(master, "psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -p 5432") {
 		t.Fatalf("master unit does not stop on setup SQL errors:\n%s", master)
 	}
 	setup := findDeploymentWriteFileText(t, components["postgres-master"], "050_write_replication_setup")
