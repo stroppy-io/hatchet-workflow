@@ -135,6 +135,7 @@ func TestPostgresDeploymentWiresClusterPeers(t *testing.T) {
 	setup := findDeploymentWriteFileText(t, components["postgres-master"], "050_write_replication_setup")
 	for _, want := range []string{
 		"EXECUTE format('CREATE ROLE %I WITH REPLICATION LOGIN PASSWORD %L', 'replicator', 'stroppy_replication')",
+		"END;\n$$;",
 		"SET password_encryption = 'scram-sha-256'",
 		"ALTER ROLE postgres WITH LOGIN PASSWORD 'stroppy_postgres'",
 	} {

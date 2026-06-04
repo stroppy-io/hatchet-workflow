@@ -413,7 +413,7 @@ BEGIN
   IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '%s') THEN
     EXECUTE format('CREATE ROLE %%I WITH REPLICATION LOGIN PASSWORD %%L', '%s', '%s');
   END IF;
-END
+END;
 $$;
 SET password_encryption = 'scram-sha-256';
 ALTER ROLE %s WITH LOGIN PASSWORD '%s';
