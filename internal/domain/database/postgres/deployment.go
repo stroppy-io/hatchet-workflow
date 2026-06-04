@@ -320,7 +320,7 @@ func postgresMasterServiceUnit(componentID, role, configDir, cfgPath string) str
 WantedBy=multi-user.target
 `)
 	setupPath := configDir + "/replication-setup.sql"
-	return base + fmt.Sprintf(`ExecStartPost=/bin/sh -c "for i in $$(seq 1 30); do pg_isready -h 127.0.0.1 -p 5432 && break; sleep 1; done; /usr/sbin/runuser -u postgres -- psql -p 5432 -f %s"
+	return base + fmt.Sprintf(`ExecStartPost=/bin/sh -ec "for i in $$(seq 1 30); do if pg_isready -h 127.0.0.1 -p 5432; then exec /usr/sbin/runuser -u postgres -- psql -v ON_ERROR_STOP=1 -p 5432 -f %s; fi; sleep 1; done; exit 1"
 
 [Install]
 WantedBy=multi-user.target
@@ -411,7 +411,7 @@ func postgresReplicationSetupFile(componentID string) *common.File {
 		Content: &common.File_Text{Text: fmt.Sprintf(`DO $$
 BEGIN
   IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '%s') THEN
-    CREATE ROLE %s WITH REPLICATION LOGIN PASSWORD '%s';
+    EXECUTE format('CREATE ROLE %%I WITH REPLICATION LOGIN PASSWORD %%L', '%s', '%s');
   END IF;
 END
 $$;

@@ -129,9 +129,12 @@ func TestPostgresDeploymentWiresClusterPeers(t *testing.T) {
 	if strings.Contains(master, "replication-setup.sql' || true") {
 		t.Fatalf("master unit ignores setup failure:\n%s", master)
 	}
+	if !strings.Contains(master, "psql -v ON_ERROR_STOP=1 -p 5432") {
+		t.Fatalf("master unit does not stop on setup SQL errors:\n%s", master)
+	}
 	setup := findDeploymentWriteFileText(t, components["postgres-master"], "050_write_replication_setup")
 	for _, want := range []string{
-		"CREATE ROLE replicator WITH REPLICATION LOGIN PASSWORD 'stroppy_replication'",
+		"EXECUTE format('CREATE ROLE %I WITH REPLICATION LOGIN PASSWORD %L', 'replicator', 'stroppy_replication')",
 		"SET password_encryption = 'scram-sha-256'",
 		"ALTER ROLE postgres WITH LOGIN PASSWORD 'stroppy_postgres'",
 	} {
