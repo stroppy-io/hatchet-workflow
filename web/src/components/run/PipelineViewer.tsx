@@ -10,16 +10,21 @@ import {
   Check,
   ChevronDown,
   Circle,
+  Copy,
   Database,
+  Download,
+  FileText,
+  FolderPlus,
   Loader2,
   Play,
   ScrollText,
   Server,
+  Terminal,
   Trash2,
   X,
   Zap,
 } from "lucide-react";
-import type { PipelineNodeVM } from "@/services/run_overview";
+import type { OperationVM, PipelineNodeVM, PipelineOutputVM } from "@/services/run_overview";
 import type { RunStatus } from "@/services/dashboard";
 import { cn } from "@/lib/utils";
 
@@ -38,14 +43,34 @@ function iconFor(name: string): typeof Zap {
   return Circle;
 }
 
+// Operation-kind glyph — lets the UI show what an agent step actually does.
+function opIcon(kind: OperationVM["kind"]): typeof Zap {
+  switch (kind) {
+    case "create_dir": return FolderPlus;
+    case "write_file": return FileText;
+    case "fetch_file": return Download;
+    case "call_cmd": return Terminal;
+    default: return Circle;
+  }
+}
+
 type FlatNode = PipelineNodeVM & { depth: number };
 
+// Flatten the node tree depth-first, ordering siblings by their stable `order`.
 function flatten(nodes: PipelineNodeVM[], depth = 0, out: FlatNode[] = []): FlatNode[] {
-  for (const n of nodes) {
+  const sorted = [...nodes].sort((a, b) => (a.order || 0) - (b.order || 0));
+  for (const n of sorted) {
     out.push({ ...n, depth });
     if (n.children.length) flatten(n.children, depth + 1, out);
   }
   return out;
+}
+
+function fmtBytes(n: number): string {
+  if (!n) return "";
+  if (n >= 1 << 20) return `${(n / (1 << 20)).toFixed(1)} MiB`;
+  if (n >= 1 << 10) return `${(n / (1 << 10)).toFixed(1)} KiB`;
+  return `${n} B`;
 }
 
 function humanize(name: string): string {
@@ -133,8 +158,8 @@ export function PipelineViewer({
     () =>
       pipeline.map((root) => ({
         id: root.nodeExecutionId || root.name,
-        label: humanize(root.name) || "—",
-        icon: iconFor(root.name),
+        label: humanize(root.phase || root.name) || "—",
+        icon: iconFor(root.phase || root.name),
         root,
         steps: flatten(root.children),
       })),
@@ -155,6 +180,15 @@ export function PipelineViewer({
   }, [bands]);
   const [overrides, setOverrides] = useState<Map<string, boolean>>(() => new Map());
   const isOpenBand = (id: string) => overrides.get(id) ?? autoOpen.has(id);
+
+  // Per-step expansion (operation / error detail).
+  const [openSteps, setOpenSteps] = useState<Set<string>>(() => new Set());
+  const toggleStep = (id: string) =>
+    setOpenSteps((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
 
   const total = flat.length;
   const done = flat.filter((n) => bucket(n.status) === "done").length;
@@ -203,7 +237,7 @@ export function PipelineViewer({
           const style = BAND_STYLE[b];
           const Icon = band.icon;
           const isOpen = isOpenBand(band.id);
-          const hasSteps = band.steps.length > 0;
+          const hasSteps = band.steps.length > 0 || band.root.outputs.length > 0;
           const groupDone = subtree.filter((n) => bucket(n.status) === "done").length;
           return (
             <div key={band.id} className={cn("border transition-colors", style.border, style.bg)}>
@@ -255,38 +289,19 @@ export function PipelineViewer({
               </button>
               {isOpen && hasSteps && (
                 <div className="space-y-px border-t border-border/40 px-2.5 py-1">
-                  {band.steps.map((n) => (
-                    <div
-                      key={n.nodeExecutionId || n.name}
-                      className={cn(
-                        "group/step flex items-center gap-2 rounded-sm px-0.5 py-1",
-                        bucket(n.status) === "running" && "bg-primary/[0.05]",
-                      )}
-                      style={{ paddingLeft: 2 + n.depth * 14 }}
-                    >
-                      {onOpenLogs && n.nodeExecutionId && (
-                        <button
-                          type="button"
-                          title="View in Logs"
-                          onClick={() => onOpenLogs(n.nodeExecutionId)}
-                          className="shrink-0 text-muted-foreground opacity-0 transition-opacity hover:text-primary group-hover/step:opacity-100"
-                        >
-                          <ScrollText className="h-3 w-3" />
-                        </button>
-                      )}
-                      <StepDot status={n.status} />
-                      <span className="flex-1 truncate font-mono text-[11px] leading-tight text-foreground/80">
-                        {humanize(n.name) || "—"}
-                      </span>
-                      {n.attempt > 1 && (
-                        <span className="font-mono text-[10px] text-warning">×{n.attempt}</span>
-                      )}
-                      {fmtDur(n.durationSec) && (
-                        <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
-                          {fmtDur(n.durationSec)}
-                        </span>
-                      )}
+                  {band.root.outputs.length > 0 && (
+                    <div className="mb-1 border-b border-border/30 pb-1">
+                      <OutputsDetail outputs={band.root.outputs} />
                     </div>
+                  )}
+                  {band.steps.map((n) => (
+                    <StepRow
+                      key={n.nodeExecutionId || n.name}
+                      node={n}
+                      expanded={openSteps.has(n.nodeExecutionId || n.name)}
+                      onToggle={() => toggleStep(n.nodeExecutionId || n.name)}
+                      onOpenLogs={onOpenLogs}
+                    />
                   ))}
                 </div>
               )}
@@ -295,5 +310,219 @@ export function PipelineViewer({
         })}
       </div>
     </div>
+  );
+}
+
+// ── Step row ────────────────────────────────────────────────────────────────
+
+function StepRow({
+  node,
+  expanded,
+  onToggle,
+  onOpenLogs,
+}: {
+  node: FlatNode;
+  expanded: boolean;
+  onToggle: () => void;
+  onOpenLogs?: (nodeExecutionId: string) => void;
+}) {
+  const op = node.operation;
+  const hasDetail = !!op || !!node.errorMessage || node.outputs.length > 0;
+  const label = op?.summary || humanize(node.name) || "—";
+  const OpIcon = op ? opIcon(op.kind) : null;
+  const isErr = bucket(node.status) === "failed";
+
+  return (
+    <div style={{ paddingLeft: 2 + node.depth * 14 }}>
+      <div
+        className={cn(
+          "group/step flex items-center gap-2 rounded-sm px-0.5 py-1",
+          bucket(node.status) === "running" && "bg-primary/[0.05]",
+          hasDetail && "cursor-pointer hover:bg-foreground/[0.03]",
+        )}
+        onClick={hasDetail ? onToggle : undefined}
+      >
+        {onOpenLogs && node.nodeExecutionId && (
+          <button
+            type="button"
+            title="View in Logs"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenLogs(node.nodeExecutionId);
+            }}
+            className="shrink-0 text-muted-foreground opacity-0 transition-opacity hover:text-primary group-hover/step:opacity-100"
+          >
+            <ScrollText className="h-3 w-3" />
+          </button>
+        )}
+        <StepDot status={node.status} />
+        {OpIcon && <OpIcon className="h-3 w-3 shrink-0 text-muted-foreground" />}
+        <span
+          className={cn(
+            "min-w-0 flex-1 truncate font-mono text-[11px] leading-tight",
+            isErr ? "text-destructive" : "text-foreground/80",
+          )}
+          title={op?.target || label}
+        >
+          {label}
+        </span>
+        {op?.mentions?.slice(0, 3).map((m) => (
+          <span key={m} className="hidden shrink-0 rounded-sm border border-border px-1 font-mono text-[9px] text-muted-foreground md:inline">
+            {m}
+          </span>
+        ))}
+        {node.machineId && (
+          <span className="hidden shrink-0 font-mono text-[9px] text-muted-foreground lg:inline" title={`machine: ${node.machineId}`}>
+            {node.machineId.length > 14 ? `…${node.machineId.slice(-14)}` : node.machineId}
+          </span>
+        )}
+        {node.attempt > 1 && <span className="shrink-0 font-mono text-[10px] text-warning">×{node.attempt}</span>}
+        {fmtDur(node.durationSec) && (
+          <span className="shrink-0 font-mono text-[10px] tabular-nums text-muted-foreground">{fmtDur(node.durationSec)}</span>
+        )}
+        {hasDetail && (
+          <ChevronDown className={cn("h-3 w-3 shrink-0 text-muted-foreground transition-transform", expanded && "rotate-180")} />
+        )}
+      </div>
+
+      {expanded && hasDetail && (
+        <div className="mb-1 ml-5 space-y-1.5 border-l border-border/60 pl-3 pt-1">
+          {node.statusReason && (
+            <div className="font-mono text-[10px] text-muted-foreground">{node.statusReason}</div>
+          )}
+          {node.errorMessage && (
+            <div className="space-y-1">
+              <pre className="whitespace-pre-wrap break-all border border-destructive/30 bg-destructive/5 p-1.5 font-mono text-[10px] leading-relaxed text-destructive/90">
+                {node.errorMessage}
+              </pre>
+              <CopyBtn text={node.errorMessage} label="copy error" />
+            </div>
+          )}
+          {op && <OperationDetail op={op} />}
+          {node.outputs.length > 0 && <OutputsDetail outputs={node.outputs} />}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function OperationDetail({ op }: { op: OperationVM }) {
+  return (
+    <div className="space-y-1.5">
+      {(op.stepId || op.stepOrder > 0) && (
+        <div className="flex gap-2 font-mono text-[10px] text-muted-foreground">
+          {op.stepId && <span>step: {op.stepId}</span>}
+          {op.stepOrder > 0 && <span>#{op.stepOrder}</span>}
+        </div>
+      )}
+
+      {/* CALL_CMD */}
+      {op.kind === "call_cmd" && (op.commandText || op.argv.length > 0) && (
+        <div className="space-y-1">
+          <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-all border border-border bg-black/40 p-1.5 font-mono text-[10px] leading-relaxed text-foreground/85">
+            {op.commandText || op.argv.join(" ")}
+          </pre>
+          <CopyBtn text={op.commandText || op.argv.join(" ")} label="copy command" />
+        </div>
+      )}
+
+      {op.resultAvailable && (
+        <div className="space-y-1">
+          <div className="flex flex-wrap items-center gap-2 font-mono text-[10px] text-muted-foreground">
+            <span className={op.exitCode === 0 && !op.timedOut ? "text-success" : "text-destructive"}>
+              exit {op.exitCode}
+            </span>
+            {op.timedOut && <span className="text-warning">timed out</span>}
+            {fmtDur(op.elapsedSec) && <span>{fmtDur(op.elapsedSec)}</span>}
+            {op.resultSummary && <span>{op.resultSummary}</span>}
+          </div>
+          {(op.stdoutPreview || op.stderrPreview) && (
+            <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-all border border-border bg-black/40 p-1.5 font-mono text-[10px] leading-relaxed text-foreground/75">
+              {op.stdoutPreview}
+              {op.stdoutPreview && op.stderrPreview ? "\n" : ""}
+              {op.stderrPreview ? `stderr:\n${op.stderrPreview}` : ""}
+            </pre>
+          )}
+        </div>
+      )}
+
+      {/* WRITE_FILE / FETCH_FILE */}
+      {(op.kind === "write_file" || op.kind === "fetch_file") && (
+        <div className="space-y-1">
+          <div className="flex flex-wrap items-center gap-2 font-mono text-[10px] text-muted-foreground">
+            {op.filePath && <span className="break-all text-foreground/80">{op.filePath}</span>}
+            {fmtBytes(op.fileSizeBytes) && <span>· {fmtBytes(op.fileSizeBytes)}</span>}
+          </div>
+          {op.contentPreview && (
+            <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-all border border-border bg-black/40 p-1.5 font-mono text-[10px] leading-relaxed text-foreground/75">
+              {op.contentPreview}
+            </pre>
+          )}
+        </div>
+      )}
+
+      {/* CREATE_DIR */}
+      {op.kind === "create_dir" && op.target && (
+        <div className="font-mono text-[10px] text-foreground/80">{op.target}</div>
+      )}
+
+      {op.mentions.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {op.mentions.map((m) => (
+            <span key={m} className="rounded-sm border border-border px-1 font-mono text-[9px] text-muted-foreground">{m}</span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function OutputsDetail({ outputs }: { outputs: PipelineOutputVM[] }) {
+  if (outputs.length === 0) return null;
+  return (
+    <div className="space-y-1">
+      {outputs.slice(0, 120).map((out) => (
+        <div key={out.id || `${out.kind}-${out.name}-${out.target}`} className="space-y-1 rounded-sm border border-border/60 bg-black/20 p-1.5">
+          <div className="flex flex-wrap items-center gap-2 font-mono text-[10px]">
+            <span className="text-muted-foreground">{out.kind || "output"}</span>
+            <span className="text-foreground/85">{out.name || out.id || out.target || "output"}</span>
+            {out.componentId && <span className="text-muted-foreground">{out.componentId}</span>}
+            {out.action && <span className="text-muted-foreground">{out.action}</span>}
+            {out.count > 0 && <span className="text-muted-foreground">count {out.count}</span>}
+            {fmtBytes(out.sizeBytes) && <span className="text-muted-foreground">{fmtBytes(out.sizeBytes)}</span>}
+          </div>
+          {out.summary && <div className="font-mono text-[10px] text-foreground/75">{out.summary}</div>}
+          {out.target && <div className="break-all font-mono text-[10px] text-muted-foreground">{out.target}</div>}
+          {(out.commandText || out.contentPreview) && (
+            <pre className="max-h-32 overflow-auto whitespace-pre-wrap break-all border border-border bg-black/40 p-1.5 font-mono text-[10px] leading-relaxed text-foreground/70">
+              {out.commandText || out.contentPreview}
+            </pre>
+          )}
+        </div>
+      ))}
+      {outputs.length > 120 && (
+        <div className="font-mono text-[10px] text-muted-foreground">+{outputs.length - 120} more outputs</div>
+      )}
+    </div>
+  );
+}
+
+function CopyBtn({ text, label }: { text: string; label: string }) {
+  const [done, setDone] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        void navigator.clipboard.writeText(text).then(() => {
+          setDone(true);
+          window.setTimeout(() => setDone(false), 1200);
+        });
+      }}
+      className="inline-flex items-center gap-1 font-mono text-[9px] text-muted-foreground hover:text-foreground"
+    >
+      {done ? <Check className="h-2.5 w-2.5 text-success" /> : <Copy className="h-2.5 w-2.5" />}
+      {done ? "copied" : label}
+    </button>
   );
 }

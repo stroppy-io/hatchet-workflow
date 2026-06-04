@@ -354,6 +354,12 @@ func buildLogsQuery(runID string, filter *api.LogFilter, direction api.LogScroll
 	// API calls this field node_ids because the UI thinks in topology nodes.
 	// LogLine stores the same stable host id as machine_id.
 	parts = appendOrFilter(parts, "machine_id", filter.GetNodeIds())
+	parts = appendOrFilter(parts, "phase", filter.GetPhases())
+	parts = appendOrFilter(parts, "parent_node_execution_id", filter.GetParentNodeExecutionIds())
+	parts = appendOrFilter(parts, "stage_name", filter.GetStageNames())
+	parts = appendOrFilter(parts, "step_id", filter.GetStepIds())
+	parts = appendOrFilter(parts, "action", filter.GetActions())
+	parts = appendOrFilter(parts, "mentions", filter.GetMentions())
 	parts = appendEnumFilter(parts, "source", filter.GetSources(), logSourceName)
 	parts = appendEnumFilter(parts, "stream", filter.GetStreams(), logStreamName)
 
@@ -443,16 +449,22 @@ func logStreamName(stream monitor.Stream) string {
 // logRow is one VictoriaLogs JSON-lines record (a flat map of the streamed
 // fields). Only the fields we surface are pulled out.
 type logRow struct {
-	Time            string `json:"_time"`
-	Message         string `json:"_msg"`
-	RunID           string `json:"run_id"`
-	LineNo          uint64 `json:"line_no"`
-	NodeExecutionID string `json:"node_execution_id"`
-	ComponentID     string `json:"component_id"`
-	MachineID       string `json:"machine_id"`
-	Source          string `json:"source"`
-	Unit            string `json:"unit"`
-	Stream          string `json:"stream"`
+	Time                  string `json:"_time"`
+	Message               string `json:"_msg"`
+	RunID                 string `json:"run_id"`
+	LineNo                uint64 `json:"line_no"`
+	NodeExecutionID       string `json:"node_execution_id"`
+	ParentNodeExecutionID string `json:"parent_node_execution_id"`
+	Phase                 string `json:"phase"`
+	StageName             string `json:"stage_name"`
+	ComponentID           string `json:"component_id"`
+	MachineID             string `json:"machine_id"`
+	StepID                string `json:"step_id"`
+	Action                string `json:"action"`
+	Mentions              string `json:"mentions"`
+	Source                string `json:"source"`
+	Unit                  string `json:"unit"`
+	Stream                string `json:"stream"`
 }
 
 // decodeLogLines parses the JSON-lines logs response into LogLine protos.
@@ -483,23 +495,44 @@ func decodeLogLines(body io.Reader, runID string) ([]*monitor.LogLine, error) {
 			lineNo = seq
 		}
 		lines = append(lines, &monitor.LogLine{
-			ObservedAt:      observed,
-			RunId:           rid,
-			LineNo:          lineNo,
-			NodeExecutionId: row.NodeExecutionID,
-			ComponentId:     row.ComponentID,
-			MachineId:       row.MachineID,
-			Source:          parseLogSource(row.Source),
-			Unit:            row.Unit,
-			Stream:          parseLogStream(row.Stream),
-			Line:            row.Message,
-			Cursor:          &monitor.LogCursor{ObservedAt: observed, Seq: lineNo},
+			ObservedAt:            observed,
+			RunId:                 rid,
+			LineNo:                lineNo,
+			NodeExecutionId:       row.NodeExecutionID,
+			ParentNodeExecutionId: row.ParentNodeExecutionID,
+			Phase:                 row.Phase,
+			StageName:             row.StageName,
+			ComponentId:           row.ComponentID,
+			MachineId:             row.MachineID,
+			StepId:                row.StepID,
+			Action:                row.Action,
+			Mentions:              splitLogMentions(row.Mentions),
+			Source:                parseLogSource(row.Source),
+			Unit:                  row.Unit,
+			Stream:                parseLogStream(row.Stream),
+			Line:                  row.Message,
+			Cursor:                &monitor.LogCursor{ObservedAt: observed, Seq: lineNo},
 		})
 	}
 	if err := scanner.Err(); err != nil {
 		return nil, err
 	}
 	return lines, nil
+}
+
+func splitLogMentions(value string) []string {
+	if value == "" {
+		return nil
+	}
+	parts := strings.Split(value, ",")
+	out := make([]string, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part != "" {
+			out = append(out, part)
+		}
+	}
+	return out
 }
 
 func parseLogSource(value string) monitor.Source {

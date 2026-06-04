@@ -5,6 +5,8 @@ package cloud.v1.workflow;
 import "cloud/v1/common/status.proto";
 import "cloud/v1/deployment/infrastructure.proto";
 import "cloud/v1/deployment/plan.proto";
+import "cloud/v1/domain/worker.proto";
+import "cloud/v1/monitor/overview.proto";
 import "cloud/v1/workflow/deployment.proto";
 import "cloud/v1/domain/database.proto";
 import "cloud/v1/domain/suite.proto";
@@ -92,6 +94,58 @@ message Stage {
         attempt is the current attempt number for this stage.
      */
     uint32 attempt = 6;
+    /*
+        order is the stable 1-based sibling execution/display order.
+     */
+    uint32 order = 7;
+    /*
+        parent_node_execution_id links nested stages to their parent stage.
+     */
+    string parent_node_execution_id = 8 [(validate.rules).string.max_len = 128];
+    /*
+        phase is the top-level phase this stage belongs to.
+     */
+    string phase = 9 [(validate.rules).string.max_len = 128];
+    /*
+        component_id is the deployment/topology component this stage acts on.
+     */
+    string component_id = 10 [(validate.rules).string.max_len = 128];
+    /*
+        machine_id is the target machine/agent id for agent-side stages.
+     */
+    string machine_id = 11 [(validate.rules).string.max_len = 128];
+    /*
+        worker is the Temporal worker identity that executes this stage.
+     */
+    domain.Worker worker = 12;
+    /*
+        status_reason is a short machine-readable explanation of the status.
+     */
+    string status_reason = 13 [(validate.rules).string.max_len = 256];
+    /*
+        error_message is the user-facing error text for failed stages.
+     */
+    string error_message = 14 [(validate.rules).string.max_len = 4096];
+    /*
+        operation is the executable operation payload for agent deployment stages.
+     */
+    monitor.PipelineOperation operation = 15;
+    /*
+        outputs are structured artifacts/results produced by this stage. They are
+        carried in RunState so the Overview projection can render stage details
+        without reverse-engineering stored deployment plans.
+     */
+    repeated monitor.PipelineOutput outputs = 16 [(validate.rules).repeated.max_items = 4096];
+}
+/*
+    StageUpdate is emitted as a Temporal signal by child workflows/activities
+    whenever a concrete runtime stage changes status.
+ */
+message StageUpdate {
+    /*
+        stage is the complete current snapshot for one runtime stage.
+     */
+    Stage stage = 1 [(validate.rules).message.required = true];
 }
 
 /*
@@ -210,6 +264,11 @@ service TestService {
                 Overview to read the live RunState (status + per-stage breakdown).
             */
             query: {ref: "GetRunState"}
+            /*
+                signal: child workflows push concrete runtime stage status
+                changes into TestWorkflow so GetRunState is live and complete.
+            */
+            signal: {ref: "UpdateStage"}
         };
     }
     /*
@@ -219,6 +278,13 @@ service TestService {
      */
     rpc GetRunState (google.protobuf.Empty) returns (RunState) {
         option (temporal.v1.query) = {name: "GetRunState"};
+    }
+    /*
+        UpdateStage is a Temporal signal used by child workflows to update one
+        concrete runtime stage inside the parent TestWorkflow RunState.
+     */
+    rpc UpdateStage (StageUpdate) returns (google.protobuf.Empty) {
+        option (temporal.v1.signal) = {name: "UpdateStage"};
     }
     /*
         InstallStroppyWorkflow installs stroppy onto the runner machines (child

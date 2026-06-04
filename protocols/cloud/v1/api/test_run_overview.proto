@@ -83,6 +83,30 @@ message LogFilter {
         query is a raw LogsQL fragment, AND-ed with the structured filters (advanced).
      */
     string query = 10 [(validate.rules).string.max_len = 4096];
+    /*
+        phases restrict to logs belonging to these top-level pipeline phases.
+     */
+    repeated string phases = 11 [(validate.rules).repeated = {max_items: 64, items: {string: {max_len: 128}}}];
+    /*
+        parent_node_execution_ids restrict to logs under these parent stages.
+     */
+    repeated string parent_node_execution_ids = 12 [(validate.rules).repeated = {max_items: 256, items: {string: {max_len: 128}}}];
+    /*
+        stage_names restrict to logs emitted by stages with these display names.
+     */
+    repeated string stage_names = 13 [(validate.rules).repeated = {max_items: 256, items: {string: {max_len: 256}}}];
+    /*
+        step_ids restrict to component-local deployment step ids.
+     */
+    repeated string step_ids = 14 [(validate.rules).repeated = {max_items: 256, items: {string: {max_len: 128}}}];
+    /*
+        actions restrict to generic action classes such as call_cmd/write_file.
+     */
+    repeated string actions = 15 [(validate.rules).repeated = {max_items: 64, items: {string: {max_len: 128}}}];
+    /*
+        mentions restrict to normalized operation tokens such as vector/vmagent/postgres.
+     */
+    repeated string mentions = 16 [(validate.rules).repeated = {max_items: 128, items: {string: {max_len: 64}}}];
 }
 
 /*

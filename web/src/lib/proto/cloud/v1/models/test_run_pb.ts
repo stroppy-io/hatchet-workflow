@@ -22,6 +22,8 @@ import type { TestRun, TestRunJson } from "../domain/test_pb.ts";
 import { file_cloud_v1_domain_test } from "../domain/test_pb.ts";
 import type { Workload_Protocol, Workload_ProtocolJson } from "../domain/workload_pb.ts";
 import { file_cloud_v1_domain_workload } from "../domain/workload_pb.ts";
+import type { RunState, RunStateJson } from "../workflow/test_pb.ts";
+import { file_cloud_v1_workflow_test } from "../workflow/test_pb.ts";
 import type { Duration, DurationJson, Timestamp, TimestampJson } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_duration, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import { file_validate_validate } from "../../../validate/validate_pb.ts";
@@ -31,7 +33,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/models/test_run.proto.
  */
 export const file_cloud_v1_models_test_run: GenFile = /*@__PURE__*/
-  fileDesc("Ch5jbG91ZC92MS9tb2RlbHMvdGVzdF9ydW4ucHJvdG8SD2Nsb3VkLnYxLm1vZGVscyL+CAoNVGVzdFJ1blJlY29yZBIxCgZlbnRpdHkYASABKAsyFy5jbG91ZC52MS5jb21tb24uRW50aXR5Qgj6QgWKAQIQARIwCgRzcGVjGAIgASgLMhguY2xvdWQudjEuZG9tYWluLlRlc3RSdW5CCPpCBYoBAhABEicKBnN0YXR1cxgDIAEoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXMSHQoMc3VpdGVfcnVuX2lkGAQgASgJQgf6QgRyAhhAEh4KDXN1aXRlX2NlbGxfaWQYDCABKAlCB/pCBHICGEASKQoHdHJpZ2dlchgHIAEoDjIYLmNsb3VkLnYxLmNvbW1vbi5UcmlnZ2VyEhgKEGluX3RlbmFudF9yYXRpbmcYCCABKAgSGAoQaW5fZ2xvYmFsX3JhdGluZxgJIAEoCBI3CgdzdW1tYXJ5GAYgASgLMiYuY2xvdWQudjEubW9kZWxzLlRlc3RSdW5SZWNvcmQuU3VtbWFyeRJGChRpbmZyYXN0cnVjdHVyZV9zdGF0ZRgKIAEoCzIoLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVTdGF0ZRI8Cg9kZXBsb3ltZW50X3BsYW4YCyABKAsyIy5jbG91ZC52MS5kZXBsb3ltZW50LkRlcGxveW1lbnRQbGFuGvsECgdTdW1tYXJ5Ei8KB2RiX2tpbmQYASABKA4yHi5jbG91ZC52MS5kb21haW4uRGF0YWJhc2UuS2luZBIdCgxkYl9wcmVzZXRfaWQYAiABKAlCB/pCBHICGEASIAoOZGJfcHJlc2V0X25hbWUYAyABKAlCCPpCBXIDGP8BEiMKEndvcmtsb2FkX3ByZXNldF9pZBgEIAEoCUIH+kIEcgIYQBIfCg13b3JrbG9hZF9uYW1lGAUgASgJQgj6QgVyAxj/ARIgCg9zdHJvcHB5X3ZlcnNpb24YBiABKAlCB/pCBHICGEASPQoRd29ya2xvYWRfcHJvdG9jb2wYDiABKA4yIi5jbG91ZC52MS5kb21haW4uV29ya2xvYWQuUHJvdG9jb2wSHwoOdGVzdF9wcmVzZXRfaWQYDyABKAlCB/pCBHICGEASIgoQdGVzdF9wcmVzZXRfbmFtZRgQIAEoCUII+kIFcgMY/wESIAoOdG9wb2xvZ3lfbGFiZWwYByABKAlCCPpCBXIDGIABEhIKCm5vZGVfY291bnQYCCABKA0SLwoIcHJvdmlkZXIYCSABKA4yHS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyEh0KDHByb2dyZXNzX3BjdBgKIAEoDUIH+kIEKgIYZBIuCgpzdGFydGVkX2F0GAsgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIvCgtmaW5pc2hlZF9hdBgMIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASKwoIZHVyYXRpb24YDSABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb25KBAgFEAZCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvbW9kZWxzYgZwcm90bzM", [file_cloud_v1_common_entity, file_cloud_v1_common_status, file_cloud_v1_common_trigger, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_plan, file_cloud_v1_deployment_provider, file_cloud_v1_domain_database, file_cloud_v1_domain_test, file_cloud_v1_domain_workload, file_google_protobuf_duration, file_google_protobuf_timestamp, file_validate_validate]);
+  fileDesc("Ch5jbG91ZC92MS9tb2RlbHMvdGVzdF9ydW4ucHJvdG8SD2Nsb3VkLnYxLm1vZGVscyKyCQoNVGVzdFJ1blJlY29yZBIxCgZlbnRpdHkYASABKAsyFy5jbG91ZC52MS5jb21tb24uRW50aXR5Qgj6QgWKAQIQARIwCgRzcGVjGAIgASgLMhguY2xvdWQudjEuZG9tYWluLlRlc3RSdW5CCPpCBYoBAhABEicKBnN0YXR1cxgDIAEoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXMSHQoMc3VpdGVfcnVuX2lkGAQgASgJQgf6QgRyAhhAEh4KDXN1aXRlX2NlbGxfaWQYDCABKAlCB/pCBHICGEASKQoHdHJpZ2dlchgHIAEoDjIYLmNsb3VkLnYxLmNvbW1vbi5UcmlnZ2VyEhgKEGluX3RlbmFudF9yYXRpbmcYCCABKAgSGAoQaW5fZ2xvYmFsX3JhdGluZxgJIAEoCBI3CgdzdW1tYXJ5GAYgASgLMiYuY2xvdWQudjEubW9kZWxzLlRlc3RSdW5SZWNvcmQuU3VtbWFyeRJGChRpbmZyYXN0cnVjdHVyZV9zdGF0ZRgKIAEoCzIoLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVTdGF0ZRI8Cg9kZXBsb3ltZW50X3BsYW4YCyABKAsyIy5jbG91ZC52MS5kZXBsb3ltZW50LkRlcGxveW1lbnRQbGFuEjIKDXJ1bnRpbWVfc3RhdGUYDSABKAsyGy5jbG91ZC52MS53b3JrZmxvdy5SdW5TdGF0ZRr7BAoHU3VtbWFyeRIvCgdkYl9raW5kGAEgASgOMh4uY2xvdWQudjEuZG9tYWluLkRhdGFiYXNlLktpbmQSHQoMZGJfcHJlc2V0X2lkGAIgASgJQgf6QgRyAhhAEiAKDmRiX3ByZXNldF9uYW1lGAMgASgJQgj6QgVyAxj/ARIjChJ3b3JrbG9hZF9wcmVzZXRfaWQYBCABKAlCB/pCBHICGEASHwoNd29ya2xvYWRfbmFtZRgFIAEoCUII+kIFcgMY/wESIAoPc3Ryb3BweV92ZXJzaW9uGAYgASgJQgf6QgRyAhhAEj0KEXdvcmtsb2FkX3Byb3RvY29sGA4gASgOMiIuY2xvdWQudjEuZG9tYWluLldvcmtsb2FkLlByb3RvY29sEh8KDnRlc3RfcHJlc2V0X2lkGA8gASgJQgf6QgRyAhhAEiIKEHRlc3RfcHJlc2V0X25hbWUYECABKAlCCPpCBXIDGP8BEiAKDnRvcG9sb2d5X2xhYmVsGAcgASgJQgj6QgVyAxiAARISCgpub2RlX2NvdW50GAggASgNEi8KCHByb3ZpZGVyGAkgASgOMh0uY2xvdWQudjEuZGVwbG95bWVudC5Qcm92aWRlchIdCgxwcm9ncmVzc19wY3QYCiABKA1CB/pCBCoCGGQSLgoKc3RhcnRlZF9hdBgLIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLwoLZmluaXNoZWRfYXQYDCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEisKCGR1cmF0aW9uGA0gASgLMhkuZ29vZ2xlLnByb3RvYnVmLkR1cmF0aW9uSgQIBRAGQkRaQmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL21vZGVsc2IGcHJvdG8z", [file_cloud_v1_common_entity, file_cloud_v1_common_status, file_cloud_v1_common_trigger, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_plan, file_cloud_v1_deployment_provider, file_cloud_v1_domain_database, file_cloud_v1_domain_test, file_cloud_v1_domain_workload, file_cloud_v1_workflow_test, file_google_protobuf_duration, file_google_protobuf_timestamp, file_validate_validate]);
 
 /**
  *
@@ -152,6 +154,16 @@ export type TestRunRecord = Message<"cloud.v1.models.TestRunRecord"> & {
    * @generated from field: cloud.v1.deployment.DeploymentPlan deployment_plan = 11;
    */
   deploymentPlan?: DeploymentPlan;
+
+  /**
+   *
+   * runtime_state is the last TestWorkflow RunState persisted by the
+   * workflow itself. Overview uses it as the durable projection when the
+   * Temporal workflow is already closed and no longer queryable.
+   *
+   * @generated from field: cloud.v1.workflow.RunState runtime_state = 13;
+   */
+  runtimeState?: RunState;
 };
 
 /**
@@ -273,6 +285,16 @@ export type TestRunRecordJson = {
    * @generated from field: cloud.v1.deployment.DeploymentPlan deployment_plan = 11;
    */
   deploymentPlan?: DeploymentPlanJson;
+
+  /**
+   *
+   * runtime_state is the last TestWorkflow RunState persisted by the
+   * workflow itself. Overview uses it as the durable projection when the
+   * Temporal workflow is already closed and no longer queryable.
+   *
+   * @generated from field: cloud.v1.workflow.RunState runtime_state = 13;
+   */
+  runtimeState?: RunStateJson;
 };
 
 export type TestRunRecordValid = TestRunRecord;

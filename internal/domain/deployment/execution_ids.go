@@ -10,18 +10,28 @@ import (
 )
 
 const (
-	LabelNodeExecutionID = "stroppy.io/node-execution-id"
-	LabelComponentID     = "stroppy.io/component-id"
-	LabelNodeID          = "stroppy.io/node-id"
-	LabelStepID          = "stroppy.io/step-id"
-	LabelAction          = "stroppy.io/action"
+	LabelNodeExecutionID       = "stroppy.io/node-execution-id"
+	LabelParentNodeExecutionID = "stroppy.io/parent-node-execution-id"
+	LabelPhase                 = "stroppy.io/phase"
+	LabelStageName             = "stroppy.io/stage-name"
+	LabelComponentID           = "stroppy.io/component-id"
+	LabelNodeID                = "stroppy.io/node-id"
+	LabelStepID                = "stroppy.io/step-id"
+	LabelAction                = "stroppy.io/action"
+	LabelOperationMentions     = "stroppy.io/operation-mentions"
 
-	EnvRunID           = "STROPPY_RUN_ID"
-	EnvNodeExecutionID = "STROPPY_NODE_EXECUTION_ID"
-	EnvComponentID     = "STROPPY_COMPONENT_ID"
-	EnvNodeID          = "STROPPY_NODE_ID"
-	EnvStepID          = "STROPPY_STEP_ID"
-	EnvAction          = "STROPPY_ACTION"
+	EnvRunID                 = "STROPPY_RUN_ID"
+	EnvNodeExecutionID       = "STROPPY_NODE_EXECUTION_ID"
+	EnvParentNodeExecutionID = "STROPPY_PARENT_NODE_EXECUTION_ID"
+	EnvPhase                 = "STROPPY_PHASE"
+	EnvStageName             = "STROPPY_STAGE_NAME"
+	EnvComponentID           = "STROPPY_COMPONENT_ID"
+	EnvNodeID                = "STROPPY_NODE_ID"
+	EnvStepID                = "STROPPY_STEP_ID"
+	EnvAction                = "STROPPY_ACTION"
+	EnvOperationMentions     = "STROPPY_OPERATION_MENTIONS"
+
+	PhaseExecuteDeploymentPlan = "execute_deployment_plan"
 )
 
 const maxNodeExecutionIDLen = 128
@@ -91,24 +101,38 @@ func StampAgentStepExecutionContext(runID string, component *deploymentpb.Compon
 	nodeID := component.GetNodeId()
 	stepID := step.GetId()
 	nodeExecutionID := StepExecutionID(componentID, stepID)
+	parentNodeExecutionID := ComponentExecutionID(componentID)
 	action := AgentStepActionKind(step)
+	stageName := AgentStepStageName(step)
+	mentions := ""
+	if operation := AgentStepOperation(step); operation != nil {
+		mentions = strings.Join(operation.GetMentions(), ",")
+	}
 	if step.Labels == nil {
 		step.Labels = map[string]string{}
 	}
 	step.Labels[LabelRunID] = runID
 	step.Labels[LabelNodeExecutionID] = nodeExecutionID
+	step.Labels[LabelParentNodeExecutionID] = parentNodeExecutionID
+	step.Labels[LabelPhase] = PhaseExecuteDeploymentPlan
+	step.Labels[LabelStageName] = stageName
 	step.Labels[LabelComponentID] = componentID
 	step.Labels[LabelNodeID] = nodeID
 	step.Labels[LabelStepID] = stepID
 	step.Labels[LabelAction] = action
+	step.Labels[LabelOperationMentions] = mentions
 	if cmd := step.GetCallCmd(); cmd != nil {
 		stampCommandEnv(cmd, map[string]string{
-			EnvRunID:           runID,
-			EnvNodeExecutionID: nodeExecutionID,
-			EnvComponentID:     componentID,
-			EnvNodeID:          nodeID,
-			EnvStepID:          stepID,
-			EnvAction:          action,
+			EnvRunID:                 runID,
+			EnvNodeExecutionID:       nodeExecutionID,
+			EnvParentNodeExecutionID: parentNodeExecutionID,
+			EnvPhase:                 PhaseExecuteDeploymentPlan,
+			EnvStageName:             stageName,
+			EnvComponentID:           componentID,
+			EnvNodeID:                nodeID,
+			EnvStepID:                stepID,
+			EnvAction:                action,
+			EnvOperationMentions:     mentions,
 		})
 	}
 }

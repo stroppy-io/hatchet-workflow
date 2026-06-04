@@ -12,6 +12,7 @@ import (
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
+	monitor "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
 	topology "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -202,7 +203,29 @@ type Stage struct {
 	// finished_at is when the stage finished (unset while running).
 	FinishedAt *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=finished_at,json=finishedAt,proto3" json:"finished_at,omitempty"`
 	// attempt is the current attempt number for this stage.
-	Attempt       uint32 `protobuf:"varint,6,opt,name=attempt,proto3" json:"attempt,omitempty"`
+	Attempt uint32 `protobuf:"varint,6,opt,name=attempt,proto3" json:"attempt,omitempty"`
+	// order is the stable 1-based sibling execution/display order.
+	Order uint32 `protobuf:"varint,7,opt,name=order,proto3" json:"order,omitempty"`
+	// parent_node_execution_id links nested stages to their parent stage.
+	ParentNodeExecutionId string `protobuf:"bytes,8,opt,name=parent_node_execution_id,json=parentNodeExecutionId,proto3" json:"parent_node_execution_id,omitempty"`
+	// phase is the top-level phase this stage belongs to.
+	Phase string `protobuf:"bytes,9,opt,name=phase,proto3" json:"phase,omitempty"`
+	// component_id is the deployment/topology component this stage acts on.
+	ComponentId string `protobuf:"bytes,10,opt,name=component_id,json=componentId,proto3" json:"component_id,omitempty"`
+	// machine_id is the target machine/agent id for agent-side stages.
+	MachineId string `protobuf:"bytes,11,opt,name=machine_id,json=machineId,proto3" json:"machine_id,omitempty"`
+	// worker is the Temporal worker identity that executes this stage.
+	Worker *domain.Worker `protobuf:"bytes,12,opt,name=worker,proto3" json:"worker,omitempty"`
+	// status_reason is a short machine-readable explanation of the status.
+	StatusReason string `protobuf:"bytes,13,opt,name=status_reason,json=statusReason,proto3" json:"status_reason,omitempty"`
+	// error_message is the user-facing error text for failed stages.
+	ErrorMessage string `protobuf:"bytes,14,opt,name=error_message,json=errorMessage,proto3" json:"error_message,omitempty"`
+	// operation is the executable operation payload for agent deployment stages.
+	Operation *monitor.PipelineOperation `protobuf:"bytes,15,opt,name=operation,proto3" json:"operation,omitempty"`
+	// outputs are structured artifacts/results produced by this stage. They are
+	// carried in RunState so the Overview projection can render stage details
+	// without reverse-engineering stored deployment plans.
+	Outputs       []*monitor.PipelineOutput `protobuf:"bytes,16,rep,name=outputs,proto3" json:"outputs,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -279,6 +302,123 @@ func (x *Stage) GetAttempt() uint32 {
 	return 0
 }
 
+func (x *Stage) GetOrder() uint32 {
+	if x != nil {
+		return x.Order
+	}
+	return 0
+}
+
+func (x *Stage) GetParentNodeExecutionId() string {
+	if x != nil {
+		return x.ParentNodeExecutionId
+	}
+	return ""
+}
+
+func (x *Stage) GetPhase() string {
+	if x != nil {
+		return x.Phase
+	}
+	return ""
+}
+
+func (x *Stage) GetComponentId() string {
+	if x != nil {
+		return x.ComponentId
+	}
+	return ""
+}
+
+func (x *Stage) GetMachineId() string {
+	if x != nil {
+		return x.MachineId
+	}
+	return ""
+}
+
+func (x *Stage) GetWorker() *domain.Worker {
+	if x != nil {
+		return x.Worker
+	}
+	return nil
+}
+
+func (x *Stage) GetStatusReason() string {
+	if x != nil {
+		return x.StatusReason
+	}
+	return ""
+}
+
+func (x *Stage) GetErrorMessage() string {
+	if x != nil {
+		return x.ErrorMessage
+	}
+	return ""
+}
+
+func (x *Stage) GetOperation() *monitor.PipelineOperation {
+	if x != nil {
+		return x.Operation
+	}
+	return nil
+}
+
+func (x *Stage) GetOutputs() []*monitor.PipelineOutput {
+	if x != nil {
+		return x.Outputs
+	}
+	return nil
+}
+
+// StageUpdate is emitted as a Temporal signal by child workflows/activities
+// whenever a concrete runtime stage changes status.
+type StageUpdate struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// stage is the complete current snapshot for one runtime stage.
+	Stage         *Stage `protobuf:"bytes,1,opt,name=stage,proto3" json:"stage,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StageUpdate) Reset() {
+	*x = StageUpdate{}
+	mi := &file_cloud_v1_workflow_test_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StageUpdate) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StageUpdate) ProtoMessage() {}
+
+func (x *StageUpdate) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_workflow_test_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StageUpdate.ProtoReflect.Descriptor instead.
+func (*StageUpdate) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_workflow_test_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *StageUpdate) GetStage() *Stage {
+	if x != nil {
+		return x.Stage
+	}
+	return nil
+}
+
 // InstallStroppyWorkflowRequest asks to execute stroppy installation steps on
 // runner nodes.
 type InstallStroppyWorkflowRequest struct {
@@ -293,7 +433,7 @@ type InstallStroppyWorkflowRequest struct {
 
 func (x *InstallStroppyWorkflowRequest) Reset() {
 	*x = InstallStroppyWorkflowRequest{}
-	mi := &file_cloud_v1_workflow_test_proto_msgTypes[4]
+	mi := &file_cloud_v1_workflow_test_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -305,7 +445,7 @@ func (x *InstallStroppyWorkflowRequest) String() string {
 func (*InstallStroppyWorkflowRequest) ProtoMessage() {}
 
 func (x *InstallStroppyWorkflowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_workflow_test_proto_msgTypes[4]
+	mi := &file_cloud_v1_workflow_test_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -318,7 +458,7 @@ func (x *InstallStroppyWorkflowRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InstallStroppyWorkflowRequest.ProtoReflect.Descriptor instead.
 func (*InstallStroppyWorkflowRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_workflow_test_proto_rawDescGZIP(), []int{4}
+	return file_cloud_v1_workflow_test_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *InstallStroppyWorkflowRequest) GetInfrastructureState() *deployment.InfrastructureState {
@@ -344,7 +484,7 @@ type InstallStroppyWorkflowResponse struct {
 
 func (x *InstallStroppyWorkflowResponse) Reset() {
 	*x = InstallStroppyWorkflowResponse{}
-	mi := &file_cloud_v1_workflow_test_proto_msgTypes[5]
+	mi := &file_cloud_v1_workflow_test_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -356,7 +496,7 @@ func (x *InstallStroppyWorkflowResponse) String() string {
 func (*InstallStroppyWorkflowResponse) ProtoMessage() {}
 
 func (x *InstallStroppyWorkflowResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_workflow_test_proto_msgTypes[5]
+	mi := &file_cloud_v1_workflow_test_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -369,7 +509,7 @@ func (x *InstallStroppyWorkflowResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InstallStroppyWorkflowResponse.ProtoReflect.Descriptor instead.
 func (*InstallStroppyWorkflowResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_workflow_test_proto_rawDescGZIP(), []int{5}
+	return file_cloud_v1_workflow_test_proto_rawDescGZIP(), []int{6}
 }
 
 // InstallDatabaseWorkflowRequest asks to bring up / provision the database
@@ -389,7 +529,7 @@ type InstallDatabaseWorkflowRequest struct {
 
 func (x *InstallDatabaseWorkflowRequest) Reset() {
 	*x = InstallDatabaseWorkflowRequest{}
-	mi := &file_cloud_v1_workflow_test_proto_msgTypes[6]
+	mi := &file_cloud_v1_workflow_test_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -401,7 +541,7 @@ func (x *InstallDatabaseWorkflowRequest) String() string {
 func (*InstallDatabaseWorkflowRequest) ProtoMessage() {}
 
 func (x *InstallDatabaseWorkflowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_workflow_test_proto_msgTypes[6]
+	mi := &file_cloud_v1_workflow_test_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -414,7 +554,7 @@ func (x *InstallDatabaseWorkflowRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InstallDatabaseWorkflowRequest.ProtoReflect.Descriptor instead.
 func (*InstallDatabaseWorkflowRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_workflow_test_proto_rawDescGZIP(), []int{6}
+	return file_cloud_v1_workflow_test_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *InstallDatabaseWorkflowRequest) GetInfrastructureState() *deployment.InfrastructureState {
@@ -447,7 +587,7 @@ type InstallDatabaseWorkflowResponse struct {
 
 func (x *InstallDatabaseWorkflowResponse) Reset() {
 	*x = InstallDatabaseWorkflowResponse{}
-	mi := &file_cloud_v1_workflow_test_proto_msgTypes[7]
+	mi := &file_cloud_v1_workflow_test_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -459,7 +599,7 @@ func (x *InstallDatabaseWorkflowResponse) String() string {
 func (*InstallDatabaseWorkflowResponse) ProtoMessage() {}
 
 func (x *InstallDatabaseWorkflowResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_workflow_test_proto_msgTypes[7]
+	mi := &file_cloud_v1_workflow_test_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -472,7 +612,7 @@ func (x *InstallDatabaseWorkflowResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InstallDatabaseWorkflowResponse.ProtoReflect.Descriptor instead.
 func (*InstallDatabaseWorkflowResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_workflow_test_proto_rawDescGZIP(), []int{7}
+	return file_cloud_v1_workflow_test_proto_rawDescGZIP(), []int{8}
 }
 
 // RunWorkloadWorkflowRequest asks to run the workload via the agent (write
@@ -492,7 +632,7 @@ type RunWorkloadWorkflowRequest struct {
 
 func (x *RunWorkloadWorkflowRequest) Reset() {
 	*x = RunWorkloadWorkflowRequest{}
-	mi := &file_cloud_v1_workflow_test_proto_msgTypes[8]
+	mi := &file_cloud_v1_workflow_test_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -504,7 +644,7 @@ func (x *RunWorkloadWorkflowRequest) String() string {
 func (*RunWorkloadWorkflowRequest) ProtoMessage() {}
 
 func (x *RunWorkloadWorkflowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_workflow_test_proto_msgTypes[8]
+	mi := &file_cloud_v1_workflow_test_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -517,7 +657,7 @@ func (x *RunWorkloadWorkflowRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RunWorkloadWorkflowRequest.ProtoReflect.Descriptor instead.
 func (*RunWorkloadWorkflowRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_workflow_test_proto_rawDescGZIP(), []int{8}
+	return file_cloud_v1_workflow_test_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *RunWorkloadWorkflowRequest) GetTopologySpec() *topology.TopologySpec {
@@ -551,7 +691,7 @@ type RunWorkloadWorkflowResponse struct {
 
 func (x *RunWorkloadWorkflowResponse) Reset() {
 	*x = RunWorkloadWorkflowResponse{}
-	mi := &file_cloud_v1_workflow_test_proto_msgTypes[9]
+	mi := &file_cloud_v1_workflow_test_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -563,7 +703,7 @@ func (x *RunWorkloadWorkflowResponse) String() string {
 func (*RunWorkloadWorkflowResponse) ProtoMessage() {}
 
 func (x *RunWorkloadWorkflowResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_workflow_test_proto_msgTypes[9]
+	mi := &file_cloud_v1_workflow_test_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -576,7 +716,7 @@ func (x *RunWorkloadWorkflowResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RunWorkloadWorkflowResponse.ProtoReflect.Descriptor instead.
 func (*RunWorkloadWorkflowResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_workflow_test_proto_rawDescGZIP(), []int{9}
+	return file_cloud_v1_workflow_test_proto_rawDescGZIP(), []int{10}
 }
 
 // SuiteWorkflowRequest is the input to a suite run. The API/start layer expands
@@ -597,7 +737,7 @@ type SuiteWorkflowRequest struct {
 
 func (x *SuiteWorkflowRequest) Reset() {
 	*x = SuiteWorkflowRequest{}
-	mi := &file_cloud_v1_workflow_test_proto_msgTypes[10]
+	mi := &file_cloud_v1_workflow_test_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -609,7 +749,7 @@ func (x *SuiteWorkflowRequest) String() string {
 func (*SuiteWorkflowRequest) ProtoMessage() {}
 
 func (x *SuiteWorkflowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_workflow_test_proto_msgTypes[10]
+	mi := &file_cloud_v1_workflow_test_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -622,7 +762,7 @@ func (x *SuiteWorkflowRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SuiteWorkflowRequest.ProtoReflect.Descriptor instead.
 func (*SuiteWorkflowRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_workflow_test_proto_rawDescGZIP(), []int{10}
+	return file_cloud_v1_workflow_test_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *SuiteWorkflowRequest) GetSuiteRunId() string {
@@ -655,7 +795,7 @@ type SuiteWorkflowResponse struct {
 
 func (x *SuiteWorkflowResponse) Reset() {
 	*x = SuiteWorkflowResponse{}
-	mi := &file_cloud_v1_workflow_test_proto_msgTypes[11]
+	mi := &file_cloud_v1_workflow_test_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -667,7 +807,7 @@ func (x *SuiteWorkflowResponse) String() string {
 func (*SuiteWorkflowResponse) ProtoMessage() {}
 
 func (x *SuiteWorkflowResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_workflow_test_proto_msgTypes[11]
+	mi := &file_cloud_v1_workflow_test_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -680,14 +820,14 @@ func (x *SuiteWorkflowResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SuiteWorkflowResponse.ProtoReflect.Descriptor instead.
 func (*SuiteWorkflowResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_workflow_test_proto_rawDescGZIP(), []int{11}
+	return file_cloud_v1_workflow_test_proto_rawDescGZIP(), []int{12}
 }
 
 var File_cloud_v1_workflow_test_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_workflow_test_proto_rawDesc = "" +
 	"\n" +
-	"\x1ccloud/v1/workflow/test.proto\x12\x11cloud.v1.workflow\x1a\x1ccloud/v1/common/status.proto\x1a(cloud/v1/deployment/infrastructure.proto\x1a\x1ecloud/v1/deployment/plan.proto\x1a\"cloud/v1/workflow/deployment.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1bcloud/v1/domain/suite.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a cloud/v1/topology/topology.proto\x1a\x1bcloud/v1/workflow/run.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1atemporal/v1/temporal.proto\x1a\x17validate/validate.proto\"\xc8\x01\n" +
+	"\x1ccloud/v1/workflow/test.proto\x12\x11cloud.v1.workflow\x1a\x1ccloud/v1/common/status.proto\x1a(cloud/v1/deployment/infrastructure.proto\x1a\x1ecloud/v1/deployment/plan.proto\x1a\x1ccloud/v1/domain/worker.proto\x1a\x1fcloud/v1/monitor/overview.proto\x1a\"cloud/v1/workflow/deployment.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1bcloud/v1/domain/suite.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a cloud/v1/topology/topology.proto\x1a\x1bcloud/v1/workflow/run.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1atemporal/v1/temporal.proto\x1a\x17validate/validate.proto\"\xc8\x01\n" +
 	"\x13TestWorkflowRequest\x12&\n" +
 	"\ttenant_id\x18\x03 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12=\n" +
 	"\btest_run\x18\x01 \x01(\v2\x18.cloud.v1.domain.TestRunB\b\xfaB\x05\x8a\x01\x02\x10\x01R\atestRun\x12J\n" +
@@ -695,7 +835,7 @@ const file_cloud_v1_workflow_test_proto_rawDesc = "" +
 	"\x14TestWorkflowResponse\"m\n" +
 	"\bRunState\x12/\n" +
 	"\x06status\x18\x01 \x01(\x0e2\x17.cloud.v1.common.StatusR\x06status\x120\n" +
-	"\x06stages\x18\x02 \x03(\v2\x18.cloud.v1.workflow.StageR\x06stages\"\x8a\x02\n" +
+	"\x06stages\x18\x02 \x03(\v2\x18.cloud.v1.workflow.StageR\x06stages\"\xf2\x05\n" +
 	"\x05Stage\x12*\n" +
 	"\x11node_execution_id\x18\x01 \x01(\tR\x0fnodeExecutionId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12/\n" +
@@ -704,7 +844,21 @@ const file_cloud_v1_workflow_test_proto_rawDesc = "" +
 	"started_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\x12;\n" +
 	"\vfinished_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"finishedAt\x12\x18\n" +
-	"\aattempt\x18\x06 \x01(\rR\aattempt\"\xde\x01\n" +
+	"\aattempt\x18\x06 \x01(\rR\aattempt\x12\x14\n" +
+	"\x05order\x18\a \x01(\rR\x05order\x12A\n" +
+	"\x18parent_node_execution_id\x18\b \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\x15parentNodeExecutionId\x12\x1e\n" +
+	"\x05phase\x18\t \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\x05phase\x12+\n" +
+	"\fcomponent_id\x18\n" +
+	" \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\vcomponentId\x12'\n" +
+	"\n" +
+	"machine_id\x18\v \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\tmachineId\x12/\n" +
+	"\x06worker\x18\f \x01(\v2\x17.cloud.v1.domain.WorkerR\x06worker\x12-\n" +
+	"\rstatus_reason\x18\r \x01(\tB\b\xfaB\x05r\x03\x18\x80\x02R\fstatusReason\x12-\n" +
+	"\rerror_message\x18\x0e \x01(\tB\b\xfaB\x05r\x03\x18\x80 R\ferrorMessage\x12A\n" +
+	"\toperation\x18\x0f \x01(\v2#.cloud.v1.monitor.PipelineOperationR\toperation\x12E\n" +
+	"\aoutputs\x18\x10 \x03(\v2 .cloud.v1.monitor.PipelineOutputB\t\xfaB\x06\x92\x01\x03\x10\x80 R\aoutputs\"G\n" +
+	"\vStageUpdate\x128\n" +
+	"\x05stage\x18\x01 \x01(\v2\x18.cloud.v1.workflow.StageB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x05stage\"\xde\x01\n" +
 	"\x1dInstallStroppyWorkflowRequest\x12e\n" +
 	"\x14infrastructure_state\x18\x01 \x01(\v2(.cloud.v1.deployment.InfrastructureStateB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x13infrastructureState\x12V\n" +
 	"\x0fdeployment_plan\x18\x02 \x01(\v2#.cloud.v1.deployment.DeploymentPlanB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x0edeploymentPlan\" \n" +
@@ -724,13 +878,16 @@ const file_cloud_v1_workflow_test_proto_rawDesc = "" +
 	"suiteRunId\x12=\n" +
 	"\x04runs\x18\x02 \x03(\v2\x1c.cloud.v1.workflow.RunConfigB\v\xfaB\b\x92\x01\x05\b\x01\x10\xe8\aR\x04runs\x12!\n" +
 	"\fmax_parallel\x18\x03 \x01(\rR\vmaxParallel\"\x17\n" +
-	"\x15SuiteWorkflowResponse2\x8f\x06\n" +
-	"\vTestService\x12\xa3\x01\n" +
-	"\fTestWorkflow\x12&.cloud.v1.workflow.TestWorkflowRequest\x1a'.cloud.v1.workflow.TestWorkflowResponse\"B\x8a\xc4\x03>\n" +
+	"\x15SuiteWorkflowResponse2\xf8\x06\n" +
+	"\vTestService\x12\xb2\x01\n" +
+	"\fTestWorkflow\x12&.cloud.v1.workflow.TestWorkflowRequest\x1a'.cloud.v1.workflow.TestWorkflowResponse\"Q\x8a\xc4\x03M\n" +
 	"\r\n" +
-	"\vGetRunState*\x19test-run/${! testRun.id }0\x02J\x02 \x01r\fTestWorkflow\x12U\n" +
+	"\vGetRunState\x12\r\n" +
+	"\vUpdateStage*\x19test-run/${! testRun.id }0\x02J\x02 \x01r\fTestWorkflow\x12U\n" +
 	"\vGetRunState\x12\x16.google.protobuf.Empty\x1a\x1b.cloud.v1.workflow.RunState\"\x11\x9a\xc4\x03\r\n" +
-	"\vGetRunState\x12\xa8\x01\n" +
+	"\vGetRunState\x12X\n" +
+	"\vUpdateStage\x12\x1e.cloud.v1.workflow.StageUpdate\x1a\x16.google.protobuf.Empty\"\x11\xa2\xc4\x03\r\n" +
+	"\vUpdateStage\x12\xa8\x01\n" +
 	"\x16InstallStroppyWorkflow\x120.cloud.v1.workflow.InstallStroppyWorkflowRequest\x1a1.cloud.v1.workflow.InstallStroppyWorkflowResponse\")\x8a\xc4\x03%J\x06\n" +
 	"\x02\b\x05 \x03R\x03\b\x88\x0er\x16InstallStroppyWorkflow\x12\xac\x01\n" +
 	"\x17InstallDatabaseWorkflow\x121.cloud.v1.workflow.InstallDatabaseWorkflowRequest\x1a2.cloud.v1.workflow.InstallDatabaseWorkflowResponse\"*\x8a\xc4\x03&J\x06\n" +
@@ -753,66 +910,76 @@ func file_cloud_v1_workflow_test_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_workflow_test_proto_rawDescData
 }
 
-var file_cloud_v1_workflow_test_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_cloud_v1_workflow_test_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_cloud_v1_workflow_test_proto_goTypes = []any{
 	(*TestWorkflowRequest)(nil),             // 0: cloud.v1.workflow.TestWorkflowRequest
 	(*TestWorkflowResponse)(nil),            // 1: cloud.v1.workflow.TestWorkflowResponse
 	(*RunState)(nil),                        // 2: cloud.v1.workflow.RunState
 	(*Stage)(nil),                           // 3: cloud.v1.workflow.Stage
-	(*InstallStroppyWorkflowRequest)(nil),   // 4: cloud.v1.workflow.InstallStroppyWorkflowRequest
-	(*InstallStroppyWorkflowResponse)(nil),  // 5: cloud.v1.workflow.InstallStroppyWorkflowResponse
-	(*InstallDatabaseWorkflowRequest)(nil),  // 6: cloud.v1.workflow.InstallDatabaseWorkflowRequest
-	(*InstallDatabaseWorkflowResponse)(nil), // 7: cloud.v1.workflow.InstallDatabaseWorkflowResponse
-	(*RunWorkloadWorkflowRequest)(nil),      // 8: cloud.v1.workflow.RunWorkloadWorkflowRequest
-	(*RunWorkloadWorkflowResponse)(nil),     // 9: cloud.v1.workflow.RunWorkloadWorkflowResponse
-	(*SuiteWorkflowRequest)(nil),            // 10: cloud.v1.workflow.SuiteWorkflowRequest
-	(*SuiteWorkflowResponse)(nil),           // 11: cloud.v1.workflow.SuiteWorkflowResponse
-	(*domain.TestRun)(nil),                  // 12: cloud.v1.domain.TestRun
-	(*AgentBootstrap)(nil),                  // 13: cloud.v1.workflow.AgentBootstrap
-	(common.Status)(0),                      // 14: cloud.v1.common.Status
-	(*timestamppb.Timestamp)(nil),           // 15: google.protobuf.Timestamp
-	(*deployment.InfrastructureState)(nil),  // 16: cloud.v1.deployment.InfrastructureState
-	(*deployment.DeploymentPlan)(nil),       // 17: cloud.v1.deployment.DeploymentPlan
-	(*domain.Database)(nil),                 // 18: cloud.v1.domain.Database
-	(*topology.TopologySpec)(nil),           // 19: cloud.v1.topology.TopologySpec
-	(*domain.Workload)(nil),                 // 20: cloud.v1.domain.Workload
-	(*RunConfig)(nil),                       // 21: cloud.v1.workflow.RunConfig
-	(*emptypb.Empty)(nil),                   // 22: google.protobuf.Empty
+	(*StageUpdate)(nil),                     // 4: cloud.v1.workflow.StageUpdate
+	(*InstallStroppyWorkflowRequest)(nil),   // 5: cloud.v1.workflow.InstallStroppyWorkflowRequest
+	(*InstallStroppyWorkflowResponse)(nil),  // 6: cloud.v1.workflow.InstallStroppyWorkflowResponse
+	(*InstallDatabaseWorkflowRequest)(nil),  // 7: cloud.v1.workflow.InstallDatabaseWorkflowRequest
+	(*InstallDatabaseWorkflowResponse)(nil), // 8: cloud.v1.workflow.InstallDatabaseWorkflowResponse
+	(*RunWorkloadWorkflowRequest)(nil),      // 9: cloud.v1.workflow.RunWorkloadWorkflowRequest
+	(*RunWorkloadWorkflowResponse)(nil),     // 10: cloud.v1.workflow.RunWorkloadWorkflowResponse
+	(*SuiteWorkflowRequest)(nil),            // 11: cloud.v1.workflow.SuiteWorkflowRequest
+	(*SuiteWorkflowResponse)(nil),           // 12: cloud.v1.workflow.SuiteWorkflowResponse
+	(*domain.TestRun)(nil),                  // 13: cloud.v1.domain.TestRun
+	(*AgentBootstrap)(nil),                  // 14: cloud.v1.workflow.AgentBootstrap
+	(common.Status)(0),                      // 15: cloud.v1.common.Status
+	(*timestamppb.Timestamp)(nil),           // 16: google.protobuf.Timestamp
+	(*domain.Worker)(nil),                   // 17: cloud.v1.domain.Worker
+	(*monitor.PipelineOperation)(nil),       // 18: cloud.v1.monitor.PipelineOperation
+	(*monitor.PipelineOutput)(nil),          // 19: cloud.v1.monitor.PipelineOutput
+	(*deployment.InfrastructureState)(nil),  // 20: cloud.v1.deployment.InfrastructureState
+	(*deployment.DeploymentPlan)(nil),       // 21: cloud.v1.deployment.DeploymentPlan
+	(*domain.Database)(nil),                 // 22: cloud.v1.domain.Database
+	(*topology.TopologySpec)(nil),           // 23: cloud.v1.topology.TopologySpec
+	(*domain.Workload)(nil),                 // 24: cloud.v1.domain.Workload
+	(*RunConfig)(nil),                       // 25: cloud.v1.workflow.RunConfig
+	(*emptypb.Empty)(nil),                   // 26: google.protobuf.Empty
 }
 var file_cloud_v1_workflow_test_proto_depIdxs = []int32{
-	12, // 0: cloud.v1.workflow.TestWorkflowRequest.test_run:type_name -> cloud.v1.domain.TestRun
-	13, // 1: cloud.v1.workflow.TestWorkflowRequest.agent_bootstrap:type_name -> cloud.v1.workflow.AgentBootstrap
-	14, // 2: cloud.v1.workflow.RunState.status:type_name -> cloud.v1.common.Status
+	13, // 0: cloud.v1.workflow.TestWorkflowRequest.test_run:type_name -> cloud.v1.domain.TestRun
+	14, // 1: cloud.v1.workflow.TestWorkflowRequest.agent_bootstrap:type_name -> cloud.v1.workflow.AgentBootstrap
+	15, // 2: cloud.v1.workflow.RunState.status:type_name -> cloud.v1.common.Status
 	3,  // 3: cloud.v1.workflow.RunState.stages:type_name -> cloud.v1.workflow.Stage
-	14, // 4: cloud.v1.workflow.Stage.status:type_name -> cloud.v1.common.Status
-	15, // 5: cloud.v1.workflow.Stage.started_at:type_name -> google.protobuf.Timestamp
-	15, // 6: cloud.v1.workflow.Stage.finished_at:type_name -> google.protobuf.Timestamp
-	16, // 7: cloud.v1.workflow.InstallStroppyWorkflowRequest.infrastructure_state:type_name -> cloud.v1.deployment.InfrastructureState
-	17, // 8: cloud.v1.workflow.InstallStroppyWorkflowRequest.deployment_plan:type_name -> cloud.v1.deployment.DeploymentPlan
-	16, // 9: cloud.v1.workflow.InstallDatabaseWorkflowRequest.infrastructure_state:type_name -> cloud.v1.deployment.InfrastructureState
-	18, // 10: cloud.v1.workflow.InstallDatabaseWorkflowRequest.database:type_name -> cloud.v1.domain.Database
-	17, // 11: cloud.v1.workflow.InstallDatabaseWorkflowRequest.deployment_plan:type_name -> cloud.v1.deployment.DeploymentPlan
-	19, // 12: cloud.v1.workflow.RunWorkloadWorkflowRequest.topology_spec:type_name -> cloud.v1.topology.TopologySpec
-	20, // 13: cloud.v1.workflow.RunWorkloadWorkflowRequest.workload:type_name -> cloud.v1.domain.Workload
-	16, // 14: cloud.v1.workflow.RunWorkloadWorkflowRequest.infrastructure_state:type_name -> cloud.v1.deployment.InfrastructureState
-	21, // 15: cloud.v1.workflow.SuiteWorkflowRequest.runs:type_name -> cloud.v1.workflow.RunConfig
-	0,  // 16: cloud.v1.workflow.TestService.TestWorkflow:input_type -> cloud.v1.workflow.TestWorkflowRequest
-	22, // 17: cloud.v1.workflow.TestService.GetRunState:input_type -> google.protobuf.Empty
-	4,  // 18: cloud.v1.workflow.TestService.InstallStroppyWorkflow:input_type -> cloud.v1.workflow.InstallStroppyWorkflowRequest
-	6,  // 19: cloud.v1.workflow.TestService.InstallDatabaseWorkflow:input_type -> cloud.v1.workflow.InstallDatabaseWorkflowRequest
-	8,  // 20: cloud.v1.workflow.TestService.RunWorkloadWorkflow:input_type -> cloud.v1.workflow.RunWorkloadWorkflowRequest
-	10, // 21: cloud.v1.workflow.SuiteWorkflowService.SuiteWorkflow:input_type -> cloud.v1.workflow.SuiteWorkflowRequest
-	1,  // 22: cloud.v1.workflow.TestService.TestWorkflow:output_type -> cloud.v1.workflow.TestWorkflowResponse
-	2,  // 23: cloud.v1.workflow.TestService.GetRunState:output_type -> cloud.v1.workflow.RunState
-	5,  // 24: cloud.v1.workflow.TestService.InstallStroppyWorkflow:output_type -> cloud.v1.workflow.InstallStroppyWorkflowResponse
-	7,  // 25: cloud.v1.workflow.TestService.InstallDatabaseWorkflow:output_type -> cloud.v1.workflow.InstallDatabaseWorkflowResponse
-	9,  // 26: cloud.v1.workflow.TestService.RunWorkloadWorkflow:output_type -> cloud.v1.workflow.RunWorkloadWorkflowResponse
-	11, // 27: cloud.v1.workflow.SuiteWorkflowService.SuiteWorkflow:output_type -> cloud.v1.workflow.SuiteWorkflowResponse
-	22, // [22:28] is the sub-list for method output_type
-	16, // [16:22] is the sub-list for method input_type
-	16, // [16:16] is the sub-list for extension type_name
-	16, // [16:16] is the sub-list for extension extendee
-	0,  // [0:16] is the sub-list for field type_name
+	15, // 4: cloud.v1.workflow.Stage.status:type_name -> cloud.v1.common.Status
+	16, // 5: cloud.v1.workflow.Stage.started_at:type_name -> google.protobuf.Timestamp
+	16, // 6: cloud.v1.workflow.Stage.finished_at:type_name -> google.protobuf.Timestamp
+	17, // 7: cloud.v1.workflow.Stage.worker:type_name -> cloud.v1.domain.Worker
+	18, // 8: cloud.v1.workflow.Stage.operation:type_name -> cloud.v1.monitor.PipelineOperation
+	19, // 9: cloud.v1.workflow.Stage.outputs:type_name -> cloud.v1.monitor.PipelineOutput
+	3,  // 10: cloud.v1.workflow.StageUpdate.stage:type_name -> cloud.v1.workflow.Stage
+	20, // 11: cloud.v1.workflow.InstallStroppyWorkflowRequest.infrastructure_state:type_name -> cloud.v1.deployment.InfrastructureState
+	21, // 12: cloud.v1.workflow.InstallStroppyWorkflowRequest.deployment_plan:type_name -> cloud.v1.deployment.DeploymentPlan
+	20, // 13: cloud.v1.workflow.InstallDatabaseWorkflowRequest.infrastructure_state:type_name -> cloud.v1.deployment.InfrastructureState
+	22, // 14: cloud.v1.workflow.InstallDatabaseWorkflowRequest.database:type_name -> cloud.v1.domain.Database
+	21, // 15: cloud.v1.workflow.InstallDatabaseWorkflowRequest.deployment_plan:type_name -> cloud.v1.deployment.DeploymentPlan
+	23, // 16: cloud.v1.workflow.RunWorkloadWorkflowRequest.topology_spec:type_name -> cloud.v1.topology.TopologySpec
+	24, // 17: cloud.v1.workflow.RunWorkloadWorkflowRequest.workload:type_name -> cloud.v1.domain.Workload
+	20, // 18: cloud.v1.workflow.RunWorkloadWorkflowRequest.infrastructure_state:type_name -> cloud.v1.deployment.InfrastructureState
+	25, // 19: cloud.v1.workflow.SuiteWorkflowRequest.runs:type_name -> cloud.v1.workflow.RunConfig
+	0,  // 20: cloud.v1.workflow.TestService.TestWorkflow:input_type -> cloud.v1.workflow.TestWorkflowRequest
+	26, // 21: cloud.v1.workflow.TestService.GetRunState:input_type -> google.protobuf.Empty
+	4,  // 22: cloud.v1.workflow.TestService.UpdateStage:input_type -> cloud.v1.workflow.StageUpdate
+	5,  // 23: cloud.v1.workflow.TestService.InstallStroppyWorkflow:input_type -> cloud.v1.workflow.InstallStroppyWorkflowRequest
+	7,  // 24: cloud.v1.workflow.TestService.InstallDatabaseWorkflow:input_type -> cloud.v1.workflow.InstallDatabaseWorkflowRequest
+	9,  // 25: cloud.v1.workflow.TestService.RunWorkloadWorkflow:input_type -> cloud.v1.workflow.RunWorkloadWorkflowRequest
+	11, // 26: cloud.v1.workflow.SuiteWorkflowService.SuiteWorkflow:input_type -> cloud.v1.workflow.SuiteWorkflowRequest
+	1,  // 27: cloud.v1.workflow.TestService.TestWorkflow:output_type -> cloud.v1.workflow.TestWorkflowResponse
+	2,  // 28: cloud.v1.workflow.TestService.GetRunState:output_type -> cloud.v1.workflow.RunState
+	26, // 29: cloud.v1.workflow.TestService.UpdateStage:output_type -> google.protobuf.Empty
+	6,  // 30: cloud.v1.workflow.TestService.InstallStroppyWorkflow:output_type -> cloud.v1.workflow.InstallStroppyWorkflowResponse
+	8,  // 31: cloud.v1.workflow.TestService.InstallDatabaseWorkflow:output_type -> cloud.v1.workflow.InstallDatabaseWorkflowResponse
+	10, // 32: cloud.v1.workflow.TestService.RunWorkloadWorkflow:output_type -> cloud.v1.workflow.RunWorkloadWorkflowResponse
+	12, // 33: cloud.v1.workflow.SuiteWorkflowService.SuiteWorkflow:output_type -> cloud.v1.workflow.SuiteWorkflowResponse
+	27, // [27:34] is the sub-list for method output_type
+	20, // [20:27] is the sub-list for method input_type
+	20, // [20:20] is the sub-list for extension type_name
+	20, // [20:20] is the sub-list for extension extendee
+	0,  // [0:20] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_workflow_test_proto_init() }
@@ -828,7 +995,7 @@ func file_cloud_v1_workflow_test_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_workflow_test_proto_rawDesc), len(file_cloud_v1_workflow_test_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   12,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

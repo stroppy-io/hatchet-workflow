@@ -11,6 +11,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	derrors "github.com/stroppy-io/stroppy-cloud/internal/domain/errors"
+	runbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/run"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/settings"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
@@ -50,35 +51,9 @@ func NewTestWorkflows(c client.Client, bootstrap settings.AgentBootstrapSource, 
 // is configured. The workflow id is derived from the run id by the generated
 // options, so a duplicate launch for the same run is deduplicated by Temporal.
 func (w *TestWorkflows) LaunchTest(ctx context.Context, run *models.TestRunRecord) error {
-	spec := run.GetSpec()
-	if spec == nil {
-		return errors.New("test run record has no baked spec to launch")
-	}
-
-	// Provider settings (e.g. Yandex credentials) are resolved at launch and
-	// injected into the plan — they are never baked into the stored run spec.
-	// Docker needs none; without this the Yandex terraform render fails with
-	// "yandex settings are required".
-	if ps, ok := w.bootstrap.(settings.ProviderSettingsSource); ok && spec.GetInfrastructurePlan() != nil {
-		pset, err := ps.ProviderSettings(ctx, run.GetEntity().GetTenantId(), spec.GetInfrastructurePlan().GetProvider())
-		if err != nil {
-			return err
-		}
-		spec = proto.Clone(spec).(*domain.TestRun)
-		spec.GetInfrastructurePlan().Settings = pset
-	}
-
-	req := &workflowpb.TestWorkflowRequest{TenantId: run.GetEntity().GetTenantId(), TestRun: spec}
-	if w.bootstrap != nil {
-		boot, err := w.bootstrap.AgentBootstrap(ctx)
-		if err != nil {
-			return err
-		}
-		boot, err = attachAgentTokens(boot, w.agentTokens, req.GetTenantId(), spec.GetId(), spec.GetInfrastructurePlan())
-		if err != nil {
-			return err
-		}
-		req.AgentBootstrap = boot
+	req, err := w.testWorkflowRequest(ctx, run)
+	if err != nil {
+		return err
 	}
 
 	// Async start: the run is fire-and-forget from the API's perspective; the
@@ -87,6 +62,41 @@ func (w *TestWorkflows) LaunchTest(ctx context.Context, run *models.TestRunRecor
 		return err
 	}
 	return nil
+}
+
+func (w *TestWorkflows) testWorkflowRequest(ctx context.Context, run *models.TestRunRecord) (*workflowpb.TestWorkflowRequest, error) {
+	spec := run.GetSpec()
+	if spec == nil {
+		return nil, errors.New("test run record has no baked spec to launch")
+	}
+	spec = proto.Clone(spec).(*domain.TestRun)
+
+	// Provider settings (e.g. Yandex credentials) are resolved at launch and
+	// injected into the plan — they are never baked into the stored run spec.
+	// Docker needs none; without this the Yandex terraform render fails with
+	// "yandex settings are required".
+	if ps, ok := w.bootstrap.(settings.ProviderSettingsSource); ok && spec.GetInfrastructurePlan() != nil {
+		pset, err := ps.ProviderSettings(ctx, run.GetEntity().GetTenantId(), spec.GetInfrastructurePlan().GetProvider())
+		if err != nil {
+			return nil, err
+		}
+		spec.GetInfrastructurePlan().Settings = pset
+	}
+
+	req := &workflowpb.TestWorkflowRequest{TenantId: run.GetEntity().GetTenantId(), TestRun: spec}
+	if w.bootstrap != nil {
+		boot, err := w.bootstrap.AgentBootstrap(ctx)
+		if err != nil {
+			return nil, err
+		}
+		boot, err = attachAgentTokens(boot, w.agentTokens, req.GetTenantId(), spec.GetId(), spec.GetInfrastructurePlan())
+		if err != nil {
+			return nil, err
+		}
+		req.AgentBootstrap = boot
+		runbuilder.StampMonitorLabels(spec.GetTopologySpec(), spec.GetId(), boot)
+	}
+	return req, nil
 }
 
 // CancelTest signals cancellation of a running TestWorkflow. A workflow that is

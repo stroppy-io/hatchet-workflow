@@ -49,6 +49,11 @@ const (
 	GetRunStateQueryName = "GetRunState"
 )
 
+// cloud.v1.workflow.TestService signal names
+const (
+	UpdateStageSignalName = "UpdateStage"
+)
+
 // TestServiceClient describes a client for a(n) cloud.v1.workflow.TestService worker
 type TestServiceClient interface {
 	// InstallDatabaseWorkflow brings up / provisions the database (child of
@@ -101,6 +106,10 @@ type TestServiceClient interface {
 	// the live RunState (overall status + per-stage breakdown) for the run
 	// Overview. Read-only; takes no input.
 	GetRunState(ctx context.Context, workflowID string, runID string) (*RunState, error)
+
+	// UpdateStage is a Temporal signal used by child workflows to update one
+	// concrete runtime stage inside the parent TestWorkflow RunState.
+	UpdateStage(ctx context.Context, workflowID string, runID string, signal *StageUpdate) error
 }
 
 // testServiceClient implements a temporal client for a cloud.v1.workflow.TestService service
@@ -365,6 +374,12 @@ func (c *testServiceClient) GetRunState(ctx context.Context, workflowID string, 
 		return nil, err
 	}
 	return &resp, nil
+}
+
+// UpdateStage is a Temporal signal used by child workflows to update one
+// concrete runtime stage inside the parent TestWorkflow RunState.
+func (c *testServiceClient) UpdateStage(ctx context.Context, workflowID string, runID string, signal *StageUpdate) error {
+	return c.client.SignalWorkflow(ctx, workflowID, runID, UpdateStageSignalName, signal)
 }
 
 // InstallDatabaseWorkflowOptions provides configuration for a InstallDatabaseWorkflow workflow operation
@@ -1140,6 +1155,10 @@ type TestWorkflowRun interface {
 	// the live RunState (overall status + per-stage breakdown) for the run
 	// Overview. Read-only; takes no input.
 	GetRunState(ctx context.Context) (*RunState, error)
+
+	// UpdateStage is a Temporal signal used by child workflows to update one
+	// concrete runtime stage inside the parent TestWorkflow RunState.
+	UpdateStage(ctx context.Context, req *StageUpdate) error
 }
 
 // testWorkflowRun provides an internal implementation of a(n) TestWorkflowRunRun
@@ -1187,6 +1206,12 @@ func (r *testWorkflowRun) Terminate(ctx context.Context, reason string, details 
 // Overview. Read-only; takes no input.
 func (r *testWorkflowRun) GetRunState(ctx context.Context) (*RunState, error) {
 	return r.client.GetRunState(ctx, r.ID(), "")
+}
+
+// UpdateStage is a Temporal signal used by child workflows to update one
+// concrete runtime stage inside the parent TestWorkflow RunState.
+func (r *testWorkflowRun) UpdateStage(ctx context.Context, req *StageUpdate) error {
+	return r.client.UpdateStage(ctx, r.ID(), "", req)
 }
 
 // Reference to generated workflow functions
@@ -2115,6 +2140,9 @@ func buildTestWorkflow(ctor func(workflow.Context, *TestWorkflowWorkflowInput) (
 	return func(ctx workflow.Context, req *TestWorkflowRequest) (*TestWorkflowResponse, error) {
 		input := &TestWorkflowWorkflowInput{
 			Req: req,
+			UpdateStage: &UpdateStageSignal{
+				Channel: workflow.GetSignalChannel(ctx, UpdateStageSignalName),
+			},
 		}
 		wf, err := ctor(ctx, input)
 		if err != nil {
@@ -2134,7 +2162,8 @@ func buildTestWorkflow(ctor func(workflow.Context, *TestWorkflowWorkflowInput) (
 
 // TestWorkflowWorkflowInput describes the input to a(n) TestWorkflow workflow constructor
 type TestWorkflowWorkflowInput struct {
-	Req *TestWorkflowRequest
+	Req         *TestWorkflowRequest
+	UpdateStage *UpdateStageSignal
 }
 
 // ContinueAsNew returns an appropriately configured ContinueAsNewError
@@ -2403,6 +2432,76 @@ func (r *TestWorkflowChildRun) WaitStart(ctx workflow.Context) (*workflow.Execut
 	return &exec, nil
 }
 
+// UpdateStage sends a(n) "UpdateStage" signal request to the child workflow
+func (r *TestWorkflowChildRun) UpdateStage(ctx workflow.Context, input *StageUpdate) error {
+	return r.UpdateStageAsync(ctx, input).Get(ctx, nil)
+}
+
+// UpdateStageAsync sends a(n) "UpdateStage" signal request to the child workflow
+func (r *TestWorkflowChildRun) UpdateStageAsync(ctx workflow.Context, input *StageUpdate) workflow.Future {
+	return r.Future.SignalChildWorkflow(ctx, UpdateStageSignalName, input)
+}
+
+// UpdateStageSignal describes a(n) cloud.v1.workflow.TestService.UpdateStage signal
+type UpdateStageSignal struct {
+	Channel workflow.ReceiveChannel
+}
+
+// NewUpdateStageSignal initializes a new UpdateStage signal wrapper
+func NewUpdateStageSignal(ctx workflow.Context) *UpdateStageSignal {
+	return &UpdateStageSignal{Channel: workflow.GetSignalChannel(ctx, UpdateStageSignalName)}
+}
+
+// Receive blocks until a(n) cloud.v1.workflow.TestService.UpdateStage signal is received
+func (s *UpdateStageSignal) Receive(ctx workflow.Context) (*StageUpdate, bool) {
+	var resp StageUpdate
+	more := s.Channel.Receive(ctx, &resp)
+	return &resp, more
+}
+
+// ReceiveAsync checks for a cloud.v1.workflow.TestService.UpdateStage signal without blocking
+func (s *UpdateStageSignal) ReceiveAsync() *StageUpdate {
+	var resp StageUpdate
+	if ok := s.Channel.ReceiveAsync(&resp); !ok {
+		return nil
+	}
+	return &resp
+}
+
+// ReceiveWithTimeout blocks until a(n) cloud.v1.workflow.TestService.UpdateStage signal is received or timeout expires.
+// Returns more value of false when Channel is closed.
+// Returns ok value of false when no value was found in the channel for the duration of timeout or the ctx was canceled.
+// resp will be nil if ok is false.
+func (s *UpdateStageSignal) ReceiveWithTimeout(ctx workflow.Context, timeout time.Duration) (resp *StageUpdate, ok bool, more bool) {
+	resp = &StageUpdate{}
+	if ok, more = s.Channel.ReceiveWithTimeout(ctx, timeout, &resp); !ok {
+		return nil, false, more
+	}
+	return
+}
+
+// Select checks for a(n) cloud.v1.workflow.TestService.UpdateStage signal without blocking
+func (s *UpdateStageSignal) Select(sel workflow.Selector, fn func(*StageUpdate)) workflow.Selector {
+	return sel.AddReceive(s.Channel, func(workflow.ReceiveChannel, bool) {
+		req := s.ReceiveAsync()
+		if fn != nil {
+			fn(req)
+		}
+	})
+}
+
+// UpdateStage is a Temporal signal used by child workflows to update one
+// concrete runtime stage inside the parent TestWorkflow RunState.
+func UpdateStageExternal(ctx workflow.Context, workflowID string, runID string, req *StageUpdate) error {
+	return UpdateStageExternalAsync(ctx, workflowID, runID, req).Get(ctx, nil)
+}
+
+// UpdateStage is a Temporal signal used by child workflows to update one
+// concrete runtime stage inside the parent TestWorkflow RunState.
+func UpdateStageExternalAsync(ctx workflow.Context, workflowID string, runID string, req *StageUpdate) workflow.Future {
+	return workflow.SignalExternalWorkflow(ctx, workflowID, runID, UpdateStageSignalName, req)
+}
+
 // TestServiceActivities describes available worker activities
 type TestServiceActivities interface{}
 
@@ -2569,6 +2668,12 @@ func (c *TestTestServiceClient) GetRunState(ctx context.Context, workflowID stri
 		}
 		return &result, nil
 	}
+}
+
+// UpdateStage executes a UpdateStage signal
+func (c *TestTestServiceClient) UpdateStage(ctx context.Context, workflowID string, runID string, req *StageUpdate) error {
+	c.env.SignalWorkflow(UpdateStageSignalName, req)
+	return nil
 }
 
 var _ InstallDatabaseWorkflowRun = &testInstallDatabaseWorkflowRun{}
@@ -2808,10 +2913,16 @@ func (r *testTestWorkflowRun) GetRunState(ctx context.Context) (*RunState, error
 	return r.client.GetRunState(ctx, r.ID(), r.RunID())
 }
 
+// UpdateStage executes a UpdateStage signal against a test TestWorkflow workflow
+func (r *testTestWorkflowRun) UpdateStage(ctx context.Context, req *StageUpdate) error {
+	return r.client.UpdateStage(ctx, r.ID(), r.RunID(), req)
+}
+
 // WithTestServiceSchemeTypes registers all TestService protobuf types with the given scheme
 func WithTestServiceSchemeTypes() scheme.Option {
 	return func(s *scheme.Scheme) {
 		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("RunState"))
+		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("StageUpdate"))
 		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("InstallDatabaseWorkflowRequest"))
 		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("InstallDatabaseWorkflowResponse"))
 		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("InstallStroppyWorkflowRequest"))

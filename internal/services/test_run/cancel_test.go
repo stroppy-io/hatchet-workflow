@@ -170,6 +170,7 @@ func (noopTrm) DoWithSettings(ctx context.Context, _ trm.Settings, fn func(ctx c
 
 type fakeTestRunRepo struct {
 	run     *models.TestRunRecord
+	runs    []*models.TestRunRecord
 	updates int
 }
 
@@ -186,7 +187,7 @@ func (r *fakeTestRunRepo) Get(_ context.Context, tenantID, id string) (*models.T
 }
 
 func (r *fakeTestRunRepo) List(context.Context, *api.ListTestRunsRequest, string) ([]*models.TestRunRecord, string, error) {
-	return nil, "", nil
+	return r.runs, "", nil
 }
 
 func (r *fakeTestRunRepo) ListFacets(context.Context, *api.ListTestRunFacetsRequest, string) (*api.ListTestRunFacetsResponse, error) {

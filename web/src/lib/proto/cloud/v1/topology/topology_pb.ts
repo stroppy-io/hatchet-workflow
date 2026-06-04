@@ -4,6 +4,8 @@
 
 import type { GenEnum, GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
+import type { Status, StatusJson } from "../common/status_pb.ts";
+import { file_cloud_v1_common_status } from "../common/status_pb.ts";
 import type { Tags, TagsJson } from "../common/tags_pb.ts";
 import { file_cloud_v1_common_tags } from "../common/tags_pb.ts";
 import type { InfrastructurePlan, InfrastructurePlanJson, InfrastructureState, InfrastructureStateJson } from "../deployment/infrastructure_pb.ts";
@@ -12,8 +14,10 @@ import type { DeploymentPlan, DeploymentPlanJson } from "../deployment/plan_pb.t
 import { file_cloud_v1_deployment_plan } from "../deployment/plan_pb.ts";
 import type { Component, ComponentJson } from "./component_pb.ts";
 import { file_cloud_v1_topology_component } from "./component_pb.ts";
-import type { Connection, ConnectionJson } from "./connection_pb.ts";
+import type { Connection, Connection_Kind, Connection_KindJson, Connection_Mode, Connection_ModeJson, Connection_Protocol, Connection_ProtocolJson, ConnectionJson } from "./connection_pb.ts";
 import { file_cloud_v1_topology_connection } from "./connection_pb.ts";
+import type { Timestamp, TimestampJson } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import { file_validate_validate } from "../../../validate/validate_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -21,7 +25,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/topology/topology.proto.
  */
 export const file_cloud_v1_topology_topology: GenFile = /*@__PURE__*/
-  fileDesc("CiBjbG91ZC92MS90b3BvbG9neS90b3BvbG9neS5wcm90bxIRY2xvdWQudjEudG9wb2xvZ3ki3gEKBE5vZGUSFgoCaWQYASABKAlCCvpCB3IFEAEYgAESKgoNY29tcG9uZW50X2lkcxgCIAMoCUIT+kIQkgENEEAiB3IFEAEYgAEIARI+CgZsYWJlbHMYAyADKAsyIy5jbG91ZC52MS50b3BvbG9neS5Ob2RlLkxhYmVsc0VudHJ5Qgn6QgaaAQMQgAESIwoEdGFncxgEIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzGi0KC0xhYmVsc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEikQMKDFRvcG9sb2d5U3BlYxIwCgVub2RlcxgBIAMoCzIXLmNsb3VkLnYxLnRvcG9sb2d5Lk5vZGVCCPpCBZIBAggBEjoKCmNvbXBvbmVudHMYAiADKAsyHC5jbG91ZC52MS50b3BvbG9neS5Db21wb25lbnRCCPpCBZIBAggBEjIKC2Nvbm5lY3Rpb25zGAMgAygLMh0uY2xvdWQudjEudG9wb2xvZ3kuQ29ubmVjdGlvbhJDChNleHRlcm5hbF9jb21wb25lbnRzGAQgAygLMhwuY2xvdWQudjEudG9wb2xvZ3kuQ29tcG9uZW50Qgj6QgWSAQIQQBJGCgZsYWJlbHMYBSADKAsyKy5jbG91ZC52MS50b3BvbG9neS5Ub3BvbG9neVNwZWMuTGFiZWxzRW50cnlCCfpCBpoBAxCAARIjCgR0YWdzGAYgASgLMhUuY2xvdWQudjEuY29tbW9uLlRhZ3MaLQoLTGFiZWxzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASLDBAoIVG9wb2xvZ3kSPAoFc3RhdGUYASABKA4yIS5jbG91ZC52MS50b3BvbG9neS5Ub3BvbG9neS5TdGF0ZUIK+kIHggEEEAEgABI3CgRzcGVjGAIgASgLMh8uY2xvdWQudjEudG9wb2xvZ3kuVG9wb2xvZ3lTcGVjQgj6QgWKAQIQARJEChNpbmZyYXN0cnVjdHVyZV9wbGFuGAMgASgLMicuY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVBsYW4SRgoUaW5mcmFzdHJ1Y3R1cmVfc3RhdGUYBCABKAsyKC5jbG91ZC52MS5kZXBsb3ltZW50LkluZnJhc3RydWN0dXJlU3RhdGUSPAoPZGVwbG95bWVudF9wbGFuGAUgASgLMiMuY2xvdWQudjEuZGVwbG95bWVudC5EZXBsb3ltZW50UGxhbhIjCgR0YWdzGAYgASgLMhUuY2xvdWQudjEuY29tbW9uLlRhZ3MizgEKBVN0YXRlEhUKEVNUQVRFX1VOU1BFQ0lGSUVEEAASDgoKU1RBVEVfU1BFQxABEiAKHFNUQVRFX0lORlJBU1RSVUNUVVJFX1BMQU5ORUQQAhIhCh1TVEFURV9JTkZSQVNUUlVDVFVSRV9ERVBMT1lFRBADEhwKGFNUQVRFX0RFUExPWU1FTlRfUExBTk5FRBAEEhIKDlNUQVRFX0RFUExPWUVEEAUSFAoQU1RBVEVfVU5ERVBMT1lFRBAGEhEKDVNUQVRFX0FSQ0hJVkUQB0JGWkRnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS90b3BvbG9neWIGcHJvdG8z", [file_cloud_v1_common_tags, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_plan, file_cloud_v1_topology_component, file_cloud_v1_topology_connection, file_validate_validate]);
+  fileDesc("CiBjbG91ZC92MS90b3BvbG9neS90b3BvbG9neS5wcm90bxIRY2xvdWQudjEudG9wb2xvZ3ki3gEKBE5vZGUSFgoCaWQYASABKAlCCvpCB3IFEAEYgAESKgoNY29tcG9uZW50X2lkcxgCIAMoCUIT+kIQkgENCAEQQCIHcgUQARiAARI+CgZsYWJlbHMYAyADKAsyIy5jbG91ZC52MS50b3BvbG9neS5Ob2RlLkxhYmVsc0VudHJ5Qgn6QgaaAQMQgAESIwoEdGFncxgEIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzGi0KC0xhYmVsc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEikQMKDFRvcG9sb2d5U3BlYxIwCgVub2RlcxgBIAMoCzIXLmNsb3VkLnYxLnRvcG9sb2d5Lk5vZGVCCPpCBZIBAggBEjoKCmNvbXBvbmVudHMYAiADKAsyHC5jbG91ZC52MS50b3BvbG9neS5Db21wb25lbnRCCPpCBZIBAggBEjIKC2Nvbm5lY3Rpb25zGAMgAygLMh0uY2xvdWQudjEudG9wb2xvZ3kuQ29ubmVjdGlvbhJDChNleHRlcm5hbF9jb21wb25lbnRzGAQgAygLMhwuY2xvdWQudjEudG9wb2xvZ3kuQ29tcG9uZW50Qgj6QgWSAQIQQBJGCgZsYWJlbHMYBSADKAsyKy5jbG91ZC52MS50b3BvbG9neS5Ub3BvbG9neVNwZWMuTGFiZWxzRW50cnlCCfpCBpoBAxCAARIjCgR0YWdzGAYgASgLMhUuY2xvdWQudjEuY29tbW9uLlRhZ3MaLQoLTGFiZWxzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASLaBgoLUnVudGltZU5vZGUSFgoCaWQYASABKAlCCvpCB3IFEAEYgAISOwoEa2luZBgCIAEoDjIjLmNsb3VkLnYxLnRvcG9sb2d5LlJ1bnRpbWVOb2RlLktpbmRCCPpCBYIBAhABEhcKBWxhYmVsGAMgASgJQgj6QgVyAxiAAhIYCgZlbmdpbmUYBCABKAlCCPpCBXIDGIABEhYKBHJvbGUYBSABKAlCCPpCBXIDGIABEh4KDGNvbXBvbmVudF9pZBgGIAEoCUII+kIFcgMYgAESHAoKbWFjaGluZV9pZBgHIAEoCUII+kIFcgMYgAESIwoRbm9kZV9leGVjdXRpb25faWQYCCABKAlCCPpCBXIDGIACEjEKBnN0YXR1cxgJIAEoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXNCCPpCBYIBAhABEh8KDXN0YXR1c19yZWFzb24YCiABKAlCCPpCBXIDGIACEhkKB2FkZHJlc3MYCyABKAlCCPpCBXIDGIAEEhwKBHBvcnQYDCABKA1CCfpCBioEGP//A0gAiAEBEi4KCnN0YXJ0ZWRfYXQYDSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC2ZpbmlzaGVkX2F0GA4gASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBJFCgZsYWJlbHMYDyADKAsyKi5jbG91ZC52MS50b3BvbG9neS5SdW50aW1lTm9kZS5MYWJlbHNFbnRyeUIJ+kIGmgEDEIABEiMKBHRhZ3MYECABKAsyFS5jbG91ZC52MS5jb21tb24uVGFncxotCgtMYWJlbHNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIrUBCgRLaW5kEhQKEEtJTkRfVU5TUEVDSUZJRUQQABIWChJLSU5EX0NPTlRST0xfUExBTkUQARIQCgxLSU5EX01BQ0hJTkUQAhIOCgpLSU5EX0FHRU5UEAMSEgoOS0lORF9DT01QT05FTlQQBBIQCgxLSU5EX01PTklUT1IQBRIRCg1LSU5EX0VYUE9SVEVSEAYSEQoNS0lORF9XT1JLTE9BRBAHEhEKDUtJTkRfRVhURVJOQUwQCEIHCgVfcG9ydCKFBgoRUnVudGltZUNvbm5lY3Rpb24SFgoCaWQYASABKAlCCvpCB3IFEAEYgAISIAoMZnJvbV9ub2RlX2lkGAIgASgJQgr6QgdyBRABGIACEh4KCnRvX25vZGVfaWQYAyABKAlCCvpCB3IFEAEYgAISOgoEa2luZBgEIAEoDjIiLmNsb3VkLnYxLnRvcG9sb2d5LkNvbm5lY3Rpb24uS2luZEII+kIFggECEAESQgoIcHJvdG9jb2wYBSABKA4yJi5jbG91ZC52MS50b3BvbG9neS5Db25uZWN0aW9uLlByb3RvY29sQgj6QgWCAQIQARI6CgRtb2RlGAYgASgOMiIuY2xvdWQudjEudG9wb2xvZ3kuQ29ubmVjdGlvbi5Nb2RlQgj6QgWCAQIQARIfCg1lbmRwb2ludF9uYW1lGAcgASgJQgj6QgVyAxiAAhIcCgRwb3J0GAggASgNQgn6QgYqBBj//wNIAIgBARIXCgVwaGFzZRgJIAEoCUII+kIFcgMYgAESIwoRbm9kZV9leGVjdXRpb25faWQYCiABKAlCCPpCBXIDGIACEjEKBnN0YXR1cxgLIAEoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXNCCPpCBYIBAhABEh8KDXN0YXR1c19yZWFzb24YDCABKAlCCPpCBXIDGIACEi4KCnN0YXJ0ZWRfYXQYDSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC2ZpbmlzaGVkX2F0GA4gASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBJLCgZsYWJlbHMYDyADKAsyMC5jbG91ZC52MS50b3BvbG9neS5SdW50aW1lQ29ubmVjdGlvbi5MYWJlbHNFbnRyeUIJ+kIGmgEDEIABEiMKBHRhZ3MYECABKAsyFS5jbG91ZC52MS5jb21tb24uVGFncxotCgtMYWJlbHNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBQgcKBV9wb3J0ItMFCghUb3BvbG9neRI8CgVzdGF0ZRgBIAEoDjIhLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5LlN0YXRlQgr6QgeCAQQQASAAEjcKBHNwZWMYAiABKAsyHy5jbG91ZC52MS50b3BvbG9neS5Ub3BvbG9neVNwZWNCCPpCBYoBAhABEkQKE2luZnJhc3RydWN0dXJlX3BsYW4YAyABKAsyJy5jbG91ZC52MS5kZXBsb3ltZW50LkluZnJhc3RydWN0dXJlUGxhbhJGChRpbmZyYXN0cnVjdHVyZV9zdGF0ZRgEIAEoCzIoLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVTdGF0ZRI8Cg9kZXBsb3ltZW50X3BsYW4YBSABKAsyIy5jbG91ZC52MS5kZXBsb3ltZW50LkRlcGxveW1lbnRQbGFuEiMKBHRhZ3MYBiABKAsyFS5jbG91ZC52MS5jb21tb24uVGFncxJACg1ydW50aW1lX25vZGVzGAcgAygLMh4uY2xvdWQudjEudG9wb2xvZ3kuUnVudGltZU5vZGVCCfpCBpIBAxCAIBJMChNydW50aW1lX2Nvbm5lY3Rpb25zGAggAygLMiQuY2xvdWQudjEudG9wb2xvZ3kuUnVudGltZUNvbm5lY3Rpb25CCfpCBpIBAxCAQCLOAQoFU3RhdGUSFQoRU1RBVEVfVU5TUEVDSUZJRUQQABIOCgpTVEFURV9TUEVDEAESIAocU1RBVEVfSU5GUkFTVFJVQ1RVUkVfUExBTk5FRBACEiEKHVNUQVRFX0lORlJBU1RSVUNUVVJFX0RFUExPWUVEEAMSHAoYU1RBVEVfREVQTE9ZTUVOVF9QTEFOTkVEEAQSEgoOU1RBVEVfREVQTE9ZRUQQBRIUChBTVEFURV9VTkRFUExPWUVEEAYSEQoNU1RBVEVfQVJDSElWRRAHQkZaRGdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL3RvcG9sb2d5YgZwcm90bzM", [file_cloud_v1_common_status, file_cloud_v1_common_tags, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_plan, file_cloud_v1_topology_component, file_cloud_v1_topology_connection, file_google_protobuf_timestamp, file_validate_validate]);
 
 /**
  *
@@ -239,6 +243,659 @@ export const TopologySpecSchema: GenMessage<TopologySpec, {jsonType: TopologySpe
 
 /**
  *
+ * RuntimeNode is one concrete thing that exists or participates during a run:
+ * the control-plane server, a provider machine, an agent, a deployed component,
+ * a monitor daemon/exporter, a workload runner, or an external endpoint. Unlike
+ * TopologySpec.Component, this is a runtime fact with placement, status and
+ * timing/provenance.
+ *
+ * @generated from message cloud.v1.topology.RuntimeNode
+ */
+export type RuntimeNode = Message<"cloud.v1.topology.RuntimeNode"> & {
+  /**
+   *
+   * id is a stable graph id, e.g. control-plane, machine/node-1,
+   * agent/node-1, component/postgres-master, monitor/node-1/vmagent.
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   *
+   * kind is the concrete runtime node family.
+   *
+   * @generated from field: cloud.v1.topology.RuntimeNode.Kind kind = 2;
+   */
+  kind: RuntimeNode_Kind;
+
+  /**
+   *
+   * label is a short display label.
+   *
+   * @generated from field: string label = 3;
+   */
+  label: string;
+
+  /**
+   *
+   * engine identifies the product/subsystem, e.g. stroppy, postgres,
+   * victoriametrics, vector, node_exporter.
+   *
+   * @generated from field: string engine = 4;
+   */
+  engine: string;
+
+  /**
+   *
+   * role identifies the concrete runtime role inside the engine.
+   *
+   * @generated from field: string role = 5;
+   */
+  role: string;
+
+  /**
+   *
+   * component_id links this node to TopologySpec.Component / DeploymentPlan.
+   *
+   * @generated from field: string component_id = 6;
+   */
+  componentId: string;
+
+  /**
+   *
+   * machine_id links this node to TopologySpec.Node / MachineState.
+   *
+   * @generated from field: string machine_id = 7;
+   */
+  machineId: string;
+
+  /**
+   *
+   * node_execution_id links this node to the pipeline/Temporal stage that
+   * materialized or last touched it.
+   *
+   * @generated from field: string node_execution_id = 8;
+   */
+  nodeExecutionId: string;
+
+  /**
+   *
+   * status is this runtime node's current/last-known lifecycle status.
+   *
+   * @generated from field: cloud.v1.common.Status status = 9;
+   */
+  status: Status;
+
+  /**
+   *
+   * status_reason is a short machine-readable explanation of status.
+   *
+   * @generated from field: string status_reason = 10;
+   */
+  statusReason: string;
+
+  /**
+   *
+   * address is the known host/IP/base URL for this node.
+   *
+   * @generated from field: string address = 11;
+   */
+  address: string;
+
+  /**
+   *
+   * port is the known listening port for this node, when applicable.
+   *
+   * @generated from field: optional uint32 port = 12;
+   */
+  port?: number;
+
+  /**
+   *
+   * started_at is when the backing runtime action/stage started, if known.
+   *
+   * @generated from field: google.protobuf.Timestamp started_at = 13;
+   */
+  startedAt?: Timestamp;
+
+  /**
+   *
+   * finished_at is when the backing runtime action/stage finished, if known.
+   *
+   * @generated from field: google.protobuf.Timestamp finished_at = 14;
+   */
+  finishedAt?: Timestamp;
+
+  /**
+   *
+   * labels are structured metadata for UI/debugging.
+   *
+   * @generated from field: map<string, string> labels = 15;
+   */
+  labels: { [key: string]: string };
+
+  /**
+   *
+   * tags are arbitrary metadata on the runtime node.
+   *
+   * @generated from field: cloud.v1.common.Tags tags = 16;
+   */
+  tags?: Tags;
+};
+
+/**
+ *
+ * RuntimeNode is one concrete thing that exists or participates during a run:
+ * the control-plane server, a provider machine, an agent, a deployed component,
+ * a monitor daemon/exporter, a workload runner, or an external endpoint. Unlike
+ * TopologySpec.Component, this is a runtime fact with placement, status and
+ * timing/provenance.
+ *
+ * @generated from message cloud.v1.topology.RuntimeNode
+ */
+export type RuntimeNodeJson = {
+  /**
+   *
+   * id is a stable graph id, e.g. control-plane, machine/node-1,
+   * agent/node-1, component/postgres-master, monitor/node-1/vmagent.
+   *
+   * @generated from field: string id = 1;
+   */
+  id?: string;
+
+  /**
+   *
+   * kind is the concrete runtime node family.
+   *
+   * @generated from field: cloud.v1.topology.RuntimeNode.Kind kind = 2;
+   */
+  kind?: RuntimeNode_KindJson;
+
+  /**
+   *
+   * label is a short display label.
+   *
+   * @generated from field: string label = 3;
+   */
+  label?: string;
+
+  /**
+   *
+   * engine identifies the product/subsystem, e.g. stroppy, postgres,
+   * victoriametrics, vector, node_exporter.
+   *
+   * @generated from field: string engine = 4;
+   */
+  engine?: string;
+
+  /**
+   *
+   * role identifies the concrete runtime role inside the engine.
+   *
+   * @generated from field: string role = 5;
+   */
+  role?: string;
+
+  /**
+   *
+   * component_id links this node to TopologySpec.Component / DeploymentPlan.
+   *
+   * @generated from field: string component_id = 6;
+   */
+  componentId?: string;
+
+  /**
+   *
+   * machine_id links this node to TopologySpec.Node / MachineState.
+   *
+   * @generated from field: string machine_id = 7;
+   */
+  machineId?: string;
+
+  /**
+   *
+   * node_execution_id links this node to the pipeline/Temporal stage that
+   * materialized or last touched it.
+   *
+   * @generated from field: string node_execution_id = 8;
+   */
+  nodeExecutionId?: string;
+
+  /**
+   *
+   * status is this runtime node's current/last-known lifecycle status.
+   *
+   * @generated from field: cloud.v1.common.Status status = 9;
+   */
+  status?: StatusJson;
+
+  /**
+   *
+   * status_reason is a short machine-readable explanation of status.
+   *
+   * @generated from field: string status_reason = 10;
+   */
+  statusReason?: string;
+
+  /**
+   *
+   * address is the known host/IP/base URL for this node.
+   *
+   * @generated from field: string address = 11;
+   */
+  address?: string;
+
+  /**
+   *
+   * port is the known listening port for this node, when applicable.
+   *
+   * @generated from field: optional uint32 port = 12;
+   */
+  port?: number;
+
+  /**
+   *
+   * started_at is when the backing runtime action/stage started, if known.
+   *
+   * @generated from field: google.protobuf.Timestamp started_at = 13;
+   */
+  startedAt?: TimestampJson;
+
+  /**
+   *
+   * finished_at is when the backing runtime action/stage finished, if known.
+   *
+   * @generated from field: google.protobuf.Timestamp finished_at = 14;
+   */
+  finishedAt?: TimestampJson;
+
+  /**
+   *
+   * labels are structured metadata for UI/debugging.
+   *
+   * @generated from field: map<string, string> labels = 15;
+   */
+  labels?: { [key: string]: string };
+
+  /**
+   *
+   * tags are arbitrary metadata on the runtime node.
+   *
+   * @generated from field: cloud.v1.common.Tags tags = 16;
+   */
+  tags?: TagsJson;
+};
+
+export type RuntimeNodeValid = RuntimeNode;
+
+/**
+ * Describes the message cloud.v1.topology.RuntimeNode.
+ * Use `create(RuntimeNodeSchema)` to create a new message.
+ */
+export const RuntimeNodeSchema: GenMessage<RuntimeNode, {jsonType: RuntimeNodeJson, validType: RuntimeNodeValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_topology_topology, 2);
+
+/**
+ *
+ * Kind classifies the concrete runtime node.
+ *
+ * @generated from enum cloud.v1.topology.RuntimeNode.Kind
+ */
+export enum RuntimeNode_Kind {
+  /**
+   * @generated from enum value: KIND_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: KIND_CONTROL_PLANE = 1;
+   */
+  CONTROL_PLANE = 1,
+
+  /**
+   * @generated from enum value: KIND_MACHINE = 2;
+   */
+  MACHINE = 2,
+
+  /**
+   * @generated from enum value: KIND_AGENT = 3;
+   */
+  AGENT = 3,
+
+  /**
+   * @generated from enum value: KIND_COMPONENT = 4;
+   */
+  COMPONENT = 4,
+
+  /**
+   * @generated from enum value: KIND_MONITOR = 5;
+   */
+  MONITOR = 5,
+
+  /**
+   * @generated from enum value: KIND_EXPORTER = 6;
+   */
+  EXPORTER = 6,
+
+  /**
+   * @generated from enum value: KIND_WORKLOAD = 7;
+   */
+  WORKLOAD = 7,
+
+  /**
+   * @generated from enum value: KIND_EXTERNAL = 8;
+   */
+  EXTERNAL = 8,
+}
+
+/**
+ *
+ * Kind classifies the concrete runtime node.
+ *
+ * @generated from enum cloud.v1.topology.RuntimeNode.Kind
+ */
+export type RuntimeNode_KindJson = "KIND_UNSPECIFIED" | "KIND_CONTROL_PLANE" | "KIND_MACHINE" | "KIND_AGENT" | "KIND_COMPONENT" | "KIND_MONITOR" | "KIND_EXPORTER" | "KIND_WORKLOAD" | "KIND_EXTERNAL";
+
+/**
+ * Describes the enum cloud.v1.topology.RuntimeNode.Kind.
+ */
+export const RuntimeNode_KindSchema: GenEnum<RuntimeNode_Kind, RuntimeNode_KindJson> = /*@__PURE__*/
+  enumDesc(file_cloud_v1_topology_topology, 2, 0);
+
+/**
+ *
+ * RuntimeConnection is one concrete directed interaction visible during a run:
+ * agent-control, binary download, component traffic, metrics scrape, logs
+ * shipping, local exporter reads, dependency/placement, or a Temporal-backed
+ * agent action. It carries endpoint/protocol/status/timing so the UI can show
+ * who talks to whom and when.
+ *
+ * @generated from message cloud.v1.topology.RuntimeConnection
+ */
+export type RuntimeConnection = Message<"cloud.v1.topology.RuntimeConnection"> & {
+  /**
+   *
+   * id is a stable graph edge id.
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   *
+   * from_node_id is the source RuntimeNode.id.
+   *
+   * @generated from field: string from_node_id = 2;
+   */
+  fromNodeId: string;
+
+  /**
+   *
+   * to_node_id is the destination RuntimeNode.id.
+   *
+   * @generated from field: string to_node_id = 3;
+   */
+  toNodeId: string;
+
+  /**
+   *
+   * kind is the semantic relationship, reusing logical Connection.Kind.
+   *
+   * @generated from field: cloud.v1.topology.Connection.Kind kind = 4;
+   */
+  kind: Connection_Kind;
+
+  /**
+   *
+   * protocol is the wire/protocol family, reusing logical Connection.Protocol.
+   *
+   * @generated from field: cloud.v1.topology.Connection.Protocol protocol = 5;
+   */
+  protocol: Connection_Protocol;
+
+  /**
+   *
+   * mode is the traffic character, reusing logical Connection.Mode.
+   *
+   * @generated from field: cloud.v1.topology.Connection.Mode mode = 6;
+   */
+  mode: Connection_Mode;
+
+  /**
+   *
+   * endpoint_name is the destination endpoint/path/job/action name.
+   *
+   * @generated from field: string endpoint_name = 7;
+   */
+  endpointName: string;
+
+  /**
+   *
+   * port is the destination port when known.
+   *
+   * @generated from field: optional uint32 port = 8;
+   */
+  port?: number;
+
+  /**
+   *
+   * phase is the top-level pipeline phase this connection belongs to.
+   *
+   * @generated from field: string phase = 9;
+   */
+  phase: string;
+
+  /**
+   *
+   * node_execution_id links this edge to the pipeline/Temporal stage that
+   * produced or last updated it.
+   *
+   * @generated from field: string node_execution_id = 10;
+   */
+  nodeExecutionId: string;
+
+  /**
+   *
+   * status is this connection's current/last-known lifecycle status.
+   *
+   * @generated from field: cloud.v1.common.Status status = 11;
+   */
+  status: Status;
+
+  /**
+   *
+   * status_reason is a short machine-readable explanation of status.
+   *
+   * @generated from field: string status_reason = 12;
+   */
+  statusReason: string;
+
+  /**
+   *
+   * started_at is when the backing runtime action/stage started, if known.
+   *
+   * @generated from field: google.protobuf.Timestamp started_at = 13;
+   */
+  startedAt?: Timestamp;
+
+  /**
+   *
+   * finished_at is when the backing runtime action/stage finished, if known.
+   *
+   * @generated from field: google.protobuf.Timestamp finished_at = 14;
+   */
+  finishedAt?: Timestamp;
+
+  /**
+   *
+   * labels are structured metadata for UI/debugging.
+   *
+   * @generated from field: map<string, string> labels = 15;
+   */
+  labels: { [key: string]: string };
+
+  /**
+   *
+   * tags are arbitrary metadata on the runtime connection.
+   *
+   * @generated from field: cloud.v1.common.Tags tags = 16;
+   */
+  tags?: Tags;
+};
+
+/**
+ *
+ * RuntimeConnection is one concrete directed interaction visible during a run:
+ * agent-control, binary download, component traffic, metrics scrape, logs
+ * shipping, local exporter reads, dependency/placement, or a Temporal-backed
+ * agent action. It carries endpoint/protocol/status/timing so the UI can show
+ * who talks to whom and when.
+ *
+ * @generated from message cloud.v1.topology.RuntimeConnection
+ */
+export type RuntimeConnectionJson = {
+  /**
+   *
+   * id is a stable graph edge id.
+   *
+   * @generated from field: string id = 1;
+   */
+  id?: string;
+
+  /**
+   *
+   * from_node_id is the source RuntimeNode.id.
+   *
+   * @generated from field: string from_node_id = 2;
+   */
+  fromNodeId?: string;
+
+  /**
+   *
+   * to_node_id is the destination RuntimeNode.id.
+   *
+   * @generated from field: string to_node_id = 3;
+   */
+  toNodeId?: string;
+
+  /**
+   *
+   * kind is the semantic relationship, reusing logical Connection.Kind.
+   *
+   * @generated from field: cloud.v1.topology.Connection.Kind kind = 4;
+   */
+  kind?: Connection_KindJson;
+
+  /**
+   *
+   * protocol is the wire/protocol family, reusing logical Connection.Protocol.
+   *
+   * @generated from field: cloud.v1.topology.Connection.Protocol protocol = 5;
+   */
+  protocol?: Connection_ProtocolJson;
+
+  /**
+   *
+   * mode is the traffic character, reusing logical Connection.Mode.
+   *
+   * @generated from field: cloud.v1.topology.Connection.Mode mode = 6;
+   */
+  mode?: Connection_ModeJson;
+
+  /**
+   *
+   * endpoint_name is the destination endpoint/path/job/action name.
+   *
+   * @generated from field: string endpoint_name = 7;
+   */
+  endpointName?: string;
+
+  /**
+   *
+   * port is the destination port when known.
+   *
+   * @generated from field: optional uint32 port = 8;
+   */
+  port?: number;
+
+  /**
+   *
+   * phase is the top-level pipeline phase this connection belongs to.
+   *
+   * @generated from field: string phase = 9;
+   */
+  phase?: string;
+
+  /**
+   *
+   * node_execution_id links this edge to the pipeline/Temporal stage that
+   * produced or last updated it.
+   *
+   * @generated from field: string node_execution_id = 10;
+   */
+  nodeExecutionId?: string;
+
+  /**
+   *
+   * status is this connection's current/last-known lifecycle status.
+   *
+   * @generated from field: cloud.v1.common.Status status = 11;
+   */
+  status?: StatusJson;
+
+  /**
+   *
+   * status_reason is a short machine-readable explanation of status.
+   *
+   * @generated from field: string status_reason = 12;
+   */
+  statusReason?: string;
+
+  /**
+   *
+   * started_at is when the backing runtime action/stage started, if known.
+   *
+   * @generated from field: google.protobuf.Timestamp started_at = 13;
+   */
+  startedAt?: TimestampJson;
+
+  /**
+   *
+   * finished_at is when the backing runtime action/stage finished, if known.
+   *
+   * @generated from field: google.protobuf.Timestamp finished_at = 14;
+   */
+  finishedAt?: TimestampJson;
+
+  /**
+   *
+   * labels are structured metadata for UI/debugging.
+   *
+   * @generated from field: map<string, string> labels = 15;
+   */
+  labels?: { [key: string]: string };
+
+  /**
+   *
+   * tags are arbitrary metadata on the runtime connection.
+   *
+   * @generated from field: cloud.v1.common.Tags tags = 16;
+   */
+  tags?: TagsJson;
+};
+
+export type RuntimeConnectionValid = RuntimeConnection;
+
+/**
+ * Describes the message cloud.v1.topology.RuntimeConnection.
+ * Use `create(RuntimeConnectionSchema)` to create a new message.
+ */
+export const RuntimeConnectionSchema: GenMessage<RuntimeConnection, {jsonType: RuntimeConnectionJson, validType: RuntimeConnectionValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_topology_topology, 3);
+
+/**
+ *
  * Topology is the full staged object for a run or wizard draft.
  *
  * @generated from message cloud.v1.topology.Topology
@@ -294,6 +951,25 @@ export type Topology = Message<"cloud.v1.topology.Topology"> & {
    * @generated from field: cloud.v1.common.Tags tags = 6;
    */
   tags?: Tags;
+
+  /**
+   *
+   * runtime_nodes are concrete nodes known for this run, including the
+   * control-plane server, machines, agents, components, monitor daemons and
+   * external endpoints.
+   *
+   * @generated from field: repeated cloud.v1.topology.RuntimeNode runtime_nodes = 7;
+   */
+  runtimeNodes: RuntimeNode[];
+
+  /**
+   *
+   * runtime_connections are concrete directed interactions between
+   * runtime_nodes, with endpoint/protocol/status/timing metadata.
+   *
+   * @generated from field: repeated cloud.v1.topology.RuntimeConnection runtime_connections = 8;
+   */
+  runtimeConnections: RuntimeConnection[];
 };
 
 /**
@@ -353,6 +1029,25 @@ export type TopologyJson = {
    * @generated from field: cloud.v1.common.Tags tags = 6;
    */
   tags?: TagsJson;
+
+  /**
+   *
+   * runtime_nodes are concrete nodes known for this run, including the
+   * control-plane server, machines, agents, components, monitor daemons and
+   * external endpoints.
+   *
+   * @generated from field: repeated cloud.v1.topology.RuntimeNode runtime_nodes = 7;
+   */
+  runtimeNodes?: RuntimeNodeJson[];
+
+  /**
+   *
+   * runtime_connections are concrete directed interactions between
+   * runtime_nodes, with endpoint/protocol/status/timing metadata.
+   *
+   * @generated from field: repeated cloud.v1.topology.RuntimeConnection runtime_connections = 8;
+   */
+  runtimeConnections?: RuntimeConnectionJson[];
 };
 
 export type TopologyValid = Topology;
@@ -362,7 +1057,7 @@ export type TopologyValid = Topology;
  * Use `create(TopologySchema)` to create a new message.
  */
 export const TopologySchema: GenMessage<Topology, {jsonType: TopologyJson, validType: TopologyValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_topology_topology, 2);
+  messageDesc(file_cloud_v1_topology_topology, 4);
 
 /**
  *
@@ -424,5 +1119,5 @@ export type Topology_StateJson = "STATE_UNSPECIFIED" | "STATE_SPEC" | "STATE_INF
  * Describes the enum cloud.v1.topology.Topology.State.
  */
 export const Topology_StateSchema: GenEnum<Topology_State, Topology_StateJson> = /*@__PURE__*/
-  enumDesc(file_cloud_v1_topology_topology, 2, 0);
+  enumDesc(file_cloud_v1_topology_topology, 4, 0);
 

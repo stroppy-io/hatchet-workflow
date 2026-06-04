@@ -218,7 +218,21 @@ type LogLine struct {
 	// line is the raw log text content.
 	Line string `protobuf:"bytes,9,opt,name=line,proto3" json:"line,omitempty"`
 	// cursor anchors this exact line for deep-linking.
-	Cursor        *LogCursor `protobuf:"bytes,10,opt,name=cursor,proto3" json:"cursor,omitempty"`
+	Cursor *LogCursor `protobuf:"bytes,10,opt,name=cursor,proto3" json:"cursor,omitempty"`
+	// parent_node_execution_id links the log line to the parent pipeline stage.
+	ParentNodeExecutionId string `protobuf:"bytes,12,opt,name=parent_node_execution_id,json=parentNodeExecutionId,proto3" json:"parent_node_execution_id,omitempty"`
+	// phase is the top-level pipeline phase this line belongs to, when known.
+	Phase string `protobuf:"bytes,13,opt,name=phase,proto3" json:"phase,omitempty"`
+	// stage_name is the producing stage's display name, when known.
+	StageName string `protobuf:"bytes,14,opt,name=stage_name,json=stageName,proto3" json:"stage_name,omitempty"`
+	// step_id is the component-local deployment step id, when this line came from an agent step.
+	StepId string `protobuf:"bytes,15,opt,name=step_id,json=stepId,proto3" json:"step_id,omitempty"`
+	// action is the generic action class, e.g. call_cmd/write_file/create_dir.
+	Action string `protobuf:"bytes,16,opt,name=action,proto3" json:"action,omitempty"`
+	// mentions are normalized operation tokens, e.g. vector/vmagent/postgres.
+	// They let the Logs API filter by rendered/executed subject without
+	// backend-specific step-id switches.
+	Mentions      []string `protobuf:"bytes,17,rep,name=mentions,proto3" json:"mentions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -326,6 +340,48 @@ func (x *LogLine) GetLine() string {
 func (x *LogLine) GetCursor() *LogCursor {
 	if x != nil {
 		return x.Cursor
+	}
+	return nil
+}
+
+func (x *LogLine) GetParentNodeExecutionId() string {
+	if x != nil {
+		return x.ParentNodeExecutionId
+	}
+	return ""
+}
+
+func (x *LogLine) GetPhase() string {
+	if x != nil {
+		return x.Phase
+	}
+	return ""
+}
+
+func (x *LogLine) GetStageName() string {
+	if x != nil {
+		return x.StageName
+	}
+	return ""
+}
+
+func (x *LogLine) GetStepId() string {
+	if x != nil {
+		return x.StepId
+	}
+	return ""
+}
+
+func (x *LogLine) GetAction() string {
+	if x != nil {
+		return x.Action
+	}
+	return ""
+}
+
+func (x *LogLine) GetMentions() []string {
+	if x != nil {
+		return x.Mentions
 	}
 	return nil
 }
@@ -486,7 +542,7 @@ const file_cloud_v1_monitor_logs_proto_rawDesc = "" +
 	"\tLogCursor\x12E\n" +
 	"\vobserved_at\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampB\b\xfaB\x05\xb2\x01\x02\b\x01R\n" +
 	"observedAt\x12\x10\n" +
-	"\x03seq\x18\x02 \x01(\x04R\x03seq\"\x82\x04\n" +
+	"\x03seq\x18\x02 \x01(\x04R\x03seq\"\xf9\x05\n" +
 	"\aLogLine\x12E\n" +
 	"\vobserved_at\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampB\b\xfaB\x05\xb2\x01\x02\b\x01R\n" +
 	"observedAt\x12!\n" +
@@ -502,7 +558,14 @@ const file_cloud_v1_monitor_logs_proto_rawDesc = "" +
 	"\x06stream\x18\b \x01(\x0e2\x18.cloud.v1.monitor.StreamB\b\xfaB\x05\x82\x01\x02\x10\x01R\x06stream\x12\x1d\n" +
 	"\x04line\x18\t \x01(\tB\t\xfaB\x06r\x04\x18\x80\x80\x04R\x04line\x123\n" +
 	"\x06cursor\x18\n" +
-	" \x01(\v2\x1b.cloud.v1.monitor.LogCursorR\x06cursor\"\x80\x03\n" +
+	" \x01(\v2\x1b.cloud.v1.monitor.LogCursorR\x06cursor\x12A\n" +
+	"\x18parent_node_execution_id\x18\f \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\x15parentNodeExecutionId\x12\x1e\n" +
+	"\x05phase\x18\r \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\x05phase\x12'\n" +
+	"\n" +
+	"stage_name\x18\x0e \x01(\tB\b\xfaB\x05r\x03\x18\x80\x02R\tstageName\x12!\n" +
+	"\astep_id\x18\x0f \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\x06stepId\x12 \n" +
+	"\x06action\x18\x10 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\x06action\x12$\n" +
+	"\bmentions\x18\x11 \x03(\tB\b\xfaB\x05\x92\x01\x02\x10@R\bmentions\"\x80\x03\n" +
 	"\x06LogRef\x12!\n" +
 	"\x06run_id\x18\x01 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x05runId\x129\n" +

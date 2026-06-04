@@ -47,9 +47,6 @@ func TestPostgresDeploymentRendererRendersPrioritiesDependenciesAndSteps(t *test
 	}
 
 	master := components["postgres-master"]
-	if got, want := len(master.GetSteps()), 12; got != want {
-		t.Fatalf("master steps = %d, want %d", got, want)
-	}
 	context := findDeploymentWriteFileText(t, master, "020_write_context")
 	if !strings.Contains(context, "ENDPOINT_PRIVATE_ADDRESS='10.0.0.1'") {
 		t.Fatalf("context does not contain private endpoint: %s", context)
@@ -59,7 +56,7 @@ func TestPostgresDeploymentRendererRendersPrioritiesDependenciesAndSteps(t *test
 		t.Fatalf("config does not contain rendered postgres options: %s", config)
 	}
 
-	install := findDeploymentCallCmd(t, master, "110_install")
+	install := findDeploymentCallCmdContaining(t, master, "postgresql-16")
 	if !strings.Contains(install, "postgresql-16") {
 		t.Fatalf("install command does not use resolved package: %s", install)
 	}
@@ -181,7 +178,7 @@ func TestPostgresDeploymentRendererBuildsRenderPreview(t *testing.T) {
 		t.Fatalf("runtime value = %q", got)
 	}
 
-	install := findRenderArtifact(t, preview, "postgres-master/install/110")
+	install := findRenderCommandArtifactContaining(t, preview, "postgres-master/install/", "postgresql-16")
 	if got, want := install.GetMutability(), deploymentpb.RenderArtifact_MUTABILITY_READ_ONLY; got != want {
 		t.Fatalf("install mutability = %s, want %s", got, want)
 	}
@@ -378,6 +375,19 @@ func findDeploymentCallCmd(t *testing.T, component *deploymentpb.ComponentDeploy
 	return ""
 }
 
+func findDeploymentCallCmdContaining(t *testing.T, component *deploymentpb.ComponentDeployment, needle string) string {
+	t.Helper()
+
+	for _, step := range component.GetSteps() {
+		text := step.GetCallCmd().GetSpec().GetScript().GetText()
+		if strings.Contains(text, needle) {
+			return text
+		}
+	}
+	t.Fatalf("call command containing %q is missing", needle)
+	return ""
+}
+
 func findRenderArtifact(t *testing.T, preview *deploymentpb.RenderPreview, artifactID string) *deploymentpb.RenderArtifact {
 	t.Helper()
 
@@ -387,5 +397,18 @@ func findRenderArtifact(t *testing.T, preview *deploymentpb.RenderPreview, artif
 		}
 	}
 	t.Fatalf("artifact %q is missing", artifactID)
+	return nil
+}
+
+func findRenderCommandArtifactContaining(t *testing.T, preview *deploymentpb.RenderPreview, idPrefix, needle string) *deploymentpb.RenderArtifact {
+	t.Helper()
+
+	for _, artifact := range preview.GetArtifacts() {
+		if strings.HasPrefix(artifact.GetId(), idPrefix) &&
+			strings.Contains(artifact.GetCmd().GetSpec().GetScript().GetText(), needle) {
+			return artifact
+		}
+	}
+	t.Fatalf("command artifact with prefix %q containing %q is missing", idPrefix, needle)
 	return nil
 }

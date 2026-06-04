@@ -5,7 +5,7 @@
 // the URL query (?steps=&comp=&mach=&unit=&q=) so any filtered view is a
 // shareable link; the pipeline "view in logs" jump writes the same params.
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Check, Cpu, FileText, Link2, Radio, Search, Server, WrapText, X, Zap } from "lucide-react";
+import { Check, Cpu, FileText, Link2, Radio, Search, Server, Tags, WrapText, X, Zap } from "lucide-react";
 import { useSearchParams } from "@/lib/router";
 import { Button } from "@/components/ui/button";
 import { MultiFilter, type FilterOption } from "@/components/ui/multi-filter";
@@ -68,6 +68,9 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
   const components = useMemo(() => new Set(csv(sp.get("comp"))), [sp]);
   const machines = useMemo(() => new Set(csv(sp.get("mach"))), [sp]);
   const units = useMemo(() => new Set(csv(sp.get("unit"))), [sp]);
+  const phases = useMemo(() => new Set(csv(sp.get("phase"))), [sp]);
+  const actions = useMemo(() => new Set(csv(sp.get("action"))), [sp]);
+  const mentions = useMemo(() => new Set(csv(sp.get("mention"))), [sp]);
   const applied = sp.get("q") ?? "";
 
   const setParam = useCallback(
@@ -89,7 +92,7 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
     setSp(
       (prev) => {
         const next = new URLSearchParams(prev);
-        for (const k of ["steps", "comp", "mach", "unit", "q"]) next.delete(k);
+        for (const k of ["steps", "comp", "mach", "unit", "phase", "action", "mention", "q"]) next.delete(k);
         return next;
       },
       { replace: true },
@@ -147,8 +150,11 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
       search: applied.trim() || undefined,
       nodeExecutionIds: stepIds.length ? stepIds : undefined,
       componentIds: compIds.length ? compIds : undefined,
+      phases: phases.size ? Array.from(phases) : undefined,
+      actions: actions.size ? Array.from(actions) : undefined,
+      mentions: mentions.size ? Array.from(mentions) : undefined,
     }),
-    [applied, stepIds, compIds],
+    [applied, stepIds, compIds, phases, actions, mentions],
   );
 
   const load = useCallback(async () => {
@@ -198,7 +204,7 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
   useEffect(() => {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tenantSlug, runId, applied, stepIds.join(","), compIds.join(",")]);
+  }, [tenantSlug, runId, applied, stepIds.join(","), compIds.join(","), Array.from(phases).join(","), Array.from(actions).join(","), Array.from(mentions).join(",")]);
 
   // Live tail.
   useEffect(() => {
@@ -212,6 +218,9 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
         search: applied.trim() || undefined,
         nodeExecutionIds: stepIds.length ? stepIds : undefined,
         componentIds: compIds.length ? compIds : undefined,
+        phases: phases.size ? Array.from(phases) : undefined,
+        actions: actions.size ? Array.from(actions) : undefined,
+        mentions: mentions.size ? Array.from(mentions) : undefined,
       },
       controller.signal,
       (line) => {
@@ -226,7 +235,7 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
       controller.abort();
       if (tailAbort.current === controller) tailAbort.current = null;
     };
-  }, [live, tenantSlug, runId, applied, stepIds, compIds]);
+  }, [live, tenantSlug, runId, applied, stepIds, compIds, phases, actions, mentions]);
 
   // Client-side machine + unit filter over the loaded buffer.
   const rows = useMemo(() => {
@@ -282,11 +291,14 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
   }, [anchorKey, rows]);
 
   // Cross-filtered option counts over the loaded buffer.
-  const { stepOpts, compOpts, machineOpts, unitOpts } = useMemo(() => {
+  const { stepOpts, compOpts, machineOpts, unitOpts, phaseOpts, actionOpts, mentionOpts } = useMemo(() => {
     const sc: Record<string, number> = {};
     const cc: Record<string, number> = {};
     const mc: Record<string, number> = {};
     const uc: Record<string, number> = {};
+    const pc: Record<string, number> = {};
+    const ac: Record<string, number> = {};
+    const xc: Record<string, number> = {};
     const hasM = machines.size > 0;
     const hasU = units.size > 0;
     for (const l of lines) {
@@ -294,6 +306,9 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
       if (l.componentId) cc[l.componentId] = (cc[l.componentId] || 0) + 1;
       if (l.machineId && (!hasU || units.has(l.unit))) mc[l.machineId] = (mc[l.machineId] || 0) + 1;
       if (l.unit && (!hasM || machines.has(l.machineId))) uc[l.unit] = (uc[l.unit] || 0) + 1;
+      if (l.phase) pc[l.phase] = (pc[l.phase] || 0) + 1;
+      if (l.action) ac[l.action] = (ac[l.action] || 0) + 1;
+      for (const m of l.mentions) xc[m] = (xc[m] || 0) + 1;
     }
     const color = (id: string) => {
       if (!colorMap.current.has(id)) colorMap.current.set(id, MACHINE_COLORS[colorMap.current.size % MACHINE_COLORS.length]);
@@ -306,10 +321,13 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
       compOpts: Object.keys(cc).sort().map((c): FilterOption => ({ value: c, label: c, count: cc[c] })),
       machineOpts: Object.keys(mc).sort().map((m): FilterOption => ({ value: m, label: m, count: mc[m], color: color(m) })),
       unitOpts: Object.keys(uc).sort().map((u): FilterOption => ({ value: u, label: u.replace(/\.service$/, ""), count: uc[u] })),
+      phaseOpts: Object.keys(pc).sort().map((p): FilterOption => ({ value: p, label: humanize(p), count: pc[p] })),
+      actionOpts: Object.keys(ac).sort().map((a): FilterOption => ({ value: a, label: humanize(a), count: ac[a] })),
+      mentionOpts: Object.keys(xc).sort().map((m): FilterOption => ({ value: m, label: m, count: xc[m] })),
     };
   }, [lines, nodeOptions, steps, machines, units]);
 
-  const totalActive = steps.size + components.size + machines.size + units.size + (applied ? 1 : 0);
+  const totalActive = steps.size + components.size + machines.size + units.size + phases.size + actions.size + mentions.size + (applied ? 1 : 0);
 
   return (
     <div className="flex h-full flex-col gap-2">
@@ -326,6 +344,15 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
         )}
         {unitOpts.length > 0 && (
           <MultiFilter icon={<Cpu className="h-3 w-3" />} label="Unit" options={unitOpts} selected={units} onChange={setSetParam("unit")} />
+        )}
+        {phaseOpts.length > 0 && (
+          <MultiFilter icon={<Radio className="h-3 w-3" />} label="Phase" options={phaseOpts} selected={phases} onChange={setSetParam("phase")} />
+        )}
+        {actionOpts.length > 0 && (
+          <MultiFilter icon={<FileText className="h-3 w-3" />} label="Action" options={actionOpts} selected={actions} onChange={setSetParam("action")} />
+        )}
+        {mentionOpts.length > 0 && (
+          <MultiFilter icon={<Tags className="h-3 w-3" />} label="Mention" options={mentionOpts} selected={mentions} onChange={setSetParam("mention")} />
         )}
 
         <div className="flex items-center gap-1 rounded border border-border px-2 py-0.5 font-mono text-[11px] transition-colors focus-within:border-foreground/40">

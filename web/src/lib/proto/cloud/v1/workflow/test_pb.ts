@@ -10,6 +10,10 @@ import type { InfrastructureState, InfrastructureStateJson } from "../deployment
 import { file_cloud_v1_deployment_infrastructure } from "../deployment/infrastructure_pb.ts";
 import type { DeploymentPlan, DeploymentPlanJson } from "../deployment/plan_pb.ts";
 import { file_cloud_v1_deployment_plan } from "../deployment/plan_pb.ts";
+import type { Worker, WorkerJson } from "../domain/worker_pb.ts";
+import { file_cloud_v1_domain_worker } from "../domain/worker_pb.ts";
+import type { PipelineOperation, PipelineOperationJson, PipelineOutput, PipelineOutputJson } from "../monitor/overview_pb.ts";
+import { file_cloud_v1_monitor_overview } from "../monitor/overview_pb.ts";
 import type { AgentBootstrap, AgentBootstrapJson } from "./deployment_pb.ts";
 import { file_cloud_v1_workflow_deployment } from "./deployment_pb.ts";
 import type { Database, DatabaseJson } from "../domain/database_pb.ts";
@@ -33,7 +37,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/workflow/test.proto.
  */
 export const file_cloud_v1_workflow_test: GenFile = /*@__PURE__*/
-  fileDesc("ChxjbG91ZC92MS93b3JrZmxvdy90ZXN0LnByb3RvEhFjbG91ZC52MS53b3JrZmxvdyKlAQoTVGVzdFdvcmtmbG93UmVxdWVzdBIcCgl0ZW5hbnRfaWQYAyABKAlCCfpCBnIEEAEYQBI0Cgh0ZXN0X3J1bhgBIAEoCzIYLmNsb3VkLnYxLmRvbWFpbi5UZXN0UnVuQgj6QgWKAQIQARI6Cg9hZ2VudF9ib290c3RyYXAYAiABKAsyIS5jbG91ZC52MS53b3JrZmxvdy5BZ2VudEJvb3RzdHJhcCIWChRUZXN0V29ya2Zsb3dSZXNwb25zZSJdCghSdW5TdGF0ZRInCgZzdGF0dXMYASABKA4yFy5jbG91ZC52MS5jb21tb24uU3RhdHVzEigKBnN0YWdlcxgCIAMoCzIYLmNsb3VkLnYxLndvcmtmbG93LlN0YWdlIssBCgVTdGFnZRIZChFub2RlX2V4ZWN1dGlvbl9pZBgBIAEoCRIMCgRuYW1lGAIgASgJEicKBnN0YXR1cxgDIAEoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXMSLgoKc3RhcnRlZF9hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLwoLZmluaXNoZWRfYXQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEg8KB2F0dGVtcHQYBiABKA0iuQEKHUluc3RhbGxTdHJvcHB5V29ya2Zsb3dSZXF1ZXN0ElAKFGluZnJhc3RydWN0dXJlX3N0YXRlGAEgASgLMiguY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVN0YXRlQgj6QgWKAQIQARJGCg9kZXBsb3ltZW50X3BsYW4YAiABKAsyIy5jbG91ZC52MS5kZXBsb3ltZW50LkRlcGxveW1lbnRQbGFuQgj6QgWKAQIQASIgCh5JbnN0YWxsU3Ryb3BweVdvcmtmbG93UmVzcG9uc2Ui8QEKHkluc3RhbGxEYXRhYmFzZVdvcmtmbG93UmVxdWVzdBJQChRpbmZyYXN0cnVjdHVyZV9zdGF0ZRgBIAEoCzIoLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVTdGF0ZUII+kIFigECEAESNQoIZGF0YWJhc2UYAiABKAsyGS5jbG91ZC52MS5kb21haW4uRGF0YWJhc2VCCPpCBYoBAhABEkYKD2RlcGxveW1lbnRfcGxhbhgDIAEoCzIjLmNsb3VkLnYxLmRlcGxveW1lbnQuRGVwbG95bWVudFBsYW5CCPpCBYoBAhABIiEKH0luc3RhbGxEYXRhYmFzZVdvcmtmbG93UmVzcG9uc2Ui5wEKGlJ1bldvcmtsb2FkV29ya2Zsb3dSZXF1ZXN0EkAKDXRvcG9sb2d5X3NwZWMYASABKAsyHy5jbG91ZC52MS50b3BvbG9neS5Ub3BvbG9neVNwZWNCCPpCBYoBAhABEjUKCHdvcmtsb2FkGAIgASgLMhkuY2xvdWQudjEuZG9tYWluLldvcmtsb2FkQgj6QgWKAQIQARJQChRpbmZyYXN0cnVjdHVyZV9zdGF0ZRgDIAEoCzIoLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVTdGF0ZUII+kIFigECEAEiHQobUnVuV29ya2xvYWRXb3JrZmxvd1Jlc3BvbnNlIoYBChRTdWl0ZVdvcmtmbG93UmVxdWVzdBIfCgxzdWl0ZV9ydW5faWQYASABKAlCCfpCBnIEEAEYQBI3CgRydW5zGAIgAygLMhwuY2xvdWQudjEud29ya2Zsb3cuUnVuQ29uZmlnQgv6QgiSAQUIARDoBxIUCgxtYXhfcGFyYWxsZWwYAyABKA0iFwoVU3VpdGVXb3JrZmxvd1Jlc3BvbnNlMo8GCgtUZXN0U2VydmljZRKjAQoMVGVzdFdvcmtmbG93EiYuY2xvdWQudjEud29ya2Zsb3cuVGVzdFdvcmtmbG93UmVxdWVzdBonLmNsb3VkLnYxLndvcmtmbG93LlRlc3RXb3JrZmxvd1Jlc3BvbnNlIkKKxAM+cgxUZXN0V29ya2Zsb3cqGXRlc3QtcnVuLyR7ISB0ZXN0UnVuLmlkIH0wAkoCIAEKDQoLR2V0UnVuU3RhdGUSVQoLR2V0UnVuU3RhdGUSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaGy5jbG91ZC52MS53b3JrZmxvdy5SdW5TdGF0ZSIRmsQDDQoLR2V0UnVuU3RhdGUSqAEKFkluc3RhbGxTdHJvcHB5V29ya2Zsb3cSMC5jbG91ZC52MS53b3JrZmxvdy5JbnN0YWxsU3Ryb3BweVdvcmtmbG93UmVxdWVzdBoxLmNsb3VkLnYxLndvcmtmbG93Lkluc3RhbGxTdHJvcHB5V29ya2Zsb3dSZXNwb25zZSIpisQDJUoGIAMKAggFchZJbnN0YWxsU3Ryb3BweVdvcmtmbG93UgMIiA4SrAEKF0luc3RhbGxEYXRhYmFzZVdvcmtmbG93EjEuY2xvdWQudjEud29ya2Zsb3cuSW5zdGFsbERhdGFiYXNlV29ya2Zsb3dSZXF1ZXN0GjIuY2xvdWQudjEud29ya2Zsb3cuSW5zdGFsbERhdGFiYXNlV29ya2Zsb3dSZXNwb25zZSIqisQDJlIDCIgOSgYgAwoCCAVyF0luc3RhbGxEYXRhYmFzZVdvcmtmbG93EpMBChNSdW5Xb3JrbG9hZFdvcmtmbG93Ei0uY2xvdWQudjEud29ya2Zsb3cuUnVuV29ya2xvYWRXb3JrZmxvd1JlcXVlc3QaLi5jbG91ZC52MS53b3JrZmxvdy5SdW5Xb3JrbG9hZFdvcmtmbG93UmVzcG9uc2UiHYrEAxlyE1J1bldvcmtsb2FkV29ya2Zsb3dKAiABGhOKxAMPCg1zdHJvcHB5LWNsb3VkMscBChRTdWl0ZVdvcmtmbG93U2VydmljZRKZAQoNU3VpdGVXb3JrZmxvdxInLmNsb3VkLnYxLndvcmtmbG93LlN1aXRlV29ya2Zsb3dSZXF1ZXN0GiguY2xvdWQudjEud29ya2Zsb3cuU3VpdGVXb3JrZmxvd1Jlc3BvbnNlIjWKxAMxSgIgAXINU3VpdGVXb3JrZmxvdyoac3VpdGUtcnVuLyR7ISBzdWl0ZVJ1bklkIH0wAhoTisQDDwoNc3Ryb3BweS1jbG91ZEJGWkRnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS93b3JrZmxvd2IGcHJvdG8z", [file_cloud_v1_common_status, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_plan, file_cloud_v1_workflow_deployment, file_cloud_v1_domain_database, file_cloud_v1_domain_suite, file_cloud_v1_domain_test, file_cloud_v1_domain_workload, file_cloud_v1_topology_topology, file_cloud_v1_workflow_run, file_google_protobuf_empty, file_google_protobuf_timestamp, file_temporal_v1_temporal, file_validate_validate]);
+  fileDesc("ChxjbG91ZC92MS93b3JrZmxvdy90ZXN0LnByb3RvEhFjbG91ZC52MS53b3JrZmxvdyKlAQoTVGVzdFdvcmtmbG93UmVxdWVzdBIcCgl0ZW5hbnRfaWQYAyABKAlCCfpCBnIEEAEYQBI0Cgh0ZXN0X3J1bhgBIAEoCzIYLmNsb3VkLnYxLmRvbWFpbi5UZXN0UnVuQgj6QgWKAQIQARI6Cg9hZ2VudF9ib290c3RyYXAYAiABKAsyIS5jbG91ZC52MS53b3JrZmxvdy5BZ2VudEJvb3RzdHJhcCIWChRUZXN0V29ya2Zsb3dSZXNwb25zZSJdCghSdW5TdGF0ZRInCgZzdGF0dXMYASABKA4yFy5jbG91ZC52MS5jb21tb24uU3RhdHVzEigKBnN0YWdlcxgCIAMoCzIYLmNsb3VkLnYxLndvcmtmbG93LlN0YWdlIr4ECgVTdGFnZRIZChFub2RlX2V4ZWN1dGlvbl9pZBgBIAEoCRIMCgRuYW1lGAIgASgJEicKBnN0YXR1cxgDIAEoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXMSLgoKc3RhcnRlZF9hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLwoLZmluaXNoZWRfYXQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEg8KB2F0dGVtcHQYBiABKA0SDQoFb3JkZXIYByABKA0SKgoYcGFyZW50X25vZGVfZXhlY3V0aW9uX2lkGAggASgJQgj6QgVyAxiAARIXCgVwaGFzZRgJIAEoCUII+kIFcgMYgAESHgoMY29tcG9uZW50X2lkGAogASgJQgj6QgVyAxiAARIcCgptYWNoaW5lX2lkGAsgASgJQgj6QgVyAxiAARInCgZ3b3JrZXIYDCABKAsyFy5jbG91ZC52MS5kb21haW4uV29ya2VyEh8KDXN0YXR1c19yZWFzb24YDSABKAlCCPpCBXIDGIACEh8KDWVycm9yX21lc3NhZ2UYDiABKAlCCPpCBXIDGIAgEjYKCW9wZXJhdGlvbhgPIAEoCzIjLmNsb3VkLnYxLm1vbml0b3IuUGlwZWxpbmVPcGVyYXRpb24SPAoHb3V0cHV0cxgQIAMoCzIgLmNsb3VkLnYxLm1vbml0b3IuUGlwZWxpbmVPdXRwdXRCCfpCBpIBAxCAICJACgtTdGFnZVVwZGF0ZRIxCgVzdGFnZRgBIAEoCzIYLmNsb3VkLnYxLndvcmtmbG93LlN0YWdlQgj6QgWKAQIQASK5AQodSW5zdGFsbFN0cm9wcHlXb3JrZmxvd1JlcXVlc3QSUAoUaW5mcmFzdHJ1Y3R1cmVfc3RhdGUYASABKAsyKC5jbG91ZC52MS5kZXBsb3ltZW50LkluZnJhc3RydWN0dXJlU3RhdGVCCPpCBYoBAhABEkYKD2RlcGxveW1lbnRfcGxhbhgCIAEoCzIjLmNsb3VkLnYxLmRlcGxveW1lbnQuRGVwbG95bWVudFBsYW5CCPpCBYoBAhABIiAKHkluc3RhbGxTdHJvcHB5V29ya2Zsb3dSZXNwb25zZSLxAQoeSW5zdGFsbERhdGFiYXNlV29ya2Zsb3dSZXF1ZXN0ElAKFGluZnJhc3RydWN0dXJlX3N0YXRlGAEgASgLMiguY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVN0YXRlQgj6QgWKAQIQARI1CghkYXRhYmFzZRgCIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5EYXRhYmFzZUII+kIFigECEAESRgoPZGVwbG95bWVudF9wbGFuGAMgASgLMiMuY2xvdWQudjEuZGVwbG95bWVudC5EZXBsb3ltZW50UGxhbkII+kIFigECEAEiIQofSW5zdGFsbERhdGFiYXNlV29ya2Zsb3dSZXNwb25zZSLnAQoaUnVuV29ya2xvYWRXb3JrZmxvd1JlcXVlc3QSQAoNdG9wb2xvZ3lfc3BlYxgBIAEoCzIfLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5U3BlY0II+kIFigECEAESNQoId29ya2xvYWQYAiABKAsyGS5jbG91ZC52MS5kb21haW4uV29ya2xvYWRCCPpCBYoBAhABElAKFGluZnJhc3RydWN0dXJlX3N0YXRlGAMgASgLMiguY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVN0YXRlQgj6QgWKAQIQASIdChtSdW5Xb3JrbG9hZFdvcmtmbG93UmVzcG9uc2UihgEKFFN1aXRlV29ya2Zsb3dSZXF1ZXN0Eh8KDHN1aXRlX3J1bl9pZBgBIAEoCUIJ+kIGcgQYQBABEjcKBHJ1bnMYAiADKAsyHC5jbG91ZC52MS53b3JrZmxvdy5SdW5Db25maWdCC/pCCJIBBQgBEOgHEhQKDG1heF9wYXJhbGxlbBgDIAEoDSIXChVTdWl0ZVdvcmtmbG93UmVzcG9uc2Uy+AYKC1Rlc3RTZXJ2aWNlErIBCgxUZXN0V29ya2Zsb3cSJi5jbG91ZC52MS53b3JrZmxvdy5UZXN0V29ya2Zsb3dSZXF1ZXN0GicuY2xvdWQudjEud29ya2Zsb3cuVGVzdFdvcmtmbG93UmVzcG9uc2UiUYrEA01yDFRlc3RXb3JrZmxvdyoZdGVzdC1ydW4vJHshIHRlc3RSdW4uaWQgfTACSgIgAQoNCgtHZXRSdW5TdGF0ZRINCgtVcGRhdGVTdGFnZRJVCgtHZXRSdW5TdGF0ZRIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRobLmNsb3VkLnYxLndvcmtmbG93LlJ1blN0YXRlIhGaxAMNCgtHZXRSdW5TdGF0ZRJYCgtVcGRhdGVTdGFnZRIeLmNsb3VkLnYxLndvcmtmbG93LlN0YWdlVXBkYXRlGhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IhGixAMNCgtVcGRhdGVTdGFnZRKoAQoWSW5zdGFsbFN0cm9wcHlXb3JrZmxvdxIwLmNsb3VkLnYxLndvcmtmbG93Lkluc3RhbGxTdHJvcHB5V29ya2Zsb3dSZXF1ZXN0GjEuY2xvdWQudjEud29ya2Zsb3cuSW5zdGFsbFN0cm9wcHlXb3JrZmxvd1Jlc3BvbnNlIimKxAMlUgMIiA5KBgoCCAUgA3IWSW5zdGFsbFN0cm9wcHlXb3JrZmxvdxKsAQoXSW5zdGFsbERhdGFiYXNlV29ya2Zsb3cSMS5jbG91ZC52MS53b3JrZmxvdy5JbnN0YWxsRGF0YWJhc2VXb3JrZmxvd1JlcXVlc3QaMi5jbG91ZC52MS53b3JrZmxvdy5JbnN0YWxsRGF0YWJhc2VXb3JrZmxvd1Jlc3BvbnNlIiqKxAMmUgMIiA5KBiADCgIIBXIXSW5zdGFsbERhdGFiYXNlV29ya2Zsb3cSkwEKE1J1bldvcmtsb2FkV29ya2Zsb3cSLS5jbG91ZC52MS53b3JrZmxvdy5SdW5Xb3JrbG9hZFdvcmtmbG93UmVxdWVzdBouLmNsb3VkLnYxLndvcmtmbG93LlJ1bldvcmtsb2FkV29ya2Zsb3dSZXNwb25zZSIdisQDGXITUnVuV29ya2xvYWRXb3JrZmxvd0oCIAEaE4rEAw8KDXN0cm9wcHktY2xvdWQyxwEKFFN1aXRlV29ya2Zsb3dTZXJ2aWNlEpkBCg1TdWl0ZVdvcmtmbG93EicuY2xvdWQudjEud29ya2Zsb3cuU3VpdGVXb3JrZmxvd1JlcXVlc3QaKC5jbG91ZC52MS53b3JrZmxvdy5TdWl0ZVdvcmtmbG93UmVzcG9uc2UiNYrEAzEwAkoCIAFyDVN1aXRlV29ya2Zsb3cqGnN1aXRlLXJ1bi8keyEgc3VpdGVSdW5JZCB9GhOKxAMPCg1zdHJvcHB5LWNsb3VkQkZaRGdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL3dvcmtmbG93YgZwcm90bzM", [file_cloud_v1_common_status, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_plan, file_cloud_v1_domain_worker, file_cloud_v1_monitor_overview, file_cloud_v1_workflow_deployment, file_cloud_v1_domain_database, file_cloud_v1_domain_suite, file_cloud_v1_domain_test, file_cloud_v1_domain_workload, file_cloud_v1_topology_topology, file_cloud_v1_workflow_run, file_google_protobuf_empty, file_google_protobuf_timestamp, file_temporal_v1_temporal, file_validate_validate]);
 
 /**
  *
@@ -251,6 +255,88 @@ export type Stage = Message<"cloud.v1.workflow.Stage"> & {
    * @generated from field: uint32 attempt = 6;
    */
   attempt: number;
+
+  /**
+   *
+   * order is the stable 1-based sibling execution/display order.
+   *
+   * @generated from field: uint32 order = 7;
+   */
+  order: number;
+
+  /**
+   *
+   * parent_node_execution_id links nested stages to their parent stage.
+   *
+   * @generated from field: string parent_node_execution_id = 8;
+   */
+  parentNodeExecutionId: string;
+
+  /**
+   *
+   * phase is the top-level phase this stage belongs to.
+   *
+   * @generated from field: string phase = 9;
+   */
+  phase: string;
+
+  /**
+   *
+   * component_id is the deployment/topology component this stage acts on.
+   *
+   * @generated from field: string component_id = 10;
+   */
+  componentId: string;
+
+  /**
+   *
+   * machine_id is the target machine/agent id for agent-side stages.
+   *
+   * @generated from field: string machine_id = 11;
+   */
+  machineId: string;
+
+  /**
+   *
+   * worker is the Temporal worker identity that executes this stage.
+   *
+   * @generated from field: cloud.v1.domain.Worker worker = 12;
+   */
+  worker?: Worker;
+
+  /**
+   *
+   * status_reason is a short machine-readable explanation of the status.
+   *
+   * @generated from field: string status_reason = 13;
+   */
+  statusReason: string;
+
+  /**
+   *
+   * error_message is the user-facing error text for failed stages.
+   *
+   * @generated from field: string error_message = 14;
+   */
+  errorMessage: string;
+
+  /**
+   *
+   * operation is the executable operation payload for agent deployment stages.
+   *
+   * @generated from field: cloud.v1.monitor.PipelineOperation operation = 15;
+   */
+  operation?: PipelineOperation;
+
+  /**
+   *
+   * outputs are structured artifacts/results produced by this stage. They are
+   * carried in RunState so the Overview projection can render stage details
+   * without reverse-engineering stored deployment plans.
+   *
+   * @generated from field: repeated cloud.v1.monitor.PipelineOutput outputs = 16;
+   */
+  outputs: PipelineOutput[];
 };
 
 /**
@@ -308,6 +394,88 @@ export type StageJson = {
    * @generated from field: uint32 attempt = 6;
    */
   attempt?: number;
+
+  /**
+   *
+   * order is the stable 1-based sibling execution/display order.
+   *
+   * @generated from field: uint32 order = 7;
+   */
+  order?: number;
+
+  /**
+   *
+   * parent_node_execution_id links nested stages to their parent stage.
+   *
+   * @generated from field: string parent_node_execution_id = 8;
+   */
+  parentNodeExecutionId?: string;
+
+  /**
+   *
+   * phase is the top-level phase this stage belongs to.
+   *
+   * @generated from field: string phase = 9;
+   */
+  phase?: string;
+
+  /**
+   *
+   * component_id is the deployment/topology component this stage acts on.
+   *
+   * @generated from field: string component_id = 10;
+   */
+  componentId?: string;
+
+  /**
+   *
+   * machine_id is the target machine/agent id for agent-side stages.
+   *
+   * @generated from field: string machine_id = 11;
+   */
+  machineId?: string;
+
+  /**
+   *
+   * worker is the Temporal worker identity that executes this stage.
+   *
+   * @generated from field: cloud.v1.domain.Worker worker = 12;
+   */
+  worker?: WorkerJson;
+
+  /**
+   *
+   * status_reason is a short machine-readable explanation of the status.
+   *
+   * @generated from field: string status_reason = 13;
+   */
+  statusReason?: string;
+
+  /**
+   *
+   * error_message is the user-facing error text for failed stages.
+   *
+   * @generated from field: string error_message = 14;
+   */
+  errorMessage?: string;
+
+  /**
+   *
+   * operation is the executable operation payload for agent deployment stages.
+   *
+   * @generated from field: cloud.v1.monitor.PipelineOperation operation = 15;
+   */
+  operation?: PipelineOperationJson;
+
+  /**
+   *
+   * outputs are structured artifacts/results produced by this stage. They are
+   * carried in RunState so the Overview projection can render stage details
+   * without reverse-engineering stored deployment plans.
+   *
+   * @generated from field: repeated cloud.v1.monitor.PipelineOutput outputs = 16;
+   */
+  outputs?: PipelineOutputJson[];
 };
 
 export type StageValid = Stage;
@@ -318,6 +486,49 @@ export type StageValid = Stage;
  */
 export const StageSchema: GenMessage<Stage, {jsonType: StageJson, validType: StageValid}> = /*@__PURE__*/
   messageDesc(file_cloud_v1_workflow_test, 3);
+
+/**
+ *
+ * StageUpdate is emitted as a Temporal signal by child workflows/activities
+ * whenever a concrete runtime stage changes status.
+ *
+ * @generated from message cloud.v1.workflow.StageUpdate
+ */
+export type StageUpdate = Message<"cloud.v1.workflow.StageUpdate"> & {
+  /**
+   *
+   * stage is the complete current snapshot for one runtime stage.
+   *
+   * @generated from field: cloud.v1.workflow.Stage stage = 1;
+   */
+  stage?: Stage;
+};
+
+/**
+ *
+ * StageUpdate is emitted as a Temporal signal by child workflows/activities
+ * whenever a concrete runtime stage changes status.
+ *
+ * @generated from message cloud.v1.workflow.StageUpdate
+ */
+export type StageUpdateJson = {
+  /**
+   *
+   * stage is the complete current snapshot for one runtime stage.
+   *
+   * @generated from field: cloud.v1.workflow.Stage stage = 1;
+   */
+  stage?: StageJson;
+};
+
+export type StageUpdateValid = StageUpdate;
+
+/**
+ * Describes the message cloud.v1.workflow.StageUpdate.
+ * Use `create(StageUpdateSchema)` to create a new message.
+ */
+export const StageUpdateSchema: GenMessage<StageUpdate, {jsonType: StageUpdateJson, validType: StageUpdateValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_workflow_test, 4);
 
 /**
  *
@@ -376,7 +587,7 @@ export type InstallStroppyWorkflowRequestValid = InstallStroppyWorkflowRequest;
  * Use `create(InstallStroppyWorkflowRequestSchema)` to create a new message.
  */
 export const InstallStroppyWorkflowRequestSchema: GenMessage<InstallStroppyWorkflowRequest, {jsonType: InstallStroppyWorkflowRequestJson, validType: InstallStroppyWorkflowRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_test, 4);
+  messageDesc(file_cloud_v1_workflow_test, 5);
 
 /**
  *
@@ -403,7 +614,7 @@ export type InstallStroppyWorkflowResponseValid = InstallStroppyWorkflowResponse
  * Use `create(InstallStroppyWorkflowResponseSchema)` to create a new message.
  */
 export const InstallStroppyWorkflowResponseSchema: GenMessage<InstallStroppyWorkflowResponse, {jsonType: InstallStroppyWorkflowResponseJson, validType: InstallStroppyWorkflowResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_test, 5);
+  messageDesc(file_cloud_v1_workflow_test, 6);
 
 /**
  *
@@ -480,7 +691,7 @@ export type InstallDatabaseWorkflowRequestValid = InstallDatabaseWorkflowRequest
  * Use `create(InstallDatabaseWorkflowRequestSchema)` to create a new message.
  */
 export const InstallDatabaseWorkflowRequestSchema: GenMessage<InstallDatabaseWorkflowRequest, {jsonType: InstallDatabaseWorkflowRequestJson, validType: InstallDatabaseWorkflowRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_test, 6);
+  messageDesc(file_cloud_v1_workflow_test, 7);
 
 /**
  *
@@ -507,7 +718,7 @@ export type InstallDatabaseWorkflowResponseValid = InstallDatabaseWorkflowRespon
  * Use `create(InstallDatabaseWorkflowResponseSchema)` to create a new message.
  */
 export const InstallDatabaseWorkflowResponseSchema: GenMessage<InstallDatabaseWorkflowResponse, {jsonType: InstallDatabaseWorkflowResponseJson, validType: InstallDatabaseWorkflowResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_test, 7);
+  messageDesc(file_cloud_v1_workflow_test, 8);
 
 /**
  *
@@ -584,7 +795,7 @@ export type RunWorkloadWorkflowRequestValid = RunWorkloadWorkflowRequest;
  * Use `create(RunWorkloadWorkflowRequestSchema)` to create a new message.
  */
 export const RunWorkloadWorkflowRequestSchema: GenMessage<RunWorkloadWorkflowRequest, {jsonType: RunWorkloadWorkflowRequestJson, validType: RunWorkloadWorkflowRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_test, 8);
+  messageDesc(file_cloud_v1_workflow_test, 9);
 
 /**
  *
@@ -613,7 +824,7 @@ export type RunWorkloadWorkflowResponseValid = RunWorkloadWorkflowResponse;
  * Use `create(RunWorkloadWorkflowResponseSchema)` to create a new message.
  */
 export const RunWorkloadWorkflowResponseSchema: GenMessage<RunWorkloadWorkflowResponse, {jsonType: RunWorkloadWorkflowResponseJson, validType: RunWorkloadWorkflowResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_test, 9);
+  messageDesc(file_cloud_v1_workflow_test, 10);
 
 /**
  *
@@ -692,7 +903,7 @@ export type SuiteWorkflowRequestValid = SuiteWorkflowRequest;
  * Use `create(SuiteWorkflowRequestSchema)` to create a new message.
  */
 export const SuiteWorkflowRequestSchema: GenMessage<SuiteWorkflowRequest, {jsonType: SuiteWorkflowRequestJson, validType: SuiteWorkflowRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_test, 10);
+  messageDesc(file_cloud_v1_workflow_test, 11);
 
 /**
  *
@@ -719,7 +930,7 @@ export type SuiteWorkflowResponseValid = SuiteWorkflowResponse;
  * Use `create(SuiteWorkflowResponseSchema)` to create a new message.
  */
 export const SuiteWorkflowResponseSchema: GenMessage<SuiteWorkflowResponse, {jsonType: SuiteWorkflowResponseJson, validType: SuiteWorkflowResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_test, 11);
+  messageDesc(file_cloud_v1_workflow_test, 12);
 
 /**
  *
@@ -755,6 +966,18 @@ export const TestService: GenService<{
     methodKind: "unary";
     input: typeof EmptySchema;
     output: typeof RunStateSchema;
+  },
+  /**
+   *
+   * UpdateStage is a Temporal signal used by child workflows to update one
+   * concrete runtime stage inside the parent TestWorkflow RunState.
+   *
+   * @generated from rpc cloud.v1.workflow.TestService.UpdateStage
+   */
+  updateStage: {
+    methodKind: "unary";
+    input: typeof StageUpdateSchema;
+    output: typeof EmptySchema;
   },
   /**
    *

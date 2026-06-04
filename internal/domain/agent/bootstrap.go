@@ -36,6 +36,7 @@ type Bootstrap struct {
 	ServerAddr        string
 	BinaryURL         string
 	TemporalNamespace string
+	RunID             string
 	ExtraEnv          map[string]string
 	AgentToken        string
 	AgentTaskQueue    string
@@ -77,6 +78,9 @@ func Env(machineID string, bootstrap Bootstrap) (map[string]string, error) {
 		taskQueue = TaskQueue(machineID)
 	}
 	env["STROPPY_MACHINE_ID"] = machineID
+	if bootstrap.RunID != "" {
+		env["STROPPY_RUN_ID"] = bootstrap.RunID
+	}
 	env["STROPPY_NODE_ID"] = machineID
 	env["AGENT_MACHINE_ID"] = machineID
 	env["AGENT_TASK_QUEUE"] = taskQueue

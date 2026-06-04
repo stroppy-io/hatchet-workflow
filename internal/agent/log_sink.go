@@ -100,11 +100,17 @@ func (w *logSinkWriter) Write(p []byte) (int, error) {
 }
 
 type commandLogContext struct {
-	runID           string
-	nodeExecutionID string
-	componentID     string
-	machineID       string
-	unit            string
+	runID                 string
+	nodeExecutionID       string
+	parentNodeExecutionID string
+	phase                 string
+	stageName             string
+	componentID           string
+	machineID             string
+	stepID                string
+	action                string
+	mentions              []string
+	unit                  string
 }
 
 func commandLogContextFromEnv(env map[string]string) commandLogContext {
@@ -117,11 +123,17 @@ func commandLogContextFromEnv(env map[string]string) commandLogContext {
 		machineID = env["STROPPY_MACHINE_ID"]
 	}
 	return commandLogContext{
-		runID:           env[deploymentbuilder.EnvRunID],
-		nodeExecutionID: env[deploymentbuilder.EnvNodeExecutionID],
-		componentID:     env[deploymentbuilder.EnvComponentID],
-		machineID:       machineID,
-		unit:            unit,
+		runID:                 env[deploymentbuilder.EnvRunID],
+		nodeExecutionID:       env[deploymentbuilder.EnvNodeExecutionID],
+		parentNodeExecutionID: env[deploymentbuilder.EnvParentNodeExecutionID],
+		phase:                 env[deploymentbuilder.EnvPhase],
+		stageName:             env[deploymentbuilder.EnvStageName],
+		componentID:           env[deploymentbuilder.EnvComponentID],
+		machineID:             machineID,
+		stepID:                env[deploymentbuilder.EnvStepID],
+		action:                env[deploymentbuilder.EnvAction],
+		mentions:              splitMentions(env[deploymentbuilder.EnvOperationMentions]),
+		unit:                  unit,
 	}
 }
 
@@ -137,16 +149,37 @@ func logLinesFromChunk(ctx commandLogContext, stream monitor.Stream, chunk []byt
 			continue
 		}
 		lines = append(lines, &monitor.LogLine{
-			ObservedAt:      timestamppb.Now(),
-			RunId:           ctx.runID,
-			NodeExecutionId: ctx.nodeExecutionID,
-			ComponentId:     ctx.componentID,
-			MachineId:       ctx.machineID,
-			Source:          monitor.Source_SOURCE_COMMAND,
-			Unit:            ctx.unit,
-			Stream:          stream,
-			Line:            part,
+			ObservedAt:            timestamppb.Now(),
+			RunId:                 ctx.runID,
+			NodeExecutionId:       ctx.nodeExecutionID,
+			ParentNodeExecutionId: ctx.parentNodeExecutionID,
+			Phase:                 ctx.phase,
+			StageName:             ctx.stageName,
+			ComponentId:           ctx.componentID,
+			MachineId:             ctx.machineID,
+			StepId:                ctx.stepID,
+			Action:                ctx.action,
+			Mentions:              ctx.mentions,
+			Source:                monitor.Source_SOURCE_COMMAND,
+			Unit:                  ctx.unit,
+			Stream:                stream,
+			Line:                  part,
 		})
 	}
 	return lines
+}
+
+func splitMentions(raw string) []string {
+	if raw == "" {
+		return nil
+	}
+	parts := strings.Split(raw, ",")
+	out := make([]string, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part != "" {
+			out = append(out, part)
+		}
+	}
+	return out
 }

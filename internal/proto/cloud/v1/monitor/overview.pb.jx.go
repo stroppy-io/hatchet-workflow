@@ -68,6 +68,26 @@ func (m *Overview) Encode(e *jx.Encoder) {
 		}
 		e.ArrEnd()
 	}
+	if m.ObservedAt != nil {
+		e.FieldStart("observedAt")
+		jxpb.EncTimestamp(e, m.ObservedAt)
+	}
+	if len(m.DegradedReasons) > 0 {
+		e.FieldStart("degradedReasons")
+		e.ArrStart()
+		for _, v := range m.DegradedReasons {
+			e.Str(v)
+		}
+		e.ArrEnd()
+	}
+	if m.Source != 0 {
+		e.FieldStart("source")
+		if s, ok := ObservationSource_name[int32(m.Source)]; ok {
+			e.Str(s)
+		} else {
+			e.Int32(int32(m.Source))
+		}
+	}
 	e.ObjEnd()
 }
 
@@ -216,6 +236,64 @@ func (m *Overview) Decode(d *jx.Decoder) error {
 				m.Timeline = append(m.Timeline, el)
 				return nil
 			})
+		case "observedAt", "observed_at":
+			if seen["ObservedAt"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["ObservedAt"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.ObservedAt = &timestamppb.Timestamp{}
+			if err := jxpb.DecTimestamp(d, m.ObservedAt); err != nil {
+				return err
+			}
+			return nil
+		case "degradedReasons", "degraded_reasons":
+			if seen["DegradedReasons"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["DegradedReasons"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				v, err := d.Str()
+				if err != nil {
+					return err
+				}
+				m.DegradedReasons = append(m.DegradedReasons, v)
+				return nil
+			})
+		case "source":
+			if seen["Source"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Source"] = true
+			switch d.Next() {
+			case jx.String:
+				s, err := d.Str()
+				if err != nil {
+					return err
+				}
+				n, ok := ObservationSource_value[s]
+				if !ok {
+					return fmt.Errorf("unknown enum value %q", s)
+				}
+				m.Source = ObservationSource(n)
+				return nil
+			case jx.Number:
+				n, err := d.Int32()
+				if err != nil {
+					return err
+				}
+				m.Source = ObservationSource(n)
+				return nil
+			case jx.Null:
+				return d.Null()
+			default:
+				return fmt.Errorf("invalid enum token %s", d.Next())
+			}
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}
@@ -346,6 +424,54 @@ func (m *PipelineNode) Encode(e *jx.Encoder) {
 	if m.Attempt != 0 {
 		e.FieldStart("attempt")
 		e.UInt32(m.Attempt)
+	}
+	if m.Source != 0 {
+		e.FieldStart("source")
+		if s, ok := ObservationSource_name[int32(m.Source)]; ok {
+			e.Str(s)
+		} else {
+			e.Int32(int32(m.Source))
+		}
+	}
+	if m.Order != 0 {
+		e.FieldStart("order")
+		e.UInt32(m.Order)
+	}
+	if m.ParentNodeExecutionId != "" {
+		e.FieldStart("parentNodeExecutionId")
+		e.Str(m.ParentNodeExecutionId)
+	}
+	if m.Phase != "" {
+		e.FieldStart("phase")
+		e.Str(m.Phase)
+	}
+	if m.ComponentId != "" {
+		e.FieldStart("componentId")
+		e.Str(m.ComponentId)
+	}
+	if m.MachineId != "" {
+		e.FieldStart("machineId")
+		e.Str(m.MachineId)
+	}
+	if m.StatusReason != "" {
+		e.FieldStart("statusReason")
+		e.Str(m.StatusReason)
+	}
+	if m.ErrorMessage != "" {
+		e.FieldStart("errorMessage")
+		e.Str(m.ErrorMessage)
+	}
+	if m.Operation != nil {
+		e.FieldStart("operation")
+		m.Operation.Encode(e)
+	}
+	if len(m.Outputs) > 0 {
+		e.FieldStart("outputs")
+		e.ArrStart()
+		for _, v := range m.Outputs {
+			v.Encode(e)
+		}
+		e.ArrEnd()
 	}
 	e.ObjEnd()
 }
@@ -519,6 +645,162 @@ func (m *PipelineNode) Decode(d *jx.Decoder) error {
 			}
 			m.Attempt = v
 			return nil
+		case "source":
+			if seen["Source"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Source"] = true
+			switch d.Next() {
+			case jx.String:
+				s, err := d.Str()
+				if err != nil {
+					return err
+				}
+				n, ok := ObservationSource_value[s]
+				if !ok {
+					return fmt.Errorf("unknown enum value %q", s)
+				}
+				m.Source = ObservationSource(n)
+				return nil
+			case jx.Number:
+				n, err := d.Int32()
+				if err != nil {
+					return err
+				}
+				m.Source = ObservationSource(n)
+				return nil
+			case jx.Null:
+				return d.Null()
+			default:
+				return fmt.Errorf("invalid enum token %s", d.Next())
+			}
+		case "order":
+			if seen["Order"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Order"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint32(d)
+			if err != nil {
+				return err
+			}
+			m.Order = v
+			return nil
+		case "parentNodeExecutionId", "parent_node_execution_id":
+			if seen["ParentNodeExecutionId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["ParentNodeExecutionId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.ParentNodeExecutionId = v
+			return nil
+		case "phase":
+			if seen["Phase"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Phase"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Phase = v
+			return nil
+		case "componentId", "component_id":
+			if seen["ComponentId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["ComponentId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.ComponentId = v
+			return nil
+		case "machineId", "machine_id":
+			if seen["MachineId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["MachineId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.MachineId = v
+			return nil
+		case "statusReason", "status_reason":
+			if seen["StatusReason"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["StatusReason"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.StatusReason = v
+			return nil
+		case "errorMessage", "error_message":
+			if seen["ErrorMessage"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["ErrorMessage"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.ErrorMessage = v
+			return nil
+		case "operation":
+			if seen["Operation"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Operation"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Operation = &PipelineOperation{}
+			if err := m.Operation.Decode(d); err != nil {
+				return err
+			}
+			return nil
+		case "outputs":
+			if seen["Outputs"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Outputs"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &PipelineOutput{}
+				if err := el.Decode(d); err != nil {
+					return err
+				}
+				m.Outputs = append(m.Outputs, el)
+				return nil
+			})
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}
@@ -532,6 +814,788 @@ func (m *PipelineNode) MarshalJSON() ([]byte, error) {
 }
 
 func (m *PipelineNode) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *PipelineOutput) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Kind != 0 {
+		e.FieldStart("kind")
+		if s, ok := OutputKind_name[int32(m.Kind)]; ok {
+			e.Str(s)
+		} else {
+			e.Int32(int32(m.Kind))
+		}
+	}
+	if m.Id != "" {
+		e.FieldStart("id")
+		e.Str(m.Id)
+	}
+	if m.Name != "" {
+		e.FieldStart("name")
+		e.Str(m.Name)
+	}
+	if m.Summary != "" {
+		e.FieldStart("summary")
+		e.Str(m.Summary)
+	}
+	if m.ComponentId != "" {
+		e.FieldStart("componentId")
+		e.Str(m.ComponentId)
+	}
+	if m.MachineId != "" {
+		e.FieldStart("machineId")
+		e.Str(m.MachineId)
+	}
+	if m.StepId != "" {
+		e.FieldStart("stepId")
+		e.Str(m.StepId)
+	}
+	if m.Action != "" {
+		e.FieldStart("action")
+		e.Str(m.Action)
+	}
+	if m.Target != "" {
+		e.FieldStart("target")
+		e.Str(m.Target)
+	}
+	if m.CommandText != "" {
+		e.FieldStart("commandText")
+		e.Str(m.CommandText)
+	}
+	if m.ContentPreview != "" {
+		e.FieldStart("contentPreview")
+		e.Str(m.ContentPreview)
+	}
+	if m.Count != 0 {
+		e.FieldStart("count")
+		e.UInt32(m.Count)
+	}
+	if m.SizeBytes != 0 {
+		e.FieldStart("sizeBytes")
+		jxpb.EncUint64(e, m.SizeBytes)
+	}
+	if len(m.Labels) > 0 {
+		e.FieldStart("labels")
+		e.ObjStart()
+		for k, v := range m.Labels {
+			e.FieldStart(k)
+			e.Str(v)
+		}
+		e.ObjEnd()
+	}
+	e.ObjEnd()
+}
+
+func (m *PipelineOutput) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "kind":
+			if seen["Kind"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Kind"] = true
+			switch d.Next() {
+			case jx.String:
+				s, err := d.Str()
+				if err != nil {
+					return err
+				}
+				n, ok := OutputKind_value[s]
+				if !ok {
+					return fmt.Errorf("unknown enum value %q", s)
+				}
+				m.Kind = OutputKind(n)
+				return nil
+			case jx.Number:
+				n, err := d.Int32()
+				if err != nil {
+					return err
+				}
+				m.Kind = OutputKind(n)
+				return nil
+			case jx.Null:
+				return d.Null()
+			default:
+				return fmt.Errorf("invalid enum token %s", d.Next())
+			}
+		case "id":
+			if seen["Id"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Id"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Id = v
+			return nil
+		case "name":
+			if seen["Name"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Name"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Name = v
+			return nil
+		case "summary":
+			if seen["Summary"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Summary"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Summary = v
+			return nil
+		case "componentId", "component_id":
+			if seen["ComponentId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["ComponentId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.ComponentId = v
+			return nil
+		case "machineId", "machine_id":
+			if seen["MachineId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["MachineId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.MachineId = v
+			return nil
+		case "stepId", "step_id":
+			if seen["StepId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["StepId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.StepId = v
+			return nil
+		case "action":
+			if seen["Action"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Action"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Action = v
+			return nil
+		case "target":
+			if seen["Target"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Target"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Target = v
+			return nil
+		case "commandText", "command_text":
+			if seen["CommandText"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["CommandText"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.CommandText = v
+			return nil
+		case "contentPreview", "content_preview":
+			if seen["ContentPreview"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["ContentPreview"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.ContentPreview = v
+			return nil
+		case "count":
+			if seen["Count"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Count"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint32(d)
+			if err != nil {
+				return err
+			}
+			m.Count = v
+			return nil
+		case "sizeBytes", "size_bytes":
+			if seen["SizeBytes"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["SizeBytes"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint64(d)
+			if err != nil {
+				return err
+			}
+			m.SizeBytes = v
+			return nil
+		case "labels":
+			if seen["Labels"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Labels"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			if m.Labels == nil {
+				m.Labels = make(map[string]string)
+			}
+			return d.Obj(func(d *jx.Decoder, ks string) error {
+				mk := ks
+				var mv string
+				tv, err := d.Str()
+				if err != nil {
+					return err
+				}
+				mv = tv
+				m.Labels[mk] = mv
+				return nil
+			})
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *PipelineOutput) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *PipelineOutput) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *PipelineOperation) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Kind != 0 {
+		e.FieldStart("kind")
+		if s, ok := OperationKind_name[int32(m.Kind)]; ok {
+			e.Str(s)
+		} else {
+			e.Int32(int32(m.Kind))
+		}
+	}
+	if m.StepId != "" {
+		e.FieldStart("stepId")
+		e.Str(m.StepId)
+	}
+	if m.StepOrder != 0 {
+		e.FieldStart("stepOrder")
+		e.UInt32(m.StepOrder)
+	}
+	if m.Target != "" {
+		e.FieldStart("target")
+		e.Str(m.Target)
+	}
+	if m.Summary != "" {
+		e.FieldStart("summary")
+		e.Str(m.Summary)
+	}
+	if len(m.Mentions) > 0 {
+		e.FieldStart("mentions")
+		e.ArrStart()
+		for _, v := range m.Mentions {
+			e.Str(v)
+		}
+		e.ArrEnd()
+	}
+	if len(m.Labels) > 0 {
+		e.FieldStart("labels")
+		e.ObjStart()
+		for k, v := range m.Labels {
+			e.FieldStart(k)
+			e.Str(v)
+		}
+		e.ObjEnd()
+	}
+	if m.Command != nil {
+		e.FieldStart("command")
+		jxpb.EncMessage(e, m.Command)
+	}
+	if m.File != nil {
+		e.FieldStart("file")
+		jxpb.EncMessage(e, m.File)
+	}
+	if m.Dir != nil {
+		e.FieldStart("dir")
+		jxpb.EncMessage(e, m.Dir)
+	}
+	if m.CommandText != "" {
+		e.FieldStart("commandText")
+		e.Str(m.CommandText)
+	}
+	if len(m.Argv) > 0 {
+		e.FieldStart("argv")
+		e.ArrStart()
+		for _, v := range m.Argv {
+			e.Str(v)
+		}
+		e.ArrEnd()
+	}
+	if m.FilePath != "" {
+		e.FieldStart("filePath")
+		e.Str(m.FilePath)
+	}
+	if m.FileSizeBytes != 0 {
+		e.FieldStart("fileSizeBytes")
+		jxpb.EncUint64(e, m.FileSizeBytes)
+	}
+	if m.ContentPreview != "" {
+		e.FieldStart("contentPreview")
+		e.Str(m.ContentPreview)
+	}
+	if m.ResultAvailable != false {
+		e.FieldStart("resultAvailable")
+		e.Bool(m.ResultAvailable)
+	}
+	if m.ExitCode != 0 {
+		e.FieldStart("exitCode")
+		e.Int32(m.ExitCode)
+	}
+	if m.TimedOut != false {
+		e.FieldStart("timedOut")
+		e.Bool(m.TimedOut)
+	}
+	if m.Elapsed != nil {
+		e.FieldStart("elapsed")
+		jxpb.EncDuration(e, m.Elapsed)
+	}
+	if m.StdoutPreview != "" {
+		e.FieldStart("stdoutPreview")
+		e.Str(m.StdoutPreview)
+	}
+	if m.StderrPreview != "" {
+		e.FieldStart("stderrPreview")
+		e.Str(m.StderrPreview)
+	}
+	if m.ResultSummary != "" {
+		e.FieldStart("resultSummary")
+		e.Str(m.ResultSummary)
+	}
+	e.ObjEnd()
+}
+
+func (m *PipelineOperation) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "kind":
+			if seen["Kind"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Kind"] = true
+			switch d.Next() {
+			case jx.String:
+				s, err := d.Str()
+				if err != nil {
+					return err
+				}
+				n, ok := OperationKind_value[s]
+				if !ok {
+					return fmt.Errorf("unknown enum value %q", s)
+				}
+				m.Kind = OperationKind(n)
+				return nil
+			case jx.Number:
+				n, err := d.Int32()
+				if err != nil {
+					return err
+				}
+				m.Kind = OperationKind(n)
+				return nil
+			case jx.Null:
+				return d.Null()
+			default:
+				return fmt.Errorf("invalid enum token %s", d.Next())
+			}
+		case "stepId", "step_id":
+			if seen["StepId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["StepId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.StepId = v
+			return nil
+		case "stepOrder", "step_order":
+			if seen["StepOrder"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["StepOrder"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint32(d)
+			if err != nil {
+				return err
+			}
+			m.StepOrder = v
+			return nil
+		case "target":
+			if seen["Target"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Target"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Target = v
+			return nil
+		case "summary":
+			if seen["Summary"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Summary"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Summary = v
+			return nil
+		case "mentions":
+			if seen["Mentions"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Mentions"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				v, err := d.Str()
+				if err != nil {
+					return err
+				}
+				m.Mentions = append(m.Mentions, v)
+				return nil
+			})
+		case "labels":
+			if seen["Labels"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Labels"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			if m.Labels == nil {
+				m.Labels = make(map[string]string)
+			}
+			return d.Obj(func(d *jx.Decoder, ks string) error {
+				mk := ks
+				var mv string
+				tv, err := d.Str()
+				if err != nil {
+					return err
+				}
+				mv = tv
+				m.Labels[mk] = mv
+				return nil
+			})
+		case "command":
+			if seen["Command"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Command"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Command = &common.Cmd{}
+			if err := jxpb.DecMessage(d, m.Command); err != nil {
+				return err
+			}
+			return nil
+		case "file":
+			if seen["File"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["File"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.File = &common.File{}
+			if err := jxpb.DecMessage(d, m.File); err != nil {
+				return err
+			}
+			return nil
+		case "dir":
+			if seen["Dir"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Dir"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Dir = &common.Dir{}
+			if err := jxpb.DecMessage(d, m.Dir); err != nil {
+				return err
+			}
+			return nil
+		case "commandText", "command_text":
+			if seen["CommandText"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["CommandText"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.CommandText = v
+			return nil
+		case "argv":
+			if seen["Argv"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Argv"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				v, err := d.Str()
+				if err != nil {
+					return err
+				}
+				m.Argv = append(m.Argv, v)
+				return nil
+			})
+		case "filePath", "file_path":
+			if seen["FilePath"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["FilePath"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.FilePath = v
+			return nil
+		case "fileSizeBytes", "file_size_bytes":
+			if seen["FileSizeBytes"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["FileSizeBytes"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint64(d)
+			if err != nil {
+				return err
+			}
+			m.FileSizeBytes = v
+			return nil
+		case "contentPreview", "content_preview":
+			if seen["ContentPreview"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["ContentPreview"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.ContentPreview = v
+			return nil
+		case "resultAvailable", "result_available":
+			if seen["ResultAvailable"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["ResultAvailable"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Bool()
+			if err != nil {
+				return err
+			}
+			m.ResultAvailable = v
+			return nil
+		case "exitCode", "exit_code":
+			if seen["ExitCode"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["ExitCode"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecInt32(d)
+			if err != nil {
+				return err
+			}
+			m.ExitCode = v
+			return nil
+		case "timedOut", "timed_out":
+			if seen["TimedOut"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["TimedOut"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Bool()
+			if err != nil {
+				return err
+			}
+			m.TimedOut = v
+			return nil
+		case "elapsed":
+			if seen["Elapsed"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Elapsed"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Elapsed = &durationpb.Duration{}
+			if err := jxpb.DecDuration(d, m.Elapsed); err != nil {
+				return err
+			}
+			return nil
+		case "stdoutPreview", "stdout_preview":
+			if seen["StdoutPreview"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["StdoutPreview"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.StdoutPreview = v
+			return nil
+		case "stderrPreview", "stderr_preview":
+			if seen["StderrPreview"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["StderrPreview"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.StderrPreview = v
+			return nil
+		case "resultSummary", "result_summary":
+			if seen["ResultSummary"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["ResultSummary"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.ResultSummary = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *PipelineOperation) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *PipelineOperation) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return m.Decode(d)
 }
@@ -577,6 +1641,46 @@ func (m *WorkerInfo) Encode(e *jx.Encoder) {
 			e.Str(s)
 		} else {
 			e.Int32(int32(m.Status))
+		}
+	}
+	if m.Presence != 0 {
+		e.FieldStart("presence")
+		if s, ok := WorkerPresence_name[int32(m.Presence)]; ok {
+			e.Str(s)
+		} else {
+			e.Int32(int32(m.Presence))
+		}
+	}
+	if m.RegisteredAt != nil {
+		e.FieldStart("registeredAt")
+		jxpb.EncTimestamp(e, m.RegisteredAt)
+	}
+	if m.LastSeenAt != nil {
+		e.FieldStart("lastSeenAt")
+		jxpb.EncTimestamp(e, m.LastSeenAt)
+	}
+	if m.HeartbeatIntervalSeconds != 0 {
+		e.FieldStart("heartbeatIntervalSeconds")
+		e.UInt32(m.HeartbeatIntervalSeconds)
+	}
+	if m.AgentVersion != "" {
+		e.FieldStart("agentVersion")
+		e.Str(m.AgentVersion)
+	}
+	if m.RunId != "" {
+		e.FieldStart("runId")
+		e.Str(m.RunId)
+	}
+	if m.StatusReason != "" {
+		e.FieldStart("statusReason")
+		e.Str(m.StatusReason)
+	}
+	if m.Source != 0 {
+		e.FieldStart("source")
+		if s, ok := ObservationSource_name[int32(m.Source)]; ok {
+			e.Str(s)
+		} else {
+			e.Int32(int32(m.Source))
 		}
 	}
 	e.ObjEnd()
@@ -714,6 +1818,146 @@ func (m *WorkerInfo) Decode(d *jx.Decoder) error {
 			default:
 				return fmt.Errorf("invalid enum token %s", d.Next())
 			}
+		case "presence":
+			if seen["Presence"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Presence"] = true
+			switch d.Next() {
+			case jx.String:
+				s, err := d.Str()
+				if err != nil {
+					return err
+				}
+				n, ok := WorkerPresence_value[s]
+				if !ok {
+					return fmt.Errorf("unknown enum value %q", s)
+				}
+				m.Presence = WorkerPresence(n)
+				return nil
+			case jx.Number:
+				n, err := d.Int32()
+				if err != nil {
+					return err
+				}
+				m.Presence = WorkerPresence(n)
+				return nil
+			case jx.Null:
+				return d.Null()
+			default:
+				return fmt.Errorf("invalid enum token %s", d.Next())
+			}
+		case "registeredAt", "registered_at":
+			if seen["RegisteredAt"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["RegisteredAt"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.RegisteredAt = &timestamppb.Timestamp{}
+			if err := jxpb.DecTimestamp(d, m.RegisteredAt); err != nil {
+				return err
+			}
+			return nil
+		case "lastSeenAt", "last_seen_at":
+			if seen["LastSeenAt"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["LastSeenAt"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.LastSeenAt = &timestamppb.Timestamp{}
+			if err := jxpb.DecTimestamp(d, m.LastSeenAt); err != nil {
+				return err
+			}
+			return nil
+		case "heartbeatIntervalSeconds", "heartbeat_interval_seconds":
+			if seen["HeartbeatIntervalSeconds"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["HeartbeatIntervalSeconds"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint32(d)
+			if err != nil {
+				return err
+			}
+			m.HeartbeatIntervalSeconds = v
+			return nil
+		case "agentVersion", "agent_version":
+			if seen["AgentVersion"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["AgentVersion"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.AgentVersion = v
+			return nil
+		case "runId", "run_id":
+			if seen["RunId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["RunId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.RunId = v
+			return nil
+		case "statusReason", "status_reason":
+			if seen["StatusReason"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["StatusReason"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.StatusReason = v
+			return nil
+		case "source":
+			if seen["Source"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Source"] = true
+			switch d.Next() {
+			case jx.String:
+				s, err := d.Str()
+				if err != nil {
+					return err
+				}
+				n, ok := ObservationSource_value[s]
+				if !ok {
+					return fmt.Errorf("unknown enum value %q", s)
+				}
+				m.Source = ObservationSource(n)
+				return nil
+			case jx.Number:
+				n, err := d.Int32()
+				if err != nil {
+					return err
+				}
+				m.Source = ObservationSource(n)
+				return nil
+			case jx.Null:
+				return d.Null()
+			default:
+				return fmt.Errorf("invalid enum token %s", d.Next())
+			}
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}
@@ -765,6 +2009,30 @@ func (m *Event) Encode(e *jx.Encoder) {
 		} else {
 			e.Int32(int32(m.Status))
 		}
+	}
+	if m.Source != 0 {
+		e.FieldStart("source")
+		if s, ok := ObservationSource_name[int32(m.Source)]; ok {
+			e.Str(s)
+		} else {
+			e.Int32(int32(m.Source))
+		}
+	}
+	if m.Severity != 0 {
+		e.FieldStart("severity")
+		if s, ok := EventSeverity_name[int32(m.Severity)]; ok {
+			e.Str(s)
+		} else {
+			e.Int32(int32(m.Severity))
+		}
+	}
+	if m.Sequence != 0 {
+		e.FieldStart("sequence")
+		jxpb.EncUint64(e, m.Sequence)
+	}
+	if m.Detail != "" {
+		e.FieldStart("detail")
+		e.Str(m.Detail)
 	}
 	e.ObjEnd()
 }
@@ -872,6 +2140,92 @@ func (m *Event) Decode(d *jx.Decoder) error {
 			default:
 				return fmt.Errorf("invalid enum token %s", d.Next())
 			}
+		case "source":
+			if seen["Source"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Source"] = true
+			switch d.Next() {
+			case jx.String:
+				s, err := d.Str()
+				if err != nil {
+					return err
+				}
+				n, ok := ObservationSource_value[s]
+				if !ok {
+					return fmt.Errorf("unknown enum value %q", s)
+				}
+				m.Source = ObservationSource(n)
+				return nil
+			case jx.Number:
+				n, err := d.Int32()
+				if err != nil {
+					return err
+				}
+				m.Source = ObservationSource(n)
+				return nil
+			case jx.Null:
+				return d.Null()
+			default:
+				return fmt.Errorf("invalid enum token %s", d.Next())
+			}
+		case "severity":
+			if seen["Severity"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Severity"] = true
+			switch d.Next() {
+			case jx.String:
+				s, err := d.Str()
+				if err != nil {
+					return err
+				}
+				n, ok := EventSeverity_value[s]
+				if !ok {
+					return fmt.Errorf("unknown enum value %q", s)
+				}
+				m.Severity = EventSeverity(n)
+				return nil
+			case jx.Number:
+				n, err := d.Int32()
+				if err != nil {
+					return err
+				}
+				m.Severity = EventSeverity(n)
+				return nil
+			case jx.Null:
+				return d.Null()
+			default:
+				return fmt.Errorf("invalid enum token %s", d.Next())
+			}
+		case "sequence":
+			if seen["Sequence"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Sequence"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint64(d)
+			if err != nil {
+				return err
+			}
+			m.Sequence = v
+			return nil
+		case "detail":
+			if seen["Detail"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Detail"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Detail = v
+			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}

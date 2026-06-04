@@ -36,12 +36,19 @@ func agentCmd() *cobra.Command {
 			if taskQueue == "" {
 				return fmt.Errorf("agent: AGENT_TASK_QUEUE is required")
 			}
+			machineID := os.Getenv("STROPPY_MACHINE_ID")
+			if machineID == "" {
+				machineID = os.Getenv("AGENT_MACHINE_ID")
+			}
+			if machineID == "" {
+				return fmt.Errorf("agent: STROPPY_MACHINE_ID is required")
+			}
 			hostPort := agentGRPCHostPort(serverAddr)
 
 			logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 			logger.Info("starting stroppy agent",
 				"server_addr", serverAddr, "temporal_hostport", hostPort,
-				"namespace", namespace, "task_queue", taskQueue)
+				"namespace", namespace, "task_queue", taskQueue, "machine_id", machineID)
 
 			clientOptions := temporalclient.Options{
 				HostPort:  hostPort,
@@ -65,6 +72,17 @@ func agentCmd() *cobra.Command {
 				agentworker.WithLogSink(agentworker.NewConnectLogSink(serverAddr, agentToken)),
 			)
 			workflowpb.RegisterAgentCommandServiceActivities(w, impl)
+
+			agentCtx, cancelAgent := context.WithCancel(cmd.Context())
+			defer cancelAgent()
+			go agentworker.NewPresenceReporter(
+				serverAddr,
+				agentToken,
+				machineID,
+				os.Getenv("STROPPY_RUN_ID"),
+				os.Getenv("STROPPY_AGENT_VERSION"),
+				logger,
+			).Run(agentCtx)
 
 			return w.Run(temporalworker.InterruptCh())
 		},

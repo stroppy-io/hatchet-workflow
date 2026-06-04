@@ -9,6 +9,7 @@ import (
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
+	workflow "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -71,6 +72,10 @@ func (m *TestRunRecord) Encode(e *jx.Encoder) {
 	if m.DeploymentPlan != nil {
 		e.FieldStart("deploymentPlan")
 		jxpb.EncMessage(e, m.DeploymentPlan)
+	}
+	if m.RuntimeState != nil {
+		e.FieldStart("runtimeState")
+		jxpb.EncMessage(e, m.RuntimeState)
 	}
 	e.ObjEnd()
 }
@@ -255,6 +260,19 @@ func (m *TestRunRecord) Decode(d *jx.Decoder) error {
 			}
 			m.DeploymentPlan = &deployment.DeploymentPlan{}
 			if err := jxpb.DecMessage(d, m.DeploymentPlan); err != nil {
+				return err
+			}
+			return nil
+		case "runtimeState", "runtime_state":
+			if seen["RuntimeState"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["RuntimeState"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.RuntimeState = &workflow.RunState{}
+			if err := jxpb.DecMessage(d, m.RuntimeState); err != nil {
 				return err
 			}
 			return nil

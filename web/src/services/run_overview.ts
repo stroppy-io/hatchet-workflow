@@ -4,11 +4,12 @@
 // shared statusToVM / enum helpers.
 
 import { fromJson, toJson } from "@bufbuild/protobuf";
-import { TestRunRecordSchema } from "@/lib/proto/cloud/v1/models/test_run_pb";
+import { TestRunRecordSchema, type TestRunRecord } from "@/lib/proto/cloud/v1/models/test_run_pb";
 import {
   GetTestRunOverviewResponseSchema,
   GetRunMetricsResponseSchema,
   QueryLogsResponseSchema,
+  TestRunOverviewSnapshotSchema,
   LogScrollDirection,
 } from "@/lib/proto/cloud/v1/api/test_run_overview_pb";
 import { LogCursorSchema, LogLineSchema } from "@/lib/proto/cloud/v1/monitor/logs_pb";
@@ -22,6 +23,61 @@ import { statusToVM, type RunStatus } from "@/services/dashboard";
 import { dbKindLabelFromJson, providerLabelFromJson } from "@/services/enums";
 import { testRunRecordToVM, type RunVM } from "@/services/runs";
 
+/** Provenance of a snapshot field/object (monitor.ObservationSource). */
+export type ObservationSource =
+  | "temporal" | "persisted" | "plan" | "registry" | "synthetic" | "";
+/** Registry-based worker liveness (monitor.WorkerPresence). */
+export type WorkerPresence =
+  | "online" | "stale" | "offline" | "terminated" | "unknown" | "";
+/** Timeline emphasis (monitor.EventSeverity). */
+export type EventSeverity = "info" | "warning" | "error" | "";
+/** Concrete agent action class (monitor.OperationKind). */
+export type OperationKind = "create_dir" | "write_file" | "fetch_file" | "call_cmd" | "";
+/** Structured pipeline output class (monitor.OutputKind). */
+export type OutputKind =
+  | "summary" | "render_artifact" | "deployment_plan" | "command_result" | "file" | "directory" | "";
+
+/** Generic, inspectable projection of an AgentStep (monitor.PipelineOperation). */
+export interface OperationVM {
+  kind: OperationKind;
+  stepId: string;
+  stepOrder: number;
+  target: string;
+  summary: string;
+  mentions: string[];
+  labels: Record<string, string>;
+  commandText: string;
+  argv: string[];
+  filePath: string;
+  fileSizeBytes: number;
+  contentPreview: string;
+  resultAvailable: boolean;
+  exitCode: number;
+  timedOut: boolean;
+  elapsedSec?: number;
+  stdoutPreview: string;
+  stderrPreview: string;
+  resultSummary: string;
+}
+
+/** One structured artifact/result produced by a pipeline stage. */
+export interface PipelineOutputVM {
+  kind: OutputKind;
+  id: string;
+  name: string;
+  summary: string;
+  componentId: string;
+  machineId: string;
+  stepId: string;
+  action: string;
+  target: string;
+  commandText: string;
+  contentPreview: string;
+  count: number;
+  sizeBytes: number;
+  labels: Record<string, string>;
+}
+
 /** One pipeline stage flattened from monitor.PipelineNode (recursive). */
 export interface PipelineNodeVM {
   nodeExecutionId: string;
@@ -32,6 +88,26 @@ export interface PipelineNodeVM {
   durationSec?: number;
   attempt: number;
   children: PipelineNodeVM[];
+  /** Provenance of this node's runtime data. */
+  source: ObservationSource;
+  /** Stable 1-based sibling display/execution order. */
+  order: number;
+  /** Parent stage's node execution id (hierarchy link). */
+  parentNodeExecutionId: string;
+  /** Top-level phase this node belongs to. */
+  phase: string;
+  /** Topology component this node acts on, when any. */
+  componentId: string;
+  /** Machine/agent this node targets, when any. */
+  machineId: string;
+  /** Short machine-readable status explanation. */
+  statusReason: string;
+  /** User-facing error text when this node failed. */
+  errorMessage: string;
+  /** Generic action projection (populated for agent step nodes). */
+  operation?: OperationVM;
+  /** Structured artifacts/results produced by this stage. */
+  outputs: PipelineOutputVM[];
 }
 
 /** One worker flattened from monitor.WorkerInfo. */
@@ -43,6 +119,14 @@ export interface WorkerVM {
   online: boolean;
   status: RunStatus;
   currentNodeExecutionId: string;
+  /** Registry-based liveness — the canonical online state. */
+  presence: WorkerPresence;
+  statusReason: string;
+  source: ObservationSource;
+  registeredAt?: string;
+  lastSeenAt?: string;
+  heartbeatIntervalSeconds: number;
+  agentVersion: string;
 }
 
 /** One timeline event flattened from monitor.Event. */
@@ -52,6 +136,10 @@ export interface TimelineEventVM {
   message: string;
   nodeExecutionId: string;
   status: RunStatus;
+  severity: EventSeverity;
+  source: ObservationSource;
+  sequence: number;
+  detail: string;
 }
 
 /** The Overview snapshot, flattened from api.TestRunOverviewSnapshot. */
@@ -71,6 +159,12 @@ export interface OverviewVM {
   suiteRunId: string;
   /** Staged topology envelope (machines / components / connections), if present. */
   topology?: TopologyJson;
+  /** Server clock time this snapshot was assembled (ISO). */
+  observedAt?: string;
+  /** Explanations of missing/stale parts (e.g. persisted-record fallback). */
+  degradedReasons: string[];
+  /** Primary source of the top-level run status/progress. */
+  source: ObservationSource;
 }
 
 /** One aggregated metric, flattened from monitor.MetricSummary. */
@@ -92,8 +186,14 @@ export interface LogLineVM {
   observedAt: string;
   lineNo: string;
   nodeExecutionId: string;
+  parentNodeExecutionId: string;
+  phase: string;
+  stageName: string;
   componentId: string;
   machineId: string;
+  stepId: string;
+  action: string;
+  mentions: string[];
   unit: string;
   source: string;
   stream: string;
@@ -121,6 +221,13 @@ export interface LogQuery {
   search?: string;
   nodeExecutionIds?: string[];
   componentIds?: string[];
+  nodeIds?: string[];
+  phases?: string[];
+  parentNodeExecutionIds?: string[];
+  stageNames?: string[];
+  stepIds?: string[];
+  actions?: string[];
+  mentions?: string[];
   /** "older" pages back in time, "newer" forward; default newer. */
   direction?: "older" | "newer";
   limit?: number;
@@ -138,7 +245,129 @@ const durSec = (d: { seconds?: string | number; nanos?: number } | string | unde
   return s + (d.nanos ?? 0) / 1e9;
 };
 
-function nodeToVM(n: {
+const obsSource = (s?: string): ObservationSource =>
+  (({
+    OBSERVATION_SOURCE_TEMPORAL_RUN_STATE: "temporal",
+    OBSERVATION_SOURCE_PERSISTED_RECORD: "persisted",
+    OBSERVATION_SOURCE_DEPLOYMENT_PLAN: "plan",
+    OBSERVATION_SOURCE_AGENT_REGISTRY: "registry",
+    OBSERVATION_SOURCE_SYNTHETIC: "synthetic",
+  } as Record<string, ObservationSource>)[s ?? ""] ?? "");
+
+const workerPresence = (s?: string): WorkerPresence =>
+  (({
+    WORKER_PRESENCE_ONLINE: "online",
+    WORKER_PRESENCE_STALE: "stale",
+    WORKER_PRESENCE_OFFLINE: "offline",
+    WORKER_PRESENCE_TERMINATED: "terminated",
+    WORKER_PRESENCE_UNKNOWN: "unknown",
+  } as Record<string, WorkerPresence>)[s ?? ""] ?? "");
+
+const eventSeverity = (s?: string): EventSeverity =>
+  (({
+    EVENT_SEVERITY_INFO: "info",
+    EVENT_SEVERITY_WARNING: "warning",
+    EVENT_SEVERITY_ERROR: "error",
+  } as Record<string, EventSeverity>)[s ?? ""] ?? "");
+
+const operationKind = (s?: string): OperationKind =>
+  (({
+    OPERATION_KIND_CREATE_DIR: "create_dir",
+    OPERATION_KIND_WRITE_FILE: "write_file",
+    OPERATION_KIND_FETCH_FILE: "fetch_file",
+    OPERATION_KIND_CALL_CMD: "call_cmd",
+  } as Record<string, OperationKind>)[s ?? ""] ?? "");
+
+const outputKind = (s?: string): OutputKind =>
+  (({
+    OUTPUT_KIND_SUMMARY: "summary",
+    OUTPUT_KIND_RENDER_ARTIFACT: "render_artifact",
+    OUTPUT_KIND_DEPLOYMENT_PLAN: "deployment_plan",
+    OUTPUT_KIND_COMMAND_RESULT: "command_result",
+    OUTPUT_KIND_FILE: "file",
+    OUTPUT_KIND_DIRECTORY: "directory",
+  } as Record<string, OutputKind>)[s ?? ""] ?? "");
+
+function operationToVM(o?: {
+  kind?: string;
+  stepId?: string;
+  stepOrder?: number;
+  target?: string;
+  summary?: string;
+  mentions?: string[];
+  labels?: Record<string, string>;
+  commandText?: string;
+  argv?: string[];
+  filePath?: string;
+  fileSizeBytes?: string;
+  contentPreview?: string;
+  resultAvailable?: boolean;
+  exitCode?: number;
+  timedOut?: boolean;
+  elapsed?: { seconds?: string | number; nanos?: number } | string;
+  stdoutPreview?: string;
+  stderrPreview?: string;
+  resultSummary?: string;
+}): OperationVM | undefined {
+  if (!o) return undefined;
+  return {
+    kind: operationKind(o.kind),
+    stepId: o.stepId ?? "",
+    stepOrder: o.stepOrder ?? 0,
+    target: o.target ?? "",
+    summary: o.summary ?? "",
+    mentions: o.mentions ?? [],
+    labels: o.labels ?? {},
+    commandText: o.commandText ?? "",
+    argv: o.argv ?? [],
+    filePath: o.filePath ?? "",
+    fileSizeBytes: o.fileSizeBytes ? Number(o.fileSizeBytes) : 0,
+    contentPreview: o.contentPreview ?? "",
+    resultAvailable: o.resultAvailable ?? false,
+    exitCode: o.exitCode ?? 0,
+    timedOut: o.timedOut ?? false,
+    elapsedSec: durSec(o.elapsed),
+    stdoutPreview: o.stdoutPreview ?? "",
+    stderrPreview: o.stderrPreview ?? "",
+    resultSummary: o.resultSummary ?? "",
+  };
+}
+
+function outputToVM(o: {
+  kind?: string;
+  id?: string;
+  name?: string;
+  summary?: string;
+  componentId?: string;
+  machineId?: string;
+  stepId?: string;
+  action?: string;
+  target?: string;
+  commandText?: string;
+  contentPreview?: string;
+  count?: number;
+  sizeBytes?: string;
+  labels?: Record<string, string>;
+}): PipelineOutputVM {
+  return {
+    kind: outputKind(o.kind),
+    id: o.id ?? "",
+    name: o.name ?? "",
+    summary: o.summary ?? "",
+    componentId: o.componentId ?? "",
+    machineId: o.machineId ?? "",
+    stepId: o.stepId ?? "",
+    action: o.action ?? "",
+    target: o.target ?? "",
+    commandText: o.commandText ?? "",
+    contentPreview: o.contentPreview ?? "",
+    count: o.count ?? 0,
+    sizeBytes: o.sizeBytes ? Number(o.sizeBytes) : 0,
+    labels: o.labels ?? {},
+  };
+}
+
+interface PipelineNodeJson {
   nodeExecutionId?: string;
   name?: string;
   status?: string;
@@ -147,7 +376,19 @@ function nodeToVM(n: {
   duration?: string;
   attempt?: number;
   children?: unknown[];
-}): PipelineNodeVM {
+  source?: string;
+  order?: number;
+  parentNodeExecutionId?: string;
+  phase?: string;
+  componentId?: string;
+  machineId?: string;
+  statusReason?: string;
+  errorMessage?: string;
+  operation?: Parameters<typeof operationToVM>[0];
+  outputs?: unknown[];
+}
+
+function nodeToVM(n: PipelineNodeJson): PipelineNodeVM {
   return {
     nodeExecutionId: n.nodeExecutionId ?? "",
     name: n.name ?? "",
@@ -156,7 +397,110 @@ function nodeToVM(n: {
     finishedAt: n.finishedAt,
     durationSec: durSec(n.duration),
     attempt: n.attempt ?? 0,
-    children: (n.children ?? []).map((c) => nodeToVM(c as Parameters<typeof nodeToVM>[0])),
+    children: (n.children ?? []).map((c) => nodeToVM(c as PipelineNodeJson)),
+    source: obsSource(n.source),
+    order: n.order ?? 0,
+    parentNodeExecutionId: n.parentNodeExecutionId ?? "",
+    phase: n.phase ?? "",
+    componentId: n.componentId ?? "",
+    machineId: n.machineId ?? "",
+    statusReason: n.statusReason ?? "",
+    errorMessage: n.errorMessage ?? "",
+    operation: operationToVM(n.operation),
+    outputs: (n.outputs ?? []).map((o) => outputToVM(o as Parameters<typeof outputToVM>[0])),
+  };
+}
+
+/** Shape of api.TestRunOverviewSnapshot after toJson (the fields we read). */
+interface SnapshotJson {
+  topology?: TopologyJson;
+  suiteRun?: { entity?: { id?: string } };
+  overview?: {
+    runId?: string;
+    status?: string;
+    startedAt?: string;
+    finishedAt?: string;
+    duration?: string;
+    progressPct?: number;
+    observedAt?: string;
+    degradedReasons?: string[];
+    source?: string;
+    pipeline?: { roots?: unknown[] };
+    workers?: Array<{
+      id?: string;
+      kind?: string;
+      machineId?: string;
+      host?: string;
+      online?: boolean;
+      status?: string;
+      currentNodeExecutionId?: string;
+      presence?: string;
+      statusReason?: string;
+      source?: string;
+      registeredAt?: string;
+      lastSeenAt?: string;
+      heartbeatIntervalSeconds?: number;
+      agentVersion?: string;
+    }>;
+    timeline?: Array<{
+      at?: string;
+      kind?: string;
+      message?: string;
+      nodeExecutionId?: string;
+      status?: string;
+      severity?: string;
+      source?: string;
+      sequence?: string;
+      detail?: string;
+    }>;
+  };
+}
+
+// Map a snapshot (JSON for overview/topology/suite + raw run record proto for
+// the header) onto OverviewVM. Shared by the one-shot fetch and the live stream.
+function snapshotToVM(snap: SnapshotJson, runRecord: TestRunRecord | undefined, runId: string): OverviewVM {
+  const ov = snap.overview ?? {};
+  return {
+    runId: ov.runId ?? runId,
+    status: statusToVM(ov.status),
+    startedAt: ov.startedAt,
+    finishedAt: ov.finishedAt,
+    durationSec: durSec(ov.duration),
+    progressPct: ov.progressPct ?? 0,
+    pipeline: (ov.pipeline?.roots ?? []).map((n) => nodeToVM(n as PipelineNodeJson)),
+    workers: (ov.workers ?? []).map((w) => ({
+      id: w.id ?? "",
+      kind: w.kind ?? "",
+      machineId: w.machineId ?? "",
+      host: w.host ?? "",
+      online: w.online ?? false,
+      status: statusToVM(w.status),
+      currentNodeExecutionId: w.currentNodeExecutionId ?? "",
+      presence: workerPresence(w.presence),
+      statusReason: w.statusReason ?? "",
+      source: obsSource(w.source),
+      registeredAt: w.registeredAt,
+      lastSeenAt: w.lastSeenAt,
+      heartbeatIntervalSeconds: w.heartbeatIntervalSeconds ?? 0,
+      agentVersion: w.agentVersion ?? "",
+    })),
+    timeline: (ov.timeline ?? []).map((e) => ({
+      at: e.at ?? "",
+      kind: e.kind ?? "",
+      message: e.message ?? "",
+      nodeExecutionId: e.nodeExecutionId ?? "",
+      status: statusToVM(e.status),
+      severity: eventSeverity(e.severity),
+      source: obsSource(e.source),
+      sequence: e.sequence ? Number(e.sequence) : 0,
+      detail: e.detail ?? "",
+    })),
+    run: runRecord ? testRunRecordToVM(runRecord) : undefined,
+    suiteRunId: snap.suiteRun?.entity?.id ?? "",
+    topology: snap.topology,
+    observedAt: ov.observedAt,
+    degradedReasons: ov.degradedReasons ?? [],
+    source: obsSource(ov.source),
   };
 }
 
@@ -166,71 +510,8 @@ export async function getRunOverview(
 ): Promise<OverviewVM> {
   const tenantId = await resolveTenantId(tenantSlug);
   const resp = await testRunOverviewClient.getTestRunOverview({ tenantId, runId });
-  const j = toJson(GetTestRunOverviewResponseSchema, resp) as {
-    snapshot?: {
-      run?: unknown;
-      topology?: TopologyJson;
-      suiteRun?: { entity?: { id?: string } };
-      overview?: {
-        runId?: string;
-        status?: string;
-        startedAt?: string;
-        finishedAt?: string;
-        duration?: string;
-        progressPct?: number;
-        pipeline?: { roots?: unknown[] };
-        workers?: Array<{
-          id?: string;
-          kind?: string;
-          machineId?: string;
-          host?: string;
-          online?: boolean;
-          status?: string;
-          currentNodeExecutionId?: string;
-        }>;
-        timeline?: Array<{
-          at?: string;
-          kind?: string;
-          message?: string;
-          nodeExecutionId?: string;
-          status?: string;
-        }>;
-      };
-    };
-  };
-  const snap = j.snapshot ?? {};
-  const ov = snap.overview ?? {};
-  const run = resp.snapshot?.run
-    ? testRunRecordToVM(resp.snapshot.run)
-    : undefined;
-  return {
-    runId: ov.runId ?? runId,
-    status: statusToVM(ov.status),
-    startedAt: ov.startedAt,
-    finishedAt: ov.finishedAt,
-    durationSec: durSec(ov.duration),
-    progressPct: ov.progressPct ?? 0,
-    pipeline: (ov.pipeline?.roots ?? []).map((n) => nodeToVM(n as Parameters<typeof nodeToVM>[0])),
-    workers: (ov.workers ?? []).map((w) => ({
-      id: w.id ?? "",
-      kind: w.kind ?? "",
-      machineId: w.machineId ?? "",
-      host: w.host ?? "",
-      online: w.online ?? false,
-      status: statusToVM(w.status),
-      currentNodeExecutionId: w.currentNodeExecutionId ?? "",
-    })),
-    timeline: (ov.timeline ?? []).map((e) => ({
-      at: e.at ?? "",
-      kind: e.kind ?? "",
-      message: e.message ?? "",
-      nodeExecutionId: e.nodeExecutionId ?? "",
-      status: statusToVM(e.status),
-    })),
-    run,
-    suiteRunId: snap.suiteRun?.entity?.id ?? "",
-    topology: snap.topology,
-  };
+  const j = toJson(GetTestRunOverviewResponseSchema, resp) as { snapshot?: SnapshotJson };
+  return snapshotToVM(j.snapshot ?? {}, resp.snapshot?.run, runId);
 }
 
 export async function getRunMetrics(
@@ -282,6 +563,13 @@ export async function queryLogs(
       search: query.search ?? "",
       nodeExecutionIds: query.nodeExecutionIds ?? [],
       componentIds: query.componentIds ?? [],
+      nodeIds: query.nodeIds ?? [],
+      phases: query.phases ?? [],
+      parentNodeExecutionIds: query.parentNodeExecutionIds ?? [],
+      stageNames: query.stageNames ?? [],
+      stepIds: query.stepIds ?? [],
+      actions: query.actions ?? [],
+      mentions: query.mentions ?? [],
     },
     direction:
       query.direction === "older"
@@ -309,8 +597,14 @@ type LogLineJson = {
   observedAt?: string;
   lineNo?: string;
   nodeExecutionId?: string;
+  parentNodeExecutionId?: string;
+  phase?: string;
+  stageName?: string;
   componentId?: string;
   machineId?: string;
+  stepId?: string;
+  action?: string;
+  mentions?: string[];
   unit?: string;
   source?: string;
   stream?: string;
@@ -328,8 +622,14 @@ function logLineToVM(l: LogLineJson): LogLineVM {
     observedAt: l.observedAt ?? "",
     lineNo: l.lineNo ?? "",
     nodeExecutionId: l.nodeExecutionId ?? "",
+    parentNodeExecutionId: l.parentNodeExecutionId ?? "",
+    phase: l.phase ?? "",
+    stageName: l.stageName ?? "",
     componentId: l.componentId ?? "",
     machineId: l.machineId ?? "",
+    stepId: l.stepId ?? "",
+    action: l.action ?? "",
+    mentions: l.mentions ?? [],
     unit: l.unit ?? "",
     source: l.source ?? "",
     stream: l.stream ?? "",
@@ -379,6 +679,13 @@ export async function streamLogs(
           search: query.search ?? "",
           nodeExecutionIds: query.nodeExecutionIds ?? [],
           componentIds: query.componentIds ?? [],
+          nodeIds: query.nodeIds ?? [],
+          phases: query.phases ?? [],
+          parentNodeExecutionIds: query.parentNodeExecutionIds ?? [],
+          stageNames: query.stageNames ?? [],
+          stepIds: query.stepIds ?? [],
+          actions: query.actions ?? [],
+          mentions: query.mentions ?? [],
         },
       },
       { signal },
@@ -416,8 +723,11 @@ export async function resolveLogRef(
 }
 
 /**
- * Stream a few overview frames (server stream). Calls the callback per frame
- * until the signal aborts or the stream ends. Optional / best-effort.
+ * Live overview stream (TestRunOverviewService.StreamTestRunOverview, server
+ * stream). Each frame is a FULL TestRunOverviewSnapshot — mapped exactly like
+ * the one-shot fetch so the UI updates in place. The loop ends when the stream
+ * completes or the AbortSignal fires; the caller owns the controller. An
+ * AbortError from signal abort is swallowed (caller-initiated stop).
  */
 export async function streamRunOverview(
   tenantSlug: string,
@@ -426,42 +736,19 @@ export async function streamRunOverview(
   signal?: AbortSignal,
 ): Promise<void> {
   const tenantId = await resolveTenantId(tenantSlug);
-  for await (const snap of testRunOverviewClient.streamTestRunOverview(
-    { tenantId, runId },
-    { signal },
-  )) {
-    const ov = snap.overview;
-    if (!ov) continue;
-    onFrame({
-      runId: ov.runId || runId,
-      status: statusToVM(statusJson(ov.status)),
-      progressPct: ov.progressPct,
-      pipeline: [],
-      workers: [],
-      timeline: [],
-      suiteRunId: "",
-    });
-  }
-}
-
-// status comes back as a numeric proto enum on the live message; convert to the
-// JSON-string form statusToVM expects. We only need a coarse mapping here.
-function statusJson(s: number): string {
-  switch (s) {
-    case 1:
-      return "STATUS_PENDING";
-    case 2:
-      return "STATUS_RUNNING";
-    case 7:
-      return "STATUS_CANCELLING";
-    case 8:
-      return "STATUS_COMPLETED";
-    case 9:
-      return "STATUS_FAILED";
-    case 10:
-      return "STATUS_CANCELLED";
-    default:
-      return "STATUS_UNSPECIFIED";
+  try {
+    for await (const snap of testRunOverviewClient.streamTestRunOverview(
+      { tenantId, runId },
+      { signal },
+    )) {
+      if (signal?.aborted) break;
+      const j = toJson(TestRunOverviewSnapshotSchema, snap) as SnapshotJson;
+      onFrame(snapshotToVM(j, snap.run, runId));
+    }
+  } catch (err) {
+    if (signal?.aborted) return;
+    if (err instanceof Error && err.name === "AbortError") return;
+    throw err;
   }
 }
 

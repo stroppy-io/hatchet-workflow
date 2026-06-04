@@ -19,6 +19,29 @@ const (
 	stageRenderPlan     = "render_deployment_plan"
 	stageExecutePlan    = "execute_deployment_plan"
 	stageWorkload       = "workload"
+	stageTeardown       = "teardown"
+
+	actionCalculateQuotas          = "calculate_quotas"
+	actionAcquireQuotas            = "acquire_quotas"
+	actionAcquireNetwork           = "acquire_network"
+	actionProcessInfrastructure    = "process_infrastructure"
+	actionCommitQuotas             = "commit_quotas"
+	actionCommitNetwork            = "commit_network"
+	actionRenderDockerInput        = "render_docker_input"
+	actionDockerPull               = "docker_pull"
+	actionDockerUp                 = "docker_up"
+	actionDockerDown               = "docker_down"
+	actionRenderTerraformVariables = "render_terraform_variables"
+	actionTerraformApply           = "terraform_apply"
+	actionTerraformDestroy         = "terraform_destroy"
+)
+
+const (
+	stageInfrastructureIndex = iota
+	stageRenderPlanIndex
+	stageExecutePlanIndex
+	stageWorkloadIndex
+	stageTeardownIndex
 )
 
 type testWorkflows struct{}
@@ -36,7 +59,7 @@ func (w *testWorkflows) RunWorkloadWorkflow(_ workflow.Context, input *workflowp
 }
 
 func (w *testWorkflows) TestWorkflow(_ workflow.Context, input *workflowpb.TestWorkflowWorkflowInput) (workflowpb.TestWorkflowWorkflow, error) {
-	return newDomainTestWorkflow(input.Req), nil
+	return newDomainTestWorkflow(input.Req, input.UpdateStage), nil
 }
 
 type installDatabaseWorkflow struct {
@@ -82,26 +105,30 @@ func (w *runWorkloadWorkflow) Execute(workflow.Context) (*workflowpb.RunWorkload
 }
 
 type domainTestWorkflow struct {
-	req   *workflowpb.TestWorkflowRequest
-	state *workflowpb.RunState
+	req          *workflowpb.TestWorkflowRequest
+	stageUpdates *workflowpb.UpdateStageSignal
+	state        *workflowpb.RunState
 }
 
-func newDomainTestWorkflow(req *workflowpb.TestWorkflowRequest) *domainTestWorkflow {
+func newDomainTestWorkflow(req *workflowpb.TestWorkflowRequest, stageUpdates *workflowpb.UpdateStageSignal) *domainTestWorkflow {
 	return &domainTestWorkflow{
-		req: req,
+		req:          req,
+		stageUpdates: stageUpdates,
 		state: &workflowpb.RunState{
 			Status: common.Status_STATUS_PENDING,
 			Stages: []*workflowpb.Stage{
-				stage(stageInfrastructure),
-				stage(stageRenderPlan),
-				stage(stageExecutePlan),
-				stage(stageWorkload),
+				rootStage(stageInfrastructure, 1),
+				rootStage(stageRenderPlan, 2),
+				rootStage(stageExecutePlan, 3),
+				rootStage(stageWorkload, 4),
+				rootStage(stageTeardown, 5),
 			},
 		},
 	}
 }
 
 func (w *domainTestWorkflow) Execute(ctx workflow.Context) (resp *workflowpb.TestWorkflowResponse, err error) {
+	w.listenStageUpdates(ctx)
 	var (
 		infrastructureState *deploymentpb.InfrastructureState
 		deploymentPlan      *deploymentpb.DeploymentPlan
@@ -122,12 +149,37 @@ func (w *domainTestWorkflow) Execute(ctx workflow.Context) (resp *workflowpb.Tes
 			// Run teardown on a disconnected context so it completes even when the
 			// workflow context is already cancelled.
 			tctx, _ := workflow.NewDisconnectedContext(ctx)
+			w.startStage(tctx, stageTeardownIndex)
+			if perr := w.persist(tctx, infrastructureState, deploymentPlan); perr != nil && err == nil {
+				err = fmt.Errorf("persist teardown run state: %w", perr)
+			}
 			if derr := w.teardownInfrastructure(tctx, teardownPlan); derr != nil {
+				w.failStage(tctx, stageTeardownIndex)
 				if err != nil {
 					err = fmt.Errorf("%w; teardown infrastructure: %v", err, derr)
 				} else {
 					err = fmt.Errorf("teardown infrastructure: %w", derr)
 				}
+				if perr := w.persist(tctx, infrastructureState, deploymentPlan); perr != nil {
+					err = fmt.Errorf("%w; persist teardown failed run state: %v", err, perr)
+				}
+			} else {
+				w.completeStage(tctx, stageTeardownIndex)
+				if err == nil {
+					w.state.Status = common.Status_STATUS_COMPLETED
+				}
+				if perr := w.persist(tctx, infrastructureState, deploymentPlan); perr != nil {
+					if err != nil {
+						err = fmt.Errorf("%w; persist teardown completed run state: %v", err, perr)
+					} else {
+						err = fmt.Errorf("persist teardown completed run state: %w", perr)
+					}
+				}
+			}
+		} else if err == nil && w.state.GetStatus() == common.Status_STATUS_RUNNING {
+			w.state.Status = common.Status_STATUS_COMPLETED
+			if perr := w.persist(ctx, infrastructureState, deploymentPlan); perr != nil {
+				err = fmt.Errorf("persist completed run state: %w", perr)
 			}
 		}
 		if err != nil && !infrastructureReady && ((quotaReserved && !quotaCommitted) || (networkReserved && !networkCommitted)) {
@@ -177,20 +229,25 @@ func (w *domainTestWorkflow) Execute(ctx workflow.Context) (resp *workflowpb.Tes
 	infrastructurePlan := proto.Clone(testRun.GetInfrastructurePlan()).(*deploymentpb.InfrastructurePlan)
 	w.state.Status = common.Status_STATUS_RUNNING
 
-	w.startStage(ctx, 0)
+	w.startStage(ctx, stageInfrastructureIndex)
 	if err := w.persist(ctx, infrastructureState, deploymentPlan); err != nil {
 		return nil, err
 	}
+	infrastructureStageID := deploymentbuilder.StageExecutionID(stageInfrastructure)
+	calculateQuotasStage := w.startActionStage(ctx, stageInfrastructure, infrastructureStageID, 1, actionCalculateQuotas)
 	quotaResp, err := workflowpb.CalculateQuotasWorkflowChild(ctx, &workflowpb.CalculateQuotasWorkflowRequest{
 		Plan: infrastructurePlan,
 	})
 	if err != nil {
-		w.failStage(ctx, 0)
+		w.failActionStage(ctx, calculateQuotasStage, err.Error())
+		w.failStage(ctx, stageInfrastructureIndex)
 		if perr := w.persist(ctx, infrastructureState, deploymentPlan); perr != nil {
 			return nil, fmt.Errorf("persist failed run state: %w", perr)
 		}
 		return nil, err
 	}
+	w.completeActionStage(ctx, calculateQuotasStage)
+	acquireQuotasStage := w.startActionStage(ctx, stageInfrastructure, infrastructureStageID, 2, actionAcquireQuotas)
 	acquireResp, err := workflowpb.AcquireQuotasActivity(ctx, &workflowpb.AcquireQuotasActivityRequest{
 		TenantId:      w.req.GetTenantId(),
 		RunId:         testRun.GetId(),
@@ -198,27 +255,32 @@ func (w *domainTestWorkflow) Execute(ctx workflow.Context) (resp *workflowpb.Tes
 		QuotaRequests: quotaResp.GetQuotaRequests(),
 	})
 	if err != nil {
-		w.failStage(ctx, 0)
+		w.failActionStage(ctx, acquireQuotasStage, err.Error())
+		w.failStage(ctx, stageInfrastructureIndex)
 		if perr := w.persist(ctx, infrastructureState, deploymentPlan); perr != nil {
 			return nil, fmt.Errorf("persist failed run state: %w", perr)
 		}
 		return nil, err
 	}
+	w.completeActionStage(ctx, acquireQuotasStage)
 	quotaReserved = len(acquireResp.GetQuotaAllocations()) > 0
 	quotaAllocations = acquireResp.GetQuotaAllocations()
 	if quotaResp.GetPlan().GetProvider() == deploymentpb.Provider_PROVIDER_YANDEX {
+		acquireNetworkStage := w.startActionStage(ctx, stageInfrastructure, infrastructureStageID, 3, actionAcquireNetwork)
 		networkResp, err := workflowpb.AcquireNetworkActivity(ctx, &workflowpb.AcquireNetworkActivityRequest{
 			TenantId: w.req.GetTenantId(),
 			RunId:    testRun.GetId(),
 			Plan:     quotaResp.GetPlan(),
 		})
 		if err != nil {
-			w.failStage(ctx, 0)
+			w.failActionStage(ctx, acquireNetworkStage, err.Error())
+			w.failStage(ctx, stageInfrastructureIndex)
 			if perr := w.persist(ctx, infrastructureState, deploymentPlan); perr != nil {
 				return nil, fmt.Errorf("persist failed run state: %w", perr)
 			}
 			return nil, err
 		}
+		w.completeActionStage(ctx, acquireNetworkStage)
 		if networkResp.GetNetworkCidr() != "" {
 			infrastructurePlan = planWithReservedNetworkCIDR(quotaResp.GetPlan(), networkResp.GetNetworkCidr())
 			networkReserved = true
@@ -231,55 +293,64 @@ func (w *domainTestWorkflow) Execute(ctx workflow.Context) (resp *workflowpb.Tes
 	// post-apply output decode error), so the defer must be able to tear those
 	// down even when this very stage errors out. Idempotent for both providers.
 	teardownPlan = infrastructurePlan
+	processInfrastructureStage := w.startActionStage(ctx, stageInfrastructure, infrastructureStageID, 4, actionProcessInfrastructure)
 	infrastructureResp, err := workflowpb.ProcessInfrastructureWorkflowChild(ctx, &workflowpb.ProcessInfrastructureWorkflowRequest{
 		RunId:          testRun.GetId(),
 		Plan:           infrastructurePlan,
 		AgentBootstrap: w.req.GetAgentBootstrap(),
 	})
 	if err != nil {
-		w.failStage(ctx, 0)
+		w.failActionStage(ctx, processInfrastructureStage, err.Error())
+		w.failStage(ctx, stageInfrastructureIndex)
 		if perr := w.persist(ctx, infrastructureState, deploymentPlan); perr != nil {
 			return nil, fmt.Errorf("persist failed run state: %w", perr)
 		}
 		return nil, err
 	}
+	w.completeActionStage(ctx, processInfrastructureStage)
 	infrastructureState = infrastructureResp.GetState()
 	infrastructureReady = true
+	commitQuotasStage := w.startActionStage(ctx, stageInfrastructure, infrastructureStageID, 5, actionCommitQuotas)
 	commitResp, err := workflowpb.CommitQuotasActivity(ctx, &workflowpb.CommitQuotasActivityRequest{
 		TenantId: w.req.GetTenantId(),
 		RunId:    testRun.GetId(),
 	})
 	if err != nil {
-		w.failStage(ctx, 0)
+		w.failActionStage(ctx, commitQuotasStage, err.Error())
+		w.failStage(ctx, stageInfrastructureIndex)
 		if perr := w.persist(ctx, infrastructureState, deploymentPlan); perr != nil {
 			return nil, fmt.Errorf("persist failed run state: %w", perr)
 		}
 		return nil, err
 	}
+	w.completeActionStage(ctx, commitQuotasStage)
 	if len(commitResp.GetQuotaAllocations()) > 0 {
 		quotaAllocations = commitResp.GetQuotaAllocations()
 	}
 	quotaCommitted = true
 	if networkReserved {
+		commitNetworkStage := w.startActionStage(ctx, stageInfrastructure, infrastructureStageID, 6, actionCommitNetwork)
 		if _, err := workflowpb.CommitNetworkActivity(ctx, &workflowpb.CommitNetworkActivityRequest{
 			TenantId: w.req.GetTenantId(),
 			RunId:    testRun.GetId(),
 		}); err != nil {
-			w.failStage(ctx, 0)
+			w.failActionStage(ctx, commitNetworkStage, err.Error())
+			w.failStage(ctx, stageInfrastructureIndex)
 			if perr := w.persist(ctx, infrastructureState, deploymentPlan); perr != nil {
 				return nil, fmt.Errorf("persist failed run state: %w", perr)
 			}
 			return nil, err
 		}
+		w.completeActionStage(ctx, commitNetworkStage)
 		networkCommitted = true
 	}
 	attachQuotaAllocations(infrastructureState, quotaAllocations)
-	w.completeStage(ctx, 0)
+	w.completeStage(ctx, stageInfrastructureIndex)
 	if err := w.persist(ctx, infrastructureState, deploymentPlan); err != nil {
 		return nil, err
 	}
 
-	w.startStage(ctx, 1)
+	w.startStage(ctx, stageRenderPlanIndex)
 	if err := w.persist(ctx, infrastructureState, deploymentPlan); err != nil {
 		return nil, err
 	}
@@ -293,19 +364,21 @@ func (w *domainTestWorkflow) Execute(ctx workflow.Context) (resp *workflowpb.Tes
 		AgentBootstrap:      w.req.GetAgentBootstrap(),
 	})
 	if err != nil {
-		w.failStage(ctx, 1)
+		w.failStage(ctx, stageRenderPlanIndex)
 		if perr := w.persist(ctx, infrastructureState, deploymentPlan); perr != nil {
 			return nil, fmt.Errorf("persist failed run state: %w", perr)
 		}
 		return nil, err
 	}
 	deploymentPlan = renderResp.GetDeploymentPlan()
-	w.completeStage(ctx, 1)
+	w.state.Stages[stageRenderPlanIndex].Outputs = deploymentbuilder.DeploymentPlanOutputs(deploymentPlan)
+	w.registerDeploymentPlanStages(testRun.GetId(), deploymentPlan)
+	w.completeStage(ctx, stageRenderPlanIndex)
 	if err := w.persist(ctx, infrastructureState, deploymentPlan); err != nil {
 		return nil, err
 	}
 
-	w.startStage(ctx, 2)
+	w.startStage(ctx, stageExecutePlanIndex)
 	if err := w.persist(ctx, infrastructureState, deploymentPlan); err != nil {
 		return nil, err
 	}
@@ -316,19 +389,20 @@ func (w *domainTestWorkflow) Execute(ctx workflow.Context) (resp *workflowpb.Tes
 		AgentBootstrap:      w.req.GetAgentBootstrap(),
 	})
 	if err != nil {
-		w.failStage(ctx, 2)
+		w.failStage(ctx, stageExecutePlanIndex)
 		if perr := w.persist(ctx, infrastructureState, deploymentPlan); perr != nil {
 			return nil, fmt.Errorf("persist failed run state: %w", perr)
 		}
 		return nil, err
 	}
 	deploymentPlan = executeResp.GetDeploymentPlan()
-	w.completeStage(ctx, 2)
+	w.registerDeploymentPlanStages(testRun.GetId(), deploymentPlan)
+	w.completeStage(ctx, stageExecutePlanIndex)
 	if err := w.persist(ctx, infrastructureState, deploymentPlan); err != nil {
 		return nil, err
 	}
 
-	w.startStage(ctx, 3)
+	w.startStage(ctx, stageWorkloadIndex)
 	if err := w.persist(ctx, infrastructureState, deploymentPlan); err != nil {
 		return nil, err
 	}
@@ -337,15 +411,14 @@ func (w *domainTestWorkflow) Execute(ctx workflow.Context) (resp *workflowpb.Tes
 		Workload:            testRun.GetWorkload(),
 		InfrastructureState: infrastructureState,
 	}); err != nil {
-		w.failStage(ctx, 3)
+		w.failStage(ctx, stageWorkloadIndex)
 		if perr := w.persist(ctx, infrastructureState, deploymentPlan); perr != nil {
 			return nil, fmt.Errorf("persist failed run state: %w", perr)
 		}
 		return nil, err
 	}
-	w.completeStage(ctx, 3)
+	w.completeStage(ctx, stageWorkloadIndex)
 
-	w.state.Status = common.Status_STATUS_COMPLETED
 	if err := w.persist(ctx, infrastructureState, deploymentPlan); err != nil {
 		return nil, err
 	}
@@ -357,19 +430,30 @@ func (w *domainTestWorkflow) Execute(ctx workflow.Context) (resp *workflowpb.Tes
 // re-rendered provider input is enough to tear everything down. It is invoked
 // from the workflow's defer for every terminal outcome.
 func (w *domainTestWorkflow) teardownInfrastructure(ctx workflow.Context, plan *deploymentpb.InfrastructurePlan) error {
+	teardownStageID := deploymentbuilder.StageExecutionID(stageTeardown)
 	switch plan.GetProvider() {
 	case deploymentpb.Provider_PROVIDER_DOCKER:
+		renderStage := w.startActionStage(ctx, stageTeardown, teardownStageID, 1, actionRenderDockerInput)
 		input, err := workflowpb.RenderDockerInputWorkflowChild(ctx, &workflowpb.RenderDockerInputWorkflowRequest{
 			RunId:          w.req.GetTestRun().GetId(),
 			Plan:           plan,
 			AgentBootstrap: w.req.GetAgentBootstrap(),
 		})
 		if err != nil {
+			w.failActionStage(ctx, renderStage, err.Error())
 			return err
 		}
+		w.completeActionStage(ctx, renderStage)
+		downStage := w.startActionStage(ctx, stageTeardown, teardownStageID, 2, actionDockerDown)
 		_, err = workflowpb.DockerDownActivity(ctx, input)
+		if err != nil {
+			w.failActionStage(ctx, downStage, err.Error())
+			return err
+		}
+		w.completeActionStage(ctx, downStage)
 		return err
 	case deploymentpb.Provider_PROVIDER_YANDEX:
+		renderStage := w.startActionStage(ctx, stageTeardown, teardownStageID, 1, actionRenderTerraformVariables)
 		input, err := workflowpb.RenderTerraformVariablesWorkflowChild(ctx, &workflowpb.RenderTerraformVariablesWorkflowRequest{
 			RunId:          w.req.GetTestRun().GetId(),
 			Plan:           plan,
@@ -377,9 +461,17 @@ func (w *domainTestWorkflow) teardownInfrastructure(ctx workflow.Context, plan *
 			AgentBootstrap: w.req.GetAgentBootstrap(),
 		})
 		if err != nil {
+			w.failActionStage(ctx, renderStage, err.Error())
 			return err
 		}
+		w.completeActionStage(ctx, renderStage)
+		destroyStage := w.startActionStage(ctx, stageTeardown, teardownStageID, 2, actionTerraformDestroy)
 		_, err = workflowpb.TerraformDestroyActivity(ctx, input)
+		if err != nil {
+			w.failActionStage(ctx, destroyStage, err.Error())
+			return err
+		}
+		w.completeActionStage(ctx, destroyStage)
 		return err
 	default:
 		return nil
@@ -411,20 +503,114 @@ func (w *domainTestWorkflow) GetRunState() (*workflowpb.RunState, error) {
 	return proto.Clone(w.state).(*workflowpb.RunState), nil
 }
 
+func (w *domainTestWorkflow) listenStageUpdates(ctx workflow.Context) {
+	if w.stageUpdates == nil {
+		return
+	}
+	workflow.Go(ctx, func(ctx workflow.Context) {
+		for {
+			update, more := w.stageUpdates.Receive(ctx)
+			if !more {
+				return
+			}
+			w.applyStageUpdate(update.GetStage())
+		}
+	})
+}
+
+func (w *domainTestWorkflow) registerDeploymentPlanStages(runID string, plan *deploymentpb.DeploymentPlan) {
+	if plan == nil {
+		return
+	}
+	deploymentbuilder.StampDeploymentPlanExecutionContext(runID, plan)
+	sortComponentExecution(plan.GetComponents())
+	parentStatus := w.state.GetStages()[stageExecutePlanIndex].GetStatus()
+	for componentIndex, component := range plan.GetComponents() {
+		if component == nil {
+			continue
+		}
+		componentStatus := component.GetStatus()
+		if componentStatus == common.Status_STATUS_UNSPECIFIED && parentStatus == common.Status_STATUS_COMPLETED {
+			componentStatus = common.Status_STATUS_DEPLOYED
+		}
+		w.applyStageUpdate(componentStage(component, uint32(componentIndex+1), componentStatus, nil, nil, ""))
+		sortAgentSteps(component)
+		for stepIndex, step := range component.GetSteps() {
+			if step == nil {
+				continue
+			}
+			stepStatus := step.GetStatus()
+			if stepStatus == common.Status_STATUS_UNSPECIFIED && componentStatus == common.Status_STATUS_DEPLOYED {
+				stepStatus = common.Status_STATUS_DEPLOYED
+			}
+			w.applyStageUpdate(agentStepStage(component, step, uint32(stepIndex+1), stepStatus, nil, nil, ""))
+		}
+	}
+}
+
+func (w *domainTestWorkflow) applyStageUpdate(stage *workflowpb.Stage) {
+	if stage == nil || stage.GetNodeExecutionId() == "" {
+		return
+	}
+	incoming := proto.Clone(stage).(*workflowpb.Stage)
+	if incoming.GetAttempt() == 0 {
+		incoming.Attempt = 1
+	}
+	if incoming.GetStatus() == common.Status_STATUS_UNSPECIFIED {
+		incoming.Status = common.Status_STATUS_PENDING
+	}
+	if incoming.GetStatusReason() == "" {
+		incoming.StatusReason = stageStatusReason(incoming.GetStatus())
+	}
+	for _, existing := range w.state.GetStages() {
+		if existing.GetNodeExecutionId() != incoming.GetNodeExecutionId() {
+			continue
+		}
+		mergeStage(existing, incoming)
+		sortRunStages(w.state.Stages)
+		return
+	}
+	w.state.Stages = append(w.state.Stages, incoming)
+	sortRunStages(w.state.Stages)
+}
+
+func (w *domainTestWorkflow) startActionStage(ctx workflow.Context, phase, parentNodeExecutionID string, order uint32, path ...string) *workflowpb.Stage {
+	stage := temporalActionStage(phase, parentNodeExecutionID, order, common.Status_STATUS_RUNNING, timestamppb.New(workflow.Now(ctx)), nil, "", path...)
+	w.applyStageUpdate(stage)
+	return stage
+}
+
+func (w *domainTestWorkflow) completeActionStage(ctx workflow.Context, stage *workflowpb.Stage) {
+	w.finishActionStage(ctx, stage, common.Status_STATUS_COMPLETED, "")
+}
+
+func (w *domainTestWorkflow) failActionStage(ctx workflow.Context, stage *workflowpb.Stage, errText string) {
+	w.finishActionStage(ctx, stage, common.Status_STATUS_FAILED, errText)
+}
+
+func (w *domainTestWorkflow) finishActionStage(ctx workflow.Context, stage *workflowpb.Stage, status common.Status, errText string) {
+	if stage == nil {
+		return
+	}
+	update := proto.Clone(stage).(*workflowpb.Stage)
+	update.Status = status
+	update.FinishedAt = timestamppb.New(workflow.Now(ctx))
+	update.StatusReason = stageStatusReason(status)
+	update.ErrorMessage = errText
+	w.applyStageUpdate(update)
+}
+
 func (w *domainTestWorkflow) startStage(ctx workflow.Context, index int) {
-	w.state.Stages[index].Status = common.Status_STATUS_RUNNING
-	w.state.Stages[index].StartedAt = timestamppb.New(workflow.Now(ctx))
+	startRootStage(ctx, w.state.Stages[index])
 }
 
 func (w *domainTestWorkflow) completeStage(ctx workflow.Context, index int) {
-	w.state.Stages[index].Status = common.Status_STATUS_COMPLETED
-	w.state.Stages[index].FinishedAt = timestamppb.New(workflow.Now(ctx))
+	completeRootStage(ctx, w.state.Stages[index])
 }
 
 func (w *domainTestWorkflow) failStage(ctx workflow.Context, index int) {
 	w.state.Status = common.Status_STATUS_FAILED
-	w.state.Stages[index].Status = common.Status_STATUS_FAILED
-	w.state.Stages[index].FinishedAt = timestamppb.New(workflow.Now(ctx))
+	failRootStage(ctx, w.state.Stages[index])
 }
 
 func (w *domainTestWorkflow) fail(ctx workflow.Context) {
@@ -434,6 +620,7 @@ func (w *domainTestWorkflow) fail(ctx workflow.Context) {
 		if stage.GetStatus() == common.Status_STATUS_PENDING || stage.GetStatus() == common.Status_STATUS_RUNNING {
 			stage.Status = common.Status_STATUS_FAILED
 			stage.FinishedAt = now
+			stage.StatusReason = stageStatusReason(stage.GetStatus())
 			return
 		}
 	}
@@ -444,7 +631,7 @@ func (w *domainTestWorkflow) cancel(ctx workflow.Context) {
 	now := timestamppb.New(workflow.Now(ctx))
 	for _, stage := range w.state.GetStages() {
 		if stage.GetStatus() == common.Status_STATUS_RUNNING || stage.GetStatus() == common.Status_STATUS_PENDING {
-			stage.Status = common.Status_STATUS_CANCELLED
+			cancelRootStage(ctx, stage)
 			stage.FinishedAt = now
 			return
 		}
@@ -455,11 +642,41 @@ func (w *domainTestWorkflow) persist(ctx workflow.Context, infrastructureState *
 	return persistRunState(ctx, w.req.GetTestRun().GetId(), w.state, infrastructureState, deploymentPlan)
 }
 
-func stage(name string) *workflowpb.Stage {
-	return &workflowpb.Stage{
-		NodeExecutionId: deploymentbuilder.StageExecutionID(name),
-		Name:            name,
-		Status:          common.Status_STATUS_PENDING,
-		Attempt:         1,
+func mergeStage(existing, incoming *workflowpb.Stage) {
+	existing.Name = firstNonEmpty(incoming.GetName(), existing.GetName())
+	existing.Status = incoming.GetStatus()
+	if incoming.GetStartedAt() != nil {
+		existing.StartedAt = incoming.GetStartedAt()
 	}
+	if incoming.GetFinishedAt() != nil {
+		existing.FinishedAt = incoming.GetFinishedAt()
+	}
+	if incoming.GetAttempt() != 0 {
+		existing.Attempt = incoming.GetAttempt()
+	}
+	if incoming.GetOrder() != 0 {
+		existing.Order = incoming.GetOrder()
+	}
+	existing.ParentNodeExecutionId = firstNonEmpty(incoming.GetParentNodeExecutionId(), existing.GetParentNodeExecutionId())
+	existing.Phase = firstNonEmpty(incoming.GetPhase(), existing.GetPhase())
+	existing.ComponentId = firstNonEmpty(incoming.GetComponentId(), existing.GetComponentId())
+	existing.MachineId = firstNonEmpty(incoming.GetMachineId(), existing.GetMachineId())
+	if incoming.GetWorker() != nil {
+		existing.Worker = incoming.GetWorker()
+	}
+	existing.StatusReason = firstNonEmpty(incoming.GetStatusReason(), existing.GetStatusReason())
+	existing.ErrorMessage = firstNonEmpty(incoming.GetErrorMessage(), existing.GetErrorMessage())
+	if incoming.GetOperation() != nil {
+		existing.Operation = incoming.GetOperation()
+	}
+	if len(incoming.GetOutputs()) > 0 {
+		existing.Outputs = incoming.GetOutputs()
+	}
+}
+
+func firstNonEmpty(left, right string) string {
+	if left != "" {
+		return left
+	}
+	return right
 }

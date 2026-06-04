@@ -1631,6 +1631,16 @@ go_name: InTenantRating</pre></td>
 json_name: infrastructureState
 go_name: InfrastructureState</pre></td>
 </tr><tr>
+<td>runtime_state</td>
+<td><a href="../workflow/README.md#cloud-v1-workflow-runstate">cloud.v1.workflow.RunState</a></td>
+<td><pre>
+//runtime_state is the last TestWorkflow RunState persisted by the
+//workflow itself. Overview uses it as the durable projection when the
+//Temporal workflow is already closed and no longer queryable.<br>
+
+json_name: runtimeState
+go_name: RuntimeState</pre></td>
+</tr><tr>
 <td>spec</td>
 <td><a href="../domain/README.md#cloud-v1-domain-testrun">cloud.v1.domain.TestRun</a></td>
 <td><pre>

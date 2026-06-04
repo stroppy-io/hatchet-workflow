@@ -74,6 +74,9 @@ func TestPersistRunStateUpdatesRecordAndSuiteAggregate(t *testing.T) {
 	if run.GetDeploymentPlan().GetLabels()["source"] != "test" {
 		t.Fatal("deployment plan was not persisted")
 	}
+	if got := len(run.GetRuntimeState().GetStages()); got != 2 {
+		t.Fatalf("runtime_state stages = %d, want 2", got)
+	}
 	if run.GetEntity().GetTimings().GetUpdatedAt() == nil {
 		t.Fatal("run updated_at was not touched")
 	}

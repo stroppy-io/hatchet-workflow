@@ -129,6 +129,12 @@ func (l *SuiteRunLauncher) Launch(ctx context.Context, run *models.SuiteRunRecor
 			return nil, fmt.Errorf("cell %q: %w", cellLabel(cell), err)
 		}
 
+		cfg, err := l.runConfig(ctx, runTenantID(run), spec.GetProvider(), testRun)
+		if err != nil {
+			return nil, err
+		}
+		configs = append(configs, cfg)
+
 		childID := testRun.GetId()
 		childRec := &models.TestRunRecord{
 			Entity: &commonpb.Entity{
@@ -159,12 +165,6 @@ func (l *SuiteRunLauncher) Launch(ctx context.Context, run *models.SuiteRunRecor
 			Status:      commonpb.Status_STATUS_PENDING,
 		})
 		dbKinds = append(dbKinds, testRun.GetDatabase().GetKind())
-
-		cfg, err := l.runConfig(ctx, runTenantID(run), spec.GetProvider(), testRun)
-		if err != nil {
-			return nil, err
-		}
-		configs = append(configs, cfg)
 	}
 
 	run.Children = children
@@ -315,6 +315,7 @@ func (l *SuiteRunLauncher) runConfig(ctx context.Context, tenantID string, provi
 			return nil, err
 		}
 		cfg.AgentBootstrap = bootstrap
+		runbuilder.StampMonitorLabels(cfg.GetTopologySpec(), testRun.GetId(), bootstrap)
 	}
 	if err := cfg.Validate(); err != nil {
 		return nil, err

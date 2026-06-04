@@ -166,10 +166,12 @@ export function statusToVM(s: string | undefined): RunStatus {
     case "STATUS_RUNNING":
     case "STATUS_ALLOCATED":
     case "STATUS_DEPLOYMENT":
+    case "STATUS_RETRY_WAIT":
       return "running";
     case "STATUS_CANCELLING":
       return "cancelling";
     case "STATUS_COMPLETED":
+    case "STATUS_DEPLOYED":
       return "completed";
     case "STATUS_FAILED":
       return "failed";

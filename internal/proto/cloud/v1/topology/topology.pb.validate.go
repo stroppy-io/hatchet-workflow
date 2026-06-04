@@ -17,6 +17,8 @@ import (
 	"unicode/utf8"
 
 	"google.golang.org/protobuf/types/known/anypb"
+
+	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 )
 
 // ensure the imports are used
@@ -33,6 +35,8 @@ var (
 	_ = (*mail.Address)(nil)
 	_ = anypb.Any{}
 	_ = sort.Sort
+
+	_ = common.Status(0)
 )
 
 // Validate checks the field values on Node with the rules defined in the proto
@@ -519,6 +523,675 @@ var _ interface {
 	ErrorName() string
 } = TopologySpecValidationError{}
 
+// Validate checks the field values on RuntimeNode with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *RuntimeNode) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RuntimeNode with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in RuntimeNodeMultiError, or
+// nil if none found.
+func (m *RuntimeNode) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RuntimeNode) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetId()); l < 1 || l > 256 {
+		err := RuntimeNodeValidationError{
+			field:  "Id",
+			reason: "value length must be between 1 and 256 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := RuntimeNode_Kind_name[int32(m.GetKind())]; !ok {
+		err := RuntimeNodeValidationError{
+			field:  "Kind",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetLabel()) > 256 {
+		err := RuntimeNodeValidationError{
+			field:  "Label",
+			reason: "value length must be at most 256 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetEngine()) > 128 {
+		err := RuntimeNodeValidationError{
+			field:  "Engine",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetRole()) > 128 {
+		err := RuntimeNodeValidationError{
+			field:  "Role",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetComponentId()) > 128 {
+		err := RuntimeNodeValidationError{
+			field:  "ComponentId",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetMachineId()) > 128 {
+		err := RuntimeNodeValidationError{
+			field:  "MachineId",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetNodeExecutionId()) > 256 {
+		err := RuntimeNodeValidationError{
+			field:  "NodeExecutionId",
+			reason: "value length must be at most 256 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := common.Status_name[int32(m.GetStatus())]; !ok {
+		err := RuntimeNodeValidationError{
+			field:  "Status",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetStatusReason()) > 256 {
+		err := RuntimeNodeValidationError{
+			field:  "StatusReason",
+			reason: "value length must be at most 256 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetAddress()) > 512 {
+		err := RuntimeNodeValidationError{
+			field:  "Address",
+			reason: "value length must be at most 512 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetStartedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RuntimeNodeValidationError{
+					field:  "StartedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RuntimeNodeValidationError{
+					field:  "StartedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetStartedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RuntimeNodeValidationError{
+				field:  "StartedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetFinishedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RuntimeNodeValidationError{
+					field:  "FinishedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RuntimeNodeValidationError{
+					field:  "FinishedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetFinishedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RuntimeNodeValidationError{
+				field:  "FinishedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(m.GetLabels()) > 128 {
+		err := RuntimeNodeValidationError{
+			field:  "Labels",
+			reason: "value must contain no more than 128 pair(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetTags()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RuntimeNodeValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RuntimeNodeValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTags()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RuntimeNodeValidationError{
+				field:  "Tags",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.Port != nil {
+
+		if m.GetPort() > 65535 {
+			err := RuntimeNodeValidationError{
+				field:  "Port",
+				reason: "value must be less than or equal to 65535",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return RuntimeNodeMultiError(errors)
+	}
+
+	return nil
+}
+
+// RuntimeNodeMultiError is an error wrapping multiple validation errors
+// returned by RuntimeNode.ValidateAll() if the designated constraints aren't met.
+type RuntimeNodeMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RuntimeNodeMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RuntimeNodeMultiError) AllErrors() []error { return m }
+
+// RuntimeNodeValidationError is the validation error returned by
+// RuntimeNode.Validate if the designated constraints aren't met.
+type RuntimeNodeValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e RuntimeNodeValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e RuntimeNodeValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e RuntimeNodeValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e RuntimeNodeValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e RuntimeNodeValidationError) ErrorName() string { return "RuntimeNodeValidationError" }
+
+// Error satisfies the builtin error interface
+func (e RuntimeNodeValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRuntimeNode.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = RuntimeNodeValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = RuntimeNodeValidationError{}
+
+// Validate checks the field values on RuntimeConnection with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *RuntimeConnection) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RuntimeConnection with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// RuntimeConnectionMultiError, or nil if none found.
+func (m *RuntimeConnection) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RuntimeConnection) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetId()); l < 1 || l > 256 {
+		err := RuntimeConnectionValidationError{
+			field:  "Id",
+			reason: "value length must be between 1 and 256 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetFromNodeId()); l < 1 || l > 256 {
+		err := RuntimeConnectionValidationError{
+			field:  "FromNodeId",
+			reason: "value length must be between 1 and 256 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetToNodeId()); l < 1 || l > 256 {
+		err := RuntimeConnectionValidationError{
+			field:  "ToNodeId",
+			reason: "value length must be between 1 and 256 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := Connection_Kind_name[int32(m.GetKind())]; !ok {
+		err := RuntimeConnectionValidationError{
+			field:  "Kind",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := Connection_Protocol_name[int32(m.GetProtocol())]; !ok {
+		err := RuntimeConnectionValidationError{
+			field:  "Protocol",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := Connection_Mode_name[int32(m.GetMode())]; !ok {
+		err := RuntimeConnectionValidationError{
+			field:  "Mode",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetEndpointName()) > 256 {
+		err := RuntimeConnectionValidationError{
+			field:  "EndpointName",
+			reason: "value length must be at most 256 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetPhase()) > 128 {
+		err := RuntimeConnectionValidationError{
+			field:  "Phase",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetNodeExecutionId()) > 256 {
+		err := RuntimeConnectionValidationError{
+			field:  "NodeExecutionId",
+			reason: "value length must be at most 256 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := common.Status_name[int32(m.GetStatus())]; !ok {
+		err := RuntimeConnectionValidationError{
+			field:  "Status",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetStatusReason()) > 256 {
+		err := RuntimeConnectionValidationError{
+			field:  "StatusReason",
+			reason: "value length must be at most 256 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetStartedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RuntimeConnectionValidationError{
+					field:  "StartedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RuntimeConnectionValidationError{
+					field:  "StartedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetStartedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RuntimeConnectionValidationError{
+				field:  "StartedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetFinishedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RuntimeConnectionValidationError{
+					field:  "FinishedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RuntimeConnectionValidationError{
+					field:  "FinishedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetFinishedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RuntimeConnectionValidationError{
+				field:  "FinishedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(m.GetLabels()) > 128 {
+		err := RuntimeConnectionValidationError{
+			field:  "Labels",
+			reason: "value must contain no more than 128 pair(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetTags()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RuntimeConnectionValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RuntimeConnectionValidationError{
+					field:  "Tags",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTags()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RuntimeConnectionValidationError{
+				field:  "Tags",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.Port != nil {
+
+		if m.GetPort() > 65535 {
+			err := RuntimeConnectionValidationError{
+				field:  "Port",
+				reason: "value must be less than or equal to 65535",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return RuntimeConnectionMultiError(errors)
+	}
+
+	return nil
+}
+
+// RuntimeConnectionMultiError is an error wrapping multiple validation errors
+// returned by RuntimeConnection.ValidateAll() if the designated constraints
+// aren't met.
+type RuntimeConnectionMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RuntimeConnectionMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RuntimeConnectionMultiError) AllErrors() []error { return m }
+
+// RuntimeConnectionValidationError is the validation error returned by
+// RuntimeConnection.Validate if the designated constraints aren't met.
+type RuntimeConnectionValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e RuntimeConnectionValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e RuntimeConnectionValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e RuntimeConnectionValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e RuntimeConnectionValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e RuntimeConnectionValidationError) ErrorName() string {
+	return "RuntimeConnectionValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e RuntimeConnectionValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRuntimeConnection.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = RuntimeConnectionValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = RuntimeConnectionValidationError{}
+
 // Validate checks the field values on Topology with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -717,6 +1390,96 @@ func (m *Topology) validate(all bool) error {
 				cause:  err,
 			}
 		}
+	}
+
+	if len(m.GetRuntimeNodes()) > 4096 {
+		err := TopologyValidationError{
+			field:  "RuntimeNodes",
+			reason: "value must contain no more than 4096 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetRuntimeNodes() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, TopologyValidationError{
+						field:  fmt.Sprintf("RuntimeNodes[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, TopologyValidationError{
+						field:  fmt.Sprintf("RuntimeNodes[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return TopologyValidationError{
+					field:  fmt.Sprintf("RuntimeNodes[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(m.GetRuntimeConnections()) > 8192 {
+		err := TopologyValidationError{
+			field:  "RuntimeConnections",
+			reason: "value must contain no more than 8192 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetRuntimeConnections() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, TopologyValidationError{
+						field:  fmt.Sprintf("RuntimeConnections[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, TopologyValidationError{
+						field:  fmt.Sprintf("RuntimeConnections[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return TopologyValidationError{
+					field:  fmt.Sprintf("RuntimeConnections[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
 	}
 
 	if len(errors) > 0 {

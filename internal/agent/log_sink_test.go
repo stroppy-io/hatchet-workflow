@@ -9,11 +9,16 @@ import (
 
 func TestLogLinesFromChunkUsesDeploymentExecutionContext(t *testing.T) {
 	ctx := commandLogContextFromEnv(map[string]string{
-		deploymentbuilder.EnvRunID:           "run-1",
-		deploymentbuilder.EnvNodeExecutionID: "deploy-step-1",
-		deploymentbuilder.EnvComponentID:     "postgres-master",
-		deploymentbuilder.EnvNodeID:          "node-1",
-		deploymentbuilder.EnvAction:          "call_cmd",
+		deploymentbuilder.EnvRunID:                 "run-1",
+		deploymentbuilder.EnvNodeExecutionID:       "deploy-step-1",
+		deploymentbuilder.EnvParentNodeExecutionID: "component/postgres-master",
+		deploymentbuilder.EnvPhase:                 "execute_deployment_plan",
+		deploymentbuilder.EnvStageName:             "call_cmd: install postgres",
+		deploymentbuilder.EnvComponentID:           "postgres-master",
+		deploymentbuilder.EnvNodeID:                "node-1",
+		deploymentbuilder.EnvStepID:                "120_install",
+		deploymentbuilder.EnvAction:                "call_cmd",
+		deploymentbuilder.EnvOperationMentions:     "postgres,pgdg",
 	})
 
 	lines := logLinesFromChunk(ctx, monitor.Stream_STREAM_STDERR, []byte("one\ntwo\n"))
@@ -30,6 +35,15 @@ func TestLogLinesFromChunkUsesDeploymentExecutionContext(t *testing.T) {
 		if got, want := line.GetNodeExecutionId(), "deploy-step-1"; got != want {
 			t.Fatalf("line %d node_execution_id = %q, want %q", i, got, want)
 		}
+		if got, want := line.GetParentNodeExecutionId(), "component/postgres-master"; got != want {
+			t.Fatalf("line %d parent_node_execution_id = %q, want %q", i, got, want)
+		}
+		if got, want := line.GetPhase(), "execute_deployment_plan"; got != want {
+			t.Fatalf("line %d phase = %q, want %q", i, got, want)
+		}
+		if got, want := line.GetStageName(), "call_cmd: install postgres"; got != want {
+			t.Fatalf("line %d stage_name = %q, want %q", i, got, want)
+		}
 		if got, want := line.GetComponentId(), "postgres-master"; got != want {
 			t.Fatalf("line %d component_id = %q, want %q", i, got, want)
 		}
@@ -38,6 +52,15 @@ func TestLogLinesFromChunkUsesDeploymentExecutionContext(t *testing.T) {
 		}
 		if got, want := line.GetUnit(), "call_cmd"; got != want {
 			t.Fatalf("line %d unit = %q, want %q", i, got, want)
+		}
+		if got, want := line.GetStepId(), "120_install"; got != want {
+			t.Fatalf("line %d step_id = %q, want %q", i, got, want)
+		}
+		if got, want := line.GetAction(), "call_cmd"; got != want {
+			t.Fatalf("line %d action = %q, want %q", i, got, want)
+		}
+		if got, want := line.GetMentions(), []string{"postgres", "pgdg"}; len(got) != len(want) || got[0] != want[0] || got[1] != want[1] {
+			t.Fatalf("line %d mentions = %v, want %v", i, got, want)
 		}
 		if got, want := line.GetStream(), monitor.Stream_STREAM_STDERR; got != want {
 			t.Fatalf("line %d stream = %s, want %s", i, got, want)

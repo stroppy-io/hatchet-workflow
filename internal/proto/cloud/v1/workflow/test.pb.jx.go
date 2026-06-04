@@ -9,6 +9,7 @@ import (
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
+	monitor "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
 	topology "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -253,6 +254,50 @@ func (m *Stage) Encode(e *jx.Encoder) {
 		e.FieldStart("attempt")
 		e.UInt32(m.Attempt)
 	}
+	if m.Order != 0 {
+		e.FieldStart("order")
+		e.UInt32(m.Order)
+	}
+	if m.ParentNodeExecutionId != "" {
+		e.FieldStart("parentNodeExecutionId")
+		e.Str(m.ParentNodeExecutionId)
+	}
+	if m.Phase != "" {
+		e.FieldStart("phase")
+		e.Str(m.Phase)
+	}
+	if m.ComponentId != "" {
+		e.FieldStart("componentId")
+		e.Str(m.ComponentId)
+	}
+	if m.MachineId != "" {
+		e.FieldStart("machineId")
+		e.Str(m.MachineId)
+	}
+	if m.Worker != nil {
+		e.FieldStart("worker")
+		jxpb.EncMessage(e, m.Worker)
+	}
+	if m.StatusReason != "" {
+		e.FieldStart("statusReason")
+		e.Str(m.StatusReason)
+	}
+	if m.ErrorMessage != "" {
+		e.FieldStart("errorMessage")
+		e.Str(m.ErrorMessage)
+	}
+	if m.Operation != nil {
+		e.FieldStart("operation")
+		jxpb.EncMessage(e, m.Operation)
+	}
+	if len(m.Outputs) > 0 {
+		e.FieldStart("outputs")
+		e.ArrStart()
+		for _, v := range m.Outputs {
+			jxpb.EncMessage(e, v)
+		}
+		e.ArrEnd()
+	}
 	e.ObjEnd()
 }
 
@@ -357,6 +402,146 @@ func (m *Stage) Decode(d *jx.Decoder) error {
 			}
 			m.Attempt = v
 			return nil
+		case "order":
+			if seen["Order"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Order"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint32(d)
+			if err != nil {
+				return err
+			}
+			m.Order = v
+			return nil
+		case "parentNodeExecutionId", "parent_node_execution_id":
+			if seen["ParentNodeExecutionId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["ParentNodeExecutionId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.ParentNodeExecutionId = v
+			return nil
+		case "phase":
+			if seen["Phase"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Phase"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Phase = v
+			return nil
+		case "componentId", "component_id":
+			if seen["ComponentId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["ComponentId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.ComponentId = v
+			return nil
+		case "machineId", "machine_id":
+			if seen["MachineId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["MachineId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.MachineId = v
+			return nil
+		case "worker":
+			if seen["Worker"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Worker"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Worker = &domain.Worker{}
+			if err := jxpb.DecMessage(d, m.Worker); err != nil {
+				return err
+			}
+			return nil
+		case "statusReason", "status_reason":
+			if seen["StatusReason"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["StatusReason"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.StatusReason = v
+			return nil
+		case "errorMessage", "error_message":
+			if seen["ErrorMessage"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["ErrorMessage"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.ErrorMessage = v
+			return nil
+		case "operation":
+			if seen["Operation"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Operation"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Operation = &monitor.PipelineOperation{}
+			if err := jxpb.DecMessage(d, m.Operation); err != nil {
+				return err
+			}
+			return nil
+		case "outputs":
+			if seen["Outputs"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Outputs"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &monitor.PipelineOutput{}
+				if err := jxpb.DecMessage(d, el); err != nil {
+					return err
+				}
+				m.Outputs = append(m.Outputs, el)
+				return nil
+			})
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}
@@ -370,6 +555,54 @@ func (m *Stage) MarshalJSON() ([]byte, error) {
 }
 
 func (m *Stage) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *StageUpdate) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Stage != nil {
+		e.FieldStart("stage")
+		m.Stage.Encode(e)
+	}
+	e.ObjEnd()
+}
+
+func (m *StageUpdate) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "stage":
+			if seen["Stage"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Stage"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Stage = &Stage{}
+			if err := m.Stage.Decode(d); err != nil {
+				return err
+			}
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *StageUpdate) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *StageUpdate) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return m.Decode(d)
 }

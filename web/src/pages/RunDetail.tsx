@@ -34,8 +34,11 @@ import { GrafanaPanel } from "@/components/run/GrafanaPanel";
 import {
   getRunOverview,
   getRunMetrics,
+  streamRunOverview,
   type OverviewVM,
   type MetricVM,
+  type WorkerPresence,
+  type EventSeverity,
 } from "@/services/run_overview";
 import { actionsForStatus, getRunsProvider } from "@/services/runs";
 import type { RunStatus } from "@/services/dashboard";
@@ -57,6 +60,52 @@ const STATUS_DOT: Record<RunStatus, string> = {
   failed: "bg-destructive",
   cancelled: "bg-pending",
 };
+
+const SEVERITY_DOT: Record<EventSeverity, string> = {
+  info: "bg-primary",
+  warning: "bg-warning",
+  error: "bg-destructive",
+  "": "bg-muted-foreground",
+};
+const SEVERITY_TEXT: Record<EventSeverity, string> = {
+  info: "text-primary",
+  warning: "text-warning",
+  error: "text-destructive",
+  "": "text-muted-foreground",
+};
+
+const PRESENCE: Record<WorkerPresence, { label: string; variant: "success" | "warning" | "destructive" | "pending" }> = {
+  online: { label: "online", variant: "success" },
+  stale: { label: "stale", variant: "warning" },
+  offline: { label: "offline", variant: "destructive" },
+  terminated: { label: "terminated", variant: "pending" },
+  unknown: { label: "unknown", variant: "pending" },
+  "": { label: "unknown", variant: "pending" },
+};
+
+const SOURCE_LABEL: Record<string, string> = {
+  temporal: "live",
+  persisted: "persisted",
+  plan: "plan",
+  registry: "registry",
+  synthetic: "synthetic",
+};
+
+function PresenceBadge({ presence, online }: { presence: WorkerPresence; online: boolean }) {
+  const p = PRESENCE[presence] ?? (online ? PRESENCE.online : PRESENCE.unknown);
+  return <Badge variant={p.variant}>{p.label}</Badge>;
+}
+
+function relTime(iso?: string): string {
+  if (!iso) return "—";
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t) || new Date(iso).getFullYear() < 2000) return "—";
+  const s = Math.max(0, Math.round((Date.now() - t) / 1000));
+  if (s < 60) return `${s}s ago`;
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+  return `${Math.floor(s / 86400)}d ago`;
+}
 
 type View = "pipeline" | "topology" | "logs" | "metrics" | "grafana" | "agents";
 
@@ -149,6 +198,39 @@ export function RunDetail() {
   const run = overview?.run;
   const status = overview?.status;
   const allowed = status ? actionsForStatus(status) : new Set<string>();
+  const terminal = status === "completed" || status === "failed" || status === "cancelled";
+
+  // Live updates while the run is in flight: subscribe to the overview stream
+  // (full snapshot per frame); fall back to polling if streaming is
+  // unavailable. Stops once the run reaches a terminal state.
+  useEffect(() => {
+    if (!tenantSlug || !id || !status || terminal) return;
+    const ctrl = new AbortController();
+    let pollIv: number | undefined;
+    const startPoll = () => {
+      if (pollIv !== undefined) return;
+      pollIv = window.setInterval(() => {
+        getRunOverview(tenantSlug, id).then(setOverview).catch(() => {});
+      }, 5000);
+    };
+    void streamRunOverview(tenantSlug, id, setOverview, ctrl.signal).catch(() => {
+      if (!ctrl.signal.aborted) startPoll();
+    });
+    return () => {
+      ctrl.abort();
+      if (pollIv !== undefined) clearInterval(pollIv);
+    };
+  }, [tenantSlug, id, status, terminal]);
+
+  // Refresh metrics periodically while the run is in flight (the stream carries
+  // overview only).
+  useEffect(() => {
+    if (!tenantSlug || !id || terminal) return;
+    const iv = window.setInterval(() => {
+      getRunMetrics(tenantSlug, id).then(setMetrics).catch(() => {});
+    }, 12000);
+    return () => clearInterval(iv);
+  }, [tenantSlug, id, terminal]);
 
   const flash = useCallback((msg: string) => {
     setNotice(msg);
@@ -276,7 +358,15 @@ export function RunDetail() {
             <h1 className="truncate text-lg font-semibold">{run?.name || `Run ${id.slice(0, 8)}`}</h1>
             {status && <Badge variant={STATUS_VARIANT[status]}>{status}</Badge>}
           </div>
-          <div className="mt-1 font-mono text-[11px] text-muted-foreground">{id}</div>
+          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-[11px] text-muted-foreground">
+            <span>{id}</span>
+            {overview?.source && overview.source !== "temporal" && (
+              <span className="rounded-sm border border-border px-1 text-[10px] uppercase tracking-wide" title="data source">
+                {SOURCE_LABEL[overview.source] ?? overview.source}
+              </span>
+            )}
+            {overview?.observedAt && <span title={overview.observedAt}>· as of {relTime(overview.observedAt)}</span>}
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -324,6 +414,11 @@ export function RunDetail() {
       )}
       {notice && (
         <div className="shrink-0 border border-success/40 bg-success/10 px-3 py-2 text-sm text-success">{notice}</div>
+      )}
+      {overview && overview.degradedReasons.length > 0 && (
+        <div className="shrink-0 border border-warning/40 bg-warning/10 px-3 py-1.5 font-mono text-[11px] text-warning">
+          Degraded snapshot: {overview.degradedReasons.join("; ")}
+        </div>
       )}
 
       {/* Body: resizable RUN INFO sidebar + main panel with a single view
@@ -383,31 +478,45 @@ export function RunDetail() {
                   <table className="w-full border-collapse text-sm">
                     <thead className="bg-muted/60 text-xs uppercase text-muted-foreground">
                       <tr className="border-b border-border">
-                        <Th>Worker</Th><Th>Kind</Th><Th>Host</Th><Th>Online</Th>
+                        <Th>Worker</Th><Th>Kind</Th><Th>Presence</Th><Th>Last seen</Th><Th>Version</Th>
                       </tr>
                     </thead>
                     <tbody>
                       {(overview?.workers ?? []).map((w) => (
                         <tr key={w.id} className="border-b border-border/70 hover:bg-muted/30">
-                          <Td><span className="font-mono text-xs">{w.id || "—"}</span></Td>
+                          <Td>
+                            <div className="font-mono text-xs">{w.id || "—"}</div>
+                            <div className="font-mono text-[10px] text-muted-foreground">{w.host || w.machineId || ""}</div>
+                          </Td>
                           <Td>{w.kind || "—"}</Td>
-                          <Td className="font-mono text-xs">{w.host || w.machineId || "—"}</Td>
-                          <Td>{w.online ? <Badge variant="success">up</Badge> : <Badge variant="warning">down</Badge>}</Td>
+                          <Td title={w.statusReason || undefined}>
+                            <PresenceBadge presence={w.presence} online={w.online} />
+                          </Td>
+                          <Td className="font-mono text-[11px] text-muted-foreground" title={w.lastSeenAt}>
+                            {relTime(w.lastSeenAt)}
+                          </Td>
+                          <Td className="font-mono text-[11px] text-muted-foreground">{w.agentVersion || "—"}</Td>
                         </tr>
                       ))}
-                      {(overview?.workers.length ?? 0) === 0 && <Empty cols={4} text="No workers." />}
+                      {(overview?.workers.length ?? 0) === 0 && <Empty cols={5} text="No workers." />}
                     </tbody>
                   </table>
                 </div>
-                <div className="max-h-[420px] overflow-y-auto border border-border">
+                <div className="max-h-[60vh] overflow-y-auto border border-border">
                   <ul className="divide-y divide-border/70 text-sm">
-                    {(overview?.timeline ?? []).map((e, i) => (
-                      <li key={i} className="flex items-start gap-2 px-3 py-2">
-                        <span className="shrink-0 font-mono text-[11px] text-muted-foreground">{fmtTime(e.at)}</span>
-                        <span className="shrink-0 text-[11px] uppercase text-primary">{e.kind}</span>
-                        <span className="min-w-0 break-words">{e.message}</span>
-                      </li>
-                    ))}
+                    {[...(overview?.timeline ?? [])]
+                      .sort((a, b) => a.sequence - b.sequence)
+                      .map((e, i) => (
+                        <li key={i} className="flex items-start gap-2 px-3 py-2">
+                          <span className={cn("mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full", SEVERITY_DOT[e.severity] ?? "bg-muted-foreground")} />
+                          <span className="shrink-0 font-mono text-[11px] text-muted-foreground">{fmtTime(e.at)}</span>
+                          <span className={cn("shrink-0 text-[11px] uppercase", SEVERITY_TEXT[e.severity] ?? "text-primary")}>{e.kind}</span>
+                          <div className="min-w-0">
+                            <div className="break-words">{e.message}</div>
+                            {e.detail && <div className="break-words font-mono text-[10px] text-muted-foreground">{e.detail}</div>}
+                          </div>
+                        </li>
+                      ))}
                     {(overview?.timeline.length ?? 0) === 0 && (
                       <li className="px-3 py-6 text-center text-muted-foreground">No events.</li>
                     )}
@@ -426,8 +535,8 @@ export function RunDetail() {
 function Th({ children, className }: { children: ReactNode; className?: string }) {
   return <th className={cn("px-3 py-2 text-left font-medium", className)}>{children}</th>;
 }
-function Td({ children, className, style }: { children: ReactNode; className?: string; style?: React.CSSProperties }) {
-  return <td className={cn("px-3 py-2 align-middle", className)} style={style}>{children}</td>;
+function Td({ children, className, style, title }: { children: ReactNode; className?: string; style?: React.CSSProperties; title?: string }) {
+  return <td className={cn("px-3 py-2 align-middle", className)} style={style} title={title}>{children}</td>;
 }
 function Empty({ cols, text }: { cols: number; text: string }) {
   return (

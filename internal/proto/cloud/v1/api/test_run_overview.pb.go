@@ -105,7 +105,19 @@ type LogFilter struct {
 	// search is a simple substring match over the line text.
 	Search string `protobuf:"bytes,9,opt,name=search,proto3" json:"search,omitempty"`
 	// query is a raw LogsQL fragment, AND-ed with the structured filters (advanced).
-	Query         string `protobuf:"bytes,10,opt,name=query,proto3" json:"query,omitempty"`
+	Query string `protobuf:"bytes,10,opt,name=query,proto3" json:"query,omitempty"`
+	// phases restrict to logs belonging to these top-level pipeline phases.
+	Phases []string `protobuf:"bytes,11,rep,name=phases,proto3" json:"phases,omitempty"`
+	// parent_node_execution_ids restrict to logs under these parent stages.
+	ParentNodeExecutionIds []string `protobuf:"bytes,12,rep,name=parent_node_execution_ids,json=parentNodeExecutionIds,proto3" json:"parent_node_execution_ids,omitempty"`
+	// stage_names restrict to logs emitted by stages with these display names.
+	StageNames []string `protobuf:"bytes,13,rep,name=stage_names,json=stageNames,proto3" json:"stage_names,omitempty"`
+	// step_ids restrict to component-local deployment step ids.
+	StepIds []string `protobuf:"bytes,14,rep,name=step_ids,json=stepIds,proto3" json:"step_ids,omitempty"`
+	// actions restrict to generic action classes such as call_cmd/write_file.
+	Actions []string `protobuf:"bytes,15,rep,name=actions,proto3" json:"actions,omitempty"`
+	// mentions restrict to normalized operation tokens such as vector/vmagent/postgres.
+	Mentions      []string `protobuf:"bytes,16,rep,name=mentions,proto3" json:"mentions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -208,6 +220,48 @@ func (x *LogFilter) GetQuery() string {
 		return x.Query
 	}
 	return ""
+}
+
+func (x *LogFilter) GetPhases() []string {
+	if x != nil {
+		return x.Phases
+	}
+	return nil
+}
+
+func (x *LogFilter) GetParentNodeExecutionIds() []string {
+	if x != nil {
+		return x.ParentNodeExecutionIds
+	}
+	return nil
+}
+
+func (x *LogFilter) GetStageNames() []string {
+	if x != nil {
+		return x.StageNames
+	}
+	return nil
+}
+
+func (x *LogFilter) GetStepIds() []string {
+	if x != nil {
+		return x.StepIds
+	}
+	return nil
+}
+
+func (x *LogFilter) GetActions() []string {
+	if x != nil {
+		return x.Actions
+	}
+	return nil
+}
+
+func (x *LogFilter) GetMentions() []string {
+	if x != nil {
+		return x.Mentions
+	}
+	return nil
 }
 
 // TestRunOverviewSnapshot is the overview page state: persisted run record,
@@ -910,7 +964,7 @@ var File_cloud_v1_api_test_run_overview_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_test_run_overview_proto_rawDesc = "" +
 	"\n" +
-	"$cloud/v1/api/test_run_overview.proto\x12\fcloud.v1.api\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1bcloud/v1/models/suite.proto\x1a\x1ecloud/v1/models/test_run.proto\x1a\x1bcloud/v1/monitor/logs.proto\x1a\x1ecloud/v1/monitor/metrics.proto\x1a\x1fcloud/v1/monitor/overview.proto\x1a cloud/v1/topology/topology.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\xd7\x03\n" +
+	"$cloud/v1/api/test_run_overview.proto\x12\fcloud.v1.api\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1bcloud/v1/models/suite.proto\x1a\x1ecloud/v1/models/test_run.proto\x1a\x1bcloud/v1/monitor/logs.proto\x1a\x1ecloud/v1/monitor/metrics.proto\x1a\x1fcloud/v1/monitor/overview.proto\x1a cloud/v1/topology/topology.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\x85\x06\n" +
 	"\tLogFilter\x12>\n" +
 	"\x12node_execution_ids\x18\x01 \x03(\tB\x10\xfaB\r\x92\x01\n" +
 	"\x10\x80\x02\"\x05r\x03\x18\x80\x01R\x10nodeExecutionIds\x125\n" +
@@ -925,7 +979,17 @@ const file_cloud_v1_api_test_run_overview_proto_rawDesc = "" +
 	"\x03end\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\x03end\x12 \n" +
 	"\x06search\x18\t \x01(\tB\b\xfaB\x05r\x03\x18\x80\bR\x06search\x12\x1e\n" +
 	"\x05query\x18\n" +
-	" \x01(\tB\b\xfaB\x05r\x03\x18\x80 R\x05query\"\x98\x02\n" +
+	" \x01(\tB\b\xfaB\x05r\x03\x18\x80 R\x05query\x12'\n" +
+	"\x06phases\x18\v \x03(\tB\x0f\xfaB\f\x92\x01\t\x10@\"\x05r\x03\x18\x80\x01R\x06phases\x12K\n" +
+	"\x19parent_node_execution_ids\x18\f \x03(\tB\x10\xfaB\r\x92\x01\n" +
+	"\x10\x80\x02\"\x05r\x03\x18\x80\x01R\x16parentNodeExecutionIds\x121\n" +
+	"\vstage_names\x18\r \x03(\tB\x10\xfaB\r\x92\x01\n" +
+	"\x10\x80\x02\"\x05r\x03\x18\x80\x02R\n" +
+	"stageNames\x12+\n" +
+	"\bstep_ids\x18\x0e \x03(\tB\x10\xfaB\r\x92\x01\n" +
+	"\x10\x80\x02\"\x05r\x03\x18\x80\x01R\astepIds\x12)\n" +
+	"\aactions\x18\x0f \x03(\tB\x0f\xfaB\f\x92\x01\t\x10@\"\x05r\x03\x18\x80\x01R\aactions\x12+\n" +
+	"\bmentions\x18\x10 \x03(\tB\x0f\xfaB\f\x92\x01\t\x10\x80\x01\"\x04r\x02\x18@R\bmentions\"\x98\x02\n" +
 	"\x17TestRunOverviewSnapshot\x12:\n" +
 	"\x03run\x18\x01 \x01(\v2\x1e.cloud.v1.models.TestRunRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x03run\x12A\n" +
 	"\btopology\x18\x02 \x01(\v2\x1b.cloud.v1.topology.TopologyB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btopology\x12@\n" +

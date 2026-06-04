@@ -14,6 +14,11 @@
   - [cloud.v1.topology.Connection.Protocol](#cloud-v1-topology-connection-protocol)
   - [cloud.v1.topology.Node](#cloud-v1-topology-node)
   - [cloud.v1.topology.Node.LabelsEntry](#cloud-v1-topology-node-labelsentry)
+  - [cloud.v1.topology.RuntimeConnection](#cloud-v1-topology-runtimeconnection)
+  - [cloud.v1.topology.RuntimeConnection.LabelsEntry](#cloud-v1-topology-runtimeconnection-labelsentry)
+  - [cloud.v1.topology.RuntimeNode](#cloud-v1-topology-runtimenode)
+  - [cloud.v1.topology.RuntimeNode.Kind](#cloud-v1-topology-runtimenode-kind)
+  - [cloud.v1.topology.RuntimeNode.LabelsEntry](#cloud-v1-topology-runtimenode-labelsentry)
   - [cloud.v1.topology.Topology](#cloud-v1-topology-topology)
   - [cloud.v1.topology.Topology.State](#cloud-v1-topology-topology-state)
   - [cloud.v1.topology.TopologySpec](#cloud-v1-topology-topologyspec)
@@ -453,6 +458,401 @@ go_name: Value</pre></td>
 
 
 
+<a name="cloud-v1-topology-runtimeconnection"></a>
+### cloud.v1.topology.RuntimeConnection
+
+<pre>
+//RuntimeConnection is one concrete directed interaction visible during a run:
+//agent-control, binary download, component traffic, metrics scrape, logs
+//shipping, local exporter reads, dependency/placement, or a Temporal-backed
+//agent action. It carries endpoint/protocol/status/timing so the UI can show
+//who talks to whom and when.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>endpoint_name</td>
+<td>string</td>
+<td><pre>
+//endpoint_name is the destination endpoint/path/job/action name.<br>
+
+json_name: endpointName
+go_name: EndpointName</pre></td>
+</tr><tr>
+<td>finished_at</td>
+<td><a href="../../../google/protobuf/README.md#google-protobuf-timestamp">google.protobuf.Timestamp</a></td>
+<td><pre>
+//finished_at is when the backing runtime action/stage finished, if known.<br>
+
+json_name: finishedAt
+go_name: FinishedAt</pre></td>
+</tr><tr>
+<td>from_node_id</td>
+<td>string</td>
+<td><pre>
+//from_node_id is the source RuntimeNode.id.<br>
+
+json_name: fromNodeId
+go_name: FromNodeId</pre></td>
+</tr><tr>
+<td>id</td>
+<td>string</td>
+<td><pre>
+//id is a stable graph edge id.<br>
+
+json_name: id
+go_name: Id</pre></td>
+</tr><tr>
+<td>kind</td>
+<td><a href="#cloud-v1-topology-connection-kind">cloud.v1.topology.Connection.Kind</a></td>
+<td><pre>
+//kind is the semantic relationship, reusing logical Connection.Kind.<br>
+
+json_name: kind
+go_name: Kind</pre></td>
+</tr><tr>
+<td>labels</td>
+<td><a href="#cloud-v1-topology-runtimeconnection-labelsentry">cloud.v1.topology.RuntimeConnection.LabelsEntry</a></td>
+<td><pre>
+//labels are structured metadata for UI/debugging.<br>
+
+json_name: labels
+go_name: Labels</pre></td>
+</tr><tr>
+<td>mode</td>
+<td><a href="#cloud-v1-topology-connection-mode">cloud.v1.topology.Connection.Mode</a></td>
+<td><pre>
+//mode is the traffic character, reusing logical Connection.Mode.<br>
+
+json_name: mode
+go_name: Mode</pre></td>
+</tr><tr>
+<td>node_execution_id</td>
+<td>string</td>
+<td><pre>
+//node_execution_id links this edge to the pipeline/Temporal stage that
+//produced or last updated it.<br>
+
+json_name: nodeExecutionId
+go_name: NodeExecutionId</pre></td>
+</tr><tr>
+<td>phase</td>
+<td>string</td>
+<td><pre>
+//phase is the top-level pipeline phase this connection belongs to.<br>
+
+json_name: phase
+go_name: Phase</pre></td>
+</tr><tr>
+<td>port</td>
+<td>uint32</td>
+<td><pre>
+//port is the destination port when known.<br>
+
+json_name: port
+go_name: Port</pre></td>
+</tr><tr>
+<td>protocol</td>
+<td><a href="#cloud-v1-topology-connection-protocol">cloud.v1.topology.Connection.Protocol</a></td>
+<td><pre>
+//protocol is the wire/protocol family, reusing logical Connection.Protocol.<br>
+
+json_name: protocol
+go_name: Protocol</pre></td>
+</tr><tr>
+<td>started_at</td>
+<td><a href="../../../google/protobuf/README.md#google-protobuf-timestamp">google.protobuf.Timestamp</a></td>
+<td><pre>
+//started_at is when the backing runtime action/stage started, if known.<br>
+
+json_name: startedAt
+go_name: StartedAt</pre></td>
+</tr><tr>
+<td>status</td>
+<td><a href="../common/README.md#cloud-v1-common-status">cloud.v1.common.Status</a></td>
+<td><pre>
+//status is this connection's current/last-known lifecycle status.<br>
+
+json_name: status
+go_name: Status</pre></td>
+</tr><tr>
+<td>status_reason</td>
+<td>string</td>
+<td><pre>
+//status_reason is a short machine-readable explanation of status.<br>
+
+json_name: statusReason
+go_name: StatusReason</pre></td>
+</tr><tr>
+<td>tags</td>
+<td><a href="../common/README.md#cloud-v1-common-tags">cloud.v1.common.Tags</a></td>
+<td><pre>
+//tags are arbitrary metadata on the runtime connection.<br>
+
+json_name: tags
+go_name: Tags</pre></td>
+</tr><tr>
+<td>to_node_id</td>
+<td>string</td>
+<td><pre>
+//to_node_id is the destination RuntimeNode.id.<br>
+
+json_name: toNodeId
+go_name: ToNodeId</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-topology-runtimeconnection-labelsentry"></a>
+### cloud.v1.topology.RuntimeConnection.LabelsEntry
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>key</td>
+<td>string</td>
+<td><pre>
+json_name: key
+go_name: Key</pre></td>
+</tr><tr>
+<td>value</td>
+<td>string</td>
+<td><pre>
+json_name: value
+go_name: Value</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-topology-runtimenode"></a>
+### cloud.v1.topology.RuntimeNode
+
+<pre>
+//RuntimeNode is one concrete thing that exists or participates during a run:
+//the control-plane server, a provider machine, an agent, a deployed component,
+//a monitor daemon/exporter, a workload runner, or an external endpoint. Unlike
+//TopologySpec.Component, this is a runtime fact with placement, status and
+//timing/provenance.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>address</td>
+<td>string</td>
+<td><pre>
+//address is the known host/IP/base URL for this node.<br>
+
+json_name: address
+go_name: Address</pre></td>
+</tr><tr>
+<td>component_id</td>
+<td>string</td>
+<td><pre>
+//component_id links this node to TopologySpec.Component / DeploymentPlan.<br>
+
+json_name: componentId
+go_name: ComponentId</pre></td>
+</tr><tr>
+<td>engine</td>
+<td>string</td>
+<td><pre>
+//engine identifies the product/subsystem, e.g. stroppy, postgres,
+//victoriametrics, vector, node_exporter.<br>
+
+json_name: engine
+go_name: Engine</pre></td>
+</tr><tr>
+<td>finished_at</td>
+<td><a href="../../../google/protobuf/README.md#google-protobuf-timestamp">google.protobuf.Timestamp</a></td>
+<td><pre>
+//finished_at is when the backing runtime action/stage finished, if known.<br>
+
+json_name: finishedAt
+go_name: FinishedAt</pre></td>
+</tr><tr>
+<td>id</td>
+<td>string</td>
+<td><pre>
+//id is a stable graph id, e.g. control-plane, machine/node-1,
+//agent/node-1, component/postgres-master, monitor/node-1/vmagent.<br>
+
+json_name: id
+go_name: Id</pre></td>
+</tr><tr>
+<td>kind</td>
+<td><a href="#cloud-v1-topology-runtimenode-kind">cloud.v1.topology.RuntimeNode.Kind</a></td>
+<td><pre>
+//kind is the concrete runtime node family.<br>
+
+json_name: kind
+go_name: Kind</pre></td>
+</tr><tr>
+<td>label</td>
+<td>string</td>
+<td><pre>
+//label is a short display label.<br>
+
+json_name: label
+go_name: Label</pre></td>
+</tr><tr>
+<td>labels</td>
+<td><a href="#cloud-v1-topology-runtimenode-labelsentry">cloud.v1.topology.RuntimeNode.LabelsEntry</a></td>
+<td><pre>
+//labels are structured metadata for UI/debugging.<br>
+
+json_name: labels
+go_name: Labels</pre></td>
+</tr><tr>
+<td>machine_id</td>
+<td>string</td>
+<td><pre>
+//machine_id links this node to TopologySpec.Node / MachineState.<br>
+
+json_name: machineId
+go_name: MachineId</pre></td>
+</tr><tr>
+<td>node_execution_id</td>
+<td>string</td>
+<td><pre>
+//node_execution_id links this node to the pipeline/Temporal stage that
+//materialized or last touched it.<br>
+
+json_name: nodeExecutionId
+go_name: NodeExecutionId</pre></td>
+</tr><tr>
+<td>port</td>
+<td>uint32</td>
+<td><pre>
+//port is the known listening port for this node, when applicable.<br>
+
+json_name: port
+go_name: Port</pre></td>
+</tr><tr>
+<td>role</td>
+<td>string</td>
+<td><pre>
+//role identifies the concrete runtime role inside the engine.<br>
+
+json_name: role
+go_name: Role</pre></td>
+</tr><tr>
+<td>started_at</td>
+<td><a href="../../../google/protobuf/README.md#google-protobuf-timestamp">google.protobuf.Timestamp</a></td>
+<td><pre>
+//started_at is when the backing runtime action/stage started, if known.<br>
+
+json_name: startedAt
+go_name: StartedAt</pre></td>
+</tr><tr>
+<td>status</td>
+<td><a href="../common/README.md#cloud-v1-common-status">cloud.v1.common.Status</a></td>
+<td><pre>
+//status is this runtime node's current/last-known lifecycle status.<br>
+
+json_name: status
+go_name: Status</pre></td>
+</tr><tr>
+<td>status_reason</td>
+<td>string</td>
+<td><pre>
+//status_reason is a short machine-readable explanation of status.<br>
+
+json_name: statusReason
+go_name: StatusReason</pre></td>
+</tr><tr>
+<td>tags</td>
+<td><a href="../common/README.md#cloud-v1-common-tags">cloud.v1.common.Tags</a></td>
+<td><pre>
+//tags are arbitrary metadata on the runtime node.<br>
+
+json_name: tags
+go_name: Tags</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-topology-runtimenode-kind"></a>
+### cloud.v1.topology.RuntimeNode.Kind
+
+<pre>
+//Kind classifies the concrete runtime node.
+</pre>
+
+<table>
+<tr><th>Value</th><th>Description</th></tr>
+<tr>
+<td>KIND_UNSPECIFIED</td>
+<td></td>
+</tr><tr>
+<td>KIND_CONTROL_PLANE</td>
+<td></td>
+</tr><tr>
+<td>KIND_MACHINE</td>
+<td></td>
+</tr><tr>
+<td>KIND_AGENT</td>
+<td></td>
+</tr><tr>
+<td>KIND_COMPONENT</td>
+<td></td>
+</tr><tr>
+<td>KIND_MONITOR</td>
+<td></td>
+</tr><tr>
+<td>KIND_EXPORTER</td>
+<td></td>
+</tr><tr>
+<td>KIND_WORKLOAD</td>
+<td></td>
+</tr><tr>
+<td>KIND_EXTERNAL</td>
+<td></td>
+</tr>
+</table>
+
+<a name="cloud-v1-topology-runtimenode-labelsentry"></a>
+### cloud.v1.topology.RuntimeNode.LabelsEntry
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>key</td>
+<td>string</td>
+<td><pre>
+json_name: key
+go_name: Key</pre></td>
+</tr><tr>
+<td>value</td>
+<td>string</td>
+<td><pre>
+json_name: value
+go_name: Value</pre></td>
+</tr>
+</table>
+
+
+
 <a name="cloud-v1-topology-topology"></a>
 ### cloud.v1.topology.Topology
 
@@ -493,6 +893,25 @@ go_name: InfrastructurePlan</pre></td>
 
 json_name: infrastructureState
 go_name: InfrastructureState</pre></td>
+</tr><tr>
+<td>runtime_connections</td>
+<td><a href="#cloud-v1-topology-runtimeconnection">cloud.v1.topology.RuntimeConnection</a></td>
+<td><pre>
+//runtime_connections are concrete directed interactions between
+//runtime_nodes, with endpoint/protocol/status/timing metadata.<br>
+
+json_name: runtimeConnections
+go_name: RuntimeConnections</pre></td>
+</tr><tr>
+<td>runtime_nodes</td>
+<td><a href="#cloud-v1-topology-runtimenode">cloud.v1.topology.RuntimeNode</a></td>
+<td><pre>
+//runtime_nodes are concrete nodes known for this run, including the
+//control-plane server, machines, agents, components, monitor daemons and
+//external endpoints.<br>
+
+json_name: runtimeNodes
+go_name: RuntimeNodes</pre></td>
 </tr><tr>
 <td>spec</td>
 <td><a href="#cloud-v1-topology-topologyspec">cloud.v1.topology.TopologySpec</a></td>

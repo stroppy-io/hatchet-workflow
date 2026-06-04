@@ -85,6 +85,22 @@ message LogLine {
     string line = 9 [(validate.rules).string.max_len = 65536];
     /* cursor anchors this exact line for deep-linking. */
     LogCursor cursor = 10;
+    /* parent_node_execution_id links the log line to the parent pipeline stage. */
+    string parent_node_execution_id = 12 [(validate.rules).string.max_len = 128];
+    /* phase is the top-level pipeline phase this line belongs to, when known. */
+    string phase = 13 [(validate.rules).string.max_len = 128];
+    /* stage_name is the producing stage's display name, when known. */
+    string stage_name = 14 [(validate.rules).string.max_len = 256];
+    /* step_id is the component-local deployment step id, when this line came from an agent step. */
+    string step_id = 15 [(validate.rules).string.max_len = 128];
+    /* action is the generic action class, e.g. call_cmd/write_file/create_dir. */
+    string action = 16 [(validate.rules).string.max_len = 128];
+    /*
+        mentions are normalized operation tokens, e.g. vector/vmagent/postgres.
+        They let the Logs API filter by rendered/executed subject without
+        backend-specific step-id switches.
+     */
+    repeated string mentions = 17 [(validate.rules).repeated.max_items = 64];
 }
 
 /*

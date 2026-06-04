@@ -44,6 +44,8 @@
     - [TestWorkflow](#testworkflow-workflow)
   - [Queries](#cloud-v1-workflow-testservice-queries)
     - [GetRunState](#getrunstate-query)
+  - [Signals](#cloud-v1-workflow-testservice-signals)
+    - [UpdateStage](#updatestage-signal)
 - Messages
   - [cloud.v1.workflow.AcquireNetworkActivityRequest](#cloud-v1-workflow-acquirenetworkactivityrequest)
   - [cloud.v1.workflow.AcquireNetworkActivityResponse](#cloud-v1-workflow-acquirenetworkactivityresponse)
@@ -82,6 +84,7 @@
   - [cloud.v1.workflow.RunWorkloadWorkflowRequest](#cloud-v1-workflow-runworkloadworkflowrequest)
   - [cloud.v1.workflow.RunWorkloadWorkflowResponse](#cloud-v1-workflow-runworkloadworkflowresponse)
   - [cloud.v1.workflow.Stage](#cloud-v1-workflow-stage)
+  - [cloud.v1.workflow.StageUpdate](#cloud-v1-workflow-stageupdate)
   - [cloud.v1.workflow.SuiteWorkflowRequest](#cloud-v1-workflow-suiteworkflowrequest)
   - [cloud.v1.workflow.SuiteWorkflowResponse](#cloud-v1-workflow-suiteworkflowresponse)
   - [cloud.v1.workflow.TestWorkflowRequest](#cloud-v1-workflow-testworkflowrequest)
@@ -1921,6 +1924,13 @@ go_name: TestRun</pre></td>
 <table>
 <tr><th>Query</th></tr>
 <tr><td><a href="#cloud-v1-workflow-testservice-getrunstate-query">cloud.v1.workflow.TestService.GetRunState</a></td></tr>
+</table>
+
+**Signals:**
+
+<table>
+<tr><th>Signal</th><th>Start</th></tr>
+<tr><td><a href="#cloud-v1-workflow-testservice-updatestage-signal">cloud.v1.workflow.TestService.UpdateStage</a></td><td>false</td></tr>
 </table>  
 
 <a name="cloud-v1-workflow-testservice-queries"></a>
@@ -1961,7 +1971,38 @@ go_name: Stages</pre></td>
 json_name: status
 go_name: Status</pre></td>
 </tr>
-</table>    
+</table>  
+
+<a name="cloud-v1-workflow-testservice-signals"></a>
+### Signals
+
+---
+<a name="updatestage-signal"></a>
+### UpdateStage
+
+<pre>
+//UpdateStage is a Temporal signal used by child workflows to update one
+//concrete runtime stage inside the parent TestWorkflow RunState.
+</pre>
+
+**Input:** [cloud.v1.workflow.StageUpdate](#cloud-v1-workflow-stageupdate)
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>stage</td>
+<td><a href="#cloud-v1-workflow-stage">cloud.v1.workflow.Stage</a></td>
+<td><pre>
+//stage is the complete current snapshot for one runtime stage.<br>
+
+json_name: stage
+go_name: Stage</pre></td>
+</tr>
+</table>   
 
 <a name="cloud-v1-workflow-messages"></a>
 ## Messages
@@ -3242,6 +3283,22 @@ go_name: Workload</pre></td>
 json_name: attempt
 go_name: Attempt</pre></td>
 </tr><tr>
+<td>component_id</td>
+<td>string</td>
+<td><pre>
+//component_id is the deployment/topology component this stage acts on.<br>
+
+json_name: componentId
+go_name: ComponentId</pre></td>
+</tr><tr>
+<td>error_message</td>
+<td>string</td>
+<td><pre>
+//error_message is the user-facing error text for failed stages.<br>
+
+json_name: errorMessage
+go_name: ErrorMessage</pre></td>
+</tr><tr>
 <td>finished_at</td>
 <td><a href="../../../google/protobuf/README.md#google-protobuf-timestamp">google.protobuf.Timestamp</a></td>
 <td><pre>
@@ -3249,6 +3306,14 @@ go_name: Attempt</pre></td>
 
 json_name: finishedAt
 go_name: FinishedAt</pre></td>
+</tr><tr>
+<td>machine_id</td>
+<td>string</td>
+<td><pre>
+//machine_id is the target machine/agent id for agent-side stages.<br>
+
+json_name: machineId
+go_name: MachineId</pre></td>
 </tr><tr>
 <td>name</td>
 <td>string</td>
@@ -3266,6 +3331,48 @@ go_name: Name</pre></td>
 json_name: nodeExecutionId
 go_name: NodeExecutionId</pre></td>
 </tr><tr>
+<td>operation</td>
+<td><a href="../monitor/README.md#cloud-v1-monitor-pipelineoperation">cloud.v1.monitor.PipelineOperation</a></td>
+<td><pre>
+//operation is the executable operation payload for agent deployment stages.<br>
+
+json_name: operation
+go_name: Operation</pre></td>
+</tr><tr>
+<td>order</td>
+<td>uint32</td>
+<td><pre>
+//order is the stable 1-based sibling execution/display order.<br>
+
+json_name: order
+go_name: Order</pre></td>
+</tr><tr>
+<td>outputs</td>
+<td><a href="../monitor/README.md#cloud-v1-monitor-pipelineoutput">cloud.v1.monitor.PipelineOutput</a></td>
+<td><pre>
+//outputs are structured artifacts/results produced by this stage. They are
+//carried in RunState so the Overview projection can render stage details
+//without reverse-engineering stored deployment plans.<br>
+
+json_name: outputs
+go_name: Outputs</pre></td>
+</tr><tr>
+<td>parent_node_execution_id</td>
+<td>string</td>
+<td><pre>
+//parent_node_execution_id links nested stages to their parent stage.<br>
+
+json_name: parentNodeExecutionId
+go_name: ParentNodeExecutionId</pre></td>
+</tr><tr>
+<td>phase</td>
+<td>string</td>
+<td><pre>
+//phase is the top-level phase this stage belongs to.<br>
+
+json_name: phase
+go_name: Phase</pre></td>
+</tr><tr>
 <td>started_at</td>
 <td><a href="../../../google/protobuf/README.md#google-protobuf-timestamp">google.protobuf.Timestamp</a></td>
 <td><pre>
@@ -3281,6 +3388,49 @@ go_name: StartedAt</pre></td>
 
 json_name: status
 go_name: Status</pre></td>
+</tr><tr>
+<td>status_reason</td>
+<td>string</td>
+<td><pre>
+//status_reason is a short machine-readable explanation of the status.<br>
+
+json_name: statusReason
+go_name: StatusReason</pre></td>
+</tr><tr>
+<td>worker</td>
+<td><a href="../domain/README.md#cloud-v1-domain-worker">cloud.v1.domain.Worker</a></td>
+<td><pre>
+//worker is the Temporal worker identity that executes this stage.<br>
+
+json_name: worker
+go_name: Worker</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-workflow-stageupdate"></a>
+### cloud.v1.workflow.StageUpdate
+
+<pre>
+//StageUpdate is emitted as a Temporal signal by child workflows/activities
+//whenever a concrete runtime stage changes status.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>stage</td>
+<td><a href="#cloud-v1-workflow-stage">cloud.v1.workflow.Stage</a></td>
+<td><pre>
+//stage is the complete current snapshot for one runtime stage.<br>
+
+json_name: stage
+go_name: Stage</pre></td>
 </tr>
 </table>
 

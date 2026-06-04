@@ -59,6 +59,9 @@ func (a *RunPersistenceActivities) PersistRunState(
 		rec.Summary = &models.TestRunRecord_Summary{}
 	}
 	applyRunSummary(rec.Summary, state, rec.GetStatus(), now)
+	if state != nil {
+		rec.RuntimeState = proto.Clone(state).(*workflowpb.RunState)
+	}
 	if infrastructureState != nil {
 		rec.InfrastructureState = proto.Clone(infrastructureState).(*deploymentpb.InfrastructureState)
 	}

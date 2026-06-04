@@ -273,6 +273,57 @@ func (m *Overview) validate(all bool) error {
 
 	}
 
+	if all {
+		switch v := interface{}(m.GetObservedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, OverviewValidationError{
+					field:  "ObservedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, OverviewValidationError{
+					field:  "ObservedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetObservedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return OverviewValidationError{
+				field:  "ObservedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(m.GetDegradedReasons()) > 32 {
+		err := OverviewValidationError{
+			field:  "DegradedReasons",
+			reason: "value must contain no more than 32 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := ObservationSource_name[int32(m.GetSource())]; !ok {
+		err := OverviewValidationError{
+			field:  "Source",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if len(errors) > 0 {
 		return OverviewMultiError(errors)
 	}
@@ -730,6 +781,159 @@ func (m *PipelineNode) validate(all bool) error {
 
 	// no validation rules for Attempt
 
+	if _, ok := ObservationSource_name[int32(m.GetSource())]; !ok {
+		err := PipelineNodeValidationError{
+			field:  "Source",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for Order
+
+	if utf8.RuneCountInString(m.GetParentNodeExecutionId()) > 128 {
+		err := PipelineNodeValidationError{
+			field:  "ParentNodeExecutionId",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetPhase()) > 128 {
+		err := PipelineNodeValidationError{
+			field:  "Phase",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetComponentId()) > 128 {
+		err := PipelineNodeValidationError{
+			field:  "ComponentId",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetMachineId()) > 128 {
+		err := PipelineNodeValidationError{
+			field:  "MachineId",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetStatusReason()) > 256 {
+		err := PipelineNodeValidationError{
+			field:  "StatusReason",
+			reason: "value length must be at most 256 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetErrorMessage()) > 4096 {
+		err := PipelineNodeValidationError{
+			field:  "ErrorMessage",
+			reason: "value length must be at most 4096 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetOperation()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, PipelineNodeValidationError{
+					field:  "Operation",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, PipelineNodeValidationError{
+					field:  "Operation",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetOperation()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return PipelineNodeValidationError{
+				field:  "Operation",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(m.GetOutputs()) > 4096 {
+		err := PipelineNodeValidationError{
+			field:  "Outputs",
+			reason: "value must contain no more than 4096 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetOutputs() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, PipelineNodeValidationError{
+						field:  fmt.Sprintf("Outputs[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, PipelineNodeValidationError{
+						field:  fmt.Sprintf("Outputs[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return PipelineNodeValidationError{
+					field:  fmt.Sprintf("Outputs[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
 	if len(errors) > 0 {
 		return PipelineNodeMultiError(errors)
 	}
@@ -807,6 +1011,613 @@ var _ interface {
 	ErrorName() string
 } = PipelineNodeValidationError{}
 
+// Validate checks the field values on PipelineOutput with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *PipelineOutput) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on PipelineOutput with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in PipelineOutputMultiError,
+// or nil if none found.
+func (m *PipelineOutput) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *PipelineOutput) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if _, ok := OutputKind_name[int32(m.GetKind())]; !ok {
+		err := PipelineOutputValidationError{
+			field:  "Kind",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetId()) > 256 {
+		err := PipelineOutputValidationError{
+			field:  "Id",
+			reason: "value length must be at most 256 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetName()) > 256 {
+		err := PipelineOutputValidationError{
+			field:  "Name",
+			reason: "value length must be at most 256 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetSummary()) > 4096 {
+		err := PipelineOutputValidationError{
+			field:  "Summary",
+			reason: "value length must be at most 4096 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetComponentId()) > 128 {
+		err := PipelineOutputValidationError{
+			field:  "ComponentId",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetMachineId()) > 128 {
+		err := PipelineOutputValidationError{
+			field:  "MachineId",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetStepId()) > 128 {
+		err := PipelineOutputValidationError{
+			field:  "StepId",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetAction()) > 128 {
+		err := PipelineOutputValidationError{
+			field:  "Action",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetTarget()) > 4096 {
+		err := PipelineOutputValidationError{
+			field:  "Target",
+			reason: "value length must be at most 4096 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetCommandText()) > 1048576 {
+		err := PipelineOutputValidationError{
+			field:  "CommandText",
+			reason: "value length must be at most 1048576 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetContentPreview()) > 4096 {
+		err := PipelineOutputValidationError{
+			field:  "ContentPreview",
+			reason: "value length must be at most 4096 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for Count
+
+	// no validation rules for SizeBytes
+
+	if len(m.GetLabels()) > 64 {
+		err := PipelineOutputValidationError{
+			field:  "Labels",
+			reason: "value must contain no more than 64 pair(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return PipelineOutputMultiError(errors)
+	}
+
+	return nil
+}
+
+// PipelineOutputMultiError is an error wrapping multiple validation errors
+// returned by PipelineOutput.ValidateAll() if the designated constraints
+// aren't met.
+type PipelineOutputMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m PipelineOutputMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m PipelineOutputMultiError) AllErrors() []error { return m }
+
+// PipelineOutputValidationError is the validation error returned by
+// PipelineOutput.Validate if the designated constraints aren't met.
+type PipelineOutputValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PipelineOutputValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PipelineOutputValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PipelineOutputValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PipelineOutputValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PipelineOutputValidationError) ErrorName() string { return "PipelineOutputValidationError" }
+
+// Error satisfies the builtin error interface
+func (e PipelineOutputValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPipelineOutput.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PipelineOutputValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PipelineOutputValidationError{}
+
+// Validate checks the field values on PipelineOperation with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *PipelineOperation) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on PipelineOperation with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// PipelineOperationMultiError, or nil if none found.
+func (m *PipelineOperation) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *PipelineOperation) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if _, ok := OperationKind_name[int32(m.GetKind())]; !ok {
+		err := PipelineOperationValidationError{
+			field:  "Kind",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetStepId()) > 128 {
+		err := PipelineOperationValidationError{
+			field:  "StepId",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for StepOrder
+
+	if utf8.RuneCountInString(m.GetTarget()) > 4096 {
+		err := PipelineOperationValidationError{
+			field:  "Target",
+			reason: "value length must be at most 4096 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetSummary()) > 4096 {
+		err := PipelineOperationValidationError{
+			field:  "Summary",
+			reason: "value length must be at most 4096 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetMentions()) > 64 {
+		err := PipelineOperationValidationError{
+			field:  "Mentions",
+			reason: "value must contain no more than 64 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetLabels()) > 64 {
+		err := PipelineOperationValidationError{
+			field:  "Labels",
+			reason: "value must contain no more than 64 pair(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetCommand()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, PipelineOperationValidationError{
+					field:  "Command",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, PipelineOperationValidationError{
+					field:  "Command",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCommand()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return PipelineOperationValidationError{
+				field:  "Command",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetFile()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, PipelineOperationValidationError{
+					field:  "File",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, PipelineOperationValidationError{
+					field:  "File",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetFile()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return PipelineOperationValidationError{
+				field:  "File",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetDir()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, PipelineOperationValidationError{
+					field:  "Dir",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, PipelineOperationValidationError{
+					field:  "Dir",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDir()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return PipelineOperationValidationError{
+				field:  "Dir",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(m.GetCommandText()) > 1048576 {
+		err := PipelineOperationValidationError{
+			field:  "CommandText",
+			reason: "value length must be at most 1048576 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetArgv()) > 512 {
+		err := PipelineOperationValidationError{
+			field:  "Argv",
+			reason: "value must contain no more than 512 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetFilePath()) > 4096 {
+		err := PipelineOperationValidationError{
+			field:  "FilePath",
+			reason: "value length must be at most 4096 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for FileSizeBytes
+
+	if utf8.RuneCountInString(m.GetContentPreview()) > 4096 {
+		err := PipelineOperationValidationError{
+			field:  "ContentPreview",
+			reason: "value length must be at most 4096 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for ResultAvailable
+
+	// no validation rules for ExitCode
+
+	// no validation rules for TimedOut
+
+	if all {
+		switch v := interface{}(m.GetElapsed()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, PipelineOperationValidationError{
+					field:  "Elapsed",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, PipelineOperationValidationError{
+					field:  "Elapsed",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetElapsed()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return PipelineOperationValidationError{
+				field:  "Elapsed",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if utf8.RuneCountInString(m.GetStdoutPreview()) > 4096 {
+		err := PipelineOperationValidationError{
+			field:  "StdoutPreview",
+			reason: "value length must be at most 4096 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetStderrPreview()) > 4096 {
+		err := PipelineOperationValidationError{
+			field:  "StderrPreview",
+			reason: "value length must be at most 4096 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetResultSummary()) > 4096 {
+		err := PipelineOperationValidationError{
+			field:  "ResultSummary",
+			reason: "value length must be at most 4096 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return PipelineOperationMultiError(errors)
+	}
+
+	return nil
+}
+
+// PipelineOperationMultiError is an error wrapping multiple validation errors
+// returned by PipelineOperation.ValidateAll() if the designated constraints
+// aren't met.
+type PipelineOperationMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m PipelineOperationMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m PipelineOperationMultiError) AllErrors() []error { return m }
+
+// PipelineOperationValidationError is the validation error returned by
+// PipelineOperation.Validate if the designated constraints aren't met.
+type PipelineOperationValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PipelineOperationValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PipelineOperationValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PipelineOperationValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PipelineOperationValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PipelineOperationValidationError) ErrorName() string {
+	return "PipelineOperationValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e PipelineOperationValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPipelineOperation.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PipelineOperationValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PipelineOperationValidationError{}
+
 // Validate checks the field values on WorkerInfo with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -878,6 +1689,121 @@ func (m *WorkerInfo) validate(all bool) error {
 	}
 
 	// no validation rules for Status
+
+	if _, ok := WorkerPresence_name[int32(m.GetPresence())]; !ok {
+		err := WorkerInfoValidationError{
+			field:  "Presence",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetRegisteredAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, WorkerInfoValidationError{
+					field:  "RegisteredAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, WorkerInfoValidationError{
+					field:  "RegisteredAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetRegisteredAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return WorkerInfoValidationError{
+				field:  "RegisteredAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetLastSeenAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, WorkerInfoValidationError{
+					field:  "LastSeenAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, WorkerInfoValidationError{
+					field:  "LastSeenAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetLastSeenAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return WorkerInfoValidationError{
+				field:  "LastSeenAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for HeartbeatIntervalSeconds
+
+	if utf8.RuneCountInString(m.GetAgentVersion()) > 64 {
+		err := WorkerInfoValidationError{
+			field:  "AgentVersion",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetRunId()) > 128 {
+		err := WorkerInfoValidationError{
+			field:  "RunId",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetStatusReason()) > 256 {
+		err := WorkerInfoValidationError{
+			field:  "StatusReason",
+			reason: "value length must be at most 256 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := ObservationSource_name[int32(m.GetSource())]; !ok {
+		err := WorkerInfoValidationError{
+			field:  "Source",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if len(errors) > 0 {
 		return WorkerInfoMultiError(errors)
@@ -1013,6 +1939,41 @@ func (m *Event) validate(all bool) error {
 	}
 
 	// no validation rules for Status
+
+	if _, ok := ObservationSource_name[int32(m.GetSource())]; !ok {
+		err := EventValidationError{
+			field:  "Source",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := EventSeverity_name[int32(m.GetSeverity())]; !ok {
+		err := EventValidationError{
+			field:  "Severity",
+			reason: "value must be one of the defined enum values",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for Sequence
+
+	if utf8.RuneCountInString(m.GetDetail()) > 4096 {
+		err := EventValidationError{
+			field:  "Detail",
+			reason: "value length must be at most 4096 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if len(errors) > 0 {
 		return EventMultiError(errors)

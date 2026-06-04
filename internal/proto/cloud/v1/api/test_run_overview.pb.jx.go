@@ -87,6 +87,54 @@ func (m *LogFilter) Encode(e *jx.Encoder) {
 		e.FieldStart("query")
 		e.Str(m.Query)
 	}
+	if len(m.Phases) > 0 {
+		e.FieldStart("phases")
+		e.ArrStart()
+		for _, v := range m.Phases {
+			e.Str(v)
+		}
+		e.ArrEnd()
+	}
+	if len(m.ParentNodeExecutionIds) > 0 {
+		e.FieldStart("parentNodeExecutionIds")
+		e.ArrStart()
+		for _, v := range m.ParentNodeExecutionIds {
+			e.Str(v)
+		}
+		e.ArrEnd()
+	}
+	if len(m.StageNames) > 0 {
+		e.FieldStart("stageNames")
+		e.ArrStart()
+		for _, v := range m.StageNames {
+			e.Str(v)
+		}
+		e.ArrEnd()
+	}
+	if len(m.StepIds) > 0 {
+		e.FieldStart("stepIds")
+		e.ArrStart()
+		for _, v := range m.StepIds {
+			e.Str(v)
+		}
+		e.ArrEnd()
+	}
+	if len(m.Actions) > 0 {
+		e.FieldStart("actions")
+		e.ArrStart()
+		for _, v := range m.Actions {
+			e.Str(v)
+		}
+		e.ArrEnd()
+	}
+	if len(m.Mentions) > 0 {
+		e.FieldStart("mentions")
+		e.ArrStart()
+		for _, v := range m.Mentions {
+			e.Str(v)
+		}
+		e.ArrEnd()
+	}
 	e.ObjEnd()
 }
 
@@ -272,6 +320,102 @@ func (m *LogFilter) Decode(d *jx.Decoder) error {
 			}
 			m.Query = v
 			return nil
+		case "phases":
+			if seen["Phases"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Phases"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				v, err := d.Str()
+				if err != nil {
+					return err
+				}
+				m.Phases = append(m.Phases, v)
+				return nil
+			})
+		case "parentNodeExecutionIds", "parent_node_execution_ids":
+			if seen["ParentNodeExecutionIds"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["ParentNodeExecutionIds"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				v, err := d.Str()
+				if err != nil {
+					return err
+				}
+				m.ParentNodeExecutionIds = append(m.ParentNodeExecutionIds, v)
+				return nil
+			})
+		case "stageNames", "stage_names":
+			if seen["StageNames"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["StageNames"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				v, err := d.Str()
+				if err != nil {
+					return err
+				}
+				m.StageNames = append(m.StageNames, v)
+				return nil
+			})
+		case "stepIds", "step_ids":
+			if seen["StepIds"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["StepIds"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				v, err := d.Str()
+				if err != nil {
+					return err
+				}
+				m.StepIds = append(m.StepIds, v)
+				return nil
+			})
+		case "actions":
+			if seen["Actions"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Actions"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				v, err := d.Str()
+				if err != nil {
+					return err
+				}
+				m.Actions = append(m.Actions, v)
+				return nil
+			})
+		case "mentions":
+			if seen["Mentions"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Mentions"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				v, err := d.Str()
+				if err != nil {
+					return err
+				}
+				m.Mentions = append(m.Mentions, v)
+				return nil
+			})
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}

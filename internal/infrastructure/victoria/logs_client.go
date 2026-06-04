@@ -94,14 +94,20 @@ func (c *LogsClient) Write(ctx context.Context, lines []*monitor.LogLine) error 
 			continue
 		}
 		row := map[string]any{
-			"_msg":              line.GetLine(),
-			"run_id":            line.GetRunId(),
-			"node_execution_id": line.GetNodeExecutionId(),
-			"component_id":      line.GetComponentId(),
-			"machine_id":        line.GetMachineId(),
-			"unit":              line.GetUnit(),
-			"source":            sourceName(line.GetSource()),
-			"stream":            streamName(line.GetStream()),
+			"_msg":                     line.GetLine(),
+			"run_id":                   line.GetRunId(),
+			"node_execution_id":        line.GetNodeExecutionId(),
+			"parent_node_execution_id": line.GetParentNodeExecutionId(),
+			"phase":                    line.GetPhase(),
+			"stage_name":               line.GetStageName(),
+			"component_id":             line.GetComponentId(),
+			"machine_id":               line.GetMachineId(),
+			"step_id":                  line.GetStepId(),
+			"action":                   line.GetAction(),
+			"mentions":                 strings.Join(line.GetMentions(), ","),
+			"unit":                     line.GetUnit(),
+			"source":                   sourceName(line.GetSource()),
+			"stream":                   streamName(line.GetStream()),
 		}
 		if line.GetObservedAt() != nil {
 			row["_time"] = line.GetObservedAt().AsTime().UTC().Format(time.RFC3339Nano)

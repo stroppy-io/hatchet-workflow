@@ -11,6 +11,7 @@ import "cloud/v1/deployment/provider.proto";
 import "cloud/v1/domain/database.proto";
 import "cloud/v1/domain/test.proto";
 import "cloud/v1/domain/workload.proto";
+import "cloud/v1/workflow/test.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 import "validate/validate.proto";
@@ -98,6 +99,12 @@ message TestRunRecord {
         execution statuses.
      */
     deployment.DeploymentPlan deployment_plan = 11;
+    /*
+        runtime_state is the last TestWorkflow RunState persisted by the
+        workflow itself. Overview uses it as the durable projection when the
+        Temporal workflow is already closed and no longer queryable.
+     */
+    workflow.RunState runtime_state = 13;
 
     /*
         Summary is the flat, indexed projection of the run used by the table:

@@ -6,6 +6,7 @@ import {
   type ColumnDef,
   type RowData,
 } from "@tanstack/react-table";
+import { toJson } from "@bufbuild/protobuf";
 
 // Per-column metadata: optional className applied to both the <th> and <td> so
 // a column (e.g. the thin trigger-icon column) can carry its own width/padding.
@@ -63,6 +64,11 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Link, useNavigate, useSearchParams, useTenantSlug } from "@/lib/router";
+import {
+  AccountSchema,
+  type Account,
+  type AccountJson,
+} from "@/lib/proto/cloud/v1/iam/account_pb";
 import { Avatar } from "@/components/Avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -98,6 +104,7 @@ import {
   type RunVM,
   type SortField,
 } from "@/services/runs";
+import { iamClient } from "@/services/client";
 
 // Test Runs — the runs list/table. Built around the slice of
 // cloud.v1.api.ListTestRunsRequest the provider wires (search, statuses[],
@@ -890,6 +897,32 @@ function disabledReason(action: RunAction): string | undefined {
   return DISABLED_REASON[action];
 }
 
+interface AuthorDisplay {
+  label: string;
+  title: string;
+  avatarName: string;
+}
+
+function fallbackAuthorDisplay(id: string): AuthorDisplay {
+  return { label: id, title: id, avatarName: id };
+}
+
+function authorDisplayFromAccount(id: string, account?: Account): AuthorDisplay {
+  if (!account) return fallbackAuthorDisplay(id);
+  const j = toJson(AccountSchema, account) as AccountJson;
+  const nickname = j.nickname ?? "";
+  const email = j.email ?? "";
+  const label = nickname || email || id;
+  const titleParts = [email && email !== label ? email : null, id].filter(
+    Boolean,
+  );
+  return {
+    label,
+    title: titleParts.length ? `${label} · ${titleParts.join(" · ")}` : label,
+    avatarName: label,
+  };
+}
+
 /**
  * ActionsMenu — the compact "⋯" (kebab) cell. Opens a radix dropdown listing
  * EVERY run action; items invalid for the row's current status are DISABLED
@@ -1010,6 +1043,44 @@ export function Runs() {
   // sourced through the provider so the mock stays isolated. Fetched once per
   // slug (best-effort: a failure just leaves an empty pick-list).
   const [facets, setFacets] = useState<RunFacets>({ authorIds: [] });
+  const [authorDisplays, setAuthorDisplays] = useState<
+    Record<string, AuthorDisplay>
+  >({});
+  const authorDisplaysRef = useRef<Record<string, AuthorDisplay>>({});
+
+  const rememberAuthorDisplays = useCallback(
+    (next: Record<string, AuthorDisplay>) => {
+      if (Object.keys(next).length === 0) return;
+      const merged = { ...authorDisplaysRef.current, ...next };
+      authorDisplaysRef.current = merged;
+      setAuthorDisplays(merged);
+    },
+    [],
+  );
+
+  const resolveAuthors = useCallback(
+    (ids: string[]) => {
+      const missing = [...new Set(ids.filter(Boolean))].filter(
+        (id) => !authorDisplaysRef.current[id],
+      );
+      if (missing.length === 0) return;
+      void Promise.all(
+        missing.map(async (id) => {
+          try {
+            const { account } = await iamClient.getAccount({ id });
+            return [id, authorDisplayFromAccount(id, account)] as const;
+          } catch {
+            return [id, fallbackAuthorDisplay(id)] as const;
+          }
+        }),
+      ).then((entries) => {
+        const next: Record<string, AuthorDisplay> = {};
+        for (const [id, display] of entries) next[id] = display;
+        rememberAuthorDisplays(next);
+      });
+    },
+    [rememberAuthorDisplays],
+  );
 
   // Row selection is local UI state for the future Compare page. It intentionally
   // stores stable run ids, not row indexes, so refetches/re-sorts keep selection.
@@ -1054,6 +1125,7 @@ export function Runs() {
         });
         setRuns(page.runs);
         setNextPageToken(page.nextPageToken);
+        resolveAuthors(page.runs.map((run) => run.authorId));
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load runs");
         setRuns([]);
@@ -1088,6 +1160,7 @@ export function Runs() {
       query.desc,
       query.pageSize,
       query.pageToken,
+      resolveAuthors,
     ],
   );
 
@@ -1160,7 +1233,10 @@ export function Runs() {
     void getRunsProvider()
       .listFacets(slug)
       .then((f) => {
-        if (!cancelled) setFacets(f);
+        if (!cancelled) {
+          setFacets(f);
+          resolveAuthors(f.authorIds);
+        }
       })
       .catch(() => {
         if (!cancelled) setFacets({ authorIds: [] });
@@ -1168,7 +1244,7 @@ export function Runs() {
     return () => {
       cancelled = true;
     };
-  }, [slug]);
+  }, [slug, resolveAuthors]);
 
   // Auto-refresh: background re-fetch on the selected interval. Paused while a
   // header filter popover is open. Cleans up on unmount / dependency change.
@@ -1592,7 +1668,10 @@ export function Runs() {
           >
             {facets.authorIds.length > 0 ? (
               <ChecklistFilter
-                options={facets.authorIds.map((a) => ({ value: a, label: a }))}
+                options={facets.authorIds.map((a) => ({
+                  value: a,
+                  label: authorDisplays[a]?.label ?? a,
+                }))}
                 selected={authorSet}
                 onChange={(next) => setCsv("author", next)}
               />
@@ -1611,14 +1690,15 @@ export function Runs() {
           const author = row.original.authorId;
           if (!author)
             return <span className="font-mono text-xs text-zinc-600">—</span>;
+          const display = authorDisplays[author] ?? fallbackAuthorDisplay(author);
           return (
             <div className="flex items-center gap-2 min-w-0">
-              <Avatar name={author} size={22} className="shrink-0" />
+              <Avatar name={display.avatarName} size={22} className="shrink-0" />
               <span
                 className="font-mono text-xs text-zinc-400 truncate"
-                title={author}
+                title={display.title}
               >
-                {author}
+                {display.label}
               </span>
             </div>
           );
@@ -2146,6 +2226,7 @@ export function Runs() {
       triggerSet,
       authorSet,
       facets,
+      authorDisplays,
       query.favoritesFirst,
       toggleFavoritesFirst,
       allVisibleSelected,

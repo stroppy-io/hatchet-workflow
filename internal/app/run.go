@@ -150,7 +150,8 @@ func Run(ctx context.Context, cfg Config) error {
 	runtimeStore := runtimePersistenceStore{r: bid, runs: store.TestRuns(), suiteRuns: store.SuiteRuns(), suites: store.Suites()}
 	runLogWriter := execution.NewRunLogWriter(cfg.MonitoringURL, cfg.MonitoringToken)
 	runtimeActivities := execution.NewRunPersistenceActivities(runtimeStore, runLogWriter)
-	overviewReader := execution.NewOverviewReader(tc, snapReader)
+	agentRegistry := execution.NewAgentRegistryService(log)
+	overviewReader := execution.NewOverviewReader(tc, snapReader, agentRegistry)
 	logReader := execution.NewLogReader(cfg.MonitoringURL, cfg.MonitoringToken, log)
 	agentLogIngest := execution.NewAgentLogIngestService(cfg.MonitoringURL, cfg.MonitoringToken, agentTokens, log)
 	metricsReader := execution.NewMetricsReader(cfg.MonitoringURL, cfg.MonitoringToken, snapReader, log)
@@ -505,9 +506,13 @@ func Run(ctx context.Context, cfg Config) error {
 	// 7) Connect handlers + embedded SPA on one mux.
 	mux := http.NewServeMux()
 	handlerOpts := []connect.HandlerOption{connect.WithInterceptors(grpcStatusToConnect{}, authzGate.Connect())}
+	agentHandlerOpts := []connect.HandlerOption{connect.WithInterceptors(grpcStatusToConnect{}, execution.NewAgentAuthInterceptor(agentTokens))}
 	register(mux,
 		func() (string, http.Handler) {
 			return agentconnect.NewAgentLogServiceHandler(agentLogIngest)
+		},
+		func() (string, http.Handler) {
+			return agentconnect.NewAgentRegistryServiceHandler(agentRegistry, agentHandlerOpts...)
 		},
 		func() (string, http.Handler) { return apiconnect.NewIamServiceHandler(iamService, handlerOpts...) },
 		func() (string, http.Handler) {

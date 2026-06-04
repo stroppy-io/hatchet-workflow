@@ -233,6 +233,168 @@ func (m *LogFilter) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if len(m.GetPhases()) > 64 {
+		err := LogFilterValidationError{
+			field:  "Phases",
+			reason: "value must contain no more than 64 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetPhases() {
+		_, _ = idx, item
+
+		if utf8.RuneCountInString(item) > 128 {
+			err := LogFilterValidationError{
+				field:  fmt.Sprintf("Phases[%v]", idx),
+				reason: "value length must be at most 128 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if len(m.GetParentNodeExecutionIds()) > 256 {
+		err := LogFilterValidationError{
+			field:  "ParentNodeExecutionIds",
+			reason: "value must contain no more than 256 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetParentNodeExecutionIds() {
+		_, _ = idx, item
+
+		if utf8.RuneCountInString(item) > 128 {
+			err := LogFilterValidationError{
+				field:  fmt.Sprintf("ParentNodeExecutionIds[%v]", idx),
+				reason: "value length must be at most 128 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if len(m.GetStageNames()) > 256 {
+		err := LogFilterValidationError{
+			field:  "StageNames",
+			reason: "value must contain no more than 256 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetStageNames() {
+		_, _ = idx, item
+
+		if utf8.RuneCountInString(item) > 256 {
+			err := LogFilterValidationError{
+				field:  fmt.Sprintf("StageNames[%v]", idx),
+				reason: "value length must be at most 256 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if len(m.GetStepIds()) > 256 {
+		err := LogFilterValidationError{
+			field:  "StepIds",
+			reason: "value must contain no more than 256 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetStepIds() {
+		_, _ = idx, item
+
+		if utf8.RuneCountInString(item) > 128 {
+			err := LogFilterValidationError{
+				field:  fmt.Sprintf("StepIds[%v]", idx),
+				reason: "value length must be at most 128 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if len(m.GetActions()) > 64 {
+		err := LogFilterValidationError{
+			field:  "Actions",
+			reason: "value must contain no more than 64 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetActions() {
+		_, _ = idx, item
+
+		if utf8.RuneCountInString(item) > 128 {
+			err := LogFilterValidationError{
+				field:  fmt.Sprintf("Actions[%v]", idx),
+				reason: "value length must be at most 128 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if len(m.GetMentions()) > 128 {
+		err := LogFilterValidationError{
+			field:  "Mentions",
+			reason: "value must contain no more than 128 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetMentions() {
+		_, _ = idx, item
+
+		if utf8.RuneCountInString(item) > 64 {
+			err := LogFilterValidationError{
+				field:  fmt.Sprintf("Mentions[%v]", idx),
+				reason: "value length must be at most 64 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
 	if len(errors) > 0 {
 		return LogFilterMultiError(errors)
 	}

@@ -43,7 +43,7 @@ func renderDockerInput(req *workflowpb.RenderDockerInputWorkflowRequest) (*deplo
 		}
 		name := dockerResourceName(req.GetRunId(), machine.GetNodeId())
 		clone := proto.Clone(container).(*deploymentpb.Docker_Container)
-		if err := applyDockerAgentBootstrap(machine.GetNodeId(), clone, req.GetAgentBootstrap()); err != nil {
+		if err := applyDockerAgentBootstrap(req.GetRunId(), machine.GetNodeId(), clone, req.GetAgentBootstrap()); err != nil {
 			return nil, err
 		}
 		if clone.Labels == nil {
@@ -170,7 +170,7 @@ func yandexInput(runID string, plan *deploymentpb.InfrastructurePlan, settings *
 			}
 		}
 		if clone.UserData == "" {
-			userData, err := agentdomain.CloudInit(machine.GetNodeId(), agentBootstrap(bootstrap, machine.GetNodeId()), agentdomain.CloudInitOptions{
+			userData, err := agentdomain.CloudInit(machine.GetNodeId(), agentBootstrap(bootstrap, machine.GetNodeId(), runID), agentdomain.CloudInitOptions{
 				SSHUser:      settings.GetSshUser(),
 				SSHPublicKey: settings.GetSshPublicKey(),
 			})
@@ -313,8 +313,8 @@ func yandexEnv(settings *deploymentpb.Yandex_Settings) map[string]string {
 	}
 }
 
-func applyDockerAgentBootstrap(nodeID string, container *deploymentpb.Docker_Container, bootstrap *workflowpb.AgentBootstrap) error {
-	env, err := agentdomain.Env(nodeID, agentBootstrap(bootstrap, nodeID))
+func applyDockerAgentBootstrap(runID, nodeID string, container *deploymentpb.Docker_Container, bootstrap *workflowpb.AgentBootstrap) error {
+	env, err := agentdomain.Env(nodeID, agentBootstrap(bootstrap, nodeID, runID))
 	if err != nil {
 		return fmt.Errorf("render docker agent env for %q: %w", nodeID, err)
 	}
@@ -328,14 +328,15 @@ func applyDockerAgentBootstrap(nodeID string, container *deploymentpb.Docker_Con
 	return nil
 }
 
-func agentBootstrap(input *workflowpb.AgentBootstrap, nodeID string) agentdomain.Bootstrap {
+func agentBootstrap(input *workflowpb.AgentBootstrap, nodeID, runID string) agentdomain.Bootstrap {
 	if input == nil {
-		return agentdomain.Bootstrap{}
+		return agentdomain.Bootstrap{RunID: runID}
 	}
 	return agentdomain.Bootstrap{
 		ServerAddr:        input.GetServerAddr(),
 		BinaryURL:         input.GetBinaryUrl(),
 		TemporalNamespace: input.GetTemporalNamespace(),
+		RunID:             runID,
 		ExtraEnv:          input.GetExtraEnv(),
 		AgentToken:        input.GetAgentTokens()[nodeID],
 		AgentTaskQueue:    input.GetAgentTaskQueues()[nodeID],

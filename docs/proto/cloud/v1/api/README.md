@@ -7568,6 +7568,14 @@ go_name: Presets</pre></td>
 <th>Description</th>
 </tr>
 <tr>
+<td>actions</td>
+<td>string</td>
+<td><pre>
+//actions restrict to generic action classes such as call_cmd/write_file.<br>
+
+json_name: actions
+go_name: Actions</pre></td>
+</tr><tr>
 <td>component_ids</td>
 <td>string</td>
 <td><pre>
@@ -7584,6 +7592,14 @@ go_name: ComponentIds</pre></td>
 json_name: end
 go_name: End</pre></td>
 </tr><tr>
+<td>mentions</td>
+<td>string</td>
+<td><pre>
+//mentions restrict to normalized operation tokens such as vector/vmagent/postgres.<br>
+
+json_name: mentions
+go_name: Mentions</pre></td>
+</tr><tr>
 <td>node_execution_ids</td>
 <td>string</td>
 <td><pre>
@@ -7599,6 +7615,22 @@ go_name: NodeExecutionIds</pre></td>
 
 json_name: nodeIds
 go_name: NodeIds</pre></td>
+</tr><tr>
+<td>parent_node_execution_ids</td>
+<td>string</td>
+<td><pre>
+//parent_node_execution_ids restrict to logs under these parent stages.<br>
+
+json_name: parentNodeExecutionIds
+go_name: ParentNodeExecutionIds</pre></td>
+</tr><tr>
+<td>phases</td>
+<td>string</td>
+<td><pre>
+//phases restrict to logs belonging to these top-level pipeline phases.<br>
+
+json_name: phases
+go_name: Phases</pre></td>
 </tr><tr>
 <td>query</td>
 <td>string</td>
@@ -7624,6 +7656,14 @@ go_name: Search</pre></td>
 json_name: sources
 go_name: Sources</pre></td>
 </tr><tr>
+<td>stage_names</td>
+<td>string</td>
+<td><pre>
+//stage_names restrict to logs emitted by stages with these display names.<br>
+
+json_name: stageNames
+go_name: StageNames</pre></td>
+</tr><tr>
 <td>start</td>
 <td><a href="../../../google/protobuf/README.md#google-protobuf-timestamp">google.protobuf.Timestamp</a></td>
 <td><pre>
@@ -7631,6 +7671,14 @@ go_name: Sources</pre></td>
 
 json_name: start
 go_name: Start</pre></td>
+</tr><tr>
+<td>step_ids</td>
+<td>string</td>
+<td><pre>
+//step_ids restrict to component-local deployment step ids.<br>
+
+json_name: stepIds
+go_name: StepIds</pre></td>
 </tr><tr>
 <td>streams</td>
 <td><a href="../monitor/README.md#cloud-v1-monitor-stream">cloud.v1.monitor.Stream</a></td>

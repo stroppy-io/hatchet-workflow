@@ -298,6 +298,72 @@ func (m *LogLine) validate(all bool) error {
 		}
 	}
 
+	if utf8.RuneCountInString(m.GetParentNodeExecutionId()) > 128 {
+		err := LogLineValidationError{
+			field:  "ParentNodeExecutionId",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetPhase()) > 128 {
+		err := LogLineValidationError{
+			field:  "Phase",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetStageName()) > 256 {
+		err := LogLineValidationError{
+			field:  "StageName",
+			reason: "value length must be at most 256 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetStepId()) > 128 {
+		err := LogLineValidationError{
+			field:  "StepId",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetAction()) > 128 {
+		err := LogLineValidationError{
+			field:  "Action",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetMentions()) > 64 {
+		err := LogLineValidationError{
+			field:  "Mentions",
+			reason: "value must contain no more than 64 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if len(errors) > 0 {
 		return LogLineMultiError(errors)
 	}

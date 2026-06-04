@@ -87,29 +87,44 @@ func (w *processInfrastructureWorkflow) Execute(ctx workflow.Context) (*workflow
 		return nil, err
 	}
 	plan := w.req.GetPlan()
+	processStageID := actionStageExecutionID(stageInfrastructure, actionProcessInfrastructure)
 	switch plan.GetProvider() {
 	case deploymentpb.Provider_PROVIDER_DOCKER:
+		renderStarted := timestamppb.New(workflow.Now(ctx))
+		emitTemporalActionStage(ctx, stageInfrastructure, processStageID, 1, common.Status_STATUS_RUNNING, renderStarted, nil, "", actionProcessInfrastructure, actionRenderDockerInput)
 		dockerInput, err := workflowpb.RenderDockerInputWorkflowChild(ctx, &workflowpb.RenderDockerInputWorkflowRequest{
 			RunId:          w.req.GetRunId(),
 			Plan:           plan,
 			AgentBootstrap: w.req.GetAgentBootstrap(),
 		})
 		if err != nil {
+			emitTemporalActionStage(ctx, stageInfrastructure, processStageID, 1, common.Status_STATUS_FAILED, renderStarted, timestamppb.New(workflow.Now(ctx)), err.Error(), actionProcessInfrastructure, actionRenderDockerInput)
 			return nil, err
 		}
+		emitTemporalActionStage(ctx, stageInfrastructure, processStageID, 1, common.Status_STATUS_COMPLETED, renderStarted, timestamppb.New(workflow.Now(ctx)), "", actionProcessInfrastructure, actionRenderDockerInput)
+		pullStarted := timestamppb.New(workflow.Now(ctx))
+		emitTemporalActionStage(ctx, stageInfrastructure, processStageID, 2, common.Status_STATUS_RUNNING, pullStarted, nil, "", actionProcessInfrastructure, actionDockerPull)
 		if _, err := workflowpb.DockerPullActivity(ctx, dockerInput); err != nil {
+			emitTemporalActionStage(ctx, stageInfrastructure, processStageID, 2, common.Status_STATUS_FAILED, pullStarted, timestamppb.New(workflow.Now(ctx)), err.Error(), actionProcessInfrastructure, actionDockerPull)
 			return nil, err
 		}
+		emitTemporalActionStage(ctx, stageInfrastructure, processStageID, 2, common.Status_STATUS_COMPLETED, pullStarted, timestamppb.New(workflow.Now(ctx)), "", actionProcessInfrastructure, actionDockerPull)
+		upStarted := timestamppb.New(workflow.Now(ctx))
+		emitTemporalActionStage(ctx, stageInfrastructure, processStageID, 3, common.Status_STATUS_RUNNING, upStarted, nil, "", actionProcessInfrastructure, actionDockerUp)
 		dockerOutput, err := workflowpb.DockerUpActivity(ctx, dockerInput)
 		if err != nil {
+			emitTemporalActionStage(ctx, stageInfrastructure, processStageID, 3, common.Status_STATUS_FAILED, upStarted, timestamppb.New(workflow.Now(ctx)), err.Error(), actionProcessInfrastructure, actionDockerUp)
 			return nil, err
 		}
+		emitTemporalActionStage(ctx, stageInfrastructure, processStageID, 3, common.Status_STATUS_COMPLETED, upStarted, timestamppb.New(workflow.Now(ctx)), "", actionProcessInfrastructure, actionDockerUp)
 		state, err := dockerInfrastructureState(w.req.GetRunId(), plan, dockerOutput)
 		if err != nil {
 			return nil, err
 		}
 		return &workflowpb.ProcessInfrastructureWorkflowResponse{State: state}, nil
 	case deploymentpb.Provider_PROVIDER_YANDEX:
+		renderStarted := timestamppb.New(workflow.Now(ctx))
+		emitTemporalActionStage(ctx, stageInfrastructure, processStageID, 1, common.Status_STATUS_RUNNING, renderStarted, nil, "", actionProcessInfrastructure, actionRenderTerraformVariables)
 		terraformInput, err := workflowpb.RenderTerraformVariablesWorkflowChild(ctx, &workflowpb.RenderTerraformVariablesWorkflowRequest{
 			RunId:          w.req.GetRunId(),
 			Plan:           plan,
@@ -117,12 +132,18 @@ func (w *processInfrastructureWorkflow) Execute(ctx workflow.Context) (*workflow
 			AgentBootstrap: w.req.GetAgentBootstrap(),
 		})
 		if err != nil {
+			emitTemporalActionStage(ctx, stageInfrastructure, processStageID, 1, common.Status_STATUS_FAILED, renderStarted, timestamppb.New(workflow.Now(ctx)), err.Error(), actionProcessInfrastructure, actionRenderTerraformVariables)
 			return nil, err
 		}
+		emitTemporalActionStage(ctx, stageInfrastructure, processStageID, 1, common.Status_STATUS_COMPLETED, renderStarted, timestamppb.New(workflow.Now(ctx)), "", actionProcessInfrastructure, actionRenderTerraformVariables)
+		applyStarted := timestamppb.New(workflow.Now(ctx))
+		emitTemporalActionStage(ctx, stageInfrastructure, processStageID, 2, common.Status_STATUS_RUNNING, applyStarted, nil, "", actionProcessInfrastructure, actionTerraformApply)
 		terraformOutput, err := workflowpb.TerraformApplyActivity(ctx, terraformInput)
 		if err != nil {
+			emitTemporalActionStage(ctx, stageInfrastructure, processStageID, 2, common.Status_STATUS_FAILED, applyStarted, timestamppb.New(workflow.Now(ctx)), err.Error(), actionProcessInfrastructure, actionTerraformApply)
 			return nil, err
 		}
+		emitTemporalActionStage(ctx, stageInfrastructure, processStageID, 2, common.Status_STATUS_COMPLETED, applyStarted, timestamppb.New(workflow.Now(ctx)), "", actionProcessInfrastructure, actionTerraformApply)
 		yandexOutput, err := terraformYandexOutput(terraformOutput)
 		if err != nil {
 			return nil, err
@@ -178,19 +199,25 @@ func (w *executeDeploymentPlanWorkflow) Execute(ctx workflow.Context) (*workflow
 		return persistDeploymentPlan(ctx, runID, plan)
 	}
 	sortComponentExecution(plan.GetComponents())
-	for _, component := range plan.GetComponents() {
+	for componentIndex, component := range plan.GetComponents() {
+		componentStarted := timestamppb.New(workflow.Now(ctx))
 		component.Status = common.Status_STATUS_DEPLOYMENT
+		emitStageUpdate(ctx, runID, componentStage(component, uint32(componentIndex+1), component.GetStatus(), componentStarted, nil, ""))
 		if err := persistPlan(); err != nil {
 			return nil, err
 		}
 		if err := executeComponentDeployment(ctx, runID, plan, component, w.req.GetAgentBootstrap()); err != nil {
+			componentFinished := timestamppb.New(workflow.Now(ctx))
 			component.Status = common.Status_STATUS_FAILED
+			emitStageUpdate(ctx, runID, componentStage(component, uint32(componentIndex+1), component.GetStatus(), componentStarted, componentFinished, err.Error()))
 			if perr := persistPlan(); perr != nil {
 				return nil, fmt.Errorf("persist failed deployment plan: %w", perr)
 			}
 			return nil, err
 		}
+		componentFinished := timestamppb.New(workflow.Now(ctx))
 		component.Status = common.Status_STATUS_DEPLOYED
+		emitStageUpdate(ctx, runID, componentStage(component, uint32(componentIndex+1), component.GetStatus(), componentStarted, componentFinished, ""))
 		if err := persistPlan(); err != nil {
 			return nil, err
 		}
@@ -397,12 +424,7 @@ func privateEndpoints(privateAddress, publicAddress string) []*deploymentpb.Endp
 }
 
 func executeComponentDeployment(ctx workflow.Context, runID string, plan *deploymentpb.DeploymentPlan, component *deploymentpb.ComponentDeployment, bootstrap *workflowpb.AgentBootstrap) error {
-	sort.SliceStable(component.Steps, func(i, j int) bool {
-		if component.Steps[i].GetOrder() != component.Steps[j].GetOrder() {
-			return component.Steps[i].GetOrder() < component.Steps[j].GetOrder()
-		}
-		return component.Steps[i].GetId() < component.Steps[j].GetId()
-	})
+	sortAgentSteps(component)
 	taskQueue, err := agentTaskQueue(bootstrap, component.GetNodeId())
 	if err != nil {
 		return err
@@ -415,9 +437,11 @@ func executeComponentDeployment(ctx workflow.Context, runID string, plan *deploy
 	if err := executeActivityNoResult(activityCtx, workflowpb.EnsureAgentOnlineActivityActivityName); err != nil {
 		return fmt.Errorf("agent %s is not online: %w", component.GetNodeId(), err)
 	}
-	for _, step := range component.GetSteps() {
+	for stepIndex, step := range component.GetSteps() {
 		deploymentbuilder.StampAgentStepExecutionContext(runID, component, step)
+		stepStarted := timestamppb.New(workflow.Now(ctx))
 		step.Status = common.Status_STATUS_DEPLOYMENT
+		emitStageUpdate(ctx, runID, agentStepStage(component, step, uint32(stepIndex+1), step.GetStatus(), stepStarted, nil, ""))
 		if err := appendDeploymentStepLog(ctx, runID, component, step, monitor.Stream_STREAM_STDOUT, "started "+agentStepDescription(step)); err != nil {
 			return err
 		}
@@ -425,7 +449,9 @@ func executeComponentDeployment(ctx workflow.Context, runID string, plan *deploy
 			return err
 		}
 		if err := executeAgentStep(activityCtx, step); err != nil {
+			stepFinished := timestamppb.New(workflow.Now(ctx))
 			step.Status = common.Status_STATUS_FAILED
+			emitStageUpdate(ctx, runID, agentStepStage(component, step, uint32(stepIndex+1), step.GetStatus(), stepStarted, stepFinished, err.Error()))
 			if lerr := appendDeploymentStepLog(ctx, runID, component, step, monitor.Stream_STREAM_STDERR, "failed "+agentStepDescription(step)+": "+err.Error()); lerr != nil {
 				return lerr
 			}
@@ -434,7 +460,9 @@ func executeComponentDeployment(ctx workflow.Context, runID string, plan *deploy
 			}
 			return fmt.Errorf("component %s step %s: %w", component.GetComponentId(), step.GetId(), err)
 		}
+		stepFinished := timestamppb.New(workflow.Now(ctx))
 		step.Status = common.Status_STATUS_DEPLOYED
+		emitStageUpdate(ctx, runID, agentStepStage(component, step, uint32(stepIndex+1), step.GetStatus(), stepStarted, stepFinished, ""))
 		if err := appendDeploymentStepLog(ctx, runID, component, step, monitor.Stream_STREAM_STDOUT, "completed "+agentStepDescription(step)); err != nil {
 			return err
 		}
@@ -461,16 +489,37 @@ func appendDeploymentStepLog(ctx workflow.Context, runID string, component *depl
 		return nil
 	}
 	return appendRunLogs(ctx, &monitor.LogLine{
-		ObservedAt:      timestamppb.New(workflow.Now(ctx)),
-		RunId:           runID,
-		NodeExecutionId: step.GetLabels()[deploymentbuilder.LabelNodeExecutionID],
-		ComponentId:     component.GetComponentId(),
-		MachineId:       component.GetNodeId(),
-		Source:          monitor.Source_SOURCE_COMMAND,
-		Unit:            deploymentbuilder.AgentStepActionKind(step),
-		Stream:          stream,
-		Line:            line,
+		ObservedAt:            timestamppb.New(workflow.Now(ctx)),
+		RunId:                 runID,
+		NodeExecutionId:       step.GetLabels()[deploymentbuilder.LabelNodeExecutionID],
+		ParentNodeExecutionId: step.GetLabels()[deploymentbuilder.LabelParentNodeExecutionID],
+		Phase:                 step.GetLabels()[deploymentbuilder.LabelPhase],
+		StageName:             step.GetLabels()[deploymentbuilder.LabelStageName],
+		ComponentId:           component.GetComponentId(),
+		MachineId:             component.GetNodeId(),
+		StepId:                step.GetLabels()[deploymentbuilder.LabelStepID],
+		Action:                step.GetLabels()[deploymentbuilder.LabelAction],
+		Mentions:              splitLabelList(step.GetLabels()[deploymentbuilder.LabelOperationMentions]),
+		Source:                monitor.Source_SOURCE_COMMAND,
+		Unit:                  deploymentbuilder.AgentStepActionKind(step),
+		Stream:                stream,
+		Line:                  line,
 	})
+}
+
+func splitLabelList(value string) []string {
+	if value == "" {
+		return nil
+	}
+	parts := strings.Split(value, ",")
+	out := make([]string, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part != "" {
+			out = append(out, part)
+		}
+	}
+	return out
 }
 
 func agentStepDescription(step *deploymentpb.AgentStep) string {

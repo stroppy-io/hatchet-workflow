@@ -38,7 +38,7 @@ func BuildRunConfig(ctx context.Context, tenantID string, settings SettingsSourc
 	// Stamp the non-secret monitoring context onto the topology-spec labels so
 	// the deployment renderer can build the agent-side metrics/logs collector
 	// phase. Per-agent bearer tokens travel separately in AgentBootstrap.
-	stampMonitorLabels(testRun.GetTopologySpec(), testRun.GetId(), bootstrap)
+	StampMonitorLabels(testRun.GetTopologySpec(), testRun.GetId(), bootstrap)
 
 	cfg := &workflowpb.RunConfig{
 		TenantId:           tenantID,
@@ -56,11 +56,11 @@ func BuildRunConfig(ctx context.Context, tenantID string, settings SettingsSourc
 	return cfg, nil
 }
 
-// stampMonitorLabels writes the server address and run id onto topology labels.
+// StampMonitorLabels writes the server address and run id onto topology labels.
 // Per-node bearer tokens stay in AgentBootstrap.AgentTokens so they are not
 // exposed as topology/runtime metadata. A nil/empty bootstrap leaves labels
 // untouched, so the monitor phase is skipped.
-func stampMonitorLabels(spec *topology.TopologySpec, runID string, bootstrap *workflowpb.AgentBootstrap) {
+func StampMonitorLabels(spec *topology.TopologySpec, runID string, bootstrap *workflowpb.AgentBootstrap) {
 	if spec == nil || bootstrap == nil {
 		return
 	}

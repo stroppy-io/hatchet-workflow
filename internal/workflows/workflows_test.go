@@ -92,6 +92,7 @@ func TestTestWorkflowOrchestratesDeploymentStages(t *testing.T) {
 		workflowpb.RenderDeploymentPlanWorkflowWorkflowName,
 		workflowpb.ExecuteDeploymentPlanWorkflowWorkflowName,
 		workflowpb.RunWorkloadWorkflowWorkflowName,
+		workflowpb.RenderDockerInputWorkflowWorkflowName,
 	}
 	if !sameStrings(childStarts, want) {
 		t.Fatalf("child workflow order = %v, want %v", childStarts, want)
@@ -137,6 +138,46 @@ func TestTestWorkflowExposesRunStateQuery(t *testing.T) {
 		if got, want := stage.GetStatus(), common.Status_STATUS_COMPLETED; got != want {
 			t.Fatalf("stage %q status = %s, want %s", stage.GetName(), got, want)
 		}
+	}
+	var agentStageSeen, providerStageSeen, renderOutputsSeen bool
+	for _, stage := range state.GetStages() {
+		if stage.GetName() == stageRenderPlan {
+			renderOutputsSeen = len(stage.GetOutputs()) > 0
+		}
+		if stage.GetName() == actionDockerUp {
+			providerStageSeen = true
+			if got, want := stage.GetPhase(), stageInfrastructure; got != want {
+				t.Fatalf("provider stage phase = %q, want %q", got, want)
+			}
+			if stage.GetParentNodeExecutionId() == "" {
+				t.Fatalf("provider stage %q has empty parent_node_execution_id", stage.GetName())
+			}
+		}
+		if stage.GetOperation() == nil {
+			continue
+		}
+		agentStageSeen = true
+		if got, want := stage.GetPhase(), stageExecutePlan; got != want {
+			t.Fatalf("agent stage phase = %q, want %q", got, want)
+		}
+		if stage.GetParentNodeExecutionId() == "" {
+			t.Fatalf("agent stage %q has empty parent_node_execution_id", stage.GetName())
+		}
+		if stage.GetComponentId() == "" {
+			t.Fatalf("agent stage %q has empty component_id", stage.GetName())
+		}
+		if stage.GetMachineId() == "" {
+			t.Fatalf("agent stage %q has empty machine_id", stage.GetName())
+		}
+	}
+	if !agentStageSeen {
+		t.Fatal("run state has no agent step stages with operations")
+	}
+	if !providerStageSeen {
+		t.Fatal("run state has no provider action stages")
+	}
+	if !renderOutputsSeen {
+		t.Fatal("render stage has no structured outputs")
 	}
 
 	if got := runtime.lastRunStatus(); got != common.Status_STATUS_COMPLETED {
@@ -225,6 +266,24 @@ func TestExecuteDeploymentPlanWorkflowPersistsActionStatusAndExecutionContext(t 
 	if got, want := envVars[deploymentbuilder.EnvNodeExecutionID], deploymentbuilder.StepExecutionID("postgres-master", "020_start"); got != want {
 		t.Fatalf("command env node_execution_id = %q, want %q", got, want)
 	}
+	if got, want := envVars[deploymentbuilder.EnvParentNodeExecutionID], deploymentbuilder.ComponentExecutionID("postgres-master"); got != want {
+		t.Fatalf("command env parent_node_execution_id = %q, want %q", got, want)
+	}
+	if got, want := envVars[deploymentbuilder.EnvPhase], deploymentbuilder.PhaseExecuteDeploymentPlan; got != want {
+		t.Fatalf("command env phase = %q, want %q", got, want)
+	}
+	if got := envVars[deploymentbuilder.EnvStageName]; got == "" {
+		t.Fatal("command env stage_name is empty")
+	}
+	if got, want := envVars[deploymentbuilder.EnvAction], "call_cmd"; got != want {
+		t.Fatalf("command env action = %q, want %q", got, want)
+	}
+	if got := envVars[deploymentbuilder.EnvOperationMentions]; got == "" {
+		t.Fatal("command env operation mentions is empty")
+	}
+	if result := component.GetSteps()[1].GetCallCmd().GetResult(); result == nil || result.GetExitCode() != 0 {
+		t.Fatalf("command result = %v, want exit 0", result)
+	}
 	if got := len(runtime.deploymentPlans); got < 4 {
 		t.Fatalf("deployment plan persist calls = %d, want live status updates", got)
 	}
@@ -233,6 +292,18 @@ func TestExecuteDeploymentPlanWorkflowPersistsActionStatusAndExecutionContext(t 
 	}
 	if got, want := runtime.logLines[0].GetNodeExecutionId(), deploymentbuilder.StepExecutionID("postgres-master", "010_create_data_dir"); got != want {
 		t.Fatalf("first log node_execution_id = %q, want %q", got, want)
+	}
+	if got, want := runtime.logLines[0].GetPhase(), deploymentbuilder.PhaseExecuteDeploymentPlan; got != want {
+		t.Fatalf("first log phase = %q, want %q", got, want)
+	}
+	if got, want := runtime.logLines[0].GetParentNodeExecutionId(), deploymentbuilder.ComponentExecutionID("postgres-master"); got != want {
+		t.Fatalf("first log parent_node_execution_id = %q, want %q", got, want)
+	}
+	if got := runtime.logLines[0].GetStageName(); got == "" {
+		t.Fatal("first log stage_name is empty")
+	}
+	if got, want := runtime.logLines[0].GetAction(), "create_dir"; got != want {
+		t.Fatalf("first log action = %q, want %q", got, want)
 	}
 }
 

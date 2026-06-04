@@ -545,6 +545,177 @@ func (m *Stage) validate(all bool) error {
 
 	// no validation rules for Attempt
 
+	// no validation rules for Order
+
+	if utf8.RuneCountInString(m.GetParentNodeExecutionId()) > 128 {
+		err := StageValidationError{
+			field:  "ParentNodeExecutionId",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetPhase()) > 128 {
+		err := StageValidationError{
+			field:  "Phase",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetComponentId()) > 128 {
+		err := StageValidationError{
+			field:  "ComponentId",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetMachineId()) > 128 {
+		err := StageValidationError{
+			field:  "MachineId",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetWorker()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, StageValidationError{
+					field:  "Worker",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, StageValidationError{
+					field:  "Worker",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetWorker()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return StageValidationError{
+				field:  "Worker",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if utf8.RuneCountInString(m.GetStatusReason()) > 256 {
+		err := StageValidationError{
+			field:  "StatusReason",
+			reason: "value length must be at most 256 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetErrorMessage()) > 4096 {
+		err := StageValidationError{
+			field:  "ErrorMessage",
+			reason: "value length must be at most 4096 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetOperation()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, StageValidationError{
+					field:  "Operation",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, StageValidationError{
+					field:  "Operation",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetOperation()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return StageValidationError{
+				field:  "Operation",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(m.GetOutputs()) > 4096 {
+		err := StageValidationError{
+			field:  "Outputs",
+			reason: "value must contain no more than 4096 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetOutputs() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, StageValidationError{
+						field:  fmt.Sprintf("Outputs[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, StageValidationError{
+						field:  fmt.Sprintf("Outputs[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return StageValidationError{
+					field:  fmt.Sprintf("Outputs[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
 	if len(errors) > 0 {
 		return StageMultiError(errors)
 	}
@@ -621,6 +792,145 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = StageValidationError{}
+
+// Validate checks the field values on StageUpdate with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *StageUpdate) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on StageUpdate with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in StageUpdateMultiError, or
+// nil if none found.
+func (m *StageUpdate) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *StageUpdate) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetStage() == nil {
+		err := StageUpdateValidationError{
+			field:  "Stage",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetStage()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, StageUpdateValidationError{
+					field:  "Stage",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, StageUpdateValidationError{
+					field:  "Stage",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetStage()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return StageUpdateValidationError{
+				field:  "Stage",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return StageUpdateMultiError(errors)
+	}
+
+	return nil
+}
+
+// StageUpdateMultiError is an error wrapping multiple validation errors
+// returned by StageUpdate.ValidateAll() if the designated constraints aren't met.
+type StageUpdateMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m StageUpdateMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m StageUpdateMultiError) AllErrors() []error { return m }
+
+// StageUpdateValidationError is the validation error returned by
+// StageUpdate.Validate if the designated constraints aren't met.
+type StageUpdateValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e StageUpdateValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e StageUpdateValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e StageUpdateValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e StageUpdateValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e StageUpdateValidationError) ErrorName() string { return "StageUpdateValidationError" }
+
+// Error satisfies the builtin error interface
+func (e StageUpdateValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sStageUpdate.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = StageUpdateValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = StageUpdateValidationError{}
 
 // Validate checks the field values on InstallStroppyWorkflowRequest with the
 // rules defined in the proto definition for this message. If any rules are
