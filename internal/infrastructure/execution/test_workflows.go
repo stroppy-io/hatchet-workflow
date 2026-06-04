@@ -8,8 +8,11 @@ import (
 	"go.temporal.io/api/serviceerror"
 	"go.temporal.io/sdk/client"
 
+	"google.golang.org/protobuf/proto"
+
 	derrors "github.com/stroppy-io/stroppy-cloud/internal/domain/errors"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/settings"
+	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
 	"github.com/stroppy-io/stroppy-cloud/internal/services/test_run"
@@ -50,6 +53,19 @@ func (w *TestWorkflows) LaunchTest(ctx context.Context, run *models.TestRunRecor
 	spec := run.GetSpec()
 	if spec == nil {
 		return errors.New("test run record has no baked spec to launch")
+	}
+
+	// Provider settings (e.g. Yandex credentials) are resolved at launch and
+	// injected into the plan — they are never baked into the stored run spec.
+	// Docker needs none; without this the Yandex terraform render fails with
+	// "yandex settings are required".
+	if ps, ok := w.bootstrap.(settings.ProviderSettingsSource); ok && spec.GetInfrastructurePlan() != nil {
+		pset, err := ps.ProviderSettings(ctx, run.GetEntity().GetTenantId(), spec.GetInfrastructurePlan().GetProvider())
+		if err != nil {
+			return err
+		}
+		spec = proto.Clone(spec).(*domain.TestRun)
+		spec.GetInfrastructurePlan().Settings = pset
 	}
 
 	req := &workflowpb.TestWorkflowRequest{TenantId: run.GetEntity().GetTenantId(), TestRun: spec}

@@ -32,8 +32,10 @@ func (s *YandexSource) ListSubnets(ctx context.Context, req SourceRequest) ([]Pr
 		return nil, derrors.Invalid("network_id", "yandex network_id is required")
 	}
 
+	// Stored credential is a YC OAuth token; OAuthToken exchanges it for an IAM
+	// token. Passing it as IAMToken verbatim fails with "the token is invalid".
 	sdk, err := ycsdk.Build(ctx,
-		options.WithCredentials(credentials.IAMToken(settings.GetToken())),
+		options.WithCredentials(credentials.OAuthToken(settings.GetToken())),
 		options.WithDefaultRetryOptions(),
 	)
 	if err != nil {

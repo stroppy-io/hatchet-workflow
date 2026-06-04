@@ -3,6 +3,7 @@ package workflows
 import (
 	"context"
 	"fmt"
+	"time"
 
 	dockerexec "github.com/stroppy-io/stroppy-cloud/internal/infrastructure/docker"
 	terraformexec "github.com/stroppy-io/stroppy-cloud/internal/infrastructure/terraform"
@@ -126,7 +127,9 @@ func (a *deploymentActivities) DockerPullActivity(ctx context.Context, req *depl
 		return nil, err
 	}
 	defer executor.Close()
-	return executor.Pull(ctx, req)
+	return withHeartbeat(ctx, func() (*deploymentpb.Docker_Output, error) {
+		return executor.Pull(ctx, req)
+	})
 }
 
 func (a *deploymentActivities) DockerUpActivity(ctx context.Context, req *deploymentpb.Docker_Input) (*deploymentpb.Docker_Output, error) {
@@ -135,7 +138,9 @@ func (a *deploymentActivities) DockerUpActivity(ctx context.Context, req *deploy
 		return nil, err
 	}
 	defer executor.Close()
-	return executor.Up(ctx, req)
+	return withHeartbeat(ctx, func() (*deploymentpb.Docker_Output, error) {
+		return executor.Up(ctx, req)
+	})
 }
 
 func (a *deploymentActivities) DockerDownActivity(ctx context.Context, req *deploymentpb.Docker_Input) (*deploymentpb.Docker_Output, error) {
@@ -144,7 +149,9 @@ func (a *deploymentActivities) DockerDownActivity(ctx context.Context, req *depl
 		return nil, err
 	}
 	defer executor.Close()
-	return executor.Down(ctx, req)
+	return withHeartbeat(ctx, func() (*deploymentpb.Docker_Output, error) {
+		return executor.Down(ctx, req)
+	})
 }
 
 func (a *deploymentActivities) TerraformPlanActivity(ctx context.Context, req *deploymentpb.Terraform_Input) (*deploymentpb.Terraform_Output, error) {
@@ -169,7 +176,33 @@ func runTerraformActivity(ctx context.Context, req *deploymentpb.Terraform_Input
 	}
 	clone.Operation.Action = action
 	executor := terraformexec.NewExecutor()
-	return executor.Execute(ctx, clone)
+	return withHeartbeat(ctx, func() (*deploymentpb.Terraform_Output, error) {
+		return executor.Execute(ctx, clone)
+	})
+}
+
+// withHeartbeat records a Temporal activity heartbeat every 20s for the duration
+// of fn. Long-running deployment activities (terraform apply/destroy, which can
+// run for minutes) MUST heartbeat: with HeartbeatTimeout=1m and no heartbeats,
+// Temporal declares the activity timed-out and retries it while the first
+// terraform process is still running, colliding on the terraform state lock and
+// failing the run (while leaking the half-applied infrastructure).
+func withHeartbeat[T any](ctx context.Context, fn func() (T, error)) (T, error) {
+	beatCtx, stop := context.WithCancel(ctx)
+	defer stop()
+	go func() {
+		ticker := time.NewTicker(20 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-beatCtx.Done():
+				return
+			case <-ticker.C:
+				activity.RecordHeartbeat(ctx)
+			}
+		}
+	}()
+	return fn()
 }
 
 func echoQuotaAllocations(refs []*workflowpb.QuotaRequestRef) []*workflowpb.QuotaAllocationRef {

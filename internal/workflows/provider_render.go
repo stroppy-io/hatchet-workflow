@@ -379,7 +379,10 @@ func terraformYandexOutput(output *deploymentpb.Terraform_Output) (*deploymentpb
 		return nil, err
 	}
 	var yandexOutput deploymentpb.Yandex_Output
-	if err := protojson.Unmarshal(data, &yandexOutput); err != nil {
+	// Tolerate terraform outputs that are not (yet) modelled in the proto
+	// (e.g. stroppy_service_account_id); strict decoding would fail the run
+	// AFTER the VMs are applied, leaking infrastructure.
+	if err := (protojson.UnmarshalOptions{DiscardUnknown: true}).Unmarshal(data, &yandexOutput); err != nil {
 		return nil, fmt.Errorf("decode yandex terraform outputs: %w", err)
 	}
 	return &yandexOutput, nil

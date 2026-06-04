@@ -11,6 +11,8 @@ import (
 	ycsdk "github.com/yandex-cloud/go-sdk/v2"
 	"github.com/yandex-cloud/go-sdk/v2/credentials"
 	"github.com/yandex-cloud/go-sdk/v2/pkg/options"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
@@ -37,8 +39,12 @@ func (s *YandexSource) ListQuotas(ctx context.Context, req SourceRequest) ([]Sna
 		return nil, derrors.Invalid("cloud_id", "yandex cloud_id is required")
 	}
 
+	// The stored token is a Yandex Cloud OAuth token (the same credential the
+	// terraform provider consumes). OAuthToken yields exchangeable credentials
+	// that the SDK swaps for a short-lived IAM token; passing it verbatim as an
+	// IAM token is rejected with "the token is invalid".
 	sdk, err := ycsdk.Build(ctx,
-		options.WithCredentials(credentials.IAMToken(settings.GetToken())),
+		options.WithCredentials(credentials.OAuthToken(settings.GetToken())),
 		options.WithDefaultRetryOptions(),
 	)
 	if err != nil {
@@ -81,6 +87,12 @@ func (s *YandexSource) ListQuotas(ctx context.Context, req SourceRequest) ([]Sna
 				PageToken: pageToken,
 			})
 			if err != nil {
+				// Some services returned by ListServices do not expose quota
+				// limits for this resource (e.g. "notifications") and answer
+				// List with NotFound. Skip them instead of failing the whole call.
+				if status.Code(err) == codes.NotFound {
+					break
+				}
 				return nil, fmt.Errorf("list yandex quotas for service %q: %w", service, err)
 			}
 			for _, limit := range resp.GetQuotaLimits() {

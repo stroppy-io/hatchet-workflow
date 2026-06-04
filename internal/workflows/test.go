@@ -226,6 +226,11 @@ func (w *domainTestWorkflow) Execute(ctx workflow.Context) (resp *workflowpb.Tes
 	} else {
 		infrastructurePlan = quotaResp.GetPlan()
 	}
+	// Arm teardown BEFORE provisioning: ProcessInfrastructure may create real
+	// resources (terraform VMs / docker containers) and then fail (e.g. a
+	// post-apply output decode error), so the defer must be able to tear those
+	// down even when this very stage errors out. Idempotent for both providers.
+	teardownPlan = infrastructurePlan
 	infrastructureResp, err := workflowpb.ProcessInfrastructureWorkflowChild(ctx, &workflowpb.ProcessInfrastructureWorkflowRequest{
 		RunId:          testRun.GetId(),
 		Plan:           infrastructurePlan,
@@ -240,8 +245,6 @@ func (w *domainTestWorkflow) Execute(ctx workflow.Context) (resp *workflowpb.Tes
 	}
 	infrastructureState = infrastructureResp.GetState()
 	infrastructureReady = true
-	// Infrastructure now exists; arm teardown for every terminal outcome.
-	teardownPlan = infrastructurePlan
 	commitResp, err := workflowpb.CommitQuotasActivity(ctx, &workflowpb.CommitQuotasActivityRequest{
 		TenantId: w.req.GetTenantId(),
 		RunId:    testRun.GetId(),
