@@ -36,7 +36,7 @@ export const DASHBOARD_LABEL: Record<string, string> = {
 
 /** Per-run metric series prefix (matches the agent's metric namespacing). */
 export function runPrefix(runId: string): string {
-  return runId.replace(/-/g, "_") + "_";
+  return `stroppy_${runId.replace(/-/g, "_")}_`;
 }
 
 /**
