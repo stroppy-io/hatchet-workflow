@@ -886,6 +886,103 @@ func (m *GetAccountResponse) UnmarshalJSON(data []byte) error {
 	return m.Decode(d)
 }
 
+func (m *LookupAccountByEmailRequest) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Email != "" {
+		e.FieldStart("email")
+		e.Str(m.Email)
+	}
+	e.ObjEnd()
+}
+
+func (m *LookupAccountByEmailRequest) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "email":
+			if seen["Email"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Email"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Email = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *LookupAccountByEmailRequest) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *LookupAccountByEmailRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *LookupAccountByEmailResponse) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Account != nil {
+		e.FieldStart("account")
+		jxpb.EncMessage(e, m.Account)
+	}
+	e.ObjEnd()
+}
+
+func (m *LookupAccountByEmailResponse) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "account":
+			if seen["Account"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Account"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Account = &iam.Account{}
+			if err := jxpb.DecMessage(d, m.Account); err != nil {
+				return err
+			}
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *LookupAccountByEmailResponse) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *LookupAccountByEmailResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
 func (m *GetMyAccountRequest) Encode(e *jx.Encoder) {
 	if m == nil {
 		e.ObjStart()

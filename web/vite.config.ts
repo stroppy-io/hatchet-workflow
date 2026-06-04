@@ -25,6 +25,11 @@ export default defineConfig({
         target: "http://localhost:8080",
         changeOrigin: true,
       },
+      // embedded Grafana — gateway reverse-proxies the dashboards same-origin.
+      "/grafana": {
+        target: "http://localhost:8080",
+        changeOrigin: true,
+      },
     },
   },
 });

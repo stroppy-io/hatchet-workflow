@@ -31,6 +31,7 @@ const (
 	IamService_MarkRegistrationRequestHandled_FullMethodName = "/cloud.v1.api.IamService/MarkRegistrationRequestHandled"
 	IamService_CreateAccount_FullMethodName                  = "/cloud.v1.api.IamService/CreateAccount"
 	IamService_GetAccount_FullMethodName                     = "/cloud.v1.api.IamService/GetAccount"
+	IamService_LookupAccountByEmail_FullMethodName           = "/cloud.v1.api.IamService/LookupAccountByEmail"
 	IamService_GetMyAccount_FullMethodName                   = "/cloud.v1.api.IamService/GetMyAccount"
 	IamService_ListAccounts_FullMethodName                   = "/cloud.v1.api.IamService/ListAccounts"
 	IamService_UpdateAccount_FullMethodName                  = "/cloud.v1.api.IamService/UpdateAccount"
@@ -114,6 +115,10 @@ type IamServiceClient interface {
 	// GetAccount fetches one account by id. The handler allows platform admins,
 	// the account itself, or callers sharing a tenant with the target account.
 	GetAccount(ctx context.Context, in *GetAccountRequest, opts ...grpc.CallOption) (*GetAccountResponse, error)
+	// LookupAccountByEmail resolves an exact email to its account — the
+	// invite-by-email primitive. Authenticated, no permission: exact hit or
+	// NotFound, never a listing.
+	LookupAccountByEmail(ctx context.Context, in *LookupAccountByEmailRequest, opts ...grpc.CallOption) (*LookupAccountByEmailResponse, error)
 	// GetMyAccount returns the caller's own profile — authenticated, no
 	// permission (self-read).
 	GetMyAccount(ctx context.Context, in *GetMyAccountRequest, opts ...grpc.CallOption) (*GetMyAccountResponse, error)
@@ -343,6 +348,16 @@ func (c *iamServiceClient) GetAccount(ctx context.Context, in *GetAccountRequest
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetAccountResponse)
 	err := c.cc.Invoke(ctx, IamService_GetAccount_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *iamServiceClient) LookupAccountByEmail(ctx context.Context, in *LookupAccountByEmailRequest, opts ...grpc.CallOption) (*LookupAccountByEmailResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LookupAccountByEmailResponse)
+	err := c.cc.Invoke(ctx, IamService_LookupAccountByEmail_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -781,6 +796,10 @@ type IamServiceServer interface {
 	// GetAccount fetches one account by id. The handler allows platform admins,
 	// the account itself, or callers sharing a tenant with the target account.
 	GetAccount(context.Context, *GetAccountRequest) (*GetAccountResponse, error)
+	// LookupAccountByEmail resolves an exact email to its account — the
+	// invite-by-email primitive. Authenticated, no permission: exact hit or
+	// NotFound, never a listing.
+	LookupAccountByEmail(context.Context, *LookupAccountByEmailRequest) (*LookupAccountByEmailResponse, error)
 	// GetMyAccount returns the caller's own profile — authenticated, no
 	// permission (self-read).
 	GetMyAccount(context.Context, *GetMyAccountRequest) (*GetMyAccountResponse, error)
@@ -931,6 +950,9 @@ func (UnimplementedIamServiceServer) CreateAccount(context.Context, *CreateAccou
 }
 func (UnimplementedIamServiceServer) GetAccount(context.Context, *GetAccountRequest) (*GetAccountResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetAccount not implemented")
+}
+func (UnimplementedIamServiceServer) LookupAccountByEmail(context.Context, *LookupAccountByEmailRequest) (*LookupAccountByEmailResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method LookupAccountByEmail not implemented")
 }
 func (UnimplementedIamServiceServer) GetMyAccount(context.Context, *GetMyAccountRequest) (*GetMyAccountResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetMyAccount not implemented")
@@ -1282,6 +1304,24 @@ func _IamService_GetAccount_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(IamServiceServer).GetAccount(ctx, req.(*GetAccountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IamService_LookupAccountByEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LookupAccountByEmailRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IamServiceServer).LookupAccountByEmail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IamService_LookupAccountByEmail_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IamServiceServer).LookupAccountByEmail(ctx, req.(*LookupAccountByEmailRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2042,6 +2082,10 @@ var IamService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAccount",
 			Handler:    _IamService_GetAccount_Handler,
+		},
+		{
+			MethodName: "LookupAccountByEmail",
+			Handler:    _IamService_LookupAccountByEmail_Handler,
 		},
 		{
 			MethodName: "GetMyAccount",

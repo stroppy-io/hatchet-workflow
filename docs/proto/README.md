@@ -319,6 +319,8 @@
     - [cloud.v1.api.LoginResponse](cloud/v1/api/README.md#cloud-v1-api-loginresponse)
     - [cloud.v1.api.LogoutRequest](cloud/v1/api/README.md#cloud-v1-api-logoutrequest)
     - [cloud.v1.api.LogoutResponse](cloud/v1/api/README.md#cloud-v1-api-logoutresponse)
+    - [cloud.v1.api.LookupAccountByEmailRequest](cloud/v1/api/README.md#cloud-v1-api-lookupaccountbyemailrequest)
+    - [cloud.v1.api.LookupAccountByEmailResponse](cloud/v1/api/README.md#cloud-v1-api-lookupaccountbyemailresponse)
     - [cloud.v1.api.MarkRegistrationRequestHandledRequest](cloud/v1/api/README.md#cloud-v1-api-markregistrationrequesthandledrequest)
     - [cloud.v1.api.MarkRegistrationRequestHandledResponse](cloud/v1/api/README.md#cloud-v1-api-markregistrationrequesthandledresponse)
     - [cloud.v1.api.PatchSuiteWizardRequest](cloud/v1/api/README.md#cloud-v1-api-patchsuitewizardrequest)

@@ -3,7 +3,7 @@
 // TestRunService for the header record. Proto -> flat VM via toJson, reusing the
 // shared statusToVM / enum helpers.
 
-import { toJson } from "@bufbuild/protobuf";
+import { fromJson, toJson } from "@bufbuild/protobuf";
 import { TestRunRecordSchema } from "@/lib/proto/cloud/v1/models/test_run_pb";
 import {
   GetTestRunOverviewResponseSchema,
@@ -11,7 +11,8 @@ import {
   QueryLogsResponseSchema,
   LogScrollDirection,
 } from "@/lib/proto/cloud/v1/api/test_run_overview_pb";
-import { LogLineSchema } from "@/lib/proto/cloud/v1/monitor/logs_pb";
+import { LogCursorSchema, LogLineSchema } from "@/lib/proto/cloud/v1/monitor/logs_pb";
+import type { TopologyJson } from "@/lib/proto/cloud/v1/topology/topology_pb";
 import {
   testRunOverviewClient,
   testRunClient,
@@ -68,6 +69,8 @@ export interface OverviewVM {
   run?: RunVM;
   /** Owning suite run id, when this run is a suite child. */
   suiteRunId: string;
+  /** Staged topology envelope (machines / components / connections), if present. */
+  topology?: TopologyJson;
 }
 
 /** One aggregated metric, flattened from monitor.MetricSummary. */
@@ -95,14 +98,21 @@ export interface LogLineVM {
   source: string;
   stream: string;
   line: string;
+  /**
+   * Stable, cross-client line identity built from the server LogCursor
+   * (observedAt + seq). Used for shareable deep-links (#line=) and re-anchoring
+   * a page around a specific line — unlike lineNo, it does not depend on when
+   * the viewer loaded the logs.
+   */
+  cursorKey: string;
 }
 
 /** A page of logs + the cursors to page either way. */
 export interface LogPageVM {
   lines: LogLineVM[];
-  /** opaque cursor JSON to fetch the page OLDER than these (empty = start). */
+  /** opaque cursor (raw proto LogCursor) to fetch the page OLDER than these. */
   older?: unknown;
-  /** opaque cursor JSON to fetch the page NEWER than these (empty = tip). */
+  /** opaque cursor (raw proto LogCursor) to fetch the page NEWER than these. */
   newer?: unknown;
 }
 
@@ -114,6 +124,8 @@ export interface LogQuery {
   /** "older" pages back in time, "newer" forward; default newer. */
   direction?: "older" | "newer";
   limit?: number;
+  /** Opaque anchor cursor from a prior page (LogPageVM.older / .newer). */
+  from?: unknown;
 }
 
 const num = (v: number | "NaN" | "Infinity" | "-Infinity" | undefined): number =>
@@ -157,6 +169,7 @@ export async function getRunOverview(
   const j = toJson(GetTestRunOverviewResponseSchema, resp) as {
     snapshot?: {
       run?: unknown;
+      topology?: TopologyJson;
       suiteRun?: { entity?: { id?: string } };
       overview?: {
         runId?: string;
@@ -216,6 +229,7 @@ export async function getRunOverview(
     })),
     run,
     suiteRunId: snap.suiteRun?.entity?.id ?? "",
+    topology: snap.topology,
   };
 }
 
@@ -274,37 +288,70 @@ export async function queryLogs(
         ? LogScrollDirection.OLDER
         : LogScrollDirection.NEWER,
     limit: query.limit ?? 200,
+    // Anchor: a raw LogCursor returned by a prior page (load-older / load-newer).
+    from: query.from as never,
   });
   const j = toJson(QueryLogsResponseSchema, resp) as {
-    lines?: Array<{
-      observedAt?: string;
-      lineNo?: string;
-      nodeExecutionId?: string;
-      componentId?: string;
-      machineId?: string;
-      unit?: string;
-      source?: string;
-      stream?: string;
-      line?: string;
-    }>;
+    lines?: Array<LogLineJson>;
     older?: unknown;
     newer?: unknown;
   };
   return {
-    lines: (j.lines ?? []).map((l) => ({
-      observedAt: l.observedAt ?? "",
-      lineNo: l.lineNo ?? "",
-      nodeExecutionId: l.nodeExecutionId ?? "",
-      componentId: l.componentId ?? "",
-      machineId: l.machineId ?? "",
-      unit: l.unit ?? "",
-      source: l.source ?? "",
-      stream: l.stream ?? "",
-      line: l.line ?? "",
-    })),
-    older: j.older,
-    newer: j.newer,
+    lines: (j.lines ?? []).map(logLineToVM),
+    // Raw proto cursors so the caller can feed them straight back as `from`.
+    older: resp.older,
+    newer: resp.newer,
   };
+}
+
+/** Shape of a monitor.LogLine after toJson (camelCase, optional everything). */
+type LogLineJson = {
+  observedAt?: string;
+  lineNo?: string;
+  nodeExecutionId?: string;
+  componentId?: string;
+  machineId?: string;
+  unit?: string;
+  source?: string;
+  stream?: string;
+  line?: string;
+  cursor?: { observedAt?: string; seq?: string };
+};
+
+function cursorKeyOf(c?: { observedAt?: string; seq?: string }): string {
+  if (!c || (!c.observedAt && !c.seq)) return "";
+  return `${c.observedAt ?? ""}@${c.seq ?? ""}`;
+}
+
+function logLineToVM(l: LogLineJson): LogLineVM {
+  return {
+    observedAt: l.observedAt ?? "",
+    lineNo: l.lineNo ?? "",
+    nodeExecutionId: l.nodeExecutionId ?? "",
+    componentId: l.componentId ?? "",
+    machineId: l.machineId ?? "",
+    unit: l.unit ?? "",
+    source: l.source ?? "",
+    stream: l.stream ?? "",
+    line: l.line ?? "",
+    cursorKey: cursorKeyOf(l.cursor),
+  };
+}
+
+/**
+ * Rebuild a raw LogCursor from a cursorKey ("<observedAt>@<seq>") so a shared
+ * #line= anchor can be passed back to QueryLogs as `from` to re-fetch the page
+ * around that exact line. Returns undefined for an empty/garbled key.
+ */
+export function logCursorFromKey(key: string): unknown {
+  const at = key.indexOf("@");
+  if (at < 0) return undefined;
+  const observedAt = key.slice(0, at);
+  const seq = key.slice(at + 1);
+  if (!observedAt && !seq) return undefined;
+  const obj: Record<string, string> = { seq: seq || "0" };
+  if (observedAt) obj.observedAt = observedAt;
+  return fromJson(LogCursorSchema, obj);
 }
 
 /**
@@ -337,28 +384,7 @@ export async function streamLogs(
       { signal },
     )) {
       if (signal.aborted) break;
-      const l = toJson(LogLineSchema, frame) as {
-        observedAt?: string;
-        lineNo?: string;
-        nodeExecutionId?: string;
-        componentId?: string;
-        machineId?: string;
-        unit?: string;
-        source?: string;
-        stream?: string;
-        line?: string;
-      };
-      onFrame({
-        observedAt: l.observedAt ?? "",
-        lineNo: l.lineNo ?? "",
-        nodeExecutionId: l.nodeExecutionId ?? "",
-        componentId: l.componentId ?? "",
-        machineId: l.machineId ?? "",
-        unit: l.unit ?? "",
-        source: l.source ?? "",
-        stream: l.stream ?? "",
-        line: l.line ?? "",
-      });
+      onFrame(logLineToVM(toJson(LogLineSchema, frame) as LogLineJson));
     }
   } catch (err) {
     // Aborting the stream (signal.abort) rejects with an AbortError-like; that

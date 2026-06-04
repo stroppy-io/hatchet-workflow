@@ -278,6 +278,23 @@ message GetAccountResponse {
 }
 
 /*
+    LookupAccountByEmailRequest resolves an EXACT email to its account — the
+    invite-by-email primitive. Any authenticated caller may use it (e.g. a
+    tenant owner adding a member) without holding RESOURCE_ACCOUNT/LIST, so it
+    deliberately exposes no listing/enumeration: an exact hit or NotFound.
+ */
+message LookupAccountByEmailRequest {
+    string email = 1 [(validate.rules).string = {min_len: 5, max_len: 255, email: true}];
+}
+
+/*
+    LookupAccountByEmailResponse returns the matched account (no secrets).
+ */
+message LookupAccountByEmailResponse {
+    iam.Account account = 1 [(validate.rules).message.required = true];
+}
+
+/*
     GetMyAccountRequest takes no arguments: it returns the CALLER's own Account,
     resolved from the token subject. This is the self-profile endpoint — any
     authenticated account may read itself without holding RESOURCE_ACCOUNT/READ.
@@ -1807,6 +1824,34 @@ service IamService {
             http_method: HTTP_METHOD_GET
             path: "/get-account"
             operation_id: "getAccount"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {};
+    }
+    /*
+        LookupAccountByEmail resolves an exact email to its account — the
+        invite-by-email primitive. Authenticated, no permission: exact hit or
+        NotFound, never a listing.
+     */
+    rpc LookupAccountByEmail (LookupAccountByEmailRequest) returns (LookupAccountByEmailResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/lookup-account-by-email"
+            operation_id: "lookupAccountByEmail"
             request_body: {
                 required: true
             }

@@ -63,6 +63,9 @@ const (
 	IamServiceCreateAccountProcedure = "/cloud.v1.api.IamService/CreateAccount"
 	// IamServiceGetAccountProcedure is the fully-qualified name of the IamService's GetAccount RPC.
 	IamServiceGetAccountProcedure = "/cloud.v1.api.IamService/GetAccount"
+	// IamServiceLookupAccountByEmailProcedure is the fully-qualified name of the IamService's
+	// LookupAccountByEmail RPC.
+	IamServiceLookupAccountByEmailProcedure = "/cloud.v1.api.IamService/LookupAccountByEmail"
 	// IamServiceGetMyAccountProcedure is the fully-qualified name of the IamService's GetMyAccount RPC.
 	IamServiceGetMyAccountProcedure = "/cloud.v1.api.IamService/GetMyAccount"
 	// IamServiceListAccountsProcedure is the fully-qualified name of the IamService's ListAccounts RPC.
@@ -208,6 +211,10 @@ type IamServiceClient interface {
 	// GetAccount fetches one account by id. The handler allows platform admins,
 	// the account itself, or callers sharing a tenant with the target account.
 	GetAccount(context.Context, *api.GetAccountRequest) (*api.GetAccountResponse, error)
+	// LookupAccountByEmail resolves an exact email to its account — the
+	// invite-by-email primitive. Authenticated, no permission: exact hit or
+	// NotFound, never a listing.
+	LookupAccountByEmail(context.Context, *api.LookupAccountByEmailRequest) (*api.LookupAccountByEmailResponse, error)
 	// GetMyAccount returns the caller's own profile — authenticated, no
 	// permission (self-read).
 	GetMyAccount(context.Context, *api.GetMyAccountRequest) (*api.GetMyAccountResponse, error)
@@ -400,6 +407,13 @@ func NewIamServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			httpClient,
 			baseURL+IamServiceGetAccountProcedure,
 			connect.WithSchema(iamServiceMethods.ByName("GetAccount")),
+			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+			connect.WithClientOptions(opts...),
+		),
+		lookupAccountByEmail: connect.NewClient[api.LookupAccountByEmailRequest, api.LookupAccountByEmailResponse](
+			httpClient,
+			baseURL+IamServiceLookupAccountByEmailProcedure,
+			connect.WithSchema(iamServiceMethods.ByName("LookupAccountByEmail")),
 			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 			connect.WithClientOptions(opts...),
 		),
@@ -684,6 +698,7 @@ type iamServiceClient struct {
 	markRegistrationRequestHandled *connect.Client[api.MarkRegistrationRequestHandledRequest, api.MarkRegistrationRequestHandledResponse]
 	createAccount                  *connect.Client[api.CreateAccountRequest, api.CreateAccountResponse]
 	getAccount                     *connect.Client[api.GetAccountRequest, api.GetAccountResponse]
+	lookupAccountByEmail           *connect.Client[api.LookupAccountByEmailRequest, api.LookupAccountByEmailResponse]
 	getMyAccount                   *connect.Client[api.GetMyAccountRequest, api.GetMyAccountResponse]
 	listAccounts                   *connect.Client[api.ListAccountsRequest, api.ListAccountsResponse]
 	updateAccount                  *connect.Client[api.UpdateAccountRequest, api.UpdateAccountResponse]
@@ -827,6 +842,15 @@ func (c *iamServiceClient) CreateAccount(ctx context.Context, req *api.CreateAcc
 // GetAccount calls cloud.v1.api.IamService.GetAccount.
 func (c *iamServiceClient) GetAccount(ctx context.Context, req *api.GetAccountRequest) (*api.GetAccountResponse, error) {
 	response, err := c.getAccount.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// LookupAccountByEmail calls cloud.v1.api.IamService.LookupAccountByEmail.
+func (c *iamServiceClient) LookupAccountByEmail(ctx context.Context, req *api.LookupAccountByEmailRequest) (*api.LookupAccountByEmailResponse, error) {
+	response, err := c.lookupAccountByEmail.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
 	}
@@ -1224,6 +1248,10 @@ type IamServiceHandler interface {
 	// GetAccount fetches one account by id. The handler allows platform admins,
 	// the account itself, or callers sharing a tenant with the target account.
 	GetAccount(context.Context, *api.GetAccountRequest) (*api.GetAccountResponse, error)
+	// LookupAccountByEmail resolves an exact email to its account — the
+	// invite-by-email primitive. Authenticated, no permission: exact hit or
+	// NotFound, never a listing.
+	LookupAccountByEmail(context.Context, *api.LookupAccountByEmailRequest) (*api.LookupAccountByEmailResponse, error)
 	// GetMyAccount returns the caller's own profile — authenticated, no
 	// permission (self-read).
 	GetMyAccount(context.Context, *api.GetMyAccountRequest) (*api.GetMyAccountResponse, error)
@@ -1412,6 +1440,13 @@ func NewIamServiceHandler(svc IamServiceHandler, opts ...connect.HandlerOption) 
 		IamServiceGetAccountProcedure,
 		svc.GetAccount,
 		connect.WithSchema(iamServiceMethods.ByName("GetAccount")),
+		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+		connect.WithHandlerOptions(opts...),
+	)
+	iamServiceLookupAccountByEmailHandler := connect.NewUnaryHandlerSimple(
+		IamServiceLookupAccountByEmailProcedure,
+		svc.LookupAccountByEmail,
+		connect.WithSchema(iamServiceMethods.ByName("LookupAccountByEmail")),
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
@@ -1705,6 +1740,8 @@ func NewIamServiceHandler(svc IamServiceHandler, opts ...connect.HandlerOption) 
 			iamServiceCreateAccountHandler.ServeHTTP(w, r)
 		case IamServiceGetAccountProcedure:
 			iamServiceGetAccountHandler.ServeHTTP(w, r)
+		case IamServiceLookupAccountByEmailProcedure:
+			iamServiceLookupAccountByEmailHandler.ServeHTTP(w, r)
 		case IamServiceGetMyAccountProcedure:
 			iamServiceGetMyAccountHandler.ServeHTTP(w, r)
 		case IamServiceListAccountsProcedure:
@@ -1838,6 +1875,10 @@ func (UnimplementedIamServiceHandler) CreateAccount(context.Context, *api.Create
 
 func (UnimplementedIamServiceHandler) GetAccount(context.Context, *api.GetAccountRequest) (*api.GetAccountResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.IamService.GetAccount is not implemented"))
+}
+
+func (UnimplementedIamServiceHandler) LookupAccountByEmail(context.Context, *api.LookupAccountByEmailRequest) (*api.LookupAccountByEmailResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.IamService.LookupAccountByEmail is not implemented"))
 }
 
 func (UnimplementedIamServiceHandler) GetMyAccount(context.Context, *api.GetMyAccountRequest) (*api.GetMyAccountResponse, error) {

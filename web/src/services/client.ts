@@ -1,4 +1,9 @@
-import { createClient, type Interceptor } from "@connectrpc/connect";
+import {
+  createClient,
+  Code,
+  ConnectError,
+  type Interceptor,
+} from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
 
 import { IamService } from "@/lib/proto/cloud/v1/api/iam_pb";
@@ -46,9 +51,81 @@ const authInterceptor: Interceptor = (next) => async (req) => {
 
 const baseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined) || "/";
 
+// Refresh-token storage (localStorage). Read directly here to avoid an import
+// cycle with services/tokens.ts; the key MUST match REFRESH_KEY there.
+const REFRESH_KEY = "stroppy.refreshToken";
+
+function readRefreshToken(): string | null {
+  try {
+    return localStorage.getItem(REFRESH_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function writeRefreshToken(token: string | null): void {
+  try {
+    if (token) localStorage.setItem(REFRESH_KEY, token);
+    else localStorage.removeItem(REFRESH_KEY);
+  } catch {
+    /* storage unavailable (private mode) — in-memory access token still works */
+  }
+}
+
+// Bare transport for the Refresh call itself — NO auth/retry wrapping, so a
+// failed refresh can never recurse back into the retry interceptor below.
+const refreshTransport = createConnectTransport({ baseUrl });
+const refreshClient = createClient(IamService, refreshTransport);
+
+// Single-flight: many concurrent calls that all 401 collapse onto ONE Refresh,
+// then each replays. Prevents a refresh-token rotation stampede (the token is
+// single-use — parallel refreshes would invalidate each other).
+let refreshInFlight: Promise<boolean> | null = null;
+
+function refreshOnce(): Promise<boolean> {
+  if (!refreshInFlight) {
+    refreshInFlight = (async () => {
+      const rt = readRefreshToken();
+      if (!rt) return false;
+      try {
+        const { tokens } = await refreshClient.refresh({ refreshToken: rt });
+        if (tokens?.accessToken) setAccessToken(tokens.accessToken);
+        if (tokens?.refreshToken) writeRefreshToken(tokens.refreshToken);
+        return true;
+      } catch {
+        // Refresh token expired/revoked — only now must the user re-login.
+        setAccessToken(null);
+        writeRefreshToken(null);
+        return false;
+      }
+    })().finally(() => {
+      refreshInFlight = null;
+    });
+  }
+  return refreshInFlight;
+}
+
+// On Unauthenticated, rotate the access token once and replay the request. Sits
+// BEFORE authInterceptor so the replay re-runs auth and attaches the FRESH
+// bearer. This keeps the user signed in for the entire refresh-token lifetime
+// with no reload — access-token expiry becomes invisible.
+const refreshRetryInterceptor: Interceptor = (next) => async (req) => {
+  try {
+    return await next(req);
+  } catch (err) {
+    const unauthenticated =
+      err instanceof ConnectError && err.code === Code.Unauthenticated;
+    // Skip streams and the case where we have nothing to refresh with.
+    if (!unauthenticated || req.stream || !readRefreshToken()) throw err;
+    if (!(await refreshOnce())) throw err;
+    return next(req);
+  }
+};
+
 export const transport = createConnectTransport({
   baseUrl,
-  interceptors: [authInterceptor],
+  // Order matters: refresh-retry wraps auth, so a replay re-attaches the token.
+  interceptors: [refreshRetryInterceptor, authInterceptor],
 });
 
 export const iamClient = createClient(IamService, transport);

@@ -222,6 +222,8 @@
   - [cloud.v1.api.LoginResponse](#cloud-v1-api-loginresponse)
   - [cloud.v1.api.LogoutRequest](#cloud-v1-api-logoutrequest)
   - [cloud.v1.api.LogoutResponse](#cloud-v1-api-logoutresponse)
+  - [cloud.v1.api.LookupAccountByEmailRequest](#cloud-v1-api-lookupaccountbyemailrequest)
+  - [cloud.v1.api.LookupAccountByEmailResponse](#cloud-v1-api-lookupaccountbyemailresponse)
   - [cloud.v1.api.MarkRegistrationRequestHandledRequest](#cloud-v1-api-markregistrationrequesthandledrequest)
   - [cloud.v1.api.MarkRegistrationRequestHandledResponse](#cloud-v1-api-markregistrationrequesthandledresponse)
   - [cloud.v1.api.PatchSuiteWizardRequest](#cloud-v1-api-patchsuitewizardrequest)
@@ -7771,6 +7773,57 @@ go_name: RefreshToken</pre></td>
 <pre>
 //LogoutResponse is empty; success is signalled by the absence of error.
 </pre>
+
+
+
+<a name="cloud-v1-api-lookupaccountbyemailrequest"></a>
+### cloud.v1.api.LookupAccountByEmailRequest
+
+<pre>
+//LookupAccountByEmailRequest resolves an EXACT email to its account — the
+//invite-by-email primitive. Any authenticated caller may use it (e.g. a
+//tenant owner adding a member) without holding RESOURCE_ACCOUNT/LIST, so it
+//deliberately exposes no listing/enumeration: an exact hit or NotFound.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>email</td>
+<td>string</td>
+<td><pre>
+json_name: email
+go_name: Email</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-lookupaccountbyemailresponse"></a>
+### cloud.v1.api.LookupAccountByEmailResponse
+
+<pre>
+//LookupAccountByEmailResponse returns the matched account (no secrets).
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>account</td>
+<td><a href="../iam/README.md#cloud-v1-iam-account">cloud.v1.iam.Account</a></td>
+<td><pre>
+json_name: account
+go_name: Account</pre></td>
+</tr>
+</table>
 
 
 

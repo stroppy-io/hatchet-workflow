@@ -6,7 +6,6 @@ import {
   CheckCircle2,
   Cloud,
   Eye,
-  KeyRound,
   LogOut,
   Pencil,
   Plus,
@@ -220,7 +219,7 @@ export function OrgDetail() {
   const [memberDialogOpen, setMemberDialogOpen] = useState(false);
   const [memberMode, setMemberMode] = useState<"create" | "update">("create");
   const [editingMember, setEditingMember] = useState<OrgMemberVM | null>(null);
-  const [memberAccountId, setMemberAccountId] = useState("");
+  const [memberEmail, setMemberEmail] = useState("");
   const [memberRoleIds, setMemberRoleIds] = useState<string[]>([]);
 
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
@@ -412,7 +411,7 @@ export function OrgDetail() {
   function openCreateMember() {
     setMemberMode("create");
     setEditingMember(null);
-    setMemberAccountId("");
+    setMemberEmail("");
     setMemberRoleIds(orgDetail.roles[0] ? [orgDetail.roles[0].id] : []);
     setMemberDialogOpen(true);
   }
@@ -420,7 +419,7 @@ export function OrgDetail() {
   function openEditMember(member: OrgMemberVM) {
     setMemberMode("update");
     setEditingMember(member);
-    setMemberAccountId(member.membership.accountId);
+    setMemberEmail(member.account.email);
     setMemberRoleIds([...member.membership.roleIds]);
     setMemberDialogOpen(true);
   }
@@ -429,17 +428,30 @@ export function OrgDetail() {
     setError(null);
     setNotice(null);
     try {
-      const next =
-        memberMode === "create"
-          ? await getOrgProvider().createMembership({
-              accountId: memberAccountId,
-              tenantId: orgDetail.tenant.id,
-              roleIds: memberRoleIds,
-            })
-          : await getOrgProvider().updateMembership({
-              id: editingMember?.membership.id ?? "",
-              roleIds: memberRoleIds,
-            });
+      let next;
+      if (memberMode === "create") {
+        // Invite by email: resolve the exact address to its account, then add
+        // it. A clear message beats the raw NotFound when nobody matches.
+        let account;
+        try {
+          account = await getOrgProvider().lookupAccountByEmail(
+            memberEmail.trim(),
+          );
+        } catch {
+          setError(`No account found for ${memberEmail.trim()}.`);
+          return;
+        }
+        next = await getOrgProvider().createMembership({
+          accountId: account.id,
+          tenantId: orgDetail.tenant.id,
+          roleIds: memberRoleIds,
+        });
+      } else {
+        next = await getOrgProvider().updateMembership({
+          id: editingMember?.membership.id ?? "",
+          roleIds: memberRoleIds,
+        });
+      }
       acceptDetail(next);
       setMemberDialogOpen(false);
       setNotice(
@@ -1478,28 +1490,35 @@ export function OrgDetail() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {memberMode === "create" ? (
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="member-account-id">account_id</Label>
+                <Label htmlFor="member-email">User email</Label>
                 <Input
-                  id="member-account-id"
-                  value={memberAccountId}
-                  disabled={memberMode === "update"}
-                  onChange={(e) => setMemberAccountId(e.target.value)}
-                  className="font-mono"
+                  id="member-email"
+                  type="email"
+                  placeholder="user@example.com"
+                  value={memberEmail}
+                  onChange={(e) => setMemberEmail(e.target.value)}
+                  autoFocus
                 />
+                <p className="text-xs text-muted-foreground">
+                  Enter the email of an existing account to add it to this
+                  organization.
+                </p>
               </div>
+            ) : (
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="member-tenant-id">tenant_id</Label>
-                <Input
-                  id="member-tenant-id"
-                  value={orgDetail.tenant.id}
-                  disabled
-                  readOnly
-                  className="font-mono"
-                />
+                <Label>Member</Label>
+                <div className="border border-border bg-muted/20 px-3 py-2 text-sm">
+                  <div className="text-foreground">
+                    {editingMember?.account.nickname}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {editingMember?.account.email}
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
             <div>
               <SectionLabel>role_ids</SectionLabel>
               <div className="mt-2 flex flex-wrap gap-2">
@@ -1525,7 +1544,7 @@ export function OrgDetail() {
               <Button
                 size="sm"
                 disabled={
-                  !memberAccountId ||
+                  (memberMode === "create" && !memberEmail.trim()) ||
                   memberRoleIds.length === 0 ||
                   (memberMode === "update" &&
                     !!editingMember &&
@@ -1658,13 +1677,26 @@ export function OrgDetail() {
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="transfer-owner-id">new_owner_account_id</Label>
-                <Input
-                  id="transfer-owner-id"
+                <Label htmlFor="transfer-owner-id">New owner</Label>
+                <Select
                   value={newOwnerAccountId}
-                  onChange={(e) => setNewOwnerAccountId(e.target.value)}
-                  className="font-mono"
-                />
+                  onValueChange={setNewOwnerAccountId}
+                >
+                  <SelectTrigger id="transfer-owner-id">
+                    <SelectValue placeholder="Select a member" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {orgDetail.memberships
+                      .filter(
+                        (m) => m.account.id !== orgDetail.tenant.ownerAccountId,
+                      )
+                      .map((m) => (
+                        <SelectItem key={m.account.id} value={m.account.id}>
+                          {m.account.nickname} — {m.account.email}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div className="flex justify-end gap-2">

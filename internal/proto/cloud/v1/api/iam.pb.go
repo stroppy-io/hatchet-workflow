@@ -857,6 +857,99 @@ func (x *GetAccountResponse) GetAccount() *iam.Account {
 	return nil
 }
 
+// LookupAccountByEmailRequest resolves an EXACT email to its account — the
+// invite-by-email primitive. Any authenticated caller may use it (e.g. a
+// tenant owner adding a member) without holding RESOURCE_ACCOUNT/LIST, so it
+// deliberately exposes no listing/enumeration: an exact hit or NotFound.
+type LookupAccountByEmailRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Email         string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LookupAccountByEmailRequest) Reset() {
+	*x = LookupAccountByEmailRequest{}
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LookupAccountByEmailRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LookupAccountByEmailRequest) ProtoMessage() {}
+
+func (x *LookupAccountByEmailRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LookupAccountByEmailRequest.ProtoReflect.Descriptor instead.
+func (*LookupAccountByEmailRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *LookupAccountByEmailRequest) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+// LookupAccountByEmailResponse returns the matched account (no secrets).
+type LookupAccountByEmailResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Account       *iam.Account           `protobuf:"bytes,1,opt,name=account,proto3" json:"account,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LookupAccountByEmailResponse) Reset() {
+	*x = LookupAccountByEmailResponse{}
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LookupAccountByEmailResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LookupAccountByEmailResponse) ProtoMessage() {}
+
+func (x *LookupAccountByEmailResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LookupAccountByEmailResponse.ProtoReflect.Descriptor instead.
+func (*LookupAccountByEmailResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *LookupAccountByEmailResponse) GetAccount() *iam.Account {
+	if x != nil {
+		return x.Account
+	}
+	return nil
+}
+
 // GetMyAccountRequest takes no arguments: it returns the CALLER's own Account,
 // resolved from the token subject. This is the self-profile endpoint — any
 // authenticated account may read itself without holding RESOURCE_ACCOUNT/READ.
@@ -868,7 +961,7 @@ type GetMyAccountRequest struct {
 
 func (x *GetMyAccountRequest) Reset() {
 	*x = GetMyAccountRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[14]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -880,7 +973,7 @@ func (x *GetMyAccountRequest) String() string {
 func (*GetMyAccountRequest) ProtoMessage() {}
 
 func (x *GetMyAccountRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[14]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -893,7 +986,7 @@ func (x *GetMyAccountRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMyAccountRequest.ProtoReflect.Descriptor instead.
 func (*GetMyAccountRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{14}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{16}
 }
 
 // GetMyAccountResponse returns the caller's own account.
@@ -907,7 +1000,7 @@ type GetMyAccountResponse struct {
 
 func (x *GetMyAccountResponse) Reset() {
 	*x = GetMyAccountResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[15]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -919,7 +1012,7 @@ func (x *GetMyAccountResponse) String() string {
 func (*GetMyAccountResponse) ProtoMessage() {}
 
 func (x *GetMyAccountResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[15]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -932,7 +1025,7 @@ func (x *GetMyAccountResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMyAccountResponse.ProtoReflect.Descriptor instead.
 func (*GetMyAccountResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{15}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *GetMyAccountResponse) GetAccount() *iam.Account {
@@ -955,7 +1048,7 @@ type ListAccountsRequest struct {
 
 func (x *ListAccountsRequest) Reset() {
 	*x = ListAccountsRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[16]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -967,7 +1060,7 @@ func (x *ListAccountsRequest) String() string {
 func (*ListAccountsRequest) ProtoMessage() {}
 
 func (x *ListAccountsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[16]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -980,7 +1073,7 @@ func (x *ListAccountsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAccountsRequest.ProtoReflect.Descriptor instead.
 func (*ListAccountsRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{16}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *ListAccountsRequest) GetPageSize() uint32 {
@@ -1009,7 +1102,7 @@ type ListAccountsResponse struct {
 
 func (x *ListAccountsResponse) Reset() {
 	*x = ListAccountsResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[17]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1021,7 +1114,7 @@ func (x *ListAccountsResponse) String() string {
 func (*ListAccountsResponse) ProtoMessage() {}
 
 func (x *ListAccountsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[17]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1034,7 +1127,7 @@ func (x *ListAccountsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAccountsResponse.ProtoReflect.Descriptor instead.
 func (*ListAccountsResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{17}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ListAccountsResponse) GetAccounts() []*iam.Account {
@@ -1068,7 +1161,7 @@ type UpdateAccountRequest struct {
 
 func (x *UpdateAccountRequest) Reset() {
 	*x = UpdateAccountRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[18]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1080,7 +1173,7 @@ func (x *UpdateAccountRequest) String() string {
 func (*UpdateAccountRequest) ProtoMessage() {}
 
 func (x *UpdateAccountRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[18]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1093,7 +1186,7 @@ func (x *UpdateAccountRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateAccountRequest.ProtoReflect.Descriptor instead.
 func (*UpdateAccountRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{18}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *UpdateAccountRequest) GetId() string {
@@ -1128,7 +1221,7 @@ type UpdateAccountResponse struct {
 
 func (x *UpdateAccountResponse) Reset() {
 	*x = UpdateAccountResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[19]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1140,7 +1233,7 @@ func (x *UpdateAccountResponse) String() string {
 func (*UpdateAccountResponse) ProtoMessage() {}
 
 func (x *UpdateAccountResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[19]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1153,7 +1246,7 @@ func (x *UpdateAccountResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateAccountResponse.ProtoReflect.Descriptor instead.
 func (*UpdateAccountResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{19}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *UpdateAccountResponse) GetAccount() *iam.Account {
@@ -1179,7 +1272,7 @@ type DeleteAccountRequest struct {
 
 func (x *DeleteAccountRequest) Reset() {
 	*x = DeleteAccountRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[20]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1191,7 +1284,7 @@ func (x *DeleteAccountRequest) String() string {
 func (*DeleteAccountRequest) ProtoMessage() {}
 
 func (x *DeleteAccountRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[20]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1204,7 +1297,7 @@ func (x *DeleteAccountRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAccountRequest.ProtoReflect.Descriptor instead.
 func (*DeleteAccountRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{20}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *DeleteAccountRequest) GetId() string {
@@ -1223,7 +1316,7 @@ type DeleteAccountResponse struct {
 
 func (x *DeleteAccountResponse) Reset() {
 	*x = DeleteAccountResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[21]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1235,7 +1328,7 @@ func (x *DeleteAccountResponse) String() string {
 func (*DeleteAccountResponse) ProtoMessage() {}
 
 func (x *DeleteAccountResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[21]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1248,7 +1341,7 @@ func (x *DeleteAccountResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAccountResponse.ProtoReflect.Descriptor instead.
 func (*DeleteAccountResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{21}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{23}
 }
 
 // ChangePasswordRequest is the authenticated self-service rotation: the caller
@@ -1267,7 +1360,7 @@ type ChangePasswordRequest struct {
 
 func (x *ChangePasswordRequest) Reset() {
 	*x = ChangePasswordRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[22]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1279,7 +1372,7 @@ func (x *ChangePasswordRequest) String() string {
 func (*ChangePasswordRequest) ProtoMessage() {}
 
 func (x *ChangePasswordRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[22]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1292,7 +1385,7 @@ func (x *ChangePasswordRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChangePasswordRequest.ProtoReflect.Descriptor instead.
 func (*ChangePasswordRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{22}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *ChangePasswordRequest) GetOldPassword() string {
@@ -1318,7 +1411,7 @@ type ChangePasswordResponse struct {
 
 func (x *ChangePasswordResponse) Reset() {
 	*x = ChangePasswordResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[23]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1330,7 +1423,7 @@ func (x *ChangePasswordResponse) String() string {
 func (*ChangePasswordResponse) ProtoMessage() {}
 
 func (x *ChangePasswordResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[23]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1343,7 +1436,7 @@ func (x *ChangePasswordResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChangePasswordResponse.ProtoReflect.Descriptor instead.
 func (*ChangePasswordResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{23}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{25}
 }
 
 // ResetPasswordRequest is the admin override: a platform admin sets a new
@@ -1360,7 +1453,7 @@ type ResetPasswordRequest struct {
 
 func (x *ResetPasswordRequest) Reset() {
 	*x = ResetPasswordRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[24]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1372,7 +1465,7 @@ func (x *ResetPasswordRequest) String() string {
 func (*ResetPasswordRequest) ProtoMessage() {}
 
 func (x *ResetPasswordRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[24]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1385,7 +1478,7 @@ func (x *ResetPasswordRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResetPasswordRequest.ProtoReflect.Descriptor instead.
 func (*ResetPasswordRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{24}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *ResetPasswordRequest) GetAccountId() string {
@@ -1411,7 +1504,7 @@ type ResetPasswordResponse struct {
 
 func (x *ResetPasswordResponse) Reset() {
 	*x = ResetPasswordResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[25]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1423,7 +1516,7 @@ func (x *ResetPasswordResponse) String() string {
 func (*ResetPasswordResponse) ProtoMessage() {}
 
 func (x *ResetPasswordResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[25]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1436,7 +1529,7 @@ func (x *ResetPasswordResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResetPasswordResponse.ProtoReflect.Descriptor instead.
 func (*ResetPasswordResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{25}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{27}
 }
 
 // RequestPasswordResetRequest starts the PUBLIC forgot-password flow: the
@@ -1453,7 +1546,7 @@ type RequestPasswordResetRequest struct {
 
 func (x *RequestPasswordResetRequest) Reset() {
 	*x = RequestPasswordResetRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[26]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1465,7 +1558,7 @@ func (x *RequestPasswordResetRequest) String() string {
 func (*RequestPasswordResetRequest) ProtoMessage() {}
 
 func (x *RequestPasswordResetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[26]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1478,7 +1571,7 @@ func (x *RequestPasswordResetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RequestPasswordResetRequest.ProtoReflect.Descriptor instead.
 func (*RequestPasswordResetRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{26}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *RequestPasswordResetRequest) GetEmail() string {
@@ -1498,7 +1591,7 @@ type RequestPasswordResetResponse struct {
 
 func (x *RequestPasswordResetResponse) Reset() {
 	*x = RequestPasswordResetResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[27]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1510,7 +1603,7 @@ func (x *RequestPasswordResetResponse) String() string {
 func (*RequestPasswordResetResponse) ProtoMessage() {}
 
 func (x *RequestPasswordResetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[27]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1523,7 +1616,7 @@ func (x *RequestPasswordResetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RequestPasswordResetResponse.ProtoReflect.Descriptor instead.
 func (*RequestPasswordResetResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{27}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{29}
 }
 
 // ConfirmPasswordResetRequest completes the forgot-password flow: it consumes
@@ -1541,7 +1634,7 @@ type ConfirmPasswordResetRequest struct {
 
 func (x *ConfirmPasswordResetRequest) Reset() {
 	*x = ConfirmPasswordResetRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[28]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1553,7 +1646,7 @@ func (x *ConfirmPasswordResetRequest) String() string {
 func (*ConfirmPasswordResetRequest) ProtoMessage() {}
 
 func (x *ConfirmPasswordResetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[28]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1566,7 +1659,7 @@ func (x *ConfirmPasswordResetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConfirmPasswordResetRequest.ProtoReflect.Descriptor instead.
 func (*ConfirmPasswordResetRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{28}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *ConfirmPasswordResetRequest) GetToken() string {
@@ -1593,7 +1686,7 @@ type ConfirmPasswordResetResponse struct {
 
 func (x *ConfirmPasswordResetResponse) Reset() {
 	*x = ConfirmPasswordResetResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[29]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1605,7 +1698,7 @@ func (x *ConfirmPasswordResetResponse) String() string {
 func (*ConfirmPasswordResetResponse) ProtoMessage() {}
 
 func (x *ConfirmPasswordResetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[29]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1618,7 +1711,7 @@ func (x *ConfirmPasswordResetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConfirmPasswordResetResponse.ProtoReflect.Descriptor instead.
 func (*ConfirmPasswordResetResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{29}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{31}
 }
 
 // VerifyEmailRequest consumes an emailed verification token and flips the
@@ -1634,7 +1727,7 @@ type VerifyEmailRequest struct {
 
 func (x *VerifyEmailRequest) Reset() {
 	*x = VerifyEmailRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[30]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1646,7 +1739,7 @@ func (x *VerifyEmailRequest) String() string {
 func (*VerifyEmailRequest) ProtoMessage() {}
 
 func (x *VerifyEmailRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[30]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1659,7 +1752,7 @@ func (x *VerifyEmailRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VerifyEmailRequest.ProtoReflect.Descriptor instead.
 func (*VerifyEmailRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{30}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *VerifyEmailRequest) GetToken() string {
@@ -1678,7 +1771,7 @@ type VerifyEmailResponse struct {
 
 func (x *VerifyEmailResponse) Reset() {
 	*x = VerifyEmailResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[31]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1690,7 +1783,7 @@ func (x *VerifyEmailResponse) String() string {
 func (*VerifyEmailResponse) ProtoMessage() {}
 
 func (x *VerifyEmailResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[31]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1703,7 +1796,7 @@ func (x *VerifyEmailResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VerifyEmailResponse.ProtoReflect.Descriptor instead.
 func (*VerifyEmailResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{31}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{33}
 }
 
 // ResendVerificationRequest re-dispatches a fresh verification token to the
@@ -1717,7 +1810,7 @@ type ResendVerificationRequest struct {
 
 func (x *ResendVerificationRequest) Reset() {
 	*x = ResendVerificationRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[32]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1729,7 +1822,7 @@ func (x *ResendVerificationRequest) String() string {
 func (*ResendVerificationRequest) ProtoMessage() {}
 
 func (x *ResendVerificationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[32]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1742,7 +1835,7 @@ func (x *ResendVerificationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResendVerificationRequest.ProtoReflect.Descriptor instead.
 func (*ResendVerificationRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{32}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{34}
 }
 
 // ResendVerificationResponse is empty; success is signalled by the absence of
@@ -1755,7 +1848,7 @@ type ResendVerificationResponse struct {
 
 func (x *ResendVerificationResponse) Reset() {
 	*x = ResendVerificationResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[33]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1767,7 +1860,7 @@ func (x *ResendVerificationResponse) String() string {
 func (*ResendVerificationResponse) ProtoMessage() {}
 
 func (x *ResendVerificationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[33]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1780,7 +1873,7 @@ func (x *ResendVerificationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResendVerificationResponse.ProtoReflect.Descriptor instead.
 func (*ResendVerificationResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{33}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{35}
 }
 
 // CreateTenantRequest creates a workspace. The caller becomes owner and the
@@ -1798,7 +1891,7 @@ type CreateTenantRequest struct {
 
 func (x *CreateTenantRequest) Reset() {
 	*x = CreateTenantRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[34]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1810,7 +1903,7 @@ func (x *CreateTenantRequest) String() string {
 func (*CreateTenantRequest) ProtoMessage() {}
 
 func (x *CreateTenantRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[34]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1823,7 +1916,7 @@ func (x *CreateTenantRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateTenantRequest.ProtoReflect.Descriptor instead.
 func (*CreateTenantRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{34}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *CreateTenantRequest) GetName() string {
@@ -1851,7 +1944,7 @@ type CreateTenantResponse struct {
 
 func (x *CreateTenantResponse) Reset() {
 	*x = CreateTenantResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[35]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1863,7 +1956,7 @@ func (x *CreateTenantResponse) String() string {
 func (*CreateTenantResponse) ProtoMessage() {}
 
 func (x *CreateTenantResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[35]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1876,7 +1969,7 @@ func (x *CreateTenantResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateTenantResponse.ProtoReflect.Descriptor instead.
 func (*CreateTenantResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{35}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *CreateTenantResponse) GetTenant() *iam.Tenant {
@@ -1903,7 +1996,7 @@ type GetTenantRequest struct {
 
 func (x *GetTenantRequest) Reset() {
 	*x = GetTenantRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[36]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1915,7 +2008,7 @@ func (x *GetTenantRequest) String() string {
 func (*GetTenantRequest) ProtoMessage() {}
 
 func (x *GetTenantRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[36]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1928,7 +2021,7 @@ func (x *GetTenantRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTenantRequest.ProtoReflect.Descriptor instead.
 func (*GetTenantRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{36}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *GetTenantRequest) GetRef() isGetTenantRequest_Ref {
@@ -1985,7 +2078,7 @@ type GetTenantResponse struct {
 
 func (x *GetTenantResponse) Reset() {
 	*x = GetTenantResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[37]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1997,7 +2090,7 @@ func (x *GetTenantResponse) String() string {
 func (*GetTenantResponse) ProtoMessage() {}
 
 func (x *GetTenantResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[37]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2010,7 +2103,7 @@ func (x *GetTenantResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTenantResponse.ProtoReflect.Descriptor instead.
 func (*GetTenantResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{37}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *GetTenantResponse) GetTenant() *iam.Tenant {
@@ -2030,7 +2123,7 @@ type ListMyTenantsRequest struct {
 
 func (x *ListMyTenantsRequest) Reset() {
 	*x = ListMyTenantsRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[38]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2042,7 +2135,7 @@ func (x *ListMyTenantsRequest) String() string {
 func (*ListMyTenantsRequest) ProtoMessage() {}
 
 func (x *ListMyTenantsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[38]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2055,7 +2148,7 @@ func (x *ListMyTenantsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMyTenantsRequest.ProtoReflect.Descriptor instead.
 func (*ListMyTenantsRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{38}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{40}
 }
 
 // ListMyTenantsResponse returns the caller's tenants (the org switcher data).
@@ -2069,7 +2162,7 @@ type ListMyTenantsResponse struct {
 
 func (x *ListMyTenantsResponse) Reset() {
 	*x = ListMyTenantsResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[39]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2081,7 +2174,7 @@ func (x *ListMyTenantsResponse) String() string {
 func (*ListMyTenantsResponse) ProtoMessage() {}
 
 func (x *ListMyTenantsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[39]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2094,7 +2187,7 @@ func (x *ListMyTenantsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMyTenantsResponse.ProtoReflect.Descriptor instead.
 func (*ListMyTenantsResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{39}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *ListMyTenantsResponse) GetTenants() []*iam.Tenant {
@@ -2119,7 +2212,7 @@ type UpdateTenantRequest struct {
 
 func (x *UpdateTenantRequest) Reset() {
 	*x = UpdateTenantRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[40]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2131,7 +2224,7 @@ func (x *UpdateTenantRequest) String() string {
 func (*UpdateTenantRequest) ProtoMessage() {}
 
 func (x *UpdateTenantRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[40]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2144,7 +2237,7 @@ func (x *UpdateTenantRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateTenantRequest.ProtoReflect.Descriptor instead.
 func (*UpdateTenantRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{40}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *UpdateTenantRequest) GetId() string {
@@ -2179,7 +2272,7 @@ type UpdateTenantResponse struct {
 
 func (x *UpdateTenantResponse) Reset() {
 	*x = UpdateTenantResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[41]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2191,7 +2284,7 @@ func (x *UpdateTenantResponse) String() string {
 func (*UpdateTenantResponse) ProtoMessage() {}
 
 func (x *UpdateTenantResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[41]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2204,7 +2297,7 @@ func (x *UpdateTenantResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateTenantResponse.ProtoReflect.Descriptor instead.
 func (*UpdateTenantResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{41}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *UpdateTenantResponse) GetTenant() *iam.Tenant {
@@ -2225,7 +2318,7 @@ type DeleteTenantRequest struct {
 
 func (x *DeleteTenantRequest) Reset() {
 	*x = DeleteTenantRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[42]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2237,7 +2330,7 @@ func (x *DeleteTenantRequest) String() string {
 func (*DeleteTenantRequest) ProtoMessage() {}
 
 func (x *DeleteTenantRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[42]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2250,7 +2343,7 @@ func (x *DeleteTenantRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteTenantRequest.ProtoReflect.Descriptor instead.
 func (*DeleteTenantRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{42}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *DeleteTenantRequest) GetId() string {
@@ -2269,7 +2362,7 @@ type DeleteTenantResponse struct {
 
 func (x *DeleteTenantResponse) Reset() {
 	*x = DeleteTenantResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[43]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2281,7 +2374,7 @@ func (x *DeleteTenantResponse) String() string {
 func (*DeleteTenantResponse) ProtoMessage() {}
 
 func (x *DeleteTenantResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[43]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2294,7 +2387,7 @@ func (x *DeleteTenantResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteTenantResponse.ProtoReflect.Descriptor instead.
 func (*DeleteTenantResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{43}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{45}
 }
 
 // TransferTenantOwnershipRequest reassigns Tenant.owner_account_id to another
@@ -2313,7 +2406,7 @@ type TransferTenantOwnershipRequest struct {
 
 func (x *TransferTenantOwnershipRequest) Reset() {
 	*x = TransferTenantOwnershipRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[44]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2325,7 +2418,7 @@ func (x *TransferTenantOwnershipRequest) String() string {
 func (*TransferTenantOwnershipRequest) ProtoMessage() {}
 
 func (x *TransferTenantOwnershipRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[44]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2338,7 +2431,7 @@ func (x *TransferTenantOwnershipRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TransferTenantOwnershipRequest.ProtoReflect.Descriptor instead.
 func (*TransferTenantOwnershipRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{44}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *TransferTenantOwnershipRequest) GetTenantId() string {
@@ -2366,7 +2459,7 @@ type TransferTenantOwnershipResponse struct {
 
 func (x *TransferTenantOwnershipResponse) Reset() {
 	*x = TransferTenantOwnershipResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[45]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2378,7 +2471,7 @@ func (x *TransferTenantOwnershipResponse) String() string {
 func (*TransferTenantOwnershipResponse) ProtoMessage() {}
 
 func (x *TransferTenantOwnershipResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[45]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2391,7 +2484,7 @@ func (x *TransferTenantOwnershipResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TransferTenantOwnershipResponse.ProtoReflect.Descriptor instead.
 func (*TransferTenantOwnershipResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{45}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *TransferTenantOwnershipResponse) GetTenant() *iam.Tenant {
@@ -2417,7 +2510,7 @@ type LeaveTenantRequest struct {
 
 func (x *LeaveTenantRequest) Reset() {
 	*x = LeaveTenantRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[46]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2429,7 +2522,7 @@ func (x *LeaveTenantRequest) String() string {
 func (*LeaveTenantRequest) ProtoMessage() {}
 
 func (x *LeaveTenantRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[46]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2442,7 +2535,7 @@ func (x *LeaveTenantRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LeaveTenantRequest.ProtoReflect.Descriptor instead.
 func (*LeaveTenantRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{46}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *LeaveTenantRequest) GetTenantId() string {
@@ -2461,7 +2554,7 @@ type LeaveTenantResponse struct {
 
 func (x *LeaveTenantResponse) Reset() {
 	*x = LeaveTenantResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[47]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2473,7 +2566,7 @@ func (x *LeaveTenantResponse) String() string {
 func (*LeaveTenantResponse) ProtoMessage() {}
 
 func (x *LeaveTenantResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[47]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2486,7 +2579,7 @@ func (x *LeaveTenantResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LeaveTenantResponse.ProtoReflect.Descriptor instead.
 func (*LeaveTenantResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{47}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{49}
 }
 
 // CreateRoleRequest defines a custom role. tenant_id MUST be set for
@@ -2508,7 +2601,7 @@ type CreateRoleRequest struct {
 
 func (x *CreateRoleRequest) Reset() {
 	*x = CreateRoleRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[48]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2520,7 +2613,7 @@ func (x *CreateRoleRequest) String() string {
 func (*CreateRoleRequest) ProtoMessage() {}
 
 func (x *CreateRoleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[48]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2533,7 +2626,7 @@ func (x *CreateRoleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateRoleRequest.ProtoReflect.Descriptor instead.
 func (*CreateRoleRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{48}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *CreateRoleRequest) GetName() string {
@@ -2575,7 +2668,7 @@ type CreateRoleResponse struct {
 
 func (x *CreateRoleResponse) Reset() {
 	*x = CreateRoleResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[49]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2587,7 +2680,7 @@ func (x *CreateRoleResponse) String() string {
 func (*CreateRoleResponse) ProtoMessage() {}
 
 func (x *CreateRoleResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[49]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2600,7 +2693,7 @@ func (x *CreateRoleResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateRoleResponse.ProtoReflect.Descriptor instead.
 func (*CreateRoleResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{49}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *CreateRoleResponse) GetRole() *iam.Role {
@@ -2621,7 +2714,7 @@ type GetRoleRequest struct {
 
 func (x *GetRoleRequest) Reset() {
 	*x = GetRoleRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[50]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2633,7 +2726,7 @@ func (x *GetRoleRequest) String() string {
 func (*GetRoleRequest) ProtoMessage() {}
 
 func (x *GetRoleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[50]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2646,7 +2739,7 @@ func (x *GetRoleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRoleRequest.ProtoReflect.Descriptor instead.
 func (*GetRoleRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{50}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *GetRoleRequest) GetId() string {
@@ -2667,7 +2760,7 @@ type GetRoleResponse struct {
 
 func (x *GetRoleResponse) Reset() {
 	*x = GetRoleResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[51]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2679,7 +2772,7 @@ func (x *GetRoleResponse) String() string {
 func (*GetRoleResponse) ProtoMessage() {}
 
 func (x *GetRoleResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[51]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2692,7 +2785,7 @@ func (x *GetRoleResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRoleResponse.ProtoReflect.Descriptor instead.
 func (*GetRoleResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{51}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *GetRoleResponse) GetRole() *iam.Role {
@@ -2719,7 +2812,7 @@ type ListRolesRequest struct {
 
 func (x *ListRolesRequest) Reset() {
 	*x = ListRolesRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[52]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2731,7 +2824,7 @@ func (x *ListRolesRequest) String() string {
 func (*ListRolesRequest) ProtoMessage() {}
 
 func (x *ListRolesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[52]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2744,7 +2837,7 @@ func (x *ListRolesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRolesRequest.ProtoReflect.Descriptor instead.
 func (*ListRolesRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{52}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{54}
 }
 
 func (x *ListRolesRequest) GetTenantId() string {
@@ -2780,7 +2873,7 @@ type ListRolesResponse struct {
 
 func (x *ListRolesResponse) Reset() {
 	*x = ListRolesResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[53]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2792,7 +2885,7 @@ func (x *ListRolesResponse) String() string {
 func (*ListRolesResponse) ProtoMessage() {}
 
 func (x *ListRolesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[53]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2805,7 +2898,7 @@ func (x *ListRolesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRolesResponse.ProtoReflect.Descriptor instead.
 func (*ListRolesResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{53}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *ListRolesResponse) GetRoles() []*iam.Role {
@@ -2837,7 +2930,7 @@ type UpdateRoleRequest struct {
 
 func (x *UpdateRoleRequest) Reset() {
 	*x = UpdateRoleRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[54]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2849,7 +2942,7 @@ func (x *UpdateRoleRequest) String() string {
 func (*UpdateRoleRequest) ProtoMessage() {}
 
 func (x *UpdateRoleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[54]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2862,7 +2955,7 @@ func (x *UpdateRoleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateRoleRequest.ProtoReflect.Descriptor instead.
 func (*UpdateRoleRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{54}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{56}
 }
 
 func (x *UpdateRoleRequest) GetId() string {
@@ -2897,7 +2990,7 @@ type UpdateRoleResponse struct {
 
 func (x *UpdateRoleResponse) Reset() {
 	*x = UpdateRoleResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[55]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[57]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2909,7 +3002,7 @@ func (x *UpdateRoleResponse) String() string {
 func (*UpdateRoleResponse) ProtoMessage() {}
 
 func (x *UpdateRoleResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[55]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[57]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2922,7 +3015,7 @@ func (x *UpdateRoleResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateRoleResponse.ProtoReflect.Descriptor instead.
 func (*UpdateRoleResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{55}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *UpdateRoleResponse) GetRole() *iam.Role {
@@ -2943,7 +3036,7 @@ type DeleteRoleRequest struct {
 
 func (x *DeleteRoleRequest) Reset() {
 	*x = DeleteRoleRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[56]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[58]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2955,7 +3048,7 @@ func (x *DeleteRoleRequest) String() string {
 func (*DeleteRoleRequest) ProtoMessage() {}
 
 func (x *DeleteRoleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[56]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[58]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2968,7 +3061,7 @@ func (x *DeleteRoleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteRoleRequest.ProtoReflect.Descriptor instead.
 func (*DeleteRoleRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{56}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{58}
 }
 
 func (x *DeleteRoleRequest) GetId() string {
@@ -2987,7 +3080,7 @@ type DeleteRoleResponse struct {
 
 func (x *DeleteRoleResponse) Reset() {
 	*x = DeleteRoleResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[57]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[59]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2999,7 +3092,7 @@ func (x *DeleteRoleResponse) String() string {
 func (*DeleteRoleResponse) ProtoMessage() {}
 
 func (x *DeleteRoleResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[57]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[59]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3012,7 +3105,7 @@ func (x *DeleteRoleResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteRoleResponse.ProtoReflect.Descriptor instead.
 func (*DeleteRoleResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{57}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{59}
 }
 
 // CreateMembershipRequest adds an account to a tenant with a set of roles — the
@@ -3033,7 +3126,7 @@ type CreateMembershipRequest struct {
 
 func (x *CreateMembershipRequest) Reset() {
 	*x = CreateMembershipRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[58]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[60]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3045,7 +3138,7 @@ func (x *CreateMembershipRequest) String() string {
 func (*CreateMembershipRequest) ProtoMessage() {}
 
 func (x *CreateMembershipRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[58]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[60]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3058,7 +3151,7 @@ func (x *CreateMembershipRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateMembershipRequest.ProtoReflect.Descriptor instead.
 func (*CreateMembershipRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{58}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{60}
 }
 
 func (x *CreateMembershipRequest) GetAccountId() string {
@@ -3093,7 +3186,7 @@ type CreateMembershipResponse struct {
 
 func (x *CreateMembershipResponse) Reset() {
 	*x = CreateMembershipResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[59]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[61]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3105,7 +3198,7 @@ func (x *CreateMembershipResponse) String() string {
 func (*CreateMembershipResponse) ProtoMessage() {}
 
 func (x *CreateMembershipResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[59]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[61]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3118,7 +3211,7 @@ func (x *CreateMembershipResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateMembershipResponse.ProtoReflect.Descriptor instead.
 func (*CreateMembershipResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{59}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{61}
 }
 
 func (x *CreateMembershipResponse) GetMembership() *iam.Membership {
@@ -3139,7 +3232,7 @@ type GetMembershipRequest struct {
 
 func (x *GetMembershipRequest) Reset() {
 	*x = GetMembershipRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[60]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[62]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3151,7 +3244,7 @@ func (x *GetMembershipRequest) String() string {
 func (*GetMembershipRequest) ProtoMessage() {}
 
 func (x *GetMembershipRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[60]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[62]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3164,7 +3257,7 @@ func (x *GetMembershipRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMembershipRequest.ProtoReflect.Descriptor instead.
 func (*GetMembershipRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{60}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{62}
 }
 
 func (x *GetMembershipRequest) GetId() string {
@@ -3185,7 +3278,7 @@ type GetMembershipResponse struct {
 
 func (x *GetMembershipResponse) Reset() {
 	*x = GetMembershipResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[61]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[63]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3197,7 +3290,7 @@ func (x *GetMembershipResponse) String() string {
 func (*GetMembershipResponse) ProtoMessage() {}
 
 func (x *GetMembershipResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[61]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[63]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3210,7 +3303,7 @@ func (x *GetMembershipResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMembershipResponse.ProtoReflect.Descriptor instead.
 func (*GetMembershipResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{61}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{63}
 }
 
 func (x *GetMembershipResponse) GetMembership() *iam.Membership {
@@ -3235,7 +3328,7 @@ type ListMembershipsRequest struct {
 
 func (x *ListMembershipsRequest) Reset() {
 	*x = ListMembershipsRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[62]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[64]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3247,7 +3340,7 @@ func (x *ListMembershipsRequest) String() string {
 func (*ListMembershipsRequest) ProtoMessage() {}
 
 func (x *ListMembershipsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[62]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[64]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3260,7 +3353,7 @@ func (x *ListMembershipsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMembershipsRequest.ProtoReflect.Descriptor instead.
 func (*ListMembershipsRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{62}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{64}
 }
 
 func (x *ListMembershipsRequest) GetTenantId() string {
@@ -3296,7 +3389,7 @@ type ListMembershipsResponse struct {
 
 func (x *ListMembershipsResponse) Reset() {
 	*x = ListMembershipsResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[63]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[65]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3308,7 +3401,7 @@ func (x *ListMembershipsResponse) String() string {
 func (*ListMembershipsResponse) ProtoMessage() {}
 
 func (x *ListMembershipsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[63]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[65]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3321,7 +3414,7 @@ func (x *ListMembershipsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMembershipsResponse.ProtoReflect.Descriptor instead.
 func (*ListMembershipsResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{63}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{65}
 }
 
 func (x *ListMembershipsResponse) GetMemberships() []*iam.Membership {
@@ -3353,7 +3446,7 @@ type UpdateMembershipRequest struct {
 
 func (x *UpdateMembershipRequest) Reset() {
 	*x = UpdateMembershipRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[64]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[66]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3365,7 +3458,7 @@ func (x *UpdateMembershipRequest) String() string {
 func (*UpdateMembershipRequest) ProtoMessage() {}
 
 func (x *UpdateMembershipRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[64]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[66]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3378,7 +3471,7 @@ func (x *UpdateMembershipRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateMembershipRequest.ProtoReflect.Descriptor instead.
 func (*UpdateMembershipRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{64}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{66}
 }
 
 func (x *UpdateMembershipRequest) GetId() string {
@@ -3406,7 +3499,7 @@ type UpdateMembershipResponse struct {
 
 func (x *UpdateMembershipResponse) Reset() {
 	*x = UpdateMembershipResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[65]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[67]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3418,7 +3511,7 @@ func (x *UpdateMembershipResponse) String() string {
 func (*UpdateMembershipResponse) ProtoMessage() {}
 
 func (x *UpdateMembershipResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[65]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[67]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3431,7 +3524,7 @@ func (x *UpdateMembershipResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateMembershipResponse.ProtoReflect.Descriptor instead.
 func (*UpdateMembershipResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{65}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{67}
 }
 
 func (x *UpdateMembershipResponse) GetMembership() *iam.Membership {
@@ -3452,7 +3545,7 @@ type DeleteMembershipRequest struct {
 
 func (x *DeleteMembershipRequest) Reset() {
 	*x = DeleteMembershipRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[66]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[68]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3464,7 +3557,7 @@ func (x *DeleteMembershipRequest) String() string {
 func (*DeleteMembershipRequest) ProtoMessage() {}
 
 func (x *DeleteMembershipRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[66]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[68]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3477,7 +3570,7 @@ func (x *DeleteMembershipRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteMembershipRequest.ProtoReflect.Descriptor instead.
 func (*DeleteMembershipRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{66}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{68}
 }
 
 func (x *DeleteMembershipRequest) GetId() string {
@@ -3497,7 +3590,7 @@ type DeleteMembershipResponse struct {
 
 func (x *DeleteMembershipResponse) Reset() {
 	*x = DeleteMembershipResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[67]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[69]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3509,7 +3602,7 @@ func (x *DeleteMembershipResponse) String() string {
 func (*DeleteMembershipResponse) ProtoMessage() {}
 
 func (x *DeleteMembershipResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[67]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[69]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3522,7 +3615,7 @@ func (x *DeleteMembershipResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteMembershipResponse.ProtoReflect.Descriptor instead.
 func (*DeleteMembershipResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{67}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{69}
 }
 
 // GetMyPermissionsRequest resolves the CALLER's effective Permissions in one
@@ -3538,7 +3631,7 @@ type GetMyPermissionsRequest struct {
 
 func (x *GetMyPermissionsRequest) Reset() {
 	*x = GetMyPermissionsRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[68]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[70]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3550,7 +3643,7 @@ func (x *GetMyPermissionsRequest) String() string {
 func (*GetMyPermissionsRequest) ProtoMessage() {}
 
 func (x *GetMyPermissionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[68]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[70]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3563,7 +3656,7 @@ func (x *GetMyPermissionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMyPermissionsRequest.ProtoReflect.Descriptor instead.
 func (*GetMyPermissionsRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{68}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{70}
 }
 
 func (x *GetMyPermissionsRequest) GetTenantId() string {
@@ -3585,7 +3678,7 @@ type GetMyPermissionsResponse struct {
 
 func (x *GetMyPermissionsResponse) Reset() {
 	*x = GetMyPermissionsResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[69]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[71]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3597,7 +3690,7 @@ func (x *GetMyPermissionsResponse) String() string {
 func (*GetMyPermissionsResponse) ProtoMessage() {}
 
 func (x *GetMyPermissionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[69]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[71]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3610,7 +3703,7 @@ func (x *GetMyPermissionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMyPermissionsResponse.ProtoReflect.Descriptor instead.
 func (*GetMyPermissionsResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{69}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{71}
 }
 
 func (x *GetMyPermissionsResponse) GetPermissions() []*iam.Permission {
@@ -3636,7 +3729,7 @@ type ListPermissionsRequest struct {
 
 func (x *ListPermissionsRequest) Reset() {
 	*x = ListPermissionsRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[70]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[72]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3648,7 +3741,7 @@ func (x *ListPermissionsRequest) String() string {
 func (*ListPermissionsRequest) ProtoMessage() {}
 
 func (x *ListPermissionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[70]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[72]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3661,7 +3754,7 @@ func (x *ListPermissionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPermissionsRequest.ProtoReflect.Descriptor instead.
 func (*ListPermissionsRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{70}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{72}
 }
 
 // CatalogEntry is one grantable Permission plus a human label for the UI.
@@ -3677,7 +3770,7 @@ type CatalogEntry struct {
 
 func (x *CatalogEntry) Reset() {
 	*x = CatalogEntry{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[71]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[73]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3689,7 +3782,7 @@ func (x *CatalogEntry) String() string {
 func (*CatalogEntry) ProtoMessage() {}
 
 func (x *CatalogEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[71]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[73]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3702,7 +3795,7 @@ func (x *CatalogEntry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CatalogEntry.ProtoReflect.Descriptor instead.
 func (*CatalogEntry) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{71}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{73}
 }
 
 func (x *CatalogEntry) GetPermission() *iam.Permission {
@@ -3730,7 +3823,7 @@ type ListPermissionsResponse struct {
 
 func (x *ListPermissionsResponse) Reset() {
 	*x = ListPermissionsResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[72]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[74]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3742,7 +3835,7 @@ func (x *ListPermissionsResponse) String() string {
 func (*ListPermissionsResponse) ProtoMessage() {}
 
 func (x *ListPermissionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[72]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[74]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3755,7 +3848,7 @@ func (x *ListPermissionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPermissionsResponse.ProtoReflect.Descriptor instead.
 func (*ListPermissionsResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{72}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{74}
 }
 
 func (x *ListPermissionsResponse) GetEntries() []*CatalogEntry {
@@ -3793,7 +3886,7 @@ type CreateIdentityProviderRequest struct {
 
 func (x *CreateIdentityProviderRequest) Reset() {
 	*x = CreateIdentityProviderRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[73]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[75]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3805,7 +3898,7 @@ func (x *CreateIdentityProviderRequest) String() string {
 func (*CreateIdentityProviderRequest) ProtoMessage() {}
 
 func (x *CreateIdentityProviderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[73]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[75]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3818,7 +3911,7 @@ func (x *CreateIdentityProviderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateIdentityProviderRequest.ProtoReflect.Descriptor instead.
 func (*CreateIdentityProviderRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{73}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{75}
 }
 
 func (x *CreateIdentityProviderRequest) GetSlug() string {
@@ -3888,7 +3981,7 @@ type CreateIdentityProviderResponse struct {
 
 func (x *CreateIdentityProviderResponse) Reset() {
 	*x = CreateIdentityProviderResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[74]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[76]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3900,7 +3993,7 @@ func (x *CreateIdentityProviderResponse) String() string {
 func (*CreateIdentityProviderResponse) ProtoMessage() {}
 
 func (x *CreateIdentityProviderResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[74]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[76]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3913,7 +4006,7 @@ func (x *CreateIdentityProviderResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateIdentityProviderResponse.ProtoReflect.Descriptor instead.
 func (*CreateIdentityProviderResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{74}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{76}
 }
 
 func (x *CreateIdentityProviderResponse) GetProvider() *iam.IdentityProvider {
@@ -3934,7 +4027,7 @@ type GetIdentityProviderRequest struct {
 
 func (x *GetIdentityProviderRequest) Reset() {
 	*x = GetIdentityProviderRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[75]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[77]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3946,7 +4039,7 @@ func (x *GetIdentityProviderRequest) String() string {
 func (*GetIdentityProviderRequest) ProtoMessage() {}
 
 func (x *GetIdentityProviderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[75]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[77]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3959,7 +4052,7 @@ func (x *GetIdentityProviderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetIdentityProviderRequest.ProtoReflect.Descriptor instead.
 func (*GetIdentityProviderRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{75}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{77}
 }
 
 func (x *GetIdentityProviderRequest) GetId() string {
@@ -3980,7 +4073,7 @@ type GetIdentityProviderResponse struct {
 
 func (x *GetIdentityProviderResponse) Reset() {
 	*x = GetIdentityProviderResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[76]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[78]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3992,7 +4085,7 @@ func (x *GetIdentityProviderResponse) String() string {
 func (*GetIdentityProviderResponse) ProtoMessage() {}
 
 func (x *GetIdentityProviderResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[76]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[78]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4005,7 +4098,7 @@ func (x *GetIdentityProviderResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetIdentityProviderResponse.ProtoReflect.Descriptor instead.
 func (*GetIdentityProviderResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{76}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{78}
 }
 
 func (x *GetIdentityProviderResponse) GetProvider() *iam.IdentityProvider {
@@ -4045,7 +4138,7 @@ type UpdateIdentityProviderRequest struct {
 
 func (x *UpdateIdentityProviderRequest) Reset() {
 	*x = UpdateIdentityProviderRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[77]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[79]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4057,7 +4150,7 @@ func (x *UpdateIdentityProviderRequest) String() string {
 func (*UpdateIdentityProviderRequest) ProtoMessage() {}
 
 func (x *UpdateIdentityProviderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[77]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[79]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4070,7 +4163,7 @@ func (x *UpdateIdentityProviderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateIdentityProviderRequest.ProtoReflect.Descriptor instead.
 func (*UpdateIdentityProviderRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{77}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{79}
 }
 
 func (x *UpdateIdentityProviderRequest) GetId() string {
@@ -4147,7 +4240,7 @@ type UpdateIdentityProviderResponse struct {
 
 func (x *UpdateIdentityProviderResponse) Reset() {
 	*x = UpdateIdentityProviderResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[78]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[80]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4159,7 +4252,7 @@ func (x *UpdateIdentityProviderResponse) String() string {
 func (*UpdateIdentityProviderResponse) ProtoMessage() {}
 
 func (x *UpdateIdentityProviderResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[78]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[80]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4172,7 +4265,7 @@ func (x *UpdateIdentityProviderResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateIdentityProviderResponse.ProtoReflect.Descriptor instead.
 func (*UpdateIdentityProviderResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{78}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{80}
 }
 
 func (x *UpdateIdentityProviderResponse) GetProvider() *iam.IdentityProvider {
@@ -4193,7 +4286,7 @@ type DeleteIdentityProviderRequest struct {
 
 func (x *DeleteIdentityProviderRequest) Reset() {
 	*x = DeleteIdentityProviderRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[79]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[81]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4205,7 +4298,7 @@ func (x *DeleteIdentityProviderRequest) String() string {
 func (*DeleteIdentityProviderRequest) ProtoMessage() {}
 
 func (x *DeleteIdentityProviderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[79]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[81]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4218,7 +4311,7 @@ func (x *DeleteIdentityProviderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteIdentityProviderRequest.ProtoReflect.Descriptor instead.
 func (*DeleteIdentityProviderRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{79}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{81}
 }
 
 func (x *DeleteIdentityProviderRequest) GetId() string {
@@ -4238,7 +4331,7 @@ type DeleteIdentityProviderResponse struct {
 
 func (x *DeleteIdentityProviderResponse) Reset() {
 	*x = DeleteIdentityProviderResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[80]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[82]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4250,7 +4343,7 @@ func (x *DeleteIdentityProviderResponse) String() string {
 func (*DeleteIdentityProviderResponse) ProtoMessage() {}
 
 func (x *DeleteIdentityProviderResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[80]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[82]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4263,7 +4356,7 @@ func (x *DeleteIdentityProviderResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteIdentityProviderResponse.ProtoReflect.Descriptor instead.
 func (*DeleteIdentityProviderResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{80}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{82}
 }
 
 // ListIdentityProvidersRequest is PUBLIC (the login page needs the buttons
@@ -4279,7 +4372,7 @@ type ListIdentityProvidersRequest struct {
 
 func (x *ListIdentityProvidersRequest) Reset() {
 	*x = ListIdentityProvidersRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[81]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[83]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4291,7 +4384,7 @@ func (x *ListIdentityProvidersRequest) String() string {
 func (*ListIdentityProvidersRequest) ProtoMessage() {}
 
 func (x *ListIdentityProvidersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[81]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[83]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4304,7 +4397,7 @@ func (x *ListIdentityProvidersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListIdentityProvidersRequest.ProtoReflect.Descriptor instead.
 func (*ListIdentityProvidersRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{81}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{83}
 }
 
 // SsoButton is the public, login-page view of an enabled provider.
@@ -4322,7 +4415,7 @@ type SsoButton struct {
 
 func (x *SsoButton) Reset() {
 	*x = SsoButton{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[82]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[84]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4334,7 +4427,7 @@ func (x *SsoButton) String() string {
 func (*SsoButton) ProtoMessage() {}
 
 func (x *SsoButton) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[82]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[84]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4347,7 +4440,7 @@ func (x *SsoButton) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SsoButton.ProtoReflect.Descriptor instead.
 func (*SsoButton) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{82}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{84}
 }
 
 func (x *SsoButton) GetId() string {
@@ -4382,7 +4475,7 @@ type ListIdentityProvidersResponse struct {
 
 func (x *ListIdentityProvidersResponse) Reset() {
 	*x = ListIdentityProvidersResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[83]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[85]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4394,7 +4487,7 @@ func (x *ListIdentityProvidersResponse) String() string {
 func (*ListIdentityProvidersResponse) ProtoMessage() {}
 
 func (x *ListIdentityProvidersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[83]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[85]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4407,7 +4500,7 @@ func (x *ListIdentityProvidersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListIdentityProvidersResponse.ProtoReflect.Descriptor instead.
 func (*ListIdentityProvidersResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{83}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{85}
 }
 
 func (x *ListIdentityProvidersResponse) GetButtons() []*SsoButton {
@@ -4431,7 +4524,7 @@ type StartSSORequest struct {
 
 func (x *StartSSORequest) Reset() {
 	*x = StartSSORequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[84]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[86]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4443,7 +4536,7 @@ func (x *StartSSORequest) String() string {
 func (*StartSSORequest) ProtoMessage() {}
 
 func (x *StartSSORequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[84]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[86]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4456,7 +4549,7 @@ func (x *StartSSORequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartSSORequest.ProtoReflect.Descriptor instead.
 func (*StartSSORequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{84}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{86}
 }
 
 func (x *StartSSORequest) GetProviderId() string {
@@ -4480,7 +4573,7 @@ type StartSSOResponse struct {
 
 func (x *StartSSOResponse) Reset() {
 	*x = StartSSOResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[85]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[87]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4492,7 +4585,7 @@ func (x *StartSSOResponse) String() string {
 func (*StartSSOResponse) ProtoMessage() {}
 
 func (x *StartSSOResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[85]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[87]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4505,7 +4598,7 @@ func (x *StartSSOResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartSSOResponse.ProtoReflect.Descriptor instead.
 func (*StartSSOResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{85}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{87}
 }
 
 func (x *StartSSOResponse) GetRedirectUrl() string {
@@ -4553,7 +4646,7 @@ type CompleteSSORequest struct {
 
 func (x *CompleteSSORequest) Reset() {
 	*x = CompleteSSORequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[86]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[88]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4565,7 +4658,7 @@ func (x *CompleteSSORequest) String() string {
 func (*CompleteSSORequest) ProtoMessage() {}
 
 func (x *CompleteSSORequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[86]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[88]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4578,7 +4671,7 @@ func (x *CompleteSSORequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CompleteSSORequest.ProtoReflect.Descriptor instead.
 func (*CompleteSSORequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{86}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{88}
 }
 
 func (x *CompleteSSORequest) GetProviderId() string {
@@ -4613,7 +4706,7 @@ type CompleteSSOResponse struct {
 
 func (x *CompleteSSOResponse) Reset() {
 	*x = CompleteSSOResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[87]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[89]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4625,7 +4718,7 @@ func (x *CompleteSSOResponse) String() string {
 func (*CompleteSSOResponse) ProtoMessage() {}
 
 func (x *CompleteSSOResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[87]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[89]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4638,7 +4731,7 @@ func (x *CompleteSSOResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CompleteSSOResponse.ProtoReflect.Descriptor instead.
 func (*CompleteSSOResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{87}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{89}
 }
 
 func (x *CompleteSSOResponse) GetTokens() *TokenPair {
@@ -4662,7 +4755,7 @@ type LinkExternalIdentityRequest struct {
 
 func (x *LinkExternalIdentityRequest) Reset() {
 	*x = LinkExternalIdentityRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[88]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[90]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4674,7 +4767,7 @@ func (x *LinkExternalIdentityRequest) String() string {
 func (*LinkExternalIdentityRequest) ProtoMessage() {}
 
 func (x *LinkExternalIdentityRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[88]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[90]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4687,7 +4780,7 @@ func (x *LinkExternalIdentityRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LinkExternalIdentityRequest.ProtoReflect.Descriptor instead.
 func (*LinkExternalIdentityRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{88}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{90}
 }
 
 func (x *LinkExternalIdentityRequest) GetAccountId() string {
@@ -4715,7 +4808,7 @@ type LinkExternalIdentityResponse struct {
 
 func (x *LinkExternalIdentityResponse) Reset() {
 	*x = LinkExternalIdentityResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[89]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[91]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4727,7 +4820,7 @@ func (x *LinkExternalIdentityResponse) String() string {
 func (*LinkExternalIdentityResponse) ProtoMessage() {}
 
 func (x *LinkExternalIdentityResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[89]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[91]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4740,7 +4833,7 @@ func (x *LinkExternalIdentityResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LinkExternalIdentityResponse.ProtoReflect.Descriptor instead.
 func (*LinkExternalIdentityResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{89}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{91}
 }
 
 func (x *LinkExternalIdentityResponse) GetIdentity() *iam.ExternalIdentity {
@@ -4764,7 +4857,7 @@ type UnlinkExternalIdentityRequest struct {
 
 func (x *UnlinkExternalIdentityRequest) Reset() {
 	*x = UnlinkExternalIdentityRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[90]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[92]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4776,7 +4869,7 @@ func (x *UnlinkExternalIdentityRequest) String() string {
 func (*UnlinkExternalIdentityRequest) ProtoMessage() {}
 
 func (x *UnlinkExternalIdentityRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[90]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[92]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4789,7 +4882,7 @@ func (x *UnlinkExternalIdentityRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnlinkExternalIdentityRequest.ProtoReflect.Descriptor instead.
 func (*UnlinkExternalIdentityRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{90}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{92}
 }
 
 func (x *UnlinkExternalIdentityRequest) GetId() string {
@@ -4809,7 +4902,7 @@ type UnlinkExternalIdentityResponse struct {
 
 func (x *UnlinkExternalIdentityResponse) Reset() {
 	*x = UnlinkExternalIdentityResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[91]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[93]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4821,7 +4914,7 @@ func (x *UnlinkExternalIdentityResponse) String() string {
 func (*UnlinkExternalIdentityResponse) ProtoMessage() {}
 
 func (x *UnlinkExternalIdentityResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[91]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[93]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4834,7 +4927,7 @@ func (x *UnlinkExternalIdentityResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnlinkExternalIdentityResponse.ProtoReflect.Descriptor instead.
 func (*UnlinkExternalIdentityResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{91}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{93}
 }
 
 // ListExternalIdentitiesRequest lists the identities linked to one account. The
@@ -4850,7 +4943,7 @@ type ListExternalIdentitiesRequest struct {
 
 func (x *ListExternalIdentitiesRequest) Reset() {
 	*x = ListExternalIdentitiesRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[92]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[94]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4862,7 +4955,7 @@ func (x *ListExternalIdentitiesRequest) String() string {
 func (*ListExternalIdentitiesRequest) ProtoMessage() {}
 
 func (x *ListExternalIdentitiesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[92]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[94]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4875,7 +4968,7 @@ func (x *ListExternalIdentitiesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListExternalIdentitiesRequest.ProtoReflect.Descriptor instead.
 func (*ListExternalIdentitiesRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{92}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{94}
 }
 
 func (x *ListExternalIdentitiesRequest) GetAccountId() string {
@@ -4896,7 +4989,7 @@ type ListExternalIdentitiesResponse struct {
 
 func (x *ListExternalIdentitiesResponse) Reset() {
 	*x = ListExternalIdentitiesResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[93]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[95]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4908,7 +5001,7 @@ func (x *ListExternalIdentitiesResponse) String() string {
 func (*ListExternalIdentitiesResponse) ProtoMessage() {}
 
 func (x *ListExternalIdentitiesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[93]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[95]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4921,7 +5014,7 @@ func (x *ListExternalIdentitiesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListExternalIdentitiesResponse.ProtoReflect.Descriptor instead.
 func (*ListExternalIdentitiesResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{93}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{95}
 }
 
 func (x *ListExternalIdentitiesResponse) GetIdentities() []*iam.ExternalIdentity {
@@ -4960,7 +5053,7 @@ type CreateApiTokenRequest struct {
 
 func (x *CreateApiTokenRequest) Reset() {
 	*x = CreateApiTokenRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[94]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[96]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4972,7 +5065,7 @@ func (x *CreateApiTokenRequest) String() string {
 func (*CreateApiTokenRequest) ProtoMessage() {}
 
 func (x *CreateApiTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[94]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[96]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4985,7 +5078,7 @@ func (x *CreateApiTokenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateApiTokenRequest.ProtoReflect.Descriptor instead.
 func (*CreateApiTokenRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{94}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{96}
 }
 
 func (x *CreateApiTokenRequest) GetAccountId() string {
@@ -5039,7 +5132,7 @@ type CreateApiTokenResponse struct {
 
 func (x *CreateApiTokenResponse) Reset() {
 	*x = CreateApiTokenResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[95]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[97]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5051,7 +5144,7 @@ func (x *CreateApiTokenResponse) String() string {
 func (*CreateApiTokenResponse) ProtoMessage() {}
 
 func (x *CreateApiTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[95]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[97]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5064,7 +5157,7 @@ func (x *CreateApiTokenResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateApiTokenResponse.ProtoReflect.Descriptor instead.
 func (*CreateApiTokenResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{95}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{97}
 }
 
 func (x *CreateApiTokenResponse) GetToken() *iam.ApiToken {
@@ -5094,7 +5187,7 @@ type ListApiTokensRequest struct {
 
 func (x *ListApiTokensRequest) Reset() {
 	*x = ListApiTokensRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[96]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[98]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5106,7 +5199,7 @@ func (x *ListApiTokensRequest) String() string {
 func (*ListApiTokensRequest) ProtoMessage() {}
 
 func (x *ListApiTokensRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[96]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[98]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5119,7 +5212,7 @@ func (x *ListApiTokensRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListApiTokensRequest.ProtoReflect.Descriptor instead.
 func (*ListApiTokensRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{96}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{98}
 }
 
 func (x *ListApiTokensRequest) GetAccountId() string {
@@ -5140,7 +5233,7 @@ type ListApiTokensResponse struct {
 
 func (x *ListApiTokensResponse) Reset() {
 	*x = ListApiTokensResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[97]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[99]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5152,7 +5245,7 @@ func (x *ListApiTokensResponse) String() string {
 func (*ListApiTokensResponse) ProtoMessage() {}
 
 func (x *ListApiTokensResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[97]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[99]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5165,7 +5258,7 @@ func (x *ListApiTokensResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListApiTokensResponse.ProtoReflect.Descriptor instead.
 func (*ListApiTokensResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{97}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{99}
 }
 
 func (x *ListApiTokensResponse) GetTokens() []*iam.ApiToken {
@@ -5187,7 +5280,7 @@ type RevokeApiTokenRequest struct {
 
 func (x *RevokeApiTokenRequest) Reset() {
 	*x = RevokeApiTokenRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[98]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[100]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5199,7 +5292,7 @@ func (x *RevokeApiTokenRequest) String() string {
 func (*RevokeApiTokenRequest) ProtoMessage() {}
 
 func (x *RevokeApiTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[98]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[100]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5212,7 +5305,7 @@ func (x *RevokeApiTokenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RevokeApiTokenRequest.ProtoReflect.Descriptor instead.
 func (*RevokeApiTokenRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{98}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{100}
 }
 
 func (x *RevokeApiTokenRequest) GetId() string {
@@ -5231,7 +5324,7 @@ type RevokeApiTokenResponse struct {
 
 func (x *RevokeApiTokenResponse) Reset() {
 	*x = RevokeApiTokenResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[99]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[101]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5243,7 +5336,7 @@ func (x *RevokeApiTokenResponse) String() string {
 func (*RevokeApiTokenResponse) ProtoMessage() {}
 
 func (x *RevokeApiTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[99]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[101]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5256,7 +5349,7 @@ func (x *RevokeApiTokenResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RevokeApiTokenResponse.ProtoReflect.Descriptor instead.
 func (*RevokeApiTokenResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{99}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{101}
 }
 
 // RegistrationRequest is one prospective user's access request, captured while
@@ -5282,7 +5375,7 @@ type RegistrationRequest struct {
 
 func (x *RegistrationRequest) Reset() {
 	*x = RegistrationRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[100]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[102]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5294,7 +5387,7 @@ func (x *RegistrationRequest) String() string {
 func (*RegistrationRequest) ProtoMessage() {}
 
 func (x *RegistrationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[100]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[102]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5307,7 +5400,7 @@ func (x *RegistrationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegistrationRequest.ProtoReflect.Descriptor instead.
 func (*RegistrationRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{100}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{102}
 }
 
 func (x *RegistrationRequest) GetId() string {
@@ -5372,7 +5465,7 @@ type SubmitRegistrationRequestRequest struct {
 
 func (x *SubmitRegistrationRequestRequest) Reset() {
 	*x = SubmitRegistrationRequestRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[101]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[103]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5384,7 +5477,7 @@ func (x *SubmitRegistrationRequestRequest) String() string {
 func (*SubmitRegistrationRequestRequest) ProtoMessage() {}
 
 func (x *SubmitRegistrationRequestRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[101]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[103]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5397,7 +5490,7 @@ func (x *SubmitRegistrationRequestRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubmitRegistrationRequestRequest.ProtoReflect.Descriptor instead.
 func (*SubmitRegistrationRequestRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{101}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{103}
 }
 
 func (x *SubmitRegistrationRequestRequest) GetEmail() string {
@@ -5424,7 +5517,7 @@ type SubmitRegistrationRequestResponse struct {
 
 func (x *SubmitRegistrationRequestResponse) Reset() {
 	*x = SubmitRegistrationRequestResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[102]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[104]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5436,7 +5529,7 @@ func (x *SubmitRegistrationRequestResponse) String() string {
 func (*SubmitRegistrationRequestResponse) ProtoMessage() {}
 
 func (x *SubmitRegistrationRequestResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[102]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[104]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5449,7 +5542,7 @@ func (x *SubmitRegistrationRequestResponse) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use SubmitRegistrationRequestResponse.ProtoReflect.Descriptor instead.
 func (*SubmitRegistrationRequestResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{102}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{104}
 }
 
 // ListRegistrationRequestsRequest lists requests for the admin console. An
@@ -5464,7 +5557,7 @@ type ListRegistrationRequestsRequest struct {
 
 func (x *ListRegistrationRequestsRequest) Reset() {
 	*x = ListRegistrationRequestsRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[103]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[105]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5476,7 +5569,7 @@ func (x *ListRegistrationRequestsRequest) String() string {
 func (*ListRegistrationRequestsRequest) ProtoMessage() {}
 
 func (x *ListRegistrationRequestsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[103]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[105]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5489,7 +5582,7 @@ func (x *ListRegistrationRequestsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRegistrationRequestsRequest.ProtoReflect.Descriptor instead.
 func (*ListRegistrationRequestsRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{103}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{105}
 }
 
 func (x *ListRegistrationRequestsRequest) GetStatus() RegistrationRequestStatus {
@@ -5508,7 +5601,7 @@ type ListRegistrationRequestsResponse struct {
 
 func (x *ListRegistrationRequestsResponse) Reset() {
 	*x = ListRegistrationRequestsResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[104]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[106]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5520,7 +5613,7 @@ func (x *ListRegistrationRequestsResponse) String() string {
 func (*ListRegistrationRequestsResponse) ProtoMessage() {}
 
 func (x *ListRegistrationRequestsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[104]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[106]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5533,7 +5626,7 @@ func (x *ListRegistrationRequestsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRegistrationRequestsResponse.ProtoReflect.Descriptor instead.
 func (*ListRegistrationRequestsResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{104}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{106}
 }
 
 func (x *ListRegistrationRequestsResponse) GetRequests() []*RegistrationRequest {
@@ -5555,7 +5648,7 @@ type MarkRegistrationRequestHandledRequest struct {
 
 func (x *MarkRegistrationRequestHandledRequest) Reset() {
 	*x = MarkRegistrationRequestHandledRequest{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[105]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[107]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5567,7 +5660,7 @@ func (x *MarkRegistrationRequestHandledRequest) String() string {
 func (*MarkRegistrationRequestHandledRequest) ProtoMessage() {}
 
 func (x *MarkRegistrationRequestHandledRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[105]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[107]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5580,7 +5673,7 @@ func (x *MarkRegistrationRequestHandledRequest) ProtoReflect() protoreflect.Mess
 
 // Deprecated: Use MarkRegistrationRequestHandledRequest.ProtoReflect.Descriptor instead.
 func (*MarkRegistrationRequestHandledRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{105}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{107}
 }
 
 func (x *MarkRegistrationRequestHandledRequest) GetId() string {
@@ -5599,7 +5692,7 @@ type MarkRegistrationRequestHandledResponse struct {
 
 func (x *MarkRegistrationRequestHandledResponse) Reset() {
 	*x = MarkRegistrationRequestHandledResponse{}
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[106]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[108]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5611,7 +5704,7 @@ func (x *MarkRegistrationRequestHandledResponse) String() string {
 func (*MarkRegistrationRequestHandledResponse) ProtoMessage() {}
 
 func (x *MarkRegistrationRequestHandledResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_iam_proto_msgTypes[106]
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[108]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5624,7 +5717,7 @@ func (x *MarkRegistrationRequestHandledResponse) ProtoReflect() protoreflect.Mes
 
 // Deprecated: Use MarkRegistrationRequestHandledResponse.ProtoReflect.Descriptor instead.
 func (*MarkRegistrationRequestHandledResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{106}
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{108}
 }
 
 func (x *MarkRegistrationRequestHandledResponse) GetRequest() *RegistrationRequest {
@@ -5688,6 +5781,10 @@ const file_cloud_v1_api_iam_proto_rawDesc = "" +
 	"\x11GetAccountRequest\x12\x19\n" +
 	"\x02id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"O\n" +
 	"\x12GetAccountResponse\x129\n" +
+	"\aaccount\x18\x01 \x01(\v2\x15.cloud.v1.iam.AccountB\b\xfaB\x05\x8a\x01\x02\x10\x01R\aaccount\"A\n" +
+	"\x1bLookupAccountByEmailRequest\x12\"\n" +
+	"\x05email\x18\x01 \x01(\tB\f\xfaB\tr\a\x10\x05\x18\xff\x01`\x01R\x05email\"Y\n" +
+	"\x1cLookupAccountByEmailResponse\x129\n" +
 	"\aaccount\x18\x01 \x01(\v2\x15.cloud.v1.iam.AccountB\b\xfaB\x05\x8a\x01\x02\x10\x01R\aaccount\"\x15\n" +
 	"\x13GetMyAccountRequest\"Q\n" +
 	"\x14GetMyAccountResponse\x129\n" +
@@ -5980,7 +6077,7 @@ const file_cloud_v1_api_iam_proto_rawDesc = "" +
 	"\x19RegistrationRequestStatus\x12+\n" +
 	"'REGISTRATION_REQUEST_STATUS_UNSPECIFIED\x10\x00\x12'\n" +
 	"#REGISTRATION_REQUEST_STATUS_PENDING\x10\x01\x12'\n" +
-	"#REGISTRATION_REQUEST_STATUS_HANDLED\x10\x022\x86V\n" +
+	"#REGISTRATION_REQUEST_STATUS_HANDLED\x10\x022\xf9W\n" +
 	"\n" +
 	"IamService\x12\xaf\x01\n" +
 	"\bRegister\x12\x1d.cloud.v1.api.RegisterRequest\x1a\x1e.cloud.v1.api.RegisterResponse\"d\x8a\xb5\x18\x02\b\x01\xf2\xa7\x1dZ\x10\x02\x1a\t/register\"\bregister\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
@@ -6008,6 +6105,8 @@ const file_cloud_v1_api_iam_proto_rawDesc = "" +
 	"\n" +
 	"GetAccount\x12\x1f.cloud.v1.api.GetAccountRequest\x1a .cloud.v1.api.GetAccountResponse\"j\x8a\xb5\x18\x00\xf2\xa7\x1d_\x10\x01\x1a\f/get-account\"\n" +
 	"getAccount\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xf0\x01\n" +
+	"\x14LookupAccountByEmail\x12).cloud.v1.api.LookupAccountByEmailRequest\x1a*.cloud.v1.api.LookupAccountByEmailResponse\"\x80\x01\x8a\xb5\x18\x00\xf2\xa7\x1du\x10\x01\x1a\x18/lookup-account-by-email\"\x14lookupAccountByEmail\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
 	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xc1\x01\n" +
 	"\fGetMyAccount\x12!.cloud.v1.api.GetMyAccountRequest\x1a\".cloud.v1.api.GetMyAccountResponse\"j\x8a\xb5\x18\x00\xf2\xa7\x1d_\x10\x01\x1a\x0f/get-my-account\"\fgetMyAccount\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
 	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xcb\x01\n" +
@@ -6110,7 +6209,7 @@ func file_cloud_v1_api_iam_proto_rawDescGZIP() []byte {
 }
 
 var file_cloud_v1_api_iam_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_cloud_v1_api_iam_proto_msgTypes = make([]protoimpl.MessageInfo, 107)
+var file_cloud_v1_api_iam_proto_msgTypes = make([]protoimpl.MessageInfo, 109)
 var file_cloud_v1_api_iam_proto_goTypes = []any{
 	(RegistrationRequestStatus)(0),                 // 0: cloud.v1.api.RegistrationRequestStatus
 	(*TokenPair)(nil),                              // 1: cloud.v1.api.TokenPair
@@ -6127,269 +6226,274 @@ var file_cloud_v1_api_iam_proto_goTypes = []any{
 	(*CreateAccountResponse)(nil),                  // 12: cloud.v1.api.CreateAccountResponse
 	(*GetAccountRequest)(nil),                      // 13: cloud.v1.api.GetAccountRequest
 	(*GetAccountResponse)(nil),                     // 14: cloud.v1.api.GetAccountResponse
-	(*GetMyAccountRequest)(nil),                    // 15: cloud.v1.api.GetMyAccountRequest
-	(*GetMyAccountResponse)(nil),                   // 16: cloud.v1.api.GetMyAccountResponse
-	(*ListAccountsRequest)(nil),                    // 17: cloud.v1.api.ListAccountsRequest
-	(*ListAccountsResponse)(nil),                   // 18: cloud.v1.api.ListAccountsResponse
-	(*UpdateAccountRequest)(nil),                   // 19: cloud.v1.api.UpdateAccountRequest
-	(*UpdateAccountResponse)(nil),                  // 20: cloud.v1.api.UpdateAccountResponse
-	(*DeleteAccountRequest)(nil),                   // 21: cloud.v1.api.DeleteAccountRequest
-	(*DeleteAccountResponse)(nil),                  // 22: cloud.v1.api.DeleteAccountResponse
-	(*ChangePasswordRequest)(nil),                  // 23: cloud.v1.api.ChangePasswordRequest
-	(*ChangePasswordResponse)(nil),                 // 24: cloud.v1.api.ChangePasswordResponse
-	(*ResetPasswordRequest)(nil),                   // 25: cloud.v1.api.ResetPasswordRequest
-	(*ResetPasswordResponse)(nil),                  // 26: cloud.v1.api.ResetPasswordResponse
-	(*RequestPasswordResetRequest)(nil),            // 27: cloud.v1.api.RequestPasswordResetRequest
-	(*RequestPasswordResetResponse)(nil),           // 28: cloud.v1.api.RequestPasswordResetResponse
-	(*ConfirmPasswordResetRequest)(nil),            // 29: cloud.v1.api.ConfirmPasswordResetRequest
-	(*ConfirmPasswordResetResponse)(nil),           // 30: cloud.v1.api.ConfirmPasswordResetResponse
-	(*VerifyEmailRequest)(nil),                     // 31: cloud.v1.api.VerifyEmailRequest
-	(*VerifyEmailResponse)(nil),                    // 32: cloud.v1.api.VerifyEmailResponse
-	(*ResendVerificationRequest)(nil),              // 33: cloud.v1.api.ResendVerificationRequest
-	(*ResendVerificationResponse)(nil),             // 34: cloud.v1.api.ResendVerificationResponse
-	(*CreateTenantRequest)(nil),                    // 35: cloud.v1.api.CreateTenantRequest
-	(*CreateTenantResponse)(nil),                   // 36: cloud.v1.api.CreateTenantResponse
-	(*GetTenantRequest)(nil),                       // 37: cloud.v1.api.GetTenantRequest
-	(*GetTenantResponse)(nil),                      // 38: cloud.v1.api.GetTenantResponse
-	(*ListMyTenantsRequest)(nil),                   // 39: cloud.v1.api.ListMyTenantsRequest
-	(*ListMyTenantsResponse)(nil),                  // 40: cloud.v1.api.ListMyTenantsResponse
-	(*UpdateTenantRequest)(nil),                    // 41: cloud.v1.api.UpdateTenantRequest
-	(*UpdateTenantResponse)(nil),                   // 42: cloud.v1.api.UpdateTenantResponse
-	(*DeleteTenantRequest)(nil),                    // 43: cloud.v1.api.DeleteTenantRequest
-	(*DeleteTenantResponse)(nil),                   // 44: cloud.v1.api.DeleteTenantResponse
-	(*TransferTenantOwnershipRequest)(nil),         // 45: cloud.v1.api.TransferTenantOwnershipRequest
-	(*TransferTenantOwnershipResponse)(nil),        // 46: cloud.v1.api.TransferTenantOwnershipResponse
-	(*LeaveTenantRequest)(nil),                     // 47: cloud.v1.api.LeaveTenantRequest
-	(*LeaveTenantResponse)(nil),                    // 48: cloud.v1.api.LeaveTenantResponse
-	(*CreateRoleRequest)(nil),                      // 49: cloud.v1.api.CreateRoleRequest
-	(*CreateRoleResponse)(nil),                     // 50: cloud.v1.api.CreateRoleResponse
-	(*GetRoleRequest)(nil),                         // 51: cloud.v1.api.GetRoleRequest
-	(*GetRoleResponse)(nil),                        // 52: cloud.v1.api.GetRoleResponse
-	(*ListRolesRequest)(nil),                       // 53: cloud.v1.api.ListRolesRequest
-	(*ListRolesResponse)(nil),                      // 54: cloud.v1.api.ListRolesResponse
-	(*UpdateRoleRequest)(nil),                      // 55: cloud.v1.api.UpdateRoleRequest
-	(*UpdateRoleResponse)(nil),                     // 56: cloud.v1.api.UpdateRoleResponse
-	(*DeleteRoleRequest)(nil),                      // 57: cloud.v1.api.DeleteRoleRequest
-	(*DeleteRoleResponse)(nil),                     // 58: cloud.v1.api.DeleteRoleResponse
-	(*CreateMembershipRequest)(nil),                // 59: cloud.v1.api.CreateMembershipRequest
-	(*CreateMembershipResponse)(nil),               // 60: cloud.v1.api.CreateMembershipResponse
-	(*GetMembershipRequest)(nil),                   // 61: cloud.v1.api.GetMembershipRequest
-	(*GetMembershipResponse)(nil),                  // 62: cloud.v1.api.GetMembershipResponse
-	(*ListMembershipsRequest)(nil),                 // 63: cloud.v1.api.ListMembershipsRequest
-	(*ListMembershipsResponse)(nil),                // 64: cloud.v1.api.ListMembershipsResponse
-	(*UpdateMembershipRequest)(nil),                // 65: cloud.v1.api.UpdateMembershipRequest
-	(*UpdateMembershipResponse)(nil),               // 66: cloud.v1.api.UpdateMembershipResponse
-	(*DeleteMembershipRequest)(nil),                // 67: cloud.v1.api.DeleteMembershipRequest
-	(*DeleteMembershipResponse)(nil),               // 68: cloud.v1.api.DeleteMembershipResponse
-	(*GetMyPermissionsRequest)(nil),                // 69: cloud.v1.api.GetMyPermissionsRequest
-	(*GetMyPermissionsResponse)(nil),               // 70: cloud.v1.api.GetMyPermissionsResponse
-	(*ListPermissionsRequest)(nil),                 // 71: cloud.v1.api.ListPermissionsRequest
-	(*CatalogEntry)(nil),                           // 72: cloud.v1.api.CatalogEntry
-	(*ListPermissionsResponse)(nil),                // 73: cloud.v1.api.ListPermissionsResponse
-	(*CreateIdentityProviderRequest)(nil),          // 74: cloud.v1.api.CreateIdentityProviderRequest
-	(*CreateIdentityProviderResponse)(nil),         // 75: cloud.v1.api.CreateIdentityProviderResponse
-	(*GetIdentityProviderRequest)(nil),             // 76: cloud.v1.api.GetIdentityProviderRequest
-	(*GetIdentityProviderResponse)(nil),            // 77: cloud.v1.api.GetIdentityProviderResponse
-	(*UpdateIdentityProviderRequest)(nil),          // 78: cloud.v1.api.UpdateIdentityProviderRequest
-	(*UpdateIdentityProviderResponse)(nil),         // 79: cloud.v1.api.UpdateIdentityProviderResponse
-	(*DeleteIdentityProviderRequest)(nil),          // 80: cloud.v1.api.DeleteIdentityProviderRequest
-	(*DeleteIdentityProviderResponse)(nil),         // 81: cloud.v1.api.DeleteIdentityProviderResponse
-	(*ListIdentityProvidersRequest)(nil),           // 82: cloud.v1.api.ListIdentityProvidersRequest
-	(*SsoButton)(nil),                              // 83: cloud.v1.api.SsoButton
-	(*ListIdentityProvidersResponse)(nil),          // 84: cloud.v1.api.ListIdentityProvidersResponse
-	(*StartSSORequest)(nil),                        // 85: cloud.v1.api.StartSSORequest
-	(*StartSSOResponse)(nil),                       // 86: cloud.v1.api.StartSSOResponse
-	(*CompleteSSORequest)(nil),                     // 87: cloud.v1.api.CompleteSSORequest
-	(*CompleteSSOResponse)(nil),                    // 88: cloud.v1.api.CompleteSSOResponse
-	(*LinkExternalIdentityRequest)(nil),            // 89: cloud.v1.api.LinkExternalIdentityRequest
-	(*LinkExternalIdentityResponse)(nil),           // 90: cloud.v1.api.LinkExternalIdentityResponse
-	(*UnlinkExternalIdentityRequest)(nil),          // 91: cloud.v1.api.UnlinkExternalIdentityRequest
-	(*UnlinkExternalIdentityResponse)(nil),         // 92: cloud.v1.api.UnlinkExternalIdentityResponse
-	(*ListExternalIdentitiesRequest)(nil),          // 93: cloud.v1.api.ListExternalIdentitiesRequest
-	(*ListExternalIdentitiesResponse)(nil),         // 94: cloud.v1.api.ListExternalIdentitiesResponse
-	(*CreateApiTokenRequest)(nil),                  // 95: cloud.v1.api.CreateApiTokenRequest
-	(*CreateApiTokenResponse)(nil),                 // 96: cloud.v1.api.CreateApiTokenResponse
-	(*ListApiTokensRequest)(nil),                   // 97: cloud.v1.api.ListApiTokensRequest
-	(*ListApiTokensResponse)(nil),                  // 98: cloud.v1.api.ListApiTokensResponse
-	(*RevokeApiTokenRequest)(nil),                  // 99: cloud.v1.api.RevokeApiTokenRequest
-	(*RevokeApiTokenResponse)(nil),                 // 100: cloud.v1.api.RevokeApiTokenResponse
-	(*RegistrationRequest)(nil),                    // 101: cloud.v1.api.RegistrationRequest
-	(*SubmitRegistrationRequestRequest)(nil),       // 102: cloud.v1.api.SubmitRegistrationRequestRequest
-	(*SubmitRegistrationRequestResponse)(nil),      // 103: cloud.v1.api.SubmitRegistrationRequestResponse
-	(*ListRegistrationRequestsRequest)(nil),        // 104: cloud.v1.api.ListRegistrationRequestsRequest
-	(*ListRegistrationRequestsResponse)(nil),       // 105: cloud.v1.api.ListRegistrationRequestsResponse
-	(*MarkRegistrationRequestHandledRequest)(nil),  // 106: cloud.v1.api.MarkRegistrationRequestHandledRequest
-	(*MarkRegistrationRequestHandledResponse)(nil), // 107: cloud.v1.api.MarkRegistrationRequestHandledResponse
-	(*durationpb.Duration)(nil),                    // 108: google.protobuf.Duration
-	(*iam.Account)(nil),                            // 109: cloud.v1.iam.Account
-	(*iam.Tenant)(nil),                             // 110: cloud.v1.iam.Tenant
-	(iam.Scope)(0),                                 // 111: cloud.v1.iam.Scope
-	(*iam.Permission)(nil),                         // 112: cloud.v1.iam.Permission
-	(*iam.Role)(nil),                               // 113: cloud.v1.iam.Role
-	(*iam.Membership)(nil),                         // 114: cloud.v1.iam.Membership
-	(*iam.IdentityProvider)(nil),                   // 115: cloud.v1.iam.IdentityProvider
-	(*iam.ExternalIdentity)(nil),                   // 116: cloud.v1.iam.ExternalIdentity
-	(iam.ApiTokenType)(0),                          // 117: cloud.v1.iam.ApiTokenType
-	(*iam.ApiToken)(nil),                           // 118: cloud.v1.iam.ApiToken
-	(*timestamppb.Timestamp)(nil),                  // 119: google.protobuf.Timestamp
+	(*LookupAccountByEmailRequest)(nil),            // 15: cloud.v1.api.LookupAccountByEmailRequest
+	(*LookupAccountByEmailResponse)(nil),           // 16: cloud.v1.api.LookupAccountByEmailResponse
+	(*GetMyAccountRequest)(nil),                    // 17: cloud.v1.api.GetMyAccountRequest
+	(*GetMyAccountResponse)(nil),                   // 18: cloud.v1.api.GetMyAccountResponse
+	(*ListAccountsRequest)(nil),                    // 19: cloud.v1.api.ListAccountsRequest
+	(*ListAccountsResponse)(nil),                   // 20: cloud.v1.api.ListAccountsResponse
+	(*UpdateAccountRequest)(nil),                   // 21: cloud.v1.api.UpdateAccountRequest
+	(*UpdateAccountResponse)(nil),                  // 22: cloud.v1.api.UpdateAccountResponse
+	(*DeleteAccountRequest)(nil),                   // 23: cloud.v1.api.DeleteAccountRequest
+	(*DeleteAccountResponse)(nil),                  // 24: cloud.v1.api.DeleteAccountResponse
+	(*ChangePasswordRequest)(nil),                  // 25: cloud.v1.api.ChangePasswordRequest
+	(*ChangePasswordResponse)(nil),                 // 26: cloud.v1.api.ChangePasswordResponse
+	(*ResetPasswordRequest)(nil),                   // 27: cloud.v1.api.ResetPasswordRequest
+	(*ResetPasswordResponse)(nil),                  // 28: cloud.v1.api.ResetPasswordResponse
+	(*RequestPasswordResetRequest)(nil),            // 29: cloud.v1.api.RequestPasswordResetRequest
+	(*RequestPasswordResetResponse)(nil),           // 30: cloud.v1.api.RequestPasswordResetResponse
+	(*ConfirmPasswordResetRequest)(nil),            // 31: cloud.v1.api.ConfirmPasswordResetRequest
+	(*ConfirmPasswordResetResponse)(nil),           // 32: cloud.v1.api.ConfirmPasswordResetResponse
+	(*VerifyEmailRequest)(nil),                     // 33: cloud.v1.api.VerifyEmailRequest
+	(*VerifyEmailResponse)(nil),                    // 34: cloud.v1.api.VerifyEmailResponse
+	(*ResendVerificationRequest)(nil),              // 35: cloud.v1.api.ResendVerificationRequest
+	(*ResendVerificationResponse)(nil),             // 36: cloud.v1.api.ResendVerificationResponse
+	(*CreateTenantRequest)(nil),                    // 37: cloud.v1.api.CreateTenantRequest
+	(*CreateTenantResponse)(nil),                   // 38: cloud.v1.api.CreateTenantResponse
+	(*GetTenantRequest)(nil),                       // 39: cloud.v1.api.GetTenantRequest
+	(*GetTenantResponse)(nil),                      // 40: cloud.v1.api.GetTenantResponse
+	(*ListMyTenantsRequest)(nil),                   // 41: cloud.v1.api.ListMyTenantsRequest
+	(*ListMyTenantsResponse)(nil),                  // 42: cloud.v1.api.ListMyTenantsResponse
+	(*UpdateTenantRequest)(nil),                    // 43: cloud.v1.api.UpdateTenantRequest
+	(*UpdateTenantResponse)(nil),                   // 44: cloud.v1.api.UpdateTenantResponse
+	(*DeleteTenantRequest)(nil),                    // 45: cloud.v1.api.DeleteTenantRequest
+	(*DeleteTenantResponse)(nil),                   // 46: cloud.v1.api.DeleteTenantResponse
+	(*TransferTenantOwnershipRequest)(nil),         // 47: cloud.v1.api.TransferTenantOwnershipRequest
+	(*TransferTenantOwnershipResponse)(nil),        // 48: cloud.v1.api.TransferTenantOwnershipResponse
+	(*LeaveTenantRequest)(nil),                     // 49: cloud.v1.api.LeaveTenantRequest
+	(*LeaveTenantResponse)(nil),                    // 50: cloud.v1.api.LeaveTenantResponse
+	(*CreateRoleRequest)(nil),                      // 51: cloud.v1.api.CreateRoleRequest
+	(*CreateRoleResponse)(nil),                     // 52: cloud.v1.api.CreateRoleResponse
+	(*GetRoleRequest)(nil),                         // 53: cloud.v1.api.GetRoleRequest
+	(*GetRoleResponse)(nil),                        // 54: cloud.v1.api.GetRoleResponse
+	(*ListRolesRequest)(nil),                       // 55: cloud.v1.api.ListRolesRequest
+	(*ListRolesResponse)(nil),                      // 56: cloud.v1.api.ListRolesResponse
+	(*UpdateRoleRequest)(nil),                      // 57: cloud.v1.api.UpdateRoleRequest
+	(*UpdateRoleResponse)(nil),                     // 58: cloud.v1.api.UpdateRoleResponse
+	(*DeleteRoleRequest)(nil),                      // 59: cloud.v1.api.DeleteRoleRequest
+	(*DeleteRoleResponse)(nil),                     // 60: cloud.v1.api.DeleteRoleResponse
+	(*CreateMembershipRequest)(nil),                // 61: cloud.v1.api.CreateMembershipRequest
+	(*CreateMembershipResponse)(nil),               // 62: cloud.v1.api.CreateMembershipResponse
+	(*GetMembershipRequest)(nil),                   // 63: cloud.v1.api.GetMembershipRequest
+	(*GetMembershipResponse)(nil),                  // 64: cloud.v1.api.GetMembershipResponse
+	(*ListMembershipsRequest)(nil),                 // 65: cloud.v1.api.ListMembershipsRequest
+	(*ListMembershipsResponse)(nil),                // 66: cloud.v1.api.ListMembershipsResponse
+	(*UpdateMembershipRequest)(nil),                // 67: cloud.v1.api.UpdateMembershipRequest
+	(*UpdateMembershipResponse)(nil),               // 68: cloud.v1.api.UpdateMembershipResponse
+	(*DeleteMembershipRequest)(nil),                // 69: cloud.v1.api.DeleteMembershipRequest
+	(*DeleteMembershipResponse)(nil),               // 70: cloud.v1.api.DeleteMembershipResponse
+	(*GetMyPermissionsRequest)(nil),                // 71: cloud.v1.api.GetMyPermissionsRequest
+	(*GetMyPermissionsResponse)(nil),               // 72: cloud.v1.api.GetMyPermissionsResponse
+	(*ListPermissionsRequest)(nil),                 // 73: cloud.v1.api.ListPermissionsRequest
+	(*CatalogEntry)(nil),                           // 74: cloud.v1.api.CatalogEntry
+	(*ListPermissionsResponse)(nil),                // 75: cloud.v1.api.ListPermissionsResponse
+	(*CreateIdentityProviderRequest)(nil),          // 76: cloud.v1.api.CreateIdentityProviderRequest
+	(*CreateIdentityProviderResponse)(nil),         // 77: cloud.v1.api.CreateIdentityProviderResponse
+	(*GetIdentityProviderRequest)(nil),             // 78: cloud.v1.api.GetIdentityProviderRequest
+	(*GetIdentityProviderResponse)(nil),            // 79: cloud.v1.api.GetIdentityProviderResponse
+	(*UpdateIdentityProviderRequest)(nil),          // 80: cloud.v1.api.UpdateIdentityProviderRequest
+	(*UpdateIdentityProviderResponse)(nil),         // 81: cloud.v1.api.UpdateIdentityProviderResponse
+	(*DeleteIdentityProviderRequest)(nil),          // 82: cloud.v1.api.DeleteIdentityProviderRequest
+	(*DeleteIdentityProviderResponse)(nil),         // 83: cloud.v1.api.DeleteIdentityProviderResponse
+	(*ListIdentityProvidersRequest)(nil),           // 84: cloud.v1.api.ListIdentityProvidersRequest
+	(*SsoButton)(nil),                              // 85: cloud.v1.api.SsoButton
+	(*ListIdentityProvidersResponse)(nil),          // 86: cloud.v1.api.ListIdentityProvidersResponse
+	(*StartSSORequest)(nil),                        // 87: cloud.v1.api.StartSSORequest
+	(*StartSSOResponse)(nil),                       // 88: cloud.v1.api.StartSSOResponse
+	(*CompleteSSORequest)(nil),                     // 89: cloud.v1.api.CompleteSSORequest
+	(*CompleteSSOResponse)(nil),                    // 90: cloud.v1.api.CompleteSSOResponse
+	(*LinkExternalIdentityRequest)(nil),            // 91: cloud.v1.api.LinkExternalIdentityRequest
+	(*LinkExternalIdentityResponse)(nil),           // 92: cloud.v1.api.LinkExternalIdentityResponse
+	(*UnlinkExternalIdentityRequest)(nil),          // 93: cloud.v1.api.UnlinkExternalIdentityRequest
+	(*UnlinkExternalIdentityResponse)(nil),         // 94: cloud.v1.api.UnlinkExternalIdentityResponse
+	(*ListExternalIdentitiesRequest)(nil),          // 95: cloud.v1.api.ListExternalIdentitiesRequest
+	(*ListExternalIdentitiesResponse)(nil),         // 96: cloud.v1.api.ListExternalIdentitiesResponse
+	(*CreateApiTokenRequest)(nil),                  // 97: cloud.v1.api.CreateApiTokenRequest
+	(*CreateApiTokenResponse)(nil),                 // 98: cloud.v1.api.CreateApiTokenResponse
+	(*ListApiTokensRequest)(nil),                   // 99: cloud.v1.api.ListApiTokensRequest
+	(*ListApiTokensResponse)(nil),                  // 100: cloud.v1.api.ListApiTokensResponse
+	(*RevokeApiTokenRequest)(nil),                  // 101: cloud.v1.api.RevokeApiTokenRequest
+	(*RevokeApiTokenResponse)(nil),                 // 102: cloud.v1.api.RevokeApiTokenResponse
+	(*RegistrationRequest)(nil),                    // 103: cloud.v1.api.RegistrationRequest
+	(*SubmitRegistrationRequestRequest)(nil),       // 104: cloud.v1.api.SubmitRegistrationRequestRequest
+	(*SubmitRegistrationRequestResponse)(nil),      // 105: cloud.v1.api.SubmitRegistrationRequestResponse
+	(*ListRegistrationRequestsRequest)(nil),        // 106: cloud.v1.api.ListRegistrationRequestsRequest
+	(*ListRegistrationRequestsResponse)(nil),       // 107: cloud.v1.api.ListRegistrationRequestsResponse
+	(*MarkRegistrationRequestHandledRequest)(nil),  // 108: cloud.v1.api.MarkRegistrationRequestHandledRequest
+	(*MarkRegistrationRequestHandledResponse)(nil), // 109: cloud.v1.api.MarkRegistrationRequestHandledResponse
+	(*durationpb.Duration)(nil),                    // 110: google.protobuf.Duration
+	(*iam.Account)(nil),                            // 111: cloud.v1.iam.Account
+	(*iam.Tenant)(nil),                             // 112: cloud.v1.iam.Tenant
+	(iam.Scope)(0),                                 // 113: cloud.v1.iam.Scope
+	(*iam.Permission)(nil),                         // 114: cloud.v1.iam.Permission
+	(*iam.Role)(nil),                               // 115: cloud.v1.iam.Role
+	(*iam.Membership)(nil),                         // 116: cloud.v1.iam.Membership
+	(*iam.IdentityProvider)(nil),                   // 117: cloud.v1.iam.IdentityProvider
+	(*iam.ExternalIdentity)(nil),                   // 118: cloud.v1.iam.ExternalIdentity
+	(iam.ApiTokenType)(0),                          // 119: cloud.v1.iam.ApiTokenType
+	(*iam.ApiToken)(nil),                           // 120: cloud.v1.iam.ApiToken
+	(*timestamppb.Timestamp)(nil),                  // 121: google.protobuf.Timestamp
 }
 var file_cloud_v1_api_iam_proto_depIdxs = []int32{
-	108, // 0: cloud.v1.api.TokenPair.access_expires_in:type_name -> google.protobuf.Duration
-	108, // 1: cloud.v1.api.TokenPair.refresh_expires_in:type_name -> google.protobuf.Duration
+	110, // 0: cloud.v1.api.TokenPair.access_expires_in:type_name -> google.protobuf.Duration
+	110, // 1: cloud.v1.api.TokenPair.refresh_expires_in:type_name -> google.protobuf.Duration
 	1,   // 2: cloud.v1.api.RegisterResponse.tokens:type_name -> cloud.v1.api.TokenPair
 	1,   // 3: cloud.v1.api.LoginResponse.tokens:type_name -> cloud.v1.api.TokenPair
 	1,   // 4: cloud.v1.api.RefreshResponse.tokens:type_name -> cloud.v1.api.TokenPair
 	11,  // 5: cloud.v1.api.CreateAccountRequest.link:type_name -> cloud.v1.api.ExternalIdentityLink
-	109, // 6: cloud.v1.api.CreateAccountResponse.account:type_name -> cloud.v1.iam.Account
-	109, // 7: cloud.v1.api.GetAccountResponse.account:type_name -> cloud.v1.iam.Account
-	109, // 8: cloud.v1.api.GetMyAccountResponse.account:type_name -> cloud.v1.iam.Account
-	109, // 9: cloud.v1.api.ListAccountsResponse.accounts:type_name -> cloud.v1.iam.Account
-	109, // 10: cloud.v1.api.UpdateAccountResponse.account:type_name -> cloud.v1.iam.Account
-	110, // 11: cloud.v1.api.CreateTenantResponse.tenant:type_name -> cloud.v1.iam.Tenant
-	110, // 12: cloud.v1.api.GetTenantResponse.tenant:type_name -> cloud.v1.iam.Tenant
-	110, // 13: cloud.v1.api.ListMyTenantsResponse.tenants:type_name -> cloud.v1.iam.Tenant
-	110, // 14: cloud.v1.api.UpdateTenantResponse.tenant:type_name -> cloud.v1.iam.Tenant
-	110, // 15: cloud.v1.api.TransferTenantOwnershipResponse.tenant:type_name -> cloud.v1.iam.Tenant
-	111, // 16: cloud.v1.api.CreateRoleRequest.scope:type_name -> cloud.v1.iam.Scope
-	112, // 17: cloud.v1.api.CreateRoleRequest.permissions:type_name -> cloud.v1.iam.Permission
-	113, // 18: cloud.v1.api.CreateRoleResponse.role:type_name -> cloud.v1.iam.Role
-	113, // 19: cloud.v1.api.GetRoleResponse.role:type_name -> cloud.v1.iam.Role
-	113, // 20: cloud.v1.api.ListRolesResponse.roles:type_name -> cloud.v1.iam.Role
-	112, // 21: cloud.v1.api.UpdateRoleRequest.permissions:type_name -> cloud.v1.iam.Permission
-	113, // 22: cloud.v1.api.UpdateRoleResponse.role:type_name -> cloud.v1.iam.Role
-	114, // 23: cloud.v1.api.CreateMembershipResponse.membership:type_name -> cloud.v1.iam.Membership
-	114, // 24: cloud.v1.api.GetMembershipResponse.membership:type_name -> cloud.v1.iam.Membership
-	114, // 25: cloud.v1.api.ListMembershipsResponse.memberships:type_name -> cloud.v1.iam.Membership
-	114, // 26: cloud.v1.api.UpdateMembershipResponse.membership:type_name -> cloud.v1.iam.Membership
-	112, // 27: cloud.v1.api.GetMyPermissionsResponse.permissions:type_name -> cloud.v1.iam.Permission
-	112, // 28: cloud.v1.api.CatalogEntry.permission:type_name -> cloud.v1.iam.Permission
-	72,  // 29: cloud.v1.api.ListPermissionsResponse.entries:type_name -> cloud.v1.api.CatalogEntry
-	115, // 30: cloud.v1.api.CreateIdentityProviderResponse.provider:type_name -> cloud.v1.iam.IdentityProvider
-	115, // 31: cloud.v1.api.GetIdentityProviderResponse.provider:type_name -> cloud.v1.iam.IdentityProvider
-	115, // 32: cloud.v1.api.UpdateIdentityProviderResponse.provider:type_name -> cloud.v1.iam.IdentityProvider
-	83,  // 33: cloud.v1.api.ListIdentityProvidersResponse.buttons:type_name -> cloud.v1.api.SsoButton
-	1,   // 34: cloud.v1.api.CompleteSSOResponse.tokens:type_name -> cloud.v1.api.TokenPair
-	11,  // 35: cloud.v1.api.LinkExternalIdentityRequest.link:type_name -> cloud.v1.api.ExternalIdentityLink
-	116, // 36: cloud.v1.api.LinkExternalIdentityResponse.identity:type_name -> cloud.v1.iam.ExternalIdentity
-	116, // 37: cloud.v1.api.ListExternalIdentitiesResponse.identities:type_name -> cloud.v1.iam.ExternalIdentity
-	117, // 38: cloud.v1.api.CreateApiTokenRequest.type:type_name -> cloud.v1.iam.ApiTokenType
-	112, // 39: cloud.v1.api.CreateApiTokenRequest.permissions:type_name -> cloud.v1.iam.Permission
-	108, // 40: cloud.v1.api.CreateApiTokenRequest.ttl:type_name -> google.protobuf.Duration
-	118, // 41: cloud.v1.api.CreateApiTokenResponse.token:type_name -> cloud.v1.iam.ApiToken
-	118, // 42: cloud.v1.api.ListApiTokensResponse.tokens:type_name -> cloud.v1.iam.ApiToken
-	0,   // 43: cloud.v1.api.RegistrationRequest.status:type_name -> cloud.v1.api.RegistrationRequestStatus
-	119, // 44: cloud.v1.api.RegistrationRequest.created_at:type_name -> google.protobuf.Timestamp
-	119, // 45: cloud.v1.api.RegistrationRequest.updated_at:type_name -> google.protobuf.Timestamp
-	0,   // 46: cloud.v1.api.ListRegistrationRequestsRequest.status:type_name -> cloud.v1.api.RegistrationRequestStatus
-	101, // 47: cloud.v1.api.ListRegistrationRequestsResponse.requests:type_name -> cloud.v1.api.RegistrationRequest
-	101, // 48: cloud.v1.api.MarkRegistrationRequestHandledResponse.request:type_name -> cloud.v1.api.RegistrationRequest
-	2,   // 49: cloud.v1.api.IamService.Register:input_type -> cloud.v1.api.RegisterRequest
-	4,   // 50: cloud.v1.api.IamService.Login:input_type -> cloud.v1.api.LoginRequest
-	6,   // 51: cloud.v1.api.IamService.Refresh:input_type -> cloud.v1.api.RefreshRequest
-	8,   // 52: cloud.v1.api.IamService.Logout:input_type -> cloud.v1.api.LogoutRequest
-	27,  // 53: cloud.v1.api.IamService.RequestPasswordReset:input_type -> cloud.v1.api.RequestPasswordResetRequest
-	29,  // 54: cloud.v1.api.IamService.ConfirmPasswordReset:input_type -> cloud.v1.api.ConfirmPasswordResetRequest
-	31,  // 55: cloud.v1.api.IamService.VerifyEmail:input_type -> cloud.v1.api.VerifyEmailRequest
-	102, // 56: cloud.v1.api.IamService.SubmitRegistrationRequest:input_type -> cloud.v1.api.SubmitRegistrationRequestRequest
-	104, // 57: cloud.v1.api.IamService.ListRegistrationRequests:input_type -> cloud.v1.api.ListRegistrationRequestsRequest
-	106, // 58: cloud.v1.api.IamService.MarkRegistrationRequestHandled:input_type -> cloud.v1.api.MarkRegistrationRequestHandledRequest
-	10,  // 59: cloud.v1.api.IamService.CreateAccount:input_type -> cloud.v1.api.CreateAccountRequest
-	13,  // 60: cloud.v1.api.IamService.GetAccount:input_type -> cloud.v1.api.GetAccountRequest
-	15,  // 61: cloud.v1.api.IamService.GetMyAccount:input_type -> cloud.v1.api.GetMyAccountRequest
-	17,  // 62: cloud.v1.api.IamService.ListAccounts:input_type -> cloud.v1.api.ListAccountsRequest
-	19,  // 63: cloud.v1.api.IamService.UpdateAccount:input_type -> cloud.v1.api.UpdateAccountRequest
-	21,  // 64: cloud.v1.api.IamService.DeleteAccount:input_type -> cloud.v1.api.DeleteAccountRequest
-	23,  // 65: cloud.v1.api.IamService.ChangePassword:input_type -> cloud.v1.api.ChangePasswordRequest
-	25,  // 66: cloud.v1.api.IamService.ResetPassword:input_type -> cloud.v1.api.ResetPasswordRequest
-	33,  // 67: cloud.v1.api.IamService.ResendVerification:input_type -> cloud.v1.api.ResendVerificationRequest
-	35,  // 68: cloud.v1.api.IamService.CreateTenant:input_type -> cloud.v1.api.CreateTenantRequest
-	37,  // 69: cloud.v1.api.IamService.GetTenant:input_type -> cloud.v1.api.GetTenantRequest
-	39,  // 70: cloud.v1.api.IamService.ListMyTenants:input_type -> cloud.v1.api.ListMyTenantsRequest
-	41,  // 71: cloud.v1.api.IamService.UpdateTenant:input_type -> cloud.v1.api.UpdateTenantRequest
-	43,  // 72: cloud.v1.api.IamService.DeleteTenant:input_type -> cloud.v1.api.DeleteTenantRequest
-	45,  // 73: cloud.v1.api.IamService.TransferTenantOwnership:input_type -> cloud.v1.api.TransferTenantOwnershipRequest
-	47,  // 74: cloud.v1.api.IamService.LeaveTenant:input_type -> cloud.v1.api.LeaveTenantRequest
-	49,  // 75: cloud.v1.api.IamService.CreateRole:input_type -> cloud.v1.api.CreateRoleRequest
-	51,  // 76: cloud.v1.api.IamService.GetRole:input_type -> cloud.v1.api.GetRoleRequest
-	53,  // 77: cloud.v1.api.IamService.ListRoles:input_type -> cloud.v1.api.ListRolesRequest
-	55,  // 78: cloud.v1.api.IamService.UpdateRole:input_type -> cloud.v1.api.UpdateRoleRequest
-	57,  // 79: cloud.v1.api.IamService.DeleteRole:input_type -> cloud.v1.api.DeleteRoleRequest
-	59,  // 80: cloud.v1.api.IamService.CreateMembership:input_type -> cloud.v1.api.CreateMembershipRequest
-	61,  // 81: cloud.v1.api.IamService.GetMembership:input_type -> cloud.v1.api.GetMembershipRequest
-	63,  // 82: cloud.v1.api.IamService.ListMemberships:input_type -> cloud.v1.api.ListMembershipsRequest
-	65,  // 83: cloud.v1.api.IamService.UpdateMembership:input_type -> cloud.v1.api.UpdateMembershipRequest
-	67,  // 84: cloud.v1.api.IamService.DeleteMembership:input_type -> cloud.v1.api.DeleteMembershipRequest
-	69,  // 85: cloud.v1.api.IamService.GetMyPermissions:input_type -> cloud.v1.api.GetMyPermissionsRequest
-	71,  // 86: cloud.v1.api.IamService.ListPermissions:input_type -> cloud.v1.api.ListPermissionsRequest
-	74,  // 87: cloud.v1.api.IamService.CreateIdentityProvider:input_type -> cloud.v1.api.CreateIdentityProviderRequest
-	76,  // 88: cloud.v1.api.IamService.GetIdentityProvider:input_type -> cloud.v1.api.GetIdentityProviderRequest
-	78,  // 89: cloud.v1.api.IamService.UpdateIdentityProvider:input_type -> cloud.v1.api.UpdateIdentityProviderRequest
-	80,  // 90: cloud.v1.api.IamService.DeleteIdentityProvider:input_type -> cloud.v1.api.DeleteIdentityProviderRequest
-	82,  // 91: cloud.v1.api.IamService.ListIdentityProviders:input_type -> cloud.v1.api.ListIdentityProvidersRequest
-	85,  // 92: cloud.v1.api.IamService.StartSSO:input_type -> cloud.v1.api.StartSSORequest
-	87,  // 93: cloud.v1.api.IamService.CompleteSSO:input_type -> cloud.v1.api.CompleteSSORequest
-	89,  // 94: cloud.v1.api.IamService.LinkExternalIdentity:input_type -> cloud.v1.api.LinkExternalIdentityRequest
-	91,  // 95: cloud.v1.api.IamService.UnlinkExternalIdentity:input_type -> cloud.v1.api.UnlinkExternalIdentityRequest
-	93,  // 96: cloud.v1.api.IamService.ListExternalIdentities:input_type -> cloud.v1.api.ListExternalIdentitiesRequest
-	95,  // 97: cloud.v1.api.IamService.CreateApiToken:input_type -> cloud.v1.api.CreateApiTokenRequest
-	97,  // 98: cloud.v1.api.IamService.ListApiTokens:input_type -> cloud.v1.api.ListApiTokensRequest
-	99,  // 99: cloud.v1.api.IamService.RevokeApiToken:input_type -> cloud.v1.api.RevokeApiTokenRequest
-	3,   // 100: cloud.v1.api.IamService.Register:output_type -> cloud.v1.api.RegisterResponse
-	5,   // 101: cloud.v1.api.IamService.Login:output_type -> cloud.v1.api.LoginResponse
-	7,   // 102: cloud.v1.api.IamService.Refresh:output_type -> cloud.v1.api.RefreshResponse
-	9,   // 103: cloud.v1.api.IamService.Logout:output_type -> cloud.v1.api.LogoutResponse
-	28,  // 104: cloud.v1.api.IamService.RequestPasswordReset:output_type -> cloud.v1.api.RequestPasswordResetResponse
-	30,  // 105: cloud.v1.api.IamService.ConfirmPasswordReset:output_type -> cloud.v1.api.ConfirmPasswordResetResponse
-	32,  // 106: cloud.v1.api.IamService.VerifyEmail:output_type -> cloud.v1.api.VerifyEmailResponse
-	103, // 107: cloud.v1.api.IamService.SubmitRegistrationRequest:output_type -> cloud.v1.api.SubmitRegistrationRequestResponse
-	105, // 108: cloud.v1.api.IamService.ListRegistrationRequests:output_type -> cloud.v1.api.ListRegistrationRequestsResponse
-	107, // 109: cloud.v1.api.IamService.MarkRegistrationRequestHandled:output_type -> cloud.v1.api.MarkRegistrationRequestHandledResponse
-	12,  // 110: cloud.v1.api.IamService.CreateAccount:output_type -> cloud.v1.api.CreateAccountResponse
-	14,  // 111: cloud.v1.api.IamService.GetAccount:output_type -> cloud.v1.api.GetAccountResponse
-	16,  // 112: cloud.v1.api.IamService.GetMyAccount:output_type -> cloud.v1.api.GetMyAccountResponse
-	18,  // 113: cloud.v1.api.IamService.ListAccounts:output_type -> cloud.v1.api.ListAccountsResponse
-	20,  // 114: cloud.v1.api.IamService.UpdateAccount:output_type -> cloud.v1.api.UpdateAccountResponse
-	22,  // 115: cloud.v1.api.IamService.DeleteAccount:output_type -> cloud.v1.api.DeleteAccountResponse
-	24,  // 116: cloud.v1.api.IamService.ChangePassword:output_type -> cloud.v1.api.ChangePasswordResponse
-	26,  // 117: cloud.v1.api.IamService.ResetPassword:output_type -> cloud.v1.api.ResetPasswordResponse
-	34,  // 118: cloud.v1.api.IamService.ResendVerification:output_type -> cloud.v1.api.ResendVerificationResponse
-	36,  // 119: cloud.v1.api.IamService.CreateTenant:output_type -> cloud.v1.api.CreateTenantResponse
-	38,  // 120: cloud.v1.api.IamService.GetTenant:output_type -> cloud.v1.api.GetTenantResponse
-	40,  // 121: cloud.v1.api.IamService.ListMyTenants:output_type -> cloud.v1.api.ListMyTenantsResponse
-	42,  // 122: cloud.v1.api.IamService.UpdateTenant:output_type -> cloud.v1.api.UpdateTenantResponse
-	44,  // 123: cloud.v1.api.IamService.DeleteTenant:output_type -> cloud.v1.api.DeleteTenantResponse
-	46,  // 124: cloud.v1.api.IamService.TransferTenantOwnership:output_type -> cloud.v1.api.TransferTenantOwnershipResponse
-	48,  // 125: cloud.v1.api.IamService.LeaveTenant:output_type -> cloud.v1.api.LeaveTenantResponse
-	50,  // 126: cloud.v1.api.IamService.CreateRole:output_type -> cloud.v1.api.CreateRoleResponse
-	52,  // 127: cloud.v1.api.IamService.GetRole:output_type -> cloud.v1.api.GetRoleResponse
-	54,  // 128: cloud.v1.api.IamService.ListRoles:output_type -> cloud.v1.api.ListRolesResponse
-	56,  // 129: cloud.v1.api.IamService.UpdateRole:output_type -> cloud.v1.api.UpdateRoleResponse
-	58,  // 130: cloud.v1.api.IamService.DeleteRole:output_type -> cloud.v1.api.DeleteRoleResponse
-	60,  // 131: cloud.v1.api.IamService.CreateMembership:output_type -> cloud.v1.api.CreateMembershipResponse
-	62,  // 132: cloud.v1.api.IamService.GetMembership:output_type -> cloud.v1.api.GetMembershipResponse
-	64,  // 133: cloud.v1.api.IamService.ListMemberships:output_type -> cloud.v1.api.ListMembershipsResponse
-	66,  // 134: cloud.v1.api.IamService.UpdateMembership:output_type -> cloud.v1.api.UpdateMembershipResponse
-	68,  // 135: cloud.v1.api.IamService.DeleteMembership:output_type -> cloud.v1.api.DeleteMembershipResponse
-	70,  // 136: cloud.v1.api.IamService.GetMyPermissions:output_type -> cloud.v1.api.GetMyPermissionsResponse
-	73,  // 137: cloud.v1.api.IamService.ListPermissions:output_type -> cloud.v1.api.ListPermissionsResponse
-	75,  // 138: cloud.v1.api.IamService.CreateIdentityProvider:output_type -> cloud.v1.api.CreateIdentityProviderResponse
-	77,  // 139: cloud.v1.api.IamService.GetIdentityProvider:output_type -> cloud.v1.api.GetIdentityProviderResponse
-	79,  // 140: cloud.v1.api.IamService.UpdateIdentityProvider:output_type -> cloud.v1.api.UpdateIdentityProviderResponse
-	81,  // 141: cloud.v1.api.IamService.DeleteIdentityProvider:output_type -> cloud.v1.api.DeleteIdentityProviderResponse
-	84,  // 142: cloud.v1.api.IamService.ListIdentityProviders:output_type -> cloud.v1.api.ListIdentityProvidersResponse
-	86,  // 143: cloud.v1.api.IamService.StartSSO:output_type -> cloud.v1.api.StartSSOResponse
-	88,  // 144: cloud.v1.api.IamService.CompleteSSO:output_type -> cloud.v1.api.CompleteSSOResponse
-	90,  // 145: cloud.v1.api.IamService.LinkExternalIdentity:output_type -> cloud.v1.api.LinkExternalIdentityResponse
-	92,  // 146: cloud.v1.api.IamService.UnlinkExternalIdentity:output_type -> cloud.v1.api.UnlinkExternalIdentityResponse
-	94,  // 147: cloud.v1.api.IamService.ListExternalIdentities:output_type -> cloud.v1.api.ListExternalIdentitiesResponse
-	96,  // 148: cloud.v1.api.IamService.CreateApiToken:output_type -> cloud.v1.api.CreateApiTokenResponse
-	98,  // 149: cloud.v1.api.IamService.ListApiTokens:output_type -> cloud.v1.api.ListApiTokensResponse
-	100, // 150: cloud.v1.api.IamService.RevokeApiToken:output_type -> cloud.v1.api.RevokeApiTokenResponse
-	100, // [100:151] is the sub-list for method output_type
-	49,  // [49:100] is the sub-list for method input_type
-	49,  // [49:49] is the sub-list for extension type_name
-	49,  // [49:49] is the sub-list for extension extendee
-	0,   // [0:49] is the sub-list for field type_name
+	111, // 6: cloud.v1.api.CreateAccountResponse.account:type_name -> cloud.v1.iam.Account
+	111, // 7: cloud.v1.api.GetAccountResponse.account:type_name -> cloud.v1.iam.Account
+	111, // 8: cloud.v1.api.LookupAccountByEmailResponse.account:type_name -> cloud.v1.iam.Account
+	111, // 9: cloud.v1.api.GetMyAccountResponse.account:type_name -> cloud.v1.iam.Account
+	111, // 10: cloud.v1.api.ListAccountsResponse.accounts:type_name -> cloud.v1.iam.Account
+	111, // 11: cloud.v1.api.UpdateAccountResponse.account:type_name -> cloud.v1.iam.Account
+	112, // 12: cloud.v1.api.CreateTenantResponse.tenant:type_name -> cloud.v1.iam.Tenant
+	112, // 13: cloud.v1.api.GetTenantResponse.tenant:type_name -> cloud.v1.iam.Tenant
+	112, // 14: cloud.v1.api.ListMyTenantsResponse.tenants:type_name -> cloud.v1.iam.Tenant
+	112, // 15: cloud.v1.api.UpdateTenantResponse.tenant:type_name -> cloud.v1.iam.Tenant
+	112, // 16: cloud.v1.api.TransferTenantOwnershipResponse.tenant:type_name -> cloud.v1.iam.Tenant
+	113, // 17: cloud.v1.api.CreateRoleRequest.scope:type_name -> cloud.v1.iam.Scope
+	114, // 18: cloud.v1.api.CreateRoleRequest.permissions:type_name -> cloud.v1.iam.Permission
+	115, // 19: cloud.v1.api.CreateRoleResponse.role:type_name -> cloud.v1.iam.Role
+	115, // 20: cloud.v1.api.GetRoleResponse.role:type_name -> cloud.v1.iam.Role
+	115, // 21: cloud.v1.api.ListRolesResponse.roles:type_name -> cloud.v1.iam.Role
+	114, // 22: cloud.v1.api.UpdateRoleRequest.permissions:type_name -> cloud.v1.iam.Permission
+	115, // 23: cloud.v1.api.UpdateRoleResponse.role:type_name -> cloud.v1.iam.Role
+	116, // 24: cloud.v1.api.CreateMembershipResponse.membership:type_name -> cloud.v1.iam.Membership
+	116, // 25: cloud.v1.api.GetMembershipResponse.membership:type_name -> cloud.v1.iam.Membership
+	116, // 26: cloud.v1.api.ListMembershipsResponse.memberships:type_name -> cloud.v1.iam.Membership
+	116, // 27: cloud.v1.api.UpdateMembershipResponse.membership:type_name -> cloud.v1.iam.Membership
+	114, // 28: cloud.v1.api.GetMyPermissionsResponse.permissions:type_name -> cloud.v1.iam.Permission
+	114, // 29: cloud.v1.api.CatalogEntry.permission:type_name -> cloud.v1.iam.Permission
+	74,  // 30: cloud.v1.api.ListPermissionsResponse.entries:type_name -> cloud.v1.api.CatalogEntry
+	117, // 31: cloud.v1.api.CreateIdentityProviderResponse.provider:type_name -> cloud.v1.iam.IdentityProvider
+	117, // 32: cloud.v1.api.GetIdentityProviderResponse.provider:type_name -> cloud.v1.iam.IdentityProvider
+	117, // 33: cloud.v1.api.UpdateIdentityProviderResponse.provider:type_name -> cloud.v1.iam.IdentityProvider
+	85,  // 34: cloud.v1.api.ListIdentityProvidersResponse.buttons:type_name -> cloud.v1.api.SsoButton
+	1,   // 35: cloud.v1.api.CompleteSSOResponse.tokens:type_name -> cloud.v1.api.TokenPair
+	11,  // 36: cloud.v1.api.LinkExternalIdentityRequest.link:type_name -> cloud.v1.api.ExternalIdentityLink
+	118, // 37: cloud.v1.api.LinkExternalIdentityResponse.identity:type_name -> cloud.v1.iam.ExternalIdentity
+	118, // 38: cloud.v1.api.ListExternalIdentitiesResponse.identities:type_name -> cloud.v1.iam.ExternalIdentity
+	119, // 39: cloud.v1.api.CreateApiTokenRequest.type:type_name -> cloud.v1.iam.ApiTokenType
+	114, // 40: cloud.v1.api.CreateApiTokenRequest.permissions:type_name -> cloud.v1.iam.Permission
+	110, // 41: cloud.v1.api.CreateApiTokenRequest.ttl:type_name -> google.protobuf.Duration
+	120, // 42: cloud.v1.api.CreateApiTokenResponse.token:type_name -> cloud.v1.iam.ApiToken
+	120, // 43: cloud.v1.api.ListApiTokensResponse.tokens:type_name -> cloud.v1.iam.ApiToken
+	0,   // 44: cloud.v1.api.RegistrationRequest.status:type_name -> cloud.v1.api.RegistrationRequestStatus
+	121, // 45: cloud.v1.api.RegistrationRequest.created_at:type_name -> google.protobuf.Timestamp
+	121, // 46: cloud.v1.api.RegistrationRequest.updated_at:type_name -> google.protobuf.Timestamp
+	0,   // 47: cloud.v1.api.ListRegistrationRequestsRequest.status:type_name -> cloud.v1.api.RegistrationRequestStatus
+	103, // 48: cloud.v1.api.ListRegistrationRequestsResponse.requests:type_name -> cloud.v1.api.RegistrationRequest
+	103, // 49: cloud.v1.api.MarkRegistrationRequestHandledResponse.request:type_name -> cloud.v1.api.RegistrationRequest
+	2,   // 50: cloud.v1.api.IamService.Register:input_type -> cloud.v1.api.RegisterRequest
+	4,   // 51: cloud.v1.api.IamService.Login:input_type -> cloud.v1.api.LoginRequest
+	6,   // 52: cloud.v1.api.IamService.Refresh:input_type -> cloud.v1.api.RefreshRequest
+	8,   // 53: cloud.v1.api.IamService.Logout:input_type -> cloud.v1.api.LogoutRequest
+	29,  // 54: cloud.v1.api.IamService.RequestPasswordReset:input_type -> cloud.v1.api.RequestPasswordResetRequest
+	31,  // 55: cloud.v1.api.IamService.ConfirmPasswordReset:input_type -> cloud.v1.api.ConfirmPasswordResetRequest
+	33,  // 56: cloud.v1.api.IamService.VerifyEmail:input_type -> cloud.v1.api.VerifyEmailRequest
+	104, // 57: cloud.v1.api.IamService.SubmitRegistrationRequest:input_type -> cloud.v1.api.SubmitRegistrationRequestRequest
+	106, // 58: cloud.v1.api.IamService.ListRegistrationRequests:input_type -> cloud.v1.api.ListRegistrationRequestsRequest
+	108, // 59: cloud.v1.api.IamService.MarkRegistrationRequestHandled:input_type -> cloud.v1.api.MarkRegistrationRequestHandledRequest
+	10,  // 60: cloud.v1.api.IamService.CreateAccount:input_type -> cloud.v1.api.CreateAccountRequest
+	13,  // 61: cloud.v1.api.IamService.GetAccount:input_type -> cloud.v1.api.GetAccountRequest
+	15,  // 62: cloud.v1.api.IamService.LookupAccountByEmail:input_type -> cloud.v1.api.LookupAccountByEmailRequest
+	17,  // 63: cloud.v1.api.IamService.GetMyAccount:input_type -> cloud.v1.api.GetMyAccountRequest
+	19,  // 64: cloud.v1.api.IamService.ListAccounts:input_type -> cloud.v1.api.ListAccountsRequest
+	21,  // 65: cloud.v1.api.IamService.UpdateAccount:input_type -> cloud.v1.api.UpdateAccountRequest
+	23,  // 66: cloud.v1.api.IamService.DeleteAccount:input_type -> cloud.v1.api.DeleteAccountRequest
+	25,  // 67: cloud.v1.api.IamService.ChangePassword:input_type -> cloud.v1.api.ChangePasswordRequest
+	27,  // 68: cloud.v1.api.IamService.ResetPassword:input_type -> cloud.v1.api.ResetPasswordRequest
+	35,  // 69: cloud.v1.api.IamService.ResendVerification:input_type -> cloud.v1.api.ResendVerificationRequest
+	37,  // 70: cloud.v1.api.IamService.CreateTenant:input_type -> cloud.v1.api.CreateTenantRequest
+	39,  // 71: cloud.v1.api.IamService.GetTenant:input_type -> cloud.v1.api.GetTenantRequest
+	41,  // 72: cloud.v1.api.IamService.ListMyTenants:input_type -> cloud.v1.api.ListMyTenantsRequest
+	43,  // 73: cloud.v1.api.IamService.UpdateTenant:input_type -> cloud.v1.api.UpdateTenantRequest
+	45,  // 74: cloud.v1.api.IamService.DeleteTenant:input_type -> cloud.v1.api.DeleteTenantRequest
+	47,  // 75: cloud.v1.api.IamService.TransferTenantOwnership:input_type -> cloud.v1.api.TransferTenantOwnershipRequest
+	49,  // 76: cloud.v1.api.IamService.LeaveTenant:input_type -> cloud.v1.api.LeaveTenantRequest
+	51,  // 77: cloud.v1.api.IamService.CreateRole:input_type -> cloud.v1.api.CreateRoleRequest
+	53,  // 78: cloud.v1.api.IamService.GetRole:input_type -> cloud.v1.api.GetRoleRequest
+	55,  // 79: cloud.v1.api.IamService.ListRoles:input_type -> cloud.v1.api.ListRolesRequest
+	57,  // 80: cloud.v1.api.IamService.UpdateRole:input_type -> cloud.v1.api.UpdateRoleRequest
+	59,  // 81: cloud.v1.api.IamService.DeleteRole:input_type -> cloud.v1.api.DeleteRoleRequest
+	61,  // 82: cloud.v1.api.IamService.CreateMembership:input_type -> cloud.v1.api.CreateMembershipRequest
+	63,  // 83: cloud.v1.api.IamService.GetMembership:input_type -> cloud.v1.api.GetMembershipRequest
+	65,  // 84: cloud.v1.api.IamService.ListMemberships:input_type -> cloud.v1.api.ListMembershipsRequest
+	67,  // 85: cloud.v1.api.IamService.UpdateMembership:input_type -> cloud.v1.api.UpdateMembershipRequest
+	69,  // 86: cloud.v1.api.IamService.DeleteMembership:input_type -> cloud.v1.api.DeleteMembershipRequest
+	71,  // 87: cloud.v1.api.IamService.GetMyPermissions:input_type -> cloud.v1.api.GetMyPermissionsRequest
+	73,  // 88: cloud.v1.api.IamService.ListPermissions:input_type -> cloud.v1.api.ListPermissionsRequest
+	76,  // 89: cloud.v1.api.IamService.CreateIdentityProvider:input_type -> cloud.v1.api.CreateIdentityProviderRequest
+	78,  // 90: cloud.v1.api.IamService.GetIdentityProvider:input_type -> cloud.v1.api.GetIdentityProviderRequest
+	80,  // 91: cloud.v1.api.IamService.UpdateIdentityProvider:input_type -> cloud.v1.api.UpdateIdentityProviderRequest
+	82,  // 92: cloud.v1.api.IamService.DeleteIdentityProvider:input_type -> cloud.v1.api.DeleteIdentityProviderRequest
+	84,  // 93: cloud.v1.api.IamService.ListIdentityProviders:input_type -> cloud.v1.api.ListIdentityProvidersRequest
+	87,  // 94: cloud.v1.api.IamService.StartSSO:input_type -> cloud.v1.api.StartSSORequest
+	89,  // 95: cloud.v1.api.IamService.CompleteSSO:input_type -> cloud.v1.api.CompleteSSORequest
+	91,  // 96: cloud.v1.api.IamService.LinkExternalIdentity:input_type -> cloud.v1.api.LinkExternalIdentityRequest
+	93,  // 97: cloud.v1.api.IamService.UnlinkExternalIdentity:input_type -> cloud.v1.api.UnlinkExternalIdentityRequest
+	95,  // 98: cloud.v1.api.IamService.ListExternalIdentities:input_type -> cloud.v1.api.ListExternalIdentitiesRequest
+	97,  // 99: cloud.v1.api.IamService.CreateApiToken:input_type -> cloud.v1.api.CreateApiTokenRequest
+	99,  // 100: cloud.v1.api.IamService.ListApiTokens:input_type -> cloud.v1.api.ListApiTokensRequest
+	101, // 101: cloud.v1.api.IamService.RevokeApiToken:input_type -> cloud.v1.api.RevokeApiTokenRequest
+	3,   // 102: cloud.v1.api.IamService.Register:output_type -> cloud.v1.api.RegisterResponse
+	5,   // 103: cloud.v1.api.IamService.Login:output_type -> cloud.v1.api.LoginResponse
+	7,   // 104: cloud.v1.api.IamService.Refresh:output_type -> cloud.v1.api.RefreshResponse
+	9,   // 105: cloud.v1.api.IamService.Logout:output_type -> cloud.v1.api.LogoutResponse
+	30,  // 106: cloud.v1.api.IamService.RequestPasswordReset:output_type -> cloud.v1.api.RequestPasswordResetResponse
+	32,  // 107: cloud.v1.api.IamService.ConfirmPasswordReset:output_type -> cloud.v1.api.ConfirmPasswordResetResponse
+	34,  // 108: cloud.v1.api.IamService.VerifyEmail:output_type -> cloud.v1.api.VerifyEmailResponse
+	105, // 109: cloud.v1.api.IamService.SubmitRegistrationRequest:output_type -> cloud.v1.api.SubmitRegistrationRequestResponse
+	107, // 110: cloud.v1.api.IamService.ListRegistrationRequests:output_type -> cloud.v1.api.ListRegistrationRequestsResponse
+	109, // 111: cloud.v1.api.IamService.MarkRegistrationRequestHandled:output_type -> cloud.v1.api.MarkRegistrationRequestHandledResponse
+	12,  // 112: cloud.v1.api.IamService.CreateAccount:output_type -> cloud.v1.api.CreateAccountResponse
+	14,  // 113: cloud.v1.api.IamService.GetAccount:output_type -> cloud.v1.api.GetAccountResponse
+	16,  // 114: cloud.v1.api.IamService.LookupAccountByEmail:output_type -> cloud.v1.api.LookupAccountByEmailResponse
+	18,  // 115: cloud.v1.api.IamService.GetMyAccount:output_type -> cloud.v1.api.GetMyAccountResponse
+	20,  // 116: cloud.v1.api.IamService.ListAccounts:output_type -> cloud.v1.api.ListAccountsResponse
+	22,  // 117: cloud.v1.api.IamService.UpdateAccount:output_type -> cloud.v1.api.UpdateAccountResponse
+	24,  // 118: cloud.v1.api.IamService.DeleteAccount:output_type -> cloud.v1.api.DeleteAccountResponse
+	26,  // 119: cloud.v1.api.IamService.ChangePassword:output_type -> cloud.v1.api.ChangePasswordResponse
+	28,  // 120: cloud.v1.api.IamService.ResetPassword:output_type -> cloud.v1.api.ResetPasswordResponse
+	36,  // 121: cloud.v1.api.IamService.ResendVerification:output_type -> cloud.v1.api.ResendVerificationResponse
+	38,  // 122: cloud.v1.api.IamService.CreateTenant:output_type -> cloud.v1.api.CreateTenantResponse
+	40,  // 123: cloud.v1.api.IamService.GetTenant:output_type -> cloud.v1.api.GetTenantResponse
+	42,  // 124: cloud.v1.api.IamService.ListMyTenants:output_type -> cloud.v1.api.ListMyTenantsResponse
+	44,  // 125: cloud.v1.api.IamService.UpdateTenant:output_type -> cloud.v1.api.UpdateTenantResponse
+	46,  // 126: cloud.v1.api.IamService.DeleteTenant:output_type -> cloud.v1.api.DeleteTenantResponse
+	48,  // 127: cloud.v1.api.IamService.TransferTenantOwnership:output_type -> cloud.v1.api.TransferTenantOwnershipResponse
+	50,  // 128: cloud.v1.api.IamService.LeaveTenant:output_type -> cloud.v1.api.LeaveTenantResponse
+	52,  // 129: cloud.v1.api.IamService.CreateRole:output_type -> cloud.v1.api.CreateRoleResponse
+	54,  // 130: cloud.v1.api.IamService.GetRole:output_type -> cloud.v1.api.GetRoleResponse
+	56,  // 131: cloud.v1.api.IamService.ListRoles:output_type -> cloud.v1.api.ListRolesResponse
+	58,  // 132: cloud.v1.api.IamService.UpdateRole:output_type -> cloud.v1.api.UpdateRoleResponse
+	60,  // 133: cloud.v1.api.IamService.DeleteRole:output_type -> cloud.v1.api.DeleteRoleResponse
+	62,  // 134: cloud.v1.api.IamService.CreateMembership:output_type -> cloud.v1.api.CreateMembershipResponse
+	64,  // 135: cloud.v1.api.IamService.GetMembership:output_type -> cloud.v1.api.GetMembershipResponse
+	66,  // 136: cloud.v1.api.IamService.ListMemberships:output_type -> cloud.v1.api.ListMembershipsResponse
+	68,  // 137: cloud.v1.api.IamService.UpdateMembership:output_type -> cloud.v1.api.UpdateMembershipResponse
+	70,  // 138: cloud.v1.api.IamService.DeleteMembership:output_type -> cloud.v1.api.DeleteMembershipResponse
+	72,  // 139: cloud.v1.api.IamService.GetMyPermissions:output_type -> cloud.v1.api.GetMyPermissionsResponse
+	75,  // 140: cloud.v1.api.IamService.ListPermissions:output_type -> cloud.v1.api.ListPermissionsResponse
+	77,  // 141: cloud.v1.api.IamService.CreateIdentityProvider:output_type -> cloud.v1.api.CreateIdentityProviderResponse
+	79,  // 142: cloud.v1.api.IamService.GetIdentityProvider:output_type -> cloud.v1.api.GetIdentityProviderResponse
+	81,  // 143: cloud.v1.api.IamService.UpdateIdentityProvider:output_type -> cloud.v1.api.UpdateIdentityProviderResponse
+	83,  // 144: cloud.v1.api.IamService.DeleteIdentityProvider:output_type -> cloud.v1.api.DeleteIdentityProviderResponse
+	86,  // 145: cloud.v1.api.IamService.ListIdentityProviders:output_type -> cloud.v1.api.ListIdentityProvidersResponse
+	88,  // 146: cloud.v1.api.IamService.StartSSO:output_type -> cloud.v1.api.StartSSOResponse
+	90,  // 147: cloud.v1.api.IamService.CompleteSSO:output_type -> cloud.v1.api.CompleteSSOResponse
+	92,  // 148: cloud.v1.api.IamService.LinkExternalIdentity:output_type -> cloud.v1.api.LinkExternalIdentityResponse
+	94,  // 149: cloud.v1.api.IamService.UnlinkExternalIdentity:output_type -> cloud.v1.api.UnlinkExternalIdentityResponse
+	96,  // 150: cloud.v1.api.IamService.ListExternalIdentities:output_type -> cloud.v1.api.ListExternalIdentitiesResponse
+	98,  // 151: cloud.v1.api.IamService.CreateApiToken:output_type -> cloud.v1.api.CreateApiTokenResponse
+	100, // 152: cloud.v1.api.IamService.ListApiTokens:output_type -> cloud.v1.api.ListApiTokensResponse
+	102, // 153: cloud.v1.api.IamService.RevokeApiToken:output_type -> cloud.v1.api.RevokeApiTokenResponse
+	102, // [102:154] is the sub-list for method output_type
+	50,  // [50:102] is the sub-list for method input_type
+	50,  // [50:50] is the sub-list for extension type_name
+	50,  // [50:50] is the sub-list for extension extendee
+	0,   // [0:50] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_api_iam_proto_init() }
@@ -6398,21 +6502,21 @@ func file_cloud_v1_api_iam_proto_init() {
 		return
 	}
 	file_cloud_v1_api_iam_proto_msgTypes[9].OneofWrappers = []any{}
-	file_cloud_v1_api_iam_proto_msgTypes[18].OneofWrappers = []any{}
-	file_cloud_v1_api_iam_proto_msgTypes[36].OneofWrappers = []any{
+	file_cloud_v1_api_iam_proto_msgTypes[20].OneofWrappers = []any{}
+	file_cloud_v1_api_iam_proto_msgTypes[38].OneofWrappers = []any{
 		(*GetTenantRequest_Id)(nil),
 		(*GetTenantRequest_Slug)(nil),
 	}
-	file_cloud_v1_api_iam_proto_msgTypes[40].OneofWrappers = []any{}
-	file_cloud_v1_api_iam_proto_msgTypes[54].OneofWrappers = []any{}
-	file_cloud_v1_api_iam_proto_msgTypes[77].OneofWrappers = []any{}
+	file_cloud_v1_api_iam_proto_msgTypes[42].OneofWrappers = []any{}
+	file_cloud_v1_api_iam_proto_msgTypes[56].OneofWrappers = []any{}
+	file_cloud_v1_api_iam_proto_msgTypes[79].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_api_iam_proto_rawDesc), len(file_cloud_v1_api_iam_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   107,
+			NumMessages:   109,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

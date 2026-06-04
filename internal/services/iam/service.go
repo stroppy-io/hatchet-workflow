@@ -538,6 +538,20 @@ func (s *IamService) GetAccount(ctx context.Context, req *api.GetAccountRequest)
 	return &api.GetAccountResponse{Account: acc}, nil
 }
 
+// LookupAccountByEmail resolves an exact email to its account — the
+// invite-by-email primitive (e.g. a tenant owner adding a member). Any
+// authenticated caller may use it: an exact hit or NotFound, never a listing.
+func (s *IamService) LookupAccountByEmail(ctx context.Context, req *api.LookupAccountByEmailRequest) (*api.LookupAccountByEmailResponse, error) {
+	if _, err := s.caller(ctx); err != nil {
+		return nil, err
+	}
+	acc, err := s.d.Accounts.GetByEmail(ctx, req.GetEmail())
+	if err != nil {
+		return nil, utils.MapErr(err)
+	}
+	return &api.LookupAccountByEmailResponse{Account: acc}, nil
+}
+
 func (s *IamService) GetMyAccount(ctx context.Context, _ *api.GetMyAccountRequest) (*api.GetMyAccountResponse, error) {
 	c, err := s.caller(ctx)
 	if err != nil {

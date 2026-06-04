@@ -79,6 +79,9 @@ export default function App() {
       <Routes>
         {/* Public landing at root (unauthenticated). */}
         <Route path="/" element={<RootEntry />} />
+        {/* Landing is always reachable here, even when signed in (root
+            redirects authenticated users straight to their tenant). */}
+        <Route path="/landing" element={<Landing />} />
 
         <Route path="/login" element={<Login />} />
 

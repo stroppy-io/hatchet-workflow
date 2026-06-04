@@ -101,11 +101,11 @@ export function Landing() {
             <Button asChild variant="ghost" size="sm">
               <Link to="/login">Sign in</Link>
             </Button>
-            {allowRegister && (
-              <Button asChild size="sm">
-                <Link to="/register">Get access</Link>
-              </Button>
-            )}
+            <Button asChild size="sm">
+              <Link to="/register">
+                {allowRegister ? "Get access" : "Request access"}
+              </Link>
+            </Button>
           </div>
         </nav>
       </header>
@@ -150,11 +150,16 @@ export function Landing() {
                 </Button>
               </>
             ) : (
-              <Button asChild size="lg">
-                <Link to="/login">
-                  Sign in <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
+              <>
+                <Button asChild size="lg">
+                  <Link to="/register">
+                    Request access <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" size="lg">
+                  <Link to="/login">Sign in</Link>
+                </Button>
+              </>
             )}
           </div>
 
@@ -319,7 +324,7 @@ export function Landing() {
               Sign in
             </Link>
             <Link to="/register" className="hover:text-foreground">
-              Get access
+              {allowRegister ? "Get access" : "Request access"}
             </Link>
           </div>
         </div>

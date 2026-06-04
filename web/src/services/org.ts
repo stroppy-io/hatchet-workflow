@@ -228,6 +228,11 @@ export interface OrgProvider {
   setProviderSettings(input: SetProviderSettingsInput): Promise<OrgDetailVM>;
   /** ListPermissions: the grantable-permission catalog for the role editor. */
   listPermissionCatalog(): Promise<OrgPermissionCatalogEntry[]>;
+  /**
+   * LookupAccountByEmail: resolve an exact email to its account (invite-by-email
+   * for the add-member flow). Throws NotFound when no account matches.
+   */
+  lookupAccountByEmail(email: string): Promise<OrgAccount>;
   /** GetMembership: fetch one membership row by id. */
   getMembership(id: string): Promise<OrgMembership>;
   /** GetRole: fetch one role by id. */
@@ -531,6 +536,12 @@ const realOrgProvider: OrgProvider = {
       catalog.push({ resource, action, label: e.label });
     }
     return catalog;
+  },
+
+  async lookupAccountByEmail(email) {
+    const { account } = await iamClient.lookupAccountByEmail({ email });
+    if (!account) throw new Error(`no account for ${email}`);
+    return toOrgAccount(account);
   },
 
   async getMembership(id) {
