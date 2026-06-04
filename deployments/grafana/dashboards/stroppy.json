@@ -80,7 +80,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(increase(${prefix}tx_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__range])) / $__range_s",
+          "expr": "sum(increase(${prefix}tx_count{scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__range])) / $__range_s",
           "instant": true,
           "legendFormat": "tx/s",
           "range": false,
@@ -149,7 +149,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(increase(${prefix}tx_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__range]))",
+          "expr": "sum(increase(${prefix}tx_count{scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__range]))",
           "instant": true,
           "legendFormat": "tx",
           "range": false,
@@ -218,7 +218,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(increase(${prefix}run_query_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\"}[$__range])) / $__range_s",
+          "expr": "sum(increase(${prefix}run_query_count{scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\"}[$__range])) / $__range_s",
           "instant": true,
           "legendFormat": "queries/s",
           "range": false,
@@ -287,7 +287,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le) (increase(${prefix}run_query_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\"}[$__range])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (increase(${prefix}run_query_duration_bucket{scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\"}[$__range])))",
           "instant": true,
           "legendFormat": "p95",
           "range": false,
@@ -356,7 +356,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le) (increase(${prefix}tx_total_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__range])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (increase(${prefix}tx_total_duration_bucket{scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__range])))",
           "instant": true,
           "legendFormat": "p95",
           "range": false,
@@ -425,7 +425,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(sum(increase({__name__=\"${prefix}tx_error_rate.total\", condition=\"nonzero\", service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__range])) or vector(0)) / clamp_min(sum(increase({__name__=\"${prefix}tx_error_rate.total\", service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__range])), 1e-9)",
+          "expr": "(sum(increase({__name__=\"${prefix}tx_error_rate.total\", condition=\"nonzero\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__range])) or vector(0)) / clamp_min(sum(increase({__name__=\"${prefix}tx_error_rate.total\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__range])), 1e-9)",
           "instant": true,
           "legendFormat": "errors",
           "range": false,
@@ -494,7 +494,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(max_over_time(${prefix}insert_rows_total{service.name=~\"$job\", step=~\"$step\", table_name=~\"$table_name\"}[$__range]))",
+          "expr": "sum(max_over_time(${prefix}insert_rows_total{step=~\"$step\", table_name=~\"$table_name\"}[$__range]))",
           "instant": true,
           "legendFormat": "rows",
           "range": false,
@@ -563,7 +563,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(increase(${prefix}tpcc_new_order_total{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])) / $__range_s * 60",
+          "expr": "sum(increase(${prefix}tpcc_new_order_total{scenario=~\"$scenario\"}[$__range])) / $__range_s * 60",
           "instant": true,
           "legendFormat": "tpmC",
           "range": false,
@@ -676,7 +676,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(${prefix}tx_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__rate_interval]))",
+          "expr": "sum(rate(${prefix}tx_count{scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__rate_interval]))",
           "legendFormat": "tx/s",
           "range": true,
           "refId": "A"
@@ -687,7 +687,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(${prefix}run_query_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\"}[$__rate_interval]))",
+          "expr": "sum(rate(${prefix}run_query_count{scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\"}[$__rate_interval]))",
           "legendFormat": "queries/s",
           "range": true,
           "refId": "B"
@@ -786,7 +786,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.50, sum by (le) (rate(${prefix}tx_total_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(${prefix}tx_total_duration_bucket{scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__rate_interval])))",
           "legendFormat": "tx p50",
           "range": true,
           "refId": "A"
@@ -797,7 +797,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.90, sum by (le) (rate(${prefix}tx_total_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.90, sum by (le) (rate(${prefix}tx_total_duration_bucket{scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__rate_interval])))",
           "legendFormat": "tx p90",
           "range": true,
           "refId": "B"
@@ -808,7 +808,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(${prefix}tx_total_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(${prefix}tx_total_duration_bucket{scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__rate_interval])))",
           "legendFormat": "tx p99",
           "range": true,
           "refId": "C"
@@ -819,7 +819,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.50, sum by (le) (rate(${prefix}run_query_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(${prefix}run_query_duration_bucket{scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\"}[$__rate_interval])))",
           "legendFormat": "query p50",
           "range": true,
           "refId": "D"
@@ -830,7 +830,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.90, sum by (le) (rate(${prefix}run_query_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.90, sum by (le) (rate(${prefix}run_query_duration_bucket{scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\"}[$__rate_interval])))",
           "legendFormat": "query p90",
           "range": true,
           "refId": "E"
@@ -841,7 +841,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(${prefix}run_query_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(${prefix}run_query_duration_bucket{scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\"}[$__rate_interval])))",
           "legendFormat": "query p99",
           "range": true,
           "refId": "F"
@@ -922,7 +922,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "quantile_over_time(0.01, sum(rate(${prefix}tx_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__rate_interval]))[$__range:])",
+          "expr": "quantile_over_time(0.01, sum(rate(${prefix}tx_count{scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__rate_interval]))[$__range:])",
           "instant": true,
           "legendFormat": "p1",
           "range": false,
@@ -934,7 +934,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "quantile_over_time(0.05, sum(rate(${prefix}tx_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__rate_interval]))[$__range:])",
+          "expr": "quantile_over_time(0.05, sum(rate(${prefix}tx_count{scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__rate_interval]))[$__range:])",
           "instant": true,
           "legendFormat": "p5",
           "range": false,
@@ -946,7 +946,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "quantile_over_time(0.10, sum(rate(${prefix}tx_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__rate_interval]))[$__range:])",
+          "expr": "quantile_over_time(0.10, sum(rate(${prefix}tx_count{scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__rate_interval]))[$__range:])",
           "instant": true,
           "legendFormat": "p10",
           "range": false,
@@ -1022,7 +1022,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "topk(10, quantile_over_time(0.01, sum by (tx_name) (rate(${prefix}tx_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\", tx_name!=\"\"}[$__rate_interval]))[$__range:]))",
+          "expr": "topk(10, quantile_over_time(0.01, sum by (tx_name) (rate(${prefix}tx_count{scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\", tx_name!=\"\"}[$__rate_interval]))[$__range:]))",
           "instant": true,
           "legendFormat": "{{tx_name}}",
           "range": false,
@@ -1098,7 +1098,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "topk(10, quantile_over_time(0.05, sum by (tx_name) (rate(${prefix}tx_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\", tx_name!=\"\"}[$__rate_interval]))[$__range:]))",
+          "expr": "topk(10, quantile_over_time(0.05, sum by (tx_name) (rate(${prefix}tx_count{scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\", tx_name!=\"\"}[$__rate_interval]))[$__range:]))",
           "instant": true,
           "legendFormat": "{{tx_name}}",
           "range": false,
@@ -1174,7 +1174,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "topk(10, quantile_over_time(0.10, sum by (tx_name) (rate(${prefix}tx_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\", tx_name!=\"\"}[$__rate_interval]))[$__range:]))",
+          "expr": "topk(10, quantile_over_time(0.10, sum by (tx_name) (rate(${prefix}tx_count{scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\", tx_name!=\"\"}[$__rate_interval]))[$__range:]))",
           "instant": true,
           "legendFormat": "{{tx_name}}",
           "range": false,
@@ -1250,7 +1250,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "topk(10, sum by (tx_name) (increase(${prefix}tx_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\", tx_name!=\"\"}[$__range])) / $__range_s)",
+          "expr": "topk(10, sum by (tx_name) (increase(${prefix}tx_count{scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\", tx_name!=\"\"}[$__range])) / $__range_s)",
           "instant": true,
           "legendFormat": "{{tx_name}}",
           "range": false,
@@ -1326,7 +1326,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "topk(10, histogram_quantile(0.90, sum by (le, tx_name) (increase(${prefix}tx_total_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\", tx_name!=\"\"}[$__range]))))",
+          "expr": "topk(10, histogram_quantile(0.90, sum by (le, tx_name) (increase(${prefix}tx_total_duration_bucket{scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\", tx_name!=\"\"}[$__range]))))",
           "instant": true,
           "legendFormat": "{{tx_name}}",
           "range": false,
@@ -1402,7 +1402,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "topk(10, histogram_quantile(0.90, sum by (le, tx_name) (increase(${prefix}tx_queries_per_tx_bucket{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\", tx_name!=\"\"}[$__range]))))",
+          "expr": "topk(10, histogram_quantile(0.90, sum by (le, tx_name) (increase(${prefix}tx_queries_per_tx_bucket{scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\", tx_name!=\"\"}[$__range]))))",
           "instant": true,
           "legendFormat": "{{tx_name}}",
           "range": false,
@@ -1502,7 +1502,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (tx_name) (rate(${prefix}tx_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\", tx_name!=\"\"}[$__rate_interval]))",
+          "expr": "sum by (tx_name) (rate(${prefix}tx_count{scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\", tx_name!=\"\"}[$__rate_interval]))",
           "legendFormat": "{{tx_name}}",
           "range": true,
           "refId": "A"
@@ -1601,7 +1601,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (tx_action) (rate(${prefix}tx_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__rate_interval]))",
+          "expr": "sum by (tx_action) (rate(${prefix}tx_count{scenario=~\"$scenario\", step=~\"$step\", tx_name=~\"$tx_name\", tx_action=~\"$tx_action\", tx_isolation=~\"$tx_isolation\"}[$__rate_interval]))",
           "legendFormat": "{{tx_action}}",
           "range": true,
           "refId": "A"
@@ -1689,7 +1689,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "topk(20, sum by (name) (increase(${prefix}run_query_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\", name=~\"$query_name\", name!=\"\", type=~\"$query_type\"}[$__range])) / $__range_s)",
+          "expr": "topk(20, sum by (name) (increase(${prefix}run_query_count{scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\", name=~\"$query_name\", name!=\"\", type=~\"$query_type\"}[$__range])) / $__range_s)",
           "instant": true,
           "legendFormat": "{{name}}",
           "range": false,
@@ -1765,7 +1765,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "topk(20, histogram_quantile(0.95, sum by (le, name) (increase(${prefix}run_query_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\", name=~\"$query_name\", name!=\"\", type=~\"$query_type\"}[$__range]))))",
+          "expr": "topk(20, histogram_quantile(0.95, sum by (le, name) (increase(${prefix}run_query_duration_bucket{scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\", name=~\"$query_name\", name!=\"\", type=~\"$query_type\"}[$__range]))))",
           "instant": true,
           "legendFormat": "{{name}}",
           "range": false,
@@ -1836,7 +1836,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "topk(20, histogram_quantile(0.99, sum by (le, name) (increase(${prefix}run_query_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\", name=~\"$query_name\", name!=\"\", type=~\"$query_type\"}[$__range]))))",
+          "expr": "topk(20, histogram_quantile(0.99, sum by (le, name) (increase(${prefix}run_query_duration_bucket{scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\", name=~\"$query_name\", name!=\"\", type=~\"$query_type\"}[$__range]))))",
           "instant": true,
           "legendFormat": "{{name}}",
           "range": false,
@@ -1936,7 +1936,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (type) (rate(${prefix}run_query_count{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\", type!=\"\"}[$__rate_interval]))",
+          "expr": "sum by (type) (rate(${prefix}run_query_count{scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\", type!=\"\"}[$__rate_interval]))",
           "legendFormat": "{{type}}",
           "range": true,
           "refId": "A"
@@ -2035,7 +2035,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.90, sum by (le, type) (rate(${prefix}run_query_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\", type!=\"\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.90, sum by (le, type) (rate(${prefix}run_query_duration_bucket{scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\", type!=\"\"}[$__rate_interval])))",
           "legendFormat": "p90 {{type}}",
           "range": true,
           "refId": "A"
@@ -2046,7 +2046,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, sum by (le, type) (rate(${prefix}run_query_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\", type!=\"\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.99, sum by (le, type) (rate(${prefix}run_query_duration_bucket{scenario=~\"$scenario\", step=~\"$step\", name=~\"$query_name\", type=~\"$query_type\", type!=\"\"}[$__rate_interval])))",
           "legendFormat": "p99 {{type}}",
           "range": true,
           "refId": "B"
@@ -2129,7 +2129,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sort_desc(sum by (table_name) (max_over_time(${prefix}insert_rows_total{service.name=~\"$job\"}[$__range])))",
+          "expr": "sort_desc(sum by (table_name) (max_over_time(${prefix}insert_rows_total[$__range])))",
           "format": "table",
           "instant": true,
           "legendFormat": "{{table_name}}",
@@ -2223,7 +2223,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.90, sum by (le, table_name) (increase(${prefix}insert_rows_per_second_bucket{service.name=~\"$job\", table_name=~\"$table_name\"}[$__range])))",
+          "expr": "histogram_quantile(0.90, sum by (le, table_name) (increase(${prefix}insert_rows_per_second_bucket{table_name=~\"$table_name\"}[$__range])))",
           "instant": true,
           "legendFormat": "{{table_name}}",
           "range": false,
@@ -2299,7 +2299,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.90, sum by (le, table_name) (increase(${prefix}insert_duration_bucket{service.name=~\"$job\", table_name=~\"$table_name\"}[$__range])))",
+          "expr": "histogram_quantile(0.90, sum by (le, table_name) (increase(${prefix}insert_duration_bucket{table_name=~\"$table_name\"}[$__range])))",
           "instant": true,
           "legendFormat": "{{table_name}}",
           "range": false,
@@ -2375,7 +2375,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(sum by (table_name) (max_over_time({__name__=\"${prefix}insert_error_rate.total\", condition=\"nonzero\", service.name=~\"$job\", table_name=~\"$table_name\"}[$__range])) or sum by (table_name) (max_over_time({__name__=\"${prefix}insert_error_rate.total\", service.name=~\"$job\", table_name=~\"$table_name\"}[$__range])) * 0) / clamp_min(sum by (table_name) (max_over_time({__name__=\"${prefix}insert_error_rate.total\", service.name=~\"$job\", table_name=~\"$table_name\"}[$__range])), 1e-9)",
+          "expr": "(sum by (table_name) (max_over_time({__name__=\"${prefix}insert_error_rate.total\", condition=\"nonzero\", table_name=~\"$table_name\"}[$__range])) or sum by (table_name) (max_over_time({__name__=\"${prefix}insert_error_rate.total\", table_name=~\"$table_name\"}[$__range])) * 0) / clamp_min(sum by (table_name) (max_over_time({__name__=\"${prefix}insert_error_rate.total\", table_name=~\"$table_name\"}[$__range])), 1e-9)",
           "instant": true,
           "legendFormat": "{{table_name}}",
           "range": false,
@@ -2475,7 +2475,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.90, sum by (le, table_name) (increase(${prefix}insert_rows_per_second_bucket{service.name=~\"$job\", table_name=~\"$table_name\"}[$__range])))",
+          "expr": "histogram_quantile(0.90, sum by (le, table_name) (increase(${prefix}insert_rows_per_second_bucket{table_name=~\"$table_name\"}[$__range])))",
           "legendFormat": "p90 {{table_name}}",
           "range": true,
           "refId": "A"
@@ -2574,7 +2574,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.90, sum by (le, table_name) (increase(${prefix}insert_duration_bucket{service.name=~\"$job\", table_name=~\"$table_name\"}[$__range])))",
+          "expr": "histogram_quantile(0.90, sum by (le, table_name) (increase(${prefix}insert_duration_bucket{table_name=~\"$table_name\"}[$__range])))",
           "legendFormat": "p90 {{table_name}}",
           "range": true,
           "refId": "A"
@@ -2686,7 +2686,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(${prefix}tpcc_new_order_total{service.name=~\"$job\", scenario=~\"$scenario\"}[$__rate_interval]))",
+          "expr": "sum(rate(${prefix}tpcc_new_order_total{scenario=~\"$scenario\"}[$__rate_interval]))",
           "legendFormat": "new_order",
           "range": true,
           "refId": "A"
@@ -2697,7 +2697,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(${prefix}tpcc_payment_total{service.name=~\"$job\", scenario=~\"$scenario\"}[$__rate_interval]))",
+          "expr": "sum(rate(${prefix}tpcc_payment_total{scenario=~\"$scenario\"}[$__rate_interval]))",
           "legendFormat": "payment",
           "range": true,
           "refId": "B"
@@ -2708,7 +2708,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(${prefix}tpcc_order_status_total{service.name=~\"$job\", scenario=~\"$scenario\"}[$__rate_interval]))",
+          "expr": "sum(rate(${prefix}tpcc_order_status_total{scenario=~\"$scenario\"}[$__rate_interval]))",
           "legendFormat": "order_status",
           "range": true,
           "refId": "C"
@@ -2719,7 +2719,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(${prefix}tpcc_delivery_total{service.name=~\"$job\", scenario=~\"$scenario\"}[$__rate_interval]))",
+          "expr": "sum(rate(${prefix}tpcc_delivery_total{scenario=~\"$scenario\"}[$__rate_interval]))",
           "legendFormat": "delivery",
           "range": true,
           "refId": "D"
@@ -2730,7 +2730,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(${prefix}tpcc_stock_level_total{service.name=~\"$job\", scenario=~\"$scenario\"}[$__rate_interval]))",
+          "expr": "sum(rate(${prefix}tpcc_stock_level_total{scenario=~\"$scenario\"}[$__rate_interval]))",
           "legendFormat": "stock_level",
           "range": true,
           "refId": "E"
@@ -2805,7 +2805,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(increase(${prefix}tpcc_new_order_total{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase({__name__=~\"${prefix}tpcc_(new_order|payment|order_status|delivery|stock_level)_total\", service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])), 1e-9)",
+          "expr": "sum(increase(${prefix}tpcc_new_order_total{scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase({__name__=~\"${prefix}tpcc_(new_order|payment|order_status|delivery|stock_level)_total\", scenario=~\"$scenario\"}[$__range])), 1e-9)",
           "instant": true,
           "legendFormat": "new_order",
           "range": false,
@@ -2817,7 +2817,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(increase(${prefix}tpcc_payment_total{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase({__name__=~\"${prefix}tpcc_(new_order|payment|order_status|delivery|stock_level)_total\", service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])), 1e-9)",
+          "expr": "sum(increase(${prefix}tpcc_payment_total{scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase({__name__=~\"${prefix}tpcc_(new_order|payment|order_status|delivery|stock_level)_total\", scenario=~\"$scenario\"}[$__range])), 1e-9)",
           "instant": true,
           "legendFormat": "payment",
           "range": false,
@@ -2829,7 +2829,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(increase(${prefix}tpcc_order_status_total{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase({__name__=~\"${prefix}tpcc_(new_order|payment|order_status|delivery|stock_level)_total\", service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])), 1e-9)",
+          "expr": "sum(increase(${prefix}tpcc_order_status_total{scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase({__name__=~\"${prefix}tpcc_(new_order|payment|order_status|delivery|stock_level)_total\", scenario=~\"$scenario\"}[$__range])), 1e-9)",
           "instant": true,
           "legendFormat": "order_status",
           "range": false,
@@ -2841,7 +2841,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(increase(${prefix}tpcc_delivery_total{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase({__name__=~\"${prefix}tpcc_(new_order|payment|order_status|delivery|stock_level)_total\", service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])), 1e-9)",
+          "expr": "sum(increase(${prefix}tpcc_delivery_total{scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase({__name__=~\"${prefix}tpcc_(new_order|payment|order_status|delivery|stock_level)_total\", scenario=~\"$scenario\"}[$__range])), 1e-9)",
           "instant": true,
           "legendFormat": "delivery",
           "range": false,
@@ -2853,7 +2853,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(increase(${prefix}tpcc_stock_level_total{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase({__name__=~\"${prefix}tpcc_(new_order|payment|order_status|delivery|stock_level)_total\", service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])), 1e-9)",
+          "expr": "sum(increase(${prefix}tpcc_stock_level_total{scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase({__name__=~\"${prefix}tpcc_(new_order|payment|order_status|delivery|stock_level)_total\", scenario=~\"$scenario\"}[$__range])), 1e-9)",
           "instant": true,
           "legendFormat": "stock_level",
           "range": false,
@@ -2953,7 +2953,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.90, sum by (le) (rate(${prefix}tpcc_new_order_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.90, sum by (le) (rate(${prefix}tpcc_new_order_duration_bucket{scenario=~\"$scenario\"}[$__rate_interval])))",
           "legendFormat": "new_order",
           "range": true,
           "refId": "A"
@@ -2964,7 +2964,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.90, sum by (le) (rate(${prefix}tpcc_payment_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.90, sum by (le) (rate(${prefix}tpcc_payment_duration_bucket{scenario=~\"$scenario\"}[$__rate_interval])))",
           "legendFormat": "payment",
           "range": true,
           "refId": "B"
@@ -2975,7 +2975,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.90, sum by (le) (rate(${prefix}tpcc_order_status_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.90, sum by (le) (rate(${prefix}tpcc_order_status_duration_bucket{scenario=~\"$scenario\"}[$__rate_interval])))",
           "legendFormat": "order_status",
           "range": true,
           "refId": "C"
@@ -2986,7 +2986,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.90, sum by (le) (rate(${prefix}tpcc_delivery_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.90, sum by (le) (rate(${prefix}tpcc_delivery_duration_bucket{scenario=~\"$scenario\"}[$__rate_interval])))",
           "legendFormat": "delivery",
           "range": true,
           "refId": "D"
@@ -2997,7 +2997,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.90, sum by (le) (rate(${prefix}tpcc_stock_level_duration_bucket{service.name=~\"$job\", scenario=~\"$scenario\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.90, sum by (le) (rate(${prefix}tpcc_stock_level_duration_bucket{scenario=~\"$scenario\"}[$__rate_interval])))",
           "legendFormat": "stock_level",
           "range": true,
           "refId": "E"
@@ -3072,7 +3072,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(increase(${prefix}tpcc_rollback_done{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase(${prefix}tpcc_rollback_decided{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])), 1e-9)",
+          "expr": "sum(increase(${prefix}tpcc_rollback_done{scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase(${prefix}tpcc_rollback_decided{scenario=~\"$scenario\"}[$__range])), 1e-9)",
           "instant": true,
           "legendFormat": "rollback done",
           "range": false,
@@ -3084,7 +3084,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(increase(${prefix}tpcc_remote_line_remote{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase(${prefix}tpcc_remote_line_total{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])), 1e-9)",
+          "expr": "sum(increase(${prefix}tpcc_remote_line_remote{scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase(${prefix}tpcc_remote_line_total{scenario=~\"$scenario\"}[$__range])), 1e-9)",
           "instant": true,
           "legendFormat": "remote lines",
           "range": false,
@@ -3096,7 +3096,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(increase(${prefix}tpcc_payment_remote{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase(${prefix}tpcc_payment_total{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])), 1e-9)",
+          "expr": "sum(increase(${prefix}tpcc_payment_remote{scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase(${prefix}tpcc_payment_total{scenario=~\"$scenario\"}[$__range])), 1e-9)",
           "instant": true,
           "legendFormat": "payment remote",
           "range": false,
@@ -3108,7 +3108,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(increase(${prefix}tpcc_payment_byname{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase(${prefix}tpcc_payment_total{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])), 1e-9)",
+          "expr": "sum(increase(${prefix}tpcc_payment_byname{scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase(${prefix}tpcc_payment_total{scenario=~\"$scenario\"}[$__range])), 1e-9)",
           "instant": true,
           "legendFormat": "payment by-name",
           "range": false,
@@ -3120,7 +3120,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(increase(${prefix}tpcc_payment_bc{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase(${prefix}tpcc_payment_total{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])), 1e-9)",
+          "expr": "sum(increase(${prefix}tpcc_payment_bc{scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase(${prefix}tpcc_payment_total{scenario=~\"$scenario\"}[$__range])), 1e-9)",
           "instant": true,
           "legendFormat": "payment BC",
           "range": false,
@@ -3132,7 +3132,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(increase(${prefix}tpcc_order_status_byname{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase(${prefix}tpcc_order_status_total{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range])), 1e-9)",
+          "expr": "sum(increase(${prefix}tpcc_order_status_byname{scenario=~\"$scenario\"}[$__range])) / clamp_min(sum(increase(${prefix}tpcc_order_status_total{scenario=~\"$scenario\"}[$__range])), 1e-9)",
           "instant": true,
           "legendFormat": "order-status by-name",
           "range": false,
@@ -3201,7 +3201,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(increase(${prefix}tpcc_retry_attempts{service.name=~\"$job\", scenario=~\"$scenario\"}[$__range]))",
+          "expr": "sum(increase(${prefix}tpcc_retry_attempts{scenario=~\"$scenario\"}[$__range]))",
           "instant": true,
           "legendFormat": "retries",
           "range": false,
@@ -3283,7 +3283,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(max_over_time(${prefix}data_received{service.name=~\"$job\"}[$__range]))",
+          "expr": "sum(max_over_time(${prefix}data_received[$__range]))",
           "instant": true,
           "legendFormat": "received",
           "range": false,
@@ -3295,7 +3295,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(max_over_time(${prefix}data_sent{service.name=~\"$job\"}[$__range]))",
+          "expr": "sum(max_over_time(${prefix}data_sent[$__range]))",
           "instant": true,
           "legendFormat": "sent",
           "range": false,
@@ -3395,7 +3395,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(${prefix}data_received{service.name=~\"$job\"}[$__rate_interval]))",
+          "expr": "sum(rate(${prefix}data_received[$__rate_interval]))",
           "legendFormat": "received",
           "range": true,
           "refId": "A"
@@ -3406,7 +3406,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(${prefix}data_sent{service.name=~\"$job\"}[$__rate_interval]))",
+          "expr": "sum(rate(${prefix}data_sent[$__rate_interval]))",
           "legendFormat": "sent",
           "range": true,
           "refId": "B"
@@ -3473,7 +3473,7 @@
         "multi": true,
         "name": "job",
         "options": [],
-        "query": "label_values({__name__=~\"${prefix}.*\"}, service.name)",
+        "query": "label_values({__name__=~\"${prefix}.*\"}, stroppy_machine_id)",
         "refresh": 2,
         "sort": 1,
         "type": "query"
@@ -3493,7 +3493,7 @@
         "multi": true,
         "name": "scenario",
         "options": [],
-        "query": "label_values({__name__=~\"${prefix}.*\", service.name=~\"$job\"}, scenario)",
+        "query": "label_values({__name__=~\"${prefix}.*\"}, scenario)",
         "refresh": 2,
         "sort": 1,
         "type": "query"
@@ -3513,7 +3513,7 @@
         "multi": true,
         "name": "step",
         "options": [],
-        "query": "label_values({__name__=~\"${prefix}.*\", service.name=~\"$job\"}, step)",
+        "query": "label_values({__name__=~\"${prefix}.*\"}, step)",
         "refresh": 2,
         "sort": 1,
         "type": "query"
@@ -3533,7 +3533,7 @@
         "multi": true,
         "name": "tx_name",
         "options": [],
-        "query": "label_values({__name__=\"${prefix}tx_count\", service.name=~\"$job\", step=~\"$step\"}, tx_name)",
+        "query": "label_values({__name__=\"${prefix}tx_count\", step=~\"$step\"}, tx_name)",
         "refresh": 2,
         "sort": 1,
         "type": "query"
@@ -3553,7 +3553,7 @@
         "multi": true,
         "name": "tx_action",
         "options": [],
-        "query": "label_values({__name__=\"${prefix}tx_count\", service.name=~\"$job\", step=~\"$step\"}, tx_action)",
+        "query": "label_values({__name__=\"${prefix}tx_count\", step=~\"$step\"}, tx_action)",
         "refresh": 2,
         "sort": 1,
         "type": "query"
@@ -3573,7 +3573,7 @@
         "multi": true,
         "name": "tx_isolation",
         "options": [],
-        "query": "label_values({__name__=\"${prefix}tx_count\", service.name=~\"$job\", step=~\"$step\"}, tx_isolation)",
+        "query": "label_values({__name__=\"${prefix}tx_count\", step=~\"$step\"}, tx_isolation)",
         "refresh": 2,
         "sort": 1,
         "type": "query"
@@ -3593,7 +3593,7 @@
         "multi": true,
         "name": "query_name",
         "options": [],
-        "query": "label_values({__name__=\"${prefix}run_query_count\", service.name=~\"$job\", step=~\"$step\"}, name)",
+        "query": "label_values({__name__=\"${prefix}run_query_count\", step=~\"$step\"}, name)",
         "refresh": 2,
         "sort": 1,
         "type": "query"
@@ -3613,7 +3613,7 @@
         "multi": true,
         "name": "query_type",
         "options": [],
-        "query": "label_values({__name__=\"${prefix}run_query_count\", service.name=~\"$job\", step=~\"$step\"}, type)",
+        "query": "label_values({__name__=\"${prefix}run_query_count\", step=~\"$step\"}, type)",
         "refresh": 2,
         "sort": 1,
         "type": "query"
@@ -3633,7 +3633,7 @@
         "multi": true,
         "name": "table_name",
         "options": [],
-        "query": "label_values({__name__=\"${prefix}insert_rows_total\", service.name=~\"$job\", step=~\"$step\"}, table_name)",
+        "query": "label_values({__name__=\"${prefix}insert_rows_total\", step=~\"$step\"}, table_name)",
         "refresh": 2,
         "sort": 1,
         "type": "query"
