@@ -320,7 +320,7 @@ func postgresMasterServiceUnit(componentID, role, configDir, cfgPath string) str
 WantedBy=multi-user.target
 `)
 	setupPath := configDir + "/replication-setup.sql"
-	return base + fmt.Sprintf(`ExecStartPost=/bin/sh -ec "for i in $$(seq 1 30); do if pg_isready -h 127.0.0.1 -p 5432; then exec /usr/sbin/runuser -u postgres -- psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -p 5432 -f %s; fi; sleep 1; done; exit 1"
+	return base + fmt.Sprintf(`ExecStartPost=/bin/sh -ec "for i in $$(seq 1 30); do if pg_isready -U postgres -h 127.0.0.1 -p 5432; then exec /usr/sbin/runuser -u postgres -- psql -v ON_ERROR_STOP=1 -U postgres -h 127.0.0.1 -p 5432 < %s; fi; sleep 1; done; exit 1"
 
 [Install]
 WantedBy=multi-user.target

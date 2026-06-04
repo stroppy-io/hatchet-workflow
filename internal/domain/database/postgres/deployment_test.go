@@ -129,10 +129,20 @@ func TestPostgresDeploymentWiresClusterPeers(t *testing.T) {
 	if strings.Contains(master, "replication-setup.sql' || true") {
 		t.Fatalf("master unit ignores setup failure:\n%s", master)
 	}
-	if !strings.Contains(master, "psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -p 5432") {
+	if !strings.Contains(master, "pg_isready -U postgres -h 127.0.0.1 -p 5432") {
+		t.Fatalf("master unit readiness check does not use the postgres role:\n%s", master)
+	}
+	if !strings.Contains(master, "psql -v ON_ERROR_STOP=1 -U postgres -h 127.0.0.1 -p 5432 < '/etc/stroppy-cloud/postgres-master/replication-setup.sql'") {
 		t.Fatalf("master unit does not stop on setup SQL errors:\n%s", master)
 	}
-	setup := findDeploymentWriteFileText(t, components["postgres-master"], "050_write_replication_setup")
+	if strings.Contains(master, "psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -p 5432 -f") {
+		t.Fatalf("master unit runs psql -f on a root-owned setup file:\n%s", master)
+	}
+	setupFile := findDeploymentWriteFile(t, components["postgres-master"], "050_write_replication_setup")
+	if got := setupFile.GetInfo().GetMode(); got != 0640 {
+		t.Fatalf("replication setup mode = %o, want 0640", got)
+	}
+	setup := setupFile.GetText()
 	for _, want := range []string{
 		"EXECUTE format('CREATE ROLE %I WITH REPLICATION LOGIN PASSWORD %L', 'replicator', 'stroppy_replication')",
 		"END;\n$$;",
