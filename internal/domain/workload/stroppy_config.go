@@ -3,19 +3,22 @@ package workload
 import (
 	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 
 	deploymentbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/deployment"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 
 	stroppypb "github.com/stroppy-io/stroppy/pkg/common/proto/stroppy"
 )
 
-// Sentinel tokens rendered into the stroppy driver URL. The real DB endpoint is
-// only known once the database component is provisioned, so the rendered config
-// embeds these and the run command substitutes them at execution time.
+// Sentinel tokens rendered into dry-run previews and user overrides. The real
+// deployment plan must carry concrete DB runtime addresses by the time the
+// workload runner writes stroppy-config.json.
 const (
 	DBHostPlaceholder = "__STROPPY_DB_HOST__"
 	DBPortPlaceholder = "__STROPPY_DB_PORT__"
@@ -34,6 +37,37 @@ const (
 	dbDatabaseLabel = "database_path"
 )
 
+type databaseTarget struct {
+	Host         string
+	Port         uint32
+	DatabasePath string
+}
+
+func (t databaseTarget) hostToken() string {
+	host := strings.TrimSpace(t.Host)
+	if host == "" {
+		return DBHostPlaceholder
+	}
+	return host
+}
+
+func (t databaseTarget) portToken() string {
+	if t.Port == 0 {
+		return DBPortPlaceholder
+	}
+	return strconv.FormatUint(uint64(t.Port), 10)
+}
+
+func (t databaseTarget) replacePlaceholders(text string) string {
+	text = strings.ReplaceAll(text, DBHostPlaceholder, t.hostToken())
+	text = strings.ReplaceAll(text, DBPortPlaceholder, t.portToken())
+	if t.DatabasePath == "" {
+		text = strings.ReplaceAll(text, "?database="+DBDatabasePlaceholder, "")
+		return strings.ReplaceAll(text, DBDatabasePlaceholder, "")
+	}
+	return strings.ReplaceAll(text, DBDatabasePlaceholder, t.DatabasePath)
+}
+
 // monitorAccountID matches deployment/monitor.go: vmagent and vector both ship
 // to AccountID 0 through the gateway's /insert/* relay. Stroppy's OTLP metrics
 // land in the same VictoriaMetrics tenant.
@@ -44,7 +78,7 @@ const monitorAccountID = 0
 // exporter so the k6/stroppy metrics (`<runID>_vus`, `_iterations`, …) reach
 // VictoriaMetrics. serverAddr/runID/bearerToken are read from the topology-spec
 // labels plus the per-node agent token from deployment RenderContext.
-func buildStroppyRunConfig(input *domain.Workload, serverAddr, runID, bearerToken, databasePath string) *stroppypb.RunConfig {
+func buildStroppyRunConfig(input *domain.Workload, database *domain.Database, serverAddr, runID, bearerToken string, target databaseTarget, loadWorkers uint32) *stroppypb.RunConfig {
 	script := strings.TrimSpace(input.GetScript())
 	if script == "" {
 		script = "tpcc/procs"
@@ -61,8 +95,8 @@ func buildStroppyRunConfig(input *domain.Workload, serverAddr, runID, bearerToke
 		sqlPtr = &s
 	}
 
-	driverType, driverURL := driverTypeURL(input.GetProtocol())
-	driverURL = resolveDatabasePath(driverURL, databasePath)
+	driverType, driverURL := driverTypeURL(effectiveProtocol(input.GetProtocol(), database), target)
+	driverURL = resolveDatabasePath(driverURL, target.DatabasePath)
 
 	params := input.GetParameters()
 	poolSize := int32(params.GetPoolSize())
@@ -94,7 +128,7 @@ func buildStroppyRunConfig(input *domain.Workload, serverAddr, runID, bearerToke
 				},
 			},
 		},
-		Env:     stroppyEnv(params, scaleFactor, poolSize),
+		Env:     stroppyEnv(params, scaleFactor, poolSize, loadWorkers),
 		K6Args:  k6Args(input.GetExecution()),
 		Steps:   params.GetSteps(),
 		NoSteps: params.GetNoSteps(),
@@ -111,10 +145,13 @@ func buildStroppyRunConfig(input *domain.Workload, serverAddr, runID, bearerToke
 // stroppyEnv assembles the k6 script env: SCALE_FACTOR/POOL_SIZE defaults plus
 // the user's workload-parameter env overrides (keys uppercased to match
 // stroppy's env contract).
-func stroppyEnv(params *domain.Workload_Parameters, scaleFactor float64, poolSize int32) map[string]string {
+func stroppyEnv(params *domain.Workload_Parameters, scaleFactor float64, poolSize int32, loadWorkers uint32) map[string]string {
 	env := map[string]string{
 		"SCALE_FACTOR": trimFloat(scaleFactor),
 		"POOL_SIZE":    fmt.Sprintf("%d", poolSize),
+	}
+	if loadWorkers > 0 {
+		env["LOAD_WORKERS"] = strconv.FormatUint(uint64(loadWorkers), 10)
 	}
 	for k, v := range params.GetEnv() {
 		key := strings.ToUpper(strings.TrimSpace(k))
@@ -132,10 +169,10 @@ func k6Args(exec *domain.Workload_Execution) []string {
 	if vus == 0 {
 		vus = 1
 	}
-	args := make([]string, 0, 8)
-	if exec.GetQuiet() {
-		args = append(args, "-q")
-	}
+	// Workload.Execution.quiet is a proto3 scalar today, so the API cannot
+	// distinguish "unset" from "explicit false". Match the main generator's
+	// production default and keep k6 quiet unless the protocol grows presence.
+	args := []string{"-q"}
 	args = append(args, "--vus", fmt.Sprintf("%d", vus))
 	if iterations := exec.GetIterations(); iterations > 0 {
 		args = append(args, "--iterations", fmt.Sprintf("%d", iterations))
@@ -153,10 +190,10 @@ func k6Args(exec *domain.Workload_Execution) []string {
 }
 
 // driverTypeURL maps the workload protocol to a stroppy driver type and a
-// connection URL templated with the DB host/port sentinels (substituted at run
-// time once the DB endpoint is known).
-func driverTypeURL(protocol domain.Workload_Protocol) (string, string) {
-	host, port := DBHostPlaceholder, DBPortPlaceholder
+// connection URL. Render previews use sentinels; runtime deployment plans use
+// concrete DB endpoint host/port from deployment.RuntimeView.
+func driverTypeURL(protocol domain.Workload_Protocol, target databaseTarget) (string, string) {
+	host, port := target.hostToken(), target.portToken()
 	switch protocol {
 	case domain.Workload_PROTOCOL_PG, domain.Workload_PROTOCOL_COCKROACH:
 		return "postgres", fmt.Sprintf("postgresql://postgres@%s:%s/postgres?sslmode=disable", host, port)
@@ -176,6 +213,26 @@ func driverTypeURL(protocol domain.Workload_Protocol) (string, string) {
 		return "ydb", fmt.Sprintf("grpcs://%s:%s/?database=%s", host, port, DBDatabasePlaceholder)
 	default:
 		return "postgres", fmt.Sprintf("postgresql://postgres@%s:%s/postgres?sslmode=disable", host, port)
+	}
+}
+
+func effectiveProtocol(protocol domain.Workload_Protocol, database *domain.Database) domain.Workload_Protocol {
+	if protocol != domain.Workload_PROTOCOL_UNSPECIFIED {
+		return protocol
+	}
+	switch database.GetKind() {
+	case domain.Database_KIND_MYSQL, domain.Database_KIND_MARIADB:
+		return domain.Workload_PROTOCOL_MYSQL
+	case domain.Database_KIND_YDB:
+		return domain.Workload_PROTOCOL_YDB_GRPC
+	case domain.Database_KIND_YDB_MANAGED:
+		return domain.Workload_PROTOCOL_YDB_GRPCS
+	case domain.Database_KIND_COCKROACH:
+		return domain.Workload_PROTOCOL_COCKROACH
+	case domain.Database_KIND_PICODATA:
+		return domain.Workload_PROTOCOL_PICODATA
+	default:
+		return domain.Workload_PROTOCOL_PG
 	}
 }
 
@@ -214,6 +271,9 @@ func injectOTLP(rc *stroppypb.RunConfig, serverAddr, runID, bearerToken string) 
 		rc.Global = &stroppypb.GlobalConfig{
 			Logger: &stroppypb.LoggerConfig{LogLevel: stroppypb.LoggerConfig_LOG_LEVEL_INFO},
 		}
+	}
+	if runID != "" && rc.Global.RunId == "" {
+		rc.Global.RunId = runID
 	}
 	if rc.Global.Exporter == nil || rc.Global.Exporter.OtlpExport == nil {
 		endpoint, insecure := otlpEndpoint(serverAddr)
@@ -261,14 +321,40 @@ func trimFloat(f float64) string {
 	return s
 }
 
+func patchStroppyConfigFile(file *common.File, labels map[string]string, target databaseTarget, bearerToken string) (*common.File, error) {
+	if file == nil {
+		return nil, fmt.Errorf("stroppy config override file is required")
+	}
+	text, ok := file.GetContent().(*common.File_Text)
+	if !ok {
+		return nil, fmt.Errorf("stroppy config override must be an inline text file")
+	}
+
+	var rc stroppypb.RunConfig
+	if err := protojson.Unmarshal([]byte(target.replacePlaceholders(text.Text)), &rc); err != nil {
+		return nil, fmt.Errorf("parse stroppy config override: %w", err)
+	}
+	serverAddr := strings.TrimRight(labels[deploymentbuilder.LabelServerAddr], "/")
+	runID := labels[deploymentbuilder.LabelRunID]
+	injectOTLP(&rc, serverAddr, runID, bearerToken)
+	data, err := protojson.MarshalOptions{Multiline: true, Indent: "  "}.Marshal(&rc)
+	if err != nil {
+		return nil, fmt.Errorf("marshal stroppy config override: %w", err)
+	}
+
+	out := proto.Clone(file).(*common.File)
+	out.Content = &common.File_Text{Text: string(data) + "\n"}
+	return out, nil
+}
+
 // renderStroppyConfigJSON marshals the stroppy RunConfig built from the workload
 // (with OTLP injected from the topology labels) to the protojson the stroppy
 // binary loads.
-func renderStroppyConfigJSON(input *domain.Workload, labels map[string]string, databasePath, bearerToken string) string {
+func renderStroppyConfigJSON(input *domain.Workload, database *domain.Database, labels map[string]string, target databaseTarget, loadWorkers uint32, bearerToken string) string {
 	serverAddr := strings.TrimRight(labels[deploymentbuilder.LabelServerAddr], "/")
 	runID := labels[deploymentbuilder.LabelRunID]
 
-	rc := buildStroppyRunConfig(input, serverAddr, runID, bearerToken, databasePath)
+	rc := buildStroppyRunConfig(input, database, serverAddr, runID, bearerToken, target, loadWorkers)
 	data, err := protojson.MarshalOptions{Multiline: true, Indent: "  "}.Marshal(rc)
 	if err != nil {
 		return "{}\n"

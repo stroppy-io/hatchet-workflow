@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 
 	deploymentbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/deployment"
@@ -29,7 +30,14 @@ func (r DeploymentRenderer) RenderComponent(ctx deploymentbuilder.RenderContext)
 		return nil, fmt.Errorf("workload renderer requires workload input")
 	}
 	dependencies := deploymentbuilder.DependencyIDs(ctx, nil)
-	configFile, _ := effectiveConfigFile(ctx.Component.GetId(), ctx.Workload, ctx.RenderOverrides, ctx.Topology.Spec().GetLabels(), resolveDatabasePathLabel(ctx), ctx.AgentToken)
+	target, err := resolveDatabaseTarget(ctx)
+	if err != nil {
+		return nil, err
+	}
+	configFile, _, err := effectiveConfigFile(ctx.Component.GetId(), ctx.Workload, ctx.Database, ctx.RenderOverrides, ctx.Topology.Spec().GetLabels(), target, loadWorkersFromMachine(ctx.Machine), ctx.AgentToken)
+	if err != nil {
+		return nil, err
+	}
 
 	steps := []*deploymentpb.AgentStep{
 		deploymentbuilder.CreateDirStep("010_create_config_dir", 10, deploymentbuilder.ConfigDir(ctx.Component.GetId()), 0755),
@@ -78,8 +86,11 @@ func (r DeploymentRenderer) RenderPreview(ctx deploymentbuilder.PreviewContext) 
 	// the URL free of a `?database=` (consistent with the address placeholders
 	// the preview also leaves unresolved). The real path is substituted in
 	// RenderComponent once the DB endpoint is resolved.
-	configFile, configOrigin := effectiveConfigFile(ctx.Component.GetId(), ctx.Workload, ctx.RenderOverrides, labels, "", "")
-	defaultConfigFile := defaultConfigFile(ctx.Component.GetId(), ctx.Workload, labels, "", "")
+	configFile, configOrigin, err := effectiveConfigFile(ctx.Component.GetId(), ctx.Workload, ctx.Database, ctx.RenderOverrides, labels, databaseTarget{}, 0, "")
+	if err != nil {
+		return nil, err
+	}
+	defaultConfigFile := defaultConfigFile(ctx.Component.GetId(), ctx.Workload, ctx.Database, labels, databaseTarget{}, 0, "")
 
 	artifacts := []*deploymentpb.RenderArtifact{
 		deploymentbuilder.DirArtifact(ctx, Engine, "config-dir", &common.Dir{
@@ -100,43 +111,83 @@ func (r DeploymentRenderer) RenderPreview(ctx deploymentbuilder.PreviewContext) 
 	return artifacts, nil
 }
 
-func effectiveConfigFile(componentID string, input *domain.Workload, overrides *deploymentpb.RenderOverrideSet, labels map[string]string, databasePath, bearerToken string) (*common.File, deploymentpb.RenderArtifact_Origin) {
+func effectiveConfigFile(componentID string, input *domain.Workload, database *domain.Database, overrides *deploymentpb.RenderOverrideSet, labels map[string]string, target databaseTarget, loadWorkers uint32, bearerToken string) (*common.File, deploymentpb.RenderArtifact_Origin, error) {
 	artifactID := configArtifactID(componentID)
 	if override, ok := deploymentbuilder.OverrideFile(overrides, componentID, artifactID); ok && override.GetFile() != nil {
-		return override.GetFile(), deploymentpb.RenderArtifact_ORIGIN_USER_OVERRIDE
+		file, err := patchStroppyConfigFile(override.GetFile(), labels, target, bearerToken)
+		if err != nil {
+			return nil, deploymentpb.RenderArtifact_ORIGIN_USER_OVERRIDE, err
+		}
+		return file, deploymentpb.RenderArtifact_ORIGIN_USER_OVERRIDE, nil
 	}
-	return defaultConfigFile(componentID, input, labels, databasePath, bearerToken), deploymentpb.RenderArtifact_ORIGIN_RENDERED_DEFAULT
+	return defaultConfigFile(componentID, input, database, labels, target, loadWorkers, bearerToken), deploymentpb.RenderArtifact_ORIGIN_RENDERED_DEFAULT, nil
 }
 
-func defaultConfigFile(componentID string, input *domain.Workload, labels map[string]string, databasePath, bearerToken string) *common.File {
+func defaultConfigFile(componentID string, input *domain.Workload, database *domain.Database, labels map[string]string, target databaseTarget, loadWorkers uint32, bearerToken string) *common.File {
 	return &common.File{
 		Info: &common.File_Info{
 			Path:          configPath(componentID),
 			Mode:          0644,
 			CreateParents: true,
 		},
-		Content: &common.File_Text{Text: renderStroppyConfigJSON(input, labels, databasePath, bearerToken)},
+		Content: &common.File_Text{Text: renderStroppyConfigJSON(input, database, labels, target, loadWorkers, bearerToken)},
 	}
 }
 
-// resolveDatabasePathLabel returns the managed-database path of the connected
-// DB endpoint, read from its database_path label. Managed YDB stamps this label
-// on its synthesized endpoint (workflows/deployment.go managedYDBMachineState);
-// self-hosted databases carry no such label, so this returns "" and the stroppy
-// URL ends up without a `?database=` query. The runner connects to exactly one
-// DB target, so the first non-empty database_path among the resolved
-// dependency targets wins.
-func resolveDatabasePathLabel(ctx deploymentbuilder.RenderContext) string {
+// resolveDatabaseTarget returns the concrete runtime DB endpoint the workload
+// runner should use. Preview configs may carry sentinels, but deployment plans
+// must write a real host/port into stroppy-config.json.
+func resolveDatabaseTarget(ctx deploymentbuilder.RenderContext) (databaseTarget, error) {
 	targets, err := deploymentbuilder.DependencyTargets(ctx, nil)
 	if err != nil {
-		return ""
+		return databaseTarget{}, err
 	}
-	for _, target := range targets {
-		if path := target.Labels[dbDatabaseLabel]; path != "" {
-			return path
+	if len(targets) == 0 {
+		return databaseTarget{}, fmt.Errorf("workload runner %q has no database target", ctx.Component.GetId())
+	}
+	target := targets[0]
+	if strings.TrimSpace(target.Address) == "" {
+		return databaseTarget{}, fmt.Errorf("workload runner %q database target %q has no address", ctx.Component.GetId(), target.ComponentID)
+	}
+	if target.Port == 0 {
+		return databaseTarget{}, fmt.Errorf("workload runner %q database target %q has no port", ctx.Component.GetId(), target.ComponentID)
+	}
+	return databaseTarget{
+		Host:         target.Address,
+		Port:         target.Port,
+		DatabasePath: target.Labels[dbDatabaseLabel],
+	}, nil
+}
+
+func loadWorkersFromMachine(machine *deploymentpb.MachineState) uint32 {
+	if machine == nil {
+		return 0
+	}
+	for _, allocation := range machine.GetAllocatedQuotas() {
+		info := allocation.GetInfo()
+		if !isCPUQuota(info.GetName(), info.GetUnits()) || allocation.GetUsed() == 0 {
+			continue
+		}
+		if allocation.GetUsed() > uint64(^uint32(0)) {
+			return ^uint32(0)
+		}
+		return uint32(allocation.GetUsed())
+	}
+	for _, key := range []string{"cpu_cores", "cpus", "cores"} {
+		value := strings.TrimSpace(machine.GetLabels()[key])
+		if value == "" {
+			continue
+		}
+		parsed, err := strconv.ParseUint(value, 10, 32)
+		if err == nil && parsed > 0 {
+			return uint32(parsed)
 		}
 	}
-	return ""
+	return 0
+}
+
+func isCPUQuota(name, units string) bool {
+	return strings.EqualFold(strings.TrimSpace(units), "cores") && strings.Contains(strings.ToLower(name), "cpu")
 }
 
 func workloadFileSteps(componentID string, input *domain.Workload) []*deploymentpb.AgentStep {

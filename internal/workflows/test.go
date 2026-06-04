@@ -551,6 +551,7 @@ func (w *domainTestWorkflow) Execute(ctx workflow.Context) (resp *workflowpb.Tes
 		}
 		return nil, err
 	}
+	w.drainStageUpdates(ctx)
 	deploymentPlan = executeResp.GetDeploymentPlan()
 	w.registerDeploymentPlanStages(testRun.GetId(), deploymentPlan)
 	w.completeStage(ctx, stageExecutePlanIndex)
@@ -574,6 +575,7 @@ func (w *domainTestWorkflow) Execute(ctx workflow.Context) (resp *workflowpb.Tes
 		}
 		return nil, err
 	}
+	w.drainStageUpdates(ctx)
 	w.completeStage(ctx, stageWorkloadIndex)
 
 	if err := w.persist(ctx, infrastructureState, deploymentPlan); err != nil {
@@ -689,6 +691,21 @@ func (w *domainTestWorkflow) listenStageUpdates(ctx workflow.Context) {
 			w.persistRuntimeProjection(ctx, isProjectionForceStage(stage))
 		}
 	})
+}
+
+func (w *domainTestWorkflow) drainStageUpdates(ctx workflow.Context) {
+	if w.stageUpdates == nil {
+		return
+	}
+	for {
+		update := w.stageUpdates.ReceiveAsync()
+		if update == nil {
+			return
+		}
+		stage := update.GetStage()
+		w.applyStageUpdate(stage)
+		w.persistRuntimeProjection(ctx, isProjectionForceStage(stage))
+	}
 }
 
 func (w *domainTestWorkflow) registerDeploymentPlanStages(runID string, plan *deploymentpb.DeploymentPlan) {
