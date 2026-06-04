@@ -169,10 +169,17 @@ fi
 	if p.dbKind == "postgres" {
 		peFile := fmt.Sprintf("postgres_exporter-%s.linux-amd64.tar.gz", postgresExporterVersion)
 		fmt.Fprintf(&b, `if ! command -v postgres_exporter >/dev/null 2>&1; then
-  curl -fsSL %s "%s" -o /tmp/postgres_exporter.tar.gz
-  tar xzf /tmp/postgres_exporter.tar.gz -C /tmp
-  cp /tmp/postgres_exporter-%s.linux-amd64/postgres_exporter /usr/local/bin/postgres_exporter
-  chmod +x /usr/local/bin/postgres_exporter
+  if curl -fsSL %s "%s" -o /tmp/postgres_exporter.tar.gz && \
+    tar xzf /tmp/postgres_exporter.tar.gz -C /tmp && \
+    cp /tmp/postgres_exporter-%s.linux-amd64/postgres_exporter /usr/local/bin/postgres_exporter; then
+    chmod +x /usr/local/bin/postgres_exporter
+  else
+    echo "install postgres_exporter from binary cache failed, falling back to apt"
+    apt-get update
+    apt-get install -y --no-install-recommends prometheus-postgres-exporter
+    systemctl disable --now prometheus-postgres-exporter 2>/dev/null || true
+    install -m 0755 /usr/bin/prometheus-postgres-exporter /usr/local/bin/postgres_exporter
+  fi
   rm -rf /tmp/postgres_exporter*
 fi
 `, curlOpts, binURL(p.serverAddr, "postgres_exporter", postgresExporterVersion, peFile), postgresExporterVersion)

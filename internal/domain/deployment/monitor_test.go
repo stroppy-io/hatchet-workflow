@@ -14,6 +14,8 @@ func TestMonitorStepsUseOnlyServerAddressForCollectors(t *testing.T) {
 		LabelServerAddr: "https://control.example",
 		LabelRunID:      "run-1",
 	}
+	spec.Components[0].Engine = "postgres"
+	spec.Components[0].Role = "master"
 	idx, err := topologyindex.NewIndex(spec)
 	if err != nil {
 		t.Fatalf("topology index: %v", err)
@@ -34,8 +36,11 @@ func TestMonitorStepsUseOnlyServerAddressForCollectors(t *testing.T) {
 	install := callCmdText(t, stepByID(steps, "300_install_collectors"))
 	for _, want := range []string{
 		"https://control.example/api/binaries/node_exporter/",
+		"https://control.example/api/binaries/postgres_exporter/",
 		"https://control.example/api/binaries/vmagent/",
 		"https://control.example/api/binaries/vector/",
+		"apt-get install -y --no-install-recommends prometheus-postgres-exporter",
+		"/usr/local/bin/postgres_exporter",
 	} {
 		if !strings.Contains(install, want) {
 			t.Fatalf("collector install script missing %q:\n%s", want, install)
