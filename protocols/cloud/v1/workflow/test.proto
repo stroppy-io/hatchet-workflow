@@ -11,8 +11,6 @@ import "cloud/v1/workflow/deployment.proto";
 import "cloud/v1/domain/database.proto";
 import "cloud/v1/domain/suite.proto";
 import "cloud/v1/domain/test.proto";
-import "cloud/v1/domain/workload.proto";
-import "cloud/v1/topology/topology.proto";
 import "cloud/v1/workflow/run.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
@@ -192,23 +190,30 @@ message InstallDatabaseWorkflowRequest {
 message InstallDatabaseWorkflowResponse {}
 
 /*
-    RunWorkloadWorkflowRequest asks to run the workload via the agent (write
-    stroppy config + call stroppy). Results land in metrics, not in the response.
+    RunWorkloadWorkflowRequest asks to run the already-rendered workload via
+    the agent. Deployment rendering writes stroppy-config.json and monitor
+    collectors first; this workflow executes the real stroppy load and relies on
+    the OTLP exporter in that config for metrics.
  */
 message RunWorkloadWorkflowRequest {
     /*
-        topology_spec is the logical graph the workload targets.
+        run_id is the stable run identifier used for stage/log correlation.
      */
-    topology.TopologySpec topology_spec = 1 [(validate.rules).message.required = true];
+    string run_id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
     /*
-        workload is the workload definition to execute.
+        deployment_plan is the materialized plan containing the workload-runner
+        component and its rendered config path.
      */
-    domain.Workload workload = 2 [(validate.rules).message.required = true];
+    deployment.DeploymentPlan deployment_plan = 2 [(validate.rules).message.required = true];
     /*
-        infrastructure_state carries runtime endpoints used to render the workload
-        connection string and route agent calls.
+        infrastructure_state carries runtime machine state for route validation.
      */
     deployment.InfrastructureState infrastructure_state = 3 [(validate.rules).message.required = true];
+    /*
+        agent_bootstrap carries the per-node Temporal task queues used to reach
+        the workload runner agent.
+     */
+    AgentBootstrap agent_bootstrap = 4 [(validate.rules).message.required = true];
 }
 /*
     RunWorkloadWorkflowResponse is the empty result of a workload run (results go

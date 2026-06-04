@@ -315,6 +315,14 @@ export function RunDetail() {
   // Whether the active view manages its own height (fills) vs scrolls.
   const scrolls = view === "metrics" || view === "agents";
 
+  // Grafana is heavy (each dashboard iframe boots the full Grafana app), so it
+  // is mounted only once the user first opens the tab — then kept mounted
+  // (hidden) so re-opening is instant. Never prefetched on run load.
+  const [grafanaSeen, setGrafanaSeen] = useState(false);
+  useEffect(() => {
+    if (view === "grafana") setGrafanaSeen(true);
+  }, [view]);
+
   // Resizable RUN INFO sidebar — width persisted so the choice sticks.
   const SIDEBAR_KEY = "stroppy.runDetail.sidebarWidth";
   const [sidebarW, setSidebarW] = useState<number>(() => {
@@ -454,9 +462,8 @@ export function RunDetail() {
             />
           </div>
           <div className="relative min-h-0 flex-1 overflow-hidden">
-            {/* Grafana is mounted as soon as the run loads (hidden until
-                selected) so its dashboards pre-load in the background. */}
-            {overview && (
+            {/* Grafana mounts on first open, then stays cached (hidden). */}
+            {overview && grafanaSeen && (
               <div className={cn("absolute inset-0 overflow-hidden", view === "grafana" ? "block" : "hidden")}>
                 <GrafanaPanel
                   runId={id}

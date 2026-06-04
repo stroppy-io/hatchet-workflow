@@ -1822,30 +1822,39 @@ go_name: InfrastructureState</pre></td>
 <th>Description</th>
 </tr>
 <tr>
+<td>agent_bootstrap</td>
+<td><a href="#cloud-v1-workflow-agentbootstrap">cloud.v1.workflow.AgentBootstrap</a></td>
+<td><pre>
+//agent_bootstrap carries the per-node Temporal task queues used to reach
+//the workload runner agent.<br>
+
+json_name: agentBootstrap
+go_name: AgentBootstrap</pre></td>
+</tr><tr>
+<td>deployment_plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-deploymentplan">cloud.v1.deployment.DeploymentPlan</a></td>
+<td><pre>
+//deployment_plan is the materialized plan containing the workload-runner
+//component and its rendered config path.<br>
+
+json_name: deploymentPlan
+go_name: DeploymentPlan</pre></td>
+</tr><tr>
 <td>infrastructure_state</td>
 <td><a href="../deployment/README.md#cloud-v1-deployment-infrastructurestate">cloud.v1.deployment.InfrastructureState</a></td>
 <td><pre>
-//infrastructure_state carries runtime endpoints used to render the workload
-//connection string and route agent calls.<br>
+//infrastructure_state carries runtime machine state for route validation.<br>
 
 json_name: infrastructureState
 go_name: InfrastructureState</pre></td>
 </tr><tr>
-<td>topology_spec</td>
-<td><a href="../topology/README.md#cloud-v1-topology-topologyspec">cloud.v1.topology.TopologySpec</a></td>
+<td>run_id</td>
+<td>string</td>
 <td><pre>
-//topology_spec is the logical graph the workload targets.<br>
+//run_id is the stable run identifier used for stage/log correlation.<br>
 
-json_name: topologySpec
-go_name: TopologySpec</pre></td>
-</tr><tr>
-<td>workload</td>
-<td><a href="../domain/README.md#cloud-v1-domain-workload">cloud.v1.domain.Workload</a></td>
-<td><pre>
-//workload is the workload definition to execute.<br>
-
-json_name: workload
-go_name: Workload</pre></td>
+json_name: runId
+go_name: RunId</pre></td>
 </tr>
 </table>
 
@@ -3210,8 +3219,10 @@ go_name: Status</pre></td>
 ### cloud.v1.workflow.RunWorkloadWorkflowRequest
 
 <pre>
-//RunWorkloadWorkflowRequest asks to run the workload via the agent (write
-//stroppy config + call stroppy). Results land in metrics, not in the response.
+//RunWorkloadWorkflowRequest asks to run the already-rendered workload via
+//the agent. Deployment rendering writes stroppy-config.json and monitor
+//collectors first; this workflow executes the real stroppy load and relies on
+//the OTLP exporter in that config for metrics.
 </pre>
 
 <table>
@@ -3221,30 +3232,39 @@ go_name: Status</pre></td>
 <th>Description</th>
 </tr>
 <tr>
+<td>agent_bootstrap</td>
+<td><a href="#cloud-v1-workflow-agentbootstrap">cloud.v1.workflow.AgentBootstrap</a></td>
+<td><pre>
+//agent_bootstrap carries the per-node Temporal task queues used to reach
+//the workload runner agent.<br>
+
+json_name: agentBootstrap
+go_name: AgentBootstrap</pre></td>
+</tr><tr>
+<td>deployment_plan</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-deploymentplan">cloud.v1.deployment.DeploymentPlan</a></td>
+<td><pre>
+//deployment_plan is the materialized plan containing the workload-runner
+//component and its rendered config path.<br>
+
+json_name: deploymentPlan
+go_name: DeploymentPlan</pre></td>
+</tr><tr>
 <td>infrastructure_state</td>
 <td><a href="../deployment/README.md#cloud-v1-deployment-infrastructurestate">cloud.v1.deployment.InfrastructureState</a></td>
 <td><pre>
-//infrastructure_state carries runtime endpoints used to render the workload
-//connection string and route agent calls.<br>
+//infrastructure_state carries runtime machine state for route validation.<br>
 
 json_name: infrastructureState
 go_name: InfrastructureState</pre></td>
 </tr><tr>
-<td>topology_spec</td>
-<td><a href="../topology/README.md#cloud-v1-topology-topologyspec">cloud.v1.topology.TopologySpec</a></td>
+<td>run_id</td>
+<td>string</td>
 <td><pre>
-//topology_spec is the logical graph the workload targets.<br>
+//run_id is the stable run identifier used for stage/log correlation.<br>
 
-json_name: topologySpec
-go_name: TopologySpec</pre></td>
-</tr><tr>
-<td>workload</td>
-<td><a href="../domain/README.md#cloud-v1-domain-workload">cloud.v1.domain.Workload</a></td>
-<td><pre>
-//workload is the workload definition to execute.<br>
-
-json_name: workload
-go_name: Workload</pre></td>
+json_name: runId
+go_name: RunId</pre></td>
 </tr>
 </table>
 

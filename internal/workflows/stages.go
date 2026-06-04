@@ -54,12 +54,26 @@ func componentStage(component *deploymentpb.ComponentDeployment, order uint32, s
 }
 
 func agentStepStage(component *deploymentpb.ComponentDeployment, step *deploymentpb.AgentStep, order uint32, status common.Status, started, finished *timestamppb.Timestamp, errText string) *workflowpb.Stage {
+	if component == nil {
+		return nil
+	}
+	parentNodeExecutionID := labelOr(component.GetLabels(), deploymentbuilder.LabelNodeExecutionID, deploymentbuilder.ComponentExecutionID(component.GetComponentId()))
+	return agentStepStageForPhase(component, step, order, status, started, finished, errText, stageExecutePlan, parentNodeExecutionID)
+}
+
+func agentStepStageForPhase(component *deploymentpb.ComponentDeployment, step *deploymentpb.AgentStep, order uint32, status common.Status, started, finished *timestamppb.Timestamp, errText, phase, parentNodeExecutionID string) *workflowpb.Stage {
 	if component == nil || step == nil {
 		return nil
 	}
 	componentID := component.GetComponentId()
 	nodeID := component.GetNodeId()
 	nodeExecutionID := labelOr(step.GetLabels(), deploymentbuilder.LabelNodeExecutionID, deploymentbuilder.StepExecutionID(componentID, step.GetId()))
+	if phase == "" {
+		phase = stageExecutePlan
+	}
+	if parentNodeExecutionID == "" {
+		parentNodeExecutionID = labelOr(component.GetLabels(), deploymentbuilder.LabelNodeExecutionID, deploymentbuilder.ComponentExecutionID(componentID))
+	}
 	return &workflowpb.Stage{
 		NodeExecutionId:       nodeExecutionID,
 		Name:                  deploymentbuilder.AgentStepStageName(step),
@@ -68,8 +82,8 @@ func agentStepStage(component *deploymentpb.ComponentDeployment, step *deploymen
 		FinishedAt:            finished,
 		Attempt:               1,
 		Order:                 order,
-		ParentNodeExecutionId: labelOr(component.GetLabels(), deploymentbuilder.LabelNodeExecutionID, deploymentbuilder.ComponentExecutionID(componentID)),
-		Phase:                 stageExecutePlan,
+		ParentNodeExecutionId: parentNodeExecutionID,
+		Phase:                 phase,
 		ComponentId:           componentID,
 		MachineId:             nodeID,
 		Worker:                agentWorker(nodeID),

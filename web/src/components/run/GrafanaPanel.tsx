@@ -46,26 +46,20 @@ export function GrafanaPanel({ runId, dbKind, startedAt, finishedAt, workers }: 
   const [loaded, setLoaded] = useState<Set<string>>(new Set());
 
   const keyFor = (name: string, m: string) => `${name}|${name === "system" ? m : ""}`;
+  const activeKey = keyFor(selected, machine);
 
-  // Warm the Cartesian product (dashboards × machines) on mount + when the
-  // target list grows. Active pair shown, the rest hidden but loaded.
+  // Lazily mount ONLY the dashboard the user is actually looking at; once
+  // visited its iframe stays cached (hidden) so re-selecting it is instant.
+  // (Pre-warming the whole dashboards×machines product booted a full Grafana
+  // app per iframe → hundreds of requests on page open — never do that.)
   useEffect(() => {
     const m = srcsRef.current;
-    let mutated = false;
-    const machines = ["", ...targets.map((t) => t.id)];
-    for (const name of dashboards) {
-      const pairs = name === "system" ? machines : [""];
-      for (const mc of pairs) {
-        const k = keyFor(name, mc);
-        if (!m.has(k)) {
-          m.set(k, buildEmbedUrl(name, { runId, dbKind, machine: mc, startedAt, finishedAt }));
-          mutated = true;
-        }
-      }
+    if (!m.has(activeKey)) {
+      m.set(activeKey, buildEmbedUrl(selected, { runId, dbKind, machine, startedAt, finishedAt }));
+      tick((n) => n + 1);
     }
-    if (mutated) tick((n) => n + 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dashboards.join(","), targets.map((t) => t.id).join(","), runId]);
+  }, [activeKey, runId]);
 
   // Rebuild every URL when the run's time window changes (run finishes) — the
   // locked from..to is part of the URL.
@@ -80,8 +74,6 @@ export function GrafanaPanel({ runId, dbKind, startedAt, finishedAt, workers }: 
     tick((n) => n + 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startedAt, finishedAt]);
-
-  const activeKey = keyFor(selected, machine);
 
   return (
     <div className="flex h-full flex-col">

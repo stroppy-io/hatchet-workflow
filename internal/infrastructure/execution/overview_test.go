@@ -22,8 +22,9 @@ import (
 func TestOverviewGetFallsBackToPersistedTerminalRecord(t *testing.T) {
 	started := timestamppb.New(time.Unix(10, 0))
 	finished := timestamppb.New(time.Unix(70, 0))
+	tc := &countingRunStateQuerier{err: errors.New("must not query terminal workflow")}
 	reader := &OverviewReader{
-		tc: fakeRunStateQuerier{err: errors.New("workflow closed")},
+		tc: tc,
 		store: fakeSnapshotStore{
 			run: &models.TestRunRecord{
 				Entity:     &common.Entity{Id: "run-1"},
@@ -94,8 +95,86 @@ func TestOverviewGetFallsBackToPersistedTerminalRecord(t *testing.T) {
 	if got := snap.GetOverview().GetSource(); got != monitor.ObservationSource_OBSERVATION_SOURCE_PERSISTED_RECORD {
 		t.Fatalf("overview source = %s, want persisted record", got)
 	}
-	if got := snap.GetOverview().GetDegradedReasons(); len(got) == 0 {
-		t.Fatal("overview degraded reasons empty, want workflow fallback reason")
+	if tc.calls != 0 {
+		t.Fatalf("temporal queries = %d, want 0 for terminal persisted record", tc.calls)
+	}
+	if got := snap.GetOverview().GetDegradedReasons(); len(got) != 0 {
+		t.Fatalf("overview degraded reasons = %v, want none for intentional persisted terminal path", got)
+	}
+}
+
+func TestOverviewGetBoundsSlowTemporalQuery(t *testing.T) {
+	tc := &blockingRunStateQuerier{}
+	reader := &OverviewReader{
+		tc:                   tc,
+		runStateQueryTimeout: 10 * time.Millisecond,
+		store: fakeSnapshotStore{
+			run: &models.TestRunRecord{
+				Entity: &common.Entity{Id: "run-1"},
+				Status: common.Status_STATUS_RUNNING,
+				Summary: &models.TestRunRecord_Summary{
+					ProgressPct: 25,
+				},
+			},
+		},
+	}
+
+	started := time.Now()
+	snap, err := reader.Get(context.Background(), "run-1")
+	if err != nil {
+		t.Fatalf("get overview: %v", err)
+	}
+	if elapsed := time.Since(started); elapsed > 500*time.Millisecond {
+		t.Fatalf("get overview elapsed = %s, want bounded temporal fallback", elapsed)
+	}
+	if got := tc.calls; got != 1 {
+		t.Fatalf("temporal queries = %d, want 1", got)
+	}
+	if got := snap.GetOverview().GetStatus(); got != common.Status_STATUS_RUNNING {
+		t.Fatalf("overview status = %s, want persisted running", got)
+	}
+	if got := snap.GetOverview().GetProgressPct(); got != 25 {
+		t.Fatalf("overview progress = %d, want persisted summary", got)
+	}
+	if got := snap.GetOverview().GetSource(); got != monitor.ObservationSource_OBSERVATION_SOURCE_PERSISTED_RECORD {
+		t.Fatalf("overview source = %s, want persisted record fallback", got)
+	}
+	if got := snap.GetOverview().GetDegradedReasons(); !containsPrefix(got, "workflow_state_unavailable:") {
+		t.Fatalf("overview degraded reasons = %v, want workflow timeout reason", got)
+	}
+}
+
+func TestOverviewGetSkipsTemporalWhenPersistedRuntimeStateIsTerminal(t *testing.T) {
+	tc := &countingRunStateQuerier{err: errors.New("must not query terminal runtime state")}
+	reader := &OverviewReader{
+		tc: tc,
+		store: fakeSnapshotStore{
+			run: &models.TestRunRecord{
+				Entity: &common.Entity{Id: "run-1"},
+				Status: common.Status_STATUS_RUNNING,
+				RuntimeState: &workflowpb.RunState{
+					Status: common.Status_STATUS_COMPLETED,
+					Stages: []*workflowpb.Stage{
+						{
+							NodeExecutionId: deploymentbuilder.StageExecutionID(stageInfrastructureNodeName),
+							Name:            stageInfrastructureNodeName,
+							Status:          common.Status_STATUS_COMPLETED,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	snap, err := reader.Get(context.Background(), "run-1")
+	if err != nil {
+		t.Fatalf("get overview: %v", err)
+	}
+	if got := tc.calls; got != 0 {
+		t.Fatalf("temporal queries = %d, want 0 for terminal persisted runtime_state", got)
+	}
+	if got := snap.GetOverview().GetStatus(); got != common.Status_STATUS_COMPLETED {
+		t.Fatalf("overview status = %s, want runtime_state terminal status", got)
 	}
 }
 
@@ -213,6 +292,29 @@ func TestLegacyRecordFallbackInheritsCompletedDeploymentChildren(t *testing.T) {
 	rec := &models.TestRunRecord{
 		Entity: &common.Entity{Id: "run-1"},
 		Status: common.Status_STATUS_COMPLETED,
+		Spec: &domainpb.TestRun{
+			InfrastructurePlan: &deploymentpb.InfrastructurePlan{
+				Provider: deploymentpb.Provider_PROVIDER_DOCKER,
+				Machines: []*deploymentpb.MachinePlan{
+					{
+						NodeId: "node-1",
+						ProviderParams: &deploymentpb.MachinePlan_Docker{Docker: &deploymentpb.Docker_Container{
+							Image: "postgres:16",
+						}},
+						QuotaRequests: []*deploymentpb.Quota_Request{
+							{
+								Info: &deploymentpb.Quota_Info{
+									Provider: deploymentpb.Provider_PROVIDER_DOCKER,
+									Name:     "host.cpuCores",
+									Units:    "cores",
+								},
+								Request: 2,
+							},
+						},
+					},
+				},
+			},
+		},
 		InfrastructureState: &deploymentpb.InfrastructureState{
 			Machines: []*deploymentpb.MachineState{{NodeId: "node-1", Status: common.Status_STATUS_DEPLOYED}},
 		},
@@ -244,6 +346,12 @@ func TestLegacyRecordFallbackInheritsCompletedDeploymentChildren(t *testing.T) {
 	}
 	if got := step.GetStatus(); got != common.Status_STATUS_COMPLETED {
 		t.Fatalf("step status = %s, want completed", got)
+	}
+	infrastructure := overview.GetPipeline().GetRoots()[0]
+	for _, id := range []string{"infrastructure/plan", "infrastructure/state", "quota/request/node-1/host.cpuCores"} {
+		if !pipelineNodeHasOutputID(infrastructure, id) {
+			t.Fatalf("infrastructure root missing output %q: %+v", id, infrastructure.GetOutputs())
+		}
 	}
 	if got := overview.GetPipeline().GetRoots()[4].GetName(); got != stageTeardownNodeName {
 		t.Fatalf("root[4] = %q, want teardown", got)
@@ -293,6 +401,15 @@ func TestTopologyFromRecordIncludesRuntimeControlPlaneMonitoringAndActionEdges(t
 				Text: "curl https://control.example/api/binaries/node_exporter/1 && install postgres_exporter vmagent vector",
 			}},
 		}}},
+	}
+	writeVectorConfig := &deploymentpb.AgentStep{
+		Id:     "310_write_vector_config",
+		Order:  310,
+		Status: common.Status_STATUS_RUNNING,
+		Action: &deploymentpb.AgentStep_WriteFile{WriteFile: &common.File{
+			Info:    &common.File_Info{Path: "/etc/vector/vector.yaml"},
+			Content: &common.File_Text{Text: "sources: {}\n"},
+		}},
 	}
 	rec := &models.TestRunRecord{
 		Entity: &common.Entity{Id: "run-1"},
@@ -354,6 +471,19 @@ func TestTopologyFromRecordIncludesRuntimeControlPlaneMonitoringAndActionEdges(t
 					MachineId:             "node-1",
 					Operation:             deploymentbuilder.AgentStepOperation(installCollectors),
 				},
+				{
+					NodeExecutionId:       deploymentbuilder.StepExecutionID("postgres-master", "310_write_vector_config"),
+					Name:                  "write vector config",
+					Status:                common.Status_STATUS_RUNNING,
+					StartedAt:             started,
+					Attempt:               1,
+					Order:                 2,
+					ParentNodeExecutionId: deploymentbuilder.ComponentExecutionID("postgres-master"),
+					Phase:                 executeDeploymentPlanNodeName,
+					ComponentId:           "postgres-master",
+					MachineId:             "node-1",
+					Operation:             deploymentbuilder.AgentStepOperation(writeVectorConfig),
+				},
 			},
 		},
 	}
@@ -381,12 +511,59 @@ func TestTopologyFromRecordIncludesRuntimeControlPlaneMonitoringAndActionEdges(t
 	assertRuntimeEdge(t, topo, "monitor/node-1/vector", "control-plane", "/insert/jsonline")
 	assertRuntimeEdge(t, topo, "monitor/node-1/vmagent", "monitor/node-1/node_exporter", "node")
 	assertRuntimeEdge(t, topo, "monitor/node-1/postgres_exporter", "component/postgres-master", "postgres_local")
-	action := assertRuntimeEdge(t, topo, "agent/node-1", "monitor/node-1/vector", "call_cmd")
-	if got, want := action.GetNodeExecutionId(), deploymentbuilder.StepExecutionID("postgres-master", "300_install_collectors"); got != want {
-		t.Fatalf("vector action node_execution_id = %q, want %q", got, want)
+	action := assertRuntimeEdge(t, topo, "agent/node-1", "monitor/node-1/vector", "agent_action")
+	if got, want := action.GetLabels()[runtimeLabelRelation], "agent_action"; got != want {
+		t.Fatalf("vector action relation = %q, want %q", got, want)
 	}
 	if got := action.GetStartedAt(); got != started {
 		t.Fatalf("vector action started_at = %v, want stage timestamp", got)
+	}
+	if got := countRuntimeEdges(topo, "agent/node-1", "monitor/node-1/vector", "agent_action"); got != 1 {
+		t.Fatalf("vector action edges = %d, want collapsed single edge", got)
+	}
+	logs := assertRuntimeEdge(t, topo, "monitor/node-1/vector", "component/postgres-master", "logs/journald_and_files")
+	if got := logs.GetKind(); got != topologypb.Connection_KIND_OBSERVATION {
+		t.Fatalf("vector local logs kind = %s, want observation", got)
+	}
+	if got := logs.GetProtocol(); got == topologypb.Connection_PROTOCOL_CONTROL {
+		t.Fatalf("vector local logs protocol = %s, want non-control observation edge", got)
+	}
+	if got, want := logs.GetLabels()[runtimeLabelRelation], "local_log_collection"; got != want {
+		t.Fatalf("vector local logs relation = %q, want %q", got, want)
+	}
+}
+
+func TestTopologyFromRecordLabelsUnspecifiedLogicalConnections(t *testing.T) {
+	rec := &models.TestRunRecord{
+		Entity: &common.Entity{Id: "run-1"},
+		Spec: &domainpb.TestRun{
+			Id: "run-1",
+			TopologySpec: &topologypb.TopologySpec{
+				Nodes: []*topologypb.Node{
+					{Id: "node-1", ComponentIds: []string{"client", "postgres-master"}},
+				},
+				Components: []*topologypb.Component{
+					{Id: "client", Kind: topologypb.Component_KIND_WORKLOAD, Engine: "stroppy", Role: "runner"},
+					{Id: "postgres-master", Kind: topologypb.Component_KIND_DATABASE, Engine: "postgres", Role: "master"},
+				},
+				Connections: []*topologypb.Connection{
+					{FromComponentId: "client", ToComponentId: "postgres-master"},
+				},
+			},
+		},
+		Status: common.Status_STATUS_PENDING,
+	}
+
+	topo := topologyFromRecord(rec)
+	edge := assertRuntimeEdge(t, topo, "component/client", "component/postgres-master", "flow/tcp")
+	if got := edge.GetKind(); got != topologypb.Connection_KIND_FLOW {
+		t.Fatalf("logical edge kind = %s, want flow", got)
+	}
+	if got := edge.GetProtocol(); got != topologypb.Connection_PROTOCOL_TCP {
+		t.Fatalf("logical edge protocol = %s, want tcp", got)
+	}
+	if got := edge.GetMode(); got != topologypb.Connection_MODE_REQUEST {
+		t.Fatalf("logical edge mode = %s, want request", got)
 	}
 }
 
@@ -553,6 +730,61 @@ func TestOverviewProjectsWorkersFromPersistedTopology(t *testing.T) {
 	}
 }
 
+func TestWorkersFromRecordKeepTerminalPresenceOverRegistrySample(t *testing.T) {
+	lastSeen := timestamppb.New(time.Unix(100, 0))
+	rec := &models.TestRunRecord{
+		Entity: &common.Entity{Id: "run-1"},
+		Status: common.Status_STATUS_COMPLETED,
+		InfrastructureState: &deploymentpb.InfrastructureState{
+			Machines: []*deploymentpb.MachineState{
+				{NodeId: "node-1", Status: common.Status_STATUS_DEPLOYED},
+			},
+		},
+		DeploymentPlan: &deploymentpb.DeploymentPlan{
+			Components: []*deploymentpb.ComponentDeployment{
+				{ComponentId: "postgres-master", NodeId: "node-1", Status: common.Status_STATUS_DEPLOYED},
+			},
+		},
+	}
+	workers := workersFromRecord(rec, map[string]*monitor.WorkerInfo{
+		"node-1": {
+			MachineId:                "node-1",
+			Host:                     "agent-node-1",
+			Online:                   true,
+			Presence:                 monitor.WorkerPresence_WORKER_PRESENCE_ONLINE,
+			LastSeenAt:               lastSeen,
+			HeartbeatIntervalSeconds: 15,
+			AgentVersion:             "test-agent",
+			RunId:                    "run-1",
+			StatusReason:             "heartbeat_recent",
+			Source:                   monitor.ObservationSource_OBSERVATION_SOURCE_AGENT_REGISTRY,
+		},
+	})
+
+	if got, want := len(workers), 1; got != want {
+		t.Fatalf("workers = %d, want %d", got, want)
+	}
+	worker := workers[0]
+	if worker.GetOnline() {
+		t.Fatal("worker online = true, want false for terminal run")
+	}
+	if got := worker.GetPresence(); got != monitor.WorkerPresence_WORKER_PRESENCE_TERMINATED {
+		t.Fatalf("worker presence = %s, want terminated", got)
+	}
+	if got, want := worker.GetHost(), "agent-node-1"; got != want {
+		t.Fatalf("worker host = %q, want registry metadata preserved", got)
+	}
+	if got := worker.GetLastSeenAt(); got != lastSeen {
+		t.Fatalf("worker last_seen_at = %v, want registry timestamp preserved", got)
+	}
+	if got, want := worker.GetStatusReason(), "run_terminal_agent_terminated"; got != want {
+		t.Fatalf("worker status_reason = %q, want %q", got, want)
+	}
+	if got := worker.GetSource(); got != monitor.ObservationSource_OBSERVATION_SOURCE_PERSISTED_RECORD {
+		t.Fatalf("worker source = %s, want persisted record terminal judgement", got)
+	}
+}
+
 func TestOverviewStreamClosesAfterPersistedTerminalSnapshot(t *testing.T) {
 	reader := &OverviewReader{
 		tc: fakeRunStateQuerier{err: errors.New("workflow closed")},
@@ -606,6 +838,30 @@ func (f fakeRunStateQuerier) GetRunState(context.Context, string, string) (*work
 	return f.state, nil
 }
 
+type countingRunStateQuerier struct {
+	state *workflowpb.RunState
+	err   error
+	calls int
+}
+
+func (f *countingRunStateQuerier) GetRunState(context.Context, string, string) (*workflowpb.RunState, error) {
+	f.calls++
+	if f.err != nil {
+		return nil, f.err
+	}
+	return f.state, nil
+}
+
+type blockingRunStateQuerier struct {
+	calls int
+}
+
+func (f *blockingRunStateQuerier) GetRunState(ctx context.Context, _, _ string) (*workflowpb.RunState, error) {
+	f.calls++
+	<-ctx.Done()
+	return nil, ctx.Err()
+}
+
 type fakeSnapshotStore struct {
 	run   *models.TestRunRecord
 	suite *models.SuiteRunRecord
@@ -622,6 +878,24 @@ func (f fakeSnapshotStore) SuiteRun(context.Context, string) (*models.SuiteRunRe
 func containsString(values []string, want string) bool {
 	for _, value := range values {
 		if value == want {
+			return true
+		}
+	}
+	return false
+}
+
+func containsPrefix(values []string, prefix string) bool {
+	for _, value := range values {
+		if strings.HasPrefix(value, prefix) {
+			return true
+		}
+	}
+	return false
+}
+
+func pipelineNodeHasOutputID(node *monitor.PipelineNode, id string) bool {
+	for _, output := range node.GetOutputs() {
+		if output.GetId() == id {
 			return true
 		}
 	}
@@ -646,4 +920,14 @@ func assertRuntimeEdge(t *testing.T, topo *topologypb.Topology, from, to, endpoi
 	}
 	t.Fatalf("runtime edge %s -> %s endpoint %q missing", from, to, endpoint)
 	return nil
+}
+
+func countRuntimeEdges(topo *topologypb.Topology, from, to, endpoint string) int {
+	var count int
+	for _, edge := range topo.GetRuntimeConnections() {
+		if edge.GetFromNodeId() == from && edge.GetToNodeId() == to && edge.GetEndpointName() == endpoint {
+			count++
+		}
+	}
+	return count
 }

@@ -267,14 +267,30 @@ func (b *runtimeTopologyBuilder) addLogicalConnections(
 			b.addSyntheticExternalComponent(toID)
 		}
 		status := logicalConnectionStatus(rec, componentPlans[fromID], componentPlans[toID])
+		kind := conn.GetKind()
+		if kind == topology.Connection_KIND_UNSPECIFIED {
+			kind = topology.Connection_KIND_FLOW
+		}
+		protocol := conn.GetProtocol()
+		if protocol == topology.Connection_PROTOCOL_UNSPECIFIED {
+			protocol = topology.Connection_PROTOCOL_TCP
+		}
+		mode := conn.GetMode()
+		if mode == topology.Connection_MODE_UNSPECIFIED {
+			mode = topology.Connection_MODE_REQUEST
+		}
+		endpointName := conn.GetEndpointName()
+		if endpointName == "" {
+			endpointName = logicalConnectionEndpointName(kind, protocol)
+		}
 		edge := &topology.RuntimeConnection{
-			Id:           runtimeEdgeID("logical", strconv.Itoa(idx), fromID, toID, conn.GetEndpointName()),
+			Id:           runtimeEdgeID("logical", strconv.Itoa(idx), fromID, toID, endpointName),
 			FromNodeId:   runtimeComponentNodeID(fromID),
 			ToNodeId:     runtimeComponentNodeID(toID),
-			Kind:         conn.GetKind(),
-			Protocol:     conn.GetProtocol(),
-			Mode:         conn.GetMode(),
-			EndpointName: conn.GetEndpointName(),
+			Kind:         kind,
+			Protocol:     protocol,
+			Mode:         mode,
+			EndpointName: endpointName,
 			Status:       status,
 			StatusReason: "topology_spec_connection",
 			Labels: map[string]string{
@@ -288,6 +304,21 @@ func (b *runtimeTopologyBuilder) addLogicalConnections(
 			edge.Port = runtimePort(conn.GetPort())
 		}
 		b.addEdge(edge)
+	}
+}
+
+func logicalConnectionEndpointName(kind topology.Connection_Kind, protocol topology.Connection_Protocol) string {
+	kindName := strings.TrimPrefix(strings.ToLower(kind.String()), "kind_")
+	protocolName := strings.TrimPrefix(strings.ToLower(protocol.String()), "protocol_")
+	switch {
+	case kindName != "" && protocolName != "":
+		return kindName + "/" + protocolName
+	case kindName != "":
+		return kindName
+	case protocolName != "":
+		return protocolName
+	default:
+		return "logical_connection"
 	}
 }
 
@@ -407,13 +438,13 @@ func (b *runtimeTopologyBuilder) addStageAction(stage *workflowpb.Stage) {
 	labels[runtimeLabelSource] = "temporal_run_state"
 	labels[runtimeLabelRelation] = "agent_action"
 	b.addEdge(&topology.RuntimeConnection{
-		Id:              runtimeEdgeID("stage-action", stage.GetNodeExecutionId(), agentID, targetID),
+		Id:              runtimeEdgeID("agent-action", agentID, targetID),
 		FromNodeId:      agentID,
 		ToNodeId:        targetID,
 		Kind:            topology.Connection_KIND_SUPPORT,
 		Protocol:        topology.Connection_PROTOCOL_CONTROL,
 		Mode:            topology.Connection_MODE_REQUEST,
-		EndpointName:    operationEndpointName(op),
+		EndpointName:    "agent_action",
 		Phase:           stage.GetPhase(),
 		NodeExecutionId: stage.GetNodeExecutionId(),
 		Status:          status,
@@ -445,7 +476,7 @@ func (b *runtimeTopologyBuilder) addStageAction(stage *workflowpb.Stage) {
 			b.addVectorControlPlaneEdge(machineID, status, stage)
 		case "binary_cache":
 			b.addEdge(&topology.RuntimeConnection{
-				Id:              runtimeEdgeID("agent", machineID, "control-plane", "binary-cache", stage.GetNodeExecutionId()),
+				Id:              runtimeEdgeID("agent", machineID, "control-plane", "binary-cache"),
 				FromNodeId:      runtimeAgentNodeID(machineID),
 				ToNodeId:        runtimeControlPlaneID,
 				Kind:            topology.Connection_KIND_SUPPORT,
@@ -566,9 +597,9 @@ func (b *runtimeTopologyBuilder) addVectorBaseEdges(machineID string, status com
 			FromNodeId:      runtimeMonitorNodeID(machineID, "vector"),
 			ToNodeId:        runtimeComponentNodeID(componentID),
 			Kind:            topology.Connection_KIND_OBSERVATION,
-			Protocol:        topology.Connection_PROTOCOL_CONTROL,
+			Protocol:        topology.Connection_PROTOCOL_UNSPECIFIED,
 			Mode:            topology.Connection_MODE_STREAM,
-			EndpointName:    "journald_and_files",
+			EndpointName:    "logs/journald_and_files",
 			Phase:           executeDeploymentPlanNodeName,
 			NodeExecutionId: stageNodeExecutionID(stage),
 			Status:          pendingIfUnspecified(status),
@@ -710,21 +741,24 @@ func (b *runtimeTopologyBuilder) addDirectMetricsEdge(machineID, componentID, en
 }
 
 func (b *runtimeTopologyBuilder) addAgentTouchesMonitor(machineID, role string, status commonpb.Status, stage *workflowpb.Stage, op *monitorpb.PipelineOperation) {
+	labels := operationLabels(op)
+	labels[runtimeLabelSource] = "temporal_run_state"
+	labels[runtimeLabelRelation] = "agent_action"
 	b.addEdge(&topology.RuntimeConnection{
-		Id:              runtimeEdgeID("stage-monitor-action", stage.GetNodeExecutionId(), machineID, role),
+		Id:              runtimeEdgeID("agent-monitor-action", machineID, role),
 		FromNodeId:      runtimeAgentNodeID(machineID),
 		ToNodeId:        runtimeMonitorNodeID(machineID, role),
 		Kind:            topology.Connection_KIND_SUPPORT,
 		Protocol:        topology.Connection_PROTOCOL_CONTROL,
 		Mode:            topology.Connection_MODE_REQUEST,
-		EndpointName:    operationEndpointName(op),
+		EndpointName:    "agent_action",
 		Phase:           stage.GetPhase(),
 		NodeExecutionId: stage.GetNodeExecutionId(),
 		Status:          pendingIfUnspecified(status),
 		StatusReason:    stageStatusReason(stage),
 		StartedAt:       stage.GetStartedAt(),
 		FinishedAt:      stage.GetFinishedAt(),
-		Labels:          operationLabels(op),
+		Labels:          labels,
 	})
 }
 

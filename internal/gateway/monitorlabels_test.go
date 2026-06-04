@@ -121,17 +121,17 @@ func TestRewriteOTLPMetricLabelsForcesResourceAndStripsDatapointIdentity(t *test
 	if got, want := resourceAttrs["service.name"], "stroppy"; got != want {
 		t.Fatalf("service.name = %q, want %q", got, want)
 	}
-	if got, want := resourceAttrs[otlpTenantAttr], "tenant-1"; got != want {
-		t.Fatalf("%s = %q, want %q", otlpTenantAttr, got, want)
+	if got, want := resourceAttrs[promTenantLabel], "tenant-1"; got != want {
+		t.Fatalf("%s = %q, want %q", promTenantLabel, got, want)
 	}
-	if got, want := resourceAttrs[otlpRunAttr], "run-1"; got != want {
-		t.Fatalf("%s = %q, want %q", otlpRunAttr, got, want)
+	if got, want := resourceAttrs[promRunLabel], "run-1"; got != want {
+		t.Fatalf("%s = %q, want %q", promRunLabel, got, want)
 	}
-	if got, want := resourceAttrs[otlpMachineAttr], "node-1"; got != want {
-		t.Fatalf("%s = %q, want %q", otlpMachineAttr, got, want)
+	if got, want := resourceAttrs[promMachineLabel], "node-1"; got != want {
+		t.Fatalf("%s = %q, want %q", promMachineLabel, got, want)
 	}
-	if _, exists := resourceAttrs[promRunLabel]; exists {
-		t.Fatalf("%s was not stripped from resource attrs", promRunLabel)
+	if _, exists := resourceAttrs[otlpRunAttr]; exists {
+		t.Fatalf("%s was not stripped from resource attrs", otlpRunAttr)
 	}
 
 	dpAttrs := attrMap(got.GetResourceMetrics()[0].GetScopeMetrics()[0].GetMetrics()[0].GetGauge().GetDataPoints()[0].GetAttributes())

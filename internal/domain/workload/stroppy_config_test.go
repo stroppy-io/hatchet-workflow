@@ -41,3 +41,30 @@ func TestRenderStroppyConfigRoutesOTLPThroughServerAddress(t *testing.T) {
 		}
 	}
 }
+
+func TestInstallCommandDownloadsStroppyReleaseThroughGateway(t *testing.T) {
+	script := installCommand(&domain.Workload{StroppyVersion: "5.1.2"}, "http://server:8080/")
+
+	for _, want := range []string{
+		"http://server:8080/api/binaries/stroppy/5.1.2/stroppy_linux_amd64.tar.gz",
+		"curl -fsSL",
+		"tar tzf",
+		"install -m 0755",
+		"/usr/local/bin/stroppy",
+	} {
+		if !strings.Contains(script, want) {
+			t.Fatalf("install command missing %q:\n%s", want, script)
+		}
+	}
+	if strings.Contains(script, "binary resolver is pending") {
+		t.Fatalf("install command still contains placeholder:\n%s", script)
+	}
+}
+
+func TestStroppyDownloadURLRoutesNightlyCommits(t *testing.T) {
+	got := stroppyDownloadURL("http://server:8080", "abcdef1234567890")
+	want := "http://server:8080/api/binaries/stroppy_nightly/abcdef1/stroppy"
+	if got != want {
+		t.Fatalf("download URL = %q, want %q", got, want)
+	}
+}

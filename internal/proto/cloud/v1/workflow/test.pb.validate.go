@@ -1566,9 +1566,20 @@ func (m *RunWorkloadWorkflowRequest) validate(all bool) error {
 
 	var errors []error
 
-	if m.GetTopologySpec() == nil {
+	if l := utf8.RuneCountInString(m.GetRunId()); l < 1 || l > 128 {
 		err := RunWorkloadWorkflowRequestValidationError{
-			field:  "TopologySpec",
+			field:  "RunId",
+			reason: "value length must be between 1 and 128 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetDeploymentPlan() == nil {
+		err := RunWorkloadWorkflowRequestValidationError{
+			field:  "DeploymentPlan",
 			reason: "value is required",
 		}
 		if !all {
@@ -1578,11 +1589,11 @@ func (m *RunWorkloadWorkflowRequest) validate(all bool) error {
 	}
 
 	if all {
-		switch v := interface{}(m.GetTopologySpec()).(type) {
+		switch v := interface{}(m.GetDeploymentPlan()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, RunWorkloadWorkflowRequestValidationError{
-					field:  "TopologySpec",
+					field:  "DeploymentPlan",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -1590,56 +1601,16 @@ func (m *RunWorkloadWorkflowRequest) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, RunWorkloadWorkflowRequestValidationError{
-					field:  "TopologySpec",
+					field:  "DeploymentPlan",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetTopologySpec()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetDeploymentPlan()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return RunWorkloadWorkflowRequestValidationError{
-				field:  "TopologySpec",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if m.GetWorkload() == nil {
-		err := RunWorkloadWorkflowRequestValidationError{
-			field:  "Workload",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetWorkload()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, RunWorkloadWorkflowRequestValidationError{
-					field:  "Workload",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, RunWorkloadWorkflowRequestValidationError{
-					field:  "Workload",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetWorkload()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return RunWorkloadWorkflowRequestValidationError{
-				field:  "Workload",
+				field:  "DeploymentPlan",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -1680,6 +1651,46 @@ func (m *RunWorkloadWorkflowRequest) validate(all bool) error {
 		if err := v.Validate(); err != nil {
 			return RunWorkloadWorkflowRequestValidationError{
 				field:  "InfrastructureState",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetAgentBootstrap() == nil {
+		err := RunWorkloadWorkflowRequestValidationError{
+			field:  "AgentBootstrap",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetAgentBootstrap()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RunWorkloadWorkflowRequestValidationError{
+					field:  "AgentBootstrap",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RunWorkloadWorkflowRequestValidationError{
+					field:  "AgentBootstrap",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetAgentBootstrap()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RunWorkloadWorkflowRequestValidationError{
+				field:  "AgentBootstrap",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}

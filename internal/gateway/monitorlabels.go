@@ -329,9 +329,9 @@ func promForcedLabels(claims *agentdomain.TokenClaims) []monitorLabel {
 
 func otlpForcedAttrs(claims *agentdomain.TokenClaims) []monitorLabel {
 	return []monitorLabel{
-		{name: otlpMachineAttr, value: claims.MachineID},
-		{name: otlpRunAttr, value: claims.RunID},
-		{name: otlpTenantAttr, value: claims.TenantID},
+		{name: promMachineLabel, value: claims.MachineID},
+		{name: promRunLabel, value: claims.RunID},
+		{name: promTenantLabel, value: claims.TenantID},
 	}
 }
 

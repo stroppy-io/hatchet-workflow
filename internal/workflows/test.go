@@ -3,10 +3,13 @@ package workflows
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	deploymentbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/deployment"
+	workloadbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/workload"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
 	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -43,6 +46,8 @@ const (
 	stageWorkloadIndex
 	stageTeardownIndex
 )
+
+const runtimeProjectionPersistMinInterval = 2 * time.Second
 
 type testWorkflows struct{}
 
@@ -94,20 +99,146 @@ type runWorkloadWorkflow struct {
 	req *workflowpb.RunWorkloadWorkflowRequest
 }
 
-func (w *runWorkloadWorkflow) Execute(workflow.Context) (*workflowpb.RunWorkloadWorkflowResponse, error) {
+func (w *runWorkloadWorkflow) Execute(ctx workflow.Context) (*workflowpb.RunWorkloadWorkflowResponse, error) {
 	if w.req == nil {
 		return nil, errors.New("run workload request is required")
 	}
 	if err := w.req.Validate(); err != nil {
 		return nil, err
 	}
+	runID := w.req.GetRunId()
+	plan := proto.Clone(w.req.GetDeploymentPlan()).(*deploymentpb.DeploymentPlan)
+	deploymentbuilder.StampDeploymentPlanExecutionContext(runID, plan)
+
+	component, err := workloadRunnerDeployment(plan)
+	if err != nil {
+		return nil, err
+	}
+	if !infrastructureHasNode(w.req.GetInfrastructureState(), component.GetNodeId()) {
+		return nil, fmt.Errorf("workload runner node %q is missing from infrastructure state", component.GetNodeId())
+	}
+	taskQueue, err := agentTaskQueue(w.req.GetAgentBootstrap(), component.GetNodeId())
+	if err != nil {
+		return nil, err
+	}
+
+	activityCtx := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+		TaskQueue:           taskQueue,
+		StartToCloseTimeout: 30 * 24 * time.Hour,
+		HeartbeatTimeout:    time.Minute,
+	})
+	if err := executeActivityNoResult(activityCtx, workflowpb.EnsureAgentOnlineActivityActivityName); err != nil {
+		return nil, fmt.Errorf("agent %s is not online: %w", component.GetNodeId(), err)
+	}
+
+	step := workloadRunStep(component)
+	stampWorkloadStepExecutionContext(runID, component, step)
+	started := timestamppb.New(workflow.Now(ctx))
+	step.Status = common.Status_STATUS_RUNNING
+	emitStageUpdate(ctx, runID, workloadAgentStepStage(component, step, common.Status_STATUS_RUNNING, started, nil, ""))
+	if err := appendDeploymentStepLog(ctx, runID, component, step, monitor.Stream_STREAM_STDOUT, "started "+agentStepDescription(step)); err != nil {
+		return nil, err
+	}
+	if err := executeAgentStep(activityCtx, step); err != nil {
+		finished := timestamppb.New(workflow.Now(ctx))
+		step.Status = common.Status_STATUS_FAILED
+		emitStageUpdate(ctx, runID, workloadAgentStepStage(component, step, common.Status_STATUS_FAILED, started, finished, err.Error()))
+		if lerr := appendDeploymentStepLog(ctx, runID, component, step, monitor.Stream_STREAM_STDERR, "failed "+agentStepDescription(step)+": "+err.Error()); lerr != nil {
+			return nil, lerr
+		}
+		return nil, fmt.Errorf("workload runner %s step %s: %w", component.GetComponentId(), step.GetId(), err)
+	}
+	finished := timestamppb.New(workflow.Now(ctx))
+	step.Status = common.Status_STATUS_COMPLETED
+	emitStageUpdate(ctx, runID, workloadAgentStepStage(component, step, common.Status_STATUS_COMPLETED, started, finished, ""))
+	if err := appendDeploymentStepLog(ctx, runID, component, step, monitor.Stream_STREAM_STDOUT, "completed "+agentStepDescription(step)); err != nil {
+		return nil, err
+	}
 	return &workflowpb.RunWorkloadWorkflowResponse{}, nil
 }
 
+func workloadRunnerDeployment(plan *deploymentpb.DeploymentPlan) (*deploymentpb.ComponentDeployment, error) {
+	if plan == nil {
+		return nil, errors.New("deployment plan is required")
+	}
+	for _, component := range plan.GetComponents() {
+		if component == nil {
+			continue
+		}
+		labels := component.GetLabels()
+		if labels["engine"] == workloadbuilder.Engine && labels["role"] == workloadbuilder.RunnerRole {
+			return component, nil
+		}
+		if component.GetComponentId() == workloadbuilder.RunnerNodeID {
+			return component, nil
+		}
+	}
+	return nil, errors.New("deployment plan has no workload runner component")
+}
+
+func infrastructureHasNode(state *deploymentpb.InfrastructureState, nodeID string) bool {
+	if state == nil || nodeID == "" {
+		return false
+	}
+	for _, machine := range state.GetMachines() {
+		if machine != nil && machine.GetNodeId() == nodeID {
+			return true
+		}
+	}
+	return false
+}
+
+func workloadRunStep(component *deploymentpb.ComponentDeployment) *deploymentpb.AgentStep {
+	componentID := component.GetComponentId()
+	configDir := deploymentbuilder.ConfigDir(componentID)
+	configPath := configDir + "/stroppy-config.json"
+	script := "set -e\n" +
+		"if ! command -v stroppy >/dev/null 2>&1; then\n" +
+		"  echo 'stroppy binary is not installed on workload runner' >&2\n" +
+		"  exit 127\n" +
+		"fi\n" +
+		"exec stroppy run -f " + deploymentbuilder.ShellQuote(configPath) + "\n"
+	step := deploymentbuilder.CallCmdStep("900_run_stroppy", 900, script)
+	step.Tags = deploymentbuilder.Tags("workload", workloadbuilder.Engine, "command")
+	step.Labels = deploymentbuilder.MergeLabels(step.GetLabels(), map[string]string{
+		"engine": workloadbuilder.Engine,
+		"role":   workloadbuilder.RunnerRole,
+		"phase":  stageWorkload,
+	})
+	if cmd := step.GetCallCmd(); cmd != nil && cmd.GetSpec() != nil {
+		cmd.Spec.Cwd = configDir
+	}
+	return step
+}
+
+func stampWorkloadStepExecutionContext(runID string, component *deploymentpb.ComponentDeployment, step *deploymentpb.AgentStep) {
+	deploymentbuilder.StampAgentStepExecutionContext(runID, component, step)
+	parentNodeExecutionID := deploymentbuilder.StageExecutionID(stageWorkload)
+	if step.Labels == nil {
+		step.Labels = map[string]string{}
+	}
+	step.Labels[deploymentbuilder.LabelPhase] = stageWorkload
+	step.Labels[deploymentbuilder.LabelParentNodeExecutionID] = parentNodeExecutionID
+	if cmd := step.GetCallCmd(); cmd != nil && cmd.GetSpec() != nil {
+		if cmd.Spec.Env == nil {
+			cmd.Spec.Env = map[string]string{}
+		}
+		cmd.Spec.Env[deploymentbuilder.EnvPhase] = stageWorkload
+		cmd.Spec.Env[deploymentbuilder.EnvParentNodeExecutionID] = parentNodeExecutionID
+	}
+}
+
+func workloadAgentStepStage(component *deploymentpb.ComponentDeployment, step *deploymentpb.AgentStep, status common.Status, started, finished *timestamppb.Timestamp, errText string) *workflowpb.Stage {
+	return agentStepStageForPhase(component, step, 1, status, started, finished, errText, stageWorkload, deploymentbuilder.StageExecutionID(stageWorkload))
+}
+
 type domainTestWorkflow struct {
-	req          *workflowpb.TestWorkflowRequest
-	stageUpdates *workflowpb.UpdateStageSignal
-	state        *workflowpb.RunState
+	req                            *workflowpb.TestWorkflowRequest
+	stageUpdates                   *workflowpb.UpdateStageSignal
+	state                          *workflowpb.RunState
+	persistedInfrastructureState   *deploymentpb.InfrastructureState
+	persistedDeploymentPlan        *deploymentpb.DeploymentPlan
+	lastRuntimeProjectionPersistAt time.Time
 }
 
 func newDomainTestWorkflow(req *workflowpb.TestWorkflowRequest, stageUpdates *workflowpb.UpdateStageSignal) *domainTestWorkflow {
@@ -227,6 +358,7 @@ func (w *domainTestWorkflow) Execute(ctx workflow.Context) (resp *workflowpb.Tes
 
 	testRun := w.req.GetTestRun()
 	infrastructurePlan := proto.Clone(testRun.GetInfrastructurePlan()).(*deploymentpb.InfrastructurePlan)
+	w.state.Stages[stageInfrastructureIndex].Outputs = deploymentbuilder.InfrastructurePlanOutputs(infrastructurePlan)
 	w.state.Status = common.Status_STATUS_RUNNING
 
 	w.startStage(ctx, stageInfrastructureIndex)
@@ -246,7 +378,10 @@ func (w *domainTestWorkflow) Execute(ctx workflow.Context) (resp *workflowpb.Tes
 		}
 		return nil, err
 	}
-	w.completeActionStage(ctx, calculateQuotasStage)
+	w.completeActionStageWithOutputs(ctx, calculateQuotasStage, appendOutputs(
+		deploymentbuilder.InfrastructurePlanOutputs(quotaResp.GetPlan()),
+		deploymentbuilder.QuotaRequestRefOutputs(quotaResp.GetQuotaRequests())...,
+	))
 	acquireQuotasStage := w.startActionStage(ctx, stageInfrastructure, infrastructureStageID, 2, actionAcquireQuotas)
 	acquireResp, err := workflowpb.AcquireQuotasActivity(ctx, &workflowpb.AcquireQuotasActivityRequest{
 		TenantId:      w.req.GetTenantId(),
@@ -262,9 +397,13 @@ func (w *domainTestWorkflow) Execute(ctx workflow.Context) (resp *workflowpb.Tes
 		}
 		return nil, err
 	}
-	w.completeActionStage(ctx, acquireQuotasStage)
+	w.completeActionStageWithOutputs(ctx, acquireQuotasStage, appendOutputs(
+		deploymentbuilder.QuotaRequestRefOutputs(quotaResp.GetQuotaRequests()),
+		deploymentbuilder.QuotaAllocationRefOutputs(acquireResp.GetQuotaAllocations())...,
+	))
 	quotaReserved = len(acquireResp.GetQuotaAllocations()) > 0
 	quotaAllocations = acquireResp.GetQuotaAllocations()
+	var networkCIDR string
 	if quotaResp.GetPlan().GetProvider() == deploymentpb.Provider_PROVIDER_YANDEX {
 		acquireNetworkStage := w.startActionStage(ctx, stageInfrastructure, infrastructureStageID, 3, actionAcquireNetwork)
 		networkResp, err := workflowpb.AcquireNetworkActivity(ctx, &workflowpb.AcquireNetworkActivityRequest{
@@ -280,9 +419,13 @@ func (w *domainTestWorkflow) Execute(ctx workflow.Context) (resp *workflowpb.Tes
 			}
 			return nil, err
 		}
-		w.completeActionStage(ctx, acquireNetworkStage)
+		networkCIDR = networkResp.GetNetworkCidr()
+		w.completeActionStageWithOutputs(ctx, acquireNetworkStage, compactOutputs(
+			deploymentbuilder.NetworkCIDROutput("network/reserved_cidr", "reserved network", networkCIDR),
+		))
 		if networkResp.GetNetworkCidr() != "" {
 			infrastructurePlan = planWithReservedNetworkCIDR(quotaResp.GetPlan(), networkResp.GetNetworkCidr())
+			w.state.Stages[stageInfrastructureIndex].Outputs = deploymentbuilder.InfrastructurePlanOutputs(infrastructurePlan)
 			networkReserved = true
 		}
 	} else {
@@ -307,8 +450,11 @@ func (w *domainTestWorkflow) Execute(ctx workflow.Context) (resp *workflowpb.Tes
 		}
 		return nil, err
 	}
-	w.completeActionStage(ctx, processInfrastructureStage)
 	infrastructureState = infrastructureResp.GetState()
+	w.completeActionStageWithOutputs(ctx, processInfrastructureStage, appendOutputs(
+		deploymentbuilder.InfrastructurePlanOutputs(infrastructurePlan),
+		deploymentbuilder.InfrastructureStateOutputs(infrastructureState)...,
+	))
 	infrastructureReady = true
 	commitQuotasStage := w.startActionStage(ctx, stageInfrastructure, infrastructureStageID, 5, actionCommitQuotas)
 	commitResp, err := workflowpb.CommitQuotasActivity(ctx, &workflowpb.CommitQuotasActivityRequest{
@@ -323,17 +469,18 @@ func (w *domainTestWorkflow) Execute(ctx workflow.Context) (resp *workflowpb.Tes
 		}
 		return nil, err
 	}
-	w.completeActionStage(ctx, commitQuotasStage)
 	if len(commitResp.GetQuotaAllocations()) > 0 {
 		quotaAllocations = commitResp.GetQuotaAllocations()
 	}
+	w.completeActionStageWithOutputs(ctx, commitQuotasStage, deploymentbuilder.QuotaAllocationRefOutputs(quotaAllocations))
 	quotaCommitted = true
 	if networkReserved {
 		commitNetworkStage := w.startActionStage(ctx, stageInfrastructure, infrastructureStageID, 6, actionCommitNetwork)
-		if _, err := workflowpb.CommitNetworkActivity(ctx, &workflowpb.CommitNetworkActivityRequest{
+		commitNetworkResp, err := workflowpb.CommitNetworkActivity(ctx, &workflowpb.CommitNetworkActivityRequest{
 			TenantId: w.req.GetTenantId(),
 			RunId:    testRun.GetId(),
-		}); err != nil {
+		})
+		if err != nil {
 			w.failActionStage(ctx, commitNetworkStage, err.Error())
 			w.failStage(ctx, stageInfrastructureIndex)
 			if perr := w.persist(ctx, infrastructureState, deploymentPlan); perr != nil {
@@ -341,10 +488,19 @@ func (w *domainTestWorkflow) Execute(ctx workflow.Context) (resp *workflowpb.Tes
 			}
 			return nil, err
 		}
-		w.completeActionStage(ctx, commitNetworkStage)
+		if commitNetworkResp.GetNetworkCidr() != "" {
+			networkCIDR = commitNetworkResp.GetNetworkCidr()
+		}
+		w.completeActionStageWithOutputs(ctx, commitNetworkStage, compactOutputs(
+			deploymentbuilder.NetworkCIDROutput("network/committed_cidr", "committed network", networkCIDR),
+		))
 		networkCommitted = true
 	}
 	attachQuotaAllocations(infrastructureState, quotaAllocations)
+	w.state.Stages[stageInfrastructureIndex].Outputs = appendOutputs(
+		deploymentbuilder.InfrastructurePlanOutputs(infrastructurePlan),
+		deploymentbuilder.InfrastructureStateOutputs(infrastructureState)...,
+	)
 	w.completeStage(ctx, stageInfrastructureIndex)
 	if err := w.persist(ctx, infrastructureState, deploymentPlan); err != nil {
 		return nil, err
@@ -407,9 +563,10 @@ func (w *domainTestWorkflow) Execute(ctx workflow.Context) (resp *workflowpb.Tes
 		return nil, err
 	}
 	if _, err := workflowpb.RunWorkloadWorkflowChild(ctx, &workflowpb.RunWorkloadWorkflowRequest{
-		TopologySpec:        testRun.GetTopologySpec(),
-		Workload:            testRun.GetWorkload(),
+		RunId:               testRun.GetId(),
+		DeploymentPlan:      deploymentPlan,
 		InfrastructureState: infrastructureState,
+		AgentBootstrap:      w.req.GetAgentBootstrap(),
 	}); err != nil {
 		w.failStage(ctx, stageWorkloadIndex)
 		if perr := w.persist(ctx, infrastructureState, deploymentPlan); perr != nil {
@@ -499,6 +656,20 @@ func attachQuotaAllocations(state *deploymentpb.InfrastructureState, refs []*wor
 	}
 }
 
+func appendOutputs(outputs []*monitor.PipelineOutput, extra ...*monitor.PipelineOutput) []*monitor.PipelineOutput {
+	for _, output := range extra {
+		if output == nil {
+			continue
+		}
+		outputs = append(outputs, output)
+	}
+	return outputs
+}
+
+func compactOutputs(outputs ...*monitor.PipelineOutput) []*monitor.PipelineOutput {
+	return appendOutputs(nil, outputs...)
+}
+
 func (w *domainTestWorkflow) GetRunState() (*workflowpb.RunState, error) {
 	return proto.Clone(w.state).(*workflowpb.RunState), nil
 }
@@ -513,7 +684,9 @@ func (w *domainTestWorkflow) listenStageUpdates(ctx workflow.Context) {
 			if !more {
 				return
 			}
-			w.applyStageUpdate(update.GetStage())
+			stage := update.GetStage()
+			w.applyStageUpdate(stage)
+			w.persistRuntimeProjection(ctx, isProjectionForceStage(stage))
 		}
 	})
 }
@@ -577,18 +750,23 @@ func (w *domainTestWorkflow) applyStageUpdate(stage *workflowpb.Stage) {
 func (w *domainTestWorkflow) startActionStage(ctx workflow.Context, phase, parentNodeExecutionID string, order uint32, path ...string) *workflowpb.Stage {
 	stage := temporalActionStage(phase, parentNodeExecutionID, order, common.Status_STATUS_RUNNING, timestamppb.New(workflow.Now(ctx)), nil, "", path...)
 	w.applyStageUpdate(stage)
+	w.persistRuntimeProjection(ctx, false)
 	return stage
 }
 
 func (w *domainTestWorkflow) completeActionStage(ctx workflow.Context, stage *workflowpb.Stage) {
-	w.finishActionStage(ctx, stage, common.Status_STATUS_COMPLETED, "")
+	w.finishActionStage(ctx, stage, common.Status_STATUS_COMPLETED, "", nil)
+}
+
+func (w *domainTestWorkflow) completeActionStageWithOutputs(ctx workflow.Context, stage *workflowpb.Stage, outputs []*monitor.PipelineOutput) {
+	w.finishActionStage(ctx, stage, common.Status_STATUS_COMPLETED, "", outputs)
 }
 
 func (w *domainTestWorkflow) failActionStage(ctx workflow.Context, stage *workflowpb.Stage, errText string) {
-	w.finishActionStage(ctx, stage, common.Status_STATUS_FAILED, errText)
+	w.finishActionStage(ctx, stage, common.Status_STATUS_FAILED, errText, nil)
 }
 
-func (w *domainTestWorkflow) finishActionStage(ctx workflow.Context, stage *workflowpb.Stage, status common.Status, errText string) {
+func (w *domainTestWorkflow) finishActionStage(ctx workflow.Context, stage *workflowpb.Stage, status common.Status, errText string, outputs []*monitor.PipelineOutput) {
 	if stage == nil {
 		return
 	}
@@ -597,7 +775,11 @@ func (w *domainTestWorkflow) finishActionStage(ctx workflow.Context, stage *work
 	update.FinishedAt = timestamppb.New(workflow.Now(ctx))
 	update.StatusReason = stageStatusReason(status)
 	update.ErrorMessage = errText
+	if len(outputs) > 0 {
+		update.Outputs = outputs
+	}
 	w.applyStageUpdate(update)
+	w.persistRuntimeProjection(ctx, isProjectionForceStage(update))
 }
 
 func (w *domainTestWorkflow) startStage(ctx workflow.Context, index int) {
@@ -639,7 +821,41 @@ func (w *domainTestWorkflow) cancel(ctx workflow.Context) {
 }
 
 func (w *domainTestWorkflow) persist(ctx workflow.Context, infrastructureState *deploymentpb.InfrastructureState, deploymentPlan *deploymentpb.DeploymentPlan) error {
-	return persistRunState(ctx, w.req.GetTestRun().GetId(), w.state, infrastructureState, deploymentPlan)
+	w.persistedInfrastructureState = infrastructureState
+	w.persistedDeploymentPlan = deploymentPlan
+	if err := persistRunState(ctx, w.req.GetTestRun().GetId(), w.state, infrastructureState, deploymentPlan); err != nil {
+		return err
+	}
+	w.lastRuntimeProjectionPersistAt = workflow.Now(ctx)
+	return nil
+}
+
+func (w *domainTestWorkflow) persistRuntimeProjection(ctx workflow.Context, force bool) {
+	if w == nil || w.req == nil || w.req.GetTestRun().GetId() == "" {
+		return
+	}
+	now := workflow.Now(ctx)
+	if !force && !w.lastRuntimeProjectionPersistAt.IsZero() && now.Sub(w.lastRuntimeProjectionPersistAt) < runtimeProjectionPersistMinInterval {
+		return
+	}
+	if err := w.persist(ctx, w.persistedInfrastructureState, w.persistedDeploymentPlan); err != nil {
+		workflow.GetLogger(ctx).Warn("persist runtime projection", "run_id", w.req.GetTestRun().GetId(), "error", err)
+	}
+}
+
+func isProjectionForceStage(stage *workflowpb.Stage) bool {
+	if stage == nil {
+		return false
+	}
+	switch stage.GetStatus() {
+	case common.Status_STATUS_COMPLETED,
+		common.Status_STATUS_FAILED,
+		common.Status_STATUS_SKIPPED,
+		common.Status_STATUS_CANCELLED:
+		return true
+	default:
+		return false
+	}
 }
 
 func mergeStage(existing, incoming *workflowpb.Stage) {

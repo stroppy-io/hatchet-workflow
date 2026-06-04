@@ -3,6 +3,7 @@ package workflows
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"testing"
 
@@ -104,7 +105,7 @@ func TestTestWorkflowExposesRunStateQuery(t *testing.T) {
 	env := suite.NewTestWorkflowEnvironment()
 	RegisterWorkflows(env, DefaultOptions())
 	registerFakeDeploymentActivities(env)
-	registerFakeAgentActivities(env)
+	agentActivities := registerFakeAgentActivities(env)
 	runtime := &fakeRuntimeActivities{}
 	registerFakeRuntimeActivities(env, runtime)
 
@@ -139,8 +140,23 @@ func TestTestWorkflowExposesRunStateQuery(t *testing.T) {
 			t.Fatalf("stage %q status = %s, want %s", stage.GetName(), got, want)
 		}
 	}
-	var agentStageSeen, providerStageSeen, renderOutputsSeen bool
+	var executeAgentStageSeen, workloadAgentStageSeen, providerStageSeen, renderOutputsSeen bool
+	var infrastructureOutputsSeen, quotaRequestsSeen, quotaAllocationsSeen, machineProviderParamsSeen, infrastructureStateSeen bool
 	for _, stage := range state.GetStages() {
+		if stage.GetName() == stageInfrastructure {
+			infrastructureOutputsSeen = stageHasOutputID(stage, "infrastructure/plan") &&
+				stageHasOutputID(stage, "infrastructure/state")
+		}
+		if stage.GetName() == actionCalculateQuotas {
+			quotaRequestsSeen = stageHasOutputID(stage, "quota/requests")
+			machineProviderParamsSeen = stageHasOutputIDPrefix(stage, "infrastructure/machine/")
+		}
+		if stage.GetName() == actionAcquireQuotas {
+			quotaAllocationsSeen = stageHasOutputID(stage, "quota/allocations")
+		}
+		if stage.GetName() == actionProcessInfrastructure {
+			infrastructureStateSeen = stageHasOutputID(stage, "infrastructure/state")
+		}
 		if stage.GetName() == stageRenderPlan {
 			renderOutputsSeen = len(stage.GetOutputs()) > 0
 		}
@@ -156,12 +172,22 @@ func TestTestWorkflowExposesRunStateQuery(t *testing.T) {
 		if stage.GetOperation() == nil {
 			continue
 		}
-		agentStageSeen = true
-		if got, want := stage.GetPhase(), stageExecutePlan; got != want {
-			t.Fatalf("agent stage phase = %q, want %q", got, want)
-		}
-		if stage.GetParentNodeExecutionId() == "" {
-			t.Fatalf("agent stage %q has empty parent_node_execution_id", stage.GetName())
+		switch stage.GetPhase() {
+		case stageExecutePlan:
+			executeAgentStageSeen = true
+			if stage.GetParentNodeExecutionId() == "" {
+				t.Fatalf("agent stage %q has empty parent_node_execution_id", stage.GetName())
+			}
+		case stageWorkload:
+			workloadAgentStageSeen = true
+			if got, want := stage.GetParentNodeExecutionId(), deploymentbuilder.StageExecutionID(stageWorkload); got != want {
+				t.Fatalf("workload stage parent_node_execution_id = %q, want %q", got, want)
+			}
+			if !strings.Contains(stage.GetOperation().GetCommandText(), "stroppy run -f") {
+				t.Fatalf("workload operation command = %q, want stroppy run", stage.GetOperation().GetCommandText())
+			}
+		default:
+			t.Fatalf("agent stage phase = %q, want %q or %q", stage.GetPhase(), stageExecutePlan, stageWorkload)
 		}
 		if stage.GetComponentId() == "" {
 			t.Fatalf("agent stage %q has empty component_id", stage.GetName())
@@ -170,8 +196,11 @@ func TestTestWorkflowExposesRunStateQuery(t *testing.T) {
 			t.Fatalf("agent stage %q has empty machine_id", stage.GetName())
 		}
 	}
-	if !agentStageSeen {
-		t.Fatal("run state has no agent step stages with operations")
+	if !executeAgentStageSeen {
+		t.Fatal("run state has no execute_deployment_plan agent step stages with operations")
+	}
+	if !workloadAgentStageSeen {
+		t.Fatal("run state has no workload agent step stage with operation")
 	}
 	if !providerStageSeen {
 		t.Fatal("run state has no provider action stages")
@@ -179,9 +208,30 @@ func TestTestWorkflowExposesRunStateQuery(t *testing.T) {
 	if !renderOutputsSeen {
 		t.Fatal("render stage has no structured outputs")
 	}
+	if !infrastructureOutputsSeen {
+		t.Fatal("infrastructure stage has no plan/state structured outputs")
+	}
+	if !quotaRequestsSeen {
+		t.Fatal("calculate_quotas stage has no quota request outputs")
+	}
+	if !quotaAllocationsSeen {
+		t.Fatal("acquire_quotas stage has no quota allocation outputs")
+	}
+	if !machineProviderParamsSeen {
+		t.Fatal("calculate_quotas stage has no machine provider params output")
+	}
+	if !infrastructureStateSeen {
+		t.Fatal("process_infrastructure stage has no infrastructure state output")
+	}
 
 	if got := runtime.lastRunStatus(); got != common.Status_STATUS_COMPLETED {
 		t.Fatalf("persisted run state status = %s, want %s", got, common.Status_STATUS_COMPLETED)
+	}
+	if !runtime.hasAgentProjectionWhileExecuteRunning() {
+		t.Fatal("runtime persistence never captured completed agent stages while execute_deployment_plan was still running")
+	}
+	if !agentActivities.hasCommandContaining("stroppy run -f") {
+		t.Fatal("agent activities never executed the stroppy workload command")
 	}
 }
 
@@ -559,14 +609,74 @@ func (fakeDeploymentActivities) TerraformDestroyActivity(context.Context, *deplo
 	return &deploymentpb.Terraform_Output{}, nil
 }
 
-func registerFakeAgentActivities(env *testsuite.TestWorkflowEnvironment) {
+func registerFakeAgentActivities(env *testsuite.TestWorkflowEnvironment) *fakeAgentActivities {
+	activities := &fakeAgentActivities{}
 	workflowpb.RegisterEnsureAgentOnlineActivityActivity(env, func(context.Context) error { return nil })
 	workflowpb.RegisterCreateDirActivityActivity(env, func(context.Context, *common.Dir) error { return nil })
 	workflowpb.RegisterWriteFileActivityActivity(env, func(context.Context, *common.File) error { return nil })
 	workflowpb.RegisterFetchFileActivityActivity(env, func(context.Context, *common.File) error { return nil })
-	workflowpb.RegisterCallCmdActivityActivity(env, func(_ context.Context, _ *common.Cmd) (*common.Cmd_Result, error) {
-		return &common.Cmd_Result{ExitCode: 0}, nil
-	})
+	workflowpb.RegisterCallCmdActivityActivity(env, activities.CallCmdActivity)
+	return activities
+}
+
+type fakeAgentActivities struct {
+	mu       sync.Mutex
+	commands []*common.Cmd
+}
+
+func (f *fakeAgentActivities) CallCmdActivity(_ context.Context, cmd *common.Cmd) (*common.Cmd_Result, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	if cmd == nil {
+		f.commands = append(f.commands, nil)
+	} else {
+		f.commands = append(f.commands, proto.Clone(cmd).(*common.Cmd))
+	}
+	return &common.Cmd_Result{ExitCode: 0}, nil
+}
+
+func (f *fakeAgentActivities) hasCommandContaining(needle string) bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	for _, cmd := range f.commands {
+		if strings.Contains(commandText(cmd), needle) {
+			return true
+		}
+	}
+	return false
+}
+
+func commandText(cmd *common.Cmd) string {
+	if cmd == nil || cmd.GetSpec() == nil {
+		return ""
+	}
+	if argv := cmd.GetSpec().GetArgv(); argv != nil {
+		return strings.Join(argv.GetArgs(), " ")
+	}
+	if script := cmd.GetSpec().GetScript(); script != nil {
+		return script.GetText()
+	}
+	return ""
+}
+
+func stageHasOutputID(stage *workflowpb.Stage, id string) bool {
+	for _, output := range stage.GetOutputs() {
+		if output.GetId() == id {
+			return true
+		}
+	}
+	return false
+}
+
+func stageHasOutputIDPrefix(stage *workflowpb.Stage, prefix string) bool {
+	for _, output := range stage.GetOutputs() {
+		if strings.HasPrefix(output.GetId(), prefix) {
+			return true
+		}
+	}
+	return false
 }
 
 func registerFakeRuntimeActivities(env *testsuite.TestWorkflowEnvironment, fake *fakeRuntimeActivities) {
@@ -648,6 +758,27 @@ func (f *fakeRuntimeActivities) lastRunStatus() common.Status {
 		return common.Status_STATUS_UNSPECIFIED
 	}
 	return f.runStates[len(f.runStates)-1].GetStatus()
+}
+
+func (f *fakeRuntimeActivities) hasAgentProjectionWhileExecuteRunning() bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	for _, state := range f.runStates {
+		var executeRunning, agentCompleted bool
+		for _, stage := range state.GetStages() {
+			if stage.GetName() == stageExecutePlan && stage.GetStatus() == common.Status_STATUS_RUNNING {
+				executeRunning = true
+			}
+			if stage.GetPhase() == stageExecutePlan && stage.GetOperation() != nil && stage.GetStatus() == common.Status_STATUS_COMPLETED {
+				agentCompleted = true
+			}
+		}
+		if executeRunning && agentCompleted {
+			return true
+		}
+	}
+	return false
 }
 
 func (f *fakeRuntimeActivities) hasSuiteStatus(status common.Status) bool {

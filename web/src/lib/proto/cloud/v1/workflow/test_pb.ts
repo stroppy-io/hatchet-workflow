@@ -21,10 +21,6 @@ import { file_cloud_v1_domain_database } from "../domain/database_pb.ts";
 import { file_cloud_v1_domain_suite } from "../domain/suite_pb.ts";
 import type { TestRun, TestRunJson } from "../domain/test_pb.ts";
 import { file_cloud_v1_domain_test } from "../domain/test_pb.ts";
-import type { Workload, WorkloadJson } from "../domain/workload_pb.ts";
-import { file_cloud_v1_domain_workload } from "../domain/workload_pb.ts";
-import type { TopologySpec, TopologySpecJson } from "../topology/topology_pb.ts";
-import { file_cloud_v1_topology_topology } from "../topology/topology_pb.ts";
 import type { RunConfig, RunConfigJson } from "./run_pb.ts";
 import { file_cloud_v1_workflow_run } from "./run_pb.ts";
 import type { EmptySchema, Timestamp, TimestampJson } from "@bufbuild/protobuf/wkt";
@@ -37,7 +33,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/workflow/test.proto.
  */
 export const file_cloud_v1_workflow_test: GenFile = /*@__PURE__*/
-  fileDesc("ChxjbG91ZC92MS93b3JrZmxvdy90ZXN0LnByb3RvEhFjbG91ZC52MS53b3JrZmxvdyKlAQoTVGVzdFdvcmtmbG93UmVxdWVzdBIcCgl0ZW5hbnRfaWQYAyABKAlCCfpCBnIEEAEYQBI0Cgh0ZXN0X3J1bhgBIAEoCzIYLmNsb3VkLnYxLmRvbWFpbi5UZXN0UnVuQgj6QgWKAQIQARI6Cg9hZ2VudF9ib290c3RyYXAYAiABKAsyIS5jbG91ZC52MS53b3JrZmxvdy5BZ2VudEJvb3RzdHJhcCIWChRUZXN0V29ya2Zsb3dSZXNwb25zZSJdCghSdW5TdGF0ZRInCgZzdGF0dXMYASABKA4yFy5jbG91ZC52MS5jb21tb24uU3RhdHVzEigKBnN0YWdlcxgCIAMoCzIYLmNsb3VkLnYxLndvcmtmbG93LlN0YWdlIr4ECgVTdGFnZRIZChFub2RlX2V4ZWN1dGlvbl9pZBgBIAEoCRIMCgRuYW1lGAIgASgJEicKBnN0YXR1cxgDIAEoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXMSLgoKc3RhcnRlZF9hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLwoLZmluaXNoZWRfYXQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEg8KB2F0dGVtcHQYBiABKA0SDQoFb3JkZXIYByABKA0SKgoYcGFyZW50X25vZGVfZXhlY3V0aW9uX2lkGAggASgJQgj6QgVyAxiAARIXCgVwaGFzZRgJIAEoCUII+kIFcgMYgAESHgoMY29tcG9uZW50X2lkGAogASgJQgj6QgVyAxiAARIcCgptYWNoaW5lX2lkGAsgASgJQgj6QgVyAxiAARInCgZ3b3JrZXIYDCABKAsyFy5jbG91ZC52MS5kb21haW4uV29ya2VyEh8KDXN0YXR1c19yZWFzb24YDSABKAlCCPpCBXIDGIACEh8KDWVycm9yX21lc3NhZ2UYDiABKAlCCPpCBXIDGIAgEjYKCW9wZXJhdGlvbhgPIAEoCzIjLmNsb3VkLnYxLm1vbml0b3IuUGlwZWxpbmVPcGVyYXRpb24SPAoHb3V0cHV0cxgQIAMoCzIgLmNsb3VkLnYxLm1vbml0b3IuUGlwZWxpbmVPdXRwdXRCCfpCBpIBAxCAICJACgtTdGFnZVVwZGF0ZRIxCgVzdGFnZRgBIAEoCzIYLmNsb3VkLnYxLndvcmtmbG93LlN0YWdlQgj6QgWKAQIQASK5AQodSW5zdGFsbFN0cm9wcHlXb3JrZmxvd1JlcXVlc3QSUAoUaW5mcmFzdHJ1Y3R1cmVfc3RhdGUYASABKAsyKC5jbG91ZC52MS5kZXBsb3ltZW50LkluZnJhc3RydWN0dXJlU3RhdGVCCPpCBYoBAhABEkYKD2RlcGxveW1lbnRfcGxhbhgCIAEoCzIjLmNsb3VkLnYxLmRlcGxveW1lbnQuRGVwbG95bWVudFBsYW5CCPpCBYoBAhABIiAKHkluc3RhbGxTdHJvcHB5V29ya2Zsb3dSZXNwb25zZSLxAQoeSW5zdGFsbERhdGFiYXNlV29ya2Zsb3dSZXF1ZXN0ElAKFGluZnJhc3RydWN0dXJlX3N0YXRlGAEgASgLMiguY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVN0YXRlQgj6QgWKAQIQARI1CghkYXRhYmFzZRgCIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5EYXRhYmFzZUII+kIFigECEAESRgoPZGVwbG95bWVudF9wbGFuGAMgASgLMiMuY2xvdWQudjEuZGVwbG95bWVudC5EZXBsb3ltZW50UGxhbkII+kIFigECEAEiIQofSW5zdGFsbERhdGFiYXNlV29ya2Zsb3dSZXNwb25zZSLnAQoaUnVuV29ya2xvYWRXb3JrZmxvd1JlcXVlc3QSQAoNdG9wb2xvZ3lfc3BlYxgBIAEoCzIfLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5U3BlY0II+kIFigECEAESNQoId29ya2xvYWQYAiABKAsyGS5jbG91ZC52MS5kb21haW4uV29ya2xvYWRCCPpCBYoBAhABElAKFGluZnJhc3RydWN0dXJlX3N0YXRlGAMgASgLMiguY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVN0YXRlQgj6QgWKAQIQASIdChtSdW5Xb3JrbG9hZFdvcmtmbG93UmVzcG9uc2UihgEKFFN1aXRlV29ya2Zsb3dSZXF1ZXN0Eh8KDHN1aXRlX3J1bl9pZBgBIAEoCUIJ+kIGcgQYQBABEjcKBHJ1bnMYAiADKAsyHC5jbG91ZC52MS53b3JrZmxvdy5SdW5Db25maWdCC/pCCJIBBQgBEOgHEhQKDG1heF9wYXJhbGxlbBgDIAEoDSIXChVTdWl0ZVdvcmtmbG93UmVzcG9uc2Uy+AYKC1Rlc3RTZXJ2aWNlErIBCgxUZXN0V29ya2Zsb3cSJi5jbG91ZC52MS53b3JrZmxvdy5UZXN0V29ya2Zsb3dSZXF1ZXN0GicuY2xvdWQudjEud29ya2Zsb3cuVGVzdFdvcmtmbG93UmVzcG9uc2UiUYrEA01yDFRlc3RXb3JrZmxvdyoZdGVzdC1ydW4vJHshIHRlc3RSdW4uaWQgfTACSgIgAQoNCgtHZXRSdW5TdGF0ZRINCgtVcGRhdGVTdGFnZRJVCgtHZXRSdW5TdGF0ZRIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRobLmNsb3VkLnYxLndvcmtmbG93LlJ1blN0YXRlIhGaxAMNCgtHZXRSdW5TdGF0ZRJYCgtVcGRhdGVTdGFnZRIeLmNsb3VkLnYxLndvcmtmbG93LlN0YWdlVXBkYXRlGhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IhGixAMNCgtVcGRhdGVTdGFnZRKoAQoWSW5zdGFsbFN0cm9wcHlXb3JrZmxvdxIwLmNsb3VkLnYxLndvcmtmbG93Lkluc3RhbGxTdHJvcHB5V29ya2Zsb3dSZXF1ZXN0GjEuY2xvdWQudjEud29ya2Zsb3cuSW5zdGFsbFN0cm9wcHlXb3JrZmxvd1Jlc3BvbnNlIimKxAMlUgMIiA5KBgoCCAUgA3IWSW5zdGFsbFN0cm9wcHlXb3JrZmxvdxKsAQoXSW5zdGFsbERhdGFiYXNlV29ya2Zsb3cSMS5jbG91ZC52MS53b3JrZmxvdy5JbnN0YWxsRGF0YWJhc2VXb3JrZmxvd1JlcXVlc3QaMi5jbG91ZC52MS53b3JrZmxvdy5JbnN0YWxsRGF0YWJhc2VXb3JrZmxvd1Jlc3BvbnNlIiqKxAMmUgMIiA5KBiADCgIIBXIXSW5zdGFsbERhdGFiYXNlV29ya2Zsb3cSkwEKE1J1bldvcmtsb2FkV29ya2Zsb3cSLS5jbG91ZC52MS53b3JrZmxvdy5SdW5Xb3JrbG9hZFdvcmtmbG93UmVxdWVzdBouLmNsb3VkLnYxLndvcmtmbG93LlJ1bldvcmtsb2FkV29ya2Zsb3dSZXNwb25zZSIdisQDGXITUnVuV29ya2xvYWRXb3JrZmxvd0oCIAEaE4rEAw8KDXN0cm9wcHktY2xvdWQyxwEKFFN1aXRlV29ya2Zsb3dTZXJ2aWNlEpkBCg1TdWl0ZVdvcmtmbG93EicuY2xvdWQudjEud29ya2Zsb3cuU3VpdGVXb3JrZmxvd1JlcXVlc3QaKC5jbG91ZC52MS53b3JrZmxvdy5TdWl0ZVdvcmtmbG93UmVzcG9uc2UiNYrEAzEwAkoCIAFyDVN1aXRlV29ya2Zsb3cqGnN1aXRlLXJ1bi8keyEgc3VpdGVSdW5JZCB9GhOKxAMPCg1zdHJvcHB5LWNsb3VkQkZaRGdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL3dvcmtmbG93YgZwcm90bzM", [file_cloud_v1_common_status, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_plan, file_cloud_v1_domain_worker, file_cloud_v1_monitor_overview, file_cloud_v1_workflow_deployment, file_cloud_v1_domain_database, file_cloud_v1_domain_suite, file_cloud_v1_domain_test, file_cloud_v1_domain_workload, file_cloud_v1_topology_topology, file_cloud_v1_workflow_run, file_google_protobuf_empty, file_google_protobuf_timestamp, file_temporal_v1_temporal, file_validate_validate]);
+  fileDesc("ChxjbG91ZC92MS93b3JrZmxvdy90ZXN0LnByb3RvEhFjbG91ZC52MS53b3JrZmxvdyKlAQoTVGVzdFdvcmtmbG93UmVxdWVzdBIcCgl0ZW5hbnRfaWQYAyABKAlCCfpCBnIEEAEYQBI0Cgh0ZXN0X3J1bhgBIAEoCzIYLmNsb3VkLnYxLmRvbWFpbi5UZXN0UnVuQgj6QgWKAQIQARI6Cg9hZ2VudF9ib290c3RyYXAYAiABKAsyIS5jbG91ZC52MS53b3JrZmxvdy5BZ2VudEJvb3RzdHJhcCIWChRUZXN0V29ya2Zsb3dSZXNwb25zZSJdCghSdW5TdGF0ZRInCgZzdGF0dXMYASABKA4yFy5jbG91ZC52MS5jb21tb24uU3RhdHVzEigKBnN0YWdlcxgCIAMoCzIYLmNsb3VkLnYxLndvcmtmbG93LlN0YWdlIr4ECgVTdGFnZRIZChFub2RlX2V4ZWN1dGlvbl9pZBgBIAEoCRIMCgRuYW1lGAIgASgJEicKBnN0YXR1cxgDIAEoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXMSLgoKc3RhcnRlZF9hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLwoLZmluaXNoZWRfYXQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEg8KB2F0dGVtcHQYBiABKA0SDQoFb3JkZXIYByABKA0SKgoYcGFyZW50X25vZGVfZXhlY3V0aW9uX2lkGAggASgJQgj6QgVyAxiAARIXCgVwaGFzZRgJIAEoCUII+kIFcgMYgAESHgoMY29tcG9uZW50X2lkGAogASgJQgj6QgVyAxiAARIcCgptYWNoaW5lX2lkGAsgASgJQgj6QgVyAxiAARInCgZ3b3JrZXIYDCABKAsyFy5jbG91ZC52MS5kb21haW4uV29ya2VyEh8KDXN0YXR1c19yZWFzb24YDSABKAlCCPpCBXIDGIACEh8KDWVycm9yX21lc3NhZ2UYDiABKAlCCPpCBXIDGIAgEjYKCW9wZXJhdGlvbhgPIAEoCzIjLmNsb3VkLnYxLm1vbml0b3IuUGlwZWxpbmVPcGVyYXRpb24SPAoHb3V0cHV0cxgQIAMoCzIgLmNsb3VkLnYxLm1vbml0b3IuUGlwZWxpbmVPdXRwdXRCCfpCBpIBAxCAICJACgtTdGFnZVVwZGF0ZRIxCgVzdGFnZRgBIAEoCzIYLmNsb3VkLnYxLndvcmtmbG93LlN0YWdlQgj6QgWKAQIQASK5AQodSW5zdGFsbFN0cm9wcHlXb3JrZmxvd1JlcXVlc3QSUAoUaW5mcmFzdHJ1Y3R1cmVfc3RhdGUYASABKAsyKC5jbG91ZC52MS5kZXBsb3ltZW50LkluZnJhc3RydWN0dXJlU3RhdGVCCPpCBYoBAhABEkYKD2RlcGxveW1lbnRfcGxhbhgCIAEoCzIjLmNsb3VkLnYxLmRlcGxveW1lbnQuRGVwbG95bWVudFBsYW5CCPpCBYoBAhABIiAKHkluc3RhbGxTdHJvcHB5V29ya2Zsb3dSZXNwb25zZSLxAQoeSW5zdGFsbERhdGFiYXNlV29ya2Zsb3dSZXF1ZXN0ElAKFGluZnJhc3RydWN0dXJlX3N0YXRlGAEgASgLMiguY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVN0YXRlQgj6QgWKAQIQARI1CghkYXRhYmFzZRgCIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5EYXRhYmFzZUII+kIFigECEAESRgoPZGVwbG95bWVudF9wbGFuGAMgASgLMiMuY2xvdWQudjEuZGVwbG95bWVudC5EZXBsb3ltZW50UGxhbkII+kIFigECEAEiIQofSW5zdGFsbERhdGFiYXNlV29ya2Zsb3dSZXNwb25zZSKYAgoaUnVuV29ya2xvYWRXb3JrZmxvd1JlcXVlc3QSGgoGcnVuX2lkGAEgASgJQgr6QgdyBRiAARABEkYKD2RlcGxveW1lbnRfcGxhbhgCIAEoCzIjLmNsb3VkLnYxLmRlcGxveW1lbnQuRGVwbG95bWVudFBsYW5CCPpCBYoBAhABElAKFGluZnJhc3RydWN0dXJlX3N0YXRlGAMgASgLMiguY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVN0YXRlQgj6QgWKAQIQARJECg9hZ2VudF9ib290c3RyYXAYBCABKAsyIS5jbG91ZC52MS53b3JrZmxvdy5BZ2VudEJvb3RzdHJhcEII+kIFigECEAEiHQobUnVuV29ya2xvYWRXb3JrZmxvd1Jlc3BvbnNlIoYBChRTdWl0ZVdvcmtmbG93UmVxdWVzdBIfCgxzdWl0ZV9ydW5faWQYASABKAlCCfpCBnIEEAEYQBI3CgRydW5zGAIgAygLMhwuY2xvdWQudjEud29ya2Zsb3cuUnVuQ29uZmlnQgv6QgiSAQUIARDoBxIUCgxtYXhfcGFyYWxsZWwYAyABKA0iFwoVU3VpdGVXb3JrZmxvd1Jlc3BvbnNlMvgGCgtUZXN0U2VydmljZRKyAQoMVGVzdFdvcmtmbG93EiYuY2xvdWQudjEud29ya2Zsb3cuVGVzdFdvcmtmbG93UmVxdWVzdBonLmNsb3VkLnYxLndvcmtmbG93LlRlc3RXb3JrZmxvd1Jlc3BvbnNlIlGKxANNKhl0ZXN0LXJ1bi8keyEgdGVzdFJ1bi5pZCB9MAJKAiABCg0KC0dldFJ1blN0YXRlEg0KC1VwZGF0ZVN0YWdlcgxUZXN0V29ya2Zsb3cSVQoLR2V0UnVuU3RhdGUSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaGy5jbG91ZC52MS53b3JrZmxvdy5SdW5TdGF0ZSIRmsQDDQoLR2V0UnVuU3RhdGUSWAoLVXBkYXRlU3RhZ2USHi5jbG91ZC52MS53b3JrZmxvdy5TdGFnZVVwZGF0ZRoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIRosQDDQoLVXBkYXRlU3RhZ2USqAEKFkluc3RhbGxTdHJvcHB5V29ya2Zsb3cSMC5jbG91ZC52MS53b3JrZmxvdy5JbnN0YWxsU3Ryb3BweVdvcmtmbG93UmVxdWVzdBoxLmNsb3VkLnYxLndvcmtmbG93Lkluc3RhbGxTdHJvcHB5V29ya2Zsb3dSZXNwb25zZSIpisQDJXIWSW5zdGFsbFN0cm9wcHlXb3JrZmxvd1IDCIgOSgYgAwoCCAUSrAEKF0luc3RhbGxEYXRhYmFzZVdvcmtmbG93EjEuY2xvdWQudjEud29ya2Zsb3cuSW5zdGFsbERhdGFiYXNlV29ya2Zsb3dSZXF1ZXN0GjIuY2xvdWQudjEud29ya2Zsb3cuSW5zdGFsbERhdGFiYXNlV29ya2Zsb3dSZXNwb25zZSIqisQDJnIXSW5zdGFsbERhdGFiYXNlV29ya2Zsb3dSAwiIDkoGCgIIBSADEpMBChNSdW5Xb3JrbG9hZFdvcmtmbG93Ei0uY2xvdWQudjEud29ya2Zsb3cuUnVuV29ya2xvYWRXb3JrZmxvd1JlcXVlc3QaLi5jbG91ZC52MS53b3JrZmxvdy5SdW5Xb3JrbG9hZFdvcmtmbG93UmVzcG9uc2UiHYrEAxlyE1J1bldvcmtsb2FkV29ya2Zsb3dKAiABGhOKxAMPCg1zdHJvcHB5LWNsb3VkMscBChRTdWl0ZVdvcmtmbG93U2VydmljZRKZAQoNU3VpdGVXb3JrZmxvdxInLmNsb3VkLnYxLndvcmtmbG93LlN1aXRlV29ya2Zsb3dSZXF1ZXN0GiguY2xvdWQudjEud29ya2Zsb3cuU3VpdGVXb3JrZmxvd1Jlc3BvbnNlIjWKxAMxSgIgAXINU3VpdGVXb3JrZmxvdyoac3VpdGUtcnVuLyR7ISBzdWl0ZVJ1bklkIH0wAhoTisQDDwoNc3Ryb3BweS1jbG91ZEJGWkRnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS93b3JrZmxvd2IGcHJvdG8z", [file_cloud_v1_common_status, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_plan, file_cloud_v1_domain_worker, file_cloud_v1_monitor_overview, file_cloud_v1_workflow_deployment, file_cloud_v1_domain_database, file_cloud_v1_domain_suite, file_cloud_v1_domain_test, file_cloud_v1_workflow_run, file_google_protobuf_empty, file_google_protobuf_timestamp, file_temporal_v1_temporal, file_validate_validate]);
 
 /**
  *
@@ -722,70 +718,92 @@ export const InstallDatabaseWorkflowResponseSchema: GenMessage<InstallDatabaseWo
 
 /**
  *
- * RunWorkloadWorkflowRequest asks to run the workload via the agent (write
- * stroppy config + call stroppy). Results land in metrics, not in the response.
+ * RunWorkloadWorkflowRequest asks to run the already-rendered workload via
+ * the agent. Deployment rendering writes stroppy-config.json and monitor
+ * collectors first; this workflow executes the real stroppy load and relies on
+ * the OTLP exporter in that config for metrics.
  *
  * @generated from message cloud.v1.workflow.RunWorkloadWorkflowRequest
  */
 export type RunWorkloadWorkflowRequest = Message<"cloud.v1.workflow.RunWorkloadWorkflowRequest"> & {
   /**
    *
-   * topology_spec is the logical graph the workload targets.
+   * run_id is the stable run identifier used for stage/log correlation.
    *
-   * @generated from field: cloud.v1.topology.TopologySpec topology_spec = 1;
+   * @generated from field: string run_id = 1;
    */
-  topologySpec?: TopologySpec;
+  runId: string;
 
   /**
    *
-   * workload is the workload definition to execute.
+   * deployment_plan is the materialized plan containing the workload-runner
+   * component and its rendered config path.
    *
-   * @generated from field: cloud.v1.domain.Workload workload = 2;
+   * @generated from field: cloud.v1.deployment.DeploymentPlan deployment_plan = 2;
    */
-  workload?: Workload;
+  deploymentPlan?: DeploymentPlan;
 
   /**
    *
-   * infrastructure_state carries runtime endpoints used to render the workload
-   * connection string and route agent calls.
+   * infrastructure_state carries runtime machine state for route validation.
    *
    * @generated from field: cloud.v1.deployment.InfrastructureState infrastructure_state = 3;
    */
   infrastructureState?: InfrastructureState;
+
+  /**
+   *
+   * agent_bootstrap carries the per-node Temporal task queues used to reach
+   * the workload runner agent.
+   *
+   * @generated from field: cloud.v1.workflow.AgentBootstrap agent_bootstrap = 4;
+   */
+  agentBootstrap?: AgentBootstrap;
 };
 
 /**
  *
- * RunWorkloadWorkflowRequest asks to run the workload via the agent (write
- * stroppy config + call stroppy). Results land in metrics, not in the response.
+ * RunWorkloadWorkflowRequest asks to run the already-rendered workload via
+ * the agent. Deployment rendering writes stroppy-config.json and monitor
+ * collectors first; this workflow executes the real stroppy load and relies on
+ * the OTLP exporter in that config for metrics.
  *
  * @generated from message cloud.v1.workflow.RunWorkloadWorkflowRequest
  */
 export type RunWorkloadWorkflowRequestJson = {
   /**
    *
-   * topology_spec is the logical graph the workload targets.
+   * run_id is the stable run identifier used for stage/log correlation.
    *
-   * @generated from field: cloud.v1.topology.TopologySpec topology_spec = 1;
+   * @generated from field: string run_id = 1;
    */
-  topologySpec?: TopologySpecJson;
+  runId?: string;
 
   /**
    *
-   * workload is the workload definition to execute.
+   * deployment_plan is the materialized plan containing the workload-runner
+   * component and its rendered config path.
    *
-   * @generated from field: cloud.v1.domain.Workload workload = 2;
+   * @generated from field: cloud.v1.deployment.DeploymentPlan deployment_plan = 2;
    */
-  workload?: WorkloadJson;
+  deploymentPlan?: DeploymentPlanJson;
 
   /**
    *
-   * infrastructure_state carries runtime endpoints used to render the workload
-   * connection string and route agent calls.
+   * infrastructure_state carries runtime machine state for route validation.
    *
    * @generated from field: cloud.v1.deployment.InfrastructureState infrastructure_state = 3;
    */
   infrastructureState?: InfrastructureStateJson;
+
+  /**
+   *
+   * agent_bootstrap carries the per-node Temporal task queues used to reach
+   * the workload runner agent.
+   *
+   * @generated from field: cloud.v1.workflow.AgentBootstrap agent_bootstrap = 4;
+   */
+  agentBootstrap?: AgentBootstrapJson;
 };
 
 export type RunWorkloadWorkflowRequestValid = RunWorkloadWorkflowRequest;

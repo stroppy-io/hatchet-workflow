@@ -19,6 +19,7 @@ var binaryUpstreams = map[string]string{
 	"node_exporter":     "https://github.com/prometheus/node_exporter/releases/download/v{ver}/{file}",
 	"vmagent":           "https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/v{ver}/{file}",
 	"stroppy":           "https://github.com/stroppy-io/stroppy/releases/download/v{ver}/{file}",
+	"stroppy_nightly":   "https://github.com/stroppy-io/stroppy/releases/download/nightly-{ver}/{file}",
 	"postgres_exporter": "https://github.com/prometheus-community/postgres_exporter/releases/download/v{ver}/{file}",
 	"mysqld_exporter":   "https://github.com/prometheus/mysqld_exporter/releases/download/v{ver}/{file}",
 	"vector":            "https://packages.timber.io/vector/{ver}/{file}",

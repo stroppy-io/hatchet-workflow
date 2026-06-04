@@ -26,6 +26,12 @@ import (
 // streamInterval is how often Stream re-polls GetRunState and emits a snapshot.
 const streamInterval = time.Second
 
+// overviewRunStateQueryTimeout bounds the one live Temporal query used by the
+// detail overview. The Overview endpoint must degrade to the persisted runtime
+// projection instead of hanging the UI when Temporal is slow or the workflow is
+// already closed.
+const overviewRunStateQueryTimeout = 2 * time.Second
+
 const (
 	stageInfrastructureNodeName       = "infrastructure"
 	stageRenderDeploymentPlanNodeName = "render_deployment_plan"
@@ -66,9 +72,10 @@ type AgentPresenceReader interface {
 // live monitor.Overview projected from the Temporal TestWorkflow's RunState, and
 // (c) the parent suite-run record when the run belongs to a suite.
 type OverviewReader struct {
-	tc       runStateQuerier
-	store    SnapshotRunReader
-	presence AgentPresenceReader
+	tc                   runStateQuerier
+	store                SnapshotRunReader
+	presence             AgentPresenceReader
+	runStateQueryTimeout time.Duration
 }
 
 var _ test_run_overview.OverviewReader = (*OverviewReader)(nil)
@@ -116,7 +123,22 @@ func (r *OverviewReader) Get(ctx context.Context, runID string) (*api.TestRunOve
 		degradedReasons = append(degradedReasons, "agent_registry_unavailable: "+err.Error())
 	}
 
-	rs, err := r.tc.GetRunState(ctx, testWorkflowID(runID), "")
+	if persistedRecordIsTerminal(rec) {
+		snap.Overview = overviewFromRecord(runID, rec, presence, observedAt)
+		snap.Overview.DegradedReasons = append(snap.Overview.GetDegradedReasons(), degradedReasons...)
+		return snap, nil
+	}
+
+	if r.tc == nil {
+		degradedReasons = append(degradedReasons, "workflow_state_unavailable: temporal_client_not_configured")
+		snap.Overview = overviewFromRecord(runID, rec, presence, observedAt)
+		snap.Overview.DegradedReasons = append(snap.Overview.GetDegradedReasons(), degradedReasons...)
+		return snap, nil
+	}
+
+	queryCtx, cancel := context.WithTimeout(ctx, r.effectiveRunStateQueryTimeout())
+	defer cancel()
+	rs, err := r.tc.GetRunState(queryCtx, testWorkflowID(runID), "")
 	if err != nil {
 		if ctxErr := ctx.Err(); ctxErr != nil {
 			return nil, ctxErr
@@ -136,6 +158,20 @@ func (r *OverviewReader) Get(ctx context.Context, runID string) (*api.TestRunOve
 	snap.Overview.DegradedReasons = append(snap.Overview.GetDegradedReasons(), degradedReasons...)
 	overlayRunFromOverview(snap.Run, snap.Overview)
 	return snap, nil
+}
+
+func (r *OverviewReader) effectiveRunStateQueryTimeout() time.Duration {
+	if r != nil && r.runStateQueryTimeout > 0 {
+		return r.runStateQueryTimeout
+	}
+	return overviewRunStateQueryTimeout
+}
+
+func persistedRecordIsTerminal(rec *models.TestRunRecord) bool {
+	if rec == nil {
+		return false
+	}
+	return isTerminalStatus(rec.GetStatus()) || isTerminalStatus(rec.GetRuntimeState().GetStatus())
 }
 
 // Stream pushes a fresh full snapshot every tick until ctx is cancelled or the
@@ -249,7 +285,9 @@ func overviewFromRecord(runID string, rec *models.TestRunRecord, presence map[st
 		overview := projectOverviewWithSource(runID, rec.GetRuntimeState(), observedAt, monitor.ObservationSource_OBSERVATION_SOURCE_PERSISTED_RECORD)
 		overview.Workers = workersFromRecord(rec, presence)
 		sum := rec.GetSummary()
-		if rec.GetStatus() != common.Status_STATUS_UNSPECIFIED {
+		runtimeTerminal := isTerminalStatus(rec.GetRuntimeState().GetStatus())
+		stored := rec.GetStatus()
+		if stored != common.Status_STATUS_UNSPECIFIED && (!runtimeTerminal || stored == common.Status_STATUS_CANCELLING || isTerminalStatus(stored)) {
 			overview.Status = rec.GetStatus()
 		}
 		if sum.GetStartedAt() != nil {
@@ -325,6 +363,12 @@ func pipelineFromRecord(runID string, rec *models.TestRunRecord) *monitor.Pipeli
 		recordStageNode(runID, rec, executeDeploymentPlanNodeName, 3, recordExecutePlanStatus(rec)),
 		recordStageNode(runID, rec, stageWorkloadNodeName, 4, recordWorkloadStatus(rec)),
 		recordStageNode(runID, rec, stageTeardownNodeName, 5, recordTeardownStatus(rec)),
+	}
+	if rec.GetSpec().GetInfrastructurePlan() != nil {
+		pipeline.Roots[0].Outputs = appendPipelineOutputs(
+			deploymentbuilder.InfrastructurePlanOutputs(rec.GetSpec().GetInfrastructurePlan()),
+			deploymentbuilder.InfrastructureStateOutputs(rec.GetInfrastructureState())...,
+		)
 	}
 	if rec.GetDeploymentPlan() != nil {
 		pipeline.Roots[1].Outputs = deploymentbuilder.DeploymentPlanOutputs(rec.GetDeploymentPlan())
@@ -413,13 +457,18 @@ func mergeWorkerPresence(worker *monitor.WorkerInfo, sample *monitor.WorkerInfo)
 	if sample.GetHost() != "" {
 		worker.Host = sample.GetHost()
 	}
-	worker.Online = sample.GetPresence() == monitor.WorkerPresence_WORKER_PRESENCE_ONLINE
-	worker.Presence = sample.GetPresence()
 	worker.RegisteredAt = sample.GetRegisteredAt()
 	worker.LastSeenAt = sample.GetLastSeenAt()
 	worker.HeartbeatIntervalSeconds = sample.GetHeartbeatIntervalSeconds()
 	worker.AgentVersion = sample.GetAgentVersion()
 	worker.RunId = sample.GetRunId()
+	if worker.GetPresence() == monitor.WorkerPresence_WORKER_PRESENCE_TERMINATED {
+		worker.Online = false
+		worker.StatusReason = "run_terminal_agent_terminated"
+		return
+	}
+	worker.Online = sample.GetPresence() == monitor.WorkerPresence_WORKER_PRESENCE_ONLINE
+	worker.Presence = sample.GetPresence()
 	worker.StatusReason = sample.GetStatusReason()
 	worker.Source = monitor.ObservationSource_OBSERVATION_SOURCE_AGENT_REGISTRY
 }
@@ -1102,6 +1151,16 @@ func sourceStatusReason(source monitor.ObservationSource, status common.Status) 
 	default:
 		return strings.ToLower(status.String())
 	}
+}
+
+func appendPipelineOutputs(outputs []*monitor.PipelineOutput, extra ...*monitor.PipelineOutput) []*monitor.PipelineOutput {
+	for _, output := range extra {
+		if output == nil {
+			continue
+		}
+		outputs = append(outputs, output)
+	}
+	return outputs
 }
 
 func isPipelineTerminalStatus(s common.Status) bool {

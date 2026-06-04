@@ -3,6 +3,7 @@ package workload
 import (
 	"fmt"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	deploymentbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/deployment"
@@ -13,6 +14,11 @@ import (
 )
 
 type DeploymentRenderer struct{}
+
+const workloadCurlOpts = `--connect-timeout 20 --max-time 300 --retry 3 --retry-delay 5 --retry-connrefused --retry-max-time 600`
+
+var stroppyReleaseVersionRE = regexp.MustCompile(`^v?[0-9]+(\.[0-9]+){1,3}([-.][0-9A-Za-z.]+)?$`)
+var stroppyCommitVersionRE = regexp.MustCompile(`^[0-9a-fA-F]{7,40}$`)
 
 func (r DeploymentRenderer) Supports(component *topologypb.Component) bool {
 	return component != nil && component.GetEngine() == Engine && component.GetRole() == RunnerRole
@@ -32,7 +38,7 @@ func (r DeploymentRenderer) RenderComponent(ctx deploymentbuilder.RenderContext)
 	}
 	steps = append(steps, workloadFileSteps(ctx.Component.GetId(), ctx.Workload)...)
 	steps = append(steps,
-		deploymentbuilder.CallCmdStep("100_prepare_stroppy", 100, installCommand(ctx.Workload)),
+		deploymentbuilder.CallCmdStep("100_prepare_stroppy", 100, installCommand(ctx.Workload, ctx.Topology.Spec().GetLabels()[deploymentbuilder.LabelServerAddr])),
 		deploymentbuilder.CallCmdStep("110_healthcheck", 110, "test -d "+deploymentbuilder.ShellQuote(deploymentbuilder.ConfigDir(ctx.Component.GetId()))),
 	)
 	// The stroppy runner emits the k6/stroppy OTEL metrics the dashboards read,
@@ -87,7 +93,7 @@ func (r DeploymentRenderer) RenderPreview(ctx deploymentbuilder.PreviewContext) 
 		artifacts = append(artifacts, deploymentbuilder.FileArtifact(ctx, Engine, deploymentbuilder.ArtifactID(ctx.Component.GetId(), "files/"+filepath.Base(file.GetInfo().GetPath())), file, deploymentpb.RenderArtifact_ORIGIN_SYSTEM, deploymentpb.RenderArtifact_MUTABILITY_READ_ONLY, "workload files come from workload input", "", map[string]string{"artifact": "workload_file"}))
 	}
 	artifacts = append(artifacts,
-		deploymentbuilder.CommandArtifact(ctx, Engine, deploymentbuilder.ArtifactID(ctx.Component.GetId(), "install/100"), installCommand(ctx.Workload), "stroppy install is renderer-owned", map[string]string{"artifact": "install"}),
+		deploymentbuilder.CommandArtifact(ctx, Engine, deploymentbuilder.ArtifactID(ctx.Component.GetId(), "install/100"), installCommand(ctx.Workload, labels[deploymentbuilder.LabelServerAddr]), "stroppy install is renderer-owned", map[string]string{"artifact": "install"}),
 		deploymentbuilder.CommandArtifact(ctx, Engine, deploymentbuilder.ArtifactID(ctx.Component.GetId(), "healthcheck"), "test -d "+deploymentbuilder.ShellQuote(deploymentbuilder.ConfigDir(ctx.Component.GetId())), "healthcheck command is renderer-owned", map[string]string{"artifact": "healthcheck"}),
 		deploymentbuilder.RuntimeArtifact(ctx, Engine, "runtime/private-address", "machine."+ctx.Node.GetId()+".endpoint.private.address"),
 	)
@@ -159,13 +165,52 @@ func workloadFiles(componentID string, input *domain.Workload) []*common.File {
 	return files
 }
 
-func installCommand(input *domain.Workload) string {
+func installCommand(input *domain.Workload, serverAddr string) string {
 	version := strings.TrimSpace(input.GetStroppyVersion())
 	if version == "" {
 		version = "latest"
 	}
-	return "mkdir -p /opt/stroppy && " +
-		"if command -v stroppy >/dev/null 2>&1; then stroppy --version || true; else echo " + deploymentbuilder.ShellQuote("stroppy "+version+" binary resolver is pending") + "; fi"
+	serverAddr = strings.TrimRight(strings.TrimSpace(serverAddr), "/")
+	if serverAddr == "" {
+		return "set -e\n" +
+			"if command -v stroppy >/dev/null 2>&1; then\n" +
+			"  stroppy --version || true\n" +
+			"else\n" +
+			"  echo 'stroppy server address is not configured; cannot fetch binary' >&2\n" +
+			"  exit 127\n" +
+			"fi\n"
+	}
+	downloadURL := stroppyDownloadURL(serverAddr, version)
+	return fmt.Sprintf(`set -e
+if command -v stroppy >/dev/null 2>&1; then
+  stroppy --version || true
+  exit 0
+fi
+mkdir -p /usr/local/bin
+tmp="$(mktemp /tmp/stroppy-artifact.XXXXXX)"
+extract_dir="$(mktemp -d /tmp/stroppy-extract.XXXXXX)"
+cleanup() {
+  rm -f "$tmp"
+  rm -rf "$extract_dir"
+}
+trap cleanup EXIT
+curl -fsSL %s %s -o "$tmp"
+if tar tzf "$tmp" >/dev/null 2>&1; then
+  tar xzf "$tmp" -C "$extract_dir"
+  bin="$(find "$extract_dir" -type f -name stroppy -perm /111 | head -n 1)"
+  if [ -z "$bin" ]; then
+    bin="$(find "$extract_dir" -type f -name stroppy | head -n 1)"
+  fi
+  if [ -z "$bin" ]; then
+    echo "stroppy binary not found in downloaded archive" >&2
+    exit 1
+  fi
+  install -m 0755 "$bin" /usr/local/bin/stroppy
+else
+  install -m 0755 "$tmp" /usr/local/bin/stroppy
+fi
+stroppy --version || true
+`, workloadCurlOpts, deploymentbuilder.ShellQuote(downloadURL))
 }
 
 func configPath(componentID string) string {
@@ -174,4 +219,22 @@ func configPath(componentID string) string {
 
 func configArtifactID(componentID string) string {
 	return deploymentbuilder.ArtifactID(componentID, "stroppy-config.json")
+}
+
+func stroppyDownloadURL(serverAddr, version string) string {
+	version = strings.TrimSpace(version)
+	trimmed := strings.TrimPrefix(version, "v")
+	switch {
+	case version == "" || strings.EqualFold(version, "latest"):
+		return serverAddr + "/artifacts/stroppy"
+	case stroppyReleaseVersionRE.MatchString(version):
+		return serverAddr + "/api/binaries/stroppy/" + trimmed + "/stroppy_linux_amd64.tar.gz"
+	case stroppyCommitVersionRE.MatchString(version):
+		if len(trimmed) > 7 {
+			trimmed = trimmed[:7]
+		}
+		return serverAddr + "/api/binaries/stroppy_nightly/" + strings.ToLower(trimmed) + "/stroppy"
+	default:
+		return serverAddr + "/artifacts/stroppy"
+	}
 }

@@ -10,7 +10,6 @@ import (
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	monitor "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
-	topology "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -821,17 +820,21 @@ func (m *RunWorkloadWorkflowRequest) Encode(e *jx.Encoder) {
 		return
 	}
 	e.ObjStart()
-	if m.TopologySpec != nil {
-		e.FieldStart("topologySpec")
-		jxpb.EncMessage(e, m.TopologySpec)
+	if m.RunId != "" {
+		e.FieldStart("runId")
+		e.Str(m.RunId)
 	}
-	if m.Workload != nil {
-		e.FieldStart("workload")
-		jxpb.EncMessage(e, m.Workload)
+	if m.DeploymentPlan != nil {
+		e.FieldStart("deploymentPlan")
+		jxpb.EncMessage(e, m.DeploymentPlan)
 	}
 	if m.InfrastructureState != nil {
 		e.FieldStart("infrastructureState")
 		jxpb.EncMessage(e, m.InfrastructureState)
+	}
+	if m.AgentBootstrap != nil {
+		e.FieldStart("agentBootstrap")
+		m.AgentBootstrap.Encode(e)
 	}
 	e.ObjEnd()
 }
@@ -840,29 +843,30 @@ func (m *RunWorkloadWorkflowRequest) Decode(d *jx.Decoder) error {
 	seen := map[string]bool{}
 	return d.Obj(func(d *jx.Decoder, key string) error {
 		switch key {
-		case "topologySpec", "topology_spec":
-			if seen["TopologySpec"] {
+		case "runId", "run_id":
+			if seen["RunId"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["TopologySpec"] = true
+			seen["RunId"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			m.TopologySpec = &topology.TopologySpec{}
-			if err := jxpb.DecMessage(d, m.TopologySpec); err != nil {
+			v, err := d.Str()
+			if err != nil {
 				return err
 			}
+			m.RunId = v
 			return nil
-		case "workload":
-			if seen["Workload"] {
+		case "deploymentPlan", "deployment_plan":
+			if seen["DeploymentPlan"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["Workload"] = true
+			seen["DeploymentPlan"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			m.Workload = &domain.Workload{}
-			if err := jxpb.DecMessage(d, m.Workload); err != nil {
+			m.DeploymentPlan = &deployment.DeploymentPlan{}
+			if err := jxpb.DecMessage(d, m.DeploymentPlan); err != nil {
 				return err
 			}
 			return nil
@@ -876,6 +880,19 @@ func (m *RunWorkloadWorkflowRequest) Decode(d *jx.Decoder) error {
 			}
 			m.InfrastructureState = &deployment.InfrastructureState{}
 			if err := jxpb.DecMessage(d, m.InfrastructureState); err != nil {
+				return err
+			}
+			return nil
+		case "agentBootstrap", "agent_bootstrap":
+			if seen["AgentBootstrap"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["AgentBootstrap"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.AgentBootstrap = &AgentBootstrap{}
+			if err := m.AgentBootstrap.Decode(d); err != nil {
 				return err
 			}
 			return nil
