@@ -112,6 +112,7 @@ func (r DeploymentRenderer) RenderPreview(ctx deploymentbuilder.PreviewContext) 
 }
 
 func effectiveConfigFile(componentID string, input *domain.Workload, database *domain.Database, overrides *deploymentpb.RenderOverrideSet, labels map[string]string, target databaseTarget, loadWorkers uint32, bearerToken string) (*common.File, deploymentpb.RenderArtifact_Origin, error) {
+	target = target.withDefaults(database)
 	artifactID := configArtifactID(componentID)
 	if override, ok := deploymentbuilder.OverrideFile(overrides, componentID, artifactID); ok && override.GetFile() != nil {
 		file, err := patchStroppyConfigFile(override.GetFile(), labels, target, bearerToken)

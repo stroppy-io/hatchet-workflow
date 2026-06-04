@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/dbcredentials"
 	deploymentbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
@@ -319,7 +320,7 @@ func postgresMasterServiceUnit(componentID, role, configDir, cfgPath string) str
 WantedBy=multi-user.target
 `)
 	setupPath := configDir + "/replication-setup.sql"
-	return base + fmt.Sprintf(`ExecStartPost=/bin/sh -c "for i in $$(seq 1 30); do pg_isready -h 127.0.0.1 -p 5432 && break; sleep 1; done; /usr/sbin/runuser -u postgres -- psql -p 5432 -f %s || true"
+	return base + fmt.Sprintf(`ExecStartPost=/bin/sh -c "for i in $$(seq 1 30); do pg_isready -h 127.0.0.1 -p 5432 && break; sleep 1; done; /usr/sbin/runuser -u postgres -- psql -p 5432 -f %s"
 
 [Install]
 WantedBy=multi-user.target
@@ -414,7 +415,9 @@ BEGIN
   END IF;
 END
 $$;
-`, postgresReplicationUser, postgresReplicationUser, postgresReplicationPassword)},
+SET password_encryption = 'scram-sha-256';
+ALTER ROLE %s WITH LOGIN PASSWORD '%s';
+`, postgresReplicationUser, postgresReplicationUser, postgresReplicationPassword, dbcredentials.PostgresUser, dbcredentials.PostgresPassword)},
 	}
 }
 
@@ -457,7 +460,7 @@ func postgresHBAFile(componentID, role string) *common.File {
 			Content: &common.File_Text{Text: `local all all trust
 host all all 127.0.0.1/32 trust
 host all all ::1/128 trust
-host all all 0.0.0.0/0 md5
+host all all 0.0.0.0/0 scram-sha-256
 host replication ` + postgresReplicationUser + ` 10.0.0.0/8 scram-sha-256
 host replication ` + postgresReplicationUser + ` 172.16.0.0/12 scram-sha-256
 host replication ` + postgresReplicationUser + ` 192.168.0.0/16 scram-sha-256

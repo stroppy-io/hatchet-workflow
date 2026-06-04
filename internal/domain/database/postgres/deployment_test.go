@@ -61,6 +61,9 @@ func TestPostgresDeploymentRendererRendersPrioritiesDependenciesAndSteps(t *test
 		t.Fatalf("install command does not use resolved package: %s", install)
 	}
 	hba := findDeploymentWriteFileText(t, master, "040_write_hba")
+	if !pgHBARuleExists(hba, "host", "all", "all", "0.0.0.0/0", "scram-sha-256") {
+		t.Fatalf("pg_hba does not require scram for client access: %s", hba)
+	}
 	if !pgHBARuleExists(hba, "host", "replication", "replicator", "10.0.0.0/8", "scram-sha-256") {
 		t.Fatalf("pg_hba does not contain scram replication access: %s", hba)
 	}
@@ -122,6 +125,19 @@ func TestPostgresDeploymentWiresClusterPeers(t *testing.T) {
 	master := findDeploymentWriteFileText(t, components["postgres-master"], "200_write_service")
 	if !strings.Contains(master, "replication-setup.sql") {
 		t.Fatalf("master unit does not provision the replication role:\n%s", master)
+	}
+	if strings.Contains(master, "replication-setup.sql' || true") {
+		t.Fatalf("master unit ignores setup failure:\n%s", master)
+	}
+	setup := findDeploymentWriteFileText(t, components["postgres-master"], "050_write_replication_setup")
+	for _, want := range []string{
+		"CREATE ROLE replicator WITH REPLICATION LOGIN PASSWORD 'stroppy_replication'",
+		"SET password_encryption = 'scram-sha-256'",
+		"ALTER ROLE postgres WITH LOGIN PASSWORD 'stroppy_postgres'",
+	} {
+		if !strings.Contains(setup, want) {
+			t.Fatalf("setup SQL missing %q:\n%s", want, setup)
+		}
 	}
 
 	haproxy := findDeploymentWriteFileText(t, components["haproxy-1"], "030_write_config")

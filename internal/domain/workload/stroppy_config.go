@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/dbcredentials"
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/metrics"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
@@ -20,8 +22,10 @@ import (
 // deployment plan must carry concrete DB runtime addresses by the time the
 // workload runner writes stroppy-config.json.
 const (
-	DBHostPlaceholder = "__STROPPY_DB_HOST__"
-	DBPortPlaceholder = "__STROPPY_DB_PORT__"
+	DBHostPlaceholder     = "__STROPPY_DB_HOST__"
+	DBPortPlaceholder     = "__STROPPY_DB_PORT__"
+	DBUserPlaceholder     = "__STROPPY_DB_USER__"
+	DBPasswordPlaceholder = "__STROPPY_DB_PASSWORD__"
 	// DBDatabasePlaceholder is the sentinel for a managed database's database
 	// path (e.g. a Managed YDB DatabasePath). It is rendered into the stroppy
 	// URL's `?database=` query for managed YDB and substituted at build time
@@ -40,6 +44,8 @@ const (
 type databaseTarget struct {
 	Host         string
 	Port         uint32
+	User         string
+	Password     string
 	DatabasePath string
 }
 
@@ -58,14 +64,44 @@ func (t databaseTarget) portToken() string {
 	return strconv.FormatUint(uint64(t.Port), 10)
 }
 
+func (t databaseTarget) userToken() string {
+	user := strings.TrimSpace(t.User)
+	if user == "" {
+		return dbcredentials.PostgresUser
+	}
+	return user
+}
+
+func (t databaseTarget) passwordToken() string {
+	if t.Password == "" {
+		return ""
+	}
+	return t.Password
+}
+
 func (t databaseTarget) replacePlaceholders(text string) string {
 	text = strings.ReplaceAll(text, DBHostPlaceholder, t.hostToken())
 	text = strings.ReplaceAll(text, DBPortPlaceholder, t.portToken())
+	text = strings.ReplaceAll(text, DBUserPlaceholder, t.userToken())
+	text = strings.ReplaceAll(text, DBPasswordPlaceholder, t.passwordToken())
 	if t.DatabasePath == "" {
 		text = strings.ReplaceAll(text, "?database="+DBDatabasePlaceholder, "")
 		return strings.ReplaceAll(text, DBDatabasePlaceholder, "")
 	}
 	return strings.ReplaceAll(text, DBDatabasePlaceholder, t.DatabasePath)
+}
+
+func (t databaseTarget) withDefaults(database *domain.Database) databaseTarget {
+	if database.GetKind() != domain.Database_KIND_POSTGRES {
+		return t
+	}
+	if strings.TrimSpace(t.User) == "" {
+		t.User = dbcredentials.PostgresUser
+	}
+	if t.Password == "" {
+		t.Password = dbcredentials.PostgresPassword
+	}
+	return t
 }
 
 // monitorAccountID matches deployment/monitor.go: vmagent and vector both ship
@@ -79,6 +115,7 @@ const monitorAccountID = 0
 // VictoriaMetrics. serverAddr/runID/bearerToken are read from the topology-spec
 // labels plus the per-node agent token from deployment RenderContext.
 func buildStroppyRunConfig(input *domain.Workload, database *domain.Database, serverAddr, runID, bearerToken string, target databaseTarget, loadWorkers uint32) *stroppypb.RunConfig {
+	target = target.withDefaults(database)
 	script := strings.TrimSpace(input.GetScript())
 	if script == "" {
 		script = "tpcc/procs"
@@ -196,7 +233,7 @@ func driverTypeURL(protocol domain.Workload_Protocol, target databaseTarget) (st
 	host, port := target.hostToken(), target.portToken()
 	switch protocol {
 	case domain.Workload_PROTOCOL_PG, domain.Workload_PROTOCOL_COCKROACH:
-		return "postgres", fmt.Sprintf("postgresql://postgres@%s:%s/postgres?sslmode=disable", host, port)
+		return "postgres", fmt.Sprintf("postgresql://%s@%s:%s/postgres?sslmode=disable", postgresUserInfo(target), host, port)
 	case domain.Workload_PROTOCOL_MYSQL:
 		return "mysql", fmt.Sprintf("%s:%s", host, port)
 	case domain.Workload_PROTOCOL_PICODATA:
@@ -214,6 +251,14 @@ func driverTypeURL(protocol domain.Workload_Protocol, target databaseTarget) (st
 	default:
 		return "postgres", fmt.Sprintf("postgresql://postgres@%s:%s/postgres?sslmode=disable", host, port)
 	}
+}
+
+func postgresUserInfo(target databaseTarget) string {
+	user := target.userToken()
+	if target.Password == "" {
+		return url.User(user).String()
+	}
+	return url.UserPassword(user, target.passwordToken()).String()
 }
 
 func effectiveProtocol(protocol domain.Workload_Protocol, database *domain.Database) domain.Workload_Protocol {
@@ -278,11 +323,9 @@ func injectOTLP(rc *stroppypb.RunConfig, serverAddr, runID, bearerToken string) 
 	if rc.Global.Exporter == nil || rc.Global.Exporter.OtlpExport == nil {
 		endpoint, insecure := otlpEndpoint(serverAddr)
 		urlPath := fmt.Sprintf("/insert/%d/opentelemetry/v1/metrics", monitorAccountID)
-		// Metric prefix = runID (dashes→underscores) + "_". Stroppy prepends it
-		// to every metric name, so `vus` becomes `<runID_>_vus`, which is what
-		// metrics/queries.go RenderQuery expects via its %p substitution
-		// (%p = runID with dashes→underscores; queries read `%p_vus`).
-		metricPrefix := strings.ReplaceAll(runID, "-", "_") + "_"
+		// Stroppy prepends this to every metric name, so `vus` becomes
+		// `stroppy_<runID>_vus`. OTEL instrument names must start with a letter.
+		metricPrefix := metrics.StroppyMetricPrefix(runID) + "_"
 
 		otlpExport := &stroppypb.OtlpExport{
 			OtlpHttpEndpoint:        &endpoint,

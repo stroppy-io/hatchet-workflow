@@ -28,12 +28,12 @@ func TestRenderStroppyConfigRoutesOTLPThroughServerAddress(t *testing.T) {
 	}, databaseTarget{Host: "10.0.0.2", Port: 5432}, 4, "agent-token")
 
 	for _, pattern := range []string{
-		`"url":\s+"postgresql://postgres@10.0.0.2:5432/postgres\?sslmode=disable"`,
+		`"url":\s+"postgresql://postgres:stroppy_postgres@10.0.0.2:5432/postgres\?sslmode=disable"`,
 		`"LOAD_WORKERS":\s+"4"`,
 		`"otlpHttpEndpoint":\s+"control.example"`,
 		`"otlpHttpExporterUrlPath":\s+"/insert/0/opentelemetry/v1/metrics"`,
 		`"otlpEndpointInsecure":\s+false`,
-		`"otlpMetricsPrefix":\s+"run_1_"`,
+		`"otlpMetricsPrefix":\s+"stroppy_run_1_"`,
 		`"otlpHeaders":\s+"Authorization=Bearer agent-token"`,
 	} {
 		if !regexp.MustCompile(pattern).MatchString(rendered) {
@@ -50,6 +50,45 @@ func TestRenderStroppyConfigRoutesOTLPThroughServerAddress(t *testing.T) {
 	}
 	if !strings.Contains(rendered, `"-q"`) {
 		t.Fatalf("stroppy config should default k6 to quiet mode:\n%s", rendered)
+	}
+}
+
+func TestPatchStroppyConfigOverrideSubstitutesRuntimeCredentials(t *testing.T) {
+	file := &common.File{
+		Info: &common.File_Info{Path: "/etc/stroppy-cloud/workload/stroppy-config.json"},
+		Content: &common.File_Text{Text: `{
+  "version": "1",
+  "drivers": {
+    "0": {
+      "driverType": "postgres",
+      "url": "postgresql://__STROPPY_DB_USER__:__STROPPY_DB_PASSWORD__@__STROPPY_DB_HOST__:__STROPPY_DB_PORT__/postgres?sslmode=disable"
+    }
+  }
+}`},
+	}
+
+	patched, err := patchStroppyConfigFile(file, map[string]string{
+		deploymentbuilder.LabelServerAddr: "http://server:8080",
+		deploymentbuilder.LabelRunID:      "run-1",
+	}, databaseTarget{Host: "10.0.0.2", Port: 5432}.withDefaults(&domain.Database{Kind: domain.Database_KIND_POSTGRES}), "agent-token")
+	if err != nil {
+		t.Fatalf("patch stroppy config: %v", err)
+	}
+
+	text := patched.GetText()
+	for _, want := range []string{
+		`postgresql://postgres:stroppy_postgres@10.0.0.2:5432/postgres?sslmode=disable`,
+		`"otlpHttpEndpoint":  "server:8080"`,
+		`"otlpMetricsPrefix":  "stroppy_run_1_"`,
+	} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("patched config missing %q:\n%s", want, text)
+		}
+	}
+	for _, forbidden := range []string{DBHostPlaceholder, DBPortPlaceholder, DBUserPlaceholder, DBPasswordPlaceholder} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("patched config still contains %q:\n%s", forbidden, text)
+		}
 	}
 }
 
@@ -121,7 +160,7 @@ func TestWorkloadDeploymentRendererWritesRuntimeDBEndpoint(t *testing.T) {
 
 	config := deploymentByID(plan, RunnerNodeID).GetSteps()[2].GetWriteFile().GetText()
 	for _, want := range []string{
-		`postgresql://postgres@10.0.0.2:5432/postgres?sslmode=disable`,
+		`postgresql://postgres:stroppy_postgres@10.0.0.2:5432/postgres?sslmode=disable`,
 		`"LOAD_WORKERS"`,
 		`"4"`,
 		`"-q"`,

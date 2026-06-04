@@ -15,8 +15,7 @@ import (
 const RunLabel = "stroppy_run_id"
 
 // MetricDef defines a named PromQL query template.
-// Templates use %s for the run_id label filter and %p for the metric prefix
-// (runID with dashes→underscores).
+// Templates use %s for the run_id label filter and %p for the metric prefix.
 type MetricDef struct {
 	Name           string // human-readable name
 	Key            string // stable key for comparison
@@ -30,9 +29,10 @@ func runFilter(runID string) string {
 	return fmt.Sprintf(`%s="%s"`, RunLabel, runID)
 }
 
-// metricPrefix converts a run ID to a PromQL-safe metric prefix (dashes→underscores).
-func metricPrefix(runID string) string {
-	return strings.ReplaceAll(runID, "-", "_")
+// StroppyMetricPrefix converts a run ID to the PromQL-safe prefix injected into
+// stroppy/k6 OTEL metric names. OTEL instrument names must start with a letter.
+func StroppyMetricPrefix(runID string) string {
+	return "stroppy_" + strings.ReplaceAll(runID, "-", "_")
 }
 
 // MetricsForDB returns metrics with DB-specific queries based on database kind.
@@ -313,8 +313,7 @@ func systemMetrics() []MetricDef {
 			Group: "system",
 		},
 
-		// --- Stroppy (K6 OTEL metrics, prefixed with runID_) ---
-		// Metric names use %p prefix (runID with underscores).
+		// --- Stroppy (K6 OTEL metrics, prefixed with stroppy_<runID>_) ---
 		{
 			Name:           "Stroppy Active VUs",
 			Key:            "stroppy_vus",
@@ -368,6 +367,6 @@ func systemMetrics() []MetricDef {
 func RenderQuery(def MetricDef, runID string) string {
 	q := def.Query
 	q = strings.ReplaceAll(q, "%s", runFilter(runID))
-	q = strings.ReplaceAll(q, "%p", metricPrefix(runID))
+	q = strings.ReplaceAll(q, "%p", StroppyMetricPrefix(runID))
 	return q
 }
