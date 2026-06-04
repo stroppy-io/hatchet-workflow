@@ -9,10 +9,6 @@ import {
   FlaskConical,
   Package,
   Activity,
-  Trophy,
-  Share2,
-  Star,
-  Terminal,
   type LucideIcon,
 } from "lucide-react";
 import { NavLink } from "@/lib/router";
@@ -52,7 +48,6 @@ const navGroups: NavGroup[] = [
     items: [
       { to: "/suites", icon: Boxes, label: "Suites", minLevel: 1 },
       { to: "/runs", icon: List, label: "Test Runs", minLevel: 1 },
-      { to: "/favorites", icon: Star, label: "Favorites", minLevel: 1 },
     ],
   },
   {
@@ -60,9 +55,6 @@ const navGroups: NavGroup[] = [
     items: [
       { to: "/runs/new", icon: Play, label: "New Run", minLevel: 2 },
       { to: "/compare", icon: GitCompare, label: "Compare", minLevel: 1 },
-      { to: "/leaderboard", icon: Trophy, label: "Leaderboard", minLevel: 1 },
-      { to: "/shares", icon: Share2, label: "Shares", minLevel: 1 },
-      { to: "/shell", icon: Terminal, label: "Agent Shell", minLevel: 2 },
     ],
   },
   {

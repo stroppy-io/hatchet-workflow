@@ -3,6 +3,7 @@ syntax = "proto3";
 package cloud.v1.api;
 
 import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
 import "validate/validate.proto";
 import "cloud/v1/iam/account.proto";
 import "cloud/v1/iam/tenant.proto";
@@ -1399,6 +1400,92 @@ message RevokeApiTokenRequest {
 message RevokeApiTokenResponse {}
 
 /*
+    ===== Registration requests (closed-signup access requests) =====
+
+    When self-registration is OFF (PlatformSettings.allow_self_registration ==
+    false) the public signup path is closed, so prospective users cannot create
+    an account themselves. Instead they leave a RegistrationRequest — an email
+    (and optional note) the platform admins triage from the admin console. The
+    admin provisions the account by hand (CreateAccount) and marks the request
+    HANDLED. This is intentionally NOT an approval workflow that mints accounts:
+    it is a lightweight lead/contact list. Submission is rejected while
+    self-registration is ON — the visitor should just Register.
+ */
+
+/*
+    RegistrationRequestStatus is the lifecycle of one access request.
+ */
+enum RegistrationRequestStatus {
+    REGISTRATION_REQUEST_STATUS_UNSPECIFIED = 0;
+    // PENDING: awaiting an admin's attention.
+    REGISTRATION_REQUEST_STATUS_PENDING = 1;
+    // HANDLED: an admin has actioned it (account created or dismissed).
+    REGISTRATION_REQUEST_STATUS_HANDLED = 2;
+}
+
+/*
+    RegistrationRequest is one prospective user's access request, captured while
+    self-signup is closed. email is the unique key — a re-submit from the same
+    address refreshes the message and keeps a single PENDING row.
+ */
+message RegistrationRequest {
+    // id is the server-assigned identifier.
+    string id = 1;
+    // email is the requester's contact + intended login address.
+    string email = 2;
+    // message is the requester's optional free-text note (reason / context).
+    string message = 3;
+    // status is the triage lifecycle state.
+    RegistrationRequestStatus status = 4;
+    // handled_by_account_id is the admin who marked it handled (empty until then).
+    string handled_by_account_id = 5;
+    google.protobuf.Timestamp created_at = 6;
+    google.protobuf.Timestamp updated_at = 7;
+}
+
+/*
+    SubmitRegistrationRequestRequest is the PUBLIC submission. Accepted only when
+    self-registration is disabled; otherwise the server tells the caller to
+    Register instead. Idempotent on email: a repeat updates the existing row.
+ */
+message SubmitRegistrationRequestRequest {
+    string email = 1 [(validate.rules).string = {min_len: 5, max_len: 255, email: true}];
+    string message = 2 [(validate.rules).string = {max_len: 2000}];
+}
+
+/*
+    SubmitRegistrationRequestResponse is empty; success is signalled by the
+    absence of error (no account-existence leak).
+ */
+message SubmitRegistrationRequestResponse {}
+
+/*
+    ListRegistrationRequestsRequest lists requests for the admin console. An
+    unspecified status filter returns every request (newest first).
+ */
+message ListRegistrationRequestsRequest {
+    // status optionally filters by lifecycle state; UNSPECIFIED = all.
+    RegistrationRequestStatus status = 1;
+}
+
+message ListRegistrationRequestsResponse {
+    repeated RegistrationRequest requests = 1;
+}
+
+/*
+    MarkRegistrationRequestHandledRequest flips one request to HANDLED. Account
+    creation is a separate admin action (CreateAccount) — this only triages.
+    Idempotent: marking an already-handled request is a no-op.
+ */
+message MarkRegistrationRequestHandledRequest {
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+
+message MarkRegistrationRequestHandledResponse {
+    RegistrationRequest request = 1;
+}
+
+/*
     ===== Service =====
  */
 
@@ -1594,6 +1681,92 @@ service IamService {
         };
 
         option (cloud.v1.iam.auth) = {public: true};
+    }
+
+    /*
+        --- Registration requests (closed-signup access requests) ---
+     */
+    /*
+        SubmitRegistrationRequest is the PUBLIC access-request submission, the
+        closed-signup counterpart of Register. Accepted only while
+        self-registration is disabled. Idempotent on email.
+     */
+    rpc SubmitRegistrationRequest (SubmitRegistrationRequestRequest) returns (SubmitRegistrationRequestResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/submit-registration-request"
+            operation_id: "submitRegistrationRequest"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {public: true};
+    }
+    /*
+        ListRegistrationRequests returns the access requests for admin triage.
+        admin_only. Read-only.
+     */
+    rpc ListRegistrationRequests (ListRegistrationRequestsRequest) returns (ListRegistrationRequestsResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/list-registration-requests"
+            operation_id: "listRegistrationRequests"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {admin_only: true};
+    }
+    /*
+        MarkRegistrationRequestHandled flips a request to HANDLED. admin_only.
+        Idempotent.
+     */
+    rpc MarkRegistrationRequestHandled (MarkRegistrationRequestHandledRequest) returns (MarkRegistrationRequestHandledResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/mark-registration-request-handled"
+            operation_id: "markRegistrationRequestHandled"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {admin_only: true};
     }
 
     /*

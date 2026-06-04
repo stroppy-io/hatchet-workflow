@@ -49,6 +49,15 @@ const (
 	IamServiceConfirmPasswordResetProcedure = "/cloud.v1.api.IamService/ConfirmPasswordReset"
 	// IamServiceVerifyEmailProcedure is the fully-qualified name of the IamService's VerifyEmail RPC.
 	IamServiceVerifyEmailProcedure = "/cloud.v1.api.IamService/VerifyEmail"
+	// IamServiceSubmitRegistrationRequestProcedure is the fully-qualified name of the IamService's
+	// SubmitRegistrationRequest RPC.
+	IamServiceSubmitRegistrationRequestProcedure = "/cloud.v1.api.IamService/SubmitRegistrationRequest"
+	// IamServiceListRegistrationRequestsProcedure is the fully-qualified name of the IamService's
+	// ListRegistrationRequests RPC.
+	IamServiceListRegistrationRequestsProcedure = "/cloud.v1.api.IamService/ListRegistrationRequests"
+	// IamServiceMarkRegistrationRequestHandledProcedure is the fully-qualified name of the IamService's
+	// MarkRegistrationRequestHandled RPC.
+	IamServiceMarkRegistrationRequestHandledProcedure = "/cloud.v1.api.IamService/MarkRegistrationRequestHandled"
 	// IamServiceCreateAccountProcedure is the fully-qualified name of the IamService's CreateAccount
 	// RPC.
 	IamServiceCreateAccountProcedure = "/cloud.v1.api.IamService/CreateAccount"
@@ -183,6 +192,16 @@ type IamServiceClient interface {
 	// VerifyEmail consumes an emailed verification token. Public: the token is
 	// the credential and the user may be logged out.
 	VerifyEmail(context.Context, *api.VerifyEmailRequest) (*api.VerifyEmailResponse, error)
+	// SubmitRegistrationRequest is the PUBLIC access-request submission, the
+	// closed-signup counterpart of Register. Accepted only while
+	// self-registration is disabled. Idempotent on email.
+	SubmitRegistrationRequest(context.Context, *api.SubmitRegistrationRequestRequest) (*api.SubmitRegistrationRequestResponse, error)
+	// ListRegistrationRequests returns the access requests for admin triage.
+	// admin_only. Read-only.
+	ListRegistrationRequests(context.Context, *api.ListRegistrationRequestsRequest) (*api.ListRegistrationRequestsResponse, error)
+	// MarkRegistrationRequestHandled flips a request to HANDLED. admin_only.
+	// Idempotent.
+	MarkRegistrationRequestHandled(context.Context, *api.MarkRegistrationRequestHandledRequest) (*api.MarkRegistrationRequestHandledResponse, error)
 	// CreateAccount is the admin-only account path (the public path is
 	// Register). Not idempotent: each call creates a new account.
 	CreateAccount(context.Context, *api.CreateAccountRequest) (*api.CreateAccountResponse, error)
@@ -348,6 +367,27 @@ func NewIamServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			httpClient,
 			baseURL+IamServiceVerifyEmailProcedure,
 			connect.WithSchema(iamServiceMethods.ByName("VerifyEmail")),
+			connect.WithClientOptions(opts...),
+		),
+		submitRegistrationRequest: connect.NewClient[api.SubmitRegistrationRequestRequest, api.SubmitRegistrationRequestResponse](
+			httpClient,
+			baseURL+IamServiceSubmitRegistrationRequestProcedure,
+			connect.WithSchema(iamServiceMethods.ByName("SubmitRegistrationRequest")),
+			connect.WithIdempotency(connect.IdempotencyIdempotent),
+			connect.WithClientOptions(opts...),
+		),
+		listRegistrationRequests: connect.NewClient[api.ListRegistrationRequestsRequest, api.ListRegistrationRequestsResponse](
+			httpClient,
+			baseURL+IamServiceListRegistrationRequestsProcedure,
+			connect.WithSchema(iamServiceMethods.ByName("ListRegistrationRequests")),
+			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+			connect.WithClientOptions(opts...),
+		),
+		markRegistrationRequestHandled: connect.NewClient[api.MarkRegistrationRequestHandledRequest, api.MarkRegistrationRequestHandledResponse](
+			httpClient,
+			baseURL+IamServiceMarkRegistrationRequestHandledProcedure,
+			connect.WithSchema(iamServiceMethods.ByName("MarkRegistrationRequestHandled")),
+			connect.WithIdempotency(connect.IdempotencyIdempotent),
 			connect.WithClientOptions(opts...),
 		),
 		createAccount: connect.NewClient[api.CreateAccountRequest, api.CreateAccountResponse](
@@ -632,54 +672,57 @@ func NewIamServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 
 // iamServiceClient implements IamServiceClient.
 type iamServiceClient struct {
-	register                *connect.Client[api.RegisterRequest, api.RegisterResponse]
-	login                   *connect.Client[api.LoginRequest, api.LoginResponse]
-	refresh                 *connect.Client[api.RefreshRequest, api.RefreshResponse]
-	logout                  *connect.Client[api.LogoutRequest, api.LogoutResponse]
-	requestPasswordReset    *connect.Client[api.RequestPasswordResetRequest, api.RequestPasswordResetResponse]
-	confirmPasswordReset    *connect.Client[api.ConfirmPasswordResetRequest, api.ConfirmPasswordResetResponse]
-	verifyEmail             *connect.Client[api.VerifyEmailRequest, api.VerifyEmailResponse]
-	createAccount           *connect.Client[api.CreateAccountRequest, api.CreateAccountResponse]
-	getAccount              *connect.Client[api.GetAccountRequest, api.GetAccountResponse]
-	getMyAccount            *connect.Client[api.GetMyAccountRequest, api.GetMyAccountResponse]
-	listAccounts            *connect.Client[api.ListAccountsRequest, api.ListAccountsResponse]
-	updateAccount           *connect.Client[api.UpdateAccountRequest, api.UpdateAccountResponse]
-	deleteAccount           *connect.Client[api.DeleteAccountRequest, api.DeleteAccountResponse]
-	changePassword          *connect.Client[api.ChangePasswordRequest, api.ChangePasswordResponse]
-	resetPassword           *connect.Client[api.ResetPasswordRequest, api.ResetPasswordResponse]
-	resendVerification      *connect.Client[api.ResendVerificationRequest, api.ResendVerificationResponse]
-	createTenant            *connect.Client[api.CreateTenantRequest, api.CreateTenantResponse]
-	getTenant               *connect.Client[api.GetTenantRequest, api.GetTenantResponse]
-	listMyTenants           *connect.Client[api.ListMyTenantsRequest, api.ListMyTenantsResponse]
-	updateTenant            *connect.Client[api.UpdateTenantRequest, api.UpdateTenantResponse]
-	deleteTenant            *connect.Client[api.DeleteTenantRequest, api.DeleteTenantResponse]
-	transferTenantOwnership *connect.Client[api.TransferTenantOwnershipRequest, api.TransferTenantOwnershipResponse]
-	leaveTenant             *connect.Client[api.LeaveTenantRequest, api.LeaveTenantResponse]
-	createRole              *connect.Client[api.CreateRoleRequest, api.CreateRoleResponse]
-	getRole                 *connect.Client[api.GetRoleRequest, api.GetRoleResponse]
-	listRoles               *connect.Client[api.ListRolesRequest, api.ListRolesResponse]
-	updateRole              *connect.Client[api.UpdateRoleRequest, api.UpdateRoleResponse]
-	deleteRole              *connect.Client[api.DeleteRoleRequest, api.DeleteRoleResponse]
-	createMembership        *connect.Client[api.CreateMembershipRequest, api.CreateMembershipResponse]
-	getMembership           *connect.Client[api.GetMembershipRequest, api.GetMembershipResponse]
-	listMemberships         *connect.Client[api.ListMembershipsRequest, api.ListMembershipsResponse]
-	updateMembership        *connect.Client[api.UpdateMembershipRequest, api.UpdateMembershipResponse]
-	deleteMembership        *connect.Client[api.DeleteMembershipRequest, api.DeleteMembershipResponse]
-	getMyPermissions        *connect.Client[api.GetMyPermissionsRequest, api.GetMyPermissionsResponse]
-	listPermissions         *connect.Client[api.ListPermissionsRequest, api.ListPermissionsResponse]
-	createIdentityProvider  *connect.Client[api.CreateIdentityProviderRequest, api.CreateIdentityProviderResponse]
-	getIdentityProvider     *connect.Client[api.GetIdentityProviderRequest, api.GetIdentityProviderResponse]
-	updateIdentityProvider  *connect.Client[api.UpdateIdentityProviderRequest, api.UpdateIdentityProviderResponse]
-	deleteIdentityProvider  *connect.Client[api.DeleteIdentityProviderRequest, api.DeleteIdentityProviderResponse]
-	listIdentityProviders   *connect.Client[api.ListIdentityProvidersRequest, api.ListIdentityProvidersResponse]
-	startSSO                *connect.Client[api.StartSSORequest, api.StartSSOResponse]
-	completeSSO             *connect.Client[api.CompleteSSORequest, api.CompleteSSOResponse]
-	linkExternalIdentity    *connect.Client[api.LinkExternalIdentityRequest, api.LinkExternalIdentityResponse]
-	unlinkExternalIdentity  *connect.Client[api.UnlinkExternalIdentityRequest, api.UnlinkExternalIdentityResponse]
-	listExternalIdentities  *connect.Client[api.ListExternalIdentitiesRequest, api.ListExternalIdentitiesResponse]
-	createApiToken          *connect.Client[api.CreateApiTokenRequest, api.CreateApiTokenResponse]
-	listApiTokens           *connect.Client[api.ListApiTokensRequest, api.ListApiTokensResponse]
-	revokeApiToken          *connect.Client[api.RevokeApiTokenRequest, api.RevokeApiTokenResponse]
+	register                       *connect.Client[api.RegisterRequest, api.RegisterResponse]
+	login                          *connect.Client[api.LoginRequest, api.LoginResponse]
+	refresh                        *connect.Client[api.RefreshRequest, api.RefreshResponse]
+	logout                         *connect.Client[api.LogoutRequest, api.LogoutResponse]
+	requestPasswordReset           *connect.Client[api.RequestPasswordResetRequest, api.RequestPasswordResetResponse]
+	confirmPasswordReset           *connect.Client[api.ConfirmPasswordResetRequest, api.ConfirmPasswordResetResponse]
+	verifyEmail                    *connect.Client[api.VerifyEmailRequest, api.VerifyEmailResponse]
+	submitRegistrationRequest      *connect.Client[api.SubmitRegistrationRequestRequest, api.SubmitRegistrationRequestResponse]
+	listRegistrationRequests       *connect.Client[api.ListRegistrationRequestsRequest, api.ListRegistrationRequestsResponse]
+	markRegistrationRequestHandled *connect.Client[api.MarkRegistrationRequestHandledRequest, api.MarkRegistrationRequestHandledResponse]
+	createAccount                  *connect.Client[api.CreateAccountRequest, api.CreateAccountResponse]
+	getAccount                     *connect.Client[api.GetAccountRequest, api.GetAccountResponse]
+	getMyAccount                   *connect.Client[api.GetMyAccountRequest, api.GetMyAccountResponse]
+	listAccounts                   *connect.Client[api.ListAccountsRequest, api.ListAccountsResponse]
+	updateAccount                  *connect.Client[api.UpdateAccountRequest, api.UpdateAccountResponse]
+	deleteAccount                  *connect.Client[api.DeleteAccountRequest, api.DeleteAccountResponse]
+	changePassword                 *connect.Client[api.ChangePasswordRequest, api.ChangePasswordResponse]
+	resetPassword                  *connect.Client[api.ResetPasswordRequest, api.ResetPasswordResponse]
+	resendVerification             *connect.Client[api.ResendVerificationRequest, api.ResendVerificationResponse]
+	createTenant                   *connect.Client[api.CreateTenantRequest, api.CreateTenantResponse]
+	getTenant                      *connect.Client[api.GetTenantRequest, api.GetTenantResponse]
+	listMyTenants                  *connect.Client[api.ListMyTenantsRequest, api.ListMyTenantsResponse]
+	updateTenant                   *connect.Client[api.UpdateTenantRequest, api.UpdateTenantResponse]
+	deleteTenant                   *connect.Client[api.DeleteTenantRequest, api.DeleteTenantResponse]
+	transferTenantOwnership        *connect.Client[api.TransferTenantOwnershipRequest, api.TransferTenantOwnershipResponse]
+	leaveTenant                    *connect.Client[api.LeaveTenantRequest, api.LeaveTenantResponse]
+	createRole                     *connect.Client[api.CreateRoleRequest, api.CreateRoleResponse]
+	getRole                        *connect.Client[api.GetRoleRequest, api.GetRoleResponse]
+	listRoles                      *connect.Client[api.ListRolesRequest, api.ListRolesResponse]
+	updateRole                     *connect.Client[api.UpdateRoleRequest, api.UpdateRoleResponse]
+	deleteRole                     *connect.Client[api.DeleteRoleRequest, api.DeleteRoleResponse]
+	createMembership               *connect.Client[api.CreateMembershipRequest, api.CreateMembershipResponse]
+	getMembership                  *connect.Client[api.GetMembershipRequest, api.GetMembershipResponse]
+	listMemberships                *connect.Client[api.ListMembershipsRequest, api.ListMembershipsResponse]
+	updateMembership               *connect.Client[api.UpdateMembershipRequest, api.UpdateMembershipResponse]
+	deleteMembership               *connect.Client[api.DeleteMembershipRequest, api.DeleteMembershipResponse]
+	getMyPermissions               *connect.Client[api.GetMyPermissionsRequest, api.GetMyPermissionsResponse]
+	listPermissions                *connect.Client[api.ListPermissionsRequest, api.ListPermissionsResponse]
+	createIdentityProvider         *connect.Client[api.CreateIdentityProviderRequest, api.CreateIdentityProviderResponse]
+	getIdentityProvider            *connect.Client[api.GetIdentityProviderRequest, api.GetIdentityProviderResponse]
+	updateIdentityProvider         *connect.Client[api.UpdateIdentityProviderRequest, api.UpdateIdentityProviderResponse]
+	deleteIdentityProvider         *connect.Client[api.DeleteIdentityProviderRequest, api.DeleteIdentityProviderResponse]
+	listIdentityProviders          *connect.Client[api.ListIdentityProvidersRequest, api.ListIdentityProvidersResponse]
+	startSSO                       *connect.Client[api.StartSSORequest, api.StartSSOResponse]
+	completeSSO                    *connect.Client[api.CompleteSSORequest, api.CompleteSSOResponse]
+	linkExternalIdentity           *connect.Client[api.LinkExternalIdentityRequest, api.LinkExternalIdentityResponse]
+	unlinkExternalIdentity         *connect.Client[api.UnlinkExternalIdentityRequest, api.UnlinkExternalIdentityResponse]
+	listExternalIdentities         *connect.Client[api.ListExternalIdentitiesRequest, api.ListExternalIdentitiesResponse]
+	createApiToken                 *connect.Client[api.CreateApiTokenRequest, api.CreateApiTokenResponse]
+	listApiTokens                  *connect.Client[api.ListApiTokensRequest, api.ListApiTokensResponse]
+	revokeApiToken                 *connect.Client[api.RevokeApiTokenRequest, api.RevokeApiTokenResponse]
 }
 
 // Register calls cloud.v1.api.IamService.Register.
@@ -739,6 +782,33 @@ func (c *iamServiceClient) ConfirmPasswordReset(ctx context.Context, req *api.Co
 // VerifyEmail calls cloud.v1.api.IamService.VerifyEmail.
 func (c *iamServiceClient) VerifyEmail(ctx context.Context, req *api.VerifyEmailRequest) (*api.VerifyEmailResponse, error) {
 	response, err := c.verifyEmail.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// SubmitRegistrationRequest calls cloud.v1.api.IamService.SubmitRegistrationRequest.
+func (c *iamServiceClient) SubmitRegistrationRequest(ctx context.Context, req *api.SubmitRegistrationRequestRequest) (*api.SubmitRegistrationRequestResponse, error) {
+	response, err := c.submitRegistrationRequest.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// ListRegistrationRequests calls cloud.v1.api.IamService.ListRegistrationRequests.
+func (c *iamServiceClient) ListRegistrationRequests(ctx context.Context, req *api.ListRegistrationRequestsRequest) (*api.ListRegistrationRequestsResponse, error) {
+	response, err := c.listRegistrationRequests.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// MarkRegistrationRequestHandled calls cloud.v1.api.IamService.MarkRegistrationRequestHandled.
+func (c *iamServiceClient) MarkRegistrationRequestHandled(ctx context.Context, req *api.MarkRegistrationRequestHandledRequest) (*api.MarkRegistrationRequestHandledResponse, error) {
+	response, err := c.markRegistrationRequestHandled.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
 	}
@@ -1138,6 +1208,16 @@ type IamServiceHandler interface {
 	// VerifyEmail consumes an emailed verification token. Public: the token is
 	// the credential and the user may be logged out.
 	VerifyEmail(context.Context, *api.VerifyEmailRequest) (*api.VerifyEmailResponse, error)
+	// SubmitRegistrationRequest is the PUBLIC access-request submission, the
+	// closed-signup counterpart of Register. Accepted only while
+	// self-registration is disabled. Idempotent on email.
+	SubmitRegistrationRequest(context.Context, *api.SubmitRegistrationRequestRequest) (*api.SubmitRegistrationRequestResponse, error)
+	// ListRegistrationRequests returns the access requests for admin triage.
+	// admin_only. Read-only.
+	ListRegistrationRequests(context.Context, *api.ListRegistrationRequestsRequest) (*api.ListRegistrationRequestsResponse, error)
+	// MarkRegistrationRequestHandled flips a request to HANDLED. admin_only.
+	// Idempotent.
+	MarkRegistrationRequestHandled(context.Context, *api.MarkRegistrationRequestHandledRequest) (*api.MarkRegistrationRequestHandledResponse, error)
 	// CreateAccount is the admin-only account path (the public path is
 	// Register). Not idempotent: each call creates a new account.
 	CreateAccount(context.Context, *api.CreateAccountRequest) (*api.CreateAccountResponse, error)
@@ -1299,6 +1379,27 @@ func NewIamServiceHandler(svc IamServiceHandler, opts ...connect.HandlerOption) 
 		IamServiceVerifyEmailProcedure,
 		svc.VerifyEmail,
 		connect.WithSchema(iamServiceMethods.ByName("VerifyEmail")),
+		connect.WithHandlerOptions(opts...),
+	)
+	iamServiceSubmitRegistrationRequestHandler := connect.NewUnaryHandlerSimple(
+		IamServiceSubmitRegistrationRequestProcedure,
+		svc.SubmitRegistrationRequest,
+		connect.WithSchema(iamServiceMethods.ByName("SubmitRegistrationRequest")),
+		connect.WithIdempotency(connect.IdempotencyIdempotent),
+		connect.WithHandlerOptions(opts...),
+	)
+	iamServiceListRegistrationRequestsHandler := connect.NewUnaryHandlerSimple(
+		IamServiceListRegistrationRequestsProcedure,
+		svc.ListRegistrationRequests,
+		connect.WithSchema(iamServiceMethods.ByName("ListRegistrationRequests")),
+		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+		connect.WithHandlerOptions(opts...),
+	)
+	iamServiceMarkRegistrationRequestHandledHandler := connect.NewUnaryHandlerSimple(
+		IamServiceMarkRegistrationRequestHandledProcedure,
+		svc.MarkRegistrationRequestHandled,
+		connect.WithSchema(iamServiceMethods.ByName("MarkRegistrationRequestHandled")),
+		connect.WithIdempotency(connect.IdempotencyIdempotent),
 		connect.WithHandlerOptions(opts...),
 	)
 	iamServiceCreateAccountHandler := connect.NewUnaryHandlerSimple(
@@ -1594,6 +1695,12 @@ func NewIamServiceHandler(svc IamServiceHandler, opts ...connect.HandlerOption) 
 			iamServiceConfirmPasswordResetHandler.ServeHTTP(w, r)
 		case IamServiceVerifyEmailProcedure:
 			iamServiceVerifyEmailHandler.ServeHTTP(w, r)
+		case IamServiceSubmitRegistrationRequestProcedure:
+			iamServiceSubmitRegistrationRequestHandler.ServeHTTP(w, r)
+		case IamServiceListRegistrationRequestsProcedure:
+			iamServiceListRegistrationRequestsHandler.ServeHTTP(w, r)
+		case IamServiceMarkRegistrationRequestHandledProcedure:
+			iamServiceMarkRegistrationRequestHandledHandler.ServeHTTP(w, r)
 		case IamServiceCreateAccountProcedure:
 			iamServiceCreateAccountHandler.ServeHTTP(w, r)
 		case IamServiceGetAccountProcedure:
@@ -1711,6 +1818,18 @@ func (UnimplementedIamServiceHandler) ConfirmPasswordReset(context.Context, *api
 
 func (UnimplementedIamServiceHandler) VerifyEmail(context.Context, *api.VerifyEmailRequest) (*api.VerifyEmailResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.IamService.VerifyEmail is not implemented"))
+}
+
+func (UnimplementedIamServiceHandler) SubmitRegistrationRequest(context.Context, *api.SubmitRegistrationRequestRequest) (*api.SubmitRegistrationRequestResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.IamService.SubmitRegistrationRequest is not implemented"))
+}
+
+func (UnimplementedIamServiceHandler) ListRegistrationRequests(context.Context, *api.ListRegistrationRequestsRequest) (*api.ListRegistrationRequestsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.IamService.ListRegistrationRequests is not implemented"))
+}
+
+func (UnimplementedIamServiceHandler) MarkRegistrationRequestHandled(context.Context, *api.MarkRegistrationRequestHandledRequest) (*api.MarkRegistrationRequestHandledResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.IamService.MarkRegistrationRequestHandled is not implemented"))
 }
 
 func (UnimplementedIamServiceHandler) CreateAccount(context.Context, *api.CreateAccountRequest) (*api.CreateAccountResponse, error) {

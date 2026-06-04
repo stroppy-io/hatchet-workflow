@@ -21,6 +21,7 @@ func Where[Q psql.Filterable]() struct {
 	TestWizardDrafts        testWizardDraftWhere[Q]
 	TestPresetRecords       testPresetRecordWhere[Q]
 	PlatformSettings        platformSettingWhere[Q]
+	RegistrationRequests    registrationRequestWhere[Q]
 	SuiteRecords            suiteRecordWhere[Q]
 	SuiteRunRecords         suiteRunRecordWhere[Q]
 	SuiteWizardDrafts       suiteWizardDraftWhere[Q]
@@ -30,6 +31,9 @@ func Where[Q psql.Filterable]() struct {
 	DatabasePresetRecords   databasePresetRecordWhere[Q]
 	WorkloadPresetRecords   workloadPresetRecordWhere[Q]
 	TenantSettingsRecords   tenantSettingsRecordWhere[Q]
+	QuotaSnapshots          quotaSnapshotWhere[Q]
+	QuotaReservations       quotaReservationWhere[Q]
+	NetworkReservations     networkReservationWhere[Q]
 	IamAccounts             iamAccountWhere[Q]
 	IamCredentials          iamCredentialWhere[Q]
 	IamAPITokens            iamAPITokenWhere[Q]
@@ -48,6 +52,7 @@ func Where[Q psql.Filterable]() struct {
 		TestWizardDrafts        testWizardDraftWhere[Q]
 		TestPresetRecords       testPresetRecordWhere[Q]
 		PlatformSettings        platformSettingWhere[Q]
+		RegistrationRequests    registrationRequestWhere[Q]
 		SuiteRecords            suiteRecordWhere[Q]
 		SuiteRunRecords         suiteRunRecordWhere[Q]
 		SuiteWizardDrafts       suiteWizardDraftWhere[Q]
@@ -57,6 +62,9 @@ func Where[Q psql.Filterable]() struct {
 		DatabasePresetRecords   databasePresetRecordWhere[Q]
 		WorkloadPresetRecords   workloadPresetRecordWhere[Q]
 		TenantSettingsRecords   tenantSettingsRecordWhere[Q]
+		QuotaSnapshots          quotaSnapshotWhere[Q]
+		QuotaReservations       quotaReservationWhere[Q]
+		NetworkReservations     networkReservationWhere[Q]
 		IamAccounts             iamAccountWhere[Q]
 		IamCredentials          iamCredentialWhere[Q]
 		IamAPITokens            iamAPITokenWhere[Q]
@@ -74,6 +82,7 @@ func Where[Q psql.Filterable]() struct {
 		TestWizardDrafts:        buildTestWizardDraftWhere[Q](TestWizardDrafts.Columns),
 		TestPresetRecords:       buildTestPresetRecordWhere[Q](TestPresetRecords.Columns),
 		PlatformSettings:        buildPlatformSettingWhere[Q](PlatformSettings.Columns),
+		RegistrationRequests:    buildRegistrationRequestWhere[Q](RegistrationRequests.Columns),
 		SuiteRecords:            buildSuiteRecordWhere[Q](SuiteRecords.Columns),
 		SuiteRunRecords:         buildSuiteRunRecordWhere[Q](SuiteRunRecords.Columns),
 		SuiteWizardDrafts:       buildSuiteWizardDraftWhere[Q](SuiteWizardDrafts.Columns),
@@ -83,6 +92,9 @@ func Where[Q psql.Filterable]() struct {
 		DatabasePresetRecords:   buildDatabasePresetRecordWhere[Q](DatabasePresetRecords.Columns),
 		WorkloadPresetRecords:   buildWorkloadPresetRecordWhere[Q](WorkloadPresetRecords.Columns),
 		TenantSettingsRecords:   buildTenantSettingsRecordWhere[Q](TenantSettingsRecords.Columns),
+		QuotaSnapshots:          buildQuotaSnapshotWhere[Q](QuotaSnapshots.Columns),
+		QuotaReservations:       buildQuotaReservationWhere[Q](QuotaReservations.Columns),
+		NetworkReservations:     buildNetworkReservationWhere[Q](NetworkReservations.Columns),
 		IamAccounts:             buildIamAccountWhere[Q](IamAccounts.Columns),
 		IamCredentials:          buildIamCredentialWhere[Q](IamCredentials.Columns),
 		IamAPITokens:            buildIamAPITokenWhere[Q](IamAPITokens.Columns),

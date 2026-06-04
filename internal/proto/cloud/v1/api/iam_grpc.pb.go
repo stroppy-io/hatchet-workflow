@@ -19,54 +19,57 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	IamService_Register_FullMethodName                = "/cloud.v1.api.IamService/Register"
-	IamService_Login_FullMethodName                   = "/cloud.v1.api.IamService/Login"
-	IamService_Refresh_FullMethodName                 = "/cloud.v1.api.IamService/Refresh"
-	IamService_Logout_FullMethodName                  = "/cloud.v1.api.IamService/Logout"
-	IamService_RequestPasswordReset_FullMethodName    = "/cloud.v1.api.IamService/RequestPasswordReset"
-	IamService_ConfirmPasswordReset_FullMethodName    = "/cloud.v1.api.IamService/ConfirmPasswordReset"
-	IamService_VerifyEmail_FullMethodName             = "/cloud.v1.api.IamService/VerifyEmail"
-	IamService_CreateAccount_FullMethodName           = "/cloud.v1.api.IamService/CreateAccount"
-	IamService_GetAccount_FullMethodName              = "/cloud.v1.api.IamService/GetAccount"
-	IamService_GetMyAccount_FullMethodName            = "/cloud.v1.api.IamService/GetMyAccount"
-	IamService_ListAccounts_FullMethodName            = "/cloud.v1.api.IamService/ListAccounts"
-	IamService_UpdateAccount_FullMethodName           = "/cloud.v1.api.IamService/UpdateAccount"
-	IamService_DeleteAccount_FullMethodName           = "/cloud.v1.api.IamService/DeleteAccount"
-	IamService_ChangePassword_FullMethodName          = "/cloud.v1.api.IamService/ChangePassword"
-	IamService_ResetPassword_FullMethodName           = "/cloud.v1.api.IamService/ResetPassword"
-	IamService_ResendVerification_FullMethodName      = "/cloud.v1.api.IamService/ResendVerification"
-	IamService_CreateTenant_FullMethodName            = "/cloud.v1.api.IamService/CreateTenant"
-	IamService_GetTenant_FullMethodName               = "/cloud.v1.api.IamService/GetTenant"
-	IamService_ListMyTenants_FullMethodName           = "/cloud.v1.api.IamService/ListMyTenants"
-	IamService_UpdateTenant_FullMethodName            = "/cloud.v1.api.IamService/UpdateTenant"
-	IamService_DeleteTenant_FullMethodName            = "/cloud.v1.api.IamService/DeleteTenant"
-	IamService_TransferTenantOwnership_FullMethodName = "/cloud.v1.api.IamService/TransferTenantOwnership"
-	IamService_LeaveTenant_FullMethodName             = "/cloud.v1.api.IamService/LeaveTenant"
-	IamService_CreateRole_FullMethodName              = "/cloud.v1.api.IamService/CreateRole"
-	IamService_GetRole_FullMethodName                 = "/cloud.v1.api.IamService/GetRole"
-	IamService_ListRoles_FullMethodName               = "/cloud.v1.api.IamService/ListRoles"
-	IamService_UpdateRole_FullMethodName              = "/cloud.v1.api.IamService/UpdateRole"
-	IamService_DeleteRole_FullMethodName              = "/cloud.v1.api.IamService/DeleteRole"
-	IamService_CreateMembership_FullMethodName        = "/cloud.v1.api.IamService/CreateMembership"
-	IamService_GetMembership_FullMethodName           = "/cloud.v1.api.IamService/GetMembership"
-	IamService_ListMemberships_FullMethodName         = "/cloud.v1.api.IamService/ListMemberships"
-	IamService_UpdateMembership_FullMethodName        = "/cloud.v1.api.IamService/UpdateMembership"
-	IamService_DeleteMembership_FullMethodName        = "/cloud.v1.api.IamService/DeleteMembership"
-	IamService_GetMyPermissions_FullMethodName        = "/cloud.v1.api.IamService/GetMyPermissions"
-	IamService_ListPermissions_FullMethodName         = "/cloud.v1.api.IamService/ListPermissions"
-	IamService_CreateIdentityProvider_FullMethodName  = "/cloud.v1.api.IamService/CreateIdentityProvider"
-	IamService_GetIdentityProvider_FullMethodName     = "/cloud.v1.api.IamService/GetIdentityProvider"
-	IamService_UpdateIdentityProvider_FullMethodName  = "/cloud.v1.api.IamService/UpdateIdentityProvider"
-	IamService_DeleteIdentityProvider_FullMethodName  = "/cloud.v1.api.IamService/DeleteIdentityProvider"
-	IamService_ListIdentityProviders_FullMethodName   = "/cloud.v1.api.IamService/ListIdentityProviders"
-	IamService_StartSSO_FullMethodName                = "/cloud.v1.api.IamService/StartSSO"
-	IamService_CompleteSSO_FullMethodName             = "/cloud.v1.api.IamService/CompleteSSO"
-	IamService_LinkExternalIdentity_FullMethodName    = "/cloud.v1.api.IamService/LinkExternalIdentity"
-	IamService_UnlinkExternalIdentity_FullMethodName  = "/cloud.v1.api.IamService/UnlinkExternalIdentity"
-	IamService_ListExternalIdentities_FullMethodName  = "/cloud.v1.api.IamService/ListExternalIdentities"
-	IamService_CreateApiToken_FullMethodName          = "/cloud.v1.api.IamService/CreateApiToken"
-	IamService_ListApiTokens_FullMethodName           = "/cloud.v1.api.IamService/ListApiTokens"
-	IamService_RevokeApiToken_FullMethodName          = "/cloud.v1.api.IamService/RevokeApiToken"
+	IamService_Register_FullMethodName                       = "/cloud.v1.api.IamService/Register"
+	IamService_Login_FullMethodName                          = "/cloud.v1.api.IamService/Login"
+	IamService_Refresh_FullMethodName                        = "/cloud.v1.api.IamService/Refresh"
+	IamService_Logout_FullMethodName                         = "/cloud.v1.api.IamService/Logout"
+	IamService_RequestPasswordReset_FullMethodName           = "/cloud.v1.api.IamService/RequestPasswordReset"
+	IamService_ConfirmPasswordReset_FullMethodName           = "/cloud.v1.api.IamService/ConfirmPasswordReset"
+	IamService_VerifyEmail_FullMethodName                    = "/cloud.v1.api.IamService/VerifyEmail"
+	IamService_SubmitRegistrationRequest_FullMethodName      = "/cloud.v1.api.IamService/SubmitRegistrationRequest"
+	IamService_ListRegistrationRequests_FullMethodName       = "/cloud.v1.api.IamService/ListRegistrationRequests"
+	IamService_MarkRegistrationRequestHandled_FullMethodName = "/cloud.v1.api.IamService/MarkRegistrationRequestHandled"
+	IamService_CreateAccount_FullMethodName                  = "/cloud.v1.api.IamService/CreateAccount"
+	IamService_GetAccount_FullMethodName                     = "/cloud.v1.api.IamService/GetAccount"
+	IamService_GetMyAccount_FullMethodName                   = "/cloud.v1.api.IamService/GetMyAccount"
+	IamService_ListAccounts_FullMethodName                   = "/cloud.v1.api.IamService/ListAccounts"
+	IamService_UpdateAccount_FullMethodName                  = "/cloud.v1.api.IamService/UpdateAccount"
+	IamService_DeleteAccount_FullMethodName                  = "/cloud.v1.api.IamService/DeleteAccount"
+	IamService_ChangePassword_FullMethodName                 = "/cloud.v1.api.IamService/ChangePassword"
+	IamService_ResetPassword_FullMethodName                  = "/cloud.v1.api.IamService/ResetPassword"
+	IamService_ResendVerification_FullMethodName             = "/cloud.v1.api.IamService/ResendVerification"
+	IamService_CreateTenant_FullMethodName                   = "/cloud.v1.api.IamService/CreateTenant"
+	IamService_GetTenant_FullMethodName                      = "/cloud.v1.api.IamService/GetTenant"
+	IamService_ListMyTenants_FullMethodName                  = "/cloud.v1.api.IamService/ListMyTenants"
+	IamService_UpdateTenant_FullMethodName                   = "/cloud.v1.api.IamService/UpdateTenant"
+	IamService_DeleteTenant_FullMethodName                   = "/cloud.v1.api.IamService/DeleteTenant"
+	IamService_TransferTenantOwnership_FullMethodName        = "/cloud.v1.api.IamService/TransferTenantOwnership"
+	IamService_LeaveTenant_FullMethodName                    = "/cloud.v1.api.IamService/LeaveTenant"
+	IamService_CreateRole_FullMethodName                     = "/cloud.v1.api.IamService/CreateRole"
+	IamService_GetRole_FullMethodName                        = "/cloud.v1.api.IamService/GetRole"
+	IamService_ListRoles_FullMethodName                      = "/cloud.v1.api.IamService/ListRoles"
+	IamService_UpdateRole_FullMethodName                     = "/cloud.v1.api.IamService/UpdateRole"
+	IamService_DeleteRole_FullMethodName                     = "/cloud.v1.api.IamService/DeleteRole"
+	IamService_CreateMembership_FullMethodName               = "/cloud.v1.api.IamService/CreateMembership"
+	IamService_GetMembership_FullMethodName                  = "/cloud.v1.api.IamService/GetMembership"
+	IamService_ListMemberships_FullMethodName                = "/cloud.v1.api.IamService/ListMemberships"
+	IamService_UpdateMembership_FullMethodName               = "/cloud.v1.api.IamService/UpdateMembership"
+	IamService_DeleteMembership_FullMethodName               = "/cloud.v1.api.IamService/DeleteMembership"
+	IamService_GetMyPermissions_FullMethodName               = "/cloud.v1.api.IamService/GetMyPermissions"
+	IamService_ListPermissions_FullMethodName                = "/cloud.v1.api.IamService/ListPermissions"
+	IamService_CreateIdentityProvider_FullMethodName         = "/cloud.v1.api.IamService/CreateIdentityProvider"
+	IamService_GetIdentityProvider_FullMethodName            = "/cloud.v1.api.IamService/GetIdentityProvider"
+	IamService_UpdateIdentityProvider_FullMethodName         = "/cloud.v1.api.IamService/UpdateIdentityProvider"
+	IamService_DeleteIdentityProvider_FullMethodName         = "/cloud.v1.api.IamService/DeleteIdentityProvider"
+	IamService_ListIdentityProviders_FullMethodName          = "/cloud.v1.api.IamService/ListIdentityProviders"
+	IamService_StartSSO_FullMethodName                       = "/cloud.v1.api.IamService/StartSSO"
+	IamService_CompleteSSO_FullMethodName                    = "/cloud.v1.api.IamService/CompleteSSO"
+	IamService_LinkExternalIdentity_FullMethodName           = "/cloud.v1.api.IamService/LinkExternalIdentity"
+	IamService_UnlinkExternalIdentity_FullMethodName         = "/cloud.v1.api.IamService/UnlinkExternalIdentity"
+	IamService_ListExternalIdentities_FullMethodName         = "/cloud.v1.api.IamService/ListExternalIdentities"
+	IamService_CreateApiToken_FullMethodName                 = "/cloud.v1.api.IamService/CreateApiToken"
+	IamService_ListApiTokens_FullMethodName                  = "/cloud.v1.api.IamService/ListApiTokens"
+	IamService_RevokeApiToken_FullMethodName                 = "/cloud.v1.api.IamService/RevokeApiToken"
 )
 
 // IamServiceClient is the client API for IamService service.
@@ -95,6 +98,16 @@ type IamServiceClient interface {
 	// VerifyEmail consumes an emailed verification token. Public: the token is
 	// the credential and the user may be logged out.
 	VerifyEmail(ctx context.Context, in *VerifyEmailRequest, opts ...grpc.CallOption) (*VerifyEmailResponse, error)
+	// SubmitRegistrationRequest is the PUBLIC access-request submission, the
+	// closed-signup counterpart of Register. Accepted only while
+	// self-registration is disabled. Idempotent on email.
+	SubmitRegistrationRequest(ctx context.Context, in *SubmitRegistrationRequestRequest, opts ...grpc.CallOption) (*SubmitRegistrationRequestResponse, error)
+	// ListRegistrationRequests returns the access requests for admin triage.
+	// admin_only. Read-only.
+	ListRegistrationRequests(ctx context.Context, in *ListRegistrationRequestsRequest, opts ...grpc.CallOption) (*ListRegistrationRequestsResponse, error)
+	// MarkRegistrationRequestHandled flips a request to HANDLED. admin_only.
+	// Idempotent.
+	MarkRegistrationRequestHandled(ctx context.Context, in *MarkRegistrationRequestHandledRequest, opts ...grpc.CallOption) (*MarkRegistrationRequestHandledResponse, error)
 	// CreateAccount is the admin-only account path (the public path is
 	// Register). Not idempotent: each call creates a new account.
 	CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*CreateAccountResponse, error)
@@ -280,6 +293,36 @@ func (c *iamServiceClient) VerifyEmail(ctx context.Context, in *VerifyEmailReque
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(VerifyEmailResponse)
 	err := c.cc.Invoke(ctx, IamService_VerifyEmail_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *iamServiceClient) SubmitRegistrationRequest(ctx context.Context, in *SubmitRegistrationRequestRequest, opts ...grpc.CallOption) (*SubmitRegistrationRequestResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SubmitRegistrationRequestResponse)
+	err := c.cc.Invoke(ctx, IamService_SubmitRegistrationRequest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *iamServiceClient) ListRegistrationRequests(ctx context.Context, in *ListRegistrationRequestsRequest, opts ...grpc.CallOption) (*ListRegistrationRequestsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListRegistrationRequestsResponse)
+	err := c.cc.Invoke(ctx, IamService_ListRegistrationRequests_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *iamServiceClient) MarkRegistrationRequestHandled(ctx context.Context, in *MarkRegistrationRequestHandledRequest, opts ...grpc.CallOption) (*MarkRegistrationRequestHandledResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MarkRegistrationRequestHandledResponse)
+	err := c.cc.Invoke(ctx, IamService_MarkRegistrationRequestHandled_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -722,6 +765,16 @@ type IamServiceServer interface {
 	// VerifyEmail consumes an emailed verification token. Public: the token is
 	// the credential and the user may be logged out.
 	VerifyEmail(context.Context, *VerifyEmailRequest) (*VerifyEmailResponse, error)
+	// SubmitRegistrationRequest is the PUBLIC access-request submission, the
+	// closed-signup counterpart of Register. Accepted only while
+	// self-registration is disabled. Idempotent on email.
+	SubmitRegistrationRequest(context.Context, *SubmitRegistrationRequestRequest) (*SubmitRegistrationRequestResponse, error)
+	// ListRegistrationRequests returns the access requests for admin triage.
+	// admin_only. Read-only.
+	ListRegistrationRequests(context.Context, *ListRegistrationRequestsRequest) (*ListRegistrationRequestsResponse, error)
+	// MarkRegistrationRequestHandled flips a request to HANDLED. admin_only.
+	// Idempotent.
+	MarkRegistrationRequestHandled(context.Context, *MarkRegistrationRequestHandledRequest) (*MarkRegistrationRequestHandledResponse, error)
 	// CreateAccount is the admin-only account path (the public path is
 	// Register). Not idempotent: each call creates a new account.
 	CreateAccount(context.Context, *CreateAccountRequest) (*CreateAccountResponse, error)
@@ -863,6 +916,15 @@ func (UnimplementedIamServiceServer) ConfirmPasswordReset(context.Context, *Conf
 }
 func (UnimplementedIamServiceServer) VerifyEmail(context.Context, *VerifyEmailRequest) (*VerifyEmailResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method VerifyEmail not implemented")
+}
+func (UnimplementedIamServiceServer) SubmitRegistrationRequest(context.Context, *SubmitRegistrationRequestRequest) (*SubmitRegistrationRequestResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SubmitRegistrationRequest not implemented")
+}
+func (UnimplementedIamServiceServer) ListRegistrationRequests(context.Context, *ListRegistrationRequestsRequest) (*ListRegistrationRequestsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListRegistrationRequests not implemented")
+}
+func (UnimplementedIamServiceServer) MarkRegistrationRequestHandled(context.Context, *MarkRegistrationRequestHandledRequest) (*MarkRegistrationRequestHandledResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method MarkRegistrationRequestHandled not implemented")
 }
 func (UnimplementedIamServiceServer) CreateAccount(context.Context, *CreateAccountRequest) (*CreateAccountResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateAccount not implemented")
@@ -1130,6 +1192,60 @@ func _IamService_VerifyEmail_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(IamServiceServer).VerifyEmail(ctx, req.(*VerifyEmailRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IamService_SubmitRegistrationRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SubmitRegistrationRequestRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IamServiceServer).SubmitRegistrationRequest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IamService_SubmitRegistrationRequest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IamServiceServer).SubmitRegistrationRequest(ctx, req.(*SubmitRegistrationRequestRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IamService_ListRegistrationRequests_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListRegistrationRequestsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IamServiceServer).ListRegistrationRequests(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IamService_ListRegistrationRequests_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IamServiceServer).ListRegistrationRequests(ctx, req.(*ListRegistrationRequestsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IamService_MarkRegistrationRequestHandled_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MarkRegistrationRequestHandledRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IamServiceServer).MarkRegistrationRequestHandled(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IamService_MarkRegistrationRequestHandled_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IamServiceServer).MarkRegistrationRequestHandled(ctx, req.(*MarkRegistrationRequestHandledRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1906,6 +2022,18 @@ var IamService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "VerifyEmail",
 			Handler:    _IamService_VerifyEmail_Handler,
+		},
+		{
+			MethodName: "SubmitRegistrationRequest",
+			Handler:    _IamService_SubmitRegistrationRequest_Handler,
+		},
+		{
+			MethodName: "ListRegistrationRequests",
+			Handler:    _IamService_ListRegistrationRequests_Handler,
+		},
+		{
+			MethodName: "MarkRegistrationRequestHandled",
+			Handler:    _IamService_MarkRegistrationRequestHandled_Handler,
 		},
 		{
 			MethodName: "CreateAccount",

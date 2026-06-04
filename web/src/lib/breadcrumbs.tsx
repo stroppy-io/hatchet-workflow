@@ -145,6 +145,8 @@ const CRUMB_REGISTRY: CrumbDef[] = [
   // Platform-admin area. Grouping crumb + leaves.
   { pattern: "/admin/*", label: "Admin", href: null },
   { pattern: "/admin/accounts", label: "Accounts" },
+  { pattern: "/admin/registration-requests", label: "Registration requests" },
+  { pattern: "/admin/identity-providers", label: "Identity providers" },
   { pattern: "/admin/system", label: "System settings" },
 ];
 

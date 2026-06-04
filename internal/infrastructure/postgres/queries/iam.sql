@@ -213,3 +213,23 @@ values (@state, @provider_id, @code_verifier, @nonce, @expires_at);
 -- name: ConsumeIdentitySsoState :one
 delete from identity_sso_states where state = @state
 returning state, provider_id, code_verifier, nonce, expires_at;
+
+-- ===== registration_requests (registration_requests.go RegistrationRequestRepo) =====
+
+-- name: UpsertRegistrationRequest :exec
+insert into registration_requests (id, email, status, created_at, updated_at, data)
+values (@id, @email, @status, now(), now(), @data)
+on conflict (email) do update set status = excluded.status, data = excluded.data, updated_at = now();
+
+-- name: GetRegistrationRequest :one
+select data from registration_requests where id = @id;
+
+-- name: GetRegistrationRequestByEmail :one
+select data from registration_requests where email = @email;
+
+-- name: ListRegistrationRequests :many
+select data from registration_requests order by created_at desc;
+
+-- name: UpdateRegistrationRequest :execrows
+update registration_requests set status = @status, data = @data, updated_at = now()
+where id = @id;

@@ -178,6 +178,8 @@
   - [cloud.v1.api.ListPermissionsResponse](#cloud-v1-api-listpermissionsresponse)
   - [cloud.v1.api.ListQuotasRequest](#cloud-v1-api-listquotasrequest)
   - [cloud.v1.api.ListQuotasResponse](#cloud-v1-api-listquotasresponse)
+  - [cloud.v1.api.ListRegistrationRequestsRequest](#cloud-v1-api-listregistrationrequestsrequest)
+  - [cloud.v1.api.ListRegistrationRequestsResponse](#cloud-v1-api-listregistrationrequestsresponse)
   - [cloud.v1.api.ListRolesRequest](#cloud-v1-api-listrolesrequest)
   - [cloud.v1.api.ListRolesResponse](#cloud-v1-api-listrolesresponse)
   - [cloud.v1.api.ListSharesRequest](#cloud-v1-api-listsharesrequest)
@@ -220,6 +222,8 @@
   - [cloud.v1.api.LoginResponse](#cloud-v1-api-loginresponse)
   - [cloud.v1.api.LogoutRequest](#cloud-v1-api-logoutrequest)
   - [cloud.v1.api.LogoutResponse](#cloud-v1-api-logoutresponse)
+  - [cloud.v1.api.MarkRegistrationRequestHandledRequest](#cloud-v1-api-markregistrationrequesthandledrequest)
+  - [cloud.v1.api.MarkRegistrationRequestHandledResponse](#cloud-v1-api-markregistrationrequesthandledresponse)
   - [cloud.v1.api.PatchSuiteWizardRequest](#cloud-v1-api-patchsuitewizardrequest)
   - [cloud.v1.api.PatchSuiteWizardResponse](#cloud-v1-api-patchsuitewizardresponse)
   - [cloud.v1.api.PatchTestWizardRequest](#cloud-v1-api-patchtestwizardrequest)
@@ -243,6 +247,8 @@
   - [cloud.v1.api.RefreshResponse](#cloud-v1-api-refreshresponse)
   - [cloud.v1.api.RegisterRequest](#cloud-v1-api-registerrequest)
   - [cloud.v1.api.RegisterResponse](#cloud-v1-api-registerresponse)
+  - [cloud.v1.api.RegistrationRequest](#cloud-v1-api-registrationrequest)
+  - [cloud.v1.api.RegistrationRequestStatus](#cloud-v1-api-registrationrequeststatus)
   - [cloud.v1.api.RemoveFavoriteRequest](#cloud-v1-api-removefavoriterequest)
   - [cloud.v1.api.RemoveFavoriteResponse](#cloud-v1-api-removefavoriteresponse)
   - [cloud.v1.api.RequestPasswordResetRequest](#cloud-v1-api-requestpasswordresetrequest)
@@ -280,6 +286,8 @@
   - [cloud.v1.api.StatusCounts](#cloud-v1-api-statuscounts)
   - [cloud.v1.api.StreamLogsRequest](#cloud-v1-api-streamlogsrequest)
   - [cloud.v1.api.StreamTestRunOverviewRequest](#cloud-v1-api-streamtestrunoverviewrequest)
+  - [cloud.v1.api.SubmitRegistrationRequestRequest](#cloud-v1-api-submitregistrationrequestrequest)
+  - [cloud.v1.api.SubmitRegistrationRequestResponse](#cloud-v1-api-submitregistrationrequestresponse)
   - [cloud.v1.api.SuiteWizardCellPatch](#cloud-v1-api-suitewizardcellpatch)
   - [cloud.v1.api.TenantDashboard](#cloud-v1-api-tenantdashboard)
   - [cloud.v1.api.TestRunOverviewSnapshot](#cloud-v1-api-testrunoverviewsnapshot)
@@ -5634,6 +5642,53 @@ go_name: Quotas</pre></td>
 
 
 
+<a name="cloud-v1-api-listregistrationrequestsrequest"></a>
+### cloud.v1.api.ListRegistrationRequestsRequest
+
+<pre>
+//ListRegistrationRequestsRequest lists requests for the admin console. An
+//unspecified status filter returns every request (newest first).
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>status</td>
+<td><a href="#cloud-v1-api-registrationrequeststatus">cloud.v1.api.RegistrationRequestStatus</a></td>
+<td><pre>
+status optionally filters by lifecycle state; UNSPECIFIED = all.<br>
+
+json_name: status
+go_name: Status</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-listregistrationrequestsresponse"></a>
+### cloud.v1.api.ListRegistrationRequestsResponse
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>requests</td>
+<td><a href="#cloud-v1-api-registrationrequest">cloud.v1.api.RegistrationRequest</a></td>
+<td><pre>
+json_name: requests
+go_name: Requests</pre></td>
+</tr>
+</table>
+
+
+
 <a name="cloud-v1-api-listrolesrequest"></a>
 ### cloud.v1.api.ListRolesRequest
 
@@ -7719,6 +7774,52 @@ go_name: RefreshToken</pre></td>
 
 
 
+<a name="cloud-v1-api-markregistrationrequesthandledrequest"></a>
+### cloud.v1.api.MarkRegistrationRequestHandledRequest
+
+<pre>
+//MarkRegistrationRequestHandledRequest flips one request to HANDLED. Account
+//creation is a separate admin action (CreateAccount) — this only triages.
+//Idempotent: marking an already-handled request is a no-op.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>id</td>
+<td>string</td>
+<td><pre>
+json_name: id
+go_name: Id</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-markregistrationrequesthandledresponse"></a>
+### cloud.v1.api.MarkRegistrationRequestHandledResponse
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>request</td>
+<td><a href="#cloud-v1-api-registrationrequest">cloud.v1.api.RegistrationRequest</a></td>
+<td><pre>
+json_name: request
+go_name: Request</pre></td>
+</tr>
+</table>
+
+
+
 <a name="cloud-v1-api-patchsuitewizardrequest"></a>
 ### cloud.v1.api.PatchSuiteWizardRequest
 
@@ -9011,6 +9112,103 @@ go_name: Tokens</pre></td>
 </table>
 
 
+
+<a name="cloud-v1-api-registrationrequest"></a>
+### cloud.v1.api.RegistrationRequest
+
+<pre>
+//RegistrationRequest is one prospective user's access request, captured while
+//self-signup is closed. email is the unique key — a re-submit from the same
+//address refreshes the message and keeps a single PENDING row.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>created_at</td>
+<td><a href="../../../google/protobuf/README.md#google-protobuf-timestamp">google.protobuf.Timestamp</a></td>
+<td><pre>
+json_name: createdAt
+go_name: CreatedAt</pre></td>
+</tr><tr>
+<td>email</td>
+<td>string</td>
+<td><pre>
+email is the requester's contact + intended login address.<br>
+
+json_name: email
+go_name: Email</pre></td>
+</tr><tr>
+<td>handled_by_account_id</td>
+<td>string</td>
+<td><pre>
+handled_by_account_id is the admin who marked it handled (empty until then).<br>
+
+json_name: handledByAccountId
+go_name: HandledByAccountId</pre></td>
+</tr><tr>
+<td>id</td>
+<td>string</td>
+<td><pre>
+id is the server-assigned identifier.<br>
+
+json_name: id
+go_name: Id</pre></td>
+</tr><tr>
+<td>message</td>
+<td>string</td>
+<td><pre>
+message is the requester's optional free-text note (reason / context).<br>
+
+json_name: message
+go_name: Message</pre></td>
+</tr><tr>
+<td>status</td>
+<td><a href="#cloud-v1-api-registrationrequeststatus">cloud.v1.api.RegistrationRequestStatus</a></td>
+<td><pre>
+status is the triage lifecycle state.<br>
+
+json_name: status
+go_name: Status</pre></td>
+</tr><tr>
+<td>updated_at</td>
+<td><a href="../../../google/protobuf/README.md#google-protobuf-timestamp">google.protobuf.Timestamp</a></td>
+<td><pre>
+json_name: updatedAt
+go_name: UpdatedAt</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-registrationrequeststatus"></a>
+### cloud.v1.api.RegistrationRequestStatus
+
+<pre>
+//RegistrationRequestStatus is the lifecycle of one access request.
+</pre>
+
+<table>
+<tr><th>Value</th><th>Description</th></tr>
+<tr>
+<td>REGISTRATION_REQUEST_STATUS_UNSPECIFIED</td>
+<td></td>
+</tr><tr>
+<td>REGISTRATION_REQUEST_STATUS_PENDING</td>
+<td><pre>
+PENDING: awaiting an admin's attention.
+</pre></td>
+</tr><tr>
+<td>REGISTRATION_REQUEST_STATUS_HANDLED</td>
+<td><pre>
+HANDLED: an admin has actioned it (account created or dismissed).
+</pre></td>
+</tr>
+</table>
 
 <a name="cloud-v1-api-removefavoriterequest"></a>
 ### cloud.v1.api.RemoveFavoriteRequest
@@ -10381,6 +10579,48 @@ json_name: tenantId
 go_name: TenantId</pre></td>
 </tr>
 </table>
+
+
+
+<a name="cloud-v1-api-submitregistrationrequestrequest"></a>
+### cloud.v1.api.SubmitRegistrationRequestRequest
+
+<pre>
+//SubmitRegistrationRequestRequest is the PUBLIC submission. Accepted only when
+//self-registration is disabled; otherwise the server tells the caller to
+//Register instead. Idempotent on email: a repeat updates the existing row.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>email</td>
+<td>string</td>
+<td><pre>
+json_name: email
+go_name: Email</pre></td>
+</tr><tr>
+<td>message</td>
+<td>string</td>
+<td><pre>
+json_name: message
+go_name: Message</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-submitregistrationrequestresponse"></a>
+### cloud.v1.api.SubmitRegistrationRequestResponse
+
+<pre>
+//SubmitRegistrationRequestResponse is empty; success is signalled by the
+//absence of error (no account-existence leak).
+</pre>
 
 
 

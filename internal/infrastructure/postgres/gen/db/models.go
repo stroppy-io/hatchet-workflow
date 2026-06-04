@@ -37,6 +37,15 @@ type PlatformSettings struct {
 	Data      json.RawMessage
 }
 
+type RegistrationRequests struct {
+	ID        string
+	Email     string
+	Status    string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Data      json.RawMessage
+}
+
 type SuiteRecords struct {
 	ID        string
 	TenantID  string
@@ -109,6 +118,56 @@ type TenantSettingsRecords struct {
 	TenantID  string
 	UpdatedAt time.Time
 	Data      json.RawMessage
+}
+
+type QuotaSnapshots struct {
+	TenantID          string
+	Provider          int32
+	ResourceType      string
+	ResourceID        string
+	Service           string
+	QuotaName         string
+	Units             string
+	ProviderUsed      string
+	QuotaLimit        string
+	ProviderAvailable string
+	ObservedAt        time.Time
+	StaleAfter        time.Time
+	Raw               json.RawMessage
+}
+
+type QuotaReservations struct {
+	ID           string
+	TenantID     string
+	RunID        string
+	NodeID       string
+	Provider     int32
+	ResourceType string
+	ResourceID   string
+	Service      string
+	QuotaName    string
+	Units        string
+	Amount       string
+	Status       int32
+	WorkflowID   string
+	ExpiresAt    *time.Time
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+}
+
+type NetworkReservations struct {
+	ID           string
+	TenantID     string
+	RunID        string
+	Provider     int32
+	ResourceType string
+	ResourceID   string
+	Cidr         string
+	Status       int32
+	WorkflowID   string
+	ExpiresAt    *time.Time
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
 type IamAccounts struct {

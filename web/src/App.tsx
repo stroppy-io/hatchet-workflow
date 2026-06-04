@@ -20,13 +20,9 @@ import { Quotas } from "@/pages/Quotas";
 import { NewRun } from "@/pages/NewRun";
 import { SuiteWizard } from "@/pages/SuiteWizard";
 import { RunDetail } from "@/pages/RunDetail";
-import { Favorites } from "@/pages/Favorites";
 import { Compare } from "@/pages/Compare";
-import { Shares } from "@/pages/Shares";
 import { SharedRun } from "@/pages/SharedRun";
 import { Landing } from "@/pages/Landing";
-import { Leaderboard } from "@/pages/Leaderboard";
-import { Shell } from "@/pages/Shell";
 import { DatabasePresets } from "@/pages/library/DatabasePresets";
 import { DatabasePresetForm } from "@/pages/library/DatabasePresetForm";
 import { DatabasePresetDetail } from "@/pages/library/DatabasePresetDetail";
@@ -42,6 +38,7 @@ import { PackageDetail } from "@/pages/library/PackageDetail";
 import { AdminAccounts } from "@/pages/admin/AdminAccounts";
 import { AdminSystemSettings } from "@/pages/admin/AdminSystemSettings";
 import { AdminIdentityProviders } from "@/pages/admin/AdminIdentityProviders";
+import { AdminRegistrationRequests } from "@/pages/admin/AdminRegistrationRequests";
 import { Orgs } from "@/pages/orgs/Orgs";
 import { OrgDetail } from "@/pages/orgs/OrgDetail";
 
@@ -111,6 +108,10 @@ export default function App() {
                 element={<Navigate to="/admin/accounts" replace />}
               />
               <Route path="/admin/accounts" element={<AdminAccounts />} />
+              <Route
+                path="/admin/registration-requests"
+                element={<AdminRegistrationRequests />}
+              />
               <Route path="/admin/system" element={<AdminSystemSettings />} />
               <Route
                 path="/admin/identity-providers"
@@ -138,11 +139,7 @@ export default function App() {
               <Route path="runs" element={<Runs />} />
               <Route path="runs/new" element={<NewRun />} />
               <Route path="runs/:id" element={<RunDetail />} />
-              <Route path="favorites" element={<Favorites />} />
               <Route path="compare" element={<Compare />} />
-              <Route path="shares" element={<Shares />} />
-              <Route path="leaderboard" element={<Leaderboard />} />
-              <Route path="shell" element={<Shell />} />
               <Route path="suites" element={<Suites />} />
               <Route path="suites/new" element={<SuiteWizard />} />
               <Route path="suites/:id" element={<SuiteDetail />} />

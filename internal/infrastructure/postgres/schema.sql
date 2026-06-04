@@ -39,6 +39,17 @@ CREATE TABLE platform_settings (
   data       jsonb NOT NULL
 );
 
+CREATE TABLE registration_requests (
+  id         text PRIMARY KEY,
+  email      text NOT NULL,
+  status     text NOT NULL DEFAULT '',
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  data       jsonb NOT NULL
+);
+CREATE UNIQUE INDEX idx_registration_requests_email ON registration_requests (email);
+CREATE INDEX idx_registration_requests_status ON registration_requests (status);
+
 CREATE TABLE suite_records (
   id         text PRIMARY KEY,
   tenant_id  text NOT NULL,

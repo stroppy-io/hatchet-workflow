@@ -5,6 +5,7 @@ import {
   SlidersHorizontal,
   UsersRound,
   ShieldCheck,
+  MailQuestion,
   ChevronDown,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -24,6 +25,11 @@ import {
 // hosts the admin API group.
 const platformItems = [
   { to: "/admin/accounts", icon: UsersRound, label: "Accounts" },
+  {
+    to: "/admin/registration-requests",
+    icon: MailQuestion,
+    label: "Registration requests",
+  },
   {
     to: "/admin/identity-providers",
     icon: ShieldCheck,

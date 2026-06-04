@@ -8,6 +8,7 @@ import (
 	jxpb "github.com/gopherex/protoc-gen-go-jx/jxpb"
 	iam "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func (m *TokenPair) Encode(e *jx.Encoder) {
@@ -5813,6 +5814,497 @@ func (m *RevokeApiTokenResponse) MarshalJSON() ([]byte, error) {
 }
 
 func (m *RevokeApiTokenResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *RegistrationRequest) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Id != "" {
+		e.FieldStart("id")
+		e.Str(m.Id)
+	}
+	if m.Email != "" {
+		e.FieldStart("email")
+		e.Str(m.Email)
+	}
+	if m.Message != "" {
+		e.FieldStart("message")
+		e.Str(m.Message)
+	}
+	if m.Status != 0 {
+		e.FieldStart("status")
+		if s, ok := RegistrationRequestStatus_name[int32(m.Status)]; ok {
+			e.Str(s)
+		} else {
+			e.Int32(int32(m.Status))
+		}
+	}
+	if m.HandledByAccountId != "" {
+		e.FieldStart("handledByAccountId")
+		e.Str(m.HandledByAccountId)
+	}
+	if m.CreatedAt != nil {
+		e.FieldStart("createdAt")
+		jxpb.EncTimestamp(e, m.CreatedAt)
+	}
+	if m.UpdatedAt != nil {
+		e.FieldStart("updatedAt")
+		jxpb.EncTimestamp(e, m.UpdatedAt)
+	}
+	e.ObjEnd()
+}
+
+func (m *RegistrationRequest) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "id":
+			if seen["Id"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Id"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Id = v
+			return nil
+		case "email":
+			if seen["Email"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Email"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Email = v
+			return nil
+		case "message":
+			if seen["Message"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Message"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Message = v
+			return nil
+		case "status":
+			if seen["Status"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Status"] = true
+			switch d.Next() {
+			case jx.String:
+				s, err := d.Str()
+				if err != nil {
+					return err
+				}
+				n, ok := RegistrationRequestStatus_value[s]
+				if !ok {
+					return fmt.Errorf("unknown enum value %q", s)
+				}
+				m.Status = RegistrationRequestStatus(n)
+				return nil
+			case jx.Number:
+				n, err := d.Int32()
+				if err != nil {
+					return err
+				}
+				m.Status = RegistrationRequestStatus(n)
+				return nil
+			case jx.Null:
+				return d.Null()
+			default:
+				return fmt.Errorf("invalid enum token %s", d.Next())
+			}
+		case "handledByAccountId", "handled_by_account_id":
+			if seen["HandledByAccountId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["HandledByAccountId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.HandledByAccountId = v
+			return nil
+		case "createdAt", "created_at":
+			if seen["CreatedAt"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["CreatedAt"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.CreatedAt = &timestamppb.Timestamp{}
+			if err := jxpb.DecTimestamp(d, m.CreatedAt); err != nil {
+				return err
+			}
+			return nil
+		case "updatedAt", "updated_at":
+			if seen["UpdatedAt"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["UpdatedAt"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.UpdatedAt = &timestamppb.Timestamp{}
+			if err := jxpb.DecTimestamp(d, m.UpdatedAt); err != nil {
+				return err
+			}
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *RegistrationRequest) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *RegistrationRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *SubmitRegistrationRequestRequest) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Email != "" {
+		e.FieldStart("email")
+		e.Str(m.Email)
+	}
+	if m.Message != "" {
+		e.FieldStart("message")
+		e.Str(m.Message)
+	}
+	e.ObjEnd()
+}
+
+func (m *SubmitRegistrationRequestRequest) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "email":
+			if seen["Email"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Email"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Email = v
+			return nil
+		case "message":
+			if seen["Message"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Message"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Message = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *SubmitRegistrationRequestRequest) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *SubmitRegistrationRequestRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *SubmitRegistrationRequestResponse) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	e.ObjEnd()
+}
+
+func (m *SubmitRegistrationRequestResponse) Decode(d *jx.Decoder) error {
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *SubmitRegistrationRequestResponse) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *SubmitRegistrationRequestResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *ListRegistrationRequestsRequest) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Status != 0 {
+		e.FieldStart("status")
+		if s, ok := RegistrationRequestStatus_name[int32(m.Status)]; ok {
+			e.Str(s)
+		} else {
+			e.Int32(int32(m.Status))
+		}
+	}
+	e.ObjEnd()
+}
+
+func (m *ListRegistrationRequestsRequest) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "status":
+			if seen["Status"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Status"] = true
+			switch d.Next() {
+			case jx.String:
+				s, err := d.Str()
+				if err != nil {
+					return err
+				}
+				n, ok := RegistrationRequestStatus_value[s]
+				if !ok {
+					return fmt.Errorf("unknown enum value %q", s)
+				}
+				m.Status = RegistrationRequestStatus(n)
+				return nil
+			case jx.Number:
+				n, err := d.Int32()
+				if err != nil {
+					return err
+				}
+				m.Status = RegistrationRequestStatus(n)
+				return nil
+			case jx.Null:
+				return d.Null()
+			default:
+				return fmt.Errorf("invalid enum token %s", d.Next())
+			}
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *ListRegistrationRequestsRequest) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *ListRegistrationRequestsRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *ListRegistrationRequestsResponse) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if len(m.Requests) > 0 {
+		e.FieldStart("requests")
+		e.ArrStart()
+		for _, v := range m.Requests {
+			v.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	e.ObjEnd()
+}
+
+func (m *ListRegistrationRequestsResponse) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "requests":
+			if seen["Requests"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Requests"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &RegistrationRequest{}
+				if err := el.Decode(d); err != nil {
+					return err
+				}
+				m.Requests = append(m.Requests, el)
+				return nil
+			})
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *ListRegistrationRequestsResponse) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *ListRegistrationRequestsResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *MarkRegistrationRequestHandledRequest) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Id != "" {
+		e.FieldStart("id")
+		e.Str(m.Id)
+	}
+	e.ObjEnd()
+}
+
+func (m *MarkRegistrationRequestHandledRequest) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "id":
+			if seen["Id"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Id"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Id = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *MarkRegistrationRequestHandledRequest) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *MarkRegistrationRequestHandledRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *MarkRegistrationRequestHandledResponse) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Request != nil {
+		e.FieldStart("request")
+		m.Request.Encode(e)
+	}
+	e.ObjEnd()
+}
+
+func (m *MarkRegistrationRequestHandledResponse) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "request":
+			if seen["Request"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Request"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Request = &RegistrationRequest{}
+			if err := m.Request.Decode(d); err != nil {
+				return err
+			}
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *MarkRegistrationRequestHandledResponse) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *MarkRegistrationRequestHandledResponse) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return m.Decode(d)
 }

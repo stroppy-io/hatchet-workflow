@@ -50,6 +50,17 @@ type AccountRepo interface {
 	Delete(ctx context.Context, id string) error
 }
 
+// RegistrationRequestRepo persists prospective-user access requests captured
+// while self-signup is closed. email is the natural key — Upsert collapses
+// repeat submissions from the same address onto one row.
+type RegistrationRequestRepo interface {
+	Upsert(ctx context.Context, req *api.RegistrationRequest) error
+	Get(ctx context.Context, id string) (*api.RegistrationRequest, error)
+	GetByEmail(ctx context.Context, email string) (*api.RegistrationRequest, error)
+	List(ctx context.Context) ([]*api.RegistrationRequest, error)
+	Update(ctx context.Context, req *api.RegistrationRequest) error
+}
+
 // CredentialStore holds password hashes keyed by account id, separate from the
 // Account so identity can travel without credentials. Get returns derrors.ErrNotFound
 // for an SSO-only account that has no password.
@@ -190,28 +201,29 @@ type TokenTTL interface {
 
 // IamDeps bundles every dependency for the constructor.
 type IamDeps struct {
-	Authn              utils.Authn
-	Authz              Authz
-	Accounts           AccountRepo
-	Credentials        CredentialStore
-	Hasher             PasswordHasher
-	Tokens             TokenService
-	OneTimeTokens      OneTimeTokens
-	Notifier           Notifier
-	Gates              PlatformGates
-	Catalog            PermissionCatalog
-	Tenants            TenantRepo
-	Roles              RoleRepo
-	Memberships        MembershipRepo
-	Providers          IdentityProviderRepo
-	ProviderSecrets    ProviderSecrets
-	ExternalIdentities ExternalIdentityRepo
-	SSO                SSOFlows
-	TTL                TokenTTL
-	ApiTokens          ApiTokenRepo
-	ApiTokenSecrets    ApiTokenSecrets
-	ApiTokenMinter     ApiTokenMinter
-	Tx                 tx.Trm
+	Authn                utils.Authn
+	Authz                Authz
+	Accounts             AccountRepo
+	RegistrationRequests RegistrationRequestRepo
+	Credentials          CredentialStore
+	Hasher               PasswordHasher
+	Tokens               TokenService
+	OneTimeTokens        OneTimeTokens
+	Notifier             Notifier
+	Gates                PlatformGates
+	Catalog              PermissionCatalog
+	Tenants              TenantRepo
+	Roles                RoleRepo
+	Memberships          MembershipRepo
+	Providers            IdentityProviderRepo
+	ProviderSecrets      ProviderSecrets
+	ExternalIdentities   ExternalIdentityRepo
+	SSO                  SSOFlows
+	TTL                  TokenTTL
+	ApiTokens            ApiTokenRepo
+	ApiTokenSecrets      ApiTokenSecrets
+	ApiTokenMinter       ApiTokenMinter
+	Tx                   tx.Trm
 }
 
 type IamService struct {

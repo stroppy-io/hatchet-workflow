@@ -851,7 +851,9 @@ func (q *Queries) SaveIdentitySsoState(ctx context.Context, arg SaveIdentitySsoS
 }
 
 const consumeIdentitySsoStateSQL = `delete from identity_sso_states where state = $1
-returning state, provider_id, code_verifier, nonce, expires_at;`
+returning state, provider_id, code_verifier, nonce, expires_at;
+
+-- ===== registration_requests (registration_requests.go RegistrationRequestRepo) =====`
 
 type ConsumeIdentitySsoStateRow struct {
 	State        string
@@ -866,6 +868,88 @@ func (q *Queries) ConsumeIdentitySsoState(ctx context.Context, state string) (Co
 	var i ConsumeIdentitySsoStateRow
 	err := row.Scan(&i.State, &i.ProviderID, &i.CodeVerifier, &i.Nonce, &i.ExpiresAt)
 	return i, err
+}
+
+const upsertRegistrationRequestSQL = `insert into registration_requests (id, email, status, created_at, updated_at, data)
+values ($1, $2, $3, now(), now(), $4)
+on conflict (email) do update set status = excluded.status, data = excluded.data, updated_at = now();`
+
+type UpsertRegistrationRequestParams struct {
+	ID     any
+	Email  any
+	Status any
+	Data   any
+}
+
+func (q *Queries) UpsertRegistrationRequest(ctx context.Context, arg UpsertRegistrationRequestParams) error {
+	_, err := q.db.Exec(ctx, upsertRegistrationRequestSQL, arg.ID, arg.Email, arg.Status, arg.Data)
+	return err
+}
+
+const getRegistrationRequestSQL = `select data from registration_requests where id = $1;`
+
+type GetRegistrationRequestRow struct {
+	Data json.RawMessage
+}
+
+func (q *Queries) GetRegistrationRequest(ctx context.Context, id string) (GetRegistrationRequestRow, error) {
+	row := q.db.QueryRow(ctx, getRegistrationRequestSQL, id)
+	var i GetRegistrationRequestRow
+	err := row.Scan(&i.Data)
+	return i, err
+}
+
+const getRegistrationRequestByEmailSQL = `select data from registration_requests where email = $1;`
+
+type GetRegistrationRequestByEmailRow struct {
+	Data json.RawMessage
+}
+
+func (q *Queries) GetRegistrationRequestByEmail(ctx context.Context, email string) (GetRegistrationRequestByEmailRow, error) {
+	row := q.db.QueryRow(ctx, getRegistrationRequestByEmailSQL, email)
+	var i GetRegistrationRequestByEmailRow
+	err := row.Scan(&i.Data)
+	return i, err
+}
+
+const listRegistrationRequestsSQL = `select data from registration_requests order by created_at desc;`
+
+type ListRegistrationRequestsRow struct {
+	Data json.RawMessage
+}
+
+func (q *Queries) ListRegistrationRequests(ctx context.Context) ([]ListRegistrationRequestsRow, error) {
+	rows, err := q.db.Query(ctx, listRegistrationRequestsSQL)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListRegistrationRequestsRow
+	for rows.Next() {
+		var i ListRegistrationRequestsRow
+		if err := rows.Scan(&i.Data); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateRegistrationRequestSQL = `update registration_requests set status = $1, data = $2, updated_at = now()
+where id = $3;`
+
+type UpdateRegistrationRequestParams struct {
+	Status string
+	Data   json.RawMessage
+	ID     string
+}
+
+func (q *Queries) UpdateRegistrationRequest(ctx context.Context, arg UpdateRegistrationRequestParams) (int64, error) {
+	tag, err := q.db.Exec(ctx, updateRegistrationRequestSQL, arg.Status, arg.Data, arg.ID)
+	return tag.RowsAffected(), err
 }
 
 const createTestRunRecordSQL = `insert into test_run_records (id, tenant_id, created_at, updated_at, data)

@@ -13,6 +13,7 @@ import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -24,6 +25,58 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
+
+// RegistrationRequestStatus is the lifecycle of one access request.
+type RegistrationRequestStatus int32
+
+const (
+	RegistrationRequestStatus_REGISTRATION_REQUEST_STATUS_UNSPECIFIED RegistrationRequestStatus = 0
+	// PENDING: awaiting an admin's attention.
+	RegistrationRequestStatus_REGISTRATION_REQUEST_STATUS_PENDING RegistrationRequestStatus = 1
+	// HANDLED: an admin has actioned it (account created or dismissed).
+	RegistrationRequestStatus_REGISTRATION_REQUEST_STATUS_HANDLED RegistrationRequestStatus = 2
+)
+
+// Enum value maps for RegistrationRequestStatus.
+var (
+	RegistrationRequestStatus_name = map[int32]string{
+		0: "REGISTRATION_REQUEST_STATUS_UNSPECIFIED",
+		1: "REGISTRATION_REQUEST_STATUS_PENDING",
+		2: "REGISTRATION_REQUEST_STATUS_HANDLED",
+	}
+	RegistrationRequestStatus_value = map[string]int32{
+		"REGISTRATION_REQUEST_STATUS_UNSPECIFIED": 0,
+		"REGISTRATION_REQUEST_STATUS_PENDING":     1,
+		"REGISTRATION_REQUEST_STATUS_HANDLED":     2,
+	}
+)
+
+func (x RegistrationRequestStatus) Enum() *RegistrationRequestStatus {
+	p := new(RegistrationRequestStatus)
+	*p = x
+	return p
+}
+
+func (x RegistrationRequestStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (RegistrationRequestStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_cloud_v1_api_iam_proto_enumTypes[0].Descriptor()
+}
+
+func (RegistrationRequestStatus) Type() protoreflect.EnumType {
+	return &file_cloud_v1_api_iam_proto_enumTypes[0]
+}
+
+func (x RegistrationRequestStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use RegistrationRequestStatus.Descriptor instead.
+func (RegistrationRequestStatus) EnumDescriptor() ([]byte, []int) {
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{0}
+}
 
 // TokenPair is the result of a successful Register, Login or Refresh. Both are
 // bearer credentials.
@@ -5206,11 +5259,386 @@ func (*RevokeApiTokenResponse) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{99}
 }
 
+// RegistrationRequest is one prospective user's access request, captured while
+// self-signup is closed. email is the unique key — a re-submit from the same
+// address refreshes the message and keeps a single PENDING row.
+type RegistrationRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is the server-assigned identifier.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// email is the requester's contact + intended login address.
+	Email string `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
+	// message is the requester's optional free-text note (reason / context).
+	Message string `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
+	// status is the triage lifecycle state.
+	Status RegistrationRequestStatus `protobuf:"varint,4,opt,name=status,proto3,enum=cloud.v1.api.RegistrationRequestStatus" json:"status,omitempty"`
+	// handled_by_account_id is the admin who marked it handled (empty until then).
+	HandledByAccountId string                 `protobuf:"bytes,5,opt,name=handled_by_account_id,json=handledByAccountId,proto3" json:"handled_by_account_id,omitempty"`
+	CreatedAt          *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt          *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *RegistrationRequest) Reset() {
+	*x = RegistrationRequest{}
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[100]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RegistrationRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegistrationRequest) ProtoMessage() {}
+
+func (x *RegistrationRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[100]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegistrationRequest.ProtoReflect.Descriptor instead.
+func (*RegistrationRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{100}
+}
+
+func (x *RegistrationRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *RegistrationRequest) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *RegistrationRequest) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *RegistrationRequest) GetStatus() RegistrationRequestStatus {
+	if x != nil {
+		return x.Status
+	}
+	return RegistrationRequestStatus_REGISTRATION_REQUEST_STATUS_UNSPECIFIED
+}
+
+func (x *RegistrationRequest) GetHandledByAccountId() string {
+	if x != nil {
+		return x.HandledByAccountId
+	}
+	return ""
+}
+
+func (x *RegistrationRequest) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *RegistrationRequest) GetUpdatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.UpdatedAt
+	}
+	return nil
+}
+
+// SubmitRegistrationRequestRequest is the PUBLIC submission. Accepted only when
+// self-registration is disabled; otherwise the server tells the caller to
+// Register instead. Idempotent on email: a repeat updates the existing row.
+type SubmitRegistrationRequestRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Email         string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SubmitRegistrationRequestRequest) Reset() {
+	*x = SubmitRegistrationRequestRequest{}
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[101]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SubmitRegistrationRequestRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SubmitRegistrationRequestRequest) ProtoMessage() {}
+
+func (x *SubmitRegistrationRequestRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[101]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SubmitRegistrationRequestRequest.ProtoReflect.Descriptor instead.
+func (*SubmitRegistrationRequestRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{101}
+}
+
+func (x *SubmitRegistrationRequestRequest) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *SubmitRegistrationRequestRequest) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+// SubmitRegistrationRequestResponse is empty; success is signalled by the
+// absence of error (no account-existence leak).
+type SubmitRegistrationRequestResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SubmitRegistrationRequestResponse) Reset() {
+	*x = SubmitRegistrationRequestResponse{}
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[102]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SubmitRegistrationRequestResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SubmitRegistrationRequestResponse) ProtoMessage() {}
+
+func (x *SubmitRegistrationRequestResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[102]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SubmitRegistrationRequestResponse.ProtoReflect.Descriptor instead.
+func (*SubmitRegistrationRequestResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{102}
+}
+
+// ListRegistrationRequestsRequest lists requests for the admin console. An
+// unspecified status filter returns every request (newest first).
+type ListRegistrationRequestsRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// status optionally filters by lifecycle state; UNSPECIFIED = all.
+	Status        RegistrationRequestStatus `protobuf:"varint,1,opt,name=status,proto3,enum=cloud.v1.api.RegistrationRequestStatus" json:"status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListRegistrationRequestsRequest) Reset() {
+	*x = ListRegistrationRequestsRequest{}
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[103]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListRegistrationRequestsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListRegistrationRequestsRequest) ProtoMessage() {}
+
+func (x *ListRegistrationRequestsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[103]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListRegistrationRequestsRequest.ProtoReflect.Descriptor instead.
+func (*ListRegistrationRequestsRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{103}
+}
+
+func (x *ListRegistrationRequestsRequest) GetStatus() RegistrationRequestStatus {
+	if x != nil {
+		return x.Status
+	}
+	return RegistrationRequestStatus_REGISTRATION_REQUEST_STATUS_UNSPECIFIED
+}
+
+type ListRegistrationRequestsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Requests      []*RegistrationRequest `protobuf:"bytes,1,rep,name=requests,proto3" json:"requests,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListRegistrationRequestsResponse) Reset() {
+	*x = ListRegistrationRequestsResponse{}
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[104]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListRegistrationRequestsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListRegistrationRequestsResponse) ProtoMessage() {}
+
+func (x *ListRegistrationRequestsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[104]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListRegistrationRequestsResponse.ProtoReflect.Descriptor instead.
+func (*ListRegistrationRequestsResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{104}
+}
+
+func (x *ListRegistrationRequestsResponse) GetRequests() []*RegistrationRequest {
+	if x != nil {
+		return x.Requests
+	}
+	return nil
+}
+
+// MarkRegistrationRequestHandledRequest flips one request to HANDLED. Account
+// creation is a separate admin action (CreateAccount) — this only triages.
+// Idempotent: marking an already-handled request is a no-op.
+type MarkRegistrationRequestHandledRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MarkRegistrationRequestHandledRequest) Reset() {
+	*x = MarkRegistrationRequestHandledRequest{}
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[105]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MarkRegistrationRequestHandledRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarkRegistrationRequestHandledRequest) ProtoMessage() {}
+
+func (x *MarkRegistrationRequestHandledRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[105]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarkRegistrationRequestHandledRequest.ProtoReflect.Descriptor instead.
+func (*MarkRegistrationRequestHandledRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{105}
+}
+
+func (x *MarkRegistrationRequestHandledRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type MarkRegistrationRequestHandledResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Request       *RegistrationRequest   `protobuf:"bytes,1,opt,name=request,proto3" json:"request,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MarkRegistrationRequestHandledResponse) Reset() {
+	*x = MarkRegistrationRequestHandledResponse{}
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[106]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MarkRegistrationRequestHandledResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarkRegistrationRequestHandledResponse) ProtoMessage() {}
+
+func (x *MarkRegistrationRequestHandledResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_iam_proto_msgTypes[106]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarkRegistrationRequestHandledResponse.ProtoReflect.Descriptor instead.
+func (*MarkRegistrationRequestHandledResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_iam_proto_rawDescGZIP(), []int{106}
+}
+
+func (x *MarkRegistrationRequestHandledResponse) GetRequest() *RegistrationRequest {
+	if x != nil {
+		return x.Request
+	}
+	return nil
+}
+
 var File_cloud_v1_api_iam_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_iam_proto_rawDesc = "" +
 	"\n" +
-	"\x16cloud/v1/api/iam.proto\x12\fcloud.v1.api\x1a\x1egoogle/protobuf/duration.proto\x1a\x17validate/validate.proto\x1a\x1acloud/v1/iam/account.proto\x1a\x19cloud/v1/iam/tenant.proto\x1a\x17cloud/v1/iam/role.proto\x1a\x1dcloud/v1/iam/membership.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x16cloud/v1/iam/sso.proto\x1a\x1bcloud/v1/iam/apitoken.proto\x1a\x0fogen/ogen.proto\"\xfb\x01\n" +
+	"\x16cloud/v1/api/iam.proto\x12\fcloud.v1.api\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\x1a\x1acloud/v1/iam/account.proto\x1a\x19cloud/v1/iam/tenant.proto\x1a\x17cloud/v1/iam/role.proto\x1a\x1dcloud/v1/iam/membership.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x16cloud/v1/iam/sso.proto\x1a\x1bcloud/v1/iam/apitoken.proto\x1a\x0fogen/ogen.proto\"\xfb\x01\n" +
 	"\tTokenPair\x12-\n" +
 	"\faccess_token\x18\x01 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\x80 R\vaccessToken\x12/\n" +
@@ -5526,7 +5954,33 @@ const file_cloud_v1_api_iam_proto_rawDesc = "" +
 	"\x06tokens\x18\x01 \x03(\v2\x16.cloud.v1.iam.ApiTokenR\x06tokens\"2\n" +
 	"\x15RevokeApiTokenRequest\x12\x19\n" +
 	"\x02id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"\x18\n" +
-	"\x16RevokeApiTokenResponse2\xc9O\n" +
+	"\x16RevokeApiTokenResponse\"\xbf\x02\n" +
+	"\x13RegistrationRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
+	"\x05email\x18\x02 \x01(\tR\x05email\x12\x18\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage\x12?\n" +
+	"\x06status\x18\x04 \x01(\x0e2'.cloud.v1.api.RegistrationRequestStatusR\x06status\x121\n" +
+	"\x15handled_by_account_id\x18\x05 \x01(\tR\x12handledByAccountId\x129\n" +
+	"\n" +
+	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"\n" +
+	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"j\n" +
+	" SubmitRegistrationRequestRequest\x12\"\n" +
+	"\x05email\x18\x01 \x01(\tB\f\xfaB\tr\a\x10\x05\x18\xff\x01`\x01R\x05email\x12\"\n" +
+	"\amessage\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\xd0\x0fR\amessage\"#\n" +
+	"!SubmitRegistrationRequestResponse\"b\n" +
+	"\x1fListRegistrationRequestsRequest\x12?\n" +
+	"\x06status\x18\x01 \x01(\x0e2'.cloud.v1.api.RegistrationRequestStatusR\x06status\"a\n" +
+	" ListRegistrationRequestsResponse\x12=\n" +
+	"\brequests\x18\x01 \x03(\v2!.cloud.v1.api.RegistrationRequestR\brequests\"B\n" +
+	"%MarkRegistrationRequestHandledRequest\x12\x19\n" +
+	"\x02id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"e\n" +
+	"&MarkRegistrationRequestHandledResponse\x12;\n" +
+	"\arequest\x18\x01 \x01(\v2!.cloud.v1.api.RegistrationRequestR\arequest*\x9a\x01\n" +
+	"\x19RegistrationRequestStatus\x12+\n" +
+	"'REGISTRATION_REQUEST_STATUS_UNSPECIFIED\x10\x00\x12'\n" +
+	"#REGISTRATION_REQUEST_STATUS_PENDING\x10\x01\x12'\n" +
+	"#REGISTRATION_REQUEST_STATUS_HANDLED\x10\x022\x86V\n" +
 	"\n" +
 	"IamService\x12\xaf\x01\n" +
 	"\bRegister\x12\x1d.cloud.v1.api.RegisterRequest\x1a\x1e.cloud.v1.api.RegisterResponse\"d\x8a\xb5\x18\x02\b\x01\xf2\xa7\x1dZ\x10\x02\x1a\t/register\"\bregister\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
@@ -5542,7 +5996,13 @@ const file_cloud_v1_api_iam_proto_rawDesc = "" +
 	"\x14ConfirmPasswordReset\x12).cloud.v1.api.ConfirmPasswordResetRequest\x1a*.cloud.v1.api.ConfirmPasswordResetResponse\"~\x8a\xb5\x18\x02\b\x01\xf2\xa7\x1dt\x10\x02\x1a\x17/confirm-password-reset\"\x14confirmPasswordReset\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
 	"\x1a#/components/schemas/Error\x12\xbf\x01\n" +
 	"\vVerifyEmail\x12 .cloud.v1.api.VerifyEmailRequest\x1a!.cloud.v1.api.VerifyEmailResponse\"k\x8a\xb5\x18\x02\b\x01\xf2\xa7\x1da\x10\x02\x1a\r/verify-email\"\vverifyEmail\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
-	"\x1a#/components/schemas/Error\x12\xc9\x01\n" +
+	"\x1a#/components/schemas/Error\x12\x8a\x02\n" +
+	"\x19SubmitRegistrationRequest\x12..cloud.v1.api.SubmitRegistrationRequestRequest\x1a/.cloud.v1.api.SubmitRegistrationRequestResponse\"\x8b\x01\x8a\xb5\x18\x02\b\x01\xf2\xa7\x1d~\x10\x02\x1a\x1c/submit-registration-request\"\x19submitRegistrationRequest\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\x85\x02\n" +
+	"\x18ListRegistrationRequests\x12-.cloud.v1.api.ListRegistrationRequestsRequest\x1a..cloud.v1.api.ListRegistrationRequestsResponse\"\x89\x01\x8a\xb5\x18\x02\x18\x01\xf2\xa7\x1d|\x10\x01\x1a\x1b/list-registration-requests\"\x18listRegistrationRequests\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xa5\x02\n" +
+	"\x1eMarkRegistrationRequestHandled\x123.cloud.v1.api.MarkRegistrationRequestHandledRequest\x1a4.cloud.v1.api.MarkRegistrationRequestHandledResponse\"\x97\x01\x8a\xb5\x18\x02\x18\x01\xf2\xa7\x1d\x89\x01\x10\x02\x1a\"/mark-registration-request-handled\"\x1emarkRegistrationRequestHandled\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xc9\x01\n" +
 	"\rCreateAccount\x12\".cloud.v1.api.CreateAccountRequest\x1a#.cloud.v1.api.CreateAccountResponse\"o\x8a\xb5\x18\x02\x18\x01\xf2\xa7\x1de\x10\x02\x1a\x0f/create-account\"\rcreateAccount\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
 	"\x1a#/components/schemas/Error\x12\xbb\x01\n" +
 	"\n" +
@@ -5649,265 +6109,287 @@ func file_cloud_v1_api_iam_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_api_iam_proto_rawDescData
 }
 
-var file_cloud_v1_api_iam_proto_msgTypes = make([]protoimpl.MessageInfo, 100)
+var file_cloud_v1_api_iam_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_cloud_v1_api_iam_proto_msgTypes = make([]protoimpl.MessageInfo, 107)
 var file_cloud_v1_api_iam_proto_goTypes = []any{
-	(*TokenPair)(nil),                       // 0: cloud.v1.api.TokenPair
-	(*RegisterRequest)(nil),                 // 1: cloud.v1.api.RegisterRequest
-	(*RegisterResponse)(nil),                // 2: cloud.v1.api.RegisterResponse
-	(*LoginRequest)(nil),                    // 3: cloud.v1.api.LoginRequest
-	(*LoginResponse)(nil),                   // 4: cloud.v1.api.LoginResponse
-	(*RefreshRequest)(nil),                  // 5: cloud.v1.api.RefreshRequest
-	(*RefreshResponse)(nil),                 // 6: cloud.v1.api.RefreshResponse
-	(*LogoutRequest)(nil),                   // 7: cloud.v1.api.LogoutRequest
-	(*LogoutResponse)(nil),                  // 8: cloud.v1.api.LogoutResponse
-	(*CreateAccountRequest)(nil),            // 9: cloud.v1.api.CreateAccountRequest
-	(*ExternalIdentityLink)(nil),            // 10: cloud.v1.api.ExternalIdentityLink
-	(*CreateAccountResponse)(nil),           // 11: cloud.v1.api.CreateAccountResponse
-	(*GetAccountRequest)(nil),               // 12: cloud.v1.api.GetAccountRequest
-	(*GetAccountResponse)(nil),              // 13: cloud.v1.api.GetAccountResponse
-	(*GetMyAccountRequest)(nil),             // 14: cloud.v1.api.GetMyAccountRequest
-	(*GetMyAccountResponse)(nil),            // 15: cloud.v1.api.GetMyAccountResponse
-	(*ListAccountsRequest)(nil),             // 16: cloud.v1.api.ListAccountsRequest
-	(*ListAccountsResponse)(nil),            // 17: cloud.v1.api.ListAccountsResponse
-	(*UpdateAccountRequest)(nil),            // 18: cloud.v1.api.UpdateAccountRequest
-	(*UpdateAccountResponse)(nil),           // 19: cloud.v1.api.UpdateAccountResponse
-	(*DeleteAccountRequest)(nil),            // 20: cloud.v1.api.DeleteAccountRequest
-	(*DeleteAccountResponse)(nil),           // 21: cloud.v1.api.DeleteAccountResponse
-	(*ChangePasswordRequest)(nil),           // 22: cloud.v1.api.ChangePasswordRequest
-	(*ChangePasswordResponse)(nil),          // 23: cloud.v1.api.ChangePasswordResponse
-	(*ResetPasswordRequest)(nil),            // 24: cloud.v1.api.ResetPasswordRequest
-	(*ResetPasswordResponse)(nil),           // 25: cloud.v1.api.ResetPasswordResponse
-	(*RequestPasswordResetRequest)(nil),     // 26: cloud.v1.api.RequestPasswordResetRequest
-	(*RequestPasswordResetResponse)(nil),    // 27: cloud.v1.api.RequestPasswordResetResponse
-	(*ConfirmPasswordResetRequest)(nil),     // 28: cloud.v1.api.ConfirmPasswordResetRequest
-	(*ConfirmPasswordResetResponse)(nil),    // 29: cloud.v1.api.ConfirmPasswordResetResponse
-	(*VerifyEmailRequest)(nil),              // 30: cloud.v1.api.VerifyEmailRequest
-	(*VerifyEmailResponse)(nil),             // 31: cloud.v1.api.VerifyEmailResponse
-	(*ResendVerificationRequest)(nil),       // 32: cloud.v1.api.ResendVerificationRequest
-	(*ResendVerificationResponse)(nil),      // 33: cloud.v1.api.ResendVerificationResponse
-	(*CreateTenantRequest)(nil),             // 34: cloud.v1.api.CreateTenantRequest
-	(*CreateTenantResponse)(nil),            // 35: cloud.v1.api.CreateTenantResponse
-	(*GetTenantRequest)(nil),                // 36: cloud.v1.api.GetTenantRequest
-	(*GetTenantResponse)(nil),               // 37: cloud.v1.api.GetTenantResponse
-	(*ListMyTenantsRequest)(nil),            // 38: cloud.v1.api.ListMyTenantsRequest
-	(*ListMyTenantsResponse)(nil),           // 39: cloud.v1.api.ListMyTenantsResponse
-	(*UpdateTenantRequest)(nil),             // 40: cloud.v1.api.UpdateTenantRequest
-	(*UpdateTenantResponse)(nil),            // 41: cloud.v1.api.UpdateTenantResponse
-	(*DeleteTenantRequest)(nil),             // 42: cloud.v1.api.DeleteTenantRequest
-	(*DeleteTenantResponse)(nil),            // 43: cloud.v1.api.DeleteTenantResponse
-	(*TransferTenantOwnershipRequest)(nil),  // 44: cloud.v1.api.TransferTenantOwnershipRequest
-	(*TransferTenantOwnershipResponse)(nil), // 45: cloud.v1.api.TransferTenantOwnershipResponse
-	(*LeaveTenantRequest)(nil),              // 46: cloud.v1.api.LeaveTenantRequest
-	(*LeaveTenantResponse)(nil),             // 47: cloud.v1.api.LeaveTenantResponse
-	(*CreateRoleRequest)(nil),               // 48: cloud.v1.api.CreateRoleRequest
-	(*CreateRoleResponse)(nil),              // 49: cloud.v1.api.CreateRoleResponse
-	(*GetRoleRequest)(nil),                  // 50: cloud.v1.api.GetRoleRequest
-	(*GetRoleResponse)(nil),                 // 51: cloud.v1.api.GetRoleResponse
-	(*ListRolesRequest)(nil),                // 52: cloud.v1.api.ListRolesRequest
-	(*ListRolesResponse)(nil),               // 53: cloud.v1.api.ListRolesResponse
-	(*UpdateRoleRequest)(nil),               // 54: cloud.v1.api.UpdateRoleRequest
-	(*UpdateRoleResponse)(nil),              // 55: cloud.v1.api.UpdateRoleResponse
-	(*DeleteRoleRequest)(nil),               // 56: cloud.v1.api.DeleteRoleRequest
-	(*DeleteRoleResponse)(nil),              // 57: cloud.v1.api.DeleteRoleResponse
-	(*CreateMembershipRequest)(nil),         // 58: cloud.v1.api.CreateMembershipRequest
-	(*CreateMembershipResponse)(nil),        // 59: cloud.v1.api.CreateMembershipResponse
-	(*GetMembershipRequest)(nil),            // 60: cloud.v1.api.GetMembershipRequest
-	(*GetMembershipResponse)(nil),           // 61: cloud.v1.api.GetMembershipResponse
-	(*ListMembershipsRequest)(nil),          // 62: cloud.v1.api.ListMembershipsRequest
-	(*ListMembershipsResponse)(nil),         // 63: cloud.v1.api.ListMembershipsResponse
-	(*UpdateMembershipRequest)(nil),         // 64: cloud.v1.api.UpdateMembershipRequest
-	(*UpdateMembershipResponse)(nil),        // 65: cloud.v1.api.UpdateMembershipResponse
-	(*DeleteMembershipRequest)(nil),         // 66: cloud.v1.api.DeleteMembershipRequest
-	(*DeleteMembershipResponse)(nil),        // 67: cloud.v1.api.DeleteMembershipResponse
-	(*GetMyPermissionsRequest)(nil),         // 68: cloud.v1.api.GetMyPermissionsRequest
-	(*GetMyPermissionsResponse)(nil),        // 69: cloud.v1.api.GetMyPermissionsResponse
-	(*ListPermissionsRequest)(nil),          // 70: cloud.v1.api.ListPermissionsRequest
-	(*CatalogEntry)(nil),                    // 71: cloud.v1.api.CatalogEntry
-	(*ListPermissionsResponse)(nil),         // 72: cloud.v1.api.ListPermissionsResponse
-	(*CreateIdentityProviderRequest)(nil),   // 73: cloud.v1.api.CreateIdentityProviderRequest
-	(*CreateIdentityProviderResponse)(nil),  // 74: cloud.v1.api.CreateIdentityProviderResponse
-	(*GetIdentityProviderRequest)(nil),      // 75: cloud.v1.api.GetIdentityProviderRequest
-	(*GetIdentityProviderResponse)(nil),     // 76: cloud.v1.api.GetIdentityProviderResponse
-	(*UpdateIdentityProviderRequest)(nil),   // 77: cloud.v1.api.UpdateIdentityProviderRequest
-	(*UpdateIdentityProviderResponse)(nil),  // 78: cloud.v1.api.UpdateIdentityProviderResponse
-	(*DeleteIdentityProviderRequest)(nil),   // 79: cloud.v1.api.DeleteIdentityProviderRequest
-	(*DeleteIdentityProviderResponse)(nil),  // 80: cloud.v1.api.DeleteIdentityProviderResponse
-	(*ListIdentityProvidersRequest)(nil),    // 81: cloud.v1.api.ListIdentityProvidersRequest
-	(*SsoButton)(nil),                       // 82: cloud.v1.api.SsoButton
-	(*ListIdentityProvidersResponse)(nil),   // 83: cloud.v1.api.ListIdentityProvidersResponse
-	(*StartSSORequest)(nil),                 // 84: cloud.v1.api.StartSSORequest
-	(*StartSSOResponse)(nil),                // 85: cloud.v1.api.StartSSOResponse
-	(*CompleteSSORequest)(nil),              // 86: cloud.v1.api.CompleteSSORequest
-	(*CompleteSSOResponse)(nil),             // 87: cloud.v1.api.CompleteSSOResponse
-	(*LinkExternalIdentityRequest)(nil),     // 88: cloud.v1.api.LinkExternalIdentityRequest
-	(*LinkExternalIdentityResponse)(nil),    // 89: cloud.v1.api.LinkExternalIdentityResponse
-	(*UnlinkExternalIdentityRequest)(nil),   // 90: cloud.v1.api.UnlinkExternalIdentityRequest
-	(*UnlinkExternalIdentityResponse)(nil),  // 91: cloud.v1.api.UnlinkExternalIdentityResponse
-	(*ListExternalIdentitiesRequest)(nil),   // 92: cloud.v1.api.ListExternalIdentitiesRequest
-	(*ListExternalIdentitiesResponse)(nil),  // 93: cloud.v1.api.ListExternalIdentitiesResponse
-	(*CreateApiTokenRequest)(nil),           // 94: cloud.v1.api.CreateApiTokenRequest
-	(*CreateApiTokenResponse)(nil),          // 95: cloud.v1.api.CreateApiTokenResponse
-	(*ListApiTokensRequest)(nil),            // 96: cloud.v1.api.ListApiTokensRequest
-	(*ListApiTokensResponse)(nil),           // 97: cloud.v1.api.ListApiTokensResponse
-	(*RevokeApiTokenRequest)(nil),           // 98: cloud.v1.api.RevokeApiTokenRequest
-	(*RevokeApiTokenResponse)(nil),          // 99: cloud.v1.api.RevokeApiTokenResponse
-	(*durationpb.Duration)(nil),             // 100: google.protobuf.Duration
-	(*iam.Account)(nil),                     // 101: cloud.v1.iam.Account
-	(*iam.Tenant)(nil),                      // 102: cloud.v1.iam.Tenant
-	(iam.Scope)(0),                          // 103: cloud.v1.iam.Scope
-	(*iam.Permission)(nil),                  // 104: cloud.v1.iam.Permission
-	(*iam.Role)(nil),                        // 105: cloud.v1.iam.Role
-	(*iam.Membership)(nil),                  // 106: cloud.v1.iam.Membership
-	(*iam.IdentityProvider)(nil),            // 107: cloud.v1.iam.IdentityProvider
-	(*iam.ExternalIdentity)(nil),            // 108: cloud.v1.iam.ExternalIdentity
-	(iam.ApiTokenType)(0),                   // 109: cloud.v1.iam.ApiTokenType
-	(*iam.ApiToken)(nil),                    // 110: cloud.v1.iam.ApiToken
+	(RegistrationRequestStatus)(0),                 // 0: cloud.v1.api.RegistrationRequestStatus
+	(*TokenPair)(nil),                              // 1: cloud.v1.api.TokenPair
+	(*RegisterRequest)(nil),                        // 2: cloud.v1.api.RegisterRequest
+	(*RegisterResponse)(nil),                       // 3: cloud.v1.api.RegisterResponse
+	(*LoginRequest)(nil),                           // 4: cloud.v1.api.LoginRequest
+	(*LoginResponse)(nil),                          // 5: cloud.v1.api.LoginResponse
+	(*RefreshRequest)(nil),                         // 6: cloud.v1.api.RefreshRequest
+	(*RefreshResponse)(nil),                        // 7: cloud.v1.api.RefreshResponse
+	(*LogoutRequest)(nil),                          // 8: cloud.v1.api.LogoutRequest
+	(*LogoutResponse)(nil),                         // 9: cloud.v1.api.LogoutResponse
+	(*CreateAccountRequest)(nil),                   // 10: cloud.v1.api.CreateAccountRequest
+	(*ExternalIdentityLink)(nil),                   // 11: cloud.v1.api.ExternalIdentityLink
+	(*CreateAccountResponse)(nil),                  // 12: cloud.v1.api.CreateAccountResponse
+	(*GetAccountRequest)(nil),                      // 13: cloud.v1.api.GetAccountRequest
+	(*GetAccountResponse)(nil),                     // 14: cloud.v1.api.GetAccountResponse
+	(*GetMyAccountRequest)(nil),                    // 15: cloud.v1.api.GetMyAccountRequest
+	(*GetMyAccountResponse)(nil),                   // 16: cloud.v1.api.GetMyAccountResponse
+	(*ListAccountsRequest)(nil),                    // 17: cloud.v1.api.ListAccountsRequest
+	(*ListAccountsResponse)(nil),                   // 18: cloud.v1.api.ListAccountsResponse
+	(*UpdateAccountRequest)(nil),                   // 19: cloud.v1.api.UpdateAccountRequest
+	(*UpdateAccountResponse)(nil),                  // 20: cloud.v1.api.UpdateAccountResponse
+	(*DeleteAccountRequest)(nil),                   // 21: cloud.v1.api.DeleteAccountRequest
+	(*DeleteAccountResponse)(nil),                  // 22: cloud.v1.api.DeleteAccountResponse
+	(*ChangePasswordRequest)(nil),                  // 23: cloud.v1.api.ChangePasswordRequest
+	(*ChangePasswordResponse)(nil),                 // 24: cloud.v1.api.ChangePasswordResponse
+	(*ResetPasswordRequest)(nil),                   // 25: cloud.v1.api.ResetPasswordRequest
+	(*ResetPasswordResponse)(nil),                  // 26: cloud.v1.api.ResetPasswordResponse
+	(*RequestPasswordResetRequest)(nil),            // 27: cloud.v1.api.RequestPasswordResetRequest
+	(*RequestPasswordResetResponse)(nil),           // 28: cloud.v1.api.RequestPasswordResetResponse
+	(*ConfirmPasswordResetRequest)(nil),            // 29: cloud.v1.api.ConfirmPasswordResetRequest
+	(*ConfirmPasswordResetResponse)(nil),           // 30: cloud.v1.api.ConfirmPasswordResetResponse
+	(*VerifyEmailRequest)(nil),                     // 31: cloud.v1.api.VerifyEmailRequest
+	(*VerifyEmailResponse)(nil),                    // 32: cloud.v1.api.VerifyEmailResponse
+	(*ResendVerificationRequest)(nil),              // 33: cloud.v1.api.ResendVerificationRequest
+	(*ResendVerificationResponse)(nil),             // 34: cloud.v1.api.ResendVerificationResponse
+	(*CreateTenantRequest)(nil),                    // 35: cloud.v1.api.CreateTenantRequest
+	(*CreateTenantResponse)(nil),                   // 36: cloud.v1.api.CreateTenantResponse
+	(*GetTenantRequest)(nil),                       // 37: cloud.v1.api.GetTenantRequest
+	(*GetTenantResponse)(nil),                      // 38: cloud.v1.api.GetTenantResponse
+	(*ListMyTenantsRequest)(nil),                   // 39: cloud.v1.api.ListMyTenantsRequest
+	(*ListMyTenantsResponse)(nil),                  // 40: cloud.v1.api.ListMyTenantsResponse
+	(*UpdateTenantRequest)(nil),                    // 41: cloud.v1.api.UpdateTenantRequest
+	(*UpdateTenantResponse)(nil),                   // 42: cloud.v1.api.UpdateTenantResponse
+	(*DeleteTenantRequest)(nil),                    // 43: cloud.v1.api.DeleteTenantRequest
+	(*DeleteTenantResponse)(nil),                   // 44: cloud.v1.api.DeleteTenantResponse
+	(*TransferTenantOwnershipRequest)(nil),         // 45: cloud.v1.api.TransferTenantOwnershipRequest
+	(*TransferTenantOwnershipResponse)(nil),        // 46: cloud.v1.api.TransferTenantOwnershipResponse
+	(*LeaveTenantRequest)(nil),                     // 47: cloud.v1.api.LeaveTenantRequest
+	(*LeaveTenantResponse)(nil),                    // 48: cloud.v1.api.LeaveTenantResponse
+	(*CreateRoleRequest)(nil),                      // 49: cloud.v1.api.CreateRoleRequest
+	(*CreateRoleResponse)(nil),                     // 50: cloud.v1.api.CreateRoleResponse
+	(*GetRoleRequest)(nil),                         // 51: cloud.v1.api.GetRoleRequest
+	(*GetRoleResponse)(nil),                        // 52: cloud.v1.api.GetRoleResponse
+	(*ListRolesRequest)(nil),                       // 53: cloud.v1.api.ListRolesRequest
+	(*ListRolesResponse)(nil),                      // 54: cloud.v1.api.ListRolesResponse
+	(*UpdateRoleRequest)(nil),                      // 55: cloud.v1.api.UpdateRoleRequest
+	(*UpdateRoleResponse)(nil),                     // 56: cloud.v1.api.UpdateRoleResponse
+	(*DeleteRoleRequest)(nil),                      // 57: cloud.v1.api.DeleteRoleRequest
+	(*DeleteRoleResponse)(nil),                     // 58: cloud.v1.api.DeleteRoleResponse
+	(*CreateMembershipRequest)(nil),                // 59: cloud.v1.api.CreateMembershipRequest
+	(*CreateMembershipResponse)(nil),               // 60: cloud.v1.api.CreateMembershipResponse
+	(*GetMembershipRequest)(nil),                   // 61: cloud.v1.api.GetMembershipRequest
+	(*GetMembershipResponse)(nil),                  // 62: cloud.v1.api.GetMembershipResponse
+	(*ListMembershipsRequest)(nil),                 // 63: cloud.v1.api.ListMembershipsRequest
+	(*ListMembershipsResponse)(nil),                // 64: cloud.v1.api.ListMembershipsResponse
+	(*UpdateMembershipRequest)(nil),                // 65: cloud.v1.api.UpdateMembershipRequest
+	(*UpdateMembershipResponse)(nil),               // 66: cloud.v1.api.UpdateMembershipResponse
+	(*DeleteMembershipRequest)(nil),                // 67: cloud.v1.api.DeleteMembershipRequest
+	(*DeleteMembershipResponse)(nil),               // 68: cloud.v1.api.DeleteMembershipResponse
+	(*GetMyPermissionsRequest)(nil),                // 69: cloud.v1.api.GetMyPermissionsRequest
+	(*GetMyPermissionsResponse)(nil),               // 70: cloud.v1.api.GetMyPermissionsResponse
+	(*ListPermissionsRequest)(nil),                 // 71: cloud.v1.api.ListPermissionsRequest
+	(*CatalogEntry)(nil),                           // 72: cloud.v1.api.CatalogEntry
+	(*ListPermissionsResponse)(nil),                // 73: cloud.v1.api.ListPermissionsResponse
+	(*CreateIdentityProviderRequest)(nil),          // 74: cloud.v1.api.CreateIdentityProviderRequest
+	(*CreateIdentityProviderResponse)(nil),         // 75: cloud.v1.api.CreateIdentityProviderResponse
+	(*GetIdentityProviderRequest)(nil),             // 76: cloud.v1.api.GetIdentityProviderRequest
+	(*GetIdentityProviderResponse)(nil),            // 77: cloud.v1.api.GetIdentityProviderResponse
+	(*UpdateIdentityProviderRequest)(nil),          // 78: cloud.v1.api.UpdateIdentityProviderRequest
+	(*UpdateIdentityProviderResponse)(nil),         // 79: cloud.v1.api.UpdateIdentityProviderResponse
+	(*DeleteIdentityProviderRequest)(nil),          // 80: cloud.v1.api.DeleteIdentityProviderRequest
+	(*DeleteIdentityProviderResponse)(nil),         // 81: cloud.v1.api.DeleteIdentityProviderResponse
+	(*ListIdentityProvidersRequest)(nil),           // 82: cloud.v1.api.ListIdentityProvidersRequest
+	(*SsoButton)(nil),                              // 83: cloud.v1.api.SsoButton
+	(*ListIdentityProvidersResponse)(nil),          // 84: cloud.v1.api.ListIdentityProvidersResponse
+	(*StartSSORequest)(nil),                        // 85: cloud.v1.api.StartSSORequest
+	(*StartSSOResponse)(nil),                       // 86: cloud.v1.api.StartSSOResponse
+	(*CompleteSSORequest)(nil),                     // 87: cloud.v1.api.CompleteSSORequest
+	(*CompleteSSOResponse)(nil),                    // 88: cloud.v1.api.CompleteSSOResponse
+	(*LinkExternalIdentityRequest)(nil),            // 89: cloud.v1.api.LinkExternalIdentityRequest
+	(*LinkExternalIdentityResponse)(nil),           // 90: cloud.v1.api.LinkExternalIdentityResponse
+	(*UnlinkExternalIdentityRequest)(nil),          // 91: cloud.v1.api.UnlinkExternalIdentityRequest
+	(*UnlinkExternalIdentityResponse)(nil),         // 92: cloud.v1.api.UnlinkExternalIdentityResponse
+	(*ListExternalIdentitiesRequest)(nil),          // 93: cloud.v1.api.ListExternalIdentitiesRequest
+	(*ListExternalIdentitiesResponse)(nil),         // 94: cloud.v1.api.ListExternalIdentitiesResponse
+	(*CreateApiTokenRequest)(nil),                  // 95: cloud.v1.api.CreateApiTokenRequest
+	(*CreateApiTokenResponse)(nil),                 // 96: cloud.v1.api.CreateApiTokenResponse
+	(*ListApiTokensRequest)(nil),                   // 97: cloud.v1.api.ListApiTokensRequest
+	(*ListApiTokensResponse)(nil),                  // 98: cloud.v1.api.ListApiTokensResponse
+	(*RevokeApiTokenRequest)(nil),                  // 99: cloud.v1.api.RevokeApiTokenRequest
+	(*RevokeApiTokenResponse)(nil),                 // 100: cloud.v1.api.RevokeApiTokenResponse
+	(*RegistrationRequest)(nil),                    // 101: cloud.v1.api.RegistrationRequest
+	(*SubmitRegistrationRequestRequest)(nil),       // 102: cloud.v1.api.SubmitRegistrationRequestRequest
+	(*SubmitRegistrationRequestResponse)(nil),      // 103: cloud.v1.api.SubmitRegistrationRequestResponse
+	(*ListRegistrationRequestsRequest)(nil),        // 104: cloud.v1.api.ListRegistrationRequestsRequest
+	(*ListRegistrationRequestsResponse)(nil),       // 105: cloud.v1.api.ListRegistrationRequestsResponse
+	(*MarkRegistrationRequestHandledRequest)(nil),  // 106: cloud.v1.api.MarkRegistrationRequestHandledRequest
+	(*MarkRegistrationRequestHandledResponse)(nil), // 107: cloud.v1.api.MarkRegistrationRequestHandledResponse
+	(*durationpb.Duration)(nil),                    // 108: google.protobuf.Duration
+	(*iam.Account)(nil),                            // 109: cloud.v1.iam.Account
+	(*iam.Tenant)(nil),                             // 110: cloud.v1.iam.Tenant
+	(iam.Scope)(0),                                 // 111: cloud.v1.iam.Scope
+	(*iam.Permission)(nil),                         // 112: cloud.v1.iam.Permission
+	(*iam.Role)(nil),                               // 113: cloud.v1.iam.Role
+	(*iam.Membership)(nil),                         // 114: cloud.v1.iam.Membership
+	(*iam.IdentityProvider)(nil),                   // 115: cloud.v1.iam.IdentityProvider
+	(*iam.ExternalIdentity)(nil),                   // 116: cloud.v1.iam.ExternalIdentity
+	(iam.ApiTokenType)(0),                          // 117: cloud.v1.iam.ApiTokenType
+	(*iam.ApiToken)(nil),                           // 118: cloud.v1.iam.ApiToken
+	(*timestamppb.Timestamp)(nil),                  // 119: google.protobuf.Timestamp
 }
 var file_cloud_v1_api_iam_proto_depIdxs = []int32{
-	100, // 0: cloud.v1.api.TokenPair.access_expires_in:type_name -> google.protobuf.Duration
-	100, // 1: cloud.v1.api.TokenPair.refresh_expires_in:type_name -> google.protobuf.Duration
-	0,   // 2: cloud.v1.api.RegisterResponse.tokens:type_name -> cloud.v1.api.TokenPair
-	0,   // 3: cloud.v1.api.LoginResponse.tokens:type_name -> cloud.v1.api.TokenPair
-	0,   // 4: cloud.v1.api.RefreshResponse.tokens:type_name -> cloud.v1.api.TokenPair
-	10,  // 5: cloud.v1.api.CreateAccountRequest.link:type_name -> cloud.v1.api.ExternalIdentityLink
-	101, // 6: cloud.v1.api.CreateAccountResponse.account:type_name -> cloud.v1.iam.Account
-	101, // 7: cloud.v1.api.GetAccountResponse.account:type_name -> cloud.v1.iam.Account
-	101, // 8: cloud.v1.api.GetMyAccountResponse.account:type_name -> cloud.v1.iam.Account
-	101, // 9: cloud.v1.api.ListAccountsResponse.accounts:type_name -> cloud.v1.iam.Account
-	101, // 10: cloud.v1.api.UpdateAccountResponse.account:type_name -> cloud.v1.iam.Account
-	102, // 11: cloud.v1.api.CreateTenantResponse.tenant:type_name -> cloud.v1.iam.Tenant
-	102, // 12: cloud.v1.api.GetTenantResponse.tenant:type_name -> cloud.v1.iam.Tenant
-	102, // 13: cloud.v1.api.ListMyTenantsResponse.tenants:type_name -> cloud.v1.iam.Tenant
-	102, // 14: cloud.v1.api.UpdateTenantResponse.tenant:type_name -> cloud.v1.iam.Tenant
-	102, // 15: cloud.v1.api.TransferTenantOwnershipResponse.tenant:type_name -> cloud.v1.iam.Tenant
-	103, // 16: cloud.v1.api.CreateRoleRequest.scope:type_name -> cloud.v1.iam.Scope
-	104, // 17: cloud.v1.api.CreateRoleRequest.permissions:type_name -> cloud.v1.iam.Permission
-	105, // 18: cloud.v1.api.CreateRoleResponse.role:type_name -> cloud.v1.iam.Role
-	105, // 19: cloud.v1.api.GetRoleResponse.role:type_name -> cloud.v1.iam.Role
-	105, // 20: cloud.v1.api.ListRolesResponse.roles:type_name -> cloud.v1.iam.Role
-	104, // 21: cloud.v1.api.UpdateRoleRequest.permissions:type_name -> cloud.v1.iam.Permission
-	105, // 22: cloud.v1.api.UpdateRoleResponse.role:type_name -> cloud.v1.iam.Role
-	106, // 23: cloud.v1.api.CreateMembershipResponse.membership:type_name -> cloud.v1.iam.Membership
-	106, // 24: cloud.v1.api.GetMembershipResponse.membership:type_name -> cloud.v1.iam.Membership
-	106, // 25: cloud.v1.api.ListMembershipsResponse.memberships:type_name -> cloud.v1.iam.Membership
-	106, // 26: cloud.v1.api.UpdateMembershipResponse.membership:type_name -> cloud.v1.iam.Membership
-	104, // 27: cloud.v1.api.GetMyPermissionsResponse.permissions:type_name -> cloud.v1.iam.Permission
-	104, // 28: cloud.v1.api.CatalogEntry.permission:type_name -> cloud.v1.iam.Permission
-	71,  // 29: cloud.v1.api.ListPermissionsResponse.entries:type_name -> cloud.v1.api.CatalogEntry
-	107, // 30: cloud.v1.api.CreateIdentityProviderResponse.provider:type_name -> cloud.v1.iam.IdentityProvider
-	107, // 31: cloud.v1.api.GetIdentityProviderResponse.provider:type_name -> cloud.v1.iam.IdentityProvider
-	107, // 32: cloud.v1.api.UpdateIdentityProviderResponse.provider:type_name -> cloud.v1.iam.IdentityProvider
-	82,  // 33: cloud.v1.api.ListIdentityProvidersResponse.buttons:type_name -> cloud.v1.api.SsoButton
-	0,   // 34: cloud.v1.api.CompleteSSOResponse.tokens:type_name -> cloud.v1.api.TokenPair
-	10,  // 35: cloud.v1.api.LinkExternalIdentityRequest.link:type_name -> cloud.v1.api.ExternalIdentityLink
-	108, // 36: cloud.v1.api.LinkExternalIdentityResponse.identity:type_name -> cloud.v1.iam.ExternalIdentity
-	108, // 37: cloud.v1.api.ListExternalIdentitiesResponse.identities:type_name -> cloud.v1.iam.ExternalIdentity
-	109, // 38: cloud.v1.api.CreateApiTokenRequest.type:type_name -> cloud.v1.iam.ApiTokenType
-	104, // 39: cloud.v1.api.CreateApiTokenRequest.permissions:type_name -> cloud.v1.iam.Permission
-	100, // 40: cloud.v1.api.CreateApiTokenRequest.ttl:type_name -> google.protobuf.Duration
-	110, // 41: cloud.v1.api.CreateApiTokenResponse.token:type_name -> cloud.v1.iam.ApiToken
-	110, // 42: cloud.v1.api.ListApiTokensResponse.tokens:type_name -> cloud.v1.iam.ApiToken
-	1,   // 43: cloud.v1.api.IamService.Register:input_type -> cloud.v1.api.RegisterRequest
-	3,   // 44: cloud.v1.api.IamService.Login:input_type -> cloud.v1.api.LoginRequest
-	5,   // 45: cloud.v1.api.IamService.Refresh:input_type -> cloud.v1.api.RefreshRequest
-	7,   // 46: cloud.v1.api.IamService.Logout:input_type -> cloud.v1.api.LogoutRequest
-	26,  // 47: cloud.v1.api.IamService.RequestPasswordReset:input_type -> cloud.v1.api.RequestPasswordResetRequest
-	28,  // 48: cloud.v1.api.IamService.ConfirmPasswordReset:input_type -> cloud.v1.api.ConfirmPasswordResetRequest
-	30,  // 49: cloud.v1.api.IamService.VerifyEmail:input_type -> cloud.v1.api.VerifyEmailRequest
-	9,   // 50: cloud.v1.api.IamService.CreateAccount:input_type -> cloud.v1.api.CreateAccountRequest
-	12,  // 51: cloud.v1.api.IamService.GetAccount:input_type -> cloud.v1.api.GetAccountRequest
-	14,  // 52: cloud.v1.api.IamService.GetMyAccount:input_type -> cloud.v1.api.GetMyAccountRequest
-	16,  // 53: cloud.v1.api.IamService.ListAccounts:input_type -> cloud.v1.api.ListAccountsRequest
-	18,  // 54: cloud.v1.api.IamService.UpdateAccount:input_type -> cloud.v1.api.UpdateAccountRequest
-	20,  // 55: cloud.v1.api.IamService.DeleteAccount:input_type -> cloud.v1.api.DeleteAccountRequest
-	22,  // 56: cloud.v1.api.IamService.ChangePassword:input_type -> cloud.v1.api.ChangePasswordRequest
-	24,  // 57: cloud.v1.api.IamService.ResetPassword:input_type -> cloud.v1.api.ResetPasswordRequest
-	32,  // 58: cloud.v1.api.IamService.ResendVerification:input_type -> cloud.v1.api.ResendVerificationRequest
-	34,  // 59: cloud.v1.api.IamService.CreateTenant:input_type -> cloud.v1.api.CreateTenantRequest
-	36,  // 60: cloud.v1.api.IamService.GetTenant:input_type -> cloud.v1.api.GetTenantRequest
-	38,  // 61: cloud.v1.api.IamService.ListMyTenants:input_type -> cloud.v1.api.ListMyTenantsRequest
-	40,  // 62: cloud.v1.api.IamService.UpdateTenant:input_type -> cloud.v1.api.UpdateTenantRequest
-	42,  // 63: cloud.v1.api.IamService.DeleteTenant:input_type -> cloud.v1.api.DeleteTenantRequest
-	44,  // 64: cloud.v1.api.IamService.TransferTenantOwnership:input_type -> cloud.v1.api.TransferTenantOwnershipRequest
-	46,  // 65: cloud.v1.api.IamService.LeaveTenant:input_type -> cloud.v1.api.LeaveTenantRequest
-	48,  // 66: cloud.v1.api.IamService.CreateRole:input_type -> cloud.v1.api.CreateRoleRequest
-	50,  // 67: cloud.v1.api.IamService.GetRole:input_type -> cloud.v1.api.GetRoleRequest
-	52,  // 68: cloud.v1.api.IamService.ListRoles:input_type -> cloud.v1.api.ListRolesRequest
-	54,  // 69: cloud.v1.api.IamService.UpdateRole:input_type -> cloud.v1.api.UpdateRoleRequest
-	56,  // 70: cloud.v1.api.IamService.DeleteRole:input_type -> cloud.v1.api.DeleteRoleRequest
-	58,  // 71: cloud.v1.api.IamService.CreateMembership:input_type -> cloud.v1.api.CreateMembershipRequest
-	60,  // 72: cloud.v1.api.IamService.GetMembership:input_type -> cloud.v1.api.GetMembershipRequest
-	62,  // 73: cloud.v1.api.IamService.ListMemberships:input_type -> cloud.v1.api.ListMembershipsRequest
-	64,  // 74: cloud.v1.api.IamService.UpdateMembership:input_type -> cloud.v1.api.UpdateMembershipRequest
-	66,  // 75: cloud.v1.api.IamService.DeleteMembership:input_type -> cloud.v1.api.DeleteMembershipRequest
-	68,  // 76: cloud.v1.api.IamService.GetMyPermissions:input_type -> cloud.v1.api.GetMyPermissionsRequest
-	70,  // 77: cloud.v1.api.IamService.ListPermissions:input_type -> cloud.v1.api.ListPermissionsRequest
-	73,  // 78: cloud.v1.api.IamService.CreateIdentityProvider:input_type -> cloud.v1.api.CreateIdentityProviderRequest
-	75,  // 79: cloud.v1.api.IamService.GetIdentityProvider:input_type -> cloud.v1.api.GetIdentityProviderRequest
-	77,  // 80: cloud.v1.api.IamService.UpdateIdentityProvider:input_type -> cloud.v1.api.UpdateIdentityProviderRequest
-	79,  // 81: cloud.v1.api.IamService.DeleteIdentityProvider:input_type -> cloud.v1.api.DeleteIdentityProviderRequest
-	81,  // 82: cloud.v1.api.IamService.ListIdentityProviders:input_type -> cloud.v1.api.ListIdentityProvidersRequest
-	84,  // 83: cloud.v1.api.IamService.StartSSO:input_type -> cloud.v1.api.StartSSORequest
-	86,  // 84: cloud.v1.api.IamService.CompleteSSO:input_type -> cloud.v1.api.CompleteSSORequest
-	88,  // 85: cloud.v1.api.IamService.LinkExternalIdentity:input_type -> cloud.v1.api.LinkExternalIdentityRequest
-	90,  // 86: cloud.v1.api.IamService.UnlinkExternalIdentity:input_type -> cloud.v1.api.UnlinkExternalIdentityRequest
-	92,  // 87: cloud.v1.api.IamService.ListExternalIdentities:input_type -> cloud.v1.api.ListExternalIdentitiesRequest
-	94,  // 88: cloud.v1.api.IamService.CreateApiToken:input_type -> cloud.v1.api.CreateApiTokenRequest
-	96,  // 89: cloud.v1.api.IamService.ListApiTokens:input_type -> cloud.v1.api.ListApiTokensRequest
-	98,  // 90: cloud.v1.api.IamService.RevokeApiToken:input_type -> cloud.v1.api.RevokeApiTokenRequest
-	2,   // 91: cloud.v1.api.IamService.Register:output_type -> cloud.v1.api.RegisterResponse
-	4,   // 92: cloud.v1.api.IamService.Login:output_type -> cloud.v1.api.LoginResponse
-	6,   // 93: cloud.v1.api.IamService.Refresh:output_type -> cloud.v1.api.RefreshResponse
-	8,   // 94: cloud.v1.api.IamService.Logout:output_type -> cloud.v1.api.LogoutResponse
-	27,  // 95: cloud.v1.api.IamService.RequestPasswordReset:output_type -> cloud.v1.api.RequestPasswordResetResponse
-	29,  // 96: cloud.v1.api.IamService.ConfirmPasswordReset:output_type -> cloud.v1.api.ConfirmPasswordResetResponse
-	31,  // 97: cloud.v1.api.IamService.VerifyEmail:output_type -> cloud.v1.api.VerifyEmailResponse
-	11,  // 98: cloud.v1.api.IamService.CreateAccount:output_type -> cloud.v1.api.CreateAccountResponse
-	13,  // 99: cloud.v1.api.IamService.GetAccount:output_type -> cloud.v1.api.GetAccountResponse
-	15,  // 100: cloud.v1.api.IamService.GetMyAccount:output_type -> cloud.v1.api.GetMyAccountResponse
-	17,  // 101: cloud.v1.api.IamService.ListAccounts:output_type -> cloud.v1.api.ListAccountsResponse
-	19,  // 102: cloud.v1.api.IamService.UpdateAccount:output_type -> cloud.v1.api.UpdateAccountResponse
-	21,  // 103: cloud.v1.api.IamService.DeleteAccount:output_type -> cloud.v1.api.DeleteAccountResponse
-	23,  // 104: cloud.v1.api.IamService.ChangePassword:output_type -> cloud.v1.api.ChangePasswordResponse
-	25,  // 105: cloud.v1.api.IamService.ResetPassword:output_type -> cloud.v1.api.ResetPasswordResponse
-	33,  // 106: cloud.v1.api.IamService.ResendVerification:output_type -> cloud.v1.api.ResendVerificationResponse
-	35,  // 107: cloud.v1.api.IamService.CreateTenant:output_type -> cloud.v1.api.CreateTenantResponse
-	37,  // 108: cloud.v1.api.IamService.GetTenant:output_type -> cloud.v1.api.GetTenantResponse
-	39,  // 109: cloud.v1.api.IamService.ListMyTenants:output_type -> cloud.v1.api.ListMyTenantsResponse
-	41,  // 110: cloud.v1.api.IamService.UpdateTenant:output_type -> cloud.v1.api.UpdateTenantResponse
-	43,  // 111: cloud.v1.api.IamService.DeleteTenant:output_type -> cloud.v1.api.DeleteTenantResponse
-	45,  // 112: cloud.v1.api.IamService.TransferTenantOwnership:output_type -> cloud.v1.api.TransferTenantOwnershipResponse
-	47,  // 113: cloud.v1.api.IamService.LeaveTenant:output_type -> cloud.v1.api.LeaveTenantResponse
-	49,  // 114: cloud.v1.api.IamService.CreateRole:output_type -> cloud.v1.api.CreateRoleResponse
-	51,  // 115: cloud.v1.api.IamService.GetRole:output_type -> cloud.v1.api.GetRoleResponse
-	53,  // 116: cloud.v1.api.IamService.ListRoles:output_type -> cloud.v1.api.ListRolesResponse
-	55,  // 117: cloud.v1.api.IamService.UpdateRole:output_type -> cloud.v1.api.UpdateRoleResponse
-	57,  // 118: cloud.v1.api.IamService.DeleteRole:output_type -> cloud.v1.api.DeleteRoleResponse
-	59,  // 119: cloud.v1.api.IamService.CreateMembership:output_type -> cloud.v1.api.CreateMembershipResponse
-	61,  // 120: cloud.v1.api.IamService.GetMembership:output_type -> cloud.v1.api.GetMembershipResponse
-	63,  // 121: cloud.v1.api.IamService.ListMemberships:output_type -> cloud.v1.api.ListMembershipsResponse
-	65,  // 122: cloud.v1.api.IamService.UpdateMembership:output_type -> cloud.v1.api.UpdateMembershipResponse
-	67,  // 123: cloud.v1.api.IamService.DeleteMembership:output_type -> cloud.v1.api.DeleteMembershipResponse
-	69,  // 124: cloud.v1.api.IamService.GetMyPermissions:output_type -> cloud.v1.api.GetMyPermissionsResponse
-	72,  // 125: cloud.v1.api.IamService.ListPermissions:output_type -> cloud.v1.api.ListPermissionsResponse
-	74,  // 126: cloud.v1.api.IamService.CreateIdentityProvider:output_type -> cloud.v1.api.CreateIdentityProviderResponse
-	76,  // 127: cloud.v1.api.IamService.GetIdentityProvider:output_type -> cloud.v1.api.GetIdentityProviderResponse
-	78,  // 128: cloud.v1.api.IamService.UpdateIdentityProvider:output_type -> cloud.v1.api.UpdateIdentityProviderResponse
-	80,  // 129: cloud.v1.api.IamService.DeleteIdentityProvider:output_type -> cloud.v1.api.DeleteIdentityProviderResponse
-	83,  // 130: cloud.v1.api.IamService.ListIdentityProviders:output_type -> cloud.v1.api.ListIdentityProvidersResponse
-	85,  // 131: cloud.v1.api.IamService.StartSSO:output_type -> cloud.v1.api.StartSSOResponse
-	87,  // 132: cloud.v1.api.IamService.CompleteSSO:output_type -> cloud.v1.api.CompleteSSOResponse
-	89,  // 133: cloud.v1.api.IamService.LinkExternalIdentity:output_type -> cloud.v1.api.LinkExternalIdentityResponse
-	91,  // 134: cloud.v1.api.IamService.UnlinkExternalIdentity:output_type -> cloud.v1.api.UnlinkExternalIdentityResponse
-	93,  // 135: cloud.v1.api.IamService.ListExternalIdentities:output_type -> cloud.v1.api.ListExternalIdentitiesResponse
-	95,  // 136: cloud.v1.api.IamService.CreateApiToken:output_type -> cloud.v1.api.CreateApiTokenResponse
-	97,  // 137: cloud.v1.api.IamService.ListApiTokens:output_type -> cloud.v1.api.ListApiTokensResponse
-	99,  // 138: cloud.v1.api.IamService.RevokeApiToken:output_type -> cloud.v1.api.RevokeApiTokenResponse
-	91,  // [91:139] is the sub-list for method output_type
-	43,  // [43:91] is the sub-list for method input_type
-	43,  // [43:43] is the sub-list for extension type_name
-	43,  // [43:43] is the sub-list for extension extendee
-	0,   // [0:43] is the sub-list for field type_name
+	108, // 0: cloud.v1.api.TokenPair.access_expires_in:type_name -> google.protobuf.Duration
+	108, // 1: cloud.v1.api.TokenPair.refresh_expires_in:type_name -> google.protobuf.Duration
+	1,   // 2: cloud.v1.api.RegisterResponse.tokens:type_name -> cloud.v1.api.TokenPair
+	1,   // 3: cloud.v1.api.LoginResponse.tokens:type_name -> cloud.v1.api.TokenPair
+	1,   // 4: cloud.v1.api.RefreshResponse.tokens:type_name -> cloud.v1.api.TokenPair
+	11,  // 5: cloud.v1.api.CreateAccountRequest.link:type_name -> cloud.v1.api.ExternalIdentityLink
+	109, // 6: cloud.v1.api.CreateAccountResponse.account:type_name -> cloud.v1.iam.Account
+	109, // 7: cloud.v1.api.GetAccountResponse.account:type_name -> cloud.v1.iam.Account
+	109, // 8: cloud.v1.api.GetMyAccountResponse.account:type_name -> cloud.v1.iam.Account
+	109, // 9: cloud.v1.api.ListAccountsResponse.accounts:type_name -> cloud.v1.iam.Account
+	109, // 10: cloud.v1.api.UpdateAccountResponse.account:type_name -> cloud.v1.iam.Account
+	110, // 11: cloud.v1.api.CreateTenantResponse.tenant:type_name -> cloud.v1.iam.Tenant
+	110, // 12: cloud.v1.api.GetTenantResponse.tenant:type_name -> cloud.v1.iam.Tenant
+	110, // 13: cloud.v1.api.ListMyTenantsResponse.tenants:type_name -> cloud.v1.iam.Tenant
+	110, // 14: cloud.v1.api.UpdateTenantResponse.tenant:type_name -> cloud.v1.iam.Tenant
+	110, // 15: cloud.v1.api.TransferTenantOwnershipResponse.tenant:type_name -> cloud.v1.iam.Tenant
+	111, // 16: cloud.v1.api.CreateRoleRequest.scope:type_name -> cloud.v1.iam.Scope
+	112, // 17: cloud.v1.api.CreateRoleRequest.permissions:type_name -> cloud.v1.iam.Permission
+	113, // 18: cloud.v1.api.CreateRoleResponse.role:type_name -> cloud.v1.iam.Role
+	113, // 19: cloud.v1.api.GetRoleResponse.role:type_name -> cloud.v1.iam.Role
+	113, // 20: cloud.v1.api.ListRolesResponse.roles:type_name -> cloud.v1.iam.Role
+	112, // 21: cloud.v1.api.UpdateRoleRequest.permissions:type_name -> cloud.v1.iam.Permission
+	113, // 22: cloud.v1.api.UpdateRoleResponse.role:type_name -> cloud.v1.iam.Role
+	114, // 23: cloud.v1.api.CreateMembershipResponse.membership:type_name -> cloud.v1.iam.Membership
+	114, // 24: cloud.v1.api.GetMembershipResponse.membership:type_name -> cloud.v1.iam.Membership
+	114, // 25: cloud.v1.api.ListMembershipsResponse.memberships:type_name -> cloud.v1.iam.Membership
+	114, // 26: cloud.v1.api.UpdateMembershipResponse.membership:type_name -> cloud.v1.iam.Membership
+	112, // 27: cloud.v1.api.GetMyPermissionsResponse.permissions:type_name -> cloud.v1.iam.Permission
+	112, // 28: cloud.v1.api.CatalogEntry.permission:type_name -> cloud.v1.iam.Permission
+	72,  // 29: cloud.v1.api.ListPermissionsResponse.entries:type_name -> cloud.v1.api.CatalogEntry
+	115, // 30: cloud.v1.api.CreateIdentityProviderResponse.provider:type_name -> cloud.v1.iam.IdentityProvider
+	115, // 31: cloud.v1.api.GetIdentityProviderResponse.provider:type_name -> cloud.v1.iam.IdentityProvider
+	115, // 32: cloud.v1.api.UpdateIdentityProviderResponse.provider:type_name -> cloud.v1.iam.IdentityProvider
+	83,  // 33: cloud.v1.api.ListIdentityProvidersResponse.buttons:type_name -> cloud.v1.api.SsoButton
+	1,   // 34: cloud.v1.api.CompleteSSOResponse.tokens:type_name -> cloud.v1.api.TokenPair
+	11,  // 35: cloud.v1.api.LinkExternalIdentityRequest.link:type_name -> cloud.v1.api.ExternalIdentityLink
+	116, // 36: cloud.v1.api.LinkExternalIdentityResponse.identity:type_name -> cloud.v1.iam.ExternalIdentity
+	116, // 37: cloud.v1.api.ListExternalIdentitiesResponse.identities:type_name -> cloud.v1.iam.ExternalIdentity
+	117, // 38: cloud.v1.api.CreateApiTokenRequest.type:type_name -> cloud.v1.iam.ApiTokenType
+	112, // 39: cloud.v1.api.CreateApiTokenRequest.permissions:type_name -> cloud.v1.iam.Permission
+	108, // 40: cloud.v1.api.CreateApiTokenRequest.ttl:type_name -> google.protobuf.Duration
+	118, // 41: cloud.v1.api.CreateApiTokenResponse.token:type_name -> cloud.v1.iam.ApiToken
+	118, // 42: cloud.v1.api.ListApiTokensResponse.tokens:type_name -> cloud.v1.iam.ApiToken
+	0,   // 43: cloud.v1.api.RegistrationRequest.status:type_name -> cloud.v1.api.RegistrationRequestStatus
+	119, // 44: cloud.v1.api.RegistrationRequest.created_at:type_name -> google.protobuf.Timestamp
+	119, // 45: cloud.v1.api.RegistrationRequest.updated_at:type_name -> google.protobuf.Timestamp
+	0,   // 46: cloud.v1.api.ListRegistrationRequestsRequest.status:type_name -> cloud.v1.api.RegistrationRequestStatus
+	101, // 47: cloud.v1.api.ListRegistrationRequestsResponse.requests:type_name -> cloud.v1.api.RegistrationRequest
+	101, // 48: cloud.v1.api.MarkRegistrationRequestHandledResponse.request:type_name -> cloud.v1.api.RegistrationRequest
+	2,   // 49: cloud.v1.api.IamService.Register:input_type -> cloud.v1.api.RegisterRequest
+	4,   // 50: cloud.v1.api.IamService.Login:input_type -> cloud.v1.api.LoginRequest
+	6,   // 51: cloud.v1.api.IamService.Refresh:input_type -> cloud.v1.api.RefreshRequest
+	8,   // 52: cloud.v1.api.IamService.Logout:input_type -> cloud.v1.api.LogoutRequest
+	27,  // 53: cloud.v1.api.IamService.RequestPasswordReset:input_type -> cloud.v1.api.RequestPasswordResetRequest
+	29,  // 54: cloud.v1.api.IamService.ConfirmPasswordReset:input_type -> cloud.v1.api.ConfirmPasswordResetRequest
+	31,  // 55: cloud.v1.api.IamService.VerifyEmail:input_type -> cloud.v1.api.VerifyEmailRequest
+	102, // 56: cloud.v1.api.IamService.SubmitRegistrationRequest:input_type -> cloud.v1.api.SubmitRegistrationRequestRequest
+	104, // 57: cloud.v1.api.IamService.ListRegistrationRequests:input_type -> cloud.v1.api.ListRegistrationRequestsRequest
+	106, // 58: cloud.v1.api.IamService.MarkRegistrationRequestHandled:input_type -> cloud.v1.api.MarkRegistrationRequestHandledRequest
+	10,  // 59: cloud.v1.api.IamService.CreateAccount:input_type -> cloud.v1.api.CreateAccountRequest
+	13,  // 60: cloud.v1.api.IamService.GetAccount:input_type -> cloud.v1.api.GetAccountRequest
+	15,  // 61: cloud.v1.api.IamService.GetMyAccount:input_type -> cloud.v1.api.GetMyAccountRequest
+	17,  // 62: cloud.v1.api.IamService.ListAccounts:input_type -> cloud.v1.api.ListAccountsRequest
+	19,  // 63: cloud.v1.api.IamService.UpdateAccount:input_type -> cloud.v1.api.UpdateAccountRequest
+	21,  // 64: cloud.v1.api.IamService.DeleteAccount:input_type -> cloud.v1.api.DeleteAccountRequest
+	23,  // 65: cloud.v1.api.IamService.ChangePassword:input_type -> cloud.v1.api.ChangePasswordRequest
+	25,  // 66: cloud.v1.api.IamService.ResetPassword:input_type -> cloud.v1.api.ResetPasswordRequest
+	33,  // 67: cloud.v1.api.IamService.ResendVerification:input_type -> cloud.v1.api.ResendVerificationRequest
+	35,  // 68: cloud.v1.api.IamService.CreateTenant:input_type -> cloud.v1.api.CreateTenantRequest
+	37,  // 69: cloud.v1.api.IamService.GetTenant:input_type -> cloud.v1.api.GetTenantRequest
+	39,  // 70: cloud.v1.api.IamService.ListMyTenants:input_type -> cloud.v1.api.ListMyTenantsRequest
+	41,  // 71: cloud.v1.api.IamService.UpdateTenant:input_type -> cloud.v1.api.UpdateTenantRequest
+	43,  // 72: cloud.v1.api.IamService.DeleteTenant:input_type -> cloud.v1.api.DeleteTenantRequest
+	45,  // 73: cloud.v1.api.IamService.TransferTenantOwnership:input_type -> cloud.v1.api.TransferTenantOwnershipRequest
+	47,  // 74: cloud.v1.api.IamService.LeaveTenant:input_type -> cloud.v1.api.LeaveTenantRequest
+	49,  // 75: cloud.v1.api.IamService.CreateRole:input_type -> cloud.v1.api.CreateRoleRequest
+	51,  // 76: cloud.v1.api.IamService.GetRole:input_type -> cloud.v1.api.GetRoleRequest
+	53,  // 77: cloud.v1.api.IamService.ListRoles:input_type -> cloud.v1.api.ListRolesRequest
+	55,  // 78: cloud.v1.api.IamService.UpdateRole:input_type -> cloud.v1.api.UpdateRoleRequest
+	57,  // 79: cloud.v1.api.IamService.DeleteRole:input_type -> cloud.v1.api.DeleteRoleRequest
+	59,  // 80: cloud.v1.api.IamService.CreateMembership:input_type -> cloud.v1.api.CreateMembershipRequest
+	61,  // 81: cloud.v1.api.IamService.GetMembership:input_type -> cloud.v1.api.GetMembershipRequest
+	63,  // 82: cloud.v1.api.IamService.ListMemberships:input_type -> cloud.v1.api.ListMembershipsRequest
+	65,  // 83: cloud.v1.api.IamService.UpdateMembership:input_type -> cloud.v1.api.UpdateMembershipRequest
+	67,  // 84: cloud.v1.api.IamService.DeleteMembership:input_type -> cloud.v1.api.DeleteMembershipRequest
+	69,  // 85: cloud.v1.api.IamService.GetMyPermissions:input_type -> cloud.v1.api.GetMyPermissionsRequest
+	71,  // 86: cloud.v1.api.IamService.ListPermissions:input_type -> cloud.v1.api.ListPermissionsRequest
+	74,  // 87: cloud.v1.api.IamService.CreateIdentityProvider:input_type -> cloud.v1.api.CreateIdentityProviderRequest
+	76,  // 88: cloud.v1.api.IamService.GetIdentityProvider:input_type -> cloud.v1.api.GetIdentityProviderRequest
+	78,  // 89: cloud.v1.api.IamService.UpdateIdentityProvider:input_type -> cloud.v1.api.UpdateIdentityProviderRequest
+	80,  // 90: cloud.v1.api.IamService.DeleteIdentityProvider:input_type -> cloud.v1.api.DeleteIdentityProviderRequest
+	82,  // 91: cloud.v1.api.IamService.ListIdentityProviders:input_type -> cloud.v1.api.ListIdentityProvidersRequest
+	85,  // 92: cloud.v1.api.IamService.StartSSO:input_type -> cloud.v1.api.StartSSORequest
+	87,  // 93: cloud.v1.api.IamService.CompleteSSO:input_type -> cloud.v1.api.CompleteSSORequest
+	89,  // 94: cloud.v1.api.IamService.LinkExternalIdentity:input_type -> cloud.v1.api.LinkExternalIdentityRequest
+	91,  // 95: cloud.v1.api.IamService.UnlinkExternalIdentity:input_type -> cloud.v1.api.UnlinkExternalIdentityRequest
+	93,  // 96: cloud.v1.api.IamService.ListExternalIdentities:input_type -> cloud.v1.api.ListExternalIdentitiesRequest
+	95,  // 97: cloud.v1.api.IamService.CreateApiToken:input_type -> cloud.v1.api.CreateApiTokenRequest
+	97,  // 98: cloud.v1.api.IamService.ListApiTokens:input_type -> cloud.v1.api.ListApiTokensRequest
+	99,  // 99: cloud.v1.api.IamService.RevokeApiToken:input_type -> cloud.v1.api.RevokeApiTokenRequest
+	3,   // 100: cloud.v1.api.IamService.Register:output_type -> cloud.v1.api.RegisterResponse
+	5,   // 101: cloud.v1.api.IamService.Login:output_type -> cloud.v1.api.LoginResponse
+	7,   // 102: cloud.v1.api.IamService.Refresh:output_type -> cloud.v1.api.RefreshResponse
+	9,   // 103: cloud.v1.api.IamService.Logout:output_type -> cloud.v1.api.LogoutResponse
+	28,  // 104: cloud.v1.api.IamService.RequestPasswordReset:output_type -> cloud.v1.api.RequestPasswordResetResponse
+	30,  // 105: cloud.v1.api.IamService.ConfirmPasswordReset:output_type -> cloud.v1.api.ConfirmPasswordResetResponse
+	32,  // 106: cloud.v1.api.IamService.VerifyEmail:output_type -> cloud.v1.api.VerifyEmailResponse
+	103, // 107: cloud.v1.api.IamService.SubmitRegistrationRequest:output_type -> cloud.v1.api.SubmitRegistrationRequestResponse
+	105, // 108: cloud.v1.api.IamService.ListRegistrationRequests:output_type -> cloud.v1.api.ListRegistrationRequestsResponse
+	107, // 109: cloud.v1.api.IamService.MarkRegistrationRequestHandled:output_type -> cloud.v1.api.MarkRegistrationRequestHandledResponse
+	12,  // 110: cloud.v1.api.IamService.CreateAccount:output_type -> cloud.v1.api.CreateAccountResponse
+	14,  // 111: cloud.v1.api.IamService.GetAccount:output_type -> cloud.v1.api.GetAccountResponse
+	16,  // 112: cloud.v1.api.IamService.GetMyAccount:output_type -> cloud.v1.api.GetMyAccountResponse
+	18,  // 113: cloud.v1.api.IamService.ListAccounts:output_type -> cloud.v1.api.ListAccountsResponse
+	20,  // 114: cloud.v1.api.IamService.UpdateAccount:output_type -> cloud.v1.api.UpdateAccountResponse
+	22,  // 115: cloud.v1.api.IamService.DeleteAccount:output_type -> cloud.v1.api.DeleteAccountResponse
+	24,  // 116: cloud.v1.api.IamService.ChangePassword:output_type -> cloud.v1.api.ChangePasswordResponse
+	26,  // 117: cloud.v1.api.IamService.ResetPassword:output_type -> cloud.v1.api.ResetPasswordResponse
+	34,  // 118: cloud.v1.api.IamService.ResendVerification:output_type -> cloud.v1.api.ResendVerificationResponse
+	36,  // 119: cloud.v1.api.IamService.CreateTenant:output_type -> cloud.v1.api.CreateTenantResponse
+	38,  // 120: cloud.v1.api.IamService.GetTenant:output_type -> cloud.v1.api.GetTenantResponse
+	40,  // 121: cloud.v1.api.IamService.ListMyTenants:output_type -> cloud.v1.api.ListMyTenantsResponse
+	42,  // 122: cloud.v1.api.IamService.UpdateTenant:output_type -> cloud.v1.api.UpdateTenantResponse
+	44,  // 123: cloud.v1.api.IamService.DeleteTenant:output_type -> cloud.v1.api.DeleteTenantResponse
+	46,  // 124: cloud.v1.api.IamService.TransferTenantOwnership:output_type -> cloud.v1.api.TransferTenantOwnershipResponse
+	48,  // 125: cloud.v1.api.IamService.LeaveTenant:output_type -> cloud.v1.api.LeaveTenantResponse
+	50,  // 126: cloud.v1.api.IamService.CreateRole:output_type -> cloud.v1.api.CreateRoleResponse
+	52,  // 127: cloud.v1.api.IamService.GetRole:output_type -> cloud.v1.api.GetRoleResponse
+	54,  // 128: cloud.v1.api.IamService.ListRoles:output_type -> cloud.v1.api.ListRolesResponse
+	56,  // 129: cloud.v1.api.IamService.UpdateRole:output_type -> cloud.v1.api.UpdateRoleResponse
+	58,  // 130: cloud.v1.api.IamService.DeleteRole:output_type -> cloud.v1.api.DeleteRoleResponse
+	60,  // 131: cloud.v1.api.IamService.CreateMembership:output_type -> cloud.v1.api.CreateMembershipResponse
+	62,  // 132: cloud.v1.api.IamService.GetMembership:output_type -> cloud.v1.api.GetMembershipResponse
+	64,  // 133: cloud.v1.api.IamService.ListMemberships:output_type -> cloud.v1.api.ListMembershipsResponse
+	66,  // 134: cloud.v1.api.IamService.UpdateMembership:output_type -> cloud.v1.api.UpdateMembershipResponse
+	68,  // 135: cloud.v1.api.IamService.DeleteMembership:output_type -> cloud.v1.api.DeleteMembershipResponse
+	70,  // 136: cloud.v1.api.IamService.GetMyPermissions:output_type -> cloud.v1.api.GetMyPermissionsResponse
+	73,  // 137: cloud.v1.api.IamService.ListPermissions:output_type -> cloud.v1.api.ListPermissionsResponse
+	75,  // 138: cloud.v1.api.IamService.CreateIdentityProvider:output_type -> cloud.v1.api.CreateIdentityProviderResponse
+	77,  // 139: cloud.v1.api.IamService.GetIdentityProvider:output_type -> cloud.v1.api.GetIdentityProviderResponse
+	79,  // 140: cloud.v1.api.IamService.UpdateIdentityProvider:output_type -> cloud.v1.api.UpdateIdentityProviderResponse
+	81,  // 141: cloud.v1.api.IamService.DeleteIdentityProvider:output_type -> cloud.v1.api.DeleteIdentityProviderResponse
+	84,  // 142: cloud.v1.api.IamService.ListIdentityProviders:output_type -> cloud.v1.api.ListIdentityProvidersResponse
+	86,  // 143: cloud.v1.api.IamService.StartSSO:output_type -> cloud.v1.api.StartSSOResponse
+	88,  // 144: cloud.v1.api.IamService.CompleteSSO:output_type -> cloud.v1.api.CompleteSSOResponse
+	90,  // 145: cloud.v1.api.IamService.LinkExternalIdentity:output_type -> cloud.v1.api.LinkExternalIdentityResponse
+	92,  // 146: cloud.v1.api.IamService.UnlinkExternalIdentity:output_type -> cloud.v1.api.UnlinkExternalIdentityResponse
+	94,  // 147: cloud.v1.api.IamService.ListExternalIdentities:output_type -> cloud.v1.api.ListExternalIdentitiesResponse
+	96,  // 148: cloud.v1.api.IamService.CreateApiToken:output_type -> cloud.v1.api.CreateApiTokenResponse
+	98,  // 149: cloud.v1.api.IamService.ListApiTokens:output_type -> cloud.v1.api.ListApiTokensResponse
+	100, // 150: cloud.v1.api.IamService.RevokeApiToken:output_type -> cloud.v1.api.RevokeApiTokenResponse
+	100, // [100:151] is the sub-list for method output_type
+	49,  // [49:100] is the sub-list for method input_type
+	49,  // [49:49] is the sub-list for extension type_name
+	49,  // [49:49] is the sub-list for extension extendee
+	0,   // [0:49] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_api_iam_proto_init() }
@@ -5929,13 +6411,14 @@ func file_cloud_v1_api_iam_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_api_iam_proto_rawDesc), len(file_cloud_v1_api_iam_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   100,
+			NumEnums:      1,
+			NumMessages:   107,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_cloud_v1_api_iam_proto_goTypes,
 		DependencyIndexes: file_cloud_v1_api_iam_proto_depIdxs,
+		EnumInfos:         file_cloud_v1_api_iam_proto_enumTypes,
 		MessageInfos:      file_cloud_v1_api_iam_proto_msgTypes,
 	}.Build()
 	File_cloud_v1_api_iam_proto = out.File
