@@ -96,23 +96,26 @@ func workloadTargets(spec *topologypb.TopologySpec) []*topologypb.Component {
 }
 
 func workloadConnection(input *domain.Workload, target *topologypb.Component) (string, uint32, topologypb.Connection_Protocol) {
-	switch input.GetProtocol() {
+	protocol := input.GetProtocol()
+	meta := workloadProtocols[protocol]
+
+	switch protocol {
 	case domain.Workload_PROTOCOL_MYSQL:
 		if target.GetRole() == "proxysql" {
 			return "mysql", 6033, topologypb.Connection_PROTOCOL_TCP
 		}
-		return "mysql", 3306, topologypb.Connection_PROTOCOL_TCP
+		return "mysql", meta.port, topologypb.Connection_PROTOCOL_TCP
 	case domain.Workload_PROTOCOL_PICODATA:
-		return "pgproto", 5432, topologypb.Connection_PROTOCOL_TCP
+		return "pgproto", meta.port, topologypb.Connection_PROTOCOL_TCP
 	case domain.Workload_PROTOCOL_YDB_GRPC, domain.Workload_PROTOCOL_YDB_GRPCS:
-		return "grpc", 2136, topologypb.Connection_PROTOCOL_GRPC
+		return "grpc", meta.port, topologypb.Connection_PROTOCOL_GRPC
 	case domain.Workload_PROTOCOL_COCKROACH:
-		return "sql", 26257, topologypb.Connection_PROTOCOL_TCP
+		return "sql", meta.port, topologypb.Connection_PROTOCOL_TCP
 	default:
 		if target.GetRole() == "pgbouncer" {
 			return "pgbouncer", 6432, topologypb.Connection_PROTOCOL_POOL
 		}
-		return "postgres", 5432, topologypb.Connection_PROTOCOL_TCP
+		return "postgres", workloadProtocols[domain.Workload_PROTOCOL_PG].port, topologypb.Connection_PROTOCOL_TCP
 	}
 }
 

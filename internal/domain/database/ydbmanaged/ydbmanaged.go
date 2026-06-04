@@ -48,9 +48,9 @@ const (
 	NodeID      = "ydb-managed-1"
 	ComponentID = "ydb-managed-1"
 
-	// grpcPort is the default YDB client gRPC(S) port. Used as the connection
+	// grpcPort is the default YDB client gRPCS port. Used as the connection
 	// port until the provider reports the real endpoint port.
-	grpcPort = 2136
+	grpcPort = 2135
 )
 
 // Database builds the managed-YDB topology spec.

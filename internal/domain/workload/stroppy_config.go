@@ -49,6 +49,38 @@ type databaseTarget struct {
 	DatabasePath string
 }
 
+type protocolMeta struct {
+	driverType string
+	port       uint32
+	urlScheme  string
+	urlTail    string
+}
+
+func (p protocolMeta) formatURL(host, port string) string {
+	if p.driverType == "mysql" {
+		return fmt.Sprintf("root@tcp(%s:%s)%s", host, port, p.urlTail)
+	}
+	return fmt.Sprintf("%s://%s:%s%s", p.urlScheme, host, port, p.urlTail)
+}
+
+var workloadProtocols = map[domain.Workload_Protocol]protocolMeta{
+	domain.Workload_PROTOCOL_PG:        {driverType: "postgres", port: 5432, urlScheme: "postgresql", urlTail: "/postgres?sslmode=disable"},
+	domain.Workload_PROTOCOL_MYSQL:     {driverType: "mysql", port: 3306, urlTail: "/"},
+	domain.Workload_PROTOCOL_PICODATA:  {driverType: "picodata", port: 5432, urlScheme: "postgres", urlTail: "?sslmode=disable"},
+	domain.Workload_PROTOCOL_YDB_GRPC:  {driverType: "ydb", port: 2136, urlScheme: "grpc", urlTail: "/Root/testdb"},
+	domain.Workload_PROTOCOL_YDB_GRPCS: {driverType: "ydb", port: 2135, urlScheme: "grpcs"},
+	domain.Workload_PROTOCOL_COCKROACH: {driverType: "postgres", port: 26257, urlScheme: "postgresql", urlTail: "/defaultdb?sslmode=disable"},
+}
+
+var databaseDefaultProtocols = map[domain.Database_Kind]domain.Workload_Protocol{
+	domain.Database_KIND_MYSQL:       domain.Workload_PROTOCOL_MYSQL,
+	domain.Database_KIND_MARIADB:     domain.Workload_PROTOCOL_MYSQL,
+	domain.Database_KIND_YDB:         domain.Workload_PROTOCOL_YDB_GRPC,
+	domain.Database_KIND_YDB_MANAGED: domain.Workload_PROTOCOL_YDB_GRPCS,
+	domain.Database_KIND_COCKROACH:   domain.Workload_PROTOCOL_COCKROACH,
+	domain.Database_KIND_PICODATA:    domain.Workload_PROTOCOL_PICODATA,
+}
+
 func (t databaseTarget) hostToken() string {
 	host := strings.TrimSpace(t.Host)
 	if host == "" {
@@ -231,15 +263,16 @@ func k6Args(exec *domain.Workload_Execution) []string {
 // concrete DB endpoint host/port from deployment.RuntimeView.
 func driverTypeURL(protocol domain.Workload_Protocol, target databaseTarget) (string, string) {
 	host, port := target.hostToken(), target.portToken()
+	meta, ok := workloadProtocols[protocol]
+	if !ok {
+		meta = workloadProtocols[domain.Workload_PROTOCOL_PG]
+	}
+
 	switch protocol {
-	case domain.Workload_PROTOCOL_PG, domain.Workload_PROTOCOL_COCKROACH:
-		return "postgres", fmt.Sprintf("postgresql://%s@%s:%s/postgres?sslmode=disable", postgresUserInfo(target), host, port)
-	case domain.Workload_PROTOCOL_MYSQL:
-		return "mysql", fmt.Sprintf("%s:%s", host, port)
+	case domain.Workload_PROTOCOL_PG:
+		return meta.driverType, fmt.Sprintf("postgresql://%s@%s:%s/postgres?sslmode=disable", postgresUserInfo(target), host, port)
 	case domain.Workload_PROTOCOL_PICODATA:
-		return "picodata", fmt.Sprintf("postgres://admin:T0psecret@%s:%s?sslmode=disable", host, port)
-	case domain.Workload_PROTOCOL_YDB_GRPC:
-		return "ydb", fmt.Sprintf("grpc://%s:%s/", host, port)
+		return meta.driverType, fmt.Sprintf("postgres://admin:T0psecret@%s:%s?sslmode=disable", host, port)
 	case domain.Workload_PROTOCOL_YDB_GRPCS:
 		// Managed YDB needs the database path as a `?database=` query (the path
 		// is dynamic — terraform output ydb_database_path — and lives on the
@@ -247,9 +280,9 @@ func driverTypeURL(protocol domain.Workload_Protocol, target databaseTarget) (st
 		// such label, so resolveDatabasePath drops the whole query. The
 		// placeholder is substituted (or dropped) at build time once the DB
 		// endpoint is resolved.
-		return "ydb", fmt.Sprintf("grpcs://%s:%s/?database=%s", host, port, DBDatabasePlaceholder)
+		return meta.driverType, fmt.Sprintf("grpcs://%s:%s/?database=%s", host, port, DBDatabasePlaceholder)
 	default:
-		return "postgres", fmt.Sprintf("postgresql://postgres@%s:%s/postgres?sslmode=disable", host, port)
+		return meta.driverType, meta.formatURL(host, port)
 	}
 }
 
@@ -265,20 +298,10 @@ func effectiveProtocol(protocol domain.Workload_Protocol, database *domain.Datab
 	if protocol != domain.Workload_PROTOCOL_UNSPECIFIED {
 		return protocol
 	}
-	switch database.GetKind() {
-	case domain.Database_KIND_MYSQL, domain.Database_KIND_MARIADB:
-		return domain.Workload_PROTOCOL_MYSQL
-	case domain.Database_KIND_YDB:
-		return domain.Workload_PROTOCOL_YDB_GRPC
-	case domain.Database_KIND_YDB_MANAGED:
-		return domain.Workload_PROTOCOL_YDB_GRPCS
-	case domain.Database_KIND_COCKROACH:
-		return domain.Workload_PROTOCOL_COCKROACH
-	case domain.Database_KIND_PICODATA:
-		return domain.Workload_PROTOCOL_PICODATA
-	default:
-		return domain.Workload_PROTOCOL_PG
+	if resolved, ok := databaseDefaultProtocols[database.GetKind()]; ok {
+		return resolved
 	}
+	return domain.Workload_PROTOCOL_PG
 }
 
 // resolveDatabasePath substitutes the managed-database path into the stroppy

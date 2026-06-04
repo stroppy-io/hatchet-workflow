@@ -78,7 +78,7 @@ func RenderComponentDeployment(ctx RenderContext, ec EngineComponent) *deploymen
 	steps = append(steps,
 		WriteFileStep("200_write_service", 200, ec.ServiceFile),
 		CallCmdStep("210_reload_systemd", 210, "systemctl daemon-reload"),
-		CallCmdStep("220_enable_start", 220, fmt.Sprintf("systemctl enable --now %s", ServiceName(ctx.Component.GetId()))),
+		CallCmdStep("220_enable_start", 220, EnableStartServiceCommand(ctx.Component.GetId())),
 		CallCmdStep("230_healthcheck", 230, ec.Healthcheck),
 	)
 
@@ -188,11 +188,22 @@ func RenderComponentPreview(ctx PreviewContext, ec EngineComponent) []*deploymen
 	}
 	artifacts = append(artifacts,
 		CommandArtifact(ctx, ec.Engine, ArtifactID(ctx.Component.GetId(), "systemd/reload"), "systemctl daemon-reload", "systemd reload is renderer-owned", map[string]string{"artifact": "systemd_reload"}),
-		CommandArtifact(ctx, ec.Engine, ArtifactID(ctx.Component.GetId(), "systemd/enable-start"), fmt.Sprintf("systemctl enable --now %s", ServiceName(ctx.Component.GetId())), "systemd activation is renderer-owned", map[string]string{"artifact": "systemd_enable_start"}),
+		CommandArtifact(ctx, ec.Engine, ArtifactID(ctx.Component.GetId(), "systemd/enable-start"), EnableStartServiceCommand(ctx.Component.GetId()), "systemd activation is renderer-owned", map[string]string{"artifact": "systemd_enable_start"}),
 		CommandArtifact(ctx, ec.Engine, ArtifactID(ctx.Component.GetId(), "healthcheck"), ec.Healthcheck, "healthcheck command is renderer-owned", map[string]string{"artifact": "healthcheck"}),
 	)
 
 	return artifacts
+}
+
+func EnableStartServiceCommand(componentID string) string {
+	service := ShellQuote(ServiceName(componentID))
+	return fmt.Sprintf(`set -e
+if ! systemctl enable --now %s; then
+  systemctl status --no-pager -l %s || true
+  journalctl --no-pager -u %s -n 200 || true
+  exit 1
+fi
+`, service, service, service)
 }
 
 // SimpleServiceUnit renders a Type=simple systemd unit that runs execStart and

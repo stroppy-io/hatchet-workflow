@@ -53,6 +53,97 @@ func TestRenderStroppyConfigRoutesOTLPThroughServerAddress(t *testing.T) {
 	}
 }
 
+func TestDriverTypeURLMatchesProtocolRegistry(t *testing.T) {
+	tests := []struct {
+		name       string
+		protocol   domain.Workload_Protocol
+		target     databaseTarget
+		driverType string
+		url        string
+	}{
+		{
+			name:       "postgres",
+			protocol:   domain.Workload_PROTOCOL_PG,
+			target:     databaseTarget{Host: "10.0.0.2", Port: 5432}.withDefaults(&domain.Database{Kind: domain.Database_KIND_POSTGRES}),
+			driverType: "postgres",
+			url:        "postgresql://postgres:stroppy_postgres@10.0.0.2:5432/postgres?sslmode=disable",
+		},
+		{
+			name:       "mysql",
+			protocol:   domain.Workload_PROTOCOL_MYSQL,
+			target:     databaseTarget{Host: "10.0.0.2", Port: 3306},
+			driverType: "mysql",
+			url:        "root@tcp(10.0.0.2:3306)/",
+		},
+		{
+			name:       "picodata",
+			protocol:   domain.Workload_PROTOCOL_PICODATA,
+			target:     databaseTarget{Host: "10.0.0.2", Port: 5432},
+			driverType: "picodata",
+			url:        "postgres://admin:T0psecret@10.0.0.2:5432?sslmode=disable",
+		},
+		{
+			name:       "ydb grpc",
+			protocol:   domain.Workload_PROTOCOL_YDB_GRPC,
+			target:     databaseTarget{Host: "10.0.0.2", Port: 2136},
+			driverType: "ydb",
+			url:        "grpc://10.0.0.2:2136/Root/testdb",
+		},
+		{
+			name:       "managed ydb grpcs",
+			protocol:   domain.Workload_PROTOCOL_YDB_GRPCS,
+			target:     databaseTarget{Host: "ydb.serverless.yandexcloud.net", Port: 2135, DatabasePath: "/ru-central1/b1g/test"},
+			driverType: "ydb",
+			url:        "grpcs://ydb.serverless.yandexcloud.net:2135/?database=/ru-central1/b1g/test",
+		},
+		{
+			name:       "cockroach",
+			protocol:   domain.Workload_PROTOCOL_COCKROACH,
+			target:     databaseTarget{Host: "10.0.0.2", Port: 26257},
+			driverType: "postgres",
+			url:        "postgresql://10.0.0.2:26257/defaultdb?sslmode=disable",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			driverType, driverURL := driverTypeURL(tt.protocol, tt.target)
+			driverURL = resolveDatabasePath(driverURL, tt.target.DatabasePath)
+			if driverType != tt.driverType || driverURL != tt.url {
+				t.Fatalf("driver = (%q, %q), want (%q, %q)", driverType, driverURL, tt.driverType, tt.url)
+			}
+		})
+	}
+}
+
+func TestEffectiveProtocolDefaultsFromDatabaseKind(t *testing.T) {
+	tests := []struct {
+		kind domain.Database_Kind
+		want domain.Workload_Protocol
+	}{
+		{domain.Database_KIND_POSTGRES, domain.Workload_PROTOCOL_PG},
+		{domain.Database_KIND_MYSQL, domain.Workload_PROTOCOL_MYSQL},
+		{domain.Database_KIND_MARIADB, domain.Workload_PROTOCOL_MYSQL},
+		{domain.Database_KIND_YDB, domain.Workload_PROTOCOL_YDB_GRPC},
+		{domain.Database_KIND_YDB_MANAGED, domain.Workload_PROTOCOL_YDB_GRPCS},
+		{domain.Database_KIND_COCKROACH, domain.Workload_PROTOCOL_COCKROACH},
+		{domain.Database_KIND_PICODATA, domain.Workload_PROTOCOL_PICODATA},
+	}
+
+	for _, tt := range tests {
+		if got := effectiveProtocol(domain.Workload_PROTOCOL_UNSPECIFIED, &domain.Database{Kind: tt.kind}); got != tt.want {
+			t.Fatalf("effective protocol for %s = %s, want %s", tt.kind, got, tt.want)
+		}
+	}
+}
+
+func TestWorkloadConnectionUsesManagedYDBPort(t *testing.T) {
+	_, port, protocol := workloadConnection(&domain.Workload{Protocol: domain.Workload_PROTOCOL_YDB_GRPCS}, &topologypb.Component{})
+	if port != 2135 || protocol != topologypb.Connection_PROTOCOL_GRPC {
+		t.Fatalf("managed ydb workload connection = port %d protocol %s, want 2135/%s", port, protocol, topologypb.Connection_PROTOCOL_GRPC)
+	}
+}
+
 func TestPatchStroppyConfigOverrideSubstitutesRuntimeCredentials(t *testing.T) {
 	file := &common.File{
 		Info: &common.File_Info{Path: "/etc/stroppy-cloud/workload/stroppy-config.json"},
@@ -78,8 +169,8 @@ func TestPatchStroppyConfigOverrideSubstitutesRuntimeCredentials(t *testing.T) {
 	text := patched.GetText()
 	for _, want := range []string{
 		`postgresql://postgres:stroppy_postgres@10.0.0.2:5432/postgres?sslmode=disable`,
-		`"otlpHttpEndpoint":  "server:8080"`,
-		`"otlpMetricsPrefix":  "stroppy_run_1_"`,
+		`"otlpHttpEndpoint": "server:8080"`,
+		`"otlpMetricsPrefix": "stroppy_run_1_"`,
 	} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("patched config missing %q:\n%s", want, text)
