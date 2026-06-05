@@ -976,19 +976,41 @@ function SettingsPane({
   apply: (d: DatabaseVM) => void;
   errs: DraftErrorVM[];
 }) {
+  // The topology only gets its own SIDE column on very wide screens (2xl); below
+  // that, Engine + Preset already eat ~32rem of the row, so a third settings
+  // sub-column would crush the form (the old bug: a 22rem track was reserved for
+  // the topology even when it was empty, squeezing the form to a sliver). Here
+  // the topology stacks UNDER the form below 2xl, and is omitted entirely when
+  // there's nothing to show — the form always keeps the full pane width.
+  const hasTopo = draft.topologyComponents.length > 0;
   return (
     <div className="pane-reveal flex min-h-0 min-w-0 flex-1 flex-col">
       <PaneHeader index={3} title="Settings" subtitle="Preset values, editable" />
-      <div className="grid min-h-0 flex-1 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] xl:items-stretch">
+      <div
+        className={`grid min-h-0 flex-1 gap-6 2xl:items-stretch ${
+          hasTopo ? "2xl:grid-cols-[minmax(24rem,1fr)_minmax(0,22rem)]" : ""
+        }`}
+      >
         <div className="min-h-0 space-y-6 overflow-y-auto pr-1">
           <EngineVersionSelect db={db} apply={apply} />
 
           <EngineParamsForm db={db} apply={apply} />
           <FieldErrors errs={errs} />
+          {/* Below 2xl the topology stacks under the form (the grid is a single
+              column there); on 2xl it moves to the side column below instead. */}
+          {hasTopo && (
+            <div className="2xl:hidden">
+              <TopologyDiagram draft={draft} />
+            </div>
+          )}
         </div>
 
-        {/* Derived topology diagram — fills the pane height, scrolls internally. */}
-        <TopologyDiagram draft={draft} />
+        {/* Derived topology diagram — side column on 2xl only. */}
+        {hasTopo && (
+          <div className="hidden min-h-0 2xl:block">
+            <TopologyDiagram draft={draft} />
+          </div>
+        )}
       </div>
     </div>
   );
