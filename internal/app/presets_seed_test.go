@@ -1,12 +1,14 @@
 package app
 
 import (
+	"strings"
 	"testing"
 
 	runbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/run"
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
+	"google.golang.org/protobuf/proto"
 )
 
 func TestBuiltinDatabasePresetsCarryBuiltinPackage(t *testing.T) {
@@ -59,7 +61,7 @@ func TestReconcileBuiltinDatabasePresetAddsMissingPackage(t *testing.T) {
 	preset := firstDatabasePresetExcept(t, builtinDatabasePresets("tenant-1", "author-1"), domain.Database_KIND_YDB_MANAGED)
 	preset.GetDatabase().GetParams().Package = nil
 
-	if !reconcileBuiltinDatabasePreset(preset) {
+	if !reconcileBuiltinDatabasePreset(preset, nil) {
 		t.Fatal("reconcileBuiltinDatabasePreset reported no change for missing package")
 	}
 	pkg := preset.GetDatabase().GetParams().GetPackage()
@@ -69,7 +71,7 @@ func TestReconcileBuiltinDatabasePresetAddsMissingPackage(t *testing.T) {
 	if !pkg.GetIsBuiltin() {
 		t.Fatalf("restored package is not builtin: %+v", pkg)
 	}
-	if reconcileBuiltinDatabasePreset(preset) {
+	if reconcileBuiltinDatabasePreset(preset, nil) {
 		t.Fatal("reconcileBuiltinDatabasePreset changed an already reconciled preset")
 	}
 }
@@ -84,14 +86,61 @@ func TestReconcileBuiltinDatabasePresetRemovesManagedYdbPackage(t *testing.T) {
 		IsBuiltin: true,
 	}
 
-	if !reconcileBuiltinDatabasePreset(preset) {
+	if !reconcileBuiltinDatabasePreset(preset, nil) {
 		t.Fatal("reconcileBuiltinDatabasePreset reported no change for managed YDB package")
 	}
 	if pkg := preset.GetDatabase().GetParams().GetPackage(); pkg != nil {
 		t.Fatalf("managed YDB package was not removed: %+v", pkg)
 	}
-	if reconcileBuiltinDatabasePreset(preset) {
+	if reconcileBuiltinDatabasePreset(preset, nil) {
 		t.Fatal("reconcileBuiltinDatabasePreset changed an already reconciled managed YDB preset")
+	}
+}
+
+func TestBuiltinPostgresPresetsUseConcreteMemoryValues(t *testing.T) {
+	for _, preset := range builtinDatabasePresets("tenant-1", "author-1") {
+		if preset.GetDatabase().GetKind() != domain.Database_KIND_POSTGRES {
+			continue
+		}
+		params := preset.GetDatabase().GetParams().GetPostgres()
+		for group, options := range map[string]map[string]string{
+			"master":  params.GetMasterOptions(),
+			"replica": params.GetReplicaOptions(),
+		} {
+			for key, value := range options {
+				if strings.Contains(value, "%") {
+					t.Fatalf("%q %s option %s uses percentage value %q; postgresql.conf requires concrete units", preset.GetEntity().GetName(), group, key, value)
+				}
+			}
+		}
+	}
+}
+
+func TestReconcileBuiltinTestPresetUpdatesEmbeddedDatabase(t *testing.T) {
+	workloads := workloadPresetsByProtocol(builtinWorkloadPresets("tenant-1", "author-1"))
+	canonicalDB := databasePresetByName(t, builtinDatabasePresets("tenant-1", "author-1"), "PostgreSQL ha")
+	staleDB := proto.Clone(canonicalDB).(*models.DatabasePresetRecord)
+	staleDB.GetDatabase().GetParams().GetPostgres().MasterOptions["shared_buffers"] = "25%"
+	staleDB.GetDatabase().GetParams().GetPostgres().ReplicaOptions["shared_buffers"] = "25%"
+
+	current, err := buildBuiltinTestPresetRecord("tenant-1", "author-1", staleDB, workloads)
+	if err != nil {
+		t.Fatalf("build stale test preset: %v", err)
+	}
+	canonical, err := buildBuiltinTestPresetRecord("tenant-1", "author-1", canonicalDB, workloads)
+	if err != nil {
+		t.Fatalf("build canonical test preset: %v", err)
+	}
+
+	if !reconcileBuiltinTestPreset(current, canonical) {
+		t.Fatal("reconcileBuiltinTestPreset reported no change for stale embedded database")
+	}
+	params := current.GetTest().GetDatabase().GetParams().GetPostgres()
+	if got, want := params.GetMasterOptions()["shared_buffers"], "512MB"; got != want {
+		t.Fatalf("master shared_buffers = %q, want %q", got, want)
+	}
+	if got, want := params.GetReplicaOptions()["shared_buffers"], "512MB"; got != want {
+		t.Fatalf("replica shared_buffers = %q, want %q", got, want)
 	}
 }
 
@@ -288,6 +337,17 @@ func firstDatabasePresetFor(t *testing.T, presets []*models.DatabasePresetRecord
 		}
 	}
 	t.Fatalf("database preset catalog has no kind %s", kind)
+	return nil
+}
+
+func databasePresetByName(t *testing.T, presets []*models.DatabasePresetRecord, name string) *models.DatabasePresetRecord {
+	t.Helper()
+	for _, preset := range presets {
+		if preset.GetEntity().GetName() == name {
+			return preset
+		}
+	}
+	t.Fatalf("database preset catalog has no preset %q", name)
 	return nil
 }
 

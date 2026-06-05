@@ -238,7 +238,7 @@ func seedDatabasePresets(ctx context.Context, log *slog.Logger, repo *postgres.D
 	out := make([]*models.DatabasePresetRecord, 0, len(presets))
 	for _, p := range presets {
 		if current := byName[p.GetEntity().GetName()]; current != nil {
-			if reconcileBuiltinDatabasePreset(current) {
+			if reconcileBuiltinDatabasePreset(current, p) {
 				if err := repo.Update(ctx, current); err != nil {
 					return nil, err
 				}
@@ -258,17 +258,30 @@ func seedDatabasePresets(ctx context.Context, log *slog.Logger, repo *postgres.D
 	return out, nil
 }
 
-func reconcileBuiltinDatabasePreset(rec *models.DatabasePresetRecord) bool {
+func reconcileBuiltinDatabasePreset(rec, canonical *models.DatabasePresetRecord) bool {
 	if rec == nil || rec.GetDatabase() == nil || rec.GetDatabase().GetParams() == nil {
 		return false
 	}
 	next := cloneDatabaseWithBuiltinPackage(rec.GetDatabase())
-	if proto.Equal(rec.GetDatabase(), next) {
+	description := rec.GetEntity().GetDescription()
+	if canonical != nil && canonical.GetDatabase() != nil {
+		next = cloneDatabaseWithBuiltinPackage(canonical.GetDatabase())
+		description = canonical.GetEntity().GetDescription()
+	}
+	changed := !proto.Equal(rec.GetDatabase(), next) ||
+		rec.GetIsSystem() != true ||
+		rec.GetEntity().GetDescription() != description
+	if !changed {
 		return false
 	}
 	rec.Database = next
-	if timings := rec.GetEntity().GetTimings(); timings != nil {
-		timings.UpdatedAt = timestamppb.Now()
+	rec.IsSystem = true
+	if entity := rec.GetEntity(); entity != nil {
+		entity.Description = description
+		entity.IsFavorite = false
+		if timings := entity.GetTimings(); timings != nil {
+			timings.UpdatedAt = timestamppb.Now()
+		}
 	}
 	return true
 }

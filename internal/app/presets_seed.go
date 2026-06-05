@@ -92,8 +92,8 @@ func builtinDatabasePresets(tenantID, authorID string) []*models.DatabasePresetR
 			Patroni:          true,
 			Etcd:             true,
 			SyncReplicas:     1,
-			MasterOptions:    map[string]string{"shared_buffers": "25%", "max_connections": "200", "work_mem": "64MB"},
-			ReplicaOptions:   map[string]string{"shared_buffers": "25%", "max_connections": "200", "work_mem": "64MB"},
+			MasterOptions:    map[string]string{"shared_buffers": "512MB", "max_connections": "200", "work_mem": "64MB"},
+			ReplicaOptions:   map[string]string{"shared_buffers": "512MB", "max_connections": "200", "work_mem": "64MB"},
 			PgbouncerOptions: map[string]string{"pool_mode": "transaction", "max_client_conn": "1000", "default_pool_size": "25"},
 			PatroniOptions:   map[string]string{"ttl": "30", "loop_wait": "10", "retry_timeout": "10"},
 		}))
@@ -105,8 +105,8 @@ func builtinDatabasePresets(tenantID, authorID string) []*models.DatabasePresetR
 			Patroni:          true,
 			Etcd:             true,
 			SyncReplicas:     2,
-			MasterOptions:    map[string]string{"shared_buffers": "25%", "max_connections": "500", "work_mem": "128MB", "effective_cache_size": "75%"},
-			ReplicaOptions:   map[string]string{"shared_buffers": "25%", "max_connections": "500", "work_mem": "128MB", "effective_cache_size": "75%"},
+			MasterOptions:    map[string]string{"shared_buffers": "1GB", "max_connections": "500", "work_mem": "128MB", "effective_cache_size": "3GB"},
+			ReplicaOptions:   map[string]string{"shared_buffers": "1GB", "max_connections": "500", "work_mem": "128MB", "effective_cache_size": "3GB"},
 			PgbouncerOptions: map[string]string{"pool_mode": "transaction", "max_client_conn": "2000", "default_pool_size": "50"},
 			PatroniOptions:   map[string]string{"ttl": "30", "loop_wait": "10", "retry_timeout": "10"},
 		}))
@@ -264,36 +264,25 @@ func seedTestPresets(ctx context.Context, log *slog.Logger, repo *postgres.TestP
 	byProtocol := workloadPresetsByProtocol(workloads)
 
 	created := 0
+	updated := 0
 	out := make([]*models.TestPresetRecord, 0, len(dbPresets))
 	for _, dbPreset := range dbPresets {
 		name := selfCheckTestPresetName(dbPreset)
+		rec, err := buildBuiltinTestPresetRecord(tenantID, authorID, dbPreset, byProtocol)
+		if err != nil {
+			return nil, err
+		}
 		if current := byName[name]; current != nil {
+			if reconcileBuiltinTestPreset(current, rec) {
+				if err := repo.Update(ctx, current); err != nil {
+					return nil, err
+				}
+				updated++
+			}
 			out = append(out, current)
 			continue
 		}
 
-		protocol := workloadProtocolForDatabase(dbPreset.GetDatabase().GetKind())
-		workload := byProtocol[protocol]
-		if workload == nil {
-			return nil, fmt.Errorf("missing builtin workload preset for protocol %s", protocol)
-		}
-
-		rec := &models.TestPresetRecord{
-			Entity:   newSeedEntity(tenantID, authorID, name, "Minimal self-check for "+dbPreset.GetEntity().GetName()),
-			IsSystem: true,
-			Test: &domain.Test{
-				Database: cloneDatabaseWithBuiltinPackage(dbPreset.GetDatabase()),
-				Workload: proto.Clone(workload.GetWorkload()).(*domain.Workload),
-			},
-		}
-		rec.Summary = &models.TestPresetRecord_Summary{
-			DbKind:         rec.GetTest().GetDatabase().GetKind(),
-			Protocol:       rec.GetTest().GetWorkload().GetProtocol(),
-			StroppyVersion: rec.GetTest().GetWorkload().GetStroppyVersion(),
-		}
-		if err := rec.GetTest().Validate(); err != nil {
-			return nil, fmt.Errorf("builtin test preset %q is invalid: %w", name, err)
-		}
 		if err := repo.Create(ctx, rec); err != nil {
 			return nil, err
 		}
@@ -301,8 +290,58 @@ func seedTestPresets(ctx context.Context, log *slog.Logger, repo *postgres.TestP
 		out = append(out, rec)
 	}
 	log.Info("first-boot seeding: builtin test presets ensured",
-		slog.String("tenant_id", tenantID), slog.Int("created", created), slog.Int("catalog", len(out)))
+		slog.String("tenant_id", tenantID), slog.Int("created", created), slog.Int("updated", updated), slog.Int("catalog", len(out)))
 	return out, nil
+}
+
+func buildBuiltinTestPresetRecord(tenantID, authorID string, dbPreset *models.DatabasePresetRecord, byProtocol map[domain.Workload_Protocol]*models.WorkloadPresetRecord) (*models.TestPresetRecord, error) {
+	protocol := workloadProtocolForDatabase(dbPreset.GetDatabase().GetKind())
+	workload := byProtocol[protocol]
+	if workload == nil {
+		return nil, fmt.Errorf("missing builtin workload preset for protocol %s", protocol)
+	}
+
+	rec := &models.TestPresetRecord{
+		Entity:   newSeedEntity(tenantID, authorID, selfCheckTestPresetName(dbPreset), "Minimal self-check for "+dbPreset.GetEntity().GetName()),
+		IsSystem: true,
+		Test: &domain.Test{
+			Database: cloneDatabaseWithBuiltinPackage(dbPreset.GetDatabase()),
+			Workload: proto.Clone(workload.GetWorkload()).(*domain.Workload),
+		},
+	}
+	rec.Summary = &models.TestPresetRecord_Summary{
+		DbKind:         rec.GetTest().GetDatabase().GetKind(),
+		Protocol:       rec.GetTest().GetWorkload().GetProtocol(),
+		StroppyVersion: rec.GetTest().GetWorkload().GetStroppyVersion(),
+	}
+	if err := rec.GetTest().Validate(); err != nil {
+		return nil, fmt.Errorf("builtin test preset %q is invalid: %w", rec.GetEntity().GetName(), err)
+	}
+	return rec, nil
+}
+
+func reconcileBuiltinTestPreset(current, canonical *models.TestPresetRecord) bool {
+	if current == nil || canonical == nil {
+		return false
+	}
+	changed := !proto.Equal(current.GetTest(), canonical.GetTest()) ||
+		!proto.Equal(current.GetSummary(), canonical.GetSummary()) ||
+		current.GetIsSystem() != canonical.GetIsSystem() ||
+		current.GetEntity().GetDescription() != canonical.GetEntity().GetDescription()
+	if !changed {
+		return false
+	}
+	current.Test = proto.Clone(canonical.GetTest()).(*domain.Test)
+	current.Summary = proto.Clone(canonical.GetSummary()).(*models.TestPresetRecord_Summary)
+	current.IsSystem = canonical.GetIsSystem()
+	if entity := current.GetEntity(); entity != nil {
+		entity.Description = canonical.GetEntity().GetDescription()
+		entity.IsFavorite = false
+		if timings := entity.GetTimings(); timings != nil {
+			timings.UpdatedAt = timestamppb.Now()
+		}
+	}
+	return true
 }
 
 const (
