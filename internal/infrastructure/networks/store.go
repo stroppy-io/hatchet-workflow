@@ -156,12 +156,13 @@ func (s *Store) ReleaseRun(ctx context.Context, tenantID, runID string, now time
 	tag, err := s.db.Pool.Exec(ctx, `
 update network_reservations
 set status = $1, updated_at = $2
-where tenant_id = $3 and run_id = $4 and status = $5`,
+where tenant_id = $3 and run_id = $4 and status in ($5, $6)`,
 		int32(deploymentpb.Quota_RESERVATION_STATUS_RELEASED),
 		now,
 		tenantID,
 		runID,
 		int32(deploymentpb.Quota_RESERVATION_STATUS_RESERVED),
+		int32(deploymentpb.Quota_RESERVATION_STATUS_ALLOCATED),
 	)
 	return uint32(tag.RowsAffected()), err
 }

@@ -62,7 +62,7 @@ func TestTestWorkflowOrchestratesDeploymentStages(t *testing.T) {
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
 	RegisterWorkflows(env, DefaultOptions())
-	registerFakeDeploymentActivities(env)
+	deploymentActivities := registerFakeDeploymentActivities(env)
 	registerFakeAgentActivities(env)
 	runtime := &fakeRuntimeActivities{}
 	registerFakeRuntimeActivities(env, runtime)
@@ -97,6 +97,12 @@ func TestTestWorkflowOrchestratesDeploymentStages(t *testing.T) {
 	}
 	if !sameStrings(childStarts, want) {
 		t.Fatalf("child workflow order = %v, want %v", childStarts, want)
+	}
+	if got, want := deploymentActivities.releaseQuotaCalls(), 1; got != want {
+		t.Fatalf("release quota calls = %d, want %d", got, want)
+	}
+	if got, want := deploymentActivities.dockerDownCalls(), 1; got != want {
+		t.Fatalf("docker down calls = %d, want %d", got, want)
 	}
 }
 
@@ -541,41 +547,54 @@ func infrastructureStateForPlan(plan *deploymentpb.InfrastructurePlan) *deployme
 	return state
 }
 
-func registerFakeDeploymentActivities(env *testsuite.TestWorkflowEnvironment) {
-	workflowpb.RegisterDeploymentServiceActivities(env, fakeDeploymentActivities{})
+func registerFakeDeploymentActivities(env *testsuite.TestWorkflowEnvironment) *fakeDeploymentActivities {
+	activities := &fakeDeploymentActivities{}
+	workflowpb.RegisterDeploymentServiceActivities(env, activities)
+	return activities
 }
 
-type fakeDeploymentActivities struct{}
+type fakeDeploymentActivities struct {
+	mu                    sync.Mutex
+	releaseQuotaCallCount int
+	releaseNetworkCalls   int
+	dockerDownCallCount   int
+}
 
-func (fakeDeploymentActivities) AcquireNetworkActivity(context.Context, *workflowpb.AcquireNetworkActivityRequest) (*workflowpb.AcquireNetworkActivityResponse, error) {
+func (*fakeDeploymentActivities) AcquireNetworkActivity(context.Context, *workflowpb.AcquireNetworkActivityRequest) (*workflowpb.AcquireNetworkActivityResponse, error) {
 	return &workflowpb.AcquireNetworkActivityResponse{}, nil
 }
 
-func (fakeDeploymentActivities) CommitNetworkActivity(context.Context, *workflowpb.CommitNetworkActivityRequest) (*workflowpb.CommitNetworkActivityResponse, error) {
+func (*fakeDeploymentActivities) CommitNetworkActivity(context.Context, *workflowpb.CommitNetworkActivityRequest) (*workflowpb.CommitNetworkActivityResponse, error) {
 	return &workflowpb.CommitNetworkActivityResponse{}, nil
 }
 
-func (fakeDeploymentActivities) ReleaseNetworkActivity(context.Context, *workflowpb.ReleaseNetworkActivityRequest) (*workflowpb.ReleaseNetworkActivityResponse, error) {
+func (f *fakeDeploymentActivities) ReleaseNetworkActivity(context.Context, *workflowpb.ReleaseNetworkActivityRequest) (*workflowpb.ReleaseNetworkActivityResponse, error) {
+	f.mu.Lock()
+	f.releaseNetworkCalls++
+	f.mu.Unlock()
 	return &workflowpb.ReleaseNetworkActivityResponse{}, nil
 }
 
-func (fakeDeploymentActivities) AcquireQuotasActivity(_ context.Context, req *workflowpb.AcquireQuotasActivityRequest) (*workflowpb.AcquireQuotasActivityResponse, error) {
+func (*fakeDeploymentActivities) AcquireQuotasActivity(_ context.Context, req *workflowpb.AcquireQuotasActivityRequest) (*workflowpb.AcquireQuotasActivityResponse, error) {
 	return &workflowpb.AcquireQuotasActivityResponse{QuotaAllocations: echoQuotaAllocations(req.GetQuotaRequests())}, nil
 }
 
-func (fakeDeploymentActivities) CommitQuotasActivity(context.Context, *workflowpb.CommitQuotasActivityRequest) (*workflowpb.CommitQuotasActivityResponse, error) {
+func (*fakeDeploymentActivities) CommitQuotasActivity(context.Context, *workflowpb.CommitQuotasActivityRequest) (*workflowpb.CommitQuotasActivityResponse, error) {
 	return &workflowpb.CommitQuotasActivityResponse{}, nil
 }
 
-func (fakeDeploymentActivities) ReleaseQuotasActivity(context.Context, *workflowpb.ReleaseQuotasActivityRequest) (*workflowpb.ReleaseQuotasActivityResponse, error) {
+func (f *fakeDeploymentActivities) ReleaseQuotasActivity(context.Context, *workflowpb.ReleaseQuotasActivityRequest) (*workflowpb.ReleaseQuotasActivityResponse, error) {
+	f.mu.Lock()
+	f.releaseQuotaCallCount++
+	f.mu.Unlock()
 	return &workflowpb.ReleaseQuotasActivityResponse{}, nil
 }
 
-func (fakeDeploymentActivities) DockerPullActivity(context.Context, *deploymentpb.Docker_Input) (*deploymentpb.Docker_Output, error) {
+func (*fakeDeploymentActivities) DockerPullActivity(context.Context, *deploymentpb.Docker_Input) (*deploymentpb.Docker_Output, error) {
 	return &deploymentpb.Docker_Output{}, nil
 }
 
-func (fakeDeploymentActivities) DockerUpActivity(_ context.Context, input *deploymentpb.Docker_Input) (*deploymentpb.Docker_Output, error) {
+func (*fakeDeploymentActivities) DockerUpActivity(_ context.Context, input *deploymentpb.Docker_Input) (*deploymentpb.Docker_Output, error) {
 	output := &deploymentpb.Docker_Output{
 		Containers: make(map[string]*deploymentpb.Docker_ContainerOutput, len(input.GetContainers())),
 		NetworkId:  "network-run-1",
@@ -593,20 +612,35 @@ func (fakeDeploymentActivities) DockerUpActivity(_ context.Context, input *deplo
 	return output, nil
 }
 
-func (fakeDeploymentActivities) DockerDownActivity(context.Context, *deploymentpb.Docker_Input) (*deploymentpb.Docker_Output, error) {
+func (f *fakeDeploymentActivities) DockerDownActivity(context.Context, *deploymentpb.Docker_Input) (*deploymentpb.Docker_Output, error) {
+	f.mu.Lock()
+	f.dockerDownCallCount++
+	f.mu.Unlock()
 	return &deploymentpb.Docker_Output{}, nil
 }
 
-func (fakeDeploymentActivities) TerraformPlanActivity(context.Context, *deploymentpb.Terraform_Input) (*deploymentpb.Terraform_Output, error) {
+func (*fakeDeploymentActivities) TerraformPlanActivity(context.Context, *deploymentpb.Terraform_Input) (*deploymentpb.Terraform_Output, error) {
 	return &deploymentpb.Terraform_Output{}, nil
 }
 
-func (fakeDeploymentActivities) TerraformApplyActivity(context.Context, *deploymentpb.Terraform_Input) (*deploymentpb.Terraform_Output, error) {
+func (*fakeDeploymentActivities) TerraformApplyActivity(context.Context, *deploymentpb.Terraform_Input) (*deploymentpb.Terraform_Output, error) {
 	return &deploymentpb.Terraform_Output{}, nil
 }
 
-func (fakeDeploymentActivities) TerraformDestroyActivity(context.Context, *deploymentpb.Terraform_Input) (*deploymentpb.Terraform_Output, error) {
+func (*fakeDeploymentActivities) TerraformDestroyActivity(context.Context, *deploymentpb.Terraform_Input) (*deploymentpb.Terraform_Output, error) {
 	return &deploymentpb.Terraform_Output{}, nil
+}
+
+func (f *fakeDeploymentActivities) releaseQuotaCalls() int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.releaseQuotaCallCount
+}
+
+func (f *fakeDeploymentActivities) dockerDownCalls() int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.dockerDownCallCount
 }
 
 func registerFakeAgentActivities(env *testsuite.TestWorkflowEnvironment) *fakeAgentActivities {

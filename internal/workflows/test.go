@@ -37,6 +37,8 @@ const (
 	actionRenderTerraformVariables = "render_terraform_variables"
 	actionTerraformApply           = "terraform_apply"
 	actionTerraformDestroy         = "terraform_destroy"
+	actionReleaseQuotas            = "release_quotas"
+	actionReleaseNetwork           = "release_network"
 )
 
 const (
@@ -290,6 +292,16 @@ func (w *domainTestWorkflow) Execute(ctx workflow.Context) (resp *workflowpb.Tes
 					err = fmt.Errorf("%w; teardown infrastructure: %v", err, derr)
 				} else {
 					err = fmt.Errorf("teardown infrastructure: %w", derr)
+				}
+				if perr := w.persist(tctx, infrastructureState, deploymentPlan); perr != nil {
+					err = fmt.Errorf("%w; persist teardown failed run state: %v", err, perr)
+				}
+			} else if rerr := w.releaseCommittedAllocations(tctx, quotaCommitted, networkCommitted); rerr != nil {
+				w.failStage(tctx, stageTeardownIndex)
+				if err != nil {
+					err = fmt.Errorf("%w; release committed allocations: %v", err, rerr)
+				} else {
+					err = fmt.Errorf("release committed allocations: %w", rerr)
 				}
 				if perr := w.persist(tctx, infrastructureState, deploymentPlan); perr != nil {
 					err = fmt.Errorf("%w; persist teardown failed run state: %v", err, perr)
@@ -656,6 +668,33 @@ func attachQuotaAllocations(state *deploymentpb.InfrastructureState, refs []*wor
 		}
 		machine.AllocatedQuotas = allocations
 	}
+}
+
+func (w *domainTestWorkflow) releaseCommittedAllocations(ctx workflow.Context, releaseQuotas, releaseNetwork bool) error {
+	teardownStageID := deploymentbuilder.StageExecutionID(stageTeardown)
+	if releaseQuotas {
+		releaseStage := w.startActionStage(ctx, stageTeardown, teardownStageID, 90, actionReleaseQuotas)
+		if _, err := workflowpb.ReleaseQuotasActivity(ctx, &workflowpb.ReleaseQuotasActivityRequest{
+			TenantId: w.req.GetTenantId(),
+			RunId:    w.req.GetTestRun().GetId(),
+		}); err != nil {
+			w.failActionStage(ctx, releaseStage, err.Error())
+			return err
+		}
+		w.completeActionStage(ctx, releaseStage)
+	}
+	if releaseNetwork {
+		releaseStage := w.startActionStage(ctx, stageTeardown, teardownStageID, 91, actionReleaseNetwork)
+		if _, err := workflowpb.ReleaseNetworkActivity(ctx, &workflowpb.ReleaseNetworkActivityRequest{
+			TenantId: w.req.GetTenantId(),
+			RunId:    w.req.GetTestRun().GetId(),
+		}); err != nil {
+			w.failActionStage(ctx, releaseStage, err.Error())
+			return err
+		}
+		w.completeActionStage(ctx, releaseStage)
+	}
+	return nil
 }
 
 func appendOutputs(outputs []*monitor.PipelineOutput, extra ...*monitor.PipelineOutput) []*monitor.PipelineOutput {
