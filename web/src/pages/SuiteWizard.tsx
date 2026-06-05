@@ -14,7 +14,7 @@
 // then a single editor view (?draft=) with the suite settings rail on the left
 // and the cell matrix + live preview on the right.
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams, useTenantSlug } from "@/lib/router";
 import { useBreadcrumbLabel } from "@/lib/breadcrumbs";
 import {
@@ -343,6 +343,46 @@ function SuiteStartScreen({
   );
 }
 
+// ─── Wizard state helpers ─────────────────────────────────────────────────────
+
+function cellTitle(cell: SuiteCellVM): string {
+  if (cell.name.trim()) return cell.name;
+  if (cell.source === "presetPair") {
+    return `${cell.dbKind || "database"} / ${cell.workload || "workload"}`;
+  }
+  if (cell.source === "testPreset") return cell.testPresetId || "Test preset";
+  return cell.id || "Suite cell";
+}
+
+function sourceLabel(cell: SuiteCellVM): string {
+  if (cell.source === "presetPair") return "Database + workload presets";
+  if (cell.source === "testPreset") return "Test preset";
+  return "Custom test";
+}
+
+function cellSourceValue(cell: SuiteCellVM): string {
+  if (cell.source === "presetPair") return `${cell.dbPresetId || "?"} / ${cell.workloadPresetId || "?"}`;
+  if (cell.source === "testPreset") return cell.testPresetId || "?";
+  return "custom";
+}
+
+function cellsWithMachines(draft: SuiteWizardDraftVM): SuiteCellVM[] {
+  return draft.cells.filter((c) => c.enabled && c.infrastructurePlan.machines.length > 0);
+}
+
+function cellsNeedingMachineConfirmation(draft: SuiteWizardDraftVM): SuiteCellVM[] {
+  return cellsWithMachines(draft).filter(
+    (c) => c.machineOverrideCount < c.infrastructurePlan.machines.length,
+  );
+}
+
+function friendlySuiteError(message: string): string {
+  if (message.toLowerCase().includes("confirm machine settings")) {
+    return "Review and confirm provider machine settings.";
+  }
+  return message;
+}
+
 // ─── Editor ─────────────────────────────────────────────────────────────────────
 
 function SuiteEditor({
@@ -361,6 +401,25 @@ function SuiteEditor({
   onFinish: (start: boolean) => void;
 }) {
   const errCount = draft.errors.filter((e) => e.severity === "error").length;
+  const machineCells = useMemo(() => cellsWithMachines(draft), [draft]);
+  const unconfirmedMachineCells = useMemo(() => cellsNeedingMachineConfirmation(draft), [draft]);
+  const hasMachinePlans = machineCells.length > 0;
+  const confirmAllMachinePlans = useCallback(async () => {
+    const cells = machineCells.map((c) => ({
+      cellId: c.id,
+      machineOverrides: c.infrastructurePlan.machines,
+    }));
+    if (cells.length === 0) return;
+    await onPatch({ cells });
+  }, [machineCells, onPatch]);
+  const blocker =
+    draft.cells.length === 0
+      ? "Add at least one suite cell."
+      : unconfirmedMachineCells.length > 0
+        ? "Confirm provider machine settings."
+        : errCount > 0
+          ? "Resolve validation errors."
+          : "";
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
@@ -395,37 +454,43 @@ function SuiteEditor({
           </div>
         )}
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(16rem,18rem)_minmax(0,1fr)]">
+        <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_minmax(17rem,20rem)]">
+          <SuiteFlow
+            slug={slug}
+            draft={draft}
+            onPatch={onPatch}
+            onConfirmAllMachines={confirmAllMachinePlans}
+          />
           <SuiteSettingsRail draft={draft} onPatch={onPatch} />
-          <CellMatrix slug={slug} draft={draft} onPatch={onPatch} />
         </div>
-
-        {draft.errors.length > 0 && (
-          <div className="mt-6 space-y-1">
-            {draft.errors.map((e, i) => (
-              <div
-                key={`${e.field}-${i}`}
-                className={`flex items-start gap-2 font-mono text-[11px] ${
-                  e.severity === "error" ? "text-red-400" : "text-amber-400"
-                }`}
-              >
-                <AlertCircle className="mt-0.5 h-3 w-3 shrink-0" />
-                <span className="text-zinc-500">{e.field}</span>
-                <span>{e.message}</span>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Finish footer */}
-      <div className="flex shrink-0 items-center justify-end gap-2 border-t border-zinc-800 bg-[#070707] px-6 py-3 lg:px-8">
-        <Button variant="outline" size="sm" disabled={!draft.ready || patching} onClick={() => onFinish(false)}>
-          <Save className="h-3.5 w-3.5" /> Save suite
-        </Button>
-        <Button size="sm" className="gap-1.5" disabled={!draft.ready || patching} onClick={() => onFinish(true)}>
-          <Rocket className="h-3.5 w-3.5" /> Save &amp; run
-        </Button>
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-zinc-800 bg-[#070707] px-6 py-3 lg:px-8">
+        <div className="min-w-0 text-[11px] text-zinc-500">
+          {draft.ready ? (
+            <span className="inline-flex items-center gap-1.5 text-emerald-400">
+              <Check className="h-3.5 w-3.5" /> Suite is ready to save or run.
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5">
+              <AlertCircle className="h-3.5 w-3.5 text-amber-400" /> {blocker}
+            </span>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {hasMachinePlans && unconfirmedMachineCells.length > 0 && (
+            <Button variant="outline" size="sm" disabled={patching} onClick={() => void confirmAllMachinePlans()}>
+              <Check className="h-3.5 w-3.5" /> Confirm machine settings
+            </Button>
+          )}
+          <Button variant="outline" size="sm" disabled={!draft.ready || patching} onClick={() => onFinish(false)}>
+            <Save className="h-3.5 w-3.5" /> Save suite
+          </Button>
+          <Button size="sm" className="gap-1.5" disabled={!draft.ready || patching} onClick={() => onFinish(true)}>
+            <Rocket className="h-3.5 w-3.5" /> Save &amp; run
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -573,16 +638,18 @@ function RatingToggle({
   );
 }
 
-// ─── Cell matrix ─────────────────────────────────────────────────────────────────
+// ─── Main suite flow ─────────────────────────────────────────────────────────────
 
-function CellMatrix({
+function SuiteFlow({
   slug,
   draft,
   onPatch,
+  onConfirmAllMachines,
 }: {
   slug: string;
   draft: SuiteWizardDraftVM;
   onPatch: (input: SuitePatchInput) => Promise<void>;
+  onConfirmAllMachines: () => Promise<void>;
 }) {
   const [adding, setAdding] = useState(false);
 
@@ -606,78 +673,266 @@ function CellMatrix({
     );
     void onPatch({ cells: [{ cellId: cell.id, machineOverrides }] });
   };
-  const hasMachinePlans = draft.cells.some((c) => c.infrastructurePlan.machines.length > 0);
 
   return (
-    <div className="flex min-h-0 flex-col">
-      <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">
-            Cells and provider machines — {draft.cells.length} cell{draft.cells.length === 1 ? "" : "s"}
-          </div>
-          <p className="mt-1 max-w-2xl text-[11px] leading-snug text-zinc-600">
-            Each cell resolves its own database, workload, topology and provider machine plan. Add cells first, then size the machines inside each cell.
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 gap-1.5"
-            disabled={!hasMachinePlans}
-            onClick={confirmAllMachinePlans}
-          >
-            <Check className="h-3.5 w-3.5" /> Confirm all machines
-          </Button>
-          <Button size="sm" variant="outline" className="h-7 gap-1.5" onClick={() => setAdding((v) => !v)}>
-            <Plus className="h-3.5 w-3.5" /> Add cell
-          </Button>
-        </div>
-      </div>
-
-      {adding && <CellComposer slug={slug} onAdd={addCell} onCancel={() => setAdding(false)} />}
-
-      {draft.cells.length === 0 && !adding ? (
-        <div className="border border-zinc-800 bg-[#0a0a0a] p-6 text-center text-[12px] text-zinc-600">
-          No cells yet. Add a database × workload preset pair or reuse an existing test preset.
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-3">
-          {draft.cells.map((c, i) => (
-            <CellCard
-              key={c.id || `local-${i}`}
-              cell={c}
-              onToggle={(enabled) => void onPatch({ cells: [{ cellId: c.id, enabled }] })}
-              onRemove={() => void onPatch({ cells: [{ cellId: c.id, remove: true }] })}
-              onConfirmMachines={() => void onPatch({ cells: [{ cellId: c.id, machineOverrides: c.infrastructurePlan.machines }] })}
-              onMachineChange={(nodeId, spec) => setCellMachine(c, nodeId, spec)}
-            />
-          ))}
-        </div>
-      )}
+    <div className="space-y-6">
+      <SuiteReadinessPanel draft={draft} onConfirmAllMachines={onConfirmAllMachines} />
+      <CellsSection
+        slug={slug}
+        draft={draft}
+        adding={adding}
+        onAddClick={() => setAdding((v) => !v)}
+        onAdd={addCell}
+        onCancelAdd={() => setAdding(false)}
+        onPatch={onPatch}
+      />
+      <MachineSettingsSection
+        draft={draft}
+        onConfirmAllMachines={onConfirmAllMachines}
+        onConfirmCell={(cell) =>
+          void onPatch({ cells: [{ cellId: cell.id, machineOverrides: cell.infrastructurePlan.machines }] })
+        }
+        onMachineChange={setCellMachine}
+      />
     </div>
   );
 }
 
-function CellCard({
+function SuiteReadinessPanel({
+  draft,
+  onConfirmAllMachines,
+}: {
+  draft: SuiteWizardDraftVM;
+  onConfirmAllMachines: () => Promise<void>;
+}) {
+  const machineCells = cellsWithMachines(draft);
+  const unconfirmed = cellsNeedingMachineConfirmation(draft);
+  const hasCells = draft.cells.length > 0;
+  const blockingErrors = draft.errors.filter((e) => e.severity === "error");
+
+  if (!hasCells) {
+    return (
+      <div className="border border-zinc-800 bg-[#0a0a0a] p-4">
+        <div className="flex items-start gap-3">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center border border-primary/30 bg-primary/[0.08] font-mono text-[11px] text-primary">1</span>
+          <div className="min-w-0">
+            <div className="text-sm font-medium text-foreground">Add suite cells</div>
+            <p className="mt-1 text-[12px] leading-snug text-zinc-500">
+              A cell is one test in the suite. Add either a database + workload preset pair or an existing test preset.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (unconfirmed.length > 0) {
+    return (
+      <div className="border border-amber-900/60 bg-amber-950/15 p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 text-sm font-medium text-amber-300">
+              <AlertCircle className="h-4 w-4" /> Provider machines need confirmation
+            </div>
+            <p className="mt-1 max-w-3xl text-[12px] leading-snug text-amber-200/70">
+              Presets define what to test. The generated nodes below define where it runs. Review CPU, RAM and disk for each provider machine, then confirm the visible settings.
+            </p>
+          </div>
+          <Button size="sm" className="shrink-0 gap-1.5" onClick={() => void onConfirmAllMachines()}>
+            <Check className="h-3.5 w-3.5" /> Confirm visible machine settings
+          </Button>
+        </div>
+        <div className="mt-3 grid gap-2 md:grid-cols-2">
+          {unconfirmed.map((cell) => (
+            <div key={cell.id} className="min-w-0 border border-amber-900/40 bg-black/20 px-3 py-2">
+              <div className="truncate text-[12px] font-medium text-amber-100">{cellTitle(cell)}</div>
+              <div className="mt-1 flex flex-wrap gap-1.5">
+                {cell.infrastructurePlan.machines.map((m) => (
+                  <span key={m.nodeId} className="border border-amber-900/40 px-1.5 py-0.5 font-mono text-[10px] text-amber-200/75">
+                    {m.nodeId}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (blockingErrors.length > 0) {
+    return (
+      <div className="border border-red-900/50 bg-red-950/20 p-4">
+        <div className="mb-2 flex items-center gap-2 text-sm font-medium text-red-400">
+          <AlertCircle className="h-4 w-4" /> Resolve suite issues
+        </div>
+        <div className="space-y-1">
+          {blockingErrors.map((e, i) => (
+            <div key={`${e.field}-${i}`} className="text-[12px] text-red-200/80">
+              {friendlySuiteError(e.message)}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="border border-emerald-900/50 bg-emerald-950/15 p-4">
+      <div className="flex items-center gap-2 text-sm font-medium text-emerald-300">
+        <Check className="h-4 w-4" /> Suite is ready
+      </div>
+      <p className="mt-1 text-[12px] text-emerald-200/70">
+        {machineCells.length} cell{machineCells.length === 1 ? "" : "s"} configured with confirmed provider machine settings.
+      </p>
+    </div>
+  );
+}
+
+function CellsSection({
+  slug,
+  draft,
+  adding,
+  onAddClick,
+  onAdd,
+  onCancelAdd,
+  onPatch,
+}: {
+  slug: string;
+  draft: SuiteWizardDraftVM;
+  adding: boolean;
+  onAddClick: () => void;
+  onAdd: (cell: SuiteCellInput) => void;
+  onCancelAdd: () => void;
+  onPatch: (input: SuitePatchInput) => Promise<void>;
+}) {
+  return (
+    <section className="border border-zinc-800/70 bg-[#070707] p-4">
+      <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">1. Suite cells</div>
+          <h2 className="mt-1 text-base font-semibold text-foreground">Choose what the suite runs</h2>
+          <p className="mt-1 max-w-3xl text-[12px] leading-snug text-zinc-500">
+            Each cell becomes one test run. Use preset pairs for matrix coverage, or reuse a complete test preset.
+          </p>
+        </div>
+        <Button size="sm" variant="outline" className="h-8 shrink-0 gap-1.5" onClick={onAddClick}>
+          <Plus className="h-3.5 w-3.5" /> {adding ? "Close add form" : "Add cell"}
+        </Button>
+      </div>
+
+      {adding && <CellComposer slug={slug} onAdd={onAdd} onCancel={onCancelAdd} />}
+
+      {draft.cells.length === 0 && !adding ? (
+        <div className="border border-zinc-800 bg-[#0a0a0a] p-6 text-center text-[12px] text-zinc-600">
+          No cells yet. Add a database + workload preset pair or reuse an existing test preset.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          {draft.cells.map((c, i) => (
+            <CellSummaryCard
+              key={c.id || `local-${i}`}
+              cell={c}
+              onToggle={(enabled) => void onPatch({ cells: [{ cellId: c.id, enabled }] })}
+              onRemove={() => void onPatch({ cells: [{ cellId: c.id, remove: true }] })}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function MachineSettingsSection({
+  draft,
+  onConfirmAllMachines,
+  onConfirmCell,
+  onMachineChange,
+}: {
+  draft: SuiteWizardDraftVM;
+  onConfirmAllMachines: () => Promise<void>;
+  onConfirmCell: (cell: SuiteCellVM) => void;
+  onMachineChange: (cell: SuiteCellVM, nodeId: string, spec: SuiteCellVM["infrastructurePlan"]["machines"][number]["spec"]) => void;
+}) {
+  const machineCells = cellsWithMachines(draft);
+  const unconfirmed = cellsNeedingMachineConfirmation(draft);
+
+  return (
+    <section className="border border-zinc-800/70 bg-[#070707] p-4">
+      <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">2. Provider machines</div>
+          <h2 className="mt-1 text-base font-semibold text-foreground">Review resources for every generated node</h2>
+          <p className="mt-1 max-w-3xl text-[12px] leading-snug text-zinc-500">
+            These are real provider machine settings produced from the selected presets. The suite cannot be saved until every node has been confirmed.
+          </p>
+        </div>
+        <Button
+          size="sm"
+          variant={unconfirmed.length > 0 ? "default" : "outline"}
+          className="h-8 shrink-0 gap-1.5"
+          disabled={machineCells.length === 0}
+          onClick={() => void onConfirmAllMachines()}
+        >
+          <Check className="h-3.5 w-3.5" /> Confirm all visible machines
+        </Button>
+      </div>
+
+      {machineCells.length === 0 ? (
+        <div className="border border-zinc-800 bg-[#0a0a0a] p-6 text-center text-[12px] text-zinc-600">
+          Add cells first. Machine settings appear here after presets resolve into topology.
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {machineCells.map((cell) => {
+            const total = cell.infrastructurePlan.machines.length;
+            const confirmed = cell.machineOverrideCount >= total;
+            return (
+              <div key={cell.id} className={`border p-3 ${confirmed ? "border-zinc-800 bg-[#0a0a0a]" : "border-amber-900/50 bg-amber-950/10"}`}>
+                <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="truncate text-sm font-medium text-foreground">{cellTitle(cell)}</h3>
+                      <span className={`px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide ${confirmed ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-300"}`}>
+                        {confirmed ? "confirmed" : "needs confirmation"}
+                      </span>
+                    </div>
+                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[10px] text-zinc-600">
+                      <span>db: {cell.dbKind || "—"}</span>
+                      <span>workload: {cell.workload || "—"}</span>
+                      <span>{cell.machineOverrideCount}/{total} confirmed</span>
+                    </div>
+                  </div>
+                  <Button size="sm" variant="outline" className="h-7 shrink-0 gap-1.5" onClick={() => onConfirmCell(cell)}>
+                    <Check className="h-3.5 w-3.5" /> Confirm this cell
+                  </Button>
+                </div>
+                <MachinePlanEditor
+                  machines={cell.infrastructurePlan.machines}
+                  settings={cell.infrastructurePlan.settings}
+                  onMachineChange={(nodeId, spec) => onMachineChange(cell, nodeId, spec)}
+                />
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function CellSummaryCard({
   cell,
   onToggle,
   onRemove,
-  onConfirmMachines,
-  onMachineChange,
 }: {
   cell: SuiteCellVM;
   onToggle: (enabled: boolean) => void;
   onRemove: () => void;
-  onConfirmMachines: () => void;
-  onMachineChange: (nodeId: string, spec: SuiteCellVM["infrastructurePlan"]["machines"][number]["spec"]) => void;
 }) {
-  const sourceLabel =
-    cell.source === "presetPair"
-      ? `${cell.dbPresetId || "?"} / ${cell.workloadPresetId || "?"}`
-      : cell.source === "testPreset"
-        ? cell.testPresetId || "?"
-        : "custom test";
+  const sourceValue = cellSourceValue(cell);
+  const totalMachines = cell.infrastructurePlan.machines.length;
+  const confirmed = totalMachines > 0 && cell.machineOverrideCount >= totalMachines;
   return (
     <div
       className={`min-w-0 border bg-[#0a0a0a] p-3 ${cell.enabled ? "border-zinc-800" : "border-zinc-800/40 opacity-60"}`}
@@ -693,8 +948,8 @@ function CellCard({
         >
           {cell.enabled && <Check className="h-2.5 w-2.5 text-primary-foreground" />}
         </button>
-        <span className="min-w-0 flex-1 truncate font-mono text-[11px] text-zinc-300">
-          {cell.name || cell.id || sourceLabel}
+        <span className="min-w-0 flex-1 truncate text-sm font-medium text-zinc-200">
+          {cellTitle(cell)}
         </span>
         {cell.ready ? (
           <Check className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
@@ -713,38 +968,22 @@ function CellCard({
       <div className="mt-2 grid grid-cols-1 gap-1 font-mono text-[10px] text-zinc-500 sm:grid-cols-2">
         <span>db: {cell.dbKind || "—"}</span>
         <span>wl: {cell.workload || "—"}</span>
-        <span>{cell.source === "presetPair" ? "preset pair" : cell.source === "testPreset" ? "test preset" : "custom test"}</span>
+        <span>{sourceLabel(cell)}</span>
         <span>
-          {cell.nodeCount} node{cell.nodeCount === 1 ? "" : "s"} · {cell.machineOverrideCount} confirmed
+          {cell.nodeCount} node{cell.nodeCount === 1 ? "" : "s"} · {totalMachines === 0 ? "waiting for topology" : confirmed ? "machines confirmed" : "machines need confirmation"}
         </span>
       </div>
-      <div className="mt-1 truncate font-mono text-[10px] text-zinc-700" title={sourceLabel}>
-        {sourceLabel}
+      <div className="mt-1 truncate font-mono text-[10px] text-zinc-700" title={sourceValue}>
+        {sourceValue}
       </div>
-      {cell.infrastructurePlan.machines.length > 0 && (
-        <div className="mt-3 border-t border-zinc-800/70 pt-3">
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <div className="min-w-0">
-              <div className="font-mono text-[10px] uppercase tracking-wider text-zinc-600">Provider machines</div>
-              <div className="truncate font-mono text-[10px] text-zinc-700">
-                {machineSpecSummary(cell.infrastructurePlan.machines[0]?.spec)}
-              </div>
-            </div>
-            <Button size="sm" variant="outline" className="h-7 shrink-0 gap-1.5" onClick={onConfirmMachines}>
-              <Check className="h-3.5 w-3.5" /> Confirm
-            </Button>
-          </div>
-          <MachinePlanEditor
-            machines={cell.infrastructurePlan.machines}
-            settings={cell.infrastructurePlan.settings}
-            onMachineChange={onMachineChange}
-            compact
-          />
+      {totalMachines > 0 && (
+        <div className="mt-2 border-t border-zinc-800/60 pt-2 text-[10px] text-zinc-600">
+          First machine: <span className="font-mono text-zinc-500">{machineSpecSummary(cell.infrastructurePlan.machines[0]?.spec)}</span>
         </div>
       )}
       {cell.errors.filter((e) => e.severity === "error").length > 0 && (
-        <div className="mt-1 font-mono text-[10px] text-red-400">
-          {cell.errors.filter((e) => e.severity === "error")[0].message}
+        <div className="mt-2 text-[11px] text-red-400">
+          {friendlySuiteError(cell.errors.filter((e) => e.severity === "error")[0].message)}
         </div>
       )}
     </div>
