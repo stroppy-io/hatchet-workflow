@@ -133,6 +133,8 @@ const STEPS: { key: StepKey; label: string }[] = [
   { key: "review", label: "Review" },
 ];
 
+const CUSTOM_WORKLOAD_PRESET_ID = "__custom_workload__";
+
 const ENGINE_ICON: Record<EngineKind, typeof Database> = {
   postgres: Database,
   mysql: Server,
@@ -1260,7 +1262,7 @@ function StepWorkload({
 
         {/* Pane 2 — Preset (slides in once a version is chosen) */}
         {versionChosen && (
-          <WorkloadPresetPane slug={slug} selectedId={presetId} onPick={pickPreset} />
+          <WorkloadPresetPane slug={slug} engine={engine} selectedId={presetId} onPick={pickPreset} />
         )}
 
         {/* Pane 3 — Parameters (+ Probe), or a fill-width hint until reached */}
@@ -1425,10 +1427,12 @@ function WorkloadVersionPane({
 
 function WorkloadPresetPane({
   slug,
+  engine,
   selectedId,
   onPick,
 }: {
   slug: string;
+  engine: EngineKind;
   selectedId: string | null;
   onPick: (p: WorkloadPresetVM) => void;
 }) {
@@ -1448,6 +1452,18 @@ function WorkloadPresetPane({
     };
   }, [slug]);
 
+  const items = useMemo<WorkloadPresetVM[] | null>(() => {
+    if (!presets) return null;
+    const custom: WorkloadPresetVM = {
+      id: CUSTOM_WORKLOAD_PRESET_ID,
+      name: "Custom",
+      description: "Configure workload settings manually.",
+      isSystem: false,
+      workload: defaultWorkload(engine),
+    };
+    return [custom, ...presets.filter((preset) => preset.id !== CUSTOM_WORKLOAD_PRESET_ID)];
+  }, [engine, presets]);
+
   return (
     <div className="pane-reveal flex min-h-0 shrink-0 flex-col lg:w-72">
       <PaneHeader index={2} title="Preset" subtitle="Workload — seeds the parameters" />
@@ -1461,11 +1477,11 @@ function WorkloadPresetPane({
           <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading presets…
         </div>
       )}
-      {presets && (
+      {items && (
         <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
-          {presets.map((p) => {
+          {items.map((p) => {
             const sel = selectedId === p.id;
-            const custom = !p.isSystem;
+            const custom = p.id === CUSTOM_WORKLOAD_PRESET_ID;
             return (
               <button
                 key={p.id}
