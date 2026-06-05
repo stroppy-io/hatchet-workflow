@@ -2,9 +2,11 @@ package agent
 
 import (
 	"context"
+	"io"
 	"log/slog"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"connectrpc.com/connect"
@@ -86,10 +88,27 @@ type logSinkWriter struct {
 	sink    LogSink
 	context commandLogContext
 	stream  monitor.Stream
+	mu      sync.Mutex
+	pending string
 }
 
 func (w *logSinkWriter) Write(p []byte) (int, error) {
-	lines := logLinesFromChunk(w.context, w.stream, p)
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	text := w.pending + string(p)
+	if text == "" {
+		return len(p), nil
+	}
+	complete := strings.HasSuffix(text, "\n")
+	parts := strings.Split(text, "\n")
+	if complete {
+		w.pending = ""
+	} else {
+		w.pending = parts[len(parts)-1]
+		parts = parts[:len(parts)-1]
+	}
+	lines := logLinesFromParts(w.context, w.stream, parts)
 	if len(lines) == 0 || w.sink == nil {
 		return len(p), nil
 	}
@@ -97,6 +116,46 @@ func (w *logSinkWriter) Write(p []byte) (int, error) {
 		w.logger.DebugContext(w.ctx, "ship command logs failed", "err", err)
 	}
 	return len(p), nil
+}
+
+func (w *logSinkWriter) Flush() {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if w.pending == "" {
+		return
+	}
+	lines := logLinesFromParts(w.context, w.stream, []string{w.pending})
+	w.pending = ""
+	if len(lines) == 0 || w.sink == nil {
+		return
+	}
+	if err := w.sink.Ship(w.ctx, lines); err != nil && w.logger != nil {
+		w.logger.DebugContext(w.ctx, "ship command logs failed", "err", err)
+	}
+}
+
+type streamLogWriter struct {
+	writers []io.Writer
+}
+
+func (w *streamLogWriter) Write(p []byte) (int, error) {
+	for _, writer := range w.writers {
+		if _, err := writer.Write(p); err != nil {
+			return 0, err
+		}
+	}
+	return len(p), nil
+}
+
+func (w *streamLogWriter) Flush() {
+	if w == nil {
+		return
+	}
+	for _, writer := range w.writers {
+		if flushable, ok := writer.(interface{ Flush() }); ok {
+			flushable.Flush()
+		}
+	}
 }
 
 type commandLogContext struct {
@@ -142,10 +201,17 @@ func logLinesFromChunk(ctx commandLogContext, stream monitor.Stream, chunk []byt
 	if strings.TrimSpace(text) == "" || ctx.runID == "" {
 		return nil
 	}
-	parts := strings.Split(text, "\n")
+	return logLinesFromParts(ctx, stream, strings.Split(text, "\n"))
+}
+
+func logLinesFromParts(ctx commandLogContext, stream monitor.Stream, parts []string) []*monitor.LogLine {
+	if ctx.runID == "" {
+		return nil
+	}
 	lines := make([]*monitor.LogLine, 0, len(parts))
 	for _, part := range parts {
-		if part == "" {
+		part = strings.TrimSuffix(part, "\r")
+		if strings.TrimSpace(part) == "" {
 			continue
 		}
 		lines = append(lines, &monitor.LogLine{

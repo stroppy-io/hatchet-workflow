@@ -118,6 +118,11 @@ func (a *RunPersistenceActivities) PersistSuiteRun(ctx context.Context, suiteRun
 		rec.Summary = &models.SuiteRunRecord_Summary{}
 	}
 
+	now := time.Now()
+	if err := a.cancelPendingSuiteChildren(ctx, rec, statusHint, now); err != nil {
+		return err
+	}
+
 	var completed, failed, running, pending uint32
 	for _, child := range rec.GetChildren() {
 		childRec, err := a.store.RunRecord(ctx, child.GetTestRunId())
@@ -141,7 +146,6 @@ func (a *RunPersistenceActivities) PersistSuiteRun(ctx context.Context, suiteRun
 		}
 	}
 
-	now := time.Now()
 	rec.Status = nextRunStatus(rec.GetStatus(), suiteStatus(statusHint, completed, failed, running, pending, uint32(len(rec.GetChildren()))))
 	rec.Summary.Total = uint32(len(rec.GetChildren()))
 	rec.Summary.Completed = completed
@@ -164,6 +168,34 @@ func (a *RunPersistenceActivities) PersistSuiteRun(ctx context.Context, suiteRun
 		return err
 	}
 	return a.updateSuiteDefinitionSummary(ctx, rec, now)
+}
+
+func (a *RunPersistenceActivities) cancelPendingSuiteChildren(ctx context.Context, rec *models.SuiteRunRecord, statusHint commonpb.Status, now time.Time) error {
+	if statusHint != commonpb.Status_STATUS_FAILED && statusHint != commonpb.Status_STATUS_CANCELLED {
+		return nil
+	}
+	for _, child := range rec.GetChildren() {
+		childRec, err := a.store.RunRecord(ctx, child.GetTestRunId())
+		if err != nil {
+			return err
+		}
+		if childRec.GetStatus() != commonpb.Status_STATUS_PENDING {
+			continue
+		}
+		childRec.Status = commonpb.Status_STATUS_CANCELLED
+		if childRec.Summary == nil {
+			childRec.Summary = &models.TestRunRecord_Summary{}
+		}
+		if childRec.Summary.FinishedAt == nil {
+			childRec.Summary.FinishedAt = timestamppb.New(now)
+		}
+		childRec.Summary.Duration = durationpb.New(0)
+		touchRecordUpdated(childRec.GetEntity(), now)
+		if err := a.store.SaveRunRecord(ctx, childRec); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (a *RunPersistenceActivities) updateSuiteDefinitionSummary(ctx context.Context, run *models.SuiteRunRecord, now time.Time) error {

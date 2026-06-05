@@ -10,8 +10,10 @@ func TestEnableStartServiceCommandPrintsDiagnosticsOnFailure(t *testing.T) {
 
 	for _, want := range []string{
 		"systemctl enable --now 'stroppy-postgres-master'",
+		`echo "--- systemctl status 'stroppy-postgres-master' ---"`,
 		"systemctl status --no-pager -l 'stroppy-postgres-master'",
-		"journalctl --no-pager -u 'stroppy-postgres-master' -n 200",
+		`echo "--- journalctl 'stroppy-postgres-master' ---"`,
+		"journalctl --no-pager --output=short-iso-precise -u 'stroppy-postgres-master' -n 200",
 		"exit 1",
 	} {
 		if !strings.Contains(cmd, want) {

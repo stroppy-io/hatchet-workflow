@@ -261,11 +261,13 @@ func (a *Activities) CallCmdActivity(ctx context.Context, req *common.Cmd) (*com
 	// workflow stamped log correlation env vars on the command.
 	streams := spec.GetStreams()
 	var stdoutBuf, stderrBuf bytes.Buffer
-	cmd.Stdout = streamWriter(&stdoutBuf, a.streamLogger(ctx, spec.GetEnv(), "stdout"), streamMode(streams.GetStdout()))
+	stdoutLog := a.streamLogger(ctx, spec.GetEnv(), "stdout")
+	stderrLog := a.streamLogger(ctx, spec.GetEnv(), "stderr")
+	cmd.Stdout = streamWriter(&stdoutBuf, stdoutLog, streamMode(streams.GetStdout()))
 	if streamMode(streams.GetStderr()) == common.Cmd_Streams_MODE_STDERR_TO_STDOUT {
 		cmd.Stderr = cmd.Stdout
 	} else {
-		cmd.Stderr = streamWriter(&stderrBuf, a.streamLogger(ctx, spec.GetEnv(), "stderr"), streamMode(streams.GetStderr()))
+		cmd.Stderr = streamWriter(&stderrBuf, stderrLog, streamMode(streams.GetStderr()))
 	}
 
 	start := time.Now()
@@ -291,6 +293,14 @@ loop:
 		}
 	}
 	elapsed := time.Since(start)
+	if stdoutLog != nil {
+		stdoutLog.Flush()
+	}
+	if streamMode(streams.GetStderr()) != common.Cmd_Streams_MODE_STDERR_TO_STDOUT {
+		if stderrLog != nil {
+			stderrLog.Flush()
+		}
+	}
 
 	timedOut := runCtx.Err() == context.DeadlineExceeded
 
@@ -413,7 +423,7 @@ func (a *Activities) download(ctx context.Context, uri string, w io.Writer) (str
 
 // streamLogger returns an io.Writer that forwards process output lines to the
 // local agent logger and the remote log sink when either is configured.
-func (a *Activities) streamLogger(ctx context.Context, env map[string]string, stream string) io.Writer {
+func (a *Activities) streamLogger(ctx context.Context, env map[string]string, stream string) *streamLogWriter {
 	if a.logger == nil && a.logSink == nil {
 		return nil
 	}
@@ -434,9 +444,9 @@ func (a *Activities) streamLogger(ctx context.Context, env map[string]string, st
 		}
 	}
 	if len(writers) == 1 {
-		return writers[0]
+		return &streamLogWriter{writers: writers}
 	}
-	return io.MultiWriter(writers...)
+	return &streamLogWriter{writers: writers}
 }
 
 // --- helpers -------------------------------------------------------------
@@ -476,7 +486,7 @@ func monitorStream(stream string) monitor.Stream {
 // streamWriter builds the destination for a process stream honoring its mode.
 // capture writes into buf; inherit/stderr-to-stdout also tee to the logger;
 // discard drops everything.
-func streamWriter(buf *bytes.Buffer, log io.Writer, mode common.Cmd_Streams_Mode) io.Writer {
+func streamWriter(buf *bytes.Buffer, log *streamLogWriter, mode common.Cmd_Streams_Mode) io.Writer {
 	switch mode {
 	case common.Cmd_Streams_MODE_DISCARD:
 		return io.Discard

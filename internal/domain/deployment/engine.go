@@ -199,11 +199,13 @@ func EnableStartServiceCommand(componentID string) string {
 	service := ShellQuote(ServiceName(componentID))
 	return fmt.Sprintf(`set -e
 if ! systemctl enable --now %s; then
+  echo "--- systemctl status %s ---"
   systemctl status --no-pager -l %s || true
-  journalctl --no-pager -u %s -n 200 || true
+  echo "--- journalctl %s ---"
+  journalctl --no-pager --output=short-iso-precise -u %s -n 200 || true
   exit 1
 fi
-`, service, service, service)
+`, service, service, service, service, service)
 }
 
 // SimpleServiceUnit renders a Type=simple systemd unit that runs execStart and

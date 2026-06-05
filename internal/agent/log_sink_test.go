@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"context"
 	"testing"
 
 	deploymentbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/deployment"
@@ -79,4 +80,37 @@ func TestLogLinesFromChunkDropsLinesWithoutRunID(t *testing.T) {
 	if len(lines) != 0 {
 		t.Fatalf("lines without run id were emitted: %v", lines)
 	}
+}
+
+func TestLogSinkWriterBuffersPartialLines(t *testing.T) {
+	sink := &recordingLogSink{}
+	writer := &logSinkWriter{
+		ctx:     context.Background(),
+		sink:    sink,
+		context: commandLogContext{runID: "run-1", nodeExecutionID: "step-1"},
+		stream:  monitor.Stream_STREAM_STDERR,
+	}
+
+	_, _ = writer.Write([]byte("Jun 05 19:53:03 postgres-master sh[3336]: 2026-06-05 "))
+	_, _ = writer.Write([]byte("19:53:03.496 GMT [3336] FATAL: configuration file error\nnext"))
+	writer.Flush()
+
+	if got, want := len(sink.lines), 2; got != want {
+		t.Fatalf("shipped lines = %d, want %d", got, want)
+	}
+	if got, want := sink.lines[0].GetLine(), "Jun 05 19:53:03 postgres-master sh[3336]: 2026-06-05 19:53:03.496 GMT [3336] FATAL: configuration file error"; got != want {
+		t.Fatalf("first line = %q, want %q", got, want)
+	}
+	if got, want := sink.lines[1].GetLine(), "next"; got != want {
+		t.Fatalf("flushed line = %q, want %q", got, want)
+	}
+}
+
+type recordingLogSink struct {
+	lines []*monitor.LogLine
+}
+
+func (s *recordingLogSink) Ship(_ context.Context, lines []*monitor.LogLine) error {
+	s.lines = append(s.lines, lines...)
+	return nil
 }

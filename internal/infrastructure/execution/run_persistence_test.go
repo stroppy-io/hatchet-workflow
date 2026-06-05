@@ -140,6 +140,52 @@ func TestPersistSuiteRunDerivesTerminalAggregate(t *testing.T) {
 	}
 }
 
+func TestPersistSuiteRunCancelsPendingChildrenOnFailure(t *testing.T) {
+	store := &fakeRunPersistenceStore{
+		runs: map[string]*models.TestRunRecord{
+			"run-1": {Entity: &common.Entity{Id: "run-1"}, Status: common.Status_STATUS_COMPLETED},
+			"run-2": {Entity: &common.Entity{Id: "run-2"}, Status: common.Status_STATUS_FAILED},
+			"run-3": {Entity: &common.Entity{Id: "run-3"}, Status: common.Status_STATUS_PENDING},
+		},
+		suites: map[string]*models.SuiteRunRecord{
+			"suite-run-1": {
+				Entity: &common.Entity{Id: "suite-run-1"},
+				Status: common.Status_STATUS_RUNNING,
+				Children: []*models.SuiteRunRecord_ChildRun{
+					{TestRunId: "run-1"},
+					{TestRunId: "run-2"},
+					{TestRunId: "run-3"},
+				},
+			},
+		},
+	}
+	activities := NewRunPersistenceActivities(store)
+
+	if err := activities.PersistSuiteRun(context.Background(), "suite-run-1", common.Status_STATUS_FAILED); err != nil {
+		t.Fatalf("persist suite run: %v", err)
+	}
+
+	if got := store.runs["run-3"].GetStatus(); got != common.Status_STATUS_CANCELLED {
+		t.Fatalf("pending child status = %s, want %s", got, common.Status_STATUS_CANCELLED)
+	}
+	if store.runs["run-3"].GetSummary().GetFinishedAt() == nil {
+		t.Fatal("cancelled child finished_at was not persisted")
+	}
+	suite := store.suites["suite-run-1"]
+	if got := suite.GetSummary().GetPending(); got != 0 {
+		t.Fatalf("suite pending = %d, want 0", got)
+	}
+	if got := suite.GetSummary().GetFailed(); got != 2 {
+		t.Fatalf("suite failed = %d, want 2", got)
+	}
+	if got := suite.GetSummary().GetProgressPct(); got != 100 {
+		t.Fatalf("suite progress = %d, want 100", got)
+	}
+	if got := suite.GetChildren()[2].GetStatus(); got != common.Status_STATUS_CANCELLED {
+		t.Fatalf("suite child status = %s, want %s", got, common.Status_STATUS_CANCELLED)
+	}
+}
+
 func TestPersistSuiteRunDoesNotOverwriteTerminalStatus(t *testing.T) {
 	store := &fakeRunPersistenceStore{
 		runs: map[string]*models.TestRunRecord{
