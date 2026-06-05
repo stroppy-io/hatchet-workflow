@@ -11,10 +11,10 @@
 // readiness. Finish persists a SuiteRecord (and optionally launches a SuiteRun).
 //
 // Layout: a start/resume screen (List/Start/Delete) when no draft is active,
-// then a single editor view (?draft=) with the suite settings rail on the left
-// and the cell matrix + live preview on the right.
+// then a provider-first editor where each suite cell expands inline to edit its
+// own generated provider machines.
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams, useTenantSlug } from "@/lib/router";
 import { useBreadcrumbLabel } from "@/lib/breadcrumbs";
 import {
@@ -47,6 +47,7 @@ import {
 import {
   AlertCircle,
   Check,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Cloud,
@@ -983,35 +984,37 @@ function CellsSection({
 }) {
   const machineCells = cellsWithMachines(draft);
   const unconfirmed = cellsNeedingMachineConfirmation(draft);
-  const [activeCellId, setActiveCellId] = useState("");
-  const activeCell = draft.cells.find((cell) => cell.id === activeCellId) ?? draft.cells[0];
+  const [expandedCellId, setExpandedCellId] = useState("");
+  const knownCellIds = useRef<Set<string>>(new Set(draft.cells.map((cell) => cell.id)));
   const providerReady = draft.provider !== Provider.UNSPECIFIED;
 
   useEffect(() => {
-    if (draft.cells.length === 0) {
-      if (activeCellId) setActiveCellId("");
+    const nextIds = new Set(draft.cells.map((cell) => cell.id));
+    const added = draft.cells.find((cell) => !knownCellIds.current.has(cell.id));
+    knownCellIds.current = nextIds;
+    if (added) {
+      setExpandedCellId(added.id);
       return;
     }
-    const current = draft.cells.find((cell) => cell.id === activeCellId);
-    const firstUnconfirmed = draft.cells.find(
-      (cell) =>
-        cell.enabled &&
-        cell.infrastructurePlan.machines.length > 0 &&
-        cell.machineOverrideCount < cell.infrastructurePlan.machines.length,
-    );
-    if (!current) {
-      setActiveCellId((firstUnconfirmed ?? draft.cells[0]).id);
-      return;
+    if (!expandedCellId) return;
+    if (!draft.cells.some((cell) => cell.id === expandedCellId)) {
+      setExpandedCellId("");
     }
-    if (
-      current.infrastructurePlan.machines.length > 0 &&
-      current.machineOverrideCount >= current.infrastructurePlan.machines.length &&
-      firstUnconfirmed &&
-      firstUnconfirmed.id !== current.id
-    ) {
-      setActiveCellId(firstUnconfirmed.id);
-    }
-  }, [activeCellId, draft.cells]);
+  }, [expandedCellId, draft.cells]);
+
+  const confirmOneCell = (cell: SuiteCellVM) => {
+    onConfirmCell(cell);
+    if (expandedCellId === cell.id) setExpandedCellId("");
+  };
+
+  const confirmAllCells = () => {
+    void onConfirmAllMachines();
+    setExpandedCellId("");
+  };
+
+  const toggleCell = (cellId: string) => {
+    setExpandedCellId((prev) => (prev === cellId ? "" : cellId));
+  };
 
   return (
     <section className="border border-zinc-800/70 bg-[#070707] p-4">
@@ -1020,7 +1023,7 @@ function CellsSection({
           <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">2. Suite cells</div>
           <h2 className="mt-1 text-base font-semibold text-foreground">Create one cell and size its machines</h2>
           <p className="mt-1 max-w-3xl text-[12px] leading-snug text-zinc-500">
-            Each cell is one test in the suite. After adding it, edit the provider machines generated for that cell before adding the next one.
+            Each cell is one test in the suite. Expand a cell to edit the provider machines generated for that exact cell.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -1029,7 +1032,7 @@ function CellsSection({
               size="sm"
               variant={unconfirmed.length > 0 ? "default" : "outline"}
               className="h-8 shrink-0 gap-1.5"
-              onClick={() => void onConfirmAllMachines()}
+              onClick={confirmAllCells}
             >
               <Check className="h-3.5 w-3.5" /> Confirm all cells
             </Button>
@@ -1059,112 +1062,115 @@ function CellsSection({
           No cells yet. Add one cell, configure its machines, then add the next one.
         </div>
       ) : (
-        <div className="mt-3 grid min-h-[34rem] gap-4 xl:grid-cols-[minmax(16rem,22rem)_minmax(0,1fr)]">
-          <div className="min-w-0 border border-zinc-800 bg-[#0a0a0a]">
-            <div className="border-b border-zinc-800 px-3 py-2">
-              <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">Suite cells</div>
-              <div className="mt-0.5 text-[12px] text-zinc-500">
-                Select a cell to edit its generated provider machines
-              </div>
-            </div>
-            <div className="max-h-[38rem] space-y-1 overflow-y-auto p-2">
-              {draft.cells.map((cell) => {
-                const total = cell.infrastructurePlan.machines.length;
-                const confirmed = total > 0 && cell.machineOverrideCount >= total;
-                const active = activeCell?.id === cell.id;
-                return (
+        <div className="mt-3 space-y-3">
+          {draft.cells.map((cell) => {
+            const total = cell.infrastructurePlan.machines.length;
+            const confirmed = total > 0 && cell.machineOverrideCount >= total;
+            const expanded = expandedCellId === cell.id;
+            const statusClass = confirmed
+              ? "bg-emerald-500/10 text-emerald-400"
+              : total > 0
+                ? "bg-amber-500/10 text-amber-300"
+                : "bg-zinc-800/60 text-zinc-500";
+            return (
+              <div
+                key={cell.id}
+                className={`min-w-0 border ${
+                  expanded
+                    ? "border-primary/45 bg-primary/[0.035]"
+                    : confirmed
+                      ? "border-zinc-800 bg-[#0a0a0a]"
+                      : total > 0
+                        ? "border-amber-900/45 bg-amber-950/10"
+                        : "border-zinc-800 bg-[#0a0a0a]"
+                }`}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3 p-3">
                   <button
-                    key={cell.id}
                     type="button"
-                    onClick={() => setActiveCellId(cell.id)}
-                    className={`w-full min-w-0 border p-2.5 text-left transition-colors ${
-                      active
-                        ? "border-primary/50 bg-primary/[0.07]"
-                        : confirmed
-                          ? "border-zinc-800 hover:border-zinc-700"
-                          : total > 0
-                            ? "border-amber-900/45 bg-amber-950/10 hover:border-amber-700/60"
-                            : "border-zinc-800 hover:border-zinc-700"
-                    }`}
+                    onClick={() => toggleCell(cell.id)}
+                    className="flex min-w-0 flex-1 items-start gap-2 text-left"
                   >
-                    <div className="flex min-w-0 items-center gap-2">
-                      <span className="min-w-0 flex-1 truncate text-[12px] font-medium text-zinc-200">
-                        {cellTitle(cell)}
-                      </span>
-                      <span className={`shrink-0 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide ${confirmed ? "bg-emerald-500/10 text-emerald-400" : total > 0 ? "bg-amber-500/10 text-amber-300" : "bg-zinc-800/60 text-zinc-500"}`}>
-                        {confirmed ? "ok" : total > 0 ? "edit" : "wait"}
-                      </span>
-                    </div>
-                    <div className="mt-1 grid grid-cols-1 gap-0.5 font-mono text-[10px] text-zinc-600">
-                      <span className="truncate">db: {cell.dbKind || "—"}</span>
-                      <span className="truncate">workload: {cell.workload || "—"}</span>
-                      <span>
-                        {total === 0 ? "waiting for topology" : `${cell.machineOverrideCount}/${total} confirmed · ${total} node${total === 1 ? "" : "s"}`}
-                      </span>
+                    {expanded ? (
+                      <ChevronDown className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    ) : (
+                      <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-zinc-500" />
+                    )}
+                    <div className="min-w-0">
+                      <div className="flex min-w-0 flex-wrap items-center gap-2">
+                        <span className="min-w-0 truncate text-sm font-medium text-zinc-200">
+                          {cellTitle(cell)}
+                        </span>
+                        <span className={`shrink-0 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide ${statusClass}`}>
+                          {confirmed ? "machines confirmed" : total > 0 ? "machines required" : "waiting for topology"}
+                        </span>
+                        {!cell.enabled && (
+                          <span className="shrink-0 bg-zinc-800/60 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide text-zinc-500">
+                            disabled
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[10px] text-zinc-600">
+                        <span>db: {cell.dbKind || "—"}</span>
+                        <span>workload: {cell.workload || "—"}</span>
+                        <span>
+                          {total === 0
+                            ? "waiting for topology"
+                            : `${cell.machineOverrideCount}/${total} confirmed · ${total} node${total === 1 ? "" : "s"}`}
+                        </span>
+                      </div>
                     </div>
                   </button>
-                );
-              })}
-            </div>
-          </div>
 
-          {activeCell && (
-            <div className={`min-w-0 border p-3 ${activeCell.infrastructurePlan.machines.length > 0 && activeCell.machineOverrideCount >= activeCell.infrastructurePlan.machines.length ? "border-zinc-800 bg-[#0a0a0a]" : "border-amber-900/50 bg-amber-950/10"}`}>
-              <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">Selected cell</div>
-                  <div className="mt-1 flex min-w-0 flex-wrap items-center gap-2">
-                    <h3 className="min-w-0 truncate text-sm font-medium text-foreground">{cellTitle(activeCell)}</h3>
-                    <span className={`px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide ${activeCell.infrastructurePlan.machines.length > 0 && activeCell.machineOverrideCount >= activeCell.infrastructurePlan.machines.length ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-300"}`}>
-                      {activeCell.infrastructurePlan.machines.length === 0
-                        ? "waiting for topology"
-                        : activeCell.machineOverrideCount >= activeCell.infrastructurePlan.machines.length
-                          ? "machines confirmed"
-                          : "machine settings required"}
-                    </span>
-                  </div>
-                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[10px] text-zinc-600">
-                    <span>db: {activeCell.dbKind || "—"}</span>
-                    <span>workload: {activeCell.workload || "—"}</span>
-                    <span>
-                      {activeCell.machineOverrideCount}/{activeCell.infrastructurePlan.machines.length} confirmed
-                    </span>
+                  <div className="flex shrink-0 flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 gap-1.5"
+                      onClick={() => void onPatch({ cells: [{ cellId: cell.id, enabled: !cell.enabled }] })}
+                    >
+                      {cell.enabled ? "Disable" : "Enable"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 gap-1.5"
+                      disabled={total === 0}
+                      onClick={() => confirmOneCell(cell)}
+                    >
+                      <Check className="h-3.5 w-3.5" /> Confirm
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 text-zinc-500 hover:text-red-400"
+                      onClick={() => void onPatch({ cells: [{ cellId: cell.id, remove: true }] })}
+                      title="Remove cell"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 shrink-0 gap-1.5"
-                    onClick={() => void onPatch({ cells: [{ cellId: activeCell.id, enabled: !activeCell.enabled }] })}
-                  >
-                    {activeCell.enabled ? "Disable" : "Enable"}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 shrink-0 gap-1.5"
-                    disabled={activeCell.infrastructurePlan.machines.length === 0}
-                    onClick={() => onConfirmCell(activeCell)}
-                  >
-                    <Check className="h-3.5 w-3.5" /> Confirm this cell
-                  </Button>
-                </div>
+
+                {expanded && (
+                  <div className="border-t border-zinc-800/70 p-3">
+                    {total === 0 ? (
+                      <div className="border border-zinc-800 bg-[#070707] p-5 text-center text-[12px] text-zinc-600">
+                        Machine settings will appear here after the cell resolves into a topology.
+                      </div>
+                    ) : (
+                      <MachinePlanEditor
+                        machines={cell.infrastructurePlan.machines}
+                        settings={cell.infrastructurePlan.settings}
+                        onMachineChange={(nodeId, spec) => onMachineChange(cell, nodeId, spec)}
+                        onMachinesChange={(updates) => onMachinesChange(cell, updates)}
+                      />
+                    )}
+                  </div>
+                )}
               </div>
-              {activeCell.infrastructurePlan.machines.length === 0 ? (
-                <div className="border border-zinc-800 bg-[#070707] p-5 text-center text-[12px] text-zinc-600">
-                  Machine settings will appear here after the cell resolves into a topology.
-                </div>
-              ) : (
-                <MachinePlanEditor
-                  machines={activeCell.infrastructurePlan.machines}
-                  settings={activeCell.infrastructurePlan.settings}
-                  onMachineChange={(nodeId, spec) => onMachineChange(activeCell, nodeId, spec)}
-                  onMachinesChange={(updates) => onMachinesChange(activeCell, updates)}
-                />
-              )}
-            </div>
-          )}
+            );
+          })}
         </div>
       )}
     </section>
