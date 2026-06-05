@@ -391,6 +391,8 @@ export function databaseVMToProto(vm: DatabaseVM): Database {
 function stableInstallPackage(vm: DatabaseVM): DatabasePackage | undefined {
   const pkg = vm.installPackage;
   if (!pkg) return undefined;
+  const selected = (vm.packageId ?? "").trim();
+  if (selected && (pkg.id === selected || pkg.packageRecordId === selected)) return pkg;
   const version = vm.version.trim();
   const pkgVersion = pkg.dbVersion.trim();
   if (pkgVersion === version) return pkg;

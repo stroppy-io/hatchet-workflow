@@ -31,22 +31,26 @@
 // Steps are URL-backed via ?step= and ?draft= so the browser Back button walks
 // the wizard and a draft is resumable.
 
+import { create } from "@bufbuild/protobuf";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useSearchParams, useTenantSlug } from "@/lib/router";
+import { Link, useNavigate, useSearchParams, useTenantSlug } from "@/lib/router";
 import { useBreadcrumbLabel } from "@/lib/breadcrumbs";
 import {
   getWizardProvider,
   ENGINES,
+  ENGINE_TO_KIND,
   Provider,
   Workload_Protocol,
   RenderArtifact_Kind,
   RenderArtifact_Origin,
   RenderArtifact_Mutability,
+  blankEngineParams,
   defaultWorkload,
   driverTypeFor,
   type WizardDraftVM,
   type DraftSummaryVM,
   type DatabaseVM,
+  type DatabasePackageVM,
   type WorkloadVM,
   type EngineKind,
   type ProbeMetaVM,
@@ -61,6 +65,11 @@ import {
   type DatabasePresetVM,
   type WorkloadPresetVM,
 } from "@/services/preset";
+import {
+  getPackagesProvider,
+  type PackageRow,
+} from "@/services/packages";
+import type { DbKind } from "@/components/library-table/labels";
 import {
   getStroppyProvider,
   commitVersion,
@@ -91,6 +100,7 @@ import {
   MachinePlanEditor,
   machineSpecSummary,
 } from "@/components/wizard/MachinePlanEditor";
+import { PackageSchema } from "@/lib/proto/cloud/v1/domain/database_pb";
 import {
   Check,
   ChevronLeft,
@@ -120,6 +130,7 @@ import {
   Pencil,
   Tag,
   GitCommit,
+  Package as PackageIcon,
 } from "lucide-react";
 
 // ─── Step model ──────────────────────────────────────────────────────────────
@@ -133,6 +144,7 @@ const STEPS: { key: StepKey; label: string }[] = [
   { key: "review", label: "Review" },
 ];
 
+const CUSTOM_DATABASE_PRESET_ID = "__custom_database__";
 const CUSTOM_WORKLOAD_PRESET_ID = "__custom_workload__";
 
 const ENGINE_ICON: Record<EngineKind, typeof Database> = {
@@ -933,6 +945,24 @@ function PresetPane({
   }, [slug, engine]);
 
   const meta = ENGINES.find((m) => m.kind === engine);
+  const items = useMemo<DatabasePresetVM[] | null>(() => {
+    if (!presets) return null;
+    const pkg = builtinPackageForEngine(engine, "");
+    const custom: DatabasePresetVM = {
+      id: CUSTOM_DATABASE_PRESET_ID,
+      name: "Custom",
+      description: "Configure topology and engine parameters manually.",
+      isSystem: false,
+      database: {
+        kind: engine,
+        version: "",
+        packageId: pkg?.id,
+        installPackage: pkg,
+        params: blankEngineParams(engine),
+      },
+    };
+    return [custom, ...presets.filter((preset) => preset.id !== CUSTOM_DATABASE_PRESET_ID)];
+  }, [engine, presets]);
 
   return (
     <div className="pane-reveal flex min-h-0 shrink-0 flex-col lg:w-72">
@@ -947,11 +977,11 @@ function PresetPane({
           <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading presets…
         </div>
       )}
-      {presets && (
+      {items && (
         <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
-          {presets.map((p) => {
+          {items.map((p) => {
             const sel = selectedId === p.id;
-            const custom = !p.isSystem;
+            const custom = p.id === CUSTOM_DATABASE_PRESET_ID;
             return (
               <button
                 key={p.id}
@@ -1020,6 +1050,8 @@ function SettingsPane({
         <div className="min-h-0 space-y-6 overflow-y-auto pr-1">
           <EngineVersionSelect db={db} apply={apply} />
 
+          <DatabasePackageSelector db={db} apply={apply} />
+
           <EngineParamsForm db={db} apply={apply} />
           <FieldErrors errs={errs} />
           {/* Below 2xl the topology stacks under the form (the grid is a single
@@ -1040,6 +1072,281 @@ function SettingsPane({
       </div>
     </div>
   );
+}
+
+function DatabasePackageSelector({
+  db,
+  apply,
+}: {
+  db: DatabaseVM;
+  apply: (d: DatabaseVM) => void;
+}) {
+  const slug = useTenantSlug() ?? "";
+  const [rows, setRows] = useState<PackageRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const builtin = useMemo(() => builtinPackageForDatabase(db), [db.kind, db.version]);
+  const dbKind = packageDbKind(db.kind);
+
+  useEffect(() => {
+    if (!builtin) return;
+    if (db.installPackage?.packageRecordId) return;
+    if (db.installPackage?.isBuiltin && db.installPackage.id !== builtin.id) {
+      apply({ ...db, packageId: builtin.id, installPackage: builtin });
+    }
+  }, [apply, builtin, db]);
+
+  useEffect(() => {
+    if (!slug || !dbKind) {
+      setRows([]);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    setErr(null);
+    getPackagesProvider()
+      .listPackages(slug, { dbKinds: [dbKind], pageSize: 100 })
+      .then((page) => {
+        if (cancelled) return;
+        setRows(page.rows.filter((row) => row.status === "ready"));
+      })
+      .catch((e) => {
+        if (!cancelled) setErr(e instanceof Error ? e.message : String(e));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [dbKind, slug]);
+
+  if (!builtin && rows.length === 0 && !loading && !err) return null;
+
+  const selectedId = db.installPackage?.packageRecordId || db.packageId || db.installPackage?.id || builtin?.id || "";
+  const selectBuiltin = () => {
+    if (!builtin) return;
+    apply({ ...db, packageId: builtin.id, installPackage: builtin });
+  };
+  const selectUploaded = (row: PackageRow) => {
+    apply({
+      ...db,
+      packageId: row.id,
+      installPackage: packageFromRecord(row, db.kind, db.version),
+    });
+  };
+
+  return (
+    <div className="border border-zinc-800 bg-surface-tile p-3">
+      <div className="mb-2 flex items-start justify-between gap-3">
+        <div>
+          <Label>Package</Label>
+          <div className="mt-0.5 text-[11px] text-zinc-600">Selected install recipe for this database.</div>
+        </div>
+        <Link to="/packages" className="shrink-0 font-mono text-[10px] text-zinc-500 hover:text-zinc-300">
+          manage
+        </Link>
+      </div>
+
+      {err && (
+        <div className="mb-2 flex items-center gap-2 border border-red-900/50 bg-red-950/30 px-3 py-2 text-xs text-red-400">
+          <AlertCircle className="h-3.5 w-3.5" /> {err}
+        </div>
+      )}
+
+      <div className="grid gap-2 md:grid-cols-2">
+        {builtin && (
+          <PackageOption
+            active={selectedId === builtin.id}
+            title={builtin.name || builtin.id}
+            subtitle={packageSummary(builtin)}
+            badge="builtin"
+            onClick={selectBuiltin}
+          />
+        )}
+        {rows.map((row) => (
+          <PackageOption
+            key={row.id}
+            active={selectedId === row.id}
+            title={row.name || row.id}
+            subtitle={[row.version || "custom", row.format || "package", row.os, row.arch].filter(Boolean).join(" · ")}
+            badge="uploaded"
+            onClick={() => selectUploaded(row)}
+          />
+        ))}
+        {loading && (
+          <div className="flex items-center gap-2 border border-zinc-800 bg-black/10 px-3 py-2 text-xs text-zinc-600">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading packages...
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PackageOption({
+  active,
+  title,
+  subtitle,
+  badge,
+  onClick,
+}: {
+  active: boolean;
+  title: string;
+  subtitle: string;
+  badge: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex min-w-0 items-start gap-2.5 border p-3 text-left transition-all ${
+        active
+          ? "border-primary/50 bg-primary/[0.07]"
+          : "border-zinc-800 bg-black/10 hover:border-zinc-700 hover:bg-zinc-900/50"
+      }`}
+    >
+      <PackageIcon className={`mt-0.5 h-4 w-4 shrink-0 ${active ? "text-primary" : "text-zinc-500"}`} />
+      <div className="min-w-0 flex-1">
+        <div className={`flex items-center gap-1.5 text-xs font-medium ${active ? "text-primary" : "text-foreground"}`}>
+          <span className="min-w-0 truncate">{title}</span>
+          <span className="shrink-0 bg-zinc-800/70 px-1 py-px font-mono text-[8px] uppercase tracking-wide text-zinc-500">
+            {badge}
+          </span>
+        </div>
+        <div className="mt-0.5 truncate text-[11px] text-zinc-600">{subtitle}</div>
+      </div>
+      {active && <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />}
+    </button>
+  );
+}
+
+function builtinPackageForDatabase(db: DatabaseVM): DatabasePackageVM | undefined {
+  return builtinPackageForEngine(db.kind, db.version);
+}
+
+function builtinPackageForEngine(kind: EngineKind, inputVersion: string): DatabasePackageVM | undefined {
+  if (kind === "external") return undefined;
+  let version = inputVersion.trim() || "default";
+  const dbKind = ENGINE_TO_KIND[kind];
+  const base = {
+    dbKind,
+    dbVersion: version,
+    isBuiltin: true,
+  };
+  switch (kind) {
+    case "postgres":
+      return create(PackageSchema, {
+        ...base,
+        id: `builtin/postgres/${version}`,
+        name: `PostgreSQL ${version}`,
+        aptPackages: version === "default" ? ["postgresql", "postgresql-contrib"] : [`postgresql-${version}`, `postgresql-contrib-${version}`],
+        preInstall: version === "default" ? ["apt-get update"] : pgdgPreInstall(),
+      });
+    case "mysql":
+      return create(PackageSchema, {
+        ...base,
+        id: `builtin/mysql/${version}`,
+        name: `MySQL ${version}`,
+        aptPackages: version === "default" ? ["mysql-server"] : [`mysql-server-${version}`],
+        preInstall: ["apt-get update"],
+      });
+    case "mariadb":
+      return create(PackageSchema, {
+        ...base,
+        id: `builtin/mariadb/${version}`,
+        name: `MariaDB ${version}`,
+        aptPackages: version === "default" ? ["mariadb-server"] : [`mariadb-server-${version}`],
+        preInstall: ["apt-get update"],
+      });
+    case "picodata":
+      return create(PackageSchema, {
+        ...base,
+        id: `builtin/picodata/${version}`,
+        name: `Picodata ${version}`,
+        aptPackages: version === "default" ? ["picodata"] : [`picodata=${version}`],
+        preInstall: ["apt-get update"],
+      });
+    case "ydb":
+      return create(PackageSchema, {
+        ...base,
+        id: `builtin/ydb/${version}`,
+        name: `YDB ${version}`,
+        debFilename: version === "default"
+          ? "https://binaries.ydb.tech/release/24.1.18/ydbd-24.1.18-linux-amd64.tar.gz"
+          : `https://binaries.ydb.tech/release/${version}/ydbd-${version}-linux-amd64.tar.gz`,
+      });
+    case "ydbManaged":
+      version = version === "default" ? "managed" : version;
+      return create(PackageSchema, {
+        dbKind,
+        dbVersion: version,
+        isBuiltin: true,
+        id: `builtin/ydb-managed/${version}`,
+        name: "Yandex Managed YDB",
+      });
+    case "cockroach":
+      return create(PackageSchema, {
+        ...base,
+        id: `builtin/cockroach/${version}`,
+        name: `CockroachDB ${version}`,
+        debFilename: version === "default"
+          ? "https://binaries.cockroachdb.com/cockroach-v23.2.5.linux-amd64.tgz"
+          : `https://binaries.cockroachdb.com/cockroach-v${version}.linux-amd64.tgz`,
+      });
+  }
+}
+
+function pgdgPreInstall(): string[] {
+  const keyring = "/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc";
+  return [
+    "install -d /usr/share/postgresql-common/pgdg",
+    `curl -fsSL -o ${keyring} https://www.postgresql.org/media/keys/ACCC4CF8.asc`,
+    `sh -c 'echo "deb [signed-by=${keyring}] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'`,
+    "apt-get update",
+  ];
+}
+
+function packageFromRecord(row: PackageRow, engine: EngineKind, currentVersion: string): DatabasePackageVM {
+  const version = row.version || currentVersion.trim() || "custom";
+  return create(PackageSchema, {
+    id: row.id,
+    name: row.name || row.id,
+    dbKind: ENGINE_TO_KIND[engine],
+    dbVersion: version,
+    isBuiltin: false,
+    debFilename: row.storageUri,
+    packageRecordId: row.id,
+  });
+}
+
+function packageDbKind(kind: EngineKind): Exclude<DbKind, ""> | undefined {
+  switch (kind) {
+    case "postgres":
+      return "postgres";
+    case "mysql":
+      return "mysql";
+    case "mariadb":
+      return "mariadb";
+    case "picodata":
+      return "picodata";
+    case "ydb":
+      return "ydb";
+    case "ydbManaged":
+      return "ydb_managed";
+    case "cockroach":
+      return "cockroach";
+    case "external":
+      return undefined;
+  }
+}
+
+function packageSummary(pkg: DatabasePackageVM): string {
+  if (pkg.aptPackages.length > 0) return pkg.aptPackages.join(", ");
+  if (pkg.debFilename) return pkg.debFilename;
+  if (pkg.packageRecordId) return `uploaded ${pkg.packageRecordId}`;
+  return pkg.dbVersion || "package";
 }
 
 /** Compact numbered header shared by the three Database panes. */

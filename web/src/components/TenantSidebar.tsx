@@ -11,7 +11,7 @@ import {
   Activity,
   type LucideIcon,
 } from "lucide-react";
-import { NavLink } from "@/lib/router";
+import { NavLink, useLocation } from "@/lib/router";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenantSlug } from "@/lib/router";
 import { roleLevel } from "@/lib/roles";
@@ -71,8 +71,10 @@ const navGroups: NavGroup[] = [
 export function TenantSidebar() {
   const { user } = useAuth();
   const slug = useTenantSlug();
+  const { pathname } = useLocation();
   const tenant = user?.tenants.find((t) => t.slug === slug);
   const level = user?.isAdmin ? 99 : tenant ? roleLevel[tenant.role] : 0;
+  const tenantPath = tenantRelativePath(pathname, slug);
 
   return (
     <aside className="flex w-48 shrink-0 flex-col border-r border-border bg-[#080808]">
@@ -92,7 +94,7 @@ export function TenantSidebar() {
                   end={item.to === "/"}
                   className={({ isActive }) =>
                     `flex items-center gap-2.5 px-4 py-1.5 text-sm transition-colors ${
-                      isActive
+                      navItemActive(item.to, tenantPath, isActive)
                         ? "border-r-2 border-primary bg-muted text-foreground"
                         : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                     }`
@@ -114,4 +116,21 @@ export function TenantSidebar() {
       </div>
     </aside>
   );
+}
+
+function tenantRelativePath(pathname: string, slug?: string): string {
+  if (!slug) return pathname || "/";
+  const prefix = `/t/${slug}`;
+  if (pathname === prefix) return "/";
+  if (pathname.startsWith(prefix + "/")) return pathname.slice(prefix.length);
+  return pathname || "/";
+}
+
+function navItemActive(to: string, tenantPath: string, routerActive: boolean): boolean {
+  if (to === "/") return tenantPath === "/";
+  if (to === "/runs") {
+    return tenantPath === "/runs" || (tenantPath.startsWith("/runs/") && tenantPath !== "/runs/new");
+  }
+  if (to === "/runs/new") return tenantPath === "/runs/new";
+  return routerActive;
 }
