@@ -285,6 +285,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 EnvironmentFile=%s/topology.env
+ExecStartPre=/bin/install -d -m 0755 %s %s
 ExecStartPre=/bin/mkdir -p %s %s
 ExecStartPre=/bin/chown -R postgres:postgres %s %s
 ExecStartPre=/bin/sh -ec "test -s %s/PG_VERSION || /usr/sbin/runuser -u postgres -- \"$$(find /usr/lib/postgresql -path '*/bin/initdb' | sort -V | tail -n1)\" -D %s"
@@ -298,6 +299,8 @@ WantedBy=multi-user.target
 		role,
 		componentID,
 		configDir,
+		deploymentbuilder.ShellQuote(postgresDataRoot()),
+		deploymentbuilder.ShellQuote(postgresRunRoot()),
 		deploymentbuilder.ShellQuote(dataDir),
 		deploymentbuilder.ShellQuote(runDir),
 		deploymentbuilder.ShellQuote(dataDir),
@@ -347,6 +350,7 @@ Wants=network-online.target
 Type=simple
 EnvironmentFile=%s/topology.env
 Environment=PGPASSFILE=%s
+ExecStartPre=/bin/install -d -m 0755 %s %s
 ExecStartPre=/bin/mkdir -p %s %s
 ExecStartPre=/bin/chown -R postgres:postgres %s %s
 ExecStartPre=/bin/chown postgres:postgres %s
@@ -363,6 +367,8 @@ WantedBy=multi-user.target
 		componentID,
 		configDir,
 		deploymentbuilder.ShellQuote(pgpassPath),
+		deploymentbuilder.ShellQuote(postgresDataRoot()),
+		deploymentbuilder.ShellQuote(postgresRunRoot()),
 		deploymentbuilder.ShellQuote(dataDir),
 		deploymentbuilder.ShellQuote(runDir),
 		deploymentbuilder.ShellQuote(dataDir),
@@ -425,7 +431,7 @@ ALTER ROLE %s WITH LOGIN PASSWORD '%s';
 // Without peers (preview) it falls back to a single-node bootstrap.
 func postgresEtcdServiceUnit(componentID, role, configDir, cfgPath string, wiring postgresWiring) string {
 	if len(wiring.etcdPeers) == 0 {
-		return deploymentbuilder.SimpleServiceUnit(componentID, role, configDir, "/usr/bin/etcd --config-file "+deploymentbuilder.ShellQuote(cfgPath))
+		return postgresEtcdUnit(componentID, role, configDir, "/usr/bin/etcd --config-file "+deploymentbuilder.ShellQuote(cfgPath))
 	}
 
 	var ownAddr string
@@ -445,7 +451,32 @@ func postgresEtcdServiceUnit(componentID, role, configDir, cfgPath string, wirin
 		ownAddr,
 		ownAddr,
 	)
-	return deploymentbuilder.SimpleServiceUnit(componentID, role, configDir, execStart)
+	return postgresEtcdUnit(componentID, role, configDir, execStart)
+}
+
+func postgresEtcdUnit(componentID, role, configDir, execStart string) string {
+	return fmt.Sprintf(`[Unit]
+Description=Stroppy Cloud %s component %s
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=%s/topology.env
+ExecStartPre=/bin/install -d -m 0755 %s
+ExecStart=%s
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
+`,
+		role,
+		componentID,
+		configDir,
+		deploymentbuilder.ShellQuote(postgresDataRoot()),
+		execStart,
+	)
 }
 
 func postgresHBAFile(componentID, role string) *common.File {
@@ -484,11 +515,19 @@ func postgresHealthcheckCommand(component *topologypb.Component) string {
 }
 
 func postgresDataDir(componentID string) string {
-	return "/var/lib/stroppy-cloud/" + componentID
+	return postgresDataRoot() + "/" + componentID
 }
 
 func postgresRunDir(componentID string) string {
-	return "/run/stroppy-cloud/" + componentID
+	return postgresRunRoot() + "/" + componentID
+}
+
+func postgresDataRoot() string {
+	return "/var/lib/stroppy-cloud"
+}
+
+func postgresRunRoot() string {
+	return "/run/stroppy-cloud"
 }
 
 func postgresHBAPath(componentID string) string {

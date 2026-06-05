@@ -72,6 +72,7 @@ func TestPostgresDeploymentRendererRendersPrioritiesDependenciesAndSteps(t *test
 	}
 	service := findDeploymentWriteFileText(t, master, "200_write_service")
 	for _, want := range []string{
+		"ExecStartPre=/bin/install -d -m 0755 '/var/lib/stroppy-cloud' '/run/stroppy-cloud'",
 		"/usr/sbin/runuser -u postgres",
 		"initdb",
 		"postgres",
@@ -162,7 +163,12 @@ func TestPostgresDeploymentWiresClusterPeers(t *testing.T) {
 	}
 
 	etcd := findDeploymentWriteFileText(t, components["postgres-master-etcd"], "200_write_service")
-	for _, want := range []string{"--initial-cluster", "postgres-master-etcd=http://10.0.0.1:2380", "postgres-replica-1-etcd=http://10.0.0.2:2380"} {
+	for _, want := range []string{
+		"ExecStartPre=/bin/install -d -m 0755 '/var/lib/stroppy-cloud'",
+		"--initial-cluster",
+		"postgres-master-etcd=http://10.0.0.1:2380",
+		"postgres-replica-1-etcd=http://10.0.0.2:2380",
+	} {
 		if !strings.Contains(etcd, want) {
 			t.Fatalf("etcd unit missing %q:\n%s", want, etcd)
 		}
