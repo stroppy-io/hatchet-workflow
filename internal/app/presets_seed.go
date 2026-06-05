@@ -9,7 +9,9 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	infrastructurebuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/infrastructure"
 	runbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/run"
+	workloadbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/workload"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
@@ -306,6 +308,14 @@ func seedTestPresets(ctx context.Context, log *slog.Logger, repo *postgres.TestP
 const (
 	builtinSelfCheckSuiteName       = "Builtin self-check suite"
 	builtinDockerSelfCheckSuiteName = "Builtin Docker self-check suite"
+
+	dockerSelfCheckCPUCores = 1
+	dockerSelfCheckMemoryMB = 2048
+	dockerSelfCheckDiskGB   = 8
+
+	dockerSelfCheckMaxCPUCores = 12
+	dockerSelfCheckMaxMemoryMB = 96 * 1024
+	dockerSelfCheckMaxDiskGB   = 96
 )
 
 type builtinSuiteSeed struct {
@@ -339,10 +349,20 @@ func seedSuites(ctx context.Context, log *slog.Logger, repo *postgres.SuiteRepo,
 	}
 	byName := suiteRecordsByName(existing)
 	created := 0
+	updated := 0
 	for _, seed := range builtinSuiteSeeds() {
 		if current := byName[seed.name]; current != nil {
-			log.Info("first-boot seeding: builtin suite already present",
-				slog.String("tenant_id", tenantID), slog.String("suite_id", current.GetEntity().GetId()), slog.String("suite", seed.name))
+			rec, err := buildBuiltinSuiteRecord(seed, tenantID, authorID, tests)
+			if err != nil {
+				return err
+			}
+			preserveBuiltinSuiteIdentity(rec, current)
+			if err := repo.Update(ctx, rec); err != nil {
+				return err
+			}
+			updated++
+			log.Info("first-boot seeding: builtin suite updated",
+				slog.String("tenant_id", tenantID), slog.String("suite_id", rec.GetEntity().GetId()), slog.String("suite", seed.name), slog.Int("cells", len(rec.GetSpec().GetCells())))
 			continue
 		}
 
@@ -358,7 +378,7 @@ func seedSuites(ctx context.Context, log *slog.Logger, repo *postgres.SuiteRepo,
 			slog.String("tenant_id", tenantID), slog.String("suite_id", rec.GetEntity().GetId()), slog.String("suite", seed.name), slog.Int("cells", len(rec.GetSpec().GetCells())))
 	}
 	log.Info("first-boot seeding: builtin suites ensured",
-		slog.String("tenant_id", tenantID), slog.Int("created", created), slog.Int("catalog", len(builtinSuiteSeeds())))
+		slog.String("tenant_id", tenantID), slog.Int("created", created), slog.Int("updated", updated), slog.Int("catalog", len(builtinSuiteSeeds())))
 	return nil
 }
 
@@ -373,13 +393,17 @@ func buildBuiltinSuiteRecord(seed builtinSuiteSeed, tenantID, authorID string, t
 			continue
 		}
 		run, err := runbuilder.BuildTestRun(runbuilder.BuildOptions{
-			ID:       uuid.NewString(),
-			Database: test.GetTest().GetDatabase(),
-			Workload: test.GetTest().GetWorkload(),
-			Provider: seed.provider,
+			ID:             uuid.NewString(),
+			Database:       test.GetTest().GetDatabase(),
+			Workload:       test.GetTest().GetWorkload(),
+			Provider:       seed.provider,
+			Infrastructure: builtinSuiteInfrastructureOptions(seed.provider),
 		})
 		if err != nil {
 			return nil, fmt.Errorf("build builtin suite cell %q: %w", test.GetEntity().GetName(), err)
+		}
+		if seed.provider == deploymentpb.Provider_PROVIDER_DOCKER && !dockerSelfCheckRunFits(run) {
+			continue
 		}
 		cells = append(cells, &domain.SuiteCell{
 			Id:      uuid.NewString(),
@@ -413,6 +437,79 @@ func buildBuiltinSuiteRecord(seed builtinSuiteSeed, tenantID, authorID string, t
 		return nil, fmt.Errorf("builtin suite is invalid: %w", err)
 	}
 	return rec, nil
+}
+
+func builtinSuiteInfrastructureOptions(provider deploymentpb.Provider) infrastructurebuilder.BuildOptions {
+	if provider != deploymentpb.Provider_PROVIDER_DOCKER {
+		return infrastructurebuilder.BuildOptions{}
+	}
+	sizing := infrastructurebuilder.MachineSizing{
+		CPUCores: dockerSelfCheckCPUCores,
+		MemoryMB: dockerSelfCheckMemoryMB,
+		DiskGB:   dockerSelfCheckDiskGB,
+	}
+	return infrastructurebuilder.BuildOptions{
+		DefaultSizing: sizing,
+		MachineSizing: map[string]infrastructurebuilder.MachineSizing{
+			workloadbuilder.RunnerNodeID: sizing,
+		},
+	}
+}
+
+func dockerSelfCheckRunFits(run *domain.TestRun) bool {
+	var cpu uint64
+	var memory uint64
+	var disk uint64
+	for _, machine := range run.GetInfrastructurePlan().GetMachines() {
+		if machine.GetDocker() == nil {
+			return false
+		}
+		for _, req := range machine.GetQuotaRequests() {
+			info := req.GetInfo()
+			if info.GetProvider() != deploymentpb.Provider_PROVIDER_DOCKER {
+				continue
+			}
+			switch info.GetName() {
+			case "host.cpuCores":
+				cpu += req.GetRequest()
+			case "host.memory.size":
+				memory += req.GetRequest()
+			case "host.disk.size":
+				disk += req.GetRequest()
+			}
+		}
+	}
+	return cpu <= dockerSelfCheckMaxCPUCores &&
+		memory <= dockerSelfCheckMaxMemoryMB &&
+		disk <= dockerSelfCheckMaxDiskGB
+}
+
+func preserveBuiltinSuiteIdentity(next, current *models.SuiteRecord) {
+	if next == nil || current == nil {
+		return
+	}
+	if next.Entity != nil && current.GetEntity() != nil {
+		next.Entity.Id = current.GetEntity().GetId()
+		next.Entity.TenantId = current.GetEntity().GetTenantId()
+		next.Entity.AuthorId = current.GetEntity().GetAuthorId()
+		if current.GetEntity().GetTimings() != nil {
+			next.Entity.Timings = proto.Clone(current.GetEntity().GetTimings()).(*common.Timings)
+		} else {
+			next.Entity.Timings = &common.Timings{}
+		}
+		next.Entity.Timings.UpdatedAt = timestamppb.Now()
+	}
+	if next.Spec != nil && current.GetSpec() != nil {
+		next.Spec.Id = current.GetSpec().GetId()
+		if next.Spec.Id == "" {
+			next.Spec.Id = current.GetEntity().GetId()
+		}
+	}
+	if current.GetSummary() != nil {
+		cellCount := next.GetSummary().GetCellCount()
+		next.Summary = proto.Clone(current.GetSummary()).(*models.SuiteRecord_Summary)
+		next.Summary.CellCount = cellCount
+	}
 }
 
 func includeSuiteTest(*models.TestPresetRecord) bool {

@@ -143,10 +143,11 @@ func TestBuiltinSelfCheckMatrixBuildsSeededTopologies(t *testing.T) {
 				}
 
 				run, err := runbuilder.BuildTestRun(runbuilder.BuildOptions{
-					ID:       "seed-preview-" + preset.GetEntity().GetId(),
-					Database: db,
-					Workload: workload.GetWorkload(),
-					Provider: matrix.provider,
+					ID:             "seed-preview-" + preset.GetEntity().GetId(),
+					Database:       db,
+					Workload:       workload.GetWorkload(),
+					Provider:       matrix.provider,
+					Infrastructure: builtinSuiteInfrastructureOptions(matrix.provider),
 				})
 				if err != nil {
 					t.Fatalf("%q does not build as %s self-check suite cell: %v", preset.GetEntity().GetName(), matrix.name, err)
@@ -179,14 +180,11 @@ func TestBuiltinSelfCheckMatrixBuildsSeededTopologies(t *testing.T) {
 func TestBuiltinDockerSelfCheckSuiteUsesDockerCompatibleTests(t *testing.T) {
 	tests := builtinSelfCheckTestRecords(t)
 	kindByTestID := make(map[string]domain.Database_Kind, len(tests))
-	managedTests := 0
 	for _, test := range tests {
 		kind := test.GetTest().GetDatabase().GetKind()
 		kindByTestID[test.GetEntity().GetId()] = kind
-		if kind == domain.Database_KIND_YDB_MANAGED {
-			managedTests++
-		}
 	}
+	expectedCells := dockerCompatibleSelfCheckTests(t, tests)
 
 	rec, err := buildBuiltinSuiteRecord(builtinSuiteSeed{
 		name:        builtinDockerSelfCheckSuiteName,
@@ -200,7 +198,7 @@ func TestBuiltinDockerSelfCheckSuiteUsesDockerCompatibleTests(t *testing.T) {
 	if got := rec.GetSpec().GetProvider(); got != deploymentpb.Provider_PROVIDER_DOCKER {
 		t.Fatalf("docker suite provider = %s, want %s", got, deploymentpb.Provider_PROVIDER_DOCKER)
 	}
-	if got, want := len(rec.GetSpec().GetCells()), len(tests)-managedTests; got != want {
+	if got, want := len(rec.GetSpec().GetCells()), expectedCells; got != want {
 		t.Fatalf("docker suite cells = %d, want %d", got, want)
 	}
 	for _, cell := range rec.GetSpec().GetCells() {
@@ -216,7 +214,48 @@ func TestBuiltinDockerSelfCheckSuiteUsesDockerCompatibleTests(t *testing.T) {
 				t.Fatalf("docker suite cell %q has non-docker machine override for node %q", cell.GetName(), machine.GetNodeId())
 			}
 		}
+		if got, limit := dockerDiskQuotaTotal(cell.GetMachineOverrides()), uint64(96); got > limit {
+			t.Fatalf("docker suite cell %q disk quota = %d GiB, want <= %d GiB", cell.GetName(), got, limit)
+		}
 	}
+}
+
+func dockerCompatibleSelfCheckTests(t *testing.T, tests []*models.TestPresetRecord) int {
+	t.Helper()
+
+	var count int
+	for _, test := range tests {
+		if !includeDockerSuiteTest(test) {
+			continue
+		}
+		run, err := runbuilder.BuildTestRun(runbuilder.BuildOptions{
+			ID:             "docker-fit-" + test.GetEntity().GetId(),
+			Database:       test.GetTest().GetDatabase(),
+			Workload:       test.GetTest().GetWorkload(),
+			Provider:       deploymentpb.Provider_PROVIDER_DOCKER,
+			Infrastructure: builtinSuiteInfrastructureOptions(deploymentpb.Provider_PROVIDER_DOCKER),
+		})
+		if err != nil {
+			t.Fatalf("build docker fit run for %q: %v", test.GetEntity().GetName(), err)
+		}
+		if dockerSelfCheckRunFits(run) {
+			count++
+		}
+	}
+	return count
+}
+
+func dockerDiskQuotaTotal(machines []*deploymentpb.MachinePlan) uint64 {
+	var total uint64
+	for _, machine := range machines {
+		for _, req := range machine.GetQuotaRequests() {
+			info := req.GetInfo()
+			if info.GetProvider() == deploymentpb.Provider_PROVIDER_DOCKER && info.GetName() == "host.disk.size" {
+				total += req.GetRequest()
+			}
+		}
+	}
+	return total
 }
 
 func builtinSelfCheckTestRecords(t *testing.T) []*models.TestPresetRecord {
