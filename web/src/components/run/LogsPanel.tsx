@@ -562,6 +562,7 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
             const str = streamLabel(l.stream);
             const stderr = streamToken(l.stream) === "stderr";
             const tooltip = logLineTooltip(l, src, str);
+            const showComponent = !!l.componentId && l.componentId !== l.machineId;
             return (
               <div
                 key={l.cursorKey || `${l.lineNo}-${i}`}
@@ -603,7 +604,7 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
                     [{l.machineId}]
                   </span>
                 )}
-                {l.componentId && (
+                {showComponent && (
                   <span className="max-w-[12rem] shrink-0 truncate text-muted-foreground/70" title={`component: ${l.componentId}`}>
                     {l.componentId}
                   </span>
