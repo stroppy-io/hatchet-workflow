@@ -95,54 +95,150 @@ func TestReconcileBuiltinDatabasePresetRemovesManagedYdbPackage(t *testing.T) {
 	}
 }
 
-func TestBuiltinSelfCheckMatrixBuildsEverySeededTopology(t *testing.T) {
+func TestBuiltinSelfCheckMatrixBuildsSeededTopologies(t *testing.T) {
 	workloads := workloadPresetsByProtocol(builtinWorkloadPresets("tenant-1", "author-1"))
 
-	for _, preset := range builtinDatabasePresets("tenant-1", "author-1") {
-		protocol := workloadProtocolForDatabase(preset.GetDatabase().GetKind())
-		workload := workloads[protocol]
-		if workload == nil {
-			t.Fatalf("%q has no workload for protocol %s", preset.GetEntity().GetName(), protocol)
-		}
+	matrices := []struct {
+		name     string
+		provider deploymentpb.Provider
+		include  func(*models.DatabasePresetRecord) bool
+	}{
+		{
+			name:     "yandex",
+			provider: deploymentpb.Provider_PROVIDER_YANDEX,
+			include:  func(*models.DatabasePresetRecord) bool { return true },
+		},
+		{
+			name:     "docker",
+			provider: deploymentpb.Provider_PROVIDER_DOCKER,
+			include: func(preset *models.DatabasePresetRecord) bool {
+				return preset.GetDatabase().GetKind() != domain.Database_KIND_YDB_MANAGED
+			},
+		},
+	}
 
-		db := cloneDatabaseWithBuiltinPackage(preset.GetDatabase())
-		pkg := db.GetParams().GetPackage()
-		if db.GetKind() == domain.Database_KIND_YDB_MANAGED {
-			if pkg != nil {
-				t.Fatalf("%q managed YDB self-check database has package %+v", preset.GetEntity().GetName(), pkg)
+	for _, matrix := range matrices {
+		t.Run(matrix.name, func(t *testing.T) {
+			built := 0
+			for _, preset := range builtinDatabasePresets("tenant-1", "author-1") {
+				if !matrix.include(preset) {
+					continue
+				}
+				protocol := workloadProtocolForDatabase(preset.GetDatabase().GetKind())
+				workload := workloads[protocol]
+				if workload == nil {
+					t.Fatalf("%q has no workload for protocol %s", preset.GetEntity().GetName(), protocol)
+				}
+
+				db := cloneDatabaseWithBuiltinPackage(preset.GetDatabase())
+				pkg := db.GetParams().GetPackage()
+				if db.GetKind() == domain.Database_KIND_YDB_MANAGED {
+					if pkg != nil {
+						t.Fatalf("%q managed YDB self-check database has package %+v", preset.GetEntity().GetName(), pkg)
+					}
+				} else if pkg == nil {
+					t.Fatalf("%q self-check database has no builtin package", preset.GetEntity().GetName())
+				} else if !pkg.GetIsBuiltin() {
+					t.Fatalf("%q self-check database package is not builtin", preset.GetEntity().GetName())
+				}
+
+				run, err := runbuilder.BuildTestRun(runbuilder.BuildOptions{
+					ID:       "seed-preview-" + preset.GetEntity().GetId(),
+					Database: db,
+					Workload: workload.GetWorkload(),
+					Provider: matrix.provider,
+				})
+				if err != nil {
+					t.Fatalf("%q does not build as %s self-check suite cell: %v", preset.GetEntity().GetName(), matrix.name, err)
+				}
+				if len(run.GetInfrastructurePlan().GetMachines()) == 0 {
+					t.Fatalf("%q built no runnable machines", preset.GetEntity().GetName())
+				}
+				runPkg := run.GetDatabase().GetParams().GetPackage()
+				if db.GetKind() == domain.Database_KIND_YDB_MANAGED {
+					if runPkg != nil {
+						t.Fatalf("%q managed YDB run has package %+v", preset.GetEntity().GetName(), runPkg)
+					}
+					continue
+				}
+				if runPkg == nil {
+					t.Fatalf("%q run lost builtin package", preset.GetEntity().GetName())
+				}
+				if got := runPkg.GetId(); got != pkg.GetId() {
+					t.Fatalf("%q run lost builtin package: got %q, want %q", preset.GetEntity().GetName(), got, pkg.GetId())
+				}
+				built++
 			}
-		} else if pkg == nil {
-			t.Fatalf("%q self-check database has no builtin package", preset.GetEntity().GetName())
-		} else if !pkg.GetIsBuiltin() {
-			t.Fatalf("%q self-check database package is not builtin", preset.GetEntity().GetName())
-		}
-
-		run, err := runbuilder.BuildTestRun(runbuilder.BuildOptions{
-			ID:       "seed-preview-" + preset.GetEntity().GetId(),
-			Database: db,
-			Workload: workload.GetWorkload(),
-			Provider: deploymentpb.Provider_PROVIDER_YANDEX,
+			if built == 0 {
+				t.Fatal("self-check matrix built no cells")
+			}
 		})
-		if err != nil {
-			t.Fatalf("%q does not build as self-check suite cell: %v", preset.GetEntity().GetName(), err)
-		}
-		if len(run.GetInfrastructurePlan().GetMachines()) == 0 {
-			t.Fatalf("%q built no runnable machines", preset.GetEntity().GetName())
-		}
-		runPkg := run.GetDatabase().GetParams().GetPackage()
-		if db.GetKind() == domain.Database_KIND_YDB_MANAGED {
-			if runPkg != nil {
-				t.Fatalf("%q managed YDB run has package %+v", preset.GetEntity().GetName(), runPkg)
-			}
-			continue
-		}
-		if runPkg == nil {
-			t.Fatalf("%q run lost builtin package", preset.GetEntity().GetName())
-		}
-		if got := runPkg.GetId(); got != pkg.GetId() {
-			t.Fatalf("%q run lost builtin package: got %q, want %q", preset.GetEntity().GetName(), got, pkg.GetId())
+	}
+}
+
+func TestBuiltinDockerSelfCheckSuiteUsesDockerCompatibleTests(t *testing.T) {
+	tests := builtinSelfCheckTestRecords(t)
+	kindByTestID := make(map[string]domain.Database_Kind, len(tests))
+	managedTests := 0
+	for _, test := range tests {
+		kind := test.GetTest().GetDatabase().GetKind()
+		kindByTestID[test.GetEntity().GetId()] = kind
+		if kind == domain.Database_KIND_YDB_MANAGED {
+			managedTests++
 		}
 	}
+
+	rec, err := buildBuiltinSuiteRecord(builtinSuiteSeed{
+		name:        builtinDockerSelfCheckSuiteName,
+		description: "Docker self-check",
+		provider:    deploymentpb.Provider_PROVIDER_DOCKER,
+		include:     includeDockerSuiteTest,
+	}, "tenant-1", "author-1", tests)
+	if err != nil {
+		t.Fatalf("build docker builtin suite: %v", err)
+	}
+	if got := rec.GetSpec().GetProvider(); got != deploymentpb.Provider_PROVIDER_DOCKER {
+		t.Fatalf("docker suite provider = %s, want %s", got, deploymentpb.Provider_PROVIDER_DOCKER)
+	}
+	if got, want := len(rec.GetSpec().GetCells()), len(tests)-managedTests; got != want {
+		t.Fatalf("docker suite cells = %d, want %d", got, want)
+	}
+	for _, cell := range rec.GetSpec().GetCells() {
+		testID := cell.GetTestPresetId()
+		if kindByTestID[testID] == domain.Database_KIND_YDB_MANAGED {
+			t.Fatalf("docker suite contains managed YDB test %s", testID)
+		}
+		if len(cell.GetMachineOverrides()) == 0 {
+			t.Fatalf("docker suite cell %q has no machine overrides", cell.GetName())
+		}
+		for _, machine := range cell.GetMachineOverrides() {
+			if machine.GetDocker() == nil {
+				t.Fatalf("docker suite cell %q has non-docker machine override for node %q", cell.GetName(), machine.GetNodeId())
+			}
+		}
+	}
+}
+
+func builtinSelfCheckTestRecords(t *testing.T) []*models.TestPresetRecord {
+	t.Helper()
+	workloads := workloadPresetsByProtocol(builtinWorkloadPresets("tenant-1", "author-1"))
+	out := make([]*models.TestPresetRecord, 0)
+	for _, dbPreset := range builtinDatabasePresets("tenant-1", "author-1") {
+		protocol := workloadProtocolForDatabase(dbPreset.GetDatabase().GetKind())
+		workload := workloads[protocol]
+		if workload == nil {
+			t.Fatalf("%q has no workload for protocol %s", dbPreset.GetEntity().GetName(), protocol)
+		}
+		out = append(out, &models.TestPresetRecord{
+			Entity:   newSeedEntity("tenant-1", "author-1", selfCheckTestPresetName(dbPreset), "test"),
+			IsSystem: true,
+			Test: &domain.Test{
+				Database: cloneDatabaseWithBuiltinPackage(dbPreset.GetDatabase()),
+				Workload: workload.GetWorkload(),
+			},
+		})
+	}
+	return out
 }
 
 func firstDatabasePresetFor(t *testing.T, presets []*models.DatabasePresetRecord, kind domain.Database_Kind) *models.DatabasePresetRecord {

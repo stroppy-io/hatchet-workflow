@@ -303,30 +303,83 @@ func seedTestPresets(ctx context.Context, log *slog.Logger, repo *postgres.TestP
 	return out, nil
 }
 
+const (
+	builtinSelfCheckSuiteName       = "Builtin self-check suite"
+	builtinDockerSelfCheckSuiteName = "Builtin Docker self-check suite"
+)
+
+type builtinSuiteSeed struct {
+	name        string
+	description string
+	provider    deploymentpb.Provider
+	include     func(*models.TestPresetRecord) bool
+}
+
+func builtinSuiteSeeds() []builtinSuiteSeed {
+	return []builtinSuiteSeed{
+		{
+			name:        builtinSelfCheckSuiteName,
+			description: "Minimal self-check across every seeded database topology",
+			provider:    deploymentpb.Provider_PROVIDER_YANDEX,
+			include:     includeSuiteTest,
+		},
+		{
+			name:        builtinDockerSelfCheckSuiteName,
+			description: "Docker-only self-check across every Docker-compatible seeded database topology",
+			provider:    deploymentpb.Provider_PROVIDER_DOCKER,
+			include:     includeDockerSuiteTest,
+		},
+	}
+}
+
 func seedSuites(ctx context.Context, log *slog.Logger, repo *postgres.SuiteRepo, tenantID, authorID string, tests []*models.TestPresetRecord) error {
-	const suiteName = "Builtin self-check suite"
 	existing, _, err := repo.List(ctx, suitesvc.SuiteListQuery{TenantID: tenantID, CallerID: authorID})
 	if err != nil {
 		return err
 	}
-	for _, rec := range existing {
-		if rec.GetEntity().GetName() == suiteName {
+	byName := suiteRecordsByName(existing)
+	created := 0
+	for _, seed := range builtinSuiteSeeds() {
+		if current := byName[seed.name]; current != nil {
 			log.Info("first-boot seeding: builtin suite already present",
-				slog.String("tenant_id", tenantID), slog.String("suite_id", rec.GetEntity().GetId()))
-			return nil
+				slog.String("tenant_id", tenantID), slog.String("suite_id", current.GetEntity().GetId()), slog.String("suite", seed.name))
+			continue
 		}
+
+		rec, err := buildBuiltinSuiteRecord(seed, tenantID, authorID, tests)
+		if err != nil {
+			return err
+		}
+		if err := repo.Create(ctx, rec); err != nil {
+			return err
+		}
+		created++
+		log.Info("first-boot seeding: builtin suite created",
+			slog.String("tenant_id", tenantID), slog.String("suite_id", rec.GetEntity().GetId()), slog.String("suite", seed.name), slog.Int("cells", len(rec.GetSpec().GetCells())))
+	}
+	log.Info("first-boot seeding: builtin suites ensured",
+		slog.String("tenant_id", tenantID), slog.Int("created", created), slog.Int("catalog", len(builtinSuiteSeeds())))
+	return nil
+}
+
+func buildBuiltinSuiteRecord(seed builtinSuiteSeed, tenantID, authorID string, tests []*models.TestPresetRecord) (*models.SuiteRecord, error) {
+	if seed.include == nil {
+		seed.include = includeSuiteTest
 	}
 
 	cells := make([]*domain.SuiteCell, 0, len(tests))
 	for _, test := range tests {
+		if !seed.include(test) {
+			continue
+		}
 		run, err := runbuilder.BuildTestRun(runbuilder.BuildOptions{
 			ID:       uuid.NewString(),
 			Database: test.GetTest().GetDatabase(),
 			Workload: test.GetTest().GetWorkload(),
-			Provider: deploymentpb.Provider_PROVIDER_YANDEX,
+			Provider: seed.provider,
 		})
 		if err != nil {
-			return fmt.Errorf("build builtin suite cell %q: %w", test.GetEntity().GetName(), err)
+			return nil, fmt.Errorf("build builtin suite cell %q: %w", test.GetEntity().GetName(), err)
 		}
 		cells = append(cells, &domain.SuiteCell{
 			Id:      uuid.NewString(),
@@ -338,14 +391,17 @@ func seedSuites(ctx context.Context, log *slog.Logger, repo *postgres.SuiteRepo,
 			MachineOverrides: cloneMachinePlans(run.GetInfrastructurePlan().GetMachines()),
 		})
 	}
+	if len(cells) == 0 {
+		return nil, fmt.Errorf("builtin suite %q has no cells", seed.name)
+	}
 
 	id := uuid.NewString()
 	rec := &models.SuiteRecord{
-		Entity: newSeedEntity(tenantID, authorID, suiteName, "Minimal self-check across every seeded database topology"),
+		Entity: newSeedEntity(tenantID, authorID, seed.name, seed.description),
 		Spec: &domain.Suite{
 			Id:                 id,
 			Cells:              cells,
-			Provider:           deploymentpb.Provider_PROVIDER_YANDEX,
+			Provider:           seed.provider,
 			DefaultMaxParallel: 1,
 		},
 		Summary: &models.SuiteRecord_Summary{
@@ -354,14 +410,17 @@ func seedSuites(ctx context.Context, log *slog.Logger, repo *postgres.SuiteRepo,
 	}
 	rec.Entity.Id = id
 	if err := rec.GetSpec().Validate(); err != nil {
-		return fmt.Errorf("builtin suite is invalid: %w", err)
+		return nil, fmt.Errorf("builtin suite is invalid: %w", err)
 	}
-	if err := repo.Create(ctx, rec); err != nil {
-		return err
-	}
-	log.Info("first-boot seeding: builtin suite created",
-		slog.String("tenant_id", tenantID), slog.String("suite_id", id), slog.Int("cells", len(cells)))
-	return nil
+	return rec, nil
+}
+
+func includeSuiteTest(*models.TestPresetRecord) bool {
+	return true
+}
+
+func includeDockerSuiteTest(test *models.TestPresetRecord) bool {
+	return test.GetTest().GetDatabase().GetKind() != domain.Database_KIND_YDB_MANAGED
 }
 
 func builtinWorkloadPresets(tenantID, authorID string) []*models.WorkloadPresetRecord {
@@ -588,6 +647,16 @@ func workloadPresetsByProtocol(input []*models.WorkloadPresetRecord) map[domain.
 
 func testPresetsByName(input []*models.TestPresetRecord) map[string]*models.TestPresetRecord {
 	out := make(map[string]*models.TestPresetRecord, len(input))
+	for _, p := range input {
+		if p.GetEntity().GetName() != "" {
+			out[p.GetEntity().GetName()] = p
+		}
+	}
+	return out
+}
+
+func suiteRecordsByName(input []*models.SuiteRecord) map[string]*models.SuiteRecord {
+	out := make(map[string]*models.SuiteRecord, len(input))
 	for _, p := range input {
 		if p.GetEntity().GetName() != "" {
 			out[p.GetEntity().GetName()] = p
