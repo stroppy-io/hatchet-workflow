@@ -9,10 +9,15 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
-	"google.golang.org/protobuf/proto"
 )
 
-const maxPipelineOutputs = 4096
+const (
+	maxPipelineOutputs           = 256
+	maxOperationCommandTextBytes = 2048
+	maxOperationPreviewBytes     = 2048
+	maxOperationArgvItems        = 32
+	maxOperationArgvElementBytes = 256
+)
 
 // AgentStepStageName returns the compact runtime label for an executable agent
 // step, derived from the action payload rather than from backend-specific ids.
@@ -44,14 +49,12 @@ func AgentStepOperation(step *deploymentpb.AgentStep) *monitor.PipelineOperation
 	case *deploymentpb.AgentStep_CreateDir:
 		dir := typed.CreateDir
 		operation.Kind = monitor.OperationKind_OPERATION_KIND_CREATE_DIR
-		operation.Dir = cloneDir(dir)
 		operation.Target = dir.GetInfo().GetPath()
 		operation.Summary = "create_dir: " + operation.Target
 		corpus = append(corpus, operation.Target)
 	case *deploymentpb.AgentStep_WriteFile:
 		file := typed.WriteFile
 		operation.Kind = monitor.OperationKind_OPERATION_KIND_WRITE_FILE
-		operation.File = cloneFile(file)
 		operation.FilePath = file.GetInfo().GetPath()
 		operation.Target = operation.FilePath
 		operation.ContentPreview, operation.FileSizeBytes = fileContentPreview(file)
@@ -60,7 +63,6 @@ func AgentStepOperation(step *deploymentpb.AgentStep) *monitor.PipelineOperation
 	case *deploymentpb.AgentStep_FetchFile:
 		file := typed.FetchFile
 		operation.Kind = monitor.OperationKind_OPERATION_KIND_FETCH_FILE
-		operation.File = cloneFile(file)
 		operation.FilePath = file.GetInfo().GetPath()
 		operation.Target = operation.FilePath
 		operation.ContentPreview, operation.FileSizeBytes = fileContentPreview(file)
@@ -69,17 +71,18 @@ func AgentStepOperation(step *deploymentpb.AgentStep) *monitor.PipelineOperation
 	case *deploymentpb.AgentStep_CallCmd:
 		cmd := typed.CallCmd
 		operation.Kind = monitor.OperationKind_OPERATION_KIND_CALL_CMD
-		operation.Command = cloneCmd(cmd)
-		operation.CommandText, operation.Argv = commandTextAndArgv(cmd)
-		operation.Target = commandTarget(cmd, operation.CommandText)
+		commandText, argv := commandTextAndArgv(cmd)
+		operation.CommandText = boundedString(commandText, maxOperationCommandTextBytes)
+		operation.Argv = boundedStringSlice(argv, maxOperationArgvItems, maxOperationArgvElementBytes)
+		operation.Target = commandTarget(cmd, commandText)
 		corpus = append(corpus, operation.Target, operation.CommandText, strings.Join(operation.Argv, " "))
 		if result := cmd.GetResult(); result != nil {
 			operation.ResultAvailable = true
 			operation.ExitCode = result.GetExitCode()
 			operation.TimedOut = result.GetTimedOut()
 			operation.Elapsed = result.GetElapsed()
-			operation.StdoutPreview = boundedString(string(result.GetStdout()), 4096)
-			operation.StderrPreview = boundedString(string(result.GetStderr()), 4096)
+			operation.StdoutPreview = boundedString(string(result.GetStdout()), maxOperationPreviewBytes)
+			operation.StderrPreview = boundedString(string(result.GetStderr()), maxOperationPreviewBytes)
 			operation.ResultSummary = commandResultSummary(result)
 			corpus = append(corpus, operation.StdoutPreview, operation.StderrPreview)
 		}
@@ -306,9 +309,9 @@ func fileContentPreview(file *common.File) (string, uint64) {
 	switch typed := file.GetContent().(type) {
 	case *common.File_Text:
 		text := typed.Text
-		return boundedString(text, 4096), uint64(len(text))
+		return boundedString(text, maxOperationPreviewBytes), uint64(len(text))
 	case *common.File_Bytes:
-		return boundedString(string(typed.Bytes), 4096), uint64(len(typed.Bytes))
+		return boundedString(string(typed.Bytes), maxOperationPreviewBytes), uint64(len(typed.Bytes))
 	default:
 		if ref := file.GetAsRef(); ref != nil {
 			return ref.GetUri(), 0
@@ -322,6 +325,20 @@ func boundedString(s string, max int) string {
 		return s
 	}
 	return s[:max]
+}
+
+func boundedStringSlice(in []string, maxItems, maxElementBytes int) []string {
+	if len(in) == 0 || maxItems <= 0 {
+		return nil
+	}
+	if len(in) > maxItems {
+		in = in[:maxItems]
+	}
+	out := make([]string, 0, len(in))
+	for _, value := range in {
+		out = append(out, boundedString(value, maxElementBytes))
+	}
+	return out
 }
 
 func fileRefURI(file *common.File) string {
@@ -366,27 +383,6 @@ func isShellNoiseToken(token string) bool {
 	default:
 		return false
 	}
-}
-
-func cloneCmd(cmd *common.Cmd) *common.Cmd {
-	if cmd == nil {
-		return nil
-	}
-	return proto.Clone(cmd).(*common.Cmd)
-}
-
-func cloneFile(file *common.File) *common.File {
-	if file == nil {
-		return nil
-	}
-	return proto.Clone(file).(*common.File)
-}
-
-func cloneDir(dir *common.Dir) *common.Dir {
-	if dir == nil {
-		return nil
-	}
-	return proto.Clone(dir).(*common.Dir)
 }
 
 func cloneStringMap(in map[string]string) map[string]string {
