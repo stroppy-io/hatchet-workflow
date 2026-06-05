@@ -343,9 +343,15 @@ type MetricCell struct {
 	// diff_max_pct is the same relative diff applied to the max value.
 	DiffMaxPct float64 `protobuf:"fixed64,5,opt,name=diff_max_pct,json=diffMaxPct,proto3" json:"diff_max_pct,omitempty"`
 	// verdict is the better/worse/same classification of this cell vs the baseline.
-	Verdict       Verdict `protobuf:"varint,6,opt,name=verdict,proto3,enum=cloud.v1.monitor.Verdict" json:"verdict,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Verdict Verdict `protobuf:"varint,6,opt,name=verdict,proto3,enum=cloud.v1.monitor.Verdict" json:"verdict,omitempty"`
+	// present is false when this run has no sample for the metric; avg/max are then placeholders.
+	Present bool `protobuf:"varint,7,opt,name=present,proto3" json:"present,omitempty"`
+	// diff_avg_pct_defined is false when the avg percentage delta cannot be computed.
+	DiffAvgPctDefined bool `protobuf:"varint,8,opt,name=diff_avg_pct_defined,json=diffAvgPctDefined,proto3" json:"diff_avg_pct_defined,omitempty"`
+	// diff_max_pct_defined is false when the max percentage delta cannot be computed.
+	DiffMaxPctDefined bool `protobuf:"varint,9,opt,name=diff_max_pct_defined,json=diffMaxPctDefined,proto3" json:"diff_max_pct_defined,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *MetricCell) Reset() {
@@ -420,6 +426,27 @@ func (x *MetricCell) GetVerdict() Verdict {
 	return Verdict_VERDICT_UNSPECIFIED
 }
 
+func (x *MetricCell) GetPresent() bool {
+	if x != nil {
+		return x.Present
+	}
+	return false
+}
+
+func (x *MetricCell) GetDiffAvgPctDefined() bool {
+	if x != nil {
+		return x.DiffAvgPctDefined
+	}
+	return false
+}
+
+func (x *MetricCell) GetDiffMaxPctDefined() bool {
+	if x != nil {
+		return x.DiffMaxPctDefined
+	}
+	return false
+}
+
 // MetricRow compares one metric across all compared runs; cells are aligned
 //
 //1:1 with Comparison.run_ids.
@@ -436,7 +463,9 @@ type MetricRow struct {
 	// group is an optional generic UI grouping label (e.g. "throughput", "latency").
 	Group string `protobuf:"bytes,5,opt,name=group,proto3" json:"group,omitempty"`
 	// cells are this metric's per-run values, aligned 1:1 with Comparison.run_ids.
-	Cells         []*MetricCell `protobuf:"bytes,6,rep,name=cells,proto3" json:"cells,omitempty"`
+	Cells []*MetricCell `protobuf:"bytes,6,rep,name=cells,proto3" json:"cells,omitempty"`
+	// description is an optional human tooltip supplied by the backend.
+	Description   string `protobuf:"bytes,7,opt,name=description,proto3" json:"description,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -511,6 +540,13 @@ func (x *MetricRow) GetCells() []*MetricCell {
 		return x.Cells
 	}
 	return nil
+}
+
+func (x *MetricRow) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
 }
 
 // Comparison is the metric-by-metric diff of N runs (>= 2) against a baseline
@@ -597,7 +633,11 @@ type Comparison_RunSummary struct {
 	// worse is the count of metrics where this run regressed.
 	Worse uint32 `protobuf:"varint,3,opt,name=worse,proto3" json:"worse,omitempty"`
 	// same is the count of metrics within the threshold (no change).
-	Same          uint32 `protobuf:"varint,4,opt,name=same,proto3" json:"same,omitempty"`
+	Same uint32 `protobuf:"varint,4,opt,name=same,proto3" json:"same,omitempty"`
+	// missing is the count of baseline metrics absent from this run.
+	Missing uint32 `protobuf:"varint,5,opt,name=missing,proto3" json:"missing,omitempty"`
+	// not_comparable is the count of metrics that cannot be baselined.
+	NotComparable uint32 `protobuf:"varint,6,opt,name=not_comparable,json=notComparable,proto3" json:"not_comparable,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -660,6 +700,20 @@ func (x *Comparison_RunSummary) GetSame() uint32 {
 	return 0
 }
 
+func (x *Comparison_RunSummary) GetMissing() uint32 {
+	if x != nil {
+		return x.Missing
+	}
+	return 0
+}
+
+func (x *Comparison_RunSummary) GetNotComparable() uint32 {
+	if x != nil {
+		return x.NotComparable
+	}
+	return 0
+}
+
 var File_cloud_v1_monitor_metrics_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_monitor_metrics_proto_rawDesc = "" +
@@ -686,7 +740,7 @@ const file_cloud_v1_monitor_metrics_proto_rawDesc = "" +
 	"\x06run_id\x18\x01 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x05runId\x12;\n" +
 	"\x05range\x18\x02 \x01(\v2\x1b.cloud.v1.monitor.TimeRangeB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x05range\x12D\n" +
-	"\ametrics\x18\x03 \x03(\v2\x1f.cloud.v1.monitor.MetricSummaryB\t\xfaB\x06\x92\x01\x03\x10\x80\x04R\ametrics\"\xd6\x01\n" +
+	"\ametrics\x18\x03 \x03(\v2\x1f.cloud.v1.monitor.MetricSummaryB\t\xfaB\x06\x92\x01\x03\x10\x80\x04R\ametrics\"\xd2\x02\n" +
 	"\n" +
 	"MetricCell\x12!\n" +
 	"\x06run_id\x18\x01 \x01(\tB\n" +
@@ -697,7 +751,10 @@ const file_cloud_v1_monitor_metrics_proto_rawDesc = "" +
 	"diffAvgPct\x12 \n" +
 	"\fdiff_max_pct\x18\x05 \x01(\x01R\n" +
 	"diffMaxPct\x12=\n" +
-	"\averdict\x18\x06 \x01(\x0e2\x19.cloud.v1.monitor.VerdictB\b\xfaB\x05\x82\x01\x02\x10\x01R\averdict\"\xeb\x01\n" +
+	"\averdict\x18\x06 \x01(\x0e2\x19.cloud.v1.monitor.VerdictB\b\xfaB\x05\x82\x01\x02\x10\x01R\averdict\x12\x18\n" +
+	"\apresent\x18\a \x01(\bR\apresent\x12/\n" +
+	"\x14diff_avg_pct_defined\x18\b \x01(\bR\x11diffAvgPctDefined\x12/\n" +
+	"\x14diff_max_pct_defined\x18\t \x01(\bR\x11diffMaxPctDefined\"\x97\x02\n" +
 	"\tMetricRow\x12\x1c\n" +
 	"\x03key\x18\x01 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\x80\x02R\x03key\x12\x1c\n" +
@@ -705,21 +762,24 @@ const file_cloud_v1_monitor_metrics_proto_rawDesc = "" +
 	"\x04unit\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x18 R\x04unit\x12(\n" +
 	"\x10higher_is_better\x18\x04 \x01(\bR\x0ehigherIsBetter\x12\x1d\n" +
 	"\x05group\x18\x05 \x01(\tB\a\xfaB\x04r\x02\x18@R\x05group\x12<\n" +
-	"\x05cells\x18\x06 \x03(\v2\x1c.cloud.v1.monitor.MetricCellB\b\xfaB\x05\x92\x01\x02\x10\x10R\x05cells\"\xea\x02\n" +
+	"\x05cells\x18\x06 \x03(\v2\x1c.cloud.v1.monitor.MetricCellB\b\xfaB\x05\x92\x01\x02\x10\x10R\x05cells\x12*\n" +
+	"\vdescription\x18\a \x01(\tB\b\xfaB\x05r\x03\x18\x80\bR\vdescription\"\xac\x03\n" +
 	"\n" +
 	"Comparison\x12#\n" +
 	"\arun_ids\x18\x01 \x03(\tB\n" +
 	"\xfaB\a\x92\x01\x04\b\x02\x10\x10R\x06runIds\x121\n" +
 	"\x05range\x18\x02 \x01(\v2\x1b.cloud.v1.monitor.TimeRangeR\x05range\x12@\n" +
 	"\ametrics\x18\x03 \x03(\v2\x1b.cloud.v1.monitor.MetricRowB\t\xfaB\x06\x92\x01\x03\x10\x80\x04R\ametrics\x12O\n" +
-	"\tsummaries\x18\x04 \x03(\v2'.cloud.v1.monitor.Comparison.RunSummaryB\b\xfaB\x05\x92\x01\x02\x10\x10R\tsummaries\x1aq\n" +
+	"\tsummaries\x18\x04 \x03(\v2'.cloud.v1.monitor.Comparison.RunSummaryB\b\xfaB\x05\x92\x01\x02\x10\x10R\tsummaries\x1a\xb2\x01\n" +
 	"\n" +
 	"RunSummary\x12!\n" +
 	"\x06run_id\x18\x01 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x05runId\x12\x16\n" +
 	"\x06better\x18\x02 \x01(\rR\x06better\x12\x14\n" +
 	"\x05worse\x18\x03 \x01(\rR\x05worse\x12\x12\n" +
-	"\x04same\x18\x04 \x01(\rR\x04same*[\n" +
+	"\x04same\x18\x04 \x01(\rR\x04same\x12\x18\n" +
+	"\amissing\x18\x05 \x01(\rR\amissing\x12%\n" +
+	"\x0enot_comparable\x18\x06 \x01(\rR\rnotComparable*[\n" +
 	"\aVerdict\x12\x17\n" +
 	"\x13VERDICT_UNSPECIFIED\x10\x00\x12\x12\n" +
 	"\x0eVERDICT_BETTER\x10\x01\x12\x11\n" +

@@ -45,6 +45,9 @@ export interface CompareCellVM {
   max: number;
   diffAvgPct: number;
   diffMaxPct: number;
+  present: boolean;
+  diffAvgPctDefined: boolean;
+  diffMaxPctDefined: boolean;
   verdict: string;
 }
 
@@ -55,7 +58,18 @@ export interface CompareMetricVM {
   unit: string;
   higherIsBetter: boolean;
   group: string;
+  description: string;
   cells: CompareCellVM[];
+}
+
+/** Per-run verdict roll-up against the baseline. */
+export interface CompareSummaryVM {
+  runId: string;
+  better: number;
+  worse: number;
+  same: number;
+  missing: number;
+  notComparable: number;
 }
 
 /** The full comparison view. */
@@ -63,6 +77,7 @@ export interface CompareVM {
   runIds: string[];
   columns: CompareColumnVM[];
   metrics: CompareMetricVM[];
+  summaries: CompareSummaryVM[];
 }
 
 export async function compareRuns(
@@ -95,14 +110,26 @@ export async function compareRuns(
           unit?: string;
           higherIsBetter?: boolean;
           group?: string;
+          description?: string;
           cells?: Array<{
             runId?: string;
             avg?: number | "NaN" | "Infinity" | "-Infinity";
             max?: number | "NaN" | "Infinity" | "-Infinity";
             diffAvgPct?: number | "NaN" | "Infinity" | "-Infinity";
             diffMaxPct?: number | "NaN" | "Infinity" | "-Infinity";
+            present?: boolean;
+            diffAvgPctDefined?: boolean;
+            diffMaxPctDefined?: boolean;
             verdict?: string;
           }>;
+        }>;
+        summaries?: Array<{
+          runId?: string;
+          better?: number;
+          worse?: number;
+          same?: number;
+          missing?: number;
+          notComparable?: number;
         }>;
       };
     };
@@ -130,14 +157,26 @@ export async function compareRuns(
       unit: m.unit ?? "",
       higherIsBetter: m.higherIsBetter ?? false,
       group: m.group ?? "",
+      description: m.description ?? "",
       cells: (m.cells ?? []).map((cell) => ({
         runId: cell.runId ?? "",
         avg: num(cell.avg),
         max: num(cell.max),
         diffAvgPct: num(cell.diffAvgPct),
         diffMaxPct: num(cell.diffMaxPct),
+        present: cell.present ?? false,
+        diffAvgPctDefined: cell.diffAvgPctDefined ?? false,
+        diffMaxPctDefined: cell.diffMaxPctDefined ?? false,
         verdict: cell.verdict ?? "",
       })),
+    })),
+    summaries: (view.metrics?.summaries ?? []).map((s) => ({
+      runId: s.runId ?? "",
+      better: s.better ?? 0,
+      worse: s.worse ?? 0,
+      same: s.same ?? 0,
+      missing: s.missing ?? 0,
+      notComparable: s.notComparable ?? 0,
     })),
   };
 }

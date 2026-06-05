@@ -411,6 +411,18 @@ func (m *MetricCell) Encode(e *jx.Encoder) {
 			e.Int32(int32(m.Verdict))
 		}
 	}
+	if m.Present != false {
+		e.FieldStart("present")
+		e.Bool(m.Present)
+	}
+	if m.DiffAvgPctDefined != false {
+		e.FieldStart("diffAvgPctDefined")
+		e.Bool(m.DiffAvgPctDefined)
+	}
+	if m.DiffMaxPctDefined != false {
+		e.FieldStart("diffMaxPctDefined")
+		e.Bool(m.DiffMaxPctDefined)
+	}
 	e.ObjEnd()
 }
 
@@ -517,6 +529,48 @@ func (m *MetricCell) Decode(d *jx.Decoder) error {
 			default:
 				return fmt.Errorf("invalid enum token %s", d.Next())
 			}
+		case "present":
+			if seen["Present"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Present"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Bool()
+			if err != nil {
+				return err
+			}
+			m.Present = v
+			return nil
+		case "diffAvgPctDefined", "diff_avg_pct_defined":
+			if seen["DiffAvgPctDefined"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["DiffAvgPctDefined"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Bool()
+			if err != nil {
+				return err
+			}
+			m.DiffAvgPctDefined = v
+			return nil
+		case "diffMaxPctDefined", "diff_max_pct_defined":
+			if seen["DiffMaxPctDefined"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["DiffMaxPctDefined"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Bool()
+			if err != nil {
+				return err
+			}
+			m.DiffMaxPctDefined = v
+			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}
@@ -568,6 +622,10 @@ func (m *MetricRow) Encode(e *jx.Encoder) {
 			v.Encode(e)
 		}
 		e.ArrEnd()
+	}
+	if m.Description != "" {
+		e.FieldStart("description")
+		e.Str(m.Description)
 	}
 	e.ObjEnd()
 }
@@ -662,6 +720,20 @@ func (m *MetricRow) Decode(d *jx.Decoder) error {
 				m.Cells = append(m.Cells, el)
 				return nil
 			})
+		case "description":
+			if seen["Description"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Description"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Description = v
+			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}
@@ -822,6 +894,14 @@ func (m *Comparison_RunSummary) Encode(e *jx.Encoder) {
 		e.FieldStart("same")
 		e.UInt32(m.Same)
 	}
+	if m.Missing != 0 {
+		e.FieldStart("missing")
+		e.UInt32(m.Missing)
+	}
+	if m.NotComparable != 0 {
+		e.FieldStart("notComparable")
+		e.UInt32(m.NotComparable)
+	}
 	e.ObjEnd()
 }
 
@@ -884,6 +964,34 @@ func (m *Comparison_RunSummary) Decode(d *jx.Decoder) error {
 				return err
 			}
 			m.Same = v
+			return nil
+		case "missing":
+			if seen["Missing"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Missing"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint32(d)
+			if err != nil {
+				return err
+			}
+			m.Missing = v
+			return nil
+		case "notComparable", "not_comparable":
+			if seen["NotComparable"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["NotComparable"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint32(d)
+			if err != nil {
+				return err
+			}
+			m.NotComparable = v
 			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)

@@ -110,6 +110,22 @@ better is the count of metrics where this run beat the baseline.<br>
 json_name: better
 go_name: Better</pre></td>
 </tr><tr>
+<td>missing</td>
+<td>uint32</td>
+<td><pre>
+missing is the count of baseline metrics absent from this run.<br>
+
+json_name: missing
+go_name: Missing</pre></td>
+</tr><tr>
+<td>not_comparable</td>
+<td>uint32</td>
+<td><pre>
+not_comparable is the count of metrics that cannot be baselined.<br>
+
+json_name: notComparable
+go_name: NotComparable</pre></td>
+</tr><tr>
 <td>run_id</td>
 <td>string</td>
 <td><pre>
@@ -600,6 +616,14 @@ diff_avg_pct is (cell - baseline) / baseline * 100; positive means higher.<br>
 json_name: diffAvgPct
 go_name: DiffAvgPct</pre></td>
 </tr><tr>
+<td>diff_avg_pct_defined</td>
+<td>bool</td>
+<td><pre>
+diff_avg_pct_defined is false when the avg percentage delta cannot be computed.<br>
+
+json_name: diffAvgPctDefined
+go_name: DiffAvgPctDefined</pre></td>
+</tr><tr>
 <td>diff_max_pct</td>
 <td>double</td>
 <td><pre>
@@ -608,6 +632,14 @@ diff_max_pct is the same relative diff applied to the max value.<br>
 json_name: diffMaxPct
 go_name: DiffMaxPct</pre></td>
 </tr><tr>
+<td>diff_max_pct_defined</td>
+<td>bool</td>
+<td><pre>
+diff_max_pct_defined is false when the max percentage delta cannot be computed.<br>
+
+json_name: diffMaxPctDefined
+go_name: DiffMaxPctDefined</pre></td>
+</tr><tr>
 <td>max</td>
 <td>double</td>
 <td><pre>
@@ -615,6 +647,14 @@ max is this run's peak value for the metric.<br>
 
 json_name: max
 go_name: Max</pre></td>
+</tr><tr>
+<td>present</td>
+<td>bool</td>
+<td><pre>
+present is false when this run has no sample for the metric; avg/max are then placeholders.<br>
+
+json_name: present
+go_name: Present</pre></td>
 </tr><tr>
 <td>run_id</td>
 <td>string</td>
@@ -658,6 +698,14 @@ cells are this metric's per-run values, aligned 1:1 with Comparison.run_ids.<br>
 
 json_name: cells
 go_name: Cells</pre></td>
+</tr><tr>
+<td>description</td>
+<td>string</td>
+<td><pre>
+description is an optional human tooltip supplied by the backend.<br>
+
+json_name: description
+go_name: Description</pre></td>
 </tr><tr>
 <td>group</td>
 <td>string</td>

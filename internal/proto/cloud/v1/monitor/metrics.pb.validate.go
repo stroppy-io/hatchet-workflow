@@ -568,6 +568,12 @@ func (m *MetricCell) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	// no validation rules for Present
+
+	// no validation rules for DiffAvgPctDefined
+
+	// no validation rules for DiffMaxPctDefined
+
 	if len(errors) > 0 {
 		return MetricCellMultiError(errors)
 	}
@@ -756,6 +762,17 @@ func (m *MetricRow) validate(all bool) error {
 			}
 		}
 
+	}
+
+	if utf8.RuneCountInString(m.GetDescription()) > 1024 {
+		err := MetricRowValidationError{
+			field:  "Description",
+			reason: "value length must be at most 1024 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
 	}
 
 	if len(errors) > 0 {
@@ -1102,6 +1119,10 @@ func (m *Comparison_RunSummary) validate(all bool) error {
 	// no validation rules for Worse
 
 	// no validation rules for Same
+
+	// no validation rules for Missing
+
+	// no validation rules for NotComparable
 
 	if len(errors) > 0 {
 		return Comparison_RunSummaryMultiError(errors)

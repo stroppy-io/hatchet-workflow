@@ -44,7 +44,7 @@ func (s *CompareService) CompareRuns(ctx context.Context, req *api.CompareRunsRe
 		seen[id] = struct{}{}
 	}
 
-	view, err := doTxRet(ctx, s, func(ctx context.Context) (*api.CompareView, error) {
+	columns, err := doTxRet(ctx, s, func(ctx context.Context) ([]*api.RunColumn, error) {
 		columns := make([]*api.RunColumn, 0, len(runIDs))
 		for _, id := range runIDs {
 			rec, err := s.d.Runs.Get(ctx, id)
@@ -56,15 +56,16 @@ func (s *CompareService) CompareRuns(ctx context.Context, req *api.CompareRunsRe
 			}
 			columns = append(columns, runColumn(rec))
 		}
-		metrics, err := s.d.Metrics.Compare(ctx, runIDs)
-		if err != nil {
-			return nil, utils.MapErr(err)
-		}
-		return &api.CompareView{Columns: columns, Metrics: metrics}, nil
+		return columns, nil
 	})
 	if err != nil {
 		return nil, err
 	}
+	metrics, err := s.d.Metrics.Compare(ctx, runIDs)
+	if err != nil {
+		return nil, utils.MapErr(err)
+	}
+	view := &api.CompareView{Columns: columns, Metrics: metrics}
 	return &api.CompareRunsResponse{View: view}, nil
 }
 

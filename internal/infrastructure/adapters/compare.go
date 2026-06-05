@@ -117,22 +117,38 @@ func (c *MetricsComparator) Compare(ctx context.Context, runIDs []string) (*moni
 			Unit:           meta.GetUnit(),
 			HigherIsBetter: meta.GetHigherIsBetter(),
 			Group:          meta.GetGroup(),
+			Description:    meta.GetDescription(),
 		}
-		baseAvg := baseline.GetAvg()
-		baseMax := baseline.GetMax()
 		higherIsBetter := meta.GetHigherIsBetter()
 
 		for i, id := range runIDs {
 			m := perRun[i][key]
-			cell := &monitor.MetricCell{RunId: id, Avg: m.GetAvg(), Max: m.GetMax()}
+			cell := metricCell(id, m)
 			if i == 0 {
-				cell.Verdict = monitor.Verdict_VERDICT_SAME
+				if cell.GetPresent() {
+					cell.Verdict = monitor.Verdict_VERDICT_SAME
+					cell.DiffAvgPctDefined = true
+					cell.DiffMaxPctDefined = true
+				}
 				row.Cells = append(row.Cells, cell)
 				continue
 			}
-			cell.DiffAvgPct = relDiffPct(m.GetAvg(), baseAvg)
-			cell.DiffMaxPct = relDiffPct(m.GetMax(), baseMax)
-			cell.Verdict = verdict(cell.DiffAvgPct, higherIsBetter)
+			if baseline == nil {
+				if m != nil {
+					summaries[i-1].NotComparable++
+				}
+				row.Cells = append(row.Cells, cell)
+				continue
+			}
+			if m == nil {
+				summaries[i-1].Missing++
+				row.Cells = append(row.Cells, cell)
+				continue
+			}
+
+			cell.DiffAvgPct, cell.DiffAvgPctDefined = relDiffPct(m.GetAvg(), baseline.GetAvg())
+			cell.DiffMaxPct, cell.DiffMaxPctDefined = relDiffPct(m.GetMax(), baseline.GetMax())
+			cell.Verdict = verdict(m.GetAvg(), baseline.GetAvg(), higherIsBetter)
 			row.Cells = append(row.Cells, cell)
 
 			switch cell.Verdict {
@@ -151,22 +167,40 @@ func (c *MetricsComparator) Compare(ctx context.Context, runIDs []string) (*moni
 	return cmp, nil
 }
 
-// relDiffPct is (value - baseline) / baseline * 100. When the baseline is zero it
-// reports 0 (no defined relative change) to avoid divide-by-zero noise.
-func relDiffPct(value, baseline float64) float64 {
-	if baseline == 0 {
-		return 0
+func metricCell(runID string, m *monitor.MetricSummary) *monitor.MetricCell {
+	cell := &monitor.MetricCell{RunId: runID}
+	if m == nil {
+		return cell
 	}
-	return (value - baseline) / baseline * 100
+	cell.Present = true
+	cell.Avg = m.GetAvg()
+	cell.Max = m.GetMax()
+	return cell
 }
 
-// verdict classifies a cell's avg diff against the baseline within the dead-band,
-// honoring the metric's higher_is_better direction.
-func verdict(diffAvgPct float64, higherIsBetter bool) monitor.Verdict {
-	if diffAvgPct <= sameThresholdPct && diffAvgPct >= -sameThresholdPct {
+// relDiffPct is (value - baseline) / baseline * 100. The boolean tells callers
+// whether the percentage is mathematically meaningful; zero-to-zero is treated as
+// a defined 0% delta so the UI can still show an explicit unchanged value.
+func relDiffPct(value, baseline float64) (float64, bool) {
+	if baseline == 0 {
+		return 0, value == 0
+	}
+	return (value - baseline) / baseline * 100, true
+}
+
+// verdict classifies a cell's avg value against the baseline within the
+// dead-band, honoring the metric's higher_is_better direction. The sign of a
+// percentage is never interpreted by the UI; this backend verdict is the source
+// of truth for "better" vs "worse".
+func verdict(value, baseline float64, higherIsBetter bool) monitor.Verdict {
+	if diffAvgPct, ok := relDiffPct(value, baseline); ok &&
+		diffAvgPct <= sameThresholdPct && diffAvgPct >= -sameThresholdPct {
 		return monitor.Verdict_VERDICT_SAME
 	}
-	higher := diffAvgPct > 0
+	if value == baseline {
+		return monitor.Verdict_VERDICT_SAME
+	}
+	higher := value > baseline
 	if higher == higherIsBetter {
 		return monitor.Verdict_VERDICT_BETTER
 	}

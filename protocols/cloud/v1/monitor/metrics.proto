@@ -103,6 +103,12 @@ message MetricCell {
     double diff_max_pct = 5;
     /* verdict is the better/worse/same classification of this cell vs the baseline. */
     Verdict verdict = 6 [(validate.rules).enum.defined_only = true];
+    /* present is false when this run has no sample for the metric; avg/max are then placeholders. */
+    bool present = 7;
+    /* diff_avg_pct_defined is false when the avg percentage delta cannot be computed. */
+    bool diff_avg_pct_defined = 8;
+    /* diff_max_pct_defined is false when the max percentage delta cannot be computed. */
+    bool diff_max_pct_defined = 9;
 }
 
 /* MetricRow compares one metric across all compared runs; cells are aligned
@@ -120,6 +126,8 @@ message MetricRow {
     string group = 5 [(validate.rules).string.max_len = 64];
     /* cells are this metric's per-run values, aligned 1:1 with Comparison.run_ids. */
     repeated MetricCell cells = 6 [(validate.rules).repeated.max_items = 16];
+    /* description is an optional human tooltip supplied by the backend. */
+    string description = 7 [(validate.rules).string.max_len = 1024];
 }
 
 /* Comparison is the metric-by-metric diff of N runs (>= 2) against a baseline
@@ -144,5 +152,9 @@ message Comparison {
         uint32 worse = 3;
         /* same is the count of metrics within the threshold (no change). */
         uint32 same = 4;
+        /* missing is the count of baseline metrics absent from this run. */
+        uint32 missing = 5;
+        /* not_comparable is the count of metrics that cannot be baselined. */
+        uint32 not_comparable = 6;
     }
 }
