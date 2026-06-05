@@ -26,6 +26,7 @@ import {
 import { useNavigate, useParams, useTenantSlug } from "@/lib/router";
 import { useBreadcrumbLabel } from "@/lib/breadcrumbs";
 import { useAuth } from "@/hooks/useAuth";
+import { useAuthorDisplay } from "@/hooks/useAuthorDisplays";
 import { roleLevel } from "@/lib/roles";
 import { Avatar } from "@/components/Avatar";
 import { Button } from "@/components/ui/button";
@@ -91,6 +92,7 @@ export function DatabasePresetDetail() {
   const canMutate = level >= roleLevel.operator;
   const isSystem = preset?.isSystem ?? false;
   const mutable = canMutate && !isSystem;
+  const authorDisplay = useAuthorDisplay(preset?.authorId);
 
   const onDuplicate = useCallback(async () => {
     if (!slug || !preset) return;
@@ -233,10 +235,12 @@ export function DatabasePresetDetail() {
                 </span>
               </MetaCard>
               <MetaCard label="Author">
-                {preset.authorId ? (
+                {authorDisplay ? (
                   <div className="flex items-center gap-2">
-                    <Avatar name={preset.authorId} size={20} />
-                    <span className="truncate font-mono text-xs text-zinc-300">{preset.authorId}</span>
+                    <Avatar name={authorDisplay.avatarName} size={20} />
+                    <span className="truncate text-xs text-zinc-300" title={authorDisplay.title}>
+                      {authorDisplay.label}
+                    </span>
                   </div>
                 ) : (
                   <span className="font-mono text-xs text-zinc-600">—</span>

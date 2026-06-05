@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { Link, useNavigate, useParams, useTenantSlug } from "@/lib/router";
 import { useAuth } from "@/hooks/useAuth";
+import { useAuthorDisplay } from "@/hooks/useAuthorDisplays";
 import { roleLevel } from "@/lib/roles";
 import { useBreadcrumbLabel } from "@/lib/breadcrumbs";
 import { Avatar } from "@/components/Avatar";
@@ -116,6 +117,7 @@ export function PackageDetail() {
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   const copyTimer = useRef<number | null>(null);
+  const authorDisplay = useAuthorDisplay(pkg?.authorId);
 
   useBreadcrumbLabel("id", pkg?.name);
 
@@ -360,10 +362,16 @@ export function PackageDetail() {
             </span>
           </MetaItem>
           <MetaItem label="Uploaded by">
-            <span className="inline-flex items-center gap-1.5">
-              <Avatar name={pkg.authorId || "unknown"} size={16} />
-              <span className="font-mono">{pkg.authorId || "—"}</span>
-            </span>
+            {authorDisplay ? (
+              <span className="inline-flex min-w-0 items-center gap-1.5">
+                <Avatar name={authorDisplay.avatarName} size={16} />
+                <span className="truncate" title={authorDisplay.title}>
+                  {authorDisplay.label}
+                </span>
+              </span>
+            ) : (
+              <span className="font-mono">—</span>
+            )}
           </MetaItem>
           <MetaItem label="Created">
             <span title={pkg.createdAt}>{formatTimestamp(pkg.createdAt)}</span>

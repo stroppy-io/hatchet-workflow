@@ -23,6 +23,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { CheckCircle2, Lock, Plus } from "lucide-react";
 import { useNavigate, useTenantSlug } from "@/lib/router";
+import { fallbackAuthorDisplay } from "@/lib/author-display";
+import { useAuthorDisplays } from "@/hooks/useAuthorDisplays";
 import { Avatar } from "@/components/Avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -89,6 +91,8 @@ export function DatabasePresets() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [openColumnId, setOpenColumnId] = useState<string | null>(null);
+  const authorIds = useMemo(() => rows.map((row) => row.authorId), [rows]);
+  const authorDisplays = useAuthorDisplays(authorIds);
   const handleOpenChange = useCallback((columnId: string, open: boolean) => {
     setOpenColumnId(open ? columnId : (cur) => (cur === columnId ? null : cur));
   }, []);
@@ -362,14 +366,15 @@ export function DatabasePresets() {
           const author = row.original.authorId;
           if (!author)
             return <span className="font-mono text-xs text-zinc-600">—</span>;
+          const display = authorDisplays[author] ?? fallbackAuthorDisplay(author);
           return (
             <div className="flex items-center gap-2 min-w-0">
-              <Avatar name={author} size={22} className="shrink-0" />
+              <Avatar name={display.avatarName} size={22} className="shrink-0" />
               <span
-                className="font-mono text-xs text-zinc-400 truncate"
-                title={author}
+                className="text-xs text-zinc-400 truncate"
+                title={display.title}
               >
-                {author}
+                {display.label}
               </span>
             </div>
           );
@@ -452,6 +457,7 @@ export function DatabasePresets() {
       setCsv,
       toggleSort,
       actionsColumn,
+      authorDisplays,
     ],
   );
 
