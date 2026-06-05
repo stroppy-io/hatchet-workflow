@@ -169,11 +169,17 @@ func TestPatchStroppyConfigOverrideSubstitutesRuntimeCredentials(t *testing.T) {
 	text := patched.GetText()
 	for _, want := range []string{
 		`postgresql://postgres:stroppy_postgres@10.0.0.2:5432/postgres?sslmode=disable`,
-		`"otlpHttpEndpoint": "server:8080"`,
-		`"otlpMetricsPrefix": "stroppy_run_1_"`,
 	} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("patched config missing %q:\n%s", want, text)
+		}
+	}
+	for _, pattern := range []string{
+		`"otlpHttpEndpoint":\s+"server:8080"`,
+		`"otlpMetricsPrefix":\s+"stroppy_run_1_"`,
+	} {
+		if !regexp.MustCompile(pattern).MatchString(text) {
+			t.Fatalf("patched config missing pattern %q:\n%s", pattern, text)
 		}
 	}
 	for _, forbidden := range []string{DBHostPlaceholder, DBPortPlaceholder, DBUserPlaceholder, DBPasswordPlaceholder} {
