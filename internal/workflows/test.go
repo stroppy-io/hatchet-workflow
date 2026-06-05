@@ -49,7 +49,12 @@ const (
 	stageTeardownIndex
 )
 
-const runtimeProjectionPersistMinInterval = 2 * time.Second
+const (
+	runtimeProjectionPersistMinInterval = 5 * time.Second
+	maxRuntimeProjectionOutputs         = 80
+	maxRuntimeProjectionTextBytes       = 512
+	maxRuntimeProjectionListItems       = 16
+)
 
 type testWorkflows struct{}
 
@@ -894,7 +899,7 @@ func (w *domainTestWorkflow) persistRuntimeProjection(ctx workflow.Context, forc
 	if !force && !w.lastRuntimeProjectionPersistAt.IsZero() && now.Sub(w.lastRuntimeProjectionPersistAt) < runtimeProjectionPersistMinInterval {
 		return
 	}
-	if err := persistRunState(ctx, w.req.GetTestRun().GetId(), w.state, nil, nil); err != nil {
+	if err := persistRunState(ctx, w.req.GetTestRun().GetId(), compactRunStateForRuntimeProjection(w.state), nil, nil); err != nil {
 		workflow.GetLogger(ctx).Warn("persist runtime projection", "run_id", w.req.GetTestRun().GetId(), "error", err)
 		return
 	}
@@ -906,14 +911,76 @@ func isProjectionForceStage(stage *workflowpb.Stage) bool {
 		return false
 	}
 	switch stage.GetStatus() {
-	case common.Status_STATUS_COMPLETED,
-		common.Status_STATUS_FAILED,
-		common.Status_STATUS_SKIPPED,
+	case common.Status_STATUS_FAILED,
 		common.Status_STATUS_CANCELLED:
 		return true
+	case common.Status_STATUS_COMPLETED,
+		common.Status_STATUS_SKIPPED:
+		return stage.GetOperation() == nil
 	default:
 		return false
 	}
+}
+
+func compactRunStateForRuntimeProjection(state *workflowpb.RunState) *workflowpb.RunState {
+	if state == nil {
+		return nil
+	}
+	compact := proto.Clone(state).(*workflowpb.RunState)
+	for _, stage := range compact.GetStages() {
+		compactStageForRuntimeProjection(stage)
+	}
+	return compact
+}
+
+func compactStageForRuntimeProjection(stage *workflowpb.Stage) {
+	if stage == nil {
+		return
+	}
+	if op := stage.GetOperation(); op != nil {
+		op.Command = nil
+		op.File = nil
+		op.Dir = nil
+		op.CommandText = compactRuntimeProjectionText(op.GetCommandText())
+		op.Argv = compactRuntimeProjectionList(op.GetArgv())
+		op.ContentPreview = compactRuntimeProjectionText(op.GetContentPreview())
+		op.StdoutPreview = compactRuntimeProjectionText(op.GetStdoutPreview())
+		op.StderrPreview = compactRuntimeProjectionText(op.GetStderrPreview())
+		op.Mentions = compactRuntimeProjectionList(op.GetMentions())
+	}
+	outputs := stage.GetOutputs()
+	if len(outputs) > maxRuntimeProjectionOutputs {
+		outputs = outputs[:maxRuntimeProjectionOutputs]
+		stage.Outputs = outputs
+	}
+	for _, output := range outputs {
+		if output == nil {
+			continue
+		}
+		output.CommandText = compactRuntimeProjectionText(output.GetCommandText())
+		output.ContentPreview = compactRuntimeProjectionText(output.GetContentPreview())
+	}
+}
+
+func compactRuntimeProjectionText(value string) string {
+	if len(value) <= maxRuntimeProjectionTextBytes {
+		return value
+	}
+	return value[:maxRuntimeProjectionTextBytes]
+}
+
+func compactRuntimeProjectionList(values []string) []string {
+	if len(values) == 0 {
+		return nil
+	}
+	if len(values) > maxRuntimeProjectionListItems {
+		values = values[:maxRuntimeProjectionListItems]
+	}
+	out := make([]string, 0, len(values))
+	for _, value := range values {
+		out = append(out, compactRuntimeProjectionText(value))
+	}
+	return out
 }
 
 func mergeStage(existing, incoming *workflowpb.Stage) {

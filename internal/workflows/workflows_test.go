@@ -58,6 +58,63 @@ func TestRenderDeploymentPlanWorkflowAppliesRenderOverrides(t *testing.T) {
 	}
 }
 
+func TestCompactRunStateForRuntimeProjectionStripsHeavyPayloads(t *testing.T) {
+	longText := strings.Repeat("x", maxRuntimeProjectionTextBytes+128)
+	longList := make([]string, 0, maxRuntimeProjectionListItems+4)
+	for i := 0; i < maxRuntimeProjectionListItems+4; i++ {
+		longList = append(longList, longText)
+	}
+	outputs := make([]*monitor.PipelineOutput, 0, maxRuntimeProjectionOutputs+4)
+	for i := 0; i < maxRuntimeProjectionOutputs+4; i++ {
+		outputs = append(outputs, &monitor.PipelineOutput{
+			Id:             fmt.Sprintf("output-%d", i),
+			CommandText:    longText,
+			ContentPreview: longText,
+		})
+	}
+	state := &workflowpb.RunState{
+		Status: common.Status_STATUS_RUNNING,
+		Stages: []*workflowpb.Stage{
+			{
+				NodeExecutionId: "step/1",
+				Operation: &monitor.PipelineOperation{
+					Command:        &common.Cmd{},
+					File:           &common.File{},
+					Dir:            &common.Dir{},
+					CommandText:    longText,
+					Argv:           longList,
+					ContentPreview: longText,
+					StdoutPreview:  longText,
+					StderrPreview:  longText,
+					Mentions:       longList,
+				},
+				Outputs: outputs,
+			},
+		},
+	}
+
+	compact := compactRunStateForRuntimeProjection(state)
+	if state.GetStages()[0].GetOperation().GetCommand() == nil {
+		t.Fatal("compact projection mutated the original state")
+	}
+	op := compact.GetStages()[0].GetOperation()
+	if op.GetCommand() != nil || op.GetFile() != nil || op.GetDir() != nil {
+		t.Fatal("compact projection kept raw operation payloads")
+	}
+	if got := len(op.GetCommandText()); got != maxRuntimeProjectionTextBytes {
+		t.Fatalf("command text length = %d, want %d", got, maxRuntimeProjectionTextBytes)
+	}
+	if got := len(op.GetArgv()); got != maxRuntimeProjectionListItems {
+		t.Fatalf("argv items = %d, want %d", got, maxRuntimeProjectionListItems)
+	}
+	if got := len(compact.GetStages()[0].GetOutputs()); got != maxRuntimeProjectionOutputs {
+		t.Fatalf("outputs = %d, want %d", got, maxRuntimeProjectionOutputs)
+	}
+	if got := len(compact.GetStages()[0].GetOutputs()[0].GetContentPreview()); got != maxRuntimeProjectionTextBytes {
+		t.Fatalf("output content preview length = %d, want %d", got, maxRuntimeProjectionTextBytes)
+	}
+}
+
 func TestTestWorkflowOrchestratesDeploymentStages(t *testing.T) {
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
