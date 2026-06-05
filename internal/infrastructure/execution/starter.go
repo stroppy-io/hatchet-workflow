@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -62,6 +64,9 @@ func (s *TestRunStarter) Start(
 	spec := proto.Clone(run).(*domain.TestRun)
 	runID := uuid.NewString()
 	spec.Id = runID
+	if err := spec.ValidateAll(); err != nil {
+		return nil, nil, status.Error(codes.InvalidArgument, err.Error())
+	}
 
 	authorID := ""
 	if s.caller != nil {

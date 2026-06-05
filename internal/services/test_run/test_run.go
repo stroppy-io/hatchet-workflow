@@ -56,6 +56,9 @@ func (s *TestRunService) StartTestRun(ctx context.Context, req *api.StartTestRun
 	// baked spec carries that same id so runtime observations key off it.
 	runID := uuid.NewString()
 	spec.Id = runID
+	if err := spec.ValidateAll(); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
 	// Trigger defaults to API for a request that supplies a run directly,
 	// otherwise MANUAL (a UI/CLI re-run). Suite-child runs are created by the
 	// suite service, never here, so suite_run_id stays empty.

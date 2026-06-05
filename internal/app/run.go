@@ -505,11 +505,18 @@ func Run(ctx context.Context, cfg Config) error {
 
 	// 7) Connect handlers + embedded SPA on one mux.
 	mux := http.NewServeMux()
-	handlerOpts := []connect.HandlerOption{connect.WithInterceptors(grpcStatusToConnect{}, authzGate.Connect())}
-	agentHandlerOpts := []connect.HandlerOption{connect.WithInterceptors(grpcStatusToConnect{}, execution.NewAgentAuthInterceptor(agentTokens))}
+	handlerOpts := []connect.HandlerOption{
+		connect.WithInterceptors(grpcStatusToConnect{}, requestValidationInterceptor{}, authzGate.Connect()),
+	}
+	agentLogHandlerOpts := []connect.HandlerOption{
+		connect.WithInterceptors(grpcStatusToConnect{}, requestValidationInterceptor{}),
+	}
+	agentHandlerOpts := []connect.HandlerOption{
+		connect.WithInterceptors(grpcStatusToConnect{}, requestValidationInterceptor{}, execution.NewAgentAuthInterceptor(agentTokens)),
+	}
 	register(mux,
 		func() (string, http.Handler) {
-			return agentconnect.NewAgentLogServiceHandler(agentLogIngest)
+			return agentconnect.NewAgentLogServiceHandler(agentLogIngest, agentLogHandlerOpts...)
 		},
 		func() (string, http.Handler) {
 			return agentconnect.NewAgentRegistryServiceHandler(agentRegistry, agentHandlerOpts...)
@@ -575,6 +582,7 @@ func Run(ctx context.Context, cfg Config) error {
 			return apiconnect.NewTenantDashboardServiceHandler(tenantDashboardService, handlerOpts...)
 		},
 	)
+	mux.Handle(blobStore.UploadPathPrefix()+"/", blobStore.UploadHandler())
 
 	spa, err := spaHandler()
 	if err != nil {
@@ -587,7 +595,10 @@ func Run(ctx context.Context, cfg Config) error {
 	// grpc.ServerStream / grpc.BidiStream, which the connect handler interfaces do
 	// not accept. They are served by a real grpc.Server multiplexed onto the same
 	// HTTP/2 cleartext handler by content-type ("application/grpc").
-	grpcSrv := grpc.NewServer(grpc.UnaryInterceptor(authzGate.Unary()), grpc.StreamInterceptor(authzGate.Stream()))
+	grpcSrv := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(grpcValidationUnary(), authzGate.Unary()),
+		grpc.ChainStreamInterceptor(grpcValidationStream(), authzGate.Stream()),
+	)
 	api.RegisterTestRunOverviewServiceServer(grpcSrv, testRunOverviewService)
 	api.RegisterAgentShellServiceServer(grpcSrv, agentShellService)
 

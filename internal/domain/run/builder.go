@@ -28,6 +28,9 @@ type BuildOptions struct {
 }
 
 func BuildTestRun(options BuildOptions) (*domain.TestRun, error) {
+	if options.ID == "" {
+		return nil, errors.New("id is required")
+	}
 	if options.Database == nil {
 		return nil, errors.New("database is required")
 	}

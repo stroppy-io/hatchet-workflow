@@ -47,41 +47,31 @@ Default login: `admin` / `admin`.
 
 ### API usage
 
+The browser and external clients use Connect RPC over the same HTTP origin as
+the SPA. RPC paths are generated as `/cloud.v1.api.<Service>/<Method>`; the
+frontend clients are in `web/src/services/client.ts`.
+
 ```bash
-TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
+TOKEN=$(curl -s -X POST http://localhost:8080/cloud.v1.api.IamService/Login \
   -H 'Content-Type: application/json' \
-  -d '{"username":"admin","password":"admin"}' | jq -r .token)
-
-# Start a run
-curl -X POST http://localhost:8080/api/v1/run \
-  -H "Authorization: Bearer $TOKEN" \
-  -H 'Content-Type: application/json' \
-  -d @examples/run-postgres-single.json
-
-# Check status
-curl -H "Authorization: Bearer $TOKEN" \
-  http://localhost:8080/api/v1/run/my-run/status
-
-# Compare two runs
-curl -H "Authorization: Bearer $TOKEN" \
-  'http://localhost:8080/api/v1/compare?a=run-1&b=run-2'
-
-# Upload custom .deb package
-curl -X POST http://localhost:8080/api/v1/upload/deb \
-  -H "Authorization: Bearer $TOKEN" \
-  -F file=@my-custom-postgres.deb
+  -d '{"login":"admin","password":"admin"}' | jq -r .tokens.accessToken)
 ```
+
+Package upload is a three-step flow: `PackageService/CreatePackageUpload` mints
+a signed PUT URL, the client PUTs the blob to that URL, then
+`PackageService/CompleteUpload` verifies size and SHA-256 and marks the package
+ready.
 
 ## Architecture
 
 ```
 Server (Go binary)          Agent (same binary, agent mode)
   |                            |
-  |- HTTP API (/api/v1/)       |- Receives commands via HTTP
-  |- WebSocket (/ws/logs/)     |- Executes shell scripts
-  |- Embedded SPA              |- Reports status back
-  |- DAG executor              |- Manages background daemons
-  |- BadgerDB state            |
+  |- Connect RPC API           |- Receives commands from workflows
+  |- Embedded SPA              |- Executes shell scripts
+  |- Package PUT gateway       |- Ships logs/metrics back
+  |- Workflow worker           |- Manages background daemons
+  |- Postgres state            |
   |                            |
   +-- VictoriaMetrics (metrics storage)
   +-- VictoriaLogs (log persistence)

@@ -40,8 +40,11 @@ message Test {
     record, not in this domain object.
  */
 message TestRun {
-    /* id is the stable test-run identifier. */
-    string id = 1 [(validate.rules).string = {min_len: 1}];
+    /*
+        id is the stable test-run identifier. It may be empty in API start
+        payloads because the server mints the persisted run id before launch.
+     */
+    string id = 1 [(validate.rules).string = {max_len: 64}];
 
     /* suite_id is the owning suite. Empty for a standalone (non-suite) run. */
     string suite_id = 2;

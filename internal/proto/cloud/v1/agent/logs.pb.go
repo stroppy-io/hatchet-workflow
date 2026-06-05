@@ -122,9 +122,10 @@ var File_cloud_v1_agent_logs_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_agent_logs_proto_rawDesc = "" +
 	"\n" +
-	"\x19cloud/v1/agent/logs.proto\x12\x0ecloud.v1.agent\x1a\x1bcloud/v1/monitor/logs.proto\x1a\x17validate/validate.proto\"F\n" +
-	"\bLogBatch\x12:\n" +
-	"\x05lines\x18\x01 \x03(\v2\x19.cloud.v1.monitor.LogLineB\t\xfaB\x06\x92\x01\x03\x10\x90NR\x05lines\")\n" +
+	"\x19cloud/v1/agent/logs.proto\x12\x0ecloud.v1.agent\x1a\x1bcloud/v1/monitor/logs.proto\x1a\x17validate/validate.proto\"M\n" +
+	"\bLogBatch\x12A\n" +
+	"\x05lines\x18\x01 \x03(\v2\x19.cloud.v1.monitor.LogLineB\x10\xfaB\r\x92\x01\n" +
+	"\x10\x90N\"\x05\x8a\x01\x02\b\x01R\x05lines\")\n" +
 	"\vShipLogsAck\x12\x1a\n" +
 	"\baccepted\x18\x01 \x01(\x04R\baccepted2V\n" +
 	"\x0fAgentLogService\x12C\n" +

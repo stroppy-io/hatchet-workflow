@@ -659,7 +659,7 @@ var File_cloud_v1_api_package_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_package_proto_rawDesc = "" +
 	"\n" +
-	"\x1acloud/v1/api/package.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1dcloud/v1/models/package.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\x9a\x03\n" +
+	"\x1acloud/v1/api/package.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1dcloud/v1/models/package.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\xad\x03\n" +
 	"\x1aCreatePackageUploadRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x1e\n" +
 	"\x04name\x18\x02 \x01(\tB\n" +
@@ -671,8 +671,8 @@ const file_cloud_v1_api_package_proto_rawDesc = "" +
 	"\x02os\x18\x06 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\x02os\x12\x1b\n" +
 	"\x04arch\x18\a \x01(\tB\a\xfaB\x04r\x02\x18 R\x04arch\x12&\n" +
 	"\n" +
-	"size_bytes\x18\b \x01(\x04B\a\xfaB\x042\x02 \x00R\tsizeBytes\x12 \n" +
-	"\x06sha256\x18\t \x01(\tB\b\xfaB\x05r\x03\x98\x01@R\x06sha256\"\xdb\x01\n" +
+	"size_bytes\x18\b \x01(\x04B\a\xfaB\x042\x02 \x00R\tsizeBytes\x123\n" +
+	"\x06sha256\x18\t \x01(\tB\x1b\xfaB\x18r\x162\x11^[0-9a-fA-F]{64}$\x98\x01@R\x06sha256\"\xdb\x01\n" +
 	"\x1bCreatePackageUploadResponse\x12B\n" +
 	"\apackage\x18\x01 \x01(\v2\x1e.cloud.v1.models.PackageRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\apackage\x12)\n" +
 	"\n" +

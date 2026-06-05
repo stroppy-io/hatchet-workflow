@@ -490,7 +490,9 @@ go_name: Description</pre></td>
 <td>id</td>
 <td>string</td>
 <td><pre>
-id is the stable, server-assigned unique row identifier.<br>
+//id is the stable, server-assigned unique row identifier. It may be empty
+//in create/update request payloads where the enclosing API request carries
+//the selector or the server mints the id.<br>
 
 json_name: id
 go_name: Id</pre></td>
@@ -521,7 +523,8 @@ go_name: Name</pre></td>
 <td>tenant_id</td>
 <td>string</td>
 <td><pre>
-tenant_id scopes the row to its owning tenant.<br>
+//tenant_id scopes the row to its owning tenant. It may be empty in request
+//payloads; API request tenant_id is authoritative and handlers stamp it.<br>
 
 json_name: tenantId
 go_name: TenantId</pre></td>

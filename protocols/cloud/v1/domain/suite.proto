@@ -47,7 +47,7 @@ message SuiteCell {
     /*
         id is stable within the suite and is copied into SuiteRunCell.suite_cell_id.
      */
-    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string id = 1 [(validate.rules).string = {max_len: 64}];
     /*
         name is the display label for this cell. Empty means server derives one
         from the presets/test.
@@ -108,7 +108,7 @@ message Suite {
         id is the stable suite identifier. For persisted suites this mirrors the
         SuiteRecord entity id; for inline API suites it may be client-supplied.
      */
-    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string id = 1 [(validate.rules).string = {max_len: 64}];
 
     /*
         cells are the runnable entries composing the suite.

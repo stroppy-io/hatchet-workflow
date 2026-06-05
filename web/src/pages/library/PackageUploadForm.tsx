@@ -4,9 +4,9 @@
 // cloud/v1/api/package.proto:
 //
 //   1. CreatePackageUpload  — declares the metadata (name / format / version /
-//      target_db_kind / os / arch + the declared blob size) and mints a pending
-//      PackageRecord (STATUS_UPLOADING) + a presigned PUT url.
-//   2. <client PUTs the blob to upload_url>  — simulated here as a progress bar.
+//      target_db_kind / os / arch + declared blob size/sha256) and mints a
+//      pending PackageRecord (STATUS_UPLOADING) + a presigned PUT url.
+//   2. <client PUTs the blob to upload_url>
 //   3. CompleteUpload       — the server verifies size + sha256 and flips the
 //      record to STATUS_READY, filling size_bytes / sha256 / storage_uri.
 //
@@ -14,7 +14,7 @@
 // never edited — so there is no "edit" affordance anywhere (see the note below).
 // On a READY result the page navigates to the package detail.
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   AlertCircle,
   ArrowLeft,
@@ -52,15 +52,18 @@ import {
 } from "@/components/library-table/labels";
 import {
   getPackagesProvider,
+  sha256File,
   type PackageUploadInput,
+  uploadPackageBlob,
 } from "@/services/packages";
 
 // The upload runs through a tiny state machine so the UI can show progress and
 // each proto step distinctly.
 type Phase =
   | { kind: "idle" }
+  | { kind: "hashing" } // client-side SHA-256 calculation
   | { kind: "creating" } // CreatePackageUpload in flight
-  | { kind: "uploading"; pct: number; id: string } // PUT to upload_url (simulated)
+  | { kind: "uploading"; pct: number; id: string } // PUT to upload_url
   | { kind: "completing"; id: string } // CompleteUpload in flight
   | { kind: "done"; id: string }
   | { kind: "error"; message: string };
@@ -90,13 +93,13 @@ export function PackageUploadForm() {
   const [dbKind, setDbKind] = useState<Exclude<DbKind, "">>("postgres");
   const [os, setOs] = useState("ubuntu-22.04");
   const [arch, setArch] = useState("amd64");
-  const [file, setFile] = useState<{ name: string; size: number } | null>(null);
+  const [file, setFile] = useState<File | null>(null);
 
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const progressTimer = useRef<number | null>(null);
 
   const busy =
+    phase.kind === "hashing" ||
     phase.kind === "creating" ||
     phase.kind === "uploading" ||
     phase.kind === "completing";
@@ -106,25 +109,12 @@ export function PackageUploadForm() {
     !busy &&
     name.trim().length > 0 &&
     version.trim().length > 0 &&
-    !!file;
-
-  const input = useMemo<PackageUploadInput>(
-    () => ({
-      name: name.trim(),
-      format,
-      version: version.trim(),
-      dbKind,
-      os: os.trim(),
-      arch: arch.trim(),
-      fileName: file?.name ?? "",
-      fileSize: file?.size ?? 0,
-    }),
-    [name, format, version, dbKind, os, arch, file],
-  );
+    !!file &&
+    file.size > 0;
 
   const onFilePicked = useCallback((f: File | null | undefined) => {
     if (!f) return;
-    setFile({ name: f.name, size: f.size });
+    setFile(f);
     // Best-effort: seed the name from the file if still empty.
     setName((n) => n || f.name.replace(/\.(deb|bin|tar\.gz|tgz|zip)$/i, ""));
     // Infer format from the extension when it is a .deb.
@@ -132,32 +122,33 @@ export function PackageUploadForm() {
   }, []);
 
   const submit = useCallback(async () => {
-    if (!slug || !canSubmit) return;
+    if (!slug || !canSubmit || !file) return;
     const provider = getPackagesProvider();
     try {
+      setPhase({ kind: "hashing" });
+      const sha256 = await sha256File(file);
+      const input: PackageUploadInput = {
+        name: name.trim(),
+        format,
+        version: version.trim(),
+        dbKind,
+        os: os.trim(),
+        arch: arch.trim(),
+        fileName: file.name,
+        fileSize: file.size,
+        sha256,
+      };
+
       // Step 1 — CreatePackageUpload: mint the pending record + upload target.
       setPhase({ kind: "creating" });
       const target = await provider.createPackageUpload(slug, input);
       const id = target.pkg.id;
 
-      // Step 2 — PUT the blob to target.uploadUrl. The backend does this for
-      // real; here we simulate a progress bar against the presigned url.
-      await new Promise<void>((resolve) => {
-        setPhase({ kind: "uploading", pct: 0, id });
-        let pct = 0;
-        progressTimer.current = window.setInterval(() => {
-          pct = Math.min(100, pct + 12 + Math.random() * 14);
-          if (pct >= 100) {
-            if (progressTimer.current !== null)
-              window.clearInterval(progressTimer.current);
-            progressTimer.current = null;
-            setPhase({ kind: "uploading", pct: 100, id });
-            resolve();
-          } else {
-            setPhase({ kind: "uploading", pct, id });
-          }
-        }, 180);
-      });
+      // Step 2 — PUT the blob to target.uploadUrl.
+      setPhase({ kind: "uploading", pct: 0, id });
+      await uploadPackageBlob(target.uploadUrl, file, (pct) =>
+        setPhase({ kind: "uploading", pct, id }),
+      );
 
       // Step 3 — CompleteUpload: server verifies size + sha256, flips to READY.
       setPhase({ kind: "completing", id });
@@ -174,16 +165,12 @@ export function PackageUploadForm() {
       // On success, land on the package detail.
       navigate(`/packages/${id}`);
     } catch (err) {
-      if (progressTimer.current !== null) {
-        window.clearInterval(progressTimer.current);
-        progressTimer.current = null;
-      }
       setPhase({
         kind: "error",
         message: err instanceof Error ? err.message : "Upload failed",
       });
     }
-  }, [slug, canSubmit, input, navigate]);
+  }, [slug, canSubmit, file, name, format, version, dbKind, os, arch, navigate]);
 
   const progressPct =
     phase.kind === "uploading"
@@ -193,7 +180,9 @@ export function PackageUploadForm() {
         : 0;
 
   const stepLabel: string =
-    phase.kind === "creating"
+    phase.kind === "hashing"
+      ? "Calculating SHA-256…"
+      : phase.kind === "creating"
       ? "Creating upload…"
       : phase.kind === "uploading"
         ? `Uploading blob… ${Math.round(phase.pct)}%`

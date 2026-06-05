@@ -1439,7 +1439,8 @@ go_name: Database</pre></td>
 <td>id</td>
 <td>string</td>
 <td><pre>
-id is the stable test-run identifier.<br>
+//id is the stable test-run identifier. It may be empty in API start
+//payloads because the server mints the persisted run id before launch.<br>
 
 json_name: id
 go_name: Id</pre></td>

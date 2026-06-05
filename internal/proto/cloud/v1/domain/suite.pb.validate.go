@@ -61,10 +61,10 @@ func (m *SuiteCell) validate(all bool) error {
 
 	var errors []error
 
-	if l := utf8.RuneCountInString(m.GetId()); l < 1 || l > 64 {
+	if utf8.RuneCountInString(m.GetId()) > 64 {
 		err := SuiteCellValidationError{
 			field:  "Id",
-			reason: "value length must be between 1 and 64 runes, inclusive",
+			reason: "value length must be at most 64 runes",
 		}
 		if !all {
 			return err
@@ -432,10 +432,10 @@ func (m *Suite) validate(all bool) error {
 
 	var errors []error
 
-	if l := utf8.RuneCountInString(m.GetId()); l < 1 || l > 64 {
+	if utf8.RuneCountInString(m.GetId()) > 64 {
 		err := SuiteValidationError{
 			field:  "Id",
-			reason: "value length must be between 1 and 64 runes, inclusive",
+			reason: "value length must be at most 64 runes",
 		}
 		if !all {
 			return err

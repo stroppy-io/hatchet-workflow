@@ -155,9 +155,12 @@ func (x *Timings) GetDeletedAt() *timestamppb.Timestamp {
 // Entity is the common storage envelope shared by every DB-persisted model.
 type Entity struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// id is the stable, server-assigned unique row identifier.
+	// id is the stable, server-assigned unique row identifier. It may be empty
+	// in create/update request payloads where the enclosing API request carries
+	// the selector or the server mints the id.
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// tenant_id scopes the row to its owning tenant.
+	// tenant_id scopes the row to its owning tenant. It may be empty in request
+	// payloads; API request tenant_id is authoritative and handlers stamp it.
 	TenantId string `protobuf:"bytes,2,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	// name is the human-facing display name of the row.
 	Name string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
@@ -506,15 +509,15 @@ const file_cloud_v1_common_entity_proto_rawDesc = "" +
 	"updated_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12>\n" +
 	"\n" +
 	"deleted_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampH\x00R\tdeletedAt\x88\x01\x01B\r\n" +
-	"\v_deleted_at\"\x94\x02\n" +
-	"\x06Entity\x12\x19\n" +
-	"\x02id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\x12&\n" +
-	"\ttenant_id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x1e\n" +
+	"\v_deleted_at\"\x8e\x02\n" +
+	"\x06Entity\x12\x17\n" +
+	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x18@R\x02id\x12$\n" +
+	"\ttenant_id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x18@R\btenantId\x12\x1e\n" +
 	"\x04name\x18\x03 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\xff\x01R\x04name\x12*\n" +
 	"\vdescription\x18\x04 \x01(\tB\b\xfaB\x05r\x03\x18\x80 R\vdescription\x122\n" +
-	"\atimings\x18\x05 \x01(\v2\x18.cloud.v1.common.TimingsR\atimings\x12&\n" +
-	"\tauthor_id\x18\x06 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\bauthorId\x12\x1f\n" +
+	"\atimings\x18\x05 \x01(\v2\x18.cloud.v1.common.TimingsR\atimings\x12$\n" +
+	"\tauthor_id\x18\x06 \x01(\tB\a\xfaB\x04r\x02\x18@R\bauthorId\x12\x1f\n" +
 	"\vis_favorite\x18\a \x01(\bR\n" +
 	"isFavorite\"\xf3\x03\n" +
 	"\fEntityFilter\x12 \n" +

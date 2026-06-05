@@ -28,10 +28,17 @@ message Timings {
 
 /* Entity is the common storage envelope shared by every DB-persisted model. */
 message Entity {
-    /* id is the stable, server-assigned unique row identifier. */
-    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
-    /* tenant_id scopes the row to its owning tenant. */
-    string tenant_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        id is the stable, server-assigned unique row identifier. It may be empty
+        in create/update request payloads where the enclosing API request carries
+        the selector or the server mints the id.
+     */
+    string id = 1 [(validate.rules).string = {max_len: 64}];
+    /*
+        tenant_id scopes the row to its owning tenant. It may be empty in request
+        payloads; API request tenant_id is authoritative and handlers stamp it.
+     */
+    string tenant_id = 2 [(validate.rules).string = {max_len: 64}];
     /* name is the human-facing display name of the row. */
     string name = 3 [(validate.rules).string = {min_len: 1, max_len: 255}];
     /* description is optional free-text describing the row. */
@@ -42,7 +49,7 @@ message Entity {
         author_id is the Account that created the row. Server-assigned from the
         caller; immutable afterwards.
      */
-    string author_id = 6 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string author_id = 6 [(validate.rules).string = {max_len: 64}];
 
     /*
         is_favorite is a COMPUTED, PER-CALLER flag — NOT persisted on the row.

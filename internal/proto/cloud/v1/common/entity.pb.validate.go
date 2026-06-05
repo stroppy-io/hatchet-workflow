@@ -245,10 +245,10 @@ func (m *Entity) validate(all bool) error {
 
 	var errors []error
 
-	if l := utf8.RuneCountInString(m.GetId()); l < 1 || l > 64 {
+	if utf8.RuneCountInString(m.GetId()) > 64 {
 		err := EntityValidationError{
 			field:  "Id",
-			reason: "value length must be between 1 and 64 runes, inclusive",
+			reason: "value length must be at most 64 runes",
 		}
 		if !all {
 			return err
@@ -256,10 +256,10 @@ func (m *Entity) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if l := utf8.RuneCountInString(m.GetTenantId()); l < 1 || l > 64 {
+	if utf8.RuneCountInString(m.GetTenantId()) > 64 {
 		err := EntityValidationError{
 			field:  "TenantId",
-			reason: "value length must be between 1 and 64 runes, inclusive",
+			reason: "value length must be at most 64 runes",
 		}
 		if !all {
 			return err
@@ -318,10 +318,10 @@ func (m *Entity) validate(all bool) error {
 		}
 	}
 
-	if l := utf8.RuneCountInString(m.GetAuthorId()); l < 1 || l > 64 {
+	if utf8.RuneCountInString(m.GetAuthorId()) > 64 {
 		err := EntityValidationError{
 			field:  "AuthorId",
-			reason: "value length must be between 1 and 64 runes, inclusive",
+			reason: "value length must be at most 64 runes",
 		}
 		if !all {
 			return err

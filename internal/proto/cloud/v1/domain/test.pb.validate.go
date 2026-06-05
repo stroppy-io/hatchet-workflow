@@ -263,10 +263,10 @@ func (m *TestRun) validate(all bool) error {
 
 	var errors []error
 
-	if utf8.RuneCountInString(m.GetId()) < 1 {
+	if utf8.RuneCountInString(m.GetId()) > 64 {
 		err := TestRunValidationError{
 			field:  "Id",
-			reason: "value length must be at least 1 runes",
+			reason: "value length must be at most 64 runes",
 		}
 		if !all {
 			return err

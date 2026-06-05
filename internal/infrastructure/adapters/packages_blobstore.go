@@ -7,14 +7,19 @@ package adapters
 
 import (
 	"context"
+	"crypto/hmac"
+	cryptorand "crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
+	"math"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -27,7 +32,7 @@ import (
 // server-assigned storage key. The presigned PUT "url" it mints is a direct
 // gateway path (relative URL) that the server's package-upload route serves;
 // there is no external object store, so the signature is the storage key plus a
-// short-lived expiry the caller enforces.
+// short-lived expiry plus declared blob metadata.
 type LocalBlobStore struct {
 	// root is the directory blobs are stored under (one file per storage key).
 	root string
@@ -35,6 +40,9 @@ type LocalBlobStore struct {
 	// at (e.g. "/api/packages/upload"). The minted url is
 	// {prefix}/{escaped-key}.
 	uploadPathPrefix string
+	// uploadSecret signs local presigned PUT URLs. It is process-local; pending
+	// URLs are deliberately invalidated by a control-plane restart.
+	uploadSecret []byte
 }
 
 var _ packages.BlobStore = (*LocalBlobStore)(nil)
@@ -54,9 +62,18 @@ func NewLocalBlobStore(root, uploadPathPrefix string) (*LocalBlobStore, error) {
 	if strings.TrimSpace(uploadPathPrefix) == "" {
 		uploadPathPrefix = "/api/packages/upload"
 	}
+	uploadPathPrefix = strings.TrimRight(uploadPathPrefix, "/")
+	if uploadPathPrefix == "" {
+		uploadPathPrefix = "/api/packages/upload"
+	}
+	secret := make([]byte, 32)
+	if _, err := cryptorand.Read(secret); err != nil {
+		return nil, fmt.Errorf("packages: generate upload signer: %w", err)
+	}
 	return &LocalBlobStore{
 		root:             root,
-		uploadPathPrefix: strings.TrimRight(uploadPathPrefix, "/"),
+		uploadPathPrefix: uploadPathPrefix,
+		uploadSecret:     secret,
 	}, nil
 }
 
@@ -69,14 +86,133 @@ func (s *LocalBlobStore) filePath(key string) string {
 
 // PresignPut returns a direct gateway path the client PUTs the blob to plus its
 // expiry. There is no external object store; the gateway route validates the
-// declared size/sha256 on receipt, so they are not folded into a signature here.
-func (s *LocalBlobStore) PresignPut(_ context.Context, key string, _ uint64, _ string, ttl time.Duration) (string, time.Time, error) {
+// declared size/sha256 on receipt and binds them into the signed URL.
+func (s *LocalBlobStore) PresignPut(_ context.Context, key string, expectedSize uint64, sha string, ttl time.Duration) (string, time.Time, error) {
 	if strings.TrimSpace(key) == "" {
 		return "", time.Time{}, errors.New("packages: storage key is required")
 	}
+	if expectedSize == 0 || expectedSize > math.MaxInt64 {
+		return "", time.Time{}, errors.New("packages: expected size is invalid")
+	}
+	sha, err := normalizeSHA256Hex(sha)
+	if err != nil {
+		return "", time.Time{}, err
+	}
 	expiresAt := time.Now().Add(ttl)
-	u := s.uploadPathPrefix + "/" + url.PathEscape(key)
+	expiresUnix := expiresAt.Unix()
+	q := url.Values{}
+	q.Set("expires", strconv.FormatInt(expiresUnix, 10))
+	q.Set("size", strconv.FormatUint(expectedSize, 10))
+	q.Set("sha256", sha)
+	q.Set("token", s.uploadToken(key, expectedSize, sha, expiresUnix))
+	u := s.uploadPathPrefix + "/" + url.PathEscape(key) + "?" + q.Encode()
 	return u, expiresAt, nil
+}
+
+// UploadPathPrefix is the route prefix served by UploadHandler.
+func (s *LocalBlobStore) UploadPathPrefix() string { return s.uploadPathPrefix }
+
+// UploadHandler accepts PUTs to presigned local upload URLs minted by PresignPut.
+func (s *LocalBlobStore) UploadHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut {
+			w.Header().Set("Allow", http.MethodPut)
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		key, expectedSize, expectedSha, err := s.verifyUploadRequest(r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusForbidden)
+			return
+		}
+		if r.ContentLength >= 0 && uint64(r.ContentLength) != expectedSize {
+			http.Error(w, "content length does not match signed size", http.StatusBadRequest)
+			return
+		}
+		if err := s.storeUpload(w, r, key, expectedSize, expectedSha); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	})
+}
+
+func (s *LocalBlobStore) verifyUploadRequest(r *http.Request) (string, uint64, string, error) {
+	keyPart := strings.TrimPrefix(r.URL.Path, s.uploadPathPrefix+"/")
+	if keyPart == "" || keyPart == r.URL.Path {
+		return "", 0, "", errors.New("invalid upload path")
+	}
+	key, err := url.PathUnescape(keyPart)
+	if err != nil || strings.TrimSpace(key) == "" {
+		return "", 0, "", errors.New("invalid upload key")
+	}
+	q := r.URL.Query()
+	expiresUnix, err := strconv.ParseInt(q.Get("expires"), 10, 64)
+	if err != nil || expiresUnix <= time.Now().Unix() {
+		return "", 0, "", errors.New("upload URL expired")
+	}
+	expectedSize, err := strconv.ParseUint(q.Get("size"), 10, 64)
+	if err != nil || expectedSize == 0 || expectedSize > math.MaxInt64 {
+		return "", 0, "", errors.New("invalid signed size")
+	}
+	expectedSha, err := normalizeSHA256Hex(q.Get("sha256"))
+	if err != nil {
+		return "", 0, "", errors.New("invalid signed sha256")
+	}
+	wantToken := s.uploadToken(key, expectedSize, expectedSha, expiresUnix)
+	gotToken := q.Get("token")
+	if !hmac.Equal([]byte(gotToken), []byte(wantToken)) {
+		return "", 0, "", errors.New("invalid upload token")
+	}
+	return key, expectedSize, expectedSha, nil
+}
+
+func (s *LocalBlobStore) storeUpload(w http.ResponseWriter, r *http.Request, key string, expectedSize uint64, expectedSha string) error {
+	tmp, err := os.CreateTemp(s.root, ".package-upload-*")
+	if err != nil {
+		return fmt.Errorf("packages: create temp upload: %w", err)
+	}
+	tmpName := tmp.Name()
+	defer func() { _ = os.Remove(tmpName) }()
+
+	h := sha256.New()
+	limited := http.MaxBytesReader(w, r.Body, int64(expectedSize)+1) //nolint:gosec // checked against MaxInt64 above.
+	written, copyErr := io.Copy(io.MultiWriter(tmp, h), limited)
+	closeErr := tmp.Close()
+	if copyErr != nil {
+		return fmt.Errorf("packages: write upload: %w", copyErr)
+	}
+	if closeErr != nil {
+		return fmt.Errorf("packages: close upload: %w", closeErr)
+	}
+	if uint64(written) != expectedSize { //nolint:gosec // written is non-negative for nil copyErr.
+		return fmt.Errorf("uploaded size mismatch: expected %d bytes, got %d", expectedSize, written)
+	}
+	actualSha := hex.EncodeToString(h.Sum(nil))
+	if !strings.EqualFold(actualSha, expectedSha) {
+		return fmt.Errorf("uploaded sha256 mismatch: expected %s, got %s", expectedSha, actualSha)
+	}
+	if err := os.Rename(tmpName, s.filePath(key)); err != nil {
+		return fmt.Errorf("packages: commit upload: %w", err)
+	}
+	return nil
+}
+
+func (s *LocalBlobStore) uploadToken(key string, expectedSize uint64, sha string, expiresUnix int64) string {
+	mac := hmac.New(sha256.New, s.uploadSecret)
+	_, _ = fmt.Fprintf(mac, "%s\n%d\n%s\n%d", key, expectedSize, sha, expiresUnix)
+	return hex.EncodeToString(mac.Sum(nil))
+}
+
+func normalizeSHA256Hex(sha string) (string, error) {
+	sha = strings.ToLower(strings.TrimSpace(sha))
+	if len(sha) != sha256.Size*2 {
+		return "", errors.New("packages: sha256 is invalid")
+	}
+	if _, err := hex.DecodeString(sha); err != nil {
+		return "", errors.New("packages: sha256 is invalid")
+	}
+	return sha, nil
 }
 
 // Stat reports the uploaded blob's size and its SHA-256 content hash, recomputed

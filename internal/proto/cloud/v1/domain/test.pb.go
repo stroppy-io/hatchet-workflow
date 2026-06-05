@@ -97,7 +97,8 @@ func (x *Test) GetTags() *common.Tags {
 // record, not in this domain object.
 type TestRun struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// id is the stable test-run identifier.
+	// id is the stable test-run identifier. It may be empty in API start
+	// payloads because the server mints the persisted run id before launch.
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// suite_id is the owning suite. Empty for a standalone (non-suite) run.
 	SuiteId string `protobuf:"bytes,2,opt,name=suite_id,json=suiteId,proto3" json:"suite_id,omitempty"`
@@ -213,7 +214,7 @@ const file_cloud_v1_domain_test_proto_rawDesc = "" +
 	"\bworkload\x18\x02 \x01(\v2\x19.cloud.v1.domain.WorkloadB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bworkload\x12)\n" +
 	"\x04tags\x18\x03 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\"\xf1\x03\n" +
 	"\aTestRun\x12\x17\n" +
-	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\x12\x19\n" +
+	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x18@R\x02id\x12\x19\n" +
 	"\bsuite_id\x18\x02 \x01(\tR\asuiteId\x12?\n" +
 	"\bdatabase\x18\x03 \x01(\v2\x19.cloud.v1.domain.DatabaseB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bdatabase\x12?\n" +
 	"\bworkload\x18\x04 \x01(\v2\x19.cloud.v1.domain.WorkloadB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bworkload\x12N\n" +

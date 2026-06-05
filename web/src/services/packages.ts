@@ -193,8 +193,7 @@ export interface PackagesPage {
 /**
  * Metadata the client declares when starting an upload — the wired slice of
  * cloud.v1.api.CreatePackageUploadRequest (the page never sets tenant_id here;
- * the provider resolves it from the slug, and size_bytes/sha256 are
- * server-verified on CompleteUpload, so they are NOT part of this input):
+ * the provider resolves it from the slug):
  *
  *   name           -> CreatePackageUploadRequest.name
  *   format         -> CreatePackageUploadRequest.format       (PackageRecord.Format)
@@ -202,8 +201,8 @@ export interface PackagesPage {
  *   dbKind         -> CreatePackageUploadRequest.target_db_kind (domain.Database.Kind)
  *   os             -> CreatePackageUploadRequest.os
  *   arch           -> CreatePackageUploadRequest.arch
- *   fileName/fileSize describe the chosen blob (used to seed size_bytes the
- *   server verifies on CompleteUpload).
+ *   fileName/fileSize/sha256 describe the chosen blob. The server verifies
+ *   size_bytes and sha256 on PUT and again on CompleteUpload.
  *
  * NOTE: there is NO UpdatePackage RPC — a package is created via this upload
  * flow and deleted, never edited. The UI therefore offers no edit form.
@@ -219,6 +218,8 @@ export interface PackageUploadInput {
   fileName: string;
   /** The chosen blob's size, in bytes (declared; verified on CompleteUpload). */
   fileSize: number;
+  /** The chosen blob's SHA-256 hex digest (declared; verified on upload). */
+  sha256: string;
 }
 
 /**
@@ -298,6 +299,7 @@ const realPackagesProvider: PackagesProvider = {
       os: input.os,
       arch: input.arch,
       sizeBytes: BigInt(input.fileSize),
+      sha256: input.sha256,
     });
     if (!rec) throw new Error("createPackageUpload returned no package");
     return {
@@ -327,6 +329,44 @@ const realPackagesProvider: PackagesProvider = {
     await packageClient.deletePackage({ tenantId, id });
   },
 };
+
+export async function sha256File(file: File): Promise<string> {
+  const bytes = await file.arrayBuffer();
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest), (b) =>
+    b.toString(16).padStart(2, "0"),
+  ).join("");
+}
+
+export function uploadPackageBlob(
+  uploadUrl: string,
+  file: File,
+  onProgress?: (pct: number) => void,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", uploadUrl);
+    xhr.upload.onprogress = (event) => {
+      if (!event.lengthComputable || event.total <= 0) return;
+      onProgress?.(Math.min(100, (event.loaded / event.total) * 100));
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        onProgress?.(100);
+        resolve();
+        return;
+      }
+      reject(
+        new Error(
+          xhr.responseText || `Package upload failed with HTTP ${xhr.status}`,
+        ),
+      );
+    };
+    xhr.onerror = () => reject(new Error("Package upload failed"));
+    xhr.onabort = () => reject(new Error("Package upload was aborted"));
+    xhr.send(file);
+  });
+}
 
 // --- Provider injection ------------------------------------------------------
 //

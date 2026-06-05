@@ -8,8 +8,11 @@ import (
 	trm "github.com/avito-tech/go-transaction-manager/trm"
 
 	derrors "github.com/stroppy-io/stroppy-cloud/internal/domain/errors"
+	infrastructurebuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/infrastructure"
+	runbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/run"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
@@ -63,12 +66,7 @@ func TestStartTestRunMarksRecordFailedWhenWorkflowLaunchFails(t *testing.T) {
 	_, err := svc.StartTestRun(context.Background(), &api.StartTestRunRequest{
 		TenantId: "tenant-1",
 		Source: &api.StartTestRunRequest_Run{
-			Run: &domain.TestRun{
-				Database: &domain.Database{Kind: domain.Database_KIND_POSTGRES},
-				Workload: &domain.Workload{
-					Script: "tpcc/tx",
-				},
-			},
+			Run: validTestRun(t),
 		},
 	})
 	if err == nil {
@@ -82,6 +80,33 @@ func TestStartTestRunMarksRecordFailedWhenWorkflowLaunchFails(t *testing.T) {
 	}
 	if repo.run.GetSummary().GetFinishedAt() == nil {
 		t.Fatal("finished_at was not set")
+	}
+}
+
+func TestStartTestRunRejectsInvalidSpecBeforePersist(t *testing.T) {
+	repo := &fakeTestRunRepo{}
+	svc := NewTestRunService(TestRunDeps{
+		Authn:      fakeAuthn{},
+		Runs:       repo,
+		Summarizer: fakeSummarizer{},
+		Workflows:  fakeMissingWorkflows{},
+		Tx:         noopTrm{},
+	})
+
+	_, err := svc.StartTestRun(context.Background(), &api.StartTestRunRequest{
+		TenantId: "tenant-1",
+		Source: &api.StartTestRunRequest_Run{
+			Run: &domain.TestRun{
+				Database: &domain.Database{Kind: domain.Database_KIND_POSTGRES},
+				Workload: &domain.Workload{Script: "tpcc/tx"},
+			},
+		},
+	})
+	if err == nil {
+		t.Fatal("expected validation error")
+	}
+	if repo.run != nil {
+		t.Fatal("invalid run was persisted")
 	}
 }
 
@@ -234,4 +259,40 @@ type fakeAuthn struct{}
 
 func (fakeAuthn) Caller(context.Context) (*iam.AccessClaims, error) {
 	return &iam.AccessClaims{AccountId: "account-1"}, nil
+}
+
+func validTestRun(t *testing.T) *domain.TestRun {
+	t.Helper()
+	run, err := runbuilder.BuildTestRun(runbuilder.BuildOptions{
+		ID: "client-supplied-preview-id",
+		Database: &domain.Database{
+			Kind: domain.Database_KIND_POSTGRES,
+			Source: &domain.Database_Params{
+				Params: &domain.DatabaseParams{
+					Version: "16",
+					Engine: &domain.DatabaseParams_Postgres{
+						Postgres: &domain.PostgresParams{Replicas: 1},
+					},
+				},
+			},
+		},
+		Workload: &domain.Workload{
+			Script:   "tpcc/tx",
+			Protocol: domain.Workload_PROTOCOL_PG,
+			Execution: &domain.Workload_Execution{
+				Vus: 1,
+				Limit: &domain.Workload_Execution_Duration{
+					Duration: "1m",
+				},
+			},
+		},
+		Provider: deployment.Provider_PROVIDER_DOCKER,
+		Infrastructure: infrastructurebuilder.BuildOptions{
+			DefaultSizing: infrastructurebuilder.MachineSizing{CPUCores: 1, MemoryMB: 1024, DiskGB: 20},
+		},
+	})
+	if err != nil {
+		t.Fatalf("build valid test run: %v", err)
+	}
+	return run
 }

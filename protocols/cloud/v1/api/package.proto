@@ -75,7 +75,7 @@ message CreatePackageUploadRequest {
         sha256 is the declared blob hash; verified on CompleteUpload against the
         uploaded object.
      */
-    string sha256 = 9 [(validate.rules).string = {len: 64}];
+    string sha256 = 9 [(validate.rules).string = {len: 64, pattern: "^[0-9a-fA-F]{64}$"}];
 }
 /*
     CreatePackageUploadResponse returns the pending record plus the presigned PUT

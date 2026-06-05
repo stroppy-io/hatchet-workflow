@@ -31,7 +31,14 @@ message LogBatch {
         lines is the batch of log lines to ship; capped at 10000 per batch so a
         single message stays bounded.
      */
-    repeated cloud.v1.monitor.LogLine lines = 1 [(validate.rules).repeated.max_items = 10000];
+    repeated cloud.v1.monitor.LogLine lines = 1 [(validate.rules).repeated = {
+        max_items: 10000
+        items: {
+            message: {
+                skip: true
+            }
+        }
+    }];
 }
 
 /*

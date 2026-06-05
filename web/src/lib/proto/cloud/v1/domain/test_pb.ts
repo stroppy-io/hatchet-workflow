@@ -23,7 +23,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/domain/test.proto.
  */
 export const file_cloud_v1_domain_test: GenFile = /*@__PURE__*/
-  fileDesc("ChpjbG91ZC92MS9kb21haW4vdGVzdC5wcm90bxIPY2xvdWQudjEuZG9tYWluIpkBCgRUZXN0EjUKCGRhdGFiYXNlGAEgASgLMhkuY2xvdWQudjEuZG9tYWluLkRhdGFiYXNlQgj6QgWKAQIQARI1Cgh3b3JrbG9hZBgCIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5Xb3JrbG9hZEII+kIFigECEAESIwoEdGFncxgDIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzIpcDCgdUZXN0UnVuEhMKAmlkGAEgASgJQgf6QgRyAhABEhAKCHN1aXRlX2lkGAIgASgJEjUKCGRhdGFiYXNlGAMgASgLMhkuY2xvdWQudjEuZG9tYWluLkRhdGFiYXNlQgj6QgWKAQIQARI1Cgh3b3JrbG9hZBgEIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5Xb3JrbG9hZEII+kIFigECEAESQAoNdG9wb2xvZ3lfc3BlYxgFIAEoCzIfLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5U3BlY0II+kIFigECEAESTgoTaW5mcmFzdHJ1Y3R1cmVfcGxhbhgGIAEoCzInLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVQbGFuQgj6QgWKAQIQARJAChByZW5kZXJfb3ZlcnJpZGVzGAggASgLMiYuY2xvdWQudjEuZGVwbG95bWVudC5SZW5kZXJPdmVycmlkZVNldBIjCgR0YWdzGAcgASgLMhUuY2xvdWQudjEuY29tbW9uLlRhZ3NCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvZG9tYWluYgZwcm90bzM", [file_cloud_v1_common_tags, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_render, file_cloud_v1_domain_database, file_cloud_v1_domain_workload, file_cloud_v1_topology_topology, file_validate_validate]);
+  fileDesc("ChpjbG91ZC92MS9kb21haW4vdGVzdC5wcm90bxIPY2xvdWQudjEuZG9tYWluIpkBCgRUZXN0EjUKCGRhdGFiYXNlGAEgASgLMhkuY2xvdWQudjEuZG9tYWluLkRhdGFiYXNlQgj6QgWKAQIQARI1Cgh3b3JrbG9hZBgCIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5Xb3JrbG9hZEII+kIFigECEAESIwoEdGFncxgDIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzIpcDCgdUZXN0UnVuEhMKAmlkGAEgASgJQgf6QgRyAhhAEhAKCHN1aXRlX2lkGAIgASgJEjUKCGRhdGFiYXNlGAMgASgLMhkuY2xvdWQudjEuZG9tYWluLkRhdGFiYXNlQgj6QgWKAQIQARI1Cgh3b3JrbG9hZBgEIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5Xb3JrbG9hZEII+kIFigECEAESQAoNdG9wb2xvZ3lfc3BlYxgFIAEoCzIfLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5U3BlY0II+kIFigECEAESTgoTaW5mcmFzdHJ1Y3R1cmVfcGxhbhgGIAEoCzInLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVQbGFuQgj6QgWKAQIQARJAChByZW5kZXJfb3ZlcnJpZGVzGAggASgLMiYuY2xvdWQudjEuZGVwbG95bWVudC5SZW5kZXJPdmVycmlkZVNldBIjCgR0YWdzGAcgASgLMhUuY2xvdWQudjEuY29tbW9uLlRhZ3NCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvZG9tYWluYgZwcm90bzM", [file_cloud_v1_common_tags, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_render, file_cloud_v1_domain_database, file_cloud_v1_domain_workload, file_cloud_v1_topology_topology, file_validate_validate]);
 
 /**
  *
@@ -107,7 +107,9 @@ export const TestSchema: GenMessage<Test, {jsonType: TestJson, validType: TestVa
  */
 export type TestRun = Message<"cloud.v1.domain.TestRun"> & {
   /**
-   * id is the stable test-run identifier. 
+   *
+   * id is the stable test-run identifier. It may be empty in API start
+   * payloads because the server mints the persisted run id before launch.
    *
    * @generated from field: string id = 1;
    */
@@ -174,7 +176,9 @@ export type TestRun = Message<"cloud.v1.domain.TestRun"> & {
  */
 export type TestRunJson = {
   /**
-   * id is the stable test-run identifier. 
+   *
+   * id is the stable test-run identifier. It may be empty in API start
+   * payloads because the server mints the persisted run id before launch.
    *
    * @generated from field: string id = 1;
    */

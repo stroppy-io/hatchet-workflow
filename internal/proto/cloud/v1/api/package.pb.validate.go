@@ -167,6 +167,17 @@ func (m *CreatePackageUploadRequest) validate(all bool) error {
 
 	}
 
+	if !_CreatePackageUploadRequest_Sha256_Pattern.MatchString(m.GetSha256()) {
+		err := CreatePackageUploadRequestValidationError{
+			field:  "Sha256",
+			reason: "value does not match regex pattern \"^[0-9a-fA-F]{64}$\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if len(errors) > 0 {
 		return CreatePackageUploadRequestMultiError(errors)
 	}
@@ -250,6 +261,8 @@ var _ interface {
 var _CreatePackageUploadRequest_Format_NotInLookup = map[models.PackageRecord_Format]struct{}{
 	0: {},
 }
+
+var _CreatePackageUploadRequest_Sha256_Pattern = regexp.MustCompile("^[0-9a-fA-F]{64}$")
 
 // Validate checks the field values on CreatePackageUploadResponse with the
 // rules defined in the proto definition for this message. If any rules are
