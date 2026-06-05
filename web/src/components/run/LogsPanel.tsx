@@ -135,6 +135,25 @@ function logClock(iso: string): string {
   return d.toLocaleTimeString(undefined, { hour12: false });
 }
 
+function logLineTooltip(l: LogLineVM, source: string, stream: string): string {
+  return [
+    l.observedAt && `time: ${l.observedAt}`,
+    l.machineId && `machine: ${l.machineId}`,
+    l.componentId && `component: ${l.componentId}`,
+    source && `source: ${source}`,
+    stream && `stream: ${stream}`,
+    l.unit && `unit: ${l.unit}`,
+    l.action && `action: ${l.action}`,
+    l.stepId && `step: ${l.stepId}`,
+    l.phase && `phase: ${l.phase}`,
+    l.stageName && `stage: ${l.stageName}`,
+    l.nodeExecutionId && `node: ${l.nodeExecutionId}`,
+    l.mentions.length > 0 && `mentions: ${l.mentions.join(", ")}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
 export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
   const [sp, setSp] = useSearchParams();
 
@@ -542,6 +561,7 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
             const src = sourceLabel(l.source);
             const str = streamLabel(l.stream);
             const stderr = streamToken(l.stream) === "stderr";
+            const tooltip = logLineTooltip(l, src, str);
             return (
               <div
                 key={l.cursorKey || `${l.lineNo}-${i}`}
@@ -583,27 +603,12 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
                     [{l.machineId}]
                   </span>
                 )}
-                {src && (
-                  <span className="shrink-0 rounded-sm border border-border/70 px-1 text-[10px] uppercase text-muted-foreground" title="source">
-                    {src}
-                  </span>
-                )}
-                {str && (
-                  <span className={cn("shrink-0 rounded-sm border px-1 text-[10px] uppercase", stderr ? "border-destructive/40 text-destructive" : "border-border/70 text-muted-foreground")} title="stream">
-                    {str}
-                  </span>
-                )}
-                {l.unit && (
-                  <span className="max-w-[13rem] shrink-0 truncate rounded-sm border border-border/70 px-1 text-[10px] text-muted-foreground" title={`unit: ${l.unit}`}>
-                    {l.unit.replace(/\.service$/, "")}
-                  </span>
-                )}
                 {l.componentId && (
                   <span className="max-w-[12rem] shrink-0 truncate text-muted-foreground/70" title={`component: ${l.componentId}`}>
                     {l.componentId}
                   </span>
                 )}
-                <span className={cn("min-w-0", stderr && "text-destructive")}>
+                <span className={cn("min-w-0", stderr && "text-destructive")} title={tooltip || undefined}>
                   <Highlight text={l.line} q={applied.trim()} />
                 </span>
               </div>
