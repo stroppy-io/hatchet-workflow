@@ -145,6 +145,7 @@ export default function App() {
               <Route path="compare" element={<Compare />} />
               <Route path="suites" element={<Suites />} />
               <Route path="suites/new" element={<SuiteWizard />} />
+              <Route path="suites/:id/edit" element={<SuiteWizard />} />
               <Route path="suites/:id" element={<SuiteDetail />} />
               <Route path="quotas" element={<Quotas />} />
               {/* Library — 3 preset tables + packages. */}

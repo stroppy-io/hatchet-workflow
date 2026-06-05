@@ -180,6 +180,7 @@ export interface SuiteFacets {
 
 export type SuiteAction =
   | "view"
+  | "edit"
   | "start"
   | "clone"
   | "enableSchedule"
@@ -188,7 +189,7 @@ export type SuiteAction =
 
 export function actionsForSuite(suite: SuiteVM): Set<SuiteAction> {
   if (suite.deleted) return new Set<SuiteAction>(["view", "delete"]);
-  const set = new Set<SuiteAction>(["view", "start", "clone", "delete"]);
+  const set = new Set<SuiteAction>(["view", "edit", "start", "clone", "delete"]);
   set.add(suite.scheduleEnabled ? "disableSchedule" : "enableSchedule");
   return set;
 }

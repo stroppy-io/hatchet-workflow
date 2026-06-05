@@ -38,7 +38,7 @@ const GROUP_ORDER = [
 export function Compare() {
   const tenantSlug = useTenantSlug() ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
-  const initial = (searchParams.get("runIds") ?? "").trim();
+  const initial = (searchParams.get("runIds") ?? searchParams.get("runs") ?? "").trim();
 
   const [idsText, setIdsText] = useState(initial);
   const [metricSearch, setMetricSearch] = useState("");
@@ -72,7 +72,12 @@ export function Compare() {
   );
 
   useEffect(() => {
+    setIdsText(initial);
     if (initial) void load(initial);
+    else {
+      setView(null);
+      setError(null);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initial, tenantSlug]);
 

@@ -422,7 +422,31 @@ type suiteBaker struct {
 
 var _ adapters.SuiteBaker = (*suiteBaker)(nil)
 
-func (b *suiteBaker) SaveSuite(ctx context.Context, suiteRec *modelspb.SuiteRecord) (*modelspb.SuiteRecord, error) {
+func (b *suiteBaker) SaveSuite(ctx context.Context, suiteRec *modelspb.SuiteRecord, replaceSuiteID string) (*modelspb.SuiteRecord, error) {
+	if replaceSuiteID != "" {
+		existing, err := b.suites.Get(ctx, suiteRec.GetEntity().GetTenantId(), replaceSuiteID)
+		if err != nil {
+			return nil, err
+		}
+		if existing.GetEntity().GetTimings().GetDeletedAt() != nil {
+			return nil, derrors.FailedPrecondition("suite_deleted", "suite is deleted")
+		}
+		suiteRec.Entity.Id = existing.GetEntity().GetId()
+		suiteRec.Entity.TenantId = existing.GetEntity().GetTenantId()
+		suiteRec.Entity.AuthorId = existing.GetEntity().GetAuthorId()
+		suiteRec.Entity.Description = existing.GetEntity().GetDescription()
+		suiteRec.Entity.Timings = &commonpb.Timings{
+			CreatedAt: existing.GetEntity().GetTimings().GetCreatedAt(),
+			UpdatedAt: timestamppbNow(),
+			DeletedAt: existing.GetEntity().GetTimings().GetDeletedAt(),
+		}
+		suiteRec.GetSpec().Id = existing.GetEntity().GetId()
+		suiteRec.Summary = suiteSummaryFromSpec(suiteRec.GetSpec(), existing.GetSummary())
+		if err := b.suites.Update(ctx, suiteRec); err != nil {
+			return nil, err
+		}
+		return suiteRec, nil
+	}
 	if err := b.suites.Create(ctx, suiteRec); err != nil {
 		return nil, err
 	}
@@ -512,6 +536,39 @@ var _ execution.SuiteRunPersister = suiteRunPersister{}
 
 func (p suiteRunPersister) SaveSuiteRun(ctx context.Context, run *modelspb.SuiteRunRecord) error {
 	return p.suiteRuns.Update(ctx, run)
+}
+
+func suiteSummaryFromSpec(spec *domain.Suite, prev *modelspb.SuiteRecord_Summary) *modelspb.SuiteRecord_Summary {
+	out := &modelspb.SuiteRecord_Summary{}
+	if prev != nil {
+		out.RunCount = prev.GetRunCount()
+		out.LastRunAt = prev.GetLastRunAt()
+		out.LastRunStatus = prev.GetLastRunStatus()
+		out.NextRunAt = prev.GetNextRunAt()
+	}
+	out.CellCount = enabledSuiteCellCount(spec)
+	if sched := spec.GetSchedule(); sched != nil {
+		out.ScheduleEnabled = sched.GetEnabled()
+		out.Cron = sched.GetCron()
+		if !sched.GetEnabled() {
+			out.NextRunAt = nil
+		}
+		return out
+	}
+	out.ScheduleEnabled = false
+	out.Cron = ""
+	out.NextRunAt = nil
+	return out
+}
+
+func enabledSuiteCellCount(spec *domain.Suite) uint32 {
+	var count uint32
+	for _, cell := range spec.GetCells() {
+		if cell.GetEnabled() {
+			count++
+		}
+	}
+	return count
 }
 
 /*

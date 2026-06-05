@@ -49,12 +49,14 @@ type SuiteCellResolver interface {
 // suite through. It crosses the storage + execution boundary (handled by other
 // workers), so the engine assembles the records and delegates the write/start:
 //   - SaveSuite persists the reusable SuiteRecord (returns the stored record with
-//     its server-owned identity filled in).
+//     its server-owned identity filled in). replaceSuiteID is set when the
+//     wizard was seeded from an existing suite and should update that definition
+//     instead of creating a copy.
 //   - StartSuiteRun persists a SuiteRunRecord whose children are the supplied
 //     baked child runs, returning the record and a post-commit starter. Called
 //     only when the wizard requested start=true.
 type SuiteBaker interface {
-	SaveSuite(ctx context.Context, suite *models.SuiteRecord) (*models.SuiteRecord, error)
+	SaveSuite(ctx context.Context, suite *models.SuiteRecord, replaceSuiteID string) (*models.SuiteRecord, error)
 	StartSuiteRun(ctx context.Context, suite *models.SuiteRecord, children []*BakedSuiteChild, trigger common.Trigger, maxParallel uint32) (*models.SuiteRunRecord, func(context.Context) error, error)
 }
 
@@ -316,6 +318,11 @@ func (e *SuiteWizardEngine) Bake(ctx context.Context, draft *models.SuiteWizardD
 		suiteName = draft.GetEntity().GetName()
 	}
 
+	suiteID := uuid.NewString()
+	if draft.GetSuiteId() != "" {
+		suiteID = draft.GetSuiteId()
+	}
+
 	spec := &domain.Suite{
 		Cells:                 suiteCells,
 		Provider:              draft.GetProvider(),
@@ -327,7 +334,7 @@ func (e *SuiteWizardEngine) Bake(ctx context.Context, draft *models.SuiteWizardD
 	now := nowTimestamp()
 	suite := &models.SuiteRecord{
 		Entity: &common.Entity{
-			Id:       uuid.NewString(),
+			Id:       suiteID,
 			TenantId: draft.GetEntity().GetTenantId(),
 			Name:     suiteName,
 			AuthorId: draft.GetEntity().GetAuthorId(),
@@ -340,9 +347,9 @@ func (e *SuiteWizardEngine) Bake(ctx context.Context, draft *models.SuiteWizardD
 			CellCount:       uint32(len(suiteCells)), //nolint:gosec // bounded by cells.
 		},
 	}
-	spec.Id = suite.GetEntity().GetId()
+	spec.Id = suiteID
 
-	savedSuite, err := e.baker.SaveSuite(ctx, suite)
+	savedSuite, err := e.baker.SaveSuite(ctx, suite, draft.GetSuiteId())
 	if err != nil {
 		return nil, nil, nil, err
 	}

@@ -9,6 +9,7 @@ import (
 	"github.com/stroppy-io/schemapb/schemapb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	derrors "github.com/stroppy-io/stroppy-cloud/internal/domain/errors"
@@ -138,6 +139,8 @@ func doTxRet[T any](ctx context.Context, s *SuiteWizardService, fn func(ctx cont
 	return tx.DoSerializableRet(ctx, s.d.Tx, fn, tx.WithRetry(tx.DefaultRetryPolicy))
 }
 
+func boolPtr(v bool) *bool { return &v }
+
 // loadDraft fetches a draft scoped to the tenant, translating not-found into a
 // gRPC NotFound. It is the single ownership/tenant gate every per-draft RPC runs
 // through, so a draft can never be touched from a foreign tenant.
@@ -190,6 +193,18 @@ func (s *SuiteWizardService) StartSuiteWizard(ctx context.Context, req *api.Star
 		Provider: provider,
 		Cells:    cells,
 		SuiteId:  req.GetSuiteId(),
+	}
+	if seed != nil {
+		draft.MaxParallel = seed.GetDefaultMaxParallel()
+		if seed.GetSchedule() != nil {
+			draft.Schedule = proto.Clone(seed.GetSchedule()).(*domain.Schedule)
+		}
+		if seed.DefaultInTenantRating != nil {
+			draft.DefaultInTenantRating = boolPtr(seed.GetDefaultInTenantRating())
+		}
+		if seed.DefaultInGlobalRating != nil {
+			draft.DefaultInGlobalRating = boolPtr(seed.GetDefaultInGlobalRating())
+		}
 	}
 
 	// Compute the first preview so the draft the client sees already carries its

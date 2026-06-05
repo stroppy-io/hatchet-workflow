@@ -39,6 +39,7 @@ import {
   Filter,
   Loader2,
   MoreHorizontal,
+  Pencil,
   Play,
   Plus,
   RefreshCw,
@@ -576,6 +577,7 @@ const ACTION_ITEMS: {
   danger?: boolean;
 }[] = [
   { action: "view", label: "View detail", icon: Eye },
+  { action: "edit", label: "Edit suite", icon: Pencil },
   { action: "start", label: "Start suite", icon: Play },
   { action: "clone", label: "Clone suite", icon: Copy },
   { action: "enableSchedule", label: "Enable schedule", icon: CalendarCheck },
@@ -926,7 +928,7 @@ export function Suites() {
   );
 
   // Quick (non-wizard) create — calls SuiteService.CreateSuite directly with a
-  // minimal empty-spec suite, then opens its detail page to fill it in. The
+  // minimal empty-spec suite, then opens its edit wizard to fill it in. The
   // wizard at /suites/new is the rich path; this is the one-click affordance.
   const [creating, setCreating] = useState(false);
   const quickCreate = useCallback(async () => {
@@ -939,7 +941,7 @@ export function Suites() {
         provider: "docker",
         cells: [],
       });
-      if (suiteId) navigate(`/suites/${suiteId}`);
+      if (suiteId) navigate(`/suites/${suiteId}/edit`);
       else await fetchSuites(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create suite");
@@ -957,6 +959,9 @@ export function Suites() {
         switch (action) {
           case "view":
             navigate(`/suites/${suite.id}`);
+            return;
+          case "edit":
+            navigate(`/suites/${suite.id}/edit`);
             return;
           case "start":
             await provider.startSuite(slug, suite.id);

@@ -15,7 +15,7 @@
 // own generated provider machines.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useSearchParams, useTenantSlug } from "@/lib/router";
+import { Link, useNavigate, useParams, useSearchParams, useTenantSlug } from "@/lib/router";
 import { useBreadcrumbLabel } from "@/lib/breadcrumbs";
 import {
   getSuiteWizardProvider,
@@ -32,6 +32,7 @@ import {
   type WorkloadPresetVM,
 } from "@/services/preset";
 import type { SuiteCellInput } from "@/services/suites";
+import { getSuitesProvider } from "@/services/suites";
 import { ENGINES, type EngineKind, type MachineSpecVM } from "@/services/wizard";
 import { MachinePlanEditor } from "@/components/wizard/MachinePlanEditor";
 import { Button } from "@/components/ui/button";
@@ -78,9 +79,12 @@ const PROVIDERS: { provider: Provider; label: string; icon: typeof Container; bl
 export function SuiteWizard() {
   const slug = useTenantSlug() ?? "";
   const navigate = useNavigate();
+  const routeParams = useParams<{ id: string }>();
   const [params, setParams] = useSearchParams();
 
   const draftId = params.get("draft") ?? "";
+  const editSuiteId = routeParams.id ?? "";
+  const editingSuite = editSuiteId !== "";
 
   const [draft, setDraft] = useState<SuiteWizardDraftVM | null>(null);
   const [loading, setLoading] = useState(false);
@@ -89,11 +93,17 @@ export function SuiteWizard() {
   const patchQueueRef = useRef<Promise<void>>(Promise.resolve());
   const pendingPatchCountRef = useRef(0);
   const activeDraftIdRef = useRef(draftId);
+  const startedEditDraftRef = useRef("");
 
   const [resume, setResume] = useState<SuiteDraftSummaryVM[]>([]);
   const [startName, setStartName] = useState("");
 
   useBreadcrumbLabel("draft", draft ? draft.name || "New Suite" : undefined);
+
+  const setActiveDraft = useCallback(
+    (id: string) => setParams({ draft: id }),
+    [setParams],
+  );
 
   useEffect(() => {
     activeDraftIdRef.current = draftId;
@@ -101,7 +111,7 @@ export function SuiteWizard() {
 
   // Resume list (List) — shown on the start screen.
   useEffect(() => {
-    if (draftId || !slug) return;
+    if (editingSuite || draftId || !slug) return;
     let cancelled = false;
     getSuiteWizardProvider()
       .list(slug)
@@ -110,7 +120,37 @@ export function SuiteWizard() {
     return () => {
       cancelled = true;
     };
-  }, [draftId, slug]);
+  }, [draftId, editingSuite, slug]);
+
+  useEffect(() => {
+    if (!editingSuite || !editSuiteId || draftId || !slug) return;
+    if (startedEditDraftRef.current === editSuiteId) return;
+    let cancelled = false;
+    startedEditDraftRef.current = editSuiteId;
+    setLoading(true);
+    setError(null);
+    getSuitesProvider()
+      .getSuite(slug, editSuiteId)
+      .then((suite) => {
+        if (!suite) throw new Error(`suite ${editSuiteId} not found`);
+        return getSuiteWizardProvider().start(slug, suite.name || "Untitled suite", editSuiteId);
+      })
+      .then((d) => {
+        if (cancelled) return;
+        setDraft(d);
+        setActiveDraft(d.id);
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        startedEditDraftRef.current = "";
+        setDraft(null);
+        setError(e instanceof Error ? e.message : String(e));
+      })
+      .finally(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [draftId, editSuiteId, editingSuite, setActiveDraft, slug]);
 
   // Load the active draft (Get).
   useEffect(() => {
@@ -137,11 +177,6 @@ export function SuiteWizard() {
       cancelled = true;
     };
   }, [draftId, slug]);
-
-  const setActiveDraft = useCallback(
-    (id: string) => setParams({ draft: id }),
-    [setParams],
-  );
 
   const handleStart = useCallback(async () => {
     if (!slug) return;
@@ -219,6 +254,26 @@ export function SuiteWizard() {
     [slug, draft, navigate],
   );
 
+  if (editingSuite && !draftId) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center text-sm text-muted-foreground">
+        {loading ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" /> Preparing suite editor…
+          </>
+        ) : (
+          <>
+            <AlertCircle className="h-4 w-4 text-red-400" />
+            <span>{error ?? "Unable to open suite editor."}</span>
+            <Button asChild variant="outline" size="sm">
+              <Link to={`/suites/${editSuiteId}`}>Back to suite</Link>
+            </Button>
+          </>
+        )}
+      </div>
+    );
+  }
+
   if (!draftId) {
     return (
       <SuiteStartScreen
@@ -248,9 +303,15 @@ export function SuiteWizard() {
         <div className="flex items-center gap-2 text-sm text-red-400">
           <AlertCircle className="h-4 w-4" /> {error ?? "Draft not found."}
         </div>
-        <Button variant="outline" size="sm" className="mt-4" onClick={() => setParams({})}>
-          Back to start
-        </Button>
+        {editingSuite ? (
+          <Button asChild variant="outline" size="sm" className="mt-4">
+            <Link to={`/suites/${editSuiteId}`}>Back to suite</Link>
+          </Button>
+        ) : (
+          <Button variant="outline" size="sm" className="mt-4" onClick={() => setParams({})}>
+            Back to start
+          </Button>
+        )}
       </div>
     );
   }
@@ -258,6 +319,7 @@ export function SuiteWizard() {
   return (
     <SuiteEditor
       slug={slug}
+      editingSuiteId={editSuiteId}
       draft={draft}
       patching={patching}
       error={error}
@@ -402,6 +464,7 @@ function friendlySuiteError(message: string): string {
 
 function SuiteEditor({
   slug,
+  editingSuiteId,
   draft,
   patching,
   error,
@@ -409,12 +472,14 @@ function SuiteEditor({
   onFinish,
 }: {
   slug: string;
+  editingSuiteId: string;
   draft: SuiteWizardDraftVM;
   patching: boolean;
   error: string | null;
   onPatch: (input: SuitePatchInput) => Promise<void>;
   onFinish: (start: boolean) => void;
 }) {
+  const editingExisting = editingSuiteId !== "";
   const [step, setStep] = useState<SuiteStepKey>("provider");
   const errCount = draft.errors.filter((e) => e.severity === "error").length;
   const machineCells = useMemo(() => cellsWithMachines(draft), [draft]);
@@ -451,7 +516,19 @@ function SuiteEditor({
       <div className="flex shrink-0 items-center gap-3 border-b border-zinc-800 bg-[#070707] px-5 py-2.5">
         <Grid3x3 className="h-4 w-4 text-primary" />
         <div className="min-w-0">
-          <div className="truncate font-mono text-sm text-zinc-200">{draft.name || "Untitled suite"}</div>
+          <div className="flex min-w-0 items-center gap-2">
+            <div className="truncate font-mono text-sm text-zinc-200">{draft.name || "Untitled suite"}</div>
+            {editingExisting && (
+              <span className="shrink-0 border border-primary/35 bg-primary/[0.07] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide text-primary">
+                editing
+              </span>
+            )}
+          </div>
+          {editingExisting && (
+            <div className="mt-0.5 font-mono text-[10px] text-zinc-600">
+              suite {editingSuiteId}
+            </div>
+          )}
         </div>
         <div className="ml-auto flex items-center gap-2">
           {patching && <Loader2 className="h-3.5 w-3.5 animate-spin text-zinc-500" />}
@@ -531,10 +608,10 @@ function SuiteEditor({
             </Button>
           )}
           <Button variant="outline" size="sm" disabled={!draft.ready || patching} onClick={() => onFinish(false)}>
-            <Save className="h-3.5 w-3.5" /> Save suite
+            <Save className="h-3.5 w-3.5" /> {editingExisting ? "Save changes" : "Save suite"}
           </Button>
           <Button size="sm" className="gap-1.5" disabled={!draft.ready || patching} onClick={() => onFinish(true)}>
-            <Rocket className="h-3.5 w-3.5" /> Save &amp; run
+            <Rocket className="h-3.5 w-3.5" /> {editingExisting ? "Save changes & run" : "Save & run"}
           </Button>
         </div>
       </div>

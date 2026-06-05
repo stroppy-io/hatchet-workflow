@@ -52,6 +52,41 @@ func TestSuiteWizardEnginePreservesCellMachineOverridesInPreviewAndBake(t *testi
 	assertAdaptersDockerOverride(t, adaptersMachineByNodeID(baker.children[0].Run.GetInfrastructurePlan().GetMachines(), workloadbuilder.RunnerNodeID))
 }
 
+func TestSuiteWizardEngineBakesSeededDraftBackIntoExistingSuite(t *testing.T) {
+	baker := &recordingSuiteBaker{}
+	engine := NewSuiteWizardEngine(nil, baker)
+	cellSpec := adaptersSuiteCell(t)
+	draft := &models.SuiteWizardDraftRecord{
+		Entity:   &common.Entity{Id: "draft-1", TenantId: "tenant-1", Name: "suite", AuthorId: "account-1"},
+		Provider: deployment.Provider_PROVIDER_DOCKER,
+		SuiteId:  "suite-existing",
+		Ready:    true,
+		Cells: []*models.SuiteWizardDraftRecord_Cell{
+			{
+				Spec:       cellSpec,
+				Database:   adaptersDatabase(),
+				Workload:   adaptersWorkload(),
+				Compatible: true,
+				Ready:      true,
+			},
+		},
+	}
+
+	suite, _, _, err := engine.Bake(context.Background(), draft, &api.FinishSuiteWizardRequest{})
+	if err != nil {
+		t.Fatalf("bake seeded suite draft: %v", err)
+	}
+	if baker.replaceSuiteID != "suite-existing" {
+		t.Fatalf("replaceSuiteID = %q, want suite-existing", baker.replaceSuiteID)
+	}
+	if got := suite.GetEntity().GetId(); got != "suite-existing" {
+		t.Fatalf("suite entity id = %q, want suite-existing", got)
+	}
+	if got := suite.GetSpec().GetId(); got != "suite-existing" {
+		t.Fatalf("suite spec id = %q, want suite-existing", got)
+	}
+}
+
 func TestSuiteWizardEngineRequiresCellMachineOverrides(t *testing.T) {
 	engine := NewSuiteWizardEngine(nil, &recordingSuiteBaker{})
 	cellSpec := adaptersSuiteCell(t)
@@ -80,10 +115,12 @@ func TestSuiteWizardEngineRequiresCellMachineOverrides(t *testing.T) {
 }
 
 type recordingSuiteBaker struct {
-	children []*BakedSuiteChild
+	children       []*BakedSuiteChild
+	replaceSuiteID string
 }
 
-func (b *recordingSuiteBaker) SaveSuite(_ context.Context, suite *models.SuiteRecord) (*models.SuiteRecord, error) {
+func (b *recordingSuiteBaker) SaveSuite(_ context.Context, suite *models.SuiteRecord, replaceSuiteID string) (*models.SuiteRecord, error) {
+	b.replaceSuiteID = replaceSuiteID
 	return suite, nil
 }
 

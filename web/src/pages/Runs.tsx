@@ -1383,7 +1383,7 @@ export function Runs() {
   const compareTo = useMemo(
     () => ({
       pathname: "/compare",
-      search: `?runs=${selectedRunIdList.map(encodeURIComponent).join(",")}`,
+      search: `?runIds=${selectedRunIdList.map(encodeURIComponent).join(",")}`,
     }),
     [selectedRunIdList],
   );
