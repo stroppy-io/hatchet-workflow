@@ -157,9 +157,33 @@ const STEP_FIELDS: Record<StepKey, string[]> = {
 function SectionTitle({ children, hint }: { children: React.ReactNode; hint?: string }) {
   return (
     <div className="mb-4">
-      <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">Step</div>
       <h2 className="text-lg font-semibold tracking-tight text-foreground">{children}</h2>
-      {hint && <p className="mt-1 text-sm text-muted-foreground">{hint}</p>}
+      {hint && <p className="mt-1 max-w-3xl text-sm text-muted-foreground">{hint}</p>}
+    </div>
+  );
+}
+
+/** A flex-1 right rail rendered in the PROGRESSIVE pane rows whenever the final
+ * editing pane isn't revealed yet. It guarantees the row always fills the width
+ * (no giant dead space on the right before the user has advanced) and shows a
+ * calm empty-state telling them what to do next. Hidden on narrow viewports
+ * where the panes stack — an empty-state block would just be noise there. */
+function PreviewAside({
+  icon: Icon,
+  title,
+  hint,
+}: {
+  icon: typeof Database;
+  title: string;
+  hint?: string;
+}) {
+  return (
+    <div className="hidden min-h-0 min-w-0 flex-1 flex-col lg:flex">
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center border border-dashed border-zinc-800/70 bg-surface-chrome/40 p-8 text-center">
+        <Icon className="mb-3 h-8 w-8 text-zinc-700" />
+        <div className="text-sm font-medium text-zinc-400">{title}</div>
+        {hint && <p className="mt-1.5 max-w-xs text-xs leading-relaxed text-zinc-600">{hint}</p>}
+      </div>
     </div>
   );
 }
@@ -321,7 +345,7 @@ export function NewRun() {
   return (
     <div className="flex h-full flex-col overflow-hidden">
       {/* Step bar */}
-      <div className="shrink-0 border-b border-zinc-800 bg-[#070707] px-5 py-2.5">
+      <div className="shrink-0 border-b border-zinc-800 bg-surface-chrome px-6 py-2.5 lg:px-8">
         <div className="flex items-center gap-1">
           {STEPS.map((s, i) => {
             const fields = STEP_FIELDS[s.key];
@@ -419,7 +443,7 @@ export function NewRun() {
       </div>
 
       {/* Nav footer — pinned at the bottom of the content viewport. */}
-      <div className="flex shrink-0 items-center justify-between border-t border-zinc-800 bg-[#070707] px-6 py-3 lg:px-8">
+      <div className="flex shrink-0 items-center justify-between border-t border-zinc-800 bg-surface-chrome px-6 py-3 lg:px-8">
         <Button
           variant="outline"
           size="sm"
@@ -477,7 +501,7 @@ function StartScreen({
         </div>
       )}
 
-      <div className="mt-6 border border-zinc-800 bg-[#0a0a0a] p-5">
+      <div className="mt-6 border border-zinc-800 bg-surface-tile p-5">
         <Label>Run name</Label>
         <div className="mt-1 flex gap-2">
           <Input
@@ -599,7 +623,7 @@ function StepInfra({
     .concat(errorsFor(draft.errors, "machine_overrides"));
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="mx-auto flex h-full w-full max-w-[120rem] flex-col">
       <SectionTitle hint="Choose where to run and size the machines produced by the selected database and workload. Tenant provider defaults are resolved server-side; this step edits only provider choice and per-node resources.">
         Infrastructure
       </SectionTitle>
@@ -607,7 +631,7 @@ function StepInfra({
       <div className="grid min-h-0 flex-1 gap-5 xl:grid-cols-[minmax(16rem,20rem)_minmax(0,1fr)] xl:items-stretch">
         <div className="space-y-5 overflow-y-auto">
           {/* Identity */}
-          <div className="border border-zinc-800/60 bg-[#070707] px-3 py-2.5">
+          <div className="border border-zinc-800/60 bg-surface-chrome px-3 py-2.5">
             <div className="text-[11px] font-mono uppercase tracking-wider text-zinc-500">Run</div>
             <div className="mt-1 font-mono text-sm text-zinc-200">{draft.name || "Untitled run"}</div>
           </div>
@@ -629,7 +653,7 @@ function StepInfra({
                     type="button"
                     onClick={() => pickProvider(p.provider)}
                     className={`flex items-center gap-3 border p-4 text-left transition-all ${
-                      active ? "border-primary/40 bg-primary/[0.06] text-primary" : "border-zinc-800/60 hover:border-zinc-700 hover:bg-zinc-900/50"
+                      active ? "border-primary/50 bg-primary/[0.07] text-primary" : "border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/50"
                     }`}
                   >
                     <Icon className={`h-5 w-5 shrink-0 ${active ? "text-primary" : "text-zinc-600"}`} />
@@ -664,7 +688,7 @@ function StepInfra({
               </div>
             </>
           ) : (
-            <div className="border border-zinc-800 bg-[#0a0a0a] p-5 text-center text-[12px] text-zinc-600">
+            <div className="border border-zinc-800 bg-surface-tile p-5 text-center text-[12px] text-zinc-600">
               Pick a database engine (Database step) to populate the machine plan.
             </div>
           )}
@@ -760,14 +784,16 @@ function StepDatabase({
   const errs = errorsFor(draft.errors, "database");
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="mx-auto flex h-full w-full max-w-[120rem] flex-col">
       <SectionTitle hint="Pick a database engine, seed it from a preset, then fine-tune the topology and engine settings. Node roles and counts from this step drive the machine plan.">
         Database under test
       </SectionTitle>
 
       {/* Three progressive panes, horizontal on lg+, stacked on narrow viewports.
-          Each revealed pane grows to fill the available width; the row fills the
-          remaining height and each pane scrolls internally. */}
+          Engine + Preset are fixed-width columns; the third slot ALWAYS grows
+          (the settings pane once revealed, otherwise a fill-the-width empty
+          state) so the row never leaves dead space on the right. The row fills
+          the remaining height and each pane scrolls internally. */}
       <div className="flex min-h-0 flex-1 flex-col gap-4 lg:flex-row lg:items-stretch">
         {/* Pane 1 — Engine (compact column on the left) */}
         <EnginePane active={engine} onPick={pickEngine} />
@@ -782,9 +808,19 @@ function StepDatabase({
           />
         )}
 
-        {/* Pane 3 — Settings (slides in once a preset/custom is chosen) */}
-        {engine && presetId && db && (
+        {/* Pane 3 — Settings, or a fill-width hint until it's reached */}
+        {engine && presetId && db ? (
           <SettingsPane key={`${engine}-settings`} draft={draft} db={db} apply={apply} errs={errs} />
+        ) : (
+          <PreviewAside
+            icon={engine ? Layers : Database}
+            title={engine ? "Pick a preset" : "Pick an engine"}
+            hint={
+              engine
+                ? "Choose a preset (or Custom) to configure the engine settings and see the derived topology."
+                : "Select a database engine on the left to begin. Its node roles drive the machine plan."
+            }
+          />
         )}
       </div>
     </div>
@@ -809,7 +845,7 @@ function EnginePane({ active, onPick }: { active: EngineKind | null; onPick: (k:
               className={`flex items-center gap-2.5 border p-3 text-left transition-all ${
                 sel
                   ? "border-primary/50 bg-primary/[0.07]"
-                  : "border-zinc-800 bg-[#0a0a0a] hover:border-zinc-700 hover:bg-zinc-900/50"
+                  : "border-zinc-800 bg-surface-tile hover:border-zinc-700 hover:bg-zinc-900/50"
               }`}
             >
               <Icon className="h-4 w-4 shrink-0" style={{ color: meta.hex }} />
@@ -879,7 +915,7 @@ function PresetPane({
                 className={`flex w-full items-start gap-2.5 border p-3 text-left transition-all ${
                   sel
                     ? "border-primary/50 bg-primary/[0.07]"
-                    : "border-zinc-800 bg-[#0a0a0a] hover:border-zinc-700 hover:bg-zinc-900/50"
+                    : "border-zinc-800 bg-surface-tile hover:border-zinc-700 hover:bg-zinc-900/50"
                 }`}
               >
                 {custom ? (
@@ -966,7 +1002,7 @@ function TopologyDiagram({ draft }: { draft: WizardDraftVM }) {
   if (draft.topologyComponents.length === 0) return null;
 
   return (
-    <div className="flex min-h-0 flex-col border border-zinc-800/60 bg-[#070707] p-3 xl:h-full">
+    <div className="flex min-h-0 flex-col border border-zinc-800/60 bg-surface-chrome p-3 xl:h-full">
       <div className="mb-2 shrink-0 text-[10px] font-mono uppercase tracking-wider text-zinc-600">
         Derived topology — {draft.topologyNodes.length} node{draft.topologyNodes.length > 1 ? "s" : ""}
       </div>
@@ -976,7 +1012,7 @@ function TopologyDiagram({ draft }: { draft: WizardDraftVM }) {
           const meta = ENGINES.find((e) => e.kind === c.engine);
           const color = meta?.hex ?? "#71717a";
           return (
-            <div key={c.id} className="flex flex-col gap-1 border border-zinc-800 bg-[#0a0a0a] p-3">
+            <div key={c.id} className="flex flex-col gap-1 border border-zinc-800 bg-surface-tile p-3">
               <div className="flex items-center gap-2">
                 <Icon className="h-4 w-4" style={{ color }} />
                 <span className="font-mono text-[11px] text-zinc-300">{c.role}</span>
@@ -1137,16 +1173,18 @@ function StepWorkload({
   const errs = errorsFor(draft.errors, "workload");
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="mx-auto flex h-full w-full max-w-[120rem] flex-col">
       <SectionTitle hint="Pick a stroppy build, choose a workload preset, tune its execution and data parameters, then probe the script for phases and environment variables.">
         Workload
       </SectionTitle>
 
-      {/* Four progressive panes, horizontal on lg+, stacked on narrow
-          viewports — mirrors the Database step. Version + Preset are narrow
-          columns (version is small, preset is a short list) so Parameters +
-          Probe keep room. The row fills the remaining height and each pane
-          scrolls internally. */}
+      {/* Progressive panes — mirrors the Database step. Version + Preset are
+          fixed-width columns; the third slot ALWAYS grows: a flex-1 main region
+          holding Parameters (+ Probe once ready), or a fill-width empty state
+          until a preset is chosen. Keeping it to a single growing region (rather
+          than two flex siblings) means there are never more than two fixed
+          columns, so the row neither leaves dead space nor overflows when the
+          window is narrow. */}
       <div className="flex min-h-0 flex-1 flex-col gap-4 lg:flex-row lg:items-stretch">
         {/* Pane 1 — Version (compact column on the left) */}
         <WorkloadVersionPane
@@ -1160,19 +1198,29 @@ function StepWorkload({
           <WorkloadPresetPane slug={slug} selectedId={presetId} onPick={pickPreset} />
         )}
 
-        {/* Pane 3 — Parameters (slides in once a preset/Custom is chosen) */}
-        {versionChosen && presetId && (
-          <WorkloadParametersPane w={w} apply={apply} errs={errs} />
-        )}
-
-        {/* Pane 4 — Probe (reveals the moment the probe result is ready) */}
-        {probeStarted && (
-          <WorkloadProbePane
-            probe={probe}
-            probing={probing}
-            probeErr={probeErr}
-            workload={w}
-            apply={apply}
+        {/* Pane 3 — Parameters (+ Probe), or a fill-width hint until reached */}
+        {versionChosen && presetId ? (
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 lg:flex-row lg:items-stretch">
+            <WorkloadParametersPane w={w} apply={apply} errs={errs} />
+            {probeStarted && (
+              <WorkloadProbePane
+                probe={probe}
+                probing={probing}
+                probeErr={probeErr}
+                workload={w}
+                apply={apply}
+              />
+            )}
+          </div>
+        ) : (
+          <PreviewAside
+            icon={versionChosen ? Layers : Tag}
+            title={versionChosen ? "Pick a workload preset" : "Pick a stroppy version"}
+            hint={
+              versionChosen
+                ? "Choose a preset (or Custom) to edit the execution and data parameters; the probe runs automatically."
+                : "Select a release tag or commit on the left to choose the stroppy build."
+            }
           />
         )}
       </div>
@@ -1262,7 +1310,7 @@ function WorkloadVersionPane({
                     className={`flex w-full items-center gap-2.5 border p-3 text-left transition-all ${
                       sel
                         ? "border-primary/50 bg-primary/[0.07]"
-                        : "border-zinc-800 bg-[#0a0a0a] hover:border-zinc-700 hover:bg-zinc-900/50"
+                        : "border-zinc-800 bg-surface-tile hover:border-zinc-700 hover:bg-zinc-900/50"
                     }`}
                   >
                     <Tag className={`h-4 w-4 shrink-0 ${sel ? "text-primary" : "text-zinc-500"}`} />
@@ -1361,7 +1409,7 @@ function WorkloadPresetPane({
                 className={`flex w-full items-start gap-2.5 border p-3 text-left transition-all ${
                   sel
                     ? "border-primary/50 bg-primary/[0.07]"
-                    : "border-zinc-800 bg-[#0a0a0a] hover:border-zinc-700 hover:bg-zinc-900/50"
+                    : "border-zinc-800 bg-surface-tile hover:border-zinc-700 hover:bg-zinc-900/50"
                 }`}
               >
                 {custom ? (
@@ -1439,7 +1487,7 @@ function WorkloadProbePane({
   return (
     <div className="pane-reveal flex min-h-0 min-w-0 flex-1 flex-col lg:basis-[24rem]">
       <PaneHeader index={4} title="Probe" subtitle="stroppy probe — phases &amp; env" />
-      <div className="flex min-h-0 flex-1 flex-col border border-zinc-800 bg-[#070707] p-4">
+      <div className="flex min-h-0 flex-1 flex-col border border-zinc-800 bg-surface-chrome p-4">
         <div className="flex shrink-0 items-center gap-2 text-[11px]">
           {probing ? (
             <span className="flex items-center gap-2 text-zinc-500">
@@ -1647,7 +1695,7 @@ function StepReview({
   }, [overrideCount]);
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="mx-auto flex h-full w-full max-w-[120rem] flex-col">
       <SectionTitle hint="Review the selected provider, database, workload and launch options. Generated files are available under Advanced for troubleshooting or manual overrides.">
         Review
       </SectionTitle>
@@ -1678,7 +1726,7 @@ function StepReview({
           <button
             type="button"
             onClick={() => setShowArtifacts((v) => !v)}
-            className="flex w-full items-center justify-between gap-3 border border-zinc-800 bg-[#0a0a0a] px-3 py-2 text-left transition-colors hover:bg-zinc-900/40"
+            className="flex w-full items-center justify-between gap-3 border border-zinc-800 bg-surface-tile px-3 py-2 text-left transition-colors hover:bg-zinc-900/40"
           >
             <div className="min-w-0">
               <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">Advanced generated files</div>
@@ -1790,7 +1838,7 @@ function ArtifactRow({
   const dirty = text !== a.content;
 
   return (
-    <div className="border border-zinc-800 bg-[#0a0a0a]">
+    <div className="border border-zinc-800 bg-surface-tile">
       <button
         type="button"
         onClick={() => (editable || hasContent) && setOpen((o) => !o)}
@@ -1856,7 +1904,7 @@ const MUTABILITY_LABEL: Record<RenderArtifact_Mutability, string> = {
 
 function ReviewCard({ title, value }: { title: string; value: string }) {
   return (
-    <div className="border border-zinc-800 bg-[#0a0a0a] p-3">
+    <div className="border border-zinc-800 bg-surface-tile p-3">
       <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">{title}</div>
       <div className="mt-1 truncate text-sm text-foreground">{value}</div>
     </div>

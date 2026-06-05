@@ -22,6 +22,12 @@
   --color-warning: #eab308;
   --color-pending: #6b7280;
 
+  /* Wizard surface scale — two levels, used by rule:
+       surface-chrome  : recessed frame (step bar, footer, side rails, identity)
+       surface-tile    : interactive tiles / cards (sits at page-bg level + border) */
+  --color-surface-chrome: #070707;
+  --color-surface-tile: #0a0a0a;
+
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
