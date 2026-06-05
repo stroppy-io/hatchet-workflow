@@ -6,7 +6,6 @@ import {
   type ColumnDef,
   type RowData,
 } from "@tanstack/react-table";
-import { toJson } from "@bufbuild/protobuf";
 
 // Per-column metadata: optional className applied to both the <th> and <td> so
 // a column (e.g. the thin trigger-icon column) can carry its own width/padding.
@@ -65,10 +64,10 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { Link, useNavigate, useSearchParams, useTenantSlug } from "@/lib/router";
 import {
-  AccountSchema,
-  type Account,
-  type AccountJson,
-} from "@/lib/proto/cloud/v1/iam/account_pb";
+  fallbackAuthorDisplay,
+  resolveAuthorDisplay,
+  type AuthorDisplay,
+} from "@/lib/author-display";
 import { Avatar } from "@/components/Avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -104,7 +103,6 @@ import {
   type RunVM,
   type SortField,
 } from "@/services/runs";
-import { iamClient } from "@/services/client";
 
 // Test Runs — the runs list/table. Built around the slice of
 // cloud.v1.api.ListTestRunsRequest the provider wires (search, statuses[],
@@ -897,32 +895,6 @@ function disabledReason(action: RunAction): string | undefined {
   return DISABLED_REASON[action];
 }
 
-interface AuthorDisplay {
-  label: string;
-  title: string;
-  avatarName: string;
-}
-
-function fallbackAuthorDisplay(id: string): AuthorDisplay {
-  return { label: id, title: id, avatarName: id };
-}
-
-function authorDisplayFromAccount(id: string, account?: Account): AuthorDisplay {
-  if (!account) return fallbackAuthorDisplay(id);
-  const j = toJson(AccountSchema, account) as AccountJson;
-  const nickname = j.nickname ?? "";
-  const email = j.email ?? "";
-  const label = nickname || email || id;
-  const titleParts = [email && email !== label ? email : null, id].filter(
-    Boolean,
-  );
-  return {
-    label,
-    title: titleParts.length ? `${label} · ${titleParts.join(" · ")}` : label,
-    avatarName: label,
-  };
-}
-
 /**
  * ActionsMenu — the compact "⋯" (kebab) cell. Opens a radix dropdown listing
  * EVERY run action; items invalid for the row's current status are DISABLED
@@ -1065,14 +1037,7 @@ export function Runs() {
       );
       if (missing.length === 0) return;
       void Promise.all(
-        missing.map(async (id) => {
-          try {
-            const { account } = await iamClient.getAccount({ id });
-            return [id, authorDisplayFromAccount(id, account)] as const;
-          } catch {
-            return [id, fallbackAuthorDisplay(id)] as const;
-          }
-        }),
+        missing.map(async (id) => [id, await resolveAuthorDisplay(id)] as const),
       ).then((entries) => {
         const next: Record<string, AuthorDisplay> = {};
         for (const [id, display] of entries) next[id] = display;

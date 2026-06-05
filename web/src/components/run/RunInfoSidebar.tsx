@@ -16,6 +16,12 @@ import {
 } from "lucide-react";
 import type { OverviewVM } from "@/services/run_overview";
 import type { RunVM } from "@/services/runs";
+import {
+  fallbackAuthorDisplay,
+  resolveAuthorDisplay,
+  type AuthorDisplay,
+} from "@/lib/author-display";
+import { Avatar } from "@/components/Avatar";
 
 function fmtTs(iso?: string): string {
   if (!iso) return "";
@@ -83,10 +89,40 @@ function Row({
 
 export function RunInfoSidebar({ overview, run }: { overview: OverviewVM; run?: RunVM }) {
   const isRunning = overview.status === "running" || overview.status === "cancelling";
+  const [ownerDisplay, setOwnerDisplay] = useState<AuthorDisplay | null>(null);
+
+  useEffect(() => {
+    const authorId = run?.authorId ?? "";
+    if (!authorId) {
+      setOwnerDisplay(null);
+      return;
+    }
+    let cancelled = false;
+    setOwnerDisplay(fallbackAuthorDisplay(authorId));
+    void resolveAuthorDisplay(authorId).then((display) => {
+      if (!cancelled) setOwnerDisplay(display);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [run?.authorId]);
+
   return (
     <div className="flex flex-col">
       <Group label="Identity">
         <Row icon={Hash} label="id" value={<span title={overview.runId}>{overview.runId.slice(0, 18)}…</span>} />
+        {run?.authorId && (
+          <Row
+            icon={Users}
+            label="owner"
+            value={
+              <span className="inline-flex min-w-0 items-center gap-1.5" title={ownerDisplay?.title ?? run.authorId}>
+                <Avatar name={ownerDisplay?.avatarName ?? run.authorId} size={14} />
+                <span className="truncate">{ownerDisplay?.label ?? run.authorId}</span>
+              </span>
+            }
+          />
+        )}
         <Row icon={Clock} label="started" value={fmtTs(overview.startedAt) || "—"} />
         <Row
           icon={Timer}

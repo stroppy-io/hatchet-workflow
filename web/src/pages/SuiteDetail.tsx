@@ -26,6 +26,11 @@ import { Link, useNavigate, useParams, useTenantSlug } from "@/lib/router";
 import { useAuth } from "@/hooks/useAuth";
 import { roleAtLeast } from "@/lib/roles";
 import { useBreadcrumbLabel } from "@/lib/breadcrumbs";
+import {
+  fallbackAuthorDisplay,
+  resolveAuthorDisplay,
+  type AuthorDisplay,
+} from "@/lib/author-display";
 import type { TenantRole } from "@/services/auth";
 import { Avatar } from "@/components/Avatar";
 import { Button } from "@/components/ui/button";
@@ -248,6 +253,7 @@ export function SuiteDetail() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [editingSettings, setEditingSettings] = useState(false);
+  const [ownerDisplay, setOwnerDisplay] = useState<AuthorDisplay | null>(null);
   // Which suite run is expanded to reveal its child test runs.
   const [expandedRunId, setExpandedRunId] = useState<string | null>(null);
 
@@ -283,6 +289,22 @@ export function SuiteDetail() {
   useEffect(() => {
     void load(true);
   }, [load]);
+
+  useEffect(() => {
+    const authorId = suite?.authorId ?? "";
+    if (!authorId) {
+      setOwnerDisplay(null);
+      return;
+    }
+    let cancelled = false;
+    setOwnerDisplay(fallbackAuthorDisplay(authorId));
+    void resolveAuthorDisplay(authorId).then((display) => {
+      if (!cancelled) setOwnerDisplay(display);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [suite?.authorId]);
 
   // Live refresh while any run is active (the mock progresses runs on a timer).
   const hasActive = useMemo(
@@ -633,6 +655,7 @@ export function SuiteDetail() {
       {/* SETTINGS / OVERVIEW — all suite settings consolidated here. */}
       <SettingsCard
         suite={suite}
+        ownerDisplay={ownerDisplay}
         editable={settingsEditable}
         editing={editingSettings}
         onEditToggle={setEditingSettings}
@@ -991,6 +1014,7 @@ interface SettingsPatch {
 
 function SettingsCard({
   suite,
+  ownerDisplay,
   editable,
   editing,
   onEditToggle,
@@ -998,6 +1022,7 @@ function SettingsCard({
   onSave,
 }: {
   suite: SuiteVM;
+  ownerDisplay: AuthorDisplay | null;
   editable: boolean;
   editing: boolean;
   onEditToggle: (v: boolean) => void;
@@ -1293,9 +1318,9 @@ function SettingsCard({
               )}
             </MetaItem>
             <MetaItem label="Owner">
-              <span className="inline-flex items-center gap-1.5">
-                <Avatar name={suite.authorId} size={14} />
-                {suite.authorId}
+              <span className="inline-flex min-w-0 items-center gap-1.5" title={ownerDisplay?.title ?? suite.authorId}>
+                <Avatar name={ownerDisplay?.avatarName ?? suite.authorId} size={14} />
+                <span className="truncate">{ownerDisplay?.label ?? suite.authorId}</span>
               </span>
             </MetaItem>
             <MetaItem label="Updated">

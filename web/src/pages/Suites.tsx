@@ -48,6 +48,11 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Link, useNavigate, useSearchParams, useTenantSlug } from "@/lib/router";
+import {
+  fallbackAuthorDisplay,
+  resolveAuthorDisplay,
+  type AuthorDisplay,
+} from "@/lib/author-display";
 import { Avatar } from "@/components/Avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -661,6 +666,8 @@ export function Suites() {
     null,
   );
   const [facets, setFacets] = useState<SuiteFacets>({ authorIds: [] });
+  const [authorDisplays, setAuthorDisplays] = useState<Record<string, AuthorDisplay>>({});
+  const authorDisplaysRef = useRef<Record<string, AuthorDisplay>>({});
   const tokenStackRef = useRef<string[]>([]);
 
   const popoverOpen = openFilterColumnId !== null || openActionSuiteId !== null;
@@ -669,6 +676,30 @@ export function Suites() {
       setOpenFilterColumnId(open ? columnId : (cur) => (cur === columnId ? null : cur));
     },
     [],
+  );
+
+  const rememberAuthorDisplays = useCallback((next: Record<string, AuthorDisplay>) => {
+    if (Object.keys(next).length === 0) return;
+    const merged = { ...authorDisplaysRef.current, ...next };
+    authorDisplaysRef.current = merged;
+    setAuthorDisplays(merged);
+  }, []);
+
+  const resolveAuthors = useCallback(
+    (ids: string[]) => {
+      const missing = [...new Set(ids.filter(Boolean))].filter(
+        (id) => !authorDisplaysRef.current[id],
+      );
+      if (missing.length === 0) return;
+      void Promise.all(
+        missing.map(async (id) => [id, await resolveAuthorDisplay(id)] as const),
+      ).then((entries) => {
+        const next: Record<string, AuthorDisplay> = {};
+        for (const [id, display] of entries) next[id] = display;
+        rememberAuthorDisplays(next);
+      });
+    },
+    [rememberAuthorDisplays],
   );
 
   const fetchSuites = useCallback(
@@ -696,6 +727,7 @@ export function Suites() {
         });
         setSuites(page.suites);
         setNextPageToken(page.nextPageToken);
+        resolveAuthors(page.suites.map((suite) => suite.authorId));
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load suites");
         setSuites([]);
@@ -721,6 +753,7 @@ export function Suites() {
       query.desc,
       query.pageSize,
       query.pageToken,
+      resolveAuthors,
     ],
   );
 
@@ -734,7 +767,10 @@ export function Suites() {
     void getSuitesProvider()
       .listFacets(slug)
       .then((f) => {
-        if (!cancelled) setFacets(f);
+        if (!cancelled) {
+          setFacets(f);
+          resolveAuthors(f.authorIds);
+        }
       })
       .catch(() => {
         if (!cancelled) setFacets({ authorIds: [] });
@@ -742,7 +778,7 @@ export function Suites() {
     return () => {
       cancelled = true;
     };
-  }, [slug]);
+  }, [slug, resolveAuthors]);
 
   useEffect(() => {
     if (query.refreshMs <= 0) return;
@@ -1063,7 +1099,7 @@ export function Suites() {
                   <ChecklistFilter
                     options={facets.authorIds.map((a) => ({
                       value: a,
-                      label: a,
+                      label: authorDisplays[a]?.label ?? a,
                     }))}
                     selected={authorSet}
                     onChange={(next) => setCsv("author", next)}
@@ -1081,14 +1117,15 @@ export function Suites() {
               const author = row.original.authorId;
               if (!author)
                 return <span className="font-mono text-xs text-zinc-600">-</span>;
+              const display = authorDisplays[author] ?? fallbackAuthorDisplay(author);
               return (
                 <div className="flex items-center gap-2 min-w-0">
-                  <Avatar name={author} size={22} className="shrink-0" />
+                  <Avatar name={display.avatarName} size={22} className="shrink-0" />
                   <span
                     className="font-mono text-xs text-zinc-400 truncate"
-                    title={author}
+                    title={display.title}
                   >
-                    {author}
+                    {display.label}
                   </span>
                 </div>
               );
