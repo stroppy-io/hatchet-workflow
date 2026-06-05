@@ -48,9 +48,17 @@ import {
 import { TestSchema } from "@/lib/proto/cloud/v1/domain/test_pb";
 import { suiteWizardClient } from "@/services/client";
 import { resolveTenantId } from "@/services/tenant";
-import { dbKindLabelFromJson, dbKindProto, providerProto } from "@/services/enums";
+import { dbKindLabelFromJson, dbKindProto } from "@/services/enums";
 import type { DbKind } from "@/services/runs";
 import type { SuiteProviderKind, SuiteCellSource, SuiteCellInput } from "@/services/suites";
+import {
+  machineVMToProto,
+  Yandex_Settings_PlatformId,
+  Yandex_Settings_Zone,
+  type InfrastructurePlanVM,
+  type MachineSpecVM,
+  type ProviderSettingsVM,
+} from "@/services/wizard";
 
 export { Provider };
 
@@ -102,6 +110,10 @@ export interface SuiteCellVM {
   ready: boolean;
   /** number of nodes in the cell's derived topology (machine count). */
   nodeCount: number;
+  /** server-derived provider machine preview for this cell. */
+  infrastructurePlan: InfrastructurePlanVM;
+  /** number of explicit machine overrides currently stored on spec. */
+  machineOverrideCount: number;
   /** per-cell validation/capacity/render errors. */
   errors: SuiteDraftErrorVM[];
 }
@@ -160,6 +172,8 @@ export interface SuiteCellPatchInput {
   name?: string;
   /** the cell's source intent (reuses the Suites SuiteCellInput shape). */
   cell?: SuiteCellInput;
+  /** explicit provider machine settings for this cell. */
+  machineOverrides?: InfrastructurePlanVM["machines"];
 }
 
 /** What a Patch carries — the typed sub-message(s) a step changed. */
@@ -273,17 +287,135 @@ type DraftJson = {
       presetPair?: { dbPresetId?: string; workloadPresetId?: string };
       testPresetId?: string;
       inlineTest?: { database?: { kind?: string } };
+      machineOverrides?: unknown[];
     };
     database?: { kind?: string };
     workload?: { script?: string };
-    topologySpec?: { nodes?: { id?: string }[] };
+    topologySpec?: TopologyJson;
+    infrastructurePlan?: InfrastructurePlanJson;
     compatible?: boolean;
     ready?: boolean;
     errors?: { field?: string; message?: string; severity?: string; code?: string }[];
   }[];
 };
 
-function mapCell(c: NonNullable<DraftJson["cells"]>[number]): SuiteCellVM {
+type TopologyJson = {
+  components?: { id?: string; kind?: string; engine?: string; role?: string }[];
+  nodes?: { id?: string; componentIds?: string[]; labels?: Record<string, string> }[];
+};
+
+type InfrastructurePlanJson = {
+  provider?: string;
+  settings?: {
+    docker?: Record<string, never>;
+    yandex?: {
+      cloudId?: string;
+      folderId?: string;
+      zone?: number;
+      networkName?: string;
+      subnetCidr?: string;
+      platformId?: number;
+      imageId?: string;
+      assignPublicIp?: boolean;
+      sshUser?: string;
+    };
+  };
+  machines?: {
+    nodeId?: string;
+    docker?: { image?: string; resources?: { cpuCores?: number; memoryMb?: string } };
+    yandex?: {
+      cores?: number;
+      memoryGb?: string;
+      bootDiskGb?: string;
+      bootDiskType?: string;
+      zone?: string;
+      publicIp?: boolean;
+    };
+  }[];
+};
+
+function infrastructurePlanToVM(
+  ip: InfrastructurePlanJson | undefined,
+  topology: TopologyJson | undefined,
+  fallbackProvider: Provider,
+): InfrastructurePlanVM {
+  const topologyComponents = (topology?.components ?? []).map((c) => {
+    const id = c.id ?? "";
+    const node = (topology?.nodes ?? []).find((n) => (n.componentIds ?? []).includes(id));
+    return {
+      id,
+      engine: c.engine ?? "",
+      role: c.role ?? "",
+      nodeId: node?.id ?? "",
+    };
+  });
+  const nodeRoleEngine = (nodeId: string): { role: string; engine: string } => {
+    const node = (topology?.nodes ?? []).find((n) => n.id === nodeId);
+    for (const cid of node?.componentIds ?? []) {
+      const comp = topologyComponents.find((x) => x.id === cid);
+      if (comp) return { role: comp.role, engine: comp.engine };
+    }
+    return { role: "", engine: "" };
+  };
+
+  let settings: ProviderSettingsVM = { case: undefined };
+  if (ip?.settings?.yandex) {
+    const y = ip.settings.yandex;
+    settings = {
+      case: "yandex",
+      yandex: {
+        cloudId: y.cloudId ?? "",
+        folderId: y.folderId ?? "",
+        zone: y.zone ?? Yandex_Settings_Zone.UNSPECIFIED,
+        networkName: y.networkName ?? "",
+        subnetCidr: y.subnetCidr ?? "",
+        platformId: y.platformId ?? Yandex_Settings_PlatformId.UNSPECIFIED,
+        imageId: y.imageId ?? "",
+        assignPublicIp: y.assignPublicIp ?? false,
+        sshUser: y.sshUser ?? "",
+      },
+    };
+  } else if (ip?.settings?.docker) {
+    settings = { case: "docker", docker: { networkName: "" } };
+  }
+
+  const machines = (ip?.machines ?? []).map((m) => {
+    const nodeId = m.nodeId ?? "";
+    const { role, engine } = nodeRoleEngine(nodeId);
+    let spec: MachineSpecVM = { case: undefined };
+    if (m.yandex) {
+      spec = {
+        case: "yandex",
+        yandex: {
+          cores: m.yandex.cores ?? 0,
+          memoryGb: Number(m.yandex.memoryGb ?? 0),
+          bootDiskGb: Number(m.yandex.bootDiskGb ?? 0),
+          bootDiskType: m.yandex.bootDiskType ?? "",
+          zone: m.yandex.zone ?? "",
+          publicIp: m.yandex.publicIp ?? false,
+        },
+      };
+    } else if (m.docker) {
+      spec = {
+        case: "docker",
+        docker: {
+          image: m.docker.image ?? "",
+          cpuCores: m.docker.resources?.cpuCores ?? 0,
+          memoryMb: Number(m.docker.resources?.memoryMb ?? 0),
+        },
+      };
+    }
+    return { nodeId, role, engine, spec };
+  });
+
+  return {
+    provider: providerFromJson(ip?.provider) || fallbackProvider,
+    settings,
+    machines,
+  };
+}
+
+function mapCell(c: NonNullable<DraftJson["cells"]>[number], provider: Provider): SuiteCellVM {
   const spec = c.spec ?? {};
   const source: SuiteCellSource = spec.presetPair
     ? "presetPair"
@@ -309,6 +441,8 @@ function mapCell(c: NonNullable<DraftJson["cells"]>[number]): SuiteCellVM {
     compatible: c.compatible ?? false,
     ready: c.ready ?? false,
     nodeCount: c.topologySpec?.nodes?.length ?? 0,
+    infrastructurePlan: infrastructurePlanToVM(c.infrastructurePlan, c.topologySpec, provider),
+    machineOverrideCount: spec.machineOverrides?.length ?? 0,
     errors: mapErrors(c.errors),
   };
 }
@@ -319,7 +453,7 @@ function draftToVM(draft: SuiteWizardDraftRecord | undefined): SuiteWizardDraftV
     id: j.entity?.id ?? "",
     name: j.entity?.name ?? "",
     provider: providerFromJson(j.provider),
-    cells: (j.cells ?? []).map(mapCell),
+    cells: (j.cells ?? []).map((c) => mapCell(c, providerFromJson(j.provider))),
     maxParallel: j.maxParallel ?? 0,
     scheduleEnabled: j.schedule?.enabled ?? false,
     cron: j.schedule?.cron ?? "",
@@ -377,6 +511,7 @@ function cellPatch(input: SuiteCellPatchInput): SuiteWizardCellPatch {
     enabled: input.enabled,
     name: input.name,
     source: input.cell ? cellSource(input.cell) : { case: undefined },
+    machineOverrides: input.machineOverrides?.map(machineVMToProto),
   });
 }
 

@@ -31,11 +31,12 @@ const (
 //
 // The server derives:
 // database + workload -> topology_spec
-// topology_spec + provider/defaults/user overrides -> infrastructure_plan
+// topology_spec + provider + explicit machine_overrides -> infrastructure_plan
 //
 // Provider account settings come from tenant settings at bake/start time. The
-// draft stores provider choice and per-node machine overrides inside
-// infrastructure_plan.
+// draft stores provider choice and per-node machine overrides separately from
+// the derived infrastructure_plan preview so generated resource values never
+// become launch intent unless the user explicitly confirms or edits them.
 type TestWizardDraftRecord struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// entity is the storage envelope (tenant-scoped: id, tenant_id, name,
@@ -52,9 +53,13 @@ type TestWizardDraftRecord struct {
 	// topology_spec is the server-derived provider-agnostic graph. Node roles
 	// and counts are never hand-entered; they come from database/workload.
 	TopologySpec *topology.TopologySpec `protobuf:"bytes,3,opt,name=topology_spec,json=topologySpec,proto3" json:"topology_spec,omitempty"`
-	// infrastructure_plan is the provider-specific resource intent derived from
-	// topology_spec and provider defaults, with user machine overrides merged.
+	// infrastructure_plan is the provider-specific resource preview derived
+	// from topology_spec, provider and machine_overrides.
 	InfrastructurePlan *deployment.InfrastructurePlan `protobuf:"bytes,9,opt,name=infrastructure_plan,json=infrastructurePlan,proto3" json:"infrastructure_plan,omitempty"`
+	// machine_overrides are the explicit per-node provider machine settings the
+	// user confirmed or edited. They are merged into infrastructure_plan and
+	// later baked into the TestRun.
+	MachineOverrides []*deployment.MachinePlan `protobuf:"bytes,12,rep,name=machine_overrides,json=machineOverrides,proto3" json:"machine_overrides,omitempty"`
 	// render_preview is the server-rendered wizard view of generated files,
 	// commands, directories, and runtime-only placeholders.
 	RenderPreview *deployment.RenderPreview `protobuf:"bytes,10,opt,name=render_preview,json=renderPreview,proto3" json:"render_preview,omitempty"`
@@ -148,6 +153,13 @@ func (x *TestWizardDraftRecord) GetInfrastructurePlan() *deployment.Infrastructu
 	return nil
 }
 
+func (x *TestWizardDraftRecord) GetMachineOverrides() []*deployment.MachinePlan {
+	if x != nil {
+		return x.MachineOverrides
+	}
+	return nil
+}
+
 func (x *TestWizardDraftRecord) GetRenderPreview() *deployment.RenderPreview {
 	if x != nil {
 		return x.RenderPreview
@@ -187,14 +199,15 @@ var File_cloud_v1_models_test_wizard_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_models_test_wizard_proto_rawDesc = "" +
 	"\n" +
-	"!cloud/v1/models/test_wizard.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/common/entity.proto\x1a(cloud/v1/deployment/infrastructure.proto\x1a\"cloud/v1/deployment/provider.proto\x1a cloud/v1/deployment/render.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a cloud/v1/topology/topology.proto\x1a\x15schemapb/schema.proto\x1a\x17validate/validate.proto\"\xb6\x05\n" +
+	"!cloud/v1/models/test_wizard.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/common/entity.proto\x1a(cloud/v1/deployment/infrastructure.proto\x1a\"cloud/v1/deployment/provider.proto\x1a cloud/v1/deployment/render.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a cloud/v1/topology/topology.proto\x1a\x15schemapb/schema.proto\x1a\x17validate/validate.proto\"\x90\x06\n" +
 	"\x15TestWizardDraftRecord\x129\n" +
 	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.common.EntityB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06entity\x12C\n" +
 	"\bprovider\x18\x02 \x01(\x0e2\x1d.cloud.v1.deployment.ProviderB\b\xfaB\x05\x82\x01\x02\x10\x01R\bprovider\x125\n" +
 	"\bdatabase\x18\a \x01(\v2\x19.cloud.v1.domain.DatabaseR\bdatabase\x125\n" +
 	"\bworkload\x18\b \x01(\v2\x19.cloud.v1.domain.WorkloadR\bworkload\x12D\n" +
 	"\rtopology_spec\x18\x03 \x01(\v2\x1f.cloud.v1.topology.TopologySpecR\ftopologySpec\x12X\n" +
-	"\x13infrastructure_plan\x18\t \x01(\v2'.cloud.v1.deployment.InfrastructurePlanR\x12infrastructurePlan\x12I\n" +
+	"\x13infrastructure_plan\x18\t \x01(\v2'.cloud.v1.deployment.InfrastructurePlanR\x12infrastructurePlan\x12X\n" +
+	"\x11machine_overrides\x18\f \x03(\v2 .cloud.v1.deployment.MachinePlanB\t\xfaB\x06\x92\x01\x03\x10\x80\x02R\x10machineOverrides\x12I\n" +
 	"\x0erender_preview\x18\n" +
 	" \x01(\v2\".cloud.v1.deployment.RenderPreviewR\rrenderPreview\x12Q\n" +
 	"\x10render_overrides\x18\v \x01(\v2&.cloud.v1.deployment.RenderOverrideSetR\x0frenderOverrides\x12,\n" +
@@ -223,25 +236,27 @@ var file_cloud_v1_models_test_wizard_proto_goTypes = []any{
 	(*domain.Workload)(nil),               // 4: cloud.v1.domain.Workload
 	(*topology.TopologySpec)(nil),         // 5: cloud.v1.topology.TopologySpec
 	(*deployment.InfrastructurePlan)(nil), // 6: cloud.v1.deployment.InfrastructurePlan
-	(*deployment.RenderPreview)(nil),      // 7: cloud.v1.deployment.RenderPreview
-	(*deployment.RenderOverrideSet)(nil),  // 8: cloud.v1.deployment.RenderOverrideSet
-	(*schemapb.FieldError)(nil),           // 9: schemapb.FieldError
+	(*deployment.MachinePlan)(nil),        // 7: cloud.v1.deployment.MachinePlan
+	(*deployment.RenderPreview)(nil),      // 8: cloud.v1.deployment.RenderPreview
+	(*deployment.RenderOverrideSet)(nil),  // 9: cloud.v1.deployment.RenderOverrideSet
+	(*schemapb.FieldError)(nil),           // 10: schemapb.FieldError
 }
 var file_cloud_v1_models_test_wizard_proto_depIdxs = []int32{
-	1, // 0: cloud.v1.models.TestWizardDraftRecord.entity:type_name -> cloud.v1.common.Entity
-	2, // 1: cloud.v1.models.TestWizardDraftRecord.provider:type_name -> cloud.v1.deployment.Provider
-	3, // 2: cloud.v1.models.TestWizardDraftRecord.database:type_name -> cloud.v1.domain.Database
-	4, // 3: cloud.v1.models.TestWizardDraftRecord.workload:type_name -> cloud.v1.domain.Workload
-	5, // 4: cloud.v1.models.TestWizardDraftRecord.topology_spec:type_name -> cloud.v1.topology.TopologySpec
-	6, // 5: cloud.v1.models.TestWizardDraftRecord.infrastructure_plan:type_name -> cloud.v1.deployment.InfrastructurePlan
-	7, // 6: cloud.v1.models.TestWizardDraftRecord.render_preview:type_name -> cloud.v1.deployment.RenderPreview
-	8, // 7: cloud.v1.models.TestWizardDraftRecord.render_overrides:type_name -> cloud.v1.deployment.RenderOverrideSet
-	9, // 8: cloud.v1.models.TestWizardDraftRecord.errors:type_name -> schemapb.FieldError
-	9, // [9:9] is the sub-list for method output_type
-	9, // [9:9] is the sub-list for method input_type
-	9, // [9:9] is the sub-list for extension type_name
-	9, // [9:9] is the sub-list for extension extendee
-	0, // [0:9] is the sub-list for field type_name
+	1,  // 0: cloud.v1.models.TestWizardDraftRecord.entity:type_name -> cloud.v1.common.Entity
+	2,  // 1: cloud.v1.models.TestWizardDraftRecord.provider:type_name -> cloud.v1.deployment.Provider
+	3,  // 2: cloud.v1.models.TestWizardDraftRecord.database:type_name -> cloud.v1.domain.Database
+	4,  // 3: cloud.v1.models.TestWizardDraftRecord.workload:type_name -> cloud.v1.domain.Workload
+	5,  // 4: cloud.v1.models.TestWizardDraftRecord.topology_spec:type_name -> cloud.v1.topology.TopologySpec
+	6,  // 5: cloud.v1.models.TestWizardDraftRecord.infrastructure_plan:type_name -> cloud.v1.deployment.InfrastructurePlan
+	7,  // 6: cloud.v1.models.TestWizardDraftRecord.machine_overrides:type_name -> cloud.v1.deployment.MachinePlan
+	8,  // 7: cloud.v1.models.TestWizardDraftRecord.render_preview:type_name -> cloud.v1.deployment.RenderPreview
+	9,  // 8: cloud.v1.models.TestWizardDraftRecord.render_overrides:type_name -> cloud.v1.deployment.RenderOverrideSet
+	10, // 9: cloud.v1.models.TestWizardDraftRecord.errors:type_name -> schemapb.FieldError
+	10, // [10:10] is the sub-list for method output_type
+	10, // [10:10] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_models_test_wizard_proto_init() }

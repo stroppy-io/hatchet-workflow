@@ -8047,7 +8047,7 @@ go_name: Draft</pre></td>
 <pre>
 //PatchTestWizard submits edited typed draft fields. The server validates,
 //re-derives topology_spec, infrastructure_plan and render_preview, preserves
-//compatible machine overrides from infrastructure_plan, applies compatible
+//compatible machine overrides from machine_overrides, applies compatible
 //render_overrides, recomputes readiness and returns the full new draft. Send
 //the fields you changed; unset typed messages are treated as "no change".
 </pre>
@@ -8078,12 +8078,22 @@ go_name: DraftId</pre></td>
 <td>infrastructure_plan</td>
 <td><a href="../deployment/README.md#cloud-v1-deployment-infrastructureplan">cloud.v1.deployment.InfrastructurePlan</a></td>
 <td><pre>
-//infrastructure_plan optionally carries user edits to provider-specific
-//machine params. The server re-derives the plan and merges compatible
-//MachinePlan overrides by node_id.<br>
+//infrastructure_plan is a compatibility path for older clients that sent
+//user machine edits as a full preview plan. New clients should use
+//machine_overrides instead.<br>
 
 json_name: infrastructurePlan
 go_name: InfrastructurePlan</pre></td>
+</tr><tr>
+<td>machine_overrides</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-machineplan">cloud.v1.deployment.MachinePlan</a></td>
+<td><pre>
+//machine_overrides carries explicit provider machine settings confirmed or
+//edited by the user. infrastructure_plan is kept as a compatibility path
+//for older clients, but new clients should patch this intent field.<br>
+
+json_name: machineOverrides
+go_name: MachineOverrides</pre></td>
 </tr><tr>
 <td>provider</td>
 <td><a href="../deployment/README.md#cloud-v1-deployment-provider">cloud.v1.deployment.Provider</a></td>

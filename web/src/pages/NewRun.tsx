@@ -19,7 +19,7 @@
 //        so it runs BEFORE Infrastructure — the machine list isn't final until
 //        the workload is set.
 //   3. Infrastructure — provider (deployment.Provider) + per-machine specs
-//        (MachinePlan → Docker.Container | Yandex.Vm) → .infrastructure_plan.
+//        (MachinePlan → Docker.Container | Yandex.Vm) → .machine_overrides.
 //        Comes LAST of the editing steps so you size the now-complete machine
 //        set. Provider-level settings (cloud/folder/zone/network/image/…) are
 //        TENANT provider defaults resolved server-side and are NOT edited here —
@@ -42,7 +42,6 @@ import {
   RenderArtifact_Kind,
   RenderArtifact_Origin,
   RenderArtifact_Mutability,
-  Yandex_Settings_PlatformId,
   defaultWorkload,
   driverTypeFor,
   type WizardDraftVM,
@@ -53,9 +52,7 @@ import {
   type ProbeMetaVM,
   type DraftErrorVM,
   type InfrastructurePlanVM,
-  type MachineVM,
   type MachineSpecVM,
-  type ProviderSettingsVM,
   type RenderArtifactVM,
   type FileOverrideVM,
 } from "@/services/wizard";
@@ -91,15 +88,9 @@ import {
 } from "@/components/ui/select";
 import { ConfigEditor } from "@/components/ui/config-editor";
 import {
-  NumericSlider,
-  DiskTypeSelect,
-  cpuStepsForPlatform,
-  ramSteps,
-  diskStepsForType,
-  platformLimits,
-  YC_PLATFORMS,
-  SliderField,
-} from "@/components/ui/sliders";
+  MachinePlanEditor,
+  machineSpecSummary,
+} from "@/components/wizard/MachinePlanEditor";
 import {
   Check,
   ChevronLeft,
@@ -253,13 +244,7 @@ export function NewRun() {
     setError(null);
     setLoading(true);
     try {
-      let d = await getWizardProvider().start(slug, startName.trim() || "Untitled run");
-      // Default a provider up front so the Database step's patch can compute an
-      // initial topology + machine plan. The user revisits/changes the provider
-      // in the Infrastructure step (which re-patches).
-      if (d.provider === Provider.UNSPECIFIED) {
-        d = await getWizardProvider().patch(slug, d.id, { provider: Provider.DOCKER });
-      }
+      const d = await getWizardProvider().start(slug, startName.trim() || "Untitled run");
       setDraft(d);
       setActiveDraft(d.id, "database");
     } catch (e) {
@@ -562,24 +547,12 @@ const PROVIDERS: { provider: Provider; label: string; icon: typeof Container; bl
   { provider: Provider.YANDEX, label: "Yandex Cloud", icon: Cloud, blurb: "Provisions VMs via Terraform — real multi-node infrastructure." },
 ];
 
-/** Map the proto Yandex platform enum (from the server-resolved settings) to the
- * slider's platform key string — read-only, used to bound the VM sliders. */
-const PLATFORM_ENUM_TO_KEY: Record<number, keyof typeof YC_PLATFORMS> = {
-  [Yandex_Settings_PlatformId.STANDARD_V2]: "standard-v2",
-  [Yandex_Settings_PlatformId.STANDARD_V3]: "standard-v3",
-  [Yandex_Settings_PlatformId.HIGHFREQ_V3]: "highfreq-v3",
-};
-function platformKey(s: ProviderSettingsVM): keyof typeof YC_PLATFORMS {
-  if (s.case !== "yandex") return "standard-v3";
-  return PLATFORM_ENUM_TO_KEY[s.yandex.platformId] ?? "standard-v3";
-}
-
 function StepInfra({
   draft,
   patch,
 }: {
   draft: WizardDraftVM;
-  patch: (input: { provider?: Provider; infrastructurePlan?: InfrastructurePlanVM }) => Promise<void>;
+  patch: (input: { provider?: Provider; machineOverrides?: InfrastructurePlanVM["machines"] }) => Promise<void>;
 }) {
   // Local editable copy of the server-returned infrastructure plan.
   const [plan, setPlan] = useState<InfrastructurePlanVM>(draft.infrastructurePlan);
@@ -607,7 +580,7 @@ function StepInfra({
       machines: plan.machines.map((m) => (m.nodeId === nodeId ? { ...m, spec } : m)),
     };
     setPlan(next);
-    void patch({ infrastructurePlan: next });
+    void patch({ machineOverrides: next.machines });
   };
 
   const pickProvider = (p: Provider) => {
@@ -616,14 +589,18 @@ function StepInfra({
     void patch({ provider: p });
   };
 
-  // Platform key for the VM sliders comes from the server-resolved settings
-  // (tenant default) — read-only here, the wizard does not edit it.
-  const pkey = platformKey(plan.settings);
-  const provErrs = errorsFor(draft.errors, "provider").concat(errorsFor(draft.errors, "infrastructure_plan"));
+  const confirmPlan = () => {
+    if (plan.machines.length === 0) return;
+    void patch({ machineOverrides: plan.machines });
+  };
+
+  const provErrs = errorsFor(draft.errors, "provider")
+    .concat(errorsFor(draft.errors, "infrastructure_plan"))
+    .concat(errorsFor(draft.errors, "machine_overrides"));
 
   return (
     <div className="flex h-full flex-col">
-      <SectionTitle hint="Where to run, and the per-machine specs for the now-complete node set (Database + Workload produced it). Provider-level settings (cloud/folder/zone/network/image/…) are tenant defaults resolved server-side — only the provider choice and per-node sizing are edited here. Editing re-Patches PatchTestWizard.infrastructure_plan.machines.">
+      <SectionTitle hint="Where to run, and the per-machine specs for the now-complete node set (Database + Workload produced it). Provider-level settings (cloud/folder/zone/network/image/…) are tenant defaults resolved server-side — only the provider choice and per-node sizing are edited here. Confirming or editing sends PatchTestWizard.machine_overrides.">
         Infrastructure
       </SectionTitle>
 
@@ -669,20 +646,21 @@ function StepInfra({
           </div>
         </div>
 
-        {/* Per-machine specs (infrastructure_plan.machines) — fills the height,
+        {/* Per-machine specs (machine_overrides from infrastructure_plan preview) — fills the height,
             scrolls internally, and uses the full width with more grid columns. */}
         <div className="flex min-h-0 flex-col">
           {plan.machines.length > 0 ? (
             <>
-              <div className="mb-2 shrink-0 text-[10px] font-mono uppercase tracking-wider text-zinc-600">
-                Machine plan — {plan.machines.length} node{plan.machines.length > 1 ? "s" : ""}
+              <div className="mb-2 flex shrink-0 items-center justify-between gap-3">
+                <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">
+                  Machine plan — {plan.machines.length} node{plan.machines.length > 1 ? "s" : ""}
+                </div>
+                <Button size="sm" variant="outline" className="h-7 gap-1.5" onClick={confirmPlan}>
+                  <Check className="h-3.5 w-3.5" /> Confirm machine settings
+                </Button>
               </div>
               <div className="min-h-0 flex-1 overflow-y-auto pr-1">
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                  {plan.machines.map((m) => (
-                    <MachineRow key={m.nodeId} m={m} platformKey={pkey} onChange={(spec) => setMachine(m.nodeId, spec)} />
-                  ))}
-                </div>
+                <MachinePlanEditor machines={plan.machines} settings={plan.settings} onMachineChange={setMachine} />
                 <FieldErrors errs={provErrs} />
               </div>
             </>
@@ -710,96 +688,6 @@ const ROLE_ICON: Record<string, typeof Database> = {
   agent: Zap,
   metrics: Server,
 };
-
-/** One MachinePlan row: a Docker.Container or Yandex.Vm spec, edited with the
- * same sliders the old NewRun used for per-role machine sizing. */
-function MachineRow({
-  m,
-  platformKey,
-  onChange,
-}: {
-  m: MachineVM;
-  platformKey: keyof typeof YC_PLATFORMS;
-  onChange: (spec: MachineSpecVM) => void;
-}) {
-  const Icon = ROLE_ICON[m.role] ?? Box;
-  const limits = platformLimits(platformKey);
-  const spec = m.spec;
-
-  return (
-    <div className="border border-zinc-800 bg-[#0a0a0a] p-2.5">
-      <div className="mb-2 flex items-center gap-1.5">
-        <Icon className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
-        <span className="min-w-0 truncate font-mono text-[11px] text-zinc-300">{m.nodeId}</span>
-        <span className="shrink-0 bg-zinc-800/60 px-1 py-0.5 font-mono text-[9px] uppercase tracking-wide text-zinc-500">{m.role}</span>
-        <span className="ml-auto shrink-0 font-mono text-[9px] text-zinc-600">{spec.case === "yandex" ? "Yandex.Vm" : "Docker.Container"}</span>
-      </div>
-
-      {spec.case === "yandex" && (
-        <div className="space-y-2">
-          <div className="grid grid-cols-2 gap-2">
-            <NumericSlider
-              label="vCPU (cores)"
-              value={spec.yandex.cores}
-              min={2}
-              max={limits.maxCores}
-              onChange={(v) => onChange({ case: "yandex", yandex: { ...spec.yandex, cores: v } })}
-            />
-            <NumericSlider
-              label="RAM (GB)"
-              value={spec.yandex.memoryGb}
-              min={1}
-              max={Math.round(limits.maxRamMb / 1024)}
-              onChange={(v) => onChange({ case: "yandex", yandex: { ...spec.yandex, memoryGb: v } })}
-            />
-          </div>
-          <SliderField
-            label="boot disk (GB)"
-            value={spec.yandex.bootDiskGb}
-            steps={diskStepsForType(spec.yandex.bootDiskType)}
-            onChange={(v) => onChange({ case: "yandex", yandex: { ...spec.yandex, bootDiskGb: v } })}
-            format={(v) => `${v}`}
-          />
-          <DiskTypeSelect
-            value={spec.yandex.bootDiskType}
-            diskSizeGb={spec.yandex.bootDiskGb}
-            onChange={(v) => onChange({ case: "yandex", yandex: { ...spec.yandex, bootDiskType: v } })}
-          />
-        </div>
-      )}
-
-      {spec.case === "docker" && (
-        <div className="space-y-2">
-          <div>
-            <Label className="text-[9px] font-mono text-zinc-600">image</Label>
-            <Input
-              className="mt-1 h-6 font-mono text-[10px]"
-              value={spec.docker.image}
-              onChange={(e) => onChange({ case: "docker", docker: { ...spec.docker, image: e.target.value } })}
-              placeholder="postgres:16"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <SliderField
-              label="cpu cores"
-              value={spec.docker.cpuCores}
-              steps={[1, 2, 4, 8, 12, 16, 24, 32]}
-              onChange={(v) => onChange({ case: "docker", docker: { ...spec.docker, cpuCores: v } })}
-              format={(v) => `${v}`}
-            />
-            <SliderField
-              label="memory (MB)"
-              value={spec.docker.memoryMb}
-              steps={[512, 1024, 2048, 4096, 8192, 16384, 32768, 65536]}
-              onChange={(v) => onChange({ case: "docker", docker: { ...spec.docker, memoryMb: v } })}
-              format={(v) => `${v}`}
-            />
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ─── Step 2: Database (+ topology diagram) ─────────────────────────────────────
 
@@ -1095,24 +983,13 @@ function TopologyDiagram({ draft }: { draft: WizardDraftVM }) {
                 <span className="font-mono text-[11px] text-zinc-300">{c.role}</span>
               </div>
               <div className="font-mono text-[10px] text-zinc-600">{c.engine}</div>
-              <div className="mt-0.5 font-mono text-[10px] text-zinc-500">{specSummary(specByNode.get(c.nodeId))}</div>
+              <div className="mt-0.5 font-mono text-[10px] text-zinc-500">{machineSpecSummary(specByNode.get(c.nodeId))}</div>
             </div>
           );
         })}
       </div>
     </div>
   );
-}
-
-function specSummary(spec: MachineSpecVM | undefined): string {
-  if (!spec || spec.case === undefined) return "—";
-  if (spec.case === "yandex") {
-    const y = spec.yandex;
-    const t = y.bootDiskType.replace("network-ssd-io-m3", "io-m3").replace("network-ssd", "ssd");
-    return `${y.cores} vCPU / ${y.memoryGb} GB / ${y.bootDiskGb} GB ${t}`;
-  }
-  const d = spec.docker;
-  return `${d.cpuCores} cpu / ${(d.memoryMb / 1024).toFixed(d.memoryMb % 1024 ? 1 : 0)} GB`;
 }
 
 // ─── Step 3: Workload + ProbeScript ───────────────────────────────────────────
@@ -1971,4 +1848,3 @@ function ReviewCard({ title, value }: { title: string; value: string }) {
     </div>
   );
 }
-

@@ -1860,11 +1860,12 @@ go_name: WorkloadProtocol</pre></td>
 
 //The server derives:
 //database + workload -> topology_spec
-//topology_spec + provider/defaults/user overrides -> infrastructure_plan
+//topology_spec + provider + explicit machine_overrides -> infrastructure_plan
 
 //Provider account settings come from tenant settings at bake/start time. The
-//draft stores provider choice and per-node machine overrides inside
-//infrastructure_plan.
+//draft stores provider choice and per-node machine overrides separately from
+//the derived infrastructure_plan preview so generated resource values never
+//become launch intent unless the user explicitly confirms or edits them.
 </pre>
 
 <table>
@@ -1907,11 +1908,21 @@ go_name: Errors</pre></td>
 <td>infrastructure_plan</td>
 <td><a href="../deployment/README.md#cloud-v1-deployment-infrastructureplan">cloud.v1.deployment.InfrastructurePlan</a></td>
 <td><pre>
-//infrastructure_plan is the provider-specific resource intent derived from
-//topology_spec and provider defaults, with user machine overrides merged.<br>
+//infrastructure_plan is the provider-specific resource preview derived
+//from topology_spec, provider and machine_overrides.<br>
 
 json_name: infrastructurePlan
 go_name: InfrastructurePlan</pre></td>
+</tr><tr>
+<td>machine_overrides</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-machineplan">cloud.v1.deployment.MachinePlan</a></td>
+<td><pre>
+//machine_overrides are the explicit per-node provider machine settings the
+//user confirmed or edited. They are merged into infrastructure_plan and
+//later baked into the TestRun.<br>
+
+json_name: machineOverrides
+go_name: MachineOverrides</pre></td>
 </tr><tr>
 <td>provider</td>
 <td><a href="../deployment/README.md#cloud-v1-deployment-provider">cloud.v1.deployment.Provider</a></td>

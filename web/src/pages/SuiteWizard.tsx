@@ -35,6 +35,10 @@ import { ENGINES, type EngineKind } from "@/services/wizard";
 import { dbKindProto } from "@/services/enums";
 import { Database_Kind } from "@/lib/proto/cloud/v1/domain/database_pb";
 import type { DbKind } from "@/services/runs";
+import {
+  MachinePlanEditor,
+  machineSpecSummary,
+} from "@/components/wizard/MachinePlanEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -163,11 +167,7 @@ export function SuiteWizard() {
     setError(null);
     setLoading(true);
     try {
-      let d = await getSuiteWizardProvider().start(slug, startName.trim() || "Untitled suite");
-      // Default a provider so each cell's first Patch can derive a topology.
-      if (d.provider === Provider.UNSPECIFIED) {
-        d = await getSuiteWizardProvider().patch(slug, d.id, { provider: Provider.DOCKER });
-      }
+      const d = await getSuiteWizardProvider().start(slug, startName.trim() || "Untitled suite");
       setDraft(d);
       setActiveDraft(d.id);
     } catch (e) {
@@ -625,6 +625,23 @@ function CellMatrix({
     setAdding(false);
     await onPatch({ cells: [{ cellId: "", cell }] });
   };
+  const confirmAllMachinePlans = async () => {
+    const cells = draft.cells
+      .filter((c) => c.infrastructurePlan.machines.length > 0)
+      .map((c) => ({
+        cellId: c.id,
+        machineOverrides: c.infrastructurePlan.machines,
+      }));
+    if (cells.length === 0) return;
+    await onPatch({ cells });
+  };
+  const setCellMachine = (cell: SuiteCellVM, nodeId: string, spec: SuiteCellVM["infrastructurePlan"]["machines"][number]["spec"]) => {
+    const machineOverrides = cell.infrastructurePlan.machines.map((m) =>
+      m.nodeId === nodeId ? { ...m, spec } : m,
+    );
+    void onPatch({ cells: [{ cellId: cell.id, machineOverrides }] });
+  };
+  const hasMachinePlans = draft.cells.some((c) => c.infrastructurePlan.machines.length > 0);
 
   return (
     <div className="flex min-h-0 flex-col">
@@ -632,9 +649,20 @@ function CellMatrix({
         <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">
           Matrix — {draft.cells.length} cell{draft.cells.length === 1 ? "" : "s"}
         </div>
-        <Button size="sm" variant="outline" className="h-7 gap-1.5" onClick={() => setAdding((v) => !v)}>
-          <Plus className="h-3.5 w-3.5" /> Add cell
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 gap-1.5"
+            disabled={!hasMachinePlans}
+            onClick={confirmAllMachinePlans}
+          >
+            <Check className="h-3.5 w-3.5" /> Confirm all machines
+          </Button>
+          <Button size="sm" variant="outline" className="h-7 gap-1.5" onClick={() => setAdding((v) => !v)}>
+            <Plus className="h-3.5 w-3.5" /> Add cell
+          </Button>
+        </div>
       </div>
 
       {adding && <CellComposer slug={slug} onAdd={addCell} onCancel={() => setAdding(false)} />}
@@ -651,6 +679,8 @@ function CellMatrix({
               cell={c}
               onToggle={(enabled) => void onPatch({ cells: [{ cellId: c.id, enabled }] })}
               onRemove={() => void onPatch({ cells: [{ cellId: c.id, remove: true }] })}
+              onConfirmMachines={() => void onPatch({ cells: [{ cellId: c.id, machineOverrides: c.infrastructurePlan.machines }] })}
+              onMachineChange={(nodeId, spec) => setCellMachine(c, nodeId, spec)}
             />
           ))}
         </div>
@@ -663,10 +693,14 @@ function CellCard({
   cell,
   onToggle,
   onRemove,
+  onConfirmMachines,
+  onMachineChange,
 }: {
   cell: SuiteCellVM;
   onToggle: (enabled: boolean) => void;
   onRemove: () => void;
+  onConfirmMachines: () => void;
+  onMachineChange: (nodeId: string, spec: SuiteCellVM["infrastructurePlan"]["machines"][number]["spec"]) => void;
 }) {
   const sourceLabel =
     cell.source === "presetPair"
@@ -710,11 +744,33 @@ function CellCard({
         <span>db: {cell.dbKind || "—"}</span>
         <span>wl: {cell.workload || "—"}</span>
         <span>{cell.source}</span>
-        <span>{cell.nodeCount} node{cell.nodeCount === 1 ? "" : "s"}</span>
+        <span>
+          {cell.nodeCount} node{cell.nodeCount === 1 ? "" : "s"} · {cell.machineOverrideCount} confirmed
+        </span>
       </div>
       <div className="mt-1 truncate font-mono text-[10px] text-zinc-700" title={sourceLabel}>
         {sourceLabel}
       </div>
+      {cell.infrastructurePlan.machines.length > 0 && (
+        <div className="mt-3 border-t border-zinc-800/70 pt-3">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <div className="font-mono text-[10px] uppercase tracking-wider text-zinc-600">Machines</div>
+              <div className="truncate font-mono text-[10px] text-zinc-700">
+                {machineSpecSummary(cell.infrastructurePlan.machines[0]?.spec)}
+              </div>
+            </div>
+            <Button size="sm" variant="outline" className="h-7 shrink-0 gap-1.5" onClick={onConfirmMachines}>
+              <Check className="h-3.5 w-3.5" /> Confirm
+            </Button>
+          </div>
+          <MachinePlanEditor
+            machines={cell.infrastructurePlan.machines}
+            settings={cell.infrastructurePlan.settings}
+            onMachineChange={onMachineChange}
+          />
+        </div>
+      )}
       {cell.errors.filter((e) => e.severity === "error").length > 0 && (
         <div className="mt-1 font-mono text-[10px] text-red-400">
           {cell.errors.filter((e) => e.severity === "error")[0].message}
@@ -754,7 +810,7 @@ function CellComposer({
       .then((p) => {
         if (cancelled) return;
         setDbPresets(p);
-        setDbPresetId(p[0]?.id ?? "");
+        setDbPresetId("");
       })
       .catch(() => !cancelled && setDbPresets([]));
     return () => {
@@ -769,7 +825,7 @@ function CellComposer({
       .then((p) => {
         if (cancelled) return;
         setWlPresets(p);
-        setWorkloadPresetId(p[0]?.id ?? "");
+        setWorkloadPresetId("");
       })
       .catch(() => !cancelled && setWlPresets([]));
     return () => {

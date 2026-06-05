@@ -2,6 +2,8 @@ package execution
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/stroppy-io/schemapb/schemapb"
@@ -84,7 +86,7 @@ func (e *TestWizardEngine) InitialDraft(ctx context.Context, tenantID, name stri
 // authoritative errors and the ready flag. A build failure is reported as a
 // field error rather than a hard error so the wizard can surface it to the user.
 func (e *TestWizardEngine) Compute(_ context.Context, _ string, draft *models.TestWizardDraftRecord) error {
-	machineOverrides := infrastructurebuilder.BuildOptionsFromPlanOverrides(draft.GetInfrastructurePlan())
+	machineOverrides := infrastructurebuilder.BuildOptionsFromMachineOverrides(draft.GetProvider(), draft.GetMachineOverrides())
 
 	// Reset derived sections; they are wholly recomputed below.
 	draft.TopologySpec = nil
@@ -122,6 +124,9 @@ func (e *TestWizardEngine) Compute(_ context.Context, _ string, draft *models.Te
 		} else {
 			draft.TopologySpec = run.GetTopologySpec()
 			draft.InfrastructurePlan = run.GetInfrastructurePlan()
+			if missing := missingMachineOverrideNodeIDs(draft.GetProvider(), run.GetInfrastructurePlan(), draft.GetMachineOverrides()); len(missing) > 0 {
+				addErr("machine_overrides", fmt.Sprintf("confirm machine settings for every node: %s", strings.Join(missing, ", ")))
+			}
 
 			preview, err := deploymentbuilder.BuildPreview(run.GetTopologySpec(), deploymentbuilder.PreviewOptions{
 				Database:        draft.GetDatabase(),
@@ -156,9 +161,45 @@ func (e *TestWizardEngine) Bake(_ context.Context, draft *models.TestWizardDraft
 		Database:        draft.GetDatabase(),
 		Workload:        draft.GetWorkload(),
 		Provider:        draft.GetProvider(),
-		Infrastructure:  infrastructurebuilder.BuildOptionsFromPlanOverrides(draft.GetInfrastructurePlan()),
+		Infrastructure:  infrastructurebuilder.BuildOptionsFromMachineOverrides(draft.GetProvider(), draft.GetMachineOverrides()),
 		RenderOverrides: draft.GetRenderOverrides(),
 	})
+}
+
+func missingMachineOverrideNodeIDs(provider deployment.Provider, plan *deployment.InfrastructurePlan, overrides []*deployment.MachinePlan) []string {
+	if plan == nil {
+		return nil
+	}
+	confirmed := make(map[string]struct{}, len(overrides))
+	for _, machine := range overrides {
+		if machineOverrideMatchesProvider(provider, machine) {
+			confirmed[machine.GetNodeId()] = struct{}{}
+		}
+	}
+	var missing []string
+	for _, machine := range plan.GetMachines() {
+		if machine.GetNodeId() == "" {
+			continue
+		}
+		if _, ok := confirmed[machine.GetNodeId()]; !ok {
+			missing = append(missing, machine.GetNodeId())
+		}
+	}
+	return missing
+}
+
+func machineOverrideMatchesProvider(provider deployment.Provider, machine *deployment.MachinePlan) bool {
+	if machine.GetNodeId() == "" {
+		return false
+	}
+	switch provider {
+	case deployment.Provider_PROVIDER_DOCKER:
+		return machine.GetDocker() != nil
+	case deployment.Provider_PROVIDER_YANDEX:
+		return machine.GetYandex() != nil
+	default:
+		return false
+	}
 }
 
 func previewRunID(draft *models.TestWizardDraftRecord) string {

@@ -19,11 +19,12 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
 
     The server derives:
       database + workload -> topology_spec
-      topology_spec + provider/defaults/user overrides -> infrastructure_plan
+      topology_spec + provider + explicit machine_overrides -> infrastructure_plan
 
     Provider account settings come from tenant settings at bake/start time. The
-    draft stores provider choice and per-node machine overrides inside
-    infrastructure_plan.
+    draft stores provider choice and per-node machine overrides separately from
+    the derived infrastructure_plan preview so generated resource values never
+    become launch intent unless the user explicitly confirms or edits them.
  */
 message TestWizardDraftRecord {
     /*
@@ -55,10 +56,16 @@ message TestWizardDraftRecord {
      */
     topology.TopologySpec topology_spec = 3;
     /*
-        infrastructure_plan is the provider-specific resource intent derived from
-        topology_spec and provider defaults, with user machine overrides merged.
+        infrastructure_plan is the provider-specific resource preview derived
+        from topology_spec, provider and machine_overrides.
      */
     deployment.InfrastructurePlan infrastructure_plan = 9;
+    /*
+        machine_overrides are the explicit per-node provider machine settings the
+        user confirmed or edited. They are merged into infrastructure_plan and
+        later baked into the TestRun.
+     */
+    repeated deployment.MachinePlan machine_overrides = 12 [(validate.rules).repeated.max_items = 256];
     /*
         render_preview is the server-rendered wizard view of generated files,
         commands, directories, and runtime-only placeholders.

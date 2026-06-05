@@ -26,9 +26,9 @@ option (ogen.file) = { generate_openapi: true };
 
 /*
     test_wizard.proto is the TEST wizard API (suite wizard is separate). Big-schema
-    patch-loop: provider/database/workload/render edits are submitted, the server
+    patch-loop: provider/database/workload/machine/render edits are submitted, the server
     derives topology_spec, infrastructure_plan and render_preview, then merges
-    user machine overrides from infrastructure_plan and editable config overrides
+    explicit machine_overrides and editable config overrides
     from render_overrides. Provider account settings come from tenant settings at
     finish/start time.
 
@@ -125,7 +125,7 @@ message ListTestWizardDraftsResponse {
 /*
     PatchTestWizard submits edited typed draft fields. The server validates,
     re-derives topology_spec, infrastructure_plan and render_preview, preserves
-    compatible machine overrides from infrastructure_plan, applies compatible
+    compatible machine overrides from machine_overrides, applies compatible
     render_overrides, recomputes readiness and returns the full new draft. Send
     the fields you changed; unset typed messages are treated as "no change".
  */
@@ -157,9 +157,9 @@ message PatchTestWizardRequest {
      */
     topology.TopologySpec topology_spec = 6;
     /*
-        infrastructure_plan optionally carries user edits to provider-specific
-        machine params. The server re-derives the plan and merges compatible
-        MachinePlan overrides by node_id.
+        infrastructure_plan is a compatibility path for older clients that sent
+        user machine edits as a full preview plan. New clients should use
+        machine_overrides instead.
      */
     deployment.InfrastructurePlan infrastructure_plan = 8;
     /*
@@ -167,6 +167,12 @@ message PatchTestWizardRequest {
         server applies compatible overrides and drops or reports stale ones.
      */
     deployment.RenderOverrideSet render_overrides = 9;
+    /*
+        machine_overrides carries explicit provider machine settings confirmed or
+        edited by the user. infrastructure_plan is kept as a compatibility path
+        for older clients, but new clients should patch this intent field.
+     */
+    repeated deployment.MachinePlan machine_overrides = 10 [(validate.rules).repeated.max_items = 256];
 }
 /*
     PatchTestWizardResponse returns the recomputed wizard draft.

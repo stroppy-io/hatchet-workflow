@@ -319,10 +319,14 @@ func applyTestPatch(draft *models.TestWizardDraftRecord, req *api.PatchTestWizar
 	if req.GetRenderOverrides() != nil {
 		draft.RenderOverrides = req.GetRenderOverrides()
 	}
-	// Carry user machine edits in via the (otherwise derived) plan; Compute
-	// re-derives the plan and merges compatible MachinePlan overrides by node_id.
-	if req.GetInfrastructurePlan() != nil {
-		draft.InfrastructurePlan = req.GetInfrastructurePlan()
+	// Carry only explicit user machine edits. infrastructure_plan itself is a
+	// derived preview and must never become launch intent just because Compute
+	// returned it to the client. Keep infrastructure_plan.machines as a fallback
+	// for older clients that have not moved to machine_overrides yet.
+	if req.GetMachineOverrides() != nil {
+		draft.MachineOverrides = req.GetMachineOverrides()
+	} else if req.GetInfrastructurePlan() != nil {
+		draft.MachineOverrides = req.GetInfrastructurePlan().GetMachines()
 	}
 }
 

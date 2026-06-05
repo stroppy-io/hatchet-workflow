@@ -372,7 +372,7 @@ func (x *ListTestWizardDraftsResponse) GetNextPageToken() string {
 
 // PatchTestWizard submits edited typed draft fields. The server validates,
 // re-derives topology_spec, infrastructure_plan and render_preview, preserves
-// compatible machine overrides from infrastructure_plan, applies compatible
+// compatible machine overrides from machine_overrides, applies compatible
 // render_overrides, recomputes readiness and returns the full new draft. Send
 // the fields you changed; unset typed messages are treated as "no change".
 type PatchTestWizardRequest struct {
@@ -391,15 +391,19 @@ type PatchTestWizardRequest struct {
 	// server. Structural edits are ignored; it exists for optimistic clients
 	// that patch all draft sections at once.
 	TopologySpec *topology.TopologySpec `protobuf:"bytes,6,opt,name=topology_spec,json=topologySpec,proto3" json:"topology_spec,omitempty"`
-	// infrastructure_plan optionally carries user edits to provider-specific
-	// machine params. The server re-derives the plan and merges compatible
-	// MachinePlan overrides by node_id.
+	// infrastructure_plan is a compatibility path for older clients that sent
+	// user machine edits as a full preview plan. New clients should use
+	// machine_overrides instead.
 	InfrastructurePlan *deployment.InfrastructurePlan `protobuf:"bytes,8,opt,name=infrastructure_plan,json=infrastructurePlan,proto3" json:"infrastructure_plan,omitempty"`
 	// render_overrides carries user edits to editable render artifacts. The
 	// server applies compatible overrides and drops or reports stale ones.
 	RenderOverrides *deployment.RenderOverrideSet `protobuf:"bytes,9,opt,name=render_overrides,json=renderOverrides,proto3" json:"render_overrides,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// machine_overrides carries explicit provider machine settings confirmed or
+	// edited by the user. infrastructure_plan is kept as a compatibility path
+	// for older clients, but new clients should patch this intent field.
+	MachineOverrides []*deployment.MachinePlan `protobuf:"bytes,10,rep,name=machine_overrides,json=machineOverrides,proto3" json:"machine_overrides,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *PatchTestWizardRequest) Reset() {
@@ -484,6 +488,13 @@ func (x *PatchTestWizardRequest) GetInfrastructurePlan() *deployment.Infrastruct
 func (x *PatchTestWizardRequest) GetRenderOverrides() *deployment.RenderOverrideSet {
 	if x != nil {
 		return x.RenderOverrides
+	}
+	return nil
+}
+
+func (x *PatchTestWizardRequest) GetMachineOverrides() []*deployment.MachinePlan {
+	if x != nil {
+		return x.MachineOverrides
 	}
 	return nil
 }
@@ -1054,7 +1065,7 @@ const file_cloud_v1_api_test_wizard_proto_rawDesc = "" +
 	"\x04page\x18\x04 \x01(\v2\x15.cloud.v1.common.PageR\x04page\"\x86\x01\n" +
 	"\x1cListTestWizardDraftsResponse\x12>\n" +
 	"\x06drafts\x18\x01 \x03(\v2&.cloud.v1.models.TestWizardDraftRecordR\x06drafts\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\x8c\x04\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xe6\x04\n" +
 	"\x16PatchTestWizardRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12$\n" +
 	"\bdraft_id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\adraftId\x12C\n" +
@@ -1063,7 +1074,9 @@ const file_cloud_v1_api_test_wizard_proto_rawDesc = "" +
 	"\bworkload\x18\x05 \x01(\v2\x19.cloud.v1.domain.WorkloadR\bworkload\x12D\n" +
 	"\rtopology_spec\x18\x06 \x01(\v2\x1f.cloud.v1.topology.TopologySpecR\ftopologySpec\x12X\n" +
 	"\x13infrastructure_plan\x18\b \x01(\v2'.cloud.v1.deployment.InfrastructurePlanR\x12infrastructurePlan\x12Q\n" +
-	"\x10render_overrides\x18\t \x01(\v2&.cloud.v1.deployment.RenderOverrideSetR\x0frenderOverrides\"a\n" +
+	"\x10render_overrides\x18\t \x01(\v2&.cloud.v1.deployment.RenderOverrideSetR\x0frenderOverrides\x12X\n" +
+	"\x11machine_overrides\x18\n" +
+	" \x03(\v2 .cloud.v1.deployment.MachinePlanB\t\xfaB\x06\x92\x01\x03\x10\x80\x02R\x10machineOverrides\"a\n" +
 	"\x17PatchTestWizardResponse\x12F\n" +
 	"\x05draft\x18\x01 \x01(\v2&.cloud.v1.models.TestWizardDraftRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x05draft\"l\n" +
 	"\x1cDeleteTestWizardDraftRequest\x12&\n" +
@@ -1161,10 +1174,11 @@ var file_cloud_v1_api_test_wizard_proto_goTypes = []any{
 	(*topology.TopologySpec)(nil),         // 23: cloud.v1.topology.TopologySpec
 	(*deployment.InfrastructurePlan)(nil), // 24: cloud.v1.deployment.InfrastructurePlan
 	(*deployment.RenderOverrideSet)(nil),  // 25: cloud.v1.deployment.RenderOverrideSet
-	(*domain.TestRun)(nil),                // 26: cloud.v1.domain.TestRun
-	(*models.TestRunRecord)(nil),          // 27: cloud.v1.models.TestRunRecord
-	(*models.TestPresetRecord)(nil),       // 28: cloud.v1.models.TestPresetRecord
-	(*structpb.Struct)(nil),               // 29: google.protobuf.Struct
+	(*deployment.MachinePlan)(nil),        // 26: cloud.v1.deployment.MachinePlan
+	(*domain.TestRun)(nil),                // 27: cloud.v1.domain.TestRun
+	(*models.TestRunRecord)(nil),          // 28: cloud.v1.models.TestRunRecord
+	(*models.TestPresetRecord)(nil),       // 29: cloud.v1.models.TestPresetRecord
+	(*structpb.Struct)(nil),               // 30: google.protobuf.Struct
 }
 var file_cloud_v1_api_test_wizard_proto_depIdxs = []int32{
 	16, // 0: cloud.v1.api.StartTestWizardResponse.draft:type_name -> cloud.v1.models.TestWizardDraftRecord
@@ -1179,32 +1193,33 @@ var file_cloud_v1_api_test_wizard_proto_depIdxs = []int32{
 	23, // 9: cloud.v1.api.PatchTestWizardRequest.topology_spec:type_name -> cloud.v1.topology.TopologySpec
 	24, // 10: cloud.v1.api.PatchTestWizardRequest.infrastructure_plan:type_name -> cloud.v1.deployment.InfrastructurePlan
 	25, // 11: cloud.v1.api.PatchTestWizardRequest.render_overrides:type_name -> cloud.v1.deployment.RenderOverrideSet
-	16, // 12: cloud.v1.api.PatchTestWizardResponse.draft:type_name -> cloud.v1.models.TestWizardDraftRecord
-	26, // 13: cloud.v1.api.FinishTestWizardResponse.test_run:type_name -> cloud.v1.domain.TestRun
-	27, // 14: cloud.v1.api.FinishTestWizardResponse.run:type_name -> cloud.v1.models.TestRunRecord
-	28, // 15: cloud.v1.api.FinishTestWizardResponse.preset:type_name -> cloud.v1.models.TestPresetRecord
-	15, // 16: cloud.v1.api.ProbeScriptRequest.env:type_name -> cloud.v1.api.ProbeScriptRequest.EnvEntry
-	13, // 17: cloud.v1.api.ProbeScriptRequest.files:type_name -> cloud.v1.api.ProbeWorkloadFile
-	29, // 18: cloud.v1.api.ProbeScriptResponse.metadata:type_name -> google.protobuf.Struct
-	0,  // 19: cloud.v1.api.TestWizardService.StartTestWizard:input_type -> cloud.v1.api.StartTestWizardRequest
-	2,  // 20: cloud.v1.api.TestWizardService.GetTestWizardDraft:input_type -> cloud.v1.api.GetTestWizardDraftRequest
-	4,  // 21: cloud.v1.api.TestWizardService.ListTestWizardDrafts:input_type -> cloud.v1.api.ListTestWizardDraftsRequest
-	6,  // 22: cloud.v1.api.TestWizardService.PatchTestWizard:input_type -> cloud.v1.api.PatchTestWizardRequest
-	8,  // 23: cloud.v1.api.TestWizardService.DeleteTestWizardDraft:input_type -> cloud.v1.api.DeleteTestWizardDraftRequest
-	10, // 24: cloud.v1.api.TestWizardService.FinishTestWizard:input_type -> cloud.v1.api.FinishTestWizardRequest
-	12, // 25: cloud.v1.api.TestWizardService.ProbeScript:input_type -> cloud.v1.api.ProbeScriptRequest
-	1,  // 26: cloud.v1.api.TestWizardService.StartTestWizard:output_type -> cloud.v1.api.StartTestWizardResponse
-	3,  // 27: cloud.v1.api.TestWizardService.GetTestWizardDraft:output_type -> cloud.v1.api.GetTestWizardDraftResponse
-	5,  // 28: cloud.v1.api.TestWizardService.ListTestWizardDrafts:output_type -> cloud.v1.api.ListTestWizardDraftsResponse
-	7,  // 29: cloud.v1.api.TestWizardService.PatchTestWizard:output_type -> cloud.v1.api.PatchTestWizardResponse
-	9,  // 30: cloud.v1.api.TestWizardService.DeleteTestWizardDraft:output_type -> cloud.v1.api.DeleteTestWizardDraftResponse
-	11, // 31: cloud.v1.api.TestWizardService.FinishTestWizard:output_type -> cloud.v1.api.FinishTestWizardResponse
-	14, // 32: cloud.v1.api.TestWizardService.ProbeScript:output_type -> cloud.v1.api.ProbeScriptResponse
-	26, // [26:33] is the sub-list for method output_type
-	19, // [19:26] is the sub-list for method input_type
-	19, // [19:19] is the sub-list for extension type_name
-	19, // [19:19] is the sub-list for extension extendee
-	0,  // [0:19] is the sub-list for field type_name
+	26, // 12: cloud.v1.api.PatchTestWizardRequest.machine_overrides:type_name -> cloud.v1.deployment.MachinePlan
+	16, // 13: cloud.v1.api.PatchTestWizardResponse.draft:type_name -> cloud.v1.models.TestWizardDraftRecord
+	27, // 14: cloud.v1.api.FinishTestWizardResponse.test_run:type_name -> cloud.v1.domain.TestRun
+	28, // 15: cloud.v1.api.FinishTestWizardResponse.run:type_name -> cloud.v1.models.TestRunRecord
+	29, // 16: cloud.v1.api.FinishTestWizardResponse.preset:type_name -> cloud.v1.models.TestPresetRecord
+	15, // 17: cloud.v1.api.ProbeScriptRequest.env:type_name -> cloud.v1.api.ProbeScriptRequest.EnvEntry
+	13, // 18: cloud.v1.api.ProbeScriptRequest.files:type_name -> cloud.v1.api.ProbeWorkloadFile
+	30, // 19: cloud.v1.api.ProbeScriptResponse.metadata:type_name -> google.protobuf.Struct
+	0,  // 20: cloud.v1.api.TestWizardService.StartTestWizard:input_type -> cloud.v1.api.StartTestWizardRequest
+	2,  // 21: cloud.v1.api.TestWizardService.GetTestWizardDraft:input_type -> cloud.v1.api.GetTestWizardDraftRequest
+	4,  // 22: cloud.v1.api.TestWizardService.ListTestWizardDrafts:input_type -> cloud.v1.api.ListTestWizardDraftsRequest
+	6,  // 23: cloud.v1.api.TestWizardService.PatchTestWizard:input_type -> cloud.v1.api.PatchTestWizardRequest
+	8,  // 24: cloud.v1.api.TestWizardService.DeleteTestWizardDraft:input_type -> cloud.v1.api.DeleteTestWizardDraftRequest
+	10, // 25: cloud.v1.api.TestWizardService.FinishTestWizard:input_type -> cloud.v1.api.FinishTestWizardRequest
+	12, // 26: cloud.v1.api.TestWizardService.ProbeScript:input_type -> cloud.v1.api.ProbeScriptRequest
+	1,  // 27: cloud.v1.api.TestWizardService.StartTestWizard:output_type -> cloud.v1.api.StartTestWizardResponse
+	3,  // 28: cloud.v1.api.TestWizardService.GetTestWizardDraft:output_type -> cloud.v1.api.GetTestWizardDraftResponse
+	5,  // 29: cloud.v1.api.TestWizardService.ListTestWizardDrafts:output_type -> cloud.v1.api.ListTestWizardDraftsResponse
+	7,  // 30: cloud.v1.api.TestWizardService.PatchTestWizard:output_type -> cloud.v1.api.PatchTestWizardResponse
+	9,  // 31: cloud.v1.api.TestWizardService.DeleteTestWizardDraft:output_type -> cloud.v1.api.DeleteTestWizardDraftResponse
+	11, // 32: cloud.v1.api.TestWizardService.FinishTestWizard:output_type -> cloud.v1.api.FinishTestWizardResponse
+	14, // 33: cloud.v1.api.TestWizardService.ProbeScript:output_type -> cloud.v1.api.ProbeScriptResponse
+	27, // [27:34] is the sub-list for method output_type
+	20, // [20:27] is the sub-list for method input_type
+	20, // [20:20] is the sub-list for extension type_name
+	20, // [20:20] is the sub-list for extension extendee
+	0,  // [0:20] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_api_test_wizard_proto_init() }

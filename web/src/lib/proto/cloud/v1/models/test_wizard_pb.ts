@@ -6,7 +6,7 @@ import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Entity, EntityJson } from "../common/entity_pb.ts";
 import { file_cloud_v1_common_entity } from "../common/entity_pb.ts";
-import type { InfrastructurePlan, InfrastructurePlanJson } from "../deployment/infrastructure_pb.ts";
+import type { InfrastructurePlan, InfrastructurePlanJson, MachinePlan, MachinePlanJson } from "../deployment/infrastructure_pb.ts";
 import { file_cloud_v1_deployment_infrastructure } from "../deployment/infrastructure_pb.ts";
 import type { Provider, ProviderJson } from "../deployment/provider_pb.ts";
 import { file_cloud_v1_deployment_provider } from "../deployment/provider_pb.ts";
@@ -27,7 +27,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/models/test_wizard.proto.
  */
 export const file_cloud_v1_models_test_wizard: GenFile = /*@__PURE__*/
-  fileDesc("CiFjbG91ZC92MS9tb2RlbHMvdGVzdF93aXphcmQucHJvdG8SD2Nsb3VkLnYxLm1vZGVscyKxBAoVVGVzdFdpemFyZERyYWZ0UmVjb3JkEjEKBmVudGl0eRgBIAEoCzIXLmNsb3VkLnYxLmNvbW1vbi5FbnRpdHlCCPpCBYoBAhABEjkKCHByb3ZpZGVyGAIgASgOMh0uY2xvdWQudjEuZGVwbG95bWVudC5Qcm92aWRlckII+kIFggECEAESKwoIZGF0YWJhc2UYByABKAsyGS5jbG91ZC52MS5kb21haW4uRGF0YWJhc2USKwoId29ya2xvYWQYCCABKAsyGS5jbG91ZC52MS5kb21haW4uV29ya2xvYWQSNgoNdG9wb2xvZ3lfc3BlYxgDIAEoCzIfLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5U3BlYxJEChNpbmZyYXN0cnVjdHVyZV9wbGFuGAkgASgLMicuY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVBsYW4SOgoOcmVuZGVyX3ByZXZpZXcYCiABKAsyIi5jbG91ZC52MS5kZXBsb3ltZW50LlJlbmRlclByZXZpZXcSQAoQcmVuZGVyX292ZXJyaWRlcxgLIAEoCzImLmNsb3VkLnYxLmRlcGxveW1lbnQuUmVuZGVyT3ZlcnJpZGVTZXQSJAoGZXJyb3JzGAQgAygLMhQuc2NoZW1hcGIuRmllbGRFcnJvchINCgVyZWFkeRgFIAEoCBIfCg50ZXN0X3ByZXNldF9pZBgGIAEoCUIH+kIEcgIYQEJEWkJnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9tb2RlbHNiBnByb3RvMw", [file_cloud_v1_common_entity, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_provider, file_cloud_v1_deployment_render, file_cloud_v1_domain_database, file_cloud_v1_domain_workload, file_cloud_v1_topology_topology, file_schemapb_schema, file_validate_validate]);
+  fileDesc("CiFjbG91ZC92MS9tb2RlbHMvdGVzdF93aXphcmQucHJvdG8SD2Nsb3VkLnYxLm1vZGVscyL5BAoVVGVzdFdpemFyZERyYWZ0UmVjb3JkEjEKBmVudGl0eRgBIAEoCzIXLmNsb3VkLnYxLmNvbW1vbi5FbnRpdHlCCPpCBYoBAhABEjkKCHByb3ZpZGVyGAIgASgOMh0uY2xvdWQudjEuZGVwbG95bWVudC5Qcm92aWRlckII+kIFggECEAESKwoIZGF0YWJhc2UYByABKAsyGS5jbG91ZC52MS5kb21haW4uRGF0YWJhc2USKwoId29ya2xvYWQYCCABKAsyGS5jbG91ZC52MS5kb21haW4uV29ya2xvYWQSNgoNdG9wb2xvZ3lfc3BlYxgDIAEoCzIfLmNsb3VkLnYxLnRvcG9sb2d5LlRvcG9sb2d5U3BlYxJEChNpbmZyYXN0cnVjdHVyZV9wbGFuGAkgASgLMicuY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVBsYW4SRgoRbWFjaGluZV9vdmVycmlkZXMYDCADKAsyIC5jbG91ZC52MS5kZXBsb3ltZW50Lk1hY2hpbmVQbGFuQgn6QgaSAQMQgAISOgoOcmVuZGVyX3ByZXZpZXcYCiABKAsyIi5jbG91ZC52MS5kZXBsb3ltZW50LlJlbmRlclByZXZpZXcSQAoQcmVuZGVyX292ZXJyaWRlcxgLIAEoCzImLmNsb3VkLnYxLmRlcGxveW1lbnQuUmVuZGVyT3ZlcnJpZGVTZXQSJAoGZXJyb3JzGAQgAygLMhQuc2NoZW1hcGIuRmllbGRFcnJvchINCgVyZWFkeRgFIAEoCBIfCg50ZXN0X3ByZXNldF9pZBgGIAEoCUIH+kIEcgIYQEJEWkJnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9tb2RlbHNiBnByb3RvMw", [file_cloud_v1_common_entity, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_provider, file_cloud_v1_deployment_render, file_cloud_v1_domain_database, file_cloud_v1_domain_workload, file_cloud_v1_topology_topology, file_schemapb_schema, file_validate_validate]);
 
 /**
  *
@@ -35,11 +35,12 @@ export const file_cloud_v1_models_test_wizard: GenFile = /*@__PURE__*/
  *
  * The server derives:
  * database + workload -> topology_spec
- * topology_spec + provider/defaults/user overrides -> infrastructure_plan
+ * topology_spec + provider + explicit machine_overrides -> infrastructure_plan
  *
  * Provider account settings come from tenant settings at bake/start time. The
- * draft stores provider choice and per-node machine overrides inside
- * infrastructure_plan.
+ * draft stores provider choice and per-node machine overrides separately from
+ * the derived infrastructure_plan preview so generated resource values never
+ * become launch intent unless the user explicitly confirms or edits them.
  *
  * @generated from message cloud.v1.models.TestWizardDraftRecord
  */
@@ -90,12 +91,22 @@ export type TestWizardDraftRecord = Message<"cloud.v1.models.TestWizardDraftReco
 
   /**
    *
-   * infrastructure_plan is the provider-specific resource intent derived from
-   * topology_spec and provider defaults, with user machine overrides merged.
+   * infrastructure_plan is the provider-specific resource preview derived
+   * from topology_spec, provider and machine_overrides.
    *
    * @generated from field: cloud.v1.deployment.InfrastructurePlan infrastructure_plan = 9;
    */
   infrastructurePlan?: InfrastructurePlan;
+
+  /**
+   *
+   * machine_overrides are the explicit per-node provider machine settings the
+   * user confirmed or edited. They are merged into infrastructure_plan and
+   * later baked into the TestRun.
+   *
+   * @generated from field: repeated cloud.v1.deployment.MachinePlan machine_overrides = 12;
+   */
+  machineOverrides: MachinePlan[];
 
   /**
    *
@@ -151,11 +162,12 @@ export type TestWizardDraftRecord = Message<"cloud.v1.models.TestWizardDraftReco
  *
  * The server derives:
  * database + workload -> topology_spec
- * topology_spec + provider/defaults/user overrides -> infrastructure_plan
+ * topology_spec + provider + explicit machine_overrides -> infrastructure_plan
  *
  * Provider account settings come from tenant settings at bake/start time. The
- * draft stores provider choice and per-node machine overrides inside
- * infrastructure_plan.
+ * draft stores provider choice and per-node machine overrides separately from
+ * the derived infrastructure_plan preview so generated resource values never
+ * become launch intent unless the user explicitly confirms or edits them.
  *
  * @generated from message cloud.v1.models.TestWizardDraftRecord
  */
@@ -206,12 +218,22 @@ export type TestWizardDraftRecordJson = {
 
   /**
    *
-   * infrastructure_plan is the provider-specific resource intent derived from
-   * topology_spec and provider defaults, with user machine overrides merged.
+   * infrastructure_plan is the provider-specific resource preview derived
+   * from topology_spec, provider and machine_overrides.
    *
    * @generated from field: cloud.v1.deployment.InfrastructurePlan infrastructure_plan = 9;
    */
   infrastructurePlan?: InfrastructurePlanJson;
+
+  /**
+   *
+   * machine_overrides are the explicit per-node provider machine settings the
+   * user confirmed or edited. They are merged into infrastructure_plan and
+   * later baked into the TestRun.
+   *
+   * @generated from field: repeated cloud.v1.deployment.MachinePlan machine_overrides = 12;
+   */
+  machineOverrides?: MachinePlanJson[];
 
   /**
    *

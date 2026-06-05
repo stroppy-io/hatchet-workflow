@@ -4,19 +4,24 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stroppy-io/schemapb/schemapb"
+	runbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/run"
 	workloadbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/workload"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
+	"google.golang.org/protobuf/proto"
 )
 
 func TestTestWizardEnginePreservesMachineOverrides(t *testing.T) {
 	engine := NewTestWizardEngine()
+	db := wizardDatabase()
+	wl := wizardWorkload()
 	draft := &models.TestWizardDraftRecord{
-		Provider:           deployment.Provider_PROVIDER_DOCKER,
-		Database:           wizardDatabase(),
-		Workload:           wizardWorkload(),
-		InfrastructurePlan: machineOverridePlan(deployment.Provider_PROVIDER_DOCKER, workloadbuilder.RunnerNodeID),
+		Provider:         deployment.Provider_PROVIDER_DOCKER,
+		Database:         db,
+		Workload:         wl,
+		MachineOverrides: completeDockerMachineOverrides(t, db, wl, workloadbuilder.RunnerNodeID),
 	}
 
 	if err := engine.Compute(context.Background(), "tenant-1", draft); err != nil {
@@ -34,6 +39,25 @@ func TestTestWizardEnginePreservesMachineOverrides(t *testing.T) {
 		t.Fatalf("bake wizard draft: %v", err)
 	}
 	assertDockerOverride(t, testMachineByNodeID(run.GetInfrastructurePlan().GetMachines(), workloadbuilder.RunnerNodeID))
+}
+
+func TestTestWizardEngineRequiresMachineOverrides(t *testing.T) {
+	engine := NewTestWizardEngine()
+	draft := &models.TestWizardDraftRecord{
+		Provider: deployment.Provider_PROVIDER_DOCKER,
+		Database: wizardDatabase(),
+		Workload: wizardWorkload(),
+	}
+
+	if err := engine.Compute(context.Background(), "tenant-1", draft); err != nil {
+		t.Fatalf("compute wizard draft: %v", err)
+	}
+	if draft.GetReady() {
+		t.Fatal("draft is ready without explicit machine overrides")
+	}
+	if !hasWizardError(draft.GetErrors(), "machine_overrides") {
+		t.Fatalf("draft errors = %v, want machine_overrides", draft.GetErrors())
+	}
 }
 
 func wizardDatabase() *domain.Database {
@@ -63,13 +87,26 @@ func wizardWorkload() *domain.Workload {
 	}
 }
 
-func machineOverridePlan(provider deployment.Provider, nodeID string) *deployment.InfrastructurePlan {
-	return &deployment.InfrastructurePlan{
-		Provider: provider,
-		Machines: []*deployment.MachinePlan{
-			dockerMachineOverride(nodeID),
-		},
+func completeDockerMachineOverrides(t *testing.T, db *domain.Database, wl *domain.Workload, customNodeID string) []*deployment.MachinePlan {
+	t.Helper()
+	run, err := runbuilder.BuildTestRun(runbuilder.BuildOptions{
+		ID:       "preview",
+		Database: db,
+		Workload: wl,
+		Provider: deployment.Provider_PROVIDER_DOCKER,
+	})
+	if err != nil {
+		t.Fatalf("build preview run: %v", err)
 	}
+	out := make([]*deployment.MachinePlan, 0, len(run.GetInfrastructurePlan().GetMachines()))
+	for _, machine := range run.GetInfrastructurePlan().GetMachines() {
+		if machine.GetNodeId() == customNodeID {
+			out = append(out, dockerMachineOverride(customNodeID))
+			continue
+		}
+		out = append(out, proto.Clone(machine).(*deployment.MachinePlan))
+	}
+	return out
 }
 
 func dockerMachineOverride(nodeID string) *deployment.MachinePlan {
@@ -130,4 +167,13 @@ func testQuotaRequestValue(machine *deployment.MachinePlan, name string) uint64 
 		}
 	}
 	return 0
+}
+
+func hasWizardError(errs []*schemapb.FieldError, field string) bool {
+	for _, err := range errs {
+		if err.GetField() == field {
+			return true
+		}
+	}
+	return false
 }

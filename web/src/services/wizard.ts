@@ -16,8 +16,8 @@
 //
 //   Step            edits (PatchTestWizardRequest field)            proto type
 //   ------------    --------------------------------------------    ------------------------------
-//   Infrastructure  .provider + .infrastructure_plan                Provider + deployment.InfrastructurePlan
-//                     (ProviderSettings + per-node MachinePlan: Docker.Container | Yandex.Vm)
+//   Infrastructure  .provider + .machine_overrides                  Provider + deployment.MachinePlan[]
+//                     (per-node MachinePlan: Docker.Container | Yandex.Vm)
 //   Database        .database                                       cloud.v1.domain.Database (typed per engine)
 //   Workload        .workload (+ ProbeScript)                       cloud.v1.domain.Workload
 //   Review/Render   .render_overrides (FileOverride set)            deployment.RenderOverrideSet
@@ -26,7 +26,8 @@
 //
 // The server fills (on every Patch) topology_spec + infrastructure_plan
 // (settings + machines) + render_preview (artifacts + mutability + base_hash);
-// the user SEES and EDITS the infrastructure plan and the EDITABLE artifacts.
+// the user SEES the infrastructure plan preview, confirms/edits machine_overrides
+// and edits the EDITABLE artifacts.
 //
 // The view-model is intentionally flat (no proto Message instances) so the
 // wizard UI stays decoupled from the wire format and the mock stays trivial.
@@ -316,9 +317,9 @@ export interface TopologyNodeVM {
 // --- Infrastructure plan (mirror deployment.InfrastructurePlan) ---------------
 //
 // The SERVER fills infrastructure_plan on every Patch: the provider-level
-// settings (ProviderSettings oneof) + a per-node MachinePlan (Docker.Container
-// or Yandex.Vm). The wizard SHOWS and EDITS these and feeds the edited
-// InfrastructurePlan back into the next Patch.
+// settings preview (ProviderSettings oneof) + a per-node MachinePlan
+// (Docker.Container or Yandex.Vm). The wizard SHOWS this preview and sends
+// explicit machine_overrides when the user confirms or edits machines.
 
 /** deployment.Docker.Settings — empty top-level (network/containers are derived). */
 export interface DockerSettingsVM {
@@ -472,8 +473,8 @@ export interface WizardDraftVM {
   topologyNodes: TopologyNodeVM[];
   /**
    * server-filled deployment.InfrastructurePlan: provider settings + per-node
-   * machine specs. The Infrastructure step SHOWS + EDITS this and Patches the
-   * edited plan back (PatchTestWizard.infrastructure_plan).
+   * machine specs. The Infrastructure step SHOWS this preview and Patches
+   * explicit machine_overrides when the user confirms or edits it.
    */
   infrastructurePlan: InfrastructurePlanVM;
   /** deployment.RenderPreview.components — artifact grouping per component. */
@@ -529,11 +530,14 @@ export interface PatchInput {
   database?: DatabaseVM;
   workload?: WorkloadVM;
   /**
-   * The edited deployment.InfrastructurePlan (provider settings + machine
-   * specs). Set by the Infrastructure step → PatchTestWizard.infrastructure_plan;
-   * the server recomputes the rest from it.
+   * Compatibility path for older clients that patched the edited preview.
    */
   infrastructurePlan?: InfrastructurePlanVM;
+  /**
+   * Explicit provider machine settings confirmed or edited by the user.
+   * Set by the Infrastructure step → PatchTestWizard.machine_overrides.
+   */
+  machineOverrides?: InfrastructurePlanVM["machines"];
   /**
    * The full deployment.RenderOverrideSet (FileOverride list) — set by the
    * Review step when a config is edited → PatchTestWizard.render_overrides.
@@ -903,6 +907,42 @@ function draftToSummaryVM(draft: TestWizardDraftRecord): DraftSummaryVM {
   };
 }
 
+// Build one deployment.MachinePlan from an edited MachineVM.
+export function machineVMToProto(m: MachineVM) {
+  if (m.spec.case === "yandex") {
+    return create(MachinePlanSchema, {
+      nodeId: m.nodeId,
+      providerParams: {
+        case: "yandex",
+        value: create(Yandex_VmSchema, {
+          cores: m.spec.yandex.cores,
+          memoryGb: BigInt(Math.trunc(m.spec.yandex.memoryGb)),
+          bootDiskGb: BigInt(Math.trunc(m.spec.yandex.bootDiskGb)),
+          bootDiskType: m.spec.yandex.bootDiskType,
+          zone: m.spec.yandex.zone,
+          publicIp: m.spec.yandex.publicIp,
+        }),
+      },
+    });
+  }
+  if (m.spec.case === "docker") {
+    return create(MachinePlanSchema, {
+      nodeId: m.nodeId,
+      providerParams: {
+        case: "docker",
+        value: create(Docker_ContainerSchema, {
+          image: m.spec.docker.image,
+          resources: {
+            cpuCores: m.spec.docker.cpuCores,
+            memoryMb: BigInt(Math.trunc(m.spec.docker.memoryMb)),
+          },
+        }),
+      },
+    });
+  }
+  return create(MachinePlanSchema, { nodeId: m.nodeId });
+}
+
 // Build a deployment.InfrastructurePlan from the edited InfrastructurePlanVM.
 function infraPlanVMToProto(vm: InfrastructurePlanVM) {
   const settings =
@@ -927,45 +967,10 @@ function infraPlanVMToProto(vm: InfrastructurePlanVM) {
         ? create(ProviderSettingsSchema, { settings: { case: "docker", value: {} } })
         : undefined;
 
-  const machines = vm.machines.map((m) => {
-    if (m.spec.case === "yandex") {
-      return create(MachinePlanSchema, {
-        nodeId: m.nodeId,
-        providerParams: {
-          case: "yandex",
-          value: create(Yandex_VmSchema, {
-            cores: m.spec.yandex.cores,
-            memoryGb: BigInt(Math.trunc(m.spec.yandex.memoryGb)),
-            bootDiskGb: BigInt(Math.trunc(m.spec.yandex.bootDiskGb)),
-            bootDiskType: m.spec.yandex.bootDiskType,
-            zone: m.spec.yandex.zone,
-            publicIp: m.spec.yandex.publicIp,
-          }),
-        },
-      });
-    }
-    if (m.spec.case === "docker") {
-      return create(MachinePlanSchema, {
-        nodeId: m.nodeId,
-        providerParams: {
-          case: "docker",
-          value: create(Docker_ContainerSchema, {
-            image: m.spec.docker.image,
-            resources: {
-              cpuCores: m.spec.docker.cpuCores,
-              memoryMb: BigInt(Math.trunc(m.spec.docker.memoryMb)),
-            },
-          }),
-        },
-      });
-    }
-    return create(MachinePlanSchema, { nodeId: m.nodeId });
-  });
-
   return create(InfrastructurePlanSchema, {
     provider: vm.provider,
     settings,
-    machines,
+    machines: vm.machines.map(machineVMToProto),
   });
 }
 
@@ -1006,6 +1011,7 @@ const realWizardProvider: WizardProvider = {
       infrastructurePlan: input.infrastructurePlan
         ? infraPlanVMToProto(input.infrastructurePlan)
         : undefined,
+      machineOverrides: input.machineOverrides?.map(machineVMToProto),
       renderOverrides: input.renderOverrides
         ? create(RenderOverrideSetSchema, {
             files: input.renderOverrides.map((o) =>

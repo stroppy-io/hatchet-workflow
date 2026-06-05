@@ -4,17 +4,20 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stroppy-io/schemapb/schemapb"
+	runbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/run"
 	workloadbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/workload"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
+	"google.golang.org/protobuf/proto"
 )
 
 func TestSuiteWizardEnginePreservesCellMachineOverridesInPreviewAndBake(t *testing.T) {
 	engine := NewSuiteWizardEngine(nil, &recordingSuiteBaker{})
-	cellSpec := adaptersSuiteCell()
+	cellSpec := adaptersSuiteCell(t)
 	draft := &models.SuiteWizardDraftRecord{
 		Entity:   &common.Entity{Id: "draft-1", TenantId: "tenant-1", Name: "suite", AuthorId: "account-1"},
 		Provider: deployment.Provider_PROVIDER_DOCKER,
@@ -49,6 +52,33 @@ func TestSuiteWizardEnginePreservesCellMachineOverridesInPreviewAndBake(t *testi
 	assertAdaptersDockerOverride(t, adaptersMachineByNodeID(baker.children[0].Run.GetInfrastructurePlan().GetMachines(), workloadbuilder.RunnerNodeID))
 }
 
+func TestSuiteWizardEngineRequiresCellMachineOverrides(t *testing.T) {
+	engine := NewSuiteWizardEngine(nil, &recordingSuiteBaker{})
+	cellSpec := adaptersSuiteCell(t)
+	cellSpec.MachineOverrides = nil
+	draft := &models.SuiteWizardDraftRecord{
+		Entity:   &common.Entity{Id: "draft-1", TenantId: "tenant-1", Name: "suite", AuthorId: "account-1"},
+		Provider: deployment.Provider_PROVIDER_DOCKER,
+		Cells: []*models.SuiteWizardDraftRecord_Cell{
+			{Spec: cellSpec},
+		},
+	}
+
+	cells, errs, ready, err := engine.Recompute(context.Background(), "tenant-1", draft)
+	if err != nil {
+		t.Fatalf("recompute suite draft: %v", err)
+	}
+	if ready {
+		t.Fatal("suite draft is ready without explicit machine overrides")
+	}
+	if !hasAdaptersError(cells[0].GetErrors(), "machine_overrides") {
+		t.Fatalf("cell errors = %v, want machine_overrides", cells[0].GetErrors())
+	}
+	if !hasAdaptersError(errs, "cells") {
+		t.Fatalf("draft errors = %v, want cells", errs)
+	}
+}
+
 type recordingSuiteBaker struct {
 	children []*BakedSuiteChild
 }
@@ -62,18 +92,19 @@ func (b *recordingSuiteBaker) StartSuiteRun(_ context.Context, _ *models.SuiteRe
 	return &models.SuiteRunRecord{}, func(context.Context) error { return nil }, nil
 }
 
-func adaptersSuiteCell() *domain.SuiteCell {
+func adaptersSuiteCell(t *testing.T) *domain.SuiteCell {
+	t.Helper()
+	db := adaptersDatabase()
+	wl := adaptersWorkload()
 	return &domain.SuiteCell{
 		Id:      "cell-1",
 		Name:    "cell 1",
 		Enabled: true,
 		Source: &domain.SuiteCell_InlineTest{InlineTest: &domain.Test{
-			Database: adaptersDatabase(),
-			Workload: adaptersWorkload(),
+			Database: db,
+			Workload: wl,
 		}},
-		MachineOverrides: []*deployment.MachinePlan{
-			adaptersDockerMachineOverride(workloadbuilder.RunnerNodeID),
-		},
+		MachineOverrides: completeAdaptersDockerMachineOverrides(t, db, wl, workloadbuilder.RunnerNodeID),
 	}
 }
 
@@ -102,6 +133,28 @@ func adaptersWorkload() *domain.Workload {
 			},
 		},
 	}
+}
+
+func completeAdaptersDockerMachineOverrides(t *testing.T, db *domain.Database, wl *domain.Workload, customNodeID string) []*deployment.MachinePlan {
+	t.Helper()
+	run, err := runbuilder.BuildTestRun(runbuilder.BuildOptions{
+		ID:       "preview",
+		Database: db,
+		Workload: wl,
+		Provider: deployment.Provider_PROVIDER_DOCKER,
+	})
+	if err != nil {
+		t.Fatalf("build preview run: %v", err)
+	}
+	out := make([]*deployment.MachinePlan, 0, len(run.GetInfrastructurePlan().GetMachines()))
+	for _, machine := range run.GetInfrastructurePlan().GetMachines() {
+		if machine.GetNodeId() == customNodeID {
+			out = append(out, adaptersDockerMachineOverride(customNodeID))
+			continue
+		}
+		out = append(out, proto.Clone(machine).(*deployment.MachinePlan))
+	}
+	return out
 }
 
 func adaptersDockerMachineOverride(nodeID string) *deployment.MachinePlan {
@@ -162,4 +215,13 @@ func adaptersQuotaRequestValue(machine *deployment.MachinePlan, name string) uin
 		}
 	}
 	return 0
+}
+
+func hasAdaptersError(errs []*schemapb.FieldError, field string) bool {
+	for _, err := range errs {
+		if err.GetField() == field {
+			return true
+		}
+	}
+	return false
 }

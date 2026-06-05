@@ -48,6 +48,14 @@ func (m *TestWizardDraftRecord) Encode(e *jx.Encoder) {
 		e.FieldStart("infrastructurePlan")
 		jxpb.EncMessage(e, m.InfrastructurePlan)
 	}
+	if len(m.MachineOverrides) > 0 {
+		e.FieldStart("machineOverrides")
+		e.ArrStart()
+		for _, v := range m.MachineOverrides {
+			jxpb.EncMessage(e, v)
+		}
+		e.ArrEnd()
+	}
 	if m.RenderPreview != nil {
 		e.FieldStart("renderPreview")
 		jxpb.EncMessage(e, m.RenderPreview)
@@ -173,6 +181,22 @@ func (m *TestWizardDraftRecord) Decode(d *jx.Decoder) error {
 				return err
 			}
 			return nil
+		case "machineOverrides", "machine_overrides":
+			if seen["MachineOverrides"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["MachineOverrides"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &deployment.MachinePlan{}
+				if err := jxpb.DecMessage(d, el); err != nil {
+					return err
+				}
+				m.MachineOverrides = append(m.MachineOverrides, el)
+				return nil
+			})
 		case "renderPreview", "render_preview":
 			if seen["RenderPreview"] {
 				return fmt.Errorf("duplicate field %q", key)

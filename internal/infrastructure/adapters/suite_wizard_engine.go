@@ -3,6 +3,8 @@ package adapters
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/stroppy-io/schemapb/schemapb"
@@ -200,6 +202,9 @@ func (e *SuiteWizardEngine) recomputeCell(ctx context.Context, tenantID string, 
 			cell.TopologySpec = run.GetTopologySpec()
 			cell.InfrastructurePlan = run.GetInfrastructurePlan()
 			cell.Compatible = true
+			if missing := missingMachineOverrideNodeIDs(provider, run.GetInfrastructurePlan(), in.GetSpec().GetMachineOverrides()); len(missing) > 0 {
+				addErr("machine_overrides", fmt.Sprintf("confirm machine settings for every node: %s", strings.Join(missing, ", ")))
+			}
 
 			preview, perr := deploymentbuilder.BuildPreview(run.GetTopologySpec(), deploymentbuilder.PreviewOptions{
 				Database:        db,
@@ -352,6 +357,42 @@ func (e *SuiteWizardEngine) Bake(ctx context.Context, draft *models.SuiteWizardD
 
 // boolPtr returns a pointer to b for the optional rating defaults.
 func boolPtr(b bool) *bool { return &b }
+
+func missingMachineOverrideNodeIDs(provider deployment.Provider, plan *deployment.InfrastructurePlan, overrides []*deployment.MachinePlan) []string {
+	if plan == nil {
+		return nil
+	}
+	confirmed := make(map[string]struct{}, len(overrides))
+	for _, machine := range overrides {
+		if machineOverrideMatchesProvider(provider, machine) {
+			confirmed[machine.GetNodeId()] = struct{}{}
+		}
+	}
+	var missing []string
+	for _, machine := range plan.GetMachines() {
+		if machine.GetNodeId() == "" {
+			continue
+		}
+		if _, ok := confirmed[machine.GetNodeId()]; !ok {
+			missing = append(missing, machine.GetNodeId())
+		}
+	}
+	return missing
+}
+
+func machineOverrideMatchesProvider(provider deployment.Provider, machine *deployment.MachinePlan) bool {
+	if machine.GetNodeId() == "" {
+		return false
+	}
+	switch provider {
+	case deployment.Provider_PROVIDER_DOCKER:
+		return machine.GetDocker() != nil
+	case deployment.Provider_PROVIDER_YANDEX:
+		return machine.GetYandex() != nil
+	default:
+		return false
+	}
+}
 
 func previewCellRunID(cell *domain.SuiteCell) string {
 	if id := cell.GetId(); id != "" {

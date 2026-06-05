@@ -478,6 +478,14 @@ func (m *PatchTestWizardRequest) Encode(e *jx.Encoder) {
 		e.FieldStart("renderOverrides")
 		jxpb.EncMessage(e, m.RenderOverrides)
 	}
+	if len(m.MachineOverrides) > 0 {
+		e.FieldStart("machineOverrides")
+		e.ArrStart()
+		for _, v := range m.MachineOverrides {
+			jxpb.EncMessage(e, v)
+		}
+		e.ArrEnd()
+	}
 	e.ObjEnd()
 }
 
@@ -607,6 +615,22 @@ func (m *PatchTestWizardRequest) Decode(d *jx.Decoder) error {
 				return err
 			}
 			return nil
+		case "machineOverrides", "machine_overrides":
+			if seen["MachineOverrides"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["MachineOverrides"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &deployment.MachinePlan{}
+				if err := jxpb.DecMessage(d, el); err != nil {
+					return err
+				}
+				m.MachineOverrides = append(m.MachineOverrides, el)
+				return nil
+			})
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}
