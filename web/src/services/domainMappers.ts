@@ -373,10 +373,10 @@ export function databaseVMToProto(vm: DatabaseVM): Database {
     });
   }
 
-  const installPackage = stableInstallPackage(vm);
+  const installPackage = vm.kind === "ydbManaged" ? undefined : stableInstallPackage(vm);
   return create(DatabaseSchema, {
     kind: ENGINE_TO_KIND[vm.kind],
-    packageId: vm.packageId ?? "",
+    packageId: vm.kind === "ydbManaged" ? "" : (vm.packageId ?? ""),
     source: {
       case: "params",
       value: {
@@ -389,6 +389,7 @@ export function databaseVMToProto(vm: DatabaseVM): Database {
 }
 
 function stableInstallPackage(vm: DatabaseVM): DatabasePackage | undefined {
+  if (vm.kind === "ydbManaged") return undefined;
   const pkg = vm.installPackage;
   if (!pkg) return undefined;
   const selected = (vm.packageId ?? "").trim();
@@ -397,7 +398,6 @@ function stableInstallPackage(vm: DatabaseVM): DatabasePackage | undefined {
   const pkgVersion = pkg.dbVersion.trim();
   if (pkgVersion === version) return pkg;
   if (version === "" && pkgVersion === "default") return pkg;
-  if (version === "" && vm.kind === "ydbManaged" && pkgVersion === "managed") return pkg;
   return undefined;
 }
 

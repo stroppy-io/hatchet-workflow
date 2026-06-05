@@ -6,6 +6,7 @@ import (
 	runbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/run"
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 )
 
 func TestBuiltinDatabasePresetsCarryBuiltinPackage(t *testing.T) {
@@ -19,6 +20,12 @@ func TestBuiltinDatabasePresetsCarryBuiltinPackage(t *testing.T) {
 		db := preset.GetDatabase()
 		kinds[db.GetKind()] = true
 		pkg := db.GetParams().GetPackage()
+		if db.GetKind() == domain.Database_KIND_YDB_MANAGED {
+			if pkg != nil {
+				t.Fatalf("%q managed YDB preset has package %+v", preset.GetEntity().GetName(), pkg)
+			}
+			continue
+		}
 		if pkg == nil {
 			t.Fatalf("%q has no builtin package", preset.GetEntity().GetName())
 		}
@@ -49,7 +56,7 @@ func TestBuiltinDatabasePresetsCarryBuiltinPackage(t *testing.T) {
 }
 
 func TestReconcileBuiltinDatabasePresetAddsMissingPackage(t *testing.T) {
-	preset := builtinDatabasePresets("tenant-1", "author-1")[0]
+	preset := firstDatabasePresetExcept(t, builtinDatabasePresets("tenant-1", "author-1"), domain.Database_KIND_YDB_MANAGED)
 	preset.GetDatabase().GetParams().Package = nil
 
 	if !reconcileBuiltinDatabasePreset(preset) {
@@ -67,6 +74,27 @@ func TestReconcileBuiltinDatabasePresetAddsMissingPackage(t *testing.T) {
 	}
 }
 
+func TestReconcileBuiltinDatabasePresetRemovesManagedYdbPackage(t *testing.T) {
+	preset := firstDatabasePresetFor(t, builtinDatabasePresets("tenant-1", "author-1"), domain.Database_KIND_YDB_MANAGED)
+	preset.GetDatabase().GetParams().Package = &domain.Package{
+		Id:        "builtin/ydb-managed/managed",
+		Name:      "Yandex Managed YDB",
+		DbKind:    domain.Database_KIND_YDB_MANAGED,
+		DbVersion: "managed",
+		IsBuiltin: true,
+	}
+
+	if !reconcileBuiltinDatabasePreset(preset) {
+		t.Fatal("reconcileBuiltinDatabasePreset reported no change for managed YDB package")
+	}
+	if pkg := preset.GetDatabase().GetParams().GetPackage(); pkg != nil {
+		t.Fatalf("managed YDB package was not removed: %+v", pkg)
+	}
+	if reconcileBuiltinDatabasePreset(preset) {
+		t.Fatal("reconcileBuiltinDatabasePreset changed an already reconciled managed YDB preset")
+	}
+}
+
 func TestBuiltinSelfCheckMatrixBuildsEverySeededTopology(t *testing.T) {
 	workloads := workloadPresetsByProtocol(builtinWorkloadPresets("tenant-1", "author-1"))
 
@@ -79,10 +107,13 @@ func TestBuiltinSelfCheckMatrixBuildsEverySeededTopology(t *testing.T) {
 
 		db := cloneDatabaseWithBuiltinPackage(preset.GetDatabase())
 		pkg := db.GetParams().GetPackage()
-		if pkg == nil {
+		if db.GetKind() == domain.Database_KIND_YDB_MANAGED {
+			if pkg != nil {
+				t.Fatalf("%q managed YDB self-check database has package %+v", preset.GetEntity().GetName(), pkg)
+			}
+		} else if pkg == nil {
 			t.Fatalf("%q self-check database has no builtin package", preset.GetEntity().GetName())
-		}
-		if !pkg.GetIsBuiltin() {
+		} else if !pkg.GetIsBuiltin() {
 			t.Fatalf("%q self-check database package is not builtin", preset.GetEntity().GetName())
 		}
 
@@ -98,8 +129,40 @@ func TestBuiltinSelfCheckMatrixBuildsEverySeededTopology(t *testing.T) {
 		if len(run.GetInfrastructurePlan().GetMachines()) == 0 {
 			t.Fatalf("%q built no runnable machines", preset.GetEntity().GetName())
 		}
-		if got := run.GetDatabase().GetParams().GetPackage().GetId(); got != pkg.GetId() {
+		runPkg := run.GetDatabase().GetParams().GetPackage()
+		if db.GetKind() == domain.Database_KIND_YDB_MANAGED {
+			if runPkg != nil {
+				t.Fatalf("%q managed YDB run has package %+v", preset.GetEntity().GetName(), runPkg)
+			}
+			continue
+		}
+		if runPkg == nil {
+			t.Fatalf("%q run lost builtin package", preset.GetEntity().GetName())
+		}
+		if got := runPkg.GetId(); got != pkg.GetId() {
 			t.Fatalf("%q run lost builtin package: got %q, want %q", preset.GetEntity().GetName(), got, pkg.GetId())
 		}
 	}
+}
+
+func firstDatabasePresetFor(t *testing.T, presets []*models.DatabasePresetRecord, kind domain.Database_Kind) *models.DatabasePresetRecord {
+	t.Helper()
+	for _, preset := range presets {
+		if preset.GetDatabase().GetKind() == kind {
+			return preset
+		}
+	}
+	t.Fatalf("database preset catalog has no kind %s", kind)
+	return nil
+}
+
+func firstDatabasePresetExcept(t *testing.T, presets []*models.DatabasePresetRecord, excluded domain.Database_Kind) *models.DatabasePresetRecord {
+	t.Helper()
+	for _, preset := range presets {
+		if preset.GetDatabase().GetKind() != excluded {
+			return preset
+		}
+	}
+	t.Fatalf("database preset catalog has no preset except %s", excluded)
+	return nil
 }

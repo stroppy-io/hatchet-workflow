@@ -1227,7 +1227,7 @@ function builtinPackageForDatabase(db: DatabaseVM): DatabasePackageVM | undefine
 }
 
 function builtinPackageForEngine(kind: EngineKind, inputVersion: string): DatabasePackageVM | undefined {
-  if (kind === "external") return undefined;
+  if (kind === "external" || kind === "ydbManaged") return undefined;
   let version = inputVersion.trim() || "default";
   const dbKind = ENGINE_TO_KIND[kind];
   const base = {
@@ -1277,15 +1277,6 @@ function builtinPackageForEngine(kind: EngineKind, inputVersion: string): Databa
           ? "https://binaries.ydb.tech/release/24.1.18/ydbd-24.1.18-linux-amd64.tar.gz"
           : `https://binaries.ydb.tech/release/${version}/ydbd-${version}-linux-amd64.tar.gz`,
       });
-    case "ydbManaged":
-      version = version === "default" ? "managed" : version;
-      return create(PackageSchema, {
-        dbKind,
-        dbVersion: version,
-        isBuiltin: true,
-        id: `builtin/ydb-managed/${version}`,
-        name: "Yandex Managed YDB",
-      });
     case "cockroach":
       return create(PackageSchema, {
         ...base,
@@ -1334,7 +1325,7 @@ function packageDbKind(kind: EngineKind): Exclude<DbKind, ""> | undefined {
     case "ydb":
       return "ydb";
     case "ydbManaged":
-      return "ydb_managed";
+      return undefined;
     case "cockroach":
       return "cockroach";
     case "external":

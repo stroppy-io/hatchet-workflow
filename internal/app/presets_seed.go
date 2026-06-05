@@ -423,13 +423,25 @@ func newSeedEntity(tenantID, authorID, name, description string) *common.Entity 
 }
 
 func ensureDatabaseParamsPackage(kind domain.Database_Kind, params *domain.DatabaseParams) {
-	if params == nil || params.GetPackage() != nil {
+	if params == nil {
+		return
+	}
+	if kind == domain.Database_KIND_YDB_MANAGED {
+		params.Package = nil
+		return
+	}
+	if params.GetPackage() != nil {
 		return
 	}
 	params.Package = builtinDatabasePackage(kind, params.GetVersion())
 }
 
 func builtinDatabasePackage(kind domain.Database_Kind, version string) *domain.Package {
+	if kind == domain.Database_KIND_UNSPECIFIED ||
+		kind == domain.Database_KIND_YDB_MANAGED ||
+		kind == domain.Database_KIND_EXTERNAL {
+		return nil
+	}
 	if version == "" {
 		version = "default"
 	}
@@ -479,13 +491,6 @@ func builtinDatabasePackage(kind domain.Database_Kind, version string) *domain.P
 		if version != "default" {
 			pkg.DebFilename = fmt.Sprintf("https://binaries.ydb.tech/release/%s/ydbd-%s-linux-amd64.tar.gz", version, version)
 		}
-	case domain.Database_KIND_YDB_MANAGED:
-		if version == "default" {
-			version = "managed"
-			pkg.DbVersion = version
-		}
-		pkg.Id = "builtin/ydb-managed/" + version
-		pkg.Name = "Yandex Managed YDB"
 	case domain.Database_KIND_COCKROACH:
 		pkg.Id = "builtin/cockroach/" + version
 		pkg.Name = "CockroachDB " + version

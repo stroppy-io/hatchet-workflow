@@ -431,16 +431,6 @@ var builtinPackageSpecs = []builtinPackageSpec{
 		Arch:        "amd64",
 	},
 	{
-		ID:          "builtin/ydb-managed/managed",
-		Name:        "Yandex Managed YDB built-in package",
-		Description: "Provider-managed YDB package supplied by the platform.",
-		Format:      models.PackageRecord_FORMAT_BINARY,
-		Version:     "managed",
-		DbKind:      domain.Database_KIND_YDB_MANAGED,
-		OS:          "managed",
-		Arch:        "managed",
-	},
-	{
 		ID:          "builtin/cockroach/default",
 		Name:        "CockroachDB default archive",
 		Description: "Server-defined stock CockroachDB release archive.",

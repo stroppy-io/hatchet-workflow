@@ -50,13 +50,12 @@ func TestListPackagesIncludesBuiltinCatalog(t *testing.T) {
 
 func TestBuiltinPackageCatalogCoversDatabaseKinds(t *testing.T) {
 	want := map[domain.Database_Kind]bool{
-		domain.Database_KIND_POSTGRES:    false,
-		domain.Database_KIND_MYSQL:       false,
-		domain.Database_KIND_MARIADB:     false,
-		domain.Database_KIND_PICODATA:    false,
-		domain.Database_KIND_YDB:         false,
-		domain.Database_KIND_YDB_MANAGED: false,
-		domain.Database_KIND_COCKROACH:   false,
+		domain.Database_KIND_POSTGRES:  false,
+		domain.Database_KIND_MYSQL:     false,
+		domain.Database_KIND_MARIADB:   false,
+		domain.Database_KIND_PICODATA:  false,
+		domain.Database_KIND_YDB:       false,
+		domain.Database_KIND_COCKROACH: false,
 	}
 
 	for _, pkg := range builtinPackageRecords("tenant-1") {
@@ -68,6 +67,11 @@ func TestBuiltinPackageCatalogCoversDatabaseKinds(t *testing.T) {
 	for kind, seen := range want {
 		if !seen {
 			t.Fatalf("missing built-in package for database kind %v", kind)
+		}
+	}
+	for _, pkg := range builtinPackageRecords("tenant-1") {
+		if pkg.GetTargetDbKind() == domain.Database_KIND_YDB_MANAGED {
+			t.Fatal("managed YDB must not have a built-in install package")
 		}
 	}
 }
