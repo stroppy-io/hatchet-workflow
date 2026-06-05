@@ -14,6 +14,7 @@ import (
 	databasepicodata "github.com/stroppy-io/stroppy-cloud/internal/domain/database/picodata"
 	databasepostgres "github.com/stroppy-io/stroppy-cloud/internal/domain/database/postgres"
 	databaseydb "github.com/stroppy-io/stroppy-cloud/internal/domain/database/ydb"
+	databaseydbmanaged "github.com/stroppy-io/stroppy-cloud/internal/domain/database/ydbmanaged"
 	deploymentbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/deployment"
 	infrastructurebuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/infrastructure"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/packages"
@@ -48,6 +49,7 @@ func NewTestWizardEngine() *TestWizardEngine {
 			databasepostgres.PackageResolver{},
 			databasepicodata.PackageResolver{},
 			databaseydb.PackageResolver{},
+			databaseydbmanaged.PackageResolver{},
 			databasecockroach.PackageResolver{},
 			databasemysql.PackageResolver{},
 		),
@@ -55,6 +57,7 @@ func NewTestWizardEngine() *TestWizardEngine {
 			databasepostgres.DeploymentRenderer{},
 			databasepicodata.DeploymentRenderer{},
 			databaseydb.DeploymentRenderer{},
+			databaseydbmanaged.DeploymentRenderer{},
 			databasecockroach.DeploymentRenderer{},
 			databasemysql.DeploymentRenderer{},
 			workloadbuilder.DeploymentRenderer{},

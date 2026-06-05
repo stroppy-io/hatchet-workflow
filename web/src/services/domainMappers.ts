@@ -20,6 +20,7 @@ import {
   DatabaseSchema,
   Database_Kind,
   type DatabaseParams,
+  type Package as DatabasePackage,
   type PostgresParams,
   type MySqlParams,
   type PicodataParams,
@@ -213,12 +214,18 @@ export function databaseProtoToVM(db: Database | undefined): DatabaseVM {
     const ext: ExternalParamsVM = {
       dsn: db?.source.case === "external" ? db.source.value.dsn : "",
     };
-    return { kind: "external", version: "", params: { kind: "external", external: ext } };
+    return { kind: "external", version: "", packageId: db?.packageId ?? "", params: { kind: "external", external: ext } };
   }
 
   const params = db?.source.case === "params" ? db.source.value : undefined;
   const version = params?.version ?? "";
-  return { kind, version, params: engineParamsProtoToVM(kind, params) };
+  return {
+    kind,
+    version,
+    packageId: db?.packageId ?? "",
+    installPackage: params?.package,
+    params: engineParamsProtoToVM(kind, params),
+  };
 }
 
 function engineParamsProtoToVM(
@@ -361,17 +368,35 @@ export function databaseVMToProto(vm: DatabaseVM): Database {
     const dsn = vm.params.kind === "external" ? vm.params.external.dsn : "";
     return create(DatabaseSchema, {
       kind: Database_Kind.EXTERNAL,
+      packageId: vm.packageId ?? "",
       source: { case: "external", value: { dsn } },
     });
   }
 
+  const installPackage = stableInstallPackage(vm);
   return create(DatabaseSchema, {
     kind: ENGINE_TO_KIND[vm.kind],
+    packageId: vm.packageId ?? "",
     source: {
       case: "params",
-      value: { version: vm.version, engine: engineParamsVMToProto(vm.params) },
+      value: {
+        version: vm.version,
+        package: installPackage,
+        engine: engineParamsVMToProto(vm.params),
+      },
     },
   });
+}
+
+function stableInstallPackage(vm: DatabaseVM): DatabasePackage | undefined {
+  const pkg = vm.installPackage;
+  if (!pkg) return undefined;
+  const version = vm.version.trim();
+  const pkgVersion = pkg.dbVersion.trim();
+  if (pkgVersion === version) return pkg;
+  if (version === "" && pkgVersion === "default") return pkg;
+  if (version === "" && vm.kind === "ydbManaged" && pkgVersion === "managed") return pkg;
+  return undefined;
 }
 
 function engineParamsVMToProto(p: EngineParamsVM): DatabaseParams["engine"] {

@@ -15,6 +15,7 @@ import (
 	databasepicodata "github.com/stroppy-io/stroppy-cloud/internal/domain/database/picodata"
 	databasepostgres "github.com/stroppy-io/stroppy-cloud/internal/domain/database/postgres"
 	databaseydb "github.com/stroppy-io/stroppy-cloud/internal/domain/database/ydb"
+	databaseydbmanaged "github.com/stroppy-io/stroppy-cloud/internal/domain/database/ydbmanaged"
 	deploymentbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/deployment"
 	derrors "github.com/stroppy-io/stroppy-cloud/internal/domain/errors"
 	infrastructurebuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/infrastructure"
@@ -95,6 +96,7 @@ func NewSuiteWizardEngine(cells SuiteCellResolver, baker SuiteBaker) *SuiteWizar
 			databasepostgres.PackageResolver{},
 			databasepicodata.PackageResolver{},
 			databaseydb.PackageResolver{},
+			databaseydbmanaged.PackageResolver{},
 			databasecockroach.PackageResolver{},
 			databasemysql.PackageResolver{},
 		),
@@ -102,6 +104,7 @@ func NewSuiteWizardEngine(cells SuiteCellResolver, baker SuiteBaker) *SuiteWizar
 			databasepostgres.DeploymentRenderer{},
 			databasepicodata.DeploymentRenderer{},
 			databaseydb.DeploymentRenderer{},
+			databaseydbmanaged.DeploymentRenderer{},
 			databasecockroach.DeploymentRenderer{},
 			databasemysql.DeploymentRenderer{},
 			workloadbuilder.DeploymentRenderer{},

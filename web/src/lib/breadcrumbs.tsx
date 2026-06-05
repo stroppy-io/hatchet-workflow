@@ -119,13 +119,10 @@ const CRUMB_REGISTRY: CrumbDef[] = [
   { pattern: "/t/:slug/presets/workload/new", label: "New preset" },
   { pattern: "/t/:slug/presets/workload/:id/edit", label: "Edit" },
   { pattern: "/t/:slug/presets/test", label: "Test Presets" },
-  // `:id` registered BEFORE `new`/`edit` so the more specific literal crumbs win
-  // dedup (same convention as the database/workload preset crumbs above).
   {
     pattern: "/t/:slug/presets/test/:id",
     label: ({ params, overrides }) => overrides.id ?? params.id ?? "",
   },
-  { pattern: "/t/:slug/presets/test/new", label: "New preset" },
   { pattern: "/t/:slug/presets/test/:id/edit", label: "Edit" },
   { pattern: "/t/:slug/packages", label: "Packages" },
   { pattern: "/t/:slug/packages/new", label: "Upload package" },

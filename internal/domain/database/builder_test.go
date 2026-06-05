@@ -25,18 +25,21 @@ func TestBuildTopologySpecDispatchesPostgres(t *testing.T) {
 	}
 }
 
-func TestBuildTopologySpecRejectsUnsupportedKind(t *testing.T) {
-	_, err := BuildTopologySpec(&domain.Database{
+func TestBuildTopologySpecDispatchesMariaDBThroughMySQLShape(t *testing.T) {
+	spec, err := BuildTopologySpec(&domain.Database{
 		Kind: domain.Database_KIND_MARIADB,
 		Source: &domain.Database_Params{
 			Params: &domain.DatabaseParams{
 				Engine: &domain.DatabaseParams_Mariadb{
-					Mariadb: &domain.MySqlParams{},
+					Mariadb: &domain.MySqlParams{Replicas: 1},
 				},
 			},
 		},
 	})
-	if err == nil {
-		t.Fatal("expected error")
+	if err != nil {
+		t.Fatalf("build topology spec: %v", err)
+	}
+	if got, want := len(spec.GetNodes()), 2; got != want {
+		t.Fatalf("nodes = %d, want %d", got, want)
 	}
 }

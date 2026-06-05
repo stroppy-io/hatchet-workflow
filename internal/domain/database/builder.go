@@ -57,6 +57,11 @@ func BuildTopologySpec(input *domain.Database) (*topology.TopologySpec, error) {
 			return nil, fmt.Errorf("mysql database requires mysql params")
 		}
 		return (&mysqldb.Database{}).BuildTopologySpec(params.GetMysql())
+	case domain.Database_KIND_MARIADB:
+		if params.GetMariadb() == nil {
+			return nil, fmt.Errorf("mariadb database requires mariadb params")
+		}
+		return (&mysqldb.Database{}).BuildTopologySpec(params.GetMariadb())
 	default:
 		return nil, fmt.Errorf("database kind %s topology builder is not implemented", input.GetKind())
 	}

@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gopherex/pgtx/pkg/tx"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	derrors "github.com/stroppy-io/stroppy-cloud/internal/domain/errors"
@@ -14,18 +15,21 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	iamsvc "github.com/stroppy-io/stroppy-cloud/internal/services/iam"
 )
 
 // seedFirstBoot creates the initial admin account + default tenant + owner role
-// + membership and the singleton PlatformSettings on a brand-new database, so
-// that a fresh install has a principal that can actually log in.
+// + membership, the singleton PlatformSettings, and the builtin catalog on a
+// brand-new database, so that a fresh install has a principal that can actually
+// log in and a minimal runnable self-check suite.
 //
 // It is idempotent in two independent ways:
 //   - if cfg.AdminPassword is empty it skips entirely (we never invent a
 //     password);
 //   - if ANY account already exists (or specifically one with the admin email),
-//     it skips — re-running on a populated DB is a no-op.
+//     it skips account creation and only ensures platform settings plus any
+//     missing builtin catalog records for the default tenant.
 //
 // All writes run inside one serializable transaction via db.Trm(); a failure
 // rolls the whole thing back so we never leave a half-seeded control plane.
@@ -53,20 +57,27 @@ func seedFirstBoot(ctx context.Context, log *slog.Logger, store *postgres.Store,
 	}
 
 	return tx.DoSerializable(ctx, db.Trm(), func(ctx context.Context) error {
-		// Idempotency: any existing account means the platform was already
-		// bootstrapped (manually or by a prior boot) — leave it untouched.
+		// Idempotency: any existing account means the platform identity was
+		// already bootstrapped (manually or by a prior boot). Do not recreate
+		// identities; only ensure settings/catalog for the default tenant.
 		existing, _, err := accounts.List(ctx, 1, "")
 		if err != nil {
 			return err
 		}
 		if len(existing) > 0 {
 			log.Info("first-boot seeding skipped: an account already exists", slog.Int("accounts", len(existing)))
-			return ensurePlatformSettings(ctx, log, settings, cfg)
+			if err := ensurePlatformSettings(ctx, log, settings, cfg); err != nil {
+				return err
+			}
+			return seedExistingDefaultTenantCatalog(ctx, log, store, tenants)
 		}
 		// Belt-and-suspenders: also short-circuit on the specific email.
 		if _, err := accounts.GetByEmail(ctx, email); err == nil {
 			log.Info("first-boot seeding skipped: admin account already exists", slog.String("email", email))
-			return ensurePlatformSettings(ctx, log, settings, cfg)
+			if err := ensurePlatformSettings(ctx, log, settings, cfg); err != nil {
+				return err
+			}
+			return seedExistingDefaultTenantCatalog(ctx, log, store, tenants)
 		} else if !errors.Is(err, derrors.ErrNotFound) {
 			return err
 		}
@@ -144,9 +155,8 @@ func seedFirstBoot(ctx context.Context, log *slog.Logger, store *postgres.Store,
 			return err
 		}
 
-		// 7) Builtin/system database presets for the default tenant — the same
-		// catalog `main` shipped, translated into the typed preset model.
-		if err := seedDatabasePresets(ctx, log, store.DatabasePresets(), tenant.Id, account.Id); err != nil {
+		// 7) Builtin/system preset catalog and the default self-check suite.
+		if err := seedBuiltinCatalog(ctx, log, store, tenant.Id, account.Id); err != nil {
 			return err
 		}
 
@@ -160,6 +170,34 @@ func seedFirstBoot(ctx context.Context, log *slog.Logger, store *postgres.Store,
 		)
 		return nil
 	}, tx.WithRetry(tx.DefaultRetryPolicy))
+}
+
+func seedExistingDefaultTenantCatalog(ctx context.Context, log *slog.Logger, store *postgres.Store, tenants *postgres.TenantRepo) error {
+	tenant, err := tenants.GetBySlug(ctx, "default")
+	if errors.Is(err, derrors.ErrNotFound) {
+		log.Info("first-boot seeding: default tenant not found, builtin catalog skipped")
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	return seedBuiltinCatalog(ctx, log, store, tenant.GetId(), tenant.GetOwnerAccountId())
+}
+
+func seedBuiltinCatalog(ctx context.Context, log *slog.Logger, store *postgres.Store, tenantID, authorID string) error {
+	dbPresets, err := seedDatabasePresets(ctx, log, store.DatabasePresets(), tenantID, authorID)
+	if err != nil {
+		return err
+	}
+	workloads, err := seedWorkloadPresets(ctx, log, store.WorkloadPresets(), tenantID, authorID)
+	if err != nil {
+		return err
+	}
+	tests, err := seedTestPresets(ctx, log, store.TestPresets(), tenantID, authorID, dbPresets, workloads)
+	if err != nil {
+		return err
+	}
+	return seedSuites(ctx, log, store.Suites(), tenantID, authorID, tests)
 }
 
 // ensurePlatformSettings creates the singleton PlatformSettings row if absent,
@@ -184,30 +222,55 @@ func ensurePlatformSettings(ctx context.Context, log *slog.Logger, settings *pos
 	return nil
 }
 
-// seedDatabasePresets inserts the builtin/system database presets for the
-// tenant, mirroring the catalog `main` shipped. It is idempotent: it lists the
-// tenant's existing database presets first and seeds nothing if any already
-// exist (so a re-run on a populated tenant is a no-op). authorID is the seeded
-// admin; every preset is stamped IsSystem=true by the catalog builder.
-func seedDatabasePresets(ctx context.Context, log *slog.Logger, repo *postgres.DatabasePresetRepo, tenantID, authorID string) error {
+// seedDatabasePresets ensures the builtin/system database presets for the
+// tenant, mirroring the catalog `main` shipped. It is idempotent by entity name:
+// missing builtin names are inserted, and existing builtin records are
+// reconciled with non-destructive catalog metadata such as the builtin package.
+func seedDatabasePresets(ctx context.Context, log *slog.Logger, repo *postgres.DatabasePresetRepo, tenantID, authorID string) ([]*models.DatabasePresetRecord, error) {
 	existing, _, err := repo.List(ctx, &api.ListDatabasePresetsRequest{TenantId: tenantID}, authorID)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if len(existing) > 0 {
-		log.Info("first-boot seeding: database presets already present, skipping",
-			slog.String("tenant_id", tenantID), slog.Int("presets", len(existing)))
-		return nil
-	}
+	byName := databasePresetsByName(existing)
 	presets := builtinDatabasePresets(tenantID, authorID)
+	created := 0
+	updated := 0
+	out := make([]*models.DatabasePresetRecord, 0, len(presets))
 	for _, p := range presets {
-		if err := repo.Create(ctx, p); err != nil {
-			return err
+		if current := byName[p.GetEntity().GetName()]; current != nil {
+			if reconcileBuiltinDatabasePreset(current) {
+				if err := repo.Update(ctx, current); err != nil {
+					return nil, err
+				}
+				updated++
+			}
+			out = append(out, current)
+			continue
 		}
+		if err := repo.Create(ctx, p); err != nil {
+			return nil, err
+		}
+		created++
+		out = append(out, p)
 	}
-	log.Info("first-boot seeding: builtin database presets created",
-		slog.String("tenant_id", tenantID), slog.Int("presets", len(presets)))
-	return nil
+	log.Info("first-boot seeding: builtin database presets ensured",
+		slog.String("tenant_id", tenantID), slog.Int("created", created), slog.Int("updated", updated), slog.Int("catalog", len(out)))
+	return out, nil
+}
+
+func reconcileBuiltinDatabasePreset(rec *models.DatabasePresetRecord) bool {
+	if rec == nil || rec.GetDatabase() == nil || rec.GetDatabase().GetParams() == nil {
+		return false
+	}
+	next := cloneDatabaseWithBuiltinPackage(rec.GetDatabase())
+	if proto.Equal(rec.GetDatabase(), next) {
+		return false
+	}
+	rec.Database = next
+	if timings := rec.GetEntity().GetTimings(); timings != nil {
+		timings.UpdatedAt = timestamppb.Now()
+	}
+	return true
 }
 
 // catalogManagePermissions returns one MANAGE permission per grantable resource,
@@ -237,9 +300,9 @@ func catalogManagePermissions(ctx context.Context, catalog *identity.Catalog) ([
 // ensure iamsvc port types stay referenced so a signature drift in the repos
 // (which must satisfy these interfaces) surfaces here at compile time.
 var (
-	_ iamsvc.AccountRepo    = (*postgres.AccountRepo)(nil)
+	_ iamsvc.AccountRepo     = (*postgres.AccountRepo)(nil)
 	_ iamsvc.CredentialStore = (*postgres.CredentialRepo)(nil)
-	_ iamsvc.TenantRepo     = (*postgres.TenantRepo)(nil)
-	_ iamsvc.RoleRepo       = (*postgres.RoleRepo)(nil)
-	_ iamsvc.MembershipRepo = (*postgres.MembershipRepo)(nil)
+	_ iamsvc.TenantRepo      = (*postgres.TenantRepo)(nil)
+	_ iamsvc.RoleRepo        = (*postgres.RoleRepo)(nil)
+	_ iamsvc.MembershipRepo  = (*postgres.MembershipRepo)(nil)
 )

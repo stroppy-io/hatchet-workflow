@@ -120,3 +120,23 @@ func TestMysqlPackageResolver(t *testing.T) {
 		t.Fatalf("package id = %q, want %q", got, want)
 	}
 }
+
+func TestMysqlPackageResolverSupportsMariaDB(t *testing.T) {
+	db := mysqlDatabase()
+	db.Kind = domain.Database_KIND_MARIADB
+	db.GetParams().Engine = &domain.DatabaseParams_Mariadb{Mariadb: db.GetParams().GetMysql()}
+
+	pkg, err := PackageResolver{}.ResolveDatabasePackage(db)
+	if err != nil {
+		t.Fatalf("resolve package: %v", err)
+	}
+	if got, want := pkg.GetId(), "builtin/mariadb/default"; got != want {
+		t.Fatalf("package id = %q, want %q", got, want)
+	}
+	if got, want := pkg.GetDbKind(), domain.Database_KIND_MARIADB; got != want {
+		t.Fatalf("db kind = %s, want %s", got, want)
+	}
+	if got, want := pkg.GetAptPackages()[0], "mariadb-server"; got != want {
+		t.Fatalf("apt package = %q, want %q", got, want)
+	}
+}

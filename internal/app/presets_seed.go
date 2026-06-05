@@ -1,12 +1,22 @@
 package app
 
 import (
+	"context"
+	"fmt"
+	"log/slog"
+
 	"github.com/google/uuid"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	runbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/run"
+	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
+	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
+	suitesvc "github.com/stroppy-io/stroppy-cloud/internal/services/suite"
 )
 
 // builtinDatabasePresets returns the catalog of system database presets that a
@@ -25,6 +35,7 @@ func builtinDatabasePresets(tenantID, authorID string) []*models.DatabasePresetR
 	var out []*models.DatabasePresetRecord
 
 	add := func(name, description string, kind domain.Database_Kind, params *domain.DatabaseParams) {
+		ensureDatabaseParamsPackage(kind, params)
 		out = append(out, &models.DatabasePresetRecord{
 			Entity: &common.Entity{
 				Id:          uuid.NewString(),
@@ -214,5 +225,368 @@ func builtinDatabasePresets(tenantID, authorID string) []*models.DatabasePresetR
 	add("CockroachDB cluster-6", "6-node CockroachDB cluster (more parallel ranges)",
 		domain.Database_KIND_COCKROACH, crdb(&domain.CockroachParams{Nodes: 6}))
 
+	return out
+}
+
+func seedWorkloadPresets(ctx context.Context, log *slog.Logger, repo *postgres.WorkloadPresetRepo, tenantID, authorID string) ([]*models.WorkloadPresetRecord, error) {
+	existing, _, err := repo.List(ctx, &api.ListWorkloadPresetsRequest{TenantId: tenantID}, authorID)
+	if err != nil {
+		return nil, err
+	}
+	byName := workloadPresetsByName(existing)
+	presets := builtinWorkloadPresets(tenantID, authorID)
+	created := 0
+	out := make([]*models.WorkloadPresetRecord, 0, len(presets))
+	for _, p := range presets {
+		if current := byName[p.GetEntity().GetName()]; current != nil {
+			out = append(out, current)
+			continue
+		}
+		if err := repo.Create(ctx, p); err != nil {
+			return nil, err
+		}
+		created++
+		out = append(out, p)
+	}
+	log.Info("first-boot seeding: builtin workload presets ensured",
+		slog.String("tenant_id", tenantID), slog.Int("created", created), slog.Int("catalog", len(out)))
+	return out, nil
+}
+
+func seedTestPresets(ctx context.Context, log *slog.Logger, repo *postgres.TestPresetRepo, tenantID, authorID string, dbPresets []*models.DatabasePresetRecord, workloads []*models.WorkloadPresetRecord) ([]*models.TestPresetRecord, error) {
+	existing, _, err := repo.List(ctx, &api.ListTestPresetsRequest{TenantId: tenantID}, authorID)
+	if err != nil {
+		return nil, err
+	}
+	byName := testPresetsByName(existing)
+	byProtocol := workloadPresetsByProtocol(workloads)
+
+	created := 0
+	out := make([]*models.TestPresetRecord, 0, len(dbPresets))
+	for _, dbPreset := range dbPresets {
+		name := selfCheckTestPresetName(dbPreset)
+		if current := byName[name]; current != nil {
+			out = append(out, current)
+			continue
+		}
+
+		protocol := workloadProtocolForDatabase(dbPreset.GetDatabase().GetKind())
+		workload := byProtocol[protocol]
+		if workload == nil {
+			return nil, fmt.Errorf("missing builtin workload preset for protocol %s", protocol)
+		}
+
+		rec := &models.TestPresetRecord{
+			Entity:   newSeedEntity(tenantID, authorID, name, "Minimal self-check for "+dbPreset.GetEntity().GetName()),
+			IsSystem: true,
+			Test: &domain.Test{
+				Database: cloneDatabaseWithBuiltinPackage(dbPreset.GetDatabase()),
+				Workload: proto.Clone(workload.GetWorkload()).(*domain.Workload),
+			},
+		}
+		rec.Summary = &models.TestPresetRecord_Summary{
+			DbKind:         rec.GetTest().GetDatabase().GetKind(),
+			Protocol:       rec.GetTest().GetWorkload().GetProtocol(),
+			StroppyVersion: rec.GetTest().GetWorkload().GetStroppyVersion(),
+		}
+		if err := rec.GetTest().Validate(); err != nil {
+			return nil, fmt.Errorf("builtin test preset %q is invalid: %w", name, err)
+		}
+		if err := repo.Create(ctx, rec); err != nil {
+			return nil, err
+		}
+		created++
+		out = append(out, rec)
+	}
+	log.Info("first-boot seeding: builtin test presets ensured",
+		slog.String("tenant_id", tenantID), slog.Int("created", created), slog.Int("catalog", len(out)))
+	return out, nil
+}
+
+func seedSuites(ctx context.Context, log *slog.Logger, repo *postgres.SuiteRepo, tenantID, authorID string, tests []*models.TestPresetRecord) error {
+	const suiteName = "Builtin self-check suite"
+	existing, _, err := repo.List(ctx, suitesvc.SuiteListQuery{TenantID: tenantID, CallerID: authorID})
+	if err != nil {
+		return err
+	}
+	for _, rec := range existing {
+		if rec.GetEntity().GetName() == suiteName {
+			log.Info("first-boot seeding: builtin suite already present",
+				slog.String("tenant_id", tenantID), slog.String("suite_id", rec.GetEntity().GetId()))
+			return nil
+		}
+	}
+
+	cells := make([]*domain.SuiteCell, 0, len(tests))
+	for _, test := range tests {
+		run, err := runbuilder.BuildTestRun(runbuilder.BuildOptions{
+			ID:       uuid.NewString(),
+			Database: test.GetTest().GetDatabase(),
+			Workload: test.GetTest().GetWorkload(),
+			Provider: deploymentpb.Provider_PROVIDER_YANDEX,
+		})
+		if err != nil {
+			return fmt.Errorf("build builtin suite cell %q: %w", test.GetEntity().GetName(), err)
+		}
+		cells = append(cells, &domain.SuiteCell{
+			Id:      uuid.NewString(),
+			Name:    test.GetEntity().GetName(),
+			Enabled: true,
+			Source: &domain.SuiteCell_TestPresetId{
+				TestPresetId: test.GetEntity().GetId(),
+			},
+			MachineOverrides: cloneMachinePlans(run.GetInfrastructurePlan().GetMachines()),
+		})
+	}
+
+	id := uuid.NewString()
+	rec := &models.SuiteRecord{
+		Entity: newSeedEntity(tenantID, authorID, suiteName, "Minimal self-check across every seeded database topology"),
+		Spec: &domain.Suite{
+			Id:                 id,
+			Cells:              cells,
+			Provider:           deploymentpb.Provider_PROVIDER_YANDEX,
+			DefaultMaxParallel: 1,
+		},
+		Summary: &models.SuiteRecord_Summary{
+			CellCount: uint32(len(cells)),
+		},
+	}
+	rec.Entity.Id = id
+	if err := rec.GetSpec().Validate(); err != nil {
+		return fmt.Errorf("builtin suite is invalid: %w", err)
+	}
+	if err := repo.Create(ctx, rec); err != nil {
+		return err
+	}
+	log.Info("first-boot seeding: builtin suite created",
+		slog.String("tenant_id", tenantID), slog.String("suite_id", id), slog.Int("cells", len(cells)))
+	return nil
+}
+
+func builtinWorkloadPresets(tenantID, authorID string) []*models.WorkloadPresetRecord {
+	add := func(name, description string, protocol domain.Workload_Protocol) *models.WorkloadPresetRecord {
+		workload := minimalSelfCheckWorkload(protocol)
+		return &models.WorkloadPresetRecord{
+			Entity:   newSeedEntity(tenantID, authorID, name, description),
+			IsSystem: true,
+			Workload: workload,
+			Summary: &models.WorkloadPresetRecord_Summary{
+				Protocol:       workload.GetProtocol(),
+				StroppyVersion: workload.GetStroppyVersion(),
+				Script:         workload.GetScript(),
+			},
+		}
+	}
+	return []*models.WorkloadPresetRecord{
+		add("Self-check PG", "Minimal PostgreSQL-compatible workload", domain.Workload_PROTOCOL_PG),
+		add("Self-check MySQL", "Minimal MySQL-compatible workload", domain.Workload_PROTOCOL_MYSQL),
+		add("Self-check Picodata", "Minimal Picodata workload", domain.Workload_PROTOCOL_PICODATA),
+		add("Self-check YDB gRPC", "Minimal self-hosted YDB workload", domain.Workload_PROTOCOL_YDB_GRPC),
+		add("Self-check YDB gRPCS", "Minimal managed YDB workload", domain.Workload_PROTOCOL_YDB_GRPCS),
+		add("Self-check CockroachDB", "Minimal CockroachDB workload", domain.Workload_PROTOCOL_COCKROACH),
+	}
+}
+
+func minimalSelfCheckWorkload(protocol domain.Workload_Protocol) *domain.Workload {
+	return &domain.Workload{
+		Script:   "tpcc/tx",
+		Protocol: protocol,
+		Execution: &domain.Workload_Execution{
+			Vus: 1,
+			Limit: &domain.Workload_Execution_Duration{
+				Duration: "30s",
+			},
+			Quiet:        true,
+			NoThresholds: true,
+		},
+		Parameters: &domain.Workload_Parameters{
+			PoolSize:    1,
+			ScaleFactor: 1,
+		},
+	}
+}
+
+func newSeedEntity(tenantID, authorID, name, description string) *common.Entity {
+	now := timestamppb.Now()
+	return &common.Entity{
+		Id:          uuid.NewString(),
+		TenantId:    tenantID,
+		Name:        name,
+		Description: description,
+		AuthorId:    authorID,
+		Timings: &common.Timings{
+			CreatedAt: now,
+			UpdatedAt: now,
+		},
+	}
+}
+
+func ensureDatabaseParamsPackage(kind domain.Database_Kind, params *domain.DatabaseParams) {
+	if params == nil || params.GetPackage() != nil {
+		return
+	}
+	params.Package = builtinDatabasePackage(kind, params.GetVersion())
+}
+
+func builtinDatabasePackage(kind domain.Database_Kind, version string) *domain.Package {
+	if version == "" {
+		version = "default"
+	}
+	pkg := &domain.Package{
+		DbKind:    kind,
+		DbVersion: version,
+		IsBuiltin: true,
+	}
+	switch kind {
+	case domain.Database_KIND_POSTGRES:
+		pkg.Id = "builtin/postgres/" + version
+		pkg.Name = "PostgreSQL " + version
+		pkg.AptPackages = []string{"postgresql", "postgresql-contrib"}
+		pkg.PreInstall = []string{"apt-get update"}
+		if version != "default" {
+			pkg.AptPackages = []string{"postgresql-" + version, "postgresql-contrib-" + version}
+			pkg.PreInstall = seedPGDGPreInstall()
+		}
+	case domain.Database_KIND_MYSQL:
+		pkg.Id = "builtin/mysql/" + version
+		pkg.Name = "MySQL " + version
+		pkg.AptPackages = []string{"mysql-server"}
+		pkg.PreInstall = []string{"apt-get update"}
+		if version != "default" {
+			pkg.AptPackages = []string{"mysql-server-" + version}
+		}
+	case domain.Database_KIND_MARIADB:
+		pkg.Id = "builtin/mariadb/" + version
+		pkg.Name = "MariaDB " + version
+		pkg.AptPackages = []string{"mariadb-server"}
+		pkg.PreInstall = []string{"apt-get update"}
+		if version != "default" {
+			pkg.AptPackages = []string{"mariadb-server-" + version}
+		}
+	case domain.Database_KIND_PICODATA:
+		pkg.Id = "builtin/picodata/" + version
+		pkg.Name = "Picodata " + version
+		pkg.AptPackages = []string{"picodata"}
+		pkg.PreInstall = []string{"apt-get update"}
+		if version != "default" {
+			pkg.AptPackages = []string{"picodata=" + version}
+		}
+	case domain.Database_KIND_YDB:
+		pkg.Id = "builtin/ydb/" + version
+		pkg.Name = "YDB " + version
+		pkg.DebFilename = "https://binaries.ydb.tech/release/24.1.18/ydbd-24.1.18-linux-amd64.tar.gz"
+		if version != "default" {
+			pkg.DebFilename = fmt.Sprintf("https://binaries.ydb.tech/release/%s/ydbd-%s-linux-amd64.tar.gz", version, version)
+		}
+	case domain.Database_KIND_YDB_MANAGED:
+		if version == "default" {
+			version = "managed"
+			pkg.DbVersion = version
+		}
+		pkg.Id = "builtin/ydb-managed/" + version
+		pkg.Name = "Yandex Managed YDB"
+	case domain.Database_KIND_COCKROACH:
+		pkg.Id = "builtin/cockroach/" + version
+		pkg.Name = "CockroachDB " + version
+		pkg.DebFilename = "https://binaries.cockroachdb.com/cockroach-v23.2.5.linux-amd64.tgz"
+		if version != "default" {
+			pkg.DebFilename = fmt.Sprintf("https://binaries.cockroachdb.com/cockroach-v%s.linux-amd64.tgz", version)
+		}
+	}
+	return pkg
+}
+
+func seedPGDGPreInstall() []string {
+	const keyring = "/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc"
+	return []string{
+		"install -d /usr/share/postgresql-common/pgdg",
+		"curl -fsSL -o " + keyring + " https://www.postgresql.org/media/keys/ACCC4CF8.asc",
+		`sh -c 'echo "deb [signed-by=` + keyring + `] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'`,
+		"apt-get update",
+	}
+}
+
+func cloneDatabaseWithBuiltinPackage(input *domain.Database) *domain.Database {
+	if input == nil {
+		return nil
+	}
+	db := proto.Clone(input).(*domain.Database)
+	ensureDatabaseParamsPackage(db.GetKind(), db.GetParams())
+	return db
+}
+
+func cloneMachinePlans(input []*deploymentpb.MachinePlan) []*deploymentpb.MachinePlan {
+	if len(input) == 0 {
+		return nil
+	}
+	out := make([]*deploymentpb.MachinePlan, 0, len(input))
+	for _, machine := range input {
+		if machine == nil {
+			continue
+		}
+		out = append(out, proto.Clone(machine).(*deploymentpb.MachinePlan))
+	}
+	return out
+}
+
+func workloadProtocolForDatabase(kind domain.Database_Kind) domain.Workload_Protocol {
+	switch kind {
+	case domain.Database_KIND_MYSQL, domain.Database_KIND_MARIADB:
+		return domain.Workload_PROTOCOL_MYSQL
+	case domain.Database_KIND_PICODATA:
+		return domain.Workload_PROTOCOL_PICODATA
+	case domain.Database_KIND_YDB:
+		return domain.Workload_PROTOCOL_YDB_GRPC
+	case domain.Database_KIND_YDB_MANAGED:
+		return domain.Workload_PROTOCOL_YDB_GRPCS
+	case domain.Database_KIND_COCKROACH:
+		return domain.Workload_PROTOCOL_COCKROACH
+	default:
+		return domain.Workload_PROTOCOL_PG
+	}
+}
+
+func selfCheckTestPresetName(dbPreset *models.DatabasePresetRecord) string {
+	return "Self-check / " + dbPreset.GetEntity().GetName()
+}
+
+func databasePresetsByName(input []*models.DatabasePresetRecord) map[string]*models.DatabasePresetRecord {
+	out := make(map[string]*models.DatabasePresetRecord, len(input))
+	for _, p := range input {
+		if p.GetEntity().GetName() != "" {
+			out[p.GetEntity().GetName()] = p
+		}
+	}
+	return out
+}
+
+func workloadPresetsByName(input []*models.WorkloadPresetRecord) map[string]*models.WorkloadPresetRecord {
+	out := make(map[string]*models.WorkloadPresetRecord, len(input))
+	for _, p := range input {
+		if p.GetEntity().GetName() != "" {
+			out[p.GetEntity().GetName()] = p
+		}
+	}
+	return out
+}
+
+func workloadPresetsByProtocol(input []*models.WorkloadPresetRecord) map[domain.Workload_Protocol]*models.WorkloadPresetRecord {
+	out := make(map[domain.Workload_Protocol]*models.WorkloadPresetRecord, len(input))
+	for _, p := range input {
+		if p.GetWorkload().GetProtocol() != domain.Workload_PROTOCOL_UNSPECIFIED {
+			out[p.GetWorkload().GetProtocol()] = p
+		}
+	}
+	return out
+}
+
+func testPresetsByName(input []*models.TestPresetRecord) map[string]*models.TestPresetRecord {
+	out := make(map[string]*models.TestPresetRecord, len(input))
+	for _, p := range input {
+		if p.GetEntity().GetName() != "" {
+			out[p.GetEntity().GetName()] = p
+		}
+	}
 	return out
 }

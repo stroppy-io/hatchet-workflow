@@ -28,13 +28,11 @@ import {
 import {
   getPresetProvider,
   type DatabasePresetVM,
+  type TestPresetRow,
   type WorkloadPresetVM,
 } from "@/services/preset";
 import type { SuiteCellInput } from "@/services/suites";
 import { ENGINES, type EngineKind } from "@/services/wizard";
-import { dbKindProto } from "@/services/enums";
-import { Database_Kind } from "@/lib/proto/cloud/v1/domain/database_pb";
-import type { DbKind } from "@/services/runs";
 import {
   MachinePlanEditor,
   machineSpecSummary,
@@ -69,37 +67,6 @@ const PROVIDERS: { provider: Provider; label: string; icon: typeof Container; bl
   { provider: Provider.DOCKER, label: "Docker", icon: Container, blurb: "Local containers — fast smoke matrices." },
   { provider: Provider.YANDEX, label: "Yandex Cloud", icon: Cloud, blurb: "Provisions VMs via Terraform per cell." },
 ];
-
-// The engine kinds offered for an inline cell's matrix ROW axis (Database_Kind).
-const DB_KINDS: { kind: DbKind; label: string }[] = ENGINES.map((e) => ({
-  kind: ENGINE_TO_DBKIND(e.kind),
-  label: e.label,
-})).filter((x) => x.kind !== "");
-
-function ENGINE_TO_DBKIND(kind: EngineKind): DbKind {
-  const proto = {
-    postgres: Database_Kind.POSTGRES,
-    mysql: Database_Kind.MYSQL,
-    mariadb: Database_Kind.MARIADB,
-    picodata: Database_Kind.PICODATA,
-    ydb: Database_Kind.YDB,
-    ydbManaged: Database_Kind.YDB_MANAGED,
-    cockroach: Database_Kind.COCKROACH,
-    external: Database_Kind.EXTERNAL,
-  }[kind];
-  // Round-trip through the enum map to get the lower-cased UI label.
-  const labels: Partial<Record<Database_Kind, DbKind>> = {
-    [Database_Kind.POSTGRES]: "postgres",
-    [Database_Kind.MYSQL]: "mysql",
-    [Database_Kind.MARIADB]: "mariadb",
-    [Database_Kind.PICODATA]: "picodata",
-    [Database_Kind.YDB]: "ydb",
-    [Database_Kind.YDB_MANAGED]: "ydb_managed",
-    [Database_Kind.COCKROACH]: "cockroach",
-    [Database_Kind.EXTERNAL]: "external",
-  };
-  return labels[proto] ?? "";
-}
 
 export function SuiteWizard() {
   const slug = useTenantSlug() ?? "";
@@ -782,7 +749,7 @@ function CellCard({
 
 // ─── Cell composer (add a new cell) ──────────────────────────────────────────────
 
-type CellMode = "presetPair" | "inline";
+type CellMode = "presetPair" | "testPreset";
 
 function CellComposer({
   slug,
@@ -797,12 +764,13 @@ function CellComposer({
   const [engine, setEngine] = useState<EngineKind>("postgres");
   const [dbPresets, setDbPresets] = useState<DatabasePresetVM[]>([]);
   const [wlPresets, setWlPresets] = useState<WorkloadPresetVM[]>([]);
+  const [testPresets, setTestPresets] = useState<TestPresetRow[]>([]);
   const [dbPresetId, setDbPresetId] = useState("");
   const [workloadPresetId, setWorkloadPresetId] = useState("");
+  const [testPresetId, setTestPresetId] = useState("");
   const [name, setName] = useState("");
-  const [inlineDbKind, setInlineDbKind] = useState<DbKind>("postgres");
 
-  // Load the db presets for the chosen engine + the (engine-agnostic) workloads.
+  // Load the db presets for the chosen engine + the reusable workload/test catalogs.
   useEffect(() => {
     let cancelled = false;
     getPresetProvider()
@@ -833,23 +801,38 @@ function CellComposer({
     };
   }, [slug]);
 
+  useEffect(() => {
+    let cancelled = false;
+    getPresetProvider()
+      .listTestPresetRows(slug, { pageSize: 200 })
+      .then((p) => {
+        if (cancelled) return;
+        setTestPresets(p.rows);
+        setTestPresetId("");
+      })
+      .catch(() => !cancelled && setTestPresets([]));
+    return () => {
+      cancelled = true;
+    };
+  }, [slug]);
+
   const canAdd =
     mode === "presetPair"
       ? !!dbPresetId && !!workloadPresetId
-      : dbKindProto(inlineDbKind) !== Database_Kind.UNSPECIFIED;
+      : !!testPresetId;
 
   const submit = () => {
     if (mode === "presetPair") {
       onAdd({ name, enabled: true, source: "presetPair", dbPresetId, workloadPresetId });
     } else {
-      onAdd({ name, enabled: true, source: "inline", inlineDbKind });
+      onAdd({ name, enabled: true, source: "testPreset", testPresetId });
     }
   };
 
   return (
     <div className="mb-3 border border-primary/30 bg-primary/[0.03] p-3">
       <div className="mb-3 inline-flex border border-zinc-800 text-[11px] font-mono">
-        {(["presetPair", "inline"] as CellMode[]).map((m) => (
+        {(["presetPair", "testPreset"] as CellMode[]).map((m) => (
           <button
             key={m}
             type="button"
@@ -858,7 +841,7 @@ function CellComposer({
               mode === m ? "bg-primary/[0.08] text-primary" : "text-zinc-500 hover:text-zinc-300"
             }`}
           >
-            {m === "presetPair" ? "Preset pair" : "Inline engine"}
+            {m === "presetPair" ? "Preset pair" : "Test preset"}
           </button>
         ))}
       </div>
@@ -874,21 +857,23 @@ function CellComposer({
           />
         </div>
 
-        <div>
-          <Label className="text-[9px] font-mono text-zinc-600">Engine</Label>
-          <Select value={engine} onValueChange={(v) => setEngine(v as EngineKind)}>
-            <SelectTrigger className="mt-1 h-7 text-[11px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {ENGINES.map((e) => (
-                <SelectItem key={e.kind} value={e.kind}>
-                  {e.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {mode === "presetPair" && (
+          <div>
+            <Label className="text-[9px] font-mono text-zinc-600">Engine</Label>
+            <Select value={engine} onValueChange={(v) => setEngine(v as EngineKind)}>
+              <SelectTrigger className="mt-1 h-7 text-[11px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ENGINES.map((e) => (
+                  <SelectItem key={e.kind} value={e.kind}>
+                    {e.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         {mode === "presetPair" ? (
           <>
@@ -924,16 +909,16 @@ function CellComposer({
             </div>
           </>
         ) : (
-          <div>
-            <Label className="text-[9px] font-mono text-zinc-600">Inline DB kind</Label>
-            <Select value={inlineDbKind || "postgres"} onValueChange={(v) => setInlineDbKind(v as DbKind)}>
+          <div className="sm:col-span-2">
+            <Label className="text-[9px] font-mono text-zinc-600">Test preset</Label>
+            <Select value={testPresetId} onValueChange={setTestPresetId}>
               <SelectTrigger className="mt-1 h-7 text-[11px]">
-                <SelectValue />
+                <SelectValue placeholder="select…" />
               </SelectTrigger>
               <SelectContent>
-                {DB_KINDS.map((k) => (
-                  <SelectItem key={k.kind} value={k.kind}>
-                    {k.label}
+                {testPresets.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.name || p.id}
                   </SelectItem>
                 ))}
               </SelectContent>

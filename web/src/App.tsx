@@ -161,7 +161,6 @@ export default function App() {
               <Route path="presets/workload/:id" element={<WorkloadPresetDetail />} />
               <Route path="presets/workload/:id/edit" element={<WorkloadPresetForm />} />
               <Route path="presets/test" element={<TestPresets />} />
-              <Route path="presets/test/new" element={<TestPresetForm />} />
               <Route path="presets/test/:id" element={<TestPresetDetail />} />
               <Route path="presets/test/:id/edit" element={<TestPresetForm />} />
               <Route path="packages" element={<Packages />} />

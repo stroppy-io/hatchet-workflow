@@ -34,7 +34,10 @@
 // Provider methods are keyed by tenant SLUG (matching runs.ts); the real
 // provider resolves slug -> tenant_id at call time exactly like runs.ts does.
 
-import { Database_Kind } from "@/lib/proto/cloud/v1/domain/database_pb";
+import {
+  Database_Kind,
+  type Package as DatabasePackage,
+} from "@/lib/proto/cloud/v1/domain/database_pb";
 import {
   YdbParams_FaultTolerance,
   YdbParams_DiskType,
@@ -246,11 +249,17 @@ export type EngineParamsVM =
   | { kind: "cockroach"; cockroach: CockroachParamsVM }
   | { kind: "external"; external: ExternalParamsVM };
 
+export type DatabasePackageVM = DatabasePackage;
+
 /** The Database step's editable state: kind + version + typed engine params. */
 export interface DatabaseVM {
   kind: EngineKind;
   /** DatabaseParams.version (engine version label); unused for external. */
   version: string;
+  /** Database.package_id, when a stored custom/builtin package id was selected. */
+  packageId?: string;
+  /** DatabaseParams.package install recipe. Hidden in UI, preserved across preset -> wizard round trips. */
+  installPackage?: DatabasePackageVM;
   params: EngineParamsVM;
 }
 
