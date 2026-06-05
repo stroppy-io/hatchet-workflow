@@ -324,7 +324,7 @@ function ReadOnlyDatabase({ database }: { database: DatabaseVM }) {
       <div className="pointer-events-none select-none opacity-90" aria-readonly>
         <div className="space-y-4">
           <EngineVersionSelect db={database} apply={noop} />
-          <EngineParamsForm db={database} apply={noop} />
+          <EngineParamsForm db={database} apply={noop} advancedInitiallyOpen />
         </div>
       </div>
     </div>

@@ -288,7 +288,7 @@ export function TestPresetForm() {
                 </div>
                 <EngineVersionSelect db={db} apply={setDb} />
                 <div className={isSystem ? "pointer-events-none opacity-60" : undefined}>
-                  <EngineParamsForm db={db} apply={setDb} />
+                  <EngineParamsForm db={db} apply={setDb} advancedInitiallyOpen={isSystem} />
                 </div>
                 <FieldErrors errs={errorsFor(dbErrors, "database")} />
               </div>

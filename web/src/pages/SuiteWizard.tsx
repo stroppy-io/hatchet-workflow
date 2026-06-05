@@ -268,9 +268,8 @@ function SuiteStartScreen({
       </div>
       <h1 className="text-2xl font-semibold tracking-tight text-foreground">New suite</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Build a benchmark suite — a matrix of cells (each a database × workload preset pair, a test
-        preset, or an inline engine), one deployment provider, and an optional cron schedule. The
-        server validates each cell after every edit; finish to persist (and optionally launch) it.
+        Build a benchmark suite from database and workload presets, choose one deployment provider,
+        size the provider machines for each cell, and optionally add a cron schedule.
       </p>
 
       {error && (
@@ -296,7 +295,7 @@ function SuiteStartScreen({
           </Button>
         </div>
         <p className="mt-2 text-[11px] text-zinc-600">
-          Creates a draft (StartSuiteWizard). You can rename it later.
+          The suite stays editable until you save or launch it.
         </p>
       </div>
 
@@ -370,7 +369,6 @@ function SuiteEditor({
         <Grid3x3 className="h-4 w-4 text-primary" />
         <div className="min-w-0">
           <div className="truncate font-mono text-sm text-zinc-200">{draft.name || "Untitled suite"}</div>
-          <div className="font-mono text-[10px] text-zinc-700">draft {draft.id}</div>
         </div>
         <div className="ml-auto flex items-center gap-2">
           {patching && <Loader2 className="h-3.5 w-3.5 animate-spin text-zinc-500" />}
@@ -397,7 +395,7 @@ function SuiteEditor({
           </div>
         )}
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+        <div className="grid gap-6 xl:grid-cols-[minmax(16rem,18rem)_minmax(0,1fr)]">
           <SuiteSettingsRail draft={draft} onPatch={onPatch} />
           <CellMatrix slug={slug} draft={draft} onPatch={onPatch} />
         </div>
@@ -612,11 +610,16 @@ function CellMatrix({
 
   return (
     <div className="flex min-h-0 flex-col">
-      <div className="mb-2 flex items-center justify-between">
-        <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">
-          Matrix — {draft.cells.length} cell{draft.cells.length === 1 ? "" : "s"}
+      <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">
+            Cells and provider machines — {draft.cells.length} cell{draft.cells.length === 1 ? "" : "s"}
+          </div>
+          <p className="mt-1 max-w-2xl text-[11px] leading-snug text-zinc-600">
+            Each cell resolves its own database, workload, topology and provider machine plan. Add cells first, then size the machines inside each cell.
+          </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <Button
             size="sm"
             variant="outline"
@@ -636,10 +639,10 @@ function CellMatrix({
 
       {draft.cells.length === 0 && !adding ? (
         <div className="border border-zinc-800 bg-[#0a0a0a] p-6 text-center text-[12px] text-zinc-600">
-          No cells yet. Add a database × workload preset pair, a test preset, or an inline engine.
+          No cells yet. Add a database × workload preset pair or reuse an existing test preset.
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-3">
           {draft.cells.map((c, i) => (
             <CellCard
               key={c.id || `local-${i}`}
@@ -674,10 +677,10 @@ function CellCard({
       ? `${cell.dbPresetId || "?"} / ${cell.workloadPresetId || "?"}`
       : cell.source === "testPreset"
         ? cell.testPresetId || "?"
-        : "inline";
+        : "custom test";
   return (
     <div
-      className={`border bg-[#0a0a0a] p-3 ${cell.enabled ? "border-zinc-800" : "border-zinc-800/40 opacity-60"}`}
+      className={`min-w-0 border bg-[#0a0a0a] p-3 ${cell.enabled ? "border-zinc-800" : "border-zinc-800/40 opacity-60"}`}
     >
       <div className="flex items-center gap-2">
         <button
@@ -707,10 +710,10 @@ function CellCard({
           <X className="h-3.5 w-3.5" />
         </button>
       </div>
-      <div className="mt-2 grid grid-cols-2 gap-1 font-mono text-[10px] text-zinc-500">
+      <div className="mt-2 grid grid-cols-1 gap-1 font-mono text-[10px] text-zinc-500 sm:grid-cols-2">
         <span>db: {cell.dbKind || "—"}</span>
         <span>wl: {cell.workload || "—"}</span>
-        <span>{cell.source}</span>
+        <span>{cell.source === "presetPair" ? "preset pair" : cell.source === "testPreset" ? "test preset" : "custom test"}</span>
         <span>
           {cell.nodeCount} node{cell.nodeCount === 1 ? "" : "s"} · {cell.machineOverrideCount} confirmed
         </span>
@@ -722,7 +725,7 @@ function CellCard({
         <div className="mt-3 border-t border-zinc-800/70 pt-3">
           <div className="mb-2 flex items-center justify-between gap-2">
             <div className="min-w-0">
-              <div className="font-mono text-[10px] uppercase tracking-wider text-zinc-600">Machines</div>
+              <div className="font-mono text-[10px] uppercase tracking-wider text-zinc-600">Provider machines</div>
               <div className="truncate font-mono text-[10px] text-zinc-700">
                 {machineSpecSummary(cell.infrastructurePlan.machines[0]?.spec)}
               </div>
@@ -735,6 +738,7 @@ function CellCard({
             machines={cell.infrastructurePlan.machines}
             settings={cell.infrastructurePlan.settings}
             onMachineChange={onMachineChange}
+            compact
           />
         </div>
       )}

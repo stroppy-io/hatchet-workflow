@@ -13,7 +13,8 @@
 // (the wizard's Version pane / the preset form's Identity section), so it is
 // NOT edited here.
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -76,16 +77,18 @@ export function WorkloadParamsForm({
   w,
   apply,
   disabled,
+  advancedInitiallyOpen = disabled ?? false,
 }: {
   w: WorkloadVM;
   apply: (w: WorkloadVM) => void;
   disabled?: boolean;
+  advancedInitiallyOpen?: boolean;
 }) {
   const limit = w.execution.limit;
   return (
     <div className={disabled ? "pointer-events-none select-none opacity-90" : undefined}>
       <div className="space-y-5">
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
           <div>
             <Label>Script</Label>
             <Input
@@ -126,7 +129,7 @@ export function WorkloadParamsForm({
 
         <div className="border border-zinc-800/60 bg-[#0a0a0a] p-4">
           <div className="mb-3 text-[10px] font-mono uppercase tracking-wider text-zinc-600">k6 execution</div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
             <NumField
               label="Virtual users"
               value={w.execution.vus}
@@ -188,7 +191,7 @@ export function WorkloadParamsForm({
               />
             )}
           </div>
-          <div className="mt-3 grid grid-cols-2 gap-2">
+          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
             <ToggleRow
               label="Quiet"
               hint="k6 -q"
@@ -206,7 +209,7 @@ export function WorkloadParamsForm({
 
         <div className="border border-zinc-800/60 bg-[#0a0a0a] p-4">
           <div className="mb-3 text-[10px] font-mono uppercase tracking-wider text-zinc-600">data parameters</div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
             <NumField
               label="Pool size"
               value={w.parameters.poolSize}
@@ -235,16 +238,46 @@ export function WorkloadParamsForm({
               />
             </div>
           </div>
-          <EnvMapEditor
-            env={w.parameters.env}
-            onChange={(env) => apply({ ...w, parameters: { ...w.parameters, env } })}
-          />
-          <StepsEditor
-            steps={w.parameters.steps}
-            onChange={(steps) => apply({ ...w, parameters: { ...w.parameters, steps } })}
-          />
+          <AdvancedRuntimeParameters initiallyOpen={advancedInitiallyOpen}>
+            <EnvMapEditor
+              env={w.parameters.env}
+              onChange={(env) => apply({ ...w, parameters: { ...w.parameters, env } })}
+            />
+            <StepsEditor
+              steps={w.parameters.steps}
+              onChange={(steps) => apply({ ...w, parameters: { ...w.parameters, steps } })}
+            />
+          </AdvancedRuntimeParameters>
         </div>
       </div>
+    </div>
+  );
+}
+
+function AdvancedRuntimeParameters({
+  children,
+  initiallyOpen,
+}: {
+  children: ReactNode;
+  initiallyOpen: boolean;
+}) {
+  const [open, setOpen] = useState(initiallyOpen);
+  return (
+    <div className="mt-4 overflow-hidden border border-zinc-800/70 bg-[#070707]">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-start gap-3 px-3 py-2.5 text-left transition-colors hover:bg-zinc-900/40"
+      >
+        <ChevronDown className={`mt-0.5 h-3.5 w-3.5 shrink-0 text-zinc-500 transition-transform ${open ? "rotate-180" : ""}`} />
+        <div className="min-w-0">
+          <div className="text-sm font-medium text-foreground">Advanced runtime parameters</div>
+          <p className="mt-0.5 text-[11px] leading-snug text-zinc-600">
+            Optional environment variables and phase selection for special runs.
+          </p>
+        </div>
+      </button>
+      {open && <div className="border-t border-zinc-800/70 p-3">{children}</div>}
     </div>
   );
 }
@@ -258,8 +291,8 @@ function StepsEditor({
   onChange: (steps: string[]) => void;
 }) {
   return (
-    <div className="mt-3">
-      <Label>Phase steps (allowlist)</Label>
+    <div>
+      <Label>Run only selected phases</Label>
       <Input
         className="mt-1 font-mono text-xs"
         value={steps.join(", ")}
@@ -267,14 +300,14 @@ function StepsEditor({
         onChange={(e) =>
           onChange(
             e.target.value
-              .split(",")
+              .split(/[,\n]/)
               .map((s) => s.trim())
               .filter(Boolean),
           )
         }
       />
       <p className="mt-1 text-[11px] text-zinc-600">
-        Empty runs every phase. A list restricts the run to those phases (Workload.Parameters.steps).
+        Leave empty to run every phase.
       </p>
     </div>
   );
@@ -305,8 +338,8 @@ function EnvMapEditor({
   }, [text, setDraftText]);
 
   return (
-    <div className="mt-3">
-      <Label>Environment (KEY=value)</Label>
+    <div className="mb-3">
+      <Label>Environment variables</Label>
       <div className="mt-1">
         <ConfigEditor
           filename=".env"

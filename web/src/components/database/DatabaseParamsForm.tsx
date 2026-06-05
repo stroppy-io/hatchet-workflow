@@ -18,6 +18,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertCircle,
   AlertTriangle,
+  ChevronDown,
   Info,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -78,7 +79,7 @@ export function NumField({
   hint?: string;
 }) {
   return (
-    <div>
+    <div className="min-w-0">
       <Label>{label}</Label>
       <Input
         type="number"
@@ -108,12 +109,12 @@ export function ToggleRow({
   onChange: (b: boolean) => void;
 }) {
   return (
-    <div className="flex items-center justify-between border border-zinc-800/60 bg-[#0a0a0a] px-3 py-2.5">
-      <div>
-        <div className="text-sm text-foreground">{label}</div>
-        {hint && <div className="text-[11px] text-zinc-600">{hint}</div>}
+    <div className="flex min-w-0 items-center justify-between gap-3 border border-zinc-800/60 bg-[#0a0a0a] px-3 py-2.5">
+      <div className="min-w-0">
+        <div className="truncate text-sm text-foreground">{label}</div>
+        {hint && <div className="text-[11px] leading-snug text-zinc-600">{hint}</div>}
       </div>
-      <Switch checked={checked} onCheckedChange={onChange} />
+      <Switch className="shrink-0" checked={checked} onCheckedChange={onChange} />
     </div>
   );
 }
@@ -159,14 +160,20 @@ export function errorsFor(errs: DraftErrorVM[], prefix: string): DraftErrorVM[] 
 export function ConfigField({
   filename,
   label,
+  description = "Optional key/value options for this engine.",
+  initiallyOpen = false,
   value,
   onChange,
 }: {
   filename: string;
   label: string;
+  description?: string;
+  initiallyOpen?: boolean;
   value: Record<string, string>;
   onChange: (m: Record<string, string>) => void;
 }) {
+  const [open, setOpen] = useState(initiallyOpen);
+  const entryCount = Object.keys(value).length;
   const text = useMemo(
     () =>
       Object.entries(value)
@@ -184,13 +191,29 @@ export function ConfigField({
   }, [text]);
 
   return (
-    <div>
-      <Label>{label}</Label>
-      <div className="mt-1">
+    <div className="overflow-hidden border border-zinc-800/70 bg-[#070707]">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-start gap-3 px-3 py-2.5 text-left transition-colors hover:bg-zinc-900/40"
+      >
+        <ChevronDown className={`mt-0.5 h-3.5 w-3.5 shrink-0 text-zinc-500 transition-transform ${open ? "rotate-180" : ""}`} />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="text-sm font-medium text-foreground">{label}</span>
+            <span className="font-mono text-[10px] uppercase tracking-wide text-zinc-600">
+              {entryCount} option{entryCount === 1 ? "" : "s"}
+            </span>
+          </div>
+          <p className="mt-0.5 text-[11px] leading-snug text-zinc-600">{description}</p>
+        </div>
+      </button>
+      {open && (
+        <div className="border-t border-zinc-800/70 p-3">
         <ConfigEditor
           filename={filename}
           value={draftText}
-          height="clamp(14rem, 32vh, 28rem)"
+          height="clamp(10rem, 28vh, 22rem)"
           onChange={(next) => {
             setDraftText(next);
             const map: Record<string, string> = {};
@@ -206,6 +229,7 @@ export function ConfigField({
           }}
         />
       </div>
+      )}
     </div>
   );
 }
@@ -244,9 +268,11 @@ export function EngineVersionSelect({
 export function EngineParamsForm({
   db,
   apply,
+  advancedInitiallyOpen = false,
 }: {
   db: DatabaseVM;
   apply: (d: DatabaseVM) => void;
+  advancedInitiallyOpen?: boolean;
 }) {
   const e = db.params;
   switch (e.kind) {
@@ -256,17 +282,24 @@ export function EngineParamsForm({
         apply({ ...db, params: { kind: "postgres", postgres: { ...p, ...patch } } });
       return (
         <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
             <NumField label="Replicas" value={p.replicas} onChange={(n) => set({ replicas: n })} hint="streaming standbys" />
             <NumField label="Sync replicas" value={p.syncReplicas} onChange={(n) => set({ syncReplicas: n })} hint="synchronous standbys" />
             <NumField label="HAProxy nodes" value={p.haproxy} onChange={(n) => set({ haproxy: n })} hint="dedicated LB" />
           </div>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 2xl:grid-cols-3">
             <ToggleRow label="PgBouncer" hint="colocated pooler" checked={p.pgbouncer} onChange={(b) => set({ pgbouncer: b })} />
             <ToggleRow label="Patroni HA" hint="needs etcd" checked={p.patroni} onChange={(b) => set({ patroni: b })} />
             <ToggleRow label="etcd" hint="DCS for Patroni" checked={p.etcd} onChange={(b) => set({ etcd: b })} />
           </div>
-          <ConfigField filename="postgresql.conf" label="postgresql.conf (master)" value={p.masterOptions} onChange={(m) => set({ masterOptions: m })} />
+          <ConfigField
+            filename="postgresql.conf"
+            label="Advanced PostgreSQL options"
+            description="Master-node postgresql.conf key/value options."
+            initiallyOpen={advancedInitiallyOpen}
+            value={p.masterOptions}
+            onChange={(m) => set({ masterOptions: m })}
+          />
         </div>
       );
     }
@@ -277,15 +310,22 @@ export function EngineParamsForm({
         apply({ ...db, params: e.kind === "mysql" ? { kind: "mysql", mysql: { ...p, ...patch } } : { kind: "mariadb", mariadb: { ...p, ...patch } } });
       return (
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <NumField label="Replicas" value={p.replicas} onChange={(n) => set({ replicas: n })} />
             <NumField label="ProxySQL nodes" value={p.proxysql} onChange={(n) => set({ proxysql: n })} hint="dedicated proxy" />
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <ToggleRow label="Group replication" checked={p.groupReplication} onChange={(b) => set({ groupReplication: b })} />
             <ToggleRow label="Semi-sync" hint="when group repl off" checked={p.semiSync} onChange={(b) => set({ semiSync: b })} />
           </div>
-          <ConfigField filename="my.cnf" label="my.cnf (primary)" value={p.primaryOptions} onChange={(m) => set({ primaryOptions: m })} />
+          <ConfigField
+            filename="my.cnf"
+            label="Advanced MySQL/MariaDB options"
+            description="Primary-node my.cnf key/value options."
+            initiallyOpen={advancedInitiallyOpen}
+            value={p.primaryOptions}
+            onChange={(m) => set({ primaryOptions: m })}
+          />
         </div>
       );
     }
@@ -295,13 +335,20 @@ export function EngineParamsForm({
         apply({ ...db, params: { kind: "picodata", picodata: { ...p, ...patch } } });
       return (
         <div className="space-y-4">
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-4">
             <NumField label="Instances" value={p.instances} onChange={(n) => set({ instances: n })} min={1} />
             <NumField label="Replication" value={p.replicationFactor} onChange={(n) => set({ replicationFactor: n })} hint="factor" />
             <NumField label="Shards" value={p.shards} onChange={(n) => set({ shards: n })} />
             <NumField label="HAProxy" value={p.haproxy} onChange={(n) => set({ haproxy: n })} />
           </div>
-          <ConfigField filename="picodata.yaml" label="instance options" value={p.instanceOptions} onChange={(m) => set({ instanceOptions: m })} />
+          <ConfigField
+            filename="picodata.yaml"
+            label="Advanced Picodata options"
+            description="Instance-level YAML options rendered into the cluster config."
+            initiallyOpen={advancedInitiallyOpen}
+            value={p.instanceOptions}
+            onChange={(m) => set({ instanceOptions: m })}
+          />
         </div>
       );
     }
@@ -311,12 +358,12 @@ export function EngineParamsForm({
         apply({ ...db, params: { kind: "ydb", ydb: { ...p, ...patch } } });
       return (
         <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
             <NumField label="Storage nodes" value={p.storageNodes} onChange={(n) => set({ storageNodes: n })} min={1} />
             <NumField label="Database nodes" value={p.databaseNodes} onChange={(n) => set({ databaseNodes: n })} hint="0 = combined" />
             <NumField label="HAProxy" value={p.haproxy} onChange={(n) => set({ haproxy: n })} />
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
             <NumField label="pdisks / node" value={p.pdisksPerStorageNode} onChange={(n) => set({ pdisksPerStorageNode: n })} />
             <NumField label="Storage groups" value={p.storageGroups} onChange={(n) => set({ storageGroups: n })} />
             <div>
@@ -333,7 +380,7 @@ export function EngineParamsForm({
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <Label>Disk type</Label>
               <Select value={String(p.defaultDiskType)} onValueChange={(v) => set({ defaultDiskType: Number(v) as YdbParams_DiskType })}>
@@ -363,7 +410,7 @@ export function EngineParamsForm({
       const dedicated = p.type === YdbManagedParams_Type.DEDICATED;
       return (
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <Label>Flavor</Label>
               <Select value={String(p.type)} onValueChange={(v) => set({ type: Number(v) as YdbManagedParams_Type })}>
@@ -390,7 +437,7 @@ export function EngineParamsForm({
             </div>
           </div>
           {dedicated ? (
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
               <div>
                 <Label>Resource preset</Label>
                 <Input className="mt-1" placeholder="medium" value={p.resourcePresetId} onChange={(ev) => set({ resourcePresetId: ev.target.value })} />
@@ -416,7 +463,14 @@ export function EngineParamsForm({
           <div className="max-w-xs">
             <NumField label="Nodes" value={p.nodes} onChange={(n) => set({ nodes: n })} min={1} hint="homogeneous cluster" />
           </div>
-          <ConfigField filename="cluster.settings" label="cluster settings (k=v, or flag:k=v)" value={p.options} onChange={(m) => set({ options: m })} />
+          <ConfigField
+            filename="cluster.settings"
+            label="Advanced CockroachDB options"
+            description="Cluster settings as key/value pairs; flag entries are supported."
+            initiallyOpen={advancedInitiallyOpen}
+            value={p.options}
+            onChange={(m) => set({ options: m })}
+          />
         </div>
       );
     }

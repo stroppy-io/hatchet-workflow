@@ -494,7 +494,7 @@ function StartScreen({
           </Button>
         </div>
         <p className="mt-2 text-[11px] text-zinc-600">
-          Creates a draft (StartTestWizard). You can rename it later.
+          The run stays editable until you launch it.
         </p>
       </div>
 
@@ -600,17 +600,16 @@ function StepInfra({
 
   return (
     <div className="flex h-full flex-col">
-      <SectionTitle hint="Where to run, and the per-machine specs for the now-complete node set (Database + Workload produced it). Provider-level settings (cloud/folder/zone/network/image/…) are tenant defaults resolved server-side — only the provider choice and per-node sizing are edited here. Confirming or editing sends PatchTestWizard.machine_overrides.">
+      <SectionTitle hint="Choose where to run and size the machines produced by the selected database and workload. Tenant provider defaults are resolved server-side; this step edits only provider choice and per-node resources.">
         Infrastructure
       </SectionTitle>
 
-      <div className="grid min-h-0 flex-1 gap-5 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:items-stretch">
+      <div className="grid min-h-0 flex-1 gap-5 xl:grid-cols-[minmax(16rem,20rem)_minmax(0,1fr)] xl:items-stretch">
         <div className="space-y-5 overflow-y-auto">
           {/* Identity */}
           <div className="border border-zinc-800/60 bg-[#070707] px-3 py-2.5">
             <div className="text-[11px] font-mono uppercase tracking-wider text-zinc-500">Run</div>
             <div className="mt-1 font-mono text-sm text-zinc-200">{draft.name || "Untitled run"}</div>
-            <div className="mt-0.5 text-[10px] font-mono text-zinc-700">draft {draft.id}</div>
           </div>
 
           {/* Provider tiles */}
@@ -762,7 +761,7 @@ function StepDatabase({
 
   return (
     <div className="flex h-full flex-col">
-      <SectionTitle hint="The provider-agnostic database under test (PatchTestWizard.database → domain.Database). Pick an engine, then a preset to seed the settings, then fine-tune. Node roles and counts come from these typed params and drive the topology + machine plan.">
+      <SectionTitle hint="Pick a database engine, seed it from a preset, then fine-tune the topology and engine settings. Node roles and counts from this step drive the machine plan.">
         Database under test
       </SectionTitle>
 
@@ -924,7 +923,7 @@ function SettingsPane({
 }) {
   return (
     <div className="pane-reveal flex min-h-0 min-w-0 flex-1 flex-col">
-      <PaneHeader index={3} title="Settings" subtitle="Typed domain.Database — pre-filled, editable" />
+      <PaneHeader index={3} title="Settings" subtitle="Preset values, editable" />
       <div className="grid min-h-0 flex-1 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] xl:items-stretch">
         <div className="min-h-0 space-y-6 overflow-y-auto pr-1">
           <EngineVersionSelect db={db} apply={apply} />
@@ -1139,7 +1138,7 @@ function StepWorkload({
 
   return (
     <div className="flex h-full flex-col">
-      <SectionTitle hint="The stroppy load (PatchTestWizard.workload → domain.Workload). Pick a stroppy version, tune the workload parameters, then probe the script for its phases &amp; env. The probe pane opens the moment the probe returns.">
+      <SectionTitle hint="Pick a stroppy build, choose a workload preset, tune its execution and data parameters, then probe the script for phases and environment variables.">
         Workload
       </SectionTitle>
 
@@ -1290,8 +1289,7 @@ function WorkloadVersionPane({
             }}
           />
           <p className="mt-2 text-[11px] text-zinc-600">
-            Builds stroppy from a specific CI commit — sent as{" "}
-            <span className="font-mono text-zinc-500">commit:&lt;sha&gt;</span>.
+            Builds stroppy from a specific CI commit.
           </p>
           {value && commit && (
             <div className="mt-3 flex items-center gap-2 border border-primary/30 bg-primary/[0.06] px-3 py-2">
@@ -1404,8 +1402,8 @@ function WorkloadParametersPane({
   errs: DraftErrorVM[];
 }) {
   return (
-    <div className="pane-reveal flex min-h-0 min-w-0 flex-1 flex-col lg:max-w-2xl">
-      <PaneHeader index={3} title="Parameters" subtitle="Typed domain.Workload — editable" />
+    <div className="pane-reveal flex min-h-0 min-w-0 flex-1 flex-col lg:basis-[28rem]">
+      <PaneHeader index={3} title="Parameters" subtitle="Execution and data settings" />
       <div className="min-h-0 flex-1 overflow-y-auto pr-1">
         <WorkloadParamsForm w={w} apply={apply} />
         <FieldErrors errs={errs} />
@@ -1439,7 +1437,7 @@ function WorkloadProbePane({
   };
 
   return (
-    <div className="pane-reveal flex min-h-0 min-w-0 flex-1 flex-col lg:max-w-md">
+    <div className="pane-reveal flex min-h-0 min-w-0 flex-1 flex-col lg:basis-[24rem]">
       <PaneHeader index={4} title="Probe" subtitle="stroppy probe — phases &amp; env" />
       <div className="flex min-h-0 flex-1 flex-col border border-zinc-800 bg-[#070707] p-4">
         <div className="flex shrink-0 items-center gap-2 text-[11px]">
@@ -1643,11 +1641,15 @@ function StepReview({
     ? draft.renderComponents.map((c) => c.componentId)
     : [...byComponent.keys()];
   const overrideCount = draft.artifacts.filter((a) => a.origin === RenderArtifact_Origin.USER_OVERRIDE).length;
+  const [showArtifacts, setShowArtifacts] = useState(overrideCount > 0);
+  useEffect(() => {
+    if (overrideCount > 0) setShowArtifacts(true);
+  }, [overrideCount]);
 
   return (
     <div className="flex h-full flex-col">
-      <SectionTitle hint="The server-rendered deployment.RenderPreview — per-component artifacts. EDITABLE configs are editable inline (→ render_overrides / FileOverride); READ_ONLY ones are locked. Then bake into a TestRun (FinishTestWizard).">
-        Review &amp; render
+      <SectionTitle hint="Review the selected provider, database, workload and launch options. Generated files are available under Advanced for troubleshooting or manual overrides.">
+        Review
       </SectionTitle>
 
       <div className="min-h-0 flex-1 overflow-y-auto pr-1">
@@ -1673,32 +1675,44 @@ function StepReview({
       {/* Render artifacts, grouped by component */}
       {draft.artifacts.length > 0 && (
         <div className="mt-6">
-          <div className="mb-2 text-[10px] font-mono uppercase tracking-wider text-zinc-600">
-            Render preview — generated configs &amp; commands
-          </div>
-          <div className="grid gap-4 xl:grid-cols-2 xl:items-start 2xl:grid-cols-3">
-            {order.map((compId) => {
-              const list = byComponent.get(compId);
-              if (!list || list.length === 0) return null;
-              return (
-                <div key={compId}>
-                  <div className="mb-1.5 flex items-center gap-2">
-                    {(() => {
-                      const comp = draft.topologyComponents.find((c) => c.id === compId);
-                      const Icon = comp ? COMP_ICON[comp.kind] ?? Box : Box;
-                      return <Icon className="h-3.5 w-3.5 text-zinc-500" />;
-                    })()}
-                    <span className="font-mono text-[12px] text-zinc-400">{compId}</span>
+          <button
+            type="button"
+            onClick={() => setShowArtifacts((v) => !v)}
+            className="flex w-full items-center justify-between gap-3 border border-zinc-800 bg-[#0a0a0a] px-3 py-2 text-left transition-colors hover:bg-zinc-900/40"
+          >
+            <div className="min-w-0">
+              <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">Advanced generated files</div>
+              <div className="mt-0.5 text-[11px] text-zinc-500">
+                Inspect rendered configs and commands, or override editable files.
+              </div>
+            </div>
+            <ChevronRight className={`h-3.5 w-3.5 shrink-0 text-zinc-600 transition-transform ${showArtifacts ? "rotate-90" : ""}`} />
+          </button>
+          {showArtifacts && (
+            <div className="mt-3 grid gap-4 xl:grid-cols-2 xl:items-start">
+              {order.map((compId) => {
+                const list = byComponent.get(compId);
+                if (!list || list.length === 0) return null;
+                return (
+                  <div key={compId} className="min-w-0">
+                    <div className="mb-1.5 flex items-center gap-2">
+                      {(() => {
+                        const comp = draft.topologyComponents.find((c) => c.id === compId);
+                        const Icon = comp ? COMP_ICON[comp.kind] ?? Box : Box;
+                        return <Icon className="h-3.5 w-3.5 text-zinc-500" />;
+                      })()}
+                      <span className="min-w-0 truncate font-mono text-[12px] text-zinc-400">{compId}</span>
+                    </div>
+                    <div className="space-y-2">
+                      {list.map((a) => (
+                        <ArtifactRow key={a.id} a={a} onSave={(c) => saveOverride(a, c)} onReset={() => resetOverride(a)} />
+                      ))}
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    {list.map((a) => (
-                      <ArtifactRow key={a.id} a={a} onSave={(c) => saveOverride(a, c)} onReset={() => resetOverride(a)} />
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
@@ -1713,14 +1727,14 @@ function StepReview({
 
       {/* Finish options */}
       <div className="mt-6 space-y-3">
-        <ToggleRow label="Launch now" hint="persist + start the run immediately (start=true)" checked={start} onChange={setStart} />
+        <ToggleRow label="Launch now" hint="Persist and start the run immediately." checked={start} onChange={setStart} />
         {start && (
-          <div className="ml-1 grid grid-cols-2 gap-2 border-l border-zinc-800 pl-4">
-            <ToggleRow label="Tenant rating" hint="in_tenant_rating" checked={inTenantRating} onChange={setInTenantRating} />
-            <ToggleRow label="Global rating" hint="in_global_rating" checked={inGlobalRating} onChange={setInGlobalRating} />
+          <div className="ml-1 grid grid-cols-1 gap-2 border-l border-zinc-800 pl-4 sm:grid-cols-2">
+            <ToggleRow label="Tenant rating" hint="Include in tenant-level reports." checked={inTenantRating} onChange={setInTenantRating} />
+            <ToggleRow label="Global rating" hint="Include in global reports." checked={inGlobalRating} onChange={setInGlobalRating} />
           </div>
         )}
-        <ToggleRow label="Save as preset" hint="save db+workload as a reusable test preset" checked={saveAsPreset} onChange={setSaveAsPreset} />
+        <ToggleRow label="Save as preset" hint="Keep this database and workload combination reusable." checked={saveAsPreset} onChange={setSaveAsPreset} />
         {saveAsPreset && (
           <div className="ml-1 border-l border-zinc-800 pl-4">
             <Label>Preset name</Label>
@@ -1780,17 +1794,17 @@ function ArtifactRow({
       <button
         type="button"
         onClick={() => (editable || hasContent) && setOpen((o) => !o)}
-        className="flex w-full items-center gap-3 px-4 py-2.5 text-left"
+        className="flex w-full flex-wrap items-center gap-2 px-4 py-2.5 text-left"
       >
-        <Icon className="h-4 w-4 text-zinc-400" />
-        <span className="min-w-0 flex-1 truncate font-mono text-[12px] text-zinc-300">{a.title}</span>
+        <Icon className="h-4 w-4 shrink-0 text-zinc-400" />
+        <span className="min-w-[8rem] flex-1 truncate font-mono text-[12px] text-zinc-300">{a.title}</span>
         {overridden && (
-          <span className="inline-flex items-center gap-1 bg-primary/10 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide text-primary">
+          <span className="inline-flex shrink-0 items-center gap-1 bg-primary/10 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide text-primary">
             <Pencil className="h-2.5 w-2.5" /> override
           </span>
         )}
         <span
-          className={`inline-flex items-center gap-1 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide ${
+          className={`inline-flex shrink-0 items-center gap-1 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide ${
             editable ? "bg-emerald-500/10 text-emerald-400" : "bg-zinc-800/60 text-zinc-500"
           }`}
         >

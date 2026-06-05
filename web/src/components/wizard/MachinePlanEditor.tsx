@@ -56,19 +56,22 @@ export function MachinePlanEditor({
   machines,
   settings,
   onMachineChange,
+  compact = false,
 }: {
   machines: MachineVM[];
   settings: ProviderSettingsVM;
   onMachineChange: (nodeId: string, spec: MachineSpecVM) => void;
+  compact?: boolean;
 }) {
   const pkey = platformKey(settings);
   return (
-    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+    <div className={compact ? "grid grid-cols-1 gap-2" : "grid grid-cols-1 gap-2 md:grid-cols-2 2xl:grid-cols-3"}>
       {machines.map((m) => (
         <MachineRow
           key={m.nodeId}
           machine={m}
           platformKey={pkey}
+          compact={compact}
           onChange={(spec) => onMachineChange(m.nodeId, spec)}
         />
       ))}
@@ -79,10 +82,12 @@ export function MachinePlanEditor({
 function MachineRow({
   machine,
   platformKey,
+  compact,
   onChange,
 }: {
   machine: MachineVM;
   platformKey: keyof typeof YC_PLATFORMS;
+  compact: boolean;
   onChange: (spec: MachineSpecVM) => void;
 }) {
   const Icon = ROLE_ICON[machine.role] ?? Box;
@@ -90,7 +95,7 @@ function MachineRow({
   const spec = machine.spec;
 
   return (
-    <div className="border border-zinc-800 bg-[#0a0a0a] p-2.5">
+    <div className="min-w-0 border border-zinc-800 bg-[#0a0a0a] p-2.5">
       <div className="mb-2 flex items-center gap-1.5">
         <Icon className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
         <span className="min-w-0 truncate font-mono text-[11px] text-zinc-300">{machine.nodeId}</span>
@@ -104,7 +109,7 @@ function MachineRow({
 
       {spec.case === "yandex" && (
         <div className="space-y-2">
-          <div className="grid grid-cols-2 gap-2">
+          <div className={compact ? "grid grid-cols-1 gap-2" : "grid grid-cols-1 gap-2 sm:grid-cols-2"}>
             <NumericSlider
               label="vCPU (cores)"
               value={spec.yandex.cores}
@@ -146,7 +151,7 @@ function MachineRow({
               placeholder="postgres:16"
             />
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className={compact ? "grid grid-cols-1 gap-2" : "grid grid-cols-1 gap-2 sm:grid-cols-2"}>
             <SliderField
               label="cpu cores"
               value={spec.docker.cpuCores}
