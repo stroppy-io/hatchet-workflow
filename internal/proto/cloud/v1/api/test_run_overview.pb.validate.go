@@ -395,6 +395,60 @@ func (m *LogFilter) validate(all bool) error {
 
 	}
 
+	if len(m.GetMachineIds()) > 256 {
+		err := LogFilterValidationError{
+			field:  "MachineIds",
+			reason: "value must contain no more than 256 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetMachineIds() {
+		_, _ = idx, item
+
+		if utf8.RuneCountInString(item) > 128 {
+			err := LogFilterValidationError{
+				field:  fmt.Sprintf("MachineIds[%v]", idx),
+				reason: "value length must be at most 128 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if len(m.GetUnits()) > 256 {
+		err := LogFilterValidationError{
+			field:  "Units",
+			reason: "value must contain no more than 256 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetUnits() {
+		_, _ = idx, item
+
+		if utf8.RuneCountInString(item) > 256 {
+			err := LogFilterValidationError{
+				field:  fmt.Sprintf("Units[%v]", idx),
+				reason: "value length must be at most 256 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
 	if len(errors) > 0 {
 		return LogFilterMultiError(errors)
 	}

@@ -12,7 +12,7 @@ import {
   TestRunOverviewSnapshotSchema,
   LogScrollDirection,
 } from "@/lib/proto/cloud/v1/api/test_run_overview_pb";
-import { LogCursorSchema, LogLineSchema } from "@/lib/proto/cloud/v1/monitor/logs_pb";
+import { LogCursorSchema, LogLineSchema, type Source, type Stream } from "@/lib/proto/cloud/v1/monitor/logs_pb";
 import type { TopologyJson } from "@/lib/proto/cloud/v1/topology/topology_pb";
 import {
   testRunOverviewClient,
@@ -219,9 +219,15 @@ export interface LogPageVM {
 /** Structured slice for QueryLogs (maps onto api.LogFilter). */
 export interface LogQuery {
   search?: string;
+  query?: string;
   nodeExecutionIds?: string[];
   componentIds?: string[];
   nodeIds?: string[];
+  machineIds?: string[];
+  sources?: Source[];
+  streams?: Stream[];
+  unit?: string;
+  units?: string[];
   phases?: string[];
   parentNodeExecutionIds?: string[];
   stageNames?: string[];
@@ -561,9 +567,15 @@ export async function queryLogs(
     runId,
     filter: {
       search: query.search ?? "",
+      query: query.query ?? "",
       nodeExecutionIds: query.nodeExecutionIds ?? [],
       componentIds: query.componentIds ?? [],
       nodeIds: query.nodeIds ?? [],
+      machineIds: query.machineIds ?? [],
+      sources: query.sources ?? [],
+      streams: query.streams ?? [],
+      unit: query.unit ?? "",
+      units: query.units ?? [],
       phases: query.phases ?? [],
       parentNodeExecutionIds: query.parentNodeExecutionIds ?? [],
       stageNames: query.stageNames ?? [],
@@ -677,9 +689,15 @@ export async function streamLogs(
         runId,
         filter: {
           search: query.search ?? "",
+          query: query.query ?? "",
           nodeExecutionIds: query.nodeExecutionIds ?? [],
           componentIds: query.componentIds ?? [],
           nodeIds: query.nodeIds ?? [],
+          machineIds: query.machineIds ?? [],
+          sources: query.sources ?? [],
+          streams: query.streams ?? [],
+          unit: query.unit ?? "",
+          units: query.units ?? [],
           phases: query.phases ?? [],
           parentNodeExecutionIds: query.parentNodeExecutionIds ?? [],
           stageNames: query.stageNames ?? [],
@@ -687,6 +705,7 @@ export async function streamLogs(
           actions: query.actions ?? [],
           mentions: query.mentions ?? [],
         },
+        from: query.from as never,
       },
       { signal },
     )) {

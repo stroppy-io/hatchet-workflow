@@ -14,6 +14,7 @@ func TestBuildLogsQueryIncludesStructuredFilters(t *testing.T) {
 		NodeExecutionIds:       []string{"deploy-step-1", "deploy-step-2"},
 		ComponentIds:           []string{"postgres-master"},
 		NodeIds:                []string{"node-1"},
+		MachineIds:             []string{"node-2", "node-1"},
 		Phases:                 []string{"execute_deployment_plan"},
 		ParentNodeExecutionIds: []string{"component/postgres-master"},
 		StageNames:             []string{"call_cmd: install postgres"},
@@ -23,6 +24,7 @@ func TestBuildLogsQueryIncludesStructuredFilters(t *testing.T) {
 		Sources:                []monitor.Source{monitor.Source_SOURCE_COMMAND, monitor.Source_SOURCE_UNSPECIFIED, monitor.Source_SOURCE_COMMAND},
 		Streams:                []monitor.Stream{monitor.Stream_STREAM_STDERR},
 		Unit:                   "call_cmd",
+		Units:                  []string{"postgresql.service", "vector"},
 		Search:                 `pg_ctl "start"`,
 		Query:                  `level:error`,
 	}, api.LogScrollDirection_LOG_SCROLL_DIRECTION_OLDER)
@@ -31,7 +33,7 @@ func TestBuildLogsQueryIncludesStructuredFilters(t *testing.T) {
 		`run_id:"run-1"`,
 		`(node_execution_id:"deploy-step-1" OR node_execution_id:"deploy-step-2")`,
 		`component_id:"postgres-master"`,
-		`machine_id:"node-1"`,
+		`(machine_id:"node-1" OR machine_id:"node-2")`,
 		`phase:"execute_deployment_plan"`,
 		`parent_node_execution_id:"component/postgres-master"`,
 		`stage_name:"call_cmd: install postgres"`,
@@ -40,7 +42,7 @@ func TestBuildLogsQueryIncludesStructuredFilters(t *testing.T) {
 		`(mentions:"postgres" OR mentions:"pgdg")`,
 		`source:"command"`,
 		`stream:"stderr"`,
-		`unit:"call_cmd"`,
+		`(unit:"call_cmd" OR unit:"postgresql.service" OR unit:"vector")`,
 		`_msg:"pg_ctl \"start\""`,
 		`level:error`,
 		`| sort by (_time) desc`,
@@ -51,6 +53,22 @@ func TestBuildLogsQueryIncludesStructuredFilters(t *testing.T) {
 	}
 	if strings.Contains(query, "node_id:") {
 		t.Fatalf("query filters by node_id instead of persisted machine_id: %q", query)
+	}
+}
+
+func TestNormalizeLogPageOrderReversesOlderPages(t *testing.T) {
+	lines := []*monitor.LogLine{
+		{LineNo: 3, Line: "third"},
+		{LineNo: 2, Line: "second"},
+		{LineNo: 1, Line: "first"},
+	}
+
+	got := normalizeLogPageOrder(lines, api.LogScrollDirection_LOG_SCROLL_DIRECTION_OLDER)
+
+	for i, want := range []uint64{1, 2, 3} {
+		if got[i].GetLineNo() != want {
+			t.Fatalf("line %d = %d, want %d", i, got[i].GetLineNo(), want)
+		}
 	}
 }
 

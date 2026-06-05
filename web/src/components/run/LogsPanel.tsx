@@ -5,11 +5,12 @@
 // the URL query (?steps=&comp=&mach=&unit=&q=) so any filtered view is a
 // shareable link; the pipeline "view in logs" jump writes the same params.
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Check, Cpu, FileText, Link2, Radio, Search, Server, Tags, WrapText, X, Zap } from "lucide-react";
+import { Check, Cpu, FileText, Link2, Radio, Search, Server, Tags, Terminal, WrapText, X, Zap } from "lucide-react";
 import { useSearchParams } from "@/lib/router";
 import { Button } from "@/components/ui/button";
 import { MultiFilter, type FilterOption } from "@/components/ui/multi-filter";
 import { cn } from "@/lib/utils";
+import { Source, Stream } from "@/lib/proto/cloud/v1/monitor/logs_pb";
 import {
   logCursorFromKey,
   queryLogs,
@@ -28,6 +29,17 @@ const MACHINE_COLORS = [
   "text-cyan-400", "text-amber-400", "text-emerald-400", "text-pink-400",
   "text-orange-400", "text-violet-400", "text-blue-400", "text-rose-400",
 ];
+
+const SOURCE_FILTERS = [
+  { token: "command", value: Source.COMMAND, label: "Command", json: "SOURCE_COMMAND" },
+  { token: "journald", value: Source.JOURNALD, label: "Journald", json: "SOURCE_JOURNALD" },
+  { token: "file", value: Source.FILE, label: "File", json: "SOURCE_FILE" },
+] as const;
+
+const STREAM_FILTERS = [
+  { token: "stdout", value: Stream.STDOUT, label: "Stdout", json: "STREAM_STDOUT" },
+  { token: "stderr", value: Stream.STDERR, label: "Stderr", json: "STREAM_STDERR" },
+] as const;
 
 function humanize(name: string): string {
   return name.replace(/[_-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
@@ -60,17 +72,91 @@ function Highlight({ text, q }: { text: string; q: string }) {
 
 const csv = (v: string | null): string[] => (v ? v.split(",").filter(Boolean) : []);
 
+function selectedSources(values: Set<string>): Source[] {
+  return SOURCE_FILTERS.filter((s) => values.has(s.token)).map((s) => s.value);
+}
+
+function selectedStreams(values: Set<string>): Stream[] {
+  return STREAM_FILTERS.filter((s) => values.has(s.token)).map((s) => s.value);
+}
+
+function sourceToken(value: string): string {
+  return SOURCE_FILTERS.find((s) => s.json === value || s.token === value.toLowerCase())?.token ?? "";
+}
+
+function streamToken(value: string): string {
+  return STREAM_FILTERS.find((s) => s.json === value || s.token === value.toLowerCase())?.token ?? "";
+}
+
+function sourceLabel(value: string): string {
+  const token = sourceToken(value);
+  return SOURCE_FILTERS.find((s) => s.token === token)?.label ?? "";
+}
+
+function streamLabel(value: string): string {
+  const token = streamToken(value);
+  return STREAM_FILTERS.find((s) => s.token === token)?.label ?? "";
+}
+
+function lineKey(l: LogLineVM): string {
+  return l.cursorKey || `${l.observedAt}|${l.lineNo}|${l.machineId}|${l.line}`;
+}
+
+function appendUnique(prev: LogLineVM[], next: LogLineVM[]): LogLineVM[] {
+  if (next.length === 0) return prev;
+  const seen = new Set(prev.map(lineKey));
+  const out = [...prev];
+  for (const line of next) {
+    const key = lineKey(line);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(line);
+  }
+  return out;
+}
+
+function prependUnique(prev: LogLineVM[], next: LogLineVM[]): LogLineVM[] {
+  if (next.length === 0) return prev;
+  const seen = new Set(prev.map(lineKey));
+  const out: LogLineVM[] = [];
+  for (const line of next) {
+    const key = lineKey(line);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(line);
+  }
+  return out.length ? [...out, ...prev] : prev;
+}
+
+function logClock(iso: string): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleTimeString(undefined, { hour12: false });
+}
+
 export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
   const [sp, setSp] = useSearchParams();
 
   // Filters derived from the URL — single source of truth (shareable).
-  const steps = useMemo(() => new Set(csv(sp.get("steps"))), [sp]);
-  const components = useMemo(() => new Set(csv(sp.get("comp"))), [sp]);
-  const machines = useMemo(() => new Set(csv(sp.get("mach"))), [sp]);
-  const units = useMemo(() => new Set(csv(sp.get("unit"))), [sp]);
-  const phases = useMemo(() => new Set(csv(sp.get("phase"))), [sp]);
-  const actions = useMemo(() => new Set(csv(sp.get("action"))), [sp]);
-  const mentions = useMemo(() => new Set(csv(sp.get("mention"))), [sp]);
+  const stepsParam = sp.get("steps");
+  const compParam = sp.get("comp");
+  const machParam = sp.get("mach");
+  const unitParam = sp.get("unit");
+  const srcParam = sp.get("src");
+  const streamParam = sp.get("stream");
+  const phaseParam = sp.get("phase");
+  const actionParam = sp.get("action");
+  const mentionParam = sp.get("mention");
+  const steps = useMemo(() => new Set(csv(stepsParam)), [stepsParam]);
+  const components = useMemo(() => new Set(csv(compParam)), [compParam]);
+  const machines = useMemo(() => new Set(csv(machParam)), [machParam]);
+  const units = useMemo(() => new Set(csv(unitParam)), [unitParam]);
+  const sources = useMemo(() => new Set(csv(srcParam)), [srcParam]);
+  const streams = useMemo(() => new Set(csv(streamParam)), [streamParam]);
+  const phases = useMemo(() => new Set(csv(phaseParam)), [phaseParam]);
+  const actions = useMemo(() => new Set(csv(actionParam)), [actionParam]);
+  const mentions = useMemo(() => new Set(csv(mentionParam)), [mentionParam]);
   const applied = sp.get("q") ?? "";
 
   const setParam = useCallback(
@@ -92,7 +178,7 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
     setSp(
       (prev) => {
         const next = new URLSearchParams(prev);
-        for (const k of ["steps", "comp", "mach", "unit", "phase", "action", "mention", "q"]) next.delete(k);
+        for (const k of ["steps", "comp", "mach", "unit", "src", "stream", "phase", "action", "mention", "q"]) next.delete(k);
         return next;
       },
       { replace: true },
@@ -114,6 +200,8 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
   const [copied, setCopied] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const olderCursor = useRef<unknown>(undefined);
+  const newerCursor = useRef<unknown>(undefined);
+  const [loadedFilterKey, setLoadedFilterKey] = useState("");
   const tailAbort = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const colorMap = useRef(new Map<string, string>());
@@ -144,22 +232,51 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
   const nodeOptions = useMemo(() => flattenNodes(pipeline), [pipeline]);
   const stepIds = useMemo(() => Array.from(steps), [steps]);
   const compIds = useMemo(() => Array.from(components), [components]);
+  const machineIds = useMemo(() => Array.from(machines), [machines]);
+  const unitIds = useMemo(() => Array.from(units), [units]);
+  const sourceIds = useMemo(() => Array.from(sources), [sources]);
+  const streamIds = useMemo(() => Array.from(streams), [streams]);
+  const phaseIds = useMemo(() => Array.from(phases), [phases]);
+  const actionIds = useMemo(() => Array.from(actions), [actions]);
+  const mentionIds = useMemo(() => Array.from(mentions), [mentions]);
 
   const serverFilter = useCallback(
     () => ({
       search: applied.trim() || undefined,
       nodeExecutionIds: stepIds.length ? stepIds : undefined,
       componentIds: compIds.length ? compIds : undefined,
-      phases: phases.size ? Array.from(phases) : undefined,
-      actions: actions.size ? Array.from(actions) : undefined,
-      mentions: mentions.size ? Array.from(mentions) : undefined,
+      machineIds: machineIds.length ? machineIds : undefined,
+      units: unitIds.length ? unitIds : undefined,
+      sources: sourceIds.length ? selectedSources(sources) : undefined,
+      streams: streamIds.length ? selectedStreams(streams) : undefined,
+      phases: phaseIds.length ? phaseIds : undefined,
+      actions: actionIds.length ? actionIds : undefined,
+      mentions: mentionIds.length ? mentionIds : undefined,
     }),
-    [applied, stepIds, compIds, phases, actions, mentions],
+    [applied, stepIds, compIds, machineIds, unitIds, sourceIds, sources, streamIds, streams, phaseIds, actionIds, mentionIds],
+  );
+
+  const filterKey = useMemo(
+    () =>
+      JSON.stringify({
+        q: applied.trim(),
+        steps: stepIds,
+        comp: compIds,
+        mach: machineIds,
+        unit: unitIds,
+        src: sourceIds,
+        stream: streamIds,
+        phase: phaseIds,
+        action: actionIds,
+        mention: mentionIds,
+      }),
+    [applied, stepIds, compIds, machineIds, unitIds, sourceIds, streamIds, phaseIds, actionIds, mentionIds],
   );
 
   const load = useCallback(async () => {
     if (!tenantSlug || !runId) return;
     setLoading(true);
+    setLoadedFilterKey("");
     setError(null);
     try {
       // First load with a #line anchor fetches the page ending at that line;
@@ -168,15 +285,17 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
       anchorRef.current = null;
       const page = anchor
         ? await queryLogs(tenantSlug, runId, { ...serverFilter(), direction: "older", from: anchor, limit: 300 })
-        : await queryLogs(tenantSlug, runId, { ...serverFilter(), direction: "newer", limit: 300 });
+        : await queryLogs(tenantSlug, runId, { ...serverFilter(), direction: "older", limit: 300 });
       setLines(page.lines);
       olderCursor.current = page.older;
+      newerCursor.current = page.newer;
+      setLoadedFilterKey(filterKey);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
-  }, [tenantSlug, runId, serverFilter]);
+  }, [tenantSlug, runId, serverFilter, filterKey]);
 
   const loadOlder = useCallback(async () => {
     if (!tenantSlug || !runId || loadingOlder || !olderCursor.current) return;
@@ -190,7 +309,7 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
       });
       if (page.lines.length) {
         prependAnchor.current = scrollRef.current?.scrollHeight ?? null;
-        setLines((prev) => [...page.lines, ...prev]);
+        setLines((prev) => prependUnique(prev, page.lines));
       }
       olderCursor.current = page.older;
     } catch (err) {
@@ -204,28 +323,25 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
   useEffect(() => {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tenantSlug, runId, applied, stepIds.join(","), compIds.join(","), Array.from(phases).join(","), Array.from(actions).join(","), Array.from(mentions).join(",")]);
+  }, [tenantSlug, runId, filterKey]);
 
   // Live tail.
   useEffect(() => {
-    if (!live || !tenantSlug || !runId) return;
+    if (!live || !tenantSlug || !runId || loadedFilterKey !== filterKey) return;
     const controller = new AbortController();
     tailAbort.current = controller;
     void streamLogs(
       tenantSlug,
       runId,
       {
-        search: applied.trim() || undefined,
-        nodeExecutionIds: stepIds.length ? stepIds : undefined,
-        componentIds: compIds.length ? compIds : undefined,
-        phases: phases.size ? Array.from(phases) : undefined,
-        actions: actions.size ? Array.from(actions) : undefined,
-        mentions: mentions.size ? Array.from(mentions) : undefined,
+        ...serverFilter(),
+        from: newerCursor.current,
       },
       controller.signal,
       (line) => {
         if (controller.signal.aborted) return;
-        setLines((prev) => [...prev, line]);
+        if (line.cursorKey) newerCursor.current = logCursorFromKey(line.cursorKey);
+        setLines((prev) => appendUnique(prev, [line]));
       },
     ).catch((err) => {
       if (controller.signal.aborted) return;
@@ -235,19 +351,9 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
       controller.abort();
       if (tailAbort.current === controller) tailAbort.current = null;
     };
-  }, [live, tenantSlug, runId, applied, stepIds, compIds, phases, actions, mentions]);
+  }, [live, tenantSlug, runId, loadedFilterKey, filterKey, serverFilter]);
 
-  // Client-side machine + unit filter over the loaded buffer.
-  const rows = useMemo(() => {
-    const hasM = machines.size > 0;
-    const hasU = units.size > 0;
-    if (!hasM && !hasU) return lines;
-    return lines.filter((l) => {
-      if (hasM && !machines.has(l.machineId)) return false;
-      if (hasU && !units.has(l.unit)) return false;
-      return true;
-    });
-  }, [lines, machines, units]);
+  const rows = lines;
 
   // Follow to the bottom on new rows while live AND pinned to bottom.
   useEffect(() => {
@@ -291,21 +397,25 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
   }, [anchorKey, rows]);
 
   // Cross-filtered option counts over the loaded buffer.
-  const { stepOpts, compOpts, machineOpts, unitOpts, phaseOpts, actionOpts, mentionOpts } = useMemo(() => {
+  const { stepOpts, compOpts, machineOpts, unitOpts, sourceOpts, streamOpts, phaseOpts, actionOpts, mentionOpts } = useMemo(() => {
     const sc: Record<string, number> = {};
     const cc: Record<string, number> = {};
     const mc: Record<string, number> = {};
     const uc: Record<string, number> = {};
+    const soc: Record<string, number> = {};
+    const stc: Record<string, number> = {};
     const pc: Record<string, number> = {};
     const ac: Record<string, number> = {};
     const xc: Record<string, number> = {};
-    const hasM = machines.size > 0;
-    const hasU = units.size > 0;
     for (const l of lines) {
       if (l.nodeExecutionId) sc[l.nodeExecutionId] = (sc[l.nodeExecutionId] || 0) + 1;
       if (l.componentId) cc[l.componentId] = (cc[l.componentId] || 0) + 1;
-      if (l.machineId && (!hasU || units.has(l.unit))) mc[l.machineId] = (mc[l.machineId] || 0) + 1;
-      if (l.unit && (!hasM || machines.has(l.machineId))) uc[l.unit] = (uc[l.unit] || 0) + 1;
+      if (l.machineId) mc[l.machineId] = (mc[l.machineId] || 0) + 1;
+      if (l.unit) uc[l.unit] = (uc[l.unit] || 0) + 1;
+      const src = sourceToken(l.source);
+      if (src) soc[src] = (soc[src] || 0) + 1;
+      const str = streamToken(l.stream);
+      if (str) stc[str] = (stc[str] || 0) + 1;
       if (l.phase) pc[l.phase] = (pc[l.phase] || 0) + 1;
       if (l.action) ac[l.action] = (ac[l.action] || 0) + 1;
       for (const m of l.mentions) xc[m] = (xc[m] || 0) + 1;
@@ -318,16 +428,18 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
       stepOpts: nodeOptions
         .filter((n) => sc[n.id] || steps.has(n.id))
         .map((n): FilterOption => ({ value: n.id, label: n.label, count: sc[n.id] || 0 })),
-      compOpts: Object.keys(cc).sort().map((c): FilterOption => ({ value: c, label: c, count: cc[c] })),
-      machineOpts: Object.keys(mc).sort().map((m): FilterOption => ({ value: m, label: m, count: mc[m], color: color(m) })),
-      unitOpts: Object.keys(uc).sort().map((u): FilterOption => ({ value: u, label: u.replace(/\.service$/, ""), count: uc[u] })),
-      phaseOpts: Object.keys(pc).sort().map((p): FilterOption => ({ value: p, label: humanize(p), count: pc[p] })),
-      actionOpts: Object.keys(ac).sort().map((a): FilterOption => ({ value: a, label: humanize(a), count: ac[a] })),
-      mentionOpts: Object.keys(xc).sort().map((m): FilterOption => ({ value: m, label: m, count: xc[m] })),
+      compOpts: Array.from(new Set([...Object.keys(cc), ...components])).sort().map((c): FilterOption => ({ value: c, label: c, count: cc[c] || 0 })),
+      machineOpts: Array.from(new Set([...Object.keys(mc), ...machines])).sort().map((m): FilterOption => ({ value: m, label: m, count: mc[m] || 0, color: color(m) })),
+      unitOpts: Array.from(new Set([...Object.keys(uc), ...units])).sort().map((u): FilterOption => ({ value: u, label: u.replace(/\.service$/, ""), count: uc[u] || 0 })),
+      sourceOpts: SOURCE_FILTERS.map((s): FilterOption => ({ value: s.token, label: s.label, count: soc[s.token] || 0 })),
+      streamOpts: STREAM_FILTERS.map((s): FilterOption => ({ value: s.token, label: s.label, count: stc[s.token] || 0 })),
+      phaseOpts: Array.from(new Set([...Object.keys(pc), ...phases])).sort().map((p): FilterOption => ({ value: p, label: humanize(p), count: pc[p] || 0 })),
+      actionOpts: Array.from(new Set([...Object.keys(ac), ...actions])).sort().map((a): FilterOption => ({ value: a, label: humanize(a), count: ac[a] || 0 })),
+      mentionOpts: Array.from(new Set([...Object.keys(xc), ...mentions])).sort().map((m): FilterOption => ({ value: m, label: m, count: xc[m] || 0 })),
     };
-  }, [lines, nodeOptions, steps, machines, units]);
+  }, [lines, nodeOptions, steps, components, machines, units, phases, actions, mentions]);
 
-  const totalActive = steps.size + components.size + machines.size + units.size + phases.size + actions.size + mentions.size + (applied ? 1 : 0);
+  const totalActive = steps.size + components.size + machines.size + units.size + sources.size + streams.size + phases.size + actions.size + mentions.size + (applied ? 1 : 0);
 
   return (
     <div className="flex h-full flex-col gap-2">
@@ -345,6 +457,8 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
         {unitOpts.length > 0 && (
           <MultiFilter icon={<Cpu className="h-3 w-3" />} label="Unit" options={unitOpts} selected={units} onChange={setSetParam("unit")} />
         )}
+        <MultiFilter icon={<Terminal className="h-3 w-3" />} label="Source" options={sourceOpts} selected={sources} onChange={setSetParam("src")} />
+        <MultiFilter icon={<Radio className="h-3 w-3" />} label="Stream" options={streamOpts} selected={streams} onChange={setSetParam("stream")} />
         {phaseOpts.length > 0 && (
           <MultiFilter icon={<Radio className="h-3 w-3" />} label="Phase" options={phaseOpts} selected={phases} onChange={setSetParam("phase")} />
         )}
@@ -425,6 +539,9 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
             const mColor = colorMap.current.get(l.machineId) ?? "text-muted-foreground";
             const isAnchor = !!anchorKey && l.cursorKey === anchorKey;
             const isCopied = copied === l.cursorKey;
+            const src = sourceLabel(l.source);
+            const str = streamLabel(l.stream);
+            const stderr = streamToken(l.stream) === "stderr";
             return (
               <div
                 key={l.cursorKey || `${l.lineNo}-${i}`}
@@ -456,12 +573,37 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
                     </>
                   )}
                 </button>
+                {l.observedAt && (
+                  <span className="shrink-0 select-none text-muted-foreground/55" title={l.observedAt}>
+                    {logClock(l.observedAt)}
+                  </span>
+                )}
                 {l.machineId && (
                   <span className={cn("max-w-[10rem] shrink-0 truncate", mColor)} title={l.machineId}>
                     [{l.machineId}]
                   </span>
                 )}
-                <span className={cn("min-w-0", l.stream === "STREAM_STDERR" && "text-destructive")}>
+                {src && (
+                  <span className="shrink-0 rounded-sm border border-border/70 px-1 text-[10px] uppercase text-muted-foreground" title="source">
+                    {src}
+                  </span>
+                )}
+                {str && (
+                  <span className={cn("shrink-0 rounded-sm border px-1 text-[10px] uppercase", stderr ? "border-destructive/40 text-destructive" : "border-border/70 text-muted-foreground")} title="stream">
+                    {str}
+                  </span>
+                )}
+                {l.unit && (
+                  <span className="max-w-[13rem] shrink-0 truncate rounded-sm border border-border/70 px-1 text-[10px] text-muted-foreground" title={`unit: ${l.unit}`}>
+                    {l.unit.replace(/\.service$/, "")}
+                  </span>
+                )}
+                {l.componentId && (
+                  <span className="max-w-[12rem] shrink-0 truncate text-muted-foreground/70" title={`component: ${l.componentId}`}>
+                    {l.componentId}
+                  </span>
+                )}
+                <span className={cn("min-w-0", stderr && "text-destructive")}>
                   <Highlight text={l.line} q={applied.trim()} />
                 </span>
               </div>

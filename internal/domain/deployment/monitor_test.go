@@ -62,6 +62,11 @@ func TestMonitorStepsUseOnlyServerAddressForCollectors(t *testing.T) {
 		`uri: "https://control.example/insert/jsonline"`,
 		`Authorization: "Bearer agent-token"`,
 		`AccountID: "0"`,
+		`.source = "journald"`,
+		`if is_string(.source_type) && string!(.source_type) == "file" { .source = "file" }`,
+		`.stream = "stdout"`,
+		`if is_string(._SYSTEMD_UNIT)`,
+		`} else if is_string(.file)`,
 	} {
 		if !strings.Contains(vector, want) {
 			t.Fatalf("vector config missing %q:\n%s", want, vector)

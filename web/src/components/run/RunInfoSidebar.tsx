@@ -3,6 +3,9 @@
 // of label→value mono rows, matching the dense terminal aesthetic of the app.
 import { useEffect, useState, type ReactNode } from "react";
 import {
+  Activity,
+  AlertTriangle,
+  CheckCircle2,
   Clock,
   Cpu,
   Database,
@@ -14,7 +17,7 @@ import {
   Timer,
   Users,
 } from "lucide-react";
-import type { OverviewVM } from "@/services/run_overview";
+import type { OverviewVM, PipelineNodeVM } from "@/services/run_overview";
 import type { RunVM } from "@/services/runs";
 import {
   fallbackAuthorDisplay,
@@ -42,6 +45,35 @@ function fmtDur(sec?: number): string {
   if (sec < 60) return `${Math.round(sec)}s`;
   if (sec < 3600) return `${Math.floor(sec / 60)}m ${Math.round(sec % 60)}s`;
   return `${Math.floor(sec / 3600)}h ${Math.floor((sec % 3600) / 60)}m`;
+}
+
+const SOURCE_LABEL: Record<string, string> = {
+  temporal: "live",
+  persisted: "persisted",
+  plan: "plan",
+  registry: "registry",
+  synthetic: "synthetic",
+};
+
+function countPipeline(nodes: PipelineNodeVM[]) {
+  const acc = { total: 0, running: 0, completed: 0, failed: 0, pending: 0, cancelled: 0 };
+  const visit = (list: PipelineNodeVM[]) => {
+    for (const node of list) {
+      acc.total += 1;
+      if (node.status === "running" || node.status === "cancelling") acc.running += 1;
+      else if (node.status === "completed") acc.completed += 1;
+      else if (node.status === "failed") acc.failed += 1;
+      else if (node.status === "cancelled") acc.cancelled += 1;
+      else acc.pending += 1;
+      if (node.children.length) visit(node.children);
+    }
+  };
+  visit(nodes);
+  return acc;
+}
+
+function compactCounts(items: Array<[string, number]>): string {
+  return items.filter(([, n]) => n > 0).map(([k, n]) => `${k}:${n}`).join(" ");
 }
 
 // Live-ticking elapsed time for in-flight runs.
@@ -90,6 +122,20 @@ function Row({
 export function RunInfoSidebar({ overview, run }: { overview: OverviewVM; run?: RunVM }) {
   const isRunning = overview.status === "running" || overview.status === "cancelling";
   const [ownerDisplay, setOwnerDisplay] = useState<AuthorDisplay | null>(null);
+  const pipeline = countPipeline(overview.pipeline);
+  const workers = overview.workers.reduce(
+    (acc, worker) => {
+      acc.total += 1;
+      if (worker.presence === "online" || worker.online) acc.online += 1;
+      else if (worker.presence === "stale") acc.stale += 1;
+      else if (worker.presence === "offline" || worker.presence === "terminated") acc.offline += 1;
+      else acc.unknown += 1;
+      return acc;
+    },
+    { total: 0, online: 0, stale: 0, offline: 0, unknown: 0 },
+  );
+  const errorEvents = overview.timeline.filter((e) => e.severity === "error").length;
+  const warningEvents = overview.timeline.filter((e) => e.severity === "warning").length;
 
   useEffect(() => {
     const authorId = run?.authorId ?? "";
@@ -110,6 +156,7 @@ export function RunInfoSidebar({ overview, run }: { overview: OverviewVM; run?: 
   return (
     <div className="flex flex-col">
       <Group label="Identity">
+        <Row icon={Activity} label="status" value={overview.status} />
         <Row icon={Hash} label="id" value={<span title={overview.runId}>{overview.runId.slice(0, 18)}…</span>} />
         {run?.authorId && (
           <Row
@@ -123,7 +170,9 @@ export function RunInfoSidebar({ overview, run }: { overview: OverviewVM; run?: 
             }
           />
         )}
+        <Row icon={Clock} label="created" value={fmtTs(run?.createdAt)} />
         <Row icon={Clock} label="started" value={fmtTs(overview.startedAt) || "—"} />
+        <Row icon={Clock} label="finished" value={fmtTs(overview.finishedAt)} />
         <Row
           icon={Timer}
           label="duration"
@@ -136,6 +185,7 @@ export function RunInfoSidebar({ overview, run }: { overview: OverviewVM; run?: 
           }
         />
         {run?.trigger && <Row icon={Tag} label="trigger" value={run.trigger} />}
+        {run?.suiteRunId && <Row icon={Layers} label="suite" value={<span title={run.suiteRunId}>{run.suiteRunId.slice(0, 12)}…</span>} />}
       </Group>
 
       {run && (run.dbKind || run.topologyLabel) && (
@@ -144,6 +194,9 @@ export function RunInfoSidebar({ overview, run }: { overview: OverviewVM; run?: 
           {run.topologyLabel && <Row icon={Layers} label="topology" value={run.topologyLabel} />}
           {run.dbPresetId && (
             <Row icon={Tag} label="preset" value={run.dbPresetId.slice(0, 8)} />
+          )}
+          {run.testPresetId && (
+            <Row icon={Tag} label="test" value={run.testPresetId.slice(0, 8)} />
           )}
         </Group>
       )}
@@ -165,6 +218,54 @@ export function RunInfoSidebar({ overview, run }: { overview: OverviewVM; run?: 
           {run.nodeCount > 0 && <Row icon={Users} label="nodes" value={String(run.nodeCount)} />}
         </Group>
       )}
+
+      <Group label="Runtime">
+        <Row
+          icon={Users}
+          label="agents"
+          value={
+            workers.total > 0
+              ? compactCounts([
+                  ["online", workers.online],
+                  ["stale", workers.stale],
+                  ["offline", workers.offline],
+                  ["unknown", workers.unknown],
+                ]) || String(workers.total)
+              : undefined
+          }
+        />
+        <Row
+          icon={CheckCircle2}
+          label="stages"
+          value={
+            pipeline.total > 0
+              ? compactCounts([
+                  ["run", pipeline.running],
+                  ["ok", pipeline.completed],
+                  ["fail", pipeline.failed],
+                  ["wait", pipeline.pending],
+                  ["cancel", pipeline.cancelled],
+                ]) || String(pipeline.total)
+              : undefined
+          }
+        />
+        <Row icon={Clock} label="events" value={overview.timeline.length ? String(overview.timeline.length) : undefined} />
+        <Row
+          icon={AlertTriangle}
+          label="issues"
+          value={
+            errorEvents || warningEvents
+              ? compactCounts([
+                  ["errors", errorEvents],
+                  ["warn", warningEvents],
+                ])
+              : undefined
+          }
+        />
+        <Row icon={Tag} label="source" value={SOURCE_LABEL[overview.source] ?? overview.source} />
+        <Row icon={Clock} label="observed" value={fmtTs(overview.observedAt)} />
+        <Row icon={AlertTriangle} label="degraded" value={overview.degradedReasons.length ? String(overview.degradedReasons.length) : undefined} />
+      </Group>
 
       <Group label="Progress">
         <div className="flex items-center gap-2">

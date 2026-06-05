@@ -139,6 +139,7 @@ func (r *LogReader) Query(
 	if err != nil {
 		return nil, nil, nil, err
 	}
+	lines = normalizeLogPageOrder(lines, direction)
 	older, newer = cursorBounds(lines)
 	return lines, older, newer, nil
 }
@@ -351,9 +352,9 @@ func buildLogsQuery(runID string, filter *api.LogFilter, direction api.LogScroll
 
 	parts = appendOrFilter(parts, "node_execution_id", filter.GetNodeExecutionIds())
 	parts = appendOrFilter(parts, "component_id", filter.GetComponentIds())
-	// API calls this field node_ids because the UI thinks in topology nodes.
-	// LogLine stores the same stable host id as machine_id.
-	parts = appendOrFilter(parts, "machine_id", filter.GetNodeIds())
+	// node_ids is the older API name; machine_ids is the explicit UI/runtime
+	// machine filter. Both map to persisted LogLine.machine_id.
+	parts = appendOrFilter(parts, "machine_id", mergeStrings(filter.GetNodeIds(), filter.GetMachineIds()))
 	parts = appendOrFilter(parts, "phase", filter.GetPhases())
 	parts = appendOrFilter(parts, "parent_node_execution_id", filter.GetParentNodeExecutionIds())
 	parts = appendOrFilter(parts, "stage_name", filter.GetStageNames())
@@ -362,10 +363,11 @@ func buildLogsQuery(runID string, filter *api.LogFilter, direction api.LogScroll
 	parts = appendOrFilter(parts, "mentions", filter.GetMentions())
 	parts = appendEnumFilter(parts, "source", filter.GetSources(), logSourceName)
 	parts = appendEnumFilter(parts, "stream", filter.GetStreams(), logStreamName)
-
+	units := filter.GetUnits()
 	if u := filter.GetUnit(); u != "" {
-		parts = append(parts, fmt.Sprintf("unit:%q", u))
+		units = mergeStrings([]string{u}, units)
 	}
+	parts = appendOrFilter(parts, "unit", units)
 	if s := filter.GetSearch(); s != "" {
 		// Substring match over _msg.
 		parts = append(parts, fmt.Sprintf("_msg:%q", s))
@@ -384,6 +386,24 @@ func buildLogsQuery(runID string, filter *api.LogFilter, direction api.LogScroll
 		query += " | sort by (_time)"
 	}
 	return query
+}
+
+func mergeStrings(values ...[]string) []string {
+	var out []string
+	seen := map[string]struct{}{}
+	for _, slice := range values {
+		for _, v := range slice {
+			if v == "" {
+				continue
+			}
+			if _, ok := seen[v]; ok {
+				continue
+			}
+			seen[v] = struct{}{}
+			out = append(out, v)
+		}
+	}
+	return out
 }
 
 // appendOrFilter adds a `field:"v"` term for one value or a parenthesised
@@ -557,6 +577,16 @@ func parseLogStream(value string) monitor.Stream {
 	default:
 		return monitor.Stream_STREAM_UNSPECIFIED
 	}
+}
+
+func normalizeLogPageOrder(lines []*monitor.LogLine, direction api.LogScrollDirection) []*monitor.LogLine {
+	if direction != api.LogScrollDirection_LOG_SCROLL_DIRECTION_OLDER || len(lines) < 2 {
+		return lines
+	}
+	for i, j := 0, len(lines)-1; i < j; i, j = i+1, j-1 {
+		lines[i], lines[j] = lines[j], lines[i]
+	}
+	return lines
 }
 
 // cursorBounds returns the older (first) and newer (last) cursors of a page.

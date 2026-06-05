@@ -117,11 +117,11 @@ type View = "pipeline" | "topology" | "logs" | "metrics" | "quotas" | "grafana" 
 const VIEW_OPTIONS = [
   { value: "pipeline" as const, label: "Pipeline", icon: <Workflow className="h-3 w-3" /> },
   { value: "topology" as const, label: "Topology", icon: <Network className="h-3 w-3" /> },
+  { value: "agents" as const, label: "Agents", icon: <Activity className="h-3 w-3" /> },
+  { value: "quotas" as const, label: "Quotas", icon: <Gauge className="h-3 w-3" /> },
   { value: "logs" as const, label: "Logs", icon: <ScrollText className="h-3 w-3" /> },
   { value: "metrics" as const, label: "Metrics", icon: <LineChart className="h-3 w-3" /> },
-  { value: "quotas" as const, label: "Quotas", icon: <Gauge className="h-3 w-3" /> },
   { value: "grafana" as const, label: "Grafana", icon: <BarChart3 className="h-3 w-3" /> },
-  { value: "agents" as const, label: "Agents", icon: <Activity className="h-3 w-3" /> },
 ];
 
 export function RunDetail() {
@@ -171,6 +171,11 @@ export function RunDetail() {
           next.delete("comp");
           next.delete("mach");
           next.delete("unit");
+          next.delete("src");
+          next.delete("stream");
+          next.delete("phase");
+          next.delete("action");
+          next.delete("mention");
           next.delete("q");
           next.delete("line");
           return next;

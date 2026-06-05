@@ -7592,6 +7592,16 @@ go_name: ComponentIds</pre></td>
 json_name: end
 go_name: End</pre></td>
 </tr><tr>
+<td>machine_ids</td>
+<td>string</td>
+<td><pre>
+//machine_ids restricts to logs emitted by these provider/runtime machines.
+//This is the explicit UI-facing machine filter; node_ids remains accepted
+//for older links and clients.<br>
+
+json_name: machineIds
+go_name: MachineIds</pre></td>
+</tr><tr>
 <td>mentions</td>
 <td>string</td>
 <td><pre>
@@ -7695,6 +7705,15 @@ go_name: Streams</pre></td>
 
 json_name: unit
 go_name: Unit</pre></td>
+</tr><tr>
+<td>units</td>
+<td>string</td>
+<td><pre>
+//units restrict to these systemd units or tailed log-file units.
+//unit remains accepted for older links and clients.<br>
+
+json_name: units
+go_name: Units</pre></td>
 </tr>
 </table>
 

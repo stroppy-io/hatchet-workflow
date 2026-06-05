@@ -117,7 +117,14 @@ type LogFilter struct {
 	// actions restrict to generic action classes such as call_cmd/write_file.
 	Actions []string `protobuf:"bytes,15,rep,name=actions,proto3" json:"actions,omitempty"`
 	// mentions restrict to normalized operation tokens such as vector/vmagent/postgres.
-	Mentions      []string `protobuf:"bytes,16,rep,name=mentions,proto3" json:"mentions,omitempty"`
+	Mentions []string `protobuf:"bytes,16,rep,name=mentions,proto3" json:"mentions,omitempty"`
+	// machine_ids restricts to logs emitted by these provider/runtime machines.
+	// This is the explicit UI-facing machine filter; node_ids remains accepted
+	// for older links and clients.
+	MachineIds []string `protobuf:"bytes,17,rep,name=machine_ids,json=machineIds,proto3" json:"machine_ids,omitempty"`
+	// units restrict to these systemd units or tailed log-file units.
+	// unit remains accepted for older links and clients.
+	Units         []string `protobuf:"bytes,18,rep,name=units,proto3" json:"units,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -260,6 +267,20 @@ func (x *LogFilter) GetActions() []string {
 func (x *LogFilter) GetMentions() []string {
 	if x != nil {
 		return x.Mentions
+	}
+	return nil
+}
+
+func (x *LogFilter) GetMachineIds() []string {
+	if x != nil {
+		return x.MachineIds
+	}
+	return nil
+}
+
+func (x *LogFilter) GetUnits() []string {
+	if x != nil {
+		return x.Units
 	}
 	return nil
 }
@@ -964,7 +985,7 @@ var File_cloud_v1_api_test_run_overview_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_test_run_overview_proto_rawDesc = "" +
 	"\n" +
-	"$cloud/v1/api/test_run_overview.proto\x12\fcloud.v1.api\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1bcloud/v1/models/suite.proto\x1a\x1ecloud/v1/models/test_run.proto\x1a\x1bcloud/v1/monitor/logs.proto\x1a\x1ecloud/v1/monitor/metrics.proto\x1a\x1fcloud/v1/monitor/overview.proto\x1a cloud/v1/topology/topology.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\x85\x06\n" +
+	"$cloud/v1/api/test_run_overview.proto\x12\fcloud.v1.api\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1bcloud/v1/models/suite.proto\x1a\x1ecloud/v1/models/test_run.proto\x1a\x1bcloud/v1/monitor/logs.proto\x1a\x1ecloud/v1/monitor/metrics.proto\x1a\x1fcloud/v1/monitor/overview.proto\x1a cloud/v1/topology/topology.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\xe0\x06\n" +
 	"\tLogFilter\x12>\n" +
 	"\x12node_execution_ids\x18\x01 \x03(\tB\x10\xfaB\r\x92\x01\n" +
 	"\x10\x80\x02\"\x05r\x03\x18\x80\x01R\x10nodeExecutionIds\x125\n" +
@@ -989,7 +1010,12 @@ const file_cloud_v1_api_test_run_overview_proto_rawDesc = "" +
 	"\bstep_ids\x18\x0e \x03(\tB\x10\xfaB\r\x92\x01\n" +
 	"\x10\x80\x02\"\x05r\x03\x18\x80\x01R\astepIds\x12)\n" +
 	"\aactions\x18\x0f \x03(\tB\x0f\xfaB\f\x92\x01\t\x10@\"\x05r\x03\x18\x80\x01R\aactions\x12+\n" +
-	"\bmentions\x18\x10 \x03(\tB\x0f\xfaB\f\x92\x01\t\x10\x80\x01\"\x04r\x02\x18@R\bmentions\"\x98\x02\n" +
+	"\bmentions\x18\x10 \x03(\tB\x0f\xfaB\f\x92\x01\t\x10\x80\x01\"\x04r\x02\x18@R\bmentions\x121\n" +
+	"\vmachine_ids\x18\x11 \x03(\tB\x10\xfaB\r\x92\x01\n" +
+	"\x10\x80\x02\"\x05r\x03\x18\x80\x01R\n" +
+	"machineIds\x12&\n" +
+	"\x05units\x18\x12 \x03(\tB\x10\xfaB\r\x92\x01\n" +
+	"\x10\x80\x02\"\x05r\x03\x18\x80\x02R\x05units\"\x98\x02\n" +
 	"\x17TestRunOverviewSnapshot\x12:\n" +
 	"\x03run\x18\x01 \x01(\v2\x1e.cloud.v1.models.TestRunRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x03run\x12A\n" +
 	"\btopology\x18\x02 \x01(\v2\x1b.cloud.v1.topology.TopologyB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btopology\x12@\n" +

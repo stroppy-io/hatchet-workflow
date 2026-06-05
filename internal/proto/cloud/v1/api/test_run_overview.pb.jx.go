@@ -135,6 +135,22 @@ func (m *LogFilter) Encode(e *jx.Encoder) {
 		}
 		e.ArrEnd()
 	}
+	if len(m.MachineIds) > 0 {
+		e.FieldStart("machineIds")
+		e.ArrStart()
+		for _, v := range m.MachineIds {
+			e.Str(v)
+		}
+		e.ArrEnd()
+	}
+	if len(m.Units) > 0 {
+		e.FieldStart("units")
+		e.ArrStart()
+		for _, v := range m.Units {
+			e.Str(v)
+		}
+		e.ArrEnd()
+	}
 	e.ObjEnd()
 }
 
@@ -414,6 +430,38 @@ func (m *LogFilter) Decode(d *jx.Decoder) error {
 					return err
 				}
 				m.Mentions = append(m.Mentions, v)
+				return nil
+			})
+		case "machineIds", "machine_ids":
+			if seen["MachineIds"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["MachineIds"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				v, err := d.Str()
+				if err != nil {
+					return err
+				}
+				m.MachineIds = append(m.MachineIds, v)
+				return nil
+			})
+		case "units":
+			if seen["Units"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Units"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				v, err := d.Str()
+				if err != nil {
+					return err
+				}
+				m.Units = append(m.Units, v)
 				return nil
 			})
 		default:

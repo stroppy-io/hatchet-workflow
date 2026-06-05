@@ -107,6 +107,17 @@ message LogFilter {
         mentions restrict to normalized operation tokens such as vector/vmagent/postgres.
      */
     repeated string mentions = 16 [(validate.rules).repeated = {max_items: 128, items: {string: {max_len: 64}}}];
+    /*
+        machine_ids restricts to logs emitted by these provider/runtime machines.
+        This is the explicit UI-facing machine filter; node_ids remains accepted
+        for older links and clients.
+     */
+    repeated string machine_ids = 17 [(validate.rules).repeated = {max_items: 256, items: {string: {max_len: 128}}}];
+    /*
+        units restrict to these systemd units or tailed log-file units.
+        unit remains accepted for older links and clients.
+     */
+    repeated string units = 18 [(validate.rules).repeated = {max_items: 256, items: {string: {max_len: 256}}}];
 }
 
 /*
