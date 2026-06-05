@@ -9,12 +9,13 @@ import "validate/validate.proto";
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models";
 
 /*
-    PackageRecord is a tenant-uploaded custom package — e.g. a .deb (apt) or a raw
-    binary — used to install a custom database build instead of the stock version.
-    The blob lives in object storage (S3/MinIO); this row holds only metadata + the
-    storage key. Upload is via presigned PUT (see api/package.proto). At install
-    time the agent fetches the blob by a file reference (resolved to a presigned
-    download). Tenant-private.
+    PackageRecord is a package catalog row — either a tenant-uploaded custom
+    package, e.g. a .deb (apt) or a raw binary, or a server-defined built-in
+    package for the stock install path. Uploaded package blobs live in object
+    storage (S3/MinIO); this row holds only metadata + the storage key. Upload is
+    via presigned PUT (see api/package.proto). At install time the agent fetches
+    the blob by a file reference (resolved to a presigned download). Tenant-private
+    except for built-in rows, which are projected into each tenant.
  */
 message PackageRecord {
     /*
@@ -96,10 +97,18 @@ message PackageRecord {
     uint64 size_bytes = 8;
     /*
         sha256 is the expected content hash (hex), verified on CompleteUpload.
+        Built-in package records do not have a tenant-uploaded blob, so the field
+        may be empty for them.
      */
-    string sha256 = 9 [(validate.rules).string = {len: 64}];
+    string sha256 = 9 [(validate.rules).string = {len: 64, ignore_empty: true}];
     /*
         status is the current upload + verification lifecycle state.
      */
     Status status = 10;
+    /*
+        is_builtin marks server-defined package choices. Built-in package records
+        are listed for discoverability but are immutable and have no uploaded blob
+        owned by the tenant.
+     */
+    bool is_builtin = 11;
 }

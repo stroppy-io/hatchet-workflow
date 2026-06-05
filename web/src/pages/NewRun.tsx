@@ -1108,7 +1108,7 @@ function DatabasePackageSelector({
       .listPackages(slug, { dbKinds: [dbKind], pageSize: 100 })
       .then((page) => {
         if (cancelled) return;
-        setRows(page.rows.filter((row) => row.status === "ready"));
+        setRows(page.rows.filter((row) => row.status === "ready" && !row.isBuiltin));
       })
       .catch((e) => {
         if (!cancelled) setErr(e instanceof Error ? e.message : String(e));

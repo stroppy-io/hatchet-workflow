@@ -33,6 +33,7 @@ import { useAuthorDisplay } from "@/hooks/useAuthorDisplays";
 import { roleLevel } from "@/lib/roles";
 import { useBreadcrumbLabel } from "@/lib/breadcrumbs";
 import { Avatar } from "@/components/Avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/confirm-dialog";
@@ -61,6 +62,15 @@ function formatTimestamp(iso?: string): string {
     minute: "2-digit",
     hour12: false,
   });
+}
+
+function decodePackageId(id?: string): string {
+  if (!id) return "";
+  try {
+    return decodeURIComponent(id);
+  } catch {
+    return id;
+  }
 }
 
 function StatusBadge({ status }: { status: PackageStatus }) {
@@ -100,7 +110,8 @@ function MetaItem({
 }
 
 export function PackageDetail() {
-  const { id } = useParams<{ id: string }>();
+  const { id: routeId } = useParams<{ id: string }>();
+  const id = useMemo(() => decodePackageId(routeId), [routeId]);
   const slug = useTenantSlug();
   const navigate = useNavigate();
   const confirm = useConfirm();
@@ -173,6 +184,10 @@ export function PackageDetail() {
 
   const remove = useCallback(async () => {
     if (!pkg) return;
+    if (pkg.isBuiltin) {
+      setError("Built-in packages cannot be deleted");
+      return;
+    }
     const ok = await confirm({
       title: "Delete package?",
       description: `“${pkg.name || pkg.id}” will be permanently removed. This cannot be undone.`,
@@ -235,6 +250,9 @@ export function PackageDetail() {
   const formatColor = pkg.format ? PACKAGE_FORMAT_COLOR[pkg.format] : undefined;
   const dbColor = pkg.dbKind ? DB_COLOR[pkg.dbKind] : undefined;
   const ready = pkg.status === "ready";
+  const blobUnavailableReason = pkg.isBuiltin
+    ? "Built-in packages have no tenant-uploaded blob"
+    : "Available once the package is uploaded (Ready)";
 
   return (
     <div className="mx-auto flex h-full min-h-0 w-full max-w-3xl flex-col gap-4 overflow-auto p-5">
@@ -261,6 +279,14 @@ export function PackageDetail() {
               <h1 className="truncate font-mono text-lg font-semibold tracking-tight">
                 {pkg.name || pkg.id}
               </h1>
+              {pkg.isBuiltin && (
+                <Badge
+                  variant="secondary"
+                  className="shrink-0 px-1.5 py-0 font-mono text-[9px] uppercase"
+                >
+                  built-in
+                </Badge>
+              )}
               <StatusBadge status={pkg.status} />
             </div>
             <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
@@ -287,9 +313,9 @@ export function PackageDetail() {
             onClick={download}
             disabled={!ready || !pkg.storageUri}
             title={
-              ready
+              ready && pkg.storageUri
                 ? "Download the package blob"
-                : "Available once the package is uploaded (Ready)"
+                : blobUnavailableReason
             }
           >
             <Download className="h-3.5 w-3.5" /> Download
@@ -299,7 +325,12 @@ export function PackageDetail() {
               variant="outline"
               size="sm"
               onClick={() => void remove()}
-              disabled={busy}
+              disabled={busy || pkg.isBuiltin}
+              title={
+                pkg.isBuiltin
+                  ? "Built-in packages are immutable"
+                  : "Delete package"
+              }
               className="text-destructive hover:text-destructive"
             >
               <Trash2 className="h-3.5 w-3.5" /> Delete
@@ -350,6 +381,18 @@ export function PackageDetail() {
           <MetaItem label="Status">
             <StatusBadge status={pkg.status} />
           </MetaItem>
+          <MetaItem label="Catalog">
+            {pkg.isBuiltin ? (
+              <Badge
+                variant="secondary"
+                className="w-fit px-1.5 py-0 font-mono text-[9px] uppercase"
+              >
+                built-in
+              </Badge>
+            ) : (
+              <span className="font-mono">uploaded</span>
+            )}
+          </MetaItem>
           <MetaItem label="OS">
             <span className="font-mono">{pkg.os || "—"}</span>
           </MetaItem>
@@ -358,7 +401,7 @@ export function PackageDetail() {
           </MetaItem>
           <MetaItem label="Size">
             <span className="font-mono tabular-nums">
-              {formatBytes(pkg.sizeBytes)}
+              {pkg.isBuiltin ? "—" : formatBytes(pkg.sizeBytes)}
             </span>
           </MetaItem>
           <MetaItem label="Uploaded by">
@@ -389,7 +432,11 @@ export function PackageDetail() {
         </h2>
         <div className="flex flex-col gap-4">
           <MetaItem label="SHA-256">
-            {pkg.sha256 ? (
+            {pkg.isBuiltin ? (
+              <span className="text-muted-foreground">
+                — (server-defined package; no uploaded blob)
+              </span>
+            ) : pkg.sha256 ? (
               <button
                 type="button"
                 onClick={() => copySha(pkg.sha256)}
@@ -410,7 +457,11 @@ export function PackageDetail() {
             )}
           </MetaItem>
           <MetaItem label="Storage URI">
-            {pkg.storageUri ? (
+            {pkg.isBuiltin ? (
+              <span className="text-muted-foreground">
+                — (server-defined package; no tenant storage object)
+              </span>
+            ) : pkg.storageUri ? (
               <span className="break-all font-mono text-xs text-zinc-400">
                 {pkg.storageUri}
               </span>

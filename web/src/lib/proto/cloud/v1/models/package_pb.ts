@@ -15,16 +15,17 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/models/package.proto.
  */
 export const file_cloud_v1_models_package: GenFile = /*@__PURE__*/
-  fileDesc("Ch1jbG91ZC92MS9tb2RlbHMvcGFja2FnZS5wcm90bxIPY2xvdWQudjEubW9kZWxzIqkECg1QYWNrYWdlUmVjb3JkEjEKBmVudGl0eRgBIAEoCzIXLmNsb3VkLnYxLmNvbW1vbi5FbnRpdHlCCPpCBYoBAhABEj8KBmZvcm1hdBgCIAEoDjIlLmNsb3VkLnYxLm1vZGVscy5QYWNrYWdlUmVjb3JkLkZvcm1hdEII+kIFggECEAESGQoHdmVyc2lvbhgDIAEoCUII+kIFcgMYgAESNgoOdGFyZ2V0X2RiX2tpbmQYBCABKA4yHi5jbG91ZC52MS5kb21haW4uRGF0YWJhc2UuS2luZBIUCgJvcxgFIAEoCUII+kIFcgMYgAESFQoEYXJjaBgGIAEoCUIH+kIEcgIYIBIdCgtzdG9yYWdlX3VyaRgHIAEoCUII+kIFcgMYgAgSEgoKc2l6ZV9ieXRlcxgIIAEoBBIYCgZzaGEyNTYYCSABKAlCCPpCBXIDmAFAEjUKBnN0YXR1cxgKIAEoDjIlLmNsb3VkLnYxLm1vZGVscy5QYWNrYWdlUmVjb3JkLlN0YXR1cyJDCgZGb3JtYXQSFgoSRk9STUFUX1VOU1BFQ0lGSUVEEAASDgoKRk9STUFUX0RFQhABEhEKDUZPUk1BVF9CSU5BUlkQAiJbCgZTdGF0dXMSFgoSU1RBVFVTX1VOU1BFQ0lGSUVEEAASFAoQU1RBVFVTX1VQTE9BRElORxABEhAKDFNUQVRVU19SRUFEWRACEhEKDVNUQVRVU19GQUlMRUQQA0JEWkJnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9tb2RlbHNiBnByb3RvMw", [file_cloud_v1_common_entity, file_cloud_v1_domain_database, file_validate_validate]);
+  fileDesc("Ch1jbG91ZC92MS9tb2RlbHMvcGFja2FnZS5wcm90bxIPY2xvdWQudjEubW9kZWxzIsAECg1QYWNrYWdlUmVjb3JkEjEKBmVudGl0eRgBIAEoCzIXLmNsb3VkLnYxLmNvbW1vbi5FbnRpdHlCCPpCBYoBAhABEj8KBmZvcm1hdBgCIAEoDjIlLmNsb3VkLnYxLm1vZGVscy5QYWNrYWdlUmVjb3JkLkZvcm1hdEII+kIFggECEAESGQoHdmVyc2lvbhgDIAEoCUII+kIFcgMYgAESNgoOdGFyZ2V0X2RiX2tpbmQYBCABKA4yHi5jbG91ZC52MS5kb21haW4uRGF0YWJhc2UuS2luZBIUCgJvcxgFIAEoCUII+kIFcgMYgAESFQoEYXJjaBgGIAEoCUIH+kIEcgIYIBIdCgtzdG9yYWdlX3VyaRgHIAEoCUII+kIFcgMYgAgSEgoKc2l6ZV9ieXRlcxgIIAEoBBIbCgZzaGEyNTYYCSABKAlCC/pCCHIGmAFA0AEBEjUKBnN0YXR1cxgKIAEoDjIlLmNsb3VkLnYxLm1vZGVscy5QYWNrYWdlUmVjb3JkLlN0YXR1cxISCgppc19idWlsdGluGAsgASgIIkMKBkZvcm1hdBIWChJGT1JNQVRfVU5TUEVDSUZJRUQQABIOCgpGT1JNQVRfREVCEAESEQoNRk9STUFUX0JJTkFSWRACIlsKBlN0YXR1cxIWChJTVEFUVVNfVU5TUEVDSUZJRUQQABIUChBTVEFUVVNfVVBMT0FESU5HEAESEAoMU1RBVFVTX1JFQURZEAISEQoNU1RBVFVTX0ZBSUxFRBADQkRaQmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL21vZGVsc2IGcHJvdG8z", [file_cloud_v1_common_entity, file_cloud_v1_domain_database, file_validate_validate]);
 
 /**
  *
- * PackageRecord is a tenant-uploaded custom package — e.g. a .deb (apt) or a raw
- * binary — used to install a custom database build instead of the stock version.
- * The blob lives in object storage (S3/MinIO); this row holds only metadata + the
- * storage key. Upload is via presigned PUT (see api/package.proto). At install
- * time the agent fetches the blob by a file reference (resolved to a presigned
- * download). Tenant-private.
+ * PackageRecord is a package catalog row — either a tenant-uploaded custom
+ * package, e.g. a .deb (apt) or a raw binary, or a server-defined built-in
+ * package for the stock install path. Uploaded package blobs live in object
+ * storage (S3/MinIO); this row holds only metadata + the storage key. Upload is
+ * via presigned PUT (see api/package.proto). At install time the agent fetches
+ * the blob by a file reference (resolved to a presigned download). Tenant-private
+ * except for built-in rows, which are projected into each tenant.
  *
  * @generated from message cloud.v1.models.PackageRecord
  */
@@ -100,6 +101,8 @@ export type PackageRecord = Message<"cloud.v1.models.PackageRecord"> & {
   /**
    *
    * sha256 is the expected content hash (hex), verified on CompleteUpload.
+   * Built-in package records do not have a tenant-uploaded blob, so the field
+   * may be empty for them.
    *
    * @generated from field: string sha256 = 9;
    */
@@ -112,16 +115,27 @@ export type PackageRecord = Message<"cloud.v1.models.PackageRecord"> & {
    * @generated from field: cloud.v1.models.PackageRecord.Status status = 10;
    */
   status: PackageRecord_Status;
+
+  /**
+   *
+   * is_builtin marks server-defined package choices. Built-in package records
+   * are listed for discoverability but are immutable and have no uploaded blob
+   * owned by the tenant.
+   *
+   * @generated from field: bool is_builtin = 11;
+   */
+  isBuiltin: boolean;
 };
 
 /**
  *
- * PackageRecord is a tenant-uploaded custom package — e.g. a .deb (apt) or a raw
- * binary — used to install a custom database build instead of the stock version.
- * The blob lives in object storage (S3/MinIO); this row holds only metadata + the
- * storage key. Upload is via presigned PUT (see api/package.proto). At install
- * time the agent fetches the blob by a file reference (resolved to a presigned
- * download). Tenant-private.
+ * PackageRecord is a package catalog row — either a tenant-uploaded custom
+ * package, e.g. a .deb (apt) or a raw binary, or a server-defined built-in
+ * package for the stock install path. Uploaded package blobs live in object
+ * storage (S3/MinIO); this row holds only metadata + the storage key. Upload is
+ * via presigned PUT (see api/package.proto). At install time the agent fetches
+ * the blob by a file reference (resolved to a presigned download). Tenant-private
+ * except for built-in rows, which are projected into each tenant.
  *
  * @generated from message cloud.v1.models.PackageRecord
  */
@@ -197,6 +211,8 @@ export type PackageRecordJson = {
   /**
    *
    * sha256 is the expected content hash (hex), verified on CompleteUpload.
+   * Built-in package records do not have a tenant-uploaded blob, so the field
+   * may be empty for them.
    *
    * @generated from field: string sha256 = 9;
    */
@@ -209,6 +225,16 @@ export type PackageRecordJson = {
    * @generated from field: cloud.v1.models.PackageRecord.Status status = 10;
    */
   status?: PackageRecord_StatusJson;
+
+  /**
+   *
+   * is_builtin marks server-defined package choices. Built-in package records
+   * are listed for discoverability but are immutable and have no uploaded blob
+   * owned by the tenant.
+   *
+   * @generated from field: bool is_builtin = 11;
+   */
+  isBuiltin?: boolean;
 };
 
 export type PackageRecordValid = PackageRecord;

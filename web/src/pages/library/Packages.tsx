@@ -24,6 +24,7 @@ import { Check, Copy, Download, Eye, Trash2, UploadCloud } from "lucide-react";
 import { Link, useNavigate, useTenantSlug } from "@/lib/router";
 import { fallbackAuthorDisplay } from "@/lib/author-display";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthorDisplays } from "@/hooks/useAuthorDisplays";
 import { roleLevel } from "@/lib/roles";
@@ -66,6 +67,10 @@ import { LibraryShell } from "@/pages/library/LibraryShell";
 /** Truncate a 64-hex sha256 to a copyable short form. */
 function shortSha(sha: string): string {
   return sha ? sha.slice(0, 12) : "";
+}
+
+function packageDetailPath(id: string): string {
+  return `/packages/${encodeURIComponent(id)}`;
 }
 
 const SORTABLE: readonly PackageSortField[] = [
@@ -176,15 +181,20 @@ export function Packages() {
       try {
         switch (action) {
           case "view": {
-            navigate(`/packages/${row.id}`);
+            navigate(packageDetailPath(row.id));
             return;
           }
           case "download": {
             // Open the blob behind storage_uri (the gateway serves the binary).
-            if (row.storageUri) window.open(row.storageUri, "_blank", "noopener");
+            if (row.storageUri)
+              window.open(row.storageUri, "_blank", "noopener");
             return;
           }
           case "delete": {
+            if (row.isBuiltin) {
+              setError("Built-in packages cannot be deleted");
+              return;
+            }
             const ok = await confirm({
               title: "Delete package?",
               description: `“${row.name || row.id}” will be permanently removed. This cannot be undone.`,
@@ -211,6 +221,7 @@ export function Packages() {
     (row: PackageRow): RowActionItem<PackageAction>[] => {
       const notReady = "Available once the package is uploaded (Ready)";
       const roleReason = "Requires the operator role or higher";
+      const builtinReason = "Built-in packages are immutable";
       return [
         { action: "view", label: "View detail", icon: Eye },
         {
@@ -218,15 +229,17 @@ export function Packages() {
           label: "Download",
           icon: Download,
           disabled: !row.storageUri,
-          disabledReason: notReady,
+          disabledReason: row.isBuiltin
+            ? "Built-in packages have no tenant-uploaded blob"
+            : notReady,
         },
         {
           action: "delete",
           label: "Delete",
           icon: Trash2,
           danger: true,
-          disabled: !canMutate,
-          disabledReason: roleReason,
+          disabled: row.isBuiltin || !canMutate,
+          disabledReason: row.isBuiltin ? builtinReason : roleReason,
         },
       ];
     },
@@ -268,9 +281,22 @@ export function Packages() {
           const r = row.original;
           return (
             <div className="flex flex-col gap-0.5 min-w-0">
-              <span className="text-xs text-primary truncate" title={r.name}>
-                {r.name || r.id}
-              </span>
+              <div className="flex min-w-0 items-center gap-1.5">
+                <span
+                  className="min-w-0 truncate text-xs text-primary"
+                  title={r.name}
+                >
+                  {r.name || r.id}
+                </span>
+                {r.isBuiltin && (
+                  <Badge
+                    variant="secondary"
+                    className="shrink-0 px-1 py-0 font-mono text-[8px] uppercase"
+                  >
+                    built-in
+                  </Badge>
+                )}
+              </div>
               {r.version && (
                 <span className="font-mono text-[10px] text-zinc-600 truncate">
                   {r.version}
@@ -351,7 +377,9 @@ export function Packages() {
           if (!r.dbKind)
             return <span className="font-mono text-xs text-zinc-600">—</span>;
           const color = DB_COLOR[r.dbKind];
-          const sub = [r.os || null, r.arch || null].filter(Boolean).join(" · ");
+          const sub = [r.os || null, r.arch || null]
+            .filter(Boolean)
+            .join(" · ");
           return (
             <div className="flex items-center gap-2">
               <span
@@ -387,7 +415,7 @@ export function Packages() {
         ),
         cell: ({ row }) => (
           <span className="font-mono text-xs text-zinc-400 tabular-nums">
-            {formatBytes(row.original.sizeBytes)}
+            {row.original.isBuiltin ? "—" : formatBytes(row.original.sizeBytes)}
           </span>
         ),
       },
@@ -486,10 +514,15 @@ export function Packages() {
           const author = row.original.authorId;
           if (!author)
             return <span className="font-mono text-xs text-zinc-600">—</span>;
-          const display = authorDisplays[author] ?? fallbackAuthorDisplay(author);
+          const display =
+            authorDisplays[author] ?? fallbackAuthorDisplay(author);
           return (
             <div className="flex items-center gap-2 min-w-0">
-              <Avatar name={display.avatarName} size={22} className="shrink-0" />
+              <Avatar
+                name={display.avatarName}
+                size={22}
+                className="shrink-0"
+              />
               <span
                 className="text-xs text-zinc-400 truncate"
                 title={display.title}
@@ -594,7 +627,7 @@ export function Packages() {
         columns={columns}
         rows={rows}
         getRowId={(r) => r.id}
-        onRowClick={(r) => navigate(`/packages/${r.id}`)}
+        onRowClick={(r) => navigate(packageDetailPath(r.id))}
         columnWidths={PACKAGE_WIDTHS}
         loading={loading}
         error={error}

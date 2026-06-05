@@ -160,19 +160,25 @@ func (m *PackageRecord) validate(all bool) error {
 
 	// no validation rules for SizeBytes
 
-	if utf8.RuneCountInString(m.GetSha256()) != 64 {
-		err := PackageRecordValidationError{
-			field:  "Sha256",
-			reason: "value length must be 64 runes",
+	if m.GetSha256() != "" {
+
+		if utf8.RuneCountInString(m.GetSha256()) != 64 {
+			err := PackageRecordValidationError{
+				field:  "Sha256",
+				reason: "value length must be 64 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+
 		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
 
 	}
 
 	// no validation rules for Status
+
+	// no validation rules for IsBuiltin
 
 	if len(errors) > 0 {
 		return PackageRecordMultiError(errors)

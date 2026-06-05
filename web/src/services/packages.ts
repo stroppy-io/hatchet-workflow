@@ -24,6 +24,7 @@
 //   sha256             sha256             (blob checksum)
 //   storageUri         storage_uri        (download / gateway blob path)
 //   status             status             (PackageRecord.Status)
+//   isBuiltin          is_builtin         (immutable server-defined package)
 //
 // SCOPE — the page is built STRICTLY around cloud.v1.api.ListPackagesRequest.
 // Wired slice:
@@ -110,6 +111,7 @@ function packageRecordToRow(rec: PackageRecord): PackageRow {
     sha256?: string;
     storageUri?: string;
     status?: string;
+    isBuiltin?: boolean;
   };
   return {
     id: j.entity?.id ?? "",
@@ -123,9 +125,10 @@ function packageRecordToRow(rec: PackageRecord): PackageRow {
     os: j.os ?? "",
     arch: j.arch ?? "",
     sizeBytes: Number(j.sizeBytes ?? 0),
-    sha256: j.sha256 ?? "",
+    sha256: j.isBuiltin ? "" : (j.sha256 ?? ""),
     storageUri: j.storageUri ?? "",
     status: statusLabel(j.status),
+    isBuiltin: j.isBuiltin ?? false,
   };
 }
 
@@ -154,6 +157,8 @@ export interface PackageRow {
   /** storage_uri — the blob download / gateway path, "" until ready. */
   storageUri: string;
   status: PackageStatus;
+  /** is_builtin — server-defined package; immutable and not tenant-uploaded. */
+  isBuiltin: boolean;
 }
 
 /**
@@ -313,7 +318,10 @@ const realPackagesProvider: PackagesProvider = {
 
   async completeUpload(tenantSlug, id) {
     const tenantId = await resolveTenantId(tenantSlug);
-    const { package: rec } = await packageClient.completeUpload({ tenantId, id });
+    const { package: rec } = await packageClient.completeUpload({
+      tenantId,
+      id,
+    });
     if (!rec) throw new Error("completeUpload returned no package");
     return packageRecordToRow(rec);
   },

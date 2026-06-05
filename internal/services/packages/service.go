@@ -56,6 +56,7 @@ type PackageQuery struct {
 	Sort      *common.EntitySort
 	PageSize  uint32
 	PageToken string
+	Builtin   []*models.PackageRecord
 }
 
 // BlobStore brokers the object-storage side of the presigned-upload flow. None
@@ -158,6 +159,9 @@ func requireTenant(tenantID string) error {
 // row keyed under a different tenant is reported as NotFound so a caller cannot
 // probe another tenant's id space.
 func (s *PackageService) getOwned(ctx context.Context, tenantID, id string) (*models.PackageRecord, error) {
+	if pkg, ok := builtinPackageRecord(tenantID, id); ok {
+		return pkg, nil
+	}
 	pkg, err := s.d.Packages.Get(ctx, tenantID, id)
 	if err != nil {
 		return nil, err
@@ -233,6 +237,9 @@ func (s *PackageService) CompleteUpload(ctx context.Context, req *api.CompleteUp
 	if err := requireTenant(req.GetTenantId()); err != nil {
 		return nil, err
 	}
+	if isBuiltinPackageID(req.GetId()) {
+		return nil, status.Error(codes.FailedPrecondition, "built-in packages are immutable")
+	}
 	pkg, err := doTxRet(ctx, s, func(ctx context.Context) (*models.PackageRecord, error) {
 		pkg, err := s.getOwned(ctx, req.GetTenantId(), req.GetId())
 		if err != nil {
@@ -303,6 +310,7 @@ func (s *PackageService) ListPackages(ctx context.Context, req *api.ListPackages
 		Sort:      req.GetSort(),
 		PageSize:  req.GetPage().GetSize(),
 		PageToken: req.GetPage().GetToken(),
+		Builtin:   builtinPackageRecords(req.GetTenantId()),
 	}
 	pkgs, next, err := s.d.Packages.List(ctx, q)
 	if err != nil {
@@ -317,6 +325,9 @@ func (s *PackageService) ListPackages(ctx context.Context, req *api.ListPackages
 func (s *PackageService) DeletePackage(ctx context.Context, req *api.DeletePackageRequest) (*api.DeletePackageResponse, error) {
 	if err := requireTenant(req.GetTenantId()); err != nil {
 		return nil, err
+	}
+	if isBuiltinPackageID(req.GetId()) {
+		return nil, status.Error(codes.FailedPrecondition, "built-in packages cannot be deleted")
 	}
 	if err := s.doTx(ctx, func(ctx context.Context) error {
 		pkg, err := s.getOwned(ctx, req.GetTenantId(), req.GetId())
@@ -355,4 +366,134 @@ func touch(pkg *models.PackageRecord, ts *timestamppb.Timestamp) {
 // normalizeSha lowercases/trims a hex digest for case-insensitive comparison.
 func normalizeSha(s string) string {
 	return strings.ToLower(strings.TrimSpace(s))
+}
+
+type builtinPackageSpec struct {
+	ID          string
+	Name        string
+	Description string
+	Format      models.PackageRecord_Format
+	Version     string
+	DbKind      domain.Database_Kind
+	OS          string
+	Arch        string
+}
+
+var builtinPackageSpecs = []builtinPackageSpec{
+	{
+		ID:          "builtin/postgres/default",
+		Name:        "PostgreSQL default packages",
+		Description: "Server-defined stock PostgreSQL install package.",
+		Format:      models.PackageRecord_FORMAT_DEB,
+		Version:     "default",
+		DbKind:      domain.Database_KIND_POSTGRES,
+		OS:          "ubuntu-22.04",
+		Arch:        "amd64",
+	},
+	{
+		ID:          "builtin/mysql/default",
+		Name:        "MySQL default packages",
+		Description: "Server-defined stock MySQL install package.",
+		Format:      models.PackageRecord_FORMAT_DEB,
+		Version:     "default",
+		DbKind:      domain.Database_KIND_MYSQL,
+		OS:          "ubuntu-22.04",
+		Arch:        "amd64",
+	},
+	{
+		ID:          "builtin/mariadb/default",
+		Name:        "MariaDB default packages",
+		Description: "Server-defined stock MariaDB install package.",
+		Format:      models.PackageRecord_FORMAT_DEB,
+		Version:     "default",
+		DbKind:      domain.Database_KIND_MARIADB,
+		OS:          "ubuntu-22.04",
+		Arch:        "amd64",
+	},
+	{
+		ID:          "builtin/picodata/default",
+		Name:        "Picodata default packages",
+		Description: "Server-defined stock Picodata install package.",
+		Format:      models.PackageRecord_FORMAT_DEB,
+		Version:     "default",
+		DbKind:      domain.Database_KIND_PICODATA,
+		OS:          "ubuntu-22.04",
+		Arch:        "amd64",
+	},
+	{
+		ID:          "builtin/ydb/default",
+		Name:        "YDB default archive",
+		Description: "Server-defined stock YDB release archive.",
+		Format:      models.PackageRecord_FORMAT_BINARY,
+		Version:     "default",
+		DbKind:      domain.Database_KIND_YDB,
+		OS:          "linux",
+		Arch:        "amd64",
+	},
+	{
+		ID:          "builtin/ydb-managed/managed",
+		Name:        "Yandex Managed YDB built-in package",
+		Description: "Provider-managed YDB package supplied by the platform.",
+		Format:      models.PackageRecord_FORMAT_BINARY,
+		Version:     "managed",
+		DbKind:      domain.Database_KIND_YDB_MANAGED,
+		OS:          "managed",
+		Arch:        "managed",
+	},
+	{
+		ID:          "builtin/cockroach/default",
+		Name:        "CockroachDB default archive",
+		Description: "Server-defined stock CockroachDB release archive.",
+		Format:      models.PackageRecord_FORMAT_BINARY,
+		Version:     "default",
+		DbKind:      domain.Database_KIND_COCKROACH,
+		OS:          "linux",
+		Arch:        "amd64",
+	},
+}
+
+var builtinPackageCatalogTime = time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)
+
+func builtinPackageRecords(tenantID string) []*models.PackageRecord {
+	out := make([]*models.PackageRecord, 0, len(builtinPackageSpecs))
+	for _, spec := range builtinPackageSpecs {
+		out = append(out, packageRecordFromBuiltinSpec(tenantID, spec))
+	}
+	return out
+}
+
+func builtinPackageRecord(tenantID, id string) (*models.PackageRecord, bool) {
+	for _, spec := range builtinPackageSpecs {
+		if spec.ID == id {
+			return packageRecordFromBuiltinSpec(tenantID, spec), true
+		}
+	}
+	return nil, false
+}
+
+func packageRecordFromBuiltinSpec(tenantID string, spec builtinPackageSpec) *models.PackageRecord {
+	createdAt := timestamppb.New(builtinPackageCatalogTime)
+	return &models.PackageRecord{
+		Entity: &common.Entity{
+			Id:          spec.ID,
+			TenantId:    tenantID,
+			Name:        spec.Name,
+			Description: spec.Description,
+			Timings: &common.Timings{
+				CreatedAt: createdAt,
+				UpdatedAt: createdAt,
+			},
+		},
+		Format:       spec.Format,
+		Version:      spec.Version,
+		TargetDbKind: spec.DbKind,
+		Os:           spec.OS,
+		Arch:         spec.Arch,
+		Status:       models.PackageRecord_STATUS_READY,
+		IsBuiltin:    true,
+	}
+}
+
+func isBuiltinPackageID(id string) bool {
+	return strings.HasPrefix(strings.TrimSpace(id), "builtin/")
 }

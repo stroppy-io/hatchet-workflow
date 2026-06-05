@@ -193,12 +193,13 @@ go_name: TargetId</pre></td>
 ### cloud.v1.models.PackageRecord
 
 <pre>
-//PackageRecord is a tenant-uploaded custom package — e.g. a .deb (apt) or a raw
-//binary — used to install a custom database build instead of the stock version.
-//The blob lives in object storage (S3/MinIO); this row holds only metadata + the
-//storage key. Upload is via presigned PUT (see api/package.proto). At install
-//time the agent fetches the blob by a file reference (resolved to a presigned
-//download). Tenant-private.
+//PackageRecord is a package catalog row — either a tenant-uploaded custom
+//package, e.g. a .deb (apt) or a raw binary, or a server-defined built-in
+//package for the stock install path. Uploaded package blobs live in object
+//storage (S3/MinIO); this row holds only metadata + the storage key. Upload is
+//via presigned PUT (see api/package.proto). At install time the agent fetches
+//the blob by a file reference (resolved to a presigned download). Tenant-private
+//except for built-in rows, which are projected into each tenant.
 </pre>
 
 <table>
@@ -234,6 +235,16 @@ go_name: Entity</pre></td>
 json_name: format
 go_name: Format</pre></td>
 </tr><tr>
+<td>is_builtin</td>
+<td>bool</td>
+<td><pre>
+//is_builtin marks server-defined package choices. Built-in package records
+//are listed for discoverability but are immutable and have no uploaded blob
+//owned by the tenant.<br>
+
+json_name: isBuiltin
+go_name: IsBuiltin</pre></td>
+</tr><tr>
 <td>os</td>
 <td>string</td>
 <td><pre>
@@ -246,7 +257,9 @@ go_name: Os</pre></td>
 <td>sha256</td>
 <td>string</td>
 <td><pre>
-//sha256 is the expected content hash (hex), verified on CompleteUpload.<br>
+//sha256 is the expected content hash (hex), verified on CompleteUpload.
+//Built-in package records do not have a tenant-uploaded blob, so the field
+//may be empty for them.<br>
 
 json_name: sha256
 go_name: Sha256</pre></td>

@@ -136,12 +136,13 @@ func (PackageRecord_Status) EnumDescriptor() ([]byte, []int) {
 	return file_cloud_v1_models_package_proto_rawDescGZIP(), []int{0, 1}
 }
 
-// PackageRecord is a tenant-uploaded custom package — e.g. a .deb (apt) or a raw
-// binary — used to install a custom database build instead of the stock version.
-// The blob lives in object storage (S3/MinIO); this row holds only metadata + the
-// storage key. Upload is via presigned PUT (see api/package.proto). At install
-// time the agent fetches the blob by a file reference (resolved to a presigned
-// download). Tenant-private.
+// PackageRecord is a package catalog row — either a tenant-uploaded custom
+// package, e.g. a .deb (apt) or a raw binary, or a server-defined built-in
+// package for the stock install path. Uploaded package blobs live in object
+// storage (S3/MinIO); this row holds only metadata + the storage key. Upload is
+// via presigned PUT (see api/package.proto). At install time the agent fetches
+// the blob by a file reference (resolved to a presigned download). Tenant-private
+// except for built-in rows, which are projected into each tenant.
 type PackageRecord struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// entity is the storage envelope (id, tenant_id, name, timings). Packages
@@ -165,9 +166,15 @@ type PackageRecord struct {
 	// size_bytes is the size of the uploaded blob in bytes.
 	SizeBytes uint64 `protobuf:"varint,8,opt,name=size_bytes,json=sizeBytes,proto3" json:"size_bytes,omitempty"`
 	// sha256 is the expected content hash (hex), verified on CompleteUpload.
+	// Built-in package records do not have a tenant-uploaded blob, so the field
+	// may be empty for them.
 	Sha256 string `protobuf:"bytes,9,opt,name=sha256,proto3" json:"sha256,omitempty"`
 	// status is the current upload + verification lifecycle state.
-	Status        PackageRecord_Status `protobuf:"varint,10,opt,name=status,proto3,enum=cloud.v1.models.PackageRecord_Status" json:"status,omitempty"`
+	Status PackageRecord_Status `protobuf:"varint,10,opt,name=status,proto3,enum=cloud.v1.models.PackageRecord_Status" json:"status,omitempty"`
+	// is_builtin marks server-defined package choices. Built-in package records
+	// are listed for discoverability but are immutable and have no uploaded blob
+	// owned by the tenant.
+	IsBuiltin     bool `protobuf:"varint,11,opt,name=is_builtin,json=isBuiltin,proto3" json:"is_builtin,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -272,11 +279,18 @@ func (x *PackageRecord) GetStatus() PackageRecord_Status {
 	return PackageRecord_STATUS_UNSPECIFIED
 }
 
+func (x *PackageRecord) GetIsBuiltin() bool {
+	if x != nil {
+		return x.IsBuiltin
+	}
+	return false
+}
+
 var File_cloud_v1_models_package_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_models_package_proto_rawDesc = "" +
 	"\n" +
-	"\x1dcloud/v1/models/package.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x17validate/validate.proto\"\x81\x05\n" +
+	"\x1dcloud/v1/models/package.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x17validate/validate.proto\"\xa3\x05\n" +
 	"\rPackageRecord\x129\n" +
 	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.common.EntityB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06entity\x12G\n" +
 	"\x06format\x18\x02 \x01(\x0e2%.cloud.v1.models.PackageRecord.FormatB\b\xfaB\x05\x82\x01\x02\x10\x01R\x06format\x12\"\n" +
@@ -287,10 +301,12 @@ const file_cloud_v1_models_package_proto_rawDesc = "" +
 	"\vstorage_uri\x18\a \x01(\tB\b\xfaB\x05r\x03\x18\x80\bR\n" +
 	"storageUri\x12\x1d\n" +
 	"\n" +
-	"size_bytes\x18\b \x01(\x04R\tsizeBytes\x12 \n" +
-	"\x06sha256\x18\t \x01(\tB\b\xfaB\x05r\x03\x98\x01@R\x06sha256\x12=\n" +
+	"size_bytes\x18\b \x01(\x04R\tsizeBytes\x12#\n" +
+	"\x06sha256\x18\t \x01(\tB\v\xfaB\br\x06\x98\x01@\xd0\x01\x01R\x06sha256\x12=\n" +
 	"\x06status\x18\n" +
-	" \x01(\x0e2%.cloud.v1.models.PackageRecord.StatusR\x06status\"C\n" +
+	" \x01(\x0e2%.cloud.v1.models.PackageRecord.StatusR\x06status\x12\x1d\n" +
+	"\n" +
+	"is_builtin\x18\v \x01(\bR\tisBuiltin\"C\n" +
 	"\x06Format\x12\x16\n" +
 	"\x12FORMAT_UNSPECIFIED\x10\x00\x12\x0e\n" +
 	"\n" +

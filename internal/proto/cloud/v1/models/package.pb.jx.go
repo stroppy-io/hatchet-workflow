@@ -69,6 +69,10 @@ func (m *PackageRecord) Encode(e *jx.Encoder) {
 			e.Int32(int32(m.Status))
 		}
 	}
+	if m.IsBuiltin != false {
+		e.FieldStart("isBuiltin")
+		e.Bool(m.IsBuiltin)
+	}
 	e.ObjEnd()
 }
 
@@ -260,6 +264,20 @@ func (m *PackageRecord) Decode(d *jx.Decoder) error {
 			default:
 				return fmt.Errorf("invalid enum token %s", d.Next())
 			}
+		case "isBuiltin", "is_builtin":
+			if seen["IsBuiltin"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["IsBuiltin"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Bool()
+			if err != nil {
+				return err
+			}
+			m.IsBuiltin = v
+			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}

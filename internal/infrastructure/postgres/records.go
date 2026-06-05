@@ -563,7 +563,7 @@ func (r *PackageRepo) List(ctx context.Context, q packages.PackageQuery) ([]*mod
 	if err != nil {
 		return nil, "", err
 	}
-	out := make([]*models.PackageRecord, 0, len(rows))
+	out := make([]*models.PackageRecord, 0, len(rows)+len(q.Builtin))
 	for _, row := range rows {
 		rec := &models.PackageRecord{}
 		if err := unmarshal(row.Data, rec); err != nil {
@@ -571,6 +571,7 @@ func (r *PackageRepo) List(ctx context.Context, q packages.PackageQuery) ([]*mod
 		}
 		out = append(out, rec)
 	}
+	out = append(out, q.Builtin...)
 	page, next := filterPackageRecords(out, q)
 	return page, next, nil
 }
