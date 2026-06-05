@@ -77,9 +77,18 @@ func TestBuiltinSelfCheckMatrixBuildsEverySeededTopology(t *testing.T) {
 			t.Fatalf("%q has no workload for protocol %s", preset.GetEntity().GetName(), protocol)
 		}
 
+		db := cloneDatabaseWithBuiltinPackage(preset.GetDatabase())
+		pkg := db.GetParams().GetPackage()
+		if pkg == nil {
+			t.Fatalf("%q self-check database has no builtin package", preset.GetEntity().GetName())
+		}
+		if !pkg.GetIsBuiltin() {
+			t.Fatalf("%q self-check database package is not builtin", preset.GetEntity().GetName())
+		}
+
 		run, err := runbuilder.BuildTestRun(runbuilder.BuildOptions{
 			ID:       "seed-preview-" + preset.GetEntity().GetId(),
-			Database: cloneDatabaseWithBuiltinPackage(preset.GetDatabase()),
+			Database: db,
 			Workload: workload.GetWorkload(),
 			Provider: deploymentpb.Provider_PROVIDER_YANDEX,
 		})
@@ -88,6 +97,9 @@ func TestBuiltinSelfCheckMatrixBuildsEverySeededTopology(t *testing.T) {
 		}
 		if len(run.GetInfrastructurePlan().GetMachines()) == 0 {
 			t.Fatalf("%q built no runnable machines", preset.GetEntity().GetName())
+		}
+		if got := run.GetDatabase().GetParams().GetPackage().GetId(); got != pkg.GetId() {
+			t.Fatalf("%q run lost builtin package: got %q, want %q", preset.GetEntity().GetName(), got, pkg.GetId())
 		}
 	}
 }

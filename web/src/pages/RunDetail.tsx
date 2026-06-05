@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import type { Timestamp } from "@bufbuild/protobuf/wkt";
 import {
   Activity,
   ArrowLeft,
   BarChart3,
+  Gauge,
   GitCompare,
   LineChart,
   Network,
@@ -31,6 +33,7 @@ import { TopologyViewer } from "@/components/run/TopologyViewer";
 import { LogsPanel } from "@/components/run/LogsPanel";
 import { MetricsPanel } from "@/components/run/MetricsPanel";
 import { GrafanaPanel } from "@/components/run/GrafanaPanel";
+import { getQuotaProvider } from "@/services/quotas";
 import {
   getRunOverview,
   getRunMetrics,
@@ -42,6 +45,8 @@ import {
 } from "@/services/run_overview";
 import { actionsForStatus, getRunsProvider } from "@/services/runs";
 import type { RunStatus } from "@/services/dashboard";
+import type { QuotaReservationView } from "@/lib/proto/cloud/v1/api/quota_pb";
+import { Quota_ReservationStatus } from "@/lib/proto/cloud/v1/deployment/quota_pb";
 
 const STATUS_VARIANT: Record<RunStatus, "default" | "success" | "destructive" | "warning" | "pending"> = {
   pending: "pending",
@@ -107,13 +112,14 @@ function relTime(iso?: string): string {
   return `${Math.floor(s / 86400)}d ago`;
 }
 
-type View = "pipeline" | "topology" | "logs" | "metrics" | "grafana" | "agents";
+type View = "pipeline" | "topology" | "logs" | "metrics" | "quotas" | "grafana" | "agents";
 
 const VIEW_OPTIONS = [
   { value: "pipeline" as const, label: "Pipeline", icon: <Workflow className="h-3 w-3" /> },
   { value: "topology" as const, label: "Topology", icon: <Network className="h-3 w-3" /> },
   { value: "logs" as const, label: "Logs", icon: <ScrollText className="h-3 w-3" /> },
   { value: "metrics" as const, label: "Metrics", icon: <LineChart className="h-3 w-3" /> },
+  { value: "quotas" as const, label: "Quotas", icon: <Gauge className="h-3 w-3" /> },
   { value: "grafana" as const, label: "Grafana", icon: <BarChart3 className="h-3 w-3" /> },
   { value: "agents" as const, label: "Agents", icon: <Activity className="h-3 w-3" /> },
 ];
@@ -126,6 +132,9 @@ export function RunDetail() {
 
   const [overview, setOverview] = useState<OverviewVM | null>(null);
   const [metrics, setMetrics] = useState<MetricVM[]>([]);
+  const [quotaRows, setQuotaRows] = useState<QuotaReservationView[]>([]);
+  const [quotaLoading, setQuotaLoading] = useState(false);
+  const [quotaError, setQuotaError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -194,6 +203,24 @@ export function RunDetail() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const loadQuotas = useCallback(async () => {
+    if (!tenantSlug || !id) return;
+    setQuotaLoading(true);
+    setQuotaError(null);
+    try {
+      const rows = await getQuotaProvider().getRunQuotaUsage(tenantSlug, id);
+      setQuotaRows(rows);
+    } catch (err) {
+      setQuotaError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setQuotaLoading(false);
+    }
+  }, [tenantSlug, id]);
+
+  useEffect(() => {
+    if (view === "quotas") void loadQuotas();
+  }, [loadQuotas, view]);
 
   const run = overview?.run;
   const status = overview?.status;
@@ -313,7 +340,7 @@ export function RunDetail() {
   }, [tenantSlug, id, run?.name, confirm, navigate]);
 
   // Whether the active view manages its own height (fills) vs scrolls.
-  const scrolls = view === "metrics" || view === "agents";
+  const scrolls = view === "metrics" || view === "quotas" || view === "agents";
 
   // Grafana is heavy (each dashboard iframe boots the full Grafana app), so it
   // is mounted only once the user first opens the tab — then kept mounted
@@ -458,7 +485,7 @@ export function RunDetail() {
               value={view}
               onChange={setView}
               options={VIEW_OPTIONS}
-              segmentClassName="w-[88px]"
+              segmentClassName="w-[78px]"
             />
           </div>
           <div className="relative min-h-0 flex-1 overflow-hidden">
@@ -479,6 +506,14 @@ export function RunDetail() {
             {view === "topology" && <TopologyViewer topology={overview?.topology} />}
             {view === "logs" && <LogsPanel tenantSlug={tenantSlug} runId={id} pipeline={overview?.pipeline ?? []} />}
             {view === "metrics" && <MetricsPanel metrics={metrics} />}
+            {view === "quotas" && (
+              <RunQuotaUsagePanel
+                rows={quotaRows}
+                loading={quotaLoading}
+                error={quotaError}
+                onRefresh={() => void loadQuotas()}
+              />
+            )}
             {view === "agents" && (
               <div className="grid gap-3 lg:grid-cols-2">
                 <div className="overflow-hidden border border-border">
@@ -539,6 +574,145 @@ export function RunDetail() {
   );
 }
 
+function RunQuotaUsagePanel({
+  rows,
+  loading,
+  error,
+  onRefresh,
+}: {
+  rows: QuotaReservationView[];
+  loading: boolean;
+  error: string | null;
+  onRefresh: () => void;
+}) {
+  const stats = useMemo(() => {
+    return rows.reduce(
+      (acc, row) => {
+        if (row.status === Quota_ReservationStatus.RESERVED) acc.reserved += 1;
+        if (row.status === Quota_ReservationStatus.ALLOCATED) acc.allocated += 1;
+        if (row.status === Quota_ReservationStatus.RELEASED) acc.released += 1;
+        if (row.status === Quota_ReservationStatus.FAILED) acc.failed += 1;
+        return acc;
+      },
+      { reserved: 0, allocated: 0, released: 0, failed: 0 },
+    );
+  }, [rows]);
+
+  return (
+    <div className="flex h-full min-h-0 flex-col gap-3">
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div className="grid w-full grid-cols-2 gap-2 md:w-auto md:grid-cols-4">
+          <QuotaStat label="Rows" value={String(rows.length)} />
+          <QuotaStat label="Reserved" value={String(stats.reserved)} />
+          <QuotaStat label="Allocated" value={String(stats.allocated)} />
+          <QuotaStat label="Released" value={String(stats.released)} />
+        </div>
+        <Button variant="outline" size="sm" onClick={onRefresh} disabled={loading}>
+          <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
+          Refresh
+        </Button>
+      </div>
+
+      {error && (
+        <div className="border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
+      <div className="min-h-0 flex-1 overflow-hidden border border-border">
+        <div className="h-full overflow-auto">
+          <table className="w-full min-w-[900px] border-collapse text-sm">
+            <thead className="sticky top-0 z-10 bg-muted/90 text-xs uppercase text-muted-foreground backdrop-blur">
+              <tr className="border-b border-border">
+                <Th>Node</Th>
+                <Th>Quota</Th>
+                <Th>Status</Th>
+                <Th className="text-right">Amount</Th>
+                <Th>Created</Th>
+                <Th>Expires</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.id} className="border-b border-border/70 hover:bg-muted/30">
+                  <Td>{row.nodeId || "—"}</Td>
+                  <Td>
+                    <div className="font-mono text-xs">{row.info?.name || "—"}</div>
+                    <div className="mt-0.5 text-[11px] text-muted-foreground">
+                      {row.resourceType || "—"} · {row.resourceId || "—"}
+                    </div>
+                  </Td>
+                  <Td>
+                    <Badge variant={quotaStatusVariant(row.status)}>{quotaStatusLabel(row.status)}</Badge>
+                  </Td>
+                  <Td className="text-right tabular-nums">
+                    {formatQuotaAmount(row.amount)} {row.info?.units}
+                  </Td>
+                  <Td>{formatQuotaTimestamp(row.createdAt)}</Td>
+                  <Td>{formatQuotaTimestamp(row.expiresAt)}</Td>
+                </tr>
+              ))}
+              {!loading && rows.length === 0 && <Empty cols={6} text="No quota usage for this run." />}
+              {loading && rows.length === 0 && <Empty cols={6} text="Loading quota usage..." />}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {stats.failed > 0 && (
+        <div className="border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {stats.failed} quota reservation row{stats.failed > 1 ? "s" : ""} failed.
+        </div>
+      )}
+    </div>
+  );
+}
+
+function QuotaStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="border border-border bg-muted/20 px-3 py-2">
+      <div className="text-[11px] uppercase text-muted-foreground">{label}</div>
+      <div className="mt-1 text-lg font-semibold tabular-nums">{value}</div>
+    </div>
+  );
+}
+
+function quotaStatusVariant(
+  status: Quota_ReservationStatus,
+): "default" | "success" | "destructive" | "warning" | "pending" {
+  switch (status) {
+    case Quota_ReservationStatus.ALLOCATED:
+      return "success";
+    case Quota_ReservationStatus.RESERVED:
+      return "default";
+    case Quota_ReservationStatus.FAILED:
+      return "destructive";
+    case Quota_ReservationStatus.EXPIRED:
+      return "warning";
+    case Quota_ReservationStatus.RELEASED:
+      return "pending";
+    default:
+      return "pending";
+  }
+}
+
+function quotaStatusLabel(status: Quota_ReservationStatus): string {
+  switch (status) {
+    case Quota_ReservationStatus.RESERVED:
+      return "reserved";
+    case Quota_ReservationStatus.ALLOCATED:
+      return "allocated";
+    case Quota_ReservationStatus.RELEASED:
+      return "released";
+    case Quota_ReservationStatus.EXPIRED:
+      return "expired";
+    case Quota_ReservationStatus.FAILED:
+      return "failed";
+    default:
+      return "unknown";
+  }
+}
+
 function Th({ children, className }: { children: ReactNode; className?: string }) {
   return <th className={cn("px-3 py-2 text-left font-medium", className)}>{children}</th>;
 }
@@ -557,4 +731,18 @@ function fmtTime(iso?: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
   return new Intl.DateTimeFormat(undefined, { timeStyle: "medium" }).format(d);
+}
+
+function formatQuotaTimestamp(ts?: Timestamp): string {
+  if (!ts) return "—";
+  const millis = Number(ts.seconds) * 1000 + Math.floor(ts.nanos / 1_000_000);
+  if (!Number.isFinite(millis) || millis <= 0) return "—";
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(new Date(millis));
+}
+
+function formatQuotaAmount(value: bigint): string {
+  return new Intl.NumberFormat().format(Number(value));
 }

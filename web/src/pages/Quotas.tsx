@@ -5,13 +5,7 @@ import type { Timestamp } from "@bufbuild/protobuf/wkt";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SegmentedControl } from "@/components/ui/segmented";
 import { cn } from "@/lib/utils";
 import { useTenantSlug } from "@/lib/router";
 import { getQuotaProvider, type QuotaProviderFilter } from "@/services/quotas";
@@ -22,8 +16,8 @@ import { Quota_ReservationStatus } from "@/lib/proto/cloud/v1/deployment/quota_p
 type ProviderFilter = QuotaProviderFilter;
 
 const PROVIDERS: { value: ProviderFilter; label: string }[] = [
-  { value: "all", label: "All providers" },
-  { value: "yandex", label: "Yandex Cloud" },
+  { value: "all", label: "All" },
+  { value: "yandex", label: "Yandex" },
   { value: "docker", label: "Docker" },
 ];
 
@@ -104,18 +98,12 @@ export function Quotas() {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Select value={provider} onValueChange={(value) => setProvider(value as ProviderFilter)}>
-              <SelectTrigger className="h-9 w-[180px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PROVIDERS.map((item) => (
-                  <SelectItem key={item.value} value={item.value}>
-                    {item.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SegmentedControl
+              value={provider}
+              onChange={setProvider}
+              options={PROVIDERS}
+              segmentClassName="w-[88px]"
+            />
             <Button variant="outline" size="sm" onClick={() => void load(true)} disabled={loading}>
               <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
               Refresh
@@ -137,9 +125,9 @@ export function Quotas() {
         )}
 
         <div className="overflow-hidden border border-border">
-          <div className="overflow-x-auto">
-            <table className="min-w-[1120px] w-full border-collapse text-sm">
-              <thead className="bg-muted/60 text-xs uppercase text-muted-foreground">
+          <div className="h-[420px] overflow-auto">
+            <table className="w-full min-w-[1120px] border-collapse text-sm">
+              <thead className="sticky top-0 z-10 bg-muted/90 text-xs uppercase text-muted-foreground backdrop-blur">
                 <tr className="border-b border-border">
                   <Th>Provider</Th>
                   <Th>Service</Th>
@@ -224,9 +212,9 @@ export function Quotas() {
           )}
 
           <div className="mt-3 overflow-hidden border border-border">
-            <div className="overflow-x-auto">
-              <table className="min-w-[860px] w-full border-collapse text-sm">
-                <thead className="bg-muted/60 text-xs uppercase text-muted-foreground">
+            <div className="h-[280px] overflow-auto">
+              <table className="w-full min-w-[860px] border-collapse text-sm">
+                <thead className="sticky top-0 z-10 bg-muted/90 text-xs uppercase text-muted-foreground backdrop-blur">
                   <tr className="border-b border-border">
                     <Th>Node</Th>
                     <Th>Quota</Th>
@@ -286,11 +274,11 @@ function Stat({ label, value }: { label: string; value: string }) {
 }
 
 function Th({ children, className }: { children: ReactNode; className?: string }) {
-	return <th className={cn("px-3 py-2 text-left font-medium", className)}>{children}</th>;
+  return <th className={cn("px-3 py-2 text-left font-medium", className)}>{children}</th>;
 }
 
 function Td({ children, className }: { children: ReactNode; className?: string }) {
-	return <td className={cn("px-3 py-2 align-middle", className)}>{children}</td>;
+  return <td className={cn("px-3 py-2 align-middle", className)}>{children}</td>;
 }
 
 function finite(value: number): number {

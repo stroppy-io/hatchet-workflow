@@ -1668,6 +1668,33 @@ const KIND_ICON: Record<RenderArtifact_Kind, typeof FileText> = {
   [RenderArtifact_Kind.RUNTIME_VALUE]: Cloud,
 };
 
+type ArtifactCategoryKey = "editable" | "commands" | "generated" | "directories" | "runtime" | "other";
+
+const ARTIFACT_CATEGORIES: {
+  key: ArtifactCategoryKey;
+  title: string;
+  hint: string;
+  icon: typeof FileText;
+}[] = [
+  { key: "editable", title: "Editable configs", hint: "Files that can be overridden before launch.", icon: Pencil },
+  { key: "commands", title: "Commands", hint: "Commands the launcher renders for execution.", icon: Terminal },
+  { key: "generated", title: "Generated files", hint: "Rendered read-only files used by the deployment.", icon: FileText },
+  { key: "directories", title: "Directories", hint: "Directories the deployment expects to create or use.", icon: Box },
+  { key: "runtime", title: "Runtime values", hint: "Values resolved only when the run starts.", icon: Cloud },
+  { key: "other", title: "Other output", hint: "Unclassified generated artifacts.", icon: Tag },
+];
+
+function artifactCategory(a: RenderArtifactVM): ArtifactCategoryKey {
+  if (a.kind === RenderArtifact_Kind.COMMAND) return "commands";
+  if (a.kind === RenderArtifact_Kind.DIRECTORY) return "directories";
+  if (a.kind === RenderArtifact_Kind.RUNTIME_VALUE || a.mutability === RenderArtifact_Mutability.RUNTIME_ONLY) {
+    return "runtime";
+  }
+  if (a.kind === RenderArtifact_Kind.FILE && a.mutability === RenderArtifact_Mutability.EDITABLE) return "editable";
+  if (a.kind === RenderArtifact_Kind.FILE) return "generated";
+  return "other";
+}
+
 function StepReview({
   draft,
   slug,
@@ -1739,36 +1766,53 @@ function StepReview({
     }
   }, [slug, draft.id, start, saveAsPreset, presetName, inTenantRating, inGlobalRating, onDone]);
 
-  // Group artifacts by render component (RenderPreview.components order).
-  const byComponent = useMemo(() => {
-    const map = new Map<string, RenderArtifactVM[]>();
-    for (const a of draft.artifacts) {
-      const list = map.get(a.componentId) ?? [];
-      list.push(a);
-      map.set(a.componentId, list);
-    }
-    return map;
-  }, [draft.artifacts]);
+  const componentOrder = useMemo(() => {
+    const ids = new Set<string>();
+    for (const c of draft.renderComponents) ids.add(c.componentId);
+    for (const a of draft.artifacts) ids.add(a.componentId);
+    return [...ids];
+  }, [draft.artifacts, draft.renderComponents]);
 
-  const order = draft.renderComponents.length
-    ? draft.renderComponents.map((c) => c.componentId)
-    : [...byComponent.keys()];
+  const artifactCategories = useMemo(() => {
+    const buckets = new Map<ArtifactCategoryKey, Map<string, RenderArtifactVM[]>>();
+    for (const a of draft.artifacts) {
+      const key = artifactCategory(a);
+      const byComponent = buckets.get(key) ?? new Map<string, RenderArtifactVM[]>();
+      const list = byComponent.get(a.componentId) ?? [];
+      list.push(a);
+      byComponent.set(a.componentId, list);
+      buckets.set(key, byComponent);
+    }
+    return ARTIFACT_CATEGORIES.map((cat) => {
+      const byComponent = buckets.get(cat.key);
+      const components = componentOrder
+        .map((componentId) => ({ componentId, list: byComponent?.get(componentId) ?? [] }))
+        .filter((group) => group.list.length > 0);
+      const count = components.reduce((acc, group) => acc + group.list.length, 0);
+      return { ...cat, count, components };
+    }).filter((cat) => cat.count > 0);
+  }, [componentOrder, draft.artifacts]);
+
   const overrideCount = draft.artifacts.filter((a) => a.origin === RenderArtifact_Origin.USER_OVERRIDE).length;
   const [showArtifacts, setShowArtifacts] = useState(overrideCount > 0);
   useEffect(() => {
     if (overrideCount > 0) setShowArtifacts(true);
   }, [overrideCount]);
 
+  const machineGroups = useMemo(() => groupReviewMachines(draft.infrastructurePlan.machines), [draft.infrastructurePlan.machines]);
+  const workloadLimit = workloadExecutionLabel(draft.workload);
+  const packageLabel = draft.database?.installPackage?.name || draft.database?.packageId || "—";
+
   return (
     <div className="mx-auto flex h-full w-full max-w-[120rem] flex-col">
-      <SectionTitle hint="Review the selected provider, database, workload and launch options. Generated files are available under Advanced for troubleshooting or manual overrides.">
+      <SectionTitle hint="Review the selected provider, database, workload and launch options. Generated output is grouped below for troubleshooting or manual overrides.">
         Review
       </SectionTitle>
 
       <div className="min-h-0 flex-1 overflow-y-auto pr-1">
       {/* Summary cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <ReviewCard title="Provider" value={Provider[draft.provider].replace("UNSPECIFIED", "—").toLowerCase()} />
+        <ReviewCard title="Provider" value={providerDisplay(draft.provider)} />
         <ReviewCard title="Database" value={draft.database ? `${ENGINES.find((e) => e.kind === draft.database!.kind)?.label} ${draft.database.version}` : "—"} />
         <ReviewCard title="Workload" value={draft.workload?.script ?? "—"} />
         <ReviewCard
@@ -1785,7 +1829,62 @@ function StepReview({
         <ReviewCard title="Overrides" value={overrideCount ? `${overrideCount} edited` : "none"} />
       </div>
 
-      {/* Render artifacts, grouped by component */}
+      <div className="mt-4 grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(24rem,0.7fr)]">
+        <div className="border border-zinc-800 bg-surface-tile p-3">
+          <div className="mb-3 flex items-center gap-2">
+            <Rocket className="h-4 w-4 text-zinc-400" />
+            <div>
+              <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">Will execute</div>
+              <div className="mt-0.5 text-[11px] text-zinc-500">{draft.ready ? "Ready to launch" : "Waiting for valid test input"}</div>
+            </div>
+          </div>
+          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+            <PlanFact label="Provider" value={providerDisplay(draft.provider)} />
+            <PlanFact label="Topology" value={`${draft.topologyNodes.length} node${draft.topologyNodes.length === 1 ? "" : "s"}`} />
+            <PlanFact label="Workload run" value={workloadLimit} />
+            <PlanFact label="Script" value={draft.workload?.script || "—"} />
+            <PlanFact label="Protocol" value={protocolDisplay(draft.workload)} />
+            <PlanFact label="Stroppy" value={draft.workload?.stroppyVersion || "—"} />
+          </div>
+          <div className="mt-3 grid gap-2 lg:grid-cols-2">
+            {machineGroups.length > 0 ? (
+              machineGroups.map((group) => (
+                <div key={group.key} className="border border-zinc-800/80 bg-black/10 px-3 py-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0 truncate text-sm text-zinc-300">{group.label}</div>
+                    <span className="shrink-0 font-mono text-[10px] text-zinc-600">x{group.count}</span>
+                  </div>
+                  <div className="mt-1 truncate font-mono text-[11px] text-zinc-500">{group.spec}</div>
+                </div>
+              ))
+            ) : (
+              <div className="border border-dashed border-zinc-800 px-3 py-4 text-center text-xs text-zinc-600 lg:col-span-2">
+                No machine plan yet.
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="border border-zinc-800 bg-surface-tile p-3">
+          <div className="mb-3 flex items-center gap-2">
+            <GitCommit className="h-4 w-4 text-zinc-400" />
+            <div>
+              <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">Test definition</div>
+              <div className="mt-0.5 text-[11px] text-zinc-500">Database, package and workload selected for this run.</div>
+            </div>
+          </div>
+          <div className="grid gap-2">
+            <PlanFact label="Database" value={databaseDisplay(draft.database)} />
+            <PlanFact label="Package" value={packageLabel} />
+            <PlanFact label="Scale factor" value={draft.workload ? String(draft.workload.parameters.scaleFactor) : "—"} />
+            <PlanFact label="Pool size" value={draft.workload ? String(draft.workload.parameters.poolSize) : "—"} />
+            <PlanFact label="Steps" value={workloadStepsLabel(draft.workload)} />
+            <PlanFact label="Files" value={draft.workload ? String(draft.workload.files.length) : "—"} />
+          </div>
+        </div>
+      </div>
+
+      {/* Render artifacts, categorized by type and grouped by component inside each category. */}
       {draft.artifacts.length > 0 && (
         <div className="mt-6">
           <button
@@ -1794,32 +1893,47 @@ function StepReview({
             className="flex w-full items-center justify-between gap-3 border border-zinc-800 bg-surface-tile px-3 py-2 text-left transition-colors hover:bg-zinc-900/40"
           >
             <div className="min-w-0">
-              <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">Advanced generated files</div>
+              <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">Advanced generated output</div>
               <div className="mt-0.5 text-[11px] text-zinc-500">
-                Inspect rendered configs and commands, or override editable files.
+                {draft.artifacts.length} artifact{draft.artifacts.length === 1 ? "" : "s"} in {artifactCategories.length} categor{artifactCategories.length === 1 ? "y" : "ies"}.
               </div>
             </div>
             <ChevronRight className={`h-3.5 w-3.5 shrink-0 text-zinc-600 transition-transform ${showArtifacts ? "rotate-90" : ""}`} />
           </button>
           {showArtifacts && (
-            <div className="mt-3 grid gap-4 xl:grid-cols-2 xl:items-start">
-              {order.map((compId) => {
-                const list = byComponent.get(compId);
-                if (!list || list.length === 0) return null;
+            <div className="mt-3 space-y-4">
+              {artifactCategories.map((category) => {
+                const CategoryIcon = category.icon;
                 return (
-                  <div key={compId} className="min-w-0">
-                    <div className="mb-1.5 flex items-center gap-2">
-                      {(() => {
-                        const comp = draft.topologyComponents.find((c) => c.id === compId);
-                        const Icon = comp ? COMP_ICON[comp.kind] ?? Box : Box;
-                        return <Icon className="h-3.5 w-3.5 text-zinc-500" />;
-                      })()}
-                      <span className="min-w-0 truncate font-mono text-[12px] text-zinc-400">{compId}</span>
+                  <div key={category.key} className="border border-zinc-800/80 bg-black/10 p-3">
+                    <div className="mb-3 flex items-start justify-between gap-3">
+                      <div className="flex min-w-0 items-start gap-2">
+                        <CategoryIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-zinc-500" />
+                        <div className="min-w-0">
+                          <div className="font-mono text-[12px] uppercase tracking-wider text-zinc-400">{category.title}</div>
+                          <div className="mt-0.5 text-[11px] text-zinc-600">{category.hint}</div>
+                        </div>
+                      </div>
+                      <span className="shrink-0 bg-zinc-900 px-1.5 py-0.5 font-mono text-[10px] text-zinc-500">{category.count}</span>
                     </div>
-                    <div className="space-y-2">
-                      {list.map((a) => (
-                        <ArtifactRow key={a.id} a={a} onSave={(c) => saveOverride(a, c)} onReset={() => resetOverride(a)} />
-                      ))}
+                    <div className="grid gap-4 xl:grid-cols-2 xl:items-start">
+                      {category.components.map(({ componentId, list }) => {
+                        const comp = draft.topologyComponents.find((c) => c.id === componentId);
+                        const Icon = comp ? COMP_ICON[comp.kind] ?? Box : Box;
+                        return (
+                          <div key={`${category.key}:${componentId}`} className="min-w-0">
+                            <div className="mb-1.5 flex items-center gap-2">
+                              <Icon className="h-3.5 w-3.5 shrink-0 text-zinc-500" />
+                              <span className="min-w-0 truncate font-mono text-[12px] text-zinc-400">{componentDisplay(comp, componentId)}</span>
+                            </div>
+                            <div className="space-y-2">
+                              {list.map((a) => (
+                                <ArtifactRow key={a.id} a={a} onSave={(c) => saveOverride(a, c)} onReset={() => resetOverride(a)} />
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 );
@@ -1966,6 +2080,71 @@ const MUTABILITY_LABEL: Record<RenderArtifact_Mutability, string> = {
   [RenderArtifact_Mutability.EDITABLE]: "editable",
   [RenderArtifact_Mutability.RUNTIME_ONLY]: "runtime",
 };
+
+function PlanFact({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0 border border-zinc-800/80 bg-black/10 px-3 py-2">
+      <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">{label}</div>
+      <div className="mt-1 min-w-0 truncate text-sm text-zinc-300" title={value}>{value}</div>
+    </div>
+  );
+}
+
+function providerDisplay(provider: Provider): string {
+  return (Provider[provider] ?? "UNSPECIFIED").replace("UNSPECIFIED", "—").replace("PROVIDER_", "").toLowerCase();
+}
+
+function databaseDisplay(db?: DatabaseVM): string {
+  if (!db) return "—";
+  const label = ENGINES.find((e) => e.kind === db.kind)?.label ?? db.kind;
+  return [label, db.version].filter(Boolean).join(" ");
+}
+
+function protocolDisplay(workload?: WorkloadVM): string {
+  if (!workload) return "—";
+  return (Workload_Protocol[workload.protocol] ?? "PROTOCOL_UNSPECIFIED").replace("PROTOCOL_", "").toLowerCase();
+}
+
+function workloadExecutionLabel(workload?: WorkloadVM): string {
+  if (!workload) return "—";
+  const limit =
+    workload.execution.limit.case === "duration"
+      ? workload.execution.limit.duration
+      : `${workload.execution.limit.iterations} iterations`;
+  return `${workload.execution.vus} VU · ${limit}`;
+}
+
+function workloadStepsLabel(workload?: WorkloadVM): string {
+  if (!workload) return "—";
+  if (workload.parameters.steps.length > 0) return workload.parameters.steps.join(", ");
+  if (workload.parameters.noSteps.length > 0) return `all except ${workload.parameters.noSteps.join(", ")}`;
+  return "all";
+}
+
+function componentDisplay(
+  comp: WizardDraftVM["topologyComponents"][number] | undefined,
+  fallback: string,
+): string {
+  if (!comp) return fallback;
+  const label = [comp.engine, comp.role || comp.kind].filter(Boolean).join(" ");
+  return label ? `${label} · ${fallback}` : fallback;
+}
+
+function groupReviewMachines(machines: InfrastructurePlanVM["machines"]) {
+  const groups = new Map<string, { key: string; label: string; spec: string; count: number }>();
+  for (const machine of machines) {
+    const spec = machineSpecSummary(machine.spec);
+    const label = [machine.engine, machine.role].filter(Boolean).join(" ") || machine.nodeId || "machine";
+    const key = `${label}:${spec}`;
+    const current = groups.get(key);
+    if (current) {
+      current.count += 1;
+    } else {
+      groups.set(key, { key, label, spec, count: 1 });
+    }
+  }
+  return [...groups.values()].sort((a, b) => a.label.localeCompare(b.label));
+}
 
 function ReviewCard({ title, value }: { title: string; value: string }) {
   return (
