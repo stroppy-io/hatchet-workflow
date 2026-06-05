@@ -203,12 +203,19 @@ export function NewRun() {
   const [loading, setLoading] = useState(false);
   const [patching, setPatching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const patchQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const pendingPatchCountRef = useRef(0);
+  const activeDraftIdRef = useRef(draftId);
 
   // Resume picker (List/Get/Delete) shown when no draft is active.
   const [resume, setResume] = useState<DraftSummaryVM[]>([]);
   const [startName, setStartName] = useState("");
 
   useBreadcrumbLabel("draft", draft ? draft.name || "New Run" : undefined);
+
+  useEffect(() => {
+    activeDraftIdRef.current = draftId;
+  }, [draftId]);
 
   useEffect(() => {
     if (draftId || !slug) return;
@@ -279,18 +286,31 @@ export function NewRun() {
   }, [slug, startName, setActiveDraft]);
 
   const patch = useCallback(
-    async (input: Parameters<ReturnType<typeof getWizardProvider>["patch"]>[2]) => {
-      if (!slug || !draftId) return;
+    (input: Parameters<ReturnType<typeof getWizardProvider>["patch"]>[2]) => {
+      if (!slug || !draftId) return Promise.resolve();
+      const requestSlug = slug;
+      const requestDraftId = draftId;
+      pendingPatchCountRef.current += 1;
       setPatching(true);
       setError(null);
-      try {
-        const d = await getWizardProvider().patch(slug, draftId, input);
-        setDraft(d);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : String(e));
-      } finally {
-        setPatching(false);
-      }
+
+      const run = async () => {
+        try {
+          const d = await getWizardProvider().patch(requestSlug, requestDraftId, input);
+          if (activeDraftIdRef.current === requestDraftId) setDraft(d);
+        } catch (e) {
+          if (activeDraftIdRef.current === requestDraftId) {
+            setError(e instanceof Error ? e.message : String(e));
+          }
+        } finally {
+          pendingPatchCountRef.current = Math.max(0, pendingPatchCountRef.current - 1);
+          if (pendingPatchCountRef.current === 0) setPatching(false);
+        }
+      };
+
+      const queued = patchQueueRef.current.then(run, run);
+      patchQueueRef.current = queued.catch(() => undefined);
+      return queued;
     },
     [slug, draftId],
   );

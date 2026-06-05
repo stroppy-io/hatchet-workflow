@@ -86,11 +86,18 @@ export function SuiteWizard() {
   const [loading, setLoading] = useState(false);
   const [patching, setPatching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const patchQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const pendingPatchCountRef = useRef(0);
+  const activeDraftIdRef = useRef(draftId);
 
   const [resume, setResume] = useState<SuiteDraftSummaryVM[]>([]);
   const [startName, setStartName] = useState("");
 
   useBreadcrumbLabel("draft", draft ? draft.name || "New Suite" : undefined);
+
+  useEffect(() => {
+    activeDraftIdRef.current = draftId;
+  }, [draftId]);
 
   // Resume list (List) — shown on the start screen.
   useEffect(() => {
@@ -152,18 +159,31 @@ export function SuiteWizard() {
   }, [slug, startName, setActiveDraft]);
 
   const patch = useCallback(
-    async (input: SuitePatchInput) => {
-      if (!slug || !draftId) return;
+    (input: SuitePatchInput) => {
+      if (!slug || !draftId) return Promise.resolve();
+      const requestSlug = slug;
+      const requestDraftId = draftId;
+      pendingPatchCountRef.current += 1;
       setPatching(true);
       setError(null);
-      try {
-        const d = await getSuiteWizardProvider().patch(slug, draftId, input);
-        setDraft(d);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : String(e));
-      } finally {
-        setPatching(false);
-      }
+
+      const run = async () => {
+        try {
+          const d = await getSuiteWizardProvider().patch(requestSlug, requestDraftId, input);
+          if (activeDraftIdRef.current === requestDraftId) setDraft(d);
+        } catch (e) {
+          if (activeDraftIdRef.current === requestDraftId) {
+            setError(e instanceof Error ? e.message : String(e));
+          }
+        } finally {
+          pendingPatchCountRef.current = Math.max(0, pendingPatchCountRef.current - 1);
+          if (pendingPatchCountRef.current === 0) setPatching(false);
+        }
+      };
+
+      const queued = patchQueueRef.current.then(run, run);
+      patchQueueRef.current = queued.catch(() => undefined);
+      return queued;
     },
     [slug, draftId],
   );
