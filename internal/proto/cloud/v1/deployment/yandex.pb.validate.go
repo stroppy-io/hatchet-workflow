@@ -1301,30 +1301,38 @@ func (m *Yandex_Vm) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if utf8.RuneCountInString(m.GetInternalIp()) < 1 {
-		err := Yandex_VmValidationError{
-			field:  "InternalIp",
-			reason: "value length must be at least 1 runes",
+	if m.GetInternalIp() != "" {
+
+		if utf8.RuneCountInString(m.GetInternalIp()) < 1 {
+			err := Yandex_VmValidationError{
+				field:  "InternalIp",
+				reason: "value length must be at least 1 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
 		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
+
 	}
 
 	// no validation rules for PublicIp
 
 	// no validation rules for UserData
 
-	if _, ok := _Yandex_Vm_NetworkAcceleration_InLookup[m.GetNetworkAcceleration()]; !ok {
-		err := Yandex_VmValidationError{
-			field:  "NetworkAcceleration",
-			reason: "value must be in list [standard software_accelerated]",
+	if m.GetNetworkAcceleration() != "" {
+
+		if _, ok := _Yandex_Vm_NetworkAcceleration_InLookup[m.GetNetworkAcceleration()]; !ok {
+			err := Yandex_VmValidationError{
+				field:  "NetworkAcceleration",
+				reason: "value must be in list [standard software_accelerated]",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
 		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
+
 	}
 
 	if len(m.GetSecondaryDisks()) > 64 {

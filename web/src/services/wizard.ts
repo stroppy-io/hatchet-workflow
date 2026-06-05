@@ -355,6 +355,7 @@ export interface YandexSettingsVM {
   platformId: number;
   imageId: string;
   assignPublicIp: boolean;
+  softwareAcceleratedNetwork: boolean;
   sshUser: string;
 }
 
@@ -383,12 +384,13 @@ export interface YandexVmVM {
   bootDiskGb: number;
   /** Yandex.Vm.boot_disk_type (e.g. network-ssd, network-ssd-io-m3). */
   bootDiskType: string;
-  /** Yandex.Vm.zone (per-VM override of the settings zone). */
+  /** Runtime echo only. Placement comes from tenant/provider settings. */
   zone: string;
-  /** Yandex.Vm.internal_ip. "auto" lets the provider allocate from subnet. */
+  /** Runtime echo only. Machine overrides always serialize this as "auto". */
   internalIp: string;
+  /** Runtime echo only. Public IP comes from tenant/provider settings. */
   publicIp: boolean;
-  /** Yandex.Vm.network_acceleration. */
+  /** Runtime echo only. Acceleration comes from tenant/provider settings. */
   networkAcceleration: YandexNetworkAcceleration;
 }
 
@@ -558,6 +560,8 @@ export interface PatchInput {
    * Set by the Infrastructure step → PatchTestWizard.machine_overrides.
    */
   machineOverrides?: InfrastructurePlanVM["machines"];
+  /** Provider-level values that own Yandex placement/network toggles. */
+  machineOverrideSettings?: ProviderSettingsVM;
   /**
    * The full deployment.RenderOverrideSet (FileOverride list) — set by the
    * Review step when a config is edited → PatchTestWizard.render_overrides.
@@ -713,6 +717,7 @@ type DraftJson = {
         platformId?: number;
         imageId?: string;
         assignPublicIp?: boolean;
+        softwareAcceleratedNetwork?: boolean;
         sshUser?: string;
       };
     };
@@ -809,6 +814,7 @@ function draftToVM(draft: TestWizardDraftRecord | undefined): WizardDraftVM {
         platformId: y.platformId ?? Yandex_Settings_PlatformId.UNSPECIFIED,
         imageId: y.imageId ?? "",
         assignPublicIp: y.assignPublicIp ?? false,
+        softwareAcceleratedNetwork: y.softwareAcceleratedNetwork ?? false,
         sshUser: y.sshUser ?? "",
       },
     };
@@ -931,10 +937,17 @@ function draftToSummaryVM(draft: TestWizardDraftRecord): DraftSummaryVM {
   };
 }
 
+function yandexNetworkAccelerationFromSettings(settings: ProviderSettingsVM | undefined): YandexNetworkAcceleration {
+  return settings?.case === "yandex" && settings.yandex.softwareAcceleratedNetwork
+    ? "software_accelerated"
+    : "standard";
+}
+
 // Build one deployment.MachinePlan from an edited MachineVM.
-export function machineVMToProto(m: MachineVM) {
+export function machineVMToProto(m: MachineVM, settings?: ProviderSettingsVM) {
   if (m.spec.case === "yandex") {
     const diskType = normalizeYandexBootDiskType(m.spec.yandex.bootDiskType);
+    const yandexSettings = settings?.case === "yandex" ? settings.yandex : undefined;
     return create(MachinePlanSchema, {
       nodeId: m.nodeId,
       providerParams: {
@@ -944,10 +957,10 @@ export function machineVMToProto(m: MachineVM) {
           memoryGb: BigInt(Math.max(1, Math.trunc(m.spec.yandex.memoryGb))),
           bootDiskGb: BigInt(normalizeYandexDiskGb(diskType, m.spec.yandex.bootDiskGb)),
           bootDiskType: diskType,
-          zone: m.spec.yandex.zone,
-          internalIp: normalizeYandexInternalIp(m.spec.yandex.internalIp),
-          publicIp: m.spec.yandex.publicIp,
-          networkAcceleration: normalizeYandexNetworkAcceleration(m.spec.yandex.networkAcceleration),
+          zone: "",
+          internalIp: "auto",
+          publicIp: yandexSettings?.assignPublicIp ?? false,
+          networkAcceleration: yandexNetworkAccelerationFromSettings(settings),
         }),
       },
     });
@@ -986,6 +999,7 @@ function infraPlanVMToProto(vm: InfrastructurePlanVM) {
               platformId: vm.settings.yandex.platformId,
               imageId: vm.settings.yandex.imageId,
               assignPublicIp: vm.settings.yandex.assignPublicIp,
+              softwareAcceleratedNetwork: vm.settings.yandex.softwareAcceleratedNetwork,
               sshUser: vm.settings.yandex.sshUser,
             },
           },
@@ -997,7 +1011,7 @@ function infraPlanVMToProto(vm: InfrastructurePlanVM) {
   return create(InfrastructurePlanSchema, {
     provider: vm.provider,
     settings,
-    machines: vm.machines.map(machineVMToProto),
+    machines: vm.machines.map((machine) => machineVMToProto(machine, vm.settings)),
   });
 }
 
@@ -1038,7 +1052,9 @@ const realWizardProvider: WizardProvider = {
       infrastructurePlan: input.infrastructurePlan
         ? infraPlanVMToProto(input.infrastructurePlan)
         : undefined,
-      machineOverrides: input.machineOverrides?.map(machineVMToProto),
+      machineOverrides: input.machineOverrides?.map((machine) =>
+        machineVMToProto(machine, input.machineOverrideSettings),
+      ),
       renderOverrides: input.renderOverrides
         ? create(RenderOverrideSetSchema, {
             files: input.renderOverrides.map((o) =>
@@ -1410,6 +1426,7 @@ export function defaultYandexSettings(): YandexSettingsVM {
     platformId: Yandex_Settings_PlatformId.STANDARD_V3,
     imageId: "",
     assignPublicIp: true,
+    softwareAcceleratedNetwork: false,
     sshUser: "stroppy",
   };
 }

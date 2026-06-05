@@ -254,15 +254,15 @@ message Yandex {
         string boot_disk_type = 4 [(validate.rules).string = {in: ["network-ssd", "network-hdd", "network-ssd-nonreplicated", "network-ssd-io-m3"]}];
         /* zone overrides Network.zone. Empty means use default zone. Closed set when set: see Enums.Zone. */
         string zone = 5 [(validate.rules).string = {in: ["", "ru-central1-a", "ru-central1-b", "ru-central1-c", "ru-central1-d"]}];
-        /* internal_ip is VM private address in selected subnet. */
-        string internal_ip = 6 [(validate.rules).string.min_len = 1];
+        /* internal_ip is VM private address in selected subnet. Empty means provider default/auto. */
+        string internal_ip = 6 [(validate.rules).string = {ignore_empty: true, min_len: 1}];
         /* public_ip requests NAT public address. */
         bool public_ip = 7;
         /* user_data is cloud-init user-data. */
         string user_data = 8;
         /* network_acceleration selects Compute network acceleration mode.
            Closed set: "standard" | "software_accelerated". See Enums.NetworkAcceleration. */
-        string network_acceleration = 9 [(validate.rules).string = {in: ["standard", "software_accelerated"]}];
+        string network_acceleration = 9 [(validate.rules).string = {ignore_empty: true, in: ["standard", "software_accelerated"]}];
         /* secondary_disks contains raw attached disks. */
         repeated Disk secondary_disks = 10 [(validate.rules).repeated.max_items = 64];
     }

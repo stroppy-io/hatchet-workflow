@@ -576,7 +576,11 @@ function StepInfra({
   patch,
 }: {
   draft: WizardDraftVM;
-  patch: (input: { provider?: Provider; machineOverrides?: InfrastructurePlanVM["machines"] }) => Promise<void>;
+  patch: (input: {
+    provider?: Provider;
+    machineOverrides?: InfrastructurePlanVM["machines"];
+    machineOverrideSettings?: InfrastructurePlanVM["settings"];
+  }) => Promise<void>;
 }) {
   // Local editable copy of the server-returned infrastructure plan.
   const [plan, setPlan] = useState<InfrastructurePlanVM>(draft.infrastructurePlan);
@@ -604,7 +608,7 @@ function StepInfra({
       machines: plan.machines.map((m) => (m.nodeId === nodeId ? { ...m, spec } : m)),
     };
     setPlan(next);
-    void patch({ machineOverrides: next.machines });
+    void patch({ machineOverrides: next.machines, machineOverrideSettings: next.settings });
   };
 
   const setMachines = (updates: { nodeId: string; spec: MachineSpecVM }[]) => {
@@ -618,7 +622,7 @@ function StepInfra({
       }),
     };
     setPlan(next);
-    void patch({ machineOverrides: next.machines });
+    void patch({ machineOverrides: next.machines, machineOverrideSettings: next.settings });
   };
 
   const pickProvider = (p: Provider) => {
@@ -629,7 +633,7 @@ function StepInfra({
 
   const confirmPlan = () => {
     if (plan.machines.length === 0) return;
-    void patch({ machineOverrides: plan.machines });
+    void patch({ machineOverrides: plan.machines, machineOverrideSettings: plan.settings });
   };
 
   const provErrs = errorsFor(draft.errors, "provider")

@@ -282,8 +282,10 @@ func applyYandexOverride(machine, override *deployment.MachinePlan) {
 	machine.QuotaRequests = yandexQuotaRequests(merged)
 }
 
-// mergeYandexVM overlays user-editable VM fields from src onto base, keeping
-// base's generated defaults for any field src leaves at its zero value.
+// mergeYandexVM overlays user-editable VM sizing/storage fields from src onto
+// base. Placement/networking fields are provider-owned: zone and public IP come
+// from tenant/provider settings, internal IP is auto, and acceleration is
+// derived from provider settings at render time.
 func mergeYandexVM(base, src *deployment.Yandex_Vm) {
 	if v := src.GetCores(); v != 0 {
 		base.Cores = v
@@ -297,24 +299,12 @@ func mergeYandexVM(base, src *deployment.Yandex_Vm) {
 	if v := src.GetBootDiskType(); v != "" {
 		base.BootDiskType = v
 	}
-	if v := src.GetZone(); v != "" {
-		base.Zone = v
-	}
-	if v := src.GetInternalIp(); v != "" {
-		base.InternalIp = v
-	}
-	if v := src.GetNetworkAcceleration(); v != "" {
-		base.NetworkAcceleration = v
-	}
 	if v := src.GetUserData(); v != "" {
 		base.UserData = v
 	}
 	if disks := src.GetSecondaryDisks(); len(disks) > 0 {
 		base.SecondaryDisks = disks
 	}
-	// PublicIp is a toggle with no "unset"; the generated default is false, so
-	// taking the override's value never regresses and honors explicit intent.
-	base.PublicIp = src.GetPublicIp()
 }
 
 func machineSizingForProvider(provider deployment.Provider, machine *deployment.MachinePlan) (MachineSizing, bool) {
@@ -433,8 +423,8 @@ func dockerContainer(node *topologypb.Node, sizing MachineSizing, options Docker
 		Labels: mergeLabels(node.GetLabels(), map[string]string{
 			"stroppy.cloud/node_id": node.GetId(),
 		}),
-		Privileged:    true,
-		CgroupnsMode:  cgroupnsMode,
+		Privileged:   true,
+		CgroupnsMode: cgroupnsMode,
 		// The agent image declares VOLUME /sys/fs/cgroup; without an explicit
 		// bind, Docker shadows it with an empty anonymous volume and systemd
 		// (PID 1, /sbin/init) fails to boot -> container exits 255 immediately.

@@ -17,11 +17,8 @@ import {
   diskStepsForType,
   normalizeYandexBootDiskType,
   normalizeYandexDiskGb,
-  normalizeYandexInternalIp,
-  normalizeYandexNetworkAcceleration,
   platformLimits,
   ramGbSteps,
-  YANDEX_NETWORK_ACCELERATIONS,
   YC_PLATFORMS,
 } from "@/lib/machine-constraints";
 import {
@@ -322,8 +319,8 @@ function YandexMachineControls({
     ...spec.yandex,
     bootDiskType: normalizeYandexBootDiskType(spec.yandex.bootDiskType),
     bootDiskGb: normalizeYandexDiskGb(spec.yandex.bootDiskType, spec.yandex.bootDiskGb),
-    internalIp: normalizeYandexInternalIp(spec.yandex.internalIp),
-    networkAcceleration: normalizeYandexNetworkAcceleration(spec.yandex.networkAcceleration),
+    zone: "",
+    internalIp: "auto",
   };
   const cpuSteps = cpuStepsForPlatform(platformKey);
   const memorySteps = ramGbSteps(y.cores || cpuSteps[0], limits.maxRamMb);
@@ -372,62 +369,6 @@ function YandexMachineControls({
         />
       </div>
 
-      <div className={compact ? "grid grid-cols-1 gap-2" : "grid grid-cols-1 gap-2 md:grid-cols-3"}>
-        <div>
-          <Label className="text-[9px] font-mono text-zinc-600">zone override</Label>
-          <Input
-            className="mt-1 h-7 font-mono text-[10px]"
-            value={y.zone}
-            onChange={(e) => update({ ...y, zone: e.target.value })}
-            placeholder="empty = provider zone"
-          />
-        </div>
-        <div>
-          <Label className="text-[9px] font-mono text-zinc-600">internal IP</Label>
-          <Input
-            className="mt-1 h-7 font-mono text-[10px]"
-            value={y.internalIp}
-            onChange={(e) => update({ ...y, internalIp: e.target.value || "auto" })}
-            onBlur={(e) => update({ ...y, internalIp: normalizeYandexInternalIp(e.target.value) })}
-            placeholder="auto"
-          />
-        </div>
-        <div className="flex items-end gap-2">
-          <button
-            type="button"
-            onClick={() => update({ ...y, publicIp: !y.publicIp })}
-            className={`h-7 flex-1 border px-2 font-mono text-[10px] transition-colors ${
-              y.publicIp
-                ? "border-primary/40 bg-primary/[0.08] text-primary"
-                : "border-zinc-800 text-zinc-500 hover:border-zinc-700"
-            }`}
-          >
-            public IP {y.publicIp ? "on" : "off"}
-          </button>
-        </div>
-      </div>
-
-      <div>
-        <Label className="text-[9px] font-mono text-zinc-600">network acceleration</Label>
-        <div className="mt-1 grid gap-1.5 sm:grid-cols-2">
-          {YANDEX_NETWORK_ACCELERATIONS.map((item) => {
-            const active = y.networkAcceleration === item.value;
-            return (
-              <button
-                key={item.value}
-                type="button"
-                onClick={() => update({ ...y, networkAcceleration: item.value })}
-                className={`border px-2 py-1.5 text-left transition-colors ${
-                  active ? "border-primary/40 bg-primary/[0.06]" : "border-zinc-800 hover:border-zinc-700"
-                }`}
-              >
-                <div className={`font-mono text-[10px] ${active ? "text-primary" : "text-zinc-400"}`}>{item.label}</div>
-                <div className="text-[9px] text-zinc-600">{item.hint}</div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
     </div>
   );
 }

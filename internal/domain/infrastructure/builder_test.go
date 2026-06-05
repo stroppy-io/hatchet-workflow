@@ -77,6 +77,18 @@ func TestBuildPlanYandex(t *testing.T) {
 	}
 }
 
+func TestYandexMachineOverrideValidationAllowsProviderOwnedFieldsEmpty(t *testing.T) {
+	vm := &deployment.Yandex_Vm{
+		Cores:        2,
+		MemoryGb:     4,
+		BootDiskGb:   50,
+		BootDiskType: "network-ssd",
+	}
+	if err := vm.Validate(); err != nil {
+		t.Fatalf("validate sizing-only yandex vm override: %v", err)
+	}
+}
+
 func TestBuildPlanAppliesDockerMachineOverride(t *testing.T) {
 	spec := postgresSpec(t)
 	nodeID := spec.GetNodes()[0].GetId()
@@ -165,6 +177,12 @@ func TestBuildPlanAppliesYandexMachineOverride(t *testing.T) {
 
 	plan, err := BuildPlan(spec, deployment.Provider_PROVIDER_YANDEX, BuildOptions{
 		DefaultSizing: MachineSizing{CPUCores: 1, MemoryMB: 1024, DiskGB: 20},
+		Yandex: YandexOptions{
+			Zone:                "ru-central1-a",
+			InternalIP:          "auto",
+			PublicIP:            true,
+			NetworkAcceleration: "software_accelerated",
+		},
 		MachineOverrides: []*deployment.MachinePlan{
 			{
 				NodeId: nodeID,
@@ -174,8 +192,8 @@ func TestBuildPlanAppliesYandexMachineOverride(t *testing.T) {
 					BootDiskGb:          200,
 					BootDiskType:        "network-hdd",
 					Zone:                "ru-central1-b",
-					InternalIp:          "auto",
-					PublicIp:            true,
+					InternalIp:          "10.0.0.42",
+					PublicIp:            false,
 					NetworkAcceleration: "standard",
 				}},
 			},
@@ -202,11 +220,17 @@ func TestBuildPlanAppliesYandexMachineOverride(t *testing.T) {
 	if got, want := vm.GetBootDiskType(), "network-hdd"; got != want {
 		t.Fatalf("yandex boot disk type = %q, want %q", got, want)
 	}
-	if got, want := vm.GetZone(), "ru-central1-b"; got != want {
-		t.Fatalf("yandex zone = %q, want %q", got, want)
+	if got, want := vm.GetZone(), "ru-central1-a"; got != want {
+		t.Fatalf("yandex zone = %q, want provider-owned %q", got, want)
+	}
+	if got, want := vm.GetInternalIp(), "auto"; got != want {
+		t.Fatalf("yandex internal ip = %q, want provider-owned %q", got, want)
 	}
 	if !vm.GetPublicIp() {
-		t.Fatal("yandex public ip override was not applied")
+		t.Fatal("yandex public ip should stay provider-owned")
+	}
+	if got, want := vm.GetNetworkAcceleration(), "software_accelerated"; got != want {
+		t.Fatalf("yandex network acceleration = %q, want provider-owned %q", got, want)
 	}
 	if got, want := quotaRequestValue(machine, "compute.hddDisks.size"), uint64(200); got != want {
 		t.Fatalf("yandex disk quota = %d, want %d", got, want)

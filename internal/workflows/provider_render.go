@@ -154,20 +154,14 @@ func yandexInput(runID string, plan *deploymentpb.InfrastructurePlan, settings *
 		}
 		name := yandexResourceName(runID, machine.GetNodeId())
 		clone := proto.Clone(vm).(*deploymentpb.Yandex_Vm)
-		if clone.Zone == "" {
-			clone.Zone = defaultZone
-		}
-		if clone.InternalIp == "" {
-			clone.InternalIp = "auto"
-		}
+		clone.Zone = defaultZone
+		clone.InternalIp = "auto"
 		if clone.BootDiskType == "" {
 			clone.BootDiskType = defaultYandexBootDiskType
 		}
-		if clone.NetworkAcceleration == "" {
-			clone.NetworkAcceleration = defaultYandexNetworkAcceleration
-			if settings.GetSoftwareAcceleratedNetwork() {
-				clone.NetworkAcceleration = "software_accelerated"
-			}
+		clone.NetworkAcceleration = defaultYandexNetworkAcceleration
+		if settings.GetSoftwareAcceleratedNetwork() {
+			clone.NetworkAcceleration = "software_accelerated"
 		}
 		if clone.UserData == "" {
 			userData, err := agentdomain.CloudInit(machine.GetNodeId(), agentBootstrap(bootstrap, machine.GetNodeId(), runID), agentdomain.CloudInitOptions{
@@ -179,7 +173,7 @@ func yandexInput(runID string, plan *deploymentpb.InfrastructurePlan, settings *
 			}
 			clone.UserData = userData
 		}
-		clone.PublicIp = clone.GetPublicIp() || settings.GetAssignPublicIp()
+		clone.PublicIp = settings.GetAssignPublicIp()
 		clone.BootDiskGb = uint64(roundIOM3GB(int(clone.GetBootDiskGb()), clone.GetBootDiskType()))
 		for _, disk := range clone.GetSecondaryDisks() {
 			disk.SizeGb = uint32(roundIOM3GB(int(disk.GetSizeGb()), disk.GetType()))

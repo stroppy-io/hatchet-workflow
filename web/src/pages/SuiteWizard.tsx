@@ -409,6 +409,7 @@ function SuiteEditor({
     const cells = machineCells.map((c) => ({
       cellId: c.id,
       machineOverrides: c.infrastructurePlan.machines,
+      machineOverrideSettings: c.infrastructurePlan.settings,
     }));
     if (cells.length === 0) return;
     await onPatch({ cells });
@@ -793,7 +794,13 @@ function SuiteFlow({
     const machineOverrides = cell.infrastructurePlan.machines.map((m) =>
       m.nodeId === nodeId ? { ...m, spec } : m,
     );
-    void onPatch({ cells: [{ cellId: cell.id, machineOverrides }] });
+    void onPatch({
+      cells: [{
+        cellId: cell.id,
+        machineOverrides,
+        machineOverrideSettings: cell.infrastructurePlan.settings,
+      }],
+    });
   };
   const setCellMachines = (cell: SuiteCellVM, updates: { nodeId: string; spec: MachineSpecVM }[]) => {
     if (updates.length === 0) return;
@@ -802,7 +809,13 @@ function SuiteFlow({
       const spec = byNode.get(m.nodeId);
       return spec ? { ...m, spec } : m;
     });
-    void onPatch({ cells: [{ cellId: cell.id, machineOverrides }] });
+    void onPatch({
+      cells: [{
+        cellId: cell.id,
+        machineOverrides,
+        machineOverrideSettings: cell.infrastructurePlan.settings,
+      }],
+    });
   };
 
   return (
@@ -826,7 +839,13 @@ function SuiteFlow({
           onPatch={onPatch}
           onConfirmAllMachines={onConfirmAllMachines}
           onConfirmCell={(cell) =>
-            void onPatch({ cells: [{ cellId: cell.id, machineOverrides: cell.infrastructurePlan.machines }] })
+            void onPatch({
+              cells: [{
+                cellId: cell.id,
+                machineOverrides: cell.infrastructurePlan.machines,
+                machineOverrideSettings: cell.infrastructurePlan.settings,
+              }],
+            })
           }
           onMachineChange={setCellMachine}
           onMachinesChange={setCellMachines}

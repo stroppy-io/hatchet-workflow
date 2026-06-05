@@ -99,6 +99,49 @@ func TestRenderTerraformInputInjectsYandexCloudInit(t *testing.T) {
 	}
 }
 
+func TestRenderTerraformInputUsesYandexProviderNetworkSettings(t *testing.T) {
+	plan := yandexInfrastructurePlan(t)
+	settings := plan.GetSettings().GetYandex()
+	settings.Zone = deploymentpb.Yandex_Settings_ZONE_RU_CENTRAL1_B
+	settings.AssignPublicIp = false
+	settings.SoftwareAcceleratedNetwork = true
+	for _, machine := range plan.GetMachines() {
+		vm := machine.GetYandex()
+		vm.Zone = "ru-central1-d"
+		vm.InternalIp = "10.0.0.42"
+		vm.PublicIp = true
+		vm.NetworkAcceleration = "standard"
+	}
+
+	tfInput, err := renderTerraformInput(&workflowpb.RenderTerraformVariablesWorkflowRequest{
+		RunId:          "run-1",
+		Plan:           plan,
+		AgentBootstrap: testAgentBootstrap(),
+	})
+	if err != nil {
+		t.Fatalf("render terraform input: %v", err)
+	}
+
+	values := tfInput.GetTfvars().GetValues().AsMap()
+	compute := values["compute"].(map[string]any)
+	vms := compute["vms"].(map[string]any)
+	for _, machine := range plan.GetMachines() {
+		vm := vms[yandexResourceName("run-1", machine.GetNodeId())].(map[string]any)
+		if got, want := vm["zone"], "ru-central1-b"; got != want {
+			t.Fatalf("vm zone = %v, want %q", got, want)
+		}
+		if got, want := vm["internal_ip"], "auto"; got != want {
+			t.Fatalf("vm internal_ip = %v, want %q", got, want)
+		}
+		if got, want := vm["public_ip"], false; got != want {
+			t.Fatalf("vm public_ip = %v, want %v", got, want)
+		}
+		if got, want := vm["network_acceleration"], "software_accelerated"; got != want {
+			t.Fatalf("vm network_acceleration = %v, want %q", got, want)
+		}
+	}
+}
+
 func TestRenderTerraformInputUsesReservedNetworkCIDR(t *testing.T) {
 	plan := planWithReservedNetworkCIDR(yandexInfrastructurePlan(t), "10.42.0.0/16")
 	tfInput, err := renderTerraformInput(&workflowpb.RenderTerraformVariablesWorkflowRequest{

@@ -899,7 +899,7 @@ type Yandex_Vm struct {
 	BootDiskType string `protobuf:"bytes,4,opt,name=boot_disk_type,json=bootDiskType,proto3" json:"boot_disk_type,omitempty"`
 	// zone overrides Network.zone. Empty means use default zone. Closed set when set: see Enums.Zone.
 	Zone string `protobuf:"bytes,5,opt,name=zone,proto3" json:"zone,omitempty"`
-	// internal_ip is VM private address in selected subnet.
+	// internal_ip is VM private address in selected subnet. Empty means provider default/auto.
 	InternalIp string `protobuf:"bytes,6,opt,name=internal_ip,json=internalIp,proto3" json:"internal_ip,omitempty"`
 	// public_ip requests NAT public address.
 	PublicIp bool `protobuf:"varint,7,opt,name=public_ip,json=publicIp,proto3" json:"public_ip,omitempty"`
@@ -1973,7 +1973,7 @@ var File_cloud_v1_deployment_yandex_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_deployment_yandex_proto_rawDesc = "" +
 	"\n" +
-	" cloud/v1/deployment/yandex.proto\x12\x13cloud.v1.deployment\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\xaf5\n" +
+	" cloud/v1/deployment/yandex.proto\x12\x13cloud.v1.deployment\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\xb55\n" +
 	"\x06Yandex\x12A\n" +
 	"\x05input\x18\x01 \x01(\v2!.cloud.v1.deployment.Yandex.InputB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x05input\x12:\n" +
 	"\x06output\x18\x02 \x01(\v2\".cloud.v1.deployment.Yandex.OutputR\x06output\x1a\xed\a\n" +
@@ -2044,19 +2044,20 @@ const file_cloud_v1_deployment_yandex_proto_rawDesc = "" +
 	"\x03vms\x18\x04 \x03(\v2,.cloud.v1.deployment.Yandex.Compute.VmsEntryB\b\xfaB\x05\x9a\x01\x02\b\x01R\x03vms\x1aV\n" +
 	"\bVmsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x124\n" +
-	"\x05value\x18\x02 \x01(\v2\x1e.cloud.v1.deployment.Yandex.VmR\x05value:\x028\x01\x1a\xd5\x04\n" +
+	"\x05value\x18\x02 \x01(\v2\x1e.cloud.v1.deployment.Yandex.VmR\x05value:\x028\x01\x1a\xdb\x04\n" +
 	"\x02Vm\x12\x1d\n" +
 	"\x05cores\x18\x01 \x01(\rB\a\xfaB\x04*\x02 \x00R\x05cores\x12$\n" +
 	"\tmemory_gb\x18\x02 \x01(\x04B\a\xfaB\x042\x02 \x00R\bmemoryGb\x12)\n" +
 	"\fboot_disk_gb\x18\x03 \x01(\x04B\a\xfaB\x042\x02 \x00R\n" +
 	"bootDiskGb\x12s\n" +
 	"\x0eboot_disk_type\x18\x04 \x01(\tBM\xfaBJrHR\vnetwork-ssdR\vnetwork-hddR\x19network-ssd-nonreplicatedR\x11network-ssd-io-m3R\fbootDiskType\x12W\n" +
-	"\x04zone\x18\x05 \x01(\tBC\xfaB@r>R\x00R\rru-central1-aR\rru-central1-bR\rru-central1-cR\rru-central1-dR\x04zone\x12(\n" +
-	"\vinternal_ip\x18\x06 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\n" +
+	"\x04zone\x18\x05 \x01(\tBC\xfaB@r>R\x00R\rru-central1-aR\rru-central1-bR\rru-central1-cR\rru-central1-dR\x04zone\x12+\n" +
+	"\vinternal_ip\x18\x06 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\xd0\x01\x01R\n" +
 	"internalIp\x12\x1b\n" +
 	"\tpublic_ip\x18\a \x01(\bR\bpublicIp\x12\x1b\n" +
-	"\tuser_data\x18\b \x01(\tR\buserData\x12X\n" +
-	"\x14network_acceleration\x18\t \x01(\tB%\xfaB\"r R\bstandardR\x14software_acceleratedR\x13networkAcceleration\x12S\n" +
+	"\tuser_data\x18\b \x01(\tR\buserData\x12[\n" +
+	"\x14network_acceleration\x18\t \x01(\tB(\xfaB%r#R\bstandardR\x14software_accelerated\xd0\x01\x01R\x13networkAcceleration\x12S\n" +
 	"\x0fsecondary_disks\x18\n" +
 	" \x03(\v2 .cloud.v1.deployment.Yandex.DiskB\b\xfaB\x05\x92\x01\x02\x10@R\x0esecondaryDisks\x1a\xb5\x01\n" +
 	"\x04Disk\x12(\n" +

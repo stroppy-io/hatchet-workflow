@@ -179,6 +179,8 @@ export interface SuiteCellPatchInput {
   cell?: SuiteCellInput;
   /** explicit provider machine settings for this cell. */
   machineOverrides?: InfrastructurePlanVM["machines"];
+  /** Provider-level values that own Yandex placement/network toggles for this cell. */
+  machineOverrideSettings?: ProviderSettingsVM;
 }
 
 /** What a Patch carries — the typed sub-message(s) a step changed. */
@@ -322,6 +324,7 @@ type InfrastructurePlanJson = {
       platformId?: number;
       imageId?: string;
       assignPublicIp?: boolean;
+      softwareAcceleratedNetwork?: boolean;
       sshUser?: string;
     };
   };
@@ -379,6 +382,7 @@ function infrastructurePlanToVM(
         platformId: y.platformId ?? Yandex_Settings_PlatformId.UNSPECIFIED,
         imageId: y.imageId ?? "",
         assignPublicIp: y.assignPublicIp ?? false,
+        softwareAcceleratedNetwork: y.softwareAcceleratedNetwork ?? false,
         sshUser: y.sshUser ?? "",
       },
     };
@@ -520,7 +524,9 @@ function cellPatch(input: SuiteCellPatchInput): SuiteWizardCellPatch {
     enabled: input.enabled,
     name: input.name,
     source: input.cell ? cellSource(input.cell) : { case: undefined },
-    machineOverrides: input.machineOverrides?.map(machineVMToProto),
+    machineOverrides: input.machineOverrides?.map((machine) =>
+      machineVMToProto(machine, input.machineOverrideSettings),
+    ),
   });
 }
 

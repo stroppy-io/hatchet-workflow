@@ -2688,7 +2688,7 @@ go_name: Cores</pre></td>
 <td>internal_ip</td>
 <td>string</td>
 <td><pre>
-internal_ip is VM private address in selected subnet.<br>
+internal_ip is VM private address in selected subnet. Empty means provider default/auto.<br>
 
 json_name: internalIp
 go_name: InternalIp</pre></td>
