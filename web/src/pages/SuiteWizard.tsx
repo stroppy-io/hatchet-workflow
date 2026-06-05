@@ -985,6 +985,18 @@ function MachineSettingsSection({
 }) {
   const machineCells = cellsWithMachines(draft);
   const unconfirmed = cellsNeedingMachineConfirmation(draft);
+  const [activeCellId, setActiveCellId] = useState("");
+  const activeCell = machineCells.find((cell) => cell.id === activeCellId) ?? machineCells[0];
+
+  useEffect(() => {
+    if (machineCells.length === 0) {
+      if (activeCellId) setActiveCellId("");
+      return;
+    }
+    if (!machineCells.some((cell) => cell.id === activeCellId)) {
+      setActiveCellId(machineCells[0].id);
+    }
+  }, [activeCellId, machineCells]);
 
   return (
     <section className="border border-zinc-800/70 bg-[#070707] p-4">
@@ -1012,39 +1024,84 @@ function MachineSettingsSection({
           Add cells first. Machine settings appear here after presets resolve into topology.
         </div>
       ) : (
-        <div className="space-y-4">
-          {machineCells.map((cell) => {
-            const total = cell.infrastructurePlan.machines.length;
-            const confirmed = cell.machineOverrideCount >= total;
-            return (
-              <div key={cell.id} className={`border p-3 ${confirmed ? "border-zinc-800 bg-[#0a0a0a]" : "border-amber-900/50 bg-amber-950/10"}`}>
-                <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="truncate text-sm font-medium text-foreground">{cellTitle(cell)}</h3>
-                      <span className={`px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide ${confirmed ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-300"}`}>
-                        {confirmed ? "confirmed" : "needs confirmation"}
+        <div className="grid min-h-[34rem] gap-4 xl:grid-cols-[minmax(16rem,22rem)_minmax(0,1fr)]">
+          <div className="min-w-0 border border-zinc-800 bg-[#0a0a0a]">
+            <div className="border-b border-zinc-800 px-3 py-2">
+              <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">Suite cells</div>
+              <div className="mt-0.5 text-[12px] text-zinc-500">
+                {machineCells.length} cell{machineCells.length === 1 ? "" : "s"} with generated machines
+              </div>
+            </div>
+            <div className="max-h-[38rem] space-y-1 overflow-y-auto p-2">
+              {machineCells.map((cell) => {
+                const total = cell.infrastructurePlan.machines.length;
+                const confirmed = cell.machineOverrideCount >= total;
+                const active = activeCell?.id === cell.id;
+                return (
+                  <button
+                    key={cell.id}
+                    type="button"
+                    onClick={() => setActiveCellId(cell.id)}
+                    className={`w-full min-w-0 border p-2.5 text-left transition-colors ${
+                      active
+                        ? "border-primary/50 bg-primary/[0.07]"
+                        : confirmed
+                          ? "border-zinc-800 hover:border-zinc-700"
+                          : "border-amber-900/45 bg-amber-950/10 hover:border-amber-700/60"
+                    }`}
+                  >
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className="min-w-0 flex-1 truncate text-[12px] font-medium text-zinc-200">
+                        {cellTitle(cell)}
+                      </span>
+                      <span className={`shrink-0 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide ${confirmed ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-300"}`}>
+                        {confirmed ? "ok" : "edit"}
                       </span>
                     </div>
-                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[10px] text-zinc-600">
-                      <span>db: {cell.dbKind || "—"}</span>
-                      <span>workload: {cell.workload || "—"}</span>
-                      <span>{cell.machineOverrideCount}/{total} confirmed</span>
+                    <div className="mt-1 grid grid-cols-1 gap-0.5 font-mono text-[10px] text-zinc-600">
+                      <span className="truncate">db: {cell.dbKind || "—"}</span>
+                      <span className="truncate">workload: {cell.workload || "—"}</span>
+                      <span>
+                        {cell.machineOverrideCount}/{total} confirmed · {total} node{total === 1 ? "" : "s"}
+                      </span>
                     </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {activeCell && (
+            <div className={`min-w-0 border p-3 ${activeCell.machineOverrideCount >= activeCell.infrastructurePlan.machines.length ? "border-zinc-800 bg-[#0a0a0a]" : "border-amber-900/50 bg-amber-950/10"}`}>
+              <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">Selected cell machines</div>
+                  <div className="mt-1 flex min-w-0 flex-wrap items-center gap-2">
+                    <h3 className="min-w-0 truncate text-sm font-medium text-foreground">{cellTitle(activeCell)}</h3>
+                    <span className={`px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide ${activeCell.machineOverrideCount >= activeCell.infrastructurePlan.machines.length ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-300"}`}>
+                      {activeCell.machineOverrideCount >= activeCell.infrastructurePlan.machines.length ? "confirmed" : "needs confirmation"}
+                    </span>
                   </div>
-                  <Button size="sm" variant="outline" className="h-7 shrink-0 gap-1.5" onClick={() => onConfirmCell(cell)}>
-                    <Check className="h-3.5 w-3.5" /> Confirm this cell
-                  </Button>
+                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[10px] text-zinc-600">
+                    <span>db: {activeCell.dbKind || "—"}</span>
+                    <span>workload: {activeCell.workload || "—"}</span>
+                    <span>
+                      {activeCell.machineOverrideCount}/{activeCell.infrastructurePlan.machines.length} confirmed
+                    </span>
+                  </div>
                 </div>
-                <MachinePlanEditor
-                  machines={cell.infrastructurePlan.machines}
-                  settings={cell.infrastructurePlan.settings}
-                  onMachineChange={(nodeId, spec) => onMachineChange(cell, nodeId, spec)}
-                  onMachinesChange={(updates) => onMachinesChange(cell, updates)}
-                />
+                <Button size="sm" variant="outline" className="h-7 shrink-0 gap-1.5" onClick={() => onConfirmCell(activeCell)}>
+                  <Check className="h-3.5 w-3.5" /> Confirm this cell
+                </Button>
               </div>
-            );
-          })}
+              <MachinePlanEditor
+                machines={activeCell.infrastructurePlan.machines}
+                settings={activeCell.infrastructurePlan.settings}
+                onMachineChange={(nodeId, spec) => onMachineChange(activeCell, nodeId, spec)}
+                onMachinesChange={(updates) => onMachinesChange(activeCell, updates)}
+              />
+            </div>
+          )}
         </div>
       )}
     </section>
