@@ -59,6 +59,11 @@ import {
   type MachineSpecVM,
   type ProviderSettingsVM,
 } from "@/services/wizard";
+import {
+  normalizeYandexBootDiskType,
+  normalizeYandexInternalIp,
+  normalizeYandexNetworkAcceleration,
+} from "@/lib/machine-constraints";
 
 export { Provider };
 
@@ -323,14 +328,16 @@ type InfrastructurePlanJson = {
   machines?: {
     nodeId?: string;
     docker?: { image?: string; resources?: { cpuCores?: number; memoryMb?: string } };
-    yandex?: {
-      cores?: number;
-      memoryGb?: string;
-      bootDiskGb?: string;
-      bootDiskType?: string;
-      zone?: string;
-      publicIp?: boolean;
-    };
+      yandex?: {
+        cores?: number;
+        memoryGb?: string;
+        bootDiskGb?: string;
+        bootDiskType?: string;
+        zone?: string;
+        internalIp?: string;
+        publicIp?: boolean;
+        networkAcceleration?: string;
+      };
   }[];
 };
 
@@ -390,9 +397,11 @@ function infrastructurePlanToVM(
           cores: m.yandex.cores ?? 0,
           memoryGb: Number(m.yandex.memoryGb ?? 0),
           bootDiskGb: Number(m.yandex.bootDiskGb ?? 0),
-          bootDiskType: m.yandex.bootDiskType ?? "",
+          bootDiskType: normalizeYandexBootDiskType(m.yandex.bootDiskType),
           zone: m.yandex.zone ?? "",
+          internalIp: normalizeYandexInternalIp(m.yandex.internalIp),
           publicIp: m.yandex.publicIp ?? false,
+          networkAcceleration: normalizeYandexNetworkAcceleration(m.yandex.networkAcceleration),
         },
       };
     } else if (m.docker) {

@@ -607,6 +607,20 @@ function StepInfra({
     void patch({ machineOverrides: next.machines });
   };
 
+  const setMachines = (updates: { nodeId: string; spec: MachineSpecVM }[]) => {
+    if (updates.length === 0) return;
+    const byNode = new Map(updates.map((u) => [u.nodeId, u.spec]));
+    const next: InfrastructurePlanVM = {
+      ...plan,
+      machines: plan.machines.map((m) => {
+        const spec = byNode.get(m.nodeId);
+        return spec ? { ...m, spec } : m;
+      }),
+    };
+    setPlan(next);
+    void patch({ machineOverrides: next.machines });
+  };
+
   const pickProvider = (p: Provider) => {
     if (p === plan.provider) return;
     // Provider switch: let the server recompute settings + machine variants.
@@ -683,7 +697,12 @@ function StepInfra({
                 </Button>
               </div>
               <div className="min-h-0 flex-1 overflow-y-auto pr-1">
-                <MachinePlanEditor machines={plan.machines} settings={plan.settings} onMachineChange={setMachine} />
+                <MachinePlanEditor
+                  machines={plan.machines}
+                  settings={plan.settings}
+                  onMachineChange={setMachine}
+                  onMachinesChange={setMachines}
+                />
                 <FieldErrors errs={provErrs} />
               </div>
             </>

@@ -32,7 +32,7 @@ import {
   type WorkloadPresetVM,
 } from "@/services/preset";
 import type { SuiteCellInput } from "@/services/suites";
-import { ENGINES, type EngineKind } from "@/services/wizard";
+import { ENGINES, type EngineKind, type MachineSpecVM } from "@/services/wizard";
 import {
   MachinePlanEditor,
   machineSpecSummary,
@@ -50,6 +50,8 @@ import {
 import {
   AlertCircle,
   Check,
+  ChevronLeft,
+  ChevronRight,
   Cloud,
   Container,
   Grid3x3,
@@ -62,6 +64,14 @@ import {
   X,
   Zap,
 } from "lucide-react";
+
+type SuiteStepKey = "cells" | "machines" | "settings";
+
+const SUITE_STEPS: { key: SuiteStepKey; label: string; hint: string }[] = [
+  { key: "cells", label: "Cells", hint: "what to run" },
+  { key: "machines", label: "Machines", hint: "where it runs" },
+  { key: "settings", label: "Options", hint: "schedule and save" },
+];
 
 const PROVIDERS: { provider: Provider; label: string; icon: typeof Container; blurb: string }[] = [
   { provider: Provider.DOCKER, label: "Docker", icon: Container, blurb: "Local containers — fast smoke matrices." },
@@ -400,10 +410,14 @@ function SuiteEditor({
   onPatch: (input: SuitePatchInput) => Promise<void>;
   onFinish: (start: boolean) => void;
 }) {
+  const [step, setStep] = useState<SuiteStepKey>("cells");
   const errCount = draft.errors.filter((e) => e.severity === "error").length;
   const machineCells = useMemo(() => cellsWithMachines(draft), [draft]);
   const unconfirmedMachineCells = useMemo(() => cellsNeedingMachineConfirmation(draft), [draft]);
   const hasMachinePlans = machineCells.length > 0;
+  const stepIndex = Math.max(0, SUITE_STEPS.findIndex((s) => s.key === step));
+  const prevStep = stepIndex > 0 ? SUITE_STEPS[stepIndex - 1].key : null;
+  const nextStep = stepIndex < SUITE_STEPS.length - 1 ? SUITE_STEPS[stepIndex + 1].key : null;
   const confirmAllMachinePlans = useCallback(async () => {
     const cells = machineCells.map((c) => ({
       cellId: c.id,
@@ -447,6 +461,13 @@ function SuiteEditor({
         </div>
       </div>
 
+      <SuiteStepNav
+        active={step}
+        draft={draft}
+        unconfirmedMachineCells={unconfirmedMachineCells.length}
+        onStep={setStep}
+      />
+
       <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6 lg:px-8">
         {error && (
           <div className="mb-4 flex items-center gap-2 border border-red-900/50 bg-red-950/30 px-3 py-2 text-sm text-red-400">
@@ -454,15 +475,14 @@ function SuiteEditor({
           </div>
         )}
 
-        <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_minmax(17rem,20rem)]">
-          <SuiteFlow
-            slug={slug}
-            draft={draft}
-            onPatch={onPatch}
-            onConfirmAllMachines={confirmAllMachinePlans}
-          />
-          <SuiteSettingsRail draft={draft} onPatch={onPatch} />
-        </div>
+        <SuiteFlow
+          slug={slug}
+          draft={draft}
+          step={step}
+          onStep={setStep}
+          onPatch={onPatch}
+          onConfirmAllMachines={confirmAllMachinePlans}
+        />
       </div>
 
       {/* Finish footer */}
@@ -479,6 +499,22 @@ function SuiteEditor({
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!prevStep || patching}
+            onClick={() => prevStep && setStep(prevStep)}
+          >
+            <ChevronLeft className="h-3.5 w-3.5" /> Back
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!nextStep || patching}
+            onClick={() => nextStep && setStep(nextStep)}
+          >
+            Next <ChevronRight className="h-3.5 w-3.5" />
+          </Button>
           {hasMachinePlans && unconfirmedMachineCells.length > 0 && (
             <Button variant="outline" size="sm" disabled={patching} onClick={() => void confirmAllMachinePlans()}>
               <Check className="h-3.5 w-3.5" /> Confirm machine settings
@@ -491,6 +527,74 @@ function SuiteEditor({
             <Rocket className="h-3.5 w-3.5" /> Save &amp; run
           </Button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function SuiteStepNav({
+  active,
+  draft,
+  unconfirmedMachineCells,
+  onStep,
+}: {
+  active: SuiteStepKey;
+  draft: SuiteWizardDraftVM;
+  unconfirmedMachineCells: number;
+  onStep: (step: SuiteStepKey) => void;
+}) {
+  const statusFor = (key: SuiteStepKey): "done" | "attention" | "idle" => {
+    if (key === "cells") return draft.cells.length > 0 ? "done" : "attention";
+    if (key === "machines") {
+      if (draft.cells.length === 0) return "idle";
+      return unconfirmedMachineCells > 0 ? "attention" : "done";
+    }
+    return draft.ready ? "done" : "idle";
+  };
+
+  return (
+    <div className="shrink-0 border-b border-zinc-800 bg-[#070707] px-5 py-2">
+      <div className="mx-auto grid max-w-5xl grid-cols-3 gap-2">
+        {SUITE_STEPS.map((item, index) => {
+          const isActive = active === item.key;
+          const status = statusFor(item.key);
+          return (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => onStep(item.key)}
+              className={`min-w-0 border px-3 py-2 text-left transition-colors ${
+                isActive
+                  ? "border-primary/50 bg-primary/[0.07]"
+                  : "border-zinc-800/70 hover:border-zinc-700 hover:bg-zinc-900/40"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <span
+                  className={`flex h-5 w-5 shrink-0 items-center justify-center border font-mono text-[10px] ${
+                    isActive
+                      ? "border-primary/40 text-primary"
+                      : status === "done"
+                        ? "border-emerald-500/40 text-emerald-400"
+                        : status === "attention"
+                          ? "border-amber-500/40 text-amber-300"
+                          : "border-zinc-700 text-zinc-500"
+                  }`}
+                >
+                  {status === "done" ? <Check className="h-3 w-3" /> : index + 1}
+                </span>
+                <div className="min-w-0">
+                  <div className={`truncate text-xs font-medium ${isActive ? "text-primary" : "text-zinc-300"}`}>
+                    {item.label}
+                  </div>
+                  <div className="truncate font-mono text-[9px] uppercase tracking-wider text-zinc-600">
+                    {item.hint}
+                  </div>
+                </div>
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -643,11 +747,15 @@ function RatingToggle({
 function SuiteFlow({
   slug,
   draft,
+  step,
+  onStep,
   onPatch,
   onConfirmAllMachines,
 }: {
   slug: string;
   draft: SuiteWizardDraftVM;
+  step: SuiteStepKey;
+  onStep: (step: SuiteStepKey) => void;
   onPatch: (input: SuitePatchInput) => Promise<void>;
   onConfirmAllMachines: () => Promise<void>;
 }) {
@@ -656,44 +764,63 @@ function SuiteFlow({
   const addCell = async (cell: SuiteCellInput) => {
     setAdding(false);
     await onPatch({ cells: [{ cellId: "", cell }] });
+    onStep("machines");
   };
-  const confirmAllMachinePlans = async () => {
-    const cells = draft.cells
-      .filter((c) => c.infrastructurePlan.machines.length > 0)
-      .map((c) => ({
-        cellId: c.id,
-        machineOverrides: c.infrastructurePlan.machines,
-      }));
-    if (cells.length === 0) return;
-    await onPatch({ cells });
-  };
-  const setCellMachine = (cell: SuiteCellVM, nodeId: string, spec: SuiteCellVM["infrastructurePlan"]["machines"][number]["spec"]) => {
+  const setCellMachine = (cell: SuiteCellVM, nodeId: string, spec: MachineSpecVM) => {
     const machineOverrides = cell.infrastructurePlan.machines.map((m) =>
       m.nodeId === nodeId ? { ...m, spec } : m,
     );
     void onPatch({ cells: [{ cellId: cell.id, machineOverrides }] });
   };
+  const setCellMachines = (cell: SuiteCellVM, updates: { nodeId: string; spec: MachineSpecVM }[]) => {
+    if (updates.length === 0) return;
+    const byNode = new Map(updates.map((u) => [u.nodeId, u.spec]));
+    const machineOverrides = cell.infrastructurePlan.machines.map((m) => {
+      const spec = byNode.get(m.nodeId);
+      return spec ? { ...m, spec } : m;
+    });
+    void onPatch({ cells: [{ cellId: cell.id, machineOverrides }] });
+  };
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-[120rem] space-y-6">
       <SuiteReadinessPanel draft={draft} onConfirmAllMachines={onConfirmAllMachines} />
-      <CellsSection
-        slug={slug}
-        draft={draft}
-        adding={adding}
-        onAddClick={() => setAdding((v) => !v)}
-        onAdd={addCell}
-        onCancelAdd={() => setAdding(false)}
-        onPatch={onPatch}
-      />
-      <MachineSettingsSection
-        draft={draft}
-        onConfirmAllMachines={onConfirmAllMachines}
-        onConfirmCell={(cell) =>
-          void onPatch({ cells: [{ cellId: cell.id, machineOverrides: cell.infrastructurePlan.machines }] })
-        }
-        onMachineChange={setCellMachine}
-      />
+      {step === "cells" && (
+        <CellsSection
+          slug={slug}
+          draft={draft}
+          adding={adding}
+          onAddClick={() => setAdding((v) => !v)}
+          onAdd={addCell}
+          onCancelAdd={() => setAdding(false)}
+          onPatch={onPatch}
+        />
+      )}
+      {step === "machines" && (
+        <MachineSettingsSection
+          draft={draft}
+          onConfirmAllMachines={onConfirmAllMachines}
+          onConfirmCell={(cell) =>
+            void onPatch({ cells: [{ cellId: cell.id, machineOverrides: cell.infrastructurePlan.machines }] })
+          }
+          onMachineChange={setCellMachine}
+          onMachinesChange={setCellMachines}
+        />
+      )}
+      {step === "settings" && (
+        <section className="border border-zinc-800/70 bg-[#070707] p-4">
+          <div className="mb-4">
+            <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">3. Suite options</div>
+            <h2 className="mt-1 text-base font-semibold text-foreground">Set provider, schedule and run policy</h2>
+            <p className="mt-1 max-w-3xl text-[12px] leading-snug text-zinc-500">
+              These settings apply to the whole suite. Per-node provider machine resources stay in the Machines step.
+            </p>
+          </div>
+          <div className="max-w-3xl">
+            <SuiteSettingsRail draft={draft} onPatch={onPatch} />
+          </div>
+        </section>
+      )}
     </div>
   );
 }
@@ -848,11 +975,13 @@ function MachineSettingsSection({
   onConfirmAllMachines,
   onConfirmCell,
   onMachineChange,
+  onMachinesChange,
 }: {
   draft: SuiteWizardDraftVM;
   onConfirmAllMachines: () => Promise<void>;
   onConfirmCell: (cell: SuiteCellVM) => void;
-  onMachineChange: (cell: SuiteCellVM, nodeId: string, spec: SuiteCellVM["infrastructurePlan"]["machines"][number]["spec"]) => void;
+  onMachineChange: (cell: SuiteCellVM, nodeId: string, spec: MachineSpecVM) => void;
+  onMachinesChange: (cell: SuiteCellVM, updates: { nodeId: string; spec: MachineSpecVM }[]) => void;
 }) {
   const machineCells = cellsWithMachines(draft);
   const unconfirmed = cellsNeedingMachineConfirmation(draft);
@@ -911,6 +1040,7 @@ function MachineSettingsSection({
                   machines={cell.infrastructurePlan.machines}
                   settings={cell.infrastructurePlan.settings}
                   onMachineChange={(nodeId, spec) => onMachineChange(cell, nodeId, spec)}
+                  onMachinesChange={(updates) => onMachinesChange(cell, updates)}
                 />
               </div>
             );

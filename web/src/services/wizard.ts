@@ -81,6 +81,13 @@ import {
   FileOverrideSchema,
 } from "@/lib/proto/cloud/v1/deployment/render_pb";
 import { FileSchema } from "@/lib/proto/cloud/v1/common/file_pb";
+import {
+  normalizeYandexBootDiskType,
+  normalizeYandexDiskGb,
+  normalizeYandexInternalIp,
+  normalizeYandexNetworkAcceleration,
+  type YandexNetworkAcceleration,
+} from "@/lib/machine-constraints";
 
 // Re-export the proto enums the steps drive their selects from, so the page
 // imports a single module. Keeping the proto enums (not string unions) makes
@@ -378,7 +385,11 @@ export interface YandexVmVM {
   bootDiskType: string;
   /** Yandex.Vm.zone (per-VM override of the settings zone). */
   zone: string;
+  /** Yandex.Vm.internal_ip. "auto" lets the provider allocate from subnet. */
+  internalIp: string;
   publicIp: boolean;
+  /** Yandex.Vm.network_acceleration. */
+  networkAcceleration: YandexNetworkAcceleration;
 }
 
 /** deployment.MachinePlan oneof, flattened to the active provider variant. */
@@ -714,7 +725,9 @@ type DraftJson = {
         bootDiskGb?: string;
         bootDiskType?: string;
         zone?: string;
+        internalIp?: string;
         publicIp?: boolean;
+        networkAcceleration?: string;
       };
     }[];
   };
@@ -816,9 +829,11 @@ function draftToVM(draft: TestWizardDraftRecord | undefined): WizardDraftVM {
           cores: m.yandex.cores ?? 0,
           memoryGb: Number(m.yandex.memoryGb ?? 0),
           bootDiskGb: Number(m.yandex.bootDiskGb ?? 0),
-          bootDiskType: m.yandex.bootDiskType ?? "",
+          bootDiskType: normalizeYandexBootDiskType(m.yandex.bootDiskType),
           zone: m.yandex.zone ?? "",
+          internalIp: normalizeYandexInternalIp(m.yandex.internalIp),
           publicIp: m.yandex.publicIp ?? false,
+          networkAcceleration: normalizeYandexNetworkAcceleration(m.yandex.networkAcceleration),
         },
       };
     } else if (m.docker) {
@@ -919,17 +934,20 @@ function draftToSummaryVM(draft: TestWizardDraftRecord): DraftSummaryVM {
 // Build one deployment.MachinePlan from an edited MachineVM.
 export function machineVMToProto(m: MachineVM) {
   if (m.spec.case === "yandex") {
+    const diskType = normalizeYandexBootDiskType(m.spec.yandex.bootDiskType);
     return create(MachinePlanSchema, {
       nodeId: m.nodeId,
       providerParams: {
         case: "yandex",
         value: create(Yandex_VmSchema, {
-          cores: m.spec.yandex.cores,
-          memoryGb: BigInt(Math.trunc(m.spec.yandex.memoryGb)),
-          bootDiskGb: BigInt(Math.trunc(m.spec.yandex.bootDiskGb)),
-          bootDiskType: m.spec.yandex.bootDiskType,
+          cores: Math.max(1, Math.trunc(m.spec.yandex.cores)),
+          memoryGb: BigInt(Math.max(1, Math.trunc(m.spec.yandex.memoryGb))),
+          bootDiskGb: BigInt(normalizeYandexDiskGb(diskType, m.spec.yandex.bootDiskGb)),
+          bootDiskType: diskType,
           zone: m.spec.yandex.zone,
+          internalIp: normalizeYandexInternalIp(m.spec.yandex.internalIp),
           publicIp: m.spec.yandex.publicIp,
+          networkAcceleration: normalizeYandexNetworkAcceleration(m.spec.yandex.networkAcceleration),
         }),
       },
     });
@@ -1411,7 +1429,9 @@ export function defaultYandexVm(role: string): YandexVmVM {
     bootDiskGb: heavy ? 200 : 50,
     bootDiskType: "network-ssd",
     zone: "",
+    internalIp: "auto",
     publicIp: false,
+    networkAcceleration: "standard",
   };
 }
 

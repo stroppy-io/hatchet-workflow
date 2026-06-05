@@ -1,15 +1,31 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  closestStep,
+  CPU_STEPS,
+  DISK_STEPS,
+  diskStepsForType,
+  IO_M3_CHUNK_GB,
+  IO_M3_DISK_STEPS,
+  platformLimits,
+  ramSteps,
+  YANDEX_DISK_SPECS,
+  YC_PLATFORMS,
+} from "@/lib/machine-constraints";
+
+export {
+  closestStep,
+  CPU_STEPS,
+  DISK_STEPS,
+  diskStepsForType,
+  IO_M3_CHUNK_GB,
+  IO_M3_DISK_STEPS,
+  platformLimits,
+  ramSteps,
+  YC_PLATFORMS,
+};
 
 const SLIDER_TRACK = "w-full h-1.5 bg-zinc-800 rounded-full appearance-none cursor-pointer accent-primary disabled:opacity-50 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:appearance-none";
-
-export function closestStep(val: number, steps: number[]): number {
-  let best = steps[0];
-  for (const s of steps) {
-    if (Math.abs(s - val) < Math.abs(best - val)) best = s;
-  }
-  return best;
-}
 
 export function SliderField({ label, value, steps, onChange, disabled, format }: {
   label: string;
@@ -108,56 +124,10 @@ export function DurationSlider({ label, value, onChange, disabled, hint }: {
   );
 }
 
-export const CPU_STEPS = [2, 4, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256];
-export const DISK_STEPS = [25, 50, 100, 200, 300, 500, 750, 1024, 2048, 4096, 8192, 16384, 32768, 65536];
-
-// io-m3 chunk size — Yandex Cloud requires io-m3 disks be multiples of
-// 93 GiB. Backend mirrors this constant in run/pdisk_size.go.
-export const IO_M3_CHUNK_GB = 93;
-
-// Pre-computed io-m3 ladder. Generous low-end coverage in single-chunk
-// steps then geometric growth so the slider stays usable up to 64 TiB.
-function buildIOM3Steps(): number[] {
-  const steps: number[] = [];
-  // 1..10 chunks (93..930 GiB).
-  for (let i = 1; i <= 10; i++) steps.push(i * IO_M3_CHUNK_GB);
-  // Then 12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512, 704 chunks.
-  const big = [12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512, 704];
-  for (const c of big) steps.push(c * IO_M3_CHUNK_GB);
-  return steps;
-}
-export const IO_M3_DISK_STEPS = buildIOM3Steps();
-
-export function diskStepsForType(diskType: string): number[] {
-  const maxGb = DISK_SPECS[diskType]?.maxSizeGb ?? 8192;
-  if (diskType === "network-ssd-io-m3") {
-    return IO_M3_DISK_STEPS.filter((s) => s <= maxGb);
-  }
-  return DISK_STEPS.filter((s) => s <= maxGb);
-}
-
 // ─── Yandex Cloud Platforms ──────────────────────────────────────
 
-export interface PlatformLimits {
-  label: string;
-  desc: string;
-  maxCores: number;
-  maxRamMb: number;     // per VM
-}
-
-export const YC_PLATFORMS: Record<string, PlatformLimits> = {
-  "standard-v2": { label: "Standard v2", desc: "Intel Cascade Lake", maxCores: 80, maxRamMb: 640 * 1024 },
-  "standard-v3": { label: "Standard v3", desc: "Intel Ice Lake",     maxCores: 96, maxRamMb: 768 * 1024 },
-  "highfreq-v3": { label: "High-freq v3", desc: "Intel Ice Lake HF", maxCores: 96, maxRamMb: 768 * 1024 },
-};
-
-export function platformLimits(platformId: string): PlatformLimits {
-  return YC_PLATFORMS[platformId] ?? YC_PLATFORMS["standard-v3"];
-}
-
 export function cpuStepsForPlatform(platformId: string): number[] {
-  const { maxCores } = platformLimits(platformId);
-  return CPU_STEPS.filter((s) => s <= maxCores);
+  return CPU_STEPS.filter((s) => s <= platformLimits(platformId).maxCores);
 }
 
 export function PlatformSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
@@ -189,63 +159,12 @@ export function PlatformSelect({ value, onChange }: { value: string; onChange: (
   );
 }
 
-/**
- * Yandex Cloud disk performance specs.
- * Source: https://yandex.cloud/en/docs/compute/concepts/limits
- * Performance scales by allocation units: units = ceil(disk_size / unitGb).
- */
-const DISK_SPECS: Record<string, {
-  label: string;
-  unitGb: number;
-  maxSizeGb: number;
-  readIopsPerUnit: number; maxReadIops: number;
-  writeIopsPerUnit: number; maxWriteIops: number;
-  readMbPerUnit: number; maxReadMb: number;
-  writeMbPerUnit: number; maxWriteMb: number;
-}> = {
-  "network-ssd": {
-    label: "SSD",
-    unitGb: 32,
-    maxSizeGb: 8192,
-    readIopsPerUnit: 1000, maxReadIops: 20000,
-    writeIopsPerUnit: 1000, maxWriteIops: 40000,
-    readMbPerUnit: 15, maxReadMb: 450,
-    writeMbPerUnit: 15, maxWriteMb: 450,
-  },
-  "network-ssd-io-m3": {
-    label: "SSD io-m3",
-    unitGb: 32,
-    maxSizeGb: 65536,  // 64 TB
-    readIopsPerUnit: 28000, maxReadIops: 75000,
-    writeIopsPerUnit: 5600, maxWriteIops: 40000,
-    readMbPerUnit: 110, maxReadMb: 1024,
-    writeMbPerUnit: 82, maxWriteMb: 1024,
-  },
-};
-
-function calcDiskPerf(type: string, sizeGb: number) {
-  const s = DISK_SPECS[type] || DISK_SPECS["network-ssd"];
-  const units = Math.max(1, Math.ceil(sizeGb / s.unitGb));
-  return {
-    readIops: Math.min(s.maxReadIops, s.readIopsPerUnit * units),
-    writeIops: Math.min(s.maxWriteIops, s.writeIopsPerUnit * units),
-    readMb: Math.min(s.maxReadMb, s.readMbPerUnit * units),
-    writeMb: Math.min(s.maxWriteMb, s.writeMbPerUnit * units),
-  };
-}
-
-function fmtK(n: number): string {
-  return n >= 1000 ? `${(n / 1000).toFixed(n % 1000 === 0 ? 0 : 1)}K` : String(n);
-}
-
-export function DiskTypeSelect({ value, onChange, diskSizeGb }: { value: string; onChange: (v: string) => void; diskSizeGb?: number }) {
-  const size = diskSizeGb || 50;
+export function DiskTypeSelect({ value, onChange }: { value: string; onChange: (v: string) => void; diskSizeGb?: number }) {
   return (
     <div>
       <label className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider mb-1 block">Disk Type</label>
       <div className="flex gap-1.5">
-        {Object.entries(DISK_SPECS).map(([id, spec]) => {
-          const perf = calcDiskPerf(id, size);
+        {Object.entries(YANDEX_DISK_SPECS).map(([id, spec]) => {
           const active = value === id;
           return (
             <button
@@ -260,10 +179,10 @@ export function DiskTypeSelect({ value, onChange, diskSizeGb }: { value: string;
             >
               <div className={`text-[11px] font-mono font-medium ${active ? "text-primary" : "text-zinc-400"}`}>{spec.label}</div>
               <div className="text-[9px] text-zinc-600">
-                {fmtK(perf.readIops)} / {fmtK(perf.writeIops)} IOPS
+                max {spec.maxSizeGb >= 1024 ? `${spec.maxSizeGb / 1024} TB` : `${spec.maxSizeGb} GB`}
               </div>
               <div className="text-[9px] text-zinc-700">
-                {perf.readMb} / {perf.writeMb} MB/s
+                {spec.multipleGb > 1 ? `${spec.multipleGb} GB chunks` : spec.hint}
               </div>
             </button>
           );
@@ -271,19 +190,4 @@ export function DiskTypeSelect({ value, onChange, diskSizeGb }: { value: string;
       </div>
     </div>
   );
-}
-
-export function ramSteps(cpus: number, maxRamMb?: number): number[] {
-  const min = cpus * 1024;
-  const cap = maxRamMb ?? 262144;
-  const steps: number[] = [];
-  let v = min;
-  while (v <= cap) {
-    steps.push(v);
-    if (v < 8192) v += 1024;
-    else if (v < 32768) v += 4096;
-    else if (v < 65536) v += 8192;
-    else v += 32768;
-  }
-  return steps;
 }
