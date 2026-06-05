@@ -340,8 +340,8 @@ func TestExecuteDeploymentPlanWorkflowPersistsActionStatusAndExecutionContext(t 
 	if result := component.GetSteps()[1].GetCallCmd().GetResult(); result == nil || result.GetExitCode() != 0 {
 		t.Fatalf("command result = %v, want exit 0", result)
 	}
-	if got := len(runtime.deploymentPlans); got < 4 {
-		t.Fatalf("deployment plan persist calls = %d, want live status updates", got)
+	if got, want := len(runtime.deploymentPlans), 2; got != want {
+		t.Fatalf("deployment plan persist calls = %d, want component boundary updates only", got)
 	}
 	if got := len(runtime.logLines); got < 4 {
 		t.Fatalf("synthetic action log lines = %d, want start/completed per step", got)

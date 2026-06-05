@@ -894,9 +894,11 @@ func (w *domainTestWorkflow) persistRuntimeProjection(ctx workflow.Context, forc
 	if !force && !w.lastRuntimeProjectionPersistAt.IsZero() && now.Sub(w.lastRuntimeProjectionPersistAt) < runtimeProjectionPersistMinInterval {
 		return
 	}
-	if err := w.persist(ctx, w.persistedInfrastructureState, w.persistedDeploymentPlan); err != nil {
+	if err := persistRunState(ctx, w.req.GetTestRun().GetId(), w.state, nil, nil); err != nil {
 		workflow.GetLogger(ctx).Warn("persist runtime projection", "run_id", w.req.GetTestRun().GetId(), "error", err)
+		return
 	}
+	w.lastRuntimeProjectionPersistAt = now
 }
 
 func isProjectionForceStage(stage *workflowpb.Stage) bool {

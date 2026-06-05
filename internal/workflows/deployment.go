@@ -445,9 +445,6 @@ func executeComponentDeployment(ctx workflow.Context, runID string, plan *deploy
 		if err := appendDeploymentStepLog(ctx, runID, component, step, monitor.Stream_STREAM_STDOUT, "started "+agentStepDescription(step)); err != nil {
 			return err
 		}
-		if err := persistDeploymentPlan(ctx, runID, plan); err != nil {
-			return err
-		}
 		if err := executeAgentStep(activityCtx, step); err != nil {
 			stepFinished := timestamppb.New(workflow.Now(ctx))
 			step.Status = common.Status_STATUS_FAILED
@@ -464,9 +461,6 @@ func executeComponentDeployment(ctx workflow.Context, runID string, plan *deploy
 		step.Status = common.Status_STATUS_DEPLOYED
 		emitStageUpdate(ctx, runID, agentStepStage(component, step, uint32(stepIndex+1), step.GetStatus(), stepStarted, stepFinished, ""))
 		if err := appendDeploymentStepLog(ctx, runID, component, step, monitor.Stream_STREAM_STDOUT, "completed "+agentStepDescription(step)); err != nil {
-			return err
-		}
-		if err := persistDeploymentPlan(ctx, runID, plan); err != nil {
 			return err
 		}
 	}
