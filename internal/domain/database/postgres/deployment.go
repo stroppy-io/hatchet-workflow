@@ -179,6 +179,21 @@ func postgresEngineComponent(
 				File:          postgresPgpassFile(component.GetId()),
 			})
 		}
+	case postgresRolePgbouncer:
+		ec.ExtraFiles = append(ec.ExtraFiles, deploymentbuilder.EngineFile{
+			StepID:        "045_write_users",
+			StepOrder:     45,
+			ArtifactName:  "users.txt",
+			ArtifactLabel: "pgbouncer_users",
+			File: &common.File{
+				Info: &common.File_Info{
+					Path:          deploymentbuilder.ConfigDir(component.GetId()) + "/users.txt",
+					Mode:          0644,
+					CreateParents: true,
+				},
+				Content: &common.File_Text{Text: `"postgres" ""` + "\n"},
+			},
+		})
 	}
 	return ec
 }
@@ -263,7 +278,7 @@ func postgresServiceUnit(componentID, role, configDir string, wiring postgresWir
 	case postgresRoleHaproxy:
 		return deploymentbuilder.SimpleServiceUnit(componentID, role, configDir, "/usr/sbin/haproxy -Ws -f "+deploymentbuilder.ShellQuote(cfgPath))
 	case postgresRolePgbouncer:
-		return deploymentbuilder.SimpleServiceUnit(componentID, role, configDir, "/usr/sbin/pgbouncer "+deploymentbuilder.ShellQuote(cfgPath))
+		return deploymentbuilder.SimpleServiceUnit(componentID, role, configDir, "/usr/sbin/runuser -u postgres -- /usr/sbin/pgbouncer "+deploymentbuilder.ShellQuote(cfgPath))
 	case postgresRolePatroni:
 		return deploymentbuilder.SimpleServiceUnit(componentID, role, configDir, "/usr/bin/patroni "+deploymentbuilder.ShellQuote(cfgPath))
 	case postgresRoleEtcd:
@@ -355,7 +370,7 @@ ExecStartPre=/bin/mkdir -p %s %s
 ExecStartPre=/bin/chown -R postgres:postgres %s %s
 ExecStartPre=/bin/chown postgres:postgres %s
 ExecStartPre=/bin/chmod 0600 %s
-ExecStartPre=/bin/sh -ec "test -s %s/PG_VERSION || /usr/sbin/runuser -u postgres -- env PGPASSFILE=%s \"$$(find /usr/lib/postgresql -path '*/bin/pg_basebackup' | sort -V | tail -n1)\" -h %s -p %d -U %s -w -D %s -R"
+ExecStartPre=/bin/sh -ec "test -s %s/PG_VERSION || for i in $$(seq 1 30); do /usr/sbin/runuser -u postgres -- env PGPASSFILE=%s \"$$(find /usr/lib/postgresql -path '*/bin/pg_basebackup' | sort -V | tail -n1)\" -h %s -p %d -U %s -w -D %s -R && break; sleep 3; done; test -s %s/PG_VERSION && chmod 0700 %s"
 ExecStart=/bin/sh -ec "exec /usr/sbin/runuser -u postgres -- \"$$(find /usr/lib/postgresql -path '*/bin/postgres' | sort -V | tail -n1)\" -D %s -c config_file=%s -c hba_file=%s -c listen_addresses='*' -c port=5432 -c unix_socket_directories=%s"
 Restart=always
 RestartSec=2
@@ -380,6 +395,8 @@ WantedBy=multi-user.target
 		host,
 		port,
 		deploymentbuilder.ShellQuote(postgresReplicationUser),
+		deploymentbuilder.ShellQuote(dataDir),
+		deploymentbuilder.ShellQuote(dataDir),
 		deploymentbuilder.ShellQuote(dataDir),
 		deploymentbuilder.ShellQuote(dataDir),
 		deploymentbuilder.ShellQuote(configPath),
@@ -491,7 +508,7 @@ func postgresHBAFile(componentID, role string) *common.File {
 			Content: &common.File_Text{Text: `local all all trust
 host all all 127.0.0.1/32 trust
 host all all ::1/128 trust
-host all all 0.0.0.0/0 scram-sha-256
+host all all 0.0.0.0/0 trust
 host replication ` + postgresReplicationUser + ` 10.0.0.0/8 scram-sha-256
 host replication ` + postgresReplicationUser + ` 172.16.0.0/12 scram-sha-256
 host replication ` + postgresReplicationUser + ` 192.168.0.0/16 scram-sha-256
@@ -504,13 +521,16 @@ host replication ` + postgresReplicationUser + ` 192.168.0.0/16 scram-sha-256
 
 func postgresHealthcheckCommand(component *topologypb.Component) string {
 	service := deploymentbuilder.ShellQuote(deploymentbuilder.ServiceName(component.GetId()))
+	wrapRetry := func(cmd string) string {
+		return "for i in $(seq 1 60); do if " + cmd + "; then exit 0; fi; sleep 3; done; exit 1"
+	}
 	switch component.GetRole() {
 	case postgresRoleMaster, postgresRoleReplica:
-		return "systemctl is-active --quiet " + service + " && pg_isready -h 127.0.0.1 -p 5432"
+		return wrapRetry("systemctl is-active --quiet " + service + " && pg_isready -h 127.0.0.1 -p 5432")
 	case postgresRolePgbouncer:
-		return "systemctl is-active --quiet " + service + " && pg_isready -h 127.0.0.1 -p 6432"
+		return wrapRetry("systemctl is-active --quiet " + service + " && pg_isready -h 127.0.0.1 -p 6432")
 	default:
-		return "systemctl is-active --quiet " + service
+		return wrapRetry("systemctl is-active --quiet " + service)
 	}
 }
 
@@ -562,19 +582,19 @@ func postgresDefaultConfigFile(component *topologypb.Component, database *domain
 			Mode:          0644,
 			CreateParents: true,
 		},
-		Content: &common.File_Text{Text: postgresConfigContentForRole(database, component.GetRole(), wiring)},
+		Content: &common.File_Text{Text: postgresConfigContentForRole(component.GetId(), database, component.GetRole(), wiring)},
 	}
 }
 
-func postgresConfigContentForRole(database *domain.Database, role string, wiring postgresWiring) string {
+func postgresConfigContentForRole(cid string, database *domain.Database, role string, wiring postgresWiring) string {
 	options := postgresRoleOptions(database, role)
 	switch role {
 	case postgresRoleHaproxy:
 		return postgresHaproxyConfig(options, wiring.backends)
 	case postgresRolePgbouncer:
-		return postgresPgbouncerConfig(options)
+		return postgresPgbouncerConfig(cid, options)
 	case postgresRolePatroni:
-		return postgresPatroniConfig(options, wiring.etcdClients)
+		return postgresPatroniConfig(cid, options, wiring.etcdClients)
 	default:
 		return configContent(role, options)
 	}
@@ -599,9 +619,9 @@ func postgresHaproxyConfig(options map[string]string, backends []pgServer) strin
 
 // postgresPgbouncerConfig renders pgbouncer.ini pooling the colocated postgres
 // instance on the same host (127.0.0.1:5432).
-func postgresPgbouncerConfig(options map[string]string) string {
+func postgresPgbouncerConfig(componentID string, options map[string]string) string {
 	var b strings.Builder
-	b.WriteString("[databases]\n* = host=127.0.0.1 port=5432\n\n[pgbouncer]\nlisten_addr = 0.0.0.0\nlisten_port = 6432\n")
+	fmt.Fprintf(&b, "[databases]\n* = host=127.0.0.1 port=5432\n\n[pgbouncer]\nlisten_addr = 0.0.0.0\nlisten_port = 6432\nauth_type = trust\nauth_file = %s/users.txt\n", deploymentbuilder.ConfigDir(componentID))
 	if extra := renderOptions(options, " = "); extra != "" {
 		b.WriteString(extra)
 	}
@@ -609,9 +629,19 @@ func postgresPgbouncerConfig(options map[string]string) string {
 }
 
 // postgresPatroniConfig renders a patroni.yml with the resolved etcd hosts.
-func postgresPatroniConfig(options map[string]string, etcdClients []string) string {
+func postgresPatroniConfig(componentID string, options map[string]string, etcdClients []string) string {
+	baseID := strings.TrimSuffix(componentID, "-patroni")
 	var b strings.Builder
-	b.WriteString("scope: stroppy-cluster\n")
+	fmt.Fprintf(&b, "scope: stroppy-cluster\nname: %s\n", componentID)
+	b.WriteString("restapi:\n  listen: 0.0.0.0:8008\n")
+	b.WriteString("postgresql:\n")
+	b.WriteString("  listen: 0.0.0.0:5432\n")
+	b.WriteString("  bin_dir: /usr/lib/postgresql/14/bin\n")
+	fmt.Fprintf(&b, "  data_dir: %s\n", postgresDataDir(baseID))
+	fmt.Fprintf(&b, "  config_dir: %s\n", deploymentbuilder.ConfigDir(baseID))
+	fmt.Fprintf(&b, "  pgpass: %s\n", postgresPgpassPath(baseID))
+	b.WriteString("  parameters:\n    listen_addresses: '*'\n    port: 5432\n")
+	b.WriteString("  use_pg_rewind: false\n")
 	if len(etcdClients) > 0 {
 		b.WriteString("etcd3:\n  hosts:\n")
 		for _, client := range etcdClients {

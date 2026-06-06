@@ -193,6 +193,7 @@ services:
       STROPPY_BINARY_CACHE_DIR: /var/lib/stroppy-cache/binaries
       STROPPY_APT_CACHE_BACKEND: apt-cacher-ng:3142
       STROPPY_UPSTREAM: https://github.com/stroppy-io/stroppy/releases/download/v5.1.2/stroppy_linux_amd64.tar.gz
+      QUOTA_REFRESH_INTERVAL: 0
       YC_TOKEN: ${YC_TOKEN:-}
       YC_CLOUD_ID: ${YC_CLOUD_ID:-}
       YC_FOLDER_ID: ${YC_FOLDER_ID:-}

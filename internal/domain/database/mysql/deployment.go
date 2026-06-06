@@ -138,7 +138,7 @@ func mysqlEngineComponent(
 		DefaultConfigFile: mysqlDefaultConfigFile(component, database, mysqlWiring{}),
 		InstallCommands:   mysqlInstallCommands(component, dbPackage),
 		ServiceFile:       mysqlServiceFile(component.GetId(), component.GetRole(), configDir, database, wiring),
-		Healthcheck:       "systemctl is-active --quiet " + deploymentbuilder.ShellQuote(deploymentbuilder.ServiceName(component.GetId())),
+		Healthcheck:       "for i in $(seq 1 60); do if systemctl is-active --quiet " + deploymentbuilder.ShellQuote(deploymentbuilder.ServiceName(component.GetId())) + "; then exit 0; fi; sleep 3; done; exit 1",
 	}
 
 	// A replica wires its replication source through a SQL bootstrap applied
@@ -181,7 +181,9 @@ func mysqlInstallCommands(component *topologypb.Component, dbPackage *domain.Pac
 		}
 		return commands
 	case mysqlRoleProxysql:
-		return []string{"apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y proxysql"}
+		return []string{
+			"command -v proxysql || (apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y wget gpg && wget -qO /tmp/proxysql.deb 'https://github.com/sysown/proxysql/releases/download/v2.5.5/proxysql_2.5.5-ubuntu22_amd64.deb' && dpkg -i /tmp/proxysql.deb && rm -f /tmp/proxysql.deb)",
+		}
 	default:
 		return []string{"true"}
 	}
@@ -206,9 +208,29 @@ func mysqlServiceUnit(componentID, role, configDir string, database *domain.Data
 			}
 		}
 
+		isMariaDB := database.GetKind() == domain.Database_KIND_MARIADB
+		initCmd := "/usr/sbin/mysqld --initialize-insecure --datadir=%s --user=mysql"
+		if isMariaDB {
+			initCmd = "mysql_install_db --datadir=%s --user=mysql"
+		}
 		execStartPost := ""
+		if role == mysqlRolePrimary {
+			mysqlClient := "mysql"
+			if isMariaDB {
+				mysqlClient = "mariadb"
+			}
+			execStartPost = fmt.Sprintf("ExecStartPost=/bin/sh -ec \"for i in $$(seq 1 30); do if %s -u root -e 'SELECT 1' >/dev/null 2>&1; then %s -u root -e \\\"CREATE USER IF NOT EXISTS 'root'@'%%%%'; GRANT ALL PRIVILEGES ON *.* TO 'root'@'%%%%' WITH GRANT OPTION; CREATE DATABASE IF NOT EXISTS stroppy; FLUSH PRIVILEGES;\\\" && exit 0; fi; sleep 1; done; exit 1\"\n", mysqlClient, mysqlClient)
+		}
 		if role == mysqlRoleReplica && wiring.primaryAddr != "" {
-			execStartPost = "ExecStartPost=/bin/sh -c 'mysql < " + deploymentbuilder.ShellQuote(configDir+"/replication.sql") + " || true'\n"
+			mysqlClient := "mysql"
+			if isMariaDB {
+				mysqlClient = "mariadb"
+			}
+			execStartPost += fmt.Sprintf("ExecStartPost=/bin/sh -c '%s < %s || true'\n", mysqlClient, deploymentbuilder.ShellQuote(configDir+"/replication.sql"))
+		}
+		socketDir := ""
+		if isMariaDB {
+			socketDir = "ExecStartPre=/bin/sh -ec \"mkdir -p /run/mysqld && chown mysql:mysql /run/mysqld\"\n"
 		}
 		return fmt.Sprintf(`[Unit]
 Description=Stroppy Cloud MySQL %s component %s
@@ -220,7 +242,7 @@ Type=simple
 EnvironmentFile=%s/topology.env
 ExecStartPre=/bin/mkdir -p %s
 ExecStartPre=/bin/chown -R mysql:mysql %s
-ExecStartPre=/bin/sh -ec "test -d %s/mysql || /usr/sbin/mysqld --initialize-insecure --datadir=%s --user=mysql"
+%sExecStartPre=/bin/sh -ec "test -d %s/mysql || `+initCmd+`"
 ExecStart=%s
 %sRestart=always
 RestartSec=2
@@ -233,6 +255,7 @@ WantedBy=multi-user.target
 			configDir,
 			deploymentbuilder.ShellQuote(dataDir),
 			deploymentbuilder.ShellQuote(dataDir),
+			socketDir,
 			deploymentbuilder.ShellQuote(dataDir),
 			deploymentbuilder.ShellQuote(dataDir),
 			execStart,
@@ -289,11 +312,12 @@ func mysqlDefaultConfigFile(component *topologypb.Component, database *domain.Da
 
 func mysqlConfigContentForRole(database *domain.Database, componentID, role string, wiring mysqlWiring) string {
 	params := database.GetParams().GetMysql()
+	isMariaDB := database.GetKind() == domain.Database_KIND_MARIADB
 	switch role {
 	case mysqlRolePrimary:
-		return mysqlConfigContent(params, componentID, role, params.GetPrimaryOptions())
+		return mysqlConfigContent(params, componentID, role, params.GetPrimaryOptions(), isMariaDB)
 	case mysqlRoleReplica:
-		return mysqlConfigContent(params, componentID, role, params.GetReplicaOptions())
+		return mysqlConfigContent(params, componentID, role, params.GetReplicaOptions(), isMariaDB)
 	case mysqlRoleProxysql:
 		return mysqlProxysqlConfig(params.GetProxysqlOptions(), wiring.backends)
 	default:
@@ -320,6 +344,9 @@ func mysqlProxysqlConfig(options map[string]string, backends []mysqlBackend) str
 		}
 		fmt.Fprintf(&b, "  { address=\"%s\" , port=%d , hostgroup=%d },\n", host, port, hostgroup)
 	}
+	b.WriteString(")\n")
+	b.WriteString("mysql_users=\n(\n")
+	b.WriteString("  { username=\"root\" , default_hostgroup=0 , active=1 },\n")
 	b.WriteString(")\n")
 	if len(options) > 0 {
 		keys := sortedKeys(options)

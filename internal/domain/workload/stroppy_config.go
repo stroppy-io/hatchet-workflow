@@ -65,7 +65,7 @@ func (p protocolMeta) formatURL(host, port string) string {
 
 var workloadProtocols = map[domain.Workload_Protocol]protocolMeta{
 	domain.Workload_PROTOCOL_PG:        {driverType: "postgres", port: 5432, urlScheme: "postgresql", urlTail: "/postgres?sslmode=disable"},
-	domain.Workload_PROTOCOL_MYSQL:     {driverType: "mysql", port: 3306, urlTail: "/"},
+	domain.Workload_PROTOCOL_MYSQL:     {driverType: "mysql", port: 3306, urlTail: "/stroppy"},
 	domain.Workload_PROTOCOL_PICODATA:  {driverType: "picodata", port: 5432, urlScheme: "postgres", urlTail: "?sslmode=disable"},
 	domain.Workload_PROTOCOL_YDB_GRPC:  {driverType: "ydb", port: 2136, urlScheme: "grpc", urlTail: "/Root/testdb"},
 	domain.Workload_PROTOCOL_YDB_GRPCS: {driverType: "ydb", port: 2135, urlScheme: "grpcs"},

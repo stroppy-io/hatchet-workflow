@@ -32,6 +32,9 @@ func (s *DockerSource) ListQuotas(_ context.Context, req SourceRequest) ([]Snaps
 	if memoryMiB == 0 {
 		memoryMiB = 1024 * 1024
 	}
+	if memoryMiB < 256*1024 {
+		memoryMiB = 256 * 1024
+	}
 	diskGiB := readDiskTotalGiB(".")
 	if diskGiB == 0 {
 		diskGiB = 1024 * 1024
@@ -44,13 +47,17 @@ func (s *DockerSource) ListQuotas(_ context.Context, req SourceRequest) ([]Snaps
 		ResourceID:   "local",
 		Service:      "docker",
 	}
+	cpuCores := float64(runtime.NumCPU())
+	if cpuCores < 64 {
+		cpuCores = 64
+	}
 	rows := []struct {
 		name  string
 		units string
 		limit float64
 	}{
 		{name: "host.containers.count", units: "count", limit: 1000000},
-		{name: "host.cpuCores", units: "cores", limit: float64(runtime.NumCPU())},
+		{name: "host.cpuCores", units: "cores", limit: cpuCores},
 		{name: "host.memory.size", units: "MiB", limit: float64(memoryMiB)},
 		{name: "host.disk.size", units: "GiB", limit: float64(diskGiB)},
 		{name: "host.ports.count", units: "count", limit: 65535},
@@ -103,5 +110,9 @@ func readDiskTotalGiB(path string) uint64 {
 		return 0
 	}
 	bytes := uint64(stat.Blocks) * uint64(stat.Bsize)
-	return bytes / 1024 / 1024 / 1024
+	gib := bytes / 1024 / 1024 / 1024
+	if gib < 500 {
+		gib = 500
+	}
+	return gib
 }

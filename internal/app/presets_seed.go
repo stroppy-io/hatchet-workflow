@@ -118,8 +118,8 @@ func builtinDatabasePresets(tenantID, authorID string) []*models.DatabasePresetR
 			Replicas:        2,
 			Proxysql:        1,
 			SemiSync:        true,
-			PrimaryOptions:  map[string]string{"innodb_buffer_pool_size": "25%", "max_connections": "200"},
-			ReplicaOptions:  map[string]string{"innodb_buffer_pool_size": "25%", "max_connections": "200"},
+			PrimaryOptions:  map[string]string{"innodb_buffer_pool_size": "256M", "max_connections": "200"},
+			ReplicaOptions:  map[string]string{"innodb_buffer_pool_size": "256M", "max_connections": "200"},
 			ProxysqlOptions: map[string]string{"threads": "4", "max_connections": "2048"},
 		}
 	}
@@ -128,8 +128,8 @@ func builtinDatabasePresets(tenantID, authorID string) []*models.DatabasePresetR
 			Replicas:         2,
 			Proxysql:         2,
 			GroupReplication: true,
-			PrimaryOptions:   map[string]string{"innodb_buffer_pool_size": "25%", "max_connections": "500"},
-			ReplicaOptions:   map[string]string{"innodb_buffer_pool_size": "25%", "max_connections": "500"},
+			PrimaryOptions:   map[string]string{"innodb_buffer_pool_size": "256M", "max_connections": "500"},
+			ReplicaOptions:   map[string]string{"innodb_buffer_pool_size": "256M", "max_connections": "500"},
 			ProxysqlOptions:  map[string]string{"threads": "4", "max_connections": "2048"},
 		}
 	}

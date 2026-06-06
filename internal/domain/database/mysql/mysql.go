@@ -144,17 +144,23 @@ func mysqlServerID(componentID string) uint32 {
 
 // mysqlConfigContent renders a my.cnf [mysqld] section: deterministic defaults
 // plus the role options merged on top.
-func mysqlConfigContent(input *domain.MySqlParams, componentID, role string, options map[string]string) string {
+func mysqlConfigContent(input *domain.MySqlParams, componentID, role string, options map[string]string, isMariaDB bool) string {
 	merged := map[string]string{
-		"server_id":                strconv.FormatUint(uint64(mysqlServerID(componentID)), 10),
-		"datadir":                  "/var/lib/stroppy-cloud/" + componentID,
-		"bind_address":             "0.0.0.0",
-		"port":                     strconv.Itoa(mysqlPort),
-		"log_bin":                  "binlog",
-		"gtid_mode":                "ON",
-		"enforce_gtid_consistency": "ON",
+		"server_id":    strconv.FormatUint(uint64(mysqlServerID(componentID)), 10),
+		"datadir":      "/var/lib/stroppy-cloud/" + componentID,
+		"bind_address": "0.0.0.0",
+		"port":         strconv.Itoa(mysqlPort),
+		"log_bin":      "binlog",
+	}
+	if isMariaDB {
+		merged["gtid_domain_id"] = strconv.FormatUint(uint64(mysqlServerID(componentID)), 10)
+		merged["log_bin_trust_function_creators"] = "1"
+	} else {
+		merged["gtid_mode"] = "ON"
+		merged["enforce_gtid_consistency"] = "ON"
 	}
 	if input.GetSemiSync() && !input.GetGroupReplication() {
+		merged["plugin_load_add"] = "semisync_master.so;semisync_slave.so"
 		merged["rpl_semi_sync_master_enabled"] = "1"
 		merged["rpl_semi_sync_slave_enabled"] = "1"
 	}

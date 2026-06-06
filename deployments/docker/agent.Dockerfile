@@ -12,6 +12,7 @@ ARG VMAGENT_VERSION=v1.139.0
 ARG NODE_EXPORTER_VERSION=1.9.1
 ARG MYSQLD_EXPORTER_VERSION=0.19.0
 ARG STROPPY_VERSION=5.1.2
+ARG PROXYSQL_VERSION=2.5.5
 
 RUN curl -fsSL "https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/${VMAGENT_VERSION}/vmutils-linux-amd64-${VMAGENT_VERSION}.tar.gz" \
     | tar xzf - -C /tmp \
@@ -29,6 +30,10 @@ RUN curl -fsSL "https://github.com/VictoriaMetrics/VictoriaMetrics/releases/down
     | tar xzf - -C /tmp \
     && cp /tmp/stroppy /usr/local/bin/stroppy \
     && chmod +x /usr/local/bin/stroppy \
+    && curl -fsSL "https://github.com/sysown/proxysql/releases/download/v${PROXYSQL_VERSION}/proxysql_${PROXYSQL_VERSION}-ubuntu22_amd64.deb" \
+        -o /tmp/proxysql.deb \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends /tmp/proxysql.deb || true \
+    && rm -f /tmp/proxysql.deb \
     && rm -rf /tmp/* \
     && chmod 1777 /tmp
 
