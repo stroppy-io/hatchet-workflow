@@ -1422,7 +1422,7 @@ export function defaultYandexSettings(): YandexSettingsVM {
     folderId: "",
     zone: Yandex_Settings_Zone.RU_CENTRAL1_A,
     networkName: "stroppy-net",
-    subnetCidr: "10.0.0.0/24",
+    subnetCidr: "10.0.0.0/8",
     platformId: Yandex_Settings_PlatformId.STANDARD_V3,
     imageId: "",
     assignPublicIp: true,

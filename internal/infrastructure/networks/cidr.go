@@ -8,6 +8,8 @@ import (
 	"sort"
 )
 
+const runCIDRBits = 20
+
 func SelectRunCIDR(runID, baseCIDR string, usedCIDRs []string) (string, error) {
 	if baseCIDR == "" {
 		baseCIDR = defaultYandexCIDRPool
@@ -20,19 +22,15 @@ func SelectRunCIDR(runID, baseCIDR string, usedCIDRs []string) (string, error) {
 	if !base.Addr().Is4() {
 		return "", fmt.Errorf("network cidr %q must be IPv4", baseCIDR)
 	}
-	if base.Bits() > 28 {
-		return "", fmt.Errorf("network cidr %q must not be narrower than /28", baseCIDR)
+	if base.Bits() > runCIDRBits {
+		return "", fmt.Errorf("network cidr %q must not be narrower than /%d for run allocations", baseCIDR, runCIDRBits)
 	}
 
 	used, err := parseCIDRs(usedCIDRs)
 	if err != nil {
 		return "", err
 	}
-	candidateBits := base.Bits()
-	if candidateBits < 16 {
-		candidateBits = 16
-	}
-	candidates, err := childPrefixes(base, candidateBits)
+	candidates, err := childPrefixes(base, runCIDRBits)
 	if err != nil {
 		return "", err
 	}
@@ -50,7 +48,7 @@ func SelectRunCIDR(runID, baseCIDR string, usedCIDRs []string) (string, error) {
 			return candidate.String(), nil
 		}
 	}
-	return "", fmt.Errorf("no free CIDR left in %s", base.String())
+	return "", fmt.Errorf("no free /%d CIDR left in %s; choose a wider non-overlapping subnet_cidr such as 10.0.0.0/8, 172.16.0.0/12, or 192.168.0.0/16, or remove stale provider subnets/reservations", runCIDRBits, base.String())
 }
 
 func ZoneCIDRs(baseCIDR string, zones []string) (map[string]string, error) {

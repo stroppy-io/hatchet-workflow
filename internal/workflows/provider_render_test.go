@@ -160,6 +160,48 @@ func TestRenderTerraformInputUsesReservedNetworkCIDR(t *testing.T) {
 	}
 }
 
+func TestRenderTerraformInputNormalizesStandardV3Memory(t *testing.T) {
+	plan := yandexInfrastructurePlan(t)
+	plan.GetSettings().GetYandex().PlatformId = deploymentpb.Yandex_Settings_PLATFORM_ID_STANDARD_V3
+	machine := plan.GetMachines()[0]
+	machine.GetYandex().Cores = 8
+	machine.GetYandex().MemoryGb = 12
+
+	tfInput, err := renderTerraformInput(&workflowpb.RenderTerraformVariablesWorkflowRequest{
+		RunId:          "run-1",
+		Plan:           plan,
+		AgentBootstrap: testAgentBootstrap(),
+	})
+	if err != nil {
+		t.Fatalf("render terraform input: %v", err)
+	}
+
+	values := tfInput.GetTfvars().GetValues().AsMap()
+	compute := values["compute"].(map[string]any)
+	vms := compute["vms"].(map[string]any)
+	vm := vms[yandexResourceName("run-1", machine.GetNodeId())].(map[string]any)
+	switch got := vm["memory_gb"].(type) {
+	case float64:
+		if got != 16 {
+			t.Fatalf("memory_gb = %v, want 16", got)
+		}
+	case uint64:
+		if got != 16 {
+			t.Fatalf("memory_gb = %v, want 16", got)
+		}
+	case int:
+		if got != 16 {
+			t.Fatalf("memory_gb = %v, want 16", got)
+		}
+	case string:
+		if got != "16" {
+			t.Fatalf("memory_gb = %v, want 16", got)
+		}
+	default:
+		t.Fatalf("memory_gb has unexpected type %T: %v", got, got)
+	}
+}
+
 func dockerFileByPath(files []*deploymentpb.Docker_File, path string) *deploymentpb.Docker_File {
 	for _, file := range files {
 		if file.GetPath() == path {

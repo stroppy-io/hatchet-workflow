@@ -174,6 +174,7 @@ func yandexInput(runID string, plan *deploymentpb.InfrastructurePlan, settings *
 			clone.UserData = userData
 		}
 		clone.PublicIp = settings.GetAssignPublicIp()
+		clone.MemoryGb = normalizeYandexMemoryGB(platformID, clone.GetCores(), clone.GetMemoryGb())
 		clone.BootDiskGb = uint64(roundIOM3GB(int(clone.GetBootDiskGb()), clone.GetBootDiskType()))
 		for _, disk := range clone.GetSecondaryDisks() {
 			disk.SizeGb = uint32(roundIOM3GB(int(disk.GetSizeGb()), disk.GetType()))
@@ -232,6 +233,23 @@ func yandexInput(runID string, plan *deploymentpb.InfrastructurePlan, settings *
 		return nil, err
 	}
 	return input, nil
+}
+
+func normalizeYandexMemoryGB(platformID string, cores uint32, memoryGB uint64) uint64 {
+	if memoryGB == 0 || cores == 0 {
+		return memoryGB
+	}
+	switch platformID {
+	case "standard-v3":
+		step := uint64(cores)
+		if memoryGB < step {
+			return step
+		}
+		if rem := memoryGB % step; rem != 0 {
+			return memoryGB + step - rem
+		}
+	}
+	return memoryGB
 }
 
 func planWithReservedNetworkCIDR(plan *deploymentpb.InfrastructurePlan, cidr string) *deploymentpb.InfrastructurePlan {
