@@ -53,6 +53,38 @@ func TestCancelTestRunFinalizesWhenWorkflowIsNotFound(t *testing.T) {
 	}
 }
 
+func TestCancelTestRunFinalizesAlreadyCancellingWhenWorkflowIsNotFound(t *testing.T) {
+	repo := &fakeTestRunRepo{
+		run: &models.TestRunRecord{
+			Entity: &common.Entity{Id: "run-1", TenantId: "tenant-1"},
+			Status: common.Status_STATUS_CANCELLING,
+		},
+	}
+	svc := NewTestRunService(TestRunDeps{
+		Runs:      repo,
+		Workflows: fakeMissingWorkflows{},
+		Tx:        noopTrm{},
+	})
+
+	resp, err := svc.CancelTestRun(context.Background(), &api.CancelTestRunRequest{
+		TenantId: "tenant-1",
+		Id:       "run-1",
+	})
+	if err != nil {
+		t.Fatalf("cancel test run: %v", err)
+	}
+
+	if got := resp.GetRun().GetStatus(); got != common.Status_STATUS_CANCELLED {
+		t.Fatalf("status = %s, want %s", got, common.Status_STATUS_CANCELLED)
+	}
+	if got := repo.run.GetStatus(); got != common.Status_STATUS_CANCELLED {
+		t.Fatalf("persisted status = %s, want %s", got, common.Status_STATUS_CANCELLED)
+	}
+	if repo.updates != 1 {
+		t.Fatalf("updates = %d, want 1", repo.updates)
+	}
+}
+
 func TestStartTestRunMarksRecordFailedWhenWorkflowLaunchFails(t *testing.T) {
 	repo := &fakeTestRunRepo{}
 	svc := NewTestRunService(TestRunDeps{

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 
+	enumspb "go.temporal.io/api/enums/v1"
 	"go.temporal.io/api/serviceerror"
 	"go.temporal.io/sdk/client"
 
@@ -23,6 +24,7 @@ import (
 // the per-run TestWorkflow (deduplicated by the deterministic id derived from the
 // run id) and cancels a running one.
 type TestWorkflows struct {
+	client      client.Client
 	tc          workflowpb.TestServiceClient
 	bootstrap   settings.AgentBootstrapSource
 	agentTokens AgentTokenIssuer
@@ -39,6 +41,7 @@ func NewTestWorkflows(c client.Client, bootstrap settings.AgentBootstrapSource, 
 		log = slog.Default()
 	}
 	return &TestWorkflows{
+		client:      c,
 		tc:          workflowpb.NewTestServiceClient(c, workflowpb.NewTestServiceClientOptions().WithLogger(log)),
 		bootstrap:   bootstrap,
 		agentTokens: agentTokens,
@@ -103,11 +106,25 @@ func (w *TestWorkflows) testWorkflowRequest(ctx context.Context, run *models.Tes
 // not running (already terminal / never started) is reported as
 // derrors.ErrNotFound so the handler treats it as a no-op.
 func (w *TestWorkflows) CancelTest(ctx context.Context, runID string) error {
-	if err := w.tc.CancelWorkflow(ctx, testWorkflowID(runID), ""); err != nil {
+	workflowID := testWorkflowID(runID)
+	if err := w.tc.CancelWorkflow(ctx, workflowID, ""); err != nil {
 		if isWorkflowNotFound(err) {
 			return derrors.ErrNotFound
 		}
 		return err
+	}
+	if w.client == nil {
+		return nil
+	}
+	desc, err := w.client.DescribeWorkflowExecution(ctx, workflowID, "")
+	if err != nil {
+		if isWorkflowNotFound(err) {
+			return derrors.ErrNotFound
+		}
+		return err
+	}
+	if desc.GetWorkflowExecutionInfo().GetStatus() != enumspb.WORKFLOW_EXECUTION_STATUS_RUNNING {
+		return derrors.ErrNotFound
 	}
 	return nil
 }
