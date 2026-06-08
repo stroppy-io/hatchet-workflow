@@ -49,11 +49,8 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Link, useNavigate, useSearchParams, useTenantSlug } from "@/lib/router";
-import {
-  fallbackAuthorDisplay,
-  resolveAuthorDisplay,
-  type AuthorDisplay,
-} from "@/lib/author-display";
+import { useAuthorDisplays } from "@/hooks/useAuthorDisplays";
+import { fallbackAuthorDisplay } from "@/lib/author-display";
 import { Avatar } from "@/components/Avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -668,9 +665,16 @@ export function Suites() {
     null,
   );
   const [facets, setFacets] = useState<SuiteFacets>({ authorIds: [] });
-  const [authorDisplays, setAuthorDisplays] = useState<Record<string, AuthorDisplay>>({});
-  const authorDisplaysRef = useRef<Record<string, AuthorDisplay>>({});
   const tokenStackRef = useRef<string[]>([]);
+  const authorIds = useMemo(
+    () => [
+      ...facets.authorIds,
+      ...suites.map((suite) => suite.authorId),
+      ...(query.authorIds ?? []),
+    ],
+    [facets.authorIds, suites, query.authorIds],
+  );
+  const authorDisplays = useAuthorDisplays(authorIds);
 
   const popoverOpen = openFilterColumnId !== null || openActionSuiteId !== null;
   const handleFilterOpenChange = useCallback(
@@ -678,30 +682,6 @@ export function Suites() {
       setOpenFilterColumnId(open ? columnId : (cur) => (cur === columnId ? null : cur));
     },
     [],
-  );
-
-  const rememberAuthorDisplays = useCallback((next: Record<string, AuthorDisplay>) => {
-    if (Object.keys(next).length === 0) return;
-    const merged = { ...authorDisplaysRef.current, ...next };
-    authorDisplaysRef.current = merged;
-    setAuthorDisplays(merged);
-  }, []);
-
-  const resolveAuthors = useCallback(
-    (ids: string[]) => {
-      const missing = [...new Set(ids.filter(Boolean))].filter(
-        (id) => !authorDisplaysRef.current[id],
-      );
-      if (missing.length === 0) return;
-      void Promise.all(
-        missing.map(async (id) => [id, await resolveAuthorDisplay(id)] as const),
-      ).then((entries) => {
-        const next: Record<string, AuthorDisplay> = {};
-        for (const [id, display] of entries) next[id] = display;
-        rememberAuthorDisplays(next);
-      });
-    },
-    [rememberAuthorDisplays],
   );
 
   const fetchSuites = useCallback(
@@ -729,7 +709,6 @@ export function Suites() {
         });
         setSuites(page.suites);
         setNextPageToken(page.nextPageToken);
-        resolveAuthors(page.suites.map((suite) => suite.authorId));
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load suites");
         setSuites([]);
@@ -755,7 +734,6 @@ export function Suites() {
       query.desc,
       query.pageSize,
       query.pageToken,
-      resolveAuthors,
     ],
   );
 
@@ -771,7 +749,6 @@ export function Suites() {
       .then((f) => {
         if (!cancelled) {
           setFacets(f);
-          resolveAuthors(f.authorIds);
         }
       })
       .catch(() => {
@@ -780,7 +757,7 @@ export function Suites() {
     return () => {
       cancelled = true;
     };
-  }, [slug, resolveAuthors]);
+  }, [slug]);
 
   useEffect(() => {
     if (query.refreshMs <= 0) return;
@@ -1042,7 +1019,7 @@ export function Suites() {
                     e.stopPropagation();
                     navigate(`/suites/${s.id}`);
                   }}
-                  className="flex flex-col gap-0.5 min-w-0 text-left group/name cursor-pointer"
+                  className="flex w-full max-w-full flex-col gap-0.5 min-w-0 text-left group/name cursor-pointer"
                 >
                   <span
                     className="block max-w-full text-xs text-primary group-hover/name:underline underline-offset-2 truncate"
@@ -1058,7 +1035,7 @@ export function Suites() {
                   </span>
                   {s.description && (
                     <span
-                      className="font-mono text-[10px] text-zinc-500 truncate"
+                      className="block max-w-full whitespace-pre-wrap break-words text-[10px] leading-snug text-zinc-500 [overflow-wrap:anywhere]"
                       title={s.description}
                     >
                       {s.description}
@@ -1590,6 +1567,7 @@ export function Suites() {
       query.authorIds,
       query.favoritesFirst,
       authorSet,
+      authorDisplays,
       providerSet,
       scheduleSet,
       facets,
