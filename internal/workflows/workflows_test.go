@@ -115,6 +115,39 @@ func TestCompactRunStateForRuntimeProjectionStripsHeavyPayloads(t *testing.T) {
 	}
 }
 
+func TestGetRunStateQueryReturnsCompactProjection(t *testing.T) {
+	longText := strings.Repeat("x", maxRuntimeProjectionTextBytes+128)
+	w := &domainTestWorkflow{
+		state: &workflowpb.RunState{
+			Status: common.Status_STATUS_RUNNING,
+			Stages: []*workflowpb.Stage{
+				{
+					NodeExecutionId: "step/1",
+					Operation: &monitor.PipelineOperation{
+						Command:     &common.Cmd{},
+						CommandText: longText,
+					},
+				},
+			},
+		},
+	}
+
+	state, err := w.GetRunState()
+	if err != nil {
+		t.Fatalf("get run state: %v", err)
+	}
+	op := state.GetStages()[0].GetOperation()
+	if op.GetCommand() != nil {
+		t.Fatal("query returned raw command payload")
+	}
+	if got := len(op.GetCommandText()); got != maxRuntimeProjectionTextBytes {
+		t.Fatalf("command text length = %d, want %d", got, maxRuntimeProjectionTextBytes)
+	}
+	if w.state.GetStages()[0].GetOperation().GetCommand() == nil {
+		t.Fatal("query compacting mutated workflow state")
+	}
+}
+
 func TestTestWorkflowOrchestratesDeploymentStages(t *testing.T) {
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()

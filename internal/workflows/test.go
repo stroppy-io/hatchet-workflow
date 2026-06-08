@@ -732,7 +732,7 @@ func compactOutputs(outputs ...*monitor.PipelineOutput) []*monitor.PipelineOutpu
 }
 
 func (w *domainTestWorkflow) GetRunState() (*workflowpb.RunState, error) {
-	return proto.Clone(w.state).(*workflowpb.RunState), nil
+	return compactRunStateForRuntimeProjection(w.state), nil
 }
 
 func (w *domainTestWorkflow) listenStageUpdates(ctx workflow.Context) {
