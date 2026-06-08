@@ -1,5 +1,4 @@
-(stroppy_gateway) {
-	@grpc protocol grpc
+(stroppy_forward_proxy) {
 	@forward_proxy expression `{http.request.orig_uri}.startsWith("http://") || {http.request.orig_uri}.startsWith("https://")`
 
 	handle @forward_proxy {
@@ -8,6 +7,12 @@
 			header_up Host {http.request.host}
 		}
 	}
+}
+
+(stroppy_gateway) {
+	import stroppy_forward_proxy
+
+	@grpc protocol grpc
 
 	handle @grpc {
 		reverse_proxy h2c://{$CADDY_UPSTREAM:127.0.0.1:8080}
@@ -24,4 +29,8 @@
 
 {$CADDY_SITE_ADDRESS:http://localhost, http://caddy} {
 	import stroppy_gateway
+}
+
+https:// {
+	import stroppy_forward_proxy
 }
