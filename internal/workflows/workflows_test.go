@@ -68,6 +68,8 @@ func TestCompactRunStateForRuntimeProjectionStripsHeavyPayloads(t *testing.T) {
 	for i := 0; i < maxRuntimeProjectionOutputs+4; i++ {
 		outputs = append(outputs, &monitor.PipelineOutput{
 			Id:             fmt.Sprintf("output-%d", i),
+			Summary:        longText,
+			Target:         longText,
 			CommandText:    longText,
 			ContentPreview: longText,
 		})
@@ -77,10 +79,12 @@ func TestCompactRunStateForRuntimeProjectionStripsHeavyPayloads(t *testing.T) {
 		Stages: []*workflowpb.Stage{
 			{
 				NodeExecutionId: "step/1",
+				ErrorMessage:    longText,
 				Operation: &monitor.PipelineOperation{
 					Command:        &common.Cmd{},
 					File:           &common.File{},
 					Dir:            &common.Dir{},
+					Summary:        longText,
 					CommandText:    longText,
 					Argv:           longList,
 					ContentPreview: longText,
@@ -104,11 +108,23 @@ func TestCompactRunStateForRuntimeProjectionStripsHeavyPayloads(t *testing.T) {
 	if got := len(op.GetCommandText()); got != maxRuntimeProjectionTextBytes {
 		t.Fatalf("command text length = %d, want %d", got, maxRuntimeProjectionTextBytes)
 	}
+	if got := len(op.GetSummary()); got != maxRuntimeProjectionTextBytes {
+		t.Fatalf("operation summary length = %d, want %d", got, maxRuntimeProjectionTextBytes)
+	}
+	if got := len(compact.GetStages()[0].GetErrorMessage()); got != maxRuntimeProjectionTextBytes {
+		t.Fatalf("error message length = %d, want %d", got, maxRuntimeProjectionTextBytes)
+	}
 	if got := len(op.GetArgv()); got != maxRuntimeProjectionListItems {
 		t.Fatalf("argv items = %d, want %d", got, maxRuntimeProjectionListItems)
 	}
 	if got := len(compact.GetStages()[0].GetOutputs()); got != maxRuntimeProjectionOutputs {
 		t.Fatalf("outputs = %d, want %d", got, maxRuntimeProjectionOutputs)
+	}
+	if got := len(compact.GetStages()[0].GetOutputs()[0].GetSummary()); got != maxRuntimeProjectionTextBytes {
+		t.Fatalf("output summary length = %d, want %d", got, maxRuntimeProjectionTextBytes)
+	}
+	if got := len(compact.GetStages()[0].GetOutputs()[0].GetTarget()); got != maxRuntimeProjectionTextBytes {
+		t.Fatalf("output target length = %d, want %d", got, maxRuntimeProjectionTextBytes)
 	}
 	if got := len(compact.GetStages()[0].GetOutputs()[0].GetContentPreview()); got != maxRuntimeProjectionTextBytes {
 		t.Fatalf("output content preview length = %d, want %d", got, maxRuntimeProjectionTextBytes)
@@ -123,6 +139,7 @@ func TestGetRunStateQueryReturnsCompactProjection(t *testing.T) {
 			Stages: []*workflowpb.Stage{
 				{
 					NodeExecutionId: "step/1",
+					ErrorMessage:    longText,
 					Operation: &monitor.PipelineOperation{
 						Command:     &common.Cmd{},
 						CommandText: longText,
@@ -142,6 +159,9 @@ func TestGetRunStateQueryReturnsCompactProjection(t *testing.T) {
 	}
 	if got := len(op.GetCommandText()); got != maxRuntimeProjectionTextBytes {
 		t.Fatalf("command text length = %d, want %d", got, maxRuntimeProjectionTextBytes)
+	}
+	if got := len(state.GetStages()[0].GetErrorMessage()); got != maxRuntimeProjectionTextBytes {
+		t.Fatalf("error message length = %d, want %d", got, maxRuntimeProjectionTextBytes)
 	}
 	if w.state.GetStages()[0].GetOperation().GetCommand() == nil {
 		t.Fatal("query compacting mutated workflow state")

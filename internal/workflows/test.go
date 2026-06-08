@@ -952,10 +952,12 @@ func compactStageForRuntimeProjection(stage *workflowpb.Stage) {
 	if stage == nil {
 		return
 	}
+	stage.ErrorMessage = compactRuntimeProjectionText(stage.GetErrorMessage())
 	if op := stage.GetOperation(); op != nil {
 		op.Command = nil
 		op.File = nil
 		op.Dir = nil
+		op.Summary = compactRuntimeProjectionText(op.GetSummary())
 		op.CommandText = compactRuntimeProjectionText(op.GetCommandText())
 		op.Argv = compactRuntimeProjectionList(op.GetArgv())
 		op.ContentPreview = compactRuntimeProjectionText(op.GetContentPreview())
@@ -972,6 +974,8 @@ func compactStageForRuntimeProjection(stage *workflowpb.Stage) {
 		if output == nil {
 			continue
 		}
+		output.Summary = compactRuntimeProjectionText(output.GetSummary())
+		output.Target = compactRuntimeProjectionText(output.GetTarget())
 		output.CommandText = compactRuntimeProjectionText(output.GetCommandText())
 		output.ContentPreview = compactRuntimeProjectionText(output.GetContentPreview())
 	}
