@@ -108,6 +108,8 @@ func TestCloudInitUsesSameEnvContract(t *testing.T) {
 		"STROPPY_MACHINE_ID=node-1",
 		"AGENT_TASK_QUEUE=stroppy-agent-node-1",
 		"EnvironmentFile=/etc/stroppy/agent.env",
+		"ExecStartPre=/bin/sh -ec",
+		"--retry 30 --retry-delay 5 --retry-connrefused",
 		"ExecStart=/usr/local/bin/stroppy-agent agent",
 		"systemctl enable --now stroppy-agent",
 	} {

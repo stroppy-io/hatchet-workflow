@@ -166,6 +166,7 @@ write_files:
       [Service]
       Type=simple
       EnvironmentFile=/etc/stroppy/agent.env
+      ExecStartPre=/bin/sh -ec 'mkdir -p /usr/local/bin && curl -fsSL --retry 30 --retry-delay 5 --retry-connrefused -o {{.BinPath}}.tmp "$STROPPY_AGENT_BINARY_URL" && chmod +x {{.BinPath}}.tmp && mv {{.BinPath}}.tmp {{.BinPath}}'
       ExecStart={{.BinPath}} agent
       Restart=always
       RestartSec=2
@@ -176,8 +177,8 @@ write_files:
 
 runcmd:
   - mkdir -p /etc/stroppy
-  - curl -fsSL -o {{.BinPath}} "{{.BinaryURL}}"
-  - chmod +x {{.BinPath}}
+  - mkdir -p /usr/local/bin
+  - curl -fsSL --retry 30 --retry-delay 5 --retry-connrefused -o {{.BinPath}}.tmp "{{.BinaryURL}}" && chmod +x {{.BinPath}}.tmp && mv {{.BinPath}}.tmp {{.BinPath}}
   - systemctl daemon-reload
   - systemctl enable --now stroppy-agent
 `))
