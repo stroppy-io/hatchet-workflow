@@ -16,6 +16,7 @@ import (
 // {file} cache route. {ver} and {file} are substituted at lookup. Templates are
 // pinned so an agent can't make the server fetch arbitrary URLs.
 var binaryUpstreams = map[string]string{
+	"cockroach":         "https://binaries.cockroachdb.com/{file}",
 	"node_exporter":     "https://github.com/prometheus/node_exporter/releases/download/v{ver}/{file}",
 	"vmagent":           "https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/v{ver}/{file}",
 	"stroppy":           "https://github.com/stroppy-io/stroppy/releases/download/v{ver}/{file}",
@@ -23,6 +24,7 @@ var binaryUpstreams = map[string]string{
 	"postgres_exporter": "https://github.com/prometheus-community/postgres_exporter/releases/download/v{ver}/{file}",
 	"mysqld_exporter":   "https://github.com/prometheus/mysqld_exporter/releases/download/v{ver}/{file}",
 	"vector":            "https://packages.timber.io/vector/{ver}/{file}",
+	"ydbd":              "https://binaries.ydb.tech/release/{ver}/{file}",
 }
 
 // inflight collapses concurrent first-hit downloads of the same artifact into a

@@ -103,7 +103,7 @@ func TestCockroachPackageResolver(t *testing.T) {
 	if got, want := pkg.GetId(), "builtin/cockroach/default"; got != want {
 		t.Fatalf("package id = %q, want %q", got, want)
 	}
-	if !strings.Contains(pkg.GetDebFilename(), "cockroachdb.com") {
+	if !strings.Contains(pkg.GetDebFilename(), "${STROPPY_SERVER_ADDR%/}/api/binaries/cockroach/23.2.5/") {
 		t.Fatalf("package download url = %q", pkg.GetDebFilename())
 	}
 }

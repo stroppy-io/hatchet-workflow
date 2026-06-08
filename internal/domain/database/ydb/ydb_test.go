@@ -113,7 +113,7 @@ func TestYdbPackageResolver(t *testing.T) {
 	if got, want := pkg.GetId(), "builtin/ydb/default"; got != want {
 		t.Fatalf("package id = %q, want %q", got, want)
 	}
-	if !strings.Contains(pkg.GetDebFilename(), "binaries.ydb.tech") {
+	if !strings.Contains(pkg.GetDebFilename(), "${STROPPY_SERVER_ADDR%/}/api/binaries/ydbd/24.1.18/") {
 		t.Fatalf("package download url = %q", pkg.GetDebFilename())
 	}
 }

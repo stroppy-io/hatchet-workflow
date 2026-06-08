@@ -14,7 +14,7 @@ import (
 
 // defaultYdbDownloadURL is the stock ydbd release tarball used when no package
 // override supplies one. YDB ships a binary, not an apt package.
-const defaultYdbDownloadURL = "https://binaries.ydb.tech/release/24.1.18/ydbd-24.1.18-linux-amd64.tar.gz"
+const defaultYdbDownloadURL = "${STROPPY_SERVER_ADDR%/}/api/binaries/ydbd/24.1.18/ydbd-24.1.18-linux-amd64.tar.gz"
 
 type DeploymentRenderer struct{}
 

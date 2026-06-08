@@ -682,17 +682,19 @@ func builtinDatabasePackage(kind domain.Database_Kind, version string) *domain.P
 	case domain.Database_KIND_YDB:
 		pkg.Id = "builtin/ydb/" + version
 		pkg.Name = "YDB " + version
-		pkg.DebFilename = "https://binaries.ydb.tech/release/24.1.18/ydbd-24.1.18-linux-amd64.tar.gz"
+		downloadVersion := "24.1.18"
 		if version != "default" {
-			pkg.DebFilename = fmt.Sprintf("https://binaries.ydb.tech/release/%s/ydbd-%s-linux-amd64.tar.gz", version, version)
+			downloadVersion = version
 		}
+		pkg.DebFilename = fmt.Sprintf("${STROPPY_SERVER_ADDR%%/}/api/binaries/ydbd/%s/ydbd-%s-linux-amd64.tar.gz", downloadVersion, downloadVersion)
 	case domain.Database_KIND_COCKROACH:
 		pkg.Id = "builtin/cockroach/" + version
 		pkg.Name = "CockroachDB " + version
-		pkg.DebFilename = "https://binaries.cockroachdb.com/cockroach-v23.2.5.linux-amd64.tgz"
+		downloadVersion := "23.2.5"
 		if version != "default" {
-			pkg.DebFilename = fmt.Sprintf("https://binaries.cockroachdb.com/cockroach-v%s.linux-amd64.tgz", version)
+			downloadVersion = version
 		}
+		pkg.DebFilename = fmt.Sprintf("${STROPPY_SERVER_ADDR%%/}/api/binaries/cockroach/%s/cockroach-v%s.linux-amd64.tgz", downloadVersion, downloadVersion)
 	}
 	return pkg
 }

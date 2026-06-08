@@ -6,6 +6,8 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 )
 
+const defaultYdbVersion = "24.1.18"
+
 type PackageResolver struct{}
 
 func (r PackageResolver) SupportsDatabase(database *domain.Database) bool {
@@ -23,10 +25,11 @@ func (r PackageResolver) ResolveDatabasePackage(database *domain.Database) (*dom
 		packageID = "builtin/ydb/" + version
 	}
 
-	downloadURL := defaultYdbDownloadURL
+	downloadVersion := defaultYdbVersion
 	if version != "default" {
-		downloadURL = fmt.Sprintf("https://binaries.ydb.tech/release/%s/ydbd-%s-linux-amd64.tar.gz", version, version)
+		downloadVersion = version
 	}
+	downloadURL := ydbServerBinaryURL(downloadVersion, fmt.Sprintf("ydbd-%s-linux-amd64.tar.gz", downloadVersion))
 
 	// YDB has no apt package: the renderer fetches the ydbd binary tarball from
 	// deb_filename (reused as the download URL for download-only engines).
@@ -38,4 +41,8 @@ func (r PackageResolver) ResolveDatabasePackage(database *domain.Database) (*dom
 		IsBuiltin:   true,
 		DebFilename: downloadURL,
 	}, nil
+}
+
+func ydbServerBinaryURL(version, filename string) string {
+	return fmt.Sprintf("${STROPPY_SERVER_ADDR%%/}/api/binaries/ydbd/%s/%s", version, filename)
 }

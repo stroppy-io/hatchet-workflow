@@ -14,7 +14,7 @@ import (
 // defaultCockroachDownloadURL is the stock cockroach release tarball used when
 // no package override supplies one. CockroachDB ships a binary, not an apt
 // package.
-const defaultCockroachDownloadURL = "https://binaries.cockroachdb.com/cockroach-v23.2.5.linux-amd64.tgz"
+const defaultCockroachDownloadURL = "${STROPPY_SERVER_ADDR%/}/api/binaries/cockroach/23.2.5/cockroach-v23.2.5.linux-amd64.tgz"
 
 type DeploymentRenderer struct{}
 
