@@ -59,6 +59,8 @@ type TenantSettingsService struct {
 
 var _ api.TenantSettingsServiceServer = (*TenantSettingsService)(nil)
 
+const tenantSettingsEntityName = "tenant-settings"
+
 func NewTenantSettingsService(deps TenantSettingsDeps) *TenantSettingsService {
 	return &TenantSettingsService{UnimplementedTenantSettingsServiceServer: &api.UnimplementedTenantSettingsServiceServer{}, d: deps}
 }
@@ -115,6 +117,7 @@ func (s *TenantSettingsService) loadOrInit(ctx context.Context, tenantID, caller
 	return &models.TenantSettingsRecord{
 		Entity: &commonpb.Entity{
 			TenantId: tenantID,
+			Name:     tenantSettingsEntityName,
 			AuthorId: callerID,
 			Timings:  &commonpb.Timings{CreatedAt: s.now(), UpdatedAt: s.now()},
 		},
@@ -155,9 +158,6 @@ func (s *TenantSettingsService) UpdateTenantSettings(ctx context.Context, req *a
 	if req.GetSettings() == nil {
 		return nil, status.Error(codes.InvalidArgument, "settings required")
 	}
-	if err := req.GetSettings().ValidateAll(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
 	if _, err := s.requireTenant(ctx, req.GetTenantId()); err != nil {
 		return nil, err
 	}
@@ -171,6 +171,9 @@ func (s *TenantSettingsService) UpdateTenantSettings(ctx context.Context, req *a
 		// Wholesale replace of the editable payload, but server-owned identity is
 		// preserved from the existing row (or the seeded default).
 		next.Entity = s.mergeEntity(existing.GetEntity(), req.GetTenantId(), c.GetAccountId())
+		if err := next.ValidateAll(); err != nil {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
 		if err := s.d.Settings.Upsert(ctx, next); err != nil {
 			return nil, utils.MapErr(err)
 		}
@@ -237,6 +240,7 @@ func (s *TenantSettingsService) mergeEntity(prior *commonpb.Entity, tenantID, ca
 	if prior == nil {
 		return &commonpb.Entity{
 			TenantId: tenantID,
+			Name:     tenantSettingsEntityName,
 			AuthorId: callerID,
 			Timings:  &commonpb.Timings{CreatedAt: s.now(), UpdatedAt: s.now()},
 		}
@@ -250,6 +254,9 @@ func (s *TenantSettingsService) mergeEntity(prior *commonpb.Entity, tenantID, ca
 	}
 	if e.AuthorId == "" {
 		e.AuthorId = callerID
+	}
+	if e.Name == "" {
+		e.Name = tenantSettingsEntityName
 	}
 	created := s.now()
 	if prior.GetTimings().GetCreatedAt() != nil {

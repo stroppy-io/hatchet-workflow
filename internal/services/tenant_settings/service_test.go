@@ -3,6 +3,7 @@ package tenant_settings
 import (
 	"testing"
 
+	commonpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 )
@@ -38,5 +39,35 @@ func TestApplyDockerProviderSettingsPreservesDefaultProvider(t *testing.T) {
 
 	if rec.GetDefaultProvider() != deployment.Provider_PROVIDER_YANDEX {
 		t.Fatalf("default provider changed to %s", rec.GetDefaultProvider())
+	}
+}
+
+func TestMergeEntitySeedsValidSettingsName(t *testing.T) {
+	svc := &TenantSettingsService{}
+
+	entity := svc.mergeEntity(nil, "tenant-1", "account-1")
+
+	if entity.GetName() != tenantSettingsEntityName {
+		t.Fatalf("name = %q, want %q", entity.GetName(), tenantSettingsEntityName)
+	}
+	if err := entity.ValidateAll(); err != nil {
+		t.Fatalf("entity should validate: %v", err)
+	}
+}
+
+func TestMergeEntityBackfillsEmptySettingsName(t *testing.T) {
+	svc := &TenantSettingsService{}
+	prior := &commonpb.Entity{
+		Id:       "settings-1",
+		TenantId: "tenant-1",
+	}
+
+	entity := svc.mergeEntity(prior, "tenant-1", "account-1")
+
+	if entity.GetName() != tenantSettingsEntityName {
+		t.Fatalf("name = %q, want %q", entity.GetName(), tenantSettingsEntityName)
+	}
+	if err := entity.ValidateAll(); err != nil {
+		t.Fatalf("entity should validate: %v", err)
 	}
 }
