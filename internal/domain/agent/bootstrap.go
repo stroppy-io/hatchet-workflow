@@ -232,19 +232,17 @@ func AgentProxyEnv(serverAddr string) (string, []string) {
 	}
 	host := u.Hostname()
 	proxyHost := u.Host
-	if u.Scheme == "https" {
-		proxyHost = host
-		if port := u.Port(); port != "" && port != "443" {
-			proxyHost = net.JoinHostPort(host, port)
-		}
+	scheme := u.Scheme
+	if scheme == "" {
+		scheme = "http"
 	}
-	if u.Port() == "" && host != "" {
+	if scheme == "http" && u.Port() == "" && host != "" {
 		proxyHost = net.JoinHostPort(host, "80")
 	}
 	if proxyHost == "" {
 		return "", nil
 	}
-	return "http://" + proxyHost, defaultNoProxyHosts(host, u.Host)
+	return scheme + "://" + proxyHost, defaultNoProxyHosts(host, u.Host)
 }
 
 func defaultNoProxyHosts(hosts ...string) []string {

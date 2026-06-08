@@ -11,7 +11,10 @@ import (
 	"time"
 )
 
-const forwardProxyHeader = "X-Stroppy-Forward-Proxy"
+const (
+	forwardProxyHeader       = "X-Stroppy-Forward-Proxy"
+	forwardProxyTargetHeader = "X-Stroppy-Proxy-Target"
+)
 
 // aptProxyMatcher is a cmux matcher that recognises an HTTP forward-proxy
 // conversation (what `apt` speaks when Acquire::http::Proxy points at us): either
@@ -157,12 +160,16 @@ func caddyForwardProxyRequest(r *http.Request) (*http.Request, error) {
 	out := r.Clone(r.Context())
 	out.RequestURI = ""
 	out.Header.Del(forwardProxyHeader)
+	out.Header.Del(forwardProxyTargetHeader)
 	out.Header.Del("X-Forwarded-For")
 	out.Header.Del("X-Forwarded-Host")
 	out.Header.Del("X-Forwarded-Proto")
 
 	if r.Method == http.MethodConnect {
-		target := r.Host
+		target := r.Header.Get(forwardProxyTargetHeader)
+		if target == "" {
+			target = r.Host
+		}
 		if target == "" {
 			target = r.URL.Host
 		}

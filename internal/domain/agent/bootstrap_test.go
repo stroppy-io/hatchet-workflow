@@ -86,8 +86,8 @@ func TestEnvDoesNotLeakDirectBackendAddresses(t *testing.T) {
 	checks := map[string]string{
 		"STROPPY_SERVER_ADDR":      "https://control.stage",
 		"STROPPY_AGENT_BINARY_URL": "https://control.stage/agent/binary",
-		"HTTP_PROXY":               "http://control.stage:80",
-		"HTTPS_PROXY":              "http://control.stage:80",
+		"HTTP_PROXY":               "https://control.stage",
+		"HTTPS_PROXY":              "https://control.stage",
 		"TEMPORAL_NAMESPACE":       DefaultTemporalNamespace,
 		"WORKLOAD_CUSTOM_ENV":      "kept",
 	}
@@ -135,6 +135,16 @@ func TestAgentProxyEnvAddsExplicitDefaultProxyPort(t *testing.T) {
 	}
 	if !contains(noProxy, "caddy") {
 		t.Fatalf("no_proxy hosts = %#v, want caddy", noProxy)
+	}
+}
+
+func TestAgentProxyEnvUsesHTTPSOriginForPublicServer(t *testing.T) {
+	proxyURL, noProxy := AgentProxyEnv("https://stage.cloud.stroppy.io")
+	if got, want := proxyURL, "https://stage.cloud.stroppy.io"; got != want {
+		t.Fatalf("proxy URL = %q, want %q", got, want)
+	}
+	if !contains(noProxy, "stage.cloud.stroppy.io") {
+		t.Fatalf("no_proxy hosts = %#v, want stage.cloud.stroppy.io", noProxy)
 	}
 }
 

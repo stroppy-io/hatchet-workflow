@@ -214,7 +214,6 @@ services:
       # try ACME for the real cloud domain. Prod should set PUBLIC_SERVER_ADDR or
       # CADDY_SITE_ADDRESS to https://<domain>.
       CADDY_SITE_ADDRESS: ${CADDY_SITE_ADDRESS:-${PUBLIC_SERVER_ADDR:-${CADDY_DOMAIN:-http://localhost, http://caddy}}}
-      CADDY_PROXY_ADDRESS: ${CADDY_PROXY_ADDRESS:-:80}
       CADDY_UPSTREAM: server:8080
       CADDY_GRAFANA_UPSTREAM: grafana:3000
     volumes:

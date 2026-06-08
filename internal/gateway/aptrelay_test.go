@@ -28,6 +28,24 @@ func TestCaddyForwardProxyRequestRebuildsAbsoluteURI(t *testing.T) {
 	}
 }
 
+func TestCaddyForwardProxyRequestUsesExplicitConnectTarget(t *testing.T) {
+	req := httptest.NewRequest(http.MethodConnect, "http://gateway", nil)
+	req.Host = "server:8080"
+	req.Header.Set(forwardProxyHeader, "1")
+	req.Header.Set(forwardProxyTargetHeader, "www.postgresql.org:443")
+
+	out, err := caddyForwardProxyRequest(req)
+	if err != nil {
+		t.Fatalf("rebuild request: %v", err)
+	}
+	if got, want := out.URL.Host, "www.postgresql.org:443"; got != want {
+		t.Fatalf("connect target = %q, want %q", got, want)
+	}
+	if got := out.Header.Get(forwardProxyTargetHeader); got != "" {
+		t.Fatalf("%s header leaked: %q", forwardProxyTargetHeader, got)
+	}
+}
+
 func TestGatewayRelaysCaddyNormalizedAptRequest(t *testing.T) {
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
