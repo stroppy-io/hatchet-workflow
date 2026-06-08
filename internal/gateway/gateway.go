@@ -122,10 +122,14 @@ func New(cfg Config) (*Gateway, error) {
 }
 
 // serveHTTP dispatches the gateway's HTTP routes (agent binary + artifact /
-// binary caches). apt is handled out-of-band by the apt-cache TCP relay, not
-// here, so this server only sees its own routes.
+// binary caches). Direct apt proxy traffic is handled out-of-band by the cmux
+// apt-cache TCP relay. When Caddy is in front, it normalizes forward-proxy
+// requests into ordinary HTTP requests and marks them with
+// X-Stroppy-Forward-Proxy, so those are relayed here.
 func (g *Gateway) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	switch {
+	case r.Header.Get(forwardProxyHeader) == "1":
+		g.serveAptProxyHTTP(w, r)
 	case r.URL.Path == "/healthz":
 		w.WriteHeader(http.StatusOK)
 	case r.URL.Path == "/agent/binary":

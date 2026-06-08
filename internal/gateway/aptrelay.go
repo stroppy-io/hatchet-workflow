@@ -2,11 +2,16 @@ package gateway
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"net"
+	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
+
+const forwardProxyHeader = "X-Stroppy-Forward-Proxy"
 
 // aptProxyMatcher is a cmux matcher that recognises an HTTP forward-proxy
 // conversation (what `apt` speaks when Acquire::http::Proxy points at us): either
@@ -53,4 +58,133 @@ func (g *Gateway) pipeApt(client net.Conn) {
 	go func() { _, _ = io.Copy(up, client); done <- struct{}{} }()
 	go func() { _, _ = io.Copy(client, up); done <- struct{}{} }()
 	<-done
+}
+
+// serveAptProxyHTTP relays forward-proxy traffic that came through Caddy. Caddy
+// accepts the public proxy request and reverse-proxies it to this gateway, but
+// normalizes absolute-form requests (GET http://mirror/path) into origin-form
+// requests (GET /path) while preserving the target Host. Rebuild the
+// absolute-form request before handing it to apt-cacher-ng.
+func (g *Gateway) serveAptProxyHTTP(w http.ResponseWriter, r *http.Request) {
+	if g.aptBackend == "" {
+		http.Error(w, "apt backend is not configured", http.StatusServiceUnavailable)
+		return
+	}
+	if r.Method == http.MethodConnect {
+		g.tunnelAptProxyHTTP(w, r)
+		return
+	}
+
+	proxyReq, err := caddyForwardProxyRequest(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	up, err := net.DialTimeout("tcp", g.aptBackend, 5*time.Second)
+	if err != nil {
+		g.logger.Warn("apt backend dial failed", "backend", g.aptBackend, "err", err)
+		http.Error(w, "apt backend unavailable", http.StatusBadGateway)
+		return
+	}
+	defer up.Close()
+
+	if err := proxyReq.WriteProxy(up); err != nil {
+		http.Error(w, "write apt proxy request failed", http.StatusBadGateway)
+		return
+	}
+	resp, err := http.ReadResponse(bufio.NewReader(up), proxyReq)
+	if err != nil {
+		http.Error(w, "read apt proxy response failed", http.StatusBadGateway)
+		return
+	}
+	defer resp.Body.Close()
+
+	for key, values := range resp.Header {
+		for _, value := range values {
+			w.Header().Add(key, value)
+		}
+	}
+	w.WriteHeader(resp.StatusCode)
+	_, _ = io.Copy(w, resp.Body)
+}
+
+func (g *Gateway) tunnelAptProxyHTTP(w http.ResponseWriter, r *http.Request) {
+	proxyReq, err := caddyForwardProxyRequest(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	up, err := net.DialTimeout("tcp", g.aptBackend, 5*time.Second)
+	if err != nil {
+		g.logger.Warn("apt backend dial failed", "backend", g.aptBackend, "err", err)
+		http.Error(w, "apt backend unavailable", http.StatusBadGateway)
+		return
+	}
+
+	hj, ok := w.(http.Hijacker)
+	if !ok {
+		up.Close()
+		http.Error(w, "response writer does not support hijacking", http.StatusInternalServerError)
+		return
+	}
+	client, rw, err := hj.Hijack()
+	if err != nil {
+		up.Close()
+		return
+	}
+	defer client.Close()
+	defer up.Close()
+
+	if err := proxyReq.Write(up); err != nil {
+		return
+	}
+	done := make(chan struct{}, 2)
+	go func() {
+		if rw.Reader.Buffered() > 0 {
+			_, _ = io.CopyN(up, rw.Reader, int64(rw.Reader.Buffered()))
+		}
+		_, _ = io.Copy(up, client)
+		done <- struct{}{}
+	}()
+	go func() {
+		_, _ = io.Copy(client, up)
+		done <- struct{}{}
+	}()
+	<-done
+}
+
+func caddyForwardProxyRequest(r *http.Request) (*http.Request, error) {
+	out := r.Clone(r.Context())
+	out.RequestURI = ""
+	out.Header.Del(forwardProxyHeader)
+	out.Header.Del("X-Forwarded-For")
+	out.Header.Del("X-Forwarded-Host")
+	out.Header.Del("X-Forwarded-Proto")
+
+	if r.Method == http.MethodConnect {
+		target := r.Host
+		if target == "" {
+			target = r.URL.Host
+		}
+		if target == "" {
+			return nil, fmt.Errorf("empty CONNECT target")
+		}
+		out.URL = &url.URL{Host: target}
+		out.Host = target
+		return out, nil
+	}
+
+	if out.URL != nil && out.URL.IsAbs() {
+		return out, nil
+	}
+	if r.Host == "" {
+		return nil, fmt.Errorf("empty proxy target host")
+	}
+	absoluteURL, err := url.Parse("http://" + r.Host + r.URL.RequestURI())
+	if err != nil {
+		return nil, fmt.Errorf("rebuild proxy URL: %w", err)
+	}
+	out.URL = absoluteURL
+	out.Host = r.Host
+	return out, nil
 }

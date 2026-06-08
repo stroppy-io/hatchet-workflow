@@ -23,6 +23,10 @@ func TestEnvBuildsProviderIndependentAgentContract(t *testing.T) {
 	checks := map[string]string{
 		"STROPPY_SERVER_ADDR":      "http://server:8080",
 		"STROPPY_AGENT_BINARY_URL": "http://server:8080/agent/binary",
+		"HTTP_PROXY":               "http://server:8080",
+		"HTTPS_PROXY":              "http://server:8080",
+		"http_proxy":               "http://server:8080",
+		"https_proxy":              "http://server:8080",
 		"STROPPY_MACHINE_ID":       "postgres-master",
 		"STROPPY_NODE_ID":          "postgres-master",
 		"AGENT_MACHINE_ID":         "postgres-master",
@@ -82,6 +86,8 @@ func TestEnvDoesNotLeakDirectBackendAddresses(t *testing.T) {
 	checks := map[string]string{
 		"STROPPY_SERVER_ADDR":      "https://control.stage",
 		"STROPPY_AGENT_BINARY_URL": "https://control.stage/agent/binary",
+		"HTTP_PROXY":               "http://control.stage:80",
+		"HTTPS_PROXY":              "http://control.stage:80",
 		"TEMPORAL_NAMESPACE":       DefaultTemporalNamespace,
 		"WORKLOAD_CUSTOM_ENV":      "kept",
 	}
@@ -105,6 +111,9 @@ func TestCloudInitUsesSameEnvContract(t *testing.T) {
 		"#cloud-config",
 		"STROPPY_SERVER_ADDR=http://server:8080",
 		"STROPPY_AGENT_BINARY_URL=http://server:8080/agent/binary",
+		"HTTP_PROXY=http://server:8080",
+		"NO_PROXY=127.0.0.1,localhost,::1,host.docker.internal,169.254.169.254,server,server:8080",
+		"Acquire::http::Proxy \"http://server:8080\";",
 		"STROPPY_MACHINE_ID=node-1",
 		"AGENT_TASK_QUEUE=stroppy-agent-node-1",
 		"EnvironmentFile=/etc/stroppy/agent.env",
@@ -117,4 +126,23 @@ func TestCloudInitUsesSameEnvContract(t *testing.T) {
 			t.Fatalf("cloud-init missing %q:\n%s", want, cloudInit)
 		}
 	}
+}
+
+func TestAgentProxyEnvAddsExplicitDefaultProxyPort(t *testing.T) {
+	proxyURL, noProxy := AgentProxyEnv("http://caddy")
+	if got, want := proxyURL, "http://caddy:80"; got != want {
+		t.Fatalf("proxy URL = %q, want %q", got, want)
+	}
+	if !contains(noProxy, "caddy") {
+		t.Fatalf("no_proxy hosts = %#v, want caddy", noProxy)
+	}
+}
+
+func contains(values []string, want string) bool {
+	for _, value := range values {
+		if value == want {
+			return true
+		}
+	}
+	return false
 }

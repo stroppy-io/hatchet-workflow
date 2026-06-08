@@ -3,6 +3,8 @@ package agent
 import (
 	"bytes"
 	"fmt"
+	"net"
+	"net/url"
 	"sort"
 	"strings"
 	"text/template"
@@ -67,6 +69,15 @@ func Env(machineID string, bootstrap Bootstrap) (map[string]string, error) {
 	env := copyExtraEnv(bootstrap.ExtraEnv)
 	env["STROPPY_SERVER_ADDR"] = bootstrap.ServerAddr
 	env["STROPPY_AGENT_BINARY_URL"] = binaryURL
+	proxyURL, noProxyHosts := AgentProxyEnv(bootstrap.ServerAddr)
+	if proxyURL != "" {
+		env["HTTP_PROXY"] = proxyURL
+		env["HTTPS_PROXY"] = proxyURL
+		env["http_proxy"] = proxyURL
+		env["https_proxy"] = proxyURL
+		env["NO_PROXY"] = mergeNoProxy(env["NO_PROXY"], noProxyHosts)
+		env["no_proxy"] = env["NO_PROXY"]
+	}
 	if bootstrap.AgentToken != "" {
 		env[EnvAgentToken] = bootstrap.AgentToken
 	}
@@ -126,12 +137,14 @@ func CloudInit(machineID string, bootstrap Bootstrap, options CloudInitOptions) 
 		EnvFile      string
 		BinaryURL    string
 		BinPath      string
+		ProxyURL     string
 	}{
 		SSHUser:      sshUser,
 		SSHPublicKey: options.SSHPublicKey,
 		EnvFile:      indent(EnvFileFromMap(env), 6),
 		BinaryURL:    env["STROPPY_AGENT_BINARY_URL"],
 		BinPath:      RemoteBinPath,
+		ProxyURL:     env["HTTP_PROXY"],
 	}
 
 	var buf bytes.Buffer
@@ -156,6 +169,12 @@ write_files:
   - path: /etc/stroppy/agent.env
     content: |
 {{.EnvFile}}
+{{- if .ProxyURL}}
+  - path: /etc/apt/apt.conf.d/90stroppy-proxy
+    content: |
+      Acquire::http::Proxy "{{.ProxyURL}}";
+      Acquire::https::Proxy "{{.ProxyURL}}";
+{{- end}}
   - path: /etc/systemd/system/stroppy-agent.service
     content: |
       [Unit]
@@ -201,4 +220,60 @@ func copyExtraEnv(in map[string]string) map[string]string {
 		out[key] = value
 	}
 	return out
+}
+
+// AgentProxyEnv returns the HTTP proxy URL agents should use for outbound
+// package/artifact traffic plus hosts that must bypass that proxy to avoid
+// sending control-plane calls back through the apt forward-proxy path.
+func AgentProxyEnv(serverAddr string) (string, []string) {
+	u, err := url.Parse(serverAddr)
+	if err != nil || u.Host == "" {
+		return serverAddr, defaultNoProxyHosts("")
+	}
+	host := u.Hostname()
+	proxyHost := u.Host
+	if u.Scheme == "https" {
+		proxyHost = host
+		if port := u.Port(); port != "" && port != "443" {
+			proxyHost = net.JoinHostPort(host, port)
+		}
+	}
+	if u.Port() == "" && host != "" {
+		proxyHost = net.JoinHostPort(host, "80")
+	}
+	if proxyHost == "" {
+		return "", nil
+	}
+	return "http://" + proxyHost, defaultNoProxyHosts(host, u.Host)
+}
+
+func defaultNoProxyHosts(hosts ...string) []string {
+	out := []string{"127.0.0.1", "localhost", "::1", "host.docker.internal", "169.254.169.254"}
+	for _, host := range hosts {
+		if host != "" {
+			out = append(out, host)
+		}
+	}
+	return out
+}
+
+func mergeNoProxy(existing string, hosts []string) string {
+	seen := map[string]struct{}{}
+	out := make([]string, 0, len(hosts)+4)
+	add := func(values string) {
+		for _, value := range strings.Split(values, ",") {
+			value = strings.TrimSpace(value)
+			if value == "" {
+				continue
+			}
+			if _, ok := seen[value]; ok {
+				continue
+			}
+			seen[value] = struct{}{}
+			out = append(out, value)
+		}
+	}
+	add(existing)
+	add(strings.Join(hosts, ","))
+	return strings.Join(out, ",")
 }

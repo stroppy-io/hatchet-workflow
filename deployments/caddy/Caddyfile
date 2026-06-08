@@ -1,15 +1,31 @@
-{$CADDY_SITE_ADDRESS:http://localhost} {
+(stroppy_gateway) {
 	@grpc protocol grpc
 
 	handle @grpc {
-		reverse_proxy h2c://127.0.0.1:8080
+		reverse_proxy h2c://{$CADDY_UPSTREAM:127.0.0.1:8080}
 	}
 
 	handle /grafana/* {
-		reverse_proxy 127.0.0.1:3001
+		reverse_proxy {$CADDY_GRAFANA_UPSTREAM:127.0.0.1:3001}
 	}
 
 	handle {
-		reverse_proxy 127.0.0.1:8080
+		reverse_proxy {$CADDY_UPSTREAM:127.0.0.1:8080}
 	}
+}
+
+(stroppy_forward_proxy) {
+	handle {
+		reverse_proxy {$CADDY_UPSTREAM:127.0.0.1:8080} {
+			header_up X-Stroppy-Forward-Proxy 1
+		}
+	}
+}
+
+{$CADDY_SITE_ADDRESS:http://localhost, http://caddy} {
+	import stroppy_gateway
+}
+
+{$CADDY_PROXY_ADDRESS::80} {
+	import stroppy_forward_proxy
 }

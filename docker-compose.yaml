@@ -185,9 +185,9 @@ services:
       TEMPORAL_NAMESPACE: default
       AGENT_GATEWAY_ADDR: ":8080"
       API_ADDR: ":8081"
-      # Docker agents can keep the in-network default. Cloud/prod agents should
-      # use the public Caddy HTTPS origin, e.g. PUBLIC_SERVER_ADDR=https://cloud.example.com.
-      AGENT_SERVER_ADDR: ${AGENT_SERVER_ADDR:-${PUBLIC_SERVER_ADDR:-http://server:8080}}
+      # Agents always dial Caddy. Local Docker agents use the compose service
+      # name; prod/cloud agents use the public Caddy origin.
+      AGENT_SERVER_ADDR: ${AGENT_SERVER_ADDR:-${PUBLIC_SERVER_ADDR:-http://caddy}}
       AGENT_ATTACH_NETWORK: stroppy-cloud_default
       AGENT_BINARY_PATH: /usr/local/bin/stroppy-cloud
       STROPPY_BINARY_CACHE_DIR: /var/lib/stroppy-cache/binaries
@@ -203,12 +203,20 @@ services:
     image: caddy:2-alpine
     restart: unless-stopped
     profiles: [prod]
-    network_mode: host
+    depends_on:
+      - server
+      - grafana
+    ports:
+      - "${CADDY_HTTP_BIND_ADDR:-0.0.0.0}:80:80"
+      - "${CADDY_HTTPS_BIND_ADDR:-0.0.0.0}:443:443"
     environment:
       # Defaults to local HTTP so running the prod profile on a laptop does not
       # try ACME for the real cloud domain. Prod should set PUBLIC_SERVER_ADDR or
       # CADDY_SITE_ADDRESS to https://<domain>.
-      CADDY_SITE_ADDRESS: ${CADDY_SITE_ADDRESS:-${PUBLIC_SERVER_ADDR:-${CADDY_DOMAIN:-http://localhost}}}
+      CADDY_SITE_ADDRESS: ${CADDY_SITE_ADDRESS:-${PUBLIC_SERVER_ADDR:-${CADDY_DOMAIN:-http://localhost, http://caddy}}}
+      CADDY_PROXY_ADDRESS: ${CADDY_PROXY_ADDRESS:-:80}
+      CADDY_UPSTREAM: server:8080
+      CADDY_GRAFANA_UPSTREAM: grafana:3000
     volumes:
       - ./deployments/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
