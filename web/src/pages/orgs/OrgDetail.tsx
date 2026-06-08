@@ -198,9 +198,6 @@ function permKey(resource: string | undefined, action: string | undefined) {
   return `${resource ?? ""}|${action ?? ""}`;
 }
 
-const PROVIDER_PRESETS = ["docker", "yandex"] as const;
-type ProviderKind = (typeof PROVIDER_PRESETS)[number];
-
 export function OrgDetail() {
   const { slug = "" } = useParams<{ slug: string }>();
   const navigate = useNavigate();
@@ -244,13 +241,6 @@ export function OrgDetail() {
   const [detailRole, setDetailRole] = useState<OrgRole | null>(null);
   const [detailMembership, setDetailMembership] =
     useState<OrgMembership | null>(null);
-
-  // SetTenantProviderSettings: one provider's config (Docker has no fields;
-  // Yandex carries credentials/placement). Kept separate from UpdateTenantSettings.
-  const [providerKind, setProviderKind] = useState<ProviderKind>("docker");
-  const [ycToken, setYcToken] = useState("");
-  const [ycCloudId, setYcCloudId] = useState("");
-  const [ycFolderId, setYcFolderId] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -543,42 +533,28 @@ export function OrgDetail() {
     }
   }
 
-  async function saveSettings() {
-    setError(null);
-    setNotice(null);
-    try {
-      const next = await getOrgProvider().updateTenantSettings({
-        tenantId: orgDetail.tenant.id,
-        settings: settings,
-      });
-      acceptDetail(next);
-      setNotice("Tenant settings updated.");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+  function providerSettingsPayload(): ProviderSettingsJson {
+    if (settings.defaultProvider !== "PROVIDER_YANDEX") {
+      return { docker: {} };
     }
+    return { yandex: settings.yandexSettings ?? defaultYandexSettings() };
   }
 
   async function saveProviderSettings() {
     setError(null);
     setNotice(null);
-    const settings: ProviderSettingsJson =
-      providerKind === "yandex"
-        ? {
-            yandex: {
-              token: ycToken,
-              cloudId: ycCloudId,
-              folderId: ycFolderId,
-            },
-          }
-        : { docker: {} };
     try {
+      await getOrgProvider().updateTenantSettings({
+        tenantId: orgDetail.tenant.id,
+        settings: settings,
+      });
       const next = await getOrgProvider().setProviderSettings({
         tenantSlug: orgDetail.tenant.slug,
         tenantId: orgDetail.tenant.id,
-        settings,
+        settings: providerSettingsPayload(),
       });
       acceptDetail(next);
-      setNotice(`Provider settings saved (${providerKind}).`);
+      setNotice("Provider settings saved.");
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -1087,21 +1063,26 @@ export function OrgDetail() {
 
           <TabsContent value="settings" className="mt-4">
             <Panel
-              label="UpdateTenantSettings"
+              label="Provider settings"
               action={
                 <Button
                   size="sm"
                   disabled={!canUpdateSettings}
-                  onClick={() => void saveSettings()}
+                  onClick={() => void saveProviderSettings()}
                 >
                   <Save className="h-3.5 w-3.5" />
                   Save
                 </Button>
               }
             >
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="max-w-3xl text-sm text-muted-foreground">
+                Choose the deployment provider used for new runs in this
+                organization, then save its connection and placement settings.
+              </div>
+
+              <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-1.5">
-                  <Label>default_provider</Label>
+                  <Label>Provider</Label>
                   <Select
                     value={settings.defaultProvider}
                     disabled={!canUpdateSettings}
@@ -1119,289 +1100,194 @@ export function OrgDetail() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="PROVIDER_DOCKER">PROVIDER_DOCKER</SelectItem>
-                      <SelectItem value="PROVIDER_YANDEX">PROVIDER_YANDEX</SelectItem>
+                      <SelectItem value="PROVIDER_DOCKER">Docker</SelectItem>
+                      <SelectItem value="PROVIDER_YANDEX">Yandex Cloud</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="max-parallel">default_max_parallel</Label>
-                  <Input
-                    id="max-parallel"
-                    type="number"
-                    disabled={!canUpdateSettings}
-                    value={settings.defaultMaxParallel ?? 0}
-                    onChange={(e) =>
-                      setSettingsValue(
-                        "defaultMaxParallel",
-                        Number(e.target.value) || 0,
-                      )
-                    }
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="retention">run_retention_days</Label>
-                  <Input
-                    id="retention"
-                    type="number"
-                    disabled={!canUpdateSettings}
-                    value={settings.runRetentionDays ?? 0}
-                    onChange={(e) =>
-                      setSettingsValue("runRetentionDays", Number(e.target.value) || 0)
-                    }
-                  />
-                </div>
-                <div className="flex min-w-0 flex-col gap-1.5">
-                  <Label>default_in_tenant_rating</Label>
-                  <div className="flex h-9 items-center gap-2 border border-input px-3">
-                    <Switch
-                      checked={!!settings.defaultInTenantRating}
-                      disabled={!canUpdateSettings}
-                      onCheckedChange={(checked) =>
-                        setSettingsValue("defaultInTenantRating", checked)
-                      }
-                    />
-                    <span className="text-sm text-muted-foreground">
-                      {String(!!settings.defaultInTenantRating)}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex min-w-0 flex-col gap-1.5">
-                  <Label>default_in_global_rating</Label>
-                  <div className="flex h-9 items-center gap-2 border border-input px-3">
-                    <Switch
-                      checked={!!settings.defaultInGlobalRating}
-                      disabled={!canUpdateSettings}
-                      onCheckedChange={(checked) =>
-                        setSettingsValue("defaultInGlobalRating", checked)
-                      }
-                    />
-                    <span className="text-sm text-muted-foreground">
-                      {String(!!settings.defaultInGlobalRating)}
-                    </span>
-                  </div>
-                </div>
               </div>
 
-              <div className="mt-6 border-t border-border/70 pt-4">
-                <SectionLabel>yandex_settings</SectionLabel>
-                {settings.defaultProvider !== "PROVIDER_YANDEX" ? (
-                  <div className="mt-3 border border-border bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
-                    Yandex settings are inactive while default_provider is not
-                    PROVIDER_YANDEX.
-                  </div>
-                ) : (
-                  <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div className="flex flex-col gap-1.5">
-                      <Label htmlFor="yc-token">token</Label>
-                      <Input
-                        id="yc-token"
-                        disabled={!canUpdateSettings}
-                        value={settings.yandexSettings?.token ?? ""}
-                        onChange={(e) => setYandexValue("token", e.target.value)}
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <Label htmlFor="yc-cloud">cloud_id</Label>
-                      <Input
-                        id="yc-cloud"
-                        disabled={!canUpdateSettings}
-                        value={settings.yandexSettings?.cloudId ?? ""}
-                        onChange={(e) => setYandexValue("cloudId", e.target.value)}
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <Label htmlFor="yc-folder">folder_id</Label>
-                      <Input
-                        id="yc-folder"
-                        disabled={!canUpdateSettings}
-                        value={settings.yandexSettings?.folderId ?? ""}
-                        onChange={(e) => setYandexValue("folderId", e.target.value)}
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <Label>zone</Label>
-                      <Select
-                        disabled={!canUpdateSettings}
-                        value={settings.yandexSettings?.zone ?? "ZONE_RU_CENTRAL1_A"}
-                        onValueChange={(value) =>
-                          setYandexValue("zone", value as NonNullable<OrgSettings["yandexSettings"]>["zone"])
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="ZONE_RU_CENTRAL1_A">ZONE_RU_CENTRAL1_A</SelectItem>
-                          <SelectItem value="ZONE_RU_CENTRAL1_B">ZONE_RU_CENTRAL1_B</SelectItem>
-                          <SelectItem value="ZONE_RU_CENTRAL1_D">ZONE_RU_CENTRAL1_D</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    {([
-                      ["networkId", "network_id"],
-                      ["networkName", "network_name"],
-                      ["subnetCidr", "subnet_cidr"],
-                      ["imageId", "image_id"],
-                      ["sshUser", "ssh_user"],
-                      ["sshPublicKey", "ssh_public_key"],
-                    ] as const).map(([key, label]) => (
-                      <div key={key} className="flex flex-col gap-1.5">
-                        <Label htmlFor={`yc-${key}`}>{label}</Label>
+              {settings.defaultProvider === "PROVIDER_YANDEX" ? (
+                <div className="mt-6 flex flex-col gap-5 border-t border-border/70 pt-5">
+                  <div>
+                    <SectionLabel>Connection</SectionLabel>
+                    <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <div className="flex flex-col gap-1.5 sm:col-span-2">
+                        <Label htmlFor="yc-token">OAuth token</Label>
                         <Input
-                          id={`yc-${key}`}
+                          id="yc-token"
+                          type="password"
                           disabled={!canUpdateSettings}
-                          value={settings.yandexSettings?.[key] ?? ""}
-                          onChange={(e) => setYandexValue(key, e.target.value)}
+                          value={settings.yandexSettings?.token ?? ""}
+                          onChange={(e) => setYandexValue("token", e.target.value)}
+                          className="font-mono"
+                          autoComplete="off"
                         />
                       </div>
-                    ))}
-                    <div className="flex flex-col gap-1.5">
-                      <Label>platform_id</Label>
-                      <Select
-                        disabled={!canUpdateSettings}
-                        value={
-                          settings.yandexSettings?.platformId ??
-                          "PLATFORM_ID_STANDARD_V3"
-                        }
-                        onValueChange={(value) =>
-                          setYandexValue(
-                            "platformId",
-                            value as NonNullable<OrgSettings["yandexSettings"]>["platformId"],
-                          )
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="PLATFORM_ID_STANDARD_V1">PLATFORM_ID_STANDARD_V1</SelectItem>
-                          <SelectItem value="PLATFORM_ID_STANDARD_V2">PLATFORM_ID_STANDARD_V2</SelectItem>
-                          <SelectItem value="PLATFORM_ID_STANDARD_V3">PLATFORM_ID_STANDARD_V3</SelectItem>
-                          <SelectItem value="PLATFORM_ID_STANDARD_V4A">PLATFORM_ID_STANDARD_V4A</SelectItem>
-                          <SelectItem value="PLATFORM_ID_AMD_V1">PLATFORM_ID_AMD_V1</SelectItem>
-                          <SelectItem value="PLATFORM_ID_HIGHFREQ_V3">PLATFORM_ID_HIGHFREQ_V3</SelectItem>
-                          <SelectItem value="PLATFORM_ID_HIGHFREQ_V4A">PLATFORM_ID_HIGHFREQ_V4A</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex min-w-0 flex-col gap-1.5">
-                      <Label>assign_public_ip</Label>
-                      <div className="flex h-9 items-center gap-2 border border-input px-3">
-                        <Switch
-                          checked={!!settings.yandexSettings?.assignPublicIp}
+                      <div className="flex flex-col gap-1.5">
+                        <Label htmlFor="yc-cloud">Cloud ID</Label>
+                        <Input
+                          id="yc-cloud"
                           disabled={!canUpdateSettings}
-                          onCheckedChange={(checked) =>
-                            setYandexValue("assignPublicIp", checked)
-                          }
+                          value={settings.yandexSettings?.cloudId ?? ""}
+                          onChange={(e) => setYandexValue("cloudId", e.target.value)}
+                          className="font-mono"
                         />
-                        <span className="text-sm text-muted-foreground">
-                          {String(!!settings.yandexSettings?.assignPublicIp)}
-                        </span>
                       </div>
-                    </div>
-                    <div className="flex min-w-0 flex-col gap-1.5">
-                      <Label>software_accelerated_network</Label>
-                      <div className="flex h-9 items-center gap-2 border border-input px-3">
-                        <Switch
-                          checked={
-                            !!settings.yandexSettings?.softwareAcceleratedNetwork
-                          }
+                      <div className="flex flex-col gap-1.5">
+                        <Label htmlFor="yc-folder">Folder ID</Label>
+                        <Input
+                          id="yc-folder"
                           disabled={!canUpdateSettings}
-                          onCheckedChange={(checked) =>
-                            setYandexValue("softwareAcceleratedNetwork", checked)
-                          }
+                          value={settings.yandexSettings?.folderId ?? ""}
+                          onChange={(e) => setYandexValue("folderId", e.target.value)}
+                          className="font-mono"
                         />
-                        <span className="text-sm text-muted-foreground">
-                          {String(
-                            !!settings.yandexSettings
-                              ?.softwareAcceleratedNetwork,
-                          )}
-                        </span>
                       </div>
                     </div>
                   </div>
-                )}
-              </div>
-            </Panel>
 
-            <Panel
-              label="SetTenantProviderSettings"
-              className="mt-4"
-              action={
-                <Button
-                  size="sm"
-                  disabled={!canUpdateSettings}
-                  onClick={() => void saveProviderSettings()}
-                >
-                  <Save className="h-3.5 w-3.5" />
-                  Save provider
-                </Button>
-              }
-            >
-              <div className="text-xs text-muted-foreground">
-                Replaces ONE provider's config (deployment.ProviderSettings
-                oneof). Docker.Settings has no fields; Yandex.Settings carries
-                credentials sent as form values for the server to bake.
-              </div>
-              <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="flex flex-col gap-1.5">
-                  <Label>provider</Label>
-                  <Select
-                    value={providerKind}
-                    disabled={!canUpdateSettings}
-                    onValueChange={(value) =>
-                      setProviderKind(value as ProviderKind)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="docker">docker</SelectItem>
-                      <SelectItem value="yandex">yandex</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              {providerKind === "yandex" ? (
-                <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="ps-token">token</Label>
-                    <Input
-                      id="ps-token"
-                      type="password"
-                      disabled={!canUpdateSettings}
-                      value={ycToken}
-                      onChange={(e) => setYcToken(e.target.value)}
-                      className="font-mono"
-                    />
+                  <div>
+                    <SectionLabel>Placement</SectionLabel>
+                    <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <div className="flex flex-col gap-1.5">
+                        <Label>Availability zone</Label>
+                        <Select
+                          disabled={!canUpdateSettings}
+                          value={settings.yandexSettings?.zone ?? "ZONE_RU_CENTRAL1_A"}
+                          onValueChange={(value) =>
+                            setYandexValue(
+                              "zone",
+                              value as NonNullable<OrgSettings["yandexSettings"]>["zone"],
+                            )
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="ZONE_RU_CENTRAL1_A">ru-central1-a</SelectItem>
+                            <SelectItem value="ZONE_RU_CENTRAL1_B">ru-central1-b</SelectItem>
+                            <SelectItem value="ZONE_RU_CENTRAL1_D">ru-central1-d</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <Label>VM platform</Label>
+                        <Select
+                          disabled={!canUpdateSettings}
+                          value={
+                            settings.yandexSettings?.platformId ??
+                            "PLATFORM_ID_STANDARD_V3"
+                          }
+                          onValueChange={(value) =>
+                            setYandexValue(
+                              "platformId",
+                              value as NonNullable<OrgSettings["yandexSettings"]>["platformId"],
+                            )
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="PLATFORM_ID_STANDARD_V1">standard-v1</SelectItem>
+                            <SelectItem value="PLATFORM_ID_STANDARD_V2">standard-v2</SelectItem>
+                            <SelectItem value="PLATFORM_ID_STANDARD_V3">standard-v3</SelectItem>
+                            <SelectItem value="PLATFORM_ID_STANDARD_V4A">standard-v4a</SelectItem>
+                            <SelectItem value="PLATFORM_ID_AMD_V1">amd-v1</SelectItem>
+                            <SelectItem value="PLATFORM_ID_HIGHFREQ_V3">highfreq-v3</SelectItem>
+                            <SelectItem value="PLATFORM_ID_HIGHFREQ_V4A">highfreq-v4a</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {([
+                        ["networkId", "Network ID"],
+                        ["networkName", "Network name"],
+                        ["subnetCidr", "Subnet CIDR"],
+                        ["imageId", "Image ID"],
+                      ] as const).map(([key, label]) => (
+                        <div key={key} className="flex flex-col gap-1.5">
+                          <Label htmlFor={`yc-${key}`}>{label}</Label>
+                          <Input
+                            id={`yc-${key}`}
+                            disabled={!canUpdateSettings}
+                            value={settings.yandexSettings?.[key] ?? ""}
+                            onChange={(e) => setYandexValue(key, e.target.value)}
+                            className="font-mono"
+                          />
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="ps-cloud">cloud_id</Label>
-                    <Input
-                      id="ps-cloud"
-                      disabled={!canUpdateSettings}
-                      value={ycCloudId}
-                      onChange={(e) => setYcCloudId(e.target.value)}
-                      className="font-mono"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="ps-folder">folder_id</Label>
-                    <Input
-                      id="ps-folder"
-                      disabled={!canUpdateSettings}
-                      value={ycFolderId}
-                      onChange={(e) => setYcFolderId(e.target.value)}
-                      className="font-mono"
-                    />
+
+                  <div>
+                    <SectionLabel>Access</SectionLabel>
+                    <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <div className="flex flex-col gap-1.5">
+                        <Label htmlFor="yc-ssh-user">SSH user</Label>
+                        <Input
+                          id="yc-ssh-user"
+                          disabled={!canUpdateSettings}
+                          value={settings.yandexSettings?.sshUser ?? ""}
+                          onChange={(e) => setYandexValue("sshUser", e.target.value)}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1.5 sm:col-span-2">
+                        <Label htmlFor="yc-ssh-public-key">SSH public key</Label>
+                        <Input
+                          id="yc-ssh-public-key"
+                          disabled={!canUpdateSettings}
+                          value={settings.yandexSettings?.sshPublicKey ?? ""}
+                          onChange={(e) =>
+                            setYandexValue("sshPublicKey", e.target.value)
+                          }
+                          className="font-mono"
+                        />
+                      </div>
+                      <div className="flex min-w-0 flex-col gap-1.5">
+                        <Label>Public IP for VMs</Label>
+                        <div className="flex h-9 items-center gap-2 border border-input px-3">
+                          <Switch
+                            checked={!!settings.yandexSettings?.assignPublicIp}
+                            disabled={!canUpdateSettings}
+                            onCheckedChange={(checked) =>
+                              setYandexValue("assignPublicIp", checked)
+                            }
+                          />
+                          <span className="text-sm text-muted-foreground">
+                            {settings.yandexSettings?.assignPublicIp
+                              ? "Enabled"
+                              : "Disabled"}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex min-w-0 flex-col gap-1.5">
+                        <Label>Software network acceleration</Label>
+                        <div className="flex h-9 items-center gap-2 border border-input px-3">
+                          <Switch
+                            checked={
+                              !!settings.yandexSettings?.softwareAcceleratedNetwork
+                            }
+                            disabled={!canUpdateSettings}
+                            onCheckedChange={(checked) =>
+                              setYandexValue("softwareAcceleratedNetwork", checked)
+                            }
+                          />
+                          <span className="text-sm text-muted-foreground">
+                            {settings.yandexSettings?.softwareAcceleratedNetwork
+                              ? "Enabled"
+                              : "Disabled"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ) : (
-                <div className="mt-3 border border-border bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
-                  Docker.Settings is an empty message — no fields to fill. Saving
-                  registers the docker provider config for this tenant.
+                <div className="mt-6 border border-border bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
+                  Docker uses the local Docker daemon. There are no provider
+                  fields to fill for this tenant.
                 </div>
               )}
             </Panel>
