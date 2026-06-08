@@ -1293,7 +1293,7 @@ function pgdgPreInstall(): string[] {
   const keyring = "/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc";
   return [
     "install -d /usr/share/postgresql-common/pgdg",
-    `curl -fsSL -o ${keyring} https://www.postgresql.org/media/keys/ACCC4CF8.asc`,
+    `curl -fsSL -o ${keyring} http://www.postgresql.org/media/keys/ACCC4CF8.asc`,
     `sh -c 'echo "deb [signed-by=${keyring}] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'`,
     "apt-get update",
   ];

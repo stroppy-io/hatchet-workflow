@@ -26,9 +26,9 @@ func (r PackageResolver) ResolveDatabasePackage(database *domain.Database) (*dom
 		// A pinned version (e.g. "16") is not in the Ubuntu/Debian distro archive
 		// (jammy ships 14); pull it from the official PostgreSQL apt repository
 		// (PGDG). apt traffic is relayed through the gateway -> apt-cacher-ng, which
-		// caches PGDG like any other apt repo. The signing key is fetched directly
-		// over https (agents have outbound egress for that). The agent image already
-		// carries curl, ca-certificates and lsb-release.
+		// caches PGDG like any other apt repo. The signing key also goes through
+		// that proxy path, so keep it on http: the public gateway is reached over
+		// HTTPS, while stock Caddy is not a generic CONNECT tunnel.
 		aptPackages = []string{"postgresql-" + version, "postgresql-contrib-" + version}
 		preInstall = pgdgPreInstall()
 	}
@@ -50,7 +50,7 @@ func pgdgPreInstall() []string {
 	const keyring = "/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc"
 	return []string{
 		"install -d /usr/share/postgresql-common/pgdg",
-		"curl -fsSL -o " + keyring + " https://www.postgresql.org/media/keys/ACCC4CF8.asc",
+		"curl -fsSL -o " + keyring + " http://www.postgresql.org/media/keys/ACCC4CF8.asc",
 		`sh -c 'echo "deb [signed-by=` + keyring + `] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'`,
 		"apt-get update",
 	}

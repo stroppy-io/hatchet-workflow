@@ -1,13 +1,5 @@
 (stroppy_gateway) {
 	@grpc protocol grpc
-	@forward_proxy method CONNECT
-
-	handle @forward_proxy {
-		reverse_proxy {$CADDY_UPSTREAM:127.0.0.1:8080} {
-			header_up X-Stroppy-Forward-Proxy 1
-			header_up X-Stroppy-Proxy-Target {http.request.host}
-		}
-	}
 
 	handle @grpc {
 		reverse_proxy h2c://{$CADDY_UPSTREAM:127.0.0.1:8080}
