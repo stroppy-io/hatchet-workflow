@@ -1,4 +1,10 @@
-{$CADDY_DOMAIN:cloud.stroppy.io} {
+{$CADDY_SITE_ADDRESS:http://localhost} {
+	@grpc protocol grpc
+
+	handle @grpc {
+		reverse_proxy h2c://127.0.0.1:8080
+	}
+
 	handle /grafana/* {
 		reverse_proxy 127.0.0.1:3001
 	}

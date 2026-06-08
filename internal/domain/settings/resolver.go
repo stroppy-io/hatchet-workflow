@@ -68,10 +68,7 @@ func (r Resolver) ProviderSettings(ctx context.Context, tenantID string, provide
 
 func (r Resolver) AgentBootstrap(ctx context.Context) (*workflowpb.AgentBootstrap, error) {
 	serverAddr := r.DefaultServerAddr
-	if serverAddr == "" {
-		serverAddr = DefaultLocalServerAddr
-	}
-	if r.PlatformSource != nil {
+	if serverAddr == "" && r.PlatformSource != nil {
 		settings, err := r.PlatformSource.PlatformSettings(ctx)
 		if err != nil {
 			return nil, err
@@ -79,6 +76,9 @@ func (r Resolver) AgentBootstrap(ctx context.Context) (*workflowpb.AgentBootstra
 		if settings.GetServerAddr() != "" {
 			serverAddr = settings.GetServerAddr()
 		}
+	}
+	if serverAddr == "" {
+		serverAddr = DefaultLocalServerAddr
 	}
 
 	bootstrap := &workflowpb.AgentBootstrap{

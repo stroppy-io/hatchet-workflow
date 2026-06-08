@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  Globe2,
   LockKeyhole,
   RefreshCw,
   Save,
@@ -9,7 +8,6 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Panel } from "@/pages/dashboard/Panel";
@@ -136,20 +134,7 @@ export function AdminSystemSettings() {
         <StatusLine value={notice} />
       </div>
 
-      <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Panel label="Server">
-          <div className="flex items-end justify-between gap-3">
-            <div className="min-w-0">
-              <div className="truncate text-sm text-foreground">
-                {settings?.serverAddr || "derived"}
-              </div>
-              <div className="mt-1 font-mono text-[10px] text-muted-foreground">
-                server_addr
-              </div>
-            </div>
-            <Globe2 className="h-5 w-5 text-muted-foreground" />
-          </div>
-        </Panel>
+      <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
         <Panel label="Registration">
           <div className="flex items-end justify-between gap-3">
             <Badge
@@ -210,15 +195,6 @@ export function AdminSystemSettings() {
             <div className="text-sm text-muted-foreground">Loading...</div>
           ) : draft ? (
             <div className="grid grid-cols-1 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="server-addr">server_addr</Label>
-                <Input
-                  id="server-addr"
-                  value={draft.serverAddr}
-                  onChange={(e) => update("serverAddr", e.target.value)}
-                  placeholder="https://cloud.example.com"
-                />
-              </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="flex items-center justify-between border border-border bg-muted/20 px-3 py-2">
                   <div className="min-w-0">

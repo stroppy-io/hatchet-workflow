@@ -185,9 +185,9 @@ services:
       TEMPORAL_NAMESPACE: default
       AGENT_GATEWAY_ADDR: ":8080"
       API_ADDR: ":8081"
-      # Agents are joined to the server's compose network and dial the gateway
-      # in-network (direct bridge DNAT, not a userland-proxy hairpin that breaks gRPC).
-      AGENT_SERVER_ADDR: http://server:8080
+      # Docker agents can keep the in-network default. Cloud/prod agents should
+      # use the public Caddy HTTPS origin, e.g. PUBLIC_SERVER_ADDR=https://cloud.example.com.
+      AGENT_SERVER_ADDR: ${AGENT_SERVER_ADDR:-${PUBLIC_SERVER_ADDR:-http://server:8080}}
       AGENT_ATTACH_NETWORK: stroppy-cloud_default
       AGENT_BINARY_PATH: /usr/local/bin/stroppy-cloud
       STROPPY_BINARY_CACHE_DIR: /var/lib/stroppy-cache/binaries
@@ -205,7 +205,10 @@ services:
     profiles: [prod]
     network_mode: host
     environment:
-      CADDY_DOMAIN: ${CADDY_DOMAIN:-cloud.stroppy.io}
+      # Defaults to local HTTP so running the prod profile on a laptop does not
+      # try ACME for the real cloud domain. Prod should set PUBLIC_SERVER_ADDR or
+      # CADDY_SITE_ADDRESS to https://<domain>.
+      CADDY_SITE_ADDRESS: ${CADDY_SITE_ADDRESS:-${PUBLIC_SERVER_ADDR:-${CADDY_DOMAIN:-http://localhost}}}
     volumes:
       - ./deployments/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data

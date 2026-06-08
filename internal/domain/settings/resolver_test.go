@@ -33,6 +33,7 @@ func TestResolverReadsProviderAndAgentSettingsThroughInterfaces(t *testing.T) {
 				},
 			},
 		},
+		DefaultServerAddr:        "https://env.example",
 		DefaultTemporalNamespace: "bench",
 		DefaultAgentEnv:          map[string]string{"CUSTOM_ENV": "value"},
 	}
@@ -49,7 +50,7 @@ func TestResolverReadsProviderAndAgentSettingsThroughInterfaces(t *testing.T) {
 	if err != nil {
 		t.Fatalf("agent bootstrap: %v", err)
 	}
-	if got, want := bootstrap.GetServerAddr(), "https://control.example"; got != want {
+	if got, want := bootstrap.GetServerAddr(), "https://env.example"; got != want {
 		t.Fatalf("server addr = %q, want %q", got, want)
 	}
 	if got, want := bootstrap.GetTemporalNamespace(), "bench"; got != want {
@@ -60,6 +61,22 @@ func TestResolverReadsProviderAndAgentSettingsThroughInterfaces(t *testing.T) {
 	}
 	if got, want := bootstrap.GetExtraEnv()["CUSTOM_ENV"], "value"; got != want {
 		t.Fatalf("extra env = %q, want %q", got, want)
+	}
+}
+
+func TestResolverFallsBackToPlatformServerAddressWhenNoRuntimeDefault(t *testing.T) {
+	resolver := Resolver{
+		PlatformSource: StaticPlatformSettingsSource{
+			Settings: &apipb.PlatformSettings{ServerAddr: "https://control.example"},
+		},
+	}
+
+	bootstrap, err := resolver.AgentBootstrap(context.Background())
+	if err != nil {
+		t.Fatalf("agent bootstrap: %v", err)
+	}
+	if got, want := bootstrap.GetServerAddr(), "https://control.example"; got != want {
+		t.Fatalf("server addr = %q, want %q", got, want)
 	}
 }
 

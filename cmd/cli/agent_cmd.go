@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/url"
 	"os"
 
@@ -43,17 +45,21 @@ func agentCmd() *cobra.Command {
 			if machineID == "" {
 				return fmt.Errorf("agent: STROPPY_MACHINE_ID is required")
 			}
-			hostPort := agentGRPCHostPort(serverAddr)
+			hostPort, tlsConfig := agentGRPCTarget(serverAddr)
 
 			logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 			logger.Info("starting stroppy agent",
 				"server_addr", serverAddr, "temporal_hostport", hostPort,
+				"temporal_tls", tlsConfig != nil,
 				"namespace", namespace, "task_queue", taskQueue, "machine_id", machineID)
 
 			clientOptions := temporalclient.Options{
 				HostPort:  hostPort,
 				Namespace: namespace,
 				Logger:    temporallog.NewStructuredLogger(logger),
+			}
+			if tlsConfig != nil {
+				clientOptions.ConnectionOptions.TLS = tlsConfig
 			}
 			clientOptions.HeadersProvider = staticHeadersProvider{
 				"authorization": "Bearer " + agentToken,
@@ -106,11 +112,28 @@ func envOrAgent(key, def string) string {
 	return def
 }
 
-// agentGRPCHostPort strips a URL scheme/path so the Temporal gRPC client gets a
-// bare host:port. "http://host:8080" -> "host:8080".
-func agentGRPCHostPort(serverAddr string) string {
+// agentGRPCTarget strips a URL scheme/path so the Temporal gRPC client gets a
+// bare host:port. HTTPS server addresses dial the gateway with TLS through Caddy.
+func agentGRPCTarget(serverAddr string) (string, *tls.Config) {
 	if u, err := url.Parse(serverAddr); err == nil && u.Host != "" {
-		return u.Host
+		target := u.Host
+		host := u.Hostname()
+		port := u.Port()
+		if port == "" && host != "" {
+			switch u.Scheme {
+			case "https":
+				port = "443"
+			case "http":
+				port = "80"
+			}
+			if port != "" {
+				target = net.JoinHostPort(host, port)
+			}
+		}
+		if u.Scheme == "https" {
+			return target, &tls.Config{ServerName: host}
+		}
+		return target, nil
 	}
-	return serverAddr
+	return serverAddr, nil
 }
