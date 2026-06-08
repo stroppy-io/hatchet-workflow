@@ -754,6 +754,25 @@ func ShellQuote(value string) string {
 	return "'" + strings.ReplaceAll(value, "'", "'\"'\"'") + "'"
 }
 
+func ShellQuoteServerAddrURL(value string) string {
+	const prefix = "${STROPPY_SERVER_ADDR%/}/"
+	if !strings.HasPrefix(value, prefix) {
+		return ShellQuote(value)
+	}
+	suffix := strings.TrimPrefix(value, prefix)
+	if suffix == "" {
+		return ShellQuote(value)
+	}
+	for _, r := range suffix {
+		if !(r == '/' || r == '-' || r == '_' || r == '.' ||
+			(r >= '0' && r <= '9') || (r >= 'a' && r <= 'z') ||
+			(r >= 'A' && r <= 'Z')) {
+			return ShellQuote(value)
+		}
+	}
+	return `"` + prefix + suffix + `"`
+}
+
 func ShellValue(value string) string {
 	return ShellQuote(value)
 }

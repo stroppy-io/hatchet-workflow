@@ -145,7 +145,7 @@ func ydbInstallCommands(component *topologypb.Component, dbPackage *domain.Packa
 			}
 		}
 		commands = append(commands,
-			"curl -fsSL "+deploymentbuilder.ShellQuote(url)+" -o /tmp/ydbd.tgz && tar -xzf /tmp/ydbd.tgz -C /opt && install -m 0755 \"$(find /opt -path '*/bin/ydbd' | head -n1)\" /usr/local/bin/ydbd",
+			"curl -fsSL "+deploymentbuilder.ShellQuoteServerAddrURL(url)+" -o /tmp/ydbd.tgz && tar -xzf /tmp/ydbd.tgz -C /opt && install -m 0755 \"$(find /opt -path '*/bin/ydbd' | head -n1)\" /usr/local/bin/ydbd",
 		)
 		return commands
 	case ydbRoleHaproxy:

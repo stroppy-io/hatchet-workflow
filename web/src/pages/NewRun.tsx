@@ -1274,8 +1274,8 @@ function builtinPackageForEngine(kind: EngineKind, inputVersion: string): Databa
         id: `builtin/ydb/${version}`,
         name: `YDB ${version}`,
         debFilename: version === "default"
-          ? "https://binaries.ydb.tech/release/24.1.18/ydbd-24.1.18-linux-amd64.tar.gz"
-          : `https://binaries.ydb.tech/release/${version}/ydbd-${version}-linux-amd64.tar.gz`,
+          ? "${STROPPY_SERVER_ADDR%/}/api/binaries/ydbd/24.1.18/ydbd-24.1.18-linux-amd64.tar.gz"
+          : `\${STROPPY_SERVER_ADDR%/}/api/binaries/ydbd/${version}/ydbd-${version}-linux-amd64.tar.gz`,
       });
     case "cockroach":
       return create(PackageSchema, {
@@ -1283,8 +1283,8 @@ function builtinPackageForEngine(kind: EngineKind, inputVersion: string): Databa
         id: `builtin/cockroach/${version}`,
         name: `CockroachDB ${version}`,
         debFilename: version === "default"
-          ? "https://binaries.cockroachdb.com/cockroach-v23.2.5.linux-amd64.tgz"
-          : `https://binaries.cockroachdb.com/cockroach-v${version}.linux-amd64.tgz`,
+          ? "${STROPPY_SERVER_ADDR%/}/api/binaries/cockroach/23.2.5/cockroach-v23.2.5.linux-amd64.tgz"
+          : `\${STROPPY_SERVER_ADDR%/}/api/binaries/cockroach/${version}/cockroach-v${version}.linux-amd64.tgz`,
       });
   }
 }

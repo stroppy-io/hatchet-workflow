@@ -80,6 +80,9 @@ func TestCockroachDeploymentPlan(t *testing.T) {
 	if strings.Contains(service, "is prepared with config") {
 		t.Fatalf("service still contains placeholder unit: %s", service)
 	}
+	if install := dbtest.CallCmd(node, "100_install"); !strings.Contains(install, "\"${STROPPY_SERVER_ADDR%/}/api/binaries/cockroach/23.2.5/cockroach-v23.2.5.linux-amd64.tgz\"") {
+		t.Fatalf("install does not expand server binary URL: %s", install)
+	}
 	// node-2 joins but is not the init node.
 	node2 := dbtest.ServiceUnitText(dbtest.ComponentsByID(plan)["cockroach-node-2"])
 	if strings.Contains(node2, "cockroach init") {

@@ -91,6 +91,9 @@ func TestYdbDeploymentPlan(t *testing.T) {
 	if install := dbtest.CallCmd(storage, "100_install"); !strings.Contains(install, "ydbd") {
 		t.Fatalf("install does not fetch ydbd: %s", install)
 	}
+	if install := dbtest.CallCmd(storage, "100_install"); !strings.Contains(install, "\"${STROPPY_SERVER_ADDR%/}/api/binaries/ydbd/24.1.18/ydbd-24.1.18-linux-amd64.tar.gz\"") {
+		t.Fatalf("install does not expand server binary URL: %s", install)
+	}
 
 	database := dbtest.ServiceUnitText(components["ydb-database-1"])
 	for _, want := range []string{"--node dynamic", "--node-broker '10.0.0.1:2136'", "--node-broker '10.0.0.2:2136'"} {
