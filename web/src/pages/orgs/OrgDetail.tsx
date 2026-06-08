@@ -61,7 +61,10 @@ import {
   type OrgRole,
   type OrgSettings,
 } from "@/services/org";
-import type { ProviderSettingsJson } from "@/lib/proto/cloud/v1/deployment/provider_pb";
+import type {
+  ProviderJson,
+  ProviderSettingsJson,
+} from "@/lib/proto/cloud/v1/deployment/provider_pb";
 
 const RESOURCES: NonNullable<PermissionJson["resource"]>[] = [
   "RESOURCE_ACCOUNT",
@@ -189,6 +192,15 @@ function defaultYandexSettings(): NonNullable<OrgSettings["yandexSettings"]> {
   };
 }
 
+type ConfigurableProvider = Exclude<ProviderJson, "PROVIDER_UNSPECIFIED">;
+
+function providerConfigFromSettings(settings: OrgSettings): ConfigurableProvider {
+  if (settings.yandexSettings) {
+    return "PROVIDER_YANDEX";
+  }
+  return "PROVIDER_DOCKER";
+}
+
 function roleIdsEqual(a: string[], b: string[]) {
   return a.length === b.length && a.every((value) => b.includes(value));
 }
@@ -212,6 +224,8 @@ export function OrgDetail() {
   const [tenantName, setTenantName] = useState("");
   const [tenantSlug, setTenantSlug] = useState("");
   const [settingsDraft, setSettingsDraft] = useState<OrgSettings | null>(null);
+  const [providerDraft, setProviderDraft] =
+    useState<ConfigurableProvider>("PROVIDER_DOCKER");
 
   const [memberDialogOpen, setMemberDialogOpen] = useState(false);
   const [memberMode, setMemberMode] = useState<"create" | "update">("create");
@@ -254,6 +268,7 @@ export function OrgDetail() {
         setTenantName(detail.tenant.name);
         setTenantSlug(detail.tenant.slug);
         setSettingsDraft(clone(detail.settings));
+        setProviderDraft(providerConfigFromSettings(detail.settings));
       })
       .catch((e: unknown) => {
         if (!cancelled) setError(e instanceof Error ? e.message : String(e));
@@ -367,6 +382,7 @@ export function OrgDetail() {
       setTenantName(detail.tenant.name);
       setTenantSlug(detail.tenant.slug);
       setSettingsDraft(clone(detail.settings));
+      setProviderDraft(providerConfigFromSettings(detail.settings));
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -377,6 +393,7 @@ export function OrgDetail() {
     setTenantName(detail.tenant.name);
     setTenantSlug(detail.tenant.slug);
     setSettingsDraft(clone(detail.settings));
+    setProviderDraft(providerConfigFromSettings(detail.settings));
   }
 
   async function saveTenant() {
@@ -534,20 +551,38 @@ export function OrgDetail() {
   }
 
   function providerSettingsPayload(): ProviderSettingsJson {
-    if (settings.defaultProvider !== "PROVIDER_YANDEX") {
+    if (providerDraft !== "PROVIDER_YANDEX") {
       return { docker: {} };
     }
     return { yandex: settings.yandexSettings ?? defaultYandexSettings() };
+  }
+
+  function tenantSettingsPayload(): OrgSettings {
+    return {
+      ...settings,
+      yandexSettings: orgDetail.settings.yandexSettings,
+    };
+  }
+
+  async function saveTenantSettings() {
+    setError(null);
+    setNotice(null);
+    try {
+      const next = await getOrgProvider().updateTenantSettings({
+        tenantId: orgDetail.tenant.id,
+        settings: tenantSettingsPayload(),
+      });
+      acceptDetail(next);
+      setNotice("Tenant settings saved.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
   }
 
   async function saveProviderSettings() {
     setError(null);
     setNotice(null);
     try {
-      await getOrgProvider().updateTenantSettings({
-        tenantId: orgDetail.tenant.id,
-        settings: settings,
-      });
       const next = await getOrgProvider().setProviderSettings({
         tenantSlug: orgDetail.tenant.slug,
         tenantId: orgDetail.tenant.id,
@@ -678,6 +713,29 @@ export function OrgDetail() {
         },
       };
     });
+  }
+
+  function optionalBoolValue(value: boolean | undefined): "default" | "true" | "false" {
+    if (value === undefined) return "default";
+    return value ? "true" : "false";
+  }
+
+  function setOptionalBool(
+    key: "defaultInTenantRating" | "defaultInGlobalRating",
+    value: string,
+  ) {
+    setSettingsValue(
+      key,
+      value === "default" ? undefined : value === "true",
+    );
+  }
+
+  function setNonNegativeNumber(
+    key: "defaultMaxParallel" | "runRetentionDays",
+    raw: string,
+  ) {
+    const next = Number.parseInt(raw, 10);
+    setSettingsValue(key, Number.isFinite(next) && next > 0 ? next : 0);
   }
 
   return (
@@ -1063,7 +1121,110 @@ export function OrgDetail() {
 
           <TabsContent value="settings" className="mt-4">
             <Panel
+              label="Tenant defaults"
+              action={
+                <Button
+                  size="sm"
+                  disabled={!canUpdateSettings}
+                  onClick={() => void saveTenantSettings()}
+                >
+                  <Save className="h-3.5 w-3.5" />
+                  Save
+                </Button>
+              }
+            >
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="flex flex-col gap-1.5">
+                  <Label>Default provider</Label>
+                  <Select
+                    value={settings.defaultProvider ?? "PROVIDER_DOCKER"}
+                    disabled={!canUpdateSettings}
+                    onValueChange={(value) => {
+                      setSettingsValue(
+                        "defaultProvider",
+                        value as OrgSettings["defaultProvider"],
+                      );
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="PROVIDER_DOCKER">Docker</SelectItem>
+                      <SelectItem value="PROVIDER_YANDEX">Yandex Cloud</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="settings-max-parallel">Default max parallel</Label>
+                  <Input
+                    id="settings-max-parallel"
+                    type="number"
+                    min={0}
+                    disabled={!canUpdateSettings}
+                    value={settings.defaultMaxParallel ?? 0}
+                    onChange={(e) =>
+                      setNonNegativeNumber("defaultMaxParallel", e.target.value)
+                    }
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="settings-retention">Run retention days</Label>
+                  <Input
+                    id="settings-retention"
+                    type="number"
+                    min={0}
+                    disabled={!canUpdateSettings}
+                    value={settings.runRetentionDays ?? 0}
+                    onChange={(e) =>
+                      setNonNegativeNumber("runRetentionDays", e.target.value)
+                    }
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label>Tenant rating by default</Label>
+                  <Select
+                    value={optionalBoolValue(settings.defaultInTenantRating)}
+                    disabled={!canUpdateSettings}
+                    onValueChange={(value) =>
+                      setOptionalBool("defaultInTenantRating", value)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">Platform default</SelectItem>
+                      <SelectItem value="true">Enabled</SelectItem>
+                      <SelectItem value="false">Disabled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label>Global rating by default</Label>
+                  <Select
+                    value={optionalBoolValue(settings.defaultInGlobalRating)}
+                    disabled={!canUpdateSettings}
+                    onValueChange={(value) =>
+                      setOptionalBool("defaultInGlobalRating", value)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">Platform default</SelectItem>
+                      <SelectItem value="true">Enabled</SelectItem>
+                      <SelectItem value="false">Disabled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </Panel>
+
+            <Panel
               label="Provider settings"
+              className="mt-4"
               action={
                 <Button
                   size="sm"
@@ -1075,26 +1236,15 @@ export function OrgDetail() {
                 </Button>
               }
             >
-              <div className="max-w-3xl text-sm text-muted-foreground">
-                Choose the deployment provider used for new runs in this
-                organization, then save its connection and placement settings.
-              </div>
-
-              <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-1.5">
-                  <Label>Provider</Label>
+                  <Label>Provider config</Label>
                   <Select
-                    value={settings.defaultProvider}
+                    value={providerDraft}
                     disabled={!canUpdateSettings}
-                    onValueChange={(value) => {
-                      setSettingsValue(
-                        "defaultProvider",
-                        value as OrgSettings["defaultProvider"],
-                      );
-                      if (value === "PROVIDER_YANDEX" && !settings.yandexSettings) {
-                        setSettingsValue("yandexSettings", defaultYandexSettings());
-                      }
-                    }}
+                    onValueChange={(value) =>
+                      setProviderDraft(value as ConfigurableProvider)
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -1107,7 +1257,7 @@ export function OrgDetail() {
                 </div>
               </div>
 
-              {settings.defaultProvider === "PROVIDER_YANDEX" ? (
+              {providerDraft === "PROVIDER_YANDEX" ? (
                 <div className="mt-6 flex flex-col gap-5 border-t border-border/70 pt-5">
                   <div>
                     <SectionLabel>Connection</SectionLabel>

@@ -19,7 +19,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/api/tenant_settings.proto.
  */
 export const file_cloud_v1_api_tenant_settings: GenFile = /*@__PURE__*/
-  fileDesc("CiJjbG91ZC92MS9hcGkvdGVuYW50X3NldHRpbmdzLnByb3RvEgxjbG91ZC52MS5hcGkiOAoYR2V0VGVuYW50U2V0dGluZ3NSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAIl4KGUdldFRlbmFudFNldHRpbmdzUmVzcG9uc2USQQoIc2V0dGluZ3MYASABKAsyJS5jbG91ZC52MS5tb2RlbHMuVGVuYW50U2V0dGluZ3NSZWNvcmRCCPpCBYoBAhABIn4KG1VwZGF0ZVRlbmFudFNldHRpbmdzUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEGEAQARJBCghzZXR0aW5ncxgCIAEoCzIlLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRTZXR0aW5nc1JlY29yZEII+kIFigECEAEiYQocVXBkYXRlVGVuYW50U2V0dGluZ3NSZXNwb25zZRJBCghzZXR0aW5ncxgBIAEoCzIlLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRTZXR0aW5nc1JlY29yZEII+kIFigECEAEieQogU2V0VGVuYW50UHJvdmlkZXJTZXR0aW5nc1JlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASNwoIc2V0dGluZ3MYAiABKAsyJS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyU2V0dGluZ3MyoAYKFVRlbmFudFNldHRpbmdzU2VydmljZRLlAQoRR2V0VGVuYW50U2V0dGluZ3MSJi5jbG91ZC52MS5hcGkuR2V0VGVuYW50U2V0dGluZ3NSZXF1ZXN0GicuY2xvdWQudjEuYXBpLkdldFRlbmFudFNldHRpbmdzUmVzcG9uc2Uif5ACAYq1GAYSBAgFEALypx1uGhQvZ2V0LXRlbmFudC1zZXR0aW5ncyIRZ2V0VGVuYW50U2V0dGluZ3OiAQIQAbIBBwjIARICT0uyATEqHAoaIy9jb21wb25lbnRzL3NjaGVtYXMvRXJyb3ISEVVuZXhwZWN0ZWQgZXJyb3IuEAES9QEKFFVwZGF0ZVRlbmFudFNldHRpbmdzEikuY2xvdWQudjEuYXBpLlVwZGF0ZVRlbmFudFNldHRpbmdzUmVxdWVzdBoqLmNsb3VkLnYxLmFwaS5VcGRhdGVUZW5hbnRTZXR0aW5nc1Jlc3BvbnNlIoUBkAICirUYBhIECAUQA/KnHXQaFy91cGRhdGUtdGVuYW50LXNldHRpbmdzIhR1cGRhdGVUZW5hbnRTZXR0aW5nc6IBAhABsgEHCMgBEgJPS7IBMSocChojL2NvbXBvbmVudHMvc2NoZW1hcy9FcnJvchIRVW5leHBlY3RlZCBlcnJvci4QAhL2AQoZU2V0VGVuYW50UHJvdmlkZXJTZXR0aW5ncxIuLmNsb3VkLnYxLmFwaS5TZXRUZW5hbnRQcm92aWRlclNldHRpbmdzUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSKQAZACAoq1GAYSBAgFEAPypx1/EAIaHS9zZXQtdGVuYW50LXByb3ZpZGVyLXNldHRpbmdzIhlzZXRUZW5hbnRQcm92aWRlclNldHRpbmdzogECEAGyAQcIyAESAk9LsgExKhwKGiMvY29tcG9uZW50cy9zY2hlbWFzL0Vycm9yEhFVbmV4cGVjdGVkIGVycm9yLhou8qcdKhIXL2FwaS92MS90ZW5hbnQtc2V0dGluZ3MaD3RlbmFudC1zZXR0aW5nc0JHWj9naXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9hcGnypx0CCAFiBnByb3RvMw", [file_cloud_v1_deployment_provider, file_cloud_v1_iam_options, file_cloud_v1_models_tenant_settings, file_google_protobuf_empty, file_validate_validate, file_ogen_ogen]);
+  fileDesc("CiJjbG91ZC92MS9hcGkvdGVuYW50X3NldHRpbmdzLnByb3RvEgxjbG91ZC52MS5hcGkiOAoYR2V0VGVuYW50U2V0dGluZ3NSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAIl4KGUdldFRlbmFudFNldHRpbmdzUmVzcG9uc2USQQoIc2V0dGluZ3MYASABKAsyJS5jbG91ZC52MS5tb2RlbHMuVGVuYW50U2V0dGluZ3NSZWNvcmRCCPpCBYoBAhABIn4KG1VwZGF0ZVRlbmFudFNldHRpbmdzUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBJBCghzZXR0aW5ncxgCIAEoCzIlLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRTZXR0aW5nc1JlY29yZEII+kIFigECEAEiYQocVXBkYXRlVGVuYW50U2V0dGluZ3NSZXNwb25zZRJBCghzZXR0aW5ncxgBIAEoCzIlLmNsb3VkLnYxLm1vZGVscy5UZW5hbnRTZXR0aW5nc1JlY29yZEII+kIFigECEAEieQogU2V0VGVuYW50UHJvdmlkZXJTZXR0aW5nc1JlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASNwoIc2V0dGluZ3MYAiABKAsyJS5jbG91ZC52MS5kZXBsb3ltZW50LlByb3ZpZGVyU2V0dGluZ3MyoAYKFVRlbmFudFNldHRpbmdzU2VydmljZRLlAQoRR2V0VGVuYW50U2V0dGluZ3MSJi5jbG91ZC52MS5hcGkuR2V0VGVuYW50U2V0dGluZ3NSZXF1ZXN0GicuY2xvdWQudjEuYXBpLkdldFRlbmFudFNldHRpbmdzUmVzcG9uc2Uif5ACAYq1GAYSBAgFEALypx1usgEHCMgBEgJPS7IBMRIRVW5leHBlY3RlZCBlcnJvci4qHAoaIy9jb21wb25lbnRzL3NjaGVtYXMvRXJyb3IQARoUL2dldC10ZW5hbnQtc2V0dGluZ3MiEWdldFRlbmFudFNldHRpbmdzogECEAES9QEKFFVwZGF0ZVRlbmFudFNldHRpbmdzEikuY2xvdWQudjEuYXBpLlVwZGF0ZVRlbmFudFNldHRpbmdzUmVxdWVzdBoqLmNsb3VkLnYxLmFwaS5VcGRhdGVUZW5hbnRTZXR0aW5nc1Jlc3BvbnNlIoUBkAICirUYBhIECAUQA/KnHXQiFHVwZGF0ZVRlbmFudFNldHRpbmdzogECEAGyAQcIyAESAk9LsgExKhwKGiMvY29tcG9uZW50cy9zY2hlbWFzL0Vycm9yEhFVbmV4cGVjdGVkIGVycm9yLhACGhcvdXBkYXRlLXRlbmFudC1zZXR0aW5ncxL2AQoZU2V0VGVuYW50UHJvdmlkZXJTZXR0aW5ncxIuLmNsb3VkLnYxLmFwaS5TZXRUZW5hbnRQcm92aWRlclNldHRpbmdzUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSKQAZACAoq1GAYSBAgFEAPypx1/sgEHCMgBEgJPS7IBMRIRVW5leHBlY3RlZCBlcnJvci4qHAoaIy9jb21wb25lbnRzL3NjaGVtYXMvRXJyb3IQAhodL3NldC10ZW5hbnQtcHJvdmlkZXItc2V0dGluZ3MiGXNldFRlbmFudFByb3ZpZGVyU2V0dGluZ3OiAQIQARou8qcdKhIXL2FwaS92MS90ZW5hbnQtc2V0dGluZ3MaD3RlbmFudC1zZXR0aW5nc0JHWj9naXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9hcGnypx0CCAFiBnByb3RvMw", [file_cloud_v1_deployment_provider, file_cloud_v1_iam_options, file_cloud_v1_models_tenant_settings, file_google_protobuf_empty, file_validate_validate, file_ogen_ogen]);
 
 /**
  *
@@ -203,11 +203,10 @@ export const UpdateTenantSettingsResponseSchema: GenMessage<UpdateTenantSettings
 
 /**
  *
- * SetTenantProviderSettings sets/replaces the config for ONE provider. The client
- * sends only the form VALUES (schemapb.Filled = values + schema ref), NOT a full
- * Baked (which would re-send the schema the server already owns); the server
- * validates against the provider's settings schema and bakes the result. Keyed by
- * `provider`. Idempotent.
+ * SetTenantProviderSettings sets/replaces the config for ONE provider. The
+ * provider is selected by the ProviderSettings oneof variant. This does not
+ * change TenantSettingsRecord.default_provider; default_provider is a separate
+ * tenant default used by wizards.
  *
  * @generated from message cloud.v1.api.SetTenantProviderSettingsRequest
  */
@@ -222,8 +221,7 @@ export type SetTenantProviderSettingsRequest = Message<"cloud.v1.api.SetTenantPr
 
   /**
    *
-   * settings carries only the form values (Filled = values + schema ref); the
-   * server validates against the provider schema and bakes the result.
+   * settings carries one provider-specific settings message.
    *
    * @generated from field: cloud.v1.deployment.ProviderSettings settings = 2;
    */
@@ -232,11 +230,10 @@ export type SetTenantProviderSettingsRequest = Message<"cloud.v1.api.SetTenantPr
 
 /**
  *
- * SetTenantProviderSettings sets/replaces the config for ONE provider. The client
- * sends only the form VALUES (schemapb.Filled = values + schema ref), NOT a full
- * Baked (which would re-send the schema the server already owns); the server
- * validates against the provider's settings schema and bakes the result. Keyed by
- * `provider`. Idempotent.
+ * SetTenantProviderSettings sets/replaces the config for ONE provider. The
+ * provider is selected by the ProviderSettings oneof variant. This does not
+ * change TenantSettingsRecord.default_provider; default_provider is a separate
+ * tenant default used by wizards.
  *
  * @generated from message cloud.v1.api.SetTenantProviderSettingsRequest
  */
@@ -251,8 +248,7 @@ export type SetTenantProviderSettingsRequestJson = {
 
   /**
    *
-   * settings carries only the form values (Filled = values + schema ref); the
-   * server validates against the provider schema and bakes the result.
+   * settings carries one provider-specific settings message.
    *
    * @generated from field: cloud.v1.deployment.ProviderSettings settings = 2;
    */

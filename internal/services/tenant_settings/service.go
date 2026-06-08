@@ -185,7 +185,8 @@ func (s *TenantSettingsService) UpdateTenantSettings(ctx context.Context, req *a
 // SetTenantProviderSettings sets/replaces the config for ONE provider (idempotent,
 // keyed by provider). The provider is identified by the oneof variant carried in
 // ProviderSettings; the typed settings are validated and stored on the tenant's
-// settings row (and the tenant's default_provider is pointed at it). Returns Empty.
+// settings row. The tenant's default_provider is a separate tenant default and
+// is not changed by this RPC. Returns Empty.
 func (s *TenantSettingsService) SetTenantProviderSettings(ctx context.Context, req *api.SetTenantProviderSettingsRequest) (*emptypb.Empty, error) {
 	c, err := s.caller(ctx)
 	if err != nil {
@@ -219,15 +220,13 @@ func (s *TenantSettingsService) SetTenantProviderSettings(ctx context.Context, r
 }
 
 // applyProviderSettings copies the typed provider config from a ProviderSettings
-// oneof onto the tenant's settings row and points default_provider at it. At most
-// one config per provider is stored (the row carries one typed field per provider).
+// oneof onto the tenant's settings row. At most one config per provider is stored
+// (the row carries one typed field per provider).
 func applyProviderSettings(rec *models.TenantSettingsRecord, cfg *deployment.ProviderSettings) {
 	switch {
 	case cfg.GetYandex() != nil:
 		rec.YandexSettings = cfg.GetYandex()
-		rec.DefaultProvider = deployment.Provider_PROVIDER_YANDEX
 	case cfg.GetDocker() != nil:
-		rec.DefaultProvider = deployment.Provider_PROVIDER_DOCKER
 	}
 }
 

@@ -306,6 +306,20 @@ function toOrgSettings(s: TenantSettingsRecord | undefined): OrgSettings {
   };
 }
 
+function withoutUndefined<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value.map(withoutUndefined) as T;
+  }
+  if (value && typeof value === "object") {
+    const next: Record<string, unknown> = {};
+    for (const [key, item] of Object.entries(value)) {
+      if (item !== undefined) next[key] = withoutUndefined(item);
+    }
+    return next as T;
+  }
+  return value;
+}
+
 // Mutations identify roles/memberships by id alone but must return the full org
 // detail. We remember the owning tenant of every row loaded via getOrg so an
 // id-only mutate can rebuild the detail it came from.
@@ -507,7 +521,7 @@ const realOrgProvider: OrgProvider = {
   async updateTenantSettings(input) {
     await tenantSettingsClient.updateTenantSettings({
       tenantId: input.tenantId,
-      settings: fromJson(TenantSettingsRecordSchema, input.settings),
+      settings: fromJson(TenantSettingsRecordSchema, withoutUndefined(input.settings)),
     });
     return buildDetail(await fetchTenantById(input.tenantId));
   },
@@ -515,7 +529,7 @@ const realOrgProvider: OrgProvider = {
   async setProviderSettings(input) {
     await tenantSettingsClient.setTenantProviderSettings({
       tenantId: input.tenantId,
-      settings: fromJson(ProviderSettingsSchema, input.settings),
+      settings: fromJson(ProviderSettingsSchema, withoutUndefined(input.settings)),
     });
     return buildDetail(await fetchTenantById(input.tenantId));
   },

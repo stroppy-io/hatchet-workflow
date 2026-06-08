@@ -220,17 +220,15 @@ func (x *UpdateTenantSettingsResponse) GetSettings() *models.TenantSettingsRecor
 	return nil
 }
 
-// SetTenantProviderSettings sets/replaces the config for ONE provider. The client
-// sends only the form VALUES (schemapb.Filled = values + schema ref), NOT a full
-// Baked (which would re-send the schema the server already owns); the server
-// validates against the provider's settings schema and bakes the result. Keyed by
-// `provider`. Idempotent.
+// SetTenantProviderSettings sets/replaces the config for ONE provider. The
+// provider is selected by the ProviderSettings oneof variant. This does not
+// change TenantSettingsRecord.default_provider; default_provider is a separate
+// tenant default used by wizards.
 type SetTenantProviderSettingsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// tenant_id scopes the request to the owning tenant.
 	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	// settings carries only the form values (Filled = values + schema ref); the
-	// server validates against the provider schema and bakes the result.
+	// settings carries one provider-specific settings message.
 	Settings      *deployment.ProviderSettings `protobuf:"bytes,2,opt,name=settings,proto3" json:"settings,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

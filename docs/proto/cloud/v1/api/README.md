@@ -9929,11 +9929,10 @@ go_name: Suite</pre></td>
 ### cloud.v1.api.SetTenantProviderSettingsRequest
 
 <pre>
-//SetTenantProviderSettings sets/replaces the config for ONE provider. The client
-//sends only the form VALUES (schemapb.Filled = values + schema ref), NOT a full
-//Baked (which would re-send the schema the server already owns); the server
-//validates against the provider's settings schema and bakes the result. Keyed by
-//`provider`. Idempotent.
+//SetTenantProviderSettings sets/replaces the config for ONE provider. The
+//provider is selected by the ProviderSettings oneof variant. This does not
+//change TenantSettingsRecord.default_provider; default_provider is a separate
+//tenant default used by wizards.
 </pre>
 
 <table>
@@ -9946,8 +9945,7 @@ go_name: Suite</pre></td>
 <td>settings</td>
 <td><a href="../deployment/README.md#cloud-v1-deployment-providersettings">cloud.v1.deployment.ProviderSettings</a></td>
 <td><pre>
-//settings carries only the form values (Filled = values + schema ref); the
-//server validates against the provider schema and bakes the result.<br>
+//settings carries one provider-specific settings message.<br>
 
 json_name: settings
 go_name: Settings</pre></td>

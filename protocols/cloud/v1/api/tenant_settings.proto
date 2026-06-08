@@ -63,11 +63,10 @@ message UpdateTenantSettingsResponse {
 }
 
 /*
-    SetTenantProviderSettings sets/replaces the config for ONE provider. The client
-    sends only the form VALUES (schemapb.Filled = values + schema ref), NOT a full
-    Baked (which would re-send the schema the server already owns); the server
-    validates against the provider's settings schema and bakes the result. Keyed by
-    `provider`. Idempotent.
+    SetTenantProviderSettings sets/replaces the config for ONE provider. The
+    provider is selected by the ProviderSettings oneof variant. This does not
+    change TenantSettingsRecord.default_provider; default_provider is a separate
+    tenant default used by wizards.
  */
 message SetTenantProviderSettingsRequest {
     /*
@@ -75,8 +74,7 @@ message SetTenantProviderSettingsRequest {
      */
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
     /*
-        settings carries only the form values (Filled = values + schema ref); the
-        server validates against the provider schema and bakes the result.
+        settings carries one provider-specific settings message.
      */
     deployment.ProviderSettings settings = 2;
 }
