@@ -204,6 +204,8 @@ services:
     restart: unless-stopped
     profiles: [prod]
     network_mode: host
+    environment:
+      CADDY_DOMAIN: ${CADDY_DOMAIN:-cloud.stroppy.io}
     volumes:
       - ./deployments/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data

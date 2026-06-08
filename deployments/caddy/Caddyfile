@@ -1,9 +1,9 @@
-cloud.stroppy.io {
-    handle /grafana/* {
-        reverse_proxy 127.0.0.1:3001
-    }
+{$CADDY_DOMAIN:cloud.stroppy.io} {
+	handle /grafana/* {
+		reverse_proxy 127.0.0.1:3001
+	}
 
-    handle {
-        reverse_proxy 127.0.0.1:8080
-    }
+	handle {
+		reverse_proxy 127.0.0.1:8080
+	}
 }
