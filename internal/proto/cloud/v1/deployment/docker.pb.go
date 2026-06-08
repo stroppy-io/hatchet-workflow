@@ -314,7 +314,9 @@ type Docker_Input struct {
 	// network describes the Docker network and DNS settings.
 	Network *Docker_Network `protobuf:"bytes,2,opt,name=network,proto3" json:"network,omitempty"`
 	// containers contains runtime container specs keyed by stable name.
-	Containers    map[string]*Docker_Container `protobuf:"bytes,3,rep,name=containers,proto3" json:"containers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Containers map[string]*Docker_Container `protobuf:"bytes,3,rep,name=containers,proto3" json:"containers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// log_context scopes Docker stderr/progress into run logs.
+	LogContext    *Docker_Input_LogContext `protobuf:"bytes,4,opt,name=log_context,json=logContext,proto3" json:"log_context,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -359,6 +361,13 @@ func (x *Docker_Input) GetNetwork() *Docker_Network {
 func (x *Docker_Input) GetContainers() map[string]*Docker_Container {
 	if x != nil {
 		return x.Containers
+	}
+	return nil
+}
+
+func (x *Docker_Input) GetLogContext() *Docker_Input_LogContext {
+	if x != nil {
+		return x.LogContext
 	}
 	return nil
 }
@@ -1110,21 +1119,143 @@ func (x *Docker_ContainerOutput) GetStartedAt() string {
 	return ""
 }
 
+// LogContext scopes Docker daemon progress output to the owning run stage.
+type Docker_Input_LogContext struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// run_id is the owning test run id.
+	RunId string `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	// node_execution_id is the execution stage receiving Docker output.
+	NodeExecutionId string `protobuf:"bytes,2,opt,name=node_execution_id,json=nodeExecutionId,proto3" json:"node_execution_id,omitempty"`
+	// parent_node_execution_id links the Docker stage to its parent pipeline stage.
+	ParentNodeExecutionId string `protobuf:"bytes,3,opt,name=parent_node_execution_id,json=parentNodeExecutionId,proto3" json:"parent_node_execution_id,omitempty"`
+	// phase is the top-level pipeline phase.
+	Phase string `protobuf:"bytes,4,opt,name=phase,proto3" json:"phase,omitempty"`
+	// stage_name is the producing stage display name.
+	StageName string `protobuf:"bytes,5,opt,name=stage_name,json=stageName,proto3" json:"stage_name,omitempty"`
+	// action is the generic action class.
+	Action string `protobuf:"bytes,6,opt,name=action,proto3" json:"action,omitempty"`
+	// unit is the server-side unit that produced the output.
+	Unit string `protobuf:"bytes,7,opt,name=unit,proto3" json:"unit,omitempty"`
+	// mentions are normalized operation tokens.
+	Mentions      []string `protobuf:"bytes,8,rep,name=mentions,proto3" json:"mentions,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Docker_Input_LogContext) Reset() {
+	*x = Docker_Input_LogContext{}
+	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Docker_Input_LogContext) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Docker_Input_LogContext) ProtoMessage() {}
+
+func (x *Docker_Input_LogContext) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_deployment_docker_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Docker_Input_LogContext.ProtoReflect.Descriptor instead.
+func (*Docker_Input_LogContext) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_deployment_docker_proto_rawDescGZIP(), []int{0, 1, 0}
+}
+
+func (x *Docker_Input_LogContext) GetRunId() string {
+	if x != nil {
+		return x.RunId
+	}
+	return ""
+}
+
+func (x *Docker_Input_LogContext) GetNodeExecutionId() string {
+	if x != nil {
+		return x.NodeExecutionId
+	}
+	return ""
+}
+
+func (x *Docker_Input_LogContext) GetParentNodeExecutionId() string {
+	if x != nil {
+		return x.ParentNodeExecutionId
+	}
+	return ""
+}
+
+func (x *Docker_Input_LogContext) GetPhase() string {
+	if x != nil {
+		return x.Phase
+	}
+	return ""
+}
+
+func (x *Docker_Input_LogContext) GetStageName() string {
+	if x != nil {
+		return x.StageName
+	}
+	return ""
+}
+
+func (x *Docker_Input_LogContext) GetAction() string {
+	if x != nil {
+		return x.Action
+	}
+	return ""
+}
+
+func (x *Docker_Input_LogContext) GetUnit() string {
+	if x != nil {
+		return x.Unit
+	}
+	return ""
+}
+
+func (x *Docker_Input_LogContext) GetMentions() []string {
+	if x != nil {
+		return x.Mentions
+	}
+	return nil
+}
+
 var File_cloud_v1_deployment_docker_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_deployment_docker_proto_rawDesc = "" +
 	"\n" +
-	" cloud/v1/deployment/docker.proto\x12\x13cloud.v1.deployment\x1a\x17validate/validate.proto\"\xbf\x1b\n" +
+	" cloud/v1/deployment/docker.proto\x12\x13cloud.v1.deployment\x1a\x17validate/validate.proto\"\xe6\x1e\n" +
 	"\x06Docker\x12A\n" +
 	"\x05input\x18\x01 \x01(\v2!.cloud.v1.deployment.Docker.InputB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x05input\x12:\n" +
 	"\x06output\x18\x02 \x01(\v2\".cloud.v1.deployment.Docker.OutputR\x06output\x1a\n" +
 	"\n" +
-	"\bSettings\x1a\x93\x02\n" +
+	"\bSettings\x1a\xba\x05\n" +
 	"\x05Input\x12G\n" +
 	"\anetwork\x18\x02 \x01(\v2#.cloud.v1.deployment.Docker.NetworkB\b\xfaB\x05\x8a\x01\x02\x10\x01R\anetwork\x12[\n" +
 	"\n" +
 	"containers\x18\x03 \x03(\v21.cloud.v1.deployment.Docker.Input.ContainersEntryB\b\xfaB\x05\x9a\x01\x02\b\x01R\n" +
-	"containers\x1ad\n" +
+	"containers\x12M\n" +
+	"\vlog_context\x18\x04 \x01(\v2,.cloud.v1.deployment.Docker.Input.LogContextR\n" +
+	"logContext\x1a\xd5\x02\n" +
+	"\n" +
+	"LogContext\x12\x1f\n" +
+	"\x06run_id\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\x05runId\x124\n" +
+	"\x11node_execution_id\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\x0fnodeExecutionId\x12A\n" +
+	"\x18parent_node_execution_id\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\x15parentNodeExecutionId\x12\x1e\n" +
+	"\x05phase\x18\x04 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\x05phase\x12'\n" +
+	"\n" +
+	"stage_name\x18\x05 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x02R\tstageName\x12 \n" +
+	"\x06action\x18\x06 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\x06action\x12\x1c\n" +
+	"\x04unit\x18\a \x01(\tB\b\xfaB\x05r\x03\x18\x80\x02R\x04unit\x12$\n" +
+	"\bmentions\x18\b \x03(\tB\b\xfaB\x05\x92\x01\x02\x10@R\bmentions\x1ad\n" +
 	"\x0fContainersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12;\n" +
 	"\x05value\x18\x02 \x01(\v2%.cloud.v1.deployment.Docker.ContainerR\x05value:\x028\x01\x1aC\n" +
@@ -1245,54 +1376,56 @@ func file_cloud_v1_deployment_docker_proto_rawDescGZIP() []byte {
 }
 
 var file_cloud_v1_deployment_docker_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_cloud_v1_deployment_docker_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
+var file_cloud_v1_deployment_docker_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
 var file_cloud_v1_deployment_docker_proto_goTypes = []any{
-	(Docker_Protocol)(0),           // 0: cloud.v1.deployment.Docker.Protocol
-	(Docker_RestartPolicy)(0),      // 1: cloud.v1.deployment.Docker.RestartPolicy
-	(Docker_QuotaKind)(0),          // 2: cloud.v1.deployment.Docker.QuotaKind
-	(*Docker)(nil),                 // 3: cloud.v1.deployment.Docker
-	(*Docker_Settings)(nil),        // 4: cloud.v1.deployment.Docker.Settings
-	(*Docker_Input)(nil),           // 5: cloud.v1.deployment.Docker.Input
-	(*Docker_Network)(nil),         // 6: cloud.v1.deployment.Docker.Network
-	(*Docker_Container)(nil),       // 7: cloud.v1.deployment.Docker.Container
-	(*Docker_VolumeMount)(nil),     // 8: cloud.v1.deployment.Docker.VolumeMount
-	(*Docker_PortBinding)(nil),     // 9: cloud.v1.deployment.Docker.PortBinding
-	(*Docker_File)(nil),            // 10: cloud.v1.deployment.Docker.File
-	(*Docker_Healthcheck)(nil),     // 11: cloud.v1.deployment.Docker.Healthcheck
-	(*Docker_Resources)(nil),       // 12: cloud.v1.deployment.Docker.Resources
-	(*Docker_Output)(nil),          // 13: cloud.v1.deployment.Docker.Output
-	(*Docker_ContainerOutput)(nil), // 14: cloud.v1.deployment.Docker.ContainerOutput
-	nil,                            // 15: cloud.v1.deployment.Docker.Input.ContainersEntry
-	nil,                            // 16: cloud.v1.deployment.Docker.Container.EnvEntry
-	nil,                            // 17: cloud.v1.deployment.Docker.Container.LabelsEntry
-	nil,                            // 18: cloud.v1.deployment.Docker.Container.TmpfsEntry
-	nil,                            // 19: cloud.v1.deployment.Docker.Output.ContainersEntry
-	nil,                            // 20: cloud.v1.deployment.Docker.ContainerOutput.MappedPortsEntry
+	(Docker_Protocol)(0),            // 0: cloud.v1.deployment.Docker.Protocol
+	(Docker_RestartPolicy)(0),       // 1: cloud.v1.deployment.Docker.RestartPolicy
+	(Docker_QuotaKind)(0),           // 2: cloud.v1.deployment.Docker.QuotaKind
+	(*Docker)(nil),                  // 3: cloud.v1.deployment.Docker
+	(*Docker_Settings)(nil),         // 4: cloud.v1.deployment.Docker.Settings
+	(*Docker_Input)(nil),            // 5: cloud.v1.deployment.Docker.Input
+	(*Docker_Network)(nil),          // 6: cloud.v1.deployment.Docker.Network
+	(*Docker_Container)(nil),        // 7: cloud.v1.deployment.Docker.Container
+	(*Docker_VolumeMount)(nil),      // 8: cloud.v1.deployment.Docker.VolumeMount
+	(*Docker_PortBinding)(nil),      // 9: cloud.v1.deployment.Docker.PortBinding
+	(*Docker_File)(nil),             // 10: cloud.v1.deployment.Docker.File
+	(*Docker_Healthcheck)(nil),      // 11: cloud.v1.deployment.Docker.Healthcheck
+	(*Docker_Resources)(nil),        // 12: cloud.v1.deployment.Docker.Resources
+	(*Docker_Output)(nil),           // 13: cloud.v1.deployment.Docker.Output
+	(*Docker_ContainerOutput)(nil),  // 14: cloud.v1.deployment.Docker.ContainerOutput
+	(*Docker_Input_LogContext)(nil), // 15: cloud.v1.deployment.Docker.Input.LogContext
+	nil,                             // 16: cloud.v1.deployment.Docker.Input.ContainersEntry
+	nil,                             // 17: cloud.v1.deployment.Docker.Container.EnvEntry
+	nil,                             // 18: cloud.v1.deployment.Docker.Container.LabelsEntry
+	nil,                             // 19: cloud.v1.deployment.Docker.Container.TmpfsEntry
+	nil,                             // 20: cloud.v1.deployment.Docker.Output.ContainersEntry
+	nil,                             // 21: cloud.v1.deployment.Docker.ContainerOutput.MappedPortsEntry
 }
 var file_cloud_v1_deployment_docker_proto_depIdxs = []int32{
 	5,  // 0: cloud.v1.deployment.Docker.input:type_name -> cloud.v1.deployment.Docker.Input
 	13, // 1: cloud.v1.deployment.Docker.output:type_name -> cloud.v1.deployment.Docker.Output
 	6,  // 2: cloud.v1.deployment.Docker.Input.network:type_name -> cloud.v1.deployment.Docker.Network
-	15, // 3: cloud.v1.deployment.Docker.Input.containers:type_name -> cloud.v1.deployment.Docker.Input.ContainersEntry
-	16, // 4: cloud.v1.deployment.Docker.Container.env:type_name -> cloud.v1.deployment.Docker.Container.EnvEntry
-	17, // 5: cloud.v1.deployment.Docker.Container.labels:type_name -> cloud.v1.deployment.Docker.Container.LabelsEntry
-	18, // 6: cloud.v1.deployment.Docker.Container.tmpfs:type_name -> cloud.v1.deployment.Docker.Container.TmpfsEntry
-	8,  // 7: cloud.v1.deployment.Docker.Container.volumes:type_name -> cloud.v1.deployment.Docker.VolumeMount
-	9,  // 8: cloud.v1.deployment.Docker.Container.ports:type_name -> cloud.v1.deployment.Docker.PortBinding
-	10, // 9: cloud.v1.deployment.Docker.Container.files:type_name -> cloud.v1.deployment.Docker.File
-	1,  // 10: cloud.v1.deployment.Docker.Container.restart_policy:type_name -> cloud.v1.deployment.Docker.RestartPolicy
-	11, // 11: cloud.v1.deployment.Docker.Container.healthcheck:type_name -> cloud.v1.deployment.Docker.Healthcheck
-	12, // 12: cloud.v1.deployment.Docker.Container.resources:type_name -> cloud.v1.deployment.Docker.Resources
-	0,  // 13: cloud.v1.deployment.Docker.PortBinding.protocol:type_name -> cloud.v1.deployment.Docker.Protocol
-	19, // 14: cloud.v1.deployment.Docker.Output.containers:type_name -> cloud.v1.deployment.Docker.Output.ContainersEntry
-	20, // 15: cloud.v1.deployment.Docker.ContainerOutput.mapped_ports:type_name -> cloud.v1.deployment.Docker.ContainerOutput.MappedPortsEntry
-	7,  // 16: cloud.v1.deployment.Docker.Input.ContainersEntry.value:type_name -> cloud.v1.deployment.Docker.Container
-	14, // 17: cloud.v1.deployment.Docker.Output.ContainersEntry.value:type_name -> cloud.v1.deployment.Docker.ContainerOutput
-	18, // [18:18] is the sub-list for method output_type
-	18, // [18:18] is the sub-list for method input_type
-	18, // [18:18] is the sub-list for extension type_name
-	18, // [18:18] is the sub-list for extension extendee
-	0,  // [0:18] is the sub-list for field type_name
+	16, // 3: cloud.v1.deployment.Docker.Input.containers:type_name -> cloud.v1.deployment.Docker.Input.ContainersEntry
+	15, // 4: cloud.v1.deployment.Docker.Input.log_context:type_name -> cloud.v1.deployment.Docker.Input.LogContext
+	17, // 5: cloud.v1.deployment.Docker.Container.env:type_name -> cloud.v1.deployment.Docker.Container.EnvEntry
+	18, // 6: cloud.v1.deployment.Docker.Container.labels:type_name -> cloud.v1.deployment.Docker.Container.LabelsEntry
+	19, // 7: cloud.v1.deployment.Docker.Container.tmpfs:type_name -> cloud.v1.deployment.Docker.Container.TmpfsEntry
+	8,  // 8: cloud.v1.deployment.Docker.Container.volumes:type_name -> cloud.v1.deployment.Docker.VolumeMount
+	9,  // 9: cloud.v1.deployment.Docker.Container.ports:type_name -> cloud.v1.deployment.Docker.PortBinding
+	10, // 10: cloud.v1.deployment.Docker.Container.files:type_name -> cloud.v1.deployment.Docker.File
+	1,  // 11: cloud.v1.deployment.Docker.Container.restart_policy:type_name -> cloud.v1.deployment.Docker.RestartPolicy
+	11, // 12: cloud.v1.deployment.Docker.Container.healthcheck:type_name -> cloud.v1.deployment.Docker.Healthcheck
+	12, // 13: cloud.v1.deployment.Docker.Container.resources:type_name -> cloud.v1.deployment.Docker.Resources
+	0,  // 14: cloud.v1.deployment.Docker.PortBinding.protocol:type_name -> cloud.v1.deployment.Docker.Protocol
+	20, // 15: cloud.v1.deployment.Docker.Output.containers:type_name -> cloud.v1.deployment.Docker.Output.ContainersEntry
+	21, // 16: cloud.v1.deployment.Docker.ContainerOutput.mapped_ports:type_name -> cloud.v1.deployment.Docker.ContainerOutput.MappedPortsEntry
+	7,  // 17: cloud.v1.deployment.Docker.Input.ContainersEntry.value:type_name -> cloud.v1.deployment.Docker.Container
+	14, // 18: cloud.v1.deployment.Docker.Output.ContainersEntry.value:type_name -> cloud.v1.deployment.Docker.ContainerOutput
+	19, // [19:19] is the sub-list for method output_type
+	19, // [19:19] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_deployment_docker_proto_init() }
@@ -1306,7 +1439,7 @@ func file_cloud_v1_deployment_docker_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_deployment_docker_proto_rawDesc), len(file_cloud_v1_deployment_docker_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   18,
+			NumMessages:   19,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

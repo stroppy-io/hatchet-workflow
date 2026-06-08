@@ -320,7 +320,9 @@ type Terraform_Operation struct {
 	// refresh controls Terraform state refresh for plan/apply when the
 	// executor exposes that option. The zero value leaves executor
 	// defaults unchanged.
-	Refresh       bool `protobuf:"varint,11,opt,name=refresh,proto3" json:"refresh,omitempty"`
+	Refresh bool `protobuf:"varint,11,opt,name=refresh,proto3" json:"refresh,omitempty"`
+	// log_context scopes Terraform stdout/stderr into run logs.
+	LogContext    *Terraform_Operation_LogContext `protobuf:"bytes,12,opt,name=log_context,json=logContext,proto3" json:"log_context,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -432,6 +434,13 @@ func (x *Terraform_Operation) GetRefresh() bool {
 	return false
 }
 
+func (x *Terraform_Operation) GetLogContext() *Terraform_Operation_LogContext {
+	if x != nil {
+		return x.LogContext
+	}
+	return nil
+}
+
 // SourceFile is one Terraform source file embedded into the operation workdir.
 type Terraform_Operation_SourceFile struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -487,12 +496,120 @@ func (x *Terraform_Operation_SourceFile) GetContent() []byte {
 	return nil
 }
 
+// LogContext scopes Terraform process output to the owning run stage.
+type Terraform_Operation_LogContext struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// run_id is the owning test run id.
+	RunId string `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	// node_execution_id is the execution stage receiving Terraform stdout/stderr.
+	NodeExecutionId string `protobuf:"bytes,2,opt,name=node_execution_id,json=nodeExecutionId,proto3" json:"node_execution_id,omitempty"`
+	// parent_node_execution_id links the Terraform stage to its parent pipeline stage.
+	ParentNodeExecutionId string `protobuf:"bytes,3,opt,name=parent_node_execution_id,json=parentNodeExecutionId,proto3" json:"parent_node_execution_id,omitempty"`
+	// phase is the top-level pipeline phase.
+	Phase string `protobuf:"bytes,4,opt,name=phase,proto3" json:"phase,omitempty"`
+	// stage_name is the producing stage display name.
+	StageName string `protobuf:"bytes,5,opt,name=stage_name,json=stageName,proto3" json:"stage_name,omitempty"`
+	// action is the generic action class.
+	Action string `protobuf:"bytes,6,opt,name=action,proto3" json:"action,omitempty"`
+	// unit is the server-side unit that produced the output.
+	Unit string `protobuf:"bytes,7,opt,name=unit,proto3" json:"unit,omitempty"`
+	// mentions are normalized operation tokens.
+	Mentions      []string `protobuf:"bytes,8,rep,name=mentions,proto3" json:"mentions,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Terraform_Operation_LogContext) Reset() {
+	*x = Terraform_Operation_LogContext{}
+	mi := &file_cloud_v1_deployment_terraform_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Terraform_Operation_LogContext) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Terraform_Operation_LogContext) ProtoMessage() {}
+
+func (x *Terraform_Operation_LogContext) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_deployment_terraform_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Terraform_Operation_LogContext.ProtoReflect.Descriptor instead.
+func (*Terraform_Operation_LogContext) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_deployment_terraform_proto_rawDescGZIP(), []int{0, 2, 1}
+}
+
+func (x *Terraform_Operation_LogContext) GetRunId() string {
+	if x != nil {
+		return x.RunId
+	}
+	return ""
+}
+
+func (x *Terraform_Operation_LogContext) GetNodeExecutionId() string {
+	if x != nil {
+		return x.NodeExecutionId
+	}
+	return ""
+}
+
+func (x *Terraform_Operation_LogContext) GetParentNodeExecutionId() string {
+	if x != nil {
+		return x.ParentNodeExecutionId
+	}
+	return ""
+}
+
+func (x *Terraform_Operation_LogContext) GetPhase() string {
+	if x != nil {
+		return x.Phase
+	}
+	return ""
+}
+
+func (x *Terraform_Operation_LogContext) GetStageName() string {
+	if x != nil {
+		return x.StageName
+	}
+	return ""
+}
+
+func (x *Terraform_Operation_LogContext) GetAction() string {
+	if x != nil {
+		return x.Action
+	}
+	return ""
+}
+
+func (x *Terraform_Operation_LogContext) GetUnit() string {
+	if x != nil {
+		return x.Unit
+	}
+	return ""
+}
+
+func (x *Terraform_Operation_LogContext) GetMentions() []string {
+	if x != nil {
+		return x.Mentions
+	}
+	return nil
+}
+
 var File_cloud_v1_deployment_terraform_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_deployment_terraform_proto_rawDesc = "" +
 	"\n" +
-	"#cloud/v1/deployment/terraform.proto\x12\x13cloud.v1.deployment\x1a\"cloud/v1/deployment/provider.proto\x1a\x15schemapb/schema.proto\x1a\x17validate/validate.proto\"\xc2\n" +
-	"\n" +
+	"#cloud/v1/deployment/terraform.proto\x12\x13cloud.v1.deployment\x1a\"cloud/v1/deployment/provider.proto\x1a\x15schemapb/schema.proto\x1a\x17validate/validate.proto\"\xf0\r\n" +
 	"\tTerraform\x1a\xbd\x01\n" +
 	"\x05Input\x129\n" +
 	"\bprovider\x18\x01 \x01(\x0e2\x1d.cloud.v1.deployment.ProviderR\bprovider\x12P\n" +
@@ -507,7 +624,7 @@ const file_cloud_v1_deployment_terraform_proto_rawDesc = "" +
 	"\aworkdir\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\x80 R\aworkdir\x12,\n" +
 	"\x12state_file_present\x18\x04 \x01(\bR\x10stateFilePresent\x12#\n" +
 	"\x04plan\x18\x05 \x01(\v2\x0f.schemapb.BakedR\x04plan\x12)\n" +
-	"\aoutputs\x18\x06 \x01(\v2\x0f.schemapb.BakedR\aoutputs\x1a\xf8\x05\n" +
+	"\aoutputs\x18\x06 \x01(\v2\x0f.schemapb.BakedR\aoutputs\x1a\xa6\t\n" +
 	"\tOperation\x12I\n" +
 	"\x06action\x18\x01 \x01(\x0e2%.cloud.v1.deployment.Terraform.ActionB\n" +
 	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x06action\x12)\n" +
@@ -523,12 +640,25 @@ const file_cloud_v1_deployment_terraform_proto_rawDesc = "" +
 	"\x17preserve_existing_state\x18\t \x01(\bR\x15preserveExistingState\x123\n" +
 	"\x16destroy_on_apply_error\x18\n" +
 	" \x01(\bR\x13destroyOnApplyError\x12\x18\n" +
-	"\arefresh\x18\v \x01(\bR\arefresh\x1aO\n" +
+	"\arefresh\x18\v \x01(\bR\arefresh\x12T\n" +
+	"\vlog_context\x18\f \x01(\v23.cloud.v1.deployment.Terraform.Operation.LogContextR\n" +
+	"logContext\x1aO\n" +
 	"\n" +
 	"SourceFile\x12\x1e\n" +
 	"\x04path\x18\x01 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\x80 R\x04path\x12!\n" +
-	"\acontent\x18\x02 \x01(\fB\a\xfaB\x04z\x02\x10\x01R\acontent\x1a6\n" +
+	"\acontent\x18\x02 \x01(\fB\a\xfaB\x04z\x02\x10\x01R\acontent\x1a\xd5\x02\n" +
+	"\n" +
+	"LogContext\x12\x1f\n" +
+	"\x06run_id\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\x05runId\x124\n" +
+	"\x11node_execution_id\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\x0fnodeExecutionId\x12A\n" +
+	"\x18parent_node_execution_id\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\x15parentNodeExecutionId\x12\x1e\n" +
+	"\x05phase\x18\x04 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\x05phase\x12'\n" +
+	"\n" +
+	"stage_name\x18\x05 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x02R\tstageName\x12 \n" +
+	"\x06action\x18\x06 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\x06action\x12\x1c\n" +
+	"\x04unit\x18\a \x01(\tB\b\xfaB\x05r\x03\x18\x80\x02R\x04unit\x12$\n" +
+	"\bmentions\x18\b \x03(\tB\b\xfaB\x05\x92\x01\x02\x10@R\bmentions\x1a6\n" +
 	"\bEnvEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"W\n" +
@@ -551,7 +681,7 @@ func file_cloud_v1_deployment_terraform_proto_rawDescGZIP() []byte {
 }
 
 var file_cloud_v1_deployment_terraform_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_cloud_v1_deployment_terraform_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_cloud_v1_deployment_terraform_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_cloud_v1_deployment_terraform_proto_goTypes = []any{
 	(Terraform_Action)(0),                  // 0: cloud.v1.deployment.Terraform.Action
 	(*Terraform)(nil),                      // 1: cloud.v1.deployment.Terraform
@@ -559,25 +689,27 @@ var file_cloud_v1_deployment_terraform_proto_goTypes = []any{
 	(*Terraform_Output)(nil),               // 3: cloud.v1.deployment.Terraform.Output
 	(*Terraform_Operation)(nil),            // 4: cloud.v1.deployment.Terraform.Operation
 	(*Terraform_Operation_SourceFile)(nil), // 5: cloud.v1.deployment.Terraform.Operation.SourceFile
-	nil,                                    // 6: cloud.v1.deployment.Terraform.Operation.EnvEntry
-	(Provider)(0),                          // 7: cloud.v1.deployment.Provider
-	(*schemapb.Baked)(nil),                 // 8: schemapb.Baked
+	(*Terraform_Operation_LogContext)(nil), // 6: cloud.v1.deployment.Terraform.Operation.LogContext
+	nil,                                    // 7: cloud.v1.deployment.Terraform.Operation.EnvEntry
+	(Provider)(0),                          // 8: cloud.v1.deployment.Provider
+	(*schemapb.Baked)(nil),                 // 9: schemapb.Baked
 }
 var file_cloud_v1_deployment_terraform_proto_depIdxs = []int32{
-	7, // 0: cloud.v1.deployment.Terraform.Input.provider:type_name -> cloud.v1.deployment.Provider
-	4, // 1: cloud.v1.deployment.Terraform.Input.operation:type_name -> cloud.v1.deployment.Terraform.Operation
-	8, // 2: cloud.v1.deployment.Terraform.Input.tfvars:type_name -> schemapb.Baked
-	0, // 3: cloud.v1.deployment.Terraform.Output.action:type_name -> cloud.v1.deployment.Terraform.Action
-	8, // 4: cloud.v1.deployment.Terraform.Output.plan:type_name -> schemapb.Baked
-	8, // 5: cloud.v1.deployment.Terraform.Output.outputs:type_name -> schemapb.Baked
-	0, // 6: cloud.v1.deployment.Terraform.Operation.action:type_name -> cloud.v1.deployment.Terraform.Action
-	5, // 7: cloud.v1.deployment.Terraform.Operation.files:type_name -> cloud.v1.deployment.Terraform.Operation.SourceFile
-	6, // 8: cloud.v1.deployment.Terraform.Operation.env:type_name -> cloud.v1.deployment.Terraform.Operation.EnvEntry
-	9, // [9:9] is the sub-list for method output_type
-	9, // [9:9] is the sub-list for method input_type
-	9, // [9:9] is the sub-list for extension type_name
-	9, // [9:9] is the sub-list for extension extendee
-	0, // [0:9] is the sub-list for field type_name
+	8,  // 0: cloud.v1.deployment.Terraform.Input.provider:type_name -> cloud.v1.deployment.Provider
+	4,  // 1: cloud.v1.deployment.Terraform.Input.operation:type_name -> cloud.v1.deployment.Terraform.Operation
+	9,  // 2: cloud.v1.deployment.Terraform.Input.tfvars:type_name -> schemapb.Baked
+	0,  // 3: cloud.v1.deployment.Terraform.Output.action:type_name -> cloud.v1.deployment.Terraform.Action
+	9,  // 4: cloud.v1.deployment.Terraform.Output.plan:type_name -> schemapb.Baked
+	9,  // 5: cloud.v1.deployment.Terraform.Output.outputs:type_name -> schemapb.Baked
+	0,  // 6: cloud.v1.deployment.Terraform.Operation.action:type_name -> cloud.v1.deployment.Terraform.Action
+	5,  // 7: cloud.v1.deployment.Terraform.Operation.files:type_name -> cloud.v1.deployment.Terraform.Operation.SourceFile
+	7,  // 8: cloud.v1.deployment.Terraform.Operation.env:type_name -> cloud.v1.deployment.Terraform.Operation.EnvEntry
+	6,  // 9: cloud.v1.deployment.Terraform.Operation.log_context:type_name -> cloud.v1.deployment.Terraform.Operation.LogContext
+	10, // [10:10] is the sub-list for method output_type
+	10, // [10:10] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_deployment_terraform_proto_init() }
@@ -592,7 +724,7 @@ func file_cloud_v1_deployment_terraform_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_deployment_terraform_proto_rawDesc), len(file_cloud_v1_deployment_terraform_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   6,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

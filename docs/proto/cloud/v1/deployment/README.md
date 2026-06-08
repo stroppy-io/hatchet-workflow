@@ -23,6 +23,7 @@
   - [cloud.v1.deployment.Docker.Healthcheck](#cloud-v1-deployment-docker-healthcheck)
   - [cloud.v1.deployment.Docker.Input](#cloud-v1-deployment-docker-input)
   - [cloud.v1.deployment.Docker.Input.ContainersEntry](#cloud-v1-deployment-docker-input-containersentry)
+  - [cloud.v1.deployment.Docker.Input.LogContext](#cloud-v1-deployment-docker-input-logcontext)
   - [cloud.v1.deployment.Docker.Network](#cloud-v1-deployment-docker-network)
   - [cloud.v1.deployment.Docker.Output](#cloud-v1-deployment-docker-output)
   - [cloud.v1.deployment.Docker.Output.ContainersEntry](#cloud-v1-deployment-docker-output-containersentry)
@@ -63,6 +64,7 @@
   - [cloud.v1.deployment.Terraform.Input](#cloud-v1-deployment-terraform-input)
   - [cloud.v1.deployment.Terraform.Operation](#cloud-v1-deployment-terraform-operation)
   - [cloud.v1.deployment.Terraform.Operation.EnvEntry](#cloud-v1-deployment-terraform-operation-enventry)
+  - [cloud.v1.deployment.Terraform.Operation.LogContext](#cloud-v1-deployment-terraform-operation-logcontext)
   - [cloud.v1.deployment.Terraform.Operation.SourceFile](#cloud-v1-deployment-terraform-operation-sourcefile)
   - [cloud.v1.deployment.Terraform.Output](#cloud-v1-deployment-terraform-output)
   - [cloud.v1.deployment.Yandex.Disk](#cloud-v1-deployment-yandex-disk)
@@ -899,6 +901,14 @@ containers contains runtime container specs keyed by stable name.<br>
 json_name: containers
 go_name: Containers</pre></td>
 </tr><tr>
+<td>log_context</td>
+<td><a href="#cloud-v1-deployment-docker-input-logcontext">cloud.v1.deployment.Docker.Input.LogContext</a></td>
+<td><pre>
+log_context scopes Docker stderr/progress into run logs.<br>
+
+json_name: logContext
+go_name: LogContext</pre></td>
+</tr><tr>
 <td>network</td>
 <td><a href="#cloud-v1-deployment-docker-network">cloud.v1.deployment.Docker.Network</a></td>
 <td><pre>
@@ -932,6 +942,88 @@ go_name: Key</pre></td>
 <td><pre>
 json_name: value
 go_name: Value</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-deployment-docker-input-logcontext"></a>
+### cloud.v1.deployment.Docker.Input.LogContext
+
+<pre>
+LogContext scopes Docker daemon progress output to the owning run stage.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>action</td>
+<td>string</td>
+<td><pre>
+action is the generic action class.<br>
+
+json_name: action
+go_name: Action</pre></td>
+</tr><tr>
+<td>mentions</td>
+<td>string</td>
+<td><pre>
+mentions are normalized operation tokens.<br>
+
+json_name: mentions
+go_name: Mentions</pre></td>
+</tr><tr>
+<td>node_execution_id</td>
+<td>string</td>
+<td><pre>
+node_execution_id is the execution stage receiving Docker output.<br>
+
+json_name: nodeExecutionId
+go_name: NodeExecutionId</pre></td>
+</tr><tr>
+<td>parent_node_execution_id</td>
+<td>string</td>
+<td><pre>
+parent_node_execution_id links the Docker stage to its parent pipeline stage.<br>
+
+json_name: parentNodeExecutionId
+go_name: ParentNodeExecutionId</pre></td>
+</tr><tr>
+<td>phase</td>
+<td>string</td>
+<td><pre>
+phase is the top-level pipeline phase.<br>
+
+json_name: phase
+go_name: Phase</pre></td>
+</tr><tr>
+<td>run_id</td>
+<td>string</td>
+<td><pre>
+run_id is the owning test run id.<br>
+
+json_name: runId
+go_name: RunId</pre></td>
+</tr><tr>
+<td>stage_name</td>
+<td>string</td>
+<td><pre>
+stage_name is the producing stage display name.<br>
+
+json_name: stageName
+go_name: StageName</pre></td>
+</tr><tr>
+<td>unit</td>
+<td>string</td>
+<td><pre>
+unit is the server-side unit that produced the output.<br>
+
+json_name: unit
+go_name: Unit</pre></td>
 </tr>
 </table>
 
@@ -2383,6 +2475,11 @@ ACTION_DESTROY destroys resources from an existing workdir state.
 
 <a name="cloud-v1-deployment-terraform-operation-enventry"></a>
 ### cloud.v1.deployment.Terraform.Operation.EnvEntry
+
+
+
+<a name="cloud-v1-deployment-terraform-operation-logcontext"></a>
+### cloud.v1.deployment.Terraform.Operation.LogContext
 
 
 

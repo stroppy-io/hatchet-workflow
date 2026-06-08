@@ -92,6 +92,7 @@ func (w *processInfrastructureWorkflow) Execute(ctx workflow.Context) (*workflow
 	case deploymentpb.Provider_PROVIDER_DOCKER:
 		renderStarted := timestamppb.New(workflow.Now(ctx))
 		emitTemporalActionStage(ctx, stageInfrastructure, processStageID, 1, common.Status_STATUS_RUNNING, renderStarted, nil, "", actionProcessInfrastructure, actionRenderDockerInput)
+		appendServerStageLog(ctx, w.req.GetRunId(), stageInfrastructure, processStageID, monitor.Stream_STREAM_STDOUT, "started "+actionRenderDockerInput, actionProcessInfrastructure, actionRenderDockerInput)
 		dockerInput, err := workflowpb.RenderDockerInputWorkflowChild(ctx, &workflowpb.RenderDockerInputWorkflowRequest{
 			RunId:          w.req.GetRunId(),
 			Plan:           plan,
@@ -99,24 +100,34 @@ func (w *processInfrastructureWorkflow) Execute(ctx workflow.Context) (*workflow
 		})
 		if err != nil {
 			emitTemporalActionStage(ctx, stageInfrastructure, processStageID, 1, common.Status_STATUS_FAILED, renderStarted, timestamppb.New(workflow.Now(ctx)), err.Error(), actionProcessInfrastructure, actionRenderDockerInput)
+			appendServerStageLog(ctx, w.req.GetRunId(), stageInfrastructure, processStageID, monitor.Stream_STREAM_STDERR, "failed "+actionRenderDockerInput+": "+err.Error(), actionProcessInfrastructure, actionRenderDockerInput)
 			return nil, err
 		}
 		emitTemporalActionStage(ctx, stageInfrastructure, processStageID, 1, common.Status_STATUS_COMPLETED, renderStarted, timestamppb.New(workflow.Now(ctx)), "", actionProcessInfrastructure, actionRenderDockerInput)
+		appendServerStageLog(ctx, w.req.GetRunId(), stageInfrastructure, processStageID, monitor.Stream_STREAM_STDOUT, "completed "+actionRenderDockerInput, actionProcessInfrastructure, actionRenderDockerInput)
 		pullStarted := timestamppb.New(workflow.Now(ctx))
 		emitTemporalActionStage(ctx, stageInfrastructure, processStageID, 2, common.Status_STATUS_RUNNING, pullStarted, nil, "", actionProcessInfrastructure, actionDockerPull)
+		appendServerStageLog(ctx, w.req.GetRunId(), stageInfrastructure, processStageID, monitor.Stream_STREAM_STDOUT, "started "+actionDockerPull, actionProcessInfrastructure, actionDockerPull)
+		stampDockerLogContext(dockerInput, w.req.GetRunId(), stageInfrastructure, processStageID, actionProcessInfrastructure, actionDockerPull)
 		if _, err := workflowpb.DockerPullActivity(ctx, dockerInput); err != nil {
 			emitTemporalActionStage(ctx, stageInfrastructure, processStageID, 2, common.Status_STATUS_FAILED, pullStarted, timestamppb.New(workflow.Now(ctx)), err.Error(), actionProcessInfrastructure, actionDockerPull)
+			appendServerStageLog(ctx, w.req.GetRunId(), stageInfrastructure, processStageID, monitor.Stream_STREAM_STDERR, "failed "+actionDockerPull+": "+err.Error(), actionProcessInfrastructure, actionDockerPull)
 			return nil, err
 		}
 		emitTemporalActionStage(ctx, stageInfrastructure, processStageID, 2, common.Status_STATUS_COMPLETED, pullStarted, timestamppb.New(workflow.Now(ctx)), "", actionProcessInfrastructure, actionDockerPull)
+		appendServerStageLog(ctx, w.req.GetRunId(), stageInfrastructure, processStageID, monitor.Stream_STREAM_STDOUT, "completed "+actionDockerPull, actionProcessInfrastructure, actionDockerPull)
 		upStarted := timestamppb.New(workflow.Now(ctx))
 		emitTemporalActionStage(ctx, stageInfrastructure, processStageID, 3, common.Status_STATUS_RUNNING, upStarted, nil, "", actionProcessInfrastructure, actionDockerUp)
+		appendServerStageLog(ctx, w.req.GetRunId(), stageInfrastructure, processStageID, monitor.Stream_STREAM_STDOUT, "started "+actionDockerUp, actionProcessInfrastructure, actionDockerUp)
+		stampDockerLogContext(dockerInput, w.req.GetRunId(), stageInfrastructure, processStageID, actionProcessInfrastructure, actionDockerUp)
 		dockerOutput, err := workflowpb.DockerUpActivity(ctx, dockerInput)
 		if err != nil {
 			emitTemporalActionStage(ctx, stageInfrastructure, processStageID, 3, common.Status_STATUS_FAILED, upStarted, timestamppb.New(workflow.Now(ctx)), err.Error(), actionProcessInfrastructure, actionDockerUp)
+			appendServerStageLog(ctx, w.req.GetRunId(), stageInfrastructure, processStageID, monitor.Stream_STREAM_STDERR, "failed "+actionDockerUp+": "+err.Error(), actionProcessInfrastructure, actionDockerUp)
 			return nil, err
 		}
 		emitTemporalActionStage(ctx, stageInfrastructure, processStageID, 3, common.Status_STATUS_COMPLETED, upStarted, timestamppb.New(workflow.Now(ctx)), "", actionProcessInfrastructure, actionDockerUp)
+		appendServerStageLog(ctx, w.req.GetRunId(), stageInfrastructure, processStageID, monitor.Stream_STREAM_STDOUT, "completed "+actionDockerUp, actionProcessInfrastructure, actionDockerUp)
 		state, err := dockerInfrastructureState(w.req.GetRunId(), plan, dockerOutput)
 		if err != nil {
 			return nil, err
@@ -125,6 +136,7 @@ func (w *processInfrastructureWorkflow) Execute(ctx workflow.Context) (*workflow
 	case deploymentpb.Provider_PROVIDER_YANDEX:
 		renderStarted := timestamppb.New(workflow.Now(ctx))
 		emitTemporalActionStage(ctx, stageInfrastructure, processStageID, 1, common.Status_STATUS_RUNNING, renderStarted, nil, "", actionProcessInfrastructure, actionRenderTerraformVariables)
+		appendServerStageLog(ctx, w.req.GetRunId(), stageInfrastructure, processStageID, monitor.Stream_STREAM_STDOUT, "started "+actionRenderTerraformVariables, actionProcessInfrastructure, actionRenderTerraformVariables)
 		terraformInput, err := workflowpb.RenderTerraformVariablesWorkflowChild(ctx, &workflowpb.RenderTerraformVariablesWorkflowRequest{
 			RunId:          w.req.GetRunId(),
 			Plan:           plan,
@@ -133,17 +145,23 @@ func (w *processInfrastructureWorkflow) Execute(ctx workflow.Context) (*workflow
 		})
 		if err != nil {
 			emitTemporalActionStage(ctx, stageInfrastructure, processStageID, 1, common.Status_STATUS_FAILED, renderStarted, timestamppb.New(workflow.Now(ctx)), err.Error(), actionProcessInfrastructure, actionRenderTerraformVariables)
+			appendServerStageLog(ctx, w.req.GetRunId(), stageInfrastructure, processStageID, monitor.Stream_STREAM_STDERR, "failed "+actionRenderTerraformVariables+": "+err.Error(), actionProcessInfrastructure, actionRenderTerraformVariables)
 			return nil, err
 		}
 		emitTemporalActionStage(ctx, stageInfrastructure, processStageID, 1, common.Status_STATUS_COMPLETED, renderStarted, timestamppb.New(workflow.Now(ctx)), "", actionProcessInfrastructure, actionRenderTerraformVariables)
+		appendServerStageLog(ctx, w.req.GetRunId(), stageInfrastructure, processStageID, monitor.Stream_STREAM_STDOUT, "completed "+actionRenderTerraformVariables, actionProcessInfrastructure, actionRenderTerraformVariables)
 		applyStarted := timestamppb.New(workflow.Now(ctx))
 		emitTemporalActionStage(ctx, stageInfrastructure, processStageID, 2, common.Status_STATUS_RUNNING, applyStarted, nil, "", actionProcessInfrastructure, actionTerraformApply)
+		appendServerStageLog(ctx, w.req.GetRunId(), stageInfrastructure, processStageID, monitor.Stream_STREAM_STDOUT, "started "+actionTerraformApply, actionProcessInfrastructure, actionTerraformApply)
+		stampTerraformLogContext(terraformInput, w.req.GetRunId(), stageInfrastructure, processStageID, actionProcessInfrastructure, actionTerraformApply)
 		terraformOutput, err := workflowpb.TerraformApplyActivity(ctx, terraformInput)
 		if err != nil {
 			emitTemporalActionStage(ctx, stageInfrastructure, processStageID, 2, common.Status_STATUS_FAILED, applyStarted, timestamppb.New(workflow.Now(ctx)), err.Error(), actionProcessInfrastructure, actionTerraformApply)
+			appendServerStageLog(ctx, w.req.GetRunId(), stageInfrastructure, processStageID, monitor.Stream_STREAM_STDERR, "failed "+actionTerraformApply+": "+err.Error(), actionProcessInfrastructure, actionTerraformApply)
 			return nil, err
 		}
 		emitTemporalActionStage(ctx, stageInfrastructure, processStageID, 2, common.Status_STATUS_COMPLETED, applyStarted, timestamppb.New(workflow.Now(ctx)), "", actionProcessInfrastructure, actionTerraformApply)
+		appendServerStageLog(ctx, w.req.GetRunId(), stageInfrastructure, processStageID, monitor.Stream_STREAM_STDOUT, "completed "+actionTerraformApply, actionProcessInfrastructure, actionTerraformApply)
 		yandexOutput, err := terraformYandexOutput(terraformOutput)
 		if err != nil {
 			return nil, err

@@ -7179,6 +7179,7 @@ func WithDeploymentServiceSchemeTypes() scheme.Option {
 		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("CommitQuotasActivityRequest"))
 		s.RegisterType(File_cloud_v1_workflow_deployment_proto.Messages().ByName("CommitQuotasActivityResponse"))
 		s.RegisterType(deployment.File_cloud_v1_deployment_docker_proto.Messages().ByName("Input"))
+		s.RegisterType(deployment.File_cloud_v1_deployment_docker_proto.Messages().ByName("Input").Messages().ByName("LogContext"))
 		s.RegisterType(deployment.File_cloud_v1_deployment_docker_proto.Messages().ByName("Input").Messages().ByName("ContainersEntry"))
 		s.RegisterType(deployment.File_cloud_v1_deployment_docker_proto.Messages().ByName("Output"))
 		s.RegisterType(deployment.File_cloud_v1_deployment_docker_proto.Messages().ByName("Output").Messages().ByName("ContainersEntry"))

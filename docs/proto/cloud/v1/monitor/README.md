@@ -475,7 +475,7 @@ go_name: RunId</pre></td>
 <td>source</td>
 <td><a href="#cloud-v1-monitor-source">cloud.v1.monitor.Source</a></td>
 <td><pre>
-source is where the line came from (command, journald, or tailed file).<br>
+source is where the line came from (command, journald, file, or server).<br>
 
 json_name: source
 go_name: Source</pre></td>
@@ -1727,6 +1727,11 @@ SOURCE_JOURNALD is a systemd-managed service's stdout/stderr.
 <td>SOURCE_FILE</td>
 <td><pre>
 SOURCE_FILE is a tailed log file (e.g. a postgresql log under /var/log/postgresql).
+</pre></td>
+</tr><tr>
+<td>SOURCE_SERVER</td>
+<td><pre>
+SOURCE_SERVER is control-plane/worker server-side output scoped to a run.
 </pre></td>
 </tr>
 </table>

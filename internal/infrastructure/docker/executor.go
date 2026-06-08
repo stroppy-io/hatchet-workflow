@@ -23,7 +23,8 @@ import (
 )
 
 type Executor struct {
-	cli *client.Client
+	cli    *client.Client
+	stderr io.Writer
 	// attachNetwork, when set, is an additional docker network every agent
 	// container is connected to so it can reach the control-plane gateway
 	// (`server:8080`) for the agent binary, apt cache and monitoring. The
@@ -31,12 +32,27 @@ type Executor struct {
 	attachNetwork string
 }
 
-func NewExecutor() (*Executor, error) {
+type ExecutorOption func(*Executor)
+
+func WithStderr(w io.Writer) ExecutorOption {
+	return func(e *Executor) {
+		e.stderr = w
+	}
+}
+
+func NewExecutor(opts ...ExecutorOption) (*Executor, error) {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return nil, fmt.Errorf("docker client: %w", err)
 	}
-	return &Executor{cli: cli, attachNetwork: os.Getenv("AGENT_ATTACH_NETWORK")}, nil
+	e := &Executor{cli: cli, stderr: os.Stderr, attachNetwork: os.Getenv("AGENT_ATTACH_NETWORK")}
+	for _, opt := range opts {
+		opt(e)
+	}
+	if e.stderr == nil {
+		e.stderr = io.Discard
+	}
+	return e, nil
 }
 
 func (e *Executor) Close() error {
@@ -199,7 +215,7 @@ func (e *Executor) pullIfMissing(ctx context.Context, ref string) error {
 		return fmt.Errorf("docker pull %s: %w", ref, err)
 	}
 	defer reader.Close()
-	_, _ = io.Copy(os.Stderr, reader)
+	_, _ = io.Copy(e.stderr, reader)
 	return nil
 }
 

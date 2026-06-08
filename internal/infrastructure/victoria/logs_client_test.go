@@ -61,7 +61,7 @@ func TestLogsClientWritePostsJSONLines(t *testing.T) {
 			StepId:                "120_install",
 			Action:                "call_cmd",
 			Mentions:              []string{"postgres", "pgdg"},
-			Source:                monitor.Source_SOURCE_COMMAND,
+			Source:                monitor.Source_SOURCE_SERVER,
 			Unit:                  "call_cmd",
 			Stream:                monitor.Stream_STREAM_STDERR,
 			Line:                  "started",
@@ -101,7 +101,7 @@ func TestLogsClientWritePostsJSONLines(t *testing.T) {
 		"step_id":                  "120_install",
 		"action":                   "call_cmd",
 		"mentions":                 "postgres,pgdg",
-		"source":                   "command",
+		"source":                   "server",
 		"unit":                     "call_cmd",
 		"stream":                   "stderr",
 	} {

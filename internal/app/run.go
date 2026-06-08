@@ -609,7 +609,7 @@ func Run(ctx context.Context, cfg Config) error {
 	// 8) Temporal server worker.
 	w := worker.New(tc, "stroppy-cloud", worker.Options{})
 	workflows.RegisterWorkflows(w, workflows.DefaultOptions())
-	workflows.RegisterActivities(w, runtimeActivities, workflows.ActivityOptions{Quotas: quotaManager, Networks: networkManager})
+	workflows.RegisterActivities(w, runtimeActivities, workflows.ActivityOptions{Quotas: quotaManager, Networks: networkManager, Logs: runLogWriter})
 	if err := w.Start(); err != nil {
 		return fmt.Errorf("start temporal worker: %w", err)
 	}

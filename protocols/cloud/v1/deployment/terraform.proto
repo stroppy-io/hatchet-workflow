@@ -74,6 +74,26 @@ message Terraform {
             bytes content = 2 [(validate.rules).bytes.min_len = 1];
         }
 
+        /* LogContext scopes Terraform process output to the owning run stage. */
+        message LogContext {
+            /* run_id is the owning test run id. */
+            string run_id = 1 [(validate.rules).string.max_len = 128];
+            /* node_execution_id is the execution stage receiving Terraform stdout/stderr. */
+            string node_execution_id = 2 [(validate.rules).string.max_len = 128];
+            /* parent_node_execution_id links the Terraform stage to its parent pipeline stage. */
+            string parent_node_execution_id = 3 [(validate.rules).string.max_len = 128];
+            /* phase is the top-level pipeline phase. */
+            string phase = 4 [(validate.rules).string.max_len = 128];
+            /* stage_name is the producing stage display name. */
+            string stage_name = 5 [(validate.rules).string.max_len = 256];
+            /* action is the generic action class. */
+            string action = 6 [(validate.rules).string.max_len = 128];
+            /* unit is the server-side unit that produced the output. */
+            string unit = 7 [(validate.rules).string.max_len = 256];
+            /* mentions are normalized operation tokens. */
+            repeated string mentions = 8 [(validate.rules).repeated.max_items = 64];
+        }
+
         /* action is the lifecycle command to execute. */
         Action action = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
         /*
@@ -132,6 +152,8 @@ message Terraform {
             defaults unchanged.
          */
         bool refresh = 11;
+        /* log_context scopes Terraform stdout/stderr into run logs. */
+        LogContext log_context = 12;
     }
 
 

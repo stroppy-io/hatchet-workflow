@@ -21,7 +21,7 @@ func TestBuildLogsQueryIncludesStructuredFilters(t *testing.T) {
 		StepIds:                []string{"120_install"},
 		Actions:                []string{"call_cmd"},
 		Mentions:               []string{"postgres", "pgdg"},
-		Sources:                []monitor.Source{monitor.Source_SOURCE_COMMAND, monitor.Source_SOURCE_UNSPECIFIED, monitor.Source_SOURCE_COMMAND},
+		Sources:                []monitor.Source{monitor.Source_SOURCE_COMMAND, monitor.Source_SOURCE_UNSPECIFIED, monitor.Source_SOURCE_SERVER},
 		Streams:                []monitor.Stream{monitor.Stream_STREAM_STDERR},
 		Unit:                   "call_cmd",
 		Units:                  []string{"postgresql.service", "vector"},
@@ -40,7 +40,7 @@ func TestBuildLogsQueryIncludesStructuredFilters(t *testing.T) {
 		`step_id:"120_install"`,
 		`action:"call_cmd"`,
 		`(mentions:"postgres" OR mentions:"pgdg")`,
-		`source:"command"`,
+		`(source:"command" OR source:"server")`,
 		`stream:"stderr"`,
 		`(unit:"call_cmd" OR unit:"postgresql.service" OR unit:"vector")`,
 		`_msg:"pg_ctl \"start\""`,
@@ -76,7 +76,7 @@ func TestDecodeLogLinesKeepsCorrelationFieldsAndSkipsMalformedRows(t *testing.T)
 	body := strings.NewReader(strings.Join([]string{
 		`{"_time":"2026-06-03T10:00:00Z","_msg":"started","run_id":"run-1","line_no":42,"node_execution_id":"deploy-step-1","parent_node_execution_id":"component/postgres-master","phase":"execute_deployment_plan","stage_name":"call_cmd: install postgres","component_id":"postgres-master","machine_id":"node-1","step_id":"120_install","action":"call_cmd","mentions":"postgres,pgdg","source":"command","unit":"call_cmd","stream":"stderr"}`,
 		`{not-json}`,
-		`{"_msg":"fallback run","component_id":"postgres-replica","source":"file","stream":"stdout"}`,
+		`{"_msg":"fallback run","component_id":"postgres-replica","source":"server","stream":"stdout"}`,
 	}, "\n"))
 
 	lines, err := decodeLogLines(body, "run-1")
@@ -141,7 +141,7 @@ func TestDecodeLogLinesKeepsCorrelationFieldsAndSkipsMalformedRows(t *testing.T)
 	if got, want := second.GetComponentId(), "postgres-replica"; got != want {
 		t.Fatalf("fallback component_id = %q, want %q", got, want)
 	}
-	if got, want := second.GetSource(), monitor.Source_SOURCE_FILE; got != want {
+	if got, want := second.GetSource(), monitor.Source_SOURCE_SERVER; got != want {
 		t.Fatalf("fallback source = %s, want %s", got, want)
 	}
 }

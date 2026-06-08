@@ -15,7 +15,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/deployment/terraform.proto.
  */
 export const file_cloud_v1_deployment_terraform: GenFile = /*@__PURE__*/
-  fileDesc("CiNjbG91ZC92MS9kZXBsb3ltZW50L3RlcnJhZm9ybS5wcm90bxITY2xvdWQudjEuZGVwbG95bWVudCK/CAoJVGVycmFmb3JtGqABCgVJbnB1dBIvCghwcm92aWRlchgBIAEoDjIdLmNsb3VkLnYxLmRlcGxveW1lbnQuUHJvdmlkZXISRQoJb3BlcmF0aW9uGAIgASgLMiguY2xvdWQudjEuZGVwbG95bWVudC5UZXJyYWZvcm0uT3BlcmF0aW9uQgj6QgWKAQIQARIfCgZ0ZnZhcnMYAyABKAsyDy5zY2hlbWFwYi5CYWtlZBrjAQoGT3V0cHV0EkEKBmFjdGlvbhgBIAEoDjIlLmNsb3VkLnYxLmRlcGxveW1lbnQuVGVycmFmb3JtLkFjdGlvbkIK+kIHggEEIAAQARIeCgp3b3JrZGlyX2lkGAIgASgJQgr6QgdyBRABGIACEhkKB3dvcmtkaXIYAyABKAlCCPpCBXIDGIAgEhoKEnN0YXRlX2ZpbGVfcHJlc2VudBgEIAEoCBIdCgRwbGFuGAUgASgLMg8uc2NoZW1hcGIuQmFrZWQSIAoHb3V0cHV0cxgGIAEoCzIPLnNjaGVtYXBiLkJha2VkGs8ECglPcGVyYXRpb24SQQoGYWN0aW9uGAEgASgOMiUuY2xvdWQudjEuZGVwbG95bWVudC5UZXJyYWZvcm0uQWN0aW9uQgr6QgeCAQQQASAAEh4KCndvcmtkaXJfaWQYAiABKAlCCvpCB3IFEAEYgAISHgoMd29ya2Rpcl9yb290GAMgASgJQgj6QgVyAxiAIBIfCg12YXJfZmlsZV9uYW1lGAQgASgJQgj6QgVyAxj/ARJNCgVmaWxlcxgFIAMoCzIzLmNsb3VkLnYxLmRlcGxveW1lbnQuVGVycmFmb3JtLk9wZXJhdGlvbi5Tb3VyY2VGaWxlQgn6QgaSAQMQgAQSSQoDZW52GAYgAygLMjEuY2xvdWQudjEuZGVwbG95bWVudC5UZXJyYWZvcm0uT3BlcmF0aW9uLkVudkVudHJ5Qgn6QgaaAQMQgAESHQoLcGFyYWxsZWxpc20YByABKA1CCPpCBSoDGIAIEiUKE3RlcnJhZm9ybV9leGVjX3BhdGgYCCABKAlCCPpCBXIDGIAgEh8KF3ByZXNlcnZlX2V4aXN0aW5nX3N0YXRlGAkgASgIEh4KFmRlc3Ryb3lfb25fYXBwbHlfZXJyb3IYCiABKAgSDwoHcmVmcmVzaBgLIAEoCBpACgpTb3VyY2VGaWxlEhgKBHBhdGgYASABKAlCCvpCB3IFEAEYgCASGAoHY29udGVudBgCIAEoDEIH+kIEegIQARoqCghFbnZFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIlcKBkFjdGlvbhIWChJBQ1RJT05fVU5TUEVDSUZJRUQQABIPCgtBQ1RJT05fUExBThABEhAKDEFDVElPTl9BUFBMWRACEhIKDkFDVElPTl9ERVNUUk9ZEANCSFpGZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvZGVwbG95bWVudGIGcHJvdG8z", [file_cloud_v1_deployment_provider, file_schemapb_schema, file_validate_validate]);
+  fileDesc("CiNjbG91ZC92MS9kZXBsb3ltZW50L3RlcnJhZm9ybS5wcm90bxITY2xvdWQudjEuZGVwbG95bWVudCKICwoJVGVycmFmb3JtGqABCgVJbnB1dBIvCghwcm92aWRlchgBIAEoDjIdLmNsb3VkLnYxLmRlcGxveW1lbnQuUHJvdmlkZXISRQoJb3BlcmF0aW9uGAIgASgLMiguY2xvdWQudjEuZGVwbG95bWVudC5UZXJyYWZvcm0uT3BlcmF0aW9uQgj6QgWKAQIQARIfCgZ0ZnZhcnMYAyABKAsyDy5zY2hlbWFwYi5CYWtlZBrjAQoGT3V0cHV0EkEKBmFjdGlvbhgBIAEoDjIlLmNsb3VkLnYxLmRlcGxveW1lbnQuVGVycmFmb3JtLkFjdGlvbkIK+kIHggEEIAAQARIeCgp3b3JrZGlyX2lkGAIgASgJQgr6QgdyBRABGIACEhkKB3dvcmtkaXIYAyABKAlCCPpCBXIDGIAgEhoKEnN0YXRlX2ZpbGVfcHJlc2VudBgEIAEoCBIdCgRwbGFuGAUgASgLMg8uc2NoZW1hcGIuQmFrZWQSIAoHb3V0cHV0cxgGIAEoCzIPLnNjaGVtYXBiLkJha2VkGpgHCglPcGVyYXRpb24SQQoGYWN0aW9uGAEgASgOMiUuY2xvdWQudjEuZGVwbG95bWVudC5UZXJyYWZvcm0uQWN0aW9uQgr6QgeCAQQQASAAEh4KCndvcmtkaXJfaWQYAiABKAlCCvpCB3IFEAEYgAISHgoMd29ya2Rpcl9yb290GAMgASgJQgj6QgVyAxiAIBIfCg12YXJfZmlsZV9uYW1lGAQgASgJQgj6QgVyAxj/ARJNCgVmaWxlcxgFIAMoCzIzLmNsb3VkLnYxLmRlcGxveW1lbnQuVGVycmFmb3JtLk9wZXJhdGlvbi5Tb3VyY2VGaWxlQgn6QgaSAQMQgAQSSQoDZW52GAYgAygLMjEuY2xvdWQudjEuZGVwbG95bWVudC5UZXJyYWZvcm0uT3BlcmF0aW9uLkVudkVudHJ5Qgn6QgaaAQMQgAESHQoLcGFyYWxsZWxpc20YByABKA1CCPpCBSoDGIAIEiUKE3RlcnJhZm9ybV9leGVjX3BhdGgYCCABKAlCCPpCBXIDGIAgEh8KF3ByZXNlcnZlX2V4aXN0aW5nX3N0YXRlGAkgASgIEh4KFmRlc3Ryb3lfb25fYXBwbHlfZXJyb3IYCiABKAgSDwoHcmVmcmVzaBgLIAEoCBJICgtsb2dfY29udGV4dBgMIAEoCzIzLmNsb3VkLnYxLmRlcGxveW1lbnQuVGVycmFmb3JtLk9wZXJhdGlvbi5Mb2dDb250ZXh0GkAKClNvdXJjZUZpbGUSGAoEcGF0aBgBIAEoCUIK+kIHcgUQARiAIBIYCgdjb250ZW50GAIgASgMQgf6QgR6AhABGvwBCgpMb2dDb250ZXh0EhgKBnJ1bl9pZBgBIAEoCUII+kIFcgMYgAESIwoRbm9kZV9leGVjdXRpb25faWQYAiABKAlCCPpCBXIDGIABEioKGHBhcmVudF9ub2RlX2V4ZWN1dGlvbl9pZBgDIAEoCUII+kIFcgMYgAESFwoFcGhhc2UYBCABKAlCCPpCBXIDGIABEhwKCnN0YWdlX25hbWUYBSABKAlCCPpCBXIDGIACEhgKBmFjdGlvbhgGIAEoCUII+kIFcgMYgAESFgoEdW5pdBgHIAEoCUII+kIFcgMYgAISGgoIbWVudGlvbnMYCCADKAlCCPpCBZIBAhBAGioKCEVudkVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiVwoGQWN0aW9uEhYKEkFDVElPTl9VTlNQRUNJRklFRBAAEg8KC0FDVElPTl9QTEFOEAESEAoMQUNUSU9OX0FQUExZEAISEgoOQUNUSU9OX0RFU1RST1kQA0JIWkZnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9kZXBsb3ltZW50YgZwcm90bzM", [file_cloud_v1_deployment_provider, file_schemapb_schema, file_validate_validate]);
 
 /**
  *
@@ -51,20 +51,20 @@ export const TerraformSchema: GenMessage<Terraform, {jsonType: TerraformJson, va
   messageDesc(file_cloud_v1_deployment_terraform, 0);
 
 /**
- * input contains everything needed to prepare and run one Terraform action. 
+ * input contains everything needed to prepare and run one Terraform action.
  *
  * @generated from message cloud.v1.deployment.Terraform.Input
  */
 export type Terraform_Input = Message<"cloud.v1.deployment.Terraform.Input"> & {
   /**
-   * provider selects the deployment backend this Terraform action targets. 
+   * provider selects the deployment backend this Terraform action targets.
    *
    * @generated from field: cloud.v1.deployment.Provider provider = 1;
    */
   provider: Provider;
 
   /**
-   * operation contains Terraform executor parameters independent of tfvars. 
+   * operation contains Terraform executor parameters independent of tfvars.
    *
    * @generated from field: cloud.v1.deployment.Terraform.Operation operation = 2;
    */
@@ -83,20 +83,20 @@ export type Terraform_Input = Message<"cloud.v1.deployment.Terraform.Input"> & {
 };
 
 /**
- * input contains everything needed to prepare and run one Terraform action. 
+ * input contains everything needed to prepare and run one Terraform action.
  *
  * @generated from message cloud.v1.deployment.Terraform.Input
  */
 export type Terraform_InputJson = {
   /**
-   * provider selects the deployment backend this Terraform action targets. 
+   * provider selects the deployment backend this Terraform action targets.
    *
    * @generated from field: cloud.v1.deployment.Provider provider = 1;
    */
   provider?: ProviderJson;
 
   /**
-   * operation contains Terraform executor parameters independent of tfvars. 
+   * operation contains Terraform executor parameters independent of tfvars.
    *
    * @generated from field: cloud.v1.deployment.Terraform.Operation operation = 2;
    */
@@ -124,34 +124,34 @@ export const Terraform_InputSchema: GenMessage<Terraform_Input, {jsonType: Terra
   messageDesc(file_cloud_v1_deployment_terraform, 0, 0);
 
 /**
- * output contains observed Terraform state and baked output values. 
+ * output contains observed Terraform state and baked output values.
  *
  * @generated from message cloud.v1.deployment.Terraform.Output
  */
 export type Terraform_Output = Message<"cloud.v1.deployment.Terraform.Output"> & {
   /**
-   * action echoes Input.operation.action for logs and state machines. 
+   * action echoes Input.operation.action for logs and state machines.
    *
    * @generated from field: cloud.v1.deployment.Terraform.Action action = 1;
    */
   action: Terraform_Action;
 
   /**
-   * workdir_id echoes Input.operation.workdir_id for teardown and recovery. 
+   * workdir_id echoes Input.operation.workdir_id for teardown and recovery.
    *
    * @generated from field: string workdir_id = 2;
    */
   workdirId: string;
 
   /**
-   * workdir is the resolved directory used by Terraform, if materialized. 
+   * workdir is the resolved directory used by Terraform, if materialized.
    *
    * @generated from field: string workdir = 3;
    */
   workdir: string;
 
   /**
-   * state_file_present records whether terraform.tfstate exists after the action. 
+   * state_file_present records whether terraform.tfstate exists after the action.
    *
    * @generated from field: bool state_file_present = 4;
    */
@@ -177,34 +177,34 @@ export type Terraform_Output = Message<"cloud.v1.deployment.Terraform.Output"> &
 };
 
 /**
- * output contains observed Terraform state and baked output values. 
+ * output contains observed Terraform state and baked output values.
  *
  * @generated from message cloud.v1.deployment.Terraform.Output
  */
 export type Terraform_OutputJson = {
   /**
-   * action echoes Input.operation.action for logs and state machines. 
+   * action echoes Input.operation.action for logs and state machines.
    *
    * @generated from field: cloud.v1.deployment.Terraform.Action action = 1;
    */
   action?: Terraform_ActionJson;
 
   /**
-   * workdir_id echoes Input.operation.workdir_id for teardown and recovery. 
+   * workdir_id echoes Input.operation.workdir_id for teardown and recovery.
    *
    * @generated from field: string workdir_id = 2;
    */
   workdirId?: string;
 
   /**
-   * workdir is the resolved directory used by Terraform, if materialized. 
+   * workdir is the resolved directory used by Terraform, if materialized.
    *
    * @generated from field: string workdir = 3;
    */
   workdir?: string;
 
   /**
-   * state_file_present records whether terraform.tfstate exists after the action. 
+   * state_file_present records whether terraform.tfstate exists after the action.
    *
    * @generated from field: bool state_file_present = 4;
    */
@@ -239,13 +239,13 @@ export const Terraform_OutputSchema: GenMessage<Terraform_Output, {jsonType: Ter
   messageDesc(file_cloud_v1_deployment_terraform, 0, 1);
 
 /**
- * Operation contains the internal Terraform executor parameters. 
+ * Operation contains the internal Terraform executor parameters.
  *
  * @generated from message cloud.v1.deployment.Terraform.Operation
  */
 export type Terraform_Operation = Message<"cloud.v1.deployment.Terraform.Operation"> & {
   /**
-   * action is the lifecycle command to execute. 
+   * action is the lifecycle command to execute.
    *
    * @generated from field: cloud.v1.deployment.Terraform.Action action = 1;
    */
@@ -346,16 +346,23 @@ export type Terraform_Operation = Message<"cloud.v1.deployment.Terraform.Operati
    * @generated from field: bool refresh = 11;
    */
   refresh: boolean;
+
+  /**
+   * log_context scopes Terraform stdout/stderr into run logs.
+   *
+   * @generated from field: cloud.v1.deployment.Terraform.Operation.LogContext log_context = 12;
+   */
+  logContext?: Terraform_Operation_LogContext;
 };
 
 /**
- * Operation contains the internal Terraform executor parameters. 
+ * Operation contains the internal Terraform executor parameters.
  *
  * @generated from message cloud.v1.deployment.Terraform.Operation
  */
 export type Terraform_OperationJson = {
   /**
-   * action is the lifecycle command to execute. 
+   * action is the lifecycle command to execute.
    *
    * @generated from field: cloud.v1.deployment.Terraform.Action action = 1;
    */
@@ -456,6 +463,13 @@ export type Terraform_OperationJson = {
    * @generated from field: bool refresh = 11;
    */
   refresh?: boolean;
+
+  /**
+   * log_context scopes Terraform stdout/stderr into run logs.
+   *
+   * @generated from field: cloud.v1.deployment.Terraform.Operation.LogContext log_context = 12;
+   */
+  logContext?: Terraform_Operation_LogContextJson;
 };
 
 export type Terraform_OperationValid = Terraform_Operation;
@@ -468,20 +482,20 @@ export const Terraform_OperationSchema: GenMessage<Terraform_Operation, {jsonTyp
   messageDesc(file_cloud_v1_deployment_terraform, 0, 2);
 
 /**
- * SourceFile is one Terraform source file embedded into the operation workdir. 
+ * SourceFile is one Terraform source file embedded into the operation workdir.
  *
  * @generated from message cloud.v1.deployment.Terraform.Operation.SourceFile
  */
 export type Terraform_Operation_SourceFile = Message<"cloud.v1.deployment.Terraform.Operation.SourceFile"> & {
   /**
-   * path is workdir-relative, for example main.tf or network.tf. 
+   * path is workdir-relative, for example main.tf or network.tf.
    *
    * @generated from field: string path = 1;
    */
   path: string;
 
   /**
-   * content contains the .tf file bytes. 
+   * content contains the .tf file bytes.
    *
    * @generated from field: bytes content = 2;
    */
@@ -489,20 +503,20 @@ export type Terraform_Operation_SourceFile = Message<"cloud.v1.deployment.Terraf
 };
 
 /**
- * SourceFile is one Terraform source file embedded into the operation workdir. 
+ * SourceFile is one Terraform source file embedded into the operation workdir.
  *
  * @generated from message cloud.v1.deployment.Terraform.Operation.SourceFile
  */
 export type Terraform_Operation_SourceFileJson = {
   /**
-   * path is workdir-relative, for example main.tf or network.tf. 
+   * path is workdir-relative, for example main.tf or network.tf.
    *
    * @generated from field: string path = 1;
    */
   path?: string;
 
   /**
-   * content contains the .tf file bytes. 
+   * content contains the .tf file bytes.
    *
    * @generated from field: bytes content = 2;
    */
@@ -519,34 +533,169 @@ export const Terraform_Operation_SourceFileSchema: GenMessage<Terraform_Operatio
   messageDesc(file_cloud_v1_deployment_terraform, 0, 2, 0);
 
 /**
- * Action selects the Terraform lifecycle command represented by input. 
+ * LogContext scopes Terraform process output to the owning run stage.
+ *
+ * @generated from message cloud.v1.deployment.Terraform.Operation.LogContext
+ */
+export type Terraform_Operation_LogContext = Message<"cloud.v1.deployment.Terraform.Operation.LogContext"> & {
+  /**
+   * run_id is the owning test run id.
+   *
+   * @generated from field: string run_id = 1;
+   */
+  runId: string;
+
+  /**
+   * node_execution_id is the execution stage receiving Terraform stdout/stderr.
+   *
+   * @generated from field: string node_execution_id = 2;
+   */
+  nodeExecutionId: string;
+
+  /**
+   * parent_node_execution_id links the Terraform stage to its parent pipeline stage.
+   *
+   * @generated from field: string parent_node_execution_id = 3;
+   */
+  parentNodeExecutionId: string;
+
+  /**
+   * phase is the top-level pipeline phase.
+   *
+   * @generated from field: string phase = 4;
+   */
+  phase: string;
+
+  /**
+   * stage_name is the producing stage display name.
+   *
+   * @generated from field: string stage_name = 5;
+   */
+  stageName: string;
+
+  /**
+   * action is the generic action class.
+   *
+   * @generated from field: string action = 6;
+   */
+  action: string;
+
+  /**
+   * unit is the server-side unit that produced the output.
+   *
+   * @generated from field: string unit = 7;
+   */
+  unit: string;
+
+  /**
+   * mentions are normalized operation tokens.
+   *
+   * @generated from field: repeated string mentions = 8;
+   */
+  mentions: string[];
+};
+
+/**
+ * LogContext scopes Terraform process output to the owning run stage.
+ *
+ * @generated from message cloud.v1.deployment.Terraform.Operation.LogContext
+ */
+export type Terraform_Operation_LogContextJson = {
+  /**
+   * run_id is the owning test run id.
+   *
+   * @generated from field: string run_id = 1;
+   */
+  runId?: string;
+
+  /**
+   * node_execution_id is the execution stage receiving Terraform stdout/stderr.
+   *
+   * @generated from field: string node_execution_id = 2;
+   */
+  nodeExecutionId?: string;
+
+  /**
+   * parent_node_execution_id links the Terraform stage to its parent pipeline stage.
+   *
+   * @generated from field: string parent_node_execution_id = 3;
+   */
+  parentNodeExecutionId?: string;
+
+  /**
+   * phase is the top-level pipeline phase.
+   *
+   * @generated from field: string phase = 4;
+   */
+  phase?: string;
+
+  /**
+   * stage_name is the producing stage display name.
+   *
+   * @generated from field: string stage_name = 5;
+   */
+  stageName?: string;
+
+  /**
+   * action is the generic action class.
+   *
+   * @generated from field: string action = 6;
+   */
+  action?: string;
+
+  /**
+   * unit is the server-side unit that produced the output.
+   *
+   * @generated from field: string unit = 7;
+   */
+  unit?: string;
+
+  /**
+   * mentions are normalized operation tokens.
+   *
+   * @generated from field: repeated string mentions = 8;
+   */
+  mentions?: string[];
+};
+
+export type Terraform_Operation_LogContextValid = Terraform_Operation_LogContext;
+
+/**
+ * Describes the message cloud.v1.deployment.Terraform.Operation.LogContext.
+ * Use `create(Terraform_Operation_LogContextSchema)` to create a new message.
+ */
+export const Terraform_Operation_LogContextSchema: GenMessage<Terraform_Operation_LogContext, {jsonType: Terraform_Operation_LogContextJson, validType: Terraform_Operation_LogContextValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_deployment_terraform, 0, 2, 1);
+
+/**
+ * Action selects the Terraform lifecycle command represented by input.
  *
  * @generated from enum cloud.v1.deployment.Terraform.Action
  */
 export enum Terraform_Action {
   /**
-   * ACTION_UNSPECIFIED is invalid. 
+   * ACTION_UNSPECIFIED is invalid.
    *
    * @generated from enum value: ACTION_UNSPECIFIED = 0;
    */
   UNSPECIFIED = 0,
 
   /**
-   * ACTION_PLAN prepares the workdir, runs init/plan, and records the plan result. 
+   * ACTION_PLAN prepares the workdir, runs init/plan, and records the plan result.
    *
    * @generated from enum value: ACTION_PLAN = 1;
    */
   PLAN = 1,
 
   /**
-   * ACTION_APPLY prepares the workdir, runs init/apply/output. 
+   * ACTION_APPLY prepares the workdir, runs init/apply/output.
    *
    * @generated from enum value: ACTION_APPLY = 2;
    */
   APPLY = 2,
 
   /**
-   * ACTION_DESTROY destroys resources from an existing workdir state. 
+   * ACTION_DESTROY destroys resources from an existing workdir state.
    *
    * @generated from enum value: ACTION_DESTROY = 3;
    */
@@ -554,7 +703,7 @@ export enum Terraform_Action {
 }
 
 /**
- * Action selects the Terraform lifecycle command represented by input. 
+ * Action selects the Terraform lifecycle command represented by input.
  *
  * @generated from enum cloud.v1.deployment.Terraform.Action
  */

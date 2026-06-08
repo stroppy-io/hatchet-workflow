@@ -607,47 +607,62 @@ func (w *domainTestWorkflow) Execute(ctx workflow.Context) (resp *workflowpb.Tes
 // from the workflow's defer for every terminal outcome.
 func (w *domainTestWorkflow) teardownInfrastructure(ctx workflow.Context, plan *deploymentpb.InfrastructurePlan) error {
 	teardownStageID := deploymentbuilder.StageExecutionID(stageTeardown)
+	runID := w.req.GetTestRun().GetId()
 	switch plan.GetProvider() {
 	case deploymentpb.Provider_PROVIDER_DOCKER:
 		renderStage := w.startActionStage(ctx, stageTeardown, teardownStageID, 1, actionRenderDockerInput)
+		appendServerStageLog(ctx, runID, stageTeardown, teardownStageID, monitor.Stream_STREAM_STDOUT, "started "+actionRenderDockerInput, actionRenderDockerInput)
 		input, err := workflowpb.RenderDockerInputWorkflowChild(ctx, &workflowpb.RenderDockerInputWorkflowRequest{
-			RunId:          w.req.GetTestRun().GetId(),
+			RunId:          runID,
 			Plan:           plan,
 			AgentBootstrap: w.req.GetAgentBootstrap(),
 		})
 		if err != nil {
 			w.failActionStage(ctx, renderStage, err.Error())
+			appendServerStageLog(ctx, runID, stageTeardown, teardownStageID, monitor.Stream_STREAM_STDERR, "failed "+actionRenderDockerInput+": "+err.Error(), actionRenderDockerInput)
 			return err
 		}
 		w.completeActionStage(ctx, renderStage)
+		appendServerStageLog(ctx, runID, stageTeardown, teardownStageID, monitor.Stream_STREAM_STDOUT, "completed "+actionRenderDockerInput, actionRenderDockerInput)
 		downStage := w.startActionStage(ctx, stageTeardown, teardownStageID, 2, actionDockerDown)
+		appendServerStageLog(ctx, runID, stageTeardown, teardownStageID, monitor.Stream_STREAM_STDOUT, "started "+actionDockerDown, actionDockerDown)
+		stampDockerLogContext(input, runID, stageTeardown, teardownStageID, actionDockerDown)
 		_, err = workflowpb.DockerDownActivity(ctx, input)
 		if err != nil {
 			w.failActionStage(ctx, downStage, err.Error())
+			appendServerStageLog(ctx, runID, stageTeardown, teardownStageID, monitor.Stream_STREAM_STDERR, "failed "+actionDockerDown+": "+err.Error(), actionDockerDown)
 			return err
 		}
 		w.completeActionStage(ctx, downStage)
+		appendServerStageLog(ctx, runID, stageTeardown, teardownStageID, monitor.Stream_STREAM_STDOUT, "completed "+actionDockerDown, actionDockerDown)
 		return err
 	case deploymentpb.Provider_PROVIDER_YANDEX:
 		renderStage := w.startActionStage(ctx, stageTeardown, teardownStageID, 1, actionRenderTerraformVariables)
+		appendServerStageLog(ctx, runID, stageTeardown, teardownStageID, monitor.Stream_STREAM_STDOUT, "started "+actionRenderTerraformVariables, actionRenderTerraformVariables)
 		input, err := workflowpb.RenderTerraformVariablesWorkflowChild(ctx, &workflowpb.RenderTerraformVariablesWorkflowRequest{
-			RunId:          w.req.GetTestRun().GetId(),
+			RunId:          runID,
 			Plan:           plan,
 			Action:         deploymentpb.Terraform_ACTION_DESTROY,
 			AgentBootstrap: w.req.GetAgentBootstrap(),
 		})
 		if err != nil {
 			w.failActionStage(ctx, renderStage, err.Error())
+			appendServerStageLog(ctx, runID, stageTeardown, teardownStageID, monitor.Stream_STREAM_STDERR, "failed "+actionRenderTerraformVariables+": "+err.Error(), actionRenderTerraformVariables)
 			return err
 		}
 		w.completeActionStage(ctx, renderStage)
+		appendServerStageLog(ctx, runID, stageTeardown, teardownStageID, monitor.Stream_STREAM_STDOUT, "completed "+actionRenderTerraformVariables, actionRenderTerraformVariables)
 		destroyStage := w.startActionStage(ctx, stageTeardown, teardownStageID, 2, actionTerraformDestroy)
+		appendServerStageLog(ctx, runID, stageTeardown, teardownStageID, monitor.Stream_STREAM_STDOUT, "started "+actionTerraformDestroy, actionTerraformDestroy)
+		stampTerraformLogContext(input, runID, stageTeardown, teardownStageID, actionTerraformDestroy)
 		_, err = workflowpb.TerraformDestroyActivity(ctx, input)
 		if err != nil {
 			w.failActionStage(ctx, destroyStage, err.Error())
+			appendServerStageLog(ctx, runID, stageTeardown, teardownStageID, monitor.Stream_STREAM_STDERR, "failed "+actionTerraformDestroy+": "+err.Error(), actionTerraformDestroy)
 			return err
 		}
 		w.completeActionStage(ctx, destroyStage)
+		appendServerStageLog(ctx, runID, stageTeardown, teardownStageID, monitor.Stream_STREAM_STDOUT, "completed "+actionTerraformDestroy, actionTerraformDestroy)
 		return err
 	default:
 		return nil

@@ -450,6 +450,8 @@ func logSourceName(source monitor.Source) string {
 		return "journald"
 	case monitor.Source_SOURCE_FILE:
 		return "file"
+	case monitor.Source_SOURCE_SERVER:
+		return "server"
 	default:
 		return ""
 	}
@@ -563,6 +565,8 @@ func parseLogSource(value string) monitor.Source {
 		return monitor.Source_SOURCE_JOURNALD
 	case "file", "source_file":
 		return monitor.Source_SOURCE_FILE
+	case "server", "source_server":
+		return monitor.Source_SOURCE_SERVER
 	default:
 		return monitor.Source_SOURCE_UNSPECIFIED
 	}

@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"os"
 
 	schemapb "github.com/stroppy-io/schemapb/schemapb"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
@@ -11,10 +13,40 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-type Executor struct{}
+type Executor struct {
+	stdout io.Writer
+	stderr io.Writer
+}
 
-func NewExecutor() *Executor {
-	return &Executor{}
+type ExecutorOption func(*Executor)
+
+func NewExecutor(opts ...ExecutorOption) *Executor {
+	e := &Executor{
+		stdout: os.Stdout,
+		stderr: os.Stderr,
+	}
+	for _, opt := range opts {
+		opt(e)
+	}
+	if e.stdout == nil {
+		e.stdout = io.Discard
+	}
+	if e.stderr == nil {
+		e.stderr = io.Discard
+	}
+	return e
+}
+
+func WithStdout(w io.Writer) ExecutorOption {
+	return func(e *Executor) {
+		e.stdout = w
+	}
+}
+
+func WithStderr(w io.Writer) ExecutorOption {
+	return func(e *Executor) {
+		e.stderr = w
+	}
 }
 
 func (e *Executor) Execute(ctx context.Context, input *deployment.Terraform_Input) (*deployment.Terraform_Output, error) {
@@ -39,7 +71,7 @@ func (e *Executor) Execute(ctx context.Context, input *deployment.Terraform_Inpu
 		return nil, err
 	}
 	workdir := NewWorkdirWithParams(NewWdId(operation.GetWorkdirId()), options...)
-	actor, err := NewActor()
+	actor, err := NewActor(WithActorStdout(e.stdout), WithActorStderr(e.stderr))
 	if err != nil {
 		return nil, err
 	}

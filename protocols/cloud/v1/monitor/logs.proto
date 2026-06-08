@@ -29,6 +29,8 @@ enum Source {
     SOURCE_JOURNALD = 2;
     /* SOURCE_FILE is a tailed log file (e.g. a postgresql log under /var/log/postgresql). */
     SOURCE_FILE = 3;
+    /* SOURCE_SERVER is control-plane/worker server-side output scoped to a run. */
+    SOURCE_SERVER = 4;
 }
 
 /* Stream is the std stream the line was written to. */
@@ -75,7 +77,7 @@ message LogLine {
     string component_id = 4 [(validate.rules).string.max_len = 128];
     /* machine_id is the host the line originated on. */
     string machine_id = 5 [(validate.rules).string.max_len = 128];
-    /* source is where the line came from (command, journald, or tailed file). */
+    /* source is where the line came from (command, journald, file, or server). */
     Source source = 6 [(validate.rules).enum.defined_only = true];
     /* unit is the systemd unit or file path for JOURNALD/FILE sources. */
     string unit = 7 [(validate.rules).string.max_len = 256];

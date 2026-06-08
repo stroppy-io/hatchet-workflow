@@ -361,6 +361,10 @@ func (m *Terraform_Operation) Encode(e *jx.Encoder) {
 		e.FieldStart("refresh")
 		e.Bool(m.Refresh)
 	}
+	if m.LogContext != nil {
+		e.FieldStart("logContext")
+		m.LogContext.Encode(e)
+	}
 	e.ObjEnd()
 }
 
@@ -547,6 +551,19 @@ func (m *Terraform_Operation) Decode(d *jx.Decoder) error {
 			}
 			m.Refresh = v
 			return nil
+		case "logContext", "log_context":
+			if seen["LogContext"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["LogContext"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.LogContext = &Terraform_Operation_LogContext{}
+			if err := m.LogContext.Decode(d); err != nil {
+				return err
+			}
+			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}
@@ -627,6 +644,187 @@ func (m *Terraform_Operation_SourceFile) MarshalJSON() ([]byte, error) {
 }
 
 func (m *Terraform_Operation_SourceFile) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *Terraform_Operation_LogContext) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.RunId != "" {
+		e.FieldStart("runId")
+		e.Str(m.RunId)
+	}
+	if m.NodeExecutionId != "" {
+		e.FieldStart("nodeExecutionId")
+		e.Str(m.NodeExecutionId)
+	}
+	if m.ParentNodeExecutionId != "" {
+		e.FieldStart("parentNodeExecutionId")
+		e.Str(m.ParentNodeExecutionId)
+	}
+	if m.Phase != "" {
+		e.FieldStart("phase")
+		e.Str(m.Phase)
+	}
+	if m.StageName != "" {
+		e.FieldStart("stageName")
+		e.Str(m.StageName)
+	}
+	if m.Action != "" {
+		e.FieldStart("action")
+		e.Str(m.Action)
+	}
+	if m.Unit != "" {
+		e.FieldStart("unit")
+		e.Str(m.Unit)
+	}
+	if len(m.Mentions) > 0 {
+		e.FieldStart("mentions")
+		e.ArrStart()
+		for _, v := range m.Mentions {
+			e.Str(v)
+		}
+		e.ArrEnd()
+	}
+	e.ObjEnd()
+}
+
+func (m *Terraform_Operation_LogContext) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "runId", "run_id":
+			if seen["RunId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["RunId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.RunId = v
+			return nil
+		case "nodeExecutionId", "node_execution_id":
+			if seen["NodeExecutionId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["NodeExecutionId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.NodeExecutionId = v
+			return nil
+		case "parentNodeExecutionId", "parent_node_execution_id":
+			if seen["ParentNodeExecutionId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["ParentNodeExecutionId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.ParentNodeExecutionId = v
+			return nil
+		case "phase":
+			if seen["Phase"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Phase"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Phase = v
+			return nil
+		case "stageName", "stage_name":
+			if seen["StageName"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["StageName"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.StageName = v
+			return nil
+		case "action":
+			if seen["Action"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Action"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Action = v
+			return nil
+		case "unit":
+			if seen["Unit"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Unit"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Unit = v
+			return nil
+		case "mentions":
+			if seen["Mentions"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Mentions"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				v, err := d.Str()
+				if err != nil {
+					return err
+				}
+				m.Mentions = append(m.Mentions, v)
+				return nil
+			})
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *Terraform_Operation_LogContext) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *Terraform_Operation_LogContext) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return m.Decode(d)
 }

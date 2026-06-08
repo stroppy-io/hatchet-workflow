@@ -42,6 +42,7 @@ type Options struct {
 type ActivityOptions struct {
 	Quotas   QuotaManager
 	Networks NetworkManager
+	Logs     RunLogWriter
 }
 
 func DefaultOptions() Options {
@@ -77,7 +78,7 @@ func RegisterActivities(registry worker.ActivityRegistry, runtime RuntimeActivit
 	if len(options) > 0 {
 		opts = options[0]
 	}
-	workflowpb.RegisterDeploymentServiceActivities(registry, NewDeploymentActivities(opts.Quotas, opts.Networks))
+	workflowpb.RegisterDeploymentServiceActivities(registry, NewDeploymentActivities(opts.Quotas, opts.Networks, opts.Logs))
 	if runtime != nil {
 		registry.RegisterActivityWithOptions(runtime.PersistRunState, activity.RegisterOptions{Name: PersistRunStateActivityName})
 		registry.RegisterActivityWithOptions(runtime.PersistDeploymentPlan, activity.RegisterOptions{Name: PersistDeploymentPlanActivityName})

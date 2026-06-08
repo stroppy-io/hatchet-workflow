@@ -34,6 +34,7 @@ const SOURCE_FILTERS = [
   { token: "command", value: Source.COMMAND, label: "Command", json: "SOURCE_COMMAND" },
   { token: "journald", value: Source.JOURNALD, label: "Journald", json: "SOURCE_JOURNALD" },
   { token: "file", value: Source.FILE, label: "File", json: "SOURCE_FILE" },
+  { token: "server", value: Source.SERVER, label: "Server", json: "SOURCE_SERVER" },
 ] as const;
 
 const STREAM_FILTERS = [

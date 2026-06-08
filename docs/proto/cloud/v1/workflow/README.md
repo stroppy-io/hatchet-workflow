@@ -855,6 +855,14 @@ containers contains runtime container specs keyed by stable name.<br>
 json_name: containers
 go_name: Containers</pre></td>
 </tr><tr>
+<td>log_context</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-docker-input-logcontext">cloud.v1.deployment.Docker.Input.LogContext</a></td>
+<td><pre>
+log_context scopes Docker stderr/progress into run logs.<br>
+
+json_name: logContext
+go_name: LogContext</pre></td>
+</tr><tr>
 <td>network</td>
 <td><a href="../deployment/README.md#cloud-v1-deployment-docker-network">cloud.v1.deployment.Docker.Network</a></td>
 <td><pre>
@@ -1226,6 +1234,14 @@ containers contains runtime container specs keyed by stable name.<br>
 json_name: containers
 go_name: Containers</pre></td>
 </tr><tr>
+<td>log_context</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-docker-input-logcontext">cloud.v1.deployment.Docker.Input.LogContext</a></td>
+<td><pre>
+log_context scopes Docker stderr/progress into run logs.<br>
+
+json_name: logContext
+go_name: LogContext</pre></td>
+</tr><tr>
 <td>network</td>
 <td><a href="../deployment/README.md#cloud-v1-deployment-docker-network">cloud.v1.deployment.Docker.Network</a></td>
 <td><pre>
@@ -1296,6 +1312,14 @@ containers contains runtime container specs keyed by stable name.<br>
 
 json_name: containers
 go_name: Containers</pre></td>
+</tr><tr>
+<td>log_context</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-docker-input-logcontext">cloud.v1.deployment.Docker.Input.LogContext</a></td>
+<td><pre>
+log_context scopes Docker stderr/progress into run logs.<br>
+
+json_name: logContext
+go_name: LogContext</pre></td>
 </tr><tr>
 <td>network</td>
 <td><a href="../deployment/README.md#cloud-v1-deployment-docker-network">cloud.v1.deployment.Docker.Network</a></td>
@@ -1368,6 +1392,14 @@ containers contains runtime container specs keyed by stable name.<br>
 
 json_name: containers
 go_name: Containers</pre></td>
+</tr><tr>
+<td>log_context</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-docker-input-logcontext">cloud.v1.deployment.Docker.Input.LogContext</a></td>
+<td><pre>
+log_context scopes Docker stderr/progress into run logs.<br>
+
+json_name: logContext
+go_name: LogContext</pre></td>
 </tr><tr>
 <td>network</td>
 <td><a href="../deployment/README.md#cloud-v1-deployment-docker-network">cloud.v1.deployment.Docker.Network</a></td>

@@ -35,6 +35,8 @@ const (
 	Source_SOURCE_JOURNALD Source = 2
 	// SOURCE_FILE is a tailed log file (e.g. a postgresql log under /var/log/postgresql).
 	Source_SOURCE_FILE Source = 3
+	// SOURCE_SERVER is control-plane/worker server-side output scoped to a run.
+	Source_SOURCE_SERVER Source = 4
 )
 
 // Enum value maps for Source.
@@ -44,12 +46,14 @@ var (
 		1: "SOURCE_COMMAND",
 		2: "SOURCE_JOURNALD",
 		3: "SOURCE_FILE",
+		4: "SOURCE_SERVER",
 	}
 	Source_value = map[string]int32{
 		"SOURCE_UNSPECIFIED": 0,
 		"SOURCE_COMMAND":     1,
 		"SOURCE_JOURNALD":    2,
 		"SOURCE_FILE":        3,
+		"SOURCE_SERVER":      4,
 	}
 )
 
@@ -209,7 +213,7 @@ type LogLine struct {
 	ComponentId string `protobuf:"bytes,4,opt,name=component_id,json=componentId,proto3" json:"component_id,omitempty"`
 	// machine_id is the host the line originated on.
 	MachineId string `protobuf:"bytes,5,opt,name=machine_id,json=machineId,proto3" json:"machine_id,omitempty"`
-	// source is where the line came from (command, journald, or tailed file).
+	// source is where the line came from (command, journald, file, or server).
 	Source Source `protobuf:"varint,6,opt,name=source,proto3,enum=cloud.v1.monitor.Source" json:"source,omitempty"`
 	// unit is the systemd unit or file path for JOURNALD/FILE sources.
 	Unit string `protobuf:"bytes,7,opt,name=unit,proto3" json:"unit,omitempty"`
@@ -582,12 +586,13 @@ const file_cloud_v1_monitor_logs_proto_rawDesc = "" +
 	"\aLogPage\x12:\n" +
 	"\x05lines\x18\x01 \x03(\v2\x19.cloud.v1.monitor.LogLineB\t\xfaB\x06\x92\x01\x03\x10\x90NR\x05lines\x12'\n" +
 	"\n" +
-	"next_token\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x02R\tnextToken*Z\n" +
+	"next_token\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x02R\tnextToken*m\n" +
 	"\x06Source\x12\x16\n" +
 	"\x12SOURCE_UNSPECIFIED\x10\x00\x12\x12\n" +
 	"\x0eSOURCE_COMMAND\x10\x01\x12\x13\n" +
 	"\x0fSOURCE_JOURNALD\x10\x02\x12\x0f\n" +
-	"\vSOURCE_FILE\x10\x03*F\n" +
+	"\vSOURCE_FILE\x10\x03\x12\x11\n" +
+	"\rSOURCE_SERVER\x10\x04*F\n" +
 	"\x06Stream\x12\x16\n" +
 	"\x12STREAM_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rSTREAM_STDOUT\x10\x01\x12\x11\n" +

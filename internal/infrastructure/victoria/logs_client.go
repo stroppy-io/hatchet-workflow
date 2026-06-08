@@ -154,6 +154,8 @@ func sourceName(source monitor.Source) string {
 		return "journald"
 	case monitor.Source_SOURCE_FILE:
 		return "file"
+	case monitor.Source_SOURCE_SERVER:
+		return "server"
 	default:
 		return ""
 	}

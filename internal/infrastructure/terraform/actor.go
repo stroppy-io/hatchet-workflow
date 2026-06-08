@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -201,11 +202,27 @@ func (w *WorkdirWithParams) writeFiles() error {
 type Actor struct {
 	mu       sync.Mutex
 	workdirs map[WdId]*WorkdirWithParams
+	stdout   io.Writer
+	stderr   io.Writer
 }
 
 var ErrWdAlreadyExists = errors.New("terraform workdir is already active")
 
-func NewActor() (*Actor, error) {
+type ActorOption func(*Actor)
+
+func WithActorStdout(w io.Writer) ActorOption {
+	return func(a *Actor) {
+		a.stdout = w
+	}
+}
+
+func WithActorStderr(w io.Writer) ActorOption {
+	return func(a *Actor) {
+		a.stderr = w
+	}
+}
+
+func NewActor(opts ...ActorOption) (*Actor, error) {
 	if defaultExecPath() == "" {
 		return nil, errors.New("terraform exec path is empty")
 	}
@@ -215,7 +232,21 @@ func NewActor() (*Actor, error) {
 	if err := writeTfCLIConfig(DefaultWorkingDir); err != nil {
 		return nil, err
 	}
-	return &Actor{workdirs: make(map[WdId]*WorkdirWithParams)}, nil
+	a := &Actor{
+		workdirs: make(map[WdId]*WorkdirWithParams),
+		stdout:   os.Stdout,
+		stderr:   os.Stderr,
+	}
+	for _, opt := range opts {
+		opt(a)
+	}
+	if a.stdout == nil {
+		a.stdout = io.Discard
+	}
+	if a.stderr == nil {
+		a.stderr = io.Discard
+	}
+	return a, nil
 }
 
 func (a *Actor) PlanTerraform(ctx context.Context, w *WorkdirWithParams) (bool, error) {
@@ -316,8 +347,8 @@ func (a *Actor) newTerraform(ctx context.Context, w *WorkdirWithParams) (*tfexec
 	if err != nil {
 		return nil, fmt.Errorf("create terraform: %w", err)
 	}
-	tf.SetStdout(os.Stdout)
-	tf.SetStderr(os.Stderr)
+	tf.SetStdout(a.stdout)
+	tf.SetStderr(a.stderr)
 	if err := tf.SetEnv(mergeEnv(os.Environ(), w.env, map[string]string{
 		tfCliConfigFileEnvKey: filepath.Join(w.workdirRoot, DefaultConfigFileName),
 	})); err != nil {
