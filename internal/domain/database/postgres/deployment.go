@@ -508,7 +508,7 @@ func postgresHBAFile(componentID, role string) *common.File {
 			Content: &common.File_Text{Text: `local all all trust
 host all all 127.0.0.1/32 trust
 host all all ::1/128 trust
-host all all 0.0.0.0/0 trust
+host all all 0.0.0.0/0 scram-sha-256
 host replication ` + postgresReplicationUser + ` 10.0.0.0/8 scram-sha-256
 host replication ` + postgresReplicationUser + ` 172.16.0.0/12 scram-sha-256
 host replication ` + postgresReplicationUser + ` 192.168.0.0/16 scram-sha-256

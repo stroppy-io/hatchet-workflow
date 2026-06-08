@@ -73,7 +73,7 @@ func TestDriverTypeURLMatchesProtocolRegistry(t *testing.T) {
 			protocol:   domain.Workload_PROTOCOL_MYSQL,
 			target:     databaseTarget{Host: "10.0.0.2", Port: 3306},
 			driverType: "mysql",
-			url:        "root@tcp(10.0.0.2:3306)/",
+			url:        "root@tcp(10.0.0.2:3306)/stroppy",
 		},
 		{
 			name:       "picodata",
