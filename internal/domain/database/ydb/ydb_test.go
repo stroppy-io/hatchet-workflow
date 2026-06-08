@@ -94,6 +94,18 @@ func TestYdbDeploymentPlan(t *testing.T) {
 	if install := dbtest.CallCmd(storage, "100_install"); !strings.Contains(install, "\"${STROPPY_SERVER_ADDR%/}/api/binaries/ydbd/24.1.18/ydbd-24.1.18-linux-amd64.tar.gz\"") {
 		t.Fatalf("install does not expand server binary URL: %s", install)
 	}
+	init := dbtest.CallCmd(storage, "240_init_database")
+	for _, want := range []string{
+		"admin blobstorage config init --yaml-file",
+		"admin database \"$database\" create \"$pool\"",
+		"database='/Root/testdb'",
+		"pool='ssd:1'",
+		"grpc://127.0.0.1:2136",
+	} {
+		if !strings.Contains(init, want) {
+			t.Fatalf("init command missing %q:\n%s", want, init)
+		}
+	}
 
 	database := dbtest.ServiceUnitText(components["ydb-database-1"])
 	for _, want := range []string{"--node dynamic", "--node-broker '10.0.0.1:2136'", "--node-broker '10.0.0.2:2136'"} {

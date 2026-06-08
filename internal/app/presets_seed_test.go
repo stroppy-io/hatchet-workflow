@@ -116,6 +116,20 @@ func TestBuiltinPostgresPresetsUseConcreteMemoryValues(t *testing.T) {
 	}
 }
 
+func TestBuiltinYdbSingleIncludesDatabaseNode(t *testing.T) {
+	preset := databasePresetByName(t, builtinDatabasePresets("tenant-1", "author-1"), "YDB single")
+	params := preset.GetDatabase().GetParams().GetYdb()
+	if got, want := params.GetStorageNodes(), uint32(1); got != want {
+		t.Fatalf("storage nodes = %d, want %d", got, want)
+	}
+	if got, want := params.GetDatabaseNodes(), uint32(1); got != want {
+		t.Fatalf("database nodes = %d, want %d", got, want)
+	}
+	if got, want := params.GetDatabasePath(), "/Root/testdb"; got != want {
+		t.Fatalf("database path = %q, want %q", got, want)
+	}
+}
+
 func TestReconcileBuiltinTestPresetUpdatesEmbeddedDatabase(t *testing.T) {
 	workloads := workloadPresetsByProtocol(builtinWorkloadPresets("tenant-1", "author-1"))
 	canonicalDB := databasePresetByName(t, builtinDatabasePresets("tenant-1", "author-1"), "PostgreSQL ha")

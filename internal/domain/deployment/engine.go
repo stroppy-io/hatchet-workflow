@@ -22,6 +22,18 @@ type EngineFile struct {
 	File          *common.File
 }
 
+// EngineCommand is an extra renderer-owned command placed after service
+// activation. Engines use it for product bootstrap that must happen only after
+// the daemon is reachable, such as creating an initial database.
+type EngineCommand struct {
+	StepID        string
+	StepOrder     uint32
+	ArtifactName  string
+	ArtifactLabel string
+	LockReason    string
+	Command       string
+}
+
 // EngineComponent is the per-component rendering an engine produces. The two
 // assemblers below turn it into the agent step list (RenderComponentDeployment)
 // and the render-preview artifacts (RenderComponentPreview) so every engine
@@ -40,6 +52,7 @@ type EngineComponent struct {
 	InstallCommands   []string
 	ServiceFile       *common.File
 	Healthcheck       string
+	PostStartCommands []EngineCommand
 }
 
 // RenderComponentDeployment assembles the ordered agent step list for one
@@ -81,6 +94,9 @@ func RenderComponentDeployment(ctx RenderContext, ec EngineComponent) *deploymen
 		CallCmdStep("220_enable_start", 220, EnableStartServiceCommand(ctx.Component.GetId())),
 		CallCmdStep("230_healthcheck", 230, ec.Healthcheck),
 	)
+	for _, command := range ec.PostStartCommands {
+		steps = append(steps, CallCmdStep(command.StepID, command.StepOrder, command.Command))
+	}
 
 	// Monitor phase: install + start the metrics/logs collectors for this
 	// machine (node_exporter + DB exporter + vmagent + vector). No-op when the
@@ -191,6 +207,28 @@ func RenderComponentPreview(ctx PreviewContext, ec EngineComponent) []*deploymen
 		CommandArtifact(ctx, ec.Engine, ArtifactID(ctx.Component.GetId(), "systemd/enable-start"), EnableStartServiceCommand(ctx.Component.GetId()), "systemd activation is renderer-owned", map[string]string{"artifact": "systemd_enable_start"}),
 		CommandArtifact(ctx, ec.Engine, ArtifactID(ctx.Component.GetId(), "healthcheck"), ec.Healthcheck, "healthcheck command is renderer-owned", map[string]string{"artifact": "healthcheck"}),
 	)
+	for _, command := range ec.PostStartCommands {
+		artifactName := command.ArtifactName
+		if artifactName == "" {
+			artifactName = command.StepID
+		}
+		lockReason := command.LockReason
+		if lockReason == "" {
+			lockReason = artifactName + " command is renderer-owned"
+		}
+		label := command.ArtifactLabel
+		if label == "" {
+			label = "post_start"
+		}
+		artifacts = append(artifacts, CommandArtifact(
+			ctx,
+			ec.Engine,
+			ArtifactID(ctx.Component.GetId(), artifactName),
+			command.Command,
+			lockReason,
+			map[string]string{"artifact": label},
+		))
+	}
 
 	return artifacts
 }
