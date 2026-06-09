@@ -103,7 +103,7 @@ func TestYdbDeploymentPlan(t *testing.T) {
 	components := dbtest.ComponentsByID(plan)
 	storage := components["ydb-storage-1"]
 	service := dbtest.ServiceUnitText(storage)
-	for _, want := range []string{"/usr/local/bin/ydbd server", "--grpc-port 2136", "--ic-port 19001", "--mon-port 8765", "--node 1"} {
+	for _, want := range []string{"/usr/local/bin/ydbd server", "--grpc-port 2135", "--ic-port 19001", "--mon-port 8765", "--node 1"} {
 		if !strings.Contains(service, want) {
 			t.Fatalf("service missing %q:\n%s", want, service)
 		}
@@ -168,7 +168,7 @@ func TestYdbDeploymentPlan(t *testing.T) {
 		"systemctl is-active --quiet \"$service\"",
 		"timeout 1s bash -c",
 		"/dev/tcp/127.0.0.1/$port",
-		"port=2136",
+		"port=2135",
 		"journalctl --no-pager",
 	} {
 		if !strings.Contains(storageHealthcheck, want) {
@@ -182,7 +182,7 @@ func TestYdbDeploymentPlan(t *testing.T) {
 		"timeout 30s /usr/local/bin/ydbd -s \"$server\" admin database \"$database\" create \"$pool\"",
 		"database='/Root/testdb'",
 		"pool='ssd:1'",
-		"grpc://127.0.0.1:2136",
+		"grpc://127.0.0.1:2135",
 	} {
 		if !strings.Contains(init, want) {
 			t.Fatalf("init command missing %q:\n%s", want, init)
@@ -190,7 +190,7 @@ func TestYdbDeploymentPlan(t *testing.T) {
 	}
 
 	database := dbtest.ServiceUnitText(components["ydb-database-1"])
-	for _, want := range []string{"--grpc-port 2136", "--ic-port 19002", "--mon-port 8766", "--tenant '/Root/testdb'", "--node-broker 'grpc://10.0.0.1:2136'", "--node-broker 'grpc://10.0.0.2:2136'"} {
+	for _, want := range []string{"--grpc-port 2136", "--ic-port 19002", "--mon-port 8766", "--tenant '/Root/testdb'", "--node-broker 'grpc://10.0.0.1:2135'", "--node-broker 'grpc://10.0.0.2:2135'"} {
 		if !strings.Contains(database, want) {
 			t.Fatalf("database service missing %q:\n%s", want, database)
 		}
@@ -217,7 +217,7 @@ func TestYdbDeploymentPlan(t *testing.T) {
 	}
 }
 
-func TestYdbCombinedDeploymentUsesSingleStaticService(t *testing.T) {
+func TestYdbCombinedDeploymentStartsDatabaseServiceOnStorageNode(t *testing.T) {
 	db := &domain.Database{
 		Kind: domain.Database_KIND_YDB,
 		Source: &domain.Database_Params{
@@ -256,22 +256,41 @@ func TestYdbCombinedDeploymentUsesSingleStaticService(t *testing.T) {
 		t.Fatalf("deployment components = %d, want %d", got, want)
 	}
 	storageService := dbtest.ServiceUnitText(storage)
-	for _, want := range []string{"--grpc-port 2136", "--ic-port 19001", "--mon-port 8765", "--node 1"} {
+	for _, want := range []string{"--grpc-port 2135", "--ic-port 19001", "--mon-port 8765", "--node 1"} {
 		if !strings.Contains(storageService, want) {
 			t.Fatalf("storage service missing %q:\n%s", want, storageService)
 		}
 	}
-	for _, stepID := range []string{"040_write_database_config", "050_write_database_service", "250_enable_start_database", "260_database_healthcheck"} {
-		if text := dbtest.WriteFileText(storage, stepID); text != "" {
-			t.Fatalf("combined single-node deployment unexpectedly has write-file step %s:\n%s", stepID, text)
+	databaseConfig := dbtest.WriteFileText(storage, "040_write_database_config")
+	if !strings.Contains(databaseConfig, "static_erasure: none") {
+		t.Fatalf("database config was not rendered:\n%s", databaseConfig)
+	}
+	databaseService := dbtest.WriteFileText(storage, "050_write_database_service")
+	for _, want := range []string{
+		"After=network-online.target stroppy-ydb-storage-1.service",
+		"--yaml-config '/etc/stroppy-cloud/ydb-storage-1/database.yaml'",
+		"--grpc-port 2136",
+		"--ic-port 19002",
+		"--mon-port 8766",
+		"--tenant '/Root/testdb'",
+		"--node-broker 'grpc://10.0.0.1:2135'",
+	} {
+		if !strings.Contains(databaseService, want) {
+			t.Fatalf("database service missing %q:\n%s", want, databaseService)
 		}
-		if script := dbtest.CallCmd(storage, stepID); script != "" {
-			t.Fatalf("combined single-node deployment unexpectedly has command step %s:\n%s", stepID, script)
-		}
+	}
+	if cmd := dbtest.CallCmd(storage, "250_enable_start_database"); !strings.Contains(cmd, "stroppy-ydb-storage-1-database") {
+		t.Fatalf("combined database service is not enabled:\n%s", cmd)
+	}
+	if check := dbtest.CallCmd(storage, "260_database_healthcheck"); !strings.Contains(check, "stroppy-ydb-storage-1-database") {
+		t.Fatalf("combined database service is not healthchecked:\n%s", check)
+	}
+	if check := dbtest.CallCmd(storage, "260_database_healthcheck"); !strings.Contains(check, "port=2136") {
+		t.Fatalf("combined database healthcheck does not wait for database port:\n%s", check)
 	}
 }
 
-func TestYdbCombinedDeploymentUsesFullMachineBudget(t *testing.T) {
+func TestYdbCombinedDeploymentSplitsMachineCpuBetweenDaemons(t *testing.T) {
 	db := &domain.Database{
 		Kind: domain.Database_KIND_YDB,
 		Source: &domain.Database_Params{
@@ -307,19 +326,18 @@ func TestYdbCombinedDeploymentUsesFullMachineBudget(t *testing.T) {
 
 	storage := dbtest.ComponentsByID(plan)["ydb-storage-1"]
 	storageConfig := dbtest.WriteFileText(storage, "030_write_config")
-	for _, want := range []string{
-		"cpu_count: 8",
-	} {
-		if !strings.Contains(storageConfig, want) {
-			t.Fatalf("storage config missing %q:\n%s", want, storageConfig)
+	databaseConfig := dbtest.WriteFileText(storage, "040_write_database_config")
+	for name, config := range map[string]string{"storage": storageConfig, "database": databaseConfig} {
+		if !strings.Contains(config, "cpu_count: 4") {
+			t.Fatalf("%s config missing split CPU budget:\n%s", name, config)
 		}
-	}
-	if strings.Contains(storageConfig, "memory_controller_config:") {
-		t.Fatalf("storage config contains unsupported memory controller block:\n%s", storageConfig)
+		if strings.Contains(config, "memory_controller_config:") {
+			t.Fatalf("%s config contains unsupported memory controller block:\n%s", name, config)
+		}
 	}
 }
 
-func TestYdbCombinedDeploymentUsesFullCpuBudgetOnSmallMachine(t *testing.T) {
+func TestYdbCombinedDeploymentSplitsCpuBudgetOnSmallMachine(t *testing.T) {
 	db := &domain.Database{
 		Kind: domain.Database_KIND_YDB,
 		Source: &domain.Database_Params{
@@ -354,12 +372,16 @@ func TestYdbCombinedDeploymentUsesFullCpuBudgetOnSmallMachine(t *testing.T) {
 	}
 
 	storage := dbtest.ComponentsByID(plan)["ydb-storage-1"]
-	config := dbtest.WriteFileText(storage, "030_write_config")
-	if strings.Contains(config, "memory_controller_config:") {
-		t.Fatalf("storage config contains unsupported memory controller block:\n%s", config)
-	}
-	if !strings.Contains(config, "cpu_count: 2") {
-		t.Fatalf("storage config does not use full CPU budget:\n%s", config)
+	for name, config := range map[string]string{
+		"storage":  dbtest.WriteFileText(storage, "030_write_config"),
+		"database": dbtest.WriteFileText(storage, "040_write_database_config"),
+	} {
+		if strings.Contains(config, "memory_controller_config:") {
+			t.Fatalf("%s config contains unsupported memory controller block:\n%s", name, config)
+		}
+		if !strings.Contains(config, "cpu_count: 1") {
+			t.Fatalf("%s config does not split CPU budget:\n%s", name, config)
+		}
 	}
 }
 

@@ -65,6 +65,7 @@ type monitorParams struct {
 	serverAddr  string
 	bearerToken string
 	role        string
+	combined    bool
 	dbKind      string // "postgres" | "mysql" | "picodata" | "ydb" | "" (none)
 }
 
@@ -96,6 +97,7 @@ func monitorParamsFor(ctx RenderContext) (monitorParams, bool) {
 		serverAddr:  serverAddr,
 		bearerToken: ctx.AgentToken,
 		role:        ctx.Component.GetRole(),
+		combined:    labels["combined"] == "true",
 		dbKind:      dbKind,
 	}, true
 }
@@ -296,15 +298,7 @@ func vmagentScrapeFile(p monitorParams) *common.File {
 	case "picodata":
 		b.WriteString("  - job_name: picodata\n    metrics_path: /metrics\n    static_configs:\n      - targets: ['localhost:8081']\n")
 	case "ydb":
-		// YDB exposes Prometheus counters at /counters/counters=<group>/prometheus
-		// on the static (8765) and dynamic (8766) nodes. Roles in this branch are
-		// split (storage→static, database→dynamic); scrape the port for the role
-		// this component runs.
-		port := "8765"
-		if p.role == "database" {
-			port = "8766"
-		}
-		fmt.Fprintf(&b, "  - job_name: ydb\n    metrics_path: /counters/counters=ydb/name_label=name/prometheus\n    static_configs:\n      - targets: ['localhost:%s']\n", port)
+		writeYDBScrapeJobs(&b, p.role, p.combined)
 	}
 
 	return &common.File{
@@ -314,6 +308,75 @@ func vmagentScrapeFile(p monitorParams) *common.File {
 			CreateParents: true,
 		},
 		Content: &common.File_Text{Text: b.String()},
+	}
+}
+
+type ydbCounterGroup struct {
+	name string
+	path string
+	role string
+}
+
+type ydbScrapeRole struct {
+	name      string
+	port      string
+	container string
+}
+
+func writeYDBScrapeJobs(b *strings.Builder, componentRole string, combined bool) {
+	counters := []ydbCounterGroup{
+		{name: "ydb", path: "/counters/counters=ydb/name_label=name/prometheus"},
+		{name: "auth"},
+		{name: "coordinator"},
+		{name: "dsproxy"},
+		{name: "dsproxy_queue"},
+		{name: "dsproxy_percentile"},
+		{name: "dsproxynode"},
+		{name: "grpc"},
+		{name: "interconnect"},
+		{name: "kqp", role: "dynamic"},
+		{name: "pdisks", role: "static"},
+		{name: "processing"},
+		{name: "proxy"},
+		{name: "storage_pool_stat"},
+		{name: "tablets"},
+		{name: "utils"},
+		{name: "vdisks", role: "static"},
+	}
+	staticRole := ydbScrapeRole{name: "static", port: "8765", container: "ydb-static"}
+	dynamicRole := ydbScrapeRole{name: "dynamic", port: "8766", container: "ydb-dynamic"}
+	roles := []ydbScrapeRole{staticRole, dynamicRole}
+	switch {
+	case componentRole == "storage" && !combined:
+		roles = []ydbScrapeRole{staticRole}
+	case componentRole == "database":
+		roles = []ydbScrapeRole{dynamicRole}
+	}
+	for _, role := range roles {
+		for _, counter := range counters {
+			if counter.role != "" && counter.role != role.name {
+				continue
+			}
+			path := counter.path
+			if path == "" {
+				path = fmt.Sprintf("/counters/counters=%s/prometheus", counter.name)
+			}
+			fmt.Fprintf(b,
+				"  - job_name: ydb_%s_%s\n"+
+					"    metrics_path: %s\n"+
+					"    static_configs:\n"+
+					"      - targets: ['localhost:%s']\n"+
+					"        labels:\n"+
+					"          container: %s\n"+
+					"          counter: %s\n"+
+					"    metric_relabel_configs:\n"+
+					"      - source_labels: [__name__]\n"+
+					"        regex: (.*)\n"+
+					"        target_label: __name__\n"+
+					"        replacement: %s_$1\n",
+				counter.name, role.name, path, role.port, role.container, counter.name, counter.name,
+			)
+		}
 	}
 }
 

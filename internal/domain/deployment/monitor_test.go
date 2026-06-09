@@ -75,6 +75,46 @@ func TestMonitorStepsUseOnlyServerAddressForCollectors(t *testing.T) {
 	assertNotContainsAny(t, vector, "http://vmauth", "https://vmauth", "http://victoria", "https://victoria")
 }
 
+func TestMonitorStepsScrapeBothYDBRolesInCombinedMode(t *testing.T) {
+	spec := fakeSpec()
+	spec.Labels = map[string]string{
+		LabelServerAddr: "https://control.example",
+		LabelRunID:      "run-1",
+		"combined":      "true",
+	}
+	spec.Components[0].Engine = "ydb"
+	spec.Components[0].Role = "storage"
+	idx, err := topologyindex.NewIndex(spec)
+	if err != nil {
+		t.Fatalf("topology index: %v", err)
+	}
+	state := fakeInfrastructureState(spec)
+
+	steps := MonitorSteps(RenderContext{
+		Topology:   idx,
+		Component:  spec.GetComponents()[0],
+		Node:       spec.GetNodes()[0],
+		Machine:    state.GetMachines()[0],
+		AgentToken: "agent-token",
+	})
+
+	scrape := fileText(t, stepByID(steps, "320_write_vmagent_scrape"))
+	for _, want := range []string{
+		"job_name: ydb_ydb_static",
+		"targets: ['localhost:8765']",
+		"container: ydb-static",
+		"job_name: ydb_ydb_dynamic",
+		"targets: ['localhost:8766']",
+		"container: ydb-dynamic",
+		"job_name: ydb_kqp_dynamic",
+		"replacement: kqp_$1",
+	} {
+		if !strings.Contains(scrape, want) {
+			t.Fatalf("combined YDB scrape config missing %q:\n%s", want, scrape)
+		}
+	}
+}
+
 func stepByID(steps []*deploymentpb.AgentStep, id string) *deploymentpb.AgentStep {
 	for _, step := range steps {
 		if step.GetId() == id {

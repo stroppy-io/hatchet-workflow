@@ -21,8 +21,10 @@ const (
 
 	// grpcPort is the YDB client gRPC port.
 	grpcPort = 2136
-	// storageGrpcPort is the static-node gRPC/node-broker port.
-	storageGrpcPort = grpcPort
+	// storageGrpcPort is the static-node gRPC/node-broker port. Keep it
+	// separate from the client gRPC port so combined single-node deployments can
+	// run static and dynamic daemons on the same host.
+	storageGrpcPort = 2135
 	// icPort is the interconnect (node-to-node) port.
 	icPort         = 19001
 	databaseICPort = 19002
