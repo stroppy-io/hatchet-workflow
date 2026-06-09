@@ -1241,89 +1241,52 @@ function builtinPackageForEngine(kind: EngineKind, inputVersion: string): Databa
         ...base,
         id: `builtin/postgres/${version}`,
         name: `PostgreSQL ${version}`,
-        aptPackages: version === "default" ? ["postgresql", "postgresql-contrib"] : [`postgresql-${version}`, `postgresql-contrib-${version}`],
-        preInstall: version === "default" ? ["apt-get update"] : pgdgPreInstall(),
       });
     case "mysql":
       return create(PackageSchema, {
         ...base,
         id: `builtin/mysql/${version}`,
         name: `MySQL ${version}`,
-        aptPackages: version === "default" ? ["mysql-server"] : [`mysql-server-${version}`],
-        preInstall: ["apt-get update"],
       });
     case "mariadb":
       return create(PackageSchema, {
         ...base,
         id: `builtin/mariadb/${version}`,
         name: `MariaDB ${version}`,
-        aptPackages: version === "default" ? ["mariadb-server"] : [`mariadb-server-${version}`],
-        preInstall: ["apt-get update"],
       });
     case "picodata":
       return create(PackageSchema, {
         ...base,
         id: `builtin/picodata/${version}`,
         name: `Picodata ${version}`,
-        aptPackages: version === "default" ? ["picodata"] : [`picodata=${version}`],
-        preInstall: picodataPreInstall(),
       });
     case "ydb":
       return create(PackageSchema, {
         ...base,
         id: `builtin/ydb/${version}`,
         name: `YDB ${version}`,
-        debFilename: version === "default"
-          ? "${STROPPY_SERVER_ADDR%/}/api/binaries/ydbd/24.1.18/ydbd-24.1.18-linux-amd64.tar.gz"
-          : `\${STROPPY_SERVER_ADDR%/}/api/binaries/ydbd/${version}/ydbd-${version}-linux-amd64.tar.gz`,
       });
     case "cockroach":
       return create(PackageSchema, {
         ...base,
         id: `builtin/cockroach/${version}`,
         name: `CockroachDB ${version}`,
-        debFilename: version === "default"
-          ? "${STROPPY_SERVER_ADDR%/}/api/binaries/cockroach/23.2.5/cockroach-v23.2.5.linux-amd64.tgz"
-          : `\${STROPPY_SERVER_ADDR%/}/api/binaries/cockroach/${version}/cockroach-v${version}.linux-amd64.tgz`,
       });
   }
 }
 
-function pgdgPreInstall(): string[] {
-  const keyring = "/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc";
-  return [
-    "install -d /usr/share/postgresql-common/pgdg",
-    `curl -fsSL -o ${keyring} http://www.postgresql.org/media/keys/ACCC4CF8.asc`,
-    `sh -c 'echo "deb [signed-by=${keyring}] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'`,
-    "apt-get update",
-  ];
-}
-
-function picodataPreInstall(): string[] {
-  return [
-    "apt-get update",
-    "DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates curl gpg",
-    `sh -ec '. /etc/os-release
-case "$ID" in
-  ubuntu|debian) distro="$ID" ;;
-  *) echo "unsupported Picodata apt repository distro: $ID" >&2; exit 1 ;;
-esac
-curl -fsSL https://download.picodata.io/tarantool-picodata/picodata.gpg.key | gpg --no-default-keyring --keyring gnupg-ring:/etc/apt/trusted.gpg.d/picodata.gpg --import
-chmod 644 /etc/apt/trusted.gpg.d/picodata.gpg
-printf "deb [arch=amd64] http://download.picodata.io/tarantool-picodata/%s/ %s main\\n" "$distro" "$VERSION_CODENAME" > /etc/apt/sources.list.d/picodata.list'`,
-    "apt-get update",
-  ];
-}
-
 function packageFromRecord(row: PackageRow, engine: EngineKind, currentVersion: string): DatabasePackageVM {
   const version = row.version || currentVersion.trim() || "custom";
+  const blobURL = row.storageUri
+    ? `\${STROPPY_SERVER_ADDR%/}/api/packages/blob/${encodeURIComponent(row.storageUri)}`
+    : "";
   return create(PackageSchema, {
     id: row.id,
     name: row.name || row.id,
     dbKind: ENGINE_TO_KIND[engine],
     dbVersion: version,
     isBuiltin: false,
-    debFilename: row.storageUri,
+    debFilename: blobURL,
     packageRecordId: row.id,
   });
 }

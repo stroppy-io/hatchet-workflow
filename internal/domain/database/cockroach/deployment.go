@@ -137,7 +137,7 @@ func cockroachInstallCommands(dbPackage *domain.Package) []string {
 		}
 	}
 	commands = append(commands,
-		"curl -fsSL "+deploymentbuilder.ShellQuoteServerAddrURL(url)+" -o /tmp/cockroach.tgz && tar -xzf /tmp/cockroach.tgz -C /opt && install -m 0755 \"$(find /opt -name cockroach -type f | head -n1)\" /usr/local/bin/cockroach",
+		deploymentbuilder.CurlDownloadCommand(url, "/tmp/cockroach.tgz")+" && tar -xzf /tmp/cockroach.tgz -C /opt && install -m 0755 \"$(find /opt -name cockroach -type f | head -n1)\" /usr/local/bin/cockroach",
 	)
 	return commands
 }

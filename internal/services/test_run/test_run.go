@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	derrors "github.com/stroppy-io/stroppy-cloud/internal/domain/errors"
+	packagecatalog "github.com/stroppy-io/stroppy-cloud/internal/domain/packages"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	commonpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
@@ -50,6 +51,9 @@ func (s *TestRunService) StartTestRun(ctx context.Context, req *api.StartTestRun
 		spec = cloneSpec(src.GetSpec())
 	default:
 		return nil, status.Error(codes.InvalidArgument, "run or test_run_id is required")
+	}
+	if err := packagecatalog.MaterializeTestRunPackages(ctx, req.GetTenantId(), spec, s.d.Packages); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	// A run is always launched as a brand-new record with a server-minted id; the

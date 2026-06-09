@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	packagecatalog "github.com/stroppy-io/stroppy-cloud/internal/domain/packages"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	commonpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
@@ -76,6 +77,7 @@ type TestRunDeps struct {
 	Authn      utils.Authn
 	Runs       TestRunRepo
 	Presets    PresetRepo
+	Packages   packagecatalog.PackageRecordGetter
 	Summarizer Summarizer
 	Workflows  Workflows
 	Tx         tx.Trm

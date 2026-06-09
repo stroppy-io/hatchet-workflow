@@ -11,6 +11,7 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	packagecatalog "github.com/stroppy-io/stroppy-cloud/internal/domain/packages"
 	commonpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
@@ -40,6 +41,7 @@ type TestRunStarter struct {
 	summarizer test_run.Summarizer
 	workflows  test_run.Workflows
 	caller     CallerSource
+	packages   packagecatalog.PackageRecordGetter
 }
 
 var _ test_wizard.TestRunStarter = (*TestRunStarter)(nil)
@@ -47,8 +49,8 @@ var _ test_wizard.TestRunStarter = (*TestRunStarter)(nil)
 // NewTestRunStarter builds the test_wizard.TestRunStarter adapter from the same
 // run-persistence, summarization and workflow ports the TestRun service uses.
 // caller may be nil (the run is then stamped with an empty author id).
-func NewTestRunStarter(runs test_run.TestRunRepo, summarizer test_run.Summarizer, workflows test_run.Workflows, caller CallerSource) *TestRunStarter {
-	return &TestRunStarter{runs: runs, summarizer: summarizer, workflows: workflows, caller: caller}
+func NewTestRunStarter(runs test_run.TestRunRepo, summarizer test_run.Summarizer, workflows test_run.Workflows, caller CallerSource, packages packagecatalog.PackageRecordGetter) *TestRunStarter {
+	return &TestRunStarter{runs: runs, summarizer: summarizer, workflows: workflows, caller: caller, packages: packages}
 }
 
 // Start persists a brand-new run record for the baked spec and returns its
@@ -64,6 +66,9 @@ func (s *TestRunStarter) Start(
 	spec := proto.Clone(run).(*domain.TestRun)
 	runID := uuid.NewString()
 	spec.Id = runID
+	if err := packagecatalog.MaterializeTestRunPackages(ctx, tenantID, spec, s.packages); err != nil {
+		return nil, nil, status.Error(codes.InvalidArgument, err.Error())
+	}
 	if err := spec.ValidateAll(); err != nil {
 		return nil, nil, status.Error(codes.InvalidArgument, err.Error())
 	}

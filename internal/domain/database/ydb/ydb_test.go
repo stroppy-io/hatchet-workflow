@@ -120,6 +120,22 @@ func TestYdbDeploymentPlan(t *testing.T) {
 	}
 }
 
+func TestYdbInstallDownloadsUploadedPackageBlobWithAgentBearer(t *testing.T) {
+	commands := ydbInstallCommands(&topology.Component{Role: ydbRoleStorage}, &domain.Package{
+		DebFilename:     "${STROPPY_SERVER_ADDR%/}/api/packages/blob/packages_tenant_ydb",
+		PackageRecordId: "pkg",
+	})
+	install := strings.Join(commands, "\n")
+	for _, want := range []string{
+		`curl -fsSL -H "Authorization: Bearer ${STROPPY_AGENT_TOKEN:?}" "${STROPPY_SERVER_ADDR%/}/api/packages/blob/packages_tenant_ydb" -o '/tmp/ydbd.tgz'`,
+		"tar -xzf /tmp/ydbd.tgz",
+	} {
+		if !strings.Contains(install, want) {
+			t.Fatalf("install script missing %q:\n%s", want, install)
+		}
+	}
+}
+
 func TestYdbPackageResolver(t *testing.T) {
 	pkg, err := PackageResolver{}.ResolveDatabasePackage(ydbDatabase())
 	if err != nil {

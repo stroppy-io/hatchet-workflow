@@ -23,9 +23,14 @@ import (
 	"strings"
 	"time"
 
+	agentdomain "github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
 	derrors "github.com/stroppy-io/stroppy-cloud/internal/domain/errors"
 	"github.com/stroppy-io/stroppy-cloud/internal/services/packages"
 )
+
+type AgentTokenVerifier interface {
+	VerifyAgentToken(token string) (*agentdomain.TokenClaims, error)
+}
 
 // LocalBlobStore is a local-filesystem implementation of packages.BlobStore. It
 // roots every package blob under a configured directory keyed by the
@@ -112,6 +117,8 @@ func (s *LocalBlobStore) PresignPut(_ context.Context, key string, expectedSize 
 // UploadPathPrefix is the route prefix served by UploadHandler.
 func (s *LocalBlobStore) UploadPathPrefix() string { return s.uploadPathPrefix }
 
+func (s *LocalBlobStore) DownloadPathPrefix() string { return "/api/packages/blob" }
+
 // UploadHandler accepts PUTs to presigned local upload URLs minted by PresignPut.
 func (s *LocalBlobStore) UploadHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -134,6 +141,48 @@ func (s *LocalBlobStore) UploadHandler() http.Handler {
 			return
 		}
 		w.WriteHeader(http.StatusNoContent)
+	})
+}
+
+func (s *LocalBlobStore) DownloadHandler(verifier AgentTokenVerifier) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.Header().Set("Allow", http.MethodGet)
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		keyPart := strings.TrimPrefix(r.URL.Path, s.DownloadPathPrefix()+"/")
+		if keyPart == "" || keyPart == r.URL.Path {
+			http.Error(w, "invalid package blob path", http.StatusBadRequest)
+			return
+		}
+		key, err := url.PathUnescape(keyPart)
+		if err != nil || strings.TrimSpace(key) == "" {
+			http.Error(w, "invalid package blob key", http.StatusBadRequest)
+			return
+		}
+		if verifier != nil {
+			claims, ok := agentClaimsFromBearer(r.Header.Get("Authorization"), verifier)
+			if !ok {
+				http.Error(w, "invalid agent token", http.StatusUnauthorized)
+				return
+			}
+			if !strings.HasPrefix(key, "packages_"+claims.TenantID+"_") {
+				http.Error(w, "package blob tenant mismatch", http.StatusForbidden)
+				return
+			}
+		}
+		path := s.filePath(key)
+		if _, err := os.Stat(path); err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				http.NotFound(w, r)
+				return
+			}
+			http.Error(w, "package blob unavailable", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/octet-stream")
+		http.ServeFile(w, r, path)
 	})
 }
 
@@ -165,6 +214,21 @@ func (s *LocalBlobStore) verifyUploadRequest(r *http.Request) (string, uint64, s
 		return "", 0, "", errors.New("invalid upload token")
 	}
 	return key, expectedSize, expectedSha, nil
+}
+
+func agentClaimsFromBearer(header string, verifier AgentTokenVerifier) (*agentdomain.TokenClaims, bool) {
+	if verifier == nil {
+		return nil, false
+	}
+	token := agentdomain.BearerToken(header)
+	if token == "" {
+		return nil, false
+	}
+	claims, err := verifier.VerifyAgentToken(token)
+	if err != nil {
+		return nil, false
+	}
+	return claims, true
 }
 
 func (s *LocalBlobStore) storeUpload(w http.ResponseWriter, r *http.Request, key string, expectedSize uint64, expectedSha string) error {

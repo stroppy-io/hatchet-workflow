@@ -173,7 +173,7 @@ func mysqlInstallCommands(component *topologypb.Component, dbPackage *domain.Pac
 			commands = append(commands, "DEBIAN_FRONTEND=noninteractive apt-get install -y "+strings.Join(dbPackage.GetAptPackages(), " "))
 		}
 		if dbPackage.GetDebFilename() != "" {
-			commands = append(commands, "DEBIAN_FRONTEND=noninteractive apt-get install -y "+deploymentbuilder.ShellQuote(dbPackage.GetDebFilename()))
+			commands = append(commands, deploymentbuilder.InstallDebFilenameCommand(dbPackage.GetDebFilename(), "/tmp/stroppy-mysql-package.deb"))
 		}
 		commands = append(commands, "systemctl disable --now mysql || true")
 		if len(commands) == 0 {

@@ -773,6 +773,25 @@ func ShellQuoteServerAddrURL(value string) string {
 	return `"` + prefix + suffix + `"`
 }
 
+func IsServerPackageBlobURL(value string) bool {
+	return strings.HasPrefix(value, "${STROPPY_SERVER_ADDR%/}/api/packages/blob/")
+}
+
+func CurlDownloadCommand(url, dst string) string {
+	args := "curl -fsSL "
+	if IsServerPackageBlobURL(url) {
+		args += `-H "Authorization: Bearer ${STROPPY_AGENT_TOKEN:?}" `
+	}
+	return args + ShellQuoteServerAddrURL(url) + " -o " + ShellQuote(dst)
+}
+
+func InstallDebFilenameCommand(url, dst string) string {
+	if IsServerPackageBlobURL(url) {
+		return CurlDownloadCommand(url, dst) + " && DEBIAN_FRONTEND=noninteractive apt-get install -y " + ShellQuote(dst)
+	}
+	return "DEBIAN_FRONTEND=noninteractive apt-get install -y " + ShellQuote(url)
+}
+
 func ShellValue(value string) string {
 	return ShellQuote(value)
 }

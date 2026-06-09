@@ -12,6 +12,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	infrastructurebuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/infrastructure"
+	packagecatalog "github.com/stroppy-io/stroppy-cloud/internal/domain/packages"
 	runbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/run"
 	commonpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
@@ -55,6 +56,7 @@ type SuiteRunLauncher struct {
 	suites      SuiteRunPersister
 	settings    runbuilder.SettingsSource
 	agentTokens AgentTokenIssuer
+	packages    packagecatalog.PackageRecordGetter
 }
 
 var _ suite.SuiteRunLauncher = (*SuiteRunLauncher)(nil)
@@ -67,7 +69,7 @@ var _ suite.SuiteRunLauncher = (*SuiteRunLauncher)(nil)
 //   - suites persists the parent SuiteRunRecord after children are attached.
 //   - settings supplies per-provider settings + agent bootstrap for the RunConfigs
 //     (may be nil to build RunConfigs without provider settings / bootstrap).
-func NewSuiteRunLauncher(c client.Client, resolver CellResolver, children ChildRunPersister, suites SuiteRunPersister, settings runbuilder.SettingsSource, agentTokens AgentTokenIssuer) *SuiteRunLauncher {
+func NewSuiteRunLauncher(c client.Client, resolver CellResolver, children ChildRunPersister, suites SuiteRunPersister, settings runbuilder.SettingsSource, agentTokens AgentTokenIssuer, packages packagecatalog.PackageRecordGetter) *SuiteRunLauncher {
 	return &SuiteRunLauncher{
 		tc:          workflowpb.NewSuiteWorkflowServiceClient(c),
 		resolver:    resolver,
@@ -75,6 +77,7 @@ func NewSuiteRunLauncher(c client.Client, resolver CellResolver, children ChildR
 		suites:      suites,
 		settings:    settings,
 		agentTokens: agentTokens,
+		packages:    packages,
 	}
 }
 
@@ -280,6 +283,9 @@ func (l *SuiteRunLauncher) bakeCell(ctx context.Context, tenantID string, spec *
 		Tags:            test.GetTags(),
 	})
 	if err != nil {
+		return nil, err
+	}
+	if err := packagecatalog.MaterializeTestRunPackages(ctx, tenantID, testRun, l.packages); err != nil {
 		return nil, err
 	}
 	return testRun, nil

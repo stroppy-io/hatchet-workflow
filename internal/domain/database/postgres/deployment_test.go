@@ -92,6 +92,25 @@ func TestPostgresDeploymentRendererRendersPrioritiesDependenciesAndSteps(t *test
 	}
 }
 
+func TestPostgresInstallDownloadsUploadedPackageBlob(t *testing.T) {
+	commands := postgresInstallCommands(&topologypb.Component{Role: postgresRoleMaster}, &domain.Package{
+		DebFilename:     "${STROPPY_SERVER_ADDR%/}/api/packages/blob/packages_tenant_pkg",
+		PackageRecordId: "pkg",
+	})
+	install := strings.Join(commands, "\n")
+	for _, want := range []string{
+		`curl -fsSL -H "Authorization: Bearer ${STROPPY_AGENT_TOKEN:?}" "${STROPPY_SERVER_ADDR%/}/api/packages/blob/packages_tenant_pkg" -o '/tmp/stroppy-postgres-package.deb'`,
+		"DEBIAN_FRONTEND=noninteractive apt-get install -y '/tmp/stroppy-postgres-package.deb'",
+	} {
+		if !strings.Contains(install, want) {
+			t.Fatalf("install script missing %q:\n%s", want, install)
+		}
+	}
+	if strings.Contains(install, "apt-get install -y '${STROPPY_SERVER_ADDR%/}/api/packages/blob") {
+		t.Fatalf("install script should not pass package blob URL directly to apt:\n%s", install)
+	}
+}
+
 func TestPostgresDeploymentWiresClusterPeers(t *testing.T) {
 	db := postgresDeploymentDatabase()
 	spec, err := (&Database{}).BuildTopologySpec(db.GetParams().GetPostgres())

@@ -138,7 +138,7 @@ func picodataInstallCommands(component *topologypb.Component, dbPackage *domain.
 			commands = append(commands, "DEBIAN_FRONTEND=noninteractive apt-get install -y "+strings.Join(dbPackage.GetAptPackages(), " "))
 		}
 		if dbPackage.GetDebFilename() != "" {
-			commands = append(commands, "DEBIAN_FRONTEND=noninteractive apt-get install -y "+deploymentbuilder.ShellQuote(dbPackage.GetDebFilename()))
+			commands = append(commands, deploymentbuilder.InstallDebFilenameCommand(dbPackage.GetDebFilename(), "/tmp/stroppy-picodata-package.deb"))
 		}
 		if len(commands) == 0 {
 			commands = append(commands, "true")

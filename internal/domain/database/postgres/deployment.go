@@ -240,7 +240,7 @@ func postgresInstallCommands(component *topologypb.Component, dbPackage *domain.
 				commands = append(commands, "DEBIAN_FRONTEND=noninteractive apt-get install -y "+strings.Join(dbPackage.GetAptPackages(), " "))
 			}
 			if dbPackage.GetDebFilename() != "" {
-				commands = append(commands, "DEBIAN_FRONTEND=noninteractive apt-get install -y "+deploymentbuilder.ShellQuote(dbPackage.GetDebFilename()))
+				commands = append(commands, deploymentbuilder.InstallDebFilenameCommand(dbPackage.GetDebFilename(), "/tmp/stroppy-postgres-package.deb"))
 			}
 		}
 		commands = append(commands, "systemctl disable --now postgresql || true")

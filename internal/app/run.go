@@ -155,7 +155,7 @@ func Run(ctx context.Context, cfg Config) error {
 	logReader := execution.NewLogReader(cfg.MonitoringURL, cfg.MonitoringToken, log)
 	agentLogIngest := execution.NewAgentLogIngestService(cfg.MonitoringURL, cfg.MonitoringToken, agentTokens, log)
 	metricsReader := execution.NewMetricsReader(cfg.MonitoringURL, cfg.MonitoringToken, snapReader, log)
-	runStarter := execution.NewTestRunStarter(store.TestRuns(), summarizer, testWorkflows, caller)
+	runStarter := execution.NewTestRunStarter(store.TestRuns(), summarizer, testWorkflows, caller, store.Packages())
 	testWizardEngine := execution.NewTestWizardEngine()
 
 	// Server-side stroppy "probe": script-metadata introspection (available
@@ -220,7 +220,7 @@ func Run(ctx context.Context, cfg Config) error {
 		workloadPresets: store.WorkloadPresets(),
 		testPresets:     store.TestPresets(),
 	}
-	suiteLauncher := execution.NewSuiteRunLauncher(tc, cells, childRunPersister{runs: store.TestRuns()}, suiteRunPersister{suiteRuns: store.SuiteRuns()}, resolver, agentTokens)
+	suiteLauncher := execution.NewSuiteRunLauncher(tc, cells, childRunPersister{runs: store.TestRuns()}, suiteRunPersister{suiteRuns: store.SuiteRuns()}, resolver, agentTokens, store.Packages())
 	suiteCanceller := execution.NewSuiteRunCanceller(tc)
 
 	// 5) Adapters layer.
@@ -392,6 +392,7 @@ func Run(ctx context.Context, cfg Config) error {
 		Authn:      authn,
 		Runs:       store.TestRuns(),
 		Presets:    store.Presets(),
+		Packages:   store.Packages(),
 		Summarizer: summarizer,
 		Workflows:  testWorkflows,
 		Tx:         trm,
@@ -583,6 +584,7 @@ func Run(ctx context.Context, cfg Config) error {
 		},
 	)
 	mux.Handle(blobStore.UploadPathPrefix()+"/", blobStore.UploadHandler())
+	mux.Handle(blobStore.DownloadPathPrefix()+"/", blobStore.DownloadHandler(agentTokens))
 
 	spa, err := spaHandler()
 	if err != nil {
