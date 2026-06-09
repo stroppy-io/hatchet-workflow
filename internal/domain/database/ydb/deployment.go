@@ -316,7 +316,7 @@ func ydbServiceUnit(componentID, role, configDir string, database *domain.Databa
 		execStart := fmt.Sprintf("/usr/local/bin/ydbd server --yaml-config %s --grpc-port %d --ic-port %d --mon-port %d --tenant %s",
 			deploymentbuilder.ShellQuote(cfgPath), grpcPort, databaseICPort, databaseMonPort, deploymentbuilder.ShellQuote(tenant))
 		for _, broker := range wiring.nodeBrokers {
-			execStart += " --node-broker " + deploymentbuilder.ShellQuote(broker)
+			execStart += " --node-broker " + deploymentbuilder.ShellQuote(ydbNodeBrokerURI(broker))
 		}
 		return ydbDaemonServiceUnit(componentID, role, configDir, dataDir, execStart)
 	case ydbRoleHaproxy:
@@ -349,7 +349,7 @@ func ydbCombinedDatabaseServiceFile(componentID, configDir string, database *dom
 	execStart := fmt.Sprintf("/usr/local/bin/ydbd server --yaml-config %s --grpc-port %d --ic-port %d --mon-port %d --tenant %s",
 		deploymentbuilder.ShellQuote(ydbCombinedDatabaseConfigPath(componentID)), grpcPort, databaseICPort, databaseMonPort, deploymentbuilder.ShellQuote(tenant))
 	for _, broker := range wiring.nodeBrokers {
-		execStart += " --node-broker " + deploymentbuilder.ShellQuote(broker)
+		execStart += " --node-broker " + deploymentbuilder.ShellQuote(ydbNodeBrokerURI(broker))
 	}
 	return &common.File{
 		Info: &common.File_Info{
@@ -369,6 +369,13 @@ func ydbCombinedDatabaseConfigPath(componentID string) string {
 
 func ydbCombinedDatabaseServiceName(componentID string) string {
 	return deploymentbuilder.ServiceName(componentID) + "-database"
+}
+
+func ydbNodeBrokerURI(addressPort string) string {
+	if strings.Contains(addressPort, "://") {
+		return addressPort
+	}
+	return "grpc://" + addressPort
 }
 
 func ydbStaticNodeID(componentID string) int {

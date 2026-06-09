@@ -167,7 +167,7 @@ func TestYdbDeploymentPlan(t *testing.T) {
 	}
 
 	database := dbtest.ServiceUnitText(components["ydb-database-1"])
-	for _, want := range []string{"--grpc-port 2136", "--ic-port 19002", "--mon-port 8766", "--tenant '/Root/testdb'", "--node-broker '10.0.0.1:2135'", "--node-broker '10.0.0.2:2135'"} {
+	for _, want := range []string{"--grpc-port 2136", "--ic-port 19002", "--mon-port 8766", "--tenant '/Root/testdb'", "--node-broker 'grpc://10.0.0.1:2135'", "--node-broker 'grpc://10.0.0.2:2135'"} {
 		if !strings.Contains(database, want) {
 			t.Fatalf("database service missing %q:\n%s", want, database)
 		}
@@ -250,7 +250,7 @@ func TestYdbCombinedDeploymentStartsDatabaseServiceOnStorageNode(t *testing.T) {
 		"--ic-port 19002",
 		"--mon-port 8766",
 		"--tenant '/Root/testdb'",
-		"--node-broker '10.0.0.1:2135'",
+		"--node-broker 'grpc://10.0.0.1:2135'",
 	} {
 		if !strings.Contains(databaseService, want) {
 			t.Fatalf("database service missing %q:\n%s", want, databaseService)
