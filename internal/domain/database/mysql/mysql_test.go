@@ -81,6 +81,17 @@ func TestMysqlDeploymentPlan(t *testing.T) {
 			t.Fatalf("service missing %q:\n%s", want, service)
 		}
 	}
+	for _, want := range []string{
+		"ExecStartPre=/bin/mkdir -p '/var/lib/stroppy-cloud'",
+		"rm -rf '/var/lib/stroppy-cloud/mysql-primary'",
+	} {
+		if !strings.Contains(service, want) {
+			t.Fatalf("service missing datadir bootstrap guard %q:\n%s", want, service)
+		}
+	}
+	if strings.Contains(service, "ExecStartPre=/bin/mkdir -p '/var/lib/stroppy-cloud/mysql-primary'") {
+		t.Fatalf("service pre-creates mysql datadir before initialize:\n%s", service)
+	}
 	if strings.Contains(service, "is prepared with config") {
 		t.Fatalf("service still contains placeholder unit: %s", service)
 	}
