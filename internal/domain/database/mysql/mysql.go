@@ -151,6 +151,8 @@ func mysqlConfigContent(input *domain.MySqlParams, componentID, role string, opt
 		"bind_address": "0.0.0.0",
 		"port":         strconv.Itoa(mysqlPort),
 		"log_bin":      "binlog",
+		"pid_file":     "/run/mysqld/mysqld.pid",
+		"socket":       "/run/mysqld/mysqld.sock",
 	}
 	if isMariaDB {
 		merged["gtid_domain_id"] = strconv.FormatUint(uint64(mysqlServerID(componentID)), 10)

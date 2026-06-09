@@ -228,10 +228,7 @@ func mysqlServiceUnit(componentID, role, configDir string, database *domain.Data
 			}
 			execStartPost += fmt.Sprintf("ExecStartPost=/bin/sh -c '%s < %s || true'\n", mysqlClient, deploymentbuilder.ShellQuote(configDir+"/replication.sql"))
 		}
-		socketDir := ""
-		if isMariaDB {
-			socketDir = "ExecStartPre=/bin/sh -ec \"mkdir -p /run/mysqld && chown mysql:mysql /run/mysqld\"\n"
-		}
+		socketDir := "ExecStartPre=/bin/sh -ec \"mkdir -p /run/mysqld && chown mysql:mysql /run/mysqld\"\n"
 		return fmt.Sprintf(`[Unit]
 Description=Stroppy Cloud MySQL %s component %s
 After=network-online.target

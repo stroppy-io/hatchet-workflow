@@ -83,6 +83,7 @@ func TestMysqlDeploymentPlan(t *testing.T) {
 	}
 	for _, want := range []string{
 		"ExecStartPre=/bin/mkdir -p '/var/lib/mysql'",
+		"mkdir -p /run/mysqld && chown mysql:mysql /run/mysqld",
 		"find '/var/lib/mysql' -mindepth 1 -maxdepth 1 -exec rm -rf {} +",
 	} {
 		if !strings.Contains(service, want) {
@@ -96,7 +97,7 @@ func TestMysqlDeploymentPlan(t *testing.T) {
 		t.Fatalf("service still contains placeholder unit: %s", service)
 	}
 	config := dbtest.WriteFileText(primary, "030_write_config")
-	for _, want := range []string{"[mysqld]", "datadir = /var/lib/mysql", "server_id = 1", "max_connections = 500", "rpl_semi_sync_master_enabled = 1"} {
+	for _, want := range []string{"[mysqld]", "datadir = /var/lib/mysql", "pid_file = /run/mysqld/mysqld.pid", "socket = /run/mysqld/mysqld.sock", "server_id = 1", "max_connections = 500", "rpl_semi_sync_master_enabled = 1"} {
 		if !strings.Contains(config, want) {
 			t.Fatalf("config missing %q:\n%s", want, config)
 		}
