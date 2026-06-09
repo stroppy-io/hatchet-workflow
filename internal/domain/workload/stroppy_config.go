@@ -272,7 +272,7 @@ func driverTypeURL(protocol domain.Workload_Protocol, target databaseTarget) (st
 	case domain.Workload_PROTOCOL_PG:
 		return meta.driverType, fmt.Sprintf("postgresql://%s@%s:%s/postgres?sslmode=disable", postgresUserInfo(target), host, port)
 	case domain.Workload_PROTOCOL_PICODATA:
-		return meta.driverType, fmt.Sprintf("postgres://admin:T0psecret@%s:%s?sslmode=disable", host, port)
+		return meta.driverType, fmt.Sprintf("postgres://%s@%s:%s?sslmode=disable", picodataUserInfo(), host, port)
 	case domain.Workload_PROTOCOL_YDB_GRPCS:
 		// Managed YDB needs the database path as a `?database=` query (the path
 		// is dynamic — terraform output ydb_database_path — and lives on the
@@ -292,6 +292,10 @@ func postgresUserInfo(target databaseTarget) string {
 		return url.User(user).String()
 	}
 	return url.UserPassword(user, target.passwordToken()).String()
+}
+
+func picodataUserInfo() string {
+	return url.UserPassword(dbcredentials.PicodataUser, dbcredentials.PicodataPassword).String()
 }
 
 func effectiveProtocol(protocol domain.Workload_Protocol, database *domain.Database) domain.Workload_Protocol {

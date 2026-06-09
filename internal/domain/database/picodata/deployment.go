@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/database/dbspec"
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/dbcredentials"
 	deploymentbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
@@ -160,6 +161,10 @@ func picodataServiceUnit(componentID, role, configDir string, wiring picodataWir
 	case picodataRoleInstance:
 		dataDir := deploymentbuilder.DataDir(componentID)
 		execStart := "/usr/bin/picodata run --config " + deploymentbuilder.ShellQuote(cfgPath)
+		adminPasswordEnv := ""
+		if wiring.isBootstrap {
+			adminPasswordEnv = fmt.Sprintf("Environment=PICODATA_ADMIN_PASSWORD=%s\n", dbcredentials.PicodataPassword)
+		}
 		return fmt.Sprintf(`[Unit]
 Description=Stroppy Cloud Picodata instance %s
 After=network-online.target
@@ -168,7 +173,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 EnvironmentFile=%s/topology.env
-ExecStartPre=/bin/mkdir -p %s
+%sExecStartPre=/bin/mkdir -p %s
 ExecStart=%s
 Restart=always
 RestartSec=2
@@ -178,6 +183,7 @@ WantedBy=multi-user.target
 `,
 			componentID,
 			configDir,
+			adminPasswordEnv,
 			deploymentbuilder.ShellQuote(dataDir),
 			execStart,
 		)

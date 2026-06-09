@@ -98,7 +98,7 @@ func TestPicodataDeploymentPlan(t *testing.T) {
 	}
 
 	service := dbtest.ServiceUnitText(instance)
-	for _, want := range []string{"/usr/bin/picodata run --config", "Restart=always"} {
+	for _, want := range []string{"/usr/bin/picodata run --config", "Environment=PICODATA_ADMIN_PASSWORD=T0psecret", "Restart=always"} {
 		if !strings.Contains(service, want) {
 			t.Fatalf("instance-1 service missing %q:\n%s", want, service)
 		}
@@ -129,6 +129,10 @@ func TestPicodataDeploymentPlan(t *testing.T) {
 	config2 := dbtest.WriteFileText(components["picodata-instance-2"], "030_write_config")
 	if !strings.Contains(config2, "peer:\n    - '10.0.0.1:3301'") {
 		t.Fatalf("instance-2 does not join bootstrap:\n%s", config2)
+	}
+	service2 := dbtest.ServiceUnitText(components["picodata-instance-2"])
+	if strings.Contains(service2, "PICODATA_ADMIN_PASSWORD") {
+		t.Fatalf("non-bootstrap instance should not set bootstrap admin password:\n%s", service2)
 	}
 
 	haproxy := dbtest.WriteFileText(components["haproxy-1"], "030_write_config")
