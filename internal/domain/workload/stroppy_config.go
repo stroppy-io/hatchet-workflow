@@ -153,6 +153,8 @@ func driverBulkSize(protocol domain.Workload_Protocol) int32 {
 // land in the same VictoriaMetrics tenant.
 const monitorAccountID = 0
 
+const defaultK6SetupTimeout = "20m"
+
 // buildStroppyRunConfig translates a cloud-side domain.Workload into the stroppy
 // binary's RunConfig (the JSON the stroppy CLI consumes) and injects the OTLP
 // exporter so the k6/stroppy metrics (`<runID>_vus`, `_iterations`, …) reach
@@ -260,6 +262,7 @@ func k6Args(exec *domain.Workload_Execution) []string {
 	// distinguish "unset" from "explicit false". Match the main generator's
 	// production default and keep k6 quiet unless the protocol grows presence.
 	args := []string{"-q"}
+	args = append(args, "--setup-timeout", defaultK6SetupTimeout)
 	args = append(args, "--vus", fmt.Sprintf("%d", vus))
 	if iterations := exec.GetIterations(); iterations > 0 {
 		args = append(args, "--iterations", fmt.Sprintf("%d", iterations))
