@@ -96,6 +96,13 @@ func TestYdbDeploymentPlan(t *testing.T) {
 		"pdisk_filter:",
 		"node: [1]",
 		"nto_select: 1",
+		"channel_profile_config:",
+		"profile_id: 0",
+		"storage_pool_kind: ssd",
+		"blob_storage_config:",
+		"service_set:",
+		"vdisk_locations:",
+		"pdisk_category: SSD",
 		"host: 10.0.0.1",
 		"host: 10.0.0.2",
 	} {
