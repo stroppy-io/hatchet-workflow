@@ -16,7 +16,7 @@ import (
 // {file} cache route. {ver} and {file} are substituted at lookup. Templates are
 // pinned so an agent can't make the server fetch arbitrary URLs.
 var binaryUpstreams = map[string]string{
-	"cockroach":         "https://binaries.cockroachdb.com/{file}",
+	"cockroach":         "https://storage.googleapis.com/cockroach-release-artifacts-prod/{file}",
 	"node_exporter":     "https://github.com/prometheus/node_exporter/releases/download/v{ver}/{file}",
 	"vmagent":           "https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/v{ver}/{file}",
 	"stroppy":           "https://github.com/stroppy-io/stroppy/releases/download/v{ver}/{file}",
@@ -92,8 +92,12 @@ func (g *Gateway) serveCachedBinary(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unknown binary", http.StatusNotFound)
 		return
 	}
-	upstream := strings.NewReplacer("{ver}", version, "{file}", filename).Replace(tmpl)
+	upstream := resolveBinaryUpstream(tmpl, version, filename)
 	g.serveCached(w, r, fmt.Sprintf("%s-%s-%s", name, version, filename), upstream)
+}
+
+func resolveBinaryUpstream(tmpl, version, filename string) string {
+	return strings.NewReplacer("{ver}", version, "{file}", filename).Replace(tmpl)
 }
 
 // serveCached streams the cached copy of upstream (keyed by cacheKey), fetching
