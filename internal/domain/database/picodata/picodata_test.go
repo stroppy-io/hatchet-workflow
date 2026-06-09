@@ -111,6 +111,16 @@ func TestPicodataDeploymentPlan(t *testing.T) {
 	if strings.Contains(service, "is prepared with config") {
 		t.Fatalf("service still contains placeholder unit: %s", service)
 	}
+	limits := dbtest.CallCmd(instance, "240_configure_sql_limits")
+	for _, want := range []string{
+		"ALTER SYSTEM SET sql_vdbe_opcode_max TO 100000000;",
+		"ALTER SYSTEM SET sql_motion_row_max TO 1000000;",
+		"postgresql://admin@127.0.0.1:5432?sslmode=disable",
+	} {
+		if !strings.Contains(limits, want) {
+			t.Fatalf("sql limits command missing %q:\n%s", want, limits)
+		}
+	}
 	config := dbtest.WriteFileText(instance, "030_write_config")
 	for _, want := range []string{
 		"replication_factor: 2",
@@ -133,6 +143,9 @@ func TestPicodataDeploymentPlan(t *testing.T) {
 	service2 := dbtest.ServiceUnitText(components["picodata-instance-2"])
 	if strings.Contains(service2, "PICODATA_ADMIN_PASSWORD") {
 		t.Fatalf("non-bootstrap instance should not set bootstrap admin password:\n%s", service2)
+	}
+	if command := dbtest.CallCmd(components["picodata-instance-2"], "240_configure_sql_limits"); command != "" {
+		t.Fatalf("non-bootstrap instance should not configure cluster SQL limits:\n%s", command)
 	}
 
 	haproxy := dbtest.WriteFileText(components["haproxy-1"], "030_write_config")

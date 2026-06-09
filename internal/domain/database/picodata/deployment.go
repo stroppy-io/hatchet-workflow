@@ -128,6 +128,7 @@ func picodataEngineComponent(
 		InstallCommands:   picodataInstallCommands(component, dbPackage),
 		ServiceFile:       picodataServiceFile(component.GetId(), component.GetRole(), configDir, wiring),
 		Healthcheck:       picodataHealthcheckCommand(component.GetId()),
+		PostStartCommands: picodataPostStartCommands(component, wiring),
 	}, nil
 }
 
@@ -273,4 +274,42 @@ echo "--- journalctl %s ---"
 journalctl --no-pager --output=short-iso-precise -u %s -n 200 || true
 exit 1
 `, service, httpPort, service, service, service, service)
+}
+
+func picodataPostStartCommands(component *topologypb.Component, wiring picodataWiring) []deploymentbuilder.EngineCommand {
+	if component.GetRole() != picodataRoleInstance || !wiring.isBootstrap {
+		return nil
+	}
+	return []deploymentbuilder.EngineCommand{
+		{
+			StepID:        "240_configure_sql_limits",
+			StepOrder:     240,
+			ArtifactName:  "bootstrap/configure-sql-limits",
+			ArtifactLabel: "bootstrap",
+			LockReason:    "Picodata SQL resource limits are tuned by the deployment renderer for the default workload",
+			Command:       picodataConfigureSQLLimitsCommand(),
+		},
+	}
+}
+
+func picodataConfigureSQLLimitsCommand() string {
+	dsn := fmt.Sprintf(
+		"postgresql://%s@127.0.0.1:%d?sslmode=disable",
+		dbcredentials.PicodataUser,
+		pgprotoPort,
+	)
+	return fmt.Sprintf(`set -e
+export PGPASSWORD=%s
+for i in $(seq 1 30); do
+  if psql %s -v ON_ERROR_STOP=1 -X <<'SQL'
+ALTER SYSTEM SET sql_vdbe_opcode_max TO 100000000;
+ALTER SYSTEM SET sql_motion_row_max TO 1000000;
+SQL
+  then
+    exit 0
+  fi
+  sleep 2
+done
+echo "failed to configure Picodata SQL limits" >&2
+exit 1`, deploymentbuilder.ShellQuote(dbcredentials.PicodataPassword), deploymentbuilder.ShellQuote(dsn))
 }
