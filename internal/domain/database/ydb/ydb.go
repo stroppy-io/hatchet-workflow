@@ -180,6 +180,7 @@ func ydbDatabasePath(input *domain.YdbParams) string {
 // address list; empty in preview (infrastructure not provisioned yet).
 func ydbConfigContent(input *domain.YdbParams, _ string, options map[string]string, hosts []string) string {
 	var b strings.Builder
+	fmt.Fprintf(&b, "static_erasure: %s\n", ydbFaultTolerance(input))
 	b.WriteString("host_configs:\n")
 	b.WriteString("- host_config_id: 1\n")
 	b.WriteString("  drive:\n")

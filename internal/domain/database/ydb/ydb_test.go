@@ -74,7 +74,7 @@ func TestYdbDeploymentPlan(t *testing.T) {
 	components := dbtest.ComponentsByID(plan)
 	storage := components["ydb-storage-1"]
 	service := dbtest.ServiceUnitText(storage)
-	for _, want := range []string{"/usr/local/bin/ydbd server", "--node static"} {
+	for _, want := range []string{"/usr/local/bin/ydbd server", "--node 1"} {
 		if !strings.Contains(service, want) {
 			t.Fatalf("service missing %q:\n%s", want, service)
 		}
@@ -84,6 +84,7 @@ func TestYdbDeploymentPlan(t *testing.T) {
 	}
 	config := dbtest.WriteFileText(storage, "030_write_config")
 	for _, want := range []string{
+		"static_erasure: block-4-2",
 		"host_configs:",
 		"host_config_id: 1",
 		"path: /var/lib/stroppy-cloud/ydb-pdisk.data",
@@ -102,7 +103,7 @@ func TestYdbDeploymentPlan(t *testing.T) {
 			t.Fatalf("config missing %q:\n%s", want, config)
 		}
 	}
-	for _, legacy := range []string{"static_erasure:", "default_disk_type:", "node_type:"} {
+	for _, legacy := range []string{"default_disk_type:", "node_type:"} {
 		if strings.Contains(config, legacy) {
 			t.Fatalf("config contains unsupported legacy field %q:\n%s", legacy, config)
 		}

@@ -2,6 +2,7 @@ package ydb
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/database/dbspec"
@@ -223,8 +224,8 @@ func ydbServiceUnit(componentID, role, configDir string, database *domain.Databa
 
 	switch role {
 	case ydbRoleStorage:
-		execStart := fmt.Sprintf("/usr/local/bin/ydbd server --yaml-config %s --grpc-port %d --ic-port %d --mon-port %d --node static",
-			deploymentbuilder.ShellQuote(cfgPath), grpcPort, icPort, monPort)
+		execStart := fmt.Sprintf("/usr/local/bin/ydbd server --yaml-config %s --grpc-port %d --ic-port %d --mon-port %d --node %d",
+			deploymentbuilder.ShellQuote(cfgPath), grpcPort, icPort, monPort, ydbStaticNodeID(componentID))
 		return ydbDaemonServiceUnit(componentID, role, configDir, dataDir, execStart)
 	case ydbRoleDatabase:
 		tenant := ydbDatabasePath(database.GetParams().GetYdb())
@@ -239,6 +240,16 @@ func ydbServiceUnit(componentID, role, configDir string, database *domain.Databa
 	default:
 		return deploymentbuilder.SimpleServiceUnit(componentID, role, configDir, "/bin/false")
 	}
+}
+
+func ydbStaticNodeID(componentID string) int {
+	const prefix = "ydb-storage-"
+	if strings.HasPrefix(componentID, prefix) {
+		if id, err := strconv.Atoi(strings.TrimPrefix(componentID, prefix)); err == nil && id > 0 {
+			return id
+		}
+	}
+	return 1
 }
 
 func ydbDaemonServiceUnit(componentID, role, configDir, dataDir, execStart string) string {
