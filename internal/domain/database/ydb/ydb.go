@@ -184,7 +184,7 @@ func ydbDatabasePath(input *domain.YdbParams) string {
 // ("STORAGE" or "COMPUTE"), with the matching *_options merged flat under a
 // passthrough block. hosts is the runtime-resolved static (storage) node
 // address list; empty in preview (infrastructure not provisioned yet).
-func ydbConfigContent(input *domain.YdbParams, _ string, options map[string]string, hosts []string) string {
+func ydbConfigContent(input *domain.YdbParams, nodeType string, options map[string]string, hosts []string, budget ydbNodeBudget) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "static_erasure: %s\n", ydbFaultTolerance(input))
 	b.WriteString("host_configs:\n")
@@ -218,6 +218,20 @@ func ydbConfigContent(input *domain.YdbParams, _ string, options map[string]stri
 		fmt.Fprintf(&b, "    - erasure_species: %s\n", ydbFaultTolerance(input))
 		fmt.Fprintf(&b, "      pdisk_category: 1\n")
 		fmt.Fprintf(&b, "      storage_pool_kind: %s\n", ydbDiskType(input))
+	}
+	b.WriteString("table_service_config:\n")
+	b.WriteString("  sql_version: 1\n")
+	b.WriteString("actor_system_config:\n")
+	b.WriteString("  use_auto_config: true\n")
+	if nodeType != "" {
+		fmt.Fprintf(&b, "  node_type: %s\n", nodeType)
+	}
+	if budget.cpuCores > 0 {
+		fmt.Fprintf(&b, "  cpu_count: %d\n", budget.cpuCores)
+	}
+	if hardMB := budget.memoryMB * 85 / 100; hardMB > 0 {
+		b.WriteString("memory_controller_config:\n")
+		fmt.Fprintf(&b, "  hard_limit_bytes: %d\n", hardMB*1024*1024)
 	}
 	fmt.Fprintf(&b, "blob_storage_config:\n")
 	fmt.Fprintf(&b, "  service_set:\n")

@@ -28,7 +28,7 @@ func (r DeploymentRenderer) RenderComponent(ctx deploymentbuilder.RenderContext)
 	if err != nil {
 		return nil, err
 	}
-	ec, err := ydbEngineComponent(ctx.Component, ctx.Database, ctx.RenderOverrides, ctx.DatabasePackage, deploymentbuilder.DependencyIDs(ctx, nil), wiring)
+	ec, err := ydbEngineComponent(ctx.Component, ctx.Database, ctx.Machine, ctx.RenderOverrides, ctx.DatabasePackage, deploymentbuilder.DependencyIDs(ctx, nil), wiring)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func (r DeploymentRenderer) RenderPreview(ctx deploymentbuilder.PreviewContext) 
 		Node:      ctx.Node,
 	}, nil)
 	// Preview has no runtime addresses; hosts/node-broker/backends render empty.
-	ec, err := ydbEngineComponent(ctx.Component, ctx.Database, ctx.RenderOverrides, ctx.DatabasePackage, deps, ydbWiring{})
+	ec, err := ydbEngineComponent(ctx.Component, ctx.Database, nil, ctx.RenderOverrides, ctx.DatabasePackage, deps, ydbWiring{})
 	if err != nil {
 		return nil, err
 	}
@@ -60,6 +60,11 @@ type ydbWiring struct {
 	storageHosts []string // storage node addresses (config.yaml hosts:)
 	nodeBrokers  []string // storage grpc host:port (dynamic --node-broker)
 	backends     []string // grpc host:port the haproxy fronts
+}
+
+type ydbNodeBudget struct {
+	cpuCores uint32
+	memoryMB uint64
 }
 
 func ydbResolveWiring(ctx deploymentbuilder.RenderContext) (ydbWiring, error) {
@@ -110,6 +115,7 @@ func isYdbDatabase(c *topologypb.Component) bool {
 func ydbEngineComponent(
 	component *topologypb.Component,
 	database *domain.Database,
+	machine *deploymentpb.MachineState,
 	overrides *deploymentpb.RenderOverrideSet,
 	dbPackage *domain.Package,
 	dependencies []string,
@@ -120,7 +126,8 @@ func ydbEngineComponent(
 		return deploymentbuilder.EngineComponent{}, fmt.Errorf("unsupported ydb component role %q", component.GetRole())
 	}
 
-	configFile, configOrigin := ydbEffectiveConfigFile(component, database, overrides, wiring)
+	budget := ydbEffectiveNodeBudget(machine, database, component.GetRole())
+	configFile, configOrigin := ydbEffectiveConfigFile(component, database, overrides, wiring, budget)
 	configDir := deploymentbuilder.ConfigDir(component.GetId())
 
 	ec := deploymentbuilder.EngineComponent{
@@ -131,7 +138,7 @@ func ydbEngineComponent(
 		ConfigArtifactID:  configArtifactID(component.GetId(), component.GetRole()),
 		ConfigFile:        configFile,
 		ConfigOrigin:      configOrigin,
-		DefaultConfigFile: ydbDefaultConfigFile(component, database, ydbWiring{}),
+		DefaultConfigFile: ydbDefaultConfigFile(component, database, ydbWiring{}, budget),
 		InstallCommands:   ydbInstallCommands(component, dbPackage),
 		ServiceFile:       ydbServiceFile(component.GetId(), component.GetRole(), configDir, database, wiring),
 		Healthcheck:       ydbHealthcheckCommand(component, database),
@@ -144,7 +151,7 @@ func ydbEngineComponent(
 				StepOrder:     40,
 				ArtifactName:  "database.yaml",
 				ArtifactLabel: "database_config",
-				File:          ydbCombinedDatabaseConfigFile(component.GetId(), database, wiring),
+				File:          ydbCombinedDatabaseConfigFile(component.GetId(), database, machine, wiring),
 			},
 			deploymentbuilder.EngineFile{
 				StepID:        "050_write_database_service",
@@ -330,7 +337,42 @@ func ydbIsCombined(database *domain.Database) bool {
 	return database.GetParams().GetYdb().GetDatabaseNodes() == 0
 }
 
-func ydbCombinedDatabaseConfigFile(componentID string, database *domain.Database, wiring ydbWiring) *common.File {
+func ydbEffectiveNodeBudget(machine *deploymentpb.MachineState, database *domain.Database, role string) ydbNodeBudget {
+	budget := ydbMachineBudget(machine)
+	if !ydbIsCombined(database) {
+		return budget
+	}
+	if role != ydbRoleStorage && role != ydbRoleDatabase {
+		return budget
+	}
+	if budget.cpuCores > 1 {
+		budget.cpuCores /= 2
+	}
+	if budget.memoryMB > 0 {
+		budget.memoryMB /= 2
+	}
+	return budget
+}
+
+func ydbMachineBudget(machine *deploymentpb.MachineState) ydbNodeBudget {
+	var budget ydbNodeBudget
+	for _, allocation := range machine.GetAllocatedQuotas() {
+		info := allocation.GetInfo()
+		switch info.GetName() {
+		case "host.cpuCores", "compute.instanceCores.count":
+			if allocation.GetUsed() > 0 && allocation.GetUsed() <= uint64(^uint32(0)) {
+				budget.cpuCores = uint32(allocation.GetUsed())
+			}
+		case "host.memory.size":
+			budget.memoryMB = allocation.GetUsed()
+		case "compute.instanceMemory.size":
+			budget.memoryMB = allocation.GetUsed() * 1024
+		}
+	}
+	return budget
+}
+
+func ydbCombinedDatabaseConfigFile(componentID string, database *domain.Database, machine *deploymentpb.MachineState, wiring ydbWiring) *common.File {
 	return &common.File{
 		Info: &common.File_Info{
 			Path:          ydbCombinedDatabaseConfigPath(componentID),
@@ -338,7 +380,7 @@ func ydbCombinedDatabaseConfigFile(componentID string, database *domain.Database
 			CreateParents: true,
 		},
 		Content: &common.File_Text{
-			Text: ydbConfigContentForRole(database, ydbRoleDatabase, wiring),
+			Text: ydbConfigContentForRole(database, ydbRoleDatabase, wiring, ydbEffectiveNodeBudget(machine, database, ydbRoleDatabase)),
 		},
 	}
 }
@@ -432,32 +474,32 @@ fi
 `, service, service, service, service, service)
 }
 
-func ydbEffectiveConfigFile(component *topologypb.Component, database *domain.Database, overrides *deploymentpb.RenderOverrideSet, wiring ydbWiring) (*common.File, deploymentpb.RenderArtifact_Origin) {
+func ydbEffectiveConfigFile(component *topologypb.Component, database *domain.Database, overrides *deploymentpb.RenderOverrideSet, wiring ydbWiring, budget ydbNodeBudget) (*common.File, deploymentpb.RenderArtifact_Origin) {
 	artifactID := configArtifactID(component.GetId(), component.GetRole())
 	if override, ok := deploymentbuilder.OverrideFile(overrides, component.GetId(), artifactID); ok && override.GetFile() != nil {
 		return override.GetFile(), deploymentpb.RenderArtifact_ORIGIN_USER_OVERRIDE
 	}
-	return ydbDefaultConfigFile(component, database, wiring), deploymentpb.RenderArtifact_ORIGIN_RENDERED_DEFAULT
+	return ydbDefaultConfigFile(component, database, wiring, budget), deploymentpb.RenderArtifact_ORIGIN_RENDERED_DEFAULT
 }
 
-func ydbDefaultConfigFile(component *topologypb.Component, database *domain.Database, wiring ydbWiring) *common.File {
+func ydbDefaultConfigFile(component *topologypb.Component, database *domain.Database, wiring ydbWiring, budget ydbNodeBudget) *common.File {
 	return &common.File{
 		Info: &common.File_Info{
 			Path:          ydbConfigPath(component.GetId(), component.GetRole()),
 			Mode:          0644,
 			CreateParents: true,
 		},
-		Content: &common.File_Text{Text: ydbConfigContentForRole(database, component.GetRole(), wiring)},
+		Content: &common.File_Text{Text: ydbConfigContentForRole(database, component.GetRole(), wiring, budget)},
 	}
 }
 
-func ydbConfigContentForRole(database *domain.Database, role string, wiring ydbWiring) string {
+func ydbConfigContentForRole(database *domain.Database, role string, wiring ydbWiring, budget ydbNodeBudget) string {
 	params := database.GetParams().GetYdb()
 	switch role {
 	case ydbRoleStorage:
-		return ydbConfigContent(params, "STORAGE", params.GetStorageOptions(), wiring.storageHosts)
+		return ydbConfigContent(params, "STORAGE", params.GetStorageOptions(), wiring.storageHosts, budget)
 	case ydbRoleDatabase:
-		return ydbConfigContent(params, "COMPUTE", params.GetDatabaseOptions(), wiring.storageHosts)
+		return ydbConfigContent(params, "COMPUTE", params.GetDatabaseOptions(), wiring.storageHosts, budget)
 	case ydbRoleHaproxy:
 		return ydbHaproxyConfig(params.GetHaproxyOptions(), wiring.backends)
 	default:

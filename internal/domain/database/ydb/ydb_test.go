@@ -7,6 +7,7 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/database/dbtest"
 	deploymentbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/packages"
+	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology"
 )
@@ -127,6 +128,11 @@ func TestYdbDeploymentPlan(t *testing.T) {
 		"channel_profile_config:",
 		"profile_id: 0",
 		"storage_pool_kind: ssd",
+		"table_service_config:",
+		"sql_version: 1",
+		"actor_system_config:",
+		"use_auto_config: true",
+		"node_type: STORAGE",
 		"blob_storage_config:",
 		"service_set:",
 		"vdisk_locations:",
@@ -138,7 +144,7 @@ func TestYdbDeploymentPlan(t *testing.T) {
 			t.Fatalf("config missing %q:\n%s", want, config)
 		}
 	}
-	for _, legacy := range []string{"default_disk_type:", "node_type:"} {
+	for _, legacy := range []string{"default_disk_type:"} {
 		if strings.Contains(config, legacy) {
 			t.Fatalf("config contains unsupported legacy field %q:\n%s", legacy, config)
 		}
@@ -264,6 +270,67 @@ func TestYdbCombinedDeploymentStartsDatabaseServiceOnStorageNode(t *testing.T) {
 	}
 	if check := dbtest.CallCmd(storage, "260_database_healthcheck"); !strings.Contains(check, "admin database \"$database\" status") {
 		t.Fatalf("combined database healthcheck does not wait for database status:\n%s", check)
+	}
+}
+
+func TestYdbCombinedDeploymentSplitsMachineBudgetBetweenDaemons(t *testing.T) {
+	db := &domain.Database{
+		Kind: domain.Database_KIND_YDB,
+		Source: &domain.Database_Params{
+			Params: &domain.DatabaseParams{
+				Engine: &domain.DatabaseParams_Ydb{
+					Ydb: &domain.YdbParams{
+						StorageNodes:   1,
+						DatabasePath:   "/Root/testdb",
+						FaultTolerance: domain.YdbParams_FAULT_TOLERANCE_NONE,
+					},
+				},
+			},
+		},
+	}
+	spec, err := (&Database{}).BuildTopologySpec(db.GetParams().GetYdb())
+	if err != nil {
+		t.Fatalf("build topology spec: %v", err)
+	}
+	state := dbtest.InfrastructureStateForSpec(spec)
+	state.GetMachines()[0].AllocatedQuotas = []*deploymentpb.Quota_Allocation{
+		quotaAllocation("compute.instanceCores.count", "cores", 8),
+		quotaAllocation("compute.instanceMemory.size", "GiB", 16),
+	}
+
+	plan, err := deploymentbuilder.BuildPlan(spec, state, deploymentbuilder.BuildOptions{
+		Database:        db,
+		PackageResolver: packages.NewRegistry(PackageResolver{}),
+		Renderers:       deploymentbuilder.NewRegistry(DeploymentRenderer{}),
+	})
+	if err != nil {
+		t.Fatalf("build deployment plan: %v", err)
+	}
+
+	storage := dbtest.ComponentsByID(plan)["ydb-storage-1"]
+	storageConfig := dbtest.WriteFileText(storage, "030_write_config")
+	databaseConfig := dbtest.WriteFileText(storage, "040_write_database_config")
+	for name, config := range map[string]string{"storage": storageConfig, "database": databaseConfig} {
+		for _, want := range []string{
+			"cpu_count: 4",
+			"memory_controller_config:",
+			"hard_limit_bytes: 7301234688",
+		} {
+			if !strings.Contains(config, want) {
+				t.Fatalf("%s config missing %q:\n%s", name, want, config)
+			}
+		}
+	}
+}
+
+func quotaAllocation(name, units string, used uint64) *deploymentpb.Quota_Allocation {
+	return &deploymentpb.Quota_Allocation{
+		Info: &deploymentpb.Quota_Info{
+			Provider: deploymentpb.Provider_PROVIDER_YANDEX,
+			Name:     name,
+			Units:    units,
+		},
+		Used: used,
 	}
 }
 
