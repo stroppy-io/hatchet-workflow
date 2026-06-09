@@ -118,9 +118,19 @@ func TestBuiltinPostgresPresetsUseConcreteMemoryValues(t *testing.T) {
 
 func TestBuiltinPicodataPresetsInstallRepository(t *testing.T) {
 	preset := databasePresetByName(t, builtinDatabasePresets("tenant-1", "author-1"), "Picodata single")
+	params := preset.GetDatabase().GetParams()
+	if got, want := params.GetVersion(), defaultPicodataVersion; got != want {
+		t.Fatalf("Picodata version = %q, want %q", got, want)
+	}
 	pkg := preset.GetDatabase().GetParams().GetPackage()
 	if pkg == nil {
 		t.Fatal("Picodata single has no builtin package")
+	}
+	if got, want := pkg.GetDbVersion(), defaultPicodataVersion; got != want {
+		t.Fatalf("Picodata package version = %q, want %q", got, want)
+	}
+	if got, want := pkg.GetAptPackages(), []string{defaultPicodataPackagePrefix + defaultPicodataAptVersion}; !equalStrings(got, want) {
+		t.Fatalf("Picodata apt packages = %v, want %v", got, want)
 	}
 	preInstall := strings.Join(pkg.GetPreInstall(), "\n")
 	for _, want := range []string{
@@ -132,6 +142,18 @@ func TestBuiltinPicodataPresetsInstallRepository(t *testing.T) {
 			t.Fatalf("Picodata preinstall missing %q:\n%s", want, preInstall)
 		}
 	}
+}
+
+func equalStrings(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func TestBuiltinVersionedMySQLPackagesConfigureRepository(t *testing.T) {

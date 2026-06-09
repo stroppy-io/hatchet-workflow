@@ -21,6 +21,12 @@ import (
 	suitesvc "github.com/stroppy-io/stroppy-cloud/internal/services/suite"
 )
 
+const (
+	defaultPicodataVersion       = "25.3"
+	defaultPicodataAptVersion    = "25.3.8.0-jammy"
+	defaultPicodataPackagePrefix = "picodata="
+)
+
 // builtinDatabasePresets returns the catalog of system database presets that a
 // fresh control plane ships, mirroring the set the legacy `main` build seeded
 // (internal/domain/types BuiltinPresets). The names/descriptions match main 1:1
@@ -69,7 +75,7 @@ func builtinDatabasePresets(tenantID, authorID string) []*models.DatabasePresetR
 		return &domain.DatabaseParams{Engine: &domain.DatabaseParams_Mariadb{Mariadb: p}}
 	}
 	pico := func(p *domain.PicodataParams) *domain.DatabaseParams {
-		return &domain.DatabaseParams{Engine: &domain.DatabaseParams_Picodata{Picodata: p}}
+		return &domain.DatabaseParams{Version: defaultPicodataVersion, Engine: &domain.DatabaseParams_Picodata{Picodata: p}}
 	}
 	ydb := func(p *domain.YdbParams) *domain.DatabaseParams {
 		return &domain.DatabaseParams{Engine: &domain.DatabaseParams_Ydb{Ydb: p}}
@@ -676,8 +682,10 @@ func builtinDatabasePackage(kind domain.Database_Kind, version string) *domain.P
 		pkg.Name = "Picodata " + version
 		pkg.AptPackages = []string{"picodata"}
 		pkg.PreInstall = seedPicodataPreInstall()
-		if version != "default" {
-			pkg.AptPackages = []string{"picodata=" + version}
+		if version == defaultPicodataVersion {
+			pkg.AptPackages = []string{defaultPicodataPackagePrefix + defaultPicodataAptVersion}
+		} else if version != "default" {
+			pkg.AptPackages = []string{defaultPicodataPackagePrefix + version}
 		}
 	case domain.Database_KIND_YDB:
 		pkg.Id = "builtin/ydb/" + version
