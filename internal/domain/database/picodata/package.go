@@ -2,6 +2,11 @@ package picodata
 
 import "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 
+const (
+	defaultPicodataVersion    = "25.3"
+	defaultPicodataAptVersion = "25.3.8.0-jammy"
+)
+
 type PackageResolver struct{}
 
 func (r PackageResolver) SupportsDatabase(database *domain.Database) bool {
@@ -20,7 +25,9 @@ func (r PackageResolver) ResolveDatabasePackage(database *domain.Database) (*dom
 	}
 
 	aptPackages := []string{"picodata"}
-	if version != "default" {
+	if version == defaultPicodataVersion {
+		aptPackages = []string{"picodata=" + defaultPicodataAptVersion}
+	} else if version != "default" {
 		aptPackages = []string{"picodata=" + version}
 	}
 

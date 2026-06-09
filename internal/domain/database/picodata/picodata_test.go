@@ -164,6 +164,9 @@ func TestPicodataPackageResolver(t *testing.T) {
 	if got, want := pkg.GetId(), "builtin/picodata/25.3"; got != want {
 		t.Fatalf("package id = %q, want %q", got, want)
 	}
+	if got, want := pkg.GetAptPackages(), []string{"picodata=25.3.8.0-jammy"}; !equalStrings(got, want) {
+		t.Fatalf("apt packages = %v, want %v", got, want)
+	}
 	preInstall := strings.Join(pkg.GetPreInstall(), "\n")
 	for _, want := range []string{
 		"https://download.picodata.io/tarantool-picodata/picodata.gpg.key",
@@ -174,4 +177,16 @@ func TestPicodataPackageResolver(t *testing.T) {
 			t.Fatalf("package preinstall missing %q:\n%s", want, preInstall)
 		}
 	}
+}
+
+func equalStrings(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }
