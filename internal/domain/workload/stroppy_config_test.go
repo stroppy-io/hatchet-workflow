@@ -70,7 +70,7 @@ func TestRenderStroppyConfigSetsPicodataBulkSize(t *testing.T) {
 
 	for _, want := range []string{
 		`"driverType":\s+"picodata"`,
-		`"bulkSize":\s+10`,
+		`"bulkSize":\s+1`,
 	} {
 		if !regexp.MustCompile(want).MatchString(rendered) {
 			t.Fatalf("picodata config missing pattern %q:\n%s", want, rendered)

@@ -142,7 +142,7 @@ func driverBulkSize(protocol domain.Workload_Protocol) int32 {
 		// Picodata's pgproto path handles multi-row INSERTs, but the default
 		// stroppy driver batch (2500 rows) produces very large statements for
 		// TPC-C. Keep batches small enough for sbroad and query limits.
-		return 10
+		return 1
 	default:
 		return 0
 	}
