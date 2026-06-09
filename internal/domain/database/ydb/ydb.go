@@ -188,6 +188,24 @@ func ydbConfigContent(input *domain.YdbParams, nodeType string, options map[stri
 	b.WriteString("  drive:\n")
 	fmt.Fprintf(&b, "  - path: %s\n", ydbPDiskPath)
 	fmt.Fprintf(&b, "    type: %s\n", strings.ToUpper(ydbDiskType(input)))
+	fmt.Fprintf(&b, "domains_config:\n")
+	fmt.Fprintf(&b, "  domain:\n")
+	fmt.Fprintf(&b, "  - name: Root\n")
+	fmt.Fprintf(&b, "    storage_pool_types:\n")
+	fmt.Fprintf(&b, "    - kind: %s\n", ydbDiskType(input))
+	fmt.Fprintf(&b, "      pool_config:\n")
+	fmt.Fprintf(&b, "        box_id: 1\n")
+	fmt.Fprintf(&b, "        erasure_species: %s\n", ydbFaultTolerance(input))
+	fmt.Fprintf(&b, "        kind: %s\n", ydbDiskType(input))
+	fmt.Fprintf(&b, "        pdisk_filter:\n")
+	fmt.Fprintf(&b, "        - property:\n")
+	fmt.Fprintf(&b, "          - type: %s\n", strings.ToUpper(ydbDiskType(input)))
+	fmt.Fprintf(&b, "        vdisk_kind: Default\n")
+	fmt.Fprintf(&b, "  state_storage:\n")
+	fmt.Fprintf(&b, "  - ring:\n")
+	fmt.Fprintf(&b, "      node: [%s]\n", ydbStateStorageNodeList(input, hosts))
+	fmt.Fprintf(&b, "      nto_select: %d\n", ydbStateStorageNToSelect(input, hosts))
+	fmt.Fprintf(&b, "    ssid: 1\n")
 	if len(hosts) > 0 {
 		b.WriteString("hosts:\n")
 		for i, host := range hosts {
@@ -213,4 +231,44 @@ func ydbConfigContent(input *domain.YdbParams, nodeType string, options map[stri
 		}
 	}
 	return b.String()
+}
+
+func ydbStateStorageNodeList(input *domain.YdbParams, hosts []string) string {
+	count := len(hosts)
+	if count == 0 {
+		count = int(input.GetStorageNodes())
+		if count == 0 {
+			count = 1
+		}
+	}
+	nto := ydbStateStorageNToSelect(input, hosts)
+	nodes := make([]string, 0, nto)
+	for i := 1; i <= nto; i++ {
+		nodes = append(nodes, strconv.Itoa(i))
+	}
+	return strings.Join(nodes, ", ")
+}
+
+func ydbStateStorageNToSelect(input *domain.YdbParams, hosts []string) int {
+	count := len(hosts)
+	if count == 0 {
+		count = int(input.GetStorageNodes())
+		if count == 0 {
+			count = 1
+		}
+	}
+	switch ydbFaultTolerance(input) {
+	case "mirror-3-dc":
+		if count >= 9 {
+			return 9
+		}
+	case "block-4-2":
+		if count >= 5 {
+			return 5
+		}
+	}
+	if count >= 3 {
+		return 3
+	}
+	return 1
 }
