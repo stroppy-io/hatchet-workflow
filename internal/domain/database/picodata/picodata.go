@@ -27,6 +27,8 @@ const (
 	httpPort = 8081
 
 	defaultTierName = "default"
+
+	defaultMemtxMemoryBytes = 2 * 1024 * 1024 * 1024
 )
 
 type Database struct{}
@@ -236,9 +238,14 @@ func picodataConfigContentLegacy(b *strings.Builder, input *domain.PicodataParam
 	fmt.Fprintf(b, "    listen: %s\n", shellYAMLString(fmt.Sprintf("0.0.0.0:%d", pgprotoPort)))
 	fmt.Fprintf(b, "    advertise: %s\n", shellYAMLString(pgAdvertise))
 	b.WriteString("    ssl: false\n")
+	b.WriteString("  memtx:\n")
+	fmt.Fprintf(b, "    memory: %d\n", picodataMemtxMemoryBytes(input))
 
 	keys := make([]string, 0, len(input.GetInstanceOptions()))
 	for key := range input.GetInstanceOptions() {
+		if strings.EqualFold(strings.TrimSpace(key), "memtx_memory") {
+			continue
+		}
 		keys = append(keys, key)
 	}
 	sort.Strings(keys)
@@ -246,6 +253,35 @@ func picodataConfigContentLegacy(b *strings.Builder, input *domain.PicodataParam
 		fmt.Fprintf(b, "  %s: %s\n", key, input.GetInstanceOptions()[key])
 	}
 	return b.String()
+}
+
+func picodataMemtxMemoryBytes(input *domain.PicodataParams) uint64 {
+	raw := strings.TrimSpace(input.GetInstanceOptions()["memtx_memory"])
+	if raw == "" {
+		return defaultMemtxMemoryBytes
+	}
+	upper := strings.ToUpper(raw)
+	multiplier := uint64(1)
+	for _, suffix := range []struct {
+		value string
+		mul   uint64
+	}{
+		{value: "GB", mul: 1024 * 1024 * 1024},
+		{value: "G", mul: 1024 * 1024 * 1024},
+		{value: "MB", mul: 1024 * 1024},
+		{value: "M", mul: 1024 * 1024},
+	} {
+		if strings.HasSuffix(upper, suffix.value) {
+			raw = strings.TrimSpace(raw[:len(raw)-len(suffix.value)])
+			multiplier = suffix.mul
+			break
+		}
+	}
+	parsed, err := strconv.ParseUint(raw, 10, 64)
+	if err != nil || parsed == 0 {
+		return defaultMemtxMemoryBytes
+	}
+	return parsed * multiplier
 }
 
 func picodataUsesLegacyConfig(version string) bool {

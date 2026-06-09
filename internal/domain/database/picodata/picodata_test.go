@@ -143,11 +143,14 @@ func TestPicodataDeploymentPlan(t *testing.T) {
 		"iproto_advertise: '10.0.0.1:3301'",
 		"http_listen: '0.0.0.0:8081'",
 		"pg:\n    listen: '0.0.0.0:5432'\n    advertise: '10.0.0.1:5432'\n    ssl: false",
-		"memtx_memory: 2147483648",
+		"memtx:\n    memory: 2147483648",
 	} {
 		if !strings.Contains(config, want) {
 			t.Fatalf("config missing %q:\n%s", want, config)
 		}
+	}
+	if strings.Contains(config, "memtx_memory:") {
+		t.Fatalf("Picodata 25.3 config should render memtx.memory, not raw memtx_memory:\n%s", config)
 	}
 	if strings.Contains(config, "peer:") {
 		t.Fatalf("bootstrap instance should not join itself:\n%s", config)
@@ -173,6 +176,18 @@ func TestPicodataDeploymentPlan(t *testing.T) {
 		if !strings.Contains(haproxy, want) {
 			t.Fatalf("haproxy backends missing %q:\n%s", want, haproxy)
 		}
+	}
+}
+
+func TestPicodataLegacyConfigDefaultsMemtxMemory(t *testing.T) {
+	config := picodataConfigContent(
+		"picodata-instance-1",
+		&domain.PicodataParams{Instances: 1, ReplicationFactor: 1},
+		"25.3",
+		picodataWiring{},
+	)
+	if !strings.Contains(config, "memtx:\n    memory: 2147483648") {
+		t.Fatalf("config missing default memtx memory:\n%s", config)
 	}
 }
 
