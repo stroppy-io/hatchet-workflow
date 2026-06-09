@@ -242,10 +242,6 @@ func ydbConfigContent(input *domain.YdbParams, nodeType string, options map[stri
 	if budget.cpuCores > 0 {
 		fmt.Fprintf(&b, "  cpu_count: %d\n", budget.cpuCores)
 	}
-	if hardMB := ydbMemoryHardLimitMB(budget.memoryMB); hardMB > 0 {
-		b.WriteString("memory_controller_config:\n")
-		fmt.Fprintf(&b, "  hard_limit_bytes: %d\n", hardMB*1024*1024)
-	}
 	fmt.Fprintf(&b, "blob_storage_config:\n")
 	fmt.Fprintf(&b, "  service_set:\n")
 	fmt.Fprintf(&b, "    groups:\n")
@@ -281,15 +277,6 @@ func ydbConfigContent(input *domain.YdbParams, nodeType string, options map[stri
 		}
 	}
 	return b.String()
-}
-
-func ydbMemoryHardLimitMB(memoryMB uint64) uint64 {
-	// Tiny VMs leave too little room for YDB bootstrap under an explicit cap.
-	// Let YDB auto-size memory there; keep the explicit cap for normal presets.
-	if memoryMB < 4096 {
-		return 0
-	}
-	return memoryMB * 85 / 100
 }
 
 func ydbStateStorageNodeList(input *domain.YdbParams, hosts []string) string {

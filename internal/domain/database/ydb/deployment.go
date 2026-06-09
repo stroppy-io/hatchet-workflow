@@ -359,6 +359,13 @@ func ydbDaemonServiceUnit(componentID, role, configDir, dataDir, execStart strin
 func ydbDaemonNamedServiceUnit(serviceName, componentID, role, configDir, dataDir, execStart string) string {
 	after := "network-online.target"
 	wants := "network-online.target"
+	pdiskPrepare := ""
+	if role == ydbRoleStorage {
+		pdiskPrepare = fmt.Sprintf("ExecStartPre=/usr/bin/test -f %s || /usr/bin/truncate -s 10G %s\n",
+			deploymentbuilder.ShellQuote(ydbPDiskPath),
+			deploymentbuilder.ShellQuote(ydbPDiskPath),
+		)
+	}
 	return fmt.Sprintf(`[Unit]
 Description=Stroppy Cloud YDB %s component %s
 After=%s
@@ -369,13 +376,13 @@ Type=simple
 EnvironmentFile=%s/topology.env
 ExecStartPre=/bin/mkdir -p %s
 ExecStartPre=/bin/mkdir -p %s
-ExecStart=%s
+%sExecStart=%s
 Restart=always
 RestartSec=2
 
 [Install]
 WantedBy=multi-user.target
-`, role, componentID, after, wants, configDir, deploymentbuilder.ShellQuote(dataDir), deploymentbuilder.ShellQuote(ydbPDiskDir), execStart)
+`, role, componentID, after, wants, configDir, deploymentbuilder.ShellQuote(dataDir), deploymentbuilder.ShellQuote(ydbPDiskDir), pdiskPrepare, execStart)
 }
 
 func ydbEffectiveConfigFile(component *topologypb.Component, database *domain.Database, overrides *deploymentpb.RenderOverrideSet, wiring ydbWiring, budget ydbNodeBudget) (*common.File, deploymentpb.RenderArtifact_Origin) {

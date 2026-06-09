@@ -152,6 +152,9 @@ func TestYdbDeploymentPlan(t *testing.T) {
 	if !strings.Contains(service, "ExecStartPre=/bin/mkdir -p '/var/lib/stroppy-cloud'") {
 		t.Fatalf("service does not create ydb pdisk parent:\n%s", service)
 	}
+	if !strings.Contains(service, "ExecStartPre=/usr/bin/test -f '/var/lib/stroppy-cloud/ydb-pdisk.data' || /usr/bin/truncate -s 10G '/var/lib/stroppy-cloud/ydb-pdisk.data'") {
+		t.Fatalf("service does not prepare ydb pdisk file:\n%s", service)
+	}
 	if install := dbtest.CallCmd(storage, "100_install"); !strings.Contains(install, "ydbd") {
 		t.Fatalf("install does not fetch ydbd: %s", install)
 	}
@@ -304,16 +307,17 @@ func TestYdbCombinedDeploymentUsesFullMachineBudget(t *testing.T) {
 	storageConfig := dbtest.WriteFileText(storage, "030_write_config")
 	for _, want := range []string{
 		"cpu_count: 8",
-		"memory_controller_config:",
-		"hard_limit_bytes: 14602469376",
 	} {
 		if !strings.Contains(storageConfig, want) {
 			t.Fatalf("storage config missing %q:\n%s", want, storageConfig)
 		}
 	}
+	if strings.Contains(storageConfig, "memory_controller_config:") {
+		t.Fatalf("storage config contains unsupported memory controller block:\n%s", storageConfig)
+	}
 }
 
-func TestYdbCombinedDeploymentOmitsHardLimitOnSmallMachine(t *testing.T) {
+func TestYdbCombinedDeploymentUsesFullCpuBudgetOnSmallMachine(t *testing.T) {
 	db := &domain.Database{
 		Kind: domain.Database_KIND_YDB,
 		Source: &domain.Database_Params{
@@ -350,7 +354,7 @@ func TestYdbCombinedDeploymentOmitsHardLimitOnSmallMachine(t *testing.T) {
 	storage := dbtest.ComponentsByID(plan)["ydb-storage-1"]
 	config := dbtest.WriteFileText(storage, "030_write_config")
 	if strings.Contains(config, "memory_controller_config:") {
-		t.Fatalf("storage config unexpectedly has memory limit:\n%s", config)
+		t.Fatalf("storage config contains unsupported memory controller block:\n%s", config)
 	}
 	if !strings.Contains(config, "cpu_count: 2") {
 		t.Fatalf("storage config does not use full CPU budget:\n%s", config)
