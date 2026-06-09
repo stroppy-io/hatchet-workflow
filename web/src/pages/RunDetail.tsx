@@ -34,6 +34,7 @@ import { LogsPanel } from "@/components/run/LogsPanel";
 import { MetricsPanel } from "@/components/run/MetricsPanel";
 import { GrafanaPanel } from "@/components/run/GrafanaPanel";
 import { getQuotaProvider } from "@/services/quotas";
+import { createShare } from "@/services/shares";
 import {
   getRunOverview,
   getRunMetrics,
@@ -273,13 +274,19 @@ export function RunDetail() {
   // Action dispatch — each maps to a real TestRunService RPC via the runs
   // provider (the same surface the runs table uses). Gated by actionsForStatus.
   const onShare = useCallback(async () => {
+    setBusy(true);
     try {
-      await navigator.clipboard.writeText(window.location.href);
-      flash("Link copied");
-    } catch {
-      navigate(`/shares?targetId=${id}`);
+      const share = await createShare(tenantSlug, id, { kind: "test_run" });
+      if (!share?.token) throw new Error("Share token was not returned");
+      const url = new URL(`/shared/${encodeURIComponent(share.token)}`, window.location.origin);
+      await navigator.clipboard.writeText(url.href);
+      flash("Public share link copied");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create share link");
+    } finally {
+      setBusy(false);
     }
-  }, [id, flash, navigate]);
+  }, [tenantSlug, id, flash]);
 
   const onRerun = useCallback(async () => {
     setBusy(true);
@@ -423,7 +430,7 @@ export function RunDetail() {
               <Save className="h-4 w-4" /> Save preset
             </Button>
           )}
-          <Button variant="outline" size="sm" onClick={() => void onShare()}>
+          <Button variant="outline" size="sm" onClick={() => void onShare()} disabled={busy}>
             <Share2 className="h-4 w-4" /> Share
           </Button>
           <Link to={`/compare?runIds=${id}`}>

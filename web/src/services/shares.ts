@@ -18,6 +18,7 @@ import { shareClient, publicShareClient } from "@/services/client";
 import { resolveTenantId } from "@/services/tenant";
 import { statusToVM, type RunStatus } from "@/services/dashboard";
 import { dbKindLabelFromJson, providerLabelFromJson } from "@/services/enums";
+import type { MetricVM } from "@/services/run_overview";
 
 /** A share record, flattened from models.ShareRecord. */
 export interface ShareVM {
@@ -156,6 +157,38 @@ export interface SharedRunVM {
   startedAt?: string;
   finishedAt?: string;
   progressPct: number;
+  metrics: MetricVM[];
+}
+
+const num = (v: number | "NaN" | "Infinity" | "-Infinity" | undefined): number =>
+  typeof v === "number" ? v : 0;
+
+type RawMetric = {
+  key?: string;
+  name?: string;
+  unit?: string;
+  avg?: number | "NaN" | "Infinity" | "-Infinity";
+  min?: number | "NaN" | "Infinity" | "-Infinity";
+  max?: number | "NaN" | "Infinity" | "-Infinity";
+  last?: number | "NaN" | "Infinity" | "-Infinity";
+  higherIsBetter?: boolean;
+  group?: string;
+  description?: string;
+};
+
+function metricToVM(m: RawMetric): MetricVM {
+  return {
+    key: m.key ?? "",
+    name: m.name ?? m.key ?? "",
+    unit: m.unit ?? "",
+    avg: num(m.avg),
+    min: num(m.min),
+    max: num(m.max),
+    last: num(m.last),
+    higherIsBetter: m.higherIsBetter ?? false,
+    group: m.group ?? "",
+    description: m.description ?? "",
+  };
 }
 
 export async function getSharedRun(token: string): Promise<SharedRunVM | undefined> {
@@ -176,6 +209,7 @@ export async function getSharedRun(token: string): Promise<SharedRunVM | undefin
         startedAt?: string;
         finishedAt?: string;
         progressPct?: number;
+        metrics?: { metrics?: RawMetric[] };
       };
       suiteRun?: { name?: string };
     };
@@ -199,6 +233,7 @@ export async function getSharedRun(token: string): Promise<SharedRunVM | undefin
       startedAt: tr.startedAt,
       finishedAt: tr.finishedAt,
       progressPct: tr.progressPct ?? 0,
+      metrics: (tr.metrics?.metrics ?? []).map(metricToVM),
     };
   }
   return {
@@ -214,5 +249,6 @@ export async function getSharedRun(token: string): Promise<SharedRunVM | undefin
     topologyLabel: "",
     nodeCount: 0,
     progressPct: 0,
+    metrics: [],
   };
 }

@@ -103,6 +103,7 @@ import {
   type RunVM,
   type SortField,
 } from "@/services/runs";
+import { createShare } from "@/services/shares";
 
 // Test Runs — the runs list/table. Built around the slice of
 // cloud.v1.api.ListTestRunsRequest the provider wires (search, statuses[],
@@ -1143,10 +1144,9 @@ export function Runs() {
             navigate(`/runs/${run.id}`);
             return;
           case "share": {
-            const url = new URL(
-              `/t/${encodeURIComponent(slug)}/runs/${encodeURIComponent(run.id)}`,
-              window.location.origin,
-            );
+            const share = await createShare(slug, run.id, { kind: "test_run" });
+            if (!share?.token) throw new Error("Share token was not returned");
+            const url = new URL(`/shared/${encodeURIComponent(share.token)}`, window.location.origin);
             await navigator.clipboard.writeText(url.href);
             return;
           }

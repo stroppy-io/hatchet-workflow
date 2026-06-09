@@ -58,7 +58,7 @@ import (
 
 // dashboardRatingMetricKey is the headline metric the tenant dashboard ranks its
 // top-benchmark tile by.
-const dashboardRatingMetricKey = "tps"
+const dashboardRatingMetricKey = "db_tps"
 
 // Run boots the full control plane and blocks until ctx is cancelled, then tears
 // everything down in reverse order. It owns the entire object graph.

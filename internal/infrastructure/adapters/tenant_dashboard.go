@@ -170,8 +170,8 @@ func (r *ScheduleReader) UpcomingSuites(ctx context.Context, tenantID string, li
 // DashboardRatingReader implements tenant_dashboard.RatingReader by delegating to
 // the tenant rating board (in_tenant_rating runs) and capping to the top N.
 type DashboardRatingReader struct {
-	board     *RatingBoard
-	metricKey string
+	board      *RatingBoard
+	metricKeys []string
 }
 
 var _ tenant_dashboard.RatingReader = (*DashboardRatingReader)(nil)
@@ -179,17 +179,33 @@ var _ tenant_dashboard.RatingReader = (*DashboardRatingReader)(nil)
 // NewDashboardRatingReader builds the rating reader over the shared RatingBoard.
 // metricKey is the headline metric the dashboard ranks the top benchmarks by.
 func NewDashboardRatingReader(board *RatingBoard, metricKey string) *DashboardRatingReader {
-	return &DashboardRatingReader{board: board, metricKey: metricKey}
+	keys := []string{metricKey}
+	for _, fallback := range []string{"db_tps", "db_qps", "stroppy_ops"} {
+		if fallback == "" || containsString(keys, fallback) {
+			continue
+		}
+		keys = append(keys, fallback)
+	}
+	return &DashboardRatingReader{board: board, metricKeys: keys}
 }
 
 // TopBenchmarks returns this tenant's top-N benchmarks ranked by the configured
 // metric. A board with no rated runs (metric not found) yields an empty list
 // rather than an error, so the dashboard tile is simply empty.
 func (r *DashboardRatingReader) TopBenchmarks(ctx context.Context, tenantID string, limit uint32) ([]*api.RatingEntry, error) {
-	entries, _, err := r.board.Rank(ctx, ratingTenantQuery(tenantID, r.metricKey, limit))
-	if err != nil {
-		// An empty board (metric absent) is not a dashboard error.
-		return nil, nil //nolint:nilerr // empty leaderboard is a valid empty tile.
+	for _, key := range r.metricKeys {
+		if key == "" {
+			continue
+		}
+		entries, _, err := r.board.Rank(ctx, ratingTenantQuery(tenantID, key, limit))
+		if err != nil {
+			// An empty board (metric absent) is not a dashboard error; try the next
+			// common throughput metric before yielding an empty tile.
+			continue
+		}
+		if len(entries) > 0 {
+			return entries, nil
+		}
 	}
-	return entries, nil
+	return nil, nil
 }

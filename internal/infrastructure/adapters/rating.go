@@ -84,7 +84,23 @@ func (b *RatingBoard) Rank(ctx context.Context, q rating.RatingQuery) ([]*api.Ra
 		return nil, "", err
 	}
 	if !found {
-		return nil, "", derrors.NotFound("metric", "metric_key not found on any rated run")
+		for _, fallback := range ratingMetricFallbacks(q.MetricKey) {
+			ranked, found, err = rankRuns(ctx, b.metrics, runs, ratingFacets{
+				metricKey:       fallback,
+				dbKinds:         q.DBKinds,
+				stroppyVersions: q.StroppyVersions,
+				providers:       q.Providers,
+			})
+			if err != nil {
+				return nil, "", err
+			}
+			if found {
+				break
+			}
+		}
+		if !found {
+			return nil, "", derrors.NotFound("metric", "metric_key not found on any rated run")
+		}
 	}
 
 	limit := q.Limit
@@ -151,21 +167,42 @@ func (b *PublicRatingBoard) Public(ctx context.Context, filter *api.RatingFilter
 	if err != nil {
 		return nil, "", err
 	}
+	startedAfter, startedBefore, hasAfter, hasBefore := ratingTimeBounds(filter)
 	ranked, found, err := rankRuns(ctx, b.metrics, runs, ratingFacets{
 		metricKey:       filter.GetMetricKey(),
 		dbKinds:         filter.GetDbKinds(),
 		stroppyVersions: filter.GetStroppyVersions(),
 		providers:       filter.GetProviders(),
-		startedAfter:    filter.GetStartedAfter().AsTime().UnixNano(),
-		startedBefore:   filter.GetStartedBefore().AsTime().UnixNano(),
-		hasAfter:        filter.GetStartedAfter() != nil,
-		hasBefore:       filter.GetStartedBefore() != nil,
+		startedAfter:    startedAfter,
+		startedBefore:   startedBefore,
+		hasAfter:        hasAfter,
+		hasBefore:       hasBefore,
 	})
 	if err != nil {
 		return nil, "", err
 	}
 	if !found {
-		return nil, "", derrors.NotFound("metric", "metric_key not found on any rated run")
+		for _, fallback := range ratingMetricFallbacks(filter.GetMetricKey()) {
+			ranked, found, err = rankRuns(ctx, b.metrics, runs, ratingFacets{
+				metricKey:       fallback,
+				dbKinds:         filter.GetDbKinds(),
+				stroppyVersions: filter.GetStroppyVersions(),
+				providers:       filter.GetProviders(),
+				startedAfter:    startedAfter,
+				startedBefore:   startedBefore,
+				hasAfter:        hasAfter,
+				hasBefore:       hasBefore,
+			})
+			if err != nil {
+				return nil, "", err
+			}
+			if found {
+				break
+			}
+		}
+		if !found {
+			return nil, "", derrors.NotFound("metric", "metric_key not found on any rated run")
+		}
 	}
 	if limit == 0 {
 		limit = defaultRatingPageSize
@@ -307,6 +344,30 @@ func containsString(list []string, v string) bool {
 		}
 	}
 	return false
+}
+
+func ratingMetricFallbacks(metricKey string) []string {
+	switch metricKey {
+	case "db_tps":
+		return []string{"db_qps", "stroppy_ops"}
+	default:
+		return nil
+	}
+}
+
+func ratingTimeBounds(filter *api.RatingFilter) (startedAfter, startedBefore int64, hasAfter, hasBefore bool) {
+	if filter == nil {
+		return 0, 0, false, false
+	}
+	if after := filter.GetStartedAfter(); after != nil {
+		startedAfter = after.AsTime().UnixNano()
+		hasAfter = true
+	}
+	if before := filter.GetStartedBefore(); before != nil {
+		startedBefore = before.AsTime().UnixNano()
+		hasBefore = true
+	}
+	return startedAfter, startedBefore, hasAfter, hasBefore
 }
 
 // paginate slices ranked by a simple decimal-offset cursor and returns the page
