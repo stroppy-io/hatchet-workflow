@@ -121,6 +121,33 @@ func TestMysqlPackageResolver(t *testing.T) {
 	}
 }
 
+func TestMysqlPackageResolverConfiguresVersionedRepo(t *testing.T) {
+	db := mysqlDatabase()
+	db.GetParams().Version = "8.4"
+
+	pkg, err := PackageResolver{}.ResolveDatabasePackage(db)
+	if err != nil {
+		t.Fatalf("resolve package: %v", err)
+	}
+	if got, want := pkg.GetAptPackages()[0], "mysql-server"; got != want {
+		t.Fatalf("apt package = %q, want %q", got, want)
+	}
+	preInstall := strings.Join(pkg.GetPreInstall(), "\n")
+	for _, want := range []string{
+		"http://repo.mysql.com/apt/ubuntu/",
+		"mysql-8.4-lts",
+		"RPM-GPG-KEY-mysql-2025",
+		"apt-get update",
+	} {
+		if !strings.Contains(preInstall, want) {
+			t.Fatalf("preinstall missing %q:\n%s", want, preInstall)
+		}
+	}
+	if strings.Contains(preInstall, "mysql-server-8.4") {
+		t.Fatalf("preinstall contains versioned apt package name:\n%s", preInstall)
+	}
+}
+
 func TestMysqlPackageResolverSupportsMariaDB(t *testing.T) {
 	db := mysqlDatabase()
 	db.Kind = domain.Database_KIND_MARIADB
@@ -138,5 +165,33 @@ func TestMysqlPackageResolverSupportsMariaDB(t *testing.T) {
 	}
 	if got, want := pkg.GetAptPackages()[0], "mariadb-server"; got != want {
 		t.Fatalf("apt package = %q, want %q", got, want)
+	}
+}
+
+func TestMysqlPackageResolverConfiguresMariaDBVersionedRepo(t *testing.T) {
+	db := mysqlDatabase()
+	db.Kind = domain.Database_KIND_MARIADB
+	db.GetParams().Version = "10.11"
+	db.GetParams().Engine = &domain.DatabaseParams_Mariadb{Mariadb: db.GetParams().GetMysql()}
+
+	pkg, err := PackageResolver{}.ResolveDatabasePackage(db)
+	if err != nil {
+		t.Fatalf("resolve package: %v", err)
+	}
+	if got, want := pkg.GetAptPackages()[0], "mariadb-server"; got != want {
+		t.Fatalf("apt package = %q, want %q", got, want)
+	}
+	preInstall := strings.Join(pkg.GetPreInstall(), "\n")
+	for _, want := range []string{
+		"https://r.mariadb.com/downloads/mariadb_repo_setup",
+		"--mariadb-server-version=10.11",
+		"apt-get update",
+	} {
+		if !strings.Contains(preInstall, want) {
+			t.Fatalf("preinstall missing %q:\n%s", want, preInstall)
+		}
+	}
+	if strings.Contains(preInstall, "mariadb-server-10.11") {
+		t.Fatalf("preinstall contains versioned apt package name:\n%s", preInstall)
 	}
 }

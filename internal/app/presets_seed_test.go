@@ -134,6 +134,45 @@ func TestBuiltinPicodataPresetsInstallRepository(t *testing.T) {
 	}
 }
 
+func TestBuiltinVersionedMySQLPackagesConfigureRepository(t *testing.T) {
+	pkg := builtinDatabasePackage(domain.Database_KIND_MYSQL, "8.4")
+	if pkg == nil {
+		t.Fatal("versioned MySQL package is nil")
+	}
+	if got, want := pkg.GetAptPackages()[0], "mysql-server"; got != want {
+		t.Fatalf("apt package = %q, want %q", got, want)
+	}
+	preInstall := strings.Join(pkg.GetPreInstall(), "\n")
+	for _, want := range []string{
+		"http://repo.mysql.com/apt/ubuntu/",
+		"mysql-8.4-lts",
+		"RPM-GPG-KEY-mysql-2025",
+	} {
+		if !strings.Contains(preInstall, want) {
+			t.Fatalf("MySQL preinstall missing %q:\n%s", want, preInstall)
+		}
+	}
+}
+
+func TestBuiltinVersionedMariaDBPackagesConfigureRepository(t *testing.T) {
+	pkg := builtinDatabasePackage(domain.Database_KIND_MARIADB, "11.4")
+	if pkg == nil {
+		t.Fatal("versioned MariaDB package is nil")
+	}
+	if got, want := pkg.GetAptPackages()[0], "mariadb-server"; got != want {
+		t.Fatalf("apt package = %q, want %q", got, want)
+	}
+	preInstall := strings.Join(pkg.GetPreInstall(), "\n")
+	for _, want := range []string{
+		"https://r.mariadb.com/downloads/mariadb_repo_setup",
+		"--mariadb-server-version=11.4",
+	} {
+		if !strings.Contains(preInstall, want) {
+			t.Fatalf("MariaDB preinstall missing %q:\n%s", want, preInstall)
+		}
+	}
+}
+
 func TestBuiltinYdbSingleUsesCombinedNode(t *testing.T) {
 	preset := databasePresetByName(t, builtinDatabasePresets("tenant-1", "author-1"), "YDB single")
 	params := preset.GetDatabase().GetParams().GetYdb()

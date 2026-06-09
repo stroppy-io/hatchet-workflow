@@ -661,7 +661,7 @@ func builtinDatabasePackage(kind domain.Database_Kind, version string) *domain.P
 		pkg.AptPackages = []string{"mysql-server"}
 		pkg.PreInstall = []string{"apt-get update"}
 		if version != "default" {
-			pkg.AptPackages = []string{"mysql-server-" + version}
+			pkg.PreInstall = seedMySQLPreInstall(version)
 		}
 	case domain.Database_KIND_MARIADB:
 		pkg.Id = "builtin/mariadb/" + version
@@ -669,7 +669,7 @@ func builtinDatabasePackage(kind domain.Database_Kind, version string) *domain.P
 		pkg.AptPackages = []string{"mariadb-server"}
 		pkg.PreInstall = []string{"apt-get update"}
 		if version != "default" {
-			pkg.AptPackages = []string{"mariadb-server-" + version}
+			pkg.PreInstall = seedMariaDBPreInstall(version)
 		}
 	case domain.Database_KIND_PICODATA:
 		pkg.Id = "builtin/picodata/" + version
@@ -705,6 +705,32 @@ func seedPGDGPreInstall() []string {
 		"install -d /usr/share/postgresql-common/pgdg",
 		"curl -fsSL -o " + keyring + " http://www.postgresql.org/media/keys/ACCC4CF8.asc",
 		`sh -c 'echo "deb [signed-by=` + keyring + `] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'`,
+		"apt-get update",
+	}
+}
+
+func seedMySQLPreInstall(version string) []string {
+	repoComponent := "mysql-" + version
+	if version == "8.4" {
+		repoComponent = "mysql-8.4-lts"
+	}
+	return []string{
+		"DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates curl gpg lsb-release",
+		"install -d /etc/apt/keyrings",
+		`sh -ec 'key=/tmp/mysql-repo.gpg.key
+curl -fsSL https://repo.mysql.com/RPM-GPG-KEY-mysql-2025 -o "$key" || curl -fsSL https://repo.mysql.com/RPM-GPG-KEY-mysql-2023 -o "$key"
+gpg --dearmor -o /etc/apt/keyrings/mysql.gpg "$key"
+chmod 644 /etc/apt/keyrings/mysql.gpg'`,
+		`sh -c 'echo "deb [signed-by=/etc/apt/keyrings/mysql.gpg] http://repo.mysql.com/apt/ubuntu/ $(lsb_release -cs) ` + repoComponent + `" > /etc/apt/sources.list.d/mysql.list'`,
+		"apt-get update",
+	}
+}
+
+func seedMariaDBPreInstall(version string) []string {
+	return []string{
+		"DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates curl",
+		"curl -fsSL https://r.mariadb.com/downloads/mariadb_repo_setup -o /tmp/mariadb_repo_setup",
+		"bash /tmp/mariadb_repo_setup --mariadb-server-version=" + version,
 		"apt-get update",
 	}
 }
