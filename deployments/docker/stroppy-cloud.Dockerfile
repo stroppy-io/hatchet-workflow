@@ -37,7 +37,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
 # Stage 3: Runtime
 FROM ubuntu:22.04
 
-ARG STROPPY_VERSION=4.1.0
+ARG STROPPY_VERSION=5.1.2
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
 	bash curl ca-certificates wget sudo gnupg lsb-release \

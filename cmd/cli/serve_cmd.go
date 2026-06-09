@@ -32,7 +32,7 @@ func serveCmd() *cobra.Command {
 				AgentImage:           env("AGENT_IMAGE", "stroppy-agent:latest"),
 				AgentBinaryPath:      os.Getenv("AGENT_BINARY_PATH"),
 				CacheDir:             env("STROPPY_BINARY_CACHE_DIR", "/var/lib/stroppy-cache/binaries"),
-				StroppyUpstream:      os.Getenv("STROPPY_UPSTREAM"),
+				StroppyUpstream:      env("STROPPY_UPSTREAM", "https://github.com/stroppy-io/stroppy/releases/download/v5.1.2/stroppy_linux_amd64.tar.gz"),
 				StroppyGitHubRepo:    env("STROPPY_GITHUB_REPO", "stroppy-io/stroppy"),
 				StroppyMinVersion:    os.Getenv("STROPPY_MIN_VERSION"),
 				StroppyGitHubToken:   env("STROPPY_GITHUB_TOKEN", os.Getenv("GITHUB_TOKEN")),

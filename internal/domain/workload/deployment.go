@@ -226,7 +226,7 @@ func installCommand(input *domain.Workload, serverAddr string) string {
 	if serverAddr == "" {
 		return "set -e\n" +
 			"if command -v stroppy >/dev/null 2>&1; then\n" +
-			"  stroppy --version || true\n" +
+			"  stroppy version || stroppy --version || true\n" +
 			"else\n" +
 			"  echo 'stroppy server address is not configured; cannot fetch binary' >&2\n" +
 			"  exit 127\n" +
@@ -235,8 +235,8 @@ func installCommand(input *domain.Workload, serverAddr string) string {
 	downloadURL := stroppyDownloadURL(serverAddr, version)
 	return fmt.Sprintf(`set -e
 if command -v stroppy >/dev/null 2>&1; then
-  stroppy --version || true
-  exit 0
+  echo "existing stroppy:"
+  stroppy version || stroppy --version || true
 fi
 mkdir -p /usr/local/bin
 tmp="$(mktemp /tmp/stroppy-artifact.XXXXXX)"
@@ -261,7 +261,8 @@ if tar tzf "$tmp" >/dev/null 2>&1; then
 else
   install -m 0755 "$tmp" /usr/local/bin/stroppy
 fi
-stroppy --version || true
+echo "installed stroppy:"
+stroppy version || stroppy --version || true
 `, workloadCurlOpts, deploymentbuilder.ShellQuote(downloadURL))
 }
 

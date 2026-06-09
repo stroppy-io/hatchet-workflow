@@ -304,6 +304,8 @@ func TestInstallCommandDownloadsStroppyReleaseThroughGateway(t *testing.T) {
 	for _, want := range []string{
 		"http://server:8080/api/binaries/stroppy/5.1.2/stroppy_linux_amd64.tar.gz",
 		"curl -fsSL",
+		"existing stroppy:",
+		"installed stroppy:",
 		"tar tzf",
 		"install -m 0755",
 		"/usr/local/bin/stroppy",
@@ -314,6 +316,9 @@ func TestInstallCommandDownloadsStroppyReleaseThroughGateway(t *testing.T) {
 	}
 	if strings.Contains(script, "binary resolver is pending") {
 		t.Fatalf("install command still contains placeholder:\n%s", script)
+	}
+	if strings.Contains(script, "exit 0\nfi\nmkdir -p /usr/local/bin") {
+		t.Fatalf("install command exits before refreshing an existing stroppy binary:\n%s", script)
 	}
 }
 
