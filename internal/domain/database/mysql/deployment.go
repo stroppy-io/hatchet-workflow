@@ -359,7 +359,10 @@ func mysqlProxysqlConfig(options map[string]string, backends []mysqlBackend) str
 }
 
 func mysqlConfigPath(componentID, role string) string {
-	return deploymentbuilder.ConfigDir(componentID) + "/" + mysqlConfigFileName(role)
+	if role == mysqlRoleProxysql {
+		return deploymentbuilder.ConfigDir(componentID) + "/" + mysqlConfigFileName(role)
+	}
+	return "/etc/mysql/stroppy-cloud/" + componentID + ".cnf"
 }
 
 func mysqlConfigFileName(role string) string {

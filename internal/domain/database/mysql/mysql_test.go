@@ -76,7 +76,7 @@ func TestMysqlDeploymentPlan(t *testing.T) {
 	components := dbtest.ComponentsByID(plan)
 	primary := components["mysql-primary"]
 	service := dbtest.ServiceUnitText(primary)
-	for _, want := range []string{"/usr/sbin/mysqld", "initialize-insecure"} {
+	for _, want := range []string{"/usr/sbin/mysqld", "initialize-insecure", "--defaults-file='/etc/mysql/stroppy-cloud/mysql-primary.cnf'"} {
 		if !strings.Contains(service, want) {
 			t.Fatalf("service missing %q:\n%s", want, service)
 		}
