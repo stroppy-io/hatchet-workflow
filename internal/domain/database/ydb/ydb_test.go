@@ -138,10 +138,13 @@ func TestYdbDeploymentPlan(t *testing.T) {
 	}
 
 	database := dbtest.ServiceUnitText(components["ydb-database-1"])
-	for _, want := range []string{"--node dynamic", "--node-broker '10.0.0.1:2136'", "--node-broker '10.0.0.2:2136'"} {
+	for _, want := range []string{"--tenant '/Root/testdb'", "--node-broker '10.0.0.1:2136'", "--node-broker '10.0.0.2:2136'"} {
 		if !strings.Contains(database, want) {
 			t.Fatalf("database service missing %q:\n%s", want, database)
 		}
+	}
+	if strings.Contains(database, "--node dynamic") {
+		t.Fatalf("database service contains unsupported dynamic node flag:\n%s", database)
 	}
 
 	haproxy := dbtest.WriteFileText(components["haproxy-1"], "030_write_config")

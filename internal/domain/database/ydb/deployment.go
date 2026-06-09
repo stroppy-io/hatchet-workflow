@@ -229,7 +229,7 @@ func ydbServiceUnit(componentID, role, configDir string, database *domain.Databa
 		return ydbDaemonServiceUnit(componentID, role, configDir, dataDir, execStart)
 	case ydbRoleDatabase:
 		tenant := ydbDatabasePath(database.GetParams().GetYdb())
-		execStart := fmt.Sprintf("/usr/local/bin/ydbd server --yaml-config %s --grpc-port %d --ic-port %d --mon-port %d --tenant %s --node dynamic",
+		execStart := fmt.Sprintf("/usr/local/bin/ydbd server --yaml-config %s --grpc-port %d --ic-port %d --mon-port %d --tenant %s",
 			deploymentbuilder.ShellQuote(cfgPath), grpcPort, icPort, monPort, deploymentbuilder.ShellQuote(tenant))
 		for _, broker := range wiring.nodeBrokers {
 			execStart += " --node-broker " + deploymentbuilder.ShellQuote(broker)
