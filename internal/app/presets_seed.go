@@ -676,7 +676,7 @@ func builtinDatabasePackage(kind domain.Database_Kind, version string) *domain.P
 		pkg.Id = "builtin/picodata/" + version
 		pkg.Name = "Picodata " + version
 		pkg.AptPackages = []string{"picodata"}
-		pkg.PreInstall = []string{"apt-get update"}
+		pkg.PreInstall = seedPicodataPreInstall()
 		if version != "default" {
 			pkg.AptPackages = []string{"picodata=" + version}
 		}
@@ -706,6 +706,22 @@ func seedPGDGPreInstall() []string {
 		"install -d /usr/share/postgresql-common/pgdg",
 		"curl -fsSL -o " + keyring + " http://www.postgresql.org/media/keys/ACCC4CF8.asc",
 		`sh -c 'echo "deb [signed-by=` + keyring + `] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'`,
+		"apt-get update",
+	}
+}
+
+func seedPicodataPreInstall() []string {
+	return []string{
+		"apt-get update",
+		"DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates curl gpg",
+		`sh -ec '. /etc/os-release
+case "$ID" in
+  ubuntu|debian) distro="$ID" ;;
+  *) echo "unsupported Picodata apt repository distro: $ID" >&2; exit 1 ;;
+esac
+curl -fsSL https://download.picodata.io/tarantool-picodata/picodata.gpg.key | gpg --no-default-keyring --keyring gnupg-ring:/etc/apt/trusted.gpg.d/picodata.gpg --import
+chmod 644 /etc/apt/trusted.gpg.d/picodata.gpg
+printf "deb [arch=amd64] https://download.picodata.io/tarantool-picodata/%s/ %s main\n" "$distro" "$VERSION_CODENAME" > /etc/apt/sources.list.d/picodata.list'`,
 		"apt-get update",
 	}
 }

@@ -116,6 +116,24 @@ func TestBuiltinPostgresPresetsUseConcreteMemoryValues(t *testing.T) {
 	}
 }
 
+func TestBuiltinPicodataPresetsInstallRepository(t *testing.T) {
+	preset := databasePresetByName(t, builtinDatabasePresets("tenant-1", "author-1"), "Picodata single")
+	pkg := preset.GetDatabase().GetParams().GetPackage()
+	if pkg == nil {
+		t.Fatal("Picodata single has no builtin package")
+	}
+	preInstall := strings.Join(pkg.GetPreInstall(), "\n")
+	for _, want := range []string{
+		"download.picodata.io/tarantool-picodata/picodata.gpg.key",
+		"download.picodata.io/tarantool-picodata/%s/",
+		"/etc/apt/sources.list.d/picodata.list",
+	} {
+		if !strings.Contains(preInstall, want) {
+			t.Fatalf("Picodata preinstall missing %q:\n%s", want, preInstall)
+		}
+	}
+}
+
 func TestBuiltinYdbSingleIncludesDatabaseNode(t *testing.T) {
 	preset := databasePresetByName(t, builtinDatabasePresets("tenant-1", "author-1"), "YDB single")
 	params := preset.GetDatabase().GetParams().GetYdb()

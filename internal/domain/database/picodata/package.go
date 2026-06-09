@@ -31,6 +31,22 @@ func (r PackageResolver) ResolveDatabasePackage(database *domain.Database) (*dom
 		DbVersion:   version,
 		IsBuiltin:   true,
 		AptPackages: aptPackages,
-		PreInstall:  []string{"apt-get update"},
+		PreInstall:  picodataPreInstall(),
 	}, nil
+}
+
+func picodataPreInstall() []string {
+	return []string{
+		"apt-get update",
+		"DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates curl gpg",
+		`sh -ec '. /etc/os-release
+case "$ID" in
+  ubuntu|debian) distro="$ID" ;;
+  *) echo "unsupported Picodata apt repository distro: $ID" >&2; exit 1 ;;
+esac
+curl -fsSL https://download.picodata.io/tarantool-picodata/picodata.gpg.key | gpg --no-default-keyring --keyring gnupg-ring:/etc/apt/trusted.gpg.d/picodata.gpg --import
+chmod 644 /etc/apt/trusted.gpg.d/picodata.gpg
+printf "deb [arch=amd64] https://download.picodata.io/tarantool-picodata/%s/ %s main\n" "$distro" "$VERSION_CODENAME" > /etc/apt/sources.list.d/picodata.list'`,
+		"apt-get update",
+	}
 }

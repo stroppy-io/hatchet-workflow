@@ -79,6 +79,24 @@ func TestPicodataDeploymentPlan(t *testing.T) {
 
 	components := dbtest.ComponentsByID(plan)
 	instance := components["picodata-instance-1"]
+	installScripts := strings.Join([]string{
+		dbtest.CallCmd(instance, "100_install"),
+		dbtest.CallCmd(instance, "110_install"),
+		dbtest.CallCmd(instance, "120_install"),
+		dbtest.CallCmd(instance, "130_install"),
+		dbtest.CallCmd(instance, "140_install"),
+	}, "\n")
+	for _, want := range []string{
+		"download.picodata.io/tarantool-picodata/picodata.gpg.key",
+		"download.picodata.io/tarantool-picodata/%s/",
+		"/etc/apt/sources.list.d/picodata.list",
+		"DEBIAN_FRONTEND=noninteractive apt-get install -y picodata",
+	} {
+		if !strings.Contains(installScripts, want) {
+			t.Fatalf("instance-1 install scripts missing %q:\n%s", want, installScripts)
+		}
+	}
+
 	service := dbtest.ServiceUnitText(instance)
 	for _, want := range []string{"/usr/bin/picodata run", "--advertise '10.0.0.1:3301'"} {
 		if !strings.Contains(service, want) {
@@ -118,5 +136,15 @@ func TestPicodataPackageResolver(t *testing.T) {
 	}
 	if got, want := pkg.GetId(), "builtin/picodata/25.3"; got != want {
 		t.Fatalf("package id = %q, want %q", got, want)
+	}
+	preInstall := strings.Join(pkg.GetPreInstall(), "\n")
+	for _, want := range []string{
+		"download.picodata.io/tarantool-picodata/picodata.gpg.key",
+		"download.picodata.io/tarantool-picodata/%s/",
+		"/etc/apt/sources.list.d/picodata.list",
+	} {
+		if !strings.Contains(preInstall, want) {
+			t.Fatalf("package preinstall missing %q:\n%s", want, preInstall)
+		}
 	}
 }
