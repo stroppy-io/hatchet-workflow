@@ -196,9 +196,9 @@ func TestYdbDeploymentPlan(t *testing.T) {
 	databaseHealthcheck := dbtest.CallCmd(components["ydb-database-1"], "230_healthcheck")
 	for _, want := range []string{
 		"systemctl is-active --quiet \"$service\"",
-		"grpc://127.0.0.1:2136",
-		"timeout 5s /usr/local/bin/ydbd",
-		"admin database \"$database\" status",
+		"timeout 1s bash -c",
+		"/dev/tcp/127.0.0.1/$port",
+		"port=2136",
 		"sleep 20",
 	} {
 		if !strings.Contains(databaseHealthcheck, want) {
@@ -280,8 +280,8 @@ func TestYdbCombinedDeploymentStartsDatabaseServiceOnStorageNode(t *testing.T) {
 	if check := dbtest.CallCmd(storage, "260_database_healthcheck"); !strings.Contains(check, "stroppy-ydb-storage-1-database") {
 		t.Fatalf("combined database service is not healthchecked:\n%s", check)
 	}
-	if check := dbtest.CallCmd(storage, "260_database_healthcheck"); !strings.Contains(check, "admin database \"$database\" status") {
-		t.Fatalf("combined database healthcheck does not wait for database status:\n%s", check)
+	if check := dbtest.CallCmd(storage, "260_database_healthcheck"); !strings.Contains(check, "port=2136") {
+		t.Fatalf("combined database healthcheck does not wait for database port:\n%s", check)
 	}
 }
 

@@ -306,18 +306,15 @@ exit 1
 }
 
 func ydbDatabaseHealthcheckCommand(serviceName string, database *domain.Database) string {
-	endpoint := fmt.Sprintf("grpc://127.0.0.1:%d", grpcPort)
-	databasePath := ydbDatabasePath(database.GetParams().GetYdb())
 	return fmt.Sprintf(`set -e
 service=%s
-endpoint=%s
-database=%s
+port=%d
 
 for attempt in $(seq 1 180); do
-  if systemctl is-active --quiet "$service" && timeout 5s /usr/local/bin/ydbd -s "$endpoint" admin database "$database" status >/dev/null 2>&1; then
-    # The admin endpoint can become available a little before the query service
-    # is ready for SDK session creation. Give the dynamic node a short settle
-    # window so stroppy does not fall through its 3s primary connect timeout.
+  if systemctl is-active --quiet "$service" && timeout 1s bash -c "cat < /dev/null > /dev/tcp/127.0.0.1/$port" >/dev/null 2>&1; then
+    # The TCP listener can open a little before the query service is ready for
+    # SDK session creation. Give the dynamic node a short settle window so
+    # stroppy does not fall through its 3s primary connect timeout.
     sleep 20
     exit 0
   fi
@@ -329,7 +326,7 @@ systemctl status --no-pager -l "$service" || true
 echo "--- journalctl $service ---"
 journalctl --no-pager --output=short-iso-precise -u "$service" -n 200 || true
 exit 1
-`, deploymentbuilder.ShellQuote(serviceName), deploymentbuilder.ShellQuote(endpoint), deploymentbuilder.ShellQuote(databasePath))
+`, deploymentbuilder.ShellQuote(serviceName), grpcPort)
 }
 
 func ydbServiceUnit(componentID, role, configDir string, database *domain.Database, wiring ydbWiring) string {
