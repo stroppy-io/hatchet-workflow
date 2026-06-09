@@ -178,6 +178,7 @@ func TestYdbDeploymentPlan(t *testing.T) {
 	for _, want := range []string{
 		"systemctl is-active --quiet \"$service\"",
 		"grpc://127.0.0.1:2136",
+		"timeout 5s /usr/local/bin/ydbd",
 		"admin database \"$database\" status",
 		"sleep 20",
 	} {

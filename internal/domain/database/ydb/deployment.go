@@ -284,7 +284,7 @@ endpoint=%s
 database=%s
 
 for attempt in $(seq 1 180); do
-  if systemctl is-active --quiet "$service" && /usr/local/bin/ydbd -s "$endpoint" admin database "$database" status >/dev/null 2>&1; then
+  if systemctl is-active --quiet "$service" && timeout 5s /usr/local/bin/ydbd -s "$endpoint" admin database "$database" status >/dev/null 2>&1; then
     # The admin endpoint can become available a little before the query service
     # is ready for SDK session creation. Give the dynamic node a short settle
     # window so stroppy does not fall through its 3s primary connect timeout.
