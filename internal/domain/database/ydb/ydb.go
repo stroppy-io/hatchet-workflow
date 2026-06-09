@@ -214,11 +214,6 @@ func ydbConfigContent(input *domain.YdbParams, nodeType string, options map[stri
 			fmt.Fprintf(&b, "  host_config_id: 1\n")
 		}
 	}
-	b.WriteString("grpc_config:\n")
-	fmt.Fprintf(&b, "  port: %d\n", grpcPort)
-	b.WriteString("interconnect_config:\n")
-	fmt.Fprintf(&b, "  port: %d\n", icPort)
-
 	if len(options) > 0 {
 		b.WriteString("config_passthrough:\n")
 		keys := make([]string, 0, len(options))

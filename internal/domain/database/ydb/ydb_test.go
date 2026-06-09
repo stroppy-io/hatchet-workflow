@@ -97,7 +97,6 @@ func TestYdbDeploymentPlan(t *testing.T) {
 		"pdisk_filter:",
 		"node: [1]",
 		"nto_select: 1",
-		"grpc_config",
 		"host: 10.0.0.1",
 		"host: 10.0.0.2",
 	} {
