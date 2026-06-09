@@ -98,27 +98,37 @@ func TestPicodataDeploymentPlan(t *testing.T) {
 	}
 
 	service := dbtest.ServiceUnitText(instance)
-	for _, want := range []string{"/usr/bin/picodata run", "--advertise '10.0.0.1:3301'"} {
+	for _, want := range []string{"/usr/bin/picodata run --config", "Restart=always"} {
 		if !strings.Contains(service, want) {
 			t.Fatalf("instance-1 service missing %q:\n%s", want, service)
 		}
 	}
-	if strings.Contains(service, "--peer") {
-		t.Fatalf("bootstrap instance-1 must not have a peer:\n%s", service)
+	for _, unwanted := range []string{"--advertise", "--peer", "--data-dir"} {
+		if strings.Contains(service, unwanted) {
+			t.Fatalf("service still contains CLI runtime option %q:\n%s", unwanted, service)
+		}
 	}
 	if strings.Contains(service, "is prepared with config") {
 		t.Fatalf("service still contains placeholder unit: %s", service)
 	}
 	config := dbtest.WriteFileText(instance, "030_write_config")
-	for _, want := range []string{"replication_factor: 2", "listen: 0.0.0.0:5432", "memtx_memory: 2147483648"} {
+	for _, want := range []string{
+		"replication_factor: 2",
+		"instance_dir: '/var/lib/stroppy-cloud/picodata-instance-1'",
+		"name: 'picodata_instance_1'",
+		"peer:\n    - '10.0.0.1:3301'",
+		"iproto:\n    enabled: true\n    listen: '0.0.0.0:3301'\n    advertise: '10.0.0.1:3301'",
+		"pgproto:\n    enabled: true\n    listen: '0.0.0.0:5432'",
+		"memtx_memory: 2147483648",
+	} {
 		if !strings.Contains(config, want) {
 			t.Fatalf("config missing %q:\n%s", want, config)
 		}
 	}
 
-	instance2 := dbtest.ServiceUnitText(components["picodata-instance-2"])
-	if !strings.Contains(instance2, "--peer '10.0.0.1:3301'") {
-		t.Fatalf("instance-2 does not join bootstrap:\n%s", instance2)
+	config2 := dbtest.WriteFileText(components["picodata-instance-2"], "030_write_config")
+	if !strings.Contains(config2, "peer:\n    - '10.0.0.1:3301'") {
+		t.Fatalf("instance-2 does not join bootstrap:\n%s", config2)
 	}
 
 	haproxy := dbtest.WriteFileText(components["haproxy-1"], "030_write_config")

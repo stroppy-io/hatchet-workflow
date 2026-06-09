@@ -122,7 +122,7 @@ func picodataEngineComponent(
 		DefaultConfigFile: picodataDefaultConfigFile(component, database, picodataWiring{}),
 		InstallCommands:   picodataInstallCommands(component, dbPackage),
 		ServiceFile:       picodataServiceFile(component.GetId(), component.GetRole(), configDir, wiring),
-		Healthcheck:       "systemctl is-active --quiet " + deploymentbuilder.ShellQuote(deploymentbuilder.ServiceName(component.GetId())),
+		Healthcheck:       picodataHealthcheckCommand(component.GetId()),
 	}, nil
 }
 
@@ -159,13 +159,7 @@ func picodataServiceUnit(componentID, role, configDir string, wiring picodataWir
 	switch role {
 	case picodataRoleInstance:
 		dataDir := deploymentbuilder.DataDir(componentID)
-		execStart := "/usr/bin/picodata run --config " + deploymentbuilder.ShellQuote(cfgPath) + " --data-dir " + deploymentbuilder.ShellQuote(dataDir)
-		if wiring.advertise != "" {
-			execStart += " --advertise " + deploymentbuilder.ShellQuote(wiring.advertise)
-		}
-		if wiring.peer != "" {
-			execStart += " --peer " + deploymentbuilder.ShellQuote(wiring.peer)
-		}
+		execStart := "/usr/bin/picodata run --config " + deploymentbuilder.ShellQuote(cfgPath)
 		return fmt.Sprintf(`[Unit]
 Description=Stroppy Cloud Picodata instance %s
 After=network-online.target
@@ -209,17 +203,17 @@ func picodataDefaultConfigFile(component *topologypb.Component, database *domain
 			Mode:          0644,
 			CreateParents: true,
 		},
-		Content: &common.File_Text{Text: picodataConfigContentForRole(database, component.GetRole(), wiring)},
+		Content: &common.File_Text{Text: picodataConfigContentForRole(database, component.GetId(), component.GetRole(), wiring)},
 	}
 }
 
-func picodataConfigContentForRole(database *domain.Database, role string, wiring picodataWiring) string {
+func picodataConfigContentForRole(database *domain.Database, componentID, role string, wiring picodataWiring) string {
 	params := database.GetParams().GetPicodata()
 	switch role {
 	case picodataRoleHaproxy:
 		return picodataHaproxyConfig(params.GetHaproxyOptions(), wiring.backends)
 	default:
-		return picodataConfigContent(params)
+		return picodataConfigContent(componentID, params, wiring)
 	}
 }
 
@@ -253,4 +247,20 @@ func picodataConfigFileName(role string) string {
 
 func configArtifactID(componentID, role string) string {
 	return deploymentbuilder.ArtifactID(componentID, picodataConfigFileName(role))
+}
+
+func picodataHealthcheckCommand(componentID string) string {
+	service := deploymentbuilder.ShellQuote(deploymentbuilder.ServiceName(componentID))
+	return fmt.Sprintf(`for i in $(seq 1 60); do
+  if systemctl is-active --quiet %s && curl -fsS http://127.0.0.1:%d/api/v1/health/ready >/dev/null; then
+    exit 0
+  fi
+  sleep 2
+done
+echo "--- systemctl status %s ---"
+systemctl status --no-pager -l %s || true
+echo "--- journalctl %s ---"
+journalctl --no-pager --output=short-iso-precise -u %s -n 200 || true
+exit 1
+`, service, httpPort, service, service, service, service)
 }

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/database/dbspec"
+	deploymentbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology"
 )
@@ -171,10 +172,19 @@ func picodataInstanceCount(input *domain.PicodataParams) uint32 {
 	return input.GetInstances()
 }
 
-// picodataConfigContent renders a minimal, valid picodata.yaml for an instance:
-// cluster tiers + listen addresses, with instance_options merged flat under the
-// instance mapping.
-func picodataConfigContent(input *domain.PicodataParams) string {
+// picodataConfigContent renders a minimal picodata.yaml in the current config
+// shape: cluster tiers plus per-instance sockets and data directory.
+func picodataConfigContent(componentID string, input *domain.PicodataParams, wiring picodataWiring) string {
+	advertise := wiring.advertise
+	if advertise == "" {
+		advertise = fmt.Sprintf("127.0.0.1:%d", iprotoPort)
+	}
+	peer := wiring.peer
+	if peer == "" {
+		peer = advertise
+	}
+	dataDir := deploymentbuilder.DataDir(componentID)
+
 	var b strings.Builder
 	b.WriteString("cluster:\n")
 	b.WriteString("  name: stroppy-cluster\n")
@@ -185,12 +195,21 @@ func picodataConfigContent(input *domain.PicodataParams) string {
 		fmt.Fprintf(&b, "      can_vote: %t\n", tier.canVote)
 	}
 	b.WriteString("instance:\n")
+	fmt.Fprintf(&b, "  instance_dir: %s\n", shellYAMLString(dataDir))
+	fmt.Fprintf(&b, "  name: %s\n", shellYAMLString(picodataInstanceName(componentID)))
+	b.WriteString("  tier: default\n")
+	fmt.Fprintf(&b, "  peer:\n    - %s\n", shellYAMLString(peer))
 	b.WriteString("  iproto:\n")
-	fmt.Fprintf(&b, "    listen: 0.0.0.0:%d\n", iprotoPort)
-	b.WriteString("  pg:\n")
-	fmt.Fprintf(&b, "    listen: 0.0.0.0:%d\n", pgprotoPort)
+	b.WriteString("    enabled: true\n")
+	fmt.Fprintf(&b, "    listen: %s\n", shellYAMLString(fmt.Sprintf("0.0.0.0:%d", iprotoPort)))
+	fmt.Fprintf(&b, "    advertise: %s\n", shellYAMLString(advertise))
 	b.WriteString("  http:\n")
-	fmt.Fprintf(&b, "    listen: 0.0.0.0:%d\n", httpPort)
+	b.WriteString("    enabled: true\n")
+	b.WriteString("    kubernetes_probes: true\n")
+	fmt.Fprintf(&b, "    listen: %s\n", shellYAMLString(fmt.Sprintf("0.0.0.0:%d", httpPort)))
+	b.WriteString("  pgproto:\n")
+	b.WriteString("    enabled: true\n")
+	fmt.Fprintf(&b, "    listen: %s\n", shellYAMLString(fmt.Sprintf("0.0.0.0:%d", pgprotoPort)))
 
 	keys := make([]string, 0, len(input.GetInstanceOptions()))
 	for key := range input.GetInstanceOptions() {
@@ -201,6 +220,18 @@ func picodataConfigContent(input *domain.PicodataParams) string {
 		fmt.Fprintf(&b, "  %s: %s\n", key, input.GetInstanceOptions()[key])
 	}
 	return b.String()
+}
+
+func picodataInstanceName(componentID string) string {
+	name := strings.NewReplacer("-", "_", ".", "_", "/", "_").Replace(componentID)
+	if name == "" {
+		return "picodata_instance"
+	}
+	return name
+}
+
+func shellYAMLString(value string) string {
+	return "'" + strings.ReplaceAll(value, "'", "''") + "'"
 }
 
 type tierSpec struct {
