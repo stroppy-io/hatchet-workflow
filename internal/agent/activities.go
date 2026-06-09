@@ -26,6 +26,8 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
 )
 
+const maxCapturedStreamBytes = 256 * 1024
+
 // heartbeater abstracts activity.RecordHeartbeat so the activities can be unit
 // tested with a plain context.Background() (no Temporal runtime needed).
 type heartbeater func(ctx context.Context, details ...any)
@@ -305,8 +307,8 @@ loop:
 	timedOut := runCtx.Err() == context.DeadlineExceeded
 
 	result := &common.Cmd_Result{
-		Stdout:   stdoutBuf.Bytes(),
-		Stderr:   stderrBuf.Bytes(),
+		Stdout:   truncateCapturedStream(stdoutBuf.Bytes()),
+		Stderr:   truncateCapturedStream(stderrBuf.Bytes()),
 		TimedOut: timedOut,
 		Elapsed:  durationpb.New(elapsed),
 	}
@@ -322,6 +324,22 @@ loop:
 	// activity error, so the workflow can inspect exit_code/timed_out. We only
 	// surface a Go error if the result itself could not be produced.
 	return result, nil
+}
+
+func truncateCapturedStream(data []byte) []byte {
+	if len(data) <= maxCapturedStreamBytes {
+		return data
+	}
+	prefix := []byte(fmt.Sprintf(
+		"... output truncated, kept last %d of %d bytes ...\n",
+		maxCapturedStreamBytes,
+		len(data),
+	))
+	tail := data[len(data)-maxCapturedStreamBytes:]
+	out := make([]byte, 0, len(prefix)+len(tail))
+	out = append(out, prefix...)
+	out = append(out, tail...)
+	return out
 }
 
 // FetchFileActivity downloads File.AsRef.uri (http/https) to File.info.path,
