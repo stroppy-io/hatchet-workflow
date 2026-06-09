@@ -27,6 +27,8 @@ const (
 	monPort = 8765
 
 	defaultDatabasePath = "/Root/testdb"
+	ydbPDiskDir         = "/var/lib/stroppy-cloud"
+	ydbPDiskPath        = ydbPDiskDir + "/ydb-pdisk.data"
 )
 
 type Database struct{}
@@ -181,6 +183,11 @@ func ydbConfigContent(input *domain.YdbParams, nodeType string, options map[stri
 	fmt.Fprintf(&b, "static_erasure: %s\n", ydbFaultTolerance(input))
 	fmt.Fprintf(&b, "default_disk_type: %s\n", ydbDiskType(input))
 	fmt.Fprintf(&b, "node_type: %s\n", nodeType)
+	b.WriteString("host_configs:\n")
+	b.WriteString("- host_config_id: 1\n")
+	b.WriteString("  drive:\n")
+	fmt.Fprintf(&b, "  - path: %s\n", ydbPDiskPath)
+	fmt.Fprintf(&b, "    type: %s\n", strings.ToUpper(ydbDiskType(input)))
 	if len(hosts) > 0 {
 		b.WriteString("hosts:\n")
 		for i, host := range hosts {

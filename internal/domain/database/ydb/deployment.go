@@ -251,13 +251,14 @@ Wants=network-online.target
 Type=simple
 EnvironmentFile=%s/topology.env
 ExecStartPre=/bin/mkdir -p %s
+ExecStartPre=/bin/mkdir -p %s
 ExecStart=%s
 Restart=always
 RestartSec=2
 
 [Install]
 WantedBy=multi-user.target
-`, role, componentID, configDir, deploymentbuilder.ShellQuote(dataDir), execStart)
+`, role, componentID, configDir, deploymentbuilder.ShellQuote(dataDir), deploymentbuilder.ShellQuote(ydbPDiskDir), execStart)
 }
 
 func ydbEffectiveConfigFile(component *topologypb.Component, database *domain.Database, overrides *deploymentpb.RenderOverrideSet, wiring ydbWiring) (*common.File, deploymentpb.RenderArtifact_Origin) {

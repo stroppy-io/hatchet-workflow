@@ -83,10 +83,23 @@ func TestYdbDeploymentPlan(t *testing.T) {
 		t.Fatalf("service still contains placeholder unit: %s", service)
 	}
 	config := dbtest.WriteFileText(storage, "030_write_config")
-	for _, want := range []string{"node_type: STORAGE", "static_erasure: block-4-2", "grpc_config", "host: 10.0.0.1", "host: 10.0.0.2"} {
+	for _, want := range []string{
+		"node_type: STORAGE",
+		"static_erasure: block-4-2",
+		"host_configs:",
+		"host_config_id: 1",
+		"path: /var/lib/stroppy-cloud/ydb-pdisk.data",
+		"type: SSD",
+		"grpc_config",
+		"host: 10.0.0.1",
+		"host: 10.0.0.2",
+	} {
 		if !strings.Contains(config, want) {
 			t.Fatalf("config missing %q:\n%s", want, config)
 		}
+	}
+	if !strings.Contains(service, "ExecStartPre=/bin/mkdir -p '/var/lib/stroppy-cloud'") {
+		t.Fatalf("service does not create ydb pdisk parent:\n%s", service)
 	}
 	if install := dbtest.CallCmd(storage, "100_install"); !strings.Contains(install, "ydbd") {
 		t.Fatalf("install does not fetch ydbd: %s", install)
