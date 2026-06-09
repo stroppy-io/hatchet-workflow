@@ -21,10 +21,8 @@ const (
 
 	// grpcPort is the YDB client gRPC port.
 	grpcPort = 2136
-	// storageGrpcPort is the static-node gRPC/node-broker port. It is separate
-	// from grpcPort so combined single-node deployments can run static and
-	// dynamic daemons on the same host.
-	storageGrpcPort = 2135
+	// storageGrpcPort is the static-node gRPC/node-broker port.
+	storageGrpcPort = grpcPort
 	// icPort is the interconnect (node-to-node) port.
 	icPort         = 19001
 	databaseICPort = 19002
@@ -266,10 +264,8 @@ func ydbConfigContent(input *domain.YdbParams, nodeType string, options map[stri
 }
 
 func ydbMemoryHardLimitMB(memoryMB uint64) uint64 {
-	// Default single-node self-checks run on 4 GiB VMs. In combined mode that
-	// leaves roughly 2 GiB per ydbd daemon after the split, which is too tight
-	// for YDB static bootstrap on current 24.1 builds. For small machines let
-	// YDB auto-size memory; keep the explicit cap for larger presets.
+	// Tiny VMs leave too little room for YDB bootstrap under an explicit cap.
+	// Let YDB auto-size memory there; keep the explicit cap for normal presets.
 	if memoryMB < 4096 {
 		return 0
 	}

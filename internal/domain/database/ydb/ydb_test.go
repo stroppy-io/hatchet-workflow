@@ -103,7 +103,7 @@ func TestYdbDeploymentPlan(t *testing.T) {
 	components := dbtest.ComponentsByID(plan)
 	storage := components["ydb-storage-1"]
 	service := dbtest.ServiceUnitText(storage)
-	for _, want := range []string{"/usr/local/bin/ydbd server", "--grpc-port 2135", "--ic-port 19001", "--mon-port 8765", "--node 1"} {
+	for _, want := range []string{"/usr/local/bin/ydbd server", "--grpc-port 2136", "--ic-port 19001", "--mon-port 8765", "--node 1"} {
 		if !strings.Contains(service, want) {
 			t.Fatalf("service missing %q:\n%s", want, service)
 		}
@@ -163,7 +163,7 @@ func TestYdbDeploymentPlan(t *testing.T) {
 		"systemctl is-active --quiet \"$service\"",
 		"timeout 1s bash -c",
 		"/dev/tcp/127.0.0.1/$port",
-		"port=2135",
+		"port=2136",
 		"journalctl --no-pager",
 	} {
 		if !strings.Contains(storageHealthcheck, want) {
@@ -177,7 +177,7 @@ func TestYdbDeploymentPlan(t *testing.T) {
 		"timeout 30s /usr/local/bin/ydbd -s \"$server\" admin database \"$database\" create \"$pool\"",
 		"database='/Root/testdb'",
 		"pool='ssd:1'",
-		"grpc://127.0.0.1:2135",
+		"grpc://127.0.0.1:2136",
 	} {
 		if !strings.Contains(init, want) {
 			t.Fatalf("init command missing %q:\n%s", want, init)
@@ -185,7 +185,7 @@ func TestYdbDeploymentPlan(t *testing.T) {
 	}
 
 	database := dbtest.ServiceUnitText(components["ydb-database-1"])
-	for _, want := range []string{"--grpc-port 2136", "--ic-port 19002", "--mon-port 8766", "--tenant '/Root/testdb'", "--node-broker 'grpc://10.0.0.1:2135'", "--node-broker 'grpc://10.0.0.2:2135'"} {
+	for _, want := range []string{"--grpc-port 2136", "--ic-port 19002", "--mon-port 8766", "--tenant '/Root/testdb'", "--node-broker 'grpc://10.0.0.1:2136'", "--node-broker 'grpc://10.0.0.2:2136'"} {
 		if !strings.Contains(database, want) {
 			t.Fatalf("database service missing %q:\n%s", want, database)
 		}
@@ -212,7 +212,7 @@ func TestYdbDeploymentPlan(t *testing.T) {
 	}
 }
 
-func TestYdbCombinedDeploymentStartsDatabaseServiceOnStorageNode(t *testing.T) {
+func TestYdbCombinedDeploymentUsesSingleStaticService(t *testing.T) {
 	db := &domain.Database{
 		Kind: domain.Database_KIND_YDB,
 		Source: &domain.Database_Params{
@@ -251,41 +251,22 @@ func TestYdbCombinedDeploymentStartsDatabaseServiceOnStorageNode(t *testing.T) {
 		t.Fatalf("deployment components = %d, want %d", got, want)
 	}
 	storageService := dbtest.ServiceUnitText(storage)
-	for _, want := range []string{"--grpc-port 2135", "--ic-port 19001", "--mon-port 8765"} {
+	for _, want := range []string{"--grpc-port 2136", "--ic-port 19001", "--mon-port 8765", "--node 1"} {
 		if !strings.Contains(storageService, want) {
 			t.Fatalf("storage service missing %q:\n%s", want, storageService)
 		}
 	}
-	databaseConfig := dbtest.WriteFileText(storage, "040_write_database_config")
-	if !strings.Contains(databaseConfig, "static_erasure: none") {
-		t.Fatalf("database config was not rendered:\n%s", databaseConfig)
-	}
-	databaseService := dbtest.WriteFileText(storage, "050_write_database_service")
-	for _, want := range []string{
-		"After=network-online.target stroppy-ydb-storage-1.service",
-		"--yaml-config '/etc/stroppy-cloud/ydb-storage-1/database.yaml'",
-		"--grpc-port 2136",
-		"--ic-port 19002",
-		"--mon-port 8766",
-		"--tenant '/Root/testdb'",
-		"--node-broker 'grpc://10.0.0.1:2135'",
-	} {
-		if !strings.Contains(databaseService, want) {
-			t.Fatalf("database service missing %q:\n%s", want, databaseService)
+	for _, stepID := range []string{"040_write_database_config", "050_write_database_service", "250_enable_start_database", "260_database_healthcheck"} {
+		if text := dbtest.WriteFileText(storage, stepID); text != "" {
+			t.Fatalf("combined single-node deployment unexpectedly has write-file step %s:\n%s", stepID, text)
 		}
-	}
-	if cmd := dbtest.CallCmd(storage, "250_enable_start_database"); !strings.Contains(cmd, "stroppy-ydb-storage-1-database") {
-		t.Fatalf("combined database service is not enabled:\n%s", cmd)
-	}
-	if check := dbtest.CallCmd(storage, "260_database_healthcheck"); !strings.Contains(check, "stroppy-ydb-storage-1-database") {
-		t.Fatalf("combined database service is not healthchecked:\n%s", check)
-	}
-	if check := dbtest.CallCmd(storage, "260_database_healthcheck"); !strings.Contains(check, "port=2136") {
-		t.Fatalf("combined database healthcheck does not wait for database port:\n%s", check)
+		if script := dbtest.CallCmd(storage, stepID); script != "" {
+			t.Fatalf("combined single-node deployment unexpectedly has command step %s:\n%s", stepID, script)
+		}
 	}
 }
 
-func TestYdbCombinedDeploymentSplitsMachineBudgetBetweenDaemons(t *testing.T) {
+func TestYdbCombinedDeploymentUsesFullMachineBudget(t *testing.T) {
 	db := &domain.Database{
 		Kind: domain.Database_KIND_YDB,
 		Source: &domain.Database_Params{
@@ -321,16 +302,13 @@ func TestYdbCombinedDeploymentSplitsMachineBudgetBetweenDaemons(t *testing.T) {
 
 	storage := dbtest.ComponentsByID(plan)["ydb-storage-1"]
 	storageConfig := dbtest.WriteFileText(storage, "030_write_config")
-	databaseConfig := dbtest.WriteFileText(storage, "040_write_database_config")
-	for name, config := range map[string]string{"storage": storageConfig, "database": databaseConfig} {
-		for _, want := range []string{
-			"cpu_count: 4",
-			"memory_controller_config:",
-			"hard_limit_bytes: 7301234688",
-		} {
-			if !strings.Contains(config, want) {
-				t.Fatalf("%s config missing %q:\n%s", name, want, config)
-			}
+	for _, want := range []string{
+		"cpu_count: 8",
+		"memory_controller_config:",
+		"hard_limit_bytes: 14602469376",
+	} {
+		if !strings.Contains(storageConfig, want) {
+			t.Fatalf("storage config missing %q:\n%s", want, storageConfig)
 		}
 	}
 }
@@ -357,7 +335,7 @@ func TestYdbCombinedDeploymentOmitsHardLimitOnSmallMachine(t *testing.T) {
 	state := dbtest.InfrastructureStateForSpec(spec)
 	state.GetMachines()[0].AllocatedQuotas = []*deploymentpb.Quota_Allocation{
 		quotaAllocation("compute.instanceCores.count", "cores", 2),
-		quotaAllocation("compute.instanceMemory.size", "GiB", 4),
+		quotaAllocation("compute.instanceMemory.size", "GiB", 2),
 	}
 
 	plan, err := deploymentbuilder.BuildPlan(spec, state, deploymentbuilder.BuildOptions{
@@ -370,16 +348,12 @@ func TestYdbCombinedDeploymentOmitsHardLimitOnSmallMachine(t *testing.T) {
 	}
 
 	storage := dbtest.ComponentsByID(plan)["ydb-storage-1"]
-	for name, config := range map[string]string{
-		"storage":  dbtest.WriteFileText(storage, "030_write_config"),
-		"database": dbtest.WriteFileText(storage, "040_write_database_config"),
-	} {
-		if strings.Contains(config, "memory_controller_config:") {
-			t.Fatalf("%s config unexpectedly has memory limit:\n%s", name, config)
-		}
-		if !strings.Contains(config, "cpu_count: 1") {
-			t.Fatalf("%s config does not split CPU budget:\n%s", name, config)
-		}
+	config := dbtest.WriteFileText(storage, "030_write_config")
+	if strings.Contains(config, "memory_controller_config:") {
+		t.Fatalf("storage config unexpectedly has memory limit:\n%s", config)
+	}
+	if !strings.Contains(config, "cpu_count: 2") {
+		t.Fatalf("storage config does not use full CPU budget:\n%s", config)
 	}
 }
 
