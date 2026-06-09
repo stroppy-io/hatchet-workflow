@@ -1,9 +1,10 @@
 (stroppy_forward_proxy) {
-	@forward_proxy expression `{http.request.orig_uri}.startsWith("http://") || {http.request.orig_uri}.startsWith("https://")`
+	@forward_proxy expression `{http.request.method} == "CONNECT" || {http.request.orig_uri}.startsWith("http://") || {http.request.orig_uri}.startsWith("https://")`
 
 	handle @forward_proxy {
 		reverse_proxy {$CADDY_UPSTREAM:127.0.0.1:8080} {
 			header_up X-Stroppy-Forward-Proxy 1
+			header_up X-Stroppy-Proxy-Target {http.request.orig_uri}
 			header_up Host {http.request.host}
 		}
 	}
