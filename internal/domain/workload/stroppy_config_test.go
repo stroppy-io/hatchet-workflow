@@ -53,6 +53,31 @@ func TestRenderStroppyConfigRoutesOTLPThroughServerAddress(t *testing.T) {
 	}
 }
 
+func TestRenderStroppyConfigSetsPicodataBulkSize(t *testing.T) {
+	rendered := renderStroppyConfigJSON(&domain.Workload{
+		Script:   "tpcc/tx",
+		Protocol: domain.Workload_PROTOCOL_PICODATA,
+		Execution: &domain.Workload_Execution{
+			Vus: 1,
+			Limit: &domain.Workload_Execution_Duration{
+				Duration: "1m",
+			},
+		},
+	}, &domain.Database{Kind: domain.Database_KIND_PICODATA}, map[string]string{
+		deploymentbuilder.LabelServerAddr: "https://control.example",
+		deploymentbuilder.LabelRunID:      "run-1",
+	}, databaseTarget{Host: "10.0.0.2", Port: 5432}, 4, "agent-token")
+
+	for _, want := range []string{
+		`"driverType":\s+"picodata"`,
+		`"bulkSize":\s+100`,
+	} {
+		if !regexp.MustCompile(want).MatchString(rendered) {
+			t.Fatalf("picodata config missing pattern %q:\n%s", want, rendered)
+		}
+	}
+}
+
 func TestDriverTypeURLMatchesProtocolRegistry(t *testing.T) {
 	tests := []struct {
 		name       string

@@ -136,6 +136,18 @@ func (t databaseTarget) withDefaults(database *domain.Database) databaseTarget {
 	return t
 }
 
+func driverBulkSize(protocol domain.Workload_Protocol) int32 {
+	switch protocol {
+	case domain.Workload_PROTOCOL_PICODATA:
+		// Picodata's pgproto path handles multi-row INSERTs, but the default
+		// stroppy driver batch (2500 rows) produces very large statements for
+		// TPC-C. Keep batches small enough for sbroad and query limits.
+		return 100
+	default:
+		return 0
+	}
+}
+
 // monitorAccountID matches deployment/monitor.go: vmagent and vector both ship
 // to AccountID 0 through the gateway's /insert/* relay. Stroppy's OTLP metrics
 // land in the same VictoriaMetrics tenant.
@@ -164,7 +176,8 @@ func buildStroppyRunConfig(input *domain.Workload, database *domain.Database, se
 		sqlPtr = &s
 	}
 
-	driverType, driverURL := driverTypeURL(effectiveProtocol(input.GetProtocol(), database), target)
+	protocol := effectiveProtocol(input.GetProtocol(), database)
+	driverType, driverURL := driverTypeURL(protocol, target)
 	driverURL = resolveDatabasePath(driverURL, target.DatabasePath)
 
 	params := input.GetParameters()
@@ -182,20 +195,25 @@ func buildStroppyRunConfig(input *domain.Workload, database *domain.Database, se
 	}
 
 	maxConns := poolSize
+	driverConfig := &stroppypb.DriverRunConfig{
+		DriverType:          driverType,
+		Url:                 driverURL,
+		DefaultInsertMethod: insertMethod,
+		Pool: &stroppypb.DriverRunConfig_PoolConfig{
+			MaxConns: &maxConns,
+			MinConns: &maxConns,
+		},
+	}
+	if bulkSize := driverBulkSize(protocol); bulkSize > 0 {
+		driverConfig.BulkSize = &bulkSize
+	}
+
 	rc := &stroppypb.RunConfig{
 		Version: "1",
 		Script:  scriptPtr,
 		Sql:     sqlPtr,
 		Drivers: map[uint32]*stroppypb.DriverRunConfig{
-			0: {
-				DriverType:          driverType,
-				Url:                 driverURL,
-				DefaultInsertMethod: insertMethod,
-				Pool: &stroppypb.DriverRunConfig_PoolConfig{
-					MaxConns: &maxConns,
-					MinConns: &maxConns,
-				},
-			},
+			0: driverConfig,
 		},
 		Env:     stroppyEnv(params, scaleFactor, poolSize, loadWorkers),
 		K6Args:  k6Args(input.GetExecution()),
