@@ -172,9 +172,9 @@ func picodataInstanceCount(input *domain.PicodataParams) uint32 {
 	return input.GetInstances()
 }
 
-// picodataConfigContent renders a minimal picodata.yaml in the current config
-// shape: cluster tiers plus per-instance sockets and data directory.
-func picodataConfigContent(componentID string, input *domain.PicodataParams, wiring picodataWiring) string {
+// picodataConfigContent renders a minimal picodata.yaml: cluster tiers plus
+// per-instance sockets and data directory.
+func picodataConfigContent(componentID string, input *domain.PicodataParams, version string, wiring picodataWiring) string {
 	advertise := wiring.advertise
 	if advertise == "" {
 		advertise = fmt.Sprintf("127.0.0.1:%d", iprotoPort)
@@ -182,10 +182,6 @@ func picodataConfigContent(componentID string, input *domain.PicodataParams, wir
 	pgAdvertise := wiring.pgAdvertise
 	if pgAdvertise == "" {
 		pgAdvertise = fmt.Sprintf("127.0.0.1:%d", pgprotoPort)
-	}
-	peer := wiring.peer
-	if peer == "" {
-		peer = advertise
 	}
 	dataDir := deploymentbuilder.DataDir(componentID)
 
@@ -202,7 +198,12 @@ func picodataConfigContent(componentID string, input *domain.PicodataParams, wir
 	fmt.Fprintf(&b, "  instance_dir: %s\n", shellYAMLString(dataDir))
 	fmt.Fprintf(&b, "  name: %s\n", shellYAMLString(picodataInstanceName(componentID)))
 	b.WriteString("  tier: default\n")
-	fmt.Fprintf(&b, "  peer:\n    - %s\n", shellYAMLString(peer))
+	if wiring.peer != "" {
+		fmt.Fprintf(&b, "  peer:\n    - %s\n", shellYAMLString(wiring.peer))
+	}
+	if picodataUsesLegacyConfig(version) {
+		return picodataConfigContentLegacy(&b, input, advertise, pgAdvertise)
+	}
 	b.WriteString("  iproto:\n")
 	b.WriteString("    enabled: true\n")
 	fmt.Fprintf(&b, "    listen: %s\n", shellYAMLString(fmt.Sprintf("0.0.0.0:%d", iprotoPort)))
@@ -225,6 +226,31 @@ func picodataConfigContent(componentID string, input *domain.PicodataParams, wir
 		fmt.Fprintf(&b, "  %s: %s\n", key, input.GetInstanceOptions()[key])
 	}
 	return b.String()
+}
+
+func picodataConfigContentLegacy(b *strings.Builder, input *domain.PicodataParams, advertise, pgAdvertise string) string {
+	fmt.Fprintf(b, "  iproto_listen: %s\n", shellYAMLString(fmt.Sprintf("0.0.0.0:%d", iprotoPort)))
+	fmt.Fprintf(b, "  iproto_advertise: %s\n", shellYAMLString(advertise))
+	fmt.Fprintf(b, "  http_listen: %s\n", shellYAMLString(fmt.Sprintf("0.0.0.0:%d", httpPort)))
+	b.WriteString("  pg:\n")
+	fmt.Fprintf(b, "    listen: %s\n", shellYAMLString(fmt.Sprintf("0.0.0.0:%d", pgprotoPort)))
+	fmt.Fprintf(b, "    advertise: %s\n", shellYAMLString(pgAdvertise))
+	b.WriteString("    ssl: false\n")
+
+	keys := make([]string, 0, len(input.GetInstanceOptions()))
+	for key := range input.GetInstanceOptions() {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		fmt.Fprintf(b, "  %s: %s\n", key, input.GetInstanceOptions()[key])
+	}
+	return b.String()
+}
+
+func picodataUsesLegacyConfig(version string) bool {
+	version = strings.TrimSpace(version)
+	return version == "" || strings.HasPrefix(version, "25.")
 }
 
 func picodataInstanceName(componentID string) string {

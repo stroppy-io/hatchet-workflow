@@ -126,14 +126,21 @@ func TestPicodataDeploymentPlan(t *testing.T) {
 		"replication_factor: 2",
 		"instance_dir: '/var/lib/stroppy-cloud/picodata-instance-1'",
 		"name: 'picodata_instance_1'",
-		"peer:\n    - '10.0.0.1:3301'",
-		"iproto:\n    enabled: true\n    listen: '0.0.0.0:3301'\n    advertise: '10.0.0.1:3301'",
-		"pgproto:\n    enabled: true\n    listen: '0.0.0.0:5432'\n    advertise: '10.0.0.1:5432'",
+		"iproto_listen: '0.0.0.0:3301'",
+		"iproto_advertise: '10.0.0.1:3301'",
+		"http_listen: '0.0.0.0:8081'",
+		"pg:\n    listen: '0.0.0.0:5432'\n    advertise: '10.0.0.1:5432'\n    ssl: false",
 		"memtx_memory: 2147483648",
 	} {
 		if !strings.Contains(config, want) {
 			t.Fatalf("config missing %q:\n%s", want, config)
 		}
+	}
+	if strings.Contains(config, "peer:") {
+		t.Fatalf("bootstrap instance should not join itself:\n%s", config)
+	}
+	if strings.Contains(config, "pgproto:") {
+		t.Fatalf("Picodata 25.3 config should use instance.pg, not pgproto:\n%s", config)
 	}
 
 	config2 := dbtest.WriteFileText(components["picodata-instance-2"], "030_write_config")

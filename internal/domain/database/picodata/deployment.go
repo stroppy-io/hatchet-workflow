@@ -219,12 +219,13 @@ func picodataDefaultConfigFile(component *topologypb.Component, database *domain
 }
 
 func picodataConfigContentForRole(database *domain.Database, componentID, role string, wiring picodataWiring) string {
-	params := database.GetParams().GetPicodata()
+	dbParams := database.GetParams()
+	params := dbParams.GetPicodata()
 	switch role {
 	case picodataRoleHaproxy:
 		return picodataHaproxyConfig(params.GetHaproxyOptions(), wiring.backends)
 	default:
-		return picodataConfigContent(componentID, params, wiring)
+		return picodataConfigContent(componentID, params, dbParams.GetVersion(), wiring)
 	}
 }
 
