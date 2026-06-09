@@ -178,11 +178,8 @@ func ydbDatabasePath(input *domain.YdbParams) string {
 // ("STORAGE" or "COMPUTE"), with the matching *_options merged flat under a
 // passthrough block. hosts is the runtime-resolved static (storage) node
 // address list; empty in preview (infrastructure not provisioned yet).
-func ydbConfigContent(input *domain.YdbParams, nodeType string, options map[string]string, hosts []string) string {
+func ydbConfigContent(input *domain.YdbParams, _ string, options map[string]string, hosts []string) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "static_erasure: %s\n", ydbFaultTolerance(input))
-	fmt.Fprintf(&b, "default_disk_type: %s\n", ydbDiskType(input))
-	fmt.Fprintf(&b, "node_type: %s\n", nodeType)
 	b.WriteString("host_configs:\n")
 	b.WriteString("- host_config_id: 1\n")
 	b.WriteString("  drive:\n")

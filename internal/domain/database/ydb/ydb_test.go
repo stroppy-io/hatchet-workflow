@@ -84,8 +84,6 @@ func TestYdbDeploymentPlan(t *testing.T) {
 	}
 	config := dbtest.WriteFileText(storage, "030_write_config")
 	for _, want := range []string{
-		"node_type: STORAGE",
-		"static_erasure: block-4-2",
 		"host_configs:",
 		"host_config_id: 1",
 		"path: /var/lib/stroppy-cloud/ydb-pdisk.data",
@@ -102,6 +100,11 @@ func TestYdbDeploymentPlan(t *testing.T) {
 	} {
 		if !strings.Contains(config, want) {
 			t.Fatalf("config missing %q:\n%s", want, config)
+		}
+	}
+	for _, legacy := range []string{"static_erasure:", "default_disk_type:", "node_type:"} {
+		if strings.Contains(config, legacy) {
+			t.Fatalf("config contains unsupported legacy field %q:\n%s", legacy, config)
 		}
 	}
 	if !strings.Contains(service, "ExecStartPre=/bin/mkdir -p '/var/lib/stroppy-cloud'") {
