@@ -23,10 +23,6 @@ func TestEnvBuildsProviderIndependentAgentContract(t *testing.T) {
 	checks := map[string]string{
 		"STROPPY_SERVER_ADDR":      "http://server:8080",
 		"STROPPY_AGENT_BINARY_URL": "http://server:8080/agent/binary",
-		"HTTP_PROXY":               "http://server:8080",
-		"HTTPS_PROXY":              "http://server:8080",
-		"http_proxy":               "http://server:8080",
-		"https_proxy":              "http://server:8080",
 		"STROPPY_MACHINE_ID":       "postgres-master",
 		"STROPPY_NODE_ID":          "postgres-master",
 		"AGENT_MACHINE_ID":         "postgres-master",
@@ -60,6 +56,12 @@ func TestEnvDoesNotLeakDirectBackendAddresses(t *testing.T) {
 			"STROPPY_AGENT_BINARY_URL": "http://wrong/agent",
 			"STROPPY_SERVER_ADDR":      "http://wrong",
 			"TEMPORAL_NAMESPACE":       "wrong",
+			"HTTP_PROXY":               "http://wrong-proxy",
+			"HTTPS_PROXY":              "http://wrong-proxy",
+			"NO_PROXY":                 "wrong",
+			"http_proxy":               "http://wrong-proxy",
+			"https_proxy":              "http://wrong-proxy",
+			"no_proxy":                 "wrong",
 		},
 	})
 	if err != nil {
@@ -77,6 +79,12 @@ func TestEnvDoesNotLeakDirectBackendAddresses(t *testing.T) {
 		"VICTORIA_LOGS_URL",
 		"VICTORIA_METRICS_URL",
 		"VICTORIA_URL",
+		"HTTP_PROXY",
+		"HTTPS_PROXY",
+		"NO_PROXY",
+		"http_proxy",
+		"https_proxy",
+		"no_proxy",
 	} {
 		if _, ok := env[key]; ok {
 			t.Fatalf("%s leaked into agent env: %#v", key, env)
@@ -86,8 +94,6 @@ func TestEnvDoesNotLeakDirectBackendAddresses(t *testing.T) {
 	checks := map[string]string{
 		"STROPPY_SERVER_ADDR":      "https://control.stage",
 		"STROPPY_AGENT_BINARY_URL": "https://control.stage/agent/binary",
-		"HTTP_PROXY":               "https://control.stage",
-		"HTTPS_PROXY":              "https://control.stage",
 		"TEMPORAL_NAMESPACE":       DefaultTemporalNamespace,
 		"WORKLOAD_CUSTOM_ENV":      "kept",
 	}
@@ -111,9 +117,8 @@ func TestCloudInitUsesSameEnvContract(t *testing.T) {
 		"#cloud-config",
 		"STROPPY_SERVER_ADDR=http://server:8080",
 		"STROPPY_AGENT_BINARY_URL=http://server:8080/agent/binary",
-		"HTTP_PROXY=http://server:8080",
-		"NO_PROXY=127.0.0.1,localhost,::1,host.docker.internal,169.254.169.254,server,server:8080",
 		"Acquire::http::Proxy \"http://server:8080\";",
+		"Acquire::https::Proxy \"http://server:8080\";",
 		"STROPPY_MACHINE_ID=node-1",
 		"AGENT_TASK_QUEUE=stroppy-agent-node-1",
 		"EnvironmentFile=/etc/stroppy/agent.env",
@@ -126,33 +131,23 @@ func TestCloudInitUsesSameEnvContract(t *testing.T) {
 			t.Fatalf("cloud-init missing %q:\n%s", want, cloudInit)
 		}
 	}
+	for _, unwanted := range []string{"HTTP_PROXY=", "HTTPS_PROXY=", "http_proxy=", "https_proxy=", "NO_PROXY=", "no_proxy="} {
+		if strings.Contains(cloudInit, unwanted) {
+			t.Fatalf("cloud-init leaked proxy env %q:\n%s", unwanted, cloudInit)
+		}
+	}
 }
 
-func TestAgentProxyEnvAddsExplicitDefaultProxyPort(t *testing.T) {
-	proxyURL, noProxy := AgentProxyEnv("http://caddy")
+func TestAptProxyURLAddsExplicitDefaultProxyPort(t *testing.T) {
+	proxyURL := AptProxyURL("http://caddy")
 	if got, want := proxyURL, "http://caddy:80"; got != want {
 		t.Fatalf("proxy URL = %q, want %q", got, want)
 	}
-	if !contains(noProxy, "caddy") {
-		t.Fatalf("no_proxy hosts = %#v, want caddy", noProxy)
-	}
 }
 
-func TestAgentProxyEnvUsesHTTPSOriginForPublicServer(t *testing.T) {
-	proxyURL, noProxy := AgentProxyEnv("https://stage.cloud.stroppy.io")
+func TestAptProxyURLUsesHTTPSOriginForPublicServer(t *testing.T) {
+	proxyURL := AptProxyURL("https://stage.cloud.stroppy.io")
 	if got, want := proxyURL, "https://stage.cloud.stroppy.io"; got != want {
 		t.Fatalf("proxy URL = %q, want %q", got, want)
 	}
-	if !contains(noProxy, "stage.cloud.stroppy.io") {
-		t.Fatalf("no_proxy hosts = %#v, want stage.cloud.stroppy.io", noProxy)
-	}
-}
-
-func contains(values []string, want string) bool {
-	for _, value := range values {
-		if value == want {
-			return true
-		}
-	}
-	return false
 }

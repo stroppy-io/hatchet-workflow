@@ -326,7 +326,8 @@ func yandexEnv(settings *deploymentpb.Yandex_Settings) map[string]string {
 }
 
 func applyDockerAgentBootstrap(runID, nodeID string, container *deploymentpb.Docker_Container, bootstrap *workflowpb.AgentBootstrap) error {
-	env, err := agentdomain.Env(nodeID, agentBootstrap(bootstrap, nodeID, runID))
+	boot := agentBootstrap(bootstrap, nodeID, runID)
+	env, err := agentdomain.Env(nodeID, boot)
 	if err != nil {
 		return fmt.Errorf("render docker agent env for %q: %w", nodeID, err)
 	}
@@ -337,6 +338,13 @@ func applyDockerAgentBootstrap(runID, nodeID string, container *deploymentpb.Doc
 		Content: []byte(agentdomain.EnvFileFromMap(mergedEnv)),
 		Mode:    0644,
 	})
+	if aptProxyConfig := agentdomain.AptProxyConfig(boot.ServerAddr); aptProxyConfig != "" {
+		container.Files = upsertDockerFile(container.GetFiles(), &deploymentpb.Docker_File{
+			Path:    agentdomain.DockerAptProxyFilePath,
+			Content: []byte(aptProxyConfig),
+			Mode:    0644,
+		})
+	}
 	return nil
 }
 

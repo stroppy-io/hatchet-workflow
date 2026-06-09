@@ -54,6 +54,25 @@ func TestRenderDockerInputInjectsAgentBootstrap(t *testing.T) {
 			t.Fatalf("docker env file missing %q:\n%s", want, content)
 		}
 	}
+	for _, unwanted := range []string{"HTTP_PROXY=", "HTTPS_PROXY=", "http_proxy=", "https_proxy=", "NO_PROXY=", "no_proxy="} {
+		if strings.Contains(content, unwanted) {
+			t.Fatalf("docker env file leaked proxy env %q:\n%s", unwanted, content)
+		}
+	}
+
+	aptProxy := dockerFileByPath(container.GetFiles(), agentdomain.DockerAptProxyFilePath)
+	if aptProxy == nil {
+		t.Fatalf("%s is missing", agentdomain.DockerAptProxyFilePath)
+	}
+	aptProxyContent := string(aptProxy.GetContent())
+	for _, want := range []string{
+		`Acquire::http::Proxy "http://127.0.0.1:8080";`,
+		`Acquire::https::Proxy "http://127.0.0.1:8080";`,
+	} {
+		if !strings.Contains(aptProxyContent, want) {
+			t.Fatalf("docker apt proxy config missing %q:\n%s", want, aptProxyContent)
+		}
+	}
 }
 
 func TestRenderTerraformInputInjectsYandexCloudInit(t *testing.T) {
@@ -89,11 +108,18 @@ func TestRenderTerraformInputInjectsYandexCloudInit(t *testing.T) {
 			"STROPPY_MACHINE_ID=" + machine.GetNodeId(),
 			"STROPPY_AGENT_TOKEN=agent-token-" + machine.GetNodeId(),
 			"AGENT_TASK_QUEUE=secret-queue-" + machine.GetNodeId(),
+			`Acquire::http::Proxy "http://127.0.0.1:8080";`,
+			`Acquire::https::Proxy "http://127.0.0.1:8080";`,
 			"EnvironmentFile=/etc/stroppy/agent.env",
 			"ExecStart=/usr/local/bin/stroppy-agent agent",
 		} {
 			if !strings.Contains(userData, want) {
 				t.Fatalf("cloud-init for %q missing %q:\n%s", machine.GetNodeId(), want, userData)
+			}
+		}
+		for _, unwanted := range []string{"HTTP_PROXY=", "HTTPS_PROXY=", "http_proxy=", "https_proxy=", "NO_PROXY=", "no_proxy="} {
+			if strings.Contains(userData, unwanted) {
+				t.Fatalf("cloud-init for %q leaked proxy env %q:\n%s", machine.GetNodeId(), unwanted, userData)
 			}
 		}
 	}

@@ -3,7 +3,6 @@ package agent
 import (
 	"bytes"
 	"fmt"
-	"net"
 	"net/url"
 	"sort"
 	"strings"
@@ -14,6 +13,7 @@ const (
 	RemoteBinPath             = "/usr/local/bin/stroppy-agent"
 	DefaultTemporalNamespace  = "default"
 	DockerEnvFilePath         = "/etc/stroppy-agent.env"
+	DockerAptProxyFilePath    = "/etc/apt/apt.conf.d/90stroppy-proxy"
 	CloudInitEnvFilePath      = "/etc/stroppy/agent.env"
 	DefaultAgentBinaryPathURL = "/agent/binary"
 )
@@ -21,8 +21,11 @@ const (
 var blockedExtraEnv = map[string]struct{}{
 	"APT_BACKEND":              {},
 	"GRAFANA_BACKEND":          {},
+	"HTTP_PROXY":               {},
+	"HTTPS_PROXY":              {},
 	"MONITORING_TOKEN":         {},
 	"MONITORING_URL":           {},
+	"NO_PROXY":                 {},
 	EnvAgentToken:              {},
 	"STROPPY_MONITORING_TOKEN": {},
 	"TEMPORAL_ADDR":            {},
@@ -32,6 +35,9 @@ var blockedExtraEnv = map[string]struct{}{
 	"VICTORIA_LOGS_URL":        {},
 	"VICTORIA_METRICS_URL":     {},
 	"VICTORIA_URL":             {},
+	"http_proxy":               {},
+	"https_proxy":              {},
+	"no_proxy":                 {},
 }
 
 type Bootstrap struct {
@@ -69,15 +75,6 @@ func Env(machineID string, bootstrap Bootstrap) (map[string]string, error) {
 	env := copyExtraEnv(bootstrap.ExtraEnv)
 	env["STROPPY_SERVER_ADDR"] = bootstrap.ServerAddr
 	env["STROPPY_AGENT_BINARY_URL"] = binaryURL
-	proxyURL, noProxyHosts := AgentProxyEnv(bootstrap.ServerAddr)
-	if proxyURL != "" {
-		env["HTTP_PROXY"] = proxyURL
-		env["HTTPS_PROXY"] = proxyURL
-		env["http_proxy"] = proxyURL
-		env["https_proxy"] = proxyURL
-		env["NO_PROXY"] = mergeNoProxy(env["NO_PROXY"], noProxyHosts)
-		env["no_proxy"] = env["NO_PROXY"]
-	}
 	if bootstrap.AgentToken != "" {
 		env[EnvAgentToken] = bootstrap.AgentToken
 	}
@@ -144,7 +141,7 @@ func CloudInit(machineID string, bootstrap Bootstrap, options CloudInitOptions) 
 		EnvFile:      indent(EnvFileFromMap(env), 6),
 		BinaryURL:    env["STROPPY_AGENT_BINARY_URL"],
 		BinPath:      RemoteBinPath,
-		ProxyURL:     env["HTTP_PROXY"],
+		ProxyURL:     AptProxyURL(bootstrap.ServerAddr),
 	}
 
 	var buf bytes.Buffer
@@ -222,13 +219,14 @@ func copyExtraEnv(in map[string]string) map[string]string {
 	return out
 }
 
-// AgentProxyEnv returns the HTTP proxy URL agents should use for outbound
-// package/artifact traffic plus hosts that must bypass that proxy to avoid
-// sending control-plane calls back through the apt forward-proxy path.
-func AgentProxyEnv(serverAddr string) (string, []string) {
+// AptProxyURL returns the forward-proxy URL apt should use for package traffic.
+// It is intentionally not exported in the agent environment: arbitrary curl/wget
+// commands must use the machine's normal network path, while apt alone goes
+// through the gateway cache.
+func AptProxyURL(serverAddr string) string {
 	u, err := url.Parse(serverAddr)
 	if err != nil || u.Host == "" {
-		return serverAddr, defaultNoProxyHosts("")
+		return serverAddr
 	}
 	host := u.Hostname()
 	proxyHost := u.Host
@@ -237,41 +235,18 @@ func AgentProxyEnv(serverAddr string) (string, []string) {
 		scheme = "http"
 	}
 	if scheme == "http" && u.Port() == "" && host != "" {
-		proxyHost = net.JoinHostPort(host, "80")
+		proxyHost = host + ":80"
 	}
 	if proxyHost == "" {
-		return "", nil
+		return ""
 	}
-	return scheme + "://" + proxyHost, defaultNoProxyHosts(host, u.Host)
+	return scheme + "://" + proxyHost
 }
 
-func defaultNoProxyHosts(hosts ...string) []string {
-	out := []string{"127.0.0.1", "localhost", "::1", "host.docker.internal", "169.254.169.254"}
-	for _, host := range hosts {
-		if host != "" {
-			out = append(out, host)
-		}
+func AptProxyConfig(serverAddr string) string {
+	proxyURL := AptProxyURL(serverAddr)
+	if proxyURL == "" {
+		return ""
 	}
-	return out
-}
-
-func mergeNoProxy(existing string, hosts []string) string {
-	seen := map[string]struct{}{}
-	out := make([]string, 0, len(hosts)+4)
-	add := func(values string) {
-		for _, value := range strings.Split(values, ",") {
-			value = strings.TrimSpace(value)
-			if value == "" {
-				continue
-			}
-			if _, ok := seen[value]; ok {
-				continue
-			}
-			seen[value] = struct{}{}
-			out = append(out, value)
-		}
-	}
-	add(existing)
-	add(strings.Join(hosts, ","))
-	return strings.Join(out, ",")
+	return fmt.Sprintf("Acquire::http::Proxy %q;\nAcquire::https::Proxy %q;\n", proxyURL, proxyURL)
 }
