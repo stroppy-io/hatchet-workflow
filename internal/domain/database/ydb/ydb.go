@@ -229,7 +229,7 @@ func ydbConfigContent(input *domain.YdbParams, nodeType string, options map[stri
 	if budget.cpuCores > 0 {
 		fmt.Fprintf(&b, "  cpu_count: %d\n", budget.cpuCores)
 	}
-	if hardMB := budget.memoryMB * 85 / 100; hardMB > 0 {
+	if hardMB := ydbMemoryHardLimitMB(budget.memoryMB); hardMB > 0 {
 		b.WriteString("memory_controller_config:\n")
 		fmt.Fprintf(&b, "  hard_limit_bytes: %d\n", hardMB*1024*1024)
 	}
@@ -263,6 +263,17 @@ func ydbConfigContent(input *domain.YdbParams, nodeType string, options map[stri
 		}
 	}
 	return b.String()
+}
+
+func ydbMemoryHardLimitMB(memoryMB uint64) uint64 {
+	// Default single-node self-checks run on 4 GiB VMs. In combined mode that
+	// leaves roughly 2 GiB per ydbd daemon after the split, which is too tight
+	// for YDB static bootstrap on current 24.1 builds. For small machines let
+	// YDB auto-size memory; keep the explicit cap for larger presets.
+	if memoryMB < 4096 {
+		return 0
+	}
+	return memoryMB * 85 / 100
 }
 
 func ydbStateStorageNodeList(input *domain.YdbParams, hosts []string) string {

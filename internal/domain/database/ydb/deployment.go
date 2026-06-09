@@ -279,7 +279,30 @@ func ydbHealthcheckCommand(component *topologypb.Component, database *domain.Dat
 	if component.GetRole() == ydbRoleDatabase {
 		return ydbDatabaseHealthcheckCommand(serviceName, database)
 	}
+	if component.GetRole() == ydbRoleStorage {
+		return ydbStorageHealthcheckCommand(serviceName)
+	}
 	return "systemctl is-active --quiet " + deploymentbuilder.ShellQuote(serviceName)
+}
+
+func ydbStorageHealthcheckCommand(serviceName string) string {
+	return fmt.Sprintf(`set -e
+service=%s
+port=%d
+
+for attempt in $(seq 1 120); do
+  if systemctl is-active --quiet "$service" && timeout 1s bash -c "cat < /dev/null > /dev/tcp/127.0.0.1/$port" >/dev/null 2>&1; then
+    exit 0
+  fi
+  sleep 1
+done
+
+echo "--- systemctl status $service ---"
+systemctl status --no-pager -l "$service" || true
+echo "--- journalctl $service ---"
+journalctl --no-pager --output=short-iso-precise -u "$service" -n 200 || true
+exit 1
+`, deploymentbuilder.ShellQuote(serviceName), storageGrpcPort)
 }
 
 func ydbDatabaseHealthcheckCommand(serviceName string, database *domain.Database) string {

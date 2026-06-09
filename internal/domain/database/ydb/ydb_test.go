@@ -158,6 +158,18 @@ func TestYdbDeploymentPlan(t *testing.T) {
 	if install := dbtest.CallCmd(storage, "100_install"); !strings.Contains(install, "\"${STROPPY_SERVER_ADDR%/}/api/binaries/ydbd/24.1.18/ydbd-24.1.18-linux-amd64.tar.gz\"") {
 		t.Fatalf("install does not expand server binary URL: %s", install)
 	}
+	storageHealthcheck := dbtest.CallCmd(storage, "230_healthcheck")
+	for _, want := range []string{
+		"systemctl is-active --quiet \"$service\"",
+		"timeout 1s bash -c",
+		"/dev/tcp/127.0.0.1/$port",
+		"port=2135",
+		"journalctl --no-pager",
+	} {
+		if !strings.Contains(storageHealthcheck, want) {
+			t.Fatalf("storage healthcheck missing %q:\n%s", want, storageHealthcheck)
+		}
+	}
 	init := dbtest.CallCmd(storage, "240_init_database")
 	for _, want := range []string{
 		"timeout 10s /usr/local/bin/ydbd -s \"$server\" admin database \"$database\" status",
@@ -319,6 +331,54 @@ func TestYdbCombinedDeploymentSplitsMachineBudgetBetweenDaemons(t *testing.T) {
 			if !strings.Contains(config, want) {
 				t.Fatalf("%s config missing %q:\n%s", name, want, config)
 			}
+		}
+	}
+}
+
+func TestYdbCombinedDeploymentOmitsHardLimitOnSmallMachine(t *testing.T) {
+	db := &domain.Database{
+		Kind: domain.Database_KIND_YDB,
+		Source: &domain.Database_Params{
+			Params: &domain.DatabaseParams{
+				Engine: &domain.DatabaseParams_Ydb{
+					Ydb: &domain.YdbParams{
+						StorageNodes:   1,
+						DatabasePath:   "/Root/testdb",
+						FaultTolerance: domain.YdbParams_FAULT_TOLERANCE_NONE,
+					},
+				},
+			},
+		},
+	}
+	spec, err := (&Database{}).BuildTopologySpec(db.GetParams().GetYdb())
+	if err != nil {
+		t.Fatalf("build topology spec: %v", err)
+	}
+	state := dbtest.InfrastructureStateForSpec(spec)
+	state.GetMachines()[0].AllocatedQuotas = []*deploymentpb.Quota_Allocation{
+		quotaAllocation("compute.instanceCores.count", "cores", 2),
+		quotaAllocation("compute.instanceMemory.size", "GiB", 4),
+	}
+
+	plan, err := deploymentbuilder.BuildPlan(spec, state, deploymentbuilder.BuildOptions{
+		Database:        db,
+		PackageResolver: packages.NewRegistry(PackageResolver{}),
+		Renderers:       deploymentbuilder.NewRegistry(DeploymentRenderer{}),
+	})
+	if err != nil {
+		t.Fatalf("build deployment plan: %v", err)
+	}
+
+	storage := dbtest.ComponentsByID(plan)["ydb-storage-1"]
+	for name, config := range map[string]string{
+		"storage":  dbtest.WriteFileText(storage, "030_write_config"),
+		"database": dbtest.WriteFileText(storage, "040_write_database_config"),
+	} {
+		if strings.Contains(config, "memory_controller_config:") {
+			t.Fatalf("%s config unexpectedly has memory limit:\n%s", name, config)
+		}
+		if !strings.Contains(config, "cpu_count: 1") {
+			t.Fatalf("%s config does not split CPU budget:\n%s", name, config)
 		}
 	}
 }
