@@ -21,10 +21,16 @@ const (
 
 	// grpcPort is the YDB client gRPC port.
 	grpcPort = 2136
+	// storageGrpcPort is the static-node gRPC/node-broker port. It is separate
+	// from grpcPort so combined single-node deployments can run static and
+	// dynamic daemons on the same host.
+	storageGrpcPort = 2135
 	// icPort is the interconnect (node-to-node) port.
-	icPort = 19001
+	icPort         = 19001
+	databaseICPort = 19002
 	// monPort is the monitoring HTTP port.
-	monPort = 8765
+	monPort         = 8765
+	databaseMonPort = 8766
 
 	defaultDatabasePath = "/Root/testdb"
 	ydbPDiskDir         = "/var/lib/stroppy-cloud"
@@ -114,7 +120,7 @@ func (b *ydbSpecBuilder) build() *topology.TopologySpec {
 			b.spec.Connections = append(b.spec.Connections, dbspec.Connection(
 				ydbEngine, id, storageID,
 				topology.Connection_KIND_COORDINATION, topology.Connection_PROTOCOL_GRPC, topology.Connection_MODE_REQUEST,
-				"grpc", grpcPort, false,
+				"node-broker", storageGrpcPort, false,
 			))
 		}
 	}

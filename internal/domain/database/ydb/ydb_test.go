@@ -44,11 +44,39 @@ func TestYdbBuildTopologySpec(t *testing.T) {
 	if dbtest.ComponentsByIDInSpec(spec)["ydb-storage-1"].GetKind() != topology.Component_KIND_DATABASE {
 		t.Fatal("ydb-storage-1 is not a database component")
 	}
-	if !dbtest.HasConnection(spec, "ydb-database-1", "ydb-storage-1", "grpc") {
-		t.Fatal("database-1 does not register against storage-1 over grpc")
+	if !dbtest.HasConnection(spec, "ydb-database-1", "ydb-storage-1", "node-broker") {
+		t.Fatal("database-1 does not register against storage-1 over node-broker")
 	}
 	if !dbtest.HasConnection(spec, "haproxy-1", "ydb-database-1", "grpc") {
 		t.Fatal("haproxy-1 does not front database-1 grpc")
+	}
+}
+
+func TestYdbCombinedTopologyUsesStorageOnly(t *testing.T) {
+	spec, err := (&Database{}).BuildTopologySpec(&domain.YdbParams{
+		StorageNodes:   1,
+		DatabaseNodes:  0,
+		FaultTolerance: domain.YdbParams_FAULT_TOLERANCE_NONE,
+		DatabasePath:   "/Root/testdb",
+	})
+	if err != nil {
+		t.Fatalf("build topology spec: %v", err)
+	}
+	if err := spec.Validate(); err != nil {
+		t.Fatalf("spec invalid: %v", err)
+	}
+	if got, want := len(spec.GetNodes()), 1; got != want {
+		t.Fatalf("nodes = %d, want %d", got, want)
+	}
+	components := dbtest.ComponentsByIDInSpec(spec)
+	if components["ydb-storage-1"] == nil {
+		t.Fatal("combined topology is missing ydb-storage-1")
+	}
+	if components["ydb-database-1"] != nil {
+		t.Fatal("combined topology should not create a separate ydb-database-1 component")
+	}
+	if got, want := spec.GetLabels()["combined"], "true"; got != want {
+		t.Fatalf("combined label = %q, want %q", got, want)
 	}
 }
 
@@ -74,7 +102,7 @@ func TestYdbDeploymentPlan(t *testing.T) {
 	components := dbtest.ComponentsByID(plan)
 	storage := components["ydb-storage-1"]
 	service := dbtest.ServiceUnitText(storage)
-	for _, want := range []string{"/usr/local/bin/ydbd server", "--node 1"} {
+	for _, want := range []string{"/usr/local/bin/ydbd server", "--grpc-port 2135", "--ic-port 19001", "--mon-port 8765", "--node 1"} {
 		if !strings.Contains(service, want) {
 			t.Fatalf("service missing %q:\n%s", want, service)
 		}
@@ -130,7 +158,7 @@ func TestYdbDeploymentPlan(t *testing.T) {
 		"admin database \"$database\" create \"$pool\"",
 		"database='/Root/testdb'",
 		"pool='ssd:1'",
-		"grpc://127.0.0.1:2136",
+		"grpc://127.0.0.1:2135",
 	} {
 		if !strings.Contains(init, want) {
 			t.Fatalf("init command missing %q:\n%s", want, init)
@@ -138,7 +166,7 @@ func TestYdbDeploymentPlan(t *testing.T) {
 	}
 
 	database := dbtest.ServiceUnitText(components["ydb-database-1"])
-	for _, want := range []string{"--tenant '/Root/testdb'", "--node-broker '10.0.0.1:2136'", "--node-broker '10.0.0.2:2136'"} {
+	for _, want := range []string{"--grpc-port 2136", "--ic-port 19002", "--mon-port 8766", "--tenant '/Root/testdb'", "--node-broker '10.0.0.1:2135'", "--node-broker '10.0.0.2:2135'"} {
 		if !strings.Contains(database, want) {
 			t.Fatalf("database service missing %q:\n%s", want, database)
 		}
@@ -150,6 +178,76 @@ func TestYdbDeploymentPlan(t *testing.T) {
 	haproxy := dbtest.WriteFileText(components["haproxy-1"], "030_write_config")
 	if !strings.Contains(haproxy, "server ydb-1 10.0.0.3:2136 check") {
 		t.Fatalf("haproxy backends missing compute node:\n%s", haproxy)
+	}
+}
+
+func TestYdbCombinedDeploymentStartsDatabaseServiceOnStorageNode(t *testing.T) {
+	db := &domain.Database{
+		Kind: domain.Database_KIND_YDB,
+		Source: &domain.Database_Params{
+			Params: &domain.DatabaseParams{
+				Engine: &domain.DatabaseParams_Ydb{
+					Ydb: &domain.YdbParams{
+						StorageNodes:   1,
+						DatabasePath:   "/Root/testdb",
+						FaultTolerance: domain.YdbParams_FAULT_TOLERANCE_NONE,
+					},
+				},
+			},
+		},
+	}
+	spec, err := (&Database{}).BuildTopologySpec(db.GetParams().GetYdb())
+	if err != nil {
+		t.Fatalf("build topology spec: %v", err)
+	}
+	plan, err := deploymentbuilder.BuildPlan(spec, dbtest.InfrastructureStateForSpec(spec), deploymentbuilder.BuildOptions{
+		Database:        db,
+		PackageResolver: packages.NewRegistry(PackageResolver{}),
+		Renderers:       deploymentbuilder.NewRegistry(DeploymentRenderer{}),
+	})
+	if err != nil {
+		t.Fatalf("build deployment plan: %v", err)
+	}
+	if err := plan.Validate(); err != nil {
+		t.Fatalf("plan invalid: %v", err)
+	}
+
+	storage := dbtest.ComponentsByID(plan)["ydb-storage-1"]
+	if storage == nil {
+		t.Fatal("plan is missing ydb-storage-1")
+	}
+	if got, want := len(plan.GetComponents()), 1; got != want {
+		t.Fatalf("deployment components = %d, want %d", got, want)
+	}
+	storageService := dbtest.ServiceUnitText(storage)
+	for _, want := range []string{"--grpc-port 2135", "--ic-port 19001", "--mon-port 8765"} {
+		if !strings.Contains(storageService, want) {
+			t.Fatalf("storage service missing %q:\n%s", want, storageService)
+		}
+	}
+	databaseConfig := dbtest.WriteFileText(storage, "040_write_database_config")
+	if !strings.Contains(databaseConfig, "static_erasure: none") {
+		t.Fatalf("database config was not rendered:\n%s", databaseConfig)
+	}
+	databaseService := dbtest.WriteFileText(storage, "050_write_database_service")
+	for _, want := range []string{
+		"After=network-online.target stroppy-ydb-storage-1.service",
+		"--yaml-config '/etc/stroppy-cloud/ydb-storage-1/database.yaml'",
+		"--grpc-port 2136",
+		"--ic-port 19002",
+		"--mon-port 8766",
+		"--tenant '/Root/testdb'",
+		"--node-broker '10.0.0.1:2135'",
+	} {
+		if !strings.Contains(databaseService, want) {
+			t.Fatalf("database service missing %q:\n%s", want, databaseService)
+		}
+	}
+	if cmd := dbtest.CallCmd(storage, "250_enable_start_database"); !strings.Contains(cmd, "stroppy-ydb-storage-1-database") {
+		t.Fatalf("combined database service is not enabled:\n%s", cmd)
+	}
+	if check := dbtest.CallCmd(storage, "260_database_healthcheck"); !strings.Contains(check, "stroppy-ydb-storage-1-database") {
+		t.Fatalf("combined database service is not healthchecked:\n%s", check)
 	}
 }
 

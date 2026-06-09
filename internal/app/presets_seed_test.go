@@ -134,13 +134,13 @@ func TestBuiltinPicodataPresetsInstallRepository(t *testing.T) {
 	}
 }
 
-func TestBuiltinYdbSingleIncludesDatabaseNode(t *testing.T) {
+func TestBuiltinYdbSingleUsesCombinedNode(t *testing.T) {
 	preset := databasePresetByName(t, builtinDatabasePresets("tenant-1", "author-1"), "YDB single")
 	params := preset.GetDatabase().GetParams().GetYdb()
 	if got, want := params.GetStorageNodes(), uint32(1); got != want {
 		t.Fatalf("storage nodes = %d, want %d", got, want)
 	}
-	if got, want := params.GetDatabaseNodes(), uint32(1); got != want {
+	if got, want := params.GetDatabaseNodes(), uint32(0); got != want {
 		t.Fatalf("database nodes = %d, want %d", got, want)
 	}
 	if got, want := params.GetDatabasePath(), "/Root/testdb"; got != want {

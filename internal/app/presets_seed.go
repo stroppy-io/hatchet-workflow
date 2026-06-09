@@ -178,10 +178,9 @@ func builtinDatabasePresets(tenantID, authorID string) []*models.DatabasePresetR
 	// Legacy node flavors (64 vCPU storage etc.) are provider/topology concerns
 	// and not representable on the preset; we carry node counts, fault tolerance,
 	// failure domain, disk type, storage groups, pdisk count and db path. ---
-	add("YDB single", "Minimal self-deployed YDB: 1 storage node + 1 database node",
+	add("YDB single", "Minimal self-deployed YDB: 1 universal node (storage + compute on one box)",
 		domain.Database_KIND_YDB, ydb(&domain.YdbParams{
 			StorageNodes:   1,
-			DatabaseNodes:  1,
 			FaultTolerance: domain.YdbParams_FAULT_TOLERANCE_NONE,
 			DatabasePath:   "/Root/testdb",
 			AutoSizePdisks: true,
