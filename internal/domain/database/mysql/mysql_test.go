@@ -82,21 +82,21 @@ func TestMysqlDeploymentPlan(t *testing.T) {
 		}
 	}
 	for _, want := range []string{
-		"ExecStartPre=/bin/mkdir -p '/var/lib/stroppy-cloud'",
-		"rm -rf '/var/lib/stroppy-cloud/mysql-primary'",
+		"ExecStartPre=/bin/mkdir -p '/var/lib/mysql'",
+		"find '/var/lib/mysql' -mindepth 1 -maxdepth 1 -exec rm -rf {} +",
 	} {
 		if !strings.Contains(service, want) {
 			t.Fatalf("service missing datadir bootstrap guard %q:\n%s", want, service)
 		}
 	}
-	if strings.Contains(service, "ExecStartPre=/bin/mkdir -p '/var/lib/stroppy-cloud/mysql-primary'") {
-		t.Fatalf("service pre-creates mysql datadir before initialize:\n%s", service)
+	if strings.Contains(service, "/var/lib/stroppy-cloud/mysql-primary") {
+		t.Fatalf("service uses apparmor-hostile custom mysql datadir:\n%s", service)
 	}
 	if strings.Contains(service, "is prepared with config") {
 		t.Fatalf("service still contains placeholder unit: %s", service)
 	}
 	config := dbtest.WriteFileText(primary, "030_write_config")
-	for _, want := range []string{"[mysqld]", "server_id = 1", "max_connections = 500", "rpl_semi_sync_master_enabled = 1"} {
+	for _, want := range []string{"[mysqld]", "datadir = /var/lib/mysql", "server_id = 1", "max_connections = 500", "rpl_semi_sync_master_enabled = 1"} {
 		if !strings.Contains(config, want) {
 			t.Fatalf("config missing %q:\n%s", want, config)
 		}

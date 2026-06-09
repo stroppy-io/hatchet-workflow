@@ -147,7 +147,7 @@ func mysqlServerID(componentID string) uint32 {
 func mysqlConfigContent(input *domain.MySqlParams, componentID, role string, options map[string]string, isMariaDB bool) string {
 	merged := map[string]string{
 		"server_id":    strconv.FormatUint(uint64(mysqlServerID(componentID)), 10),
-		"datadir":      "/var/lib/stroppy-cloud/" + componentID,
+		"datadir":      mysqlDataDir(componentID),
 		"bind_address": "0.0.0.0",
 		"port":         strconv.Itoa(mysqlPort),
 		"log_bin":      "binlog",
@@ -188,4 +188,8 @@ func mysqlConfigContent(input *domain.MySqlParams, componentID, role string, opt
 		fmt.Fprintf(&b, "%s = %s\n", key, merged[key])
 	}
 	return b.String()
+}
+
+func mysqlDataDir(_ string) string {
+	return "/var/lib/mysql"
 }

@@ -2,7 +2,6 @@ package mysql
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 
 	deploymentbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/deployment"
@@ -198,8 +197,7 @@ func mysqlServiceUnit(componentID, role, configDir string, database *domain.Data
 	cfgPath := mysqlConfigPath(componentID, role)
 	switch role {
 	case mysqlRolePrimary, mysqlRoleReplica:
-		dataDir := deploymentbuilder.DataDir(componentID)
-		dataParentDir := filepath.Dir(dataDir)
+		dataDir := mysqlDataDir(componentID)
 		execStart := "/usr/sbin/mysqld --defaults-file=" + deploymentbuilder.ShellQuote(cfgPath) + " --datadir=" + deploymentbuilder.ShellQuote(dataDir) + " --user=mysql"
 		if database.GetParams().GetMysql().GetGroupReplication() {
 			if wiring.ownGroup != "" {
@@ -244,7 +242,7 @@ Type=simple
 EnvironmentFile=%s/topology.env
 ExecStartPre=/bin/mkdir -p %s
 ExecStartPre=/bin/chown -R mysql:mysql %s
-%sExecStartPre=/bin/sh -ec "if [ ! -d %s/mysql ]; then rm -rf %s; `+initCmd+`; fi"
+%sExecStartPre=/bin/sh -ec "if [ ! -d %s/mysql ]; then find %s -mindepth 1 -maxdepth 1 -exec rm -rf {} +; `+initCmd+`; fi"
 ExecStart=%s
 %sRestart=always
 RestartSec=2
@@ -255,8 +253,8 @@ WantedBy=multi-user.target
 			role,
 			componentID,
 			configDir,
-			deploymentbuilder.ShellQuote(dataParentDir),
-			deploymentbuilder.ShellQuote(dataParentDir),
+			deploymentbuilder.ShellQuote(dataDir),
+			deploymentbuilder.ShellQuote(dataDir),
 			socketDir,
 			deploymentbuilder.ShellQuote(dataDir),
 			deploymentbuilder.ShellQuote(dataDir),
