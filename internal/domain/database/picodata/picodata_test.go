@@ -118,7 +118,7 @@ func TestPicodataDeploymentPlan(t *testing.T) {
 		"name: 'picodata_instance_1'",
 		"peer:\n    - '10.0.0.1:3301'",
 		"iproto:\n    enabled: true\n    listen: '0.0.0.0:3301'\n    advertise: '10.0.0.1:3301'",
-		"pgproto:\n    enabled: true\n    listen: '0.0.0.0:5432'",
+		"pgproto:\n    enabled: true\n    listen: '0.0.0.0:5432'\n    advertise: '10.0.0.1:5432'",
 		"memtx_memory: 2147483648",
 	} {
 		if !strings.Contains(config, want) {

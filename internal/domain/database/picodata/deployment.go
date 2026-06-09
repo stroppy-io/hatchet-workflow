@@ -53,6 +53,7 @@ var picodataDeploymentSpecs = map[string]struct{ globalPriority, nodePriority ui
 // picodataWiring carries runtime-resolved cluster topology for one component.
 type picodataWiring struct {
 	advertise   string   // own iproto host:port (instances)
+	pgAdvertise string   // own pgproto host:port (instances)
 	peer        string   // bootstrap instance iproto host:port (empty on the bootstrap)
 	isBootstrap bool     // first instance bootstraps the raft group
 	backends    []string // instance pgproto host:port list (haproxy)
@@ -72,7 +73,10 @@ func picodataResolveWiring(ctx deploymentbuilder.RenderContext) (picodataWiring,
 		if !ok {
 			return picodataWiring{}, fmt.Errorf("picodata instance %q has no private endpoint", ctx.Component.GetId())
 		}
-		wiring := picodataWiring{advertise: deploymentbuilder.AddressPort(own.Address, iprotoPort)}
+		wiring := picodataWiring{
+			advertise:   deploymentbuilder.AddressPort(own.Address, iprotoPort),
+			pgAdvertise: deploymentbuilder.AddressPort(own.Address, pgprotoPort),
+		}
 		if len(instances) > 0 && instances[0].ComponentID == ctx.Component.GetId() {
 			wiring.isBootstrap = true
 		} else if len(instances) > 0 {

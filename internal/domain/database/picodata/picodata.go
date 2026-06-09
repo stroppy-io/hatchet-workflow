@@ -179,6 +179,10 @@ func picodataConfigContent(componentID string, input *domain.PicodataParams, wir
 	if advertise == "" {
 		advertise = fmt.Sprintf("127.0.0.1:%d", iprotoPort)
 	}
+	pgAdvertise := wiring.pgAdvertise
+	if pgAdvertise == "" {
+		pgAdvertise = fmt.Sprintf("127.0.0.1:%d", pgprotoPort)
+	}
 	peer := wiring.peer
 	if peer == "" {
 		peer = advertise
@@ -210,6 +214,7 @@ func picodataConfigContent(componentID string, input *domain.PicodataParams, wir
 	b.WriteString("  pgproto:\n")
 	b.WriteString("    enabled: true\n")
 	fmt.Fprintf(&b, "    listen: %s\n", shellYAMLString(fmt.Sprintf("0.0.0.0:%d", pgprotoPort)))
+	fmt.Fprintf(&b, "    advertise: %s\n", shellYAMLString(pgAdvertise))
 
 	keys := make([]string, 0, len(input.GetInstanceOptions()))
 	for key := range input.GetInstanceOptions() {
