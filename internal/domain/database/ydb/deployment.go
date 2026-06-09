@@ -246,18 +246,23 @@ config=%s
 
 last_log=/tmp/stroppy-ydb-bootstrap.log
 for attempt in $(seq 1 60); do
-  if timeout 10s /usr/local/bin/ydbd -s "$server" admin database "$database" status >/dev/null 2>&1; then
+  status_out="$(timeout 10s /usr/local/bin/ydbd -s "$server" admin database "$database" status 2>&1 || true)"
+  if printf '%%s\n' "$status_out" | grep -q "Database $database status:" && ! printf '%%s\n' "$status_out" | grep -q "ERROR:"; then
     echo "YDB database $database already exists"
     exit 0
   fi
 
-  if timeout 30s /usr/local/bin/ydbd -s "$server" admin blobstorage config init --yaml-file "$config" >>"$last_log" 2>&1; then
+  blob_out="$(timeout 30s /usr/local/bin/ydbd -s "$server" admin blobstorage config init --yaml-file "$config" 2>&1 || true)"
+  printf '%%s\n' "$blob_out" >>"$last_log"
+  if printf '%%s\n' "$blob_out" | grep -q "Success: true" && ! printf '%%s\n' "$blob_out" | grep -q "ERROR:"; then
     echo "YDB blobstorage config initialized"
   else
     cat "$last_log" >&2 || true
   fi
 
-  if timeout 30s /usr/local/bin/ydbd -s "$server" admin database "$database" create "$pool" >>"$last_log" 2>&1; then
+  create_out="$(timeout 30s /usr/local/bin/ydbd -s "$server" admin database "$database" create "$pool" 2>&1 || true)"
+  printf '%%s\n' "$create_out" >>"$last_log"
+  if printf '%%s\n' "$create_out" | grep -q "^OK$" && ! printf '%%s\n' "$create_out" | grep -q "ERROR:"; then
     echo "YDB database $database created with pool $pool"
     exit 0
   fi
