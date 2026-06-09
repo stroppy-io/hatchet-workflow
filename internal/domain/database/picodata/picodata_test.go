@@ -121,6 +121,19 @@ func TestPicodataDeploymentPlan(t *testing.T) {
 			t.Fatalf("sql limits command missing %q:\n%s", want, limits)
 		}
 	}
+	healthcheck := dbtest.CallCmd(instance, "230_healthcheck")
+	for _, want := range []string{
+		"systemctl is-active --quiet",
+		"postgresql://admin@127.0.0.1:5432?sslmode=disable",
+		"SELECT 1",
+	} {
+		if !strings.Contains(healthcheck, want) {
+			t.Fatalf("healthcheck command missing %q:\n%s", want, healthcheck)
+		}
+	}
+	if strings.Contains(healthcheck, "/api/v1/health/ready") {
+		t.Fatalf("healthcheck should not depend on Picodata HTTP readiness endpoint:\n%s", healthcheck)
+	}
 	config := dbtest.WriteFileText(instance, "030_write_config")
 	for _, want := range []string{
 		"replication_factor: 2",

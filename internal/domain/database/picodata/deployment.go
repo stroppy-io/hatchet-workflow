@@ -263,8 +263,13 @@ func configArtifactID(componentID, role string) string {
 
 func picodataHealthcheckCommand(componentID string) string {
 	service := deploymentbuilder.ShellQuote(deploymentbuilder.ServiceName(componentID))
+	dsn := fmt.Sprintf(
+		"postgresql://%s@127.0.0.1:%d?sslmode=disable",
+		dbcredentials.PicodataUser,
+		pgprotoPort,
+	)
 	return fmt.Sprintf(`for i in $(seq 1 60); do
-  if systemctl is-active --quiet %s && curl -fsS http://127.0.0.1:%d/api/v1/health/ready >/dev/null; then
+  if systemctl is-active --quiet %s && PGPASSWORD=%s psql %s -v ON_ERROR_STOP=1 -X -c 'SELECT 1' >/dev/null; then
     exit 0
   fi
   sleep 2
@@ -274,7 +279,7 @@ systemctl status --no-pager -l %s || true
 echo "--- journalctl %s ---"
 journalctl --no-pager --output=short-iso-precise -u %s -n 200 || true
 exit 1
-`, service, httpPort, service, service, service, service)
+`, service, deploymentbuilder.ShellQuote(dbcredentials.PicodataPassword), deploymentbuilder.ShellQuote(dsn), service, service, service, service)
 }
 
 func picodataPostStartCommands(component *topologypb.Component, wiring picodataWiring) []deploymentbuilder.EngineCommand {
