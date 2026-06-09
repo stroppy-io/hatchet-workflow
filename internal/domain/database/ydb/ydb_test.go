@@ -174,6 +174,17 @@ func TestYdbDeploymentPlan(t *testing.T) {
 	if strings.Contains(database, "--node dynamic") {
 		t.Fatalf("database service contains unsupported dynamic node flag:\n%s", database)
 	}
+	databaseHealthcheck := dbtest.CallCmd(components["ydb-database-1"], "230_healthcheck")
+	for _, want := range []string{
+		"systemctl is-active --quiet \"$service\"",
+		"grpc://127.0.0.1:2136",
+		"admin database \"$database\" status",
+		"sleep 20",
+	} {
+		if !strings.Contains(databaseHealthcheck, want) {
+			t.Fatalf("database healthcheck missing %q:\n%s", want, databaseHealthcheck)
+		}
+	}
 
 	haproxy := dbtest.WriteFileText(components["haproxy-1"], "030_write_config")
 	if !strings.Contains(haproxy, "server ydb-1 10.0.0.3:2136 check") {
@@ -248,6 +259,9 @@ func TestYdbCombinedDeploymentStartsDatabaseServiceOnStorageNode(t *testing.T) {
 	}
 	if check := dbtest.CallCmd(storage, "260_database_healthcheck"); !strings.Contains(check, "stroppy-ydb-storage-1-database") {
 		t.Fatalf("combined database service is not healthchecked:\n%s", check)
+	}
+	if check := dbtest.CallCmd(storage, "260_database_healthcheck"); !strings.Contains(check, "admin database \"$database\" status") {
+		t.Fatalf("combined database healthcheck does not wait for database status:\n%s", check)
 	}
 }
 

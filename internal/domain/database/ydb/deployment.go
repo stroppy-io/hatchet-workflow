@@ -134,7 +134,7 @@ func ydbEngineComponent(
 		DefaultConfigFile: ydbDefaultConfigFile(component, database, ydbWiring{}),
 		InstallCommands:   ydbInstallCommands(component, dbPackage),
 		ServiceFile:       ydbServiceFile(component.GetId(), component.GetRole(), configDir, database, wiring),
-		Healthcheck:       "systemctl is-active --quiet " + deploymentbuilder.ShellQuote(deploymentbuilder.ServiceName(component.GetId())),
+		Healthcheck:       ydbHealthcheckCommand(component, database),
 		PostStartCommands: ydbPostStartCommands(component, database),
 	}
 	if ydbIsCombined(database) && component.GetRole() == ydbRoleStorage {
@@ -213,7 +213,7 @@ func ydbPostStartCommands(component *topologypb.Component, database *domain.Data
 				ArtifactName:  "healthcheck/database",
 				ArtifactLabel: "healthcheck",
 				LockReason:    "combined YDB database service healthcheck is renderer-owned",
-				Command:       "systemctl is-active --quiet " + deploymentbuilder.ShellQuote(serviceName),
+				Command:       ydbDatabaseHealthcheckCommand(serviceName, database),
 			},
 		)
 	}
@@ -265,6 +265,41 @@ exit 1
 
 func ydbServiceFile(componentID, role, configDir string, database *domain.Database, wiring ydbWiring) *common.File {
 	return deploymentbuilder.EngineServiceFile(componentID, ydbServiceUnit(componentID, role, configDir, database, wiring))
+}
+
+func ydbHealthcheckCommand(component *topologypb.Component, database *domain.Database) string {
+	serviceName := deploymentbuilder.ServiceName(component.GetId())
+	if component.GetRole() == ydbRoleDatabase {
+		return ydbDatabaseHealthcheckCommand(serviceName, database)
+	}
+	return "systemctl is-active --quiet " + deploymentbuilder.ShellQuote(serviceName)
+}
+
+func ydbDatabaseHealthcheckCommand(serviceName string, database *domain.Database) string {
+	endpoint := fmt.Sprintf("grpc://127.0.0.1:%d", grpcPort)
+	databasePath := ydbDatabasePath(database.GetParams().GetYdb())
+	return fmt.Sprintf(`set -e
+service=%s
+endpoint=%s
+database=%s
+
+for attempt in $(seq 1 180); do
+  if systemctl is-active --quiet "$service" && /usr/local/bin/ydbd -s "$endpoint" admin database "$database" status >/dev/null 2>&1; then
+    # The admin endpoint can become available a little before the query service
+    # is ready for SDK session creation. Give the dynamic node a short settle
+    # window so stroppy does not fall through its 3s primary connect timeout.
+    sleep 20
+    exit 0
+  fi
+  sleep 2
+done
+
+echo "--- systemctl status $service ---"
+systemctl status --no-pager -l "$service" || true
+echo "--- journalctl $service ---"
+journalctl --no-pager --output=short-iso-precise -u "$service" -n 200 || true
+exit 1
+`, deploymentbuilder.ShellQuote(serviceName), deploymentbuilder.ShellQuote(endpoint), deploymentbuilder.ShellQuote(databasePath))
 }
 
 func ydbServiceUnit(componentID, role, configDir string, database *domain.Database, wiring ydbWiring) string {
