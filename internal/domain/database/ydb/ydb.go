@@ -183,40 +183,55 @@ func ydbDatabasePath(input *domain.YdbParams) string {
 // passthrough block. hosts is the runtime-resolved static (storage) node
 // address list; empty in preview (infrastructure not provisioned yet).
 func ydbConfigContent(input *domain.YdbParams, nodeType string, options map[string]string, hosts []string, budget ydbNodeBudget) string {
+	hostCount := len(hosts)
+	if hostCount == 0 {
+		hostCount = int(input.GetStorageNodes())
+		if hostCount == 0 {
+			hostCount = 1
+		}
+	}
+	zones := []string{"zone-a", "zone-b", "zone-c"}
+	diskType := strings.ToUpper(ydbDiskType(input))
+	storagePoolKind := ydbDiskType(input)
+
 	var b strings.Builder
 	fmt.Fprintf(&b, "static_erasure: %s\n", ydbFaultTolerance(input))
 	b.WriteString("host_configs:\n")
-	b.WriteString("- host_config_id: 1\n")
-	b.WriteString("  drive:\n")
+	b.WriteString("- drive:\n")
 	fmt.Fprintf(&b, "  - path: %s\n", ydbPDiskPath)
-	fmt.Fprintf(&b, "    type: %s\n", strings.ToUpper(ydbDiskType(input)))
+	fmt.Fprintf(&b, "    type: %s\n", diskType)
+	b.WriteString("  host_config_id: 1\n")
+	b.WriteString("hosts:\n")
+	for i := 0; i < hostCount; i++ {
+		host := fmt.Sprintf("__YDB_HOST_%d__", i)
+		if i < len(hosts) && hosts[i] != "" {
+			host = hosts[i]
+		}
+		fmt.Fprintf(&b, "- host: %s\n", host)
+		b.WriteString("  host_config_id: 1\n")
+		b.WriteString("  walle_location:\n")
+		fmt.Fprintf(&b, "    body: %d\n", i+1)
+		fmt.Fprintf(&b, "    data_center: '%s'\n", zones[i%len(zones)])
+		fmt.Fprintf(&b, "    rack: '%d'\n", i+1)
+	}
 	fmt.Fprintf(&b, "domains_config:\n")
 	fmt.Fprintf(&b, "  domain:\n")
 	fmt.Fprintf(&b, "  - name: Root\n")
 	fmt.Fprintf(&b, "    storage_pool_types:\n")
-	fmt.Fprintf(&b, "    - kind: %s\n", ydbDiskType(input))
+	fmt.Fprintf(&b, "    - kind: %s\n", storagePoolKind)
 	fmt.Fprintf(&b, "      pool_config:\n")
 	fmt.Fprintf(&b, "        box_id: 1\n")
 	fmt.Fprintf(&b, "        erasure_species: %s\n", ydbFaultTolerance(input))
-	fmt.Fprintf(&b, "        kind: %s\n", ydbDiskType(input))
+	fmt.Fprintf(&b, "        kind: %s\n", storagePoolKind)
 	fmt.Fprintf(&b, "        pdisk_filter:\n")
 	fmt.Fprintf(&b, "        - property:\n")
-	fmt.Fprintf(&b, "          - type: %s\n", strings.ToUpper(ydbDiskType(input)))
+	fmt.Fprintf(&b, "          - type: %s\n", diskType)
 	fmt.Fprintf(&b, "        vdisk_kind: Default\n")
 	fmt.Fprintf(&b, "  state_storage:\n")
 	fmt.Fprintf(&b, "  - ring:\n")
 	fmt.Fprintf(&b, "      node: [%s]\n", ydbStateStorageNodeList(input, hosts))
 	fmt.Fprintf(&b, "      nto_select: %d\n", ydbStateStorageNToSelect(input, hosts))
 	fmt.Fprintf(&b, "    ssid: 1\n")
-	fmt.Fprintf(&b, "channel_profile_config:\n")
-	fmt.Fprintf(&b, "  profile:\n")
-	fmt.Fprintf(&b, "  - profile_id: 0\n")
-	fmt.Fprintf(&b, "    channel:\n")
-	for i := 0; i < 3; i++ {
-		fmt.Fprintf(&b, "    - erasure_species: %s\n", ydbFaultTolerance(input))
-		fmt.Fprintf(&b, "      pdisk_category: 1\n")
-		fmt.Fprintf(&b, "      storage_pool_kind: %s\n", ydbDiskType(input))
-	}
 	b.WriteString("table_service_config:\n")
 	b.WriteString("  sql_version: 1\n")
 	b.WriteString("actor_system_config:\n")
@@ -236,19 +251,24 @@ func ydbConfigContent(input *domain.YdbParams, nodeType string, options map[stri
 	fmt.Fprintf(&b, "    groups:\n")
 	fmt.Fprintf(&b, "    - erasure_species: %s\n", ydbFaultTolerance(input))
 	fmt.Fprintf(&b, "      rings:\n")
-	fmt.Fprintf(&b, "      - fail_domains:\n")
-	fmt.Fprintf(&b, "        - vdisk_locations:\n")
-	fmt.Fprintf(&b, "          - node_id: 1\n")
-	fmt.Fprintf(&b, "            path: %s\n", ydbPDiskPath)
-	fmt.Fprintf(&b, "            pdisk_category: %s\n", strings.ToUpper(ydbDiskType(input)))
-	if len(hosts) > 0 {
-		b.WriteString("hosts:\n")
-		for i, host := range hosts {
-			fmt.Fprintf(&b, "- host: %s\n", host)
-			fmt.Fprintf(&b, "  node_id: %d\n", i+1)
-			fmt.Fprintf(&b, "  host_config_id: 1\n")
-		}
+	b.WriteString("      - fail_domains:\n")
+	for i := 0; i < hostCount; i++ {
+		b.WriteString("        - vdisk_locations:\n")
+		fmt.Fprintf(&b, "          - node_id: %d\n", i+1)
+		fmt.Fprintf(&b, "            pdisk_category: %s\n", diskType)
+		fmt.Fprintf(&b, "            path: %s\n", ydbPDiskPath)
 	}
+	b.WriteString("channel_profile_config:\n")
+	b.WriteString("  profile:\n")
+	b.WriteString("  - channel:\n")
+	for i := 0; i < 3; i++ {
+		fmt.Fprintf(&b, "    - erasure_species: %s\n", ydbFaultTolerance(input))
+		fmt.Fprintf(&b, "      pdisk_category: 1\n")
+		fmt.Fprintf(&b, "      storage_pool_kind: %s\n", storagePoolKind)
+	}
+	b.WriteString("    profile_id: 0\n")
+	b.WriteString("grpc_config:\n")
+	fmt.Fprintf(&b, "  port: %d\n", grpcPort)
 	if len(options) > 0 {
 		b.WriteString("config_passthrough:\n")
 		keys := make([]string, 0, len(options))
