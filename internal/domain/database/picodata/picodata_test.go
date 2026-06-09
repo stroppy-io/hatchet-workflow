@@ -87,8 +87,8 @@ func TestPicodataDeploymentPlan(t *testing.T) {
 		dbtest.CallCmd(instance, "140_install"),
 	}, "\n")
 	for _, want := range []string{
-		"download.picodata.io/tarantool-picodata/picodata.gpg.key",
-		"download.picodata.io/tarantool-picodata/%s/",
+		"https://download.picodata.io/tarantool-picodata/picodata.gpg.key",
+		"http://download.picodata.io/tarantool-picodata/%s/",
 		"/etc/apt/sources.list.d/picodata.list",
 		"DEBIAN_FRONTEND=noninteractive apt-get install -y picodata",
 	} {
@@ -139,8 +139,8 @@ func TestPicodataPackageResolver(t *testing.T) {
 	}
 	preInstall := strings.Join(pkg.GetPreInstall(), "\n")
 	for _, want := range []string{
-		"download.picodata.io/tarantool-picodata/picodata.gpg.key",
-		"download.picodata.io/tarantool-picodata/%s/",
+		"https://download.picodata.io/tarantool-picodata/picodata.gpg.key",
+		"http://download.picodata.io/tarantool-picodata/%s/",
 		"/etc/apt/sources.list.d/picodata.list",
 	} {
 		if !strings.Contains(preInstall, want) {

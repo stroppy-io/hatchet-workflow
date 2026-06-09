@@ -46,7 +46,7 @@ case "$ID" in
 esac
 curl -fsSL https://download.picodata.io/tarantool-picodata/picodata.gpg.key | gpg --no-default-keyring --keyring gnupg-ring:/etc/apt/trusted.gpg.d/picodata.gpg --import
 chmod 644 /etc/apt/trusted.gpg.d/picodata.gpg
-printf "deb [arch=amd64] https://download.picodata.io/tarantool-picodata/%s/ %s main\n" "$distro" "$VERSION_CODENAME" > /etc/apt/sources.list.d/picodata.list'`,
+printf "deb [arch=amd64] http://download.picodata.io/tarantool-picodata/%s/ %s main\n" "$distro" "$VERSION_CODENAME" > /etc/apt/sources.list.d/picodata.list'`,
 		"apt-get update",
 	}
 }

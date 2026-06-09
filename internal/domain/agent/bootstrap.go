@@ -128,20 +128,25 @@ func CloudInit(machineID string, bootstrap Bootstrap, options CloudInitOptions) 
 		sshUser = "stroppy"
 	}
 
+	aptProxyConfig := AptProxyConfig(bootstrap.ServerAddr)
+	if aptProxyConfig != "" {
+		aptProxyConfig = indent(aptProxyConfig, 6)
+	}
+
 	data := struct {
-		SSHUser      string
-		SSHPublicKey string
-		EnvFile      string
-		BinaryURL    string
-		BinPath      string
-		ProxyURL     string
+		SSHUser        string
+		SSHPublicKey   string
+		EnvFile        string
+		BinaryURL      string
+		BinPath        string
+		AptProxyConfig string
 	}{
-		SSHUser:      sshUser,
-		SSHPublicKey: options.SSHPublicKey,
-		EnvFile:      indent(EnvFileFromMap(env), 6),
-		BinaryURL:    env["STROPPY_AGENT_BINARY_URL"],
-		BinPath:      RemoteBinPath,
-		ProxyURL:     AptProxyURL(bootstrap.ServerAddr),
+		SSHUser:        sshUser,
+		SSHPublicKey:   options.SSHPublicKey,
+		EnvFile:        indent(EnvFileFromMap(env), 6),
+		BinaryURL:      env["STROPPY_AGENT_BINARY_URL"],
+		BinPath:        RemoteBinPath,
+		AptProxyConfig: aptProxyConfig,
 	}
 
 	var buf bytes.Buffer
@@ -166,11 +171,10 @@ write_files:
   - path: /etc/stroppy/agent.env
     content: |
 {{.EnvFile}}
-{{- if .ProxyURL}}
+{{- if .AptProxyConfig}}
   - path: /etc/apt/apt.conf.d/90stroppy-proxy
     content: |
-      Acquire::http::Proxy "{{.ProxyURL}}";
-      Acquire::https::Proxy "{{.ProxyURL}}";
+{{.AptProxyConfig}}
 {{- end}}
   - path: /etc/systemd/system/stroppy-agent.service
     content: |
@@ -248,5 +252,5 @@ func AptProxyConfig(serverAddr string) string {
 	if proxyURL == "" {
 		return ""
 	}
-	return fmt.Sprintf("Acquire::http::Proxy %q;\nAcquire::https::Proxy %q;\n", proxyURL, proxyURL)
+	return fmt.Sprintf("Acquire::http::Proxy %q;\nAcquire::https::Proxy \"DIRECT\";\n", proxyURL)
 }

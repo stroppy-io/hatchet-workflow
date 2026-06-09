@@ -33,7 +33,7 @@ func (r Registry) ResolveDatabasePackage(database *domain.Database) (*domain.Pac
 	if params == nil {
 		return nil, nil
 	}
-	if params.GetPackage() != nil {
+	if pkg := params.GetPackage(); pkg != nil && !pkg.GetIsBuiltin() {
 		return params.GetPackage(), nil
 	}
 

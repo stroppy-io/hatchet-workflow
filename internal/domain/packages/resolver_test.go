@@ -32,6 +32,27 @@ func TestRegistryPrefersEmbeddedPackage(t *testing.T) {
 	}
 }
 
+func TestRegistryRebuildsEmbeddedBuiltinPackage(t *testing.T) {
+	embedded := &domain.Package{
+		Id:          "builtin/postgres/16",
+		DbKind:      domain.Database_KIND_POSTGRES,
+		DbVersion:   "16",
+		IsBuiltin:   true,
+		AptPackages: []string{"stale-postgres-package"},
+	}
+
+	pkg, err := NewRegistry(fakePackageResolver{}).ResolveDatabasePackage(postgresDatabase(embedded))
+	if err != nil {
+		t.Fatalf("resolve package: %v", err)
+	}
+	if pkg == embedded {
+		t.Fatal("resolver returned stale embedded builtin package")
+	}
+	if got, want := pkg.GetId(), "fake-package"; got != want {
+		t.Fatalf("package id = %q, want %q", got, want)
+	}
+}
+
 func TestRegistryRejectsMissingResolver(t *testing.T) {
 	_, err := NewRegistry().ResolveDatabasePackage(postgresDatabase(nil))
 	if err == nil {

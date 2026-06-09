@@ -118,7 +118,7 @@ func TestCloudInitUsesSameEnvContract(t *testing.T) {
 		"STROPPY_SERVER_ADDR=http://server:8080",
 		"STROPPY_AGENT_BINARY_URL=http://server:8080/agent/binary",
 		"Acquire::http::Proxy \"http://server:8080\";",
-		"Acquire::https::Proxy \"http://server:8080\";",
+		"Acquire::https::Proxy \"DIRECT\";",
 		"STROPPY_MACHINE_ID=node-1",
 		"AGENT_TASK_QUEUE=stroppy-agent-node-1",
 		"EnvironmentFile=/etc/stroppy/agent.env",

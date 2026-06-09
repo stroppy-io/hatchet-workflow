@@ -124,8 +124,8 @@ func TestBuiltinPicodataPresetsInstallRepository(t *testing.T) {
 	}
 	preInstall := strings.Join(pkg.GetPreInstall(), "\n")
 	for _, want := range []string{
-		"download.picodata.io/tarantool-picodata/picodata.gpg.key",
-		"download.picodata.io/tarantool-picodata/%s/",
+		"https://download.picodata.io/tarantool-picodata/picodata.gpg.key",
+		"http://download.picodata.io/tarantool-picodata/%s/",
 		"/etc/apt/sources.list.d/picodata.list",
 	} {
 		if !strings.Contains(preInstall, want) {

@@ -67,7 +67,7 @@ func TestRenderDockerInputInjectsAgentBootstrap(t *testing.T) {
 	aptProxyContent := string(aptProxy.GetContent())
 	for _, want := range []string{
 		`Acquire::http::Proxy "http://127.0.0.1:8080";`,
-		`Acquire::https::Proxy "http://127.0.0.1:8080";`,
+		`Acquire::https::Proxy "DIRECT";`,
 	} {
 		if !strings.Contains(aptProxyContent, want) {
 			t.Fatalf("docker apt proxy config missing %q:\n%s", want, aptProxyContent)
@@ -109,7 +109,7 @@ func TestRenderTerraformInputInjectsYandexCloudInit(t *testing.T) {
 			"STROPPY_AGENT_TOKEN=agent-token-" + machine.GetNodeId(),
 			"AGENT_TASK_QUEUE=secret-queue-" + machine.GetNodeId(),
 			`Acquire::http::Proxy "http://127.0.0.1:8080";`,
-			`Acquire::https::Proxy "http://127.0.0.1:8080";`,
+			`Acquire::https::Proxy "DIRECT";`,
 			"EnvironmentFile=/etc/stroppy/agent.env",
 			"ExecStart=/usr/local/bin/stroppy-agent agent",
 		} {
