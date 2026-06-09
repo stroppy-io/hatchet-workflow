@@ -361,9 +361,11 @@ func ydbDaemonNamedServiceUnit(serviceName, componentID, role, configDir, dataDi
 	wants := "network-online.target"
 	pdiskPrepare := ""
 	if role == ydbRoleStorage {
-		pdiskPrepare = fmt.Sprintf("ExecStartPre=/usr/bin/test -f %s || /usr/bin/truncate -s 10G %s\n",
-			deploymentbuilder.ShellQuote(ydbPDiskPath),
-			deploymentbuilder.ShellQuote(ydbPDiskPath),
+		pdiskPrepare = fmt.Sprintf("ExecStartPre=/bin/sh -ec %s\n",
+			deploymentbuilder.ShellQuote(fmt.Sprintf("test -f %s || truncate -s 10G %s",
+				deploymentbuilder.ShellQuote(ydbPDiskPath),
+				deploymentbuilder.ShellQuote(ydbPDiskPath),
+			)),
 		)
 	}
 	return fmt.Sprintf(`[Unit]

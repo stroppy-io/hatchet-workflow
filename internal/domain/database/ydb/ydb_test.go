@@ -152,8 +152,10 @@ func TestYdbDeploymentPlan(t *testing.T) {
 	if !strings.Contains(service, "ExecStartPre=/bin/mkdir -p '/var/lib/stroppy-cloud'") {
 		t.Fatalf("service does not create ydb pdisk parent:\n%s", service)
 	}
-	if !strings.Contains(service, "ExecStartPre=/usr/bin/test -f '/var/lib/stroppy-cloud/ydb-pdisk.data' || /usr/bin/truncate -s 10G '/var/lib/stroppy-cloud/ydb-pdisk.data'") {
-		t.Fatalf("service does not prepare ydb pdisk file:\n%s", service)
+	for _, want := range []string{"ExecStartPre=/bin/sh -ec", "test -f", "truncate -s 10G", "/var/lib/stroppy-cloud/ydb-pdisk.data"} {
+		if !strings.Contains(service, want) {
+			t.Fatalf("service pdisk preparation missing %q:\n%s", want, service)
+		}
 	}
 	if install := dbtest.CallCmd(storage, "100_install"); !strings.Contains(install, "ydbd") {
 		t.Fatalf("install does not fetch ydbd: %s", install)
