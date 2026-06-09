@@ -239,18 +239,18 @@ config=%s
 
 last_log=/tmp/stroppy-ydb-bootstrap.log
 for attempt in $(seq 1 60); do
-  if /usr/local/bin/ydbd -s "$server" admin database "$database" status >/dev/null 2>&1; then
+  if timeout 10s /usr/local/bin/ydbd -s "$server" admin database "$database" status >/dev/null 2>&1; then
     echo "YDB database $database already exists"
     exit 0
   fi
 
-  if /usr/local/bin/ydbd -s "$server" admin blobstorage config init --yaml-file "$config" >>"$last_log" 2>&1; then
+  if timeout 30s /usr/local/bin/ydbd -s "$server" admin blobstorage config init --yaml-file "$config" >>"$last_log" 2>&1; then
     echo "YDB blobstorage config initialized"
   else
     cat "$last_log" >&2 || true
   fi
 
-  if /usr/local/bin/ydbd -s "$server" admin database "$database" create "$pool" >>"$last_log" 2>&1; then
+  if timeout 30s /usr/local/bin/ydbd -s "$server" admin database "$database" create "$pool" >>"$last_log" 2>&1; then
     echo "YDB database $database created with pool $pool"
     exit 0
   fi

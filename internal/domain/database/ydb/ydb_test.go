@@ -154,8 +154,9 @@ func TestYdbDeploymentPlan(t *testing.T) {
 	}
 	init := dbtest.CallCmd(storage, "240_init_database")
 	for _, want := range []string{
-		"admin blobstorage config init --yaml-file",
-		"admin database \"$database\" create \"$pool\"",
+		"timeout 10s /usr/local/bin/ydbd -s \"$server\" admin database \"$database\" status",
+		"timeout 30s /usr/local/bin/ydbd -s \"$server\" admin blobstorage config init --yaml-file",
+		"timeout 30s /usr/local/bin/ydbd -s \"$server\" admin database \"$database\" create \"$pool\"",
 		"database='/Root/testdb'",
 		"pool='ssd:1'",
 		"grpc://127.0.0.1:2135",
