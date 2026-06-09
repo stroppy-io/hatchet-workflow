@@ -51,8 +51,11 @@ func TestRenderStroppyConfigRoutesOTLPThroughServerAddress(t *testing.T) {
 	if !strings.Contains(rendered, `"-q"`) {
 		t.Fatalf("stroppy config should default k6 to quiet mode:\n%s", rendered)
 	}
-	if !strings.Contains(rendered, `"--setup-timeout"`) || !strings.Contains(rendered, `"20m"`) {
-		t.Fatalf("stroppy config should extend k6 setup timeout:\n%s", rendered)
+	if !regexp.MustCompile(`"K6_SETUP_TIMEOUT":\s+"20m"`).MatchString(rendered) {
+		t.Fatalf("stroppy config should extend k6 setup timeout through env:\n%s", rendered)
+	}
+	if strings.Contains(rendered, `"--setup-timeout"`) {
+		t.Fatalf("stroppy config must not pass unsupported k6 setup timeout flag:\n%s", rendered)
 	}
 }
 

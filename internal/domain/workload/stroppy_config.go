@@ -236,8 +236,9 @@ func buildStroppyRunConfig(input *domain.Workload, database *domain.Database, se
 // stroppy's env contract).
 func stroppyEnv(params *domain.Workload_Parameters, scaleFactor float64, poolSize int32, loadWorkers uint32) map[string]string {
 	env := map[string]string{
-		"SCALE_FACTOR": trimFloat(scaleFactor),
-		"POOL_SIZE":    fmt.Sprintf("%d", poolSize),
+		"K6_SETUP_TIMEOUT": defaultK6SetupTimeout,
+		"SCALE_FACTOR":     trimFloat(scaleFactor),
+		"POOL_SIZE":        fmt.Sprintf("%d", poolSize),
 	}
 	if loadWorkers > 0 {
 		env["LOAD_WORKERS"] = strconv.FormatUint(uint64(loadWorkers), 10)
@@ -262,7 +263,6 @@ func k6Args(exec *domain.Workload_Execution) []string {
 	// distinguish "unset" from "explicit false". Match the main generator's
 	// production default and keep k6 quiet unless the protocol grows presence.
 	args := []string{"-q"}
-	args = append(args, "--setup-timeout", defaultK6SetupTimeout)
 	args = append(args, "--vus", fmt.Sprintf("%d", vus))
 	if iterations := exec.GetIterations(); iterations > 0 {
 		args = append(args, "--iterations", fmt.Sprintf("%d", iterations))
