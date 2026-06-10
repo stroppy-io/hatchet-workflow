@@ -1,6 +1,8 @@
 package workflows
 
 import (
+	"crypto/sha1"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -518,7 +520,16 @@ func sanitizeProviderName(name string) string {
 		name = "s-" + name
 	}
 	if len(name) > 63 {
-		name = strings.TrimRight(name[:63], "-")
+		// Truncating to 63 chars naively drops the trailing node index
+		// (e.g. "stroppy-<uuid>-picodata-instance-1" is 64 chars, so the "-1"
+		// is cut and all instances collapse to the same name -> Terraform's
+		// for_each VM map keeps only ONE VM, the other instances' agents never
+		// come online and the deploy hangs on EnsureAgentOnline). Append a short
+		// deterministic hash of the full name to a trimmed prefix to keep names
+		// unique and stable across applies.
+		sum := sha1.Sum([]byte(name))
+		suffix := "-" + hex.EncodeToString(sum[:])[:8]
+		name = strings.TrimRight(name[:63-len(suffix)], "-") + suffix
 	}
 	return name
 }
