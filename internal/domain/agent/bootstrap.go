@@ -262,7 +262,13 @@ func AptProxyConfig(serverAddr string) string {
 			"Acquire::https::Proxy \"DIRECT\";\n"+
 			"Acquire::Retries \"8\";\n"+
 			"Acquire::http::Timeout \"120\";\n"+
-			"Acquire::https::Timeout \"120\";\n",
+			"Acquire::https::Timeout \"120\";\n"+
+			// Serialize downloads to one connection per host. apt opens ~10
+			// parallel connections per repo by default; across a multi-node
+			// cluster that floods the single gateway apt proxy and it starts
+			// dropping connections ("empty reply"). One-at-a-time keeps the
+			// proxy load low enough that retries reliably succeed.
+			"Acquire::Queue-Mode \"access\";\n",
 		proxyURL,
 	)
 }
