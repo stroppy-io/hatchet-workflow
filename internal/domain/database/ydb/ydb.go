@@ -211,6 +211,10 @@ func ydbConfigContent(input *domain.YdbParams, nodeType string, options map[stri
 		}
 		fmt.Fprintf(&b, "- host: %s\n", host)
 		b.WriteString("  host_config_id: 1\n")
+		// Interconnect port. Required by ydbd: without it the static config
+		// fails to parse ("failed to parse config from file") because the
+		// node address book has no port to bind/dial for blobstorage init.
+		fmt.Fprintf(&b, "  port: %d\n", icPort)
 		b.WriteString("  walle_location:\n")
 		fmt.Fprintf(&b, "    body: %d\n", i+1)
 		fmt.Fprintf(&b, "    data_center: '%s'\n", zones[i%len(zones)])
@@ -261,7 +265,10 @@ func ydbConfigContent(input *domain.YdbParams, nodeType string, options map[stri
 	b.WriteString("  - channel:\n")
 	for i := 0; i < 3; i++ {
 		fmt.Fprintf(&b, "    - erasure_species: %s\n", ydbFaultTolerance(input))
-		fmt.Fprintf(&b, "      pdisk_category: 1\n")
+		// channel_profile_config selects pdisks by storage_pool_kind, so the
+		// category here is the default (0), matching the official single-node
+		// reference config. A raw category (1=SSD) here breaks pool selection.
+		fmt.Fprintf(&b, "      pdisk_category: 0\n")
 		fmt.Fprintf(&b, "      storage_pool_kind: %s\n", storagePoolKind)
 	}
 	b.WriteString("    profile_id: 0\n")

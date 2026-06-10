@@ -139,6 +139,7 @@ func TestYdbDeploymentPlan(t *testing.T) {
 		"pdisk_category: SSD",
 		"host: 10.0.0.1",
 		"host: 10.0.0.2",
+		"port: 19001",
 	} {
 		if !strings.Contains(config, want) {
 			t.Fatalf("config missing %q:\n%s", want, config)
