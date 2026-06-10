@@ -237,6 +237,7 @@ func ydbInitDatabaseCommand(database *domain.Database) string {
 	pool := fmt.Sprintf("%s:%d", ydbDiskType(params), storageGroups)
 	configPath := ydbConfigPath("ydb-storage-1", ydbRoleStorage)
 	server := fmt.Sprintf("grpc://127.0.0.1:%d", storageGrpcPort)
+	storageService := deploymentbuilder.ServiceName("ydb-storage-1")
 
 	return fmt.Sprintf(`set -e
 server=%s
@@ -271,8 +272,10 @@ for attempt in $(seq 1 60); do
 done
 
 echo "YDB database $database was not created after retries" >&2
+echo "--- journalctl %s (storage node) ---" >&2
+journalctl --no-pager --output=short-iso-precise -u %s -n 200 >&2 || true
 exit 1
-`, deploymentbuilder.ShellQuote(server), deploymentbuilder.ShellQuote(databasePath), deploymentbuilder.ShellQuote(pool), deploymentbuilder.ShellQuote(configPath))
+`, deploymentbuilder.ShellQuote(server), deploymentbuilder.ShellQuote(databasePath), deploymentbuilder.ShellQuote(pool), deploymentbuilder.ShellQuote(configPath), storageService, deploymentbuilder.ShellQuote(storageService))
 }
 
 func ydbServiceFile(componentID, role, configDir string, database *domain.Database, wiring ydbWiring) *common.File {
