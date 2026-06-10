@@ -217,28 +217,67 @@ func (w *executeDeploymentPlanWorkflow) Execute(ctx workflow.Context) (*workflow
 		return persistDeploymentPlan(ctx, runID, plan)
 	}
 	sortComponentExecution(plan.GetComponents())
-	for componentIndex, component := range plan.GetComponents() {
-		componentStarted := timestamppb.New(workflow.Now(ctx))
-		component.Status = common.Status_STATUS_DEPLOYMENT
-		emitStageUpdate(ctx, runID, componentStage(component, uint32(componentIndex+1), component.GetStatus(), componentStarted, nil, ""))
-		if err := persistPlan(); err != nil {
+	components := plan.GetComponents()
+	// Deploy components in waves grouped by global priority. Components within a
+	// priority are independent across machines (peer-join/retry handles cluster
+	// formation), so they deploy CONCURRENTLY; a lower-priority wave fully
+	// completes before the next starts, preserving cross-tier ordering
+	// (etcd -> master -> replica -> patroni -> proxy; ydb storage -> database).
+	// Sequential per-component deploy made cluster installs O(N) slow and broke
+	// quorum formation (a bootstrap node's healthcheck waited for peers that had
+	// not been deployed yet because the executor was blocked on the bootstrap).
+	for waveStart := 0; waveStart < len(components); {
+		waveEnd := waveStart
+		prio := components[waveStart].GetGlobalPriority()
+		for waveEnd < len(components) && components[waveEnd].GetGlobalPriority() == prio {
+			waveEnd++
+		}
+		wave := components[waveStart:waveEnd]
+
+		finished := 0
+		var waveErr error
+		for offset := range wave {
+			componentIndex := waveStart + offset
+			component := wave[offset]
+			workflow.Go(ctx, func(gctx workflow.Context) {
+				defer func() { finished++ }()
+				started := timestamppb.New(workflow.Now(gctx))
+				component.Status = common.Status_STATUS_DEPLOYMENT
+				emitStageUpdate(gctx, runID, componentStage(component, uint32(componentIndex+1), component.GetStatus(), started, nil, ""))
+				if err := persistDeploymentPlan(gctx, runID, plan); err != nil {
+					if waveErr == nil {
+						waveErr = err
+					}
+					return
+				}
+				if err := executeComponentDeployment(gctx, runID, plan, component, w.req.GetAgentBootstrap()); err != nil {
+					finishedAt := timestamppb.New(workflow.Now(gctx))
+					component.Status = common.Status_STATUS_FAILED
+					emitStageUpdate(gctx, runID, componentStage(component, uint32(componentIndex+1), component.GetStatus(), started, finishedAt, err.Error()))
+					_ = persistDeploymentPlan(gctx, runID, plan)
+					if waveErr == nil {
+						waveErr = err
+					}
+					return
+				}
+				finishedAt := timestamppb.New(workflow.Now(gctx))
+				component.Status = common.Status_STATUS_DEPLOYED
+				emitStageUpdate(gctx, runID, componentStage(component, uint32(componentIndex+1), component.GetStatus(), started, finishedAt, ""))
+				if err := persistDeploymentPlan(gctx, runID, plan); err != nil && waveErr == nil {
+					waveErr = err
+				}
+			})
+		}
+		if err := workflow.Await(ctx, func() bool { return finished == len(wave) }); err != nil {
 			return nil, err
 		}
-		if err := executeComponentDeployment(ctx, runID, plan, component, w.req.GetAgentBootstrap()); err != nil {
-			componentFinished := timestamppb.New(workflow.Now(ctx))
-			component.Status = common.Status_STATUS_FAILED
-			emitStageUpdate(ctx, runID, componentStage(component, uint32(componentIndex+1), component.GetStatus(), componentStarted, componentFinished, err.Error()))
+		if waveErr != nil {
 			if perr := persistPlan(); perr != nil {
 				return nil, fmt.Errorf("persist failed deployment plan: %w", perr)
 			}
-			return nil, err
+			return nil, waveErr
 		}
-		componentFinished := timestamppb.New(workflow.Now(ctx))
-		component.Status = common.Status_STATUS_DEPLOYED
-		emitStageUpdate(ctx, runID, componentStage(component, uint32(componentIndex+1), component.GetStatus(), componentStarted, componentFinished, ""))
-		if err := persistPlan(); err != nil {
-			return nil, err
-		}
+		waveStart = waveEnd
 	}
 
 	if err := plan.Validate(); err != nil {
