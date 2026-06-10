@@ -255,7 +255,15 @@ func postgresInstallCommands(component *topologypb.Component, dbPackage *domain.
 	case postgresRolePatroni:
 		return []string{"apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y patroni"}
 	case postgresRoleEtcd:
-		return []string{"apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y etcd"}
+		// The distro etcd package auto-starts its own etcd.service bound to the
+		// default 2379/2380 ports; left running it steals the ports from our
+		// stroppy etcd unit, which then crashloops and fails the healthcheck.
+		// Install (etcd, or the split etcd-server/-client on newer Ubuntu) and
+		// disable the packaged service, mirroring the postgresql handling above.
+		return []string{
+			"apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y etcd || DEBIAN_FRONTEND=noninteractive apt-get install -y etcd-server etcd-client",
+			"systemctl disable --now etcd 2>/dev/null || true",
+		}
 	default:
 		return []string{"true"}
 	}
