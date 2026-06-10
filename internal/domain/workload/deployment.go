@@ -16,7 +16,7 @@ import (
 
 type DeploymentRenderer struct{}
 
-const workloadCurlOpts = `--connect-timeout 20 --max-time 300 --retry 3 --retry-delay 5 --retry-connrefused --retry-max-time 600`
+const workloadCurlOpts = `--connect-timeout 20 --max-time 300 --retry 8 --retry-delay 5 --retry-all-errors --retry-connrefused --retry-max-time 900`
 
 var stroppyReleaseVersionRE = regexp.MustCompile(`^v?[0-9]+(\.[0-9]+){1,3}([-.][0-9A-Za-z.]+)?$`)
 var stroppyCommitVersionRE = regexp.MustCompile(`^[0-9a-fA-F]{7,40}$`)
@@ -34,7 +34,16 @@ func (r DeploymentRenderer) RenderComponent(ctx deploymentbuilder.RenderContext)
 	if err != nil {
 		return nil, err
 	}
-	configFile, _, err := effectiveConfigFile(ctx.Component.GetId(), ctx.Workload, ctx.Database, ctx.RenderOverrides, ctx.Topology.Spec().GetLabels(), target, loadWorkersFromMachine(ctx.Machine), ctx.AgentToken)
+	configFile, _, err := effectiveConfigFile(
+		ctx.Component.GetId(),
+		ctx.Workload,
+		ctx.Database,
+		ctx.RenderOverrides,
+		ctx.Topology.Spec().GetLabels(),
+		target,
+		loadWorkersFromMachine(ctx.Machine),
+		ctx.AgentToken,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -86,32 +95,110 @@ func (r DeploymentRenderer) RenderPreview(ctx deploymentbuilder.PreviewContext) 
 	// the URL free of a `?database=` (consistent with the address placeholders
 	// the preview also leaves unresolved). The real path is substituted in
 	// RenderComponent once the DB endpoint is resolved.
-	configFile, configOrigin, err := effectiveConfigFile(ctx.Component.GetId(), ctx.Workload, ctx.Database, ctx.RenderOverrides, labels, databaseTarget{}, 0, "")
+	configFile, configOrigin, err := effectiveConfigFile(
+		ctx.Component.GetId(),
+		ctx.Workload,
+		ctx.Database,
+		ctx.RenderOverrides,
+		labels,
+		databaseTarget{},
+		0,
+		"",
+	)
 	if err != nil {
 		return nil, err
 	}
-	defaultConfigFile := defaultConfigFile(ctx.Component.GetId(), ctx.Workload, ctx.Database, labels, databaseTarget{}, 0, "")
+	defaultConfigFile := defaultConfigFile(
+		ctx.Component.GetId(),
+		ctx.Workload,
+		ctx.Database,
+		labels,
+		databaseTarget{},
+		0,
+		"",
+	)
 
 	artifacts := []*deploymentpb.RenderArtifact{
 		deploymentbuilder.DirArtifact(ctx, Engine, "config-dir", &common.Dir{
 			Info:          &common.Dir_Info{Path: deploymentbuilder.ConfigDir(ctx.Component.GetId()), Mode: 0755},
 			CreateParents: true,
 		}),
-		deploymentbuilder.FileArtifact(ctx, Engine, deploymentbuilder.ArtifactID(ctx.Component.GetId(), "topology.env"), deploymentbuilder.PreviewContextFile(ctx, dependencies), deploymentpb.RenderArtifact_ORIGIN_SYSTEM, deploymentpb.RenderArtifact_MUTABILITY_READ_ONLY, "topology context is generated from topology and runtime state", "", map[string]string{"artifact": "context"}),
-		deploymentbuilder.FileArtifact(ctx, Engine, configArtifactID(ctx.Component.GetId()), configFile, configOrigin, deploymentpb.RenderArtifact_MUTABILITY_EDITABLE, "", deploymentbuilder.FileHash(defaultConfigFile), map[string]string{"artifact": "config"}),
+		deploymentbuilder.FileArtifact(
+			ctx,
+			Engine,
+			deploymentbuilder.ArtifactID(
+				ctx.Component.GetId(),
+				"topology.env",
+			),
+			deploymentbuilder.PreviewContextFile(ctx, dependencies),
+			deploymentpb.RenderArtifact_ORIGIN_SYSTEM,
+			deploymentpb.RenderArtifact_MUTABILITY_READ_ONLY,
+			"topology context is generated from topology and runtime state",
+			"",
+			map[string]string{"artifact": "context"},
+		),
+		deploymentbuilder.FileArtifact(
+			ctx,
+			Engine,
+			configArtifactID(ctx.Component.GetId()),
+			configFile,
+			configOrigin,
+			deploymentpb.RenderArtifact_MUTABILITY_EDITABLE,
+			"",
+			deploymentbuilder.FileHash(defaultConfigFile),
+			map[string]string{"artifact": "config"},
+		),
 	}
 	for _, file := range workloadFiles(ctx.Component.GetId(), ctx.Workload) {
-		artifacts = append(artifacts, deploymentbuilder.FileArtifact(ctx, Engine, deploymentbuilder.ArtifactID(ctx.Component.GetId(), "files/"+filepath.Base(file.GetInfo().GetPath())), file, deploymentpb.RenderArtifact_ORIGIN_SYSTEM, deploymentpb.RenderArtifact_MUTABILITY_READ_ONLY, "workload files come from workload input", "", map[string]string{"artifact": "workload_file"}))
+		artifacts = append(artifacts, deploymentbuilder.FileArtifact(
+			ctx,
+			Engine,
+			deploymentbuilder.ArtifactID(ctx.Component.GetId(), "files/"+filepath.Base(file.GetInfo().GetPath())),
+			file,
+			deploymentpb.RenderArtifact_ORIGIN_SYSTEM,
+			deploymentpb.RenderArtifact_MUTABILITY_READ_ONLY,
+			"workload files come from workload input",
+			"",
+			map[string]string{"artifact": "workload_file"},
+		))
 	}
 	artifacts = append(artifacts,
-		deploymentbuilder.CommandArtifact(ctx, Engine, deploymentbuilder.ArtifactID(ctx.Component.GetId(), "install/100"), installCommand(ctx.Workload, labels[deploymentbuilder.LabelServerAddr]), "stroppy install is renderer-owned", map[string]string{"artifact": "install"}),
-		deploymentbuilder.CommandArtifact(ctx, Engine, deploymentbuilder.ArtifactID(ctx.Component.GetId(), "healthcheck"), "test -d "+deploymentbuilder.ShellQuote(deploymentbuilder.ConfigDir(ctx.Component.GetId())), "healthcheck command is renderer-owned", map[string]string{"artifact": "healthcheck"}),
-		deploymentbuilder.RuntimeArtifact(ctx, Engine, "runtime/private-address", "machine."+ctx.Node.GetId()+".endpoint.private.address"),
+		deploymentbuilder.CommandArtifact(
+			ctx,
+			Engine,
+			deploymentbuilder.ArtifactID(ctx.Component.GetId(), "install/100"),
+			installCommand(ctx.Workload, labels[deploymentbuilder.LabelServerAddr]),
+			"stroppy install is renderer-owned",
+			map[string]string{"artifact": "install"},
+		),
+		deploymentbuilder.CommandArtifact(
+			ctx,
+			Engine,
+			deploymentbuilder.ArtifactID(ctx.Component.GetId(), "healthcheck"),
+			"test -d "+deploymentbuilder.ShellQuote(deploymentbuilder.ConfigDir(ctx.Component.GetId())),
+			"healthcheck command is renderer-owned",
+			map[string]string{"artifact": "healthcheck"},
+		),
+		deploymentbuilder.RuntimeArtifact(
+			ctx,
+			Engine,
+			"runtime/private-address",
+			"machine."+ctx.Node.GetId()+".endpoint.private.address",
+		),
 	)
 	return artifacts, nil
 }
 
-func effectiveConfigFile(componentID string, input *domain.Workload, database *domain.Database, overrides *deploymentpb.RenderOverrideSet, labels map[string]string, target databaseTarget, loadWorkers uint32, bearerToken string) (*common.File, deploymentpb.RenderArtifact_Origin, error) {
+func effectiveConfigFile(
+	componentID string,
+	input *domain.Workload,
+	database *domain.Database,
+	overrides *deploymentpb.RenderOverrideSet,
+	labels map[string]string,
+	target databaseTarget,
+	loadWorkers uint32,
+	bearerToken string,
+) (*common.File, deploymentpb.RenderArtifact_Origin, error) {
 	target = target.withDefaults(database)
 	artifactID := configArtifactID(componentID)
 	if override, ok := deploymentbuilder.OverrideFile(overrides, componentID, artifactID); ok && override.GetFile() != nil {
@@ -121,10 +208,26 @@ func effectiveConfigFile(componentID string, input *domain.Workload, database *d
 		}
 		return file, deploymentpb.RenderArtifact_ORIGIN_USER_OVERRIDE, nil
 	}
-	return defaultConfigFile(componentID, input, database, labels, target, loadWorkers, bearerToken), deploymentpb.RenderArtifact_ORIGIN_RENDERED_DEFAULT, nil
+	return defaultConfigFile(
+		componentID,
+		input,
+		database,
+		labels,
+		target,
+		loadWorkers,
+		bearerToken,
+	), deploymentpb.RenderArtifact_ORIGIN_RENDERED_DEFAULT, nil
 }
 
-func defaultConfigFile(componentID string, input *domain.Workload, database *domain.Database, labels map[string]string, target databaseTarget, loadWorkers uint32, bearerToken string) *common.File {
+func defaultConfigFile(
+	componentID string,
+	input *domain.Workload,
+	database *domain.Database,
+	labels map[string]string,
+	target databaseTarget,
+	loadWorkers uint32,
+	bearerToken string,
+) *common.File {
 	return &common.File{
 		Info: &common.File_Info{
 			Path:          configPath(componentID),
