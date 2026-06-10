@@ -253,12 +253,32 @@ func ydbConfigContent(input *domain.YdbParams, nodeType string, options map[stri
 	fmt.Fprintf(&b, "    groups:\n")
 	fmt.Fprintf(&b, "    - erasure_species: %s\n", ydbFaultTolerance(input))
 	fmt.Fprintf(&b, "      rings:\n")
-	b.WriteString("      - fail_domains:\n")
-	for i := 0; i < hostCount; i++ {
-		b.WriteString("        - vdisk_locations:\n")
-		fmt.Fprintf(&b, "          - node_id: %d\n", i+1)
-		fmt.Fprintf(&b, "            pdisk_category: %s\n", diskType)
-		fmt.Fprintf(&b, "            path: %s\n", ydbPDiskPath)
+	if ydbFaultTolerance(input) == "mirror-3-dc" {
+		// mirror-3-dc requires exactly 3 rings, one per datacenter. Nodes are
+		// round-robin assigned to zones[i%len(zones)] (matching the host
+		// walle_location.data_center above), so each ring lists the vdisks of
+		// the nodes that live in that datacenter. ydbd rejects a single-ring
+		// mirror-3-dc group, which is why the storage node failed to start.
+		for dcIdx := range zones {
+			b.WriteString("      - fail_domains:\n")
+			for i := 0; i < hostCount; i++ {
+				if i%len(zones) != dcIdx {
+					continue
+				}
+				b.WriteString("        - vdisk_locations:\n")
+				fmt.Fprintf(&b, "          - node_id: %d\n", i+1)
+				fmt.Fprintf(&b, "            pdisk_category: %s\n", diskType)
+				fmt.Fprintf(&b, "            path: %s\n", ydbPDiskPath)
+			}
+		}
+	} else {
+		b.WriteString("      - fail_domains:\n")
+		for i := 0; i < hostCount; i++ {
+			b.WriteString("        - vdisk_locations:\n")
+			fmt.Fprintf(&b, "          - node_id: %d\n", i+1)
+			fmt.Fprintf(&b, "            pdisk_category: %s\n", diskType)
+			fmt.Fprintf(&b, "            path: %s\n", ydbPDiskPath)
+		}
 	}
 	b.WriteString("channel_profile_config:\n")
 	b.WriteString("  profile:\n")
