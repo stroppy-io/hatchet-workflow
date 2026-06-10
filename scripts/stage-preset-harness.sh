@@ -445,7 +445,15 @@ fi
 
 processed=0
 failed=0
+# Read presets into an array first. Iterating over `< <(filtered_presets)`
+# breaks in smoke mode because curl/jq inside launch_run consume the loop's
+# stdin (the process substitution), draining the remaining presets so only the
+# first one ever runs.
+presets=()
 while IFS= read -r preset; do
+	[[ -n "$preset" ]] && presets+=("$preset")
+done < <(filtered_presets)
+for preset in "${presets[@]}"; do
 	processed=$((processed + 1))
 	if ! audit_preset "$preset" "$([[ "$MODE" == "smoke" ]] && echo 1 || echo 0)"; then
 		failed=$((failed + 1))
@@ -453,7 +461,7 @@ while IFS= read -r preset; do
 			continue
 		fi
 	fi
-done < <(filtered_presets)
+done
 
 log_event INFO "processed=$processed failed=$failed report=$REPORT_JSONL"
 summarize
