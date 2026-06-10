@@ -122,17 +122,16 @@ func TestPicodataDeploymentPlan(t *testing.T) {
 		}
 	}
 	healthcheck := dbtest.CallCmd(instance, "230_healthcheck")
-	for _, want := range []string{
-		"systemctl is-active --quiet",
-		"postgresql://admin@127.0.0.1:5432?sslmode=disable",
-		"SELECT 1",
-	} {
-		if !strings.Contains(healthcheck, want) {
-			t.Fatalf("healthcheck command missing %q:\n%s", want, healthcheck)
-		}
+	if !strings.Contains(healthcheck, "systemctl is-active --quiet") {
+		t.Fatalf("healthcheck command missing %q:\n%s", "systemctl is-active --quiet", healthcheck)
 	}
-	if strings.Contains(healthcheck, "/api/v1/health/ready") {
-		t.Fatalf("healthcheck should not depend on Picodata HTTP readiness endpoint:\n%s", healthcheck)
+	// The healthcheck must NOT probe SQL/raft readiness: components deploy
+	// sequentially, so a multi-instance cluster's bootstrap would deadlock
+	// waiting for a quorum that needs the not-yet-deployed instances.
+	for _, banned := range []string{"SELECT 1", "psql", "/api/v1/health/ready"} {
+		if strings.Contains(healthcheck, banned) {
+			t.Fatalf("healthcheck must not depend on SQL/raft readiness (%q):\n%s", banned, healthcheck)
+		}
 	}
 	config := dbtest.WriteFileText(instance, "030_write_config")
 	for _, want := range []string{
@@ -167,8 +166,11 @@ func TestPicodataDeploymentPlan(t *testing.T) {
 	if strings.Contains(service2, "PICODATA_ADMIN_PASSWORD") {
 		t.Fatalf("non-bootstrap instance should not set bootstrap admin password:\n%s", service2)
 	}
-	if command := dbtest.CallCmd(components["picodata-instance-2"], "240_configure_sql_limits"); command != "" {
-		t.Fatalf("non-bootstrap instance should not configure cluster SQL limits:\n%s", command)
+	// SQL limits run (best-effort) on every instance: components deploy
+	// sequentially, so the bootstrap is alone (no quorum) and a later instance
+	// applies the cluster-wide ALTER SYSTEM once quorum forms.
+	if command := dbtest.CallCmd(components["picodata-instance-2"], "240_configure_sql_limits"); command == "" {
+		t.Fatalf("every instance should attempt cluster SQL limits (best-effort)")
 	}
 
 	haproxy := dbtest.WriteFileText(components["haproxy-1"], "030_write_config")

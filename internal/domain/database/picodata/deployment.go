@@ -24,28 +24,11 @@ func (r DeploymentRenderer) RenderComponent(ctx deploymentbuilder.RenderContext)
 	if err != nil {
 		return nil, err
 	}
-	ec, err := picodataEngineComponent(ctx.Component, ctx.Database, ctx.RenderOverrides, ctx.DatabasePackage, picodataDependencyIDs(ctx), wiring)
+	ec, err := picodataEngineComponent(ctx.Component, ctx.Database, ctx.RenderOverrides, ctx.DatabasePackage, deploymentbuilder.DependencyIDs(ctx, nil), wiring)
 	if err != nil {
 		return nil, err
 	}
 	return deploymentbuilder.RenderComponentDeployment(ctx, ec), nil
-}
-
-// picodataDependencyIDs returns the deploy dependencies for a component, but
-// drops instance->instance edges. Picodata instances form the raft cluster by
-// retrying their peer connection to the bootstrap, so they must deploy in
-// parallel: the bootstrap instance does not become ready (and its enable/health
-// step does not finish) until the cluster reaches quorum, which needs the other
-// instances running. Keeping the coordination edge as a deploy dependency
-// serialized them and deadlocked the whole deployment. haproxy keeps its
-// dependency on the instances so it still starts after them.
-func picodataDependencyIDs(ctx deploymentbuilder.RenderContext) []string {
-	if ctx.Component.GetRole() != picodataRoleInstance {
-		return deploymentbuilder.DependencyIDs(ctx, nil)
-	}
-	return deploymentbuilder.DependencyIDs(ctx, func(c *topologypb.Component) bool {
-		return !(c.GetEngine() == picodataEngine && c.GetRole() == picodataRoleInstance)
-	})
 }
 
 func (r DeploymentRenderer) RenderPreview(ctx deploymentbuilder.PreviewContext) ([]*deploymentpb.RenderArtifact, error) {
@@ -280,13 +263,16 @@ func configArtifactID(componentID, role string) string {
 
 func picodataHealthcheckCommand(componentID string) string {
 	service := deploymentbuilder.ShellQuote(deploymentbuilder.ServiceName(componentID))
-	dsn := fmt.Sprintf(
-		"postgresql://%s@127.0.0.1:%d?sslmode=disable",
-		dbcredentials.PicodataUser,
-		pgprotoPort,
-	)
+	// Only check that the picodata service is up — NOT SQL/raft readiness.
+	// The deployment executor deploys components strictly sequentially, so a
+	// multi-instance cluster's first (bootstrap) instance is deployed alone; an
+	// SQL `SELECT 1` here would block forever waiting for a raft quorum that
+	// needs the other instances, which never deploy because the executor is
+	// stuck on this healthcheck. CockroachDB/MySQL use the same is-active-only
+	// check for the same reason; the cluster forms via peer-join as the later
+	// instances come up.
 	return fmt.Sprintf(`for i in $(seq 1 60); do
-  if systemctl is-active --quiet %s && PGPASSWORD=%s psql %s -v ON_ERROR_STOP=1 -X -c 'SELECT 1' >/dev/null; then
+  if systemctl is-active --quiet %s; then
     exit 0
   fi
   sleep 2
@@ -296,11 +282,17 @@ systemctl status --no-pager -l %s || true
 echo "--- journalctl %s ---"
 journalctl --no-pager --output=short-iso-precise -u %s -n 200 || true
 exit 1
-`, service, deploymentbuilder.ShellQuote(dbcredentials.PicodataPassword), deploymentbuilder.ShellQuote(dsn), service, service, service, service)
+`, service, service, service, service, service)
 }
 
-func picodataPostStartCommands(component *topologypb.Component, wiring picodataWiring) []deploymentbuilder.EngineCommand {
-	if component.GetRole() != picodataRoleInstance || !wiring.isBootstrap {
+func picodataPostStartCommands(component *topologypb.Component, _ picodataWiring) []deploymentbuilder.EngineCommand {
+	// Run on every instance, not just the bootstrap: components deploy
+	// sequentially, so the bootstrap is deployed alone (no raft quorum yet) and
+	// the SQL limits cannot be applied during its deploy. The command is
+	// best-effort and idempotent (ALTER SYSTEM is cluster-wide), so it harmlessly
+	// no-ops on the first instance and succeeds once a later instance brings the
+	// cluster to quorum. A single-node cluster forms 1-of-1 quorum immediately.
+	if component.GetRole() != picodataRoleInstance {
 		return nil
 	}
 	return []deploymentbuilder.EngineCommand{
@@ -333,6 +325,9 @@ SQL
   fi
   sleep 2
 done
-echo "failed to configure Picodata SQL limits" >&2
-exit 1`, deploymentbuilder.ShellQuote(dbcredentials.PicodataPassword), deploymentbuilder.ShellQuote(dsn))
+# Best-effort: on the bootstrap instance (deployed alone) there is no raft
+# quorum yet, so this cannot apply. A later instance applies it cluster-wide
+# once quorum forms. Never fail the deploy over it.
+echo "Picodata SQL limits not applied yet (no quorum on this instance); a later instance will apply them" >&2
+exit 0`, deploymentbuilder.ShellQuote(dbcredentials.PicodataPassword), deploymentbuilder.ShellQuote(dsn))
 }
