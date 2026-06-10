@@ -77,28 +77,60 @@ api_public() {
 		"$BASE$path"
 }
 
+login() {
+	TOKEN="$(api_public /cloud.v1.api.IamService/Login "$(jq -cn --arg login "$LOGIN" --arg password "$PASSWORD" '{login:$login,password:$password}')" | jq -r '.tokens.accessToken // empty')"
+	[[ -n "$TOKEN" ]]
+}
+
+# api_auth issues an authenticated POST. The access token expires mid-matrix on
+# long runs, so on a 401 it transparently re-logs in once and retries. Prints
+# the JSON body on success; mimics curl -fsS (exit 22) on any non-2xx.
 api_auth() {
 	local path="$1"
 	local payload="$2"
-	curl -fsS \
-		-H "Content-Type: application/json" \
-		-H "Authorization: Bearer $TOKEN" \
-		--data-binary "$payload" \
-		"$BASE$path"
+	local attempt resp code body
+	for attempt in 1 2; do
+		resp="$(curl -sS \
+			-H "Content-Type: application/json" \
+			-H "Authorization: Bearer $TOKEN" \
+			--data-binary "$payload" \
+			-w $'\n%{http_code}' \
+			"$BASE$path")"
+		code="${resp##*$'\n'}"
+		body="${resp%$'\n'*}"
+		if [[ "$code" == "401" && "$attempt" == "1" ]]; then
+			login || true
+			continue
+		fi
+		if [[ "$code" =~ ^2 ]]; then
+			printf '%s' "$body"
+			return 0
+		fi
+		printf '%s' "$body" >&2
+		return 22
+	done
+	return 22
 }
 
 api_auth_maybe() {
 	local path="$1"
 	local payload="$2"
 	local out="$3"
-	local status
-	status="$(curl -sS \
-		-H "Content-Type: application/json" \
-		-H "Authorization: Bearer $TOKEN" \
-		--data-binary "$payload" \
-		-o "$out" \
-		-w "%{http_code}" \
-		"$BASE$path")"
+	local attempt status
+	for attempt in 1 2; do
+		status="$(curl -sS \
+			-H "Content-Type: application/json" \
+			-H "Authorization: Bearer $TOKEN" \
+			--data-binary "$payload" \
+			-o "$out" \
+			-w "%{http_code}" \
+			"$BASE$path")"
+		if [[ "$status" == "401" && "$attempt" == "1" ]]; then
+			login || true
+			continue
+		fi
+		break
+	done
 	printf '%s' "$status"
 }
 
@@ -112,8 +144,7 @@ log_event() {
 	printf '%s %s\n' "$level" "$*"
 }
 
-TOKEN="$(api_public /cloud.v1.api.IamService/Login "$(jq -cn --arg login "$LOGIN" --arg password "$PASSWORD" '{login:$login,password:$password}')" | jq -r '.tokens.accessToken // empty')"
-if [[ -z "$TOKEN" ]]; then
+if ! login; then
 	echo "login failed" >&2
 	exit 1
 fi
