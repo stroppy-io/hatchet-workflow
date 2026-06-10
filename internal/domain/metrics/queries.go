@@ -41,7 +41,7 @@ func StroppyMetricPrefix(runID string) string {
 func MetricsForDB(dbKind string) []MetricDef {
 	var dbMetrics []MetricDef
 	switch strings.ToLower(dbKind) {
-	case "mysql":
+	case "mysql", "mariadb":
 		dbMetrics = mysqlMetrics()
 	case "picodata":
 		dbMetrics = picodataMetrics()

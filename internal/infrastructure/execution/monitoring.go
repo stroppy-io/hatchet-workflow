@@ -321,7 +321,8 @@ func dbKindString(rec *models.TestRunRecord) string {
 		kind = rec.GetSpec().GetDatabase().GetKind()
 	}
 	switch kind {
-	case domainpb.Database_KIND_MYSQL:
+	case domainpb.Database_KIND_MYSQL, domainpb.Database_KIND_MARIADB:
+		// MariaDB uses the mysqld_exporter and the same metric names as MySQL.
 		return "mysql"
 	case domainpb.Database_KIND_YDB, domainpb.Database_KIND_YDB_MANAGED:
 		return "ydb"
