@@ -250,13 +250,18 @@ func startExportersScript(p monitorParams) string {
 		))
 	case "mysql":
 		// Create the least-privilege exporter user, then start mysqld_exporter
-		// against the local server. Best-effort grant (idempotent).
-		b.WriteString(`mysql -h 127.0.0.1 -u root -e "SET sql_log_bin=0; CREATE USER IF NOT EXISTS 'exporter'@'localhost' IDENTIFIED BY 'exporter' WITH MAX_USER_CONNECTIONS 3; GRANT PROCESS, REPLICATION CLIENT, SELECT ON *.* TO 'exporter'@'localhost'; FLUSH PRIVILEGES; SET sql_log_bin=1;" 2>/dev/null || true
+		// against the local server. Best-effort grant (idempotent). The user is
+		// '%' (not 'localhost') because the exporter connects over TCP, so the
+		// server sees 127.0.0.1 and a 'localhost' account would never match.
+		// MariaDB 11+ ships only the `mariadb` client, so fall back to it when
+		// `mysql` is absent, and connect through the local socket as root.
+		b.WriteString(`mysqlcli="$(command -v mysql || command -v mariadb || echo mysql)"
+"$mysqlcli" -u root --socket=/run/mysqld/mysqld.sock -e "SET sql_log_bin=0; CREATE USER IF NOT EXISTS 'exporter'@'%' IDENTIFIED BY 'exporter' WITH MAX_USER_CONNECTIONS 3; GRANT PROCESS, REPLICATION CLIENT, SELECT ON *.* TO 'exporter'@'%'; FLUSH PRIVILEGES; SET sql_log_bin=1;" 2>/dev/null || true
 `)
 		b.WriteString(systemdRunUnit(
 			"stroppy-mysqld-exporter",
 			"MYSQLD_EXPORTER_PASSWORD=exporter",
-			"/usr/local/bin/mysqld_exporter --mysqld.address=localhost:3306 --mysqld.username=exporter",
+			"/usr/local/bin/mysqld_exporter --mysqld.address=127.0.0.1:3306 --mysqld.username=exporter",
 		))
 	}
 
