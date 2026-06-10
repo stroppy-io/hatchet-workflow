@@ -21,8 +21,16 @@
 
 	@grpc protocol grpc
 
+	# Same transient cmux dial hiccup as the apt path: under a concurrent boot of
+	# a multi-node cluster, agents establish their Temporal gRPC connection and
+	# fetch the agent binary all at once. Without retries Caddy turns a momentary
+	# upstream dial failure into a 503, so an agent never comes online and the
+	# deploy hangs on EnsureAgentOnline. Retry the upstream on every gateway path.
 	handle @grpc {
-		reverse_proxy h2c://{$CADDY_UPSTREAM:127.0.0.1:8080}
+		reverse_proxy h2c://{$CADDY_UPSTREAM:127.0.0.1:8080} {
+			lb_try_duration 15s
+			lb_try_interval 250ms
+		}
 	}
 
 	handle /grafana/* {
@@ -30,7 +38,10 @@
 	}
 
 	handle {
-		reverse_proxy {$CADDY_UPSTREAM:127.0.0.1:8080}
+		reverse_proxy {$CADDY_UPSTREAM:127.0.0.1:8080} {
+			lb_try_duration 15s
+			lb_try_interval 250ms
+		}
 	}
 }
 
