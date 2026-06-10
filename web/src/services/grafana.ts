@@ -22,6 +22,7 @@ export const DASHBOARD_UID: Record<string, string> = {
   mysql: "stroppy-mysql",
   // MariaDB reuses the MySQL dashboard: same mysqld_exporter, same metric names.
   mariadb: "stroppy-mysql",
+  cockroach: "stroppy-cockroach",
   ydb: "stroppy-ydb",
   picodata: "stroppy-picodata",
 };
@@ -33,6 +34,7 @@ export const DASHBOARD_LABEL: Record<string, string> = {
   postgres: "PostgreSQL",
   mysql: "MySQL",
   mariadb: "MariaDB",
+  cockroach: "CockroachDB",
   ydb: "YDB",
   picodata: "Picodata",
 };
