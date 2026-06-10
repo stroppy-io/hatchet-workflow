@@ -127,6 +127,9 @@ services:
       - POSTGRES_SEEDS=postgres
       - DBNAME=temporal
       - VISIBILITY_DBNAME=temporal_visibility
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/stroppy.yaml
+    volumes:
+      - ./deployments/temporal/dynamicconfig.yaml:/etc/temporal/config/dynamicconfig/stroppy.yaml:ro
     ports:
       - "${BIND_ADDR:-0.0.0.0}:7233:7233"
 

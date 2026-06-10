@@ -50,7 +50,7 @@ const (
 )
 
 const (
-	runtimeProjectionPersistMinInterval = 5 * time.Second
+	runtimeProjectionPersistMinInterval = 2 * time.Second
 	maxRuntimeProjectionOutputs         = 80
 	maxRuntimeProjectionTextBytes       = 512
 	maxRuntimeProjectionListItems       = 16
@@ -931,14 +931,14 @@ func isProjectionForceStage(stage *workflowpb.Stage) bool {
 		return true
 	case common.Status_STATUS_COMPLETED,
 		common.Status_STATUS_SKIPPED:
-		// Only force a persist on root-stage completions. Forcing on every
-		// agent-step completion bloats the parent workflow history (each
-		// persist activity records the growing RunState as its input), which
-		// for a multi-tier cluster exceeds Temporal's history size limit and
-		// gets the workflow terminated. Live status freshness comes from the
-		// in-memory GetRunState query (read-side, no history cost); the
-		// persisted projection is only the fallback.
-		return stage.GetOperation() == nil
+		// Force a persist on EVERY step/stage completion so the persisted
+		// runtime projection (the fallback the overview serves when the live
+		// Temporal query is unavailable) stays current and the UI never shows
+		// completed steps stuck PENDING. This grows the workflow history; the
+		// Temporal history-size/count limits are raised in
+		// deployments/temporal/dynamicconfig.yaml to accommodate it rather than
+		// throttling status updates.
+		return true
 	default:
 		return false
 	}

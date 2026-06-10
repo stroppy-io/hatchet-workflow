@@ -1,0 +1,22 @@
+# Temporal dynamic config overrides for stroppy-cloud.
+#
+# Test-run workflows (especially multi-tier clusters deployed in parallel) emit
+# many stage-update signals and runtime-projection persists, so the workflow
+# history grows well past Temporal's conservative defaults. Rather than crippling
+# the persist/projection logic to fit the default 50MB/51200-event limit (which
+# terminated PostgreSQL HA runs), raise the limits generously. Histories are
+# bounded per run and a cleanup job reclaims them later.
+limit.historySize.warn:
+  - value: 536870912 # 512 MiB
+limit.historySize.error:
+  - value: 2147483648 # 2 GiB
+limit.historyCount.warn:
+  - value: 1048576 # 1M events
+limit.historyCount.error:
+  - value: 4194304 # 4M events
+# Allow larger single payloads (e.g. GetRunState query results and the deployment
+# plan / runtime projection activity inputs) than the 2 MiB default.
+limit.blobSize.warn:
+  - value: 16777216 # 16 MiB
+limit.blobSize.error:
+  - value: 33554432 # 32 MiB
