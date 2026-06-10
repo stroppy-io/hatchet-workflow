@@ -24,11 +24,28 @@ func (r DeploymentRenderer) RenderComponent(ctx deploymentbuilder.RenderContext)
 	if err != nil {
 		return nil, err
 	}
-	ec, err := picodataEngineComponent(ctx.Component, ctx.Database, ctx.RenderOverrides, ctx.DatabasePackage, deploymentbuilder.DependencyIDs(ctx, nil), wiring)
+	ec, err := picodataEngineComponent(ctx.Component, ctx.Database, ctx.RenderOverrides, ctx.DatabasePackage, picodataDependencyIDs(ctx), wiring)
 	if err != nil {
 		return nil, err
 	}
 	return deploymentbuilder.RenderComponentDeployment(ctx, ec), nil
+}
+
+// picodataDependencyIDs returns the deploy dependencies for a component, but
+// drops instance->instance edges. Picodata instances form the raft cluster by
+// retrying their peer connection to the bootstrap, so they must deploy in
+// parallel: the bootstrap instance does not become ready (and its enable/health
+// step does not finish) until the cluster reaches quorum, which needs the other
+// instances running. Keeping the coordination edge as a deploy dependency
+// serialized them and deadlocked the whole deployment. haproxy keeps its
+// dependency on the instances so it still starts after them.
+func picodataDependencyIDs(ctx deploymentbuilder.RenderContext) []string {
+	if ctx.Component.GetRole() != picodataRoleInstance {
+		return deploymentbuilder.DependencyIDs(ctx, nil)
+	}
+	return deploymentbuilder.DependencyIDs(ctx, func(c *topologypb.Component) bool {
+		return !(c.GetEngine() == picodataEngine && c.GetRole() == picodataRoleInstance)
+	})
 }
 
 func (r DeploymentRenderer) RenderPreview(ctx deploymentbuilder.PreviewContext) ([]*deploymentpb.RenderArtifact, error) {
