@@ -260,9 +260,9 @@ func AptProxyConfig(serverAddr string) string {
 	return fmt.Sprintf(
 		"Acquire::http::Proxy %q;\n"+
 			"Acquire::https::Proxy \"DIRECT\";\n"+
-			"Acquire::Retries \"5\";\n"+
-			"Acquire::http::Timeout \"30\";\n"+
-			"Acquire::https::Timeout \"30\";\n",
+			"Acquire::Retries \"8\";\n"+
+			"Acquire::http::Timeout \"120\";\n"+
+			"Acquire::https::Timeout \"120\";\n",
 		proxyURL,
 	)
 }
