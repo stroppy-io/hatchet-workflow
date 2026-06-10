@@ -6821,7 +6821,7 @@
               "showLineNumbers": false,
               "showMiniMap": false
             },
-            "content": "`quota_used_ratio` > 90%, `arena_used_ratio` > 90%, 50% < `items_used_ratio` < 90% – your memory is highly fragmented. See [docs](https://www.Picodata.io/en/doc/1.10/reference/reference_lua/box_slab/#lua-function.box.slab.info) for more info.\n\n`quota_used_ratio` > 90%, `arena_used_ratio` > 90%, `items_used_ratio` > 90% – you are running out of memory. You should consider increasing Picodata’s memory limit (*box.cfg.memtx_memory*).\n",
+            "content": "`quota_used_ratio` > 90%, `arena_used_ratio` > 90%, 50% < `items_used_ratio` < 90% \u2013 your memory is highly fragmented. See [docs](https://www.Picodata.io/en/doc/1.10/reference/reference_lua/box_slab/#lua-function.box.slab.info) for more info.\n\n`quota_used_ratio` > 90%, `arena_used_ratio` > 90%, `items_used_ratio` > 90% \u2013 you are running out of memory. You should consider increasing Picodata\u2019s memory limit (*box.cfg.memtx_memory*).\n",
             "mode": "markdown"
           },
           "pluginVersion": "12.2.1",
@@ -6933,7 +6933,7 @@
         },
         {
           "datasource": "VictoriaMetrics",
-          "description": "`arena_used_ratio` = `arena_used` / `arena_size`.\n\n`arena_used` – used for both tuples and indexes.\n\n`arena_size` – allocated for both tuples and indexes.\n",
+          "description": "`arena_used_ratio` = `arena_used` / `arena_size`.\n\n`arena_used` \u2013 used for both tuples and indexes.\n\n`arena_size` \u2013 allocated for both tuples and indexes.\n",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -7032,7 +7032,7 @@
         },
         {
           "datasource": "VictoriaMetrics",
-          "description": "`items_used_ratio` = `items_used` / `items_size`.\n\n`items_used` – used only for tuples.\n\n`items_size` – allocated only for tuples.\n",
+          "description": "`items_used_ratio` = `items_used` / `items_size`.\n\n`items_used` \u2013 used only for tuples.\n\n`items_size` \u2013 allocated only for tuples.\n",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -7131,7 +7131,7 @@
         },
         {
           "datasource": "VictoriaMetrics",
-          "description": "`quota_used_ratio` = `quota_used` / `quota_size`.\n\n`quota_used` – used by slab allocator (for both tuple and index slabs).\n\n`quota_size` – memory limit for slab allocator (as configured in the *memtx_memory* parameter).\n",
+          "description": "`quota_used_ratio` = `quota_used` / `quota_size`.\n\n`quota_used` \u2013 used by slab allocator (for both tuple and index slabs).\n\n`quota_size` \u2013 memory limit for slab allocator (as configured in the *memtx_memory* parameter).\n",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -10519,7 +10519,7 @@
               "expr": "tnt_space_len{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\", engine=\"memtx\"}",
               "format": "time_series",
               "intervalFactor": 2,
-              "legendFormat": "{{instance_name}} — {{name}}",
+              "legendFormat": "{{instance_name}} \u2014 {{name}}",
               "range": true,
               "refId": "A"
             }
@@ -10618,7 +10618,7 @@
               "expr": "tnt_vinyl_tuples{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\",engine=\"vinyl\"}",
               "format": "time_series",
               "intervalFactor": 2,
-              "legendFormat": "{{instance_name}} — {{name}}",
+              "legendFormat": "{{instance_name}} \u2014 {{name}}",
               "refId": "A"
             }
           ],
@@ -10715,7 +10715,7 @@
               "expr": "tnt_space_bsize{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\",engine=\"memtx\"}",
               "format": "time_series",
               "intervalFactor": 2,
-              "legendFormat": "{{instance_name}} — {{name}}",
+              "legendFormat": "{{instance_name}} \u2014 {{name}}",
               "refId": "A"
             }
           ],
@@ -10812,7 +10812,7 @@
               "expr": "tnt_space_index_bsize{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"}",
               "format": "time_series",
               "intervalFactor": 2,
-              "legendFormat": "{{instance_name}} — {{name}} ({{index_name}})",
+              "legendFormat": "{{instance_name}} \u2014 {{name}} ({{index_name}})",
               "refId": "A"
             }
           ],
@@ -10909,7 +10909,7 @@
               "expr": "tnt_space_total_bsize{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\",engine=\"memtx\"}",
               "format": "time_series",
               "intervalFactor": 2,
-              "legendFormat": "{{instance_name}} — {{name}}",
+              "legendFormat": "{{instance_name}} \u2014 {{name}}",
               "refId": "A"
             }
           ],
@@ -11722,7 +11722,7 @@
         },
         {
           "datasource": "VictoriaMetrics",
-          "description": "«Level 0» (L0) memory area in bytes. L0 is the area that\nvinyl can use for in-memory storage of an LSM tree.\nBy monitoring this metric, you can see when L0 is getting\nclose to its maximum (tnt_vinyl_regulator_dump_watermark),\nat which time a dump will occur. You can expect L0 = 0\nimmediately after the dump operation is completed.\n\nPanel works with `metrics >= 0.8.0`.\n",
+          "description": "\u00abLevel 0\u00bb (L0) memory area in bytes. L0 is the area that\nvinyl can use for in-memory storage of an LSM tree.\nBy monitoring this metric, you can see when L0 is getting\nclose to its maximum (tnt_vinyl_regulator_dump_watermark),\nat which time a dump will occur. You can expect L0 = 0\nimmediately after the dump operation is completed.\n\nPanel works with `metrics >= 0.8.0`.\n",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -12014,7 +12014,7 @@
         },
         {
           "datasource": "VictoriaMetrics",
-          "description": "Average per second rate of commits (successful transaction ends).\nIt includes implicit commits: for example, any insert operation causes a commit\nunless it is within a `box.begin()`–`box.commit()` block.\n\nPanel works with `metrics >= 0.8.0`.\n",
+          "description": "Average per second rate of commits (successful transaction ends).\nIt includes implicit commits: for example, any insert operation causes a commit\nunless it is within a `box.begin()`\u2013`box.commit()` block.\n\nPanel works with `metrics >= 0.8.0`.\n",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -12113,7 +12113,7 @@
         },
         {
           "datasource": "VictoriaMetrics",
-          "description": "Average per second rate of rollbacks (unsuccessful transaction ends).\nThis is not merely a count of explicit `box.rollback()` requests — it includes requests\nthat ended with errors.\nPanel works with `metrics >= 0.8.0`.\n",
+          "description": "Average per second rate of rollbacks (unsuccessful transaction ends).\nThis is not merely a count of explicit `box.rollback()` requests \u2014 it includes requests\nthat ended with errors.\nPanel works with `metrics >= 0.8.0`.\n",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -12212,7 +12212,7 @@
         },
         {
           "datasource": "VictoriaMetrics",
-          "description": "Average per second rate of conflicts that caused transactions to roll back.\nThe ratio `tx conflicts` / `tx commits` above 5% indicates that vinyl is not healthy.\nAt this moment you’ll probably see a lot of other problems with vinyl.\n\nPanel works with `metrics >= 0.8.0`.\n",
+          "description": "Average per second rate of conflicts that caused transactions to roll back.\nThe ratio `tx conflicts` / `tx commits` above 5% indicates that vinyl is not healthy.\nAt this moment you\u2019ll probably see a lot of other problems with vinyl.\n\nPanel works with `metrics >= 0.8.0`.\n",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -17225,7 +17225,7 @@
             {
               "editorMode": "builder",
               "exemplar": false,
-              "expr": "pico_instance_state{stroppy_run_id=\"$run_id\",tier=\"$tier\"}",
+              "expr": "pico_instance_state{stroppy_run_id=\"$run_id\"}",
               "format": "table",
               "instant": false,
               "legendFormat": "{{instance_name}}",
