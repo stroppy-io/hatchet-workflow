@@ -50,7 +50,7 @@ const (
 )
 
 const (
-	runtimeProjectionPersistMinInterval = 5 * time.Second
+	runtimeProjectionPersistMinInterval = 2 * time.Second
 	maxRuntimeProjectionOutputs         = 80
 	maxRuntimeProjectionTextBytes       = 512
 	maxRuntimeProjectionListItems       = 16
@@ -931,7 +931,11 @@ func isProjectionForceStage(stage *workflowpb.Stage) bool {
 		return true
 	case common.Status_STATUS_COMPLETED,
 		common.Status_STATUS_SKIPPED:
-		return stage.GetOperation() == nil
+		// Force a persist on EVERY step/stage completion (not just root
+		// stages). Otherwise a burst of fast agent steps completing inside the
+		// throttle window is never persisted, so the run overview shows them
+		// stuck PENDING and the run looks hung in the UI.
+		return true
 	default:
 		return false
 	}

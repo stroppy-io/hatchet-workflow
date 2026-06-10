@@ -30,7 +30,7 @@ const streamInterval = time.Second
 // detail overview. The Overview endpoint must degrade to the persisted runtime
 // projection instead of hanging the UI when Temporal is slow or the workflow is
 // already closed.
-const overviewRunStateQueryTimeout = 2 * time.Second
+const overviewRunStateQueryTimeout = 4 * time.Second
 
 const (
 	stageInfrastructureNodeName       = "infrastructure"
@@ -296,8 +296,13 @@ func overviewFromRecord(runID string, rec *models.TestRunRecord, presence map[st
 		if sum.GetFinishedAt() != nil {
 			overview.FinishedAt = sum.GetFinishedAt()
 		}
-		if sum.GetDuration() != nil {
+		// Only trust the stored duration once the run is terminal. While running
+		// it is a frozen snapshot from the last persist, which made the UI
+		// duration look stuck; recompute it live against the observation time.
+		if runtimeTerminal && sum.GetDuration() != nil {
 			overview.Duration = sum.GetDuration()
+		} else if overview.GetStartedAt() != nil {
+			overview.Duration = spanDuration(overview.GetStartedAt(), overview.GetFinishedAt(), observedAt.AsTime())
 		}
 		if sum.GetProgressPct() > overview.GetProgressPct() {
 			overview.ProgressPct = sum.GetProgressPct()
