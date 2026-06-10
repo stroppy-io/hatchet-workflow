@@ -186,7 +186,7 @@ func picodataMetrics() []MetricDef {
 		{
 			Name:           "DB SQL Requests/s",
 			Key:            "db_qps",
-			Query:          `sum(rate(picodata_sql_requests_total{%s}[5m]))`,
+			Query:          `sum(rate(pico_sql_query_total{%s}[5m]))`,
 			Unit:           "q/s",
 			HigherIsBetter: true,
 			Group:          "throughput",
@@ -194,21 +194,23 @@ func picodataMetrics() []MetricDef {
 		{
 			Name:  "DB SQL Errors/s",
 			Key:   "db_errors",
-			Query: `sum(rate(picodata_sql_errors_total{%s}[5m]))`,
+			Query: `sum(rate(pico_sql_query_errors_total{%s}[5m]))`,
 			Unit:  "err/s",
 			Group: "errors",
 		},
 		{
 			Name:  "DB Raft Commit Index",
 			Key:   "db_raft_commit",
-			Query: `max(picodata_raft_commit_index{%s})`,
+			Query: `max(pico_raft_commit_index{%s})`,
 			Unit:  "",
 			Group: "replication",
 		},
 		{
-			Name:  "DB Tables Count",
+			// Picodata exposes no table-count metric; tables are tarantool
+			// spaces, so count the per-space gauge instead.
+			Name:  "DB Spaces Count",
 			Key:   "db_tables",
-			Query: `max(picodata_storage_tables_count{%s})`,
+			Query: `count(tnt_space_len{%s})`,
 			Unit:  "",
 			Group: "resources",
 		},

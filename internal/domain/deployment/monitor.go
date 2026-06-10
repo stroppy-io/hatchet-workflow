@@ -82,7 +82,7 @@ func monitorParamsFor(ctx RenderContext) (monitorParams, bool) {
 	engine := ctx.Component.GetEngine()
 	dbKind := ""
 	switch engine {
-	case "postgres", "mysql", "picodata", "ydb":
+	case "postgres", "mysql", "picodata", "ydb", "cockroach":
 		// Only emit a DB exporter for the engine roles that actually run a DB
 		// server on the machine. Proxy / etcd / coordinator roles share the
 		// engine name but host no DB to scrape.
@@ -113,6 +113,8 @@ func isDatabaseRole(engine, role string) bool {
 		return role == "instance"
 	case "ydb":
 		return role == "storage" || role == "database"
+	case "cockroach":
+		return role == "node"
 	default:
 		return false
 	}
@@ -297,6 +299,10 @@ func vmagentScrapeFile(p monitorParams) *common.File {
 		b.WriteString("  - job_name: mysql\n    static_configs:\n      - targets: ['localhost:9104']\n")
 	case "picodata":
 		b.WriteString("  - job_name: picodata\n    metrics_path: /metrics\n    static_configs:\n      - targets: ['localhost:8081']\n")
+	case "cockroach":
+		// CockroachDB exposes Prometheus metrics natively on the HTTP port at
+		// /_status/vars; there is no separate exporter to install.
+		b.WriteString("  - job_name: cockroach\n    metrics_path: /_status/vars\n    static_configs:\n      - targets: ['localhost:8080']\n")
 	case "ydb":
 		writeYDBScrapeJobs(&b, p.role, p.combined)
 	}

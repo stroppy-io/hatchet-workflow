@@ -118,6 +118,40 @@ func TestMonitorStepsScrapeBothYDBRolesInCombinedMode(t *testing.T) {
 	}
 }
 
+func TestMonitorStepsScrapeCockroach(t *testing.T) {
+	spec := fakeSpec()
+	spec.Labels = map[string]string{
+		LabelServerAddr: "https://control.example",
+		LabelRunID:      "run-1",
+	}
+	spec.Components[0].Engine = "cockroach"
+	spec.Components[0].Role = "node"
+	idx, err := topologyindex.NewIndex(spec)
+	if err != nil {
+		t.Fatalf("topology index: %v", err)
+	}
+	state := fakeInfrastructureState(spec)
+
+	steps := MonitorSteps(RenderContext{
+		Topology:   idx,
+		Component:  spec.GetComponents()[0],
+		Node:       spec.GetNodes()[0],
+		Machine:    state.GetMachines()[0],
+		AgentToken: "agent-token",
+	})
+
+	scrape := fileText(t, stepByID(steps, "320_write_vmagent_scrape"))
+	for _, want := range []string{
+		"job_name: cockroach",
+		"metrics_path: /_status/vars",
+		"targets: ['localhost:8080']",
+	} {
+		if !strings.Contains(scrape, want) {
+			t.Fatalf("cockroach scrape config missing %q:\n%s", want, scrape)
+		}
+	}
+}
+
 func stepByID(steps []*deploymentpb.AgentStep, id string) *deploymentpb.AgentStep {
 	for _, step := range steps {
 		if step.GetId() == id {
