@@ -309,14 +309,13 @@ func picodataPostStartCommands(component *topologypb.Component, _ picodataWiring
 
 func picodataConfigureSQLLimitsCommand() string {
 	dsn := fmt.Sprintf(
-		"postgresql://%s@127.0.0.1:%d?sslmode=disable",
+		"postgresql://%s@127.0.0.1:%d?sslmode=disable&connect_timeout=5",
 		dbcredentials.PicodataUser,
 		pgprotoPort,
 	)
-	return fmt.Sprintf(`set -e
-export PGPASSWORD=%s
-for i in $(seq 1 30); do
-  if psql %s -v ON_ERROR_STOP=1 -X <<'SQL'
+	return fmt.Sprintf(`export PGPASSWORD=%s
+for i in $(seq 1 8); do
+  if timeout 10s psql %s -v ON_ERROR_STOP=1 -X <<'SQL'
 ALTER SYSTEM SET sql_vdbe_opcode_max TO 100000000;
 ALTER SYSTEM SET sql_motion_row_max TO 1000000;
 SQL
@@ -326,8 +325,10 @@ SQL
   sleep 2
 done
 # Best-effort: on the bootstrap instance (deployed alone) there is no raft
-# quorum yet, so this cannot apply. A later instance applies it cluster-wide
-# once quorum forms. Never fail the deploy over it.
+# quorum yet, so the SQL connection hangs/fails. The timeout wrapper plus the
+# connect_timeout in the DSN keep each attempt bounded so this step cannot hang
+# the sequential deploy. A later instance applies the cluster-wide ALTER SYSTEM
+# once quorum forms; never fail the deploy over it.
 echo "Picodata SQL limits not applied yet (no quorum on this instance); a later instance will apply them" >&2
 exit 0`, deploymentbuilder.ShellQuote(dbcredentials.PicodataPassword), deploymentbuilder.ShellQuote(dsn))
 }
