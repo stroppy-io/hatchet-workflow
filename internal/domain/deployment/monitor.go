@@ -500,6 +500,13 @@ func vectorConfigFile(p monitorParams) *common.File {
 		fmt.Fprintf(&b, "        Authorization: %q\n", "Bearer "+p.bearerToken)
 	}
 	fmt.Fprintf(&b, "        AccountID: %q\n", fmt.Sprintf("%d", monitorAccountID))
+	// VictoriaLogs field mapping (https://docs.victoriametrics.com/victorialogs/data-ingestion/).
+	// Without these the events carry the log line in "message" with no "_msg",
+	// so VictoriaLogs records the literal "missing _msg field" placeholder and
+	// stamps every event with the ingest time instead of the real timestamp.
+	b.WriteString("        VL-Msg-Field: \"message\"\n")
+	b.WriteString("        VL-Time-Field: \"timestamp\"\n")
+	b.WriteString("        VL-Stream-Fields: \"run_id,machine_id,role,unit,source\"\n")
 	b.WriteString("    batch:\n")
 	b.WriteString("      max_events: 1000\n")
 	b.WriteString("      timeout_secs: 5\n")
