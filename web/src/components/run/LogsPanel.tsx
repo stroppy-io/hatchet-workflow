@@ -301,14 +301,31 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
     try {
       // First load with a #line anchor fetches the page ending at that line;
       // afterwards (and on any filter change) load the newest tail.
-      const anchor = anchorRef.current ? logCursorFromKey(anchorRef.current) : undefined;
+      const anchorCk = anchorRef.current;
+      const anchor = anchorCk ? logCursorFromKey(anchorCk) : undefined;
       anchorRef.current = null;
       const page = anchor
         ? await queryLogs(tenantSlug, runId, { ...serverFilter(), direction: "older", from: anchor, limit: 300 })
         : await queryLogs(tenantSlug, runId, { ...serverFilter(), direction: "older", limit: 300 });
-      setLines(page.lines);
+      let lines = page.lines;
       olderCursor.current = page.older;
       newerCursor.current = page.newer;
+      // When opening a shared line link, also pull a page of newer lines so the
+      // anchored line itself (and some context after it) is in the buffer — the
+      // older-direction page can end just before the anchor, leaving nothing to
+      // scroll to / highlight.
+      if (anchor) {
+        try {
+          const after = await queryLogs(tenantSlug, runId, { ...serverFilter(), direction: "newer", from: anchor, limit: 150 });
+          if (after.lines.length) {
+            lines = appendUnique(lines, after.lines);
+            newerCursor.current = after.newer;
+          }
+        } catch {
+          /* best-effort context fetch */
+        }
+      }
+      setLines(lines);
       setLoadedFilterKey(filterKey);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -375,12 +392,15 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
 
   const rows = lines;
 
-  // Follow to the bottom on new rows while live AND pinned to bottom.
+  // Follow to the bottom on new rows while live AND pinned to bottom. Never
+  // follow while a load-older prepend is in flight (prependAnchor set) or the
+  // older-page indicator is showing, otherwise prepending history yanks the
+  // viewport to the bottom instead of holding the reader's position.
   useEffect(() => {
-    if (!live || !atBottom.current) return;
+    if (!live || !atBottom.current || loadingOlder || prependAnchor.current != null) return;
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [rows, live]);
+  }, [rows, live, loadingOlder]);
 
   useEffect(() => {
     if (!live) return;
@@ -610,7 +630,7 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
                     {l.componentId}
                   </span>
                 )}
-                <span className={cn("min-w-0", stderr && "text-destructive")} title={tooltip || undefined}>
+                <span className={cn("min-w-0", wrap && "[overflow-wrap:anywhere]", stderr && "text-destructive")} title={tooltip || undefined}>
                   <Highlight text={l.line} q={applied.trim()} />
                 </span>
               </div>
