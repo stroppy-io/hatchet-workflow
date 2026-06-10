@@ -252,5 +252,17 @@ func AptProxyConfig(serverAddr string) string {
 	if proxyURL == "" {
 		return ""
 	}
-	return fmt.Sprintf("Acquire::http::Proxy %q;\nAcquire::https::Proxy \"DIRECT\";\n", proxyURL)
+	// Retries + connection timeouts are essential: several cluster nodes run
+	// apt-get update concurrently through the single gateway proxy, which under
+	// load can drop or stall a connection. Without a timeout apt waits forever
+	// on a silent socket (cluster deploys hung at apt-get update for 15m+); with
+	// these, a stalled fetch aborts and is retried instead of blocking deploy.
+	return fmt.Sprintf(
+		"Acquire::http::Proxy %q;\n"+
+			"Acquire::https::Proxy \"DIRECT\";\n"+
+			"Acquire::Retries \"5\";\n"+
+			"Acquire::http::Timeout \"30\";\n"+
+			"Acquire::https::Timeout \"30\";\n",
+		proxyURL,
+	)
 }
