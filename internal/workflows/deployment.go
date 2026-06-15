@@ -244,17 +244,10 @@ func (w *executeDeploymentPlanWorkflow) Execute(ctx workflow.Context) (*workflow
 				started := timestamppb.New(workflow.Now(gctx))
 				component.Status = common.Status_STATUS_DEPLOYMENT
 				emitStageUpdate(gctx, runID, componentStage(component, uint32(componentIndex+1), component.GetStatus(), started, nil, ""))
-				if err := persistDeploymentPlan(gctx, runID, plan); err != nil {
-					if waveErr == nil {
-						waveErr = err
-					}
-					return
-				}
 				if err := executeComponentDeployment(gctx, runID, plan, component, w.req.GetAgentBootstrap()); err != nil {
 					finishedAt := timestamppb.New(workflow.Now(gctx))
 					component.Status = common.Status_STATUS_FAILED
 					emitStageUpdate(gctx, runID, componentStage(component, uint32(componentIndex+1), component.GetStatus(), started, finishedAt, err.Error()))
-					_ = persistDeploymentPlan(gctx, runID, plan)
 					if waveErr == nil {
 						waveErr = err
 					}
@@ -263,15 +256,19 @@ func (w *executeDeploymentPlanWorkflow) Execute(ctx workflow.Context) (*workflow
 				finishedAt := timestamppb.New(workflow.Now(gctx))
 				component.Status = common.Status_STATUS_DEPLOYED
 				emitStageUpdate(gctx, runID, componentStage(component, uint32(componentIndex+1), component.GetStatus(), started, finishedAt, ""))
-				if err := persistDeploymentPlan(gctx, runID, plan); err != nil && waveErr == nil {
-					waveErr = err
-				}
 			})
 		}
 		if err := workflow.Await(ctx, func() bool { return finished == len(wave) }); err != nil {
 			return nil, err
 		}
 		if waveErr != nil {
+			// Persist the full plan only on failure (final statuses for the UI) and
+			// at the very end — NOT per wave. The plan body (every machine's
+			// rendered files/configs/units) is ~700KB and immutable except for
+			// component statuses, which the UI already gets live from
+			// emitStageUpdate; re-sending it after every wave put megabytes of
+			// duplicate payload into this workflow's Temporal history and pushed a
+			// single WorkflowTask past the gRPC message limit on large clusters.
 			if perr := persistPlan(); perr != nil {
 				return nil, fmt.Errorf("persist failed deployment plan: %w", perr)
 			}
@@ -282,6 +279,9 @@ func (w *executeDeploymentPlanWorkflow) Execute(ctx workflow.Context) (*workflow
 
 	if err := plan.Validate(); err != nil {
 		return nil, err
+	}
+	if err := persistPlan(); err != nil {
+		return nil, fmt.Errorf("persist deployed deployment plan: %w", err)
 	}
 	return &workflowpb.ExecuteDeploymentPlanWorkflowResponse{DeploymentPlan: plan}, nil
 }
@@ -481,6 +481,14 @@ func privateEndpoints(privateAddress, publicAddress string) []*deploymentpb.Endp
 }
 
 func executeComponentDeployment(ctx workflow.Context, runID string, plan *deploymentpb.DeploymentPlan, component *deploymentpb.ComponentDeployment, bootstrap *workflowpb.AgentBootstrap) error {
+	// Provider-managed components (e.g. managed YDB) have no VM/agent — the
+	// database is provisioned by terraform. Skip them entirely: reaching for an
+	// agent task queue that does not exist would fail with "agent task queue for
+	// node ... is missing". (They keep a no-op marker step only to satisfy
+	// ComponentDeployment validation.)
+	if component.GetLabels()["managed"] == "true" || len(component.GetSteps()) == 0 {
+		return nil
+	}
 	sortAgentSteps(component)
 	taskQueue, err := agentTaskQueue(bootstrap, component.GetNodeId())
 	if err != nil {
@@ -508,9 +516,6 @@ func executeComponentDeployment(ctx workflow.Context, runID string, plan *deploy
 			emitStageUpdate(ctx, runID, agentStepStage(component, step, uint32(stepIndex+1), step.GetStatus(), stepStarted, stepFinished, err.Error()))
 			if lerr := appendDeploymentStepLog(ctx, runID, component, step, monitor.Stream_STREAM_STDERR, "failed "+agentStepDescription(step)+": "+err.Error()); lerr != nil {
 				return lerr
-			}
-			if perr := persistDeploymentPlan(ctx, runID, plan); perr != nil {
-				return perr
 			}
 			return fmt.Errorf("component %s step %s: %w", component.GetComponentId(), step.GetId(), err)
 		}

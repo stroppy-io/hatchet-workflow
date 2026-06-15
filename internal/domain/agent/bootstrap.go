@@ -268,7 +268,12 @@ func AptProxyConfig(serverAddr string) string {
 			// cluster that floods the single gateway apt proxy and it starts
 			// dropping connections ("empty reply"). One-at-a-time keeps the
 			// proxy load low enough that retries reliably succeed.
-			"Acquire::Queue-Mode \"access\";\n",
+			"Acquire::Queue-Mode \"access\";\n"+
+			// Freshly-booted Ubuntu cloud images run unattended-upgrades, which
+			// holds /var/lib/dpkg/lock-frontend; our install then fails fast with
+			// "Could not get lock ... exit 100". Wait for the lock instead of
+			// aborting so the early-boot upgrade can finish first.
+			"DPkg::Lock::Timeout \"600\";\n",
 		proxyURL,
 	)
 }

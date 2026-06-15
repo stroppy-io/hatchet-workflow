@@ -16,6 +16,7 @@ import (
 
 	agentworker "github.com/stroppy-io/stroppy-cloud/internal/agent"
 	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
+	"github.com/stroppy-io/stroppy-cloud/internal/temporalopts"
 )
 
 // agentCmd runs the node-side Temporal worker. The agent is told ONLY the server
@@ -54,12 +55,10 @@ func agentCmd() *cobra.Command {
 				"namespace", namespace, "task_queue", taskQueue, "machine_id", machineID)
 
 			clientOptions := temporalclient.Options{
-				HostPort:  hostPort,
-				Namespace: namespace,
-				Logger:    temporallog.NewStructuredLogger(logger),
-			}
-			if tlsConfig != nil {
-				clientOptions.ConnectionOptions.TLS = tlsConfig
+				HostPort:          hostPort,
+				Namespace:         namespace,
+				Logger:            temporallog.NewStructuredLogger(logger),
+				ConnectionOptions: temporalopts.ConnectionOptions(tlsConfig),
 			}
 			clientOptions.HeadersProvider = staticHeadersProvider{
 				"authorization": "Bearer " + agentToken,

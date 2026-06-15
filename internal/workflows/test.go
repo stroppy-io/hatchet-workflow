@@ -50,7 +50,7 @@ const (
 )
 
 const (
-	runtimeProjectionPersistMinInterval = 2 * time.Second
+	runtimeProjectionPersistMinInterval = 20 * time.Second
 	maxRuntimeProjectionOutputs         = 80
 	maxRuntimeProjectionTextBytes       = 512
 	maxRuntimeProjectionListItems       = 16
@@ -138,7 +138,7 @@ func (w *runWorkloadWorkflow) Execute(ctx workflow.Context) (*workflowpb.RunWork
 		return nil, fmt.Errorf("agent %s is not online: %w", component.GetNodeId(), err)
 	}
 
-	step := workloadRunStep(component)
+	step := workloadRunStep(component, planHasManagedDatabase(plan))
 	stampWorkloadStepExecutionContext(runID, component, step)
 	started := timestamppb.New(workflow.Now(ctx))
 	step.Status = common.Status_STATUS_RUNNING
@@ -195,17 +195,47 @@ func infrastructureHasNode(state *deploymentpb.InfrastructureState, nodeID strin
 	return false
 }
 
-func workloadRunStep(component *deploymentpb.ComponentDeployment) *deploymentpb.AgentStep {
+// planHasManagedDatabase reports whether the deployment plan includes a
+// provider-managed database component (e.g. managed YDB). Such databases require
+// IAM auth via the workload VM's service account, and the folder role binding can
+// take a short time to propagate after terraform applies it — so the first
+// stroppy connect may fail with Unauthenticated before the role is effective.
+func planHasManagedDatabase(plan *deploymentpb.DeploymentPlan) bool {
+	for _, component := range plan.GetComponents() {
+		if component.GetLabels()["managed"] == "true" {
+			return true
+		}
+	}
+	return false
+}
+
+func workloadRunStep(component *deploymentpb.ComponentDeployment, retryAuth bool) *deploymentpb.AgentStep {
 	componentID := component.GetComponentId()
 	configDir := deploymentbuilder.ConfigDir(componentID)
 	configPath := configDir + "/stroppy-config.json"
-	script := "set -e\n" +
+	cfg := deploymentbuilder.ShellQuote(configPath)
+	run := "set -e\n" +
 		"if ! command -v stroppy >/dev/null 2>&1; then\n" +
 		"  echo 'stroppy binary is not installed on workload runner' >&2\n" +
 		"  exit 127\n" +
-		"fi\n" +
-		"exec stroppy run -f " + deploymentbuilder.ShellQuote(configPath) + "\n"
-	step := deploymentbuilder.CallCmdStep("900_run_stroppy", 900, script)
+		"fi\n"
+	if retryAuth {
+		// Managed databases authenticate with the VM service account; the IAM
+		// folder-role binding can lag terraform by up to a minute, so the first
+		// connect may fail Unauthenticated. Retry the whole run — early attempts
+		// fail at auth before any DDL, so re-running is safe — until the role
+		// propagates.
+		run += "for attempt in $(seq 1 8); do\n" +
+			"  if stroppy run -f " + cfg + "; then exit 0; fi\n" +
+			"  echo \"stroppy run attempt $attempt failed (managed DB IAM propagation?), retrying in 20s\" >&2\n" +
+			"  sleep 20\n" +
+			"done\n" +
+			"echo 'stroppy run failed after retries' >&2\n" +
+			"exit 1\n"
+	} else {
+		run += "exec stroppy run -f " + cfg + "\n"
+	}
+	step := deploymentbuilder.CallCmdStep("900_run_stroppy", 900, run)
 	step.Tags = deploymentbuilder.Tags("workload", workloadbuilder.Engine, "command")
 	step.Labels = deploymentbuilder.MergeLabels(step.GetLabels(), map[string]string{
 		"engine": workloadbuilder.Engine,
@@ -897,9 +927,27 @@ func (w *domainTestWorkflow) cancel(ctx workflow.Context) {
 }
 
 func (w *domainTestWorkflow) persist(ctx workflow.Context, infrastructureState *deploymentpb.InfrastructureState, deploymentPlan *deploymentpb.DeploymentPlan) error {
-	w.persistedInfrastructureState = infrastructureState
-	w.persistedDeploymentPlan = deploymentPlan
-	if err := persistRunState(ctx, w.req.GetTestRun().GetId(), w.state, infrastructureState, deploymentPlan); err != nil {
+	// Only send the (large) infrastructure state / deployment plan when they
+	// actually change since the last persist. Both are produced once and then
+	// only mutate component statuses (which the UI gets live from the runtime
+	// projection), so re-sending the full ~700KB plan + infra on each of the
+	// ~25 phase persists put megabytes of duplicate payload into Temporal
+	// history. PersistRunState treats nil as "keep the stored value".
+	infraArg := infrastructureState
+	if infrastructureState != nil && infrastructureState == w.persistedInfrastructureState {
+		infraArg = nil
+	}
+	planArg := deploymentPlan
+	if deploymentPlan != nil && deploymentPlan == w.persistedDeploymentPlan {
+		planArg = nil
+	}
+	if infrastructureState != nil {
+		w.persistedInfrastructureState = infrastructureState
+	}
+	if deploymentPlan != nil {
+		w.persistedDeploymentPlan = deploymentPlan
+	}
+	if err := persistRunState(ctx, w.req.GetTestRun().GetId(), w.state, infraArg, planArg); err != nil {
 		return err
 	}
 	w.lastRuntimeProjectionPersistAt = workflow.Now(ctx)
@@ -928,16 +976,6 @@ func isProjectionForceStage(stage *workflowpb.Stage) bool {
 	switch stage.GetStatus() {
 	case common.Status_STATUS_FAILED,
 		common.Status_STATUS_CANCELLED:
-		return true
-	case common.Status_STATUS_COMPLETED,
-		common.Status_STATUS_SKIPPED:
-		// Force a persist on EVERY step/stage completion so the persisted
-		// runtime projection (the fallback the overview serves when the live
-		// Temporal query is unavailable) stays current and the UI never shows
-		// completed steps stuck PENDING. This grows the workflow history; the
-		// Temporal history-size/count limits are raised in
-		// deployments/temporal/dynamicconfig.yaml to accommodate it rather than
-		// throttling status updates.
 		return true
 	default:
 		return false

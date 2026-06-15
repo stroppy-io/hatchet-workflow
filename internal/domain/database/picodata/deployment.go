@@ -56,6 +56,7 @@ type picodataWiring struct {
 	pgAdvertise string   // own pgproto host:port (instances)
 	peer        string   // bootstrap instance iproto host:port (empty on the bootstrap)
 	isBootstrap bool     // first instance bootstraps the raft group
+	tier        string   // this instance's tier name (must match a declared cluster.tier)
 	backends    []string // instance pgproto host:port list (haproxy)
 }
 
@@ -76,6 +77,7 @@ func picodataResolveWiring(ctx deploymentbuilder.RenderContext) (picodataWiring,
 		wiring := picodataWiring{
 			advertise:   deploymentbuilder.AddressPort(own.Address, iprotoPort),
 			pgAdvertise: deploymentbuilder.AddressPort(own.Address, pgprotoPort),
+			tier:        ctx.Node.GetLabels()["tier"],
 		}
 		if len(instances) > 0 && instances[0].ComponentID == ctx.Component.GetId() {
 			wiring.isBootstrap = true
@@ -127,7 +129,7 @@ func picodataEngineComponent(
 		DefaultConfigFile: picodataDefaultConfigFile(component, database, picodataWiring{}),
 		InstallCommands:   picodataInstallCommands(component, dbPackage),
 		ServiceFile:       picodataServiceFile(component.GetId(), component.GetRole(), configDir, wiring),
-		Healthcheck:       picodataHealthcheckCommand(component.GetId()),
+		Healthcheck:       picodataHealthcheckCommand(component.GetId(), component.GetRole()),
 		PostStartCommands: picodataPostStartCommands(component, wiring),
 	}, nil
 }
@@ -150,7 +152,10 @@ func picodataInstallCommands(component *topologypb.Component, dbPackage *domain.
 		}
 		return commands
 	case picodataRoleHaproxy:
-		return []string{"apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y haproxy"}
+		// postgresql-client gives psql for the readiness gate (a real pgproto
+		// round-trip through the frontend proves the cluster serves); socat reads
+		// the haproxy stats socket for diagnostics.
+		return []string{"apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y haproxy postgresql-client socat"}
 	default:
 		return []string{"true"}
 	}
@@ -193,7 +198,10 @@ WantedBy=multi-user.target
 			execStart,
 		)
 	case picodataRoleHaproxy:
-		return deploymentbuilder.SimpleServiceUnit(componentID, role, configDir, "/usr/sbin/haproxy -Ws -f "+deploymentbuilder.ShellQuote(cfgPath))
+		// -W (master-worker, foreground) not -Ws: -Ws enables sd_notify which needs
+		// a Type=notify unit; under the Type=simple unit here -Ws leaves the unit
+		// mis-reported and breaks forwarding.
+		return deploymentbuilder.SimpleServiceUnit(componentID, role, configDir, "/usr/sbin/haproxy -W -f "+deploymentbuilder.ShellQuote(cfgPath))
 	default:
 		return deploymentbuilder.SimpleServiceUnit(componentID, role, configDir, "/bin/false")
 	}
@@ -233,8 +241,12 @@ func picodataConfigContentForRole(database *domain.Database, componentID, role s
 // port across the resolved instance backends.
 func picodataHaproxyConfig(options map[string]string, backends []string) string {
 	var b strings.Builder
-	b.WriteString("global\n  daemon\n")
-	b.WriteString("defaults\n  mode tcp\n  timeout connect 5s\n  timeout client 1m\n  timeout server 1m\n")
+	// No `daemon`: the systemd unit runs `haproxy -W` (master-worker, foreground)
+	// which is incompatible with the daemon keyword. With `daemon` + master-worker
+	// the frontend accepted connections but never forwarded to the backend
+	// instances (the workload hit "unexpected EOF" through the proxy).
+	b.WriteString("global\n  maxconn 4096\n  stats socket /run/haproxy.sock mode 660 level admin\n")
+	b.WriteString("defaults\n  mode tcp\n  retries 3\n  timeout connect 5s\n  timeout client 1m\n  timeout server 1m\n")
 	fmt.Fprintf(&b, "frontend pgproto\n  bind 0.0.0.0:%d\n  default_backend picodata\n", pgprotoPort)
 	b.WriteString("backend picodata\n")
 	for i, backend := range backends {
@@ -261,8 +273,31 @@ func configArtifactID(componentID, role string) string {
 	return deploymentbuilder.ArtifactID(componentID, picodataConfigFileName(role))
 }
 
-func picodataHealthcheckCommand(componentID string) string {
+func picodataHealthcheckCommand(componentID, role string) string {
 	service := deploymentbuilder.ShellQuote(deploymentbuilder.ServiceName(componentID))
+	// haproxy fronts the pgproto port. Its own process being up does NOT mean the
+	// cluster serves: an instance opens 5432 (so haproxy's TCP check marks it up)
+	// before raft has formed, then EOFs the pgproto handshake — which is exactly
+	// the "unexpected EOF" the workload hit. Gate haproxy on a real pgproto
+	// round-trip through the frontend so the workload only starts once the cluster
+	// actually answers. Instances deploy in an earlier (concurrent) wave, so this
+	// no longer risks the sequential-deploy quorum deadlock the comment below
+	// describes. On failure, dump the per-backend pgproto probe + haproxy stats.
+	if role == picodataRoleHaproxy {
+		dsn := fmt.Sprintf("host=127.0.0.1 port=%d user=%s password=%s sslmode=disable", pgprotoPort, dbcredentials.PicodataUser, dbcredentials.PicodataPassword)
+		// Each attempt is hard-bounded with `timeout 8`: picodata accepts the
+		// pgproto connection before an instance reaches the Online grade and then
+		// BLOCKS the query (no statement timeout), so an unbounded psql hangs the
+		// whole healthcheck forever on the first iteration. Bounding it lets the
+		// loop cycle until the cluster actually answers.
+		return fmt.Sprintf(`for i in $(seq 1 120); do if timeout 8 env PGCONNECT_TIMEOUT=5 psql %s -tAc 'select 1' >/dev/null 2>&1; then exit 0; fi; sleep 3; done; `+
+			`echo "PICO-HAPROXY-DIAG: frontend not serving pgproto"; `+
+			`for ip in $(awk '/^[[:space:]]*server /{print $3}' /etc/stroppy-cloud/%s/haproxy.cfg | sed 's/:.*//'); do `+
+			`echo "PICO-DIAG host=$ip tcp5432=$(timeout 3 bash -c "echo > /dev/tcp/$ip/%d" 2>&1 && echo open || echo closed)"; done; `+
+			`echo "PICO-DIAG psql: [$(timeout 8 env PGCONNECT_TIMEOUT=5 psql %s -tAc 'select 1' 2>&1 | tr '\n' ' ')]"; `+
+			`echo "show stat" | timeout 3 socat - /run/haproxy.sock 2>/dev/null | grep -E '^(grpc|pgproto|picodata),' | sed 's/^/PICO-STAT /'; exit 1`,
+			deploymentbuilder.ShellQuote(dsn), componentID, pgprotoPort, deploymentbuilder.ShellQuote(dsn))
+	}
 	// Only check that the picodata service is up — NOT SQL/raft readiness.
 	// The deployment executor deploys components strictly sequentially, so a
 	// multi-instance cluster's first (bootstrap) instance is deployed alone; an

@@ -37,6 +37,23 @@ const (
 	ydbPDiskPath        = ydbPDiskDir + "/ydb-pdisk.data"
 )
 
+// ydbPDiskPaths returns the pdisk backing-file paths for one storage node. A
+// single pdisk keeps the original path (single-node topologies are unchanged);
+// multiple pdisks are required by mirror-3-dc, which needs >=3 fail domains per
+// fail realm — with one node per datacenter that means >=3 pdisks per node, each
+// pdisk becoming a distinct fail domain.
+func ydbPDiskPaths(input *domain.YdbParams) []string {
+	n := int(input.GetPdisksPerStorageNode())
+	if n <= 1 {
+		return []string{ydbPDiskPath}
+	}
+	paths := make([]string, 0, n)
+	for i := 1; i <= n; i++ {
+		paths = append(paths, fmt.Sprintf("%s/ydb-pdisk-%d.data", ydbPDiskDir, i))
+	}
+	return paths
+}
+
 type Database struct{}
 
 func (d *Database) ValidateInput(input *domain.YdbParams) error {
@@ -198,10 +215,13 @@ func ydbConfigContent(input *domain.YdbParams, nodeType string, options map[stri
 
 	var b strings.Builder
 	fmt.Fprintf(&b, "static_erasure: %s\n", ydbFaultTolerance(input))
+	pdiskPaths := ydbPDiskPaths(input)
 	b.WriteString("host_configs:\n")
 	b.WriteString("- drive:\n")
-	fmt.Fprintf(&b, "  - path: %s\n", ydbPDiskPath)
-	fmt.Fprintf(&b, "    type: %s\n", diskType)
+	for _, p := range pdiskPaths {
+		fmt.Fprintf(&b, "  - path: %s\n", p)
+		fmt.Fprintf(&b, "    type: %s\n", diskType)
+	}
 	b.WriteString("  host_config_id: 1\n")
 	b.WriteString("hosts:\n")
 	for i := 0; i < hostCount; i++ {
@@ -229,6 +249,21 @@ func ydbConfigContent(input *domain.YdbParams, nodeType string, options map[stri
 	fmt.Fprintf(&b, "        box_id: 1\n")
 	fmt.Fprintf(&b, "        erasure_species: %s\n", ydbFaultTolerance(input))
 	fmt.Fprintf(&b, "        kind: %s\n", storagePoolKind)
+	if ydbFaultTolerance(input) == "mirror-3-dc" {
+		// Disk-level fail domains for the DYNAMIC database group. With only one
+		// storage node per datacenter, the BS controller otherwise treats a node
+		// as a single fail domain (rack-level) and cannot place a mirror-3-dc
+		// group (needs 3 fail domains per realm) -> "no group options". The
+		// geometry maps realm=DataCenter (level 10) and domain down to the
+		// individual pdisk (level_end 256), so each of the 3 pdisks on a node is a
+		// distinct fail domain. Values from the official deprecated
+		// mirror-3dc-3-nodes.yaml example.
+		fmt.Fprintf(&b, "        geometry:\n")
+		fmt.Fprintf(&b, "          realm_level_begin: 10\n")
+		fmt.Fprintf(&b, "          realm_level_end: 20\n")
+		fmt.Fprintf(&b, "          domain_level_begin: 10\n")
+		fmt.Fprintf(&b, "          domain_level_end: 256\n")
+	}
 	fmt.Fprintf(&b, "        pdisk_filter:\n")
 	fmt.Fprintf(&b, "        - property:\n")
 	fmt.Fprintf(&b, "          - type: %s\n", diskType)
@@ -254,30 +289,36 @@ func ydbConfigContent(input *domain.YdbParams, nodeType string, options map[stri
 	fmt.Fprintf(&b, "    - erasure_species: %s\n", ydbFaultTolerance(input))
 	fmt.Fprintf(&b, "      rings:\n")
 	if ydbFaultTolerance(input) == "mirror-3-dc" {
-		// mirror-3-dc requires exactly 3 rings, one per datacenter. Nodes are
-		// round-robin assigned to zones[i%len(zones)] (matching the host
-		// walle_location.data_center above), so each ring lists the vdisks of
-		// the nodes that live in that datacenter. ydbd rejects a single-ring
-		// mirror-3-dc group, which is why the storage node failed to start.
+		// mirror-3-dc requires exactly 3 rings (one per datacenter) AND at least 3
+		// fail domains per ring (NumFailDomainsPerFailRealm >= 3, enforced by
+		// TMirror3dcMapper). With one storage node per datacenter, each pdisk on
+		// that node becomes a distinct fail domain — so 3 nodes x 3 pdisks yields
+		// the required 3 rings x 3 fail domains. A single pdisk per node produced
+		// 3 rings x 1 fail domain and ydbd aborted with "mirror-3-dc group
+		// topology is invalid".
 		for dcIdx := range zones {
 			b.WriteString("      - fail_domains:\n")
 			for i := 0; i < hostCount; i++ {
 				if i%len(zones) != dcIdx {
 					continue
 				}
-				b.WriteString("        - vdisk_locations:\n")
-				fmt.Fprintf(&b, "          - node_id: %d\n", i+1)
-				fmt.Fprintf(&b, "            pdisk_category: %s\n", diskType)
-				fmt.Fprintf(&b, "            path: %s\n", ydbPDiskPath)
+				for _, p := range pdiskPaths {
+					b.WriteString("        - vdisk_locations:\n")
+					fmt.Fprintf(&b, "          - node_id: %d\n", i+1)
+					fmt.Fprintf(&b, "            pdisk_category: %s\n", diskType)
+					fmt.Fprintf(&b, "            path: %s\n", p)
+				}
 			}
 		}
 	} else {
 		b.WriteString("      - fail_domains:\n")
 		for i := 0; i < hostCount; i++ {
-			b.WriteString("        - vdisk_locations:\n")
-			fmt.Fprintf(&b, "          - node_id: %d\n", i+1)
-			fmt.Fprintf(&b, "            pdisk_category: %s\n", diskType)
-			fmt.Fprintf(&b, "            path: %s\n", ydbPDiskPath)
+			for _, p := range pdiskPaths {
+				b.WriteString("        - vdisk_locations:\n")
+				fmt.Fprintf(&b, "          - node_id: %d\n", i+1)
+				fmt.Fprintf(&b, "            pdisk_category: %s\n", diskType)
+				fmt.Fprintf(&b, "            path: %s\n", p)
+			}
 		}
 	}
 	b.WriteString("channel_profile_config:\n")

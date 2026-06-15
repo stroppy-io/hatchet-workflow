@@ -79,7 +79,7 @@ func TestPostgresBuildTopologySpec(t *testing.T) {
 	assertConnection(t, spec, "postgres-replica-1", "postgres-master", topology.Connection_KIND_REPLICATION, topology.Connection_PROTOCOL_REPLICATION, topology.Connection_MODE_STREAM, "postgres", 5432, false)
 	assertConnection(t, spec, "postgres-master-pgbouncer", "postgres-master", topology.Connection_KIND_PROXY, topology.Connection_PROTOCOL_POOL, topology.Connection_MODE_REQUEST, "postgres", 5432, true)
 	assertConnection(t, spec, "postgres-master-patroni", "postgres-master-etcd", topology.Connection_KIND_COORDINATION, topology.Connection_PROTOCOL_CONTROL, topology.Connection_MODE_HEARTBEAT, "etcd_client", 2379, true)
-	assertConnection(t, spec, "haproxy-1", "postgres-master-pgbouncer", topology.Connection_KIND_PROXY, topology.Connection_PROTOCOL_POOL, topology.Connection_MODE_REQUEST, "pgbouncer", 6432, false)
+	assertConnection(t, spec, "haproxy-1", "postgres-master", topology.Connection_KIND_PROXY, topology.Connection_PROTOCOL_TCP, topology.Connection_MODE_REQUEST, "postgres", 5432, false)
 }
 
 func TestPostgresBuildTopologySpecDefaultSingleNode(t *testing.T) {

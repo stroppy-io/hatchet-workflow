@@ -52,6 +52,7 @@ import (
 	testrunsvc "github.com/stroppy-io/stroppy-cloud/internal/services/test_run"
 	testrunoverview "github.com/stroppy-io/stroppy-cloud/internal/services/test_run_overview"
 	testwizardsvc "github.com/stroppy-io/stroppy-cloud/internal/services/test_wizard"
+	"github.com/stroppy-io/stroppy-cloud/internal/temporalopts"
 	"github.com/stroppy-io/stroppy-cloud/internal/workflows"
 	"github.com/stroppy-io/stroppy-cloud/web"
 )
@@ -77,10 +78,13 @@ func Run(ctx context.Context, cfg Config) error {
 	store := postgres.New(db)
 	trm := db.Trm()
 
-	// 2) Temporal client.
+	// 2) Temporal client. Raise the gRPC message size well above the 4 MiB
+	// default so large self-hosted smoke WorkflowTasks do not wedge in a
+	// ResourceExhausted retry loop.
 	tc, err := client.Dial(client.Options{
-		HostPort:  cfg.TemporalHostPort,
-		Namespace: cfg.TemporalNS,
+		HostPort:          cfg.TemporalHostPort,
+		Namespace:         cfg.TemporalNS,
+		ConnectionOptions: temporalopts.ConnectionOptions(nil),
 	})
 	if err != nil {
 		return fmt.Errorf("dial temporal: %w", err)

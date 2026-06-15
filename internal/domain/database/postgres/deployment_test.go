@@ -42,8 +42,8 @@ func TestPostgresDeploymentRendererRendersPrioritiesDependenciesAndSteps(t *test
 	if !deploymentHasDependency(components["postgres-master-pgbouncer"], "postgres-master") {
 		t.Fatal("pgbouncer does not depend on postgres-master")
 	}
-	if !deploymentHasDependency(components["haproxy-1"], "postgres-master-pgbouncer") {
-		t.Fatal("haproxy does not depend on postgres-master-pgbouncer")
+	if !deploymentHasDependency(components["haproxy-1"], "postgres-master") {
+		t.Fatal("haproxy does not depend on postgres-master")
 	}
 
 	master := components["postgres-master"]
@@ -175,7 +175,7 @@ func TestPostgresDeploymentWiresClusterPeers(t *testing.T) {
 	}
 
 	haproxy := findDeploymentWriteFileText(t, components["haproxy-1"], "030_write_config")
-	for _, want := range []string{"server pg-1 10.0.0.1:6432 check", "server pg-2 10.0.0.2:6432 check"} {
+	for _, want := range []string{"server pg-1 10.0.0.1:5432 check", "server pg-2 10.0.0.2:5432 check"} {
 		if !strings.Contains(haproxy, want) {
 			t.Fatalf("haproxy backends missing %q:\n%s", want, haproxy)
 		}
@@ -191,6 +191,105 @@ func TestPostgresDeploymentWiresClusterPeers(t *testing.T) {
 		if !strings.Contains(etcd, want) {
 			t.Fatalf("etcd unit missing %q:\n%s", want, etcd)
 		}
+	}
+}
+
+func TestPostgresPatroniManagedCluster(t *testing.T) {
+	db := postgresPatroniDatabase()
+	spec, err := (&Database{}).BuildTopologySpec(db.GetParams().GetPostgres())
+	if err != nil {
+		t.Fatalf("build topology spec: %v", err)
+	}
+	plan, err := deploymentbuilder.BuildPlan(spec, postgresInfrastructureStateForSpec(spec), deploymentbuilder.BuildOptions{
+		Database:        db,
+		PackageResolver: packages.NewRegistry(PackageResolver{}),
+		Renderers:       deploymentbuilder.NewRegistry(DeploymentRenderer{}),
+	})
+	if err != nil {
+		t.Fatalf("build deployment plan: %v", err)
+	}
+	if err := plan.Validate(); err != nil {
+		t.Fatalf("plan is invalid: %v", err)
+	}
+	components := deploymentComponentsByID(plan)
+
+	// Master/replica units must be passive — Patroni owns the postgres process,
+	// so they must never run initdb / pg_basebackup or bind port 5432.
+	for _, id := range []string{"postgres-master", "postgres-replica-1"} {
+		unit := findDeploymentWriteFileText(t, components[id], "200_write_service")
+		if !strings.Contains(unit, "managed by Patroni") || !strings.Contains(unit, "ExecStart=/bin/true") {
+			t.Fatalf("%s unit is not a passive Patroni marker:\n%s", id, unit)
+		}
+		for _, banned := range []string{"initdb", "pg_basebackup", "config_file="} {
+			if strings.Contains(unit, banned) {
+				t.Fatalf("%s passive unit must not contain %q:\n%s", id, banned, unit)
+			}
+		}
+		health := findDeploymentCallCmd(t, components[id], "230_healthcheck")
+		if strings.Contains(health, "pg_isready") {
+			t.Fatalf("%s healthcheck must not probe postgres directly (Patroni owns it):\n%s", id, health)
+		}
+	}
+
+	// Patroni component renders a docs-compliant patroni.yml and runs patroni
+	// with a runtime-resolved bin_dir.
+	patroniCfg := findDeploymentWriteFileText(t, components["postgres-master-patroni"], "030_write_config")
+	for _, want := range []string{
+		"scope: stroppy-cluster",
+		"etcd3:",
+		"bootstrap:",
+		"initdb:",
+		"data-checksums",
+		"synchronous_mode: true",
+		"authentication:",
+		"username: postgres",
+		"password: stroppy_postgres",
+		"username: replicator",
+		"connect_address: 10.0.0.1:8008",
+	} {
+		if !strings.Contains(patroniCfg, want) {
+			t.Fatalf("patroni.yml missing %q:\n%s", want, patroniCfg)
+		}
+	}
+	patroniUnit := findDeploymentWriteFileText(t, components["postgres-master-patroni"], "200_write_service")
+	for _, want := range []string{"PATRONI_POSTGRESQL_BIN_DIR=", "/usr/bin/patroni", "runuser -u postgres"} {
+		if !strings.Contains(patroniUnit, want) {
+			t.Fatalf("patroni unit missing %q:\n%s", want, patroniUnit)
+		}
+	}
+
+	// HAProxy must route writes only to the current leader via the patroni REST
+	// health check, not a blind TCP connect.
+	haproxy := findDeploymentWriteFileText(t, components["haproxy-1"], "030_write_config")
+	for _, want := range []string{"option httpchk", "http-check send meth GET uri /primary ver HTTP/1.1 hdr Host", "http-check expect status 200", "check port 8008"} {
+		if !strings.Contains(haproxy, want) {
+			t.Fatalf("haproxy config missing %q:\n%s", want, haproxy)
+		}
+	}
+}
+
+func postgresPatroniDatabase() *domain.Database {
+	return &domain.Database{
+		Kind: domain.Database_KIND_POSTGRES,
+		Source: &domain.Database_Params{
+			Params: &domain.DatabaseParams{
+				Version: "16",
+				Engine: &domain.DatabaseParams_Postgres{
+					Postgres: &domain.PostgresParams{
+						Replicas:     1,
+						Haproxy:      1,
+						Pgbouncer:    true,
+						Patroni:      true,
+						Etcd:         true,
+						SyncReplicas: 1,
+						MasterOptions: map[string]string{
+							"max_connections": "200",
+						},
+						PatroniOptions: map[string]string{"ttl": "30", "loop_wait": "10", "retry_timeout": "10"},
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -331,7 +430,7 @@ func postgresDeploymentDatabase() *domain.Database {
 						Replicas:  1,
 						Haproxy:   1,
 						Pgbouncer: true,
-						Patroni:   true,
+						Etcd:      true,
 						MasterOptions: map[string]string{
 							"max_connections": "200",
 						},

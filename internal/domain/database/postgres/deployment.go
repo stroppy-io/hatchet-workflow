@@ -59,6 +59,18 @@ type postgresWiring struct {
 	backends    []pgServer // haproxy backend pg/pgbouncer endpoints
 	etcdPeers   []etcdPeer // all etcd peers (etcd initial-cluster)
 	etcdClients []string   // etcd client host:port (patroni dcs)
+	ownHost     string     // this component's own private host (patroni connect_address)
+
+	// patroniManaged is true when a patroni coordinator is colocated on this
+	// node. Patroni then owns the postgres process entirely, so the plain
+	// master/replica systemd unit must NOT also start postgres (port + data_dir
+	// conflict). See https://patroni.readthedocs.io/ — Patroni must be the only
+	// supervisor of the managed PostgreSQL instance.
+	patroniManaged bool
+	// patroniCluster is true when the topology runs Patroni at all; haproxy then
+	// health-checks the patroni REST API (GET /primary) instead of a blind TCP
+	// connect so it routes writes only to the current leader.
+	patroniCluster bool
 }
 
 type pgServer struct {
@@ -73,7 +85,13 @@ type etcdPeer struct {
 }
 
 func postgresResolveWiring(ctx deploymentbuilder.RenderContext) (postgresWiring, error) {
-	wiring := postgresWiring{}
+	wiring := postgresWiring{
+		patroniManaged: nodeHasPatroni(ctx),
+		patroniCluster: topologyHasPatroni(ctx),
+	}
+	if own, ok := deploymentbuilder.OwnPrivateEndpoint(ctx); ok {
+		wiring.ownHost = own.Address
+	}
 
 	switch ctx.Component.GetRole() {
 	case postgresRoleReplica:
@@ -125,6 +143,30 @@ func isPostgresEtcd(c *topologypb.Component) bool {
 	return c.GetEngine() == postgresEngine && c.GetRole() == postgresRoleEtcd
 }
 
+// nodeHasPatroni reports whether a patroni coordinator is colocated on the same
+// node as the component being rendered. When true, Patroni owns postgres and the
+// plain master/replica unit must stay passive.
+func nodeHasPatroni(ctx deploymentbuilder.RenderContext) bool {
+	for _, id := range ctx.Node.GetComponentIds() {
+		if c, ok := ctx.Topology.Component(id); ok && c.GetRole() == postgresRolePatroni {
+			return true
+		}
+	}
+	return false
+}
+
+// topologyHasPatroni reports whether any patroni coordinator exists in the whole
+// cluster, used by haproxy to decide between a leader-aware REST health check and
+// a plain TCP connect check.
+func topologyHasPatroni(ctx deploymentbuilder.RenderContext) bool {
+	for _, c := range ctx.Topology.Spec().GetComponents() {
+		if c.GetRole() == postgresRolePatroni {
+			return true
+		}
+	}
+	return false
+}
+
 func postgresEngineComponent(
 	component *topologypb.Component,
 	database *domain.Database,
@@ -148,7 +190,7 @@ func postgresEngineComponent(
 		DefaultConfigFile: postgresDefaultConfigFile(component, database, postgresWiring{}),
 		InstallCommands:   postgresInstallCommands(component, dbPackage),
 		ServiceFile:       postgresServiceFile(component.GetId(), component.GetRole(), configDir, wiring),
-		Healthcheck:       postgresHealthcheckCommand(component),
+		Healthcheck:       postgresHealthcheckCommand(component, wiring),
 	}
 	if hbaFile := postgresHBAFile(component.GetId(), component.GetRole()); hbaFile != nil {
 		ec.ExtraFiles = append(ec.ExtraFiles, deploymentbuilder.EngineFile{
@@ -249,11 +291,17 @@ func postgresInstallCommands(component *topologypb.Component, dbPackage *domain.
 		}
 		return commands
 	case postgresRoleHaproxy:
-		return []string{"apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y haproxy"}
+		// postgresql-client provides pg_isready (healthcheck proves haproxy can
+		// route to a live primary); socat queries the haproxy stats socket to
+		// surface the per-backend check verdict when it does not.
+		return []string{"apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y haproxy postgresql-client socat"}
 	case postgresRolePgbouncer:
 		return []string{"apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y pgbouncer"}
 	case postgresRolePatroni:
-		return []string{"apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y patroni"}
+		// python3-etcd is the client Patroni's etcd3 DCS backend speaks through;
+		// the patroni package's OR-dependency can otherwise resolve to a non-etcd
+		// client and Patroni then fails to find a usable DCS at startup.
+		return []string{"apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y patroni python3-etcd"}
 	case postgresRoleEtcd:
 		// The distro etcd package auto-starts its own etcd.service bound to the
 		// default 2379/2380 ports; left running it steals the ports from our
@@ -275,6 +323,12 @@ func postgresServiceFile(componentID, role, configDir string, wiring postgresWir
 
 func postgresServiceUnit(componentID, role, configDir string, wiring postgresWiring) string {
 	cfgPath := configPath(componentID, role)
+	// When Patroni manages this node, the postgres data instance is owned by the
+	// colocated patroni unit. The master/replica unit becomes a passive marker so
+	// it does not fight Patroni for port 5432 / the data directory.
+	if wiring.patroniManaged && (role == postgresRoleMaster || role == postgresRoleReplica) {
+		return postgresPassiveServiceUnit(componentID, role)
+	}
 	switch role {
 	case postgresRoleMaster:
 		return postgresMasterServiceUnit(componentID, role, configDir, cfgPath)
@@ -284,11 +338,16 @@ func postgresServiceUnit(componentID, role, configDir string, wiring postgresWir
 		}
 		return postgresDatabaseServiceUnit(componentID, role, configDir, cfgPath)
 	case postgresRoleHaproxy:
-		return deploymentbuilder.SimpleServiceUnit(componentID, role, configDir, "/usr/sbin/haproxy -Ws -f "+deploymentbuilder.ShellQuote(cfgPath))
+		// -W (master-worker, foreground) not -Ws: -Ws also enables sd_notify which
+		// requires a Type=notify unit. Under the Type=simple unit here, -Ws left
+		// the unit reported as not-active even though the worker served traffic,
+		// so the healthcheck's `systemctl is-active` short-circuited and the gate
+		// never ran. -W keeps the master in the foreground for Type=simple.
+		return deploymentbuilder.SimpleServiceUnit(componentID, role, configDir, "/usr/sbin/haproxy -W -f "+deploymentbuilder.ShellQuote(cfgPath))
 	case postgresRolePgbouncer:
 		return deploymentbuilder.SimpleServiceUnit(componentID, role, configDir, "/usr/sbin/runuser -u postgres -- /usr/sbin/pgbouncer "+deploymentbuilder.ShellQuote(cfgPath))
 	case postgresRolePatroni:
-		return deploymentbuilder.SimpleServiceUnit(componentID, role, configDir, "/usr/bin/patroni "+deploymentbuilder.ShellQuote(cfgPath))
+		return postgresPatroniServiceUnit(componentID, role, configDir, cfgPath)
 	case postgresRoleEtcd:
 		return postgresEtcdServiceUnit(componentID, role, configDir, cfgPath, wiring)
 	default:
@@ -504,6 +563,60 @@ WantedBy=multi-user.target
 	)
 }
 
+// postgresPassiveServiceUnit is a no-op marker unit used for master/replica
+// components when Patroni owns the postgres instance on the node. It stays
+// "active" so dependency/healthcheck gating passes, but it never touches port
+// 5432 or the data directory.
+func postgresPassiveServiceUnit(componentID, role string) string {
+	return fmt.Sprintf(`[Unit]
+Description=Stroppy Cloud PostgreSQL %s component %s (managed by Patroni)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/true
+
+[Install]
+WantedBy=multi-user.target
+`, role, componentID)
+}
+
+// postgresPatroniServiceUnit runs Patroni as the postgres user. The PostgreSQL
+// bin_dir is resolved at start so the unit works across Ubuntu releases (PG 14
+// on 22.04, PG 16 on 24.04, ...) and exported via PATRONI_POSTGRESQL_BIN_DIR,
+// which overrides the YAML value.
+func postgresPatroniServiceUnit(componentID, role, configDir, cfgPath string) string {
+	baseID := strings.TrimSuffix(componentID, "-"+postgresRolePatroni)
+	dataDir := postgresDataDir(baseID)
+	runDir := postgresRunDir(baseID)
+	return fmt.Sprintf(`[Unit]
+Description=Stroppy Cloud PostgreSQL %s component %s
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=%s/topology.env
+ExecStartPre=/bin/install -d -m 0700 -o postgres -g postgres %s
+ExecStartPre=/bin/install -d -m 0755 -o postgres -g postgres %s
+ExecStart=/bin/sh -ec "BIN=$$(dirname \"$$(find /usr/lib/postgresql -path '*/bin/postgres' | sort -V | tail -n1)\"); exec /usr/sbin/runuser -u postgres -- env PATRONI_POSTGRESQL_BIN_DIR=\"$$BIN\" /usr/bin/patroni %s"
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+`,
+		role,
+		componentID,
+		configDir,
+		deploymentbuilder.ShellQuote(dataDir),
+		deploymentbuilder.ShellQuote(runDir),
+		deploymentbuilder.ShellQuote(cfgPath),
+	)
+}
+
 func postgresHBAFile(componentID, role string) *common.File {
 	switch role {
 	case postgresRoleMaster, postgresRoleReplica:
@@ -527,19 +640,62 @@ host replication ` + postgresReplicationUser + ` 192.168.0.0/16 scram-sha-256
 	}
 }
 
-func postgresHealthcheckCommand(component *topologypb.Component) string {
+func postgresHealthcheckCommand(component *topologypb.Component, wiring postgresWiring) string {
 	service := deploymentbuilder.ShellQuote(deploymentbuilder.ServiceName(component.GetId()))
 	wrapRetry := func(cmd string) string {
 		return "for i in $(seq 1 60); do if " + cmd + "; then exit 0; fi; sleep 3; done; exit 1"
 	}
 	switch component.GetRole() {
 	case postgresRoleMaster, postgresRoleReplica:
+		// Under Patroni the postgres instance is owned by the colocated patroni
+		// unit (started in a later wave), so the passive marker is only checked
+		// for liveness; the patroni component verifies postgres is serving.
+		if wiring.patroniManaged {
+			return wrapRetry("systemctl is-active --quiet " + service)
+		}
 		return wrapRetry("systemctl is-active --quiet " + service + " && pg_isready -h 127.0.0.1 -p 5432")
 	case postgresRolePgbouncer:
 		return wrapRetry("systemctl is-active --quiet " + service + " && pg_isready -h 127.0.0.1 -p 6432")
+	case postgresRolePatroni:
+		// Patroni REST /health returns 200 once the managed postgres is running.
+		return wrapRetry("systemctl is-active --quiet " + service + " && curl -sf -o /dev/null http://127.0.0.1:8008/health")
+	case postgresRoleHaproxy:
+		// With Patroni, haproxy only forwards to the node whose patroni REST
+		// reports a primary. Until a leader is elected and the L7 check marks it
+		// up, haproxy has zero live servers and resets connections (the
+		// "unexpected EOF" the workload otherwise hit). Gate on a real connection
+		// through the frontend so the workload never starts before a primary is
+		// routable; the retry budget covers leader election + check rise time.
+		if wiring.patroniCluster {
+			return postgresHaproxyPatroniHealthcheck(configPath(component.GetId(), postgresRoleHaproxy))
+		}
+		return wrapRetry("systemctl is-active --quiet " + service)
 	default:
 		return wrapRetry("systemctl is-active --quiet " + service)
 	}
+}
+
+// postgresHaproxyPatroniHealthcheck gates the haproxy component on a real
+// connection through its own frontend, and on failure dumps the patroni REST
+// status (/, /primary, /leader) for every backend so a stuck cluster is
+// diagnosable from the run logs without live VM access.
+func postgresHaproxyPatroniHealthcheck(cfgPath string) string {
+	cfg := deploymentbuilder.ShellQuote(cfgPath)
+	// Gate on a full psql round-trip through the frontend (no `systemctl
+	// is-active` precondition — a successful query already proves haproxy is up
+	// and routing). pg_isready is avoided because its abrupt half-open probe can
+	// read as "no response" through haproxy mode tcp even when the backend
+	// serves. Allow up to ~6min: with synchronous_mode the patroni leader only
+	// reports /primary=200 (the only state haproxy routes to) once a sync standby
+	// has finished pg_basebackup and connected.
+	return fmt.Sprintf(`for i in $(seq 1 120); do if PGCONNECT_TIMEOUT=5 psql 'host=127.0.0.1 port=5432 user=postgres dbname=postgres' -tAc 'select 1' >/dev/null 2>&1; then exit 0; fi; sleep 3; done; `+
+		`echo "HAPROXY-DIAG: frontend not routable; probing patroni REST backends from %s"; `+
+		`for ip in $(awk '/^[[:space:]]*server /{print $3}' %s | sed 's/:.*//'); do `+
+		`echo "HAPROXY-DIAG host=$ip /primary=$(curl -s -m3 -o /dev/null -w '%%{http_code}' http://$ip:8008/primary) pg5432=$(pg_isready -h $ip -p 5432 -t 3 2>&1) tcp5432=$(timeout 3 bash -c "echo > /dev/tcp/$ip/5432" 2>&1 && echo open || echo closed)"; done; `+
+		`echo "HAPROXY-DIAG stat:"; echo "show stat" | timeout 3 socat - /run/haproxy.sock 2>/dev/null | grep -E '^(ft_postgres|bk_postgres),' | sed 's/^/HAPROXY-DIAG-STAT /'; `+
+		`echo "HAPROXY-DIAG psql-result: [$(PGCONNECT_TIMEOUT=5 psql 'host=127.0.0.1 port=5432 user=postgres dbname=postgres' -tAc 'select 1' 2>&1 | tr '\n' ' ')]"; `+
+		`echo "HAPROXY-DIAG cfg:"; sed -n '/backend bk_postgres/,$p' %s; exit 1`,
+		cfg, cfg, cfg)
 }
 
 func postgresDataDir(componentID string) string {
@@ -598,26 +754,56 @@ func postgresConfigContentForRole(cid string, database *domain.Database, role st
 	options := postgresRoleOptions(database, role)
 	switch role {
 	case postgresRoleHaproxy:
-		return postgresHaproxyConfig(options, wiring.backends)
+		return postgresHaproxyConfig(options, wiring.backends, wiring.patroniCluster)
 	case postgresRolePgbouncer:
 		return postgresPgbouncerConfig(cid, options)
 	case postgresRolePatroni:
-		return postgresPatroniConfig(cid, options, wiring.etcdClients)
+		return postgresPatroniConfig(cid, database, options, wiring)
 	default:
 		return configContent(role, options)
 	}
 }
 
 // postgresHaproxyConfig renders an haproxy.cfg fronting port 5432 across the
-// resolved pg/pgbouncer backends.
-func postgresHaproxyConfig(options map[string]string, backends []pgServer) string {
+// resolved pg/pgbouncer backends. With Patroni the backend uses an HTTP health
+// check against the patroni REST API (GET /primary, 200 only on the leader) so
+// writes are routed exclusively to the current primary; without Patroni it falls
+// back to a plain TCP connect check against a single fixed master.
+func postgresHaproxyConfig(options map[string]string, backends []pgServer, patroni bool) string {
 	var b strings.Builder
-	b.WriteString("global\n  daemon\n")
-	b.WriteString("defaults\n  mode tcp\n  timeout connect 5s\n  timeout client 1m\n  timeout server 1m\n")
-	b.WriteString("frontend postgres\n  bind 0.0.0.0:5432\n  default_backend postgres\n")
-	b.WriteString("backend postgres\n")
-	for _, backend := range backends {
-		fmt.Fprintf(&b, "  server %s %s check\n", backend.name, backend.addr)
+	// No `daemon`: the systemd unit runs `haproxy -Ws` (master-worker), which is
+	// incompatible with the daemon keyword. stats socket exposes show stat/state.
+	b.WriteString("global\n  maxconn 4096\n  stats socket /run/haproxy.sock mode 660 level admin\n")
+	b.WriteString("defaults\n  mode tcp\n  retries 3\n  timeout connect 5s\n  timeout client 1m\n  timeout server 1m\n")
+	// Frontend and backend MUST have distinct proxy names. haproxy treats a
+	// frontend and a backend sharing a name as a name clash and the frontend's
+	// default_backend then fails to resolve to the real server pool, so the
+	// frontend accepts connections but forwards to nothing ("no response" at the
+	// client even though the backend servers are UP). Match the master topology's
+	// ft_/bk_ naming.
+	b.WriteString("frontend ft_postgres\n  bind 0.0.0.0:5432\n  default_backend bk_postgres\n")
+	b.WriteString("backend bk_postgres\n")
+	if patroni {
+		// Patroni leader-aware health check. Patroni REST GET /primary returns 200
+		// ONLY on the node holding the leader lock, so haproxy routes writes there.
+		// It MUST be sent as HTTP/1.1 WITH a Host header: empirically, patroni's
+		// REST returns 200 to an HTTP/1.1+Host request (curl) but NOT to haproxy's
+		// legacy HTTP/1.0 no-Host probe (`option httpchk GET /primary`) nor to the
+		// bare `option httpchk` OPTIONS probe — both leave every backend marked
+		// down ("no response" at the frontend). Use the explicit http-check send.
+		b.WriteString("  option httpchk\n")
+		b.WriteString("  http-check send meth GET uri /primary ver HTTP/1.1 hdr Host stroppy\n")
+		b.WriteString("  http-check expect status 200\n")
+		b.WriteString("  default-server inter 3s fall 3 rise 2 on-marked-down shutdown-sessions\n")
+		for _, backend := range backends {
+			// `check port 8008` keeps the server's host but probes the patroni
+			// REST API instead of the postgres/pgbouncer traffic port.
+			fmt.Fprintf(&b, "  server %s %s maxconn 100 check port 8008\n", backend.name, backend.addr)
+		}
+	} else {
+		for _, backend := range backends {
+			fmt.Fprintf(&b, "  server %s %s check\n", backend.name, backend.addr)
+		}
 	}
 	if extra := renderOptions(options, " "); extra != "" {
 		b.WriteString(extra)
@@ -636,29 +822,62 @@ func postgresPgbouncerConfig(componentID string, options map[string]string) stri
 	return b.String()
 }
 
-// postgresPatroniConfig renders a patroni.yml with the resolved etcd hosts.
-func postgresPatroniConfig(componentID string, options map[string]string, etcdClients []string) string {
-	baseID := strings.TrimSuffix(componentID, "-patroni")
+// postgresPatroniConfig renders a docs-compliant patroni.yml: Patroni owns the
+// postgres instance (initdb on the bootstrap leader, pg_basebackup on followers,
+// leader election via etcd) and is the sole supervisor of the data directory.
+// The bin_dir is injected at runtime via PATRONI_POSTGRESQL_BIN_DIR (see the
+// service unit), so it is intentionally omitted here.
+func postgresPatroniConfig(componentID string, database *domain.Database, options map[string]string, wiring postgresWiring) string {
+	baseID := strings.TrimSuffix(componentID, "-"+postgresRolePatroni)
+	dataDir := postgresDataDir(baseID)
+	runDir := postgresRunDir(baseID)
+	sync := database.GetParams().GetPostgres().GetSyncReplicas() > 0
+
+	dcs := map[string]string{"ttl": "30", "loop_wait": "10", "retry_timeout": "10"}
+	for k, v := range options {
+		dcs[k] = v
+	}
+
 	var b strings.Builder
 	fmt.Fprintf(&b, "scope: stroppy-cluster\nname: %s\n", componentID)
 	b.WriteString("restapi:\n  listen: 0.0.0.0:8008\n")
-	b.WriteString("postgresql:\n")
-	b.WriteString("  listen: 0.0.0.0:5432\n")
-	b.WriteString("  bin_dir: /usr/lib/postgresql/14/bin\n")
-	fmt.Fprintf(&b, "  data_dir: %s\n", postgresDataDir(baseID))
-	fmt.Fprintf(&b, "  config_dir: %s\n", deploymentbuilder.ConfigDir(baseID))
-	fmt.Fprintf(&b, "  pgpass: %s\n", postgresPgpassPath(baseID))
-	b.WriteString("  parameters:\n    listen_addresses: '*'\n    port: 5432\n")
-	b.WriteString("  use_pg_rewind: false\n")
-	if len(etcdClients) > 0 {
+	if wiring.ownHost != "" {
+		fmt.Fprintf(&b, "  connect_address: %s:8008\n", wiring.ownHost)
+	}
+	if len(wiring.etcdClients) > 0 {
 		b.WriteString("etcd3:\n  hosts:\n")
-		for _, client := range etcdClients {
+		for _, client := range wiring.etcdClients {
 			fmt.Fprintf(&b, "  - %s\n", client)
 		}
 	}
-	if extra := renderOptions(options, ": "); extra != "" {
-		b.WriteString(extra)
+
+	b.WriteString("bootstrap:\n  dcs:\n")
+	fmt.Fprintf(&b, "    ttl: %s\n    loop_wait: %s\n    retry_timeout: %s\n", dcs["ttl"], dcs["loop_wait"], dcs["retry_timeout"])
+	b.WriteString("    maximum_lag_on_failover: 1048576\n")
+	if sync {
+		b.WriteString("    synchronous_mode: true\n")
 	}
+	b.WriteString("    postgresql:\n      use_pg_rewind: false\n      parameters:\n        listen_addresses: '*'\n        port: 5432\n")
+	b.WriteString("  initdb:\n  - encoding: UTF8\n  - data-checksums\n")
+	// Trust auth across the ephemeral benchmark cluster, matching the proven
+	// master topology: the workload, pgbouncer and replication all connect
+	// without passwords, removing scram as a failure variable.
+	b.WriteString("  pg_hba:\n")
+	b.WriteString("  - local all all trust\n")
+	b.WriteString("  - host all all 0.0.0.0/0 trust\n")
+	b.WriteString("  - host replication all 0.0.0.0/0 trust\n")
+
+	b.WriteString("postgresql:\n")
+	b.WriteString("  listen: 0.0.0.0:5432\n")
+	if wiring.ownHost != "" {
+		fmt.Fprintf(&b, "  connect_address: %s:5432\n", wiring.ownHost)
+	}
+	fmt.Fprintf(&b, "  data_dir: %s\n", dataDir)
+	fmt.Fprintf(&b, "  pgpass: %s/pgpass\n", runDir)
+	b.WriteString("  authentication:\n")
+	fmt.Fprintf(&b, "    superuser:\n      username: %s\n      password: %s\n", dbcredentials.PostgresUser, dbcredentials.PostgresPassword)
+	fmt.Fprintf(&b, "    replication:\n      username: %s\n      password: %s\n", postgresReplicationUser, postgresReplicationPassword)
+	fmt.Fprintf(&b, "  parameters:\n    unix_socket_directories: %s\n", runDir)
 	return b.String()
 }
 

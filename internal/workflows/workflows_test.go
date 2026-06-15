@@ -343,11 +343,29 @@ func TestTestWorkflowExposesRunStateQuery(t *testing.T) {
 	if got := runtime.lastRunStatus(); got != common.Status_STATUS_COMPLETED {
 		t.Fatalf("persisted run state status = %s, want %s", got, common.Status_STATUS_COMPLETED)
 	}
-	if !runtime.hasAgentProjectionWhileExecuteRunning() {
-		t.Fatal("runtime persistence never captured completed agent stages while execute_deployment_plan was still running")
-	}
 	if !agentActivities.hasCommandContaining("stroppy run -f") {
 		t.Fatal("agent activities never executed the stroppy workload command")
+	}
+}
+
+func TestProjectionForceStageOnlyForTerminalFailures(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		status common.Status
+		want   bool
+	}{
+		{name: "failed", status: common.Status_STATUS_FAILED, want: true},
+		{name: "cancelled", status: common.Status_STATUS_CANCELLED, want: true},
+		{name: "completed", status: common.Status_STATUS_COMPLETED, want: false},
+		{name: "skipped", status: common.Status_STATUS_SKIPPED, want: false},
+		{name: "running", status: common.Status_STATUS_RUNNING, want: false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got := isProjectionForceStage(&workflowpb.Stage{Status: tc.status})
+			if got != tc.want {
+				t.Fatalf("isProjectionForceStage(%s) = %v, want %v", tc.status, got, tc.want)
+			}
+		})
 	}
 }
 
@@ -450,8 +468,8 @@ func TestExecuteDeploymentPlanWorkflowPersistsActionStatusAndExecutionContext(t 
 	if result := component.GetSteps()[1].GetCallCmd().GetResult(); result == nil || result.GetExitCode() != 0 {
 		t.Fatalf("command result = %v, want exit 0", result)
 	}
-	if got, want := len(runtime.deploymentPlans), 2; got != want {
-		t.Fatalf("deployment plan persist calls = %d, want component boundary updates only", got)
+	if got, want := len(runtime.deploymentPlans), 1; got != want {
+		t.Fatalf("deployment plan persist calls = %d, want wave boundary update only", got)
 	}
 	if got := len(runtime.logLines); got < 4 {
 		t.Fatalf("synthetic action log lines = %d, want start/completed per step", got)

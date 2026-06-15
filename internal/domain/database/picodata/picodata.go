@@ -199,7 +199,15 @@ func picodataConfigContent(componentID string, input *domain.PicodataParams, ver
 	b.WriteString("instance:\n")
 	fmt.Fprintf(&b, "  instance_dir: %s\n", shellYAMLString(dataDir))
 	fmt.Fprintf(&b, "  name: %s\n", shellYAMLString(picodataInstanceName(componentID)))
-	b.WriteString("  tier: default\n")
+	// The instance's tier MUST match one declared in cluster.tier. Multi-tier
+	// presets (e.g. scale: compute/storage) name instances picodata-<tier>-N and
+	// carry the tier on the node label; hardcoding "default" referenced a tier
+	// that does not exist for those presets, so every instance crash-looped.
+	instanceTier := wiring.tier
+	if instanceTier == "" {
+		instanceTier = defaultTierName
+	}
+	fmt.Fprintf(&b, "  tier: %s\n", shellYAMLString(instanceTier))
 	if wiring.peer != "" {
 		fmt.Fprintf(&b, "  peer:\n    - %s\n", shellYAMLString(wiring.peer))
 	}

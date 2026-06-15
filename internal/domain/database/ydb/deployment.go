@@ -245,7 +245,8 @@ database=%s
 pool=%s
 config=%s
 
-last_log=/tmp/stroppy-ydb-bootstrap.log
+blob_out=""
+create_out=""
 for attempt in $(seq 1 60); do
   status_out="$(timeout 10s /usr/local/bin/ydbd -s "$server" admin database "$database" status 2>&1 || true)"
   if printf '%%s\n' "$status_out" | grep -q "Database $database status:" && ! printf '%%s\n' "$status_out" | grep -q "ERROR:"; then
@@ -254,28 +255,31 @@ for attempt in $(seq 1 60); do
   fi
 
   blob_out="$(timeout 30s /usr/local/bin/ydbd -s "$server" admin blobstorage config init --yaml-file "$config" 2>&1 || true)"
-  printf '%%s\n' "$blob_out" >>"$last_log"
   if printf '%%s\n' "$blob_out" | grep -q "Success: true" && ! printf '%%s\n' "$blob_out" | grep -q "ERROR:"; then
     echo "YDB blobstorage config initialized"
-  else
-    cat "$last_log" >&2 || true
   fi
 
   create_out="$(timeout 30s /usr/local/bin/ydbd -s "$server" admin database "$database" create "$pool" 2>&1 || true)"
-  printf '%%s\n' "$create_out" >>"$last_log"
   if printf '%%s\n' "$create_out" | grep -q "^OK$" && ! printf '%%s\n' "$create_out" | grep -q "ERROR:"; then
     echo "YDB database $database created with pool $pool"
     exit 0
   fi
-  cat "$last_log" >&2 || true
   sleep 5
 done
 
-echo "YDB database $database was not created after retries" >&2
-echo "--- journalctl %s (storage node) ---" >&2
-journalctl --no-pager --output=short-iso-precise -u %s -n 200 >&2 || true
+# Bounded failure diagnostics at the very end (no per-iteration spam, so the
+# ydbd journal survives output truncation and reveals why :2135 is unreachable).
+echo "YDB-INIT-FAIL: database $database not created after retries" >&2
+echo "YDB-INIT-FAIL last blobstorage init:" >&2
+printf '%%s\n' "$blob_out" | tail -n 20 >&2
+echo "YDB-INIT-FAIL last database create:" >&2
+printf '%%s\n' "$create_out" | tail -n 20 >&2
+echo "YDB-INIT-FAIL listening sockets:" >&2
+ss -tlnp 2>/dev/null | grep -E ':(2135|19001|8765)' >&2 || echo "  none of 2135/19001/8765 listening" >&2
+echo "YDB-INIT-FAIL ydbd journal (last 120):" >&2
+journalctl --no-pager --output=cat -u %s -n 120 2>&1 | tail -c 60000 >&2 || true
 exit 1
-`, deploymentbuilder.ShellQuote(server), deploymentbuilder.ShellQuote(databasePath), deploymentbuilder.ShellQuote(pool), deploymentbuilder.ShellQuote(configPath), storageService, deploymentbuilder.ShellQuote(storageService))
+`, deploymentbuilder.ShellQuote(server), deploymentbuilder.ShellQuote(databasePath), deploymentbuilder.ShellQuote(pool), deploymentbuilder.ShellQuote(configPath), deploymentbuilder.ShellQuote(storageService))
 }
 
 func ydbServiceFile(componentID, role, configDir string, database *domain.Database, wiring ydbWiring) *common.File {
@@ -345,7 +349,7 @@ func ydbServiceUnit(componentID, role, configDir string, database *domain.Databa
 	case ydbRoleStorage:
 		execStart := fmt.Sprintf("/usr/local/bin/ydbd server --yaml-config %s --grpc-port %d --ic-port %d --mon-port %d --node %d",
 			deploymentbuilder.ShellQuote(cfgPath), storageGrpcPort, icPort, monPort, ydbStaticNodeID(componentID))
-		return ydbDaemonServiceUnit(componentID, role, configDir, dataDir, execStart)
+		return ydbDaemonServiceUnit(componentID, role, configDir, dataDir, execStart, ydbPDiskPaths(database.GetParams().GetYdb()))
 	case ydbRoleDatabase:
 		tenant := ydbDatabasePath(database.GetParams().GetYdb())
 		execStart := fmt.Sprintf("/usr/local/bin/ydbd server --yaml-config %s --grpc-port %d --ic-port %d --mon-port %d --tenant %s",
@@ -353,9 +357,11 @@ func ydbServiceUnit(componentID, role, configDir string, database *domain.Databa
 		for _, broker := range wiring.nodeBrokers {
 			execStart += " --node-broker " + deploymentbuilder.ShellQuote(ydbNodeBrokerURI(broker))
 		}
-		return ydbDaemonServiceUnit(componentID, role, configDir, dataDir, execStart)
+		return ydbDaemonServiceUnit(componentID, role, configDir, dataDir, execStart, nil)
 	case ydbRoleHaproxy:
-		return deploymentbuilder.SimpleServiceUnit(componentID, role, configDir, "/usr/sbin/haproxy -Ws -f "+deploymentbuilder.ShellQuote(cfgPath))
+		// -W (master-worker, foreground) not -Ws: -Ws needs a Type=notify unit;
+		// under Type=simple it breaks forwarding (see postgres/picodata).
+		return deploymentbuilder.SimpleServiceUnit(componentID, role, configDir, "/usr/sbin/haproxy -W -f "+deploymentbuilder.ShellQuote(cfgPath))
 	default:
 		return deploymentbuilder.SimpleServiceUnit(componentID, role, configDir, "/bin/false")
 	}
@@ -428,7 +434,7 @@ func ydbCombinedDatabaseServiceFile(componentID, configDir string, database *dom
 			CreateParents: true,
 		},
 		Content: &common.File_Text{
-			Text: ydbDaemonNamedServiceUnit(serviceName, componentID, ydbRoleDatabase, configDir, deploymentbuilder.DataDir(componentID)+"-database", execStart),
+			Text: ydbDaemonNamedServiceUnit(serviceName, componentID, ydbRoleDatabase, configDir, deploymentbuilder.DataDir(componentID)+"-database", execStart, nil),
 		},
 	}
 }
@@ -458,11 +464,11 @@ func ydbStaticNodeID(componentID string) int {
 	return 1
 }
 
-func ydbDaemonServiceUnit(componentID, role, configDir, dataDir, execStart string) string {
-	return ydbDaemonNamedServiceUnit(deploymentbuilder.ServiceName(componentID), componentID, role, configDir, dataDir, execStart)
+func ydbDaemonServiceUnit(componentID, role, configDir, dataDir, execStart string, pdiskPaths []string) string {
+	return ydbDaemonNamedServiceUnit(deploymentbuilder.ServiceName(componentID), componentID, role, configDir, dataDir, execStart, pdiskPaths)
 }
 
-func ydbDaemonNamedServiceUnit(serviceName, componentID, role, configDir, dataDir, execStart string) string {
+func ydbDaemonNamedServiceUnit(serviceName, componentID, role, configDir, dataDir, execStart string, pdiskPaths []string) string {
 	after := "network-online.target"
 	wants := "network-online.target"
 	if role == ydbRoleDatabase && strings.HasSuffix(serviceName, "-database") {
@@ -472,11 +478,16 @@ func ydbDaemonNamedServiceUnit(serviceName, componentID, role, configDir, dataDi
 	}
 	pdiskPrepare := ""
 	if role == ydbRoleStorage {
+		if len(pdiskPaths) == 0 {
+			pdiskPaths = []string{ydbPDiskPath}
+		}
+		var prep strings.Builder
+		for _, p := range pdiskPaths {
+			fmt.Fprintf(&prep, "test -f %s || truncate -s 10G %s; ",
+				deploymentbuilder.ShellQuote(p), deploymentbuilder.ShellQuote(p))
+		}
 		pdiskPrepare = fmt.Sprintf("ExecStartPre=/bin/sh -ec %s\n",
-			deploymentbuilder.ShellQuote(fmt.Sprintf("test -f %s || truncate -s 10G %s",
-				deploymentbuilder.ShellQuote(ydbPDiskPath),
-				deploymentbuilder.ShellQuote(ydbPDiskPath),
-			)),
+			deploymentbuilder.ShellQuote(prep.String()),
 		)
 	}
 	return fmt.Sprintf(`[Unit]
@@ -548,8 +559,10 @@ func ydbConfigContentForRole(database *domain.Database, role string, wiring ydbW
 // resolved compute (or storage) backends.
 func ydbHaproxyConfig(options map[string]string, backends []string) string {
 	var b strings.Builder
-	b.WriteString("global\n  daemon\n")
-	b.WriteString("defaults\n  mode tcp\n  timeout connect 5s\n  timeout client 1m\n  timeout server 1m\n")
+	// No `daemon` (incompatible with the -W master-worker unit; daemon+master-worker
+	// breaks forwarding — frontend accepts but never proxies to the backends).
+	b.WriteString("global\n  maxconn 4096\n")
+	b.WriteString("defaults\n  mode tcp\n  retries 3\n  timeout connect 5s\n  timeout client 1m\n  timeout server 1m\n")
 	fmt.Fprintf(&b, "frontend grpc\n  bind 0.0.0.0:%d\n  default_backend ydb\n", grpcPort)
 	b.WriteString("backend ydb\n")
 	for i, backend := range backends {

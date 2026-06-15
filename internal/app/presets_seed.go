@@ -174,8 +174,13 @@ func builtinDatabasePresets(tenantID, authorID string) []*models.DatabasePresetR
 			Haproxy:           2,
 			ReplicationFactor: 3,
 			Shards:            6,
+			// One tier MUST be named "default": picodata routes unqualified
+			// CREATE TABLE (which the tier-unaware TPC-C workload emits) to the
+			// "default" tier, so a multi-tier cluster without it fails DDL with
+			// "specified tier 'default' doesn't exist". Keep a second tier for the
+			// multi-tier shape.
 			Tiers: []*domain.PicodataTier{
-				{Name: "compute", ReplicationFactor: 1, CanVote: true, Count: 3},
+				{Name: "default", ReplicationFactor: 2, CanVote: true, Count: 3},
 				{Name: "storage", ReplicationFactor: 2, CanVote: false, Count: 3},
 			},
 		}))

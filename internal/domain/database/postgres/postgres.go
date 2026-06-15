@@ -190,18 +190,14 @@ func (b *postgresSpecBuilder) addHaproxyNodes() {
 		))
 		b.spec.Nodes = append(b.spec.Nodes, node(haproxyID, postgresRoleHaproxy, i, []string{haproxyID}))
 
+		// haproxy fronts the postgres instances directly on 5432 (matching the
+		// proven master topology). pgbouncer is colocated for client pooling but
+		// is NOT placed in the haproxy->db path: under Patroni the leader-aware
+		// health check probes patroni REST :8008 while traffic must reach the
+		// postgres port that patroni manages, and an extra pgbouncer hop here only
+		// added an unreachable data port behind a passing check.
 		for _, pgComponentID := range b.pgComponentIDs {
-			targetID := pgComponentID
-			protocol := topology.Connection_PROTOCOL_TCP
-			endpoint := "postgres"
-			port := uint32(5432)
-			if b.input.GetPgbouncer() {
-				targetID = componentID(pgComponentID, postgresRolePgbouncer)
-				protocol = topology.Connection_PROTOCOL_POOL
-				endpoint = "pgbouncer"
-				port = 6432
-			}
-			b.addConnection(haproxyID, targetID, topology.Connection_KIND_PROXY, protocol, topology.Connection_MODE_REQUEST, endpoint, port, false)
+			b.addConnection(haproxyID, pgComponentID, topology.Connection_KIND_PROXY, topology.Connection_PROTOCOL_TCP, topology.Connection_MODE_REQUEST, "postgres", 5432, false)
 		}
 	}
 }
