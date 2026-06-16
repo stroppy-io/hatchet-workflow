@@ -33,6 +33,9 @@ import {
   type ProbeMetaVM,
 } from "@/services/wizard";
 
+/** Env vars already surfaced by dedicated controls — hidden from the generic env list. */
+const COVERED_ENV = new Set(["POOL_SIZE", "SCALE_FACTOR", "WAREHOUSES", "STROPPY_STEPS", "STROPPY_NO_STEPS"]);
+
 /** Set or clear a single env key (empty value clears it, falling back to the script default). */
 function setEnvKey(env: Record<string, string>, name: string, value: string): Record<string, string> {
   const next = { ...env };
@@ -103,8 +106,18 @@ export function WorkloadParamsForm({
   probe?: ProbeMetaVM | null;
 }) {
   const limit = w.execution.limit;
-  const declaredEnv = probe?.env ?? [];
-  const declaredNames = useMemo(() => new Set(declaredEnv.map((d) => d.name)), [declaredEnv]);
+  // Hide declarations already driven by dedicated controls: Pool size
+  // (POOL_SIZE), Scale factor (SCALE_FACTOR/WAREHOUSES) and the Phases chips
+  // (STROPPY_STEPS/STROPPY_NO_STEPS). Everything else the script declares shows
+  // up as an editable field.
+  const declaredEnv = useMemo(
+    () => (probe?.env ?? []).filter((d) => !d.names.some((n) => COVERED_ENV.has(n))),
+    [probe],
+  );
+  const declaredNames = useMemo(
+    () => new Set(declaredEnv.flatMap((d) => d.names)),
+    [declaredEnv],
+  );
   const probeSteps = probe?.steps ?? [];
 
   const setEnv = (name: string, value: string) =>

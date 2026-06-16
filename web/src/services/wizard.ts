@@ -535,7 +535,7 @@ export interface ProbeMetaVM {
   /** phases the script exposes (-> Parameters.steps / no_steps pickers). */
   steps: string[];
   /** env declarations the script reads (-> Parameters.env editor). */
-  env: { name: string; description: string; default: string; required: boolean }[];
+  env: { name: string; names: string[]; description: string; default: string; required: boolean }[];
   /** sql section names the script declares. */
   sqlSections: string[];
   /** driver default pool size the probe reports. */
@@ -1123,16 +1123,31 @@ function probeMetaFromStruct(
   const asNumber = (v: unknown): number => (typeof v === "number" ? v : 0);
   const asString = (v: unknown): string => (typeof v === "string" ? v : "");
 
-  const envRaw = Array.isArray(m.env) ? m.env : [];
-  const env = envRaw.map((e) => {
-    const o = (e ?? {}) as Record<string, unknown>;
-    return {
-      name: asString(o.name),
-      description: asString(o.description),
-      default: asString(o.default),
-      required: o.required === true,
-    };
-  });
+  // stroppy's `probe -o json` emits `env_declarations`, each declaring one or
+  // more aliases under `names` (e.g. ["SCALE_FACTOR","WAREHOUSES"]) plus an
+  // optional default + description. (Older/mock shapes used `env` with a
+  // singular `name`; accept both.) We surface the first name as the primary key
+  // and keep the full alias list so the form can de-dupe against its dedicated
+  // controls.
+  const envRaw = Array.isArray(m.env_declarations)
+    ? m.env_declarations
+    : Array.isArray(m.env)
+      ? m.env
+      : [];
+  const env = envRaw
+    .map((e) => {
+      const o = (e ?? {}) as Record<string, unknown>;
+      const names = asStringArray(o.names);
+      const name = names[0] || asString(o.name);
+      return {
+        name,
+        names: names.length > 0 ? names : name ? [name] : [],
+        description: asString(o.description),
+        default: asString(o.default),
+        required: o.required === true,
+      };
+    })
+    .filter((e) => e.name !== "");
 
   return {
     steps: asStringArray(m.steps),
