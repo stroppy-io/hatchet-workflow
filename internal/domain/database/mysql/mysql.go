@@ -160,6 +160,12 @@ func mysqlConfigContent(input *domain.MySqlParams, componentID, role string, opt
 	} else {
 		merged["gtid_mode"] = "ON"
 		merged["enforce_gtid_consistency"] = "ON"
+		// Enable performance_schema memory instrumentation so the
+		// mysqld_exporter --collect.perf_schema.memory_events collector
+		// populates the dashboard's Internal Memory panel (memory/% instruments
+		// are OFF by default in MySQL 8.0).
+		merged["performance_schema"] = "ON"
+		merged["performance_schema_instrument"] = "'memory/%=ON'"
 	}
 	if input.GetSemiSync() && !input.GetGroupReplication() {
 		merged["plugin_load_add"] = "semisync_master.so;semisync_slave.so"
