@@ -910,6 +910,7 @@ function StepDatabase({
   }, [drafts, presetId, apply]);
 
   const [saveOpen, setSaveOpen] = useState(false);
+  const [presetReload, setPresetReload] = useState(0);
   const saveAsPreset = useCallback(
     async (name: string, description: string) => {
       if (!db) return;
@@ -921,6 +922,7 @@ function StepDatabase({
       });
       drafts.markSaved(id, db);
       setPresetId(id);
+      setPresetReload((n) => n + 1); // refetch the preset list so it shows up
     },
     [slug, db, drafts],
   );
@@ -949,6 +951,7 @@ function StepDatabase({
             engine={engine}
             selectedId={presetId}
             onPick={pickPreset}
+            reloadKey={presetReload}
           />
         )}
 
@@ -1027,10 +1030,13 @@ function PresetPane({
   engine,
   selectedId,
   onPick,
+  reloadKey = 0,
 }: {
   engine: EngineKind;
   selectedId: string | null;
   onPick: (p: DatabasePresetVM) => void;
+  /** Bumped after a save-as-preset so the freshly created preset appears here. */
+  reloadKey?: number;
 }) {
   const slug = useTenantSlug() ?? "";
   const [presets, setPresets] = useState<DatabasePresetVM[] | null>(null);
@@ -1047,7 +1053,7 @@ function PresetPane({
     return () => {
       cancelled = true;
     };
-  }, [slug, engine]);
+  }, [slug, engine, reloadKey]);
 
   const meta = ENGINES.find((m) => m.kind === engine);
   const items = useMemo<DatabasePresetVM[] | null>(() => {
@@ -1813,6 +1819,7 @@ function StepWorkload({
   }, [drafts, presetId, apply, w.stroppyVersion]);
 
   const [saveOpen, setSaveOpen] = useState(false);
+  const [presetReload, setPresetReload] = useState(0);
   const saveAsPreset = useCallback(
     async (name: string, description: string) => {
       const id = await getPresetProvider().createWorkloadPreset(slug, {
@@ -1823,6 +1830,7 @@ function StepWorkload({
       });
       drafts.markSaved(id, w);
       setPresetId(id);
+      setPresetReload((n) => n + 1); // refetch the preset list so it shows up
     },
     [slug, w, drafts],
   );
@@ -1908,7 +1916,13 @@ function StepWorkload({
 
         {/* Pane 2 — Preset (slides in once a version is chosen) */}
         {versionChosen && (
-          <WorkloadPresetPane slug={slug} engine={engine} selectedId={presetId} onPick={pickPreset} />
+          <WorkloadPresetPane
+            slug={slug}
+            engine={engine}
+            selectedId={presetId}
+            onPick={pickPreset}
+            reloadKey={presetReload}
+          />
         )}
 
         {/* Pane 3 — Parameters. Probe-declared phases/env are folded into the
@@ -2087,11 +2101,14 @@ function WorkloadPresetPane({
   engine,
   selectedId,
   onPick,
+  reloadKey = 0,
 }: {
   slug: string;
   engine: EngineKind;
   selectedId: string | null;
   onPick: (p: WorkloadPresetVM) => void;
+  /** Bumped after a save-as-preset so the freshly created preset appears here. */
+  reloadKey?: number;
 }) {
   const [presets, setPresets] = useState<WorkloadPresetVM[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -2107,7 +2124,7 @@ function WorkloadPresetPane({
     return () => {
       cancelled = true;
     };
-  }, [slug]);
+  }, [slug, reloadKey]);
 
   const items = useMemo<WorkloadPresetVM[] | null>(() => {
     if (!presets) return null;
