@@ -243,15 +243,22 @@ func startExportersScript(p monitorParams) string {
 	switch p.dbKind {
 	case "postgres":
 		// postgres_exporter connects to the LOCAL postgres over the standard
-		// port. Use 127.0.0.1 (not "localhost") to force IPv4: patroni renders
-		// listen_addresses from `listen: 0.0.0.0:5432` (IPv4-only), so a
-		// "localhost" DSN that resolves to ::1 first is refused on HA nodes,
-		// leaving pg_up=0 and no pg_stat_database/pg_database_size metrics.
+		// port. 127.0.0.1 (not "localhost") forces IPv4 to match patroni's
+		// listen_addresses. The exporter exits when its DB connection drops while
+		// patroni is still bootstrapping/promoting (postgres restarts as the
+		// leader is elected), so the Restart=always + StartLimitIntervalSec=0 in
+		// systemdRunUnit is what keeps it alive long enough to scrape the workload.
 		b.WriteString(systemdRunUnit(
 			"stroppy-postgres-exporter",
 			"DATA_SOURCE_NAME=postgresql://postgres@127.0.0.1:5432/postgres?sslmode=disable",
 			"/usr/local/bin/postgres_exporter",
 		))
+		// PG-EXPORTER-DIAG (backgrounded, non-blocking): if the exporter still
+		// dies, dump its journal to journald via logger so it reaches VictoriaLogs
+		// (tag PGEXP-DIAG) for post-mortem. Captures the steady-state exit, not
+		// just the early bootstrap.
+		b.WriteString("( sleep 420; systemctl status stroppy-postgres-exporter 2>&1 | head -5 | logger -t PGEXP-DIAG; " +
+			"journalctl -u stroppy-postgres-exporter --no-pager 2>&1 | tail -40 | logger -t PGEXP-DIAG ) &\n")
 	case "mysql":
 		// Create the least-privilege exporter user, then start mysqld_exporter
 		// against the local server. Best-effort grant (idempotent). The user is
@@ -291,7 +298,7 @@ func systemdRunUnit(unit, env, exec string) string {
 		setenv = "--setenv=" + ShellQuote(env) + " "
 	}
 	return fmt.Sprintf(`systemctl stop %s 2>/dev/null || true
-systemd-run --unit=%s --collect -p Restart=always -p RestartSec=2 %s%s
+systemd-run --unit=%s --collect -p Restart=always -p RestartSec=2 -p StartLimitIntervalSec=0 %s%s
 `, ShellQuote(unit), ShellQuote(unit), setenv, exec)
 }
 
