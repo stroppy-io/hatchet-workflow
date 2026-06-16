@@ -14,11 +14,12 @@
 // preset form can offer the same validation + topology preview the wizard does
 // without depending on the wizard page.
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertCircle,
   AlertTriangle,
   ChevronDown,
+  GripVertical,
   Info,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -63,12 +64,117 @@ export const DB_VERSIONS: Record<EngineKind, string[]> = {
 
 // ─── Small form primitives (shared with the wizard) ────────────────────────────
 
+// Scrubby-slider behavior for numeric fields: grab the label handle and drag
+// left/right to change the value relative to its current value, Premiere/Blender
+// style. Uses the Pointer Lock API so the cursor hides and you can drag past the
+// screen edge indefinitely; falls back to plain pointer deltas (touch / no lock,
+// where it stays bounded by the screen). The faster you drag, the larger the
+// increment; hold Shift for fine (¼-speed), Alt/Ctrl for coarse (×10).
+function useScrub({
+  value,
+  onChange,
+  min,
+  max,
+  step = 1,
+}: {
+  value: number;
+  onChange: (n: number) => void;
+  min?: number;
+  max?: number;
+  step?: number;
+}) {
+  const [scrubbing, setScrubbing] = useState(false);
+  // Read the latest value inside the long-lived drag listeners without
+  // re-binding them every render.
+  const valueRef = useRef(value);
+  valueRef.current = value;
+
+  const onPointerDown = useCallback(
+    (e: React.PointerEvent<HTMLElement>) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      const handle = e.currentTarget;
+      const isMouse = e.pointerType === "mouse";
+      const downX = e.clientX;
+      let lastX = e.clientX;
+      let started = false; // engaged only after a few px of travel (so a plain click never locks)
+      let locked = false;
+      let acc = 0; // fractional-step accumulator so slow drags still tick by `step`
+
+      const clamp = (n: number) => {
+        let r = n;
+        if (min !== undefined) r = Math.max(min, r);
+        if (max !== undefined) r = Math.min(max, r);
+        return r;
+      };
+      const snap = (n: number) => {
+        const base = min ?? 0;
+        return base + Math.round((n - base) / step) * step;
+      };
+      const apply = (dx: number, shift: boolean, coarse: boolean) => {
+        const fine = shift ? 0.25 : 1;
+        const big = coarse ? 10 : 1;
+        const accel = 1 + Math.min(Math.abs(dx) * 0.08, 5); // speed → bigger jumps
+        acc += (dx / 5) * step * fine * big * accel; // ~5px of drag per base step
+        const whole = Math.trunc(acc);
+        if (whole === 0) return;
+        acc -= whole;
+        const next = clamp(snap(valueRef.current + whole));
+        if (next !== valueRef.current) {
+          valueRef.current = next;
+          onChange(next);
+        }
+      };
+
+      const onLockChange = () => {
+        locked = document.pointerLockElement === handle;
+      };
+      const onMove = (ev: PointerEvent) => {
+        if (!started) {
+          if (Math.abs(ev.clientX - downX) < 3) return;
+          started = true;
+          if (isMouse) handle.requestPointerLock?.();
+          lastX = ev.clientX;
+          return;
+        }
+        // Under pointer lock the cursor is frozen, so use the relative
+        // movementX; otherwise diff against the last client position.
+        const dx = locked ? ev.movementX : ev.clientX - lastX;
+        lastX = ev.clientX;
+        apply(dx, ev.shiftKey, ev.altKey || ev.ctrlKey || ev.metaKey);
+      };
+      const end = () => {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", end);
+        window.removeEventListener("pointercancel", end);
+        document.removeEventListener("pointerlockchange", onLockChange);
+        if (document.pointerLockElement === handle) document.exitPointerLock();
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+        setScrubbing(false);
+      };
+
+      setScrubbing(true);
+      document.body.style.cursor = "ew-resize";
+      document.body.style.userSelect = "none";
+      document.addEventListener("pointerlockchange", onLockChange);
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", end);
+      window.addEventListener("pointercancel", end);
+    },
+    [min, max, step, onChange],
+  );
+
+  return { scrubbing, onPointerDown };
+}
+
 export function NumField({
   label,
   value,
   onChange,
   min = 0,
   max,
+  step = 1,
   hint,
 }: {
   label: string;
@@ -76,16 +182,30 @@ export function NumField({
   onChange: (n: number) => void;
   min?: number;
   max?: number;
+  step?: number;
   hint?: string;
 }) {
+  const { scrubbing, onPointerDown } = useScrub({ value, onChange, min, max, step });
   return (
     <div className="min-w-0">
-      <Label>{label}</Label>
+      {/* Drag handle — the label + grip. Click-to-type still works on the input
+          below; only a real left/right drag scrubs the value. */}
+      <div
+        onPointerDown={onPointerDown}
+        title="Drag to adjust (Shift = fine, Alt = coarse)"
+        className={`flex w-fit cursor-ew-resize touch-none select-none items-center gap-1 ${
+          scrubbing ? "text-primary" : "text-zinc-500 hover:text-zinc-300"
+        }`}
+      >
+        <GripVertical className="h-3 w-3 shrink-0 opacity-50" />
+        <Label className="cursor-ew-resize">{label}</Label>
+      </div>
       <Input
         type="number"
         className="mt-1"
         min={min}
         max={max}
+        step={step}
         value={String(value)}
         onChange={(e) => {
           const n = Number.parseInt(e.target.value, 10);
