@@ -1,0 +1,124 @@
+version: "2"
+
+run:
+  timeout: 5m
+  tests: false
+  modules-download-mode: readonly
+
+linters:
+  # Явный список лучше для CI, чем default: all:
+  # новые линтеры не будут внезапно ломать сборку после обновления golangci-lint.
+  default: none
+
+  enable:
+    # базовые / почти must-have
+    - govet
+    - staticcheck
+    - ineffassign
+    - unused
+    - errcheck
+
+    # баги, ошибки, безопасность
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - copyloopvar
+    - durationcheck
+    - errname
+    - errorlint
+    - exhaustive
+    - fatcontext
+    - gosec
+    - makezero
+    - nilerr
+    - nilnil
+    - noctx
+    - rowserrcheck
+    - sqlclosecheck
+    - wastedassign
+
+    # стиль / поддерживаемость, но без жести типа lll/funlen/varnamelen
+    - gocritic
+    - misspell
+    - nolintlint
+    - revive
+    - testifylint
+    - unconvert
+    - unparam
+    - usestdlibvars
+    - whitespace
+
+  settings:
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+
+    exhaustive:
+      check:
+        - switch
+
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - performance
+        - style
+      disabled-checks:
+        - hugeParam
+        - rangeValCopy
+
+    gosec:
+      # G104 пересекается с errcheck и часто шумит.
+      excludes:
+        - G104
+
+    misspell:
+      locale: US
+
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+
+    revive:
+      severity: warning
+      rules:
+        # Часто шумят на публичных API / интерфейсах.
+        - name: unused-parameter
+          disabled: true
+        - name: var-naming
+          disabled: true
+
+  exclusions:
+    generated: strict
+    warn-unused: true
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - path: _test\.go
+        linters:
+          - errcheck
+          - gosec
+          - noctx
+
+formatters:
+  enable:
+    - goimports
+    # Раскомментируй, если хочешь более строгий gofmt:
+    - gofumpt
+
+  settings:
+    goimports:
+      # Замени на module path из go.mod.
+      local-prefixes:
+        - github.com/stroppy-io/stroppy-cloud
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+output:
+  sort-order:
+    - file
+    - linter

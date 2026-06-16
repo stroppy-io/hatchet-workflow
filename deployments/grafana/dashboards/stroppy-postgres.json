@@ -767,7 +767,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum((rate(pg_stat_statements_calls{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"}[$Interval])))",
+          "expr": "sum((rate(pg_stat_statements_calls_total{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"}[$Interval])))",
           "interval": "",
           "legendFormat": "",
           "refId": "A"
@@ -948,7 +948,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum((delta(pg_stat_statements_total_time_seconds{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"}[$Interval])))/sum((delta(pg_stat_statements_calls{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"}[$Interval])))",
+          "expr": "sum((delta(pg_stat_statements_seconds_total{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"}[$Interval])))/sum((delta(pg_stat_statements_calls_total{stroppy_run_id=\"$run_id\",stroppy_machine_id=~\"$Instance\"}[$Interval])))",
           "interval": "",
           "legendFormat": "",
           "refId": "A"

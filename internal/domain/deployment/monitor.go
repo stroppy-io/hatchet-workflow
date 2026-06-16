@@ -257,7 +257,13 @@ func startExportersScript(p monitorParams) string {
 		b.WriteString(systemdRunUnit(
 			"stroppy-postgres-exporter",
 			"DATA_SOURCE_NAME=postgresql://postgres@127.0.0.1:5432/postgres?sslmode=disable",
-			"/usr/local/bin/postgres_exporter",
+			// --collector.postmaster (pg_postmaster_start_time_seconds -> Uptime)
+			// and --collector.stat_statements (pg_stat_statements_calls_total /
+			// _seconds_total -> Query rate / avg runtime) are both off by default.
+			// stat_statements needs the pg_stat_statements extension; until it is
+			// created the collector just reports success=0 without failing the
+			// scrape, so enabling it early is safe.
+			"/usr/local/bin/postgres_exporter --collector.postmaster --collector.stat_statements",
 		))
 	case "mysql":
 		// Create the least-privilege exporter user, then start mysqld_exporter

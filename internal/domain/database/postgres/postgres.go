@@ -307,6 +307,14 @@ func configContent(role string, options map[string]string) string {
 	case postgresRolePatroni:
 		return renderOptions(options, ": ")
 	default:
+		// Non-patroni master/replica postgresql.conf. Ensure pg_stat_statements
+		// is preloaded (postmaster-context) so the extension can be created
+		// (replication-setup.sql) and the postgres_exporter stat_statements
+		// collector + dashboard Query rate / avg runtime panels have data. Only
+		// inject when the preset has not set it, so role options stay authoritative.
+		if _, ok := options["shared_preload_libraries"]; !ok {
+			return "shared_preload_libraries = 'pg_stat_statements'\ncompute_query_id = on\npg_stat_statements.track = all\n" + renderOptions(options, " = ")
+		}
 		return renderOptions(options, " = ")
 	}
 }

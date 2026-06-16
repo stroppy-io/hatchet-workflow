@@ -221,6 +221,14 @@ func postgresEngineComponent(
 				File:          postgresPgpassFile(component.GetId()),
 			})
 		}
+	case postgresRolePatroni:
+		ec.ExtraFiles = append(ec.ExtraFiles, deploymentbuilder.EngineFile{
+			StepID:        "050_write_post_bootstrap",
+			StepOrder:     50,
+			ArtifactName:  "post-bootstrap.sh",
+			ArtifactLabel: "post_bootstrap",
+			File:          postgresPostBootstrapFile(component.GetId()),
+		})
 	case postgresRolePgbouncer:
 		ec.ExtraFiles = append(ec.ExtraFiles, deploymentbuilder.EngineFile{
 			StepID:        "045_write_users",
@@ -489,6 +497,23 @@ func postgresPgpassFile(componentID string) *common.File {
 	}
 }
 
+// postgresPostBootstrapFile is the Patroni post_bootstrap hook: Patroni invokes
+// it once on the freshly-initialised leader with the superuser connection string
+// as $1. It creates pg_stat_statements in that database (the one the exporter
+// scrapes); the extension replicates to standbys via WAL.
+func postgresPostBootstrapFile(componentID string) *common.File {
+	return &common.File{
+		Info: &common.File_Info{
+			Path:          deploymentbuilder.ConfigDir(componentID) + "/post-bootstrap.sh",
+			Mode:          0755,
+			CreateParents: true,
+		},
+		Content: &common.File_Text{Text: `#!/bin/sh
+exec psql "$1" -c "CREATE EXTENSION IF NOT EXISTS pg_stat_statements"
+`},
+	}
+}
+
 // postgresReplicationSetupFile creates the least-privilege replication role on
 // the master if it does not already exist.
 func postgresReplicationSetupFile(componentID string) *common.File {
@@ -507,6 +532,7 @@ END;
 $$;
 SET password_encryption = 'scram-sha-256';
 ALTER ROLE %s WITH LOGIN PASSWORD '%s';
+CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
 `, postgresReplicationUser, postgresReplicationUser, postgresReplicationPassword, dbcredentials.PostgresUser, dbcredentials.PostgresPassword)},
 	}
 }
@@ -857,7 +883,12 @@ func postgresPatroniConfig(componentID string, database *domain.Database, option
 	if sync {
 		b.WriteString("    synchronous_mode: true\n")
 	}
-	b.WriteString("    postgresql:\n      use_pg_rewind: false\n      parameters:\n        listen_addresses: '*'\n        port: 5432\n")
+	// shared_preload_libraries is postmaster-context and is applied from the very
+	// first start (same as listen_addresses here), so a fresh patroni cluster
+	// loads pg_stat_statements without a restart; the extension is created by the
+	// post_bootstrap hook below. compute_query_id=on + track=all make the
+	// statements view populated for the dashboard's Query rate / avg runtime.
+	b.WriteString("    postgresql:\n      use_pg_rewind: false\n      parameters:\n        listen_addresses: '*'\n        port: 5432\n        shared_preload_libraries: pg_stat_statements\n        compute_query_id: 'on'\n        pg_stat_statements.track: all\n")
 	b.WriteString("  initdb:\n  - encoding: UTF8\n  - data-checksums\n")
 	// Trust auth across the ephemeral benchmark cluster, matching the proven
 	// master topology: the workload, pgbouncer and replication all connect
@@ -866,6 +897,11 @@ func postgresPatroniConfig(componentID string, database *domain.Database, option
 	b.WriteString("  - local all all trust\n")
 	b.WriteString("  - host all all 0.0.0.0/0 trust\n")
 	b.WriteString("  - host replication all 0.0.0.0/0 trust\n")
+	// post_bootstrap runs once on the freshly-bootstrapped leader with the
+	// superuser connstring as $1; create pg_stat_statements there (it replicates
+	// to standbys via WAL) so the postgres_exporter stat_statements collector and
+	// the dashboard's Query rate / avg runtime panels have data.
+	fmt.Fprintf(&b, "  post_bootstrap: %s/post-bootstrap.sh\n", deploymentbuilder.ConfigDir(componentID))
 
 	b.WriteString("postgresql:\n")
 	b.WriteString("  listen: 0.0.0.0:5432\n")
