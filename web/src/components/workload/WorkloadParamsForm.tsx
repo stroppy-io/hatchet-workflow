@@ -404,39 +404,39 @@ function ProbeEnvFields({
       <p className="mb-2 mt-0.5 text-[11px] text-zinc-600">
         Declared by the script — blank uses the default.
       </p>
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         {decls.map((d) => {
           const set = (env[d.name] ?? "") !== "";
           return (
-            <div key={d.name} className="flex items-center gap-2">
-              <label
-                className="w-40 shrink-0 truncate font-mono text-[11px] text-zinc-300"
-                title={d.names.length > 1 ? d.names.join(", ") : undefined}
-              >
-                {d.name}
-                {d.required && <span className="ml-1 text-red-400">*</span>}
-              </label>
+            <div key={d.name} className="flex items-start gap-3">
+              {/* Name + description fill the row width; the description gets two
+                  lines before clamping, so most read in full without a hover. */}
+              <div className="min-w-0 flex-1">
+                <div
+                  className="font-mono text-[11px] text-zinc-300"
+                  title={d.names.length > 1 ? d.names.join(", ") : undefined}
+                >
+                  {d.name}
+                  {d.required && <span className="ml-1 text-red-400">*</span>}
+                </div>
+                {d.description && (
+                  <div className="mt-0.5 line-clamp-2 text-[10px] leading-snug text-zinc-600">
+                    {d.description}
+                  </div>
+                )}
+              </div>
               <Input
                 className="h-7 w-36 shrink-0 font-mono text-xs"
                 placeholder={d.default || "<unset>"}
                 value={env[d.name] ?? ""}
                 onChange={(e) => onSet(d.name, e.target.value)}
               />
-              {/* Description takes the remaining width and truncates; the full
-                  text is available on hover (native tooltip). */}
-              {d.description ? (
-                <span className="min-w-0 flex-1 cursor-help truncate text-[10px] text-zinc-600" title={d.description}>
-                  {d.description}
-                </span>
-              ) : (
-                <span className="flex-1" />
-              )}
               <button
                 type="button"
                 onClick={() => onSet(d.name, "")}
                 disabled={!set}
                 title="Reset to default"
-                className="shrink-0 p-1 text-zinc-600 transition-colors hover:text-zinc-300 disabled:opacity-30"
+                className="mt-0.5 shrink-0 p-1 text-zinc-600 transition-colors hover:text-zinc-300 disabled:opacity-30"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
               </button>
