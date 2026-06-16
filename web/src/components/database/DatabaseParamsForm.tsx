@@ -308,12 +308,12 @@ export function EngineParamsForm({
         apply({ ...db, params: { kind: "postgres", postgres: { ...p, ...patch } } });
       return (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 @lg:grid-cols-2 @3xl:grid-cols-3">
             <NumField label="Replicas" value={p.replicas} onChange={(n) => set({ replicas: n })} hint="streaming standbys" />
             <NumField label="Sync replicas" value={p.syncReplicas} onChange={(n) => set({ syncReplicas: n })} hint="synchronous standbys" />
             <NumField label="HAProxy nodes" value={p.haproxy} onChange={(n) => set({ haproxy: n })} hint="dedicated LB" />
           </div>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 2xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-2 @lg:grid-cols-2 @3xl:grid-cols-3">
             <ToggleRow label="PgBouncer" hint="colocated pooler" checked={p.pgbouncer} onChange={(b) => set({ pgbouncer: b })} />
             <ToggleRow label="Patroni HA" hint="needs etcd" checked={p.patroni} onChange={(b) => set({ patroni: b })} />
             <ToggleRow label="etcd" hint="DCS for Patroni" checked={p.etcd} onChange={(b) => set({ etcd: b })} />
@@ -336,11 +336,11 @@ export function EngineParamsForm({
         apply({ ...db, params: e.kind === "mysql" ? { kind: "mysql", mysql: { ...p, ...patch } } : { kind: "mariadb", mariadb: { ...p, ...patch } } });
       return (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 @lg:grid-cols-2">
             <NumField label="Replicas" value={p.replicas} onChange={(n) => set({ replicas: n })} />
             <NumField label="ProxySQL nodes" value={p.proxysql} onChange={(n) => set({ proxysql: n })} hint="dedicated proxy" />
           </div>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-2 @lg:grid-cols-2">
             <ToggleRow label="Group replication" checked={p.groupReplication} onChange={(b) => set({ groupReplication: b })} />
             <ToggleRow label="Semi-sync" hint="when group repl off" checked={p.semiSync} onChange={(b) => set({ semiSync: b })} />
           </div>
@@ -361,7 +361,7 @@ export function EngineParamsForm({
         apply({ ...db, params: { kind: "picodata", picodata: { ...p, ...patch } } });
       return (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 @lg:grid-cols-2 @3xl:grid-cols-4">
             <NumField label="Instances" value={p.instances} onChange={(n) => set({ instances: n })} min={1} />
             <NumField label="Replication" value={p.replicationFactor} onChange={(n) => set({ replicationFactor: n })} hint="factor" />
             <NumField label="Shards" value={p.shards} onChange={(n) => set({ shards: n })} />
@@ -384,12 +384,12 @@ export function EngineParamsForm({
         apply({ ...db, params: { kind: "ydb", ydb: { ...p, ...patch } } });
       return (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 @lg:grid-cols-2 @3xl:grid-cols-3">
             <NumField label="Storage nodes" value={p.storageNodes} onChange={(n) => set({ storageNodes: n })} min={1} />
             <NumField label="Database nodes" value={p.databaseNodes} onChange={(n) => set({ databaseNodes: n })} hint="0 = combined" />
             <NumField label="HAProxy" value={p.haproxy} onChange={(n) => set({ haproxy: n })} />
           </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 @lg:grid-cols-2 @3xl:grid-cols-3">
             <NumField label="pdisks / node" value={p.pdisksPerStorageNode} onChange={(n) => set({ pdisksPerStorageNode: n })} />
             <NumField label="Storage groups" value={p.storageGroups} onChange={(n) => set({ storageGroups: n })} />
             <div>
@@ -406,7 +406,7 @@ export function EngineParamsForm({
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 @lg:grid-cols-2">
             <div>
               <Label>Disk type</Label>
               <Select value={String(p.defaultDiskType)} onValueChange={(v) => set({ defaultDiskType: Number(v) as YdbParams_DiskType })}>
@@ -436,7 +436,7 @@ export function EngineParamsForm({
       const dedicated = p.type === YdbManagedParams_Type.DEDICATED;
       return (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 @lg:grid-cols-2">
             <div>
               <Label>Flavor</Label>
               <Select value={String(p.type)} onValueChange={(v) => set({ type: Number(v) as YdbManagedParams_Type })}>
@@ -463,7 +463,7 @@ export function EngineParamsForm({
             </div>
           </div>
           {dedicated ? (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 @lg:grid-cols-2 @3xl:grid-cols-3">
               <div>
                 <Label>Resource preset</Label>
                 <Input className="mt-1" placeholder="medium" value={p.resourcePresetId} onChange={(ev) => set({ resourcePresetId: ev.target.value })} />

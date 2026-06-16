@@ -119,8 +119,11 @@ export function WorkloadParamsForm({
   };
   return (
     <div className={disabled ? "pointer-events-none select-none opacity-90" : undefined}>
-      <div className="space-y-5">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
+      {/* @container: the field grids below break on the PANE's width, not the
+          viewport — so they stack to one column when this form shares a narrow
+          row with the Version/Preset panes, instead of cramming 2-3 columns. */}
+      <div className="@container space-y-5">
+        <div className="grid grid-cols-1 gap-3 @lg:grid-cols-2 @3xl:grid-cols-3">
           <div>
             <Label>Script</Label>
             <Input
@@ -161,7 +164,7 @@ export function WorkloadParamsForm({
 
         <div className="border border-zinc-800/60 bg-[#0a0a0a] p-4">
           <div className="mb-3 text-[10px] font-mono uppercase tracking-wider text-zinc-600">k6 execution</div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 @lg:grid-cols-2 @3xl:grid-cols-3">
             <NumField
               label="Virtual users"
               value={w.execution.vus}
@@ -223,7 +226,7 @@ export function WorkloadParamsForm({
               />
             )}
           </div>
-          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div className="mt-3 grid grid-cols-1 gap-2 @lg:grid-cols-2">
             <ToggleRow
               label="Quiet"
               hint="k6 -q"
@@ -241,7 +244,7 @@ export function WorkloadParamsForm({
 
         <div className="border border-zinc-800/60 bg-[#0a0a0a] p-4">
           <div className="mb-3 text-[10px] font-mono uppercase tracking-wider text-zinc-600">data parameters</div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 @lg:grid-cols-2 @3xl:grid-cols-3">
             <NumField
               label="Pool size"
               value={w.parameters.poolSize}

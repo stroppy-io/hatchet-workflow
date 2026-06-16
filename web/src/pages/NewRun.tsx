@@ -1087,7 +1087,7 @@ function SettingsPane({
           hasTopo ? "2xl:grid-cols-[minmax(24rem,1fr)_minmax(0,22rem)]" : ""
         }`}
       >
-        <div className="min-h-0 space-y-6 overflow-y-auto pr-1">
+        <div className="@container min-h-0 space-y-6 overflow-y-auto pr-1">
           <EngineVersionSelect db={db} apply={apply} />
 
           <DatabasePackageSelector db={db} apply={apply} />

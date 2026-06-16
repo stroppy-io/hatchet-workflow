@@ -259,7 +259,7 @@ export function DatabasePresetForm() {
             </section>
 
             {/* Typed params */}
-            <section className="space-y-4">
+            <section className="@container space-y-4">
               <SectionLabel>Configuration</SectionLabel>
               <EngineVersionSelect db={db} apply={setDb} />
               <div className={isSystem ? "pointer-events-none opacity-60" : undefined}>
