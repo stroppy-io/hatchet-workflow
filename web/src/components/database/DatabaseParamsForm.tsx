@@ -119,34 +119,60 @@ export function ToggleRow({
   );
 }
 
-/** Renders the FieldError-shaped DraftErrors for a section. */
+function severityTone(s: DraftErrorVM["severity"]): string {
+  return s === "error" ? "text-red-400" : s === "warning" ? "text-amber-400" : "text-zinc-400";
+}
+
+function SeverityIcon({ severity, className }: { severity: DraftErrorVM["severity"]; className?: string }) {
+  if (severity === "error") return <AlertCircle className={className} />;
+  if (severity === "warning") return <AlertTriangle className={className} />;
+  return <Info className={className} />;
+}
+
+/**
+ * Renders the FieldError-shaped DraftErrors for a section as a FIXED-HEIGHT,
+ * expandable row. Validation re-runs on (debounced) every edit, so a row that
+ * grew/shrank with the error count — or vanished entirely when valid — made the
+ * form jump as the user typed. Instead we always reserve one line: when valid
+ * the line is an empty spacer; when not, it's a one-line summary (worst-severity
+ * message + an "+N more" count) that expands on demand to the full list.
+ */
 export function FieldErrors({ errs }: { errs: DraftErrorVM[] }) {
-  if (errs.length === 0) return null;
+  const [open, setOpen] = useState(false);
+  if (errs.length === 0) return <div className="mt-2 h-6" aria-hidden />;
+
+  // Surface the worst severity first (error > warning > info).
+  const rank = (s: DraftErrorVM["severity"]) => (s === "error" ? 0 : s === "warning" ? 1 : 2);
+  const sorted = [...errs].sort((a, b) => rank(a.severity) - rank(b.severity));
+  const top = sorted[0];
+
   return (
-    <div className="mt-2 space-y-1">
-      {errs.map((e, i) => (
-        <div
-          key={i}
-          className={`flex items-start gap-1.5 text-[11px] ${
-            e.severity === "error"
-              ? "text-red-400"
-              : e.severity === "warning"
-                ? "text-amber-400"
-                : "text-zinc-400"
-          }`}
-        >
-          {e.severity === "error" ? (
-            <AlertCircle className="mt-px h-3 w-3 shrink-0" />
-          ) : e.severity === "warning" ? (
-            <AlertTriangle className="mt-px h-3 w-3 shrink-0" />
-          ) : (
-            <Info className="mt-px h-3 w-3 shrink-0" />
-          )}
-          <span>
-            <span className="font-mono text-[10px] text-zinc-600">{e.field}</span> · {e.message}
-          </span>
+    <div className="mt-2">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className={`flex h-6 w-full items-center gap-1.5 text-left text-[11px] ${severityTone(top.severity)}`}
+      >
+        <SeverityIcon severity={top.severity} className="h-3 w-3 shrink-0" />
+        <span className="truncate">{top.message}</span>
+        {errs.length > 1 && (
+          <span className="shrink-0 text-zinc-600">+{errs.length - 1} more</span>
+        )}
+        <ChevronDown className={`ml-auto h-3 w-3 shrink-0 text-zinc-600 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="mt-1 space-y-1 border-l border-zinc-800/70 pl-2">
+          {sorted.map((e, i) => (
+            <div key={i} className={`flex items-start gap-1.5 text-[11px] ${severityTone(e.severity)}`}>
+              <SeverityIcon severity={e.severity} className="mt-px h-3 w-3 shrink-0" />
+              <span>
+                <span className="font-mono text-[10px] text-zinc-600">{e.field}</span> · {e.message}
+              </span>
+            </div>
+          ))}
         </div>
-      ))}
+      )}
     </div>
   );
 }

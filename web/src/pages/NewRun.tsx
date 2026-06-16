@@ -269,15 +269,6 @@ export function NewRun() {
     };
   }, [draftId, slug]);
 
-  const goStep = useCallback(
-    (key: StepKey) => {
-      const next = new URLSearchParams(params);
-      next.set("step", key);
-      setParams(next);
-    },
-    [params, setParams],
-  );
-
   const setActiveDraft = useCallback(
     (id: string, step: StepKey) => {
       setParams({ draft: id, step });
@@ -328,6 +319,54 @@ export function NewRun() {
       return queued;
     },
     [slug, draftId],
+  );
+
+  // Debounced patch — the form steps fire a patch on every keystroke, and each
+  // server round-trip recomputes draft.errors. Validating per-keystroke made
+  // the inline error rows fl/blink and the layout jump ("epilepsy"). We coalesce
+  // rapid edits (latest-wins) into one patch ~350 ms after typing settles, and
+  // flush any pending edit synchronously before navigating so the next step
+  // always sees the validated draft. Discrete picks still go through the
+  // immediate `patch` (and flush covers the in-flight case anyway).
+  const patchTimerRef = useRef<number | undefined>(undefined);
+  const pendingPatchRef = useRef<Parameters<typeof patch>[0] | null>(null);
+
+  const flushPatch = useCallback(() => {
+    if (patchTimerRef.current !== undefined) {
+      window.clearTimeout(patchTimerRef.current);
+      patchTimerRef.current = undefined;
+    }
+    const input = pendingPatchRef.current;
+    pendingPatchRef.current = null;
+    if (input) void patch(input);
+  }, [patch]);
+
+  const patchDebounced = useCallback(
+    (input: Parameters<typeof patch>[0]): Promise<void> => {
+      pendingPatchRef.current = input;
+      setPatching(true); // surface activity immediately while the edit settles
+      if (patchTimerRef.current !== undefined) window.clearTimeout(patchTimerRef.current);
+      patchTimerRef.current = window.setTimeout(() => {
+        patchTimerRef.current = undefined;
+        const queued = pendingPatchRef.current;
+        pendingPatchRef.current = null;
+        if (queued) void patch(queued);
+      }, 350);
+      return Promise.resolve();
+    },
+    [patch],
+  );
+
+  // Navigate between steps. Flush any pending debounced edit first so the step
+  // we land on validates against the latest values.
+  const goStep = useCallback(
+    (key: StepKey) => {
+      flushPatch();
+      const next = new URLSearchParams(params);
+      next.set("step", key);
+      setParams(next);
+    },
+    [params, setParams, flushPatch],
   );
 
   const deleteDraft = useCallback(
@@ -460,9 +499,9 @@ export function NewRun() {
         )}
 
         <div className="flex h-full flex-col">
-          {stepKey === "infra" && <StepInfra draft={draft} patch={patch} />}
-          {stepKey === "database" && <StepDatabase draft={draft} patch={patch} />}
-          {stepKey === "workload" && <StepWorkload draft={draft} patch={patch} slug={slug} />}
+          {stepKey === "infra" && <StepInfra draft={draft} patch={patchDebounced} />}
+          {stepKey === "database" && <StepDatabase draft={draft} patch={patchDebounced} />}
+          {stepKey === "workload" && <StepWorkload draft={draft} patch={patchDebounced} slug={slug} />}
           {stepKey === "review" && (
             <StepReview
               draft={draft}
