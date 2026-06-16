@@ -14,7 +14,7 @@
 // NOT edited here.
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, RotateCcw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -30,7 +30,16 @@ import {
   Workload_Protocol,
   type WorkloadVM,
   type DraftErrorVM,
+  type ProbeMetaVM,
 } from "@/services/wizard";
+
+/** Set or clear a single env key (empty value clears it, falling back to the script default). */
+function setEnvKey(env: Record<string, string>, name: string, value: string): Record<string, string> {
+  const next = { ...env };
+  if (value === "") delete next[name];
+  else next[name] = value;
+  return next;
+}
 
 /** The wire protocols the Protocol picker offers (mirrors NewRun's PROTOCOLS). */
 export const PROTOCOLS: { v: Workload_Protocol; label: string }[] = [
@@ -78,13 +87,36 @@ export function WorkloadParamsForm({
   apply,
   disabled,
   advancedInitiallyOpen = disabled ?? false,
+  probe = null,
 }: {
   w: WorkloadVM;
   apply: (w: WorkloadVM) => void;
   disabled?: boolean;
   advancedInitiallyOpen?: boolean;
+  /**
+   * Live `stroppy probe` metadata for the current script. When present, its
+   * declared phases and env variables are surfaced as first-class controls
+   * (chips + described fields) right here in the parameters form — the probe
+   * pane is then only a status/output disclosure. Absent on the preset
+   * authoring pages, which fall back to the free-text editors.
+   */
+  probe?: ProbeMetaVM | null;
 }) {
   const limit = w.execution.limit;
+  const declaredEnv = probe?.env ?? [];
+  const declaredNames = useMemo(() => new Set(declaredEnv.map((d) => d.name)), [declaredEnv]);
+  const probeSteps = probe?.steps ?? [];
+
+  const setEnv = (name: string, value: string) =>
+    apply({ ...w, parameters: { ...w.parameters, env: setEnvKey(w.parameters.env, name, value) } });
+
+  // Toggle a phase in the steps allowlist (XOR with noSteps — selecting any
+  // phase clears the blocklist, mirroring the backend's mutual exclusion).
+  const togglePhase = (phase: string) => {
+    const has = w.parameters.steps.includes(phase);
+    const steps = has ? w.parameters.steps.filter((s) => s !== phase) : [...w.parameters.steps, phase];
+    apply({ ...w, parameters: { ...w.parameters, steps, noSteps: [] } });
+  };
   return (
     <div className={disabled ? "pointer-events-none select-none opacity-90" : undefined}>
       <div className="space-y-5">
@@ -238,15 +270,27 @@ export function WorkloadParamsForm({
               />
             </div>
           </div>
+          {probeSteps.length > 0 && (
+            <PhaseChips steps={probeSteps} selected={w.parameters.steps} onToggle={togglePhase} />
+          )}
+
+          {declaredEnv.length > 0 && (
+            <ProbeEnvFields decls={declaredEnv} env={w.parameters.env} onSet={setEnv} />
+          )}
+
           <AdvancedRuntimeParameters initiallyOpen={advancedInitiallyOpen}>
             <EnvMapEditor
+              label={declaredEnv.length > 0 ? "Additional environment variables" : "Environment variables"}
               env={w.parameters.env}
+              declaredNames={declaredNames}
               onChange={(env) => apply({ ...w, parameters: { ...w.parameters, env } })}
             />
-            <StepsEditor
-              steps={w.parameters.steps}
-              onChange={(steps) => apply({ ...w, parameters: { ...w.parameters, steps } })}
-            />
+            {probeSteps.length === 0 && (
+              <StepsEditor
+                steps={w.parameters.steps}
+                onChange={(steps) => apply({ ...w, parameters: { ...w.parameters, steps } })}
+              />
+            )}
           </AdvancedRuntimeParameters>
         </div>
       </div>
@@ -273,11 +317,112 @@ function AdvancedRuntimeParameters({
         <div className="min-w-0">
           <div className="text-sm font-medium text-foreground">Advanced runtime parameters</div>
           <p className="mt-0.5 text-[11px] leading-snug text-zinc-600">
-            Optional environment variables and phase selection for special runs.
+            Extra environment variables and manual phase selection for special runs.
           </p>
         </div>
       </button>
       {open && <div className="border-t border-zinc-800/70 p-3">{children}</div>}
+    </div>
+  );
+}
+
+/**
+ * Phase allowlist as toggle chips, populated from the probe's declared phases.
+ * Empty selection runs every phase; selecting any subset narrows the run.
+ */
+function PhaseChips({
+  steps,
+  selected,
+  onToggle,
+}: {
+  steps: string[];
+  selected: string[];
+  onToggle: (phase: string) => void;
+}) {
+  return (
+    <div className="mt-4">
+      <Label>Phases</Label>
+      <p className="mb-1.5 mt-0.5 text-[11px] text-zinc-600">
+        From the probe — none selected runs every phase.
+      </p>
+      <div className="flex flex-wrap gap-1.5">
+        {steps.map((s) => {
+          const on = selected.includes(s);
+          return (
+            <button
+              key={s}
+              type="button"
+              onClick={() => onToggle(s)}
+              className={`px-2.5 py-1 font-mono text-[11px] transition-all ${
+                on
+                  ? "border border-primary/40 bg-primary/[0.08] text-primary"
+                  : "border border-zinc-800 text-zinc-500 hover:text-zinc-300"
+              }`}
+            >
+              {s}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Described env fields, one per probe-declared variable: shows the name,
+ * description, required marker, and the script default as placeholder. Editing
+ * sets `parameters.env[name]`; clearing it falls back to the default.
+ */
+function ProbeEnvFields({
+  decls,
+  env,
+  onSet,
+}: {
+  decls: ProbeMetaVM["env"];
+  env: Record<string, string>;
+  onSet: (name: string, value: string) => void;
+}) {
+  return (
+    <div className="mt-4">
+      <Label>Environment</Label>
+      <p className="mb-2 mt-0.5 text-[11px] text-zinc-600">
+        Declared by the script — blank uses the default.
+      </p>
+      <div className="space-y-2">
+        {decls.map((d) => {
+          const set = (env[d.name] ?? "") !== "";
+          return (
+            <div key={d.name} className="flex items-center gap-2">
+              <div className="w-44 shrink-0">
+                <div className="font-mono text-[11px] text-zinc-300">
+                  {d.name}
+                  {d.required && <span className="ml-1 text-red-400">*</span>}
+                </div>
+                {d.description && (
+                  <div className="truncate text-[10px] text-zinc-600" title={d.description}>
+                    {d.description}
+                  </div>
+                )}
+              </div>
+              <Input
+                className="h-8 flex-1 font-mono text-xs"
+                placeholder={d.default || "<unset>"}
+                value={env[d.name] ?? ""}
+                onChange={(e) => onSet(d.name, e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={() => onSet(d.name, "")}
+                disabled={!set}
+                title="Reset to default"
+                className="shrink-0 p-1 text-zinc-600 transition-colors hover:text-zinc-300 disabled:opacity-30"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -313,20 +458,32 @@ function StepsEditor({
   );
 }
 
-/** Free-form env map editor (KEY=value lines), backed by the dark ConfigEditor. */
+/**
+ * Free-form env map editor (KEY=value lines), backed by the dark ConfigEditor.
+ * When `declaredNames` is given, the editor only shows/owns the env keys NOT
+ * declared by the probe (those have their own described fields above) — so
+ * round-tripping the text never drops the probe-driven values.
+ */
 function EnvMapEditor({
   env,
   onChange,
+  label = "Environment variables",
+  declaredNames,
 }: {
   env: Record<string, string>;
   onChange: (m: Record<string, string>) => void;
+  label?: string;
+  declaredNames?: Set<string>;
 }) {
+  const isExtra = (k: string) => !declaredNames || !declaredNames.has(k);
   const text = useMemo(
     () =>
       Object.entries(env)
+        .filter(([k]) => isExtra(k))
         .map(([k, v]) => `${k}=${v}`)
         .join("\n"),
-    [env],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [env, declaredNames],
   );
   const [draftText, setDraftText] = useState(text);
   const lastApplied = useRef(text);
@@ -339,7 +496,7 @@ function EnvMapEditor({
 
   return (
     <div className="mb-3">
-      <Label>Environment variables</Label>
+      <Label>{label}</Label>
       <div className="mt-1">
         <ConfigEditor
           filename=".env"
@@ -347,13 +504,20 @@ function EnvMapEditor({
           height="clamp(8rem, 18vh, 16rem)"
           onChange={(next) => {
             setDraftText(next);
+            // Preserve probe-declared keys (edited via their own fields); only
+            // the undeclared "extra" keys are parsed back out of this editor.
             const map: Record<string, string> = {};
+            for (const [k, v] of Object.entries(env)) {
+              if (!isExtra(k)) map[k] = v;
+            }
             for (const line of next.split("\n")) {
               const t = line.trim();
               if (!t || t.startsWith("#")) continue;
               const idx = t.indexOf("=");
               if (idx < 0) continue;
-              map[t.slice(0, idx).trim()] = t.slice(idx + 1).trim();
+              const key = t.slice(0, idx).trim();
+              if (!isExtra(key)) continue;
+              map[key] = t.slice(idx + 1).trim();
             }
             lastApplied.current = next;
             onChange(map);
