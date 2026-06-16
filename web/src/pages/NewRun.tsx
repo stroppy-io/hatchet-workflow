@@ -89,6 +89,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectTrigger,
   SelectValue,
@@ -500,7 +507,7 @@ export function NewRun() {
 
         <div className="flex h-full flex-col">
           {stepKey === "infra" && <StepInfra draft={draft} patch={patchDebounced} />}
-          {stepKey === "database" && <StepDatabase draft={draft} patch={patchDebounced} />}
+          {stepKey === "database" && <StepDatabase draft={draft} patch={patchDebounced} slug={slug} />}
           {stepKey === "workload" && <StepWorkload draft={draft} patch={patchDebounced} slug={slug} />}
           {stepKey === "review" && (
             <StepReview
@@ -829,9 +836,11 @@ type DbPhase = "engine" | "preset" | "settings";
 function StepDatabase({
   draft,
   patch,
+  slug,
 }: {
   draft: WizardDraftVM;
   patch: (input: { database?: DatabaseVM }) => Promise<void>;
+  slug: string;
 }) {
   // A resumed draft already has a database → jump straight to the settings pane
   // (engine + preset are implicitly "chosen"). A fresh draft starts at engine.
@@ -854,12 +863,25 @@ function StepDatabase({
     }
   }, [draft.database]);
 
-  const apply = useCallback(
+  const drafts = usePresetDraft<DatabaseVM>(normDatabase);
+
+  // setDb + server patch — no preset-cache write (used by pick / reset).
+  const commit = useCallback(
     (next: DatabaseVM) => {
       setDb(next);
       void patch({ database: next });
     },
     [patch],
+  );
+
+  // The form's edit path: commit AND remember the working copy for this preset
+  // so switching presets away and back restores the user's edits.
+  const apply = useCallback(
+    (next: DatabaseVM) => {
+      commit(next);
+      drafts.edit(presetId, next);
+    },
+    [commit, drafts, presetId],
   );
 
   // Pane 1 — pick an engine. Resets the downstream panes so 2 (and then 3)
@@ -872,11 +894,36 @@ function StepDatabase({
     adopted.current = true; // user-driven; don't let the effect clobber the reset
   };
 
-  // Pane 2 — pick a preset (or Custom/blank). Seeds + Patches the settings pane.
+  // Pane 2 — pick a preset (or Custom/blank). Restores prior edits for that
+  // preset and records its pristine baseline.
   const pickPreset = (preset: DatabasePresetVM) => {
+    const loaded = drafts.pick(preset.id, preset.database);
     setPresetId(preset.id);
-    apply(preset.database);
+    commit(loaded);
   };
+
+  // Dirty / reset / save-as-preset for the picked database preset.
+  const dirty = db ? drafts.isDirty(presetId, db) : false;
+  const resetToPreset = useCallback(() => {
+    const base = drafts.baseline(presetId);
+    if (base) apply(base);
+  }, [drafts, presetId, apply]);
+
+  const [saveOpen, setSaveOpen] = useState(false);
+  const saveAsPreset = useCallback(
+    async (name: string, description: string) => {
+      if (!db) return;
+      const id = await getPresetProvider().createDatabasePreset(slug, {
+        name,
+        description,
+        tags: {},
+        database: db,
+      });
+      drafts.markSaved(id, db);
+      setPresetId(id);
+    },
+    [slug, db, drafts],
+  );
 
   const errs = errorsFor(draft.errors, "database");
 
@@ -907,7 +954,17 @@ function StepDatabase({
 
         {/* Pane 3 — Settings, or a fill-width hint until it's reached */}
         {engine && presetId && db ? (
-          <SettingsPane key={`${engine}-settings`} draft={draft} db={db} apply={apply} errs={errs} />
+          <SettingsPane
+            key={`${engine}-settings`}
+            draft={draft}
+            db={db}
+            apply={apply}
+            errs={errs}
+            dirty={dirty}
+            canReset={isRealPresetId(presetId)}
+            onReset={resetToPreset}
+            onSave={() => setSaveOpen(true)}
+          />
         ) : (
           <PreviewAside
             icon={engine ? Layers : Database}
@@ -920,6 +977,14 @@ function StepDatabase({
           />
         )}
       </div>
+
+      <SavePresetDialog
+        open={saveOpen}
+        onOpenChange={setSaveOpen}
+        kind="database"
+        defaultName={draft.name ? `${draft.name} database` : ""}
+        onSave={saveAsPreset}
+      />
     </div>
   );
 }
@@ -1066,11 +1131,19 @@ function SettingsPane({
   db,
   apply,
   errs,
+  dirty,
+  canReset,
+  onReset,
+  onSave,
 }: {
   draft: WizardDraftVM;
   db: DatabaseVM;
   apply: (d: DatabaseVM) => void;
   errs: DraftErrorVM[];
+  dirty: boolean;
+  canReset: boolean;
+  onReset: () => void;
+  onSave: () => void;
 }) {
   // The topology only gets its own SIDE column on very wide screens (2xl); below
   // that, Engine + Preset already eat ~32rem of the row, so a third settings
@@ -1081,7 +1154,12 @@ function SettingsPane({
   const hasTopo = draft.topologyComponents.length > 0;
   return (
     <div className="pane-reveal flex min-h-0 min-w-0 flex-1 flex-col">
-      <PaneHeader index={3} title="Settings" subtitle="Preset values, editable" />
+      <PaneHeader
+        index={3}
+        title="Settings"
+        subtitle="Preset values, editable"
+        right={<PresetEditControls dirty={dirty} canReset={canReset} onReset={onReset} onSave={onSave} />}
+      />
       <div
         className={`grid min-h-0 flex-1 gap-6 2xl:items-stretch ${
           hasTopo ? "2xl:grid-cols-[minmax(24rem,1fr)_minmax(0,22rem)]" : ""
@@ -1360,7 +1438,17 @@ function packageSummary(pkg: DatabasePackageVM): string {
 }
 
 /** Compact numbered header shared by the three Database panes. */
-function PaneHeader({ index, title, subtitle }: { index: number; title: string; subtitle: string }) {
+function PaneHeader({
+  index,
+  title,
+  subtitle,
+  right,
+}: {
+  index: number;
+  title: string;
+  subtitle: string;
+  right?: React.ReactNode;
+}) {
   return (
     <div className="mb-3 flex items-center gap-2">
       <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-primary/30 bg-primary/[0.08] font-mono text-[10px] text-primary">
@@ -1370,6 +1458,7 @@ function PaneHeader({ index, title, subtitle }: { index: number; title: string; 
         <div className="text-sm font-semibold leading-none text-foreground">{title}</div>
         <div className="mt-1 truncate text-[10px] font-mono uppercase tracking-wider text-zinc-600">{subtitle}</div>
       </div>
+      {right}
     </div>
   );
 }
@@ -1441,6 +1530,210 @@ function TopologyDiagram({ draft }: { draft: WizardDraftVM }) {
 //
 // The composed WorkloadVM still flows through the unchanged patch({ workload }).
 
+// ─── Preset draft memory (edit persistence + dirty + reset) ────────────────────
+// Picking a preset used to overwrite the form outright: switch preset → back and
+// your edits were gone. This keeps, per preset id, both the pristine baseline
+// (to detect "dirty" and to reset) and the working copy (so switching away and
+// back restores your edits). `normalize` strips fields the preset doesn't own
+// (e.g. the workload's stroppy_version, chosen in a separate pane) from the
+// comparison/storage so they don't read as edits.
+
+interface PresetDraft<T> {
+  /** Record the pristine baseline (first time only) and return the VM to load. */
+  pick: (id: string, pristine: T) => T;
+  /** Remember the working copy for the active preset. */
+  edit: (id: string | null, vm: T) => void;
+  /** Adopt a freshly-saved preset: its current VM becomes the new baseline. */
+  markSaved: (id: string, vm: T) => void;
+  /** Has the VM drifted from the picked preset's baseline? */
+  isDirty: (id: string | null, vm: T) => boolean;
+  /** The pristine baseline VM for a preset, if known. */
+  baseline: (id: string | null) => T | null;
+}
+
+function usePresetDraft<T>(normalize: (v: T) => T): PresetDraft<T> {
+  const baseline = useRef(new Map<string, T>());
+  const working = useRef(new Map<string, T>());
+  return useMemo(() => {
+    const key = (v: T) => JSON.stringify(normalize(v));
+    return {
+      pick(id, pristine) {
+        const norm = normalize(pristine);
+        if (!baseline.current.has(id)) baseline.current.set(id, norm);
+        return working.current.get(id) ?? norm;
+      },
+      edit(id, vm) {
+        if (id) working.current.set(id, normalize(vm));
+      },
+      markSaved(id, vm) {
+        const norm = normalize(vm);
+        baseline.current.set(id, norm);
+        working.current.set(id, norm);
+      },
+      isDirty(id, vm) {
+        const b = id ? baseline.current.get(id) : undefined;
+        return b !== undefined && key(b) !== key(vm);
+      },
+      baseline(id) {
+        return id ? baseline.current.get(id) ?? null : null;
+      },
+    };
+  }, [normalize]);
+}
+
+// stroppy_version is owned by the Version pane, not the preset, so exclude it
+// from the workload preset's dirty/baseline comparison.
+const normWorkload = (w: WorkloadVM): WorkloadVM => ({ ...w, stroppyVersion: "" });
+const normDatabase = (d: DatabaseVM): DatabaseVM => d;
+
+// A preset id that is real and editable (not the synthetic Custom tile or a
+// resumed draft placeholder) — i.e. one we can offer "reset to preset" against.
+function isRealPresetId(id: string | null): boolean {
+  return (
+    !!id &&
+    id !== "__resumed__" &&
+    id !== CUSTOM_DATABASE_PRESET_ID &&
+    id !== CUSTOM_WORKLOAD_PRESET_ID
+  );
+}
+
+// Dialog that names + saves the current edited VM as a brand-new preset.
+function SavePresetDialog({
+  open,
+  onOpenChange,
+  kind,
+  defaultName,
+  onSave,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  kind: "workload" | "database";
+  defaultName: string;
+  onSave: (name: string, description: string) => Promise<void>;
+}) {
+  const [name, setName] = useState(defaultName);
+  const [description, setDescription] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  // Reseed the name each time the dialog opens.
+  useEffect(() => {
+    if (open) {
+      setName(defaultName);
+      setDescription("");
+      setErr(null);
+    }
+  }, [open, defaultName]);
+
+  const submit = async () => {
+    if (!name.trim()) {
+      setErr("A preset needs a name.");
+      return;
+    }
+    setSaving(true);
+    setErr(null);
+    try {
+      await onSave(name.trim(), description.trim());
+      onOpenChange(false);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Save as {kind} preset</DialogTitle>
+          <DialogDescription>
+            Save the current {kind} configuration as a reusable preset in your library.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label>Name</Label>
+            <Input
+              className="mt-1"
+              value={name}
+              autoFocus
+              onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") void submit();
+              }}
+              placeholder={`my-${kind}-preset`}
+            />
+          </div>
+          <div>
+            <Label>Description (optional)</Label>
+            <Input
+              className="mt-1"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="What is this preset for?"
+            />
+          </div>
+          {err && (
+            <div className="flex items-center gap-2 border border-red-900/50 bg-red-950/30 px-3 py-2 text-xs text-red-400">
+              <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {err}
+            </div>
+          )}
+          <div className="flex justify-end gap-2 pt-1">
+            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={saving}>
+              Cancel
+            </Button>
+            <Button size="sm" className="gap-1.5" onClick={() => void submit()} disabled={saving}>
+              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+              Save preset
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Compact "edited / reset / save" cluster shown in a pane header when a preset
+// is active. Reset reverts to the preset's pristine baseline; Save persists the
+// current edits as a new preset.
+function PresetEditControls({
+  dirty,
+  canReset,
+  onReset,
+  onSave,
+}: {
+  dirty: boolean;
+  canReset: boolean;
+  onReset: () => void;
+  onSave: () => void;
+}) {
+  return (
+    <div className="ml-auto flex shrink-0 items-center gap-2">
+      {dirty && <span className="font-mono text-[10px] uppercase tracking-wider text-amber-500">edited</span>}
+      {canReset && (
+        <button
+          type="button"
+          onClick={onReset}
+          disabled={!dirty}
+          title="Reset to the preset's values"
+          className="flex items-center gap-1 text-[10px] font-mono text-zinc-500 transition-colors hover:text-zinc-300 disabled:opacity-30"
+        >
+          <RotateCcw className="h-3 w-3" /> reset
+        </button>
+      )}
+      <button
+        type="button"
+        onClick={onSave}
+        title="Save the current settings as a new preset"
+        className="flex items-center gap-1 text-[10px] font-mono text-zinc-500 transition-colors hover:text-zinc-300"
+      >
+        <Save className="h-3 w-3" /> save as preset
+      </button>
+    </div>
+  );
+}
+
 function StepWorkload({
   draft,
   patch,
@@ -1471,12 +1764,25 @@ function StepWorkload({
     }
   }, [draft.workload]);
 
-  const apply = useCallback(
+  const drafts = usePresetDraft<WorkloadVM>(normWorkload);
+
+  // setW + server patch — no preset-cache write (used by pick / reset).
+  const commit = useCallback(
     (next: WorkloadVM) => {
       setW(next);
       void patch({ workload: next });
     },
     [patch],
+  );
+
+  // The form's edit path: commit AND remember the working copy for this preset
+  // so switching presets away and back restores the user's edits.
+  const apply = useCallback(
+    (next: WorkloadVM) => {
+      commit(next);
+      drafts.edit(presetId, next);
+    },
+    [commit, drafts, presetId],
   );
 
   const setVersion = useCallback(
@@ -1487,15 +1793,38 @@ function StepWorkload({
     [apply, w],
   );
 
-  // Pane 2 — pick a workload preset (or Custom/blank). Seeds + Patches the
-  // parameters pane, but PRESERVES the version the user already chose in pane 1
-  // (presets carry stroppyVersion "").
+  // Pane 2 — pick a workload preset (or Custom/blank). Restores prior edits for
+  // that preset, records its pristine baseline, and PRESERVES the chosen stroppy
+  // version (presets carry stroppyVersion "").
   const pickPreset = useCallback(
     (preset: WorkloadPresetVM) => {
+      const loaded = drafts.pick(preset.id, { ...preset.workload, stroppyVersion: "" });
       setPresetId(preset.id);
-      apply({ ...preset.workload, stroppyVersion: w.stroppyVersion });
+      commit({ ...loaded, stroppyVersion: w.stroppyVersion });
     },
-    [apply, w.stroppyVersion],
+    [drafts, commit, w.stroppyVersion],
+  );
+
+  // Dirty / reset / save-as-preset for the picked workload preset.
+  const dirty = drafts.isDirty(presetId, w);
+  const resetToPreset = useCallback(() => {
+    const base = drafts.baseline(presetId);
+    if (base) apply({ ...base, stroppyVersion: w.stroppyVersion });
+  }, [drafts, presetId, apply, w.stroppyVersion]);
+
+  const [saveOpen, setSaveOpen] = useState(false);
+  const saveAsPreset = useCallback(
+    async (name: string, description: string) => {
+      const id = await getPresetProvider().createWorkloadPreset(slug, {
+        name,
+        description,
+        tags: {},
+        workload: { ...w, stroppyVersion: "" },
+      });
+      drafts.markSaved(id, w);
+      setPresetId(id);
+    },
+    [slug, w, drafts],
   );
 
   // --- Probe: fires the MOMENT there's enough to probe (script + version),
@@ -1594,6 +1923,10 @@ function StepWorkload({
             probing={probing}
             probeErr={probeErr}
             probeStarted={probeStarted}
+            dirty={dirty}
+            canReset={isRealPresetId(presetId)}
+            onReset={resetToPreset}
+            onSave={() => setSaveOpen(true)}
           />
         ) : (
           <PreviewAside
@@ -1607,6 +1940,14 @@ function StepWorkload({
           />
         )}
       </div>
+
+      <SavePresetDialog
+        open={saveOpen}
+        onOpenChange={setSaveOpen}
+        kind="workload"
+        defaultName={draft.name ? `${draft.name} workload` : ""}
+        onSave={saveAsPreset}
+      />
     </div>
   );
 }
@@ -1845,6 +2186,10 @@ function WorkloadParametersPane({
   probing,
   probeErr,
   probeStarted,
+  dirty,
+  canReset,
+  onReset,
+  onSave,
 }: {
   w: WorkloadVM;
   apply: (w: WorkloadVM) => void;
@@ -1853,10 +2198,19 @@ function WorkloadParametersPane({
   probing: boolean;
   probeErr: string | null;
   probeStarted: boolean;
+  dirty: boolean;
+  canReset: boolean;
+  onReset: () => void;
+  onSave: () => void;
 }) {
   return (
     <div className="pane-reveal flex min-h-0 min-w-0 flex-1 flex-col">
-      <PaneHeader index={3} title="Parameters" subtitle="Execution and data settings" />
+      <PaneHeader
+        index={3}
+        title="Parameters"
+        subtitle="Execution and data settings"
+        right={<PresetEditControls dirty={dirty} canReset={canReset} onReset={onReset} onSave={onSave} />}
+      />
       <div className="min-h-0 flex-1 overflow-y-auto pr-1">
         <WorkloadParamsForm w={w} apply={apply} probe={probe} />
         <FieldErrors errs={errs} />
