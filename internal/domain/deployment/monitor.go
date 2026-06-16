@@ -265,12 +265,13 @@ func startExportersScript(p monitorParams) string {
 		b.WriteString(systemdRunUnit(
 			"stroppy-mysqld-exporter",
 			"MYSQLD_EXPORTER_PASSWORD=exporter",
-			// Enable the processlist + perf_schema memory collectors (off by
-			// default) so the dashboard's Process States and Internal Memory
-			// panels populate. The exporter user already has PROCESS + SELECT on
-			// *.* (incl performance_schema). Query-cache panels stay empty by
-			// design — MySQL 8.0 removed the query cache.
-			"/usr/local/bin/mysqld_exporter --mysqld.address=127.0.0.1:3306 --mysqld.username=exporter --collect.info_schema.processlist --collect.perf_schema.memory_events",
+			// Enable the processlist collector (off by default) so the dashboard's
+			// Process States panels populate (mysql_info_schema_processlist_threads).
+			// The exporter user already has PROCESS + SELECT on *.*. Query-cache and
+			// perf_schema memory panels stay empty by design — MySQL 8.0 removed the
+			// query cache and the dashboard's memory panels read innodb_* status, not
+			// perf_schema instruments.
+			"/usr/local/bin/mysqld_exporter --mysqld.address=127.0.0.1:3306 --mysqld.username=exporter --collect.info_schema.processlist",
 		))
 	}
 
@@ -279,14 +280,18 @@ func startExportersScript(p monitorParams) string {
 
 // systemdRunUnit emits an idempotent systemd-run invocation for a long-running
 // collector. The unit is stopped first so re-runs (shared machine, retries)
-// restart cleanly against the current binary/config.
+// restart cleanly against the current binary/config. Restart=always keeps the
+// collector alive across exits: postgres_exporter exits when its DB connection
+// drops (e.g. patroni promotes/restarts postgres the moment it comes up), and
+// without a restart policy --collect would garbage-collect the dead unit, so no
+// metrics ship for the rest of the run.
 func systemdRunUnit(unit, env, exec string) string {
 	setenv := ""
 	if env != "" {
 		setenv = "--setenv=" + ShellQuote(env) + " "
 	}
 	return fmt.Sprintf(`systemctl stop %s 2>/dev/null || true
-systemd-run --unit=%s --collect %s%s
+systemd-run --unit=%s --collect -p Restart=always -p RestartSec=2 %s%s
 `, ShellQuote(unit), ShellQuote(unit), setenv, exec)
 }
 
