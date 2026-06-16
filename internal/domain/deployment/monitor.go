@@ -259,12 +259,6 @@ func startExportersScript(p monitorParams) string {
 			"DATA_SOURCE_NAME=postgresql://postgres@127.0.0.1:5432/postgres?sslmode=disable",
 			"/usr/local/bin/postgres_exporter",
 		))
-		// PG-EXPORTER-DIAG (backgrounded, non-blocking): if the exporter still
-		// dies, dump its journal to journald via logger so it reaches VictoriaLogs
-		// (tag PGEXP-DIAG) for post-mortem. Captures the steady-state exit, not
-		// just the early bootstrap.
-		b.WriteString("( sleep 420; systemctl status stroppy-postgres-exporter 2>&1 | head -5 | logger -t PGEXP-DIAG; " +
-			"journalctl -u stroppy-postgres-exporter --no-pager 2>&1 | tail -40 | logger -t PGEXP-DIAG ) &\n")
 	case "mysql":
 		// Create the least-privilege exporter user, then start mysqld_exporter
 		// against the local server. Best-effort grant (idempotent). The user is
