@@ -23,6 +23,7 @@ var binaryUpstreams = map[string]string{
 	"stroppy_nightly":   "https://github.com/stroppy-io/stroppy/releases/download/nightly-{ver}/{file}",
 	"postgres_exporter": "https://github.com/prometheus-community/postgres_exporter/releases/download/v{ver}/{file}",
 	"mysqld_exporter":   "https://github.com/prometheus/mysqld_exporter/releases/download/v{ver}/{file}",
+	"proxysql":          "https://github.com/sysown/proxysql/releases/download/v{ver}/{file}",
 	"vector":            "https://packages.timber.io/vector/{ver}/{file}",
 	"ydbd":              "https://binaries.ydb.tech/release/{ver}/{file}",
 }

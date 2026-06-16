@@ -181,8 +181,14 @@ func mysqlInstallCommands(component *topologypb.Component, dbPackage *domain.Pac
 		}
 		return commands
 	case mysqlRoleProxysql:
+		// Fetch the .deb through the gateway's /api/binaries cache (pinned upstream
+		// in gateway/cache.go), NOT a direct github wget: cloud agents have no
+		// direct internet, only the gateway, so the old github download failed with
+		// wget exit 4. apt-get install of the local .deb pulls deps via apt-cacher.
+		proxysqlDeb := "${STROPPY_SERVER_ADDR%/}/api/binaries/proxysql/2.5.5/proxysql_2.5.5-ubuntu22_amd64.deb"
 		return []string{
-			"command -v proxysql || (apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y wget gpg && wget -qO /tmp/proxysql.deb 'https://github.com/sysown/proxysql/releases/download/v2.5.5/proxysql_2.5.5-ubuntu22_amd64.deb' && dpkg -i /tmp/proxysql.deb && rm -f /tmp/proxysql.deb)",
+			"command -v proxysql || (" + deploymentbuilder.CurlDownloadCommand(proxysqlDeb, "/tmp/proxysql.deb") +
+				" && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y /tmp/proxysql.deb && rm -f /tmp/proxysql.deb)",
 		}
 	default:
 		return []string{"true"}
