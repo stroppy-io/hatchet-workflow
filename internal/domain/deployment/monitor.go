@@ -248,6 +248,14 @@ func startExportersScript(p monitorParams) string {
 			"DATA_SOURCE_NAME=postgresql://postgres@localhost:5432/postgres?sslmode=disable",
 			"/usr/local/bin/postgres_exporter",
 		))
+		// PG-EXPORTER-DIAG: surface why content collectors (pg_stat_database,
+		// pg_database_size) are empty on patroni follower nodes — dump the
+		// exporter's own pg_up / scrape error, its journal, and a direct psql
+		// probe. Best-effort; never fails the step.
+		b.WriteString("( sleep 15; echo 'PG-EXPORTER-DIAG:'; " +
+			"curl -s --max-time 5 localhost:9187/metrics 2>&1 | grep -E '^pg_up |^pg_exporter_last_scrape_error' || echo '  no /metrics'; " +
+			"echo 'PG-EXPORTER-DIAG journal:'; journalctl -u stroppy-postgres-exporter -n 25 --no-pager 2>&1 | tail -20; " +
+			"echo 'PG-EXPORTER-DIAG direct-psql:'; PGCONNECT_TIMEOUT=5 psql 'host=localhost port=5432 user=postgres dbname=postgres sslmode=disable' -tAc 'select count(*) from pg_stat_database' 2>&1 | tail -3 ) || true\n")
 	case "mysql":
 		// Create the least-privilege exporter user, then start mysqld_exporter
 		// against the local server. Best-effort grant (idempotent). The user is
@@ -261,7 +269,12 @@ func startExportersScript(p monitorParams) string {
 		b.WriteString(systemdRunUnit(
 			"stroppy-mysqld-exporter",
 			"MYSQLD_EXPORTER_PASSWORD=exporter",
-			"/usr/local/bin/mysqld_exporter --mysqld.address=127.0.0.1:3306 --mysqld.username=exporter",
+			// Enable the processlist + perf_schema memory collectors (off by
+			// default) so the dashboard's Process States and Internal Memory
+			// panels populate. The exporter user already has PROCESS + SELECT on
+			// *.* (incl performance_schema). Query-cache panels stay empty by
+			// design — MySQL 8.0 removed the query cache.
+			"/usr/local/bin/mysqld_exporter --mysqld.address=127.0.0.1:3306 --mysqld.username=exporter --collect.info_schema.processlist --collect.perf_schema.memory_events",
 		))
 	}
 
