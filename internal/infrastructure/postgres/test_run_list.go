@@ -231,7 +231,12 @@ func (r *TestRunRepo) List(ctx context.Context, query *api.ListTestRunsRequest, 
 	}
 
 	sb := strings.Builder{}
-	sb.WriteString("SELECT data FROM test_run_records")
+	// The list view only renders summary/entity/status fields. Strip the heavy
+	// blobs (runtimeState ~1.25MB of stage outputs, deploymentPlan ~700KB of
+	// rendered files, infrastructureState) from each row — they were making a
+	// single page transfer + protojson-unmarshal tens of MB. RunDetail loads the
+	// full record separately via Get. (jsonb `-` removes a top-level key.)
+	sb.WriteString("SELECT data - 'runtimeState' - 'deploymentPlan' - 'infrastructureState' FROM test_run_records")
 	if len(where) > 0 {
 		sb.WriteString(" WHERE ")
 		sb.WriteString(strings.Join(where, " AND "))
