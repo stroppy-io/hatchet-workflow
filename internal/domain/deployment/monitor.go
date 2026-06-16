@@ -79,15 +79,21 @@ func monitorParamsFor(ctx RenderContext) (monitorParams, bool) {
 		return monitorParams{}, false
 	}
 
-	engine := ctx.Component.GetEngine()
+	// Resolve the scrape dbKind from ALL components co-located on this node, not
+	// just ctx.Component. On HA a DB node is shared by several components
+	// (e.g. postgres-master + patroni + etcd); every component renders the
+	// vmagent scrape config, so if a non-DB component resolved dbKind="" it
+	// would overwrite scrape.yml and drop the DB scrape job — silently stopping
+	// exporter metrics mid-run while the exporter keeps running. Treating the
+	// node as a DB node whenever any co-located component runs a scrapeable DB
+	// server keeps scrape.yml stable regardless of component deploy order.
 	dbKind := ""
-	switch engine {
-	case "postgres", "mysql", "picodata", "ydb", "cockroach":
-		// Only emit a DB exporter for the engine roles that actually run a DB
-		// server on the machine. Proxy / etcd / coordinator roles share the
-		// engine name but host no DB to scrape.
-		if isDatabaseRole(engine, ctx.Component.GetRole()) {
-			dbKind = engine
+	if comps, err := ctx.Topology.ComponentsOnNode(ctx.Node.GetId()); err == nil {
+		for _, c := range comps {
+			if isDatabaseRole(c.GetEngine(), c.GetRole()) {
+				dbKind = c.GetEngine()
+				break
+			}
 		}
 	}
 
