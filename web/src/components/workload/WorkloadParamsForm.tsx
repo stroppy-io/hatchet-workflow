@@ -404,28 +404,33 @@ function ProbeEnvFields({
       <p className="mb-2 mt-0.5 text-[11px] text-zinc-600">
         Declared by the script — blank uses the default.
       </p>
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         {decls.map((d) => {
           const set = (env[d.name] ?? "") !== "";
           return (
             <div key={d.name} className="flex items-center gap-2">
-              <div className="w-44 shrink-0">
-                <div className="font-mono text-[11px] text-zinc-300">
-                  {d.name}
-                  {d.required && <span className="ml-1 text-red-400">*</span>}
-                </div>
-                {d.description && (
-                  <div className="truncate text-[10px] text-zinc-600" title={d.description}>
-                    {d.description}
-                  </div>
-                )}
-              </div>
+              <label
+                className="w-40 shrink-0 truncate font-mono text-[11px] text-zinc-300"
+                title={d.names.length > 1 ? d.names.join(", ") : undefined}
+              >
+                {d.name}
+                {d.required && <span className="ml-1 text-red-400">*</span>}
+              </label>
               <Input
-                className="h-8 flex-1 font-mono text-xs"
+                className="h-7 w-36 shrink-0 font-mono text-xs"
                 placeholder={d.default || "<unset>"}
                 value={env[d.name] ?? ""}
                 onChange={(e) => onSet(d.name, e.target.value)}
               />
+              {/* Description takes the remaining width and truncates; the full
+                  text is available on hover (native tooltip). */}
+              {d.description ? (
+                <span className="min-w-0 flex-1 cursor-help truncate text-[10px] text-zinc-600" title={d.description}>
+                  {d.description}
+                </span>
+              ) : (
+                <span className="flex-1" />
+              )}
               <button
                 type="button"
                 onClick={() => onSet(d.name, "")}
