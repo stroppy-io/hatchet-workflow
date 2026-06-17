@@ -249,9 +249,19 @@ func seedWorkloadPresets(ctx context.Context, log *slog.Logger, repo *postgres.W
 	byName := workloadPresetsByName(existing)
 	presets := builtinWorkloadPresets(tenantID, authorID)
 	created := 0
+	updated := 0
 	out := make([]*models.WorkloadPresetRecord, 0, len(presets))
 	for _, p := range presets {
+		// Reconcile existing SYSTEM presets to the canonical shape (e.g. presets
+		// seeded under an older Workload schema that now lack segments). User
+		// presets that happen to share a name are left untouched.
 		if current := byName[p.GetEntity().GetName()]; current != nil {
+			if current.GetIsSystem() && reconcileBuiltinWorkloadPreset(current, p) {
+				if err := repo.Update(ctx, current); err != nil {
+					return nil, err
+				}
+				updated++
+			}
 			out = append(out, current)
 			continue
 		}
@@ -262,8 +272,34 @@ func seedWorkloadPresets(ctx context.Context, log *slog.Logger, repo *postgres.W
 		out = append(out, p)
 	}
 	log.Info("first-boot seeding: builtin workload presets ensured",
-		slog.String("tenant_id", tenantID), slog.Int("created", created), slog.Int("catalog", len(out)))
+		slog.String("tenant_id", tenantID), slog.Int("created", created), slog.Int("updated", updated), slog.Int("catalog", len(out)))
 	return out, nil
+}
+
+// reconcileBuiltinWorkloadPreset rewrites an existing system preset to the
+// canonical workload/summary when they differ, preserving its entity identity
+// and creation time. Returns whether anything changed.
+func reconcileBuiltinWorkloadPreset(current, canonical *models.WorkloadPresetRecord) bool {
+	if current == nil || canonical == nil {
+		return false
+	}
+	changed := !proto.Equal(current.GetWorkload(), canonical.GetWorkload()) ||
+		!proto.Equal(current.GetSummary(), canonical.GetSummary()) ||
+		current.GetIsSystem() != canonical.GetIsSystem() ||
+		current.GetEntity().GetDescription() != canonical.GetEntity().GetDescription()
+	if !changed {
+		return false
+	}
+	current.Workload = proto.Clone(canonical.GetWorkload()).(*domain.Workload)
+	current.Summary = proto.Clone(canonical.GetSummary()).(*models.WorkloadPresetRecord_Summary)
+	current.IsSystem = canonical.GetIsSystem()
+	if entity := current.GetEntity(); entity != nil {
+		entity.Description = canonical.GetEntity().GetDescription()
+		if timings := entity.GetTimings(); timings != nil {
+			timings.UpdatedAt = timestamppb.Now()
+		}
+	}
+	return true
 }
 
 func seedTestPresets(ctx context.Context, log *slog.Logger, repo *postgres.TestPresetRepo, tenantID, authorID string, dbPresets []*models.DatabasePresetRecord, workloads []*models.WorkloadPresetRecord) ([]*models.TestPresetRecord, error) {
