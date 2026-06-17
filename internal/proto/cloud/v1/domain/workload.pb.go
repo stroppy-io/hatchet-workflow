@@ -351,7 +351,11 @@ type Workload_Parameters struct {
 	// Mutually exclusive with no_steps — backend enforces.
 	Steps []string `protobuf:"bytes,5,rep,name=steps,proto3" json:"steps,omitempty"`
 	// no_steps is a phase blocklist. Mutually exclusive with steps.
-	NoSteps       []string `protobuf:"bytes,6,rep,name=no_steps,json=noSteps,proto3" json:"no_steps,omitempty"`
+	NoSteps []string `protobuf:"bytes,6,rep,name=no_steps,json=noSteps,proto3" json:"no_steps,omitempty"`
+	// bulk_size is rows per bulk INSERT for the plain_bulk insert method
+	// (stroppy driver bulkSize; default 2500 when unset). Only meaningful
+	// when default_insert_method == "plain_bulk". 0 means use the default.
+	BulkSize      uint32 `protobuf:"varint,7,opt,name=bulk_size,json=bulkSize,proto3" json:"bulk_size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -428,6 +432,13 @@ func (x *Workload_Parameters) GetNoSteps() []string {
 	return nil
 }
 
+func (x *Workload_Parameters) GetBulkSize() uint32 {
+	if x != nil {
+		return x.BulkSize
+	}
+	return 0
+}
+
 // WorkloadFile is a run-scoped file staged for stroppy (SQL probes, support files).
 type Workload_WorkloadFile struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -496,7 +507,7 @@ var File_cloud_v1_domain_workload_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_domain_workload_proto_rawDesc = "" +
 	"\n" +
-	"\x1ecloud/v1/domain/workload.proto\x12\x0fcloud.v1.domain\x1a\x1acloud/v1/common/tags.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\xbb\v\n" +
+	"\x1ecloud/v1/domain/workload.proto\x12\x0fcloud.v1.domain\x1a\x1acloud/v1/common/tags.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\xe3\v\n" +
 	"\bWorkload\x120\n" +
 	"\x0fstroppy_version\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x18@R\x0estroppyVersion\x12\"\n" +
 	"\x06script\x18\x02 \x01(\tB\n" +
@@ -517,7 +528,7 @@ const file_cloud_v1_domain_workload_proto_rawDesc = "" +
 	"iterations\x12\x14\n" +
 	"\x05quiet\x18\x04 \x01(\bR\x05quiet\x12#\n" +
 	"\rno_thresholds\x18\x05 \x01(\bR\fnoThresholdsB\x12\n" +
-	"\x05limit\x12\t\xf8B\x01\xf2\xa7\x1d\x02\b\x03\x1a\xd0\x03\n" +
+	"\x05limit\x12\t\xf8B\x01\xf2\xa7\x1d\x02\b\x03\x1a\xf8\x03\n" +
 	"\n" +
 	"Parameters\x12&\n" +
 	"\tpool_size\x18\x01 \x01(\rB\t\xfaB\x06*\x04\x18\xff\xff\x03R\bpoolSize\x12:\n" +
@@ -525,7 +536,8 @@ const file_cloud_v1_domain_workload_proto_rawDesc = "" +
 	"\x15default_insert_method\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x18@R\x13defaultInsertMethod\x12n\n" +
 	"\x03env\x18\x04 \x03(\v2-.cloud.v1.domain.Workload.Parameters.EnvEntryB-\xfaB*\x9a\x01'\x10\x80\x02\"\x1br\x19\x10\x01\x18\x80\x022\x12^[A-Z_][A-Z0-9_]*$*\x05r\x03\x18\x80@R\x03env\x129\n" +
 	"\x05steps\x18\x05 \x03(\tB#\xfaB \x92\x01\x1d\x10 \"\x19r\x17\x10\x01\x18@2\x11^[a-z][a-z0-9_]*$R\x05steps\x12>\n" +
-	"\bno_steps\x18\x06 \x03(\tB#\xfaB \x92\x01\x1d\x10 \"\x19r\x17\x10\x01\x18@2\x11^[a-z][a-z0-9_]*$R\anoSteps\x1a6\n" +
+	"\bno_steps\x18\x06 \x03(\tB#\xfaB \x92\x01\x1d\x10 \"\x19r\x17\x10\x01\x18@2\x11^[a-z][a-z0-9_]*$R\anoSteps\x12&\n" +
+	"\tbulk_size\x18\a \x01(\rB\t\xfaB\x06*\x04\x18\xc0\x84=R\bbulkSize\x1a6\n" +
 	"\bEnvEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a\x84\x01\n" +

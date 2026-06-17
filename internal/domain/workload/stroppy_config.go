@@ -206,7 +206,13 @@ func buildStroppyRunConfig(input *domain.Workload, database *domain.Database, se
 			MinConns: &maxConns,
 		},
 	}
-	if bulkSize := driverBulkSize(protocol); bulkSize > 0 {
+	// A user-supplied bulk_size (the wizard surfaces it for plain_bulk) wins;
+	// otherwise fall back to the protocol-specific default.
+	bulkSize := driverBulkSize(protocol)
+	if userBulk := int32(params.GetBulkSize()); userBulk > 0 {
+		bulkSize = userBulk
+	}
+	if bulkSize > 0 {
 		driverConfig.BulkSize = &bulkSize
 	}
 

@@ -705,6 +705,17 @@ func (m *Workload_Parameters) validate(all bool) error {
 
 	}
 
+	if m.GetBulkSize() > 1000000 {
+		err := Workload_ParametersValidationError{
+			field:  "BulkSize",
+			reason: "value must be less than or equal to 1000000",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if len(errors) > 0 {
 		return Workload_ParametersMultiError(errors)
 	}

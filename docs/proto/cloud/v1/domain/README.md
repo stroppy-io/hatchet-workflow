@@ -1741,6 +1741,16 @@ go_name: Vus</pre></td>
 <th>Description</th>
 </tr>
 <tr>
+<td>bulk_size</td>
+<td>uint32</td>
+<td><pre>
+bulk_size is rows per bulk INSERT for the plain_bulk insert method
+//(stroppy driver bulkSize; default 2500 when unset). Only meaningful
+//when default_insert_method == "plain_bulk". 0 means use the default.<br>
+
+json_name: bulkSize
+go_name: BulkSize</pre></td>
+</tr><tr>
 <td>default_insert_method</td>
 <td>string</td>
 <td><pre>

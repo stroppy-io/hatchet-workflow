@@ -372,6 +372,10 @@ func (m *Workload_Parameters) Encode(e *jx.Encoder) {
 		}
 		e.ArrEnd()
 	}
+	if m.BulkSize != 0 {
+		e.FieldStart("bulkSize")
+		e.UInt32(m.BulkSize)
+	}
 	e.ObjEnd()
 }
 
@@ -475,6 +479,20 @@ func (m *Workload_Parameters) Decode(d *jx.Decoder) error {
 				m.NoSteps = append(m.NoSteps, v)
 				return nil
 			})
+		case "bulkSize", "bulk_size":
+			if seen["BulkSize"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["BulkSize"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint32(d)
+			if err != nil {
+				return err
+			}
+			m.BulkSize = v
+			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}
