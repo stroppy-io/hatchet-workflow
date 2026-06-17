@@ -34,26 +34,33 @@ func (r DeploymentRenderer) RenderComponent(ctx deploymentbuilder.RenderContext)
 	if err != nil {
 		return nil, err
 	}
-	configFile, _, err := effectiveConfigFile(
-		ctx.Component.GetId(),
-		ctx.Workload,
-		ctx.Database,
-		ctx.RenderOverrides,
-		ctx.Topology.Spec().GetLabels(),
-		target,
-		loadWorkersFromMachine(ctx.Machine),
-		ctx.AgentToken,
-	)
-	if err != nil {
-		return nil, err
-	}
+	componentID := ctx.Component.GetId()
+	labels := ctx.Topology.Spec().GetLabels()
+	loadWorkers := loadWorkersFromMachine(ctx.Machine)
 
 	steps := []*deploymentpb.AgentStep{
-		deploymentbuilder.CreateDirStep("010_create_config_dir", 10, deploymentbuilder.ConfigDir(ctx.Component.GetId()), 0755),
+		deploymentbuilder.CreateDirStep("010_create_config_dir", 10, deploymentbuilder.ConfigDir(componentID), 0755),
 		deploymentbuilder.WriteFileStep("020_write_context", 20, deploymentbuilder.ContextFile(ctx, dependencies)),
-		deploymentbuilder.WriteFileStep("030_write_config", 30, configFile),
 	}
-	steps = append(steps, workloadFileSteps(ctx.Component.GetId(), ctx.Workload)...)
+	// One config file (and its run-scoped files) per segment, written before the
+	// stroppy install. The run steps that execute each config are injected by the
+	// workload workflow stage, not here.
+	order := uint32(30)
+	for i, segment := range ctx.Workload.GetSegments() {
+		configFile, _, cerr := effectiveConfigFile(
+			componentID, ctx.Workload, segment, i, ctx.Database,
+			ctx.RenderOverrides, labels, target, loadWorkers, ctx.AgentToken,
+		)
+		if cerr != nil {
+			return nil, cerr
+		}
+		steps = append(steps, deploymentbuilder.WriteFileStep(fmt.Sprintf("%03d_write_config_seg%d", order, i), order, configFile))
+		order++
+		for _, file := range segmentFiles(componentID, segment) {
+			steps = append(steps, deploymentbuilder.WriteFileStep(fmt.Sprintf("%03d_write_workload_file", order), order, file))
+			order++
+		}
+	}
 	steps = append(steps,
 		deploymentbuilder.CallCmdStep("100_prepare_stroppy", 100, installCommand(ctx.Workload, ctx.Topology.Spec().GetLabels()[deploymentbuilder.LabelServerAddr])),
 		deploymentbuilder.CallCmdStep("110_healthcheck", 110, "test -d "+deploymentbuilder.ShellQuote(deploymentbuilder.ConfigDir(ctx.Component.GetId()))),
@@ -95,39 +102,17 @@ func (r DeploymentRenderer) RenderPreview(ctx deploymentbuilder.PreviewContext) 
 	// the URL free of a `?database=` (consistent with the address placeholders
 	// the preview also leaves unresolved). The real path is substituted in
 	// RenderComponent once the DB endpoint is resolved.
-	configFile, configOrigin, err := effectiveConfigFile(
-		ctx.Component.GetId(),
-		ctx.Workload,
-		ctx.Database,
-		ctx.RenderOverrides,
-		labels,
-		databaseTarget{},
-		0,
-		"",
-	)
-	if err != nil {
-		return nil, err
-	}
-	defaultConfigFile := defaultConfigFile(
-		ctx.Component.GetId(),
-		ctx.Workload,
-		ctx.Database,
-		labels,
-		databaseTarget{},
-		0,
-		"",
-	)
-
+	componentID := ctx.Component.GetId()
 	artifacts := []*deploymentpb.RenderArtifact{
 		deploymentbuilder.DirArtifact(ctx, Engine, "config-dir", &common.Dir{
-			Info:          &common.Dir_Info{Path: deploymentbuilder.ConfigDir(ctx.Component.GetId()), Mode: 0755},
+			Info:          &common.Dir_Info{Path: deploymentbuilder.ConfigDir(componentID), Mode: 0755},
 			CreateParents: true,
 		}),
 		deploymentbuilder.FileArtifact(
 			ctx,
 			Engine,
 			deploymentbuilder.ArtifactID(
-				ctx.Component.GetId(),
+				componentID,
 				"topology.env",
 			),
 			deploymentbuilder.PreviewContextFile(ctx, dependencies),
@@ -137,30 +122,44 @@ func (r DeploymentRenderer) RenderPreview(ctx deploymentbuilder.PreviewContext) 
 			"",
 			map[string]string{"artifact": "context"},
 		),
-		deploymentbuilder.FileArtifact(
+	}
+	// One editable config artifact (and its read-only files) per segment.
+	for i, segment := range ctx.Workload.GetSegments() {
+		configFile, configOrigin, cerr := effectiveConfigFile(
+			componentID, ctx.Workload, segment, i, ctx.Database,
+			ctx.RenderOverrides, labels, databaseTarget{}, 0, "",
+		)
+		if cerr != nil {
+			return nil, cerr
+		}
+		defConfig := defaultConfigFile(
+			componentID, ctx.Workload, segment, i, ctx.Database,
+			labels, databaseTarget{}, 0, "",
+		)
+		artifacts = append(artifacts, deploymentbuilder.FileArtifact(
 			ctx,
 			Engine,
-			configArtifactID(ctx.Component.GetId()),
+			segmentConfigArtifactID(componentID, i),
 			configFile,
 			configOrigin,
 			deploymentpb.RenderArtifact_MUTABILITY_EDITABLE,
 			"",
-			deploymentbuilder.FileHash(defaultConfigFile),
+			deploymentbuilder.FileHash(defConfig),
 			map[string]string{"artifact": "config"},
-		),
-	}
-	for _, file := range workloadFiles(ctx.Component.GetId(), ctx.Workload) {
-		artifacts = append(artifacts, deploymentbuilder.FileArtifact(
-			ctx,
-			Engine,
-			deploymentbuilder.ArtifactID(ctx.Component.GetId(), "files/"+filepath.Base(file.GetInfo().GetPath())),
-			file,
-			deploymentpb.RenderArtifact_ORIGIN_SYSTEM,
-			deploymentpb.RenderArtifact_MUTABILITY_READ_ONLY,
-			"workload files come from workload input",
-			"",
-			map[string]string{"artifact": "workload_file"},
 		))
+		for _, file := range segmentFiles(componentID, segment) {
+			artifacts = append(artifacts, deploymentbuilder.FileArtifact(
+				ctx,
+				Engine,
+				deploymentbuilder.ArtifactID(componentID, "files/"+filepath.Base(file.GetInfo().GetPath())),
+				file,
+				deploymentpb.RenderArtifact_ORIGIN_SYSTEM,
+				deploymentpb.RenderArtifact_MUTABILITY_READ_ONLY,
+				"workload files come from workload input",
+				"",
+				map[string]string{"artifact": "workload_file"},
+			))
+		}
 	}
 	artifacts = append(artifacts,
 		deploymentbuilder.CommandArtifact(
@@ -192,6 +191,8 @@ func (r DeploymentRenderer) RenderPreview(ctx deploymentbuilder.PreviewContext) 
 func effectiveConfigFile(
 	componentID string,
 	input *domain.Workload,
+	segment *domain.Workload_Segment,
+	index int,
 	database *domain.Database,
 	overrides *deploymentpb.RenderOverrideSet,
 	labels map[string]string,
@@ -200,7 +201,7 @@ func effectiveConfigFile(
 	bearerToken string,
 ) (*common.File, deploymentpb.RenderArtifact_Origin, error) {
 	target = target.withDefaults(database)
-	artifactID := configArtifactID(componentID)
+	artifactID := segmentConfigArtifactID(componentID, index)
 	if override, ok := deploymentbuilder.OverrideFile(overrides, componentID, artifactID); ok && override.GetFile() != nil {
 		file, err := patchStroppyConfigFile(override.GetFile(), labels, target, bearerToken)
 		if err != nil {
@@ -211,6 +212,8 @@ func effectiveConfigFile(
 	return defaultConfigFile(
 		componentID,
 		input,
+		segment,
+		index,
 		database,
 		labels,
 		target,
@@ -222,6 +225,8 @@ func effectiveConfigFile(
 func defaultConfigFile(
 	componentID string,
 	input *domain.Workload,
+	segment *domain.Workload_Segment,
+	index int,
 	database *domain.Database,
 	labels map[string]string,
 	target databaseTarget,
@@ -230,11 +235,11 @@ func defaultConfigFile(
 ) *common.File {
 	return &common.File{
 		Info: &common.File_Info{
-			Path:          configPath(componentID),
+			Path:          SegmentConfigPath(componentID, index),
 			Mode:          0644,
 			CreateParents: true,
 		},
-		Content: &common.File_Text{Text: renderStroppyConfigJSON(input, database, labels, target, loadWorkers, bearerToken)},
+		Content: &common.File_Text{Text: renderStroppyConfigJSON(input, segment, database, labels, target, loadWorkers, bearerToken)},
 	}
 }
 
@@ -294,21 +299,10 @@ func isCPUQuota(name, units string) bool {
 	return strings.EqualFold(strings.TrimSpace(units), "cores") && strings.Contains(strings.ToLower(name), "cpu")
 }
 
-func workloadFileSteps(componentID string, input *domain.Workload) []*deploymentpb.AgentStep {
-	files := workloadFiles(componentID, input)
-	steps := make([]*deploymentpb.AgentStep, 0, len(files))
-	order := uint32(40)
-	for _, file := range files {
-		steps = append(steps, deploymentbuilder.WriteFileStep(fmt.Sprintf("%03d_write_workload_file", order), order, file))
-		order += 10
-	}
-	return steps
-}
-
-func workloadFiles(componentID string, input *domain.Workload) []*common.File {
-	segmentFiles := PrimarySegment(input).GetFiles()
-	files := make([]*common.File, 0, len(segmentFiles))
-	for _, file := range segmentFiles {
+func segmentFiles(componentID string, segment *domain.Workload_Segment) []*common.File {
+	src := segment.GetFiles()
+	files := make([]*common.File, 0, len(src))
+	for _, file := range src {
 		files = append(files, &common.File{
 			Info: &common.File_Info{
 				Path:          deploymentbuilder.ConfigDir(componentID) + "/files/" + file.GetName(),
@@ -370,12 +364,26 @@ stroppy version || stroppy --version || true
 `, workloadCurlOpts, deploymentbuilder.ShellQuote(downloadURL))
 }
 
-func configPath(componentID string) string {
-	return deploymentbuilder.ConfigDir(componentID) + "/stroppy-config.json"
+// SegmentConfigFileName is the stroppy config filename for a segment by index.
+// Index 0 keeps the legacy "stroppy-config.json" so single-segment runs stay
+// byte-identical (config path, artifact id, and render-override keys unchanged);
+// later segments get an indexed name.
+func SegmentConfigFileName(index int) string {
+	if index <= 0 {
+		return "stroppy-config.json"
+	}
+	return fmt.Sprintf("stroppy-config-%d.json", index)
 }
 
-func configArtifactID(componentID string) string {
-	return deploymentbuilder.ArtifactID(componentID, "stroppy-config.json")
+// SegmentConfigPath is the absolute path the workload runner writes/reads for a
+// segment's stroppy config. Shared by the renderer (which writes it) and the
+// workflow (which runs `stroppy run -f <path>`).
+func SegmentConfigPath(componentID string, index int) string {
+	return deploymentbuilder.ConfigDir(componentID) + "/" + SegmentConfigFileName(index)
+}
+
+func segmentConfigArtifactID(componentID string, index int) string {
+	return deploymentbuilder.ArtifactID(componentID, SegmentConfigFileName(index))
 }
 
 func stroppyDownloadURL(serverAddr, version string) string {

@@ -13,7 +13,7 @@ import (
 )
 
 func TestRenderStroppyConfigRoutesOTLPThroughServerAddress(t *testing.T) {
-	rendered := renderStroppyConfigJSON(&domain.Workload{
+	w := &domain.Workload{
 		Protocol: domain.Workload_PROTOCOL_PG,
 		Segments: []*domain.Workload_Segment{{
 			Name:   "workload",
@@ -25,7 +25,8 @@ func TestRenderStroppyConfigRoutesOTLPThroughServerAddress(t *testing.T) {
 				},
 			},
 		}},
-	}, &domain.Database{Kind: domain.Database_KIND_POSTGRES}, map[string]string{
+	}
+	rendered := renderStroppyConfigJSON(w, w.GetSegments()[0], &domain.Database{Kind: domain.Database_KIND_POSTGRES}, map[string]string{
 		deploymentbuilder.LabelServerAddr: "https://control.example",
 		deploymentbuilder.LabelRunID:      "run-1",
 	}, databaseTarget{Host: "10.0.0.2", Port: 5432}, 4, "agent-token")
@@ -63,7 +64,7 @@ func TestRenderStroppyConfigRoutesOTLPThroughServerAddress(t *testing.T) {
 }
 
 func TestRenderStroppyConfigSetsPicodataBulkSize(t *testing.T) {
-	rendered := renderStroppyConfigJSON(&domain.Workload{
+	w := &domain.Workload{
 		Protocol: domain.Workload_PROTOCOL_PICODATA,
 		Segments: []*domain.Workload_Segment{{
 			Name:   "workload",
@@ -75,7 +76,8 @@ func TestRenderStroppyConfigSetsPicodataBulkSize(t *testing.T) {
 				},
 			},
 		}},
-	}, &domain.Database{Kind: domain.Database_KIND_PICODATA}, map[string]string{
+	}
+	rendered := renderStroppyConfigJSON(w, w.GetSegments()[0], &domain.Database{Kind: domain.Database_KIND_PICODATA}, map[string]string{
 		deploymentbuilder.LabelServerAddr: "https://control.example",
 		deploymentbuilder.LabelRunID:      "run-1",
 	}, databaseTarget{Host: "10.0.0.2", Port: 5432}, 4, "agent-token")

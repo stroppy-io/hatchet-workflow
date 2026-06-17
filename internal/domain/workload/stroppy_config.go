@@ -160,9 +160,8 @@ const defaultK6SetupTimeout = "20m"
 // exporter so the k6/stroppy metrics (`<runID>_vus`, `_iterations`, …) reach
 // VictoriaMetrics. serverAddr/runID/bearerToken are read from the topology-spec
 // labels plus the per-node agent token from deployment RenderContext.
-func buildStroppyRunConfig(input *domain.Workload, database *domain.Database, serverAddr, runID, bearerToken string, target databaseTarget, loadWorkers uint32) *stroppypb.RunConfig {
+func buildStroppyRunConfig(input *domain.Workload, segment *domain.Workload_Segment, database *domain.Database, serverAddr, runID, bearerToken string, target databaseTarget, loadWorkers uint32) *stroppypb.RunConfig {
 	target = target.withDefaults(database)
-	segment := PrimarySegment(input)
 	script := strings.TrimSpace(segment.GetScript())
 	if script == "" {
 		script = "tpcc/procs"
@@ -448,11 +447,11 @@ func patchStroppyConfigFile(file *common.File, labels map[string]string, target 
 // renderStroppyConfigJSON marshals the stroppy RunConfig built from the workload
 // (with OTLP injected from the topology labels) to the protojson the stroppy
 // binary loads.
-func renderStroppyConfigJSON(input *domain.Workload, database *domain.Database, labels map[string]string, target databaseTarget, loadWorkers uint32, bearerToken string) string {
+func renderStroppyConfigJSON(input *domain.Workload, segment *domain.Workload_Segment, database *domain.Database, labels map[string]string, target databaseTarget, loadWorkers uint32, bearerToken string) string {
 	serverAddr := strings.TrimRight(labels[deploymentbuilder.LabelServerAddr], "/")
 	runID := labels[deploymentbuilder.LabelRunID]
 
-	rc := buildStroppyRunConfig(input, database, serverAddr, runID, bearerToken, target, loadWorkers)
+	rc := buildStroppyRunConfig(input, segment, database, serverAddr, runID, bearerToken, target, loadWorkers)
 	data, err := protojson.MarshalOptions{Multiline: true, Indent: "  "}.Marshal(rc)
 	if err != nil {
 		return "{}\n"

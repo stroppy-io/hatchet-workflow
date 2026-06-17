@@ -1887,6 +1887,16 @@ go_name: InfrastructureState</pre></td>
 
 json_name: runId
 go_name: RunId</pre></td>
+</tr><tr>
+<td>workload</td>
+<td><a href="../domain/README.md#cloud-v1-domain-workload">cloud.v1.domain.Workload</a></td>
+<td><pre>
+//workload is the test's workload — its ordered segments drive one stroppy
+//run step each (against the per-segment config the deployment plan wrote),
+//executed sequentially on the same database.<br>
+
+json_name: workload
+go_name: Workload</pre></td>
 </tr>
 </table>
 
@@ -3297,6 +3307,16 @@ go_name: InfrastructureState</pre></td>
 
 json_name: runId
 go_name: RunId</pre></td>
+</tr><tr>
+<td>workload</td>
+<td><a href="../domain/README.md#cloud-v1-domain-workload">cloud.v1.domain.Workload</a></td>
+<td><pre>
+//workload is the test's workload — its ordered segments drive one stroppy
+//run step each (against the per-segment config the deployment plan wrote),
+//executed sequentially on the same database.<br>
+
+json_name: workload
+go_name: Workload</pre></td>
 </tr>
 </table>
 

@@ -11,6 +11,7 @@ import "cloud/v1/workflow/deployment.proto";
 import "cloud/v1/domain/database.proto";
 import "cloud/v1/domain/suite.proto";
 import "cloud/v1/domain/test.proto";
+import "cloud/v1/domain/workload.proto";
 import "cloud/v1/workflow/run.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
@@ -214,6 +215,12 @@ message RunWorkloadWorkflowRequest {
         the workload runner agent.
      */
     AgentBootstrap agent_bootstrap = 4 [(validate.rules).message.required = true];
+    /*
+        workload is the test's workload — its ordered segments drive one stroppy
+        run step each (against the per-segment config the deployment plan wrote),
+        executed sequentially on the same database.
+     */
+    domain.Workload workload = 5 [(validate.rules).message.required = true];
 }
 /*
     RunWorkloadWorkflowResponse is the empty result of a workload run (results go

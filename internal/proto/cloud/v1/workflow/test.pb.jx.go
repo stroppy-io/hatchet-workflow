@@ -836,6 +836,10 @@ func (m *RunWorkloadWorkflowRequest) Encode(e *jx.Encoder) {
 		e.FieldStart("agentBootstrap")
 		m.AgentBootstrap.Encode(e)
 	}
+	if m.Workload != nil {
+		e.FieldStart("workload")
+		jxpb.EncMessage(e, m.Workload)
+	}
 	e.ObjEnd()
 }
 
@@ -893,6 +897,19 @@ func (m *RunWorkloadWorkflowRequest) Decode(d *jx.Decoder) error {
 			}
 			m.AgentBootstrap = &AgentBootstrap{}
 			if err := m.AgentBootstrap.Decode(d); err != nil {
+				return err
+			}
+			return nil
+		case "workload":
+			if seen["Workload"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Workload"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Workload = &domain.Workload{}
+			if err := jxpb.DecMessage(d, m.Workload); err != nil {
 				return err
 			}
 			return nil

@@ -3,12 +3,14 @@ package workflows
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	deploymentbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/deployment"
 	workloadbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/workload"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
 	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
 	"go.temporal.io/sdk/temporal"
@@ -138,28 +140,36 @@ func (w *runWorkloadWorkflow) Execute(ctx workflow.Context) (*workflowpb.RunWork
 		return nil, fmt.Errorf("agent %s is not online: %w", component.GetNodeId(), err)
 	}
 
-	step := workloadRunStep(component, planHasManagedDatabase(plan))
-	stampWorkloadStepExecutionContext(runID, component, step)
-	started := timestamppb.New(workflow.Now(ctx))
-	step.Status = common.Status_STATUS_RUNNING
-	emitStageUpdate(ctx, runID, workloadAgentStepStage(component, step, common.Status_STATUS_RUNNING, started, nil, ""))
-	if err := appendDeploymentStepLog(ctx, runID, component, step, monitor.Stream_STREAM_STDOUT, "started "+agentStepDescription(step)); err != nil {
-		return nil, err
-	}
-	if err := executeAgentStep(activityCtx, step); err != nil {
-		finished := timestamppb.New(workflow.Now(ctx))
-		step.Status = common.Status_STATUS_FAILED
-		emitStageUpdate(ctx, runID, workloadAgentStepStage(component, step, common.Status_STATUS_FAILED, started, finished, err.Error()))
-		if lerr := appendDeploymentStepLog(ctx, runID, component, step, monitor.Stream_STREAM_STDERR, "failed "+agentStepDescription(step)+": "+err.Error()); lerr != nil {
-			return nil, lerr
+	retryAuth := planHasManagedDatabase(plan)
+	segments := w.req.GetWorkload().GetSegments()
+	// Segments run sequentially on the same database (e.g. a bootstrap segment,
+	// then the measured workload). Each is its own agent step / pipeline node with
+	// an independent start/finish window. A segment failure aborts the rest.
+	for i, segment := range segments {
+		step := workloadRunStep(component, segment, i, retryAuth)
+		stampWorkloadStepExecutionContext(runID, component, step)
+		stageOrder := uint32(i + 1)
+		started := timestamppb.New(workflow.Now(ctx))
+		step.Status = common.Status_STATUS_RUNNING
+		emitStageUpdate(ctx, runID, workloadAgentStepStage(component, step, stageOrder, common.Status_STATUS_RUNNING, started, nil, ""))
+		if err := appendDeploymentStepLog(ctx, runID, component, step, monitor.Stream_STREAM_STDOUT, "started "+agentStepDescription(step)); err != nil {
+			return nil, err
 		}
-		return nil, fmt.Errorf("workload runner %s step %s: %w", component.GetComponentId(), step.GetId(), err)
-	}
-	finished := timestamppb.New(workflow.Now(ctx))
-	step.Status = common.Status_STATUS_COMPLETED
-	emitStageUpdate(ctx, runID, workloadAgentStepStage(component, step, common.Status_STATUS_COMPLETED, started, finished, ""))
-	if err := appendDeploymentStepLog(ctx, runID, component, step, monitor.Stream_STREAM_STDOUT, "completed "+agentStepDescription(step)); err != nil {
-		return nil, err
+		if err := executeAgentStep(activityCtx, step); err != nil {
+			finished := timestamppb.New(workflow.Now(ctx))
+			step.Status = common.Status_STATUS_FAILED
+			emitStageUpdate(ctx, runID, workloadAgentStepStage(component, step, stageOrder, common.Status_STATUS_FAILED, started, finished, err.Error()))
+			if lerr := appendDeploymentStepLog(ctx, runID, component, step, monitor.Stream_STREAM_STDERR, "failed "+agentStepDescription(step)+": "+err.Error()); lerr != nil {
+				return nil, lerr
+			}
+			return nil, fmt.Errorf("workload runner %s step %s: %w", component.GetComponentId(), step.GetId(), err)
+		}
+		finished := timestamppb.New(workflow.Now(ctx))
+		step.Status = common.Status_STATUS_COMPLETED
+		emitStageUpdate(ctx, runID, workloadAgentStepStage(component, step, stageOrder, common.Status_STATUS_COMPLETED, started, finished, ""))
+		if err := appendDeploymentStepLog(ctx, runID, component, step, monitor.Stream_STREAM_STDOUT, "completed "+agentStepDescription(step)); err != nil {
+			return nil, err
+		}
 	}
 	return &workflowpb.RunWorkloadWorkflowResponse{}, nil
 }
@@ -209,10 +219,15 @@ func planHasManagedDatabase(plan *deploymentpb.DeploymentPlan) bool {
 	return false
 }
 
-func workloadRunStep(component *deploymentpb.ComponentDeployment, retryAuth bool) *deploymentpb.AgentStep {
+// workloadRunStep builds the agent step that runs one workload segment: it
+// executes `stroppy run -f <segment-config>` from the runner's config dir. Each
+// segment is a separate step (distinct id/order) so it surfaces as its own
+// pipeline node with its own start/finish window — the basis for per-segment
+// metrics and Grafana scoping.
+func workloadRunStep(component *deploymentpb.ComponentDeployment, segment *domain.Workload_Segment, index int, retryAuth bool) *deploymentpb.AgentStep {
 	componentID := component.GetComponentId()
 	configDir := deploymentbuilder.ConfigDir(componentID)
-	configPath := configDir + "/stroppy-config.json"
+	configPath := workloadbuilder.SegmentConfigPath(componentID, index)
 	cfg := deploymentbuilder.ShellQuote(configPath)
 	run := "set -e\n" +
 		"if ! command -v stroppy >/dev/null 2>&1; then\n" +
@@ -235,17 +250,40 @@ func workloadRunStep(component *deploymentpb.ComponentDeployment, retryAuth bool
 	} else {
 		run += "exec stroppy run -f " + cfg + "\n"
 	}
-	step := deploymentbuilder.CallCmdStep("900_run_stroppy", 900, run)
+	order := uint32(900 + index*10)
+	stepID := fmt.Sprintf("%d_run_stroppy_%s", order, segmentStepSlug(segment, index))
+	step := deploymentbuilder.CallCmdStep(stepID, order, run)
 	step.Tags = deploymentbuilder.Tags("workload", workloadbuilder.Engine, "command")
 	step.Labels = deploymentbuilder.MergeLabels(step.GetLabels(), map[string]string{
-		"engine": workloadbuilder.Engine,
-		"role":   workloadbuilder.RunnerRole,
-		"phase":  stageWorkload,
+		"engine":  workloadbuilder.Engine,
+		"role":    workloadbuilder.RunnerRole,
+		"phase":   stageWorkload,
+		"segment": segment.GetName(),
 	})
 	if cmd := step.GetCallCmd(); cmd != nil && cmd.GetSpec() != nil {
 		cmd.Spec.Cwd = configDir
 	}
 	return step
+}
+
+// segmentStepSlug derives a stable, shell/identifier-safe suffix for a segment's
+// run-step id from its name, falling back to the index when the name has no
+// usable characters.
+func segmentStepSlug(segment *domain.Workload_Segment, index int) string {
+	var b strings.Builder
+	for _, r := range strings.ToLower(segment.GetName()) {
+		switch {
+		case r >= 'a' && r <= 'z', r >= '0' && r <= '9':
+			b.WriteRune(r)
+		case r == ' ' || r == '-' || r == '_':
+			b.WriteByte('_')
+		}
+	}
+	slug := strings.Trim(b.String(), "_")
+	if slug == "" {
+		return fmt.Sprintf("seg%d", index)
+	}
+	return slug
 }
 
 func stampWorkloadStepExecutionContext(runID string, component *deploymentpb.ComponentDeployment, step *deploymentpb.AgentStep) {
@@ -265,8 +303,8 @@ func stampWorkloadStepExecutionContext(runID string, component *deploymentpb.Com
 	}
 }
 
-func workloadAgentStepStage(component *deploymentpb.ComponentDeployment, step *deploymentpb.AgentStep, status common.Status, started, finished *timestamppb.Timestamp, errText string) *workflowpb.Stage {
-	return agentStepStageForPhase(component, step, 1, status, started, finished, errText, stageWorkload, deploymentbuilder.StageExecutionID(stageWorkload))
+func workloadAgentStepStage(component *deploymentpb.ComponentDeployment, step *deploymentpb.AgentStep, order uint32, status common.Status, started, finished *timestamppb.Timestamp, errText string) *workflowpb.Stage {
+	return agentStepStageForPhase(component, step, order, status, started, finished, errText, stageWorkload, deploymentbuilder.StageExecutionID(stageWorkload))
 }
 
 type domainTestWorkflow struct {
@@ -615,6 +653,7 @@ func (w *domainTestWorkflow) Execute(ctx workflow.Context) (resp *workflowpb.Tes
 		DeploymentPlan:      deploymentPlan,
 		InfrastructureState: infrastructureState,
 		AgentBootstrap:      w.req.GetAgentBootstrap(),
+		Workload:            testRun.GetWorkload(),
 	}); err != nil {
 		w.failStage(ctx, stageWorkloadIndex)
 		if perr := w.persist(ctx, infrastructureState, deploymentPlan); perr != nil {

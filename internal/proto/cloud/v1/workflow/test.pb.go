@@ -630,8 +630,12 @@ type RunWorkloadWorkflowRequest struct {
 	// agent_bootstrap carries the per-node Temporal task queues used to reach
 	// the workload runner agent.
 	AgentBootstrap *AgentBootstrap `protobuf:"bytes,4,opt,name=agent_bootstrap,json=agentBootstrap,proto3" json:"agent_bootstrap,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// workload is the test's workload — its ordered segments drive one stroppy
+	// run step each (against the per-segment config the deployment plan wrote),
+	// executed sequentially on the same database.
+	Workload      *domain.Workload `protobuf:"bytes,5,opt,name=workload,proto3" json:"workload,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *RunWorkloadWorkflowRequest) Reset() {
@@ -688,6 +692,13 @@ func (x *RunWorkloadWorkflowRequest) GetInfrastructureState() *deployment.Infras
 func (x *RunWorkloadWorkflowRequest) GetAgentBootstrap() *AgentBootstrap {
 	if x != nil {
 		return x.AgentBootstrap
+	}
+	return nil
+}
+
+func (x *RunWorkloadWorkflowRequest) GetWorkload() *domain.Workload {
+	if x != nil {
+		return x.Workload
 	}
 	return nil
 }
@@ -838,7 +849,7 @@ var File_cloud_v1_workflow_test_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_workflow_test_proto_rawDesc = "" +
 	"\n" +
-	"\x1ccloud/v1/workflow/test.proto\x12\x11cloud.v1.workflow\x1a\x1ccloud/v1/common/status.proto\x1a(cloud/v1/deployment/infrastructure.proto\x1a\x1ecloud/v1/deployment/plan.proto\x1a\x1ccloud/v1/domain/worker.proto\x1a\x1fcloud/v1/monitor/overview.proto\x1a\"cloud/v1/workflow/deployment.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1bcloud/v1/domain/suite.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1bcloud/v1/workflow/run.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1atemporal/v1/temporal.proto\x1a\x17validate/validate.proto\"\xc8\x01\n" +
+	"\x1ccloud/v1/workflow/test.proto\x12\x11cloud.v1.workflow\x1a\x1ccloud/v1/common/status.proto\x1a(cloud/v1/deployment/infrastructure.proto\x1a\x1ecloud/v1/deployment/plan.proto\x1a\x1ccloud/v1/domain/worker.proto\x1a\x1fcloud/v1/monitor/overview.proto\x1a\"cloud/v1/workflow/deployment.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1bcloud/v1/domain/suite.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a\x1bcloud/v1/workflow/run.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1atemporal/v1/temporal.proto\x1a\x17validate/validate.proto\"\xc8\x01\n" +
 	"\x13TestWorkflowRequest\x12&\n" +
 	"\ttenant_id\x18\x03 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12=\n" +
 	"\btest_run\x18\x01 \x01(\v2\x18.cloud.v1.domain.TestRunB\b\xfaB\x05\x8a\x01\x02\x10\x01R\atestRun\x12J\n" +
@@ -878,13 +889,14 @@ const file_cloud_v1_workflow_test_proto_rawDesc = "" +
 	"\x14infrastructure_state\x18\x01 \x01(\v2(.cloud.v1.deployment.InfrastructureStateB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x13infrastructureState\x12?\n" +
 	"\bdatabase\x18\x02 \x01(\v2\x19.cloud.v1.domain.DatabaseB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bdatabase\x12V\n" +
 	"\x0fdeployment_plan\x18\x03 \x01(\v2#.cloud.v1.deployment.DeploymentPlanB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x0edeploymentPlan\"!\n" +
-	"\x1fInstallDatabaseWorkflowResponse\"\xd4\x02\n" +
+	"\x1fInstallDatabaseWorkflowResponse\"\x95\x03\n" +
 	"\x1aRunWorkloadWorkflowRequest\x12!\n" +
 	"\x06run_id\x18\x01 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x05runId\x12V\n" +
 	"\x0fdeployment_plan\x18\x02 \x01(\v2#.cloud.v1.deployment.DeploymentPlanB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x0edeploymentPlan\x12e\n" +
 	"\x14infrastructure_state\x18\x03 \x01(\v2(.cloud.v1.deployment.InfrastructureStateB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x13infrastructureState\x12T\n" +
-	"\x0fagent_bootstrap\x18\x04 \x01(\v2!.cloud.v1.workflow.AgentBootstrapB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x0eagentBootstrap\"\x1d\n" +
+	"\x0fagent_bootstrap\x18\x04 \x01(\v2!.cloud.v1.workflow.AgentBootstrapB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x0eagentBootstrap\x12?\n" +
+	"\bworkload\x18\x05 \x01(\v2\x19.cloud.v1.domain.WorkloadB\b\xfaB\x05\x8a\x01\x02\x10\x01R\bworkload\"\x1d\n" +
 	"\x1bRunWorkloadWorkflowResponse\"\xa5\x01\n" +
 	"\x14SuiteWorkflowRequest\x12+\n" +
 	"\fsuite_run_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\n" +
@@ -948,8 +960,9 @@ var file_cloud_v1_workflow_test_proto_goTypes = []any{
 	(*deployment.InfrastructureState)(nil),  // 20: cloud.v1.deployment.InfrastructureState
 	(*deployment.DeploymentPlan)(nil),       // 21: cloud.v1.deployment.DeploymentPlan
 	(*domain.Database)(nil),                 // 22: cloud.v1.domain.Database
-	(*RunConfig)(nil),                       // 23: cloud.v1.workflow.RunConfig
-	(*emptypb.Empty)(nil),                   // 24: google.protobuf.Empty
+	(*domain.Workload)(nil),                 // 23: cloud.v1.domain.Workload
+	(*RunConfig)(nil),                       // 24: cloud.v1.workflow.RunConfig
+	(*emptypb.Empty)(nil),                   // 25: google.protobuf.Empty
 }
 var file_cloud_v1_workflow_test_proto_depIdxs = []int32{
 	13, // 0: cloud.v1.workflow.TestWorkflowRequest.test_run:type_name -> cloud.v1.domain.TestRun
@@ -971,26 +984,27 @@ var file_cloud_v1_workflow_test_proto_depIdxs = []int32{
 	21, // 16: cloud.v1.workflow.RunWorkloadWorkflowRequest.deployment_plan:type_name -> cloud.v1.deployment.DeploymentPlan
 	20, // 17: cloud.v1.workflow.RunWorkloadWorkflowRequest.infrastructure_state:type_name -> cloud.v1.deployment.InfrastructureState
 	14, // 18: cloud.v1.workflow.RunWorkloadWorkflowRequest.agent_bootstrap:type_name -> cloud.v1.workflow.AgentBootstrap
-	23, // 19: cloud.v1.workflow.SuiteWorkflowRequest.runs:type_name -> cloud.v1.workflow.RunConfig
-	0,  // 20: cloud.v1.workflow.TestService.TestWorkflow:input_type -> cloud.v1.workflow.TestWorkflowRequest
-	24, // 21: cloud.v1.workflow.TestService.GetRunState:input_type -> google.protobuf.Empty
-	4,  // 22: cloud.v1.workflow.TestService.UpdateStage:input_type -> cloud.v1.workflow.StageUpdate
-	5,  // 23: cloud.v1.workflow.TestService.InstallStroppyWorkflow:input_type -> cloud.v1.workflow.InstallStroppyWorkflowRequest
-	7,  // 24: cloud.v1.workflow.TestService.InstallDatabaseWorkflow:input_type -> cloud.v1.workflow.InstallDatabaseWorkflowRequest
-	9,  // 25: cloud.v1.workflow.TestService.RunWorkloadWorkflow:input_type -> cloud.v1.workflow.RunWorkloadWorkflowRequest
-	11, // 26: cloud.v1.workflow.SuiteWorkflowService.SuiteWorkflow:input_type -> cloud.v1.workflow.SuiteWorkflowRequest
-	1,  // 27: cloud.v1.workflow.TestService.TestWorkflow:output_type -> cloud.v1.workflow.TestWorkflowResponse
-	2,  // 28: cloud.v1.workflow.TestService.GetRunState:output_type -> cloud.v1.workflow.RunState
-	24, // 29: cloud.v1.workflow.TestService.UpdateStage:output_type -> google.protobuf.Empty
-	6,  // 30: cloud.v1.workflow.TestService.InstallStroppyWorkflow:output_type -> cloud.v1.workflow.InstallStroppyWorkflowResponse
-	8,  // 31: cloud.v1.workflow.TestService.InstallDatabaseWorkflow:output_type -> cloud.v1.workflow.InstallDatabaseWorkflowResponse
-	10, // 32: cloud.v1.workflow.TestService.RunWorkloadWorkflow:output_type -> cloud.v1.workflow.RunWorkloadWorkflowResponse
-	12, // 33: cloud.v1.workflow.SuiteWorkflowService.SuiteWorkflow:output_type -> cloud.v1.workflow.SuiteWorkflowResponse
-	27, // [27:34] is the sub-list for method output_type
-	20, // [20:27] is the sub-list for method input_type
-	20, // [20:20] is the sub-list for extension type_name
-	20, // [20:20] is the sub-list for extension extendee
-	0,  // [0:20] is the sub-list for field type_name
+	23, // 19: cloud.v1.workflow.RunWorkloadWorkflowRequest.workload:type_name -> cloud.v1.domain.Workload
+	24, // 20: cloud.v1.workflow.SuiteWorkflowRequest.runs:type_name -> cloud.v1.workflow.RunConfig
+	0,  // 21: cloud.v1.workflow.TestService.TestWorkflow:input_type -> cloud.v1.workflow.TestWorkflowRequest
+	25, // 22: cloud.v1.workflow.TestService.GetRunState:input_type -> google.protobuf.Empty
+	4,  // 23: cloud.v1.workflow.TestService.UpdateStage:input_type -> cloud.v1.workflow.StageUpdate
+	5,  // 24: cloud.v1.workflow.TestService.InstallStroppyWorkflow:input_type -> cloud.v1.workflow.InstallStroppyWorkflowRequest
+	7,  // 25: cloud.v1.workflow.TestService.InstallDatabaseWorkflow:input_type -> cloud.v1.workflow.InstallDatabaseWorkflowRequest
+	9,  // 26: cloud.v1.workflow.TestService.RunWorkloadWorkflow:input_type -> cloud.v1.workflow.RunWorkloadWorkflowRequest
+	11, // 27: cloud.v1.workflow.SuiteWorkflowService.SuiteWorkflow:input_type -> cloud.v1.workflow.SuiteWorkflowRequest
+	1,  // 28: cloud.v1.workflow.TestService.TestWorkflow:output_type -> cloud.v1.workflow.TestWorkflowResponse
+	2,  // 29: cloud.v1.workflow.TestService.GetRunState:output_type -> cloud.v1.workflow.RunState
+	25, // 30: cloud.v1.workflow.TestService.UpdateStage:output_type -> google.protobuf.Empty
+	6,  // 31: cloud.v1.workflow.TestService.InstallStroppyWorkflow:output_type -> cloud.v1.workflow.InstallStroppyWorkflowResponse
+	8,  // 32: cloud.v1.workflow.TestService.InstallDatabaseWorkflow:output_type -> cloud.v1.workflow.InstallDatabaseWorkflowResponse
+	10, // 33: cloud.v1.workflow.TestService.RunWorkloadWorkflow:output_type -> cloud.v1.workflow.RunWorkloadWorkflowResponse
+	12, // 34: cloud.v1.workflow.SuiteWorkflowService.SuiteWorkflow:output_type -> cloud.v1.workflow.SuiteWorkflowResponse
+	28, // [28:35] is the sub-list for method output_type
+	21, // [21:28] is the sub-list for method input_type
+	21, // [21:21] is the sub-list for extension type_name
+	21, // [21:21] is the sub-list for extension extendee
+	0,  // [0:21] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_workflow_test_proto_init() }
