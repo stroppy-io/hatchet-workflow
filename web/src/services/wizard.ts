@@ -287,6 +287,8 @@ export interface WorkloadParametersVM {
   poolSize: number;
   scaleFactor: number;
   defaultInsertMethod: string;
+  /** Workload.Parameters.bulk_size — rows per bulk INSERT (plain_bulk only). 0 = default. */
+  bulkSize: number;
   env: Record<string, string>;
   /** Workload.Parameters.steps — phase allowlist (XOR with noSteps). */
   steps: string[];
@@ -1493,6 +1495,7 @@ export function defaultWorkload(kind: EngineKind): WorkloadVM {
       poolSize: 16,
       scaleFactor: 1,
       defaultInsertMethod: "",
+      bulkSize: 0,
       env: {},
       steps: [],
       noSteps: [],

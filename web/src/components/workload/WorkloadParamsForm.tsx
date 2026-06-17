@@ -295,6 +295,16 @@ export function WorkloadParamsForm({
                 </SelectContent>
               </Select>
             </div>
+            {w.parameters.defaultInsertMethod === "plain_bulk" && (
+              <NumField
+                label="Batch size"
+                value={w.parameters.bulkSize}
+                min={0}
+                max={1000000}
+                onChange={(n) => apply({ ...w, parameters: { ...w.parameters, bulkSize: n } })}
+                hint="rows per bulk INSERT (0 = stroppy default 2500)"
+              />
+            )}
           </div>
           {probeSteps.length > 0 && (
             <PhaseChips steps={probeSteps} selected={w.parameters.steps} onToggle={togglePhase} />
