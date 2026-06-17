@@ -39,6 +39,7 @@ import {
   getRunOverview,
   getRunMetrics,
   streamRunOverview,
+  workloadSegments,
   type OverviewVM,
   type MetricVM,
   type WorkerPresence,
@@ -193,12 +194,10 @@ export function RunDetail() {
     setLoading(true);
     setError(null);
     try {
-      const [ov, ms] = await Promise.all([
-        getRunOverview(tenantSlug, id),
-        getRunMetrics(tenantSlug, id).catch(() => [] as MetricVM[]),
-      ]);
+      // Metrics are fetched by the window-aware effect below (initial + on
+      // segment-selection / time changes), so load only resolves the overview.
+      const ov = await getRunOverview(tenantSlug, id);
       setOverview(ov);
-      setMetrics(ms);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -233,6 +232,15 @@ export function RunDetail() {
   const allowed = status ? actionsForStatus(status) : new Set<string>();
   const terminal = status === "completed" || status === "failed" || status === "cancelled";
 
+  // Workload segments (per-segment run steps) and the selected one (-1 = whole
+  // run). Selecting a segment scopes both the Grafana window and the metric
+  // averages to that segment's [started, finished] — excluding e.g. bootstrap.
+  const segments = useMemo(() => workloadSegments(overview), [overview]);
+  const [segmentSel, setSegmentSel] = useState(-1);
+  const selSeg = segmentSel >= 0 ? segments[segmentSel] : undefined;
+  const winStart = selSeg?.startedAt ?? overview?.startedAt;
+  const winEnd = selSeg?.finishedAt ?? overview?.finishedAt;
+
   // Live updates while the run is in flight: subscribe to the overview stream
   // (full snapshot per frame); fall back to polling if streaming is
   // unavailable. Stops once the run reaches a terminal state.
@@ -255,15 +263,27 @@ export function RunDetail() {
     };
   }, [tenantSlug, id, status, terminal]);
 
+  // Fetch metrics for the active window — initially and whenever the selected
+  // segment (or the run's own start/finish) changes.
+  useEffect(() => {
+    if (!tenantSlug || !id) return;
+    const w = selSeg ? { startedAt: selSeg.startedAt, finishedAt: selSeg.finishedAt } : undefined;
+    getRunMetrics(tenantSlug, id, w).then(setMetrics).catch(() => {});
+    // selSeg start/end fully capture the window; identity isn't stable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tenantSlug, id, selSeg?.startedAt, selSeg?.finishedAt]);
+
   // Refresh metrics periodically while the run is in flight (the stream carries
-  // overview only).
+  // overview only), honoring the selected segment window.
   useEffect(() => {
     if (!tenantSlug || !id || terminal) return;
+    const w = selSeg ? { startedAt: selSeg.startedAt, finishedAt: selSeg.finishedAt } : undefined;
     const iv = window.setInterval(() => {
-      getRunMetrics(tenantSlug, id).then(setMetrics).catch(() => {});
+      getRunMetrics(tenantSlug, id, w).then(setMetrics).catch(() => {});
     }, 12000);
     return () => clearInterval(iv);
-  }, [tenantSlug, id, terminal]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tenantSlug, id, terminal, selSeg?.startedAt, selSeg?.finishedAt]);
 
   const flash = useCallback((msg: string) => {
     setNotice(msg);
@@ -491,7 +511,7 @@ export function RunDetail() {
         </div>
 
         <div className="flex h-full min-w-0 min-h-0 flex-1 pl-1 flex-col">
-          <div className="flex h-12 shrink-0 items-stretch p-2">
+          <div className="flex h-12 shrink-0 items-center gap-2 p-2">
             <SegmentedControl
               variant="tabs"
               value={view}
@@ -499,6 +519,24 @@ export function RunDetail() {
               options={VIEW_OPTIONS}
               segmentClassName="w-[78px]"
             />
+            {(view === "grafana" || view === "metrics") && segments.length > 0 && (
+              <label className="ml-auto flex items-center gap-1.5 text-[11px] text-zinc-500">
+                <span className="font-mono uppercase tracking-wider text-zinc-600">window</span>
+                <select
+                  value={segmentSel}
+                  onChange={(e) => setSegmentSel(Number(e.target.value))}
+                  className="h-7 border border-zinc-800 bg-[#0a0a0a] px-2 font-mono text-[11px] text-zinc-300"
+                  title="Scope Grafana and metric averages to a workload segment"
+                >
+                  <option value={-1}>Whole run</option>
+                  {segments.map((s, i) => (
+                    <option key={i} value={i}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
           </div>
           <div className="relative min-h-0 flex-1 overflow-hidden">
             {/* Grafana mounts on first open, then stays cached (hidden). */}
@@ -507,8 +545,8 @@ export function RunDetail() {
                 <GrafanaPanel
                   runId={id}
                   dbKind={run?.dbKind}
-                  startedAt={overview.startedAt}
-                  finishedAt={overview.finishedAt}
+                  startedAt={winStart}
+                  finishedAt={winEnd}
                   workers={overview.workers}
                 />
               </div>

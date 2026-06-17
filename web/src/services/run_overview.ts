@@ -4,6 +4,7 @@
 // shared statusToVM / enum helpers.
 
 import { fromJson, toJson } from "@bufbuild/protobuf";
+import { timestampFromDate } from "@bufbuild/protobuf/wkt";
 import { TestRunRecordSchema, type TestRunRecord } from "@/lib/proto/cloud/v1/models/test_run_pb";
 import {
   GetTestRunOverviewResponseSchema,
@@ -520,12 +521,26 @@ export async function getRunOverview(
   return snapshotToVM(j.snapshot ?? {}, resp.snapshot?.run, runId);
 }
 
+/** Optional [startedAt, finishedAt] ISO window to scope the metrics aggregation to. */
+export interface MetricsWindow {
+  startedAt?: string;
+  finishedAt?: string;
+}
+
 export async function getRunMetrics(
   tenantSlug: string,
   runId: string,
+  window?: MetricsWindow,
 ): Promise<MetricVM[]> {
   const tenantId = await resolveTenantId(tenantSlug);
-  const resp = await testRunOverviewClient.getRunMetrics({ tenantId, runId });
+  const win =
+    window?.startedAt && window?.finishedAt
+      ? {
+          start: timestampFromDate(new Date(window.startedAt)),
+          end: timestampFromDate(new Date(window.finishedAt)),
+        }
+      : undefined;
+  const resp = await testRunOverviewClient.getRunMetrics({ tenantId, runId, window: win });
   const j = toJson(GetRunMetricsResponseSchema, resp) as {
     metrics?: {
       metrics?: Array<{
@@ -554,6 +569,33 @@ export async function getRunMetrics(
     group: m.group ?? "",
     description: m.description ?? "",
   }));
+}
+
+/** A workload segment's name + its [started, finished] window, for scoping. */
+export interface SegmentWindowVM {
+  name: string;
+  startedAt?: string;
+  finishedAt?: string;
+}
+
+/**
+ * The per-segment run steps under the workload stage, in execution order — the
+ * leaf "workload"-phase pipeline nodes, each with its own time window. Used to
+ * scope Grafana / metrics to a single segment (e.g. the measured workload,
+ * excluding bootstrap). Empty until the workload stage starts.
+ */
+export function workloadSegments(overview: OverviewVM | null | undefined): SegmentWindowVM[] {
+  const out: SegmentWindowVM[] = [];
+  const walk = (nodes: PipelineNodeVM[]) => {
+    for (const n of nodes) {
+      if (n.phase === "workload" && n.children.length === 0 && n.startedAt) {
+        out.push({ name: n.name, startedAt: n.startedAt, finishedAt: n.finishedAt });
+      }
+      if (n.children.length) walk(n.children);
+    }
+  };
+  walk(overview?.pipeline ?? []);
+  return out;
 }
 
 export async function queryLogs(
