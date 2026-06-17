@@ -318,6 +318,22 @@ function SegmentEditor({
     setParams({ steps, noSteps: [] });
   };
 
+  // Phases are script-specific. When the probe reports a new set (e.g. after the
+  // script changes), drop any selected steps/no_steps the new script no longer
+  // exposes — otherwise stale phases from the previous script are sent and
+  // stroppy rejects them with "unknown steps".
+  useEffect(() => {
+    if (probeSteps.length === 0) return; // no probe result yet — leave as-is
+    const valid = new Set(probeSteps);
+    const steps = seg.parameters.steps.filter((s) => valid.has(s));
+    const noSteps = seg.parameters.noSteps.filter((s) => valid.has(s));
+    if (steps.length !== seg.parameters.steps.length || noSteps.length !== seg.parameters.noSteps.length) {
+      setParams({ steps, noSteps });
+    }
+    // Re-run only when the available phase set changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [probeSteps.join(" ")]);
+
   return (
     <div className="border border-zinc-800/70 bg-[#0a0a0a]">
       <div className="flex items-center gap-2 px-3 py-2">
