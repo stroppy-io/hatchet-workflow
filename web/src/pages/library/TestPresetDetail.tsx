@@ -80,7 +80,8 @@ function protocolLabel(p: Workload_Protocol): string {
 }
 
 function limitLabel(w: WorkloadVM): string {
-  const l = w.execution.limit;
+  const l = w.segments[0]?.execution.limit;
+  if (!l) return "—";
   return l.case === "duration" ? l.duration || "—" : `${l.iterations} iter`;
 }
 
@@ -264,9 +265,12 @@ export function TestPresetDetail() {
               </span>
             </MetaCard>
             <MetaCard label="Workload">
-              <span className="font-mono text-sm text-zinc-300">{w.script || "—"}</span>
+              <span className="font-mono text-sm text-zinc-300">
+                {w.segments[0]?.script || "—"}
+                {w.segments.length > 1 ? ` +${w.segments.length - 1}` : ""}
+              </span>
               <span className="font-mono text-[10px] text-zinc-600">
-                {protocolLabel(w.protocol)} · {w.execution.vus} VU · {limitLabel(w)}
+                {protocolLabel(w.protocol)} · {w.segments[0]?.execution.vus ?? 0} VU · {limitLabel(w)}
               </span>
             </MetaCard>
             <MetaCard label="Stroppy version">

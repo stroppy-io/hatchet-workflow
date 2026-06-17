@@ -46,14 +46,12 @@ import {
   RenderArtifact_Mutability,
   blankEngineParams,
   defaultWorkload,
-  driverTypeFor,
   type WizardDraftVM,
   type DraftSummaryVM,
   type DatabaseVM,
   type DatabasePackageVM,
   type WorkloadVM,
   type EngineKind,
-  type ProbeMetaVM,
   type DraftErrorVM,
   type InfrastructurePlanVM,
   type MachineSpecVM,
@@ -84,7 +82,7 @@ import {
   EngineParamsForm,
   EngineVersionSelect,
 } from "@/components/database/DatabaseParamsForm";
-import { WorkloadParamsForm } from "@/components/workload/WorkloadParamsForm";
+import { WorkloadParamsForm, type SegmentProbeContext } from "@/components/workload/WorkloadParamsForm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -1835,61 +1833,12 @@ function StepWorkload({
     [slug, w, drafts],
   );
 
-  // --- Probe: fires the MOMENT there's enough to probe (script + version),
-  // debounced, and re-fires whenever the script/sql/version/driver change. The
-  // probe pane reveals as soon as a RESULT is ready — concurrently with the
-  // user still editing pane 2 — exactly like the old WorkloadForm's auto-probe.
-  const [probe, setProbe] = useState<ProbeMetaVM | null>(null);
-  const [probing, setProbing] = useState(false);
-  const [probeErr, setProbeErr] = useState<string | null>(null);
-
-  const canProbe = versionChosen && !!w.script.trim() && !!w.stroppyVersion.trim();
-  // Debounce key — only the inputs the probe actually depends on.
-  const probeKey = `${w.stroppyVersion}|${w.script}|${w.sql}|${engine}|${w.parameters.poolSize}|${w.parameters.scaleFactor}`;
-  useEffect(() => {
-    if (!canProbe) {
-      setProbe(null);
-      setProbeErr(null);
-      return;
-    }
-    let cancelled = false;
-    setProbing(true);
-    setProbeErr(null);
-    const timer = window.setTimeout(() => {
-      getWizardProvider()
-        .probe(slug, {
-          version: w.stroppyVersion,
-          script: w.script.trim(),
-          sql: w.sql,
-          driverType: driverTypeFor(engine),
-          poolSize: w.parameters.poolSize,
-          scaleFactor: w.parameters.scaleFactor,
-          includeHuman: true,
-        })
-        .then((meta) => {
-          if (cancelled) return;
-          setProbe(meta);
-          setProbeErr(null);
-        })
-        .catch((e) => {
-          if (cancelled) return;
-          setProbe(null);
-          setProbeErr(e instanceof Error ? e.message : String(e));
-        })
-        .finally(() => {
-          if (!cancelled) setProbing(false);
-        });
-    }, 350);
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timer);
-    };
-    // probeKey captures every dependency; slug/engine are stable per step.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [probeKey, canProbe, slug]);
-
-  // Pane 3 reveals as soon as there's a result, an error, or a probe in flight.
-  const probeStarted = canProbe && (probing || probe !== null || probeErr !== null);
+  // Each segment editor runs its own debounced `stroppy probe` for its script;
+  // this context supplies the shared inputs (slug, engine, chosen version).
+  const probeContext = useMemo<SegmentProbeContext>(
+    () => ({ slug, engine, version: w.stroppyVersion }),
+    [slug, engine, w.stroppyVersion],
+  );
 
   const errs = errorsFor(draft.errors, "workload");
 
@@ -1933,10 +1882,7 @@ function StepWorkload({
             w={w}
             apply={apply}
             errs={errs}
-            probe={probe}
-            probing={probing}
-            probeErr={probeErr}
-            probeStarted={probeStarted}
+            probeContext={probeContext}
             dirty={dirty}
             canReset={isRealPresetId(presetId)}
             onReset={resetToPreset}
@@ -2199,10 +2145,7 @@ function WorkloadParametersPane({
   w,
   apply,
   errs,
-  probe,
-  probing,
-  probeErr,
-  probeStarted,
+  probeContext,
   dirty,
   canReset,
   onReset,
@@ -2211,10 +2154,7 @@ function WorkloadParametersPane({
   w: WorkloadVM;
   apply: (w: WorkloadVM) => void;
   errs: DraftErrorVM[];
-  probe: ProbeMetaVM | null;
-  probing: boolean;
-  probeErr: string | null;
-  probeStarted: boolean;
+  probeContext: SegmentProbeContext;
   dirty: boolean;
   canReset: boolean;
   onReset: () => void;
@@ -2225,87 +2165,13 @@ function WorkloadParametersPane({
       <PaneHeader
         index={3}
         title="Parameters"
-        subtitle="Execution and data settings"
+        subtitle="Segments, execution and data settings"
         right={<PresetEditControls dirty={dirty} canReset={canReset} onReset={onReset} onSave={onSave} />}
       />
       <div className="min-h-0 flex-1 overflow-y-auto pr-1">
-        <WorkloadParamsForm w={w} apply={apply} probe={probe} />
+        <WorkloadParamsForm w={w} apply={apply} probeContext={probeContext} />
         <FieldErrors errs={errs} />
-        {probeStarted && (
-          <ProbeDisclosure probe={probe} probing={probing} probeErr={probeErr} />
-        )}
       </div>
-    </div>
-  );
-}
-
-// ─── Workload probe disclosure: collapsed status line + on-demand output ───────
-// The phases/env editing the probe reveals now lives in WorkloadParamsForm; this
-// is purely a status indicator (collapsed by default) that expands to show the
-// driver/pool/sql context and the `probe -o human` render.
-
-function ProbeDisclosure({
-  probe,
-  probing,
-  probeErr,
-}: {
-  probe: ProbeMetaVM | null;
-  probing: boolean;
-  probeErr: string | null;
-}) {
-  const [open, setOpen] = useState(false);
-  const hasDetail = !!probe;
-  return (
-    <div className="mt-4 overflow-hidden border border-zinc-800/70 bg-[#070707]">
-      <button
-        type="button"
-        onClick={() => hasDetail && setOpen((v) => !v)}
-        aria-expanded={open}
-        className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[11px] ${
-          hasDetail ? "transition-colors hover:bg-zinc-900/40" : "cursor-default"
-        }`}
-      >
-        {probing ? (
-          <span className="flex items-center gap-2 text-zinc-500">
-            <Loader2 className="h-3.5 w-3.5 animate-spin" /> Probing workload…
-          </span>
-        ) : probeErr ? (
-          <span className="flex min-w-0 items-center gap-2 text-red-400">
-            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">{probeErr}</span>
-          </span>
-        ) : probe ? (
-          <span className="flex items-center gap-2 text-emerald-400">
-            <Check className="h-3.5 w-3.5" /> Probe OK — {probe.steps.length} phase
-            {probe.steps.length === 1 ? "" : "s"}, {probe.env.length} env
-          </span>
-        ) : null}
-        {hasDetail && (
-          <ChevronDown
-            className={`ml-auto h-3.5 w-3.5 shrink-0 text-zinc-500 transition-transform ${open ? "rotate-180" : ""}`}
-          />
-        )}
-      </button>
-
-      {open && probe && (
-        <div className="space-y-4 border-t border-zinc-800/70 p-3">
-          <div className="flex flex-wrap gap-x-6 gap-y-1 text-[11px] text-zinc-500">
-            <span>driver: <span className="font-mono text-zinc-300">{probe.driverType}</span></span>
-            <span>pool: <span className="font-mono text-zinc-300">{probe.poolSize}</span></span>
-            {probe.sqlSections.length > 0 && (
-              <span>sql: <span className="font-mono text-zinc-300">{probe.sqlSections.join(", ")}</span></span>
-            )}
-          </div>
-          {probe.human && (
-            <div>
-              <Label>probe -o human</Label>
-              <pre className="mt-1.5 max-h-56 overflow-auto border border-zinc-800/60 bg-black/40 p-2 font-mono text-[10px] leading-relaxed text-zinc-400">
-                {probe.human}
-              </pre>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
@@ -2476,17 +2342,8 @@ function StepReview({
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <ReviewCard title="Provider" value={providerDisplay(draft.provider)} />
         <ReviewCard title="Database" value={draft.database ? `${ENGINES.find((e) => e.kind === draft.database!.kind)?.label} ${draft.database.version}` : "—"} />
-        <ReviewCard title="Workload" value={draft.workload?.script ?? "—"} />
-        <ReviewCard
-          title="Execution"
-          value={
-            draft.workload
-              ? draft.workload.execution.limit.case === "duration"
-                ? `${draft.workload.execution.vus} VU · ${draft.workload.execution.limit.duration}`
-                : `${draft.workload.execution.vus} VU · ${draft.workload.execution.limit.iterations} iters`
-              : "—"
-          }
-        />
+        <ReviewCard title="Workload" value={workloadScriptLabel(draft.workload)} />
+        <ReviewCard title="Execution" value={workloadExecutionLabel(draft.workload)} />
         <ReviewCard title="Nodes" value={String(draft.topologyNodes.length)} />
         <ReviewCard title="Overrides" value={overrideCount ? `${overrideCount} edited` : "none"} />
       </div>
@@ -2504,7 +2361,7 @@ function StepReview({
             <PlanFact label="Provider" value={providerDisplay(draft.provider)} />
             <PlanFact label="Topology" value={`${draft.topologyNodes.length} node${draft.topologyNodes.length === 1 ? "" : "s"}`} />
             <PlanFact label="Workload run" value={workloadLimit} />
-            <PlanFact label="Script" value={draft.workload?.script || "—"} />
+            <PlanFact label="Script" value={workloadScriptLabel(draft.workload)} />
             <PlanFact label="Protocol" value={protocolDisplay(draft.workload)} />
             <PlanFact label="Stroppy" value={draft.workload?.stroppyVersion || "—"} />
           </div>
@@ -2538,10 +2395,10 @@ function StepReview({
           <div className="grid gap-2">
             <PlanFact label="Database" value={databaseDisplay(draft.database)} />
             <PlanFact label="Package" value={packageLabel} />
-            <PlanFact label="Scale factor" value={draft.workload ? String(draft.workload.parameters.scaleFactor) : "—"} />
-            <PlanFact label="Pool size" value={draft.workload ? String(draft.workload.parameters.poolSize) : "—"} />
+            <PlanFact label="Scale factor" value={firstSegment(draft.workload) ? String(firstSegment(draft.workload)!.parameters.scaleFactor) : "—"} />
+            <PlanFact label="Pool size" value={firstSegment(draft.workload) ? String(firstSegment(draft.workload)!.parameters.poolSize) : "—"} />
             <PlanFact label="Steps" value={workloadStepsLabel(draft.workload)} />
-            <PlanFact label="Files" value={draft.workload ? String(draft.workload.files.length) : "—"} />
+            <PlanFact label="Files" value={draft.workload ? String(draft.workload.segments.reduce((n, s) => n + s.files.length, 0)) : "—"} />
           </div>
         </div>
       </div>
@@ -2767,19 +2624,35 @@ function protocolDisplay(workload?: WorkloadVM): string {
   return (Workload_Protocol[workload.protocol] ?? "PROTOCOL_UNSPECIFIED").replace("PROTOCOL_", "").toLowerCase();
 }
 
+/** The first (primary) segment — drives the single-line review summaries. */
+function firstSegment(workload?: WorkloadVM) {
+  return workload?.segments[0];
+}
+
+/** Script label for the run summary: the first segment's script + a "+N" hint. */
+function workloadScriptLabel(workload?: WorkloadVM): string {
+  const seg = firstSegment(workload);
+  if (!workload || !seg) return "—";
+  const head = seg.script || "—";
+  return workload.segments.length > 1 ? `${head} +${workload.segments.length - 1}` : head;
+}
+
 function workloadExecutionLabel(workload?: WorkloadVM): string {
-  if (!workload) return "—";
+  const seg = firstSegment(workload);
+  if (!seg) return "—";
   const limit =
-    workload.execution.limit.case === "duration"
-      ? workload.execution.limit.duration
-      : `${workload.execution.limit.iterations} iterations`;
-  return `${workload.execution.vus} VU · ${limit}`;
+    seg.execution.limit.case === "duration"
+      ? seg.execution.limit.duration
+      : `${seg.execution.limit.iterations} iterations`;
+  const suffix = workload && workload.segments.length > 1 ? ` · ${workload.segments.length} segments` : "";
+  return `${seg.execution.vus} VU · ${limit}${suffix}`;
 }
 
 function workloadStepsLabel(workload?: WorkloadVM): string {
-  if (!workload) return "—";
-  if (workload.parameters.steps.length > 0) return workload.parameters.steps.join(", ");
-  if (workload.parameters.noSteps.length > 0) return `all except ${workload.parameters.noSteps.join(", ")}`;
+  const seg = firstSegment(workload);
+  if (!seg) return "—";
+  if (seg.parameters.steps.length > 0) return seg.parameters.steps.join(", ");
+  if (seg.parameters.noSteps.length > 0) return `all except ${seg.parameters.noSteps.join(", ")}`;
   return "all";
 }
 

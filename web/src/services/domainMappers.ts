@@ -30,6 +30,7 @@ import {
 } from "@/lib/proto/cloud/v1/domain/database_pb";
 import {
   type Workload,
+  type Workload_Segment,
   WorkloadSchema,
   Workload_Protocol,
 } from "@/lib/proto/cloud/v1/domain/workload_pb";
@@ -47,10 +48,10 @@ import {
   type CockroachParamsVM,
   type ExternalParamsVM,
   type WorkloadVM,
-  type WorkloadExecutionVM,
-  type WorkloadParametersVM,
+  type WorkloadSegmentVM,
   type WorkloadFileVM,
   type K6Limit,
+  defaultSegment,
 } from "@/services/wizard";
 
 // --- per-engine params: proto -> VM -----------------------------------------
@@ -426,92 +427,83 @@ function engineParamsVMToProto(p: EngineParamsVM): DatabaseParams["engine"] {
 
 // --- Workload: proto -> VM ---------------------------------------------------
 
-/**
- * Map a typed domain.Workload onto the flat WorkloadVM the wizard step edits.
- *
- * Workload is now a thin outer envelope (stroppy_version + protocol) wrapping an
- * ordered list of Segments. While the wizard edits a single segment, the flat
- * WorkloadVM mirrors the PRIMARY (first) segment plus the shared outer fields;
- * the multi-segment editor will replace this flat VM with a segment list.
- */
-export function workloadProtoToVM(w: Workload | undefined): WorkloadVM {
-  const segment = w?.segments?.[0];
-  const exec = segment?.execution;
+function segmentProtoToVM(s: Workload_Segment, index: number): WorkloadSegmentVM {
+  const exec = s.execution;
   let limit: K6Limit;
   if (exec?.limit.case === "iterations") {
     limit = { case: "iterations", iterations: exec.limit.value };
   } else {
     limit = { case: "duration", duration: exec?.limit.case === "duration" ? exec.limit.value : "" };
   }
-  const execution: WorkloadExecutionVM = {
-    vus: exec?.vus ?? 0,
-    limit,
-    quiet: exec?.quiet ?? false,
-    noThresholds: exec?.noThresholds ?? false,
+  const p = s.parameters;
+  return {
+    name: s.name || `segment ${index + 1}`,
+    script: s.script ?? "",
+    sql: s.sql ?? "",
+    execution: {
+      vus: exec?.vus ?? 0,
+      limit,
+      quiet: exec?.quiet ?? false,
+      noThresholds: exec?.noThresholds ?? false,
+    },
+    parameters: {
+      poolSize: p?.poolSize ?? 0,
+      scaleFactor: p?.scaleFactor ?? 0,
+      defaultInsertMethod: p?.defaultInsertMethod ?? "",
+      bulkSize: p?.bulkSize ?? 0,
+      env: { ...(p?.env ?? {}) },
+      steps: [...(p?.steps ?? [])],
+      noSteps: [...(p?.noSteps ?? [])],
+    },
+    files: (s.files ?? []).map((f) => ({ name: f.name, kind: f.kind, content: f.content })),
   };
+}
 
-  const p = segment?.parameters;
-  const parameters: WorkloadParametersVM = {
-    poolSize: p?.poolSize ?? 0,
-    scaleFactor: p?.scaleFactor ?? 0,
-    defaultInsertMethod: p?.defaultInsertMethod ?? "",
-    bulkSize: p?.bulkSize ?? 0,
-    env: { ...(p?.env ?? {}) },
-    steps: [...(p?.steps ?? [])],
-    noSteps: [...(p?.noSteps ?? [])],
-  };
-
-  const files: WorkloadFileVM[] = (segment?.files ?? []).map((f) => ({
-    name: f.name,
-    kind: f.kind,
-    content: f.content,
-  }));
-
+/** Map a typed domain.Workload onto the WorkloadVM the editors render. */
+export function workloadProtoToVM(w: Workload | undefined): WorkloadVM {
+  const segments = (w?.segments ?? []).map(segmentProtoToVM);
   return {
     stroppyVersion: w?.stroppyVersion ?? "",
-    script: segment?.script ?? "",
-    sql: segment?.sql ?? "",
     protocol: w?.protocol ?? Workload_Protocol.UNSPECIFIED,
-    execution,
-    parameters,
-    files,
+    segments: segments.length > 0 ? segments : [defaultSegment()],
   };
 }
 
 // --- Workload: VM -> proto ---------------------------------------------------
 
-/** Build a typed domain.Workload from the flat WorkloadVM (one primary segment). */
-export function workloadVMToProto(vm: WorkloadVM): Workload {
+function segmentVMToProto(seg: WorkloadSegmentVM) {
   const limit =
-    vm.execution.limit.case === "iterations"
-      ? ({ case: "iterations", value: vm.execution.limit.iterations } as const)
-      : ({ case: "duration", value: vm.execution.limit.duration } as const);
+    seg.execution.limit.case === "iterations"
+      ? ({ case: "iterations", value: seg.execution.limit.iterations } as const)
+      : ({ case: "duration", value: seg.execution.limit.duration } as const);
+  return {
+    name: seg.name,
+    script: seg.script,
+    sql: seg.sql,
+    execution: {
+      vus: seg.execution.vus,
+      limit,
+      quiet: seg.execution.quiet,
+      noThresholds: seg.execution.noThresholds,
+    },
+    parameters: {
+      poolSize: seg.parameters.poolSize,
+      scaleFactor: seg.parameters.scaleFactor,
+      defaultInsertMethod: seg.parameters.defaultInsertMethod,
+      bulkSize: seg.parameters.bulkSize,
+      env: { ...seg.parameters.env },
+      steps: [...seg.parameters.steps],
+      noSteps: [...seg.parameters.noSteps],
+    },
+    files: seg.files.map((f) => ({ name: f.name, kind: f.kind, content: f.content })),
+  };
+}
 
+/** Build a typed domain.Workload from the WorkloadVM. */
+export function workloadVMToProto(vm: WorkloadVM): Workload {
   return create(WorkloadSchema, {
     stroppyVersion: vm.stroppyVersion,
     protocol: vm.protocol,
-    segments: [
-      {
-        name: "workload",
-        script: vm.script,
-        sql: vm.sql,
-        execution: {
-          vus: vm.execution.vus,
-          limit,
-          quiet: vm.execution.quiet,
-          noThresholds: vm.execution.noThresholds,
-        },
-        parameters: {
-          poolSize: vm.parameters.poolSize,
-          scaleFactor: vm.parameters.scaleFactor,
-          defaultInsertMethod: vm.parameters.defaultInsertMethod,
-          bulkSize: vm.parameters.bulkSize,
-          env: { ...vm.parameters.env },
-          steps: [...vm.parameters.steps],
-          noSteps: [...vm.parameters.noSteps],
-        },
-        files: vm.files.map((f) => ({ name: f.name, kind: f.kind, content: f.content })),
-      },
-    ],
+    segments: vm.segments.map(segmentVMToProto),
   });
 }

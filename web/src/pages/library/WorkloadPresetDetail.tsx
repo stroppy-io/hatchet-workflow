@@ -53,7 +53,8 @@ function protocolLabel(p: Workload_Protocol): string {
 }
 
 function limitLabel(w: WorkloadVM): string {
-  const l = w.execution.limit;
+  const l = w.segments[0]?.execution.limit;
+  if (!l) return "—";
   return l.case === "duration"
     ? l.duration || "—"
     : `${l.iterations} iter`;
@@ -226,7 +227,10 @@ export function WorkloadPresetDetail() {
           {/* Meta strip */}
           <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <MetaCard label="Script">
-              <span className="font-mono text-sm text-zinc-300">{w.script || "—"}</span>
+              <span className="font-mono text-sm text-zinc-300">
+                {w.segments[0]?.script || "—"}
+                {w.segments.length > 1 ? ` +${w.segments.length - 1}` : ""}
+              </span>
             </MetaCard>
             <MetaCard label="Protocol">
               <span className="font-mono text-sm text-zinc-300">{protocolLabel(w.protocol)}</span>
@@ -238,7 +242,7 @@ export function WorkloadPresetDetail() {
             </MetaCard>
             <MetaCard label="Execution">
               <span className="font-mono text-sm text-zinc-300">
-                {w.execution.vus} VU · {limitLabel(w)}
+                {w.segments[0]?.execution.vus ?? 0} VU · {limitLabel(w)}
               </span>
             </MetaCard>
           </section>

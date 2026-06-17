@@ -14,7 +14,7 @@
 // NOT edited here.
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ChevronDown, RotateCcw } from "lucide-react";
+import { AlertCircle, Check, ChevronDown, ChevronUp, Loader2, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -28,10 +28,28 @@ import { ConfigEditor } from "@/components/ui/config-editor";
 import { NumField, ScrubHandle, ToggleRow, FieldErrors, errorsFor } from "@/components/database/DatabaseParamsForm";
 import {
   Workload_Protocol,
+  driverTypeFor,
+  getWizardProvider,
+  defaultSegment,
+  type EngineKind,
   type WorkloadVM,
+  type WorkloadSegmentVM,
   type DraftErrorVM,
   type ProbeMetaVM,
 } from "@/services/wizard";
+
+/**
+ * Optional probe wiring. When present (the wizard's Workload step), each segment
+ * editor runs its own debounced `stroppy probe` for its script and surfaces the
+ * declared phases/env as first-class controls. Absent on the preset authoring
+ * pages, which fall back to free-text editors.
+ */
+export interface SegmentProbeContext {
+  slug: string;
+  engine: EngineKind;
+  /** The run's shared stroppy version (from the wizard Version pane). */
+  version: string;
+}
 
 /** Env vars already surfaced by dedicated controls — hidden from the generic env list. */
 const COVERED_ENV = new Set(["POOL_SIZE", "SCALE_FACTOR", "WAREHOUSES", "STROPPY_STEPS", "STROPPY_NO_STEPS"]);
@@ -79,90 +97,74 @@ export function validateWorkload(w: WorkloadVM | null): DraftErrorVM[] {
     err("workload", "Configure the workload.");
     return errs;
   }
-  if (!w.script.trim()) err("workload.script", "A workload needs a script.", "error", "required");
-  if (w.execution.vus < 1) err("workload.execution.vus", "At least 1 virtual user.", "error", "min");
-  if (w.execution.limit.case === "duration" && !w.execution.limit.duration.trim())
-    err("workload.execution.duration", "Set a run duration.", "error", "required");
-  if (w.execution.limit.case === "iterations" && w.execution.limit.iterations < 1)
-    err("workload.execution.iterations", "At least 1 iteration.", "error", "min");
-  if (w.parameters.steps.length > 0 && w.parameters.noSteps.length > 0)
-    err("workload.parameters.steps", "steps and no_steps are mutually exclusive.", "error", "exclusive");
+  if (w.segments.length === 0) {
+    err("workload.segments", "Add at least one segment.", "error", "required");
+    return errs;
+  }
+  w.segments.forEach((seg, i) => {
+    const f = (suffix: string) => `workload.segments[${i}].${suffix}`;
+    if (!seg.name.trim()) err(f("name"), "Segment needs a name.", "error", "required");
+    if (!seg.script.trim()) err(f("script"), "A segment needs a script.", "error", "required");
+    if (seg.execution.vus < 1) err(f("execution.vus"), "At least 1 virtual user.", "error", "min");
+    if (seg.execution.limit.case === "duration" && !seg.execution.limit.duration.trim())
+      err(f("execution.duration"), "Set a run duration.", "error", "required");
+    if (seg.execution.limit.case === "iterations" && seg.execution.limit.iterations < 1)
+      err(f("execution.iterations"), "At least 1 iteration.", "error", "min");
+    if (seg.parameters.steps.length > 0 && seg.parameters.noSteps.length > 0)
+      err(f("parameters.steps"), "steps and no_steps are mutually exclusive.", "error", "exclusive");
+  });
   return errs;
 }
 
-/** The typed-workload editor — script/sql/protocol + k6 execution + data params. */
+/**
+ * The typed-workload editor: a shared protocol picker plus an accordion of
+ * segment cards. Each segment is a self-contained stroppy invocation (script +
+ * k6 execution + data params); they run sequentially on the same DB. The common
+ * shape is a bootstrap segment followed by the measured workload.
+ */
 export function WorkloadParamsForm({
   w,
   apply,
   disabled,
   advancedInitiallyOpen = disabled ?? false,
-  probe = null,
+  probeContext = null,
 }: {
   w: WorkloadVM;
   apply: (w: WorkloadVM) => void;
   disabled?: boolean;
   advancedInitiallyOpen?: boolean;
   /**
-   * Live `stroppy probe` metadata for the current script. When present, its
-   * declared phases and env variables are surfaced as first-class controls
-   * (chips + described fields) right here in the parameters form — the probe
-   * pane is then only a status/output disclosure. Absent on the preset
-   * authoring pages, which fall back to the free-text editors.
+   * When present, each segment editor runs its own live `stroppy probe` for its
+   * script and surfaces the declared phases/env as first-class controls. Absent
+   * on the preset authoring pages, which fall back to the free-text editors.
    */
-  probe?: ProbeMetaVM | null;
+  probeContext?: SegmentProbeContext | null;
 }) {
-  const limit = w.execution.limit;
-  // Hide declarations already driven by dedicated controls: Pool size
-  // (POOL_SIZE), Scale factor (SCALE_FACTOR/WAREHOUSES) and the Phases chips
-  // (STROPPY_STEPS/STROPPY_NO_STEPS). Everything else the script declares shows
-  // up as an editable field.
-  const declaredEnv = useMemo(
-    () => (probe?.env ?? []).filter((d) => !d.names.some((n) => COVERED_ENV.has(n))),
-    [probe],
-  );
-  const declaredNames = useMemo(
-    () => new Set(declaredEnv.flatMap((d) => d.names)),
-    [declaredEnv],
-  );
-  const probeSteps = probe?.steps ?? [];
-
-  const setEnv = (name: string, value: string) =>
-    apply({ ...w, parameters: { ...w.parameters, env: setEnvKey(w.parameters.env, name, value) } });
-
-  // Toggle a phase in the steps allowlist (XOR with noSteps — selecting any
-  // phase clears the blocklist, mirroring the backend's mutual exclusion).
-  const togglePhase = (phase: string) => {
-    const has = w.parameters.steps.includes(phase);
-    const steps = has ? w.parameters.steps.filter((s) => s !== phase) : [...w.parameters.steps, phase];
-    apply({ ...w, parameters: { ...w.parameters, steps, noSteps: [] } });
+  const setSegment = (index: number, seg: WorkloadSegmentVM) =>
+    apply({ ...w, segments: w.segments.map((s, i) => (i === index ? seg : s)) });
+  const addSegment = () =>
+    apply({ ...w, segments: [...w.segments, defaultSegment(`segment ${w.segments.length + 1}`)] });
+  const removeSegment = (index: number) => {
+    if (w.segments.length <= 1) return; // always keep at least one segment
+    apply({ ...w, segments: w.segments.filter((_, i) => i !== index) });
   };
+  const moveSegment = (index: number, dir: -1 | 1) => {
+    const target = index + dir;
+    if (target < 0 || target >= w.segments.length) return;
+    const next = [...w.segments];
+    [next[index], next[target]] = [next[target], next[index]];
+    apply({ ...w, segments: next });
+  };
+
   return (
     <div className={disabled ? "pointer-events-none select-none opacity-90" : undefined}>
-      {/* @container: the field grids below break on the PANE's width, not the
-          viewport — so they stack to one column when this form shares a narrow
-          row with the Version/Preset panes, instead of cramming 2-3 columns. */}
-      <div className="@container space-y-5">
-        <div className="grid grid-cols-1 gap-3 @lg:grid-cols-2 @3xl:grid-cols-3">
-          <div>
-            <Label>Script</Label>
-            <Input
-              className="mt-1 font-mono text-xs"
-              value={w.script}
-              onChange={(e) => apply({ ...w, script: e.target.value })}
-              placeholder="tpcc/tx"
-            />
-          </div>
-          <div>
-            <Label>SQL arg (optional)</Label>
-            <Input
-              className="mt-1 font-mono text-xs"
-              value={w.sql}
-              onChange={(e) => apply({ ...w, sql: e.target.value })}
-              placeholder="queries.sql"
-            />
-          </div>
+      <div className="@container space-y-4">
+        <div className="grid grid-cols-1 gap-3 @lg:grid-cols-2">
           <div>
             <Label>Protocol</Label>
+            <p className="mb-1 mt-0.5 text-[11px] text-zinc-600">
+              Shared across segments — they all target the one database.
+            </p>
             <Select
               value={String(w.protocol)}
               onValueChange={(v) => apply({ ...w, protocol: Number(v) as Workload_Protocol })}
@@ -181,155 +183,424 @@ export function WorkloadParamsForm({
           </div>
         </div>
 
-        <div className="border border-zinc-800/60 bg-[#0a0a0a] p-4">
-          <div className="mb-3 text-[10px] font-mono uppercase tracking-wider text-zinc-600">k6 execution</div>
-          <div className="grid grid-cols-1 gap-3 @lg:grid-cols-2 @3xl:grid-cols-3">
-            <NumField
-              label="Virtual users"
-              value={w.execution.vus}
-              onChange={(n) => apply({ ...w, execution: { ...w.execution, vus: n } })}
-              min={1}
+        <div className="space-y-3">
+          {w.segments.map((seg, i) => (
+            <SegmentEditor
+              key={i}
+              index={i}
+              total={w.segments.length}
+              segment={seg}
+              onChange={(s) => setSegment(i, s)}
+              onRemove={() => removeSegment(i)}
+              onMove={(dir) => moveSegment(i, dir)}
+              advancedInitiallyOpen={advancedInitiallyOpen}
+              probeContext={probeContext}
             />
+          ))}
+        </div>
+
+        {!disabled && (
+          <button
+            type="button"
+            onClick={addSegment}
+            className="flex w-full items-center justify-center gap-2 border border-dashed border-zinc-800 py-2.5 text-[12px] text-zinc-500 transition-colors hover:border-zinc-700 hover:text-zinc-300"
+          >
+            <Plus className="h-3.5 w-3.5" /> Add segment
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Concise one-line summary of a segment for the collapsed accordion header. */
+function segmentSummary(seg: WorkloadSegmentVM): string {
+  const limit =
+    seg.execution.limit.case === "duration"
+      ? seg.execution.limit.duration || "—"
+      : `${seg.execution.limit.iterations} iters`;
+  const phases = seg.parameters.steps.length > 0 ? ` · ${seg.parameters.steps.join("+")}` : "";
+  return `${seg.script || "no script"} · ${seg.execution.vus} vus · ${limit}${phases}`;
+}
+
+/**
+ * One collapsible segment card: an editable name + the script/execution/data
+ * fields, with its own optional probe (declared phases/env + status disclosure).
+ */
+function SegmentEditor({
+  index,
+  total,
+  segment: seg,
+  onChange,
+  onRemove,
+  onMove,
+  advancedInitiallyOpen,
+  probeContext,
+}: {
+  index: number;
+  total: number;
+  segment: WorkloadSegmentVM;
+  onChange: (seg: WorkloadSegmentVM) => void;
+  onRemove: () => void;
+  onMove: (dir: -1 | 1) => void;
+  advancedInitiallyOpen: boolean;
+  probeContext: SegmentProbeContext | null;
+}) {
+  const [open, setOpen] = useState(total <= 2);
+  const limit = seg.execution.limit;
+
+  // --- Per-segment probe: fires once script + version are present, debounced,
+  // re-firing when the script/sql/version/scale/pool change.
+  const [probe, setProbe] = useState<ProbeMetaVM | null>(null);
+  const [probing, setProbing] = useState(false);
+  const [probeErr, setProbeErr] = useState<string | null>(null);
+  const version = probeContext?.version ?? "";
+  const canProbe = !!probeContext && !!seg.script.trim() && !!version.trim();
+  const probeKey = `${version}|${seg.script}|${seg.sql}|${probeContext?.engine}|${seg.parameters.poolSize}|${seg.parameters.scaleFactor}`;
+  useEffect(() => {
+    if (!probeContext || !canProbe) {
+      setProbe(null);
+      setProbeErr(null);
+      return;
+    }
+    let cancelled = false;
+    setProbing(true);
+    setProbeErr(null);
+    const timer = window.setTimeout(() => {
+      getWizardProvider()
+        .probe(probeContext.slug, {
+          version,
+          script: seg.script.trim(),
+          sql: seg.sql,
+          driverType: driverTypeFor(probeContext.engine),
+          poolSize: seg.parameters.poolSize,
+          scaleFactor: seg.parameters.scaleFactor,
+          includeHuman: true,
+        })
+        .then((meta) => {
+          if (cancelled) return;
+          setProbe(meta);
+          setProbeErr(null);
+        })
+        .catch((e) => {
+          if (cancelled) return;
+          setProbe(null);
+          setProbeErr(e instanceof Error ? e.message : String(e));
+        })
+        .finally(() => {
+          if (!cancelled) setProbing(false);
+        });
+    }, 350);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+    // probeKey captures every dependency; slug/engine are stable per step.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [probeKey, canProbe]);
+
+  const declaredEnv = useMemo(
+    () => (probe?.env ?? []).filter((d) => !d.names.some((n) => COVERED_ENV.has(n))),
+    [probe],
+  );
+  const declaredNames = useMemo(() => new Set(declaredEnv.flatMap((d) => d.names)), [declaredEnv]);
+  const probeSteps = probe?.steps ?? [];
+
+  const setExec = (patch: Partial<WorkloadSegmentVM["execution"]>) =>
+    onChange({ ...seg, execution: { ...seg.execution, ...patch } });
+  const setParams = (patch: Partial<WorkloadSegmentVM["parameters"]>) =>
+    onChange({ ...seg, parameters: { ...seg.parameters, ...patch } });
+  const setEnv = (name: string, value: string) =>
+    setParams({ env: setEnvKey(seg.parameters.env, name, value) });
+  const togglePhase = (phase: string) => {
+    const has = seg.parameters.steps.includes(phase);
+    const steps = has ? seg.parameters.steps.filter((s) => s !== phase) : [...seg.parameters.steps, phase];
+    setParams({ steps, noSteps: [] });
+  };
+
+  return (
+    <div className="border border-zinc-800/70 bg-[#0a0a0a]">
+      <div className="flex items-center gap-2 px-3 py-2">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="text-zinc-500 transition-colors hover:text-zinc-300"
+          aria-expanded={open}
+        >
+          <ChevronDown className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} />
+        </button>
+        <Input
+          className="h-7 w-40 font-mono text-xs"
+          value={seg.name}
+          onChange={(e) => onChange({ ...seg, name: e.target.value })}
+          placeholder={`segment ${index + 1}`}
+        />
+        {!open && (
+          <span className="truncate font-mono text-[11px] text-zinc-600">{segmentSummary(seg)}</span>
+        )}
+        <div className="ml-auto flex items-center gap-0.5">
+          <button
+            type="button"
+            onClick={() => onMove(-1)}
+            disabled={index === 0}
+            title="Move up"
+            className="p-1 text-zinc-600 transition-colors hover:text-zinc-300 disabled:opacity-25"
+          >
+            <ChevronUp className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => onMove(1)}
+            disabled={index === total - 1}
+            title="Move down"
+            className="p-1 text-zinc-600 transition-colors hover:text-zinc-300 disabled:opacity-25"
+          >
+            <ChevronDown className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={onRemove}
+            disabled={total <= 1}
+            title="Remove segment"
+            className="p-1 text-zinc-600 transition-colors hover:text-red-400 disabled:opacity-25"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {open && (
+        <div className="@container space-y-5 border-t border-zinc-800/70 p-4">
+          <div className="grid grid-cols-1 gap-3 @lg:grid-cols-2">
             <div>
-              <Label>Limit by</Label>
-              <Select
-                value={limit.case}
-                onValueChange={(v) =>
-                  apply({
-                    ...w,
-                    execution: {
-                      ...w.execution,
+              <Label>Script</Label>
+              <Input
+                className="mt-1 font-mono text-xs"
+                value={seg.script}
+                onChange={(e) => onChange({ ...seg, script: e.target.value })}
+                placeholder="tpcc/tx"
+              />
+            </div>
+            <div>
+              <Label>SQL arg (optional)</Label>
+              <Input
+                className="mt-1 font-mono text-xs"
+                value={seg.sql}
+                onChange={(e) => onChange({ ...seg, sql: e.target.value })}
+                placeholder="queries.sql"
+              />
+            </div>
+          </div>
+
+          <div className="border border-zinc-800/60 bg-[#070707] p-4">
+            <div className="mb-3 text-[10px] font-mono uppercase tracking-wider text-zinc-600">k6 execution</div>
+            <div className="grid grid-cols-1 gap-3 @lg:grid-cols-2 @3xl:grid-cols-3">
+              <NumField
+                label="Virtual users"
+                value={seg.execution.vus}
+                onChange={(n) => setExec({ vus: n })}
+                min={1}
+              />
+              <div>
+                <Label>Limit by</Label>
+                <Select
+                  value={limit.case}
+                  onValueChange={(v) =>
+                    setExec({
                       limit:
                         v === "duration"
                           ? { case: "duration", duration: "5m" }
                           : { case: "iterations", iterations: 10000 },
-                    },
-                  })
-                }
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="duration">Duration</SelectItem>
-                  <SelectItem value="iterations">Iterations</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {limit.case === "duration" ? (
-              <div>
-                <Label>Duration</Label>
-                <Input
-                  className="mt-1"
-                  value={limit.duration}
-                  onChange={(e) =>
-                    apply({
-                      ...w,
-                      execution: { ...w.execution, limit: { case: "duration", duration: e.target.value } },
                     })
                   }
-                  placeholder="10m"
-                />
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="duration">Duration</SelectItem>
+                    <SelectItem value="iterations">Iterations</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            ) : (
-              <NumField
-                label="Iterations"
-                value={limit.iterations}
-                min={1}
-                onChange={(n) =>
-                  apply({
-                    ...w,
-                    execution: { ...w.execution, limit: { case: "iterations", iterations: n } },
-                  })
-                }
-              />
-            )}
-          </div>
-          <div className="mt-3 grid grid-cols-1 gap-2 @lg:grid-cols-2">
-            <ToggleRow
-              label="Quiet"
-              hint="k6 -q"
-              checked={w.execution.quiet}
-              onChange={(b) => apply({ ...w, execution: { ...w.execution, quiet: b } })}
-            />
-            <ToggleRow
-              label="No thresholds"
-              hint="k6 --no-thresholds"
-              checked={w.execution.noThresholds}
-              onChange={(b) => apply({ ...w, execution: { ...w.execution, noThresholds: b } })}
-            />
-          </div>
-        </div>
-
-        <div className="border border-zinc-800/60 bg-[#0a0a0a] p-4">
-          <div className="mb-3 text-[10px] font-mono uppercase tracking-wider text-zinc-600">data parameters</div>
-          <div className="grid grid-cols-1 gap-3 @lg:grid-cols-2 @3xl:grid-cols-3">
-            <NumField
-              label="Pool size"
-              value={w.parameters.poolSize}
-              onChange={(n) => apply({ ...w, parameters: { ...w.parameters, poolSize: n } })}
-            />
-            <NumField
-              label="Scale factor"
-              value={w.parameters.scaleFactor}
-              float
-              min={0.01}
-              onChange={(n) => apply({ ...w, parameters: { ...w.parameters, scaleFactor: n } })}
-              hint="warehouses / branches / scale — fractional for smoke tests"
-            />
-            <div>
-              <Label>Insert method</Label>
-              <Select
-                value={w.parameters.defaultInsertMethod || "native"}
-                onValueChange={(v) => apply({ ...w, parameters: { ...w.parameters, defaultInsertMethod: v } })}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {INSERT_METHODS.map((m) => (
-                    <SelectItem key={m} value={m}>
-                      {m}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {limit.case === "duration" ? (
+                <div>
+                  <Label>Duration</Label>
+                  <Input
+                    className="mt-1"
+                    value={limit.duration}
+                    onChange={(e) => setExec({ limit: { case: "duration", duration: e.target.value } })}
+                    placeholder="10m"
+                  />
+                </div>
+              ) : (
+                <NumField
+                  label="Iterations"
+                  value={limit.iterations}
+                  min={1}
+                  onChange={(n) => setExec({ limit: { case: "iterations", iterations: n } })}
+                />
+              )}
             </div>
-            {w.parameters.defaultInsertMethod === "plain_bulk" && (
-              <NumField
-                label="Batch size"
-                value={w.parameters.bulkSize}
-                min={0}
-                max={1000000}
-                onChange={(n) => apply({ ...w, parameters: { ...w.parameters, bulkSize: n } })}
-                hint="rows per bulk INSERT (0 = stroppy default 2500)"
+            <div className="mt-3 grid grid-cols-1 gap-2 @lg:grid-cols-2">
+              <ToggleRow
+                label="Quiet"
+                hint="k6 -q"
+                checked={seg.execution.quiet}
+                onChange={(b) => setExec({ quiet: b })}
               />
+              <ToggleRow
+                label="No thresholds"
+                hint="k6 --no-thresholds"
+                checked={seg.execution.noThresholds}
+                onChange={(b) => setExec({ noThresholds: b })}
+              />
+            </div>
+          </div>
+
+          <div className="border border-zinc-800/60 bg-[#070707] p-4">
+            <div className="mb-3 text-[10px] font-mono uppercase tracking-wider text-zinc-600">data parameters</div>
+            <div className="grid grid-cols-1 gap-3 @lg:grid-cols-2 @3xl:grid-cols-3">
+              <NumField
+                label="Pool size"
+                value={seg.parameters.poolSize}
+                onChange={(n) => setParams({ poolSize: n })}
+              />
+              <NumField
+                label="Scale factor"
+                value={seg.parameters.scaleFactor}
+                float
+                min={0.01}
+                onChange={(n) => setParams({ scaleFactor: n })}
+                hint="warehouses / branches / scale — fractional for smoke tests"
+              />
+              <div>
+                <Label>Insert method</Label>
+                <Select
+                  value={seg.parameters.defaultInsertMethod || "native"}
+                  onValueChange={(v) => setParams({ defaultInsertMethod: v })}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {INSERT_METHODS.map((m) => (
+                      <SelectItem key={m} value={m}>
+                        {m}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {seg.parameters.defaultInsertMethod === "plain_bulk" && (
+                <NumField
+                  label="Batch size"
+                  value={seg.parameters.bulkSize}
+                  min={0}
+                  max={1000000}
+                  onChange={(n) => setParams({ bulkSize: n })}
+                  hint="rows per bulk INSERT (0 = stroppy default 2500)"
+                />
+              )}
+            </div>
+            {probeSteps.length > 0 && (
+              <PhaseChips steps={probeSteps} selected={seg.parameters.steps} onToggle={togglePhase} />
+            )}
+
+            {declaredEnv.length > 0 && (
+              <ProbeEnvFields decls={declaredEnv} env={seg.parameters.env} onSet={setEnv} />
+            )}
+
+            <AdvancedRuntimeParameters initiallyOpen={advancedInitiallyOpen}>
+              <EnvMapEditor
+                label={declaredEnv.length > 0 ? "Additional environment variables" : "Environment variables"}
+                env={seg.parameters.env}
+                declaredNames={declaredNames}
+                onChange={(env) => setParams({ env })}
+              />
+              {probeSteps.length === 0 && (
+                <StepsEditor steps={seg.parameters.steps} onChange={(steps) => setParams({ steps })} />
+              )}
+            </AdvancedRuntimeParameters>
+          </div>
+
+          {probeContext && (
+            <ProbeDisclosure probe={probe} probing={probing} probeErr={probeErr} />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Collapsed status/output disclosure for a segment's `stroppy probe` result:
+ * spinner while probing, error, or an OK summary that expands to the driver/pool
+ * details + the `probe -o human` render.
+ */
+function ProbeDisclosure({
+  probe,
+  probing,
+  probeErr,
+}: {
+  probe: ProbeMetaVM | null;
+  probing: boolean;
+  probeErr: string | null;
+}) {
+  const [open, setOpen] = useState(false);
+  const hasDetail = !!probe;
+  if (!probing && !probeErr && !probe) return null;
+  return (
+    <div className="overflow-hidden border border-zinc-800/70 bg-[#070707]">
+      <button
+        type="button"
+        onClick={() => hasDetail && setOpen((v) => !v)}
+        aria-expanded={open}
+        className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[11px] ${
+          hasDetail ? "transition-colors hover:bg-zinc-900/40" : "cursor-default"
+        }`}
+      >
+        {probing ? (
+          <span className="flex items-center gap-2 text-zinc-500">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" /> Probing workload…
+          </span>
+        ) : probeErr ? (
+          <span className="flex min-w-0 items-center gap-2 text-red-400">
+            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">{probeErr}</span>
+          </span>
+        ) : probe ? (
+          <span className="flex items-center gap-2 text-emerald-400">
+            <Check className="h-3.5 w-3.5" /> Probe OK — {probe.steps.length} phase
+            {probe.steps.length === 1 ? "" : "s"}, {probe.env.length} env
+          </span>
+        ) : null}
+        {hasDetail && (
+          <ChevronDown
+            className={`ml-auto h-3.5 w-3.5 shrink-0 text-zinc-500 transition-transform ${open ? "rotate-180" : ""}`}
+          />
+        )}
+      </button>
+
+      {open && probe && (
+        <div className="space-y-4 border-t border-zinc-800/70 p-3">
+          <div className="flex flex-wrap gap-x-6 gap-y-1 text-[11px] text-zinc-500">
+            <span>driver: <span className="font-mono text-zinc-300">{probe.driverType}</span></span>
+            <span>pool: <span className="font-mono text-zinc-300">{probe.poolSize}</span></span>
+            {probe.sqlSections.length > 0 && (
+              <span>sql: <span className="font-mono text-zinc-300">{probe.sqlSections.join(", ")}</span></span>
             )}
           </div>
-          {probeSteps.length > 0 && (
-            <PhaseChips steps={probeSteps} selected={w.parameters.steps} onToggle={togglePhase} />
+          {probe.human && (
+            <div>
+              <Label>probe -o human</Label>
+              <pre className="mt-1.5 max-h-56 overflow-auto border border-zinc-800/60 bg-black/40 p-2 font-mono text-[10px] leading-relaxed text-zinc-400">
+                {probe.human}
+              </pre>
+            </div>
           )}
-
-          {declaredEnv.length > 0 && (
-            <ProbeEnvFields decls={declaredEnv} env={w.parameters.env} onSet={setEnv} />
-          )}
-
-          <AdvancedRuntimeParameters initiallyOpen={advancedInitiallyOpen}>
-            <EnvMapEditor
-              label={declaredEnv.length > 0 ? "Additional environment variables" : "Environment variables"}
-              env={w.parameters.env}
-              declaredNames={declaredNames}
-              onChange={(env) => apply({ ...w, parameters: { ...w.parameters, env } })}
-            />
-            {probeSteps.length === 0 && (
-              <StepsEditor
-                steps={w.parameters.steps}
-                onChange={(steps) => apply({ ...w, parameters: { ...w.parameters, steps } })}
-              />
-            )}
-          </AdvancedRuntimeParameters>
         </div>
-      </div>
+      )}
     </div>
   );
 }

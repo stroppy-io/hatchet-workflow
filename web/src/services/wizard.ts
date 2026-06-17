@@ -302,14 +302,26 @@ export interface WorkloadFileVM {
   content: string;
 }
 
-export interface WorkloadVM {
-  stroppyVersion: string;
+/**
+ * One workload segment (mirror domain.Workload.Segment): a self-contained
+ * stroppy invocation — script + k6 execution + data parameters + run-scoped
+ * files. Segments run sequentially on the same DB; stroppy_version and protocol
+ * live on the parent WorkloadVM since they are shared across the run.
+ */
+export interface WorkloadSegmentVM {
+  name: string;
   script: string;
   sql: string;
-  protocol: Workload_Protocol;
   execution: WorkloadExecutionVM;
   parameters: WorkloadParametersVM;
   files: WorkloadFileVM[];
+}
+
+export interface WorkloadVM {
+  stroppyVersion: string;
+  protocol: Workload_Protocol;
+  /** Ordered segments — at least one; the first is typically the measured workload. */
+  segments: WorkloadSegmentVM[];
 }
 
 // --- Server-derived preview (mirror topology + infrastructure + render) -------
@@ -1479,12 +1491,12 @@ export function defaultDockerContainer(role: string, engine: string): DockerCont
   };
 }
 
-export function defaultWorkload(kind: EngineKind): WorkloadVM {
+/** A fresh workload segment with sensible k6/data defaults. */
+export function defaultSegment(name = "workload"): WorkloadSegmentVM {
   return {
-    stroppyVersion: "",
+    name,
     script: "tpcc/tx",
     sql: "",
-    protocol: defaultProtocolFor(kind),
     execution: {
       vus: 16,
       limit: { case: "duration", duration: "5m" },
@@ -1501,5 +1513,13 @@ export function defaultWorkload(kind: EngineKind): WorkloadVM {
       noSteps: [],
     },
     files: [],
+  };
+}
+
+export function defaultWorkload(kind: EngineKind): WorkloadVM {
+  return {
+    stroppyVersion: "",
+    protocol: defaultProtocolFor(kind),
+    segments: [defaultSegment()],
   };
 }
