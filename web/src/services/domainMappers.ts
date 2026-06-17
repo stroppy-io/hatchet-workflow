@@ -426,9 +426,17 @@ function engineParamsVMToProto(p: EngineParamsVM): DatabaseParams["engine"] {
 
 // --- Workload: proto -> VM ---------------------------------------------------
 
-/** Map a typed domain.Workload onto the flat WorkloadVM the wizard step edits. */
+/**
+ * Map a typed domain.Workload onto the flat WorkloadVM the wizard step edits.
+ *
+ * Workload is now a thin outer envelope (stroppy_version + protocol) wrapping an
+ * ordered list of Segments. While the wizard edits a single segment, the flat
+ * WorkloadVM mirrors the PRIMARY (first) segment plus the shared outer fields;
+ * the multi-segment editor will replace this flat VM with a segment list.
+ */
 export function workloadProtoToVM(w: Workload | undefined): WorkloadVM {
-  const exec = w?.execution;
+  const segment = w?.segments?.[0];
+  const exec = segment?.execution;
   let limit: K6Limit;
   if (exec?.limit.case === "iterations") {
     limit = { case: "iterations", iterations: exec.limit.value };
@@ -442,7 +450,7 @@ export function workloadProtoToVM(w: Workload | undefined): WorkloadVM {
     noThresholds: exec?.noThresholds ?? false,
   };
 
-  const p = w?.parameters;
+  const p = segment?.parameters;
   const parameters: WorkloadParametersVM = {
     poolSize: p?.poolSize ?? 0,
     scaleFactor: p?.scaleFactor ?? 0,
@@ -453,7 +461,7 @@ export function workloadProtoToVM(w: Workload | undefined): WorkloadVM {
     noSteps: [...(p?.noSteps ?? [])],
   };
 
-  const files: WorkloadFileVM[] = (w?.files ?? []).map((f) => ({
+  const files: WorkloadFileVM[] = (segment?.files ?? []).map((f) => ({
     name: f.name,
     kind: f.kind,
     content: f.content,
@@ -461,8 +469,8 @@ export function workloadProtoToVM(w: Workload | undefined): WorkloadVM {
 
   return {
     stroppyVersion: w?.stroppyVersion ?? "",
-    script: w?.script ?? "",
-    sql: w?.sql ?? "",
+    script: segment?.script ?? "",
+    sql: segment?.sql ?? "",
     protocol: w?.protocol ?? Workload_Protocol.UNSPECIFIED,
     execution,
     parameters,
@@ -472,7 +480,7 @@ export function workloadProtoToVM(w: Workload | undefined): WorkloadVM {
 
 // --- Workload: VM -> proto ---------------------------------------------------
 
-/** Build a typed domain.Workload from the flat WorkloadVM. */
+/** Build a typed domain.Workload from the flat WorkloadVM (one primary segment). */
 export function workloadVMToProto(vm: WorkloadVM): Workload {
   const limit =
     vm.execution.limit.case === "iterations"
@@ -481,24 +489,29 @@ export function workloadVMToProto(vm: WorkloadVM): Workload {
 
   return create(WorkloadSchema, {
     stroppyVersion: vm.stroppyVersion,
-    script: vm.script,
-    sql: vm.sql,
     protocol: vm.protocol,
-    execution: {
-      vus: vm.execution.vus,
-      limit,
-      quiet: vm.execution.quiet,
-      noThresholds: vm.execution.noThresholds,
-    },
-    parameters: {
-      poolSize: vm.parameters.poolSize,
-      scaleFactor: vm.parameters.scaleFactor,
-      defaultInsertMethod: vm.parameters.defaultInsertMethod,
-      bulkSize: vm.parameters.bulkSize,
-      env: { ...vm.parameters.env },
-      steps: [...vm.parameters.steps],
-      noSteps: [...vm.parameters.noSteps],
-    },
-    files: vm.files.map((f) => ({ name: f.name, kind: f.kind, content: f.content })),
+    segments: [
+      {
+        name: "workload",
+        script: vm.script,
+        sql: vm.sql,
+        execution: {
+          vus: vm.execution.vus,
+          limit,
+          quiet: vm.execution.quiet,
+          noThresholds: vm.execution.noThresholds,
+        },
+        parameters: {
+          poolSize: vm.parameters.poolSize,
+          scaleFactor: vm.parameters.scaleFactor,
+          defaultInsertMethod: vm.parameters.defaultInsertMethod,
+          bulkSize: vm.parameters.bulkSize,
+          env: { ...vm.parameters.env },
+          steps: [...vm.parameters.steps],
+          noSteps: [...vm.parameters.noSteps],
+        },
+        files: vm.files.map((f) => ({ name: f.name, kind: f.kind, content: f.content })),
+      },
+    ],
   });
 }

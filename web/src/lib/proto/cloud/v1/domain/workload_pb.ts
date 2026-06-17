@@ -14,15 +14,28 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/domain/workload.proto.
  */
 export const file_cloud_v1_domain_workload: GenFile = /*@__PURE__*/
-  fileDesc("Ch5jbG91ZC92MS9kb21haW4vd29ya2xvYWQucHJvdG8SD2Nsb3VkLnYxLmRvbWFpbiL7CQoIV29ya2xvYWQSIAoPc3Ryb3BweV92ZXJzaW9uGAEgASgJQgf6QgRyAhhAEhoKBnNjcmlwdBgCIAEoCUIK+kIHcgUQARiABBIVCgNzcWwYAyABKAlCCPpCBXIDGIAEEj4KCHByb3RvY29sGAQgASgOMiIuY2xvdWQudjEuZG9tYWluLldvcmtsb2FkLlByb3RvY29sQgj6QgWCAQIQARJACglleGVjdXRpb24YBSABKAsyIy5jbG91ZC52MS5kb21haW4uV29ya2xvYWQuRXhlY3V0aW9uQgj6QgWKAQIQARI4CgpwYXJhbWV0ZXJzGAYgASgLMiQuY2xvdWQudjEuZG9tYWluLldvcmtsb2FkLlBhcmFtZXRlcnMSPwoFZmlsZXMYByADKAsyJi5jbG91ZC52MS5kb21haW4uV29ya2xvYWQuV29ya2xvYWRGaWxlQgj6QgWSAQIQQBIjCgR0YWdzGAggASgLMhUuY2xvdWQudjEuY29tbW9uLlRhZ3MauAEKCUV4ZWN1dGlvbhIYCgN2dXMYASABKA1CC/pCCCoGGKCNBigBEjgKCGR1cmF0aW9uGAIgASgJQiT6QiFyHxggMhteKFswLTldKyhuc3x1c3xtc3xzfG18aCkpKyRIABIdCgppdGVyYXRpb25zGAMgASgNQgf6QgQqAigBSAASDQoFcXVpZXQYBCABKAgSFQoNbm9fdGhyZXNob2xkcxgFIAEoCEISCgVsaW1pdBIJ+EIB8qcdAggDGqEDCgpQYXJhbWV0ZXJzEhwKCXBvb2xfc2l6ZRgBIAEoDUIJ+kIGKgQY//8DEi0KDHNjYWxlX2ZhY3RvchgCIAEoAUIX+kIUEhIhAAAAAAAAAAAZAAAAAABq+EASJgoVZGVmYXVsdF9pbnNlcnRfbWV0aG9kGAMgASgJQgf6QgRyAhhAEmkKA2VudhgEIAMoCzItLmNsb3VkLnYxLmRvbWFpbi5Xb3JrbG9hZC5QYXJhbWV0ZXJzLkVudkVudHJ5Qi36QiqaAScQgAIiG3IZEAEYgAIyEl5bQS1aX11bQS1aMC05X10qJCoFcgMYgEASMgoFc3RlcHMYBSADKAlCI/pCIJIBHRAgIhlyFxABGEAyEV5bYS16XVthLXowLTlfXSokEjUKCG5vX3N0ZXBzGAYgAygJQiP6QiCSAR0QICIZchcQARhAMhFeW2Etel1bYS16MC05X10qJBIcCglidWxrX3NpemUYByABKA1CCfpCBioEGMCEPRoqCghFbnZFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGm8KDFdvcmtsb2FkRmlsZRIrCgRuYW1lGAEgASgJQh36QhpyGBABGIACMhFeW0EtWmEtejAtOS5fLV0rJBIVCgRraW5kGAIgASgJQgf6QgRyAhggEhsKB2NvbnRlbnQYAyABKAlCCvpCB3IFKICAgAIipwEKCFByb3RvY29sEhgKFFBST1RPQ09MX1VOU1BFQ0lGSUVEEAASDwoLUFJPVE9DT0xfUEcQARISCg5QUk9UT0NPTF9NWVNRTBACEhUKEVBST1RPQ09MX1BJQ09EQVRBEAMSFQoRUFJPVE9DT0xfWURCX0dSUEMQBBIWChJQUk9UT0NPTF9ZREJfR1JQQ1MQBRIWChJQUk9UT0NPTF9DT0NLUk9BQ0gQB0JEWkJnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9kb21haW5iBnByb3RvMw", [file_cloud_v1_common_tags, file_validate_validate, file_ogen_ogen]);
+  fileDesc("Ch5jbG91ZC92MS9kb21haW4vd29ya2xvYWQucHJvdG8SD2Nsb3VkLnYxLmRvbWFpbiKqCwoIV29ya2xvYWQSIAoPc3Ryb3BweV92ZXJzaW9uGAEgASgJQgf6QgRyAhhAEj4KCHByb3RvY29sGAQgASgOMiIuY2xvdWQudjEuZG9tYWluLldvcmtsb2FkLlByb3RvY29sQgj6QgWCAQIQARI/CghzZWdtZW50cxgJIAMoCzIhLmNsb3VkLnYxLmRvbWFpbi5Xb3JrbG9hZC5TZWdtZW50Qgr6QgeSAQQIARAQEiMKBHRhZ3MYCCABKAsyFS5jbG91ZC52MS5jb21tb24uVGFncxq4AQoJRXhlY3V0aW9uEhgKA3Z1cxgBIAEoDUIL+kIIKgYoARigjQYSOAoIZHVyYXRpb24YAiABKAlCJPpCIXIfGCAyG14oWzAtOV0rKG5zfHVzfG1zfHN8bXxoKSkrJEgAEh0KCml0ZXJhdGlvbnMYAyABKA1CB/pCBCoCKAFIABINCgVxdWlldBgEIAEoCBIVCg1ub190aHJlc2hvbGRzGAUgASgIQhIKBWxpbWl0Egn4QgHypx0CCAMaoQMKClBhcmFtZXRlcnMSHAoJcG9vbF9zaXplGAEgASgNQgn6QgYqBBj//wMSLQoMc2NhbGVfZmFjdG9yGAIgASgBQhf6QhQSEhkAAAAAAGr4QCEAAAAAAAAAABImChVkZWZhdWx0X2luc2VydF9tZXRob2QYAyABKAlCB/pCBHICGEASaQoDZW52GAQgAygLMi0uY2xvdWQudjEuZG9tYWluLldvcmtsb2FkLlBhcmFtZXRlcnMuRW52RW50cnlCLfpCKpoBJxCAAiIbchkQARiAAjISXltBLVpfXVtBLVowLTlfXSokKgVyAxiAQBIyCgVzdGVwcxgFIAMoCUIj+kIgkgEdECAiGXIXMhFeW2Etel1bYS16MC05X10qJBABGEASNQoIbm9fc3RlcHMYBiADKAlCI/pCIJIBHRAgIhlyFxABGEAyEV5bYS16XVthLXowLTlfXSokEhwKCWJ1bGtfc2l6ZRgHIAEoDUIJ+kIGKgQYwIQ9GioKCEVudkVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEabwoMV29ya2xvYWRGaWxlEisKBG5hbWUYASABKAlCHfpCGnIYEAEYgAIyEV5bQS1aYS16MC05Ll8tXSskEhUKBGtpbmQYAiABKAlCB/pCBHICGCASGwoHY29udGVudBgDIAEoCUIK+kIHcgUogICAAhqSAgoHU2VnbWVudBIXCgRuYW1lGAEgASgJQgn6QgZyBBhAEAESGgoGc2NyaXB0GAIgASgJQgr6QgdyBRABGIAEEhUKA3NxbBgDIAEoCUII+kIFcgMYgAQSQAoJZXhlY3V0aW9uGAQgASgLMiMuY2xvdWQudjEuZG9tYWluLldvcmtsb2FkLkV4ZWN1dGlvbkII+kIFigECEAESOAoKcGFyYW1ldGVycxgFIAEoCzIkLmNsb3VkLnYxLmRvbWFpbi5Xb3JrbG9hZC5QYXJhbWV0ZXJzEj8KBWZpbGVzGAYgAygLMiYuY2xvdWQudjEuZG9tYWluLldvcmtsb2FkLldvcmtsb2FkRmlsZUII+kIFkgECEEAipwEKCFByb3RvY29sEhgKFFBST1RPQ09MX1VOU1BFQ0lGSUVEEAASDwoLUFJPVE9DT0xfUEcQARISCg5QUk9UT0NPTF9NWVNRTBACEhUKEVBST1RPQ09MX1BJQ09EQVRBEAMSFQoRUFJPVE9DT0xfWURCX0dSUEMQBBIWChJQUk9UT0NPTF9ZREJfR1JQQ1MQBRIWChJQUk9UT0NPTF9DT0NLUk9BQ0gQB0oECAIQA0oECAMQBEoECAUQBkoECAYQB0oECAcQCFIGc2NyaXB0UgNzcWxSCWV4ZWN1dGlvblIKcGFyYW1ldGVyc1IFZmlsZXNCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvZG9tYWluYgZwcm90bzM", [file_cloud_v1_common_tags, file_validate_validate, file_ogen_ogen]);
 
 /**
  *
- * Workload is the cloud-facing workload DTO sent by the wizard — ONLY the load
- * (script, protocol, k6 profile, parameters, run-scoped files). DB engine
- * install/packages belong to the Database intent, not here; stroppy_version is
- * just a selector for which stroppy the load needs. The backend renders this into
- * stroppy's RunConfig protojson before launching.
+ * Workload is the cloud-facing workload DTO sent by the wizard. It is a thin
+ * outer envelope — what is shared across the whole run — wrapping an ordered list
+ * of Segments, each a self-contained stroppy invocation against the SAME database.
+ *
+ * Shared at this level because it is structurally forced or DB-bound:
+ * - stroppy_version: the binary installs ONCE per runner node, so one version
+ * per run (a single selector for which stroppy the load needs).
+ * - protocol (driver type): every segment hits the one provisioned DB, so the
+ * wire format is shared.
+ *
+ * Everything that legitimately varies per phase (script, k6 profile, parameters,
+ * run-scoped files, step filter) lives on Segment. The canonical use is a
+ * "bootstrap" segment (create_schema + load_data) followed by a "workload" segment
+ * (the measured load) so Grafana averages are not polluted by load time; but N
+ * segments are allowed (multiple benchmarks back to back on one DB), default 1.
+ *
+ * Segments run SEQUENTIALLY on a single DB (not in parallel) — each is rendered
+ * into its own stroppy RunConfig protojson and gets its own execution time window.
  *
  * These are the params the user supplies AROUND the probe: the wizard sends the
  * base fields (version, script, sql, files, protocol, scale_factor, pool_size) to
@@ -40,54 +53,28 @@ export const file_cloud_v1_domain_workload: GenFile = /*@__PURE__*/
  */
 export type Workload = Message<"cloud.v1.domain.Workload"> & {
   /**
-   * stroppy_version is the stroppy binary version/tag the load needs. 
+   * stroppy_version is the stroppy binary version/tag the load needs. Shared
+   * across all segments: the binary installs once per runner node. 
    *
    * @generated from field: string stroppy_version = 1;
    */
   stroppyVersion: string;
 
   /**
-   * script is a stroppy-accepted script/preset/path/inline SQL,
-   * e.g. "tpcc/tx", "tpcds", "./bench.ts", "queries.sql". 
-   *
-   * @generated from field: string script = 2;
-   */
-  script: string;
-
-  /**
-   * sql is an optional second stroppy positional arg, e.g. an SQL probe file. 
-   *
-   * @generated from field: string sql = 3;
-   */
-  sql: string;
-
-  /**
-   * protocol selects wire format. UNSPECIFIED means backend default for Database.Kind. 
+   * protocol selects wire format. UNSPECIFIED means backend default for Database.Kind.
+   * Shared across all segments: every segment hits the one provisioned DB. 
    *
    * @generated from field: cloud.v1.domain.Workload.Protocol protocol = 4;
    */
   protocol: Workload_Protocol;
 
   /**
-   * execution is the k6 execution profile. 
+   * segments is the ordered list of stroppy invocations run back to back on the
+   * same DB. At least one; the first is typically bootstrap, the rest measured. 
    *
-   * @generated from field: cloud.v1.domain.Workload.Execution execution = 5;
+   * @generated from field: repeated cloud.v1.domain.Workload.Segment segments = 9;
    */
-  execution?: Workload_Execution;
-
-  /**
-   * parameters are workload/script parameters. 
-   *
-   * @generated from field: cloud.v1.domain.Workload.Parameters parameters = 6;
-   */
-  parameters?: Workload_Parameters;
-
-  /**
-   * files are run-scoped files staged next to stroppy-config.json. 
-   *
-   * @generated from field: repeated cloud.v1.domain.Workload.WorkloadFile files = 7;
-   */
-  files: Workload_WorkloadFile[];
+  segments: Workload_Segment[];
 
   /**
    * tags are free-form metadata attached to the workload. 
@@ -99,11 +86,24 @@ export type Workload = Message<"cloud.v1.domain.Workload"> & {
 
 /**
  *
- * Workload is the cloud-facing workload DTO sent by the wizard — ONLY the load
- * (script, protocol, k6 profile, parameters, run-scoped files). DB engine
- * install/packages belong to the Database intent, not here; stroppy_version is
- * just a selector for which stroppy the load needs. The backend renders this into
- * stroppy's RunConfig protojson before launching.
+ * Workload is the cloud-facing workload DTO sent by the wizard. It is a thin
+ * outer envelope — what is shared across the whole run — wrapping an ordered list
+ * of Segments, each a self-contained stroppy invocation against the SAME database.
+ *
+ * Shared at this level because it is structurally forced or DB-bound:
+ * - stroppy_version: the binary installs ONCE per runner node, so one version
+ * per run (a single selector for which stroppy the load needs).
+ * - protocol (driver type): every segment hits the one provisioned DB, so the
+ * wire format is shared.
+ *
+ * Everything that legitimately varies per phase (script, k6 profile, parameters,
+ * run-scoped files, step filter) lives on Segment. The canonical use is a
+ * "bootstrap" segment (create_schema + load_data) followed by a "workload" segment
+ * (the measured load) so Grafana averages are not polluted by load time; but N
+ * segments are allowed (multiple benchmarks back to back on one DB), default 1.
+ *
+ * Segments run SEQUENTIALLY on a single DB (not in parallel) — each is rendered
+ * into its own stroppy RunConfig protojson and gets its own execution time window.
  *
  * These are the params the user supplies AROUND the probe: the wizard sends the
  * base fields (version, script, sql, files, protocol, scale_factor, pool_size) to
@@ -121,54 +121,28 @@ export type Workload = Message<"cloud.v1.domain.Workload"> & {
  */
 export type WorkloadJson = {
   /**
-   * stroppy_version is the stroppy binary version/tag the load needs. 
+   * stroppy_version is the stroppy binary version/tag the load needs. Shared
+   * across all segments: the binary installs once per runner node. 
    *
    * @generated from field: string stroppy_version = 1;
    */
   stroppyVersion?: string;
 
   /**
-   * script is a stroppy-accepted script/preset/path/inline SQL,
-   * e.g. "tpcc/tx", "tpcds", "./bench.ts", "queries.sql". 
-   *
-   * @generated from field: string script = 2;
-   */
-  script?: string;
-
-  /**
-   * sql is an optional second stroppy positional arg, e.g. an SQL probe file. 
-   *
-   * @generated from field: string sql = 3;
-   */
-  sql?: string;
-
-  /**
-   * protocol selects wire format. UNSPECIFIED means backend default for Database.Kind. 
+   * protocol selects wire format. UNSPECIFIED means backend default for Database.Kind.
+   * Shared across all segments: every segment hits the one provisioned DB. 
    *
    * @generated from field: cloud.v1.domain.Workload.Protocol protocol = 4;
    */
   protocol?: Workload_ProtocolJson;
 
   /**
-   * execution is the k6 execution profile. 
+   * segments is the ordered list of stroppy invocations run back to back on the
+   * same DB. At least one; the first is typically bootstrap, the rest measured. 
    *
-   * @generated from field: cloud.v1.domain.Workload.Execution execution = 5;
+   * @generated from field: repeated cloud.v1.domain.Workload.Segment segments = 9;
    */
-  execution?: Workload_ExecutionJson;
-
-  /**
-   * parameters are workload/script parameters. 
-   *
-   * @generated from field: cloud.v1.domain.Workload.Parameters parameters = 6;
-   */
-  parameters?: Workload_ParametersJson;
-
-  /**
-   * files are run-scoped files staged next to stroppy-config.json. 
-   *
-   * @generated from field: repeated cloud.v1.domain.Workload.WorkloadFile files = 7;
-   */
-  files?: Workload_WorkloadFileJson[];
+  segments?: Workload_SegmentJson[];
 
   /**
    * tags are free-form metadata attached to the workload. 
@@ -490,6 +464,129 @@ export type Workload_WorkloadFileValid = Workload_WorkloadFile;
  */
 export const Workload_WorkloadFileSchema: GenMessage<Workload_WorkloadFile, {jsonType: Workload_WorkloadFileJson, validType: Workload_WorkloadFileValid}> = /*@__PURE__*/
   messageDesc(file_cloud_v1_domain_workload, 0, 2);
+
+/**
+ *
+ * Segment is one self-contained stroppy invocation in the run's sequence. Each
+ * segment is rendered into its own stroppy RunConfig and runs against the same
+ * DB, in order, with its own execution time window (so per-segment Grafana /
+ * metrics scoping is possible). A run has >= 1 segment; the common 2-segment
+ * shape is a "bootstrap" segment (steps: create_schema, load_data) followed by
+ * a measured "workload" segment.
+ *
+ * @generated from message cloud.v1.domain.Workload.Segment
+ */
+export type Workload_Segment = Message<"cloud.v1.domain.Workload.Segment"> & {
+  /**
+   * name is a human label for the segment, e.g. "bootstrap", "workload".
+   * Surfaced as the stage phase and the Grafana time-window label. 
+   *
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * script is a stroppy-accepted script/preset/path/inline SQL,
+   * e.g. "tpcc/tx", "tpcds", "./bench.ts", "queries.sql". 
+   *
+   * @generated from field: string script = 2;
+   */
+  script: string;
+
+  /**
+   * sql is an optional second stroppy positional arg, e.g. an SQL probe file. 
+   *
+   * @generated from field: string sql = 3;
+   */
+  sql: string;
+
+  /**
+   * execution is the k6 execution profile for this segment. 
+   *
+   * @generated from field: cloud.v1.domain.Workload.Execution execution = 4;
+   */
+  execution?: Workload_Execution;
+
+  /**
+   * parameters are workload/script parameters for this segment. 
+   *
+   * @generated from field: cloud.v1.domain.Workload.Parameters parameters = 5;
+   */
+  parameters?: Workload_Parameters;
+
+  /**
+   * files are run-scoped files staged next to this segment's stroppy-config.json. 
+   *
+   * @generated from field: repeated cloud.v1.domain.Workload.WorkloadFile files = 6;
+   */
+  files: Workload_WorkloadFile[];
+};
+
+/**
+ *
+ * Segment is one self-contained stroppy invocation in the run's sequence. Each
+ * segment is rendered into its own stroppy RunConfig and runs against the same
+ * DB, in order, with its own execution time window (so per-segment Grafana /
+ * metrics scoping is possible). A run has >= 1 segment; the common 2-segment
+ * shape is a "bootstrap" segment (steps: create_schema, load_data) followed by
+ * a measured "workload" segment.
+ *
+ * @generated from message cloud.v1.domain.Workload.Segment
+ */
+export type Workload_SegmentJson = {
+  /**
+   * name is a human label for the segment, e.g. "bootstrap", "workload".
+   * Surfaced as the stage phase and the Grafana time-window label. 
+   *
+   * @generated from field: string name = 1;
+   */
+  name?: string;
+
+  /**
+   * script is a stroppy-accepted script/preset/path/inline SQL,
+   * e.g. "tpcc/tx", "tpcds", "./bench.ts", "queries.sql". 
+   *
+   * @generated from field: string script = 2;
+   */
+  script?: string;
+
+  /**
+   * sql is an optional second stroppy positional arg, e.g. an SQL probe file. 
+   *
+   * @generated from field: string sql = 3;
+   */
+  sql?: string;
+
+  /**
+   * execution is the k6 execution profile for this segment. 
+   *
+   * @generated from field: cloud.v1.domain.Workload.Execution execution = 4;
+   */
+  execution?: Workload_ExecutionJson;
+
+  /**
+   * parameters are workload/script parameters for this segment. 
+   *
+   * @generated from field: cloud.v1.domain.Workload.Parameters parameters = 5;
+   */
+  parameters?: Workload_ParametersJson;
+
+  /**
+   * files are run-scoped files staged next to this segment's stroppy-config.json. 
+   *
+   * @generated from field: repeated cloud.v1.domain.Workload.WorkloadFile files = 6;
+   */
+  files?: Workload_WorkloadFileJson[];
+};
+
+export type Workload_SegmentValid = Workload_Segment;
+
+/**
+ * Describes the message cloud.v1.domain.Workload.Segment.
+ * Use `create(Workload_SegmentSchema)` to create a new message.
+ */
+export const Workload_SegmentSchema: GenMessage<Workload_Segment, {jsonType: Workload_SegmentJson, validType: Workload_SegmentValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_domain_workload, 0, 3);
 
 /**
  *
