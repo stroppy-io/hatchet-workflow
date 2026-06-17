@@ -584,6 +584,22 @@ func builtinWorkloadPresets(tenantID, authorID string) []*models.WorkloadPresetR
 			},
 		}
 	}
+	addSplit := func(name, description, script string, scaleFactor float64) *models.WorkloadPresetRecord {
+		workload := splitDemoWorkload(script, scaleFactor)
+		return &models.WorkloadPresetRecord{
+			Entity:   newSeedEntity(tenantID, authorID, name, description),
+			IsSystem: true,
+			Workload: workload,
+			Summary: &models.WorkloadPresetRecord_Summary{
+				Protocol:       workload.GetProtocol(),
+				StroppyVersion: workload.GetStroppyVersion(),
+				Script:         workloadbuilder.PrimarySegment(workload).GetScript(),
+			},
+		}
+	}
+	// Self-check presets come first so workloadPresetsByProtocol (first-wins) binds
+	// each protocol to its minimal workload for the builtin self-check test presets.
+	// The split demos that follow showcase the bootstrap + measured-workload shape.
 	return []*models.WorkloadPresetRecord{
 		add("Self-check PG", "Minimal PostgreSQL-compatible workload", domain.Workload_PROTOCOL_PG),
 		add("Self-check MySQL", "Minimal MySQL-compatible workload", domain.Workload_PROTOCOL_MYSQL),
@@ -591,6 +607,52 @@ func builtinWorkloadPresets(tenantID, authorID string) []*models.WorkloadPresetR
 		add("Self-check YDB gRPC", "Minimal self-hosted YDB workload", domain.Workload_PROTOCOL_YDB_GRPC),
 		add("Self-check YDB gRPCS", "Minimal managed YDB workload", domain.Workload_PROTOCOL_YDB_GRPCS),
 		add("Self-check CockroachDB", "Minimal CockroachDB workload", domain.Workload_PROTOCOL_COCKROACH),
+		addSplit("TPC-C split (bootstrap + workload)",
+			"TPC-C in two segments: a bootstrap (create_schema + load_data) then the measured workload, so load time does not skew the workload averages",
+			"tpcc/tx", 10),
+		addSplit("TPC-H split (bootstrap + workload)",
+			"TPC-H in two segments: a bootstrap (create_schema + load_data) then the measured query workload",
+			"tpch", 1),
+	}
+}
+
+// splitDemoWorkload builds a two-segment PG workload: a bootstrap segment
+// (create_schema + load_data, no measured limit relevant) followed by the
+// measured workload segment. It is a starting point users clone and tune.
+func splitDemoWorkload(script string, scaleFactor float64) *domain.Workload {
+	bootstrap := &domain.Workload_Segment{
+		Name:   "bootstrap",
+		Script: script,
+		Execution: &domain.Workload_Execution{
+			Vus:          16,
+			Limit:        &domain.Workload_Execution_Duration{Duration: "1h"},
+			Quiet:        true,
+			NoThresholds: true,
+		},
+		Parameters: &domain.Workload_Parameters{
+			PoolSize:    16,
+			ScaleFactor: scaleFactor,
+			Steps:       []string{"create_schema", "load_data"},
+		},
+	}
+	measured := &domain.Workload_Segment{
+		Name:   "workload",
+		Script: script,
+		Execution: &domain.Workload_Execution{
+			Vus:          64,
+			Limit:        &domain.Workload_Execution_Duration{Duration: "10m"},
+			Quiet:        true,
+			NoThresholds: true,
+		},
+		Parameters: &domain.Workload_Parameters{
+			PoolSize:    64,
+			ScaleFactor: scaleFactor,
+			Steps:       []string{"workload"},
+		},
+	}
+	return &domain.Workload{
+		Protocol: domain.Workload_PROTOCOL_PG,
+		Segments: []*domain.Workload_Segment{bootstrap, measured},
 	}
 }
 
@@ -836,8 +898,15 @@ func workloadPresetsByName(input []*models.WorkloadPresetRecord) map[string]*mod
 func workloadPresetsByProtocol(input []*models.WorkloadPresetRecord) map[domain.Workload_Protocol]*models.WorkloadPresetRecord {
 	out := make(map[domain.Workload_Protocol]*models.WorkloadPresetRecord, len(input))
 	for _, p := range input {
-		if p.GetWorkload().GetProtocol() != domain.Workload_PROTOCOL_UNSPECIFIED {
-			out[p.GetWorkload().GetProtocol()] = p
+		protocol := p.GetWorkload().GetProtocol()
+		if protocol == domain.Workload_PROTOCOL_UNSPECIFIED {
+			continue
+		}
+		// First-wins: builtinWorkloadPresets lists the minimal self-check workload
+		// for each protocol before the multi-segment demos, so the builtin
+		// self-check test presets keep binding to the minimal workload.
+		if _, ok := out[protocol]; !ok {
+			out[protocol] = p
 		}
 	}
 	return out
