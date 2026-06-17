@@ -620,8 +620,7 @@ func builtinWorkloadPresets(tenantID, authorID string) []*models.WorkloadPresetR
 			},
 		}
 	}
-	addSplit := func(name, description, script string, scaleFactor float64) *models.WorkloadPresetRecord {
-		workload := splitDemoWorkload(script, scaleFactor)
+	addSplit := func(name, description string, workload *domain.Workload) *models.WorkloadPresetRecord {
 		return &models.WorkloadPresetRecord{
 			Entity:   newSeedEntity(tenantID, authorID, name, description),
 			IsSystem: true,
@@ -644,51 +643,73 @@ func builtinWorkloadPresets(tenantID, authorID string) []*models.WorkloadPresetR
 		add("Self-check YDB gRPCS", "Minimal managed YDB workload", domain.Workload_PROTOCOL_YDB_GRPCS),
 		add("Self-check CockroachDB", "Minimal CockroachDB workload", domain.Workload_PROTOCOL_COCKROACH),
 		addSplit("TPC-C split (bootstrap + workload)",
-			"TPC-C in two segments: a bootstrap (create_schema + load_data) then the measured workload, so load time does not skew the workload averages",
-			"tpcc/tx", 10),
+			"TPC-C in two segments: a bootstrap (schema + load + indexes) then the measured workload, so load time does not skew the workload averages",
+			tpccSplitWorkload()),
 		addSplit("TPC-H split (bootstrap + workload)",
-			"TPC-H in two segments: a bootstrap (create_schema + load_data) then the measured query workload",
-			"tpch", 1),
+			"TPC-H in two segments: a bootstrap (schema + load + set_logged + indexes + finalize) then a single measured query iteration",
+			tpchSplitWorkload()),
 	}
 }
 
-// splitDemoWorkload builds a two-segment PG workload: a bootstrap segment
-// (create_schema + load_data, no measured limit relevant) followed by the
-// measured workload segment. It is a starting point users clone and tune.
-func splitDemoWorkload(script string, scaleFactor float64) *domain.Workload {
-	bootstrap := &domain.Workload_Segment{
-		Name:   "bootstrap",
+// splitSegment assembles one duration-limited PG segment with the shared demo
+// defaults (pool 10, quiet, no thresholds). vus and the duration differ per
+// segment; the iteration-limited TPC-H workload segment is built inline.
+func splitSegment(name, script string, vus uint32, scaleFactor float64, steps []string, duration string) *domain.Workload_Segment {
+	return &domain.Workload_Segment{
+		Name:   name,
 		Script: script,
 		Execution: &domain.Workload_Execution{
-			Vus:          16,
-			Limit:        &domain.Workload_Execution_Duration{Duration: "1h"},
+			Vus:          vus,
+			Limit:        &domain.Workload_Execution_Duration{Duration: duration},
 			Quiet:        true,
 			NoThresholds: true,
 		},
 		Parameters: &domain.Workload_Parameters{
-			PoolSize:    16,
+			PoolSize:    10,
 			ScaleFactor: scaleFactor,
-			Steps:       []string{"create_schema", "load_data"},
+			Steps:       steps,
 		},
 	}
-	measured := &domain.Workload_Segment{
-		Name:   "workload",
-		Script: script,
-		Execution: &domain.Workload_Execution{
-			Vus:          64,
-			Limit:        &domain.Workload_Execution_Duration{Duration: "10m"},
-			Quiet:        true,
-			NoThresholds: true,
-		},
-		Parameters: &domain.Workload_Parameters{
-			PoolSize:    64,
-			ScaleFactor: scaleFactor,
-			Steps:       []string{"workload"},
-		},
-	}
+}
+
+// tpccSplitWorkload: bootstrap (schema + load + indexes) capped generously, then
+// a 1-minute measured workload. Two VUs on the workload, one on the bootstrap.
+func tpccSplitWorkload() *domain.Workload {
 	return &domain.Workload{
 		Protocol: domain.Workload_PROTOCOL_PG,
-		Segments: []*domain.Workload_Segment{bootstrap, measured},
+		Segments: []*domain.Workload_Segment{
+			splitSegment("bootstrap", "tpcc/tx", 1, 10,
+				[]string{"create_schema", "load_data", "create_indexes"}, "1h"),
+			splitSegment("workload", "tpcc/tx", 2, 10,
+				[]string{"workload"}, "1m"),
+		},
+	}
+}
+
+// tpchSplitWorkload: bootstrap (schema + load + set_logged + indexes + finalize)
+// capped generously, then a single measured query iteration.
+func tpchSplitWorkload() *domain.Workload {
+	return &domain.Workload{
+		Protocol: domain.Workload_PROTOCOL_PG,
+		Segments: []*domain.Workload_Segment{
+			splitSegment("bootstrap", "tpch/tx", 1, 1,
+				[]string{"create_schema", "load_data", "set_logged", "create_indexes", "finalize_totals"}, "1h"),
+			{
+				Name:   "workload",
+				Script: "tpch/tx",
+				Execution: &domain.Workload_Execution{
+					Vus:          2,
+					Limit:        &domain.Workload_Execution_Iterations{Iterations: 1},
+					Quiet:        true,
+					NoThresholds: true,
+				},
+				Parameters: &domain.Workload_Parameters{
+					PoolSize:    10,
+					ScaleFactor: 1,
+					Steps:       []string{"queries"},
+				},
+			},
+		},
 	}
 }
 
