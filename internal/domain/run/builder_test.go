@@ -55,7 +55,7 @@ func TestBuildTestRun(t *testing.T) {
 
 func TestBuildTestRunUsesMaxRunnerSizingFromThousandVUs(t *testing.T) {
 	wl := workload()
-	wl.Execution.Vus = 1000
+	wl.Segments[0].Execution.Vus = 1000
 	run, err := BuildTestRun(BuildOptions{
 		ID:       "run-1",
 		Database: postgresDatabase(),
@@ -126,14 +126,17 @@ func postgresDatabase() *domain.Database {
 
 func workload() *domain.Workload {
 	return &domain.Workload{
-		Script:   "tpcc/tx",
 		Protocol: domain.Workload_PROTOCOL_PG,
-		Execution: &domain.Workload_Execution{
-			Vus: 1,
-			Limit: &domain.Workload_Execution_Duration{
-				Duration: "1m",
+		Segments: []*domain.Workload_Segment{{
+			Name:   "workload",
+			Script: "tpcc/tx",
+			Execution: &domain.Workload_Execution{
+				Vus: 1,
+				Limit: &domain.Workload_Execution_Duration{
+					Duration: "1m",
+				},
 			},
-		},
+		}},
 	}
 }
 

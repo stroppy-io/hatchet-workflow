@@ -130,7 +130,7 @@ func TestStartTestRunRejectsInvalidSpecBeforePersist(t *testing.T) {
 		Source: &api.StartTestRunRequest_Run{
 			Run: &domain.TestRun{
 				Database: &domain.Database{Kind: domain.Database_KIND_POSTGRES},
-				Workload: &domain.Workload{Script: "tpcc/tx"},
+				Workload: &domain.Workload{Segments: []*domain.Workload_Segment{{Name: "workload", Script: "tpcc/tx"}}},
 			},
 		},
 	})
@@ -309,14 +309,17 @@ func validTestRun(t *testing.T) *domain.TestRun {
 			},
 		},
 		Workload: &domain.Workload{
-			Script:   "tpcc/tx",
 			Protocol: domain.Workload_PROTOCOL_PG,
-			Execution: &domain.Workload_Execution{
-				Vus: 1,
-				Limit: &domain.Workload_Execution_Duration{
-					Duration: "1m",
+			Segments: []*domain.Workload_Segment{{
+				Name:   "workload",
+				Script: "tpcc/tx",
+				Execution: &domain.Workload_Execution{
+					Vus: 1,
+					Limit: &domain.Workload_Execution_Duration{
+						Duration: "1m",
+					},
 				},
-			},
+			}},
 		},
 		Provider: deployment.Provider_PROVIDER_DOCKER,
 		Infrastructure: infrastructurebuilder.BuildOptions{

@@ -105,7 +105,10 @@ func TestEnsurePresetSummariesBackfillsDecodedRows(t *testing.T) {
 	workloadPreset := &models.WorkloadPresetRecord{Workload: &domain.Workload{
 		Protocol:       domain.Workload_PROTOCOL_PG,
 		StroppyVersion: "1.2.3",
-		Script:         "tpcc",
+		Segments: []*domain.Workload_Segment{{
+			Name:   "workload",
+			Script: "tpcc",
+		}},
 	}}
 	ensureWorkloadPresetSummary(workloadPreset)
 	if workloadPreset.GetSummary().GetProtocol() != domain.Workload_PROTOCOL_PG || workloadPreset.GetSummary().GetScript() != "tpcc" {

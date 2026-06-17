@@ -41,6 +41,7 @@
   - [cloud.v1.domain.Workload.Parameters](#cloud-v1-domain-workload-parameters)
   - [cloud.v1.domain.Workload.Parameters.EnvEntry](#cloud-v1-domain-workload-parameters-enventry)
   - [cloud.v1.domain.Workload.Protocol](#cloud-v1-domain-workload-protocol)
+  - [cloud.v1.domain.Workload.Segment](#cloud-v1-domain-workload-segment)
   - [cloud.v1.domain.Workload.WorkloadFile](#cloud-v1-domain-workload-workloadfile)
   - [cloud.v1.domain.YdbManagedParams](#cloud-v1-domain-ydbmanagedparams)
   - [cloud.v1.domain.YdbManagedParams.AutoScale](#cloud-v1-domain-ydbmanagedparams-autoscale)
@@ -1572,11 +1573,24 @@ KIND_AGENT is a worker running on a host.
 ### cloud.v1.domain.Workload
 
 <pre>
-//Workload is the cloud-facing workload DTO sent by the wizard — ONLY the load
-//(script, protocol, k6 profile, parameters, run-scoped files). DB engine
-//install/packages belong to the Database intent, not here; stroppy_version is
-//just a selector for which stroppy the load needs. The backend renders this into
-//stroppy's RunConfig protojson before launching.
+//Workload is the cloud-facing workload DTO sent by the wizard. It is a thin
+//outer envelope — what is shared across the whole run — wrapping an ordered list
+//of Segments, each a self-contained stroppy invocation against the SAME database.
+
+//Shared at this level because it is structurally forced or DB-bound:
+//- stroppy_version: the binary installs ONCE per runner node, so one version
+//per run (a single selector for which stroppy the load needs).
+//- protocol (driver type): every segment hits the one provisioned DB, so the
+//wire format is shared.
+
+//Everything that legitimately varies per phase (script, k6 profile, parameters,
+//run-scoped files, step filter) lives on Segment. The canonical use is a
+//"bootstrap" segment (create_schema + load_data) followed by a "workload" segment
+//(the measured load) so Grafana averages are not polluted by load time; but N
+//segments are allowed (multiple benchmarks back to back on one DB), default 1.
+
+//Segments run SEQUENTIALLY on a single DB (not in parallel) — each is rendered
+//into its own stroppy RunConfig protojson and gets its own execution time window.
 
 //These are the params the user supplies AROUND the probe: the wizard sends the
 //base fields (version, script, sql, files, protocol, scale_factor, pool_size) to
@@ -1598,59 +1612,29 @@ KIND_AGENT is a worker running on a host.
 <th>Description</th>
 </tr>
 <tr>
-<td>execution</td>
-<td><a href="#cloud-v1-domain-workload-execution">cloud.v1.domain.Workload.Execution</a></td>
-<td><pre>
-execution is the k6 execution profile.<br>
-
-json_name: execution
-go_name: Execution</pre></td>
-</tr><tr>
-<td>files</td>
-<td><a href="#cloud-v1-domain-workload-workloadfile">cloud.v1.domain.Workload.WorkloadFile</a></td>
-<td><pre>
-files are run-scoped files staged next to stroppy-config.json.<br>
-
-json_name: files
-go_name: Files</pre></td>
-</tr><tr>
-<td>parameters</td>
-<td><a href="#cloud-v1-domain-workload-parameters">cloud.v1.domain.Workload.Parameters</a></td>
-<td><pre>
-parameters are workload/script parameters.<br>
-
-json_name: parameters
-go_name: Parameters</pre></td>
-</tr><tr>
 <td>protocol</td>
 <td><a href="#cloud-v1-domain-workload-protocol">cloud.v1.domain.Workload.Protocol</a></td>
 <td><pre>
-protocol selects wire format. UNSPECIFIED means backend default for Database.Kind.<br>
+protocol selects wire format. UNSPECIFIED means backend default for Database.Kind.
+//Shared across all segments: every segment hits the one provisioned DB.<br>
 
 json_name: protocol
 go_name: Protocol</pre></td>
 </tr><tr>
-<td>script</td>
-<td>string</td>
+<td>segments</td>
+<td><a href="#cloud-v1-domain-workload-segment">cloud.v1.domain.Workload.Segment</a></td>
 <td><pre>
-script is a stroppy-accepted script/preset/path/inline SQL,
-//e.g. "tpcc/tx", "tpcds", "./bench.ts", "queries.sql".<br>
+segments is the ordered list of stroppy invocations run back to back on the
+//same DB. At least one; the first is typically bootstrap, the rest measured.<br>
 
-json_name: script
-go_name: Script</pre></td>
-</tr><tr>
-<td>sql</td>
-<td>string</td>
-<td><pre>
-sql is an optional second stroppy positional arg, e.g. an SQL probe file.<br>
-
-json_name: sql
-go_name: Sql</pre></td>
+json_name: segments
+go_name: Segments</pre></td>
 </tr><tr>
 <td>stroppy_version</td>
 <td>string</td>
 <td><pre>
-stroppy_version is the stroppy binary version/tag the load needs.<br>
+stroppy_version is the stroppy binary version/tag the load needs. Shared
+//across all segments: the binary installs once per runner node.<br>
 
 json_name: stroppyVersion
 go_name: StroppyVersion</pre></td>
@@ -1879,6 +1863,79 @@ COCKROACH is CockroachDB pg-wire on its own default port.
 </pre></td>
 </tr>
 </table>
+
+<a name="cloud-v1-domain-workload-segment"></a>
+### cloud.v1.domain.Workload.Segment
+
+<pre>
+//Segment is one self-contained stroppy invocation in the run's sequence. Each
+//segment is rendered into its own stroppy RunConfig and runs against the same
+//DB, in order, with its own execution time window (so per-segment Grafana /
+//metrics scoping is possible). A run has >= 1 segment; the common 2-segment
+//shape is a "bootstrap" segment (steps: create_schema, load_data) followed by
+//a measured "workload" segment.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>execution</td>
+<td><a href="#cloud-v1-domain-workload-execution">cloud.v1.domain.Workload.Execution</a></td>
+<td><pre>
+execution is the k6 execution profile for this segment.<br>
+
+json_name: execution
+go_name: Execution</pre></td>
+</tr><tr>
+<td>files</td>
+<td><a href="#cloud-v1-domain-workload-workloadfile">cloud.v1.domain.Workload.WorkloadFile</a></td>
+<td><pre>
+files are run-scoped files staged next to this segment's stroppy-config.json.<br>
+
+json_name: files
+go_name: Files</pre></td>
+</tr><tr>
+<td>name</td>
+<td>string</td>
+<td><pre>
+name is a human label for the segment, e.g. "bootstrap", "workload".
+//Surfaced as the stage phase and the Grafana time-window label.<br>
+
+json_name: name
+go_name: Name</pre></td>
+</tr><tr>
+<td>parameters</td>
+<td><a href="#cloud-v1-domain-workload-parameters">cloud.v1.domain.Workload.Parameters</a></td>
+<td><pre>
+parameters are workload/script parameters for this segment.<br>
+
+json_name: parameters
+go_name: Parameters</pre></td>
+</tr><tr>
+<td>script</td>
+<td>string</td>
+<td><pre>
+script is a stroppy-accepted script/preset/path/inline SQL,
+//e.g. "tpcc/tx", "tpcds", "./bench.ts", "queries.sql".<br>
+
+json_name: script
+go_name: Script</pre></td>
+</tr><tr>
+<td>sql</td>
+<td>string</td>
+<td><pre>
+sql is an optional second stroppy positional arg, e.g. an SQL probe file.<br>
+
+json_name: sql
+go_name: Sql</pre></td>
+</tr>
+</table>
+
+
 
 <a name="cloud-v1-domain-workload-workloadfile"></a>
 ### cloud.v1.domain.Workload.WorkloadFile

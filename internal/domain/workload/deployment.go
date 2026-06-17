@@ -306,8 +306,9 @@ func workloadFileSteps(componentID string, input *domain.Workload) []*deployment
 }
 
 func workloadFiles(componentID string, input *domain.Workload) []*common.File {
-	files := make([]*common.File, 0, len(input.GetFiles()))
-	for _, file := range input.GetFiles() {
+	segmentFiles := PrimarySegment(input).GetFiles()
+	files := make([]*common.File, 0, len(segmentFiles))
+	for _, file := range segmentFiles {
 		files = append(files, &common.File{
 			Info: &common.File_Info{
 				Path:          deploymentbuilder.ConfigDir(componentID) + "/files/" + file.GetName(),

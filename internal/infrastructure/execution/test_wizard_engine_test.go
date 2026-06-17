@@ -76,14 +76,17 @@ func wizardDatabase() *domain.Database {
 
 func wizardWorkload() *domain.Workload {
 	return &domain.Workload{
-		Script:   "tpcc/tx",
 		Protocol: domain.Workload_PROTOCOL_PG,
-		Execution: &domain.Workload_Execution{
-			Vus: 16,
-			Limit: &domain.Workload_Execution_Duration{
-				Duration: "1m",
+		Segments: []*domain.Workload_Segment{{
+			Name:   "workload",
+			Script: "tpcc/tx",
+			Execution: &domain.Workload_Execution{
+				Vus: 16,
+				Limit: &domain.Workload_Execution_Duration{
+					Duration: "1m",
+				},
 			},
-		},
+		}},
 	}
 }
 

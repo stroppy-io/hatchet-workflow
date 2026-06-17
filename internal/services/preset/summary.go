@@ -1,6 +1,7 @@
 package preset
 
 import (
+	workloadbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/workload"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 )
 
@@ -22,7 +23,7 @@ func fillWorkloadPresetSummary(p *models.WorkloadPresetRecord) {
 	p.Summary = &models.WorkloadPresetRecord_Summary{
 		Protocol:       p.GetWorkload().GetProtocol(),
 		StroppyVersion: p.GetWorkload().GetStroppyVersion(),
-		Script:         p.GetWorkload().GetScript(),
+		Script:         workloadbuilder.PrimarySegment(p.GetWorkload()).GetScript(),
 	}
 }
 

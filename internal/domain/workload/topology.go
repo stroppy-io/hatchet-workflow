@@ -55,7 +55,7 @@ func ExtendTopologySpec(spec *topologypb.TopologySpec, input *domain.Workload) (
 	}
 	spec.Labels["workload_engine"] = Engine
 	spec.Labels["workload_runner"] = RunnerNodeID
-	spec.Labels["workload_vus"] = strconv.FormatUint(uint64(input.GetExecution().GetVus()), 10)
+	spec.Labels["workload_vus"] = strconv.FormatUint(uint64(PrimarySegment(input).GetExecution().GetVus()), 10)
 	return spec, nil
 }
 

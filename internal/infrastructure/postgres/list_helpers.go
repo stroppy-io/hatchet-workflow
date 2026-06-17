@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	workloadbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/workload"
 	dbgen "github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres/gen/db"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	commonpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
@@ -746,7 +747,7 @@ func ensureWorkloadPresetSummary(rec *models.WorkloadPresetRecord) {
 	rec.Summary = &models.WorkloadPresetRecord_Summary{
 		Protocol:       rec.GetWorkload().GetProtocol(),
 		StroppyVersion: rec.GetWorkload().GetStroppyVersion(),
-		Script:         rec.GetWorkload().GetScript(),
+		Script:         workloadbuilder.PrimarySegment(rec.GetWorkload()).GetScript(),
 	}
 }
 

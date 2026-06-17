@@ -94,11 +94,24 @@ func (Workload_Protocol) EnumDescriptor() ([]byte, []int) {
 	return file_cloud_v1_domain_workload_proto_rawDescGZIP(), []int{0, 0}
 }
 
-// Workload is the cloud-facing workload DTO sent by the wizard — ONLY the load
-// (script, protocol, k6 profile, parameters, run-scoped files). DB engine
-// install/packages belong to the Database intent, not here; stroppy_version is
-// just a selector for which stroppy the load needs. The backend renders this into
-// stroppy's RunConfig protojson before launching.
+// Workload is the cloud-facing workload DTO sent by the wizard. It is a thin
+// outer envelope — what is shared across the whole run — wrapping an ordered list
+// of Segments, each a self-contained stroppy invocation against the SAME database.
+//
+// Shared at this level because it is structurally forced or DB-bound:
+// - stroppy_version: the binary installs ONCE per runner node, so one version
+// per run (a single selector for which stroppy the load needs).
+// - protocol (driver type): every segment hits the one provisioned DB, so the
+// wire format is shared.
+//
+// Everything that legitimately varies per phase (script, k6 profile, parameters,
+// run-scoped files, step filter) lives on Segment. The canonical use is a
+// "bootstrap" segment (create_schema + load_data) followed by a "workload" segment
+// (the measured load) so Grafana averages are not polluted by load time; but N
+// segments are allowed (multiple benchmarks back to back on one DB), default 1.
+//
+// Segments run SEQUENTIALLY on a single DB (not in parallel) — each is rendered
+// into its own stroppy RunConfig protojson and gets its own execution time window.
 //
 // These are the params the user supplies AROUND the probe: the wizard sends the
 // base fields (version, script, sql, files, protocol, scale_factor, pool_size) to
@@ -113,21 +126,15 @@ func (Workload_Protocol) EnumDescriptor() ([]byte, []int) {
 // Workload.Protocol — intentionally not modeled in proto.
 type Workload struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// stroppy_version is the stroppy binary version/tag the load needs.
+	// stroppy_version is the stroppy binary version/tag the load needs. Shared
+	// across all segments: the binary installs once per runner node.
 	StroppyVersion string `protobuf:"bytes,1,opt,name=stroppy_version,json=stroppyVersion,proto3" json:"stroppy_version,omitempty"`
-	// script is a stroppy-accepted script/preset/path/inline SQL,
-	// e.g. "tpcc/tx", "tpcds", "./bench.ts", "queries.sql".
-	Script string `protobuf:"bytes,2,opt,name=script,proto3" json:"script,omitempty"`
-	// sql is an optional second stroppy positional arg, e.g. an SQL probe file.
-	Sql string `protobuf:"bytes,3,opt,name=sql,proto3" json:"sql,omitempty"`
 	// protocol selects wire format. UNSPECIFIED means backend default for Database.Kind.
+	// Shared across all segments: every segment hits the one provisioned DB.
 	Protocol Workload_Protocol `protobuf:"varint,4,opt,name=protocol,proto3,enum=cloud.v1.domain.Workload_Protocol" json:"protocol,omitempty"`
-	// execution is the k6 execution profile.
-	Execution *Workload_Execution `protobuf:"bytes,5,opt,name=execution,proto3" json:"execution,omitempty"`
-	// parameters are workload/script parameters.
-	Parameters *Workload_Parameters `protobuf:"bytes,6,opt,name=parameters,proto3" json:"parameters,omitempty"`
-	// files are run-scoped files staged next to stroppy-config.json.
-	Files []*Workload_WorkloadFile `protobuf:"bytes,7,rep,name=files,proto3" json:"files,omitempty"`
+	// segments is the ordered list of stroppy invocations run back to back on the
+	// same DB. At least one; the first is typically bootstrap, the rest measured.
+	Segments []*Workload_Segment `protobuf:"bytes,9,rep,name=segments,proto3" json:"segments,omitempty"`
 	// tags are free-form metadata attached to the workload.
 	Tags          *common.Tags `protobuf:"bytes,8,opt,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -171,20 +178,6 @@ func (x *Workload) GetStroppyVersion() string {
 	return ""
 }
 
-func (x *Workload) GetScript() string {
-	if x != nil {
-		return x.Script
-	}
-	return ""
-}
-
-func (x *Workload) GetSql() string {
-	if x != nil {
-		return x.Sql
-	}
-	return ""
-}
-
 func (x *Workload) GetProtocol() Workload_Protocol {
 	if x != nil {
 		return x.Protocol
@@ -192,23 +185,9 @@ func (x *Workload) GetProtocol() Workload_Protocol {
 	return Workload_PROTOCOL_UNSPECIFIED
 }
 
-func (x *Workload) GetExecution() *Workload_Execution {
+func (x *Workload) GetSegments() []*Workload_Segment {
 	if x != nil {
-		return x.Execution
-	}
-	return nil
-}
-
-func (x *Workload) GetParameters() *Workload_Parameters {
-	if x != nil {
-		return x.Parameters
-	}
-	return nil
-}
-
-func (x *Workload) GetFiles() []*Workload_WorkloadFile {
-	if x != nil {
-		return x.Files
+		return x.Segments
 	}
 	return nil
 }
@@ -503,22 +482,114 @@ func (x *Workload_WorkloadFile) GetContent() string {
 	return ""
 }
 
+// Segment is one self-contained stroppy invocation in the run's sequence. Each
+// segment is rendered into its own stroppy RunConfig and runs against the same
+// DB, in order, with its own execution time window (so per-segment Grafana /
+// metrics scoping is possible). A run has >= 1 segment; the common 2-segment
+// shape is a "bootstrap" segment (steps: create_schema, load_data) followed by
+// a measured "workload" segment.
+type Workload_Segment struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// name is a human label for the segment, e.g. "bootstrap", "workload".
+	// Surfaced as the stage phase and the Grafana time-window label.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// script is a stroppy-accepted script/preset/path/inline SQL,
+	// e.g. "tpcc/tx", "tpcds", "./bench.ts", "queries.sql".
+	Script string `protobuf:"bytes,2,opt,name=script,proto3" json:"script,omitempty"`
+	// sql is an optional second stroppy positional arg, e.g. an SQL probe file.
+	Sql string `protobuf:"bytes,3,opt,name=sql,proto3" json:"sql,omitempty"`
+	// execution is the k6 execution profile for this segment.
+	Execution *Workload_Execution `protobuf:"bytes,4,opt,name=execution,proto3" json:"execution,omitempty"`
+	// parameters are workload/script parameters for this segment.
+	Parameters *Workload_Parameters `protobuf:"bytes,5,opt,name=parameters,proto3" json:"parameters,omitempty"`
+	// files are run-scoped files staged next to this segment's stroppy-config.json.
+	Files         []*Workload_WorkloadFile `protobuf:"bytes,6,rep,name=files,proto3" json:"files,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Workload_Segment) Reset() {
+	*x = Workload_Segment{}
+	mi := &file_cloud_v1_domain_workload_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Workload_Segment) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Workload_Segment) ProtoMessage() {}
+
+func (x *Workload_Segment) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_domain_workload_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Workload_Segment.ProtoReflect.Descriptor instead.
+func (*Workload_Segment) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_domain_workload_proto_rawDescGZIP(), []int{0, 3}
+}
+
+func (x *Workload_Segment) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Workload_Segment) GetScript() string {
+	if x != nil {
+		return x.Script
+	}
+	return ""
+}
+
+func (x *Workload_Segment) GetSql() string {
+	if x != nil {
+		return x.Sql
+	}
+	return ""
+}
+
+func (x *Workload_Segment) GetExecution() *Workload_Execution {
+	if x != nil {
+		return x.Execution
+	}
+	return nil
+}
+
+func (x *Workload_Segment) GetParameters() *Workload_Parameters {
+	if x != nil {
+		return x.Parameters
+	}
+	return nil
+}
+
+func (x *Workload_Segment) GetFiles() []*Workload_WorkloadFile {
+	if x != nil {
+		return x.Files
+	}
+	return nil
+}
+
 var File_cloud_v1_domain_workload_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_domain_workload_proto_rawDesc = "" +
 	"\n" +
-	"\x1ecloud/v1/domain/workload.proto\x12\x0fcloud.v1.domain\x1a\x1acloud/v1/common/tags.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\xe3\v\n" +
+	"\x1ecloud/v1/domain/workload.proto\x12\x0fcloud.v1.domain\x1a\x1acloud/v1/common/tags.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\xa2\r\n" +
 	"\bWorkload\x120\n" +
-	"\x0fstroppy_version\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x18@R\x0estroppyVersion\x12\"\n" +
-	"\x06script\x18\x02 \x01(\tB\n" +
-	"\xfaB\ar\x05\x10\x01\x18\x80\x04R\x06script\x12\x1a\n" +
-	"\x03sql\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x04R\x03sql\x12H\n" +
-	"\bprotocol\x18\x04 \x01(\x0e2\".cloud.v1.domain.Workload.ProtocolB\b\xfaB\x05\x82\x01\x02\x10\x01R\bprotocol\x12K\n" +
-	"\texecution\x18\x05 \x01(\v2#.cloud.v1.domain.Workload.ExecutionB\b\xfaB\x05\x8a\x01\x02\x10\x01R\texecution\x12D\n" +
-	"\n" +
-	"parameters\x18\x06 \x01(\v2$.cloud.v1.domain.Workload.ParametersR\n" +
-	"parameters\x12F\n" +
-	"\x05files\x18\a \x03(\v2&.cloud.v1.domain.Workload.WorkloadFileB\b\xfaB\x05\x92\x01\x02\x10@R\x05files\x12)\n" +
+	"\x0fstroppy_version\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x18@R\x0estroppyVersion\x12H\n" +
+	"\bprotocol\x18\x04 \x01(\x0e2\".cloud.v1.domain.Workload.ProtocolB\b\xfaB\x05\x82\x01\x02\x10\x01R\bprotocol\x12I\n" +
+	"\bsegments\x18\t \x03(\v2!.cloud.v1.domain.Workload.SegmentB\n" +
+	"\xfaB\a\x92\x01\x04\b\x01\x10\x10R\bsegments\x12)\n" +
 	"\x04tags\x18\b \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1a\xe8\x01\n" +
 	"\tExecution\x12\x1d\n" +
 	"\x03vus\x18\x01 \x01(\rB\v\xfaB\b*\x06\x18\xa0\x8d\x06(\x01R\x03vus\x12B\n" +
@@ -545,7 +616,17 @@ const file_cloud_v1_domain_workload_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tB\x1d\xfaB\x1ar\x18\x10\x01\x18\x80\x022\x11^[A-Za-z0-9._-]+$R\x04name\x12\x1b\n" +
 	"\x04kind\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x18 R\x04kind\x12$\n" +
 	"\acontent\x18\x03 \x01(\tB\n" +
-	"\xfaB\ar\x05(\x80\x80\x80\x02R\acontent\"\xa7\x01\n" +
+	"\xfaB\ar\x05(\x80\x80\x80\x02R\acontent\x1a\xc3\x02\n" +
+	"\aSegment\x12\x1d\n" +
+	"\x04name\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x04name\x12\"\n" +
+	"\x06script\x18\x02 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x04R\x06script\x12\x1a\n" +
+	"\x03sql\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x04R\x03sql\x12K\n" +
+	"\texecution\x18\x04 \x01(\v2#.cloud.v1.domain.Workload.ExecutionB\b\xfaB\x05\x8a\x01\x02\x10\x01R\texecution\x12D\n" +
+	"\n" +
+	"parameters\x18\x05 \x01(\v2$.cloud.v1.domain.Workload.ParametersR\n" +
+	"parameters\x12F\n" +
+	"\x05files\x18\x06 \x03(\v2&.cloud.v1.domain.Workload.WorkloadFileB\b\xfaB\x05\x92\x01\x02\x10@R\x05files\"\xa7\x01\n" +
 	"\bProtocol\x12\x18\n" +
 	"\x14PROTOCOL_UNSPECIFIED\x10\x00\x12\x0f\n" +
 	"\vPROTOCOL_PG\x10\x01\x12\x12\n" +
@@ -553,7 +634,8 @@ const file_cloud_v1_domain_workload_proto_rawDesc = "" +
 	"\x11PROTOCOL_PICODATA\x10\x03\x12\x15\n" +
 	"\x11PROTOCOL_YDB_GRPC\x10\x04\x12\x16\n" +
 	"\x12PROTOCOL_YDB_GRPCS\x10\x05\x12\x16\n" +
-	"\x12PROTOCOL_COCKROACH\x10\aBDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domainb\x06proto3"
+	"\x12PROTOCOL_COCKROACH\x10\aJ\x04\b\x02\x10\x03J\x04\b\x03\x10\x04J\x04\b\x05\x10\x06J\x04\b\x06\x10\aJ\x04\b\a\x10\bR\x06scriptR\x03sqlR\texecutionR\n" +
+	"parametersR\x05filesBDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domainb\x06proto3"
 
 var (
 	file_cloud_v1_domain_workload_proto_rawDescOnce sync.Once
@@ -568,28 +650,30 @@ func file_cloud_v1_domain_workload_proto_rawDescGZIP() []byte {
 }
 
 var file_cloud_v1_domain_workload_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_cloud_v1_domain_workload_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_cloud_v1_domain_workload_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_cloud_v1_domain_workload_proto_goTypes = []any{
 	(Workload_Protocol)(0),        // 0: cloud.v1.domain.Workload.Protocol
 	(*Workload)(nil),              // 1: cloud.v1.domain.Workload
 	(*Workload_Execution)(nil),    // 2: cloud.v1.domain.Workload.Execution
 	(*Workload_Parameters)(nil),   // 3: cloud.v1.domain.Workload.Parameters
 	(*Workload_WorkloadFile)(nil), // 4: cloud.v1.domain.Workload.WorkloadFile
-	nil,                           // 5: cloud.v1.domain.Workload.Parameters.EnvEntry
-	(*common.Tags)(nil),           // 6: cloud.v1.common.Tags
+	(*Workload_Segment)(nil),      // 5: cloud.v1.domain.Workload.Segment
+	nil,                           // 6: cloud.v1.domain.Workload.Parameters.EnvEntry
+	(*common.Tags)(nil),           // 7: cloud.v1.common.Tags
 }
 var file_cloud_v1_domain_workload_proto_depIdxs = []int32{
 	0, // 0: cloud.v1.domain.Workload.protocol:type_name -> cloud.v1.domain.Workload.Protocol
-	2, // 1: cloud.v1.domain.Workload.execution:type_name -> cloud.v1.domain.Workload.Execution
-	3, // 2: cloud.v1.domain.Workload.parameters:type_name -> cloud.v1.domain.Workload.Parameters
-	4, // 3: cloud.v1.domain.Workload.files:type_name -> cloud.v1.domain.Workload.WorkloadFile
-	6, // 4: cloud.v1.domain.Workload.tags:type_name -> cloud.v1.common.Tags
-	5, // 5: cloud.v1.domain.Workload.Parameters.env:type_name -> cloud.v1.domain.Workload.Parameters.EnvEntry
-	6, // [6:6] is the sub-list for method output_type
-	6, // [6:6] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	5, // 1: cloud.v1.domain.Workload.segments:type_name -> cloud.v1.domain.Workload.Segment
+	7, // 2: cloud.v1.domain.Workload.tags:type_name -> cloud.v1.common.Tags
+	6, // 3: cloud.v1.domain.Workload.Parameters.env:type_name -> cloud.v1.domain.Workload.Parameters.EnvEntry
+	2, // 4: cloud.v1.domain.Workload.Segment.execution:type_name -> cloud.v1.domain.Workload.Execution
+	3, // 5: cloud.v1.domain.Workload.Segment.parameters:type_name -> cloud.v1.domain.Workload.Parameters
+	4, // 6: cloud.v1.domain.Workload.Segment.files:type_name -> cloud.v1.domain.Workload.WorkloadFile
+	7, // [7:7] is the sub-list for method output_type
+	7, // [7:7] is the sub-list for method input_type
+	7, // [7:7] is the sub-list for extension type_name
+	7, // [7:7] is the sub-list for extension extendee
+	0, // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_domain_workload_proto_init() }
@@ -607,7 +691,7 @@ func file_cloud_v1_domain_workload_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_domain_workload_proto_rawDesc), len(file_cloud_v1_domain_workload_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   5,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -9,11 +9,24 @@ import "ogen/ogen.proto";
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain";
 
 /*
-    Workload is the cloud-facing workload DTO sent by the wizard — ONLY the load
-    (script, protocol, k6 profile, parameters, run-scoped files). DB engine
-    install/packages belong to the Database intent, not here; stroppy_version is
-    just a selector for which stroppy the load needs. The backend renders this into
-    stroppy's RunConfig protojson before launching.
+    Workload is the cloud-facing workload DTO sent by the wizard. It is a thin
+    outer envelope — what is shared across the whole run — wrapping an ordered list
+    of Segments, each a self-contained stroppy invocation against the SAME database.
+
+    Shared at this level because it is structurally forced or DB-bound:
+      - stroppy_version: the binary installs ONCE per runner node, so one version
+        per run (a single selector for which stroppy the load needs).
+      - protocol (driver type): every segment hits the one provisioned DB, so the
+        wire format is shared.
+
+    Everything that legitimately varies per phase (script, k6 profile, parameters,
+    run-scoped files, step filter) lives on Segment. The canonical use is a
+    "bootstrap" segment (create_schema + load_data) followed by a "workload" segment
+    (the measured load) so Grafana averages are not polluted by load time; but N
+    segments are allowed (multiple benchmarks back to back on one DB), default 1.
+
+    Segments run SEQUENTIALLY on a single DB (not in parallel) — each is rendered
+    into its own stroppy RunConfig protojson and gets its own execution time window.
 
     These are the params the user supplies AROUND the probe: the wizard sends the
     base fields (version, script, sql, files, protocol, scale_factor, pool_size) to
@@ -116,21 +129,44 @@ message Workload {
         string content = 3 [(validate.rules).string.max_bytes = 4194304];
     }
 
-    /* stroppy_version is the stroppy binary version/tag the load needs. */
+    /*
+        Segment is one self-contained stroppy invocation in the run's sequence. Each
+        segment is rendered into its own stroppy RunConfig and runs against the same
+        DB, in order, with its own execution time window (so per-segment Grafana /
+        metrics scoping is possible). A run has >= 1 segment; the common 2-segment
+        shape is a "bootstrap" segment (steps: create_schema, load_data) followed by
+        a measured "workload" segment.
+     */
+    message Segment {
+        /* name is a human label for the segment, e.g. "bootstrap", "workload".
+           Surfaced as the stage phase and the Grafana time-window label. */
+        string name = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+        /* script is a stroppy-accepted script/preset/path/inline SQL,
+           e.g. "tpcc/tx", "tpcds", "./bench.ts", "queries.sql". */
+        string script = 2 [(validate.rules).string = {min_len: 1, max_len: 512}];
+        /* sql is an optional second stroppy positional arg, e.g. an SQL probe file. */
+        string sql = 3 [(validate.rules).string.max_len = 512];
+        /* execution is the k6 execution profile for this segment. */
+        Execution execution = 4 [(validate.rules).message.required = true];
+        /* parameters are workload/script parameters for this segment. */
+        Parameters parameters = 5;
+        /* files are run-scoped files staged next to this segment's stroppy-config.json. */
+        repeated WorkloadFile files = 6 [(validate.rules).repeated.max_items = 64];
+    }
+
+    reserved 2, 3, 5, 6, 7;
+    reserved "script", "sql", "execution", "parameters", "files";
+
+    /* stroppy_version is the stroppy binary version/tag the load needs. Shared
+       across all segments: the binary installs once per runner node. */
     string stroppy_version = 1 [(validate.rules).string.max_len = 64];
-    /* script is a stroppy-accepted script/preset/path/inline SQL,
-       e.g. "tpcc/tx", "tpcds", "./bench.ts", "queries.sql". */
-    string script = 2 [(validate.rules).string = {min_len: 1, max_len: 512}];
-    /* sql is an optional second stroppy positional arg, e.g. an SQL probe file. */
-    string sql = 3 [(validate.rules).string.max_len = 512];
-    /* protocol selects wire format. UNSPECIFIED means backend default for Database.Kind. */
+    /* protocol selects wire format. UNSPECIFIED means backend default for Database.Kind.
+       Shared across all segments: every segment hits the one provisioned DB. */
     Protocol protocol = 4 [(validate.rules).enum.defined_only = true];
-    /* execution is the k6 execution profile. */
-    Execution execution = 5 [(validate.rules).message.required = true];
-    /* parameters are workload/script parameters. */
-    Parameters parameters = 6;
-    /* files are run-scoped files staged next to stroppy-config.json. */
-    repeated WorkloadFile files = 7 [(validate.rules).repeated.max_items = 64];
+
+    /* segments is the ordered list of stroppy invocations run back to back on the
+       same DB. At least one; the first is typically bootstrap, the rest measured. */
+    repeated Segment segments = 9 [(validate.rules).repeated = {min_items: 1, max_items: 16}];
 
     /* tags are free-form metadata attached to the workload. */
     common.Tags tags = 8;

@@ -611,14 +611,17 @@ func postgresDatabase() *domainpb.Database {
 
 func workload() *domainpb.Workload {
 	return &domainpb.Workload{
-		Script:   "tpcc/tx",
 		Protocol: domainpb.Workload_PROTOCOL_PG,
-		Execution: &domainpb.Workload_Execution{
-			Vus: 1,
-			Limit: &domainpb.Workload_Execution_Duration{
-				Duration: "1m",
+		Segments: []*domainpb.Workload_Segment{{
+			Name:   "workload",
+			Script: "tpcc/tx",
+			Execution: &domainpb.Workload_Execution{
+				Vus: 1,
+				Limit: &domainpb.Workload_Execution_Duration{
+					Duration: "1m",
+				},
 			},
-		},
+		}},
 	}
 }
 

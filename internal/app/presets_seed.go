@@ -580,7 +580,7 @@ func builtinWorkloadPresets(tenantID, authorID string) []*models.WorkloadPresetR
 			Summary: &models.WorkloadPresetRecord_Summary{
 				Protocol:       workload.GetProtocol(),
 				StroppyVersion: workload.GetStroppyVersion(),
-				Script:         workload.GetScript(),
+				Script:         workloadbuilder.PrimarySegment(workload).GetScript(),
 			},
 		}
 	}
@@ -596,19 +596,24 @@ func builtinWorkloadPresets(tenantID, authorID string) []*models.WorkloadPresetR
 
 func minimalSelfCheckWorkload(protocol domain.Workload_Protocol) *domain.Workload {
 	return &domain.Workload{
-		Script:   "tpcc/tx",
 		Protocol: protocol,
-		Execution: &domain.Workload_Execution{
-			Vus: 1,
-			Limit: &domain.Workload_Execution_Duration{
-				Duration: "30s",
+		Segments: []*domain.Workload_Segment{
+			{
+				Name:   "workload",
+				Script: "tpcc/tx",
+				Execution: &domain.Workload_Execution{
+					Vus: 1,
+					Limit: &domain.Workload_Execution_Duration{
+						Duration: "30s",
+					},
+					Quiet:        true,
+					NoThresholds: true,
+				},
+				Parameters: &domain.Workload_Parameters{
+					PoolSize:    1,
+					ScaleFactor: 1,
+				},
 			},
-			Quiet:        true,
-			NoThresholds: true,
-		},
-		Parameters: &domain.Workload_Parameters{
-			PoolSize:    1,
-			ScaleFactor: 1,
 		},
 	}
 }

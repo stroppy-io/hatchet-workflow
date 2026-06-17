@@ -68,28 +68,6 @@ func (m *Workload) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if l := utf8.RuneCountInString(m.GetScript()); l < 1 || l > 512 {
-		err := WorkloadValidationError{
-			field:  "Script",
-			reason: "value length must be between 1 and 512 runes, inclusive",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if utf8.RuneCountInString(m.GetSql()) > 512 {
-		err := WorkloadValidationError{
-			field:  "Sql",
-			reason: "value length must be at most 512 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
 	if _, ok := Workload_Protocol_name[int32(m.GetProtocol())]; !ok {
 		err := WorkloadValidationError{
 			field:  "Protocol",
@@ -101,10 +79,10 @@ func (m *Workload) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if m.GetExecution() == nil {
+	if l := len(m.GetSegments()); l < 1 || l > 16 {
 		err := WorkloadValidationError{
-			field:  "Execution",
-			reason: "value is required",
+			field:  "Segments",
+			reason: "value must contain between 1 and 16 items, inclusive",
 		}
 		if !all {
 			return err
@@ -112,76 +90,7 @@ func (m *Workload) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if all {
-		switch v := interface{}(m.GetExecution()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, WorkloadValidationError{
-					field:  "Execution",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, WorkloadValidationError{
-					field:  "Execution",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetExecution()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return WorkloadValidationError{
-				field:  "Execution",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if all {
-		switch v := interface{}(m.GetParameters()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, WorkloadValidationError{
-					field:  "Parameters",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, WorkloadValidationError{
-					field:  "Parameters",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetParameters()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return WorkloadValidationError{
-				field:  "Parameters",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if len(m.GetFiles()) > 64 {
-		err := WorkloadValidationError{
-			field:  "Files",
-			reason: "value must contain no more than 64 item(s)",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	for idx, item := range m.GetFiles() {
+	for idx, item := range m.GetSegments() {
 		_, _ = idx, item
 
 		if all {
@@ -189,7 +98,7 @@ func (m *Workload) validate(all bool) error {
 			case interface{ ValidateAll() error }:
 				if err := v.ValidateAll(); err != nil {
 					errors = append(errors, WorkloadValidationError{
-						field:  fmt.Sprintf("Files[%v]", idx),
+						field:  fmt.Sprintf("Segments[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
@@ -197,7 +106,7 @@ func (m *Workload) validate(all bool) error {
 			case interface{ Validate() error }:
 				if err := v.Validate(); err != nil {
 					errors = append(errors, WorkloadValidationError{
-						field:  fmt.Sprintf("Files[%v]", idx),
+						field:  fmt.Sprintf("Segments[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
@@ -206,7 +115,7 @@ func (m *Workload) validate(all bool) error {
 		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return WorkloadValidationError{
-					field:  fmt.Sprintf("Files[%v]", idx),
+					field:  fmt.Sprintf("Segments[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
@@ -949,3 +858,250 @@ var _ interface {
 } = Workload_WorkloadFileValidationError{}
 
 var _Workload_WorkloadFile_Name_Pattern = regexp.MustCompile("^[A-Za-z0-9._-]+$")
+
+// Validate checks the field values on Workload_Segment with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *Workload_Segment) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Workload_Segment with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Workload_SegmentMultiError, or nil if none found.
+func (m *Workload_Segment) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Workload_Segment) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetName()); l < 1 || l > 64 {
+		err := Workload_SegmentValidationError{
+			field:  "Name",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetScript()); l < 1 || l > 512 {
+		err := Workload_SegmentValidationError{
+			field:  "Script",
+			reason: "value length must be between 1 and 512 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetSql()) > 512 {
+		err := Workload_SegmentValidationError{
+			field:  "Sql",
+			reason: "value length must be at most 512 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetExecution() == nil {
+		err := Workload_SegmentValidationError{
+			field:  "Execution",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetExecution()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Workload_SegmentValidationError{
+					field:  "Execution",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Workload_SegmentValidationError{
+					field:  "Execution",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetExecution()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Workload_SegmentValidationError{
+				field:  "Execution",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetParameters()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Workload_SegmentValidationError{
+					field:  "Parameters",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Workload_SegmentValidationError{
+					field:  "Parameters",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetParameters()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Workload_SegmentValidationError{
+				field:  "Parameters",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(m.GetFiles()) > 64 {
+		err := Workload_SegmentValidationError{
+			field:  "Files",
+			reason: "value must contain no more than 64 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetFiles() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, Workload_SegmentValidationError{
+						field:  fmt.Sprintf("Files[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, Workload_SegmentValidationError{
+						field:  fmt.Sprintf("Files[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return Workload_SegmentValidationError{
+					field:  fmt.Sprintf("Files[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return Workload_SegmentMultiError(errors)
+	}
+
+	return nil
+}
+
+// Workload_SegmentMultiError is an error wrapping multiple validation errors
+// returned by Workload_Segment.ValidateAll() if the designated constraints
+// aren't met.
+type Workload_SegmentMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Workload_SegmentMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Workload_SegmentMultiError) AllErrors() []error { return m }
+
+// Workload_SegmentValidationError is the validation error returned by
+// Workload_Segment.Validate if the designated constraints aren't met.
+type Workload_SegmentValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Workload_SegmentValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Workload_SegmentValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Workload_SegmentValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Workload_SegmentValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Workload_SegmentValidationError) ErrorName() string { return "Workload_SegmentValidationError" }
+
+// Error satisfies the builtin error interface
+func (e Workload_SegmentValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sWorkload_Segment.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Workload_SegmentValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Workload_SegmentValidationError{}

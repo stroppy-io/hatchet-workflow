@@ -162,7 +162,8 @@ const defaultK6SetupTimeout = "20m"
 // labels plus the per-node agent token from deployment RenderContext.
 func buildStroppyRunConfig(input *domain.Workload, database *domain.Database, serverAddr, runID, bearerToken string, target databaseTarget, loadWorkers uint32) *stroppypb.RunConfig {
 	target = target.withDefaults(database)
-	script := strings.TrimSpace(input.GetScript())
+	segment := PrimarySegment(input)
+	script := strings.TrimSpace(segment.GetScript())
 	if script == "" {
 		script = "tpcc/procs"
 	}
@@ -173,7 +174,7 @@ func buildStroppyRunConfig(input *domain.Workload, database *domain.Database, se
 		scriptPtr = &s
 	}
 	var sqlPtr *string
-	if sql := strings.TrimSpace(input.GetSql()); sql != "" {
+	if sql := strings.TrimSpace(segment.GetSql()); sql != "" {
 		s := sql
 		sqlPtr = &s
 	}
@@ -182,7 +183,7 @@ func buildStroppyRunConfig(input *domain.Workload, database *domain.Database, se
 	driverType, driverURL := driverTypeURL(protocol, target)
 	driverURL = resolveDatabasePath(driverURL, target.DatabasePath)
 
-	params := input.GetParameters()
+	params := segment.GetParameters()
 	poolSize := int32(params.GetPoolSize())
 	if poolSize == 0 {
 		poolSize = 100
@@ -224,7 +225,7 @@ func buildStroppyRunConfig(input *domain.Workload, database *domain.Database, se
 			0: driverConfig,
 		},
 		Env:     stroppyEnv(params, scaleFactor, poolSize, loadWorkers),
-		K6Args:  k6Args(input.GetExecution()),
+		K6Args:  k6Args(segment.GetExecution()),
 		Steps:   params.GetSteps(),
 		NoSteps: params.GetNoSteps(),
 		Global: &stroppypb.GlobalConfig{

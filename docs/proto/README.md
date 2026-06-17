@@ -558,6 +558,7 @@
     - [cloud.v1.domain.Workload.Parameters](cloud/v1/domain/README.md#cloud-v1-domain-workload-parameters)
     - [cloud.v1.domain.Workload.Parameters.EnvEntry](cloud/v1/domain/README.md#cloud-v1-domain-workload-parameters-enventry)
     - [cloud.v1.domain.Workload.Protocol](cloud/v1/domain/README.md#cloud-v1-domain-workload-protocol)
+    - [cloud.v1.domain.Workload.Segment](cloud/v1/domain/README.md#cloud-v1-domain-workload-segment)
     - [cloud.v1.domain.Workload.WorkloadFile](cloud/v1/domain/README.md#cloud-v1-domain-workload-workloadfile)
     - [cloud.v1.domain.YdbManagedParams](cloud/v1/domain/README.md#cloud-v1-domain-ydbmanagedparams)
     - [cloud.v1.domain.YdbManagedParams.AutoScale](cloud/v1/domain/README.md#cloud-v1-domain-ydbmanagedparams-autoscale)

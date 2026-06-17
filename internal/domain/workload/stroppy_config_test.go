@@ -14,14 +14,17 @@ import (
 
 func TestRenderStroppyConfigRoutesOTLPThroughServerAddress(t *testing.T) {
 	rendered := renderStroppyConfigJSON(&domain.Workload{
-		Script:   "tpcc/tx",
 		Protocol: domain.Workload_PROTOCOL_PG,
-		Execution: &domain.Workload_Execution{
-			Vus: 1,
-			Limit: &domain.Workload_Execution_Duration{
-				Duration: "1m",
+		Segments: []*domain.Workload_Segment{{
+			Name:   "workload",
+			Script: "tpcc/tx",
+			Execution: &domain.Workload_Execution{
+				Vus: 1,
+				Limit: &domain.Workload_Execution_Duration{
+					Duration: "1m",
+				},
 			},
-		},
+		}},
 	}, &domain.Database{Kind: domain.Database_KIND_POSTGRES}, map[string]string{
 		deploymentbuilder.LabelServerAddr: "https://control.example",
 		deploymentbuilder.LabelRunID:      "run-1",
@@ -61,14 +64,17 @@ func TestRenderStroppyConfigRoutesOTLPThroughServerAddress(t *testing.T) {
 
 func TestRenderStroppyConfigSetsPicodataBulkSize(t *testing.T) {
 	rendered := renderStroppyConfigJSON(&domain.Workload{
-		Script:   "tpcc/tx",
 		Protocol: domain.Workload_PROTOCOL_PICODATA,
-		Execution: &domain.Workload_Execution{
-			Vus: 1,
-			Limit: &domain.Workload_Execution_Duration{
-				Duration: "1m",
+		Segments: []*domain.Workload_Segment{{
+			Name:   "workload",
+			Script: "tpcc/tx",
+			Execution: &domain.Workload_Execution{
+				Vus: 1,
+				Limit: &domain.Workload_Execution_Duration{
+					Duration: "1m",
+				},
 			},
-		},
+		}},
 	}, &domain.Database{Kind: domain.Database_KIND_PICODATA}, map[string]string{
 		deploymentbuilder.LabelServerAddr: "https://control.example",
 		deploymentbuilder.LabelRunID:      "run-1",
@@ -356,16 +362,19 @@ func (r fakeDBRenderer) RenderComponent(ctx deploymentbuilder.RenderContext) (*d
 func testWorkload() *domain.Workload {
 	return &domain.Workload{
 		StroppyVersion: "5.1.2",
-		Script:         "tpcc/procs",
-		Execution: &domain.Workload_Execution{
-			Vus:          1,
-			Limit:        &domain.Workload_Execution_Duration{Duration: "10s"},
-			NoThresholds: true,
-		},
-		Parameters: &domain.Workload_Parameters{
-			PoolSize:    2,
-			ScaleFactor: 1,
-		},
+		Segments: []*domain.Workload_Segment{{
+			Name:   "workload",
+			Script: "tpcc/procs",
+			Execution: &domain.Workload_Execution{
+				Vus:          1,
+				Limit:        &domain.Workload_Execution_Duration{Duration: "10s"},
+				NoThresholds: true,
+			},
+			Parameters: &domain.Workload_Parameters{
+				PoolSize:    2,
+				ScaleFactor: 1,
+			},
+		}},
 	}
 }
 

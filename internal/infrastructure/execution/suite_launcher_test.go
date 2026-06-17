@@ -162,14 +162,17 @@ func (staticCellResolver) ResolveCell(context.Context, string, *domain.SuiteCell
 			},
 		},
 		Workload: &domain.Workload{
-			Script:   "tpcc/tx",
 			Protocol: domain.Workload_PROTOCOL_PG,
-			Execution: &domain.Workload_Execution{
-				Vus: 1,
-				Limit: &domain.Workload_Execution_Duration{
-					Duration: "1m",
+			Segments: []*domain.Workload_Segment{{
+				Name:   "workload",
+				Script: "tpcc/tx",
+				Execution: &domain.Workload_Execution{
+					Vus: 1,
+					Limit: &domain.Workload_Execution_Duration{
+						Duration: "1m",
+					},
 				},
-			},
+			}},
 		},
 	}, nil
 }

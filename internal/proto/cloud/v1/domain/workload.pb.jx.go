@@ -21,14 +21,6 @@ func (m *Workload) Encode(e *jx.Encoder) {
 		e.FieldStart("stroppyVersion")
 		e.Str(m.StroppyVersion)
 	}
-	if m.Script != "" {
-		e.FieldStart("script")
-		e.Str(m.Script)
-	}
-	if m.Sql != "" {
-		e.FieldStart("sql")
-		e.Str(m.Sql)
-	}
 	if m.Protocol != 0 {
 		e.FieldStart("protocol")
 		if s, ok := Workload_Protocol_name[int32(m.Protocol)]; ok {
@@ -37,18 +29,10 @@ func (m *Workload) Encode(e *jx.Encoder) {
 			e.Int32(int32(m.Protocol))
 		}
 	}
-	if m.Execution != nil {
-		e.FieldStart("execution")
-		m.Execution.Encode(e)
-	}
-	if m.Parameters != nil {
-		e.FieldStart("parameters")
-		m.Parameters.Encode(e)
-	}
-	if len(m.Files) > 0 {
-		e.FieldStart("files")
+	if len(m.Segments) > 0 {
+		e.FieldStart("segments")
 		e.ArrStart()
-		for _, v := range m.Files {
+		for _, v := range m.Segments {
 			v.Encode(e)
 		}
 		e.ArrEnd()
@@ -77,34 +61,6 @@ func (m *Workload) Decode(d *jx.Decoder) error {
 				return err
 			}
 			m.StroppyVersion = v
-			return nil
-		case "script":
-			if seen["Script"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["Script"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			v, err := d.Str()
-			if err != nil {
-				return err
-			}
-			m.Script = v
-			return nil
-		case "sql":
-			if seen["Sql"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["Sql"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			v, err := d.Str()
-			if err != nil {
-				return err
-			}
-			m.Sql = v
 			return nil
 		case "protocol":
 			if seen["Protocol"] {
@@ -135,46 +91,20 @@ func (m *Workload) Decode(d *jx.Decoder) error {
 			default:
 				return fmt.Errorf("invalid enum token %s", d.Next())
 			}
-		case "execution":
-			if seen["Execution"] {
+		case "segments":
+			if seen["Segments"] {
 				return fmt.Errorf("duplicate field %q", key)
 			}
-			seen["Execution"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			m.Execution = &Workload_Execution{}
-			if err := m.Execution.Decode(d); err != nil {
-				return err
-			}
-			return nil
-		case "parameters":
-			if seen["Parameters"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["Parameters"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			m.Parameters = &Workload_Parameters{}
-			if err := m.Parameters.Decode(d); err != nil {
-				return err
-			}
-			return nil
-		case "files":
-			if seen["Files"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["Files"] = true
+			seen["Segments"] = true
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
 			return d.Arr(func(d *jx.Decoder) error {
-				el := &Workload_WorkloadFile{}
+				el := &Workload_Segment{}
 				if err := el.Decode(d); err != nil {
 					return err
 				}
-				m.Files = append(m.Files, el)
+				m.Segments = append(m.Segments, el)
 				return nil
 			})
 		case "tags":
@@ -591,6 +521,149 @@ func (m *Workload_WorkloadFile) MarshalJSON() ([]byte, error) {
 }
 
 func (m *Workload_WorkloadFile) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *Workload_Segment) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Name != "" {
+		e.FieldStart("name")
+		e.Str(m.Name)
+	}
+	if m.Script != "" {
+		e.FieldStart("script")
+		e.Str(m.Script)
+	}
+	if m.Sql != "" {
+		e.FieldStart("sql")
+		e.Str(m.Sql)
+	}
+	if m.Execution != nil {
+		e.FieldStart("execution")
+		m.Execution.Encode(e)
+	}
+	if m.Parameters != nil {
+		e.FieldStart("parameters")
+		m.Parameters.Encode(e)
+	}
+	if len(m.Files) > 0 {
+		e.FieldStart("files")
+		e.ArrStart()
+		for _, v := range m.Files {
+			v.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	e.ObjEnd()
+}
+
+func (m *Workload_Segment) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "name":
+			if seen["Name"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Name"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Name = v
+			return nil
+		case "script":
+			if seen["Script"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Script"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Script = v
+			return nil
+		case "sql":
+			if seen["Sql"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Sql"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Sql = v
+			return nil
+		case "execution":
+			if seen["Execution"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Execution"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Execution = &Workload_Execution{}
+			if err := m.Execution.Decode(d); err != nil {
+				return err
+			}
+			return nil
+		case "parameters":
+			if seen["Parameters"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Parameters"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Parameters = &Workload_Parameters{}
+			if err := m.Parameters.Decode(d); err != nil {
+				return err
+			}
+			return nil
+		case "files":
+			if seen["Files"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Files"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &Workload_WorkloadFile{}
+				if err := el.Decode(d); err != nil {
+					return err
+				}
+				m.Files = append(m.Files, el)
+				return nil
+			})
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *Workload_Segment) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *Workload_Segment) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return m.Decode(d)
 }

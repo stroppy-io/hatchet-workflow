@@ -13,7 +13,7 @@ var (
 )
 
 func RunnerSizing(input *domain.Workload) infrastructurebuilder.MachineSizing {
-	if input.GetExecution().GetVus() >= maxRunnerVusThreshold {
+	if PrimarySegment(input).GetExecution().GetVus() >= maxRunnerVusThreshold {
 		return maxRunnerSizing
 	}
 	return defaultRunnerSizing
