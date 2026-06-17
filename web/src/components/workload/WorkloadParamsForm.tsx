@@ -25,7 +25,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { ConfigEditor } from "@/components/ui/config-editor";
-import { NumField, ToggleRow, FieldErrors, errorsFor } from "@/components/database/DatabaseParamsForm";
+import { NumField, ScrubHandle, ToggleRow, FieldErrors, errorsFor } from "@/components/database/DatabaseParamsForm";
 import {
   Workload_Protocol,
   type WorkloadVM,
@@ -35,6 +35,12 @@ import {
 
 /** Env vars already surfaced by dedicated controls — hidden from the generic env list. */
 const COVERED_ENV = new Set(["POOL_SIZE", "SCALE_FACTOR", "WAREHOUSES", "STROPPY_STEPS", "STROPPY_NO_STEPS"]);
+
+/** Driver-level insert methods (mirrors stroppy run.proto default_insert_method). */
+const INSERT_METHODS = ["native", "plain_bulk", "plain_query"] as const;
+
+/** Numbers (incl. negatives/decimals) vs free text like "max"/"false". */
+const NUMERIC_RE = /^-?\d+(\.\d+)?$/;
 
 /** Set or clear a single env key (empty value clears it, falling back to the script default). */
 function setEnvKey(env: Record<string, string>, name: string, value: string): Record<string, string> {
@@ -263,27 +269,29 @@ export function WorkloadParamsForm({
               value={w.parameters.poolSize}
               onChange={(n) => apply({ ...w, parameters: { ...w.parameters, poolSize: n } })}
             />
-            <div>
-              <Label>Scale factor</Label>
-              <Input
-                type="number"
-                step="0.01"
-                className="mt-1"
-                value={String(w.parameters.scaleFactor)}
-                onChange={(e) => {
-                  const n = Number.parseFloat(e.target.value);
-                  apply({ ...w, parameters: { ...w.parameters, scaleFactor: Number.isNaN(n) ? 0 : n } });
-                }}
-              />
-            </div>
+            <NumField
+              label="Scale factor"
+              value={w.parameters.scaleFactor}
+              min={1}
+              onChange={(n) => apply({ ...w, parameters: { ...w.parameters, scaleFactor: n } })}
+            />
             <div>
               <Label>Insert method</Label>
-              <Input
-                className="mt-1"
-                value={w.parameters.defaultInsertMethod}
-                onChange={(e) => apply({ ...w, parameters: { ...w.parameters, defaultInsertMethod: e.target.value } })}
-                placeholder="native"
-              />
+              <Select
+                value={w.parameters.defaultInsertMethod || "native"}
+                onValueChange={(v) => apply({ ...w, parameters: { ...w.parameters, defaultInsertMethod: v } })}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {INSERT_METHODS.map((m) => (
+                    <SelectItem key={m} value={m}>
+                      {m}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           {probeSteps.length > 0 && (
@@ -406,7 +414,15 @@ function ProbeEnvFields({
       </p>
       <div className="space-y-2">
         {decls.map((d) => {
-          const set = (env[d.name] ?? "") !== "";
+          const raw = env[d.name] ?? "";
+          const set = raw !== "";
+          // The value is a string (env vars can be "max"/"false"), but when the
+          // script's default is numeric we offer a scrub grip — active only while
+          // the current value (or the default it falls back to) is itself numeric.
+          const effective = (raw !== "" ? raw : d.default).trim();
+          const numericDefault = NUMERIC_RE.test(d.default.trim());
+          const numericNow = NUMERIC_RE.test(effective);
+          const fractional = effective.includes(".") || d.default.includes(".");
           return (
             <div key={d.name} className="flex items-start gap-3">
               {/* Name + description fill the row width; the description gets two
@@ -425,10 +441,18 @@ function ProbeEnvFields({
                   </div>
                 )}
               </div>
+              {numericDefault && (
+                <ScrubHandle
+                  value={numericNow ? Number(effective) : 0}
+                  disabled={!numericNow}
+                  step={fractional ? 0.1 : 1}
+                  onChange={(n) => onSet(d.name, String(n))}
+                />
+              )}
               <Input
-                className="h-7 w-36 shrink-0 font-mono text-xs"
+                className="h-7 w-32 shrink-0 font-mono text-xs"
                 placeholder={d.default || "<unset>"}
-                value={env[d.name] ?? ""}
+                value={raw}
                 onChange={(e) => onSet(d.name, e.target.value)}
               />
               <button
