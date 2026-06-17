@@ -272,8 +272,10 @@ export function WorkloadParamsForm({
             <NumField
               label="Scale factor"
               value={w.parameters.scaleFactor}
-              min={1}
+              float
+              min={0.01}
               onChange={(n) => apply({ ...w, parameters: { ...w.parameters, scaleFactor: n } })}
+              hint="warehouses / branches / scale — fractional for smoke tests"
             />
             <div>
               <Label>Insert method</Label>

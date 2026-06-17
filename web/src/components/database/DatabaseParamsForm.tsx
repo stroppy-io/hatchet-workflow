@@ -76,12 +76,15 @@ function useScrub({
   min,
   max,
   step = 1,
+  float = false,
 }: {
   value: number;
   onChange: (n: number) => void;
   min?: number;
   max?: number;
   step?: number;
+  /** Allow fractional values (typed precisely; scrubbed in whole `step`s). */
+  float?: boolean;
 }) {
   const [scrubbing, setScrubbing] = useState(false);
   // Read the latest value inside the long-lived drag listeners without
@@ -102,9 +105,11 @@ function useScrub({
       let acc = 0; // fractional-step accumulator so slow drags still tick by `step`
 
       // Round to the step's precision (so a 0.1 step doesn't drift into
-      // 0.30000000000000004 territory).
+      // 0.30000000000000004 territory). Float fields scrub in whole `step`s but
+      // keep any fractional offset the user typed, so round generously there.
       const dot = String(step).indexOf(".");
-      const decimals = dot < 0 ? 0 : String(step).length - dot - 1;
+      const stepDecimals = dot < 0 ? 0 : String(step).length - dot - 1;
+      const decimals = float ? Math.max(stepDecimals, 6) : stepDecimals;
       const pow = Math.pow(10, decimals);
       const clamp = (n: number) => {
         let r = Math.round(n * pow) / pow;
@@ -163,7 +168,7 @@ function useScrub({
       window.addEventListener("pointerup", end);
       window.addEventListener("pointercancel", end);
     },
-    [min, max, step, onChange],
+    [min, max, step, float, onChange],
   );
 
   return { scrubbing, onPointerDown };
@@ -176,6 +181,7 @@ export function NumField({
   min = 0,
   max,
   step = 1,
+  float = false,
   hint,
 }: {
   label: string;
@@ -184,10 +190,12 @@ export function NumField({
   min?: number;
   max?: number;
   step?: number;
+  /** Accept fractional input (typed precisely; scrubbed in whole `step`s). */
+  float?: boolean;
   hint?: string;
 }) {
-  const { scrubbing, onPointerDown } = useScrub({ value, onChange, min, max, step });
-  const isFloat = !Number.isInteger(step);
+  const { scrubbing, onPointerDown } = useScrub({ value, onChange, min, max, step, float });
+  const isFloat = float || !Number.isInteger(step);
   return (
     <div className="min-w-0">
       {/* The label itself is the drag handle (with an inline grip), kept as the
@@ -206,7 +214,7 @@ export function NumField({
         className="mt-1"
         min={min}
         max={max}
-        step={step}
+        step={isFloat ? "any" : step}
         value={String(value)}
         onChange={(e) => {
           const n = isFloat ? Number.parseFloat(e.target.value) : Number.parseInt(e.target.value, 10);
