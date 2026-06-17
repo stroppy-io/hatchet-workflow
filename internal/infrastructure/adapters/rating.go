@@ -261,7 +261,7 @@ func rankRuns(ctx context.Context, metrics RunMetricsGetter, runs []*models.Test
 		if !matchFacets(run, f) {
 			continue
 		}
-		rm, err := metrics.Get(ctx, run.GetEntity().GetId())
+		rm, err := metrics.Get(ctx, run.GetEntity().GetId(), nil)
 		if err != nil {
 			if derrors.IgnoreNotFound(err) == nil {
 				continue

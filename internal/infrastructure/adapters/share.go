@@ -57,7 +57,7 @@ type ShareRunReader interface {
 // shared test-run view can expose our metrics (never a Grafana link). A nil
 // reader (or a not-found result) simply omits metrics from the snapshot.
 type ShareMetricsReader interface {
-	Get(ctx context.Context, runID string) (*monitor.RunMetrics, error)
+	Get(ctx context.Context, runID string, window *monitor.TimeRange) (*monitor.RunMetrics, error)
 }
 
 // RunSnapshotBuilder implements share.SnapshotBuilder: it freezes the limited,
@@ -125,7 +125,7 @@ func (b *RunSnapshotBuilder) sharedTestRun(ctx context.Context, rec *models.Test
 		ProgressPct:    sum.GetProgressPct(),
 	}
 	if b.metrics != nil {
-		if m, err := b.metrics.Get(ctx, rec.GetEntity().GetId()); err == nil {
+		if m, err := b.metrics.Get(ctx, rec.GetEntity().GetId(), nil); err == nil {
 			view.Metrics = m
 		}
 	}

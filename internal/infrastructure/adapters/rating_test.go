@@ -110,6 +110,6 @@ type fakeRunMetricsGetter struct {
 	byRunID map[string]*monitor.RunMetrics
 }
 
-func (g fakeRunMetricsGetter) Get(_ context.Context, runID string) (*monitor.RunMetrics, error) {
+func (g fakeRunMetricsGetter) Get(_ context.Context, runID string, _ *monitor.TimeRange) (*monitor.RunMetrics, error) {
 	return g.byRunID[runID], nil
 }

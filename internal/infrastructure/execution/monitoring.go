@@ -262,17 +262,37 @@ func NewMetricsReader(monitoringURL, token string, store RunRecordReader, log *s
 func (r *MetricsReader) configured() bool { return r.base != "" }
 
 // Get returns the run's aggregated metric summaries. With no backend configured
-// it returns an empty RunMetrics for the run id (graceful degradation).
-func (r *MetricsReader) Get(ctx context.Context, runID string) (*monitor.RunMetrics, error) {
+// it returns an empty RunMetrics for the run id (graceful degradation). A
+// non-nil window scopes the aggregation to that sub-range (e.g. one workload
+// segment, so bootstrap/load time is excluded from the averages); otherwise the
+// whole-run window is used.
+func (r *MetricsReader) Get(ctx context.Context, runID string, window *monitor.TimeRange) (*monitor.RunMetrics, error) {
 	if !r.configured() {
 		return &monitor.RunMetrics{RunId: runID}, nil
 	}
 
 	dbKind, tr := r.resolveKindAndWindow(ctx, runID)
+	if w, ok := overrideWindow(window); ok {
+		tr = w
+	}
 
 	client := victoria.NewClient(r.base+metricsTenantPath, r.token)
 	collector := metrics.NewCollectorForDB(client, dbKind)
 	return collector.Collect(ctx, runID, tr)
+}
+
+// overrideWindow converts a caller-supplied TimeRange into a metrics.TimeRange,
+// reporting false when it is absent or not a usable [start, end] range.
+func overrideWindow(window *monitor.TimeRange) (metrics.TimeRange, bool) {
+	if window.GetStart() == nil || window.GetEnd() == nil {
+		return metrics.TimeRange{}, false
+	}
+	start := window.GetStart().AsTime()
+	end := window.GetEnd().AsTime()
+	if !end.After(start) {
+		return metrics.TimeRange{}, false
+	}
+	return metrics.TimeRange{Start: start, End: end}, true
 }
 
 // resolveKindAndWindow loads the run record (when a store is wired) to determine

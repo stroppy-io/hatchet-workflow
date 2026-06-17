@@ -27,7 +27,7 @@ type RunRecordGetter interface {
 // (Get(ctx, runID) (*monitor.RunMetrics, error)) satisfies it. Get returns
 // derrors.ErrNotFound when a run has no metrics.
 type RunMetricsGetter interface {
-	Get(ctx context.Context, runID string) (*monitor.RunMetrics, error)
+	Get(ctx context.Context, runID string, window *monitor.TimeRange) (*monitor.RunMetrics, error)
 }
 
 // TestRunReader implements compare.TestRunReader by delegating to a RunRecordGetter.
@@ -73,7 +73,7 @@ func (c *MetricsComparator) Compare(ctx context.Context, runIDs []string) (*moni
 	var rng *monitor.TimeRange
 
 	for i, id := range runIDs {
-		rm, err := c.metrics.Get(ctx, id)
+		rm, err := c.metrics.Get(ctx, id, nil)
 		if err != nil {
 			return nil, err
 		}

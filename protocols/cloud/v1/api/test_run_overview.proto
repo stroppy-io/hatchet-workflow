@@ -328,6 +328,13 @@ message GetRunMetricsRequest {
         run_id identifies the run whose metrics are requested.
      */
     string run_id = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /*
+        window optionally scopes the aggregation to a sub-range of the run — e.g.
+        a single workload segment's [started_at, finished_at] taken from the
+        Overview pipeline — so averages exclude bootstrap/load time. Unset means
+        the whole run window (the run record's start/finish).
+     */
+    monitor.TimeRange window = 3;
 }
 /*
     GetRunMetricsResponse returns the run's metrics.

@@ -1272,6 +1272,10 @@ func (m *GetRunMetricsRequest) Encode(e *jx.Encoder) {
 		e.FieldStart("runId")
 		e.Str(m.RunId)
 	}
+	if m.Window != nil {
+		e.FieldStart("window")
+		jxpb.EncMessage(e, m.Window)
+	}
 	e.ObjEnd()
 }
 
@@ -1306,6 +1310,19 @@ func (m *GetRunMetricsRequest) Decode(d *jx.Decoder) error {
 				return err
 			}
 			m.RunId = v
+			return nil
+		case "window":
+			if seen["Window"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Window"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Window = &monitor.TimeRange{}
+			if err := jxpb.DecMessage(d, m.Window); err != nil {
+				return err
+			}
 			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)

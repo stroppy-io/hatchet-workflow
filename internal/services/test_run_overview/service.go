@@ -82,7 +82,10 @@ type LogReader interface {
 
 // MetricsReader serves the Metrics tab: the run's aggregated metric summaries.
 type MetricsReader interface {
-	Get(ctx context.Context, runID string) (*monitor.RunMetrics, error)
+	// Get returns the run's aggregated metrics. When window is non-nil it scopes
+	// the aggregation to that sub-range (e.g. one workload segment); nil means the
+	// whole-run window.
+	Get(ctx context.Context, runID string, window *monitor.TimeRange) (*monitor.RunMetrics, error)
 }
 
 // TestRunOverviewDeps bundles every dependency for the constructor.
@@ -239,7 +242,7 @@ func (s *TestRunOverviewService) GetRunMetrics(ctx context.Context, req *api.Get
 	if err := s.authorizeRun(ctx, req.GetTenantId(), req.GetRunId()); err != nil {
 		return nil, err
 	}
-	m, err := s.d.Metrics.Get(ctx, req.GetRunId())
+	m, err := s.d.Metrics.Get(ctx, req.GetRunId(), req.GetWindow())
 	if err != nil {
 		return nil, utils.MapErr(err)
 	}

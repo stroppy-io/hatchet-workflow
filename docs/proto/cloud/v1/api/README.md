@@ -3678,6 +3678,17 @@ go_name: RunId</pre></td>
 
 json_name: tenantId
 go_name: TenantId</pre></td>
+</tr><tr>
+<td>window</td>
+<td><a href="../monitor/README.md#cloud-v1-monitor-timerange">cloud.v1.monitor.TimeRange</a></td>
+<td><pre>
+//window optionally scopes the aggregation to a sub-range of the run — e.g.
+//a single workload segment's [started_at, finished_at] taken from the
+//Overview pipeline — so averages exclude bootstrap/load time. Unset means
+//the whole run window (the run record's start/finish).<br>
+
+json_name: window
+go_name: Window</pre></td>
 </tr>
 </table>
 

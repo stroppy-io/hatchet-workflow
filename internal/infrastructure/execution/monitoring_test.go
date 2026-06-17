@@ -3,6 +3,7 @@ package execution
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
@@ -182,5 +183,26 @@ func TestInitialStreamCursorDefaultsToNowUnlessBackfilling(t *testing.T) {
 	filterStart := timestamppb.Now()
 	if got := initialStreamCursor(nil, &api.LogFilter{Start: filterStart}); got != nil {
 		t.Fatalf("stream cursor with filter.start = %v, want nil so Query backfills from filter.start", got)
+	}
+}
+
+func TestOverrideWindow(t *testing.T) {
+	if _, ok := overrideWindow(nil); ok {
+		t.Fatal("nil window must not override")
+	}
+	if _, ok := overrideWindow(&monitor.TimeRange{Start: timestamppb.New(time.Unix(100, 0))}); ok {
+		t.Fatal("window without end must not override")
+	}
+	start := time.Unix(100, 0)
+	end := time.Unix(50, 0)
+	if _, ok := overrideWindow(&monitor.TimeRange{Start: timestamppb.New(start), End: timestamppb.New(end)}); ok {
+		t.Fatal("end before start must not override")
+	}
+	tr, ok := overrideWindow(&monitor.TimeRange{
+		Start: timestamppb.New(time.Unix(100, 0)),
+		End:   timestamppb.New(time.Unix(200, 0)),
+	})
+	if !ok || !tr.Start.Equal(time.Unix(100, 0)) || !tr.End.Equal(time.Unix(200, 0)) {
+		t.Fatalf("valid window must override, got %+v ok=%v", tr, ok)
 	}
 }

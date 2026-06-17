@@ -886,7 +886,12 @@ type GetRunMetricsRequest struct {
 	// tenant_id scopes the request to the owning tenant.
 	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	// run_id identifies the run whose metrics are requested.
-	RunId         string `protobuf:"bytes,2,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	RunId string `protobuf:"bytes,2,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	// window optionally scopes the aggregation to a sub-range of the run — e.g.
+	// a single workload segment's [started_at, finished_at] taken from the
+	// Overview pipeline — so averages exclude bootstrap/load time. Unset means
+	// the whole run window (the run record's start/finish).
+	Window        *monitor.TimeRange `protobuf:"bytes,3,opt,name=window,proto3" json:"window,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -933,6 +938,13 @@ func (x *GetRunMetricsRequest) GetRunId() string {
 		return x.RunId
 	}
 	return ""
+}
+
+func (x *GetRunMetricsRequest) GetWindow() *monitor.TimeRange {
+	if x != nil {
+		return x.Window
+	}
+	return nil
 }
 
 // GetRunMetricsResponse returns the run's metrics.
@@ -1055,11 +1067,12 @@ const file_cloud_v1_api_test_run_overview_proto_rawDesc = "" +
 	"\x15ResolveLogRefResponse\x12\x15\n" +
 	"\x06run_id\x18\x01 \x01(\tR\x05runId\x12/\n" +
 	"\x06filter\x18\x02 \x01(\v2\x17.cloud.v1.api.LogFilterR\x06filter\x123\n" +
-	"\x06cursor\x18\x03 \x01(\v2\x1b.cloud.v1.monitor.LogCursorR\x06cursor\"a\n" +
+	"\x06cursor\x18\x03 \x01(\v2\x1b.cloud.v1.monitor.LogCursorR\x06cursor\"\x96\x01\n" +
 	"\x14GetRunMetricsRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12!\n" +
 	"\x06run_id\x18\x02 \x01(\tB\n" +
-	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x05runId\"Y\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x05runId\x123\n" +
+	"\x06window\x18\x03 \x01(\v2\x1b.cloud.v1.monitor.TimeRangeR\x06window\"Y\n" +
 	"\x15GetRunMetricsResponse\x12@\n" +
 	"\ametrics\x18\x01 \x01(\v2\x1c.cloud.v1.monitor.RunMetricsB\b\xfaB\x05\x8a\x01\x02\x10\x01R\ametrics*z\n" +
 	"\x12LogScrollDirection\x12$\n" +
@@ -1121,7 +1134,8 @@ var file_cloud_v1_api_test_run_overview_proto_goTypes = []any{
 	(*monitor.LogCursor)(nil),            // 20: cloud.v1.monitor.LogCursor
 	(*monitor.LogLine)(nil),              // 21: cloud.v1.monitor.LogLine
 	(*monitor.LogRef)(nil),               // 22: cloud.v1.monitor.LogRef
-	(*monitor.RunMetrics)(nil),           // 23: cloud.v1.monitor.RunMetrics
+	(*monitor.TimeRange)(nil),            // 23: cloud.v1.monitor.TimeRange
+	(*monitor.RunMetrics)(nil),           // 24: cloud.v1.monitor.RunMetrics
 }
 var file_cloud_v1_api_test_run_overview_proto_depIdxs = []int32{
 	13, // 0: cloud.v1.api.LogFilter.sources:type_name -> cloud.v1.monitor.Source
@@ -1144,24 +1158,25 @@ var file_cloud_v1_api_test_run_overview_proto_depIdxs = []int32{
 	22, // 17: cloud.v1.api.ResolveLogRefRequest.ref:type_name -> cloud.v1.monitor.LogRef
 	1,  // 18: cloud.v1.api.ResolveLogRefResponse.filter:type_name -> cloud.v1.api.LogFilter
 	20, // 19: cloud.v1.api.ResolveLogRefResponse.cursor:type_name -> cloud.v1.monitor.LogCursor
-	23, // 20: cloud.v1.api.GetRunMetricsResponse.metrics:type_name -> cloud.v1.monitor.RunMetrics
-	3,  // 21: cloud.v1.api.TestRunOverviewService.GetTestRunOverview:input_type -> cloud.v1.api.GetTestRunOverviewRequest
-	5,  // 22: cloud.v1.api.TestRunOverviewService.StreamTestRunOverview:input_type -> cloud.v1.api.StreamTestRunOverviewRequest
-	6,  // 23: cloud.v1.api.TestRunOverviewService.QueryLogs:input_type -> cloud.v1.api.QueryLogsRequest
-	8,  // 24: cloud.v1.api.TestRunOverviewService.StreamLogs:input_type -> cloud.v1.api.StreamLogsRequest
-	9,  // 25: cloud.v1.api.TestRunOverviewService.ResolveLogRef:input_type -> cloud.v1.api.ResolveLogRefRequest
-	11, // 26: cloud.v1.api.TestRunOverviewService.GetRunMetrics:input_type -> cloud.v1.api.GetRunMetricsRequest
-	4,  // 27: cloud.v1.api.TestRunOverviewService.GetTestRunOverview:output_type -> cloud.v1.api.GetTestRunOverviewResponse
-	2,  // 28: cloud.v1.api.TestRunOverviewService.StreamTestRunOverview:output_type -> cloud.v1.api.TestRunOverviewSnapshot
-	7,  // 29: cloud.v1.api.TestRunOverviewService.QueryLogs:output_type -> cloud.v1.api.QueryLogsResponse
-	21, // 30: cloud.v1.api.TestRunOverviewService.StreamLogs:output_type -> cloud.v1.monitor.LogLine
-	10, // 31: cloud.v1.api.TestRunOverviewService.ResolveLogRef:output_type -> cloud.v1.api.ResolveLogRefResponse
-	12, // 32: cloud.v1.api.TestRunOverviewService.GetRunMetrics:output_type -> cloud.v1.api.GetRunMetricsResponse
-	27, // [27:33] is the sub-list for method output_type
-	21, // [21:27] is the sub-list for method input_type
-	21, // [21:21] is the sub-list for extension type_name
-	21, // [21:21] is the sub-list for extension extendee
-	0,  // [0:21] is the sub-list for field type_name
+	23, // 20: cloud.v1.api.GetRunMetricsRequest.window:type_name -> cloud.v1.monitor.TimeRange
+	24, // 21: cloud.v1.api.GetRunMetricsResponse.metrics:type_name -> cloud.v1.monitor.RunMetrics
+	3,  // 22: cloud.v1.api.TestRunOverviewService.GetTestRunOverview:input_type -> cloud.v1.api.GetTestRunOverviewRequest
+	5,  // 23: cloud.v1.api.TestRunOverviewService.StreamTestRunOverview:input_type -> cloud.v1.api.StreamTestRunOverviewRequest
+	6,  // 24: cloud.v1.api.TestRunOverviewService.QueryLogs:input_type -> cloud.v1.api.QueryLogsRequest
+	8,  // 25: cloud.v1.api.TestRunOverviewService.StreamLogs:input_type -> cloud.v1.api.StreamLogsRequest
+	9,  // 26: cloud.v1.api.TestRunOverviewService.ResolveLogRef:input_type -> cloud.v1.api.ResolveLogRefRequest
+	11, // 27: cloud.v1.api.TestRunOverviewService.GetRunMetrics:input_type -> cloud.v1.api.GetRunMetricsRequest
+	4,  // 28: cloud.v1.api.TestRunOverviewService.GetTestRunOverview:output_type -> cloud.v1.api.GetTestRunOverviewResponse
+	2,  // 29: cloud.v1.api.TestRunOverviewService.StreamTestRunOverview:output_type -> cloud.v1.api.TestRunOverviewSnapshot
+	7,  // 30: cloud.v1.api.TestRunOverviewService.QueryLogs:output_type -> cloud.v1.api.QueryLogsResponse
+	21, // 31: cloud.v1.api.TestRunOverviewService.StreamLogs:output_type -> cloud.v1.monitor.LogLine
+	10, // 32: cloud.v1.api.TestRunOverviewService.ResolveLogRef:output_type -> cloud.v1.api.ResolveLogRefResponse
+	12, // 33: cloud.v1.api.TestRunOverviewService.GetRunMetrics:output_type -> cloud.v1.api.GetRunMetricsResponse
+	28, // [28:34] is the sub-list for method output_type
+	22, // [22:28] is the sub-list for method input_type
+	22, // [22:22] is the sub-list for extension type_name
+	22, // [22:22] is the sub-list for extension extendee
+	0,  // [0:22] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_api_test_run_overview_proto_init() }
