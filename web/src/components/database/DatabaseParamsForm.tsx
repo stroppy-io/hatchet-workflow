@@ -101,25 +101,26 @@ function useScrub({
       let locked = false;
       let acc = 0; // fractional-step accumulator so slow drags still tick by `step`
 
+      // Round to the step's precision (so a 0.1 step doesn't drift into
+      // 0.30000000000000004 territory).
+      const dot = String(step).indexOf(".");
+      const decimals = dot < 0 ? 0 : String(step).length - dot - 1;
+      const pow = Math.pow(10, decimals);
       const clamp = (n: number) => {
-        let r = n;
+        let r = Math.round(n * pow) / pow;
         if (min !== undefined) r = Math.max(min, r);
         if (max !== undefined) r = Math.min(max, r);
         return r;
-      };
-      const snap = (n: number) => {
-        const base = min ?? 0;
-        return base + Math.round((n - base) / step) * step;
       };
       const apply = (dx: number, shift: boolean, coarse: boolean) => {
         const fine = shift ? 0.25 : 1;
         const big = coarse ? 10 : 1;
         const accel = 1 + Math.min(Math.abs(dx) * 0.08, 5); // speed → bigger jumps
-        acc += (dx / 5) * step * fine * big * accel; // ~5px of drag per base step
-        const whole = Math.trunc(acc);
-        if (whole === 0) return;
-        acc -= whole;
-        const next = clamp(snap(valueRef.current + whole));
+        acc += (dx / 5) * fine * big * accel; // ~5px of drag per step, before accel
+        const steps = Math.trunc(acc); // whole steps to apply this move
+        if (steps === 0) return;
+        acc -= steps;
+        const next = clamp(valueRef.current + steps * step);
         if (next !== valueRef.current) {
           valueRef.current = next;
           onChange(next);
@@ -186,20 +187,20 @@ export function NumField({
   hint?: string;
 }) {
   const { scrubbing, onPointerDown } = useScrub({ value, onChange, min, max, step });
+  const isFloat = !Number.isInteger(step);
   return (
     <div className="min-w-0">
-      {/* Drag handle — the label + grip. Click-to-type still works on the input
-          below; only a real left/right drag scrubs the value. */}
-      <div
+      {/* The label itself is the drag handle (with an inline grip), kept as the
+          same inline <Label> as non-scrub fields so it lines up vertically.
+          Click-to-type still works on the input; only a real drag scrubs. */}
+      <Label
         onPointerDown={onPointerDown}
         title="Drag to adjust (Shift = fine, Alt = coarse)"
-        className={`flex w-fit cursor-ew-resize touch-none select-none items-center gap-1 ${
-          scrubbing ? "text-primary" : "text-zinc-500 hover:text-zinc-300"
-        }`}
+        className={`cursor-ew-resize touch-none select-none ${scrubbing ? "text-primary" : "hover:text-foreground"}`}
       >
-        <GripVertical className="h-3 w-3 shrink-0 opacity-50" />
-        <Label className="cursor-ew-resize">{label}</Label>
-      </div>
+        <GripVertical className="mr-1 inline-block h-3 w-3 -translate-y-px align-middle opacity-50" />
+        {label}
+      </Label>
       <Input
         type="number"
         className="mt-1"
@@ -208,12 +209,47 @@ export function NumField({
         step={step}
         value={String(value)}
         onChange={(e) => {
-          const n = Number.parseInt(e.target.value, 10);
+          const n = isFloat ? Number.parseFloat(e.target.value) : Number.parseInt(e.target.value, 10);
           onChange(Number.isNaN(n) ? 0 : n);
         }}
       />
       {hint && <p className="mt-1 text-[11px] text-zinc-600">{hint}</p>}
     </div>
+  );
+}
+
+// A standalone scrub grip — the same drag-to-change behavior as NumField, but
+// detached from a label so it can sit next to a free-text input (e.g. a probe
+// env field whose value is usually numeric but may be a word like "max"). When
+// `disabled` (the current value isn't a number) it dims and ignores drags.
+export function ScrubHandle({
+  value,
+  onChange,
+  min,
+  max,
+  step = 1,
+  disabled = false,
+}: {
+  value: number;
+  onChange: (n: number) => void;
+  min?: number;
+  max?: number;
+  step?: number;
+  disabled?: boolean;
+}) {
+  const { scrubbing, onPointerDown } = useScrub({ value, onChange, min, max, step });
+  return (
+    <button
+      type="button"
+      tabIndex={-1}
+      onPointerDown={disabled ? undefined : onPointerDown}
+      title={disabled ? "Enter a number to drag" : "Drag to adjust (Shift = fine, Alt = coarse)"}
+      className={`flex h-7 shrink-0 touch-none items-center ${
+        disabled ? "cursor-default opacity-25" : "cursor-ew-resize"
+      } ${scrubbing ? "text-primary" : "text-zinc-600 hover:text-zinc-300"}`}
+    >
+      <GripVertical className="h-3.5 w-3.5" />
+    </button>
   );
 }
 
