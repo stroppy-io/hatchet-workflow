@@ -1,7 +1,7 @@
 # stroppy-cloud Makefile
 .PHONY: help configure build build-all protocols test test-integration test-e2e test-e2e-core test-coverage \
         agent-image test-unit test-db test-full smoke smoke-clean \
-        tools db-gen migrate-generate migrate-clear \
+        tools proto-tools db-gen migrate-generate migrate-clear \
         lint fmt docker-build docker-push docker-up docker-down docker-logs \
         serve docs-install docs-dev docs-build web-install web-dev web-build \
         clean release
@@ -56,12 +56,28 @@ build-all: ## Build for all platforms
 # ============================================================
 # Protocols
 # ============================================================
-protocols: ## Generate Go + TS code from proto
-	cd protocols && easyp -cfg easyp.go.yaml mod update && easyp -cfg easyp.go.yaml mod vendor
+PROTO_BIN := $(CURDIR)/bin
+# Prepend the locally-installed codegen toolchain (easyp + protoc plugins from
+# ./bin, protoc-gen-es from web/node_modules) so `make protocols` is hermetic
+# and reproduces the committed output regardless of what's on the host PATH.
+PROTO_PATH := $(PROTO_BIN):$(CURDIR)/web/node_modules/.bin:$$PATH
+
+proto-tools: ## Install the proto codegen toolchain (easyp + plugins) into ./bin, versions pinned to match the committed generated code
+	GOFLAGS=-mod=mod GOBIN=$(PROTO_BIN) go install github.com/easyp-tech/easyp/cmd/easyp@v0.16.6
+	GOFLAGS=-mod=mod GOBIN=$(PROTO_BIN) go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.11
+	GOFLAGS=-mod=mod GOBIN=$(PROTO_BIN) go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.6.1
+	GOFLAGS=-mod=mod GOBIN=$(PROTO_BIN) go install connectrpc.com/connect/cmd/protoc-gen-connect-go@v1.19.1
+	GOFLAGS=-mod=mod GOBIN=$(PROTO_BIN) go install github.com/cludden/protoc-gen-go-temporal/cmd/protoc-gen-go_temporal@v1.23.1
+	GOFLAGS=-mod=mod GOBIN=$(PROTO_BIN) go install github.com/gopherex/protoc-gen-go-jx@v1.0.1
+	GOFLAGS=-mod=mod GOBIN=$(PROTO_BIN) go install github.com/envoyproxy/protoc-gen-validate@v1.3.3
+	cd web && npm install --no-save @bufbuild/protoc-gen-es@2.11.0
+
+protocols: proto-tools ## Generate Go + TS code from proto
+	cd protocols && export PATH="$(PROTO_PATH)" && easyp -cfg easyp.go.yaml mod update && easyp -cfg easyp.go.yaml mod vendor
 	rm -rf $(CURDIR)/internal/proto
-	cd protocols && easyp -cfg easyp.go.yaml generate && easyp -cfg easyp.api.go.yaml generate
+	cd protocols && export PATH="$(PROTO_PATH)" && easyp -cfg easyp.go.yaml generate && easyp -cfg easyp.api.go.yaml generate
 	rm -rf $(CURDIR)/web/src/lib/proto
-	cd protocols && easyp -cfg easyp.ts.yaml generate
+	cd protocols && export PATH="$(PROTO_PATH)" && easyp -cfg easyp.ts.yaml generate
 
 # ============================================================
 # Postgres store codegen (komeet sqld toolchain)
