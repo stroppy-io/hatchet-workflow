@@ -46,11 +46,17 @@ func (r PackageResolver) ResolveDatabasePackage(database *domain.Database) (*dom
 
 // pgdgPreInstall returns the commands that register the PostgreSQL APT (PGDG)
 // repository for the running distro codename, then refresh the package index.
+//
+// The signing key is fetched through the gateway's /api/binaries cache (pinned
+// upstream in gateway/cache.go), NOT a direct curl to postgresql.org: cloud
+// agents have no direct internet — only the gateway — so a direct curl times out
+// and the non-default version install fails. apt.postgresql.org repo traffic
+// itself rides the apt proxy (apt-cacher-ng) via the agent's apt.conf.
 func pgdgPreInstall() []string {
 	const keyring = "/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc"
 	return []string{
 		"install -d /usr/share/postgresql-common/pgdg",
-		"curl -fsSL -o " + keyring + " http://www.postgresql.org/media/keys/ACCC4CF8.asc",
+		"curl -fsSL -o " + keyring + " ${STROPPY_SERVER_ADDR%/}/api/binaries/postgresql-key/1/ACCC4CF8.asc",
 		`sh -c 'echo "deb [signed-by=` + keyring + `] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'`,
 		"apt-get update",
 	}

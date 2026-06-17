@@ -188,9 +188,11 @@ services:
       TEMPORAL_NAMESPACE: default
       AGENT_GATEWAY_ADDR: ":8080"
       API_ADDR: ":8081"
-      # Agents always dial Caddy. Local Docker agents use the compose service
-      # name; prod/cloud agents use the public Caddy origin.
-      AGENT_SERVER_ADDR: ${AGENT_SERVER_ADDR:-${PUBLIC_SERVER_ADDR:-http://caddy}}
+      # Agents dial the server gateway. Dev (no PUBLIC_SERVER_ADDR) uses the
+      # server compose service directly — caddy is a prod-only profile and is not
+      # running in dev, so defaulting to http://caddy made docker agents time out
+      # on bootstrap. Prod/cloud sets PUBLIC_SERVER_ADDR to the public origin.
+      AGENT_SERVER_ADDR: ${AGENT_SERVER_ADDR:-${PUBLIC_SERVER_ADDR:-http://server:8080}}
       AGENT_ATTACH_NETWORK: stroppy-cloud_default
       AGENT_BINARY_PATH: /usr/local/bin/stroppy-cloud
       STROPPY_BINARY_CACHE_DIR: /var/lib/stroppy-cache/binaries

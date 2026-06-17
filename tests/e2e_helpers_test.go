@@ -221,6 +221,23 @@ func (e *e2e) launchDockerRunRec(t *testing.T, name string, vus uint32, scale fl
 	if err != nil {
 		t.Fatalf("PatchTestWizard: %v", err)
 	}
+	// The wizard now requires machine settings to be confirmed for every node
+	// (machine_overrides). The first patch populates the suggested infrastructure
+	// plan; echo its machines back as the confirmed overrides.
+	if !pr.GetDraft().GetReady() {
+		machines := pr.GetDraft().GetInfrastructurePlan().GetMachines()
+		pr, err = e.wizard.PatchTestWizard(ctx, &api.PatchTestWizardRequest{
+			TenantId:         e.tenantID,
+			DraftId:          draftID,
+			Provider:         deployment.Provider_PROVIDER_DOCKER,
+			Database:         dockerPostgresDatabase("16"),
+			Workload:         tinyWorkload(vus, scale, duration),
+			MachineOverrides: machines,
+		})
+		if err != nil {
+			t.Fatalf("PatchTestWizard (machine_overrides): %v", err)
+		}
+	}
 	if !pr.GetDraft().GetReady() {
 		for _, fe := range pr.GetDraft().GetErrors() {
 			t.Logf("draft error: %s -> %s", fe.GetField(), fe.GetMessage())

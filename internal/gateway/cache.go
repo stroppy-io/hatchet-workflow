@@ -24,6 +24,10 @@ var binaryUpstreams = map[string]string{
 	"postgres_exporter": "https://github.com/prometheus-community/postgres_exporter/releases/download/v{ver}/{file}",
 	"mysqld_exporter":   "https://github.com/prometheus/mysqld_exporter/releases/download/v{ver}/{file}",
 	"proxysql":          "https://github.com/sysown/proxysql/releases/download/v{ver}/{file}",
+	// PostgreSQL APT (PGDG) signing key — cloud agents have no direct internet,
+	// so the non-default-version install fetches the key through this cache. {ver}
+	// is a dummy path segment; only {file} (ACCC4CF8.asc) is substituted.
+	"postgresql-key": "https://www.postgresql.org/media/keys/{file}",
 	"vector":            "https://packages.timber.io/vector/{ver}/{file}",
 	"ydbd":              "https://binaries.ydb.tech/release/{ver}/{file}",
 }
