@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -84,8 +85,9 @@ type ProbeRequest struct {
 	DriverType string `json:"driver_type,omitempty"`
 	// PoolSize, when > 0, sets the driver pool min/max conns and a POOL_SIZE env.
 	PoolSize int `json:"pool_size,omitempty"`
-	// ScaleFactor, when > 0, sets a SCALE_FACTOR env override.
-	ScaleFactor int `json:"scale_factor,omitempty"`
+	// ScaleFactor, when > 0, sets a SCALE_FACTOR env override. Fractional values
+	// are valid (e.g. TPCH smoke runs use 0.01).
+	ScaleFactor float64 `json:"scale_factor,omitempty"`
 	// Env are extra env overrides for the probed script (keys uppercased).
 	Env map[string]string `json:"env,omitempty"`
 	// Files are inline workload files written next to the generated config so the
@@ -201,7 +203,7 @@ func (p *StroppyProber) run(ctx context.Context, req ProbeRequest, outputFormat 
 		if rc.Env == nil {
 			rc.Env = make(map[string]string)
 		}
-		rc.Env["SCALE_FACTOR"] = fmt.Sprintf("%d", req.ScaleFactor)
+		rc.Env["SCALE_FACTOR"] = strconv.FormatFloat(req.ScaleFactor, 'f', -1, 64)
 	}
 	if req.PoolSize > 0 {
 		if rc.Env == nil {

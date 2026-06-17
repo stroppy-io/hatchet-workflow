@@ -827,8 +827,10 @@ type ProbeScriptRequest struct {
 	DriverType string `protobuf:"bytes,4,opt,name=driver_type,json=driverType,proto3" json:"driver_type,omitempty"`
 	// pool_size, when > 0, sets the driver pool min/max conns and a POOL_SIZE env.
 	PoolSize int32 `protobuf:"varint,5,opt,name=pool_size,json=poolSize,proto3" json:"pool_size,omitempty"`
-	// scale_factor, when > 0, sets a SCALE_FACTOR env override.
-	ScaleFactor int32 `protobuf:"varint,6,opt,name=scale_factor,json=scaleFactor,proto3" json:"scale_factor,omitempty"`
+	// scale_factor, when > 0, sets a SCALE_FACTOR env override. Fractional
+	// values are valid (e.g. TPCH smoke runs use 0.01), matching
+	// domain.Workload.Parameters.scale_factor.
+	ScaleFactor float64 `protobuf:"fixed64,6,opt,name=scale_factor,json=scaleFactor,proto3" json:"scale_factor,omitempty"`
 	// env are extra env overrides for the probed script (keys uppercased).
 	Env map[string]string `protobuf:"bytes,7,rep,name=env,proto3" json:"env,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// files are inline workload files written next to the generated config so the
@@ -905,7 +907,7 @@ func (x *ProbeScriptRequest) GetPoolSize() int32 {
 	return 0
 }
 
-func (x *ProbeScriptRequest) GetScaleFactor() int32 {
+func (x *ProbeScriptRequest) GetScaleFactor() float64 {
 	if x != nil {
 		return x.ScaleFactor
 	}
@@ -1105,7 +1107,7 @@ const file_cloud_v1_api_test_wizard_proto_rawDesc = "" +
 	"\vdriver_type\x18\x04 \x01(\tR\n" +
 	"driverType\x12\x1b\n" +
 	"\tpool_size\x18\x05 \x01(\x05R\bpoolSize\x12!\n" +
-	"\fscale_factor\x18\x06 \x01(\x05R\vscaleFactor\x12;\n" +
+	"\fscale_factor\x18\x06 \x01(\x01R\vscaleFactor\x12;\n" +
 	"\x03env\x18\a \x03(\v2).cloud.v1.api.ProbeScriptRequest.EnvEntryR\x03env\x125\n" +
 	"\x05files\x18\b \x03(\v2\x1f.cloud.v1.api.ProbeWorkloadFileR\x05files\x12#\n" +
 	"\rinclude_human\x18\t \x01(\bR\fincludeHuman\x1a6\n" +

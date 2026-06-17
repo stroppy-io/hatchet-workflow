@@ -104,7 +104,7 @@ type ProbeInput struct {
 	SQL          string
 	DriverType   string
 	PoolSize     int
-	ScaleFactor  int
+	ScaleFactor  float64
 	Env          map[string]string
 	Files        []ProbeFile
 	IncludeHuman bool
@@ -434,7 +434,7 @@ func (s *TestWizardService) ProbeScript(ctx context.Context, req *api.ProbeScrip
 		SQL:          req.GetSql(),
 		DriverType:   req.GetDriverType(),
 		PoolSize:     int(req.GetPoolSize()),
-		ScaleFactor:  int(req.GetScaleFactor()),
+		ScaleFactor:  req.GetScaleFactor(),
 		Env:          req.GetEnv(),
 		Files:        files,
 		IncludeHuman: req.GetIncludeHuman(),

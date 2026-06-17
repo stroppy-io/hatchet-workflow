@@ -12,6 +12,7 @@ import (
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	topology "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology"
 	structpb "google.golang.org/protobuf/types/known/structpb"
+	math "math"
 )
 
 func (m *StartTestWizardRequest) Encode(e *jx.Encoder) {
@@ -1059,9 +1060,9 @@ func (m *ProbeScriptRequest) Encode(e *jx.Encoder) {
 		e.FieldStart("poolSize")
 		e.Int32(m.PoolSize)
 	}
-	if m.ScaleFactor != 0 {
+	if m.ScaleFactor != 0 || math.Signbit(float64(m.ScaleFactor)) {
 		e.FieldStart("scaleFactor")
-		e.Int32(m.ScaleFactor)
+		jxpb.EncFloat64(e, m.ScaleFactor)
 	}
 	if len(m.Env) > 0 {
 		e.FieldStart("env")
@@ -1169,7 +1170,7 @@ func (m *ProbeScriptRequest) Decode(d *jx.Decoder) error {
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			v, err := jxpb.DecInt32(d)
+			v, err := jxpb.DecFloat64(d)
 			if err != nil {
 				return err
 			}

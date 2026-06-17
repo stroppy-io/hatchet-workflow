@@ -8310,9 +8310,11 @@ json_name: poolSize
 go_name: PoolSize</pre></td>
 </tr><tr>
 <td>scale_factor</td>
-<td>int32</td>
+<td>double</td>
 <td><pre>
-//scale_factor, when > 0, sets a SCALE_FACTOR env override.<br>
+//scale_factor, when > 0, sets a SCALE_FACTOR env override. Fractional
+//values are valid (e.g. TPCH smoke runs use 0.01), matching
+//domain.Workload.Parameters.scale_factor.<br>
 
 json_name: scaleFactor
 go_name: ScaleFactor</pre></td>

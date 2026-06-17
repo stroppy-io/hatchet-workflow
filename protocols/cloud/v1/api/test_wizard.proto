@@ -291,9 +291,11 @@ message ProbeScriptRequest {
      */
     int32 pool_size = 5;
     /*
-        scale_factor, when > 0, sets a SCALE_FACTOR env override.
+        scale_factor, when > 0, sets a SCALE_FACTOR env override. Fractional
+        values are valid (e.g. TPCH smoke runs use 0.01), matching
+        domain.Workload.Parameters.scale_factor.
      */
-    int32 scale_factor = 6;
+    double scale_factor = 6;
     /*
         env are extra env overrides for the probed script (keys uppercased).
      */
