@@ -1045,21 +1045,29 @@ function SettingsCard({
   const [tags, setTags] = useState<string[]>(suite.tags);
   const [tagDraft, setTagDraft] = useState("");
 
-  // Re-seed drafts whenever we (re)enter edit mode or the suite changes.
+  // Seed drafts ONCE when entering edit mode — NOT on every `suite` change. The
+  // page polls (setInterval load) every 2s, so re-seeding on each suite update
+  // would clobber the user's in-progress edits every poll (toggles snapping back
+  // together, name reverting). The flag resets when edit mode closes.
+  const seededRef = useRef(false);
   useEffect(() => {
-    if (editing) {
-      setName(suite.name);
-      setDescription(suite.description);
-      setProvider(suite.provider);
-      setScheduleEnabled(suite.scheduleEnabled);
-      setCron(suite.cron);
-      setTimezone(suite.timezone || "UTC");
-      setInTenant(suite.defaultInTenantRating ?? false);
-      setInGlobal(suite.defaultInGlobalRating ?? false);
-      setMaxParallel(suite.defaultMaxParallel);
-      setTags(suite.tags);
-      setTagDraft("");
+    if (!editing) {
+      seededRef.current = false;
+      return;
     }
+    if (seededRef.current) return;
+    seededRef.current = true;
+    setName(suite.name);
+    setDescription(suite.description);
+    setProvider(suite.provider);
+    setScheduleEnabled(suite.scheduleEnabled);
+    setCron(suite.cron);
+    setTimezone(suite.timezone || "UTC");
+    setInTenant(suite.defaultInTenantRating ?? false);
+    setInGlobal(suite.defaultInGlobalRating ?? false);
+    setMaxParallel(suite.defaultMaxParallel);
+    setTags(suite.tags);
+    setTagDraft("");
   }, [editing, suite]);
 
   const addTag = () => {
