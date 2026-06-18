@@ -56,7 +56,9 @@ import {
 import {
   WorkloadParamsForm,
   validateWorkload,
+  type SegmentProbeContext,
 } from "@/components/workload/WorkloadParamsForm";
+import { StroppyVersionField } from "@/components/workload/StroppyVersionField";
 import { TopologyPreview } from "@/pages/library/DatabaseTopologyPreview";
 
 /** A fresh, immediately-valid DatabaseVM for a chosen engine. */
@@ -134,6 +136,14 @@ export function TestPresetForm() {
   const pickEngine = useCallback((engine: EngineKind) => {
     setDb((cur) => (cur.kind === engine ? cur : freshDatabase(engine)));
   }, []);
+
+  // Live script probing for the workload editor — same surface as New Run. The
+  // engine under test supplies the driver; stroppyVersion picks the binary.
+  // Probe fires once a version is set (empty version defers to the run).
+  const probeContext = useMemo<SegmentProbeContext>(
+    () => ({ slug, engine: db.kind, version: w.stroppyVersion }),
+    [slug, db.kind, w.stroppyVersion],
+  );
 
   const onSave = useCallback(async () => {
     if (!slug) return;
@@ -309,20 +319,14 @@ export function TestPresetForm() {
               <Gauge className="h-4 w-4 text-primary/70" />
               <SectionLabel>Workload</SectionLabel>
             </div>
-            <div className="sm:max-w-xs">
-              <Label>Stroppy version (optional)</Label>
-              <Input
-                className="mt-1 font-mono text-xs"
-                value={w.stroppyVersion}
-                disabled={isSystem}
-                placeholder="e.g. 5.1.2 — empty defers to the run"
-                onChange={(e) => setW({ ...w, stroppyVersion: e.target.value })}
-              />
-              <p className="mt-1 text-[11px] text-zinc-600">
-                Pins the stroppy build this workload targets; leave empty to let the run choose.
-              </p>
-            </div>
-            <WorkloadParamsForm w={w} apply={setW} disabled={isSystem} />
+            <StroppyVersionField
+              slug={slug}
+              value={w.stroppyVersion}
+              onChange={(v) => setW({ ...w, stroppyVersion: v })}
+              disabled={isSystem}
+              autofillLatest={!isEdit}
+            />
+            <WorkloadParamsForm w={w} apply={setW} disabled={isSystem} probeContext={probeContext} />
             <FieldErrors errs={errorsFor(wErrors, "workload")} />
           </section>
 

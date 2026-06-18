@@ -39,7 +39,9 @@ import {
   FieldErrors,
   errorsFor,
   validateWorkload,
+  type SegmentProbeContext,
 } from "@/components/workload/WorkloadParamsForm";
+import { StroppyVersionField } from "@/components/workload/StroppyVersionField";
 
 /** A fresh, immediately-valid WorkloadVM (TPC-C defaults, no version). */
 function freshWorkload(): WorkloadVM {
@@ -96,6 +98,15 @@ export function WorkloadPresetForm() {
   const blocking = wErrors.filter((e) => e.severity === "error");
   const nameMissing = !name.trim();
   const canSave = !saving && !nameMissing && blocking.length === 0 && !isSystem;
+
+  // Live script probing for the workload editor — same surface as New Run. A
+  // workload preset is engine-agnostic, so the driver only picks a default probe
+  // URL (never connected — probe just introspects the script); stroppyVersion
+  // picks the binary. Probe fires once a version is set (empty defers to the run).
+  const probeContext = useMemo<SegmentProbeContext>(
+    () => ({ slug, engine: "postgres", version: w.stroppyVersion }),
+    [slug, w.stroppyVersion],
+  );
 
   const onSave = useCallback(async () => {
     if (!slug) return;
@@ -213,26 +224,20 @@ export function WorkloadPresetForm() {
                 />
               </div>
             </div>
-            <div className="sm:max-w-xs">
-              <Label>Stroppy version (optional)</Label>
-              <Input
-                className="mt-1 font-mono text-xs"
-                value={w.stroppyVersion}
-                disabled={isSystem}
-                placeholder="e.g. 5.1.2 — empty defers to the run"
-                onChange={(e) => setW({ ...w, stroppyVersion: e.target.value })}
-              />
-              <p className="mt-1 text-[11px] text-zinc-600">
-                Pins the stroppy build this workload targets; leave empty to let the run choose.
-              </p>
-            </div>
+            <StroppyVersionField
+              slug={slug}
+              value={w.stroppyVersion}
+              onChange={(v) => setW({ ...w, stroppyVersion: v })}
+              disabled={isSystem}
+              autofillLatest={!isEdit}
+            />
             <TagsEditor tags={tags} onChange={setTags} disabled={isSystem} />
           </section>
 
           {/* Typed workload params */}
           <section className="space-y-4">
             <SectionLabel>Configuration</SectionLabel>
-            <WorkloadParamsForm w={w} apply={setW} disabled={isSystem} />
+            <WorkloadParamsForm w={w} apply={setW} disabled={isSystem} probeContext={probeContext} />
             <FieldErrors errs={errorsFor(wErrors, "workload")} />
           </section>
 
