@@ -219,6 +219,11 @@ export function NewRun() {
   const draftId = params.get("draft") ?? "";
   // "New from run": ?from=<runId> auto-starts a draft seeded from that run's spec.
   const fromRunId = params.get("from") ?? "";
+  // "Use in new run": ?preset=<id>&kind=test auto-starts a draft seeded from a
+  // test preset (the db/workload preset kinds aren't wizard-seedable — the
+  // backend's StartTestWizard only accepts test_preset_id / source_run_id).
+  const presetId = params.get("preset") ?? "";
+  const presetIsTest = presetId !== "" && params.get("kind") === "test";
   const stepKey = (params.get("step") as StepKey) || "database";
   const stepIndex = Math.max(0, STEPS.findIndex((s) => s.key === stepKey));
 
@@ -321,6 +326,28 @@ export function NewRun() {
       .finally(() => setLoading(false));
   }, [slug, fromRunId, draftId, setParams]);
 
+  // "Use in new run" (?preset=<id>&kind=test): seed a fresh draft from the test
+  // preset and flip the URL to ?draft=… — the exact mirror of the ?from= path
+  // above, so the wizard opens prefilled (and editable) instead of blank.
+  const presetSeedStartedRef = useRef(false);
+  useEffect(() => {
+    if (!slug || !presetIsTest || draftId || presetSeedStartedRef.current) return;
+    presetSeedStartedRef.current = true;
+    setError(null);
+    setLoading(true);
+    getWizardProvider()
+      .start(slug, "Untitled run", { testPresetId: presetId })
+      .then((d) => {
+        setDraft(d);
+        setParams({ draft: d.id, step: "database" }, { replace: true });
+      })
+      .catch((e) => {
+        presetSeedStartedRef.current = false;
+        setError(e instanceof Error ? e.message : String(e));
+      })
+      .finally(() => setLoading(false));
+  }, [slug, presetIsTest, presetId, draftId, setParams]);
+
   const patch = useCallback(
     (input: Parameters<ReturnType<typeof getWizardProvider>["patch"]>[2]) => {
       if (!slug || !draftId) return Promise.resolve();
@@ -407,12 +434,14 @@ export function NewRun() {
     [slug],
   );
 
-  // Cloning from a run (?from=…): show a spinner instead of the start/resume
-  // picker until the seeded draft is created and the URL flips to ?draft=….
-  if (!draftId && fromRunId && !error) {
+  // Seeding from a run (?from=…) or a test preset (?preset=…&kind=test): show a
+  // spinner instead of the start/resume picker until the seeded draft is created
+  // and the URL flips to ?draft=….
+  if (!draftId && (fromRunId || presetIsTest) && !error) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Cloning run…
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />{" "}
+        {fromRunId ? "Cloning run…" : "Seeding from preset…"}
       </div>
     );
   }

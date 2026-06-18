@@ -11,7 +11,11 @@
 //   * Duplicate    → CloneTestPreset (PresetProvider.clonePreset). Always.
 //   * Delete       → DeleteTestPreset (PresetProvider.deletePreset) behind a
 //                    confirm. System presets / non-operators → gated.
-//   * Use in run   → /runs/new?preset=:id&kind=test. Always.
+//   * Launch now   → start a draft from this preset + Finish(start=true) to
+//                    launch a run immediately, no wizard. Always; a not-ready
+//                    preset surfaces the backend error and stays put.
+//   * Open in wizard → /runs/new?preset=:id&kind=test (seeds a prefilled,
+//                    editable draft). Always.
 
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -24,6 +28,7 @@ import {
   Lock,
   Pencil,
   PlayCircle,
+  Rocket,
   Trash2,
 } from "lucide-react";
 import { useNavigate, useParams, useTenantSlug } from "@/lib/router";
@@ -42,7 +47,13 @@ import {
   type DbKind,
   type Protocol,
 } from "@/components/library-table/labels";
-import { ENGINES, Workload_Protocol, type DatabaseVM, type WorkloadVM } from "@/services/wizard";
+import {
+  ENGINES,
+  Workload_Protocol,
+  launchFromTestPreset,
+  type DatabaseVM,
+  type WorkloadVM,
+} from "@/services/wizard";
 import {
   EngineParamsForm,
   EngineVersionSelect,
@@ -126,6 +137,22 @@ export function TestPresetDetail() {
   const isSystem = preset?.isSystem ?? false;
   const mutable = canMutate && !isSystem;
   const authorDisplay = useAuthorDisplay(preset?.authorId);
+
+  // "Launch now": skip the wizard — seed a draft from this preset and launch it
+  // immediately. If the preset isn't launch-ready the backend rejects Finish; we
+  // surface the error and stay on the page (no navigation).
+  const onLaunch = useCallback(async () => {
+    if (!slug || !preset) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const runId = await launchFromTestPreset(slug, preset.id, preset.name);
+      navigate(runId ? `/runs/${runId}` : "/runs");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+      setBusy(false);
+    }
+  }, [slug, preset, navigate]);
 
   const onDuplicate = useCallback(async () => {
     if (!slug || !preset) return;
@@ -212,12 +239,15 @@ export function TestPresetDetail() {
           )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          <Button variant="default" size="sm" disabled={busy} onClick={() => void onLaunch()}>
+            <Rocket className="h-3.5 w-3.5" /> Launch now
+          </Button>
           <Button
-            variant="default"
+            variant="outline"
             size="sm"
             onClick={() => navigate(`/runs/new?preset=${encodeURIComponent(preset.id)}&kind=test`)}
           >
-            <PlayCircle className="h-3.5 w-3.5" /> Use in new run
+            <PlayCircle className="h-3.5 w-3.5" /> Open in wizard
           </Button>
           <Button
             variant="outline"

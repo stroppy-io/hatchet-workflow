@@ -1198,6 +1198,29 @@ export function getWizardProvider(): WizardProvider {
   return active;
 }
 
+/**
+ * Launch a run directly from a test preset, skipping the wizard UI: seed a fresh
+ * draft from the preset, then Finish it with start=true. Returns the launched
+ * run's id (may be "" if the backend reports no run). Throws when the seeded
+ * draft isn't launch-ready — callers surface that and stay put. The orphaned
+ * draft (if Finish fails) stays resumable from the New Run start screen, exactly
+ * like an abandoned "Use in new run".
+ */
+export async function launchFromTestPreset(
+  tenantSlug: string,
+  testPresetId: string,
+  name: string,
+): Promise<string> {
+  const provider = getWizardProvider();
+  const draft = await provider.start(tenantSlug, name || "Untitled run", { testPresetId });
+  const res = await provider.finish(tenantSlug, draft.id, {
+    start: true,
+    saveAsPreset: false,
+    presetName: "",
+  });
+  return res.runId;
+}
+
 // --- Sensible defaults shared by the page + mock -----------------------------
 
 export function defaultPostgresParams(): PostgresParamsVM {
