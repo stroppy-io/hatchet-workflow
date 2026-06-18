@@ -1435,14 +1435,17 @@ export function driverTypeFor(kind: EngineKind): string {
     case "mysql":
       return "mysql";
     case "mariadb":
-      return "mariadb";
+      // MariaDB speaks the MySQL wire protocol; stroppy has no mariadb driver.
+      return "mysql";
     case "picodata":
       return "picodata";
     case "ydb":
     case "ydbManaged":
       return "ydb";
     case "cockroach":
-      return "cockroach";
+      // CockroachDB speaks pg-wire; stroppy has no cockroach driver (the
+      // distinct PROTOCOL_COCKROACH only changes port/url, not the driver).
+      return "postgres";
     case "external":
       return "postgres";
   }
