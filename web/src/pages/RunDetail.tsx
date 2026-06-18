@@ -7,6 +7,7 @@ import {
   BarChart3,
   Gauge,
   GitCompare,
+  CopyPlus,
   LineChart,
   Network,
   RefreshCw,
@@ -445,6 +446,11 @@ export function RunDetail() {
               <Repeat className="h-4 w-4" /> Rerun
             </Button>
           )}
+          <Link to={`/runs/new?from=${id}`} title="Open the wizard pre-filled with this run's parameters">
+            <Button variant="outline" size="sm">
+              <CopyPlus className="h-4 w-4" /> New from
+            </Button>
+          </Link>
           {allowed.has("extract") && (
             <Button variant="outline" size="sm" onClick={() => void onSavePreset()} disabled={busy}>
               <Save className="h-4 w-4" /> Save preset
@@ -517,7 +523,7 @@ export function RunDetail() {
               value={view}
               onChange={setView}
               options={VIEW_OPTIONS}
-              segmentClassName="w-[78px]"
+              segmentClassName="w-[88px]"
             />
             {(view === "grafana" || view === "metrics") && segments.length > 0 && (
               <label className="ml-auto flex items-center gap-1.5 text-[11px] text-zinc-500">

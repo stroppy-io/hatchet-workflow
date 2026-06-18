@@ -34,6 +34,10 @@ func (m *StartTestWizardRequest) Encode(e *jx.Encoder) {
 		e.FieldStart("testPresetId")
 		e.Str(m.TestPresetId)
 	}
+	if m.SourceRunId != "" {
+		e.FieldStart("sourceRunId")
+		e.Str(m.SourceRunId)
+	}
 	e.ObjEnd()
 }
 
@@ -82,6 +86,20 @@ func (m *StartTestWizardRequest) Decode(d *jx.Decoder) error {
 				return err
 			}
 			m.TestPresetId = v
+			return nil
+		case "sourceRunId", "source_run_id":
+			if seen["SourceRunId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["SourceRunId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.SourceRunId = v
 			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)

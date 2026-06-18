@@ -24,7 +24,7 @@ export const file_cloud_v1_monitor_logs: GenFile = /*@__PURE__*/
  */
 export type LogCursor = Message<"cloud.v1.monitor.LogCursor"> & {
   /**
-   * observed_at is the precise timestamp the line was observed at.
+   * observed_at is the precise timestamp the line was observed at. 
    *
    * @generated from field: google.protobuf.Timestamp observed_at = 1;
    */
@@ -49,7 +49,7 @@ export type LogCursor = Message<"cloud.v1.monitor.LogCursor"> & {
  */
 export type LogCursorJson = {
   /**
-   * observed_at is the precise timestamp the line was observed at.
+   * observed_at is the precise timestamp the line was observed at. 
    *
    * @generated from field: google.protobuf.Timestamp observed_at = 1;
    */
@@ -75,20 +75,20 @@ export const LogCursorSchema: GenMessage<LogCursor, {jsonType: LogCursorJson, va
   messageDesc(file_cloud_v1_monitor_logs, 0);
 
 /**
- * LogLine is one unified log record returned from a query or stream.
+ * LogLine is one unified log record returned from a query or stream. 
  *
  * @generated from message cloud.v1.monitor.LogLine
  */
 export type LogLine = Message<"cloud.v1.monitor.LogLine"> & {
   /**
-   * observed_at is when the line was emitted/observed.
+   * observed_at is when the line was emitted/observed. 
    *
    * @generated from field: google.protobuf.Timestamp observed_at = 1;
    */
   observedAt?: Timestamp;
 
   /**
-   * run_id is the owning test run id (plain string, runtime-pure).
+   * run_id is the owning test run id (plain string, runtime-pure). 
    *
    * @generated from field: string run_id = 2;
    */
@@ -107,91 +107,91 @@ export type LogLine = Message<"cloud.v1.monitor.LogLine"> & {
   lineNo: bigint;
 
   /**
-   * node_execution_id is the owning execution stage, when the line came from a stage op.
+   * node_execution_id is the owning execution stage, when the line came from a stage op. 
    *
    * @generated from field: string node_execution_id = 3;
    */
   nodeExecutionId: string;
 
   /**
-   * component_id is the topology component the line is about.
+   * component_id is the topology component the line is about. 
    *
    * @generated from field: string component_id = 4;
    */
   componentId: string;
 
   /**
-   * machine_id is the host the line originated on.
+   * machine_id is the host the line originated on. 
    *
    * @generated from field: string machine_id = 5;
    */
   machineId: string;
 
   /**
-   * source is where the line came from (command, journald, file, or server).
+   * source is where the line came from (command, journald, file, or server). 
    *
    * @generated from field: cloud.v1.monitor.Source source = 6;
    */
   source: Source;
 
   /**
-   * unit is the systemd unit or file path for JOURNALD/FILE sources.
+   * unit is the systemd unit or file path for JOURNALD/FILE sources. 
    *
    * @generated from field: string unit = 7;
    */
   unit: string;
 
   /**
-   * stream is the std stream (stdout/stderr) the line was written to.
+   * stream is the std stream (stdout/stderr) the line was written to. 
    *
    * @generated from field: cloud.v1.monitor.Stream stream = 8;
    */
   stream: Stream;
 
   /**
-   * line is the raw log text content.
+   * line is the raw log text content. 
    *
    * @generated from field: string line = 9;
    */
   line: string;
 
   /**
-   * cursor anchors this exact line for deep-linking.
+   * cursor anchors this exact line for deep-linking. 
    *
    * @generated from field: cloud.v1.monitor.LogCursor cursor = 10;
    */
   cursor?: LogCursor;
 
   /**
-   * parent_node_execution_id links the log line to the parent pipeline stage.
+   * parent_node_execution_id links the log line to the parent pipeline stage. 
    *
    * @generated from field: string parent_node_execution_id = 12;
    */
   parentNodeExecutionId: string;
 
   /**
-   * phase is the top-level pipeline phase this line belongs to, when known.
+   * phase is the top-level pipeline phase this line belongs to, when known. 
    *
    * @generated from field: string phase = 13;
    */
   phase: string;
 
   /**
-   * stage_name is the producing stage's display name, when known.
+   * stage_name is the producing stage's display name, when known. 
    *
    * @generated from field: string stage_name = 14;
    */
   stageName: string;
 
   /**
-   * step_id is the component-local deployment step id, when this line came from an agent step.
+   * step_id is the component-local deployment step id, when this line came from an agent step. 
    *
    * @generated from field: string step_id = 15;
    */
   stepId: string;
 
   /**
-   * action is the generic action class, e.g. call_cmd/write_file/create_dir.
+   * action is the generic action class, e.g. call_cmd/write_file/create_dir. 
    *
    * @generated from field: string action = 16;
    */
@@ -209,20 +209,20 @@ export type LogLine = Message<"cloud.v1.monitor.LogLine"> & {
 };
 
 /**
- * LogLine is one unified log record returned from a query or stream.
+ * LogLine is one unified log record returned from a query or stream. 
  *
  * @generated from message cloud.v1.monitor.LogLine
  */
 export type LogLineJson = {
   /**
-   * observed_at is when the line was emitted/observed.
+   * observed_at is when the line was emitted/observed. 
    *
    * @generated from field: google.protobuf.Timestamp observed_at = 1;
    */
   observedAt?: TimestampJson;
 
   /**
-   * run_id is the owning test run id (plain string, runtime-pure).
+   * run_id is the owning test run id (plain string, runtime-pure). 
    *
    * @generated from field: string run_id = 2;
    */
@@ -241,91 +241,91 @@ export type LogLineJson = {
   lineNo?: string;
 
   /**
-   * node_execution_id is the owning execution stage, when the line came from a stage op.
+   * node_execution_id is the owning execution stage, when the line came from a stage op. 
    *
    * @generated from field: string node_execution_id = 3;
    */
   nodeExecutionId?: string;
 
   /**
-   * component_id is the topology component the line is about.
+   * component_id is the topology component the line is about. 
    *
    * @generated from field: string component_id = 4;
    */
   componentId?: string;
 
   /**
-   * machine_id is the host the line originated on.
+   * machine_id is the host the line originated on. 
    *
    * @generated from field: string machine_id = 5;
    */
   machineId?: string;
 
   /**
-   * source is where the line came from (command, journald, file, or server).
+   * source is where the line came from (command, journald, file, or server). 
    *
    * @generated from field: cloud.v1.monitor.Source source = 6;
    */
   source?: SourceJson;
 
   /**
-   * unit is the systemd unit or file path for JOURNALD/FILE sources.
+   * unit is the systemd unit or file path for JOURNALD/FILE sources. 
    *
    * @generated from field: string unit = 7;
    */
   unit?: string;
 
   /**
-   * stream is the std stream (stdout/stderr) the line was written to.
+   * stream is the std stream (stdout/stderr) the line was written to. 
    *
    * @generated from field: cloud.v1.monitor.Stream stream = 8;
    */
   stream?: StreamJson;
 
   /**
-   * line is the raw log text content.
+   * line is the raw log text content. 
    *
    * @generated from field: string line = 9;
    */
   line?: string;
 
   /**
-   * cursor anchors this exact line for deep-linking.
+   * cursor anchors this exact line for deep-linking. 
    *
    * @generated from field: cloud.v1.monitor.LogCursor cursor = 10;
    */
   cursor?: LogCursorJson;
 
   /**
-   * parent_node_execution_id links the log line to the parent pipeline stage.
+   * parent_node_execution_id links the log line to the parent pipeline stage. 
    *
    * @generated from field: string parent_node_execution_id = 12;
    */
   parentNodeExecutionId?: string;
 
   /**
-   * phase is the top-level pipeline phase this line belongs to, when known.
+   * phase is the top-level pipeline phase this line belongs to, when known. 
    *
    * @generated from field: string phase = 13;
    */
   phase?: string;
 
   /**
-   * stage_name is the producing stage's display name, when known.
+   * stage_name is the producing stage's display name, when known. 
    *
    * @generated from field: string stage_name = 14;
    */
   stageName?: string;
 
   /**
-   * step_id is the component-local deployment step id, when this line came from an agent step.
+   * step_id is the component-local deployment step id, when this line came from an agent step. 
    *
    * @generated from field: string step_id = 15;
    */
   stepId?: string;
 
   /**
-   * action is the generic action class, e.g. call_cmd/write_file/create_dir.
+   * action is the generic action class, e.g. call_cmd/write_file/create_dir. 
    *
    * @generated from field: string action = 16;
    */
@@ -361,42 +361,42 @@ export const LogLineSchema: GenMessage<LogLine, {jsonType: LogLineJson, validTyp
  */
 export type LogRef = Message<"cloud.v1.monitor.LogRef"> & {
   /**
-   * run_id is the owning test run the slice belongs to.
+   * run_id is the owning test run the slice belongs to. 
    *
    * @generated from field: string run_id = 1;
    */
   runId: string;
 
   /**
-   * node_execution_id, when set, narrows the slice to one execution stage's logs.
+   * node_execution_id, when set, narrows the slice to one execution stage's logs. 
    *
    * @generated from field: optional string node_execution_id = 2;
    */
   nodeExecutionId?: string;
 
   /**
-   * component_id, when set, narrows the slice to one topology component's logs.
+   * component_id, when set, narrows the slice to one topology component's logs. 
    *
    * @generated from field: optional string component_id = 3;
    */
   componentId?: string;
 
   /**
-   * start, when set, bounds the slice to lines at or after this time.
+   * start, when set, bounds the slice to lines at or after this time. 
    *
    * @generated from field: optional google.protobuf.Timestamp start = 4;
    */
   start?: Timestamp;
 
   /**
-   * end, when set, bounds the slice to lines at or before this time.
+   * end, when set, bounds the slice to lines at or before this time. 
    *
    * @generated from field: optional google.protobuf.Timestamp end = 5;
    */
   end?: Timestamp;
 
   /**
-   * cursor pins a specific line (deep-link to line).
+   * cursor pins a specific line (deep-link to line). 
    *
    * @generated from field: optional cloud.v1.monitor.LogCursor cursor = 6;
    */
@@ -413,42 +413,42 @@ export type LogRef = Message<"cloud.v1.monitor.LogRef"> & {
  */
 export type LogRefJson = {
   /**
-   * run_id is the owning test run the slice belongs to.
+   * run_id is the owning test run the slice belongs to. 
    *
    * @generated from field: string run_id = 1;
    */
   runId?: string;
 
   /**
-   * node_execution_id, when set, narrows the slice to one execution stage's logs.
+   * node_execution_id, when set, narrows the slice to one execution stage's logs. 
    *
    * @generated from field: optional string node_execution_id = 2;
    */
   nodeExecutionId?: string;
 
   /**
-   * component_id, when set, narrows the slice to one topology component's logs.
+   * component_id, when set, narrows the slice to one topology component's logs. 
    *
    * @generated from field: optional string component_id = 3;
    */
   componentId?: string;
 
   /**
-   * start, when set, bounds the slice to lines at or after this time.
+   * start, when set, bounds the slice to lines at or after this time. 
    *
    * @generated from field: optional google.protobuf.Timestamp start = 4;
    */
   start?: TimestampJson;
 
   /**
-   * end, when set, bounds the slice to lines at or before this time.
+   * end, when set, bounds the slice to lines at or before this time. 
    *
    * @generated from field: optional google.protobuf.Timestamp end = 5;
    */
   end?: TimestampJson;
 
   /**
-   * cursor pins a specific line (deep-link to line).
+   * cursor pins a specific line (deep-link to line). 
    *
    * @generated from field: optional cloud.v1.monitor.LogCursor cursor = 6;
    */
@@ -465,20 +465,20 @@ export const LogRefSchema: GenMessage<LogRef, {jsonType: LogRefJson, validType: 
   messageDesc(file_cloud_v1_monitor_logs, 2);
 
 /**
- * LogPage is a page of query results with a forward cursor token.
+ * LogPage is a page of query results with a forward cursor token. 
  *
  * @generated from message cloud.v1.monitor.LogPage
  */
 export type LogPage = Message<"cloud.v1.monitor.LogPage"> & {
   /**
-   * lines are the log records on this page, in query order.
+   * lines are the log records on this page, in query order. 
    *
    * @generated from field: repeated cloud.v1.monitor.LogLine lines = 1;
    */
   lines: LogLine[];
 
   /**
-   * next_token continues the query; empty when no more.
+   * next_token continues the query; empty when no more. 
    *
    * @generated from field: string next_token = 2;
    */
@@ -486,20 +486,20 @@ export type LogPage = Message<"cloud.v1.monitor.LogPage"> & {
 };
 
 /**
- * LogPage is a page of query results with a forward cursor token.
+ * LogPage is a page of query results with a forward cursor token. 
  *
  * @generated from message cloud.v1.monitor.LogPage
  */
 export type LogPageJson = {
   /**
-   * lines are the log records on this page, in query order.
+   * lines are the log records on this page, in query order. 
    *
    * @generated from field: repeated cloud.v1.monitor.LogLine lines = 1;
    */
   lines?: LogLineJson[];
 
   /**
-   * next_token continues the query; empty when no more.
+   * next_token continues the query; empty when no more. 
    *
    * @generated from field: string next_token = 2;
    */
@@ -516,41 +516,41 @@ export const LogPageSchema: GenMessage<LogPage, {jsonType: LogPageJson, validTyp
   messageDesc(file_cloud_v1_monitor_logs, 3);
 
 /**
- * Source is where a log line came from.
+ * Source is where a log line came from. 
  *
  * @generated from enum cloud.v1.monitor.Source
  */
 export enum Source {
   /**
-   * SOURCE_UNSPECIFIED is the zero value and is never a valid source.
+   * SOURCE_UNSPECIFIED is the zero value and is never a valid source. 
    *
    * @generated from enum value: SOURCE_UNSPECIFIED = 0;
    */
   UNSPECIFIED = 0,
 
   /**
-   * SOURCE_COMMAND is agent command stdout/stderr (an execution-stage op).
+   * SOURCE_COMMAND is agent command stdout/stderr (an execution-stage op). 
    *
    * @generated from enum value: SOURCE_COMMAND = 1;
    */
   COMMAND = 1,
 
   /**
-   * SOURCE_JOURNALD is a systemd-managed service's stdout/stderr.
+   * SOURCE_JOURNALD is a systemd-managed service's stdout/stderr. 
    *
    * @generated from enum value: SOURCE_JOURNALD = 2;
    */
   JOURNALD = 2,
 
   /**
-   * SOURCE_FILE is a tailed log file (e.g. a postgresql log under /var/log/postgresql).
+   * SOURCE_FILE is a tailed log file (e.g. a postgresql log under /var/log/postgresql). 
    *
    * @generated from enum value: SOURCE_FILE = 3;
    */
   FILE = 3,
 
   /**
-   * SOURCE_SERVER is control-plane/worker server-side output scoped to a run.
+   * SOURCE_SERVER is control-plane/worker server-side output scoped to a run. 
    *
    * @generated from enum value: SOURCE_SERVER = 4;
    */
@@ -558,7 +558,7 @@ export enum Source {
 }
 
 /**
- * Source is where a log line came from.
+ * Source is where a log line came from. 
  *
  * @generated from enum cloud.v1.monitor.Source
  */
@@ -571,27 +571,27 @@ export const SourceSchema: GenEnum<Source, SourceJson> = /*@__PURE__*/
   enumDesc(file_cloud_v1_monitor_logs, 0);
 
 /**
- * Stream is the std stream the line was written to.
+ * Stream is the std stream the line was written to. 
  *
  * @generated from enum cloud.v1.monitor.Stream
  */
 export enum Stream {
   /**
-   * STREAM_UNSPECIFIED is the zero value and is never a valid stream.
+   * STREAM_UNSPECIFIED is the zero value and is never a valid stream. 
    *
    * @generated from enum value: STREAM_UNSPECIFIED = 0;
    */
   UNSPECIFIED = 0,
 
   /**
-   * STREAM_STDOUT is the standard output stream.
+   * STREAM_STDOUT is the standard output stream. 
    *
    * @generated from enum value: STREAM_STDOUT = 1;
    */
   STDOUT = 1,
 
   /**
-   * STREAM_STDERR is the standard error stream.
+   * STREAM_STDERR is the standard error stream. 
    *
    * @generated from enum value: STREAM_STDERR = 2;
    */
@@ -599,7 +599,7 @@ export enum Stream {
 }
 
 /**
- * Stream is the std stream the line was written to.
+ * Stream is the std stream the line was written to. 
  *
  * @generated from enum cloud.v1.monitor.Stream
  */

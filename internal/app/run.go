@@ -412,14 +412,15 @@ func Run(ctx context.Context, cfg Config) error {
 	})
 
 	testWizardService := testwizardsvc.NewTestWizardService(testwizardsvc.TestWizardDeps{
-		Authn:   authn,
-		Drafts:  store.Drafts(),
-		Presets: store.Presets(),
-		Engine:  testWizardEngine,
-		Runs:    runStarter,
-		Saver:   store.Presets(),
-		Prober:  stroppyProberAdapter{prober: stroppyProber},
-		Tx:      trm,
+		Authn:    authn,
+		Drafts:   store.Drafts(),
+		Presets:  store.Presets(),
+		Engine:   testWizardEngine,
+		Runs:     runStarter,
+		RunSpecs: store.TestRuns(),
+		Saver:    store.Presets(),
+		Prober:   stroppyProberAdapter{prober: stroppyProber},
+		Tx:       trm,
 	})
 
 	stroppyService := stroppysvc.NewService(stroppysvc.Deps{

@@ -83,6 +83,46 @@ func (e *TestWizardEngine) InitialDraft(ctx context.Context, tenantID, name stri
 	return draft, nil
 }
 
+// InitialDraftFromRun builds the starting draft for a "New from run" clone: it
+// seeds the editable values from an existing run's immutable baked spec so the
+// user lands in the wizard with that run's exact parameters, free to edit before
+// launching. Unlike a re-run (which relaunches the frozen spec verbatim), this
+// produces a fresh, fully editable draft. Seeded: provider, database, workload,
+// render overrides AND the per-node machine settings (provider VM/container
+// sizing) — the baked infrastructure_plan.machines are MachinePlans keyed by
+// topology node_id, the exact shape draft.machine_overrides expects, so the clone
+// reproduces the same infrastructure. Compute regenerates topology identically
+// (same db+workload+provider => same node_ids) and re-applies these overrides.
+func (e *TestWizardEngine) InitialDraftFromRun(ctx context.Context, tenantID, name string, spec *domain.TestRun) (*models.TestWizardDraftRecord, error) {
+	draft := &models.TestWizardDraftRecord{
+		Provider: deployment.Provider_PROVIDER_UNSPECIFIED,
+	}
+	if spec != nil {
+		if db := spec.GetDatabase(); db != nil {
+			draft.Database = proto.Clone(db).(*domain.Database)
+		}
+		if wl := spec.GetWorkload(); wl != nil {
+			draft.Workload = proto.Clone(wl).(*domain.Workload)
+		}
+		if ov := spec.GetRenderOverrides(); ov != nil {
+			draft.RenderOverrides = proto.Clone(ov).(*deployment.RenderOverrideSet)
+		}
+		// Provider + per-node machine settings live on the baked
+		// infrastructure_plan; seed both so the clone targets the same backend and
+		// the same VM/container sizing by default.
+		if plan := spec.GetInfrastructurePlan(); plan != nil {
+			draft.Provider = plan.GetProvider()
+			for _, m := range plan.GetMachines() {
+				draft.MachineOverrides = append(draft.MachineOverrides, proto.Clone(m).(*deployment.MachinePlan))
+			}
+		}
+	}
+	if err := e.Compute(ctx, tenantID, draft); err != nil {
+		return nil, err
+	}
+	return draft, nil
+}
+
 // Compute recomputes the server-derived sections IN PLACE from the draft's
 // editable values. It regenerates topology_spec + infrastructure_plan (via the
 // run builder), the render_preview (via the deployment preview builder), the

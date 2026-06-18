@@ -94,6 +94,17 @@ func (m *StartTestWizardRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if utf8.RuneCountInString(m.GetSourceRunId()) > 64 {
+		err := StartTestWizardRequestValidationError{
+			field:  "SourceRunId",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if len(errors) > 0 {
 		return StartTestWizardRequestMultiError(errors)
 	}

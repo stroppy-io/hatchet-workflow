@@ -45,6 +45,7 @@ import {
   ChevronUp,
   ChevronsUpDown,
   Circle,
+  CopyPlus,
   Eye,
   Filter,
   GitCompare,
@@ -877,6 +878,7 @@ const ACTION_ITEMS: {
 }[] = [
   { action: "view", label: "View detail", icon: Eye },
   { action: "share", label: "Share link", icon: Link2 },
+  { action: "clone", label: "New from", icon: CopyPlus },
   { action: "rerun", label: "Re-run", icon: RotateCcw },
   { action: "extract", label: "Save as preset", icon: Bookmark },
   { action: "cancel", label: "Cancel run", icon: Ban },
@@ -884,7 +886,7 @@ const ACTION_ITEMS: {
 ];
 
 // Why an action is greyed out, per status — shown as the disabled item's title.
-const DISABLED_REASON: Record<Exclude<RunAction, "view" | "share">, string> = {
+const DISABLED_REASON: Record<Exclude<RunAction, "view" | "share" | "clone">, string> = {
   cancel: "Only running or pending runs can be cancelled",
   rerun: "Only finished runs can be re-run",
   extract: "Only completed runs can be saved as a preset",
@@ -892,7 +894,7 @@ const DISABLED_REASON: Record<Exclude<RunAction, "view" | "share">, string> = {
 };
 
 function disabledReason(action: RunAction): string | undefined {
-  if (action === "view" || action === "share") return undefined;
+  if (action === "view" || action === "share" || action === "clone") return undefined;
   return DISABLED_REASON[action];
 }
 
@@ -1142,6 +1144,9 @@ export function Runs() {
         switch (action) {
           case "view":
             navigate(`/runs/${run.id}`);
+            return;
+          case "clone":
+            navigate(`/runs/new?from=${run.id}`);
             return;
           case "share": {
             const share = await createShare(slug, run.id, { kind: "test_run" });

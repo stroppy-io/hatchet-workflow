@@ -298,6 +298,8 @@ export interface RunFacets {
  * an existing in-app route — no speculative operations:
  *   * "view"      -> in-app route /runs/:id (no RPC; always available).
  *   * "share"     -> copy an in-app /runs/:id link (no RPC; always available).
+ *   * "clone"     -> in-app route /runs/new?from=:id ("New from run"; seeds the
+ *                    wizard from this run's spec — always available).
  *   * "cancel"    -> TestRunService.CancelTestRun  (running / pending only).
  *   * "rerun"     -> TestRunService.StartTestRun with source = { testRunId }
  *                    (terminal states only: completed / failed / cancelled).
@@ -310,6 +312,7 @@ export interface RunFacets {
 export type RunAction =
   | "view"
   | "share"
+  | "clone"
   | "cancel"
   | "rerun"
   | "extract"
@@ -339,7 +342,7 @@ export type RunAction =
  *   * Share    — always (copies the in-app run link).
  */
 export function actionsForStatus(status: RunStatus): Set<RunAction> {
-  const set = new Set<RunAction>(["view", "share"]);
+  const set = new Set<RunAction>(["view", "share", "clone"]);
   const canCancel = status === "running" || status === "pending";
   const inFlight = canCancel || status === "cancelling";
   const terminal =

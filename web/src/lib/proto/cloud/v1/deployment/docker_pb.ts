@@ -23,14 +23,14 @@ export const file_cloud_v1_deployment_docker: GenFile = /*@__PURE__*/
  */
 export type Docker = Message<"cloud.v1.deployment.Docker"> & {
   /**
-   * input contains runtime container specs for one deployment.
+   * input contains runtime container specs for one deployment. 
    *
    * @generated from field: cloud.v1.deployment.Docker.Input input = 1;
    */
   input?: Docker_Input;
 
   /**
-   * output contains created container metadata.
+   * output contains created container metadata. 
    *
    * @generated from field: cloud.v1.deployment.Docker.Output output = 2;
    */
@@ -47,14 +47,14 @@ export type Docker = Message<"cloud.v1.deployment.Docker"> & {
  */
 export type DockerJson = {
   /**
-   * input contains runtime container specs for one deployment.
+   * input contains runtime container specs for one deployment. 
    *
    * @generated from field: cloud.v1.deployment.Docker.Input input = 1;
    */
   input?: Docker_InputJson;
 
   /**
-   * output contains created container metadata.
+   * output contains created container metadata. 
    *
    * @generated from field: cloud.v1.deployment.Docker.Output output = 2;
    */
@@ -92,27 +92,27 @@ export const Docker_SettingsSchema: GenMessage<Docker_Settings, {jsonType: Docke
   messageDesc(file_cloud_v1_deployment_docker, 0, 0);
 
 /**
- * Input contains runtime parameters passed to the Docker deployer.
+ * Input contains runtime parameters passed to the Docker deployer. 
  *
  * @generated from message cloud.v1.deployment.Docker.Input
  */
 export type Docker_Input = Message<"cloud.v1.deployment.Docker.Input"> & {
   /**
-   * network describes the Docker network and DNS settings.
+   * network describes the Docker network and DNS settings. 
    *
    * @generated from field: cloud.v1.deployment.Docker.Network network = 2;
    */
   network?: Docker_Network;
 
   /**
-   * containers contains runtime container specs keyed by stable name.
+   * containers contains runtime container specs keyed by stable name. 
    *
    * @generated from field: map<string, cloud.v1.deployment.Docker.Container> containers = 3;
    */
   containers: { [key: string]: Docker_Container };
 
   /**
-   * log_context scopes Docker stderr/progress into run logs.
+   * log_context scopes Docker stderr/progress into run logs. 
    *
    * @generated from field: cloud.v1.deployment.Docker.Input.LogContext log_context = 4;
    */
@@ -120,27 +120,27 @@ export type Docker_Input = Message<"cloud.v1.deployment.Docker.Input"> & {
 };
 
 /**
- * Input contains runtime parameters passed to the Docker deployer.
+ * Input contains runtime parameters passed to the Docker deployer. 
  *
  * @generated from message cloud.v1.deployment.Docker.Input
  */
 export type Docker_InputJson = {
   /**
-   * network describes the Docker network and DNS settings.
+   * network describes the Docker network and DNS settings. 
    *
    * @generated from field: cloud.v1.deployment.Docker.Network network = 2;
    */
   network?: Docker_NetworkJson;
 
   /**
-   * containers contains runtime container specs keyed by stable name.
+   * containers contains runtime container specs keyed by stable name. 
    *
    * @generated from field: map<string, cloud.v1.deployment.Docker.Container> containers = 3;
    */
   containers?: { [key: string]: Docker_ContainerJson };
 
   /**
-   * log_context scopes Docker stderr/progress into run logs.
+   * log_context scopes Docker stderr/progress into run logs. 
    *
    * @generated from field: cloud.v1.deployment.Docker.Input.LogContext log_context = 4;
    */
@@ -157,62 +157,62 @@ export const Docker_InputSchema: GenMessage<Docker_Input, {jsonType: Docker_Inpu
   messageDesc(file_cloud_v1_deployment_docker, 0, 1);
 
 /**
- * LogContext scopes Docker daemon progress output to the owning run stage.
+ * LogContext scopes Docker daemon progress output to the owning run stage. 
  *
  * @generated from message cloud.v1.deployment.Docker.Input.LogContext
  */
 export type Docker_Input_LogContext = Message<"cloud.v1.deployment.Docker.Input.LogContext"> & {
   /**
-   * run_id is the owning test run id.
+   * run_id is the owning test run id. 
    *
    * @generated from field: string run_id = 1;
    */
   runId: string;
 
   /**
-   * node_execution_id is the execution stage receiving Docker output.
+   * node_execution_id is the execution stage receiving Docker output. 
    *
    * @generated from field: string node_execution_id = 2;
    */
   nodeExecutionId: string;
 
   /**
-   * parent_node_execution_id links the Docker stage to its parent pipeline stage.
+   * parent_node_execution_id links the Docker stage to its parent pipeline stage. 
    *
    * @generated from field: string parent_node_execution_id = 3;
    */
   parentNodeExecutionId: string;
 
   /**
-   * phase is the top-level pipeline phase.
+   * phase is the top-level pipeline phase. 
    *
    * @generated from field: string phase = 4;
    */
   phase: string;
 
   /**
-   * stage_name is the producing stage display name.
+   * stage_name is the producing stage display name. 
    *
    * @generated from field: string stage_name = 5;
    */
   stageName: string;
 
   /**
-   * action is the generic action class.
+   * action is the generic action class. 
    *
    * @generated from field: string action = 6;
    */
   action: string;
 
   /**
-   * unit is the server-side unit that produced the output.
+   * unit is the server-side unit that produced the output. 
    *
    * @generated from field: string unit = 7;
    */
   unit: string;
 
   /**
-   * mentions are normalized operation tokens.
+   * mentions are normalized operation tokens. 
    *
    * @generated from field: repeated string mentions = 8;
    */
@@ -220,62 +220,62 @@ export type Docker_Input_LogContext = Message<"cloud.v1.deployment.Docker.Input.
 };
 
 /**
- * LogContext scopes Docker daemon progress output to the owning run stage.
+ * LogContext scopes Docker daemon progress output to the owning run stage. 
  *
  * @generated from message cloud.v1.deployment.Docker.Input.LogContext
  */
 export type Docker_Input_LogContextJson = {
   /**
-   * run_id is the owning test run id.
+   * run_id is the owning test run id. 
    *
    * @generated from field: string run_id = 1;
    */
   runId?: string;
 
   /**
-   * node_execution_id is the execution stage receiving Docker output.
+   * node_execution_id is the execution stage receiving Docker output. 
    *
    * @generated from field: string node_execution_id = 2;
    */
   nodeExecutionId?: string;
 
   /**
-   * parent_node_execution_id links the Docker stage to its parent pipeline stage.
+   * parent_node_execution_id links the Docker stage to its parent pipeline stage. 
    *
    * @generated from field: string parent_node_execution_id = 3;
    */
   parentNodeExecutionId?: string;
 
   /**
-   * phase is the top-level pipeline phase.
+   * phase is the top-level pipeline phase. 
    *
    * @generated from field: string phase = 4;
    */
   phase?: string;
 
   /**
-   * stage_name is the producing stage display name.
+   * stage_name is the producing stage display name. 
    *
    * @generated from field: string stage_name = 5;
    */
   stageName?: string;
 
   /**
-   * action is the generic action class.
+   * action is the generic action class. 
    *
    * @generated from field: string action = 6;
    */
   action?: string;
 
   /**
-   * unit is the server-side unit that produced the output.
+   * unit is the server-side unit that produced the output. 
    *
    * @generated from field: string unit = 7;
    */
   unit?: string;
 
   /**
-   * mentions are normalized operation tokens.
+   * mentions are normalized operation tokens. 
    *
    * @generated from field: repeated string mentions = 8;
    */
@@ -292,20 +292,20 @@ export const Docker_Input_LogContextSchema: GenMessage<Docker_Input_LogContext, 
   messageDesc(file_cloud_v1_deployment_docker, 0, 1, 0);
 
 /**
- * Network describes the Docker network attached to containers.
+ * Network describes the Docker network attached to containers. 
  *
  * @generated from message cloud.v1.deployment.Docker.Network
  */
 export type Docker_Network = Message<"cloud.v1.deployment.Docker.Network"> & {
   /**
-   * name is the Docker network name. Empty means default bridge.
+   * name is the Docker network name. Empty means default bridge. 
    *
    * @generated from field: string name = 1;
    */
   name: string;
 
   /**
-   * dns lists DNS server IPs injected into containers.
+   * dns lists DNS server IPs injected into containers. 
    *
    * @generated from field: repeated string dns = 2;
    */
@@ -313,20 +313,20 @@ export type Docker_Network = Message<"cloud.v1.deployment.Docker.Network"> & {
 };
 
 /**
- * Network describes the Docker network attached to containers.
+ * Network describes the Docker network attached to containers. 
  *
  * @generated from message cloud.v1.deployment.Docker.Network
  */
 export type Docker_NetworkJson = {
   /**
-   * name is the Docker network name. Empty means default bridge.
+   * name is the Docker network name. Empty means default bridge. 
    *
    * @generated from field: string name = 1;
    */
   name?: string;
 
   /**
-   * dns lists DNS server IPs injected into containers.
+   * dns lists DNS server IPs injected into containers. 
    *
    * @generated from field: repeated string dns = 2;
    */
@@ -343,132 +343,132 @@ export const Docker_NetworkSchema: GenMessage<Docker_Network, {jsonType: Docker_
   messageDesc(file_cloud_v1_deployment_docker, 0, 2);
 
 /**
- * Container is the runtime container spec consumed by the Docker daemon.
+ * Container is the runtime container spec consumed by the Docker daemon. 
  *
  * @generated from message cloud.v1.deployment.Docker.Container
  */
 export type Docker_Container = Message<"cloud.v1.deployment.Docker.Container"> & {
   /**
-   * image is the Docker image reference, e.g. stroppy-agent:latest.
+   * image is the Docker image reference, e.g. stroppy-agent:latest. 
    *
    * @generated from field: string image = 1;
    */
   image: string;
 
   /**
-   * fallback_image is pulled when image is missing. Empty means no fallback.
+   * fallback_image is pulled when image is missing. Empty means no fallback. 
    *
    * @generated from field: string fallback_image = 2;
    */
   fallbackImage: string;
 
   /**
-   * hostname overrides container hostname.
+   * hostname overrides container hostname. 
    *
    * @generated from field: string hostname = 3;
    */
   hostname: string;
 
   /**
-   * entrypoint overrides the image ENTRYPOINT.
+   * entrypoint overrides the image ENTRYPOINT. 
    *
    * @generated from field: repeated string entrypoint = 4;
    */
   entrypoint: string[];
 
   /**
-   * cmd overrides the image CMD.
+   * cmd overrides the image CMD. 
    *
    * @generated from field: repeated string cmd = 5;
    */
   cmd: string[];
 
   /**
-   * env contains environment variables keyed by name.
+   * env contains environment variables keyed by name. 
    *
    * @generated from field: map<string, string> env = 6;
    */
   env: { [key: string]: string };
 
   /**
-   * labels are applied to the container.
+   * labels are applied to the container. 
    *
    * @generated from field: map<string, string> labels = 7;
    */
   labels: { [key: string]: string };
 
   /**
-   * privileged enables privileged mode. Required for systemd containers.
+   * privileged enables privileged mode. Required for systemd containers. 
    *
    * @generated from field: bool privileged = 8;
    */
   privileged: boolean;
 
   /**
-   * cgroupns_mode sets cgroup namespace, e.g. "host" or "private".
+   * cgroupns_mode sets cgroup namespace, e.g. "host" or "private". 
    *
    * @generated from field: string cgroupns_mode = 9;
    */
   cgroupnsMode: string;
 
   /**
-   * tmpfs mounts keyed by container path with mount options as value.
+   * tmpfs mounts keyed by container path with mount options as value. 
    *
    * @generated from field: map<string, string> tmpfs = 10;
    */
   tmpfs: { [key: string]: string };
 
   /**
-   * binds lists host:container[:opts] bind mounts.
+   * binds lists host:container[:opts] bind mounts. 
    *
    * @generated from field: repeated string binds = 11;
    */
   binds: string[];
 
   /**
-   * volumes lists named volume mounts.
+   * volumes lists named volume mounts. 
    *
    * @generated from field: repeated cloud.v1.deployment.Docker.VolumeMount volumes = 12;
    */
   volumes: Docker_VolumeMount[];
 
   /**
-   * ports lists port bindings exposed to the host.
+   * ports lists port bindings exposed to the host. 
    *
    * @generated from field: repeated cloud.v1.deployment.Docker.PortBinding ports = 13;
    */
   ports: Docker_PortBinding[];
 
   /**
-   * files lists files written into the container before start.
+   * files lists files written into the container before start. 
    *
    * @generated from field: repeated cloud.v1.deployment.Docker.File files = 14;
    */
   files: Docker_File[];
 
   /**
-   * restart_policy selects Docker restart policy.
+   * restart_policy selects Docker restart policy. 
    *
    * @generated from field: cloud.v1.deployment.Docker.RestartPolicy restart_policy = 15;
    */
   restartPolicy: Docker_RestartPolicy;
 
   /**
-   * depends_on lists container names that must start first.
+   * depends_on lists container names that must start first. 
    *
    * @generated from field: repeated string depends_on = 16;
    */
   dependsOn: string[];
 
   /**
-   * healthcheck overrides image healthcheck.
+   * healthcheck overrides image healthcheck. 
    *
    * @generated from field: cloud.v1.deployment.Docker.Healthcheck healthcheck = 17;
    */
   healthcheck?: Docker_Healthcheck;
 
   /**
-   * resources limits CPU and memory.
+   * resources limits CPU and memory. 
    *
    * @generated from field: cloud.v1.deployment.Docker.Resources resources = 18;
    */
@@ -476,132 +476,132 @@ export type Docker_Container = Message<"cloud.v1.deployment.Docker.Container"> &
 };
 
 /**
- * Container is the runtime container spec consumed by the Docker daemon.
+ * Container is the runtime container spec consumed by the Docker daemon. 
  *
  * @generated from message cloud.v1.deployment.Docker.Container
  */
 export type Docker_ContainerJson = {
   /**
-   * image is the Docker image reference, e.g. stroppy-agent:latest.
+   * image is the Docker image reference, e.g. stroppy-agent:latest. 
    *
    * @generated from field: string image = 1;
    */
   image?: string;
 
   /**
-   * fallback_image is pulled when image is missing. Empty means no fallback.
+   * fallback_image is pulled when image is missing. Empty means no fallback. 
    *
    * @generated from field: string fallback_image = 2;
    */
   fallbackImage?: string;
 
   /**
-   * hostname overrides container hostname.
+   * hostname overrides container hostname. 
    *
    * @generated from field: string hostname = 3;
    */
   hostname?: string;
 
   /**
-   * entrypoint overrides the image ENTRYPOINT.
+   * entrypoint overrides the image ENTRYPOINT. 
    *
    * @generated from field: repeated string entrypoint = 4;
    */
   entrypoint?: string[];
 
   /**
-   * cmd overrides the image CMD.
+   * cmd overrides the image CMD. 
    *
    * @generated from field: repeated string cmd = 5;
    */
   cmd?: string[];
 
   /**
-   * env contains environment variables keyed by name.
+   * env contains environment variables keyed by name. 
    *
    * @generated from field: map<string, string> env = 6;
    */
   env?: { [key: string]: string };
 
   /**
-   * labels are applied to the container.
+   * labels are applied to the container. 
    *
    * @generated from field: map<string, string> labels = 7;
    */
   labels?: { [key: string]: string };
 
   /**
-   * privileged enables privileged mode. Required for systemd containers.
+   * privileged enables privileged mode. Required for systemd containers. 
    *
    * @generated from field: bool privileged = 8;
    */
   privileged?: boolean;
 
   /**
-   * cgroupns_mode sets cgroup namespace, e.g. "host" or "private".
+   * cgroupns_mode sets cgroup namespace, e.g. "host" or "private". 
    *
    * @generated from field: string cgroupns_mode = 9;
    */
   cgroupnsMode?: string;
 
   /**
-   * tmpfs mounts keyed by container path with mount options as value.
+   * tmpfs mounts keyed by container path with mount options as value. 
    *
    * @generated from field: map<string, string> tmpfs = 10;
    */
   tmpfs?: { [key: string]: string };
 
   /**
-   * binds lists host:container[:opts] bind mounts.
+   * binds lists host:container[:opts] bind mounts. 
    *
    * @generated from field: repeated string binds = 11;
    */
   binds?: string[];
 
   /**
-   * volumes lists named volume mounts.
+   * volumes lists named volume mounts. 
    *
    * @generated from field: repeated cloud.v1.deployment.Docker.VolumeMount volumes = 12;
    */
   volumes?: Docker_VolumeMountJson[];
 
   /**
-   * ports lists port bindings exposed to the host.
+   * ports lists port bindings exposed to the host. 
    *
    * @generated from field: repeated cloud.v1.deployment.Docker.PortBinding ports = 13;
    */
   ports?: Docker_PortBindingJson[];
 
   /**
-   * files lists files written into the container before start.
+   * files lists files written into the container before start. 
    *
    * @generated from field: repeated cloud.v1.deployment.Docker.File files = 14;
    */
   files?: Docker_FileJson[];
 
   /**
-   * restart_policy selects Docker restart policy.
+   * restart_policy selects Docker restart policy. 
    *
    * @generated from field: cloud.v1.deployment.Docker.RestartPolicy restart_policy = 15;
    */
   restartPolicy?: Docker_RestartPolicyJson;
 
   /**
-   * depends_on lists container names that must start first.
+   * depends_on lists container names that must start first. 
    *
    * @generated from field: repeated string depends_on = 16;
    */
   dependsOn?: string[];
 
   /**
-   * healthcheck overrides image healthcheck.
+   * healthcheck overrides image healthcheck. 
    *
    * @generated from field: cloud.v1.deployment.Docker.Healthcheck healthcheck = 17;
    */
   healthcheck?: Docker_HealthcheckJson;
 
   /**
-   * resources limits CPU and memory.
+   * resources limits CPU and memory. 
    *
    * @generated from field: cloud.v1.deployment.Docker.Resources resources = 18;
    */
@@ -618,27 +618,27 @@ export const Docker_ContainerSchema: GenMessage<Docker_Container, {jsonType: Doc
   messageDesc(file_cloud_v1_deployment_docker, 0, 3);
 
 /**
- * VolumeMount describes a named volume attached to a container.
+ * VolumeMount describes a named volume attached to a container. 
  *
  * @generated from message cloud.v1.deployment.Docker.VolumeMount
  */
 export type Docker_VolumeMount = Message<"cloud.v1.deployment.Docker.VolumeMount"> & {
   /**
-   * name is Docker named volume.
+   * name is Docker named volume. 
    *
    * @generated from field: string name = 1;
    */
   name: string;
 
   /**
-   * target is path inside the container.
+   * target is path inside the container. 
    *
    * @generated from field: string target = 2;
    */
   target: string;
 
   /**
-   * read_only mounts the volume read-only.
+   * read_only mounts the volume read-only. 
    *
    * @generated from field: bool read_only = 3;
    */
@@ -646,27 +646,27 @@ export type Docker_VolumeMount = Message<"cloud.v1.deployment.Docker.VolumeMount
 };
 
 /**
- * VolumeMount describes a named volume attached to a container.
+ * VolumeMount describes a named volume attached to a container. 
  *
  * @generated from message cloud.v1.deployment.Docker.VolumeMount
  */
 export type Docker_VolumeMountJson = {
   /**
-   * name is Docker named volume.
+   * name is Docker named volume. 
    *
    * @generated from field: string name = 1;
    */
   name?: string;
 
   /**
-   * target is path inside the container.
+   * target is path inside the container. 
    *
    * @generated from field: string target = 2;
    */
   target?: string;
 
   /**
-   * read_only mounts the volume read-only.
+   * read_only mounts the volume read-only. 
    *
    * @generated from field: bool read_only = 3;
    */
@@ -683,34 +683,34 @@ export const Docker_VolumeMountSchema: GenMessage<Docker_VolumeMount, {jsonType:
   messageDesc(file_cloud_v1_deployment_docker, 0, 4);
 
 /**
- * PortBinding maps a container port to the host.
+ * PortBinding maps a container port to the host. 
  *
  * @generated from message cloud.v1.deployment.Docker.PortBinding
  */
 export type Docker_PortBinding = Message<"cloud.v1.deployment.Docker.PortBinding"> & {
   /**
-   * container_port is the port exposed inside the container.
+   * container_port is the port exposed inside the container. 
    *
    * @generated from field: uint32 container_port = 1;
    */
   containerPort: number;
 
   /**
-   * host_port is the host port. Zero means assign dynamically.
+   * host_port is the host port. Zero means assign dynamically. 
    *
    * @generated from field: uint32 host_port = 2;
    */
   hostPort: number;
 
   /**
-   * host_ip is the host bind address. Empty means 0.0.0.0.
+   * host_ip is the host bind address. Empty means 0.0.0.0. 
    *
    * @generated from field: string host_ip = 3;
    */
   hostIp: string;
 
   /**
-   * protocol selects tcp or udp.
+   * protocol selects tcp or udp. 
    *
    * @generated from field: cloud.v1.deployment.Docker.Protocol protocol = 4;
    */
@@ -718,34 +718,34 @@ export type Docker_PortBinding = Message<"cloud.v1.deployment.Docker.PortBinding
 };
 
 /**
- * PortBinding maps a container port to the host.
+ * PortBinding maps a container port to the host. 
  *
  * @generated from message cloud.v1.deployment.Docker.PortBinding
  */
 export type Docker_PortBindingJson = {
   /**
-   * container_port is the port exposed inside the container.
+   * container_port is the port exposed inside the container. 
    *
    * @generated from field: uint32 container_port = 1;
    */
   containerPort?: number;
 
   /**
-   * host_port is the host port. Zero means assign dynamically.
+   * host_port is the host port. Zero means assign dynamically. 
    *
    * @generated from field: uint32 host_port = 2;
    */
   hostPort?: number;
 
   /**
-   * host_ip is the host bind address. Empty means 0.0.0.0.
+   * host_ip is the host bind address. Empty means 0.0.0.0. 
    *
    * @generated from field: string host_ip = 3;
    */
   hostIp?: string;
 
   /**
-   * protocol selects tcp or udp.
+   * protocol selects tcp or udp. 
    *
    * @generated from field: cloud.v1.deployment.Docker.Protocol protocol = 4;
    */
@@ -762,27 +762,27 @@ export const Docker_PortBindingSchema: GenMessage<Docker_PortBinding, {jsonType:
   messageDesc(file_cloud_v1_deployment_docker, 0, 5);
 
 /**
- * File describes a file written into the container before start.
+ * File describes a file written into the container before start. 
  *
  * @generated from message cloud.v1.deployment.Docker.File
  */
 export type Docker_File = Message<"cloud.v1.deployment.Docker.File"> & {
   /**
-   * path is the absolute path inside the container.
+   * path is the absolute path inside the container. 
    *
    * @generated from field: string path = 1;
    */
   path: string;
 
   /**
-   * content is the raw file content.
+   * content is the raw file content. 
    *
    * @generated from field: bytes content = 2;
    */
   content: Uint8Array;
 
   /**
-   * mode is the octal file mode. Zero means 0644.
+   * mode is the octal file mode. Zero means 0644. 
    *
    * @generated from field: uint32 mode = 3;
    */
@@ -790,27 +790,27 @@ export type Docker_File = Message<"cloud.v1.deployment.Docker.File"> & {
 };
 
 /**
- * File describes a file written into the container before start.
+ * File describes a file written into the container before start. 
  *
  * @generated from message cloud.v1.deployment.Docker.File
  */
 export type Docker_FileJson = {
   /**
-   * path is the absolute path inside the container.
+   * path is the absolute path inside the container. 
    *
    * @generated from field: string path = 1;
    */
   path?: string;
 
   /**
-   * content is the raw file content.
+   * content is the raw file content. 
    *
    * @generated from field: bytes content = 2;
    */
   content?: string;
 
   /**
-   * mode is the octal file mode. Zero means 0644.
+   * mode is the octal file mode. Zero means 0644. 
    *
    * @generated from field: uint32 mode = 3;
    */
@@ -827,41 +827,41 @@ export const Docker_FileSchema: GenMessage<Docker_File, {jsonType: Docker_FileJs
   messageDesc(file_cloud_v1_deployment_docker, 0, 6);
 
 /**
- * Healthcheck overrides image-level healthcheck.
+ * Healthcheck overrides image-level healthcheck. 
  *
  * @generated from message cloud.v1.deployment.Docker.Healthcheck
  */
 export type Docker_Healthcheck = Message<"cloud.v1.deployment.Docker.Healthcheck"> & {
   /**
-   * test is the healthcheck command, e.g. ["CMD", "curl", "-f", "..."].
+   * test is the healthcheck command, e.g. ["CMD", "curl", "-f", "..."]. 
    *
    * @generated from field: repeated string test = 1;
    */
   test: string[];
 
   /**
-   * interval_seconds is the delay between checks.
+   * interval_seconds is the delay between checks. 
    *
    * @generated from field: uint32 interval_seconds = 2;
    */
   intervalSeconds: number;
 
   /**
-   * timeout_seconds is the max time one check may run.
+   * timeout_seconds is the max time one check may run. 
    *
    * @generated from field: uint32 timeout_seconds = 3;
    */
   timeoutSeconds: number;
 
   /**
-   * retries is the number of consecutive failures before unhealthy.
+   * retries is the number of consecutive failures before unhealthy. 
    *
    * @generated from field: uint32 retries = 4;
    */
   retries: number;
 
   /**
-   * start_period_seconds is the grace period before failures count.
+   * start_period_seconds is the grace period before failures count. 
    *
    * @generated from field: uint32 start_period_seconds = 5;
    */
@@ -869,41 +869,41 @@ export type Docker_Healthcheck = Message<"cloud.v1.deployment.Docker.Healthcheck
 };
 
 /**
- * Healthcheck overrides image-level healthcheck.
+ * Healthcheck overrides image-level healthcheck. 
  *
  * @generated from message cloud.v1.deployment.Docker.Healthcheck
  */
 export type Docker_HealthcheckJson = {
   /**
-   * test is the healthcheck command, e.g. ["CMD", "curl", "-f", "..."].
+   * test is the healthcheck command, e.g. ["CMD", "curl", "-f", "..."]. 
    *
    * @generated from field: repeated string test = 1;
    */
   test?: string[];
 
   /**
-   * interval_seconds is the delay between checks.
+   * interval_seconds is the delay between checks. 
    *
    * @generated from field: uint32 interval_seconds = 2;
    */
   intervalSeconds?: number;
 
   /**
-   * timeout_seconds is the max time one check may run.
+   * timeout_seconds is the max time one check may run. 
    *
    * @generated from field: uint32 timeout_seconds = 3;
    */
   timeoutSeconds?: number;
 
   /**
-   * retries is the number of consecutive failures before unhealthy.
+   * retries is the number of consecutive failures before unhealthy. 
    *
    * @generated from field: uint32 retries = 4;
    */
   retries?: number;
 
   /**
-   * start_period_seconds is the grace period before failures count.
+   * start_period_seconds is the grace period before failures count. 
    *
    * @generated from field: uint32 start_period_seconds = 5;
    */
@@ -920,27 +920,27 @@ export const Docker_HealthcheckSchema: GenMessage<Docker_Healthcheck, {jsonType:
   messageDesc(file_cloud_v1_deployment_docker, 0, 7);
 
 /**
- * Resources limits container CPU and memory.
+ * Resources limits container CPU and memory. 
  *
  * @generated from message cloud.v1.deployment.Docker.Resources
  */
 export type Docker_Resources = Message<"cloud.v1.deployment.Docker.Resources"> & {
   /**
-   * cpu_cores limits CPU cores. Zero means unlimited.
+   * cpu_cores limits CPU cores. Zero means unlimited. 
    *
    * @generated from field: double cpu_cores = 1;
    */
   cpuCores: number;
 
   /**
-   * memory_mb limits RAM in MiB. Zero means unlimited.
+   * memory_mb limits RAM in MiB. Zero means unlimited. 
    *
    * @generated from field: uint64 memory_mb = 2;
    */
   memoryMb: bigint;
 
   /**
-   * pids_limit caps process count. Zero means unlimited.
+   * pids_limit caps process count. Zero means unlimited. 
    *
    * @generated from field: uint64 pids_limit = 3;
    */
@@ -948,27 +948,27 @@ export type Docker_Resources = Message<"cloud.v1.deployment.Docker.Resources"> &
 };
 
 /**
- * Resources limits container CPU and memory.
+ * Resources limits container CPU and memory. 
  *
  * @generated from message cloud.v1.deployment.Docker.Resources
  */
 export type Docker_ResourcesJson = {
   /**
-   * cpu_cores limits CPU cores. Zero means unlimited.
+   * cpu_cores limits CPU cores. Zero means unlimited. 
    *
    * @generated from field: double cpu_cores = 1;
    */
   cpuCores?: number | "NaN" | "Infinity" | "-Infinity";
 
   /**
-   * memory_mb limits RAM in MiB. Zero means unlimited.
+   * memory_mb limits RAM in MiB. Zero means unlimited. 
    *
    * @generated from field: uint64 memory_mb = 2;
    */
   memoryMb?: string;
 
   /**
-   * pids_limit caps process count. Zero means unlimited.
+   * pids_limit caps process count. Zero means unlimited. 
    *
    * @generated from field: uint64 pids_limit = 3;
    */
@@ -985,20 +985,20 @@ export const Docker_ResourcesSchema: GenMessage<Docker_Resources, {jsonType: Doc
   messageDesc(file_cloud_v1_deployment_docker, 0, 8);
 
 /**
- * Output mirrors created Docker containers.
+ * Output mirrors created Docker containers. 
  *
  * @generated from message cloud.v1.deployment.Docker.Output
  */
 export type Docker_Output = Message<"cloud.v1.deployment.Docker.Output"> & {
   /**
-   * containers contains container outputs keyed by container name.
+   * containers contains container outputs keyed by container name. 
    *
    * @generated from field: map<string, cloud.v1.deployment.Docker.ContainerOutput> containers = 1;
    */
   containers: { [key: string]: Docker_ContainerOutput };
 
   /**
-   * network_id is the Docker network id when a custom network is used.
+   * network_id is the Docker network id when a custom network is used. 
    *
    * @generated from field: string network_id = 2;
    */
@@ -1006,20 +1006,20 @@ export type Docker_Output = Message<"cloud.v1.deployment.Docker.Output"> & {
 };
 
 /**
- * Output mirrors created Docker containers.
+ * Output mirrors created Docker containers. 
  *
  * @generated from message cloud.v1.deployment.Docker.Output
  */
 export type Docker_OutputJson = {
   /**
-   * containers contains container outputs keyed by container name.
+   * containers contains container outputs keyed by container name. 
    *
    * @generated from field: map<string, cloud.v1.deployment.Docker.ContainerOutput> containers = 1;
    */
   containers?: { [key: string]: Docker_ContainerOutputJson };
 
   /**
-   * network_id is the Docker network id when a custom network is used.
+   * network_id is the Docker network id when a custom network is used. 
    *
    * @generated from field: string network_id = 2;
    */
@@ -1036,48 +1036,48 @@ export const Docker_OutputSchema: GenMessage<Docker_Output, {jsonType: Docker_Ou
   messageDesc(file_cloud_v1_deployment_docker, 0, 9);
 
 /**
- * ContainerOutput describes one created container.
+ * ContainerOutput describes one created container. 
  *
  * @generated from message cloud.v1.deployment.Docker.ContainerOutput
  */
 export type Docker_ContainerOutput = Message<"cloud.v1.deployment.Docker.ContainerOutput"> & {
   /**
-   * id is the Docker container id assigned by the daemon.
+   * id is the Docker container id assigned by the daemon. 
    *
    * @generated from field: string id = 1;
    */
   id: string;
 
   /**
-   * name is the resolved container name.
+   * name is the resolved container name. 
    *
    * @generated from field: string name = 2;
    */
   name: string;
 
   /**
-   * internal_ip is the container IP on the Docker network.
+   * internal_ip is the container IP on the Docker network. 
    *
    * @generated from field: string internal_ip = 3;
    */
   internalIp: string;
 
   /**
-   * mapped_ports maps container ports to the host ports they bound to.
+   * mapped_ports maps container ports to the host ports they bound to. 
    *
    * @generated from field: map<uint32, uint32> mapped_ports = 4;
    */
   mappedPorts: { [key: number]: number };
 
   /**
-   * status is the container status string reported by Docker.
+   * status is the container status string reported by Docker. 
    *
    * @generated from field: string status = 5;
    */
   status: string;
 
   /**
-   * started_at is the container start timestamp as reported by Docker.
+   * started_at is the container start timestamp as reported by Docker. 
    *
    * @generated from field: string started_at = 6;
    */
@@ -1085,48 +1085,48 @@ export type Docker_ContainerOutput = Message<"cloud.v1.deployment.Docker.Contain
 };
 
 /**
- * ContainerOutput describes one created container.
+ * ContainerOutput describes one created container. 
  *
  * @generated from message cloud.v1.deployment.Docker.ContainerOutput
  */
 export type Docker_ContainerOutputJson = {
   /**
-   * id is the Docker container id assigned by the daemon.
+   * id is the Docker container id assigned by the daemon. 
    *
    * @generated from field: string id = 1;
    */
   id?: string;
 
   /**
-   * name is the resolved container name.
+   * name is the resolved container name. 
    *
    * @generated from field: string name = 2;
    */
   name?: string;
 
   /**
-   * internal_ip is the container IP on the Docker network.
+   * internal_ip is the container IP on the Docker network. 
    *
    * @generated from field: string internal_ip = 3;
    */
   internalIp?: string;
 
   /**
-   * mapped_ports maps container ports to the host ports they bound to.
+   * mapped_ports maps container ports to the host ports they bound to. 
    *
    * @generated from field: map<uint32, uint32> mapped_ports = 4;
    */
   mappedPorts?: { [key: number]: number };
 
   /**
-   * status is the container status string reported by Docker.
+   * status is the container status string reported by Docker. 
    *
    * @generated from field: string status = 5;
    */
   status?: string;
 
   /**
-   * started_at is the container start timestamp as reported by Docker.
+   * started_at is the container start timestamp as reported by Docker. 
    *
    * @generated from field: string started_at = 6;
    */
@@ -1143,27 +1143,27 @@ export const Docker_ContainerOutputSchema: GenMessage<Docker_ContainerOutput, {j
   messageDesc(file_cloud_v1_deployment_docker, 0, 10);
 
 /**
- * Protocol maps to Docker port protocol.
+ * Protocol maps to Docker port protocol. 
  *
  * @generated from enum cloud.v1.deployment.Docker.Protocol
  */
 export enum Docker_Protocol {
   /**
-   * PROTOCOL_UNSPECIFIED is the unset zero value; treated as tcp.
+   * PROTOCOL_UNSPECIFIED is the unset zero value; treated as tcp. 
    *
    * @generated from enum value: PROTOCOL_UNSPECIFIED = 0;
    */
   UNSPECIFIED = 0,
 
   /**
-   * PROTOCOL_TCP binds the port over TCP.
+   * PROTOCOL_TCP binds the port over TCP. 
    *
    * @generated from enum value: PROTOCOL_TCP = 1;
    */
   TCP = 1,
 
   /**
-   * PROTOCOL_UDP binds the port over UDP.
+   * PROTOCOL_UDP binds the port over UDP. 
    *
    * @generated from enum value: PROTOCOL_UDP = 2;
    */
@@ -1171,7 +1171,7 @@ export enum Docker_Protocol {
 }
 
 /**
- * Protocol maps to Docker port protocol.
+ * Protocol maps to Docker port protocol. 
  *
  * @generated from enum cloud.v1.deployment.Docker.Protocol
  */
@@ -1184,41 +1184,41 @@ export const Docker_ProtocolSchema: GenEnum<Docker_Protocol, Docker_ProtocolJson
   enumDesc(file_cloud_v1_deployment_docker, 0, 0);
 
 /**
- * RestartPolicy maps to Docker HostConfig.RestartPolicy.
+ * RestartPolicy maps to Docker HostConfig.RestartPolicy. 
  *
  * @generated from enum cloud.v1.deployment.Docker.RestartPolicy
  */
 export enum Docker_RestartPolicy {
   /**
-   * RESTART_POLICY_UNSPECIFIED is the unset zero value; uses daemon default.
+   * RESTART_POLICY_UNSPECIFIED is the unset zero value; uses daemon default. 
    *
    * @generated from enum value: RESTART_POLICY_UNSPECIFIED = 0;
    */
   UNSPECIFIED = 0,
 
   /**
-   * RESTART_POLICY_NO never restarts the container.
+   * RESTART_POLICY_NO never restarts the container. 
    *
    * @generated from enum value: RESTART_POLICY_NO = 1;
    */
   NO = 1,
 
   /**
-   * RESTART_POLICY_ON_FAILURE restarts only on non-zero exit.
+   * RESTART_POLICY_ON_FAILURE restarts only on non-zero exit. 
    *
    * @generated from enum value: RESTART_POLICY_ON_FAILURE = 2;
    */
   ON_FAILURE = 2,
 
   /**
-   * RESTART_POLICY_ALWAYS always restarts the container.
+   * RESTART_POLICY_ALWAYS always restarts the container. 
    *
    * @generated from enum value: RESTART_POLICY_ALWAYS = 3;
    */
   ALWAYS = 3,
 
   /**
-   * RESTART_POLICY_UNLESS_STOPPED always restarts unless explicitly stopped.
+   * RESTART_POLICY_UNLESS_STOPPED always restarts unless explicitly stopped. 
    *
    * @generated from enum value: RESTART_POLICY_UNLESS_STOPPED = 4;
    */
@@ -1226,7 +1226,7 @@ export enum Docker_RestartPolicy {
 }
 
 /**
- * RestartPolicy maps to Docker HostConfig.RestartPolicy.
+ * RestartPolicy maps to Docker HostConfig.RestartPolicy. 
  *
  * @generated from enum cloud.v1.deployment.Docker.RestartPolicy
  */
@@ -1242,7 +1242,7 @@ export const Docker_RestartPolicySchema: GenEnum<Docker_RestartPolicy, Docker_Re
  * QuotaKind enumerates the local host capacity dimensions checked before a
  * deployment. Docker has no cloud metric ids, so the wire string is a stable
  * "host.*" key mirroring the Yandex dotted convention. Each maps to a field
- * on Container.Resources, PortBinding, Network or VolumeMount.
+ * on Container.Resources, PortBinding, Network or VolumeMount. 
  *
  * @generated from enum cloud.v1.deployment.Docker.QuotaKind
  */
@@ -1253,56 +1253,56 @@ export enum Docker_QuotaKind {
   UNSPECIFIED = 0,
 
   /**
-   * maps to "host.cpuCores" (sum of Resources.cpu_cores).
+   * maps to "host.cpuCores" (sum of Resources.cpu_cores). 
    *
    * @generated from enum value: QUOTA_KIND_HOST_CPU_CORES = 1;
    */
   HOST_CPU_CORES = 1,
 
   /**
-   * maps to "host.memory.size" (sum of Resources.memory_mb, MiB).
+   * maps to "host.memory.size" (sum of Resources.memory_mb, MiB). 
    *
    * @generated from enum value: QUOTA_KIND_HOST_MEMORY_SIZE = 2;
    */
   HOST_MEMORY_SIZE = 2,
 
   /**
-   * maps to "host.disk.size" (host filesystem space for images/volumes).
+   * maps to "host.disk.size" (host filesystem space for images/volumes). 
    *
    * @generated from enum value: QUOTA_KIND_HOST_DISK_SIZE = 3;
    */
   HOST_DISK_SIZE = 3,
 
   /**
-   * maps to "host.pids.count" (sum of Resources.pids_limit).
+   * maps to "host.pids.count" (sum of Resources.pids_limit). 
    *
    * @generated from enum value: QUOTA_KIND_HOST_PIDS_COUNT = 4;
    */
   HOST_PIDS_COUNT = 4,
 
   /**
-   * maps to "host.containers.count" (number of containers).
+   * maps to "host.containers.count" (number of containers). 
    *
    * @generated from enum value: QUOTA_KIND_HOST_CONTAINERS_COUNT = 5;
    */
   HOST_CONTAINERS_COUNT = 5,
 
   /**
-   * maps to "host.ports.count" (number of published host ports).
+   * maps to "host.ports.count" (number of published host ports). 
    *
    * @generated from enum value: QUOTA_KIND_HOST_PORTS_COUNT = 6;
    */
   HOST_PORTS_COUNT = 6,
 
   /**
-   * maps to "host.networks.count" (number of Docker networks).
+   * maps to "host.networks.count" (number of Docker networks). 
    *
    * @generated from enum value: QUOTA_KIND_HOST_NETWORKS_COUNT = 7;
    */
   HOST_NETWORKS_COUNT = 7,
 
   /**
-   * maps to "host.volumes.count" (number of named volumes).
+   * maps to "host.volumes.count" (number of named volumes). 
    *
    * @generated from enum value: QUOTA_KIND_HOST_VOLUMES_COUNT = 8;
    */
@@ -1313,7 +1313,7 @@ export enum Docker_QuotaKind {
  * QuotaKind enumerates the local host capacity dimensions checked before a
  * deployment. Docker has no cloud metric ids, so the wire string is a stable
  * "host.*" key mirroring the Yandex dotted convention. Each maps to a field
- * on Container.Resources, PortBinding, Network or VolumeMount.
+ * on Container.Resources, PortBinding, Network or VolumeMount. 
  *
  * @generated from enum cloud.v1.deployment.Docker.QuotaKind
  */

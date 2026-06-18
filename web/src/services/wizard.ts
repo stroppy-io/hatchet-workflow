@@ -610,8 +610,16 @@ export interface FinishResultVM {
  * TestWizardService RPC.
  */
 export interface WizardProvider {
-  /** StartTestWizard -> a fresh draft (optionally seeded from a test preset). */
-  start(tenantSlug: string, name: string, testPresetId?: string): Promise<WizardDraftVM>;
+  /**
+   * StartTestWizard -> a fresh draft. Optionally seeded from a test preset, or —
+   * via opts.sourceRunId ("New from run") — from an existing run's baked spec
+   * (a fully editable clone). sourceRunId wins when both are given.
+   */
+  start(
+    tenantSlug: string,
+    name: string,
+    opts?: { testPresetId?: string; sourceRunId?: string },
+  ): Promise<WizardDraftVM>;
   /** GetTestWizardDraft -> a single draft by id (for resume / Back). */
   get(tenantSlug: string, draftId: string): Promise<WizardDraftVM>;
   /** ListTestWizardDrafts -> the caller's recent drafts (resume list). */
@@ -1030,12 +1038,13 @@ function infraPlanVMToProto(vm: InfrastructurePlanVM) {
 }
 
 const realWizardProvider: WizardProvider = {
-  async start(tenantSlug, name, testPresetId) {
+  async start(tenantSlug, name, opts) {
     const tenantId = await resolveTenantId(tenantSlug);
     const { draft } = await testWizardClient.startTestWizard({
       tenantId,
       name,
-      testPresetId: testPresetId ?? "",
+      testPresetId: opts?.testPresetId ?? "",
+      sourceRunId: opts?.sourceRunId ?? "",
     });
     return draftToVM(draft);
   },
