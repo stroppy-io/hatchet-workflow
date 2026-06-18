@@ -668,6 +668,7 @@ export function SuiteDetail() {
             const sid = suite.id;
             const s = slug ?? "";
             await Promise.all([
+              patch.name !== undefined ? p.setName(s, sid, patch.name) : null,
               patch.description !== undefined
                 ? p.setDescription(s, sid, patch.description)
                 : null,
@@ -1005,6 +1006,7 @@ function ChildTestRuns({ run }: { run: SuiteRunVM }) {
 // --- consolidated settings card --------------------------------------------
 
 interface SettingsPatch {
+  name?: string;
   description?: string;
   provider?: SuiteProviderKind;
   schedule?: { enabled: boolean; cron: string; timezone: string };
@@ -1031,6 +1033,7 @@ function SettingsCard({
   onSave: (patch: SettingsPatch) => Promise<void>;
 }) {
   // Draft state (only meaningful while editing).
+  const [name, setName] = useState(suite.name);
   const [description, setDescription] = useState(suite.description);
   const [provider, setProvider] = useState<SuiteProviderKind>(suite.provider);
   const [scheduleEnabled, setScheduleEnabled] = useState(suite.scheduleEnabled);
@@ -1045,6 +1048,7 @@ function SettingsCard({
   // Re-seed drafts whenever we (re)enter edit mode or the suite changes.
   useEffect(() => {
     if (editing) {
+      setName(suite.name);
       setDescription(suite.description);
       setProvider(suite.provider);
       setScheduleEnabled(suite.scheduleEnabled);
@@ -1066,6 +1070,8 @@ function SettingsCard({
 
   const submit = () =>
     void onSave({
+      // Skip an empty name so the suite is never wiped to a blank title.
+      name: name.trim() || undefined,
       description,
       provider,
       schedule: { enabled: scheduleEnabled, cron, timezone },
@@ -1104,6 +1110,18 @@ function SettingsCard({
 
       {editing ? (
         <div className="flex flex-col gap-3">
+          {/* name */}
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="set-name">Name</Label>
+            <input
+              id="set-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Suite name"
+              className="flex h-9 w-full border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+          </div>
+
           {/* description */}
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="set-desc">Description</Label>

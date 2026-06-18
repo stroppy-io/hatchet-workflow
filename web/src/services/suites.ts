@@ -293,6 +293,8 @@ export interface SuitesProvider {
     cellId: string,
     enabled: boolean,
   ): Promise<void>;
+  /** UpdateSuite — patch entity.name. */
+  setName(tenantSlug: string, suiteId: string, name: string): Promise<void>;
   /** UpdateSuite — patch entity.description. */
   setDescription(
     tenantSlug: string,
@@ -614,6 +616,13 @@ const realSuitesProvider: SuitesProvider = {
     await patchSuite(tenantId, suiteId, (rec) => {
       const cell = rec.spec?.cells.find((c) => c.id === cellId);
       if (cell) cell.enabled = enabled;
+    });
+  },
+
+  async setName(tenantSlug, suiteId, name) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    await patchSuite(tenantId, suiteId, (rec) => {
+      if (rec.entity) rec.entity.name = name;
     });
   },
 
