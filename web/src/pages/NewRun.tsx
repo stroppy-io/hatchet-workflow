@@ -75,13 +75,13 @@ import {
   commitSha,
 } from "@/services/stroppy";
 import {
-  NumField,
   ToggleRow,
   FieldErrors,
   errorsFor,
   EngineParamsForm,
   EngineVersionSelect,
 } from "@/components/database/DatabaseParamsForm";
+import { NumField } from "@/components/ui/num-field";
 import { WorkloadParamsForm, type SegmentProbeContext } from "@/components/workload/WorkloadParamsForm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

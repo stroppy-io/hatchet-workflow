@@ -38,6 +38,7 @@ import { MachinePlanEditor } from "@/components/wizard/MachinePlanEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NumField } from "@/components/ui/num-field";
 import {
   Select,
   SelectTrigger,
@@ -767,16 +768,11 @@ function SuiteSettingsRail({
     <div className="space-y-5">
       {/* Concurrency */}
       <div>
-        <Label className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">Max parallel (0 = unlimited)</Label>
-        <Input
-          type="number"
-          min={0}
-          className="mt-1 h-8 font-mono text-xs"
+        <NumField
+          label="Max parallel (0 = unlimited)"
           value={draft.maxParallel}
-          onChange={(e) => {
-            const v = Math.max(0, Number.parseInt(e.target.value, 10) || 0);
-            void onPatch({ maxParallel: v });
-          }}
+          onChange={(n) => void onPatch({ maxParallel: n })}
+          inputClassName="h-8 font-mono text-xs"
         />
       </div>
 

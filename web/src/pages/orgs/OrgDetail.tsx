@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NumField } from "@/components/ui/num-field";
 import {
   Select,
   SelectContent,
@@ -1156,29 +1157,21 @@ export function OrgDetail() {
                   </Select>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="settings-max-parallel">Default max parallel</Label>
-                  <Input
+                  <NumField
                     id="settings-max-parallel"
-                    type="number"
-                    min={0}
+                    label="Default max parallel"
                     disabled={!canUpdateSettings}
                     value={settings.defaultMaxParallel ?? 0}
-                    onChange={(e) =>
-                      setNonNegativeNumber("defaultMaxParallel", e.target.value)
-                    }
+                    onChange={(n) => setNonNegativeNumber("defaultMaxParallel", String(n))}
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="settings-retention">Run retention days</Label>
-                  <Input
+                  <NumField
                     id="settings-retention"
-                    type="number"
-                    min={0}
+                    label="Run retention days"
                     disabled={!canUpdateSettings}
                     value={settings.runRetentionDays ?? 0}
-                    onChange={(e) =>
-                      setNonNegativeNumber("runRetentionDays", e.target.value)
-                    }
+                    onChange={(n) => setNonNegativeNumber("runRetentionDays", String(n))}
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">

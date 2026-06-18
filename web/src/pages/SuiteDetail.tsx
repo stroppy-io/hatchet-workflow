@@ -38,6 +38,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NumField } from "@/components/ui/num-field";
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -1139,18 +1140,12 @@ function SettingsCard({
 
             {/* max parallel */}
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="set-maxp">Max parallel (0 = unlimited)</Label>
-              <Input
+              <NumField
                 id="set-maxp"
-                type="number"
-                min={0}
+                label="Max parallel (0 = unlimited)"
                 value={maxParallel}
-                onChange={(e) =>
-                  setMaxParallel(
-                    Math.max(0, Number.parseInt(e.target.value, 10) || 0),
-                  )
-                }
-                className="h-9 font-mono"
+                onChange={setMaxParallel}
+                inputClassName="h-9 font-mono"
               />
             </div>
 

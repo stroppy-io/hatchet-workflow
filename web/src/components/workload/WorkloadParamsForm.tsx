@@ -25,7 +25,8 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { ConfigEditor } from "@/components/ui/config-editor";
-import { NumField, ScrubHandle, ToggleRow, FieldErrors, errorsFor } from "@/components/database/DatabaseParamsForm";
+import { ToggleRow, FieldErrors, errorsFor } from "@/components/database/DatabaseParamsForm";
+import { NumField, ScrubHandle } from "@/components/ui/num-field";
 import {
   Workload_Protocol,
   driverTypeFor,
