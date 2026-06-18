@@ -12,7 +12,7 @@
 //   * View            — always (pure navigation).
 
 import { useCallback, useMemo, useState } from "react";
-import { Copy, Eye, PlayCircle, Pencil, Rocket, Trash2 } from "lucide-react";
+import { Copy, Eye, PlayCircle, Pencil, Trash2 } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useNavigate } from "@/lib/router";
 import { useAuth } from "@/hooks/useAuth";
@@ -23,7 +23,6 @@ import {
   type PresetAction,
   type PresetKind,
 } from "@/services/preset";
-import { launchFromTestPreset } from "@/services/wizard";
 import {
   FavoriteStar,
   RowActionsMenu,
@@ -112,15 +111,6 @@ export function usePresetRowActions<T extends PresetRowLike>({
           case "use":
             navigate(`/runs/new?preset=${encodeURIComponent(row.id)}&kind=${kind}`);
             return;
-          case "launch": {
-            // Immediate launch — seed a draft from the test preset and Finish it
-            // with start=true, no wizard. Only exposed for test presets (the only
-            // wizard-seedable, launch-ready kind). On a not-ready preset the
-            // backend rejects Finish → surfaced below, and we stay put.
-            const runId = await launchFromTestPreset(slug, row.id, row.name);
-            navigate(runId ? `/runs/${runId}` : "/runs");
-            return;
-          }
           case "edit":
             // Update<Kind>Preset — route to the authoring surface seeded with
             // this preset (KIND_ROUTE/:id/edit). System presets are gated out
@@ -161,11 +151,6 @@ export function usePresetRowActions<T extends PresetRowLike>({
       return [
         { action: "view", label: "View detail", icon: Eye },
         { action: "use", label: "Use in new run", icon: PlayCircle },
-        // Immediate launch is only meaningful for test presets — db/workload
-        // presets are run fragments, not launch-ready specs.
-        ...(kind === "test"
-          ? [{ action: "launch" as const, label: "Launch now", icon: Rocket }]
-          : []),
         {
           action: "edit",
           label: "Edit",
@@ -184,7 +169,7 @@ export function usePresetRowActions<T extends PresetRowLike>({
         },
       ];
     },
-    [canMutate, kind],
+    [canMutate],
   );
 
   // The trailing Actions column (⋯ menu + favorite star), shared by all three

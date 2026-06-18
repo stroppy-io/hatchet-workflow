@@ -392,14 +392,12 @@ export type PresetKind = "database" | "workload" | "test";
  * real preset Service RPC or an in-app route — no speculative operations:
  *   * "view"      -> route to the preset (no RPC; always available).
  *   * "use"       -> route to /runs/new?preset=:id (seed the wizard; always).
- *   * "launch"    -> start a draft from the preset + Finish(start=true) to launch
- *                    a run immediately, skipping the wizard (test presets only).
  *   * "edit"      -> Update<Kind>Preset (NOT allowed for system presets).
  *   * "duplicate" -> Clone<Kind>Preset (always available — clones any preset).
  *   * "delete"    -> Delete<Kind>Preset (NOT allowed for system presets;
  *                    operator+ role required).
  */
-export type PresetAction = "view" | "use" | "launch" | "edit" | "duplicate" | "delete";
+export type PresetAction = "view" | "use" | "edit" | "duplicate" | "delete";
 
 /**
  * PresetProvider abstracts the DatabasePresetService list call so the Database
