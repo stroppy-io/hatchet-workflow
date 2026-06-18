@@ -46,6 +46,7 @@ func (s *SuiteService) CreateSuite(ctx context.Context, req *api.CreateSuiteRequ
 		},
 	}
 	rec.GetSpec().Id = id
+	ensureCellIDs(rec.GetSpec())
 	rec.Summary = scheduleSummary(rec.GetSpec(), nil)
 
 	if err := s.d.Suites.Create(ctx, rec); err != nil {
@@ -143,6 +144,7 @@ func (s *SuiteService) UpdateSuite(ctx context.Context, req *api.UpdateSuiteRequ
 			DeletedAt: existing.GetEntity().GetTimings().GetDeletedAt(),
 		}
 		rec.GetSpec().Id = existing.GetEntity().GetId()
+		ensureCellIDs(rec.GetSpec())
 		rec.Summary = scheduleSummary(rec.GetSpec(), existing.GetSummary())
 		if err := s.d.Suites.Update(ctx, rec); err != nil {
 			return nil, utils.MapErr(err)
@@ -215,6 +217,7 @@ func (s *SuiteService) CloneSuite(ctx context.Context, req *api.CloneSuiteReques
 			dst.Spec = &domain.Suite{}
 		}
 		dst.GetSpec().Id = id
+		ensureCellIDs(dst.GetSpec())
 		// A clone starts with no run history; keep only the schedule mirror.
 		dst.Summary = scheduleSummary(dst.GetSpec(), nil)
 		if err := s.d.Suites.Create(ctx, dst); err != nil {
@@ -288,6 +291,18 @@ func scheduleSummary(spec *domain.Suite, prev *models.SuiteRecord_Summary) *mode
 		out.NextRunAt = nil
 	}
 	return out
+}
+
+// ensureCellIDs assigns a stable uuid to every cell that lacks one. Cells are
+// edited and toggled by id on the client; without unique ids two cells collide
+// (an empty id matches them all), so toggling one flips the others. Idempotent —
+// cells that already have an id keep it.
+func ensureCellIDs(spec *domain.Suite) {
+	for _, cell := range spec.GetCells() {
+		if cell.GetId() == "" {
+			cell.Id = uuid.NewString()
+		}
+	}
 }
 
 func enabledCellCount(spec *domain.Suite) uint32 {
