@@ -667,25 +667,21 @@ export function SuiteDetail() {
             const p = getSuitesProvider();
             const sid = suite.id;
             const s = slug ?? "";
-            await Promise.all([
-              patch.name !== undefined ? p.setName(s, sid, patch.name) : null,
-              patch.description !== undefined
-                ? p.setDescription(s, sid, patch.description)
-                : null,
-              patch.provider !== undefined
-                ? p.setProvider(s, sid, patch.provider)
-                : null,
-              patch.schedule !== undefined
-                ? p.setSchedule(s, sid, patch.schedule)
-                : null,
-              patch.rating !== undefined
-                ? p.setRatingFlags(s, sid, patch.rating)
-                : null,
-              patch.maxParallel !== undefined
-                ? p.setMaxParallel(s, sid, patch.maxParallel)
-                : null,
-              patch.tags !== undefined ? p.setTags(s, sid, patch.tags) : null,
-            ]);
+            // Batch every entity/spec field into ONE update — issuing them in
+            // parallel made the txns collide on the same row (serialize-access
+            // 40001) and could drop fields. Schedule uses its own RPC, so run it
+            // sequentially afterwards rather than concurrently.
+            await p.updateSettings(s, sid, {
+              name: patch.name,
+              description: patch.description,
+              provider: patch.provider,
+              rating: patch.rating,
+              maxParallel: patch.maxParallel,
+              tags: patch.tags,
+            });
+            if (patch.schedule !== undefined) {
+              await p.setSchedule(s, sid, patch.schedule);
+            }
             setEditingSettings(false);
             await load(false);
           } catch (err) {

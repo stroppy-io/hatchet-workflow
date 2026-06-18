@@ -295,6 +295,24 @@ export interface SuitesProvider {
   ): Promise<void>;
   /** UpdateSuite — patch entity.name. */
   setName(tenantSlug: string, suiteId: string, name: string): Promise<void>;
+  /**
+   * UpdateSuite — apply several entity/spec settings in ONE read-modify-write.
+   * Saving each field via a separate patch concurrently makes the txns collide
+   * on the same row (serialize-access 40001); batching them avoids that and is
+   * atomic (no lost fields). Schedule has its own RPC and is saved separately.
+   */
+  updateSettings(
+    tenantSlug: string,
+    suiteId: string,
+    patch: {
+      name?: string;
+      description?: string;
+      provider?: SuiteProviderKind;
+      rating?: { inTenant?: boolean; inGlobal?: boolean };
+      maxParallel?: number;
+      tags?: string[];
+    },
+  ): Promise<void>;
   /** UpdateSuite — patch entity.description. */
   setDescription(
     tenantSlug: string,
@@ -623,6 +641,29 @@ const realSuitesProvider: SuitesProvider = {
     const tenantId = await resolveTenantId(tenantSlug);
     await patchSuite(tenantId, suiteId, (rec) => {
       if (rec.entity) rec.entity.name = name;
+    });
+  },
+
+  async updateSettings(tenantSlug, suiteId, patch) {
+    const tenantId = await resolveTenantId(tenantSlug);
+    await patchSuite(tenantId, suiteId, (rec) => {
+      if (patch.name !== undefined && rec.entity) rec.entity.name = patch.name;
+      if (patch.description !== undefined && rec.entity)
+        rec.entity.description = patch.description;
+      if (!rec.spec) return;
+      if (patch.provider !== undefined)
+        rec.spec.provider = providerProto(patch.provider);
+      if (patch.rating?.inTenant !== undefined)
+        rec.spec.defaultInTenantRating = patch.rating.inTenant;
+      if (patch.rating?.inGlobal !== undefined)
+        rec.spec.defaultInGlobalRating = patch.rating.inGlobal;
+      if (patch.maxParallel !== undefined)
+        rec.spec.defaultMaxParallel = patch.maxParallel;
+      if (patch.tags !== undefined)
+        rec.spec.tags = create(TagsSchema, {
+          tags: patch.tags,
+          labels: rec.spec.tags?.labels ?? {},
+        });
     });
   },
 
