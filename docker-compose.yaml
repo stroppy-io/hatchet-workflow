@@ -111,6 +111,8 @@ services:
     restart: unless-stopped
     volumes:
       - aptcache:/var/cache/apt-cacher-ng
+      # VfileUseRangeOps:0 — fixes 503 "unexpected range" on CDN repos (PGDG).
+      - ./deployments/apt-cacher-ng/acng-rangefix.conf:/etc/apt-cacher-ng/zz-rangefix.conf:ro
 
   # --- Temporal (runs execute as workflows) ---
   temporal:
