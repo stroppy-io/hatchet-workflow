@@ -210,6 +210,8 @@ export function NewRun() {
   const [params, setParams] = useSearchParams();
 
   const draftId = params.get("draft") ?? "";
+  // "New from run": ?from=<runId> auto-starts a draft seeded from that run's spec.
+  const fromRunId = params.get("from") ?? "";
   const stepKey = (params.get("step") as StepKey) || "database";
   const stepIndex = Math.max(0, STEPS.findIndex((s) => s.key === stepKey));
 
@@ -299,6 +301,28 @@ export function NewRun() {
     }
   }, [slug, startName, setActiveDraft]);
 
+  // "New from run": when arriving with ?from=<runId> and no active draft, start a
+  // draft seeded from that run's spec and replace the URL with the new draft (so a
+  // reload/back doesn't re-clone). The ref guards against StrictMode double-fire.
+  const cloneStartedRef = useRef(false);
+  useEffect(() => {
+    if (!slug || !fromRunId || draftId || cloneStartedRef.current) return;
+    cloneStartedRef.current = true;
+    setError(null);
+    setLoading(true);
+    getWizardProvider()
+      .start(slug, "Untitled run", { sourceRunId: fromRunId })
+      .then((d) => {
+        setDraft(d);
+        setParams({ draft: d.id, step: "database" }, { replace: true });
+      })
+      .catch((e) => {
+        cloneStartedRef.current = false;
+        setError(e instanceof Error ? e.message : String(e));
+      })
+      .finally(() => setLoading(false));
+  }, [slug, fromRunId, draftId, setParams]);
+
   const patch = useCallback(
     (input: Parameters<ReturnType<typeof getWizardProvider>["patch"]>[2]) => {
       if (!slug || !draftId) return Promise.resolve();
@@ -336,6 +360,16 @@ export function NewRun() {
     },
     [slug],
   );
+
+  // Cloning from a run (?from=…): show a spinner instead of the start/resume
+  // picker until the seeded draft is created and the URL flips to ?draft=….
+  if (!draftId && fromRunId && !error) {
+    return (
+      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Cloning run…
+      </div>
+    );
+  }
 
   if (!draftId) {
     return (

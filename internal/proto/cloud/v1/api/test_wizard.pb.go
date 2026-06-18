@@ -38,7 +38,12 @@ type StartTestWizardRequest struct {
 	// name is the optional human label for the draft.
 	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	// test_preset_id optionally seeds the whole draft from an existing test preset.
-	TestPresetId  string `protobuf:"bytes,3,opt,name=test_preset_id,json=testPresetId,proto3" json:"test_preset_id,omitempty"`
+	TestPresetId string `protobuf:"bytes,3,opt,name=test_preset_id,json=testPresetId,proto3" json:"test_preset_id,omitempty"`
+	// source_run_id optionally seeds the whole draft from an existing run's baked
+	// spec (database + workload + provider + render overrides) — a "New from run"
+	// clone the user can edit before launching. Mutually exclusive with
+	// test_preset_id; when both are set, source_run_id wins.
+	SourceRunId   string `protobuf:"bytes,4,opt,name=source_run_id,json=sourceRunId,proto3" json:"source_run_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -90,6 +95,13 @@ func (x *StartTestWizardRequest) GetName() string {
 func (x *StartTestWizardRequest) GetTestPresetId() string {
 	if x != nil {
 		return x.TestPresetId
+	}
+	return ""
+}
+
+func (x *StartTestWizardRequest) GetSourceRunId() string {
+	if x != nil {
+		return x.SourceRunId
 	}
 	return ""
 }
@@ -1046,11 +1058,12 @@ var File_cloud_v1_api_test_wizard_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_test_wizard_proto_rawDesc = "" +
 	"\n" +
-	"\x1ecloud/v1/api/test_wizard.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a(cloud/v1/deployment/infrastructure.proto\x1a\"cloud/v1/deployment/provider.proto\x1a cloud/v1/deployment/render.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1ccloud/v1/models/preset.proto\x1a\x1ecloud/v1/models/test_run.proto\x1a!cloud/v1/models/test_wizard.proto\x1a cloud/v1/topology/topology.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\x8d\x01\n" +
+	"\x1ecloud/v1/api/test_wizard.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a(cloud/v1/deployment/infrastructure.proto\x1a\"cloud/v1/deployment/provider.proto\x1a cloud/v1/deployment/render.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1ccloud/v1/models/preset.proto\x1a\x1ecloud/v1/models/test_run.proto\x1a!cloud/v1/models/test_wizard.proto\x1a cloud/v1/topology/topology.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\xba\x01\n" +
 	"\x16StartTestWizardRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x1c\n" +
 	"\x04name\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\xff\x01R\x04name\x12-\n" +
-	"\x0etest_preset_id\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x18@R\ftestPresetId\"a\n" +
+	"\x0etest_preset_id\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x18@R\ftestPresetId\x12+\n" +
+	"\rsource_run_id\x18\x04 \x01(\tB\a\xfaB\x04r\x02\x18@R\vsourceRunId\"a\n" +
 	"\x17StartTestWizardResponse\x12F\n" +
 	"\x05draft\x18\x01 \x01(\v2&.cloud.v1.models.TestWizardDraftRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x05draft\"i\n" +
 	"\x19GetTestWizardDraftRequest\x12&\n" +

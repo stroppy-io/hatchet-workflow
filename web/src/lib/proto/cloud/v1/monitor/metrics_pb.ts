@@ -13,23 +13,23 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/monitor/metrics.proto.
  */
 export const file_cloud_v1_monitor_metrics: GenFile = /*@__PURE__*/
-  fileDesc("Ch5jbG91ZC92MS9tb25pdG9yL21ldHJpY3MucHJvdG8SEGNsb3VkLnYxLm1vbml0b3IicwoJVGltZVJhbmdlEjMKBXN0YXJ0GAEgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEII+kIFsgECCAESMQoDZW5kGAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEII+kIFsgECCAEi3QEKDU1ldHJpY1N1bW1hcnkSFwoDa2V5GAEgASgJQgr6QgdyBRABGIACEhYKBG5hbWUYAiABKAlCCPpCBXIDGIACEhUKBHVuaXQYAyABKAlCB/pCBHICGCASCwoDYXZnGAQgASgBEgsKA21pbhgFIAEoARILCgNtYXgYBiABKAESDAoEbGFzdBgHIAEoARIYChBoaWdoZXJfaXNfYmV0dGVyGAggASgIEh0KC2Rlc2NyaXB0aW9uGAkgASgJQgj6QgVyAxiACBIWCgVncm91cBgKIAEoCUIH+kIEcgIYQCKbAQoKUnVuTWV0cmljcxIaCgZydW5faWQYASABKAlCCvpCB3IFEAEYgAESNAoFcmFuZ2UYAiABKAsyGy5jbG91ZC52MS5tb25pdG9yLlRpbWVSYW5nZUII+kIFigECEAESOwoHbWV0cmljcxgDIAMoCzIfLmNsb3VkLnYxLm1vbml0b3IuTWV0cmljU3VtbWFyeUIJ+kIGkgEDEIAEIvEBCgpNZXRyaWNDZWxsEhoKBnJ1bl9pZBgBIAEoCUIK+kIHcgUQARiAARILCgNhdmcYAiABKAESCwoDbWF4GAMgASgBEhQKDGRpZmZfYXZnX3BjdBgEIAEoARIUCgxkaWZmX21heF9wY3QYBSABKAESNAoHdmVyZGljdBgGIAEoDjIZLmNsb3VkLnYxLm1vbml0b3IuVmVyZGljdEII+kIFggECEAESDwoHcHJlc2VudBgHIAEoCBIcChRkaWZmX2F2Z19wY3RfZGVmaW5lZBgIIAEoCBIcChRkaWZmX21heF9wY3RfZGVmaW5lZBgJIAEoCCLbAQoJTWV0cmljUm93EhcKA2tleRgBIAEoCUIK+kIHcgUQARiAAhIWCgRuYW1lGAIgASgJQgj6QgVyAxiAAhIVCgR1bml0GAMgASgJQgf6QgRyAhggEhgKEGhpZ2hlcl9pc19iZXR0ZXIYBCABKAgSFgoFZ3JvdXAYBSABKAlCB/pCBHICGEASNQoFY2VsbHMYBiADKAsyHC5jbG91ZC52MS5tb25pdG9yLk1ldHJpY0NlbGxCCPpCBZIBAhAQEh0KC2Rlc2NyaXB0aW9uGAcgASgJQgj6QgVyAxiACCLUAgoKQ29tcGFyaXNvbhIbCgdydW5faWRzGAEgAygJQgr6QgeSAQQQEAgCEioKBXJhbmdlGAIgASgLMhsuY2xvdWQudjEubW9uaXRvci5UaW1lUmFuZ2USNwoHbWV0cmljcxgDIAMoCzIbLmNsb3VkLnYxLm1vbml0b3IuTWV0cmljUm93Qgn6QgaSAQMQgAQSRAoJc3VtbWFyaWVzGAQgAygLMicuY2xvdWQudjEubW9uaXRvci5Db21wYXJpc29uLlJ1blN1bW1hcnlCCPpCBZIBAhAQGn4KClJ1blN1bW1hcnkSGgoGcnVuX2lkGAEgASgJQgr6QgdyBRABGIABEg4KBmJldHRlchgCIAEoDRINCgV3b3JzZRgDIAEoDRIMCgRzYW1lGAQgASgNEg8KB21pc3NpbmcYBSABKA0SFgoObm90X2NvbXBhcmFibGUYBiABKA0qWwoHVmVyZGljdBIXChNWRVJESUNUX1VOU1BFQ0lGSUVEEAASEgoOVkVSRElDVF9CRVRURVIQARIRCg1WRVJESUNUX1dPUlNFEAISEAoMVkVSRElDVF9TQU1FEANCRVpDZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvbW9uaXRvcmIGcHJvdG8z", [file_google_protobuf_timestamp, file_validate_validate]);
+  fileDesc("Ch5jbG91ZC92MS9tb25pdG9yL21ldHJpY3MucHJvdG8SEGNsb3VkLnYxLm1vbml0b3IicwoJVGltZVJhbmdlEjMKBXN0YXJ0GAEgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEII+kIFsgECCAESMQoDZW5kGAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEII+kIFsgECCAEi3QEKDU1ldHJpY1N1bW1hcnkSFwoDa2V5GAEgASgJQgr6QgdyBRABGIACEhYKBG5hbWUYAiABKAlCCPpCBXIDGIACEhUKBHVuaXQYAyABKAlCB/pCBHICGCASCwoDYXZnGAQgASgBEgsKA21pbhgFIAEoARILCgNtYXgYBiABKAESDAoEbGFzdBgHIAEoARIYChBoaWdoZXJfaXNfYmV0dGVyGAggASgIEh0KC2Rlc2NyaXB0aW9uGAkgASgJQgj6QgVyAxiACBIWCgVncm91cBgKIAEoCUIH+kIEcgIYQCKbAQoKUnVuTWV0cmljcxIaCgZydW5faWQYASABKAlCCvpCB3IFEAEYgAESNAoFcmFuZ2UYAiABKAsyGy5jbG91ZC52MS5tb25pdG9yLlRpbWVSYW5nZUII+kIFigECEAESOwoHbWV0cmljcxgDIAMoCzIfLmNsb3VkLnYxLm1vbml0b3IuTWV0cmljU3VtbWFyeUIJ+kIGkgEDEIAEIvEBCgpNZXRyaWNDZWxsEhoKBnJ1bl9pZBgBIAEoCUIK+kIHcgUYgAEQARILCgNhdmcYAiABKAESCwoDbWF4GAMgASgBEhQKDGRpZmZfYXZnX3BjdBgEIAEoARIUCgxkaWZmX21heF9wY3QYBSABKAESNAoHdmVyZGljdBgGIAEoDjIZLmNsb3VkLnYxLm1vbml0b3IuVmVyZGljdEII+kIFggECEAESDwoHcHJlc2VudBgHIAEoCBIcChRkaWZmX2F2Z19wY3RfZGVmaW5lZBgIIAEoCBIcChRkaWZmX21heF9wY3RfZGVmaW5lZBgJIAEoCCLbAQoJTWV0cmljUm93EhcKA2tleRgBIAEoCUIK+kIHcgUQARiAAhIWCgRuYW1lGAIgASgJQgj6QgVyAxiAAhIVCgR1bml0GAMgASgJQgf6QgRyAhggEhgKEGhpZ2hlcl9pc19iZXR0ZXIYBCABKAgSFgoFZ3JvdXAYBSABKAlCB/pCBHICGEASNQoFY2VsbHMYBiADKAsyHC5jbG91ZC52MS5tb25pdG9yLk1ldHJpY0NlbGxCCPpCBZIBAhAQEh0KC2Rlc2NyaXB0aW9uGAcgASgJQgj6QgVyAxiACCLUAgoKQ29tcGFyaXNvbhIbCgdydW5faWRzGAEgAygJQgr6QgeSAQQIAhAQEioKBXJhbmdlGAIgASgLMhsuY2xvdWQudjEubW9uaXRvci5UaW1lUmFuZ2USNwoHbWV0cmljcxgDIAMoCzIbLmNsb3VkLnYxLm1vbml0b3IuTWV0cmljUm93Qgn6QgaSAQMQgAQSRAoJc3VtbWFyaWVzGAQgAygLMicuY2xvdWQudjEubW9uaXRvci5Db21wYXJpc29uLlJ1blN1bW1hcnlCCPpCBZIBAhAQGn4KClJ1blN1bW1hcnkSGgoGcnVuX2lkGAEgASgJQgr6QgdyBRiAARABEg4KBmJldHRlchgCIAEoDRINCgV3b3JzZRgDIAEoDRIMCgRzYW1lGAQgASgNEg8KB21pc3NpbmcYBSABKA0SFgoObm90X2NvbXBhcmFibGUYBiABKA0qWwoHVmVyZGljdBIXChNWRVJESUNUX1VOU1BFQ0lGSUVEEAASEgoOVkVSRElDVF9CRVRURVIQARIRCg1WRVJESUNUX1dPUlNFEAISEAoMVkVSRElDVF9TQU1FEANCRVpDZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvbW9uaXRvcmIGcHJvdG8z", [file_google_protobuf_timestamp, file_validate_validate]);
 
 /**
- * TimeRange is the [start, end] window the metrics cover.
+ * TimeRange is the [start, end] window the metrics cover. 
  *
  * @generated from message cloud.v1.monitor.TimeRange
  */
 export type TimeRange = Message<"cloud.v1.monitor.TimeRange"> & {
   /**
-   * start is the inclusive lower bound of the window.
+   * start is the inclusive lower bound of the window. 
    *
    * @generated from field: google.protobuf.Timestamp start = 1;
    */
   start?: Timestamp;
 
   /**
-   * end is the inclusive upper bound of the window.
+   * end is the inclusive upper bound of the window. 
    *
    * @generated from field: google.protobuf.Timestamp end = 2;
    */
@@ -37,20 +37,20 @@ export type TimeRange = Message<"cloud.v1.monitor.TimeRange"> & {
 };
 
 /**
- * TimeRange is the [start, end] window the metrics cover.
+ * TimeRange is the [start, end] window the metrics cover. 
  *
  * @generated from message cloud.v1.monitor.TimeRange
  */
 export type TimeRangeJson = {
   /**
-   * start is the inclusive lower bound of the window.
+   * start is the inclusive lower bound of the window. 
    *
    * @generated from field: google.protobuf.Timestamp start = 1;
    */
   start?: TimestampJson;
 
   /**
-   * end is the inclusive upper bound of the window.
+   * end is the inclusive upper bound of the window. 
    *
    * @generated from field: google.protobuf.Timestamp end = 2;
    */
@@ -67,76 +67,76 @@ export const TimeRangeSchema: GenMessage<TimeRange, {jsonType: TimeRangeJson, va
   messageDesc(file_cloud_v1_monitor_metrics, 0);
 
 /**
- * MetricSummary is one aggregated metric series for a run.
+ * MetricSummary is one aggregated metric series for a run. 
  *
  * @generated from message cloud.v1.monitor.MetricSummary
  */
 export type MetricSummary = Message<"cloud.v1.monitor.MetricSummary"> & {
   /**
-   * key is the stable metric key (PromQL series identity). Free string, not an enum.
+   * key is the stable metric key (PromQL series identity). Free string, not an enum. 
    *
    * @generated from field: string key = 1;
    */
   key: string;
 
   /**
-   * name is the human-readable metric name supplied by the backend.
+   * name is the human-readable metric name supplied by the backend. 
    *
    * @generated from field: string name = 2;
    */
   name: string;
 
   /**
-   * unit is the metric unit, e.g. "ms", "ops/s".
+   * unit is the metric unit, e.g. "ms", "ops/s". 
    *
    * @generated from field: string unit = 3;
    */
   unit: string;
 
   /**
-   * avg is the mean value of the series over the window.
+   * avg is the mean value of the series over the window. 
    *
    * @generated from field: double avg = 4;
    */
   avg: number;
 
   /**
-   * min is the smallest observed value over the window.
+   * min is the smallest observed value over the window. 
    *
    * @generated from field: double min = 5;
    */
   min: number;
 
   /**
-   * max is the largest observed value over the window.
+   * max is the largest observed value over the window. 
    *
    * @generated from field: double max = 6;
    */
   max: number;
 
   /**
-   * last is the most recent observed value.
+   * last is the most recent observed value. 
    *
    * @generated from field: double last = 7;
    */
   last: number;
 
   /**
-   * higher_is_better is the comparison direction as DATA (not an enum of metric meaning).
+   * higher_is_better is the comparison direction as DATA (not an enum of metric meaning). 
    *
    * @generated from field: bool higher_is_better = 8;
    */
   higherIsBetter: boolean;
 
   /**
-   * description is an optional human tooltip supplied by the backend.
+   * description is an optional human tooltip supplied by the backend. 
    *
    * @generated from field: string description = 9;
    */
   description: string;
 
   /**
-   * group is an optional generic UI grouping label (e.g. "throughput", "latency").
+   * group is an optional generic UI grouping label (e.g. "throughput", "latency"). 
    *
    * @generated from field: string group = 10;
    */
@@ -144,76 +144,76 @@ export type MetricSummary = Message<"cloud.v1.monitor.MetricSummary"> & {
 };
 
 /**
- * MetricSummary is one aggregated metric series for a run.
+ * MetricSummary is one aggregated metric series for a run. 
  *
  * @generated from message cloud.v1.monitor.MetricSummary
  */
 export type MetricSummaryJson = {
   /**
-   * key is the stable metric key (PromQL series identity). Free string, not an enum.
+   * key is the stable metric key (PromQL series identity). Free string, not an enum. 
    *
    * @generated from field: string key = 1;
    */
   key?: string;
 
   /**
-   * name is the human-readable metric name supplied by the backend.
+   * name is the human-readable metric name supplied by the backend. 
    *
    * @generated from field: string name = 2;
    */
   name?: string;
 
   /**
-   * unit is the metric unit, e.g. "ms", "ops/s".
+   * unit is the metric unit, e.g. "ms", "ops/s". 
    *
    * @generated from field: string unit = 3;
    */
   unit?: string;
 
   /**
-   * avg is the mean value of the series over the window.
+   * avg is the mean value of the series over the window. 
    *
    * @generated from field: double avg = 4;
    */
   avg?: number | "NaN" | "Infinity" | "-Infinity";
 
   /**
-   * min is the smallest observed value over the window.
+   * min is the smallest observed value over the window. 
    *
    * @generated from field: double min = 5;
    */
   min?: number | "NaN" | "Infinity" | "-Infinity";
 
   /**
-   * max is the largest observed value over the window.
+   * max is the largest observed value over the window. 
    *
    * @generated from field: double max = 6;
    */
   max?: number | "NaN" | "Infinity" | "-Infinity";
 
   /**
-   * last is the most recent observed value.
+   * last is the most recent observed value. 
    *
    * @generated from field: double last = 7;
    */
   last?: number | "NaN" | "Infinity" | "-Infinity";
 
   /**
-   * higher_is_better is the comparison direction as DATA (not an enum of metric meaning).
+   * higher_is_better is the comparison direction as DATA (not an enum of metric meaning). 
    *
    * @generated from field: bool higher_is_better = 8;
    */
   higherIsBetter?: boolean;
 
   /**
-   * description is an optional human tooltip supplied by the backend.
+   * description is an optional human tooltip supplied by the backend. 
    *
    * @generated from field: string description = 9;
    */
   description?: string;
 
   /**
-   * group is an optional generic UI grouping label (e.g. "throughput", "latency").
+   * group is an optional generic UI grouping label (e.g. "throughput", "latency"). 
    *
    * @generated from field: string group = 10;
    */
@@ -230,27 +230,27 @@ export const MetricSummarySchema: GenMessage<MetricSummary, {jsonType: MetricSum
   messageDesc(file_cloud_v1_monitor_metrics, 1);
 
 /**
- * RunMetrics is the collected metric summary set for one run.
+ * RunMetrics is the collected metric summary set for one run. 
  *
  * @generated from message cloud.v1.monitor.RunMetrics
  */
 export type RunMetrics = Message<"cloud.v1.monitor.RunMetrics"> & {
   /**
-   * run_id is the plain run identity (string, keeps runtime models-independent).
+   * run_id is the plain run identity (string, keeps runtime models-independent). 
    *
    * @generated from field: string run_id = 1;
    */
   runId: string;
 
   /**
-   * range is the time window the metrics were computed over.
+   * range is the time window the metrics were computed over. 
    *
    * @generated from field: cloud.v1.monitor.TimeRange range = 2;
    */
   range?: TimeRange;
 
   /**
-   * metrics is the per-series aggregated summary set for this run.
+   * metrics is the per-series aggregated summary set for this run. 
    *
    * @generated from field: repeated cloud.v1.monitor.MetricSummary metrics = 3;
    */
@@ -258,27 +258,27 @@ export type RunMetrics = Message<"cloud.v1.monitor.RunMetrics"> & {
 };
 
 /**
- * RunMetrics is the collected metric summary set for one run.
+ * RunMetrics is the collected metric summary set for one run. 
  *
  * @generated from message cloud.v1.monitor.RunMetrics
  */
 export type RunMetricsJson = {
   /**
-   * run_id is the plain run identity (string, keeps runtime models-independent).
+   * run_id is the plain run identity (string, keeps runtime models-independent). 
    *
    * @generated from field: string run_id = 1;
    */
   runId?: string;
 
   /**
-   * range is the time window the metrics were computed over.
+   * range is the time window the metrics were computed over. 
    *
    * @generated from field: cloud.v1.monitor.TimeRange range = 2;
    */
   range?: TimeRangeJson;
 
   /**
-   * metrics is the per-series aggregated summary set for this run.
+   * metrics is the per-series aggregated summary set for this run. 
    *
    * @generated from field: repeated cloud.v1.monitor.MetricSummary metrics = 3;
    */
@@ -297,69 +297,69 @@ export const RunMetricsSchema: GenMessage<RunMetrics, {jsonType: RunMetricsJson,
 /**
  * MetricCell is one run's value for a metric within an N-way Comparison row.
  * diff_*_pct are relative to the baseline run (Comparison.run_ids[0]); for the
- * baseline cell itself they are 0 and verdict is VERDICT_SAME.
+ * baseline cell itself they are 0 and verdict is VERDICT_SAME. 
  *
  * @generated from message cloud.v1.monitor.MetricCell
  */
 export type MetricCell = Message<"cloud.v1.monitor.MetricCell"> & {
   /**
-   * run_id is the run this cell belongs to (= Comparison.run_ids[index]).
+   * run_id is the run this cell belongs to (= Comparison.run_ids[index]). 
    *
    * @generated from field: string run_id = 1;
    */
   runId: string;
 
   /**
-   * avg is this run's mean value for the metric.
+   * avg is this run's mean value for the metric. 
    *
    * @generated from field: double avg = 2;
    */
   avg: number;
 
   /**
-   * max is this run's peak value for the metric.
+   * max is this run's peak value for the metric. 
    *
    * @generated from field: double max = 3;
    */
   max: number;
 
   /**
-   * diff_avg_pct is (cell - baseline) / baseline * 100; positive means higher.
+   * diff_avg_pct is (cell - baseline) / baseline * 100; positive means higher. 
    *
    * @generated from field: double diff_avg_pct = 4;
    */
   diffAvgPct: number;
 
   /**
-   * diff_max_pct is the same relative diff applied to the max value.
+   * diff_max_pct is the same relative diff applied to the max value. 
    *
    * @generated from field: double diff_max_pct = 5;
    */
   diffMaxPct: number;
 
   /**
-   * verdict is the better/worse/same classification of this cell vs the baseline.
+   * verdict is the better/worse/same classification of this cell vs the baseline. 
    *
    * @generated from field: cloud.v1.monitor.Verdict verdict = 6;
    */
   verdict: Verdict;
 
   /**
-   * present is false when this run has no sample for the metric; avg/max are then placeholders.
+   * present is false when this run has no sample for the metric; avg/max are then placeholders. 
    *
    * @generated from field: bool present = 7;
    */
   present: boolean;
 
   /**
-   * diff_avg_pct_defined is false when the avg percentage delta cannot be computed.
+   * diff_avg_pct_defined is false when the avg percentage delta cannot be computed. 
    *
    * @generated from field: bool diff_avg_pct_defined = 8;
    */
   diffAvgPctDefined: boolean;
 
   /**
-   * diff_max_pct_defined is false when the max percentage delta cannot be computed.
+   * diff_max_pct_defined is false when the max percentage delta cannot be computed. 
    *
    * @generated from field: bool diff_max_pct_defined = 9;
    */
@@ -369,69 +369,69 @@ export type MetricCell = Message<"cloud.v1.monitor.MetricCell"> & {
 /**
  * MetricCell is one run's value for a metric within an N-way Comparison row.
  * diff_*_pct are relative to the baseline run (Comparison.run_ids[0]); for the
- * baseline cell itself they are 0 and verdict is VERDICT_SAME.
+ * baseline cell itself they are 0 and verdict is VERDICT_SAME. 
  *
  * @generated from message cloud.v1.monitor.MetricCell
  */
 export type MetricCellJson = {
   /**
-   * run_id is the run this cell belongs to (= Comparison.run_ids[index]).
+   * run_id is the run this cell belongs to (= Comparison.run_ids[index]). 
    *
    * @generated from field: string run_id = 1;
    */
   runId?: string;
 
   /**
-   * avg is this run's mean value for the metric.
+   * avg is this run's mean value for the metric. 
    *
    * @generated from field: double avg = 2;
    */
   avg?: number | "NaN" | "Infinity" | "-Infinity";
 
   /**
-   * max is this run's peak value for the metric.
+   * max is this run's peak value for the metric. 
    *
    * @generated from field: double max = 3;
    */
   max?: number | "NaN" | "Infinity" | "-Infinity";
 
   /**
-   * diff_avg_pct is (cell - baseline) / baseline * 100; positive means higher.
+   * diff_avg_pct is (cell - baseline) / baseline * 100; positive means higher. 
    *
    * @generated from field: double diff_avg_pct = 4;
    */
   diffAvgPct?: number | "NaN" | "Infinity" | "-Infinity";
 
   /**
-   * diff_max_pct is the same relative diff applied to the max value.
+   * diff_max_pct is the same relative diff applied to the max value. 
    *
    * @generated from field: double diff_max_pct = 5;
    */
   diffMaxPct?: number | "NaN" | "Infinity" | "-Infinity";
 
   /**
-   * verdict is the better/worse/same classification of this cell vs the baseline.
+   * verdict is the better/worse/same classification of this cell vs the baseline. 
    *
    * @generated from field: cloud.v1.monitor.Verdict verdict = 6;
    */
   verdict?: VerdictJson;
 
   /**
-   * present is false when this run has no sample for the metric; avg/max are then placeholders.
+   * present is false when this run has no sample for the metric; avg/max are then placeholders. 
    *
    * @generated from field: bool present = 7;
    */
   present?: boolean;
 
   /**
-   * diff_avg_pct_defined is false when the avg percentage delta cannot be computed.
+   * diff_avg_pct_defined is false when the avg percentage delta cannot be computed. 
    *
    * @generated from field: bool diff_avg_pct_defined = 8;
    */
   diffAvgPctDefined?: boolean;
 
   /**
-   * diff_max_pct_defined is false when the max percentage delta cannot be computed.
+   * diff_max_pct_defined is false when the max percentage delta cannot be computed. 
    *
    * @generated from field: bool diff_max_pct_defined = 9;
    */
@@ -449,55 +449,55 @@ export const MetricCellSchema: GenMessage<MetricCell, {jsonType: MetricCellJson,
 
 /**
  * MetricRow compares one metric across all compared runs; cells are aligned
- * 1:1 with Comparison.run_ids.
+ * 1:1 with Comparison.run_ids. 
  *
  * @generated from message cloud.v1.monitor.MetricRow
  */
 export type MetricRow = Message<"cloud.v1.monitor.MetricRow"> & {
   /**
-   * key is the stable metric key (PromQL series identity).
+   * key is the stable metric key (PromQL series identity). 
    *
    * @generated from field: string key = 1;
    */
   key: string;
 
   /**
-   * name is the human-readable metric name supplied by the backend.
+   * name is the human-readable metric name supplied by the backend. 
    *
    * @generated from field: string name = 2;
    */
   name: string;
 
   /**
-   * unit is the metric unit, e.g. "ms", "ops/s".
+   * unit is the metric unit, e.g. "ms", "ops/s". 
    *
    * @generated from field: string unit = 3;
    */
   unit: string;
 
   /**
-   * higher_is_better is the comparison direction as DATA (mirrors MetricSummary).
+   * higher_is_better is the comparison direction as DATA (mirrors MetricSummary). 
    *
    * @generated from field: bool higher_is_better = 4;
    */
   higherIsBetter: boolean;
 
   /**
-   * group is an optional generic UI grouping label (e.g. "throughput", "latency").
+   * group is an optional generic UI grouping label (e.g. "throughput", "latency"). 
    *
    * @generated from field: string group = 5;
    */
   group: string;
 
   /**
-   * cells are this metric's per-run values, aligned 1:1 with Comparison.run_ids.
+   * cells are this metric's per-run values, aligned 1:1 with Comparison.run_ids. 
    *
    * @generated from field: repeated cloud.v1.monitor.MetricCell cells = 6;
    */
   cells: MetricCell[];
 
   /**
-   * description is an optional human tooltip supplied by the backend.
+   * description is an optional human tooltip supplied by the backend. 
    *
    * @generated from field: string description = 7;
    */
@@ -506,55 +506,55 @@ export type MetricRow = Message<"cloud.v1.monitor.MetricRow"> & {
 
 /**
  * MetricRow compares one metric across all compared runs; cells are aligned
- * 1:1 with Comparison.run_ids.
+ * 1:1 with Comparison.run_ids. 
  *
  * @generated from message cloud.v1.monitor.MetricRow
  */
 export type MetricRowJson = {
   /**
-   * key is the stable metric key (PromQL series identity).
+   * key is the stable metric key (PromQL series identity). 
    *
    * @generated from field: string key = 1;
    */
   key?: string;
 
   /**
-   * name is the human-readable metric name supplied by the backend.
+   * name is the human-readable metric name supplied by the backend. 
    *
    * @generated from field: string name = 2;
    */
   name?: string;
 
   /**
-   * unit is the metric unit, e.g. "ms", "ops/s".
+   * unit is the metric unit, e.g. "ms", "ops/s". 
    *
    * @generated from field: string unit = 3;
    */
   unit?: string;
 
   /**
-   * higher_is_better is the comparison direction as DATA (mirrors MetricSummary).
+   * higher_is_better is the comparison direction as DATA (mirrors MetricSummary). 
    *
    * @generated from field: bool higher_is_better = 4;
    */
   higherIsBetter?: boolean;
 
   /**
-   * group is an optional generic UI grouping label (e.g. "throughput", "latency").
+   * group is an optional generic UI grouping label (e.g. "throughput", "latency"). 
    *
    * @generated from field: string group = 5;
    */
   group?: string;
 
   /**
-   * cells are this metric's per-run values, aligned 1:1 with Comparison.run_ids.
+   * cells are this metric's per-run values, aligned 1:1 with Comparison.run_ids. 
    *
    * @generated from field: repeated cloud.v1.monitor.MetricCell cells = 6;
    */
   cells?: MetricCellJson[];
 
   /**
-   * description is an optional human tooltip supplied by the backend.
+   * description is an optional human tooltip supplied by the backend. 
    *
    * @generated from field: string description = 7;
    */
@@ -572,34 +572,34 @@ export const MetricRowSchema: GenMessage<MetricRow, {jsonType: MetricRowJson, va
 
 /**
  * Comparison is the metric-by-metric diff of N runs (>= 2) against a baseline
- * (run_ids[0]) with a per-run roll-up verdict.
+ * (run_ids[0]) with a per-run roll-up verdict. 
  *
  * @generated from message cloud.v1.monitor.Comparison
  */
 export type Comparison = Message<"cloud.v1.monitor.Comparison"> & {
   /**
-   * run_ids are the compared runs in display order; run_ids[0] is the baseline.
+   * run_ids are the compared runs in display order; run_ids[0] is the baseline. 
    *
    * @generated from field: repeated string run_ids = 1;
    */
   runIds: string[];
 
   /**
-   * range is the time window the comparison was computed over.
+   * range is the time window the comparison was computed over. 
    *
    * @generated from field: cloud.v1.monitor.TimeRange range = 2;
    */
   range?: TimeRange;
 
   /**
-   * metrics are the per-metric rows, each comparing all runs for that metric.
+   * metrics are the per-metric rows, each comparing all runs for that metric. 
    *
    * @generated from field: repeated cloud.v1.monitor.MetricRow metrics = 3;
    */
   metrics: MetricRow[];
 
   /**
-   * summaries roll up per non-baseline run (aligned with run_ids[1:]).
+   * summaries roll up per non-baseline run (aligned with run_ids[1:]). 
    *
    * @generated from field: repeated cloud.v1.monitor.Comparison.RunSummary summaries = 4;
    */
@@ -608,34 +608,34 @@ export type Comparison = Message<"cloud.v1.monitor.Comparison"> & {
 
 /**
  * Comparison is the metric-by-metric diff of N runs (>= 2) against a baseline
- * (run_ids[0]) with a per-run roll-up verdict.
+ * (run_ids[0]) with a per-run roll-up verdict. 
  *
  * @generated from message cloud.v1.monitor.Comparison
  */
 export type ComparisonJson = {
   /**
-   * run_ids are the compared runs in display order; run_ids[0] is the baseline.
+   * run_ids are the compared runs in display order; run_ids[0] is the baseline. 
    *
    * @generated from field: repeated string run_ids = 1;
    */
   runIds?: string[];
 
   /**
-   * range is the time window the comparison was computed over.
+   * range is the time window the comparison was computed over. 
    *
    * @generated from field: cloud.v1.monitor.TimeRange range = 2;
    */
   range?: TimeRangeJson;
 
   /**
-   * metrics are the per-metric rows, each comparing all runs for that metric.
+   * metrics are the per-metric rows, each comparing all runs for that metric. 
    *
    * @generated from field: repeated cloud.v1.monitor.MetricRow metrics = 3;
    */
   metrics?: MetricRowJson[];
 
   /**
-   * summaries roll up per non-baseline run (aligned with run_ids[1:]).
+   * summaries roll up per non-baseline run (aligned with run_ids[1:]). 
    *
    * @generated from field: repeated cloud.v1.monitor.Comparison.RunSummary summaries = 4;
    */
@@ -652,48 +652,48 @@ export const ComparisonSchema: GenMessage<Comparison, {jsonType: ComparisonJson,
   messageDesc(file_cloud_v1_monitor_metrics, 5);
 
 /**
- * RunSummary rolls up one run's per-metric verdicts against the baseline.
+ * RunSummary rolls up one run's per-metric verdicts against the baseline. 
  *
  * @generated from message cloud.v1.monitor.Comparison.RunSummary
  */
 export type Comparison_RunSummary = Message<"cloud.v1.monitor.Comparison.RunSummary"> & {
   /**
-   * run_id is the non-baseline run this roll-up belongs to.
+   * run_id is the non-baseline run this roll-up belongs to. 
    *
    * @generated from field: string run_id = 1;
    */
   runId: string;
 
   /**
-   * better is the count of metrics where this run beat the baseline.
+   * better is the count of metrics where this run beat the baseline. 
    *
    * @generated from field: uint32 better = 2;
    */
   better: number;
 
   /**
-   * worse is the count of metrics where this run regressed.
+   * worse is the count of metrics where this run regressed. 
    *
    * @generated from field: uint32 worse = 3;
    */
   worse: number;
 
   /**
-   * same is the count of metrics within the threshold (no change).
+   * same is the count of metrics within the threshold (no change). 
    *
    * @generated from field: uint32 same = 4;
    */
   same: number;
 
   /**
-   * missing is the count of baseline metrics absent from this run.
+   * missing is the count of baseline metrics absent from this run. 
    *
    * @generated from field: uint32 missing = 5;
    */
   missing: number;
 
   /**
-   * not_comparable is the count of metrics that cannot be baselined.
+   * not_comparable is the count of metrics that cannot be baselined. 
    *
    * @generated from field: uint32 not_comparable = 6;
    */
@@ -701,48 +701,48 @@ export type Comparison_RunSummary = Message<"cloud.v1.monitor.Comparison.RunSumm
 };
 
 /**
- * RunSummary rolls up one run's per-metric verdicts against the baseline.
+ * RunSummary rolls up one run's per-metric verdicts against the baseline. 
  *
  * @generated from message cloud.v1.monitor.Comparison.RunSummary
  */
 export type Comparison_RunSummaryJson = {
   /**
-   * run_id is the non-baseline run this roll-up belongs to.
+   * run_id is the non-baseline run this roll-up belongs to. 
    *
    * @generated from field: string run_id = 1;
    */
   runId?: string;
 
   /**
-   * better is the count of metrics where this run beat the baseline.
+   * better is the count of metrics where this run beat the baseline. 
    *
    * @generated from field: uint32 better = 2;
    */
   better?: number;
 
   /**
-   * worse is the count of metrics where this run regressed.
+   * worse is the count of metrics where this run regressed. 
    *
    * @generated from field: uint32 worse = 3;
    */
   worse?: number;
 
   /**
-   * same is the count of metrics within the threshold (no change).
+   * same is the count of metrics within the threshold (no change). 
    *
    * @generated from field: uint32 same = 4;
    */
   same?: number;
 
   /**
-   * missing is the count of baseline metrics absent from this run.
+   * missing is the count of baseline metrics absent from this run. 
    *
    * @generated from field: uint32 missing = 5;
    */
   missing?: number;
 
   /**
-   * not_comparable is the count of metrics that cannot be baselined.
+   * not_comparable is the count of metrics that cannot be baselined. 
    *
    * @generated from field: uint32 not_comparable = 6;
    */
@@ -760,34 +760,34 @@ export const Comparison_RunSummarySchema: GenMessage<Comparison_RunSummary, {jso
 
 /**
  * Verdict classifies a per-metric change of one run against the baseline,
- * honouring the metric's higher_is_better direction and the request threshold.
+ * honouring the metric's higher_is_better direction and the request threshold. 
  *
  * @generated from enum cloud.v1.monitor.Verdict
  */
 export enum Verdict {
   /**
-   * VERDICT_UNSPECIFIED is the zero value and is never a valid verdict.
+   * VERDICT_UNSPECIFIED is the zero value and is never a valid verdict. 
    *
    * @generated from enum value: VERDICT_UNSPECIFIED = 0;
    */
   UNSPECIFIED = 0,
 
   /**
-   * VERDICT_BETTER means the run improved on the baseline (per direction/threshold).
+   * VERDICT_BETTER means the run improved on the baseline (per direction/threshold). 
    *
    * @generated from enum value: VERDICT_BETTER = 1;
    */
   BETTER = 1,
 
   /**
-   * VERDICT_WORSE means the run regressed against the baseline.
+   * VERDICT_WORSE means the run regressed against the baseline. 
    *
    * @generated from enum value: VERDICT_WORSE = 2;
    */
   WORSE = 2,
 
   /**
-   * VERDICT_SAME means the change was within the threshold (no meaningful difference).
+   * VERDICT_SAME means the change was within the threshold (no meaningful difference). 
    *
    * @generated from enum value: VERDICT_SAME = 3;
    */
@@ -796,7 +796,7 @@ export enum Verdict {
 
 /**
  * Verdict classifies a per-metric change of one run against the baseline,
- * honouring the metric's higher_is_better direction and the request threshold.
+ * honouring the metric's higher_is_better direction and the request threshold. 
  *
  * @generated from enum cloud.v1.monitor.Verdict
  */

@@ -10508,6 +10508,17 @@ go_name: Run</pre></td>
 json_name: name
 go_name: Name</pre></td>
 </tr><tr>
+<td>source_run_id</td>
+<td>string</td>
+<td><pre>
+//source_run_id optionally seeds the whole draft from an existing run's baked
+//spec (database + workload + provider + render overrides) — a "New from run"
+//clone the user can edit before launching. Mutually exclusive with
+//test_preset_id; when both are set, source_run_id wins.<br>
+
+json_name: sourceRunId
+go_name: SourceRunId</pre></td>
+</tr><tr>
 <td>tenant_id</td>
 <td>string</td>
 <td><pre>

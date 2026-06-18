@@ -52,6 +52,13 @@ message StartTestWizardRequest {
         test_preset_id optionally seeds the whole draft from an existing test preset.
      */
     string test_preset_id = 3 [(validate.rules).string = {max_len: 64}];
+    /*
+        source_run_id optionally seeds the whole draft from an existing run's baked
+        spec (database + workload + provider + render overrides) — a "New from run"
+        clone the user can edit before launching. Mutually exclusive with
+        test_preset_id; when both are set, source_run_id wins.
+     */
+    string source_run_id = 4 [(validate.rules).string = {max_len: 64}];
 }
 /*
     StartTestWizardResponse returns the freshly created draft.

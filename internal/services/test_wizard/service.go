@@ -76,6 +76,9 @@ type PresetReader interface {
 //     that is not ready.
 type WizardEngine interface {
 	InitialDraft(ctx context.Context, tenantID, name string, seed *models.TestPresetRecord) (*models.TestWizardDraftRecord, error)
+	// InitialDraftFromRun seeds a fresh, fully-editable draft from an existing
+	// run's baked spec (the "New from run" clone), unlike a verbatim re-run.
+	InitialDraftFromRun(ctx context.Context, tenantID, name string, spec *domain.TestRun) (*models.TestWizardDraftRecord, error)
 	Compute(ctx context.Context, tenantID string, draft *models.TestWizardDraftRecord) error
 	Bake(ctx context.Context, draft *models.TestWizardDraftRecord) (*domain.TestRun, error)
 }
@@ -87,6 +90,12 @@ type WizardEngine interface {
 // inTenantRating/inGlobalRating carry the resolved rating membership.
 type TestRunStarter interface {
 	Start(ctx context.Context, tenantID string, run *domain.TestRun, trigger common.Trigger, inTenantRating, inGlobalRating bool) (*models.TestRunRecord, func(context.Context) error, error)
+}
+
+// RunSpecReader loads an existing run record (tenant-scoped) so StartTestWizard
+// can seed a "New from run" draft from its baked spec. Read-only.
+type RunSpecReader interface {
+	Get(ctx context.Context, tenantID, runID string) (*models.TestRunRecord, error)
 }
 
 // PresetSaver persists a baked run's db+workload as a reusable test preset. It
@@ -133,14 +142,15 @@ type Prober interface {
 
 // TestWizardDeps bundles every dependency for the constructor.
 type TestWizardDeps struct {
-	Authn   utils.Authn
-	Drafts  DraftRepo
-	Presets PresetReader
-	Engine  WizardEngine
-	Runs    TestRunStarter
-	Saver   PresetSaver
-	Prober  Prober
-	Tx      tx.Trm
+	Authn    utils.Authn
+	Drafts   DraftRepo
+	Presets  PresetReader
+	Engine   WizardEngine
+	Runs     TestRunStarter
+	RunSpecs RunSpecReader
+	Saver    PresetSaver
+	Prober   Prober
+	Tx       tx.Trm
 }
 
 type TestWizardService struct {
@@ -222,17 +232,33 @@ func (s *TestWizardService) StartTestWizard(ctx context.Context, req *api.StartT
 		return nil, err
 	}
 
-	var seed *models.TestPresetRecord
-	if req.GetTestPresetId() != "" {
-		seed, err = s.d.Presets.Get(ctx, req.GetTenantId(), req.GetTestPresetId())
+	// source_run_id ("New from run") takes precedence over test_preset_id: seed a
+	// fresh, fully-editable draft from the run's baked spec rather than a preset.
+	var draft *models.TestWizardDraftRecord
+	if req.GetSourceRunId() != "" {
+		src, err := s.d.RunSpecs.Get(ctx, req.GetTenantId(), req.GetSourceRunId())
 		if err != nil {
 			return nil, utils.MapErr(err)
 		}
-	}
-
-	draft, err := s.d.Engine.InitialDraft(ctx, req.GetTenantId(), req.GetName(), seed)
-	if err != nil {
-		return nil, utils.MapErr(err)
+		if src.GetSpec() == nil {
+			return nil, status.Error(codes.FailedPrecondition, "source run has no spec to clone")
+		}
+		draft, err = s.d.Engine.InitialDraftFromRun(ctx, req.GetTenantId(), req.GetName(), src.GetSpec())
+		if err != nil {
+			return nil, utils.MapErr(err)
+		}
+	} else {
+		var seed *models.TestPresetRecord
+		if req.GetTestPresetId() != "" {
+			seed, err = s.d.Presets.Get(ctx, req.GetTenantId(), req.GetTestPresetId())
+			if err != nil {
+				return nil, utils.MapErr(err)
+			}
+		}
+		draft, err = s.d.Engine.InitialDraft(ctx, req.GetTenantId(), req.GetName(), seed)
+		if err != nil {
+			return nil, utils.MapErr(err)
+		}
 	}
 	// The engine owns the editable+derived sections; the service owns identity.
 	draft.Entity = &common.Entity{
