@@ -454,6 +454,17 @@ export function NewRun() {
 
   const canPrev = stepIndex > 0;
   const canNext = stepIndex < STEPS.length - 1;
+  // On the Infrastructure step the topology must be validated (machine settings
+  // confirmed, no provider / infrastructure_plan / machine_overrides errors)
+  // before advancing — "Next" only appears once "Validate topology" passes.
+  const infraValid = !draft.errors.some(
+    (e) =>
+      e.severity === "error" &&
+      ["provider", "infrastructure_plan", "machine_overrides"].some(
+        (f) => e.field === f || e.field.startsWith(f + "."),
+      ),
+  );
+  const showNext = canNext && (stepKey !== "infra" || infraValid);
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
@@ -565,10 +576,17 @@ export function NewRun() {
         >
           <ChevronLeft className="h-3 w-3" /> Back
         </Button>
-        {canNext && (
+        {showNext ? (
           <Button size="sm" className="gap-1.5" onClick={() => goStep(STEPS[stepIndex + 1].key)}>
             Next <ChevronRight className="h-3 w-3" />
           </Button>
+        ) : (
+          canNext &&
+          stepKey === "infra" && (
+            <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-zinc-500">
+              <AlertCircle className="h-3.5 w-3.5" /> Validate topology to continue
+            </span>
+          )
         )}
       </div>
     </div>
@@ -810,7 +828,7 @@ function StepInfra({
                   Machine plan — {plan.machines.length} node{plan.machines.length > 1 ? "s" : ""}
                 </div>
                 <Button size="sm" variant="outline" className="h-7 gap-1.5" onClick={confirmPlan}>
-                  <Check className="h-3.5 w-3.5" /> Confirm machine settings
+                  <Check className="h-3.5 w-3.5" /> Validate topology
                 </Button>
               </div>
               <div className="min-h-0 flex-1 overflow-y-auto pr-1">
