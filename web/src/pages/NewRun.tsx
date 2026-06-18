@@ -46,6 +46,7 @@ import {
   RenderArtifact_Mutability,
   blankEngineParams,
   defaultWorkload,
+  defaultProtocolFor,
   type WizardDraftVM,
   type DraftSummaryVM,
   type DatabaseVM,
@@ -1822,14 +1823,35 @@ function StepWorkload({
 
   const drafts = usePresetDraft<WorkloadVM>(normWorkload);
 
+  // A builtin engine speaks exactly one wire protocol, and the protocol decides
+  // the connection port/db/auth (e.g. CockroachDB → 26257/defaultdb, not PG's
+  // 5432/postgres). Workload presets carry their own protocol, so a PG-authored
+  // preset run against a CockroachDB would otherwise dial 5432 and be refused.
+  // Force the workload's protocol to match the selected engine; "external" has
+  // no canonical protocol, so leave it to the manual picker.
+  const reconcileProtocol = useCallback(
+    (next: WorkloadVM): WorkloadVM =>
+      engine === "external" ? next : { ...next, protocol: defaultProtocolFor(engine) },
+    [engine],
+  );
+
   // setW + server patch — no preset-cache write (used by pick / reset).
   const commit = useCallback(
     (next: WorkloadVM) => {
-      setW(next);
-      void patch({ workload: next });
+      const reconciled = reconcileProtocol(next);
+      setW(reconciled);
+      void patch({ workload: reconciled });
     },
-    [patch],
+    [patch, reconcileProtocol],
   );
+
+  // Resume/initial seed `w` via setW directly (bypassing commit), so a resumed
+  // draft can still carry a stale protocol — reconcile it once the engine is known.
+  useEffect(() => {
+    if (engine === "external") return;
+    const want = defaultProtocolFor(engine);
+    if (w.protocol !== want) commit({ ...w, protocol: want });
+  }, [engine, w, commit]);
 
   // The form's edit path: commit AND remember the working copy for this preset
   // so switching presets away and back restores the user's edits.
@@ -2221,7 +2243,7 @@ function WorkloadParametersPane({
         right={<PresetEditControls dirty={dirty} canReset={canReset} onReset={onReset} onSave={onSave} />}
       />
       <div className="min-h-0 flex-1 overflow-y-auto pr-1">
-        <WorkloadParamsForm w={w} apply={apply} probeContext={probeContext} />
+        <WorkloadParamsForm w={w} apply={apply} engine={probeContext.engine} probeContext={probeContext} />
         <FieldErrors errs={errs} />
       </div>
     </div>

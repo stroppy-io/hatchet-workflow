@@ -30,6 +30,7 @@ import { NumField, ScrubHandle } from "@/components/ui/num-field";
 import {
   Workload_Protocol,
   driverTypeFor,
+  defaultProtocolFor,
   getWizardProvider,
   defaultSegment,
   type EngineKind,
@@ -128,6 +129,7 @@ export function WorkloadParamsForm({
   apply,
   disabled,
   advancedInitiallyOpen = disabled ?? false,
+  engine,
   probeContext = null,
 }: {
   w: WorkloadVM;
@@ -135,12 +137,21 @@ export function WorkloadParamsForm({
   disabled?: boolean;
   advancedInitiallyOpen?: boolean;
   /**
+   * The selected database engine, when authored inside a run (NewRun). A builtin
+   * engine speaks exactly one protocol, so the picker is locked to it — the
+   * protocol decides the connection port/db (CockroachDB → 26257/defaultdb, not
+   * PG's 5432). Absent on the engine-agnostic preset authoring pages, where the
+   * picker stays free; "external" also keeps it free (no canonical protocol).
+   */
+  engine?: EngineKind;
+  /**
    * When present, each segment editor runs its own live `stroppy probe` for its
    * script and surfaces the declared phases/env as first-class controls. Absent
    * on the preset authoring pages, which fall back to the free-text editors.
    */
   probeContext?: SegmentProbeContext | null;
 }) {
+  const protocolLocked = !!engine && engine !== "external";
   const setSegment = (index: number, seg: WorkloadSegmentVM) =>
     apply({ ...w, segments: w.segments.map((s, i) => (i === index ? seg : s)) });
   const addSegment = () =>
@@ -164,23 +175,32 @@ export function WorkloadParamsForm({
           <div>
             <Label>Protocol</Label>
             <p className="mb-1 mt-0.5 text-[11px] text-zinc-600">
-              Shared across segments — they all target the one database.
+              {protocolLocked
+                ? "Determined by the selected database engine."
+                : "Shared across segments — they all target the one database."}
             </p>
-            <Select
-              value={String(w.protocol)}
-              onValueChange={(v) => apply({ ...w, protocol: Number(v) as Workload_Protocol })}
-            >
-              <SelectTrigger className="mt-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PROTOCOLS.map((p) => (
-                  <SelectItem key={p.v} value={String(p.v)}>
-                    {p.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {protocolLocked ? (
+              <div className="mt-1 flex h-9 items-center border border-zinc-800 bg-zinc-900/40 px-3 text-[13px] text-zinc-300">
+                {PROTOCOLS.find((p) => p.v === defaultProtocolFor(engine!))?.label ??
+                  Workload_Protocol[w.protocol]}
+              </div>
+            ) : (
+              <Select
+                value={String(w.protocol)}
+                onValueChange={(v) => apply({ ...w, protocol: Number(v) as Workload_Protocol })}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PROTOCOLS.map((p) => (
+                    <SelectItem key={p.v} value={String(p.v)}>
+                      {p.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </div>
 
