@@ -250,42 +250,44 @@ func Run(ctx context.Context, cfg Config) error {
 	publicRatingBoard := adapters.NewPublicRatingBoard(ratingRuns, metricsReader)
 
 	favoriteTargets := adapters.NewFavoriteTargetResolver(adapters.FavoriteTargetRepos{
-		DatabasePresets: adapters.EntityGetterFunc(func(ctx context.Context, id string) (*commonEntity, error) {
-			rec, err := store.DatabasePresets().Get(ctx, "", id, "")
+		DatabasePresets: adapters.EntityGetterFunc(func(ctx context.Context, tenantID, id string) (*commonEntity, error) {
+			rec, err := store.DatabasePresets().Get(ctx, tenantID, id, "")
 			if err != nil {
 				return nil, err
 			}
 			return rec.GetEntity(), nil
 		}),
-		WorkloadPresets: adapters.EntityGetterFunc(func(ctx context.Context, id string) (*commonEntity, error) {
-			rec, err := store.WorkloadPresets().Get(ctx, "", id, "")
+		WorkloadPresets: adapters.EntityGetterFunc(func(ctx context.Context, tenantID, id string) (*commonEntity, error) {
+			rec, err := store.WorkloadPresets().Get(ctx, tenantID, id, "")
 			if err != nil {
 				return nil, err
 			}
 			return rec.GetEntity(), nil
 		}),
-		TestPresets: adapters.EntityGetterFunc(func(ctx context.Context, id string) (*commonEntity, error) {
-			rec, err := store.TestPresets().Get(ctx, "", id, "")
+		TestPresets: adapters.EntityGetterFunc(func(ctx context.Context, tenantID, id string) (*commonEntity, error) {
+			rec, err := store.TestPresets().Get(ctx, tenantID, id, "")
 			if err != nil {
 				return nil, err
 			}
 			return rec.GetEntity(), nil
 		}),
-		TestRuns: adapters.EntityGetterFunc(func(ctx context.Context, id string) (*commonEntity, error) {
+		// test_run / suite_run are keyed by id only — the tenant is validated by
+		// the favorite service after resolution.
+		TestRuns: adapters.EntityGetterFunc(func(ctx context.Context, _, id string) (*commonEntity, error) {
 			rec, err := bid.testRun(ctx, id)
 			if err != nil {
 				return nil, err
 			}
 			return rec.GetEntity(), nil
 		}),
-		Suites: adapters.EntityGetterFunc(func(ctx context.Context, id string) (*commonEntity, error) {
-			rec, err := store.Suites().Get(ctx, "", id)
+		Suites: adapters.EntityGetterFunc(func(ctx context.Context, tenantID, id string) (*commonEntity, error) {
+			rec, err := store.Suites().Get(ctx, tenantID, id)
 			if err != nil {
 				return nil, err
 			}
 			return rec.GetEntity(), nil
 		}),
-		SuiteRuns: adapters.EntityGetterFunc(func(ctx context.Context, id string) (*commonEntity, error) {
+		SuiteRuns: adapters.EntityGetterFunc(func(ctx context.Context, _, id string) (*commonEntity, error) {
 			rec, err := store.SuiteRuns().Get(ctx, id)
 			if err != nil {
 				return nil, err

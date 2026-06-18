@@ -14,12 +14,12 @@ import (
 // (common.Entity) carrying its tenant_id, or derrors.ErrNotFound when the row is
 // absent. The gormstore repos satisfy these once injected:
 //
-//	DatabasePresets -> *DatabasePresetRepo.Get(ctx, "", id)         (entity)
-//	WorkloadPresets -> *WorkloadPresetRepo.Get(ctx, "", id)         (entity)
-//	TestPresets     -> *TestPresetRepo.Get(ctx, "", id)             (entity)
-//	TestRuns        -> *TestRunRepo.Get(ctx, id)                    (entity)
-//	Suites          -> *SuiteRepo.Get(ctx, "", id)                  (entity)
-//	SuiteRuns       -> *SuiteRunRepo.Get(ctx, id)                   (entity)
+//	DatabasePresets -> *DatabasePresetRepo.Get(ctx, tenantID, id)   (entity)
+//	WorkloadPresets -> *WorkloadPresetRepo.Get(ctx, tenantID, id)   (entity)
+//	TestPresets     -> *TestPresetRepo.Get(ctx, tenantID, id)       (entity)
+//	TestRuns        -> *TestRunRepo.Get(ctx, id)                    (entity, by id)
+//	Suites          -> *SuiteRepo.Get(ctx, tenantID, id)           (entity)
+//	SuiteRuns       -> *SuiteRunRepo.Get(ctx, id)                   (entity, by id)
 //
 // A thin per-kind adapter (closure) maps each repo's record to its
 // GetEntity(); the wiring layer supplies these so the resolver stays
@@ -33,20 +33,21 @@ type FavoriteTargetRepos struct {
 	SuiteRuns       EntityGetter
 }
 
-// EntityGetter resolves a target's common.Entity by id, returning
-// derrors.ErrNotFound when absent.
+// EntityGetter resolves a target's common.Entity by (tenant, id), returning
+// derrors.ErrNotFound when absent. tenantID is honored by tenant-partitioned
+// tables (presets, suites) and ignored by by-id tables (test_run, suite_run).
 type EntityGetter interface {
-	GetEntity(ctx context.Context, id string) (*common.Entity, error)
+	GetEntity(ctx context.Context, tenantID, id string) (*common.Entity, error)
 }
 
 // EntityGetterFunc adapts a function to EntityGetter so the wiring layer can pass
 // a closure over a typed gormstore repo (e.g. mapping TestRunRecord ->
 // GetEntity()).
-type EntityGetterFunc func(ctx context.Context, id string) (*common.Entity, error)
+type EntityGetterFunc func(ctx context.Context, tenantID, id string) (*common.Entity, error)
 
 // GetEntity calls the underlying function.
-func (f EntityGetterFunc) GetEntity(ctx context.Context, id string) (*common.Entity, error) {
-	return f(ctx, id)
+func (f EntityGetterFunc) GetEntity(ctx context.Context, tenantID, id string) (*common.Entity, error) {
+	return f(ctx, tenantID, id)
 }
 
 // FavoriteTargetResolver implements favorite.TargetResolver: it resolves a
@@ -63,7 +64,7 @@ func NewFavoriteTargetResolver(repos FavoriteTargetRepos) *FavoriteTargetResolve
 
 // Resolve returns the target's Entity when it exists; derrors.ErrNotFound for an
 // unknown kind or absent row.
-func (r *FavoriteTargetResolver) Resolve(ctx context.Context, kind common.FavoriteKind, targetID string) (*common.Entity, error) {
+func (r *FavoriteTargetResolver) Resolve(ctx context.Context, kind common.FavoriteKind, tenantID, targetID string) (*common.Entity, error) {
 	var getter EntityGetter
 	switch kind {
 	case common.FavoriteKind_FAVORITE_KIND_DATABASE_PRESET:
@@ -84,7 +85,7 @@ func (r *FavoriteTargetResolver) Resolve(ctx context.Context, kind common.Favori
 	if getter == nil {
 		return nil, derrors.NotFound("favorite_target", "target kind is not resolvable")
 	}
-	entity, err := getter.GetEntity(ctx, targetID)
+	entity, err := getter.GetEntity(ctx, tenantID, targetID)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +101,7 @@ func (r *FavoriteTargetResolver) Resolve(ctx context.Context, kind common.Favori
 // closure by hand (e.g.
 // EntityGetterFromRecord(func(ctx, id) (*models.TestRunRecord, error){...})).
 func EntityGetterFromRecord[T interface{ GetEntity() *common.Entity }](get func(ctx context.Context, id string) (T, error)) EntityGetterFunc {
-	return func(ctx context.Context, id string) (*common.Entity, error) {
+	return func(ctx context.Context, _ string, id string) (*common.Entity, error) {
 		rec, err := get(ctx, id)
 		if err != nil {
 			return nil, err

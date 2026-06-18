@@ -54,8 +54,11 @@ type FavoriteRepo interface {
 // derrors.ErrNotFound when the target row does not exist in that tenant.
 type TargetResolver interface {
 	// Resolve returns the target's Entity (carrying its tenant_id) when the row
-	// exists; derrors.ErrNotFound otherwise.
-	Resolve(ctx context.Context, kind common.FavoriteKind, targetID string) (*common.Entity, error)
+	// exists; derrors.ErrNotFound otherwise. tenantID scopes the per-kind lookup
+	// for tenant-partitioned tables (presets, suites) — passing it through is
+	// required because those repos match tenant_id exactly; by-id tables
+	// (test_run, suite_run) ignore it and are validated by the tenant check below.
+	Resolve(ctx context.Context, kind common.FavoriteKind, tenantID, targetID string) (*common.Entity, error)
 }
 
 // FavoriteDeps bundles every dependency for the constructor.
@@ -143,7 +146,7 @@ func (s *FavoriteService) AddFavorite(ctx context.Context, req *api.AddFavoriteR
 		}
 
 		// Validate the target exists and lives in the caller's active tenant.
-		entity, terr := s.d.Targets.Resolve(ctx, req.GetKind(), req.GetTargetId())
+		entity, terr := s.d.Targets.Resolve(ctx, req.GetKind(), req.GetTenantId(), req.GetTargetId())
 		if terr != nil {
 			return nil, utils.MapErr(terr)
 		}
