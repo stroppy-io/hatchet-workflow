@@ -12,7 +12,7 @@ deps:
   - github.com/cludden/protoc-gen-go-temporal@v1.23.1
   - github.com/temporalio/api@v1.62.12
   - github.com/stroppy-io/schemapb@v1.4.4
-  - github.com/gopherex/protoc-gen-go-ogen@v1.1.4
+  - github.com/gopherex/protoc-gen-go-ogen@v1.1.5
   - github.com/gopherex/protoc-gen-go-graphql@v1.0.5
 #  - github.com/yaroher/protoc-gen-go-plain@v0.7.17
 #  - github.com/yaroher/ratel@v0.4.26
@@ -51,6 +51,10 @@ generate:
         paths: source_relative
         openapi_out: ../internal/openapidoc
         default_oneof_schema_mode: object
+        # Adds an HTTP bearer scheme + global security to the OpenAPI doc only
+        # (Swagger UI Authorize box). Not fed to ogen, so the generated server
+        # stays SecurityHandler-free; auth stays in the REST middleware.
+        openapi_security: bearer
 
 breaking:
   ignore: []

@@ -12,7 +12,7 @@ deps:
   - github.com/cludden/protoc-gen-go-temporal@v1.23.1
   - github.com/temporalio/api@v1.62.12
   - github.com/stroppy-io/schemapb@v1.4.4
-  - github.com/gopherex/protoc-gen-go-ogen@v1.1.4
+  - github.com/gopherex/protoc-gen-go-ogen@v1.1.5
   - github.com/gopherex/protoc-gen-go-graphql@v1.0.5
 #  - github.com/yaroher/protoc-gen-go-plain@v0.7.13
 #  - github.com/yaroher/ratel@v0.4.26

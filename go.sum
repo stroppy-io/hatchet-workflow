@@ -183,8 +183,8 @@ github.com/gopherex/protoc-gen-go-graphql v1.0.5 h1:gYqfW1oR40BI3QWNum6yTFDa2Wrh
 github.com/gopherex/protoc-gen-go-graphql v1.0.5/go.mod h1:/CAt3dsxhXKRBHWKvK3YVjTTAKHC0hC86e5ubAhPUGc=
 github.com/gopherex/protoc-gen-go-jx v1.0.1 h1:b1Vv2SYqT3j1G8nchoVEONaBOE3dqOjVkmll+5i1Ui8=
 github.com/gopherex/protoc-gen-go-jx v1.0.1/go.mod h1:b3FYdkhqyCndvsQ0rpUqWbNKv3WbV3VDfi3+mjwR/m0=
-github.com/gopherex/protoc-gen-go-ogen v1.1.4 h1:VVeNTPbyXfoK9w7P72e0e9WK3zf24Bb2isEYBjTFfv8=
-github.com/gopherex/protoc-gen-go-ogen v1.1.4/go.mod h1:1ttMr0ZcD2yiNKSo0E5t+zo2sbujIeb9bPYHoz3LmTk=
+github.com/gopherex/protoc-gen-go-ogen v1.1.5 h1:UdT+/Bw9KzPg9DX4s/pDjpPfDqjzHVakOlrmy90rIKk=
+github.com/gopherex/protoc-gen-go-ogen v1.1.5/go.mod h1:1ttMr0ZcD2yiNKSo0E5t+zo2sbujIeb9bPYHoz3LmTk=
 github.com/gopherex/sqld v1.0.0 h1:4xuFBGZPKUm8wl9iQeZdgbHkNj8yK/70t2wZ77Y/raw=
 github.com/gopherex/sqld v1.0.0/go.mod h1:J/HwPz/WO9lJFALOQZipoG7KTXJV2N8E9qwu9aNIz2k=
 github.com/gorilla/css v1.0.1 h1:ntNaBIghp6JmvWnxbZKANoLyuXTPZ4cAMlo6RyhlbO8=

@@ -825,6 +825,7 @@ var swaggerPage = []byte(`<!DOCTYPE html>
         url: '/api/openapi.yaml',
         dom_id: '#swagger-ui',
         deepLinking: true,
+        persistAuthorization: true,
         presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
         layout: 'StandaloneLayout',
       });

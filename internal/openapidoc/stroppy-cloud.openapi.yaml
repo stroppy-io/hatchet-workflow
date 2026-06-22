@@ -8828,6 +8828,11 @@ components:
                         type: string
                     type: object
             type: object
+    securitySchemes:
+        bearerAuth:
+            bearerFormat: JWT
+            scheme: bearer
+            type: http
 info:
     description: Generated REST/OpenAPI surface for the Stroppy Cloud control-plane API.
     title: Stroppy Cloud API
@@ -13154,3 +13159,5 @@ paths:
                 - workload-preset
             x-idempotency-level: IDEMPOTENT
             x-ogen-operation-group: WorkloadPreset
+security:
+    - bearerAuth: []

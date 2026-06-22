@@ -75,7 +75,7 @@ proto-tools: ## Install the proto codegen toolchain (easyp + plugins) into ./bin
 	GOFLAGS=-mod=mod GOBIN=$(PROTO_BIN) go install github.com/gopherex/protoc-gen-go-graphql@v1.0.5
 	# go-ogen: single-pass REST/OpenAPI surface over the existing pb.*ServiceServer
 	# impls (emits ogen HTTP server + pb<->ogen converters + an OgenAdapter).
-	GOFLAGS=-mod=mod GOBIN=$(PROTO_BIN) go install github.com/gopherex/protoc-gen-go-ogen@v1.1.4
+	GOFLAGS=-mod=mod GOBIN=$(PROTO_BIN) go install github.com/gopherex/protoc-gen-go-ogen@v1.1.5
 	cd web && npm install --no-save @bufbuild/protoc-gen-es@2.11.0
 
 protocols: proto-tools ## Generate Go + TS code from proto
