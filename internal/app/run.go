@@ -645,16 +645,23 @@ func Run(ctx context.Context, cfg Config) error {
 		}
 		return ctx
 	}
-	// GraphiQL renders the in-browser IDE / auto-doc (driven by introspection)
-	// on a browser GET; POST queries still get JSON. Introspection resolves
-	// against schema meta fields, not the pb services, so it loads without a
-	// token; real queries use the IDE's Authorization header (bridged above).
-	gqlHTTP := graphqlhandler.New(&graphqlhandler.Config{Schema: &gqlSchema, Pretty: true, GraphiQL: true})
+	// graphql-go/handler's built-in GraphiQL pins React 15 / GraphiQL 0.x from a
+	// dead jsdelivr path (blank page), so serve our own modern GraphiQL build
+	// (see graphiqlPage) on a browser GET instead. The IDE auto-documents the
+	// schema via introspection; real queries use its header editor (bridged into
+	// gRPC metadata by gqlAuthCtx).
+	gqlHTTP := graphqlhandler.New(&graphqlhandler.Config{Schema: &gqlSchema, Pretty: true})
 	gqlWS := graphqlrt.SubscriptionHandler(&gqlSchema, gqlAuthCtx)
 	mux.Handle("/graphql", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Subscriptions arrive as a websocket upgrade; queries/mutations as POST/GET.
 		if strings.EqualFold(r.Header.Get("Upgrade"), "websocket") {
 			gqlWS.ServeHTTP(w, r)
+			return
+		}
+		// A browser navigating to /graphql (GET, wants HTML) gets the IDE.
+		if r.Method == http.MethodGet && strings.Contains(r.Header.Get("Accept"), "text/html") && r.URL.Query().Get("query") == "" {
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			_, _ = w.Write(graphiqlPage)
 			return
 		}
 		gqlHTTP.ContextHandler(gqlAuthCtx(r), w, r)
@@ -810,6 +817,31 @@ var redocPage = []byte(`<!DOCTYPE html>
   <body>
     <redoc spec-url="/api/openapi.yaml"></redoc>
     <script src="https://cdn.redoc.ly/redoc/v2.5.0/bundles/redoc.standalone.js" crossorigin="anonymous"></script>
+  </body>
+</html>`)
+
+// graphiqlPage is a modern, self-hosted-markup GraphiQL build (the upstream
+// graphql-go/handler page pins React 15 from a dead CDN path). It posts to the
+// same-origin /graphql endpoint; the header editor lets you set Authorization.
+var graphiqlPage = []byte(`<!DOCTYPE html>
+<html>
+  <head>
+    <title>Stroppy Cloud GraphQL</title>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link rel="stylesheet" href="https://unpkg.com/graphiql@3.8.3/graphiql.min.css"/>
+    <style>html, body, #graphiql { height: 100%; margin: 0; overflow: hidden; }</style>
+  </head>
+  <body>
+    <div id="graphiql">Loading GraphiQL…</div>
+    <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/graphiql@3.8.3/graphiql.min.js"></script>
+    <script>
+      const fetcher = GraphiQL.createFetcher({ url: '/graphql' });
+      const root = ReactDOM.createRoot(document.getElementById('graphiql'));
+      root.render(React.createElement(GraphiQL, { fetcher, defaultEditorToolsVisibility: true }));
+    </script>
   </body>
 </html>`)
 
