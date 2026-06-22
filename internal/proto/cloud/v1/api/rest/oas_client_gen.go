@@ -1022,6 +1022,13 @@ type TestWizardInvoker interface {
 	//
 	// POST /api/v1/test-wizard/patch-test-wizard
 	PatchTestWizard(ctx context.Context, request *PatchTestWizardRequest, params PatchTestWizardParams) (*PatchTestWizardResponse, error)
+	// ProbeCatalog invokes probeCatalog operation.
+	//
+	// ProbeCatalog lists the runnable scripts a stroppy binary embeds (its
+	// `probe -o json` catalog). Read-only / no side effects.
+	//
+	// GET /api/v1/test-wizard/probe-catalog
+	ProbeCatalog(ctx context.Context, request *ProbeCatalogRequest) (*ProbeCatalogResponse, error)
 	// ProbeScript invokes probeScript operation.
 	//
 	// ProbeScript introspects a stroppy script. Read-only / no side effects.
@@ -9423,6 +9430,84 @@ func (c *Client) sendPatchTestWizard(ctx context.Context, request *PatchTestWiza
 
 	stage = "DecodeResponse"
 	result, err := decodePatchTestWizardResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// ProbeCatalog invokes probeCatalog operation.
+//
+// ProbeCatalog lists the runnable scripts a stroppy binary embeds (its
+// `probe -o json` catalog). Read-only / no side effects.
+//
+// GET /api/v1/test-wizard/probe-catalog
+func (c *Client) ProbeCatalog(ctx context.Context, request *ProbeCatalogRequest) (*ProbeCatalogResponse, error) {
+	res, err := c.sendProbeCatalog(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendProbeCatalog(ctx context.Context, request *ProbeCatalogRequest) (res *ProbeCatalogResponse, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("probeCatalog"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/api/v1/test-wizard/probe-catalog"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, ProbeCatalogOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/api/v1/test-wizard/probe-catalog"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeProbeCatalogRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeProbeCatalogResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

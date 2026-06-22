@@ -27753,6 +27753,36 @@ func (s *PresetPair) SetWorkloadPresetId(val OptString) {
 	s.WorkloadPresetId = val
 }
 
+// Ref: #/components/schemas/ProbeCatalogRequest
+type ProbeCatalogRequest struct {
+	Version OptString `json:"version"`
+}
+
+// GetVersion returns the value of Version.
+func (s *ProbeCatalogRequest) GetVersion() OptString {
+	return s.Version
+}
+
+// SetVersion sets the value of Version.
+func (s *ProbeCatalogRequest) SetVersion(val OptString) {
+	s.Version = val
+}
+
+// Ref: #/components/schemas/ProbeCatalogResponse
+type ProbeCatalogResponse struct {
+	Scripts []string `json:"scripts"`
+}
+
+// GetScripts returns the value of Scripts.
+func (s *ProbeCatalogResponse) GetScripts() []string {
+	return s.Scripts
+}
+
+// SetScripts sets the value of Scripts.
+func (s *ProbeCatalogResponse) SetScripts(val []string) {
+	s.Scripts = val
+}
+
 // Ref: #/components/schemas/ProbeScriptRequest
 type ProbeScriptRequest struct {
 	DriverType   OptString                `json:"driverType"`

@@ -496,6 +496,54 @@ func PatchTestWizardResponseFromOgen(src *rest.PatchTestWizardResponse) (*PatchT
 	return dst, nil
 }
 
+// ToOgen converts ProbeCatalogRequest to its ogen representation.
+func (src *ProbeCatalogRequest) ToOgen() (*rest.ProbeCatalogRequest, error) {
+	var dst rest.ProbeCatalogRequest
+	if src == nil {
+		return &dst, nil
+	}
+	dst.Version.SetTo(string(src.GetVersion()))
+	return &dst, nil
+}
+
+// ProbeCatalogRequestFromOgen converts the ogen representation back to ProbeCatalogRequest.
+func ProbeCatalogRequestFromOgen(src *rest.ProbeCatalogRequest) (*ProbeCatalogRequest, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &ProbeCatalogRequest{}
+	if v1, ok := src.Version.Get(); ok {
+		dst.Version = string(v1)
+	}
+	return dst, nil
+}
+
+// ToOgen converts ProbeCatalogResponse to its ogen representation.
+func (src *ProbeCatalogResponse) ToOgen() (*rest.ProbeCatalogResponse, error) {
+	var dst rest.ProbeCatalogResponse
+	if src == nil {
+		return &dst, nil
+	}
+	c1 := convert.Slice(src.GetScripts(), func(e string) string {
+		return string(e)
+	})
+	dst.Scripts = c1
+	return &dst, nil
+}
+
+// ProbeCatalogResponseFromOgen converts the ogen representation back to ProbeCatalogResponse.
+func ProbeCatalogResponseFromOgen(src *rest.ProbeCatalogResponse) (*ProbeCatalogResponse, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &ProbeCatalogResponse{}
+	c1 := convert.Slice(src.Scripts, func(e string) string {
+		return string(e)
+	})
+	dst.Scripts = c1
+	return dst, nil
+}
+
 // ToOgen converts ProbeScriptRequest to its ogen representation.
 func (src *ProbeScriptRequest) ToOgen() (*rest.ProbeScriptRequest, error) {
 	var dst rest.ProbeScriptRequest

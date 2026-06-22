@@ -160,6 +160,59 @@ func (p *StroppyProber) Probe(ctx context.Context, req ProbeRequest, opts ProbeO
 	return res, nil
 }
 
+// Catalog execs `stroppy probe -o json` with NO script, which (since stroppy
+// 5.4.0) prints the embedded preset catalog as {"presets":[...]}. It returns the
+// flattened runnable script ids in "<preset>/<script>" form, ready to drop into
+// a workload segment's script field. Older binaries reject a no-script probe; the
+// resulting non-zero exit surfaces as an error so callers fall back to free text.
+func (p *StroppyProber) Catalog(ctx context.Context, version string) ([]string, error) {
+	binPath, err := p.resolveBinary(ctx, version)
+	if err != nil {
+		return nil, err
+	}
+
+	cmd := exec.CommandContext(ctx, binPath, "probe", "-o", "json")
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		detail := strings.TrimSpace(stderr.String())
+		if detail == "" {
+			detail = err.Error()
+		}
+		return nil, fmt.Errorf("probe catalog failed: %s", detail)
+	}
+
+	var catalog struct {
+		Presets []struct {
+			Name    string `json:"name"`
+			Scripts []struct {
+				Name     string `json:"name"`
+				Runnable bool   `json:"runnable"`
+			} `json:"scripts"`
+		} `json:"presets"`
+	}
+	if err := json.Unmarshal(bytes.TrimSpace(stdout.Bytes()), &catalog); err != nil {
+		return nil, fmt.Errorf("probe catalog: parse json output: %w", err)
+	}
+
+	scripts := make([]string, 0, len(catalog.Presets))
+	for _, preset := range catalog.Presets {
+		for _, s := range preset.Scripts {
+			if !s.Runnable {
+				continue
+			}
+			stem := strings.TrimSuffix(s.Name, ".ts")
+			if stem == preset.Name {
+				scripts = append(scripts, preset.Name)
+			} else {
+				scripts = append(scripts, preset.Name+"/"+stem)
+			}
+		}
+	}
+	return scripts, nil
+}
+
 // run builds the run config for req, execs `stroppy probe` with the given output
 // format, and returns stdout, stderr and the exec error. Mirrors the monolith's
 // executeStroppyProbeFormat.

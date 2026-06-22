@@ -1836,6 +1836,24 @@ func (a *OgenAdapter) PatchTestWizard(ctx context.Context, req *rest.PatchTestWi
 	return out, nil
 }
 
+func (a *OgenAdapter) ProbeCatalog(ctx context.Context, req *rest.ProbeCatalogRequest) (*rest.ProbeCatalogResponse, error) {
+	in := &ProbeCatalogRequest{}
+	b, err := ProbeCatalogRequestFromOgen(req)
+	if err != nil {
+		return nil, err
+	}
+	in = b
+	resp, err := a.testWizardService.ProbeCatalog(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+	out, err := resp.ToOgen()
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (a *OgenAdapter) ProbeScript(ctx context.Context, req *rest.ProbeScriptRequest) (*rest.ProbeScriptResponse, error) {
 	in := &ProbeScriptRequest{}
 	b, err := ProbeScriptRequestFromOgen(req)

@@ -977,6 +977,16 @@ func (UnimplementedHandler) PatchTestWizard(ctx context.Context, req *PatchTestW
 	return r, ht.ErrNotImplemented
 }
 
+// ProbeCatalog implements probeCatalog operation.
+//
+// ProbeCatalog lists the runnable scripts a stroppy binary embeds (its
+// `probe -o json` catalog). Read-only / no side effects.
+//
+// GET /api/v1/test-wizard/probe-catalog
+func (UnimplementedHandler) ProbeCatalog(ctx context.Context, req *ProbeCatalogRequest) (r *ProbeCatalogResponse, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // ProbeScript implements probeScript operation.
 //
 // ProbeScript introspects a stroppy script. Read-only / no side effects.

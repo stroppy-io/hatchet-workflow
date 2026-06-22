@@ -340,6 +340,28 @@ message ProbeScriptResponse {
 }
 
 /*
+    ProbeCatalogRequest lists the runnable scripts a stroppy binary embeds: the
+    server execs `stroppy probe -o json` with NO script, which (since stroppy
+    5.4.0) prints the embedded preset catalog. Older binaries reject a no-script
+    probe, so the caller falls back to a free-text script field on error.
+ */
+message ProbeCatalogRequest {
+    /*
+        version selects the stroppy binary: a github release tag (e.g. "5.4.0")
+        or "commit:<sha>". Empty uses the configured upstream / PATH binary.
+     */
+    string version = 1;
+}
+/*
+    ProbeCatalogResponse returns the flattened runnable script ids the binary
+    embeds, in `<preset>/<script>` form (e.g. "tpcc/tx"), ready to drop into a
+    segment's script field.
+ */
+message ProbeCatalogResponse {
+    repeated string scripts = 1;
+}
+
+/*
     TestWizardService drives the test wizard: start, fetch/list, patch-loop and
     finish into a baked TestRun (optionally started and/or saved as a preset).
  */
@@ -511,6 +533,33 @@ service TestWizardService {
             http_method: HTTP_METHOD_GET
             path: "/probe-script"
             operation_id: "probeScript"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_WIZARD, action: ACTION_READ}]};
+    }
+    /*
+        ProbeCatalog lists the runnable scripts a stroppy binary embeds (its
+        `probe -o json` catalog). Read-only / no side effects.
+     */
+    rpc ProbeCatalog (ProbeCatalogRequest) returns (ProbeCatalogResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/probe-catalog"
+            operation_id: "probeCatalog"
             request_body: {
                 required: true
             }

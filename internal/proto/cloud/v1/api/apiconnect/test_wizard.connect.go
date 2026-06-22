@@ -54,6 +54,9 @@ const (
 	// TestWizardServiceProbeScriptProcedure is the fully-qualified name of the TestWizardService's
 	// ProbeScript RPC.
 	TestWizardServiceProbeScriptProcedure = "/cloud.v1.api.TestWizardService/ProbeScript"
+	// TestWizardServiceProbeCatalogProcedure is the fully-qualified name of the TestWizardService's
+	// ProbeCatalog RPC.
+	TestWizardServiceProbeCatalogProcedure = "/cloud.v1.api.TestWizardService/ProbeCatalog"
 )
 
 // TestWizardServiceClient is a client for the cloud.v1.api.TestWizardService service.
@@ -72,6 +75,9 @@ type TestWizardServiceClient interface {
 	FinishTestWizard(context.Context, *api.FinishTestWizardRequest) (*api.FinishTestWizardResponse, error)
 	// ProbeScript introspects a stroppy script. Read-only / no side effects.
 	ProbeScript(context.Context, *api.ProbeScriptRequest) (*api.ProbeScriptResponse, error)
+	// ProbeCatalog lists the runnable scripts a stroppy binary embeds (its
+	// `probe -o json` catalog). Read-only / no side effects.
+	ProbeCatalog(context.Context, *api.ProbeCatalogRequest) (*api.ProbeCatalogResponse, error)
 }
 
 // NewTestWizardServiceClient constructs a client for the cloud.v1.api.TestWizardService service. By
@@ -132,6 +138,13 @@ func NewTestWizardServiceClient(httpClient connect.HTTPClient, baseURL string, o
 			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 			connect.WithClientOptions(opts...),
 		),
+		probeCatalog: connect.NewClient[api.ProbeCatalogRequest, api.ProbeCatalogResponse](
+			httpClient,
+			baseURL+TestWizardServiceProbeCatalogProcedure,
+			connect.WithSchema(testWizardServiceMethods.ByName("ProbeCatalog")),
+			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -144,6 +157,7 @@ type testWizardServiceClient struct {
 	deleteTestWizardDraft *connect.Client[api.DeleteTestWizardDraftRequest, api.DeleteTestWizardDraftResponse]
 	finishTestWizard      *connect.Client[api.FinishTestWizardRequest, api.FinishTestWizardResponse]
 	probeScript           *connect.Client[api.ProbeScriptRequest, api.ProbeScriptResponse]
+	probeCatalog          *connect.Client[api.ProbeCatalogRequest, api.ProbeCatalogResponse]
 }
 
 // StartTestWizard calls cloud.v1.api.TestWizardService.StartTestWizard.
@@ -209,6 +223,15 @@ func (c *testWizardServiceClient) ProbeScript(ctx context.Context, req *api.Prob
 	return nil, err
 }
 
+// ProbeCatalog calls cloud.v1.api.TestWizardService.ProbeCatalog.
+func (c *testWizardServiceClient) ProbeCatalog(ctx context.Context, req *api.ProbeCatalogRequest) (*api.ProbeCatalogResponse, error) {
+	response, err := c.probeCatalog.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // TestWizardServiceHandler is an implementation of the cloud.v1.api.TestWizardService service.
 type TestWizardServiceHandler interface {
 	// StartTestWizard opens a new draft. Not idempotent.
@@ -225,6 +248,9 @@ type TestWizardServiceHandler interface {
 	FinishTestWizard(context.Context, *api.FinishTestWizardRequest) (*api.FinishTestWizardResponse, error)
 	// ProbeScript introspects a stroppy script. Read-only / no side effects.
 	ProbeScript(context.Context, *api.ProbeScriptRequest) (*api.ProbeScriptResponse, error)
+	// ProbeCatalog lists the runnable scripts a stroppy binary embeds (its
+	// `probe -o json` catalog). Read-only / no side effects.
+	ProbeCatalog(context.Context, *api.ProbeCatalogRequest) (*api.ProbeCatalogResponse, error)
 }
 
 // NewTestWizardServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -281,6 +307,13 @@ func NewTestWizardServiceHandler(svc TestWizardServiceHandler, opts ...connect.H
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
+	testWizardServiceProbeCatalogHandler := connect.NewUnaryHandlerSimple(
+		TestWizardServiceProbeCatalogProcedure,
+		svc.ProbeCatalog,
+		connect.WithSchema(testWizardServiceMethods.ByName("ProbeCatalog")),
+		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/cloud.v1.api.TestWizardService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case TestWizardServiceStartTestWizardProcedure:
@@ -297,6 +330,8 @@ func NewTestWizardServiceHandler(svc TestWizardServiceHandler, opts ...connect.H
 			testWizardServiceFinishTestWizardHandler.ServeHTTP(w, r)
 		case TestWizardServiceProbeScriptProcedure:
 			testWizardServiceProbeScriptHandler.ServeHTTP(w, r)
+		case TestWizardServiceProbeCatalogProcedure:
+			testWizardServiceProbeCatalogHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -332,4 +367,8 @@ func (UnimplementedTestWizardServiceHandler) FinishTestWizard(context.Context, *
 
 func (UnimplementedTestWizardServiceHandler) ProbeScript(context.Context, *api.ProbeScriptRequest) (*api.ProbeScriptResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.TestWizardService.ProbeScript is not implemented"))
+}
+
+func (UnimplementedTestWizardServiceHandler) ProbeCatalog(context.Context, *api.ProbeCatalogRequest) (*api.ProbeCatalogResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.TestWizardService.ProbeCatalog is not implemented"))
 }

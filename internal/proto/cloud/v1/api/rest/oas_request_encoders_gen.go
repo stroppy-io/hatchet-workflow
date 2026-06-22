@@ -1354,6 +1354,20 @@ func encodePatchTestWizardRequest(
 	return nil
 }
 
+func encodeProbeCatalogRequest(
+	req *ProbeCatalogRequest,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
 func encodeProbeScriptRequest(
 	req *ProbeScriptRequest,
 	r *http.Request,

@@ -622,3 +622,7 @@ func (a stroppyProberAdapter) Probe(ctx context.Context, in testwizardsvc.ProbeI
 	}
 	return &testwizardsvc.ProbeOutput{Metadata: res.Metadata, Human: res.Human}, nil
 }
+
+func (a stroppyProberAdapter) Catalog(ctx context.Context, version string) ([]string, error) {
+	return a.prober.Catalog(ctx, version)
+}
