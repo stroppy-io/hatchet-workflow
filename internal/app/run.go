@@ -645,7 +645,11 @@ func Run(ctx context.Context, cfg Config) error {
 		}
 		return ctx
 	}
-	gqlHTTP := graphqlhandler.New(&graphqlhandler.Config{Schema: &gqlSchema, Pretty: true})
+	// GraphiQL renders the in-browser IDE / auto-doc (driven by introspection)
+	// on a browser GET; POST queries still get JSON. Introspection resolves
+	// against schema meta fields, not the pb services, so it loads without a
+	// token; real queries use the IDE's Authorization header (bridged above).
+	gqlHTTP := graphqlhandler.New(&graphqlhandler.Config{Schema: &gqlSchema, Pretty: true, GraphiQL: true})
 	gqlWS := graphqlrt.SubscriptionHandler(&gqlSchema, gqlAuthCtx)
 	mux.Handle("/graphql", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Subscriptions arrive as a websocket upgrade; queries/mutations as POST/GET.
