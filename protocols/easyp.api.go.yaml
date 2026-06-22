@@ -49,7 +49,7 @@ generate:
       out: ../internal/proto
       opts:
         paths: source_relative
-        openapi_out: ../docs/openapi
+        openapi_out: ../internal/openapidoc
         default_oneof_schema_mode: object
 
 breaking:

@@ -33,6 +33,7 @@ import (
 	networkinfra "github.com/stroppy-io/stroppy-cloud/internal/infrastructure/networks"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres"
 	quotainfra "github.com/stroppy-io/stroppy-cloud/internal/infrastructure/quotas"
+	"github.com/stroppy-io/stroppy-cloud/internal/openapidoc"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agent/agentconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/apiconnect"
@@ -707,6 +708,16 @@ func Run(ctx context.Context, cfg Config) error {
 		return fmt.Errorf("rest server: %w", err)
 	}
 	mux.Handle("/api/", http.StripPrefix("/api", restSrv))
+	// Serve the OpenAPI bundle and a Redoc docs page. More-specific mux
+	// patterns win over "/api/", so these are not swallowed by the ogen router.
+	mux.HandleFunc("/api/openapi.yaml", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/yaml")
+		_, _ = w.Write(openapidoc.Spec)
+	})
+	mux.HandleFunc("/api/docs", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		_, _ = w.Write(redocPage)
+	})
 
 	spa, err := spaHandler()
 	if err != nil {
@@ -782,6 +793,22 @@ func Run(ctx context.Context, cfg Config) error {
 // grpcOrHTTP dispatches native gRPC requests (HTTP/2 with an application/grpc
 // content-type) to the gRPC server and everything else (connect, SPA) to the
 // HTTP mux, sharing one HTTP/2 cleartext handler.
+// redocPage renders the REST OpenAPI bundle (served at /api/openapi.yaml) via
+// the Redoc standalone bundle from CDN.
+var redocPage = []byte(`<!DOCTYPE html>
+<html>
+  <head>
+    <title>Stroppy Cloud API</title>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <style>body { margin: 0; padding: 0; }</style>
+  </head>
+  <body>
+    <redoc spec-url="/api/openapi.yaml"></redoc>
+    <script src="https://cdn.redoc.ly/redoc/v2.5.0/bundles/redoc.standalone.js" crossorigin="anonymous"></script>
+  </body>
+</html>`)
+
 // apiProcedureByMethod maps each cloud.v1.api gRPC method name to its full gRPC
 // procedure ("/cloud.v1.api.IamService/Login"). ogen uses the proto method name
 // as the (unique) operation name, so the REST auth middleware can recover the
