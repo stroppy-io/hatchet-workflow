@@ -2374,3 +2374,209 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ProbeScriptResponseValidationError{}
+
+// Validate checks the field values on ProbeCatalogRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ProbeCatalogRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ProbeCatalogRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ProbeCatalogRequestMultiError, or nil if none found.
+func (m *ProbeCatalogRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ProbeCatalogRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Version
+
+	if len(errors) > 0 {
+		return ProbeCatalogRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// ProbeCatalogRequestMultiError is an error wrapping multiple validation
+// errors returned by ProbeCatalogRequest.ValidateAll() if the designated
+// constraints aren't met.
+type ProbeCatalogRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ProbeCatalogRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ProbeCatalogRequestMultiError) AllErrors() []error { return m }
+
+// ProbeCatalogRequestValidationError is the validation error returned by
+// ProbeCatalogRequest.Validate if the designated constraints aren't met.
+type ProbeCatalogRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ProbeCatalogRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ProbeCatalogRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ProbeCatalogRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ProbeCatalogRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ProbeCatalogRequestValidationError) ErrorName() string {
+	return "ProbeCatalogRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ProbeCatalogRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sProbeCatalogRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ProbeCatalogRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ProbeCatalogRequestValidationError{}
+
+// Validate checks the field values on ProbeCatalogResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ProbeCatalogResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ProbeCatalogResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ProbeCatalogResponseMultiError, or nil if none found.
+func (m *ProbeCatalogResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ProbeCatalogResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return ProbeCatalogResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ProbeCatalogResponseMultiError is an error wrapping multiple validation
+// errors returned by ProbeCatalogResponse.ValidateAll() if the designated
+// constraints aren't met.
+type ProbeCatalogResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ProbeCatalogResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ProbeCatalogResponseMultiError) AllErrors() []error { return m }
+
+// ProbeCatalogResponseValidationError is the validation error returned by
+// ProbeCatalogResponse.Validate if the designated constraints aren't met.
+type ProbeCatalogResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ProbeCatalogResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ProbeCatalogResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ProbeCatalogResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ProbeCatalogResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ProbeCatalogResponseValidationError) ErrorName() string {
+	return "ProbeCatalogResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ProbeCatalogResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sProbeCatalogResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ProbeCatalogResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ProbeCatalogResponseValidationError{}

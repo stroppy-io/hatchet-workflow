@@ -1007,6 +1007,13 @@ type TestWizardHandler interface {
 	//
 	// POST /api/v1/test-wizard/patch-test-wizard
 	PatchTestWizard(ctx context.Context, req *PatchTestWizardRequest, params PatchTestWizardParams) (*PatchTestWizardResponse, error)
+	// ProbeCatalog implements probeCatalog operation.
+	//
+	// ProbeCatalog lists the runnable scripts a stroppy binary embeds (its
+	// `probe -o json` catalog). Read-only / no side effects.
+	//
+	// GET /api/v1/test-wizard/probe-catalog
+	ProbeCatalog(ctx context.Context, req *ProbeCatalogRequest) (*ProbeCatalogResponse, error)
 	// ProbeScript implements probeScript operation.
 	//
 	// ProbeScript introspects a stroppy script. Read-only / no side effects.

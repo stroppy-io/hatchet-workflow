@@ -108,6 +108,7 @@ const (
 	MarkRegistrationRequestHandledOperation OperationName = "MarkRegistrationRequestHandled"
 	PatchSuiteWizardOperation               OperationName = "PatchSuiteWizard"
 	PatchTestWizardOperation                OperationName = "PatchTestWizard"
+	ProbeCatalogOperation                   OperationName = "ProbeCatalog"
 	ProbeScriptOperation                    OperationName = "ProbeScript"
 	QueryLogsOperation                      OperationName = "QueryLogs"
 	RefreshOperation                        OperationName = "Refresh"

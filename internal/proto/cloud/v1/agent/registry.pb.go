@@ -8,6 +8,7 @@ package agent
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-graphql/graphqlopt"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -285,7 +286,7 @@ var File_cloud_v1_agent_registry_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_agent_registry_proto_rawDesc = "" +
 	"\n" +
-	"\x1dcloud/v1/agent/registry.proto\x12\x0ecloud.v1.agent\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\xa3\x01\n" +
+	"\x1dcloud/v1/agent/registry.proto\x12\x0ecloud.v1.agent\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x18graphqlopt/graphql.proto\x1a\x17validate/validate.proto\"\xa3\x01\n" +
 	"\tAgentInfo\x12)\n" +
 	"\n" +
 	"machine_id\x18\x01 \x01(\tB\n" +
@@ -302,10 +303,10 @@ const file_cloud_v1_agent_registry_proto_rawDesc = "" +
 	"\n" +
 	"machine_id\x18\x01 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\tmachineId\"\x13\n" +
-	"\x11HeartbeatResponse2\xb7\x01\n" +
+	"\x11HeartbeatResponse2\xbf\x01\n" +
 	"\x14AgentRegistryService\x12M\n" +
 	"\bRegister\x12\x1f.cloud.v1.agent.RegisterRequest\x1a .cloud.v1.agent.RegisterResponse\x12P\n" +
-	"\tHeartbeat\x12 .cloud.v1.agent.HeartbeatRequest\x1a!.cloud.v1.agent.HeartbeatResponseBCZAgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agentb\x06proto3"
+	"\tHeartbeat\x12 .cloud.v1.agent.HeartbeatRequest\x1a!.cloud.v1.agent.HeartbeatResponse\x1a\x06\xc2\xc9&\x02\b\x01BCZAgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agentb\x06proto3"
 
 var (
 	file_cloud_v1_agent_registry_proto_rawDescOnce sync.Once

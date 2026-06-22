@@ -13,7 +13,7 @@
 // (the wizard's Version pane / the preset form's Identity section), so it is
 // NOT edited here.
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { AlertCircle, Check, ChevronDown, ChevronUp, Loader2, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -119,6 +119,34 @@ export function validateWorkload(w: WorkloadVM | null): DraftErrorVM[] {
 }
 
 /**
+ * Fetches the runnable-script catalog for the run's stroppy version (the binary's
+ * `probe -o json` listing). Returns [] when there is no probe context, no version
+ * is pinned, or the binary predates the catalog probe (stroppy < 5.4.0) — in
+ * which case the Script field stays a plain free-text input.
+ */
+function useScriptCatalog(probeContext: SegmentProbeContext | null): string[] {
+  const [scripts, setScripts] = useState<string[]>([]);
+  const version = probeContext?.version.trim() ?? "";
+  useEffect(() => {
+    if (!probeContext || !version) {
+      setScripts([]);
+      return;
+    }
+    let cancelled = false;
+    getWizardProvider()
+      .catalog(version)
+      .then((s) => !cancelled && setScripts(s))
+      .catch(() => !cancelled && setScripts([]));
+    return () => {
+      cancelled = true;
+    };
+    // Catalog depends only on the resolved binary (version); slug/engine are irrelevant.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [version]);
+  return scripts;
+}
+
+/**
  * The typed-workload editor: a shared protocol picker plus an accordion of
  * segment cards. Each segment is a self-contained stroppy invocation (script +
  * k6 execution + data params); they run sequentially on the same DB. The common
@@ -152,6 +180,11 @@ export function WorkloadParamsForm({
   probeContext?: SegmentProbeContext | null;
 }) {
   const protocolLocked = !!engine && engine !== "external";
+  // The runnable-script catalog for the run's stroppy version (5.4.0+), shared
+  // across segments — feeds the Script field's datalist dropdown. Empty on older
+  // binaries / preset pages, where the field stays free-text.
+  const catalogScripts = useScriptCatalog(probeContext);
+  const catalogListId = useId();
   const setSegment = (index: number, seg: WorkloadSegmentVM) =>
     apply({ ...w, segments: w.segments.map((s, i) => (i === index ? seg : s)) });
   const addSegment = () =>
@@ -216,9 +249,18 @@ export function WorkloadParamsForm({
               onMove={(dir) => moveSegment(i, dir)}
               advancedInitiallyOpen={advancedInitiallyOpen}
               probeContext={probeContext}
+              catalogListId={catalogScripts.length > 0 ? catalogListId : undefined}
             />
           ))}
         </div>
+
+        {catalogScripts.length > 0 && (
+          <datalist id={catalogListId}>
+            {catalogScripts.map((s) => (
+              <option key={s} value={s} />
+            ))}
+          </datalist>
+        )}
 
         {!disabled && (
           <button
@@ -257,6 +299,7 @@ function SegmentEditor({
   onMove,
   advancedInitiallyOpen,
   probeContext,
+  catalogListId,
 }: {
   index: number;
   total: number;
@@ -266,6 +309,8 @@ function SegmentEditor({
   onMove: (dir: -1 | 1) => void;
   advancedInitiallyOpen: boolean;
   probeContext: SegmentProbeContext | null;
+  /** datalist id of the version's runnable-script catalog (5.4.0+); undefined → free text. */
+  catalogListId?: string;
 }) {
   const [open, setOpen] = useState(total <= 2);
   const limit = seg.execution.limit;
@@ -416,6 +461,7 @@ function SegmentEditor({
                 value={seg.script}
                 onChange={(e) => onChange({ ...seg, script: e.target.value })}
                 placeholder="tpcc/tx"
+                list={catalogListId}
               />
             </div>
             <div>

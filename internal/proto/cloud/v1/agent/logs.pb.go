@@ -8,6 +8,7 @@ package agent
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-graphql/graphqlopt"
 	monitor "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -122,14 +123,14 @@ var File_cloud_v1_agent_logs_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_agent_logs_proto_rawDesc = "" +
 	"\n" +
-	"\x19cloud/v1/agent/logs.proto\x12\x0ecloud.v1.agent\x1a\x1bcloud/v1/monitor/logs.proto\x1a\x17validate/validate.proto\"M\n" +
+	"\x19cloud/v1/agent/logs.proto\x12\x0ecloud.v1.agent\x1a\x1bcloud/v1/monitor/logs.proto\x1a\x18graphqlopt/graphql.proto\x1a\x17validate/validate.proto\"M\n" +
 	"\bLogBatch\x12A\n" +
 	"\x05lines\x18\x01 \x03(\v2\x19.cloud.v1.monitor.LogLineB\x10\xfaB\r\x92\x01\n" +
 	"\x10\x90N\"\x05\x8a\x01\x02\b\x01R\x05lines\")\n" +
 	"\vShipLogsAck\x12\x1a\n" +
-	"\baccepted\x18\x01 \x01(\x04R\baccepted2V\n" +
+	"\baccepted\x18\x01 \x01(\x04R\baccepted2^\n" +
 	"\x0fAgentLogService\x12C\n" +
-	"\bShipLogs\x12\x18.cloud.v1.agent.LogBatch\x1a\x1b.cloud.v1.agent.ShipLogsAck(\x01BCZAgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agentb\x06proto3"
+	"\bShipLogs\x12\x18.cloud.v1.agent.LogBatch\x1a\x1b.cloud.v1.agent.ShipLogsAck(\x01\x1a\x06\xc2\xc9&\x02\b\x01BCZAgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agentb\x06proto3"
 
 var (
 	file_cloud_v1_agent_logs_proto_rawDescOnce sync.Once

@@ -314,6 +314,24 @@ go_name: Value</pre></td>
 <a name="schemapb-schema-filed"></a>
 ### schemapb.Schema.Filed
 
+<pre>
+Filed is one field of the form.
+
+Per-field evaluation order (each stage reads the form as resolved by the
+previous one):
+  1. when         — gate: if false the field is INACTIVE and every stage
+                    below is skipped; the field is treated as ABSENT (its
+                    value, if any, is preserved but ignored). For a
+                    container kind (Object/OneOf/List/Ref) the WHOLE
+                    subtree is gated.
+  2. normalize    — map the field's own value.
+  3. Computed     — derive the value from `root`.
+  4. options_expr / count_expr — dynamic Enum options / List length.
+  5. rules + kind constraints — required/nullable, gt/lt/in/pattern, ...
+
+Renderer contract: an inactive field (when=false) MUST NOT be rendered.
+</pre>
+
 <table>
 <tr>
 <th>Attribute</th>
@@ -560,6 +578,25 @@ the engine ignores it; it is for renderers/serializers.<br>
 
 json_name: unit
 go_name: Unit</pre></td>
+</tr><tr>
+<td>when</td>
+<td>string</td>
+<td><pre>
+Conditional gate: an expr boolean over `root` (the whole form as
+map<string, dyn>). When it evaluates to false the field is INACTIVE —
+the validator skips it ENTIRELY (no required/nullable, no rules, no
+kind constraints, no Computed/normalize) and treats it as ABSENT
+regardless of any value present in `values`. For a container kind the
+whole subtree is gated. Inactive fields do not count toward
+min/max_properties and their value key never raises a strict
+"unknown_field". Their value is NOT deleted, so it reappears if the
+field becomes active again. Renderers MUST hide an inactive field.
+`this` is NOT bound (a field's own value must not gate its
+existence). Empty/absent => always active. A non-bool result is a
+runtime error.<br>
+
+json_name: when
+go_name: When</pre></td>
 </tr>
 </table>
 
@@ -842,6 +879,20 @@ Value must not be any of these.<br>
 
 json_name: notIn
 go_name: NotIn</pre></td>
+</tr><tr>
+<td>options_expr</td>
+<td>string</td>
+<td><pre>
+expr over `root` returning a list of allowed integer values. When
+set it REPLACES the static allowed set (values/in/not_in/
+defined_only) for validation and supplies the option list to
+renderers. The submitted value must be a member of the result,
+else FieldError code "enum_not_allowed". Empty/absent => use the
+static values. The result must be a list; a non-list is a runtime
+error. Use cases: db versions by kind, zones by region.<br>
+
+json_name: optionsExpr
+go_name: OptionsExpr</pre></td>
 </tr><tr>
 <td>values</td>
 <td><a href="#schemapb-schema-filed-enum-valuesentry">schemapb.Schema.Filed.Enum.ValuesEntry</a></td>
@@ -1167,6 +1218,21 @@ List field kind: a repeated value described by its element field(s).
 <th>Description</th>
 </tr>
 <tr>
+<td>count_expr</td>
+<td>string</td>
+<td><pre>
+expr over `root` returning a non-negative int: the exact number
+of items the list must have. Renderers generate that many item
+slots. The list length must equal the result, else FieldError
+code "list_count_mismatch". Empty/absent => length bounded only by
+min_items/max_items. A non-int or negative result is a runtime
+error. Each item is still validated by the item schema; inside an
+item's rules the item's zero-based position is bound as `index`.
+Use case: per-machine settings where N = replicas + 1.<br>
+
+json_name: countExpr
+go_name: CountExpr</pre></td>
+</tr><tr>
 <td>items</td>
 <td><a href="#schemapb-schema-filed">schemapb.Schema.Filed</a></td>
 <td><pre>
@@ -1294,10 +1360,17 @@ go_name: Value</pre></td>
 ### schemapb.Schema.Filed.Ref
 
 <pre>
-Ref field kind: the value must be an object validated against the
-named definition in the root schema's defs map. Enables recursive
-schemas — a def may contain a Ref back to itself; recursion
-terminates because it follows the (finite) data.
+Ref field kind: the value is an object validated against another
+schema. The target is selected one of two ways:
+  - name: a key in the root schema's defs map (local composition;
+    enables recursion — a def may Ref back to itself, terminating on
+    the finite data).
+  - id:   the SchemaIdentity of a separately-registered schema. The
+    identity is PRESERVED on the node (renderers can show/link the
+    target), and the referenced schema must be made resolvable —
+    either present in the root defs under its identity key, or pulled
+    in by Link(resolver) before validation. An id-ref to a schema not
+    present in defs is an "unknown $ref" error at validate time.
 </pre>
 
 <table>
@@ -1307,6 +1380,14 @@ terminates because it follows the (finite) data.
 <th>Description</th>
 </tr>
 <tr>
+<td>id</td>
+<td><a href="#schemapb-schemaidentity">schemapb.SchemaIdentity</a></td>
+<td><pre>
+Identity of a registered schema (resolved via defs / Link).<br>
+
+json_name: id
+go_name: Id</pre></td>
+</tr><tr>
 <td>name</td>
 <td>string</td>
 <td><pre>

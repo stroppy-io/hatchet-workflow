@@ -1056,6 +1056,103 @@ func (x *ProbeScriptResponse) GetHuman() string {
 	return ""
 }
 
+// ProbeCatalogRequest lists the runnable scripts a stroppy binary embeds: the
+// server execs `stroppy probe -o json` with NO script, which (since stroppy
+// 5.4.0) prints the embedded preset catalog. Older binaries reject a no-script
+// probe, so the caller falls back to a free-text script field on error.
+type ProbeCatalogRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// version selects the stroppy binary: a github release tag (e.g. "5.4.0")
+	// or "commit:<sha>". Empty uses the configured upstream / PATH binary.
+	Version       string `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ProbeCatalogRequest) Reset() {
+	*x = ProbeCatalogRequest{}
+	mi := &file_cloud_v1_api_test_wizard_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ProbeCatalogRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ProbeCatalogRequest) ProtoMessage() {}
+
+func (x *ProbeCatalogRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_test_wizard_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ProbeCatalogRequest.ProtoReflect.Descriptor instead.
+func (*ProbeCatalogRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_test_wizard_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *ProbeCatalogRequest) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+// ProbeCatalogResponse returns the flattened runnable script ids the binary
+// embeds, in `<preset>/<script>` form (e.g. "tpcc/tx"), ready to drop into a
+// segment's script field.
+type ProbeCatalogResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Scripts       []string               `protobuf:"bytes,1,rep,name=scripts,proto3" json:"scripts,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ProbeCatalogResponse) Reset() {
+	*x = ProbeCatalogResponse{}
+	mi := &file_cloud_v1_api_test_wizard_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ProbeCatalogResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ProbeCatalogResponse) ProtoMessage() {}
+
+func (x *ProbeCatalogResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_test_wizard_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ProbeCatalogResponse.ProtoReflect.Descriptor instead.
+func (*ProbeCatalogResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_test_wizard_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *ProbeCatalogResponse) GetScripts() []string {
+	if x != nil {
+		return x.Scripts
+	}
+	return nil
+}
+
 var File_cloud_v1_api_test_wizard_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_test_wizard_proto_rawDesc = "" +
@@ -1132,7 +1229,11 @@ const file_cloud_v1_api_test_wizard_proto_rawDesc = "" +
 	"\acontent\x18\x02 \x01(\tR\acontent\"`\n" +
 	"\x13ProbeScriptResponse\x123\n" +
 	"\bmetadata\x18\x01 \x01(\v2\x17.google.protobuf.StructR\bmetadata\x12\x14\n" +
-	"\x05human\x18\x02 \x01(\tR\x05human2\x83\r\n" +
+	"\x05human\x18\x02 \x01(\tR\x05human\"/\n" +
+	"\x13ProbeCatalogRequest\x12\x18\n" +
+	"\aversion\x18\x01 \x01(\tR\aversion\"0\n" +
+	"\x14ProbeCatalogResponse\x12\x18\n" +
+	"\ascripts\x18\x01 \x03(\tR\ascripts2\xd1\x0e\n" +
 	"\x11TestWizardService\x12\xd8\x01\n" +
 	"\x0fStartTestWizard\x12$.cloud.v1.api.StartTestWizardRequest\x1a%.cloud.v1.api.StartTestWizardResponse\"x\x8a\xb5\x18\x06\x12\x04\b\a\x10\x01\xf2\xa7\x1dj\x10\x02\x1a\x12/start-test-wizard\"\x0fstartTestWizard\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
 	"\x1a#/components/schemas/Error\x12\xec\x01\n" +
@@ -1147,6 +1248,8 @@ const file_cloud_v1_api_test_wizard_proto_rawDesc = "" +
 	"\x10FinishTestWizard\x12%.cloud.v1.api.FinishTestWizardRequest\x1a&.cloud.v1.api.FinishTestWizardResponse\"z\x8a\xb5\x18\x06\x12\x04\b\a\x10\x03\xf2\xa7\x1dl\x10\x02\x1a\x13/finish-test-wizard\"\x10finishTestWizard\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
 	"\x1a#/components/schemas/Error\x12\xc6\x01\n" +
 	"\vProbeScript\x12 .cloud.v1.api.ProbeScriptRequest\x1a!.cloud.v1.api.ProbeScriptResponse\"r\x8a\xb5\x18\x06\x12\x04\b\a\x10\x02\xf2\xa7\x1da\x10\x01\x1a\r/probe-script\"\vprobeScript\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xcb\x01\n" +
+	"\fProbeCatalog\x12!.cloud.v1.api.ProbeCatalogRequest\x1a\".cloud.v1.api.ProbeCatalogResponse\"t\x8a\xb5\x18\x06\x12\x04\b\a\x10\x02\xf2\xa7\x1dc\x10\x01\x1a\x0e/probe-catalog\"\fprobeCatalog\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
 	"\x1a#/components/schemas/Error\x90\x02\x01\x1a&\xf2\xa7\x1d\"\x12\x13/api/v1/test-wizard\x1a\vtest-wizardBG\xf2\xa7\x1d\x02\b\x01Z?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
 
 var (
@@ -1161,7 +1264,7 @@ func file_cloud_v1_api_test_wizard_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_api_test_wizard_proto_rawDescData
 }
 
-var file_cloud_v1_api_test_wizard_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_cloud_v1_api_test_wizard_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_cloud_v1_api_test_wizard_proto_goTypes = []any{
 	(*StartTestWizardRequest)(nil),        // 0: cloud.v1.api.StartTestWizardRequest
 	(*StartTestWizardResponse)(nil),       // 1: cloud.v1.api.StartTestWizardResponse
@@ -1178,44 +1281,46 @@ var file_cloud_v1_api_test_wizard_proto_goTypes = []any{
 	(*ProbeScriptRequest)(nil),            // 12: cloud.v1.api.ProbeScriptRequest
 	(*ProbeWorkloadFile)(nil),             // 13: cloud.v1.api.ProbeWorkloadFile
 	(*ProbeScriptResponse)(nil),           // 14: cloud.v1.api.ProbeScriptResponse
-	nil,                                   // 15: cloud.v1.api.ProbeScriptRequest.EnvEntry
-	(*models.TestWizardDraftRecord)(nil),  // 16: cloud.v1.models.TestWizardDraftRecord
-	(*common.EntityFilter)(nil),           // 17: cloud.v1.common.EntityFilter
-	(*common.EntitySort)(nil),             // 18: cloud.v1.common.EntitySort
-	(*common.Page)(nil),                   // 19: cloud.v1.common.Page
-	(deployment.Provider)(0),              // 20: cloud.v1.deployment.Provider
-	(*domain.Database)(nil),               // 21: cloud.v1.domain.Database
-	(*domain.Workload)(nil),               // 22: cloud.v1.domain.Workload
-	(*topology.TopologySpec)(nil),         // 23: cloud.v1.topology.TopologySpec
-	(*deployment.InfrastructurePlan)(nil), // 24: cloud.v1.deployment.InfrastructurePlan
-	(*deployment.RenderOverrideSet)(nil),  // 25: cloud.v1.deployment.RenderOverrideSet
-	(*deployment.MachinePlan)(nil),        // 26: cloud.v1.deployment.MachinePlan
-	(*domain.TestRun)(nil),                // 27: cloud.v1.domain.TestRun
-	(*models.TestRunRecord)(nil),          // 28: cloud.v1.models.TestRunRecord
-	(*models.TestPresetRecord)(nil),       // 29: cloud.v1.models.TestPresetRecord
-	(*structpb.Struct)(nil),               // 30: google.protobuf.Struct
+	(*ProbeCatalogRequest)(nil),           // 15: cloud.v1.api.ProbeCatalogRequest
+	(*ProbeCatalogResponse)(nil),          // 16: cloud.v1.api.ProbeCatalogResponse
+	nil,                                   // 17: cloud.v1.api.ProbeScriptRequest.EnvEntry
+	(*models.TestWizardDraftRecord)(nil),  // 18: cloud.v1.models.TestWizardDraftRecord
+	(*common.EntityFilter)(nil),           // 19: cloud.v1.common.EntityFilter
+	(*common.EntitySort)(nil),             // 20: cloud.v1.common.EntitySort
+	(*common.Page)(nil),                   // 21: cloud.v1.common.Page
+	(deployment.Provider)(0),              // 22: cloud.v1.deployment.Provider
+	(*domain.Database)(nil),               // 23: cloud.v1.domain.Database
+	(*domain.Workload)(nil),               // 24: cloud.v1.domain.Workload
+	(*topology.TopologySpec)(nil),         // 25: cloud.v1.topology.TopologySpec
+	(*deployment.InfrastructurePlan)(nil), // 26: cloud.v1.deployment.InfrastructurePlan
+	(*deployment.RenderOverrideSet)(nil),  // 27: cloud.v1.deployment.RenderOverrideSet
+	(*deployment.MachinePlan)(nil),        // 28: cloud.v1.deployment.MachinePlan
+	(*domain.TestRun)(nil),                // 29: cloud.v1.domain.TestRun
+	(*models.TestRunRecord)(nil),          // 30: cloud.v1.models.TestRunRecord
+	(*models.TestPresetRecord)(nil),       // 31: cloud.v1.models.TestPresetRecord
+	(*structpb.Struct)(nil),               // 32: google.protobuf.Struct
 }
 var file_cloud_v1_api_test_wizard_proto_depIdxs = []int32{
-	16, // 0: cloud.v1.api.StartTestWizardResponse.draft:type_name -> cloud.v1.models.TestWizardDraftRecord
-	16, // 1: cloud.v1.api.GetTestWizardDraftResponse.draft:type_name -> cloud.v1.models.TestWizardDraftRecord
-	17, // 2: cloud.v1.api.ListTestWizardDraftsRequest.filter:type_name -> cloud.v1.common.EntityFilter
-	18, // 3: cloud.v1.api.ListTestWizardDraftsRequest.sort:type_name -> cloud.v1.common.EntitySort
-	19, // 4: cloud.v1.api.ListTestWizardDraftsRequest.page:type_name -> cloud.v1.common.Page
-	16, // 5: cloud.v1.api.ListTestWizardDraftsResponse.drafts:type_name -> cloud.v1.models.TestWizardDraftRecord
-	20, // 6: cloud.v1.api.PatchTestWizardRequest.provider:type_name -> cloud.v1.deployment.Provider
-	21, // 7: cloud.v1.api.PatchTestWizardRequest.database:type_name -> cloud.v1.domain.Database
-	22, // 8: cloud.v1.api.PatchTestWizardRequest.workload:type_name -> cloud.v1.domain.Workload
-	23, // 9: cloud.v1.api.PatchTestWizardRequest.topology_spec:type_name -> cloud.v1.topology.TopologySpec
-	24, // 10: cloud.v1.api.PatchTestWizardRequest.infrastructure_plan:type_name -> cloud.v1.deployment.InfrastructurePlan
-	25, // 11: cloud.v1.api.PatchTestWizardRequest.render_overrides:type_name -> cloud.v1.deployment.RenderOverrideSet
-	26, // 12: cloud.v1.api.PatchTestWizardRequest.machine_overrides:type_name -> cloud.v1.deployment.MachinePlan
-	16, // 13: cloud.v1.api.PatchTestWizardResponse.draft:type_name -> cloud.v1.models.TestWizardDraftRecord
-	27, // 14: cloud.v1.api.FinishTestWizardResponse.test_run:type_name -> cloud.v1.domain.TestRun
-	28, // 15: cloud.v1.api.FinishTestWizardResponse.run:type_name -> cloud.v1.models.TestRunRecord
-	29, // 16: cloud.v1.api.FinishTestWizardResponse.preset:type_name -> cloud.v1.models.TestPresetRecord
-	15, // 17: cloud.v1.api.ProbeScriptRequest.env:type_name -> cloud.v1.api.ProbeScriptRequest.EnvEntry
+	18, // 0: cloud.v1.api.StartTestWizardResponse.draft:type_name -> cloud.v1.models.TestWizardDraftRecord
+	18, // 1: cloud.v1.api.GetTestWizardDraftResponse.draft:type_name -> cloud.v1.models.TestWizardDraftRecord
+	19, // 2: cloud.v1.api.ListTestWizardDraftsRequest.filter:type_name -> cloud.v1.common.EntityFilter
+	20, // 3: cloud.v1.api.ListTestWizardDraftsRequest.sort:type_name -> cloud.v1.common.EntitySort
+	21, // 4: cloud.v1.api.ListTestWizardDraftsRequest.page:type_name -> cloud.v1.common.Page
+	18, // 5: cloud.v1.api.ListTestWizardDraftsResponse.drafts:type_name -> cloud.v1.models.TestWizardDraftRecord
+	22, // 6: cloud.v1.api.PatchTestWizardRequest.provider:type_name -> cloud.v1.deployment.Provider
+	23, // 7: cloud.v1.api.PatchTestWizardRequest.database:type_name -> cloud.v1.domain.Database
+	24, // 8: cloud.v1.api.PatchTestWizardRequest.workload:type_name -> cloud.v1.domain.Workload
+	25, // 9: cloud.v1.api.PatchTestWizardRequest.topology_spec:type_name -> cloud.v1.topology.TopologySpec
+	26, // 10: cloud.v1.api.PatchTestWizardRequest.infrastructure_plan:type_name -> cloud.v1.deployment.InfrastructurePlan
+	27, // 11: cloud.v1.api.PatchTestWizardRequest.render_overrides:type_name -> cloud.v1.deployment.RenderOverrideSet
+	28, // 12: cloud.v1.api.PatchTestWizardRequest.machine_overrides:type_name -> cloud.v1.deployment.MachinePlan
+	18, // 13: cloud.v1.api.PatchTestWizardResponse.draft:type_name -> cloud.v1.models.TestWizardDraftRecord
+	29, // 14: cloud.v1.api.FinishTestWizardResponse.test_run:type_name -> cloud.v1.domain.TestRun
+	30, // 15: cloud.v1.api.FinishTestWizardResponse.run:type_name -> cloud.v1.models.TestRunRecord
+	31, // 16: cloud.v1.api.FinishTestWizardResponse.preset:type_name -> cloud.v1.models.TestPresetRecord
+	17, // 17: cloud.v1.api.ProbeScriptRequest.env:type_name -> cloud.v1.api.ProbeScriptRequest.EnvEntry
 	13, // 18: cloud.v1.api.ProbeScriptRequest.files:type_name -> cloud.v1.api.ProbeWorkloadFile
-	30, // 19: cloud.v1.api.ProbeScriptResponse.metadata:type_name -> google.protobuf.Struct
+	32, // 19: cloud.v1.api.ProbeScriptResponse.metadata:type_name -> google.protobuf.Struct
 	0,  // 20: cloud.v1.api.TestWizardService.StartTestWizard:input_type -> cloud.v1.api.StartTestWizardRequest
 	2,  // 21: cloud.v1.api.TestWizardService.GetTestWizardDraft:input_type -> cloud.v1.api.GetTestWizardDraftRequest
 	4,  // 22: cloud.v1.api.TestWizardService.ListTestWizardDrafts:input_type -> cloud.v1.api.ListTestWizardDraftsRequest
@@ -1223,15 +1328,17 @@ var file_cloud_v1_api_test_wizard_proto_depIdxs = []int32{
 	8,  // 24: cloud.v1.api.TestWizardService.DeleteTestWizardDraft:input_type -> cloud.v1.api.DeleteTestWizardDraftRequest
 	10, // 25: cloud.v1.api.TestWizardService.FinishTestWizard:input_type -> cloud.v1.api.FinishTestWizardRequest
 	12, // 26: cloud.v1.api.TestWizardService.ProbeScript:input_type -> cloud.v1.api.ProbeScriptRequest
-	1,  // 27: cloud.v1.api.TestWizardService.StartTestWizard:output_type -> cloud.v1.api.StartTestWizardResponse
-	3,  // 28: cloud.v1.api.TestWizardService.GetTestWizardDraft:output_type -> cloud.v1.api.GetTestWizardDraftResponse
-	5,  // 29: cloud.v1.api.TestWizardService.ListTestWizardDrafts:output_type -> cloud.v1.api.ListTestWizardDraftsResponse
-	7,  // 30: cloud.v1.api.TestWizardService.PatchTestWizard:output_type -> cloud.v1.api.PatchTestWizardResponse
-	9,  // 31: cloud.v1.api.TestWizardService.DeleteTestWizardDraft:output_type -> cloud.v1.api.DeleteTestWizardDraftResponse
-	11, // 32: cloud.v1.api.TestWizardService.FinishTestWizard:output_type -> cloud.v1.api.FinishTestWizardResponse
-	14, // 33: cloud.v1.api.TestWizardService.ProbeScript:output_type -> cloud.v1.api.ProbeScriptResponse
-	27, // [27:34] is the sub-list for method output_type
-	20, // [20:27] is the sub-list for method input_type
+	15, // 27: cloud.v1.api.TestWizardService.ProbeCatalog:input_type -> cloud.v1.api.ProbeCatalogRequest
+	1,  // 28: cloud.v1.api.TestWizardService.StartTestWizard:output_type -> cloud.v1.api.StartTestWizardResponse
+	3,  // 29: cloud.v1.api.TestWizardService.GetTestWizardDraft:output_type -> cloud.v1.api.GetTestWizardDraftResponse
+	5,  // 30: cloud.v1.api.TestWizardService.ListTestWizardDrafts:output_type -> cloud.v1.api.ListTestWizardDraftsResponse
+	7,  // 31: cloud.v1.api.TestWizardService.PatchTestWizard:output_type -> cloud.v1.api.PatchTestWizardResponse
+	9,  // 32: cloud.v1.api.TestWizardService.DeleteTestWizardDraft:output_type -> cloud.v1.api.DeleteTestWizardDraftResponse
+	11, // 33: cloud.v1.api.TestWizardService.FinishTestWizard:output_type -> cloud.v1.api.FinishTestWizardResponse
+	14, // 34: cloud.v1.api.TestWizardService.ProbeScript:output_type -> cloud.v1.api.ProbeScriptResponse
+	16, // 35: cloud.v1.api.TestWizardService.ProbeCatalog:output_type -> cloud.v1.api.ProbeCatalogResponse
+	28, // [28:36] is the sub-list for method output_type
+	20, // [20:28] is the sub-list for method input_type
 	20, // [20:20] is the sub-list for extension type_name
 	20, // [20:20] is the sub-list for extension extendee
 	0,  // [0:20] is the sub-list for field type_name
@@ -1249,7 +1356,7 @@ func file_cloud_v1_api_test_wizard_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_api_test_wizard_proto_rawDesc), len(file_cloud_v1_api_test_wizard_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   16,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

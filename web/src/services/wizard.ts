@@ -635,6 +635,13 @@ export interface WizardProvider {
     tenantSlug: string,
     input: { version: string; script: string; sql: string; driverType: string; poolSize: number; scaleFactor: number; includeHuman: boolean },
   ): Promise<ProbeMetaVM>;
+  /**
+   * ProbeCatalog -> the runnable script ids ("<preset>/<script>") the chosen
+   * stroppy binary embeds, for the Script field's dropdown. Rejects on binaries
+   * that predate the catalog probe (stroppy < 5.4.0); callers fall back to free
+   * text.
+   */
+  catalog(version: string): Promise<string[]>;
 }
 
 // --- Real backend provider ---------------------------------------------------
@@ -1131,6 +1138,11 @@ const realWizardProvider: WizardProvider = {
       includeHuman: input.includeHuman,
     });
     return probeMetaFromStruct(resp.metadata, resp.human);
+  },
+
+  async catalog(version) {
+    const resp = await testWizardClient.probeCatalog({ version });
+    return resp.scripts;
   },
 };
 

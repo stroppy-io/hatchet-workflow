@@ -231,6 +231,8 @@
   - [cloud.v1.api.PatchTestWizardRequest](#cloud-v1-api-patchtestwizardrequest)
   - [cloud.v1.api.PatchTestWizardResponse](#cloud-v1-api-patchtestwizardresponse)
   - [cloud.v1.api.PlatformSettings](#cloud-v1-api-platformsettings)
+  - [cloud.v1.api.ProbeCatalogRequest](#cloud-v1-api-probecatalogrequest)
+  - [cloud.v1.api.ProbeCatalogResponse](#cloud-v1-api-probecatalogresponse)
   - [cloud.v1.api.ProbeScriptRequest](#cloud-v1-api-probescriptrequest)
   - [cloud.v1.api.ProbeScriptRequest.EnvEntry](#cloud-v1-api-probescriptrequest-enventry)
   - [cloud.v1.api.ProbeScriptResponse](#cloud-v1-api-probescriptresponse)
@@ -8257,6 +8259,62 @@ go_name: AllowSelfRegistration</pre></td>
 
 json_name: serverAddr
 go_name: ServerAddr</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-probecatalogrequest"></a>
+### cloud.v1.api.ProbeCatalogRequest
+
+<pre>
+//ProbeCatalogRequest lists the runnable scripts a stroppy binary embeds: the
+//server execs `stroppy probe -o json` with NO script, which (since stroppy
+//5.4.0) prints the embedded preset catalog. Older binaries reject a no-script
+//probe, so the caller falls back to a free-text script field on error.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>version</td>
+<td>string</td>
+<td><pre>
+//version selects the stroppy binary: a github release tag (e.g. "5.4.0")
+//or "commit:<sha>". Empty uses the configured upstream / PATH binary.<br>
+
+json_name: version
+go_name: Version</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-probecatalogresponse"></a>
+### cloud.v1.api.ProbeCatalogResponse
+
+<pre>
+//ProbeCatalogResponse returns the flattened runnable script ids the binary
+//embeds, in `<preset>/<script>` form (e.g. "tpcc/tx"), ready to drop into a
+//segment's script field.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>scripts</td>
+<td>string</td>
+<td><pre>
+json_name: scripts
+go_name: Scripts</pre></td>
 </tr>
 </table>
 

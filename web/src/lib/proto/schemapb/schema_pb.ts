@@ -12,7 +12,7 @@ import type { JsonObject, Message } from "@bufbuild/protobuf";
  * Describes the file schemapb/schema.proto.
  */
 export const file_schemapb_schema: GenFile = /*@__PURE__*/
-  fileDesc("ChVzY2hlbWFwYi9zY2hlbWEucHJvdG8SCHNjaGVtYXBiIsgpCgZTY2hlbWESJAoCaWQYASABKAsyGC5zY2hlbWFwYi5TY2hlbWFJZGVudGl0eRIYCgtkZXNjcmlwdGlvbhgCIAEoCUgAiAEBEiYKBmZpZWxkcxgDIAMoCzIWLnNjaGVtYXBiLlNjaGVtYS5GaWxlZBIqCgVydWxlcxgEIAMoCzIbLnNjaGVtYXBiLlNjaGVtYS5GaWxlZC5SdWxlEg4KBnN0cmljdBgFIAEoCBIbCg5taW5fcHJvcGVydGllcxgGIAEoBEgBiAEBEhsKDm1heF9wcm9wZXJ0aWVzGAcgASgESAKIAQESDgoGY29lcmNlGAggASgIEigKBGRlZnMYCSADKAsyGi5zY2hlbWFwYi5TY2hlbWEuRGVmc0VudHJ5GrAmCgVGaWxlZBIMCgRuYW1lGAEgASgJEhgKC2Rlc2NyaXB0aW9uGAIgASgJSAGIAQESEAoIbnVsbGFibGUYAyABKAgSEAoIcmVxdWlyZWQYBCABKAgSKgoFcnVsZXMYBSADKAsyGy5zY2hlbWFwYi5TY2hlbWEuRmlsZWQuUnVsZRIRCglpbW11dGFibGUYFCABKAgSEgoFZ3JvdXAYFSABKAlIAogBARIRCgR1bml0GBYgASgJSAOIAQESEgoFdGl0bGUYFyABKAlIBIgBARISCgpkZXByZWNhdGVkGBggASgIEigKCGV4YW1wbGVzGBkgAygLMhYuZ29vZ2xlLnByb3RvYnVmLlZhbHVlEg4KBnNlY3JldBgaIAEoCBIWCglub3JtYWxpemUYGyABKAlIBYgBARItCgVmbG9hdBgGIAEoCzIcLnNjaGVtYXBiLlNjaGVtYS5GaWxlZC5GbG9hdEgAEi8KBmRvdWJsZRgHIAEoCzIdLnNjaGVtYXBiLlNjaGVtYS5GaWxlZC5Eb3VibGVIABItCgVpbnQzMhgIIAEoCzIcLnNjaGVtYXBiLlNjaGVtYS5GaWxlZC5JbnQzMkgAEi0KBWludDY0GAkgASgLMhwuc2NoZW1hcGIuU2NoZW1hLkZpbGVkLkludDY0SAASLwoGdWludDMyGAogASgLMh0uc2NoZW1hcGIuU2NoZW1hLkZpbGVkLlVJbnQzMkgAEi8KBnVpbnQ2NBgLIAEoCzIdLnNjaGVtYXBiLlNjaGVtYS5GaWxlZC5VSW50NjRIABIrCgRib29sGAwgASgLMhsuc2NoZW1hcGIuU2NoZW1hLkZpbGVkLkJvb2xIABIvCgZzdHJpbmcYDSABKAsyHS5zY2hlbWFwYi5TY2hlbWEuRmlsZWQuU3RyaW5nSAASKwoEZW51bRgOIAEoCzIbLnNjaGVtYXBiLlNjaGVtYS5GaWxlZC5FbnVtSAASMwoIZHVyYXRpb24YDyABKAsyHy5zY2hlbWFwYi5TY2hlbWEuRmlsZWQuRHVyYXRpb25IABI1Cgl0aW1lc3RhbXAYECABKAsyIC5zY2hlbWFwYi5TY2hlbWEuRmlsZWQuVGltZXN0YW1wSAASKwoEbGlzdBgRIAEoCzIbLnNjaGVtYXBiLlNjaGVtYS5GaWxlZC5MaXN0SAASLwoGb2JqZWN0GBIgASgLMh0uc2NoZW1hcGIuU2NoZW1hLkZpbGVkLk9iamVjdEgAEjMKCGNvbXB1dGVkGBMgASgLMh8uc2NoZW1hcGIuU2NoZW1hLkZpbGVkLkNvbXB1dGVkSAASLgoGb25lX29mGBwgASgLMhwuc2NoZW1hcGIuU2NoZW1hLkZpbGVkLk9uZU9mSAASKQoDcmVmGB0gASgLMhouc2NoZW1hcGIuU2NoZW1hLkZpbGVkLlJlZkgAGvEBCgVGbG9hdBIUCgdkZWZhdWx0GAEgASgCSACIAQESEgoFY29uc3QYAiABKAJIAYgBARIPCgJndBgDIAEoAkgCiAEBEhAKA2d0ZRgEIAEoAkgDiAEBEg8KAmx0GAUgASgCSASIAQESEAoDbHRlGAYgASgCSAWIAQESCgoCaW4YByADKAISDgoGbm90X2luGAggAygCEhgKC211bHRpcGxlX29mGAkgASgCSAaIAQFCCgoIX2RlZmF1bHRCCAoGX2NvbnN0QgUKA19ndEIGCgRfZ3RlQgUKA19sdEIGCgRfbHRlQg4KDF9tdWx0aXBsZV9vZhryAQoGRG91YmxlEhQKB2RlZmF1bHQYASABKAFIAIgBARISCgVjb25zdBgCIAEoAUgBiAEBEg8KAmd0GAMgASgBSAKIAQESEAoDZ3RlGAQgASgBSAOIAQESDwoCbHQYBSABKAFIBIgBARIQCgNsdGUYBiABKAFIBYgBARIKCgJpbhgHIAMoARIOCgZub3RfaW4YCCADKAESGAoLbXVsdGlwbGVfb2YYCSABKAFIBogBAUIKCghfZGVmYXVsdEIICgZfY29uc3RCBQoDX2d0QgYKBF9ndGVCBQoDX2x0QgYKBF9sdGVCDgoMX211bHRpcGxlX29mGvEBCgVJbnQzMhIUCgdkZWZhdWx0GAEgASgFSACIAQESEgoFY29uc3QYAiABKAVIAYgBARIPCgJndBgDIAEoBUgCiAEBEhAKA2d0ZRgEIAEoBUgDiAEBEg8KAmx0GAUgASgFSASIAQESEAoDbHRlGAYgASgFSAWIAQESCgoCaW4YByADKAUSDgoGbm90X2luGAggAygFEhgKC211bHRpcGxlX29mGAkgASgFSAaIAQFCCgoIX2RlZmF1bHRCCAoGX2NvbnN0QgUKA19ndEIGCgRfZ3RlQgUKA19sdEIGCgRfbHRlQg4KDF9tdWx0aXBsZV9vZhrxAQoFSW50NjQSFAoHZGVmYXVsdBgBIAEoA0gAiAEBEhIKBWNvbnN0GAIgASgDSAGIAQESDwoCZ3QYAyABKANIAogBARIQCgNndGUYBCABKANIA4gBARIPCgJsdBgFIAEoA0gEiAEBEhAKA2x0ZRgGIAEoA0gFiAEBEgoKAmluGAcgAygDEg4KBm5vdF9pbhgIIAMoAxIYCgttdWx0aXBsZV9vZhgJIAEoA0gGiAEBQgoKCF9kZWZhdWx0QggKBl9jb25zdEIFCgNfZ3RCBgoEX2d0ZUIFCgNfbHRCBgoEX2x0ZUIOCgxfbXVsdGlwbGVfb2Ya8gEKBlVJbnQzMhIUCgdkZWZhdWx0GAEgASgNSACIAQESEgoFY29uc3QYAiABKA1IAYgBARIPCgJndBgDIAEoDUgCiAEBEhAKA2d0ZRgEIAEoDUgDiAEBEg8KAmx0GAUgASgNSASIAQESEAoDbHRlGAYgASgNSAWIAQESCgoCaW4YByADKA0SDgoGbm90X2luGAggAygNEhgKC211bHRpcGxlX29mGAkgASgNSAaIAQFCCgoIX2RlZmF1bHRCCAoGX2NvbnN0QgUKA19ndEIGCgRfZ3RlQgUKA19sdEIGCgRfbHRlQg4KDF9tdWx0aXBsZV9vZhryAQoGVUludDY0EhQKB2RlZmF1bHQYASABKARIAIgBARISCgVjb25zdBgCIAEoBEgBiAEBEg8KAmd0GAMgASgESAKIAQESEAoDZ3RlGAQgASgESAOIAQESDwoCbHQYBSABKARIBIgBARIQCgNsdGUYBiABKARIBYgBARIKCgJpbhgHIAMoBBIOCgZub3RfaW4YCCADKAQSGAoLbXVsdGlwbGVfb2YYCSABKARIBogBAUIKCghfZGVmYXVsdEIICgZfY29uc3RCBQoDX2d0QgYKBF9ndGVCBQoDX2x0QgYKBF9sdGVCDgoMX211bHRpcGxlX29mGkYKBEJvb2wSFAoHZGVmYXVsdBgBIAEoCEgAiAEBEhIKBWNvbnN0GAIgASgISAGIAQFCCgoIX2RlZmF1bHRCCAoGX2NvbnN0GtYECgZTdHJpbmcSFAoHZGVmYXVsdBgBIAEoCUgAiAEBEhIKBWNvbnN0GAIgASgJSAGIAQESEAoDbGVuGAMgASgESAKIAQESFAoHbWluX2xlbhgEIAEoBEgDiAEBEhQKB21heF9sZW4YBSABKARIBIgBARIUCgdwYXR0ZXJuGAYgASgJSAWIAQESCgoCaW4YByADKAkSDgoGbm90X2luGAggAygJEj8KBmZvcm1hdBgJIAEoDjIqLnNjaGVtYXBiLlNjaGVtYS5GaWxlZC5TdHJpbmcuU3RyaW5nRm9ybWF0SAaIAQEiowIKDFN0cmluZ0Zvcm1hdBIdChlTVFJJTkdfRk9STUFUX1VOU1BFQ0lGSUVEEAASFwoTU1RSSU5HX0ZPUk1BVF9FTUFJTBABEhUKEVNUUklOR19GT1JNQVRfVVJMEAISFgoSU1RSSU5HX0ZPUk1BVF9VVUlEEAMSFgoSU1RSSU5HX0ZPUk1BVF9JUFY0EAQSFgoSU1RSSU5HX0ZPUk1BVF9JUFY2EAUSFAoQU1RSSU5HX0ZPUk1BVF9JUBAGEhoKFlNUUklOR19GT1JNQVRfSE9TVE5BTUUQBxIWChJTVFJJTkdfRk9STUFUX0RBVEUQCBIWChJTVFJJTkdfRk9STUFUX1RJTUUQCRIaChZTVFJJTkdfRk9STUFUX0RBVEVUSU1FEApCCgoIX2RlZmF1bHRCCAoGX2NvbnN0QgYKBF9sZW5CCgoIX21pbl9sZW5CCgoIX21heF9sZW5CCgoIX3BhdHRlcm5CCQoHX2Zvcm1hdBrCAQoERW51bRIUCgdkZWZhdWx0GAEgASgFSACIAQESNwoGdmFsdWVzGAIgAygLMicuc2NoZW1hcGIuU2NoZW1hLkZpbGVkLkVudW0uVmFsdWVzRW50cnkSFAoMZGVmaW5lZF9vbmx5GAMgASgIEgoKAmluGAQgAygFEg4KBm5vdF9pbhgFIAMoBRotCgtWYWx1ZXNFbnRyeRILCgNrZXkYASABKAUSDQoFdmFsdWUYAiABKAk6AjgBQgoKCF9kZWZhdWx0GpcCCghEdXJhdGlvbhIvCgdkZWZhdWx0GAEgASgLMhkuZ29vZ2xlLnByb3RvYnVmLkR1cmF0aW9uSACIAQESKgoCZ3QYAiABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb25IAYgBARIrCgNndGUYAyABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb25IAogBARIqCgJsdBgEIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbkgDiAEBEisKA2x0ZRgFIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbkgEiAEBQgoKCF9kZWZhdWx0QgUKA19ndEIGCgRfZ3RlQgUKA19sdEIGCgRfbHRlGp0CCglUaW1lc3RhbXASMAoHZGVmYXVsdBgBIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBIAIgBARIrCgJndBgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBIAYgBARIsCgNndGUYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wSAKIAQESKwoCbHQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wSAOIAQESLAoDbHRlGAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEgEiAEBQgoKCF9kZWZhdWx0QgUKA19ndEIGCgRfZ3RlQgUKA19sdEIGCgRfbHRlGokBCgRMaXN0EiUKBWl0ZW1zGAEgAygLMhYuc2NoZW1hcGIuU2NoZW1hLkZpbGVkEhYKCW1pbl9pdGVtcxgCIAEoBEgAiAEBEhYKCW1heF9pdGVtcxgDIAEoBEgBiAEBEg4KBnVuaXF1ZRgEIAEoCEIMCgpfbWluX2l0ZW1zQgwKCl9tYXhfaXRlbXMaOgoGT2JqZWN0EiUKBnNjaGVtYRgBIAEoCzIQLnNjaGVtYXBiLlNjaGVtYUgAiAEBQgkKB19zY2hlbWEaWwoIQ29tcHV0ZWQSDAoEZXhwchgBIAEoCRI2CgZyZXN1bHQYAiABKA4yIS5zY2hlbWFwYi5TY2hlbWEuRmlsZWQuUmVzdWx0VHlwZUgAiAEBQgkKB19yZXN1bHQaggEKBFJ1bGUSDAoEZXhwchgBIAEoCRIPCgdtZXNzYWdlGAIgASgJEg8KAmlkGAMgASgJSACIAQESNgoIc2V2ZXJpdHkYBCABKA4yHy5zY2hlbWFwYi5TY2hlbWEuRmlsZWQuU2V2ZXJpdHlIAYgBAUIFCgNfaWRCCwoJX3NldmVyaXR5Gp8BCgVPbmVPZhIVCg1kaXNjcmltaW5hdG9yGAEgASgJEjwKCHZhcmlhbnRzGAIgAygLMiouc2NoZW1hcGIuU2NoZW1hLkZpbGVkLk9uZU9mLlZhcmlhbnRzRW50cnkaQQoNVmFyaWFudHNFbnRyeRILCgNrZXkYASABKAkSHwoFdmFsdWUYAiABKAsyEC5zY2hlbWFwYi5TY2hlbWE6AjgBGhMKA1JlZhIMCgRuYW1lGAEgASgJIrgBCgpSZXN1bHRUeXBlEhsKF1JFU1VMVF9UWVBFX1VOU1BFQ0lGSUVEEAASFgoSUkVTVUxUX1RZUEVfRE9VQkxFEAESFQoRUkVTVUxUX1RZUEVfSU5UNjQQAhIWChJSRVNVTFRfVFlQRV9VSU5UNjQQAxIUChBSRVNVTFRfVFlQRV9CT09MEAQSFgoSUkVTVUxUX1RZUEVfU1RSSU5HEAUSGAoUUkVTVUxUX1RZUEVfRFVSQVRJT04QBiI8CghTZXZlcml0eRIYChRTRVZFUklUWV9VTlNQRUNJRklFRBAAEgkKBUVSUk9SEAESCwoHV0FSTklORxACQgYKBGtpbmRCDgoMX2Rlc2NyaXB0aW9uQggKBl9ncm91cEIHCgVfdW5pdEIICgZfdGl0bGVCDAoKX25vcm1hbGl6ZRo9CglEZWZzRW50cnkSCwoDa2V5GAEgASgJEh8KBXZhbHVlGAIgASgLMhAuc2NoZW1hcGIuU2NoZW1hOgI4AUIOCgxfZGVzY3JpcHRpb25CEQoPX21pbl9wcm9wZXJ0aWVzQhEKD19tYXhfcHJvcGVydGllcyJCCg5TY2hlbWFJZGVudGl0eRIRCgluYW1lc3BhY2UYASABKAkSDAoEbmFtZRgCIAEoCRIPCgd2ZXJzaW9uGAMgASgJIvABCgpGaWVsZEVycm9yEg0KBWZpZWxkGAEgASgJEg8KB21lc3NhZ2UYAiABKAkSFAoHcnVsZV9pZBgDIAEoCUgAiAEBEjEKCHNldmVyaXR5GAQgASgOMh8uc2NoZW1hcGIuU2NoZW1hLkZpbGVkLlNldmVyaXR5EgwKBGNvZGUYBSABKAkSMAoGcGFyYW1zGAYgAygLMiAuc2NoZW1hcGIuRmllbGRFcnJvci5QYXJhbXNFbnRyeRotCgtQYXJhbXNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBQgoKCF9ydWxlX2lkImEKCVNjaGVtYVJlZhImCgJpZBgBIAEoCzIYLnNjaGVtYXBiLlNjaGVtYUlkZW50aXR5SAASIgoGc2NoZW1hGAIgASgLMhAuc2NoZW1hcGIuU2NoZW1hSABCCAoGc291cmNlIlYKBkZpbGxlZBIjCgZzY2hlbWEYASABKAsyEy5zY2hlbWFwYi5TY2hlbWFSZWYSJwoGdmFsdWVzGAIgASgLMhcuZ29vZ2xlLnByb3RvYnVmLlN0cnVjdCJSCgVCYWtlZBIgCgZzY2hlbWEYASABKAsyEC5zY2hlbWFwYi5TY2hlbWESJwoGdmFsdWVzGAIgASgLMhcuZ29vZ2xlLnByb3RvYnVmLlN0cnVjdEIpWidnaXRodWIuY29tL3N0cm9wcHktaW8vc2NoZW1hcGIvc2NoZW1hcGJiBnByb3RvMw", [file_google_protobuf_duration, file_google_protobuf_struct, file_google_protobuf_timestamp]);
+  fileDesc("ChVzY2hlbWFwYi9zY2hlbWEucHJvdG8SCHNjaGVtYXBiIuwqCgZTY2hlbWESJAoCaWQYASABKAsyGC5zY2hlbWFwYi5TY2hlbWFJZGVudGl0eRIYCgtkZXNjcmlwdGlvbhgCIAEoCUgAiAEBEiYKBmZpZWxkcxgDIAMoCzIWLnNjaGVtYXBiLlNjaGVtYS5GaWxlZBIqCgVydWxlcxgEIAMoCzIbLnNjaGVtYXBiLlNjaGVtYS5GaWxlZC5SdWxlEg4KBnN0cmljdBgFIAEoCBIbCg5taW5fcHJvcGVydGllcxgGIAEoBEgBiAEBEhsKDm1heF9wcm9wZXJ0aWVzGAcgASgESAKIAQESDgoGY29lcmNlGAggASgIEigKBGRlZnMYCSADKAsyGi5zY2hlbWFwYi5TY2hlbWEuRGVmc0VudHJ5GtQnCgVGaWxlZBIMCgRuYW1lGAEgASgJEhgKC2Rlc2NyaXB0aW9uGAIgASgJSAGIAQESEAoIbnVsbGFibGUYAyABKAgSEAoIcmVxdWlyZWQYBCABKAgSKgoFcnVsZXMYBSADKAsyGy5zY2hlbWFwYi5TY2hlbWEuRmlsZWQuUnVsZRIRCglpbW11dGFibGUYFCABKAgSEgoFZ3JvdXAYFSABKAlIAogBARIRCgR1bml0GBYgASgJSAOIAQESEgoFdGl0bGUYFyABKAlIBIgBARISCgpkZXByZWNhdGVkGBggASgIEigKCGV4YW1wbGVzGBkgAygLMhYuZ29vZ2xlLnByb3RvYnVmLlZhbHVlEg4KBnNlY3JldBgaIAEoCBIWCglub3JtYWxpemUYGyABKAlIBYgBARIRCgR3aGVuGB4gASgJSAaIAQESLQoFZmxvYXQYBiABKAsyHC5zY2hlbWFwYi5TY2hlbWEuRmlsZWQuRmxvYXRIABIvCgZkb3VibGUYByABKAsyHS5zY2hlbWFwYi5TY2hlbWEuRmlsZWQuRG91YmxlSAASLQoFaW50MzIYCCABKAsyHC5zY2hlbWFwYi5TY2hlbWEuRmlsZWQuSW50MzJIABItCgVpbnQ2NBgJIAEoCzIcLnNjaGVtYXBiLlNjaGVtYS5GaWxlZC5JbnQ2NEgAEi8KBnVpbnQzMhgKIAEoCzIdLnNjaGVtYXBiLlNjaGVtYS5GaWxlZC5VSW50MzJIABIvCgZ1aW50NjQYCyABKAsyHS5zY2hlbWFwYi5TY2hlbWEuRmlsZWQuVUludDY0SAASKwoEYm9vbBgMIAEoCzIbLnNjaGVtYXBiLlNjaGVtYS5GaWxlZC5Cb29sSAASLwoGc3RyaW5nGA0gASgLMh0uc2NoZW1hcGIuU2NoZW1hLkZpbGVkLlN0cmluZ0gAEisKBGVudW0YDiABKAsyGy5zY2hlbWFwYi5TY2hlbWEuRmlsZWQuRW51bUgAEjMKCGR1cmF0aW9uGA8gASgLMh8uc2NoZW1hcGIuU2NoZW1hLkZpbGVkLkR1cmF0aW9uSAASNQoJdGltZXN0YW1wGBAgASgLMiAuc2NoZW1hcGIuU2NoZW1hLkZpbGVkLlRpbWVzdGFtcEgAEisKBGxpc3QYESABKAsyGy5zY2hlbWFwYi5TY2hlbWEuRmlsZWQuTGlzdEgAEi8KBm9iamVjdBgSIAEoCzIdLnNjaGVtYXBiLlNjaGVtYS5GaWxlZC5PYmplY3RIABIzCghjb21wdXRlZBgTIAEoCzIfLnNjaGVtYXBiLlNjaGVtYS5GaWxlZC5Db21wdXRlZEgAEi4KBm9uZV9vZhgcIAEoCzIcLnNjaGVtYXBiLlNjaGVtYS5GaWxlZC5PbmVPZkgAEikKA3JlZhgdIAEoCzIaLnNjaGVtYXBiLlNjaGVtYS5GaWxlZC5SZWZIABrxAQoFRmxvYXQSFAoHZGVmYXVsdBgBIAEoAkgAiAEBEhIKBWNvbnN0GAIgASgCSAGIAQESDwoCZ3QYAyABKAJIAogBARIQCgNndGUYBCABKAJIA4gBARIPCgJsdBgFIAEoAkgEiAEBEhAKA2x0ZRgGIAEoAkgFiAEBEgoKAmluGAcgAygCEg4KBm5vdF9pbhgIIAMoAhIYCgttdWx0aXBsZV9vZhgJIAEoAkgGiAEBQgoKCF9kZWZhdWx0QggKBl9jb25zdEIFCgNfZ3RCBgoEX2d0ZUIFCgNfbHRCBgoEX2x0ZUIOCgxfbXVsdGlwbGVfb2Ya8gEKBkRvdWJsZRIUCgdkZWZhdWx0GAEgASgBSACIAQESEgoFY29uc3QYAiABKAFIAYgBARIPCgJndBgDIAEoAUgCiAEBEhAKA2d0ZRgEIAEoAUgDiAEBEg8KAmx0GAUgASgBSASIAQESEAoDbHRlGAYgASgBSAWIAQESCgoCaW4YByADKAESDgoGbm90X2luGAggAygBEhgKC211bHRpcGxlX29mGAkgASgBSAaIAQFCCgoIX2RlZmF1bHRCCAoGX2NvbnN0QgUKA19ndEIGCgRfZ3RlQgUKA19sdEIGCgRfbHRlQg4KDF9tdWx0aXBsZV9vZhrxAQoFSW50MzISFAoHZGVmYXVsdBgBIAEoBUgAiAEBEhIKBWNvbnN0GAIgASgFSAGIAQESDwoCZ3QYAyABKAVIAogBARIQCgNndGUYBCABKAVIA4gBARIPCgJsdBgFIAEoBUgEiAEBEhAKA2x0ZRgGIAEoBUgFiAEBEgoKAmluGAcgAygFEg4KBm5vdF9pbhgIIAMoBRIYCgttdWx0aXBsZV9vZhgJIAEoBUgGiAEBQgoKCF9kZWZhdWx0QggKBl9jb25zdEIFCgNfZ3RCBgoEX2d0ZUIFCgNfbHRCBgoEX2x0ZUIOCgxfbXVsdGlwbGVfb2Ya8QEKBUludDY0EhQKB2RlZmF1bHQYASABKANIAIgBARISCgVjb25zdBgCIAEoA0gBiAEBEg8KAmd0GAMgASgDSAKIAQESEAoDZ3RlGAQgASgDSAOIAQESDwoCbHQYBSABKANIBIgBARIQCgNsdGUYBiABKANIBYgBARIKCgJpbhgHIAMoAxIOCgZub3RfaW4YCCADKAMSGAoLbXVsdGlwbGVfb2YYCSABKANIBogBAUIKCghfZGVmYXVsdEIICgZfY29uc3RCBQoDX2d0QgYKBF9ndGVCBQoDX2x0QgYKBF9sdGVCDgoMX211bHRpcGxlX29mGvIBCgZVSW50MzISFAoHZGVmYXVsdBgBIAEoDUgAiAEBEhIKBWNvbnN0GAIgASgNSAGIAQESDwoCZ3QYAyABKA1IAogBARIQCgNndGUYBCABKA1IA4gBARIPCgJsdBgFIAEoDUgEiAEBEhAKA2x0ZRgGIAEoDUgFiAEBEgoKAmluGAcgAygNEg4KBm5vdF9pbhgIIAMoDRIYCgttdWx0aXBsZV9vZhgJIAEoDUgGiAEBQgoKCF9kZWZhdWx0QggKBl9jb25zdEIFCgNfZ3RCBgoEX2d0ZUIFCgNfbHRCBgoEX2x0ZUIOCgxfbXVsdGlwbGVfb2Ya8gEKBlVJbnQ2NBIUCgdkZWZhdWx0GAEgASgESACIAQESEgoFY29uc3QYAiABKARIAYgBARIPCgJndBgDIAEoBEgCiAEBEhAKA2d0ZRgEIAEoBEgDiAEBEg8KAmx0GAUgASgESASIAQESEAoDbHRlGAYgASgESAWIAQESCgoCaW4YByADKAQSDgoGbm90X2luGAggAygEEhgKC211bHRpcGxlX29mGAkgASgESAaIAQFCCgoIX2RlZmF1bHRCCAoGX2NvbnN0QgUKA19ndEIGCgRfZ3RlQgUKA19sdEIGCgRfbHRlQg4KDF9tdWx0aXBsZV9vZhpGCgRCb29sEhQKB2RlZmF1bHQYASABKAhIAIgBARISCgVjb25zdBgCIAEoCEgBiAEBQgoKCF9kZWZhdWx0QggKBl9jb25zdBrWBAoGU3RyaW5nEhQKB2RlZmF1bHQYASABKAlIAIgBARISCgVjb25zdBgCIAEoCUgBiAEBEhAKA2xlbhgDIAEoBEgCiAEBEhQKB21pbl9sZW4YBCABKARIA4gBARIUCgdtYXhfbGVuGAUgASgESASIAQESFAoHcGF0dGVybhgGIAEoCUgFiAEBEgoKAmluGAcgAygJEg4KBm5vdF9pbhgIIAMoCRI/CgZmb3JtYXQYCSABKA4yKi5zY2hlbWFwYi5TY2hlbWEuRmlsZWQuU3RyaW5nLlN0cmluZ0Zvcm1hdEgGiAEBIqMCCgxTdHJpbmdGb3JtYXQSHQoZU1RSSU5HX0ZPUk1BVF9VTlNQRUNJRklFRBAAEhcKE1NUUklOR19GT1JNQVRfRU1BSUwQARIVChFTVFJJTkdfRk9STUFUX1VSTBACEhYKElNUUklOR19GT1JNQVRfVVVJRBADEhYKElNUUklOR19GT1JNQVRfSVBWNBAEEhYKElNUUklOR19GT1JNQVRfSVBWNhAFEhQKEFNUUklOR19GT1JNQVRfSVAQBhIaChZTVFJJTkdfRk9STUFUX0hPU1ROQU1FEAcSFgoSU1RSSU5HX0ZPUk1BVF9EQVRFEAgSFgoSU1RSSU5HX0ZPUk1BVF9USU1FEAkSGgoWU1RSSU5HX0ZPUk1BVF9EQVRFVElNRRAKQgoKCF9kZWZhdWx0QggKBl9jb25zdEIGCgRfbGVuQgoKCF9taW5fbGVuQgoKCF9tYXhfbGVuQgoKCF9wYXR0ZXJuQgkKB19mb3JtYXQa7gEKBEVudW0SFAoHZGVmYXVsdBgBIAEoBUgAiAEBEjcKBnZhbHVlcxgCIAMoCzInLnNjaGVtYXBiLlNjaGVtYS5GaWxlZC5FbnVtLlZhbHVlc0VudHJ5EhQKDGRlZmluZWRfb25seRgDIAEoCBIKCgJpbhgEIAMoBRIOCgZub3RfaW4YBSADKAUSGQoMb3B0aW9uc19leHByGAYgASgJSAGIAQEaLQoLVmFsdWVzRW50cnkSCwoDa2V5GAEgASgFEg0KBXZhbHVlGAIgASgJOgI4AUIKCghfZGVmYXVsdEIPCg1fb3B0aW9uc19leHByGpcCCghEdXJhdGlvbhIvCgdkZWZhdWx0GAEgASgLMhkuZ29vZ2xlLnByb3RvYnVmLkR1cmF0aW9uSACIAQESKgoCZ3QYAiABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb25IAYgBARIrCgNndGUYAyABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb25IAogBARIqCgJsdBgEIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbkgDiAEBEisKA2x0ZRgFIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbkgEiAEBQgoKCF9kZWZhdWx0QgUKA19ndEIGCgRfZ3RlQgUKA19sdEIGCgRfbHRlGp0CCglUaW1lc3RhbXASMAoHZGVmYXVsdBgBIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBIAIgBARIrCgJndBgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBIAYgBARIsCgNndGUYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wSAKIAQESKwoCbHQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wSAOIAQESLAoDbHRlGAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEgEiAEBQgoKCF9kZWZhdWx0QgUKA19ndEIGCgRfZ3RlQgUKA19sdEIGCgRfbHRlGrEBCgRMaXN0EiUKBWl0ZW1zGAEgAygLMhYuc2NoZW1hcGIuU2NoZW1hLkZpbGVkEhYKCW1pbl9pdGVtcxgCIAEoBEgAiAEBEhYKCW1heF9pdGVtcxgDIAEoBEgBiAEBEg4KBnVuaXF1ZRgEIAEoCBIXCgpjb3VudF9leHByGAUgASgJSAKIAQFCDAoKX21pbl9pdGVtc0IMCgpfbWF4X2l0ZW1zQg0KC19jb3VudF9leHByGjoKBk9iamVjdBIlCgZzY2hlbWEYASABKAsyEC5zY2hlbWFwYi5TY2hlbWFIAIgBAUIJCgdfc2NoZW1hGlsKCENvbXB1dGVkEgwKBGV4cHIYASABKAkSNgoGcmVzdWx0GAIgASgOMiEuc2NoZW1hcGIuU2NoZW1hLkZpbGVkLlJlc3VsdFR5cGVIAIgBAUIJCgdfcmVzdWx0GoIBCgRSdWxlEgwKBGV4cHIYASABKAkSDwoHbWVzc2FnZRgCIAEoCRIPCgJpZBgDIAEoCUgAiAEBEjYKCHNldmVyaXR5GAQgASgOMh8uc2NoZW1hcGIuU2NoZW1hLkZpbGVkLlNldmVyaXR5SAGIAQFCBQoDX2lkQgsKCV9zZXZlcml0eRqfAQoFT25lT2YSFQoNZGlzY3JpbWluYXRvchgBIAEoCRI8Cgh2YXJpYW50cxgCIAMoCzIqLnNjaGVtYXBiLlNjaGVtYS5GaWxlZC5PbmVPZi5WYXJpYW50c0VudHJ5GkEKDVZhcmlhbnRzRW50cnkSCwoDa2V5GAEgASgJEh8KBXZhbHVlGAIgASgLMhAuc2NoZW1hcGIuU2NoZW1hOgI4ARpHCgNSZWYSDgoEbmFtZRgBIAEoCUgAEiYKAmlkGAIgASgLMhguc2NoZW1hcGIuU2NoZW1hSWRlbnRpdHlIAEIICgZ0YXJnZXQiuAEKClJlc3VsdFR5cGUSGwoXUkVTVUxUX1RZUEVfVU5TUEVDSUZJRUQQABIWChJSRVNVTFRfVFlQRV9ET1VCTEUQARIVChFSRVNVTFRfVFlQRV9JTlQ2NBACEhYKElJFU1VMVF9UWVBFX1VJTlQ2NBADEhQKEFJFU1VMVF9UWVBFX0JPT0wQBBIWChJSRVNVTFRfVFlQRV9TVFJJTkcQBRIYChRSRVNVTFRfVFlQRV9EVVJBVElPThAGIjwKCFNldmVyaXR5EhgKFFNFVkVSSVRZX1VOU1BFQ0lGSUVEEAASCQoFRVJST1IQARILCgdXQVJOSU5HEAJCBgoEa2luZEIOCgxfZGVzY3JpcHRpb25CCAoGX2dyb3VwQgcKBV91bml0QggKBl90aXRsZUIMCgpfbm9ybWFsaXplQgcKBV93aGVuGj0KCURlZnNFbnRyeRILCgNrZXkYASABKAkSHwoFdmFsdWUYAiABKAsyEC5zY2hlbWFwYi5TY2hlbWE6AjgBQg4KDF9kZXNjcmlwdGlvbkIRCg9fbWluX3Byb3BlcnRpZXNCEQoPX21heF9wcm9wZXJ0aWVzIkIKDlNjaGVtYUlkZW50aXR5EhEKCW5hbWVzcGFjZRgBIAEoCRIMCgRuYW1lGAIgASgJEg8KB3ZlcnNpb24YAyABKAki8AEKCkZpZWxkRXJyb3ISDQoFZmllbGQYASABKAkSDwoHbWVzc2FnZRgCIAEoCRIUCgdydWxlX2lkGAMgASgJSACIAQESMQoIc2V2ZXJpdHkYBCABKA4yHy5zY2hlbWFwYi5TY2hlbWEuRmlsZWQuU2V2ZXJpdHkSDAoEY29kZRgFIAEoCRIwCgZwYXJhbXMYBiADKAsyIC5zY2hlbWFwYi5GaWVsZEVycm9yLlBhcmFtc0VudHJ5Gi0KC1BhcmFtc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAFCCgoIX3J1bGVfaWQiYQoJU2NoZW1hUmVmEiYKAmlkGAEgASgLMhguc2NoZW1hcGIuU2NoZW1hSWRlbnRpdHlIABIiCgZzY2hlbWEYAiABKAsyEC5zY2hlbWFwYi5TY2hlbWFIAEIICgZzb3VyY2UiVgoGRmlsbGVkEiMKBnNjaGVtYRgBIAEoCzITLnNjaGVtYXBiLlNjaGVtYVJlZhInCgZ2YWx1ZXMYAiABKAsyFy5nb29nbGUucHJvdG9idWYuU3RydWN0IlIKBUJha2VkEiAKBnNjaGVtYRgBIAEoCzIQLnNjaGVtYXBiLlNjaGVtYRInCgZ2YWx1ZXMYAiABKAsyFy5nb29nbGUucHJvdG9idWYuU3RydWN0QilaJ2dpdGh1Yi5jb20vc3Ryb3BweS1pby9zY2hlbWFwYi9zY2hlbWFwYmIGcHJvdG8z", [file_google_protobuf_duration, file_google_protobuf_struct, file_google_protobuf_timestamp]);
 
 /**
  *
@@ -224,6 +224,23 @@ export const SchemaSchema: GenMessage<Schema, {jsonType: SchemaJson, validType: 
   messageDesc(file_schemapb_schema, 0);
 
 /**
+ *
+ * Filed is one field of the form.
+ *
+ * Per-field evaluation order (each stage reads the form as resolved by the
+ * previous one):
+ *   1. when         — gate: if false the field is INACTIVE and every stage
+ *                     below is skipped; the field is treated as ABSENT (its
+ *                     value, if any, is preserved but ignored). For a
+ *                     container kind (Object/OneOf/List/Ref) the WHOLE
+ *                     subtree is gated.
+ *   2. normalize    — map the field's own value.
+ *   3. Computed     — derive the value from `root`.
+ *   4. options_expr / count_expr — dynamic Enum options / List length.
+ *   5. rules + kind constraints — required/nullable, gt/lt/in/pattern, ...
+ *
+ * Renderer contract: an inactive field (when=false) MUST NOT be rendered.
+ *
  * @generated from message schemapb.Schema.Filed
  */
 export type Schema_Filed = Message<"schemapb.Schema.Filed"> & {
@@ -329,6 +346,25 @@ export type Schema_Filed = Message<"schemapb.Schema.Filed"> & {
    * @generated from field: optional string normalize = 27;
    */
   normalize?: string;
+
+  /**
+   *
+   * Conditional gate: an expr boolean over `root` (the whole form as
+   * map<string, dyn>). When it evaluates to false the field is INACTIVE —
+   * the validator skips it ENTIRELY (no required/nullable, no rules, no
+   * kind constraints, no Computed/normalize) and treats it as ABSENT
+   * regardless of any value present in `values`. For a container kind the
+   * whole subtree is gated. Inactive fields do not count toward
+   * min/max_properties and their value key never raises a strict
+   * "unknown_field". Their value is NOT deleted, so it reappears if the
+   * field becomes active again. Renderers MUST hide an inactive field.
+   * `this` is NOT bound (a field's own value must not gate its
+   * existence). Empty/absent => always active. A non-bool result is a
+   * runtime error.
+   *
+   * @generated from field: optional string when = 30;
+   */
+  when?: string;
 
   /**
    * The field kind; exactly one must be set. 
@@ -467,6 +503,23 @@ export type Schema_Filed = Message<"schemapb.Schema.Filed"> & {
 };
 
 /**
+ *
+ * Filed is one field of the form.
+ *
+ * Per-field evaluation order (each stage reads the form as resolved by the
+ * previous one):
+ *   1. when         — gate: if false the field is INACTIVE and every stage
+ *                     below is skipped; the field is treated as ABSENT (its
+ *                     value, if any, is preserved but ignored). For a
+ *                     container kind (Object/OneOf/List/Ref) the WHOLE
+ *                     subtree is gated.
+ *   2. normalize    — map the field's own value.
+ *   3. Computed     — derive the value from `root`.
+ *   4. options_expr / count_expr — dynamic Enum options / List length.
+ *   5. rules + kind constraints — required/nullable, gt/lt/in/pattern, ...
+ *
+ * Renderer contract: an inactive field (when=false) MUST NOT be rendered.
+ *
  * @generated from message schemapb.Schema.Filed
  */
 export type Schema_FiledJson = {
@@ -572,6 +625,25 @@ export type Schema_FiledJson = {
    * @generated from field: optional string normalize = 27;
    */
   normalize?: string;
+
+  /**
+   *
+   * Conditional gate: an expr boolean over `root` (the whole form as
+   * map<string, dyn>). When it evaluates to false the field is INACTIVE —
+   * the validator skips it ENTIRELY (no required/nullable, no rules, no
+   * kind constraints, no Computed/normalize) and treats it as ABSENT
+   * regardless of any value present in `values`. For a container kind the
+   * whole subtree is gated. Inactive fields do not count toward
+   * min/max_properties and their value key never raises a strict
+   * "unknown_field". Their value is NOT deleted, so it reappears if the
+   * field becomes active again. Renderers MUST hide an inactive field.
+   * `this` is NOT bound (a field's own value must not gate its
+   * existence). Empty/absent => always active. A non-bool result is a
+   * runtime error.
+   *
+   * @generated from field: optional string when = 30;
+   */
+  when?: string;
 
   /**
    * Float field. 
@@ -1925,6 +1997,20 @@ export type Schema_Filed_Enum = Message<"schemapb.Schema.Filed.Enum"> & {
    * @generated from field: repeated int32 not_in = 5;
    */
   notIn: number[];
+
+  /**
+   *
+   * expr over `root` returning a list of allowed integer values. When
+   * set it REPLACES the static allowed set (values/in/not_in/
+   * defined_only) for validation and supplies the option list to
+   * renderers. The submitted value must be a member of the result,
+   * else FieldError code "enum_not_allowed". Empty/absent => use the
+   * static values. The result must be a list; a non-list is a runtime
+   * error. Use cases: db versions by kind, zones by region.
+   *
+   * @generated from field: optional string options_expr = 6;
+   */
+  optionsExpr?: string;
 };
 
 /**
@@ -1968,6 +2054,20 @@ export type Schema_Filed_EnumJson = {
    * @generated from field: repeated int32 not_in = 5;
    */
   notIn?: number[];
+
+  /**
+   *
+   * expr over `root` returning a list of allowed integer values. When
+   * set it REPLACES the static allowed set (values/in/not_in/
+   * defined_only) for validation and supplies the option list to
+   * renderers. The submitted value must be a member of the result,
+   * else FieldError code "enum_not_allowed". Empty/absent => use the
+   * static values. The result must be a list; a non-list is a runtime
+   * error. Use cases: db versions by kind, zones by region.
+   *
+   * @generated from field: optional string options_expr = 6;
+   */
+  optionsExpr?: string;
 };
 
 export type Schema_Filed_EnumValid = Schema_Filed_Enum;
@@ -2203,6 +2303,21 @@ export type Schema_Filed_List = Message<"schemapb.Schema.Filed.List"> & {
    * @generated from field: bool unique = 4;
    */
   unique: boolean;
+
+  /**
+   *
+   * expr over `root` returning a non-negative int: the exact number
+   * of items the list must have. Renderers generate that many item
+   * slots. The list length must equal the result, else FieldError
+   * code "list_count_mismatch". Empty/absent => length bounded only by
+   * min_items/max_items. A non-int or negative result is a runtime
+   * error. Each item is still validated by the item schema; inside an
+   * item's rules the item's zero-based position is bound as `index`.
+   * Use case: per-machine settings where N = replicas + 1.
+   *
+   * @generated from field: optional string count_expr = 5;
+   */
+  countExpr?: string;
 };
 
 /**
@@ -2239,6 +2354,21 @@ export type Schema_Filed_ListJson = {
    * @generated from field: bool unique = 4;
    */
   unique?: boolean;
+
+  /**
+   *
+   * expr over `root` returning a non-negative int: the exact number
+   * of items the list must have. Renderers generate that many item
+   * slots. The list length must equal the result, else FieldError
+   * code "list_count_mismatch". Empty/absent => length bounded only by
+   * min_items/max_items. A non-int or negative result is a runtime
+   * error. Each item is still validated by the item schema; inside an
+   * item's rules the item's zero-based position is bound as `index`.
+   * Use case: per-machine settings where N = replicas + 1.
+   *
+   * @generated from field: optional string count_expr = 5;
+   */
+  countExpr?: string;
 };
 
 export type Schema_Filed_ListValid = Schema_Filed_List;
@@ -2518,28 +2648,56 @@ export const Schema_Filed_OneOfSchema: GenMessage<Schema_Filed_OneOf, {jsonType:
 
 /**
  *
- * Ref field kind: the value must be an object validated against the
- * named definition in the root schema's defs map. Enables recursive
- * schemas — a def may contain a Ref back to itself; recursion
- * terminates because it follows the (finite) data.
+ * Ref field kind: the value is an object validated against another
+ * schema. The target is selected one of two ways:
+ *   - name: a key in the root schema's defs map (local composition;
+ *     enables recursion — a def may Ref back to itself, terminating on
+ *     the finite data).
+ *   - id:   the SchemaIdentity of a separately-registered schema. The
+ *     identity is PRESERVED on the node (renderers can show/link the
+ *     target), and the referenced schema must be made resolvable —
+ *     either present in the root defs under its identity key, or pulled
+ *     in by Link(resolver) before validation. An id-ref to a schema not
+ *     present in defs is an "unknown $ref" error at validate time.
  *
  * @generated from message schemapb.Schema.Filed.Ref
  */
 export type Schema_Filed_Ref = Message<"schemapb.Schema.Filed.Ref"> & {
   /**
-   * Name of the def in the root schema's defs map. 
-   *
-   * @generated from field: string name = 1;
+   * @generated from oneof schemapb.Schema.Filed.Ref.target
    */
-  name: string;
+  target: {
+    /**
+     * Name of the def in the root schema's defs map. 
+     *
+     * @generated from field: string name = 1;
+     */
+    value: string;
+    case: "name";
+  } | {
+    /**
+     * Identity of a registered schema (resolved via defs / Link). 
+     *
+     * @generated from field: schemapb.SchemaIdentity id = 2;
+     */
+    value: SchemaIdentity;
+    case: "id";
+  } | { case: undefined; value?: undefined };
 };
 
 /**
  *
- * Ref field kind: the value must be an object validated against the
- * named definition in the root schema's defs map. Enables recursive
- * schemas — a def may contain a Ref back to itself; recursion
- * terminates because it follows the (finite) data.
+ * Ref field kind: the value is an object validated against another
+ * schema. The target is selected one of two ways:
+ *   - name: a key in the root schema's defs map (local composition;
+ *     enables recursion — a def may Ref back to itself, terminating on
+ *     the finite data).
+ *   - id:   the SchemaIdentity of a separately-registered schema. The
+ *     identity is PRESERVED on the node (renderers can show/link the
+ *     target), and the referenced schema must be made resolvable —
+ *     either present in the root defs under its identity key, or pulled
+ *     in by Link(resolver) before validation. An id-ref to a schema not
+ *     present in defs is an "unknown $ref" error at validate time.
  *
  * @generated from message schemapb.Schema.Filed.Ref
  */
@@ -2550,6 +2708,13 @@ export type Schema_Filed_RefJson = {
    * @generated from field: string name = 1;
    */
   name?: string;
+
+  /**
+   * Identity of a registered schema (resolved via defs / Link). 
+   *
+   * @generated from field: schemapb.SchemaIdentity id = 2;
+   */
+  id?: SchemaIdentityJson;
 };
 
 export type Schema_Filed_RefValid = Schema_Filed_Ref;

@@ -331,6 +331,8 @@
     - [cloud.v1.api.PatchTestWizardRequest](cloud/v1/api/README.md#cloud-v1-api-patchtestwizardrequest)
     - [cloud.v1.api.PatchTestWizardResponse](cloud/v1/api/README.md#cloud-v1-api-patchtestwizardresponse)
     - [cloud.v1.api.PlatformSettings](cloud/v1/api/README.md#cloud-v1-api-platformsettings)
+    - [cloud.v1.api.ProbeCatalogRequest](cloud/v1/api/README.md#cloud-v1-api-probecatalogrequest)
+    - [cloud.v1.api.ProbeCatalogResponse](cloud/v1/api/README.md#cloud-v1-api-probecatalogresponse)
     - [cloud.v1.api.ProbeScriptRequest](cloud/v1/api/README.md#cloud-v1-api-probescriptrequest)
     - [cloud.v1.api.ProbeScriptRequest.EnvEntry](cloud/v1/api/README.md#cloud-v1-api-probescriptrequest-enventry)
     - [cloud.v1.api.ProbeScriptResponse](cloud/v1/api/README.md#cloud-v1-api-probescriptresponse)

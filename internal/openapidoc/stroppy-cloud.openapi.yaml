@@ -5329,6 +5329,20 @@ components:
                     minLength: 1
                     type: string
             type: object
+        ProbeCatalogRequest:
+            additionalProperties: false
+            properties:
+                version:
+                    type: string
+            type: object
+        ProbeCatalogResponse:
+            additionalProperties: false
+            properties:
+                scripts:
+                    items:
+                        type: string
+                    type: array
+            type: object
         ProbeScriptRequest:
             additionalProperties: false
             properties:
@@ -12911,6 +12925,36 @@ paths:
             tags:
                 - test-wizard
             x-idempotency-level: IDEMPOTENT
+            x-ogen-operation-group: TestWizard
+    /api/v1/test-wizard/probe-catalog:
+        get:
+            description: |-
+                ProbeCatalog lists the runnable scripts a stroppy binary embeds (its
+                `probe -o json` catalog). Read-only / no side effects.
+            operationId: probeCatalog
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ProbeCatalogRequest'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ProbeCatalogResponse'
+                    description: OK
+                default:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Unexpected error.
+            summary: ProbeCatalog lists the runnable scripts a stroppy binary embeds (its
+            tags:
+                - test-wizard
+            x-idempotency-level: NO_SIDE_EFFECTS
             x-ogen-operation-group: TestWizard
     /api/v1/test-wizard/probe-script:
         get:

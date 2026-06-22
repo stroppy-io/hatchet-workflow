@@ -8,6 +8,7 @@ package api
 
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
+	_ "github.com/gopherex/protoc-gen-go-graphql/graphqlopt"
 	agent "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agent"
 	_ "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -357,7 +358,7 @@ var File_cloud_v1_api_agent_shell_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_agent_shell_proto_rawDesc = "" +
 	"\n" +
-	"\x1ecloud/v1/api/agent_shell.proto\x12\fcloud.v1.api\x1a\x1acloud/v1/agent/shell.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x17validate/validate.proto\"\xf5\x01\n" +
+	"\x1ecloud/v1/api/agent_shell.proto\x12\fcloud.v1.api\x1a\x1acloud/v1/agent/shell.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x18graphqlopt/graphql.proto\x1a\x17validate/validate.proto\"\xf5\x01\n" +
 	"\n" +
 	"ShellStart\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x1f\n" +
@@ -379,10 +380,10 @@ const file_cloud_v1_api_agent_shell_proto_rawDesc = "" +
 	"\x06stdout\x18\x01 \x01(\fH\x00R\x06stdout\x12\x18\n" +
 	"\x06stderr\x18\x02 \x01(\fH\x00R\x06stderr\x12/\n" +
 	"\x04exit\x18\x03 \x01(\v2\x19.cloud.v1.agent.ShellExitH\x00R\x04exitB\a\n" +
-	"\x05frame2p\n" +
+	"\x05frame2x\n" +
 	"\x11AgentShellService\x12[\n" +
 	"\tOpenShell\x12\x1e.cloud.v1.api.ShellClientFrame\x1a\x1e.cloud.v1.api.ShellServerFrame\"\n" +
-	"\x8a\xb5\x18\x06\x12\x04\b\f\x10\x01(\x010\x01BAZ?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
+	"\x8a\xb5\x18\x06\x12\x04\b\f\x10\x01(\x010\x01\x1a\x06\xc2\xc9&\x02\b\x01BAZ?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
 
 var (
 	file_cloud_v1_api_agent_shell_proto_rawDescOnce sync.Once

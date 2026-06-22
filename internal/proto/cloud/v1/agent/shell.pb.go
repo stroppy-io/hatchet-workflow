@@ -7,6 +7,7 @@
 package agent
 
 import (
+	_ "github.com/gopherex/protoc-gen-go-graphql/graphqlopt"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -527,7 +528,7 @@ var File_cloud_v1_agent_shell_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_agent_shell_proto_rawDesc = "" +
 	"\n" +
-	"\x1acloud/v1/agent/shell.proto\x12\x0ecloud.v1.agent\x1a\x1bgoogle/protobuf/empty.proto\"\x83\x01\n" +
+	"\x1acloud/v1/agent/shell.proto\x12\x0ecloud.v1.agent\x1a\x1bgoogle/protobuf/empty.proto\x1a\x18graphqlopt/graphql.proto\"\x83\x01\n" +
 	"\tOpenShell\x12\x15\n" +
 	"\x06run_id\x18\x01 \x01(\tR\x05runId\x12!\n" +
 	"\fcomponent_id\x18\x02 \x01(\tR\vcomponentId\x12\x12\n" +
@@ -558,9 +559,9 @@ const file_cloud_v1_agent_shell_proto_rawDesc = "" +
 	"\x06stdout\x18\x03 \x01(\fH\x00R\x06stdout\x12\x18\n" +
 	"\x06stderr\x18\x04 \x01(\fH\x00R\x06stderr\x12/\n" +
 	"\x04exit\x18\x05 \x01(\v2\x19.cloud.v1.agent.ShellExitH\x00R\x04exitB\x05\n" +
-	"\x03msg2f\n" +
+	"\x03msg2n\n" +
 	"\x16AgentShellAgentService\x12L\n" +
-	"\aConnect\x12\x1d.cloud.v1.agent.AgentShellMsg\x1a\x1e.cloud.v1.agent.ServerShellMsg(\x010\x01BCZAgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agentb\x06proto3"
+	"\aConnect\x12\x1d.cloud.v1.agent.AgentShellMsg\x1a\x1e.cloud.v1.agent.ServerShellMsg(\x010\x01\x1a\x06\xc2\xc9&\x02\b\x01BCZAgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agentb\x06proto3"
 
 var (
 	file_cloud_v1_agent_shell_proto_rawDescOnce sync.Once

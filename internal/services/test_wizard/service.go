@@ -138,6 +138,10 @@ type ProbeOutput struct {
 // service does not import internal/infrastructure/execution (cycle-free).
 type Prober interface {
 	Probe(ctx context.Context, in ProbeInput) (*ProbeOutput, error)
+	// Catalog lists the runnable scripts the binary embeds (its `probe -o json`
+	// catalog), in "<preset>/<script>" form. Errors on binaries that predate the
+	// no-script catalog probe (stroppy < 5.4.0).
+	Catalog(ctx context.Context, version string) ([]string, error)
 }
 
 // TestWizardDeps bundles every dependency for the constructor.
@@ -478,6 +482,18 @@ func (s *TestWizardService) ProbeScript(ctx context.Context, req *api.ProbeScrip
 		resp.Metadata = md
 	}
 	return resp, nil
+}
+
+// ProbeCatalog lists the runnable scripts a stroppy binary embeds via the
+// server-local prober (its `probe -o json` catalog). Read-only. Binaries that
+// predate the no-script catalog probe (stroppy < 5.4.0) return an error, which
+// the caller treats as "no catalog" and falls back to a free-text script field.
+func (s *TestWizardService) ProbeCatalog(ctx context.Context, req *api.ProbeCatalogRequest) (*api.ProbeCatalogResponse, error) {
+	scripts, err := s.d.Prober.Catalog(ctx, req.GetVersion())
+	if err != nil {
+		return nil, utils.MapErr(err)
+	}
+	return &api.ProbeCatalogResponse{Scripts: scripts}, nil
 }
 
 // resolveRating applies the documented defaults for the started run's rating

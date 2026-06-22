@@ -6,6 +6,7 @@ import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegen
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import type { LogLine, LogLineJson } from "../monitor/logs_pb.ts";
 import { file_cloud_v1_monitor_logs } from "../monitor/logs_pb.ts";
+import { file_graphqlopt_graphql } from "../../../graphqlopt/graphql_pb.ts";
 import { file_validate_validate } from "../../../validate/validate_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -13,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/agent/logs.proto.
  */
 export const file_cloud_v1_agent_logs: GenFile = /*@__PURE__*/
-  fileDesc("ChljbG91ZC92MS9hZ2VudC9sb2dzLnByb3RvEg5jbG91ZC52MS5hZ2VudCJGCghMb2dCYXRjaBI6CgVsaW5lcxgBIAMoCzIZLmNsb3VkLnYxLm1vbml0b3IuTG9nTGluZUIQ+kINkgEKIgWKAQIIARCQTiIfCgtTaGlwTG9nc0FjaxIQCghhY2NlcHRlZBgBIAEoBDJWCg9BZ2VudExvZ1NlcnZpY2USQwoIU2hpcExvZ3MSGC5jbG91ZC52MS5hZ2VudC5Mb2dCYXRjaBobLmNsb3VkLnYxLmFnZW50LlNoaXBMb2dzQWNrKAFCQ1pBZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvYWdlbnRiBnByb3RvMw", [file_cloud_v1_monitor_logs, file_validate_validate]);
+  fileDesc("ChljbG91ZC92MS9hZ2VudC9sb2dzLnByb3RvEg5jbG91ZC52MS5hZ2VudCJGCghMb2dCYXRjaBI6CgVsaW5lcxgBIAMoCzIZLmNsb3VkLnYxLm1vbml0b3IuTG9nTGluZUIQ+kINkgEKEJBOIgWKAQIIASIfCgtTaGlwTG9nc0FjaxIQCghhY2NlcHRlZBgBIAEoBDJeCg9BZ2VudExvZ1NlcnZpY2USQwoIU2hpcExvZ3MSGC5jbG91ZC52MS5hZ2VudC5Mb2dCYXRjaBobLmNsb3VkLnYxLmFnZW50LlNoaXBMb2dzQWNrKAEaBsLJJgIIAUJDWkFnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9hZ2VudGIGcHJvdG8z", [file_cloud_v1_monitor_logs, file_graphqlopt_graphql, file_validate_validate]);
 
 /**
  *
