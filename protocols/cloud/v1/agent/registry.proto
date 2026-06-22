@@ -3,6 +3,7 @@ syntax = "proto3";
 package cloud.v1.agent;
 
 import "google/protobuf/timestamp.proto";
+import "graphqlopt/graphql.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agent";
@@ -81,6 +82,8 @@ message HeartbeatResponse {}
     and heartbeat so the server knows which agents are online.
  */
 service AgentRegistryService {
+    // agent→server registration/heartbeat. Not exposed via GraphQL.
+    option (graphqlopt.service).skip = true;
     /*
         Register announces an agent coming online.
      */

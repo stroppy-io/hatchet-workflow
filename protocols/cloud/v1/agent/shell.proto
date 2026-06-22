@@ -3,6 +3,7 @@ syntax = "proto3";
 package cloud.v1.agent;
 
 import "google/protobuf/empty.proto";
+import "graphqlopt/graphql.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agent";
 
@@ -152,6 +153,8 @@ message AgentShellMsg {
     token, NOT the iam RBAC interceptor — hence no (cloud.v1.iam.auth) annotation.
  */
 service AgentShellAgentService {
+    // bidi-streaming agent control plane. Not exposed via GraphQL.
+    option (graphqlopt.service).skip = true;
     /*
         Connect opens the long-lived, multiplexed control stream.
      */

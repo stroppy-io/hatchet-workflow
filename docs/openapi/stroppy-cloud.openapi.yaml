@@ -208,14 +208,6 @@ components:
                     $ref: '#/components/schemas/Schema'
                 values: {}
             type: object
-        Bool:
-            additionalProperties: false
-            properties:
-                const:
-                    type: boolean
-                default:
-                    type: boolean
-            type: object
         CancelSuiteRunRequest:
             additionalProperties: false
             properties:
@@ -1039,6 +1031,7 @@ components:
                 sha256:
                     maxLength: 64
                     minLength: 64
+                    pattern: ^[0-9a-fA-F]{64}$
                     type: string
                 sizeBytes:
                     exclusiveMinimum: true
@@ -1564,41 +1557,6 @@ components:
                         - network-ssd-io-m3
                     type: string
             type: object
-        Double:
-            additionalProperties: false
-            properties:
-                const:
-                    format: double
-                    type: number
-                default:
-                    format: double
-                    type: number
-                gt:
-                    format: double
-                    type: number
-                gte:
-                    format: double
-                    type: number
-                in:
-                    items:
-                        format: double
-                        type: number
-                    type: array
-                lt:
-                    format: double
-                    type: number
-                lte:
-                    format: double
-                    type: number
-                multipleOf:
-                    format: double
-                    type: number
-                notIn:
-                    items:
-                        format: double
-                        type: number
-                    type: array
-            type: object
         Endpoint:
             additionalProperties: false
             properties:
@@ -1626,14 +1584,12 @@ components:
             properties:
                 authorId:
                     maxLength: 64
-                    minLength: 1
                     type: string
                 description:
                     maxLength: 4096
                     type: string
                 id:
                     maxLength: 64
-                    minLength: 1
                     type: string
                 isFavorite:
                     type: boolean
@@ -1643,7 +1599,6 @@ components:
                     type: string
                 tenantId:
                     maxLength: 64
-                    minLength: 1
                     type: string
                 timings:
                     $ref: '#/components/schemas/Timings'
@@ -1717,6 +1672,8 @@ components:
                         format: int32
                         type: integer
                     type: array
+                optionsExpr:
+                    type: string
                 values:
                     additionalProperties:
                         type: string
@@ -1742,6 +1699,9 @@ components:
                 at:
                     format: date-time
                     type: string
+                detail:
+                    maxLength: 4096
+                    type: string
                 kind:
                     enum:
                         - 0
@@ -1760,6 +1720,27 @@ components:
                 nodeExecutionId:
                     maxLength: 128
                     type: string
+                sequence:
+                    format: uint64
+                    type: string
+                severity:
+                    enum:
+                        - 0
+                        - 1
+                        - 2
+                        - 3
+                    format: int32
+                    type: integer
+                source:
+                    enum:
+                        - 0
+                        - 1
+                        - 2
+                        - 3
+                        - 4
+                        - 5
+                    format: int32
+                    type: integer
                 status:
                     enum:
                         - 0
@@ -2025,7 +2006,7 @@ components:
                     - ref
             properties:
                 bool:
-                    $ref: '#/components/schemas/Bool'
+                    $ref: '#/components/schemas/FiledBool'
                 computed:
                     $ref: '#/components/schemas/Computed'
                 deprecated:
@@ -2033,7 +2014,7 @@ components:
                 description:
                     type: string
                 double:
-                    $ref: '#/components/schemas/Double'
+                    $ref: '#/components/schemas/FiledDouble'
                 duration:
                     $ref: '#/components/schemas/FiledDuration'
                 enum:
@@ -2042,15 +2023,15 @@ components:
                     items: {}
                     type: array
                 float:
-                    $ref: '#/components/schemas/Float'
+                    $ref: '#/components/schemas/FiledFloat'
                 group:
                     type: string
                 immutable:
                     type: boolean
                 int32:
-                    $ref: '#/components/schemas/Int32'
+                    $ref: '#/components/schemas/FiledInt32'
                 int64:
-                    $ref: '#/components/schemas/Int64'
+                    $ref: '#/components/schemas/FiledInt64'
                 list:
                     $ref: '#/components/schemas/List'
                 name:
@@ -2074,17 +2055,62 @@ components:
                 secret:
                     type: boolean
                 string:
-                    $ref: '#/components/schemas/String'
+                    $ref: '#/components/schemas/FiledString'
                 timestamp:
                     $ref: '#/components/schemas/FiledTimestamp'
                 title:
                     type: string
                 uint32:
-                    $ref: '#/components/schemas/UInt32'
+                    $ref: '#/components/schemas/FiledUInt32'
                 uint64:
-                    $ref: '#/components/schemas/UInt64'
+                    $ref: '#/components/schemas/FiledUInt64'
                 unit:
                     type: string
+                when:
+                    type: string
+            type: object
+        FiledBool:
+            additionalProperties: false
+            properties:
+                const:
+                    type: boolean
+                default:
+                    type: boolean
+            type: object
+        FiledDouble:
+            additionalProperties: false
+            properties:
+                const:
+                    format: double
+                    type: number
+                default:
+                    format: double
+                    type: number
+                gt:
+                    format: double
+                    type: number
+                gte:
+                    format: double
+                    type: number
+                in:
+                    items:
+                        format: double
+                        type: number
+                    type: array
+                lt:
+                    format: double
+                    type: number
+                lte:
+                    format: double
+                    type: number
+                multipleOf:
+                    format: double
+                    type: number
+                notIn:
+                    items:
+                        format: double
+                        type: number
+                    type: array
             type: object
         FiledDuration:
             additionalProperties: false
@@ -2105,6 +2131,153 @@ components:
                     format: duration
                     type: string
             type: object
+        FiledFloat:
+            additionalProperties: false
+            properties:
+                const:
+                    format: float
+                    type: number
+                default:
+                    format: float
+                    type: number
+                gt:
+                    format: float
+                    type: number
+                gte:
+                    format: float
+                    type: number
+                in:
+                    items:
+                        format: float
+                        type: number
+                    type: array
+                lt:
+                    format: float
+                    type: number
+                lte:
+                    format: float
+                    type: number
+                multipleOf:
+                    format: float
+                    type: number
+                notIn:
+                    items:
+                        format: float
+                        type: number
+                    type: array
+            type: object
+        FiledInt32:
+            additionalProperties: false
+            properties:
+                const:
+                    format: int32
+                    type: integer
+                default:
+                    format: int32
+                    type: integer
+                gt:
+                    format: int32
+                    type: integer
+                gte:
+                    format: int32
+                    type: integer
+                in:
+                    items:
+                        format: int32
+                        type: integer
+                    type: array
+                lt:
+                    format: int32
+                    type: integer
+                lte:
+                    format: int32
+                    type: integer
+                multipleOf:
+                    format: int32
+                    type: integer
+                notIn:
+                    items:
+                        format: int32
+                        type: integer
+                    type: array
+            type: object
+        FiledInt64:
+            additionalProperties: false
+            properties:
+                const:
+                    format: int64
+                    type: string
+                default:
+                    format: int64
+                    type: string
+                gt:
+                    format: int64
+                    type: string
+                gte:
+                    format: int64
+                    type: string
+                in:
+                    items:
+                        format: int64
+                        type: string
+                    type: array
+                lt:
+                    format: int64
+                    type: string
+                lte:
+                    format: int64
+                    type: string
+                multipleOf:
+                    format: int64
+                    type: string
+                notIn:
+                    items:
+                        format: int64
+                        type: string
+                    type: array
+            type: object
+        FiledString:
+            additionalProperties: false
+            properties:
+                const:
+                    type: string
+                default:
+                    type: string
+                format:
+                    enum:
+                        - 0
+                        - 1
+                        - 2
+                        - 3
+                        - 4
+                        - 5
+                        - 6
+                        - 7
+                        - 8
+                        - 9
+                        - 10
+                    format: int32
+                    type: integer
+                in:
+                    items:
+                        type: string
+                    type: array
+                len:
+                    format: uint64
+                    type: string
+                maxLen:
+                    format: uint64
+                    type: string
+                minLen:
+                    format: uint64
+                    type: string
+                notIn:
+                    items:
+                        type: string
+                    type: array
+                pattern:
+                    type: string
+            type: object
         FiledTimestamp:
             additionalProperties: false
             properties:
@@ -2123,6 +2296,85 @@ components:
                 lte:
                     format: date-time
                     type: string
+            type: object
+        FiledUInt32:
+            additionalProperties: false
+            properties:
+                const:
+                    format: int32
+                    minimum: 0
+                    type: integer
+                default:
+                    format: int32
+                    minimum: 0
+                    type: integer
+                gt:
+                    format: int32
+                    minimum: 0
+                    type: integer
+                gte:
+                    format: int32
+                    minimum: 0
+                    type: integer
+                in:
+                    items:
+                        format: int32
+                        minimum: 0
+                        type: integer
+                    type: array
+                lt:
+                    format: int32
+                    minimum: 0
+                    type: integer
+                lte:
+                    format: int32
+                    minimum: 0
+                    type: integer
+                multipleOf:
+                    format: int32
+                    minimum: 0
+                    type: integer
+                notIn:
+                    items:
+                        format: int32
+                        minimum: 0
+                        type: integer
+                    type: array
+            type: object
+        FiledUInt64:
+            additionalProperties: false
+            properties:
+                const:
+                    format: uint64
+                    type: string
+                default:
+                    format: uint64
+                    type: string
+                gt:
+                    format: uint64
+                    type: string
+                gte:
+                    format: uint64
+                    type: string
+                in:
+                    items:
+                        format: uint64
+                        type: string
+                    type: array
+                lt:
+                    format: uint64
+                    type: string
+                lte:
+                    format: uint64
+                    type: string
+                multipleOf:
+                    format: uint64
+                    type: string
+                notIn:
+                    items:
+                        format: uint64
+                        type: string
+                    type: array
             type: object
         FinishSuiteWizardRequest:
             additionalProperties: false
@@ -2189,41 +2441,6 @@ components:
                     $ref: '#/components/schemas/TestRun'
             required:
                 - testRun
-            type: object
-        Float:
-            additionalProperties: false
-            properties:
-                const:
-                    format: float
-                    type: number
-                default:
-                    format: float
-                    type: number
-                gt:
-                    format: float
-                    type: number
-                gte:
-                    format: float
-                    type: number
-                in:
-                    items:
-                        format: float
-                        type: number
-                    type: array
-                lt:
-                    format: float
-                    type: number
-                lte:
-                    format: float
-                    type: number
-                multipleOf:
-                    format: float
-                    type: number
-                notIn:
-                    items:
-                        format: float
-                        type: number
-                    type: array
             type: object
         GetAccountRequest:
             additionalProperties: false
@@ -2405,6 +2622,8 @@ components:
                     maxLength: 64
                     minLength: 1
                     type: string
+                window:
+                    $ref: '#/components/schemas/TimeRange'
             type: object
         GetRunMetricsResponse:
             additionalProperties: false
@@ -2927,76 +3146,6 @@ components:
                 tags:
                     $ref: '#/components/schemas/Tags'
             type: object
-        Int32:
-            additionalProperties: false
-            properties:
-                const:
-                    format: int32
-                    type: integer
-                default:
-                    format: int32
-                    type: integer
-                gt:
-                    format: int32
-                    type: integer
-                gte:
-                    format: int32
-                    type: integer
-                in:
-                    items:
-                        format: int32
-                        type: integer
-                    type: array
-                lt:
-                    format: int32
-                    type: integer
-                lte:
-                    format: int32
-                    type: integer
-                multipleOf:
-                    format: int32
-                    type: integer
-                notIn:
-                    items:
-                        format: int32
-                        type: integer
-                    type: array
-            type: object
-        Int64:
-            additionalProperties: false
-            properties:
-                const:
-                    format: int64
-                    type: string
-                default:
-                    format: int64
-                    type: string
-                gt:
-                    format: int64
-                    type: string
-                gte:
-                    format: int64
-                    type: string
-                in:
-                    items:
-                        format: int64
-                        type: string
-                    type: array
-                lt:
-                    format: int64
-                    type: string
-                lte:
-                    format: int64
-                    type: string
-                multipleOf:
-                    format: int64
-                    type: string
-                notIn:
-                    items:
-                        format: int64
-                        type: string
-                    type: array
-            type: object
         LeaveTenantRequest:
             additionalProperties: false
             properties:
@@ -3032,6 +3181,8 @@ components:
         List:
             additionalProperties: false
             properties:
+                countExpr:
+                    type: string
                 items:
                     items:
                         $ref: '#/components/schemas/Filed'
@@ -3322,6 +3473,25 @@ components:
                 quotas:
                     items:
                         $ref: '#/components/schemas/QuotaView'
+                    type: array
+            type: object
+        ListRegistrationRequestsRequest:
+            additionalProperties: false
+            properties:
+                status:
+                    enum:
+                        - 0
+                        - 1
+                        - 2
+                    format: int32
+                    type: integer
+            type: object
+        ListRegistrationRequestsResponse:
+            additionalProperties: false
+            properties:
+                requests:
+                    items:
+                        $ref: '#/components/schemas/RegistrationRequest'
                     type: array
             type: object
         ListRolesRequest:
@@ -3917,6 +4087,12 @@ components:
         LogFilter:
             additionalProperties: false
             properties:
+                actions:
+                    items:
+                        maxLength: 128
+                        type: string
+                    maxItems: 64
+                    type: array
                 componentIds:
                     items:
                         maxLength: 128
@@ -3926,6 +4102,18 @@ components:
                 end:
                     format: date-time
                     type: string
+                machineIds:
+                    items:
+                        maxLength: 128
+                        type: string
+                    maxItems: 256
+                    type: array
+                mentions:
+                    items:
+                        maxLength: 64
+                        type: string
+                    maxItems: 128
+                    type: array
                 nodeExecutionIds:
                     items:
                         maxLength: 128
@@ -3937,6 +4125,18 @@ components:
                         maxLength: 128
                         type: string
                     maxItems: 256
+                    type: array
+                parentNodeExecutionIds:
+                    items:
+                        maxLength: 128
+                        type: string
+                    maxItems: 256
+                    type: array
+                phases:
+                    items:
+                        maxLength: 128
+                        type: string
+                    maxItems: 64
                     type: array
                 query:
                     maxLength: 4096
@@ -3951,12 +4151,25 @@ components:
                             - 1
                             - 2
                             - 3
+                            - 4
                         format: int32
                         type: integer
+                    type: array
+                stageNames:
+                    items:
+                        maxLength: 256
+                        type: string
+                    maxItems: 256
                     type: array
                 start:
                     format: date-time
                     type: string
+                stepIds:
+                    items:
+                        maxLength: 128
+                        type: string
+                    maxItems: 256
+                    type: array
                 streams:
                     items:
                         enum:
@@ -3969,10 +4182,19 @@ components:
                 unit:
                     maxLength: 256
                     type: string
+                units:
+                    items:
+                        maxLength: 256
+                        type: string
+                    maxItems: 256
+                    type: array
             type: object
         LogLine:
             additionalProperties: false
             properties:
+                action:
+                    maxLength: 128
+                    type: string
                 componentId:
                     maxLength: 128
                     type: string
@@ -3987,11 +4209,22 @@ components:
                 machineId:
                     maxLength: 128
                     type: string
+                mentions:
+                    items:
+                        type: string
+                    maxItems: 64
+                    type: array
                 nodeExecutionId:
                     maxLength: 128
                     type: string
                 observedAt:
                     format: date-time
+                    type: string
+                parentNodeExecutionId:
+                    maxLength: 128
+                    type: string
+                phase:
+                    maxLength: 128
                     type: string
                 runId:
                     maxLength: 128
@@ -4003,8 +4236,15 @@ components:
                         - 1
                         - 2
                         - 3
+                        - 4
                     format: int32
                     type: integer
+                stageName:
+                    maxLength: 256
+                    type: string
+                stepId:
+                    maxLength: 128
+                    type: string
                 stream:
                     enum:
                         - 0
@@ -4069,6 +4309,23 @@ components:
         LogoutResponse:
             additionalProperties: false
             properties: {}
+            type: object
+        LookupAccountByEmailRequest:
+            additionalProperties: false
+            properties:
+                email:
+                    format: email
+                    maxLength: 255
+                    minLength: 5
+                    type: string
+            type: object
+        LookupAccountByEmailResponse:
+            additionalProperties: false
+            properties:
+                account:
+                    $ref: '#/components/schemas/Account'
+            required:
+                - account
             type: object
         MachinePlan:
             additionalProperties: false
@@ -4152,6 +4409,20 @@ components:
                 yandex:
                     $ref: '#/components/schemas/VmOutput'
             type: object
+        MarkRegistrationRequestHandledRequest:
+            additionalProperties: false
+            properties:
+                id:
+                    maxLength: 64
+                    minLength: 1
+                    type: string
+            type: object
+        MarkRegistrationRequestHandledResponse:
+            additionalProperties: false
+            properties:
+                request:
+                    $ref: '#/components/schemas/RegistrationRequest'
+            type: object
         Membership:
             additionalProperties: false
             properties:
@@ -4190,12 +4461,18 @@ components:
                 diffAvgPct:
                     format: double
                     type: number
+                diffAvgPctDefined:
+                    type: boolean
                 diffMaxPct:
                     format: double
                     type: number
+                diffMaxPctDefined:
+                    type: boolean
                 max:
                     format: double
                     type: number
+                present:
+                    type: boolean
                 runId:
                     maxLength: 128
                     minLength: 1
@@ -4217,6 +4494,9 @@ components:
                         $ref: '#/components/schemas/MetricCell'
                     maxItems: 16
                     type: array
+                description:
+                    maxLength: 1024
+                    type: string
                 group:
                     maxLength: 64
                     type: string
@@ -4337,10 +4617,18 @@ components:
         Overview:
             additionalProperties: false
             properties:
+                degradedReasons:
+                    items:
+                        type: string
+                    maxItems: 32
+                    type: array
                 duration:
                     format: duration
                     type: string
                 finishedAt:
+                    format: date-time
+                    type: string
+                observedAt:
                     format: date-time
                     type: string
                 pipeline:
@@ -4354,6 +4642,16 @@ components:
                     maxLength: 128
                     minLength: 1
                     type: string
+                source:
+                    enum:
+                        - 0
+                        - 1
+                        - 2
+                        - 3
+                        - 4
+                        - 5
+                    format: int32
+                    type: integer
                 startedAt:
                     format: date-time
                     type: string
@@ -4438,6 +4736,8 @@ components:
                         - 2
                     format: int32
                     type: integer
+                isBuiltin:
+                    type: boolean
                 os:
                     maxLength: 128
                     type: string
@@ -4492,6 +4792,11 @@ components:
         Parameters:
             additionalProperties: false
             properties:
+                bulkSize:
+                    format: int32
+                    maximum: 1000000
+                    minimum: 0
+                    type: integer
                 defaultInsertMethod:
                     maxLength: 64
                     type: string
@@ -4584,6 +4889,11 @@ components:
                     type: string
                 infrastructurePlan:
                     $ref: '#/components/schemas/InfrastructurePlan'
+                machineOverrides:
+                    items:
+                        $ref: '#/components/schemas/MachinePlan'
+                    maxItems: 256
+                    type: array
                 provider:
                     enum:
                         - 0
@@ -4702,21 +5012,57 @@ components:
                     items:
                         $ref: '#/components/schemas/PipelineNode'
                     type: array
+                componentId:
+                    maxLength: 128
+                    type: string
                 duration:
                     format: duration
+                    type: string
+                errorMessage:
+                    maxLength: 4096
                     type: string
                 finishedAt:
                     format: date-time
                     type: string
                 logRef:
                     $ref: '#/components/schemas/LogRef'
+                machineId:
+                    maxLength: 128
+                    type: string
                 name:
                     type: string
                 nodeExecutionId:
                     maxLength: 128
                     type: string
+                operation:
+                    $ref: '#/components/schemas/PipelineOperation'
+                order:
+                    format: int32
+                    minimum: 0
+                    type: integer
+                outputs:
+                    items:
+                        $ref: '#/components/schemas/PipelineOutput'
+                    maxItems: 4096
+                    type: array
                 params:
                     $ref: '#/components/schemas/Baked'
+                parentNodeExecutionId:
+                    maxLength: 128
+                    type: string
+                phase:
+                    maxLength: 128
+                    type: string
+                source:
+                    enum:
+                        - 0
+                        - 1
+                        - 2
+                        - 3
+                        - 4
+                        - 5
+                    format: int32
+                    type: integer
                 startedAt:
                     format: date-time
                     type: string
@@ -4736,8 +5082,144 @@ components:
                         - 11
                     format: int32
                     type: integer
+                statusReason:
+                    maxLength: 256
+                    type: string
                 worker:
                     $ref: '#/components/schemas/Worker'
+            type: object
+        PipelineOperation:
+            additionalProperties: false
+            properties:
+                argv:
+                    items:
+                        type: string
+                    maxItems: 512
+                    type: array
+                command:
+                    $ref: '#/components/schemas/Cmd'
+                commandText:
+                    type: string
+                contentPreview:
+                    maxLength: 4096
+                    type: string
+                dir:
+                    $ref: '#/components/schemas/Dir'
+                elapsed:
+                    format: duration
+                    type: string
+                exitCode:
+                    format: int32
+                    type: integer
+                file:
+                    $ref: '#/components/schemas/File2'
+                filePath:
+                    maxLength: 4096
+                    type: string
+                fileSizeBytes:
+                    format: uint64
+                    type: string
+                kind:
+                    enum:
+                        - 0
+                        - 1
+                        - 2
+                        - 3
+                        - 4
+                    format: int32
+                    type: integer
+                labels:
+                    additionalProperties:
+                        type: string
+                    maxProperties: 64
+                    type: object
+                mentions:
+                    items:
+                        type: string
+                    maxItems: 64
+                    type: array
+                resultAvailable:
+                    type: boolean
+                resultSummary:
+                    maxLength: 4096
+                    type: string
+                stderrPreview:
+                    maxLength: 4096
+                    type: string
+                stdoutPreview:
+                    maxLength: 4096
+                    type: string
+                stepId:
+                    maxLength: 128
+                    type: string
+                stepOrder:
+                    format: int32
+                    minimum: 0
+                    type: integer
+                summary:
+                    maxLength: 4096
+                    type: string
+                target:
+                    maxLength: 4096
+                    type: string
+                timedOut:
+                    type: boolean
+            type: object
+        PipelineOutput:
+            additionalProperties: false
+            properties:
+                action:
+                    maxLength: 128
+                    type: string
+                commandText:
+                    type: string
+                componentId:
+                    maxLength: 128
+                    type: string
+                contentPreview:
+                    maxLength: 4096
+                    type: string
+                count:
+                    format: int32
+                    minimum: 0
+                    type: integer
+                id:
+                    maxLength: 256
+                    type: string
+                kind:
+                    enum:
+                        - 0
+                        - 1
+                        - 2
+                        - 3
+                        - 4
+                        - 5
+                        - 6
+                    format: int32
+                    type: integer
+                labels:
+                    additionalProperties:
+                        type: string
+                    maxProperties: 64
+                    type: object
+                machineId:
+                    maxLength: 128
+                    type: string
+                name:
+                    maxLength: 256
+                    type: string
+                sizeBytes:
+                    format: uint64
+                    type: string
+                stepId:
+                    maxLength: 128
+                    type: string
+                summary:
+                    maxLength: 4096
+                    type: string
+                target:
+                    maxLength: 4096
+                    type: string
             type: object
         PipelineView:
             additionalProperties: false
@@ -4866,8 +5348,8 @@ components:
                     format: int32
                     type: integer
                 scaleFactor:
-                    format: int32
-                    type: integer
+                    format: double
+                    type: number
                 script:
                     minLength: 1
                     type: string
@@ -5190,7 +5672,14 @@ components:
             type: object
         Ref:
             additionalProperties: false
+            oneOf:
+                - required:
+                    - name
+                - required:
+                    - id
             properties:
+                id:
+                    $ref: '#/components/schemas/SchemaIdentity'
                 name:
                     type: string
             type: object
@@ -5257,6 +5746,31 @@ components:
                     $ref: '#/components/schemas/TokenPair'
             required:
                 - tokens
+            type: object
+        RegistrationRequest:
+            additionalProperties: false
+            properties:
+                createdAt:
+                    format: date-time
+                    type: string
+                email:
+                    type: string
+                handledByAccountId:
+                    type: string
+                id:
+                    type: string
+                message:
+                    type: string
+                status:
+                    enum:
+                        - 0
+                        - 1
+                        - 2
+                    format: int32
+                    type: integer
+                updatedAt:
+                    format: date-time
+                    type: string
             type: object
         RemoveFavoriteRequest:
             additionalProperties: false
@@ -5666,10 +6180,42 @@ components:
             required:
                 - range
             type: object
+        RunState:
+            additionalProperties: false
+            properties:
+                stages:
+                    items:
+                        $ref: '#/components/schemas/Stage'
+                    type: array
+                status:
+                    enum:
+                        - 0
+                        - 1
+                        - 2
+                        - 5
+                        - 3
+                        - 4
+                        - 6
+                        - 7
+                        - 8
+                        - 9
+                        - 10
+                        - 11
+                    format: int32
+                    type: integer
+            type: object
         RunSummary:
             additionalProperties: false
             properties:
                 better:
+                    format: int32
+                    minimum: 0
+                    type: integer
+                missing:
+                    format: int32
+                    minimum: 0
+                    type: integer
+                notComparable:
                     format: int32
                     minimum: 0
                     type: integer
@@ -5685,6 +6231,182 @@ components:
                     format: int32
                     minimum: 0
                     type: integer
+            type: object
+        RuntimeConnection:
+            additionalProperties: false
+            properties:
+                endpointName:
+                    maxLength: 256
+                    type: string
+                finishedAt:
+                    format: date-time
+                    type: string
+                fromNodeId:
+                    maxLength: 256
+                    minLength: 1
+                    type: string
+                id:
+                    maxLength: 256
+                    minLength: 1
+                    type: string
+                kind:
+                    enum:
+                        - 0
+                        - 1
+                        - 2
+                        - 3
+                        - 4
+                        - 5
+                        - 6
+                    format: int32
+                    type: integer
+                labels:
+                    additionalProperties:
+                        type: string
+                    maxProperties: 128
+                    type: object
+                mode:
+                    enum:
+                        - 0
+                        - 1
+                        - 2
+                        - 3
+                        - 4
+                        - 5
+                    format: int32
+                    type: integer
+                nodeExecutionId:
+                    maxLength: 256
+                    type: string
+                phase:
+                    maxLength: 128
+                    type: string
+                port:
+                    format: int32
+                    maximum: 65535
+                    minimum: 0
+                    type: integer
+                protocol:
+                    enum:
+                        - 0
+                        - 1
+                        - 2
+                        - 3
+                        - 4
+                        - 5
+                        - 6
+                        - 7
+                        - 8
+                        - 9
+                    format: int32
+                    type: integer
+                startedAt:
+                    format: date-time
+                    type: string
+                status:
+                    enum:
+                        - 0
+                        - 1
+                        - 2
+                        - 5
+                        - 3
+                        - 4
+                        - 6
+                        - 7
+                        - 8
+                        - 9
+                        - 10
+                        - 11
+                    format: int32
+                    type: integer
+                statusReason:
+                    maxLength: 256
+                    type: string
+                tags:
+                    $ref: '#/components/schemas/Tags'
+                toNodeId:
+                    maxLength: 256
+                    minLength: 1
+                    type: string
+            type: object
+        RuntimeNode:
+            additionalProperties: false
+            properties:
+                address:
+                    maxLength: 512
+                    type: string
+                componentId:
+                    maxLength: 128
+                    type: string
+                engine:
+                    maxLength: 128
+                    type: string
+                finishedAt:
+                    format: date-time
+                    type: string
+                id:
+                    maxLength: 256
+                    minLength: 1
+                    type: string
+                kind:
+                    enum:
+                        - 0
+                        - 1
+                        - 2
+                        - 3
+                        - 4
+                        - 5
+                        - 6
+                        - 7
+                        - 8
+                    format: int32
+                    type: integer
+                label:
+                    maxLength: 256
+                    type: string
+                labels:
+                    additionalProperties:
+                        type: string
+                    maxProperties: 128
+                    type: object
+                machineId:
+                    maxLength: 128
+                    type: string
+                nodeExecutionId:
+                    maxLength: 256
+                    type: string
+                port:
+                    format: int32
+                    maximum: 65535
+                    minimum: 0
+                    type: integer
+                role:
+                    maxLength: 128
+                    type: string
+                startedAt:
+                    format: date-time
+                    type: string
+                status:
+                    enum:
+                        - 0
+                        - 1
+                        - 2
+                        - 5
+                        - 3
+                        - 4
+                        - 6
+                        - 7
+                        - 8
+                        - 9
+                        - 10
+                        - 11
+                    format: int32
+                    type: integer
+                statusReason:
+                    maxLength: 256
+                    type: string
+                tags:
+                    $ref: '#/components/schemas/Tags'
             type: object
         Schedule:
             additionalProperties: false
@@ -5747,6 +6469,32 @@ components:
                 text:
                     minLength: 1
                     type: string
+            type: object
+        Segment:
+            additionalProperties: false
+            properties:
+                execution:
+                    $ref: '#/components/schemas/Execution'
+                files:
+                    items:
+                        $ref: '#/components/schemas/WorkloadFile'
+                    maxItems: 64
+                    type: array
+                name:
+                    maxLength: 64
+                    minLength: 1
+                    type: string
+                parameters:
+                    $ref: '#/components/schemas/Parameters'
+                script:
+                    maxLength: 512
+                    minLength: 1
+                    type: string
+                sql:
+                    maxLength: 512
+                    type: string
+            required:
+                - execution
             type: object
         SetShareExpiryRequest:
             additionalProperties: false
@@ -6291,6 +7039,71 @@ components:
                 slug:
                     type: string
             type: object
+        Stage:
+            additionalProperties: false
+            properties:
+                attempt:
+                    format: int32
+                    minimum: 0
+                    type: integer
+                componentId:
+                    maxLength: 128
+                    type: string
+                errorMessage:
+                    maxLength: 4096
+                    type: string
+                finishedAt:
+                    format: date-time
+                    type: string
+                machineId:
+                    maxLength: 128
+                    type: string
+                name:
+                    type: string
+                nodeExecutionId:
+                    type: string
+                operation:
+                    $ref: '#/components/schemas/PipelineOperation'
+                order:
+                    format: int32
+                    minimum: 0
+                    type: integer
+                outputs:
+                    items:
+                        $ref: '#/components/schemas/PipelineOutput'
+                    maxItems: 4096
+                    type: array
+                parentNodeExecutionId:
+                    maxLength: 128
+                    type: string
+                phase:
+                    maxLength: 128
+                    type: string
+                startedAt:
+                    format: date-time
+                    type: string
+                status:
+                    enum:
+                        - 0
+                        - 1
+                        - 2
+                        - 5
+                        - 3
+                        - 4
+                        - 6
+                        - 7
+                        - 8
+                        - 9
+                        - 10
+                        - 11
+                    format: int32
+                    type: integer
+                statusReason:
+                    maxLength: 256
+                    type: string
+                worker:
+                    $ref: '#/components/schemas/Worker'
+            type: object
         StartSSORequest:
             additionalProperties: false
             properties:
@@ -6405,6 +7218,9 @@ components:
                 name:
                     maxLength: 255
                     type: string
+                sourceRunId:
+                    maxLength: 64
+                    type: string
                 tenantId:
                     maxLength: 64
                     minLength: 1
@@ -6499,47 +7315,21 @@ components:
                     format: int32
                     type: integer
             type: object
-        String:
+        SubmitRegistrationRequestRequest:
             additionalProperties: false
             properties:
-                const:
+                email:
+                    format: email
+                    maxLength: 255
+                    minLength: 5
                     type: string
-                default:
+                message:
+                    maxLength: 2000
                     type: string
-                format:
-                    enum:
-                        - 0
-                        - 1
-                        - 2
-                        - 3
-                        - 4
-                        - 5
-                        - 6
-                        - 7
-                        - 8
-                        - 9
-                        - 10
-                    format: int32
-                    type: integer
-                in:
-                    items:
-                        type: string
-                    type: array
-                len:
-                    format: uint64
-                    type: string
-                maxLen:
-                    format: uint64
-                    type: string
-                minLen:
-                    format: uint64
-                    type: string
-                notIn:
-                    items:
-                        type: string
-                    type: array
-                pattern:
-                    type: string
+            type: object
+        SubmitRegistrationRequestResponse:
+            additionalProperties: false
+            properties: {}
             type: object
         Suite:
             additionalProperties: false
@@ -6560,7 +7350,6 @@ components:
                     type: integer
                 id:
                     maxLength: 64
-                    minLength: 1
                     type: string
                 provider:
                     enum:
@@ -6587,7 +7376,6 @@ components:
                     type: boolean
                 id:
                     maxLength: 64
-                    minLength: 1
                     type: string
                 inlineTest:
                     $ref: '#/components/schemas/Test'
@@ -7162,7 +7950,7 @@ components:
                 database:
                     $ref: '#/components/schemas/Database'
                 id:
-                    minLength: 1
+                    maxLength: 64
                     type: string
                 infrastructurePlan:
                     $ref: '#/components/schemas/InfrastructurePlan'
@@ -7211,6 +7999,8 @@ components:
                     type: boolean
                 infrastructureState:
                     $ref: '#/components/schemas/InfrastructureState'
+                runtimeState:
+                    $ref: '#/components/schemas/RunState'
                 spec:
                     $ref: '#/components/schemas/TestRun'
                 status:
@@ -7262,6 +8052,11 @@ components:
                     type: array
                 infrastructurePlan:
                     $ref: '#/components/schemas/InfrastructurePlan'
+                machineOverrides:
+                    items:
+                        $ref: '#/components/schemas/MachinePlan'
+                    maxItems: 256
+                    type: array
                 provider:
                     enum:
                         - 0
@@ -7335,6 +8130,16 @@ components:
                     $ref: '#/components/schemas/InfrastructurePlan'
                 infrastructureState:
                     $ref: '#/components/schemas/InfrastructureState'
+                runtimeConnections:
+                    items:
+                        $ref: '#/components/schemas/RuntimeConnection'
+                    maxItems: 8192
+                    type: array
+                runtimeNodes:
+                    items:
+                        $ref: '#/components/schemas/RuntimeNode'
+                    maxItems: 4096
+                    type: array
                 spec:
                     $ref: '#/components/schemas/TopologySpec'
                 state:
@@ -7402,85 +8207,6 @@ components:
                     $ref: '#/components/schemas/Tenant'
             required:
                 - tenant
-            type: object
-        UInt32:
-            additionalProperties: false
-            properties:
-                const:
-                    format: int32
-                    minimum: 0
-                    type: integer
-                default:
-                    format: int32
-                    minimum: 0
-                    type: integer
-                gt:
-                    format: int32
-                    minimum: 0
-                    type: integer
-                gte:
-                    format: int32
-                    minimum: 0
-                    type: integer
-                in:
-                    items:
-                        format: int32
-                        minimum: 0
-                        type: integer
-                    type: array
-                lt:
-                    format: int32
-                    minimum: 0
-                    type: integer
-                lte:
-                    format: int32
-                    minimum: 0
-                    type: integer
-                multipleOf:
-                    format: int32
-                    minimum: 0
-                    type: integer
-                notIn:
-                    items:
-                        format: int32
-                        minimum: 0
-                        type: integer
-                    type: array
-            type: object
-        UInt64:
-            additionalProperties: false
-            properties:
-                const:
-                    format: uint64
-                    type: string
-                default:
-                    format: uint64
-                    type: string
-                gt:
-                    format: uint64
-                    type: string
-                gte:
-                    format: uint64
-                    type: string
-                in:
-                    items:
-                        format: uint64
-                        type: string
-                    type: array
-                lt:
-                    format: uint64
-                    type: string
-                lte:
-                    format: uint64
-                    type: string
-                multipleOf:
-                    format: uint64
-                    type: string
-                notIn:
-                    items:
-                        format: uint64
-                        type: string
-                    type: array
             type: object
         UnlinkExternalIdentityRequest:
             additionalProperties: false
@@ -7873,9 +8599,16 @@ components:
         WorkerInfo:
             additionalProperties: false
             properties:
+                agentVersion:
+                    maxLength: 64
+                    type: string
                 currentNodeExecutionId:
                     maxLength: 128
                     type: string
+                heartbeatIntervalSeconds:
+                    format: int32
+                    minimum: 0
+                    type: integer
                 host:
                     maxLength: 256
                     type: string
@@ -7889,11 +8622,40 @@ components:
                         - 2
                     format: int32
                     type: integer
+                lastSeenAt:
+                    format: date-time
+                    type: string
                 machineId:
                     maxLength: 128
                     type: string
                 online:
                     type: boolean
+                presence:
+                    enum:
+                        - 0
+                        - 1
+                        - 2
+                        - 3
+                        - 4
+                        - 5
+                    format: int32
+                    type: integer
+                registeredAt:
+                    format: date-time
+                    type: string
+                runId:
+                    maxLength: 128
+                    type: string
+                source:
+                    enum:
+                        - 0
+                        - 1
+                        - 2
+                        - 3
+                        - 4
+                        - 5
+                    format: int32
+                    type: integer
                 status:
                     enum:
                         - 0
@@ -7910,19 +8672,13 @@ components:
                         - 11
                     format: int32
                     type: integer
+                statusReason:
+                    maxLength: 256
+                    type: string
             type: object
         Workload:
             additionalProperties: false
             properties:
-                execution:
-                    $ref: '#/components/schemas/Execution'
-                files:
-                    items:
-                        $ref: '#/components/schemas/WorkloadFile'
-                    maxItems: 64
-                    type: array
-                parameters:
-                    $ref: '#/components/schemas/Parameters'
                 protocol:
                     enum:
                         - 0
@@ -7934,20 +8690,17 @@ components:
                         - 7
                     format: int32
                     type: integer
-                script:
-                    maxLength: 512
-                    minLength: 1
-                    type: string
-                sql:
-                    maxLength: 512
-                    type: string
+                segments:
+                    items:
+                        $ref: '#/components/schemas/Segment'
+                    maxItems: 16
+                    minItems: 1
+                    type: array
                 stroppyVersion:
                     maxLength: 64
                     type: string
                 tags:
                     $ref: '#/components/schemas/Tags'
-            required:
-                - execution
             type: object
         WorkloadFile:
             additionalProperties: false
@@ -9303,6 +10056,36 @@ paths:
                 - iam
             x-idempotency-level: NO_SIDE_EFFECTS
             x-ogen-operation-group: Iam
+    /api/v1/iam/list-registration-requests:
+        get:
+            description: |-
+                ListRegistrationRequests returns the access requests for admin triage.
+                admin_only. Read-only.
+            operationId: listRegistrationRequests
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ListRegistrationRequestsRequest'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListRegistrationRequestsResponse'
+                    description: OK
+                default:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Unexpected error.
+            summary: ListRegistrationRequests returns the access requests for admin triage.
+            tags:
+                - iam
+            x-idempotency-level: NO_SIDE_EFFECTS
+            x-ogen-operation-group: Iam
     /api/v1/iam/list-roles:
         get:
             description: |-
@@ -9396,6 +10179,75 @@ paths:
                                 $ref: '#/components/schemas/Error'
                     description: Unexpected error.
             summary: 'Logout revokes the refresh_token''s server-side session. Idempotent:'
+            tags:
+                - iam
+            x-idempotency-level: IDEMPOTENT
+            x-ogen-operation-group: Iam
+    /api/v1/iam/lookup-account-by-email:
+        get:
+            description: |-
+                LookupAccountByEmail resolves an exact email to its account — the
+                invite-by-email primitive. Authenticated, no permission: exact hit or
+                NotFound, never a listing.
+            operationId: lookupAccountByEmail
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/LookupAccountByEmailRequest'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/LookupAccountByEmailResponse'
+                    description: OK
+                default:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Unexpected error.
+            summary: LookupAccountByEmail resolves an exact email to its account — the
+            tags:
+                - iam
+            x-idempotency-level: NO_SIDE_EFFECTS
+            x-ogen-operation-group: Iam
+    /api/v1/iam/mark-registration-request-handled:
+        post:
+            description: |-
+                MarkRegistrationRequestHandled flips a request to HANDLED. admin_only.
+                Idempotent.
+            operationId: markRegistrationRequestHandled
+            parameters:
+                - description: Optional idempotency key used to safely retry the request.
+                  in: header
+                  name: Idempotency-Key
+                  required: false
+                  schema:
+                    format: uuid
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/MarkRegistrationRequestHandledRequest'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/MarkRegistrationRequestHandledResponse'
+                    description: OK
+                default:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Unexpected error.
+            summary: MarkRegistrationRequestHandled flips a request to HANDLED. admin_only.
             tags:
                 - iam
             x-idempotency-level: IDEMPOTENT
@@ -9616,6 +10468,45 @@ paths:
             summary: 'StartSSO returns the IdP authorize URL. Public. Not idempotent: each call'
             tags:
                 - iam
+            x-ogen-operation-group: Iam
+    /api/v1/iam/submit-registration-request:
+        post:
+            description: |-
+                SubmitRegistrationRequest is the PUBLIC access-request submission, the
+                closed-signup counterpart of Register. Accepted only while
+                self-registration is disabled. Idempotent on email.
+            operationId: submitRegistrationRequest
+            parameters:
+                - description: Optional idempotency key used to safely retry the request.
+                  in: header
+                  name: Idempotency-Key
+                  required: false
+                  schema:
+                    format: uuid
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/SubmitRegistrationRequestRequest'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/SubmitRegistrationRequestResponse'
+                    description: OK
+                default:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Unexpected error.
+            summary: SubmitRegistrationRequest is the PUBLIC access-request submission, the
+            tags:
+                - iam
+            x-idempotency-level: IDEMPOTENT
             x-ogen-operation-group: Iam
     /api/v1/iam/transfer-tenant-ownership:
         post:

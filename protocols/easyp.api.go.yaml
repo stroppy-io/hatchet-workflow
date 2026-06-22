@@ -11,9 +11,9 @@ deps:
   - github.com/bufbuild/protoc-gen-validate@v1.3.3
   - github.com/cludden/protoc-gen-go-temporal@v1.23.1
   - github.com/temporalio/api@v1.62.12
-  - github.com/stroppy-io/schemapb@v1.3.0
-  - github.com/gopherex/protoc-gen-go-ogen@v1.1.3
-  - github.com/gopherex/protoc-gen-go-graphql@v1.0.1
+  - github.com/stroppy-io/schemapb@v1.4.4
+  - github.com/gopherex/protoc-gen-go-ogen@v1.1.4
+  - github.com/gopherex/protoc-gen-go-graphql@v1.0.5
 #  - github.com/yaroher/protoc-gen-go-plain@v0.7.17
 #  - github.com/yaroher/ratel@v0.4.26
 generate:
@@ -30,16 +30,27 @@ generate:
       opts:
         paths: source_relative
         simple: true
-#    - name: go-graphql
-#      out: ../internal/proto
-#      opts:
-#        paths: source_relative
-#    - name: go-ogen
-#      out: ../internal/proto
-#      opts:
-#        paths: source_relative
-#        openapi_out: ../docs/openapi
-#        default_oneof_schema_mode: object
+    # GraphQL surface over the EXISTING gRPC handlers: a single-pass graphql-go
+    # backend emits one schema.go building a *graphql.Schema whose resolvers
+    # delegate to the pb.*ServiceServer impls in internal/services/* (no new
+    # handlers, no gqlgen). Agent services (cloud/v1/agent) are excluded via
+    # (graphqlopt.service).skip.
+    - name: go-graphql
+      out: ../internal/proto
+      opts:
+        paths: source_relative
+    # REST surface over the EXISTING gRPC handlers: protoc-gen-go-ogen emits an
+    # OpenAPI doc + an ogen HTTP server (internal/proto/cloud/v1/api/rest) +
+    # converters + an OgenAdapter delegating to the pb.*ServiceServer impls.
+    # Config (generate_ogen/converters/grpc_adapter, ogen_target/package) lives in
+    # the (ogen.file) option on admin.proto; per-method HTTP bindings via
+    # (ogen.method). Runs ogen in-process — single protoc pass.
+    - name: go-ogen
+      out: ../internal/proto
+      opts:
+        paths: source_relative
+        openapi_out: ../docs/openapi
+        default_oneof_schema_mode: object
 
 breaking:
   ignore: []

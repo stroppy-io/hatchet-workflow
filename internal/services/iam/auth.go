@@ -162,6 +162,41 @@ func (a *AuthInterceptor) connectUnary(ctx context.Context, req connect.AnyReque
 	return next(ctx, req)
 }
 
+// AuthorizeGraphQL enforces the proto auth annotation for a gRPC procedure on the
+// in-process GraphQL path (the generated graphql-go resolvers delegate to the
+// pb.*ServiceServer without going through the connect/gRPC interceptors, so they
+// must call this to get identical per-method authn + authz). The bearer
+// credential must already be present in ctx as gRPC incoming metadata — the
+// /graphql HTTP middleware bridges the Authorization header before execution.
+// procedure is the gRPC procedure name ("/cloud.v1.api.IamService/Login").
+// Returns the context enriched with the verified caller.
+func (a *AuthInterceptor) AuthorizeGraphQL(ctx context.Context, procedure string, msg any) (context.Context, error) {
+	auth := methodAuth(procedure)
+	if auth == nil {
+		auth = &iam.MethodAuth{AdminOnly: true}
+	}
+	if auth.GetPublic() {
+		return ctx, nil
+	}
+	verified, err := a.authenticate(ctx)
+	if err != nil {
+		return ctx, err
+	}
+	ctx = contextWithVerifiedCaller(ctx, verified)
+	if auth.GetAdminOnly() {
+		if verified.restricted || !verified.claims.GetIsAdmin() {
+			return ctx, status.Error(codes.PermissionDenied, "admin only")
+		}
+		return ctx, nil
+	}
+	if len(auth.GetAllOf()) > 0 {
+		if err := a.authorize(ctx, verified, msg, auth); err != nil {
+			return ctx, err
+		}
+	}
+	return ctx, nil
+}
+
 type connectAuthInterceptor struct {
 	auth *AuthInterceptor
 }

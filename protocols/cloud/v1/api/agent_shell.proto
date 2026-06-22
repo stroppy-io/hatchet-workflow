@@ -6,6 +6,7 @@ import "cloud/v1/agent/shell.proto";
 import "cloud/v1/iam/options.proto";
 import "cloud/v1/iam/permission.proto";
 import "google/protobuf/empty.proto";
+import "graphqlopt/graphql.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
@@ -115,6 +116,9 @@ message ShellServerFrame {
     stream, exposing one interactive reverse-shell session per OpenShell call.
  */
 service AgentShellService {
+    // bidi-streaming shell bridge — not expressible in GraphQL; omit from the
+    // generated GraphQL API (browser clients use the websocket transport directly).
+    option (graphqlopt.service).skip = true;
     /*
         OpenShell attaches an interactive terminal to an agent. First client frame
         must be ShellStart. High-privilege: RESOURCE_AGENT_SHELL + audit.

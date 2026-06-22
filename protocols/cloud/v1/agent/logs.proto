@@ -3,6 +3,7 @@ syntax = "proto3";
 package cloud.v1.agent;
 
 import "cloud/v1/monitor/logs.proto";
+import "graphqlopt/graphql.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agent";
@@ -58,6 +59,8 @@ message ShipLogsAck {
     shipped lines into VictoriaLogs.
  */
 service AgentLogService {
+    // agent→server ingest (client-streaming). Not exposed via GraphQL.
+    option (graphqlopt.service).skip = true;
     /*
         ShipLogs is a client stream of batches: the agent flushes LogBatch chunks
         continuously; the server writes them to VictoriaLogs and acks counts.

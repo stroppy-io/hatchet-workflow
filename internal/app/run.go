@@ -12,11 +12,17 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/gopherex/protoc-gen-go-graphql/graphqlrt"
+	graphqlhandler "github.com/graphql-go/handler"
+	"github.com/ogen-go/ogen/middleware"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/reflect/protoregistry"
 
 	agentdomain "github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
 	domsettings "github.com/stroppy-io/stroppy-cloud/internal/domain/settings"
@@ -30,6 +36,8 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agent/agentconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/apiconnect"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/gqlapi"
+	rest "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/rest"
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/services/agent_shell"
 	"github.com/stroppy-io/stroppy-cloud/internal/services/compare"
@@ -593,6 +601,113 @@ func Run(ctx context.Context, cfg Config) error {
 	mux.Handle(blobStore.UploadPathPrefix()+"/", blobStore.UploadHandler())
 	mux.Handle(blobStore.DownloadPathPrefix()+"/", blobStore.DownloadHandler(agentTokens))
 
+	// GraphQL: one endpoint over the SAME API gRPC handlers. The generated
+	// resolvers delegate to the pb.*ServiceServer impls registered above; Authorize
+	// applies the identical per-method authn+authz as the connect interceptors
+	// (the HTTP wrapper bridges the Authorization header into gRPC metadata so the
+	// shared authenticate() path works). Queries/mutations over HTTP POST/GET;
+	// subscriptions (server-streaming RPCs) over the graphql-transport-ws protocol.
+	gqlSchema, err := gqlapi.NewSchema(&gqlapi.Server{
+		CompareService:         compareService,
+		FavoriteService:        favoriteService,
+		IamService:             iamService,
+		PackageService:         packageService,
+		DatabasePresetService:  databasePresetService,
+		WorkloadPresetService:  workloadPresetService,
+		TestPresetService:      testPresetService,
+		RatingService:          ratingService,
+		PublicRatingService:    publicRatingService,
+		PublicShareService:     publicShareService,
+		QuotaService:           quotaService,
+		ShareService:           shareService,
+		StroppyService:         stroppyService,
+		SuiteService:           suiteService,
+		SuiteRunService:        suiteRunService,
+		SuiteWizardService:     suiteWizardService,
+		SystemSettingsService:  systemSettingsService,
+		TenantDashboardService: tenantDashboardService,
+		TenantSettingsService:  tenantSettingsService,
+		TestRunService:         testRunService,
+		TestRunOverviewService: testRunOverviewService,
+		TestWizardService:      testWizardService,
+		Authorize:              authzGate.AuthorizeGraphQL,
+	})
+	if err != nil {
+		return fmt.Errorf("graphql schema: %w", err)
+	}
+	// Bridge the bearer credential into the gRPC incoming metadata the shared
+	// authenticate() path reads (for both HTTP and the WS upgrade request).
+	gqlAuthCtx := func(r *http.Request) context.Context {
+		ctx := r.Context()
+		if authz := r.Header.Get("Authorization"); authz != "" {
+			ctx = metadata.NewIncomingContext(ctx, metadata.Pairs("authorization", authz))
+		}
+		return ctx
+	}
+	gqlHTTP := graphqlhandler.New(&graphqlhandler.Config{Schema: &gqlSchema, Pretty: true})
+	gqlWS := graphqlrt.SubscriptionHandler(&gqlSchema, gqlAuthCtx)
+	mux.Handle("/graphql", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Subscriptions arrive as a websocket upgrade; queries/mutations as POST/GET.
+		if strings.EqualFold(r.Header.Get("Upgrade"), "websocket") {
+			gqlWS.ServeHTTP(w, r)
+			return
+		}
+		gqlHTTP.ContextHandler(gqlAuthCtx(r), w, r)
+	}))
+
+	// REST/OpenAPI: a second HTTP surface over the SAME API gRPC handlers
+	// (the ogen adapter delegates to the pb.*ServiceServer impls). Like the
+	// GraphQL path it bypasses the connect/gRPC interceptors, so an ogen
+	// middleware re-applies the identical per-method authn+authz: it bridges
+	// the Authorization header into gRPC incoming metadata and calls the
+	// shared AuthorizeGraphQL gate keyed by the gRPC procedure.
+	ogenAdapter := api.NewOgenAdapter(
+		compareService,
+		favoriteService,
+		iamService,
+		packageService,
+		databasePresetService,
+		workloadPresetService,
+		testPresetService,
+		ratingService,
+		publicRatingService,
+		publicShareService,
+		quotaService,
+		shareService,
+		stroppyService,
+		suiteService,
+		suiteRunService,
+		suiteWizardService,
+		systemSettingsService,
+		tenantDashboardService,
+		tenantSettingsService,
+		testRunService,
+		testRunOverviewService,
+		testWizardService,
+	)
+	restProcedures := apiProcedureByMethod()
+	restAuthMW := func(req middleware.Request, next middleware.Next) (middleware.Response, error) {
+		ctx := req.Context
+		if authz := req.Raw.Header.Get("Authorization"); authz != "" {
+			ctx = metadata.NewIncomingContext(ctx, metadata.Pairs("authorization", authz))
+		}
+		procedure, ok := restProcedures[req.OperationName]
+		if !ok {
+			return middleware.Response{}, fmt.Errorf("rest auth: no gRPC procedure for operation %q", req.OperationName)
+		}
+		ctx, err := authzGate.AuthorizeGraphQL(ctx, procedure, req.Body)
+		if err != nil {
+			return middleware.Response{}, err
+		}
+		req.SetContext(ctx)
+		return next(req)
+	}
+	restSrv, err := rest.NewServer(ogenAdapter, rest.WithMiddleware(restAuthMW))
+	if err != nil {
+		return fmt.Errorf("rest server: %w", err)
+	}
+	mux.Handle("/api/", http.StripPrefix("/api", restSrv))
+
 	spa, err := spaHandler()
 	if err != nil {
 		return fmt.Errorf("embedded spa: %w", err)
@@ -667,6 +782,27 @@ func Run(ctx context.Context, cfg Config) error {
 // grpcOrHTTP dispatches native gRPC requests (HTTP/2 with an application/grpc
 // content-type) to the gRPC server and everything else (connect, SPA) to the
 // HTTP mux, sharing one HTTP/2 cleartext handler.
+// apiProcedureByMethod maps each cloud.v1.api gRPC method name to its full gRPC
+// procedure ("/cloud.v1.api.IamService/Login"). ogen uses the proto method name
+// as the (unique) operation name, so the REST auth middleware can recover the
+// procedure the AuthorizeGraphQL gate needs from middleware.Request.OperationName.
+func apiProcedureByMethod() map[string]string {
+	out := map[string]string{}
+	protoregistry.GlobalFiles.RangeFilesByPackage("cloud.v1.api", func(fd protoreflect.FileDescriptor) bool {
+		svcs := fd.Services()
+		for i := 0; i < svcs.Len(); i++ {
+			svc := svcs.Get(i)
+			methods := svc.Methods()
+			for j := 0; j < methods.Len(); j++ {
+				m := methods.Get(j)
+				out[string(m.Name())] = "/" + string(svc.FullName()) + "/" + string(m.Name())
+			}
+		}
+		return true
+	})
+	return out
+}
+
 func grpcOrHTTP(grpcSrv *grpc.Server, httpHandler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.ProtoMajor == 2 && strings.HasPrefix(r.Header.Get("Content-Type"), "application/grpc") {

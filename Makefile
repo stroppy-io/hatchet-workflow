@@ -70,6 +70,12 @@ proto-tools: ## Install the proto codegen toolchain (easyp + plugins) into ./bin
 	GOFLAGS=-mod=mod GOBIN=$(PROTO_BIN) go install github.com/cludden/protoc-gen-go-temporal/cmd/protoc-gen-go_temporal@v1.23.1
 	GOFLAGS=-mod=mod GOBIN=$(PROTO_BIN) go install github.com/gopherex/protoc-gen-go-jx@v1.0.1
 	GOFLAGS=-mod=mod GOBIN=$(PROTO_BIN) go install github.com/envoyproxy/protoc-gen-validate@v1.3.3
+	# go-graphql: single-pass graphql-go backend (emits one schema.go building a
+	# *graphql.Schema that delegates to the existing pb.*ServiceServer impls).
+	GOFLAGS=-mod=mod GOBIN=$(PROTO_BIN) go install github.com/gopherex/protoc-gen-go-graphql@v1.0.5
+	# go-ogen: single-pass REST/OpenAPI surface over the existing pb.*ServiceServer
+	# impls (emits ogen HTTP server + pb<->ogen converters + an OgenAdapter).
+	GOFLAGS=-mod=mod GOBIN=$(PROTO_BIN) go install github.com/gopherex/protoc-gen-go-ogen@v1.1.4
 	cd web && npm install --no-save @bufbuild/protoc-gen-es@2.11.0
 
 protocols: proto-tools ## Generate Go + TS code from proto
