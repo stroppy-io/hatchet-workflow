@@ -718,9 +718,11 @@ func Run(ctx context.Context, cfg Config) error {
 	if err != nil {
 		return fmt.Errorf("rest server: %w", err)
 	}
-	mux.Handle("/api/", http.StripPrefix("/api", restSrv))
-	// Serve the OpenAPI bundle and a Redoc docs page. More-specific mux
-	// patterns win over "/api/", so these are not swallowed by the ogen router.
+	// The generated ogen routes already carry the full /api/v1/... prefix, so
+	// mount the server at that subtree WITHOUT stripping (stripping would leave
+	// ogen with /v1/... and 404 every call).
+	mux.Handle("/api/v1/", restSrv)
+	// Docs live under /api/ but outside /api/v1/, so they need their own routes.
 	mux.HandleFunc("/api/openapi.yaml", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/yaml")
 		_, _ = w.Write(openapidoc.Spec)
