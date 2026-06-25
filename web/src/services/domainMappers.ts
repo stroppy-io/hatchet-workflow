@@ -27,6 +27,7 @@ import {
   type YdbParams,
   type YdbManagedParams,
   type CockroachParams,
+  type OrioledbParams,
 } from "@/lib/proto/cloud/v1/domain/database_pb";
 import {
   type Workload,
@@ -46,6 +47,7 @@ import {
   type YdbParamsVM,
   type YdbManagedParamsVM,
   type CockroachParamsVM,
+  type OrioledbParamsVM,
   type ExternalParamsVM,
   type WorkloadVM,
   type WorkloadSegmentVM,
@@ -129,6 +131,15 @@ function cockroachToVM(p: CockroachParams): CockroachParamsVM {
   };
 }
 
+function orioledbToVM(p: OrioledbParams): OrioledbParamsVM {
+  return {
+    image: p.image,
+    postgresOptions: { ...p.postgresOptions },
+    initdbLocale: p.initdbLocale || "C",
+    sharedBuffersMb: p.sharedBuffersMb,
+  };
+}
+
 // --- per-engine params: VM -> proto init -------------------------------------
 
 function postgresToProto(vm: PostgresParamsVM): Partial<PostgresParams> {
@@ -204,6 +215,15 @@ function cockroachToProto(vm: CockroachParamsVM): Partial<CockroachParams> {
   };
 }
 
+function orioledbToProto(vm: OrioledbParamsVM): Partial<OrioledbParams> {
+  return {
+    image: vm.image,
+    postgresOptions: { ...vm.postgresOptions },
+    initdbLocale: vm.initdbLocale,
+    sharedBuffersMb: vm.sharedBuffersMb,
+  };
+}
+
 // --- Database: proto -> VM ---------------------------------------------------
 
 /** Map a typed domain.Database onto the flat DatabaseVM the wizard step edits. */
@@ -276,6 +296,13 @@ function engineParamsProtoToVM(
         kind: "cockroach",
         cockroach: cockroachToVM(
           engine?.case === "cockroach" ? engine.value : create_CockroachEmpty(),
+        ),
+      };
+    case "orioledb":
+      return {
+        kind: "orioledb",
+        orioledb: orioledbToVM(
+          engine?.case === "orioledb" ? engine.value : create_OrioledbEmpty(),
         ),
       };
   }
@@ -360,6 +387,15 @@ function create_CockroachEmpty(): CockroachParams {
     options: {},
   };
 }
+function create_OrioledbEmpty(): OrioledbParams {
+  return {
+    $typeName: "cloud.v1.domain.OrioledbParams",
+    image: "",
+    postgresOptions: {},
+    initdbLocale: "C",
+    sharedBuffersMb: 0,
+  };
+}
 
 // --- Database: VM -> proto ---------------------------------------------------
 
@@ -418,6 +454,8 @@ function engineParamsVMToProto(p: EngineParamsVM): DatabaseParams["engine"] {
       return { case: "ydbManaged", value: ydbManagedToProto(p.ydbManaged) as YdbManagedParams };
     case "cockroach":
       return { case: "cockroach", value: cockroachToProto(p.cockroach) as CockroachParams };
+    case "orioledb":
+      return { case: "orioledb", value: orioledbToProto(p.orioledb) as OrioledbParams };
     case "external":
       // external never reaches here (handled in databaseVMToProto), but keep
       // the switch exhaustive.

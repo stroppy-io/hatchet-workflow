@@ -15,6 +15,7 @@ export type DbKind =
   | "ydb_managed"
   | "cockroach"
   | "picodata"
+  | "orioledb"
   | "external";
 
 /** All selectable db kinds (UNSPECIFIED excluded), for facet controls. */
@@ -26,6 +27,7 @@ export const DB_KINDS: Exclude<DbKind, "">[] = [
   "ydb_managed",
   "cockroach",
   "picodata",
+  "orioledb",
   "external",
 ];
 
@@ -37,6 +39,7 @@ export const DB_LABEL: Record<Exclude<DbKind, "">, string> = {
   ydb_managed: "YDB Managed",
   cockroach: "CockroachDB",
   picodata: "Picodata",
+  orioledb: "OrioleDB",
   external: "External",
 };
 
@@ -50,6 +53,7 @@ export const DB_COLOR: Record<Exclude<DbKind, "">, string> = {
   ydb_managed: "#2dd4bf",
   cockroach: "#f472b6",
   picodata: "#fb7185",
+  orioledb: "#E8633A",
   external: "#9ca3af",
 };
 

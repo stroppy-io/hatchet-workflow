@@ -148,6 +148,7 @@ const DB_LABEL: Record<Exclude<DbKind, "">, string> = {
   ydb_managed: "YDB Managed",
   cockroach: "CockroachDB",
   picodata: "Picodata",
+  orioledb: "OrioleDB",
   external: "External",
 };
 
@@ -162,6 +163,7 @@ const DB_COLOR: Record<Exclude<DbKind, "">, string> = {
   ydb_managed: "#2dd4bf", // teal — YDB managed (sibling hue of ydb)
   cockroach: "#f472b6", // pink — CockroachDB
   picodata: "#fb7185", // rose — Picodata
+  orioledb: "#E8633A", // orange — OrioleDB
   external: "#9ca3af", // grey — external / unmanaged
 };
 

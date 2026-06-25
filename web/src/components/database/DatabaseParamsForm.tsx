@@ -47,6 +47,7 @@ import {
   type YdbParamsVM,
   type YdbManagedParamsVM,
   type CockroachParamsVM,
+  type OrioledbParamsVM,
   type DraftErrorVM,
 } from "@/services/wizard";
 
@@ -60,6 +61,7 @@ export const DB_VERSIONS: Record<EngineKind, string[]> = {
   ydb: ["25.2", "24.4"],
   ydbManaged: ["managed"],
   cockroach: ["24.2", "23.2"],
+  orioledb: ["pg17", "pg16"],
   external: [],
 };
 
@@ -468,6 +470,50 @@ export function EngineParamsForm({
         </div>
       );
     }
+    case "orioledb": {
+      const p = e.orioledb;
+      const set = (patch: Partial<OrioledbParamsVM>) =>
+        apply({ ...db, params: { kind: "orioledb", orioledb: { ...p, ...patch } } });
+      return (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-3 @lg:grid-cols-2">
+            <div>
+              <Label>Version</Label>
+              <Select value={db.version} onValueChange={(v) => apply({ ...db, version: v })}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {DB_VERSIONS[db.kind].map((v) => (
+                    <SelectItem key={v} value={v}>{v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>initdb locale</Label>
+              <Input
+                className="mt-1"
+                placeholder="C"
+                value={p.initdbLocale}
+                onChange={(ev) => set({ initdbLocale: ev.target.value })}
+              />
+            </div>
+          </div>
+          <div className="max-w-xs">
+            <NumField label="shared_buffers (MiB)" value={p.sharedBuffersMb} onChange={(n) => set({ sharedBuffersMb: n })} hint="0 = use image default" />
+          </div>
+          <ConfigField
+            filename="postgresql.conf"
+            label="Advanced PostgreSQL options"
+            description="postgresql.conf key/value options for the OrioleDB container."
+            initiallyOpen={advancedInitiallyOpen}
+            value={p.postgresOptions}
+            onChange={(m) => set({ postgresOptions: m })}
+          />
+        </div>
+      );
+    }
     case "external": {
       const p = e.external;
       return (
@@ -543,6 +589,8 @@ export function engineNodes(db: DatabaseVM): TopologyGroup[] {
       const p = e.cockroach;
       return [{ role: "node", engine: "cockroach", count: Math.max(1, p.nodes), kind: "database" }];
     }
+    case "orioledb":
+      return [{ role: "master", engine: "orioledb", count: 1, kind: "database" }];
     case "external":
       return [{ role: "external", engine: "external", count: 0, kind: "external" }];
   }

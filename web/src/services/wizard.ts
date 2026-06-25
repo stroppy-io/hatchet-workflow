@@ -119,6 +119,7 @@ export type EngineKind =
   | "ydb"
   | "ydbManaged"
   | "cockroach"
+  | "orioledb"
   | "external";
 
 /** EngineKind -> Database_Kind enum (the wire value Patch sends). */
@@ -130,6 +131,7 @@ export const ENGINE_TO_KIND: Record<EngineKind, Database_Kind> = {
   ydb: Database_Kind.YDB,
   ydbManaged: Database_Kind.YDB_MANAGED,
   cockroach: Database_Kind.COCKROACH,
+  orioledb: Database_Kind.ORIOLEDB,
   external: Database_Kind.EXTERNAL,
 };
 
@@ -142,6 +144,7 @@ export const KIND_TO_ENGINE: Partial<Record<Database_Kind, EngineKind>> = {
   [Database_Kind.YDB]: "ydb",
   [Database_Kind.YDB_MANAGED]: "ydbManaged",
   [Database_Kind.COCKROACH]: "cockroach",
+  [Database_Kind.ORIOLEDB]: "orioledb",
   [Database_Kind.EXTERNAL]: "external",
 };
 
@@ -165,6 +168,7 @@ export const ENGINES: EngineMeta[] = [
   { kind: "ydb", label: "YDB", hex: "#7FB3E8", blurb: "Self-deployed storage + database nodes, erasure modes.", typed: true },
   { kind: "ydbManaged", label: "YDB Managed", hex: "#FF6666", blurb: "Cloud-managed serverless or dedicated YDB.", typed: true },
   { kind: "cockroach", label: "CockroachDB", hex: "#3FAEAE", blurb: "Homogeneous node cluster with cluster settings.", typed: true },
+  { kind: "orioledb", label: "OrioleDB", hex: "#E8633A", blurb: "Patched-Postgres storage engine (docker).", typed: true },
   { kind: "external", label: "External", hex: "#A1A1AA", blurb: "Connect to an existing DSN — no deploy/teardown.", typed: true },
 ];
 
@@ -236,6 +240,13 @@ export interface CockroachParamsVM {
   options: Record<string, string>;
 }
 
+export interface OrioledbParamsVM {
+  image: string;
+  postgresOptions: Record<string, string>;
+  initdbLocale: string;
+  sharedBuffersMb: number;
+}
+
 export interface ExternalParamsVM {
   dsn: string;
 }
@@ -254,6 +265,7 @@ export type EngineParamsVM =
   | { kind: "ydb"; ydb: YdbParamsVM }
   | { kind: "ydbManaged"; ydbManaged: YdbManagedParamsVM }
   | { kind: "cockroach"; cockroach: CockroachParamsVM }
+  | { kind: "orioledb"; orioledb: OrioledbParamsVM }
   | { kind: "external"; external: ExternalParamsVM };
 
 export type DatabasePackageVM = DatabasePackage;
@@ -1298,6 +1310,8 @@ export function defaultEngineParams(kind: EngineKind): EngineParamsVM {
       return { kind, ydbManaged: defaultYdbManagedParams() };
     case "cockroach":
       return { kind, cockroach: defaultCockroachParams() };
+    case "orioledb":
+      return { kind, orioledb: { image: "", postgresOptions: {}, initdbLocale: "C", sharedBuffersMb: 256 } };
     case "external":
       return { kind, external: { dsn: "" } };
   }
@@ -1414,6 +1428,8 @@ export function blankEngineParams(kind: EngineKind): EngineParamsVM {
       return { kind, ydbManaged: blankYdbManagedParams() };
     case "cockroach":
       return { kind, cockroach: blankCockroachParams() };
+    case "orioledb":
+      return { kind, orioledb: { image: "", postgresOptions: {}, initdbLocale: "C", sharedBuffersMb: 0 } };
     case "external":
       return { kind, external: { dsn: "" } };
   }
@@ -1434,6 +1450,8 @@ export function defaultProtocolFor(kind: EngineKind): Workload_Protocol {
       return Workload_Protocol.YDB_GRPC;
     case "cockroach":
       return Workload_Protocol.COCKROACH;
+    case "orioledb":
+      return Workload_Protocol.PG;
     case "external":
       return Workload_Protocol.UNSPECIFIED;
   }
@@ -1457,6 +1475,9 @@ export function driverTypeFor(kind: EngineKind): string {
     case "cockroach":
       // CockroachDB speaks pg-wire; stroppy has no cockroach driver (the
       // distinct PROTOCOL_COCKROACH only changes port/url, not the driver).
+      return "postgres";
+    case "orioledb":
+      // OrioleDB is a patched-Postgres storage engine; uses the pg wire protocol.
       return "postgres";
     case "external":
       return "postgres";

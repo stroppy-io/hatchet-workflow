@@ -116,6 +116,7 @@ const DB_TINT: Record<Exclude<DbKind, "">, string> = {
   ydb_managed: "#fbbf24",
   cockroach: "#60a5fa",
   picodata: "#F06580",
+  orioledb: "#E8633A",
   external: "#a1a1aa",
 };
 
@@ -127,6 +128,7 @@ const DB_LABEL: Record<Exclude<DbKind, "">, string> = {
   ydb_managed: "YDB Managed",
   cockroach: "CockroachDB",
   picodata: "Picodata",
+  orioledb: "OrioleDB",
   external: "External",
 };
 

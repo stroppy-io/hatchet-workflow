@@ -14,6 +14,7 @@ const DB_KIND_TO_LABEL: Record<Database_Kind, DbKind> = {
   [Database_Kind.YDB_MANAGED]: "ydb_managed",
   [Database_Kind.COCKROACH]: "cockroach",
   [Database_Kind.PICODATA]: "picodata",
+  [Database_Kind.ORIOLEDB]: "orioledb",
   [Database_Kind.EXTERNAL]: "external",
 };
 
@@ -25,6 +26,7 @@ const LABEL_TO_DB_KIND: Record<Exclude<DbKind, "">, Database_Kind> = {
   ydb_managed: Database_Kind.YDB_MANAGED,
   cockroach: Database_Kind.COCKROACH,
   picodata: Database_Kind.PICODATA,
+  orioledb: Database_Kind.ORIOLEDB,
   external: Database_Kind.EXTERNAL,
 };
 
@@ -50,6 +52,8 @@ export function dbKindLabelFromJson(s: string | undefined): DbKind {
       return "cockroach";
     case "KIND_PICODATA":
       return "picodata";
+    case "KIND_ORIOLEDB":
+      return "orioledb";
     case "KIND_EXTERNAL":
       return "external";
     default:

@@ -76,6 +76,7 @@ export type DbKind =
   | "ydb_managed"
   | "cockroach"
   | "picodata"
+  | "orioledb"
   | "external";
 
 /** All selectable db kinds (UNSPECIFIED excluded), for the facet control. */
@@ -87,6 +88,7 @@ export const DB_KINDS: Exclude<DbKind, "">[] = [
   "ydb_managed",
   "cockroach",
   "picodata",
+  "orioledb",
   "external",
 ];
 
