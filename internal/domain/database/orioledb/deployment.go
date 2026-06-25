@@ -80,7 +80,10 @@ func orioledbEngineComponent(
 }
 
 // orioledbDefaultConfigFile returns the env file written to the config dir.
-// The EnvironmentFile in the systemd unit loads POSTGRES_PASSWORD from here.
+// Trust auth (not a password) mirrors the native-Postgres deploy: the stroppy
+// workload and the local postgres_exporter both connect passwordless over
+// 127.0.0.1, so the container must accept unauthenticated local/TCP connections
+// exactly like native pg. The EnvironmentFile in the systemd unit loads it.
 func orioledbDefaultConfigFile(configDir string) *common.File {
 	return &common.File{
 		Info: &common.File_Info{
@@ -88,7 +91,7 @@ func orioledbDefaultConfigFile(configDir string) *common.File {
 			Mode:          0644,
 			CreateParents: true,
 		},
-		Content: &common.File_Text{Text: "POSTGRES_PASSWORD=stroppy\n"},
+		Content: &common.File_Text{Text: "POSTGRES_HOST_AUTH_METHOD=trust\n"},
 	}
 }
 
@@ -119,8 +122,12 @@ func orioledbInstallCommands(dbPackage *domain.Package) []string {
 }
 
 // orioledbServiceUnit renders a systemd unit that pulls and runs the OrioleDB
-// container with host networking (so port 5432 is on the node exactly as native
-// Postgres). POSTGRES_PASSWORD is loaded from the EnvironmentFile.
+// container with benchmark-faithful flags so the container does not skew the
+// numbers vs bare metal: --network host (no NAT, 5432 directly on the node),
+// --pid/--ipc host (no namespace isolation; shared memory like a host process),
+// --privileged (direct/async IO, huge pages, sysctl access the engine may use),
+// and a bind mount of the host data dir to PGDATA (writes hit the real disk, not
+// docker's overlay/CoW layer). Trust auth is loaded from the EnvironmentFile.
 func orioledbServiceUnit(componentID, image, locale string, options map[string]string) string {
 	var optStr strings.Builder
 	keys := make([]string, 0, len(options))
@@ -145,8 +152,8 @@ EnvironmentFile=%s/orioledb.env
 ExecStartPre=-/usr/bin/docker rm -f %s
 ExecStartPre=/usr/bin/docker pull %s
 ExecStartPre=/bin/mkdir -p %s
-ExecStart=/usr/bin/docker run --rm --name %s --network host \
-  -e POSTGRES_PASSWORD \
+ExecStart=/usr/bin/docker run --rm --name %s --network host --pid host --ipc host --privileged \
+  -e POSTGRES_HOST_AUTH_METHOD \
   -e POSTGRES_INITDB_ARGS=--locale=%s \
   -v %s:/var/lib/postgresql/data \
   %s%s

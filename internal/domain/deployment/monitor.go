@@ -92,6 +92,12 @@ func monitorParamsFor(ctx RenderContext) (monitorParams, bool) {
 		for _, c := range comps {
 			if isDatabaseRole(c.GetEngine(), c.GetRole()) {
 				dbKind = c.GetEngine()
+				// OrioleDB speaks the Postgres wire protocol and exposes Postgres
+				// metrics/logs, so it reuses the entire postgres monitoring path
+				// (postgres_exporter, scrape job, log tailers).
+				if dbKind == "orioledb" {
+					dbKind = "postgres"
+				}
 				break
 			}
 		}
@@ -113,6 +119,9 @@ func isDatabaseRole(engine, role string) bool {
 	switch engine {
 	case "postgres":
 		return role == "master" || role == "replica"
+	case "orioledb":
+		// OrioleDB is a patched-Postgres container; scraped via postgres_exporter.
+		return role == "master"
 	case "mysql":
 		return role == "primary" || role == "replica"
 	case "picodata":
