@@ -49,6 +49,8 @@ func MetricsForDB(dbKind string) []MetricDef {
 		dbMetrics = ydbMetrics()
 	case "cockroach", "cockroachdb":
 		dbMetrics = cockroachMetrics()
+	case "orioledb":
+		dbMetrics = postgresMetrics()
 	default: // postgres
 		dbMetrics = postgresMetrics()
 	}

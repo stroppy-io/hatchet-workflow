@@ -352,6 +352,8 @@ func dbKindString(rec *models.TestRunRecord) string {
 		return "picodata"
 	case domainpb.Database_KIND_POSTGRES:
 		return "postgres"
+	case domainpb.Database_KIND_ORIOLEDB:
+		return "orioledb"
 	default:
 		return ""
 	}

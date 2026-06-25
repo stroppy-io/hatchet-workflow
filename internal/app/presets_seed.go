@@ -230,6 +230,17 @@ func builtinDatabasePresets(tenantID, authorID string) []*models.DatabasePresetR
 			StorageType:      "ssd",
 		}))
 
+	// --- OrioleDB: single-node container ---
+	add("OrioleDB single", "Single OrioleDB container (docker).",
+		domain.Database_KIND_ORIOLEDB,
+		&domain.DatabaseParams{
+			Version: "pg17",
+			Engine: &domain.DatabaseParams_Orioledb{Orioledb: &domain.OrioledbParams{
+				Image:        "orioledb/orioledb:latest-pg17",
+				InitdbLocale: "C",
+			}},
+		})
+
 	// --- CockroachDB: single / cluster-3 / cluster-6 (homogeneous node count) ---
 	add("CockroachDB single", "Single CockroachDB node — dev / smoke runs",
 		domain.Database_KIND_COCKROACH, crdb(&domain.CockroachParams{Nodes: 1}))
@@ -832,6 +843,11 @@ func builtinDatabasePackage(kind domain.Database_Kind, version string) *domain.P
 			downloadVersion = version
 		}
 		pkg.DebFilename = fmt.Sprintf("${STROPPY_SERVER_ADDR%%/}/api/binaries/cockroach/%s/cockroach-v%s.linux-amd64.tgz", downloadVersion, downloadVersion)
+	case domain.Database_KIND_ORIOLEDB:
+		pkg.Id = "builtin/orioledb/" + version
+		pkg.Name = "OrioleDB " + version
+		// OrioleDB is Docker-only: the engine is embedded in the container image;
+		// no apt packages or binary downloads are required.
 	}
 	return pkg
 }
@@ -923,6 +939,8 @@ func workloadProtocolForDatabase(kind domain.Database_Kind) domain.Workload_Prot
 		return domain.Workload_PROTOCOL_YDB_GRPCS
 	case domain.Database_KIND_COCKROACH:
 		return domain.Workload_PROTOCOL_COCKROACH
+	case domain.Database_KIND_ORIOLEDB:
+		return domain.Workload_PROTOCOL_PG
 	default:
 		return domain.Workload_PROTOCOL_PG
 	}
