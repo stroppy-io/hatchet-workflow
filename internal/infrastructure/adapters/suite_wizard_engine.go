@@ -12,6 +12,7 @@ import (
 
 	databasecockroach "github.com/stroppy-io/stroppy-cloud/internal/domain/database/cockroach"
 	databasemysql "github.com/stroppy-io/stroppy-cloud/internal/domain/database/mysql"
+	databaseorioledb "github.com/stroppy-io/stroppy-cloud/internal/domain/database/orioledb"
 	databasepicodata "github.com/stroppy-io/stroppy-cloud/internal/domain/database/picodata"
 	databasepostgres "github.com/stroppy-io/stroppy-cloud/internal/domain/database/postgres"
 	databaseydb "github.com/stroppy-io/stroppy-cloud/internal/domain/database/ydb"
@@ -101,6 +102,7 @@ func NewSuiteWizardEngine(cells SuiteCellResolver, baker SuiteBaker) *SuiteWizar
 			databaseydbmanaged.PackageResolver{},
 			databasecockroach.PackageResolver{},
 			databasemysql.PackageResolver{},
+			databaseorioledb.PackageResolver{},
 		),
 		renderers: deploymentbuilder.NewRegistry(
 			databasepostgres.DeploymentRenderer{},
@@ -109,6 +111,7 @@ func NewSuiteWizardEngine(cells SuiteCellResolver, baker SuiteBaker) *SuiteWizar
 			databaseydbmanaged.DeploymentRenderer{},
 			databasecockroach.DeploymentRenderer{},
 			databasemysql.DeploymentRenderer{},
+			databaseorioledb.DeploymentRenderer{},
 			workloadbuilder.DeploymentRenderer{},
 		),
 	}

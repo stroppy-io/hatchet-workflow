@@ -5,6 +5,7 @@ import (
 
 	cockroachdb "github.com/stroppy-io/stroppy-cloud/internal/domain/database/cockroach"
 	mysqldb "github.com/stroppy-io/stroppy-cloud/internal/domain/database/mysql"
+	orioledbdb "github.com/stroppy-io/stroppy-cloud/internal/domain/database/orioledb"
 	picodatadb "github.com/stroppy-io/stroppy-cloud/internal/domain/database/picodata"
 	postgresdb "github.com/stroppy-io/stroppy-cloud/internal/domain/database/postgres"
 	ydbdb "github.com/stroppy-io/stroppy-cloud/internal/domain/database/ydb"
@@ -62,6 +63,11 @@ func BuildTopologySpec(input *domain.Database) (*topology.TopologySpec, error) {
 			return nil, fmt.Errorf("mariadb database requires mariadb params")
 		}
 		return (&mysqldb.Database{}).BuildTopologySpec(params.GetMariadb())
+	case domain.Database_KIND_ORIOLEDB:
+		if params.GetOrioledb() == nil {
+			return nil, fmt.Errorf("orioledb database requires orioledb params")
+		}
+		return (&orioledbdb.Database{}).BuildTopologySpec(params.GetOrioledb())
 	default:
 		return nil, fmt.Errorf("database kind %s topology builder is not implemented", input.GetKind())
 	}
