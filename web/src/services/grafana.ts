@@ -25,6 +25,9 @@ export const DASHBOARD_UID: Record<string, string> = {
   cockroach: "stroppy-cockroach",
   ydb: "stroppy-ydb",
   picodata: "stroppy-picodata",
+  // OrioleDB reuses the PostgreSQL dashboard: it is patched Postgres, scraped by
+  // the same postgres_exporter with identical metric names.
+  orioledb: "stroppy-postgres",
 };
 
 /** Human label per dashboard key. */
@@ -37,6 +40,7 @@ export const DASHBOARD_LABEL: Record<string, string> = {
   cockroach: "CockroachDB",
   ydb: "YDB",
   picodata: "Picodata",
+  orioledb: "OrioleDB",
 };
 
 /** Per-run metric series prefix (matches the agent's metric namespacing). */
