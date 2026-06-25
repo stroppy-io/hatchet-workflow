@@ -107,14 +107,19 @@ func pgOptions(params *domain.OrioledbParams) map[string]string {
 	return out
 }
 
-// orioledbInstallCommands runs the package pre_install (docker + mirror) then
-// apt install of docker.io. dbPackage is always set for builtin orioledb.
+// orioledbInstallCommands installs docker.io then configures + starts dockerd.
+// dbPackage is always set for builtin orioledb.
 func orioledbInstallCommands(dbPackage *domain.Package) []string {
 	var commands []string
 	if dbPackage != nil {
 		commands = append(commands, dbPackage.GetPreInstall()...)
 		if pkgs := dbPackage.GetAptPackages(); len(pkgs) > 0 {
+			// Refresh the index first: the cloud-init apt update goes stale by
+			// deploy time, so apt asks the apt-cacher for .deb versions the mirror
+			// has already superseded -> 404. `apt-get update` realigns the index
+			// with what the mirror (via apt-cacher) actually serves.
 			commands = append(commands,
+				"apt-get update",
 				"DEBIAN_FRONTEND=noninteractive apt-get install -y "+strings.Join(pkgs, " "))
 		}
 	}
