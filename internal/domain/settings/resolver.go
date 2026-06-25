@@ -91,6 +91,7 @@ func (r Resolver) AgentBootstrap(ctx context.Context) (*workflowpb.AgentBootstra
 	// DefaultAgentEnv (let an explicit setting win).
 	if serverAddr != "" {
 		if _, alreadySet := extraEnv[orioledb.RegistryMirrorEnv]; !alreadySet {
+			// mirror URL == server origin; /v2 is routed to the registry backend by the gateway (and Caddy).
 			if mirrorURL := agentdomain.AptProxyURL(serverAddr); mirrorURL != "" {
 				extraEnv[orioledb.RegistryMirrorEnv] = mirrorURL
 			}

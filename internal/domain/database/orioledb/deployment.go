@@ -62,7 +62,7 @@ func orioledbEngineComponent(
 	}
 	options := pgOptions(params)
 	configDir := deploymentbuilder.ConfigDir(component.GetId())
-	configFile := orioledbDefaultConfigFile(component.GetId(), configDir)
+	configFile := orioledbDefaultConfigFile(configDir)
 
 	return deploymentbuilder.EngineComponent{
 		Engine:            orioledbEngine,
@@ -75,13 +75,13 @@ func orioledbEngineComponent(
 		DefaultConfigFile: configFile,
 		InstallCommands:   orioledbInstallCommands(dbPackage),
 		ServiceFile:       deploymentbuilder.EngineServiceFile(component.GetId(), orioledbServiceUnit(component.GetId(), image, locale, options)),
-		Healthcheck:       "docker exec " + containerName + " pg_isready -h 127.0.0.1 -p " + fmt.Sprint(pgPort),
+		Healthcheck:       "for i in $(seq 1 60); do docker exec " + containerName + " pg_isready -h 127.0.0.1 -p " + fmt.Sprint(pgPort) + " && exit 0; sleep 3; done; exit 1",
 	}, nil
 }
 
 // orioledbDefaultConfigFile returns the env file written to the config dir.
 // The EnvironmentFile in the systemd unit loads POSTGRES_PASSWORD from here.
-func orioledbDefaultConfigFile(componentID, configDir string) *common.File {
+func orioledbDefaultConfigFile(configDir string) *common.File {
 	return &common.File{
 		Info: &common.File_Info{
 			Path:          configDir + "/orioledb.env",

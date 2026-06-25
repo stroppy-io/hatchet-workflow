@@ -47,6 +47,11 @@ type Config struct {
 	// served from the SAME server origin — no separate public Grafana URL needed.
 	// Grafana must serve from the /grafana sub-path. Empty disables it (404).
 	GrafanaBackend string
+	// RegistryBackend is the internal Docker registry base URL (e.g.
+	// "http://registry:5000") the gateway reverse-proxies /v2/* to, so agents
+	// can pull images through the server origin without direct internet access.
+	// Empty disables the route (503).
+	RegistryBackend string
 	// HTTPFallback handles every HTTP/1.1 request that is not one of the gateway's
 	// own agent-facing routes — i.e. the control-plane connect API + the embedded
 	// SPA. Empty means unmatched routes 404. This lets the connect server and UI
@@ -67,8 +72,9 @@ type Gateway struct {
 	httpFallback    http.Handler
 	logger          *slog.Logger
 
-	monitorProxy http.Handler
-	grafanaProxy http.Handler
+	monitorProxy  http.Handler
+	grafanaProxy  http.Handler
+	registryProxy http.Handler
 
 	grpc    *grpc.Server
 	backend *grpc.ClientConn
@@ -117,6 +123,13 @@ func New(cfg Config) (*Gateway, error) {
 		}
 		g.grafanaProxy = gp
 	}
+	if cfg.RegistryBackend != "" {
+		rp, err := newMonitorProxy(cfg.RegistryBackend, "", nil) // single-host reverse proxy, no bearer
+		if err != nil {
+			return nil, fmt.Errorf("gateway: registry backend %q: %w", cfg.RegistryBackend, err)
+		}
+		g.registryProxy = rp
+	}
 	g.http = &http.Server{Handler: http.HandlerFunc(g.serveHTTP), ReadHeaderTimeout: 30 * time.Second}
 	return g, nil
 }
@@ -153,6 +166,14 @@ func (g *Gateway) serveHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		g.grafanaProxy.ServeHTTP(w, r)
+	case strings.HasPrefix(r.URL.Path, "/v2/"):
+		// Pull-through Docker registry mirror: agents pull images through the
+		// gateway so egress-less VMs do not need direct Docker Hub access.
+		if g.registryProxy == nil {
+			http.Error(w, "registry backend not configured", http.StatusServiceUnavailable)
+			return
+		}
+		g.registryProxy.ServeHTTP(w, r)
 	case g.httpFallback != nil:
 		// control-plane connect API + embedded SPA share the gateway port.
 		g.httpFallback.ServeHTTP(w, r)

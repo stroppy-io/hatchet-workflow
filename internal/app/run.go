@@ -773,7 +773,8 @@ func Run(ctx context.Context, cfg Config) error {
 		MonitoringBackend: cfg.MonitoringURL,   // relay agent /insert/* + /select/* -> vmauth
 		MonitoringToken:   cfg.MonitoringToken, // backend monitoring bearer injected into vmauth
 		AgentTokens:       agentTokens,
-		GrafanaBackend:    cfg.GrafanaBackend, // serve /grafana/* from the server origin
+		GrafanaBackend:    cfg.GrafanaBackend,  // serve /grafana/* from the server origin
+		RegistryBackend:   cfg.RegistryBackend, // serve /v2/* registry mirror from the server origin
 		HTTPFallback:      h2cHandler,
 		Logger:            log,
 	})

@@ -8,12 +8,6 @@ import (
 
 var dummyParams = domain.OrioledbParams{}
 
-func TestBuilderDispatchesOrioledb(t *testing.T) {
-	// Guards that the builder switch routes KIND_ORIOLEDB here. Import the
-	// builder package locally to avoid an import cycle at file top.
-	t.Skip("covered by package-level builder_test in internal/domain/database")
-}
-
 func TestBuildTopologySpecSingleNode(t *testing.T) {
 	spec, err := (&Database{}).BuildTopologySpec(&dummyParams)
 	if err != nil {

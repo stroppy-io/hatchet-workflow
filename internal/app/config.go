@@ -66,6 +66,10 @@ type Config struct {
 	// GrafanaBackend is the embedded Grafana upstream the gateway reverse-proxies
 	// /grafana/* to, serving dashboards from the same server origin.
 	GrafanaBackend string
+	// RegistryBackend is the Docker registry upstream the gateway reverse-proxies
+	// /v2/* to, so agents can pull images without direct internet access.
+	// Defaults to http://registry:5000 (STROPPY_REGISTRY_BACKEND env var).
+	RegistryBackend string
 	// PackageBlobDir is the local filesystem root for package blobs.
 	PackageBlobDir string
 	// AdminEmail is the email/login of the first-boot admin account seeded on a
