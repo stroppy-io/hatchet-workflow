@@ -698,6 +698,8 @@ func (src *ListDatabasePresetsRequest) ToOgen() (*rest.ListDatabasePresetsReques
 			en4 = rest.ListDatabasePresetsRequestDbKindsItem7
 		case domain.Database_KIND_EXTERNAL:
 			en4 = rest.ListDatabasePresetsRequestDbKindsItem8
+		case domain.Database_KIND_ORIOLEDB:
+			en4 = rest.ListDatabasePresetsRequestDbKindsItem9
 		default:
 			return zero, fmt.Errorf("cloud.v1.api.ListDatabasePresetsRequest.db_kinds: enum value %v has no ogen ListDatabasePresetsRequestDbKindsItem variant", e)
 		}
@@ -790,6 +792,8 @@ func ListDatabasePresetsRequestFromOgen(src *rest.ListDatabasePresetsRequest) (*
 			en7 = domain.Database_KIND_PICODATA
 		case rest.ListDatabasePresetsRequestDbKindsItem8:
 			en7 = domain.Database_KIND_EXTERNAL
+		case rest.ListDatabasePresetsRequestDbKindsItem9:
+			en7 = domain.Database_KIND_ORIOLEDB
 		default:
 			return zero, fmt.Errorf("cloud.v1.api.ListDatabasePresetsRequest.db_kinds: enum value %v has no Database_Kind variant", e)
 		}
@@ -923,6 +927,8 @@ func (src *ListTestPresetsRequest) ToOgen() (*rest.ListTestPresetsRequest, error
 			en4 = rest.ListTestPresetsRequestDbKindsItem7
 		case domain.Database_KIND_EXTERNAL:
 			en4 = rest.ListTestPresetsRequestDbKindsItem8
+		case domain.Database_KIND_ORIOLEDB:
+			en4 = rest.ListTestPresetsRequestDbKindsItem9
 		default:
 			return zero, fmt.Errorf("cloud.v1.api.ListTestPresetsRequest.db_kinds: enum value %v has no ogen ListTestPresetsRequestDbKindsItem variant", e)
 		}
@@ -1025,6 +1031,8 @@ func ListTestPresetsRequestFromOgen(src *rest.ListTestPresetsRequest) (*ListTest
 			en7 = domain.Database_KIND_PICODATA
 		case rest.ListTestPresetsRequestDbKindsItem8:
 			en7 = domain.Database_KIND_EXTERNAL
+		case rest.ListTestPresetsRequestDbKindsItem9:
+			en7 = domain.Database_KIND_ORIOLEDB
 		default:
 			return zero, fmt.Errorf("cloud.v1.api.ListTestPresetsRequest.db_kinds: enum value %v has no Database_Kind variant", e)
 		}

@@ -181,6 +181,8 @@ func (src *RunColumn) ToOgen() (*rest.RunColumn, error) {
 		en2 = rest.RunColumnDbKind7
 	case domain.Database_KIND_EXTERNAL:
 		en2 = rest.RunColumnDbKind8
+	case domain.Database_KIND_ORIOLEDB:
+		en2 = rest.RunColumnDbKind9
 	default:
 		return nil, fmt.Errorf("cloud.v1.api.RunColumn.db_kind: enum value %v has no ogen RunColumnDbKind variant", src.GetDbKind())
 	}
@@ -276,6 +278,8 @@ func RunColumnFromOgen(src *rest.RunColumn) (*RunColumn, error) {
 			en6 = domain.Database_KIND_PICODATA
 		case rest.RunColumnDbKind8:
 			en6 = domain.Database_KIND_EXTERNAL
+		case rest.RunColumnDbKind9:
+			en6 = domain.Database_KIND_ORIOLEDB
 		default:
 			return nil, fmt.Errorf("cloud.v1.api.RunColumn.db_kind: enum value %v has no Database_Kind variant", v5)
 		}

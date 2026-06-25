@@ -4951,6 +4951,8 @@ func (s CreatePackageUploadRequestTargetDbKind) Validate() error {
 		return nil
 	case 8:
 		return nil
+	case 9:
+		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
 	}
@@ -5659,6 +5661,8 @@ func (s DatabaseKind) Validate() error {
 		return nil
 	case 8:
 		return nil
+	case 9:
+		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
 	}
@@ -5721,6 +5725,24 @@ func (s *DatabaseParams) Validate() error {
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
 			Name:  "mysql",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.Orioledb.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "orioledb",
 			Error: err,
 		})
 	}
@@ -13432,6 +13454,8 @@ func (s ListDatabasePresetsRequestDbKindsItem) Validate() error {
 		return nil
 	case 8:
 		return nil
+	case 9:
+		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
 	}
@@ -14013,6 +14037,8 @@ func (s ListPackagesRequestDbKindsItem) Validate() error {
 	case 7:
 		return nil
 	case 8:
+		return nil
+	case 9:
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
@@ -15003,6 +15029,8 @@ func (s ListSuiteRunsRequestDbKindsItem) Validate() error {
 		return nil
 	case 8:
 		return nil
+	case 9:
+		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
 	}
@@ -15621,6 +15649,8 @@ func (s ListTestPresetsRequestDbKindsItem) Validate() error {
 	case 7:
 		return nil
 	case 8:
+		return nil
+	case 9:
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
@@ -16311,6 +16341,8 @@ func (s ListTestRunsRequestDbKindsItem) Validate() error {
 	case 7:
 		return nil
 	case 8:
+		return nil
+	case 9:
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
@@ -19730,6 +19762,46 @@ func (s OneOfVariants) Validate() error {
 	return nil
 }
 
+func (s *OrioledbParams) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if value, ok := s.SharedBuffersMb.Get(); ok {
+			if err := func() error {
+				if err := (validate.Int{
+					MinSet:        true,
+					Min:           0,
+					MaxSet:        false,
+					Max:           0,
+					MinExclusive:  false,
+					MaxExclusive:  false,
+					MultipleOfSet: false,
+					MultipleOf:    0,
+					Pattern:       nil,
+				}).Validate(int64(value)); err != nil {
+					return errors.Wrap(err, "int")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "sharedBuffersMb",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
 func (s *Overview) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -20051,6 +20123,8 @@ func (s PackageDbKind) Validate() error {
 		return nil
 	case 8:
 		return nil
+	case 9:
+		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
 	}
@@ -20330,6 +20404,8 @@ func (s PackageRecordTargetDbKind) Validate() error {
 	case 7:
 		return nil
 	case 8:
+		return nil
+	case 9:
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
@@ -23506,6 +23582,8 @@ func (s PublicRatingEntryDbKind) Validate() error {
 		return nil
 	case 8:
 		return nil
+	case 9:
+		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
 	}
@@ -24503,6 +24581,8 @@ func (s RatingEntryDbKind) Validate() error {
 		return nil
 	case 8:
 		return nil
+	case 9:
+		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
 	}
@@ -24680,6 +24760,8 @@ func (s RatingFilterDbKindsItem) Validate() error {
 	case 7:
 		return nil
 	case 8:
+		return nil
+	case 9:
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
@@ -26670,6 +26752,8 @@ func (s RunColumnDbKind) Validate() error {
 	case 7:
 		return nil
 	case 8:
+		return nil
+	case 9:
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
@@ -29308,6 +29392,8 @@ func (s SharedSuiteRunDbKindsItem) Validate() error {
 		return nil
 	case 8:
 		return nil
+	case 9:
+		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
 	}
@@ -29516,6 +29602,8 @@ func (s SharedTestRunDbKind) Validate() error {
 	case 7:
 		return nil
 	case 8:
+		return nil
+	case 9:
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
@@ -33044,6 +33132,8 @@ func (s Summary3DbKind) Validate() error {
 		return nil
 	case 8:
 		return nil
+	case 9:
+		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
 	}
@@ -33490,6 +33580,8 @@ func (s Summary5DbKindsItem) Validate() error {
 		return nil
 	case 8:
 		return nil
+	case 9:
+		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
 	}
@@ -33890,6 +33982,8 @@ func (s Summary6DbKind) Validate() error {
 		return nil
 	case 8:
 		return nil
+	case 9:
+		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
 	}
@@ -33948,6 +34042,8 @@ func (s SummaryDbKind) Validate() error {
 	case 7:
 		return nil
 	case 8:
+		return nil
+	case 9:
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)

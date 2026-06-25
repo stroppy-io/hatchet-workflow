@@ -1740,6 +1740,122 @@ func (m *YdbManagedParams_AutoScale) UnmarshalJSON(data []byte) error {
 	return m.Decode(d)
 }
 
+func (m *OrioledbParams) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Image != "" {
+		e.FieldStart("image")
+		e.Str(m.Image)
+	}
+	if len(m.PostgresOptions) > 0 {
+		e.FieldStart("postgresOptions")
+		e.ObjStart()
+		for k, v := range m.PostgresOptions {
+			e.FieldStart(k)
+			e.Str(v)
+		}
+		e.ObjEnd()
+	}
+	if m.InitdbLocale != "" {
+		e.FieldStart("initdbLocale")
+		e.Str(m.InitdbLocale)
+	}
+	if m.SharedBuffersMb != 0 {
+		e.FieldStart("sharedBuffersMb")
+		e.UInt32(m.SharedBuffersMb)
+	}
+	e.ObjEnd()
+}
+
+func (m *OrioledbParams) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "image":
+			if seen["Image"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Image"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Image = v
+			return nil
+		case "postgresOptions", "postgres_options":
+			if seen["PostgresOptions"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["PostgresOptions"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			if m.PostgresOptions == nil {
+				m.PostgresOptions = make(map[string]string)
+			}
+			return d.Obj(func(d *jx.Decoder, ks string) error {
+				mk := ks
+				var mv string
+				tv, err := d.Str()
+				if err != nil {
+					return err
+				}
+				mv = tv
+				m.PostgresOptions[mk] = mv
+				return nil
+			})
+		case "initdbLocale", "initdb_locale":
+			if seen["InitdbLocale"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["InitdbLocale"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.InitdbLocale = v
+			return nil
+		case "sharedBuffersMb", "shared_buffers_mb":
+			if seen["SharedBuffersMb"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["SharedBuffersMb"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint32(d)
+			if err != nil {
+				return err
+			}
+			m.SharedBuffersMb = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *OrioledbParams) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *OrioledbParams) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
 func (m *CockroachParams) Encode(e *jx.Encoder) {
 	if m == nil {
 		e.ObjStart()
@@ -1857,6 +1973,9 @@ func (m *DatabaseParams) Encode(e *jx.Encoder) {
 	case *DatabaseParams_Cockroach:
 		e.FieldStart("cockroach")
 		v.Cockroach.Encode(e)
+	case *DatabaseParams_Orioledb:
+		e.FieldStart("orioledb")
+		v.Orioledb.Encode(e)
 	}
 	e.ObjEnd()
 }
@@ -1993,6 +2112,21 @@ func (m *DatabaseParams) Decode(d *jx.Decoder) error {
 			w := &DatabaseParams_Cockroach{}
 			w.Cockroach = &CockroachParams{}
 			if err := w.Cockroach.Decode(d); err != nil {
+				return err
+			}
+			m.Engine = w
+			return nil
+		case "orioledb":
+			if seen["oneof:Engine"] {
+				return fmt.Errorf("multiple keys for oneof engine")
+			}
+			seen["oneof:Engine"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			w := &DatabaseParams_Orioledb{}
+			w.Orioledb = &OrioledbParams{}
+			if err := w.Orioledb.Decode(d); err != nil {
 				return err
 			}
 			m.Engine = w

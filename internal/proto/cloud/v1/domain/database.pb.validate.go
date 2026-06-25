@@ -993,6 +993,114 @@ var _YdbManagedParams_Type_NotInLookup = map[YdbManagedParams_Type]struct{}{
 	0: {},
 }
 
+// Validate checks the field values on OrioledbParams with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *OrioledbParams) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on OrioledbParams with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in OrioledbParamsMultiError,
+// or nil if none found.
+func (m *OrioledbParams) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *OrioledbParams) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Image
+
+	// no validation rules for PostgresOptions
+
+	// no validation rules for InitdbLocale
+
+	// no validation rules for SharedBuffersMb
+
+	if len(errors) > 0 {
+		return OrioledbParamsMultiError(errors)
+	}
+
+	return nil
+}
+
+// OrioledbParamsMultiError is an error wrapping multiple validation errors
+// returned by OrioledbParams.ValidateAll() if the designated constraints
+// aren't met.
+type OrioledbParamsMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m OrioledbParamsMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m OrioledbParamsMultiError) AllErrors() []error { return m }
+
+// OrioledbParamsValidationError is the validation error returned by
+// OrioledbParams.Validate if the designated constraints aren't met.
+type OrioledbParamsValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e OrioledbParamsValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e OrioledbParamsValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e OrioledbParamsValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e OrioledbParamsValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e OrioledbParamsValidationError) ErrorName() string { return "OrioledbParamsValidationError" }
+
+// Error satisfies the builtin error interface
+func (e OrioledbParamsValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sOrioledbParams.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = OrioledbParamsValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = OrioledbParamsValidationError{}
+
 // Validate checks the field values on CockroachParams with the rules defined
 // in the proto definition for this message. If any rules are violated, the
 // first error encountered is returned, or nil if there are no violations.
@@ -1449,6 +1557,48 @@ func (m *DatabaseParams) validate(all bool) error {
 			if err := v.Validate(); err != nil {
 				return DatabaseParamsValidationError{
 					field:  "Cockroach",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *DatabaseParams_Orioledb:
+		if v == nil {
+			err := DatabaseParamsValidationError{
+				field:  "Engine",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofEnginePresent = true
+
+		if all {
+			switch v := interface{}(m.GetOrioledb()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, DatabaseParamsValidationError{
+						field:  "Orioledb",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, DatabaseParamsValidationError{
+						field:  "Orioledb",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetOrioledb()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return DatabaseParamsValidationError{
+					field:  "Orioledb",
 					reason: "embedded message failed validation",
 					cause:  err,
 				}

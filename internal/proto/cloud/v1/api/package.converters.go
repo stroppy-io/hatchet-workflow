@@ -103,6 +103,8 @@ func (src *CreatePackageUploadRequest) ToOgen() (*rest.CreatePackageUploadReques
 		en2 = rest.CreatePackageUploadRequestTargetDbKind7
 	case domain.Database_KIND_EXTERNAL:
 		en2 = rest.CreatePackageUploadRequestTargetDbKind8
+	case domain.Database_KIND_ORIOLEDB:
+		en2 = rest.CreatePackageUploadRequestTargetDbKind9
 	default:
 		return nil, fmt.Errorf("cloud.v1.api.CreatePackageUploadRequest.target_db_kind: enum value %v has no ogen CreatePackageUploadRequestTargetDbKind variant", src.GetTargetDbKind())
 	}
@@ -162,6 +164,8 @@ func CreatePackageUploadRequestFromOgen(src *rest.CreatePackageUploadRequest) (*
 			en7 = domain.Database_KIND_PICODATA
 		case rest.CreatePackageUploadRequestTargetDbKind8:
 			en7 = domain.Database_KIND_EXTERNAL
+		case rest.CreatePackageUploadRequestTargetDbKind9:
+			en7 = domain.Database_KIND_ORIOLEDB
 		default:
 			return nil, fmt.Errorf("cloud.v1.api.CreatePackageUploadRequest.target_db_kind: enum value %v has no Database_Kind variant", v6)
 		}
@@ -371,6 +375,8 @@ func (src *ListPackagesRequest) ToOgen() (*rest.ListPackagesRequest, error) {
 			en5 = rest.ListPackagesRequestDbKindsItem7
 		case domain.Database_KIND_EXTERNAL:
 			en5 = rest.ListPackagesRequestDbKindsItem8
+		case domain.Database_KIND_ORIOLEDB:
+			en5 = rest.ListPackagesRequestDbKindsItem9
 		default:
 			return zero, fmt.Errorf("cloud.v1.api.ListPackagesRequest.db_kinds: enum value %v has no ogen ListPackagesRequestDbKindsItem variant", e)
 		}
@@ -452,6 +458,8 @@ func ListPackagesRequestFromOgen(src *rest.ListPackagesRequest) (*ListPackagesRe
 			en7 = domain.Database_KIND_PICODATA
 		case rest.ListPackagesRequestDbKindsItem8:
 			en7 = domain.Database_KIND_EXTERNAL
+		case rest.ListPackagesRequestDbKindsItem9:
+			en7 = domain.Database_KIND_ORIOLEDB
 		default:
 			return zero, fmt.Errorf("cloud.v1.api.ListPackagesRequest.db_kinds: enum value %v has no Database_Kind variant", e)
 		}

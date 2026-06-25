@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/domain/database.proto.
  */
 export const file_cloud_v1_domain_database: GenFile = /*@__PURE__*/
-  fileDesc("Ch5jbG91ZC92MS9kb21haW4vZGF0YWJhc2UucHJvdG8SD2Nsb3VkLnYxLmRvbWFpbiKcAgoHUGFja2FnZRIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEjsKB2RiX2tpbmQYAyABKA4yHi5jbG91ZC52MS5kb21haW4uRGF0YWJhc2UuS2luZEIK+kIHggEEEAEgABIcCgpkYl92ZXJzaW9uGAQgASgJQgj6QgVyAxiAARISCgppc19idWlsdGluGAUgASgIEhQKDGFwdF9wYWNrYWdlcxgGIAMoCRITCgtwcmVfaW5zdGFsbBgHIAMoCRITCgtjdXN0b21fcmVwbxgIIAEoCRIXCg9jdXN0b21fcmVwb19rZXkYCSABKAkSFAoMZGViX2ZpbGVuYW1lGAogASgJEhkKEXBhY2thZ2VfcmVjb3JkX2lkGAsgASgJIpQHCg5Qb3N0Z3Jlc1BhcmFtcxIQCghyZXBsaWNhcxgBIAEoDRIPCgdoYXByb3h5GAIgASgNEhEKCXBnYm91bmNlchgDIAEoCBIPCgdwYXRyb25pGAQgASgIEgwKBGV0Y2QYBSABKAgSFQoNc3luY19yZXBsaWNhcxgGIAEoDRJKCg5tYXN0ZXJfb3B0aW9ucxgKIAMoCzIyLmNsb3VkLnYxLmRvbWFpbi5Qb3N0Z3Jlc1BhcmFtcy5NYXN0ZXJPcHRpb25zRW50cnkSTAoPcmVwbGljYV9vcHRpb25zGAsgAygLMjMuY2xvdWQudjEuZG9tYWluLlBvc3RncmVzUGFyYW1zLlJlcGxpY2FPcHRpb25zRW50cnkSTAoPaGFwcm94eV9vcHRpb25zGAwgAygLMjMuY2xvdWQudjEuZG9tYWluLlBvc3RncmVzUGFyYW1zLkhhcHJveHlPcHRpb25zRW50cnkSUAoRcGdib3VuY2VyX29wdGlvbnMYDSADKAsyNS5jbG91ZC52MS5kb21haW4uUG9zdGdyZXNQYXJhbXMuUGdib3VuY2VyT3B0aW9uc0VudHJ5EkwKD3BhdHJvbmlfb3B0aW9ucxgOIAMoCzIzLmNsb3VkLnYxLmRvbWFpbi5Qb3N0Z3Jlc1BhcmFtcy5QYXRyb25pT3B0aW9uc0VudHJ5EkYKDGV0Y2Rfb3B0aW9ucxgPIAMoCzIwLmNsb3VkLnYxLmRvbWFpbi5Qb3N0Z3Jlc1BhcmFtcy5FdGNkT3B0aW9uc0VudHJ5GjQKEk1hc3Rlck9wdGlvbnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGjUKE1JlcGxpY2FPcHRpb25zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ARo1ChNIYXByb3h5T3B0aW9uc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEaNwoVUGdib3VuY2VyT3B0aW9uc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEaNQoTUGF0cm9uaU9wdGlvbnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGjIKEEV0Y2RPcHRpb25zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASLoAwoLTXlTcWxQYXJhbXMSEAoIcmVwbGljYXMYASABKA0SEAoIcHJveHlzcWwYAiABKA0SGQoRZ3JvdXBfcmVwbGljYXRpb24YAyABKAgSEQoJc2VtaV9zeW5jGAQgASgIEkkKD3ByaW1hcnlfb3B0aW9ucxgKIAMoCzIwLmNsb3VkLnYxLmRvbWFpbi5NeVNxbFBhcmFtcy5QcmltYXJ5T3B0aW9uc0VudHJ5EkkKD3JlcGxpY2Ffb3B0aW9ucxgLIAMoCzIwLmNsb3VkLnYxLmRvbWFpbi5NeVNxbFBhcmFtcy5SZXBsaWNhT3B0aW9uc0VudHJ5EksKEHByb3h5c3FsX29wdGlvbnMYDCADKAsyMS5jbG91ZC52MS5kb21haW4uTXlTcWxQYXJhbXMuUHJveHlzcWxPcHRpb25zRW50cnkaNQoTUHJpbWFyeU9wdGlvbnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGjUKE1JlcGxpY2FPcHRpb25zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ARo2ChRQcm94eXNxbE9wdGlvbnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBImIKDFBpY29kYXRhVGllchIVCgRuYW1lGAEgASgJQgf6QgRyAhABEhoKEnJlcGxpY2F0aW9uX2ZhY3RvchgCIAEoDRIQCghjYW5fdm90ZRgDIAEoCBINCgVjb3VudBgEIAEoDSKkAwoOUGljb2RhdGFQYXJhbXMSGgoJaW5zdGFuY2VzGAEgASgNQgf6QgQqAigBEg8KB2hhcHJveHkYAiABKA0SGgoScmVwbGljYXRpb25fZmFjdG9yGAMgASgNEg4KBnNoYXJkcxgEIAEoDRIsCgV0aWVycxgFIAMoCzIdLmNsb3VkLnYxLmRvbWFpbi5QaWNvZGF0YVRpZXISTgoQaW5zdGFuY2Vfb3B0aW9ucxgKIAMoCzI0LmNsb3VkLnYxLmRvbWFpbi5QaWNvZGF0YVBhcmFtcy5JbnN0YW5jZU9wdGlvbnNFbnRyeRJMCg9oYXByb3h5X29wdGlvbnMYCyADKAsyMy5jbG91ZC52MS5kb21haW4uUGljb2RhdGFQYXJhbXMuSGFwcm94eU9wdGlvbnNFbnRyeRo2ChRJbnN0YW5jZU9wdGlvbnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGjUKE0hhcHJveHlPcHRpb25zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASLFCAoJWWRiUGFyYW1zEh4KDXN0b3JhZ2Vfbm9kZXMYASABKA1CB/pCBCoCKAESFgoOZGF0YWJhc2Vfbm9kZXMYAiABKA0SDwoHaGFwcm94eRgDIAEoDRIfChdwZGlza3NfcGVyX3N0b3JhZ2Vfbm9kZRgEIAEoDRJCCg9mYXVsdF90b2xlcmFuY2UYBSABKA4yKS5jbG91ZC52MS5kb21haW4uWWRiUGFyYW1zLkZhdWx0VG9sZXJhbmNlEkUKE2ZhaWx1cmVfZG9tYWluX3R5cGUYBiABKA4yKC5jbG91ZC52MS5kb21haW4uWWRiUGFyYW1zLkZhaWx1cmVEb21haW4SPgoRZGVmYXVsdF9kaXNrX3R5cGUYByABKA4yIy5jbG91ZC52MS5kb21haW4uWWRiUGFyYW1zLkRpc2tUeXBlEhYKDnN0b3JhZ2VfZ3JvdXBzGAggASgNEhgKEGF1dG9fc2l6ZV9wZGlza3MYCSABKAgSFQoNZGF0YWJhc2VfcGF0aBgKIAEoCRJHCg9zdG9yYWdlX29wdGlvbnMYFCADKAsyLi5jbG91ZC52MS5kb21haW4uWWRiUGFyYW1zLlN0b3JhZ2VPcHRpb25zRW50cnkSSQoQZGF0YWJhc2Vfb3B0aW9ucxgVIAMoCzIvLmNsb3VkLnYxLmRvbWFpbi5ZZGJQYXJhbXMuRGF0YWJhc2VPcHRpb25zRW50cnkSRwoPaGFwcm94eV9vcHRpb25zGBYgAygLMi4uY2xvdWQudjEuZG9tYWluLllkYlBhcmFtcy5IYXByb3h5T3B0aW9uc0VudHJ5GjUKE1N0b3JhZ2VPcHRpb25zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ARo2ChREYXRhYmFzZU9wdGlvbnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGjUKE0hhcHJveHlPcHRpb25zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASKLAQoORmF1bHRUb2xlcmFuY2USHwobRkFVTFRfVE9MRVJBTkNFX1VOU1BFQ0lGSUVEEAASGAoURkFVTFRfVE9MRVJBTkNFX05PTkUQARIdChlGQVVMVF9UT0xFUkFOQ0VfQkxPQ0tfNF8yEAISHwobRkFVTFRfVE9MRVJBTkNFX01JUlJPUl8zX0RDEAMiSAoNRmFpbHVyZURvbWFpbhIeChpGQUlMVVJFX0RPTUFJTl9VTlNQRUNJRklFRBAAEhcKE0ZBSUxVUkVfRE9NQUlOX0RJU0sQASJfCghEaXNrVHlwZRIZChVESVNLX1RZUEVfVU5TUEVDSUZJRUQQABIRCg1ESVNLX1RZUEVfU1NEEAESEgoORElTS19UWVBFX05WTUUQAhIRCg1ESVNLX1RZUEVfUk9UEAMi4gQKEFlkYk1hbmFnZWRQYXJhbXMSQAoEdHlwZRgBIAEoDjImLmNsb3VkLnYxLmRvbWFpbi5ZZGJNYW5hZ2VkUGFyYW1zLlR5cGVCCvpCB4IBBBABIAASQwoMY29tcHV0ZV90eXBlGAIgASgOMi0uY2xvdWQudjEuZG9tYWluLllkYk1hbmFnZWRQYXJhbXMuQ29tcHV0ZVR5cGUSGgoScmVzb3VyY2VfcHJlc2V0X2lkGAMgASgJEhIKCm5vZGVfY291bnQYBCABKA0SPwoKYXV0b19zY2FsZRgFIAEoCzIrLmNsb3VkLnYxLmRvbWFpbi5ZZGJNYW5hZ2VkUGFyYW1zLkF1dG9TY2FsZRIWCg5zdG9yYWdlX2dyb3VwcxgGIAEoDRIUCgxzdG9yYWdlX3R5cGUYByABKAkSFwoPdGhyb3R0bGluZ19yY3VzGAggASgNGm0KCUF1dG9TY2FsZRIZCghtaW5fc2l6ZRgBIAEoDUIH+kIEKgIoARIZCghtYXhfc2l6ZRgCIAEoDUIH+kIEKgIoARIqChdjcHVfdXRpbGl6YXRpb25fcGVyY2VudBgDIAEoDUIJ+kIGKgQoABhkIkUKBFR5cGUSFAoQVFlQRV9VTlNQRUNJRklFRBAAEhMKD1RZUEVfU0VSVkVSTEVTUxABEhIKDlRZUEVfREVESUNBVEVEEAIiWQoLQ29tcHV0ZVR5cGUSHAoYQ09NUFVURV9UWVBFX1VOU1BFQ0lGSUVEEAASFQoRQ09NUFVURV9UWVBFX09MVFAQARIVChFDT01QVVRFX1RZUEVfT0xBUBACIpkBCg9Db2Nrcm9hY2hQYXJhbXMSFgoFbm9kZXMYASABKA1CB/pCBCoCKAESPgoHb3B0aW9ucxgCIAMoCzItLmNsb3VkLnYxLmRvbWFpbi5Db2Nrcm9hY2hQYXJhbXMuT3B0aW9uc0VudHJ5Gi4KDE9wdGlvbnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIscDCg5EYXRhYmFzZVBhcmFtcxIPCgd2ZXJzaW9uGAEgASgJEikKB3BhY2thZ2UYAiABKAsyGC5jbG91ZC52MS5kb21haW4uUGFja2FnZRIzCghwb3N0Z3JlcxgKIAEoCzIfLmNsb3VkLnYxLmRvbWFpbi5Qb3N0Z3Jlc1BhcmFtc0gAEi0KBW15c3FsGAsgASgLMhwuY2xvdWQudjEuZG9tYWluLk15U3FsUGFyYW1zSAASLwoHbWFyaWFkYhgMIAEoCzIcLmNsb3VkLnYxLmRvbWFpbi5NeVNxbFBhcmFtc0gAEjMKCHBpY29kYXRhGA0gASgLMh8uY2xvdWQudjEuZG9tYWluLlBpY29kYXRhUGFyYW1zSAASKQoDeWRiGA4gASgLMhouY2xvdWQudjEuZG9tYWluLllkYlBhcmFtc0gAEjgKC3lkYl9tYW5hZ2VkGA8gASgLMiEuY2xvdWQudjEuZG9tYWluLllkYk1hbmFnZWRQYXJhbXNIABI1Cgljb2Nrcm9hY2gYECABKAsyIC5jbG91ZC52MS5kb21haW4uQ29ja3JvYWNoUGFyYW1zSABCEwoGZW5naW5lEgn4QgHypx0CCAMi2QQKCERhdGFiYXNlEjgKBGtpbmQYASABKA4yHi5jbG91ZC52MS5kb21haW4uRGF0YWJhc2UuS2luZEIK+kIHggEEEAEgABIxCgZwYXJhbXMYAyABKAsyHy5jbG91ZC52MS5kb21haW4uRGF0YWJhc2VQYXJhbXNIABI2CghleHRlcm5hbBgEIAEoCzIiLmNsb3VkLnYxLmRvbWFpbi5EYXRhYmFzZS5FeHRlcm5hbEgAEkAKEmRhdGFiYXNlX3ByZXNldF9pZBgFIAEoCzIiLmNsb3VkLnYxLmRvbWFpbi5EYXRhYmFzZS5QcmVzZXRJZEgAEhIKCnBhY2thZ2VfaWQYBiABKAkSIwoEdGFncxgHIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzGh8KCFByZXNldElkEhMKAmlkGAEgASgJQgf6QgRyAhABGkUKCEV4dGVybmFsEhQKA2RzbhgBIAEoCUIH+kIEcgIQARIjCgR0YWdzGAIgASgLMhUuY2xvdWQudjEuY29tbW9uLlRhZ3MirwEKBEtpbmQSFAoQS0lORF9VTlNQRUNJRklFRBAAEhEKDUtJTkRfUE9TVEdSRVMQARIOCgpLSU5EX01ZU1FMEAISEAoMS0lORF9NQVJJQURCEAMSDAoIS0lORF9ZREIQBBIUChBLSU5EX1lEQl9NQU5BR0VEEAUSEgoOS0lORF9DT0NLUk9BQ0gQBhIRCg1LSU5EX1BJQ09EQVRBEAcSEQoNS0lORF9FWFRFUk5BTBAIQhMKBnNvdXJjZRIJ+EIB8qcdAggDQkRaQmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2RvbWFpbmIGcHJvdG8z", [file_cloud_v1_common_tags, file_validate_validate, file_ogen_ogen]);
+  fileDesc("Ch5jbG91ZC92MS9kb21haW4vZGF0YWJhc2UucHJvdG8SD2Nsb3VkLnYxLmRvbWFpbiKcAgoHUGFja2FnZRIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEjsKB2RiX2tpbmQYAyABKA4yHi5jbG91ZC52MS5kb21haW4uRGF0YWJhc2UuS2luZEIK+kIHggEEEAEgABIcCgpkYl92ZXJzaW9uGAQgASgJQgj6QgVyAxiAARISCgppc19idWlsdGluGAUgASgIEhQKDGFwdF9wYWNrYWdlcxgGIAMoCRITCgtwcmVfaW5zdGFsbBgHIAMoCRITCgtjdXN0b21fcmVwbxgIIAEoCRIXCg9jdXN0b21fcmVwb19rZXkYCSABKAkSFAoMZGViX2ZpbGVuYW1lGAogASgJEhkKEXBhY2thZ2VfcmVjb3JkX2lkGAsgASgJIpQHCg5Qb3N0Z3Jlc1BhcmFtcxIQCghyZXBsaWNhcxgBIAEoDRIPCgdoYXByb3h5GAIgASgNEhEKCXBnYm91bmNlchgDIAEoCBIPCgdwYXRyb25pGAQgASgIEgwKBGV0Y2QYBSABKAgSFQoNc3luY19yZXBsaWNhcxgGIAEoDRJKCg5tYXN0ZXJfb3B0aW9ucxgKIAMoCzIyLmNsb3VkLnYxLmRvbWFpbi5Qb3N0Z3Jlc1BhcmFtcy5NYXN0ZXJPcHRpb25zRW50cnkSTAoPcmVwbGljYV9vcHRpb25zGAsgAygLMjMuY2xvdWQudjEuZG9tYWluLlBvc3RncmVzUGFyYW1zLlJlcGxpY2FPcHRpb25zRW50cnkSTAoPaGFwcm94eV9vcHRpb25zGAwgAygLMjMuY2xvdWQudjEuZG9tYWluLlBvc3RncmVzUGFyYW1zLkhhcHJveHlPcHRpb25zRW50cnkSUAoRcGdib3VuY2VyX29wdGlvbnMYDSADKAsyNS5jbG91ZC52MS5kb21haW4uUG9zdGdyZXNQYXJhbXMuUGdib3VuY2VyT3B0aW9uc0VudHJ5EkwKD3BhdHJvbmlfb3B0aW9ucxgOIAMoCzIzLmNsb3VkLnYxLmRvbWFpbi5Qb3N0Z3Jlc1BhcmFtcy5QYXRyb25pT3B0aW9uc0VudHJ5EkYKDGV0Y2Rfb3B0aW9ucxgPIAMoCzIwLmNsb3VkLnYxLmRvbWFpbi5Qb3N0Z3Jlc1BhcmFtcy5FdGNkT3B0aW9uc0VudHJ5GjQKEk1hc3Rlck9wdGlvbnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGjUKE1JlcGxpY2FPcHRpb25zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ARo1ChNIYXByb3h5T3B0aW9uc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEaNwoVUGdib3VuY2VyT3B0aW9uc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEaNQoTUGF0cm9uaU9wdGlvbnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGjIKEEV0Y2RPcHRpb25zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASLoAwoLTXlTcWxQYXJhbXMSEAoIcmVwbGljYXMYASABKA0SEAoIcHJveHlzcWwYAiABKA0SGQoRZ3JvdXBfcmVwbGljYXRpb24YAyABKAgSEQoJc2VtaV9zeW5jGAQgASgIEkkKD3ByaW1hcnlfb3B0aW9ucxgKIAMoCzIwLmNsb3VkLnYxLmRvbWFpbi5NeVNxbFBhcmFtcy5QcmltYXJ5T3B0aW9uc0VudHJ5EkkKD3JlcGxpY2Ffb3B0aW9ucxgLIAMoCzIwLmNsb3VkLnYxLmRvbWFpbi5NeVNxbFBhcmFtcy5SZXBsaWNhT3B0aW9uc0VudHJ5EksKEHByb3h5c3FsX29wdGlvbnMYDCADKAsyMS5jbG91ZC52MS5kb21haW4uTXlTcWxQYXJhbXMuUHJveHlzcWxPcHRpb25zRW50cnkaNQoTUHJpbWFyeU9wdGlvbnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGjUKE1JlcGxpY2FPcHRpb25zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ARo2ChRQcm94eXNxbE9wdGlvbnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBImIKDFBpY29kYXRhVGllchIVCgRuYW1lGAEgASgJQgf6QgRyAhABEhoKEnJlcGxpY2F0aW9uX2ZhY3RvchgCIAEoDRIQCghjYW5fdm90ZRgDIAEoCBINCgVjb3VudBgEIAEoDSKkAwoOUGljb2RhdGFQYXJhbXMSGgoJaW5zdGFuY2VzGAEgASgNQgf6QgQqAigBEg8KB2hhcHJveHkYAiABKA0SGgoScmVwbGljYXRpb25fZmFjdG9yGAMgASgNEg4KBnNoYXJkcxgEIAEoDRIsCgV0aWVycxgFIAMoCzIdLmNsb3VkLnYxLmRvbWFpbi5QaWNvZGF0YVRpZXISTgoQaW5zdGFuY2Vfb3B0aW9ucxgKIAMoCzI0LmNsb3VkLnYxLmRvbWFpbi5QaWNvZGF0YVBhcmFtcy5JbnN0YW5jZU9wdGlvbnNFbnRyeRJMCg9oYXByb3h5X29wdGlvbnMYCyADKAsyMy5jbG91ZC52MS5kb21haW4uUGljb2RhdGFQYXJhbXMuSGFwcm94eU9wdGlvbnNFbnRyeRo2ChRJbnN0YW5jZU9wdGlvbnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGjUKE0hhcHJveHlPcHRpb25zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASLFCAoJWWRiUGFyYW1zEh4KDXN0b3JhZ2Vfbm9kZXMYASABKA1CB/pCBCoCKAESFgoOZGF0YWJhc2Vfbm9kZXMYAiABKA0SDwoHaGFwcm94eRgDIAEoDRIfChdwZGlza3NfcGVyX3N0b3JhZ2Vfbm9kZRgEIAEoDRJCCg9mYXVsdF90b2xlcmFuY2UYBSABKA4yKS5jbG91ZC52MS5kb21haW4uWWRiUGFyYW1zLkZhdWx0VG9sZXJhbmNlEkUKE2ZhaWx1cmVfZG9tYWluX3R5cGUYBiABKA4yKC5jbG91ZC52MS5kb21haW4uWWRiUGFyYW1zLkZhaWx1cmVEb21haW4SPgoRZGVmYXVsdF9kaXNrX3R5cGUYByABKA4yIy5jbG91ZC52MS5kb21haW4uWWRiUGFyYW1zLkRpc2tUeXBlEhYKDnN0b3JhZ2VfZ3JvdXBzGAggASgNEhgKEGF1dG9fc2l6ZV9wZGlza3MYCSABKAgSFQoNZGF0YWJhc2VfcGF0aBgKIAEoCRJHCg9zdG9yYWdlX29wdGlvbnMYFCADKAsyLi5jbG91ZC52MS5kb21haW4uWWRiUGFyYW1zLlN0b3JhZ2VPcHRpb25zRW50cnkSSQoQZGF0YWJhc2Vfb3B0aW9ucxgVIAMoCzIvLmNsb3VkLnYxLmRvbWFpbi5ZZGJQYXJhbXMuRGF0YWJhc2VPcHRpb25zRW50cnkSRwoPaGFwcm94eV9vcHRpb25zGBYgAygLMi4uY2xvdWQudjEuZG9tYWluLllkYlBhcmFtcy5IYXByb3h5T3B0aW9uc0VudHJ5GjUKE1N0b3JhZ2VPcHRpb25zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ARo2ChREYXRhYmFzZU9wdGlvbnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGjUKE0hhcHJveHlPcHRpb25zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASKLAQoORmF1bHRUb2xlcmFuY2USHwobRkFVTFRfVE9MRVJBTkNFX1VOU1BFQ0lGSUVEEAASGAoURkFVTFRfVE9MRVJBTkNFX05PTkUQARIdChlGQVVMVF9UT0xFUkFOQ0VfQkxPQ0tfNF8yEAISHwobRkFVTFRfVE9MRVJBTkNFX01JUlJPUl8zX0RDEAMiSAoNRmFpbHVyZURvbWFpbhIeChpGQUlMVVJFX0RPTUFJTl9VTlNQRUNJRklFRBAAEhcKE0ZBSUxVUkVfRE9NQUlOX0RJU0sQASJfCghEaXNrVHlwZRIZChVESVNLX1RZUEVfVU5TUEVDSUZJRUQQABIRCg1ESVNLX1RZUEVfU1NEEAESEgoORElTS19UWVBFX05WTUUQAhIRCg1ESVNLX1RZUEVfUk9UEAMi4gQKEFlkYk1hbmFnZWRQYXJhbXMSQAoEdHlwZRgBIAEoDjImLmNsb3VkLnYxLmRvbWFpbi5ZZGJNYW5hZ2VkUGFyYW1zLlR5cGVCCvpCB4IBBBABIAASQwoMY29tcHV0ZV90eXBlGAIgASgOMi0uY2xvdWQudjEuZG9tYWluLllkYk1hbmFnZWRQYXJhbXMuQ29tcHV0ZVR5cGUSGgoScmVzb3VyY2VfcHJlc2V0X2lkGAMgASgJEhIKCm5vZGVfY291bnQYBCABKA0SPwoKYXV0b19zY2FsZRgFIAEoCzIrLmNsb3VkLnYxLmRvbWFpbi5ZZGJNYW5hZ2VkUGFyYW1zLkF1dG9TY2FsZRIWCg5zdG9yYWdlX2dyb3VwcxgGIAEoDRIUCgxzdG9yYWdlX3R5cGUYByABKAkSFwoPdGhyb3R0bGluZ19yY3VzGAggASgNGm0KCUF1dG9TY2FsZRIZCghtaW5fc2l6ZRgBIAEoDUIH+kIEKgIoARIZCghtYXhfc2l6ZRgCIAEoDUIH+kIEKgIoARIqChdjcHVfdXRpbGl6YXRpb25fcGVyY2VudBgDIAEoDUIJ+kIGKgQYZCgAIkUKBFR5cGUSFAoQVFlQRV9VTlNQRUNJRklFRBAAEhMKD1RZUEVfU0VSVkVSTEVTUxABEhIKDlRZUEVfREVESUNBVEVEEAIiWQoLQ29tcHV0ZVR5cGUSHAoYQ09NUFVURV9UWVBFX1VOU1BFQ0lGSUVEEAASFQoRQ09NUFVURV9UWVBFX09MVFAQARIVChFDT01QVVRFX1RZUEVfT0xBUBACItkBCg5PcmlvbGVkYlBhcmFtcxINCgVpbWFnZRgBIAEoCRJOChBwb3N0Z3Jlc19vcHRpb25zGAIgAygLMjQuY2xvdWQudjEuZG9tYWluLk9yaW9sZWRiUGFyYW1zLlBvc3RncmVzT3B0aW9uc0VudHJ5EhUKDWluaXRkYl9sb2NhbGUYAyABKAkSGQoRc2hhcmVkX2J1ZmZlcnNfbWIYBCABKA0aNgoUUG9zdGdyZXNPcHRpb25zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASKZAQoPQ29ja3JvYWNoUGFyYW1zEhYKBW5vZGVzGAEgASgNQgf6QgQqAigBEj4KB29wdGlvbnMYAiADKAsyLS5jbG91ZC52MS5kb21haW4uQ29ja3JvYWNoUGFyYW1zLk9wdGlvbnNFbnRyeRouCgxPcHRpb25zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASL8AwoORGF0YWJhc2VQYXJhbXMSDwoHdmVyc2lvbhgBIAEoCRIpCgdwYWNrYWdlGAIgASgLMhguY2xvdWQudjEuZG9tYWluLlBhY2thZ2USMwoIcG9zdGdyZXMYCiABKAsyHy5jbG91ZC52MS5kb21haW4uUG9zdGdyZXNQYXJhbXNIABItCgVteXNxbBgLIAEoCzIcLmNsb3VkLnYxLmRvbWFpbi5NeVNxbFBhcmFtc0gAEi8KB21hcmlhZGIYDCABKAsyHC5jbG91ZC52MS5kb21haW4uTXlTcWxQYXJhbXNIABIzCghwaWNvZGF0YRgNIAEoCzIfLmNsb3VkLnYxLmRvbWFpbi5QaWNvZGF0YVBhcmFtc0gAEikKA3lkYhgOIAEoCzIaLmNsb3VkLnYxLmRvbWFpbi5ZZGJQYXJhbXNIABI4Cgt5ZGJfbWFuYWdlZBgPIAEoCzIhLmNsb3VkLnYxLmRvbWFpbi5ZZGJNYW5hZ2VkUGFyYW1zSAASNQoJY29ja3JvYWNoGBAgASgLMiAuY2xvdWQudjEuZG9tYWluLkNvY2tyb2FjaFBhcmFtc0gAEjMKCG9yaW9sZWRiGBEgASgLMh8uY2xvdWQudjEuZG9tYWluLk9yaW9sZWRiUGFyYW1zSABCEwoGZW5naW5lEgn4QgHypx0CCAMi7AQKCERhdGFiYXNlEjgKBGtpbmQYASABKA4yHi5jbG91ZC52MS5kb21haW4uRGF0YWJhc2UuS2luZEIK+kIHggEEEAEgABIxCgZwYXJhbXMYAyABKAsyHy5jbG91ZC52MS5kb21haW4uRGF0YWJhc2VQYXJhbXNIABI2CghleHRlcm5hbBgEIAEoCzIiLmNsb3VkLnYxLmRvbWFpbi5EYXRhYmFzZS5FeHRlcm5hbEgAEkAKEmRhdGFiYXNlX3ByZXNldF9pZBgFIAEoCzIiLmNsb3VkLnYxLmRvbWFpbi5EYXRhYmFzZS5QcmVzZXRJZEgAEhIKCnBhY2thZ2VfaWQYBiABKAkSIwoEdGFncxgHIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzGh8KCFByZXNldElkEhMKAmlkGAEgASgJQgf6QgRyAhABGkUKCEV4dGVybmFsEhQKA2RzbhgBIAEoCUIH+kIEcgIQARIjCgR0YWdzGAIgASgLMhUuY2xvdWQudjEuY29tbW9uLlRhZ3MiwgEKBEtpbmQSFAoQS0lORF9VTlNQRUNJRklFRBAAEhEKDUtJTkRfUE9TVEdSRVMQARIOCgpLSU5EX01ZU1FMEAISEAoMS0lORF9NQVJJQURCEAMSDAoIS0lORF9ZREIQBBIUChBLSU5EX1lEQl9NQU5BR0VEEAUSEgoOS0lORF9DT0NLUk9BQ0gQBhIRCg1LSU5EX1BJQ09EQVRBEAcSEQoNS0lORF9FWFRFUk5BTBAIEhEKDUtJTkRfT1JJT0xFREIQCUITCgZzb3VyY2USCfhCAfKnHQIIA0JEWkJnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9kb21haW5iBnByb3RvMw", [file_cloud_v1_common_tags, file_validate_validate, file_ogen_ogen]);
 
 /**
  *
@@ -1337,6 +1337,97 @@ export const YdbManagedParams_ComputeTypeSchema: GenEnum<YdbManagedParams_Comput
   enumDesc(file_cloud_v1_domain_database, 6, 1);
 
 /**
+ *
+ * OrioledbParams configures a single OrioleDB container. OrioleDB is a
+ * patched-Postgres storage engine shipped docker-only, so there is no native
+ * package: the node installs Docker and runs the official image. Wire protocol
+ * is plain PostgreSQL.
+ *
+ * @generated from message cloud.v1.domain.OrioledbParams
+ */
+export type OrioledbParams = Message<"cloud.v1.domain.OrioledbParams"> & {
+  /**
+   * image is the full OrioleDB docker image ref. Empty => latest-pg17.
+   *
+   * @generated from field: string image = 1;
+   */
+  image: string;
+
+  /**
+   * postgres_options are appended as `-c key=value` to the container command
+   * (postgresql.conf overrides).
+   *
+   * @generated from field: map<string, string> postgres_options = 2;
+   */
+  postgresOptions: { [key: string]: string };
+
+  /**
+   * initdb_locale must be C, POSIX or an ICU locale (OrioleDB limitation).
+   * Empty => "C".
+   *
+   * @generated from field: string initdb_locale = 3;
+   */
+  initdbLocale: string;
+
+  /**
+   * shared_buffers_mb is a convenience tuning knob; 0 => image default.
+   *
+   * @generated from field: uint32 shared_buffers_mb = 4;
+   */
+  sharedBuffersMb: number;
+};
+
+/**
+ *
+ * OrioledbParams configures a single OrioleDB container. OrioleDB is a
+ * patched-Postgres storage engine shipped docker-only, so there is no native
+ * package: the node installs Docker and runs the official image. Wire protocol
+ * is plain PostgreSQL.
+ *
+ * @generated from message cloud.v1.domain.OrioledbParams
+ */
+export type OrioledbParamsJson = {
+  /**
+   * image is the full OrioleDB docker image ref. Empty => latest-pg17.
+   *
+   * @generated from field: string image = 1;
+   */
+  image?: string;
+
+  /**
+   * postgres_options are appended as `-c key=value` to the container command
+   * (postgresql.conf overrides).
+   *
+   * @generated from field: map<string, string> postgres_options = 2;
+   */
+  postgresOptions?: { [key: string]: string };
+
+  /**
+   * initdb_locale must be C, POSIX or an ICU locale (OrioleDB limitation).
+   * Empty => "C".
+   *
+   * @generated from field: string initdb_locale = 3;
+   */
+  initdbLocale?: string;
+
+  /**
+   * shared_buffers_mb is a convenience tuning knob; 0 => image default.
+   *
+   * @generated from field: uint32 shared_buffers_mb = 4;
+   */
+  sharedBuffersMb?: number;
+};
+
+export type OrioledbParamsValid = OrioledbParams;
+
+/**
+ * Describes the message cloud.v1.domain.OrioledbParams.
+ * Use `create(OrioledbParamsSchema)` to create a new message.
+ */
+export const OrioledbParamsSchema: GenMessage<OrioledbParams, {jsonType: OrioledbParamsJson, validType: OrioledbParamsValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_domain_database, 7);
+
+/**
  * CockroachParams is the engine topology for CockroachDB (homogeneous nodes). 
  *
  * @generated from message cloud.v1.domain.CockroachParams
@@ -1387,7 +1478,7 @@ export type CockroachParamsValid = CockroachParams;
  * Use `create(CockroachParamsSchema)` to create a new message.
  */
 export const CockroachParamsSchema: GenMessage<CockroachParams, {jsonType: CockroachParamsJson, validType: CockroachParamsValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_domain_database, 7);
+  messageDesc(file_cloud_v1_domain_database, 8);
 
 /**
  *
@@ -1461,6 +1552,12 @@ export type DatabaseParams = Message<"cloud.v1.domain.DatabaseParams"> & {
      */
     value: CockroachParams;
     case: "cockroach";
+  } | {
+    /**
+     * @generated from field: cloud.v1.domain.OrioledbParams orioledb = 17;
+     */
+    value: OrioledbParams;
+    case: "orioledb";
   } | { case: undefined; value?: undefined };
 };
 
@@ -1522,6 +1619,11 @@ export type DatabaseParamsJson = {
    * @generated from field: cloud.v1.domain.CockroachParams cockroach = 16;
    */
   cockroach?: CockroachParamsJson;
+
+  /**
+   * @generated from field: cloud.v1.domain.OrioledbParams orioledb = 17;
+   */
+  orioledb?: OrioledbParamsJson;
 };
 
 export type DatabaseParamsValid = DatabaseParams;
@@ -1531,7 +1633,7 @@ export type DatabaseParamsValid = DatabaseParams;
  * Use `create(DatabaseParamsSchema)` to create a new message.
  */
 export const DatabaseParamsSchema: GenMessage<DatabaseParams, {jsonType: DatabaseParamsJson, validType: DatabaseParamsValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_domain_database, 8);
+  messageDesc(file_cloud_v1_domain_database, 9);
 
 /**
  *
@@ -1665,7 +1767,7 @@ export type DatabaseValid = Database;
  * Use `create(DatabaseSchema)` to create a new message.
  */
 export const DatabaseSchema: GenMessage<Database, {jsonType: DatabaseJson, validType: DatabaseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_domain_database, 9);
+  messageDesc(file_cloud_v1_domain_database, 10);
 
 /**
  *
@@ -1708,7 +1810,7 @@ export type Database_PresetIdValid = Database_PresetId;
  * Use `create(Database_PresetIdSchema)` to create a new message.
  */
 export const Database_PresetIdSchema: GenMessage<Database_PresetId, {jsonType: Database_PresetIdJson, validType: Database_PresetIdValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_domain_database, 9, 0);
+  messageDesc(file_cloud_v1_domain_database, 10, 0);
 
 /**
  *
@@ -1763,7 +1865,7 @@ export type Database_ExternalValid = Database_External;
  * Use `create(Database_ExternalSchema)` to create a new message.
  */
 export const Database_ExternalSchema: GenMessage<Database_External, {jsonType: Database_ExternalJson, validType: Database_ExternalValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_domain_database, 9, 1);
+  messageDesc(file_cloud_v1_domain_database, 10, 1);
 
 /**
  * Kind enumerates the supported database engines under test. 
@@ -1834,6 +1936,13 @@ export enum Database_Kind {
    * @generated from enum value: KIND_EXTERNAL = 8;
    */
   EXTERNAL = 8,
+
+  /**
+   * KIND_ORIOLEDB is OrioleDB (docker-only patched-Postgres storage engine). 
+   *
+   * @generated from enum value: KIND_ORIOLEDB = 9;
+   */
+  ORIOLEDB = 9,
 }
 
 /**
@@ -1841,11 +1950,11 @@ export enum Database_Kind {
  *
  * @generated from enum cloud.v1.domain.Database.Kind
  */
-export type Database_KindJson = "KIND_UNSPECIFIED" | "KIND_POSTGRES" | "KIND_MYSQL" | "KIND_MARIADB" | "KIND_YDB" | "KIND_YDB_MANAGED" | "KIND_COCKROACH" | "KIND_PICODATA" | "KIND_EXTERNAL";
+export type Database_KindJson = "KIND_UNSPECIFIED" | "KIND_POSTGRES" | "KIND_MYSQL" | "KIND_MARIADB" | "KIND_YDB" | "KIND_YDB_MANAGED" | "KIND_COCKROACH" | "KIND_PICODATA" | "KIND_EXTERNAL" | "KIND_ORIOLEDB";
 
 /**
  * Describes the enum cloud.v1.domain.Database.Kind.
  */
 export const Database_KindSchema: GenEnum<Database_Kind, Database_KindJson> = /*@__PURE__*/
-  enumDesc(file_cloud_v1_domain_database, 9, 0);
+  enumDesc(file_cloud_v1_domain_database, 10, 0);
 

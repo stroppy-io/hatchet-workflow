@@ -310,6 +310,8 @@ const (
 	// KIND_EXTERNAL is an external / unmanaged database addressed only by
 	// dsn. Use with source.external.
 	Database_KIND_EXTERNAL Database_Kind = 8
+	// KIND_ORIOLEDB is OrioleDB (docker-only patched-Postgres storage engine).
+	Database_KIND_ORIOLEDB Database_Kind = 9
 )
 
 // Enum value maps for Database_Kind.
@@ -324,6 +326,7 @@ var (
 		6: "KIND_COCKROACH",
 		7: "KIND_PICODATA",
 		8: "KIND_EXTERNAL",
+		9: "KIND_ORIOLEDB",
 	}
 	Database_Kind_value = map[string]int32{
 		"KIND_UNSPECIFIED": 0,
@@ -335,6 +338,7 @@ var (
 		"KIND_COCKROACH":   6,
 		"KIND_PICODATA":    7,
 		"KIND_EXTERNAL":    8,
+		"KIND_ORIOLEDB":    9,
 	}
 )
 
@@ -362,7 +366,7 @@ func (x Database_Kind) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Database_Kind.Descriptor instead.
 func (Database_Kind) EnumDescriptor() ([]byte, []int) {
-	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{9, 0}
+	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{10, 0}
 }
 
 // Package is how to install one database engine version on a host. Selected on a
@@ -1192,6 +1196,84 @@ func (x *YdbManagedParams) GetThrottlingRcus() uint32 {
 	return 0
 }
 
+// OrioledbParams configures a single OrioleDB container. OrioleDB is a
+// patched-Postgres storage engine shipped docker-only, so there is no native
+// package: the node installs Docker and runs the official image. Wire protocol
+// is plain PostgreSQL.
+type OrioledbParams struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// image is the full OrioleDB docker image ref. Empty => latest-pg17.
+	Image string `protobuf:"bytes,1,opt,name=image,proto3" json:"image,omitempty"`
+	// postgres_options are appended as `-c key=value` to the container command
+	// (postgresql.conf overrides).
+	PostgresOptions map[string]string `protobuf:"bytes,2,rep,name=postgres_options,json=postgresOptions,proto3" json:"postgres_options,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// initdb_locale must be C, POSIX or an ICU locale (OrioleDB limitation).
+	// Empty => "C".
+	InitdbLocale string `protobuf:"bytes,3,opt,name=initdb_locale,json=initdbLocale,proto3" json:"initdb_locale,omitempty"`
+	// shared_buffers_mb is a convenience tuning knob; 0 => image default.
+	SharedBuffersMb uint32 `protobuf:"varint,4,opt,name=shared_buffers_mb,json=sharedBuffersMb,proto3" json:"shared_buffers_mb,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *OrioledbParams) Reset() {
+	*x = OrioledbParams{}
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OrioledbParams) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OrioledbParams) ProtoMessage() {}
+
+func (x *OrioledbParams) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OrioledbParams.ProtoReflect.Descriptor instead.
+func (*OrioledbParams) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *OrioledbParams) GetImage() string {
+	if x != nil {
+		return x.Image
+	}
+	return ""
+}
+
+func (x *OrioledbParams) GetPostgresOptions() map[string]string {
+	if x != nil {
+		return x.PostgresOptions
+	}
+	return nil
+}
+
+func (x *OrioledbParams) GetInitdbLocale() string {
+	if x != nil {
+		return x.InitdbLocale
+	}
+	return ""
+}
+
+func (x *OrioledbParams) GetSharedBuffersMb() uint32 {
+	if x != nil {
+		return x.SharedBuffersMb
+	}
+	return 0
+}
+
 // CockroachParams is the engine topology for CockroachDB (homogeneous nodes).
 type CockroachParams struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -1206,7 +1288,7 @@ type CockroachParams struct {
 
 func (x *CockroachParams) Reset() {
 	*x = CockroachParams{}
-	mi := &file_cloud_v1_domain_database_proto_msgTypes[7]
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1218,7 +1300,7 @@ func (x *CockroachParams) String() string {
 func (*CockroachParams) ProtoMessage() {}
 
 func (x *CockroachParams) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_domain_database_proto_msgTypes[7]
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1231,7 +1313,7 @@ func (x *CockroachParams) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CockroachParams.ProtoReflect.Descriptor instead.
 func (*CockroachParams) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{7}
+	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *CockroachParams) GetNodes() uint32 {
@@ -1268,6 +1350,7 @@ type DatabaseParams struct {
 	//	*DatabaseParams_Ydb
 	//	*DatabaseParams_YdbManaged
 	//	*DatabaseParams_Cockroach
+	//	*DatabaseParams_Orioledb
 	Engine        isDatabaseParams_Engine `protobuf_oneof:"engine"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1275,7 +1358,7 @@ type DatabaseParams struct {
 
 func (x *DatabaseParams) Reset() {
 	*x = DatabaseParams{}
-	mi := &file_cloud_v1_domain_database_proto_msgTypes[8]
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1287,7 +1370,7 @@ func (x *DatabaseParams) String() string {
 func (*DatabaseParams) ProtoMessage() {}
 
 func (x *DatabaseParams) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_domain_database_proto_msgTypes[8]
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1300,7 +1383,7 @@ func (x *DatabaseParams) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DatabaseParams.ProtoReflect.Descriptor instead.
 func (*DatabaseParams) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{8}
+	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *DatabaseParams) GetVersion() string {
@@ -1387,6 +1470,15 @@ func (x *DatabaseParams) GetCockroach() *CockroachParams {
 	return nil
 }
 
+func (x *DatabaseParams) GetOrioledb() *OrioledbParams {
+	if x != nil {
+		if x, ok := x.Engine.(*DatabaseParams_Orioledb); ok {
+			return x.Orioledb
+		}
+	}
+	return nil
+}
+
 type isDatabaseParams_Engine interface {
 	isDatabaseParams_Engine()
 }
@@ -1420,6 +1512,10 @@ type DatabaseParams_Cockroach struct {
 	Cockroach *CockroachParams `protobuf:"bytes,16,opt,name=cockroach,proto3,oneof"`
 }
 
+type DatabaseParams_Orioledb struct {
+	Orioledb *OrioledbParams `protobuf:"bytes,17,opt,name=orioledb,proto3,oneof"`
+}
+
 func (*DatabaseParams_Postgres) isDatabaseParams_Engine() {}
 
 func (*DatabaseParams_Mysql) isDatabaseParams_Engine() {}
@@ -1433,6 +1529,8 @@ func (*DatabaseParams_Ydb) isDatabaseParams_Engine() {}
 func (*DatabaseParams_YdbManaged) isDatabaseParams_Engine() {}
 
 func (*DatabaseParams_Cockroach) isDatabaseParams_Engine() {}
+
+func (*DatabaseParams_Orioledb) isDatabaseParams_Engine() {}
 
 // Database is the database-under-test definition for a test run. It selects a
 // Kind and provides it through exactly one source variant, optionally carrying
@@ -1461,7 +1559,7 @@ type Database struct {
 
 func (x *Database) Reset() {
 	*x = Database{}
-	mi := &file_cloud_v1_domain_database_proto_msgTypes[9]
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1473,7 +1571,7 @@ func (x *Database) String() string {
 func (*Database) ProtoMessage() {}
 
 func (x *Database) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_domain_database_proto_msgTypes[9]
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1486,7 +1584,7 @@ func (x *Database) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Database.ProtoReflect.Descriptor instead.
 func (*Database) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{9}
+	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *Database) GetKind() Database_Kind {
@@ -1587,7 +1685,7 @@ type YdbManagedParams_AutoScale struct {
 
 func (x *YdbManagedParams_AutoScale) Reset() {
 	*x = YdbManagedParams_AutoScale{}
-	mi := &file_cloud_v1_domain_database_proto_msgTypes[24]
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1599,7 +1697,7 @@ func (x *YdbManagedParams_AutoScale) String() string {
 func (*YdbManagedParams_AutoScale) ProtoMessage() {}
 
 func (x *YdbManagedParams_AutoScale) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_domain_database_proto_msgTypes[24]
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1649,7 +1747,7 @@ type Database_PresetId struct {
 
 func (x *Database_PresetId) Reset() {
 	*x = Database_PresetId{}
-	mi := &file_cloud_v1_domain_database_proto_msgTypes[26]
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1661,7 +1759,7 @@ func (x *Database_PresetId) String() string {
 func (*Database_PresetId) ProtoMessage() {}
 
 func (x *Database_PresetId) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_domain_database_proto_msgTypes[26]
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1674,7 +1772,7 @@ func (x *Database_PresetId) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Database_PresetId.ProtoReflect.Descriptor instead.
 func (*Database_PresetId) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{9, 0}
+	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{10, 0}
 }
 
 func (x *Database_PresetId) GetId() string {
@@ -1698,7 +1796,7 @@ type Database_External struct {
 
 func (x *Database_External) Reset() {
 	*x = Database_External{}
-	mi := &file_cloud_v1_domain_database_proto_msgTypes[27]
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1710,7 +1808,7 @@ func (x *Database_External) String() string {
 func (*Database_External) ProtoMessage() {}
 
 func (x *Database_External) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_domain_database_proto_msgTypes[27]
+	mi := &file_cloud_v1_domain_database_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1723,7 +1821,7 @@ func (x *Database_External) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Database_External.ProtoReflect.Descriptor instead.
 func (*Database_External) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{9, 1}
+	return file_cloud_v1_domain_database_proto_rawDescGZIP(), []int{10, 1}
 }
 
 func (x *Database_External) GetDsn() string {
@@ -1894,13 +1992,21 @@ const file_cloud_v1_domain_database_proto_rawDesc = "" +
 	"\vComputeType\x12\x1c\n" +
 	"\x18COMPUTE_TYPE_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11COMPUTE_TYPE_OLTP\x10\x01\x12\x15\n" +
-	"\x11COMPUTE_TYPE_OLAP\x10\x02\"\xb5\x01\n" +
+	"\x11COMPUTE_TYPE_OLAP\x10\x02\"\x9c\x02\n" +
+	"\x0eOrioledbParams\x12\x14\n" +
+	"\x05image\x18\x01 \x01(\tR\x05image\x12_\n" +
+	"\x10postgres_options\x18\x02 \x03(\v24.cloud.v1.domain.OrioledbParams.PostgresOptionsEntryR\x0fpostgresOptions\x12#\n" +
+	"\rinitdb_locale\x18\x03 \x01(\tR\finitdbLocale\x12*\n" +
+	"\x11shared_buffers_mb\x18\x04 \x01(\rR\x0fsharedBuffersMb\x1aB\n" +
+	"\x14PostgresOptionsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xb5\x01\n" +
 	"\x0fCockroachParams\x12\x1d\n" +
 	"\x05nodes\x18\x01 \x01(\rB\a\xfaB\x04*\x02(\x01R\x05nodes\x12G\n" +
 	"\aoptions\x18\x02 \x03(\v2-.cloud.v1.domain.CockroachParams.OptionsEntryR\aoptions\x1a:\n" +
 	"\fOptionsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x99\x04\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xd8\x04\n" +
 	"\x0eDatabaseParams\x12\x18\n" +
 	"\aversion\x18\x01 \x01(\tR\aversion\x122\n" +
 	"\apackage\x18\x02 \x01(\v2\x18.cloud.v1.domain.PackageR\apackage\x12=\n" +
@@ -1912,8 +2018,9 @@ const file_cloud_v1_domain_database_proto_rawDesc = "" +
 	"\x03ydb\x18\x0e \x01(\v2\x1a.cloud.v1.domain.YdbParamsH\x00R\x03ydb\x12D\n" +
 	"\vydb_managed\x18\x0f \x01(\v2!.cloud.v1.domain.YdbManagedParamsH\x00R\n" +
 	"ydbManaged\x12@\n" +
-	"\tcockroach\x18\x10 \x01(\v2 .cloud.v1.domain.CockroachParamsH\x00R\tcockroachB\x13\n" +
-	"\x06engine\x12\t\xf8B\x01\xf2\xa7\x1d\x02\b\x03\"\xa3\x05\n" +
+	"\tcockroach\x18\x10 \x01(\v2 .cloud.v1.domain.CockroachParamsH\x00R\tcockroach\x12=\n" +
+	"\borioledb\x18\x11 \x01(\v2\x1f.cloud.v1.domain.OrioledbParamsH\x00R\borioledbB\x13\n" +
+	"\x06engine\x12\t\xf8B\x01\xf2\xa7\x1d\x02\b\x03\"\xb6\x05\n" +
 	"\bDatabase\x12>\n" +
 	"\x04kind\x18\x01 \x01(\x0e2\x1e.cloud.v1.domain.Database.KindB\n" +
 	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x04kind\x129\n" +
@@ -1927,7 +2034,7 @@ const file_cloud_v1_domain_database_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\x1aP\n" +
 	"\bExternal\x12\x19\n" +
 	"\x03dsn\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x03dsn\x12)\n" +
-	"\x04tags\x18\x02 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\"\xaf\x01\n" +
+	"\x04tags\x18\x02 \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\"\xc2\x01\n" +
 	"\x04Kind\x12\x14\n" +
 	"\x10KIND_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rKIND_POSTGRES\x10\x01\x12\x0e\n" +
@@ -1938,7 +2045,8 @@ const file_cloud_v1_domain_database_proto_rawDesc = "" +
 	"\x10KIND_YDB_MANAGED\x10\x05\x12\x12\n" +
 	"\x0eKIND_COCKROACH\x10\x06\x12\x11\n" +
 	"\rKIND_PICODATA\x10\a\x12\x11\n" +
-	"\rKIND_EXTERNAL\x10\bB\x13\n" +
+	"\rKIND_EXTERNAL\x10\b\x12\x11\n" +
+	"\rKIND_ORIOLEDB\x10\tB\x13\n" +
 	"\x06source\x12\t\xf8B\x01\xf2\xa7\x1d\x02\b\x03BDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domainb\x06proto3"
 
 var (
@@ -1954,7 +2062,7 @@ func file_cloud_v1_domain_database_proto_rawDescGZIP() []byte {
 }
 
 var file_cloud_v1_domain_database_proto_enumTypes = make([]protoimpl.EnumInfo, 6)
-var file_cloud_v1_domain_database_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
+var file_cloud_v1_domain_database_proto_msgTypes = make([]protoimpl.MessageInfo, 30)
 var file_cloud_v1_domain_database_proto_goTypes = []any{
 	(YdbParams_FaultTolerance)(0),      // 0: cloud.v1.domain.YdbParams.FaultTolerance
 	(YdbParams_FailureDomain)(0),       // 1: cloud.v1.domain.YdbParams.FailureDomain
@@ -1969,72 +2077,76 @@ var file_cloud_v1_domain_database_proto_goTypes = []any{
 	(*PicodataParams)(nil),             // 10: cloud.v1.domain.PicodataParams
 	(*YdbParams)(nil),                  // 11: cloud.v1.domain.YdbParams
 	(*YdbManagedParams)(nil),           // 12: cloud.v1.domain.YdbManagedParams
-	(*CockroachParams)(nil),            // 13: cloud.v1.domain.CockroachParams
-	(*DatabaseParams)(nil),             // 14: cloud.v1.domain.DatabaseParams
-	(*Database)(nil),                   // 15: cloud.v1.domain.Database
-	nil,                                // 16: cloud.v1.domain.PostgresParams.MasterOptionsEntry
-	nil,                                // 17: cloud.v1.domain.PostgresParams.ReplicaOptionsEntry
-	nil,                                // 18: cloud.v1.domain.PostgresParams.HaproxyOptionsEntry
-	nil,                                // 19: cloud.v1.domain.PostgresParams.PgbouncerOptionsEntry
-	nil,                                // 20: cloud.v1.domain.PostgresParams.PatroniOptionsEntry
-	nil,                                // 21: cloud.v1.domain.PostgresParams.EtcdOptionsEntry
-	nil,                                // 22: cloud.v1.domain.MySqlParams.PrimaryOptionsEntry
-	nil,                                // 23: cloud.v1.domain.MySqlParams.ReplicaOptionsEntry
-	nil,                                // 24: cloud.v1.domain.MySqlParams.ProxysqlOptionsEntry
-	nil,                                // 25: cloud.v1.domain.PicodataParams.InstanceOptionsEntry
-	nil,                                // 26: cloud.v1.domain.PicodataParams.HaproxyOptionsEntry
-	nil,                                // 27: cloud.v1.domain.YdbParams.StorageOptionsEntry
-	nil,                                // 28: cloud.v1.domain.YdbParams.DatabaseOptionsEntry
-	nil,                                // 29: cloud.v1.domain.YdbParams.HaproxyOptionsEntry
-	(*YdbManagedParams_AutoScale)(nil), // 30: cloud.v1.domain.YdbManagedParams.AutoScale
-	nil,                                // 31: cloud.v1.domain.CockroachParams.OptionsEntry
-	(*Database_PresetId)(nil),          // 32: cloud.v1.domain.Database.PresetId
-	(*Database_External)(nil),          // 33: cloud.v1.domain.Database.External
-	(*common.Tags)(nil),                // 34: cloud.v1.common.Tags
+	(*OrioledbParams)(nil),             // 13: cloud.v1.domain.OrioledbParams
+	(*CockroachParams)(nil),            // 14: cloud.v1.domain.CockroachParams
+	(*DatabaseParams)(nil),             // 15: cloud.v1.domain.DatabaseParams
+	(*Database)(nil),                   // 16: cloud.v1.domain.Database
+	nil,                                // 17: cloud.v1.domain.PostgresParams.MasterOptionsEntry
+	nil,                                // 18: cloud.v1.domain.PostgresParams.ReplicaOptionsEntry
+	nil,                                // 19: cloud.v1.domain.PostgresParams.HaproxyOptionsEntry
+	nil,                                // 20: cloud.v1.domain.PostgresParams.PgbouncerOptionsEntry
+	nil,                                // 21: cloud.v1.domain.PostgresParams.PatroniOptionsEntry
+	nil,                                // 22: cloud.v1.domain.PostgresParams.EtcdOptionsEntry
+	nil,                                // 23: cloud.v1.domain.MySqlParams.PrimaryOptionsEntry
+	nil,                                // 24: cloud.v1.domain.MySqlParams.ReplicaOptionsEntry
+	nil,                                // 25: cloud.v1.domain.MySqlParams.ProxysqlOptionsEntry
+	nil,                                // 26: cloud.v1.domain.PicodataParams.InstanceOptionsEntry
+	nil,                                // 27: cloud.v1.domain.PicodataParams.HaproxyOptionsEntry
+	nil,                                // 28: cloud.v1.domain.YdbParams.StorageOptionsEntry
+	nil,                                // 29: cloud.v1.domain.YdbParams.DatabaseOptionsEntry
+	nil,                                // 30: cloud.v1.domain.YdbParams.HaproxyOptionsEntry
+	(*YdbManagedParams_AutoScale)(nil), // 31: cloud.v1.domain.YdbManagedParams.AutoScale
+	nil,                                // 32: cloud.v1.domain.OrioledbParams.PostgresOptionsEntry
+	nil,                                // 33: cloud.v1.domain.CockroachParams.OptionsEntry
+	(*Database_PresetId)(nil),          // 34: cloud.v1.domain.Database.PresetId
+	(*Database_External)(nil),          // 35: cloud.v1.domain.Database.External
+	(*common.Tags)(nil),                // 36: cloud.v1.common.Tags
 }
 var file_cloud_v1_domain_database_proto_depIdxs = []int32{
 	5,  // 0: cloud.v1.domain.Package.db_kind:type_name -> cloud.v1.domain.Database.Kind
-	16, // 1: cloud.v1.domain.PostgresParams.master_options:type_name -> cloud.v1.domain.PostgresParams.MasterOptionsEntry
-	17, // 2: cloud.v1.domain.PostgresParams.replica_options:type_name -> cloud.v1.domain.PostgresParams.ReplicaOptionsEntry
-	18, // 3: cloud.v1.domain.PostgresParams.haproxy_options:type_name -> cloud.v1.domain.PostgresParams.HaproxyOptionsEntry
-	19, // 4: cloud.v1.domain.PostgresParams.pgbouncer_options:type_name -> cloud.v1.domain.PostgresParams.PgbouncerOptionsEntry
-	20, // 5: cloud.v1.domain.PostgresParams.patroni_options:type_name -> cloud.v1.domain.PostgresParams.PatroniOptionsEntry
-	21, // 6: cloud.v1.domain.PostgresParams.etcd_options:type_name -> cloud.v1.domain.PostgresParams.EtcdOptionsEntry
-	22, // 7: cloud.v1.domain.MySqlParams.primary_options:type_name -> cloud.v1.domain.MySqlParams.PrimaryOptionsEntry
-	23, // 8: cloud.v1.domain.MySqlParams.replica_options:type_name -> cloud.v1.domain.MySqlParams.ReplicaOptionsEntry
-	24, // 9: cloud.v1.domain.MySqlParams.proxysql_options:type_name -> cloud.v1.domain.MySqlParams.ProxysqlOptionsEntry
+	17, // 1: cloud.v1.domain.PostgresParams.master_options:type_name -> cloud.v1.domain.PostgresParams.MasterOptionsEntry
+	18, // 2: cloud.v1.domain.PostgresParams.replica_options:type_name -> cloud.v1.domain.PostgresParams.ReplicaOptionsEntry
+	19, // 3: cloud.v1.domain.PostgresParams.haproxy_options:type_name -> cloud.v1.domain.PostgresParams.HaproxyOptionsEntry
+	20, // 4: cloud.v1.domain.PostgresParams.pgbouncer_options:type_name -> cloud.v1.domain.PostgresParams.PgbouncerOptionsEntry
+	21, // 5: cloud.v1.domain.PostgresParams.patroni_options:type_name -> cloud.v1.domain.PostgresParams.PatroniOptionsEntry
+	22, // 6: cloud.v1.domain.PostgresParams.etcd_options:type_name -> cloud.v1.domain.PostgresParams.EtcdOptionsEntry
+	23, // 7: cloud.v1.domain.MySqlParams.primary_options:type_name -> cloud.v1.domain.MySqlParams.PrimaryOptionsEntry
+	24, // 8: cloud.v1.domain.MySqlParams.replica_options:type_name -> cloud.v1.domain.MySqlParams.ReplicaOptionsEntry
+	25, // 9: cloud.v1.domain.MySqlParams.proxysql_options:type_name -> cloud.v1.domain.MySqlParams.ProxysqlOptionsEntry
 	9,  // 10: cloud.v1.domain.PicodataParams.tiers:type_name -> cloud.v1.domain.PicodataTier
-	25, // 11: cloud.v1.domain.PicodataParams.instance_options:type_name -> cloud.v1.domain.PicodataParams.InstanceOptionsEntry
-	26, // 12: cloud.v1.domain.PicodataParams.haproxy_options:type_name -> cloud.v1.domain.PicodataParams.HaproxyOptionsEntry
+	26, // 11: cloud.v1.domain.PicodataParams.instance_options:type_name -> cloud.v1.domain.PicodataParams.InstanceOptionsEntry
+	27, // 12: cloud.v1.domain.PicodataParams.haproxy_options:type_name -> cloud.v1.domain.PicodataParams.HaproxyOptionsEntry
 	0,  // 13: cloud.v1.domain.YdbParams.fault_tolerance:type_name -> cloud.v1.domain.YdbParams.FaultTolerance
 	1,  // 14: cloud.v1.domain.YdbParams.failure_domain_type:type_name -> cloud.v1.domain.YdbParams.FailureDomain
 	2,  // 15: cloud.v1.domain.YdbParams.default_disk_type:type_name -> cloud.v1.domain.YdbParams.DiskType
-	27, // 16: cloud.v1.domain.YdbParams.storage_options:type_name -> cloud.v1.domain.YdbParams.StorageOptionsEntry
-	28, // 17: cloud.v1.domain.YdbParams.database_options:type_name -> cloud.v1.domain.YdbParams.DatabaseOptionsEntry
-	29, // 18: cloud.v1.domain.YdbParams.haproxy_options:type_name -> cloud.v1.domain.YdbParams.HaproxyOptionsEntry
+	28, // 16: cloud.v1.domain.YdbParams.storage_options:type_name -> cloud.v1.domain.YdbParams.StorageOptionsEntry
+	29, // 17: cloud.v1.domain.YdbParams.database_options:type_name -> cloud.v1.domain.YdbParams.DatabaseOptionsEntry
+	30, // 18: cloud.v1.domain.YdbParams.haproxy_options:type_name -> cloud.v1.domain.YdbParams.HaproxyOptionsEntry
 	3,  // 19: cloud.v1.domain.YdbManagedParams.type:type_name -> cloud.v1.domain.YdbManagedParams.Type
 	4,  // 20: cloud.v1.domain.YdbManagedParams.compute_type:type_name -> cloud.v1.domain.YdbManagedParams.ComputeType
-	30, // 21: cloud.v1.domain.YdbManagedParams.auto_scale:type_name -> cloud.v1.domain.YdbManagedParams.AutoScale
-	31, // 22: cloud.v1.domain.CockroachParams.options:type_name -> cloud.v1.domain.CockroachParams.OptionsEntry
-	6,  // 23: cloud.v1.domain.DatabaseParams.package:type_name -> cloud.v1.domain.Package
-	7,  // 24: cloud.v1.domain.DatabaseParams.postgres:type_name -> cloud.v1.domain.PostgresParams
-	8,  // 25: cloud.v1.domain.DatabaseParams.mysql:type_name -> cloud.v1.domain.MySqlParams
-	8,  // 26: cloud.v1.domain.DatabaseParams.mariadb:type_name -> cloud.v1.domain.MySqlParams
-	10, // 27: cloud.v1.domain.DatabaseParams.picodata:type_name -> cloud.v1.domain.PicodataParams
-	11, // 28: cloud.v1.domain.DatabaseParams.ydb:type_name -> cloud.v1.domain.YdbParams
-	12, // 29: cloud.v1.domain.DatabaseParams.ydb_managed:type_name -> cloud.v1.domain.YdbManagedParams
-	13, // 30: cloud.v1.domain.DatabaseParams.cockroach:type_name -> cloud.v1.domain.CockroachParams
-	5,  // 31: cloud.v1.domain.Database.kind:type_name -> cloud.v1.domain.Database.Kind
-	14, // 32: cloud.v1.domain.Database.params:type_name -> cloud.v1.domain.DatabaseParams
-	33, // 33: cloud.v1.domain.Database.external:type_name -> cloud.v1.domain.Database.External
-	32, // 34: cloud.v1.domain.Database.database_preset_id:type_name -> cloud.v1.domain.Database.PresetId
-	34, // 35: cloud.v1.domain.Database.tags:type_name -> cloud.v1.common.Tags
-	34, // 36: cloud.v1.domain.Database.External.tags:type_name -> cloud.v1.common.Tags
-	37, // [37:37] is the sub-list for method output_type
-	37, // [37:37] is the sub-list for method input_type
-	37, // [37:37] is the sub-list for extension type_name
-	37, // [37:37] is the sub-list for extension extendee
-	0,  // [0:37] is the sub-list for field type_name
+	31, // 21: cloud.v1.domain.YdbManagedParams.auto_scale:type_name -> cloud.v1.domain.YdbManagedParams.AutoScale
+	32, // 22: cloud.v1.domain.OrioledbParams.postgres_options:type_name -> cloud.v1.domain.OrioledbParams.PostgresOptionsEntry
+	33, // 23: cloud.v1.domain.CockroachParams.options:type_name -> cloud.v1.domain.CockroachParams.OptionsEntry
+	6,  // 24: cloud.v1.domain.DatabaseParams.package:type_name -> cloud.v1.domain.Package
+	7,  // 25: cloud.v1.domain.DatabaseParams.postgres:type_name -> cloud.v1.domain.PostgresParams
+	8,  // 26: cloud.v1.domain.DatabaseParams.mysql:type_name -> cloud.v1.domain.MySqlParams
+	8,  // 27: cloud.v1.domain.DatabaseParams.mariadb:type_name -> cloud.v1.domain.MySqlParams
+	10, // 28: cloud.v1.domain.DatabaseParams.picodata:type_name -> cloud.v1.domain.PicodataParams
+	11, // 29: cloud.v1.domain.DatabaseParams.ydb:type_name -> cloud.v1.domain.YdbParams
+	12, // 30: cloud.v1.domain.DatabaseParams.ydb_managed:type_name -> cloud.v1.domain.YdbManagedParams
+	14, // 31: cloud.v1.domain.DatabaseParams.cockroach:type_name -> cloud.v1.domain.CockroachParams
+	13, // 32: cloud.v1.domain.DatabaseParams.orioledb:type_name -> cloud.v1.domain.OrioledbParams
+	5,  // 33: cloud.v1.domain.Database.kind:type_name -> cloud.v1.domain.Database.Kind
+	15, // 34: cloud.v1.domain.Database.params:type_name -> cloud.v1.domain.DatabaseParams
+	35, // 35: cloud.v1.domain.Database.external:type_name -> cloud.v1.domain.Database.External
+	34, // 36: cloud.v1.domain.Database.database_preset_id:type_name -> cloud.v1.domain.Database.PresetId
+	36, // 37: cloud.v1.domain.Database.tags:type_name -> cloud.v1.common.Tags
+	36, // 38: cloud.v1.domain.Database.External.tags:type_name -> cloud.v1.common.Tags
+	39, // [39:39] is the sub-list for method output_type
+	39, // [39:39] is the sub-list for method input_type
+	39, // [39:39] is the sub-list for extension type_name
+	39, // [39:39] is the sub-list for extension extendee
+	0,  // [0:39] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_domain_database_proto_init() }
@@ -2042,7 +2154,7 @@ func file_cloud_v1_domain_database_proto_init() {
 	if File_cloud_v1_domain_database_proto != nil {
 		return
 	}
-	file_cloud_v1_domain_database_proto_msgTypes[8].OneofWrappers = []any{
+	file_cloud_v1_domain_database_proto_msgTypes[9].OneofWrappers = []any{
 		(*DatabaseParams_Postgres)(nil),
 		(*DatabaseParams_Mysql)(nil),
 		(*DatabaseParams_Mariadb)(nil),
@@ -2050,8 +2162,9 @@ func file_cloud_v1_domain_database_proto_init() {
 		(*DatabaseParams_Ydb)(nil),
 		(*DatabaseParams_YdbManaged)(nil),
 		(*DatabaseParams_Cockroach)(nil),
+		(*DatabaseParams_Orioledb)(nil),
 	}
-	file_cloud_v1_domain_database_proto_msgTypes[9].OneofWrappers = []any{
+	file_cloud_v1_domain_database_proto_msgTypes[10].OneofWrappers = []any{
 		(*Database_Params)(nil),
 		(*Database_External_)(nil),
 		(*Database_DatabasePresetId)(nil),
@@ -2062,7 +2175,7 @@ func file_cloud_v1_domain_database_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_domain_database_proto_rawDesc), len(file_cloud_v1_domain_database_proto_rawDesc)),
 			NumEnums:      6,
-			NumMessages:   28,
+			NumMessages:   30,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

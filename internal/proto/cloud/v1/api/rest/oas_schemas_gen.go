@@ -2804,6 +2804,7 @@ const (
 	CreatePackageUploadRequestTargetDbKind6 CreatePackageUploadRequestTargetDbKind = 6
 	CreatePackageUploadRequestTargetDbKind7 CreatePackageUploadRequestTargetDbKind = 7
 	CreatePackageUploadRequestTargetDbKind8 CreatePackageUploadRequestTargetDbKind = 8
+	CreatePackageUploadRequestTargetDbKind9 CreatePackageUploadRequestTargetDbKind = 9
 )
 
 // AllValues returns all CreatePackageUploadRequestTargetDbKind values.
@@ -2818,6 +2819,7 @@ func (CreatePackageUploadRequestTargetDbKind) AllValues() []CreatePackageUploadR
 		CreatePackageUploadRequestTargetDbKind6,
 		CreatePackageUploadRequestTargetDbKind7,
 		CreatePackageUploadRequestTargetDbKind8,
+		CreatePackageUploadRequestTargetDbKind9,
 	}
 }
 
@@ -3233,6 +3235,7 @@ const (
 	DatabaseKind6 DatabaseKind = 6
 	DatabaseKind7 DatabaseKind = 7
 	DatabaseKind8 DatabaseKind = 8
+	DatabaseKind9 DatabaseKind = 9
 )
 
 // AllValues returns all DatabaseKind values.
@@ -3246,6 +3249,7 @@ func (DatabaseKind) AllValues() []DatabaseKind {
 		DatabaseKind6,
 		DatabaseKind7,
 		DatabaseKind8,
+		DatabaseKind9,
 	}
 }
 
@@ -3254,6 +3258,7 @@ type DatabaseParams struct {
 	Cockroach  OptCockroachParams  `json:"cockroach"`
 	Mariadb    OptMySqlParams      `json:"mariadb"`
 	Mysql      OptMySqlParams      `json:"mysql"`
+	Orioledb   OptOrioledbParams   `json:"orioledb"`
 	Package    OptPackage          `json:"package"`
 	Picodata   OptPicodataParams   `json:"picodata"`
 	Postgres   OptPostgresParams   `json:"postgres"`
@@ -3275,6 +3280,11 @@ func (s *DatabaseParams) GetMariadb() OptMySqlParams {
 // GetMysql returns the value of Mysql.
 func (s *DatabaseParams) GetMysql() OptMySqlParams {
 	return s.Mysql
+}
+
+// GetOrioledb returns the value of Orioledb.
+func (s *DatabaseParams) GetOrioledb() OptOrioledbParams {
+	return s.Orioledb
 }
 
 // GetPackage returns the value of Package.
@@ -3320,6 +3330,11 @@ func (s *DatabaseParams) SetMariadb(val OptMySqlParams) {
 // SetMysql sets the value of Mysql.
 func (s *DatabaseParams) SetMysql(val OptMySqlParams) {
 	s.Mysql = val
+}
+
+// SetOrioledb sets the value of Orioledb.
+func (s *DatabaseParams) SetOrioledb(val OptOrioledbParams) {
+	s.Orioledb = val
 }
 
 // SetPackage sets the value of Package.
@@ -8501,6 +8516,7 @@ const (
 	ListDatabasePresetsRequestDbKindsItem6 ListDatabasePresetsRequestDbKindsItem = 6
 	ListDatabasePresetsRequestDbKindsItem7 ListDatabasePresetsRequestDbKindsItem = 7
 	ListDatabasePresetsRequestDbKindsItem8 ListDatabasePresetsRequestDbKindsItem = 8
+	ListDatabasePresetsRequestDbKindsItem9 ListDatabasePresetsRequestDbKindsItem = 9
 )
 
 // AllValues returns all ListDatabasePresetsRequestDbKindsItem values.
@@ -8515,6 +8531,7 @@ func (ListDatabasePresetsRequestDbKindsItem) AllValues() []ListDatabasePresetsRe
 		ListDatabasePresetsRequestDbKindsItem6,
 		ListDatabasePresetsRequestDbKindsItem7,
 		ListDatabasePresetsRequestDbKindsItem8,
+		ListDatabasePresetsRequestDbKindsItem9,
 	}
 }
 
@@ -8867,6 +8884,7 @@ const (
 	ListPackagesRequestDbKindsItem6 ListPackagesRequestDbKindsItem = 6
 	ListPackagesRequestDbKindsItem7 ListPackagesRequestDbKindsItem = 7
 	ListPackagesRequestDbKindsItem8 ListPackagesRequestDbKindsItem = 8
+	ListPackagesRequestDbKindsItem9 ListPackagesRequestDbKindsItem = 9
 )
 
 // AllValues returns all ListPackagesRequestDbKindsItem values.
@@ -8881,6 +8899,7 @@ func (ListPackagesRequestDbKindsItem) AllValues() []ListPackagesRequestDbKindsIt
 		ListPackagesRequestDbKindsItem6,
 		ListPackagesRequestDbKindsItem7,
 		ListPackagesRequestDbKindsItem8,
+		ListPackagesRequestDbKindsItem9,
 	}
 }
 
@@ -9499,6 +9518,7 @@ const (
 	ListSuiteRunsRequestDbKindsItem6 ListSuiteRunsRequestDbKindsItem = 6
 	ListSuiteRunsRequestDbKindsItem7 ListSuiteRunsRequestDbKindsItem = 7
 	ListSuiteRunsRequestDbKindsItem8 ListSuiteRunsRequestDbKindsItem = 8
+	ListSuiteRunsRequestDbKindsItem9 ListSuiteRunsRequestDbKindsItem = 9
 )
 
 // AllValues returns all ListSuiteRunsRequestDbKindsItem values.
@@ -9513,6 +9533,7 @@ func (ListSuiteRunsRequestDbKindsItem) AllValues() []ListSuiteRunsRequestDbKinds
 		ListSuiteRunsRequestDbKindsItem6,
 		ListSuiteRunsRequestDbKindsItem7,
 		ListSuiteRunsRequestDbKindsItem8,
+		ListSuiteRunsRequestDbKindsItem9,
 	}
 }
 
@@ -9915,6 +9936,7 @@ const (
 	ListTestPresetsRequestDbKindsItem6 ListTestPresetsRequestDbKindsItem = 6
 	ListTestPresetsRequestDbKindsItem7 ListTestPresetsRequestDbKindsItem = 7
 	ListTestPresetsRequestDbKindsItem8 ListTestPresetsRequestDbKindsItem = 8
+	ListTestPresetsRequestDbKindsItem9 ListTestPresetsRequestDbKindsItem = 9
 )
 
 // AllValues returns all ListTestPresetsRequestDbKindsItem values.
@@ -9929,6 +9951,7 @@ func (ListTestPresetsRequestDbKindsItem) AllValues() []ListTestPresetsRequestDbK
 		ListTestPresetsRequestDbKindsItem6,
 		ListTestPresetsRequestDbKindsItem7,
 		ListTestPresetsRequestDbKindsItem8,
+		ListTestPresetsRequestDbKindsItem9,
 	}
 }
 
@@ -10359,6 +10382,7 @@ const (
 	ListTestRunsRequestDbKindsItem6 ListTestRunsRequestDbKindsItem = 6
 	ListTestRunsRequestDbKindsItem7 ListTestRunsRequestDbKindsItem = 7
 	ListTestRunsRequestDbKindsItem8 ListTestRunsRequestDbKindsItem = 8
+	ListTestRunsRequestDbKindsItem9 ListTestRunsRequestDbKindsItem = 9
 )
 
 // AllValues returns all ListTestRunsRequestDbKindsItem values.
@@ -10373,6 +10397,7 @@ func (ListTestRunsRequestDbKindsItem) AllValues() []ListTestRunsRequestDbKindsIt
 		ListTestRunsRequestDbKindsItem6,
 		ListTestRunsRequestDbKindsItem7,
 		ListTestRunsRequestDbKindsItem8,
+		ListTestRunsRequestDbKindsItem9,
 	}
 }
 
@@ -17225,6 +17250,98 @@ func (o OptOneOfVariants) Get() (v OneOfVariants, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptOneOfVariants) Or(d OneOfVariants) OneOfVariants {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptOrioledbParams returns new OptOrioledbParams with value set to v.
+func NewOptOrioledbParams(v OrioledbParams) OptOrioledbParams {
+	return OptOrioledbParams{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptOrioledbParams is optional OrioledbParams.
+type OptOrioledbParams struct {
+	Value OrioledbParams
+	Set   bool
+}
+
+// IsSet returns true if OptOrioledbParams was set.
+func (o OptOrioledbParams) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptOrioledbParams) Reset() {
+	var v OrioledbParams
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptOrioledbParams) SetTo(v OrioledbParams) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptOrioledbParams) Get() (v OrioledbParams, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptOrioledbParams) Or(d OrioledbParams) OrioledbParams {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptOrioledbParamsPostgresOptions returns new OptOrioledbParamsPostgresOptions with value set to v.
+func NewOptOrioledbParamsPostgresOptions(v OrioledbParamsPostgresOptions) OptOrioledbParamsPostgresOptions {
+	return OptOrioledbParamsPostgresOptions{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptOrioledbParamsPostgresOptions is optional OrioledbParamsPostgresOptions.
+type OptOrioledbParamsPostgresOptions struct {
+	Value OrioledbParamsPostgresOptions
+	Set   bool
+}
+
+// IsSet returns true if OptOrioledbParamsPostgresOptions was set.
+func (o OptOrioledbParamsPostgresOptions) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptOrioledbParamsPostgresOptions) Reset() {
+	var v OrioledbParamsPostgresOptions
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptOrioledbParamsPostgresOptions) SetTo(v OrioledbParamsPostgresOptions) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptOrioledbParamsPostgresOptions) Get() (v OrioledbParamsPostgresOptions, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptOrioledbParamsPostgresOptions) Or(d OrioledbParamsPostgresOptions) OrioledbParamsPostgresOptions {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -25465,6 +25582,65 @@ func (o OptYdbParamsStorageOptions) Or(d YdbParamsStorageOptions) YdbParamsStora
 	return d
 }
 
+// Ref: #/components/schemas/OrioledbParams
+type OrioledbParams struct {
+	Image           OptString                        `json:"image"`
+	InitdbLocale    OptString                        `json:"initdbLocale"`
+	PostgresOptions OptOrioledbParamsPostgresOptions `json:"postgresOptions"`
+	SharedBuffersMb OptInt32                         `json:"sharedBuffersMb"`
+}
+
+// GetImage returns the value of Image.
+func (s *OrioledbParams) GetImage() OptString {
+	return s.Image
+}
+
+// GetInitdbLocale returns the value of InitdbLocale.
+func (s *OrioledbParams) GetInitdbLocale() OptString {
+	return s.InitdbLocale
+}
+
+// GetPostgresOptions returns the value of PostgresOptions.
+func (s *OrioledbParams) GetPostgresOptions() OptOrioledbParamsPostgresOptions {
+	return s.PostgresOptions
+}
+
+// GetSharedBuffersMb returns the value of SharedBuffersMb.
+func (s *OrioledbParams) GetSharedBuffersMb() OptInt32 {
+	return s.SharedBuffersMb
+}
+
+// SetImage sets the value of Image.
+func (s *OrioledbParams) SetImage(val OptString) {
+	s.Image = val
+}
+
+// SetInitdbLocale sets the value of InitdbLocale.
+func (s *OrioledbParams) SetInitdbLocale(val OptString) {
+	s.InitdbLocale = val
+}
+
+// SetPostgresOptions sets the value of PostgresOptions.
+func (s *OrioledbParams) SetPostgresOptions(val OptOrioledbParamsPostgresOptions) {
+	s.PostgresOptions = val
+}
+
+// SetSharedBuffersMb sets the value of SharedBuffersMb.
+func (s *OrioledbParams) SetSharedBuffersMb(val OptInt32) {
+	s.SharedBuffersMb = val
+}
+
+type OrioledbParamsPostgresOptions map[string]string
+
+func (s *OrioledbParamsPostgresOptions) init() OrioledbParamsPostgresOptions {
+	m := *s
+	if m == nil {
+		m = map[string]string{}
+		*s = m
+	}
+	return m
+}
+
 // Ref: #/components/schemas/Overview
 type Overview struct {
 	DegradedReasons []string          `json:"degradedReasons"`
@@ -25795,6 +25971,7 @@ const (
 	PackageDbKind6 PackageDbKind = 6
 	PackageDbKind7 PackageDbKind = 7
 	PackageDbKind8 PackageDbKind = 8
+	PackageDbKind9 PackageDbKind = 9
 )
 
 // AllValues returns all PackageDbKind values.
@@ -25808,6 +25985,7 @@ func (PackageDbKind) AllValues() []PackageDbKind {
 		PackageDbKind6,
 		PackageDbKind7,
 		PackageDbKind8,
+		PackageDbKind9,
 	}
 }
 
@@ -25984,6 +26162,7 @@ const (
 	PackageRecordTargetDbKind6 PackageRecordTargetDbKind = 6
 	PackageRecordTargetDbKind7 PackageRecordTargetDbKind = 7
 	PackageRecordTargetDbKind8 PackageRecordTargetDbKind = 8
+	PackageRecordTargetDbKind9 PackageRecordTargetDbKind = 9
 )
 
 // AllValues returns all PackageRecordTargetDbKind values.
@@ -25998,6 +26177,7 @@ func (PackageRecordTargetDbKind) AllValues() []PackageRecordTargetDbKind {
 		PackageRecordTargetDbKind6,
 		PackageRecordTargetDbKind7,
 		PackageRecordTargetDbKind8,
+		PackageRecordTargetDbKind9,
 	}
 }
 
@@ -28090,6 +28270,7 @@ const (
 	PublicRatingEntryDbKind6 PublicRatingEntryDbKind = 6
 	PublicRatingEntryDbKind7 PublicRatingEntryDbKind = 7
 	PublicRatingEntryDbKind8 PublicRatingEntryDbKind = 8
+	PublicRatingEntryDbKind9 PublicRatingEntryDbKind = 9
 )
 
 // AllValues returns all PublicRatingEntryDbKind values.
@@ -28104,6 +28285,7 @@ func (PublicRatingEntryDbKind) AllValues() []PublicRatingEntryDbKind {
 		PublicRatingEntryDbKind6,
 		PublicRatingEntryDbKind7,
 		PublicRatingEntryDbKind8,
+		PublicRatingEntryDbKind9,
 	}
 }
 
@@ -28700,6 +28882,7 @@ const (
 	RatingEntryDbKind6 RatingEntryDbKind = 6
 	RatingEntryDbKind7 RatingEntryDbKind = 7
 	RatingEntryDbKind8 RatingEntryDbKind = 8
+	RatingEntryDbKind9 RatingEntryDbKind = 9
 )
 
 // AllValues returns all RatingEntryDbKind values.
@@ -28714,6 +28897,7 @@ func (RatingEntryDbKind) AllValues() []RatingEntryDbKind {
 		RatingEntryDbKind6,
 		RatingEntryDbKind7,
 		RatingEntryDbKind8,
+		RatingEntryDbKind9,
 	}
 }
 
@@ -28816,6 +29000,7 @@ const (
 	RatingFilterDbKindsItem6 RatingFilterDbKindsItem = 6
 	RatingFilterDbKindsItem7 RatingFilterDbKindsItem = 7
 	RatingFilterDbKindsItem8 RatingFilterDbKindsItem = 8
+	RatingFilterDbKindsItem9 RatingFilterDbKindsItem = 9
 )
 
 // AllValues returns all RatingFilterDbKindsItem values.
@@ -28830,6 +29015,7 @@ func (RatingFilterDbKindsItem) AllValues() []RatingFilterDbKindsItem {
 		RatingFilterDbKindsItem6,
 		RatingFilterDbKindsItem7,
 		RatingFilterDbKindsItem8,
+		RatingFilterDbKindsItem9,
 	}
 }
 
@@ -30131,6 +30317,7 @@ const (
 	RunColumnDbKind6 RunColumnDbKind = 6
 	RunColumnDbKind7 RunColumnDbKind = 7
 	RunColumnDbKind8 RunColumnDbKind = 8
+	RunColumnDbKind9 RunColumnDbKind = 9
 )
 
 // AllValues returns all RunColumnDbKind values.
@@ -30145,6 +30332,7 @@ func (RunColumnDbKind) AllValues() []RunColumnDbKind {
 		RunColumnDbKind6,
 		RunColumnDbKind7,
 		RunColumnDbKind8,
+		RunColumnDbKind9,
 	}
 }
 
@@ -31766,6 +31954,7 @@ const (
 	SharedSuiteRunDbKindsItem6 SharedSuiteRunDbKindsItem = 6
 	SharedSuiteRunDbKindsItem7 SharedSuiteRunDbKindsItem = 7
 	SharedSuiteRunDbKindsItem8 SharedSuiteRunDbKindsItem = 8
+	SharedSuiteRunDbKindsItem9 SharedSuiteRunDbKindsItem = 9
 )
 
 // AllValues returns all SharedSuiteRunDbKindsItem values.
@@ -31780,6 +31969,7 @@ func (SharedSuiteRunDbKindsItem) AllValues() []SharedSuiteRunDbKindsItem {
 		SharedSuiteRunDbKindsItem6,
 		SharedSuiteRunDbKindsItem7,
 		SharedSuiteRunDbKindsItem8,
+		SharedSuiteRunDbKindsItem9,
 	}
 }
 
@@ -32005,6 +32195,7 @@ const (
 	SharedTestRunDbKind6 SharedTestRunDbKind = 6
 	SharedTestRunDbKind7 SharedTestRunDbKind = 7
 	SharedTestRunDbKind8 SharedTestRunDbKind = 8
+	SharedTestRunDbKind9 SharedTestRunDbKind = 9
 )
 
 // AllValues returns all SharedTestRunDbKind values.
@@ -32019,6 +32210,7 @@ func (SharedTestRunDbKind) AllValues() []SharedTestRunDbKind {
 		SharedTestRunDbKind6,
 		SharedTestRunDbKind7,
 		SharedTestRunDbKind8,
+		SharedTestRunDbKind9,
 	}
 }
 
@@ -34320,6 +34512,7 @@ const (
 	Summary3DbKind6 Summary3DbKind = 6
 	Summary3DbKind7 Summary3DbKind = 7
 	Summary3DbKind8 Summary3DbKind = 8
+	Summary3DbKind9 Summary3DbKind = 9
 )
 
 // AllValues returns all Summary3DbKind values.
@@ -34334,6 +34527,7 @@ func (Summary3DbKind) AllValues() []Summary3DbKind {
 		Summary3DbKind6,
 		Summary3DbKind7,
 		Summary3DbKind8,
+		Summary3DbKind9,
 	}
 }
 
@@ -34626,6 +34820,7 @@ const (
 	Summary5DbKindsItem6 Summary5DbKindsItem = 6
 	Summary5DbKindsItem7 Summary5DbKindsItem = 7
 	Summary5DbKindsItem8 Summary5DbKindsItem = 8
+	Summary5DbKindsItem9 Summary5DbKindsItem = 9
 )
 
 // AllValues returns all Summary5DbKindsItem values.
@@ -34640,6 +34835,7 @@ func (Summary5DbKindsItem) AllValues() []Summary5DbKindsItem {
 		Summary5DbKindsItem6,
 		Summary5DbKindsItem7,
 		Summary5DbKindsItem8,
+		Summary5DbKindsItem9,
 	}
 }
 
@@ -34852,6 +35048,7 @@ const (
 	Summary6DbKind6 Summary6DbKind = 6
 	Summary6DbKind7 Summary6DbKind = 7
 	Summary6DbKind8 Summary6DbKind = 8
+	Summary6DbKind9 Summary6DbKind = 9
 )
 
 // AllValues returns all Summary6DbKind values.
@@ -34866,6 +35063,7 @@ func (Summary6DbKind) AllValues() []Summary6DbKind {
 		Summary6DbKind6,
 		Summary6DbKind7,
 		Summary6DbKind8,
+		Summary6DbKind9,
 	}
 }
 
@@ -34923,6 +35121,7 @@ const (
 	SummaryDbKind6 SummaryDbKind = 6
 	SummaryDbKind7 SummaryDbKind = 7
 	SummaryDbKind8 SummaryDbKind = 8
+	SummaryDbKind9 SummaryDbKind = 9
 )
 
 // AllValues returns all SummaryDbKind values.
@@ -34937,6 +35136,7 @@ func (SummaryDbKind) AllValues() []SummaryDbKind {
 		SummaryDbKind6,
 		SummaryDbKind7,
 		SummaryDbKind8,
+		SummaryDbKind9,
 	}
 }
 

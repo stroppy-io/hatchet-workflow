@@ -387,6 +387,8 @@ func (src *ListTestRunsRequest) ToOgen() (*rest.ListTestRunsRequest, error) {
 			en5 = rest.ListTestRunsRequestDbKindsItem7
 		case domain.Database_KIND_EXTERNAL:
 			en5 = rest.ListTestRunsRequestDbKindsItem8
+		case domain.Database_KIND_ORIOLEDB:
+			en5 = rest.ListTestRunsRequestDbKindsItem9
 		default:
 			return zero, fmt.Errorf("cloud.v1.api.ListTestRunsRequest.db_kinds: enum value %v has no ogen ListTestRunsRequestDbKindsItem variant", e)
 		}
@@ -598,6 +600,8 @@ func ListTestRunsRequestFromOgen(src *rest.ListTestRunsRequest) (*ListTestRunsRe
 			en7 = domain.Database_KIND_PICODATA
 		case rest.ListTestRunsRequestDbKindsItem8:
 			en7 = domain.Database_KIND_EXTERNAL
+		case rest.ListTestRunsRequestDbKindsItem9:
+			en7 = domain.Database_KIND_ORIOLEDB
 		default:
 			return zero, fmt.Errorf("cloud.v1.api.ListTestRunsRequest.db_kinds: enum value %v has no Database_Kind variant", e)
 		}

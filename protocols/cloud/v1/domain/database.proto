@@ -266,6 +266,25 @@ message YdbManagedParams {
     uint32 throttling_rcus = 8;
 }
 
+/*
+    OrioledbParams configures a single OrioleDB container. OrioleDB is a
+    patched-Postgres storage engine shipped docker-only, so there is no native
+    package: the node installs Docker and runs the official image. Wire protocol
+    is plain PostgreSQL.
+ */
+message OrioledbParams {
+    // image is the full OrioleDB docker image ref. Empty => latest-pg17.
+    string image = 1;
+    // postgres_options are appended as `-c key=value` to the container command
+    // (postgresql.conf overrides).
+    map<string, string> postgres_options = 2;
+    // initdb_locale must be C, POSIX or an ICU locale (OrioleDB limitation).
+    // Empty => "C".
+    string initdb_locale = 3;
+    // shared_buffers_mb is a convenience tuning knob; 0 => image default.
+    uint32 shared_buffers_mb = 4;
+}
+
 /* CockroachParams is the engine topology for CockroachDB (homogeneous nodes). */
 message CockroachParams {
     /* nodes is the homogeneous node count. */
@@ -300,6 +319,7 @@ message DatabaseParams {
         YdbParams ydb = 14;
         YdbManagedParams ydb_managed = 15;
         CockroachParams cockroach = 16;
+        OrioledbParams orioledb = 17;
     }
 }
 
@@ -351,6 +371,8 @@ message Database {
         /* KIND_EXTERNAL is an external / unmanaged database addressed only by
            dsn. Use with source.external. */
         KIND_EXTERNAL = 8;
+        /* KIND_ORIOLEDB is OrioleDB (docker-only patched-Postgres storage engine). */
+        KIND_ORIOLEDB = 9;
     }
     /* kind selects which database engine is under test. */
     Kind kind = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];

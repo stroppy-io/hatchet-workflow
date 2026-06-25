@@ -1732,6 +1732,8 @@ func DatabaseToOgen(src *domain.Database) (*rest.Database, error) {
 		en1 = rest.DatabaseKind7
 	case domain.Database_KIND_EXTERNAL:
 		en1 = rest.DatabaseKind8
+	case domain.Database_KIND_ORIOLEDB:
+		en1 = rest.DatabaseKind9
 	default:
 		return nil, fmt.Errorf("cloud.v1.domain.Database.kind: enum value %v has no ogen DatabaseKind variant", src.GetKind())
 	}
@@ -1792,6 +1794,8 @@ func DatabaseFromOgen(src *rest.Database) (*domain.Database, error) {
 			en2 = domain.Database_KIND_PICODATA
 		case rest.DatabaseKind8:
 			en2 = domain.Database_KIND_EXTERNAL
+		case rest.DatabaseKind9:
+			en2 = domain.Database_KIND_ORIOLEDB
 		default:
 			return nil, fmt.Errorf("cloud.v1.domain.Database.kind: enum value %v has no Database_Kind variant", v1)
 		}
@@ -1888,6 +1892,12 @@ func DatabaseParamsToOgen(src *domain.DatabaseParams) (*rest.DatabaseParams, err
 			return nil, err
 		}
 		dst.Cockroach.SetTo(*o8)
+	case *domain.DatabaseParams_Orioledb:
+		o9, err := OrioledbParamsToOgen(src.GetOrioledb())
+		if err != nil {
+			return nil, err
+		}
+		dst.Orioledb.SetTo(*o9)
 	}
 	return &dst, nil
 }
@@ -1956,6 +1966,13 @@ func DatabaseParamsFromOgen(src *rest.DatabaseParams) (*domain.DatabaseParams, e
 			return nil, err
 		}
 		dst.Engine = &domain.DatabaseParams_Cockroach{Cockroach: m17}
+	}
+	if v18, ok := src.Orioledb.Get(); ok {
+		m19, err := OrioledbParamsFromOgen(&v18)
+		if err != nil {
+			return nil, err
+		}
+		dst.Engine = &domain.DatabaseParams_Orioledb{Orioledb: m19}
 	}
 	return dst, nil
 }
@@ -5624,6 +5641,46 @@ func OneOfFromOgen(src *rest.OneOf) (*schemapb.Schema_Filed_OneOf, error) {
 	return dst, nil
 }
 
+// OrioledbParamsToOgen converts domain.OrioledbParams (an imported type) to its ogen representation.
+func OrioledbParamsToOgen(src *domain.OrioledbParams) (*rest.OrioledbParams, error) {
+	var dst rest.OrioledbParams
+	if src == nil {
+		return &dst, nil
+	}
+	dst.Image.SetTo(string(src.GetImage()))
+	c1 := convert.Map(src.GetPostgresOptions(), func(v string) string {
+		return string(v)
+	})
+	dst.PostgresOptions.SetTo(c1)
+	dst.InitdbLocale.SetTo(string(src.GetInitdbLocale()))
+	dst.SharedBuffersMb.SetTo(int32(src.GetSharedBuffersMb()))
+	return &dst, nil
+}
+
+// OrioledbParamsFromOgen converts the ogen representation back to OrioledbParams.
+func OrioledbParamsFromOgen(src *rest.OrioledbParams) (*domain.OrioledbParams, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &domain.OrioledbParams{}
+	if v1, ok := src.Image.Get(); ok {
+		dst.Image = string(v1)
+	}
+	if mv2, ok := src.PostgresOptions.Get(); ok {
+		c3 := convert.Map(mv2, func(v string) string {
+			return string(v)
+		})
+		dst.PostgresOptions = c3
+	}
+	if v4, ok := src.InitdbLocale.Get(); ok {
+		dst.InitdbLocale = string(v4)
+	}
+	if v5, ok := src.SharedBuffersMb.Get(); ok {
+		dst.SharedBuffersMb = uint32(v5)
+	}
+	return dst, nil
+}
+
 // OverviewToOgen converts monitor.Overview (an imported type) to its ogen representation.
 func OverviewToOgen(src *monitor.Overview) (*rest.Overview, error) {
 	var dst rest.Overview
@@ -5866,6 +5923,8 @@ func PackageToOgen(src *domain.Package) (*rest.Package, error) {
 		en1 = rest.PackageDbKind7
 	case domain.Database_KIND_EXTERNAL:
 		en1 = rest.PackageDbKind8
+	case domain.Database_KIND_ORIOLEDB:
+		en1 = rest.PackageDbKind9
 	default:
 		return nil, fmt.Errorf("cloud.v1.domain.Package.db_kind: enum value %v has no ogen PackageDbKind variant", src.GetDbKind())
 	}
@@ -5918,6 +5977,8 @@ func PackageFromOgen(src *rest.Package) (*domain.Package, error) {
 			en4 = domain.Database_KIND_PICODATA
 		case rest.PackageDbKind8:
 			en4 = domain.Database_KIND_EXTERNAL
+		case rest.PackageDbKind9:
+			en4 = domain.Database_KIND_ORIOLEDB
 		default:
 			return nil, fmt.Errorf("cloud.v1.domain.Package.db_kind: enum value %v has no Database_Kind variant", v3)
 		}
@@ -5996,6 +6057,8 @@ func PackageRecordToOgen(src *models.PackageRecord) (*rest.PackageRecord, error)
 		en3 = rest.PackageRecordTargetDbKind7
 	case domain.Database_KIND_EXTERNAL:
 		en3 = rest.PackageRecordTargetDbKind8
+	case domain.Database_KIND_ORIOLEDB:
+		en3 = rest.PackageRecordTargetDbKind9
 	default:
 		return nil, fmt.Errorf("cloud.v1.models.PackageRecord.target_db_kind: enum value %v has no ogen PackageRecordTargetDbKind variant", src.GetTargetDbKind())
 	}
@@ -6072,6 +6135,8 @@ func PackageRecordFromOgen(src *rest.PackageRecord) (*models.PackageRecord, erro
 			en6 = domain.Database_KIND_PICODATA
 		case rest.PackageRecordTargetDbKind8:
 			en6 = domain.Database_KIND_EXTERNAL
+		case rest.PackageRecordTargetDbKind9:
+			en6 = domain.Database_KIND_ORIOLEDB
 		default:
 			return nil, fmt.Errorf("cloud.v1.models.PackageRecord.target_db_kind: enum value %v has no Database_Kind variant", v5)
 		}
@@ -9205,6 +9270,8 @@ func SharedSuiteRunToOgen(src *models.SharedSuiteRun) (*rest.SharedSuiteRun, err
 			en4 = rest.SharedSuiteRunDbKindsItem7
 		case domain.Database_KIND_EXTERNAL:
 			en4 = rest.SharedSuiteRunDbKindsItem8
+		case domain.Database_KIND_ORIOLEDB:
+			en4 = rest.SharedSuiteRunDbKindsItem9
 		default:
 			return zero, fmt.Errorf("cloud.v1.models.SharedSuiteRun.db_kinds: enum value %v has no ogen SharedSuiteRunDbKindsItem variant", e)
 		}
@@ -9318,6 +9385,8 @@ func SharedSuiteRunFromOgen(src *rest.SharedSuiteRun) (*models.SharedSuiteRun, e
 			en7 = domain.Database_KIND_PICODATA
 		case rest.SharedSuiteRunDbKindsItem8:
 			en7 = domain.Database_KIND_EXTERNAL
+		case rest.SharedSuiteRunDbKindsItem9:
+			en7 = domain.Database_KIND_ORIOLEDB
 		default:
 			return zero, fmt.Errorf("cloud.v1.models.SharedSuiteRun.db_kinds: enum value %v has no Database_Kind variant", e)
 		}
@@ -9422,6 +9491,8 @@ func SharedTestRunToOgen(src *models.SharedTestRun) (*rest.SharedTestRun, error)
 		en2 = rest.SharedTestRunDbKind7
 	case domain.Database_KIND_EXTERNAL:
 		en2 = rest.SharedTestRunDbKind8
+	case domain.Database_KIND_ORIOLEDB:
+		en2 = rest.SharedTestRunDbKind9
 	default:
 		return nil, fmt.Errorf("cloud.v1.models.SharedTestRun.db_kind: enum value %v has no ogen SharedTestRunDbKind variant", src.GetDbKind())
 	}
@@ -9525,6 +9596,8 @@ func SharedTestRunFromOgen(src *rest.SharedTestRun) (*models.SharedTestRun, erro
 			en5 = domain.Database_KIND_PICODATA
 		case rest.SharedTestRunDbKind8:
 			en5 = domain.Database_KIND_EXTERNAL
+		case rest.SharedTestRunDbKind9:
+			en5 = domain.Database_KIND_ORIOLEDB
 		default:
 			return nil, fmt.Errorf("cloud.v1.models.SharedTestRun.db_kind: enum value %v has no Database_Kind variant", v4)
 		}
@@ -10596,6 +10669,8 @@ func SummaryToOgen(src *models.DatabasePresetRecord_Summary) (*rest.Summary, err
 		en1 = rest.SummaryDbKind7
 	case domain.Database_KIND_EXTERNAL:
 		en1 = rest.SummaryDbKind8
+	case domain.Database_KIND_ORIOLEDB:
+		en1 = rest.SummaryDbKind9
 	default:
 		return nil, fmt.Errorf("cloud.v1.models.DatabasePresetRecord.Summary.db_kind: enum value %v has no ogen SummaryDbKind variant", src.GetDbKind())
 	}
@@ -10632,6 +10707,8 @@ func SummaryFromOgen(src *rest.Summary) (*models.DatabasePresetRecord_Summary, e
 			en2 = domain.Database_KIND_PICODATA
 		case rest.SummaryDbKind8:
 			en2 = domain.Database_KIND_EXTERNAL
+		case rest.SummaryDbKind9:
+			en2 = domain.Database_KIND_ORIOLEDB
 		default:
 			return nil, fmt.Errorf("cloud.v1.models.DatabasePresetRecord.Summary.db_kind: enum value %v has no Database_Kind variant", v1)
 		}
@@ -10740,6 +10817,8 @@ func Summary3ToOgen(src *models.TestPresetRecord_Summary) (*rest.Summary3, error
 		en1 = rest.Summary3DbKind7
 	case domain.Database_KIND_EXTERNAL:
 		en1 = rest.Summary3DbKind8
+	case domain.Database_KIND_ORIOLEDB:
+		en1 = rest.Summary3DbKind9
 	default:
 		return nil, fmt.Errorf("cloud.v1.models.TestPresetRecord.Summary.db_kind: enum value %v has no ogen Summary3DbKind variant", src.GetDbKind())
 	}
@@ -10795,6 +10874,8 @@ func Summary3FromOgen(src *rest.Summary3) (*models.TestPresetRecord_Summary, err
 			en2 = domain.Database_KIND_PICODATA
 		case rest.Summary3DbKind8:
 			en2 = domain.Database_KIND_EXTERNAL
+		case rest.Summary3DbKind9:
+			en2 = domain.Database_KIND_ORIOLEDB
 		default:
 			return nil, fmt.Errorf("cloud.v1.models.TestPresetRecord.Summary.db_kind: enum value %v has no Database_Kind variant", v1)
 		}
@@ -10976,6 +11057,8 @@ func Summary5ToOgen(src *models.SuiteRunRecord_Summary) (*rest.Summary5, error) 
 			en3 = rest.Summary5DbKindsItem7
 		case domain.Database_KIND_EXTERNAL:
 			en3 = rest.Summary5DbKindsItem8
+		case domain.Database_KIND_ORIOLEDB:
+			en3 = rest.Summary5DbKindsItem9
 		default:
 			return zero, fmt.Errorf("cloud.v1.models.SuiteRunRecord.Summary.db_kinds: enum value %v has no ogen Summary5DbKindsItem variant", e)
 		}
@@ -11047,6 +11130,8 @@ func Summary5FromOgen(src *rest.Summary5) (*models.SuiteRunRecord_Summary, error
 			en5 = domain.Database_KIND_PICODATA
 		case rest.Summary5DbKindsItem8:
 			en5 = domain.Database_KIND_EXTERNAL
+		case rest.Summary5DbKindsItem9:
+			en5 = domain.Database_KIND_ORIOLEDB
 		default:
 			return zero, fmt.Errorf("cloud.v1.models.SuiteRunRecord.Summary.db_kinds: enum value %v has no Database_Kind variant", e)
 		}
@@ -11112,6 +11197,8 @@ func Summary6ToOgen(src *models.TestRunRecord_Summary) (*rest.Summary6, error) {
 		en1 = rest.Summary6DbKind7
 	case domain.Database_KIND_EXTERNAL:
 		en1 = rest.Summary6DbKind8
+	case domain.Database_KIND_ORIOLEDB:
+		en1 = rest.Summary6DbKind9
 	default:
 		return nil, fmt.Errorf("cloud.v1.models.TestRunRecord.Summary.db_kind: enum value %v has no ogen Summary6DbKind variant", src.GetDbKind())
 	}
@@ -11197,6 +11284,8 @@ func Summary6FromOgen(src *rest.Summary6) (*models.TestRunRecord_Summary, error)
 			en2 = domain.Database_KIND_PICODATA
 		case rest.Summary6DbKind8:
 			en2 = domain.Database_KIND_EXTERNAL
+		case rest.Summary6DbKind9:
+			en2 = domain.Database_KIND_ORIOLEDB
 		default:
 			return nil, fmt.Errorf("cloud.v1.models.TestRunRecord.Summary.db_kind: enum value %v has no Database_Kind variant", v1)
 		}
