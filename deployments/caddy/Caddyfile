@@ -33,6 +33,10 @@
 		}
 	}
 
+	handle /v2/* {
+		reverse_proxy {$CADDY_REGISTRY_UPSTREAM:127.0.0.1:5000}
+	}
+
 	handle /grafana/* {
 		reverse_proxy {$CADDY_GRAFANA_UPSTREAM:127.0.0.1:3001}
 	}

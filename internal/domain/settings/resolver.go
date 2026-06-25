@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	agentdomain "github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
+	"github.com/stroppy-io/stroppy-cloud/internal/domain/database/orioledb"
 	apipb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	modelspb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
@@ -81,10 +83,24 @@ func (r Resolver) AgentBootstrap(ctx context.Context) (*workflowpb.AgentBootstra
 		serverAddr = DefaultLocalServerAddr
 	}
 
+	extraEnv := copyStringMap(r.DefaultAgentEnv)
+	// Inject the pull-through registry mirror URL so agents can pull Docker
+	// images through the gateway without direct internet access. Uses the same
+	// host as the apt proxy (agentdomain.AptProxyURL). Skipped when serverAddr
+	// is empty or the caller already provides an explicit override via
+	// DefaultAgentEnv (let an explicit setting win).
+	if serverAddr != "" {
+		if _, alreadySet := extraEnv[orioledb.RegistryMirrorEnv]; !alreadySet {
+			if mirrorURL := agentdomain.AptProxyURL(serverAddr); mirrorURL != "" {
+				extraEnv[orioledb.RegistryMirrorEnv] = mirrorURL
+			}
+		}
+	}
+
 	bootstrap := &workflowpb.AgentBootstrap{
 		ServerAddr:        serverAddr,
 		TemporalNamespace: r.DefaultTemporalNamespace,
-		ExtraEnv:          copyStringMap(r.DefaultAgentEnv),
+		ExtraEnv:          extraEnv,
 	}
 	if err := bootstrap.Validate(); err != nil {
 		return nil, err

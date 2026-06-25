@@ -205,6 +205,17 @@ services:
       YC_CLOUD_ID: ${YC_CLOUD_ID:-}
       YC_FOLDER_ID: ${YC_FOLDER_ID:-}
 
+  # --- Pull-through Docker registry (mirrors Docker Hub for egress-less nodes) ---
+  registry:
+    image: registry:2
+    restart: unless-stopped
+    environment:
+      REGISTRY_PROXY_REMOTEURL: "https://registry-1.docker.io"
+    ports:
+      - "127.0.0.1:5000:5000"
+    volumes:
+      - registry-data:/var/lib/registry
+
   # --- Caddy reverse proxy (prod only) ---
   caddy:
     image: caddy:2-alpine
@@ -238,3 +249,4 @@ volumes:
   grafanadata:
   caddy_data:
   caddy_config:
+  registry-data:
