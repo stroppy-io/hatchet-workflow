@@ -5,6 +5,7 @@ import (
 
 	databasecockroach "github.com/stroppy-io/stroppy-cloud/internal/domain/database/cockroach"
 	databasemysql "github.com/stroppy-io/stroppy-cloud/internal/domain/database/mysql"
+	databaseorioledb "github.com/stroppy-io/stroppy-cloud/internal/domain/database/orioledb"
 	databasepicodata "github.com/stroppy-io/stroppy-cloud/internal/domain/database/picodata"
 	databasepostgres "github.com/stroppy-io/stroppy-cloud/internal/domain/database/postgres"
 	databaseydb "github.com/stroppy-io/stroppy-cloud/internal/domain/database/ydb"
@@ -54,6 +55,7 @@ func DefaultOptions() Options {
 			databaseydbmanaged.PackageResolver{},
 			databasecockroach.PackageResolver{},
 			databasemysql.PackageResolver{},
+			databaseorioledb.PackageResolver{},
 		),
 		DeploymentRenderers: deploymentbuilder.NewRegistry(
 			databasepostgres.DeploymentRenderer{},
@@ -62,6 +64,7 @@ func DefaultOptions() Options {
 			databaseydbmanaged.DeploymentRenderer{},
 			databasecockroach.DeploymentRenderer{},
 			databasemysql.DeploymentRenderer{},
+			databaseorioledb.DeploymentRenderer{},
 			workloadbuilder.DeploymentRenderer{},
 		),
 	}
