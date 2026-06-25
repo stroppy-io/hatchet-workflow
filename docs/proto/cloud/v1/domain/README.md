@@ -16,6 +16,8 @@
   - [cloud.v1.domain.MySqlParams.PrimaryOptionsEntry](#cloud-v1-domain-mysqlparams-primaryoptionsentry)
   - [cloud.v1.domain.MySqlParams.ProxysqlOptionsEntry](#cloud-v1-domain-mysqlparams-proxysqloptionsentry)
   - [cloud.v1.domain.MySqlParams.ReplicaOptionsEntry](#cloud-v1-domain-mysqlparams-replicaoptionsentry)
+  - [cloud.v1.domain.OrioledbParams](#cloud-v1-domain-orioledbparams)
+  - [cloud.v1.domain.OrioledbParams.PostgresOptionsEntry](#cloud-v1-domain-orioledbparams-postgresoptionsentry)
   - [cloud.v1.domain.Package](#cloud-v1-domain-package)
   - [cloud.v1.domain.PicodataParams](#cloud-v1-domain-picodataparams)
   - [cloud.v1.domain.PicodataParams.HaproxyOptionsEntry](#cloud-v1-domain-picodataparams-haproxyoptionsentry)
@@ -282,6 +284,11 @@ KIND_PICODATA is Picodata.
 KIND_EXTERNAL is an external / unmanaged database addressed only by
 //dsn. Use with source.external.
 </pre></td>
+</tr><tr>
+<td>KIND_ORIOLEDB</td>
+<td><pre>
+KIND_ORIOLEDB is OrioleDB (docker-only patched-Postgres storage engine).
+</pre></td>
 </tr>
 </table>
 
@@ -348,6 +355,12 @@ go_name: Mariadb</pre></td>
 <td><pre>
 json_name: mysql
 go_name: Mysql</pre></td>
+</tr><tr>
+<td>orioledb</td>
+<td><a href="#cloud-v1-domain-orioledbparams">cloud.v1.domain.OrioledbParams</a></td>
+<td><pre>
+json_name: orioledb
+go_name: Orioledb</pre></td>
 </tr><tr>
 <td>package</td>
 <td><a href="#cloud-v1-domain-package">cloud.v1.domain.Package</a></td>
@@ -521,6 +534,87 @@ go_name: Value</pre></td>
 
 <a name="cloud-v1-domain-mysqlparams-replicaoptionsentry"></a>
 ### cloud.v1.domain.MySqlParams.ReplicaOptionsEntry
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>key</td>
+<td>string</td>
+<td><pre>
+json_name: key
+go_name: Key</pre></td>
+</tr><tr>
+<td>value</td>
+<td>string</td>
+<td><pre>
+json_name: value
+go_name: Value</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-domain-orioledbparams"></a>
+### cloud.v1.domain.OrioledbParams
+
+<pre>
+//OrioledbParams configures a single OrioleDB container. OrioleDB is a
+//patched-Postgres storage engine shipped docker-only, so there is no native
+//package: the node installs Docker and runs the official image. Wire protocol
+//is plain PostgreSQL.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>image</td>
+<td>string</td>
+<td><pre>
+image is the full OrioleDB docker image ref. Empty => latest-pg17.<br>
+
+json_name: image
+go_name: Image</pre></td>
+</tr><tr>
+<td>initdb_locale</td>
+<td>string</td>
+<td><pre>
+initdb_locale must be C, POSIX or an ICU locale (OrioleDB limitation).
+Empty => "C".<br>
+
+json_name: initdbLocale
+go_name: InitdbLocale</pre></td>
+</tr><tr>
+<td>postgres_options</td>
+<td><a href="#cloud-v1-domain-orioledbparams-postgresoptionsentry">cloud.v1.domain.OrioledbParams.PostgresOptionsEntry</a></td>
+<td><pre>
+postgres_options are appended as `-c key=value` to the container command
+(postgresql.conf overrides).<br>
+
+json_name: postgresOptions
+go_name: PostgresOptions</pre></td>
+</tr><tr>
+<td>shared_buffers_mb</td>
+<td>uint32</td>
+<td><pre>
+shared_buffers_mb is a convenience tuning knob; 0 => image default.<br>
+
+json_name: sharedBuffersMb
+go_name: SharedBuffersMb</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-domain-orioledbparams-postgresoptionsentry"></a>
+### cloud.v1.domain.OrioledbParams.PostgresOptionsEntry
 
 <table>
 <tr>

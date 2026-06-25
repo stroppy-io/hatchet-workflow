@@ -535,6 +535,8 @@
     - [cloud.v1.domain.MySqlParams.PrimaryOptionsEntry](cloud/v1/domain/README.md#cloud-v1-domain-mysqlparams-primaryoptionsentry)
     - [cloud.v1.domain.MySqlParams.ProxysqlOptionsEntry](cloud/v1/domain/README.md#cloud-v1-domain-mysqlparams-proxysqloptionsentry)
     - [cloud.v1.domain.MySqlParams.ReplicaOptionsEntry](cloud/v1/domain/README.md#cloud-v1-domain-mysqlparams-replicaoptionsentry)
+    - [cloud.v1.domain.OrioledbParams](cloud/v1/domain/README.md#cloud-v1-domain-orioledbparams)
+    - [cloud.v1.domain.OrioledbParams.PostgresOptionsEntry](cloud/v1/domain/README.md#cloud-v1-domain-orioledbparams-postgresoptionsentry)
     - [cloud.v1.domain.Package](cloud/v1/domain/README.md#cloud-v1-domain-package)
     - [cloud.v1.domain.PicodataParams](cloud/v1/domain/README.md#cloud-v1-domain-picodataparams)
     - [cloud.v1.domain.PicodataParams.HaproxyOptionsEntry](cloud/v1/domain/README.md#cloud-v1-domain-picodataparams-haproxyoptionsentry)
