@@ -27,21 +27,27 @@ func (r PackageResolver) ResolveDatabasePackage(database *domain.Database) (*dom
 		packageID = "builtin/orioledb/docker"
 	}
 	return &domain.Package{
-		Id:          packageID,
-		Name:        "OrioleDB (docker)",
-		DbKind:      domain.Database_KIND_ORIOLEDB,
-		DbVersion:   database.GetParams().GetVersion(),
-		IsBuiltin:   true,
+		Id:        packageID,
+		Name:      "OrioleDB (docker)",
+		DbKind:    domain.Database_KIND_ORIOLEDB,
+		DbVersion: database.GetParams().GetVersion(),
+		IsBuiltin: true,
+		// docker.io is in the Ubuntu universe repo and rides the existing
+		// apt-cacher proxy, so no PreInstall (custom repo/key) is needed. The
+		// daemon mirror config + dockerd start happen AFTER the apt install — see
+		// dockerDaemonSetupCommands, invoked by the deployment renderer once
+		// docker.service actually exists.
 		AptPackages: []string{"docker.io"},
-		PreInstall:  dockerMirrorPreInstall(),
 	}, nil
 }
 
-// dockerMirrorPreInstall configures /etc/docker/daemon.json with the registry
+// dockerDaemonSetupCommands configures /etc/docker/daemon.json with the registry
 // mirror (when $STROPPY_REGISTRY_MIRROR is set) and a matching insecure-registry
-// entry (the in-VPC mirror is plain HTTP), then enables dockerd. apt installs
-// docker.io itself; these run as the package pre_install steps (order 100).
-func dockerMirrorPreInstall() []string {
+// entry (the in-VPC mirror is plain HTTP), then enables + restarts dockerd so it
+// picks up the mirror. These MUST run AFTER `apt-get install docker.io` (the
+// renderer appends them post-install): running `systemctl enable docker` before
+// the package exists fails with "Unit file docker.service does not exist".
+func dockerDaemonSetupCommands() []string {
 	const daemonJSON = "/etc/docker/daemon.json"
 	return []string{
 		"install -d /etc/docker",
@@ -50,7 +56,7 @@ func dockerMirrorPreInstall() []string {
 		fmt.Sprintf(`sh -c 'mirror="${%s}"; if [ -n "$mirror" ]; then host="${mirror#http://}"; host="${host#https://}"; printf "{\"registry-mirrors\":[\"%%s\"],\"insecure-registries\":[\"%%s\"]}\n" "$mirror" "$host" > %s; fi'`,
 			RegistryMirrorEnv, daemonJSON),
 		"systemctl enable --now docker",
-		// Apply daemon.json if dockerd was already running.
-		"systemctl reload docker 2>/dev/null || systemctl restart docker || true",
+		// Apply daemon.json now that it is written.
+		"systemctl restart docker",
 	}
 }

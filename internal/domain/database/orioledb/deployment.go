@@ -118,6 +118,9 @@ func orioledbInstallCommands(dbPackage *domain.Package) []string {
 				"DEBIAN_FRONTEND=noninteractive apt-get install -y "+strings.Join(pkgs, " "))
 		}
 	}
+	// Configure the registry mirror + start dockerd AFTER docker.io is installed
+	// (docker.service does not exist before the apt install).
+	commands = append(commands, dockerDaemonSetupCommands()...)
 	return commands
 }
 
