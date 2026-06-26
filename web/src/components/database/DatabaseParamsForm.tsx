@@ -500,17 +500,37 @@ export function EngineParamsForm({
               />
             </div>
           </div>
-          <div className="max-w-xs">
-            <NumField label="shared_buffers (MiB)" value={p.sharedBuffersMb} onChange={(n) => set({ sharedBuffersMb: n })} hint="0 = use image default" />
+          <div className="grid grid-cols-1 gap-3 @lg:grid-cols-3">
+            <NumField label="shared_buffers (MiB)" value={p.sharedBuffersMb} onChange={(n) => set({ sharedBuffersMb: n })} hint="0 = image default" />
+            <NumField label="Replicas" value={p.replicas} onChange={(n) => set({ replicas: n })} hint="streaming standbys" />
+            <NumField label="HAProxy nodes" value={p.haproxy} onChange={(n) => set({ haproxy: n })} hint="0/1 — write/read split" />
           </div>
           <ConfigField
             filename="postgresql.conf"
-            label="Advanced PostgreSQL options"
-            description="postgresql.conf key/value options for the OrioleDB container."
+            label="Advanced PostgreSQL options (master)"
+            description="postgresql.conf key/value options for the master container."
             initiallyOpen={advancedInitiallyOpen}
             value={p.postgresOptions}
             onChange={(m) => set({ postgresOptions: m })}
           />
+          {p.replicas > 0 && (
+            <ConfigField
+              filename="postgresql.conf"
+              label="Advanced replica options"
+              description="postgresql.conf key/value options applied to replica containers."
+              value={p.replicaOptions}
+              onChange={(m) => set({ replicaOptions: m })}
+            />
+          )}
+          {p.haproxy > 0 && (
+            <ConfigField
+              filename="haproxy.cfg"
+              label="Advanced HAProxy options"
+              description="haproxy.cfg tunables (e.g. maxconn)."
+              value={p.haproxyOptions}
+              onChange={(m) => set({ haproxyOptions: m })}
+            />
+          )}
         </div>
       );
     }
@@ -589,8 +609,13 @@ export function engineNodes(db: DatabaseVM): TopologyGroup[] {
       const p = e.cockroach;
       return [{ role: "node", engine: "cockroach", count: Math.max(1, p.nodes), kind: "database" }];
     }
-    case "orioledb":
-      return [{ role: "master", engine: "orioledb", count: 1, kind: "database" }];
+    case "orioledb": {
+      const p = e.orioledb;
+      const out: TopologyGroup[] = [{ role: "master", engine: "orioledb", count: 1, kind: "database" }];
+      if (p.replicas > 0) out.push({ role: "replica", engine: "orioledb", count: p.replicas, kind: "replica" });
+      if (p.haproxy > 0) out.push({ role: "haproxy", engine: "haproxy", count: p.haproxy, kind: "proxy" });
+      return out;
+    }
     case "external":
       return [{ role: "external", engine: "external", count: 0, kind: "external" }];
   }

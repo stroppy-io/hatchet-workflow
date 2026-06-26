@@ -245,6 +245,10 @@ export interface OrioledbParamsVM {
   postgresOptions: Record<string, string>;
   initdbLocale: string;
   sharedBuffersMb: number;
+  replicas: number;
+  haproxy: number;
+  replicaOptions: Record<string, string>;
+  haproxyOptions: Record<string, string>;
 }
 
 export interface ExternalParamsVM {
@@ -1311,7 +1315,7 @@ export function defaultEngineParams(kind: EngineKind): EngineParamsVM {
     case "cockroach":
       return { kind, cockroach: defaultCockroachParams() };
     case "orioledb":
-      return { kind, orioledb: { image: "", postgresOptions: {}, initdbLocale: "C", sharedBuffersMb: 256 } };
+      return { kind, orioledb: { image: "", postgresOptions: {}, initdbLocale: "C", sharedBuffersMb: 256, replicas: 0, haproxy: 0, replicaOptions: {}, haproxyOptions: {} } };
     case "external":
       return { kind, external: { dsn: "" } };
   }
@@ -1429,7 +1433,7 @@ export function blankEngineParams(kind: EngineKind): EngineParamsVM {
     case "cockroach":
       return { kind, cockroach: blankCockroachParams() };
     case "orioledb":
-      return { kind, orioledb: { image: "", postgresOptions: {}, initdbLocale: "C", sharedBuffersMb: 0 } };
+      return { kind, orioledb: { image: "", postgresOptions: {}, initdbLocale: "C", sharedBuffersMb: 0, replicas: 0, haproxy: 0, replicaOptions: {}, haproxyOptions: {} } };
     case "external":
       return { kind, external: { dsn: "" } };
   }

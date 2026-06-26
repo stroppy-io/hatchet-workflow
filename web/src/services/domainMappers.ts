@@ -137,6 +137,10 @@ function orioledbToVM(p: OrioledbParams): OrioledbParamsVM {
     postgresOptions: { ...p.postgresOptions },
     initdbLocale: p.initdbLocale || "C",
     sharedBuffersMb: p.sharedBuffersMb,
+    replicas: p.replicas,
+    haproxy: p.haproxy,
+    replicaOptions: { ...p.replicaOptions },
+    haproxyOptions: { ...p.haproxyOptions },
   };
 }
 
@@ -221,6 +225,10 @@ function orioledbToProto(vm: OrioledbParamsVM): Partial<OrioledbParams> {
     postgresOptions: { ...vm.postgresOptions },
     initdbLocale: vm.initdbLocale,
     sharedBuffersMb: vm.sharedBuffersMb,
+    replicas: vm.replicas,
+    haproxy: vm.haproxy,
+    replicaOptions: { ...vm.replicaOptions },
+    haproxyOptions: { ...vm.haproxyOptions },
   };
 }
 
@@ -394,6 +402,10 @@ function create_OrioledbEmpty(): OrioledbParams {
     postgresOptions: {},
     initdbLocale: "C",
     sharedBuffersMb: 0,
+    replicas: 0,
+    haproxy: 0,
+    replicaOptions: {},
+    haproxyOptions: {},
   };
 }
 
