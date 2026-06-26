@@ -464,8 +464,12 @@ func orioledbHAProxyComponent(
 		hosts = []string{"PREVIEW-DB"} // preview: no resolved peers
 	}
 	cfg := orioledbHAProxyConfig(hosts, database.GetParams().GetOrioledb().GetHaproxyOptions())
+	// Write to the component config dir, NOT /etc/haproxy/haproxy.cfg: the latter
+	// is a dpkg conffile, and writing it before `apt-get install haproxy` makes
+	// the install prompt on the existing conffile and fail non-interactively.
+	cfgPath := deploymentbuilder.ConfigDir(component.GetId()) + "/haproxy.cfg"
 	cfgFile := &common.File{
-		Info:    &common.File_Info{Path: "/etc/haproxy/haproxy.cfg", Mode: 0644, CreateParents: true},
+		Info:    &common.File_Info{Path: cfgPath, Mode: 0644, CreateParents: true},
 		Content: &common.File_Text{Text: cfg},
 	}
 	return deploymentbuilder.EngineComponent{
@@ -478,27 +482,27 @@ func orioledbHAProxyComponent(
 		ConfigOrigin:      deploymentpb.RenderArtifact_ORIGIN_RENDERED_DEFAULT,
 		DefaultConfigFile: cfgFile,
 		InstallCommands:   []string{"apt-get update", "DEBIAN_FRONTEND=noninteractive apt-get install -y haproxy"},
-		ServiceFile:       deploymentbuilder.EngineServiceFile(component.GetId(), orioledbHAProxyUnit()),
+		ServiceFile:       deploymentbuilder.EngineServiceFile(component.GetId(), orioledbHAProxyUnit(cfgPath)),
 		Healthcheck:       "systemctl is-active --quiet " + deploymentbuilder.ShellQuote(deploymentbuilder.ServiceName(component.GetId())),
 	}, nil
 }
 
-func orioledbHAProxyUnit() string {
-	return `[Unit]
+func orioledbHAProxyUnit(cfgPath string) string {
+	return fmt.Sprintf(`[Unit]
 Description=Stroppy Cloud OrioleDB HAProxy
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStartPre=/usr/sbin/haproxy -c -f /etc/haproxy/haproxy.cfg
-ExecStart=/usr/sbin/haproxy -W -db -f /etc/haproxy/haproxy.cfg
+ExecStartPre=/usr/sbin/haproxy -c -f %s
+ExecStart=/usr/sbin/haproxy -W -db -f %s
 Restart=always
 RestartSec=2
 
 [Install]
 WantedBy=multi-user.target
-`
+`, cfgPath, cfgPath)
 }
 
 // orioledbHAProxyConfig renders haproxy.cfg: a write frontend (:5432 -> primary)
