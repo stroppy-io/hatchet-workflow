@@ -73,7 +73,7 @@ func TestHealthScriptUsesRecoveryCheck(t *testing.T) {
 }
 
 func TestServiceUnitRunsContainer(t *testing.T) {
-	unit := orioledbServiceUnit("orioledb-master-1", "orioledb/orioledb:latest-pg17", "C", map[string]string{"shared_buffers": "512MB"})
+	unit := orioledbServiceUnit("orioledb-master-1", "orioledb/orioledb:latest-pg17", "C", map[string]string{"shared_buffers": "512MB"}, "")
 	for _, want := range []string{
 		"docker run",
 		"--network host",

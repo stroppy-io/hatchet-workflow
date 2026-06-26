@@ -117,9 +117,17 @@ func orioledbDBComponent(
 	configDir := deploymentbuilder.ConfigDir(component.GetId())
 	configFile := orioledbDefaultConfigFile(configDir)
 
+	extraFiles := orioledbHealthFiles()
 	var unit string
 	if isMaster {
-		unit = orioledbServiceUnit(component.GetId(), image, locale, streamingMasterOptions(pgOptions(params)))
+		// The master must trust replication connections so a replica's
+		// pg_basebackup can attach. POSTGRES_HOST_AUTH_METHOD=trust only writes a
+		// `host all all all trust` pg_hba line (not the `replication` pseudo-db),
+		// so append the replication line via an initdb.d hook (runs on first init,
+		// before the final server start reads pg_hba).
+		hbaPath := configDir + "/repl-hba.sh"
+		extraFiles = append(extraFiles, orioledbReplHBAFile(hbaPath))
+		unit = orioledbServiceUnit(component.GetId(), image, locale, streamingMasterOptions(pgOptions(params)), hbaPath)
 	} else {
 		master := wiring.masterHost
 		if master == "" {
@@ -140,9 +148,24 @@ func orioledbDBComponent(
 		InstallCommands:   orioledbInstallCommands(dbPackage),
 		ServiceFile:       deploymentbuilder.EngineServiceFile(component.GetId(), unit),
 		Healthcheck:       "for i in $(seq 1 60); do docker exec " + containerName + " pg_isready -h 127.0.0.1 -p " + fmt.Sprint(pgPort) + " && exit 0; sleep 3; done; exit 1",
-		ExtraFiles:        orioledbHealthFiles(),
+		ExtraFiles:        extraFiles,
 		PostStartCommands: orioledbHealthPostStart(),
 	}, nil
+}
+
+// orioledbReplHBAFile is a /docker-entrypoint-initdb.d hook the master mounts to
+// trust replication connections (needed for replica pg_basebackup over TCP).
+func orioledbReplHBAFile(path string) deploymentbuilder.EngineFile {
+	return deploymentbuilder.EngineFile{
+		StepID:        "055_write_repl_hba",
+		StepOrder:     55,
+		ArtifactName:  "repl-hba.sh",
+		ArtifactLabel: "repl_hba",
+		File: &common.File{
+			Info:    &common.File_Info{Path: path, Mode: 0755, CreateParents: true},
+			Content: &common.File_Text{Text: "#!/bin/sh\nset -e\necho \"host replication all all trust\" >> \"$PGDATA/pg_hba.conf\"\n"},
+		},
+	}
 }
 
 type prio struct{ global, node uint32 }
@@ -238,7 +261,7 @@ func orioledbInstallCommands(dbPackage *domain.Package) []string {
 // --privileged (direct/async IO, huge pages, sysctl access the engine may use),
 // and a bind mount of the host data dir to PGDATA (writes hit the real disk, not
 // docker's overlay/CoW layer). Trust auth is loaded from the EnvironmentFile.
-func orioledbServiceUnit(componentID, image, locale string, options map[string]string) string {
+func orioledbServiceUnit(componentID, image, locale string, options map[string]string, initHBAPath string) string {
 	var optStr strings.Builder
 	keys := make([]string, 0, len(options))
 	for k := range options {
@@ -250,6 +273,10 @@ func orioledbServiceUnit(componentID, image, locale string, options map[string]s
 	}
 	dataDir := deploymentbuilder.DataDir(componentID)
 	configDir := deploymentbuilder.ConfigDir(componentID)
+	initMount := ""
+	if initHBAPath != "" {
+		initMount = fmt.Sprintf("  -v %s:/docker-entrypoint-initdb.d/00-repl-hba.sh:ro \\\n", deploymentbuilder.ShellQuote(initHBAPath))
+	}
 	return fmt.Sprintf(`[Unit]
 Description=Stroppy Cloud OrioleDB %s
 After=network-online.target docker.service
@@ -266,7 +293,7 @@ ExecStart=/usr/bin/docker run --rm --name %s --network host --pid host --ipc hos
   -e POSTGRES_HOST_AUTH_METHOD \
   -e POSTGRES_INITDB_ARGS=--locale=%s \
   -v %s:/var/lib/postgresql/data \
-  %s%s
+%s  %s%s
 ExecStop=/usr/bin/docker rm -f %s
 Restart=always
 RestartSec=3
@@ -282,6 +309,7 @@ WantedBy=multi-user.target
 		containerName,
 		locale,
 		deploymentbuilder.ShellQuote(dataDir),
+		initMount,
 		image,
 		optStr.String(),
 		containerName,
