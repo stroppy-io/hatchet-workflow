@@ -240,6 +240,17 @@ func builtinDatabasePresets(tenantID, authorID string) []*models.DatabasePresetR
 				InitdbLocale: "C",
 			}},
 		})
+	add("OrioleDB HA", "OrioleDB master + 1 streaming replica + HAProxy.",
+		domain.Database_KIND_ORIOLEDB,
+		&domain.DatabaseParams{
+			Version: "pg17",
+			Engine: &domain.DatabaseParams_Orioledb{Orioledb: &domain.OrioledbParams{
+				Image:        "orioledb/orioledb:latest-pg17",
+				InitdbLocale: "C",
+				Replicas:     1,
+				Haproxy:      1,
+			}},
+		})
 
 	// --- CockroachDB: single / cluster-3 / cluster-6 (homogeneous node count) ---
 	add("CockroachDB single", "Single CockroachDB node — dev / smoke runs",
