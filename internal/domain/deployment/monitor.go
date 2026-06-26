@@ -120,8 +120,8 @@ func isDatabaseRole(engine, role string) bool {
 	case "postgres":
 		return role == "master" || role == "replica"
 	case "orioledb":
-		// OrioleDB is a patched-Postgres container; scraped via postgres_exporter.
-		return role == "master"
+		// OrioleDB master + streaming replicas are both scraped via postgres_exporter.
+		return role == "master" || role == "replica"
 	case "mysql":
 		return role == "primary" || role == "replica"
 	case "picodata":
