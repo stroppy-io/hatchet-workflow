@@ -133,7 +133,7 @@ func orioledbDBComponent(
 		if master == "" {
 			master = "PREVIEW-MASTER" // preview: no resolved peer
 		}
-		unit = orioledbReplicaUnit(component.GetId(), image, master, mergeMaps(pgOptions(params), params.GetReplicaOptions()))
+		unit = orioledbReplicaUnit(component.GetId(), image, master, streamingReplicaOptions(mergeMaps(pgOptions(params), params.GetReplicaOptions())))
 	}
 
 	return deploymentbuilder.EngineComponent{
@@ -182,10 +182,26 @@ func dbPriority(isMaster bool) prio {
 // replicas can attach. Trust auth already permits replication connections.
 func streamingMasterOptions(base map[string]string) map[string]string {
 	out := map[string]string{
+		// The OrioleDB/postgres image defaults listen_addresses to localhost, so a
+		// replica on another node (and the stroppy runner) could not connect.
+		"listen_addresses":      "*",
 		"wal_level":             "replica",
 		"max_wal_senders":       "10",
 		"max_replication_slots": "10",
 		"hot_standby":           "on",
+	}
+	for k, v := range base {
+		out[k] = v
+	}
+	return out
+}
+
+// streamingReplicaOptions overlays the standby's required knobs (listen
+// externally + hot_standby reads) on the user's replica_options (user wins).
+func streamingReplicaOptions(base map[string]string) map[string]string {
+	out := map[string]string{
+		"listen_addresses": "*",
+		"hot_standby":      "on",
 	}
 	for k, v := range base {
 		out[k] = v
