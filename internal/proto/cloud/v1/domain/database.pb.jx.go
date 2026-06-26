@@ -1768,6 +1768,32 @@ func (m *OrioledbParams) Encode(e *jx.Encoder) {
 		e.FieldStart("sharedBuffersMb")
 		e.UInt32(m.SharedBuffersMb)
 	}
+	if m.Replicas != 0 {
+		e.FieldStart("replicas")
+		e.UInt32(m.Replicas)
+	}
+	if m.Haproxy != 0 {
+		e.FieldStart("haproxy")
+		e.UInt32(m.Haproxy)
+	}
+	if len(m.ReplicaOptions) > 0 {
+		e.FieldStart("replicaOptions")
+		e.ObjStart()
+		for k, v := range m.ReplicaOptions {
+			e.FieldStart(k)
+			e.Str(v)
+		}
+		e.ObjEnd()
+	}
+	if len(m.HaproxyOptions) > 0 {
+		e.FieldStart("haproxyOptions")
+		e.ObjStart()
+		for k, v := range m.HaproxyOptions {
+			e.FieldStart(k)
+			e.Str(v)
+		}
+		e.ObjEnd()
+	}
 	e.ObjEnd()
 }
 
@@ -1839,6 +1865,78 @@ func (m *OrioledbParams) Decode(d *jx.Decoder) error {
 			}
 			m.SharedBuffersMb = v
 			return nil
+		case "replicas":
+			if seen["Replicas"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Replicas"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint32(d)
+			if err != nil {
+				return err
+			}
+			m.Replicas = v
+			return nil
+		case "haproxy":
+			if seen["Haproxy"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Haproxy"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint32(d)
+			if err != nil {
+				return err
+			}
+			m.Haproxy = v
+			return nil
+		case "replicaOptions", "replica_options":
+			if seen["ReplicaOptions"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["ReplicaOptions"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			if m.ReplicaOptions == nil {
+				m.ReplicaOptions = make(map[string]string)
+			}
+			return d.Obj(func(d *jx.Decoder, ks string) error {
+				mk := ks
+				var mv string
+				tv, err := d.Str()
+				if err != nil {
+					return err
+				}
+				mv = tv
+				m.ReplicaOptions[mk] = mv
+				return nil
+			})
+		case "haproxyOptions", "haproxy_options":
+			if seen["HaproxyOptions"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["HaproxyOptions"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			if m.HaproxyOptions == nil {
+				m.HaproxyOptions = make(map[string]string)
+			}
+			return d.Obj(func(d *jx.Decoder, ks string) error {
+				mk := ks
+				var mv string
+				tv, err := d.Str()
+				if err != nil {
+					return err
+				}
+				mv = tv
+				m.HaproxyOptions[mk] = mv
+				return nil
+			})
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}

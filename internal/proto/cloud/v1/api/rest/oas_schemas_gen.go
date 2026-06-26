@@ -17302,6 +17302,52 @@ func (o OptOrioledbParams) Or(d OrioledbParams) OrioledbParams {
 	return d
 }
 
+// NewOptOrioledbParamsHaproxyOptions returns new OptOrioledbParamsHaproxyOptions with value set to v.
+func NewOptOrioledbParamsHaproxyOptions(v OrioledbParamsHaproxyOptions) OptOrioledbParamsHaproxyOptions {
+	return OptOrioledbParamsHaproxyOptions{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptOrioledbParamsHaproxyOptions is optional OrioledbParamsHaproxyOptions.
+type OptOrioledbParamsHaproxyOptions struct {
+	Value OrioledbParamsHaproxyOptions
+	Set   bool
+}
+
+// IsSet returns true if OptOrioledbParamsHaproxyOptions was set.
+func (o OptOrioledbParamsHaproxyOptions) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptOrioledbParamsHaproxyOptions) Reset() {
+	var v OrioledbParamsHaproxyOptions
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptOrioledbParamsHaproxyOptions) SetTo(v OrioledbParamsHaproxyOptions) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptOrioledbParamsHaproxyOptions) Get() (v OrioledbParamsHaproxyOptions, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptOrioledbParamsHaproxyOptions) Or(d OrioledbParamsHaproxyOptions) OrioledbParamsHaproxyOptions {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptOrioledbParamsPostgresOptions returns new OptOrioledbParamsPostgresOptions with value set to v.
 func NewOptOrioledbParamsPostgresOptions(v OrioledbParamsPostgresOptions) OptOrioledbParamsPostgresOptions {
 	return OptOrioledbParamsPostgresOptions{
@@ -17342,6 +17388,52 @@ func (o OptOrioledbParamsPostgresOptions) Get() (v OrioledbParamsPostgresOptions
 
 // Or returns value if set, or given parameter if does not.
 func (o OptOrioledbParamsPostgresOptions) Or(d OrioledbParamsPostgresOptions) OrioledbParamsPostgresOptions {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptOrioledbParamsReplicaOptions returns new OptOrioledbParamsReplicaOptions with value set to v.
+func NewOptOrioledbParamsReplicaOptions(v OrioledbParamsReplicaOptions) OptOrioledbParamsReplicaOptions {
+	return OptOrioledbParamsReplicaOptions{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptOrioledbParamsReplicaOptions is optional OrioledbParamsReplicaOptions.
+type OptOrioledbParamsReplicaOptions struct {
+	Value OrioledbParamsReplicaOptions
+	Set   bool
+}
+
+// IsSet returns true if OptOrioledbParamsReplicaOptions was set.
+func (o OptOrioledbParamsReplicaOptions) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptOrioledbParamsReplicaOptions) Reset() {
+	var v OrioledbParamsReplicaOptions
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptOrioledbParamsReplicaOptions) SetTo(v OrioledbParamsReplicaOptions) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptOrioledbParamsReplicaOptions) Get() (v OrioledbParamsReplicaOptions, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptOrioledbParamsReplicaOptions) Or(d OrioledbParamsReplicaOptions) OrioledbParamsReplicaOptions {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -25584,10 +25676,24 @@ func (o OptYdbParamsStorageOptions) Or(d YdbParamsStorageOptions) YdbParamsStora
 
 // Ref: #/components/schemas/OrioledbParams
 type OrioledbParams struct {
+	Haproxy         OptInt32                         `json:"haproxy"`
+	HaproxyOptions  OptOrioledbParamsHaproxyOptions  `json:"haproxyOptions"`
 	Image           OptString                        `json:"image"`
 	InitdbLocale    OptString                        `json:"initdbLocale"`
 	PostgresOptions OptOrioledbParamsPostgresOptions `json:"postgresOptions"`
+	ReplicaOptions  OptOrioledbParamsReplicaOptions  `json:"replicaOptions"`
+	Replicas        OptInt32                         `json:"replicas"`
 	SharedBuffersMb OptInt32                         `json:"sharedBuffersMb"`
+}
+
+// GetHaproxy returns the value of Haproxy.
+func (s *OrioledbParams) GetHaproxy() OptInt32 {
+	return s.Haproxy
+}
+
+// GetHaproxyOptions returns the value of HaproxyOptions.
+func (s *OrioledbParams) GetHaproxyOptions() OptOrioledbParamsHaproxyOptions {
+	return s.HaproxyOptions
 }
 
 // GetImage returns the value of Image.
@@ -25605,9 +25711,29 @@ func (s *OrioledbParams) GetPostgresOptions() OptOrioledbParamsPostgresOptions {
 	return s.PostgresOptions
 }
 
+// GetReplicaOptions returns the value of ReplicaOptions.
+func (s *OrioledbParams) GetReplicaOptions() OptOrioledbParamsReplicaOptions {
+	return s.ReplicaOptions
+}
+
+// GetReplicas returns the value of Replicas.
+func (s *OrioledbParams) GetReplicas() OptInt32 {
+	return s.Replicas
+}
+
 // GetSharedBuffersMb returns the value of SharedBuffersMb.
 func (s *OrioledbParams) GetSharedBuffersMb() OptInt32 {
 	return s.SharedBuffersMb
+}
+
+// SetHaproxy sets the value of Haproxy.
+func (s *OrioledbParams) SetHaproxy(val OptInt32) {
+	s.Haproxy = val
+}
+
+// SetHaproxyOptions sets the value of HaproxyOptions.
+func (s *OrioledbParams) SetHaproxyOptions(val OptOrioledbParamsHaproxyOptions) {
+	s.HaproxyOptions = val
 }
 
 // SetImage sets the value of Image.
@@ -25625,14 +25751,46 @@ func (s *OrioledbParams) SetPostgresOptions(val OptOrioledbParamsPostgresOptions
 	s.PostgresOptions = val
 }
 
+// SetReplicaOptions sets the value of ReplicaOptions.
+func (s *OrioledbParams) SetReplicaOptions(val OptOrioledbParamsReplicaOptions) {
+	s.ReplicaOptions = val
+}
+
+// SetReplicas sets the value of Replicas.
+func (s *OrioledbParams) SetReplicas(val OptInt32) {
+	s.Replicas = val
+}
+
 // SetSharedBuffersMb sets the value of SharedBuffersMb.
 func (s *OrioledbParams) SetSharedBuffersMb(val OptInt32) {
 	s.SharedBuffersMb = val
 }
 
+type OrioledbParamsHaproxyOptions map[string]string
+
+func (s *OrioledbParamsHaproxyOptions) init() OrioledbParamsHaproxyOptions {
+	m := *s
+	if m == nil {
+		m = map[string]string{}
+		*s = m
+	}
+	return m
+}
+
 type OrioledbParamsPostgresOptions map[string]string
 
 func (s *OrioledbParamsPostgresOptions) init() OrioledbParamsPostgresOptions {
+	m := *s
+	if m == nil {
+		m = map[string]string{}
+		*s = m
+	}
+	return m
+}
+
+type OrioledbParamsReplicaOptions map[string]string
+
+func (s *OrioledbParamsReplicaOptions) init() OrioledbParamsReplicaOptions {
 	m := *s
 	if m == nil {
 		m = map[string]string{}

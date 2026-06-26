@@ -1273,6 +1273,8 @@ func decode_OrioledbParamsInput(m map[string]interface{}) *pb2.OrioledbParams {
 	out.Image = graphqlrt.AsString(m["image"])
 	out.InitdbLocale = graphqlrt.AsString(m["initdbLocale"])
 	out.SharedBuffersMb = graphqlrt.AsUint32(m["sharedBuffersMb"])
+	out.Replicas = graphqlrt.AsUint32(m["replicas"])
+	out.Haproxy = graphqlrt.AsUint32(m["haproxy"])
 	return out
 }
 
@@ -7193,6 +7195,34 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 					return nil, nil
 				}
 				return obj.GetSharedBuffersMb(), nil
+			}},
+			"replicas": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb2.OrioledbParams)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetReplicas(), nil
+			}},
+			"haproxy": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb2.OrioledbParams)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetHaproxy(), nil
+			}},
+			"replicaOptions": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb2.OrioledbParams)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetReplicaOptions(), nil
+			}},
+			"haproxyOptions": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb2.OrioledbParams)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetHaproxyOptions(), nil
 			}},
 		}
 	})})
@@ -15378,6 +15408,8 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 			"image":           &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
 			"initdbLocale":    &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
 			"sharedBuffersMb": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Int)},
+			"replicas":        &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Int)},
+			"haproxy":         &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Int)},
 		}
 	})})
 	i_GetDatabasePresetRequest = graphql.NewInputObject(graphql.InputObjectConfig{Name: "GetDatabasePresetRequest", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {

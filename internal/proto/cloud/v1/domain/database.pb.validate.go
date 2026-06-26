@@ -1023,6 +1023,14 @@ func (m *OrioledbParams) validate(all bool) error {
 
 	// no validation rules for SharedBuffersMb
 
+	// no validation rules for Replicas
+
+	// no validation rules for Haproxy
+
+	// no validation rules for ReplicaOptions
+
+	// no validation rules for HaproxyOptions
+
 	if len(errors) > 0 {
 		return OrioledbParamsMultiError(errors)
 	}

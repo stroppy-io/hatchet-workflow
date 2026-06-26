@@ -17,7 +17,9 @@
   - [cloud.v1.domain.MySqlParams.ProxysqlOptionsEntry](#cloud-v1-domain-mysqlparams-proxysqloptionsentry)
   - [cloud.v1.domain.MySqlParams.ReplicaOptionsEntry](#cloud-v1-domain-mysqlparams-replicaoptionsentry)
   - [cloud.v1.domain.OrioledbParams](#cloud-v1-domain-orioledbparams)
+  - [cloud.v1.domain.OrioledbParams.HaproxyOptionsEntry](#cloud-v1-domain-orioledbparams-haproxyoptionsentry)
   - [cloud.v1.domain.OrioledbParams.PostgresOptionsEntry](#cloud-v1-domain-orioledbparams-postgresoptionsentry)
+  - [cloud.v1.domain.OrioledbParams.ReplicaOptionsEntry](#cloud-v1-domain-orioledbparams-replicaoptionsentry)
   - [cloud.v1.domain.Package](#cloud-v1-domain-package)
   - [cloud.v1.domain.PicodataParams](#cloud-v1-domain-picodataparams)
   - [cloud.v1.domain.PicodataParams.HaproxyOptionsEntry](#cloud-v1-domain-picodataparams-haproxyoptionsentry)
@@ -575,6 +577,22 @@ go_name: Value</pre></td>
 <th>Description</th>
 </tr>
 <tr>
+<td>haproxy</td>
+<td>uint32</td>
+<td><pre>
+haproxy is the dedicated HAProxy LB node count (0 = none; capped at 1).<br>
+
+json_name: haproxy
+go_name: Haproxy</pre></td>
+</tr><tr>
+<td>haproxy_options</td>
+<td><a href="#cloud-v1-domain-orioledbparams-haproxyoptionsentry">cloud.v1.domain.OrioledbParams.HaproxyOptionsEntry</a></td>
+<td><pre>
+haproxy_options tunes haproxy.cfg.<br>
+
+json_name: haproxyOptions
+go_name: HaproxyOptions</pre></td>
+</tr><tr>
 <td>image</td>
 <td>string</td>
 <td><pre>
@@ -601,6 +619,22 @@ postgres_options are appended as `-c key=value` to the container command
 json_name: postgresOptions
 go_name: PostgresOptions</pre></td>
 </tr><tr>
+<td>replica_options</td>
+<td><a href="#cloud-v1-domain-orioledbparams-replicaoptionsentry">cloud.v1.domain.OrioledbParams.ReplicaOptionsEntry</a></td>
+<td><pre>
+replica_options is postgresql.conf applied to replica containers.<br>
+
+json_name: replicaOptions
+go_name: ReplicaOptions</pre></td>
+</tr><tr>
+<td>replicas</td>
+<td>uint32</td>
+<td><pre>
+replicas is the streaming-replica container count (0 = no replicas).<br>
+
+json_name: replicas
+go_name: Replicas</pre></td>
+</tr><tr>
 <td>shared_buffers_mb</td>
 <td>uint32</td>
 <td><pre>
@@ -613,8 +647,60 @@ go_name: SharedBuffersMb</pre></td>
 
 
 
+<a name="cloud-v1-domain-orioledbparams-haproxyoptionsentry"></a>
+### cloud.v1.domain.OrioledbParams.HaproxyOptionsEntry
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>key</td>
+<td>string</td>
+<td><pre>
+json_name: key
+go_name: Key</pre></td>
+</tr><tr>
+<td>value</td>
+<td>string</td>
+<td><pre>
+json_name: value
+go_name: Value</pre></td>
+</tr>
+</table>
+
+
+
 <a name="cloud-v1-domain-orioledbparams-postgresoptionsentry"></a>
 ### cloud.v1.domain.OrioledbParams.PostgresOptionsEntry
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>key</td>
+<td>string</td>
+<td><pre>
+json_name: key
+go_name: Key</pre></td>
+</tr><tr>
+<td>value</td>
+<td>string</td>
+<td><pre>
+json_name: value
+go_name: Value</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-domain-orioledbparams-replicaoptionsentry"></a>
+### cloud.v1.domain.OrioledbParams.ReplicaOptionsEntry
 
 <table>
 <tr>

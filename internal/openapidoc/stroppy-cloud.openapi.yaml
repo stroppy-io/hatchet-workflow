@@ -4628,6 +4628,14 @@ components:
         OrioledbParams:
             additionalProperties: false
             properties:
+                haproxy:
+                    format: int32
+                    minimum: 0
+                    type: integer
+                haproxyOptions:
+                    additionalProperties:
+                        type: string
+                    type: object
                 image:
                     type: string
                 initdbLocale:
@@ -4636,6 +4644,14 @@ components:
                     additionalProperties:
                         type: string
                     type: object
+                replicaOptions:
+                    additionalProperties:
+                        type: string
+                    type: object
+                replicas:
+                    format: int32
+                    minimum: 0
+                    type: integer
                 sharedBuffersMb:
                     format: int32
                     minimum: 0

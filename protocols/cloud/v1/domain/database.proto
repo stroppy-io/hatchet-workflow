@@ -283,6 +283,14 @@ message OrioledbParams {
     string initdb_locale = 3;
     // shared_buffers_mb is a convenience tuning knob; 0 => image default.
     uint32 shared_buffers_mb = 4;
+    // replicas is the streaming-replica container count (0 = no replicas).
+    uint32 replicas = 5;
+    // haproxy is the dedicated HAProxy LB node count (0 = none; capped at 1).
+    uint32 haproxy = 6;
+    // replica_options is postgresql.conf applied to replica containers.
+    map<string, string> replica_options = 7;
+    // haproxy_options tunes haproxy.cfg.
+    map<string, string> haproxy_options = 8;
 }
 
 /* CockroachParams is the engine topology for CockroachDB (homogeneous nodes). */

@@ -37930,6 +37930,40 @@ func (s *OptOrioledbParams) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes OrioledbParamsHaproxyOptions as json.
+func (o OptOrioledbParamsHaproxyOptions) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes OrioledbParamsHaproxyOptions from json.
+func (o *OptOrioledbParamsHaproxyOptions) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptOrioledbParamsHaproxyOptions to nil")
+	}
+	o.Set = true
+	o.Value = make(OrioledbParamsHaproxyOptions)
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptOrioledbParamsHaproxyOptions) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptOrioledbParamsHaproxyOptions) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode encodes OrioledbParamsPostgresOptions as json.
 func (o OptOrioledbParamsPostgresOptions) Encode(e *jx.Encoder) {
 	if !o.Set {
@@ -37960,6 +37994,40 @@ func (s OptOrioledbParamsPostgresOptions) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OptOrioledbParamsPostgresOptions) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes OrioledbParamsReplicaOptions as json.
+func (o OptOrioledbParamsReplicaOptions) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes OrioledbParamsReplicaOptions from json.
+func (o *OptOrioledbParamsReplicaOptions) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptOrioledbParamsReplicaOptions to nil")
+	}
+	o.Set = true
+	o.Value = make(OrioledbParamsReplicaOptions)
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptOrioledbParamsReplicaOptions) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptOrioledbParamsReplicaOptions) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -43880,6 +43948,18 @@ func (s *OrioledbParams) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *OrioledbParams) encodeFields(e *jx.Encoder) {
 	{
+		if s.Haproxy.Set {
+			e.FieldStart("haproxy")
+			s.Haproxy.Encode(e)
+		}
+	}
+	{
+		if s.HaproxyOptions.Set {
+			e.FieldStart("haproxyOptions")
+			s.HaproxyOptions.Encode(e)
+		}
+	}
+	{
 		if s.Image.Set {
 			e.FieldStart("image")
 			s.Image.Encode(e)
@@ -43898,6 +43978,18 @@ func (s *OrioledbParams) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.ReplicaOptions.Set {
+			e.FieldStart("replicaOptions")
+			s.ReplicaOptions.Encode(e)
+		}
+	}
+	{
+		if s.Replicas.Set {
+			e.FieldStart("replicas")
+			s.Replicas.Encode(e)
+		}
+	}
+	{
 		if s.SharedBuffersMb.Set {
 			e.FieldStart("sharedBuffersMb")
 			s.SharedBuffersMb.Encode(e)
@@ -43905,11 +43997,15 @@ func (s *OrioledbParams) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfOrioledbParams = [4]string{
-	0: "image",
-	1: "initdbLocale",
-	2: "postgresOptions",
-	3: "sharedBuffersMb",
+var jsonFieldsNameOfOrioledbParams = [8]string{
+	0: "haproxy",
+	1: "haproxyOptions",
+	2: "image",
+	3: "initdbLocale",
+	4: "postgresOptions",
+	5: "replicaOptions",
+	6: "replicas",
+	7: "sharedBuffersMb",
 }
 
 // Decode decodes OrioledbParams from json.
@@ -43920,6 +44016,26 @@ func (s *OrioledbParams) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
+		case "haproxy":
+			if err := func() error {
+				s.Haproxy.Reset()
+				if err := s.Haproxy.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"haproxy\"")
+			}
+		case "haproxyOptions":
+			if err := func() error {
+				s.HaproxyOptions.Reset()
+				if err := s.HaproxyOptions.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"haproxyOptions\"")
+			}
 		case "image":
 			if err := func() error {
 				s.Image.Reset()
@@ -43949,6 +44065,26 @@ func (s *OrioledbParams) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"postgresOptions\"")
+			}
+		case "replicaOptions":
+			if err := func() error {
+				s.ReplicaOptions.Reset()
+				if err := s.ReplicaOptions.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"replicaOptions\"")
+			}
+		case "replicas":
+			if err := func() error {
+				s.Replicas.Reset()
+				if err := s.Replicas.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"replicas\"")
 			}
 		case "sharedBuffersMb":
 			if err := func() error {
@@ -43980,6 +44116,62 @@ func (s *OrioledbParams) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OrioledbParams) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s OrioledbParamsHaproxyOptions) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields implements json.Marshaler.
+func (s OrioledbParamsHaproxyOptions) encodeFields(e *jx.Encoder) {
+	for k, elem := range s {
+		e.FieldStart(k)
+
+		e.Str(elem)
+	}
+}
+
+// Decode decodes OrioledbParamsHaproxyOptions from json.
+func (s *OrioledbParamsHaproxyOptions) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode OrioledbParamsHaproxyOptions to nil")
+	}
+	m := s.init()
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		var elem string
+		if err := func() error {
+			v, err := d.Str()
+			elem = string(v)
+			if err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return errors.Wrapf(err, "decode field %q", k)
+		}
+		m[string(k)] = elem
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode OrioledbParamsHaproxyOptions")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OrioledbParamsHaproxyOptions) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OrioledbParamsHaproxyOptions) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -44036,6 +44228,62 @@ func (s OrioledbParamsPostgresOptions) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OrioledbParamsPostgresOptions) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s OrioledbParamsReplicaOptions) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields implements json.Marshaler.
+func (s OrioledbParamsReplicaOptions) encodeFields(e *jx.Encoder) {
+	for k, elem := range s {
+		e.FieldStart(k)
+
+		e.Str(elem)
+	}
+}
+
+// Decode decodes OrioledbParamsReplicaOptions from json.
+func (s *OrioledbParamsReplicaOptions) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode OrioledbParamsReplicaOptions to nil")
+	}
+	m := s.init()
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		var elem string
+		if err := func() error {
+			v, err := d.Str()
+			elem = string(v)
+			if err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return errors.Wrapf(err, "decode field %q", k)
+		}
+		m[string(k)] = elem
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode OrioledbParamsReplicaOptions")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OrioledbParamsReplicaOptions) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OrioledbParamsReplicaOptions) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

@@ -5654,6 +5654,16 @@ func OrioledbParamsToOgen(src *domain.OrioledbParams) (*rest.OrioledbParams, err
 	dst.PostgresOptions.SetTo(c1)
 	dst.InitdbLocale.SetTo(string(src.GetInitdbLocale()))
 	dst.SharedBuffersMb.SetTo(int32(src.GetSharedBuffersMb()))
+	dst.Replicas.SetTo(int32(src.GetReplicas()))
+	dst.Haproxy.SetTo(int32(src.GetHaproxy()))
+	c2 := convert.Map(src.GetReplicaOptions(), func(v string) string {
+		return string(v)
+	})
+	dst.ReplicaOptions.SetTo(c2)
+	c3 := convert.Map(src.GetHaproxyOptions(), func(v string) string {
+		return string(v)
+	})
+	dst.HaproxyOptions.SetTo(c3)
 	return &dst, nil
 }
 
@@ -5677,6 +5687,24 @@ func OrioledbParamsFromOgen(src *rest.OrioledbParams) (*domain.OrioledbParams, e
 	}
 	if v5, ok := src.SharedBuffersMb.Get(); ok {
 		dst.SharedBuffersMb = uint32(v5)
+	}
+	if v6, ok := src.Replicas.Get(); ok {
+		dst.Replicas = uint32(v6)
+	}
+	if v7, ok := src.Haproxy.Get(); ok {
+		dst.Haproxy = uint32(v7)
+	}
+	if mv8, ok := src.ReplicaOptions.Get(); ok {
+		c9 := convert.Map(mv8, func(v string) string {
+			return string(v)
+		})
+		dst.ReplicaOptions = c9
+	}
+	if mv10, ok := src.HaproxyOptions.Get(); ok {
+		c11 := convert.Map(mv10, func(v string) string {
+			return string(v)
+		})
+		dst.HaproxyOptions = c11
 	}
 	return dst, nil
 }
