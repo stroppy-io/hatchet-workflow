@@ -304,12 +304,10 @@ func orioledbReplicaUnit(componentID, image, masterHost string, options map[stri
 	}
 	dataDir := deploymentbuilder.DataDir(componentID)
 	configDir := deploymentbuilder.ConfigDir(componentID)
-	inner := fmt.Sprintf(`set -e
-if [ ! -s "$PGDATA/PG_VERSION" ]; then
-  pg_basebackup -h %s -p %d -U postgres -D "$PGDATA" -R -X stream -P
-  test -f "$PGDATA/standby.signal"
-fi
-exec docker-entrypoint.sh postgres%s`, masterHost, pgPort, optStr.String())
+	// MUST be a single line: systemd Exec lines cannot contain literal newlines
+	// inside a quoted argument ("Unbalanced quoting"). Join with ';'.
+	inner := fmt.Sprintf(`set -e; if [ ! -s "$PGDATA/PG_VERSION" ]; then pg_basebackup -h %s -p %d -U postgres -D "$PGDATA" -R -X stream -P; test -f "$PGDATA/standby.signal"; fi; exec docker-entrypoint.sh postgres%s`,
+		masterHost, pgPort, optStr.String())
 	return fmt.Sprintf(`[Unit]
 Description=Stroppy Cloud OrioleDB replica %s
 After=network-online.target docker.service
