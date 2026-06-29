@@ -303,6 +303,31 @@ message CockroachParams {
 }
 
 /*
+    NoopParams is the no-database machine benchmark. There is nothing to deploy:
+    stroppy runs on the runner node alone with its internal noop driver, draining
+    the datagen pipeline to /dev/null. The measured throughput is the runner
+    machine's max row-generation rate. Machine sizing and the generation
+    parallelism come from the infrastructure sizing and Workload params, so this
+    message carries no fields.
+ */
+message NoopParams {
+}
+
+/*
+    PgNoopParams configures a single pg-noop blackhole container/binary. pg-noop is
+    a static single-binary PostgreSQL-wire server that accepts every connection and
+    discards all data, so stroppy connects with the plain postgres driver. There is
+    no replication or HA: it is one node fronting nothing.
+ */
+message PgNoopParams {
+    /* workers is the pg-noop worker-thread count (--workers); 0 => one per logical
+       CPU (the binary default). */
+    uint32 workers = 1;
+    /* options are verbatim pg-noop config passthroughs (reserved for future knobs). */
+    map<string, string> options = 2;
+}
+
+/*
     DatabaseParams is the typed self-deploy variant (replaces the former
     schemapb.Baked). It carries the common version + config overrides and exactly
     one engine-specific params message. The selected engine MUST match Database.kind.
@@ -328,6 +353,8 @@ message DatabaseParams {
         YdbManagedParams ydb_managed = 15;
         CockroachParams cockroach = 16;
         OrioledbParams orioledb = 17;
+        NoopParams noop = 18;
+        PgNoopParams pg_noop = 19;
     }
 }
 
@@ -381,6 +408,14 @@ message Database {
         KIND_EXTERNAL = 8;
         /* KIND_ORIOLEDB is OrioleDB (docker-only patched-Postgres storage engine). */
         KIND_ORIOLEDB = 9;
+        /* KIND_NOOP is the no-database machine benchmark: stroppy runs with its
+           internal noop driver, deploying NO database, to measure the max row
+           generation rate a single runner machine can produce. */
+        KIND_NOOP = 10;
+        /* KIND_PG_NOOP is the pg-noop blackhole: a single static binary that
+           speaks the PostgreSQL wire protocol and discards everything, to measure
+           the max rate stroppy can deliver over the wire (the delivery ceiling). */
+        KIND_PG_NOOP = 11;
     }
     /* kind selects which database engine is under test. */
     Kind kind = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];

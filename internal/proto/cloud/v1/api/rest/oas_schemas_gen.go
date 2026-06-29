@@ -2795,16 +2795,18 @@ func (CreatePackageUploadRequestFormat) AllValues() []CreatePackageUploadRequest
 type CreatePackageUploadRequestTargetDbKind int32
 
 const (
-	CreatePackageUploadRequestTargetDbKind0 CreatePackageUploadRequestTargetDbKind = 0
-	CreatePackageUploadRequestTargetDbKind1 CreatePackageUploadRequestTargetDbKind = 1
-	CreatePackageUploadRequestTargetDbKind2 CreatePackageUploadRequestTargetDbKind = 2
-	CreatePackageUploadRequestTargetDbKind3 CreatePackageUploadRequestTargetDbKind = 3
-	CreatePackageUploadRequestTargetDbKind4 CreatePackageUploadRequestTargetDbKind = 4
-	CreatePackageUploadRequestTargetDbKind5 CreatePackageUploadRequestTargetDbKind = 5
-	CreatePackageUploadRequestTargetDbKind6 CreatePackageUploadRequestTargetDbKind = 6
-	CreatePackageUploadRequestTargetDbKind7 CreatePackageUploadRequestTargetDbKind = 7
-	CreatePackageUploadRequestTargetDbKind8 CreatePackageUploadRequestTargetDbKind = 8
-	CreatePackageUploadRequestTargetDbKind9 CreatePackageUploadRequestTargetDbKind = 9
+	CreatePackageUploadRequestTargetDbKind0  CreatePackageUploadRequestTargetDbKind = 0
+	CreatePackageUploadRequestTargetDbKind1  CreatePackageUploadRequestTargetDbKind = 1
+	CreatePackageUploadRequestTargetDbKind2  CreatePackageUploadRequestTargetDbKind = 2
+	CreatePackageUploadRequestTargetDbKind3  CreatePackageUploadRequestTargetDbKind = 3
+	CreatePackageUploadRequestTargetDbKind4  CreatePackageUploadRequestTargetDbKind = 4
+	CreatePackageUploadRequestTargetDbKind5  CreatePackageUploadRequestTargetDbKind = 5
+	CreatePackageUploadRequestTargetDbKind6  CreatePackageUploadRequestTargetDbKind = 6
+	CreatePackageUploadRequestTargetDbKind7  CreatePackageUploadRequestTargetDbKind = 7
+	CreatePackageUploadRequestTargetDbKind8  CreatePackageUploadRequestTargetDbKind = 8
+	CreatePackageUploadRequestTargetDbKind9  CreatePackageUploadRequestTargetDbKind = 9
+	CreatePackageUploadRequestTargetDbKind10 CreatePackageUploadRequestTargetDbKind = 10
+	CreatePackageUploadRequestTargetDbKind11 CreatePackageUploadRequestTargetDbKind = 11
 )
 
 // AllValues returns all CreatePackageUploadRequestTargetDbKind values.
@@ -2820,6 +2822,8 @@ func (CreatePackageUploadRequestTargetDbKind) AllValues() []CreatePackageUploadR
 		CreatePackageUploadRequestTargetDbKind7,
 		CreatePackageUploadRequestTargetDbKind8,
 		CreatePackageUploadRequestTargetDbKind9,
+		CreatePackageUploadRequestTargetDbKind10,
+		CreatePackageUploadRequestTargetDbKind11,
 	}
 }
 
@@ -3227,15 +3231,17 @@ func (s *Database) SetTags(val OptTags) {
 type DatabaseKind int32
 
 const (
-	DatabaseKind1 DatabaseKind = 1
-	DatabaseKind2 DatabaseKind = 2
-	DatabaseKind3 DatabaseKind = 3
-	DatabaseKind4 DatabaseKind = 4
-	DatabaseKind5 DatabaseKind = 5
-	DatabaseKind6 DatabaseKind = 6
-	DatabaseKind7 DatabaseKind = 7
-	DatabaseKind8 DatabaseKind = 8
-	DatabaseKind9 DatabaseKind = 9
+	DatabaseKind1  DatabaseKind = 1
+	DatabaseKind2  DatabaseKind = 2
+	DatabaseKind3  DatabaseKind = 3
+	DatabaseKind4  DatabaseKind = 4
+	DatabaseKind5  DatabaseKind = 5
+	DatabaseKind6  DatabaseKind = 6
+	DatabaseKind7  DatabaseKind = 7
+	DatabaseKind8  DatabaseKind = 8
+	DatabaseKind9  DatabaseKind = 9
+	DatabaseKind10 DatabaseKind = 10
+	DatabaseKind11 DatabaseKind = 11
 )
 
 // AllValues returns all DatabaseKind values.
@@ -3250,6 +3256,8 @@ func (DatabaseKind) AllValues() []DatabaseKind {
 		DatabaseKind7,
 		DatabaseKind8,
 		DatabaseKind9,
+		DatabaseKind10,
+		DatabaseKind11,
 	}
 }
 
@@ -3258,8 +3266,10 @@ type DatabaseParams struct {
 	Cockroach  OptCockroachParams  `json:"cockroach"`
 	Mariadb    OptMySqlParams      `json:"mariadb"`
 	Mysql      OptMySqlParams      `json:"mysql"`
+	Noop       *NoopParams         `json:"noop"`
 	Orioledb   OptOrioledbParams   `json:"orioledb"`
 	Package    OptPackage          `json:"package"`
+	PgNoop     OptPgNoopParams     `json:"pgNoop"`
 	Picodata   OptPicodataParams   `json:"picodata"`
 	Postgres   OptPostgresParams   `json:"postgres"`
 	Version    OptString           `json:"version"`
@@ -3282,6 +3292,11 @@ func (s *DatabaseParams) GetMysql() OptMySqlParams {
 	return s.Mysql
 }
 
+// GetNoop returns the value of Noop.
+func (s *DatabaseParams) GetNoop() *NoopParams {
+	return s.Noop
+}
+
 // GetOrioledb returns the value of Orioledb.
 func (s *DatabaseParams) GetOrioledb() OptOrioledbParams {
 	return s.Orioledb
@@ -3290,6 +3305,11 @@ func (s *DatabaseParams) GetOrioledb() OptOrioledbParams {
 // GetPackage returns the value of Package.
 func (s *DatabaseParams) GetPackage() OptPackage {
 	return s.Package
+}
+
+// GetPgNoop returns the value of PgNoop.
+func (s *DatabaseParams) GetPgNoop() OptPgNoopParams {
+	return s.PgNoop
 }
 
 // GetPicodata returns the value of Picodata.
@@ -3332,6 +3352,11 @@ func (s *DatabaseParams) SetMysql(val OptMySqlParams) {
 	s.Mysql = val
 }
 
+// SetNoop sets the value of Noop.
+func (s *DatabaseParams) SetNoop(val *NoopParams) {
+	s.Noop = val
+}
+
 // SetOrioledb sets the value of Orioledb.
 func (s *DatabaseParams) SetOrioledb(val OptOrioledbParams) {
 	s.Orioledb = val
@@ -3340,6 +3365,11 @@ func (s *DatabaseParams) SetOrioledb(val OptOrioledbParams) {
 // SetPackage sets the value of Package.
 func (s *DatabaseParams) SetPackage(val OptPackage) {
 	s.Package = val
+}
+
+// SetPgNoop sets the value of PgNoop.
+func (s *DatabaseParams) SetPgNoop(val OptPgNoopParams) {
+	s.PgNoop = val
 }
 
 // SetPicodata sets the value of Picodata.
@@ -8518,16 +8548,18 @@ func (s *ListDatabasePresetsRequest) SetTenantId(val OptString) {
 type ListDatabasePresetsRequestDbKindsItem int32
 
 const (
-	ListDatabasePresetsRequestDbKindsItem0 ListDatabasePresetsRequestDbKindsItem = 0
-	ListDatabasePresetsRequestDbKindsItem1 ListDatabasePresetsRequestDbKindsItem = 1
-	ListDatabasePresetsRequestDbKindsItem2 ListDatabasePresetsRequestDbKindsItem = 2
-	ListDatabasePresetsRequestDbKindsItem3 ListDatabasePresetsRequestDbKindsItem = 3
-	ListDatabasePresetsRequestDbKindsItem4 ListDatabasePresetsRequestDbKindsItem = 4
-	ListDatabasePresetsRequestDbKindsItem5 ListDatabasePresetsRequestDbKindsItem = 5
-	ListDatabasePresetsRequestDbKindsItem6 ListDatabasePresetsRequestDbKindsItem = 6
-	ListDatabasePresetsRequestDbKindsItem7 ListDatabasePresetsRequestDbKindsItem = 7
-	ListDatabasePresetsRequestDbKindsItem8 ListDatabasePresetsRequestDbKindsItem = 8
-	ListDatabasePresetsRequestDbKindsItem9 ListDatabasePresetsRequestDbKindsItem = 9
+	ListDatabasePresetsRequestDbKindsItem0  ListDatabasePresetsRequestDbKindsItem = 0
+	ListDatabasePresetsRequestDbKindsItem1  ListDatabasePresetsRequestDbKindsItem = 1
+	ListDatabasePresetsRequestDbKindsItem2  ListDatabasePresetsRequestDbKindsItem = 2
+	ListDatabasePresetsRequestDbKindsItem3  ListDatabasePresetsRequestDbKindsItem = 3
+	ListDatabasePresetsRequestDbKindsItem4  ListDatabasePresetsRequestDbKindsItem = 4
+	ListDatabasePresetsRequestDbKindsItem5  ListDatabasePresetsRequestDbKindsItem = 5
+	ListDatabasePresetsRequestDbKindsItem6  ListDatabasePresetsRequestDbKindsItem = 6
+	ListDatabasePresetsRequestDbKindsItem7  ListDatabasePresetsRequestDbKindsItem = 7
+	ListDatabasePresetsRequestDbKindsItem8  ListDatabasePresetsRequestDbKindsItem = 8
+	ListDatabasePresetsRequestDbKindsItem9  ListDatabasePresetsRequestDbKindsItem = 9
+	ListDatabasePresetsRequestDbKindsItem10 ListDatabasePresetsRequestDbKindsItem = 10
+	ListDatabasePresetsRequestDbKindsItem11 ListDatabasePresetsRequestDbKindsItem = 11
 )
 
 // AllValues returns all ListDatabasePresetsRequestDbKindsItem values.
@@ -8543,6 +8575,8 @@ func (ListDatabasePresetsRequestDbKindsItem) AllValues() []ListDatabasePresetsRe
 		ListDatabasePresetsRequestDbKindsItem7,
 		ListDatabasePresetsRequestDbKindsItem8,
 		ListDatabasePresetsRequestDbKindsItem9,
+		ListDatabasePresetsRequestDbKindsItem10,
+		ListDatabasePresetsRequestDbKindsItem11,
 	}
 }
 
@@ -8886,16 +8920,18 @@ func (s *ListPackagesRequest) SetTenantId(val OptString) {
 type ListPackagesRequestDbKindsItem int32
 
 const (
-	ListPackagesRequestDbKindsItem0 ListPackagesRequestDbKindsItem = 0
-	ListPackagesRequestDbKindsItem1 ListPackagesRequestDbKindsItem = 1
-	ListPackagesRequestDbKindsItem2 ListPackagesRequestDbKindsItem = 2
-	ListPackagesRequestDbKindsItem3 ListPackagesRequestDbKindsItem = 3
-	ListPackagesRequestDbKindsItem4 ListPackagesRequestDbKindsItem = 4
-	ListPackagesRequestDbKindsItem5 ListPackagesRequestDbKindsItem = 5
-	ListPackagesRequestDbKindsItem6 ListPackagesRequestDbKindsItem = 6
-	ListPackagesRequestDbKindsItem7 ListPackagesRequestDbKindsItem = 7
-	ListPackagesRequestDbKindsItem8 ListPackagesRequestDbKindsItem = 8
-	ListPackagesRequestDbKindsItem9 ListPackagesRequestDbKindsItem = 9
+	ListPackagesRequestDbKindsItem0  ListPackagesRequestDbKindsItem = 0
+	ListPackagesRequestDbKindsItem1  ListPackagesRequestDbKindsItem = 1
+	ListPackagesRequestDbKindsItem2  ListPackagesRequestDbKindsItem = 2
+	ListPackagesRequestDbKindsItem3  ListPackagesRequestDbKindsItem = 3
+	ListPackagesRequestDbKindsItem4  ListPackagesRequestDbKindsItem = 4
+	ListPackagesRequestDbKindsItem5  ListPackagesRequestDbKindsItem = 5
+	ListPackagesRequestDbKindsItem6  ListPackagesRequestDbKindsItem = 6
+	ListPackagesRequestDbKindsItem7  ListPackagesRequestDbKindsItem = 7
+	ListPackagesRequestDbKindsItem8  ListPackagesRequestDbKindsItem = 8
+	ListPackagesRequestDbKindsItem9  ListPackagesRequestDbKindsItem = 9
+	ListPackagesRequestDbKindsItem10 ListPackagesRequestDbKindsItem = 10
+	ListPackagesRequestDbKindsItem11 ListPackagesRequestDbKindsItem = 11
 )
 
 // AllValues returns all ListPackagesRequestDbKindsItem values.
@@ -8911,6 +8947,8 @@ func (ListPackagesRequestDbKindsItem) AllValues() []ListPackagesRequestDbKindsIt
 		ListPackagesRequestDbKindsItem7,
 		ListPackagesRequestDbKindsItem8,
 		ListPackagesRequestDbKindsItem9,
+		ListPackagesRequestDbKindsItem10,
+		ListPackagesRequestDbKindsItem11,
 	}
 }
 
@@ -9520,16 +9558,18 @@ func (s *ListSuiteRunsRequest) SetTriggers(val []ListSuiteRunsRequestTriggersIte
 type ListSuiteRunsRequestDbKindsItem int32
 
 const (
-	ListSuiteRunsRequestDbKindsItem0 ListSuiteRunsRequestDbKindsItem = 0
-	ListSuiteRunsRequestDbKindsItem1 ListSuiteRunsRequestDbKindsItem = 1
-	ListSuiteRunsRequestDbKindsItem2 ListSuiteRunsRequestDbKindsItem = 2
-	ListSuiteRunsRequestDbKindsItem3 ListSuiteRunsRequestDbKindsItem = 3
-	ListSuiteRunsRequestDbKindsItem4 ListSuiteRunsRequestDbKindsItem = 4
-	ListSuiteRunsRequestDbKindsItem5 ListSuiteRunsRequestDbKindsItem = 5
-	ListSuiteRunsRequestDbKindsItem6 ListSuiteRunsRequestDbKindsItem = 6
-	ListSuiteRunsRequestDbKindsItem7 ListSuiteRunsRequestDbKindsItem = 7
-	ListSuiteRunsRequestDbKindsItem8 ListSuiteRunsRequestDbKindsItem = 8
-	ListSuiteRunsRequestDbKindsItem9 ListSuiteRunsRequestDbKindsItem = 9
+	ListSuiteRunsRequestDbKindsItem0  ListSuiteRunsRequestDbKindsItem = 0
+	ListSuiteRunsRequestDbKindsItem1  ListSuiteRunsRequestDbKindsItem = 1
+	ListSuiteRunsRequestDbKindsItem2  ListSuiteRunsRequestDbKindsItem = 2
+	ListSuiteRunsRequestDbKindsItem3  ListSuiteRunsRequestDbKindsItem = 3
+	ListSuiteRunsRequestDbKindsItem4  ListSuiteRunsRequestDbKindsItem = 4
+	ListSuiteRunsRequestDbKindsItem5  ListSuiteRunsRequestDbKindsItem = 5
+	ListSuiteRunsRequestDbKindsItem6  ListSuiteRunsRequestDbKindsItem = 6
+	ListSuiteRunsRequestDbKindsItem7  ListSuiteRunsRequestDbKindsItem = 7
+	ListSuiteRunsRequestDbKindsItem8  ListSuiteRunsRequestDbKindsItem = 8
+	ListSuiteRunsRequestDbKindsItem9  ListSuiteRunsRequestDbKindsItem = 9
+	ListSuiteRunsRequestDbKindsItem10 ListSuiteRunsRequestDbKindsItem = 10
+	ListSuiteRunsRequestDbKindsItem11 ListSuiteRunsRequestDbKindsItem = 11
 )
 
 // AllValues returns all ListSuiteRunsRequestDbKindsItem values.
@@ -9545,6 +9585,8 @@ func (ListSuiteRunsRequestDbKindsItem) AllValues() []ListSuiteRunsRequestDbKinds
 		ListSuiteRunsRequestDbKindsItem7,
 		ListSuiteRunsRequestDbKindsItem8,
 		ListSuiteRunsRequestDbKindsItem9,
+		ListSuiteRunsRequestDbKindsItem10,
+		ListSuiteRunsRequestDbKindsItem11,
 	}
 }
 
@@ -9938,16 +9980,18 @@ func (s *ListTestPresetsRequest) SetTenantId(val OptString) {
 type ListTestPresetsRequestDbKindsItem int32
 
 const (
-	ListTestPresetsRequestDbKindsItem0 ListTestPresetsRequestDbKindsItem = 0
-	ListTestPresetsRequestDbKindsItem1 ListTestPresetsRequestDbKindsItem = 1
-	ListTestPresetsRequestDbKindsItem2 ListTestPresetsRequestDbKindsItem = 2
-	ListTestPresetsRequestDbKindsItem3 ListTestPresetsRequestDbKindsItem = 3
-	ListTestPresetsRequestDbKindsItem4 ListTestPresetsRequestDbKindsItem = 4
-	ListTestPresetsRequestDbKindsItem5 ListTestPresetsRequestDbKindsItem = 5
-	ListTestPresetsRequestDbKindsItem6 ListTestPresetsRequestDbKindsItem = 6
-	ListTestPresetsRequestDbKindsItem7 ListTestPresetsRequestDbKindsItem = 7
-	ListTestPresetsRequestDbKindsItem8 ListTestPresetsRequestDbKindsItem = 8
-	ListTestPresetsRequestDbKindsItem9 ListTestPresetsRequestDbKindsItem = 9
+	ListTestPresetsRequestDbKindsItem0  ListTestPresetsRequestDbKindsItem = 0
+	ListTestPresetsRequestDbKindsItem1  ListTestPresetsRequestDbKindsItem = 1
+	ListTestPresetsRequestDbKindsItem2  ListTestPresetsRequestDbKindsItem = 2
+	ListTestPresetsRequestDbKindsItem3  ListTestPresetsRequestDbKindsItem = 3
+	ListTestPresetsRequestDbKindsItem4  ListTestPresetsRequestDbKindsItem = 4
+	ListTestPresetsRequestDbKindsItem5  ListTestPresetsRequestDbKindsItem = 5
+	ListTestPresetsRequestDbKindsItem6  ListTestPresetsRequestDbKindsItem = 6
+	ListTestPresetsRequestDbKindsItem7  ListTestPresetsRequestDbKindsItem = 7
+	ListTestPresetsRequestDbKindsItem8  ListTestPresetsRequestDbKindsItem = 8
+	ListTestPresetsRequestDbKindsItem9  ListTestPresetsRequestDbKindsItem = 9
+	ListTestPresetsRequestDbKindsItem10 ListTestPresetsRequestDbKindsItem = 10
+	ListTestPresetsRequestDbKindsItem11 ListTestPresetsRequestDbKindsItem = 11
 )
 
 // AllValues returns all ListTestPresetsRequestDbKindsItem values.
@@ -9963,6 +10007,8 @@ func (ListTestPresetsRequestDbKindsItem) AllValues() []ListTestPresetsRequestDbK
 		ListTestPresetsRequestDbKindsItem7,
 		ListTestPresetsRequestDbKindsItem8,
 		ListTestPresetsRequestDbKindsItem9,
+		ListTestPresetsRequestDbKindsItem10,
+		ListTestPresetsRequestDbKindsItem11,
 	}
 }
 
@@ -9976,6 +10022,7 @@ const (
 	ListTestPresetsRequestProtocolsItem4 ListTestPresetsRequestProtocolsItem = 4
 	ListTestPresetsRequestProtocolsItem5 ListTestPresetsRequestProtocolsItem = 5
 	ListTestPresetsRequestProtocolsItem7 ListTestPresetsRequestProtocolsItem = 7
+	ListTestPresetsRequestProtocolsItem8 ListTestPresetsRequestProtocolsItem = 8
 )
 
 // AllValues returns all ListTestPresetsRequestProtocolsItem values.
@@ -9988,6 +10035,7 @@ func (ListTestPresetsRequestProtocolsItem) AllValues() []ListTestPresetsRequestP
 		ListTestPresetsRequestProtocolsItem4,
 		ListTestPresetsRequestProtocolsItem5,
 		ListTestPresetsRequestProtocolsItem7,
+		ListTestPresetsRequestProtocolsItem8,
 	}
 }
 
@@ -10384,16 +10432,18 @@ func (s *ListTestRunsRequest) SetWorkloadPresetIds(val []string) {
 type ListTestRunsRequestDbKindsItem int32
 
 const (
-	ListTestRunsRequestDbKindsItem0 ListTestRunsRequestDbKindsItem = 0
-	ListTestRunsRequestDbKindsItem1 ListTestRunsRequestDbKindsItem = 1
-	ListTestRunsRequestDbKindsItem2 ListTestRunsRequestDbKindsItem = 2
-	ListTestRunsRequestDbKindsItem3 ListTestRunsRequestDbKindsItem = 3
-	ListTestRunsRequestDbKindsItem4 ListTestRunsRequestDbKindsItem = 4
-	ListTestRunsRequestDbKindsItem5 ListTestRunsRequestDbKindsItem = 5
-	ListTestRunsRequestDbKindsItem6 ListTestRunsRequestDbKindsItem = 6
-	ListTestRunsRequestDbKindsItem7 ListTestRunsRequestDbKindsItem = 7
-	ListTestRunsRequestDbKindsItem8 ListTestRunsRequestDbKindsItem = 8
-	ListTestRunsRequestDbKindsItem9 ListTestRunsRequestDbKindsItem = 9
+	ListTestRunsRequestDbKindsItem0  ListTestRunsRequestDbKindsItem = 0
+	ListTestRunsRequestDbKindsItem1  ListTestRunsRequestDbKindsItem = 1
+	ListTestRunsRequestDbKindsItem2  ListTestRunsRequestDbKindsItem = 2
+	ListTestRunsRequestDbKindsItem3  ListTestRunsRequestDbKindsItem = 3
+	ListTestRunsRequestDbKindsItem4  ListTestRunsRequestDbKindsItem = 4
+	ListTestRunsRequestDbKindsItem5  ListTestRunsRequestDbKindsItem = 5
+	ListTestRunsRequestDbKindsItem6  ListTestRunsRequestDbKindsItem = 6
+	ListTestRunsRequestDbKindsItem7  ListTestRunsRequestDbKindsItem = 7
+	ListTestRunsRequestDbKindsItem8  ListTestRunsRequestDbKindsItem = 8
+	ListTestRunsRequestDbKindsItem9  ListTestRunsRequestDbKindsItem = 9
+	ListTestRunsRequestDbKindsItem10 ListTestRunsRequestDbKindsItem = 10
+	ListTestRunsRequestDbKindsItem11 ListTestRunsRequestDbKindsItem = 11
 )
 
 // AllValues returns all ListTestRunsRequestDbKindsItem values.
@@ -10409,6 +10459,8 @@ func (ListTestRunsRequestDbKindsItem) AllValues() []ListTestRunsRequestDbKindsIt
 		ListTestRunsRequestDbKindsItem7,
 		ListTestRunsRequestDbKindsItem8,
 		ListTestRunsRequestDbKindsItem9,
+		ListTestRunsRequestDbKindsItem10,
+		ListTestRunsRequestDbKindsItem11,
 	}
 }
 
@@ -10422,6 +10474,7 @@ const (
 	ListTestRunsRequestProtocolsItem4 ListTestRunsRequestProtocolsItem = 4
 	ListTestRunsRequestProtocolsItem5 ListTestRunsRequestProtocolsItem = 5
 	ListTestRunsRequestProtocolsItem7 ListTestRunsRequestProtocolsItem = 7
+	ListTestRunsRequestProtocolsItem8 ListTestRunsRequestProtocolsItem = 8
 )
 
 // AllValues returns all ListTestRunsRequestProtocolsItem values.
@@ -10434,6 +10487,7 @@ func (ListTestRunsRequestProtocolsItem) AllValues() []ListTestRunsRequestProtoco
 		ListTestRunsRequestProtocolsItem4,
 		ListTestRunsRequestProtocolsItem5,
 		ListTestRunsRequestProtocolsItem7,
+		ListTestRunsRequestProtocolsItem8,
 	}
 }
 
@@ -10721,6 +10775,7 @@ const (
 	ListWorkloadPresetsRequestProtocolsItem4 ListWorkloadPresetsRequestProtocolsItem = 4
 	ListWorkloadPresetsRequestProtocolsItem5 ListWorkloadPresetsRequestProtocolsItem = 5
 	ListWorkloadPresetsRequestProtocolsItem7 ListWorkloadPresetsRequestProtocolsItem = 7
+	ListWorkloadPresetsRequestProtocolsItem8 ListWorkloadPresetsRequestProtocolsItem = 8
 )
 
 // AllValues returns all ListWorkloadPresetsRequestProtocolsItem values.
@@ -10733,6 +10788,7 @@ func (ListWorkloadPresetsRequestProtocolsItem) AllValues() []ListWorkloadPresets
 		ListWorkloadPresetsRequestProtocolsItem4,
 		ListWorkloadPresetsRequestProtocolsItem5,
 		ListWorkloadPresetsRequestProtocolsItem7,
+		ListWorkloadPresetsRequestProtocolsItem8,
 	}
 }
 
@@ -12246,6 +12302,9 @@ func (s *NodeLabels) init() NodeLabels {
 	}
 	return m
 }
+
+// Ref: #/components/schemas/NoopParams
+type NoopParams struct{}
 
 // Ref: #/components/schemas/Object
 type Object struct {
@@ -18089,6 +18148,98 @@ func (o OptPermissionResource) Get() (v PermissionResource, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptPermissionResource) Or(d PermissionResource) PermissionResource {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptPgNoopParams returns new OptPgNoopParams with value set to v.
+func NewOptPgNoopParams(v PgNoopParams) OptPgNoopParams {
+	return OptPgNoopParams{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptPgNoopParams is optional PgNoopParams.
+type OptPgNoopParams struct {
+	Value PgNoopParams
+	Set   bool
+}
+
+// IsSet returns true if OptPgNoopParams was set.
+func (o OptPgNoopParams) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptPgNoopParams) Reset() {
+	var v PgNoopParams
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptPgNoopParams) SetTo(v PgNoopParams) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptPgNoopParams) Get() (v PgNoopParams, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptPgNoopParams) Or(d PgNoopParams) PgNoopParams {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptPgNoopParamsOptions returns new OptPgNoopParamsOptions with value set to v.
+func NewOptPgNoopParamsOptions(v PgNoopParamsOptions) OptPgNoopParamsOptions {
+	return OptPgNoopParamsOptions{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptPgNoopParamsOptions is optional PgNoopParamsOptions.
+type OptPgNoopParamsOptions struct {
+	Value PgNoopParamsOptions
+	Set   bool
+}
+
+// IsSet returns true if OptPgNoopParamsOptions was set.
+func (o OptPgNoopParamsOptions) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptPgNoopParamsOptions) Reset() {
+	var v PgNoopParamsOptions
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptPgNoopParamsOptions) SetTo(v PgNoopParamsOptions) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptPgNoopParamsOptions) Get() (v PgNoopParamsOptions, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptPgNoopParamsOptions) Or(d PgNoopParamsOptions) PgNoopParamsOptions {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -26132,15 +26283,17 @@ func (s *Package) SetPreInstall(val []string) {
 type PackageDbKind int32
 
 const (
-	PackageDbKind1 PackageDbKind = 1
-	PackageDbKind2 PackageDbKind = 2
-	PackageDbKind3 PackageDbKind = 3
-	PackageDbKind4 PackageDbKind = 4
-	PackageDbKind5 PackageDbKind = 5
-	PackageDbKind6 PackageDbKind = 6
-	PackageDbKind7 PackageDbKind = 7
-	PackageDbKind8 PackageDbKind = 8
-	PackageDbKind9 PackageDbKind = 9
+	PackageDbKind1  PackageDbKind = 1
+	PackageDbKind2  PackageDbKind = 2
+	PackageDbKind3  PackageDbKind = 3
+	PackageDbKind4  PackageDbKind = 4
+	PackageDbKind5  PackageDbKind = 5
+	PackageDbKind6  PackageDbKind = 6
+	PackageDbKind7  PackageDbKind = 7
+	PackageDbKind8  PackageDbKind = 8
+	PackageDbKind9  PackageDbKind = 9
+	PackageDbKind10 PackageDbKind = 10
+	PackageDbKind11 PackageDbKind = 11
 )
 
 // AllValues returns all PackageDbKind values.
@@ -26155,6 +26308,8 @@ func (PackageDbKind) AllValues() []PackageDbKind {
 		PackageDbKind7,
 		PackageDbKind8,
 		PackageDbKind9,
+		PackageDbKind10,
+		PackageDbKind11,
 	}
 }
 
@@ -26322,16 +26477,18 @@ func (PackageRecordStatus) AllValues() []PackageRecordStatus {
 type PackageRecordTargetDbKind int32
 
 const (
-	PackageRecordTargetDbKind0 PackageRecordTargetDbKind = 0
-	PackageRecordTargetDbKind1 PackageRecordTargetDbKind = 1
-	PackageRecordTargetDbKind2 PackageRecordTargetDbKind = 2
-	PackageRecordTargetDbKind3 PackageRecordTargetDbKind = 3
-	PackageRecordTargetDbKind4 PackageRecordTargetDbKind = 4
-	PackageRecordTargetDbKind5 PackageRecordTargetDbKind = 5
-	PackageRecordTargetDbKind6 PackageRecordTargetDbKind = 6
-	PackageRecordTargetDbKind7 PackageRecordTargetDbKind = 7
-	PackageRecordTargetDbKind8 PackageRecordTargetDbKind = 8
-	PackageRecordTargetDbKind9 PackageRecordTargetDbKind = 9
+	PackageRecordTargetDbKind0  PackageRecordTargetDbKind = 0
+	PackageRecordTargetDbKind1  PackageRecordTargetDbKind = 1
+	PackageRecordTargetDbKind2  PackageRecordTargetDbKind = 2
+	PackageRecordTargetDbKind3  PackageRecordTargetDbKind = 3
+	PackageRecordTargetDbKind4  PackageRecordTargetDbKind = 4
+	PackageRecordTargetDbKind5  PackageRecordTargetDbKind = 5
+	PackageRecordTargetDbKind6  PackageRecordTargetDbKind = 6
+	PackageRecordTargetDbKind7  PackageRecordTargetDbKind = 7
+	PackageRecordTargetDbKind8  PackageRecordTargetDbKind = 8
+	PackageRecordTargetDbKind9  PackageRecordTargetDbKind = 9
+	PackageRecordTargetDbKind10 PackageRecordTargetDbKind = 10
+	PackageRecordTargetDbKind11 PackageRecordTargetDbKind = 11
 )
 
 // AllValues returns all PackageRecordTargetDbKind values.
@@ -26347,6 +26504,8 @@ func (PackageRecordTargetDbKind) AllValues() []PackageRecordTargetDbKind {
 		PackageRecordTargetDbKind7,
 		PackageRecordTargetDbKind8,
 		PackageRecordTargetDbKind9,
+		PackageRecordTargetDbKind10,
+		PackageRecordTargetDbKind11,
 	}
 }
 
@@ -26824,6 +26983,43 @@ func (PermissionResource) AllValues() []PermissionResource {
 		PermissionResource13,
 		PermissionResource14,
 	}
+}
+
+// Ref: #/components/schemas/PgNoopParams
+type PgNoopParams struct {
+	Options OptPgNoopParamsOptions `json:"options"`
+	Workers OptInt32               `json:"workers"`
+}
+
+// GetOptions returns the value of Options.
+func (s *PgNoopParams) GetOptions() OptPgNoopParamsOptions {
+	return s.Options
+}
+
+// GetWorkers returns the value of Workers.
+func (s *PgNoopParams) GetWorkers() OptInt32 {
+	return s.Workers
+}
+
+// SetOptions sets the value of Options.
+func (s *PgNoopParams) SetOptions(val OptPgNoopParamsOptions) {
+	s.Options = val
+}
+
+// SetWorkers sets the value of Workers.
+func (s *PgNoopParams) SetWorkers(val OptInt32) {
+	s.Workers = val
+}
+
+type PgNoopParamsOptions map[string]string
+
+func (s *PgNoopParamsOptions) init() PgNoopParamsOptions {
+	m := *s
+	if m == nil {
+		m = map[string]string{}
+		*s = m
+	}
+	return m
 }
 
 // Ref: #/components/schemas/PicodataParams
@@ -28430,16 +28626,18 @@ func (s *PublicRatingEntry) SetWorkloadName(val OptString) {
 type PublicRatingEntryDbKind int32
 
 const (
-	PublicRatingEntryDbKind0 PublicRatingEntryDbKind = 0
-	PublicRatingEntryDbKind1 PublicRatingEntryDbKind = 1
-	PublicRatingEntryDbKind2 PublicRatingEntryDbKind = 2
-	PublicRatingEntryDbKind3 PublicRatingEntryDbKind = 3
-	PublicRatingEntryDbKind4 PublicRatingEntryDbKind = 4
-	PublicRatingEntryDbKind5 PublicRatingEntryDbKind = 5
-	PublicRatingEntryDbKind6 PublicRatingEntryDbKind = 6
-	PublicRatingEntryDbKind7 PublicRatingEntryDbKind = 7
-	PublicRatingEntryDbKind8 PublicRatingEntryDbKind = 8
-	PublicRatingEntryDbKind9 PublicRatingEntryDbKind = 9
+	PublicRatingEntryDbKind0  PublicRatingEntryDbKind = 0
+	PublicRatingEntryDbKind1  PublicRatingEntryDbKind = 1
+	PublicRatingEntryDbKind2  PublicRatingEntryDbKind = 2
+	PublicRatingEntryDbKind3  PublicRatingEntryDbKind = 3
+	PublicRatingEntryDbKind4  PublicRatingEntryDbKind = 4
+	PublicRatingEntryDbKind5  PublicRatingEntryDbKind = 5
+	PublicRatingEntryDbKind6  PublicRatingEntryDbKind = 6
+	PublicRatingEntryDbKind7  PublicRatingEntryDbKind = 7
+	PublicRatingEntryDbKind8  PublicRatingEntryDbKind = 8
+	PublicRatingEntryDbKind9  PublicRatingEntryDbKind = 9
+	PublicRatingEntryDbKind10 PublicRatingEntryDbKind = 10
+	PublicRatingEntryDbKind11 PublicRatingEntryDbKind = 11
 )
 
 // AllValues returns all PublicRatingEntryDbKind values.
@@ -28455,6 +28653,8 @@ func (PublicRatingEntryDbKind) AllValues() []PublicRatingEntryDbKind {
 		PublicRatingEntryDbKind7,
 		PublicRatingEntryDbKind8,
 		PublicRatingEntryDbKind9,
+		PublicRatingEntryDbKind10,
+		PublicRatingEntryDbKind11,
 	}
 }
 
@@ -29042,16 +29242,18 @@ func (s *RatingEntry) SetWorkloadName(val OptString) {
 type RatingEntryDbKind int32
 
 const (
-	RatingEntryDbKind0 RatingEntryDbKind = 0
-	RatingEntryDbKind1 RatingEntryDbKind = 1
-	RatingEntryDbKind2 RatingEntryDbKind = 2
-	RatingEntryDbKind3 RatingEntryDbKind = 3
-	RatingEntryDbKind4 RatingEntryDbKind = 4
-	RatingEntryDbKind5 RatingEntryDbKind = 5
-	RatingEntryDbKind6 RatingEntryDbKind = 6
-	RatingEntryDbKind7 RatingEntryDbKind = 7
-	RatingEntryDbKind8 RatingEntryDbKind = 8
-	RatingEntryDbKind9 RatingEntryDbKind = 9
+	RatingEntryDbKind0  RatingEntryDbKind = 0
+	RatingEntryDbKind1  RatingEntryDbKind = 1
+	RatingEntryDbKind2  RatingEntryDbKind = 2
+	RatingEntryDbKind3  RatingEntryDbKind = 3
+	RatingEntryDbKind4  RatingEntryDbKind = 4
+	RatingEntryDbKind5  RatingEntryDbKind = 5
+	RatingEntryDbKind6  RatingEntryDbKind = 6
+	RatingEntryDbKind7  RatingEntryDbKind = 7
+	RatingEntryDbKind8  RatingEntryDbKind = 8
+	RatingEntryDbKind9  RatingEntryDbKind = 9
+	RatingEntryDbKind10 RatingEntryDbKind = 10
+	RatingEntryDbKind11 RatingEntryDbKind = 11
 )
 
 // AllValues returns all RatingEntryDbKind values.
@@ -29067,6 +29269,8 @@ func (RatingEntryDbKind) AllValues() []RatingEntryDbKind {
 		RatingEntryDbKind7,
 		RatingEntryDbKind8,
 		RatingEntryDbKind9,
+		RatingEntryDbKind10,
+		RatingEntryDbKind11,
 	}
 }
 
@@ -29160,16 +29364,18 @@ func (s *RatingFilter) SetStroppyVersions(val []string) {
 type RatingFilterDbKindsItem int32
 
 const (
-	RatingFilterDbKindsItem0 RatingFilterDbKindsItem = 0
-	RatingFilterDbKindsItem1 RatingFilterDbKindsItem = 1
-	RatingFilterDbKindsItem2 RatingFilterDbKindsItem = 2
-	RatingFilterDbKindsItem3 RatingFilterDbKindsItem = 3
-	RatingFilterDbKindsItem4 RatingFilterDbKindsItem = 4
-	RatingFilterDbKindsItem5 RatingFilterDbKindsItem = 5
-	RatingFilterDbKindsItem6 RatingFilterDbKindsItem = 6
-	RatingFilterDbKindsItem7 RatingFilterDbKindsItem = 7
-	RatingFilterDbKindsItem8 RatingFilterDbKindsItem = 8
-	RatingFilterDbKindsItem9 RatingFilterDbKindsItem = 9
+	RatingFilterDbKindsItem0  RatingFilterDbKindsItem = 0
+	RatingFilterDbKindsItem1  RatingFilterDbKindsItem = 1
+	RatingFilterDbKindsItem2  RatingFilterDbKindsItem = 2
+	RatingFilterDbKindsItem3  RatingFilterDbKindsItem = 3
+	RatingFilterDbKindsItem4  RatingFilterDbKindsItem = 4
+	RatingFilterDbKindsItem5  RatingFilterDbKindsItem = 5
+	RatingFilterDbKindsItem6  RatingFilterDbKindsItem = 6
+	RatingFilterDbKindsItem7  RatingFilterDbKindsItem = 7
+	RatingFilterDbKindsItem8  RatingFilterDbKindsItem = 8
+	RatingFilterDbKindsItem9  RatingFilterDbKindsItem = 9
+	RatingFilterDbKindsItem10 RatingFilterDbKindsItem = 10
+	RatingFilterDbKindsItem11 RatingFilterDbKindsItem = 11
 )
 
 // AllValues returns all RatingFilterDbKindsItem values.
@@ -29185,6 +29391,8 @@ func (RatingFilterDbKindsItem) AllValues() []RatingFilterDbKindsItem {
 		RatingFilterDbKindsItem7,
 		RatingFilterDbKindsItem8,
 		RatingFilterDbKindsItem9,
+		RatingFilterDbKindsItem10,
+		RatingFilterDbKindsItem11,
 	}
 }
 
@@ -30477,16 +30685,18 @@ func (s *RunColumn) SetWorkloadName(val OptString) {
 type RunColumnDbKind int32
 
 const (
-	RunColumnDbKind0 RunColumnDbKind = 0
-	RunColumnDbKind1 RunColumnDbKind = 1
-	RunColumnDbKind2 RunColumnDbKind = 2
-	RunColumnDbKind3 RunColumnDbKind = 3
-	RunColumnDbKind4 RunColumnDbKind = 4
-	RunColumnDbKind5 RunColumnDbKind = 5
-	RunColumnDbKind6 RunColumnDbKind = 6
-	RunColumnDbKind7 RunColumnDbKind = 7
-	RunColumnDbKind8 RunColumnDbKind = 8
-	RunColumnDbKind9 RunColumnDbKind = 9
+	RunColumnDbKind0  RunColumnDbKind = 0
+	RunColumnDbKind1  RunColumnDbKind = 1
+	RunColumnDbKind2  RunColumnDbKind = 2
+	RunColumnDbKind3  RunColumnDbKind = 3
+	RunColumnDbKind4  RunColumnDbKind = 4
+	RunColumnDbKind5  RunColumnDbKind = 5
+	RunColumnDbKind6  RunColumnDbKind = 6
+	RunColumnDbKind7  RunColumnDbKind = 7
+	RunColumnDbKind8  RunColumnDbKind = 8
+	RunColumnDbKind9  RunColumnDbKind = 9
+	RunColumnDbKind10 RunColumnDbKind = 10
+	RunColumnDbKind11 RunColumnDbKind = 11
 )
 
 // AllValues returns all RunColumnDbKind values.
@@ -30502,6 +30712,8 @@ func (RunColumnDbKind) AllValues() []RunColumnDbKind {
 		RunColumnDbKind7,
 		RunColumnDbKind8,
 		RunColumnDbKind9,
+		RunColumnDbKind10,
+		RunColumnDbKind11,
 	}
 }
 
@@ -32114,16 +32326,18 @@ func (s *SharedSuiteRun) SetTotal(val OptInt32) {
 type SharedSuiteRunDbKindsItem int32
 
 const (
-	SharedSuiteRunDbKindsItem0 SharedSuiteRunDbKindsItem = 0
-	SharedSuiteRunDbKindsItem1 SharedSuiteRunDbKindsItem = 1
-	SharedSuiteRunDbKindsItem2 SharedSuiteRunDbKindsItem = 2
-	SharedSuiteRunDbKindsItem3 SharedSuiteRunDbKindsItem = 3
-	SharedSuiteRunDbKindsItem4 SharedSuiteRunDbKindsItem = 4
-	SharedSuiteRunDbKindsItem5 SharedSuiteRunDbKindsItem = 5
-	SharedSuiteRunDbKindsItem6 SharedSuiteRunDbKindsItem = 6
-	SharedSuiteRunDbKindsItem7 SharedSuiteRunDbKindsItem = 7
-	SharedSuiteRunDbKindsItem8 SharedSuiteRunDbKindsItem = 8
-	SharedSuiteRunDbKindsItem9 SharedSuiteRunDbKindsItem = 9
+	SharedSuiteRunDbKindsItem0  SharedSuiteRunDbKindsItem = 0
+	SharedSuiteRunDbKindsItem1  SharedSuiteRunDbKindsItem = 1
+	SharedSuiteRunDbKindsItem2  SharedSuiteRunDbKindsItem = 2
+	SharedSuiteRunDbKindsItem3  SharedSuiteRunDbKindsItem = 3
+	SharedSuiteRunDbKindsItem4  SharedSuiteRunDbKindsItem = 4
+	SharedSuiteRunDbKindsItem5  SharedSuiteRunDbKindsItem = 5
+	SharedSuiteRunDbKindsItem6  SharedSuiteRunDbKindsItem = 6
+	SharedSuiteRunDbKindsItem7  SharedSuiteRunDbKindsItem = 7
+	SharedSuiteRunDbKindsItem8  SharedSuiteRunDbKindsItem = 8
+	SharedSuiteRunDbKindsItem9  SharedSuiteRunDbKindsItem = 9
+	SharedSuiteRunDbKindsItem10 SharedSuiteRunDbKindsItem = 10
+	SharedSuiteRunDbKindsItem11 SharedSuiteRunDbKindsItem = 11
 )
 
 // AllValues returns all SharedSuiteRunDbKindsItem values.
@@ -32139,6 +32353,8 @@ func (SharedSuiteRunDbKindsItem) AllValues() []SharedSuiteRunDbKindsItem {
 		SharedSuiteRunDbKindsItem7,
 		SharedSuiteRunDbKindsItem8,
 		SharedSuiteRunDbKindsItem9,
+		SharedSuiteRunDbKindsItem10,
+		SharedSuiteRunDbKindsItem11,
 	}
 }
 
@@ -32355,16 +32571,18 @@ func (s *SharedTestRun) SetWorkloadName(val OptString) {
 type SharedTestRunDbKind int32
 
 const (
-	SharedTestRunDbKind0 SharedTestRunDbKind = 0
-	SharedTestRunDbKind1 SharedTestRunDbKind = 1
-	SharedTestRunDbKind2 SharedTestRunDbKind = 2
-	SharedTestRunDbKind3 SharedTestRunDbKind = 3
-	SharedTestRunDbKind4 SharedTestRunDbKind = 4
-	SharedTestRunDbKind5 SharedTestRunDbKind = 5
-	SharedTestRunDbKind6 SharedTestRunDbKind = 6
-	SharedTestRunDbKind7 SharedTestRunDbKind = 7
-	SharedTestRunDbKind8 SharedTestRunDbKind = 8
-	SharedTestRunDbKind9 SharedTestRunDbKind = 9
+	SharedTestRunDbKind0  SharedTestRunDbKind = 0
+	SharedTestRunDbKind1  SharedTestRunDbKind = 1
+	SharedTestRunDbKind2  SharedTestRunDbKind = 2
+	SharedTestRunDbKind3  SharedTestRunDbKind = 3
+	SharedTestRunDbKind4  SharedTestRunDbKind = 4
+	SharedTestRunDbKind5  SharedTestRunDbKind = 5
+	SharedTestRunDbKind6  SharedTestRunDbKind = 6
+	SharedTestRunDbKind7  SharedTestRunDbKind = 7
+	SharedTestRunDbKind8  SharedTestRunDbKind = 8
+	SharedTestRunDbKind9  SharedTestRunDbKind = 9
+	SharedTestRunDbKind10 SharedTestRunDbKind = 10
+	SharedTestRunDbKind11 SharedTestRunDbKind = 11
 )
 
 // AllValues returns all SharedTestRunDbKind values.
@@ -32380,6 +32598,8 @@ func (SharedTestRunDbKind) AllValues() []SharedTestRunDbKind {
 		SharedTestRunDbKind7,
 		SharedTestRunDbKind8,
 		SharedTestRunDbKind9,
+		SharedTestRunDbKind10,
+		SharedTestRunDbKind11,
 	}
 }
 
@@ -34617,6 +34837,7 @@ const (
 	Summary2Protocol4 Summary2Protocol = 4
 	Summary2Protocol5 Summary2Protocol = 5
 	Summary2Protocol7 Summary2Protocol = 7
+	Summary2Protocol8 Summary2Protocol = 8
 )
 
 // AllValues returns all Summary2Protocol values.
@@ -34629,6 +34850,7 @@ func (Summary2Protocol) AllValues() []Summary2Protocol {
 		Summary2Protocol4,
 		Summary2Protocol5,
 		Summary2Protocol7,
+		Summary2Protocol8,
 	}
 }
 
@@ -34672,16 +34894,18 @@ func (s *Summary3) SetStroppyVersion(val OptString) {
 type Summary3DbKind int32
 
 const (
-	Summary3DbKind0 Summary3DbKind = 0
-	Summary3DbKind1 Summary3DbKind = 1
-	Summary3DbKind2 Summary3DbKind = 2
-	Summary3DbKind3 Summary3DbKind = 3
-	Summary3DbKind4 Summary3DbKind = 4
-	Summary3DbKind5 Summary3DbKind = 5
-	Summary3DbKind6 Summary3DbKind = 6
-	Summary3DbKind7 Summary3DbKind = 7
-	Summary3DbKind8 Summary3DbKind = 8
-	Summary3DbKind9 Summary3DbKind = 9
+	Summary3DbKind0  Summary3DbKind = 0
+	Summary3DbKind1  Summary3DbKind = 1
+	Summary3DbKind2  Summary3DbKind = 2
+	Summary3DbKind3  Summary3DbKind = 3
+	Summary3DbKind4  Summary3DbKind = 4
+	Summary3DbKind5  Summary3DbKind = 5
+	Summary3DbKind6  Summary3DbKind = 6
+	Summary3DbKind7  Summary3DbKind = 7
+	Summary3DbKind8  Summary3DbKind = 8
+	Summary3DbKind9  Summary3DbKind = 9
+	Summary3DbKind10 Summary3DbKind = 10
+	Summary3DbKind11 Summary3DbKind = 11
 )
 
 // AllValues returns all Summary3DbKind values.
@@ -34697,6 +34921,8 @@ func (Summary3DbKind) AllValues() []Summary3DbKind {
 		Summary3DbKind7,
 		Summary3DbKind8,
 		Summary3DbKind9,
+		Summary3DbKind10,
+		Summary3DbKind11,
 	}
 }
 
@@ -34710,6 +34936,7 @@ const (
 	Summary3Protocol4 Summary3Protocol = 4
 	Summary3Protocol5 Summary3Protocol = 5
 	Summary3Protocol7 Summary3Protocol = 7
+	Summary3Protocol8 Summary3Protocol = 8
 )
 
 // AllValues returns all Summary3Protocol values.
@@ -34722,6 +34949,7 @@ func (Summary3Protocol) AllValues() []Summary3Protocol {
 		Summary3Protocol4,
 		Summary3Protocol5,
 		Summary3Protocol7,
+		Summary3Protocol8,
 	}
 }
 
@@ -34980,16 +35208,18 @@ func (s *Summary5) SetTotal(val OptInt32) {
 type Summary5DbKindsItem int32
 
 const (
-	Summary5DbKindsItem0 Summary5DbKindsItem = 0
-	Summary5DbKindsItem1 Summary5DbKindsItem = 1
-	Summary5DbKindsItem2 Summary5DbKindsItem = 2
-	Summary5DbKindsItem3 Summary5DbKindsItem = 3
-	Summary5DbKindsItem4 Summary5DbKindsItem = 4
-	Summary5DbKindsItem5 Summary5DbKindsItem = 5
-	Summary5DbKindsItem6 Summary5DbKindsItem = 6
-	Summary5DbKindsItem7 Summary5DbKindsItem = 7
-	Summary5DbKindsItem8 Summary5DbKindsItem = 8
-	Summary5DbKindsItem9 Summary5DbKindsItem = 9
+	Summary5DbKindsItem0  Summary5DbKindsItem = 0
+	Summary5DbKindsItem1  Summary5DbKindsItem = 1
+	Summary5DbKindsItem2  Summary5DbKindsItem = 2
+	Summary5DbKindsItem3  Summary5DbKindsItem = 3
+	Summary5DbKindsItem4  Summary5DbKindsItem = 4
+	Summary5DbKindsItem5  Summary5DbKindsItem = 5
+	Summary5DbKindsItem6  Summary5DbKindsItem = 6
+	Summary5DbKindsItem7  Summary5DbKindsItem = 7
+	Summary5DbKindsItem8  Summary5DbKindsItem = 8
+	Summary5DbKindsItem9  Summary5DbKindsItem = 9
+	Summary5DbKindsItem10 Summary5DbKindsItem = 10
+	Summary5DbKindsItem11 Summary5DbKindsItem = 11
 )
 
 // AllValues returns all Summary5DbKindsItem values.
@@ -35005,6 +35235,8 @@ func (Summary5DbKindsItem) AllValues() []Summary5DbKindsItem {
 		Summary5DbKindsItem7,
 		Summary5DbKindsItem8,
 		Summary5DbKindsItem9,
+		Summary5DbKindsItem10,
+		Summary5DbKindsItem11,
 	}
 }
 
@@ -35208,16 +35440,18 @@ func (s *Summary6) SetWorkloadProtocol(val OptSummary6WorkloadProtocol) {
 type Summary6DbKind int32
 
 const (
-	Summary6DbKind0 Summary6DbKind = 0
-	Summary6DbKind1 Summary6DbKind = 1
-	Summary6DbKind2 Summary6DbKind = 2
-	Summary6DbKind3 Summary6DbKind = 3
-	Summary6DbKind4 Summary6DbKind = 4
-	Summary6DbKind5 Summary6DbKind = 5
-	Summary6DbKind6 Summary6DbKind = 6
-	Summary6DbKind7 Summary6DbKind = 7
-	Summary6DbKind8 Summary6DbKind = 8
-	Summary6DbKind9 Summary6DbKind = 9
+	Summary6DbKind0  Summary6DbKind = 0
+	Summary6DbKind1  Summary6DbKind = 1
+	Summary6DbKind2  Summary6DbKind = 2
+	Summary6DbKind3  Summary6DbKind = 3
+	Summary6DbKind4  Summary6DbKind = 4
+	Summary6DbKind5  Summary6DbKind = 5
+	Summary6DbKind6  Summary6DbKind = 6
+	Summary6DbKind7  Summary6DbKind = 7
+	Summary6DbKind8  Summary6DbKind = 8
+	Summary6DbKind9  Summary6DbKind = 9
+	Summary6DbKind10 Summary6DbKind = 10
+	Summary6DbKind11 Summary6DbKind = 11
 )
 
 // AllValues returns all Summary6DbKind values.
@@ -35233,6 +35467,8 @@ func (Summary6DbKind) AllValues() []Summary6DbKind {
 		Summary6DbKind7,
 		Summary6DbKind8,
 		Summary6DbKind9,
+		Summary6DbKind10,
+		Summary6DbKind11,
 	}
 }
 
@@ -35263,6 +35499,7 @@ const (
 	Summary6WorkloadProtocol4 Summary6WorkloadProtocol = 4
 	Summary6WorkloadProtocol5 Summary6WorkloadProtocol = 5
 	Summary6WorkloadProtocol7 Summary6WorkloadProtocol = 7
+	Summary6WorkloadProtocol8 Summary6WorkloadProtocol = 8
 )
 
 // AllValues returns all Summary6WorkloadProtocol values.
@@ -35275,22 +35512,25 @@ func (Summary6WorkloadProtocol) AllValues() []Summary6WorkloadProtocol {
 		Summary6WorkloadProtocol4,
 		Summary6WorkloadProtocol5,
 		Summary6WorkloadProtocol7,
+		Summary6WorkloadProtocol8,
 	}
 }
 
 type SummaryDbKind int32
 
 const (
-	SummaryDbKind0 SummaryDbKind = 0
-	SummaryDbKind1 SummaryDbKind = 1
-	SummaryDbKind2 SummaryDbKind = 2
-	SummaryDbKind3 SummaryDbKind = 3
-	SummaryDbKind4 SummaryDbKind = 4
-	SummaryDbKind5 SummaryDbKind = 5
-	SummaryDbKind6 SummaryDbKind = 6
-	SummaryDbKind7 SummaryDbKind = 7
-	SummaryDbKind8 SummaryDbKind = 8
-	SummaryDbKind9 SummaryDbKind = 9
+	SummaryDbKind0  SummaryDbKind = 0
+	SummaryDbKind1  SummaryDbKind = 1
+	SummaryDbKind2  SummaryDbKind = 2
+	SummaryDbKind3  SummaryDbKind = 3
+	SummaryDbKind4  SummaryDbKind = 4
+	SummaryDbKind5  SummaryDbKind = 5
+	SummaryDbKind6  SummaryDbKind = 6
+	SummaryDbKind7  SummaryDbKind = 7
+	SummaryDbKind8  SummaryDbKind = 8
+	SummaryDbKind9  SummaryDbKind = 9
+	SummaryDbKind10 SummaryDbKind = 10
+	SummaryDbKind11 SummaryDbKind = 11
 )
 
 // AllValues returns all SummaryDbKind values.
@@ -35306,6 +35546,8 @@ func (SummaryDbKind) AllValues() []SummaryDbKind {
 		SummaryDbKind7,
 		SummaryDbKind8,
 		SummaryDbKind9,
+		SummaryDbKind10,
+		SummaryDbKind11,
 	}
 }
 
@@ -37998,6 +38240,7 @@ const (
 	WorkloadProtocol4 WorkloadProtocol = 4
 	WorkloadProtocol5 WorkloadProtocol = 5
 	WorkloadProtocol7 WorkloadProtocol = 7
+	WorkloadProtocol8 WorkloadProtocol = 8
 )
 
 // AllValues returns all WorkloadProtocol values.
@@ -38010,6 +38253,7 @@ func (WorkloadProtocol) AllValues() []WorkloadProtocol {
 		WorkloadProtocol4,
 		WorkloadProtocol5,
 		WorkloadProtocol7,
+		WorkloadProtocol8,
 	}
 }
 

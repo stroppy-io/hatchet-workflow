@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/domain/database.proto.
  */
 export const file_cloud_v1_domain_database: GenFile = /*@__PURE__*/
-  fileDesc("Ch5jbG91ZC92MS9kb21haW4vZGF0YWJhc2UucHJvdG8SD2Nsb3VkLnYxLmRvbWFpbiKcAgoHUGFja2FnZRIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEjsKB2RiX2tpbmQYAyABKA4yHi5jbG91ZC52MS5kb21haW4uRGF0YWJhc2UuS2luZEIK+kIHggEEEAEgABIcCgpkYl92ZXJzaW9uGAQgASgJQgj6QgVyAxiAARISCgppc19idWlsdGluGAUgASgIEhQKDGFwdF9wYWNrYWdlcxgGIAMoCRITCgtwcmVfaW5zdGFsbBgHIAMoCRITCgtjdXN0b21fcmVwbxgIIAEoCRIXCg9jdXN0b21fcmVwb19rZXkYCSABKAkSFAoMZGViX2ZpbGVuYW1lGAogASgJEhkKEXBhY2thZ2VfcmVjb3JkX2lkGAsgASgJIpQHCg5Qb3N0Z3Jlc1BhcmFtcxIQCghyZXBsaWNhcxgBIAEoDRIPCgdoYXByb3h5GAIgASgNEhEKCXBnYm91bmNlchgDIAEoCBIPCgdwYXRyb25pGAQgASgIEgwKBGV0Y2QYBSABKAgSFQoNc3luY19yZXBsaWNhcxgGIAEoDRJKCg5tYXN0ZXJfb3B0aW9ucxgKIAMoCzIyLmNsb3VkLnYxLmRvbWFpbi5Qb3N0Z3Jlc1BhcmFtcy5NYXN0ZXJPcHRpb25zRW50cnkSTAoPcmVwbGljYV9vcHRpb25zGAsgAygLMjMuY2xvdWQudjEuZG9tYWluLlBvc3RncmVzUGFyYW1zLlJlcGxpY2FPcHRpb25zRW50cnkSTAoPaGFwcm94eV9vcHRpb25zGAwgAygLMjMuY2xvdWQudjEuZG9tYWluLlBvc3RncmVzUGFyYW1zLkhhcHJveHlPcHRpb25zRW50cnkSUAoRcGdib3VuY2VyX29wdGlvbnMYDSADKAsyNS5jbG91ZC52MS5kb21haW4uUG9zdGdyZXNQYXJhbXMuUGdib3VuY2VyT3B0aW9uc0VudHJ5EkwKD3BhdHJvbmlfb3B0aW9ucxgOIAMoCzIzLmNsb3VkLnYxLmRvbWFpbi5Qb3N0Z3Jlc1BhcmFtcy5QYXRyb25pT3B0aW9uc0VudHJ5EkYKDGV0Y2Rfb3B0aW9ucxgPIAMoCzIwLmNsb3VkLnYxLmRvbWFpbi5Qb3N0Z3Jlc1BhcmFtcy5FdGNkT3B0aW9uc0VudHJ5GjQKEk1hc3Rlck9wdGlvbnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGjUKE1JlcGxpY2FPcHRpb25zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ARo1ChNIYXByb3h5T3B0aW9uc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEaNwoVUGdib3VuY2VyT3B0aW9uc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEaNQoTUGF0cm9uaU9wdGlvbnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGjIKEEV0Y2RPcHRpb25zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASLoAwoLTXlTcWxQYXJhbXMSEAoIcmVwbGljYXMYASABKA0SEAoIcHJveHlzcWwYAiABKA0SGQoRZ3JvdXBfcmVwbGljYXRpb24YAyABKAgSEQoJc2VtaV9zeW5jGAQgASgIEkkKD3ByaW1hcnlfb3B0aW9ucxgKIAMoCzIwLmNsb3VkLnYxLmRvbWFpbi5NeVNxbFBhcmFtcy5QcmltYXJ5T3B0aW9uc0VudHJ5EkkKD3JlcGxpY2Ffb3B0aW9ucxgLIAMoCzIwLmNsb3VkLnYxLmRvbWFpbi5NeVNxbFBhcmFtcy5SZXBsaWNhT3B0aW9uc0VudHJ5EksKEHByb3h5c3FsX29wdGlvbnMYDCADKAsyMS5jbG91ZC52MS5kb21haW4uTXlTcWxQYXJhbXMuUHJveHlzcWxPcHRpb25zRW50cnkaNQoTUHJpbWFyeU9wdGlvbnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGjUKE1JlcGxpY2FPcHRpb25zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ARo2ChRQcm94eXNxbE9wdGlvbnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBImIKDFBpY29kYXRhVGllchIVCgRuYW1lGAEgASgJQgf6QgRyAhABEhoKEnJlcGxpY2F0aW9uX2ZhY3RvchgCIAEoDRIQCghjYW5fdm90ZRgDIAEoCBINCgVjb3VudBgEIAEoDSKkAwoOUGljb2RhdGFQYXJhbXMSGgoJaW5zdGFuY2VzGAEgASgNQgf6QgQqAigBEg8KB2hhcHJveHkYAiABKA0SGgoScmVwbGljYXRpb25fZmFjdG9yGAMgASgNEg4KBnNoYXJkcxgEIAEoDRIsCgV0aWVycxgFIAMoCzIdLmNsb3VkLnYxLmRvbWFpbi5QaWNvZGF0YVRpZXISTgoQaW5zdGFuY2Vfb3B0aW9ucxgKIAMoCzI0LmNsb3VkLnYxLmRvbWFpbi5QaWNvZGF0YVBhcmFtcy5JbnN0YW5jZU9wdGlvbnNFbnRyeRJMCg9oYXByb3h5X29wdGlvbnMYCyADKAsyMy5jbG91ZC52MS5kb21haW4uUGljb2RhdGFQYXJhbXMuSGFwcm94eU9wdGlvbnNFbnRyeRo2ChRJbnN0YW5jZU9wdGlvbnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGjUKE0hhcHJveHlPcHRpb25zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASLFCAoJWWRiUGFyYW1zEh4KDXN0b3JhZ2Vfbm9kZXMYASABKA1CB/pCBCoCKAESFgoOZGF0YWJhc2Vfbm9kZXMYAiABKA0SDwoHaGFwcm94eRgDIAEoDRIfChdwZGlza3NfcGVyX3N0b3JhZ2Vfbm9kZRgEIAEoDRJCCg9mYXVsdF90b2xlcmFuY2UYBSABKA4yKS5jbG91ZC52MS5kb21haW4uWWRiUGFyYW1zLkZhdWx0VG9sZXJhbmNlEkUKE2ZhaWx1cmVfZG9tYWluX3R5cGUYBiABKA4yKC5jbG91ZC52MS5kb21haW4uWWRiUGFyYW1zLkZhaWx1cmVEb21haW4SPgoRZGVmYXVsdF9kaXNrX3R5cGUYByABKA4yIy5jbG91ZC52MS5kb21haW4uWWRiUGFyYW1zLkRpc2tUeXBlEhYKDnN0b3JhZ2VfZ3JvdXBzGAggASgNEhgKEGF1dG9fc2l6ZV9wZGlza3MYCSABKAgSFQoNZGF0YWJhc2VfcGF0aBgKIAEoCRJHCg9zdG9yYWdlX29wdGlvbnMYFCADKAsyLi5jbG91ZC52MS5kb21haW4uWWRiUGFyYW1zLlN0b3JhZ2VPcHRpb25zRW50cnkSSQoQZGF0YWJhc2Vfb3B0aW9ucxgVIAMoCzIvLmNsb3VkLnYxLmRvbWFpbi5ZZGJQYXJhbXMuRGF0YWJhc2VPcHRpb25zRW50cnkSRwoPaGFwcm94eV9vcHRpb25zGBYgAygLMi4uY2xvdWQudjEuZG9tYWluLllkYlBhcmFtcy5IYXByb3h5T3B0aW9uc0VudHJ5GjUKE1N0b3JhZ2VPcHRpb25zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ARo2ChREYXRhYmFzZU9wdGlvbnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGjUKE0hhcHJveHlPcHRpb25zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASKLAQoORmF1bHRUb2xlcmFuY2USHwobRkFVTFRfVE9MRVJBTkNFX1VOU1BFQ0lGSUVEEAASGAoURkFVTFRfVE9MRVJBTkNFX05PTkUQARIdChlGQVVMVF9UT0xFUkFOQ0VfQkxPQ0tfNF8yEAISHwobRkFVTFRfVE9MRVJBTkNFX01JUlJPUl8zX0RDEAMiSAoNRmFpbHVyZURvbWFpbhIeChpGQUlMVVJFX0RPTUFJTl9VTlNQRUNJRklFRBAAEhcKE0ZBSUxVUkVfRE9NQUlOX0RJU0sQASJfCghEaXNrVHlwZRIZChVESVNLX1RZUEVfVU5TUEVDSUZJRUQQABIRCg1ESVNLX1RZUEVfU1NEEAESEgoORElTS19UWVBFX05WTUUQAhIRCg1ESVNLX1RZUEVfUk9UEAMi4gQKEFlkYk1hbmFnZWRQYXJhbXMSQAoEdHlwZRgBIAEoDjImLmNsb3VkLnYxLmRvbWFpbi5ZZGJNYW5hZ2VkUGFyYW1zLlR5cGVCCvpCB4IBBCAAEAESQwoMY29tcHV0ZV90eXBlGAIgASgOMi0uY2xvdWQudjEuZG9tYWluLllkYk1hbmFnZWRQYXJhbXMuQ29tcHV0ZVR5cGUSGgoScmVzb3VyY2VfcHJlc2V0X2lkGAMgASgJEhIKCm5vZGVfY291bnQYBCABKA0SPwoKYXV0b19zY2FsZRgFIAEoCzIrLmNsb3VkLnYxLmRvbWFpbi5ZZGJNYW5hZ2VkUGFyYW1zLkF1dG9TY2FsZRIWCg5zdG9yYWdlX2dyb3VwcxgGIAEoDRIUCgxzdG9yYWdlX3R5cGUYByABKAkSFwoPdGhyb3R0bGluZ19yY3VzGAggASgNGm0KCUF1dG9TY2FsZRIZCghtaW5fc2l6ZRgBIAEoDUIH+kIEKgIoARIZCghtYXhfc2l6ZRgCIAEoDUIH+kIEKgIoARIqChdjcHVfdXRpbGl6YXRpb25fcGVyY2VudBgDIAEoDUIJ+kIGKgQoABhkIkUKBFR5cGUSFAoQVFlQRV9VTlNQRUNJRklFRBAAEhMKD1RZUEVfU0VSVkVSTEVTUxABEhIKDlRZUEVfREVESUNBVEVEEAIiWQoLQ29tcHV0ZVR5cGUSHAoYQ09NUFVURV9UWVBFX1VOU1BFQ0lGSUVEEAASFQoRQ09NUFVURV9UWVBFX09MVFAQARIVChFDT01QVVRFX1RZUEVfT0xBUBACIoYECg5PcmlvbGVkYlBhcmFtcxINCgVpbWFnZRgBIAEoCRJOChBwb3N0Z3Jlc19vcHRpb25zGAIgAygLMjQuY2xvdWQudjEuZG9tYWluLk9yaW9sZWRiUGFyYW1zLlBvc3RncmVzT3B0aW9uc0VudHJ5EhUKDWluaXRkYl9sb2NhbGUYAyABKAkSGQoRc2hhcmVkX2J1ZmZlcnNfbWIYBCABKA0SEAoIcmVwbGljYXMYBSABKA0SDwoHaGFwcm94eRgGIAEoDRJMCg9yZXBsaWNhX29wdGlvbnMYByADKAsyMy5jbG91ZC52MS5kb21haW4uT3Jpb2xlZGJQYXJhbXMuUmVwbGljYU9wdGlvbnNFbnRyeRJMCg9oYXByb3h5X29wdGlvbnMYCCADKAsyMy5jbG91ZC52MS5kb21haW4uT3Jpb2xlZGJQYXJhbXMuSGFwcm94eU9wdGlvbnNFbnRyeRo2ChRQb3N0Z3Jlc09wdGlvbnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGjUKE1JlcGxpY2FPcHRpb25zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ARo1ChNIYXByb3h5T3B0aW9uc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEimQEKD0NvY2tyb2FjaFBhcmFtcxIWCgVub2RlcxgBIAEoDUIH+kIEKgIoARI+CgdvcHRpb25zGAIgAygLMi0uY2xvdWQudjEuZG9tYWluLkNvY2tyb2FjaFBhcmFtcy5PcHRpb25zRW50cnkaLgoMT3B0aW9uc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEi/AMKDkRhdGFiYXNlUGFyYW1zEg8KB3ZlcnNpb24YASABKAkSKQoHcGFja2FnZRgCIAEoCzIYLmNsb3VkLnYxLmRvbWFpbi5QYWNrYWdlEjMKCHBvc3RncmVzGAogASgLMh8uY2xvdWQudjEuZG9tYWluLlBvc3RncmVzUGFyYW1zSAASLQoFbXlzcWwYCyABKAsyHC5jbG91ZC52MS5kb21haW4uTXlTcWxQYXJhbXNIABIvCgdtYXJpYWRiGAwgASgLMhwuY2xvdWQudjEuZG9tYWluLk15U3FsUGFyYW1zSAASMwoIcGljb2RhdGEYDSABKAsyHy5jbG91ZC52MS5kb21haW4uUGljb2RhdGFQYXJhbXNIABIpCgN5ZGIYDiABKAsyGi5jbG91ZC52MS5kb21haW4uWWRiUGFyYW1zSAASOAoLeWRiX21hbmFnZWQYDyABKAsyIS5jbG91ZC52MS5kb21haW4uWWRiTWFuYWdlZFBhcmFtc0gAEjUKCWNvY2tyb2FjaBgQIAEoCzIgLmNsb3VkLnYxLmRvbWFpbi5Db2Nrcm9hY2hQYXJhbXNIABIzCghvcmlvbGVkYhgRIAEoCzIfLmNsb3VkLnYxLmRvbWFpbi5PcmlvbGVkYlBhcmFtc0gAQhMKBmVuZ2luZRIJ+EIB8qcdAggDIuwECghEYXRhYmFzZRI4CgRraW5kGAEgASgOMh4uY2xvdWQudjEuZG9tYWluLkRhdGFiYXNlLktpbmRCCvpCB4IBBBABIAASMQoGcGFyYW1zGAMgASgLMh8uY2xvdWQudjEuZG9tYWluLkRhdGFiYXNlUGFyYW1zSAASNgoIZXh0ZXJuYWwYBCABKAsyIi5jbG91ZC52MS5kb21haW4uRGF0YWJhc2UuRXh0ZXJuYWxIABJAChJkYXRhYmFzZV9wcmVzZXRfaWQYBSABKAsyIi5jbG91ZC52MS5kb21haW4uRGF0YWJhc2UuUHJlc2V0SWRIABISCgpwYWNrYWdlX2lkGAYgASgJEiMKBHRhZ3MYByABKAsyFS5jbG91ZC52MS5jb21tb24uVGFncxofCghQcmVzZXRJZBITCgJpZBgBIAEoCUIH+kIEcgIQARpFCghFeHRlcm5hbBIUCgNkc24YASABKAlCB/pCBHICEAESIwoEdGFncxgCIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzIsIBCgRLaW5kEhQKEEtJTkRfVU5TUEVDSUZJRUQQABIRCg1LSU5EX1BPU1RHUkVTEAESDgoKS0lORF9NWVNRTBACEhAKDEtJTkRfTUFSSUFEQhADEgwKCEtJTkRfWURCEAQSFAoQS0lORF9ZREJfTUFOQUdFRBAFEhIKDktJTkRfQ09DS1JPQUNIEAYSEQoNS0lORF9QSUNPREFUQRAHEhEKDUtJTkRfRVhURVJOQUwQCBIRCg1LSU5EX09SSU9MRURCEAlCEwoGc291cmNlEgn4QgHypx0CCANCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvZG9tYWluYgZwcm90bzM", [file_cloud_v1_common_tags, file_validate_validate, file_ogen_ogen]);
+  fileDesc("Ch5jbG91ZC92MS9kb21haW4vZGF0YWJhc2UucHJvdG8SD2Nsb3VkLnYxLmRvbWFpbiKcAgoHUGFja2FnZRIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEjsKB2RiX2tpbmQYAyABKA4yHi5jbG91ZC52MS5kb21haW4uRGF0YWJhc2UuS2luZEIK+kIHggEEEAEgABIcCgpkYl92ZXJzaW9uGAQgASgJQgj6QgVyAxiAARISCgppc19idWlsdGluGAUgASgIEhQKDGFwdF9wYWNrYWdlcxgGIAMoCRITCgtwcmVfaW5zdGFsbBgHIAMoCRITCgtjdXN0b21fcmVwbxgIIAEoCRIXCg9jdXN0b21fcmVwb19rZXkYCSABKAkSFAoMZGViX2ZpbGVuYW1lGAogASgJEhkKEXBhY2thZ2VfcmVjb3JkX2lkGAsgASgJIpQHCg5Qb3N0Z3Jlc1BhcmFtcxIQCghyZXBsaWNhcxgBIAEoDRIPCgdoYXByb3h5GAIgASgNEhEKCXBnYm91bmNlchgDIAEoCBIPCgdwYXRyb25pGAQgASgIEgwKBGV0Y2QYBSABKAgSFQoNc3luY19yZXBsaWNhcxgGIAEoDRJKCg5tYXN0ZXJfb3B0aW9ucxgKIAMoCzIyLmNsb3VkLnYxLmRvbWFpbi5Qb3N0Z3Jlc1BhcmFtcy5NYXN0ZXJPcHRpb25zRW50cnkSTAoPcmVwbGljYV9vcHRpb25zGAsgAygLMjMuY2xvdWQudjEuZG9tYWluLlBvc3RncmVzUGFyYW1zLlJlcGxpY2FPcHRpb25zRW50cnkSTAoPaGFwcm94eV9vcHRpb25zGAwgAygLMjMuY2xvdWQudjEuZG9tYWluLlBvc3RncmVzUGFyYW1zLkhhcHJveHlPcHRpb25zRW50cnkSUAoRcGdib3VuY2VyX29wdGlvbnMYDSADKAsyNS5jbG91ZC52MS5kb21haW4uUG9zdGdyZXNQYXJhbXMuUGdib3VuY2VyT3B0aW9uc0VudHJ5EkwKD3BhdHJvbmlfb3B0aW9ucxgOIAMoCzIzLmNsb3VkLnYxLmRvbWFpbi5Qb3N0Z3Jlc1BhcmFtcy5QYXRyb25pT3B0aW9uc0VudHJ5EkYKDGV0Y2Rfb3B0aW9ucxgPIAMoCzIwLmNsb3VkLnYxLmRvbWFpbi5Qb3N0Z3Jlc1BhcmFtcy5FdGNkT3B0aW9uc0VudHJ5GjQKEk1hc3Rlck9wdGlvbnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGjUKE1JlcGxpY2FPcHRpb25zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ARo1ChNIYXByb3h5T3B0aW9uc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEaNwoVUGdib3VuY2VyT3B0aW9uc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEaNQoTUGF0cm9uaU9wdGlvbnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGjIKEEV0Y2RPcHRpb25zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASLoAwoLTXlTcWxQYXJhbXMSEAoIcmVwbGljYXMYASABKA0SEAoIcHJveHlzcWwYAiABKA0SGQoRZ3JvdXBfcmVwbGljYXRpb24YAyABKAgSEQoJc2VtaV9zeW5jGAQgASgIEkkKD3ByaW1hcnlfb3B0aW9ucxgKIAMoCzIwLmNsb3VkLnYxLmRvbWFpbi5NeVNxbFBhcmFtcy5QcmltYXJ5T3B0aW9uc0VudHJ5EkkKD3JlcGxpY2Ffb3B0aW9ucxgLIAMoCzIwLmNsb3VkLnYxLmRvbWFpbi5NeVNxbFBhcmFtcy5SZXBsaWNhT3B0aW9uc0VudHJ5EksKEHByb3h5c3FsX29wdGlvbnMYDCADKAsyMS5jbG91ZC52MS5kb21haW4uTXlTcWxQYXJhbXMuUHJveHlzcWxPcHRpb25zRW50cnkaNQoTUHJpbWFyeU9wdGlvbnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGjUKE1JlcGxpY2FPcHRpb25zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ARo2ChRQcm94eXNxbE9wdGlvbnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBImIKDFBpY29kYXRhVGllchIVCgRuYW1lGAEgASgJQgf6QgRyAhABEhoKEnJlcGxpY2F0aW9uX2ZhY3RvchgCIAEoDRIQCghjYW5fdm90ZRgDIAEoCBINCgVjb3VudBgEIAEoDSKkAwoOUGljb2RhdGFQYXJhbXMSGgoJaW5zdGFuY2VzGAEgASgNQgf6QgQqAigBEg8KB2hhcHJveHkYAiABKA0SGgoScmVwbGljYXRpb25fZmFjdG9yGAMgASgNEg4KBnNoYXJkcxgEIAEoDRIsCgV0aWVycxgFIAMoCzIdLmNsb3VkLnYxLmRvbWFpbi5QaWNvZGF0YVRpZXISTgoQaW5zdGFuY2Vfb3B0aW9ucxgKIAMoCzI0LmNsb3VkLnYxLmRvbWFpbi5QaWNvZGF0YVBhcmFtcy5JbnN0YW5jZU9wdGlvbnNFbnRyeRJMCg9oYXByb3h5X29wdGlvbnMYCyADKAsyMy5jbG91ZC52MS5kb21haW4uUGljb2RhdGFQYXJhbXMuSGFwcm94eU9wdGlvbnNFbnRyeRo2ChRJbnN0YW5jZU9wdGlvbnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGjUKE0hhcHJveHlPcHRpb25zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASLFCAoJWWRiUGFyYW1zEh4KDXN0b3JhZ2Vfbm9kZXMYASABKA1CB/pCBCoCKAESFgoOZGF0YWJhc2Vfbm9kZXMYAiABKA0SDwoHaGFwcm94eRgDIAEoDRIfChdwZGlza3NfcGVyX3N0b3JhZ2Vfbm9kZRgEIAEoDRJCCg9mYXVsdF90b2xlcmFuY2UYBSABKA4yKS5jbG91ZC52MS5kb21haW4uWWRiUGFyYW1zLkZhdWx0VG9sZXJhbmNlEkUKE2ZhaWx1cmVfZG9tYWluX3R5cGUYBiABKA4yKC5jbG91ZC52MS5kb21haW4uWWRiUGFyYW1zLkZhaWx1cmVEb21haW4SPgoRZGVmYXVsdF9kaXNrX3R5cGUYByABKA4yIy5jbG91ZC52MS5kb21haW4uWWRiUGFyYW1zLkRpc2tUeXBlEhYKDnN0b3JhZ2VfZ3JvdXBzGAggASgNEhgKEGF1dG9fc2l6ZV9wZGlza3MYCSABKAgSFQoNZGF0YWJhc2VfcGF0aBgKIAEoCRJHCg9zdG9yYWdlX29wdGlvbnMYFCADKAsyLi5jbG91ZC52MS5kb21haW4uWWRiUGFyYW1zLlN0b3JhZ2VPcHRpb25zRW50cnkSSQoQZGF0YWJhc2Vfb3B0aW9ucxgVIAMoCzIvLmNsb3VkLnYxLmRvbWFpbi5ZZGJQYXJhbXMuRGF0YWJhc2VPcHRpb25zRW50cnkSRwoPaGFwcm94eV9vcHRpb25zGBYgAygLMi4uY2xvdWQudjEuZG9tYWluLllkYlBhcmFtcy5IYXByb3h5T3B0aW9uc0VudHJ5GjUKE1N0b3JhZ2VPcHRpb25zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ARo2ChREYXRhYmFzZU9wdGlvbnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGjUKE0hhcHJveHlPcHRpb25zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASKLAQoORmF1bHRUb2xlcmFuY2USHwobRkFVTFRfVE9MRVJBTkNFX1VOU1BFQ0lGSUVEEAASGAoURkFVTFRfVE9MRVJBTkNFX05PTkUQARIdChlGQVVMVF9UT0xFUkFOQ0VfQkxPQ0tfNF8yEAISHwobRkFVTFRfVE9MRVJBTkNFX01JUlJPUl8zX0RDEAMiSAoNRmFpbHVyZURvbWFpbhIeChpGQUlMVVJFX0RPTUFJTl9VTlNQRUNJRklFRBAAEhcKE0ZBSUxVUkVfRE9NQUlOX0RJU0sQASJfCghEaXNrVHlwZRIZChVESVNLX1RZUEVfVU5TUEVDSUZJRUQQABIRCg1ESVNLX1RZUEVfU1NEEAESEgoORElTS19UWVBFX05WTUUQAhIRCg1ESVNLX1RZUEVfUk9UEAMi4gQKEFlkYk1hbmFnZWRQYXJhbXMSQAoEdHlwZRgBIAEoDjImLmNsb3VkLnYxLmRvbWFpbi5ZZGJNYW5hZ2VkUGFyYW1zLlR5cGVCCvpCB4IBBBABIAASQwoMY29tcHV0ZV90eXBlGAIgASgOMi0uY2xvdWQudjEuZG9tYWluLllkYk1hbmFnZWRQYXJhbXMuQ29tcHV0ZVR5cGUSGgoScmVzb3VyY2VfcHJlc2V0X2lkGAMgASgJEhIKCm5vZGVfY291bnQYBCABKA0SPwoKYXV0b19zY2FsZRgFIAEoCzIrLmNsb3VkLnYxLmRvbWFpbi5ZZGJNYW5hZ2VkUGFyYW1zLkF1dG9TY2FsZRIWCg5zdG9yYWdlX2dyb3VwcxgGIAEoDRIUCgxzdG9yYWdlX3R5cGUYByABKAkSFwoPdGhyb3R0bGluZ19yY3VzGAggASgNGm0KCUF1dG9TY2FsZRIZCghtaW5fc2l6ZRgBIAEoDUIH+kIEKgIoARIZCghtYXhfc2l6ZRgCIAEoDUIH+kIEKgIoARIqChdjcHVfdXRpbGl6YXRpb25fcGVyY2VudBgDIAEoDUIJ+kIGKgQoABhkIkUKBFR5cGUSFAoQVFlQRV9VTlNQRUNJRklFRBAAEhMKD1RZUEVfU0VSVkVSTEVTUxABEhIKDlRZUEVfREVESUNBVEVEEAIiWQoLQ29tcHV0ZVR5cGUSHAoYQ09NUFVURV9UWVBFX1VOU1BFQ0lGSUVEEAASFQoRQ09NUFVURV9UWVBFX09MVFAQARIVChFDT01QVVRFX1RZUEVfT0xBUBACIoYECg5PcmlvbGVkYlBhcmFtcxINCgVpbWFnZRgBIAEoCRJOChBwb3N0Z3Jlc19vcHRpb25zGAIgAygLMjQuY2xvdWQudjEuZG9tYWluLk9yaW9sZWRiUGFyYW1zLlBvc3RncmVzT3B0aW9uc0VudHJ5EhUKDWluaXRkYl9sb2NhbGUYAyABKAkSGQoRc2hhcmVkX2J1ZmZlcnNfbWIYBCABKA0SEAoIcmVwbGljYXMYBSABKA0SDwoHaGFwcm94eRgGIAEoDRJMCg9yZXBsaWNhX29wdGlvbnMYByADKAsyMy5jbG91ZC52MS5kb21haW4uT3Jpb2xlZGJQYXJhbXMuUmVwbGljYU9wdGlvbnNFbnRyeRJMCg9oYXByb3h5X29wdGlvbnMYCCADKAsyMy5jbG91ZC52MS5kb21haW4uT3Jpb2xlZGJQYXJhbXMuSGFwcm94eU9wdGlvbnNFbnRyeRo2ChRQb3N0Z3Jlc09wdGlvbnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGjUKE1JlcGxpY2FPcHRpb25zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ARo1ChNIYXByb3h5T3B0aW9uc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEimQEKD0NvY2tyb2FjaFBhcmFtcxIWCgVub2RlcxgBIAEoDUIH+kIEKgIoARI+CgdvcHRpb25zGAIgAygLMi0uY2xvdWQudjEuZG9tYWluLkNvY2tyb2FjaFBhcmFtcy5PcHRpb25zRW50cnkaLgoMT3B0aW9uc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiDAoKTm9vcFBhcmFtcyKMAQoMUGdOb29wUGFyYW1zEg8KB3dvcmtlcnMYASABKA0SOwoHb3B0aW9ucxgCIAMoCzIqLmNsb3VkLnYxLmRvbWFpbi5QZ05vb3BQYXJhbXMuT3B0aW9uc0VudHJ5Gi4KDE9wdGlvbnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBItsECg5EYXRhYmFzZVBhcmFtcxIPCgd2ZXJzaW9uGAEgASgJEikKB3BhY2thZ2UYAiABKAsyGC5jbG91ZC52MS5kb21haW4uUGFja2FnZRIzCghwb3N0Z3JlcxgKIAEoCzIfLmNsb3VkLnYxLmRvbWFpbi5Qb3N0Z3Jlc1BhcmFtc0gAEi0KBW15c3FsGAsgASgLMhwuY2xvdWQudjEuZG9tYWluLk15U3FsUGFyYW1zSAASLwoHbWFyaWFkYhgMIAEoCzIcLmNsb3VkLnYxLmRvbWFpbi5NeVNxbFBhcmFtc0gAEjMKCHBpY29kYXRhGA0gASgLMh8uY2xvdWQudjEuZG9tYWluLlBpY29kYXRhUGFyYW1zSAASKQoDeWRiGA4gASgLMhouY2xvdWQudjEuZG9tYWluLllkYlBhcmFtc0gAEjgKC3lkYl9tYW5hZ2VkGA8gASgLMiEuY2xvdWQudjEuZG9tYWluLllkYk1hbmFnZWRQYXJhbXNIABI1Cgljb2Nrcm9hY2gYECABKAsyIC5jbG91ZC52MS5kb21haW4uQ29ja3JvYWNoUGFyYW1zSAASMwoIb3Jpb2xlZGIYESABKAsyHy5jbG91ZC52MS5kb21haW4uT3Jpb2xlZGJQYXJhbXNIABIrCgRub29wGBIgASgLMhsuY2xvdWQudjEuZG9tYWluLk5vb3BQYXJhbXNIABIwCgdwZ19ub29wGBMgASgLMh0uY2xvdWQudjEuZG9tYWluLlBnTm9vcFBhcmFtc0gAQhMKBmVuZ2luZRIJ+EIB8qcdAggDIo0FCghEYXRhYmFzZRI4CgRraW5kGAEgASgOMh4uY2xvdWQudjEuZG9tYWluLkRhdGFiYXNlLktpbmRCCvpCB4IBBCAAEAESMQoGcGFyYW1zGAMgASgLMh8uY2xvdWQudjEuZG9tYWluLkRhdGFiYXNlUGFyYW1zSAASNgoIZXh0ZXJuYWwYBCABKAsyIi5jbG91ZC52MS5kb21haW4uRGF0YWJhc2UuRXh0ZXJuYWxIABJAChJkYXRhYmFzZV9wcmVzZXRfaWQYBSABKAsyIi5jbG91ZC52MS5kb21haW4uRGF0YWJhc2UuUHJlc2V0SWRIABISCgpwYWNrYWdlX2lkGAYgASgJEiMKBHRhZ3MYByABKAsyFS5jbG91ZC52MS5jb21tb24uVGFncxofCghQcmVzZXRJZBITCgJpZBgBIAEoCUIH+kIEcgIQARpFCghFeHRlcm5hbBIUCgNkc24YASABKAlCB/pCBHICEAESIwoEdGFncxgCIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5UYWdzIuMBCgRLaW5kEhQKEEtJTkRfVU5TUEVDSUZJRUQQABIRCg1LSU5EX1BPU1RHUkVTEAESDgoKS0lORF9NWVNRTBACEhAKDEtJTkRfTUFSSUFEQhADEgwKCEtJTkRfWURCEAQSFAoQS0lORF9ZREJfTUFOQUdFRBAFEhIKDktJTkRfQ09DS1JPQUNIEAYSEQoNS0lORF9QSUNPREFUQRAHEhEKDUtJTkRfRVhURVJOQUwQCBIRCg1LSU5EX09SSU9MRURCEAkSDQoJS0lORF9OT09QEAoSEAoMS0lORF9QR19OT09QEAtCEwoGc291cmNlEgn4QgHypx0CCANCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvZG9tYWluYgZwcm90bzM", [file_cloud_v1_common_tags, file_validate_validate, file_ogen_ogen]);
 
 /**
  *
@@ -1538,6 +1538,104 @@ export const CockroachParamsSchema: GenMessage<CockroachParams, {jsonType: Cockr
 
 /**
  *
+ * NoopParams is the no-database machine benchmark. There is nothing to deploy:
+ * stroppy runs on the runner node alone with its internal noop driver, draining
+ * the datagen pipeline to /dev/null. The measured throughput is the runner
+ * machine's max row-generation rate. Machine sizing and the generation
+ * parallelism come from the infrastructure sizing and Workload params, so this
+ * message carries no fields.
+ *
+ * @generated from message cloud.v1.domain.NoopParams
+ */
+export type NoopParams = Message<"cloud.v1.domain.NoopParams"> & {
+};
+
+/**
+ *
+ * NoopParams is the no-database machine benchmark. There is nothing to deploy:
+ * stroppy runs on the runner node alone with its internal noop driver, draining
+ * the datagen pipeline to /dev/null. The measured throughput is the runner
+ * machine's max row-generation rate. Machine sizing and the generation
+ * parallelism come from the infrastructure sizing and Workload params, so this
+ * message carries no fields.
+ *
+ * @generated from message cloud.v1.domain.NoopParams
+ */
+export type NoopParamsJson = {
+};
+
+export type NoopParamsValid = NoopParams;
+
+/**
+ * Describes the message cloud.v1.domain.NoopParams.
+ * Use `create(NoopParamsSchema)` to create a new message.
+ */
+export const NoopParamsSchema: GenMessage<NoopParams, {jsonType: NoopParamsJson, validType: NoopParamsValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_domain_database, 9);
+
+/**
+ *
+ * PgNoopParams configures a single pg-noop blackhole container/binary. pg-noop is
+ * a static single-binary PostgreSQL-wire server that accepts every connection and
+ * discards all data, so stroppy connects with the plain postgres driver. There is
+ * no replication or HA: it is one node fronting nothing.
+ *
+ * @generated from message cloud.v1.domain.PgNoopParams
+ */
+export type PgNoopParams = Message<"cloud.v1.domain.PgNoopParams"> & {
+  /**
+   * workers is the pg-noop worker-thread count (--workers); 0 => one per logical
+   * CPU (the binary default). 
+   *
+   * @generated from field: uint32 workers = 1;
+   */
+  workers: number;
+
+  /**
+   * options are verbatim pg-noop config passthroughs (reserved for future knobs). 
+   *
+   * @generated from field: map<string, string> options = 2;
+   */
+  options: { [key: string]: string };
+};
+
+/**
+ *
+ * PgNoopParams configures a single pg-noop blackhole container/binary. pg-noop is
+ * a static single-binary PostgreSQL-wire server that accepts every connection and
+ * discards all data, so stroppy connects with the plain postgres driver. There is
+ * no replication or HA: it is one node fronting nothing.
+ *
+ * @generated from message cloud.v1.domain.PgNoopParams
+ */
+export type PgNoopParamsJson = {
+  /**
+   * workers is the pg-noop worker-thread count (--workers); 0 => one per logical
+   * CPU (the binary default). 
+   *
+   * @generated from field: uint32 workers = 1;
+   */
+  workers?: number;
+
+  /**
+   * options are verbatim pg-noop config passthroughs (reserved for future knobs). 
+   *
+   * @generated from field: map<string, string> options = 2;
+   */
+  options?: { [key: string]: string };
+};
+
+export type PgNoopParamsValid = PgNoopParams;
+
+/**
+ * Describes the message cloud.v1.domain.PgNoopParams.
+ * Use `create(PgNoopParamsSchema)` to create a new message.
+ */
+export const PgNoopParamsSchema: GenMessage<PgNoopParams, {jsonType: PgNoopParamsJson, validType: PgNoopParamsValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_domain_database, 10);
+
+/**
+ *
  * DatabaseParams is the typed self-deploy variant (replaces the former
  * schemapb.Baked). It carries the common version + config overrides and exactly
  * one engine-specific params message. The selected engine MUST match Database.kind.
@@ -1614,6 +1712,18 @@ export type DatabaseParams = Message<"cloud.v1.domain.DatabaseParams"> & {
      */
     value: OrioledbParams;
     case: "orioledb";
+  } | {
+    /**
+     * @generated from field: cloud.v1.domain.NoopParams noop = 18;
+     */
+    value: NoopParams;
+    case: "noop";
+  } | {
+    /**
+     * @generated from field: cloud.v1.domain.PgNoopParams pg_noop = 19;
+     */
+    value: PgNoopParams;
+    case: "pgNoop";
   } | { case: undefined; value?: undefined };
 };
 
@@ -1680,6 +1790,16 @@ export type DatabaseParamsJson = {
    * @generated from field: cloud.v1.domain.OrioledbParams orioledb = 17;
    */
   orioledb?: OrioledbParamsJson;
+
+  /**
+   * @generated from field: cloud.v1.domain.NoopParams noop = 18;
+   */
+  noop?: NoopParamsJson;
+
+  /**
+   * @generated from field: cloud.v1.domain.PgNoopParams pg_noop = 19;
+   */
+  pgNoop?: PgNoopParamsJson;
 };
 
 export type DatabaseParamsValid = DatabaseParams;
@@ -1689,7 +1809,7 @@ export type DatabaseParamsValid = DatabaseParams;
  * Use `create(DatabaseParamsSchema)` to create a new message.
  */
 export const DatabaseParamsSchema: GenMessage<DatabaseParams, {jsonType: DatabaseParamsJson, validType: DatabaseParamsValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_domain_database, 9);
+  messageDesc(file_cloud_v1_domain_database, 11);
 
 /**
  *
@@ -1823,7 +1943,7 @@ export type DatabaseValid = Database;
  * Use `create(DatabaseSchema)` to create a new message.
  */
 export const DatabaseSchema: GenMessage<Database, {jsonType: DatabaseJson, validType: DatabaseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_domain_database, 10);
+  messageDesc(file_cloud_v1_domain_database, 12);
 
 /**
  *
@@ -1866,7 +1986,7 @@ export type Database_PresetIdValid = Database_PresetId;
  * Use `create(Database_PresetIdSchema)` to create a new message.
  */
 export const Database_PresetIdSchema: GenMessage<Database_PresetId, {jsonType: Database_PresetIdJson, validType: Database_PresetIdValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_domain_database, 10, 0);
+  messageDesc(file_cloud_v1_domain_database, 12, 0);
 
 /**
  *
@@ -1921,7 +2041,7 @@ export type Database_ExternalValid = Database_External;
  * Use `create(Database_ExternalSchema)` to create a new message.
  */
 export const Database_ExternalSchema: GenMessage<Database_External, {jsonType: Database_ExternalJson, validType: Database_ExternalValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_domain_database, 10, 1);
+  messageDesc(file_cloud_v1_domain_database, 12, 1);
 
 /**
  * Kind enumerates the supported database engines under test. 
@@ -1999,6 +2119,24 @@ export enum Database_Kind {
    * @generated from enum value: KIND_ORIOLEDB = 9;
    */
   ORIOLEDB = 9,
+
+  /**
+   * KIND_NOOP is the no-database machine benchmark: stroppy runs with its
+   * internal noop driver, deploying NO database, to measure the max row
+   * generation rate a single runner machine can produce. 
+   *
+   * @generated from enum value: KIND_NOOP = 10;
+   */
+  NOOP = 10,
+
+  /**
+   * KIND_PG_NOOP is the pg-noop blackhole: a single static binary that
+   * speaks the PostgreSQL wire protocol and discards everything, to measure
+   * the max rate stroppy can deliver over the wire (the delivery ceiling). 
+   *
+   * @generated from enum value: KIND_PG_NOOP = 11;
+   */
+  PG_NOOP = 11,
 }
 
 /**
@@ -2006,11 +2144,11 @@ export enum Database_Kind {
  *
  * @generated from enum cloud.v1.domain.Database.Kind
  */
-export type Database_KindJson = "KIND_UNSPECIFIED" | "KIND_POSTGRES" | "KIND_MYSQL" | "KIND_MARIADB" | "KIND_YDB" | "KIND_YDB_MANAGED" | "KIND_COCKROACH" | "KIND_PICODATA" | "KIND_EXTERNAL" | "KIND_ORIOLEDB";
+export type Database_KindJson = "KIND_UNSPECIFIED" | "KIND_POSTGRES" | "KIND_MYSQL" | "KIND_MARIADB" | "KIND_YDB" | "KIND_YDB_MANAGED" | "KIND_COCKROACH" | "KIND_PICODATA" | "KIND_EXTERNAL" | "KIND_ORIOLEDB" | "KIND_NOOP" | "KIND_PG_NOOP";
 
 /**
  * Describes the enum cloud.v1.domain.Database.Kind.
  */
 export const Database_KindSchema: GenEnum<Database_Kind, Database_KindJson> = /*@__PURE__*/
-  enumDesc(file_cloud_v1_domain_database, 10, 0);
+  enumDesc(file_cloud_v1_domain_database, 12, 0);
 

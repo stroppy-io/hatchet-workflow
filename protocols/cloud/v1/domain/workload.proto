@@ -60,6 +60,10 @@ message Workload {
         PROTOCOL_YDB_GRPCS = 5;
         /* COCKROACH is CockroachDB pg-wire on its own default port. */
         PROTOCOL_COCKROACH = 7;
+        /* NOOP is stroppy's internal no-database driver: rows are generated and
+           discarded, no connection is made (used by the KIND_NOOP machine
+           benchmark). */
+        PROTOCOL_NOOP = 8;
     }
 
     /*

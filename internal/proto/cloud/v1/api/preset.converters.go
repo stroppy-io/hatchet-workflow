@@ -700,6 +700,10 @@ func (src *ListDatabasePresetsRequest) ToOgen() (*rest.ListDatabasePresetsReques
 			en4 = rest.ListDatabasePresetsRequestDbKindsItem8
 		case domain.Database_KIND_ORIOLEDB:
 			en4 = rest.ListDatabasePresetsRequestDbKindsItem9
+		case domain.Database_KIND_NOOP:
+			en4 = rest.ListDatabasePresetsRequestDbKindsItem10
+		case domain.Database_KIND_PG_NOOP:
+			en4 = rest.ListDatabasePresetsRequestDbKindsItem11
 		default:
 			return zero, fmt.Errorf("cloud.v1.api.ListDatabasePresetsRequest.db_kinds: enum value %v has no ogen ListDatabasePresetsRequestDbKindsItem variant", e)
 		}
@@ -794,6 +798,10 @@ func ListDatabasePresetsRequestFromOgen(src *rest.ListDatabasePresetsRequest) (*
 			en7 = domain.Database_KIND_EXTERNAL
 		case rest.ListDatabasePresetsRequestDbKindsItem9:
 			en7 = domain.Database_KIND_ORIOLEDB
+		case rest.ListDatabasePresetsRequestDbKindsItem10:
+			en7 = domain.Database_KIND_NOOP
+		case rest.ListDatabasePresetsRequestDbKindsItem11:
+			en7 = domain.Database_KIND_PG_NOOP
 		default:
 			return zero, fmt.Errorf("cloud.v1.api.ListDatabasePresetsRequest.db_kinds: enum value %v has no Database_Kind variant", e)
 		}
@@ -929,6 +937,10 @@ func (src *ListTestPresetsRequest) ToOgen() (*rest.ListTestPresetsRequest, error
 			en4 = rest.ListTestPresetsRequestDbKindsItem8
 		case domain.Database_KIND_ORIOLEDB:
 			en4 = rest.ListTestPresetsRequestDbKindsItem9
+		case domain.Database_KIND_NOOP:
+			en4 = rest.ListTestPresetsRequestDbKindsItem10
+		case domain.Database_KIND_PG_NOOP:
+			en4 = rest.ListTestPresetsRequestDbKindsItem11
 		default:
 			return zero, fmt.Errorf("cloud.v1.api.ListTestPresetsRequest.db_kinds: enum value %v has no ogen ListTestPresetsRequestDbKindsItem variant", e)
 		}
@@ -976,6 +988,8 @@ func (src *ListTestPresetsRequest) ToOgen() (*rest.ListTestPresetsRequest, error
 			en9 = rest.ListTestPresetsRequestProtocolsItem5
 		case domain.Workload_PROTOCOL_COCKROACH:
 			en9 = rest.ListTestPresetsRequestProtocolsItem7
+		case domain.Workload_PROTOCOL_NOOP:
+			en9 = rest.ListTestPresetsRequestProtocolsItem8
 		default:
 			return zero, fmt.Errorf("cloud.v1.api.ListTestPresetsRequest.protocols: enum value %v has no ogen ListTestPresetsRequestProtocolsItem variant", e)
 		}
@@ -1033,6 +1047,10 @@ func ListTestPresetsRequestFromOgen(src *rest.ListTestPresetsRequest) (*ListTest
 			en7 = domain.Database_KIND_EXTERNAL
 		case rest.ListTestPresetsRequestDbKindsItem9:
 			en7 = domain.Database_KIND_ORIOLEDB
+		case rest.ListTestPresetsRequestDbKindsItem10:
+			en7 = domain.Database_KIND_NOOP
+		case rest.ListTestPresetsRequestDbKindsItem11:
+			en7 = domain.Database_KIND_PG_NOOP
 		default:
 			return zero, fmt.Errorf("cloud.v1.api.ListTestPresetsRequest.db_kinds: enum value %v has no Database_Kind variant", e)
 		}
@@ -1081,6 +1099,8 @@ func ListTestPresetsRequestFromOgen(src *rest.ListTestPresetsRequest) (*ListTest
 			en16 = domain.Workload_PROTOCOL_YDB_GRPCS
 		case rest.ListTestPresetsRequestProtocolsItem7:
 			en16 = domain.Workload_PROTOCOL_COCKROACH
+		case rest.ListTestPresetsRequestProtocolsItem8:
+			en16 = domain.Workload_PROTOCOL_NOOP
 		default:
 			return zero, fmt.Errorf("cloud.v1.api.ListTestPresetsRequest.protocols: enum value %v has no Workload_Protocol variant", e)
 		}
@@ -1193,6 +1213,8 @@ func (src *ListWorkloadPresetsRequest) ToOgen() (*rest.ListWorkloadPresetsReques
 			en7 = rest.ListWorkloadPresetsRequestProtocolsItem5
 		case domain.Workload_PROTOCOL_COCKROACH:
 			en7 = rest.ListWorkloadPresetsRequestProtocolsItem7
+		case domain.Workload_PROTOCOL_NOOP:
+			en7 = rest.ListWorkloadPresetsRequestProtocolsItem8
 		default:
 			return zero, fmt.Errorf("cloud.v1.api.ListWorkloadPresetsRequest.protocols: enum value %v has no ogen ListWorkloadPresetsRequestProtocolsItem variant", e)
 		}
@@ -1270,6 +1292,8 @@ func ListWorkloadPresetsRequestFromOgen(src *rest.ListWorkloadPresetsRequest) (*
 			en14 = domain.Workload_PROTOCOL_YDB_GRPCS
 		case rest.ListWorkloadPresetsRequestProtocolsItem7:
 			en14 = domain.Workload_PROTOCOL_COCKROACH
+		case rest.ListWorkloadPresetsRequestProtocolsItem8:
+			en14 = domain.Workload_PROTOCOL_NOOP
 		default:
 			return zero, fmt.Errorf("cloud.v1.api.ListWorkloadPresetsRequest.protocols: enum value %v has no Workload_Protocol variant", e)
 		}

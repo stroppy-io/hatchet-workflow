@@ -121,6 +121,10 @@ func (src *PublicRatingEntry) ToOgen() (*rest.PublicRatingEntry, error) {
 		en1 = rest.PublicRatingEntryDbKind8
 	case domain.Database_KIND_ORIOLEDB:
 		en1 = rest.PublicRatingEntryDbKind9
+	case domain.Database_KIND_NOOP:
+		en1 = rest.PublicRatingEntryDbKind10
+	case domain.Database_KIND_PG_NOOP:
+		en1 = rest.PublicRatingEntryDbKind11
 	default:
 		return nil, fmt.Errorf("cloud.v1.api.PublicRatingEntry.db_kind: enum value %v has no ogen PublicRatingEntryDbKind variant", src.GetDbKind())
 	}
@@ -182,6 +186,10 @@ func PublicRatingEntryFromOgen(src *rest.PublicRatingEntry) (*PublicRatingEntry,
 			en5 = domain.Database_KIND_EXTERNAL
 		case rest.PublicRatingEntryDbKind9:
 			en5 = domain.Database_KIND_ORIOLEDB
+		case rest.PublicRatingEntryDbKind10:
+			en5 = domain.Database_KIND_NOOP
+		case rest.PublicRatingEntryDbKind11:
+			en5 = domain.Database_KIND_PG_NOOP
 		default:
 			return nil, fmt.Errorf("cloud.v1.api.PublicRatingEntry.db_kind: enum value %v has no Database_Kind variant", v4)
 		}

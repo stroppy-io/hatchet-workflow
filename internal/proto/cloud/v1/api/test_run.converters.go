@@ -389,6 +389,10 @@ func (src *ListTestRunsRequest) ToOgen() (*rest.ListTestRunsRequest, error) {
 			en5 = rest.ListTestRunsRequestDbKindsItem8
 		case domain.Database_KIND_ORIOLEDB:
 			en5 = rest.ListTestRunsRequestDbKindsItem9
+		case domain.Database_KIND_NOOP:
+			en5 = rest.ListTestRunsRequestDbKindsItem10
+		case domain.Database_KIND_PG_NOOP:
+			en5 = rest.ListTestRunsRequestDbKindsItem11
 		default:
 			return zero, fmt.Errorf("cloud.v1.api.ListTestRunsRequest.db_kinds: enum value %v has no ogen ListTestRunsRequestDbKindsItem variant", e)
 		}
@@ -449,6 +453,8 @@ func (src *ListTestRunsRequest) ToOgen() (*rest.ListTestRunsRequest, error) {
 			en13 = rest.ListTestRunsRequestProtocolsItem5
 		case domain.Workload_PROTOCOL_COCKROACH:
 			en13 = rest.ListTestRunsRequestProtocolsItem7
+		case domain.Workload_PROTOCOL_NOOP:
+			en13 = rest.ListTestRunsRequestProtocolsItem8
 		default:
 			return zero, fmt.Errorf("cloud.v1.api.ListTestRunsRequest.protocols: enum value %v has no ogen ListTestRunsRequestProtocolsItem variant", e)
 		}
@@ -602,6 +608,10 @@ func ListTestRunsRequestFromOgen(src *rest.ListTestRunsRequest) (*ListTestRunsRe
 			en7 = domain.Database_KIND_EXTERNAL
 		case rest.ListTestRunsRequestDbKindsItem9:
 			en7 = domain.Database_KIND_ORIOLEDB
+		case rest.ListTestRunsRequestDbKindsItem10:
+			en7 = domain.Database_KIND_NOOP
+		case rest.ListTestRunsRequestDbKindsItem11:
+			en7 = domain.Database_KIND_PG_NOOP
 		default:
 			return zero, fmt.Errorf("cloud.v1.api.ListTestRunsRequest.db_kinds: enum value %v has no Database_Kind variant", e)
 		}
@@ -662,6 +672,8 @@ func ListTestRunsRequestFromOgen(src *rest.ListTestRunsRequest) (*ListTestRunsRe
 			en15 = domain.Workload_PROTOCOL_YDB_GRPCS
 		case rest.ListTestRunsRequestProtocolsItem7:
 			en15 = domain.Workload_PROTOCOL_COCKROACH
+		case rest.ListTestRunsRequestProtocolsItem8:
+			en15 = domain.Workload_PROTOCOL_NOOP
 		default:
 			return zero, fmt.Errorf("cloud.v1.api.ListTestRunsRequest.protocols: enum value %v has no Workload_Protocol variant", e)
 		}

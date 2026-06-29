@@ -9427,6 +9427,12 @@ func (s *DatabaseParams) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.Noop != nil {
+			e.FieldStart("noop")
+			s.Noop.Encode(e)
+		}
+	}
+	{
 		if s.Orioledb.Set {
 			e.FieldStart("orioledb")
 			s.Orioledb.Encode(e)
@@ -9436,6 +9442,12 @@ func (s *DatabaseParams) encodeFields(e *jx.Encoder) {
 		if s.Package.Set {
 			e.FieldStart("package")
 			s.Package.Encode(e)
+		}
+	}
+	{
+		if s.PgNoop.Set {
+			e.FieldStart("pgNoop")
+			s.PgNoop.Encode(e)
 		}
 	}
 	{
@@ -9470,17 +9482,19 @@ func (s *DatabaseParams) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfDatabaseParams = [10]string{
-	0: "cockroach",
-	1: "mariadb",
-	2: "mysql",
-	3: "orioledb",
-	4: "package",
-	5: "picodata",
-	6: "postgres",
-	7: "version",
-	8: "ydb",
-	9: "ydbManaged",
+var jsonFieldsNameOfDatabaseParams = [12]string{
+	0:  "cockroach",
+	1:  "mariadb",
+	2:  "mysql",
+	3:  "noop",
+	4:  "orioledb",
+	5:  "package",
+	6:  "pgNoop",
+	7:  "picodata",
+	8:  "postgres",
+	9:  "version",
+	10: "ydb",
+	11: "ydbManaged",
 }
 
 // Decode decodes DatabaseParams from json.
@@ -9521,6 +9535,18 @@ func (s *DatabaseParams) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"mysql\"")
 			}
+		case "noop":
+			if err := func() error {
+				s.Noop = nil
+				var elem NoopParams
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Noop = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"noop\"")
+			}
 		case "orioledb":
 			if err := func() error {
 				s.Orioledb.Reset()
@@ -9540,6 +9566,16 @@ func (s *DatabaseParams) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"package\"")
+			}
+		case "pgNoop":
+			if err := func() error {
+				s.PgNoop.Reset()
+				if err := s.PgNoop.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"pgNoop\"")
 			}
 		case "picodata":
 			if err := func() error {
@@ -34129,6 +34165,50 @@ func (s *NodeLabels) UnmarshalJSON(data []byte) error {
 }
 
 // Encode implements json.Marshaler.
+func (s *NoopParams) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *NoopParams) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfNoopParams = [0]string{}
+
+// Decode decodes NoopParams from json.
+func (s *NoopParams) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode NoopParams to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode NoopParams")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *NoopParams) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *NoopParams) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
 func (s *Object) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
@@ -38521,6 +38601,73 @@ func (s OptPermissionResource) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OptPermissionResource) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes PgNoopParams as json.
+func (o OptPgNoopParams) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes PgNoopParams from json.
+func (o *OptPgNoopParams) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptPgNoopParams to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptPgNoopParams) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptPgNoopParams) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes PgNoopParamsOptions as json.
+func (o OptPgNoopParamsOptions) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes PgNoopParamsOptions from json.
+func (o *OptPgNoopParamsOptions) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptPgNoopParamsOptions to nil")
+	}
+	o.Set = true
+	o.Value = make(PgNoopParamsOptions)
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptPgNoopParamsOptions) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptPgNoopParamsOptions) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -46469,6 +46616,142 @@ func (s PermissionResource) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *PermissionResource) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *PgNoopParams) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *PgNoopParams) encodeFields(e *jx.Encoder) {
+	{
+		if s.Options.Set {
+			e.FieldStart("options")
+			s.Options.Encode(e)
+		}
+	}
+	{
+		if s.Workers.Set {
+			e.FieldStart("workers")
+			s.Workers.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfPgNoopParams = [2]string{
+	0: "options",
+	1: "workers",
+}
+
+// Decode decodes PgNoopParams from json.
+func (s *PgNoopParams) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode PgNoopParams to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "options":
+			if err := func() error {
+				s.Options.Reset()
+				if err := s.Options.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"options\"")
+			}
+		case "workers":
+			if err := func() error {
+				s.Workers.Reset()
+				if err := s.Workers.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"workers\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode PgNoopParams")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *PgNoopParams) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *PgNoopParams) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s PgNoopParamsOptions) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields implements json.Marshaler.
+func (s PgNoopParamsOptions) encodeFields(e *jx.Encoder) {
+	for k, elem := range s {
+		e.FieldStart(k)
+
+		e.Str(elem)
+	}
+}
+
+// Decode decodes PgNoopParamsOptions from json.
+func (s *PgNoopParamsOptions) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode PgNoopParamsOptions to nil")
+	}
+	m := s.init()
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		var elem string
+		if err := func() error {
+			v, err := d.Str()
+			elem = string(v)
+			if err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return errors.Wrapf(err, "decode field %q", k)
+		}
+		m[string(k)] = elem
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode PgNoopParamsOptions")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s PgNoopParamsOptions) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *PgNoopParamsOptions) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

@@ -255,6 +255,10 @@ func (src *ListSuiteRunsRequest) ToOgen() (*rest.ListSuiteRunsRequest, error) {
 			en7 = rest.ListSuiteRunsRequestDbKindsItem8
 		case domain.Database_KIND_ORIOLEDB:
 			en7 = rest.ListSuiteRunsRequestDbKindsItem9
+		case domain.Database_KIND_NOOP:
+			en7 = rest.ListSuiteRunsRequestDbKindsItem10
+		case domain.Database_KIND_PG_NOOP:
+			en7 = rest.ListSuiteRunsRequestDbKindsItem11
 		default:
 			return zero, fmt.Errorf("cloud.v1.api.ListSuiteRunsRequest.db_kinds: enum value %v has no ogen ListSuiteRunsRequestDbKindsItem variant", e)
 		}
@@ -419,6 +423,10 @@ func ListSuiteRunsRequestFromOgen(src *rest.ListSuiteRunsRequest) (*ListSuiteRun
 			en9 = domain.Database_KIND_EXTERNAL
 		case rest.ListSuiteRunsRequestDbKindsItem9:
 			en9 = domain.Database_KIND_ORIOLEDB
+		case rest.ListSuiteRunsRequestDbKindsItem10:
+			en9 = domain.Database_KIND_NOOP
+		case rest.ListSuiteRunsRequestDbKindsItem11:
+			en9 = domain.Database_KIND_PG_NOOP
 		default:
 			return zero, fmt.Errorf("cloud.v1.api.ListSuiteRunsRequest.db_kinds: enum value %v has no Database_Kind variant", e)
 		}

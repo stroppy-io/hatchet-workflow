@@ -205,6 +205,10 @@ func (src *RatingEntry) ToOgen() (*rest.RatingEntry, error) {
 		en1 = rest.RatingEntryDbKind8
 	case domain.Database_KIND_ORIOLEDB:
 		en1 = rest.RatingEntryDbKind9
+	case domain.Database_KIND_NOOP:
+		en1 = rest.RatingEntryDbKind10
+	case domain.Database_KIND_PG_NOOP:
+		en1 = rest.RatingEntryDbKind11
 	default:
 		return nil, fmt.Errorf("cloud.v1.api.RatingEntry.db_kind: enum value %v has no ogen RatingEntryDbKind variant", src.GetDbKind())
 	}
@@ -272,6 +276,10 @@ func RatingEntryFromOgen(src *rest.RatingEntry) (*RatingEntry, error) {
 			en5 = domain.Database_KIND_EXTERNAL
 		case rest.RatingEntryDbKind9:
 			en5 = domain.Database_KIND_ORIOLEDB
+		case rest.RatingEntryDbKind10:
+			en5 = domain.Database_KIND_NOOP
+		case rest.RatingEntryDbKind11:
+			en5 = domain.Database_KIND_PG_NOOP
 		default:
 			return nil, fmt.Errorf("cloud.v1.api.RatingEntry.db_kind: enum value %v has no Database_Kind variant", v4)
 		}
@@ -348,6 +356,10 @@ func (src *RatingFilter) ToOgen() (*rest.RatingFilter, error) {
 			en2 = rest.RatingFilterDbKindsItem8
 		case domain.Database_KIND_ORIOLEDB:
 			en2 = rest.RatingFilterDbKindsItem9
+		case domain.Database_KIND_NOOP:
+			en2 = rest.RatingFilterDbKindsItem10
+		case domain.Database_KIND_PG_NOOP:
+			en2 = rest.RatingFilterDbKindsItem11
 		default:
 			return zero, fmt.Errorf("cloud.v1.api.RatingFilter.db_kinds: enum value %v has no ogen RatingFilterDbKindsItem variant", e)
 		}
@@ -420,6 +432,10 @@ func RatingFilterFromOgen(src *rest.RatingFilter) (*RatingFilter, error) {
 			en3 = domain.Database_KIND_EXTERNAL
 		case rest.RatingFilterDbKindsItem9:
 			en3 = domain.Database_KIND_ORIOLEDB
+		case rest.RatingFilterDbKindsItem10:
+			en3 = domain.Database_KIND_NOOP
+		case rest.RatingFilterDbKindsItem11:
+			en3 = domain.Database_KIND_PG_NOOP
 		default:
 			return zero, fmt.Errorf("cloud.v1.api.RatingFilter.db_kinds: enum value %v has no Database_Kind variant", e)
 		}

@@ -1050,6 +1050,8 @@ components:
                         - 7
                         - 8
                         - 9
+                        - 10
+                        - 11
                     format: int32
                     type: integer
                 tenantId:
@@ -1233,6 +1235,8 @@ components:
                         - 7
                         - 8
                         - 9
+                        - 10
+                        - 11
                     format: int32
                     type: integer
                 packageId:
@@ -1261,6 +1265,10 @@ components:
                     - cockroach
                 - required:
                     - orioledb
+                - required:
+                    - noop
+                - required:
+                    - pgNoop
             properties:
                 cockroach:
                     $ref: '#/components/schemas/CockroachParams'
@@ -1268,10 +1276,14 @@ components:
                     $ref: '#/components/schemas/MySqlParams'
                 mysql:
                     $ref: '#/components/schemas/MySqlParams'
+                noop:
+                    $ref: '#/components/schemas/NoopParams'
                 orioledb:
                     $ref: '#/components/schemas/OrioledbParams'
                 package:
                     $ref: '#/components/schemas/Package'
+                pgNoop:
+                    $ref: '#/components/schemas/PgNoopParams'
                 picodata:
                     $ref: '#/components/schemas/PicodataParams'
                 postgres:
@@ -3262,6 +3274,8 @@ components:
                             - 7
                             - 8
                             - 9
+                            - 10
+                            - 11
                         format: int32
                         type: integer
                     type: array
@@ -3414,6 +3428,8 @@ components:
                             - 7
                             - 8
                             - 9
+                            - 10
+                            - 11
                         format: int32
                         type: integer
                     type: array
@@ -3610,6 +3626,8 @@ components:
                             - 7
                             - 8
                             - 9
+                            - 10
+                            - 11
                         format: int32
                         type: integer
                     type: array
@@ -3777,6 +3795,8 @@ components:
                             - 7
                             - 8
                             - 9
+                            - 10
+                            - 11
                         format: int32
                         type: integer
                     type: array
@@ -3796,6 +3816,7 @@ components:
                             - 4
                             - 5
                             - 7
+                            - 8
                         format: int32
                         type: integer
                     type: array
@@ -3876,6 +3897,8 @@ components:
                             - 7
                             - 8
                             - 9
+                            - 10
+                            - 11
                         format: int32
                         type: integer
                     type: array
@@ -3921,6 +3944,7 @@ components:
                             - 4
                             - 5
                             - 7
+                            - 8
                         format: int32
                         type: integer
                     type: array
@@ -4056,6 +4080,7 @@ components:
                             - 4
                             - 5
                             - 7
+                            - 8
                         format: int32
                         type: integer
                     type: array
@@ -4616,6 +4641,10 @@ components:
                 tags:
                     $ref: '#/components/schemas/Tags'
             type: object
+        NoopParams:
+            additionalProperties: false
+            properties: {}
+            type: object
         Object:
             additionalProperties: false
             properties:
@@ -4752,6 +4781,8 @@ components:
                         - 7
                         - 8
                         - 9
+                        - 10
+                        - 11
                     format: int32
                     type: integer
                 dbVersion:
@@ -4822,6 +4853,8 @@ components:
                         - 7
                         - 8
                         - 9
+                        - 10
+                        - 11
                     format: int32
                     type: integer
                 version:
@@ -5002,6 +5035,18 @@ components:
                         - 13
                         - 14
                     format: int32
+                    type: integer
+            type: object
+        PgNoopParams:
+            additionalProperties: false
+            properties:
+                options:
+                    additionalProperties:
+                        type: string
+                    type: object
+                workers:
+                    format: int32
+                    minimum: 0
                     type: integer
             type: object
         PicodataParams:
@@ -5467,6 +5512,8 @@ components:
                         - 7
                         - 8
                         - 9
+                        - 10
+                        - 11
                     format: int32
                     type: integer
                 metricUnit:
@@ -5652,6 +5699,8 @@ components:
                         - 7
                         - 8
                         - 9
+                        - 10
+                        - 11
                     format: int32
                     type: integer
                 metricUnit:
@@ -5710,6 +5759,8 @@ components:
                             - 7
                             - 8
                             - 9
+                            - 10
+                            - 11
                         format: int32
                         type: integer
                     type: array
@@ -6178,6 +6229,8 @@ components:
                         - 7
                         - 8
                         - 9
+                        - 10
+                        - 11
                     format: int32
                     type: integer
                 dbName:
@@ -6730,6 +6783,8 @@ components:
                             - 7
                             - 8
                             - 9
+                            - 10
+                            - 11
                         format: int32
                         type: integer
                     type: array
@@ -6804,6 +6859,8 @@ components:
                         - 7
                         - 8
                         - 9
+                        - 10
+                        - 11
                     format: int32
                     type: integer
                 dbName:
@@ -7619,6 +7676,8 @@ components:
                         - 7
                         - 8
                         - 9
+                        - 10
+                        - 11
                     format: int32
                     type: integer
                 external:
@@ -7639,6 +7698,7 @@ components:
                         - 4
                         - 5
                         - 7
+                        - 8
                     format: int32
                     type: integer
                 script:
@@ -7663,6 +7723,8 @@ components:
                         - 7
                         - 8
                         - 9
+                        - 10
+                        - 11
                     format: int32
                     type: integer
                 protocol:
@@ -7674,6 +7736,7 @@ components:
                         - 4
                         - 5
                         - 7
+                        - 8
                     format: int32
                     type: integer
                 stroppyVersion:
@@ -7739,6 +7802,8 @@ components:
                             - 7
                             - 8
                             - 9
+                            - 10
+                            - 11
                         format: int32
                         type: integer
                     type: array
@@ -7798,6 +7863,8 @@ components:
                         - 7
                         - 8
                         - 9
+                        - 10
+                        - 11
                     format: int32
                     type: integer
                 dbPresetId:
@@ -7858,6 +7925,7 @@ components:
                         - 4
                         - 5
                         - 7
+                        - 8
                     format: int32
                     type: integer
             type: object
@@ -8764,6 +8832,7 @@ components:
                         - 4
                         - 5
                         - 7
+                        - 8
                     format: int32
                     type: integer
                 segments:

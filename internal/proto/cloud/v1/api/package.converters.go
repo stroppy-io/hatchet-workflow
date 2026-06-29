@@ -105,6 +105,10 @@ func (src *CreatePackageUploadRequest) ToOgen() (*rest.CreatePackageUploadReques
 		en2 = rest.CreatePackageUploadRequestTargetDbKind8
 	case domain.Database_KIND_ORIOLEDB:
 		en2 = rest.CreatePackageUploadRequestTargetDbKind9
+	case domain.Database_KIND_NOOP:
+		en2 = rest.CreatePackageUploadRequestTargetDbKind10
+	case domain.Database_KIND_PG_NOOP:
+		en2 = rest.CreatePackageUploadRequestTargetDbKind11
 	default:
 		return nil, fmt.Errorf("cloud.v1.api.CreatePackageUploadRequest.target_db_kind: enum value %v has no ogen CreatePackageUploadRequestTargetDbKind variant", src.GetTargetDbKind())
 	}
@@ -166,6 +170,10 @@ func CreatePackageUploadRequestFromOgen(src *rest.CreatePackageUploadRequest) (*
 			en7 = domain.Database_KIND_EXTERNAL
 		case rest.CreatePackageUploadRequestTargetDbKind9:
 			en7 = domain.Database_KIND_ORIOLEDB
+		case rest.CreatePackageUploadRequestTargetDbKind10:
+			en7 = domain.Database_KIND_NOOP
+		case rest.CreatePackageUploadRequestTargetDbKind11:
+			en7 = domain.Database_KIND_PG_NOOP
 		default:
 			return nil, fmt.Errorf("cloud.v1.api.CreatePackageUploadRequest.target_db_kind: enum value %v has no Database_Kind variant", v6)
 		}
@@ -377,6 +385,10 @@ func (src *ListPackagesRequest) ToOgen() (*rest.ListPackagesRequest, error) {
 			en5 = rest.ListPackagesRequestDbKindsItem8
 		case domain.Database_KIND_ORIOLEDB:
 			en5 = rest.ListPackagesRequestDbKindsItem9
+		case domain.Database_KIND_NOOP:
+			en5 = rest.ListPackagesRequestDbKindsItem10
+		case domain.Database_KIND_PG_NOOP:
+			en5 = rest.ListPackagesRequestDbKindsItem11
 		default:
 			return zero, fmt.Errorf("cloud.v1.api.ListPackagesRequest.db_kinds: enum value %v has no ogen ListPackagesRequestDbKindsItem variant", e)
 		}
@@ -460,6 +472,10 @@ func ListPackagesRequestFromOgen(src *rest.ListPackagesRequest) (*ListPackagesRe
 			en7 = domain.Database_KIND_EXTERNAL
 		case rest.ListPackagesRequestDbKindsItem9:
 			en7 = domain.Database_KIND_ORIOLEDB
+		case rest.ListPackagesRequestDbKindsItem10:
+			en7 = domain.Database_KIND_NOOP
+		case rest.ListPackagesRequestDbKindsItem11:
+			en7 = domain.Database_KIND_PG_NOOP
 		default:
 			return zero, fmt.Errorf("cloud.v1.api.ListPackagesRequest.db_kinds: enum value %v has no Database_Kind variant", e)
 		}

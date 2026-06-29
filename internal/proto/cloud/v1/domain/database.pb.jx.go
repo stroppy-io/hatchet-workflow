@@ -2034,6 +2034,116 @@ func (m *CockroachParams) UnmarshalJSON(data []byte) error {
 	return m.Decode(d)
 }
 
+func (m *NoopParams) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	e.ObjEnd()
+}
+
+func (m *NoopParams) Decode(d *jx.Decoder) error {
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *NoopParams) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *NoopParams) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *PgNoopParams) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Workers != 0 {
+		e.FieldStart("workers")
+		e.UInt32(m.Workers)
+	}
+	if len(m.Options) > 0 {
+		e.FieldStart("options")
+		e.ObjStart()
+		for k, v := range m.Options {
+			e.FieldStart(k)
+			e.Str(v)
+		}
+		e.ObjEnd()
+	}
+	e.ObjEnd()
+}
+
+func (m *PgNoopParams) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "workers":
+			if seen["Workers"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Workers"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint32(d)
+			if err != nil {
+				return err
+			}
+			m.Workers = v
+			return nil
+		case "options":
+			if seen["Options"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Options"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			if m.Options == nil {
+				m.Options = make(map[string]string)
+			}
+			return d.Obj(func(d *jx.Decoder, ks string) error {
+				mk := ks
+				var mv string
+				tv, err := d.Str()
+				if err != nil {
+					return err
+				}
+				mv = tv
+				m.Options[mk] = mv
+				return nil
+			})
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *PgNoopParams) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *PgNoopParams) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
 func (m *DatabaseParams) Encode(e *jx.Encoder) {
 	if m == nil {
 		e.ObjStart()
@@ -2074,6 +2184,12 @@ func (m *DatabaseParams) Encode(e *jx.Encoder) {
 	case *DatabaseParams_Orioledb:
 		e.FieldStart("orioledb")
 		v.Orioledb.Encode(e)
+	case *DatabaseParams_Noop:
+		e.FieldStart("noop")
+		v.Noop.Encode(e)
+	case *DatabaseParams_PgNoop:
+		e.FieldStart("pgNoop")
+		v.PgNoop.Encode(e)
 	}
 	e.ObjEnd()
 }
@@ -2225,6 +2341,36 @@ func (m *DatabaseParams) Decode(d *jx.Decoder) error {
 			w := &DatabaseParams_Orioledb{}
 			w.Orioledb = &OrioledbParams{}
 			if err := w.Orioledb.Decode(d); err != nil {
+				return err
+			}
+			m.Engine = w
+			return nil
+		case "noop":
+			if seen["oneof:Engine"] {
+				return fmt.Errorf("multiple keys for oneof engine")
+			}
+			seen["oneof:Engine"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			w := &DatabaseParams_Noop{}
+			w.Noop = &NoopParams{}
+			if err := w.Noop.Decode(d); err != nil {
+				return err
+			}
+			m.Engine = w
+			return nil
+		case "pgNoop", "pg_noop":
+			if seen["oneof:Engine"] {
+				return fmt.Errorf("multiple keys for oneof engine")
+			}
+			seen["oneof:Engine"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			w := &DatabaseParams_PgNoop{}
+			w.PgNoop = &PgNoopParams{}
+			if err := w.PgNoop.Decode(d); err != nil {
 				return err
 			}
 			m.Engine = w

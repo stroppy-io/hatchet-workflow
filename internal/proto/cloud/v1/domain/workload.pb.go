@@ -43,6 +43,10 @@ const (
 	Workload_PROTOCOL_YDB_GRPCS Workload_Protocol = 5
 	// COCKROACH is CockroachDB pg-wire on its own default port.
 	Workload_PROTOCOL_COCKROACH Workload_Protocol = 7
+	// NOOP is stroppy's internal no-database driver: rows are generated and
+	// discarded, no connection is made (used by the KIND_NOOP machine
+	// benchmark).
+	Workload_PROTOCOL_NOOP Workload_Protocol = 8
 )
 
 // Enum value maps for Workload_Protocol.
@@ -55,6 +59,7 @@ var (
 		4: "PROTOCOL_YDB_GRPC",
 		5: "PROTOCOL_YDB_GRPCS",
 		7: "PROTOCOL_COCKROACH",
+		8: "PROTOCOL_NOOP",
 	}
 	Workload_Protocol_value = map[string]int32{
 		"PROTOCOL_UNSPECIFIED": 0,
@@ -64,6 +69,7 @@ var (
 		"PROTOCOL_YDB_GRPC":    4,
 		"PROTOCOL_YDB_GRPCS":   5,
 		"PROTOCOL_COCKROACH":   7,
+		"PROTOCOL_NOOP":        8,
 	}
 )
 
@@ -598,7 +604,7 @@ var File_cloud_v1_domain_workload_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_domain_workload_proto_rawDesc = "" +
 	"\n" +
-	"\x1ecloud/v1/domain/workload.proto\x12\x0fcloud.v1.domain\x1a\x1acloud/v1/common/tags.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\xed\r\n" +
+	"\x1ecloud/v1/domain/workload.proto\x12\x0fcloud.v1.domain\x1a\x1acloud/v1/common/tags.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\x80\x0e\n" +
 	"\bWorkload\x120\n" +
 	"\x0fstroppy_version\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x18@R\x0estroppyVersion\x12H\n" +
 	"\bprotocol\x18\x04 \x01(\x0e2\".cloud.v1.domain.Workload.ProtocolB\b\xfaB\x05\x82\x01\x02\x10\x01R\bprotocol\x12I\n" +
@@ -644,7 +650,7 @@ const file_cloud_v1_domain_workload_proto_rawDesc = "" +
 	"\n" +
 	"parameters\x18\x05 \x01(\v2$.cloud.v1.domain.Workload.ParametersR\n" +
 	"parameters\x12F\n" +
-	"\x05files\x18\x06 \x03(\v2&.cloud.v1.domain.Workload.WorkloadFileB\b\xfaB\x05\x92\x01\x02\x10@R\x05files\"\xa7\x01\n" +
+	"\x05files\x18\x06 \x03(\v2&.cloud.v1.domain.Workload.WorkloadFileB\b\xfaB\x05\x92\x01\x02\x10@R\x05files\"\xba\x01\n" +
 	"\bProtocol\x12\x18\n" +
 	"\x14PROTOCOL_UNSPECIFIED\x10\x00\x12\x0f\n" +
 	"\vPROTOCOL_PG\x10\x01\x12\x12\n" +
@@ -652,7 +658,8 @@ const file_cloud_v1_domain_workload_proto_rawDesc = "" +
 	"\x11PROTOCOL_PICODATA\x10\x03\x12\x15\n" +
 	"\x11PROTOCOL_YDB_GRPC\x10\x04\x12\x16\n" +
 	"\x12PROTOCOL_YDB_GRPCS\x10\x05\x12\x16\n" +
-	"\x12PROTOCOL_COCKROACH\x10\aJ\x04\b\x02\x10\x03J\x04\b\x03\x10\x04J\x04\b\x05\x10\x06J\x04\b\x06\x10\aJ\x04\b\a\x10\bR\x06scriptR\x03sqlR\texecutionR\n" +
+	"\x12PROTOCOL_COCKROACH\x10\a\x12\x11\n" +
+	"\rPROTOCOL_NOOP\x10\bJ\x04\b\x02\x10\x03J\x04\b\x03\x10\x04J\x04\b\x05\x10\x06J\x04\b\x06\x10\aJ\x04\b\a\x10\bR\x06scriptR\x03sqlR\texecutionR\n" +
 	"parametersR\x05filesBDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domainb\x06proto3"
 
 var (

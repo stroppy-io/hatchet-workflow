@@ -1222,6 +1222,208 @@ var _ interface {
 	ErrorName() string
 } = CockroachParamsValidationError{}
 
+// Validate checks the field values on NoopParams with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *NoopParams) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on NoopParams with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in NoopParamsMultiError, or
+// nil if none found.
+func (m *NoopParams) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *NoopParams) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return NoopParamsMultiError(errors)
+	}
+
+	return nil
+}
+
+// NoopParamsMultiError is an error wrapping multiple validation errors
+// returned by NoopParams.ValidateAll() if the designated constraints aren't met.
+type NoopParamsMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m NoopParamsMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m NoopParamsMultiError) AllErrors() []error { return m }
+
+// NoopParamsValidationError is the validation error returned by
+// NoopParams.Validate if the designated constraints aren't met.
+type NoopParamsValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e NoopParamsValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e NoopParamsValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e NoopParamsValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e NoopParamsValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e NoopParamsValidationError) ErrorName() string { return "NoopParamsValidationError" }
+
+// Error satisfies the builtin error interface
+func (e NoopParamsValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sNoopParams.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = NoopParamsValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = NoopParamsValidationError{}
+
+// Validate checks the field values on PgNoopParams with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *PgNoopParams) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on PgNoopParams with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in PgNoopParamsMultiError, or
+// nil if none found.
+func (m *PgNoopParams) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *PgNoopParams) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Workers
+
+	// no validation rules for Options
+
+	if len(errors) > 0 {
+		return PgNoopParamsMultiError(errors)
+	}
+
+	return nil
+}
+
+// PgNoopParamsMultiError is an error wrapping multiple validation errors
+// returned by PgNoopParams.ValidateAll() if the designated constraints aren't met.
+type PgNoopParamsMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m PgNoopParamsMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m PgNoopParamsMultiError) AllErrors() []error { return m }
+
+// PgNoopParamsValidationError is the validation error returned by
+// PgNoopParams.Validate if the designated constraints aren't met.
+type PgNoopParamsValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PgNoopParamsValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PgNoopParamsValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PgNoopParamsValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PgNoopParamsValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PgNoopParamsValidationError) ErrorName() string { return "PgNoopParamsValidationError" }
+
+// Error satisfies the builtin error interface
+func (e PgNoopParamsValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPgNoopParams.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PgNoopParamsValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PgNoopParamsValidationError{}
+
 // Validate checks the field values on DatabaseParams with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -1607,6 +1809,90 @@ func (m *DatabaseParams) validate(all bool) error {
 			if err := v.Validate(); err != nil {
 				return DatabaseParamsValidationError{
 					field:  "Orioledb",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *DatabaseParams_Noop:
+		if v == nil {
+			err := DatabaseParamsValidationError{
+				field:  "Engine",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofEnginePresent = true
+
+		if all {
+			switch v := interface{}(m.GetNoop()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, DatabaseParamsValidationError{
+						field:  "Noop",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, DatabaseParamsValidationError{
+						field:  "Noop",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetNoop()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return DatabaseParamsValidationError{
+					field:  "Noop",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *DatabaseParams_PgNoop:
+		if v == nil {
+			err := DatabaseParamsValidationError{
+				field:  "Engine",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofEnginePresent = true
+
+		if all {
+			switch v := interface{}(m.GetPgNoop()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, DatabaseParamsValidationError{
+						field:  "PgNoop",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, DatabaseParamsValidationError{
+						field:  "PgNoop",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetPgNoop()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return DatabaseParamsValidationError{
+					field:  "PgNoop",
 					reason: "embedded message failed validation",
 					cause:  err,
 				}

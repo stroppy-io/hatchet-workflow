@@ -16,11 +16,14 @@
   - [cloud.v1.domain.MySqlParams.PrimaryOptionsEntry](#cloud-v1-domain-mysqlparams-primaryoptionsentry)
   - [cloud.v1.domain.MySqlParams.ProxysqlOptionsEntry](#cloud-v1-domain-mysqlparams-proxysqloptionsentry)
   - [cloud.v1.domain.MySqlParams.ReplicaOptionsEntry](#cloud-v1-domain-mysqlparams-replicaoptionsentry)
+  - [cloud.v1.domain.NoopParams](#cloud-v1-domain-noopparams)
   - [cloud.v1.domain.OrioledbParams](#cloud-v1-domain-orioledbparams)
   - [cloud.v1.domain.OrioledbParams.HaproxyOptionsEntry](#cloud-v1-domain-orioledbparams-haproxyoptionsentry)
   - [cloud.v1.domain.OrioledbParams.PostgresOptionsEntry](#cloud-v1-domain-orioledbparams-postgresoptionsentry)
   - [cloud.v1.domain.OrioledbParams.ReplicaOptionsEntry](#cloud-v1-domain-orioledbparams-replicaoptionsentry)
   - [cloud.v1.domain.Package](#cloud-v1-domain-package)
+  - [cloud.v1.domain.PgNoopParams](#cloud-v1-domain-pgnoopparams)
+  - [cloud.v1.domain.PgNoopParams.OptionsEntry](#cloud-v1-domain-pgnoopparams-optionsentry)
   - [cloud.v1.domain.PicodataParams](#cloud-v1-domain-picodataparams)
   - [cloud.v1.domain.PicodataParams.HaproxyOptionsEntry](#cloud-v1-domain-picodataparams-haproxyoptionsentry)
   - [cloud.v1.domain.PicodataParams.InstanceOptionsEntry](#cloud-v1-domain-picodataparams-instanceoptionsentry)
@@ -291,6 +294,20 @@ KIND_EXTERNAL is an external / unmanaged database addressed only by
 <td><pre>
 KIND_ORIOLEDB is OrioleDB (docker-only patched-Postgres storage engine).
 </pre></td>
+</tr><tr>
+<td>KIND_NOOP</td>
+<td><pre>
+KIND_NOOP is the no-database machine benchmark: stroppy runs with its
+//internal noop driver, deploying NO database, to measure the max row
+//generation rate a single runner machine can produce.
+</pre></td>
+</tr><tr>
+<td>KIND_PG_NOOP</td>
+<td><pre>
+KIND_PG_NOOP is the pg-noop blackhole: a single static binary that
+//speaks the PostgreSQL wire protocol and discards everything, to measure
+//the max rate stroppy can deliver over the wire (the delivery ceiling).
+</pre></td>
 </tr>
 </table>
 
@@ -358,6 +375,12 @@ go_name: Mariadb</pre></td>
 json_name: mysql
 go_name: Mysql</pre></td>
 </tr><tr>
+<td>noop</td>
+<td><a href="#cloud-v1-domain-noopparams">cloud.v1.domain.NoopParams</a></td>
+<td><pre>
+json_name: noop
+go_name: Noop</pre></td>
+</tr><tr>
 <td>orioledb</td>
 <td><a href="#cloud-v1-domain-orioledbparams">cloud.v1.domain.OrioledbParams</a></td>
 <td><pre>
@@ -369,6 +392,12 @@ go_name: Orioledb</pre></td>
 <td><pre>
 json_name: package
 go_name: Package</pre></td>
+</tr><tr>
+<td>pg_noop</td>
+<td><a href="#cloud-v1-domain-pgnoopparams">cloud.v1.domain.PgNoopParams</a></td>
+<td><pre>
+json_name: pgNoop
+go_name: PgNoop</pre></td>
 </tr><tr>
 <td>picodata</td>
 <td><a href="#cloud-v1-domain-picodataparams">cloud.v1.domain.PicodataParams</a></td>
@@ -557,6 +586,20 @@ json_name: value
 go_name: Value</pre></td>
 </tr>
 </table>
+
+
+
+<a name="cloud-v1-domain-noopparams"></a>
+### cloud.v1.domain.NoopParams
+
+<pre>
+//NoopParams is the no-database machine benchmark. There is nothing to deploy:
+//stroppy runs on the runner node alone with its internal noop driver, draining
+//the datagen pipeline to /dev/null. The measured throughput is the runner
+//machine's max row-generation rate. Machine sizing and the generation
+//parallelism come from the infrastructure sizing and Workload params, so this
+//message carries no fields.
+</pre>
 
 
 
@@ -832,6 +875,70 @@ pre_install are shell commands run before the install (add repo, import gpg
 
 json_name: preInstall
 go_name: PreInstall</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-domain-pgnoopparams"></a>
+### cloud.v1.domain.PgNoopParams
+
+<pre>
+//PgNoopParams configures a single pg-noop blackhole container/binary. pg-noop is
+//a static single-binary PostgreSQL-wire server that accepts every connection and
+//discards all data, so stroppy connects with the plain postgres driver. There is
+//no replication or HA: it is one node fronting nothing.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>options</td>
+<td><a href="#cloud-v1-domain-pgnoopparams-optionsentry">cloud.v1.domain.PgNoopParams.OptionsEntry</a></td>
+<td><pre>
+options are verbatim pg-noop config passthroughs (reserved for future knobs).<br>
+
+json_name: options
+go_name: Options</pre></td>
+</tr><tr>
+<td>workers</td>
+<td>uint32</td>
+<td><pre>
+workers is the pg-noop worker-thread count (--workers); 0 => one per logical
+//CPU (the binary default).<br>
+
+json_name: workers
+go_name: Workers</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-domain-pgnoopparams-optionsentry"></a>
+### cloud.v1.domain.PgNoopParams.OptionsEntry
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>key</td>
+<td>string</td>
+<td><pre>
+json_name: key
+go_name: Key</pre></td>
+</tr><tr>
+<td>value</td>
+<td>string</td>
+<td><pre>
+json_name: value
+go_name: Value</pre></td>
 </tr>
 </table>
 
@@ -2053,6 +2160,13 @@ YDB_GRPCS is YDB native gRPC over TLS.
 <td>PROTOCOL_COCKROACH</td>
 <td><pre>
 COCKROACH is CockroachDB pg-wire on its own default port.
+</pre></td>
+</tr><tr>
+<td>PROTOCOL_NOOP</td>
+<td><pre>
+NOOP is stroppy's internal no-database driver: rows are generated and
+//discarded, no connection is made (used by the KIND_NOOP machine
+//benchmark).
 </pre></td>
 </tr>
 </table>
