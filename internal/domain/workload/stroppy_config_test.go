@@ -324,6 +324,50 @@ func TestWorkloadDeploymentRendererWritesRuntimeDBEndpoint(t *testing.T) {
 	}
 }
 
+// The no-DB benchmark renders a runner-only deployment plan: there is no DB
+// component/connection, so BuildPlan must NOT fail resolving a database target,
+// and the stroppy config must carry the noop driver + sentinel DSN.
+func TestWorkloadDeploymentRendererNoopHasNoDBTarget(t *testing.T) {
+	sshPort := uint32(22)
+	spec := &topologypb.TopologySpec{
+		Labels: map[string]string{
+			deploymentbuilder.LabelServerAddr: "http://server:8080",
+			deploymentbuilder.LabelRunID:      "run-noop",
+		},
+		Components: []*topologypb.Component{component(RunnerNodeID, RunnerNodeID)},
+		Nodes:      []*topologypb.Node{node(RunnerNodeID, []string{RunnerNodeID})},
+	}
+	state := &deploymentpb.InfrastructureState{
+		Provider: deploymentpb.Provider_PROVIDER_DOCKER,
+		Machines: []*deploymentpb.MachineState{{
+			NodeId:             RunnerNodeID,
+			ProviderResourceId: "runner-container",
+			Status:             common.Status_STATUS_DEPLOYED,
+			Endpoints:          []*deploymentpb.Endpoint{{Name: "private", Address: "10.0.0.3", Port: &sshPort}},
+		}},
+	}
+
+	workload := testWorkload()
+	workload.Protocol = domain.Workload_PROTOCOL_NOOP
+
+	plan, err := deploymentbuilder.BuildPlan(spec, state, deploymentbuilder.BuildOptions{
+		Database:    &domain.Database{Kind: domain.Database_KIND_NOOP},
+		Workload:    workload,
+		Renderers:   deploymentbuilder.NewRegistry(DeploymentRenderer{}),
+		AgentTokens: map[string]string{RunnerNodeID: "agent-token"},
+	})
+	if err != nil {
+		t.Fatalf("build deployment plan: %v", err)
+	}
+
+	config := deploymentByID(plan, RunnerNodeID).GetSteps()[2].GetWriteFile().GetText()
+	for _, want := range []string{`"noop"`, `noop://localhost`} {
+		if !strings.Contains(config, want) {
+			t.Fatalf("config missing %q:\n%s", want, config)
+		}
+	}
+}
+
 func TestInstallCommandDownloadsStroppyReleaseThroughGateway(t *testing.T) {
 	script := installCommand(&domain.Workload{StroppyVersion: "5.1.2"}, "http://server:8080/")
 

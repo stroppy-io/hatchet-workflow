@@ -30,9 +30,16 @@ func (r DeploymentRenderer) RenderComponent(ctx deploymentbuilder.RenderContext)
 		return nil, fmt.Errorf("workload renderer requires workload input")
 	}
 	dependencies := deploymentbuilder.DependencyIDs(ctx, nil)
-	target, err := resolveDatabaseTarget(ctx)
-	if err != nil {
-		return nil, err
+	// The no-DB benchmark (noop driver) connects to nothing, so there is no DB
+	// target to resolve — the DSN is the fixed noop:// sentinel. Every other
+	// protocol must write a real host/port into stroppy-config.json.
+	target := databaseTarget{}
+	if effectiveProtocol(ctx.Workload.GetProtocol(), ctx.Database) != domain.Workload_PROTOCOL_NOOP {
+		resolved, err := resolveDatabaseTarget(ctx)
+		if err != nil {
+			return nil, err
+		}
+		target = resolved
 	}
 	componentID := ctx.Component.GetId()
 	labels := ctx.Topology.Spec().GetLabels()
