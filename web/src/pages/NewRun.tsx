@@ -163,6 +163,8 @@ const ENGINE_ICON: Record<EngineKind, typeof Database> = {
   ydbManaged: Cloud,
   cockroach: Database,
   orioledb: Database,
+  noop: Cpu,
+  pgnoop: Database,
   external: Network,
 };
 

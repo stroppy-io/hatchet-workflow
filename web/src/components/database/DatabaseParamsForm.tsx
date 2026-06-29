@@ -48,6 +48,7 @@ import {
   type YdbManagedParamsVM,
   type CockroachParamsVM,
   type OrioledbParamsVM,
+  type PgNoopParamsVM,
   type DraftErrorVM,
 } from "@/services/wizard";
 
@@ -62,6 +63,8 @@ export const DB_VERSIONS: Record<EngineKind, string[]> = {
   ydbManaged: ["managed"],
   cockroach: ["24.2", "23.2"],
   orioledb: ["pg17", "pg16"],
+  noop: [],
+  pgnoop: ["0.1.2"],
   external: [],
 };
 
@@ -239,7 +242,7 @@ export function EngineVersionSelect({
   db: DatabaseVM;
   apply: (d: DatabaseVM) => void;
 }) {
-  if (db.kind === "external" || db.kind === "ydbManaged") return null;
+  if (db.kind === "external" || db.kind === "ydbManaged" || db.kind === "noop") return null;
   return (
     <div className="max-w-xs">
       <Label>Engine version</Label>
@@ -534,6 +537,25 @@ export function EngineParamsForm({
         </div>
       );
     }
+    case "noop": {
+      return (
+        <p className="text-[11px] text-zinc-600">
+          No tunable parameters — the no-DB benchmark measures raw stroppy generation rate.
+        </p>
+      );
+    }
+    case "pgnoop": {
+      const p = e.pgnoop;
+      const set = (patch: Partial<PgNoopParamsVM>) =>
+        apply({ ...db, params: { kind: "pgnoop", pgnoop: { ...p, ...patch } } });
+      return (
+        <div className="space-y-4">
+          <div className="max-w-xs">
+            <NumField label="Worker threads" value={p.workers} onChange={(n) => set({ workers: n })} hint="0 = one per CPU" />
+          </div>
+        </div>
+      );
+    }
     case "external": {
       const p = e.external;
       return (
@@ -616,6 +638,10 @@ export function engineNodes(db: DatabaseVM): TopologyGroup[] {
       if (p.haproxy > 0) out.push({ role: "haproxy", engine: "haproxy", count: p.haproxy, kind: "proxy" });
       return out;
     }
+    case "noop":
+      return [];
+    case "pgnoop":
+      return [{ role: "node", engine: "pgnoop", count: 1, kind: "database" }];
     case "external":
       return [{ role: "external", engine: "external", count: 0, kind: "external" }];
   }
@@ -681,7 +707,7 @@ export function validateDatabase(db: DatabaseVM | null): DraftErrorVM[] {
       err("database.params.picodata.replication_factor", "Replication factor cannot exceed the instance count.", "error", "range");
   }
 
-  if (e.kind !== "external" && e.kind !== "ydbManaged") {
+  if (e.kind !== "external" && e.kind !== "ydbManaged" && e.kind !== "noop") {
     if (db.version.length > 128)
       err("database.params.version", "Engine version is too long (max 128 chars).", "error", "max_len");
     else if (!db.version.trim())

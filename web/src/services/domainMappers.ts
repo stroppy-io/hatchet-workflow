@@ -28,6 +28,8 @@ import {
   type YdbManagedParams,
   type CockroachParams,
   type OrioledbParams,
+  type NoopParams,
+  type PgNoopParams,
 } from "@/lib/proto/cloud/v1/domain/database_pb";
 import {
   type Workload,
@@ -48,6 +50,8 @@ import {
   type YdbManagedParamsVM,
   type CockroachParamsVM,
   type OrioledbParamsVM,
+  type NoopParamsVM,
+  type PgNoopParamsVM,
   type ExternalParamsVM,
   type WorkloadVM,
   type WorkloadSegmentVM,
@@ -144,6 +148,16 @@ function orioledbToVM(p: OrioledbParams): OrioledbParamsVM {
   };
 }
 
+function noopToVM(_p: NoopParams): NoopParamsVM {
+  return {};
+}
+
+function pgnoopToVM(p: PgNoopParams): PgNoopParamsVM {
+  return {
+    workers: p.workers,
+  };
+}
+
 // --- per-engine params: VM -> proto init -------------------------------------
 
 function postgresToProto(vm: PostgresParamsVM): Partial<PostgresParams> {
@@ -232,6 +246,16 @@ function orioledbToProto(vm: OrioledbParamsVM): Partial<OrioledbParams> {
   };
 }
 
+function noopToProto(_vm: NoopParamsVM): Partial<NoopParams> {
+  return {};
+}
+
+function pgnoopToProto(vm: PgNoopParamsVM): Partial<PgNoopParams> {
+  return {
+    workers: vm.workers,
+  };
+}
+
 // --- Database: proto -> VM ---------------------------------------------------
 
 /** Map a typed domain.Database onto the flat DatabaseVM the wizard step edits. */
@@ -311,6 +335,18 @@ function engineParamsProtoToVM(
         kind: "orioledb",
         orioledb: orioledbToVM(
           engine?.case === "orioledb" ? engine.value : create_OrioledbEmpty(),
+        ),
+      };
+    case "noop":
+      return {
+        kind: "noop",
+        noop: noopToVM(engine?.case === "noop" ? engine.value : create_NoopEmpty()),
+      };
+    case "pgnoop":
+      return {
+        kind: "pgnoop",
+        pgnoop: pgnoopToVM(
+          engine?.case === "pgNoop" ? engine.value : create_PgNoopEmpty(),
         ),
       };
   }
@@ -408,6 +444,18 @@ function create_OrioledbEmpty(): OrioledbParams {
     haproxyOptions: {},
   };
 }
+function create_NoopEmpty(): NoopParams {
+  return {
+    $typeName: "cloud.v1.domain.NoopParams",
+  };
+}
+function create_PgNoopEmpty(): PgNoopParams {
+  return {
+    $typeName: "cloud.v1.domain.PgNoopParams",
+    workers: 0,
+    options: {},
+  };
+}
 
 // --- Database: VM -> proto ---------------------------------------------------
 
@@ -468,6 +516,10 @@ function engineParamsVMToProto(p: EngineParamsVM): DatabaseParams["engine"] {
       return { case: "cockroach", value: cockroachToProto(p.cockroach) as CockroachParams };
     case "orioledb":
       return { case: "orioledb", value: orioledbToProto(p.orioledb) as OrioledbParams };
+    case "noop":
+      return { case: "noop", value: noopToProto(p.noop) as NoopParams };
+    case "pgnoop":
+      return { case: "pgNoop", value: pgnoopToProto(p.pgnoop) as PgNoopParams };
     case "external":
       // external never reaches here (handled in databaseVMToProto), but keep
       // the switch exhaustive.
