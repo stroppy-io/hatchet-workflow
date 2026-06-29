@@ -5,6 +5,7 @@ import (
 
 	databasecockroach "github.com/stroppy-io/stroppy-cloud/internal/domain/database/cockroach"
 	databasemysql "github.com/stroppy-io/stroppy-cloud/internal/domain/database/mysql"
+	databasenoop "github.com/stroppy-io/stroppy-cloud/internal/domain/database/noop"
 	databaseorioledb "github.com/stroppy-io/stroppy-cloud/internal/domain/database/orioledb"
 	databasepgnoop "github.com/stroppy-io/stroppy-cloud/internal/domain/database/pgnoop"
 	databasepicodata "github.com/stroppy-io/stroppy-cloud/internal/domain/database/picodata"
@@ -58,6 +59,7 @@ func DefaultOptions() Options {
 			databasemysql.PackageResolver{},
 			databaseorioledb.PackageResolver{},
 			databasepgnoop.PackageResolver{},
+			databasenoop.PackageResolver{},
 		),
 		DeploymentRenderers: deploymentbuilder.NewRegistry(
 			databasepostgres.DeploymentRenderer{},

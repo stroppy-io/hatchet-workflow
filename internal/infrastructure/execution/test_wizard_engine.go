@@ -11,6 +11,7 @@ import (
 
 	databasecockroach "github.com/stroppy-io/stroppy-cloud/internal/domain/database/cockroach"
 	databasemysql "github.com/stroppy-io/stroppy-cloud/internal/domain/database/mysql"
+	databasenoop "github.com/stroppy-io/stroppy-cloud/internal/domain/database/noop"
 	databaseorioledb "github.com/stroppy-io/stroppy-cloud/internal/domain/database/orioledb"
 	databasepgnoop "github.com/stroppy-io/stroppy-cloud/internal/domain/database/pgnoop"
 	databasepicodata "github.com/stroppy-io/stroppy-cloud/internal/domain/database/picodata"
@@ -56,6 +57,7 @@ func NewTestWizardEngine() *TestWizardEngine {
 			databasemysql.PackageResolver{},
 			databaseorioledb.PackageResolver{},
 			databasepgnoop.PackageResolver{},
+			databasenoop.PackageResolver{},
 		),
 		renderers: deploymentbuilder.NewRegistry(
 			databasepostgres.DeploymentRenderer{},
