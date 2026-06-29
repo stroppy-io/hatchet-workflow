@@ -17,6 +17,7 @@ import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "rea
 import { AlertCircle, Check, ChevronDown, ChevronUp, Loader2, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectTrigger,
@@ -107,11 +108,15 @@ export function validateWorkload(w: WorkloadVM | null): DraftErrorVM[] {
     const f = (suffix: string) => `workload.segments[${i}].${suffix}`;
     if (!seg.name.trim()) err(f("name"), "Segment needs a name.", "error", "required");
     if (!seg.script.trim()) err(f("script"), "A segment needs a script.", "error", "required");
-    if (seg.execution.vus < 1) err(f("execution.vus"), "At least 1 virtual user.", "error", "min");
+    if (seg.execution.vus != null && seg.execution.vus < 1)
+      err(f("execution.vus"), "At least 1 virtual user.", "error", "min");
     if (seg.execution.limit.case === "duration" && !seg.execution.limit.duration.trim())
       err(f("execution.duration"), "Set a run duration.", "error", "required");
     if (seg.execution.limit.case === "iterations" && seg.execution.limit.iterations < 1)
       err(f("execution.iterations"), "At least 1 iteration.", "error", "min");
+    seg.execution.extraArgs.forEach((a, j) => {
+      if (!a.trim()) err(f(`execution.extraArgs[${j}]`), "Empty extra arg.", "error", "required");
+    });
     if (seg.parameters.steps.length > 0 && seg.parameters.noSteps.length > 0)
       err(f("parameters.steps"), "steps and no_steps are mutually exclusive.", "error", "exclusive");
   });
@@ -281,9 +286,59 @@ function segmentSummary(seg: WorkloadSegmentVM): string {
   const limit =
     seg.execution.limit.case === "duration"
       ? seg.execution.limit.duration || "—"
-      : `${seg.execution.limit.iterations} iters`;
+      : seg.execution.limit.case === "iterations"
+        ? `${seg.execution.limit.iterations} iters`
+        : "no limit";
+  const vus = seg.execution.vus != null ? `${seg.execution.vus} vus` : "auto vus";
   const phases = seg.parameters.steps.length > 0 ? ` · ${seg.parameters.steps.join("+")}` : "";
-  return `${seg.script || "no script"} · ${seg.execution.vus} vus · ${limit}${phases}`;
+  return `${seg.script || "no script"} · ${vus} · ${limit}${phases}`;
+}
+
+/**
+ * Free-form raw "k6 run" argv editor: one token per row, appended after the
+ * managed flags. Tokens stay separate (no shell-splitting) so values with
+ * spaces survive, e.g. ["--max-duration", "1h"].
+ */
+function ExtraArgsEditor({ args, onChange }: { args: string[]; onChange: (next: string[]) => void }) {
+  const setAt = (i: number, v: string) => onChange(args.map((a, j) => (j === i ? v : a)));
+  const removeAt = (i: number) => onChange(args.filter((_, j) => j !== i));
+  return (
+    <div className="mt-3 border border-zinc-800/60 bg-[#0a0a0a] p-3">
+      <div className="mb-2 flex items-center justify-between">
+        <Label className="text-zinc-400">Extra k6 args</Label>
+        <span className="font-mono text-[10px] text-zinc-600">appended after managed flags</span>
+      </div>
+      {args.length > 0 && (
+        <div className="space-y-1.5">
+          {args.map((a, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <Input
+                value={a}
+                onChange={(e) => setAt(i, e.target.value)}
+                placeholder={i === 0 ? "--max-duration" : i === 1 ? "1h" : "--flag or value"}
+                className="h-7 font-mono text-xs"
+              />
+              <button
+                type="button"
+                onClick={() => removeAt(i)}
+                title="Remove arg"
+                className="shrink-0 p-1 text-zinc-600 transition-colors hover:text-red-400"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      <button
+        type="button"
+        onClick={() => onChange([...args, ""])}
+        className="mt-2 flex items-center gap-1.5 text-[11px] text-zinc-500 transition-colors hover:text-zinc-300"
+      >
+        <Plus className="h-3.5 w-3.5" /> Add arg
+      </button>
+    </div>
+  );
 }
 
 /**
@@ -477,13 +532,7 @@ function SegmentEditor({
 
           <div className="border border-zinc-800/60 bg-[#070707] p-4">
             <div className="mb-3 text-[10px] font-mono uppercase tracking-wider text-zinc-600">k6 execution</div>
-            <div className="grid grid-cols-1 gap-3 @lg:grid-cols-2 @3xl:grid-cols-3">
-              <NumField
-                label="Virtual users"
-                value={seg.execution.vus}
-                onChange={(n) => setExec({ vus: n })}
-                min={1}
-              />
+            <div className="grid grid-cols-1 gap-3 @lg:grid-cols-2">
               <div>
                 <Label>Limit by</Label>
                 <Select
@@ -493,7 +542,9 @@ function SegmentEditor({
                       limit:
                         v === "duration"
                           ? { case: "duration", duration: "5m" }
-                          : { case: "iterations", iterations: 10000 },
+                          : v === "iterations"
+                            ? { case: "iterations", iterations: 10000 }
+                            : { case: "none" },
                     })
                   }
                 >
@@ -503,6 +554,7 @@ function SegmentEditor({
                   <SelectContent>
                     <SelectItem value="duration">Duration</SelectItem>
                     <SelectItem value="iterations">Iterations</SelectItem>
+                    <SelectItem value="none">None (config-driven)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -516,16 +568,43 @@ function SegmentEditor({
                     placeholder="10m"
                   />
                 </div>
-              ) : (
+              ) : limit.case === "iterations" ? (
                 <NumField
                   label="Iterations"
                   value={limit.iterations}
                   min={1}
                   onChange={(n) => setExec({ limit: { case: "iterations", iterations: n } })}
                 />
+              ) : (
+                <div className="flex items-end">
+                  <p className="pb-2 text-[11px] leading-snug text-zinc-600">
+                    No --duration/--iterations flag; stroppy env/config (DURATION/ITER) drives it.
+                  </p>
+                </div>
               )}
             </div>
-            <div className="mt-3 grid grid-cols-1 gap-2 @lg:grid-cols-2">
+            <div className="mt-3 grid grid-cols-1 gap-2 @lg:grid-cols-3">
+              <div className="flex min-w-0 items-center justify-between gap-3 border border-zinc-800/60 bg-[#0a0a0a] px-3 py-2.5">
+                <div className="min-w-0">
+                  <div className="truncate text-sm text-foreground">Virtual users</div>
+                  <div className="text-[11px] leading-snug text-zinc-600">k6 --vus · off = config</div>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  {seg.execution.vus != null && (
+                    <Input
+                      type="number"
+                      min={1}
+                      value={seg.execution.vus}
+                      onChange={(e) => setExec({ vus: Math.max(1, Number(e.target.value) || 1) })}
+                      className="h-7 w-20"
+                    />
+                  )}
+                  <Switch
+                    checked={seg.execution.vus != null}
+                    onCheckedChange={(b) => setExec({ vus: b ? 16 : null })}
+                  />
+                </div>
+              </div>
               <ToggleRow
                 label="Quiet"
                 hint="k6 -q"
@@ -539,6 +618,10 @@ function SegmentEditor({
                 onChange={(b) => setExec({ noThresholds: b })}
               />
             </div>
+            <ExtraArgsEditor
+              args={seg.execution.extraArgs}
+              onChange={(extraArgs) => setExec({ extraArgs })}
+            />
           </div>
 
           <div className="border border-zinc-800/60 bg-[#070707] p-4">

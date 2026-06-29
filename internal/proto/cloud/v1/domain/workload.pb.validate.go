@@ -252,10 +252,12 @@ func (m *Workload_Execution) validate(all bool) error {
 
 	var errors []error
 
-	if val := m.GetVus(); val < 1 || val > 100000 {
+	// no validation rules for NoThresholds
+
+	if len(m.GetExtraArgs()) > 64 {
 		err := Workload_ExecutionValidationError{
-			field:  "Vus",
-			reason: "value must be inside range [1, 100000]",
+			field:  "ExtraArgs",
+			reason: "value must contain no more than 64 item(s)",
 		}
 		if !all {
 			return err
@@ -263,11 +265,22 @@ func (m *Workload_Execution) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	// no validation rules for Quiet
+	for idx, item := range m.GetExtraArgs() {
+		_, _ = idx, item
 
-	// no validation rules for NoThresholds
+		if l := utf8.RuneCountInString(item); l < 1 || l > 256 {
+			err := Workload_ExecutionValidationError{
+				field:  fmt.Sprintf("ExtraArgs[%v]", idx),
+				reason: "value length must be between 1 and 256 runes, inclusive",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
-	oneofLimitPresent := false
+	}
+
 	switch v := m.Limit.(type) {
 	case *Workload_Execution_Duration:
 		if v == nil {
@@ -280,7 +293,6 @@ func (m *Workload_Execution) validate(all bool) error {
 			}
 			errors = append(errors, err)
 		}
-		oneofLimitPresent = true
 
 		if utf8.RuneCountInString(m.GetDuration()) > 32 {
 			err := Workload_ExecutionValidationError{
@@ -315,7 +327,6 @@ func (m *Workload_Execution) validate(all bool) error {
 			}
 			errors = append(errors, err)
 		}
-		oneofLimitPresent = true
 
 		if m.GetIterations() < 1 {
 			err := Workload_ExecutionValidationError{
@@ -331,15 +342,24 @@ func (m *Workload_Execution) validate(all bool) error {
 	default:
 		_ = v // ensures v is used
 	}
-	if !oneofLimitPresent {
-		err := Workload_ExecutionValidationError{
-			field:  "Limit",
-			reason: "value is required",
+
+	if m.Vus != nil {
+
+		if val := m.GetVus(); val < 1 || val > 100000 {
+			err := Workload_ExecutionValidationError{
+				field:  "Vus",
+				reason: "value must be inside range [1, 100000]",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
 		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
+
+	}
+
+	if m.Quiet != nil {
+		// no validation rules for Quiet
 	}
 
 	if len(errors) > 0 {

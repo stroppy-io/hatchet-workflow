@@ -258,31 +258,30 @@ func stroppyEnv(params *domain.Workload_Parameters, scaleFactor float64, poolSiz
 	return env
 }
 
-// k6Args mirrors the k6 execution profile (vus + duration|iterations + quiet +
-// no-thresholds) into raw "k6 run" args.
+// k6Args mirrors the k6 execution profile into raw "k6 run" args. Every managed
+// flag is opt-out: --vus, the duration|iterations limit, and -q are emitted only
+// when the profile sets them, so a user can drop a flag (letting stroppy's
+// env-driven config own it) while keeping the rest. Free-form extra_args are
+// appended last so they override the managed flags k6-side.
 func k6Args(exec *domain.Workload_Execution) []string {
-	vus := exec.GetVus()
-	if vus == 0 {
-		vus = 1
+	var args []string
+	// quiet has presence: absent keeps the production default (-q); explicit
+	// false drops it.
+	if exec.Quiet == nil || exec.GetQuiet() {
+		args = append(args, "-q")
 	}
-	// Workload.Execution.quiet is a proto3 scalar today, so the API cannot
-	// distinguish "unset" from "explicit false". Match the main generator's
-	// production default and keep k6 quiet unless the protocol grows presence.
-	args := []string{"-q"}
-	args = append(args, "--vus", fmt.Sprintf("%d", vus))
+	if exec.Vus != nil {
+		args = append(args, "--vus", fmt.Sprintf("%d", exec.GetVus()))
+	}
 	if iterations := exec.GetIterations(); iterations > 0 {
 		args = append(args, "--iterations", fmt.Sprintf("%d", iterations))
-	} else {
-		duration := strings.TrimSpace(exec.GetDuration())
-		if duration == "" {
-			duration = "60s"
-		}
+	} else if duration := strings.TrimSpace(exec.GetDuration()); duration != "" {
 		args = append(args, "--duration", duration)
 	}
 	if exec.GetNoThresholds() {
 		args = append(args, "--no-thresholds")
 	}
-	return args
+	return append(args, exec.GetExtraArgs()...)
 }
 
 // driverTypeURL maps the workload protocol to a stroppy driver type and a

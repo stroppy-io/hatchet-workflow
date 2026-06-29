@@ -7,6 +7,8 @@ import (
 
 	trm "github.com/avito-tech/go-transaction-manager/trm"
 
+	"google.golang.org/protobuf/proto"
+
 	derrors "github.com/stroppy-io/stroppy-cloud/internal/domain/errors"
 	infrastructurebuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/infrastructure"
 	runbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/run"
@@ -314,7 +316,7 @@ func validTestRun(t *testing.T) *domain.TestRun {
 				Name:   "workload",
 				Script: "tpcc/tx",
 				Execution: &domain.Workload_Execution{
-					Vus: 1,
+					Vus: proto.Uint32(1),
 					Limit: &domain.Workload_Execution_Duration{
 						Duration: "1m",
 					},

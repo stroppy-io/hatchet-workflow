@@ -482,8 +482,10 @@ function segmentProtoToVM(s: Workload_Segment, index: number): WorkloadSegmentVM
   let limit: K6Limit;
   if (exec?.limit.case === "iterations") {
     limit = { case: "iterations", iterations: exec.limit.value };
+  } else if (exec?.limit.case === "duration") {
+    limit = { case: "duration", duration: exec.limit.value };
   } else {
-    limit = { case: "duration", duration: exec?.limit.case === "duration" ? exec.limit.value : "" };
+    limit = { case: "none" };
   }
   const p = s.parameters;
   return {
@@ -491,10 +493,12 @@ function segmentProtoToVM(s: Workload_Segment, index: number): WorkloadSegmentVM
     script: s.script ?? "",
     sql: s.sql ?? "",
     execution: {
-      vus: exec?.vus ?? 0,
+      // proto vus/quiet have presence: undefined => omit / production default.
+      vus: exec?.vus ?? null,
       limit,
-      quiet: exec?.quiet ?? false,
+      quiet: exec?.quiet ?? true,
       noThresholds: exec?.noThresholds ?? false,
+      extraArgs: [...(exec?.extraArgs ?? [])],
     },
     parameters: {
       poolSize: p?.poolSize ?? 0,
@@ -522,19 +526,23 @@ export function workloadProtoToVM(w: Workload | undefined): WorkloadVM {
 // --- Workload: VM -> proto ---------------------------------------------------
 
 function segmentVMToProto(seg: WorkloadSegmentVM) {
+  const e = seg.execution;
   const limit =
-    seg.execution.limit.case === "iterations"
-      ? ({ case: "iterations", value: seg.execution.limit.iterations } as const)
-      : ({ case: "duration", value: seg.execution.limit.duration } as const);
+    e.limit.case === "iterations"
+      ? ({ case: "iterations", value: e.limit.iterations } as const)
+      : e.limit.case === "duration"
+        ? ({ case: "duration", value: e.limit.duration } as const)
+        : ({ case: undefined } as const);
   return {
     name: seg.name,
     script: seg.script,
     sql: seg.sql,
     execution: {
-      vus: seg.execution.vus,
+      vus: e.vus ?? undefined,
       limit,
-      quiet: seg.execution.quiet,
-      noThresholds: seg.execution.noThresholds,
+      quiet: e.quiet,
+      noThresholds: e.noThresholds,
+      extraArgs: [...e.extraArgs],
     },
     parameters: {
       poolSize: seg.parameters.poolSize,

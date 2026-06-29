@@ -83,7 +83,11 @@ function protocolLabel(p: Workload_Protocol): string {
 function limitLabel(w: WorkloadVM): string {
   const l = w.segments[0]?.execution.limit;
   if (!l) return "—";
-  return l.case === "duration" ? l.duration || "—" : `${l.iterations} iter`;
+  return l.case === "duration"
+    ? l.duration || "—"
+    : l.case === "iterations"
+      ? `${l.iterations} iter`
+      : "no limit";
 }
 
 export function TestPresetDetail() {

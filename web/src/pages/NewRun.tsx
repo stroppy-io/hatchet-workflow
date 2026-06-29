@@ -2747,9 +2747,12 @@ function workloadExecutionLabel(workload?: WorkloadVM): string {
   const limit =
     seg.execution.limit.case === "duration"
       ? seg.execution.limit.duration
-      : `${seg.execution.limit.iterations} iterations`;
+      : seg.execution.limit.case === "iterations"
+        ? `${seg.execution.limit.iterations} iterations`
+        : "no limit";
   const suffix = workload && workload.segments.length > 1 ? ` · ${workload.segments.length} segments` : "";
-  return `${seg.execution.vus} VU · ${limit}${suffix}`;
+  const vus = seg.execution.vus != null ? `${seg.execution.vus} VU` : "auto VU";
+  return `${vus} · ${limit}${suffix}`;
 }
 
 function workloadStepsLabel(workload?: WorkloadVM): string {

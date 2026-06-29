@@ -199,21 +199,28 @@ func (x *Workload) GetTags() *common.Tags {
 	return nil
 }
 
-// Execution is the k6 execution profile. Limit is exclusive: duration OR
-// iterations.
+// Execution is the k6 execution profile. Every managed flag is opt-out:
+// vus, the duration|iterations limit, and quiet only reach the k6 CLI when
+// set, so stroppy's env-driven config (VUS/DURATION/ITER) can own them
+// instead. Limit is exclusive: duration OR iterations, or neither.
 type Workload_Execution struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// vus is virtual users (k6 --vus).
-	Vus uint32 `protobuf:"varint,1,opt,name=vus,proto3" json:"vus,omitempty"`
+	// vus is virtual users (k6 --vus). Absent => no --vus flag emitted.
+	Vus *uint32 `protobuf:"varint,1,opt,name=vus,proto3,oneof" json:"vus,omitempty"`
 	// Types that are valid to be assigned to Limit:
 	//
 	//	*Workload_Execution_Duration
 	//	*Workload_Execution_Iterations
 	Limit isWorkload_Execution_Limit `protobuf_oneof:"limit"`
-	// quiet maps to k6 -q.
-	Quiet bool `protobuf:"varint,4,opt,name=quiet,proto3" json:"quiet,omitempty"`
+	// quiet maps to k6 -q. Absent => keep the production default (quiet);
+	// explicit false => drop -q.
+	Quiet *bool `protobuf:"varint,4,opt,name=quiet,proto3,oneof" json:"quiet,omitempty"`
 	// no_thresholds maps to k6 --no-thresholds.
-	NoThresholds  bool `protobuf:"varint,5,opt,name=no_thresholds,json=noThresholds,proto3" json:"no_thresholds,omitempty"`
+	NoThresholds bool `protobuf:"varint,5,opt,name=no_thresholds,json=noThresholds,proto3" json:"no_thresholds,omitempty"`
+	// extra_args are free-form raw "k6 run" argv tokens appended verbatim
+	// after the managed flags (so they override them k6-side), one token
+	// per element, e.g. ["--max-duration", "1h"].
+	ExtraArgs     []string `protobuf:"bytes,6,rep,name=extra_args,json=extraArgs,proto3" json:"extra_args,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -249,8 +256,8 @@ func (*Workload_Execution) Descriptor() ([]byte, []int) {
 }
 
 func (x *Workload_Execution) GetVus() uint32 {
-	if x != nil {
-		return x.Vus
+	if x != nil && x.Vus != nil {
+		return *x.Vus
 	}
 	return 0
 }
@@ -281,8 +288,8 @@ func (x *Workload_Execution) GetIterations() uint32 {
 }
 
 func (x *Workload_Execution) GetQuiet() bool {
-	if x != nil {
-		return x.Quiet
+	if x != nil && x.Quiet != nil {
+		return *x.Quiet
 	}
 	return false
 }
@@ -292,6 +299,13 @@ func (x *Workload_Execution) GetNoThresholds() bool {
 		return x.NoThresholds
 	}
 	return false
+}
+
+func (x *Workload_Execution) GetExtraArgs() []string {
+	if x != nil {
+		return x.ExtraArgs
+	}
+	return nil
 }
 
 type isWorkload_Execution_Limit interface {
@@ -584,22 +598,26 @@ var File_cloud_v1_domain_workload_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_domain_workload_proto_rawDesc = "" +
 	"\n" +
-	"\x1ecloud/v1/domain/workload.proto\x12\x0fcloud.v1.domain\x1a\x1acloud/v1/common/tags.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\xa2\r\n" +
+	"\x1ecloud/v1/domain/workload.proto\x12\x0fcloud.v1.domain\x1a\x1acloud/v1/common/tags.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\xed\r\n" +
 	"\bWorkload\x120\n" +
 	"\x0fstroppy_version\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x18@R\x0estroppyVersion\x12H\n" +
 	"\bprotocol\x18\x04 \x01(\x0e2\".cloud.v1.domain.Workload.ProtocolB\b\xfaB\x05\x82\x01\x02\x10\x01R\bprotocol\x12I\n" +
 	"\bsegments\x18\t \x03(\v2!.cloud.v1.domain.Workload.SegmentB\n" +
 	"\xfaB\a\x92\x01\x04\b\x01\x10\x10R\bsegments\x12)\n" +
-	"\x04tags\x18\b \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1a\xe8\x01\n" +
-	"\tExecution\x12\x1d\n" +
-	"\x03vus\x18\x01 \x01(\rB\v\xfaB\b*\x06\x18\xa0\x8d\x06(\x01R\x03vus\x12B\n" +
+	"\x04tags\x18\b \x01(\v2\x15.cloud.v1.common.TagsR\x04tags\x1a\xb3\x02\n" +
+	"\tExecution\x12\"\n" +
+	"\x03vus\x18\x01 \x01(\rB\v\xfaB\b*\x06\x18\xa0\x8d\x06(\x01H\x01R\x03vus\x88\x01\x01\x12B\n" +
 	"\bduration\x18\x02 \x01(\tB$\xfaB!r\x1f\x18 2\x1b^([0-9]+(ns|us|ms|s|m|h))+$H\x00R\bduration\x12)\n" +
 	"\n" +
 	"iterations\x18\x03 \x01(\rB\a\xfaB\x04*\x02(\x01H\x00R\n" +
-	"iterations\x12\x14\n" +
-	"\x05quiet\x18\x04 \x01(\bR\x05quiet\x12#\n" +
-	"\rno_thresholds\x18\x05 \x01(\bR\fnoThresholdsB\x12\n" +
-	"\x05limit\x12\t\xf8B\x01\xf2\xa7\x1d\x02\b\x03\x1a\xf8\x03\n" +
+	"iterations\x12\x19\n" +
+	"\x05quiet\x18\x04 \x01(\bH\x02R\x05quiet\x88\x01\x01\x12#\n" +
+	"\rno_thresholds\x18\x05 \x01(\bR\fnoThresholds\x120\n" +
+	"\n" +
+	"extra_args\x18\x06 \x03(\tB\x11\xfaB\x0e\x92\x01\v\x10@\"\ar\x05\x10\x01\x18\x80\x02R\textraArgsB\x0f\n" +
+	"\x05limit\x12\x06\xf2\xa7\x1d\x02\b\x03B\x06\n" +
+	"\x04_vusB\b\n" +
+	"\x06_quiet\x1a\xf8\x03\n" +
 	"\n" +
 	"Parameters\x12&\n" +
 	"\tpool_size\x18\x01 \x01(\rB\t\xfaB\x06*\x04\x18\xff\xff\x03R\bpoolSize\x12:\n" +

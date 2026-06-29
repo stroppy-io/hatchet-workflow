@@ -1448,7 +1448,10 @@ func decode_Workload_ExecutionInput(m map[string]interface{}) *pb2.Workload_Exec
 	if m == nil {
 		return out
 	}
-	out.Vus = graphqlrt.AsUint32(m["vus"])
+	if _, ok := m["vus"]; ok {
+		v := graphqlrt.AsUint32(m["vus"])
+		out.Vus = &v
+	}
 	if ov, ok := m["limit"].(map[string]interface{}); ok {
 		switch {
 		case ov["duration"] != nil:
@@ -1457,8 +1460,16 @@ func decode_Workload_ExecutionInput(m map[string]interface{}) *pb2.Workload_Exec
 			out.Limit = &pb2.Workload_Execution_Iterations{Iterations: graphqlrt.AsUint32(ov["iterations"])}
 		}
 	}
-	out.Quiet = graphqlrt.AsBool(m["quiet"])
+	if _, ok := m["quiet"]; ok {
+		v := graphqlrt.AsBool(m["quiet"])
+		out.Quiet = &v
+	}
 	out.NoThresholds = graphqlrt.AsBool(m["noThresholds"])
+	if arr, ok := m["extraArgs"].([]interface{}); ok {
+		for _, it := range arr {
+			out.ExtraArgs = append(out.ExtraArgs, graphqlrt.AsString(it))
+		}
+	}
 	return out
 }
 
@@ -7382,7 +7393,7 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 	})})
 	o_Workload_Execution = graphql.NewObject(graphql.ObjectConfig{Name: "Workload_Execution", Fields: graphql.FieldsThunk(func() graphql.Fields {
 		return graphql.Fields{
-			"vus": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+			"vus": &graphql.Field{Type: graphql.Int, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 				obj, _ := p.Source.(*pb2.Workload_Execution)
 				if obj == nil {
 					return nil, nil
@@ -7402,7 +7413,7 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 				}
 				return nil, nil
 			}},
-			"quiet": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+			"quiet": &graphql.Field{Type: graphql.Boolean, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 				obj, _ := p.Source.(*pb2.Workload_Execution)
 				if obj == nil {
 					return nil, nil
@@ -7415,6 +7426,13 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 					return nil, nil
 				}
 				return obj.GetNoThresholds(), nil
+			}},
+			"extraArgs": &graphql.Field{Type: graphql.NewList(graphql.NewNonNull(graphql.String)), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb2.Workload_Execution)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetExtraArgs(), nil
 			}},
 		}
 	})})
@@ -15491,10 +15509,11 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 	})})
 	i_Workload_ExecutionInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "Workload_ExecutionInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
 		return graphql.InputObjectConfigFieldMap{
-			"vus":          &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Int)},
+			"vus":          &graphql.InputObjectFieldConfig{Type: graphql.Int},
 			"limit":        &graphql.InputObjectFieldConfig{Type: i_Workload_ExecutionLimitInput},
-			"quiet":        &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Boolean)},
+			"quiet":        &graphql.InputObjectFieldConfig{Type: graphql.Boolean},
 			"noThresholds": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Boolean)},
+			"extraArgs":    &graphql.InputObjectFieldConfig{Type: graphql.NewList(graphql.NewNonNull(graphql.String))},
 		}
 	})})
 	i_Workload_ExecutionLimitInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "Workload_ExecutionLimitInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {

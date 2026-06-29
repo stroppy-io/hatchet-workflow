@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"testing"
 
+	"google.golang.org/protobuf/proto"
+
 	workloadbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/workload"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
@@ -167,7 +169,7 @@ func (staticCellResolver) ResolveCell(context.Context, string, *domain.SuiteCell
 				Name:   "workload",
 				Script: "tpcc/tx",
 				Execution: &domain.Workload_Execution{
-					Vus: 1,
+					Vus: proto.Uint32(1),
 					Limit: &domain.Workload_Execution_Duration{
 						Duration: "1m",
 					},

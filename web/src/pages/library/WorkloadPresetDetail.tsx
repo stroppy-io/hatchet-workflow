@@ -57,7 +57,9 @@ function limitLabel(w: WorkloadVM): string {
   if (!l) return "—";
   return l.case === "duration"
     ? l.duration || "—"
-    : `${l.iterations} iter`;
+    : l.case === "iterations"
+      ? `${l.iterations} iter`
+      : "no limit";
 }
 
 export function WorkloadPresetDetail() {

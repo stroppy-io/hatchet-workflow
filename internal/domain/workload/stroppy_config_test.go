@@ -1,9 +1,12 @@
 package workload
 
 import (
+	"reflect"
 	"regexp"
 	"strings"
 	"testing"
+
+	"google.golang.org/protobuf/proto"
 
 	deploymentbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
@@ -19,7 +22,7 @@ func TestRenderStroppyConfigRoutesOTLPThroughServerAddress(t *testing.T) {
 			Name:   "workload",
 			Script: "tpcc/tx",
 			Execution: &domain.Workload_Execution{
-				Vus: 1,
+				Vus: proto.Uint32(1),
 				Limit: &domain.Workload_Execution_Duration{
 					Duration: "1m",
 				},
@@ -70,7 +73,7 @@ func TestRenderStroppyConfigSetsPicodataBulkSize(t *testing.T) {
 			Name:   "workload",
 			Script: "tpcc/tx",
 			Execution: &domain.Workload_Execution{
-				Vus: 1,
+				Vus: proto.Uint32(1),
 				Limit: &domain.Workload_Execution_Duration{
 					Duration: "1m",
 				},
@@ -368,7 +371,7 @@ func testWorkload() *domain.Workload {
 			Name:   "workload",
 			Script: "tpcc/procs",
 			Execution: &domain.Workload_Execution{
-				Vus:          1,
+				Vus:          proto.Uint32(1),
 				Limit:        &domain.Workload_Execution_Duration{Duration: "10s"},
 				NoThresholds: true,
 			},
@@ -387,4 +390,65 @@ func deploymentByID(plan *deploymentpb.DeploymentPlan, componentID string) *depl
 		}
 	}
 	return nil
+}
+
+func TestK6Args(t *testing.T) {
+	dur := func(d string) *domain.Workload_Execution_Duration {
+		return &domain.Workload_Execution_Duration{Duration: d}
+	}
+	iters := func(n uint32) *domain.Workload_Execution_Iterations {
+		return &domain.Workload_Execution_Iterations{Iterations: n}
+	}
+	cases := []struct {
+		name string
+		exec *domain.Workload_Execution
+		want []string
+	}{
+		{
+			name: "full profile, extra args appended last",
+			exec: &domain.Workload_Execution{
+				Vus: proto.Uint32(4), Limit: dur("5m"), Quiet: proto.Bool(true),
+				NoThresholds: true, ExtraArgs: []string{"--max-duration", "1h"},
+			},
+			want: []string{"-q", "--vus", "4", "--duration", "5m", "--no-thresholds", "--max-duration", "1h"},
+		},
+		{
+			name: "vus omitted => no --vus",
+			exec: &domain.Workload_Execution{Limit: dur("30s")},
+			want: []string{"-q", "--duration", "30s"},
+		},
+		{
+			name: "limit omitted => no duration/iterations flag",
+			exec: &domain.Workload_Execution{Vus: proto.Uint32(2)},
+			want: []string{"-q", "--vus", "2"},
+		},
+		{
+			name: "iterations limit",
+			exec: &domain.Workload_Execution{Vus: proto.Uint32(1), Limit: iters(100)},
+			want: []string{"-q", "--vus", "1", "--iterations", "100"},
+		},
+		{
+			name: "quiet absent keeps default -q",
+			exec: &domain.Workload_Execution{Limit: dur("1m")},
+			want: []string{"-q", "--duration", "1m"},
+		},
+		{
+			name: "quiet explicit false drops -q",
+			exec: &domain.Workload_Execution{Quiet: proto.Bool(false), Limit: dur("1m")},
+			want: []string{"--duration", "1m"},
+		},
+		{
+			name: "only extra args (all managed flags off)",
+			exec: &domain.Workload_Execution{Quiet: proto.Bool(false), ExtraArgs: []string{"--max-duration", "24h"}},
+			want: []string{"--max-duration", "24h"},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := k6Args(tc.exec)
+			if !reflect.DeepEqual(got, tc.want) {
+				t.Fatalf("k6Args = %v, want %v", got, tc.want)
+			}
+		})
+	}
 }

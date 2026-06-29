@@ -616,7 +616,7 @@ func workload() *domainpb.Workload {
 			Name:   "workload",
 			Script: "tpcc/tx",
 			Execution: &domainpb.Workload_Execution{
-				Vus: 1,
+				Vus: proto.Uint32(1),
 				Limit: &domainpb.Workload_Execution_Duration{
 					Duration: "1m",
 				},

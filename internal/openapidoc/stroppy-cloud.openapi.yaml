@@ -1776,6 +1776,13 @@ components:
                     maxLength: 32
                     pattern: ^([0-9]+(ns|us|ms|s|m|h))+$
                     type: string
+                extraArgs:
+                    items:
+                        maxLength: 256
+                        minLength: 1
+                        type: string
+                    maxItems: 64
+                    type: array
                 iterations:
                     format: int32
                     minimum: 1

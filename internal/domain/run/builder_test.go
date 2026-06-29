@@ -3,6 +3,8 @@ package run
 import (
 	"testing"
 
+	"google.golang.org/protobuf/proto"
+
 	infrastructurebuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/infrastructure"
 	workloadbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/workload"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
@@ -55,7 +57,7 @@ func TestBuildTestRun(t *testing.T) {
 
 func TestBuildTestRunUsesMaxRunnerSizingFromThousandVUs(t *testing.T) {
 	wl := workload()
-	wl.Segments[0].Execution.Vus = 1000
+	wl.Segments[0].Execution.Vus = proto.Uint32(1000)
 	run, err := BuildTestRun(BuildOptions{
 		ID:       "run-1",
 		Database: postgresDatabase(),
@@ -131,7 +133,7 @@ func workload() *domain.Workload {
 			Name:   "workload",
 			Script: "tpcc/tx",
 			Execution: &domain.Workload_Execution{
-				Vus: 1,
+				Vus: proto.Uint32(1),
 				Limit: &domain.Workload_Execution_Duration{
 					Duration: "1m",
 				},

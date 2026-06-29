@@ -681,9 +681,9 @@ func splitSegment(name, script string, vus uint32, scaleFactor float64, steps []
 		Name:   name,
 		Script: script,
 		Execution: &domain.Workload_Execution{
-			Vus:          vus,
+			Vus:          proto.Uint32(vus),
 			Limit:        &domain.Workload_Execution_Duration{Duration: duration},
-			Quiet:        true,
+			Quiet:        proto.Bool(true),
 			NoThresholds: true,
 		},
 		Parameters: &domain.Workload_Parameters{
@@ -720,9 +720,9 @@ func tpchSplitWorkload() *domain.Workload {
 				Name:   "workload",
 				Script: "tpch/tx",
 				Execution: &domain.Workload_Execution{
-					Vus:          2,
+					Vus:          proto.Uint32(2),
 					Limit:        &domain.Workload_Execution_Iterations{Iterations: 1},
-					Quiet:        true,
+					Quiet:        proto.Bool(true),
 					NoThresholds: true,
 				},
 				Parameters: &domain.Workload_Parameters{
@@ -743,11 +743,11 @@ func minimalSelfCheckWorkload(protocol domain.Workload_Protocol) *domain.Workloa
 				Name:   "workload",
 				Script: "tpcc/tx",
 				Execution: &domain.Workload_Execution{
-					Vus: 1,
+					Vus: proto.Uint32(1),
 					Limit: &domain.Workload_Execution_Duration{
 						Duration: "30s",
 					},
-					Quiet:        true,
+					Quiet:        proto.Bool(true),
 					NoThresholds: true,
 				},
 				Parameters: &domain.Workload_Parameters{

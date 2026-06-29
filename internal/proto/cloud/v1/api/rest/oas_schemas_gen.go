@@ -4607,6 +4607,7 @@ func (EventStatus) AllValues() []EventStatus {
 // Ref: #/components/schemas/Execution
 type Execution struct {
 	Duration     OptString `json:"duration"`
+	ExtraArgs    []string  `json:"extraArgs"`
 	Iterations   OptInt32  `json:"iterations"`
 	NoThresholds OptBool   `json:"noThresholds"`
 	Quiet        OptBool   `json:"quiet"`
@@ -4616,6 +4617,11 @@ type Execution struct {
 // GetDuration returns the value of Duration.
 func (s *Execution) GetDuration() OptString {
 	return s.Duration
+}
+
+// GetExtraArgs returns the value of ExtraArgs.
+func (s *Execution) GetExtraArgs() []string {
+	return s.ExtraArgs
 }
 
 // GetIterations returns the value of Iterations.
@@ -4641,6 +4647,11 @@ func (s *Execution) GetVus() OptInt32 {
 // SetDuration sets the value of Duration.
 func (s *Execution) SetDuration(val OptString) {
 	s.Duration = val
+}
+
+// SetExtraArgs sets the value of ExtraArgs.
+func (s *Execution) SetExtraArgs(val []string) {
+	s.ExtraArgs = val
 }
 
 // SetIterations sets the value of Iterations.

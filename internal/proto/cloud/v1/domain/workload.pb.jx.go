@@ -144,17 +144,25 @@ func (m *Workload_Execution) Encode(e *jx.Encoder) {
 		return
 	}
 	e.ObjStart()
-	if m.Vus != 0 {
+	if m.Vus != nil {
 		e.FieldStart("vus")
-		e.UInt32(m.Vus)
+		e.UInt32(*m.Vus)
 	}
-	if m.Quiet != false {
+	if m.Quiet != nil {
 		e.FieldStart("quiet")
-		e.Bool(m.Quiet)
+		e.Bool(*m.Quiet)
 	}
 	if m.NoThresholds != false {
 		e.FieldStart("noThresholds")
 		e.Bool(m.NoThresholds)
+	}
+	if len(m.ExtraArgs) > 0 {
+		e.FieldStart("extraArgs")
+		e.ArrStart()
+		for _, v := range m.ExtraArgs {
+			e.Str(v)
+		}
+		e.ArrEnd()
 	}
 	switch v := m.Limit.(type) {
 	case *Workload_Execution_Duration:
@@ -183,7 +191,7 @@ func (m *Workload_Execution) Decode(d *jx.Decoder) error {
 			if err != nil {
 				return err
 			}
-			m.Vus = v
+			m.Vus = &v
 			return nil
 		case "quiet":
 			if seen["Quiet"] {
@@ -197,7 +205,7 @@ func (m *Workload_Execution) Decode(d *jx.Decoder) error {
 			if err != nil {
 				return err
 			}
-			m.Quiet = v
+			m.Quiet = &v
 			return nil
 		case "noThresholds", "no_thresholds":
 			if seen["NoThresholds"] {
@@ -213,6 +221,22 @@ func (m *Workload_Execution) Decode(d *jx.Decoder) error {
 			}
 			m.NoThresholds = v
 			return nil
+		case "extraArgs", "extra_args":
+			if seen["ExtraArgs"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["ExtraArgs"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				v, err := d.Str()
+				if err != nil {
+					return err
+				}
+				m.ExtraArgs = append(m.ExtraArgs, v)
+				return nil
+			})
 		case "duration":
 			if seen["oneof:Limit"] {
 				return fmt.Errorf("multiple keys for oneof limit")

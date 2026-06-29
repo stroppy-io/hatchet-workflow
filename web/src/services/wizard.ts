@@ -289,14 +289,21 @@ export interface DatabaseVM {
 // --- Workload (mirror domain.Workload) ---------------------------------------
 
 export type K6Limit =
+  | { case: "none" }
   | { case: "duration"; duration: string }
   | { case: "iterations"; iterations: number };
 
 export interface WorkloadExecutionVM {
-  vus: number;
+  /** k6 --vus; null => omit the flag (let stroppy env/config own it). */
+  vus: number | null;
+  /** k6 --duration|--iterations; "none" => omit the limit flag. */
   limit: K6Limit;
+  /** k6 -q. */
   quiet: boolean;
+  /** k6 --no-thresholds. */
   noThresholds: boolean;
+  /** Free-form raw "k6 run" argv tokens, appended last, e.g. ["--max-duration", "1h"]. */
+  extraArgs: string[];
 }
 
 export interface WorkloadParametersVM {
@@ -1551,6 +1558,7 @@ export function defaultSegment(name = "workload"): WorkloadSegmentVM {
       limit: { case: "duration", duration: "5m" },
       quiet: false,
       noThresholds: false,
+      extraArgs: [],
     },
     parameters: {
       poolSize: 16,

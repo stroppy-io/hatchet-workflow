@@ -19,6 +19,8 @@ import (
 
 	"connectrpc.com/connect"
 
+	"google.golang.org/protobuf/proto"
+
 	api "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/apiconnect"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
@@ -175,7 +177,7 @@ func tinyWorkload(vus uint32, scale float64, duration string) *domain.Workload {
 		Script:         defaultScript,
 		Protocol:       domain.Workload_PROTOCOL_PG,
 		Execution: &domain.Workload_Execution{
-			Vus:          vus,
+			Vus:          proto.Uint32(vus),
 			Limit:        &domain.Workload_Execution_Duration{Duration: duration},
 			NoThresholds: true,
 		},

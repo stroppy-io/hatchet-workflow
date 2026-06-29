@@ -1835,8 +1835,10 @@ go_name: Tags</pre></td>
 ### cloud.v1.domain.Workload.Execution
 
 <pre>
-//Execution is the k6 execution profile. Limit is exclusive: duration OR
-//iterations.
+//Execution is the k6 execution profile. Every managed flag is opt-out:
+//vus, the duration|iterations limit, and quiet only reach the k6 CLI when
+//set, so stroppy's env-driven config (VUS/DURATION/ITER) can own them
+//instead. Limit is exclusive: duration OR iterations, or neither.
 </pre>
 
 <table>
@@ -1853,6 +1855,16 @@ duration maps to k6 --duration, format like "10m", "1h30m".<br>
 
 json_name: duration
 go_name: Duration</pre></td>
+</tr><tr>
+<td>extra_args</td>
+<td>string</td>
+<td><pre>
+extra_args are free-form raw "k6 run" argv tokens appended verbatim
+//after the managed flags (so they override them k6-side), one token
+//per element, e.g. ["--max-duration", "1h"].<br>
+
+json_name: extraArgs
+go_name: ExtraArgs</pre></td>
 </tr><tr>
 <td>iterations</td>
 <td>uint32</td>
@@ -1873,7 +1885,8 @@ go_name: NoThresholds</pre></td>
 <td>quiet</td>
 <td>bool</td>
 <td><pre>
-quiet maps to k6 -q.<br>
+quiet maps to k6 -q. Absent => keep the production default (quiet);
+//explicit false => drop -q.<br>
 
 json_name: quiet
 go_name: Quiet</pre></td>
@@ -1881,7 +1894,7 @@ go_name: Quiet</pre></td>
 <td>vus</td>
 <td>uint32</td>
 <td><pre>
-vus is virtual users (k6 --vus).<br>
+vus is virtual users (k6 --vus). Absent => no --vus flag emitted.<br>
 
 json_name: vus
 go_name: Vus</pre></td>

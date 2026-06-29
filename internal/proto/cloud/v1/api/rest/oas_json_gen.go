@@ -13361,6 +13361,16 @@ func (s *Execution) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.ExtraArgs != nil {
+			e.FieldStart("extraArgs")
+			e.ArrStart()
+			for _, elem := range s.ExtraArgs {
+				e.Str(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
 		if s.Iterations.Set {
 			e.FieldStart("iterations")
 			s.Iterations.Encode(e)
@@ -13386,12 +13396,13 @@ func (s *Execution) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfExecution = [5]string{
+var jsonFieldsNameOfExecution = [6]string{
 	0: "duration",
-	1: "iterations",
-	2: "noThresholds",
-	3: "quiet",
-	4: "vus",
+	1: "extraArgs",
+	2: "iterations",
+	3: "noThresholds",
+	4: "quiet",
+	5: "vus",
 }
 
 // Decode decodes Execution from json.
@@ -13411,6 +13422,25 @@ func (s *Execution) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"duration\"")
+			}
+		case "extraArgs":
+			if err := func() error {
+				s.ExtraArgs = make([]string, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem string
+					v, err := d.Str()
+					elem = string(v)
+					if err != nil {
+						return err
+					}
+					s.ExtraArgs = append(s.ExtraArgs, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"extraArgs\"")
 			}
 		case "iterations":
 			if err := func() error {

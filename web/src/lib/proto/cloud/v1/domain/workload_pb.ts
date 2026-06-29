@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/domain/workload.proto.
  */
 export const file_cloud_v1_domain_workload: GenFile = /*@__PURE__*/
-  fileDesc("Ch5jbG91ZC92MS9kb21haW4vd29ya2xvYWQucHJvdG8SD2Nsb3VkLnYxLmRvbWFpbiKqCwoIV29ya2xvYWQSIAoPc3Ryb3BweV92ZXJzaW9uGAEgASgJQgf6QgRyAhhAEj4KCHByb3RvY29sGAQgASgOMiIuY2xvdWQudjEuZG9tYWluLldvcmtsb2FkLlByb3RvY29sQgj6QgWCAQIQARI/CghzZWdtZW50cxgJIAMoCzIhLmNsb3VkLnYxLmRvbWFpbi5Xb3JrbG9hZC5TZWdtZW50Qgr6QgeSAQQIARAQEiMKBHRhZ3MYCCABKAsyFS5jbG91ZC52MS5jb21tb24uVGFncxq4AQoJRXhlY3V0aW9uEhgKA3Z1cxgBIAEoDUIL+kIIKgYoARigjQYSOAoIZHVyYXRpb24YAiABKAlCJPpCIXIfGCAyG14oWzAtOV0rKG5zfHVzfG1zfHN8bXxoKSkrJEgAEh0KCml0ZXJhdGlvbnMYAyABKA1CB/pCBCoCKAFIABINCgVxdWlldBgEIAEoCBIVCg1ub190aHJlc2hvbGRzGAUgASgIQhIKBWxpbWl0Egn4QgHypx0CCAMaoQMKClBhcmFtZXRlcnMSHAoJcG9vbF9zaXplGAEgASgNQgn6QgYqBBj//wMSLQoMc2NhbGVfZmFjdG9yGAIgASgBQhf6QhQSEhkAAAAAAGr4QCEAAAAAAAAAABImChVkZWZhdWx0X2luc2VydF9tZXRob2QYAyABKAlCB/pCBHICGEASaQoDZW52GAQgAygLMi0uY2xvdWQudjEuZG9tYWluLldvcmtsb2FkLlBhcmFtZXRlcnMuRW52RW50cnlCLfpCKpoBJxCAAiIbchkQARiAAjISXltBLVpfXVtBLVowLTlfXSokKgVyAxiAQBIyCgVzdGVwcxgFIAMoCUIj+kIgkgEdECAiGXIXEAEYQDIRXlthLXpdW2EtejAtOV9dKiQSNQoIbm9fc3RlcHMYBiADKAlCI/pCIJIBHRAgIhlyFxABGEAyEV5bYS16XVthLXowLTlfXSokEhwKCWJ1bGtfc2l6ZRgHIAEoDUIJ+kIGKgQYwIQ9GioKCEVudkVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEabwoMV29ya2xvYWRGaWxlEisKBG5hbWUYASABKAlCHfpCGnIYGIACMhFeW0EtWmEtejAtOS5fLV0rJBABEhUKBGtpbmQYAiABKAlCB/pCBHICGCASGwoHY29udGVudBgDIAEoCUIK+kIHcgUogICAAhqSAgoHU2VnbWVudBIXCgRuYW1lGAEgASgJQgn6QgZyBBABGEASGgoGc2NyaXB0GAIgASgJQgr6QgdyBRABGIAEEhUKA3NxbBgDIAEoCUII+kIFcgMYgAQSQAoJZXhlY3V0aW9uGAQgASgLMiMuY2xvdWQudjEuZG9tYWluLldvcmtsb2FkLkV4ZWN1dGlvbkII+kIFigECEAESOAoKcGFyYW1ldGVycxgFIAEoCzIkLmNsb3VkLnYxLmRvbWFpbi5Xb3JrbG9hZC5QYXJhbWV0ZXJzEj8KBWZpbGVzGAYgAygLMiYuY2xvdWQudjEuZG9tYWluLldvcmtsb2FkLldvcmtsb2FkRmlsZUII+kIFkgECEEAipwEKCFByb3RvY29sEhgKFFBST1RPQ09MX1VOU1BFQ0lGSUVEEAASDwoLUFJPVE9DT0xfUEcQARISCg5QUk9UT0NPTF9NWVNRTBACEhUKEVBST1RPQ09MX1BJQ09EQVRBEAMSFQoRUFJPVE9DT0xfWURCX0dSUEMQBBIWChJQUk9UT0NPTF9ZREJfR1JQQ1MQBRIWChJQUk9UT0NPTF9DT0NLUk9BQ0gQB0oECAIQA0oECAMQBEoECAUQBkoECAYQB0oECAcQCFIGc2NyaXB0UgNzcWxSCWV4ZWN1dGlvblIKcGFyYW1ldGVyc1IFZmlsZXNCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvZG9tYWluYgZwcm90bzM", [file_cloud_v1_common_tags, file_validate_validate, file_ogen_ogen]);
+  fileDesc("Ch5jbG91ZC92MS9kb21haW4vd29ya2xvYWQucHJvdG8SD2Nsb3VkLnYxLmRvbWFpbiLqCwoIV29ya2xvYWQSIAoPc3Ryb3BweV92ZXJzaW9uGAEgASgJQgf6QgRyAhhAEj4KCHByb3RvY29sGAQgASgOMiIuY2xvdWQudjEuZG9tYWluLldvcmtsb2FkLlByb3RvY29sQgj6QgWCAQIQARI/CghzZWdtZW50cxgJIAMoCzIhLmNsb3VkLnYxLmRvbWFpbi5Xb3JrbG9hZC5TZWdtZW50Qgr6QgeSAQQIARAQEiMKBHRhZ3MYCCABKAsyFS5jbG91ZC52MS5jb21tb24uVGFncxr4AQoJRXhlY3V0aW9uEh0KA3Z1cxgBIAEoDUIL+kIIKgYoARigjQZIAYgBARI4CghkdXJhdGlvbhgCIAEoCUIk+kIhch8YIDIbXihbMC05XSsobnN8dXN8bXN8c3xtfGgpKSskSAASHQoKaXRlcmF0aW9ucxgDIAEoDUIH+kIEKgIoAUgAEhIKBXF1aWV0GAQgASgISAKIAQESFQoNbm9fdGhyZXNob2xkcxgFIAEoCBIlCgpleHRyYV9hcmdzGAYgAygJQhH6Qg6SAQsQQCIHcgUQARiAAkIPCgVsaW1pdBIG8qcdAggDQgYKBF92dXNCCAoGX3F1aWV0GqEDCgpQYXJhbWV0ZXJzEhwKCXBvb2xfc2l6ZRgBIAEoDUIJ+kIGKgQY//8DEi0KDHNjYWxlX2ZhY3RvchgCIAEoAUIX+kIUEhIZAAAAAABq+EAhAAAAAAAAAAASJgoVZGVmYXVsdF9pbnNlcnRfbWV0aG9kGAMgASgJQgf6QgRyAhhAEmkKA2VudhgEIAMoCzItLmNsb3VkLnYxLmRvbWFpbi5Xb3JrbG9hZC5QYXJhbWV0ZXJzLkVudkVudHJ5Qi36QiqaAScQgAIiG3IZEAEYgAIyEl5bQS1aX11bQS1aMC05X10qJCoFcgMYgEASMgoFc3RlcHMYBSADKAlCI/pCIJIBHSIZchcyEV5bYS16XVthLXowLTlfXSokEAEYQBAgEjUKCG5vX3N0ZXBzGAYgAygJQiP6QiCSAR0QICIZchcQARhAMhFeW2Etel1bYS16MC05X10qJBIcCglidWxrX3NpemUYByABKA1CCfpCBioEGMCEPRoqCghFbnZFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGm8KDFdvcmtsb2FkRmlsZRIrCgRuYW1lGAEgASgJQh36QhpyGBiAAjIRXltBLVphLXowLTkuXy1dKyQQARIVCgRraW5kGAIgASgJQgf6QgRyAhggEhsKB2NvbnRlbnQYAyABKAlCCvpCB3IFKICAgAIakgIKB1NlZ21lbnQSFwoEbmFtZRgBIAEoCUIJ+kIGcgQQARhAEhoKBnNjcmlwdBgCIAEoCUIK+kIHcgUYgAQQARIVCgNzcWwYAyABKAlCCPpCBXIDGIAEEkAKCWV4ZWN1dGlvbhgEIAEoCzIjLmNsb3VkLnYxLmRvbWFpbi5Xb3JrbG9hZC5FeGVjdXRpb25CCPpCBYoBAhABEjgKCnBhcmFtZXRlcnMYBSABKAsyJC5jbG91ZC52MS5kb21haW4uV29ya2xvYWQuUGFyYW1ldGVycxI/CgVmaWxlcxgGIAMoCzImLmNsb3VkLnYxLmRvbWFpbi5Xb3JrbG9hZC5Xb3JrbG9hZEZpbGVCCPpCBZIBAhBAIqcBCghQcm90b2NvbBIYChRQUk9UT0NPTF9VTlNQRUNJRklFRBAAEg8KC1BST1RPQ09MX1BHEAESEgoOUFJPVE9DT0xfTVlTUUwQAhIVChFQUk9UT0NPTF9QSUNPREFUQRADEhUKEVBST1RPQ09MX1lEQl9HUlBDEAQSFgoSUFJPVE9DT0xfWURCX0dSUENTEAUSFgoSUFJPVE9DT0xfQ09DS1JPQUNIEAdKBAgCEANKBAgDEARKBAgFEAZKBAgGEAdKBAgHEAhSBnNjcmlwdFIDc3FsUglleGVjdXRpb25SCnBhcmFtZXRlcnNSBWZpbGVzQkRaQmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2RvbWFpbmIGcHJvdG8z", [file_cloud_v1_common_tags, file_validate_validate, file_ogen_ogen]);
 
 /**
  *
@@ -163,18 +163,20 @@ export const WorkloadSchema: GenMessage<Workload, {jsonType: WorkloadJson, valid
 
 /**
  *
- * Execution is the k6 execution profile. Limit is exclusive: duration OR
- * iterations.
+ * Execution is the k6 execution profile. Every managed flag is opt-out:
+ * vus, the duration|iterations limit, and quiet only reach the k6 CLI when
+ * set, so stroppy's env-driven config (VUS/DURATION/ITER) can own them
+ * instead. Limit is exclusive: duration OR iterations, or neither.
  *
  * @generated from message cloud.v1.domain.Workload.Execution
  */
 export type Workload_Execution = Message<"cloud.v1.domain.Workload.Execution"> & {
   /**
-   * vus is virtual users (k6 --vus). 
+   * vus is virtual users (k6 --vus). Absent => no --vus flag emitted. 
    *
-   * @generated from field: uint32 vus = 1;
+   * @generated from field: optional uint32 vus = 1;
    */
-  vus: number;
+  vus?: number;
 
   /**
    * @generated from oneof cloud.v1.domain.Workload.Execution.limit
@@ -198,11 +200,12 @@ export type Workload_Execution = Message<"cloud.v1.domain.Workload.Execution"> &
   } | { case: undefined; value?: undefined };
 
   /**
-   * quiet maps to k6 -q. 
+   * quiet maps to k6 -q. Absent => keep the production default (quiet);
+   * explicit false => drop -q. 
    *
-   * @generated from field: bool quiet = 4;
+   * @generated from field: optional bool quiet = 4;
    */
-  quiet: boolean;
+  quiet?: boolean;
 
   /**
    * no_thresholds maps to k6 --no-thresholds. 
@@ -210,20 +213,31 @@ export type Workload_Execution = Message<"cloud.v1.domain.Workload.Execution"> &
    * @generated from field: bool no_thresholds = 5;
    */
   noThresholds: boolean;
+
+  /**
+   * extra_args are free-form raw "k6 run" argv tokens appended verbatim
+   * after the managed flags (so they override them k6-side), one token
+   * per element, e.g. ["--max-duration", "1h"]. 
+   *
+   * @generated from field: repeated string extra_args = 6;
+   */
+  extraArgs: string[];
 };
 
 /**
  *
- * Execution is the k6 execution profile. Limit is exclusive: duration OR
- * iterations.
+ * Execution is the k6 execution profile. Every managed flag is opt-out:
+ * vus, the duration|iterations limit, and quiet only reach the k6 CLI when
+ * set, so stroppy's env-driven config (VUS/DURATION/ITER) can own them
+ * instead. Limit is exclusive: duration OR iterations, or neither.
  *
  * @generated from message cloud.v1.domain.Workload.Execution
  */
 export type Workload_ExecutionJson = {
   /**
-   * vus is virtual users (k6 --vus). 
+   * vus is virtual users (k6 --vus). Absent => no --vus flag emitted. 
    *
-   * @generated from field: uint32 vus = 1;
+   * @generated from field: optional uint32 vus = 1;
    */
   vus?: number;
 
@@ -242,9 +256,10 @@ export type Workload_ExecutionJson = {
   iterations?: number;
 
   /**
-   * quiet maps to k6 -q. 
+   * quiet maps to k6 -q. Absent => keep the production default (quiet);
+   * explicit false => drop -q. 
    *
-   * @generated from field: bool quiet = 4;
+   * @generated from field: optional bool quiet = 4;
    */
   quiet?: boolean;
 
@@ -254,6 +269,15 @@ export type Workload_ExecutionJson = {
    * @generated from field: bool no_thresholds = 5;
    */
   noThresholds?: boolean;
+
+  /**
+   * extra_args are free-form raw "k6 run" argv tokens appended verbatim
+   * after the managed flags (so they override them k6-side), one token
+   * per element, e.g. ["--max-duration", "1h"]. 
+   *
+   * @generated from field: repeated string extra_args = 6;
+   */
+  extraArgs?: string[];
 };
 
 export type Workload_ExecutionValid = Workload_Execution;

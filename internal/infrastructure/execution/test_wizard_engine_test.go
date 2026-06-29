@@ -81,7 +81,7 @@ func wizardWorkload() *domain.Workload {
 			Name:   "workload",
 			Script: "tpcc/tx",
 			Execution: &domain.Workload_Execution{
-				Vus: 16,
+				Vus: proto.Uint32(16),
 				Limit: &domain.Workload_Execution_Duration{
 					Duration: "1m",
 				},

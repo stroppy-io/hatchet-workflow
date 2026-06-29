@@ -2680,9 +2680,17 @@ func ExecutionToOgen(src *domain.Workload_Execution) (*rest.Execution, error) {
 	if src == nil {
 		return &dst, nil
 	}
-	dst.Vus.SetTo(int32(src.GetVus()))
-	dst.Quiet.SetTo(bool(src.GetQuiet()))
+	if src.Vus != nil {
+		dst.Vus.SetTo(int32(src.GetVus()))
+	}
+	if src.Quiet != nil {
+		dst.Quiet.SetTo(bool(src.GetQuiet()))
+	}
 	dst.NoThresholds.SetTo(bool(src.GetNoThresholds()))
+	c1 := convert.Slice(src.GetExtraArgs(), func(e string) string {
+		return string(e)
+	})
+	dst.ExtraArgs = c1
 	switch src.GetLimit().(type) {
 	case *domain.Workload_Execution_Duration:
 		dst.Duration.SetTo(string(src.GetDuration()))
@@ -2699,19 +2707,25 @@ func ExecutionFromOgen(src *rest.Execution) (*domain.Workload_Execution, error) 
 	}
 	dst := &domain.Workload_Execution{}
 	if v1, ok := src.Vus.Get(); ok {
-		dst.Vus = uint32(v1)
+		p2 := uint32(v1)
+		dst.Vus = &p2
 	}
-	if v2, ok := src.Quiet.Get(); ok {
-		dst.Quiet = bool(v2)
+	if v3, ok := src.Quiet.Get(); ok {
+		p4 := bool(v3)
+		dst.Quiet = &p4
 	}
-	if v3, ok := src.NoThresholds.Get(); ok {
-		dst.NoThresholds = bool(v3)
+	if v5, ok := src.NoThresholds.Get(); ok {
+		dst.NoThresholds = bool(v5)
 	}
-	if v4, ok := src.Duration.Get(); ok {
-		dst.Limit = &domain.Workload_Execution_Duration{Duration: string(v4)}
+	c6 := convert.Slice(src.ExtraArgs, func(e string) string {
+		return string(e)
+	})
+	dst.ExtraArgs = c6
+	if v7, ok := src.Duration.Get(); ok {
+		dst.Limit = &domain.Workload_Execution_Duration{Duration: string(v7)}
 	}
-	if v5, ok := src.Iterations.Get(); ok {
-		dst.Limit = &domain.Workload_Execution_Iterations{Iterations: uint32(v5)}
+	if v8, ok := src.Iterations.Get(); ok {
+		dst.Limit = &domain.Workload_Execution_Iterations{Iterations: uint32(v8)}
 	}
 	return dst, nil
 }
