@@ -77,7 +77,9 @@ export type DbKind =
   | "cockroach"
   | "picodata"
   | "orioledb"
-  | "external";
+  | "external"
+  | "noop"
+  | "pgnoop";
 
 /** All selectable db kinds (UNSPECIFIED excluded), for the facet control. */
 export const DB_KINDS: Exclude<DbKind, "">[] = [
@@ -90,6 +92,8 @@ export const DB_KINDS: Exclude<DbKind, "">[] = [
   "picodata",
   "orioledb",
   "external",
+  "noop",
+  "pgnoop",
 ];
 
 /** All selectable statuses for the facet control (UNSPECIFIED excluded). */
@@ -113,7 +117,8 @@ export type Protocol =
   | "picodata"
   | "ydb_grpc"
   | "ydb_grpcs"
-  | "cockroach";
+  | "cockroach"
+  | "noop";
 
 /** All selectable protocols (UNSPECIFIED excluded), for the facet control. */
 export const PROTOCOLS: Exclude<Protocol, "">[] = [
@@ -123,6 +128,7 @@ export const PROTOCOLS: Exclude<Protocol, "">[] = [
   "ydb_grpc",
   "ydb_grpcs",
   "cockroach",
+  "noop",
 ];
 
 /**

@@ -45,6 +45,7 @@ const ENUM_TO_PROTOCOL: Record<Workload_Protocol, Protocol> = {
   [Workload_Protocol.YDB_GRPC]: "ydb_grpc",
   [Workload_Protocol.YDB_GRPCS]: "ydb_grpcs",
   [Workload_Protocol.COCKROACH]: "cockroach",
+  [Workload_Protocol.NOOP]: "noop",
 };
 
 function protocolLabel(p: Workload_Protocol): string {

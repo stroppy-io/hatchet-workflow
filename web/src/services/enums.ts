@@ -16,6 +16,8 @@ const DB_KIND_TO_LABEL: Record<Database_Kind, DbKind> = {
   [Database_Kind.PICODATA]: "picodata",
   [Database_Kind.ORIOLEDB]: "orioledb",
   [Database_Kind.EXTERNAL]: "external",
+  [Database_Kind.NOOP]: "noop",
+  [Database_Kind.PG_NOOP]: "pgnoop",
 };
 
 const LABEL_TO_DB_KIND: Record<Exclude<DbKind, "">, Database_Kind> = {
@@ -28,6 +30,8 @@ const LABEL_TO_DB_KIND: Record<Exclude<DbKind, "">, Database_Kind> = {
   picodata: Database_Kind.PICODATA,
   orioledb: Database_Kind.ORIOLEDB,
   external: Database_Kind.EXTERNAL,
+  noop: Database_Kind.NOOP,
+  pgnoop: Database_Kind.PG_NOOP,
 };
 
 /** numeric proto enum -> UI label ("" for UNSPECIFIED/unknown). */
@@ -56,6 +60,10 @@ export function dbKindLabelFromJson(s: string | undefined): DbKind {
       return "orioledb";
     case "KIND_EXTERNAL":
       return "external";
+    case "KIND_NOOP":
+      return "noop";
+    case "KIND_PG_NOOP":
+      return "pgnoop";
     default:
       return "";
   }
@@ -146,7 +154,8 @@ export type ProtocolLabel =
   | "picodata"
   | "ydb_grpc"
   | "ydb_grpcs"
-  | "cockroach";
+  | "cockroach"
+  | "noop";
 
 /** domain.Workload.Protocol JSON-string enum -> lower-cased label. */
 export function protocolLabelFromJson(s: string | undefined): ProtocolLabel {
@@ -163,6 +172,8 @@ export function protocolLabelFromJson(s: string | undefined): ProtocolLabel {
       return "ydb_grpcs";
     case "PROTOCOL_COCKROACH":
       return "cockroach";
+    case "PROTOCOL_NOOP":
+      return "noop";
     default:
       return "";
   }
@@ -183,6 +194,8 @@ export function protocolProto(p: ProtocolLabel): Workload_Protocol {
       return Workload_Protocol.YDB_GRPCS;
     case "cockroach":
       return Workload_Protocol.COCKROACH;
+    case "noop":
+      return Workload_Protocol.NOOP;
     default:
       return Workload_Protocol.UNSPECIFIED;
   }

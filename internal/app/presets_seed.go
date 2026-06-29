@@ -260,6 +260,14 @@ func builtinDatabasePresets(tenantID, authorID string) []*models.DatabasePresetR
 	add("CockroachDB cluster-6", "6-node CockroachDB cluster (more parallel ranges)",
 		domain.Database_KIND_COCKROACH, crdb(&domain.CockroachParams{Nodes: 6}))
 
+	// --- Noop perf ceilings: machine max (no DB) and delivery max (pg-noop) ---
+	add("No-DB (machine max)", "No database: stroppy runs with its internal noop driver to measure the runner machine's max row generation rate.",
+		domain.Database_KIND_NOOP,
+		&domain.DatabaseParams{Engine: &domain.DatabaseParams_Noop{Noop: &domain.NoopParams{}}})
+	add("pg-noop (delivery max)", "pg-noop blackhole: a single binary speaking the postgres wire protocol and discarding all data, measuring the max rate stroppy can deliver over the wire.",
+		domain.Database_KIND_PG_NOOP,
+		&domain.DatabaseParams{Engine: &domain.DatabaseParams_PgNoop{PgNoop: &domain.PgNoopParams{}}})
+
 	return out
 }
 
@@ -664,6 +672,7 @@ func builtinWorkloadPresets(tenantID, authorID string) []*models.WorkloadPresetR
 		add("Self-check YDB gRPC", "Minimal self-hosted YDB workload", domain.Workload_PROTOCOL_YDB_GRPC),
 		add("Self-check YDB gRPCS", "Minimal managed YDB workload", domain.Workload_PROTOCOL_YDB_GRPCS),
 		add("Self-check CockroachDB", "Minimal CockroachDB workload", domain.Workload_PROTOCOL_COCKROACH),
+		add("Self-check Noop", "Minimal no-DB workload (stroppy noop driver, no connection)", domain.Workload_PROTOCOL_NOOP),
 		addSplit("TPC-C split (bootstrap + workload)",
 			"TPC-C in two segments: a bootstrap (schema + load + indexes) then the measured workload, so load time does not skew the workload averages",
 			tpccSplitWorkload()),
@@ -791,7 +800,9 @@ func ensureDatabaseParamsPackage(kind domain.Database_Kind, params *domain.Datab
 func builtinDatabasePackage(kind domain.Database_Kind, version string) *domain.Package {
 	if kind == domain.Database_KIND_UNSPECIFIED ||
 		kind == domain.Database_KIND_YDB_MANAGED ||
-		kind == domain.Database_KIND_EXTERNAL {
+		kind == domain.Database_KIND_EXTERNAL ||
+		kind == domain.Database_KIND_NOOP {
+		// KIND_NOOP deploys no database (machine benchmark); nothing to install.
 		return nil
 	}
 	if version == "" {
@@ -859,6 +870,14 @@ func builtinDatabasePackage(kind domain.Database_Kind, version string) *domain.P
 		pkg.Name = "OrioleDB " + version
 		// OrioleDB is Docker-only: the engine is embedded in the container image;
 		// no apt packages or binary downloads are required.
+	case domain.Database_KIND_PG_NOOP:
+		pkg.Id = "builtin/pgnoop/" + version
+		pkg.Name = "pg-noop " + version
+		downloadVersion := "0.1.2"
+		if version != "default" {
+			downloadVersion = version
+		}
+		pkg.DebFilename = fmt.Sprintf("${STROPPY_SERVER_ADDR%%/}/api/binaries/pgnoop/%s/pg-noop-x86_64-unknown-linux-musl.tar.xz", downloadVersion)
 	}
 	return pkg
 }
@@ -951,6 +970,10 @@ func workloadProtocolForDatabase(kind domain.Database_Kind) domain.Workload_Prot
 	case domain.Database_KIND_COCKROACH:
 		return domain.Workload_PROTOCOL_COCKROACH
 	case domain.Database_KIND_ORIOLEDB:
+		return domain.Workload_PROTOCOL_PG
+	case domain.Database_KIND_NOOP:
+		return domain.Workload_PROTOCOL_NOOP
+	case domain.Database_KIND_PG_NOOP:
 		return domain.Workload_PROTOCOL_PG
 	default:
 		return domain.Workload_PROTOCOL_PG

@@ -28,8 +28,9 @@ var binaryUpstreams = map[string]string{
 	// so the non-default-version install fetches the key through this cache. {ver}
 	// is a dummy path segment; only {file} (ACCC4CF8.asc) is substituted.
 	"postgresql-key": "https://www.postgresql.org/media/keys/{file}",
-	"vector":            "https://packages.timber.io/vector/{ver}/{file}",
-	"ydbd":              "https://binaries.ydb.tech/release/{ver}/{file}",
+	"vector":         "https://packages.timber.io/vector/{ver}/{file}",
+	"ydbd":           "https://binaries.ydb.tech/release/{ver}/{file}",
+	"pgnoop":         "https://github.com/stroppy-io/pg-noop/releases/download/v{ver}/{file}",
 }
 
 // inflight collapses concurrent first-hit downloads of the same artifact into a

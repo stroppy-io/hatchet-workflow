@@ -70,6 +70,9 @@ var workloadProtocols = map[domain.Workload_Protocol]protocolMeta{
 	domain.Workload_PROTOCOL_YDB_GRPC:  {driverType: "ydb", port: 2136, urlScheme: "grpc", urlTail: "/Root/testdb"},
 	domain.Workload_PROTOCOL_YDB_GRPCS: {driverType: "ydb", port: 2135, urlScheme: "grpcs"},
 	domain.Workload_PROTOCOL_COCKROACH: {driverType: "postgres", port: 26257, urlScheme: "postgresql", urlTail: "/defaultdb?sslmode=disable"},
+	// NOOP makes no connection: the stroppy noop driver discards rows locally. The
+	// url is a fixed sentinel (no host/port) — see driverTypeURL.
+	domain.Workload_PROTOCOL_NOOP: {driverType: "noop", urlScheme: "noop"},
 }
 
 var databaseDefaultProtocols = map[domain.Database_Kind]domain.Workload_Protocol{
@@ -79,6 +82,10 @@ var databaseDefaultProtocols = map[domain.Database_Kind]domain.Workload_Protocol
 	domain.Database_KIND_YDB_MANAGED: domain.Workload_PROTOCOL_YDB_GRPCS,
 	domain.Database_KIND_COCKROACH:   domain.Workload_PROTOCOL_COCKROACH,
 	domain.Database_KIND_PICODATA:    domain.Workload_PROTOCOL_PICODATA,
+	// pg-noop speaks plain pg-wire, so it rides the postgres driver/url.
+	domain.Database_KIND_PG_NOOP: domain.Workload_PROTOCOL_PG,
+	// The no-DB machine benchmark uses stroppy's internal noop driver.
+	domain.Database_KIND_NOOP: domain.Workload_PROTOCOL_NOOP,
 }
 
 func (t databaseTarget) hostToken() string {
@@ -295,6 +302,9 @@ func driverTypeURL(protocol domain.Workload_Protocol, target databaseTarget) (st
 	}
 
 	switch protocol {
+	case domain.Workload_PROTOCOL_NOOP:
+		// The noop driver connects to nothing; stroppy expects the noop:// scheme.
+		return meta.driverType, "noop://localhost"
 	case domain.Workload_PROTOCOL_PG:
 		return meta.driverType, fmt.Sprintf("postgresql://%s@%s:%s/postgres?sslmode=disable", postgresUserInfo(target), host, port)
 	case domain.Workload_PROTOCOL_PICODATA:

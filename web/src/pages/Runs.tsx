@@ -150,6 +150,8 @@ const DB_LABEL: Record<Exclude<DbKind, "">, string> = {
   picodata: "Picodata",
   orioledb: "OrioleDB",
   external: "External",
+  noop: "No-DB",
+  pgnoop: "pg-noop",
 };
 
 // Per-database accent colour. Each engine gets its OWN distinct hue that sits
@@ -165,6 +167,8 @@ const DB_COLOR: Record<Exclude<DbKind, "">, string> = {
   picodata: "#fb7185", // rose — Picodata
   orioledb: "#E8633A", // orange — OrioleDB
   external: "#9ca3af", // grey — external / unmanaged
+  noop: "#94a3b8", // slate — no database
+  pgnoop: "#22d3ee", // cyan — pg-wire blackhole
 };
 
 const PROTOCOL_LABEL: Record<Exclude<Protocol, "">, string> = {
@@ -174,6 +178,7 @@ const PROTOCOL_LABEL: Record<Exclude<Protocol, "">, string> = {
   ydb_grpc: "YDB gRPC",
   ydb_grpcs: "YDB gRPCs",
   cockroach: "CockroachDB",
+  noop: "Noop",
 };
 
 const TRIGGER_LABEL: Record<Exclude<RunTrigger, "">, string> = {

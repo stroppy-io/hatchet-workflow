@@ -30,6 +30,20 @@ func ExtendTopologySpec(spec *topologypb.TopologySpec, input *domain.Workload) (
 		return spec, nil
 	}
 
+	// The no-DB machine benchmark (PROTOCOL_NOOP) deploys no database: the runner
+	// stands alone with stroppy's internal noop driver and connects to nothing.
+	if input.GetProtocol() == domain.Workload_PROTOCOL_NOOP {
+		spec.Components = append(spec.Components, component(RunnerNodeID, RunnerNodeID))
+		spec.Nodes = append(spec.Nodes, node(RunnerNodeID, []string{RunnerNodeID}))
+		if spec.Labels == nil {
+			spec.Labels = map[string]string{}
+		}
+		spec.Labels["workload_engine"] = Engine
+		spec.Labels["workload_runner"] = RunnerNodeID
+		spec.Labels["workload_vus"] = strconv.FormatUint(uint64(PrimarySegment(input).GetExecution().GetVus()), 10)
+		return spec, nil
+	}
+
 	targets := workloadTargets(spec)
 	if len(targets) == 0 {
 		return nil, fmt.Errorf("workload runner has no database entrypoint target")

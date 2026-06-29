@@ -22,9 +22,11 @@ func TestBuiltinDatabasePresetsCarryBuiltinPackage(t *testing.T) {
 		db := preset.GetDatabase()
 		kinds[db.GetKind()] = true
 		pkg := db.GetParams().GetPackage()
-		if db.GetKind() == domain.Database_KIND_YDB_MANAGED {
+		if db.GetKind() == domain.Database_KIND_YDB_MANAGED || db.GetKind() == domain.Database_KIND_NOOP {
+			// Managed YDB and the no-DB machine benchmark deploy no engine, so
+			// they carry no install package.
 			if pkg != nil {
-				t.Fatalf("%q managed YDB preset has package %+v", preset.GetEntity().GetName(), pkg)
+				t.Fatalf("%q preset has package %+v but should have none", preset.GetEntity().GetName(), pkg)
 			}
 			continue
 		}
@@ -274,9 +276,10 @@ func TestBuiltinSelfCheckMatrixBuildsSeededTopologies(t *testing.T) {
 
 				db := cloneDatabaseWithBuiltinPackage(preset.GetDatabase())
 				pkg := db.GetParams().GetPackage()
-				if db.GetKind() == domain.Database_KIND_YDB_MANAGED {
+				noPackageKind := db.GetKind() == domain.Database_KIND_YDB_MANAGED || db.GetKind() == domain.Database_KIND_NOOP
+				if noPackageKind {
 					if pkg != nil {
-						t.Fatalf("%q managed YDB self-check database has package %+v", preset.GetEntity().GetName(), pkg)
+						t.Fatalf("%q no-deploy self-check database has package %+v", preset.GetEntity().GetName(), pkg)
 					}
 				} else if pkg == nil {
 					t.Fatalf("%q self-check database has no builtin package", preset.GetEntity().GetName())
@@ -298,9 +301,9 @@ func TestBuiltinSelfCheckMatrixBuildsSeededTopologies(t *testing.T) {
 					t.Fatalf("%q built no runnable machines", preset.GetEntity().GetName())
 				}
 				runPkg := run.GetDatabase().GetParams().GetPackage()
-				if db.GetKind() == domain.Database_KIND_YDB_MANAGED {
+				if noPackageKind {
 					if runPkg != nil {
-						t.Fatalf("%q managed YDB run has package %+v", preset.GetEntity().GetName(), runPkg)
+						t.Fatalf("%q no-deploy run has package %+v", preset.GetEntity().GetName(), runPkg)
 					}
 					continue
 				}

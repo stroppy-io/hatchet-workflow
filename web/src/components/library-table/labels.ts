@@ -16,7 +16,9 @@ export type DbKind =
   | "cockroach"
   | "picodata"
   | "orioledb"
-  | "external";
+  | "external"
+  | "noop"
+  | "pgnoop";
 
 /** All selectable db kinds (UNSPECIFIED excluded), for facet controls. */
 export const DB_KINDS: Exclude<DbKind, "">[] = [
@@ -29,6 +31,8 @@ export const DB_KINDS: Exclude<DbKind, "">[] = [
   "picodata",
   "orioledb",
   "external",
+  "noop",
+  "pgnoop",
 ];
 
 export const DB_LABEL: Record<Exclude<DbKind, "">, string> = {
@@ -41,6 +45,8 @@ export const DB_LABEL: Record<Exclude<DbKind, "">, string> = {
   picodata: "Picodata",
   orioledb: "OrioleDB",
   external: "External",
+  noop: "No-DB",
+  pgnoop: "pg-noop",
 };
 
 // Per-database accent colour — identical to the Test Runs table so an engine
@@ -55,6 +61,8 @@ export const DB_COLOR: Record<Exclude<DbKind, "">, string> = {
   picodata: "#fb7185",
   orioledb: "#E8633A",
   external: "#9ca3af",
+  noop: "#94a3b8", // slate — no database
+  pgnoop: "#22d3ee", // cyan — pg-wire blackhole
 };
 
 /** Workload wire protocol, mapped from cloud.v1.domain.Workload.Protocol. */
@@ -65,7 +73,8 @@ export type Protocol =
   | "picodata"
   | "ydb_grpc"
   | "ydb_grpcs"
-  | "cockroach";
+  | "cockroach"
+  | "noop";
 
 export const PROTOCOLS: Exclude<Protocol, "">[] = [
   "pg",
@@ -74,6 +83,7 @@ export const PROTOCOLS: Exclude<Protocol, "">[] = [
   "ydb_grpc",
   "ydb_grpcs",
   "cockroach",
+  "noop",
 ];
 
 export const PROTOCOL_LABEL: Record<Exclude<Protocol, "">, string> = {
@@ -83,6 +93,7 @@ export const PROTOCOL_LABEL: Record<Exclude<Protocol, "">, string> = {
   ydb_grpc: "YDB gRPC",
   ydb_grpcs: "YDB gRPCs",
   cockroach: "CockroachDB",
+  noop: "Noop",
 };
 
 /** Package format, mapped from cloud.v1.models.PackageRecord.Format. */

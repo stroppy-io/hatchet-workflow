@@ -6,6 +6,7 @@ import (
 	cockroachdb "github.com/stroppy-io/stroppy-cloud/internal/domain/database/cockroach"
 	mysqldb "github.com/stroppy-io/stroppy-cloud/internal/domain/database/mysql"
 	orioledbdb "github.com/stroppy-io/stroppy-cloud/internal/domain/database/orioledb"
+	pgnoopdb "github.com/stroppy-io/stroppy-cloud/internal/domain/database/pgnoop"
 	picodatadb "github.com/stroppy-io/stroppy-cloud/internal/domain/database/picodata"
 	postgresdb "github.com/stroppy-io/stroppy-cloud/internal/domain/database/postgres"
 	ydbdb "github.com/stroppy-io/stroppy-cloud/internal/domain/database/ydb"
@@ -68,6 +69,16 @@ func BuildTopologySpec(input *domain.Database) (*topology.TopologySpec, error) {
 			return nil, fmt.Errorf("orioledb database requires orioledb params")
 		}
 		return (&orioledbdb.Database{}).BuildTopologySpec(params.GetOrioledb())
+	case domain.Database_KIND_PG_NOOP:
+		if params.GetPgNoop() == nil {
+			return nil, fmt.Errorf("pg_noop database requires pg_noop params")
+		}
+		return (&pgnoopdb.Database{}).BuildTopologySpec(params.GetPgNoop())
+	case domain.Database_KIND_NOOP:
+		// The no-DB machine benchmark deploys nothing: stroppy runs on the runner
+		// node alone with its internal noop driver. Return an empty spec; the
+		// workload builder adds the runner-only topology (PROTOCOL_NOOP).
+		return &topology.TopologySpec{}, nil
 	default:
 		return nil, fmt.Errorf("database kind %s topology builder is not implemented", input.GetKind())
 	}

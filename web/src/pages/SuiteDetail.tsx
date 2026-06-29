@@ -118,6 +118,8 @@ const DB_TINT: Record<Exclude<DbKind, "">, string> = {
   picodata: "#F06580",
   orioledb: "#E8633A",
   external: "#a1a1aa",
+  noop: "#94a3b8",
+  pgnoop: "#22d3ee",
 };
 
 const DB_LABEL: Record<Exclude<DbKind, "">, string> = {
@@ -130,6 +132,8 @@ const DB_LABEL: Record<Exclude<DbKind, "">, string> = {
   picodata: "Picodata",
   orioledb: "OrioleDB",
   external: "External",
+  noop: "No-DB",
+  pgnoop: "pg-noop",
 };
 
 function dbTint(kind: DbKind): string {

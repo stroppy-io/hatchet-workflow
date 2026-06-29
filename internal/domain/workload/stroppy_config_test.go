@@ -145,6 +145,13 @@ func TestDriverTypeURLMatchesProtocolRegistry(t *testing.T) {
 			driverType: "postgres",
 			url:        "postgresql://10.0.0.2:26257/defaultdb?sslmode=disable",
 		},
+		{
+			name:       "noop",
+			protocol:   domain.Workload_PROTOCOL_NOOP,
+			target:     databaseTarget{},
+			driverType: "noop",
+			url:        "noop://localhost",
+		},
 	}
 
 	for _, tt := range tests {
@@ -170,6 +177,8 @@ func TestEffectiveProtocolDefaultsFromDatabaseKind(t *testing.T) {
 		{domain.Database_KIND_YDB_MANAGED, domain.Workload_PROTOCOL_YDB_GRPCS},
 		{domain.Database_KIND_COCKROACH, domain.Workload_PROTOCOL_COCKROACH},
 		{domain.Database_KIND_PICODATA, domain.Workload_PROTOCOL_PICODATA},
+		{domain.Database_KIND_NOOP, domain.Workload_PROTOCOL_NOOP},
+		{domain.Database_KIND_PG_NOOP, domain.Workload_PROTOCOL_PG},
 	}
 
 	for _, tt := range tests {
