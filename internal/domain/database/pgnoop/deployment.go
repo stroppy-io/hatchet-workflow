@@ -112,7 +112,10 @@ func pgnoopInstallCommands(dbPackage *domain.Package) []string {
 		}
 	}
 	commands = append(commands,
-		deploymentbuilder.CurlDownloadCommand(url, "/tmp/pgnoop.tar.xz")+
+		// tar -xJf needs the xz binary, which the minimal base image lacks; install
+		// xz-utils first (only when missing — it rides the apt-cacher proxy).
+		`( command -v xz >/dev/null 2>&1 || { apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y xz-utils; } ) && `+
+			deploymentbuilder.CurlDownloadCommand(url, "/tmp/pgnoop.tar.xz")+
 			` && mkdir -p /opt/pgnoop && tar -xJf /tmp/pgnoop.tar.xz -C /opt/pgnoop`+
 			` && install -m 0755 "$(find /opt/pgnoop -type f \( -name pgnoop -o -name pg-noop \) | head -n1)" /usr/local/bin/pgnoop`,
 	)

@@ -65,8 +65,12 @@ func TestPgNoopDeploymentPlan(t *testing.T) {
 			t.Fatalf("service missing %q:\n%s", want, service)
 		}
 	}
-	if install := dbtest.CallCmd(node, "100_install"); !strings.Contains(install, "/api/binaries/pgnoop/0.1.2/pg-noop-x86_64-unknown-linux-musl.tar.xz") {
+	install := dbtest.CallCmd(node, "100_install")
+	if !strings.Contains(install, "/api/binaries/pgnoop/0.1.2/pg-noop-x86_64-unknown-linux-musl.tar.xz") {
 		t.Fatalf("install does not expand pg-noop binary URL: %s", install)
+	}
+	if !strings.Contains(install, "xz-utils") {
+		t.Fatalf("install must ensure xz is present before tar -xJf: %s", install)
 	}
 	env := dbtest.WriteFileText(node, "030_write_config")
 	for _, want := range []string{"PGNOOP_PORT=5432", "PGNOOP_WORKERS=8"} {
