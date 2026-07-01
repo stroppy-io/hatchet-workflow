@@ -192,7 +192,8 @@ export function LogsPanel({ tenantSlug, runId, pipeline, runStart, runEnd }: Log
   // day pickers only offer the days the test actually ran.
   const validRunTs = (iso?: string) => !!iso && iso !== "0001-01-01T00:00:00Z" && new Date(iso).getFullYear() >= 2000;
   const calMin = validRunTs(runStart) ? new Date(runStart!) : undefined;
-  const calMax = validRunTs(runEnd) ? new Date(runEnd!) : undefined;
+  // Running test (no finish yet) → window runs up to today so all its days show.
+  const calMax = validRunTs(runEnd) ? new Date(runEnd!) : calMin ? new Date() : undefined;
   const steps = useMemo(() => new Set(csv(stepsParam)), [stepsParam]);
   const components = useMemo(() => new Set(csv(compParam)), [compParam]);
   const machines = useMemo(() => new Set(csv(machParam)), [machParam]);

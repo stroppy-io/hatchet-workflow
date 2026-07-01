@@ -13,6 +13,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 function pad(n: number): string {
   return n.toString().padStart(2, "0");
 }
+function clamp(n: number, max: number): number {
+  if (Number.isNaN(n)) return 0;
+  return Math.min(max, Math.max(0, n));
+}
+
 function sameDay(a?: Date, b?: Date): boolean {
   return !!a && !!b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
@@ -171,9 +176,20 @@ export function DateTimePicker({
   const m = value ? value.getMinutes() : 0;
   const sec = value ? value.getSeconds() : 0;
 
-  // Small run windows (few days) render as day chips instead of a full month.
+  // With a run window, render ONLY the test's days as chips (no month grid);
+  // fall back to the full calendar only if the span is implausibly large.
   const days = minDate && maxDate ? dayList(minDate, maxDate) : null;
-  const compactDays = days && days.length <= 14 ? days : null;
+  const dayChips = days && days.length <= 62 ? days : null;
+
+  // Big editable time segment (inline, not a nested component — a nested one
+  // would remount each render and drop input focus mid-typing).
+  const segCls = (unit: "h" | "m" | "s") =>
+    cn(
+      "w-14 rounded px-1 py-0.5 text-center font-mono text-2xl tabular-nums outline-none transition-colors",
+      mode === unit ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted",
+    );
+  const onSeg = (unit: "h" | "m" | "s") => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setPartN(unit, clamp(parseInt(e.target.value.replace(/\D/g, "") || "0", 10), unit === "h" ? 23 : 59));
 
   return (
     <Popover>
@@ -198,10 +214,10 @@ export function DateTimePicker({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
-        {compactDays ? (
+        {dayChips ? (
           // Only the days the test ran — compact chips, no month grid.
           <div className="flex max-w-[264px] flex-wrap justify-center gap-1 p-3">
-            {compactDays.map((d) => (
+            {dayChips.map((d) => (
               <button
                 key={d.toISOString()}
                 type="button"
@@ -227,23 +243,13 @@ export function DateTimePicker({
             autoFocus
           />
         )}
-        {/* Material-style HH:MM:SS switcher — click a unit, then use the clock. */}
-        <div className="flex items-center justify-center gap-1 border-t border-border px-3 pt-3 font-mono text-2xl tabular-nums">
-          {(["h", "m", "s"] as const).map((u, i) => (
-            <span key={u} className="flex items-center">
-              {i > 0 && <span className="px-1 text-muted-foreground">:</span>}
-              <button
-                type="button"
-                onClick={() => setMode(u)}
-                className={cn(
-                  "rounded px-2 py-0.5 transition-colors",
-                  mode === u ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted",
-                )}
-              >
-                {pad(u === "h" ? h : u === "m" ? m : sec)}
-              </button>
-            </span>
-          ))}
+        {/* HH:MM:SS — type digits or click a unit, then use the clock. */}
+        <div className="flex items-center justify-center gap-1 border-t border-border px-3 pt-3">
+          <input value={pad(h)} inputMode="numeric" maxLength={2} onFocus={() => setMode("h")} onChange={onSeg("h")} className={segCls("h")} />
+          <span className="text-2xl text-muted-foreground">:</span>
+          <input value={pad(m)} inputMode="numeric" maxLength={2} onFocus={() => setMode("m")} onChange={onSeg("m")} className={segCls("m")} />
+          <span className="text-2xl text-muted-foreground">:</span>
+          <input value={pad(sec)} inputMode="numeric" maxLength={2} onFocus={() => setMode("s")} onChange={onSeg("s")} className={segCls("s")} />
         </div>
         {/* Analog clock for the active unit — drag the hand or click a number. */}
         <div className="flex justify-center px-3 pb-3">
