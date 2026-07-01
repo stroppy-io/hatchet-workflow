@@ -5,7 +5,7 @@
 // the URL query (?steps=&comp=&mach=&unit=&q=) so any filtered view is a
 // shareable link; the pipeline "view in logs" jump writes the same params.
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { ArrowDownToLine, ArrowUpToLine, Check, Cpu, FileText, Link2, Radio, Search, Server, Tags, Terminal, WrapText, X, Zap } from "lucide-react";
+import { ArrowDownToLine, ArrowUpToLine, Check, ChevronDown, ChevronUp, Cpu, FileText, Link2, Radio, Search, Server, Tags, Terminal, WrapText, X, Zap } from "lucide-react";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { useSearchParams } from "@/lib/router";
 import { Button } from "@/components/ui/button";
@@ -597,9 +597,32 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
     }
   }, [tenantSlug, runId, serverFilter, hasRange]);
 
+  // Page up/down by ~500 lines. Scrolls the viewport; the edge handlers in
+  // onScroll then page older/newer from the server as needed.
+  const LINES_PER_PAGE = 500;
+  const pageBy = useCallback((dir: -1 | 1) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const first = el.querySelector<HTMLElement>("[data-ck]");
+    const rowPx = first?.offsetHeight || 18;
+    el.scrollTop += dir * LINES_PER_PAGE * rowPx;
+  }, []);
+
+  // Keyboard nav on the focused log body: Home/End = absolute oldest/newest,
+  // PageUp/PageDown = ±500 lines.
+  const onKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Home") { e.preventDefault(); void jumpTop(); }
+      else if (e.key === "End") { e.preventDefault(); void jumpBottom(); }
+      else if (e.key === "PageUp") { e.preventDefault(); pageBy(-1); }
+      else if (e.key === "PageDown") { e.preventDefault(); pageBy(1); }
+    },
+    [jumpTop, jumpBottom, pageBy],
+  );
+
   return (
     <div className="flex h-full flex-col gap-2">
-      {/* Toolbar */}
+      {/* Row 1 — filters + time window (+ clear). */}
       <div className="flex shrink-0 flex-wrap items-center gap-2">
         {stepOpts.length > 0 && (
           <MultiFilter icon={<Zap className="h-3 w-3" />} label="Step" options={stepOpts} selected={steps} onChange={setSetParam("steps")} />
@@ -625,36 +648,6 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
           <MultiFilter icon={<Tags className="h-3 w-3" />} label="Mention" options={mentionOpts} selected={mentions} onChange={setSetParam("mention")} />
         )}
 
-        <div className="flex items-center gap-1 rounded border border-border px-2 py-0.5 font-mono text-[11px] transition-colors focus-within:border-foreground/40">
-          <Search className="h-3 w-3 shrink-0 text-muted-foreground" />
-          <input
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && setParam("q", searchInput.trim() ? [searchInput.trim()] : [])}
-            placeholder="Search logs…"
-            className="w-28 bg-transparent text-foreground outline-none transition-all placeholder:text-muted-foreground focus:w-40"
-          />
-          {searchInput && (
-            <X
-              className="h-3 w-3 shrink-0 cursor-pointer text-muted-foreground hover:text-foreground"
-              onClick={() => {
-                setSearchInput("");
-                setParam("q", []);
-              }}
-            />
-          )}
-        </div>
-
-        {totalActive > 0 && (
-          <button
-            type="button"
-            onClick={clearFilters}
-            className="flex items-center gap-1 rounded border border-border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground"
-          >
-            <X className="h-3 w-3" /> Clear
-          </button>
-        )}
-
         {/* Time window (from–to), 24-hour shadcn pickers. A set range pins the
             view to history (live tail off). */}
         <div className="flex items-center gap-1">
@@ -671,6 +664,39 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
           />
         </div>
 
+        {totalActive > 0 && (
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="flex items-center gap-1 rounded border border-border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground"
+          >
+            <X className="h-3 w-3" /> Clear
+          </button>
+        )}
+      </div>
+
+      {/* Row 2 — search + navigation. */}
+      <div className="flex shrink-0 items-center gap-2">
+        <div className="flex items-center gap-1 rounded border border-border px-2 py-0.5 font-mono text-[11px] transition-colors focus-within:border-foreground/40">
+          <Search className="h-3 w-3 shrink-0 text-muted-foreground" />
+          <input
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && setParam("q", searchInput.trim() ? [searchInput.trim()] : [])}
+            placeholder="Search logs…"
+            className="w-40 bg-transparent text-foreground outline-none transition-all placeholder:text-muted-foreground focus:w-56"
+          />
+          {searchInput && (
+            <X
+              className="h-3 w-3 shrink-0 cursor-pointer text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                setSearchInput("");
+                setParam("q", []);
+              }}
+            />
+          )}
+        </div>
+
         <div className="flex-1" />
 
         <span className="shrink-0 font-mono text-[10px] text-muted-foreground">
@@ -678,11 +704,17 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
           {lines.length.toLocaleString()} lines
         </span>
 
-        {/* Jump to top / bottom of the loaded buffer. */}
-        <Button variant="outline" size="sm" onClick={jumpTop} title="Jump to top">
+        {/* Navigation: absolute start/end (Home/End) + ±500 lines (PgUp/PgDown). */}
+        <Button variant="outline" size="sm" onClick={jumpTop} title="To start — oldest of all logs (Home)">
           <ArrowUpToLine className="h-4 w-4" />
         </Button>
-        <Button variant="outline" size="sm" onClick={jumpBottom} title="Jump to bottom">
+        <Button variant="outline" size="sm" onClick={() => pageBy(-1)} title="Up 500 lines (PgUp)">
+          <ChevronUp className="h-4 w-4" />
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => pageBy(1)} title="Down 500 lines (PgDown)">
+          <ChevronDown className="h-4 w-4" />
+        </Button>
+        <Button variant="outline" size="sm" onClick={jumpBottom} title="To end — newest of all logs (End)">
           <ArrowDownToLine className="h-4 w-4" />
         </Button>
 
@@ -708,7 +740,9 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
       <div
         ref={scrollRef}
         onScroll={onScroll}
-        className="min-h-0 flex-1 overflow-auto border border-border bg-black/40 font-mono text-[11px] leading-relaxed"
+        onKeyDown={onKeyDown}
+        tabIndex={0}
+        className="min-h-0 flex-1 overflow-auto border border-border bg-black/40 font-mono text-[11px] leading-relaxed outline-none"
       >
         {loadingOlder && (
           <div className="border-b border-border/50 py-1 text-center text-[10px] text-muted-foreground">Loading older…</div>
