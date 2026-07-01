@@ -5,7 +5,8 @@
 // the URL query (?steps=&comp=&mach=&unit=&q=) so any filtered view is a
 // shareable link; the pipeline "view in logs" jump writes the same params.
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { ArrowDownToLine, ArrowUpToLine, Check, Clock, Cpu, FileText, Link2, Radio, Search, Server, Tags, Terminal, WrapText, X, Zap } from "lucide-react";
+import { ArrowDownToLine, ArrowUpToLine, Check, Cpu, FileText, Link2, Radio, Search, Server, Tags, Terminal, WrapText, X, Zap } from "lucide-react";
+import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { useSearchParams } from "@/lib/router";
 import { Button } from "@/components/ui/button";
 import { MultiFilter, type FilterOption } from "@/components/ui/multi-filter";
@@ -588,33 +589,20 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
           </button>
         )}
 
-        {/* Time window (from–to). A set range pins the view to history. */}
-        <div className="flex items-center gap-1 rounded border border-border px-2 py-0.5 font-mono text-[11px] transition-colors focus-within:border-foreground/40">
-          <Clock className="h-3 w-3 shrink-0 text-muted-foreground" />
-          <input
-            type="datetime-local"
-            step="1"
-            value={fromTs}
-            onChange={(e) => setParam("from_ts", e.target.value ? [e.target.value] : [])}
-            title="From (inclusive)"
-            className="bg-transparent text-foreground outline-none [color-scheme:dark]"
+        {/* Time window (from–to), 24-hour shadcn pickers. A set range pins the
+            view to history (live tail off). */}
+        <div className="flex items-center gap-1">
+          <DateTimePicker
+            value={fromTs ? new Date(fromTs) : undefined}
+            onChange={(d) => setParam("from_ts", d ? [d.toISOString()] : [])}
+            placeholder="From"
           />
           <span className="text-muted-foreground">–</span>
-          <input
-            type="datetime-local"
-            step="1"
-            value={toTs}
-            onChange={(e) => setParam("to_ts", e.target.value ? [e.target.value] : [])}
-            title="To (inclusive)"
-            className="bg-transparent text-foreground outline-none [color-scheme:dark]"
+          <DateTimePicker
+            value={toTs ? new Date(toTs) : undefined}
+            onChange={(d) => setParam("to_ts", d ? [d.toISOString()] : [])}
+            placeholder="To"
           />
-          {hasRange && (
-            <X
-              className="h-3 w-3 shrink-0 cursor-pointer text-muted-foreground hover:text-foreground"
-              onClick={() => setSp((prev) => { const n = new URLSearchParams(prev); n.delete("from_ts"); n.delete("to_ts"); return n; }, { replace: true })}
-              aria-label="Clear time range"
-            />
-          )}
         </div>
 
         <div className="flex-1" />
@@ -689,7 +677,7 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
                   disabled={!l.cursorKey}
                   title="Copy link to this line"
                   className={cn(
-                    "relative shrink-0 select-none tabular-nums transition-colors",
+                    "relative w-10 shrink-0 select-none pr-1 text-right tabular-nums transition-colors",
                     isCopied ? "text-success" : "text-muted-foreground/50 hover:text-primary",
                   )}
                 >
@@ -697,7 +685,10 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
                     <Check className="h-3 w-3" />
                   ) : (
                     <>
-                      <span className="group-hover:invisible">{l.lineNo}</span>
+                      {/* Monotonic gutter index over the loaded buffer — the
+                          server lineNo is a per-node counter and reads as
+                          non-monotonic garbage when nodes are interleaved. */}
+                      <span className="group-hover:invisible">{i + 1}</span>
                       <Link2 className="invisible absolute inset-0 m-auto h-3 w-3 group-hover:visible" />
                     </>
                   )}
