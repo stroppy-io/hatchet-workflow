@@ -240,6 +240,10 @@ export interface LogQuery {
   limit?: number;
   /** Opaque anchor cursor from a prior page (LogPageVM.older / .newer). */
   from?: unknown;
+  /** Keep lines at or after this time (LogFilter.start). */
+  start?: Date;
+  /** Keep lines at or before this time (LogFilter.end). */
+  end?: Date;
 }
 
 const num = (v: number | "NaN" | "Infinity" | "-Infinity" | undefined): number =>
@@ -624,6 +628,8 @@ export async function queryLogs(
       stepIds: query.stepIds ?? [],
       actions: query.actions ?? [],
       mentions: query.mentions ?? [],
+      start: query.start ? timestampFromDate(query.start) : undefined,
+      end: query.end ? timestampFromDate(query.end) : undefined,
     },
     direction:
       query.direction === "older"
@@ -746,6 +752,8 @@ export async function streamLogs(
           stepIds: query.stepIds ?? [],
           actions: query.actions ?? [],
           mentions: query.mentions ?? [],
+          start: query.start ? timestampFromDate(query.start) : undefined,
+          end: query.end ? timestampFromDate(query.end) : undefined,
         },
         from: query.from as never,
       },

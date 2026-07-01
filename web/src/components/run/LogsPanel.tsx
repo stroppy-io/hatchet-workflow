@@ -5,7 +5,7 @@
 // the URL query (?steps=&comp=&mach=&unit=&q=) so any filtered view is a
 // shareable link; the pipeline "view in logs" jump writes the same params.
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Check, Cpu, FileText, Link2, Radio, Search, Server, Tags, Terminal, WrapText, X, Zap } from "lucide-react";
+import { ArrowDownToLine, ArrowUpToLine, Check, Clock, Cpu, FileText, Link2, Radio, Search, Server, Tags, Terminal, WrapText, X, Zap } from "lucide-react";
 import { useSearchParams } from "@/lib/router";
 import { Button } from "@/components/ui/button";
 import { MultiFilter, type FilterOption } from "@/components/ui/multi-filter";
@@ -177,6 +177,11 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
   const phaseParam = sp.get("phase");
   const actionParam = sp.get("action");
   const mentionParam = sp.get("mention");
+  // Time window (datetime-local strings, e.g. "2026-06-26T15:30"). A set window
+  // pins the view to history, so live tail is forced off while it is active.
+  const fromTs = sp.get("from_ts") ?? "";
+  const toTs = sp.get("to_ts") ?? "";
+  const hasRange = !!fromTs || !!toTs;
   const steps = useMemo(() => new Set(csv(stepsParam)), [stepsParam]);
   const components = useMemo(() => new Set(csv(compParam)), [compParam]);
   const machines = useMemo(() => new Set(csv(machParam)), [machParam]);
@@ -207,7 +212,7 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
     setSp(
       (prev) => {
         const next = new URLSearchParams(prev);
-        for (const k of ["steps", "comp", "mach", "unit", "src", "stream", "phase", "action", "mention", "q"]) next.delete(k);
+        for (const k of ["steps", "comp", "mach", "unit", "src", "stream", "phase", "action", "mention", "q", "from_ts", "to_ts"]) next.delete(k);
         return next;
       },
       { replace: true },
@@ -281,8 +286,10 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
       phases: phaseIds.length ? phaseIds : undefined,
       actions: actionIds.length ? actionIds : undefined,
       mentions: mentionIds.length ? mentionIds : undefined,
+      start: fromTs ? new Date(fromTs) : undefined,
+      end: toTs ? new Date(toTs) : undefined,
     }),
-    [applied, stepIds, compIds, machineIds, unitIds, sourceIds, sources, streamIds, streams, phaseIds, actionIds, mentionIds],
+    [applied, stepIds, compIds, machineIds, unitIds, sourceIds, sources, streamIds, streams, phaseIds, actionIds, mentionIds, fromTs, toTs],
   );
 
   const filterKey = useMemo(
@@ -298,8 +305,10 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
         phase: phaseIds,
         action: actionIds,
         mention: mentionIds,
+        from_ts: fromTs,
+        to_ts: toTs,
       }),
-    [applied, stepIds, compIds, machineIds, unitIds, sourceIds, streamIds, phaseIds, actionIds, mentionIds],
+    [applied, stepIds, compIds, machineIds, unitIds, sourceIds, streamIds, phaseIds, actionIds, mentionIds, fromTs, toTs],
   );
 
   const load = useCallback(async () => {
@@ -376,7 +385,8 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
   // does not lock up the tab.
   const pendingRef = useRef<LogLineVM[]>([]);
   useEffect(() => {
-    if (!live || !tenantSlug || !runId || loadedFilterKey !== filterKey) return;
+    // A time window pins the view to history — no live tail while it's active.
+    if (!live || hasRange || !tenantSlug || !runId || loadedFilterKey !== filterKey) return;
     const controller = new AbortController();
     tailAbort.current = controller;
     pendingRef.current = [];
@@ -415,7 +425,7 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
       pendingRef.current = [];
       if (tailAbort.current === controller) tailAbort.current = null;
     };
-  }, [live, tenantSlug, runId, loadedFilterKey, filterKey, serverFilter]);
+  }, [live, hasRange, tenantSlug, runId, loadedFilterKey, filterKey, serverFilter]);
 
   const rows = lines;
 
@@ -506,7 +516,19 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
     };
   }, [lines, nodeOptions, steps, components, machines, units, phases, actions, mentions]);
 
-  const totalActive = steps.size + components.size + machines.size + units.size + sources.size + streams.size + phases.size + actions.size + mentions.size + (applied ? 1 : 0);
+  const totalActive = steps.size + components.size + machines.size + units.size + sources.size + streams.size + phases.size + actions.size + mentions.size + (applied ? 1 : 0) + (fromTs ? 1 : 0) + (toTs ? 1 : 0);
+
+  const jumpTop = useCallback(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollTop = 0;
+  }, []);
+  const jumpBottom = useCallback(() => {
+    const el = scrollRef.current;
+    if (el) {
+      el.scrollTop = el.scrollHeight;
+      atBottom.current = true;
+    }
+  }, []);
 
   return (
     <div className="flex h-full flex-col gap-2">
@@ -566,6 +588,35 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
           </button>
         )}
 
+        {/* Time window (from–to). A set range pins the view to history. */}
+        <div className="flex items-center gap-1 rounded border border-border px-2 py-0.5 font-mono text-[11px] transition-colors focus-within:border-foreground/40">
+          <Clock className="h-3 w-3 shrink-0 text-muted-foreground" />
+          <input
+            type="datetime-local"
+            step="1"
+            value={fromTs}
+            onChange={(e) => setParam("from_ts", e.target.value ? [e.target.value] : [])}
+            title="From (inclusive)"
+            className="bg-transparent text-foreground outline-none [color-scheme:dark]"
+          />
+          <span className="text-muted-foreground">–</span>
+          <input
+            type="datetime-local"
+            step="1"
+            value={toTs}
+            onChange={(e) => setParam("to_ts", e.target.value ? [e.target.value] : [])}
+            title="To (inclusive)"
+            className="bg-transparent text-foreground outline-none [color-scheme:dark]"
+          />
+          {hasRange && (
+            <X
+              className="h-3 w-3 shrink-0 cursor-pointer text-muted-foreground hover:text-foreground"
+              onClick={() => setSp((prev) => { const n = new URLSearchParams(prev); n.delete("from_ts"); n.delete("to_ts"); return n; }, { replace: true })}
+              aria-label="Clear time range"
+            />
+          )}
+        </div>
+
         <div className="flex-1" />
 
         <span className="shrink-0 font-mono text-[10px] text-muted-foreground">
@@ -573,13 +624,22 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
           {lines.length.toLocaleString()} lines
         </span>
 
+        {/* Jump to top / bottom of the loaded buffer. */}
+        <Button variant="outline" size="sm" onClick={jumpTop} title="Jump to top">
+          <ArrowUpToLine className="h-4 w-4" />
+        </Button>
+        <Button variant="outline" size="sm" onClick={jumpBottom} title="Jump to bottom">
+          <ArrowDownToLine className="h-4 w-4" />
+        </Button>
+
         <Button
-          variant={live ? "default" : "outline"}
+          variant={live && !hasRange ? "default" : "outline"}
           size="sm"
+          disabled={hasRange}
           onClick={() => setLive((v) => !v)}
-          title="Stream new lines and follow to the bottom"
+          title={hasRange ? "Live tail disabled while a time range is set" : "Stream new lines and follow to the bottom"}
         >
-          <Radio className={cn("h-4 w-4", live && "animate-pulse")} /> Live
+          <Radio className={cn("h-4 w-4", live && !hasRange && "animate-pulse")} /> Live
         </Button>
         <Button variant={wrap ? "default" : "outline"} size="sm" onClick={() => setWrap((v) => !v)} title="Wrap lines">
           <WrapText className="h-4 w-4" /> Wrap
