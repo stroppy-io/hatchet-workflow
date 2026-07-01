@@ -229,6 +229,7 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
   const [searchInput, setSearchInput] = useState(applied);
   const [loading, setLoading] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
+  const [loadingNewer, setLoadingNewer] = useState(false);
   // Live tail off when arriving on a line anchor (so it doesn't jump to bottom).
   const [live, setLive] = useState(!anchorKey);
   const [wrap, setWrap] = useState(true);
@@ -375,6 +376,28 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
     }
   }, [tenantSlug, runId, serverFilter, loadingOlder]);
 
+  // Scroll-DOWN paging forward in time — needed when NOT live-tailing (e.g. after
+  // jump-to-top, or reading a historical time range), where the live stream is
+  // not appending newer lines for us.
+  const loadNewer = useCallback(async () => {
+    if (!tenantSlug || !runId || loadingNewer || !newerCursor.current) return;
+    setLoadingNewer(true);
+    try {
+      const page = await queryLogs(tenantSlug, runId, {
+        ...serverFilter(),
+        direction: "newer",
+        from: newerCursor.current,
+        limit: 300,
+      });
+      if (page.lines.length) setLines((prev) => appendUnique(prev, page.lines));
+      newerCursor.current = page.newer;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoadingNewer(false);
+    }
+  }, [tenantSlug, runId, serverFilter, loadingNewer]);
+
   // Refetch on server-filter change.
   useEffect(() => {
     void load();
@@ -478,7 +501,12 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
     if (!el) return;
     atBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
     if (el.scrollTop < 80 && olderCursor.current && !loadingOlder) void loadOlder();
-  }, [loadingOlder, loadOlder]);
+    // Page forward on scroll-down only when not live-tailing (live already
+    // appends newer lines); the live stream owns the tail otherwise.
+    if (!live && el.scrollHeight - el.scrollTop - el.clientHeight < 80 && newerCursor.current && !loadingNewer) {
+      void loadNewer();
+    }
+  }, [loadingOlder, loadOlder, live, loadingNewer, loadNewer]);
 
   // Scroll to + keep highlight on the deep-linked line once it's in the buffer.
   useEffect(() => {
