@@ -149,6 +149,7 @@ export function DateTimePicker({
   className,
   minDate,
   maxDate,
+  onOpenChange,
 }: {
   value?: Date;
   onChange: (d?: Date) => void;
@@ -158,6 +159,9 @@ export function DateTimePicker({
    *  days outside are disabled and month navigation is clamped. */
   minDate?: Date;
   maxDate?: Date;
+  /** Notified when the popover opens/closes (e.g. so the parent can pause a
+   *  live stream that would otherwise jank the clock animation). */
+  onOpenChange?: (open: boolean) => void;
 }) {
   const base = value ?? undefined;
   // Which unit the clock face edits (Material-style HH:MM:SS switcher).
@@ -227,7 +231,12 @@ export function DateTimePicker({
   };
 
   return (
-    <Popover onOpenChange={(open) => !open && commit()}>
+    <Popover
+      onOpenChange={(open) => {
+        if (!open) commit();
+        onOpenChange?.(open);
+      }}
+    >
       <PopoverTrigger asChild>
         <Button
           variant="outline"

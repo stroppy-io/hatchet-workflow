@@ -240,6 +240,9 @@ export function LogsPanel({ tenantSlug, runId, pipeline, runStart, runEnd }: Log
   // Server-side facets over the WHOLE run (distinct values + counts per filter
   // dimension), so the dropdowns don't depend on which page of logs is loaded.
   const [facets, setFacets] = useState<LogFacetsVM>({});
+  // While a From/To picker popover is open, pause the live tail: its 150ms
+  // flush re-renders the whole (un-virtualized) log body and janks the clock.
+  const [picking, setPicking] = useState(false);
   const [searchInput, setSearchInput] = useState(applied);
   const [loading, setLoading] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
@@ -442,7 +445,8 @@ export function LogsPanel({ tenantSlug, runId, pipeline, runStart, runEnd }: Log
   const pendingRef = useRef<LogLineVM[]>([]);
   useEffect(() => {
     // A time window pins the view to history — no live tail while it's active.
-    if (!live || hasRange || !tenantSlug || !runId || loadedFilterKey !== filterKey) return;
+    // Also pause while a time picker is open (its flush janks the clock anim).
+    if (!live || hasRange || picking || !tenantSlug || !runId || loadedFilterKey !== filterKey) return;
     const controller = new AbortController();
     tailAbort.current = controller;
     pendingRef.current = [];
@@ -481,7 +485,7 @@ export function LogsPanel({ tenantSlug, runId, pipeline, runStart, runEnd }: Log
       pendingRef.current = [];
       if (tailAbort.current === controller) tailAbort.current = null;
     };
-  }, [live, hasRange, tenantSlug, runId, loadedFilterKey, filterKey, serverFilter]);
+  }, [live, hasRange, picking, tenantSlug, runId, loadedFilterKey, filterKey, serverFilter]);
 
   const rows = lines;
 
@@ -741,6 +745,7 @@ export function LogsPanel({ tenantSlug, runId, pipeline, runStart, runEnd }: Log
           placeholder="From"
           minDate={calMin}
           maxDate={calMax}
+          onOpenChange={setPicking}
         />
         <span className="text-muted-foreground">–</span>
         <DateTimePicker
@@ -749,6 +754,7 @@ export function LogsPanel({ tenantSlug, runId, pipeline, runStart, runEnd }: Log
           placeholder="To"
           minDate={calMin}
           maxDate={calMax}
+          onOpenChange={setPicking}
         />
 
         <div className="flex-1" />
