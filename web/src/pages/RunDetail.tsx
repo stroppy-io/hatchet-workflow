@@ -14,6 +14,7 @@ import {
   Repeat,
   Save,
   ScrollText,
+  SlidersHorizontal,
   Share2,
   Square,
   Terminal,
@@ -29,6 +30,7 @@ import { SegmentedControl } from "@/components/ui/segmented";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
 import { RunInfoSidebar } from "@/components/run/RunInfoSidebar";
+import { RunConfigTab } from "@/components/run/RunConfigTab";
 import { PipelineViewer } from "@/components/run/PipelineViewer";
 import { TopologyViewer } from "@/components/run/TopologyViewer";
 import { LogsPanel } from "@/components/run/LogsPanel";
@@ -115,9 +117,10 @@ function relTime(iso?: string): string {
   return `${Math.floor(s / 86400)}d ago`;
 }
 
-type View = "pipeline" | "topology" | "logs" | "metrics" | "quotas" | "grafana" | "agents";
+type View = "overview" | "pipeline" | "topology" | "logs" | "metrics" | "quotas" | "grafana" | "agents";
 
 const VIEW_OPTIONS = [
+  { value: "overview" as const, label: "Overview", icon: <SlidersHorizontal className="h-3 w-3" /> },
   { value: "pipeline" as const, label: "Pipeline", icon: <Workflow className="h-3 w-3" /> },
   { value: "topology" as const, label: "Topology", icon: <Network className="h-3 w-3" /> },
   { value: "agents" as const, label: "Agents", icon: <Activity className="h-3 w-3" /> },
@@ -147,7 +150,7 @@ export function RunDetail() {
   // link (e.g. ?view=logs&steps=<id>&q=error). The pipeline jump and back
   // button all flow through it.
   const [sp, setSp] = useSearchParams();
-  const view = (sp.get("view") as View | null) ?? "pipeline";
+  const view = (sp.get("view") as View | null) ?? "overview";
   const setView = useCallback(
     (v: string) =>
       setSp(
@@ -373,7 +376,7 @@ export function RunDetail() {
   }, [tenantSlug, id, run?.name, confirm, navigate]);
 
   // Whether the active view manages its own height (fills) vs scrolls.
-  const scrolls = view === "metrics" || view === "quotas" || view === "agents";
+  const scrolls = view === "overview" || view === "metrics" || view === "quotas" || view === "agents";
 
   // Grafana is heavy (each dashboard iframe boots the full Grafana app), so it
   // is mounted only once the user first opens the tab — then kept mounted
@@ -558,6 +561,7 @@ export function RunDetail() {
               </div>
             )}
             <div className={cn("h-full", scrolls ? "overflow-auto p-3" : "overflow-hidden", view === "grafana" && "hidden")}>
+            {view === "overview" && run && <RunConfigTab run={run} />}
             {view === "pipeline" && <PipelineViewer pipeline={overview?.pipeline ?? []} onOpenLogs={openLogsForNode} />}
             {view === "topology" && <TopologyViewer topology={overview?.topology} />}
             {view === "logs" && <LogsPanel tenantSlug={tenantSlug} runId={id} pipeline={overview?.pipeline ?? []} />}

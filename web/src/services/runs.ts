@@ -231,6 +231,16 @@ export interface RunVM {
    * summary. Surfaced in the run Overview so a run is reproducible at a glance.
    */
   workloadSegments: WorkloadSegmentVM[];
+  /**
+   * spec — the full decoded run spec (toJson of models.TestRunRecord.spec:
+   * workload + database + test-level config). Present only when the record
+   * carries the full spec (overview snapshot / GetTestRun); undefined from the
+   * list summary. Rendered verbatim on the run Overview (Config) tab so every
+   * launch parameter (insert method, bulk size, advanced DB options, …) is
+   * visible without "New from run". Loosely typed — the tab renders it
+   * generically.
+   */
+  spec?: Record<string, unknown>;
 }
 
 /** One stroppy workload segment's launch settings (from spec.workload.segments). */
@@ -242,6 +252,22 @@ export interface WorkloadSegmentVM {
   iterations?: number;
   poolSize?: number;
   scaleFactor?: number;
+  /** parameters.default_insert_method — "native" (default) / "plain_bulk" / … */
+  insertMethod?: string;
+  /** parameters.bulk_size — rows per bulk INSERT (only for plain_bulk). */
+  bulkSize?: number;
+  /** parameters.env — extra environment passed to stroppy. */
+  env?: Record<string, string>;
+  /** parameters.steps / no_steps — enabled step list, or "all steps" flag. */
+  steps?: string[];
+  noSteps?: boolean;
+  /** execution flags. */
+  quiet?: boolean;
+  noThresholds?: boolean;
+  extraArgs?: string[];
+  /** inline SQL + attached files, when set. */
+  sql?: string;
+  files?: string[];
 }
 
 /**
@@ -448,8 +474,25 @@ export function testRunRecordToVM(rec: TestRunRecord): RunVM {
         segments?: Array<{
           name?: string;
           script?: string;
-          execution?: { vus?: number; duration?: string; iterations?: number };
-          parameters?: { poolSize?: number; scaleFactor?: number };
+          sql?: string;
+          files?: string[];
+          execution?: {
+            vus?: number;
+            duration?: string;
+            iterations?: number;
+            quiet?: boolean;
+            noThresholds?: boolean;
+            extraArgs?: string[];
+          };
+          parameters?: {
+            poolSize?: number;
+            scaleFactor?: number;
+            defaultInsertMethod?: string;
+            bulkSize?: number;
+            env?: Record<string, string>;
+            steps?: string[];
+            noSteps?: boolean;
+          };
         }>;
       };
     };
@@ -464,6 +507,16 @@ export function testRunRecordToVM(rec: TestRunRecord): RunVM {
     iterations: seg.execution?.iterations,
     poolSize: seg.parameters?.poolSize,
     scaleFactor: seg.parameters?.scaleFactor,
+    insertMethod: seg.parameters?.defaultInsertMethod,
+    bulkSize: seg.parameters?.bulkSize,
+    env: seg.parameters?.env,
+    steps: seg.parameters?.steps,
+    noSteps: seg.parameters?.noSteps,
+    quiet: seg.execution?.quiet,
+    noThresholds: seg.execution?.noThresholds,
+    extraArgs: seg.execution?.extraArgs,
+    sql: seg.sql,
+    files: seg.files,
   }));
   return {
     id: e.id ?? "",
@@ -490,6 +543,7 @@ export function testRunRecordToVM(rec: TestRunRecord): RunVM {
     favorite: e.isFavorite ?? false,
     deleted: !!e.timings?.deletedAt,
     workloadSegments: segments,
+    spec: (j.spec as Record<string, unknown>) ?? undefined,
   };
 }
 
