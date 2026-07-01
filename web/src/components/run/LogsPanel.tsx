@@ -648,22 +648,6 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
           <MultiFilter icon={<Tags className="h-3 w-3" />} label="Mention" options={mentionOpts} selected={mentions} onChange={setSetParam("mention")} />
         )}
 
-        {/* Time window (from–to), 24-hour shadcn pickers. A set range pins the
-            view to history (live tail off). */}
-        <div className="flex items-center gap-1">
-          <DateTimePicker
-            value={fromTs ? new Date(fromTs) : undefined}
-            onChange={(d) => setParam("from_ts", d ? [d.toISOString()] : [])}
-            placeholder="From"
-          />
-          <span className="text-muted-foreground">–</span>
-          <DateTimePicker
-            value={toTs ? new Date(toTs) : undefined}
-            onChange={(d) => setParam("to_ts", d ? [d.toISOString()] : [])}
-            placeholder="To"
-          />
-        </div>
-
         {totalActive > 0 && (
           <button
             type="button"
@@ -696,6 +680,20 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
             />
           )}
         </div>
+
+        {/* Time window (from–to), 24-hour shadcn pickers. A set range pins the
+            view to history (live tail off). */}
+        <DateTimePicker
+          value={fromTs ? new Date(fromTs) : undefined}
+          onChange={(d) => setParam("from_ts", d ? [d.toISOString()] : [])}
+          placeholder="From"
+        />
+        <span className="text-muted-foreground">–</span>
+        <DateTimePicker
+          value={toTs ? new Date(toTs) : undefined}
+          onChange={(d) => setParam("to_ts", d ? [d.toISOString()] : [])}
+          placeholder="To"
+        />
 
         <div className="flex-1" />
 
