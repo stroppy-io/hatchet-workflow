@@ -13,9 +13,20 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 function pad(n: number): string {
   return n.toString().padStart(2, "0");
 }
-function clamp(n: number, max: number): number {
-  if (Number.isNaN(n)) return 0;
-  return Math.min(max, Math.max(0, n));
+function sameDay(a?: Date, b?: Date): boolean {
+  return !!a && !!b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+// Inclusive list of calendar days in [min, max] (capped for safety).
+function dayList(min: Date, max: Date): Date[] {
+  const out: Date[] = [];
+  const end = new Date(max.getFullYear(), max.getMonth(), max.getDate());
+  const d = new Date(min.getFullYear(), min.getMonth(), min.getDate());
+  while (d <= end && out.length < 93) {
+    out.push(new Date(d));
+    d.setDate(d.getDate() + 1);
+  }
+  return out;
 }
 
 // ClockFace — a Material-style analog clock for one unit (hours 0–23, or
@@ -156,14 +167,13 @@ export function DateTimePicker({
     if (part === "s") d.setSeconds(n);
     onChange(d);
   };
-  const setPart = (part: "h" | "m" | "s", raw: string) =>
-    setPartN(part, clamp(parseInt(raw || "0", 10), part === "h" ? 23 : 59));
-
   const h = value ? value.getHours() : 0;
   const m = value ? value.getMinutes() : 0;
   const sec = value ? value.getSeconds() : 0;
 
-  const num = "w-9 bg-transparent text-center font-mono text-sm outline-none tabular-nums";
+  // Small run windows (few days) render as day chips instead of a full month.
+  const days = minDate && maxDate ? dayList(minDate, maxDate) : null;
+  const compactDays = days && days.length <= 14 ? days : null;
 
   return (
     <Popover>
@@ -188,16 +198,35 @@ export function DateTimePicker({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
-        <Calendar
-          mode="single"
-          selected={base}
-          onSelect={onDay}
-          defaultMonth={base ?? minDate}
-          startMonth={minDate}
-          endMonth={maxDate}
-          disabled={[...(minDate ? [{ before: minDate }] : []), ...(maxDate ? [{ after: maxDate }] : [])]}
-          autoFocus
-        />
+        {compactDays ? (
+          // Only the days the test ran — compact chips, no month grid.
+          <div className="flex max-w-[264px] flex-wrap justify-center gap-1 p-3">
+            {compactDays.map((d) => (
+              <button
+                key={d.toISOString()}
+                type="button"
+                onClick={() => onDay(d)}
+                className={cn(
+                  "rounded px-2.5 py-1 font-mono text-xs transition-colors",
+                  sameDay(d, value) ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted",
+                )}
+              >
+                {format(d, "EEE d MMM")}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <Calendar
+            mode="single"
+            selected={base}
+            onSelect={onDay}
+            defaultMonth={base ?? minDate}
+            startMonth={minDate}
+            endMonth={maxDate}
+            disabled={[...(minDate ? [{ before: minDate }] : []), ...(maxDate ? [{ after: maxDate }] : [])]}
+            autoFocus
+          />
+        )}
         {/* Material-style HH:MM:SS switcher — click a unit, then use the clock. */}
         <div className="flex items-center justify-center gap-1 border-t border-border px-3 pt-3 font-mono text-2xl tabular-nums">
           {(["h", "m", "s"] as const).map((u, i) => (
@@ -217,34 +246,8 @@ export function DateTimePicker({
           ))}
         </div>
         {/* Analog clock for the active unit — drag the hand or click a number. */}
-        <div className="flex justify-center px-3 py-2">
+        <div className="flex justify-center px-3 pb-3">
           <ClockFace mode={mode} value={mode === "h" ? h : mode === "m" ? m : sec} onSet={(n) => setPartN(mode, n)} />
-        </div>
-        <div className="flex items-center justify-center gap-1 border-t border-border px-3 py-2">
-          <span className="mr-1 text-[11px] text-muted-foreground">24h</span>
-          <input
-            className={num}
-            inputMode="numeric"
-            value={value ? pad(value.getHours()) : ""}
-            placeholder="HH"
-            onChange={(e) => setPart("h", e.target.value)}
-          />
-          <span className="text-muted-foreground">:</span>
-          <input
-            className={num}
-            inputMode="numeric"
-            value={value ? pad(value.getMinutes()) : ""}
-            placeholder="MM"
-            onChange={(e) => setPart("m", e.target.value)}
-          />
-          <span className="text-muted-foreground">:</span>
-          <input
-            className={num}
-            inputMode="numeric"
-            value={value ? pad(value.getSeconds()) : ""}
-            placeholder="SS"
-            onChange={(e) => setPart("s", e.target.value)}
-          />
         </div>
       </PopoverContent>
     </Popover>
