@@ -75,7 +75,11 @@ function ClockFace({ mode, value, onSet, onCommit }: { mode: "h" | "m" | "s"; va
     [mode, cx, cy],
   );
 
-  const handle = pos(value, radiusFor(value));
+  // Hand as a rotation (0° = 12 o'clock, clockwise) so switching units / snapping
+  // animates smoothly via a CSS transition instead of jumping.
+  const unitMax = mode === "h" ? 12 : 60;
+  const deg = ((value % unitMax) / unitMax) * 360;
+  const handRadius = radiusFor(value);
   // Labels: hours -> 0..11 outer + 12..23 inner; min/sec -> 0,5..55 outer.
   const outerLabels = mode === "h" ? Array.from({ length: 12 }, (_, i) => i) : Array.from({ length: 12 }, (_, i) => i * 5);
   const innerLabels = mode === "h" ? Array.from({ length: 12 }, (_, i) => (i === 0 ? 12 : i + 12)) : [];
@@ -115,10 +119,19 @@ function ClockFace({ mode, value, onSet, onCommit }: { mode: "h" | "m" | "s"; va
       onPointerCancel={() => onCommit?.()}
     >
       <circle cx={cx} cy={cy} r={rOuter + 16} fill="var(--color-muted)" />
-      {/* hand */}
-      <line x1={cx} y1={cy} x2={handle.x} y2={handle.y} stroke="var(--color-primary)" strokeWidth={2} />
+      {/* hand — rotated group so angle + radius transition smoothly */}
+      <g
+        style={{
+          transform: `rotate(${deg}deg)`,
+          transformOrigin: `${cx}px ${cy}px`,
+          transformBox: "view-box",
+          transition: "transform 160ms cubic-bezier(0.22, 1, 0.36, 1)",
+        }}
+      >
+        <line x1={cx} y1={cy} x2={cx} y2={cy - handRadius} stroke="var(--color-primary)" strokeWidth={2} style={{ transition: "y2 160ms cubic-bezier(0.22,1,0.36,1)" }} />
+        <circle cx={cx} cy={cy - handRadius} r={16} fill="var(--color-primary)" style={{ transition: "cy 160ms cubic-bezier(0.22,1,0.36,1)" }} />
+      </g>
       <circle cx={cx} cy={cy} r={3} fill="var(--color-primary)" />
-      <circle cx={handle.x} cy={handle.y} r={16} fill="var(--color-primary)" />
       {outerLabels.map((v) => (
         <Label key={`o${v}`} v={v} r={rOuter} />
       ))}
