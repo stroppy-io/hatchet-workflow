@@ -309,7 +309,7 @@ ExecStart=/usr/bin/docker run --rm --name %s --network host --pid host --ipc hos
   -e POSTGRES_HOST_AUTH_METHOD \
   -e POSTGRES_INITDB_ARGS=--locale=%s \
   -v %s:/var/lib/postgresql/data \
-%s  %s%s
+%s  %s postgres -D /etc/postgresql%s
 ExecStop=/usr/bin/docker rm -f %s
 Restart=always
 RestartSec=3
@@ -350,7 +350,10 @@ func orioledbReplicaUnit(componentID, image, masterHost string, options map[stri
 	configDir := deploymentbuilder.ConfigDir(componentID)
 	// MUST be a single line: systemd Exec lines cannot contain literal newlines
 	// inside a quoted argument ("Unbalanced quoting"). Join with ';'.
-	inner := fmt.Sprintf(`set -e; if [ ! -s "$PGDATA/PG_VERSION" ]; then pg_basebackup -h %s -p %d -U postgres -D "$PGDATA" -R -X stream -P; test -f "$PGDATA/standby.signal"; fi; exec docker-entrypoint.sh postgres%s`,
+	// -D /etc/postgresql keeps the image's orioledb config (shared_preload_libraries
+	// = orioledb, default_table_access_method = orioledb); without it the standby
+	// starts on the bare initdb config and cannot read the orioledb tables.
+	inner := fmt.Sprintf(`set -e; if [ ! -s "$PGDATA/PG_VERSION" ]; then pg_basebackup -h %s -p %d -U postgres -D "$PGDATA" -R -X stream -P; test -f "$PGDATA/standby.signal"; fi; exec docker-entrypoint.sh postgres -D /etc/postgresql%s`,
 		masterHost, pgPort, optStr.String())
 	return fmt.Sprintf(`[Unit]
 Description=Stroppy Cloud OrioleDB replica %s
