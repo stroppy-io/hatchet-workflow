@@ -457,6 +457,22 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
     prependAnchor.current = null;
   }, [rows]);
 
+  // After a jump-to-oldest/newest replaced the buffer, land at the requested end.
+  useLayoutEffect(() => {
+    if (!jumpTargetRef.current) return;
+    const el = scrollRef.current;
+    if (el) {
+      if (jumpTargetRef.current === "top") {
+        el.scrollTop = 0;
+        atBottom.current = false;
+      } else {
+        el.scrollTop = el.scrollHeight;
+        atBottom.current = true;
+      }
+    }
+    jumpTargetRef.current = null;
+  }, [rows]);
+
   const onScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -519,17 +535,39 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
 
   const totalActive = steps.size + components.size + machines.size + units.size + sources.size + streams.size + phases.size + actions.size + mentions.size + (applied ? 1 : 0) + (fromTs ? 1 : 0) + (toTs ? 1 : 0);
 
-  const jumpTop = useCallback(() => {
-    const el = scrollRef.current;
-    if (el) el.scrollTop = 0;
-  }, []);
-  const jumpBottom = useCallback(() => {
-    const el = scrollRef.current;
-    if (el) {
-      el.scrollTop = el.scrollHeight;
-      atBottom.current = true;
+  // Jump to the absolute oldest / newest of ALL logs (not just the loaded
+  // buffer): re-query the boundary page under the current filters, replace the
+  // buffer, reset the paging cursors, then scroll (via jumpTargetRef, once the
+  // new rows render).
+  const jumpTargetRef = useRef<null | "top" | "bottom">(null);
+  const jumpTop = useCallback(async () => {
+    if (!tenantSlug || !runId) return;
+    setLive(false); // viewing history from the very start
+    setError(null);
+    try {
+      const page = await queryLogs(tenantSlug, runId, { ...serverFilter(), direction: "newer", limit: 300 });
+      olderCursor.current = undefined; // nothing older than the oldest page
+      newerCursor.current = page.newer;
+      jumpTargetRef.current = "top";
+      setLines(page.lines);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
     }
-  }, []);
+  }, [tenantSlug, runId, serverFilter]);
+  const jumpBottom = useCallback(async () => {
+    if (!tenantSlug || !runId) return;
+    setError(null);
+    try {
+      const page = await queryLogs(tenantSlug, runId, { ...serverFilter(), direction: "older", limit: 300 });
+      olderCursor.current = page.older;
+      newerCursor.current = page.newer;
+      jumpTargetRef.current = "bottom";
+      setLines(page.lines);
+      if (!hasRange) setLive(true); // resume following the tail
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  }, [tenantSlug, runId, serverFilter, hasRange]);
 
   return (
     <div className="flex h-full flex-col gap-2">
