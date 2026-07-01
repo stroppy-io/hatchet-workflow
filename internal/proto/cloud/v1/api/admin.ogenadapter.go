@@ -846,6 +846,24 @@ func (a *OgenAdapter) GetIdentityProvider(ctx context.Context, req *rest.GetIden
 	return out, nil
 }
 
+func (a *OgenAdapter) GetLogFacets(ctx context.Context, req *rest.GetLogFacetsRequest) (*rest.GetLogFacetsResponse, error) {
+	in := &GetLogFacetsRequest{}
+	b, err := GetLogFacetsRequestFromOgen(req)
+	if err != nil {
+		return nil, err
+	}
+	in = b
+	resp, err := a.testRunOverviewService.GetLogFacets(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+	out, err := resp.ToOgen()
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (a *OgenAdapter) GetMembership(ctx context.Context, req *rest.GetMembershipRequest) (*rest.GetMembershipResponse, error) {
 	in := &GetMembershipRequest{}
 	b, err := GetMembershipRequestFromOgen(req)

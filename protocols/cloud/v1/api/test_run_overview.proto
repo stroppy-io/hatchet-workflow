@@ -347,6 +347,59 @@ message GetRunMetricsResponse {
 }
 
 /*
+    GetLogFacetsRequest asks for the distinct values (and their hit counts) of the
+    log filter dimensions across the WHOLE run, not just a loaded buffer. The
+    optional filter cross-narrows the facets (e.g. counts under the active
+    machine/phase selection), matching the behaviour of the QueryLogs filter.
+ */
+message GetLogFacetsRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        run_id identifies the run whose log facets are requested.
+     */
+    string run_id = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /*
+        filter cross-narrows the facet values (AND-ed with the run id). Unset =
+        facets over the whole run.
+     */
+    LogFilter filter = 3;
+}
+
+/*
+    LogFacetValue is one distinct value of a facet field plus how many lines carry
+    it (under the request filter).
+ */
+message LogFacetValue {
+    string value = 1;
+    uint64 count = 2;
+}
+
+/*
+    LogFacetField is the distinct-value set for one log filter dimension.
+ */
+message LogFacetField {
+    /*
+        field is the wire field name (e.g. component_id, machine_id, unit, phase,
+        action, step_id, stage_name, node_execution_id).
+     */
+    string field = 1;
+    /*
+        values are the distinct values with hit counts, most frequent first.
+     */
+    repeated LogFacetValue values = 2;
+}
+
+/*
+    GetLogFacetsResponse returns the per-field distinct values across the run.
+ */
+message GetLogFacetsResponse {
+    repeated LogFacetField fields = 1;
+}
+
+/*
     TestRunOverviewService serves the read-only overview, logs and metrics for a
     single run.
  */
@@ -492,6 +545,34 @@ service TestRunOverviewService {
             http_method: HTTP_METHOD_GET
             path: "/get-run-metrics"
             operation_id: "getRunMetrics"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TEST_RUN, action: ACTION_READ}]};
+    }
+    /*
+        GetLogFacets returns the distinct values + counts of the log filter
+        dimensions across the whole run (so the filter dropdowns don't depend on
+        which page of logs is loaded). Read-only.
+     */
+    rpc GetLogFacets (GetLogFacetsRequest) returns (GetLogFacetsResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/get-log-facets"
+            operation_id: "getLogFacets"
             request_body: {
                 required: true
             }

@@ -98,6 +98,8 @@
   - [cloud.v1.api.GetDatabasePresetResponse](#cloud-v1-api-getdatabasepresetresponse)
   - [cloud.v1.api.GetIdentityProviderRequest](#cloud-v1-api-getidentityproviderrequest)
   - [cloud.v1.api.GetIdentityProviderResponse](#cloud-v1-api-getidentityproviderresponse)
+  - [cloud.v1.api.GetLogFacetsRequest](#cloud-v1-api-getlogfacetsrequest)
+  - [cloud.v1.api.GetLogFacetsResponse](#cloud-v1-api-getlogfacetsresponse)
   - [cloud.v1.api.GetMembershipRequest](#cloud-v1-api-getmembershiprequest)
   - [cloud.v1.api.GetMembershipResponse](#cloud-v1-api-getmembershipresponse)
   - [cloud.v1.api.GetMyAccountRequest](#cloud-v1-api-getmyaccountrequest)
@@ -216,6 +218,8 @@
   - [cloud.v1.api.ListWorkloadPresetsRequest.Sort.Kind](#cloud-v1-api-listworkloadpresetsrequest-sort-kind)
   - [cloud.v1.api.ListWorkloadPresetsRequest.TagsEntry](#cloud-v1-api-listworkloadpresetsrequest-tagsentry)
   - [cloud.v1.api.ListWorkloadPresetsResponse](#cloud-v1-api-listworkloadpresetsresponse)
+  - [cloud.v1.api.LogFacetField](#cloud-v1-api-logfacetfield)
+  - [cloud.v1.api.LogFacetValue](#cloud-v1-api-logfacetvalue)
   - [cloud.v1.api.LogFilter](#cloud-v1-api-logfilter)
   - [cloud.v1.api.LogScrollDirection](#cloud-v1-api-logscrolldirection)
   - [cloud.v1.api.LoginRequest](#cloud-v1-api-loginrequest)
@@ -3262,6 +3266,76 @@ go_name: Id</pre></td>
 
 json_name: provider
 go_name: Provider</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-getlogfacetsrequest"></a>
+### cloud.v1.api.GetLogFacetsRequest
+
+<pre>
+//GetLogFacetsRequest asks for the distinct values (and their hit counts) of the
+//log filter dimensions across the WHOLE run, not just a loaded buffer. The
+//optional filter cross-narrows the facets (e.g. counts under the active
+//machine/phase selection), matching the behaviour of the QueryLogs filter.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>filter</td>
+<td><a href="#cloud-v1-api-logfilter">cloud.v1.api.LogFilter</a></td>
+<td><pre>
+//filter cross-narrows the facet values (AND-ed with the run id). Unset =
+//facets over the whole run.<br>
+
+json_name: filter
+go_name: Filter</pre></td>
+</tr><tr>
+<td>run_id</td>
+<td>string</td>
+<td><pre>
+//run_id identifies the run whose log facets are requested.<br>
+
+json_name: runId
+go_name: RunId</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+//tenant_id scopes the request to the owning tenant.<br>
+
+json_name: tenantId
+go_name: TenantId</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-getlogfacetsresponse"></a>
+### cloud.v1.api.GetLogFacetsResponse
+
+<pre>
+//GetLogFacetsResponse returns the per-field distinct values across the run.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>fields</td>
+<td><a href="#cloud-v1-api-logfacetfield">cloud.v1.api.LogFacetField</a></td>
+<td><pre>
+json_name: fields
+go_name: Fields</pre></td>
 </tr>
 </table>
 
@@ -7560,6 +7634,72 @@ go_name: NextPageToken</pre></td>
 
 json_name: presets
 go_name: Presets</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-logfacetfield"></a>
+### cloud.v1.api.LogFacetField
+
+<pre>
+//LogFacetField is the distinct-value set for one log filter dimension.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>field</td>
+<td>string</td>
+<td><pre>
+//field is the wire field name (e.g. component_id, machine_id, unit, phase,
+//action, step_id, stage_name, node_execution_id).<br>
+
+json_name: field
+go_name: Field</pre></td>
+</tr><tr>
+<td>values</td>
+<td><a href="#cloud-v1-api-logfacetvalue">cloud.v1.api.LogFacetValue</a></td>
+<td><pre>
+//values are the distinct values with hit counts, most frequent first.<br>
+
+json_name: values
+go_name: Values</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-logfacetvalue"></a>
+### cloud.v1.api.LogFacetValue
+
+<pre>
+//LogFacetValue is one distinct value of a facet field plus how many lines carry
+//it (under the request filter).
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>count</td>
+<td>uint64</td>
+<td><pre>
+json_name: count
+go_name: Count</pre></td>
+</tr><tr>
+<td>value</td>
+<td>string</td>
+<td><pre>
+json_name: value
+go_name: Value</pre></td>
 </tr>
 </table>
 

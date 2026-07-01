@@ -447,6 +447,17 @@ func (UnimplementedHandler) GetIdentityProvider(ctx context.Context, req *GetIde
 	return r, ht.ErrNotImplemented
 }
 
+// GetLogFacets implements getLogFacets operation.
+//
+// GetLogFacets returns the distinct values + counts of the log filter
+// dimensions across the whole run (so the filter dropdowns don't depend on
+// which page of logs is loaded). Read-only.
+//
+// GET /api/v1/test-run-overview/get-log-facets
+func (UnimplementedHandler) GetLogFacets(ctx context.Context, req *GetLogFacetsRequest) (r *GetLogFacetsResponse, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetMembership implements getMembership operation.
 //
 // GetMembership fetches one membership by id. Read-only.

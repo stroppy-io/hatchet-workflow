@@ -2346,3 +2346,532 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = GetRunMetricsResponseValidationError{}
+
+// Validate checks the field values on GetLogFacetsRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetLogFacetsRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetLogFacetsRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetLogFacetsRequestMultiError, or nil if none found.
+func (m *GetLogFacetsRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetLogFacetsRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetTenantId()); l < 1 || l > 64 {
+		err := GetLogFacetsRequestValidationError{
+			field:  "TenantId",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetRunId()); l < 1 || l > 128 {
+		err := GetLogFacetsRequestValidationError{
+			field:  "RunId",
+			reason: "value length must be between 1 and 128 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetFilter()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, GetLogFacetsRequestValidationError{
+					field:  "Filter",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, GetLogFacetsRequestValidationError{
+					field:  "Filter",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetFilter()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return GetLogFacetsRequestValidationError{
+				field:  "Filter",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return GetLogFacetsRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetLogFacetsRequestMultiError is an error wrapping multiple validation
+// errors returned by GetLogFacetsRequest.ValidateAll() if the designated
+// constraints aren't met.
+type GetLogFacetsRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetLogFacetsRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetLogFacetsRequestMultiError) AllErrors() []error { return m }
+
+// GetLogFacetsRequestValidationError is the validation error returned by
+// GetLogFacetsRequest.Validate if the designated constraints aren't met.
+type GetLogFacetsRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetLogFacetsRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetLogFacetsRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetLogFacetsRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetLogFacetsRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetLogFacetsRequestValidationError) ErrorName() string {
+	return "GetLogFacetsRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetLogFacetsRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetLogFacetsRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetLogFacetsRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetLogFacetsRequestValidationError{}
+
+// Validate checks the field values on LogFacetValue with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *LogFacetValue) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on LogFacetValue with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in LogFacetValueMultiError, or
+// nil if none found.
+func (m *LogFacetValue) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *LogFacetValue) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Value
+
+	// no validation rules for Count
+
+	if len(errors) > 0 {
+		return LogFacetValueMultiError(errors)
+	}
+
+	return nil
+}
+
+// LogFacetValueMultiError is an error wrapping multiple validation errors
+// returned by LogFacetValue.ValidateAll() if the designated constraints
+// aren't met.
+type LogFacetValueMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m LogFacetValueMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m LogFacetValueMultiError) AllErrors() []error { return m }
+
+// LogFacetValueValidationError is the validation error returned by
+// LogFacetValue.Validate if the designated constraints aren't met.
+type LogFacetValueValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e LogFacetValueValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e LogFacetValueValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e LogFacetValueValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e LogFacetValueValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e LogFacetValueValidationError) ErrorName() string { return "LogFacetValueValidationError" }
+
+// Error satisfies the builtin error interface
+func (e LogFacetValueValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sLogFacetValue.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = LogFacetValueValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = LogFacetValueValidationError{}
+
+// Validate checks the field values on LogFacetField with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *LogFacetField) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on LogFacetField with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in LogFacetFieldMultiError, or
+// nil if none found.
+func (m *LogFacetField) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *LogFacetField) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Field
+
+	for idx, item := range m.GetValues() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, LogFacetFieldValidationError{
+						field:  fmt.Sprintf("Values[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, LogFacetFieldValidationError{
+						field:  fmt.Sprintf("Values[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return LogFacetFieldValidationError{
+					field:  fmt.Sprintf("Values[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return LogFacetFieldMultiError(errors)
+	}
+
+	return nil
+}
+
+// LogFacetFieldMultiError is an error wrapping multiple validation errors
+// returned by LogFacetField.ValidateAll() if the designated constraints
+// aren't met.
+type LogFacetFieldMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m LogFacetFieldMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m LogFacetFieldMultiError) AllErrors() []error { return m }
+
+// LogFacetFieldValidationError is the validation error returned by
+// LogFacetField.Validate if the designated constraints aren't met.
+type LogFacetFieldValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e LogFacetFieldValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e LogFacetFieldValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e LogFacetFieldValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e LogFacetFieldValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e LogFacetFieldValidationError) ErrorName() string { return "LogFacetFieldValidationError" }
+
+// Error satisfies the builtin error interface
+func (e LogFacetFieldValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sLogFacetField.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = LogFacetFieldValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = LogFacetFieldValidationError{}
+
+// Validate checks the field values on GetLogFacetsResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetLogFacetsResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetLogFacetsResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetLogFacetsResponseMultiError, or nil if none found.
+func (m *GetLogFacetsResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetLogFacetsResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetFields() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, GetLogFacetsResponseValidationError{
+						field:  fmt.Sprintf("Fields[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, GetLogFacetsResponseValidationError{
+						field:  fmt.Sprintf("Fields[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return GetLogFacetsResponseValidationError{
+					field:  fmt.Sprintf("Fields[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return GetLogFacetsResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetLogFacetsResponseMultiError is an error wrapping multiple validation
+// errors returned by GetLogFacetsResponse.ValidateAll() if the designated
+// constraints aren't met.
+type GetLogFacetsResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetLogFacetsResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetLogFacetsResponseMultiError) AllErrors() []error { return m }
+
+// GetLogFacetsResponseValidationError is the validation error returned by
+// GetLogFacetsResponse.Validate if the designated constraints aren't met.
+type GetLogFacetsResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetLogFacetsResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetLogFacetsResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetLogFacetsResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetLogFacetsResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetLogFacetsResponseValidationError) ErrorName() string {
+	return "GetLogFacetsResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetLogFacetsResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetLogFacetsResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetLogFacetsResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetLogFacetsResponseValidationError{}

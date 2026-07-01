@@ -6771,6 +6771,58 @@ func (s *GetIdentityProviderResponse) SetProvider(val IdentityProvider) {
 	s.Provider = val
 }
 
+// Ref: #/components/schemas/GetLogFacetsRequest
+type GetLogFacetsRequest struct {
+	Filter   OptLogFilter `json:"filter"`
+	RunId    OptString    `json:"runId"`
+	TenantId OptString    `json:"tenantId"`
+}
+
+// GetFilter returns the value of Filter.
+func (s *GetLogFacetsRequest) GetFilter() OptLogFilter {
+	return s.Filter
+}
+
+// GetRunId returns the value of RunId.
+func (s *GetLogFacetsRequest) GetRunId() OptString {
+	return s.RunId
+}
+
+// GetTenantId returns the value of TenantId.
+func (s *GetLogFacetsRequest) GetTenantId() OptString {
+	return s.TenantId
+}
+
+// SetFilter sets the value of Filter.
+func (s *GetLogFacetsRequest) SetFilter(val OptLogFilter) {
+	s.Filter = val
+}
+
+// SetRunId sets the value of RunId.
+func (s *GetLogFacetsRequest) SetRunId(val OptString) {
+	s.RunId = val
+}
+
+// SetTenantId sets the value of TenantId.
+func (s *GetLogFacetsRequest) SetTenantId(val OptString) {
+	s.TenantId = val
+}
+
+// Ref: #/components/schemas/GetLogFacetsResponse
+type GetLogFacetsResponse struct {
+	Fields []LogFacetField `json:"fields"`
+}
+
+// GetFields returns the value of Fields.
+func (s *GetLogFacetsResponse) GetFields() []LogFacetField {
+	return s.Fields
+}
+
+// SetFields sets the value of Fields.
+func (s *GetLogFacetsResponse) SetFields(val []LogFacetField) {
+	s.Fields = val
+}
+
 // Ref: #/components/schemas/GetMembershipRequest
 type GetMembershipRequest struct {
 	ID OptString `json:"id"`
@@ -10853,6 +10905,58 @@ func (s *LogCursor) SetObservedAt(val OptDateTime) {
 // SetSeq sets the value of Seq.
 func (s *LogCursor) SetSeq(val OptStringUint64) {
 	s.Seq = val
+}
+
+// Ref: #/components/schemas/LogFacetField
+type LogFacetField struct {
+	Field  OptString       `json:"field"`
+	Values []LogFacetValue `json:"values"`
+}
+
+// GetField returns the value of Field.
+func (s *LogFacetField) GetField() OptString {
+	return s.Field
+}
+
+// GetValues returns the value of Values.
+func (s *LogFacetField) GetValues() []LogFacetValue {
+	return s.Values
+}
+
+// SetField sets the value of Field.
+func (s *LogFacetField) SetField(val OptString) {
+	s.Field = val
+}
+
+// SetValues sets the value of Values.
+func (s *LogFacetField) SetValues(val []LogFacetValue) {
+	s.Values = val
+}
+
+// Ref: #/components/schemas/LogFacetValue
+type LogFacetValue struct {
+	Count OptStringUint64 `json:"count"`
+	Value OptString       `json:"value"`
+}
+
+// GetCount returns the value of Count.
+func (s *LogFacetValue) GetCount() OptStringUint64 {
+	return s.Count
+}
+
+// GetValue returns the value of Value.
+func (s *LogFacetValue) GetValue() OptString {
+	return s.Value
+}
+
+// SetCount sets the value of Count.
+func (s *LogFacetValue) SetCount(val OptStringUint64) {
+	s.Count = val
+}
+
+// SetValue sets the value of Value.
+func (s *LogFacetValue) SetValue(val OptString) {
+	s.Value = val
 }
 
 // Ref: #/components/schemas/LogFilter

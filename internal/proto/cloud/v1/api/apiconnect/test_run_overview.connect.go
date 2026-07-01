@@ -52,6 +52,9 @@ const (
 	// TestRunOverviewServiceGetRunMetricsProcedure is the fully-qualified name of the
 	// TestRunOverviewService's GetRunMetrics RPC.
 	TestRunOverviewServiceGetRunMetricsProcedure = "/cloud.v1.api.TestRunOverviewService/GetRunMetrics"
+	// TestRunOverviewServiceGetLogFacetsProcedure is the fully-qualified name of the
+	// TestRunOverviewService's GetLogFacets RPC.
+	TestRunOverviewServiceGetLogFacetsProcedure = "/cloud.v1.api.TestRunOverviewService/GetLogFacets"
 )
 
 // TestRunOverviewServiceClient is a client for the cloud.v1.api.TestRunOverviewService service.
@@ -68,6 +71,10 @@ type TestRunOverviewServiceClient interface {
 	ResolveLogRef(context.Context, *api.ResolveLogRefRequest) (*api.ResolveLogRefResponse, error)
 	// GetRunMetrics fetches the run's metrics. Read-only.
 	GetRunMetrics(context.Context, *api.GetRunMetricsRequest) (*api.GetRunMetricsResponse, error)
+	// GetLogFacets returns the distinct values + counts of the log filter
+	// dimensions across the whole run (so the filter dropdowns don't depend on
+	// which page of logs is loaded). Read-only.
+	GetLogFacets(context.Context, *api.GetLogFacetsRequest) (*api.GetLogFacetsResponse, error)
 }
 
 // NewTestRunOverviewServiceClient constructs a client for the cloud.v1.api.TestRunOverviewService
@@ -121,6 +128,13 @@ func NewTestRunOverviewServiceClient(httpClient connect.HTTPClient, baseURL stri
 			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 			connect.WithClientOptions(opts...),
 		),
+		getLogFacets: connect.NewClient[api.GetLogFacetsRequest, api.GetLogFacetsResponse](
+			httpClient,
+			baseURL+TestRunOverviewServiceGetLogFacetsProcedure,
+			connect.WithSchema(testRunOverviewServiceMethods.ByName("GetLogFacets")),
+			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -132,6 +146,7 @@ type testRunOverviewServiceClient struct {
 	streamLogs            *connect.Client[api.StreamLogsRequest, monitor.LogLine]
 	resolveLogRef         *connect.Client[api.ResolveLogRefRequest, api.ResolveLogRefResponse]
 	getRunMetrics         *connect.Client[api.GetRunMetricsRequest, api.GetRunMetricsResponse]
+	getLogFacets          *connect.Client[api.GetLogFacetsRequest, api.GetLogFacetsResponse]
 }
 
 // GetTestRunOverview calls cloud.v1.api.TestRunOverviewService.GetTestRunOverview.
@@ -180,6 +195,15 @@ func (c *testRunOverviewServiceClient) GetRunMetrics(ctx context.Context, req *a
 	return nil, err
 }
 
+// GetLogFacets calls cloud.v1.api.TestRunOverviewService.GetLogFacets.
+func (c *testRunOverviewServiceClient) GetLogFacets(ctx context.Context, req *api.GetLogFacetsRequest) (*api.GetLogFacetsResponse, error) {
+	response, err := c.getLogFacets.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // TestRunOverviewServiceHandler is an implementation of the cloud.v1.api.TestRunOverviewService
 // service.
 type TestRunOverviewServiceHandler interface {
@@ -195,6 +219,10 @@ type TestRunOverviewServiceHandler interface {
 	ResolveLogRef(context.Context, *api.ResolveLogRefRequest) (*api.ResolveLogRefResponse, error)
 	// GetRunMetrics fetches the run's metrics. Read-only.
 	GetRunMetrics(context.Context, *api.GetRunMetricsRequest) (*api.GetRunMetricsResponse, error)
+	// GetLogFacets returns the distinct values + counts of the log filter
+	// dimensions across the whole run (so the filter dropdowns don't depend on
+	// which page of logs is loaded). Read-only.
+	GetLogFacets(context.Context, *api.GetLogFacetsRequest) (*api.GetLogFacetsResponse, error)
 }
 
 // NewTestRunOverviewServiceHandler builds an HTTP handler from the service implementation. It
@@ -244,6 +272,13 @@ func NewTestRunOverviewServiceHandler(svc TestRunOverviewServiceHandler, opts ..
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
+	testRunOverviewServiceGetLogFacetsHandler := connect.NewUnaryHandlerSimple(
+		TestRunOverviewServiceGetLogFacetsProcedure,
+		svc.GetLogFacets,
+		connect.WithSchema(testRunOverviewServiceMethods.ByName("GetLogFacets")),
+		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/cloud.v1.api.TestRunOverviewService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case TestRunOverviewServiceGetTestRunOverviewProcedure:
@@ -258,6 +293,8 @@ func NewTestRunOverviewServiceHandler(svc TestRunOverviewServiceHandler, opts ..
 			testRunOverviewServiceResolveLogRefHandler.ServeHTTP(w, r)
 		case TestRunOverviewServiceGetRunMetricsProcedure:
 			testRunOverviewServiceGetRunMetricsHandler.ServeHTTP(w, r)
+		case TestRunOverviewServiceGetLogFacetsProcedure:
+			testRunOverviewServiceGetLogFacetsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -289,4 +326,8 @@ func (UnimplementedTestRunOverviewServiceHandler) ResolveLogRef(context.Context,
 
 func (UnimplementedTestRunOverviewServiceHandler) GetRunMetrics(context.Context, *api.GetRunMetricsRequest) (*api.GetRunMetricsResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.TestRunOverviewService.GetRunMetrics is not implemented"))
+}
+
+func (UnimplementedTestRunOverviewServiceHandler) GetLogFacets(context.Context, *api.GetLogFacetsRequest) (*api.GetLogFacetsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.TestRunOverviewService.GetLogFacets is not implemented"))
 }

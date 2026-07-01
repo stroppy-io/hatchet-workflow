@@ -18529,6 +18529,177 @@ func (s *GetIdentityProviderResponse) UnmarshalJSON(data []byte) error {
 }
 
 // Encode implements json.Marshaler.
+func (s *GetLogFacetsRequest) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetLogFacetsRequest) encodeFields(e *jx.Encoder) {
+	{
+		if s.Filter.Set {
+			e.FieldStart("filter")
+			s.Filter.Encode(e)
+		}
+	}
+	{
+		if s.RunId.Set {
+			e.FieldStart("runId")
+			s.RunId.Encode(e)
+		}
+	}
+	{
+		if s.TenantId.Set {
+			e.FieldStart("tenantId")
+			s.TenantId.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetLogFacetsRequest = [3]string{
+	0: "filter",
+	1: "runId",
+	2: "tenantId",
+}
+
+// Decode decodes GetLogFacetsRequest from json.
+func (s *GetLogFacetsRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetLogFacetsRequest to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "filter":
+			if err := func() error {
+				s.Filter.Reset()
+				if err := s.Filter.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"filter\"")
+			}
+		case "runId":
+			if err := func() error {
+				s.RunId.Reset()
+				if err := s.RunId.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"runId\"")
+			}
+		case "tenantId":
+			if err := func() error {
+				s.TenantId.Reset()
+				if err := s.TenantId.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"tenantId\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetLogFacetsRequest")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetLogFacetsRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetLogFacetsRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetLogFacetsResponse) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetLogFacetsResponse) encodeFields(e *jx.Encoder) {
+	{
+		if s.Fields != nil {
+			e.FieldStart("fields")
+			e.ArrStart()
+			for _, elem := range s.Fields {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+}
+
+var jsonFieldsNameOfGetLogFacetsResponse = [1]string{
+	0: "fields",
+}
+
+// Decode decodes GetLogFacetsResponse from json.
+func (s *GetLogFacetsResponse) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetLogFacetsResponse to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "fields":
+			if err := func() error {
+				s.Fields = make([]LogFacetField, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem LogFacetField
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Fields = append(s.Fields, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"fields\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetLogFacetsResponse")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetLogFacetsResponse) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetLogFacetsResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
 func (s *GetMembershipRequest) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
@@ -30598,6 +30769,177 @@ func (s *LogCursor) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *LogCursor) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *LogFacetField) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *LogFacetField) encodeFields(e *jx.Encoder) {
+	{
+		if s.Field.Set {
+			e.FieldStart("field")
+			s.Field.Encode(e)
+		}
+	}
+	{
+		if s.Values != nil {
+			e.FieldStart("values")
+			e.ArrStart()
+			for _, elem := range s.Values {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+}
+
+var jsonFieldsNameOfLogFacetField = [2]string{
+	0: "field",
+	1: "values",
+}
+
+// Decode decodes LogFacetField from json.
+func (s *LogFacetField) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode LogFacetField to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "field":
+			if err := func() error {
+				s.Field.Reset()
+				if err := s.Field.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"field\"")
+			}
+		case "values":
+			if err := func() error {
+				s.Values = make([]LogFacetValue, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem LogFacetValue
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Values = append(s.Values, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"values\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode LogFacetField")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *LogFacetField) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *LogFacetField) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *LogFacetValue) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *LogFacetValue) encodeFields(e *jx.Encoder) {
+	{
+		if s.Count.Set {
+			e.FieldStart("count")
+			s.Count.Encode(e)
+		}
+	}
+	{
+		if s.Value.Set {
+			e.FieldStart("value")
+			s.Value.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfLogFacetValue = [2]string{
+	0: "count",
+	1: "value",
+}
+
+// Decode decodes LogFacetValue from json.
+func (s *LogFacetValue) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode LogFacetValue to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "count":
+			if err := func() error {
+				s.Count.Reset()
+				if err := s.Count.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"count\"")
+			}
+		case "value":
+			if err := func() error {
+				s.Value.Reset()
+				if err := s.Value.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"value\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode LogFacetValue")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *LogFacetValue) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *LogFacetValue) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

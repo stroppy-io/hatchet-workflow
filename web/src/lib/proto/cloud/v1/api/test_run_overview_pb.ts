@@ -28,7 +28,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/api/test_run_overview.proto.
  */
 export const file_cloud_v1_api_test_run_overview: GenFile = /*@__PURE__*/
-  fileDesc("CiRjbG91ZC92MS9hcGkvdGVzdF9ydW5fb3ZlcnZpZXcucHJvdG8SDGNsb3VkLnYxLmFwaSKpBQoJTG9nRmlsdGVyEiwKEm5vZGVfZXhlY3V0aW9uX2lkcxgBIAMoCUIQ+kINkgEKEIACIgVyAxiAARInCg1jb21wb25lbnRfaWRzGAIgAygJQhD6Qg2SAQoQgAIiBXIDGIABEiIKCG5vZGVfaWRzGAMgAygJQhD6Qg2SAQoQgAIiBXIDGIABEikKB3NvdXJjZXMYBCADKA4yGC5jbG91ZC52MS5tb25pdG9yLlNvdXJjZRIpCgdzdHJlYW1zGAUgAygOMhguY2xvdWQudjEubW9uaXRvci5TdHJlYW0SFgoEdW5pdBgGIAEoCUII+kIFcgMYgAISKQoFc3RhcnQYByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEicKA2VuZBgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASGAoGc2VhcmNoGAkgASgJQgj6QgVyAxiACBIXCgVxdWVyeRgKIAEoCUII+kIFcgMYgCASHwoGcGhhc2VzGAsgAygJQg/6QgySAQkQQCIFcgMYgAESMwoZcGFyZW50X25vZGVfZXhlY3V0aW9uX2lkcxgMIAMoCUIQ+kINkgEKEIACIgVyAxiAARIlCgtzdGFnZV9uYW1lcxgNIAMoCUIQ+kINkgEKEIACIgVyAxiAAhIiCghzdGVwX2lkcxgOIAMoCUIQ+kINkgEKEIACIgVyAxiAARIgCgdhY3Rpb25zGA8gAygJQg/6QgySAQkiBXIDGIABEEASIQoIbWVudGlvbnMYECADKAlCD/pCDJIBCRCAASIEcgIYQBIlCgttYWNoaW5lX2lkcxgRIAMoCUIQ+kINkgEKEIACIgVyAxiAARIfCgV1bml0cxgSIAMoCUIQ+kINkgEKEIACIgVyAxiAAiL1AQoXVGVzdFJ1bk92ZXJ2aWV3U25hcHNob3QSNQoDcnVuGAEgASgLMh4uY2xvdWQudjEubW9kZWxzLlRlc3RSdW5SZWNvcmRCCPpCBYoBAhABEjcKCHRvcG9sb2d5GAIgASgLMhsuY2xvdWQudjEudG9wb2xvZ3kuVG9wb2xvZ3lCCPpCBYoBAhABEjYKCG92ZXJ2aWV3GAMgASgLMhouY2xvdWQudjEubW9uaXRvci5PdmVydmlld0II+kIFigECEAESMgoJc3VpdGVfcnVuGAQgASgLMh8uY2xvdWQudjEubW9kZWxzLlN1aXRlUnVuUmVjb3JkIlUKGUdldFRlc3RSdW5PdmVydmlld1JlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASGgoGcnVuX2lkGAIgASgJQgr6QgdyBRiAARABIl8KGkdldFRlc3RSdW5PdmVydmlld1Jlc3BvbnNlEkEKCHNuYXBzaG90GAEgASgLMiUuY2xvdWQudjEuYXBpLlRlc3RSdW5PdmVydmlld1NuYXBzaG90Qgj6QgWKAQIQASJYChxTdHJlYW1UZXN0UnVuT3ZlcnZpZXdSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQYQBABEhoKBnJ1bl9pZBgCIAEoCUIK+kIHcgUQARiAASLuAQoQUXVlcnlMb2dzUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIaCgZydW5faWQYAiABKAlCCvpCB3IFEAEYgAESJwoGZmlsdGVyGAMgASgLMhcuY2xvdWQudjEuYXBpLkxvZ0ZpbHRlchIpCgRmcm9tGAQgASgLMhsuY2xvdWQudjEubW9uaXRvci5Mb2dDdXJzb3ISMwoJZGlyZWN0aW9uGAUgASgOMiAuY2xvdWQudjEuYXBpLkxvZ1Njcm9sbERpcmVjdGlvbhIXCgVsaW1pdBgGIAEoDUII+kIFKgMYiCcilQEKEVF1ZXJ5TG9nc1Jlc3BvbnNlEigKBWxpbmVzGAEgAygLMhkuY2xvdWQudjEubW9uaXRvci5Mb2dMaW5lEioKBW9sZGVyGAIgASgLMhsuY2xvdWQudjEubW9uaXRvci5Mb2dDdXJzb3ISKgoFbmV3ZXIYAyABKAsyGy5jbG91ZC52MS5tb25pdG9yLkxvZ0N1cnNvciKhAQoRU3RyZWFtTG9nc1JlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASGgoGcnVuX2lkGAIgASgJQgr6QgdyBRABGIABEicKBmZpbHRlchgDIAEoCzIXLmNsb3VkLnYxLmFwaS5Mb2dGaWx0ZXISKQoEZnJvbRgEIAEoCzIbLmNsb3VkLnYxLm1vbml0b3IuTG9nQ3Vyc29yImUKFFJlc29sdmVMb2dSZWZSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQYQBABEi8KA3JlZhgCIAEoCzIYLmNsb3VkLnYxLm1vbml0b3IuTG9nUmVmQgj6QgWKAQIQASJ9ChVSZXNvbHZlTG9nUmVmUmVzcG9uc2USDgoGcnVuX2lkGAEgASgJEicKBmZpbHRlchgCIAEoCzIXLmNsb3VkLnYxLmFwaS5Mb2dGaWx0ZXISKwoGY3Vyc29yGAMgASgLMhsuY2xvdWQudjEubW9uaXRvci5Mb2dDdXJzb3IifQoUR2V0UnVuTWV0cmljc1JlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASGgoGcnVuX2lkGAIgASgJQgr6QgdyBRiAARABEisKBndpbmRvdxgDIAEoCzIbLmNsb3VkLnYxLm1vbml0b3IuVGltZVJhbmdlIlAKFUdldFJ1bk1ldHJpY3NSZXNwb25zZRI3CgdtZXRyaWNzGAEgASgLMhwuY2xvdWQudjEubW9uaXRvci5SdW5NZXRyaWNzQgj6QgWKAQIQASp6ChJMb2dTY3JvbGxEaXJlY3Rpb24SJAogTE9HX1NDUk9MTF9ESVJFQ1RJT05fVU5TUEVDSUZJRUQQABIeChpMT0dfU0NST0xMX0RJUkVDVElPTl9PTERFUhABEh4KGkxPR19TQ1JPTExfRElSRUNUSU9OX05FV0VSEAIy1QoKFlRlc3RSdW5PdmVydmlld1NlcnZpY2US7AEKEkdldFRlc3RSdW5PdmVydmlldxInLmNsb3VkLnYxLmFwaS5HZXRUZXN0UnVuT3ZlcnZpZXdSZXF1ZXN0GiguY2xvdWQudjEuYXBpLkdldFRlc3RSdW5PdmVydmlld1Jlc3BvbnNlIoIBkAIBirUYBhIECAgQAvKnHXGiAQIQAbIBBxICT0sIyAGyATESEVVuZXhwZWN0ZWQgZXJyb3IuKhwKGiMvY29tcG9uZW50cy9zY2hlbWFzL0Vycm9yEAEaFi9nZXQtdGVzdC1ydW4tb3ZlcnZpZXciEmdldFRlc3RSdW5PdmVydmlldxL0AQoVU3RyZWFtVGVzdFJ1bk92ZXJ2aWV3EiouY2xvdWQudjEuYXBpLlN0cmVhbVRlc3RSdW5PdmVydmlld1JlcXVlc3QaJS5jbG91ZC52MS5hcGkuVGVzdFJ1bk92ZXJ2aWV3U25hcHNob3QihQGKtRgGEgQICBAC8qcdd7IBBwjIARICT0uyATESEVVuZXhwZWN0ZWQgZXJyb3IuKhwKGiMvY29tcG9uZW50cy9zY2hlbWFzL0Vycm9yEAIaGS9zdHJlYW0tdGVzdC1ydW4tb3ZlcnZpZXciFXN0cmVhbVRlc3RSdW5PdmVydmlld6IBAhABMAESvAEKCVF1ZXJ5TG9ncxIeLmNsb3VkLnYxLmFwaS5RdWVyeUxvZ3NSZXF1ZXN0Gh8uY2xvdWQudjEuYXBpLlF1ZXJ5TG9nc1Jlc3BvbnNlIm6QAgGKtRgGEgQICBAC8qcdXbIBBwjIARICT0uyATESEVVuZXhwZWN0ZWQgZXJyb3IuKhwKGiMvY29tcG9uZW50cy9zY2hlbWFzL0Vycm9yEAEaCy9xdWVyeS1sb2dzIglxdWVyeUxvZ3OiAQIQARK5AQoKU3RyZWFtTG9ncxIfLmNsb3VkLnYxLmFwaS5TdHJlYW1Mb2dzUmVxdWVzdBoZLmNsb3VkLnYxLm1vbml0b3IuTG9nTGluZSJtirUYBhIECAgQAvKnHV8aDC9zdHJlYW0tbG9ncyIKc3RyZWFtTG9nc6IBAhABsgEHCMgBEgJPS7IBMRIRVW5leHBlY3RlZCBlcnJvci4qHAoaIy9jb21wb25lbnRzL3NjaGVtYXMvRXJyb3IQAjABEtEBCg1SZXNvbHZlTG9nUmVmEiIuY2xvdWQudjEuYXBpLlJlc29sdmVMb2dSZWZSZXF1ZXN0GiMuY2xvdWQudjEuYXBpLlJlc29sdmVMb2dSZWZSZXNwb25zZSJ3kAIBirUYBhIECAgQAvKnHWaiAQIQAbIBBwjIARICT0uyATESEVVuZXhwZWN0ZWQgZXJyb3IuKhwKGiMvY29tcG9uZW50cy9zY2hlbWFzL0Vycm9yEAEaEC9yZXNvbHZlLWxvZy1yZWYiDXJlc29sdmVMb2dSZWYS0QEKDUdldFJ1bk1ldHJpY3MSIi5jbG91ZC52MS5hcGkuR2V0UnVuTWV0cmljc1JlcXVlc3QaIy5jbG91ZC52MS5hcGkuR2V0UnVuTWV0cmljc1Jlc3BvbnNlIneQAgGKtRgGEgQICBAC8qcdZhABGhAvZ2V0LXJ1bi1tZXRyaWNzIg1nZXRSdW5NZXRyaWNzogECEAGyAQcIyAESAk9LsgExEhFVbmV4cGVjdGVkIGVycm9yLiocChojL2NvbXBvbmVudHMvc2NoZW1hcy9FcnJvchoy8qcdLhoRdGVzdC1ydW4tb3ZlcnZpZXcSGS9hcGkvdjEvdGVzdC1ydW4tb3ZlcnZpZXdCR1o/Z2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvYXBp8qcdAggBYgZwcm90bzM", [file_cloud_v1_iam_options, file_cloud_v1_iam_permission, file_cloud_v1_models_suite, file_cloud_v1_models_test_run, file_cloud_v1_monitor_logs, file_cloud_v1_monitor_metrics, file_cloud_v1_monitor_overview, file_cloud_v1_topology_topology, file_google_protobuf_timestamp, file_validate_validate, file_ogen_ogen]);
+  fileDesc("CiRjbG91ZC92MS9hcGkvdGVzdF9ydW5fb3ZlcnZpZXcucHJvdG8SDGNsb3VkLnYxLmFwaSKpBQoJTG9nRmlsdGVyEiwKEm5vZGVfZXhlY3V0aW9uX2lkcxgBIAMoCUIQ+kINkgEKIgVyAxiAARCAAhInCg1jb21wb25lbnRfaWRzGAIgAygJQhD6Qg2SAQoiBXIDGIABEIACEiIKCG5vZGVfaWRzGAMgAygJQhD6Qg2SAQoQgAIiBXIDGIABEikKB3NvdXJjZXMYBCADKA4yGC5jbG91ZC52MS5tb25pdG9yLlNvdXJjZRIpCgdzdHJlYW1zGAUgAygOMhguY2xvdWQudjEubW9uaXRvci5TdHJlYW0SFgoEdW5pdBgGIAEoCUII+kIFcgMYgAISKQoFc3RhcnQYByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEicKA2VuZBgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASGAoGc2VhcmNoGAkgASgJQgj6QgVyAxiACBIXCgVxdWVyeRgKIAEoCUII+kIFcgMYgCASHwoGcGhhc2VzGAsgAygJQg/6QgySAQkQQCIFcgMYgAESMwoZcGFyZW50X25vZGVfZXhlY3V0aW9uX2lkcxgMIAMoCUIQ+kINkgEKIgVyAxiAARCAAhIlCgtzdGFnZV9uYW1lcxgNIAMoCUIQ+kINkgEKEIACIgVyAxiAAhIiCghzdGVwX2lkcxgOIAMoCUIQ+kINkgEKEIACIgVyAxiAARIgCgdhY3Rpb25zGA8gAygJQg/6QgySAQkQQCIFcgMYgAESIQoIbWVudGlvbnMYECADKAlCD/pCDJIBCRCAASIEcgIYQBIlCgttYWNoaW5lX2lkcxgRIAMoCUIQ+kINkgEKEIACIgVyAxiAARIfCgV1bml0cxgSIAMoCUIQ+kINkgEKEIACIgVyAxiAAiL1AQoXVGVzdFJ1bk92ZXJ2aWV3U25hcHNob3QSNQoDcnVuGAEgASgLMh4uY2xvdWQudjEubW9kZWxzLlRlc3RSdW5SZWNvcmRCCPpCBYoBAhABEjcKCHRvcG9sb2d5GAIgASgLMhsuY2xvdWQudjEudG9wb2xvZ3kuVG9wb2xvZ3lCCPpCBYoBAhABEjYKCG92ZXJ2aWV3GAMgASgLMhouY2xvdWQudjEubW9uaXRvci5PdmVydmlld0II+kIFigECEAESMgoJc3VpdGVfcnVuGAQgASgLMh8uY2xvdWQudjEubW9kZWxzLlN1aXRlUnVuUmVjb3JkIlUKGUdldFRlc3RSdW5PdmVydmlld1JlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASGgoGcnVuX2lkGAIgASgJQgr6QgdyBRiAARABIl8KGkdldFRlc3RSdW5PdmVydmlld1Jlc3BvbnNlEkEKCHNuYXBzaG90GAEgASgLMiUuY2xvdWQudjEuYXBpLlRlc3RSdW5PdmVydmlld1NuYXBzaG90Qgj6QgWKAQIQASJYChxTdHJlYW1UZXN0UnVuT3ZlcnZpZXdSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhoKBnJ1bl9pZBgCIAEoCUIK+kIHcgUQARiAASLuAQoQUXVlcnlMb2dzUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIaCgZydW5faWQYAiABKAlCCvpCB3IFEAEYgAESJwoGZmlsdGVyGAMgASgLMhcuY2xvdWQudjEuYXBpLkxvZ0ZpbHRlchIpCgRmcm9tGAQgASgLMhsuY2xvdWQudjEubW9uaXRvci5Mb2dDdXJzb3ISMwoJZGlyZWN0aW9uGAUgASgOMiAuY2xvdWQudjEuYXBpLkxvZ1Njcm9sbERpcmVjdGlvbhIXCgVsaW1pdBgGIAEoDUII+kIFKgMYiCcilQEKEVF1ZXJ5TG9nc1Jlc3BvbnNlEigKBWxpbmVzGAEgAygLMhkuY2xvdWQudjEubW9uaXRvci5Mb2dMaW5lEioKBW9sZGVyGAIgASgLMhsuY2xvdWQudjEubW9uaXRvci5Mb2dDdXJzb3ISKgoFbmV3ZXIYAyABKAsyGy5jbG91ZC52MS5tb25pdG9yLkxvZ0N1cnNvciKhAQoRU3RyZWFtTG9nc1JlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASGgoGcnVuX2lkGAIgASgJQgr6QgdyBRABGIABEicKBmZpbHRlchgDIAEoCzIXLmNsb3VkLnYxLmFwaS5Mb2dGaWx0ZXISKQoEZnJvbRgEIAEoCzIbLmNsb3VkLnYxLm1vbml0b3IuTG9nQ3Vyc29yImUKFFJlc29sdmVMb2dSZWZSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEi8KA3JlZhgCIAEoCzIYLmNsb3VkLnYxLm1vbml0b3IuTG9nUmVmQgj6QgWKAQIQASJ9ChVSZXNvbHZlTG9nUmVmUmVzcG9uc2USDgoGcnVuX2lkGAEgASgJEicKBmZpbHRlchgCIAEoCzIXLmNsb3VkLnYxLmFwaS5Mb2dGaWx0ZXISKwoGY3Vyc29yGAMgASgLMhsuY2xvdWQudjEubW9uaXRvci5Mb2dDdXJzb3IifQoUR2V0UnVuTWV0cmljc1JlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASGgoGcnVuX2lkGAIgASgJQgr6QgdyBRABGIABEisKBndpbmRvdxgDIAEoCzIbLmNsb3VkLnYxLm1vbml0b3IuVGltZVJhbmdlIlAKFUdldFJ1bk1ldHJpY3NSZXNwb25zZRI3CgdtZXRyaWNzGAEgASgLMhwuY2xvdWQudjEubW9uaXRvci5SdW5NZXRyaWNzQgj6QgWKAQIQASJ4ChNHZXRMb2dGYWNldHNSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhoKBnJ1bl9pZBgCIAEoCUIK+kIHcgUQARiAARInCgZmaWx0ZXIYAyABKAsyFy5jbG91ZC52MS5hcGkuTG9nRmlsdGVyIi0KDUxvZ0ZhY2V0VmFsdWUSDQoFdmFsdWUYASABKAkSDQoFY291bnQYAiABKAQiSwoNTG9nRmFjZXRGaWVsZBINCgVmaWVsZBgBIAEoCRIrCgZ2YWx1ZXMYAiADKAsyGy5jbG91ZC52MS5hcGkuTG9nRmFjZXRWYWx1ZSJDChRHZXRMb2dGYWNldHNSZXNwb25zZRIrCgZmaWVsZHMYASADKAsyGy5jbG91ZC52MS5hcGkuTG9nRmFjZXRGaWVsZCp6ChJMb2dTY3JvbGxEaXJlY3Rpb24SJAogTE9HX1NDUk9MTF9ESVJFQ1RJT05fVU5TUEVDSUZJRUQQABIeChpMT0dfU0NST0xMX0RJUkVDVElPTl9PTERFUhABEh4KGkxPR19TQ1JPTExfRElSRUNUSU9OX05FV0VSEAIypAwKFlRlc3RSdW5PdmVydmlld1NlcnZpY2US7AEKEkdldFRlc3RSdW5PdmVydmlldxInLmNsb3VkLnYxLmFwaS5HZXRUZXN0UnVuT3ZlcnZpZXdSZXF1ZXN0GiguY2xvdWQudjEuYXBpLkdldFRlc3RSdW5PdmVydmlld1Jlc3BvbnNlIoIBkAIBirUYBhIECAgQAvKnHXGiAQIQAbIBBwjIARICT0uyATESEVVuZXhwZWN0ZWQgZXJyb3IuKhwKGiMvY29tcG9uZW50cy9zY2hlbWFzL0Vycm9yEAEaFi9nZXQtdGVzdC1ydW4tb3ZlcnZpZXciEmdldFRlc3RSdW5PdmVydmlldxL0AQoVU3RyZWFtVGVzdFJ1bk92ZXJ2aWV3EiouY2xvdWQudjEuYXBpLlN0cmVhbVRlc3RSdW5PdmVydmlld1JlcXVlc3QaJS5jbG91ZC52MS5hcGkuVGVzdFJ1bk92ZXJ2aWV3U25hcHNob3QihQGKtRgGEgQICBAC8qcddxoZL3N0cmVhbS10ZXN0LXJ1bi1vdmVydmlldyIVc3RyZWFtVGVzdFJ1bk92ZXJ2aWV3ogECEAGyAQcIyAESAk9LsgExEhFVbmV4cGVjdGVkIGVycm9yLiocChojL2NvbXBvbmVudHMvc2NoZW1hcy9FcnJvchACMAESvAEKCVF1ZXJ5TG9ncxIeLmNsb3VkLnYxLmFwaS5RdWVyeUxvZ3NSZXF1ZXN0Gh8uY2xvdWQudjEuYXBpLlF1ZXJ5TG9nc1Jlc3BvbnNlIm6QAgGKtRgGEgQICBAC8qcdXRoLL3F1ZXJ5LWxvZ3MiCXF1ZXJ5TG9nc6IBAhABsgEHEgJPSwjIAbIBMRIRVW5leHBlY3RlZCBlcnJvci4qHAoaIy9jb21wb25lbnRzL3NjaGVtYXMvRXJyb3IQARK5AQoKU3RyZWFtTG9ncxIfLmNsb3VkLnYxLmFwaS5TdHJlYW1Mb2dzUmVxdWVzdBoZLmNsb3VkLnYxLm1vbml0b3IuTG9nTGluZSJtirUYBhIEEAIICPKnHV8iCnN0cmVhbUxvZ3OiAQIQAbIBBwjIARICT0uyATESEVVuZXhwZWN0ZWQgZXJyb3IuKhwKGiMvY29tcG9uZW50cy9zY2hlbWFzL0Vycm9yEAIaDC9zdHJlYW0tbG9nczABEtEBCg1SZXNvbHZlTG9nUmVmEiIuY2xvdWQudjEuYXBpLlJlc29sdmVMb2dSZWZSZXF1ZXN0GiMuY2xvdWQudjEuYXBpLlJlc29sdmVMb2dSZWZSZXNwb25zZSJ3kAIBirUYBhIEEAIICPKnHWYQARoQL3Jlc29sdmUtbG9nLXJlZiINcmVzb2x2ZUxvZ1JlZqIBAhABsgEHCMgBEgJPS7IBMSocChojL2NvbXBvbmVudHMvc2NoZW1hcy9FcnJvchIRVW5leHBlY3RlZCBlcnJvci4S0QEKDUdldFJ1bk1ldHJpY3MSIi5jbG91ZC52MS5hcGkuR2V0UnVuTWV0cmljc1JlcXVlc3QaIy5jbG91ZC52MS5hcGkuR2V0UnVuTWV0cmljc1Jlc3BvbnNlIneQAgGKtRgGEgQICBAC8qcdZiINZ2V0UnVuTWV0cmljc6IBAhABsgEHCMgBEgJPS7IBMRIRVW5leHBlY3RlZCBlcnJvci4qHAoaIy9jb21wb25lbnRzL3NjaGVtYXMvRXJyb3IQARoQL2dldC1ydW4tbWV0cmljcxLMAQoMR2V0TG9nRmFjZXRzEiEuY2xvdWQudjEuYXBpLkdldExvZ0ZhY2V0c1JlcXVlc3QaIi5jbG91ZC52MS5hcGkuR2V0TG9nRmFjZXRzUmVzcG9uc2UidZACAYq1GAYSBBACCAjypx1kEAEaDy9nZXQtbG9nLWZhY2V0cyIMZ2V0TG9nRmFjZXRzogECEAGyAQcIyAESAk9LsgExEhFVbmV4cGVjdGVkIGVycm9yLiocChojL2NvbXBvbmVudHMvc2NoZW1hcy9FcnJvchoy8qcdLhIZL2FwaS92MS90ZXN0LXJ1bi1vdmVydmlldxoRdGVzdC1ydW4tb3ZlcnZpZXdCR1o/Z2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvYXBp8qcdAggBYgZwcm90bzM", [file_cloud_v1_iam_options, file_cloud_v1_iam_permission, file_cloud_v1_models_suite, file_cloud_v1_models_test_run, file_cloud_v1_monitor_logs, file_cloud_v1_monitor_metrics, file_cloud_v1_monitor_overview, file_cloud_v1_topology_topology, file_google_protobuf_timestamp, file_validate_validate, file_ogen_ogen]);
 
 /**
  *
@@ -1170,6 +1170,228 @@ export const GetRunMetricsResponseSchema: GenMessage<GetRunMetricsResponse, {jso
 
 /**
  *
+ * GetLogFacetsRequest asks for the distinct values (and their hit counts) of the
+ * log filter dimensions across the WHOLE run, not just a loaded buffer. The
+ * optional filter cross-narrows the facets (e.g. counts under the active
+ * machine/phase selection), matching the behaviour of the QueryLogs filter.
+ *
+ * @generated from message cloud.v1.api.GetLogFacetsRequest
+ */
+export type GetLogFacetsRequest = Message<"cloud.v1.api.GetLogFacetsRequest"> & {
+  /**
+   *
+   * tenant_id scopes the request to the owning tenant.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   *
+   * run_id identifies the run whose log facets are requested.
+   *
+   * @generated from field: string run_id = 2;
+   */
+  runId: string;
+
+  /**
+   *
+   * filter cross-narrows the facet values (AND-ed with the run id). Unset =
+   * facets over the whole run.
+   *
+   * @generated from field: cloud.v1.api.LogFilter filter = 3;
+   */
+  filter?: LogFilter;
+};
+
+/**
+ *
+ * GetLogFacetsRequest asks for the distinct values (and their hit counts) of the
+ * log filter dimensions across the WHOLE run, not just a loaded buffer. The
+ * optional filter cross-narrows the facets (e.g. counts under the active
+ * machine/phase selection), matching the behaviour of the QueryLogs filter.
+ *
+ * @generated from message cloud.v1.api.GetLogFacetsRequest
+ */
+export type GetLogFacetsRequestJson = {
+  /**
+   *
+   * tenant_id scopes the request to the owning tenant.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId?: string;
+
+  /**
+   *
+   * run_id identifies the run whose log facets are requested.
+   *
+   * @generated from field: string run_id = 2;
+   */
+  runId?: string;
+
+  /**
+   *
+   * filter cross-narrows the facet values (AND-ed with the run id). Unset =
+   * facets over the whole run.
+   *
+   * @generated from field: cloud.v1.api.LogFilter filter = 3;
+   */
+  filter?: LogFilterJson;
+};
+
+export type GetLogFacetsRequestValid = GetLogFacetsRequest;
+
+/**
+ * Describes the message cloud.v1.api.GetLogFacetsRequest.
+ * Use `create(GetLogFacetsRequestSchema)` to create a new message.
+ */
+export const GetLogFacetsRequestSchema: GenMessage<GetLogFacetsRequest, {jsonType: GetLogFacetsRequestJson, validType: GetLogFacetsRequestValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_test_run_overview, 12);
+
+/**
+ *
+ * LogFacetValue is one distinct value of a facet field plus how many lines carry
+ * it (under the request filter).
+ *
+ * @generated from message cloud.v1.api.LogFacetValue
+ */
+export type LogFacetValue = Message<"cloud.v1.api.LogFacetValue"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+
+  /**
+   * @generated from field: uint64 count = 2;
+   */
+  count: bigint;
+};
+
+/**
+ *
+ * LogFacetValue is one distinct value of a facet field plus how many lines carry
+ * it (under the request filter).
+ *
+ * @generated from message cloud.v1.api.LogFacetValue
+ */
+export type LogFacetValueJson = {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value?: string;
+
+  /**
+   * @generated from field: uint64 count = 2;
+   */
+  count?: string;
+};
+
+export type LogFacetValueValid = LogFacetValue;
+
+/**
+ * Describes the message cloud.v1.api.LogFacetValue.
+ * Use `create(LogFacetValueSchema)` to create a new message.
+ */
+export const LogFacetValueSchema: GenMessage<LogFacetValue, {jsonType: LogFacetValueJson, validType: LogFacetValueValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_test_run_overview, 13);
+
+/**
+ *
+ * LogFacetField is the distinct-value set for one log filter dimension.
+ *
+ * @generated from message cloud.v1.api.LogFacetField
+ */
+export type LogFacetField = Message<"cloud.v1.api.LogFacetField"> & {
+  /**
+   *
+   * field is the wire field name (e.g. component_id, machine_id, unit, phase,
+   * action, step_id, stage_name, node_execution_id).
+   *
+   * @generated from field: string field = 1;
+   */
+  field: string;
+
+  /**
+   *
+   * values are the distinct values with hit counts, most frequent first.
+   *
+   * @generated from field: repeated cloud.v1.api.LogFacetValue values = 2;
+   */
+  values: LogFacetValue[];
+};
+
+/**
+ *
+ * LogFacetField is the distinct-value set for one log filter dimension.
+ *
+ * @generated from message cloud.v1.api.LogFacetField
+ */
+export type LogFacetFieldJson = {
+  /**
+   *
+   * field is the wire field name (e.g. component_id, machine_id, unit, phase,
+   * action, step_id, stage_name, node_execution_id).
+   *
+   * @generated from field: string field = 1;
+   */
+  field?: string;
+
+  /**
+   *
+   * values are the distinct values with hit counts, most frequent first.
+   *
+   * @generated from field: repeated cloud.v1.api.LogFacetValue values = 2;
+   */
+  values?: LogFacetValueJson[];
+};
+
+export type LogFacetFieldValid = LogFacetField;
+
+/**
+ * Describes the message cloud.v1.api.LogFacetField.
+ * Use `create(LogFacetFieldSchema)` to create a new message.
+ */
+export const LogFacetFieldSchema: GenMessage<LogFacetField, {jsonType: LogFacetFieldJson, validType: LogFacetFieldValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_test_run_overview, 14);
+
+/**
+ *
+ * GetLogFacetsResponse returns the per-field distinct values across the run.
+ *
+ * @generated from message cloud.v1.api.GetLogFacetsResponse
+ */
+export type GetLogFacetsResponse = Message<"cloud.v1.api.GetLogFacetsResponse"> & {
+  /**
+   * @generated from field: repeated cloud.v1.api.LogFacetField fields = 1;
+   */
+  fields: LogFacetField[];
+};
+
+/**
+ *
+ * GetLogFacetsResponse returns the per-field distinct values across the run.
+ *
+ * @generated from message cloud.v1.api.GetLogFacetsResponse
+ */
+export type GetLogFacetsResponseJson = {
+  /**
+   * @generated from field: repeated cloud.v1.api.LogFacetField fields = 1;
+   */
+  fields?: LogFacetFieldJson[];
+};
+
+export type GetLogFacetsResponseValid = GetLogFacetsResponse;
+
+/**
+ * Describes the message cloud.v1.api.GetLogFacetsResponse.
+ * Use `create(GetLogFacetsResponseSchema)` to create a new message.
+ */
+export const GetLogFacetsResponseSchema: GenMessage<GetLogFacetsResponse, {jsonType: GetLogFacetsResponseJson, validType: GetLogFacetsResponseValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_test_run_overview, 15);
+
+/**
+ *
  * LogScrollDirection selects which way QueryLogs pages relative to the anchor.
  *
  * @generated from enum cloud.v1.api.LogScrollDirection
@@ -1287,6 +1509,19 @@ export const TestRunOverviewService: GenService<{
     methodKind: "unary";
     input: typeof GetRunMetricsRequestSchema;
     output: typeof GetRunMetricsResponseSchema;
+  },
+  /**
+   *
+   * GetLogFacets returns the distinct values + counts of the log filter
+   * dimensions across the whole run (so the filter dropdowns don't depend on
+   * which page of logs is loaded). Read-only.
+   *
+   * @generated from rpc cloud.v1.api.TestRunOverviewService.GetLogFacets
+   */
+  getLogFacets: {
+    methodKind: "unary";
+    input: typeof GetLogFacetsRequestSchema;
+    output: typeof GetLogFacetsResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_cloud_v1_api_test_run_overview, 0);

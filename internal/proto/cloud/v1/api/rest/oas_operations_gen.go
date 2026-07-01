@@ -51,6 +51,7 @@ const (
 	GetAccountOperation                     OperationName = "GetAccount"
 	GetDatabasePresetOperation              OperationName = "GetDatabasePreset"
 	GetIdentityProviderOperation            OperationName = "GetIdentityProvider"
+	GetLogFacetsOperation                   OperationName = "GetLogFacets"
 	GetMembershipOperation                  OperationName = "GetMembership"
 	GetMyAccountOperation                   OperationName = "GetMyAccount"
 	GetMyPermissionsOperation               OperationName = "GetMyPermissions"

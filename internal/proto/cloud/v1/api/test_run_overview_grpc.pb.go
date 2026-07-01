@@ -26,6 +26,7 @@ const (
 	TestRunOverviewService_StreamLogs_FullMethodName            = "/cloud.v1.api.TestRunOverviewService/StreamLogs"
 	TestRunOverviewService_ResolveLogRef_FullMethodName         = "/cloud.v1.api.TestRunOverviewService/ResolveLogRef"
 	TestRunOverviewService_GetRunMetrics_FullMethodName         = "/cloud.v1.api.TestRunOverviewService/GetRunMetrics"
+	TestRunOverviewService_GetLogFacets_FullMethodName          = "/cloud.v1.api.TestRunOverviewService/GetLogFacets"
 )
 
 // TestRunOverviewServiceClient is the client API for TestRunOverviewService service.
@@ -47,6 +48,10 @@ type TestRunOverviewServiceClient interface {
 	ResolveLogRef(ctx context.Context, in *ResolveLogRefRequest, opts ...grpc.CallOption) (*ResolveLogRefResponse, error)
 	// GetRunMetrics fetches the run's metrics. Read-only.
 	GetRunMetrics(ctx context.Context, in *GetRunMetricsRequest, opts ...grpc.CallOption) (*GetRunMetricsResponse, error)
+	// GetLogFacets returns the distinct values + counts of the log filter
+	// dimensions across the whole run (so the filter dropdowns don't depend on
+	// which page of logs is loaded). Read-only.
+	GetLogFacets(ctx context.Context, in *GetLogFacetsRequest, opts ...grpc.CallOption) (*GetLogFacetsResponse, error)
 }
 
 type testRunOverviewServiceClient struct {
@@ -135,6 +140,16 @@ func (c *testRunOverviewServiceClient) GetRunMetrics(ctx context.Context, in *Ge
 	return out, nil
 }
 
+func (c *testRunOverviewServiceClient) GetLogFacets(ctx context.Context, in *GetLogFacetsRequest, opts ...grpc.CallOption) (*GetLogFacetsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetLogFacetsResponse)
+	err := c.cc.Invoke(ctx, TestRunOverviewService_GetLogFacets_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TestRunOverviewServiceServer is the server API for TestRunOverviewService service.
 // All implementations must embed UnimplementedTestRunOverviewServiceServer
 // for forward compatibility.
@@ -154,6 +169,10 @@ type TestRunOverviewServiceServer interface {
 	ResolveLogRef(context.Context, *ResolveLogRefRequest) (*ResolveLogRefResponse, error)
 	// GetRunMetrics fetches the run's metrics. Read-only.
 	GetRunMetrics(context.Context, *GetRunMetricsRequest) (*GetRunMetricsResponse, error)
+	// GetLogFacets returns the distinct values + counts of the log filter
+	// dimensions across the whole run (so the filter dropdowns don't depend on
+	// which page of logs is loaded). Read-only.
+	GetLogFacets(context.Context, *GetLogFacetsRequest) (*GetLogFacetsResponse, error)
 	mustEmbedUnimplementedTestRunOverviewServiceServer()
 }
 
@@ -181,6 +200,9 @@ func (UnimplementedTestRunOverviewServiceServer) ResolveLogRef(context.Context, 
 }
 func (UnimplementedTestRunOverviewServiceServer) GetRunMetrics(context.Context, *GetRunMetricsRequest) (*GetRunMetricsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetRunMetrics not implemented")
+}
+func (UnimplementedTestRunOverviewServiceServer) GetLogFacets(context.Context, *GetLogFacetsRequest) (*GetLogFacetsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetLogFacets not implemented")
 }
 func (UnimplementedTestRunOverviewServiceServer) mustEmbedUnimplementedTestRunOverviewServiceServer() {
 }
@@ -298,6 +320,24 @@ func _TestRunOverviewService_GetRunMetrics_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TestRunOverviewService_GetLogFacets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetLogFacetsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TestRunOverviewServiceServer).GetLogFacets(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TestRunOverviewService_GetLogFacets_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TestRunOverviewServiceServer).GetLogFacets(ctx, req.(*GetLogFacetsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TestRunOverviewService_ServiceDesc is the grpc.ServiceDesc for TestRunOverviewService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -320,6 +360,10 @@ var TestRunOverviewService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetRunMetrics",
 			Handler:    _TestRunOverviewService_GetRunMetrics_Handler,
+		},
+		{
+			MethodName: "GetLogFacets",
+			Handler:    _TestRunOverviewService_GetLogFacets_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

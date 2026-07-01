@@ -2519,6 +2519,28 @@ components:
             required:
                 - provider
             type: object
+        GetLogFacetsRequest:
+            additionalProperties: false
+            properties:
+                filter:
+                    $ref: '#/components/schemas/LogFilter'
+                runId:
+                    maxLength: 128
+                    minLength: 1
+                    type: string
+                tenantId:
+                    maxLength: 64
+                    minLength: 1
+                    type: string
+            type: object
+        GetLogFacetsResponse:
+            additionalProperties: false
+            properties:
+                fields:
+                    items:
+                        $ref: '#/components/schemas/LogFacetField'
+                    type: array
+            type: object
         GetMembershipRequest:
             additionalProperties: false
             properties:
@@ -4125,6 +4147,25 @@ components:
                     type: string
                 seq:
                     format: uint64
+                    type: string
+            type: object
+        LogFacetField:
+            additionalProperties: false
+            properties:
+                field:
+                    type: string
+                values:
+                    items:
+                        $ref: '#/components/schemas/LogFacetValue'
+                    type: array
+            type: object
+        LogFacetValue:
+            additionalProperties: false
+            properties:
+                count:
+                    format: uint64
+                    type: string
+                value:
                     type: string
             type: object
         LogFilter:
@@ -12518,6 +12559,37 @@ paths:
                 - test-preset
             x-idempotency-level: IDEMPOTENT
             x-ogen-operation-group: TestPreset
+    /api/v1/test-run-overview/get-log-facets:
+        get:
+            description: |-
+                GetLogFacets returns the distinct values + counts of the log filter
+                dimensions across the whole run (so the filter dropdowns don't depend on
+                which page of logs is loaded). Read-only.
+            operationId: getLogFacets
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/GetLogFacetsRequest'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetLogFacetsResponse'
+                    description: OK
+                default:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Unexpected error.
+            summary: GetLogFacets returns the distinct values + counts of the log filter
+            tags:
+                - test-run-overview
+            x-idempotency-level: NO_SIDE_EFFECTS
+            x-ogen-operation-group: TestRunOverview
     /api/v1/test-run-overview/get-run-metrics:
         get:
             description: GetRunMetrics fetches the run's metrics. Read-only.

@@ -935,6 +935,14 @@ type TestRunHandler interface {
 //
 // x-ogen-operation-group: TestRunOverview
 type TestRunOverviewHandler interface {
+	// GetLogFacets implements getLogFacets operation.
+	//
+	// GetLogFacets returns the distinct values + counts of the log filter
+	// dimensions across the whole run (so the filter dropdowns don't depend on
+	// which page of logs is loaded). Read-only.
+	//
+	// GET /api/v1/test-run-overview/get-log-facets
+	GetLogFacets(ctx context.Context, req *GetLogFacetsRequest) (*GetLogFacetsResponse, error)
 	// GetRunMetrics implements getRunMetrics operation.
 	//
 	// GetRunMetrics fetches the run's metrics. Read-only.

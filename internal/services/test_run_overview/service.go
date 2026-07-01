@@ -78,6 +78,10 @@ type LogReader interface {
 	// Resolve translates a LogRef into the concrete filter + anchor cursor used
 	// to render it. The ref's run id is authoritative for the run.
 	Resolve(ctx context.Context, ref *monitor.LogRef) (filter *api.LogFilter, cursor *monitor.LogCursor, err error)
+	// Facets returns the distinct values + counts of each log filter dimension
+	// across the whole run (narrowed by filter), so the filter dropdowns don't
+	// depend on which page of logs is loaded.
+	Facets(ctx context.Context, runID string, filter *api.LogFilter) ([]*api.LogFacetField, error)
 }
 
 // MetricsReader serves the Metrics tab: the run's aggregated metric summaries.
@@ -208,6 +212,20 @@ func (s *TestRunOverviewService) QueryLogs(ctx context.Context, req *api.QueryLo
 // rate-limit; clients use QueryLogs for exact scrollback.
 func (s *TestRunOverviewService) StreamLogs(req *api.StreamLogsRequest, stream grpc.ServerStreamingServer[monitor.LogLine]) error {
 	return s.streamLogs(stream.Context(), req.GetTenantId(), req.GetRunId(), req.GetFilter(), req.GetFrom(), stream.Send)
+}
+
+// GetLogFacets returns the distinct values + counts of the log filter
+// dimensions across the whole run, so the filter dropdowns are complete
+// regardless of which page of logs the client has loaded. Read-only.
+func (s *TestRunOverviewService) GetLogFacets(ctx context.Context, req *api.GetLogFacetsRequest) (*api.GetLogFacetsResponse, error) {
+	if err := s.authorizeRun(ctx, req.GetTenantId(), req.GetRunId()); err != nil {
+		return nil, err
+	}
+	fields, err := s.d.Logs.Facets(ctx, req.GetRunId(), req.GetFilter())
+	if err != nil {
+		return nil, utils.MapErr(err)
+	}
+	return &api.GetLogFacetsResponse{Fields: fields}, nil
 }
 
 // ResolveLogRef turns a shareable LogRef (deep-link) into a concrete run +

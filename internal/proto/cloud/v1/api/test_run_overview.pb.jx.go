@@ -1388,3 +1388,282 @@ func (m *GetRunMetricsResponse) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return m.Decode(d)
 }
+
+func (m *GetLogFacetsRequest) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.TenantId != "" {
+		e.FieldStart("tenantId")
+		e.Str(m.TenantId)
+	}
+	if m.RunId != "" {
+		e.FieldStart("runId")
+		e.Str(m.RunId)
+	}
+	if m.Filter != nil {
+		e.FieldStart("filter")
+		m.Filter.Encode(e)
+	}
+	e.ObjEnd()
+}
+
+func (m *GetLogFacetsRequest) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "tenantId", "tenant_id":
+			if seen["TenantId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["TenantId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.TenantId = v
+			return nil
+		case "runId", "run_id":
+			if seen["RunId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["RunId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.RunId = v
+			return nil
+		case "filter":
+			if seen["Filter"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Filter"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Filter = &LogFilter{}
+			if err := m.Filter.Decode(d); err != nil {
+				return err
+			}
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *GetLogFacetsRequest) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *GetLogFacetsRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *LogFacetValue) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Value != "" {
+		e.FieldStart("value")
+		e.Str(m.Value)
+	}
+	if m.Count != 0 {
+		e.FieldStart("count")
+		jxpb.EncUint64(e, m.Count)
+	}
+	e.ObjEnd()
+}
+
+func (m *LogFacetValue) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "value":
+			if seen["Value"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Value"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Value = v
+			return nil
+		case "count":
+			if seen["Count"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Count"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint64(d)
+			if err != nil {
+				return err
+			}
+			m.Count = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *LogFacetValue) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *LogFacetValue) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *LogFacetField) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Field != "" {
+		e.FieldStart("field")
+		e.Str(m.Field)
+	}
+	if len(m.Values) > 0 {
+		e.FieldStart("values")
+		e.ArrStart()
+		for _, v := range m.Values {
+			v.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	e.ObjEnd()
+}
+
+func (m *LogFacetField) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "field":
+			if seen["Field"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Field"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Field = v
+			return nil
+		case "values":
+			if seen["Values"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Values"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &LogFacetValue{}
+				if err := el.Decode(d); err != nil {
+					return err
+				}
+				m.Values = append(m.Values, el)
+				return nil
+			})
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *LogFacetField) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *LogFacetField) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *GetLogFacetsResponse) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if len(m.Fields) > 0 {
+		e.FieldStart("fields")
+		e.ArrStart()
+		for _, v := range m.Fields {
+			v.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	e.ObjEnd()
+}
+
+func (m *GetLogFacetsResponse) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "fields":
+			if seen["Fields"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Fields"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &LogFacetField{}
+				if err := el.Decode(d); err != nil {
+					return err
+				}
+				m.Fields = append(m.Fields, el)
+				return nil
+			})
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *GetLogFacetsResponse) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *GetLogFacetsResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}

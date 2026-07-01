@@ -9,6 +9,7 @@ import { TestRunRecordSchema, type TestRunRecord } from "@/lib/proto/cloud/v1/mo
 import {
   GetTestRunOverviewResponseSchema,
   GetRunMetricsResponseSchema,
+  GetLogFacetsResponseSchema,
   QueryLogsResponseSchema,
   TestRunOverviewSnapshotSchema,
   LogScrollDirection,
@@ -602,6 +603,68 @@ export function workloadSegments(overview: OverviewVM | null | undefined): Segme
   return out;
 }
 
+/** Map a LogQuery slice onto the wire api.LogFilter shape (shared by query /
+ *  stream / facets so all three narrow identically). */
+function toLogFilter(query: LogQuery) {
+  return {
+    search: query.search ?? "",
+    query: query.query ?? "",
+    nodeExecutionIds: query.nodeExecutionIds ?? [],
+    componentIds: query.componentIds ?? [],
+    nodeIds: query.nodeIds ?? [],
+    machineIds: query.machineIds ?? [],
+    sources: query.sources ?? [],
+    streams: query.streams ?? [],
+    unit: query.unit ?? "",
+    units: query.units ?? [],
+    phases: query.phases ?? [],
+    parentNodeExecutionIds: query.parentNodeExecutionIds ?? [],
+    stageNames: query.stageNames ?? [],
+    stepIds: query.stepIds ?? [],
+    actions: query.actions ?? [],
+    mentions: query.mentions ?? [],
+    start: query.start ? timestampFromDate(query.start) : undefined,
+    end: query.end ? timestampFromDate(query.end) : undefined,
+  };
+}
+
+/** One distinct value of a log filter dimension + its hit count over the run. */
+export interface LogFacetValueVM {
+  value: string;
+  count: number;
+}
+/** Server-side facets keyed by wire field name (component_id, machine_id, …). */
+export type LogFacetsVM = Record<string, LogFacetValueVM[]>;
+
+/**
+ * Distinct values + counts of every log filter dimension across the WHOLE run
+ * (narrowed by the same filter), so the dropdowns don't depend on which page of
+ * logs is loaded. `query` cross-narrows exactly like queryLogs.
+ */
+export async function getLogFacets(
+  tenantSlug: string,
+  runId: string,
+  query: LogQuery = {},
+): Promise<LogFacetsVM> {
+  const tenantId = await resolveTenantId(tenantSlug);
+  const resp = await testRunOverviewClient.getLogFacets({
+    tenantId,
+    runId,
+    filter: toLogFilter(query),
+  });
+  const j = toJson(GetLogFacetsResponseSchema, resp) as {
+    fields?: Array<{ field?: string; values?: Array<{ value?: string; count?: string | number }> }>;
+  };
+  const out: LogFacetsVM = {};
+  for (const f of j.fields ?? []) {
+    if (!f.field) continue;
+    out[f.field] = (f.values ?? [])
+      .filter((v) => !!v.value)
+      .map((v) => ({ value: v.value as string, count: Number(v.count ?? 0) }));
+  }
+  return out;
+}
+
 export async function queryLogs(
   tenantSlug: string,
   runId: string,
@@ -611,26 +674,7 @@ export async function queryLogs(
   const resp = await testRunOverviewClient.queryLogs({
     tenantId,
     runId,
-    filter: {
-      search: query.search ?? "",
-      query: query.query ?? "",
-      nodeExecutionIds: query.nodeExecutionIds ?? [],
-      componentIds: query.componentIds ?? [],
-      nodeIds: query.nodeIds ?? [],
-      machineIds: query.machineIds ?? [],
-      sources: query.sources ?? [],
-      streams: query.streams ?? [],
-      unit: query.unit ?? "",
-      units: query.units ?? [],
-      phases: query.phases ?? [],
-      parentNodeExecutionIds: query.parentNodeExecutionIds ?? [],
-      stageNames: query.stageNames ?? [],
-      stepIds: query.stepIds ?? [],
-      actions: query.actions ?? [],
-      mentions: query.mentions ?? [],
-      start: query.start ? timestampFromDate(query.start) : undefined,
-      end: query.end ? timestampFromDate(query.end) : undefined,
-    },
+    filter: toLogFilter(query),
     direction:
       query.direction === "older"
         ? LogScrollDirection.OLDER

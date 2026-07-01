@@ -227,6 +227,59 @@ func (r *LogReader) Resolve(_ context.Context, ref *monitor.LogRef) (*api.LogFil
 	return filter, cursor, nil
 }
 
+// logFacetFields are the log filter dimensions surfaced as server-side facets.
+// Each is a plain scalar field in the JSONL store, so field_values yields clean
+// distinct values. mentions is intentionally excluded (stored comma-joined, so
+// field_values returns unusable combinations); source/stream are fixed enums the
+// client already knows. Order is the display order in the UI.
+var logFacetFields = []string{
+	"node_execution_id",
+	"component_id",
+	"machine_id",
+	"unit",
+	"phase",
+	"action",
+	"step_id",
+	"stage_name",
+}
+
+// Facets returns the distinct values + hit counts of each log filter dimension
+// across the whole run (narrowed by filter), so the UI dropdowns don't depend on
+// which page of logs is loaded. With no backend configured it returns nil.
+func (r *LogReader) Facets(ctx context.Context, runID string, filter *api.LogFilter) ([]*api.LogFacetField, error) {
+	if !r.configured() {
+		return nil, nil
+	}
+	if filter == nil {
+		filter = &api.LogFilter{}
+	}
+	query := buildLogsFilter(runID, filter)
+	var start, end time.Time
+	if filter.GetStart() != nil {
+		start = filter.GetStart().AsTime()
+	}
+	if filter.GetEnd() != nil {
+		end = filter.GetEnd().AsTime()
+	}
+
+	out := make([]*api.LogFacetField, 0, len(logFacetFields))
+	for _, field := range logFacetFields {
+		vals, err := r.client.FieldValues(ctx, field, query, start, end, 1000)
+		if err != nil {
+			return nil, err
+		}
+		if len(vals) == 0 {
+			continue
+		}
+		fv := make([]*api.LogFacetValue, 0, len(vals))
+		for _, v := range vals {
+			fv = append(fv, &api.LogFacetValue{Value: v.Value, Count: v.Hits})
+		}
+		out = append(out, &api.LogFacetField{Field: field, Values: fv})
+	}
+	return out, nil
+}
+
 // MetricsReader implements test_run_overview.MetricsReader against
 // VictoriaMetrics. It resolves the run's DB kind + observation window from the
 // persisted run record, builds the per-DB PromQL set, range-queries the backend,
@@ -370,7 +423,10 @@ func dbKindString(rec *models.TestRunRecord) string {
 // buildLogsQuery composes a LogsQL filter pinning the run id and any narrowing
 // filter fields, then a sort. Run isolation is by the run_id field (see
 // ACCOUNT-ID RULE above).
-func buildLogsQuery(runID string, filter *api.LogFilter, direction api.LogScrollDirection) string {
+// buildLogsFilter composes just the LogsQL filter (run id pin + narrowing
+// fields), with no sort pipe — used both by buildLogsQuery and the facet
+// field_values queries.
+func buildLogsFilter(runID string, filter *api.LogFilter) string {
 	parts := []string{fmt.Sprintf("run_id:%q", runID)}
 
 	parts = appendOrFilter(parts, "node_execution_id", filter.GetNodeExecutionIds())
@@ -399,8 +455,11 @@ func buildLogsQuery(runID string, filter *api.LogFilter, direction api.LogScroll
 		// Raw LogsQL fragment, AND-ed with the structured filters.
 		parts = append(parts, q)
 	}
+	return strings.Join(parts, " ")
+}
 
-	query := strings.Join(parts, " ")
+func buildLogsQuery(runID string, filter *api.LogFilter, direction api.LogScrollDirection) string {
+	query := buildLogsFilter(runID, filter)
 	// Oldest-first by default; newest-first for the OLDER scroll so the page
 	// closest to the cursor comes back first.
 	if direction == api.LogScrollDirection_LOG_SCROLL_DIRECTION_OLDER {

@@ -13,9 +13,11 @@ import { MultiFilter, type FilterOption } from "@/components/ui/multi-filter";
 import { cn } from "@/lib/utils";
 import { Source, Stream } from "@/lib/proto/cloud/v1/monitor/logs_pb";
 import {
+  getLogFacets,
   logCursorFromKey,
   queryLogs,
   streamLogs,
+  type LogFacetsVM,
   type LogLineVM,
   type PipelineNodeVM,
 } from "@/services/run_overview";
@@ -226,6 +228,9 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
   const anchorRef = useRef<string | null>(anchorKey); // consumed on first load
 
   const [lines, setLines] = useState<LogLineVM[]>([]);
+  // Server-side facets over the WHOLE run (distinct values + counts per filter
+  // dimension), so the dropdowns don't depend on which page of logs is loaded.
+  const [facets, setFacets] = useState<LogFacetsVM>({});
   const [searchInput, setSearchInput] = useState(applied);
   const [loading, setLoading] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
@@ -404,6 +409,24 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tenantSlug, runId, filterKey]);
 
+  // Refetch facets (whole-run distinct values + counts) on filter change. These
+  // cross-narrow like the log query, so counts reflect the active selection.
+  useEffect(() => {
+    if (!tenantSlug || !runId) return;
+    let cancelled = false;
+    void getLogFacets(tenantSlug, runId, serverFilter())
+      .then((f) => {
+        if (!cancelled) setFacets(f);
+      })
+      .catch(() => {
+        if (!cancelled) setFacets({});
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tenantSlug, runId, filterKey]);
+
   // Live tail. Streamed lines are buffered in pendingRef and flushed to state on
   // a timer (one re-render per FLUSH_MS, capped to MAX_LIVE_LINES) so a firehose
   // does not lock up the tab.
@@ -518,48 +541,68 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
     }
   }, [anchorKey, rows]);
 
-  // Cross-filtered option counts over the loaded buffer.
+  // Filter option lists. Values + counts come from the server facets (whole
+  // run) when available so the dropdowns don't depend on the loaded buffer;
+  // mentions has no server facet (stored comma-joined) and stays buffer-derived,
+  // and source/stream are a fixed enum with buffer counts.
   const { stepOpts, compOpts, machineOpts, unitOpts, sourceOpts, streamOpts, phaseOpts, actionOpts, mentionOpts } = useMemo(() => {
-    const sc: Record<string, number> = {};
-    const cc: Record<string, number> = {};
-    const mc: Record<string, number> = {};
-    const uc: Record<string, number> = {};
+    // Buffer counts — fallback when a facet field is absent (no monitoring
+    // backend / facets not loaded yet).
+    const bc: Record<string, Record<string, number>> = { node_execution_id: {}, component_id: {}, machine_id: {}, unit: {}, phase: {}, action: {} };
     const soc: Record<string, number> = {};
     const stc: Record<string, number> = {};
-    const pc: Record<string, number> = {};
-    const ac: Record<string, number> = {};
     const xc: Record<string, number> = {};
     for (const l of lines) {
-      if (l.nodeExecutionId) sc[l.nodeExecutionId] = (sc[l.nodeExecutionId] || 0) + 1;
-      if (l.componentId) cc[l.componentId] = (cc[l.componentId] || 0) + 1;
-      if (l.machineId) mc[l.machineId] = (mc[l.machineId] || 0) + 1;
-      if (l.unit) uc[l.unit] = (uc[l.unit] || 0) + 1;
+      if (l.nodeExecutionId) bc.node_execution_id[l.nodeExecutionId] = (bc.node_execution_id[l.nodeExecutionId] || 0) + 1;
+      if (l.componentId) bc.component_id[l.componentId] = (bc.component_id[l.componentId] || 0) + 1;
+      if (l.machineId) bc.machine_id[l.machineId] = (bc.machine_id[l.machineId] || 0) + 1;
+      if (l.unit) bc.unit[l.unit] = (bc.unit[l.unit] || 0) + 1;
       const src = sourceToken(l.source);
       if (src) soc[src] = (soc[src] || 0) + 1;
       const str = streamToken(l.stream);
       if (str) stc[str] = (stc[str] || 0) + 1;
-      if (l.phase) pc[l.phase] = (pc[l.phase] || 0) + 1;
-      if (l.action) ac[l.action] = (ac[l.action] || 0) + 1;
+      if (l.phase) bc.phase[l.phase] = (bc.phase[l.phase] || 0) + 1;
+      if (l.action) bc.action[l.action] = (bc.action[l.action] || 0) + 1;
       for (const m of l.mentions) xc[m] = (xc[m] || 0) + 1;
     }
     const color = (id: string) => {
       if (!colorMap.current.has(id)) colorMap.current.set(id, MACHINE_COLORS[colorMap.current.size % MACHINE_COLORS.length]);
       return colorMap.current.get(id)!;
     };
+    // value -> count map for a field: prefer server facet, else buffer. Always
+    // union the currently-selected values (a selected value must stay visible
+    // even when the active filter narrows its own count to it).
+    const counts = (field: string, selected: Set<string>): Map<string, number> => {
+      const m = new Map<string, number>();
+      const fv = facets[field];
+      if (fv && fv.length) for (const v of fv) m.set(v.value, v.count);
+      else for (const [k, n] of Object.entries(bc[field] ?? {})) m.set(k, n);
+      for (const s of selected) if (!m.has(s)) m.set(s, 0);
+      return m;
+    };
+    const sorted = (m: Map<string, number>) => Array.from(m.keys()).sort();
+
+    const stepCounts = counts("node_execution_id", steps);
+    const compCounts = counts("component_id", components);
+    const machCounts = counts("machine_id", machines);
+    const unitCounts = counts("unit", units);
+    const phaseCounts = counts("phase", phases);
+    const actionCounts = counts("action", actions);
+
     return {
       stepOpts: nodeOptions
-        .filter((n) => sc[n.id] || steps.has(n.id))
-        .map((n): FilterOption => ({ value: n.id, label: n.label, count: sc[n.id] || 0 })),
-      compOpts: Array.from(new Set([...Object.keys(cc), ...components])).sort().map((c): FilterOption => ({ value: c, label: c, count: cc[c] || 0 })),
-      machineOpts: Array.from(new Set([...Object.keys(mc), ...machines])).sort().map((m): FilterOption => ({ value: m, label: m, count: mc[m] || 0, color: color(m) })),
-      unitOpts: Array.from(new Set([...Object.keys(uc), ...units])).sort().map((u): FilterOption => ({ value: u, label: u.replace(/\.service$/, ""), count: uc[u] || 0 })),
+        .filter((n) => stepCounts.has(n.id) || steps.has(n.id))
+        .map((n): FilterOption => ({ value: n.id, label: n.label, count: stepCounts.get(n.id) || 0 })),
+      compOpts: sorted(compCounts).map((c): FilterOption => ({ value: c, label: c, count: compCounts.get(c) || 0 })),
+      machineOpts: sorted(machCounts).map((m): FilterOption => ({ value: m, label: m, count: machCounts.get(m) || 0, color: color(m) })),
+      unitOpts: sorted(unitCounts).map((u): FilterOption => ({ value: u, label: u.replace(/\.service$/, ""), count: unitCounts.get(u) || 0 })),
       sourceOpts: SOURCE_FILTERS.map((s): FilterOption => ({ value: s.token, label: s.label, count: soc[s.token] || 0 })),
       streamOpts: STREAM_FILTERS.map((s): FilterOption => ({ value: s.token, label: s.label, count: stc[s.token] || 0 })),
-      phaseOpts: Array.from(new Set([...Object.keys(pc), ...phases])).sort().map((p): FilterOption => ({ value: p, label: humanize(p), count: pc[p] || 0 })),
-      actionOpts: Array.from(new Set([...Object.keys(ac), ...actions])).sort().map((a): FilterOption => ({ value: a, label: humanize(a), count: ac[a] || 0 })),
+      phaseOpts: sorted(phaseCounts).map((p): FilterOption => ({ value: p, label: humanize(p), count: phaseCounts.get(p) || 0 })),
+      actionOpts: sorted(actionCounts).map((a): FilterOption => ({ value: a, label: humanize(a), count: actionCounts.get(a) || 0 })),
       mentionOpts: Array.from(new Set([...Object.keys(xc), ...mentions])).sort().map((m): FilterOption => ({ value: m, label: m, count: xc[m] || 0 })),
     };
-  }, [lines, nodeOptions, steps, components, machines, units, phases, actions, mentions]);
+  }, [lines, facets, nodeOptions, steps, components, machines, units, phases, actions, mentions]);
 
   const totalActive = steps.size + components.size + machines.size + units.size + sources.size + streams.size + phases.size + actions.size + mentions.size + (applied ? 1 : 0) + (fromTs ? 1 : 0) + (toTs ? 1 : 0);
 

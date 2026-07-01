@@ -9,6 +9,86 @@ import (
 	monitor "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
 )
 
+// ToOgen converts GetLogFacetsRequest to its ogen representation.
+func (src *GetLogFacetsRequest) ToOgen() (*rest.GetLogFacetsRequest, error) {
+	var dst rest.GetLogFacetsRequest
+	if src == nil {
+		return &dst, nil
+	}
+	dst.TenantId.SetTo(string(src.GetTenantId()))
+	dst.RunId.SetTo(string(src.GetRunId()))
+	if src.Filter != nil {
+		o1, err := src.GetFilter().ToOgen()
+		if err != nil {
+			return nil, err
+		}
+		dst.Filter.SetTo(*o1)
+	}
+	return &dst, nil
+}
+
+// GetLogFacetsRequestFromOgen converts the ogen representation back to GetLogFacetsRequest.
+func GetLogFacetsRequestFromOgen(src *rest.GetLogFacetsRequest) (*GetLogFacetsRequest, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &GetLogFacetsRequest{}
+	if v1, ok := src.TenantId.Get(); ok {
+		dst.TenantId = string(v1)
+	}
+	if v2, ok := src.RunId.Get(); ok {
+		dst.RunId = string(v2)
+	}
+	if v3, ok := src.Filter.Get(); ok {
+		m4, err := LogFilterFromOgen(&v3)
+		if err != nil {
+			return nil, err
+		}
+		dst.Filter = m4
+	}
+	return dst, nil
+}
+
+// ToOgen converts GetLogFacetsResponse to its ogen representation.
+func (src *GetLogFacetsResponse) ToOgen() (*rest.GetLogFacetsResponse, error) {
+	var dst rest.GetLogFacetsResponse
+	if src == nil {
+		return &dst, nil
+	}
+	c1, err := convert.SliceErr(src.GetFields(), func(e *LogFacetField) (zero rest.LogFacetField, _ error) {
+		o2, err := e.ToOgen()
+		if err != nil {
+			return zero, err
+		}
+		return *o2, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dst.Fields = c1
+	return &dst, nil
+}
+
+// GetLogFacetsResponseFromOgen converts the ogen representation back to GetLogFacetsResponse.
+func GetLogFacetsResponseFromOgen(src *rest.GetLogFacetsResponse) (*GetLogFacetsResponse, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &GetLogFacetsResponse{}
+	c1, err := convert.SliceErr(src.Fields, func(e rest.LogFacetField) (zero *LogFacetField, _ error) {
+		m2, err := LogFacetFieldFromOgen(&e)
+		if err != nil {
+			return zero, err
+		}
+		return m2, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dst.Fields = c1
+	return dst, nil
+}
+
 // ToOgen converts GetRunMetricsRequest to its ogen representation.
 func (src *GetRunMetricsRequest) ToOgen() (*rest.GetRunMetricsRequest, error) {
 	var dst rest.GetRunMetricsRequest
@@ -128,6 +208,76 @@ func GetTestRunOverviewResponseFromOgen(src *rest.GetTestRunOverviewResponse) (*
 		return nil, err
 	}
 	dst.Snapshot = m1
+	return dst, nil
+}
+
+// ToOgen converts LogFacetField to its ogen representation.
+func (src *LogFacetField) ToOgen() (*rest.LogFacetField, error) {
+	var dst rest.LogFacetField
+	if src == nil {
+		return &dst, nil
+	}
+	dst.Field.SetTo(string(src.GetField()))
+	c1, err := convert.SliceErr(src.GetValues(), func(e *LogFacetValue) (zero rest.LogFacetValue, _ error) {
+		o2, err := e.ToOgen()
+		if err != nil {
+			return zero, err
+		}
+		return *o2, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dst.Values = c1
+	return &dst, nil
+}
+
+// LogFacetFieldFromOgen converts the ogen representation back to LogFacetField.
+func LogFacetFieldFromOgen(src *rest.LogFacetField) (*LogFacetField, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &LogFacetField{}
+	if v1, ok := src.Field.Get(); ok {
+		dst.Field = string(v1)
+	}
+	c2, err := convert.SliceErr(src.Values, func(e rest.LogFacetValue) (zero *LogFacetValue, _ error) {
+		m3, err := LogFacetValueFromOgen(&e)
+		if err != nil {
+			return zero, err
+		}
+		return m3, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dst.Values = c2
+	return dst, nil
+}
+
+// ToOgen converts LogFacetValue to its ogen representation.
+func (src *LogFacetValue) ToOgen() (*rest.LogFacetValue, error) {
+	var dst rest.LogFacetValue
+	if src == nil {
+		return &dst, nil
+	}
+	dst.Value.SetTo(string(src.GetValue()))
+	dst.Count.SetTo(uint64(src.GetCount()))
+	return &dst, nil
+}
+
+// LogFacetValueFromOgen converts the ogen representation back to LogFacetValue.
+func LogFacetValueFromOgen(src *rest.LogFacetValue) (*LogFacetValue, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &LogFacetValue{}
+	if v1, ok := src.Value.Get(); ok {
+		dst.Value = string(v1)
+	}
+	if v2, ok := src.Count.Get(); ok {
+		dst.Count = uint64(v2)
+	}
 	return dst, nil
 }
 

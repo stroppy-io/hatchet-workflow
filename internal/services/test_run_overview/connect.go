@@ -47,3 +47,7 @@ func (h *ConnectHandler) ResolveLogRef(ctx context.Context, req *api.ResolveLogR
 func (h *ConnectHandler) GetRunMetrics(ctx context.Context, req *api.GetRunMetricsRequest) (*api.GetRunMetricsResponse, error) {
 	return h.svc.GetRunMetrics(ctx, req)
 }
+
+func (h *ConnectHandler) GetLogFacets(ctx context.Context, req *api.GetLogFacetsRequest) (*api.GetLogFacetsResponse, error) {
+	return h.svc.GetLogFacets(ctx, req)
+}

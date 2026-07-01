@@ -79,6 +79,69 @@ func (c *LogsClient) Query(ctx context.Context, q LogsQuery) (io.ReadCloser, err
 	return resp.Body, nil
 }
 
+// FacetValue is one distinct value of a log field plus its hit count.
+type FacetValue struct {
+	Value string
+	Hits  uint64
+}
+
+// FieldValues returns the distinct values (and hit counts) of one log field for
+// the given LogsQL filter, via /select/logsql/field_values. limit caps the
+// number of values returned (0 = backend default). The window narrows the scan.
+func (c *LogsClient) FieldValues(ctx context.Context, field, query string, start, end time.Time, limit uint32) ([]FacetValue, error) {
+	values := url.Values{}
+	values.Set("query", query)
+	values.Set("field", field)
+	if limit > 0 {
+		values.Set("limit", fmt.Sprintf("%d", limit))
+	}
+	if !start.IsZero() {
+		values.Set("start", start.UTC().Format(time.RFC3339Nano))
+	}
+	if !end.IsZero() {
+		values.Set("end", end.UTC().Format(time.RFC3339Nano))
+	}
+
+	endpoint := c.baseURL + "/select/logsql/field_values"
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(values.Encode()))
+	if err != nil {
+		return nil, fmt.Errorf("vlogs: build field_values request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if c.token != "" {
+		req.Header.Set("Authorization", "Bearer "+c.token)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("vlogs: field_values: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		return nil, fmt.Errorf("vlogs: field_values status %d: %s", resp.StatusCode, body)
+	}
+
+	// VictoriaLogs returns {"values":[{"value":"...","hits":123}, ...]}.
+	var decoded struct {
+		Values []struct {
+			Value string `json:"value"`
+			Hits  uint64 `json:"hits"`
+		} `json:"values"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&decoded); err != nil {
+		return nil, fmt.Errorf("vlogs: decode field_values: %w", err)
+	}
+	out := make([]FacetValue, 0, len(decoded.Values))
+	for _, v := range decoded.Values {
+		if v.Value == "" {
+			continue
+		}
+		out = append(out, FacetValue{Value: v.Value, Hits: v.Hits})
+	}
+	return out, nil
+}
+
 // Write appends log lines to VictoriaLogs via /insert/jsonline. The caller is
 // responsible for setting run_id / node_execution_id / component_id on the
 // lines; this method only maps the proto shape to the JSONL wire fields used by
