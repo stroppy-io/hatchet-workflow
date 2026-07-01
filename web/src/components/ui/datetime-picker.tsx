@@ -38,7 +38,7 @@ function dayList(min: Date, max: Date): Date[] {
 // minutes/seconds 0–59). Drag the hand (or click a number) to set the value
 // from the pointer angle: 12 o'clock = 0, clockwise. Hours render as two
 // concentric rings (outer 0–11, inner 12–23); minutes/seconds label every 5.
-function ClockFace({ mode, value, onSet }: { mode: "h" | "m" | "s"; value: number; onSet: (n: number) => void }) {
+function ClockFace({ mode, value, onSet, onCommit }: { mode: "h" | "m" | "s"; value: number; onSet: (n: number) => void; onCommit?: () => void }) {
   const ref = useRef<SVGSVGElement>(null);
   const size = 232;
   const cx = size / 2;
@@ -111,6 +111,8 @@ function ClockFace({ mode, value, onSet }: { mode: "h" | "m" | "s"; value: numbe
       onPointerMove={(e) => {
         if (e.buttons === 1) setFromEvent(e);
       }}
+      onPointerUp={() => onCommit?.()}
+      onPointerCancel={() => onCommit?.()}
     >
       <circle cx={cx} cy={cy} r={rOuter + 16} fill="var(--color-muted)" />
       {/* hand */}
@@ -148,33 +150,49 @@ export function DateTimePicker({
   // Which unit the clock face edits (Material-style HH:MM:SS switcher).
   const [mode, setMode] = useState<"h" | "m" | "s">("h");
 
+  // While scrubbing the clock (or typing), edits land in a local draft so the
+  // face spins smoothly; we push ONE onChange (→ URL → log refetch) on release
+  // — dragging the dial must not fire a query per pointer-move tick.
+  const [draft, setDraft] = useState<Date | undefined>(undefined);
+  const eff = draft ?? value; // value shown/edited (draft wins while active)
+
+  const commit = () => {
+    if (draft) {
+      onChange(draft);
+      setDraft(undefined);
+    }
+  };
+
   // Merge a newly-picked calendar day into the current time (or 00:00:00).
+  // A day pick is a single action → commit straight away.
   const onDay = (day?: Date) => {
+    setDraft(undefined);
     if (!day) {
       onChange(undefined);
       return;
     }
     const d = new Date(day);
-    if (value) {
-      d.setHours(value.getHours(), value.getMinutes(), value.getSeconds(), 0);
+    if (eff) {
+      d.setHours(eff.getHours(), eff.getMinutes(), eff.getSeconds(), 0);
     } else {
       d.setHours(0, 0, 0, 0);
     }
     onChange(d);
   };
 
-  // Set one time part to an exact number (shared by the dials and the inputs).
+  // Set one time part to an exact number — updates the draft only (commit on
+  // pointer-up / input blur). Accumulates on top of the current draft/value.
   const setPartN = (part: "h" | "m" | "s", n: number) => {
-    const d = value ? new Date(value) : new Date();
-    if (!value) d.setSeconds(0, 0);
+    const d = eff ? new Date(eff) : new Date();
+    if (!eff) d.setSeconds(0, 0);
     if (part === "h") d.setHours(n);
     if (part === "m") d.setMinutes(n);
     if (part === "s") d.setSeconds(n);
-    onChange(d);
+    setDraft(d);
   };
-  const h = value ? value.getHours() : 0;
-  const m = value ? value.getMinutes() : 0;
-  const sec = value ? value.getSeconds() : 0;
+  const h = eff ? eff.getHours() : 0;
+  const m = eff ? eff.getMinutes() : 0;
+  const sec = eff ? eff.getSeconds() : 0;
 
   // With a run window, render ONLY the test's days as chips (no month grid);
   // fall back to the full calendar only if the span is implausibly large.
@@ -191,8 +209,12 @@ export function DateTimePicker({
   const onSeg = (unit: "h" | "m" | "s") => (e: React.ChangeEvent<HTMLInputElement>) =>
     setPartN(unit, clamp(parseInt(e.target.value.replace(/\D/g, "") || "0", 10), unit === "h" ? 23 : 59));
 
+  const onSegKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") commit();
+  };
+
   return (
-    <Popover>
+    <Popover onOpenChange={(open) => !open && commit()}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -245,15 +267,15 @@ export function DateTimePicker({
         )}
         {/* HH:MM:SS — type digits or click a unit, then use the clock. */}
         <div className="flex items-center justify-center gap-1 border-t border-border px-3 pt-3">
-          <input value={pad(h)} inputMode="numeric" maxLength={2} onFocus={() => setMode("h")} onChange={onSeg("h")} className={segCls("h")} />
+          <input value={pad(h)} inputMode="numeric" maxLength={2} onFocus={() => setMode("h")} onChange={onSeg("h")} onBlur={commit} onKeyDown={onSegKey} className={segCls("h")} />
           <span className="text-2xl text-muted-foreground">:</span>
-          <input value={pad(m)} inputMode="numeric" maxLength={2} onFocus={() => setMode("m")} onChange={onSeg("m")} className={segCls("m")} />
+          <input value={pad(m)} inputMode="numeric" maxLength={2} onFocus={() => setMode("m")} onChange={onSeg("m")} onBlur={commit} onKeyDown={onSegKey} className={segCls("m")} />
           <span className="text-2xl text-muted-foreground">:</span>
-          <input value={pad(sec)} inputMode="numeric" maxLength={2} onFocus={() => setMode("s")} onChange={onSeg("s")} className={segCls("s")} />
+          <input value={pad(sec)} inputMode="numeric" maxLength={2} onFocus={() => setMode("s")} onChange={onSeg("s")} onBlur={commit} onKeyDown={onSegKey} className={segCls("s")} />
         </div>
         {/* Analog clock for the active unit — drag the hand or click a number. */}
         <div className="flex justify-center px-3 pb-3">
-          <ClockFace mode={mode} value={mode === "h" ? h : mode === "m" ? m : sec} onSet={(n) => setPartN(mode, n)} />
+          <ClockFace mode={mode} value={mode === "h" ? h : mode === "m" ? m : sec} onSet={(n) => setPartN(mode, n)} onCommit={commit} />
         </div>
       </PopoverContent>
     </Popover>
