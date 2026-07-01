@@ -99,6 +99,15 @@ function streamLabel(value: string): string {
   return STREAM_FILTERS.find((s) => s.token === token)?.label ?? "";
 }
 
+// Live-tail buffer cap: at a firehose rate (500+ lines/s) an unbounded buffer
+// makes appendUnique O(n^2) and renders thousands of un-virtualized rows, which
+// freezes the tab. Cap the in-memory tail; scroll-up "load older" still pages
+// history from the server, and pausing Live freezes the buffer for reading.
+const MAX_LIVE_LINES = 5000;
+// Coalesce streamed lines into one state update per FLUSH_MS instead of one per
+// line — the per-line setState was the dominant cost under a firehose.
+const FLUSH_MS = 150;
+
 function lineKey(l: LogLineVM): string {
   return l.cursorKey || `${l.observedAt}|${l.lineNo}|${l.machineId}|${l.line}`;
 }
@@ -362,11 +371,27 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tenantSlug, runId, filterKey]);
 
-  // Live tail.
+  // Live tail. Streamed lines are buffered in pendingRef and flushed to state on
+  // a timer (one re-render per FLUSH_MS, capped to MAX_LIVE_LINES) so a firehose
+  // does not lock up the tab.
+  const pendingRef = useRef<LogLineVM[]>([]);
   useEffect(() => {
     if (!live || !tenantSlug || !runId || loadedFilterKey !== filterKey) return;
     const controller = new AbortController();
     tailAbort.current = controller;
+    pendingRef.current = [];
+
+    const flush = () => {
+      const batch = pendingRef.current;
+      if (batch.length === 0) return;
+      pendingRef.current = [];
+      setLines((prev) => {
+        const merged = appendUnique(prev, batch);
+        return merged.length > MAX_LIVE_LINES ? merged.slice(merged.length - MAX_LIVE_LINES) : merged;
+      });
+    };
+    const timer = window.setInterval(flush, FLUSH_MS);
+
     void streamLogs(
       tenantSlug,
       runId,
@@ -378,7 +403,7 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
       (line) => {
         if (controller.signal.aborted) return;
         if (line.cursorKey) newerCursor.current = logCursorFromKey(line.cursorKey);
-        setLines((prev) => appendUnique(prev, [line]));
+        pendingRef.current.push(line);
       },
     ).catch((err) => {
       if (controller.signal.aborted) return;
@@ -386,6 +411,8 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
     });
     return () => {
       controller.abort();
+      window.clearInterval(timer);
+      pendingRef.current = [];
       if (tailAbort.current === controller) tailAbort.current = null;
     };
   }, [live, tenantSlug, runId, loadedFilterKey, filterKey, serverFilter]);
