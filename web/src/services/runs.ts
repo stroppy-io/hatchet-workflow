@@ -224,6 +224,24 @@ export interface RunVM {
   favorite: boolean;
   /** entity.timings.deleted_at is set (soft-deleted); drives include_deleted. */
   deleted: boolean;
+  /**
+   * spec.workload.segments — the exact stroppy launch settings per segment
+   * (script + k6 execution + stroppy parameters). Present only when the record
+   * carries the full spec (overview snapshot / GetTestRun); empty from the list
+   * summary. Surfaced in the run Overview so a run is reproducible at a glance.
+   */
+  workloadSegments: WorkloadSegmentVM[];
+}
+
+/** One stroppy workload segment's launch settings (from spec.workload.segments). */
+export interface WorkloadSegmentVM {
+  name: string;
+  script: string;
+  vus?: number;
+  duration?: string;
+  iterations?: number;
+  poolSize?: number;
+  scaleFactor?: number;
 }
 
 /**
@@ -425,9 +443,28 @@ export function testRunRecordToVM(rec: TestRunRecord): RunVM {
       workloadPresetId?: string;
       testPresetId?: string;
     };
+    spec?: {
+      workload?: {
+        segments?: Array<{
+          name?: string;
+          script?: string;
+          execution?: { vus?: number; duration?: string; iterations?: number };
+          parameters?: { poolSize?: number; scaleFactor?: number };
+        }>;
+      };
+    };
   };
   const e = j.entity ?? {};
   const s = j.summary ?? {};
+  const segments: WorkloadSegmentVM[] = (j.spec?.workload?.segments ?? []).map((seg) => ({
+    name: seg.name ?? "",
+    script: seg.script ?? "",
+    vus: seg.execution?.vus,
+    duration: seg.execution?.duration,
+    iterations: seg.execution?.iterations,
+    poolSize: seg.parameters?.poolSize,
+    scaleFactor: seg.parameters?.scaleFactor,
+  }));
   return {
     id: e.id ?? "",
     name: e.name ?? "",
@@ -452,6 +489,7 @@ export function testRunRecordToVM(rec: TestRunRecord): RunVM {
     testPresetId: s.testPresetId ?? "",
     favorite: e.isFavorite ?? false,
     deleted: !!e.timings?.deletedAt,
+    workloadSegments: segments,
   };
 }
 

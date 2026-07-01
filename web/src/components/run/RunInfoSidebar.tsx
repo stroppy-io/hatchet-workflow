@@ -10,6 +10,7 @@ import {
   Cpu,
   Database,
   FileCode,
+  Gauge,
   Hash,
   Layers,
   Network,
@@ -201,14 +202,34 @@ export function RunInfoSidebar({ overview, run }: { overview: OverviewVM; run?: 
         </Group>
       )}
 
-      {run && (run.workload || run.stroppyVersion) && (
+      {run && (run.workload || run.stroppyVersion || (run.workloadSegments?.length ?? 0) > 0) && (
         <Group label="Workload">
-          <Row icon={FileCode} label="script" value={run.workload || "—"} />
+          <Row icon={FileCode} label="name" value={run.workload || "—"} />
           {run.protocol && <Row icon={Network} label="protocol" value={run.protocol} />}
           {run.stroppyVersion && <Row icon={Tag} label="stroppy" value={run.stroppyVersion} />}
           {run.workloadPresetId && (
             <Row icon={Tag} label="preset" value={run.workloadPresetId.slice(0, 8)} />
           )}
+          {run.workloadSegments?.map((seg, i) => (
+            <Row
+              key={i}
+              icon={Gauge}
+              label={seg.name || `seg ${i + 1}`}
+              value={
+                <span className="break-words">
+                  {[
+                    seg.script,
+                    seg.vus !== undefined && `vus=${seg.vus}`,
+                    seg.duration ? `dur=${seg.duration}` : seg.iterations !== undefined && `iters=${seg.iterations}`,
+                    seg.poolSize !== undefined && `pool=${seg.poolSize}`,
+                    seg.scaleFactor !== undefined && `scale=${seg.scaleFactor}`,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </span>
+              }
+            />
+          ))}
         </Group>
       )}
 
