@@ -26,6 +26,9 @@ interface LogsPanelProps {
   tenantSlug: string;
   runId: string;
   pipeline: PipelineNodeVM[];
+  /** Run window (ISO) — restricts the From/To calendars to the test's days. */
+  runStart?: string;
+  runEnd?: string;
 }
 
 const MACHINE_COLORS = [
@@ -167,7 +170,7 @@ function logLineTooltip(l: LogLineVM, source: string, stream: string): string {
     .join("\n");
 }
 
-export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
+export function LogsPanel({ tenantSlug, runId, pipeline, runStart, runEnd }: LogsPanelProps) {
   const [sp, setSp] = useSearchParams();
 
   // Filters derived from the URL — single source of truth (shareable).
@@ -185,6 +188,11 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
   const fromTs = sp.get("from_ts") ?? "";
   const toTs = sp.get("to_ts") ?? "";
   const hasRange = !!fromTs || !!toTs;
+  // Calendar bounds = the run window (skip zero/epoch sentinels), so the From/To
+  // day pickers only offer the days the test actually ran.
+  const validRunTs = (iso?: string) => !!iso && iso !== "0001-01-01T00:00:00Z" && new Date(iso).getFullYear() >= 2000;
+  const calMin = validRunTs(runStart) ? new Date(runStart!) : undefined;
+  const calMax = validRunTs(runEnd) ? new Date(runEnd!) : undefined;
   const steps = useMemo(() => new Set(csv(stepsParam)), [stepsParam]);
   const components = useMemo(() => new Set(csv(compParam)), [compParam]);
   const machines = useMemo(() => new Set(csv(machParam)), [machParam]);
@@ -730,12 +738,16 @@ export function LogsPanel({ tenantSlug, runId, pipeline }: LogsPanelProps) {
           value={fromTs ? new Date(fromTs) : undefined}
           onChange={(d) => setParam("from_ts", d ? [d.toISOString()] : [])}
           placeholder="From"
+          minDate={calMin}
+          maxDate={calMax}
         />
         <span className="text-muted-foreground">–</span>
         <DateTimePicker
           value={toTs ? new Date(toTs) : undefined}
           onChange={(d) => setParam("to_ts", d ? [d.toISOString()] : [])}
           placeholder="To"
+          minDate={calMin}
+          maxDate={calMax}
         />
 
         <div className="flex-1" />

@@ -564,7 +564,15 @@ export function RunDetail() {
             {view === "overview" && run && <RunConfigTab run={run} />}
             {view === "pipeline" && <PipelineViewer pipeline={overview?.pipeline ?? []} onOpenLogs={openLogsForNode} />}
             {view === "topology" && <TopologyViewer topology={overview?.topology} />}
-            {view === "logs" && <LogsPanel tenantSlug={tenantSlug} runId={id} pipeline={overview?.pipeline ?? []} />}
+            {view === "logs" && (
+              <LogsPanel
+                tenantSlug={tenantSlug}
+                runId={id}
+                pipeline={overview?.pipeline ?? []}
+                runStart={overview?.startedAt}
+                runEnd={overview?.finishedAt}
+              />
+            )}
             {view === "metrics" && <MetricsPanel metrics={metrics} />}
             {view === "quotas" && (
               <RunQuotaUsagePanel
