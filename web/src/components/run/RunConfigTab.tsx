@@ -126,7 +126,7 @@ function SegmentCard({ seg, index }: { seg: WorkloadSegmentVM; index: number }) 
     seg.quiet && "quiet",
     seg.noThresholds && "no-thresholds",
   ].filter(Boolean);
-  const bulk = seg.insertMethod === "plain_bulk" || (seg.bulkSize ?? 0) > 0;
+  const bulk = seg.insertMethod === "plain_bulk" || seg.insertMethod === "columnar" || (seg.bulkSize ?? 0) > 0;
   return (
     <div className="rounded border border-border/60 p-3">
       <div className="mb-2 flex items-center gap-2">

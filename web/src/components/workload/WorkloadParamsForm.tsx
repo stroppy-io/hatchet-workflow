@@ -58,7 +58,10 @@ export interface SegmentProbeContext {
 const COVERED_ENV = new Set(["POOL_SIZE", "SCALE_FACTOR", "WAREHOUSES", "STROPPY_STEPS", "STROPPY_NO_STEPS"]);
 
 /** Driver-level insert methods (mirrors stroppy run.proto default_insert_method). */
-const INSERT_METHODS = ["native", "plain_bulk", "plain_query"] as const;
+const INSERT_METHODS = ["native", "plain_bulk", "columnar", "plain_query"] as const;
+
+/** Insert methods that batch rows, so bulk_size (batch size) is meaningful. */
+const BATCHED_INSERT_METHODS = new Set(["plain_bulk", "columnar"]);
 
 /** Numbers (incl. negatives/decimals) vs free text like "max"/"false". */
 const NUMERIC_RE = /^-?\d+(\.\d+)?$/;
@@ -658,14 +661,14 @@ function SegmentEditor({
                   </SelectContent>
                 </Select>
               </div>
-              {seg.parameters.defaultInsertMethod === "plain_bulk" && (
+              {BATCHED_INSERT_METHODS.has(seg.parameters.defaultInsertMethod) && (
                 <NumField
                   label="Batch size"
                   value={seg.parameters.bulkSize}
                   min={0}
                   max={1000000}
                   onChange={(n) => setParams({ bulkSize: n })}
-                  hint="rows per bulk INSERT (0 = stroppy default 2500)"
+                  hint="rows per batch (0 = stroppy default 2500)"
                 />
               )}
             </div>
