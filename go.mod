@@ -41,15 +41,25 @@ require (
 )
 
 require (
+	github.com/agext/levenshtein v1.2.2 // indirect
 	github.com/dlclark/regexp2 v1.11.5 // indirect
 	github.com/fatih/color v1.19.0 // indirect
 	github.com/go-faster/yaml v0.4.6 // indirect
+	github.com/google/cel-go v0.29.0 // indirect
+	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
+	github.com/hashicorp/hcl v0.0.0-20170504190234-a4b07c25de5f // indirect
+	github.com/hashicorp/hcl/v2 v2.20.1 // indirect
+	github.com/hashicorp/terraform-config-inspect v0.0.0-20260224005459-813a97530220 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.21 // indirect
+	github.com/mitchellh/go-wordwrap v1.0.0 // indirect
 	github.com/onsi/gomega v1.38.3 // indirect
+	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 // indirect
 	github.com/stretchr/testify v1.11.1 // indirect
 	go.uber.org/zap v1.27.1 // indirect
+	golang.org/x/mod v0.36.0 // indirect
+	golang.org/x/tools v0.45.0 // indirect
 )
 
 require (
