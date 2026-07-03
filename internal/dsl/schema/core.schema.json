@@ -179,7 +179,9 @@
         "steps": {
           "type": "array",
           "items": { "$ref": "#/$defs/step" }
-        }
+        },
+        "include": { "type": "string" },
+        "inputs": { "type": "object" }
       }
     },
 
