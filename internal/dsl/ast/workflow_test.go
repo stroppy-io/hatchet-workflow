@@ -164,3 +164,61 @@ jobs:
 		t.Fatalf("bad with: %+v", job.With)
 	}
 }
+
+// --- include/inputs fields (Task 8) ---
+
+func TestDecodeWorkflowJobInclude(t *testing.T) {
+	src := []byte(`
+jobs:
+  ha:
+    needs: [prep]
+    include: components/patroni
+    inputs: { nodes: db }
+`)
+	doc, diags := ast.DecodeWorkflow("workflow.yaml", src)
+	if diags.HasErrors() {
+		t.Fatalf("unexpected diags: %+v", diags)
+	}
+	job := doc.Jobs["ha"]
+	if job.Include != "components/patroni" {
+		t.Fatalf("bad include: %+v", job.Include)
+	}
+	if job.Inputs["nodes"] != "db" {
+		t.Fatalf("bad inputs: %+v", job.Inputs)
+	}
+	if len(job.Needs) != 1 || job.Needs[0] != "prep" {
+		t.Fatalf("bad needs: %+v", job.Needs)
+	}
+}
+
+func TestDecodeWorkflowJobIncludeWithServiceErrors(t *testing.T) {
+	src := []byte("jobs:\n  ha:\n    include: components/patroni\n    service: etcd\n")
+	_, diags := ast.DecodeWorkflow("workflow.yaml", src)
+	if !diags.HasErrors() {
+		t.Fatal("include combined with service must produce error diagnostic")
+	}
+}
+
+func TestDecodeWorkflowJobIncludeWithStepsErrors(t *testing.T) {
+	src := []byte("jobs:\n  ha:\n    include: components/patroni\n    steps:\n      - cmd: x\n")
+	_, diags := ast.DecodeWorkflow("workflow.yaml", src)
+	if !diags.HasErrors() {
+		t.Fatal("include combined with steps must produce error diagnostic")
+	}
+}
+
+func TestDecodeWorkflowJobIncludeWithOnErrors(t *testing.T) {
+	src := []byte("jobs:\n  ha:\n    include: components/patroni\n    on: db\n")
+	_, diags := ast.DecodeWorkflow("workflow.yaml", src)
+	if !diags.HasErrors() {
+		t.Fatal("include combined with on must produce error diagnostic")
+	}
+}
+
+func TestDecodeWorkflowJobIncludeWithMatrixErrors(t *testing.T) {
+	src := []byte("jobs:\n  ha:\n    include: components/patroni\n    matrix: { x: [a, b] }\n")
+	_, diags := ast.DecodeWorkflow("workflow.yaml", src)
+	if !diags.HasErrors() {
+		t.Fatal("include combined with matrix must produce error diagnostic")
+	}
+}

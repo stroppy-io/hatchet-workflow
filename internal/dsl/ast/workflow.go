@@ -12,6 +12,18 @@ type WorkflowDoc struct {
 }
 
 // Job describes one named job in a workflow.
+//
+// Include/Inputs let a job instantiate a component fragment's Jobs (see
+// internal/dsl/include) instead of running steps/a service directly:
+//
+//	jobs:
+//	  ha:
+//	    include: components/patroni
+//	    inputs: { nodes: db }
+//
+// A job with Include set may also carry Needs (the fragment's root jobs
+// inherit them) but must not combine Include with Service, Steps, On or
+// Matrix — decodeJob reports a diagnostic if it does.
 type Job struct {
 	Needs   []string
 	On      string // machine group; пусто для service-jobs
@@ -20,6 +32,8 @@ type Job struct {
 	Matrix  map[string][]string
 	When    string // CEL
 	Steps   []Step
+	Include string         // путь до каталога с component.yaml внутри бандла
+	Inputs  map[string]any // inputs для include-джобы
 }
 
 // Step is one action within a job's step list. Exactly one of Cmd,

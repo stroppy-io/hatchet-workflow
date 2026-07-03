@@ -234,7 +234,12 @@ func (d *decoderBase) decodeJob(node *yaml.Node) Job {
 		"matrix":  d.alwaysOK(func(v *yaml.Node) { d.decodeValue(v, &job.Matrix, "jobs.matrix") }),
 		"when":    d.alwaysOK(func(v *yaml.Node) { d.decodeValue(v, &job.When, "jobs.when") }),
 		"steps":   d.alwaysOK(func(v *yaml.Node) { job.Steps = d.decodeSteps(v) }),
+		"include": d.alwaysOK(func(v *yaml.Node) { d.decodeValue(v, &job.Include, "jobs.include") }),
+		"inputs":  d.alwaysOK(func(v *yaml.Node) { d.decodeValue(v, &job.Inputs, "jobs.inputs") }),
 	})
+	if job.Include != "" && (job.Service != "" || job.On != "" || len(job.Matrix) > 0 || len(job.Steps) > 0) {
+		d.errorf(node, "jobs: include cannot be combined with service, on, matrix or steps")
+	}
 	return job
 }
 
