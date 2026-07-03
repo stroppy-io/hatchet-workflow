@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/google/cel-go/cel"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/dsl/diag"
 )
@@ -15,8 +16,11 @@ import (
 // yields two expressions ("a" and "b"), but a literal "}}" or "${{" inside
 // an expression's own string/map/list literals is not distinguished from a
 // marker boundary. Recipes needing such characters inside an expression are
-// out of scope for this compiler stage.
-var interpBraces = regexp.MustCompile(`\$\{\{(.*?)\}\}`)
+// out of scope for this compiler stage. The (?s) flag makes "." match
+// newlines too, so a marker whose body spans multiple lines (e.g. a
+// multi-line CEL expression written for readability in YAML) is still
+// captured whole instead of silently dropped.
+var interpBraces = regexp.MustCompile(`(?s)\$\{\{(.*?)\}\}`)
 
 // Extract returns the CEL expressions embedded in s via ${{ ... }}
 // interpolation markers, in order of appearance, with surrounding
@@ -62,6 +66,18 @@ func Check(env *cel.Env, expr, path string, pos diag.Pos) diag.List {
 // bindings, returning the result as a native Go value. It is used both for
 // contract-check-time evaluation (e.g. constant-folding constraints) and at
 // runtime by the recipe executor.
+//
+// The result is normalized before being returned (see normalizeEvalResult):
+// any protobuf well-known-type wrapper reachable from ProviderMachineView.Ext
+// (*structpb.Struct, *structpb.ListValue, *structpb.Value — see env.go's
+// ProviderMachineView doc for why Ext is shaped that way) is converted to
+// its native Go equivalent, recursively, so callers never see a proto type
+// leak out of this package. One consequence of that conversion: numbers
+// that originate from ext data come back as float64 (structpb.Value only
+// carries JSON number semantics), while CEL-native integers (MachineView/
+// ProviderMachineView int64 fields, integer literals, ...) come back as
+// int64. Callers must not assume both sides of a comparison built from
+// Eval's result share the same Go numeric type.
 func Eval(env *cel.Env, expr string, vars map[string]any) (any, error) {
 	ast, iss := env.Compile(expr)
 	if iss != nil && iss.Err() != nil {
@@ -75,5 +91,37 @@ func Eval(env *cel.Env, expr string, vars map[string]any) (any, error) {
 	if err != nil {
 		return nil, fmt.Errorf("eval %q: %w", expr, err)
 	}
-	return out.Value(), nil
+	return normalizeEvalResult(out.Value()), nil
+}
+
+// normalizeEvalResult recursively converts protobuf well-known-type wrapper
+// values into native Go types: *structpb.Struct becomes map[string]any (via
+// AsMap), *structpb.ListValue becomes []any (via AsSlice), and *structpb.Value
+// becomes whatever AsInterface resolves it to. Nested map[string]any and
+// []any values are walked too, in case a proto wrapper is embedded inside a
+// CEL-constructed map or list rather than being the top-level result. CEL's
+// own native types (int64, string, bool, ...) pass through unchanged.
+func normalizeEvalResult(v any) any {
+	switch t := v.(type) {
+	case *structpb.Struct:
+		return normalizeEvalResult(t.AsMap())
+	case *structpb.ListValue:
+		return normalizeEvalResult(t.AsSlice())
+	case *structpb.Value:
+		return normalizeEvalResult(t.AsInterface())
+	case map[string]any:
+		out := make(map[string]any, len(t))
+		for k, val := range t {
+			out[k] = normalizeEvalResult(val)
+		}
+		return out
+	case []any:
+		out := make([]any, len(t))
+		for i, val := range t {
+			out[i] = normalizeEvalResult(val)
+		}
+		return out
+	default:
+		return v
+	}
 }
