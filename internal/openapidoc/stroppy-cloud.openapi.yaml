@@ -300,6 +300,26 @@ components:
             additionalProperties: false
             properties: {}
             type: object
+        CheckRecipeRequest:
+            additionalProperties: false
+            properties:
+                id:
+                    maxLength: 64
+                    minLength: 1
+                    type: string
+                tenantId:
+                    maxLength: 64
+                    minLength: 1
+                    type: string
+            type: object
+        CheckRecipeResponse:
+            additionalProperties: false
+            properties:
+                diagnostics:
+                    items:
+                        $ref: '#/components/schemas/Diagnostic'
+                    type: array
+            type: object
         ChildRun:
             additionalProperties: false
             properties:
@@ -1077,6 +1097,26 @@ components:
             required:
                 - package
             type: object
+        CreateRecipeRequest:
+            additionalProperties: false
+            properties:
+                recipe:
+                    $ref: '#/components/schemas/RecipeRecord'
+                tenantId:
+                    maxLength: 64
+                    minLength: 1
+                    type: string
+            required:
+                - recipe
+            type: object
+        CreateRecipeResponse:
+            additionalProperties: false
+            properties:
+                recipe:
+                    $ref: '#/components/schemas/RecipeRecord'
+            required:
+                - recipe
+            type: object
         CreateRoleRequest:
             additionalProperties: false
             properties:
@@ -1378,6 +1418,22 @@ components:
             additionalProperties: false
             properties: {}
             type: object
+        DeleteRecipeRequest:
+            additionalProperties: false
+            properties:
+                id:
+                    maxLength: 64
+                    minLength: 1
+                    type: string
+                tenantId:
+                    maxLength: 64
+                    minLength: 1
+                    type: string
+            type: object
+        DeleteRecipeResponse:
+            additionalProperties: false
+            properties: {}
+            type: object
         DeleteRoleRequest:
             additionalProperties: false
             properties:
@@ -1545,6 +1601,31 @@ components:
                     type: object
                 tags:
                     $ref: '#/components/schemas/Tags'
+            type: object
+        Diagnostic:
+            additionalProperties: false
+            properties:
+                col:
+                    format: int32
+                    minimum: 0
+                    type: integer
+                line:
+                    format: int32
+                    minimum: 0
+                    type: integer
+                message:
+                    type: string
+                module:
+                    type: string
+                path:
+                    type: string
+                severity:
+                    enum:
+                        - 0
+                        - 1
+                        - 2
+                    format: int32
+                    type: integer
             type: object
         Dir:
             additionalProperties: false
@@ -2642,6 +2723,26 @@ components:
                 nextPageToken:
                     type: string
             type: object
+        GetRecipeRequest:
+            additionalProperties: false
+            properties:
+                id:
+                    maxLength: 64
+                    minLength: 1
+                    type: string
+                tenantId:
+                    maxLength: 64
+                    minLength: 1
+                    type: string
+            type: object
+        GetRecipeResponse:
+            additionalProperties: false
+            properties:
+                recipe:
+                    $ref: '#/components/schemas/RecipeRecord'
+            required:
+                - recipe
+            type: object
         GetRoleRequest:
             additionalProperties: false
             properties:
@@ -3526,6 +3627,28 @@ components:
                 quotas:
                     items:
                         $ref: '#/components/schemas/QuotaView'
+                    type: array
+            type: object
+        ListRecipesRequest:
+            additionalProperties: false
+            properties:
+                filter:
+                    $ref: '#/components/schemas/EntityFilter'
+                page:
+                    $ref: '#/components/schemas/Page'
+                tenantId:
+                    maxLength: 64
+                    minLength: 1
+                    type: string
+            type: object
+        ListRecipesResponse:
+            additionalProperties: false
+            properties:
+                nextPageToken:
+                    type: string
+                recipes:
+                    items:
+                        $ref: '#/components/schemas/RecipeRecord'
                     type: array
             type: object
         ListRegistrationRequestsRequest:
@@ -5075,6 +5198,7 @@ components:
                         - 12
                         - 13
                         - 14
+                        - 15
                     format: int32
                     type: integer
             type: object
@@ -5830,6 +5954,34 @@ components:
                         type: string
                     maxItems: 100
                     type: array
+            type: object
+        RecipeBundle:
+            additionalProperties: false
+            properties:
+                files:
+                    additionalProperties:
+                        format: byte
+                        type: string
+                    maxProperties: 512
+                    minProperties: 1
+                    type: object
+            type: object
+        RecipeRecord:
+            additionalProperties: false
+            properties:
+                bundle:
+                    $ref: '#/components/schemas/RecipeBundle'
+                entity:
+                    $ref: '#/components/schemas/Entity'
+                summary:
+                    $ref: '#/components/schemas/Summary4'
+                version:
+                    format: int32
+                    minimum: 0
+                    type: integer
+            required:
+                - bundle
+                - entity
             type: object
         Ref:
             additionalProperties: false
@@ -7576,7 +7728,7 @@ components:
                 spec:
                     $ref: '#/components/schemas/Suite'
                 summary:
-                    $ref: '#/components/schemas/Summary4'
+                    $ref: '#/components/schemas/Summary5'
             required:
                 - entity
                 - spec
@@ -7615,7 +7767,7 @@ components:
                     minLength: 1
                     type: string
                 summary:
-                    $ref: '#/components/schemas/Summary5'
+                    $ref: '#/components/schemas/Summary6'
                 trigger:
                     enum:
                         - 0
@@ -7787,6 +7939,23 @@ components:
         Summary4:
             additionalProperties: false
             properties:
+                compiles:
+                    type: boolean
+                machineGroupCount:
+                    format: int32
+                    minimum: 0
+                    type: integer
+                provider:
+                    maxLength: 128
+                    type: string
+                serviceCount:
+                    format: int32
+                    minimum: 0
+                    type: integer
+            type: object
+        Summary5:
+            additionalProperties: false
+            properties:
                 cellCount:
                     format: int32
                     minimum: 0
@@ -7823,7 +7992,7 @@ components:
                 scheduleEnabled:
                     type: boolean
             type: object
-        Summary5:
+        Summary6:
             additionalProperties: false
             properties:
                 completed:
@@ -7889,7 +8058,7 @@ components:
                     minimum: 0
                     type: integer
             type: object
-        Summary6:
+        Summary7:
             additionalProperties: false
             properties:
                 dbKind:
@@ -8211,7 +8380,7 @@ components:
                     maxLength: 64
                     type: string
                 summary:
-                    $ref: '#/components/schemas/Summary6'
+                    $ref: '#/components/schemas/Summary7'
                 trigger:
                     enum:
                         - 0
@@ -11373,6 +11542,159 @@ paths:
                 - rating
             x-idempotency-level: NO_SIDE_EFFECTS
             x-ogen-operation-group: Rating
+    /api/v1/recipe/check-recipe:
+        get:
+            description: |-
+                CheckRecipe compiles the stored bundle in check-mode. Read-only: it
+                never mutates the stored record.
+            operationId: checkRecipe
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CheckRecipeRequest'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/CheckRecipeResponse'
+                    description: OK
+                default:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Unexpected error.
+            summary: 'CheckRecipe compiles the stored bundle in check-mode. Read-only: it'
+            tags:
+                - recipe
+            x-idempotency-level: NO_SIDE_EFFECTS
+            x-ogen-operation-group: Recipe
+    /api/v1/recipe/create-recipe:
+        post:
+            description: CreateRecipe persists a new recipe bundle. Not idempotent.
+            operationId: createRecipe
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CreateRecipeRequest'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/CreateRecipeResponse'
+                    description: OK
+                default:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Unexpected error.
+            summary: CreateRecipe persists a new recipe bundle. Not idempotent.
+            tags:
+                - recipe
+            x-ogen-operation-group: Recipe
+    /api/v1/recipe/delete-recipe:
+        post:
+            description: |-
+                DeleteRecipe is idempotent: soft-deleting an absent or already-deleted
+                recipe is a no-op.
+            operationId: deleteRecipe
+            parameters:
+                - description: Optional idempotency key used to safely retry the request.
+                  in: header
+                  name: Idempotency-Key
+                  required: false
+                  schema:
+                    format: uuid
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/DeleteRecipeRequest'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DeleteRecipeResponse'
+                    description: OK
+                default:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Unexpected error.
+            summary: 'DeleteRecipe is idempotent: soft-deleting an absent or already-deleted'
+            tags:
+                - recipe
+            x-idempotency-level: IDEMPOTENT
+            x-ogen-operation-group: Recipe
+    /api/v1/recipe/get-recipe:
+        get:
+            description: GetRecipe fetches a single recipe record by id. Read-only.
+            operationId: getRecipe
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/GetRecipeRequest'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetRecipeResponse'
+                    description: OK
+                default:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Unexpected error.
+            summary: GetRecipe fetches a single recipe record by id. Read-only.
+            tags:
+                - recipe
+            x-idempotency-level: NO_SIDE_EFFECTS
+            x-ogen-operation-group: Recipe
+    /api/v1/recipe/list-recipes:
+        get:
+            description: |-
+                ListRecipes lists recipe records with filtering and pagination.
+                Read-only.
+            operationId: listRecipes
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ListRecipesRequest'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListRecipesResponse'
+                    description: OK
+                default:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Unexpected error.
+            summary: ListRecipes lists recipe records with filtering and pagination.
+            tags:
+                - recipe
+            x-idempotency-level: NO_SIDE_EFFECTS
+            x-ogen-operation-group: Recipe
     /api/v1/share/create-share:
         post:
             description: 'CreateShare is not idempotent: each call mints a new token + snapshot.'

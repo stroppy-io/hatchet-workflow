@@ -23,6 +23,7 @@ type OgenAdapter struct {
 	publicRatingService    PublicRatingServiceServer
 	publicShareService     PublicShareServiceServer
 	quotaService           QuotaServiceServer
+	recipeService          RecipeServiceServer
 	shareService           ShareServiceServer
 	stroppyService         StroppyServiceServer
 	suiteService           SuiteServiceServer
@@ -49,6 +50,7 @@ func NewOgenAdapter(
 	publicRatingService PublicRatingServiceServer,
 	publicShareService PublicShareServiceServer,
 	quotaService QuotaServiceServer,
+	recipeService RecipeServiceServer,
 	shareService ShareServiceServer,
 	stroppyService StroppyServiceServer,
 	suiteService SuiteServiceServer,
@@ -73,6 +75,7 @@ func NewOgenAdapter(
 		publicRatingService:    publicRatingService,
 		publicShareService:     publicShareService,
 		quotaService:           quotaService,
+		recipeService:          recipeService,
 		shareService:           shareService,
 		stroppyService:         stroppyService,
 		suiteService:           suiteService,
@@ -154,6 +157,24 @@ func (a *OgenAdapter) ChangePassword(ctx context.Context, req *rest.ChangePasswo
 	}
 	_ = resp
 	return nil
+}
+
+func (a *OgenAdapter) CheckRecipe(ctx context.Context, req *rest.CheckRecipeRequest) (*rest.CheckRecipeResponse, error) {
+	in := &CheckRecipeRequest{}
+	b, err := CheckRecipeRequestFromOgen(req)
+	if err != nil {
+		return nil, err
+	}
+	in = b
+	resp, err := a.recipeService.CheckRecipe(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+	out, err := resp.ToOgen()
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (a *OgenAdapter) CloneDatabasePreset(ctx context.Context, req *rest.CloneDatabasePresetRequest) (*rest.CloneDatabasePresetResponse, error) {
@@ -405,6 +426,24 @@ func (a *OgenAdapter) CreatePackageUpload(ctx context.Context, req *rest.CreateP
 	return out, nil
 }
 
+func (a *OgenAdapter) CreateRecipe(ctx context.Context, req *rest.CreateRecipeRequest) (*rest.CreateRecipeResponse, error) {
+	in := &CreateRecipeRequest{}
+	b, err := CreateRecipeRequestFromOgen(req)
+	if err != nil {
+		return nil, err
+	}
+	in = b
+	resp, err := a.recipeService.CreateRecipe(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+	out, err := resp.ToOgen()
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (a *OgenAdapter) CreateRole(ctx context.Context, req *rest.CreateRoleRequest) (*rest.CreateRoleResponse, error) {
 	in := &CreateRoleRequest{}
 	b, err := CreateRoleRequestFromOgen(req)
@@ -581,6 +620,21 @@ func (a *OgenAdapter) DeletePackage(ctx context.Context, req *rest.DeletePackage
 	}
 	in = b
 	resp, err := a.packageService.DeletePackage(ctx, in)
+	if err != nil {
+		return err
+	}
+	_ = resp
+	return nil
+}
+
+func (a *OgenAdapter) DeleteRecipe(ctx context.Context, req *rest.DeleteRecipeRequest, params rest.DeleteRecipeParams) error {
+	in := &DeleteRecipeRequest{}
+	b, err := DeleteRecipeRequestFromOgen(req)
+	if err != nil {
+		return err
+	}
+	in = b
+	resp, err := a.recipeService.DeleteRecipe(ctx, in)
 	if err != nil {
 		return err
 	}
@@ -952,6 +1006,24 @@ func (a *OgenAdapter) GetPublicRating(ctx context.Context, req *rest.GetPublicRa
 	}
 	in = b
 	resp, err := a.publicRatingService.GetPublicRating(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+	out, err := resp.ToOgen()
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (a *OgenAdapter) GetRecipe(ctx context.Context, req *rest.GetRecipeRequest) (*rest.GetRecipeResponse, error) {
+	in := &GetRecipeRequest{}
+	b, err := GetRecipeRequestFromOgen(req)
+	if err != nil {
+		return nil, err
+	}
+	in = b
+	resp, err := a.recipeService.GetRecipe(ctx, in)
 	if err != nil {
 		return nil, err
 	}
@@ -1505,6 +1577,24 @@ func (a *OgenAdapter) ListQuotas(ctx context.Context, req *rest.ListQuotasReques
 	}
 	in = b
 	resp, err := a.quotaService.ListQuotas(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+	out, err := resp.ToOgen()
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (a *OgenAdapter) ListRecipes(ctx context.Context, req *rest.ListRecipesRequest) (*rest.ListRecipesResponse, error) {
+	in := &ListRecipesRequest{}
+	b, err := ListRecipesRequestFromOgen(req)
+	if err != nil {
+		return nil, err
+	}
+	in = b
+	resp, err := a.recipeService.ListRecipes(ctx, in)
 	if err != nil {
 		return nil, err
 	}

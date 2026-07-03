@@ -729,6 +729,12 @@ go_name: Resource</pre></td>
 //RESOURCE_PACKAGE is a tenant-uploaded custom package (models.PackageRecord),
 //e.g. a custom .deb / binary used to install a database build. Tenant-private.
 </pre></td>
+</tr><tr>
+<td>RESOURCE_RECIPE</td>
+<td><pre>
+//RESOURCE_RECIPE is a tenant-scoped persisted DSL recipe bundle
+//(models.RecipeRecord): full CRUD + check.
+</pre></td>
 </tr>
 </table>
 

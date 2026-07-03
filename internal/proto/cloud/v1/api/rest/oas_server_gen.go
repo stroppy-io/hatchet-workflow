@@ -17,6 +17,7 @@ type Handler interface {
 	PublicShareHandler
 	QuotaHandler
 	RatingHandler
+	RecipeHandler
 	ShareHandler
 	StroppyHandler
 	SuiteHandler
@@ -579,6 +580,45 @@ type RatingHandler interface {
 	//
 	// GET /api/v1/rating/get-tenant-rating
 	GetTenantRating(ctx context.Context, req *GetTenantRatingRequest) (*GetTenantRatingResponse, error)
+}
+
+// RecipeHandler handles operations described by OpenAPI v3 specification.
+//
+// x-ogen-operation-group: Recipe
+type RecipeHandler interface {
+	// CheckRecipe implements checkRecipe operation.
+	//
+	// CheckRecipe compiles the stored bundle in check-mode. Read-only: it
+	// never mutates the stored record.
+	//
+	// GET /api/v1/recipe/check-recipe
+	CheckRecipe(ctx context.Context, req *CheckRecipeRequest) (*CheckRecipeResponse, error)
+	// CreateRecipe implements createRecipe operation.
+	//
+	// CreateRecipe persists a new recipe bundle. Not idempotent.
+	//
+	// POST /api/v1/recipe/create-recipe
+	CreateRecipe(ctx context.Context, req *CreateRecipeRequest) (*CreateRecipeResponse, error)
+	// DeleteRecipe implements deleteRecipe operation.
+	//
+	// DeleteRecipe is idempotent: soft-deleting an absent or already-deleted
+	// recipe is a no-op.
+	//
+	// POST /api/v1/recipe/delete-recipe
+	DeleteRecipe(ctx context.Context, req *DeleteRecipeRequest, params DeleteRecipeParams) error
+	// GetRecipe implements getRecipe operation.
+	//
+	// GetRecipe fetches a single recipe record by id. Read-only.
+	//
+	// GET /api/v1/recipe/get-recipe
+	GetRecipe(ctx context.Context, req *GetRecipeRequest) (*GetRecipeResponse, error)
+	// ListRecipes implements listRecipes operation.
+	//
+	// ListRecipes lists recipe records with filtering and pagination.
+	// Read-only.
+	//
+	// GET /api/v1/recipe/list-recipes
+	ListRecipes(ctx context.Context, req *ListRecipesRequest) (*ListRecipesResponse, error)
 }
 
 // ShareHandler handles operations described by OpenAPI v3 specification.

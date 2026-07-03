@@ -11,6 +11,10 @@
   - [cloud.v1.models.PackageRecord](#cloud-v1-models-packagerecord)
   - [cloud.v1.models.PackageRecord.Format](#cloud-v1-models-packagerecord-format)
   - [cloud.v1.models.PackageRecord.Status](#cloud-v1-models-packagerecord-status)
+  - [cloud.v1.models.RecipeBundle](#cloud-v1-models-recipebundle)
+  - [cloud.v1.models.RecipeBundle.FilesEntry](#cloud-v1-models-recipebundle-filesentry)
+  - [cloud.v1.models.RecipeRecord](#cloud-v1-models-reciperecord)
+  - [cloud.v1.models.RecipeRecord.Summary](#cloud-v1-models-reciperecord-summary)
   - [cloud.v1.models.ShareRecord](#cloud-v1-models-sharerecord)
   - [cloud.v1.models.ShareRecord.Snapshot](#cloud-v1-models-sharerecord-snapshot)
   - [cloud.v1.models.ShareRecord.Target](#cloud-v1-models-sharerecord-target)
@@ -369,6 +373,168 @@ go_name: Version</pre></td>
 </pre></td>
 </tr>
 </table>
+
+<a name="cloud-v1-models-recipebundle"></a>
+### cloud.v1.models.RecipeBundle
+
+<pre>
+//RecipeBundle is the recipe's file set: slash-path -> file bytes. Keys are
+//the same paths internal/dsl include.Sources uses (cluster.yaml,
+//workflow.yaml, components/**, providers/**).
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>files</td>
+<td><a href="#cloud-v1-models-recipebundle-filesentry">cloud.v1.models.RecipeBundle.FilesEntry</a></td>
+<td><pre>
+//files maps a slash-path within the bundle to its raw file bytes.<br>
+
+json_name: files
+go_name: Files</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-models-recipebundle-filesentry"></a>
+### cloud.v1.models.RecipeBundle.FilesEntry
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>key</td>
+<td>string</td>
+<td><pre>
+json_name: key
+go_name: Key</pre></td>
+</tr><tr>
+<td>value</td>
+<td>bytes</td>
+<td><pre>
+json_name: value
+go_name: Value</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-models-reciperecord"></a>
+### cloud.v1.models.RecipeRecord
+
+<pre>
+//RecipeRecord is a persisted DSL recipe bundle.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>bundle</td>
+<td><a href="#cloud-v1-models-recipebundle">cloud.v1.models.RecipeBundle</a></td>
+<td><pre>
+//bundle holds the recipe's files (cluster.yaml, workflow.yaml,
+//components/**, providers/**).<br>
+
+json_name: bundle
+go_name: Bundle</pre></td>
+</tr><tr>
+<td>entity</td>
+<td><a href="../common/README.md#cloud-v1-common-entity">cloud.v1.common.Entity</a></td>
+<td><pre>
+//entity is the storage envelope (id, tenant_id, name, description,
+//timings).<br>
+
+json_name: entity
+go_name: Entity</pre></td>
+</tr><tr>
+<td>summary</td>
+<td><a href="#cloud-v1-models-reciperecord-summary">cloud.v1.models.RecipeRecord.Summary</a></td>
+<td><pre>
+//summary holds denormalized facets for the recipes table (provider,
+//machine-group/service counts, last known Check result).<br>
+
+json_name: summary
+go_name: Summary</pre></td>
+</tr><tr>
+<td>version</td>
+<td>uint32</td>
+<td><pre>
+//version is the immutable version number of this bundle. The triple
+//(tenant_id, name, version) is unique.<br>
+
+json_name: version
+go_name: Version</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-models-reciperecord-summary"></a>
+### cloud.v1.models.RecipeRecord.Summary
+
+<pre>
+//Summary is the flat, indexed projection of the recipe used by the
+//recipes table.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>compiles</td>
+<td>bool</td>
+<td><pre>
+//compiles is the last known Check result: true when the bundle
+//compiled with no error diagnostics.<br>
+
+json_name: compiles
+go_name: Compiles</pre></td>
+</tr><tr>
+<td>machine_group_count</td>
+<td>uint32</td>
+<td><pre>
+//machine_group_count is the number of machine groups declared by
+//the bundle's cluster.yaml.<br>
+
+json_name: machineGroupCount
+go_name: MachineGroupCount</pre></td>
+</tr><tr>
+<td>provider</td>
+<td>string</td>
+<td><pre>
+//provider is the deployment provider name declared by the bundle.<br>
+
+json_name: provider
+go_name: Provider</pre></td>
+</tr><tr>
+<td>service_count</td>
+<td>uint32</td>
+<td><pre>
+//service_count is the number of services declared by the bundle's
+//cluster.yaml.<br>
+
+json_name: serviceCount
+go_name: ServiceCount</pre></td>
+</tr>
+</table>
+
+
 
 <a name="cloud-v1-models-sharerecord"></a>
 ### cloud.v1.models.ShareRecord

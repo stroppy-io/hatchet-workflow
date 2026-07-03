@@ -11,6 +11,7 @@ import (
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
+	dsl "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dsl"
 	iam "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	monitor "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
@@ -2115,6 +2116,70 @@ func DeploymentPlanFromOgen(src *rest.DeploymentPlan) (*deployment.DeploymentPla
 			return nil, err
 		}
 		dst.Tags = m6
+	}
+	return dst, nil
+}
+
+// DiagnosticToOgen converts dsl.Diagnostic (an imported type) to its ogen representation.
+func DiagnosticToOgen(src *dsl.Diagnostic) (*rest.Diagnostic, error) {
+	var dst rest.Diagnostic
+	if src == nil {
+		return &dst, nil
+	}
+	var en1 rest.DiagnosticSeverity
+	switch src.GetSeverity() {
+	case dsl.Severity_SEVERITY_UNSPECIFIED:
+		en1 = rest.DiagnosticSeverity0
+	case dsl.Severity_SEVERITY_ERROR:
+		en1 = rest.DiagnosticSeverity1
+	case dsl.Severity_SEVERITY_WARNING:
+		en1 = rest.DiagnosticSeverity2
+	default:
+		return nil, fmt.Errorf("cloud.v1.dsl.Diagnostic.severity: enum value %v has no ogen DiagnosticSeverity variant", src.GetSeverity())
+	}
+	dst.Severity.SetTo(en1)
+	dst.Path.SetTo(string(src.GetPath()))
+	dst.Line.SetTo(int32(src.GetLine()))
+	dst.Col.SetTo(int32(src.GetCol()))
+	dst.Message.SetTo(string(src.GetMessage()))
+	dst.Module.SetTo(string(src.GetModule()))
+	return &dst, nil
+}
+
+// DiagnosticFromOgen converts the ogen representation back to Diagnostic.
+func DiagnosticFromOgen(src *rest.Diagnostic) (*dsl.Diagnostic, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &dsl.Diagnostic{}
+	if v1, ok := src.Severity.Get(); ok {
+		var en2 dsl.Severity
+		switch v1 {
+		case rest.DiagnosticSeverity0:
+			en2 = dsl.Severity_SEVERITY_UNSPECIFIED
+		case rest.DiagnosticSeverity1:
+			en2 = dsl.Severity_SEVERITY_ERROR
+		case rest.DiagnosticSeverity2:
+			en2 = dsl.Severity_SEVERITY_WARNING
+		default:
+			return nil, fmt.Errorf("cloud.v1.dsl.Diagnostic.severity: enum value %v has no Severity variant", v1)
+		}
+		dst.Severity = en2
+	}
+	if v3, ok := src.Path.Get(); ok {
+		dst.Path = string(v3)
+	}
+	if v4, ok := src.Line.Get(); ok {
+		dst.Line = uint32(v4)
+	}
+	if v5, ok := src.Col.Get(); ok {
+		dst.Col = uint32(v5)
+	}
+	if v6, ok := src.Message.Get(); ok {
+		dst.Message = string(v6)
+	}
+	if v7, ok := src.Module.Get(); ok {
+		dst.Module = string(v7)
 	}
 	return dst, nil
 }
@@ -6399,6 +6464,8 @@ func PermissionToOgen(src *iam.Permission) (*rest.Permission, error) {
 		en1 = rest.PermissionResource13
 	case iam.Resource_RESOURCE_PACKAGE:
 		en1 = rest.PermissionResource14
+	case iam.Resource_RESOURCE_RECIPE:
+		en1 = rest.PermissionResource15
 	default:
 		return nil, fmt.Errorf("cloud.v1.iam.Permission.resource: enum value %v has no ogen PermissionResource variant", src.GetResource())
 	}
@@ -6461,6 +6528,8 @@ func PermissionFromOgen(src *rest.Permission) (*iam.Permission, error) {
 			en2 = iam.Resource_RESOURCE_SHARE
 		case rest.PermissionResource14:
 			en2 = iam.Resource_RESOURCE_PACKAGE
+		case rest.PermissionResource15:
+			en2 = iam.Resource_RESOURCE_RECIPE
 		default:
 			return nil, fmt.Errorf("cloud.v1.iam.Permission.resource: enum value %v has no Resource variant", v1)
 		}
@@ -7483,6 +7552,90 @@ func ProviderSettingsFromOgen(src *rest.ProviderSettings) (*deployment.ProviderS
 			return nil, err
 		}
 		dst.Settings = &deployment.ProviderSettings_Yandex{Yandex: m2}
+	}
+	return dst, nil
+}
+
+// RecipeBundleToOgen converts models.RecipeBundle (an imported type) to its ogen representation.
+func RecipeBundleToOgen(src *models.RecipeBundle) (*rest.RecipeBundle, error) {
+	var dst rest.RecipeBundle
+	if src == nil {
+		return &dst, nil
+	}
+	c1 := convert.Map(src.GetFiles(), func(v []byte) []byte {
+		return []byte(v)
+	})
+	dst.Files.SetTo(c1)
+	return &dst, nil
+}
+
+// RecipeBundleFromOgen converts the ogen representation back to RecipeBundle.
+func RecipeBundleFromOgen(src *rest.RecipeBundle) (*models.RecipeBundle, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &models.RecipeBundle{}
+	if mv1, ok := src.Files.Get(); ok {
+		c2 := convert.Map(mv1, func(v []byte) []byte {
+			return []byte(v)
+		})
+		dst.Files = c2
+	}
+	return dst, nil
+}
+
+// RecipeRecordToOgen converts models.RecipeRecord (an imported type) to its ogen representation.
+func RecipeRecordToOgen(src *models.RecipeRecord) (*rest.RecipeRecord, error) {
+	var dst rest.RecipeRecord
+	if src == nil {
+		return &dst, nil
+	}
+	o1, err := EntityToOgen(src.GetEntity())
+	if err != nil {
+		return nil, err
+	}
+	dst.Entity = *o1
+	o2, err := RecipeBundleToOgen(src.GetBundle())
+	if err != nil {
+		return nil, err
+	}
+	dst.Bundle = *o2
+	dst.Version.SetTo(int32(src.GetVersion()))
+	if src.Summary != nil {
+		o3, err := Summary4ToOgen(src.GetSummary())
+		if err != nil {
+			return nil, err
+		}
+		dst.Summary.SetTo(*o3)
+	}
+	return &dst, nil
+}
+
+// RecipeRecordFromOgen converts the ogen representation back to RecipeRecord.
+func RecipeRecordFromOgen(src *rest.RecipeRecord) (*models.RecipeRecord, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &models.RecipeRecord{}
+	m1, err := EntityFromOgen(&src.Entity)
+	if err != nil {
+		return nil, err
+	}
+	dst.Entity = m1
+	m2, err := RecipeBundleFromOgen(&src.Bundle)
+	if err != nil {
+		return nil, err
+	}
+	dst.Bundle = m2
+	if v3, ok := src.Version.Get(); ok {
+		dst.Version = uint32(v3)
+	}
+	if v4, ok := src.Summary.Get(); ok {
+		m5, err := Summary4FromOgen(&v4)
+		if err != nil {
+			return nil, err
+		}
+		dst.Summary = m5
 	}
 	return dst, nil
 }
@@ -10452,7 +10605,7 @@ func SuiteRecordToOgen(src *models.SuiteRecord) (*rest.SuiteRecord, error) {
 	}
 	dst.Spec = *o2
 	if src.Summary != nil {
-		o3, err := Summary4ToOgen(src.GetSummary())
+		o3, err := Summary5ToOgen(src.GetSummary())
 		if err != nil {
 			return nil, err
 		}
@@ -10478,7 +10631,7 @@ func SuiteRecordFromOgen(src *rest.SuiteRecord) (*models.SuiteRecord, error) {
 	}
 	dst.Spec = m2
 	if v3, ok := src.Summary.Get(); ok {
-		m4, err := Summary4FromOgen(&v3)
+		m4, err := Summary5FromOgen(&v3)
 		if err != nil {
 			return nil, err
 		}
@@ -10556,7 +10709,7 @@ func SuiteRunRecordToOgen(src *models.SuiteRunRecord) (*rest.SuiteRunRecord, err
 	}
 	dst.Children = c4
 	if src.Summary != nil {
-		o6, err := Summary5ToOgen(src.GetSummary())
+		o6, err := Summary6ToOgen(src.GetSummary())
 		if err != nil {
 			return nil, err
 		}
@@ -10642,7 +10795,7 @@ func SuiteRunRecordFromOgen(src *rest.SuiteRunRecord) (*models.SuiteRunRecord, e
 	}
 	dst.Children = c8
 	if v10, ok := src.Summary.Get(); ok {
-		m11, err := Summary5FromOgen(&v10)
+		m11, err := Summary6FromOgen(&v10)
 		if err != nil {
 			return nil, err
 		}
@@ -11079,9 +11232,43 @@ func Summary3FromOgen(src *rest.Summary3) (*models.TestPresetRecord_Summary, err
 	return dst, nil
 }
 
-// Summary4ToOgen converts models.SuiteRecord_Summary (an imported type) to its ogen representation.
-func Summary4ToOgen(src *models.SuiteRecord_Summary) (*rest.Summary4, error) {
+// Summary4ToOgen converts models.RecipeRecord_Summary (an imported type) to its ogen representation.
+func Summary4ToOgen(src *models.RecipeRecord_Summary) (*rest.Summary4, error) {
 	var dst rest.Summary4
+	if src == nil {
+		return &dst, nil
+	}
+	dst.Provider.SetTo(string(src.GetProvider()))
+	dst.MachineGroupCount.SetTo(int32(src.GetMachineGroupCount()))
+	dst.ServiceCount.SetTo(int32(src.GetServiceCount()))
+	dst.Compiles.SetTo(bool(src.GetCompiles()))
+	return &dst, nil
+}
+
+// Summary4FromOgen converts the ogen representation back to RecipeRecord_Summary.
+func Summary4FromOgen(src *rest.Summary4) (*models.RecipeRecord_Summary, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &models.RecipeRecord_Summary{}
+	if v1, ok := src.Provider.Get(); ok {
+		dst.Provider = string(v1)
+	}
+	if v2, ok := src.MachineGroupCount.Get(); ok {
+		dst.MachineGroupCount = uint32(v2)
+	}
+	if v3, ok := src.ServiceCount.Get(); ok {
+		dst.ServiceCount = uint32(v3)
+	}
+	if v4, ok := src.Compiles.Get(); ok {
+		dst.Compiles = bool(v4)
+	}
+	return dst, nil
+}
+
+// Summary5ToOgen converts models.SuiteRecord_Summary (an imported type) to its ogen representation.
+func Summary5ToOgen(src *models.SuiteRecord_Summary) (*rest.Summary5, error) {
+	var dst rest.Summary5
 	if src == nil {
 		return &dst, nil
 	}
@@ -11093,34 +11280,34 @@ func Summary4ToOgen(src *models.SuiteRecord_Summary) (*rest.Summary4, error) {
 	if src.LastRunAt != nil {
 		dst.LastRunAt.SetTo(convert.TimeFromProto(src.GetLastRunAt()))
 	}
-	var en1 rest.Summary4LastRunStatus
+	var en1 rest.Summary5LastRunStatus
 	switch src.GetLastRunStatus() {
 	case common.Status_STATUS_UNSPECIFIED:
-		en1 = rest.Summary4LastRunStatus0
+		en1 = rest.Summary5LastRunStatus0
 	case common.Status_STATUS_PENDING:
-		en1 = rest.Summary4LastRunStatus1
+		en1 = rest.Summary5LastRunStatus1
 	case common.Status_STATUS_RUNNING:
-		en1 = rest.Summary4LastRunStatus2
+		en1 = rest.Summary5LastRunStatus2
 	case common.Status_STATUS_RETRY_WAIT:
-		en1 = rest.Summary4LastRunStatus5
+		en1 = rest.Summary5LastRunStatus5
 	case common.Status_STATUS_COMPLETED:
-		en1 = rest.Summary4LastRunStatus3
+		en1 = rest.Summary5LastRunStatus3
 	case common.Status_STATUS_FAILED:
-		en1 = rest.Summary4LastRunStatus4
+		en1 = rest.Summary5LastRunStatus4
 	case common.Status_STATUS_SKIPPED:
-		en1 = rest.Summary4LastRunStatus6
+		en1 = rest.Summary5LastRunStatus6
 	case common.Status_STATUS_CANCELLING:
-		en1 = rest.Summary4LastRunStatus7
+		en1 = rest.Summary5LastRunStatus7
 	case common.Status_STATUS_CANCELLED:
-		en1 = rest.Summary4LastRunStatus8
+		en1 = rest.Summary5LastRunStatus8
 	case common.Status_STATUS_ALLOCATED:
-		en1 = rest.Summary4LastRunStatus9
+		en1 = rest.Summary5LastRunStatus9
 	case common.Status_STATUS_DEPLOYMENT:
-		en1 = rest.Summary4LastRunStatus10
+		en1 = rest.Summary5LastRunStatus10
 	case common.Status_STATUS_DEPLOYED:
-		en1 = rest.Summary4LastRunStatus11
+		en1 = rest.Summary5LastRunStatus11
 	default:
-		return nil, fmt.Errorf("cloud.v1.models.SuiteRecord.Summary.last_run_status: enum value %v has no ogen Summary4LastRunStatus variant", src.GetLastRunStatus())
+		return nil, fmt.Errorf("cloud.v1.models.SuiteRecord.Summary.last_run_status: enum value %v has no ogen Summary5LastRunStatus variant", src.GetLastRunStatus())
 	}
 	dst.LastRunStatus.SetTo(en1)
 	dst.RunCount.SetTo(int32(src.GetRunCount()))
@@ -11128,8 +11315,8 @@ func Summary4ToOgen(src *models.SuiteRecord_Summary) (*rest.Summary4, error) {
 	return &dst, nil
 }
 
-// Summary4FromOgen converts the ogen representation back to SuiteRecord_Summary.
-func Summary4FromOgen(src *rest.Summary4) (*models.SuiteRecord_Summary, error) {
+// Summary5FromOgen converts the ogen representation back to SuiteRecord_Summary.
+func Summary5FromOgen(src *rest.Summary5) (*models.SuiteRecord_Summary, error) {
 	if src == nil {
 		return nil, nil
 	}
@@ -11149,29 +11336,29 @@ func Summary4FromOgen(src *rest.Summary4) (*models.SuiteRecord_Summary, error) {
 	if v5, ok := src.LastRunStatus.Get(); ok {
 		var en6 common.Status
 		switch v5 {
-		case rest.Summary4LastRunStatus0:
+		case rest.Summary5LastRunStatus0:
 			en6 = common.Status_STATUS_UNSPECIFIED
-		case rest.Summary4LastRunStatus1:
+		case rest.Summary5LastRunStatus1:
 			en6 = common.Status_STATUS_PENDING
-		case rest.Summary4LastRunStatus2:
+		case rest.Summary5LastRunStatus2:
 			en6 = common.Status_STATUS_RUNNING
-		case rest.Summary4LastRunStatus5:
+		case rest.Summary5LastRunStatus5:
 			en6 = common.Status_STATUS_RETRY_WAIT
-		case rest.Summary4LastRunStatus3:
+		case rest.Summary5LastRunStatus3:
 			en6 = common.Status_STATUS_COMPLETED
-		case rest.Summary4LastRunStatus4:
+		case rest.Summary5LastRunStatus4:
 			en6 = common.Status_STATUS_FAILED
-		case rest.Summary4LastRunStatus6:
+		case rest.Summary5LastRunStatus6:
 			en6 = common.Status_STATUS_SKIPPED
-		case rest.Summary4LastRunStatus7:
+		case rest.Summary5LastRunStatus7:
 			en6 = common.Status_STATUS_CANCELLING
-		case rest.Summary4LastRunStatus8:
+		case rest.Summary5LastRunStatus8:
 			en6 = common.Status_STATUS_CANCELLED
-		case rest.Summary4LastRunStatus9:
+		case rest.Summary5LastRunStatus9:
 			en6 = common.Status_STATUS_ALLOCATED
-		case rest.Summary4LastRunStatus10:
+		case rest.Summary5LastRunStatus10:
 			en6 = common.Status_STATUS_DEPLOYMENT
-		case rest.Summary4LastRunStatus11:
+		case rest.Summary5LastRunStatus11:
 			en6 = common.Status_STATUS_DEPLOYED
 		default:
 			return nil, fmt.Errorf("cloud.v1.models.SuiteRecord.Summary.last_run_status: enum value %v has no Status variant", v5)
@@ -11187,54 +11374,54 @@ func Summary4FromOgen(src *rest.Summary4) (*models.SuiteRecord_Summary, error) {
 	return dst, nil
 }
 
-// Summary5ToOgen converts models.SuiteRunRecord_Summary (an imported type) to its ogen representation.
-func Summary5ToOgen(src *models.SuiteRunRecord_Summary) (*rest.Summary5, error) {
-	var dst rest.Summary5
+// Summary6ToOgen converts models.SuiteRunRecord_Summary (an imported type) to its ogen representation.
+func Summary6ToOgen(src *models.SuiteRunRecord_Summary) (*rest.Summary6, error) {
+	var dst rest.Summary6
 	if src == nil {
 		return &dst, nil
 	}
 	dst.SuiteName.SetTo(string(src.GetSuiteName()))
-	var en1 rest.Summary5Provider
+	var en1 rest.Summary6Provider
 	switch src.GetProvider() {
 	case deployment.Provider_PROVIDER_UNSPECIFIED:
-		en1 = rest.Summary5Provider0
+		en1 = rest.Summary6Provider0
 	case deployment.Provider_PROVIDER_DOCKER:
-		en1 = rest.Summary5Provider1
+		en1 = rest.Summary6Provider1
 	case deployment.Provider_PROVIDER_YANDEX:
-		en1 = rest.Summary5Provider2
+		en1 = rest.Summary6Provider2
 	default:
-		return nil, fmt.Errorf("cloud.v1.models.SuiteRunRecord.Summary.provider: enum value %v has no ogen Summary5Provider variant", src.GetProvider())
+		return nil, fmt.Errorf("cloud.v1.models.SuiteRunRecord.Summary.provider: enum value %v has no ogen Summary6Provider variant", src.GetProvider())
 	}
 	dst.Provider.SetTo(en1)
-	c2, err := convert.SliceErr(src.GetDbKinds(), func(e domain.Database_Kind) (zero rest.Summary5DbKindsItem, _ error) {
-		var en3 rest.Summary5DbKindsItem
+	c2, err := convert.SliceErr(src.GetDbKinds(), func(e domain.Database_Kind) (zero rest.Summary6DbKindsItem, _ error) {
+		var en3 rest.Summary6DbKindsItem
 		switch e {
 		case domain.Database_KIND_UNSPECIFIED:
-			en3 = rest.Summary5DbKindsItem0
+			en3 = rest.Summary6DbKindsItem0
 		case domain.Database_KIND_POSTGRES:
-			en3 = rest.Summary5DbKindsItem1
+			en3 = rest.Summary6DbKindsItem1
 		case domain.Database_KIND_MYSQL:
-			en3 = rest.Summary5DbKindsItem2
+			en3 = rest.Summary6DbKindsItem2
 		case domain.Database_KIND_MARIADB:
-			en3 = rest.Summary5DbKindsItem3
+			en3 = rest.Summary6DbKindsItem3
 		case domain.Database_KIND_YDB:
-			en3 = rest.Summary5DbKindsItem4
+			en3 = rest.Summary6DbKindsItem4
 		case domain.Database_KIND_YDB_MANAGED:
-			en3 = rest.Summary5DbKindsItem5
+			en3 = rest.Summary6DbKindsItem5
 		case domain.Database_KIND_COCKROACH:
-			en3 = rest.Summary5DbKindsItem6
+			en3 = rest.Summary6DbKindsItem6
 		case domain.Database_KIND_PICODATA:
-			en3 = rest.Summary5DbKindsItem7
+			en3 = rest.Summary6DbKindsItem7
 		case domain.Database_KIND_EXTERNAL:
-			en3 = rest.Summary5DbKindsItem8
+			en3 = rest.Summary6DbKindsItem8
 		case domain.Database_KIND_ORIOLEDB:
-			en3 = rest.Summary5DbKindsItem9
+			en3 = rest.Summary6DbKindsItem9
 		case domain.Database_KIND_NOOP:
-			en3 = rest.Summary5DbKindsItem10
+			en3 = rest.Summary6DbKindsItem10
 		case domain.Database_KIND_PG_NOOP:
-			en3 = rest.Summary5DbKindsItem11
+			en3 = rest.Summary6DbKindsItem11
 		default:
-			return zero, fmt.Errorf("cloud.v1.models.SuiteRunRecord.Summary.db_kinds: enum value %v has no ogen Summary5DbKindsItem variant", e)
+			return zero, fmt.Errorf("cloud.v1.models.SuiteRunRecord.Summary.db_kinds: enum value %v has no ogen Summary6DbKindsItem variant", e)
 		}
 		return en3, nil
 	})
@@ -11260,8 +11447,8 @@ func Summary5ToOgen(src *models.SuiteRunRecord_Summary) (*rest.Summary5, error) 
 	return &dst, nil
 }
 
-// Summary5FromOgen converts the ogen representation back to SuiteRunRecord_Summary.
-func Summary5FromOgen(src *rest.Summary5) (*models.SuiteRunRecord_Summary, error) {
+// Summary6FromOgen converts the ogen representation back to SuiteRunRecord_Summary.
+func Summary6FromOgen(src *rest.Summary6) (*models.SuiteRunRecord_Summary, error) {
 	if src == nil {
 		return nil, nil
 	}
@@ -11272,43 +11459,43 @@ func Summary5FromOgen(src *rest.Summary5) (*models.SuiteRunRecord_Summary, error
 	if v2, ok := src.Provider.Get(); ok {
 		var en3 deployment.Provider
 		switch v2 {
-		case rest.Summary5Provider0:
+		case rest.Summary6Provider0:
 			en3 = deployment.Provider_PROVIDER_UNSPECIFIED
-		case rest.Summary5Provider1:
+		case rest.Summary6Provider1:
 			en3 = deployment.Provider_PROVIDER_DOCKER
-		case rest.Summary5Provider2:
+		case rest.Summary6Provider2:
 			en3 = deployment.Provider_PROVIDER_YANDEX
 		default:
 			return nil, fmt.Errorf("cloud.v1.models.SuiteRunRecord.Summary.provider: enum value %v has no Provider variant", v2)
 		}
 		dst.Provider = en3
 	}
-	c4, err := convert.SliceErr(src.DbKinds, func(e rest.Summary5DbKindsItem) (zero domain.Database_Kind, _ error) {
+	c4, err := convert.SliceErr(src.DbKinds, func(e rest.Summary6DbKindsItem) (zero domain.Database_Kind, _ error) {
 		var en5 domain.Database_Kind
 		switch e {
-		case rest.Summary5DbKindsItem0:
+		case rest.Summary6DbKindsItem0:
 			en5 = domain.Database_KIND_UNSPECIFIED
-		case rest.Summary5DbKindsItem1:
+		case rest.Summary6DbKindsItem1:
 			en5 = domain.Database_KIND_POSTGRES
-		case rest.Summary5DbKindsItem2:
+		case rest.Summary6DbKindsItem2:
 			en5 = domain.Database_KIND_MYSQL
-		case rest.Summary5DbKindsItem3:
+		case rest.Summary6DbKindsItem3:
 			en5 = domain.Database_KIND_MARIADB
-		case rest.Summary5DbKindsItem4:
+		case rest.Summary6DbKindsItem4:
 			en5 = domain.Database_KIND_YDB
-		case rest.Summary5DbKindsItem5:
+		case rest.Summary6DbKindsItem5:
 			en5 = domain.Database_KIND_YDB_MANAGED
-		case rest.Summary5DbKindsItem6:
+		case rest.Summary6DbKindsItem6:
 			en5 = domain.Database_KIND_COCKROACH
-		case rest.Summary5DbKindsItem7:
+		case rest.Summary6DbKindsItem7:
 			en5 = domain.Database_KIND_PICODATA
-		case rest.Summary5DbKindsItem8:
+		case rest.Summary6DbKindsItem8:
 			en5 = domain.Database_KIND_EXTERNAL
-		case rest.Summary5DbKindsItem9:
+		case rest.Summary6DbKindsItem9:
 			en5 = domain.Database_KIND_ORIOLEDB
-		case rest.Summary5DbKindsItem10:
+		case rest.Summary6DbKindsItem10:
 			en5 = domain.Database_KIND_NOOP
-		case rest.Summary5DbKindsItem11:
+		case rest.Summary6DbKindsItem11:
 			en5 = domain.Database_KIND_PG_NOOP
 		default:
 			return zero, fmt.Errorf("cloud.v1.models.SuiteRunRecord.Summary.db_kinds: enum value %v has no Database_Kind variant", e)
@@ -11349,40 +11536,40 @@ func Summary5FromOgen(src *rest.Summary5) (*models.SuiteRunRecord_Summary, error
 	return dst, nil
 }
 
-// Summary6ToOgen converts models.TestRunRecord_Summary (an imported type) to its ogen representation.
-func Summary6ToOgen(src *models.TestRunRecord_Summary) (*rest.Summary6, error) {
-	var dst rest.Summary6
+// Summary7ToOgen converts models.TestRunRecord_Summary (an imported type) to its ogen representation.
+func Summary7ToOgen(src *models.TestRunRecord_Summary) (*rest.Summary7, error) {
+	var dst rest.Summary7
 	if src == nil {
 		return &dst, nil
 	}
-	var en1 rest.Summary6DbKind
+	var en1 rest.Summary7DbKind
 	switch src.GetDbKind() {
 	case domain.Database_KIND_UNSPECIFIED:
-		en1 = rest.Summary6DbKind0
+		en1 = rest.Summary7DbKind0
 	case domain.Database_KIND_POSTGRES:
-		en1 = rest.Summary6DbKind1
+		en1 = rest.Summary7DbKind1
 	case domain.Database_KIND_MYSQL:
-		en1 = rest.Summary6DbKind2
+		en1 = rest.Summary7DbKind2
 	case domain.Database_KIND_MARIADB:
-		en1 = rest.Summary6DbKind3
+		en1 = rest.Summary7DbKind3
 	case domain.Database_KIND_YDB:
-		en1 = rest.Summary6DbKind4
+		en1 = rest.Summary7DbKind4
 	case domain.Database_KIND_YDB_MANAGED:
-		en1 = rest.Summary6DbKind5
+		en1 = rest.Summary7DbKind5
 	case domain.Database_KIND_COCKROACH:
-		en1 = rest.Summary6DbKind6
+		en1 = rest.Summary7DbKind6
 	case domain.Database_KIND_PICODATA:
-		en1 = rest.Summary6DbKind7
+		en1 = rest.Summary7DbKind7
 	case domain.Database_KIND_EXTERNAL:
-		en1 = rest.Summary6DbKind8
+		en1 = rest.Summary7DbKind8
 	case domain.Database_KIND_ORIOLEDB:
-		en1 = rest.Summary6DbKind9
+		en1 = rest.Summary7DbKind9
 	case domain.Database_KIND_NOOP:
-		en1 = rest.Summary6DbKind10
+		en1 = rest.Summary7DbKind10
 	case domain.Database_KIND_PG_NOOP:
-		en1 = rest.Summary6DbKind11
+		en1 = rest.Summary7DbKind11
 	default:
-		return nil, fmt.Errorf("cloud.v1.models.TestRunRecord.Summary.db_kind: enum value %v has no ogen Summary6DbKind variant", src.GetDbKind())
+		return nil, fmt.Errorf("cloud.v1.models.TestRunRecord.Summary.db_kind: enum value %v has no ogen Summary7DbKind variant", src.GetDbKind())
 	}
 	dst.DbKind.SetTo(en1)
 	dst.DbPresetId.SetTo(string(src.GetDbPresetId()))
@@ -11390,42 +11577,42 @@ func Summary6ToOgen(src *models.TestRunRecord_Summary) (*rest.Summary6, error) {
 	dst.WorkloadPresetId.SetTo(string(src.GetWorkloadPresetId()))
 	dst.WorkloadName.SetTo(string(src.GetWorkloadName()))
 	dst.StroppyVersion.SetTo(string(src.GetStroppyVersion()))
-	var en2 rest.Summary6WorkloadProtocol
+	var en2 rest.Summary7WorkloadProtocol
 	switch src.GetWorkloadProtocol() {
 	case domain.Workload_PROTOCOL_UNSPECIFIED:
-		en2 = rest.Summary6WorkloadProtocol0
+		en2 = rest.Summary7WorkloadProtocol0
 	case domain.Workload_PROTOCOL_PG:
-		en2 = rest.Summary6WorkloadProtocol1
+		en2 = rest.Summary7WorkloadProtocol1
 	case domain.Workload_PROTOCOL_MYSQL:
-		en2 = rest.Summary6WorkloadProtocol2
+		en2 = rest.Summary7WorkloadProtocol2
 	case domain.Workload_PROTOCOL_PICODATA:
-		en2 = rest.Summary6WorkloadProtocol3
+		en2 = rest.Summary7WorkloadProtocol3
 	case domain.Workload_PROTOCOL_YDB_GRPC:
-		en2 = rest.Summary6WorkloadProtocol4
+		en2 = rest.Summary7WorkloadProtocol4
 	case domain.Workload_PROTOCOL_YDB_GRPCS:
-		en2 = rest.Summary6WorkloadProtocol5
+		en2 = rest.Summary7WorkloadProtocol5
 	case domain.Workload_PROTOCOL_COCKROACH:
-		en2 = rest.Summary6WorkloadProtocol7
+		en2 = rest.Summary7WorkloadProtocol7
 	case domain.Workload_PROTOCOL_NOOP:
-		en2 = rest.Summary6WorkloadProtocol8
+		en2 = rest.Summary7WorkloadProtocol8
 	default:
-		return nil, fmt.Errorf("cloud.v1.models.TestRunRecord.Summary.workload_protocol: enum value %v has no ogen Summary6WorkloadProtocol variant", src.GetWorkloadProtocol())
+		return nil, fmt.Errorf("cloud.v1.models.TestRunRecord.Summary.workload_protocol: enum value %v has no ogen Summary7WorkloadProtocol variant", src.GetWorkloadProtocol())
 	}
 	dst.WorkloadProtocol.SetTo(en2)
 	dst.TestPresetId.SetTo(string(src.GetTestPresetId()))
 	dst.TestPresetName.SetTo(string(src.GetTestPresetName()))
 	dst.TopologyLabel.SetTo(string(src.GetTopologyLabel()))
 	dst.NodeCount.SetTo(int32(src.GetNodeCount()))
-	var en3 rest.Summary6Provider
+	var en3 rest.Summary7Provider
 	switch src.GetProvider() {
 	case deployment.Provider_PROVIDER_UNSPECIFIED:
-		en3 = rest.Summary6Provider0
+		en3 = rest.Summary7Provider0
 	case deployment.Provider_PROVIDER_DOCKER:
-		en3 = rest.Summary6Provider1
+		en3 = rest.Summary7Provider1
 	case deployment.Provider_PROVIDER_YANDEX:
-		en3 = rest.Summary6Provider2
+		en3 = rest.Summary7Provider2
 	default:
-		return nil, fmt.Errorf("cloud.v1.models.TestRunRecord.Summary.provider: enum value %v has no ogen Summary6Provider variant", src.GetProvider())
+		return nil, fmt.Errorf("cloud.v1.models.TestRunRecord.Summary.provider: enum value %v has no ogen Summary7Provider variant", src.GetProvider())
 	}
 	dst.Provider.SetTo(en3)
 	dst.ProgressPct.SetTo(int32(src.GetProgressPct()))
@@ -11441,8 +11628,8 @@ func Summary6ToOgen(src *models.TestRunRecord_Summary) (*rest.Summary6, error) {
 	return &dst, nil
 }
 
-// Summary6FromOgen converts the ogen representation back to TestRunRecord_Summary.
-func Summary6FromOgen(src *rest.Summary6) (*models.TestRunRecord_Summary, error) {
+// Summary7FromOgen converts the ogen representation back to TestRunRecord_Summary.
+func Summary7FromOgen(src *rest.Summary7) (*models.TestRunRecord_Summary, error) {
 	if src == nil {
 		return nil, nil
 	}
@@ -11450,29 +11637,29 @@ func Summary6FromOgen(src *rest.Summary6) (*models.TestRunRecord_Summary, error)
 	if v1, ok := src.DbKind.Get(); ok {
 		var en2 domain.Database_Kind
 		switch v1 {
-		case rest.Summary6DbKind0:
+		case rest.Summary7DbKind0:
 			en2 = domain.Database_KIND_UNSPECIFIED
-		case rest.Summary6DbKind1:
+		case rest.Summary7DbKind1:
 			en2 = domain.Database_KIND_POSTGRES
-		case rest.Summary6DbKind2:
+		case rest.Summary7DbKind2:
 			en2 = domain.Database_KIND_MYSQL
-		case rest.Summary6DbKind3:
+		case rest.Summary7DbKind3:
 			en2 = domain.Database_KIND_MARIADB
-		case rest.Summary6DbKind4:
+		case rest.Summary7DbKind4:
 			en2 = domain.Database_KIND_YDB
-		case rest.Summary6DbKind5:
+		case rest.Summary7DbKind5:
 			en2 = domain.Database_KIND_YDB_MANAGED
-		case rest.Summary6DbKind6:
+		case rest.Summary7DbKind6:
 			en2 = domain.Database_KIND_COCKROACH
-		case rest.Summary6DbKind7:
+		case rest.Summary7DbKind7:
 			en2 = domain.Database_KIND_PICODATA
-		case rest.Summary6DbKind8:
+		case rest.Summary7DbKind8:
 			en2 = domain.Database_KIND_EXTERNAL
-		case rest.Summary6DbKind9:
+		case rest.Summary7DbKind9:
 			en2 = domain.Database_KIND_ORIOLEDB
-		case rest.Summary6DbKind10:
+		case rest.Summary7DbKind10:
 			en2 = domain.Database_KIND_NOOP
-		case rest.Summary6DbKind11:
+		case rest.Summary7DbKind11:
 			en2 = domain.Database_KIND_PG_NOOP
 		default:
 			return nil, fmt.Errorf("cloud.v1.models.TestRunRecord.Summary.db_kind: enum value %v has no Database_Kind variant", v1)
@@ -11497,21 +11684,21 @@ func Summary6FromOgen(src *rest.Summary6) (*models.TestRunRecord_Summary, error)
 	if v8, ok := src.WorkloadProtocol.Get(); ok {
 		var en9 domain.Workload_Protocol
 		switch v8 {
-		case rest.Summary6WorkloadProtocol0:
+		case rest.Summary7WorkloadProtocol0:
 			en9 = domain.Workload_PROTOCOL_UNSPECIFIED
-		case rest.Summary6WorkloadProtocol1:
+		case rest.Summary7WorkloadProtocol1:
 			en9 = domain.Workload_PROTOCOL_PG
-		case rest.Summary6WorkloadProtocol2:
+		case rest.Summary7WorkloadProtocol2:
 			en9 = domain.Workload_PROTOCOL_MYSQL
-		case rest.Summary6WorkloadProtocol3:
+		case rest.Summary7WorkloadProtocol3:
 			en9 = domain.Workload_PROTOCOL_PICODATA
-		case rest.Summary6WorkloadProtocol4:
+		case rest.Summary7WorkloadProtocol4:
 			en9 = domain.Workload_PROTOCOL_YDB_GRPC
-		case rest.Summary6WorkloadProtocol5:
+		case rest.Summary7WorkloadProtocol5:
 			en9 = domain.Workload_PROTOCOL_YDB_GRPCS
-		case rest.Summary6WorkloadProtocol7:
+		case rest.Summary7WorkloadProtocol7:
 			en9 = domain.Workload_PROTOCOL_COCKROACH
-		case rest.Summary6WorkloadProtocol8:
+		case rest.Summary7WorkloadProtocol8:
 			en9 = domain.Workload_PROTOCOL_NOOP
 		default:
 			return nil, fmt.Errorf("cloud.v1.models.TestRunRecord.Summary.workload_protocol: enum value %v has no Workload_Protocol variant", v8)
@@ -11533,11 +11720,11 @@ func Summary6FromOgen(src *rest.Summary6) (*models.TestRunRecord_Summary, error)
 	if v14, ok := src.Provider.Get(); ok {
 		var en15 deployment.Provider
 		switch v14 {
-		case rest.Summary6Provider0:
+		case rest.Summary7Provider0:
 			en15 = deployment.Provider_PROVIDER_UNSPECIFIED
-		case rest.Summary6Provider1:
+		case rest.Summary7Provider1:
 			en15 = deployment.Provider_PROVIDER_DOCKER
-		case rest.Summary6Provider2:
+		case rest.Summary7Provider2:
 			en15 = deployment.Provider_PROVIDER_YANDEX
 		default:
 			return nil, fmt.Errorf("cloud.v1.models.TestRunRecord.Summary.provider: enum value %v has no Provider variant", v14)
@@ -12056,7 +12243,7 @@ func TestRunRecordToOgen(src *models.TestRunRecord) (*rest.TestRunRecord, error)
 	dst.InTenantRating.SetTo(bool(src.GetInTenantRating()))
 	dst.InGlobalRating.SetTo(bool(src.GetInGlobalRating()))
 	if src.Summary != nil {
-		o5, err := Summary6ToOgen(src.GetSummary())
+		o5, err := Summary7ToOgen(src.GetSummary())
 		if err != nil {
 			return nil, err
 		}
@@ -12163,7 +12350,7 @@ func TestRunRecordFromOgen(src *rest.TestRunRecord) (*models.TestRunRecord, erro
 		dst.InGlobalRating = bool(v10)
 	}
 	if v11, ok := src.Summary.Get(); ok {
-		m12, err := Summary6FromOgen(&v11)
+		m12, err := Summary7FromOgen(&v11)
 		if err != nil {
 			return nil, err
 		}

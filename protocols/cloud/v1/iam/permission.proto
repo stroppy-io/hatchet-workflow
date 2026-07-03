@@ -99,6 +99,11 @@ enum Resource {
         e.g. a custom .deb / binary used to install a database build. Tenant-private.
      */
     RESOURCE_PACKAGE = 14;
+    /*
+        RESOURCE_RECIPE is a tenant-scoped persisted DSL recipe bundle
+        (models.RecipeRecord): full CRUD + check.
+     */
+    RESOURCE_RECIPE = 15;
 }
 
 /*

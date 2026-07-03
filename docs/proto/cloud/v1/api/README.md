@@ -14,6 +14,8 @@
   - [cloud.v1.api.CatalogEntry](#cloud-v1-api-catalogentry)
   - [cloud.v1.api.ChangePasswordRequest](#cloud-v1-api-changepasswordrequest)
   - [cloud.v1.api.ChangePasswordResponse](#cloud-v1-api-changepasswordresponse)
+  - [cloud.v1.api.CheckRecipeRequest](#cloud-v1-api-checkreciperequest)
+  - [cloud.v1.api.CheckRecipeResponse](#cloud-v1-api-checkreciperesponse)
   - [cloud.v1.api.CloneDatabasePresetRequest](#cloud-v1-api-clonedatabasepresetrequest)
   - [cloud.v1.api.CloneDatabasePresetResponse](#cloud-v1-api-clonedatabasepresetresponse)
   - [cloud.v1.api.CloneSuiteRequest](#cloud-v1-api-clonesuiterequest)
@@ -43,6 +45,8 @@
   - [cloud.v1.api.CreateMembershipResponse](#cloud-v1-api-createmembershipresponse)
   - [cloud.v1.api.CreatePackageUploadRequest](#cloud-v1-api-createpackageuploadrequest)
   - [cloud.v1.api.CreatePackageUploadResponse](#cloud-v1-api-createpackageuploadresponse)
+  - [cloud.v1.api.CreateRecipeRequest](#cloud-v1-api-createreciperequest)
+  - [cloud.v1.api.CreateRecipeResponse](#cloud-v1-api-createreciperesponse)
   - [cloud.v1.api.CreateRoleRequest](#cloud-v1-api-createrolerequest)
   - [cloud.v1.api.CreateRoleResponse](#cloud-v1-api-createroleresponse)
   - [cloud.v1.api.CreateShareRequest](#cloud-v1-api-createsharerequest)
@@ -65,6 +69,8 @@
   - [cloud.v1.api.DeleteMembershipResponse](#cloud-v1-api-deletemembershipresponse)
   - [cloud.v1.api.DeletePackageRequest](#cloud-v1-api-deletepackagerequest)
   - [cloud.v1.api.DeletePackageResponse](#cloud-v1-api-deletepackageresponse)
+  - [cloud.v1.api.DeleteRecipeRequest](#cloud-v1-api-deletereciperequest)
+  - [cloud.v1.api.DeleteRecipeResponse](#cloud-v1-api-deletereciperesponse)
   - [cloud.v1.api.DeleteRoleRequest](#cloud-v1-api-deleterolerequest)
   - [cloud.v1.api.DeleteRoleResponse](#cloud-v1-api-deleteroleresponse)
   - [cloud.v1.api.DeleteShareRequest](#cloud-v1-api-deletesharerequest)
@@ -112,6 +118,8 @@
   - [cloud.v1.api.GetPublicConfigResponse](#cloud-v1-api-getpublicconfigresponse)
   - [cloud.v1.api.GetPublicRatingRequest](#cloud-v1-api-getpublicratingrequest)
   - [cloud.v1.api.GetPublicRatingResponse](#cloud-v1-api-getpublicratingresponse)
+  - [cloud.v1.api.GetRecipeRequest](#cloud-v1-api-getreciperequest)
+  - [cloud.v1.api.GetRecipeResponse](#cloud-v1-api-getreciperesponse)
   - [cloud.v1.api.GetRoleRequest](#cloud-v1-api-getrolerequest)
   - [cloud.v1.api.GetRoleResponse](#cloud-v1-api-getroleresponse)
   - [cloud.v1.api.GetRunMetricsRequest](#cloud-v1-api-getrunmetricsrequest)
@@ -180,6 +188,8 @@
   - [cloud.v1.api.ListPermissionsResponse](#cloud-v1-api-listpermissionsresponse)
   - [cloud.v1.api.ListQuotasRequest](#cloud-v1-api-listquotasrequest)
   - [cloud.v1.api.ListQuotasResponse](#cloud-v1-api-listquotasresponse)
+  - [cloud.v1.api.ListRecipesRequest](#cloud-v1-api-listrecipesrequest)
+  - [cloud.v1.api.ListRecipesResponse](#cloud-v1-api-listrecipesresponse)
   - [cloud.v1.api.ListRegistrationRequestsRequest](#cloud-v1-api-listregistrationrequestsrequest)
   - [cloud.v1.api.ListRegistrationRequestsResponse](#cloud-v1-api-listregistrationrequestsresponse)
   - [cloud.v1.api.ListRolesRequest](#cloud-v1-api-listrolesrequest)
@@ -601,6 +611,70 @@ go_name: OldPassword</pre></td>
 <pre>
 //ChangePasswordResponse is empty; success is signalled by the absence of error.
 </pre>
+
+
+
+<a name="cloud-v1-api-checkreciperequest"></a>
+### cloud.v1.api.CheckRecipeRequest
+
+<pre>
+//CheckRecipeRequest compiles an already-stored recipe bundle in
+//check-mode. Diagnostics from user input are NEVER surfaced as an RPC
+//error — only as entries in CheckRecipeResponse.diagnostics.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>id</td>
+<td>string</td>
+<td><pre>
+//id is the recipe record identifier whose stored bundle is checked.<br>
+
+json_name: id
+go_name: Id</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+//tenant_id scopes the request to the owning tenant.<br>
+
+json_name: tenantId
+go_name: TenantId</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-checkreciperesponse"></a>
+### cloud.v1.api.CheckRecipeResponse
+
+<pre>
+//CheckRecipeResponse returns the check-mode compile diagnostics for the
+//stored bundle. An empty list means the bundle compiles cleanly.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>diagnostics</td>
+<td><a href="../dsl/README.md#cloud-v1-dsl-diagnostic">cloud.v1.dsl.Diagnostic</a></td>
+<td><pre>
+//diagnostics is the result of check-mode compilation (see
+//cloud.v1.dsl.DslService.Check for the same diagnostic model).<br>
+
+json_name: diagnostics
+go_name: Diagnostics</pre></td>
+</tr>
+</table>
 
 
 
@@ -1752,6 +1826,67 @@ go_name: UploadUrlExpiresAt</pre></td>
 
 
 
+<a name="cloud-v1-api-createreciperequest"></a>
+### cloud.v1.api.CreateRecipeRequest
+
+<pre>
+//CreateRecipeRequest persists a new recipe bundle under a tenant.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>recipe</td>
+<td><a href="../models/README.md#cloud-v1-models-reciperecord">cloud.v1.models.RecipeRecord</a></td>
+<td><pre>
+//recipe is the bundle to persist. Server assigns entity.id / tenant_id
+/// timings.<br>
+
+json_name: recipe
+go_name: Recipe</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+//tenant_id scopes the request to the owning tenant.<br>
+
+json_name: tenantId
+go_name: TenantId</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-createreciperesponse"></a>
+### cloud.v1.api.CreateRecipeResponse
+
+<pre>
+//CreateRecipeResponse returns the newly created recipe record.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>recipe</td>
+<td><a href="../models/README.md#cloud-v1-models-reciperecord">cloud.v1.models.RecipeRecord</a></td>
+<td><pre>
+//recipe is the persisted record with server-assigned fields populated.<br>
+
+json_name: recipe
+go_name: Recipe</pre></td>
+</tr>
+</table>
+
+
+
 <a name="cloud-v1-api-createrolerequest"></a>
 ### cloud.v1.api.CreateRoleRequest
 
@@ -2340,6 +2475,50 @@ go_name: TenantId</pre></td>
 
 <pre>
 //DeletePackageResponse is empty; success is signalled by the absence of error.
+</pre>
+
+
+
+<a name="cloud-v1-api-deletereciperequest"></a>
+### cloud.v1.api.DeleteRecipeRequest
+
+<pre>
+//DeleteRecipeRequest soft-deletes a recipe record by id.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>id</td>
+<td>string</td>
+<td><pre>
+//id is the recipe record identifier to delete.<br>
+
+json_name: id
+go_name: Id</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+//tenant_id scopes the request to the owning tenant.<br>
+
+json_name: tenantId
+go_name: TenantId</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-deletereciperesponse"></a>
+### cloud.v1.api.DeleteRecipeResponse
+
+<pre>
+//DeleteRecipeResponse is empty; soft-delete success is signalled by a
+//non-error reply.
 </pre>
 
 
@@ -3667,6 +3846,66 @@ go_name: Entries</pre></td>
 
 json_name: nextPageToken
 go_name: NextPageToken</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-getreciperequest"></a>
+### cloud.v1.api.GetRecipeRequest
+
+<pre>
+//GetRecipeRequest fetches a single recipe record by id.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>id</td>
+<td>string</td>
+<td><pre>
+//id is the recipe record identifier to fetch.<br>
+
+json_name: id
+go_name: Id</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+//tenant_id scopes the request to the owning tenant.<br>
+
+json_name: tenantId
+go_name: TenantId</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-getreciperesponse"></a>
+### cloud.v1.api.GetRecipeResponse
+
+<pre>
+//GetRecipeResponse returns the requested recipe record.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>recipe</td>
+<td><a href="../models/README.md#cloud-v1-models-reciperecord">cloud.v1.models.RecipeRecord</a></td>
+<td><pre>
+//recipe is the requested record.<br>
+
+json_name: recipe
+go_name: Recipe</pre></td>
 </tr>
 </table>
 
@@ -5726,6 +5965,83 @@ go_name: TenantId</pre></td>
 <td><pre>
 json_name: quotas
 go_name: Quotas</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-listrecipesrequest"></a>
+### cloud.v1.api.ListRecipesRequest
+
+<pre>
+//ListRecipesRequest lists recipe records with filtering and pagination.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>filter</td>
+<td><a href="../common/README.md#cloud-v1-common-entityfilter">cloud.v1.common.EntityFilter</a></td>
+<td><pre>
+//filter holds the shared Entity-level filters (search, ids, time
+//windows).<br>
+
+json_name: filter
+go_name: Filter</pre></td>
+</tr><tr>
+<td>page</td>
+<td><a href="../common/README.md#cloud-v1-common-page">cloud.v1.common.Page</a></td>
+<td><pre>
+//page carries pagination (page size + token).<br>
+
+json_name: page
+go_name: Page</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+//tenant_id scopes the request to the owning tenant.<br>
+
+json_name: tenantId
+go_name: TenantId</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-listrecipesresponse"></a>
+### cloud.v1.api.ListRecipesResponse
+
+<pre>
+//ListRecipesResponse returns a page of recipe records.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>next_page_token</td>
+<td>string</td>
+<td><pre>
+//next_page_token fetches the following page; empty when at the end.<br>
+
+json_name: nextPageToken
+go_name: NextPageToken</pre></td>
+</tr><tr>
+<td>recipes</td>
+<td><a href="../models/README.md#cloud-v1-models-reciperecord">cloud.v1.models.RecipeRecord</a></td>
+<td><pre>
+//recipes is the matching page of records.<br>
+
+json_name: recipes
+go_name: Recipes</pre></td>
 </tr>
 </table>
 

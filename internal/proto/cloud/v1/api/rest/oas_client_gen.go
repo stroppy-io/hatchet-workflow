@@ -36,6 +36,7 @@ type Invoker interface {
 	PublicShareInvoker
 	QuotaInvoker
 	RatingInvoker
+	RecipeInvoker
 	ShareInvoker
 	StroppyInvoker
 	SuiteInvoker
@@ -594,6 +595,45 @@ type RatingInvoker interface {
 	//
 	// GET /api/v1/rating/get-tenant-rating
 	GetTenantRating(ctx context.Context, request *GetTenantRatingRequest) (*GetTenantRatingResponse, error)
+}
+
+// RecipeInvoker invokes operations described by OpenAPI v3 specification.
+//
+// x-gen-operation-group: Recipe
+type RecipeInvoker interface {
+	// CheckRecipe invokes checkRecipe operation.
+	//
+	// CheckRecipe compiles the stored bundle in check-mode. Read-only: it
+	// never mutates the stored record.
+	//
+	// GET /api/v1/recipe/check-recipe
+	CheckRecipe(ctx context.Context, request *CheckRecipeRequest) (*CheckRecipeResponse, error)
+	// CreateRecipe invokes createRecipe operation.
+	//
+	// CreateRecipe persists a new recipe bundle. Not idempotent.
+	//
+	// POST /api/v1/recipe/create-recipe
+	CreateRecipe(ctx context.Context, request *CreateRecipeRequest) (*CreateRecipeResponse, error)
+	// DeleteRecipe invokes deleteRecipe operation.
+	//
+	// DeleteRecipe is idempotent: soft-deleting an absent or already-deleted
+	// recipe is a no-op.
+	//
+	// POST /api/v1/recipe/delete-recipe
+	DeleteRecipe(ctx context.Context, request *DeleteRecipeRequest, params DeleteRecipeParams) error
+	// GetRecipe invokes getRecipe operation.
+	//
+	// GetRecipe fetches a single recipe record by id. Read-only.
+	//
+	// GET /api/v1/recipe/get-recipe
+	GetRecipe(ctx context.Context, request *GetRecipeRequest) (*GetRecipeResponse, error)
+	// ListRecipes invokes listRecipes operation.
+	//
+	// ListRecipes lists recipe records with filtering and pagination.
+	// Read-only.
+	//
+	// GET /api/v1/recipe/list-recipes
+	ListRecipes(ctx context.Context, request *ListRecipesRequest) (*ListRecipesResponse, error)
 }
 
 // ShareInvoker invokes operations described by OpenAPI v3 specification.
@@ -1490,6 +1530,84 @@ func (c *Client) sendChangePassword(ctx context.Context, request *ChangePassword
 
 	stage = "DecodeResponse"
 	result, err := decodeChangePasswordResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// CheckRecipe invokes checkRecipe operation.
+//
+// CheckRecipe compiles the stored bundle in check-mode. Read-only: it
+// never mutates the stored record.
+//
+// GET /api/v1/recipe/check-recipe
+func (c *Client) CheckRecipe(ctx context.Context, request *CheckRecipeRequest) (*CheckRecipeResponse, error) {
+	res, err := c.sendCheckRecipe(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendCheckRecipe(ctx context.Context, request *CheckRecipeRequest) (res *CheckRecipeResponse, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("checkRecipe"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/api/v1/recipe/check-recipe"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, CheckRecipeOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/api/v1/recipe/check-recipe"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeCheckRecipeRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeCheckRecipeResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -2604,6 +2722,83 @@ func (c *Client) sendCreatePackageUpload(ctx context.Context, request *CreatePac
 	return result, nil
 }
 
+// CreateRecipe invokes createRecipe operation.
+//
+// CreateRecipe persists a new recipe bundle. Not idempotent.
+//
+// POST /api/v1/recipe/create-recipe
+func (c *Client) CreateRecipe(ctx context.Context, request *CreateRecipeRequest) (*CreateRecipeResponse, error) {
+	res, err := c.sendCreateRecipe(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendCreateRecipe(ctx context.Context, request *CreateRecipeRequest) (res *CreateRecipeResponse, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("createRecipe"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/api/v1/recipe/create-recipe"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, CreateRecipeOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/api/v1/recipe/create-recipe"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeCreateRecipeRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeCreateRecipeResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
 // CreateRole invokes createRole operation.
 //
 // CreateRole is not idempotent: each call creates a new role.
@@ -3536,6 +3731,101 @@ func (c *Client) sendDeletePackage(ctx context.Context, request *DeletePackageRe
 
 	stage = "DecodeResponse"
 	result, err := decodeDeletePackageResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// DeleteRecipe invokes deleteRecipe operation.
+//
+// DeleteRecipe is idempotent: soft-deleting an absent or already-deleted
+// recipe is a no-op.
+//
+// POST /api/v1/recipe/delete-recipe
+func (c *Client) DeleteRecipe(ctx context.Context, request *DeleteRecipeRequest, params DeleteRecipeParams) error {
+	_, err := c.sendDeleteRecipe(ctx, request, params)
+	return err
+}
+
+func (c *Client) sendDeleteRecipe(ctx context.Context, request *DeleteRecipeRequest, params DeleteRecipeParams) (res *DeleteRecipeResponse, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("deleteRecipe"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/api/v1/recipe/delete-recipe"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, DeleteRecipeOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/api/v1/recipe/delete-recipe"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeDeleteRecipeRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "EncodeHeaderParams"
+	h := uri.NewHeaderEncoder(r.Header)
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "Idempotency-Key",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.IdempotencyKey.Get(); ok {
+				return e.EncodeValue(conv.UUIDToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeDeleteRecipeResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -5485,6 +5775,83 @@ func (c *Client) sendGetPublicRating(ctx context.Context, request *GetPublicRati
 
 	stage = "DecodeResponse"
 	result, err := decodeGetPublicRatingResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetRecipe invokes getRecipe operation.
+//
+// GetRecipe fetches a single recipe record by id. Read-only.
+//
+// GET /api/v1/recipe/get-recipe
+func (c *Client) GetRecipe(ctx context.Context, request *GetRecipeRequest) (*GetRecipeResponse, error) {
+	res, err := c.sendGetRecipe(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendGetRecipe(ctx context.Context, request *GetRecipeRequest) (res *GetRecipeResponse, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getRecipe"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/api/v1/recipe/get-recipe"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetRecipeOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/api/v1/recipe/get-recipe"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeGetRecipeRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetRecipeResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -7977,6 +8344,84 @@ func (c *Client) sendListQuotas(ctx context.Context, request *ListQuotasRequest)
 
 	stage = "DecodeResponse"
 	result, err := decodeListQuotasResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// ListRecipes invokes listRecipes operation.
+//
+// ListRecipes lists recipe records with filtering and pagination.
+// Read-only.
+//
+// GET /api/v1/recipe/list-recipes
+func (c *Client) ListRecipes(ctx context.Context, request *ListRecipesRequest) (*ListRecipesResponse, error) {
+	res, err := c.sendListRecipes(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendListRecipes(ctx context.Context, request *ListRecipesRequest) (res *ListRecipesResponse, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("listRecipes"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/api/v1/recipe/list-recipes"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, ListRecipesOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/api/v1/recipe/list-recipes"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeListRecipesRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeListRecipesResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

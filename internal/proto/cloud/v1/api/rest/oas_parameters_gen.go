@@ -579,6 +579,69 @@ func decodeDeletePackageParams(args [0]string, argsEscaped bool, r *http.Request
 	return params, nil
 }
 
+// DeleteRecipeParams is parameters of deleteRecipe operation.
+type DeleteRecipeParams struct {
+	// Optional idempotency key used to safely retry the request.
+	IdempotencyKey OptUUID `json:",omitempty,omitzero"`
+}
+
+func unpackDeleteRecipeParams(packed middleware.Parameters) (params DeleteRecipeParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "Idempotency-Key",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.IdempotencyKey = v.(OptUUID)
+		}
+	}
+	return params
+}
+
+func decodeDeleteRecipeParams(args [0]string, argsEscaped bool, r *http.Request) (params DeleteRecipeParams, _ error) {
+	h := uri.NewHeaderDecoder(r.Header)
+	// Decode header: Idempotency-Key.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "Idempotency-Key",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotIdempotencyKeyVal uuid.UUID
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToUUID(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotIdempotencyKeyVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.IdempotencyKey.SetTo(paramsDotIdempotencyKeyVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "Idempotency-Key",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // DeleteRoleParams is parameters of deleteRole operation.
 type DeleteRoleParams struct {
 	// Optional idempotency key used to safely retry the request.

@@ -66,6 +66,20 @@ func encodeChangePasswordRequest(
 	return nil
 }
 
+func encodeCheckRecipeRequest(
+	req *CheckRecipeRequest,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
 func encodeCloneDatabasePresetRequest(
 	req *CloneDatabasePresetRequest,
 	r *http.Request,
@@ -262,6 +276,20 @@ func encodeCreatePackageUploadRequest(
 	return nil
 }
 
+func encodeCreateRecipeRequest(
+	req *CreateRecipeRequest,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
 func encodeCreateRoleRequest(
 	req *CreateRoleRequest,
 	r *http.Request,
@@ -404,6 +432,20 @@ func encodeDeleteMembershipRequest(
 
 func encodeDeletePackageRequest(
 	req *DeletePackageRequest,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeDeleteRecipeRequest(
+	req *DeleteRecipeRequest,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -698,6 +740,20 @@ func encodeGetPackageRequest(
 
 func encodeGetPublicRatingRequest(
 	req *GetPublicRatingRequest,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeGetRecipeRequest(
+	req *GetRecipeRequest,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -1090,6 +1146,20 @@ func encodeListPackagesRequest(
 
 func encodeListQuotasRequest(
 	req *ListQuotasRequest,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeListRecipesRequest(
+	req *ListRecipesRequest,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"

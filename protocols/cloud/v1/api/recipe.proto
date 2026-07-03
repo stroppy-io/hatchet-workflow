@@ -1,0 +1,295 @@
+syntax = "proto3";
+
+package cloud.v1.api;
+
+import "cloud/v1/common/entity.proto";
+import "cloud/v1/dsl/service.proto";
+import "cloud/v1/iam/options.proto";
+import "cloud/v1/iam/permission.proto";
+import "cloud/v1/models/recipe.proto";
+import "validate/validate.proto";
+
+import "ogen/ogen.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api";
+
+option (ogen.file) = { generate_openapi: true };
+
+/*
+    recipe.proto is the tenant-scoped API over models.RecipeRecord — a
+    persisted DSL recipe bundle (cluster.yaml, workflow.yaml, components/**,
+    providers/**). CRUD over stored bundles, plus CheckRecipe which re-runs
+    the DSL compiler (cloud.v1.dsl.DslService's compiler) in check-mode over
+    an already-stored bundle. Every request is tenant-scoped (tenant_id);
+    CRUD is gated by RESOURCE_RECIPE, CheckRecipe by ACTION_READ on the same
+    resource (it only reads the stored bundle, never mutates it).
+ */
+
+/*
+    CreateRecipeRequest persists a new recipe bundle under a tenant.
+ */
+message CreateRecipeRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        recipe is the bundle to persist. Server assigns entity.id / tenant_id
+        / timings.
+     */
+    models.RecipeRecord recipe = 2 [(validate.rules).message.required = true];
+}
+/*
+    CreateRecipeResponse returns the newly created recipe record.
+ */
+message CreateRecipeResponse {
+    /*
+        recipe is the persisted record with server-assigned fields populated.
+     */
+    models.RecipeRecord recipe = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    GetRecipeRequest fetches a single recipe record by id.
+ */
+message GetRecipeRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        id is the recipe record identifier to fetch.
+     */
+    string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+/*
+    GetRecipeResponse returns the requested recipe record.
+ */
+message GetRecipeResponse {
+    /*
+        recipe is the requested record.
+     */
+    models.RecipeRecord recipe = 1 [(validate.rules).message.required = true];
+}
+
+/*
+    ListRecipesRequest lists recipe records with filtering and pagination.
+ */
+message ListRecipesRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        filter holds the shared Entity-level filters (search, ids, time
+        windows).
+     */
+    common.EntityFilter filter = 2;
+    /*
+        page carries pagination (page size + token).
+     */
+    common.Page page = 3;
+}
+/*
+    ListRecipesResponse returns a page of recipe records.
+ */
+message ListRecipesResponse {
+    /*
+        recipes is the matching page of records.
+     */
+    repeated models.RecipeRecord recipes = 1;
+    /*
+        next_page_token fetches the following page; empty when at the end.
+     */
+    string next_page_token = 2;
+}
+
+/*
+    DeleteRecipeRequest soft-deletes a recipe record by id.
+ */
+message DeleteRecipeRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        id is the recipe record identifier to delete.
+     */
+    string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+/*
+    DeleteRecipeResponse is empty; soft-delete success is signalled by a
+    non-error reply.
+ */
+message DeleteRecipeResponse {}
+
+/*
+    CheckRecipeRequest compiles an already-stored recipe bundle in
+    check-mode. Diagnostics from user input are NEVER surfaced as an RPC
+    error — only as entries in CheckRecipeResponse.diagnostics.
+ */
+message CheckRecipeRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        id is the recipe record identifier whose stored bundle is checked.
+     */
+    string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+/*
+    CheckRecipeResponse returns the check-mode compile diagnostics for the
+    stored bundle. An empty list means the bundle compiles cleanly.
+ */
+message CheckRecipeResponse {
+    /*
+        diagnostics is the result of check-mode compilation (see
+        cloud.v1.dsl.DslService.Check for the same diagnostic model).
+     */
+    repeated dsl.Diagnostic diagnostics = 1;
+}
+
+/*
+    RecipeService is the tenant-scoped CRUD + check API for persisted DSL
+    recipe bundles.
+ */
+service RecipeService {
+    option (ogen.service) = {
+        path_prefix: "/api/v1/recipe"
+        tags: "recipe"
+    };
+
+    /*
+        CreateRecipe persists a new recipe bundle. Not idempotent.
+     */
+    rpc CreateRecipe (CreateRecipeRequest) returns (CreateRecipeResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/create-recipe"
+            operation_id: "createRecipe"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_RECIPE, action: ACTION_CREATE}]};
+    }
+    /*
+        GetRecipe fetches a single recipe record by id. Read-only.
+     */
+    rpc GetRecipe (GetRecipeRequest) returns (GetRecipeResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/get-recipe"
+            operation_id: "getRecipe"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_RECIPE, action: ACTION_READ}]};
+    }
+    /*
+        ListRecipes lists recipe records with filtering and pagination.
+        Read-only.
+     */
+    rpc ListRecipes (ListRecipesRequest) returns (ListRecipesResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/list-recipes"
+            operation_id: "listRecipes"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_RECIPE, action: ACTION_LIST}]};
+    }
+    /*
+        DeleteRecipe is idempotent: soft-deleting an absent or already-deleted
+        recipe is a no-op.
+     */
+    rpc DeleteRecipe (DeleteRecipeRequest) returns (DeleteRecipeResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/delete-recipe"
+            operation_id: "deleteRecipe"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_RECIPE, action: ACTION_DELETE}]};
+    }
+    /*
+        CheckRecipe compiles the stored bundle in check-mode. Read-only: it
+        never mutates the stored record.
+     */
+    rpc CheckRecipe (CheckRecipeRequest) returns (CheckRecipeResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/check-recipe"
+            operation_id: "checkRecipe"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_RECIPE, action: ACTION_READ}]};
+    }
+}

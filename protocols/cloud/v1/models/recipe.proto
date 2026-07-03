@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package cloud.v1.models;
+
+import "cloud/v1/common/entity.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models";
+
+/*
+    recipe.proto persists a DSL recipe bundle: the exact file set
+    internal/dsl include.Sources compiles (cluster.yaml, workflow.yaml,
+    components/**, providers/**). A RecipeRecord is the storage-side twin of
+    the in-browser recipe the IDE edits; api.RecipeService.CheckRecipe
+    re-runs the DSL compiler in check-mode over the stored bundle to keep
+    Summary.compiles current.
+ */
+
+/*
+    RecipeRecord is a persisted DSL recipe bundle.
+ */
+message RecipeRecord {
+    /*
+        entity is the storage envelope (id, tenant_id, name, description,
+        timings).
+     */
+    common.Entity entity = 1 [(validate.rules).message.required = true];
+    /*
+        bundle holds the recipe's files (cluster.yaml, workflow.yaml,
+        components/**, providers/**).
+     */
+    RecipeBundle bundle = 2 [(validate.rules).message.required = true];
+    /*
+        version is the immutable version number of this bundle. The triple
+        (tenant_id, name, version) is unique.
+     */
+    uint32 version = 3;
+    /*
+        summary holds denormalized facets for the recipes table (provider,
+        machine-group/service counts, last known Check result).
+     */
+    Summary summary = 4;
+
+    /*
+        Summary is the flat, indexed projection of the recipe used by the
+        recipes table.
+     */
+    message Summary {
+        /*
+            provider is the deployment provider name declared by the bundle.
+         */
+        string provider = 1 [(validate.rules).string.max_len = 128];
+        /*
+            machine_group_count is the number of machine groups declared by
+            the bundle's cluster.yaml.
+         */
+        uint32 machine_group_count = 2;
+        /*
+            service_count is the number of services declared by the bundle's
+            cluster.yaml.
+         */
+        uint32 service_count = 3;
+        /*
+            compiles is the last known Check result: true when the bundle
+            compiled with no error diagnostics.
+         */
+        bool compiles = 4;
+    }
+}
+
+/*
+    RecipeBundle is the recipe's file set: slash-path -> file bytes. Keys are
+    the same paths internal/dsl include.Sources uses (cluster.yaml,
+    workflow.yaml, components/**, providers/**).
+ */
+message RecipeBundle {
+    /*
+        files maps a slash-path within the bundle to its raw file bytes.
+     */
+    map<string, bytes> files = 1 [(validate.rules).map = {min_pairs: 1, max_pairs: 512}];
+}

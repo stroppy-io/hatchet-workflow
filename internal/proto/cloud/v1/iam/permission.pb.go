@@ -74,6 +74,9 @@ const (
 	// RESOURCE_PACKAGE is a tenant-uploaded custom package (models.PackageRecord),
 	// e.g. a custom .deb / binary used to install a database build. Tenant-private.
 	Resource_RESOURCE_PACKAGE Resource = 14
+	// RESOURCE_RECIPE is a tenant-scoped persisted DSL recipe bundle
+	// (models.RecipeRecord): full CRUD + check.
+	Resource_RESOURCE_RECIPE Resource = 15
 )
 
 // Enum value maps for Resource.
@@ -94,6 +97,7 @@ var (
 		12: "RESOURCE_AGENT_SHELL",
 		13: "RESOURCE_SHARE",
 		14: "RESOURCE_PACKAGE",
+		15: "RESOURCE_RECIPE",
 	}
 	Resource_value = map[string]int32{
 		"RESOURCE_UNSPECIFIED": 0,
@@ -111,6 +115,7 @@ var (
 		"RESOURCE_AGENT_SHELL": 12,
 		"RESOURCE_SHARE":       13,
 		"RESOURCE_PACKAGE":     14,
+		"RESOURCE_RECIPE":      15,
 	}
 )
 
@@ -338,7 +343,7 @@ const file_cloud_v1_iam_permission_proto_rawDesc = "" +
 	"\bresource\x18\x01 \x01(\x0e2\x16.cloud.v1.iam.ResourceB\n" +
 	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\bresource\x128\n" +
 	"\x06action\x18\x02 \x01(\x0e2\x14.cloud.v1.iam.ActionB\n" +
-	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x06action*\xda\x02\n" +
+	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x06action*\xef\x02\n" +
 	"\bResource\x12\x18\n" +
 	"\x14RESOURCE_UNSPECIFIED\x10\x00\x12\x14\n" +
 	"\x10RESOURCE_ACCOUNT\x10\x01\x12\x13\n" +
@@ -355,7 +360,8 @@ const file_cloud_v1_iam_permission_proto_rawDesc = "" +
 	"\x11RESOURCE_FAVORITE\x10\v\x12\x18\n" +
 	"\x14RESOURCE_AGENT_SHELL\x10\f\x12\x12\n" +
 	"\x0eRESOURCE_SHARE\x10\r\x12\x14\n" +
-	"\x10RESOURCE_PACKAGE\x10\x0e*\x8e\x01\n" +
+	"\x10RESOURCE_PACKAGE\x10\x0e\x12\x13\n" +
+	"\x0fRESOURCE_RECIPE\x10\x0f*\x8e\x01\n" +
 	"\x06Action\x12\x16\n" +
 	"\x12ACTION_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rACTION_CREATE\x10\x01\x12\x0f\n" +

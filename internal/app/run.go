@@ -696,6 +696,7 @@ func Run(ctx context.Context, cfg Config) error {
 		publicRatingService,
 		publicShareService,
 		quotaService,
+		&api.UnimplementedRecipeServiceServer{}, // no RecipeService implementation yet — proto-only (phase 1A task 1); real wiring lands in a later phase-1a task.
 		shareService,
 		stroppyService,
 		suiteService,

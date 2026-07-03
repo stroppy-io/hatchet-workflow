@@ -49,6 +49,16 @@ func (UnimplementedHandler) ChangePassword(ctx context.Context, req *ChangePassw
 	return ht.ErrNotImplemented
 }
 
+// CheckRecipe implements checkRecipe operation.
+//
+// CheckRecipe compiles the stored bundle in check-mode. Read-only: it
+// never mutates the stored record.
+//
+// GET /api/v1/recipe/check-recipe
+func (UnimplementedHandler) CheckRecipe(ctx context.Context, req *CheckRecipeRequest) (r *CheckRecipeResponse, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // CloneDatabasePreset implements cloneDatabasePreset operation.
 //
 // CloneDatabasePreset creates a new editable copy. Not idempotent: each call
@@ -187,6 +197,15 @@ func (UnimplementedHandler) CreatePackageUpload(ctx context.Context, req *Create
 	return r, ht.ErrNotImplemented
 }
 
+// CreateRecipe implements createRecipe operation.
+//
+// CreateRecipe persists a new recipe bundle. Not idempotent.
+//
+// POST /api/v1/recipe/create-recipe
+func (UnimplementedHandler) CreateRecipe(ctx context.Context, req *CreateRecipeRequest) (r *CreateRecipeResponse, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // CreateRole implements createRole operation.
 //
 // CreateRole is not idempotent: each call creates a new role.
@@ -290,6 +309,16 @@ func (UnimplementedHandler) DeleteMembership(ctx context.Context, req *DeleteMem
 //
 // POST /api/v1/package/delete-package
 func (UnimplementedHandler) DeletePackage(ctx context.Context, req *DeletePackageRequest, params DeletePackageParams) error {
+	return ht.ErrNotImplemented
+}
+
+// DeleteRecipe implements deleteRecipe operation.
+//
+// DeleteRecipe is idempotent: soft-deleting an absent or already-deleted
+// recipe is a no-op.
+//
+// POST /api/v1/recipe/delete-recipe
+func (UnimplementedHandler) DeleteRecipe(ctx context.Context, req *DeleteRecipeRequest, params DeleteRecipeParams) error {
 	return ht.ErrNotImplemented
 }
 
@@ -511,6 +540,15 @@ func (UnimplementedHandler) GetPublicConfig(ctx context.Context) (r *GetPublicCo
 //
 // GET /api/v1/public-rating/get-public-rating
 func (UnimplementedHandler) GetPublicRating(ctx context.Context, req *GetPublicRatingRequest) (r *GetPublicRatingResponse, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetRecipe implements getRecipe operation.
+//
+// GetRecipe fetches a single recipe record by id. Read-only.
+//
+// GET /api/v1/recipe/get-recipe
+func (UnimplementedHandler) GetRecipe(ctx context.Context, req *GetRecipeRequest) (r *GetRecipeResponse, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -805,6 +843,16 @@ func (UnimplementedHandler) ListPermissions(ctx context.Context) (r *ListPermiss
 //
 // GET /api/v1/quota/list-quotas
 func (UnimplementedHandler) ListQuotas(ctx context.Context, req *ListQuotasRequest) (r *ListQuotasResponse, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListRecipes implements listRecipes operation.
+//
+// ListRecipes lists recipe records with filtering and pagination.
+// Read-only.
+//
+// GET /api/v1/recipe/list-recipes
+func (UnimplementedHandler) ListRecipes(ctx context.Context, req *ListRecipesRequest) (r *ListRecipesResponse, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
