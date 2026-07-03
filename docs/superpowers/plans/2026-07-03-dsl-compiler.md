@@ -876,12 +876,149 @@ func TestPostgresHAGolden(t *testing.T) {
 
 ---
 
-## Вне этого плана (следующие)
+### Task 15: Nomad job-spec маппинг + активности gateway-агента
 
-- Generic Temporal-интерпретатор `CompiledPlan` (замена stage-машины `test.go`) + активности `NomadSubmitJob`/`NomadAllocLogs` на gateway-агенте.
-- Провайдер-раннер: `stroppy_nodes` → terraform apply → `stroppy_machines` → `MachineState` (сабпроект 2).
-- Schema-endpoint `GET /api/orgs/{org}/dsl/schema.json` + check-endpoint (connect-сервис поверх `schema.Compose` и `dsl.Compile`).
+**Files:**
+- Create: `internal/dsl/nomad/jobspec.go`, `internal/agent/nomad_activities.go`
+- Test: `internal/dsl/nomad/jobspec_test.go`, `internal/agent/nomad_activities_test.go`
+- Modify: `go.mod` (добавить `github.com/hashicorp/nomad/api`)
+
+**Interfaces:**
+- Consumes: `dslpb.ServiceSpec`, `dslpb.MachineGroup` (Task 12); паттерн существующих активностей `internal/agent/activities.go` (heartbeat-тикер, структура Input/Output, регистрация в `cmd/cli/agent_cmd.go`).
+- Produces:
+
+```go
+// internal/dsl/nomad/jobspec.go
+// BuildJob: ServiceSpec + целевые ноды → Nomad job (docker driver, host network,
+// constraint по node_id через node meta stroppy_node_id, один task group на машину
+// группы). Health из ServiceSpec → nomad service check (http, timeout).
+func BuildJob(svc *dslpb.ServiceSpec, nodes []NodeRef) (*api.Job, error)
+type NodeRef struct{ NodeID, PrivateIP string }
+
+// internal/agent/nomad_activities.go — активности gateway-агента, дёргают
+// localhost:4646 (api.NewClient c address из env STROPPY_NOMAD_ADDR, default localhost).
+// Регистрируются ТОЛЬКО на gateway-ноде (роль в bootstrap).
+func (a *Activities) NomadSubmitJobActivity(ctx context.Context, in *NomadSubmitJobInput) (*NomadSubmitJobOutput, error)   // register + poll до running/failed, heartbeat
+func (a *Activities) NomadJobStatusActivity(ctx context.Context, in *NomadJobStatusInput) (*NomadJobStatusOutput, error)
+func (a *Activities) NomadStopJobActivity(ctx context.Context, in *NomadStopJobInput) (*NomadStopJobOutput, error)
+func (a *Activities) NomadAllocLogsActivity(ctx context.Context, in *NomadAllocLogsInput) (*NomadAllocLogsOutput, error)
+```
+
+- [ ] **Step 1: Падающий тест jobspec** — `BuildJob` для postgres-ServiceSpec (image, host network, volumes, env с `${{ }}`-строкой уже вычисленной, health) на 3 нодах → job c 3 task groups, у каждой constraint `${meta.stroppy_node_id} == <id>`, docker config с image/network_mode=host/volumes, check http с timeout.
+- [ ] **Step 2: Run — FAIL** (`go test ./internal/dsl/nomad/ -v`)
+- [ ] **Step 3: Реализация jobspec + активностей** — активности тестируются httptest-сервером, имитирующим Nomad API (register 200 + evaluations поллинг); heartbeat-паттерн скопировать из `CallCmdActivity`.
+- [ ] **Step 4: Run — PASS** (`go test ./internal/dsl/nomad/ ./internal/agent/ -v`)
+- [ ] **Step 5: Commit** `feat(dsl): nomad jobspec mapping and gateway agent activities`
+
+---
+
+### Task 16: Temporal-интерпретатор CompiledPlan
+
+**Files:**
+- Create: `internal/workflows/dslrun.go`
+- Test: `internal/workflows/dslrun_test.go`
+- Modify: `internal/workflows/register.go` (регистрация workflow)
+
+**Interfaces:**
+- Consumes: `dslpb.CompiledPlan` (Task 12), `expr.Eval` (Task 7), Nomad-активности (Task 15); существующие паттерны: `executeAgentStep`/`executeActivityNoResult` (`internal/workflows/deployment.go:607-632`), per-node task queue (`agentTaskQueue`, deployment.go:493), child-workflow структура `internal/workflows/test.go`.
+- Produces:
+
+```go
+// ExecuteCompiledPlanWorkflow — generic DAG-исполнитель:
+//  - вход: план + map group→[]MachineState (от провайдера) + bootstrap;
+//  - готовность джоба = все needs в terminal-success; параллелизм через workflow.Go
+//    (паттерн волн из executeDeploymentPlanWorkflow);
+//  - when: CEL eval (детерминированно: только по входным данным);
+//  - steps-джоб: DslStep.agent → существующие агент-активности на task queue каждой
+//    машины on_group; DslStep.wait → активность-поллер (SideEffect-free, retry policy);
+//  - service-джоб: expr.Eval всех ${{ }} в env/args по рантайм-биндингам
+//    (machines → views с IP из MachineState) → nomad.BuildJob → NomadSubmitJobActivity
+//    на gateway task queue;
+//  - фейл джоба → фейл зависимых, независимые ветки дорабатывают; итог — статус по джобам.
+type ExecuteCompiledPlanInput struct {
+	Plan     *dslpb.CompiledPlan
+	Machines map[string][]*deploymentpb.MachineState // group → machines
+	Bootstrap *workflowpb.AgentBootstrap             // тип как в существующих workflow
+}
+func ExecuteCompiledPlanWorkflow(ctx workflow.Context, in *ExecuteCompiledPlanInput) (*ExecuteCompiledPlanOutput, error)
+```
+
+- [ ] **Step 1: Падающий тест** — `testsuite.WorkflowTestSuite` с замоканными активностями: план из 4 джобов (a→b, a→c, [b,c]→d; b = service, остальные steps): проверить порядок (a раньше b/c; d последним), b вызвал NomadSubmitJobActivity, matrix-джоб исполнился per-инстанс; фейл c (мок возвращает error) → d не исполнен, b исполнен, workflow вернул статусы `{a: ok, b: ok, c: failed, d: skipped}`.
+- [ ] **Step 2: Run — FAIL** (`go test ./internal/workflows/ -run CompiledPlan -v`)
+- [ ] **Step 3: Реализация**
+- [ ] **Step 4: Run — PASS**
+- [ ] **Step 5: Commit** `feat(workflows): generic CompiledPlan DAG interpreter`
+
+---
+
+### Task 17: Провайдер-раннер (сабпроект 2): tf-модуль как внешний контракт
+
+**Files:**
+- Create: `internal/infrastructure/provider/provider.go`, `internal/infrastructure/provider/terraform.go`, `internal/infrastructure/provider/docker.go`
+- Test: `internal/infrastructure/provider/terraform_test.go`, `internal/infrastructure/provider/docker_test.go`
+
+**Interfaces:**
+- Consumes: `dslpb.MachineGroup`/`dslpb.ProviderRef` (Task 12); существующий terraform executor (`internal/infrastructure/terraform/executor.go` — `Apply/Destroy/Output`), docker executor (`internal/infrastructure/docker/executor.go`), `deploymentpb.MachineState`.
+- Produces:
+
+```go
+// Интерфейс провайдера (замена enum-switch — спека §3):
+type Provider interface {
+	// Provision: машины по группам. nodes-вход tf-модуля:
+	//   stroppy_nodes = [{id, group, cpu, ram_gb, disk: {size_gb, type}, ext: {...}}]
+	// (id генерится здесь: "<group>-<idx>"); выход: output stroppy_machines
+	//   [{id, private_ip, public_ip}] → []MachineState (id → node_id, группа в labels).
+	Provision(ctx context.Context, ref *dslpb.ProviderRef, groups []*dslpb.MachineGroup) (map[string][]*deploymentpb.MachineState, error)
+	Destroy(ctx context.Context, ref *dslpb.ProviderRef) error
+}
+func NewTerraform(moduleDir string, exec terraformExec) Provider // params_json+groups → tfvars JSON
+func NewDocker(exec dockerExec) Provider                         // builtin: группа → контейнеры stroppy-agent (паттерн текущего docker-провайдера)
+```
+
+- [ ] **Step 1: Падающий тест terraform-провайдера** — фейковый `terraformExec` (интерфейс с Apply/Output), проверить: tfvars содержит `stroppy_nodes` с 3 нодами группы db (id "db-0..2", lowered disk type, ext развёрнут из ext_json) + params из params_json; `stroppy_machines`-output парсится в MachineState c верными node_id/private_ip; отсутствующий output → ошибка «module must export stroppy_machines».
+- [ ] **Step 2: Run — FAIL**
+- [ ] **Step 3: Реализация** (docker-builtin — по образу текущего `renderDockerInput`: контейнер на машину, agent-bootstrap env)
+- [ ] **Step 4: Run — PASS** (`go test ./internal/infrastructure/provider/ -v`)
+- [ ] **Step 5: Commit** `feat(provider): pluggable provider interface with tf-module contract`
+
+---
+
+### Task 18: Connect-сервис: schema-endpoint + check-endpoint
+
+**Files:**
+- Create: `protocols/cloud/v1/dsl/service.proto`, `internal/services/dsl_service.go`
+- Test: `internal/services/dsl_service_test.go`
+- Modify: `internal/app/*` (wiring по образцу остальных 20 connect-сервисов — найти место регистрации сервисов в app и добавить туда)
+
+**Interfaces:**
+- Consumes: `schema.Compose`/`DeriveParamsSchema` (Task 6), `dsl.Compile` (Task 13), `diag.Diagnostic`.
+- Produces:
+
+```proto
+service DslService {
+    // ComposedSchema — динамическая JSON Schema организации (для Monaco/yaml-language-server).
+    rpc ComposedSchema(ComposedSchemaRequest) returns (ComposedSchemaResponse); // {schema_json string}
+    // Check — компиляция бандла в check-режиме, возвращает диагностики (IDE-линтер).
+    rpc Check(CheckRequest) returns (CheckResponse); // files map<string,bytes> → repeated Diagnostic{severity,path,line,col,message,module}
+}
+```
+
+Хранилище провайдеров для v1: каталог `providers/` внутри переданного в Check бандла + builtin docker (открытый вопрос спеки §11 про постоянное хранилище решается в сабпроекте 4, здесь — stateless).
+
+- [ ] **Step 1: proto + `make protocols`** — генерация зелёная.
+- [ ] **Step 2: Падающий тест** — `Check` с валидным postgres-ha бандлом (из Task 14) → 0 diagnostics; с etcd count=2 → diagnostic {severity: ERROR, module: "etcd"}; `ComposedSchema` для бандла с yandex-модулем → schema_json содержит `platform_id`.
+- [ ] **Step 3: Run — FAIL**
+- [ ] **Step 4: Реализация + wiring в app**
+- [ ] **Step 5: Run — PASS** (`go test ./internal/services/ -run Dsl -v && go build ./...`)
+- [ ] **Step 6: Commit** `feat(services): dsl schema and check endpoints`
+
+---
+
+## Вне этого плана
+
 - Миграционные дифф-тесты YAML↔Go-рендер по БД (§9 спеки), перевод остальных 10 БД.
+- Bootstrap per-run Nomad-кластера в cloud-init/terraform-модуле (сабпроект 3, инфра-часть).
+- Git + browser IDE (сабпроект 4).
 
 ## Self-Review
 
