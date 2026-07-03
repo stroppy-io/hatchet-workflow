@@ -78,6 +78,20 @@ func agentCmd() *cobra.Command {
 			)
 			workflowpb.RegisterAgentCommandServiceActivities(w, impl)
 
+			// Nomad activities are NOT part of the generated AgentCommandService
+			// interface (Nomad is gateway-node-only, not a per-machine concern), so
+			// they are registered here directly rather than through the codegen'd
+			// registrar above. The agent has no notion of a "gateway role" today —
+			// internal/domain/agent/bootstrap.go's Env carries no role/kind field,
+			// only machine/task-queue/server-addr — so every agent registers them
+			// unconditionally. This is harmless: the orchestrating workflow only
+			// schedules Nomad activities on the gateway machine's task queue, and on
+			// any other machine these activities would simply fail fast (dial error
+			// against STROPPY_NOMAD_ADDR / the unreachable default
+			// http://127.0.0.1:4646) if ever misdirected there. Revisit if/when the
+			// agent gains an explicit role concept.
+			registerNomadActivities(w, impl)
+
 			agentCtx, cancelAgent := context.WithCancel(cmd.Context())
 			defer cancelAgent()
 			go agentworker.NewPresenceReporter(
@@ -92,6 +106,18 @@ func agentCmd() *cobra.Command {
 			return w.Run(temporalworker.InterruptCh())
 		},
 	}
+}
+
+// registerNomadActivities registers the four Nomad job-management activities
+// (internal/agent/nomad_activities.go) individually rather than via a
+// struct-scanning RegisterActivity(impl), which would also try to re-register
+// every AgentCommandService method already wired above by
+// workflowpb.RegisterAgentCommandServiceActivities.
+func registerNomadActivities(w temporalworker.Worker, impl *agentworker.Activities) {
+	w.RegisterActivity(impl.NomadSubmitJobActivity)
+	w.RegisterActivity(impl.NomadJobStatusActivity)
+	w.RegisterActivity(impl.NomadStopJobActivity)
+	w.RegisterActivity(impl.NomadAllocLogsActivity)
 }
 
 type staticHeadersProvider map[string]string
