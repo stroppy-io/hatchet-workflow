@@ -170,7 +170,7 @@ func DecodeCluster(path string, src []byte, providerKey string) (*ClusterDoc, di
 		return nil, diags
 	}
 
-	dec := &clusterDecoder{path: path, providerKey: providerKey, diags: &diags}
+	dec := &clusterDecoder{decoderBase: decoderBase{path: path, diags: &diags}, providerKey: providerKey}
 	doc := &ClusterDoc{
 		Machines: map[string]MachineGroup{},
 		Services: map[string]Service{},
@@ -180,67 +180,28 @@ func DecodeCluster(path string, src []byte, providerKey string) (*ClusterDoc, di
 	return doc, diags
 }
 
-// clusterDecoder carries the state shared across all the nested decode
-// helpers below: where diagnostics get attached (path), where they
-// accumulate (diags), and which provider's ext-block is allowed
-// (providerKey).
+// clusterDecoder embeds decoderBase (errorf/decodeValue/alwaysOK/mapping,
+// and the generic decodeServices/decodeJobs helpers) and adds the one bit
+// of state specific to cluster.yaml: which provider's ext-block is allowed
+// inside a machine group (providerKey).
 type clusterDecoder struct {
-	path        string
+	decoderBase
 	providerKey string
-	diags       *diag.List
-}
-
-func (d *clusterDecoder) errorf(n *yaml.Node, format string, args ...any) {
-	d.diags.Errorf(d.path, posOf(n), format, args...)
-}
-
-// decodeValue calls value.Decode(target) and, on failure, records a
-// diagnostic pointing at value's position instead of returning an error.
-// It reports whether decoding succeeded.
-func (d *clusterDecoder) decodeValue(value *yaml.Node, target any, field string) bool {
-	if err := value.Decode(target); err != nil {
-		d.errorf(value, "%s: %v", field, err)
-		return false
-	}
-	return true
-}
-
-// alwaysOK adapts a handler that reports its own problems through the
-// shared *clusterDecoder (and so never fails the walk itself) to the
-// func(*yaml.Node) error shape decodeMapping's handlers map requires.
-func alwaysOK(fn func(*yaml.Node)) func(*yaml.Node) error {
-	return func(v *yaml.Node) error {
-		fn(v)
-		return nil
-	}
-}
-
-// mapping walks node as a strict mapping: any key not in handlers is
-// reported as an unknown-key diagnostic. Structural mismatches (node isn't
-// actually a mapping) are also turned into a diagnostic here so callers
-// never need to check decodeMapping's own error return.
-func (d *clusterDecoder) mapping(node *yaml.Node, context string, handlers map[string]func(*yaml.Node) error) {
-	err := decodeMapping(node, handlers, func(key string, keyNode, _ *yaml.Node) {
-		d.errorf(keyNode, "%s: unknown key %q", context, key)
-	})
-	if err != nil {
-		d.errorf(node, "%s: %v", context, err)
-	}
 }
 
 func (d *clusterDecoder) decodeDoc(node *yaml.Node, doc *ClusterDoc) {
 	d.mapping(node, "cluster", map[string]func(*yaml.Node) error{
-		"version":  alwaysOK(func(v *yaml.Node) { d.decodeValue(v, &doc.Version, "version") }),
-		"provider": alwaysOK(func(v *yaml.Node) { d.decodeProvider(v, &doc.Provider) }),
-		"machines": alwaysOK(func(v *yaml.Node) { d.decodeMachines(v, doc.Machines) }),
-		"services": alwaysOK(func(v *yaml.Node) { d.decodeServices(v, doc.Services) }),
+		"version":  d.alwaysOK(func(v *yaml.Node) { d.decodeValue(v, &doc.Version, "version") }),
+		"provider": d.alwaysOK(func(v *yaml.Node) { d.decodeProvider(v, &doc.Provider) }),
+		"machines": d.alwaysOK(func(v *yaml.Node) { d.decodeMachines(v, doc.Machines) }),
+		"services": d.alwaysOK(func(v *yaml.Node) { d.decodeServices(v, doc.Services) }),
 	})
 }
 
 func (d *clusterDecoder) decodeProvider(node *yaml.Node, out *ProviderUse) {
 	d.mapping(node, "provider", map[string]func(*yaml.Node) error{
-		"use":    alwaysOK(func(v *yaml.Node) { d.decodeValue(v, &out.Use, "provider.use") }),
-		"params": alwaysOK(func(v *yaml.Node) { d.decodeValue(v, &out.Params, "provider.params") }),
+		"use":    d.alwaysOK(func(v *yaml.Node) { d.decodeValue(v, &out.Use, "provider.use") }),
+		"params": d.alwaysOK(func(v *yaml.Node) { d.decodeValue(v, &out.Params, "provider.params") }),
 	})
 }
 
@@ -262,8 +223,8 @@ func (d *clusterDecoder) decodeMachineGroup(node *yaml.Node) MachineGroup {
 	var mg MachineGroup
 
 	err := decodeMapping(node, map[string]func(*yaml.Node) error{
-		"count":     alwaysOK(func(v *yaml.Node) { d.decodeValue(v, &mg.Count, "machines.count") }),
-		"resources": alwaysOK(func(v *yaml.Node) { mg.Resources = d.decodeResources(v) }),
+		"count":     d.alwaysOK(func(v *yaml.Node) { d.decodeValue(v, &mg.Count, "machines.count") }),
+		"resources": d.alwaysOK(func(v *yaml.Node) { mg.Resources = d.decodeResources(v) }),
 	}, func(key string, keyNode, valNode *yaml.Node) {
 		if key == d.providerKey {
 			var ext map[string]any
@@ -284,9 +245,9 @@ func (d *clusterDecoder) decodeMachineGroup(node *yaml.Node) MachineGroup {
 func (d *clusterDecoder) decodeResources(node *yaml.Node) Resources {
 	var res Resources
 	d.mapping(node, "resources", map[string]func(*yaml.Node) error{
-		"cpu": alwaysOK(func(v *yaml.Node) { d.decodeValue(v, &res.CPU, "resources.cpu") }),
-		"ram": alwaysOK(func(v *yaml.Node) { d.decodeValue(v, &res.RAM, "resources.ram") }),
-		"disk": alwaysOK(func(v *yaml.Node) {
+		"cpu": d.alwaysOK(func(v *yaml.Node) { d.decodeValue(v, &res.CPU, "resources.cpu") }),
+		"ram": d.alwaysOK(func(v *yaml.Node) { d.decodeValue(v, &res.RAM, "resources.ram") }),
+		"disk": d.alwaysOK(func(v *yaml.Node) {
 			disk := d.decodeDisk(v)
 			res.Disk = &disk
 		}),
@@ -297,65 +258,13 @@ func (d *clusterDecoder) decodeResources(node *yaml.Node) Resources {
 func (d *clusterDecoder) decodeDisk(node *yaml.Node) Disk {
 	var disk Disk
 	d.mapping(node, "disk", map[string]func(*yaml.Node) error{
-		"size": alwaysOK(func(v *yaml.Node) { d.decodeValue(v, &disk.Size, "disk.size") }),
-		"type": alwaysOK(func(v *yaml.Node) { d.decodeValue(v, &disk.Type, "disk.type") }),
+		"size": d.alwaysOK(func(v *yaml.Node) { d.decodeValue(v, &disk.Size, "disk.size") }),
+		"type": d.alwaysOK(func(v *yaml.Node) { d.decodeValue(v, &disk.Type, "disk.type") }),
 	})
 	return disk
 }
 
-// decodeServices walks the "services" mapping, whose keys are arbitrary
-// service names, so — like decodeMachines — it iterates node.Content
-// directly.
-func (d *clusterDecoder) decodeServices(node *yaml.Node, out map[string]Service) {
-	if node.Kind != yaml.MappingNode {
-		d.errorf(node, "services: expected a mapping, got %s", nodeKindName(node.Kind))
-		return
-	}
-	for i := 0; i+1 < len(node.Content); i += 2 {
-		nameNode, svcNode := node.Content[i], node.Content[i+1]
-		out[nameNode.Value] = d.decodeService(svcNode)
-	}
-}
-
-func (d *clusterDecoder) decodeService(node *yaml.Node) Service {
-	var svc Service
-	d.mapping(node, "service", map[string]func(*yaml.Node) error{
-		"on":      alwaysOK(func(v *yaml.Node) { d.decodeValue(v, &svc.On, "service.on") }),
-		"image":   alwaysOK(func(v *yaml.Node) { d.decodeValue(v, &svc.Image, "service.image") }),
-		"network": alwaysOK(func(v *yaml.Node) { d.decodeValue(v, &svc.Network, "service.network") }),
-		"volumes": alwaysOK(func(v *yaml.Node) { d.decodeValue(v, &svc.Volumes, "service.volumes") }),
-		"env":     alwaysOK(func(v *yaml.Node) { d.decodeValue(v, &svc.Env, "service.env") }),
-		"configs": alwaysOK(func(v *yaml.Node) { svc.Configs = d.decodeConfigs(v) }),
-		"health": alwaysOK(func(v *yaml.Node) {
-			health := d.decodeHealth(v)
-			svc.Health = &health
-		}),
-	})
-	return svc
-}
-
-func (d *clusterDecoder) decodeConfigs(node *yaml.Node) []ConfigFile {
-	if node.Kind != yaml.SequenceNode {
-		d.errorf(node, "service.configs: expected a sequence, got %s", nodeKindName(node.Kind))
-		return nil
-	}
-	configs := make([]ConfigFile, 0, len(node.Content))
-	for _, item := range node.Content {
-		var cfg ConfigFile
-		d.mapping(item, "service.configs[]", map[string]func(*yaml.Node) error{
-			"template": alwaysOK(func(v *yaml.Node) { d.decodeValue(v, &cfg.Template, "service.configs[].template") }),
-			"dest":     alwaysOK(func(v *yaml.Node) { d.decodeValue(v, &cfg.Dest, "service.configs[].dest") }),
-		})
-		configs = append(configs, cfg)
-	}
-	return configs
-}
-
-func (d *clusterDecoder) decodeHealth(node *yaml.Node) Health {
-	var health Health
-	d.mapping(node, "health", map[string]func(*yaml.Node) error{
-		"http":    alwaysOK(func(v *yaml.Node) { d.decodeValue(v, &health.HTTP, "health.http") }),
-		"timeout": alwaysOK(func(v *yaml.Node) { d.decodeValue(v, &health.Timeout, "health.timeout") }),
-	})
-	return health
-}
+// decodeServices, decodeService, decodeConfigs and decodeHealth are
+// generic (not tied to cluster.yaml specifically — a component.yaml can
+// nest the same shapes under `cluster:`) and live on decoderBase in
+// yamlwalk.go; clusterDecoder inherits them through embedding.
