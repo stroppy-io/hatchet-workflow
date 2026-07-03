@@ -39,19 +39,35 @@ func stubNomadSubmitJob(context.Context, *stroppyagent.NomadSubmitJobInput) (*st
 	return nil, nil
 }
 
+// activityQueueRecord captures which task queue an activity executed on.
+type activityQueueRecord struct {
+	name      string
+	taskQueue string
+}
+
 // recorder captures activity invocations in completion order across
 // possibly-concurrent workflow.Go goroutines (mock callbacks run on their
 // own goroutines per the SDK's OnActivity doc), so every append is
 // mutex-guarded.
 type recorder struct {
-	mu     sync.Mutex
-	events []string
+	mu          sync.Mutex
+	events      []string
+	queueChecks []activityQueueRecord
 }
 
 func (r *recorder) add(event string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.events = append(r.events, event)
+}
+
+func (r *recorder) addQueueCheck(name string, taskQueue string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.queueChecks = append(r.queueChecks, activityQueueRecord{
+		name:      name,
+		taskQueue: taskQueue,
+	})
 }
 
 func (r *recorder) indexOf(event string) int {
@@ -185,9 +201,12 @@ func TestExecuteCompiledPlanWorkflow(t *testing.T) {
 	env.OnActivity(workflowpb.EnsureAgentOnlineActivityActivityName, mock.Anything).Return(nil)
 
 	env.OnActivity(workflowpb.CallCmdActivityActivityName, mock.Anything, mock.Anything).Return(
-		func(_ context.Context, cmd *common.Cmd) (*common.Cmd_Result, error) {
+		func(ctx context.Context, cmd *common.Cmd) (*common.Cmd_Result, error) {
 			text := cmd.GetSpec().GetScript().GetText()
 			rec.add("cmd:" + text)
+			// Record which task queue this activity was dispatched on.
+			info := activity.GetInfo(ctx)
+			rec.addQueueCheck(workflowpb.CallCmdActivityActivityName, info.TaskQueue)
 			if strings.Contains(text, "echo c") {
 				return &common.Cmd_Result{ExitCode: 1, Stderr: []byte("boom")}, nil
 			}
@@ -196,12 +215,15 @@ func TestExecuteCompiledPlanWorkflow(t *testing.T) {
 	)
 
 	env.OnActivity(NomadSubmitJobActivityName, mock.Anything, mock.Anything).Return(
-		func(_ context.Context, in *stroppyagent.NomadSubmitJobInput) (*stroppyagent.NomadSubmitJobOutput, error) {
+		func(ctx context.Context, in *stroppyagent.NomadSubmitJobInput) (*stroppyagent.NomadSubmitJobOutput, error) {
 			nomadMu.Lock()
 			nomadCalls++
 			lastJobJSON = in.JobJSON
 			nomadMu.Unlock()
 			rec.add("nomad:echo")
+			// Record which task queue this activity was dispatched on.
+			info := activity.GetInfo(ctx)
+			rec.addQueueCheck(NomadSubmitJobActivityName, info.TaskQueue)
 			return &stroppyagent.NomadSubmitJobOutput{JobID: "echo", EvalID: "eval-1"}, nil
 		},
 	)
@@ -293,5 +315,40 @@ func TestExecuteCompiledPlanWorkflow(t *testing.T) {
 	}
 	if got := task.Env["EXTRA"]; got != "1" {
 		t.Fatalf("service env EXTRA (from job.with) = %q, want %q", got, "1")
+	}
+
+	// Assert task queue routing: every activity must have been dispatched to the
+	// correct queue based on which node/machine it ran on.
+	// - Steps jobs (CallCmd activities) dispatch to their node's per-node queue
+	// - Service jobs (NomadSubmitJobActivity) dispatch to the gateway node's queue
+	callCmdQueues := []string{}
+	nomadQueues := []string{}
+	for _, qc := range rec.queueChecks {
+		if qc.name == workflowpb.CallCmdActivityActivityName {
+			callCmdQueues = append(callCmdQueues, qc.taskQueue)
+		} else if qc.name == NomadSubmitJobActivityName {
+			nomadQueues = append(nomadQueues, qc.taskQueue)
+		}
+	}
+
+	// All CallCmd activities should run on the "app" node's queue (app-1 -> tq-app-1)
+	// Jobs that ran: a, c, f, bench_insert, bench_select (5 total)
+	// Job d never ran (skipped due to c failure), job e never ran (when=false)
+	expectedCallCmdQueues := 5
+	if len(callCmdQueues) != expectedCallCmdQueues {
+		t.Errorf("expected %d CallCmd activities, got %d: %v", expectedCallCmdQueues, len(callCmdQueues), callCmdQueues)
+	}
+	for i, q := range callCmdQueues {
+		if q != "tq-app-1" {
+			t.Errorf("CallCmd activity %d dispatched to queue %q, want %q", i, q, "tq-app-1")
+		}
+	}
+
+	// NomadSubmitJobActivity should run exactly once on the gateway node's queue
+	if len(nomadQueues) != 1 {
+		t.Errorf("expected 1 NomadSubmitJob activity, got %d: %v", len(nomadQueues), nomadQueues)
+	}
+	if len(nomadQueues) > 0 && nomadQueues[0] != "tq-gateway" {
+		t.Errorf("NomadSubmitJob activity dispatched to queue %q, want %q", nomadQueues[0], "tq-gateway")
 	}
 }
