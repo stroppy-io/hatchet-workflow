@@ -952,6 +952,97 @@ func (q *Queries) UpdateRegistrationRequest(ctx context.Context, arg UpdateRegis
 	return tag.RowsAffected(), err
 }
 
+const createRecipeRecordSQL = `insert into recipe_records (id, tenant_id, name, version, created_at, updated_at, data)
+values ($1, $2, $3, $4, now(), now(), $5);`
+
+type CreateRecipeRecordParams struct {
+	ID       any
+	TenantID any
+	Name     any
+	Version  any
+	Data     any
+}
+
+func (q *Queries) CreateRecipeRecord(ctx context.Context, arg CreateRecipeRecordParams) error {
+	_, err := q.db.Exec(ctx, createRecipeRecordSQL, arg.ID, arg.TenantID, arg.Name, arg.Version, arg.Data)
+	return err
+}
+
+const getRecipeRecordSQL = `select data from recipe_records where tenant_id = $1 and id = $2;`
+
+type GetRecipeRecordParams struct {
+	TenantID string
+	ID       string
+}
+
+type GetRecipeRecordRow struct {
+	Data json.RawMessage
+}
+
+func (q *Queries) GetRecipeRecord(ctx context.Context, arg GetRecipeRecordParams) (GetRecipeRecordRow, error) {
+	row := q.db.QueryRow(ctx, getRecipeRecordSQL, arg.TenantID, arg.ID)
+	var i GetRecipeRecordRow
+	err := row.Scan(&i.Data)
+	return i, err
+}
+
+const listRecipeRecordsSQL = `select data from recipe_records where tenant_id = $1 order by name, version;`
+
+type ListRecipeRecordsRow struct {
+	Data json.RawMessage
+}
+
+func (q *Queries) ListRecipeRecords(ctx context.Context, tenantID string) ([]ListRecipeRecordsRow, error) {
+	rows, err := q.db.Query(ctx, listRecipeRecordsSQL, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListRecipeRecordsRow
+	for rows.Next() {
+		var i ListRecipeRecordsRow
+		if err := rows.Scan(&i.Data); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getLatestRecipeRecordByNameSQL = `select data from recipe_records where tenant_id = $1 and name = $2
+order by version desc limit 1;`
+
+type GetLatestRecipeRecordByNameParams struct {
+	TenantID string
+	Name     string
+}
+
+type GetLatestRecipeRecordByNameRow struct {
+	Data json.RawMessage
+}
+
+func (q *Queries) GetLatestRecipeRecordByName(ctx context.Context, arg GetLatestRecipeRecordByNameParams) (GetLatestRecipeRecordByNameRow, error) {
+	row := q.db.QueryRow(ctx, getLatestRecipeRecordByNameSQL, arg.TenantID, arg.Name)
+	var i GetLatestRecipeRecordByNameRow
+	err := row.Scan(&i.Data)
+	return i, err
+}
+
+const deleteRecipeRecordSQL = `delete from recipe_records where tenant_id = $1 and id = $2;`
+
+type DeleteRecipeRecordParams struct {
+	TenantID string
+	ID       string
+}
+
+func (q *Queries) DeleteRecipeRecord(ctx context.Context, arg DeleteRecipeRecordParams) (int64, error) {
+	tag, err := q.db.Exec(ctx, deleteRecipeRecordSQL, arg.TenantID, arg.ID)
+	return tag.RowsAffected(), err
+}
+
 const createTestRunRecordSQL = `insert into test_run_records (id, tenant_id, created_at, updated_at, data)
 values ($1, $2, now(), now(), $3);`
 

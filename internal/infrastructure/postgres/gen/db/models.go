@@ -54,6 +54,16 @@ type SuiteRecords struct {
 	Data      json.RawMessage
 }
 
+type RecipeRecords struct {
+	ID        string
+	TenantID  string
+	Name      string
+	Version   int32
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Data      json.RawMessage
+}
+
 type SuiteRunRecords struct {
 	ID        string
 	TenantID  string

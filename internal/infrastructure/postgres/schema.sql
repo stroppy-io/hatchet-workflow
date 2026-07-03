@@ -59,6 +59,18 @@ CREATE TABLE suite_records (
 );
 CREATE INDEX idx_suite_records_tenant ON suite_records (tenant_id);
 
+CREATE TABLE recipe_records (
+  id         text PRIMARY KEY,
+  tenant_id  text NOT NULL,
+  name       text NOT NULL,
+  version    integer NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  data       jsonb NOT NULL
+);
+CREATE INDEX idx_recipe_records_tenant ON recipe_records (tenant_id);
+CREATE UNIQUE INDEX uq_recipe_records_tenant_name_version ON recipe_records (tenant_id, name, version);
+
 CREATE TABLE suite_run_records (
   id         text PRIMARY KEY,
   tenant_id  text NOT NULL,

@@ -23,6 +23,7 @@ func Where[Q psql.Filterable]() struct {
 	PlatformSettings        platformSettingWhere[Q]
 	RegistrationRequests    registrationRequestWhere[Q]
 	SuiteRecords            suiteRecordWhere[Q]
+	RecipeRecords           recipeRecordWhere[Q]
 	SuiteRunRecords         suiteRunRecordWhere[Q]
 	SuiteWizardDrafts       suiteWizardDraftWhere[Q]
 	ShareRecords            shareRecordWhere[Q]
@@ -54,6 +55,7 @@ func Where[Q psql.Filterable]() struct {
 		PlatformSettings        platformSettingWhere[Q]
 		RegistrationRequests    registrationRequestWhere[Q]
 		SuiteRecords            suiteRecordWhere[Q]
+		RecipeRecords           recipeRecordWhere[Q]
 		SuiteRunRecords         suiteRunRecordWhere[Q]
 		SuiteWizardDrafts       suiteWizardDraftWhere[Q]
 		ShareRecords            shareRecordWhere[Q]
@@ -84,6 +86,7 @@ func Where[Q psql.Filterable]() struct {
 		PlatformSettings:        buildPlatformSettingWhere[Q](PlatformSettings.Columns),
 		RegistrationRequests:    buildRegistrationRequestWhere[Q](RegistrationRequests.Columns),
 		SuiteRecords:            buildSuiteRecordWhere[Q](SuiteRecords.Columns),
+		RecipeRecords:           buildRecipeRecordWhere[Q](RecipeRecords.Columns),
 		SuiteRunRecords:         buildSuiteRunRecordWhere[Q](SuiteRunRecords.Columns),
 		SuiteWizardDrafts:       buildSuiteWizardDraftWhere[Q](SuiteWizardDrafts.Columns),
 		ShareRecords:            buildShareRecordWhere[Q](ShareRecords.Columns),
