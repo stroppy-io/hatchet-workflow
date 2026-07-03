@@ -1,0 +1,270 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stroppy.io/dsl/core.schema.json",
+  "description": "Core (provider-agnostic) JSON Schema for the stroppy YAML-DSL document kinds: cluster.yaml, workflow.yaml, component.yaml. Mirrors internal/dsl/ast (cluster.go, workflow.go, component.go, provider.go) exactly. Task 6's composer tightens $defs.providerParams and $defs.machineExt per provider; this core schema intentionally leaves them open (permissive objects).",
+  "$defs": {
+    "cluster": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version"],
+      "properties": {
+        "version": { "type": "integer" },
+        "provider": { "$ref": "#/$defs/providerUse" },
+        "machines": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/machineGroup" }
+        },
+        "services": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/service" }
+        }
+      }
+    },
+
+    "workflow": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "jobs": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/job" }
+        }
+      }
+    },
+
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "inputs": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/inputSpec" }
+        },
+        "requires": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/requirement" }
+        },
+        "provides": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "cluster": { "$ref": "#/$defs/clusterFragment" },
+        "jobs": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/job" }
+        }
+      }
+    },
+
+    "providerUse": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "use": { "type": "string" },
+        "params": { "$ref": "#/$defs/providerParams" }
+      }
+    },
+
+    "providerParams": {
+      "type": "object"
+    },
+
+    "machineGroup": {
+      "type": "object",
+      "properties": {
+        "count": { "type": "integer", "minimum": 0 },
+        "resources": { "$ref": "#/$defs/resources" }
+      },
+      "additionalProperties": { "$ref": "#/$defs/machineExt" }
+    },
+
+    "machineExt": {
+      "type": "object"
+    },
+
+    "resources": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cpu": { "type": "integer" },
+        "ram": { "$ref": "#/$defs/byteSize" },
+        "disk": { "$ref": "#/$defs/disk" }
+      }
+    },
+
+    "disk": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "size": { "$ref": "#/$defs/byteSize" },
+        "type": { "type": "string" }
+      }
+    },
+
+    "byteSize": {
+      "type": "string",
+      "pattern": "^[0-9]+[kmg]?$"
+    },
+
+    "duration": {
+      "type": "string",
+      "pattern": "^[0-9]+(ns|us|ms|s|m|h)$"
+    },
+
+    "service": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "on": { "type": "string" },
+        "image": { "type": "string" },
+        "network": { "type": "string" },
+        "volumes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "env": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "configs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/configFile" }
+        },
+        "health": { "$ref": "#/$defs/health" }
+      }
+    },
+
+    "configFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "template": { "type": "string" },
+        "dest": { "type": "string" }
+      }
+    },
+
+    "health": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "http": { "type": "string" },
+        "timeout": { "$ref": "#/$defs/duration" }
+      }
+    },
+
+    "job": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "needs": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "on": { "type": "string" },
+        "service": { "type": "string" },
+        "with": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "matrix": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "when": { "type": "string" },
+        "steps": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/step" }
+        }
+      }
+    },
+
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cmd": { "type": "string" },
+        "write_file": { "$ref": "#/$defs/writeFile" },
+        "fetch": { "$ref": "#/$defs/fetch" },
+        "dir": { "type": "string" },
+        "wait": { "$ref": "#/$defs/wait" }
+      },
+      "oneOf": [
+        { "required": ["cmd"] },
+        { "required": ["write_file"] },
+        { "required": ["fetch"] },
+        { "required": ["dir"] },
+        { "required": ["wait"] }
+      ]
+    },
+
+    "writeFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "dest": { "type": "string" },
+        "content": { "type": "string" },
+        "template": { "type": "string" }
+      }
+    },
+
+    "fetch": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "url": { "type": "string" },
+        "dest": { "type": "string" }
+      }
+    },
+
+    "wait": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "http": { "type": "string" },
+        "timeout": { "$ref": "#/$defs/duration" }
+      }
+    },
+
+    "inputSpec": {
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": { "type": "string" },
+            "default": {}
+          }
+        }
+      ]
+    },
+
+    "requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "expr": { "type": "string" },
+        "capability": { "type": "string" },
+        "message": { "type": "string" }
+      },
+      "oneOf": [
+        { "required": ["expr"] },
+        { "required": ["capability"] }
+      ]
+    },
+
+    "clusterFragment": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "services": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/service" }
+        }
+      }
+    }
+  }
+}
