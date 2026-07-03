@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package cloud.v1.dsl;
+
+import "cloud/v1/iam/options.proto";
+import "graphqlopt/graphql.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dsl";
+
+// service.proto — connect-сервис поверх DSL-компилятора: динамическая
+// composed JSON Schema для редактора (Monaco/yaml-language-server) и
+// check-режим компиляции (диагностики-линтер, без исполнения). Stateless:
+// каталог провайдеров v1 читается прямо из бандла запроса
+// (providers/<name>/manifest.yaml + providers/<name>/module/variables.tf) —
+// см. internal/services/dsl_service.go. Хранилище провайдеров как отдельная
+// сущность — вне этого сервиса (сабпроект 4).
+
+// ComposedSchemaRequest несёт весь бандл рецепта (cluster.yaml, workflow.yaml,
+// components/**, providers/**, files/**, ...) как path -> содержимое файла.
+message ComposedSchemaRequest {
+    map<string, bytes> files = 1;
+}
+
+message ComposedSchemaResponse {
+    // schema_json — динамическая JSON Schema (core-схема + provider params/ext
+    // бандла), против которой редактор валидирует cluster.yaml.
+    string schema_json = 1;
+}
+
+// CheckRequest несёт тот же бандл, что и ComposedSchemaRequest.
+message CheckRequest {
+    map<string, bytes> files = 1;
+}
+
+message CheckResponse {
+    // diagnostics — результат check-режима компиляции. Пустой список значит
+    // "бандл компилируется чисто"; ошибки пользовательского ввода — это ВСЕГДА
+    // диагностика, а не RPC-ошибка (RPC-ошибка — только транспортный сбой).
+    repeated Diagnostic diagnostics = 1;
+}
+
+enum Severity {
+    SEVERITY_UNSPECIFIED = 0;
+    SEVERITY_ERROR = 1;
+    SEVERITY_WARNING = 2;
+}
+
+message Diagnostic {
+    Severity severity = 1;
+    // path — путь файла внутри бандла, к которому относится диагностика.
+    string path = 2;
+    uint32 line = 3;
+    uint32 col = 4;
+    string message = 5;
+    // module — имя include-компонента/модуля, из которого пришла диагностика
+    // (пусто для диагностик верхнего уровня бандла).
+    string module = 6;
+}
+
+// DslService — check-режим компиляции и динамическая схема для browser IDE.
+// Оба RPC stateless и без побочных эффектов: ничего не разворачивается и не
+// сохраняется на сервере.
+service DslService {
+    // map<string, bytes> не имеет GraphQL-скаляра "из коробки"; browser IDE
+    // потребляет этот сервис напрямую через Connect (см. registry.proto /
+    // agent_shell.proto — тот же паттерн для сервисов вне GraphQL-поверхности).
+    option (graphqlopt.service).skip = true;
+
+    // ComposedSchema возвращает динамическую JSON Schema организации бандла
+    // (провайдерские params/ext, включая builtin docker).
+    rpc ComposedSchema (ComposedSchemaRequest) returns (ComposedSchemaResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {};
+    }
+    // Check компилирует бандл в check-режиме и возвращает диагностики.
+    rpc Check (CheckRequest) returns (CheckResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {};
+    }
+}

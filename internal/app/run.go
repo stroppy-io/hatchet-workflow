@@ -40,8 +40,10 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/gqlapi"
 	rest "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/rest"
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dsl/dslconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/services/agent_shell"
 	"github.com/stroppy-io/stroppy-cloud/internal/services/compare"
+	dslsvc "github.com/stroppy-io/stroppy-cloud/internal/services/dsl"
 	"github.com/stroppy-io/stroppy-cloud/internal/services/favorite"
 	iamsvc "github.com/stroppy-io/stroppy-cloud/internal/services/iam"
 	packagessvc "github.com/stroppy-io/stroppy-cloud/internal/services/packages"
@@ -520,6 +522,12 @@ func Run(ctx context.Context, cfg Config) error {
 		Tx:       trm,
 	})
 
+	// DslService is stateless (no XDeps: see internal/services/dsl's package
+	// doc) — the browser IDE's schema/lint surface over internal/dsl, not
+	// exposed via GraphQL/REST (map<string, bytes> has no clean surface
+	// there; see (graphqlopt.service).skip on cloud/v1/dsl/service.proto).
+	dslService := dslsvc.NewDslService()
+
 	// 7) Connect handlers + embedded SPA on one mux.
 	mux := http.NewServeMux()
 	handlerOpts := []connect.HandlerOption{
@@ -597,6 +605,9 @@ func Run(ctx context.Context, cfg Config) error {
 		},
 		func() (string, http.Handler) {
 			return apiconnect.NewTenantDashboardServiceHandler(tenantDashboardService, handlerOpts...)
+		},
+		func() (string, http.Handler) {
+			return dslconnect.NewDslServiceHandler(dslService, handlerOpts...)
 		},
 	)
 	mux.Handle(blobStore.UploadPathPrefix()+"/", blobStore.UploadHandler())

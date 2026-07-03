@@ -584,6 +584,16 @@
     - [cloud.v1.domain.YdbParams.FaultTolerance](cloud/v1/domain/README.md#cloud-v1-domain-ydbparams-faulttolerance)
     - [cloud.v1.domain.YdbParams.HaproxyOptionsEntry](cloud/v1/domain/README.md#cloud-v1-domain-ydbparams-haproxyoptionsentry)
     - [cloud.v1.domain.YdbParams.StorageOptionsEntry](cloud/v1/domain/README.md#cloud-v1-domain-ydbparams-storageoptionsentry)
+- [cloud.v1.dsl](cloud/v1/dsl/README.md)
+  - Messages
+    - [cloud.v1.dsl.CheckRequest](cloud/v1/dsl/README.md#cloud-v1-dsl-checkrequest)
+    - [cloud.v1.dsl.CheckRequest.FilesEntry](cloud/v1/dsl/README.md#cloud-v1-dsl-checkrequest-filesentry)
+    - [cloud.v1.dsl.CheckResponse](cloud/v1/dsl/README.md#cloud-v1-dsl-checkresponse)
+    - [cloud.v1.dsl.ComposedSchemaRequest](cloud/v1/dsl/README.md#cloud-v1-dsl-composedschemarequest)
+    - [cloud.v1.dsl.ComposedSchemaRequest.FilesEntry](cloud/v1/dsl/README.md#cloud-v1-dsl-composedschemarequest-filesentry)
+    - [cloud.v1.dsl.ComposedSchemaResponse](cloud/v1/dsl/README.md#cloud-v1-dsl-composedschemaresponse)
+    - [cloud.v1.dsl.Diagnostic](cloud/v1/dsl/README.md#cloud-v1-dsl-diagnostic)
+    - [cloud.v1.dsl.Severity](cloud/v1/dsl/README.md#cloud-v1-dsl-severity)
 - [cloud.v1.iam](cloud/v1/iam/README.md)
   - Messages
     - [cloud.v1.iam.Account](cloud/v1/iam/README.md#cloud-v1-iam-account)
