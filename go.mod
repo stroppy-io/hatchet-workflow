@@ -32,6 +32,7 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/stephenafamo/bob v0.45.0
 	github.com/stephenafamo/scan v0.7.0
+	github.com/stretchr/testify v1.11.1
 	github.com/stroppy-io/schemapb v1.4.4
 	github.com/stroppy-io/stroppy v1.2.0-dev9.0.20260408121705-83c882f8d7f3
 	go.temporal.io/api v1.62.12
@@ -64,7 +65,6 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.0 // indirect
 	github.com/onsi/gomega v1.38.3 // indirect
-	github.com/stretchr/testify v1.11.1 // indirect
 	go.uber.org/zap v1.27.1 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/mod v0.36.0 // indirect
