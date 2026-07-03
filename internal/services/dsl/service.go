@@ -75,9 +75,16 @@ func (s *DslService) ComposedSchema(_ context.Context, req *dslpb.ComposedSchema
 
 	providers := map[string]schema.ProviderSchemas{}
 	if name != "" {
-		params, ext, derr := deriveProviderSchema(files, name)
+		params, ext, deriveDiags, derr := deriveProviderSchema(files, name)
 		if derr != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "derive provider %q schema: %v", name, derr)
+		}
+		if deriveDiags.HasErrors() {
+			// ComposedSchemaResponse carries no diagnostics channel (see the
+			// doc comment above), so a rejected path-traversal key here must
+			// still surface as an RPC error rather than silently composing a
+			// schema derived from a partially-rejected module.
+			return nil, status.Errorf(codes.InvalidArgument, "derive provider %q schema: %s", name, joinDiagMessages(deriveDiags))
 		}
 		providers[name] = schema.ProviderSchemas{Params: params, Ext: ext}
 	}
@@ -145,7 +152,8 @@ func resolveProvider(files map[string][]byte) (*ast.ProviderManifest, *jsonschem
 		return nil, nil, diags
 	}
 
-	params, ext, err := deriveProviderSchema(files, name)
+	params, ext, deriveDiags, err := deriveProviderSchema(files, name)
+	diags = append(diags, deriveDiags...)
 	if err != nil {
 		diags.Add(diag.Diagnostic{
 			Severity: diag.Error,
@@ -274,12 +282,23 @@ func moduleFilePrefix(name string) string {
 // tree, so avoiding the temp-dir write would mean re-implementing (or
 // vendoring a fork of) terraform-config-inspect's directory walk — far more
 // risk than one MkdirTemp/RemoveAll per request.
-func deriveProviderSchema(files map[string][]byte, name string) (params, ext map[string]any, err error) {
+//
+// files is caller-controlled request input: a "providers/<name>/module/"-
+// prefixed key may contain ".." segments (e.g.
+// "providers/yandex/module/../../../../etc/cron.d/evil") that, if joined
+// onto tmp unchecked, resolve outside tmp entirely — an arbitrary
+// server-side file write. Every candidate rel path is therefore required to
+// be filepath.IsLocal (never escapes tmp via ".." or an absolute path)
+// before it is joined and written; a rejected key is skipped and reported
+// as an Error diagnostic instead of a Go error, so one malicious/malformed
+// key in an otherwise-valid bundle does not abort deriving the rest of the
+// module's schema.
+func deriveProviderSchema(files map[string][]byte, name string) (params, ext map[string]any, diags diag.List, err error) {
 	prefix := moduleFilePrefix(name)
 
 	tmp, err := os.MkdirTemp("", "dsl-provider-module-*")
 	if err != nil {
-		return nil, nil, fmt.Errorf("create temp module dir: %w", err)
+		return nil, nil, nil, fmt.Errorf("create temp module dir: %w", err)
 	}
 	defer func() { _ = os.RemoveAll(tmp) }()
 
@@ -289,23 +308,45 @@ func deriveProviderSchema(files map[string][]byte, name string) (params, ext map
 		if !ok || rel == "" {
 			continue
 		}
-		dest := filepath.Join(tmp, filepath.FromSlash(rel))
+		relOS := filepath.FromSlash(rel)
+		if !filepath.IsLocal(relOS) {
+			diags.Add(diag.Diagnostic{
+				Severity: diag.Error,
+				Path:     p,
+				Message:  fmt.Sprintf("provider %q: module file %q escapes the module directory and was rejected (path traversal)", name, rel),
+				Module:   name,
+			})
+			continue
+		}
+		dest := filepath.Join(tmp, relOS)
 		// 0o700/0o600: tmp is a private, request-scoped temp dir removed
 		// before this function returns (see the RemoveAll above) — no reason
 		// to leave it group/world-readable in the meantime.
 		if mkErr := os.MkdirAll(filepath.Dir(dest), 0o700); mkErr != nil {
-			return nil, nil, fmt.Errorf("mkdir %q: %w", filepath.Dir(dest), mkErr)
+			return nil, nil, diags, fmt.Errorf("mkdir %q: %w", filepath.Dir(dest), mkErr)
 		}
 		if writeErr := os.WriteFile(dest, content, 0o600); writeErr != nil {
-			return nil, nil, fmt.Errorf("write %q: %w", dest, writeErr)
+			return nil, nil, diags, fmt.Errorf("write %q: %w", dest, writeErr)
 		}
 		wrote++
 	}
 	if wrote == 0 {
-		return nil, nil, fmt.Errorf("no module files found under %s", prefix)
+		return nil, nil, diags, fmt.Errorf("no module files found under %s", prefix)
 	}
 
-	return schema.DeriveParamsSchema(tmp)
+	params, ext, err = schema.DeriveParamsSchema(tmp)
+	return params, ext, diags, err
+}
+
+// joinDiagMessages flattens a diag.List's messages into one string, for the
+// rare paths (ComposedSchema) that must fold a diag.List into a single Go
+// error/RPC-status message rather than a Diagnostic list of their own.
+func joinDiagMessages(diags diag.List) string {
+	msgs := make([]string, 0, len(diags))
+	for _, d := range diags {
+		msgs = append(msgs, d.Message)
+	}
+	return strings.Join(msgs, "; ")
 }
 
 // toProtoDiagnostics maps a diag.List to the wire Diagnostic shape.

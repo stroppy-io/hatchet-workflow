@@ -109,6 +109,54 @@ func TestComposedSchemaContainsPlatformID(t *testing.T) {
 	}
 }
 
+// TestCheckRejectsPathTraversalInProviderModule guards against the
+// deriveProviderSchema temp-dir write in service.go writing bundle bytes to
+// an attacker-chosen absolute path. A malicious "files" key under
+// providers/<name>/module/ containing ".." segments must never let bytes
+// land outside the request-scoped temp dir, and Check must surface the
+// rejection as a diagnostic rather than silently dropping it (or, worse,
+// silently writing the file).
+func TestCheckRejectsPathTraversalInProviderModule(t *testing.T) {
+	svc := NewDslService()
+	files := loadBundle(t, postgresHADir)
+
+	// escapeDir is a scratch directory distinct from any temp dir
+	// deriveProviderSchema itself creates (os.MkdirTemp("", "dsl-provider-module-*")),
+	// so if the write escapes its intended temp dir, evidence lands here.
+	escapeDir := t.TempDir()
+	escapeTarget := filepath.Join(escapeDir, "pwned-marker")
+
+	// Enough "../" segments to walk past root regardless of the actual depth
+	// of os.MkdirTemp's directory, then back down into escapeTarget — mirrors
+	// "providers/yandex/module/../../../../etc/cron.d/evil" from the report,
+	// just pointed at a location this test can assert on afterwards.
+	climb := strings.Repeat("../", 30)
+	escapeRel := climb + strings.TrimPrefix(filepath.ToSlash(escapeTarget), "/")
+	maliciousKey := "providers/yandex/module/" + escapeRel
+	files[maliciousKey] = []byte("path traversal payload\n")
+
+	resp, err := svc.Check(context.Background(), &dslpb.CheckRequest{Files: files})
+	if err != nil {
+		t.Fatalf("Check must never return an RPC error for a bundle-content problem, got: %v", err)
+	}
+
+	if _, statErr := os.Stat(escapeTarget); statErr == nil {
+		t.Fatalf("path traversal escaped the temp dir: a file was written at %q", escapeTarget)
+	}
+
+	var found *dslpb.Diagnostic
+	for _, d := range resp.GetDiagnostics() {
+		if d.GetModule() == "yandex" && d.GetSeverity() == dslpb.Severity_SEVERITY_ERROR &&
+			strings.Contains(strings.ToLower(d.GetMessage()), "travers") {
+			found = d
+			break
+		}
+	}
+	if found == nil {
+		t.Fatalf("expected an ERROR diagnostic rejecting the path-traversal module key, got %+v", resp.GetDiagnostics())
+	}
+}
+
 func TestCheckMissingProviderManifestIsDiagnosticNotError(t *testing.T) {
 	svc := NewDslService()
 	files := loadBundle(t, postgresHADir)
