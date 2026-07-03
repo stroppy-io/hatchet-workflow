@@ -2,9 +2,11 @@ package include_test
 
 import (
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/dsl/ast"
+	"github.com/stroppy-io/stroppy-cloud/internal/dsl/diag"
 	"github.com/stroppy-io/stroppy-cloud/internal/dsl/include"
 )
 
@@ -270,6 +272,215 @@ jobs:
 	sort.Strings(names)
 	if len(names) != 2 || names[0] != "outer" || names[1] != "outer/inner" {
 		t.Fatalf("bad nested bound component names: %+v", names)
+	}
+}
+
+// --- Finding 1: job-name collisions between a literal job and an include-
+// instantiated job must error, not silently clobber ---
+
+func TestResolveJobNameCollisionErrors(t *testing.T) {
+	cluster := testCluster(t)
+	wf := testWorkflow(t, `
+jobs:
+  etcd/install:
+    on: db
+    steps:
+      - cmd: literal-install
+  etcd:
+    include: components/etcd
+    inputs: { nodes: db }
+`)
+	src := include.Sources{Files: map[string][]byte{
+		"components/etcd/component.yaml": []byte(etcdComponentYAML),
+	}}
+
+	resolved, diags := include.Resolve(cluster, wf, src)
+	if !diags.HasErrors() {
+		t.Fatal("literal job name colliding with an include-instantiated job name must error")
+	}
+
+	foundCollision := false
+	for _, d := range diags {
+		if d.Severity == diag.Error && strings.Contains(d.Message, "collides") {
+			foundCollision = true
+		}
+	}
+	if !foundCollision {
+		t.Fatalf(`expected a diagnostic message containing "collides", got: %+v`, diags)
+	}
+
+	install, ok := resolved.Jobs["etcd/install"]
+	if !ok {
+		t.Fatal("the first-claimed entry for the colliding name must be kept, not dropped")
+	}
+	if len(install.Steps) != 1 || install.Steps[0].Cmd != "etcd-install" {
+		t.Fatalf("collision must keep the FIRST-claimed entry (include jobs expand before "+
+			"plain jobs at the same level, so the include-instantiated job wins here) and must "+
+			"not be silently overwritten by the literal job, got: %+v", install)
+	}
+}
+
+// --- Finding 2: nested-include input forwarding via the narrow
+// ${{ inputs.<name> }} rule ---
+
+func TestResolveNestedIncludeForwardsBoundInput(t *testing.T) {
+	cluster := testCluster(t)
+	wrapperYAML := `
+inputs:
+  outer_nodes: { type: machine_group }
+jobs:
+  etcd:
+    include: components/etcd
+    inputs: { nodes: "${{ inputs.outer_nodes }}" }
+`
+	wf := testWorkflow(t, `
+jobs:
+  wrapper:
+    include: components/wrapper
+    inputs: { outer_nodes: db }
+`)
+	src := include.Sources{Files: map[string][]byte{
+		"components/wrapper/component.yaml": []byte(wrapperYAML),
+		"components/etcd/component.yaml":    []byte(etcdComponentYAML),
+	}}
+
+	resolved, diags := include.Resolve(cluster, wf, src)
+	if diags.HasErrors() {
+		t.Fatalf("unexpected diags: %+v", diags)
+	}
+
+	install, ok := resolved.Jobs["wrapper/etcd/install"]
+	if !ok {
+		t.Fatalf("expected wrapper/etcd/install job, got: %+v", keys(resolved.Jobs))
+	}
+	if install.On != "db" {
+		t.Fatalf("forwarded outer input not resolved to the outer bound value: %+v", install.On)
+	}
+}
+
+func TestResolveNestedIncludeForwardsUnknownOuterInputErrors(t *testing.T) {
+	cluster := testCluster(t)
+	wrapperYAML := `
+inputs:
+  outer_nodes: { type: machine_group }
+jobs:
+  etcd:
+    include: components/etcd
+    inputs: { nodes: "${{ inputs.no_such_input }}" }
+`
+	wf := testWorkflow(t, `
+jobs:
+  wrapper:
+    include: components/wrapper
+    inputs: { outer_nodes: db }
+`)
+	src := include.Sources{Files: map[string][]byte{
+		"components/wrapper/component.yaml": []byte(wrapperYAML),
+		"components/etcd/component.yaml":    []byte(etcdComponentYAML),
+	}}
+
+	_, diags := include.Resolve(cluster, wf, src)
+	if !diags.HasErrors() {
+		t.Fatal("forwarding a nested include input from an unknown outer input name must error")
+	}
+}
+
+// --- Minors ---
+
+func TestResolveBadDefaultErrors(t *testing.T) {
+	cluster := testCluster(t)
+	componentYAML := `
+inputs:
+  nodes: { type: machine_group }
+  row_bytes: { type: int, default: "oops" }
+jobs:
+  install:
+    on: ${{ inputs.nodes }}
+    steps:
+      - cmd: install
+`
+	wf := testWorkflow(t, `
+jobs:
+  etcd:
+    include: components/etcd
+    inputs: { nodes: db }
+`)
+	src := include.Sources{Files: map[string][]byte{
+		"components/etcd/component.yaml": []byte(componentYAML),
+	}}
+
+	_, diags := include.Resolve(cluster, wf, src)
+	if !diags.HasErrors() {
+		t.Fatal("a default value that fails typecheck must produce an error diagnostic, not be bound as-is")
+	}
+}
+
+func TestResolveMachineGroupInputRequiresClusterContext(t *testing.T) {
+	wf := testWorkflow(t, `
+jobs:
+  etcd:
+    include: components/etcd
+    inputs: { nodes: db }
+`)
+	src := include.Sources{Files: map[string][]byte{
+		"components/etcd/component.yaml": []byte(etcdComponentYAML),
+	}}
+
+	_, diags := include.Resolve(nil, wf, src)
+	if !diags.HasErrors() {
+		t.Fatal("machine_group input with no cluster context must error")
+	}
+	found := false
+	for _, d := range diags {
+		if strings.Contains(d.Message, "requires a cluster context") {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf(`expected a "requires a cluster context" diagnostic distinct from "no such machine group", got: %+v`, diags)
+	}
+}
+
+func TestResolveInputTypeMismatchErrors(t *testing.T) {
+	componentYAML := `
+inputs:
+  iterations: { type: int }
+  label: { type: string }
+  verbose: { type: bool }
+jobs:
+  install:
+    on: db
+    steps:
+      - cmd: install
+`
+	cluster := testCluster(t)
+
+	cases := []struct {
+		name   string
+		inputs string
+	}{
+		{"int", `inputs: { iterations: "not-an-int", label: x, verbose: true }`},
+		{"string", `inputs: { iterations: 3, label: 42, verbose: true }`},
+		{"bool", `inputs: { iterations: 3, label: x, verbose: "not-a-bool" }`},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			wf := testWorkflow(t, `
+jobs:
+  etcd:
+    include: components/etcd
+    `+tc.inputs+`
+`)
+			src := include.Sources{Files: map[string][]byte{
+				"components/etcd/component.yaml": []byte(componentYAML),
+			}}
+
+			_, diags := include.Resolve(cluster, wf, src)
+			if !diags.HasErrors() {
+				t.Fatalf("wrong-typed %s input must produce an error diagnostic", tc.name)
+			}
+		})
 	}
 }
 

@@ -13,8 +13,8 @@
 // Resolve does no filesystem I/O: it reads component.yaml bytes purely from
 // the in-memory Sources bundle passed in by the caller, and reports every
 // problem it finds (missing files, unknown/missing inputs, bad input types,
-// include cycles) as diag.Diagnostic values rather than a Go error, matching
-// the rest of the dsl compiler's decode/resolve stages.
+// include cycles, job-name collisions) as diag.Diagnostic values rather than
+// a Go error, matching the rest of the dsl compiler's decode/resolve stages.
 package include
 
 import (
@@ -63,14 +63,41 @@ type BoundComponent struct {
 // job DAG and the set of bound component instantiations. Every problem
 // found is appended to the returned diag.List; a caller should check
 // HasErrors() before trusting Resolved.
+//
+// Resolve applies exactly two narrow `${{ inputs.<name> }}` substitutions,
+// both exact-match (whitespace-tolerant inside the braces) only — no CEL, no
+// partial-string interpolation, everything else (cmd, when, with, nested
+// inputs values that aren't a bare reference, ...) is left untouched for a
+// later phase:
+//
+//   - a fragment job's On field is replaced with the bound input value
+//     rendered as a string (see substituteOn). A reference to an
+//     unknown/out-of-scope name is left as the literal template text,
+//     unchanged — no diagnostic.
+//
+//   - a nested include job's own `inputs:` map values are replaced with the
+//     *outer* fragment's already-bound, typed value for that name (verbatim,
+//     not stringified) before that nested include's own bindInputs/
+//     typecheck runs (see forwardInputs). This is what lets a wrapper
+//     component forward one of its own bound inputs into a component it
+//     includes, e.g. a fragment job `include: components/etcd, inputs:
+//     {nodes: "${{ inputs.outer_nodes }}"}` inside a component that itself
+//     declares `inputs: {outer_nodes: {type: machine_group}}`. Unlike the
+//     On rule, a reference to an unknown outer input name here is an error.
+//
+// Precondition: wf must already have passed ast.DecodeWorkflow without
+// producing any error diagnostic — Resolve does not re-validate wf's own
+// shape (mutually-exclusive Include/Service/On/Matrix, step actions, ...);
+// it assumes the caller checked DecodeWorkflow's diag.List first.
 func Resolve(cluster *ast.ClusterDoc, wf *ast.WorkflowDoc, src Sources) (*Resolved, diag.List) {
 	r := &resolver{
-		src:     src,
-		cluster: cluster,
-		diags:   &diag.List{},
-		out:     map[string]ast.Job{},
+		src:        src,
+		cluster:    cluster,
+		diags:      &diag.List{},
+		out:        map[string]ast.Job{},
+		jobOrigins: map[string]jobOrigin{},
 	}
-	r.expandFragment(wf.Jobs, "", nil, map[string]bool{})
+	r.expandFragment(wf.Jobs, "", nil, map[string]bool{}, fragmentCtx{path: "workflow.yaml"})
 
 	return &Resolved{
 		Cluster:    cluster,
@@ -82,20 +109,72 @@ func Resolve(cluster *ast.ClusterDoc, wf *ast.WorkflowDoc, src Sources) (*Resolv
 // resolver carries the state threaded through the recursive expansion:
 // where component bytes come from (src), the cluster to validate
 // machine_group inputs against (cluster), where diagnostics accumulate
-// (diags), and the flat output being built (out/comps).
+// (diags), and the flat output being built (out/comps/jobOrigins).
 type resolver struct {
 	src     Sources
 	cluster *ast.ClusterDoc
 	diags   *diag.List
 	out     map[string]ast.Job
 	comps   []BoundComponent
+	// jobOrigins mirrors out's keys, recording how each landed there
+	// (Finding 1: needed to name both origins in a collision diagnostic).
+	jobOrigins map[string]jobOrigin
+}
+
+// fragmentCtx is the per-level context threaded alongside a jobsMap through
+// expandFragment/expandInclude: where diagnostics produced while expanding
+// *this* jobsMap's own jobs are anchored (path/module), what to call this
+// jobsMap's jobs when they collide with something else (includeOrigin, ""
+// for the top-level workflow), and this level's own already-bound, typed
+// inputs (boundInputs, nil at top level) available for a nested include to
+// forward from (see Resolve's godoc).
+type fragmentCtx struct {
+	path          string
+	module        string
+	includeOrigin string
+	boundInputs   map[string]any
+}
+
+// jobOrigin records how a job landed in r.out, purely so a name collision
+// (Finding 1) can name both origins in its diagnostic: a job directly
+// authored in the jobs map being expanded (Literal — either a workflow.yaml
+// job or a component's own fragment job) versus a job that exists only
+// because some include job's fragment produced it.
+type jobOrigin struct {
+	literal        bool
+	includeJobName string // set when !literal: the (prefixed) name of the job that carried `include:`
+}
+
+// describe renders o as a phrase suitable for either side of a "%s collides
+// with %s" collision message; name is the shared (prefixed) job name.
+func (o jobOrigin) describe(name string) string {
+	if o.literal {
+		return fmt.Sprintf("job %q", name)
+	}
+	return fmt.Sprintf("job instantiated from include %q", o.includeJobName)
+}
+
+// claimJob records newJob under newName in r.out, unless that name was
+// already claimed by an earlier write — Finding 1: a literal job and an
+// include's fragment job can produce the same prefixed name (e.g. a literal
+// "etcd/install" job alongside an include named "etcd" whose fragment has a
+// job "install"). On collision it reports an error diagnostic naming both
+// origins and keeps the first entry; it never overwrites r.out.
+func (r *resolver) claimJob(newName string, newJob ast.Job, origin jobOrigin, filePath, module string) bool {
+	if existing, taken := r.jobOrigins[newName]; taken {
+		r.errorf(filePath, module, "%s collides with %s", origin.describe(newName), existing.describe(newName))
+		return false
+	}
+	r.out[newName] = newJob
+	r.jobOrigins[newName] = origin
+	return true
 }
 
 // expandFragment expands one map of jobs — either the top-level workflow's
-// Jobs (prefix "", inputSubst nil) or a component fragment's own Jobs
-// (prefix "<includeJobName>/...", inputSubst the fragment's bound inputs,
-// rendered as strings for the narrow `On == "${{ inputs.x }}"` substitution
-// rule) — into r.out.
+// Jobs (ctx.includeOrigin "", inputSubst nil) or a component fragment's own
+// Jobs (ctx.includeOrigin the include job that produced this fragment,
+// inputSubst the fragment's bound inputs rendered as strings for the narrow
+// `On == "${{ inputs.x }}"` substitution rule) — into r.out.
 //
 // It returns:
 //   - allNames: every job name instantiated from jobsMap (prefixed), used
@@ -111,6 +190,7 @@ func (r *resolver) expandFragment(
 	prefix string,
 	inputSubst map[string]string,
 	visiting map[string]bool,
+	ctx fragmentCtx,
 ) (allNames, rootNames []string) {
 	includeJobs := map[string]ast.Job{}
 	plainJobs := map[string]ast.Job{}
@@ -128,7 +208,7 @@ func (r *resolver) expandFragment(
 	nestedInstantiated := map[string][]string{}
 	nestedRoots := map[string][]string{}
 	for _, name := range sortedKeys(includeJobs) {
-		inst, roots := r.expandInclude(name, includeJobs[name], prefix, visiting)
+		inst, roots := r.expandInclude(name, includeJobs[name], prefix, visiting, ctx)
 		nestedInstantiated[name] = inst
 		nestedRoots[name] = roots
 	}
@@ -165,7 +245,13 @@ func (r *resolver) expandFragment(
 			newJob.On = substituteOn(job.On, inputSubst)
 		}
 		newName := prefix + name
-		r.out[newName] = newJob
+		origin := jobOrigin{literal: ctx.includeOrigin == ""}
+		if !origin.literal {
+			origin.includeJobName = ctx.includeOrigin
+		}
+		if !r.claimJob(newName, newJob, origin, ctx.path, ctx.module) {
+			continue
+		}
 		allNames = append(allNames, newName)
 		if isFragmentRoot(job.Needs) {
 			rootNames = append(rootNames, newName)
@@ -198,9 +284,14 @@ func (r *resolver) expandFragment(
 }
 
 // expandInclude resolves one include job: reads its component.yaml from
-// src, binds/type-checks its inputs, records a BoundComponent, and
-// recursively expands the component's own Jobs under prefix+name+"/".
-func (r *resolver) expandInclude(name string, job ast.Job, prefix string, visiting map[string]bool) (allNames, rootNames []string) {
+// src, forwards any outer-scoped inputs (Resolve's second narrow
+// substitution rule), binds/type-checks the result, records a
+// BoundComponent, and recursively expands the component's own Jobs under
+// prefix+name+"/". outerCtx is the context of the jobsMap this include job
+// itself lives in — its path/module anchor forwarding-diagnostics, and its
+// boundInputs is what a `${{ inputs.<name> }}` reference in this include's
+// own Inputs resolves against.
+func (r *resolver) expandInclude(name string, job ast.Job, prefix string, visiting map[string]bool, outerCtx fragmentCtx) (allNames, rootNames []string) {
 	includePath := strings.TrimSuffix(strings.TrimSpace(job.Include), "/")
 	componentPath := includePath + "/component.yaml"
 	module := path.Base(includePath)
@@ -228,7 +319,12 @@ func (r *resolver) expandInclude(name string, job ast.Job, prefix string, visiti
 		return nil, nil
 	}
 
-	boundInputs, ok := r.bindInputs(jobName, componentPath, module, compDoc, job.Inputs)
+	forwardedInputs, fwdOK := r.forwardInputs(job.Inputs, outerCtx.boundInputs, jobName, outerCtx.path, outerCtx.module)
+	if !fwdOK {
+		return nil, nil
+	}
+
+	boundInputs, ok := r.bindInputs(jobName, componentPath, module, compDoc, forwardedInputs)
 	if !ok {
 		return nil, nil
 	}
@@ -250,12 +346,67 @@ func (r *resolver) expandInclude(name string, job ast.Job, prefix string, visiti
 	}
 	childVisiting[includePath] = true
 
-	return r.expandFragment(compDoc.Jobs, jobName+"/", inputSubst, childVisiting)
+	return r.expandFragment(compDoc.Jobs, jobName+"/", inputSubst, childVisiting, fragmentCtx{
+		path:          componentPath,
+		module:        module,
+		includeOrigin: jobName,
+		boundInputs:   boundInputs,
+	})
+}
+
+// forwardInputs implements Resolve's second narrow substitution rule
+// (Finding 2): every provided input value that is *exactly*
+// (whitespace-tolerant) a "${{ inputs.<name> }}" reference is replaced with
+// outerBoundInputs[<name>] — the enclosing fragment's own already-bound,
+// typed value — before bindInputs/typecheck runs on this include. Any other
+// value (not a string, or a string that isn't such a reference) passes
+// through unchanged. A reference to a name absent from outerBoundInputs
+// (including when outerBoundInputs is nil, i.e. there is no enclosing
+// fragment to forward from at all) is an error diagnostic anchored to
+// filePath/module — the *outer* fragment, not the nested include.
+func (r *resolver) forwardInputs(provided, outerBoundInputs map[string]any, jobName, filePath, module string) (map[string]any, bool) {
+	if len(provided) == 0 {
+		return provided, true
+	}
+
+	ok := true
+	out := make(map[string]any, len(provided))
+
+	keys := make([]string, 0, len(provided))
+	for k := range provided {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, key := range keys {
+		val := provided[key]
+		s, isStr := val.(string)
+		if !isStr {
+			out[key] = val
+			continue
+		}
+		refName, isRef := parseInputRef(s)
+		if !isRef {
+			out[key] = val
+			continue
+		}
+		outerVal, known := outerBoundInputs[refName]
+		if !known {
+			r.errorf(filePath, module, "include (job %q): input %q: unknown outer input %q", jobName, key, refName)
+			ok = false
+			continue
+		}
+		out[key] = outerVal
+	}
+
+	return out, ok
 }
 
 // bindInputs validates job-supplied inputs against compDoc's InputSpecs:
 // unknown keys and bad types are errors, required inputs (no Default) must
-// be present, and omitted inputs with a Default get it applied. It reports
+// be present, and omitted inputs with a Default get it applied — run
+// through the same checkInputType as any explicitly-provided value, so a
+// malformed Default is reported instead of silently bound. It reports
 // whether binding succeeded (no errors) alongside the bound value map.
 func (r *resolver) bindInputs(jobName, filePath, module string, compDoc *ast.ComponentDoc, provided map[string]any) (map[string]any, bool) {
 	ok := true
@@ -294,7 +445,13 @@ func (r *resolver) bindInputs(jobName, filePath, module string, compDoc *ast.Com
 			ok = false
 			continue
 		}
-		bound[key] = spec.Default
+		checked, errMsg := checkInputType(r.cluster, spec, spec.Default)
+		if errMsg != "" {
+			r.errorf(filePath, module, "include (job %q): input %q: bad default: %s", jobName, key, errMsg)
+			ok = false
+			continue
+		}
+		bound[key] = checked
 	}
 
 	return bound, ok
@@ -313,7 +470,7 @@ func checkInputType(cluster *ast.ClusterDoc, spec ast.InputSpec, val any) (bound
 			return nil, fmt.Sprintf("expected machine group name (string), got %T", val)
 		}
 		if cluster == nil {
-			return nil, fmt.Sprintf("no such machine group %q", name)
+			return nil, fmt.Sprintf("machine_group input %q requires a cluster context", name)
 		}
 		if _, exists := cluster.Machines[name]; !exists {
 			return nil, fmt.Sprintf("no such machine group %q", name)
@@ -339,26 +496,39 @@ func checkInputType(cluster *ast.ClusterDoc, spec ast.InputSpec, val any) (bound
 	}
 }
 
-// substituteOn implements the one narrow templating rule Resolve performs
-// itself (everything else — CEL in `when:`, ${{ matrix.x }} in steps, ...
-// — is left untouched for a later phase): a job's On field that is
-// *exactly* (whitespace-tolerant) "${{ inputs.<name> }}" is replaced with
-// the bound input's value rendered as a string, so a fragment job lands on
-// a real machine group at instantiation time. Any other On value, including
-// one that merely contains such a reference alongside other text, is left
-// as-is.
-func substituteOn(on string, inputSubst map[string]string) string {
-	trimmed := strings.TrimSpace(on)
+// parseInputRef reports whether s is, once surrounding whitespace is
+// trimmed, exactly a single "${{ inputs.<name> }}" placeholder
+// (whitespace-tolerant inside the braces too), returning <name>. Both of
+// Resolve's narrow substitution rules (Job.On via substituteOn, a nested
+// include's `inputs:` values via forwardInputs — see Resolve's godoc) share
+// this exact-match parsing; they differ only in what happens when the name
+// turns out to be unknown in scope.
+func parseInputRef(s string) (name string, ok bool) {
+	trimmed := strings.TrimSpace(s)
 	if !strings.HasPrefix(trimmed, "${{") || !strings.HasSuffix(trimmed, "}}") {
-		return on
+		return "", false
 	}
 	inner := strings.TrimSpace(trimmed[len("${{") : len(trimmed)-len("}}")])
-	name, isInputsRef := strings.CutPrefix(inner, "inputs.")
+	refName, isInputsRef := strings.CutPrefix(inner, "inputs.")
 	if !isInputsRef {
+		return "", false
+	}
+	return strings.TrimSpace(refName), true
+}
+
+// substituteOn implements Resolve's first narrow templating rule (see
+// Resolve's godoc): a job's On field that is *exactly* a parseInputRef match
+// is replaced with the bound input's value rendered as a string, so a
+// fragment job lands on a real machine group at instantiation time. Any
+// other On value — including one that merely contains such a reference
+// alongside other text, or references a name unknown in inputSubst — is
+// left as-is; unlike forwardInputs, an unknown name here is not an error.
+func substituteOn(on string, inputSubst map[string]string) string {
+	name, isRef := parseInputRef(on)
+	if !isRef {
 		return on
 	}
-	name = strings.TrimSpace(name)
-	if v, ok := inputSubst[name]; ok {
+	if v, known := inputSubst[name]; known {
 		return v
 	}
 	return on
