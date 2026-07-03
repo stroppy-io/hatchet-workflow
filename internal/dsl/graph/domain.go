@@ -6,6 +6,7 @@ package graph
 
 import (
 	"sort"
+	"strconv"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/dsl/ast"
 	"github.com/stroppy-io/stroppy-cloud/internal/dsl/diag"
@@ -81,7 +82,7 @@ func Build(cluster *ast.ClusterDoc, provider *ast.ProviderManifest) (*Domain, di
 
 	for _, name := range sortedGroupNames(cluster.Machines) {
 		spec := cluster.Machines[name]
-		state, groupDiags := buildGroup(spec, provider)
+		state, groupDiags := buildGroup(name, spec, provider)
 		diags = append(diags, groupDiags...)
 		dom.Groups[name] = state
 	}
@@ -89,8 +90,20 @@ func Build(cluster *ast.ClusterDoc, provider *ast.ProviderManifest) (*Domain, di
 	return dom, diags
 }
 
-func buildGroup(spec ast.MachineGroup, provider *ast.ProviderManifest) (GroupState, diag.List) {
+func buildGroup(name string, spec ast.MachineGroup, provider *ast.ProviderManifest) (GroupState, diag.List) {
 	var diags diag.List
+
+	if spec.Count < 0 {
+		diags.Add(diag.Diagnostic{
+			Severity: diag.Error,
+			Message:  "machine group " + name + ": count must be non-negative (got " + strconv.FormatInt(int64(spec.Count), 10) + ")",
+		})
+		return GroupState{
+			Spec: spec,
+			View: expr.MachineGroupView{Count: int64(spec.Count), Machines: nil},
+			Ext:  make(map[string]any),
+		}, diags
+	}
 
 	ext := make(map[string]any, len(spec.Ext))
 	for k, v := range spec.Ext {

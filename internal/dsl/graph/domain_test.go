@@ -300,3 +300,31 @@ func TestBuildNilProviderIsError(t *testing.T) {
 		t.Fatal("expected an error diagnostic for nil provider manifest")
 	}
 }
+
+func TestBuildNegativeCountIsError(t *testing.T) {
+	cluster := &ast.ClusterDoc{
+		Machines: map[string]ast.MachineGroup{
+			"bad": {
+				Count:     -1,
+				Resources: ast.Resources{CPU: 2, RAM: 4 << 30},
+			},
+		},
+	}
+	provider := yandexProvider(nil)
+
+	_, diags := graph.Build(cluster, provider)
+	if !diags.HasErrors() {
+		t.Fatal("expected an error diagnostic for negative count")
+	}
+
+	found := false
+	for _, d := range diags {
+		if d.Message == `machine group bad: count must be non-negative (got -1)` {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("expected error message for group 'bad' with count, got: %+v", diags)
+	}
+}
