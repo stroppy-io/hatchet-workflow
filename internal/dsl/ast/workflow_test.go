@@ -222,3 +222,13 @@ func TestDecodeWorkflowJobIncludeWithMatrixErrors(t *testing.T) {
 		t.Fatal("include combined with matrix must produce error diagnostic")
 	}
 }
+
+// --- MatrixValues is runtime-only (Task 11) ---
+
+func TestDecodeWorkflowRejectsMatrixValuesKey(t *testing.T) {
+	src := []byte("jobs:\n  a:\n    on: db\n    matrix_values: { x: a }\n    steps:\n      - cmd: y\n")
+	_, diags := ast.DecodeWorkflow("workflow.yaml", src)
+	if !diags.HasErrors() {
+		t.Fatal("matrix_values: is a runtime-only field and must not decode from YAML")
+	}
+}

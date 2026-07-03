@@ -34,6 +34,15 @@ type Job struct {
 	Steps   []Step
 	Include string         // путь до каталога с component.yaml внутри бандла
 	Inputs  map[string]any // inputs для include-джобы
+
+	// MatrixValues carries one matrix key→value assignment for a job
+	// instance produced by internal/dsl/graph.Expand from a Matrix job
+	// (Matrix itself is nil'd on the instance). It is a runtime-only field:
+	// DecodeWorkflow never sets it, and there is no "matrix_values:" YAML
+	// key for it — decodeJob's handlers map below simply has no entry for
+	// that key, so a document declaring one gets the same "unknown key"
+	// diagnostic as any other typo.
+	MatrixValues map[string]string
 }
 
 // Step is one action within a job's step list. Exactly one of Cmd,
