@@ -34,6 +34,14 @@ type fakeNomadServer struct {
 	pollsBeforeRunning int32
 	pollCount          atomic.Int32
 	allocClientStatus  string // overrides the terminal status once polls are exhausted; "" means running
+
+	// allocs, when non-nil, replaces the default single-alloc response
+	// entirely: the handler serves this fixed list on every poll instead of
+	// synthesizing one from pollsBeforeRunning/allocClientStatus. Used to
+	// exercise reschedule scenarios (stale failed alloc + running
+	// replacement) where the shape of the allocation list itself is what's
+	// under test.
+	allocs []*api.AllocationListStub
 }
 
 func newFakeNomadServer(t *testing.T, fake *fakeNomadServer) *httptest.Server {
@@ -52,7 +60,12 @@ func newFakeNomadServer(t *testing.T, fake *fakeNomadServer) *httptest.Server {
 	})
 
 	mux.HandleFunc("GET /v1/job/{id}/allocations", func(w http.ResponseWriter, r *http.Request) {
-		n := fake.pollCount.Add(1)
+		fake.pollCount.Add(1)
+		if fake.allocs != nil {
+			writeJSON(t, w, fake.allocs)
+			return
+		}
+		n := fake.pollCount.Load()
 		status := api.AllocClientStatusRunning
 		desc := "running"
 		if n <= fake.pollsBeforeRunning {
@@ -162,6 +175,87 @@ func TestNomadSubmitJobActivityHappyPath(t *testing.T) {
 
 func TestNomadSubmitJobActivityFailsOnFailedAlloc(t *testing.T) {
 	fake := &fakeNomadServer{allocClientStatus: api.AllocClientStatusFailed}
+	server := newFakeNomadServer(t, fake)
+	defer server.Close()
+	t.Setenv("STROPPY_NOMAD_ADDR", server.URL)
+
+	a := newTestActivities()
+	_, err := a.NomadSubmitJobActivity(t.Context(), &NomadSubmitJobInput{
+		JobJSON:      testJobJSON(t),
+		PollInterval: time.Millisecond,
+		WaitTimeout:  5 * time.Second,
+	})
+	if err == nil {
+		t.Fatalf("NomadSubmitJobActivity: want error, got nil")
+	}
+	if !strings.Contains(err.Error(), "failed") {
+		t.Fatalf("error = %v, want it to mention the failure", err)
+	}
+}
+
+// TestNomadSubmitJobActivitySurvivesReschedule exercises Nomad's normal
+// reschedule behavior: a transient container failure produces a failed
+// allocation whose NextAllocation points at its replacement, and the
+// replacement (same TaskGroup, higher CreateIndex) is running. The job is
+// healthy as a whole once the replacement runs, so the activity must
+// succeed rather than surface the stale failed alloc as a fatal error.
+func TestNomadSubmitJobActivitySurvivesReschedule(t *testing.T) {
+	fake := &fakeNomadServer{
+		allocs: []*api.AllocationListStub{
+			{
+				ID:                "alloc-1",
+				NodeID:            "node-1",
+				TaskGroup:         "postgres-node-1",
+				ClientStatus:      api.AllocClientStatusFailed,
+				ClientDescription: "transient failure, rescheduled",
+				NextAllocation:    "alloc-2",
+				CreateIndex:       10,
+			},
+			{
+				ID:                "alloc-2",
+				NodeID:            "node-1",
+				TaskGroup:         "postgres-node-1",
+				ClientStatus:      api.AllocClientStatusRunning,
+				ClientDescription: "running",
+				CreateIndex:       11,
+			},
+		},
+	}
+	server := newFakeNomadServer(t, fake)
+	defer server.Close()
+	t.Setenv("STROPPY_NOMAD_ADDR", server.URL)
+
+	a := newTestActivities()
+	out, err := a.NomadSubmitJobActivity(t.Context(), &NomadSubmitJobInput{
+		JobJSON:      testJobJSON(t),
+		PollInterval: time.Millisecond,
+		WaitTimeout:  5 * time.Second,
+	})
+	if err != nil {
+		t.Fatalf("NomadSubmitJobActivity: %v", err)
+	}
+	if got, want := out.JobID, "postgres"; got != want {
+		t.Fatalf("JobID = %q, want %q", got, want)
+	}
+}
+
+// TestNomadSubmitJobActivityFailsOnTerminalFailedAlloc verifies a failed
+// allocation with no replacement (NextAllocation empty) is still fatal: this
+// is not a reschedule-in-progress, it's a terminal failure.
+func TestNomadSubmitJobActivityFailsOnTerminalFailedAlloc(t *testing.T) {
+	fake := &fakeNomadServer{
+		allocs: []*api.AllocationListStub{
+			{
+				ID:                "alloc-1",
+				NodeID:            "node-1",
+				TaskGroup:         "postgres-node-1",
+				ClientStatus:      api.AllocClientStatusFailed,
+				ClientDescription: "terminal failure",
+				NextAllocation:    "",
+				CreateIndex:       10,
+			},
+		},
+	}
 	server := newFakeNomadServer(t, fake)
 	defer server.Close()
 	t.Setenv("STROPPY_NOMAD_ADDR", server.URL)

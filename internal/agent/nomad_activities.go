@@ -115,13 +115,15 @@ func (a *Activities) NomadSubmitJobActivity(
 		}
 		a.heartbeat(ctx, "polling", jobID, len(allocs))
 
-		if failed := firstFailedAlloc(allocs); failed != nil {
+		latest := latestAllocPerGroup(allocs)
+
+		if failed := firstFailedAlloc(latest); failed != nil {
 			return nil, fmt.Errorf(
 				"NomadSubmitJob %q: allocation %s failed: %s",
 				jobID, failed.ID, failed.ClientDescription,
 			)
 		}
-		if wantAllocs > 0 && countRunning(allocs) >= wantAllocs {
+		if wantAllocs > 0 && countRunning(latest) >= wantAllocs {
 			return &NomadSubmitJobOutput{
 				JobID:  jobID,
 				EvalID: regResp.EvalID,
@@ -132,7 +134,7 @@ func (a *Activities) NomadSubmitJobActivity(
 		if time.Now().After(deadline) {
 			return nil, fmt.Errorf(
 				"NomadSubmitJob %q: timed out after %s waiting for %d allocation(s) to run (have %d)",
-				jobID, waitTimeout, wantAllocs, countRunning(allocs),
+				jobID, waitTimeout, wantAllocs, countRunning(latest),
 			)
 		}
 
@@ -280,9 +282,39 @@ func stringVal(p *string) string {
 	return *p
 }
 
+// latestAllocPerGroup reduces allocs to one entry per TaskGroup: the one
+// with the highest CreateIndex. Nomad reschedules failed allocations by
+// creating a replacement (linked via NextAllocation) rather than mutating
+// the original, so a task group can have several allocation records at
+// once — a stale failed one and its running replacement. Evaluating
+// failure/success against every record would treat the stale failed alloc
+// as a fatal error even though the group has since recovered; reducing to
+// the latest-per-group record first makes that reschedule invisible to the
+// caller, matching what "is the job healthy" actually means.
+func latestAllocPerGroup(allocs []*api.AllocationListStub) []*api.AllocationListStub {
+	latest := make(map[string]*api.AllocationListStub, len(allocs))
+	for _, alloc := range allocs {
+		cur, ok := latest[alloc.TaskGroup]
+		if !ok || alloc.CreateIndex > cur.CreateIndex {
+			latest[alloc.TaskGroup] = alloc
+		}
+	}
+	out := make([]*api.AllocationListStub, 0, len(latest))
+	for _, alloc := range latest {
+		out = append(out, alloc)
+	}
+	return out
+}
+
+// firstFailedAlloc reports the first terminally-failed allocation in allocs,
+// or nil if none. A failed allocation with a non-empty NextAllocation is a
+// reschedule in progress, not a terminal failure — Nomad has already queued
+// (or created) its replacement, so it is not reported here. Callers should
+// pass a latest-per-group set (see latestAllocPerGroup) so a failed
+// allocation's already-running replacement doesn't also need consulting.
 func firstFailedAlloc(allocs []*api.AllocationListStub) *api.AllocationListStub {
 	for _, alloc := range allocs {
-		if alloc.ClientStatus == api.AllocClientStatusFailed {
+		if alloc.ClientStatus == api.AllocClientStatusFailed && alloc.NextAllocation == "" {
 			return alloc
 		}
 	}
