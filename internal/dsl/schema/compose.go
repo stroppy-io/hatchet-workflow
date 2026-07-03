@@ -45,21 +45,21 @@ const includeInputsDefPrefix = "includeInputs_"
 // includeInputsDefPrefix).
 //
 // providers is keyed by provider name (e.g. "yandex") purely for caller
-// bookkeeping; Compose itself only looks at the values. A document only
-// ever activates one provider via `provider.use:`, but core.schema.json's
-// $defs.providerParams/$defs.machineExt are each a single schema slot
-// shared by whichever provider-specific keys appear in the document (e.g.
-// machine-group additionalProperties has no way to know a given key came
-// from "yandex" specifically), so Compose does not know in advance which
-// provider(s) a given document will use:
+// bookkeeping; Compose itself only looks at the values. v1 DSL's
+// `provider.use:` is a single string, so a document only ever activates
+// exactly one provider:
 //   - zero entries in providers: the corresponding $defs entry is left as
 //     core.schema.json's original permissive placeholder.
 //   - exactly one entry: the corresponding $defs entry becomes that
-//     provider's schema verbatim.
-//   - two or more entries: the corresponding $defs entry becomes
-//     {"anyOf": [schema, schema, ...]} (any one provider's shape is
-//     accepted; branch order is unspecified since map iteration order is
-//     random, but that doesn't affect validation outcomes).
+//     provider's schema (shallow-copied so a caller mutating its
+//     ProviderSchemas after Compose returns cannot alias into the
+//     composed schema).
+//   - two or more entries: Compose returns an error. core.schema.json's
+//     $defs.providerParams/$defs.machineExt are each a single schema slot,
+//     and there is no v1 document shape that activates more than one
+//     provider at once, so merging multiple providers' schemas (e.g. via
+//     anyOf) is unneeded; supporting it is future work if multi-provider
+//     documents are ever introduced.
 //
 // Compose returns the schema compiled to the cluster document shape
 // (core.schema.json's $defs.cluster is the only per-kind entry point that
@@ -78,6 +78,10 @@ func Compose(providers map[string]ProviderSchemas, fragments map[string]map[stri
 	defs, ok := doc["$defs"].(map[string]any)
 	if !ok {
 		return nil, nil, fmt.Errorf("dsl/schema: embedded core.schema.json has no $defs object")
+	}
+
+	if len(providers) > 1 {
+		return nil, nil, fmt.Errorf("dsl/schema: Compose supports exactly one provider, got %d: multiple providers are not supported in v1 DSL (provider.use is a single string)", len(providers))
 	}
 
 	if params := mergeProviderSchemas(providers, func(p ProviderSchemas) map[string]any { return p.Params }); params != nil {
@@ -148,27 +152,32 @@ func kindDefName(kind Kind) (string, error) {
 }
 
 // mergeProviderSchemas extracts one field (Params or Ext, via get) from
-// every entry of providers and combines them per Compose's doc comment:
-// nil for zero entries, the schema itself for exactly one, an "anyOf" of
-// all of them for two or more. Entries where get returns nil (a provider
-// with no Ext, say) are skipped.
+// providers' single entry (Compose has already rejected len(providers) > 1)
+// per Compose's doc comment: nil if providers is empty or its entry's get
+// returns nil (a provider with no Ext, say), otherwise a shallow copy of
+// the schema so the composed $defs entry does not alias the caller's map --
+// a caller mutating its ProviderSchemas after Compose returns cannot then
+// reach into the schema Compose already produced.
 func mergeProviderSchemas(providers map[string]ProviderSchemas, get func(ProviderSchemas) map[string]any) map[string]any {
-	var schemas []map[string]any
 	for _, p := range providers {
-		if s := get(p); s != nil {
-			schemas = append(schemas, s)
+		s := get(p)
+		if s == nil {
+			return nil
 		}
+		return shallowCopyMap(s)
 	}
-	switch len(schemas) {
-	case 0:
-		return nil
-	case 1:
-		return schemas[0]
-	default:
-		anyOf := make([]any, len(schemas))
-		for i, s := range schemas {
-			anyOf[i] = s
-		}
-		return map[string]any{"anyOf": anyOf}
+	return nil
+}
+
+// shallowCopyMap copies m one level deep: the returned map is a distinct
+// object from m, but values that are themselves maps/slices are shared with
+// m (a full deep copy is unneeded here -- callers only need protection
+// against the top-level map being mutated in place, e.g. a caller adding or
+// overwriting a key on the ProviderSchemas map it passed to Compose).
+func shallowCopyMap(m map[string]any) map[string]any {
+	out := make(map[string]any, len(m))
+	for k, v := range m {
+		out[k] = v
 	}
+	return out
 }

@@ -200,6 +200,21 @@ func TestComposeIncludeInputsFragmentsStoredUnderDefs(t *testing.T) {
 	}
 }
 
+func TestComposeMultipleProvidersUnsupported(t *testing.T) {
+	_, yandexProviders := composeYandex(t)
+	providers := map[string]schema.ProviderSchemas{
+		"yandex":  yandexProviders["yandex"],
+		"another": yandexProviders["yandex"],
+	}
+	_, _, err := schema.Compose(providers, nil)
+	if err == nil {
+		t.Fatal("Compose with two providers must return an error, got nil")
+	}
+	if !strings.Contains(err.Error(), "multiple providers") {
+		t.Fatalf("expected error mentioning %q, got: %v", "multiple providers", err)
+	}
+}
+
 func keysOf(m map[string]any) []string {
 	out := make([]string, 0, len(m))
 	for k := range m {
