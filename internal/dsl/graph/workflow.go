@@ -42,6 +42,7 @@ func Validate(r *include.Resolved) diag.List {
 		return diags
 	}
 
+	validateJobNames(r, &diags)
 	validateNeeds(r, &diags)
 	validateCycle(r, &diags)
 	validateRefs(r, &diags)
@@ -55,6 +56,20 @@ const (
 	workflowPath = "workflow.yaml"
 	clusterPath  = "cluster.yaml"
 )
+
+// validateJobNames reports an error for every job whose name contains
+// reserved characters ([]=,) that are used to format matrix instance names.
+func validateJobNames(r *include.Resolved, diags *diag.List) {
+	reserved := map[rune]bool{'[': true, ']': true, '=': true, ',': true}
+	for _, name := range sortedKeys(r.Jobs) {
+		for _, ch := range name {
+			if reserved[ch] {
+				diags.Errorf(workflowPath, diag.Pos{}, "job name %q contains reserved characters ([],=) — reserved for matrix instance names", name)
+				break
+			}
+		}
+	}
+}
 
 // validateNeeds reports an error for every job whose `needs:` names a job
 // absent from r.Jobs.
@@ -272,7 +287,8 @@ func sortedKeys[V any](m map[string]V) []string {
 // re-validate needs/on/service/expression correctness, but it does not panic
 // on a `needs:` entry naming a job absent from r.Jobs — such an entry has no
 // matching instances map entry and so is left as-is, referring to nothing,
-// same as it did in r.Jobs.
+// same as it did in r.Jobs. Instance names are collision-free because Validate
+// rejects user job names containing reserved characters ([],=).
 func Expand(r *include.Resolved) map[string]ast.Job {
 	names := sortedKeys(r.Jobs)
 

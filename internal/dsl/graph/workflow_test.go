@@ -288,3 +288,23 @@ func TestValidateGoodWorkflowNoErrors(t *testing.T) {
 		t.Fatalf("valid workflow must not produce errors: %+v", diags)
 	}
 }
+
+func TestValidateRejectsReservedCharsInJobNames(t *testing.T) {
+	jobs := map[string]ast.Job{
+		"bench[workload=insert]": {On: "db", Steps: []ast.Step{{Cmd: "x"}}},
+	}
+	diags := graph.Validate(resolvedWith(jobs))
+	if !diags.HasErrors() {
+		t.Fatal("expected an error for job name with reserved characters []=,")
+	}
+	found := false
+	for _, d := range diags {
+		if strings.Contains(d.Message, "bench[workload=insert]") && strings.Contains(d.Message, "reserved") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("expected diagnostic naming the job and 'reserved', got: %+v", diags)
+	}
+}
