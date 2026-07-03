@@ -102,8 +102,10 @@
     },
 
     "byteSize": {
-      "type": "string",
-      "pattern": "^[0-9]+[kmg]?$"
+      "oneOf": [
+        { "type": "string", "pattern": "^[0-9]+[kmg]?$" },
+        { "type": "integer", "minimum": 0 }
+      ]
     },
 
     "duration": {

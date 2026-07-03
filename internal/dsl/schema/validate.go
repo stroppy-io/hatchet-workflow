@@ -12,15 +12,24 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 
 	_ "embed"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 	"gopkg.in/yaml.v3"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/dsl/diag"
 )
+
+// msgPrinter renders jsonschema.ErrorKind messages in English. jsonschema/v6
+// requires a non-nil *message.Printer (a nil one panics inside
+// golang.org/x/text/message), so this is created once at package init
+// rather than threaded through every call site.
+var msgPrinter = message.NewPrinter(language.English)
 
 //go:embed core.schema.json
 var coreSchemaJSON []byte
@@ -192,31 +201,63 @@ func normalize(v any) any {
 
 // addValidationErrors flattens a jsonschema.Validate error into diag.List
 // entries, one per leaf schema-violation, each carrying the JSON instance
-// location (e.g. "/machines/db/count") folded into the message.
+// location (e.g. "/machines/db/count") folded into the message alongside
+// the actual failing keyword (minimum, type, oneOf, required, ...).
+//
+// This walks the raw *jsonschema.ValidationError tree itself instead of
+// calling ValidationError.BasicOutput(): core.schema.json's $defs reference
+// each other exclusively through "$ref" (every property/additionalProperties
+// entry points at a $defs/* schema), so every real failure passes through at
+// least one single-cause "$ref" indirection node. BasicOutput's flattening
+// unwraps those nodes to get the right InstanceLocation, but then re-derives
+// the reported Error from the *outer* $ref node instead of the unwrapped
+// inner leaf, so every message came out as the generic, useless
+// "<path>: validation failed" (see golang.org/x/text-backed
+// ValidationError.output()'s cause.skip()/cause.ErrorKind interaction) — the
+// instance path was always present, but the actual cause never was. Walking
+// the tree ourselves and reporting only nodes with no further Causes (true
+// leaves: a failing "minimum"/"type"/"required"/... assertion, or a
+// "oneOf" node whose LocalizedString already summarizes why) surfaces the
+// real reason next to the JSON instance path.
 func addValidationErrors(diags *diag.List, path string, err error) {
 	var valErr *jsonschema.ValidationError
 	if !errors.As(err, &valErr) {
 		diags.Errorf(path, diag.Pos{}, "schema: %v", err)
 		return
 	}
+	collectLeafErrors(diags, path, valErr)
+}
 
-	out := valErr.BasicOutput()
-	if len(out.Errors) == 0 {
-		diags.Errorf(path, diag.Pos{}, "%s", formatUnitMessage(*out))
+// collectLeafErrors recurses into e.Causes, emitting one diagnostic per leaf
+// (a *jsonschema.ValidationError with no Causes of its own).
+func collectLeafErrors(diags *diag.List, path string, e *jsonschema.ValidationError) {
+	if len(e.Causes) == 0 {
+		diags.Errorf(path, diag.Pos{}, "%s", formatLeaf(e))
 		return
 	}
-	for _, unit := range out.Errors {
-		diags.Errorf(path, diag.Pos{}, "%s", formatUnitMessage(unit))
+	for _, cause := range e.Causes {
+		collectLeafErrors(diags, path, cause)
 	}
 }
 
-func formatUnitMessage(unit jsonschema.OutputUnit) string {
-	loc := unit.InstanceLocation
-	if loc == "" {
-		loc = "/"
+// formatLeaf renders one leaf ValidationError as "<instance path>: <reason>",
+// e.g. "/machines/db/count: minimum: got -1, want 0".
+func formatLeaf(e *jsonschema.ValidationError) string {
+	return fmt.Sprintf("%s: %s", instanceLocation(e.InstanceLocation), e.ErrorKind.LocalizedString(msgPrinter))
+}
+
+// instanceLocation renders a jsonschema.ValidationError.InstanceLocation
+// token slice as a JSON pointer (e.g. []string{"machines", "db", "count"} ->
+// "/machines/db/count"), matching the format jsonschema.OutputUnit.
+// InstanceLocation already used elsewhere in diagnostics.
+func instanceLocation(tokens []string) string {
+	if len(tokens) == 0 {
+		return "/"
 	}
-	if unit.Error == nil {
-		return loc
+	var sb strings.Builder
+	for _, tok := range tokens {
+		sb.WriteByte('/')
+		sb.WriteString(tok)
 	}
-	return fmt.Sprintf("%s: %s", loc, unit.Error.String())
+	return sb.String()
 }
