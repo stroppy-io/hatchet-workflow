@@ -143,7 +143,9 @@ func (d *decoderBase) mapping(node *yaml.Node, context string, handlers map[stri
 
 // decodeServices walks a "services" mapping, whose keys are arbitrary
 // service names, so it iterates node.Content directly rather than going
-// through decodeMapping's known-key dispatch.
+// through decodeMapping's known-key dispatch. A duplicate service name is
+// reported as a diagnostic (anchored to the second occurrence's key node)
+// and the first entry is preserved.
 func (d *decoderBase) decodeServices(node *yaml.Node, out map[string]Service) {
 	if node.Kind != yaml.MappingNode {
 		d.errorf(node, "services: expected a mapping, got %s", nodeKindName(node.Kind))
@@ -151,6 +153,10 @@ func (d *decoderBase) decodeServices(node *yaml.Node, out map[string]Service) {
 	}
 	for i := 0; i+1 < len(node.Content); i += 2 {
 		nameNode, svcNode := node.Content[i], node.Content[i+1]
+		if _, dup := out[nameNode.Value]; dup {
+			d.errorf(nameNode, "services: duplicate service name %q", nameNode.Value)
+			continue
+		}
 		out[nameNode.Value] = d.decodeService(svcNode)
 	}
 }
