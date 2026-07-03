@@ -105,8 +105,26 @@ func (s *DslService) ComposedSchema(_ context.Context, req *dslpb.ComposedSchema
 // user-input problem comes back as a Diagnostic entry, exactly like an IDE
 // linter would report it. An RPC error would mean a transport-level failure
 // only; nothing in this method's current implementation produces one.
-func (s *DslService) Check(_ context.Context, req *dslpb.CheckRequest) (*dslpb.CheckResponse, error) {
-	files := req.GetFiles()
+func (s *DslService) Check(ctx context.Context, req *dslpb.CheckRequest) (*dslpb.CheckResponse, error) {
+	diags, err := CheckBundle(ctx, req.GetFiles())
+	if err != nil {
+		return nil, err
+	}
+	return &dslpb.CheckResponse{Diagnostics: diags}, nil
+}
+
+// CheckBundle runs the same check-mode compile pipeline as Check
+// (provider resolution + dsl.Compile) directly over a bundle's files,
+// returning wire-shaped diagnostics. It is the shared implementation behind
+// DslService.Check and — via injection as internal/services/recipe.Deps.Checker
+// — RecipeService's create-time Summary.compiles computation and
+// CheckRecipe, so neither caller duplicates the path-traversal-safe
+// provider derivation in resolveProvider/deriveProviderSchema. Like Check,
+// it never returns a Go error for a problem in the bundle itself (every such
+// problem is folded into a diagnostic instead); the error return exists so
+// callers have a seam for a future failure mode that genuinely isn't
+// bundle-shaped (e.g. an IO error), not because one exists today.
+func CheckBundle(_ context.Context, files map[string][]byte) ([]*dslpb.Diagnostic, error) {
 	sources := include.Sources{Files: files}
 
 	provider, composed, diags := resolveProvider(files)
@@ -114,7 +132,7 @@ func (s *DslService) Check(_ context.Context, req *dslpb.CheckRequest) (*dslpb.C
 	_, compileDiags := dsl.Compile(dsl.Input{Sources: sources, Provider: provider, Composed: composed})
 	diags = append(diags, compileDiags...)
 
-	return &dslpb.CheckResponse{Diagnostics: toProtoDiagnostics(diags)}, nil
+	return toProtoDiagnostics(diags), nil
 }
 
 // resolveProvider finds and decodes the provider cluster.yaml's provider.use
