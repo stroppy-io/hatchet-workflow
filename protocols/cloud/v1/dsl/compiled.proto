@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+package cloud.v1.dsl;
+
+import "cloud/v1/deployment/plan.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dsl";
+
+// CompiledPlan — результат компиляции DSL-бандла: запрос машин провайдеру,
+// сервисы (Nomad jobs) и DAG джобов. Строковые поля могут содержать
+// невычисленные ${{ CEL }} — их вычисляет исполнитель по рантайм-данным.
+message CompiledPlan {
+    ProviderRef provider = 1;
+    repeated MachineGroup machine_groups = 2;
+    repeated ServiceSpec services = 3;
+    repeated CompiledJob jobs = 4;
+}
+
+message ProviderRef {
+    string name = 1;
+    // params_json — provider.params как JSON (схема динамическая, в proto не типизируется).
+    string params_json = 2;
+}
+
+message MachineGroup {
+    string name = 1;
+    uint32 count = 2;
+    uint32 cpu = 3;
+    uint64 ram_mb = 4;
+    repeated DiskSpec disks = 5;
+    // ext_json — провайдерский ext-блок после lowering-прецеденса, как JSON.
+    string ext_json = 6;
+}
+
+message DiskSpec {
+    uint64 size_gb = 1;
+    // type — уже lowered в термины провайдера.
+    string type = 2;
+}
+
+message ServiceSpec {
+    string name = 1;
+    string on_group = 2;
+    string image = 3;
+    string network = 4;
+    repeated string volumes = 5;
+    map<string, string> env = 6;
+    repeated ConfigFile configs = 7;
+    HealthCheck health = 8;
+}
+
+message ConfigFile {
+    string template_path = 1;
+    string dest = 2;
+}
+
+message HealthCheck {
+    string http = 1;
+    string timeout = 2;
+}
+
+message CompiledJob {
+    // id включает matrix-инстанс: "bench[workload=insert]".
+    string id = 1;
+    repeated string needs = 2;
+    string on_group = 3;
+    map<string, string> matrix = 4;
+    string when = 5; // CEL, пусто = всегда
+    oneof action {
+        StepList steps = 10;
+        // service — имя ServiceSpec: запуск Nomad job + ожидание health.
+        string service = 11;
+    }
+    map<string, string> with = 6;
+}
+
+message StepList {
+    repeated DslStep steps = 1;
+}
+
+message DslStep {
+    oneof step {
+        cloud.v1.deployment.AgentStep agent = 1;
+        WaitStep wait = 2;
+    }
+}
+
+message WaitStep {
+    string http = 1;
+    string timeout = 2;
+}
