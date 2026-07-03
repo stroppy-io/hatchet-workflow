@@ -1,0 +1,63 @@
+version: 1
+provider:
+  use: yandex
+  params:
+    zone: ru-central1-a
+
+machines:
+  db:
+    count: 3
+    resources:
+      cpu: 8
+      ram: 32g
+      disk: { size: 100g, type: ssd }
+    yandex:
+      platform_id: standard-v3
+      disk_type: network-ssd-nonreplicated
+  runner:
+    count: 1
+    resources:
+      cpu: 2
+      ram: 4g
+      disk: { size: 20g, type: ssd }
+
+services:
+  etcd:
+    on: db
+    image: quay.io/coreos/etcd:v3.5.14
+    network: host
+    volumes: [ "/data/etcd:/etcd-data" ]
+    env:
+      ETCD_DATA_DIR: /etcd-data
+      ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
+      ETCD_LISTEN_PEER_URLS: http://0.0.0.0:2380
+    health: { http: ":2379/health", timeout: 60s }
+
+  patroni-postgres:
+    on: db
+    image: registry.opensource.zalan.do/acid/spilo-16:3.2-p3
+    network: host
+    volumes: [ "/data/pg:/home/postgres/pgdata" ]
+    env:
+      ETCD3_HOSTS: "db:2379"
+      PATRONI_RESTAPI_LISTEN: "0.0.0.0:8008"
+      PATRONI_POSTGRESQL_LISTEN: "0.0.0.0:5432"
+      SCOPE: postgres-ha
+    configs:
+      - template: files/patroni.yaml.tpl
+        dest: /etc/patroni/patroni.yaml
+    health: { http: ":8008/health", timeout: 120s }
+
+  haproxy:
+    on: db
+    image: haproxy:2.9
+    network: host
+    volumes: [ "/data/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg" ]
+    health: { http: ":7000/health", timeout: 30s }
+
+  stroppy:
+    on: runner
+    image: stroppy:latest
+    network: host
+    env:
+      STROPPY_TARGET: "db:5000"

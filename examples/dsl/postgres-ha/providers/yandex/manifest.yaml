@@ -1,0 +1,13 @@
+name: yandex
+provides: [machines, disk.network-ssd, disk.local-ssd, network.private]
+capabilities:
+  machine:
+    cpu: { enum: [2, 4, 8, 16, 32, 64] }
+  constraints:
+    - expr: "machine.ext.disk_type == 'local-ssd' ? machine.cpu >= 8 : true"
+      message: "local-ssd только от 8 vCPU"
+lowering:
+  disk.type:
+    ssd: network-ssd
+    hdd: network-hdd
+    local: local-ssd

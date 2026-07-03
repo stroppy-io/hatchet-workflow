@@ -1,0 +1,9 @@
+inputs:
+  nodes: { type: machine_group }
+requires:
+  - expr: "inputs.nodes.count >= 3 && inputs.nodes.count % 2 == 1"
+    message: "etcd: нечётный кворум ≥ 3"
+provides: [kv.etcd]
+jobs:
+  up:
+    service: etcd

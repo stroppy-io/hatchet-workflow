@@ -48,12 +48,17 @@ type Input struct {
 
 // Compile runs the full compiler pipeline over in, in stage order:
 //
-//  1. parse — both cluster.yaml and workflow.yaml are required; each is
-//     schema-validated (Composed if non-nil, else the matching core
-//     subschema) before being ast-decoded. A missing file or a schema
-//     violation is reported without ever reaching ast decode for that pair,
-//     so a caller never sees a decode diagnostic layered on top of a schema
-//     one for the same root cause.
+//  1. parse — both cluster.yaml and workflow.yaml are required; cluster.yaml
+//     is schema-validated against Composed if non-nil (schema.Compose only
+//     ever tightens core.schema.json's $defs.cluster — providerParams and
+//     machineExt are both reachable exclusively from $defs.cluster, never
+//     from $defs.workflow), else the core $defs.cluster subschema;
+//     workflow.yaml is always validated against the core $defs.workflow
+//     subschema, since no per-provider composition applies to it. Both are
+//     ast-decoded only once schema validation for that pair passed cleanly.
+//     A missing file or a schema violation is reported without ever
+//     reaching ast decode for that pair, so a caller never sees a decode
+//     diagnostic layered on top of a schema one for the same root cause.
 //  2. include.Resolve — expands every `include:` job into the flat job DAG
 //     plus the bound component set contract-check validates against.
 //  3. graph.Build — the domain graph (per-group lowered disk types, CEL
@@ -133,7 +138,10 @@ func parse(in Input) (*ast.ClusterDoc, *ast.WorkflowDoc, diag.List) {
 	}
 
 	diags = append(diags, schema.Validate(schema.Cluster, clusterFile, clusterSrc, in.Composed)...)
-	diags = append(diags, schema.Validate(schema.Workflow, workflowFile, workflowSrc, in.Composed)...)
+	// workflow.yaml has no composed counterpart (schema.Compose only ever
+	// tightens $defs.cluster) — always validate it against the core
+	// $defs.workflow subschema, passing nil regardless of in.Composed.
+	diags = append(diags, schema.Validate(schema.Workflow, workflowFile, workflowSrc, nil)...)
 	if diags.HasErrors() {
 		return nil, nil, diags
 	}

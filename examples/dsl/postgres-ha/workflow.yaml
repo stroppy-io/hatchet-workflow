@@ -1,0 +1,30 @@
+jobs:
+  prep-disks:
+    on: db
+    steps:
+      - cmd: mkfs.ext4 ${{ machine.disks[0].path }} && mount ${{ machine.disks[0].path }} /data
+
+  etcd:
+    needs: [prep-disks]
+    include: components/etcd
+    inputs:
+      nodes: db
+
+  patroni:
+    needs: [etcd]
+    include: components/patroni
+    inputs:
+      nodes: db
+
+  wait-primary:
+    needs: [patroni]
+    steps:
+      - wait:
+          http: "http://db:8008/primary"
+          timeout: 300s
+
+  bench:
+    needs: [wait-primary]
+    matrix: { workload: [insert, select] }
+    service: stroppy
+    with: { args: "--workload ${{ matrix.workload }}" }

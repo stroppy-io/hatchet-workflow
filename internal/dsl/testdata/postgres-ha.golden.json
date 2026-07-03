@@ -1,0 +1,183 @@
+{
+  "jobs": [
+    {
+      "id": "bench[workload=insert]",
+      "matrix": {
+        "workload": "insert"
+      },
+      "needs": [
+        "wait-primary"
+      ],
+      "service": "stroppy",
+      "with": {
+        "args": "--workload ${{ matrix.workload }}"
+      }
+    },
+    {
+      "id": "bench[workload=select]",
+      "matrix": {
+        "workload": "select"
+      },
+      "needs": [
+        "wait-primary"
+      ],
+      "service": "stroppy",
+      "with": {
+        "args": "--workload ${{ matrix.workload }}"
+      }
+    },
+    {
+      "id": "etcd/up",
+      "needs": [
+        "prep-disks"
+      ],
+      "service": "etcd"
+    },
+    {
+      "id": "patroni/up",
+      "needs": [
+        "etcd/up"
+      ],
+      "service": "patroni-postgres"
+    },
+    {
+      "id": "prep-disks",
+      "onGroup": "db",
+      "steps": {
+        "steps": [
+          {
+            "agent": {
+              "callCmd": {
+                "spec": {
+                  "expectedExitCodes": [
+                    0
+                  ],
+                  "script": {
+                    "shell": "/bin/sh",
+                    "text": "mkfs.ext4 ${{ machine.disks[0].path }} \u0026\u0026 mount ${{ machine.disks[0].path }} /data"
+                  }
+                }
+              },
+              "id": "prep-disks/0"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "wait-primary",
+      "needs": [
+        "patroni/up"
+      ],
+      "steps": {
+        "steps": [
+          {
+            "wait": {
+              "http": "http://db:8008/primary",
+              "timeout": "5m0s"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "machineGroups": [
+    {
+      "count": 3,
+      "cpu": 8,
+      "disks": [
+        {
+          "sizeGb": "100",
+          "type": "network-ssd-nonreplicated"
+        }
+      ],
+      "extJson": "{\"disk_type\":\"network-ssd-nonreplicated\",\"platform_id\":\"standard-v3\"}",
+      "name": "db",
+      "ramMb": "32768"
+    },
+    {
+      "count": 1,
+      "cpu": 2,
+      "disks": [
+        {
+          "sizeGb": "20",
+          "type": "network-ssd"
+        }
+      ],
+      "extJson": "{}",
+      "name": "runner",
+      "ramMb": "4096"
+    }
+  ],
+  "provider": {
+    "name": "yandex",
+    "paramsJson": "{\"zone\":\"ru-central1-a\"}"
+  },
+  "services": [
+    {
+      "env": {
+        "ETCD_DATA_DIR": "/etcd-data",
+        "ETCD_LISTEN_CLIENT_URLS": "http://0.0.0.0:2379",
+        "ETCD_LISTEN_PEER_URLS": "http://0.0.0.0:2380"
+      },
+      "health": {
+        "http": ":2379/health",
+        "timeout": "1m0s"
+      },
+      "image": "quay.io/coreos/etcd:v3.5.14",
+      "name": "etcd",
+      "network": "host",
+      "onGroup": "db",
+      "volumes": [
+        "/data/etcd:/etcd-data"
+      ]
+    },
+    {
+      "health": {
+        "http": ":7000/health",
+        "timeout": "30s"
+      },
+      "image": "haproxy:2.9",
+      "name": "haproxy",
+      "network": "host",
+      "onGroup": "db",
+      "volumes": [
+        "/data/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg"
+      ]
+    },
+    {
+      "configs": [
+        {
+          "dest": "/etc/patroni/patroni.yaml",
+          "templatePath": "files/patroni.yaml.tpl"
+        }
+      ],
+      "env": {
+        "ETCD3_HOSTS": "db:2379",
+        "PATRONI_POSTGRESQL_LISTEN": "0.0.0.0:5432",
+        "PATRONI_RESTAPI_LISTEN": "0.0.0.0:8008",
+        "SCOPE": "postgres-ha"
+      },
+      "health": {
+        "http": ":8008/health",
+        "timeout": "2m0s"
+      },
+      "image": "registry.opensource.zalan.do/acid/spilo-16:3.2-p3",
+      "name": "patroni-postgres",
+      "network": "host",
+      "onGroup": "db",
+      "volumes": [
+        "/data/pg:/home/postgres/pgdata"
+      ]
+    },
+    {
+      "env": {
+        "STROPPY_TARGET": "db:5000"
+      },
+      "image": "stroppy:latest",
+      "name": "stroppy",
+      "network": "host",
+      "onGroup": "runner"
+    }
+  ]
+}

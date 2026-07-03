@@ -1,0 +1,10 @@
+inputs:
+  nodes: { type: machine_group }
+requires:
+  - capability: kv.etcd
+  - expr: "inputs.nodes.machines.all(m, m.ram_gb >= 4)"
+    message: "patroni: каждому узлу нужно ≥ 4g RAM"
+provides: [sql.postgres]
+jobs:
+  up:
+    service: patroni-postgres
