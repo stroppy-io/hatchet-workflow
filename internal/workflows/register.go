@@ -3,6 +3,10 @@ package workflows
 import (
 	"context"
 
+	"go.temporal.io/sdk/activity"
+	"go.temporal.io/sdk/worker"
+	"go.temporal.io/sdk/workflow"
+
 	databasecockroach "github.com/stroppy-io/stroppy-cloud/internal/domain/database/cockroach"
 	databasemysql "github.com/stroppy-io/stroppy-cloud/internal/domain/database/mysql"
 	databasenoop "github.com/stroppy-io/stroppy-cloud/internal/domain/database/noop"
@@ -19,8 +23,6 @@ import (
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
 	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
-	"go.temporal.io/sdk/activity"
-	"go.temporal.io/sdk/worker"
 )
 
 const (
@@ -79,6 +81,14 @@ func RegisterWorkflows(registry worker.WorkflowRegistry, options Options) {
 	workflowpb.RegisterDeploymentServiceWorkflows(registry, NewDeploymentWorkflows(options))
 	workflowpb.RegisterTestServiceWorkflows(registry, NewTestWorkflows())
 	workflowpb.RegisterSuiteWorkflowServiceWorkflows(registry, NewSuiteWorkflows())
+	// ExecuteCompiledPlanWorkflow (dslrun.go) is the generic YAML-DSL
+	// interpreter. It has no proto workflow service of its own (dslpb.
+	// CompiledPlan carries no RPC definitions), so it registers directly
+	// against the SDK rather than through a RegisterXxxServiceWorkflows
+	// codegen entry point like the workflows above.
+	registry.RegisterWorkflowWithOptions(ExecuteCompiledPlanWorkflow, workflow.RegisterOptions{
+		Name: ExecuteCompiledPlanWorkflowName,
+	})
 }
 
 func RegisterActivities(registry worker.ActivityRegistry, runtime RuntimeActivities, options ...ActivityOptions) {
