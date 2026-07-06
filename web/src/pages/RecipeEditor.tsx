@@ -211,6 +211,7 @@ export function RecipeEditor() {
     try {
       const saved = await createRecipe(slug, { name: name.trim(), files });
       savedSnapshotRef.current = snapshotOf(saved.name, saved.files);
+      // TODO: post-save reflash is minor: could update local state from saved instead of forcing reload.
       navigate(`/recipes/${saved.id}`);
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : String(e));
@@ -260,7 +261,7 @@ export function RecipeEditor() {
         <div className="flex items-center gap-3 min-w-0">
           <button
             type="button"
-            onClick={() => navigate(isEdit && id ? `/recipes/${id}` : "/recipes")}
+            onClick={() => navigate("/recipes")}
             className="flex h-7 w-7 shrink-0 items-center justify-center border border-zinc-800 text-zinc-500 transition-colors hover:border-zinc-700 hover:text-zinc-300"
             aria-label="Back"
           >
@@ -284,7 +285,7 @@ export function RecipeEditor() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate(isEdit && id ? `/recipes/${id}` : "/recipes")}
+            onClick={() => navigate("/recipes")}
           >
             Cancel
           </Button>
