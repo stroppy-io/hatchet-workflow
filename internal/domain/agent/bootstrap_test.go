@@ -138,6 +138,141 @@ func TestCloudInitUsesSameEnvContract(t *testing.T) {
 	}
 }
 
+// cloudInitNonePathGolden is a byte-for-byte capture of CloudInit's output
+// for a plain Bootstrap (no NomadRole) taken before Nomad support was added.
+// It exists to guard the invariant that NomadRoleNone (the default, and the
+// only path every current caller exercises) renders identical cloud-init
+// after the Nomad template blocks are introduced.
+const cloudInitNonePathGolden = `#cloud-config
+users:
+  - name: stroppy
+    groups: sudo
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    ssh_authorized_keys:
+      - ssh-rsa test
+
+write_files:
+  - path: /etc/stroppy/agent.env
+    content: |
+      AGENT_MACHINE_ID=node-1
+      AGENT_TASK_QUEUE=stroppy-agent-node-1
+      STROPPY_AGENT_BINARY_URL=http://server:8080/agent/binary
+      STROPPY_MACHINE_ID=node-1
+      STROPPY_NODE_ID=node-1
+      STROPPY_SERVER_ADDR=http://server:8080
+      TEMPORAL_NAMESPACE=default
+  - path: /etc/apt/apt.conf.d/90stroppy-proxy
+    content: |
+      Acquire::http::Proxy "http://server:8080";
+      Acquire::https::Proxy "DIRECT";
+      Acquire::Retries "8";
+      Acquire::http::Timeout "120";
+      Acquire::https::Timeout "120";
+      Acquire::Queue-Mode "access";
+      DPkg::Lock::Timeout "600";
+  - path: /etc/systemd/system/stroppy-agent.service
+    content: |
+      [Unit]
+      Description=Stroppy Agent
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=simple
+      EnvironmentFile=/etc/stroppy/agent.env
+      ExecStartPre=/bin/sh -ec 'mkdir -p /usr/local/bin && curl -fsSL --retry 30 --retry-delay 5 --retry-connrefused -o /usr/local/bin/stroppy-agent.tmp "$STROPPY_AGENT_BINARY_URL" && chmod +x /usr/local/bin/stroppy-agent.tmp && mv /usr/local/bin/stroppy-agent.tmp /usr/local/bin/stroppy-agent'
+      ExecStart=/usr/local/bin/stroppy-agent agent
+      Restart=always
+      RestartSec=2
+      StartLimitIntervalSec=0
+
+      [Install]
+      WantedBy=multi-user.target
+
+runcmd:
+  - mkdir -p /etc/stroppy
+  - mkdir -p /usr/local/bin
+  - curl -fsSL --retry 30 --retry-delay 5 --retry-connrefused -o /usr/local/bin/stroppy-agent.tmp "http://server:8080/agent/binary" && chmod +x /usr/local/bin/stroppy-agent.tmp && mv /usr/local/bin/stroppy-agent.tmp /usr/local/bin/stroppy-agent
+  - systemctl daemon-reload
+  - systemctl enable --now stroppy-agent
+`
+
+func TestCloudInitNomadNoneIsByteIdenticalToPreNomadTemplate(t *testing.T) {
+	cloudInit, err := CloudInit("node-1", Bootstrap{ServerAddr: "http://server:8080"}, CloudInitOptions{
+		SSHUser:      "stroppy",
+		SSHPublicKey: "ssh-rsa test",
+	})
+	if err != nil {
+		t.Fatalf("cloud-init: %v", err)
+	}
+	if cloudInit != cloudInitNonePathGolden {
+		t.Fatalf("cloud-init changed for NomadRoleNone (default path):\ngot:\n%s\nwant:\n%s", cloudInit, cloudInitNonePathGolden)
+	}
+}
+
+func TestCloudInitNomadClientRendersClientHCLAndInstall(t *testing.T) {
+	cloudInit, err := CloudInit("node-1", Bootstrap{
+		ServerAddr:      "http://server:8080",
+		NomadRole:       NomadRoleClient,
+		NomadServerAddr: "10.0.0.1:4647",
+	}, CloudInitOptions{SSHUser: "stroppy"})
+	if err != nil {
+		t.Fatalf("cloud-init: %v", err)
+	}
+
+	for _, want := range []string{
+		"/etc/nomad.d/client.hcl",
+		`datacenter = "dc1"`,
+		"client {",
+		`servers = ["10.0.0.1:4647"]`,
+		"meta {",
+		`stroppy_node_id = "node-1"`,
+		"nomad.service",
+		"ExecStart=/usr/local/bin/nomad agent -config=/etc/nomad.d",
+		"https://releases.hashicorp.com/nomad/" + DefaultNomadVersion + "/nomad_" + DefaultNomadVersion + "_linux_amd64.zip",
+		"systemctl enable --now nomad",
+	} {
+		if !strings.Contains(cloudInit, want) {
+			t.Fatalf("cloud-init missing %q:\n%s", want, cloudInit)
+		}
+	}
+	if strings.Contains(cloudInit, "server.hcl") {
+		t.Fatalf("client cloud-init unexpectedly contains server.hcl:\n%s", cloudInit)
+	}
+	if strings.Contains(cloudInit, "bootstrap_expect") {
+		t.Fatalf("client cloud-init unexpectedly contains bootstrap_expect:\n%s", cloudInit)
+	}
+}
+
+func TestCloudInitNomadServerRendersServerHCLAndInstall(t *testing.T) {
+	cloudInit, err := CloudInit("node-1", Bootstrap{
+		ServerAddr: "http://server:8080",
+		NomadRole:  NomadRoleServer,
+	}, CloudInitOptions{SSHUser: "stroppy"})
+	if err != nil {
+		t.Fatalf("cloud-init: %v", err)
+	}
+
+	for _, want := range []string{
+		"/etc/nomad.d/server.hcl",
+		`datacenter = "dc1"`,
+		"server {",
+		"bootstrap_expect = 1",
+		"client {",
+		"enabled = true",
+		"nomad.service",
+		"systemctl enable --now nomad",
+	} {
+		if !strings.Contains(cloudInit, want) {
+			t.Fatalf("cloud-init missing %q:\n%s", want, cloudInit)
+		}
+	}
+	if strings.Contains(cloudInit, "client.hcl") {
+		t.Fatalf("server cloud-init unexpectedly contains client.hcl:\n%s", cloudInit)
+	}
+}
+
 func TestAptProxyURLAddsExplicitDefaultProxyPort(t *testing.T) {
 	proxyURL := AptProxyURL("http://caddy")
 	if got, want := proxyURL, "http://caddy:80"; got != want {

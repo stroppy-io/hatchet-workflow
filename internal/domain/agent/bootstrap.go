@@ -16,6 +16,47 @@ const (
 	DockerAptProxyFilePath    = "/etc/apt/apt.conf.d/90stroppy-proxy"
 	CloudInitEnvFilePath      = "/etc/stroppy/agent.env"
 	DefaultAgentBinaryPathURL = "/agent/binary"
+
+	// NomadDatacenter is the only Nomad datacenter stroppy clusters use. It
+	// MUST match nomad's defaultDatacenter (internal/dsl/nomad/jobspec.go):
+	// BuildJob's job carries Datacenters: []string{"dc1"}, and a Nomad client
+	// only ever picks up work from a server whose datacenter it shares.
+	NomadDatacenter = "dc1"
+
+	// nomadDataDir is where the Nomad agent stores its local state.
+	nomadDataDir = "/opt/nomad/data"
+
+	// nomadConfigDir/nomadBinPath/nomadServiceUnit describe where the
+	// installed binary, config, and systemd unit live on the node.
+	nomadConfigDir     = "/etc/nomad.d"
+	nomadBinPath       = "/usr/local/bin/nomad"
+	nomadServiceUnit   = "/etc/systemd/system/nomad.service"
+	nomadServerHCLPath = nomadConfigDir + "/server.hcl"
+	nomadClientHCLPath = nomadConfigDir + "/client.hcl"
+
+	// DefaultNomadVersion pins the Nomad release installed by cloud-init when
+	// no explicit Bootstrap.NomadVersion is set. Bump deliberately (and retest
+	// against the target Nomad server version) — it is deploy-gated (see
+	// renderNomadInstall doc).
+	DefaultNomadVersion = "1.9.3"
+)
+
+// NomadRole selects which Nomad agent cloud-init installs and configures on
+// the node, if any.
+type NomadRole string
+
+const (
+	// NomadRoleNone means cloud-init installs no Nomad agent at all (today's
+	// default and only behavior for every existing caller).
+	NomadRoleNone NomadRole = ""
+	// NomadRoleServer configures a single-node dev-style Nomad server that
+	// also runs the client subsystem colocated (server+client enabled,
+	// bootstrap_expect=1) — this is the gateway/control node.
+	NomadRoleServer NomadRole = "server"
+	// NomadRoleClient configures a Nomad client that joins NomadServerAddr
+	// and stamps meta.stroppy_node_id so nomad's BuildJob per-node
+	// constraint (${meta.stroppy_node_id} == NodeID) can place work on it.
+	NomadRoleClient NomadRole = "client"
 )
 
 var blockedExtraEnv = map[string]struct{}{
@@ -48,6 +89,20 @@ type Bootstrap struct {
 	ExtraEnv          map[string]string
 	AgentToken        string
 	AgentTaskQueue    string
+
+	// NomadRole, when set, makes CloudInit additionally install and
+	// configure a Nomad agent on the node (see NomadRole for the
+	// server/client distinction). Zero value (NomadRoleNone) installs no
+	// Nomad agent — CloudInit's output for that case is unchanged from
+	// before Nomad support existed.
+	NomadRole NomadRole
+	// NomadServerAddr is the Nomad server's advertise address
+	// ("<gateway-private-ip>:4647") that a NomadRoleClient node joins. Unused
+	// for NomadRoleServer (the server is its own coordinator).
+	NomadServerAddr string
+	// NomadVersion pins the Nomad release cloud-init installs. Empty selects
+	// DefaultNomadVersion.
+	NomadVersion string
 }
 
 type CloudInitOptions struct {
@@ -133,20 +188,56 @@ func CloudInit(machineID string, bootstrap Bootstrap, options CloudInitOptions) 
 		aptProxyConfig = indent(aptProxyConfig, 6)
 	}
 
+	nomadEnabled := bootstrap.NomadRole != NomadRoleNone
+	var nomadHCLPath, nomadHCLContent, nomadVersion, nomadZipURL string
+	if nomadEnabled {
+		nomadVersion = bootstrap.NomadVersion
+		if nomadVersion == "" {
+			nomadVersion = DefaultNomadVersion
+		}
+		nomadZipURL = fmt.Sprintf(
+			"https://releases.hashicorp.com/nomad/%s/nomad_%s_linux_amd64.zip",
+			nomadVersion, nomadVersion,
+		)
+		switch bootstrap.NomadRole {
+		case NomadRoleNone:
+			// unreachable: nomadEnabled is only true when NomadRole != NomadRoleNone.
+		case NomadRoleServer:
+			nomadHCLPath = nomadServerHCLPath
+		case NomadRoleClient:
+			nomadHCLPath = nomadClientHCLPath
+		}
+		nomadHCLContent = indent(renderNomadHCL(bootstrap.NomadRole, bootstrap.NomadServerAddr, machineID), 6)
+	}
+
 	data := struct {
-		SSHUser        string
-		SSHPublicKey   string
-		EnvFile        string
-		BinaryURL      string
-		BinPath        string
-		AptProxyConfig string
+		SSHUser          string
+		SSHPublicKey     string
+		EnvFile          string
+		BinaryURL        string
+		BinPath          string
+		AptProxyConfig   string
+		NomadEnabled     bool
+		NomadHCLPath     string
+		NomadHCLContent  string
+		NomadZipURL      string
+		NomadBinPath     string
+		NomadConfigDir   string
+		NomadServiceUnit string
 	}{
-		SSHUser:        sshUser,
-		SSHPublicKey:   options.SSHPublicKey,
-		EnvFile:        indent(EnvFileFromMap(env), 6),
-		BinaryURL:      env["STROPPY_AGENT_BINARY_URL"],
-		BinPath:        RemoteBinPath,
-		AptProxyConfig: aptProxyConfig,
+		SSHUser:          sshUser,
+		SSHPublicKey:     options.SSHPublicKey,
+		EnvFile:          indent(EnvFileFromMap(env), 6),
+		BinaryURL:        env["STROPPY_AGENT_BINARY_URL"],
+		BinPath:          RemoteBinPath,
+		AptProxyConfig:   aptProxyConfig,
+		NomadEnabled:     nomadEnabled,
+		NomadHCLPath:     nomadHCLPath,
+		NomadHCLContent:  nomadHCLContent,
+		NomadZipURL:      nomadZipURL,
+		NomadBinPath:     nomadBinPath,
+		NomadConfigDir:   nomadConfigDir,
+		NomadServiceUnit: nomadServiceUnit,
 	}
 
 	var buf bytes.Buffer
@@ -154,6 +245,49 @@ func CloudInit(machineID string, bootstrap Bootstrap, options CloudInitOptions) 
 		return "", fmt.Errorf("agent bootstrap: render cloud-init: %w", err)
 	}
 	return buf.String(), nil
+}
+
+// renderNomadHCL renders the /etc/nomad.d/{server,client}.hcl content for
+// role. serverAddr is the Nomad server's advertise address a client joins
+// (ignored for NomadRoleServer); machineID is stamped into a client's
+// meta.stroppy_node_id so nomad.BuildJob's per-node placement constraint
+// (${meta.stroppy_node_id} == NodeID, see internal/dsl/nomad/jobspec.go) can
+// match this node. Both roles share NomadDatacenter ("dc1") — jobspec.go's
+// BuildJob only ever targets that one datacenter, and a Nomad client that
+// advertised a different one would never be offered stroppy's jobs.
+func renderNomadHCL(role NomadRole, serverAddr, machineID string) string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "datacenter = %q\n", NomadDatacenter)
+	fmt.Fprintf(&b, "data_dir   = %q\n\n", nomadDataDir)
+
+	switch role {
+	case NomadRoleNone:
+		// renderNomadHCL is only called when role != NomadRoleNone; nothing
+		// to add for this case.
+	case NomadRoleServer:
+		b.WriteString("server {\n")
+		b.WriteString("  enabled          = true\n")
+		b.WriteString("  bootstrap_expect = 1\n")
+		b.WriteString("}\n\n")
+		b.WriteString("client {\n")
+		b.WriteString("  enabled = true\n")
+		b.WriteString("}\n\n")
+	case NomadRoleClient:
+		b.WriteString("client {\n")
+		b.WriteString("  enabled = true\n")
+		fmt.Fprintf(&b, "  servers = [%q]\n\n", serverAddr)
+		b.WriteString("  meta {\n")
+		fmt.Fprintf(&b, "    stroppy_node_id = %q\n", machineID)
+		b.WriteString("  }\n")
+		b.WriteString("}\n\n")
+	}
+
+	b.WriteString("plugin \"docker\" {\n")
+	b.WriteString("  config {\n")
+	b.WriteString("    allow_privileged = true\n")
+	b.WriteString("  }\n")
+	b.WriteString("}\n")
+	return b.String()
 }
 
 var cloudInitTmpl = template.Must(template.New("cloudinit").Parse(`#cloud-config
@@ -194,6 +328,28 @@ write_files:
 
       [Install]
       WantedBy=multi-user.target
+{{- if .NomadEnabled}}
+  - path: {{.NomadHCLPath}}
+    content: |
+{{.NomadHCLContent}}
+  - path: {{.NomadServiceUnit}}
+    content: |
+      [Unit]
+      Description=Nomad
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=simple
+      ExecStart={{.NomadBinPath}} agent -config={{.NomadConfigDir}}
+      Restart=always
+      RestartSec=2
+      StartLimitIntervalSec=0
+      LimitNOFILE=65536
+
+      [Install]
+      WantedBy=multi-user.target
+{{- end}}
 
 runcmd:
   - mkdir -p /etc/stroppy
@@ -201,6 +357,12 @@ runcmd:
   - curl -fsSL --retry 30 --retry-delay 5 --retry-connrefused -o {{.BinPath}}.tmp "{{.BinaryURL}}" && chmod +x {{.BinPath}}.tmp && mv {{.BinPath}}.tmp {{.BinPath}}
   - systemctl daemon-reload
   - systemctl enable --now stroppy-agent
+{{- if .NomadEnabled}}
+  - mkdir -p {{.NomadConfigDir}}
+  - curl -fsSL --retry 30 --retry-delay 5 --retry-connrefused -o /tmp/nomad.zip "{{.NomadZipURL}}" && unzip -o /tmp/nomad.zip -d /usr/local/bin && chmod +x {{.NomadBinPath}} && rm -f /tmp/nomad.zip
+  - systemctl daemon-reload
+  - systemctl enable --now nomad
+{{- end}}
 `))
 
 func indent(s string, spaces int) string {
