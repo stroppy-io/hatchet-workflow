@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -24,15 +25,19 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
 
+	yandextf "github.com/stroppy-io/stroppy-cloud/deployments/terraform/yandex"
 	agentdomain "github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
 	domsettings "github.com/stroppy-io/stroppy-cloud/internal/domain/settings"
 	"github.com/stroppy-io/stroppy-cloud/internal/gateway"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/adapters"
+	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/docker"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/execution"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/identity"
 	networkinfra "github.com/stroppy-io/stroppy-cloud/internal/infrastructure/networks"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres"
+	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/provider"
 	quotainfra "github.com/stroppy-io/stroppy-cloud/internal/infrastructure/quotas"
+	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/terraform"
 	"github.com/stroppy-io/stroppy-cloud/internal/openapidoc"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/agent/agentconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
@@ -530,14 +535,61 @@ func Run(ctx context.Context, cfg Config) error {
 	dslService := dslsvc.NewDslService()
 
 	// recipeWorkflows launches RunRecipeWorkflow for RecipeService.StartRun.
-	// Note: the worker started below (RegisterWorkflows) registers
-	// RunRecipeWorkflow itself unconditionally, but its three by-name
-	// activities (CompileRecipeActivity/ProvisionActivity/TeardownActivity —
-	// see internal/workflows/register.go's RegisterRecipeActivities) are not
-	// yet wired here: that needs a provider.Deps this app wiring does not
-	// build today. A launched recipe run will start but stall on its first
-	// activity call until that follow-up wiring lands.
 	recipeWorkflows := execution.NewRecipeWorkflows(tc, resolver, log)
+
+	// recipeActivities backs RunRecipeWorkflow's three by-name activities
+	// (CompileRecipeActivity/ProvisionActivity/TeardownActivity — see
+	// internal/workflows/register.go's RegisterRecipeActivities) with the
+	// real provider executors: a docker.Executor for the builtin "docker"
+	// provider and a terraform.Actor for terraform-module providers (today
+	// only the builtin "yandex" module, resolved through ModuleDir below).
+	// Neither the old (pre-DSL-pivot) deployment flow nor any other app
+	// wiring constructs these today, so this is their first real
+	// construction site; recipe-supplied provider modules (phase 1A recipe
+	// storage) are a later ModuleDir extension, not needed for the builtin
+	// providers wired here.
+	dockerExecutor, err := docker.NewExecutor()
+	if err != nil {
+		return fmt.Errorf("docker executor: %w", err)
+	}
+	terraformActor, err := terraform.NewActor()
+	if err != nil {
+		return fmt.Errorf("terraform actor: %w", err)
+	}
+	// providerEnv carries the control-plane's own Yandex Cloud credentials,
+	// applied to every terraform apply/destroy a recipe run's provisioning
+	// triggers. Sourced straight from the process environment — the same
+	// "terraform + YC_TOKEN env vars, never yc CLI" convention used
+	// elsewhere in this deployment (yandexEnv in
+	// internal/workflows/provider_render.go instead derives its own
+	// per-run YC_TOKEN from the DeploymentPlan's Yandex_Settings, since
+	// that old flow carries tenant-supplied credentials through the plan;
+	// no equivalent per-run credential path exists yet for the DSL
+	// ProviderRef, so a single control-plane-wide credential set is this
+	// wiring's v1). Unset/empty is fine for docker-only dev/test —
+	// ModuleDir below is only ever consulted for a non-"docker" ProviderRef.
+	providerEnv := map[string]string{
+		"YC_TOKEN":     os.Getenv("YC_TOKEN"),
+		"YC_CLOUD_ID":  os.Getenv("YC_CLOUD_ID"),
+		"YC_FOLDER_ID": os.Getenv("YC_FOLDER_ID"),
+		"YC_ZONE":      os.Getenv("YC_ZONE"),
+	}
+	providerDeps := provider.Deps{
+		DockerExec: provider.NewDockerExecutorExec(dockerExecutor),
+		Actor:      terraformActor,
+		Env:        providerEnv,
+		ModuleDir: func(name string) (string, []terraform.TfFile, bool) {
+			if name != "yandex" {
+				return "", nil, false
+			}
+			files, err := yandextf.EmbeddedTfFiles()
+			if err != nil {
+				return "", nil, false
+			}
+			return "yandex", files, true
+		},
+	}
+	recipeActivities := execution.NewRecipeActivities(providerDeps)
 	recipeService := recipesvc.NewService(recipesvc.Deps{
 		Repo:      store.Recipes(),
 		Authn:     authn,
@@ -792,6 +844,7 @@ func Run(ctx context.Context, cfg Config) error {
 	w := worker.New(tc, "stroppy-cloud", worker.Options{})
 	workflows.RegisterWorkflows(w, workflows.DefaultOptions())
 	workflows.RegisterActivities(w, runtimeActivities, workflows.ActivityOptions{Quotas: quotaManager, Networks: networkManager, Logs: runLogWriter})
+	workflows.RegisterRecipeActivities(w, recipeActivities)
 	if err := w.Start(); err != nil {
 		return fmt.Errorf("start temporal worker: %w", err)
 	}
