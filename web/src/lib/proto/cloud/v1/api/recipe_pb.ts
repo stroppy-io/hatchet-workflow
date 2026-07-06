@@ -12,6 +12,8 @@ import { file_cloud_v1_iam_options } from "../iam/options_pb.ts";
 import { file_cloud_v1_iam_permission } from "../iam/permission_pb.ts";
 import type { RecipeRecord, RecipeRecordJson } from "../models/recipe_pb.ts";
 import { file_cloud_v1_models_recipe } from "../models/recipe_pb.ts";
+import type { TestRunRecord, TestRunRecordJson } from "../models/test_run_pb.ts";
+import { file_cloud_v1_models_test_run } from "../models/test_run_pb.ts";
 import { file_validate_validate } from "../../../validate/validate_pb.ts";
 import { file_ogen_ogen } from "../../../ogen/ogen_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
@@ -20,7 +22,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/api/recipe.proto.
  */
 export const file_cloud_v1_api_recipe: GenFile = /*@__PURE__*/
-  fileDesc("ChljbG91ZC92MS9hcGkvcmVjaXBlLnByb3RvEgxjbG91ZC52MS5hcGkibAoTQ3JlYXRlUmVjaXBlUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEGEAQARI3CgZyZWNpcGUYAiABKAsyHS5jbG91ZC52MS5tb2RlbHMuUmVjaXBlUmVjb3JkQgj6QgWKAQIQASJPChRDcmVhdGVSZWNpcGVSZXNwb25zZRI3CgZyZWNpcGUYASABKAsyHS5jbG91ZC52MS5tb2RlbHMuUmVjaXBlUmVjb3JkQgj6QgWKAQIQASJHChBHZXRSZWNpcGVSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhUKAmlkGAIgASgJQgn6QgZyBBABGEAiTAoRR2V0UmVjaXBlUmVzcG9uc2USNwoGcmVjaXBlGAEgASgLMh0uY2xvdWQudjEubW9kZWxzLlJlY2lwZVJlY29yZEII+kIFigECEAEihgEKEkxpc3RSZWNpcGVzUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBItCgZmaWx0ZXIYAiABKAsyHS5jbG91ZC52MS5jb21tb24uRW50aXR5RmlsdGVyEiMKBHBhZ2UYAyABKAsyFS5jbG91ZC52MS5jb21tb24uUGFnZSJeChNMaXN0UmVjaXBlc1Jlc3BvbnNlEi4KB3JlY2lwZXMYASADKAsyHS5jbG91ZC52MS5tb2RlbHMuUmVjaXBlUmVjb3JkEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSJKChNEZWxldGVSZWNpcGVSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhUKAmlkGAIgASgJQgn6QgZyBBABGEAiFgoURGVsZXRlUmVjaXBlUmVzcG9uc2UiSQoSQ2hlY2tSZWNpcGVSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhUKAmlkGAIgASgJQgn6QgZyBBABGEAiRAoTQ2hlY2tSZWNpcGVSZXNwb25zZRItCgtkaWFnbm9zdGljcxgBIAMoCzIYLmNsb3VkLnYxLmRzbC5EaWFnbm9zdGljMpcICg1SZWNpcGVTZXJ2aWNlEsgBCgxDcmVhdGVSZWNpcGUSIS5jbG91ZC52MS5hcGkuQ3JlYXRlUmVjaXBlUmVxdWVzdBoiLmNsb3VkLnYxLmFwaS5DcmVhdGVSZWNpcGVSZXNwb25zZSJxirUYBhIEEAEID/KnHWMaDi9jcmVhdGUtcmVjaXBlIgxjcmVhdGVSZWNpcGWiAQIQAbIBBwjIARICT0uyATEqHAoaIy9jb21wb25lbnRzL3NjaGVtYXMvRXJyb3ISEVVuZXhwZWN0ZWQgZXJyb3IuEAISvAEKCUdldFJlY2lwZRIeLmNsb3VkLnYxLmFwaS5HZXRSZWNpcGVSZXF1ZXN0Gh8uY2xvdWQudjEuYXBpLkdldFJlY2lwZVJlc3BvbnNlIm6QAgGKtRgGEgQIDxAC8qcdXRoLL2dldC1yZWNpcGUiCWdldFJlY2lwZaIBAhABsgEHCMgBEgJPS7IBMRIRVW5leHBlY3RlZCBlcnJvci4qHAoaIy9jb21wb25lbnRzL3NjaGVtYXMvRXJyb3IQARLGAQoLTGlzdFJlY2lwZXMSIC5jbG91ZC52MS5hcGkuTGlzdFJlY2lwZXNSZXF1ZXN0GiEuY2xvdWQudjEuYXBpLkxpc3RSZWNpcGVzUmVzcG9uc2UicpACAYq1GAYSBAgPEAXypx1hIgtsaXN0UmVjaXBlc6IBAhABsgEHCMgBEgJPS7IBMRIRVW5leHBlY3RlZCBlcnJvci4qHAoaIy9jb21wb25lbnRzL3NjaGVtYXMvRXJyb3IQARoNL2xpc3QtcmVjaXBlcxLLAQoMRGVsZXRlUmVjaXBlEiEuY2xvdWQudjEuYXBpLkRlbGV0ZVJlY2lwZVJlcXVlc3QaIi5jbG91ZC52MS5hcGkuRGVsZXRlUmVjaXBlUmVzcG9uc2UidJACAoq1GAYSBAgPEATypx1jEAIaDi9kZWxldGUtcmVjaXBlIgxkZWxldGVSZWNpcGWiAQIQAbIBBxICT0sIyAGyATEqHAoaIy9jb21wb25lbnRzL3NjaGVtYXMvRXJyb3ISEVVuZXhwZWN0ZWQgZXJyb3IuEsYBCgtDaGVja1JlY2lwZRIgLmNsb3VkLnYxLmFwaS5DaGVja1JlY2lwZVJlcXVlc3QaIS5jbG91ZC52MS5hcGkuQ2hlY2tSZWNpcGVSZXNwb25zZSJykAIBirUYBhIECA8QAvKnHWEiC2NoZWNrUmVjaXBlogECEAGyAQcIyAESAk9LsgExEhFVbmV4cGVjdGVkIGVycm9yLiocChojL2NvbXBvbmVudHMvc2NoZW1hcy9FcnJvchABGg0vY2hlY2stcmVjaXBlGhzypx0YGgZyZWNpcGUSDi9hcGkvdjEvcmVjaXBlQkdaP2dpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2FwafKnHQIIAWIGcHJvdG8z", [file_cloud_v1_common_entity, file_cloud_v1_dsl_service, file_cloud_v1_iam_options, file_cloud_v1_iam_permission, file_cloud_v1_models_recipe, file_validate_validate, file_ogen_ogen]);
+  fileDesc("ChljbG91ZC92MS9hcGkvcmVjaXBlLnByb3RvEgxjbG91ZC52MS5hcGkibAoTQ3JlYXRlUmVjaXBlUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEGEAQARI3CgZyZWNpcGUYAiABKAsyHS5jbG91ZC52MS5tb2RlbHMuUmVjaXBlUmVjb3JkQgj6QgWKAQIQASJPChRDcmVhdGVSZWNpcGVSZXNwb25zZRI3CgZyZWNpcGUYASABKAsyHS5jbG91ZC52MS5tb2RlbHMuUmVjaXBlUmVjb3JkQgj6QgWKAQIQASJHChBHZXRSZWNpcGVSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhUKAmlkGAIgASgJQgn6QgZyBBABGEAiTAoRR2V0UmVjaXBlUmVzcG9uc2USNwoGcmVjaXBlGAEgASgLMh0uY2xvdWQudjEubW9kZWxzLlJlY2lwZVJlY29yZEII+kIFigECEAEihgEKEkxpc3RSZWNpcGVzUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBItCgZmaWx0ZXIYAiABKAsyHS5jbG91ZC52MS5jb21tb24uRW50aXR5RmlsdGVyEiMKBHBhZ2UYAyABKAsyFS5jbG91ZC52MS5jb21tb24uUGFnZSJeChNMaXN0UmVjaXBlc1Jlc3BvbnNlEi4KB3JlY2lwZXMYASADKAsyHS5jbG91ZC52MS5tb2RlbHMuUmVjaXBlUmVjb3JkEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSJKChNEZWxldGVSZWNpcGVSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhUKAmlkGAIgASgJQgn6QgZyBBhAEAEiFgoURGVsZXRlUmVjaXBlUmVzcG9uc2UiSQoSQ2hlY2tSZWNpcGVSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhUKAmlkGAIgASgJQgn6QgZyBBABGEAiRAoTQ2hlY2tSZWNpcGVSZXNwb25zZRItCgtkaWFnbm9zdGljcxgBIAMoCzIYLmNsb3VkLnYxLmRzbC5EaWFnbm9zdGljIk0KD1N0YXJ0UnVuUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEGEAQARIcCglyZWNpcGVfaWQYAiABKAlCCfpCBnIEEAEYQCJJChBTdGFydFJ1blJlc3BvbnNlEjUKA3J1bhgBIAEoCzIeLmNsb3VkLnYxLm1vZGVscy5UZXN0UnVuUmVjb3JkQgj6QgWKAQIQATLUCQoNUmVjaXBlU2VydmljZRLIAQoMQ3JlYXRlUmVjaXBlEiEuY2xvdWQudjEuYXBpLkNyZWF0ZVJlY2lwZVJlcXVlc3QaIi5jbG91ZC52MS5hcGkuQ3JlYXRlUmVjaXBlUmVzcG9uc2UicYq1GAYSBAgPEAHypx1jogECEAGyAQcIyAESAk9LsgExEhFVbmV4cGVjdGVkIGVycm9yLiocChojL2NvbXBvbmVudHMvc2NoZW1hcy9FcnJvchACGg4vY3JlYXRlLXJlY2lwZSIMY3JlYXRlUmVjaXBlErwBCglHZXRSZWNpcGUSHi5jbG91ZC52MS5hcGkuR2V0UmVjaXBlUmVxdWVzdBofLmNsb3VkLnYxLmFwaS5HZXRSZWNpcGVSZXNwb25zZSJukAIBirUYBhIECA8QAvKnHV0QARoLL2dldC1yZWNpcGUiCWdldFJlY2lwZaIBAhABsgEHCMgBEgJPS7IBMRIRVW5leHBlY3RlZCBlcnJvci4qHAoaIy9jb21wb25lbnRzL3NjaGVtYXMvRXJyb3ISxgEKC0xpc3RSZWNpcGVzEiAuY2xvdWQudjEuYXBpLkxpc3RSZWNpcGVzUmVxdWVzdBohLmNsb3VkLnYxLmFwaS5MaXN0UmVjaXBlc1Jlc3BvbnNlInKQAgGKtRgGEgQIDxAF8qcdYRABGg0vbGlzdC1yZWNpcGVzIgtsaXN0UmVjaXBlc6IBAhABsgEHEgJPSwjIAbIBMRIRVW5leHBlY3RlZCBlcnJvci4qHAoaIy9jb21wb25lbnRzL3NjaGVtYXMvRXJyb3ISywEKDERlbGV0ZVJlY2lwZRIhLmNsb3VkLnYxLmFwaS5EZWxldGVSZWNpcGVSZXF1ZXN0GiIuY2xvdWQudjEuYXBpLkRlbGV0ZVJlY2lwZVJlc3BvbnNlInSQAgKKtRgGEgQIDxAE8qcdYxoOL2RlbGV0ZS1yZWNpcGUiDGRlbGV0ZVJlY2lwZaIBAhABsgEHCMgBEgJPS7IBMRIRVW5leHBlY3RlZCBlcnJvci4qHAoaIy9jb21wb25lbnRzL3NjaGVtYXMvRXJyb3IQAhLGAQoLQ2hlY2tSZWNpcGUSIC5jbG91ZC52MS5hcGkuQ2hlY2tSZWNpcGVSZXF1ZXN0GiEuY2xvdWQudjEuYXBpLkNoZWNrUmVjaXBlUmVzcG9uc2UicpACAYq1GAYSBBACCA/ypx1hEAEaDS9jaGVjay1yZWNpcGUiC2NoZWNrUmVjaXBlogECEAGyAQcIyAESAk9LsgExEhFVbmV4cGVjdGVkIGVycm9yLiocChojL2NvbXBvbmVudHMvc2NoZW1hcy9FcnJvchK6AQoIU3RhcnRSdW4SHS5jbG91ZC52MS5hcGkuU3RhcnRSdW5SZXF1ZXN0Gh4uY2xvdWQudjEuYXBpLlN0YXJ0UnVuUmVzcG9uc2Uib4q1GAwSBAgIEAESBBACCA/ypx1bEAIaCi9zdGFydC1ydW4iCHN0YXJ0UnVuogECEAGyAQcIyAESAk9LsgExKhwKGiMvY29tcG9uZW50cy9zY2hlbWFzL0Vycm9yEhFVbmV4cGVjdGVkIGVycm9yLhoc8qcdGBIOL2FwaS92MS9yZWNpcGUaBnJlY2lwZUJHWj9naXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9hcGnypx0CCAFiBnByb3RvMw", [file_cloud_v1_common_entity, file_cloud_v1_dsl_service, file_cloud_v1_iam_options, file_cloud_v1_iam_permission, file_cloud_v1_models_recipe, file_cloud_v1_models_test_run, file_validate_validate, file_ogen_ogen]);
 
 /**
  *
@@ -546,6 +548,112 @@ export const CheckRecipeResponseSchema: GenMessage<CheckRecipeResponse, {jsonTyp
 
 /**
  *
+ * StartRunRequest launches a new run of an already-stored recipe bundle.
+ *
+ * @generated from message cloud.v1.api.StartRunRequest
+ */
+export type StartRunRequest = Message<"cloud.v1.api.StartRunRequest"> & {
+  /**
+   *
+   * tenant_id scopes the request to the owning tenant.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   *
+   * recipe_id is the recipe record whose stored bundle is launched.
+   *
+   * @generated from field: string recipe_id = 2;
+   */
+  recipeId: string;
+};
+
+/**
+ *
+ * StartRunRequest launches a new run of an already-stored recipe bundle.
+ *
+ * @generated from message cloud.v1.api.StartRunRequest
+ */
+export type StartRunRequestJson = {
+  /**
+   *
+   * tenant_id scopes the request to the owning tenant.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId?: string;
+
+  /**
+   *
+   * recipe_id is the recipe record whose stored bundle is launched.
+   *
+   * @generated from field: string recipe_id = 2;
+   */
+  recipeId?: string;
+};
+
+export type StartRunRequestValid = StartRunRequest;
+
+/**
+ * Describes the message cloud.v1.api.StartRunRequest.
+ * Use `create(StartRunRequestSchema)` to create a new message.
+ */
+export const StartRunRequestSchema: GenMessage<StartRunRequest, {jsonType: StartRunRequestJson, validType: StartRunRequestValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_recipe, 10);
+
+/**
+ *
+ * StartRunResponse returns the persisted, launched run record. The run
+ * reuses models.TestRunRecord so overview/metrics/logs work unchanged for
+ * a recipe run; its spec/topology fields are left empty (a recipe run has
+ * no baked domain.TestRun — its input is the recipe bundle, carried by the
+ * launched RunRecipeWorkflow instead).
+ *
+ * @generated from message cloud.v1.api.StartRunResponse
+ */
+export type StartRunResponse = Message<"cloud.v1.api.StartRunResponse"> & {
+  /**
+   *
+   * run is the persisted, launched run record.
+   *
+   * @generated from field: cloud.v1.models.TestRunRecord run = 1;
+   */
+  run?: TestRunRecord;
+};
+
+/**
+ *
+ * StartRunResponse returns the persisted, launched run record. The run
+ * reuses models.TestRunRecord so overview/metrics/logs work unchanged for
+ * a recipe run; its spec/topology fields are left empty (a recipe run has
+ * no baked domain.TestRun — its input is the recipe bundle, carried by the
+ * launched RunRecipeWorkflow instead).
+ *
+ * @generated from message cloud.v1.api.StartRunResponse
+ */
+export type StartRunResponseJson = {
+  /**
+   *
+   * run is the persisted, launched run record.
+   *
+   * @generated from field: cloud.v1.models.TestRunRecord run = 1;
+   */
+  run?: TestRunRecordJson;
+};
+
+export type StartRunResponseValid = StartRunResponse;
+
+/**
+ * Describes the message cloud.v1.api.StartRunResponse.
+ * Use `create(StartRunResponseSchema)` to create a new message.
+ */
+export const StartRunResponseSchema: GenMessage<StartRunResponse, {jsonType: StartRunResponseJson, validType: StartRunResponseValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_recipe, 11);
+
+/**
+ *
  * RecipeService is the tenant-scoped CRUD + check API for persisted DSL
  * recipe bundles.
  *
@@ -609,6 +717,19 @@ export const RecipeService: GenService<{
     methodKind: "unary";
     input: typeof CheckRecipeRequestSchema;
     output: typeof CheckRecipeResponseSchema;
+  },
+  /**
+   *
+   * StartRun launches a new run of an already-stored recipe bundle: it
+   * persists a run record and starts RunRecipeWorkflow for it. Not
+   * idempotent — each call mints a new run.
+   *
+   * @generated from rpc cloud.v1.api.RecipeService.StartRun
+   */
+  startRun: {
+    methodKind: "unary";
+    input: typeof StartRunRequestSchema;
+    output: typeof StartRunResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_cloud_v1_api_recipe, 0);

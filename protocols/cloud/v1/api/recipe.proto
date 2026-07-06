@@ -345,6 +345,9 @@ service RecipeService {
             }
         };
 
-        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_RECIPE, action: ACTION_CREATE}]};
+        option (cloud.v1.iam.auth) = {all_of: [
+            {resource: RESOURCE_TEST_RUN, action: ACTION_CREATE},
+            {resource: RESOURCE_RECIPE, action: ACTION_READ}
+        ]};
     }
 }
