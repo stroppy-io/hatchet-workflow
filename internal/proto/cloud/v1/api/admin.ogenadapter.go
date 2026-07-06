@@ -2209,6 +2209,24 @@ func (a *OgenAdapter) SetTenantProviderSettings(ctx context.Context, req *rest.S
 	return nil
 }
 
+func (a *OgenAdapter) StartRun(ctx context.Context, req *rest.StartRunRequest) (*rest.StartRunResponse, error) {
+	in := &StartRunRequest{}
+	b, err := StartRunRequestFromOgen(req)
+	if err != nil {
+		return nil, err
+	}
+	in = b
+	resp, err := a.recipeService.StartRun(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+	out, err := resp.ToOgen()
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (a *OgenAdapter) StartSSO(ctx context.Context, req *rest.StartSSORequest) (*rest.StartSSOResponse, error) {
 	in := &StartSSORequest{}
 	b, err := StartSSORequestFromOgen(req)

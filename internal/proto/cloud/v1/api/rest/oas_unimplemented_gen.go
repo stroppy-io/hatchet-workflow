@@ -1188,6 +1188,17 @@ func (UnimplementedHandler) SetTenantProviderSettings(ctx context.Context, req *
 	return ht.ErrNotImplemented
 }
 
+// StartRun implements startRun operation.
+//
+// StartRun launches a new run of an already-stored recipe bundle: it
+// persists a run record and starts RunRecipeWorkflow for it. Not
+// idempotent — each call mints a new run.
+//
+// POST /api/v1/recipe/start-run
+func (UnimplementedHandler) StartRun(ctx context.Context, req *StartRunRequest) (r *StartRunResponse, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // StartSSO implements startSSO operation.
 //
 // StartSSO returns the IdP authorize URL. Public. Not idempotent: each call

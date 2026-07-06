@@ -326,3 +326,57 @@ func ListRecipesResponseFromOgen(src *rest.ListRecipesResponse) (*ListRecipesRes
 	}
 	return dst, nil
 }
+
+// ToOgen converts StartRunRequest to its ogen representation.
+func (src *StartRunRequest) ToOgen() (*rest.StartRunRequest, error) {
+	var dst rest.StartRunRequest
+	if src == nil {
+		return &dst, nil
+	}
+	dst.TenantId.SetTo(string(src.GetTenantId()))
+	dst.RecipeId.SetTo(string(src.GetRecipeId()))
+	return &dst, nil
+}
+
+// StartRunRequestFromOgen converts the ogen representation back to StartRunRequest.
+func StartRunRequestFromOgen(src *rest.StartRunRequest) (*StartRunRequest, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &StartRunRequest{}
+	if v1, ok := src.TenantId.Get(); ok {
+		dst.TenantId = string(v1)
+	}
+	if v2, ok := src.RecipeId.Get(); ok {
+		dst.RecipeId = string(v2)
+	}
+	return dst, nil
+}
+
+// ToOgen converts StartRunResponse to its ogen representation.
+func (src *StartRunResponse) ToOgen() (*rest.StartRunResponse, error) {
+	var dst rest.StartRunResponse
+	if src == nil {
+		return &dst, nil
+	}
+	o1, err := TestRunRecordToOgen(src.GetRun())
+	if err != nil {
+		return nil, err
+	}
+	dst.Run = *o1
+	return &dst, nil
+}
+
+// StartRunResponseFromOgen converts the ogen representation back to StartRunResponse.
+func StartRunResponseFromOgen(src *rest.StartRunResponse) (*StartRunResponse, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &StartRunResponse{}
+	m1, err := TestRunRecordFromOgen(&src.Run)
+	if err != nil {
+		return nil, err
+	}
+	dst.Run = m1
+	return dst, nil
+}

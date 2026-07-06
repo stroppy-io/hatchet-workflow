@@ -43991,18 +43991,18 @@ func (s *OptSummary5) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
-// Encode encodes Summary5LastRunStatus as json.
-func (o OptSummary5LastRunStatus) Encode(e *jx.Encoder) {
+// Encode encodes Summary5DbKind as json.
+func (o OptSummary5DbKind) Encode(e *jx.Encoder) {
 	if !o.Set {
 		return
 	}
 	e.Int32(int32(o.Value))
 }
 
-// Decode decodes Summary5LastRunStatus from json.
-func (o *OptSummary5LastRunStatus) Decode(d *jx.Decoder) error {
+// Decode decodes Summary5DbKind from json.
+func (o *OptSummary5DbKind) Decode(d *jx.Decoder) error {
 	if o == nil {
-		return errors.New("invalid: unable to decode OptSummary5LastRunStatus to nil")
+		return errors.New("invalid: unable to decode OptSummary5DbKind to nil")
 	}
 	o.Set = true
 	if err := o.Value.Decode(d); err != nil {
@@ -44012,14 +44012,80 @@ func (o *OptSummary5LastRunStatus) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s OptSummary5LastRunStatus) MarshalJSON() ([]byte, error) {
+func (s OptSummary5DbKind) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *OptSummary5LastRunStatus) UnmarshalJSON(data []byte) error {
+func (s *OptSummary5DbKind) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes Summary5Provider as json.
+func (o OptSummary5Provider) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Int32(int32(o.Value))
+}
+
+// Decode decodes Summary5Provider from json.
+func (o *OptSummary5Provider) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptSummary5Provider to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptSummary5Provider) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptSummary5Provider) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes Summary5WorkloadProtocol as json.
+func (o OptSummary5WorkloadProtocol) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Int32(int32(o.Value))
+}
+
+// Decode decodes Summary5WorkloadProtocol from json.
+func (o *OptSummary5WorkloadProtocol) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptSummary5WorkloadProtocol to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptSummary5WorkloadProtocol) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptSummary5WorkloadProtocol) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -44057,18 +44123,18 @@ func (s *OptSummary6) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
-// Encode encodes Summary6Provider as json.
-func (o OptSummary6Provider) Encode(e *jx.Encoder) {
+// Encode encodes Summary6LastRunStatus as json.
+func (o OptSummary6LastRunStatus) Encode(e *jx.Encoder) {
 	if !o.Set {
 		return
 	}
 	e.Int32(int32(o.Value))
 }
 
-// Decode decodes Summary6Provider from json.
-func (o *OptSummary6Provider) Decode(d *jx.Decoder) error {
+// Decode decodes Summary6LastRunStatus from json.
+func (o *OptSummary6LastRunStatus) Decode(d *jx.Decoder) error {
 	if o == nil {
-		return errors.New("invalid: unable to decode OptSummary6Provider to nil")
+		return errors.New("invalid: unable to decode OptSummary6LastRunStatus to nil")
 	}
 	o.Set = true
 	if err := o.Value.Decode(d); err != nil {
@@ -44078,14 +44144,14 @@ func (o *OptSummary6Provider) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s OptSummary6Provider) MarshalJSON() ([]byte, error) {
+func (s OptSummary6LastRunStatus) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *OptSummary6Provider) UnmarshalJSON(data []byte) error {
+func (s *OptSummary6LastRunStatus) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -44123,39 +44189,6 @@ func (s *OptSummary7) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
-// Encode encodes Summary7DbKind as json.
-func (o OptSummary7DbKind) Encode(e *jx.Encoder) {
-	if !o.Set {
-		return
-	}
-	e.Int32(int32(o.Value))
-}
-
-// Decode decodes Summary7DbKind from json.
-func (o *OptSummary7DbKind) Decode(d *jx.Decoder) error {
-	if o == nil {
-		return errors.New("invalid: unable to decode OptSummary7DbKind to nil")
-	}
-	o.Set = true
-	if err := o.Value.Decode(d); err != nil {
-		return err
-	}
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s OptSummary7DbKind) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *OptSummary7DbKind) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
 // Encode encodes Summary7Provider as json.
 func (o OptSummary7Provider) Encode(e *jx.Encoder) {
 	if !o.Set {
@@ -44185,39 +44218,6 @@ func (s OptSummary7Provider) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OptSummary7Provider) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes Summary7WorkloadProtocol as json.
-func (o OptSummary7WorkloadProtocol) Encode(e *jx.Encoder) {
-	if !o.Set {
-		return
-	}
-	e.Int32(int32(o.Value))
-}
-
-// Decode decodes Summary7WorkloadProtocol from json.
-func (o *OptSummary7WorkloadProtocol) Decode(d *jx.Decoder) error {
-	if o == nil {
-		return errors.New("invalid: unable to decode OptSummary7WorkloadProtocol to nil")
-	}
-	o.Set = true
-	if err := o.Value.Decode(d); err != nil {
-		return err
-	}
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s OptSummary7WorkloadProtocol) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *OptSummary7WorkloadProtocol) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -63071,6 +63071,180 @@ func (s *StageStatus) UnmarshalJSON(data []byte) error {
 }
 
 // Encode implements json.Marshaler.
+func (s *StartRunRequest) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *StartRunRequest) encodeFields(e *jx.Encoder) {
+	{
+		if s.RecipeId.Set {
+			e.FieldStart("recipeId")
+			s.RecipeId.Encode(e)
+		}
+	}
+	{
+		if s.TenantId.Set {
+			e.FieldStart("tenantId")
+			s.TenantId.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfStartRunRequest = [2]string{
+	0: "recipeId",
+	1: "tenantId",
+}
+
+// Decode decodes StartRunRequest from json.
+func (s *StartRunRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode StartRunRequest to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "recipeId":
+			if err := func() error {
+				s.RecipeId.Reset()
+				if err := s.RecipeId.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"recipeId\"")
+			}
+		case "tenantId":
+			if err := func() error {
+				s.TenantId.Reset()
+				if err := s.TenantId.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"tenantId\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode StartRunRequest")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *StartRunRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *StartRunRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *StartRunResponse) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *StartRunResponse) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("run")
+		s.Run.Encode(e)
+	}
+}
+
+var jsonFieldsNameOfStartRunResponse = [1]string{
+	0: "run",
+}
+
+// Decode decodes StartRunResponse from json.
+func (s *StartRunResponse) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode StartRunResponse to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "run":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Run.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"run\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode StartRunResponse")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000001,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfStartRunResponse) {
+					name = jsonFieldsNameOfStartRunResponse[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *StartRunResponse) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *StartRunResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
 func (s *StartSSORequest) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
@@ -66544,528 +66718,6 @@ func (s *Summary5) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *Summary5) encodeFields(e *jx.Encoder) {
 	{
-		if s.CellCount.Set {
-			e.FieldStart("cellCount")
-			s.CellCount.Encode(e)
-		}
-	}
-	{
-		if s.Cron.Set {
-			e.FieldStart("cron")
-			s.Cron.Encode(e)
-		}
-	}
-	{
-		if s.LastRunAt.Set {
-			e.FieldStart("lastRunAt")
-			s.LastRunAt.Encode(e, json.EncodeDateTime)
-		}
-	}
-	{
-		if s.LastRunStatus.Set {
-			e.FieldStart("lastRunStatus")
-			s.LastRunStatus.Encode(e)
-		}
-	}
-	{
-		if s.NextRunAt.Set {
-			e.FieldStart("nextRunAt")
-			s.NextRunAt.Encode(e, json.EncodeDateTime)
-		}
-	}
-	{
-		if s.RunCount.Set {
-			e.FieldStart("runCount")
-			s.RunCount.Encode(e)
-		}
-	}
-	{
-		if s.ScheduleEnabled.Set {
-			e.FieldStart("scheduleEnabled")
-			s.ScheduleEnabled.Encode(e)
-		}
-	}
-}
-
-var jsonFieldsNameOfSummary5 = [7]string{
-	0: "cellCount",
-	1: "cron",
-	2: "lastRunAt",
-	3: "lastRunStatus",
-	4: "nextRunAt",
-	5: "runCount",
-	6: "scheduleEnabled",
-}
-
-// Decode decodes Summary5 from json.
-func (s *Summary5) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode Summary5 to nil")
-	}
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "cellCount":
-			if err := func() error {
-				s.CellCount.Reset()
-				if err := s.CellCount.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"cellCount\"")
-			}
-		case "cron":
-			if err := func() error {
-				s.Cron.Reset()
-				if err := s.Cron.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"cron\"")
-			}
-		case "lastRunAt":
-			if err := func() error {
-				s.LastRunAt.Reset()
-				if err := s.LastRunAt.Decode(d, json.DecodeDateTime); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"lastRunAt\"")
-			}
-		case "lastRunStatus":
-			if err := func() error {
-				s.LastRunStatus.Reset()
-				if err := s.LastRunStatus.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"lastRunStatus\"")
-			}
-		case "nextRunAt":
-			if err := func() error {
-				s.NextRunAt.Reset()
-				if err := s.NextRunAt.Decode(d, json.DecodeDateTime); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"nextRunAt\"")
-			}
-		case "runCount":
-			if err := func() error {
-				s.RunCount.Reset()
-				if err := s.RunCount.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"runCount\"")
-			}
-		case "scheduleEnabled":
-			if err := func() error {
-				s.ScheduleEnabled.Reset()
-				if err := s.ScheduleEnabled.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"scheduleEnabled\"")
-			}
-		default:
-			return errors.Errorf("unexpected field %q", k)
-		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "decode Summary5")
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *Summary5) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *Summary5) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes Summary5LastRunStatus as json.
-func (s Summary5LastRunStatus) Encode(e *jx.Encoder) {
-	e.Int32(int32(s))
-}
-
-// Decode decodes Summary5LastRunStatus from json.
-func (s *Summary5LastRunStatus) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode Summary5LastRunStatus to nil")
-	}
-	v, err := d.Int32()
-	if err != nil {
-		return err
-	}
-	*s = Summary5LastRunStatus(v)
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s Summary5LastRunStatus) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *Summary5LastRunStatus) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *Summary6) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *Summary6) encodeFields(e *jx.Encoder) {
-	{
-		if s.Completed.Set {
-			e.FieldStart("completed")
-			s.Completed.Encode(e)
-		}
-	}
-	{
-		if s.DbKinds != nil {
-			e.FieldStart("dbKinds")
-			e.ArrStart()
-			for _, elem := range s.DbKinds {
-				elem.Encode(e)
-			}
-			e.ArrEnd()
-		}
-	}
-	{
-		if s.Duration.Set {
-			e.FieldStart("duration")
-			s.Duration.Encode(e)
-		}
-	}
-	{
-		if s.Failed.Set {
-			e.FieldStart("failed")
-			s.Failed.Encode(e)
-		}
-	}
-	{
-		if s.FinishedAt.Set {
-			e.FieldStart("finishedAt")
-			s.FinishedAt.Encode(e, json.EncodeDateTime)
-		}
-	}
-	{
-		if s.Pending.Set {
-			e.FieldStart("pending")
-			s.Pending.Encode(e)
-		}
-	}
-	{
-		if s.ProgressPct.Set {
-			e.FieldStart("progressPct")
-			s.ProgressPct.Encode(e)
-		}
-	}
-	{
-		if s.Provider.Set {
-			e.FieldStart("provider")
-			s.Provider.Encode(e)
-		}
-	}
-	{
-		if s.Running.Set {
-			e.FieldStart("running")
-			s.Running.Encode(e)
-		}
-	}
-	{
-		if s.StartedAt.Set {
-			e.FieldStart("startedAt")
-			s.StartedAt.Encode(e, json.EncodeDateTime)
-		}
-	}
-	{
-		if s.SuiteName.Set {
-			e.FieldStart("suiteName")
-			s.SuiteName.Encode(e)
-		}
-	}
-	{
-		if s.Total.Set {
-			e.FieldStart("total")
-			s.Total.Encode(e)
-		}
-	}
-}
-
-var jsonFieldsNameOfSummary6 = [12]string{
-	0:  "completed",
-	1:  "dbKinds",
-	2:  "duration",
-	3:  "failed",
-	4:  "finishedAt",
-	5:  "pending",
-	6:  "progressPct",
-	7:  "provider",
-	8:  "running",
-	9:  "startedAt",
-	10: "suiteName",
-	11: "total",
-}
-
-// Decode decodes Summary6 from json.
-func (s *Summary6) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode Summary6 to nil")
-	}
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "completed":
-			if err := func() error {
-				s.Completed.Reset()
-				if err := s.Completed.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"completed\"")
-			}
-		case "dbKinds":
-			if err := func() error {
-				s.DbKinds = make([]Summary6DbKindsItem, 0)
-				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem Summary6DbKindsItem
-					if err := elem.Decode(d); err != nil {
-						return err
-					}
-					s.DbKinds = append(s.DbKinds, elem)
-					return nil
-				}); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"dbKinds\"")
-			}
-		case "duration":
-			if err := func() error {
-				s.Duration.Reset()
-				if err := s.Duration.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"duration\"")
-			}
-		case "failed":
-			if err := func() error {
-				s.Failed.Reset()
-				if err := s.Failed.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"failed\"")
-			}
-		case "finishedAt":
-			if err := func() error {
-				s.FinishedAt.Reset()
-				if err := s.FinishedAt.Decode(d, json.DecodeDateTime); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"finishedAt\"")
-			}
-		case "pending":
-			if err := func() error {
-				s.Pending.Reset()
-				if err := s.Pending.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"pending\"")
-			}
-		case "progressPct":
-			if err := func() error {
-				s.ProgressPct.Reset()
-				if err := s.ProgressPct.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"progressPct\"")
-			}
-		case "provider":
-			if err := func() error {
-				s.Provider.Reset()
-				if err := s.Provider.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"provider\"")
-			}
-		case "running":
-			if err := func() error {
-				s.Running.Reset()
-				if err := s.Running.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"running\"")
-			}
-		case "startedAt":
-			if err := func() error {
-				s.StartedAt.Reset()
-				if err := s.StartedAt.Decode(d, json.DecodeDateTime); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"startedAt\"")
-			}
-		case "suiteName":
-			if err := func() error {
-				s.SuiteName.Reset()
-				if err := s.SuiteName.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"suiteName\"")
-			}
-		case "total":
-			if err := func() error {
-				s.Total.Reset()
-				if err := s.Total.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"total\"")
-			}
-		default:
-			return errors.Errorf("unexpected field %q", k)
-		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "decode Summary6")
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *Summary6) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *Summary6) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes Summary6DbKindsItem as json.
-func (s Summary6DbKindsItem) Encode(e *jx.Encoder) {
-	e.Int32(int32(s))
-}
-
-// Decode decodes Summary6DbKindsItem from json.
-func (s *Summary6DbKindsItem) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode Summary6DbKindsItem to nil")
-	}
-	v, err := d.Int32()
-	if err != nil {
-		return err
-	}
-	*s = Summary6DbKindsItem(v)
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s Summary6DbKindsItem) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *Summary6DbKindsItem) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes Summary6Provider as json.
-func (s Summary6Provider) Encode(e *jx.Encoder) {
-	e.Int32(int32(s))
-}
-
-// Decode decodes Summary6Provider from json.
-func (s *Summary6Provider) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode Summary6Provider to nil")
-	}
-	v, err := d.Int32()
-	if err != nil {
-		return err
-	}
-	*s = Summary6Provider(v)
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s Summary6Provider) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *Summary6Provider) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *Summary7) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *Summary7) encodeFields(e *jx.Encoder) {
-	{
 		if s.DbKind.Set {
 			e.FieldStart("dbKind")
 			s.DbKind.Encode(e)
@@ -67163,7 +66815,7 @@ func (s *Summary7) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfSummary7 = [16]string{
+var jsonFieldsNameOfSummary5 = [16]string{
 	0:  "dbKind",
 	1:  "dbPresetId",
 	2:  "dbPresetName",
@@ -67182,10 +66834,10 @@ var jsonFieldsNameOfSummary7 = [16]string{
 	15: "workloadProtocol",
 }
 
-// Decode decodes Summary7 from json.
-func (s *Summary7) Decode(d *jx.Decoder) error {
+// Decode decodes Summary5 from json.
+func (s *Summary5) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode Summary7 to nil")
+		return errors.New("invalid: unable to decode Summary5 to nil")
 	}
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
@@ -67355,6 +67007,560 @@ func (s *Summary7) Decode(d *jx.Decoder) error {
 		}
 		return nil
 	}); err != nil {
+		return errors.Wrap(err, "decode Summary5")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *Summary5) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *Summary5) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes Summary5DbKind as json.
+func (s Summary5DbKind) Encode(e *jx.Encoder) {
+	e.Int32(int32(s))
+}
+
+// Decode decodes Summary5DbKind from json.
+func (s *Summary5DbKind) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode Summary5DbKind to nil")
+	}
+	v, err := d.Int32()
+	if err != nil {
+		return err
+	}
+	*s = Summary5DbKind(v)
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s Summary5DbKind) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *Summary5DbKind) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes Summary5Provider as json.
+func (s Summary5Provider) Encode(e *jx.Encoder) {
+	e.Int32(int32(s))
+}
+
+// Decode decodes Summary5Provider from json.
+func (s *Summary5Provider) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode Summary5Provider to nil")
+	}
+	v, err := d.Int32()
+	if err != nil {
+		return err
+	}
+	*s = Summary5Provider(v)
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s Summary5Provider) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *Summary5Provider) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes Summary5WorkloadProtocol as json.
+func (s Summary5WorkloadProtocol) Encode(e *jx.Encoder) {
+	e.Int32(int32(s))
+}
+
+// Decode decodes Summary5WorkloadProtocol from json.
+func (s *Summary5WorkloadProtocol) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode Summary5WorkloadProtocol to nil")
+	}
+	v, err := d.Int32()
+	if err != nil {
+		return err
+	}
+	*s = Summary5WorkloadProtocol(v)
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s Summary5WorkloadProtocol) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *Summary5WorkloadProtocol) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *Summary6) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *Summary6) encodeFields(e *jx.Encoder) {
+	{
+		if s.CellCount.Set {
+			e.FieldStart("cellCount")
+			s.CellCount.Encode(e)
+		}
+	}
+	{
+		if s.Cron.Set {
+			e.FieldStart("cron")
+			s.Cron.Encode(e)
+		}
+	}
+	{
+		if s.LastRunAt.Set {
+			e.FieldStart("lastRunAt")
+			s.LastRunAt.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.LastRunStatus.Set {
+			e.FieldStart("lastRunStatus")
+			s.LastRunStatus.Encode(e)
+		}
+	}
+	{
+		if s.NextRunAt.Set {
+			e.FieldStart("nextRunAt")
+			s.NextRunAt.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.RunCount.Set {
+			e.FieldStart("runCount")
+			s.RunCount.Encode(e)
+		}
+	}
+	{
+		if s.ScheduleEnabled.Set {
+			e.FieldStart("scheduleEnabled")
+			s.ScheduleEnabled.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfSummary6 = [7]string{
+	0: "cellCount",
+	1: "cron",
+	2: "lastRunAt",
+	3: "lastRunStatus",
+	4: "nextRunAt",
+	5: "runCount",
+	6: "scheduleEnabled",
+}
+
+// Decode decodes Summary6 from json.
+func (s *Summary6) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode Summary6 to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "cellCount":
+			if err := func() error {
+				s.CellCount.Reset()
+				if err := s.CellCount.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"cellCount\"")
+			}
+		case "cron":
+			if err := func() error {
+				s.Cron.Reset()
+				if err := s.Cron.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"cron\"")
+			}
+		case "lastRunAt":
+			if err := func() error {
+				s.LastRunAt.Reset()
+				if err := s.LastRunAt.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"lastRunAt\"")
+			}
+		case "lastRunStatus":
+			if err := func() error {
+				s.LastRunStatus.Reset()
+				if err := s.LastRunStatus.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"lastRunStatus\"")
+			}
+		case "nextRunAt":
+			if err := func() error {
+				s.NextRunAt.Reset()
+				if err := s.NextRunAt.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"nextRunAt\"")
+			}
+		case "runCount":
+			if err := func() error {
+				s.RunCount.Reset()
+				if err := s.RunCount.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"runCount\"")
+			}
+		case "scheduleEnabled":
+			if err := func() error {
+				s.ScheduleEnabled.Reset()
+				if err := s.ScheduleEnabled.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"scheduleEnabled\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode Summary6")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *Summary6) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *Summary6) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes Summary6LastRunStatus as json.
+func (s Summary6LastRunStatus) Encode(e *jx.Encoder) {
+	e.Int32(int32(s))
+}
+
+// Decode decodes Summary6LastRunStatus from json.
+func (s *Summary6LastRunStatus) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode Summary6LastRunStatus to nil")
+	}
+	v, err := d.Int32()
+	if err != nil {
+		return err
+	}
+	*s = Summary6LastRunStatus(v)
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s Summary6LastRunStatus) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *Summary6LastRunStatus) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *Summary7) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *Summary7) encodeFields(e *jx.Encoder) {
+	{
+		if s.Completed.Set {
+			e.FieldStart("completed")
+			s.Completed.Encode(e)
+		}
+	}
+	{
+		if s.DbKinds != nil {
+			e.FieldStart("dbKinds")
+			e.ArrStart()
+			for _, elem := range s.DbKinds {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.Duration.Set {
+			e.FieldStart("duration")
+			s.Duration.Encode(e)
+		}
+	}
+	{
+		if s.Failed.Set {
+			e.FieldStart("failed")
+			s.Failed.Encode(e)
+		}
+	}
+	{
+		if s.FinishedAt.Set {
+			e.FieldStart("finishedAt")
+			s.FinishedAt.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.Pending.Set {
+			e.FieldStart("pending")
+			s.Pending.Encode(e)
+		}
+	}
+	{
+		if s.ProgressPct.Set {
+			e.FieldStart("progressPct")
+			s.ProgressPct.Encode(e)
+		}
+	}
+	{
+		if s.Provider.Set {
+			e.FieldStart("provider")
+			s.Provider.Encode(e)
+		}
+	}
+	{
+		if s.Running.Set {
+			e.FieldStart("running")
+			s.Running.Encode(e)
+		}
+	}
+	{
+		if s.StartedAt.Set {
+			e.FieldStart("startedAt")
+			s.StartedAt.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.SuiteName.Set {
+			e.FieldStart("suiteName")
+			s.SuiteName.Encode(e)
+		}
+	}
+	{
+		if s.Total.Set {
+			e.FieldStart("total")
+			s.Total.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfSummary7 = [12]string{
+	0:  "completed",
+	1:  "dbKinds",
+	2:  "duration",
+	3:  "failed",
+	4:  "finishedAt",
+	5:  "pending",
+	6:  "progressPct",
+	7:  "provider",
+	8:  "running",
+	9:  "startedAt",
+	10: "suiteName",
+	11: "total",
+}
+
+// Decode decodes Summary7 from json.
+func (s *Summary7) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode Summary7 to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "completed":
+			if err := func() error {
+				s.Completed.Reset()
+				if err := s.Completed.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"completed\"")
+			}
+		case "dbKinds":
+			if err := func() error {
+				s.DbKinds = make([]Summary7DbKindsItem, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem Summary7DbKindsItem
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.DbKinds = append(s.DbKinds, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"dbKinds\"")
+			}
+		case "duration":
+			if err := func() error {
+				s.Duration.Reset()
+				if err := s.Duration.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"duration\"")
+			}
+		case "failed":
+			if err := func() error {
+				s.Failed.Reset()
+				if err := s.Failed.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"failed\"")
+			}
+		case "finishedAt":
+			if err := func() error {
+				s.FinishedAt.Reset()
+				if err := s.FinishedAt.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"finishedAt\"")
+			}
+		case "pending":
+			if err := func() error {
+				s.Pending.Reset()
+				if err := s.Pending.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"pending\"")
+			}
+		case "progressPct":
+			if err := func() error {
+				s.ProgressPct.Reset()
+				if err := s.ProgressPct.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"progressPct\"")
+			}
+		case "provider":
+			if err := func() error {
+				s.Provider.Reset()
+				if err := s.Provider.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"provider\"")
+			}
+		case "running":
+			if err := func() error {
+				s.Running.Reset()
+				if err := s.Running.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"running\"")
+			}
+		case "startedAt":
+			if err := func() error {
+				s.StartedAt.Reset()
+				if err := s.StartedAt.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"startedAt\"")
+			}
+		case "suiteName":
+			if err := func() error {
+				s.SuiteName.Reset()
+				if err := s.SuiteName.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"suiteName\"")
+			}
+		case "total":
+			if err := func() error {
+				s.Total.Reset()
+				if err := s.Total.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"total\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
 		return errors.Wrap(err, "decode Summary7")
 	}
 
@@ -67374,34 +67580,34 @@ func (s *Summary7) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
-// Encode encodes Summary7DbKind as json.
-func (s Summary7DbKind) Encode(e *jx.Encoder) {
+// Encode encodes Summary7DbKindsItem as json.
+func (s Summary7DbKindsItem) Encode(e *jx.Encoder) {
 	e.Int32(int32(s))
 }
 
-// Decode decodes Summary7DbKind from json.
-func (s *Summary7DbKind) Decode(d *jx.Decoder) error {
+// Decode decodes Summary7DbKindsItem from json.
+func (s *Summary7DbKindsItem) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode Summary7DbKind to nil")
+		return errors.New("invalid: unable to decode Summary7DbKindsItem to nil")
 	}
 	v, err := d.Int32()
 	if err != nil {
 		return err
 	}
-	*s = Summary7DbKind(v)
+	*s = Summary7DbKindsItem(v)
 
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s Summary7DbKind) MarshalJSON() ([]byte, error) {
+func (s Summary7DbKindsItem) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *Summary7DbKind) UnmarshalJSON(data []byte) error {
+func (s *Summary7DbKindsItem) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -67434,38 +67640,6 @@ func (s Summary7Provider) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *Summary7Provider) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes Summary7WorkloadProtocol as json.
-func (s Summary7WorkloadProtocol) Encode(e *jx.Encoder) {
-	e.Int32(int32(s))
-}
-
-// Decode decodes Summary7WorkloadProtocol from json.
-func (s *Summary7WorkloadProtocol) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode Summary7WorkloadProtocol to nil")
-	}
-	v, err := d.Int32()
-	if err != nil {
-		return err
-	}
-	*s = Summary7WorkloadProtocol(v)
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s Summary7WorkloadProtocol) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *Summary7WorkloadProtocol) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

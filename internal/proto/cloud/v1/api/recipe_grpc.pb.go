@@ -24,6 +24,7 @@ const (
 	RecipeService_ListRecipes_FullMethodName  = "/cloud.v1.api.RecipeService/ListRecipes"
 	RecipeService_DeleteRecipe_FullMethodName = "/cloud.v1.api.RecipeService/DeleteRecipe"
 	RecipeService_CheckRecipe_FullMethodName  = "/cloud.v1.api.RecipeService/CheckRecipe"
+	RecipeService_StartRun_FullMethodName     = "/cloud.v1.api.RecipeService/StartRun"
 )
 
 // RecipeServiceClient is the client API for RecipeService service.
@@ -46,6 +47,10 @@ type RecipeServiceClient interface {
 	// CheckRecipe compiles the stored bundle in check-mode. Read-only: it
 	// never mutates the stored record.
 	CheckRecipe(ctx context.Context, in *CheckRecipeRequest, opts ...grpc.CallOption) (*CheckRecipeResponse, error)
+	// StartRun launches a new run of an already-stored recipe bundle: it
+	// persists a run record and starts RunRecipeWorkflow for it. Not
+	// idempotent — each call mints a new run.
+	StartRun(ctx context.Context, in *StartRunRequest, opts ...grpc.CallOption) (*StartRunResponse, error)
 }
 
 type recipeServiceClient struct {
@@ -106,6 +111,16 @@ func (c *recipeServiceClient) CheckRecipe(ctx context.Context, in *CheckRecipeRe
 	return out, nil
 }
 
+func (c *recipeServiceClient) StartRun(ctx context.Context, in *StartRunRequest, opts ...grpc.CallOption) (*StartRunResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StartRunResponse)
+	err := c.cc.Invoke(ctx, RecipeService_StartRun_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RecipeServiceServer is the server API for RecipeService service.
 // All implementations must embed UnimplementedRecipeServiceServer
 // for forward compatibility.
@@ -126,6 +141,10 @@ type RecipeServiceServer interface {
 	// CheckRecipe compiles the stored bundle in check-mode. Read-only: it
 	// never mutates the stored record.
 	CheckRecipe(context.Context, *CheckRecipeRequest) (*CheckRecipeResponse, error)
+	// StartRun launches a new run of an already-stored recipe bundle: it
+	// persists a run record and starts RunRecipeWorkflow for it. Not
+	// idempotent — each call mints a new run.
+	StartRun(context.Context, *StartRunRequest) (*StartRunResponse, error)
 	mustEmbedUnimplementedRecipeServiceServer()
 }
 
@@ -150,6 +169,9 @@ func (UnimplementedRecipeServiceServer) DeleteRecipe(context.Context, *DeleteRec
 }
 func (UnimplementedRecipeServiceServer) CheckRecipe(context.Context, *CheckRecipeRequest) (*CheckRecipeResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CheckRecipe not implemented")
+}
+func (UnimplementedRecipeServiceServer) StartRun(context.Context, *StartRunRequest) (*StartRunResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method StartRun not implemented")
 }
 func (UnimplementedRecipeServiceServer) mustEmbedUnimplementedRecipeServiceServer() {}
 func (UnimplementedRecipeServiceServer) testEmbeddedByValue()                       {}
@@ -262,6 +284,24 @@ func _RecipeService_CheckRecipe_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RecipeService_StartRun_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StartRunRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RecipeServiceServer).StartRun(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RecipeService_StartRun_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RecipeServiceServer).StartRun(ctx, req.(*StartRunRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RecipeService_ServiceDesc is the grpc.ServiceDesc for RecipeService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -288,6 +328,10 @@ var RecipeService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CheckRecipe",
 			Handler:    _RecipeService_CheckRecipe_Handler,
+		},
+		{
+			MethodName: "StartRun",
+			Handler:    _RecipeService_StartRun_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

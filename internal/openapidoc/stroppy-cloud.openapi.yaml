@@ -7426,6 +7426,26 @@ components:
                 worker:
                     $ref: '#/components/schemas/Worker'
             type: object
+        StartRunRequest:
+            additionalProperties: false
+            properties:
+                recipeId:
+                    maxLength: 64
+                    minLength: 1
+                    type: string
+                tenantId:
+                    maxLength: 64
+                    minLength: 1
+                    type: string
+            type: object
+        StartRunResponse:
+            additionalProperties: false
+            properties:
+                run:
+                    $ref: '#/components/schemas/TestRunRecord'
+            required:
+                - run
+            type: object
         StartSSORequest:
             additionalProperties: false
             properties:
@@ -7728,7 +7748,7 @@ components:
                 spec:
                     $ref: '#/components/schemas/Suite'
                 summary:
-                    $ref: '#/components/schemas/Summary5'
+                    $ref: '#/components/schemas/Summary6'
             required:
                 - entity
                 - spec
@@ -7767,7 +7787,7 @@ components:
                     minLength: 1
                     type: string
                 summary:
-                    $ref: '#/components/schemas/Summary6'
+                    $ref: '#/components/schemas/Summary7'
                 trigger:
                     enum:
                         - 0
@@ -7956,111 +7976,6 @@ components:
         Summary5:
             additionalProperties: false
             properties:
-                cellCount:
-                    format: int32
-                    minimum: 0
-                    type: integer
-                cron:
-                    maxLength: 128
-                    type: string
-                lastRunAt:
-                    format: date-time
-                    type: string
-                lastRunStatus:
-                    enum:
-                        - 0
-                        - 1
-                        - 2
-                        - 5
-                        - 3
-                        - 4
-                        - 6
-                        - 7
-                        - 8
-                        - 9
-                        - 10
-                        - 11
-                    format: int32
-                    type: integer
-                nextRunAt:
-                    format: date-time
-                    type: string
-                runCount:
-                    format: int32
-                    minimum: 0
-                    type: integer
-                scheduleEnabled:
-                    type: boolean
-            type: object
-        Summary6:
-            additionalProperties: false
-            properties:
-                completed:
-                    format: int32
-                    minimum: 0
-                    type: integer
-                dbKinds:
-                    items:
-                        enum:
-                            - 0
-                            - 1
-                            - 2
-                            - 3
-                            - 4
-                            - 5
-                            - 6
-                            - 7
-                            - 8
-                            - 9
-                            - 10
-                            - 11
-                        format: int32
-                        type: integer
-                    type: array
-                duration:
-                    format: duration
-                    type: string
-                failed:
-                    format: int32
-                    minimum: 0
-                    type: integer
-                finishedAt:
-                    format: date-time
-                    type: string
-                pending:
-                    format: int32
-                    minimum: 0
-                    type: integer
-                progressPct:
-                    format: int32
-                    maximum: 100
-                    minimum: 0
-                    type: integer
-                provider:
-                    enum:
-                        - 0
-                        - 1
-                        - 2
-                    format: int32
-                    type: integer
-                running:
-                    format: int32
-                    minimum: 0
-                    type: integer
-                startedAt:
-                    format: date-time
-                    type: string
-                suiteName:
-                    maxLength: 255
-                    type: string
-                total:
-                    format: int32
-                    minimum: 0
-                    type: integer
-            type: object
-        Summary7:
-            additionalProperties: false
-            properties:
                 dbKind:
                     enum:
                         - 0
@@ -8137,6 +8052,111 @@ components:
                         - 7
                         - 8
                     format: int32
+                    type: integer
+            type: object
+        Summary6:
+            additionalProperties: false
+            properties:
+                cellCount:
+                    format: int32
+                    minimum: 0
+                    type: integer
+                cron:
+                    maxLength: 128
+                    type: string
+                lastRunAt:
+                    format: date-time
+                    type: string
+                lastRunStatus:
+                    enum:
+                        - 0
+                        - 1
+                        - 2
+                        - 5
+                        - 3
+                        - 4
+                        - 6
+                        - 7
+                        - 8
+                        - 9
+                        - 10
+                        - 11
+                    format: int32
+                    type: integer
+                nextRunAt:
+                    format: date-time
+                    type: string
+                runCount:
+                    format: int32
+                    minimum: 0
+                    type: integer
+                scheduleEnabled:
+                    type: boolean
+            type: object
+        Summary7:
+            additionalProperties: false
+            properties:
+                completed:
+                    format: int32
+                    minimum: 0
+                    type: integer
+                dbKinds:
+                    items:
+                        enum:
+                            - 0
+                            - 1
+                            - 2
+                            - 3
+                            - 4
+                            - 5
+                            - 6
+                            - 7
+                            - 8
+                            - 9
+                            - 10
+                            - 11
+                        format: int32
+                        type: integer
+                    type: array
+                duration:
+                    format: duration
+                    type: string
+                failed:
+                    format: int32
+                    minimum: 0
+                    type: integer
+                finishedAt:
+                    format: date-time
+                    type: string
+                pending:
+                    format: int32
+                    minimum: 0
+                    type: integer
+                progressPct:
+                    format: int32
+                    maximum: 100
+                    minimum: 0
+                    type: integer
+                provider:
+                    enum:
+                        - 0
+                        - 1
+                        - 2
+                    format: int32
+                    type: integer
+                running:
+                    format: int32
+                    minimum: 0
+                    type: integer
+                startedAt:
+                    format: date-time
+                    type: string
+                suiteName:
+                    maxLength: 255
+                    type: string
+                total:
+                    format: int32
+                    minimum: 0
                     type: integer
             type: object
         Tags:
@@ -8380,7 +8400,7 @@ components:
                     maxLength: 64
                     type: string
                 summary:
-                    $ref: '#/components/schemas/Summary7'
+                    $ref: '#/components/schemas/Summary5'
                 trigger:
                     enum:
                         - 0
@@ -11694,6 +11714,36 @@ paths:
             tags:
                 - recipe
             x-idempotency-level: NO_SIDE_EFFECTS
+            x-ogen-operation-group: Recipe
+    /api/v1/recipe/start-run:
+        post:
+            description: |-
+                StartRun launches a new run of an already-stored recipe bundle: it
+                persists a run record and starts RunRecipeWorkflow for it. Not
+                idempotent — each call mints a new run.
+            operationId: startRun
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/StartRunRequest'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StartRunResponse'
+                    description: OK
+                default:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Unexpected error.
+            summary: 'StartRun launches a new run of an already-stored recipe bundle: it'
+            tags:
+                - recipe
             x-ogen-operation-group: Recipe
     /api/v1/share/create-share:
         post:

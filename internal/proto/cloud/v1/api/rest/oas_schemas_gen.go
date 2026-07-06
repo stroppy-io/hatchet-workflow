@@ -24126,38 +24126,38 @@ func (o OptSummary5) Or(d Summary5) Summary5 {
 	return d
 }
 
-// NewOptSummary5LastRunStatus returns new OptSummary5LastRunStatus with value set to v.
-func NewOptSummary5LastRunStatus(v Summary5LastRunStatus) OptSummary5LastRunStatus {
-	return OptSummary5LastRunStatus{
+// NewOptSummary5DbKind returns new OptSummary5DbKind with value set to v.
+func NewOptSummary5DbKind(v Summary5DbKind) OptSummary5DbKind {
+	return OptSummary5DbKind{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptSummary5LastRunStatus is optional Summary5LastRunStatus.
-type OptSummary5LastRunStatus struct {
-	Value Summary5LastRunStatus
+// OptSummary5DbKind is optional Summary5DbKind.
+type OptSummary5DbKind struct {
+	Value Summary5DbKind
 	Set   bool
 }
 
-// IsSet returns true if OptSummary5LastRunStatus was set.
-func (o OptSummary5LastRunStatus) IsSet() bool { return o.Set }
+// IsSet returns true if OptSummary5DbKind was set.
+func (o OptSummary5DbKind) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptSummary5LastRunStatus) Reset() {
-	var v Summary5LastRunStatus
+func (o *OptSummary5DbKind) Reset() {
+	var v Summary5DbKind
 	o.Value = v
 	o.Set = false
 }
 
 // SetTo sets value to v.
-func (o *OptSummary5LastRunStatus) SetTo(v Summary5LastRunStatus) {
+func (o *OptSummary5DbKind) SetTo(v Summary5DbKind) {
 	o.Set = true
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptSummary5LastRunStatus) Get() (v Summary5LastRunStatus, ok bool) {
+func (o OptSummary5DbKind) Get() (v Summary5DbKind, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -24165,7 +24165,99 @@ func (o OptSummary5LastRunStatus) Get() (v Summary5LastRunStatus, ok bool) {
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptSummary5LastRunStatus) Or(d Summary5LastRunStatus) Summary5LastRunStatus {
+func (o OptSummary5DbKind) Or(d Summary5DbKind) Summary5DbKind {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptSummary5Provider returns new OptSummary5Provider with value set to v.
+func NewOptSummary5Provider(v Summary5Provider) OptSummary5Provider {
+	return OptSummary5Provider{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSummary5Provider is optional Summary5Provider.
+type OptSummary5Provider struct {
+	Value Summary5Provider
+	Set   bool
+}
+
+// IsSet returns true if OptSummary5Provider was set.
+func (o OptSummary5Provider) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSummary5Provider) Reset() {
+	var v Summary5Provider
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSummary5Provider) SetTo(v Summary5Provider) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSummary5Provider) Get() (v Summary5Provider, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSummary5Provider) Or(d Summary5Provider) Summary5Provider {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptSummary5WorkloadProtocol returns new OptSummary5WorkloadProtocol with value set to v.
+func NewOptSummary5WorkloadProtocol(v Summary5WorkloadProtocol) OptSummary5WorkloadProtocol {
+	return OptSummary5WorkloadProtocol{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSummary5WorkloadProtocol is optional Summary5WorkloadProtocol.
+type OptSummary5WorkloadProtocol struct {
+	Value Summary5WorkloadProtocol
+	Set   bool
+}
+
+// IsSet returns true if OptSummary5WorkloadProtocol was set.
+func (o OptSummary5WorkloadProtocol) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSummary5WorkloadProtocol) Reset() {
+	var v Summary5WorkloadProtocol
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSummary5WorkloadProtocol) SetTo(v Summary5WorkloadProtocol) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSummary5WorkloadProtocol) Get() (v Summary5WorkloadProtocol, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSummary5WorkloadProtocol) Or(d Summary5WorkloadProtocol) Summary5WorkloadProtocol {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -24218,38 +24310,38 @@ func (o OptSummary6) Or(d Summary6) Summary6 {
 	return d
 }
 
-// NewOptSummary6Provider returns new OptSummary6Provider with value set to v.
-func NewOptSummary6Provider(v Summary6Provider) OptSummary6Provider {
-	return OptSummary6Provider{
+// NewOptSummary6LastRunStatus returns new OptSummary6LastRunStatus with value set to v.
+func NewOptSummary6LastRunStatus(v Summary6LastRunStatus) OptSummary6LastRunStatus {
+	return OptSummary6LastRunStatus{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptSummary6Provider is optional Summary6Provider.
-type OptSummary6Provider struct {
-	Value Summary6Provider
+// OptSummary6LastRunStatus is optional Summary6LastRunStatus.
+type OptSummary6LastRunStatus struct {
+	Value Summary6LastRunStatus
 	Set   bool
 }
 
-// IsSet returns true if OptSummary6Provider was set.
-func (o OptSummary6Provider) IsSet() bool { return o.Set }
+// IsSet returns true if OptSummary6LastRunStatus was set.
+func (o OptSummary6LastRunStatus) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptSummary6Provider) Reset() {
-	var v Summary6Provider
+func (o *OptSummary6LastRunStatus) Reset() {
+	var v Summary6LastRunStatus
 	o.Value = v
 	o.Set = false
 }
 
 // SetTo sets value to v.
-func (o *OptSummary6Provider) SetTo(v Summary6Provider) {
+func (o *OptSummary6LastRunStatus) SetTo(v Summary6LastRunStatus) {
 	o.Set = true
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptSummary6Provider) Get() (v Summary6Provider, ok bool) {
+func (o OptSummary6LastRunStatus) Get() (v Summary6LastRunStatus, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -24257,7 +24349,7 @@ func (o OptSummary6Provider) Get() (v Summary6Provider, ok bool) {
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptSummary6Provider) Or(d Summary6Provider) Summary6Provider {
+func (o OptSummary6LastRunStatus) Or(d Summary6LastRunStatus) Summary6LastRunStatus {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -24310,52 +24402,6 @@ func (o OptSummary7) Or(d Summary7) Summary7 {
 	return d
 }
 
-// NewOptSummary7DbKind returns new OptSummary7DbKind with value set to v.
-func NewOptSummary7DbKind(v Summary7DbKind) OptSummary7DbKind {
-	return OptSummary7DbKind{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSummary7DbKind is optional Summary7DbKind.
-type OptSummary7DbKind struct {
-	Value Summary7DbKind
-	Set   bool
-}
-
-// IsSet returns true if OptSummary7DbKind was set.
-func (o OptSummary7DbKind) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSummary7DbKind) Reset() {
-	var v Summary7DbKind
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSummary7DbKind) SetTo(v Summary7DbKind) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSummary7DbKind) Get() (v Summary7DbKind, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSummary7DbKind) Or(d Summary7DbKind) Summary7DbKind {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptSummary7Provider returns new OptSummary7Provider with value set to v.
 func NewOptSummary7Provider(v Summary7Provider) OptSummary7Provider {
 	return OptSummary7Provider{
@@ -24396,52 +24442,6 @@ func (o OptSummary7Provider) Get() (v Summary7Provider, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptSummary7Provider) Or(d Summary7Provider) Summary7Provider {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSummary7WorkloadProtocol returns new OptSummary7WorkloadProtocol with value set to v.
-func NewOptSummary7WorkloadProtocol(v Summary7WorkloadProtocol) OptSummary7WorkloadProtocol {
-	return OptSummary7WorkloadProtocol{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSummary7WorkloadProtocol is optional Summary7WorkloadProtocol.
-type OptSummary7WorkloadProtocol struct {
-	Value Summary7WorkloadProtocol
-	Set   bool
-}
-
-// IsSet returns true if OptSummary7WorkloadProtocol was set.
-func (o OptSummary7WorkloadProtocol) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSummary7WorkloadProtocol) Reset() {
-	var v Summary7WorkloadProtocol
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSummary7WorkloadProtocol) SetTo(v Summary7WorkloadProtocol) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSummary7WorkloadProtocol) Get() (v Summary7WorkloadProtocol, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSummary7WorkloadProtocol) Or(d Summary7WorkloadProtocol) Summary7WorkloadProtocol {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -34173,6 +34173,47 @@ func (StageStatus) AllValues() []StageStatus {
 	}
 }
 
+// Ref: #/components/schemas/StartRunRequest
+type StartRunRequest struct {
+	RecipeId OptString `json:"recipeId"`
+	TenantId OptString `json:"tenantId"`
+}
+
+// GetRecipeId returns the value of RecipeId.
+func (s *StartRunRequest) GetRecipeId() OptString {
+	return s.RecipeId
+}
+
+// GetTenantId returns the value of TenantId.
+func (s *StartRunRequest) GetTenantId() OptString {
+	return s.TenantId
+}
+
+// SetRecipeId sets the value of RecipeId.
+func (s *StartRunRequest) SetRecipeId(val OptString) {
+	s.RecipeId = val
+}
+
+// SetTenantId sets the value of TenantId.
+func (s *StartRunRequest) SetTenantId(val OptString) {
+	s.TenantId = val
+}
+
+// Ref: #/components/schemas/StartRunResponse
+type StartRunResponse struct {
+	Run TestRunRecord `json:"run"`
+}
+
+// GetRun returns the value of Run.
+func (s *StartRunResponse) GetRun() TestRunRecord {
+	return s.Run
+}
+
+// SetRun sets the value of Run.
+func (s *StartRunResponse) SetRun(val TestRunRecord) {
+	s.Run = val
+}
+
 // Ref: #/components/schemas/StartSSORequest
 type StartSSORequest struct {
 	ProviderId OptString `json:"providerId"`
@@ -34971,7 +35012,7 @@ func (SuiteProvider) AllValues() []SuiteProvider {
 type SuiteRecord struct {
 	Entity  Entity      `json:"entity"`
 	Spec    Suite       `json:"spec"`
-	Summary OptSummary5 `json:"summary"`
+	Summary OptSummary6 `json:"summary"`
 }
 
 // GetEntity returns the value of Entity.
@@ -34985,7 +35026,7 @@ func (s *SuiteRecord) GetSpec() Suite {
 }
 
 // GetSummary returns the value of Summary.
-func (s *SuiteRecord) GetSummary() OptSummary5 {
+func (s *SuiteRecord) GetSummary() OptSummary6 {
 	return s.Summary
 }
 
@@ -35000,7 +35041,7 @@ func (s *SuiteRecord) SetSpec(val Suite) {
 }
 
 // SetSummary sets the value of Summary.
-func (s *SuiteRecord) SetSummary(val OptSummary5) {
+func (s *SuiteRecord) SetSummary(val OptSummary6) {
 	s.Summary = val
 }
 
@@ -35011,7 +35052,7 @@ type SuiteRunRecord struct {
 	MaxParallel OptInt32                 `json:"maxParallel"`
 	Status      OptSuiteRunRecordStatus  `json:"status"`
 	SuiteId     OptString                `json:"suiteId"`
-	Summary     OptSummary6              `json:"summary"`
+	Summary     OptSummary7              `json:"summary"`
 	Trigger     OptSuiteRunRecordTrigger `json:"trigger"`
 }
 
@@ -35041,7 +35082,7 @@ func (s *SuiteRunRecord) GetSuiteId() OptString {
 }
 
 // GetSummary returns the value of Summary.
-func (s *SuiteRunRecord) GetSummary() OptSummary6 {
+func (s *SuiteRunRecord) GetSummary() OptSummary7 {
 	return s.Summary
 }
 
@@ -35076,7 +35117,7 @@ func (s *SuiteRunRecord) SetSuiteId(val OptString) {
 }
 
 // SetSummary sets the value of Summary.
-func (s *SuiteRunRecord) SetSummary(val OptSummary6) {
+func (s *SuiteRunRecord) SetSummary(val OptSummary7) {
 	s.Summary = val
 }
 
@@ -35623,318 +35664,14 @@ func (s *Summary4) SetServiceCount(val OptInt32) {
 
 // Ref: #/components/schemas/Summary5
 type Summary5 struct {
-	CellCount       OptInt32                 `json:"cellCount"`
-	Cron            OptString                `json:"cron"`
-	LastRunAt       OptDateTime              `json:"lastRunAt"`
-	LastRunStatus   OptSummary5LastRunStatus `json:"lastRunStatus"`
-	NextRunAt       OptDateTime              `json:"nextRunAt"`
-	RunCount        OptInt32                 `json:"runCount"`
-	ScheduleEnabled OptBool                  `json:"scheduleEnabled"`
-}
-
-// GetCellCount returns the value of CellCount.
-func (s *Summary5) GetCellCount() OptInt32 {
-	return s.CellCount
-}
-
-// GetCron returns the value of Cron.
-func (s *Summary5) GetCron() OptString {
-	return s.Cron
-}
-
-// GetLastRunAt returns the value of LastRunAt.
-func (s *Summary5) GetLastRunAt() OptDateTime {
-	return s.LastRunAt
-}
-
-// GetLastRunStatus returns the value of LastRunStatus.
-func (s *Summary5) GetLastRunStatus() OptSummary5LastRunStatus {
-	return s.LastRunStatus
-}
-
-// GetNextRunAt returns the value of NextRunAt.
-func (s *Summary5) GetNextRunAt() OptDateTime {
-	return s.NextRunAt
-}
-
-// GetRunCount returns the value of RunCount.
-func (s *Summary5) GetRunCount() OptInt32 {
-	return s.RunCount
-}
-
-// GetScheduleEnabled returns the value of ScheduleEnabled.
-func (s *Summary5) GetScheduleEnabled() OptBool {
-	return s.ScheduleEnabled
-}
-
-// SetCellCount sets the value of CellCount.
-func (s *Summary5) SetCellCount(val OptInt32) {
-	s.CellCount = val
-}
-
-// SetCron sets the value of Cron.
-func (s *Summary5) SetCron(val OptString) {
-	s.Cron = val
-}
-
-// SetLastRunAt sets the value of LastRunAt.
-func (s *Summary5) SetLastRunAt(val OptDateTime) {
-	s.LastRunAt = val
-}
-
-// SetLastRunStatus sets the value of LastRunStatus.
-func (s *Summary5) SetLastRunStatus(val OptSummary5LastRunStatus) {
-	s.LastRunStatus = val
-}
-
-// SetNextRunAt sets the value of NextRunAt.
-func (s *Summary5) SetNextRunAt(val OptDateTime) {
-	s.NextRunAt = val
-}
-
-// SetRunCount sets the value of RunCount.
-func (s *Summary5) SetRunCount(val OptInt32) {
-	s.RunCount = val
-}
-
-// SetScheduleEnabled sets the value of ScheduleEnabled.
-func (s *Summary5) SetScheduleEnabled(val OptBool) {
-	s.ScheduleEnabled = val
-}
-
-type Summary5LastRunStatus int32
-
-const (
-	Summary5LastRunStatus0  Summary5LastRunStatus = 0
-	Summary5LastRunStatus1  Summary5LastRunStatus = 1
-	Summary5LastRunStatus2  Summary5LastRunStatus = 2
-	Summary5LastRunStatus5  Summary5LastRunStatus = 5
-	Summary5LastRunStatus3  Summary5LastRunStatus = 3
-	Summary5LastRunStatus4  Summary5LastRunStatus = 4
-	Summary5LastRunStatus6  Summary5LastRunStatus = 6
-	Summary5LastRunStatus7  Summary5LastRunStatus = 7
-	Summary5LastRunStatus8  Summary5LastRunStatus = 8
-	Summary5LastRunStatus9  Summary5LastRunStatus = 9
-	Summary5LastRunStatus10 Summary5LastRunStatus = 10
-	Summary5LastRunStatus11 Summary5LastRunStatus = 11
-)
-
-// AllValues returns all Summary5LastRunStatus values.
-func (Summary5LastRunStatus) AllValues() []Summary5LastRunStatus {
-	return []Summary5LastRunStatus{
-		Summary5LastRunStatus0,
-		Summary5LastRunStatus1,
-		Summary5LastRunStatus2,
-		Summary5LastRunStatus5,
-		Summary5LastRunStatus3,
-		Summary5LastRunStatus4,
-		Summary5LastRunStatus6,
-		Summary5LastRunStatus7,
-		Summary5LastRunStatus8,
-		Summary5LastRunStatus9,
-		Summary5LastRunStatus10,
-		Summary5LastRunStatus11,
-	}
-}
-
-// Ref: #/components/schemas/Summary6
-type Summary6 struct {
-	Completed   OptInt32              `json:"completed"`
-	DbKinds     []Summary6DbKindsItem `json:"dbKinds"`
-	Duration    OptDuration           `json:"duration"`
-	Failed      OptInt32              `json:"failed"`
-	FinishedAt  OptDateTime           `json:"finishedAt"`
-	Pending     OptInt32              `json:"pending"`
-	ProgressPct OptInt32              `json:"progressPct"`
-	Provider    OptSummary6Provider   `json:"provider"`
-	Running     OptInt32              `json:"running"`
-	StartedAt   OptDateTime           `json:"startedAt"`
-	SuiteName   OptString             `json:"suiteName"`
-	Total       OptInt32              `json:"total"`
-}
-
-// GetCompleted returns the value of Completed.
-func (s *Summary6) GetCompleted() OptInt32 {
-	return s.Completed
-}
-
-// GetDbKinds returns the value of DbKinds.
-func (s *Summary6) GetDbKinds() []Summary6DbKindsItem {
-	return s.DbKinds
-}
-
-// GetDuration returns the value of Duration.
-func (s *Summary6) GetDuration() OptDuration {
-	return s.Duration
-}
-
-// GetFailed returns the value of Failed.
-func (s *Summary6) GetFailed() OptInt32 {
-	return s.Failed
-}
-
-// GetFinishedAt returns the value of FinishedAt.
-func (s *Summary6) GetFinishedAt() OptDateTime {
-	return s.FinishedAt
-}
-
-// GetPending returns the value of Pending.
-func (s *Summary6) GetPending() OptInt32 {
-	return s.Pending
-}
-
-// GetProgressPct returns the value of ProgressPct.
-func (s *Summary6) GetProgressPct() OptInt32 {
-	return s.ProgressPct
-}
-
-// GetProvider returns the value of Provider.
-func (s *Summary6) GetProvider() OptSummary6Provider {
-	return s.Provider
-}
-
-// GetRunning returns the value of Running.
-func (s *Summary6) GetRunning() OptInt32 {
-	return s.Running
-}
-
-// GetStartedAt returns the value of StartedAt.
-func (s *Summary6) GetStartedAt() OptDateTime {
-	return s.StartedAt
-}
-
-// GetSuiteName returns the value of SuiteName.
-func (s *Summary6) GetSuiteName() OptString {
-	return s.SuiteName
-}
-
-// GetTotal returns the value of Total.
-func (s *Summary6) GetTotal() OptInt32 {
-	return s.Total
-}
-
-// SetCompleted sets the value of Completed.
-func (s *Summary6) SetCompleted(val OptInt32) {
-	s.Completed = val
-}
-
-// SetDbKinds sets the value of DbKinds.
-func (s *Summary6) SetDbKinds(val []Summary6DbKindsItem) {
-	s.DbKinds = val
-}
-
-// SetDuration sets the value of Duration.
-func (s *Summary6) SetDuration(val OptDuration) {
-	s.Duration = val
-}
-
-// SetFailed sets the value of Failed.
-func (s *Summary6) SetFailed(val OptInt32) {
-	s.Failed = val
-}
-
-// SetFinishedAt sets the value of FinishedAt.
-func (s *Summary6) SetFinishedAt(val OptDateTime) {
-	s.FinishedAt = val
-}
-
-// SetPending sets the value of Pending.
-func (s *Summary6) SetPending(val OptInt32) {
-	s.Pending = val
-}
-
-// SetProgressPct sets the value of ProgressPct.
-func (s *Summary6) SetProgressPct(val OptInt32) {
-	s.ProgressPct = val
-}
-
-// SetProvider sets the value of Provider.
-func (s *Summary6) SetProvider(val OptSummary6Provider) {
-	s.Provider = val
-}
-
-// SetRunning sets the value of Running.
-func (s *Summary6) SetRunning(val OptInt32) {
-	s.Running = val
-}
-
-// SetStartedAt sets the value of StartedAt.
-func (s *Summary6) SetStartedAt(val OptDateTime) {
-	s.StartedAt = val
-}
-
-// SetSuiteName sets the value of SuiteName.
-func (s *Summary6) SetSuiteName(val OptString) {
-	s.SuiteName = val
-}
-
-// SetTotal sets the value of Total.
-func (s *Summary6) SetTotal(val OptInt32) {
-	s.Total = val
-}
-
-type Summary6DbKindsItem int32
-
-const (
-	Summary6DbKindsItem0  Summary6DbKindsItem = 0
-	Summary6DbKindsItem1  Summary6DbKindsItem = 1
-	Summary6DbKindsItem2  Summary6DbKindsItem = 2
-	Summary6DbKindsItem3  Summary6DbKindsItem = 3
-	Summary6DbKindsItem4  Summary6DbKindsItem = 4
-	Summary6DbKindsItem5  Summary6DbKindsItem = 5
-	Summary6DbKindsItem6  Summary6DbKindsItem = 6
-	Summary6DbKindsItem7  Summary6DbKindsItem = 7
-	Summary6DbKindsItem8  Summary6DbKindsItem = 8
-	Summary6DbKindsItem9  Summary6DbKindsItem = 9
-	Summary6DbKindsItem10 Summary6DbKindsItem = 10
-	Summary6DbKindsItem11 Summary6DbKindsItem = 11
-)
-
-// AllValues returns all Summary6DbKindsItem values.
-func (Summary6DbKindsItem) AllValues() []Summary6DbKindsItem {
-	return []Summary6DbKindsItem{
-		Summary6DbKindsItem0,
-		Summary6DbKindsItem1,
-		Summary6DbKindsItem2,
-		Summary6DbKindsItem3,
-		Summary6DbKindsItem4,
-		Summary6DbKindsItem5,
-		Summary6DbKindsItem6,
-		Summary6DbKindsItem7,
-		Summary6DbKindsItem8,
-		Summary6DbKindsItem9,
-		Summary6DbKindsItem10,
-		Summary6DbKindsItem11,
-	}
-}
-
-type Summary6Provider int32
-
-const (
-	Summary6Provider0 Summary6Provider = 0
-	Summary6Provider1 Summary6Provider = 1
-	Summary6Provider2 Summary6Provider = 2
-)
-
-// AllValues returns all Summary6Provider values.
-func (Summary6Provider) AllValues() []Summary6Provider {
-	return []Summary6Provider{
-		Summary6Provider0,
-		Summary6Provider1,
-		Summary6Provider2,
-	}
-}
-
-// Ref: #/components/schemas/Summary7
-type Summary7 struct {
-	DbKind           OptSummary7DbKind           `json:"dbKind"`
+	DbKind           OptSummary5DbKind           `json:"dbKind"`
 	DbPresetId       OptString                   `json:"dbPresetId"`
 	DbPresetName     OptString                   `json:"dbPresetName"`
 	Duration         OptDuration                 `json:"duration"`
 	FinishedAt       OptDateTime                 `json:"finishedAt"`
 	NodeCount        OptInt32                    `json:"nodeCount"`
 	ProgressPct      OptInt32                    `json:"progressPct"`
-	Provider         OptSummary7Provider         `json:"provider"`
+	Provider         OptSummary5Provider         `json:"provider"`
 	StartedAt        OptDateTime                 `json:"startedAt"`
 	StroppyVersion   OptString                   `json:"stroppyVersion"`
 	TestPresetId     OptString                   `json:"testPresetId"`
@@ -35942,22 +35679,388 @@ type Summary7 struct {
 	TopologyLabel    OptString                   `json:"topologyLabel"`
 	WorkloadName     OptString                   `json:"workloadName"`
 	WorkloadPresetId OptString                   `json:"workloadPresetId"`
-	WorkloadProtocol OptSummary7WorkloadProtocol `json:"workloadProtocol"`
+	WorkloadProtocol OptSummary5WorkloadProtocol `json:"workloadProtocol"`
 }
 
 // GetDbKind returns the value of DbKind.
-func (s *Summary7) GetDbKind() OptSummary7DbKind {
+func (s *Summary5) GetDbKind() OptSummary5DbKind {
 	return s.DbKind
 }
 
 // GetDbPresetId returns the value of DbPresetId.
-func (s *Summary7) GetDbPresetId() OptString {
+func (s *Summary5) GetDbPresetId() OptString {
 	return s.DbPresetId
 }
 
 // GetDbPresetName returns the value of DbPresetName.
-func (s *Summary7) GetDbPresetName() OptString {
+func (s *Summary5) GetDbPresetName() OptString {
 	return s.DbPresetName
+}
+
+// GetDuration returns the value of Duration.
+func (s *Summary5) GetDuration() OptDuration {
+	return s.Duration
+}
+
+// GetFinishedAt returns the value of FinishedAt.
+func (s *Summary5) GetFinishedAt() OptDateTime {
+	return s.FinishedAt
+}
+
+// GetNodeCount returns the value of NodeCount.
+func (s *Summary5) GetNodeCount() OptInt32 {
+	return s.NodeCount
+}
+
+// GetProgressPct returns the value of ProgressPct.
+func (s *Summary5) GetProgressPct() OptInt32 {
+	return s.ProgressPct
+}
+
+// GetProvider returns the value of Provider.
+func (s *Summary5) GetProvider() OptSummary5Provider {
+	return s.Provider
+}
+
+// GetStartedAt returns the value of StartedAt.
+func (s *Summary5) GetStartedAt() OptDateTime {
+	return s.StartedAt
+}
+
+// GetStroppyVersion returns the value of StroppyVersion.
+func (s *Summary5) GetStroppyVersion() OptString {
+	return s.StroppyVersion
+}
+
+// GetTestPresetId returns the value of TestPresetId.
+func (s *Summary5) GetTestPresetId() OptString {
+	return s.TestPresetId
+}
+
+// GetTestPresetName returns the value of TestPresetName.
+func (s *Summary5) GetTestPresetName() OptString {
+	return s.TestPresetName
+}
+
+// GetTopologyLabel returns the value of TopologyLabel.
+func (s *Summary5) GetTopologyLabel() OptString {
+	return s.TopologyLabel
+}
+
+// GetWorkloadName returns the value of WorkloadName.
+func (s *Summary5) GetWorkloadName() OptString {
+	return s.WorkloadName
+}
+
+// GetWorkloadPresetId returns the value of WorkloadPresetId.
+func (s *Summary5) GetWorkloadPresetId() OptString {
+	return s.WorkloadPresetId
+}
+
+// GetWorkloadProtocol returns the value of WorkloadProtocol.
+func (s *Summary5) GetWorkloadProtocol() OptSummary5WorkloadProtocol {
+	return s.WorkloadProtocol
+}
+
+// SetDbKind sets the value of DbKind.
+func (s *Summary5) SetDbKind(val OptSummary5DbKind) {
+	s.DbKind = val
+}
+
+// SetDbPresetId sets the value of DbPresetId.
+func (s *Summary5) SetDbPresetId(val OptString) {
+	s.DbPresetId = val
+}
+
+// SetDbPresetName sets the value of DbPresetName.
+func (s *Summary5) SetDbPresetName(val OptString) {
+	s.DbPresetName = val
+}
+
+// SetDuration sets the value of Duration.
+func (s *Summary5) SetDuration(val OptDuration) {
+	s.Duration = val
+}
+
+// SetFinishedAt sets the value of FinishedAt.
+func (s *Summary5) SetFinishedAt(val OptDateTime) {
+	s.FinishedAt = val
+}
+
+// SetNodeCount sets the value of NodeCount.
+func (s *Summary5) SetNodeCount(val OptInt32) {
+	s.NodeCount = val
+}
+
+// SetProgressPct sets the value of ProgressPct.
+func (s *Summary5) SetProgressPct(val OptInt32) {
+	s.ProgressPct = val
+}
+
+// SetProvider sets the value of Provider.
+func (s *Summary5) SetProvider(val OptSummary5Provider) {
+	s.Provider = val
+}
+
+// SetStartedAt sets the value of StartedAt.
+func (s *Summary5) SetStartedAt(val OptDateTime) {
+	s.StartedAt = val
+}
+
+// SetStroppyVersion sets the value of StroppyVersion.
+func (s *Summary5) SetStroppyVersion(val OptString) {
+	s.StroppyVersion = val
+}
+
+// SetTestPresetId sets the value of TestPresetId.
+func (s *Summary5) SetTestPresetId(val OptString) {
+	s.TestPresetId = val
+}
+
+// SetTestPresetName sets the value of TestPresetName.
+func (s *Summary5) SetTestPresetName(val OptString) {
+	s.TestPresetName = val
+}
+
+// SetTopologyLabel sets the value of TopologyLabel.
+func (s *Summary5) SetTopologyLabel(val OptString) {
+	s.TopologyLabel = val
+}
+
+// SetWorkloadName sets the value of WorkloadName.
+func (s *Summary5) SetWorkloadName(val OptString) {
+	s.WorkloadName = val
+}
+
+// SetWorkloadPresetId sets the value of WorkloadPresetId.
+func (s *Summary5) SetWorkloadPresetId(val OptString) {
+	s.WorkloadPresetId = val
+}
+
+// SetWorkloadProtocol sets the value of WorkloadProtocol.
+func (s *Summary5) SetWorkloadProtocol(val OptSummary5WorkloadProtocol) {
+	s.WorkloadProtocol = val
+}
+
+type Summary5DbKind int32
+
+const (
+	Summary5DbKind0  Summary5DbKind = 0
+	Summary5DbKind1  Summary5DbKind = 1
+	Summary5DbKind2  Summary5DbKind = 2
+	Summary5DbKind3  Summary5DbKind = 3
+	Summary5DbKind4  Summary5DbKind = 4
+	Summary5DbKind5  Summary5DbKind = 5
+	Summary5DbKind6  Summary5DbKind = 6
+	Summary5DbKind7  Summary5DbKind = 7
+	Summary5DbKind8  Summary5DbKind = 8
+	Summary5DbKind9  Summary5DbKind = 9
+	Summary5DbKind10 Summary5DbKind = 10
+	Summary5DbKind11 Summary5DbKind = 11
+)
+
+// AllValues returns all Summary5DbKind values.
+func (Summary5DbKind) AllValues() []Summary5DbKind {
+	return []Summary5DbKind{
+		Summary5DbKind0,
+		Summary5DbKind1,
+		Summary5DbKind2,
+		Summary5DbKind3,
+		Summary5DbKind4,
+		Summary5DbKind5,
+		Summary5DbKind6,
+		Summary5DbKind7,
+		Summary5DbKind8,
+		Summary5DbKind9,
+		Summary5DbKind10,
+		Summary5DbKind11,
+	}
+}
+
+type Summary5Provider int32
+
+const (
+	Summary5Provider0 Summary5Provider = 0
+	Summary5Provider1 Summary5Provider = 1
+	Summary5Provider2 Summary5Provider = 2
+)
+
+// AllValues returns all Summary5Provider values.
+func (Summary5Provider) AllValues() []Summary5Provider {
+	return []Summary5Provider{
+		Summary5Provider0,
+		Summary5Provider1,
+		Summary5Provider2,
+	}
+}
+
+type Summary5WorkloadProtocol int32
+
+const (
+	Summary5WorkloadProtocol0 Summary5WorkloadProtocol = 0
+	Summary5WorkloadProtocol1 Summary5WorkloadProtocol = 1
+	Summary5WorkloadProtocol2 Summary5WorkloadProtocol = 2
+	Summary5WorkloadProtocol3 Summary5WorkloadProtocol = 3
+	Summary5WorkloadProtocol4 Summary5WorkloadProtocol = 4
+	Summary5WorkloadProtocol5 Summary5WorkloadProtocol = 5
+	Summary5WorkloadProtocol7 Summary5WorkloadProtocol = 7
+	Summary5WorkloadProtocol8 Summary5WorkloadProtocol = 8
+)
+
+// AllValues returns all Summary5WorkloadProtocol values.
+func (Summary5WorkloadProtocol) AllValues() []Summary5WorkloadProtocol {
+	return []Summary5WorkloadProtocol{
+		Summary5WorkloadProtocol0,
+		Summary5WorkloadProtocol1,
+		Summary5WorkloadProtocol2,
+		Summary5WorkloadProtocol3,
+		Summary5WorkloadProtocol4,
+		Summary5WorkloadProtocol5,
+		Summary5WorkloadProtocol7,
+		Summary5WorkloadProtocol8,
+	}
+}
+
+// Ref: #/components/schemas/Summary6
+type Summary6 struct {
+	CellCount       OptInt32                 `json:"cellCount"`
+	Cron            OptString                `json:"cron"`
+	LastRunAt       OptDateTime              `json:"lastRunAt"`
+	LastRunStatus   OptSummary6LastRunStatus `json:"lastRunStatus"`
+	NextRunAt       OptDateTime              `json:"nextRunAt"`
+	RunCount        OptInt32                 `json:"runCount"`
+	ScheduleEnabled OptBool                  `json:"scheduleEnabled"`
+}
+
+// GetCellCount returns the value of CellCount.
+func (s *Summary6) GetCellCount() OptInt32 {
+	return s.CellCount
+}
+
+// GetCron returns the value of Cron.
+func (s *Summary6) GetCron() OptString {
+	return s.Cron
+}
+
+// GetLastRunAt returns the value of LastRunAt.
+func (s *Summary6) GetLastRunAt() OptDateTime {
+	return s.LastRunAt
+}
+
+// GetLastRunStatus returns the value of LastRunStatus.
+func (s *Summary6) GetLastRunStatus() OptSummary6LastRunStatus {
+	return s.LastRunStatus
+}
+
+// GetNextRunAt returns the value of NextRunAt.
+func (s *Summary6) GetNextRunAt() OptDateTime {
+	return s.NextRunAt
+}
+
+// GetRunCount returns the value of RunCount.
+func (s *Summary6) GetRunCount() OptInt32 {
+	return s.RunCount
+}
+
+// GetScheduleEnabled returns the value of ScheduleEnabled.
+func (s *Summary6) GetScheduleEnabled() OptBool {
+	return s.ScheduleEnabled
+}
+
+// SetCellCount sets the value of CellCount.
+func (s *Summary6) SetCellCount(val OptInt32) {
+	s.CellCount = val
+}
+
+// SetCron sets the value of Cron.
+func (s *Summary6) SetCron(val OptString) {
+	s.Cron = val
+}
+
+// SetLastRunAt sets the value of LastRunAt.
+func (s *Summary6) SetLastRunAt(val OptDateTime) {
+	s.LastRunAt = val
+}
+
+// SetLastRunStatus sets the value of LastRunStatus.
+func (s *Summary6) SetLastRunStatus(val OptSummary6LastRunStatus) {
+	s.LastRunStatus = val
+}
+
+// SetNextRunAt sets the value of NextRunAt.
+func (s *Summary6) SetNextRunAt(val OptDateTime) {
+	s.NextRunAt = val
+}
+
+// SetRunCount sets the value of RunCount.
+func (s *Summary6) SetRunCount(val OptInt32) {
+	s.RunCount = val
+}
+
+// SetScheduleEnabled sets the value of ScheduleEnabled.
+func (s *Summary6) SetScheduleEnabled(val OptBool) {
+	s.ScheduleEnabled = val
+}
+
+type Summary6LastRunStatus int32
+
+const (
+	Summary6LastRunStatus0  Summary6LastRunStatus = 0
+	Summary6LastRunStatus1  Summary6LastRunStatus = 1
+	Summary6LastRunStatus2  Summary6LastRunStatus = 2
+	Summary6LastRunStatus5  Summary6LastRunStatus = 5
+	Summary6LastRunStatus3  Summary6LastRunStatus = 3
+	Summary6LastRunStatus4  Summary6LastRunStatus = 4
+	Summary6LastRunStatus6  Summary6LastRunStatus = 6
+	Summary6LastRunStatus7  Summary6LastRunStatus = 7
+	Summary6LastRunStatus8  Summary6LastRunStatus = 8
+	Summary6LastRunStatus9  Summary6LastRunStatus = 9
+	Summary6LastRunStatus10 Summary6LastRunStatus = 10
+	Summary6LastRunStatus11 Summary6LastRunStatus = 11
+)
+
+// AllValues returns all Summary6LastRunStatus values.
+func (Summary6LastRunStatus) AllValues() []Summary6LastRunStatus {
+	return []Summary6LastRunStatus{
+		Summary6LastRunStatus0,
+		Summary6LastRunStatus1,
+		Summary6LastRunStatus2,
+		Summary6LastRunStatus5,
+		Summary6LastRunStatus3,
+		Summary6LastRunStatus4,
+		Summary6LastRunStatus6,
+		Summary6LastRunStatus7,
+		Summary6LastRunStatus8,
+		Summary6LastRunStatus9,
+		Summary6LastRunStatus10,
+		Summary6LastRunStatus11,
+	}
+}
+
+// Ref: #/components/schemas/Summary7
+type Summary7 struct {
+	Completed   OptInt32              `json:"completed"`
+	DbKinds     []Summary7DbKindsItem `json:"dbKinds"`
+	Duration    OptDuration           `json:"duration"`
+	Failed      OptInt32              `json:"failed"`
+	FinishedAt  OptDateTime           `json:"finishedAt"`
+	Pending     OptInt32              `json:"pending"`
+	ProgressPct OptInt32              `json:"progressPct"`
+	Provider    OptSummary7Provider   `json:"provider"`
+	Running     OptInt32              `json:"running"`
+	StartedAt   OptDateTime           `json:"startedAt"`
+	SuiteName   OptString             `json:"suiteName"`
+	Total       OptInt32              `json:"total"`
+}
+
+// GetCompleted returns the value of Completed.
+func (s *Summary7) GetCompleted() OptInt32 {
+	return s.Completed
+}
+
+// GetDbKinds returns the value of DbKinds.
+func (s *Summary7) GetDbKinds() []Summary7DbKindsItem {
+	return s.DbKinds
 }
 
 // GetDuration returns the value of Duration.
@@ -35965,14 +36068,19 @@ func (s *Summary7) GetDuration() OptDuration {
 	return s.Duration
 }
 
+// GetFailed returns the value of Failed.
+func (s *Summary7) GetFailed() OptInt32 {
+	return s.Failed
+}
+
 // GetFinishedAt returns the value of FinishedAt.
 func (s *Summary7) GetFinishedAt() OptDateTime {
 	return s.FinishedAt
 }
 
-// GetNodeCount returns the value of NodeCount.
-func (s *Summary7) GetNodeCount() OptInt32 {
-	return s.NodeCount
+// GetPending returns the value of Pending.
+func (s *Summary7) GetPending() OptInt32 {
+	return s.Pending
 }
 
 // GetProgressPct returns the value of ProgressPct.
@@ -35985,59 +36093,34 @@ func (s *Summary7) GetProvider() OptSummary7Provider {
 	return s.Provider
 }
 
+// GetRunning returns the value of Running.
+func (s *Summary7) GetRunning() OptInt32 {
+	return s.Running
+}
+
 // GetStartedAt returns the value of StartedAt.
 func (s *Summary7) GetStartedAt() OptDateTime {
 	return s.StartedAt
 }
 
-// GetStroppyVersion returns the value of StroppyVersion.
-func (s *Summary7) GetStroppyVersion() OptString {
-	return s.StroppyVersion
+// GetSuiteName returns the value of SuiteName.
+func (s *Summary7) GetSuiteName() OptString {
+	return s.SuiteName
 }
 
-// GetTestPresetId returns the value of TestPresetId.
-func (s *Summary7) GetTestPresetId() OptString {
-	return s.TestPresetId
+// GetTotal returns the value of Total.
+func (s *Summary7) GetTotal() OptInt32 {
+	return s.Total
 }
 
-// GetTestPresetName returns the value of TestPresetName.
-func (s *Summary7) GetTestPresetName() OptString {
-	return s.TestPresetName
+// SetCompleted sets the value of Completed.
+func (s *Summary7) SetCompleted(val OptInt32) {
+	s.Completed = val
 }
 
-// GetTopologyLabel returns the value of TopologyLabel.
-func (s *Summary7) GetTopologyLabel() OptString {
-	return s.TopologyLabel
-}
-
-// GetWorkloadName returns the value of WorkloadName.
-func (s *Summary7) GetWorkloadName() OptString {
-	return s.WorkloadName
-}
-
-// GetWorkloadPresetId returns the value of WorkloadPresetId.
-func (s *Summary7) GetWorkloadPresetId() OptString {
-	return s.WorkloadPresetId
-}
-
-// GetWorkloadProtocol returns the value of WorkloadProtocol.
-func (s *Summary7) GetWorkloadProtocol() OptSummary7WorkloadProtocol {
-	return s.WorkloadProtocol
-}
-
-// SetDbKind sets the value of DbKind.
-func (s *Summary7) SetDbKind(val OptSummary7DbKind) {
-	s.DbKind = val
-}
-
-// SetDbPresetId sets the value of DbPresetId.
-func (s *Summary7) SetDbPresetId(val OptString) {
-	s.DbPresetId = val
-}
-
-// SetDbPresetName sets the value of DbPresetName.
-func (s *Summary7) SetDbPresetName(val OptString) {
-	s.DbPresetName = val
+// SetDbKinds sets the value of DbKinds.
+func (s *Summary7) SetDbKinds(val []Summary7DbKindsItem) {
+	s.DbKinds = val
 }
 
 // SetDuration sets the value of Duration.
@@ -36045,14 +36128,19 @@ func (s *Summary7) SetDuration(val OptDuration) {
 	s.Duration = val
 }
 
+// SetFailed sets the value of Failed.
+func (s *Summary7) SetFailed(val OptInt32) {
+	s.Failed = val
+}
+
 // SetFinishedAt sets the value of FinishedAt.
 func (s *Summary7) SetFinishedAt(val OptDateTime) {
 	s.FinishedAt = val
 }
 
-// SetNodeCount sets the value of NodeCount.
-func (s *Summary7) SetNodeCount(val OptInt32) {
-	s.NodeCount = val
+// SetPending sets the value of Pending.
+func (s *Summary7) SetPending(val OptInt32) {
+	s.Pending = val
 }
 
 // SetProgressPct sets the value of ProgressPct.
@@ -36065,78 +36153,58 @@ func (s *Summary7) SetProvider(val OptSummary7Provider) {
 	s.Provider = val
 }
 
+// SetRunning sets the value of Running.
+func (s *Summary7) SetRunning(val OptInt32) {
+	s.Running = val
+}
+
 // SetStartedAt sets the value of StartedAt.
 func (s *Summary7) SetStartedAt(val OptDateTime) {
 	s.StartedAt = val
 }
 
-// SetStroppyVersion sets the value of StroppyVersion.
-func (s *Summary7) SetStroppyVersion(val OptString) {
-	s.StroppyVersion = val
+// SetSuiteName sets the value of SuiteName.
+func (s *Summary7) SetSuiteName(val OptString) {
+	s.SuiteName = val
 }
 
-// SetTestPresetId sets the value of TestPresetId.
-func (s *Summary7) SetTestPresetId(val OptString) {
-	s.TestPresetId = val
+// SetTotal sets the value of Total.
+func (s *Summary7) SetTotal(val OptInt32) {
+	s.Total = val
 }
 
-// SetTestPresetName sets the value of TestPresetName.
-func (s *Summary7) SetTestPresetName(val OptString) {
-	s.TestPresetName = val
-}
-
-// SetTopologyLabel sets the value of TopologyLabel.
-func (s *Summary7) SetTopologyLabel(val OptString) {
-	s.TopologyLabel = val
-}
-
-// SetWorkloadName sets the value of WorkloadName.
-func (s *Summary7) SetWorkloadName(val OptString) {
-	s.WorkloadName = val
-}
-
-// SetWorkloadPresetId sets the value of WorkloadPresetId.
-func (s *Summary7) SetWorkloadPresetId(val OptString) {
-	s.WorkloadPresetId = val
-}
-
-// SetWorkloadProtocol sets the value of WorkloadProtocol.
-func (s *Summary7) SetWorkloadProtocol(val OptSummary7WorkloadProtocol) {
-	s.WorkloadProtocol = val
-}
-
-type Summary7DbKind int32
+type Summary7DbKindsItem int32
 
 const (
-	Summary7DbKind0  Summary7DbKind = 0
-	Summary7DbKind1  Summary7DbKind = 1
-	Summary7DbKind2  Summary7DbKind = 2
-	Summary7DbKind3  Summary7DbKind = 3
-	Summary7DbKind4  Summary7DbKind = 4
-	Summary7DbKind5  Summary7DbKind = 5
-	Summary7DbKind6  Summary7DbKind = 6
-	Summary7DbKind7  Summary7DbKind = 7
-	Summary7DbKind8  Summary7DbKind = 8
-	Summary7DbKind9  Summary7DbKind = 9
-	Summary7DbKind10 Summary7DbKind = 10
-	Summary7DbKind11 Summary7DbKind = 11
+	Summary7DbKindsItem0  Summary7DbKindsItem = 0
+	Summary7DbKindsItem1  Summary7DbKindsItem = 1
+	Summary7DbKindsItem2  Summary7DbKindsItem = 2
+	Summary7DbKindsItem3  Summary7DbKindsItem = 3
+	Summary7DbKindsItem4  Summary7DbKindsItem = 4
+	Summary7DbKindsItem5  Summary7DbKindsItem = 5
+	Summary7DbKindsItem6  Summary7DbKindsItem = 6
+	Summary7DbKindsItem7  Summary7DbKindsItem = 7
+	Summary7DbKindsItem8  Summary7DbKindsItem = 8
+	Summary7DbKindsItem9  Summary7DbKindsItem = 9
+	Summary7DbKindsItem10 Summary7DbKindsItem = 10
+	Summary7DbKindsItem11 Summary7DbKindsItem = 11
 )
 
-// AllValues returns all Summary7DbKind values.
-func (Summary7DbKind) AllValues() []Summary7DbKind {
-	return []Summary7DbKind{
-		Summary7DbKind0,
-		Summary7DbKind1,
-		Summary7DbKind2,
-		Summary7DbKind3,
-		Summary7DbKind4,
-		Summary7DbKind5,
-		Summary7DbKind6,
-		Summary7DbKind7,
-		Summary7DbKind8,
-		Summary7DbKind9,
-		Summary7DbKind10,
-		Summary7DbKind11,
+// AllValues returns all Summary7DbKindsItem values.
+func (Summary7DbKindsItem) AllValues() []Summary7DbKindsItem {
+	return []Summary7DbKindsItem{
+		Summary7DbKindsItem0,
+		Summary7DbKindsItem1,
+		Summary7DbKindsItem2,
+		Summary7DbKindsItem3,
+		Summary7DbKindsItem4,
+		Summary7DbKindsItem5,
+		Summary7DbKindsItem6,
+		Summary7DbKindsItem7,
+		Summary7DbKindsItem8,
+		Summary7DbKindsItem9,
+		Summary7DbKindsItem10,
+		Summary7DbKindsItem11,
 	}
 }
 
@@ -36154,33 +36222,6 @@ func (Summary7Provider) AllValues() []Summary7Provider {
 		Summary7Provider0,
 		Summary7Provider1,
 		Summary7Provider2,
-	}
-}
-
-type Summary7WorkloadProtocol int32
-
-const (
-	Summary7WorkloadProtocol0 Summary7WorkloadProtocol = 0
-	Summary7WorkloadProtocol1 Summary7WorkloadProtocol = 1
-	Summary7WorkloadProtocol2 Summary7WorkloadProtocol = 2
-	Summary7WorkloadProtocol3 Summary7WorkloadProtocol = 3
-	Summary7WorkloadProtocol4 Summary7WorkloadProtocol = 4
-	Summary7WorkloadProtocol5 Summary7WorkloadProtocol = 5
-	Summary7WorkloadProtocol7 Summary7WorkloadProtocol = 7
-	Summary7WorkloadProtocol8 Summary7WorkloadProtocol = 8
-)
-
-// AllValues returns all Summary7WorkloadProtocol values.
-func (Summary7WorkloadProtocol) AllValues() []Summary7WorkloadProtocol {
-	return []Summary7WorkloadProtocol{
-		Summary7WorkloadProtocol0,
-		Summary7WorkloadProtocol1,
-		Summary7WorkloadProtocol2,
-		Summary7WorkloadProtocol3,
-		Summary7WorkloadProtocol4,
-		Summary7WorkloadProtocol5,
-		Summary7WorkloadProtocol7,
-		Summary7WorkloadProtocol8,
 	}
 }
 
@@ -36783,7 +36824,7 @@ type TestRunRecord struct {
 	Status              OptTestRunRecordStatus  `json:"status"`
 	SuiteCellId         OptString               `json:"suiteCellId"`
 	SuiteRunId          OptString               `json:"suiteRunId"`
-	Summary             OptSummary7             `json:"summary"`
+	Summary             OptSummary5             `json:"summary"`
 	Trigger             OptTestRunRecordTrigger `json:"trigger"`
 }
 
@@ -36838,7 +36879,7 @@ func (s *TestRunRecord) GetSuiteRunId() OptString {
 }
 
 // GetSummary returns the value of Summary.
-func (s *TestRunRecord) GetSummary() OptSummary7 {
+func (s *TestRunRecord) GetSummary() OptSummary5 {
 	return s.Summary
 }
 
@@ -36898,7 +36939,7 @@ func (s *TestRunRecord) SetSuiteRunId(val OptString) {
 }
 
 // SetSummary sets the value of Summary.
-func (s *TestRunRecord) SetSummary(val OptSummary7) {
+func (s *TestRunRecord) SetSummary(val OptSummary5) {
 	s.Summary = val
 }
 

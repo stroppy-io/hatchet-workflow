@@ -391,6 +391,8 @@
     - [cloud.v1.api.ShellServerFrame](cloud/v1/api/README.md#cloud-v1-api-shellserverframe)
     - [cloud.v1.api.ShellStart](cloud/v1/api/README.md#cloud-v1-api-shellstart)
     - [cloud.v1.api.SsoButton](cloud/v1/api/README.md#cloud-v1-api-ssobutton)
+    - [cloud.v1.api.StartRunRequest](cloud/v1/api/README.md#cloud-v1-api-startrunrequest)
+    - [cloud.v1.api.StartRunResponse](cloud/v1/api/README.md#cloud-v1-api-startrunresponse)
     - [cloud.v1.api.StartSSORequest](cloud/v1/api/README.md#cloud-v1-api-startssorequest)
     - [cloud.v1.api.StartSSOResponse](cloud/v1/api/README.md#cloud-v1-api-startssoresponse)
     - [cloud.v1.api.StartSuiteRequest](cloud/v1/api/README.md#cloud-v1-api-startsuiterequest)

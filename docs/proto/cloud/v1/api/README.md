@@ -291,6 +291,8 @@
   - [cloud.v1.api.ShellServerFrame](#cloud-v1-api-shellserverframe)
   - [cloud.v1.api.ShellStart](#cloud-v1-api-shellstart)
   - [cloud.v1.api.SsoButton](#cloud-v1-api-ssobutton)
+  - [cloud.v1.api.StartRunRequest](#cloud-v1-api-startrunrequest)
+  - [cloud.v1.api.StartRunResponse](#cloud-v1-api-startrunresponse)
   - [cloud.v1.api.StartSSORequest](#cloud-v1-api-startssorequest)
   - [cloud.v1.api.StartSSOResponse](#cloud-v1-api-startssoresponse)
   - [cloud.v1.api.StartSuiteRequest](#cloud-v1-api-startsuiterequest)
@@ -10693,6 +10695,70 @@ go_name: Id</pre></td>
 
 json_name: slug
 go_name: Slug</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-startrunrequest"></a>
+### cloud.v1.api.StartRunRequest
+
+<pre>
+//StartRunRequest launches a new run of an already-stored recipe bundle.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>recipe_id</td>
+<td>string</td>
+<td><pre>
+//recipe_id is the recipe record whose stored bundle is launched.<br>
+
+json_name: recipeId
+go_name: RecipeId</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+//tenant_id scopes the request to the owning tenant.<br>
+
+json_name: tenantId
+go_name: TenantId</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-startrunresponse"></a>
+### cloud.v1.api.StartRunResponse
+
+<pre>
+//StartRunResponse returns the persisted, launched run record. The run
+//reuses models.TestRunRecord so overview/metrics/logs work unchanged for
+//a recipe run; its spec/topology fields are left empty (a recipe run has
+//no baked domain.TestRun — its input is the recipe bundle, carried by the
+//launched RunRecipeWorkflow instead).
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>run</td>
+<td><a href="../models/README.md#cloud-v1-models-testrunrecord">cloud.v1.models.TestRunRecord</a></td>
+<td><pre>
+//run is the persisted, launched run record.<br>
+
+json_name: run
+go_name: Run</pre></td>
 </tr>
 </table>
 

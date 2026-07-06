@@ -130,6 +130,7 @@ const (
 	SetShareExpiryOperation                 OperationName = "SetShareExpiry"
 	SetSuiteScheduleOperation               OperationName = "SetSuiteSchedule"
 	SetTenantProviderSettingsOperation      OperationName = "SetTenantProviderSettings"
+	StartRunOperation                       OperationName = "StartRun"
 	StartSSOOperation                       OperationName = "StartSSO"
 	StartSuiteOperation                     OperationName = "StartSuite"
 	StartSuiteWizardOperation               OperationName = "StartSuiteWizard"

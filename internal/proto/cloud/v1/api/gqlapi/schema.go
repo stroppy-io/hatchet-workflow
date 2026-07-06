@@ -57,11 +57,11 @@ type Workload_ExecutionLimitDuration struct{ Value string }
 
 type Workload_ExecutionLimitIterations struct{ Value uint32 }
 
-type SuiteCellSourceTestPresetId struct{ Value string }
-
 type FileContentText struct{ Value string }
 
 type FileContentBytes struct{ Value []byte }
+
+type SuiteCellSourceTestPresetId struct{ Value string }
 
 type RenderArtifactArtifactRuntimeValue struct{ Value string }
 
@@ -2055,216 +2055,34 @@ func decode_CheckRecipeRequest(m map[string]interface{}) *pb.CheckRecipeRequest 
 	return out
 }
 
-func decode_CreateShareRequest(m map[string]interface{}) *pb.CreateShareRequest {
-	out := &pb.CreateShareRequest{}
+func decode_StartRunRequest(m map[string]interface{}) *pb.StartRunRequest {
+	out := &pb.StartRunRequest{}
 	if m == nil {
 		return out
 	}
 	out.TenantId = graphqlrt.AsString(m["tenantId"])
-	if mm, ok := m["target"].(map[string]interface{}); ok {
-		out.Target = decode_ShareRecord_TargetInput(mm)
-	}
-	if tv, ok := m["ttl"].(*pb13.Duration); ok {
-		out.Ttl = tv
-	}
+	out.RecipeId = graphqlrt.AsString(m["recipeId"])
 	return out
 }
 
-func decode_ShareRecord_TargetInput(m map[string]interface{}) *pb6.ShareRecord_Target {
-	out := &pb6.ShareRecord_Target{}
-	if m == nil {
-		return out
-	}
-	if ev, ok := m["kind"].(pb6.ShareRecord_Target_Kind); ok {
-		out.Kind = ev
-	}
-	out.Id = graphqlrt.AsString(m["id"])
-	return out
-}
-
-func decode_GetShareRequest(m map[string]interface{}) *pb.GetShareRequest {
-	out := &pb.GetShareRequest{}
-	if m == nil {
-		return out
-	}
-	out.TenantId = graphqlrt.AsString(m["tenantId"])
-	out.Id = graphqlrt.AsString(m["id"])
-	return out
-}
-
-func decode_ListSharesRequest(m map[string]interface{}) *pb.ListSharesRequest {
-	out := &pb.ListSharesRequest{}
-	if m == nil {
-		return out
-	}
-	out.TenantId = graphqlrt.AsString(m["tenantId"])
-	if mm, ok := m["filter"].(map[string]interface{}); ok {
-		out.Filter = decode_EntityFilterInput(mm)
-	}
-	if mm, ok := m["sort"].(map[string]interface{}); ok {
-		out.Sort = decode_EntitySortInput(mm)
-	}
-	if mm, ok := m["page"].(map[string]interface{}); ok {
-		out.Page = decode_PageInput(mm)
-	}
-	out.TargetId = graphqlrt.AsString(m["targetId"])
-	return out
-}
-
-func decode_RevokeShareRequest(m map[string]interface{}) *pb.RevokeShareRequest {
-	out := &pb.RevokeShareRequest{}
-	if m == nil {
-		return out
-	}
-	out.TenantId = graphqlrt.AsString(m["tenantId"])
-	out.Id = graphqlrt.AsString(m["id"])
-	return out
-}
-
-func decode_SetShareExpiryRequest(m map[string]interface{}) *pb.SetShareExpiryRequest {
-	out := &pb.SetShareExpiryRequest{}
-	if m == nil {
-		return out
-	}
-	out.TenantId = graphqlrt.AsString(m["tenantId"])
-	out.Id = graphqlrt.AsString(m["id"])
-	if tv, ok := m["ttl"].(*pb13.Duration); ok {
-		out.Ttl = tv
-	}
-	return out
-}
-
-func decode_DeleteShareRequest(m map[string]interface{}) *pb.DeleteShareRequest {
-	out := &pb.DeleteShareRequest{}
-	if m == nil {
-		return out
-	}
-	out.TenantId = graphqlrt.AsString(m["tenantId"])
-	out.Id = graphqlrt.AsString(m["id"])
-	return out
-}
-
-func decode_ListStroppyVersionsRequest(m map[string]interface{}) *pb.ListStroppyVersionsRequest {
-	out := &pb.ListStroppyVersionsRequest{}
-	if m == nil {
-		return out
-	}
-	out.TenantId = graphqlrt.AsString(m["tenantId"])
-	return out
-}
-
-func decode_CreateSuiteRequest(m map[string]interface{}) *pb.CreateSuiteRequest {
-	out := &pb.CreateSuiteRequest{}
-	if m == nil {
-		return out
-	}
-	out.TenantId = graphqlrt.AsString(m["tenantId"])
-	if mm, ok := m["suite"].(map[string]interface{}); ok {
-		out.Suite = decode_SuiteRecordInput(mm)
-	}
-	return out
-}
-
-func decode_SuiteRecordInput(m map[string]interface{}) *pb6.SuiteRecord {
-	out := &pb6.SuiteRecord{}
-	if m == nil {
-		return out
-	}
-	if mm, ok := m["entity"].(map[string]interface{}); ok {
-		out.Entity = decode_EntityInput(mm)
-	}
-	if mm, ok := m["spec"].(map[string]interface{}); ok {
-		out.Spec = decode_SuiteInput(mm)
-	}
-	if mm, ok := m["summary"].(map[string]interface{}); ok {
-		out.Summary = decode_SuiteRecord_SummaryInput(mm)
-	}
-	return out
-}
-
-func decode_SuiteRecord_SummaryInput(m map[string]interface{}) *pb6.SuiteRecord_Summary {
-	out := &pb6.SuiteRecord_Summary{}
-	if m == nil {
-		return out
-	}
-	out.ScheduleEnabled = graphqlrt.AsBool(m["scheduleEnabled"])
-	out.Cron = graphqlrt.AsString(m["cron"])
-	if tv, ok := m["nextRunAt"].(*pb12.Timestamp); ok {
-		out.NextRunAt = tv
-	}
-	if tv, ok := m["lastRunAt"].(*pb12.Timestamp); ok {
-		out.LastRunAt = tv
-	}
-	if ev, ok := m["lastRunStatus"].(pb1.Status); ok {
-		out.LastRunStatus = ev
-	}
-	out.RunCount = graphqlrt.AsUint32(m["runCount"])
-	out.CellCount = graphqlrt.AsUint32(m["cellCount"])
-	return out
-}
-
-func decode_SuiteInput(m map[string]interface{}) *pb2.Suite {
-	out := &pb2.Suite{}
+func decode_TestRunInput(m map[string]interface{}) *pb2.TestRun {
+	out := &pb2.TestRun{}
 	if m == nil {
 		return out
 	}
 	out.Id = graphqlrt.AsString(m["id"])
-	if arr, ok := m["cells"].([]interface{}); ok {
-		for _, it := range arr {
-			if mm, ok := it.(map[string]interface{}); ok {
-				out.Cells = append(out.Cells, decode_SuiteCellInput(mm))
-			}
-		}
+	out.SuiteId = graphqlrt.AsString(m["suiteId"])
+	if mm, ok := m["database"].(map[string]interface{}); ok {
+		out.Database = decode_DatabaseInput(mm)
 	}
-	if ev, ok := m["provider"].(pb3.Provider); ok {
-		out.Provider = ev
+	if mm, ok := m["workload"].(map[string]interface{}); ok {
+		out.Workload = decode_WorkloadInput(mm)
 	}
-	if mm, ok := m["tags"].(map[string]interface{}); ok {
-		out.Tags = decode_TagsInput(mm)
+	if mm, ok := m["topologySpec"].(map[string]interface{}); ok {
+		out.TopologySpec = decode_TopologySpecInput(mm)
 	}
-	if mm, ok := m["schedule"].(map[string]interface{}); ok {
-		out.Schedule = decode_ScheduleInput(mm)
-	}
-	if _, ok := m["defaultInTenantRating"]; ok {
-		v := graphqlrt.AsBool(m["defaultInTenantRating"])
-		out.DefaultInTenantRating = &v
-	}
-	if _, ok := m["defaultInGlobalRating"]; ok {
-		v := graphqlrt.AsBool(m["defaultInGlobalRating"])
-		out.DefaultInGlobalRating = &v
-	}
-	out.DefaultMaxParallel = graphqlrt.AsUint32(m["defaultMaxParallel"])
-	return out
-}
-
-func decode_SuiteCellInput(m map[string]interface{}) *pb2.SuiteCell {
-	out := &pb2.SuiteCell{}
-	if m == nil {
-		return out
-	}
-	out.Id = graphqlrt.AsString(m["id"])
-	out.Name = graphqlrt.AsString(m["name"])
-	out.Enabled = graphqlrt.AsBool(m["enabled"])
-	if ov, ok := m["source"].(map[string]interface{}); ok {
-		switch {
-		case ov["presetPair"] != nil:
-			if mm, ok := ov["presetPair"].(map[string]interface{}); ok {
-				out.Source = &pb2.SuiteCell_PresetPair_{PresetPair: decode_SuiteCell_PresetPairInput(mm)}
-			}
-		case ov["testPresetId"] != nil:
-			out.Source = &pb2.SuiteCell_TestPresetId{TestPresetId: graphqlrt.AsString(ov["testPresetId"])}
-		case ov["inlineTest"] != nil:
-			if mm, ok := ov["inlineTest"].(map[string]interface{}); ok {
-				out.Source = &pb2.SuiteCell_InlineTest{InlineTest: decode_TestInput(mm)}
-			}
-		}
-	}
-	if arr, ok := m["machineOverrides"].([]interface{}); ok {
-		for _, it := range arr {
-			if mm, ok := it.(map[string]interface{}); ok {
-				out.MachineOverrides = append(out.MachineOverrides, decode_MachinePlanInput(mm))
-			}
-		}
+	if mm, ok := m["infrastructurePlan"].(map[string]interface{}); ok {
+		out.InfrastructurePlan = decode_InfrastructurePlanInput(mm)
 	}
 	if mm, ok := m["renderOverrides"].(map[string]interface{}); ok {
 		out.RenderOverrides = decode_RenderOverrideSetInput(mm)
@@ -2275,13 +2093,181 @@ func decode_SuiteCellInput(m map[string]interface{}) *pb2.SuiteCell {
 	return out
 }
 
-func decode_SuiteCell_PresetPairInput(m map[string]interface{}) *pb2.SuiteCell_PresetPair {
-	out := &pb2.SuiteCell_PresetPair{}
+func decode_TopologySpecInput(m map[string]interface{}) *pb8.TopologySpec {
+	out := &pb8.TopologySpec{}
 	if m == nil {
 		return out
 	}
-	out.DbPresetId = graphqlrt.AsString(m["dbPresetId"])
-	out.WorkloadPresetId = graphqlrt.AsString(m["workloadPresetId"])
+	if arr, ok := m["nodes"].([]interface{}); ok {
+		for _, it := range arr {
+			if mm, ok := it.(map[string]interface{}); ok {
+				out.Nodes = append(out.Nodes, decode_NodeInput(mm))
+			}
+		}
+	}
+	if arr, ok := m["components"].([]interface{}); ok {
+		for _, it := range arr {
+			if mm, ok := it.(map[string]interface{}); ok {
+				out.Components = append(out.Components, decode_ComponentInput(mm))
+			}
+		}
+	}
+	if arr, ok := m["connections"].([]interface{}); ok {
+		for _, it := range arr {
+			if mm, ok := it.(map[string]interface{}); ok {
+				out.Connections = append(out.Connections, decode_ConnectionInput(mm))
+			}
+		}
+	}
+	if arr, ok := m["externalComponents"].([]interface{}); ok {
+		for _, it := range arr {
+			if mm, ok := it.(map[string]interface{}); ok {
+				out.ExternalComponents = append(out.ExternalComponents, decode_ComponentInput(mm))
+			}
+		}
+	}
+	if mm, ok := m["tags"].(map[string]interface{}); ok {
+		out.Tags = decode_TagsInput(mm)
+	}
+	return out
+}
+
+func decode_NodeInput(m map[string]interface{}) *pb8.Node {
+	out := &pb8.Node{}
+	if m == nil {
+		return out
+	}
+	out.Id = graphqlrt.AsString(m["id"])
+	if arr, ok := m["componentIds"].([]interface{}); ok {
+		for _, it := range arr {
+			out.ComponentIds = append(out.ComponentIds, graphqlrt.AsString(it))
+		}
+	}
+	if mm, ok := m["tags"].(map[string]interface{}); ok {
+		out.Tags = decode_TagsInput(mm)
+	}
+	return out
+}
+
+func decode_ComponentInput(m map[string]interface{}) *pb8.Component {
+	out := &pb8.Component{}
+	if m == nil {
+		return out
+	}
+	out.Id = graphqlrt.AsString(m["id"])
+	if ev, ok := m["kind"].(pb8.Component_Kind); ok {
+		out.Kind = ev
+	}
+	out.Engine = graphqlrt.AsString(m["engine"])
+	out.Role = graphqlrt.AsString(m["role"])
+	if mm, ok := m["tags"].(map[string]interface{}); ok {
+		out.Tags = decode_TagsInput(mm)
+	}
+	return out
+}
+
+func decode_ConnectionInput(m map[string]interface{}) *pb8.Connection {
+	out := &pb8.Connection{}
+	if m == nil {
+		return out
+	}
+	out.FromComponentId = graphqlrt.AsString(m["fromComponentId"])
+	out.ToComponentId = graphqlrt.AsString(m["toComponentId"])
+	if ev, ok := m["kind"].(pb8.Connection_Kind); ok {
+		out.Kind = ev
+	}
+	if ev, ok := m["protocol"].(pb8.Connection_Protocol); ok {
+		out.Protocol = ev
+	}
+	if ev, ok := m["mode"].(pb8.Connection_Mode); ok {
+		out.Mode = ev
+	}
+	out.EndpointName = graphqlrt.AsString(m["endpointName"])
+	if _, ok := m["port"]; ok {
+		v := graphqlrt.AsUint32(m["port"])
+		out.Port = &v
+	}
+	out.Colocated = graphqlrt.AsBool(m["colocated"])
+	if mm, ok := m["tags"].(map[string]interface{}); ok {
+		out.Tags = decode_TagsInput(mm)
+	}
+	return out
+}
+
+func decode_InfrastructurePlanInput(m map[string]interface{}) *pb3.InfrastructurePlan {
+	out := &pb3.InfrastructurePlan{}
+	if m == nil {
+		return out
+	}
+	if ev, ok := m["provider"].(pb3.Provider); ok {
+		out.Provider = ev
+	}
+	if mm, ok := m["settings"].(map[string]interface{}); ok {
+		out.Settings = decode_ProviderSettingsInput(mm)
+	}
+	if arr, ok := m["machines"].([]interface{}); ok {
+		for _, it := range arr {
+			if mm, ok := it.(map[string]interface{}); ok {
+				out.Machines = append(out.Machines, decode_MachinePlanInput(mm))
+			}
+		}
+	}
+	if mm, ok := m["tags"].(map[string]interface{}); ok {
+		out.Tags = decode_TagsInput(mm)
+	}
+	return out
+}
+
+func decode_ProviderSettingsInput(m map[string]interface{}) *pb3.ProviderSettings {
+	out := &pb3.ProviderSettings{}
+	if m == nil {
+		return out
+	}
+	if ov, ok := m["settings"].(map[string]interface{}); ok {
+		switch {
+		case ov["docker"] != nil:
+			if mm, ok := ov["docker"].(map[string]interface{}); ok {
+				out.Settings = &pb3.ProviderSettings_Docker{Docker: decode_Docker_SettingsInput(mm)}
+			}
+		case ov["yandex"] != nil:
+			if mm, ok := ov["yandex"].(map[string]interface{}); ok {
+				out.Settings = &pb3.ProviderSettings_Yandex{Yandex: decode_Yandex_SettingsInput(mm)}
+			}
+		}
+	}
+	return out
+}
+
+func decode_Docker_SettingsInput(m map[string]interface{}) *pb3.Docker_Settings {
+	out := &pb3.Docker_Settings{}
+	if m == nil {
+		return out
+	}
+	return out
+}
+
+func decode_Yandex_SettingsInput(m map[string]interface{}) *pb3.Yandex_Settings {
+	out := &pb3.Yandex_Settings{}
+	if m == nil {
+		return out
+	}
+	out.Token = graphqlrt.AsString(m["token"])
+	out.CloudId = graphqlrt.AsString(m["cloudId"])
+	out.FolderId = graphqlrt.AsString(m["folderId"])
+	if ev, ok := m["zone"].(pb3.Yandex_Settings_Zone); ok {
+		out.Zone = ev
+	}
+	out.NetworkId = graphqlrt.AsString(m["networkId"])
+	out.NetworkName = graphqlrt.AsString(m["networkName"])
+	out.SubnetCidr = graphqlrt.AsString(m["subnetCidr"])
+	if ev, ok := m["platformId"].(pb3.Yandex_Settings_PlatformId); ok {
+		out.PlatformId = ev
+	}
+	out.ImageId = graphqlrt.AsString(m["imageId"])
+	out.AssignPublicIp = graphqlrt.AsBool(m["assignPublicIp"])
+	out.SoftwareAcceleratedNetwork = graphqlrt.AsBool(m["softwareAcceleratedNetwork"])
+	out.SshUser = graphqlrt.AsString(m["sshUser"])
+	out.SshPublicKey = graphqlrt.AsString(m["sshPublicKey"])
 	return out
 }
 
@@ -2566,6 +2552,236 @@ func decode_File_AsRefInput(m map[string]interface{}) *pb1.File_AsRef {
 	}
 	out.Uri = graphqlrt.AsString(m["uri"])
 	out.Checksum = graphqlrt.AsString(m["checksum"])
+	return out
+}
+
+func decode_CreateShareRequest(m map[string]interface{}) *pb.CreateShareRequest {
+	out := &pb.CreateShareRequest{}
+	if m == nil {
+		return out
+	}
+	out.TenantId = graphqlrt.AsString(m["tenantId"])
+	if mm, ok := m["target"].(map[string]interface{}); ok {
+		out.Target = decode_ShareRecord_TargetInput(mm)
+	}
+	if tv, ok := m["ttl"].(*pb13.Duration); ok {
+		out.Ttl = tv
+	}
+	return out
+}
+
+func decode_ShareRecord_TargetInput(m map[string]interface{}) *pb6.ShareRecord_Target {
+	out := &pb6.ShareRecord_Target{}
+	if m == nil {
+		return out
+	}
+	if ev, ok := m["kind"].(pb6.ShareRecord_Target_Kind); ok {
+		out.Kind = ev
+	}
+	out.Id = graphqlrt.AsString(m["id"])
+	return out
+}
+
+func decode_GetShareRequest(m map[string]interface{}) *pb.GetShareRequest {
+	out := &pb.GetShareRequest{}
+	if m == nil {
+		return out
+	}
+	out.TenantId = graphqlrt.AsString(m["tenantId"])
+	out.Id = graphqlrt.AsString(m["id"])
+	return out
+}
+
+func decode_ListSharesRequest(m map[string]interface{}) *pb.ListSharesRequest {
+	out := &pb.ListSharesRequest{}
+	if m == nil {
+		return out
+	}
+	out.TenantId = graphqlrt.AsString(m["tenantId"])
+	if mm, ok := m["filter"].(map[string]interface{}); ok {
+		out.Filter = decode_EntityFilterInput(mm)
+	}
+	if mm, ok := m["sort"].(map[string]interface{}); ok {
+		out.Sort = decode_EntitySortInput(mm)
+	}
+	if mm, ok := m["page"].(map[string]interface{}); ok {
+		out.Page = decode_PageInput(mm)
+	}
+	out.TargetId = graphqlrt.AsString(m["targetId"])
+	return out
+}
+
+func decode_RevokeShareRequest(m map[string]interface{}) *pb.RevokeShareRequest {
+	out := &pb.RevokeShareRequest{}
+	if m == nil {
+		return out
+	}
+	out.TenantId = graphqlrt.AsString(m["tenantId"])
+	out.Id = graphqlrt.AsString(m["id"])
+	return out
+}
+
+func decode_SetShareExpiryRequest(m map[string]interface{}) *pb.SetShareExpiryRequest {
+	out := &pb.SetShareExpiryRequest{}
+	if m == nil {
+		return out
+	}
+	out.TenantId = graphqlrt.AsString(m["tenantId"])
+	out.Id = graphqlrt.AsString(m["id"])
+	if tv, ok := m["ttl"].(*pb13.Duration); ok {
+		out.Ttl = tv
+	}
+	return out
+}
+
+func decode_DeleteShareRequest(m map[string]interface{}) *pb.DeleteShareRequest {
+	out := &pb.DeleteShareRequest{}
+	if m == nil {
+		return out
+	}
+	out.TenantId = graphqlrt.AsString(m["tenantId"])
+	out.Id = graphqlrt.AsString(m["id"])
+	return out
+}
+
+func decode_ListStroppyVersionsRequest(m map[string]interface{}) *pb.ListStroppyVersionsRequest {
+	out := &pb.ListStroppyVersionsRequest{}
+	if m == nil {
+		return out
+	}
+	out.TenantId = graphqlrt.AsString(m["tenantId"])
+	return out
+}
+
+func decode_CreateSuiteRequest(m map[string]interface{}) *pb.CreateSuiteRequest {
+	out := &pb.CreateSuiteRequest{}
+	if m == nil {
+		return out
+	}
+	out.TenantId = graphqlrt.AsString(m["tenantId"])
+	if mm, ok := m["suite"].(map[string]interface{}); ok {
+		out.Suite = decode_SuiteRecordInput(mm)
+	}
+	return out
+}
+
+func decode_SuiteRecordInput(m map[string]interface{}) *pb6.SuiteRecord {
+	out := &pb6.SuiteRecord{}
+	if m == nil {
+		return out
+	}
+	if mm, ok := m["entity"].(map[string]interface{}); ok {
+		out.Entity = decode_EntityInput(mm)
+	}
+	if mm, ok := m["spec"].(map[string]interface{}); ok {
+		out.Spec = decode_SuiteInput(mm)
+	}
+	if mm, ok := m["summary"].(map[string]interface{}); ok {
+		out.Summary = decode_SuiteRecord_SummaryInput(mm)
+	}
+	return out
+}
+
+func decode_SuiteRecord_SummaryInput(m map[string]interface{}) *pb6.SuiteRecord_Summary {
+	out := &pb6.SuiteRecord_Summary{}
+	if m == nil {
+		return out
+	}
+	out.ScheduleEnabled = graphqlrt.AsBool(m["scheduleEnabled"])
+	out.Cron = graphqlrt.AsString(m["cron"])
+	if tv, ok := m["nextRunAt"].(*pb12.Timestamp); ok {
+		out.NextRunAt = tv
+	}
+	if tv, ok := m["lastRunAt"].(*pb12.Timestamp); ok {
+		out.LastRunAt = tv
+	}
+	if ev, ok := m["lastRunStatus"].(pb1.Status); ok {
+		out.LastRunStatus = ev
+	}
+	out.RunCount = graphqlrt.AsUint32(m["runCount"])
+	out.CellCount = graphqlrt.AsUint32(m["cellCount"])
+	return out
+}
+
+func decode_SuiteInput(m map[string]interface{}) *pb2.Suite {
+	out := &pb2.Suite{}
+	if m == nil {
+		return out
+	}
+	out.Id = graphqlrt.AsString(m["id"])
+	if arr, ok := m["cells"].([]interface{}); ok {
+		for _, it := range arr {
+			if mm, ok := it.(map[string]interface{}); ok {
+				out.Cells = append(out.Cells, decode_SuiteCellInput(mm))
+			}
+		}
+	}
+	if ev, ok := m["provider"].(pb3.Provider); ok {
+		out.Provider = ev
+	}
+	if mm, ok := m["tags"].(map[string]interface{}); ok {
+		out.Tags = decode_TagsInput(mm)
+	}
+	if mm, ok := m["schedule"].(map[string]interface{}); ok {
+		out.Schedule = decode_ScheduleInput(mm)
+	}
+	if _, ok := m["defaultInTenantRating"]; ok {
+		v := graphqlrt.AsBool(m["defaultInTenantRating"])
+		out.DefaultInTenantRating = &v
+	}
+	if _, ok := m["defaultInGlobalRating"]; ok {
+		v := graphqlrt.AsBool(m["defaultInGlobalRating"])
+		out.DefaultInGlobalRating = &v
+	}
+	out.DefaultMaxParallel = graphqlrt.AsUint32(m["defaultMaxParallel"])
+	return out
+}
+
+func decode_SuiteCellInput(m map[string]interface{}) *pb2.SuiteCell {
+	out := &pb2.SuiteCell{}
+	if m == nil {
+		return out
+	}
+	out.Id = graphqlrt.AsString(m["id"])
+	out.Name = graphqlrt.AsString(m["name"])
+	out.Enabled = graphqlrt.AsBool(m["enabled"])
+	if ov, ok := m["source"].(map[string]interface{}); ok {
+		switch {
+		case ov["presetPair"] != nil:
+			if mm, ok := ov["presetPair"].(map[string]interface{}); ok {
+				out.Source = &pb2.SuiteCell_PresetPair_{PresetPair: decode_SuiteCell_PresetPairInput(mm)}
+			}
+		case ov["testPresetId"] != nil:
+			out.Source = &pb2.SuiteCell_TestPresetId{TestPresetId: graphqlrt.AsString(ov["testPresetId"])}
+		case ov["inlineTest"] != nil:
+			if mm, ok := ov["inlineTest"].(map[string]interface{}); ok {
+				out.Source = &pb2.SuiteCell_InlineTest{InlineTest: decode_TestInput(mm)}
+			}
+		}
+	}
+	if arr, ok := m["machineOverrides"].([]interface{}); ok {
+		for _, it := range arr {
+			if mm, ok := it.(map[string]interface{}); ok {
+				out.MachineOverrides = append(out.MachineOverrides, decode_MachinePlanInput(mm))
+			}
+		}
+	}
+	if mm, ok := m["renderOverrides"].(map[string]interface{}); ok {
+		out.RenderOverrides = decode_RenderOverrideSetInput(mm)
+	}
+	if mm, ok := m["tags"].(map[string]interface{}); ok {
+		out.Tags = decode_TagsInput(mm)
+	}
+	return out
+}
+
+func decode_SuiteCell_PresetPairInput(m map[string]interface{}) *pb2.SuiteCell_PresetPair {
+	out := &pb2.SuiteCell_PresetPair{}
+	if m == nil {
+		return out
+	}
+	out.DbPresetId = graphqlrt.AsString(m["dbPresetId"])
+	out.WorkloadPresetId = graphqlrt.AsString(m["workloadPresetId"])
 	return out
 }
 
@@ -2903,184 +3119,6 @@ func decode_StartSuiteWizardRequest(m map[string]interface{}) *pb.StartSuiteWiza
 	return out
 }
 
-func decode_TopologySpecInput(m map[string]interface{}) *pb8.TopologySpec {
-	out := &pb8.TopologySpec{}
-	if m == nil {
-		return out
-	}
-	if arr, ok := m["nodes"].([]interface{}); ok {
-		for _, it := range arr {
-			if mm, ok := it.(map[string]interface{}); ok {
-				out.Nodes = append(out.Nodes, decode_NodeInput(mm))
-			}
-		}
-	}
-	if arr, ok := m["components"].([]interface{}); ok {
-		for _, it := range arr {
-			if mm, ok := it.(map[string]interface{}); ok {
-				out.Components = append(out.Components, decode_ComponentInput(mm))
-			}
-		}
-	}
-	if arr, ok := m["connections"].([]interface{}); ok {
-		for _, it := range arr {
-			if mm, ok := it.(map[string]interface{}); ok {
-				out.Connections = append(out.Connections, decode_ConnectionInput(mm))
-			}
-		}
-	}
-	if arr, ok := m["externalComponents"].([]interface{}); ok {
-		for _, it := range arr {
-			if mm, ok := it.(map[string]interface{}); ok {
-				out.ExternalComponents = append(out.ExternalComponents, decode_ComponentInput(mm))
-			}
-		}
-	}
-	if mm, ok := m["tags"].(map[string]interface{}); ok {
-		out.Tags = decode_TagsInput(mm)
-	}
-	return out
-}
-
-func decode_NodeInput(m map[string]interface{}) *pb8.Node {
-	out := &pb8.Node{}
-	if m == nil {
-		return out
-	}
-	out.Id = graphqlrt.AsString(m["id"])
-	if arr, ok := m["componentIds"].([]interface{}); ok {
-		for _, it := range arr {
-			out.ComponentIds = append(out.ComponentIds, graphqlrt.AsString(it))
-		}
-	}
-	if mm, ok := m["tags"].(map[string]interface{}); ok {
-		out.Tags = decode_TagsInput(mm)
-	}
-	return out
-}
-
-func decode_ComponentInput(m map[string]interface{}) *pb8.Component {
-	out := &pb8.Component{}
-	if m == nil {
-		return out
-	}
-	out.Id = graphqlrt.AsString(m["id"])
-	if ev, ok := m["kind"].(pb8.Component_Kind); ok {
-		out.Kind = ev
-	}
-	out.Engine = graphqlrt.AsString(m["engine"])
-	out.Role = graphqlrt.AsString(m["role"])
-	if mm, ok := m["tags"].(map[string]interface{}); ok {
-		out.Tags = decode_TagsInput(mm)
-	}
-	return out
-}
-
-func decode_ConnectionInput(m map[string]interface{}) *pb8.Connection {
-	out := &pb8.Connection{}
-	if m == nil {
-		return out
-	}
-	out.FromComponentId = graphqlrt.AsString(m["fromComponentId"])
-	out.ToComponentId = graphqlrt.AsString(m["toComponentId"])
-	if ev, ok := m["kind"].(pb8.Connection_Kind); ok {
-		out.Kind = ev
-	}
-	if ev, ok := m["protocol"].(pb8.Connection_Protocol); ok {
-		out.Protocol = ev
-	}
-	if ev, ok := m["mode"].(pb8.Connection_Mode); ok {
-		out.Mode = ev
-	}
-	out.EndpointName = graphqlrt.AsString(m["endpointName"])
-	if _, ok := m["port"]; ok {
-		v := graphqlrt.AsUint32(m["port"])
-		out.Port = &v
-	}
-	out.Colocated = graphqlrt.AsBool(m["colocated"])
-	if mm, ok := m["tags"].(map[string]interface{}); ok {
-		out.Tags = decode_TagsInput(mm)
-	}
-	return out
-}
-
-func decode_InfrastructurePlanInput(m map[string]interface{}) *pb3.InfrastructurePlan {
-	out := &pb3.InfrastructurePlan{}
-	if m == nil {
-		return out
-	}
-	if ev, ok := m["provider"].(pb3.Provider); ok {
-		out.Provider = ev
-	}
-	if mm, ok := m["settings"].(map[string]interface{}); ok {
-		out.Settings = decode_ProviderSettingsInput(mm)
-	}
-	if arr, ok := m["machines"].([]interface{}); ok {
-		for _, it := range arr {
-			if mm, ok := it.(map[string]interface{}); ok {
-				out.Machines = append(out.Machines, decode_MachinePlanInput(mm))
-			}
-		}
-	}
-	if mm, ok := m["tags"].(map[string]interface{}); ok {
-		out.Tags = decode_TagsInput(mm)
-	}
-	return out
-}
-
-func decode_ProviderSettingsInput(m map[string]interface{}) *pb3.ProviderSettings {
-	out := &pb3.ProviderSettings{}
-	if m == nil {
-		return out
-	}
-	if ov, ok := m["settings"].(map[string]interface{}); ok {
-		switch {
-		case ov["docker"] != nil:
-			if mm, ok := ov["docker"].(map[string]interface{}); ok {
-				out.Settings = &pb3.ProviderSettings_Docker{Docker: decode_Docker_SettingsInput(mm)}
-			}
-		case ov["yandex"] != nil:
-			if mm, ok := ov["yandex"].(map[string]interface{}); ok {
-				out.Settings = &pb3.ProviderSettings_Yandex{Yandex: decode_Yandex_SettingsInput(mm)}
-			}
-		}
-	}
-	return out
-}
-
-func decode_Docker_SettingsInput(m map[string]interface{}) *pb3.Docker_Settings {
-	out := &pb3.Docker_Settings{}
-	if m == nil {
-		return out
-	}
-	return out
-}
-
-func decode_Yandex_SettingsInput(m map[string]interface{}) *pb3.Yandex_Settings {
-	out := &pb3.Yandex_Settings{}
-	if m == nil {
-		return out
-	}
-	out.Token = graphqlrt.AsString(m["token"])
-	out.CloudId = graphqlrt.AsString(m["cloudId"])
-	out.FolderId = graphqlrt.AsString(m["folderId"])
-	if ev, ok := m["zone"].(pb3.Yandex_Settings_Zone); ok {
-		out.Zone = ev
-	}
-	out.NetworkId = graphqlrt.AsString(m["networkId"])
-	out.NetworkName = graphqlrt.AsString(m["networkName"])
-	out.SubnetCidr = graphqlrt.AsString(m["subnetCidr"])
-	if ev, ok := m["platformId"].(pb3.Yandex_Settings_PlatformId); ok {
-		out.PlatformId = ev
-	}
-	out.ImageId = graphqlrt.AsString(m["imageId"])
-	out.AssignPublicIp = graphqlrt.AsBool(m["assignPublicIp"])
-	out.SoftwareAcceleratedNetwork = graphqlrt.AsBool(m["softwareAcceleratedNetwork"])
-	out.SshUser = graphqlrt.AsString(m["sshUser"])
-	out.SshPublicKey = graphqlrt.AsString(m["sshPublicKey"])
-	return out
-}
-
 func decode_GetSuiteWizardDraftRequest(m map[string]interface{}) *pb.GetSuiteWizardDraftRequest {
 	out := &pb.GetSuiteWizardDraftRequest{}
 	if m == nil {
@@ -3198,34 +3236,6 @@ func decode_GetPublicConfigRequest(m map[string]interface{}) *pb.GetPublicConfig
 	out := &pb.GetPublicConfigRequest{}
 	if m == nil {
 		return out
-	}
-	return out
-}
-
-func decode_TestRunInput(m map[string]interface{}) *pb2.TestRun {
-	out := &pb2.TestRun{}
-	if m == nil {
-		return out
-	}
-	out.Id = graphqlrt.AsString(m["id"])
-	out.SuiteId = graphqlrt.AsString(m["suiteId"])
-	if mm, ok := m["database"].(map[string]interface{}); ok {
-		out.Database = decode_DatabaseInput(mm)
-	}
-	if mm, ok := m["workload"].(map[string]interface{}); ok {
-		out.Workload = decode_WorkloadInput(mm)
-	}
-	if mm, ok := m["topologySpec"].(map[string]interface{}); ok {
-		out.TopologySpec = decode_TopologySpecInput(mm)
-	}
-	if mm, ok := m["infrastructurePlan"].(map[string]interface{}); ok {
-		out.InfrastructurePlan = decode_InfrastructurePlanInput(mm)
-	}
-	if mm, ok := m["renderOverrides"].(map[string]interface{}); ok {
-		out.RenderOverrides = decode_RenderOverrideSetInput(mm)
-	}
-	if mm, ok := m["tags"].(map[string]interface{}); ok {
-		out.Tags = decode_TagsInput(mm)
 	}
 	return out
 }
@@ -3902,26 +3912,26 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 	var e_QuotaRefreshPolicy *graphql.Enum
 	var e_Quota_ReservationStatus *graphql.Enum
 	var e_Severity *graphql.Enum
-	var e_ShareRecord_Target_Kind *graphql.Enum
-	var e_Docker_Protocol *graphql.Enum
-	var e_Docker_RestartPolicy *graphql.Enum
-	var e_ListSuitesRequest_Sort_Kind *graphql.Enum
-	var e_Trigger *graphql.Enum
-	var e_ListSuiteRunsRequest_Sort_Kind *graphql.Enum
 	var e_Component_Kind *graphql.Enum
 	var e_Connection_Kind *graphql.Enum
 	var e_Connection_Protocol *graphql.Enum
 	var e_Connection_Mode *graphql.Enum
 	var e_Yandex_Settings_PlatformId *graphql.Enum
 	var e_Yandex_Settings_Zone *graphql.Enum
-	var e_RenderArtifact_Kind *graphql.Enum
-	var e_RenderArtifact_Origin *graphql.Enum
-	var e_RenderArtifact_Mutability *graphql.Enum
+	var e_Docker_Protocol *graphql.Enum
+	var e_Docker_RestartPolicy *graphql.Enum
+	var e_Trigger *graphql.Enum
 	var e_Cmd_Streams_Mode *graphql.Enum
-	var e_Schema_Filed_Severity *graphql.Enum
 	var e_Worker_Kind *graphql.Enum
 	var e_OperationKind *graphql.Enum
 	var e_OutputKind *graphql.Enum
+	var e_ShareRecord_Target_Kind *graphql.Enum
+	var e_ListSuitesRequest_Sort_Kind *graphql.Enum
+	var e_ListSuiteRunsRequest_Sort_Kind *graphql.Enum
+	var e_RenderArtifact_Kind *graphql.Enum
+	var e_RenderArtifact_Origin *graphql.Enum
+	var e_RenderArtifact_Mutability *graphql.Enum
+	var e_Schema_Filed_Severity *graphql.Enum
 	var e_ListTestRunsRequest_Sort_Kind *graphql.Enum
 	var e_LogScrollDirection *graphql.Enum
 	var e_Source *graphql.Enum
@@ -4092,20 +4102,18 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 	var o_DeleteRecipeResponse *graphql.Object
 	var o_CheckRecipeResponse *graphql.Object
 	var o_Diagnostic *graphql.Object
-	var o_ShareRecord_Target *graphql.Object
-	var o_CreateShareResponse *graphql.Object
-	var o_ShareRecord *graphql.Object
-	var o_GetShareResponse *graphql.Object
-	var o_ListSharesResponse *graphql.Object
-	var o_RevokeShareResponse *graphql.Object
-	var o_SetShareExpiryResponse *graphql.Object
-	var o_DeleteShareResponse *graphql.Object
-	var o_ListStroppyVersionsResponse *graphql.Object
-	var o_SuiteRecord *graphql.Object
-	var o_SuiteRecord_Summary *graphql.Object
-	var o_Suite *graphql.Object
-	var o_SuiteCell *graphql.Object
-	var o_SuiteCell_PresetPair *graphql.Object
+	var o_StartRunResponse *graphql.Object
+	var o_TestRunRecord *graphql.Object
+	var o_TestRunRecord_Summary *graphql.Object
+	var o_TestRun *graphql.Object
+	var o_TopologySpec *graphql.Object
+	var o_Node *graphql.Object
+	var o_Component *graphql.Object
+	var o_Connection *graphql.Object
+	var o_InfrastructurePlan *graphql.Object
+	var o_ProviderSettings *graphql.Object
+	var o_Docker_Settings *graphql.Object
+	var o_Yandex_Settings *graphql.Object
 	var o_MachinePlan *graphql.Object
 	var o_Docker_Container *graphql.Object
 	var o_Docker_VolumeMount *graphql.Object
@@ -4121,6 +4129,42 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 	var o_File *graphql.Object
 	var o_File_Info *graphql.Object
 	var o_File_AsRef *graphql.Object
+	var o_InfrastructureState *graphql.Object
+	var o_MachineState *graphql.Object
+	var o_Endpoint *graphql.Object
+	var o_Docker_ContainerOutput *graphql.Object
+	var o_Yandex_VmOutput *graphql.Object
+	var o_Quota_Allocation *graphql.Object
+	var o_DeploymentPlan *graphql.Object
+	var o_ComponentDeployment *graphql.Object
+	var o_AgentStep *graphql.Object
+	var o_Dir *graphql.Object
+	var o_Dir_Info *graphql.Object
+	var o_Cmd *graphql.Object
+	var o_Cmd_Spec *graphql.Object
+	var o_Cmd_Argv *graphql.Object
+	var o_Cmd_Script *graphql.Object
+	var o_Cmd_Streams *graphql.Object
+	var o_Cmd_Result *graphql.Object
+	var o_RunState *graphql.Object
+	var o_Stage *graphql.Object
+	var o_Worker *graphql.Object
+	var o_PipelineOperation *graphql.Object
+	var o_PipelineOutput *graphql.Object
+	var o_ShareRecord_Target *graphql.Object
+	var o_CreateShareResponse *graphql.Object
+	var o_ShareRecord *graphql.Object
+	var o_GetShareResponse *graphql.Object
+	var o_ListSharesResponse *graphql.Object
+	var o_RevokeShareResponse *graphql.Object
+	var o_SetShareExpiryResponse *graphql.Object
+	var o_DeleteShareResponse *graphql.Object
+	var o_ListStroppyVersionsResponse *graphql.Object
+	var o_SuiteRecord *graphql.Object
+	var o_SuiteRecord_Summary *graphql.Object
+	var o_Suite *graphql.Object
+	var o_SuiteCell *graphql.Object
+	var o_SuiteCell_PresetPair *graphql.Object
 	var o_Schedule *graphql.Object
 	var o_CreateSuiteResponse *graphql.Object
 	var o_GetSuiteResponse *graphql.Object
@@ -4141,25 +4185,9 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 	var o_StartSuiteWizardResponse *graphql.Object
 	var o_SuiteWizardDraftRecord *graphql.Object
 	var o_SuiteWizardDraftRecord_Cell *graphql.Object
-	var o_TopologySpec *graphql.Object
-	var o_Node *graphql.Object
-	var o_Component *graphql.Object
-	var o_Connection *graphql.Object
-	var o_InfrastructurePlan *graphql.Object
-	var o_ProviderSettings *graphql.Object
-	var o_Docker_Settings *graphql.Object
-	var o_Yandex_Settings *graphql.Object
 	var o_RenderPreview *graphql.Object
 	var o_ComponentRender *graphql.Object
 	var o_RenderArtifact *graphql.Object
-	var o_Cmd *graphql.Object
-	var o_Cmd_Spec *graphql.Object
-	var o_Cmd_Argv *graphql.Object
-	var o_Cmd_Script *graphql.Object
-	var o_Cmd_Streams *graphql.Object
-	var o_Cmd_Result *graphql.Object
-	var o_Dir *graphql.Object
-	var o_Dir_Info *graphql.Object
 	var o_FieldError *graphql.Object
 	var o_GetSuiteWizardDraftResponse *graphql.Object
 	var o_ListSuiteWizardDraftsResponse *graphql.Object
@@ -4172,23 +4200,6 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 	var o_StatusCounts *graphql.Object
 	var o_UpcomingSuite *graphql.Object
 	var o_TenantDashboard *graphql.Object
-	var o_TestRunRecord *graphql.Object
-	var o_TestRunRecord_Summary *graphql.Object
-	var o_TestRun *graphql.Object
-	var o_InfrastructureState *graphql.Object
-	var o_MachineState *graphql.Object
-	var o_Endpoint *graphql.Object
-	var o_Docker_ContainerOutput *graphql.Object
-	var o_Yandex_VmOutput *graphql.Object
-	var o_Quota_Allocation *graphql.Object
-	var o_DeploymentPlan *graphql.Object
-	var o_ComponentDeployment *graphql.Object
-	var o_AgentStep *graphql.Object
-	var o_RunState *graphql.Object
-	var o_Stage *graphql.Object
-	var o_Worker *graphql.Object
-	var o_PipelineOperation *graphql.Object
-	var o_PipelineOutput *graphql.Object
 	var o_GetTenantDashboardResponse *graphql.Object
 	var o_GetTenantSettingsResponse *graphql.Object
 	var o_TenantSettingsRecord *graphql.Object
@@ -4253,23 +4264,23 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 	var o_Empty *graphql.Object
 	var o_Workload_ExecutionLimitDuration *graphql.Object
 	var o_Workload_ExecutionLimitIterations *graphql.Object
-	var o_SuiteCellSourceTestPresetId *graphql.Object
 	var o_FileContentText *graphql.Object
 	var o_FileContentBytes *graphql.Object
+	var o_SuiteCellSourceTestPresetId *graphql.Object
 	var o_RenderArtifactArtifactRuntimeValue *graphql.Object
 	var o_Schema_Filed_RefTargetName *graphql.Object
 	var u_DatabaseSource *graphql.Union
 	var u_DatabaseParamsEngine *graphql.Union
 	var u_Workload_ExecutionLimit *graphql.Union
 	var u_ShareRecord_SnapshotView *graphql.Union
-	var u_SuiteCellSource *graphql.Union
+	var u_ProviderSettingsSettings *graphql.Union
 	var u_MachinePlanProviderParams *graphql.Union
 	var u_FileContent *graphql.Union
-	var u_ProviderSettingsSettings *graphql.Union
-	var u_RenderArtifactArtifact *graphql.Union
-	var u_Cmd_SpecCommand *graphql.Union
 	var u_MachineStateProviderOutput *graphql.Union
 	var u_AgentStepAction *graphql.Union
+	var u_Cmd_SpecCommand *graphql.Union
+	var u_SuiteCellSource *graphql.Union
+	var u_RenderArtifactArtifact *graphql.Union
 	var u_Schema_FiledKind *graphql.Union
 	var u_Schema_Filed_RefTarget *graphql.Union
 	var i_PlatformSettingsInput *graphql.InputObject
@@ -4416,21 +4427,17 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 	var i_ListRecipesRequest *graphql.InputObject
 	var i_DeleteRecipeRequest *graphql.InputObject
 	var i_CheckRecipeRequest *graphql.InputObject
-	var i_CreateShareRequest *graphql.InputObject
-	var i_ShareRecord_TargetInput *graphql.InputObject
-	var i_GetShareRequest *graphql.InputObject
-	var i_ListSharesRequest *graphql.InputObject
-	var i_RevokeShareRequest *graphql.InputObject
-	var i_SetShareExpiryRequest *graphql.InputObject
-	var i_DeleteShareRequest *graphql.InputObject
-	var i_ListStroppyVersionsRequest *graphql.InputObject
-	var i_CreateSuiteRequest *graphql.InputObject
-	var i_SuiteRecordInput *graphql.InputObject
-	var i_SuiteRecord_SummaryInput *graphql.InputObject
-	var i_SuiteInput *graphql.InputObject
-	var i_SuiteCellInput *graphql.InputObject
-	var i_SuiteCellSourceInput *graphql.InputObject
-	var i_SuiteCell_PresetPairInput *graphql.InputObject
+	var i_StartRunRequest *graphql.InputObject
+	var i_TestRunInput *graphql.InputObject
+	var i_TopologySpecInput *graphql.InputObject
+	var i_NodeInput *graphql.InputObject
+	var i_ComponentInput *graphql.InputObject
+	var i_ConnectionInput *graphql.InputObject
+	var i_InfrastructurePlanInput *graphql.InputObject
+	var i_ProviderSettingsInput *graphql.InputObject
+	var i_ProviderSettingsSettingsInput *graphql.InputObject
+	var i_Docker_SettingsInput *graphql.InputObject
+	var i_Yandex_SettingsInput *graphql.InputObject
 	var i_MachinePlanInput *graphql.InputObject
 	var i_MachinePlanProviderParamsInput *graphql.InputObject
 	var i_Docker_ContainerInput *graphql.InputObject
@@ -4448,6 +4455,21 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 	var i_FileContentInput *graphql.InputObject
 	var i_File_InfoInput *graphql.InputObject
 	var i_File_AsRefInput *graphql.InputObject
+	var i_CreateShareRequest *graphql.InputObject
+	var i_ShareRecord_TargetInput *graphql.InputObject
+	var i_GetShareRequest *graphql.InputObject
+	var i_ListSharesRequest *graphql.InputObject
+	var i_RevokeShareRequest *graphql.InputObject
+	var i_SetShareExpiryRequest *graphql.InputObject
+	var i_DeleteShareRequest *graphql.InputObject
+	var i_ListStroppyVersionsRequest *graphql.InputObject
+	var i_CreateSuiteRequest *graphql.InputObject
+	var i_SuiteRecordInput *graphql.InputObject
+	var i_SuiteRecord_SummaryInput *graphql.InputObject
+	var i_SuiteInput *graphql.InputObject
+	var i_SuiteCellInput *graphql.InputObject
+	var i_SuiteCellSourceInput *graphql.InputObject
+	var i_SuiteCell_PresetPairInput *graphql.InputObject
 	var i_ScheduleInput *graphql.InputObject
 	var i_GetSuiteRequest *graphql.InputObject
 	var i_ListSuitesRequest *graphql.InputObject
@@ -4469,15 +4491,6 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 	var i_SuiteWizardCellPatchInput *graphql.InputObject
 	var i_SuiteWizardCellPatchSource *graphql.InputObject
 	var i_StartSuiteWizardRequest *graphql.InputObject
-	var i_TopologySpecInput *graphql.InputObject
-	var i_NodeInput *graphql.InputObject
-	var i_ComponentInput *graphql.InputObject
-	var i_ConnectionInput *graphql.InputObject
-	var i_InfrastructurePlanInput *graphql.InputObject
-	var i_ProviderSettingsInput *graphql.InputObject
-	var i_ProviderSettingsSettingsInput *graphql.InputObject
-	var i_Docker_SettingsInput *graphql.InputObject
-	var i_Yandex_SettingsInput *graphql.InputObject
 	var i_GetSuiteWizardDraftRequest *graphql.InputObject
 	var i_ListSuiteWizardDraftsRequest *graphql.InputObject
 	var i_PatchSuiteWizardRequest *graphql.InputObject
@@ -4486,7 +4499,6 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 	var i_GetSystemSettingsRequest *graphql.InputObject
 	var i_UpdateSystemSettingsRequest *graphql.InputObject
 	var i_GetPublicConfigRequest *graphql.InputObject
-	var i_TestRunInput *graphql.InputObject
 	var i_GetTenantDashboardRequest *graphql.InputObject
 	var i_GetTenantSettingsRequest *graphql.InputObject
 	var i_TenantSettingsRecordInput *graphql.InputObject
@@ -4710,47 +4722,6 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 		"SEVERITY_ERROR":       &graphql.EnumValueConfig{Value: pb7.Severity_SEVERITY_ERROR},
 		"SEVERITY_WARNING":     &graphql.EnumValueConfig{Value: pb7.Severity_SEVERITY_WARNING},
 	}})
-	e_ShareRecord_Target_Kind = graphql.NewEnum(graphql.EnumConfig{Name: "ShareRecord_Target_Kind", Values: graphql.EnumValueConfigMap{
-		"KIND_UNSPECIFIED": &graphql.EnumValueConfig{Value: pb6.ShareRecord_Target_KIND_UNSPECIFIED},
-		"KIND_TEST_RUN":    &graphql.EnumValueConfig{Value: pb6.ShareRecord_Target_KIND_TEST_RUN},
-		"KIND_SUITE_RUN":   &graphql.EnumValueConfig{Value: pb6.ShareRecord_Target_KIND_SUITE_RUN},
-	}})
-	e_Docker_Protocol = graphql.NewEnum(graphql.EnumConfig{Name: "Docker_Protocol", Values: graphql.EnumValueConfigMap{
-		"PROTOCOL_UNSPECIFIED": &graphql.EnumValueConfig{Value: pb3.Docker_PROTOCOL_UNSPECIFIED},
-		"PROTOCOL_TCP":         &graphql.EnumValueConfig{Value: pb3.Docker_PROTOCOL_TCP},
-		"PROTOCOL_UDP":         &graphql.EnumValueConfig{Value: pb3.Docker_PROTOCOL_UDP},
-	}})
-	e_Docker_RestartPolicy = graphql.NewEnum(graphql.EnumConfig{Name: "Docker_RestartPolicy", Values: graphql.EnumValueConfigMap{
-		"RESTART_POLICY_UNSPECIFIED":    &graphql.EnumValueConfig{Value: pb3.Docker_RESTART_POLICY_UNSPECIFIED},
-		"RESTART_POLICY_NO":             &graphql.EnumValueConfig{Value: pb3.Docker_RESTART_POLICY_NO},
-		"RESTART_POLICY_ON_FAILURE":     &graphql.EnumValueConfig{Value: pb3.Docker_RESTART_POLICY_ON_FAILURE},
-		"RESTART_POLICY_ALWAYS":         &graphql.EnumValueConfig{Value: pb3.Docker_RESTART_POLICY_ALWAYS},
-		"RESTART_POLICY_UNLESS_STOPPED": &graphql.EnumValueConfig{Value: pb3.Docker_RESTART_POLICY_UNLESS_STOPPED},
-	}})
-	e_ListSuitesRequest_Sort_Kind = graphql.NewEnum(graphql.EnumConfig{Name: "ListSuitesRequest_Sort_Kind", Values: graphql.EnumValueConfigMap{
-		"KIND_UNSPECIFIED":      &graphql.EnumValueConfig{Value: pb.ListSuitesRequest_Sort_KIND_UNSPECIFIED},
-		"KIND_PROVIDER":         &graphql.EnumValueConfig{Value: pb.ListSuitesRequest_Sort_KIND_PROVIDER},
-		"KIND_SCHEDULE_ENABLED": &graphql.EnumValueConfig{Value: pb.ListSuitesRequest_Sort_KIND_SCHEDULE_ENABLED},
-		"KIND_NEXT_RUN_AT":      &graphql.EnumValueConfig{Value: pb.ListSuitesRequest_Sort_KIND_NEXT_RUN_AT},
-		"KIND_LAST_RUN_AT":      &graphql.EnumValueConfig{Value: pb.ListSuitesRequest_Sort_KIND_LAST_RUN_AT},
-		"KIND_RUN_COUNT":        &graphql.EnumValueConfig{Value: pb.ListSuitesRequest_Sort_KIND_RUN_COUNT},
-	}})
-	e_Trigger = graphql.NewEnum(graphql.EnumConfig{Name: "Trigger", Values: graphql.EnumValueConfigMap{
-		"TRIGGER_UNSPECIFIED": &graphql.EnumValueConfig{Value: pb1.Trigger_TRIGGER_UNSPECIFIED},
-		"TRIGGER_MANUAL":      &graphql.EnumValueConfig{Value: pb1.Trigger_TRIGGER_MANUAL},
-		"TRIGGER_CRON":        &graphql.EnumValueConfig{Value: pb1.Trigger_TRIGGER_CRON},
-		"TRIGGER_API":         &graphql.EnumValueConfig{Value: pb1.Trigger_TRIGGER_API},
-	}})
-	e_ListSuiteRunsRequest_Sort_Kind = graphql.NewEnum(graphql.EnumConfig{Name: "ListSuiteRunsRequest_Sort_Kind", Values: graphql.EnumValueConfigMap{
-		"KIND_UNSPECIFIED": &graphql.EnumValueConfig{Value: pb.ListSuiteRunsRequest_Sort_KIND_UNSPECIFIED},
-		"KIND_STATUS":      &graphql.EnumValueConfig{Value: pb.ListSuiteRunsRequest_Sort_KIND_STATUS},
-		"KIND_PROVIDER":    &graphql.EnumValueConfig{Value: pb.ListSuiteRunsRequest_Sort_KIND_PROVIDER},
-		"KIND_PROGRESS":    &graphql.EnumValueConfig{Value: pb.ListSuiteRunsRequest_Sort_KIND_PROGRESS},
-		"KIND_DURATION":    &graphql.EnumValueConfig{Value: pb.ListSuiteRunsRequest_Sort_KIND_DURATION},
-		"KIND_STARTED_AT":  &graphql.EnumValueConfig{Value: pb.ListSuiteRunsRequest_Sort_KIND_STARTED_AT},
-		"KIND_FINISHED_AT": &graphql.EnumValueConfig{Value: pb.ListSuiteRunsRequest_Sort_KIND_FINISHED_AT},
-		"KIND_TOTAL":       &graphql.EnumValueConfig{Value: pb.ListSuiteRunsRequest_Sort_KIND_TOTAL},
-	}})
 	e_Component_Kind = graphql.NewEnum(graphql.EnumConfig{Name: "Component_Kind", Values: graphql.EnumValueConfigMap{
 		"KIND_UNSPECIFIED": &graphql.EnumValueConfig{Value: pb8.Component_KIND_UNSPECIFIED},
 		"KIND_AGENT":       &graphql.EnumValueConfig{Value: pb8.Component_KIND_AGENT},
@@ -4808,25 +4779,23 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 		"ZONE_RU_CENTRAL1_B": &graphql.EnumValueConfig{Value: pb3.Yandex_Settings_ZONE_RU_CENTRAL1_B},
 		"ZONE_RU_CENTRAL1_D": &graphql.EnumValueConfig{Value: pb3.Yandex_Settings_ZONE_RU_CENTRAL1_D},
 	}})
-	e_RenderArtifact_Kind = graphql.NewEnum(graphql.EnumConfig{Name: "RenderArtifact_Kind", Values: graphql.EnumValueConfigMap{
-		"KIND_UNSPECIFIED":   &graphql.EnumValueConfig{Value: pb3.RenderArtifact_KIND_UNSPECIFIED},
-		"KIND_FILE":          &graphql.EnumValueConfig{Value: pb3.RenderArtifact_KIND_FILE},
-		"KIND_COMMAND":       &graphql.EnumValueConfig{Value: pb3.RenderArtifact_KIND_COMMAND},
-		"KIND_DIRECTORY":     &graphql.EnumValueConfig{Value: pb3.RenderArtifact_KIND_DIRECTORY},
-		"KIND_RUNTIME_VALUE": &graphql.EnumValueConfig{Value: pb3.RenderArtifact_KIND_RUNTIME_VALUE},
+	e_Docker_Protocol = graphql.NewEnum(graphql.EnumConfig{Name: "Docker_Protocol", Values: graphql.EnumValueConfigMap{
+		"PROTOCOL_UNSPECIFIED": &graphql.EnumValueConfig{Value: pb3.Docker_PROTOCOL_UNSPECIFIED},
+		"PROTOCOL_TCP":         &graphql.EnumValueConfig{Value: pb3.Docker_PROTOCOL_TCP},
+		"PROTOCOL_UDP":         &graphql.EnumValueConfig{Value: pb3.Docker_PROTOCOL_UDP},
 	}})
-	e_RenderArtifact_Origin = graphql.NewEnum(graphql.EnumConfig{Name: "RenderArtifact_Origin", Values: graphql.EnumValueConfigMap{
-		"ORIGIN_UNSPECIFIED":      &graphql.EnumValueConfig{Value: pb3.RenderArtifact_ORIGIN_UNSPECIFIED},
-		"ORIGIN_SYSTEM":           &graphql.EnumValueConfig{Value: pb3.RenderArtifact_ORIGIN_SYSTEM},
-		"ORIGIN_RENDERED_DEFAULT": &graphql.EnumValueConfig{Value: pb3.RenderArtifact_ORIGIN_RENDERED_DEFAULT},
-		"ORIGIN_USER_OVERRIDE":    &graphql.EnumValueConfig{Value: pb3.RenderArtifact_ORIGIN_USER_OVERRIDE},
-		"ORIGIN_RUNTIME":          &graphql.EnumValueConfig{Value: pb3.RenderArtifact_ORIGIN_RUNTIME},
+	e_Docker_RestartPolicy = graphql.NewEnum(graphql.EnumConfig{Name: "Docker_RestartPolicy", Values: graphql.EnumValueConfigMap{
+		"RESTART_POLICY_UNSPECIFIED":    &graphql.EnumValueConfig{Value: pb3.Docker_RESTART_POLICY_UNSPECIFIED},
+		"RESTART_POLICY_NO":             &graphql.EnumValueConfig{Value: pb3.Docker_RESTART_POLICY_NO},
+		"RESTART_POLICY_ON_FAILURE":     &graphql.EnumValueConfig{Value: pb3.Docker_RESTART_POLICY_ON_FAILURE},
+		"RESTART_POLICY_ALWAYS":         &graphql.EnumValueConfig{Value: pb3.Docker_RESTART_POLICY_ALWAYS},
+		"RESTART_POLICY_UNLESS_STOPPED": &graphql.EnumValueConfig{Value: pb3.Docker_RESTART_POLICY_UNLESS_STOPPED},
 	}})
-	e_RenderArtifact_Mutability = graphql.NewEnum(graphql.EnumConfig{Name: "RenderArtifact_Mutability", Values: graphql.EnumValueConfigMap{
-		"MUTABILITY_UNSPECIFIED":  &graphql.EnumValueConfig{Value: pb3.RenderArtifact_MUTABILITY_UNSPECIFIED},
-		"MUTABILITY_READ_ONLY":    &graphql.EnumValueConfig{Value: pb3.RenderArtifact_MUTABILITY_READ_ONLY},
-		"MUTABILITY_EDITABLE":     &graphql.EnumValueConfig{Value: pb3.RenderArtifact_MUTABILITY_EDITABLE},
-		"MUTABILITY_RUNTIME_ONLY": &graphql.EnumValueConfig{Value: pb3.RenderArtifact_MUTABILITY_RUNTIME_ONLY},
+	e_Trigger = graphql.NewEnum(graphql.EnumConfig{Name: "Trigger", Values: graphql.EnumValueConfigMap{
+		"TRIGGER_UNSPECIFIED": &graphql.EnumValueConfig{Value: pb1.Trigger_TRIGGER_UNSPECIFIED},
+		"TRIGGER_MANUAL":      &graphql.EnumValueConfig{Value: pb1.Trigger_TRIGGER_MANUAL},
+		"TRIGGER_CRON":        &graphql.EnumValueConfig{Value: pb1.Trigger_TRIGGER_CRON},
+		"TRIGGER_API":         &graphql.EnumValueConfig{Value: pb1.Trigger_TRIGGER_API},
 	}})
 	e_Cmd_Streams_Mode = graphql.NewEnum(graphql.EnumConfig{Name: "Cmd_Streams_Mode", Values: graphql.EnumValueConfigMap{
 		"MODE_UNSPECIFIED":      &graphql.EnumValueConfig{Value: pb1.Cmd_Streams_MODE_UNSPECIFIED},
@@ -4834,11 +4803,6 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 		"MODE_CAPTURE":          &graphql.EnumValueConfig{Value: pb1.Cmd_Streams_MODE_CAPTURE},
 		"MODE_DISCARD":          &graphql.EnumValueConfig{Value: pb1.Cmd_Streams_MODE_DISCARD},
 		"MODE_STDERR_TO_STDOUT": &graphql.EnumValueConfig{Value: pb1.Cmd_Streams_MODE_STDERR_TO_STDOUT},
-	}})
-	e_Schema_Filed_Severity = graphql.NewEnum(graphql.EnumConfig{Name: "Schema_Filed_Severity", Values: graphql.EnumValueConfigMap{
-		"SEVERITY_UNSPECIFIED": &graphql.EnumValueConfig{Value: pb9.Schema_Filed_SEVERITY_UNSPECIFIED},
-		"ERROR":                &graphql.EnumValueConfig{Value: pb9.Schema_Filed_ERROR},
-		"WARNING":              &graphql.EnumValueConfig{Value: pb9.Schema_Filed_WARNING},
 	}})
 	e_Worker_Kind = graphql.NewEnum(graphql.EnumConfig{Name: "Worker_Kind", Values: graphql.EnumValueConfigMap{
 		"KIND_UNSPECIFIED": &graphql.EnumValueConfig{Value: pb2.Worker_KIND_UNSPECIFIED},
@@ -4860,6 +4824,54 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 		"OUTPUT_KIND_COMMAND_RESULT":  &graphql.EnumValueConfig{Value: pb4.OutputKind_OUTPUT_KIND_COMMAND_RESULT},
 		"OUTPUT_KIND_FILE":            &graphql.EnumValueConfig{Value: pb4.OutputKind_OUTPUT_KIND_FILE},
 		"OUTPUT_KIND_DIRECTORY":       &graphql.EnumValueConfig{Value: pb4.OutputKind_OUTPUT_KIND_DIRECTORY},
+	}})
+	e_ShareRecord_Target_Kind = graphql.NewEnum(graphql.EnumConfig{Name: "ShareRecord_Target_Kind", Values: graphql.EnumValueConfigMap{
+		"KIND_UNSPECIFIED": &graphql.EnumValueConfig{Value: pb6.ShareRecord_Target_KIND_UNSPECIFIED},
+		"KIND_TEST_RUN":    &graphql.EnumValueConfig{Value: pb6.ShareRecord_Target_KIND_TEST_RUN},
+		"KIND_SUITE_RUN":   &graphql.EnumValueConfig{Value: pb6.ShareRecord_Target_KIND_SUITE_RUN},
+	}})
+	e_ListSuitesRequest_Sort_Kind = graphql.NewEnum(graphql.EnumConfig{Name: "ListSuitesRequest_Sort_Kind", Values: graphql.EnumValueConfigMap{
+		"KIND_UNSPECIFIED":      &graphql.EnumValueConfig{Value: pb.ListSuitesRequest_Sort_KIND_UNSPECIFIED},
+		"KIND_PROVIDER":         &graphql.EnumValueConfig{Value: pb.ListSuitesRequest_Sort_KIND_PROVIDER},
+		"KIND_SCHEDULE_ENABLED": &graphql.EnumValueConfig{Value: pb.ListSuitesRequest_Sort_KIND_SCHEDULE_ENABLED},
+		"KIND_NEXT_RUN_AT":      &graphql.EnumValueConfig{Value: pb.ListSuitesRequest_Sort_KIND_NEXT_RUN_AT},
+		"KIND_LAST_RUN_AT":      &graphql.EnumValueConfig{Value: pb.ListSuitesRequest_Sort_KIND_LAST_RUN_AT},
+		"KIND_RUN_COUNT":        &graphql.EnumValueConfig{Value: pb.ListSuitesRequest_Sort_KIND_RUN_COUNT},
+	}})
+	e_ListSuiteRunsRequest_Sort_Kind = graphql.NewEnum(graphql.EnumConfig{Name: "ListSuiteRunsRequest_Sort_Kind", Values: graphql.EnumValueConfigMap{
+		"KIND_UNSPECIFIED": &graphql.EnumValueConfig{Value: pb.ListSuiteRunsRequest_Sort_KIND_UNSPECIFIED},
+		"KIND_STATUS":      &graphql.EnumValueConfig{Value: pb.ListSuiteRunsRequest_Sort_KIND_STATUS},
+		"KIND_PROVIDER":    &graphql.EnumValueConfig{Value: pb.ListSuiteRunsRequest_Sort_KIND_PROVIDER},
+		"KIND_PROGRESS":    &graphql.EnumValueConfig{Value: pb.ListSuiteRunsRequest_Sort_KIND_PROGRESS},
+		"KIND_DURATION":    &graphql.EnumValueConfig{Value: pb.ListSuiteRunsRequest_Sort_KIND_DURATION},
+		"KIND_STARTED_AT":  &graphql.EnumValueConfig{Value: pb.ListSuiteRunsRequest_Sort_KIND_STARTED_AT},
+		"KIND_FINISHED_AT": &graphql.EnumValueConfig{Value: pb.ListSuiteRunsRequest_Sort_KIND_FINISHED_AT},
+		"KIND_TOTAL":       &graphql.EnumValueConfig{Value: pb.ListSuiteRunsRequest_Sort_KIND_TOTAL},
+	}})
+	e_RenderArtifact_Kind = graphql.NewEnum(graphql.EnumConfig{Name: "RenderArtifact_Kind", Values: graphql.EnumValueConfigMap{
+		"KIND_UNSPECIFIED":   &graphql.EnumValueConfig{Value: pb3.RenderArtifact_KIND_UNSPECIFIED},
+		"KIND_FILE":          &graphql.EnumValueConfig{Value: pb3.RenderArtifact_KIND_FILE},
+		"KIND_COMMAND":       &graphql.EnumValueConfig{Value: pb3.RenderArtifact_KIND_COMMAND},
+		"KIND_DIRECTORY":     &graphql.EnumValueConfig{Value: pb3.RenderArtifact_KIND_DIRECTORY},
+		"KIND_RUNTIME_VALUE": &graphql.EnumValueConfig{Value: pb3.RenderArtifact_KIND_RUNTIME_VALUE},
+	}})
+	e_RenderArtifact_Origin = graphql.NewEnum(graphql.EnumConfig{Name: "RenderArtifact_Origin", Values: graphql.EnumValueConfigMap{
+		"ORIGIN_UNSPECIFIED":      &graphql.EnumValueConfig{Value: pb3.RenderArtifact_ORIGIN_UNSPECIFIED},
+		"ORIGIN_SYSTEM":           &graphql.EnumValueConfig{Value: pb3.RenderArtifact_ORIGIN_SYSTEM},
+		"ORIGIN_RENDERED_DEFAULT": &graphql.EnumValueConfig{Value: pb3.RenderArtifact_ORIGIN_RENDERED_DEFAULT},
+		"ORIGIN_USER_OVERRIDE":    &graphql.EnumValueConfig{Value: pb3.RenderArtifact_ORIGIN_USER_OVERRIDE},
+		"ORIGIN_RUNTIME":          &graphql.EnumValueConfig{Value: pb3.RenderArtifact_ORIGIN_RUNTIME},
+	}})
+	e_RenderArtifact_Mutability = graphql.NewEnum(graphql.EnumConfig{Name: "RenderArtifact_Mutability", Values: graphql.EnumValueConfigMap{
+		"MUTABILITY_UNSPECIFIED":  &graphql.EnumValueConfig{Value: pb3.RenderArtifact_MUTABILITY_UNSPECIFIED},
+		"MUTABILITY_READ_ONLY":    &graphql.EnumValueConfig{Value: pb3.RenderArtifact_MUTABILITY_READ_ONLY},
+		"MUTABILITY_EDITABLE":     &graphql.EnumValueConfig{Value: pb3.RenderArtifact_MUTABILITY_EDITABLE},
+		"MUTABILITY_RUNTIME_ONLY": &graphql.EnumValueConfig{Value: pb3.RenderArtifact_MUTABILITY_RUNTIME_ONLY},
+	}})
+	e_Schema_Filed_Severity = graphql.NewEnum(graphql.EnumConfig{Name: "Schema_Filed_Severity", Values: graphql.EnumValueConfigMap{
+		"SEVERITY_UNSPECIFIED": &graphql.EnumValueConfig{Value: pb9.Schema_Filed_SEVERITY_UNSPECIFIED},
+		"ERROR":                &graphql.EnumValueConfig{Value: pb9.Schema_Filed_ERROR},
+		"WARNING":              &graphql.EnumValueConfig{Value: pb9.Schema_Filed_WARNING},
 	}})
 	e_ListTestRunsRequest_Sort_Kind = graphql.NewEnum(graphql.EnumConfig{Name: "ListTestRunsRequest_Sort_Kind", Values: graphql.EnumValueConfigMap{
 		"KIND_UNSPECIFIED": &graphql.EnumValueConfig{Value: pb.ListTestRunsRequest_Sort_KIND_UNSPECIFIED},
@@ -8923,338 +8935,274 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 			}},
 		}
 	})})
-	o_ShareRecord_Target = graphql.NewObject(graphql.ObjectConfig{Name: "ShareRecord_Target", Fields: graphql.FieldsThunk(func() graphql.Fields {
+	o_StartRunResponse = graphql.NewObject(graphql.ObjectConfig{Name: "StartRunResponse", Fields: graphql.FieldsThunk(func() graphql.Fields {
 		return graphql.Fields{
-			"kind": &graphql.Field{Type: graphql.NewNonNull(e_ShareRecord_Target_Kind), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.ShareRecord_Target)
+			"run": &graphql.Field{Type: o_TestRunRecord, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb.StartRunResponse)
 				if obj == nil {
 					return nil, nil
 				}
-				return obj.GetKind(), nil
-			}},
-			"id": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.ShareRecord_Target)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetId(), nil
+				return obj.GetRun(), nil
 			}},
 		}
 	})})
-	o_CreateShareResponse = graphql.NewObject(graphql.ObjectConfig{Name: "CreateShareResponse", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"share": &graphql.Field{Type: o_ShareRecord, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb.CreateShareResponse)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetShare(), nil
-			}},
-		}
-	})})
-	o_ShareRecord = graphql.NewObject(graphql.ObjectConfig{Name: "ShareRecord", Fields: graphql.FieldsThunk(func() graphql.Fields {
+	o_TestRunRecord = graphql.NewObject(graphql.ObjectConfig{Name: "TestRunRecord", Fields: graphql.FieldsThunk(func() graphql.Fields {
 		return graphql.Fields{
 			"entity": &graphql.Field{Type: o_Entity, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.ShareRecord)
+				obj, _ := p.Source.(*pb6.TestRunRecord)
 				if obj == nil {
 					return nil, nil
 				}
 				return obj.GetEntity(), nil
 			}},
-			"target": &graphql.Field{Type: o_ShareRecord_Target, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.ShareRecord)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetTarget(), nil
-			}},
-			"token": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.ShareRecord)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetToken(), nil
-			}},
-			"expiresAt": &graphql.Field{Type: graphqlrt.Timestamp, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.ShareRecord)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetExpiresAt(), nil
-			}},
-			"revoked": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.ShareRecord)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetRevoked(), nil
-			}},
-			"snapshot": &graphql.Field{Type: o_ShareRecord_Snapshot, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.ShareRecord)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetSnapshot(), nil
-			}},
-		}
-	})})
-	o_GetShareResponse = graphql.NewObject(graphql.ObjectConfig{Name: "GetShareResponse", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"share": &graphql.Field{Type: o_ShareRecord, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb.GetShareResponse)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetShare(), nil
-			}},
-		}
-	})})
-	o_ListSharesResponse = graphql.NewObject(graphql.ObjectConfig{Name: "ListSharesResponse", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"shares": &graphql.Field{Type: graphql.NewList(o_ShareRecord), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb.ListSharesResponse)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetShares(), nil
-			}},
-			"nextPageToken": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb.ListSharesResponse)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetNextPageToken(), nil
-			}},
-		}
-	})})
-	o_RevokeShareResponse = graphql.NewObject(graphql.ObjectConfig{Name: "RevokeShareResponse", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"share": &graphql.Field{Type: o_ShareRecord, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb.RevokeShareResponse)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetShare(), nil
-			}},
-		}
-	})})
-	o_SetShareExpiryResponse = graphql.NewObject(graphql.ObjectConfig{Name: "SetShareExpiryResponse", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"share": &graphql.Field{Type: o_ShareRecord, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb.SetShareExpiryResponse)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetShare(), nil
-			}},
-		}
-	})})
-	o_DeleteShareResponse = graphql.NewObject(graphql.ObjectConfig{Name: "DeleteShareResponse", Fields: graphql.Fields{
-		"ok": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) { return true, nil }},
-	}})
-	o_ListStroppyVersionsResponse = graphql.NewObject(graphql.ObjectConfig{Name: "ListStroppyVersionsResponse", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"versions": &graphql.Field{Type: graphql.NewList(graphql.NewNonNull(graphql.String)), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb.ListStroppyVersionsResponse)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetVersions(), nil
-			}},
-		}
-	})})
-	o_SuiteRecord = graphql.NewObject(graphql.ObjectConfig{Name: "SuiteRecord", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"entity": &graphql.Field{Type: o_Entity, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.SuiteRecord)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetEntity(), nil
-			}},
-			"spec": &graphql.Field{Type: o_Suite, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.SuiteRecord)
+			"spec": &graphql.Field{Type: o_TestRun, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.TestRunRecord)
 				if obj == nil {
 					return nil, nil
 				}
 				return obj.GetSpec(), nil
 			}},
-			"summary": &graphql.Field{Type: o_SuiteRecord_Summary, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.SuiteRecord)
+			"status": &graphql.Field{Type: graphql.NewNonNull(e_Status), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.TestRunRecord)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetStatus(), nil
+			}},
+			"suiteRunId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.TestRunRecord)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetSuiteRunId(), nil
+			}},
+			"suiteCellId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.TestRunRecord)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetSuiteCellId(), nil
+			}},
+			"trigger": &graphql.Field{Type: graphql.NewNonNull(e_Trigger), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.TestRunRecord)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetTrigger(), nil
+			}},
+			"inTenantRating": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.TestRunRecord)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetInTenantRating(), nil
+			}},
+			"inGlobalRating": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.TestRunRecord)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetInGlobalRating(), nil
+			}},
+			"summary": &graphql.Field{Type: o_TestRunRecord_Summary, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.TestRunRecord)
 				if obj == nil {
 					return nil, nil
 				}
 				return obj.GetSummary(), nil
 			}},
-		}
-	})})
-	o_SuiteRecord_Summary = graphql.NewObject(graphql.ObjectConfig{Name: "SuiteRecord_Summary", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"scheduleEnabled": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.SuiteRecord_Summary)
+			"infrastructureState": &graphql.Field{Type: o_InfrastructureState, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.TestRunRecord)
 				if obj == nil {
 					return nil, nil
 				}
-				return obj.GetScheduleEnabled(), nil
+				return obj.GetInfrastructureState(), nil
 			}},
-			"cron": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.SuiteRecord_Summary)
+			"deploymentPlan": &graphql.Field{Type: o_DeploymentPlan, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.TestRunRecord)
 				if obj == nil {
 					return nil, nil
 				}
-				return obj.GetCron(), nil
+				return obj.GetDeploymentPlan(), nil
 			}},
-			"nextRunAt": &graphql.Field{Type: graphqlrt.Timestamp, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.SuiteRecord_Summary)
+			"runtimeState": &graphql.Field{Type: o_RunState, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.TestRunRecord)
 				if obj == nil {
 					return nil, nil
 				}
-				return obj.GetNextRunAt(), nil
-			}},
-			"lastRunAt": &graphql.Field{Type: graphqlrt.Timestamp, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.SuiteRecord_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetLastRunAt(), nil
-			}},
-			"lastRunStatus": &graphql.Field{Type: graphql.NewNonNull(e_Status), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.SuiteRecord_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetLastRunStatus(), nil
-			}},
-			"runCount": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.SuiteRecord_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetRunCount(), nil
-			}},
-			"cellCount": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.SuiteRecord_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetCellCount(), nil
+				return obj.GetRuntimeState(), nil
 			}},
 		}
 	})})
-	o_Suite = graphql.NewObject(graphql.ObjectConfig{Name: "Suite", Fields: graphql.FieldsThunk(func() graphql.Fields {
+	o_TestRunRecord_Summary = graphql.NewObject(graphql.ObjectConfig{Name: "TestRunRecord_Summary", Fields: graphql.FieldsThunk(func() graphql.Fields {
 		return graphql.Fields{
-			"id": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb2.Suite)
+			"dbKind": &graphql.Field{Type: graphql.NewNonNull(e_Database_Kind), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.TestRunRecord_Summary)
 				if obj == nil {
 					return nil, nil
 				}
-				return obj.GetId(), nil
+				return obj.GetDbKind(), nil
 			}},
-			"cells": &graphql.Field{Type: graphql.NewList(o_SuiteCell), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb2.Suite)
+			"dbPresetId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.TestRunRecord_Summary)
 				if obj == nil {
 					return nil, nil
 				}
-				return obj.GetCells(), nil
+				return obj.GetDbPresetId(), nil
+			}},
+			"dbPresetName": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.TestRunRecord_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetDbPresetName(), nil
+			}},
+			"workloadPresetId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.TestRunRecord_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetWorkloadPresetId(), nil
+			}},
+			"workloadName": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.TestRunRecord_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetWorkloadName(), nil
+			}},
+			"stroppyVersion": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.TestRunRecord_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetStroppyVersion(), nil
+			}},
+			"workloadProtocol": &graphql.Field{Type: graphql.NewNonNull(e_Workload_Protocol), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.TestRunRecord_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetWorkloadProtocol(), nil
+			}},
+			"testPresetId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.TestRunRecord_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetTestPresetId(), nil
+			}},
+			"testPresetName": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.TestRunRecord_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetTestPresetName(), nil
+			}},
+			"topologyLabel": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.TestRunRecord_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetTopologyLabel(), nil
+			}},
+			"nodeCount": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.TestRunRecord_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetNodeCount(), nil
 			}},
 			"provider": &graphql.Field{Type: graphql.NewNonNull(e_Provider), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb2.Suite)
+				obj, _ := p.Source.(*pb6.TestRunRecord_Summary)
 				if obj == nil {
 					return nil, nil
 				}
 				return obj.GetProvider(), nil
 			}},
-			"tags": &graphql.Field{Type: o_Tags, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb2.Suite)
+			"progressPct": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.TestRunRecord_Summary)
 				if obj == nil {
 					return nil, nil
 				}
-				return obj.GetTags(), nil
+				return obj.GetProgressPct(), nil
 			}},
-			"schedule": &graphql.Field{Type: o_Schedule, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb2.Suite)
+			"startedAt": &graphql.Field{Type: graphqlrt.Timestamp, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.TestRunRecord_Summary)
 				if obj == nil {
 					return nil, nil
 				}
-				return obj.GetSchedule(), nil
+				return obj.GetStartedAt(), nil
 			}},
-			"defaultInTenantRating": &graphql.Field{Type: graphql.Boolean, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb2.Suite)
+			"finishedAt": &graphql.Field{Type: graphqlrt.Timestamp, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.TestRunRecord_Summary)
 				if obj == nil {
 					return nil, nil
 				}
-				return obj.GetDefaultInTenantRating(), nil
+				return obj.GetFinishedAt(), nil
 			}},
-			"defaultInGlobalRating": &graphql.Field{Type: graphql.Boolean, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb2.Suite)
+			"duration": &graphql.Field{Type: graphqlrt.Duration, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.TestRunRecord_Summary)
 				if obj == nil {
 					return nil, nil
 				}
-				return obj.GetDefaultInGlobalRating(), nil
-			}},
-			"defaultMaxParallel": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb2.Suite)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetDefaultMaxParallel(), nil
+				return obj.GetDuration(), nil
 			}},
 		}
 	})})
-	o_SuiteCell = graphql.NewObject(graphql.ObjectConfig{Name: "SuiteCell", Fields: graphql.FieldsThunk(func() graphql.Fields {
+	o_TestRun = graphql.NewObject(graphql.ObjectConfig{Name: "TestRun", Fields: graphql.FieldsThunk(func() graphql.Fields {
 		return graphql.Fields{
 			"id": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb2.SuiteCell)
+				obj, _ := p.Source.(*pb2.TestRun)
 				if obj == nil {
 					return nil, nil
 				}
 				return obj.GetId(), nil
 			}},
-			"name": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb2.SuiteCell)
+			"suiteId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb2.TestRun)
 				if obj == nil {
 					return nil, nil
 				}
-				return obj.GetName(), nil
+				return obj.GetSuiteId(), nil
 			}},
-			"enabled": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb2.SuiteCell)
+			"database": &graphql.Field{Type: o_Database, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb2.TestRun)
 				if obj == nil {
 					return nil, nil
 				}
-				return obj.GetEnabled(), nil
+				return obj.GetDatabase(), nil
 			}},
-			"source": &graphql.Field{Type: u_SuiteCellSource, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb2.SuiteCell)
+			"workload": &graphql.Field{Type: o_Workload, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb2.TestRun)
 				if obj == nil {
 					return nil, nil
 				}
-				switch v := obj.GetSource().(type) {
-				case *pb2.SuiteCell_PresetPair_:
-					return v.PresetPair, nil
-				case *pb2.SuiteCell_TestPresetId:
-					return SuiteCellSourceTestPresetId{Value: v.TestPresetId}, nil
-				case *pb2.SuiteCell_InlineTest:
-					return v.InlineTest, nil
-				}
-				return nil, nil
+				return obj.GetWorkload(), nil
 			}},
-			"machineOverrides": &graphql.Field{Type: graphql.NewList(o_MachinePlan), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb2.SuiteCell)
+			"topologySpec": &graphql.Field{Type: o_TopologySpec, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb2.TestRun)
 				if obj == nil {
 					return nil, nil
 				}
-				return obj.GetMachineOverrides(), nil
+				return obj.GetTopologySpec(), nil
+			}},
+			"infrastructurePlan": &graphql.Field{Type: o_InfrastructurePlan, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb2.TestRun)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetInfrastructurePlan(), nil
 			}},
 			"renderOverrides": &graphql.Field{Type: o_RenderOverrideSet, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb2.SuiteCell)
+				obj, _ := p.Source.(*pb2.TestRun)
 				if obj == nil {
 					return nil, nil
 				}
 				return obj.GetRenderOverrides(), nil
 			}},
 			"tags": &graphql.Field{Type: o_Tags, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb2.SuiteCell)
+				obj, _ := p.Source.(*pb2.TestRun)
 				if obj == nil {
 					return nil, nil
 				}
@@ -9262,21 +9210,348 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 			}},
 		}
 	})})
-	o_SuiteCell_PresetPair = graphql.NewObject(graphql.ObjectConfig{Name: "SuiteCell_PresetPair", Fields: graphql.FieldsThunk(func() graphql.Fields {
+	o_TopologySpec = graphql.NewObject(graphql.ObjectConfig{Name: "TopologySpec", Fields: graphql.FieldsThunk(func() graphql.Fields {
 		return graphql.Fields{
-			"dbPresetId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb2.SuiteCell_PresetPair)
+			"nodes": &graphql.Field{Type: graphql.NewList(o_Node), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.TopologySpec)
 				if obj == nil {
 					return nil, nil
 				}
-				return obj.GetDbPresetId(), nil
+				return obj.GetNodes(), nil
 			}},
-			"workloadPresetId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb2.SuiteCell_PresetPair)
+			"components": &graphql.Field{Type: graphql.NewList(o_Component), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.TopologySpec)
 				if obj == nil {
 					return nil, nil
 				}
-				return obj.GetWorkloadPresetId(), nil
+				return obj.GetComponents(), nil
+			}},
+			"connections": &graphql.Field{Type: graphql.NewList(o_Connection), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.TopologySpec)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetConnections(), nil
+			}},
+			"externalComponents": &graphql.Field{Type: graphql.NewList(o_Component), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.TopologySpec)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetExternalComponents(), nil
+			}},
+			"labels": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.TopologySpec)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetLabels(), nil
+			}},
+			"tags": &graphql.Field{Type: o_Tags, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.TopologySpec)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetTags(), nil
+			}},
+		}
+	})})
+	o_Node = graphql.NewObject(graphql.ObjectConfig{Name: "Node", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"id": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.Node)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetId(), nil
+			}},
+			"componentIds": &graphql.Field{Type: graphql.NewList(graphql.NewNonNull(graphql.String)), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.Node)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetComponentIds(), nil
+			}},
+			"labels": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.Node)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetLabels(), nil
+			}},
+			"tags": &graphql.Field{Type: o_Tags, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.Node)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetTags(), nil
+			}},
+		}
+	})})
+	o_Component = graphql.NewObject(graphql.ObjectConfig{Name: "Component", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"id": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.Component)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetId(), nil
+			}},
+			"kind": &graphql.Field{Type: graphql.NewNonNull(e_Component_Kind), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.Component)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetKind(), nil
+			}},
+			"engine": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.Component)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetEngine(), nil
+			}},
+			"role": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.Component)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetRole(), nil
+			}},
+			"labels": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.Component)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetLabels(), nil
+			}},
+			"tags": &graphql.Field{Type: o_Tags, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.Component)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetTags(), nil
+			}},
+		}
+	})})
+	o_Connection = graphql.NewObject(graphql.ObjectConfig{Name: "Connection", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"fromComponentId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.Connection)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetFromComponentId(), nil
+			}},
+			"toComponentId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.Connection)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetToComponentId(), nil
+			}},
+			"kind": &graphql.Field{Type: graphql.NewNonNull(e_Connection_Kind), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.Connection)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetKind(), nil
+			}},
+			"protocol": &graphql.Field{Type: graphql.NewNonNull(e_Connection_Protocol), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.Connection)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetProtocol(), nil
+			}},
+			"mode": &graphql.Field{Type: graphql.NewNonNull(e_Connection_Mode), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.Connection)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetMode(), nil
+			}},
+			"endpointName": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.Connection)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetEndpointName(), nil
+			}},
+			"port": &graphql.Field{Type: graphql.Int, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.Connection)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetPort(), nil
+			}},
+			"colocated": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.Connection)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetColocated(), nil
+			}},
+			"tags": &graphql.Field{Type: o_Tags, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.Connection)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetTags(), nil
+			}},
+		}
+	})})
+	o_InfrastructurePlan = graphql.NewObject(graphql.ObjectConfig{Name: "InfrastructurePlan", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"provider": &graphql.Field{Type: graphql.NewNonNull(e_Provider), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.InfrastructurePlan)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetProvider(), nil
+			}},
+			"settings": &graphql.Field{Type: o_ProviderSettings, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.InfrastructurePlan)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetSettings(), nil
+			}},
+			"machines": &graphql.Field{Type: graphql.NewList(o_MachinePlan), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.InfrastructurePlan)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetMachines(), nil
+			}},
+			"labels": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.InfrastructurePlan)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetLabels(), nil
+			}},
+			"tags": &graphql.Field{Type: o_Tags, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.InfrastructurePlan)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetTags(), nil
+			}},
+		}
+	})})
+	o_ProviderSettings = graphql.NewObject(graphql.ObjectConfig{Name: "ProviderSettings", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"settings": &graphql.Field{Type: u_ProviderSettingsSettings, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.ProviderSettings)
+				if obj == nil {
+					return nil, nil
+				}
+				switch v := obj.GetSettings().(type) {
+				case *pb3.ProviderSettings_Docker:
+					return v.Docker, nil
+				case *pb3.ProviderSettings_Yandex:
+					return v.Yandex, nil
+				}
+				return nil, nil
+			}},
+		}
+	})})
+	o_Docker_Settings = graphql.NewObject(graphql.ObjectConfig{Name: "Docker_Settings", Fields: graphql.Fields{
+		"ok": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) { return true, nil }},
+	}})
+	o_Yandex_Settings = graphql.NewObject(graphql.ObjectConfig{Name: "Yandex_Settings", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"token": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.Yandex_Settings)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetToken(), nil
+			}},
+			"cloudId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.Yandex_Settings)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetCloudId(), nil
+			}},
+			"folderId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.Yandex_Settings)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetFolderId(), nil
+			}},
+			"zone": &graphql.Field{Type: graphql.NewNonNull(e_Yandex_Settings_Zone), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.Yandex_Settings)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetZone(), nil
+			}},
+			"networkId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.Yandex_Settings)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetNetworkId(), nil
+			}},
+			"networkName": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.Yandex_Settings)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetNetworkName(), nil
+			}},
+			"subnetCidr": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.Yandex_Settings)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetSubnetCidr(), nil
+			}},
+			"platformId": &graphql.Field{Type: graphql.NewNonNull(e_Yandex_Settings_PlatformId), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.Yandex_Settings)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetPlatformId(), nil
+			}},
+			"imageId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.Yandex_Settings)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetImageId(), nil
+			}},
+			"assignPublicIp": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.Yandex_Settings)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetAssignPublicIp(), nil
+			}},
+			"softwareAcceleratedNetwork": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.Yandex_Settings)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetSoftwareAcceleratedNetwork(), nil
+			}},
+			"sshUser": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.Yandex_Settings)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetSshUser(), nil
+			}},
+			"sshPublicKey": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.Yandex_Settings)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetSshPublicKey(), nil
 			}},
 		}
 	})})
@@ -9872,6 +10147,1362 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 			}},
 		}
 	})})
+	o_InfrastructureState = graphql.NewObject(graphql.ObjectConfig{Name: "InfrastructureState", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"provider": &graphql.Field{Type: graphql.NewNonNull(e_Provider), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.InfrastructureState)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetProvider(), nil
+			}},
+			"machines": &graphql.Field{Type: graphql.NewList(o_MachineState), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.InfrastructureState)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetMachines(), nil
+			}},
+			"labels": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.InfrastructureState)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetLabels(), nil
+			}},
+			"tags": &graphql.Field{Type: o_Tags, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.InfrastructureState)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetTags(), nil
+			}},
+		}
+	})})
+	o_MachineState = graphql.NewObject(graphql.ObjectConfig{Name: "MachineState", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"nodeId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.MachineState)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetNodeId(), nil
+			}},
+			"providerResourceId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.MachineState)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetProviderResourceId(), nil
+			}},
+			"status": &graphql.Field{Type: graphql.NewNonNull(e_Status), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.MachineState)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetStatus(), nil
+			}},
+			"endpoints": &graphql.Field{Type: graphql.NewList(o_Endpoint), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.MachineState)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetEndpoints(), nil
+			}},
+			"providerOutput": &graphql.Field{Type: u_MachineStateProviderOutput, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.MachineState)
+				if obj == nil {
+					return nil, nil
+				}
+				switch v := obj.GetProviderOutput().(type) {
+				case *pb3.MachineState_Docker:
+					return v.Docker, nil
+				case *pb3.MachineState_Yandex:
+					return v.Yandex, nil
+				}
+				return nil, nil
+			}},
+			"allocatedQuotas": &graphql.Field{Type: graphql.NewList(o_Quota_Allocation), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.MachineState)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetAllocatedQuotas(), nil
+			}},
+			"labels": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.MachineState)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetLabels(), nil
+			}},
+			"tags": &graphql.Field{Type: o_Tags, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.MachineState)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetTags(), nil
+			}},
+		}
+	})})
+	o_Endpoint = graphql.NewObject(graphql.ObjectConfig{Name: "Endpoint", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"name": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.Endpoint)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetName(), nil
+			}},
+			"address": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.Endpoint)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetAddress(), nil
+			}},
+			"port": &graphql.Field{Type: graphql.Int, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.Endpoint)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetPort(), nil
+			}},
+			"labels": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.Endpoint)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetLabels(), nil
+			}},
+		}
+	})})
+	o_Docker_ContainerOutput = graphql.NewObject(graphql.ObjectConfig{Name: "Docker_ContainerOutput", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"id": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.Docker_ContainerOutput)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetId(), nil
+			}},
+			"name": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.Docker_ContainerOutput)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetName(), nil
+			}},
+			"internalIp": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.Docker_ContainerOutput)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetInternalIp(), nil
+			}},
+			"mappedPorts": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.Docker_ContainerOutput)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetMappedPorts(), nil
+			}},
+			"status": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.Docker_ContainerOutput)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetStatus(), nil
+			}},
+			"startedAt": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.Docker_ContainerOutput)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetStartedAt(), nil
+			}},
+		}
+	})})
+	o_Yandex_VmOutput = graphql.NewObject(graphql.ObjectConfig{Name: "Yandex_VmOutput", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"id": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.Yandex_VmOutput)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetId(), nil
+			}},
+			"internalIp": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.Yandex_VmOutput)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetInternalIp(), nil
+			}},
+			"publicIp": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.Yandex_VmOutput)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetPublicIp(), nil
+			}},
+		}
+	})})
+	o_Quota_Allocation = graphql.NewObject(graphql.ObjectConfig{Name: "Quota_Allocation", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"info": &graphql.Field{Type: o_Quota_Info, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.Quota_Allocation)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetInfo(), nil
+			}},
+			"used": &graphql.Field{Type: graphql.NewNonNull(graphqlrt.Uint64), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.Quota_Allocation)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetUsed(), nil
+			}},
+		}
+	})})
+	o_DeploymentPlan = graphql.NewObject(graphql.ObjectConfig{Name: "DeploymentPlan", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"components": &graphql.Field{Type: graphql.NewList(o_ComponentDeployment), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.DeploymentPlan)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetComponents(), nil
+			}},
+			"labels": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.DeploymentPlan)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetLabels(), nil
+			}},
+			"tags": &graphql.Field{Type: o_Tags, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.DeploymentPlan)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetTags(), nil
+			}},
+		}
+	})})
+	o_ComponentDeployment = graphql.NewObject(graphql.ObjectConfig{Name: "ComponentDeployment", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"componentId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.ComponentDeployment)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetComponentId(), nil
+			}},
+			"nodeId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.ComponentDeployment)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetNodeId(), nil
+			}},
+			"globalPriority": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.ComponentDeployment)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetGlobalPriority(), nil
+			}},
+			"nodePriority": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.ComponentDeployment)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetNodePriority(), nil
+			}},
+			"dependsOnComponentIds": &graphql.Field{Type: graphql.NewList(graphql.NewNonNull(graphql.String)), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.ComponentDeployment)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetDependsOnComponentIds(), nil
+			}},
+			"steps": &graphql.Field{Type: graphql.NewList(o_AgentStep), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.ComponentDeployment)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetSteps(), nil
+			}},
+			"status": &graphql.Field{Type: graphql.NewNonNull(e_Status), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.ComponentDeployment)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetStatus(), nil
+			}},
+			"labels": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.ComponentDeployment)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetLabels(), nil
+			}},
+			"tags": &graphql.Field{Type: o_Tags, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.ComponentDeployment)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetTags(), nil
+			}},
+		}
+	})})
+	o_AgentStep = graphql.NewObject(graphql.ObjectConfig{Name: "AgentStep", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"id": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.AgentStep)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetId(), nil
+			}},
+			"order": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.AgentStep)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetOrder(), nil
+			}},
+			"action": &graphql.Field{Type: u_AgentStepAction, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.AgentStep)
+				if obj == nil {
+					return nil, nil
+				}
+				switch v := obj.GetAction().(type) {
+				case *pb3.AgentStep_CreateDir:
+					return v.CreateDir, nil
+				case *pb3.AgentStep_WriteFile:
+					return v.WriteFile, nil
+				case *pb3.AgentStep_FetchFile:
+					return v.FetchFile, nil
+				case *pb3.AgentStep_CallCmd:
+					return v.CallCmd, nil
+				}
+				return nil, nil
+			}},
+			"status": &graphql.Field{Type: graphql.NewNonNull(e_Status), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.AgentStep)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetStatus(), nil
+			}},
+			"labels": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.AgentStep)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetLabels(), nil
+			}},
+			"tags": &graphql.Field{Type: o_Tags, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb3.AgentStep)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetTags(), nil
+			}},
+		}
+	})})
+	o_Dir = graphql.NewObject(graphql.ObjectConfig{Name: "Dir", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"info": &graphql.Field{Type: o_Dir_Info, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb1.Dir)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetInfo(), nil
+			}},
+			"createParents": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb1.Dir)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetCreateParents(), nil
+			}},
+		}
+	})})
+	o_Dir_Info = graphql.NewObject(graphql.ObjectConfig{Name: "Dir_Info", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"path": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb1.Dir_Info)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetPath(), nil
+			}},
+			"mode": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb1.Dir_Info)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetMode(), nil
+			}},
+			"owner": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb1.Dir_Info)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetOwner(), nil
+			}},
+			"group": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb1.Dir_Info)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetGroup(), nil
+			}},
+		}
+	})})
+	o_Cmd = graphql.NewObject(graphql.ObjectConfig{Name: "Cmd", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"spec": &graphql.Field{Type: o_Cmd_Spec, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb1.Cmd)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetSpec(), nil
+			}},
+			"result": &graphql.Field{Type: o_Cmd_Result, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb1.Cmd)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetResult(), nil
+			}},
+		}
+	})})
+	o_Cmd_Spec = graphql.NewObject(graphql.ObjectConfig{Name: "Cmd_Spec", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"command": &graphql.Field{Type: u_Cmd_SpecCommand, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb1.Cmd_Spec)
+				if obj == nil {
+					return nil, nil
+				}
+				switch v := obj.GetCommand().(type) {
+				case *pb1.Cmd_Spec_Argv:
+					return v.Argv, nil
+				case *pb1.Cmd_Spec_Script:
+					return v.Script, nil
+				}
+				return nil, nil
+			}},
+			"cwd": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb1.Cmd_Spec)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetCwd(), nil
+			}},
+			"env": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb1.Cmd_Spec)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetEnv(), nil
+			}},
+			"stdin": &graphql.Field{Type: graphql.NewNonNull(graphqlrt.Bytes), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb1.Cmd_Spec)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetStdin(), nil
+			}},
+			"timeout": &graphql.Field{Type: graphqlrt.Duration, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb1.Cmd_Spec)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetTimeout(), nil
+			}},
+			"expectedExitCodes": &graphql.Field{Type: graphql.NewList(graphql.NewNonNull(graphql.Int)), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb1.Cmd_Spec)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetExpectedExitCodes(), nil
+			}},
+			"streams": &graphql.Field{Type: o_Cmd_Streams, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb1.Cmd_Spec)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetStreams(), nil
+			}},
+		}
+	})})
+	o_Cmd_Argv = graphql.NewObject(graphql.ObjectConfig{Name: "Cmd_Argv", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"args": &graphql.Field{Type: graphql.NewList(graphql.NewNonNull(graphql.String)), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb1.Cmd_Argv)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetArgs(), nil
+			}},
+		}
+	})})
+	o_Cmd_Script = graphql.NewObject(graphql.ObjectConfig{Name: "Cmd_Script", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"text": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb1.Cmd_Script)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetText(), nil
+			}},
+			"shell": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb1.Cmd_Script)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetShell(), nil
+			}},
+		}
+	})})
+	o_Cmd_Streams = graphql.NewObject(graphql.ObjectConfig{Name: "Cmd_Streams", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"stdout": &graphql.Field{Type: graphql.NewNonNull(e_Cmd_Streams_Mode), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb1.Cmd_Streams)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetStdout(), nil
+			}},
+			"stderr": &graphql.Field{Type: graphql.NewNonNull(e_Cmd_Streams_Mode), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb1.Cmd_Streams)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetStderr(), nil
+			}},
+		}
+	})})
+	o_Cmd_Result = graphql.NewObject(graphql.ObjectConfig{Name: "Cmd_Result", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"exitCode": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb1.Cmd_Result)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetExitCode(), nil
+			}},
+			"stdout": &graphql.Field{Type: graphql.NewNonNull(graphqlrt.Bytes), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb1.Cmd_Result)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetStdout(), nil
+			}},
+			"stderr": &graphql.Field{Type: graphql.NewNonNull(graphqlrt.Bytes), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb1.Cmd_Result)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetStderr(), nil
+			}},
+			"timedOut": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb1.Cmd_Result)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetTimedOut(), nil
+			}},
+			"elapsed": &graphql.Field{Type: graphqlrt.Duration, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb1.Cmd_Result)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetElapsed(), nil
+			}},
+		}
+	})})
+	o_RunState = graphql.NewObject(graphql.ObjectConfig{Name: "RunState", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"status": &graphql.Field{Type: graphql.NewNonNull(e_Status), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb10.RunState)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetStatus(), nil
+			}},
+			"stages": &graphql.Field{Type: graphql.NewList(o_Stage), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb10.RunState)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetStages(), nil
+			}},
+		}
+	})})
+	o_Stage = graphql.NewObject(graphql.ObjectConfig{Name: "Stage", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"nodeExecutionId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb10.Stage)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetNodeExecutionId(), nil
+			}},
+			"name": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb10.Stage)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetName(), nil
+			}},
+			"status": &graphql.Field{Type: graphql.NewNonNull(e_Status), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb10.Stage)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetStatus(), nil
+			}},
+			"startedAt": &graphql.Field{Type: graphqlrt.Timestamp, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb10.Stage)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetStartedAt(), nil
+			}},
+			"finishedAt": &graphql.Field{Type: graphqlrt.Timestamp, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb10.Stage)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetFinishedAt(), nil
+			}},
+			"attempt": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb10.Stage)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetAttempt(), nil
+			}},
+			"order": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb10.Stage)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetOrder(), nil
+			}},
+			"parentNodeExecutionId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb10.Stage)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetParentNodeExecutionId(), nil
+			}},
+			"phase": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb10.Stage)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetPhase(), nil
+			}},
+			"componentId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb10.Stage)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetComponentId(), nil
+			}},
+			"machineId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb10.Stage)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetMachineId(), nil
+			}},
+			"worker": &graphql.Field{Type: o_Worker, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb10.Stage)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetWorker(), nil
+			}},
+			"statusReason": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb10.Stage)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetStatusReason(), nil
+			}},
+			"errorMessage": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb10.Stage)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetErrorMessage(), nil
+			}},
+			"operation": &graphql.Field{Type: o_PipelineOperation, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb10.Stage)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetOperation(), nil
+			}},
+			"outputs": &graphql.Field{Type: graphql.NewList(o_PipelineOutput), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb10.Stage)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetOutputs(), nil
+			}},
+		}
+	})})
+	o_Worker = graphql.NewObject(graphql.ObjectConfig{Name: "Worker", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"id": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb2.Worker)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetId(), nil
+			}},
+			"kind": &graphql.Field{Type: graphql.NewNonNull(e_Worker_Kind), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb2.Worker)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetKind(), nil
+			}},
+			"tags": &graphql.Field{Type: o_Tags, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb2.Worker)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetTags(), nil
+			}},
+		}
+	})})
+	o_PipelineOperation = graphql.NewObject(graphql.ObjectConfig{Name: "PipelineOperation", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"kind": &graphql.Field{Type: graphql.NewNonNull(e_OperationKind), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOperation)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetKind(), nil
+			}},
+			"stepId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOperation)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetStepId(), nil
+			}},
+			"stepOrder": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOperation)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetStepOrder(), nil
+			}},
+			"target": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOperation)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetTarget(), nil
+			}},
+			"summary": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOperation)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetSummary(), nil
+			}},
+			"mentions": &graphql.Field{Type: graphql.NewList(graphql.NewNonNull(graphql.String)), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOperation)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetMentions(), nil
+			}},
+			"labels": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOperation)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetLabels(), nil
+			}},
+			"command": &graphql.Field{Type: o_Cmd, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOperation)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetCommand(), nil
+			}},
+			"file": &graphql.Field{Type: o_File, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOperation)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetFile(), nil
+			}},
+			"dir": &graphql.Field{Type: o_Dir, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOperation)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetDir(), nil
+			}},
+			"commandText": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOperation)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetCommandText(), nil
+			}},
+			"argv": &graphql.Field{Type: graphql.NewList(graphql.NewNonNull(graphql.String)), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOperation)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetArgv(), nil
+			}},
+			"filePath": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOperation)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetFilePath(), nil
+			}},
+			"fileSizeBytes": &graphql.Field{Type: graphql.NewNonNull(graphqlrt.Uint64), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOperation)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetFileSizeBytes(), nil
+			}},
+			"contentPreview": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOperation)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetContentPreview(), nil
+			}},
+			"resultAvailable": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOperation)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetResultAvailable(), nil
+			}},
+			"exitCode": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOperation)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetExitCode(), nil
+			}},
+			"timedOut": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOperation)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetTimedOut(), nil
+			}},
+			"elapsed": &graphql.Field{Type: graphqlrt.Duration, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOperation)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetElapsed(), nil
+			}},
+			"stdoutPreview": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOperation)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetStdoutPreview(), nil
+			}},
+			"stderrPreview": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOperation)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetStderrPreview(), nil
+			}},
+			"resultSummary": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOperation)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetResultSummary(), nil
+			}},
+		}
+	})})
+	o_PipelineOutput = graphql.NewObject(graphql.ObjectConfig{Name: "PipelineOutput", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"kind": &graphql.Field{Type: graphql.NewNonNull(e_OutputKind), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOutput)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetKind(), nil
+			}},
+			"id": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOutput)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetId(), nil
+			}},
+			"name": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOutput)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetName(), nil
+			}},
+			"summary": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOutput)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetSummary(), nil
+			}},
+			"componentId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOutput)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetComponentId(), nil
+			}},
+			"machineId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOutput)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetMachineId(), nil
+			}},
+			"stepId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOutput)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetStepId(), nil
+			}},
+			"action": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOutput)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetAction(), nil
+			}},
+			"target": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOutput)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetTarget(), nil
+			}},
+			"commandText": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOutput)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetCommandText(), nil
+			}},
+			"contentPreview": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOutput)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetContentPreview(), nil
+			}},
+			"count": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOutput)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetCount(), nil
+			}},
+			"sizeBytes": &graphql.Field{Type: graphql.NewNonNull(graphqlrt.Uint64), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOutput)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetSizeBytes(), nil
+			}},
+			"labels": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb4.PipelineOutput)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetLabels(), nil
+			}},
+		}
+	})})
+	o_ShareRecord_Target = graphql.NewObject(graphql.ObjectConfig{Name: "ShareRecord_Target", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"kind": &graphql.Field{Type: graphql.NewNonNull(e_ShareRecord_Target_Kind), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.ShareRecord_Target)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetKind(), nil
+			}},
+			"id": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.ShareRecord_Target)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetId(), nil
+			}},
+		}
+	})})
+	o_CreateShareResponse = graphql.NewObject(graphql.ObjectConfig{Name: "CreateShareResponse", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"share": &graphql.Field{Type: o_ShareRecord, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb.CreateShareResponse)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetShare(), nil
+			}},
+		}
+	})})
+	o_ShareRecord = graphql.NewObject(graphql.ObjectConfig{Name: "ShareRecord", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"entity": &graphql.Field{Type: o_Entity, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.ShareRecord)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetEntity(), nil
+			}},
+			"target": &graphql.Field{Type: o_ShareRecord_Target, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.ShareRecord)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetTarget(), nil
+			}},
+			"token": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.ShareRecord)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetToken(), nil
+			}},
+			"expiresAt": &graphql.Field{Type: graphqlrt.Timestamp, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.ShareRecord)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetExpiresAt(), nil
+			}},
+			"revoked": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.ShareRecord)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetRevoked(), nil
+			}},
+			"snapshot": &graphql.Field{Type: o_ShareRecord_Snapshot, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.ShareRecord)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetSnapshot(), nil
+			}},
+		}
+	})})
+	o_GetShareResponse = graphql.NewObject(graphql.ObjectConfig{Name: "GetShareResponse", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"share": &graphql.Field{Type: o_ShareRecord, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb.GetShareResponse)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetShare(), nil
+			}},
+		}
+	})})
+	o_ListSharesResponse = graphql.NewObject(graphql.ObjectConfig{Name: "ListSharesResponse", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"shares": &graphql.Field{Type: graphql.NewList(o_ShareRecord), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb.ListSharesResponse)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetShares(), nil
+			}},
+			"nextPageToken": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb.ListSharesResponse)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetNextPageToken(), nil
+			}},
+		}
+	})})
+	o_RevokeShareResponse = graphql.NewObject(graphql.ObjectConfig{Name: "RevokeShareResponse", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"share": &graphql.Field{Type: o_ShareRecord, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb.RevokeShareResponse)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetShare(), nil
+			}},
+		}
+	})})
+	o_SetShareExpiryResponse = graphql.NewObject(graphql.ObjectConfig{Name: "SetShareExpiryResponse", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"share": &graphql.Field{Type: o_ShareRecord, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb.SetShareExpiryResponse)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetShare(), nil
+			}},
+		}
+	})})
+	o_DeleteShareResponse = graphql.NewObject(graphql.ObjectConfig{Name: "DeleteShareResponse", Fields: graphql.Fields{
+		"ok": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) { return true, nil }},
+	}})
+	o_ListStroppyVersionsResponse = graphql.NewObject(graphql.ObjectConfig{Name: "ListStroppyVersionsResponse", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"versions": &graphql.Field{Type: graphql.NewList(graphql.NewNonNull(graphql.String)), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb.ListStroppyVersionsResponse)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetVersions(), nil
+			}},
+		}
+	})})
+	o_SuiteRecord = graphql.NewObject(graphql.ObjectConfig{Name: "SuiteRecord", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"entity": &graphql.Field{Type: o_Entity, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.SuiteRecord)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetEntity(), nil
+			}},
+			"spec": &graphql.Field{Type: o_Suite, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.SuiteRecord)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetSpec(), nil
+			}},
+			"summary": &graphql.Field{Type: o_SuiteRecord_Summary, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.SuiteRecord)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetSummary(), nil
+			}},
+		}
+	})})
+	o_SuiteRecord_Summary = graphql.NewObject(graphql.ObjectConfig{Name: "SuiteRecord_Summary", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"scheduleEnabled": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.SuiteRecord_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetScheduleEnabled(), nil
+			}},
+			"cron": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.SuiteRecord_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetCron(), nil
+			}},
+			"nextRunAt": &graphql.Field{Type: graphqlrt.Timestamp, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.SuiteRecord_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetNextRunAt(), nil
+			}},
+			"lastRunAt": &graphql.Field{Type: graphqlrt.Timestamp, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.SuiteRecord_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetLastRunAt(), nil
+			}},
+			"lastRunStatus": &graphql.Field{Type: graphql.NewNonNull(e_Status), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.SuiteRecord_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetLastRunStatus(), nil
+			}},
+			"runCount": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.SuiteRecord_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetRunCount(), nil
+			}},
+			"cellCount": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.SuiteRecord_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetCellCount(), nil
+			}},
+		}
+	})})
+	o_Suite = graphql.NewObject(graphql.ObjectConfig{Name: "Suite", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"id": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb2.Suite)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetId(), nil
+			}},
+			"cells": &graphql.Field{Type: graphql.NewList(o_SuiteCell), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb2.Suite)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetCells(), nil
+			}},
+			"provider": &graphql.Field{Type: graphql.NewNonNull(e_Provider), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb2.Suite)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetProvider(), nil
+			}},
+			"tags": &graphql.Field{Type: o_Tags, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb2.Suite)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetTags(), nil
+			}},
+			"schedule": &graphql.Field{Type: o_Schedule, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb2.Suite)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetSchedule(), nil
+			}},
+			"defaultInTenantRating": &graphql.Field{Type: graphql.Boolean, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb2.Suite)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetDefaultInTenantRating(), nil
+			}},
+			"defaultInGlobalRating": &graphql.Field{Type: graphql.Boolean, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb2.Suite)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetDefaultInGlobalRating(), nil
+			}},
+			"defaultMaxParallel": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb2.Suite)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetDefaultMaxParallel(), nil
+			}},
+		}
+	})})
+	o_SuiteCell = graphql.NewObject(graphql.ObjectConfig{Name: "SuiteCell", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"id": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb2.SuiteCell)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetId(), nil
+			}},
+			"name": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb2.SuiteCell)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetName(), nil
+			}},
+			"enabled": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb2.SuiteCell)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetEnabled(), nil
+			}},
+			"source": &graphql.Field{Type: u_SuiteCellSource, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb2.SuiteCell)
+				if obj == nil {
+					return nil, nil
+				}
+				switch v := obj.GetSource().(type) {
+				case *pb2.SuiteCell_PresetPair_:
+					return v.PresetPair, nil
+				case *pb2.SuiteCell_TestPresetId:
+					return SuiteCellSourceTestPresetId{Value: v.TestPresetId}, nil
+				case *pb2.SuiteCell_InlineTest:
+					return v.InlineTest, nil
+				}
+				return nil, nil
+			}},
+			"machineOverrides": &graphql.Field{Type: graphql.NewList(o_MachinePlan), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb2.SuiteCell)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetMachineOverrides(), nil
+			}},
+			"renderOverrides": &graphql.Field{Type: o_RenderOverrideSet, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb2.SuiteCell)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetRenderOverrides(), nil
+			}},
+			"tags": &graphql.Field{Type: o_Tags, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb2.SuiteCell)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetTags(), nil
+			}},
+		}
+	})})
+	o_SuiteCell_PresetPair = graphql.NewObject(graphql.ObjectConfig{Name: "SuiteCell_PresetPair", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"dbPresetId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb2.SuiteCell_PresetPair)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetDbPresetId(), nil
+			}},
+			"workloadPresetId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb2.SuiteCell_PresetPair)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetWorkloadPresetId(), nil
+			}},
+		}
+	})})
 	o_Schedule = graphql.NewObject(graphql.ObjectConfig{Name: "Schedule", Fields: graphql.FieldsThunk(func() graphql.Fields {
 		return graphql.Fields{
 			"enabled": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
@@ -10363,351 +11994,6 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 			}},
 		}
 	})})
-	o_TopologySpec = graphql.NewObject(graphql.ObjectConfig{Name: "TopologySpec", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"nodes": &graphql.Field{Type: graphql.NewList(o_Node), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb8.TopologySpec)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetNodes(), nil
-			}},
-			"components": &graphql.Field{Type: graphql.NewList(o_Component), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb8.TopologySpec)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetComponents(), nil
-			}},
-			"connections": &graphql.Field{Type: graphql.NewList(o_Connection), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb8.TopologySpec)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetConnections(), nil
-			}},
-			"externalComponents": &graphql.Field{Type: graphql.NewList(o_Component), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb8.TopologySpec)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetExternalComponents(), nil
-			}},
-			"labels": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb8.TopologySpec)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetLabels(), nil
-			}},
-			"tags": &graphql.Field{Type: o_Tags, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb8.TopologySpec)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetTags(), nil
-			}},
-		}
-	})})
-	o_Node = graphql.NewObject(graphql.ObjectConfig{Name: "Node", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"id": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb8.Node)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetId(), nil
-			}},
-			"componentIds": &graphql.Field{Type: graphql.NewList(graphql.NewNonNull(graphql.String)), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb8.Node)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetComponentIds(), nil
-			}},
-			"labels": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb8.Node)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetLabels(), nil
-			}},
-			"tags": &graphql.Field{Type: o_Tags, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb8.Node)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetTags(), nil
-			}},
-		}
-	})})
-	o_Component = graphql.NewObject(graphql.ObjectConfig{Name: "Component", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"id": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb8.Component)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetId(), nil
-			}},
-			"kind": &graphql.Field{Type: graphql.NewNonNull(e_Component_Kind), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb8.Component)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetKind(), nil
-			}},
-			"engine": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb8.Component)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetEngine(), nil
-			}},
-			"role": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb8.Component)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetRole(), nil
-			}},
-			"labels": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb8.Component)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetLabels(), nil
-			}},
-			"tags": &graphql.Field{Type: o_Tags, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb8.Component)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetTags(), nil
-			}},
-		}
-	})})
-	o_Connection = graphql.NewObject(graphql.ObjectConfig{Name: "Connection", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"fromComponentId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb8.Connection)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetFromComponentId(), nil
-			}},
-			"toComponentId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb8.Connection)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetToComponentId(), nil
-			}},
-			"kind": &graphql.Field{Type: graphql.NewNonNull(e_Connection_Kind), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb8.Connection)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetKind(), nil
-			}},
-			"protocol": &graphql.Field{Type: graphql.NewNonNull(e_Connection_Protocol), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb8.Connection)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetProtocol(), nil
-			}},
-			"mode": &graphql.Field{Type: graphql.NewNonNull(e_Connection_Mode), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb8.Connection)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetMode(), nil
-			}},
-			"endpointName": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb8.Connection)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetEndpointName(), nil
-			}},
-			"port": &graphql.Field{Type: graphql.Int, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb8.Connection)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetPort(), nil
-			}},
-			"colocated": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb8.Connection)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetColocated(), nil
-			}},
-			"tags": &graphql.Field{Type: o_Tags, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb8.Connection)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetTags(), nil
-			}},
-		}
-	})})
-	o_InfrastructurePlan = graphql.NewObject(graphql.ObjectConfig{Name: "InfrastructurePlan", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"provider": &graphql.Field{Type: graphql.NewNonNull(e_Provider), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.InfrastructurePlan)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetProvider(), nil
-			}},
-			"settings": &graphql.Field{Type: o_ProviderSettings, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.InfrastructurePlan)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetSettings(), nil
-			}},
-			"machines": &graphql.Field{Type: graphql.NewList(o_MachinePlan), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.InfrastructurePlan)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetMachines(), nil
-			}},
-			"labels": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.InfrastructurePlan)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetLabels(), nil
-			}},
-			"tags": &graphql.Field{Type: o_Tags, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.InfrastructurePlan)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetTags(), nil
-			}},
-		}
-	})})
-	o_ProviderSettings = graphql.NewObject(graphql.ObjectConfig{Name: "ProviderSettings", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"settings": &graphql.Field{Type: u_ProviderSettingsSettings, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.ProviderSettings)
-				if obj == nil {
-					return nil, nil
-				}
-				switch v := obj.GetSettings().(type) {
-				case *pb3.ProviderSettings_Docker:
-					return v.Docker, nil
-				case *pb3.ProviderSettings_Yandex:
-					return v.Yandex, nil
-				}
-				return nil, nil
-			}},
-		}
-	})})
-	o_Docker_Settings = graphql.NewObject(graphql.ObjectConfig{Name: "Docker_Settings", Fields: graphql.Fields{
-		"ok": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) { return true, nil }},
-	}})
-	o_Yandex_Settings = graphql.NewObject(graphql.ObjectConfig{Name: "Yandex_Settings", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"token": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.Yandex_Settings)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetToken(), nil
-			}},
-			"cloudId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.Yandex_Settings)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetCloudId(), nil
-			}},
-			"folderId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.Yandex_Settings)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetFolderId(), nil
-			}},
-			"zone": &graphql.Field{Type: graphql.NewNonNull(e_Yandex_Settings_Zone), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.Yandex_Settings)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetZone(), nil
-			}},
-			"networkId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.Yandex_Settings)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetNetworkId(), nil
-			}},
-			"networkName": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.Yandex_Settings)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetNetworkName(), nil
-			}},
-			"subnetCidr": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.Yandex_Settings)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetSubnetCidr(), nil
-			}},
-			"platformId": &graphql.Field{Type: graphql.NewNonNull(e_Yandex_Settings_PlatformId), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.Yandex_Settings)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetPlatformId(), nil
-			}},
-			"imageId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.Yandex_Settings)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetImageId(), nil
-			}},
-			"assignPublicIp": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.Yandex_Settings)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetAssignPublicIp(), nil
-			}},
-			"softwareAcceleratedNetwork": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.Yandex_Settings)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetSoftwareAcceleratedNetwork(), nil
-			}},
-			"sshUser": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.Yandex_Settings)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetSshUser(), nil
-			}},
-			"sshPublicKey": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.Yandex_Settings)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetSshPublicKey(), nil
-			}},
-		}
-	})})
 	o_RenderPreview = graphql.NewObject(graphql.ObjectConfig{Name: "RenderPreview", Fields: graphql.FieldsThunk(func() graphql.Fields {
 		return graphql.Fields{
 			"components": &graphql.Field{Type: graphql.NewList(o_ComponentRender), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
@@ -10867,219 +12153,6 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 					return nil, nil
 				}
 				return obj.GetTags(), nil
-			}},
-		}
-	})})
-	o_Cmd = graphql.NewObject(graphql.ObjectConfig{Name: "Cmd", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"spec": &graphql.Field{Type: o_Cmd_Spec, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb1.Cmd)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetSpec(), nil
-			}},
-			"result": &graphql.Field{Type: o_Cmd_Result, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb1.Cmd)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetResult(), nil
-			}},
-		}
-	})})
-	o_Cmd_Spec = graphql.NewObject(graphql.ObjectConfig{Name: "Cmd_Spec", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"command": &graphql.Field{Type: u_Cmd_SpecCommand, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb1.Cmd_Spec)
-				if obj == nil {
-					return nil, nil
-				}
-				switch v := obj.GetCommand().(type) {
-				case *pb1.Cmd_Spec_Argv:
-					return v.Argv, nil
-				case *pb1.Cmd_Spec_Script:
-					return v.Script, nil
-				}
-				return nil, nil
-			}},
-			"cwd": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb1.Cmd_Spec)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetCwd(), nil
-			}},
-			"env": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb1.Cmd_Spec)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetEnv(), nil
-			}},
-			"stdin": &graphql.Field{Type: graphql.NewNonNull(graphqlrt.Bytes), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb1.Cmd_Spec)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetStdin(), nil
-			}},
-			"timeout": &graphql.Field{Type: graphqlrt.Duration, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb1.Cmd_Spec)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetTimeout(), nil
-			}},
-			"expectedExitCodes": &graphql.Field{Type: graphql.NewList(graphql.NewNonNull(graphql.Int)), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb1.Cmd_Spec)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetExpectedExitCodes(), nil
-			}},
-			"streams": &graphql.Field{Type: o_Cmd_Streams, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb1.Cmd_Spec)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetStreams(), nil
-			}},
-		}
-	})})
-	o_Cmd_Argv = graphql.NewObject(graphql.ObjectConfig{Name: "Cmd_Argv", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"args": &graphql.Field{Type: graphql.NewList(graphql.NewNonNull(graphql.String)), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb1.Cmd_Argv)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetArgs(), nil
-			}},
-		}
-	})})
-	o_Cmd_Script = graphql.NewObject(graphql.ObjectConfig{Name: "Cmd_Script", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"text": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb1.Cmd_Script)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetText(), nil
-			}},
-			"shell": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb1.Cmd_Script)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetShell(), nil
-			}},
-		}
-	})})
-	o_Cmd_Streams = graphql.NewObject(graphql.ObjectConfig{Name: "Cmd_Streams", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"stdout": &graphql.Field{Type: graphql.NewNonNull(e_Cmd_Streams_Mode), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb1.Cmd_Streams)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetStdout(), nil
-			}},
-			"stderr": &graphql.Field{Type: graphql.NewNonNull(e_Cmd_Streams_Mode), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb1.Cmd_Streams)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetStderr(), nil
-			}},
-		}
-	})})
-	o_Cmd_Result = graphql.NewObject(graphql.ObjectConfig{Name: "Cmd_Result", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"exitCode": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb1.Cmd_Result)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetExitCode(), nil
-			}},
-			"stdout": &graphql.Field{Type: graphql.NewNonNull(graphqlrt.Bytes), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb1.Cmd_Result)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetStdout(), nil
-			}},
-			"stderr": &graphql.Field{Type: graphql.NewNonNull(graphqlrt.Bytes), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb1.Cmd_Result)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetStderr(), nil
-			}},
-			"timedOut": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb1.Cmd_Result)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetTimedOut(), nil
-			}},
-			"elapsed": &graphql.Field{Type: graphqlrt.Duration, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb1.Cmd_Result)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetElapsed(), nil
-			}},
-		}
-	})})
-	o_Dir = graphql.NewObject(graphql.ObjectConfig{Name: "Dir", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"info": &graphql.Field{Type: o_Dir_Info, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb1.Dir)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetInfo(), nil
-			}},
-			"createParents": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb1.Dir)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetCreateParents(), nil
-			}},
-		}
-	})})
-	o_Dir_Info = graphql.NewObject(graphql.ObjectConfig{Name: "Dir_Info", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"path": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb1.Dir_Info)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetPath(), nil
-			}},
-			"mode": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb1.Dir_Info)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetMode(), nil
-			}},
-			"owner": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb1.Dir_Info)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetOwner(), nil
-			}},
-			"group": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb1.Dir_Info)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetGroup(), nil
 			}},
 		}
 	})})
@@ -11351,1056 +12424,6 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 					return nil, nil
 				}
 				return obj.GetTopBenchmarks(), nil
-			}},
-		}
-	})})
-	o_TestRunRecord = graphql.NewObject(graphql.ObjectConfig{Name: "TestRunRecord", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"entity": &graphql.Field{Type: o_Entity, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.TestRunRecord)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetEntity(), nil
-			}},
-			"spec": &graphql.Field{Type: o_TestRun, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.TestRunRecord)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetSpec(), nil
-			}},
-			"status": &graphql.Field{Type: graphql.NewNonNull(e_Status), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.TestRunRecord)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetStatus(), nil
-			}},
-			"suiteRunId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.TestRunRecord)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetSuiteRunId(), nil
-			}},
-			"suiteCellId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.TestRunRecord)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetSuiteCellId(), nil
-			}},
-			"trigger": &graphql.Field{Type: graphql.NewNonNull(e_Trigger), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.TestRunRecord)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetTrigger(), nil
-			}},
-			"inTenantRating": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.TestRunRecord)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetInTenantRating(), nil
-			}},
-			"inGlobalRating": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.TestRunRecord)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetInGlobalRating(), nil
-			}},
-			"summary": &graphql.Field{Type: o_TestRunRecord_Summary, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.TestRunRecord)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetSummary(), nil
-			}},
-			"infrastructureState": &graphql.Field{Type: o_InfrastructureState, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.TestRunRecord)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetInfrastructureState(), nil
-			}},
-			"deploymentPlan": &graphql.Field{Type: o_DeploymentPlan, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.TestRunRecord)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetDeploymentPlan(), nil
-			}},
-			"runtimeState": &graphql.Field{Type: o_RunState, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.TestRunRecord)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetRuntimeState(), nil
-			}},
-		}
-	})})
-	o_TestRunRecord_Summary = graphql.NewObject(graphql.ObjectConfig{Name: "TestRunRecord_Summary", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"dbKind": &graphql.Field{Type: graphql.NewNonNull(e_Database_Kind), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.TestRunRecord_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetDbKind(), nil
-			}},
-			"dbPresetId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.TestRunRecord_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetDbPresetId(), nil
-			}},
-			"dbPresetName": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.TestRunRecord_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetDbPresetName(), nil
-			}},
-			"workloadPresetId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.TestRunRecord_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetWorkloadPresetId(), nil
-			}},
-			"workloadName": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.TestRunRecord_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetWorkloadName(), nil
-			}},
-			"stroppyVersion": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.TestRunRecord_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetStroppyVersion(), nil
-			}},
-			"workloadProtocol": &graphql.Field{Type: graphql.NewNonNull(e_Workload_Protocol), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.TestRunRecord_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetWorkloadProtocol(), nil
-			}},
-			"testPresetId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.TestRunRecord_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetTestPresetId(), nil
-			}},
-			"testPresetName": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.TestRunRecord_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetTestPresetName(), nil
-			}},
-			"topologyLabel": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.TestRunRecord_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetTopologyLabel(), nil
-			}},
-			"nodeCount": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.TestRunRecord_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetNodeCount(), nil
-			}},
-			"provider": &graphql.Field{Type: graphql.NewNonNull(e_Provider), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.TestRunRecord_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetProvider(), nil
-			}},
-			"progressPct": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.TestRunRecord_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetProgressPct(), nil
-			}},
-			"startedAt": &graphql.Field{Type: graphqlrt.Timestamp, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.TestRunRecord_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetStartedAt(), nil
-			}},
-			"finishedAt": &graphql.Field{Type: graphqlrt.Timestamp, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.TestRunRecord_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetFinishedAt(), nil
-			}},
-			"duration": &graphql.Field{Type: graphqlrt.Duration, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.TestRunRecord_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetDuration(), nil
-			}},
-		}
-	})})
-	o_TestRun = graphql.NewObject(graphql.ObjectConfig{Name: "TestRun", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"id": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb2.TestRun)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetId(), nil
-			}},
-			"suiteId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb2.TestRun)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetSuiteId(), nil
-			}},
-			"database": &graphql.Field{Type: o_Database, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb2.TestRun)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetDatabase(), nil
-			}},
-			"workload": &graphql.Field{Type: o_Workload, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb2.TestRun)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetWorkload(), nil
-			}},
-			"topologySpec": &graphql.Field{Type: o_TopologySpec, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb2.TestRun)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetTopologySpec(), nil
-			}},
-			"infrastructurePlan": &graphql.Field{Type: o_InfrastructurePlan, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb2.TestRun)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetInfrastructurePlan(), nil
-			}},
-			"renderOverrides": &graphql.Field{Type: o_RenderOverrideSet, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb2.TestRun)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetRenderOverrides(), nil
-			}},
-			"tags": &graphql.Field{Type: o_Tags, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb2.TestRun)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetTags(), nil
-			}},
-		}
-	})})
-	o_InfrastructureState = graphql.NewObject(graphql.ObjectConfig{Name: "InfrastructureState", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"provider": &graphql.Field{Type: graphql.NewNonNull(e_Provider), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.InfrastructureState)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetProvider(), nil
-			}},
-			"machines": &graphql.Field{Type: graphql.NewList(o_MachineState), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.InfrastructureState)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetMachines(), nil
-			}},
-			"labels": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.InfrastructureState)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetLabels(), nil
-			}},
-			"tags": &graphql.Field{Type: o_Tags, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.InfrastructureState)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetTags(), nil
-			}},
-		}
-	})})
-	o_MachineState = graphql.NewObject(graphql.ObjectConfig{Name: "MachineState", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"nodeId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.MachineState)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetNodeId(), nil
-			}},
-			"providerResourceId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.MachineState)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetProviderResourceId(), nil
-			}},
-			"status": &graphql.Field{Type: graphql.NewNonNull(e_Status), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.MachineState)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetStatus(), nil
-			}},
-			"endpoints": &graphql.Field{Type: graphql.NewList(o_Endpoint), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.MachineState)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetEndpoints(), nil
-			}},
-			"providerOutput": &graphql.Field{Type: u_MachineStateProviderOutput, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.MachineState)
-				if obj == nil {
-					return nil, nil
-				}
-				switch v := obj.GetProviderOutput().(type) {
-				case *pb3.MachineState_Docker:
-					return v.Docker, nil
-				case *pb3.MachineState_Yandex:
-					return v.Yandex, nil
-				}
-				return nil, nil
-			}},
-			"allocatedQuotas": &graphql.Field{Type: graphql.NewList(o_Quota_Allocation), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.MachineState)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetAllocatedQuotas(), nil
-			}},
-			"labels": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.MachineState)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetLabels(), nil
-			}},
-			"tags": &graphql.Field{Type: o_Tags, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.MachineState)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetTags(), nil
-			}},
-		}
-	})})
-	o_Endpoint = graphql.NewObject(graphql.ObjectConfig{Name: "Endpoint", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"name": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.Endpoint)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetName(), nil
-			}},
-			"address": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.Endpoint)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetAddress(), nil
-			}},
-			"port": &graphql.Field{Type: graphql.Int, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.Endpoint)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetPort(), nil
-			}},
-			"labels": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.Endpoint)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetLabels(), nil
-			}},
-		}
-	})})
-	o_Docker_ContainerOutput = graphql.NewObject(graphql.ObjectConfig{Name: "Docker_ContainerOutput", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"id": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.Docker_ContainerOutput)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetId(), nil
-			}},
-			"name": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.Docker_ContainerOutput)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetName(), nil
-			}},
-			"internalIp": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.Docker_ContainerOutput)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetInternalIp(), nil
-			}},
-			"mappedPorts": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.Docker_ContainerOutput)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetMappedPorts(), nil
-			}},
-			"status": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.Docker_ContainerOutput)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetStatus(), nil
-			}},
-			"startedAt": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.Docker_ContainerOutput)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetStartedAt(), nil
-			}},
-		}
-	})})
-	o_Yandex_VmOutput = graphql.NewObject(graphql.ObjectConfig{Name: "Yandex_VmOutput", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"id": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.Yandex_VmOutput)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetId(), nil
-			}},
-			"internalIp": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.Yandex_VmOutput)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetInternalIp(), nil
-			}},
-			"publicIp": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.Yandex_VmOutput)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetPublicIp(), nil
-			}},
-		}
-	})})
-	o_Quota_Allocation = graphql.NewObject(graphql.ObjectConfig{Name: "Quota_Allocation", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"info": &graphql.Field{Type: o_Quota_Info, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.Quota_Allocation)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetInfo(), nil
-			}},
-			"used": &graphql.Field{Type: graphql.NewNonNull(graphqlrt.Uint64), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.Quota_Allocation)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetUsed(), nil
-			}},
-		}
-	})})
-	o_DeploymentPlan = graphql.NewObject(graphql.ObjectConfig{Name: "DeploymentPlan", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"components": &graphql.Field{Type: graphql.NewList(o_ComponentDeployment), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.DeploymentPlan)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetComponents(), nil
-			}},
-			"labels": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.DeploymentPlan)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetLabels(), nil
-			}},
-			"tags": &graphql.Field{Type: o_Tags, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.DeploymentPlan)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetTags(), nil
-			}},
-		}
-	})})
-	o_ComponentDeployment = graphql.NewObject(graphql.ObjectConfig{Name: "ComponentDeployment", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"componentId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.ComponentDeployment)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetComponentId(), nil
-			}},
-			"nodeId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.ComponentDeployment)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetNodeId(), nil
-			}},
-			"globalPriority": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.ComponentDeployment)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetGlobalPriority(), nil
-			}},
-			"nodePriority": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.ComponentDeployment)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetNodePriority(), nil
-			}},
-			"dependsOnComponentIds": &graphql.Field{Type: graphql.NewList(graphql.NewNonNull(graphql.String)), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.ComponentDeployment)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetDependsOnComponentIds(), nil
-			}},
-			"steps": &graphql.Field{Type: graphql.NewList(o_AgentStep), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.ComponentDeployment)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetSteps(), nil
-			}},
-			"status": &graphql.Field{Type: graphql.NewNonNull(e_Status), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.ComponentDeployment)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetStatus(), nil
-			}},
-			"labels": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.ComponentDeployment)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetLabels(), nil
-			}},
-			"tags": &graphql.Field{Type: o_Tags, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.ComponentDeployment)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetTags(), nil
-			}},
-		}
-	})})
-	o_AgentStep = graphql.NewObject(graphql.ObjectConfig{Name: "AgentStep", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"id": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.AgentStep)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetId(), nil
-			}},
-			"order": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.AgentStep)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetOrder(), nil
-			}},
-			"action": &graphql.Field{Type: u_AgentStepAction, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.AgentStep)
-				if obj == nil {
-					return nil, nil
-				}
-				switch v := obj.GetAction().(type) {
-				case *pb3.AgentStep_CreateDir:
-					return v.CreateDir, nil
-				case *pb3.AgentStep_WriteFile:
-					return v.WriteFile, nil
-				case *pb3.AgentStep_FetchFile:
-					return v.FetchFile, nil
-				case *pb3.AgentStep_CallCmd:
-					return v.CallCmd, nil
-				}
-				return nil, nil
-			}},
-			"status": &graphql.Field{Type: graphql.NewNonNull(e_Status), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.AgentStep)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetStatus(), nil
-			}},
-			"labels": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.AgentStep)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetLabels(), nil
-			}},
-			"tags": &graphql.Field{Type: o_Tags, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb3.AgentStep)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetTags(), nil
-			}},
-		}
-	})})
-	o_RunState = graphql.NewObject(graphql.ObjectConfig{Name: "RunState", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"status": &graphql.Field{Type: graphql.NewNonNull(e_Status), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb10.RunState)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetStatus(), nil
-			}},
-			"stages": &graphql.Field{Type: graphql.NewList(o_Stage), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb10.RunState)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetStages(), nil
-			}},
-		}
-	})})
-	o_Stage = graphql.NewObject(graphql.ObjectConfig{Name: "Stage", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"nodeExecutionId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb10.Stage)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetNodeExecutionId(), nil
-			}},
-			"name": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb10.Stage)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetName(), nil
-			}},
-			"status": &graphql.Field{Type: graphql.NewNonNull(e_Status), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb10.Stage)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetStatus(), nil
-			}},
-			"startedAt": &graphql.Field{Type: graphqlrt.Timestamp, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb10.Stage)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetStartedAt(), nil
-			}},
-			"finishedAt": &graphql.Field{Type: graphqlrt.Timestamp, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb10.Stage)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetFinishedAt(), nil
-			}},
-			"attempt": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb10.Stage)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetAttempt(), nil
-			}},
-			"order": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb10.Stage)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetOrder(), nil
-			}},
-			"parentNodeExecutionId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb10.Stage)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetParentNodeExecutionId(), nil
-			}},
-			"phase": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb10.Stage)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetPhase(), nil
-			}},
-			"componentId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb10.Stage)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetComponentId(), nil
-			}},
-			"machineId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb10.Stage)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetMachineId(), nil
-			}},
-			"worker": &graphql.Field{Type: o_Worker, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb10.Stage)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetWorker(), nil
-			}},
-			"statusReason": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb10.Stage)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetStatusReason(), nil
-			}},
-			"errorMessage": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb10.Stage)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetErrorMessage(), nil
-			}},
-			"operation": &graphql.Field{Type: o_PipelineOperation, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb10.Stage)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetOperation(), nil
-			}},
-			"outputs": &graphql.Field{Type: graphql.NewList(o_PipelineOutput), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb10.Stage)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetOutputs(), nil
-			}},
-		}
-	})})
-	o_Worker = graphql.NewObject(graphql.ObjectConfig{Name: "Worker", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"id": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb2.Worker)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetId(), nil
-			}},
-			"kind": &graphql.Field{Type: graphql.NewNonNull(e_Worker_Kind), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb2.Worker)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetKind(), nil
-			}},
-			"tags": &graphql.Field{Type: o_Tags, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb2.Worker)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetTags(), nil
-			}},
-		}
-	})})
-	o_PipelineOperation = graphql.NewObject(graphql.ObjectConfig{Name: "PipelineOperation", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"kind": &graphql.Field{Type: graphql.NewNonNull(e_OperationKind), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOperation)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetKind(), nil
-			}},
-			"stepId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOperation)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetStepId(), nil
-			}},
-			"stepOrder": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOperation)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetStepOrder(), nil
-			}},
-			"target": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOperation)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetTarget(), nil
-			}},
-			"summary": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOperation)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetSummary(), nil
-			}},
-			"mentions": &graphql.Field{Type: graphql.NewList(graphql.NewNonNull(graphql.String)), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOperation)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetMentions(), nil
-			}},
-			"labels": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOperation)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetLabels(), nil
-			}},
-			"command": &graphql.Field{Type: o_Cmd, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOperation)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetCommand(), nil
-			}},
-			"file": &graphql.Field{Type: o_File, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOperation)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetFile(), nil
-			}},
-			"dir": &graphql.Field{Type: o_Dir, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOperation)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetDir(), nil
-			}},
-			"commandText": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOperation)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetCommandText(), nil
-			}},
-			"argv": &graphql.Field{Type: graphql.NewList(graphql.NewNonNull(graphql.String)), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOperation)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetArgv(), nil
-			}},
-			"filePath": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOperation)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetFilePath(), nil
-			}},
-			"fileSizeBytes": &graphql.Field{Type: graphql.NewNonNull(graphqlrt.Uint64), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOperation)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetFileSizeBytes(), nil
-			}},
-			"contentPreview": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOperation)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetContentPreview(), nil
-			}},
-			"resultAvailable": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOperation)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetResultAvailable(), nil
-			}},
-			"exitCode": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOperation)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetExitCode(), nil
-			}},
-			"timedOut": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOperation)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetTimedOut(), nil
-			}},
-			"elapsed": &graphql.Field{Type: graphqlrt.Duration, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOperation)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetElapsed(), nil
-			}},
-			"stdoutPreview": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOperation)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetStdoutPreview(), nil
-			}},
-			"stderrPreview": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOperation)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetStderrPreview(), nil
-			}},
-			"resultSummary": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOperation)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetResultSummary(), nil
-			}},
-		}
-	})})
-	o_PipelineOutput = graphql.NewObject(graphql.ObjectConfig{Name: "PipelineOutput", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"kind": &graphql.Field{Type: graphql.NewNonNull(e_OutputKind), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOutput)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetKind(), nil
-			}},
-			"id": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOutput)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetId(), nil
-			}},
-			"name": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOutput)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetName(), nil
-			}},
-			"summary": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOutput)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetSummary(), nil
-			}},
-			"componentId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOutput)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetComponentId(), nil
-			}},
-			"machineId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOutput)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetMachineId(), nil
-			}},
-			"stepId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOutput)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetStepId(), nil
-			}},
-			"action": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOutput)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetAction(), nil
-			}},
-			"target": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOutput)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetTarget(), nil
-			}},
-			"commandText": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOutput)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetCommandText(), nil
-			}},
-			"contentPreview": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOutput)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetContentPreview(), nil
-			}},
-			"count": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOutput)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetCount(), nil
-			}},
-			"sizeBytes": &graphql.Field{Type: graphql.NewNonNull(graphqlrt.Uint64), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOutput)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetSizeBytes(), nil
-			}},
-			"labels": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb4.PipelineOutput)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetLabels(), nil
 			}},
 		}
 	})})
@@ -14994,14 +15017,6 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 			return nil, nil
 		}},
 	}})
-	o_SuiteCellSourceTestPresetId = graphql.NewObject(graphql.ObjectConfig{Name: "SuiteCellSourceTestPresetId", Fields: graphql.Fields{
-		"value": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-			if w, ok := p.Source.(SuiteCellSourceTestPresetId); ok {
-				return w.Value, nil
-			}
-			return nil, nil
-		}},
-	}})
 	o_FileContentText = graphql.NewObject(graphql.ObjectConfig{Name: "FileContentText", Fields: graphql.Fields{
 		"value": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 			if w, ok := p.Source.(FileContentText); ok {
@@ -15013,6 +15028,14 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 	o_FileContentBytes = graphql.NewObject(graphql.ObjectConfig{Name: "FileContentBytes", Fields: graphql.Fields{
 		"value": &graphql.Field{Type: graphql.NewNonNull(graphqlrt.Bytes), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 			if w, ok := p.Source.(FileContentBytes); ok {
+				return w.Value, nil
+			}
+			return nil, nil
+		}},
+	}})
+	o_SuiteCellSourceTestPresetId = graphql.NewObject(graphql.ObjectConfig{Name: "SuiteCellSourceTestPresetId", Fields: graphql.Fields{
+		"value": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+			if w, ok := p.Source.(SuiteCellSourceTestPresetId); ok {
 				return w.Value, nil
 			}
 			return nil, nil
@@ -15090,15 +15113,13 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 			}
 			return nil
 		}})
-	u_SuiteCellSource = graphql.NewUnion(graphql.UnionConfig{Name: "SuiteCellSource", Types: []*graphql.Object{o_SuiteCell_PresetPair, o_SuiteCellSourceTestPresetId, o_Test},
+	u_ProviderSettingsSettings = graphql.NewUnion(graphql.UnionConfig{Name: "ProviderSettingsSettings", Types: []*graphql.Object{o_Docker_Settings, o_Yandex_Settings},
 		ResolveType: func(p graphql.ResolveTypeParams) *graphql.Object {
 			switch p.Value.(type) {
-			case *pb2.SuiteCell_PresetPair:
-				return o_SuiteCell_PresetPair
-			case SuiteCellSourceTestPresetId:
-				return o_SuiteCellSourceTestPresetId
-			case *pb2.Test:
-				return o_Test
+			case *pb3.Docker_Settings:
+				return o_Docker_Settings
+			case *pb3.Yandex_Settings:
+				return o_Yandex_Settings
 			}
 			return nil
 		}})
@@ -15124,40 +15145,6 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 			}
 			return nil
 		}})
-	u_ProviderSettingsSettings = graphql.NewUnion(graphql.UnionConfig{Name: "ProviderSettingsSettings", Types: []*graphql.Object{o_Docker_Settings, o_Yandex_Settings},
-		ResolveType: func(p graphql.ResolveTypeParams) *graphql.Object {
-			switch p.Value.(type) {
-			case *pb3.Docker_Settings:
-				return o_Docker_Settings
-			case *pb3.Yandex_Settings:
-				return o_Yandex_Settings
-			}
-			return nil
-		}})
-	u_RenderArtifactArtifact = graphql.NewUnion(graphql.UnionConfig{Name: "RenderArtifactArtifact", Types: []*graphql.Object{o_File, o_Cmd, o_Dir, o_RenderArtifactArtifactRuntimeValue},
-		ResolveType: func(p graphql.ResolveTypeParams) *graphql.Object {
-			switch p.Value.(type) {
-			case *pb1.File:
-				return o_File
-			case *pb1.Cmd:
-				return o_Cmd
-			case *pb1.Dir:
-				return o_Dir
-			case RenderArtifactArtifactRuntimeValue:
-				return o_RenderArtifactArtifactRuntimeValue
-			}
-			return nil
-		}})
-	u_Cmd_SpecCommand = graphql.NewUnion(graphql.UnionConfig{Name: "Cmd_SpecCommand", Types: []*graphql.Object{o_Cmd_Argv, o_Cmd_Script},
-		ResolveType: func(p graphql.ResolveTypeParams) *graphql.Object {
-			switch p.Value.(type) {
-			case *pb1.Cmd_Argv:
-				return o_Cmd_Argv
-			case *pb1.Cmd_Script:
-				return o_Cmd_Script
-			}
-			return nil
-		}})
 	u_MachineStateProviderOutput = graphql.NewUnion(graphql.UnionConfig{Name: "MachineStateProviderOutput", Types: []*graphql.Object{o_Docker_ContainerOutput, o_Yandex_VmOutput},
 		ResolveType: func(p graphql.ResolveTypeParams) *graphql.Object {
 			switch p.Value.(type) {
@@ -15177,6 +15164,42 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 				return o_File
 			case *pb1.Cmd:
 				return o_Cmd
+			}
+			return nil
+		}})
+	u_Cmd_SpecCommand = graphql.NewUnion(graphql.UnionConfig{Name: "Cmd_SpecCommand", Types: []*graphql.Object{o_Cmd_Argv, o_Cmd_Script},
+		ResolveType: func(p graphql.ResolveTypeParams) *graphql.Object {
+			switch p.Value.(type) {
+			case *pb1.Cmd_Argv:
+				return o_Cmd_Argv
+			case *pb1.Cmd_Script:
+				return o_Cmd_Script
+			}
+			return nil
+		}})
+	u_SuiteCellSource = graphql.NewUnion(graphql.UnionConfig{Name: "SuiteCellSource", Types: []*graphql.Object{o_SuiteCell_PresetPair, o_SuiteCellSourceTestPresetId, o_Test},
+		ResolveType: func(p graphql.ResolveTypeParams) *graphql.Object {
+			switch p.Value.(type) {
+			case *pb2.SuiteCell_PresetPair:
+				return o_SuiteCell_PresetPair
+			case SuiteCellSourceTestPresetId:
+				return o_SuiteCellSourceTestPresetId
+			case *pb2.Test:
+				return o_Test
+			}
+			return nil
+		}})
+	u_RenderArtifactArtifact = graphql.NewUnion(graphql.UnionConfig{Name: "RenderArtifactArtifact", Types: []*graphql.Object{o_File, o_Cmd, o_Dir, o_RenderArtifactArtifactRuntimeValue},
+		ResolveType: func(p graphql.ResolveTypeParams) *graphql.Object {
+			switch p.Value.(type) {
+			case *pb1.File:
+				return o_File
+			case *pb1.Cmd:
+				return o_Cmd
+			case *pb1.Dir:
+				return o_Dir
+			case RenderArtifactArtifactRuntimeValue:
+				return o_RenderArtifactArtifactRuntimeValue
 			}
 			return nil
 		}})
@@ -16223,116 +16246,101 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 			"id":       &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
 		}
 	})})
-	i_CreateShareRequest = graphql.NewInputObject(graphql.InputObjectConfig{Name: "CreateShareRequest", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+	i_StartRunRequest = graphql.NewInputObject(graphql.InputObjectConfig{Name: "StartRunRequest", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
 		return graphql.InputObjectConfigFieldMap{
 			"tenantId": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-			"target":   &graphql.InputObjectFieldConfig{Type: i_ShareRecord_TargetInput},
-			"ttl":      &graphql.InputObjectFieldConfig{Type: graphqlrt.Duration},
+			"recipeId": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
 		}
 	})})
-	i_ShareRecord_TargetInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "ShareRecord_TargetInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+	i_TestRunInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "TestRunInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
 		return graphql.InputObjectConfigFieldMap{
-			"kind": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(e_ShareRecord_Target_Kind)},
-			"id":   &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"id":                 &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"suiteId":            &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"database":           &graphql.InputObjectFieldConfig{Type: i_DatabaseInput},
+			"workload":           &graphql.InputObjectFieldConfig{Type: i_WorkloadInput},
+			"topologySpec":       &graphql.InputObjectFieldConfig{Type: i_TopologySpecInput},
+			"infrastructurePlan": &graphql.InputObjectFieldConfig{Type: i_InfrastructurePlanInput},
+			"renderOverrides":    &graphql.InputObjectFieldConfig{Type: i_RenderOverrideSetInput},
+			"tags":               &graphql.InputObjectFieldConfig{Type: i_TagsInput},
 		}
 	})})
-	i_GetShareRequest = graphql.NewInputObject(graphql.InputObjectConfig{Name: "GetShareRequest", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+	i_TopologySpecInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "TopologySpecInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
 		return graphql.InputObjectConfigFieldMap{
-			"tenantId": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-			"id":       &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"nodes":              &graphql.InputObjectFieldConfig{Type: graphql.NewList(i_NodeInput)},
+			"components":         &graphql.InputObjectFieldConfig{Type: graphql.NewList(i_ComponentInput)},
+			"connections":        &graphql.InputObjectFieldConfig{Type: graphql.NewList(i_ConnectionInput)},
+			"externalComponents": &graphql.InputObjectFieldConfig{Type: graphql.NewList(i_ComponentInput)},
+			"tags":               &graphql.InputObjectFieldConfig{Type: i_TagsInput},
 		}
 	})})
-	i_ListSharesRequest = graphql.NewInputObject(graphql.InputObjectConfig{Name: "ListSharesRequest", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+	i_NodeInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "NodeInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
 		return graphql.InputObjectConfigFieldMap{
-			"tenantId": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-			"filter":   &graphql.InputObjectFieldConfig{Type: i_EntityFilterInput},
-			"sort":     &graphql.InputObjectFieldConfig{Type: i_EntitySortInput},
-			"page":     &graphql.InputObjectFieldConfig{Type: i_PageInput},
-			"targetId": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"id":           &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"componentIds": &graphql.InputObjectFieldConfig{Type: graphql.NewList(graphql.NewNonNull(graphql.String))},
+			"tags":         &graphql.InputObjectFieldConfig{Type: i_TagsInput},
 		}
 	})})
-	i_RevokeShareRequest = graphql.NewInputObject(graphql.InputObjectConfig{Name: "RevokeShareRequest", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+	i_ComponentInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "ComponentInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
 		return graphql.InputObjectConfigFieldMap{
-			"tenantId": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-			"id":       &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"id":     &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"kind":   &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(e_Component_Kind)},
+			"engine": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"role":   &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"tags":   &graphql.InputObjectFieldConfig{Type: i_TagsInput},
 		}
 	})})
-	i_SetShareExpiryRequest = graphql.NewInputObject(graphql.InputObjectConfig{Name: "SetShareExpiryRequest", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+	i_ConnectionInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "ConnectionInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
 		return graphql.InputObjectConfigFieldMap{
-			"tenantId": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-			"id":       &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-			"ttl":      &graphql.InputObjectFieldConfig{Type: graphqlrt.Duration},
+			"fromComponentId": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"toComponentId":   &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"kind":            &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(e_Connection_Kind)},
+			"protocol":        &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(e_Connection_Protocol)},
+			"mode":            &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(e_Connection_Mode)},
+			"endpointName":    &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"port":            &graphql.InputObjectFieldConfig{Type: graphql.Int},
+			"colocated":       &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Boolean)},
+			"tags":            &graphql.InputObjectFieldConfig{Type: i_TagsInput},
 		}
 	})})
-	i_DeleteShareRequest = graphql.NewInputObject(graphql.InputObjectConfig{Name: "DeleteShareRequest", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+	i_InfrastructurePlanInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "InfrastructurePlanInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
 		return graphql.InputObjectConfigFieldMap{
-			"tenantId": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-			"id":       &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"provider": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(e_Provider)},
+			"settings": &graphql.InputObjectFieldConfig{Type: i_ProviderSettingsInput},
+			"machines": &graphql.InputObjectFieldConfig{Type: graphql.NewList(i_MachinePlanInput)},
+			"tags":     &graphql.InputObjectFieldConfig{Type: i_TagsInput},
 		}
 	})})
-	i_ListStroppyVersionsRequest = graphql.NewInputObject(graphql.InputObjectConfig{Name: "ListStroppyVersionsRequest", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+	i_ProviderSettingsInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "ProviderSettingsInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
 		return graphql.InputObjectConfigFieldMap{
-			"tenantId": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"settings": &graphql.InputObjectFieldConfig{Type: i_ProviderSettingsSettingsInput},
 		}
 	})})
-	i_CreateSuiteRequest = graphql.NewInputObject(graphql.InputObjectConfig{Name: "CreateSuiteRequest", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+	i_ProviderSettingsSettingsInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "ProviderSettingsSettingsInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
 		return graphql.InputObjectConfigFieldMap{
-			"tenantId": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-			"suite":    &graphql.InputObjectFieldConfig{Type: i_SuiteRecordInput},
+			"docker": &graphql.InputObjectFieldConfig{Type: i_Docker_SettingsInput},
+			"yandex": &graphql.InputObjectFieldConfig{Type: i_Yandex_SettingsInput},
 		}
 	})})
-	i_SuiteRecordInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "SuiteRecordInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+	i_Docker_SettingsInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "Docker_SettingsInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
 		return graphql.InputObjectConfigFieldMap{
-			"entity":  &graphql.InputObjectFieldConfig{Type: i_EntityInput},
-			"spec":    &graphql.InputObjectFieldConfig{Type: i_SuiteInput},
-			"summary": &graphql.InputObjectFieldConfig{Type: i_SuiteRecord_SummaryInput},
+			"_empty": &graphql.InputObjectFieldConfig{Type: graphql.Boolean},
 		}
 	})})
-	i_SuiteRecord_SummaryInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "SuiteRecord_SummaryInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+	i_Yandex_SettingsInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "Yandex_SettingsInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
 		return graphql.InputObjectConfigFieldMap{
-			"scheduleEnabled": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Boolean)},
-			"cron":            &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-			"nextRunAt":       &graphql.InputObjectFieldConfig{Type: graphqlrt.Timestamp},
-			"lastRunAt":       &graphql.InputObjectFieldConfig{Type: graphqlrt.Timestamp},
-			"lastRunStatus":   &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(e_Status)},
-			"runCount":        &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Int)},
-			"cellCount":       &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Int)},
-		}
-	})})
-	i_SuiteInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "SuiteInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
-		return graphql.InputObjectConfigFieldMap{
-			"id":                    &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-			"cells":                 &graphql.InputObjectFieldConfig{Type: graphql.NewList(i_SuiteCellInput)},
-			"provider":              &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(e_Provider)},
-			"tags":                  &graphql.InputObjectFieldConfig{Type: i_TagsInput},
-			"schedule":              &graphql.InputObjectFieldConfig{Type: i_ScheduleInput},
-			"defaultInTenantRating": &graphql.InputObjectFieldConfig{Type: graphql.Boolean},
-			"defaultInGlobalRating": &graphql.InputObjectFieldConfig{Type: graphql.Boolean},
-			"defaultMaxParallel":    &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Int)},
-		}
-	})})
-	i_SuiteCellInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "SuiteCellInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
-		return graphql.InputObjectConfigFieldMap{
-			"id":               &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-			"name":             &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-			"enabled":          &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Boolean)},
-			"source":           &graphql.InputObjectFieldConfig{Type: i_SuiteCellSourceInput},
-			"machineOverrides": &graphql.InputObjectFieldConfig{Type: graphql.NewList(i_MachinePlanInput)},
-			"renderOverrides":  &graphql.InputObjectFieldConfig{Type: i_RenderOverrideSetInput},
-			"tags":             &graphql.InputObjectFieldConfig{Type: i_TagsInput},
-		}
-	})})
-	i_SuiteCellSourceInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "SuiteCellSourceInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
-		return graphql.InputObjectConfigFieldMap{
-			"presetPair":   &graphql.InputObjectFieldConfig{Type: i_SuiteCell_PresetPairInput},
-			"testPresetId": &graphql.InputObjectFieldConfig{Type: graphql.String},
-			"inlineTest":   &graphql.InputObjectFieldConfig{Type: i_TestInput},
-		}
-	})})
-	i_SuiteCell_PresetPairInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "SuiteCell_PresetPairInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
-		return graphql.InputObjectConfigFieldMap{
-			"dbPresetId":       &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-			"workloadPresetId": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"token":                      &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"cloudId":                    &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"folderId":                   &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"zone":                       &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(e_Yandex_Settings_Zone)},
+			"networkId":                  &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"networkName":                &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"subnetCidr":                 &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"platformId":                 &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(e_Yandex_Settings_PlatformId)},
+			"imageId":                    &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"assignPublicIp":             &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Boolean)},
+			"softwareAcceleratedNetwork": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Boolean)},
+			"sshUser":                    &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"sshPublicKey":               &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
 		}
 	})})
 	i_MachinePlanInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "MachinePlanInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
@@ -16474,6 +16482,118 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 		return graphql.InputObjectConfigFieldMap{
 			"uri":      &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
 			"checksum": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+		}
+	})})
+	i_CreateShareRequest = graphql.NewInputObject(graphql.InputObjectConfig{Name: "CreateShareRequest", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"tenantId": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"target":   &graphql.InputObjectFieldConfig{Type: i_ShareRecord_TargetInput},
+			"ttl":      &graphql.InputObjectFieldConfig{Type: graphqlrt.Duration},
+		}
+	})})
+	i_ShareRecord_TargetInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "ShareRecord_TargetInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"kind": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(e_ShareRecord_Target_Kind)},
+			"id":   &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+		}
+	})})
+	i_GetShareRequest = graphql.NewInputObject(graphql.InputObjectConfig{Name: "GetShareRequest", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"tenantId": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"id":       &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+		}
+	})})
+	i_ListSharesRequest = graphql.NewInputObject(graphql.InputObjectConfig{Name: "ListSharesRequest", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"tenantId": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"filter":   &graphql.InputObjectFieldConfig{Type: i_EntityFilterInput},
+			"sort":     &graphql.InputObjectFieldConfig{Type: i_EntitySortInput},
+			"page":     &graphql.InputObjectFieldConfig{Type: i_PageInput},
+			"targetId": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+		}
+	})})
+	i_RevokeShareRequest = graphql.NewInputObject(graphql.InputObjectConfig{Name: "RevokeShareRequest", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"tenantId": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"id":       &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+		}
+	})})
+	i_SetShareExpiryRequest = graphql.NewInputObject(graphql.InputObjectConfig{Name: "SetShareExpiryRequest", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"tenantId": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"id":       &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"ttl":      &graphql.InputObjectFieldConfig{Type: graphqlrt.Duration},
+		}
+	})})
+	i_DeleteShareRequest = graphql.NewInputObject(graphql.InputObjectConfig{Name: "DeleteShareRequest", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"tenantId": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"id":       &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+		}
+	})})
+	i_ListStroppyVersionsRequest = graphql.NewInputObject(graphql.InputObjectConfig{Name: "ListStroppyVersionsRequest", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"tenantId": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+		}
+	})})
+	i_CreateSuiteRequest = graphql.NewInputObject(graphql.InputObjectConfig{Name: "CreateSuiteRequest", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"tenantId": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"suite":    &graphql.InputObjectFieldConfig{Type: i_SuiteRecordInput},
+		}
+	})})
+	i_SuiteRecordInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "SuiteRecordInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"entity":  &graphql.InputObjectFieldConfig{Type: i_EntityInput},
+			"spec":    &graphql.InputObjectFieldConfig{Type: i_SuiteInput},
+			"summary": &graphql.InputObjectFieldConfig{Type: i_SuiteRecord_SummaryInput},
+		}
+	})})
+	i_SuiteRecord_SummaryInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "SuiteRecord_SummaryInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"scheduleEnabled": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Boolean)},
+			"cron":            &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"nextRunAt":       &graphql.InputObjectFieldConfig{Type: graphqlrt.Timestamp},
+			"lastRunAt":       &graphql.InputObjectFieldConfig{Type: graphqlrt.Timestamp},
+			"lastRunStatus":   &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(e_Status)},
+			"runCount":        &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Int)},
+			"cellCount":       &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Int)},
+		}
+	})})
+	i_SuiteInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "SuiteInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"id":                    &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"cells":                 &graphql.InputObjectFieldConfig{Type: graphql.NewList(i_SuiteCellInput)},
+			"provider":              &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(e_Provider)},
+			"tags":                  &graphql.InputObjectFieldConfig{Type: i_TagsInput},
+			"schedule":              &graphql.InputObjectFieldConfig{Type: i_ScheduleInput},
+			"defaultInTenantRating": &graphql.InputObjectFieldConfig{Type: graphql.Boolean},
+			"defaultInGlobalRating": &graphql.InputObjectFieldConfig{Type: graphql.Boolean},
+			"defaultMaxParallel":    &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Int)},
+		}
+	})})
+	i_SuiteCellInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "SuiteCellInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"id":               &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"name":             &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"enabled":          &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Boolean)},
+			"source":           &graphql.InputObjectFieldConfig{Type: i_SuiteCellSourceInput},
+			"machineOverrides": &graphql.InputObjectFieldConfig{Type: graphql.NewList(i_MachinePlanInput)},
+			"renderOverrides":  &graphql.InputObjectFieldConfig{Type: i_RenderOverrideSetInput},
+			"tags":             &graphql.InputObjectFieldConfig{Type: i_TagsInput},
+		}
+	})})
+	i_SuiteCellSourceInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "SuiteCellSourceInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"presetPair":   &graphql.InputObjectFieldConfig{Type: i_SuiteCell_PresetPairInput},
+			"testPresetId": &graphql.InputObjectFieldConfig{Type: graphql.String},
+			"inlineTest":   &graphql.InputObjectFieldConfig{Type: i_TestInput},
+		}
+	})})
+	i_SuiteCell_PresetPairInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "SuiteCell_PresetPairInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"dbPresetId":       &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"workloadPresetId": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
 		}
 	})})
 	i_ScheduleInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "ScheduleInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
@@ -16634,85 +16754,6 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 			"suiteId":  &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
 		}
 	})})
-	i_TopologySpecInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "TopologySpecInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
-		return graphql.InputObjectConfigFieldMap{
-			"nodes":              &graphql.InputObjectFieldConfig{Type: graphql.NewList(i_NodeInput)},
-			"components":         &graphql.InputObjectFieldConfig{Type: graphql.NewList(i_ComponentInput)},
-			"connections":        &graphql.InputObjectFieldConfig{Type: graphql.NewList(i_ConnectionInput)},
-			"externalComponents": &graphql.InputObjectFieldConfig{Type: graphql.NewList(i_ComponentInput)},
-			"tags":               &graphql.InputObjectFieldConfig{Type: i_TagsInput},
-		}
-	})})
-	i_NodeInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "NodeInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
-		return graphql.InputObjectConfigFieldMap{
-			"id":           &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-			"componentIds": &graphql.InputObjectFieldConfig{Type: graphql.NewList(graphql.NewNonNull(graphql.String))},
-			"tags":         &graphql.InputObjectFieldConfig{Type: i_TagsInput},
-		}
-	})})
-	i_ComponentInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "ComponentInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
-		return graphql.InputObjectConfigFieldMap{
-			"id":     &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-			"kind":   &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(e_Component_Kind)},
-			"engine": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-			"role":   &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-			"tags":   &graphql.InputObjectFieldConfig{Type: i_TagsInput},
-		}
-	})})
-	i_ConnectionInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "ConnectionInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
-		return graphql.InputObjectConfigFieldMap{
-			"fromComponentId": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-			"toComponentId":   &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-			"kind":            &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(e_Connection_Kind)},
-			"protocol":        &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(e_Connection_Protocol)},
-			"mode":            &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(e_Connection_Mode)},
-			"endpointName":    &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-			"port":            &graphql.InputObjectFieldConfig{Type: graphql.Int},
-			"colocated":       &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Boolean)},
-			"tags":            &graphql.InputObjectFieldConfig{Type: i_TagsInput},
-		}
-	})})
-	i_InfrastructurePlanInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "InfrastructurePlanInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
-		return graphql.InputObjectConfigFieldMap{
-			"provider": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(e_Provider)},
-			"settings": &graphql.InputObjectFieldConfig{Type: i_ProviderSettingsInput},
-			"machines": &graphql.InputObjectFieldConfig{Type: graphql.NewList(i_MachinePlanInput)},
-			"tags":     &graphql.InputObjectFieldConfig{Type: i_TagsInput},
-		}
-	})})
-	i_ProviderSettingsInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "ProviderSettingsInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
-		return graphql.InputObjectConfigFieldMap{
-			"settings": &graphql.InputObjectFieldConfig{Type: i_ProviderSettingsSettingsInput},
-		}
-	})})
-	i_ProviderSettingsSettingsInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "ProviderSettingsSettingsInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
-		return graphql.InputObjectConfigFieldMap{
-			"docker": &graphql.InputObjectFieldConfig{Type: i_Docker_SettingsInput},
-			"yandex": &graphql.InputObjectFieldConfig{Type: i_Yandex_SettingsInput},
-		}
-	})})
-	i_Docker_SettingsInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "Docker_SettingsInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
-		return graphql.InputObjectConfigFieldMap{
-			"_empty": &graphql.InputObjectFieldConfig{Type: graphql.Boolean},
-		}
-	})})
-	i_Yandex_SettingsInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "Yandex_SettingsInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
-		return graphql.InputObjectConfigFieldMap{
-			"token":                      &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-			"cloudId":                    &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-			"folderId":                   &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-			"zone":                       &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(e_Yandex_Settings_Zone)},
-			"networkId":                  &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-			"networkName":                &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-			"subnetCidr":                 &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-			"platformId":                 &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(e_Yandex_Settings_PlatformId)},
-			"imageId":                    &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-			"assignPublicIp":             &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Boolean)},
-			"softwareAcceleratedNetwork": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Boolean)},
-			"sshUser":                    &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-			"sshPublicKey":               &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-		}
-	})})
 	i_GetSuiteWizardDraftRequest = graphql.NewInputObject(graphql.InputObjectConfig{Name: "GetSuiteWizardDraftRequest", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
 		return graphql.InputObjectConfigFieldMap{
 			"tenantId": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
@@ -16769,18 +16810,6 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 	i_GetPublicConfigRequest = graphql.NewInputObject(graphql.InputObjectConfig{Name: "GetPublicConfigRequest", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
 		return graphql.InputObjectConfigFieldMap{
 			"_empty": &graphql.InputObjectFieldConfig{Type: graphql.Boolean},
-		}
-	})})
-	i_TestRunInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "TestRunInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
-		return graphql.InputObjectConfigFieldMap{
-			"id":                 &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-			"suiteId":            &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
-			"database":           &graphql.InputObjectFieldConfig{Type: i_DatabaseInput},
-			"workload":           &graphql.InputObjectFieldConfig{Type: i_WorkloadInput},
-			"topologySpec":       &graphql.InputObjectFieldConfig{Type: i_TopologySpecInput},
-			"infrastructurePlan": &graphql.InputObjectFieldConfig{Type: i_InfrastructurePlanInput},
-			"renderOverrides":    &graphql.InputObjectFieldConfig{Type: i_RenderOverrideSetInput},
-			"tags":               &graphql.InputObjectFieldConfig{Type: i_TagsInput},
 		}
 	})})
 	i_GetTenantDashboardRequest = graphql.NewInputObject(graphql.InputObjectConfig{Name: "GetTenantDashboardRequest", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
@@ -19369,6 +19398,25 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 			}
 			return resp, nil
 		}},
+		"startRun": &graphql.Field{Type: o_StartRunResponse, Args: graphql.FieldConfigArgument{
+			"tenantId": &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.String)},
+			"recipeId": &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.String)},
+		}, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+			req := decode_StartRunRequest(p.Args)
+			ctx := p.Context
+			if srv.Authorize != nil {
+				var aerr error
+				ctx, aerr = srv.Authorize(ctx, "/cloud.v1.api.RecipeService/StartRun", req)
+				if aerr != nil {
+					return nil, graphqlrt.GraphQLError(ctx, aerr)
+				}
+			}
+			resp, err := srv.RecipeService.StartRun(ctx, req)
+			if err != nil {
+				return nil, graphqlrt.GraphQLError(ctx, err)
+			}
+			return resp, nil
+		}},
 		"createShare": &graphql.Field{Type: o_CreateShareResponse, Args: graphql.FieldConfigArgument{
 			"tenantId": &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.String)},
 			"target":   &graphql.ArgumentConfig{Type: i_ShareRecord_TargetInput},
@@ -19962,6 +20010,6 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 	cfg.Query = queryRoot
 	cfg.Mutation = mutationRoot
 	cfg.Subscription = subscriptionRoot
-	cfg.Types = []graphql.Type{e_Status, e_Database_Kind, e_Provider, e_Verdict, e_FavoriteKind, e_RegistrationRequestStatus, e_Scope, e_Resource, e_Action, e_ApiTokenType, e_PackageRecord_Format, e_PackageRecord_Status, e_EntitySortField, e_YdbParams_FaultTolerance, e_YdbParams_FailureDomain, e_YdbParams_DiskType, e_YdbManagedParams_Type, e_YdbManagedParams_ComputeType, e_ListDatabasePresetsRequest_SourceKind, e_ListDatabasePresetsRequest_Sort_Kind, e_Workload_Protocol, e_ListWorkloadPresetsRequest_Sort_Kind, e_ListTestPresetsRequest_Sort_Kind, e_QuotaRefreshPolicy, e_Quota_ReservationStatus, e_Severity, e_ShareRecord_Target_Kind, e_Docker_Protocol, e_Docker_RestartPolicy, e_ListSuitesRequest_Sort_Kind, e_Trigger, e_ListSuiteRunsRequest_Sort_Kind, e_Component_Kind, e_Connection_Kind, e_Connection_Protocol, e_Connection_Mode, e_Yandex_Settings_PlatformId, e_Yandex_Settings_Zone, e_RenderArtifact_Kind, e_RenderArtifact_Origin, e_RenderArtifact_Mutability, e_Cmd_Streams_Mode, e_Schema_Filed_Severity, e_Worker_Kind, e_OperationKind, e_OutputKind, e_ListTestRunsRequest_Sort_Kind, e_LogScrollDirection, e_Source, e_Stream, e_Topology_State, e_RuntimeNode_Kind, e_Schema_Filed_ResultType, e_Schema_Filed_String_StringFormat, e_ObservationSource, e_WorkerPresence, e_Event_Kind, e_EventSeverity, o_PlatformSettings, o_RunColumn, o_CompareView, o_Comparison, o_Comparison_RunSummary, o_TimeRange, o_MetricRow, o_MetricCell, o_CompareRunsResponse, o_AddFavoriteResponse, o_FavoriteRecord, o_Entity, o_Timings, o_RemoveFavoriteResponse, o_ListFavoritesResponse, o_TokenPair, o_RegisterResponse, o_LoginResponse, o_RefreshResponse, o_LogoutResponse, o_CreateAccountResponse, o_Account, o_GetAccountResponse, o_LookupAccountByEmailResponse, o_GetMyAccountResponse, o_ListAccountsResponse, o_UpdateAccountResponse, o_DeleteAccountResponse, o_ChangePasswordResponse, o_ResetPasswordResponse, o_RequestPasswordResetResponse, o_ConfirmPasswordResetResponse, o_VerifyEmailResponse, o_ResendVerificationResponse, o_CreateTenantResponse, o_Tenant, o_Tags, o_GetTenantResponse, o_ListMyTenantsResponse, o_UpdateTenantResponse, o_DeleteTenantResponse, o_TransferTenantOwnershipResponse, o_LeaveTenantResponse, o_Permission, o_CreateRoleResponse, o_Role, o_GetRoleResponse, o_ListRolesResponse, o_UpdateRoleResponse, o_DeleteRoleResponse, o_CreateMembershipResponse, o_Membership, o_GetMembershipResponse, o_ListMembershipsResponse, o_UpdateMembershipResponse, o_DeleteMembershipResponse, o_GetMyPermissionsResponse, o_CatalogEntry, o_ListPermissionsResponse, o_CreateIdentityProviderResponse, o_IdentityProvider, o_GetIdentityProviderResponse, o_UpdateIdentityProviderResponse, o_DeleteIdentityProviderResponse, o_SsoButton, o_ListIdentityProvidersResponse, o_StartSSOResponse, o_CompleteSSOResponse, o_LinkExternalIdentityResponse, o_ExternalIdentity, o_UnlinkExternalIdentityResponse, o_ListExternalIdentitiesResponse, o_CreateApiTokenResponse, o_ApiToken, o_ListApiTokensResponse, o_RevokeApiTokenResponse, o_RegistrationRequest, o_SubmitRegistrationRequestResponse, o_ListRegistrationRequestsResponse, o_MarkRegistrationRequestHandledResponse, o_CreatePackageUploadResponse, o_PackageRecord, o_CompleteUploadResponse, o_GetPackageResponse, o_ListPackagesResponse, o_DeletePackageResponse, o_DatabasePresetRecord, o_DatabasePresetRecord_Summary, o_Database, o_Database_PresetId, o_Database_External, o_DatabaseParams, o_Package, o_PostgresParams, o_MySqlParams, o_PicodataParams, o_PicodataTier, o_YdbParams, o_YdbManagedParams, o_YdbManagedParams_AutoScale, o_CockroachParams, o_OrioledbParams, o_NoopParams, o_PgNoopParams, o_CreateDatabasePresetResponse, o_GetDatabasePresetResponse, o_ListDatabasePresetsResponse, o_UpdateDatabasePresetResponse, o_DeleteDatabasePresetResponse, o_CloneDatabasePresetResponse, o_WorkloadPresetRecord, o_WorkloadPresetRecord_Summary, o_Workload, o_Workload_Execution, o_Workload_Parameters, o_Workload_WorkloadFile, o_Workload_Segment, o_CreateWorkloadPresetResponse, o_GetWorkloadPresetResponse, o_ListWorkloadPresetsResponse, o_UpdateWorkloadPresetResponse, o_DeleteWorkloadPresetResponse, o_CloneWorkloadPresetResponse, o_TestPresetRecord, o_TestPresetRecord_Summary, o_Test, o_CreateTestPresetResponse, o_GetTestPresetResponse, o_ListTestPresetsResponse, o_UpdateTestPresetResponse, o_DeleteTestPresetResponse, o_CloneTestPresetResponse, o_RatingEntry, o_GetSystemRatingResponse, o_GetTenantRatingResponse, o_PublicRatingEntry, o_GetPublicRatingResponse, o_GetSharedRunResponse, o_ShareRecord_Snapshot, o_SharedTestRun, o_RunMetrics, o_MetricSummary, o_SharedSuiteRun, o_QuotaView, o_Quota_Info, o_QuotaReservationView, o_ListQuotasResponse, o_RefreshQuotasResponse, o_GetRunQuotaUsageResponse, o_RecipeRecord, o_RecipeRecord_Summary, o_RecipeBundle, o_CreateRecipeResponse, o_GetRecipeResponse, o_ListRecipesResponse, o_DeleteRecipeResponse, o_CheckRecipeResponse, o_Diagnostic, o_ShareRecord_Target, o_CreateShareResponse, o_ShareRecord, o_GetShareResponse, o_ListSharesResponse, o_RevokeShareResponse, o_SetShareExpiryResponse, o_DeleteShareResponse, o_ListStroppyVersionsResponse, o_SuiteRecord, o_SuiteRecord_Summary, o_Suite, o_SuiteCell, o_SuiteCell_PresetPair, o_MachinePlan, o_Docker_Container, o_Docker_VolumeMount, o_Docker_PortBinding, o_Docker_File, o_Docker_Healthcheck, o_Docker_Resources, o_Yandex_Vm, o_Yandex_Disk, o_Quota_Request, o_RenderOverrideSet, o_FileOverride, o_File, o_File_Info, o_File_AsRef, o_Schedule, o_CreateSuiteResponse, o_GetSuiteResponse, o_ListSuitesResponse, o_ListSuiteFacetsResponse, o_UpdateSuiteResponse, o_DeleteSuiteResponse, o_CloneSuiteResponse, o_SetSuiteScheduleResponse, o_StartSuiteResponse, o_SuiteRunRecord, o_SuiteRunRecord_Summary, o_SuiteRunRecord_ChildRun, o_GetSuiteRunResponse, o_ListSuiteRunsResponse, o_CancelSuiteRunResponse, o_DeleteSuiteRunResponse, o_StartSuiteWizardResponse, o_SuiteWizardDraftRecord, o_SuiteWizardDraftRecord_Cell, o_TopologySpec, o_Node, o_Component, o_Connection, o_InfrastructurePlan, o_ProviderSettings, o_Docker_Settings, o_Yandex_Settings, o_RenderPreview, o_ComponentRender, o_RenderArtifact, o_Cmd, o_Cmd_Spec, o_Cmd_Argv, o_Cmd_Script, o_Cmd_Streams, o_Cmd_Result, o_Dir, o_Dir_Info, o_FieldError, o_GetSuiteWizardDraftResponse, o_ListSuiteWizardDraftsResponse, o_PatchSuiteWizardResponse, o_DeleteSuiteWizardDraftResponse, o_FinishSuiteWizardResponse, o_GetSystemSettingsResponse, o_UpdateSystemSettingsResponse, o_GetPublicConfigResponse, o_StatusCounts, o_UpcomingSuite, o_TenantDashboard, o_TestRunRecord, o_TestRunRecord_Summary, o_TestRun, o_InfrastructureState, o_MachineState, o_Endpoint, o_Docker_ContainerOutput, o_Yandex_VmOutput, o_Quota_Allocation, o_DeploymentPlan, o_ComponentDeployment, o_AgentStep, o_RunState, o_Stage, o_Worker, o_PipelineOperation, o_PipelineOutput, o_GetTenantDashboardResponse, o_GetTenantSettingsResponse, o_TenantSettingsRecord, o_UpdateTenantSettingsResponse, o_StartTestRunResponse, o_GetTestRunResponse, o_ListTestRunsResponse, o_ListTestRunFacetsResponse, o_CancelTestRunResponse, o_DeleteTestRunResponse, o_ExtractToPresetResponse, o_LogFilter, o_TestRunOverviewSnapshot, o_Topology, o_RuntimeNode, o_RuntimeConnection, o_Overview, o_PipelineView, o_PipelineNode, o_Baked, o_Schema, o_Schema_Filed, o_Schema_Filed_Float, o_Schema_Filed_Double, o_Schema_Filed_Int32, o_Schema_Filed_Int64, o_Schema_Filed_UInt32, o_Schema_Filed_UInt64, o_Schema_Filed_Bool, o_Schema_Filed_String, o_Schema_Filed_Enum, o_Schema_Filed_Duration, o_Schema_Filed_Timestamp, o_Schema_Filed_List, o_Schema_Filed_Object, o_Schema_Filed_Computed, o_Schema_Filed_Rule, o_Schema_Filed_OneOf, o_Schema_Filed_Ref, o_SchemaIdentity, o_LogRef, o_LogCursor, o_WorkerInfo, o_Event, o_GetTestRunOverviewResponse, o_QueryLogsResponse, o_LogLine, o_ResolveLogRefResponse, o_GetRunMetricsResponse, o_LogFacetValue, o_LogFacetField, o_GetLogFacetsResponse, o_StartTestWizardResponse, o_TestWizardDraftRecord, o_GetTestWizardDraftResponse, o_ListTestWizardDraftsResponse, o_PatchTestWizardResponse, o_DeleteTestWizardDraftResponse, o_FinishTestWizardResponse, o_ProbeScriptResponse, o_ProbeCatalogResponse, o_Empty, o_Workload_ExecutionLimitDuration, o_Workload_ExecutionLimitIterations, o_SuiteCellSourceTestPresetId, o_FileContentText, o_FileContentBytes, o_RenderArtifactArtifactRuntimeValue, o_Schema_Filed_RefTargetName, u_DatabaseSource, u_DatabaseParamsEngine, u_Workload_ExecutionLimit, u_ShareRecord_SnapshotView, u_SuiteCellSource, u_MachinePlanProviderParams, u_FileContent, u_ProviderSettingsSettings, u_RenderArtifactArtifact, u_Cmd_SpecCommand, u_MachineStateProviderOutput, u_AgentStepAction, u_Schema_FiledKind, u_Schema_Filed_RefTarget, i_PlatformSettingsInput, i_TimeRangeInput, i_CompareRunsRequest, i_AddFavoriteRequest, i_EntityInput, i_TimingsInput, i_RemoveFavoriteRequest, i_ListFavoritesRequest, i_PageInput, i_RegisterRequest, i_LoginRequest, i_RefreshRequest, i_LogoutRequest, i_CreateAccountRequest, i_ExternalIdentityLinkInput, i_GetAccountRequest, i_LookupAccountByEmailRequest, i_GetMyAccountRequest, i_ListAccountsRequest, i_UpdateAccountRequest, i_DeleteAccountRequest, i_ChangePasswordRequest, i_ResetPasswordRequest, i_RequestPasswordResetRequest, i_ConfirmPasswordResetRequest, i_VerifyEmailRequest, i_ResendVerificationRequest, i_CreateTenantRequest, i_TagsInput, i_GetTenantRequest, i_GetTenantRequestRef, i_ListMyTenantsRequest, i_UpdateTenantRequest, i_DeleteTenantRequest, i_TransferTenantOwnershipRequest, i_LeaveTenantRequest, i_CreateRoleRequest, i_PermissionInput, i_GetRoleRequest, i_ListRolesRequest, i_UpdateRoleRequest, i_DeleteRoleRequest, i_CreateMembershipRequest, i_GetMembershipRequest, i_ListMembershipsRequest, i_UpdateMembershipRequest, i_DeleteMembershipRequest, i_GetMyPermissionsRequest, i_ListPermissionsRequest, i_CreateIdentityProviderRequest, i_GetIdentityProviderRequest, i_UpdateIdentityProviderRequest, i_DeleteIdentityProviderRequest, i_ListIdentityProvidersRequest, i_StartSSORequest, i_CompleteSSORequest, i_LinkExternalIdentityRequest, i_UnlinkExternalIdentityRequest, i_ListExternalIdentitiesRequest, i_CreateApiTokenRequest, i_ListApiTokensRequest, i_RevokeApiTokenRequest, i_SubmitRegistrationRequestRequest, i_ListRegistrationRequestsRequest, i_MarkRegistrationRequestHandledRequest, i_CreatePackageUploadRequest, i_CompleteUploadRequest, i_GetPackageRequest, i_ListPackagesRequest, i_EntityFilterInput, i_EntitySortInput, i_DeletePackageRequest, i_CreateDatabasePresetRequest, i_DatabasePresetRecordInput, i_DatabasePresetRecord_SummaryInput, i_DatabaseInput, i_DatabaseSourceInput, i_Database_PresetIdInput, i_Database_ExternalInput, i_DatabaseParamsInput, i_DatabaseParamsEngineInput, i_PackageInput, i_PostgresParamsInput, i_MySqlParamsInput, i_PicodataParamsInput, i_PicodataTierInput, i_YdbParamsInput, i_YdbManagedParamsInput, i_YdbManagedParams_AutoScaleInput, i_CockroachParamsInput, i_OrioledbParamsInput, i_NoopParamsInput, i_PgNoopParamsInput, i_GetDatabasePresetRequest, i_ListDatabasePresetsRequest, i_ListDatabasePresetsRequest_SortInput, i_ListDatabasePresetsRequest_SortBy, i_UpdateDatabasePresetRequest, i_DeleteDatabasePresetRequest, i_CloneDatabasePresetRequest, i_CreateWorkloadPresetRequest, i_WorkloadPresetRecordInput, i_WorkloadPresetRecord_SummaryInput, i_WorkloadInput, i_Workload_ExecutionInput, i_Workload_ExecutionLimitInput, i_Workload_ParametersInput, i_Workload_WorkloadFileInput, i_Workload_SegmentInput, i_GetWorkloadPresetRequest, i_ListWorkloadPresetsRequest, i_ListWorkloadPresetsRequest_SortInput, i_ListWorkloadPresetsRequest_SortBy, i_UpdateWorkloadPresetRequest, i_DeleteWorkloadPresetRequest, i_CloneWorkloadPresetRequest, i_CreateTestPresetRequest, i_TestPresetRecordInput, i_TestPresetRecord_SummaryInput, i_TestInput, i_GetTestPresetRequest, i_ListTestPresetsRequest, i_ListTestPresetsRequest_SortInput, i_ListTestPresetsRequest_SortBy, i_UpdateTestPresetRequest, i_DeleteTestPresetRequest, i_CloneTestPresetRequest, i_RatingFilterInput, i_GetSystemRatingRequest, i_GetTenantRatingRequest, i_GetPublicRatingRequest, i_GetSharedRunRequest, i_Quota_InfoInput, i_ListQuotasRequest, i_RefreshQuotasRequest, i_GetRunQuotaUsageRequest, i_CreateRecipeRequest, i_RecipeRecordInput, i_RecipeRecord_SummaryInput, i_RecipeBundleInput, i_GetRecipeRequest, i_ListRecipesRequest, i_DeleteRecipeRequest, i_CheckRecipeRequest, i_CreateShareRequest, i_ShareRecord_TargetInput, i_GetShareRequest, i_ListSharesRequest, i_RevokeShareRequest, i_SetShareExpiryRequest, i_DeleteShareRequest, i_ListStroppyVersionsRequest, i_CreateSuiteRequest, i_SuiteRecordInput, i_SuiteRecord_SummaryInput, i_SuiteInput, i_SuiteCellInput, i_SuiteCellSourceInput, i_SuiteCell_PresetPairInput, i_MachinePlanInput, i_MachinePlanProviderParamsInput, i_Docker_ContainerInput, i_Docker_VolumeMountInput, i_Docker_PortBindingInput, i_Docker_FileInput, i_Docker_HealthcheckInput, i_Docker_ResourcesInput, i_Yandex_VmInput, i_Yandex_DiskInput, i_Quota_RequestInput, i_RenderOverrideSetInput, i_FileOverrideInput, i_FileInput, i_FileContentInput, i_File_InfoInput, i_File_AsRefInput, i_ScheduleInput, i_GetSuiteRequest, i_ListSuitesRequest, i_ListSuitesRequest_SortInput, i_ListSuitesRequest_SortBy, i_ListSuiteFacetsRequest, i_UpdateSuiteRequest, i_DeleteSuiteRequest, i_CloneSuiteRequest, i_SetSuiteScheduleRequest, i_StartSuiteRequest, i_StartSuiteRequestSource, i_GetSuiteRunRequest, i_ListSuiteRunsRequest, i_ListSuiteRunsRequest_SortInput, i_ListSuiteRunsRequest_SortBy, i_CancelSuiteRunRequest, i_DeleteSuiteRunRequest, i_SuiteWizardCellPatchInput, i_SuiteWizardCellPatchSource, i_StartSuiteWizardRequest, i_TopologySpecInput, i_NodeInput, i_ComponentInput, i_ConnectionInput, i_InfrastructurePlanInput, i_ProviderSettingsInput, i_ProviderSettingsSettingsInput, i_Docker_SettingsInput, i_Yandex_SettingsInput, i_GetSuiteWizardDraftRequest, i_ListSuiteWizardDraftsRequest, i_PatchSuiteWizardRequest, i_DeleteSuiteWizardDraftRequest, i_FinishSuiteWizardRequest, i_GetSystemSettingsRequest, i_UpdateSystemSettingsRequest, i_GetPublicConfigRequest, i_TestRunInput, i_GetTenantDashboardRequest, i_GetTenantSettingsRequest, i_TenantSettingsRecordInput, i_UpdateTenantSettingsRequest, i_SetTenantProviderSettingsRequest, i_StartTestRunRequest, i_StartTestRunRequestSource, i_GetTestRunRequest, i_ListTestRunsRequest, i_ListTestRunsRequest_SortInput, i_ListTestRunsRequest_SortBy, i_ListTestRunFacetsRequest, i_CancelTestRunRequest, i_DeleteTestRunRequest, i_ExtractToPresetRequest, i_LogFilterInput, i_LogRefInput, i_LogCursorInput, i_GetTestRunOverviewRequest, i_StreamTestRunOverviewRequest, i_QueryLogsRequest, i_StreamLogsRequest, i_ResolveLogRefRequest, i_GetRunMetricsRequest, i_GetLogFacetsRequest, i_StartTestWizardRequest, i_GetTestWizardDraftRequest, i_ListTestWizardDraftsRequest, i_PatchTestWizardRequest, i_DeleteTestWizardDraftRequest, i_FinishTestWizardRequest, i_ProbeScriptRequest, i_ProbeWorkloadFileInput, i_ProbeCatalogRequest}
+	cfg.Types = []graphql.Type{e_Status, e_Database_Kind, e_Provider, e_Verdict, e_FavoriteKind, e_RegistrationRequestStatus, e_Scope, e_Resource, e_Action, e_ApiTokenType, e_PackageRecord_Format, e_PackageRecord_Status, e_EntitySortField, e_YdbParams_FaultTolerance, e_YdbParams_FailureDomain, e_YdbParams_DiskType, e_YdbManagedParams_Type, e_YdbManagedParams_ComputeType, e_ListDatabasePresetsRequest_SourceKind, e_ListDatabasePresetsRequest_Sort_Kind, e_Workload_Protocol, e_ListWorkloadPresetsRequest_Sort_Kind, e_ListTestPresetsRequest_Sort_Kind, e_QuotaRefreshPolicy, e_Quota_ReservationStatus, e_Severity, e_Component_Kind, e_Connection_Kind, e_Connection_Protocol, e_Connection_Mode, e_Yandex_Settings_PlatformId, e_Yandex_Settings_Zone, e_Docker_Protocol, e_Docker_RestartPolicy, e_Trigger, e_Cmd_Streams_Mode, e_Worker_Kind, e_OperationKind, e_OutputKind, e_ShareRecord_Target_Kind, e_ListSuitesRequest_Sort_Kind, e_ListSuiteRunsRequest_Sort_Kind, e_RenderArtifact_Kind, e_RenderArtifact_Origin, e_RenderArtifact_Mutability, e_Schema_Filed_Severity, e_ListTestRunsRequest_Sort_Kind, e_LogScrollDirection, e_Source, e_Stream, e_Topology_State, e_RuntimeNode_Kind, e_Schema_Filed_ResultType, e_Schema_Filed_String_StringFormat, e_ObservationSource, e_WorkerPresence, e_Event_Kind, e_EventSeverity, o_PlatformSettings, o_RunColumn, o_CompareView, o_Comparison, o_Comparison_RunSummary, o_TimeRange, o_MetricRow, o_MetricCell, o_CompareRunsResponse, o_AddFavoriteResponse, o_FavoriteRecord, o_Entity, o_Timings, o_RemoveFavoriteResponse, o_ListFavoritesResponse, o_TokenPair, o_RegisterResponse, o_LoginResponse, o_RefreshResponse, o_LogoutResponse, o_CreateAccountResponse, o_Account, o_GetAccountResponse, o_LookupAccountByEmailResponse, o_GetMyAccountResponse, o_ListAccountsResponse, o_UpdateAccountResponse, o_DeleteAccountResponse, o_ChangePasswordResponse, o_ResetPasswordResponse, o_RequestPasswordResetResponse, o_ConfirmPasswordResetResponse, o_VerifyEmailResponse, o_ResendVerificationResponse, o_CreateTenantResponse, o_Tenant, o_Tags, o_GetTenantResponse, o_ListMyTenantsResponse, o_UpdateTenantResponse, o_DeleteTenantResponse, o_TransferTenantOwnershipResponse, o_LeaveTenantResponse, o_Permission, o_CreateRoleResponse, o_Role, o_GetRoleResponse, o_ListRolesResponse, o_UpdateRoleResponse, o_DeleteRoleResponse, o_CreateMembershipResponse, o_Membership, o_GetMembershipResponse, o_ListMembershipsResponse, o_UpdateMembershipResponse, o_DeleteMembershipResponse, o_GetMyPermissionsResponse, o_CatalogEntry, o_ListPermissionsResponse, o_CreateIdentityProviderResponse, o_IdentityProvider, o_GetIdentityProviderResponse, o_UpdateIdentityProviderResponse, o_DeleteIdentityProviderResponse, o_SsoButton, o_ListIdentityProvidersResponse, o_StartSSOResponse, o_CompleteSSOResponse, o_LinkExternalIdentityResponse, o_ExternalIdentity, o_UnlinkExternalIdentityResponse, o_ListExternalIdentitiesResponse, o_CreateApiTokenResponse, o_ApiToken, o_ListApiTokensResponse, o_RevokeApiTokenResponse, o_RegistrationRequest, o_SubmitRegistrationRequestResponse, o_ListRegistrationRequestsResponse, o_MarkRegistrationRequestHandledResponse, o_CreatePackageUploadResponse, o_PackageRecord, o_CompleteUploadResponse, o_GetPackageResponse, o_ListPackagesResponse, o_DeletePackageResponse, o_DatabasePresetRecord, o_DatabasePresetRecord_Summary, o_Database, o_Database_PresetId, o_Database_External, o_DatabaseParams, o_Package, o_PostgresParams, o_MySqlParams, o_PicodataParams, o_PicodataTier, o_YdbParams, o_YdbManagedParams, o_YdbManagedParams_AutoScale, o_CockroachParams, o_OrioledbParams, o_NoopParams, o_PgNoopParams, o_CreateDatabasePresetResponse, o_GetDatabasePresetResponse, o_ListDatabasePresetsResponse, o_UpdateDatabasePresetResponse, o_DeleteDatabasePresetResponse, o_CloneDatabasePresetResponse, o_WorkloadPresetRecord, o_WorkloadPresetRecord_Summary, o_Workload, o_Workload_Execution, o_Workload_Parameters, o_Workload_WorkloadFile, o_Workload_Segment, o_CreateWorkloadPresetResponse, o_GetWorkloadPresetResponse, o_ListWorkloadPresetsResponse, o_UpdateWorkloadPresetResponse, o_DeleteWorkloadPresetResponse, o_CloneWorkloadPresetResponse, o_TestPresetRecord, o_TestPresetRecord_Summary, o_Test, o_CreateTestPresetResponse, o_GetTestPresetResponse, o_ListTestPresetsResponse, o_UpdateTestPresetResponse, o_DeleteTestPresetResponse, o_CloneTestPresetResponse, o_RatingEntry, o_GetSystemRatingResponse, o_GetTenantRatingResponse, o_PublicRatingEntry, o_GetPublicRatingResponse, o_GetSharedRunResponse, o_ShareRecord_Snapshot, o_SharedTestRun, o_RunMetrics, o_MetricSummary, o_SharedSuiteRun, o_QuotaView, o_Quota_Info, o_QuotaReservationView, o_ListQuotasResponse, o_RefreshQuotasResponse, o_GetRunQuotaUsageResponse, o_RecipeRecord, o_RecipeRecord_Summary, o_RecipeBundle, o_CreateRecipeResponse, o_GetRecipeResponse, o_ListRecipesResponse, o_DeleteRecipeResponse, o_CheckRecipeResponse, o_Diagnostic, o_StartRunResponse, o_TestRunRecord, o_TestRunRecord_Summary, o_TestRun, o_TopologySpec, o_Node, o_Component, o_Connection, o_InfrastructurePlan, o_ProviderSettings, o_Docker_Settings, o_Yandex_Settings, o_MachinePlan, o_Docker_Container, o_Docker_VolumeMount, o_Docker_PortBinding, o_Docker_File, o_Docker_Healthcheck, o_Docker_Resources, o_Yandex_Vm, o_Yandex_Disk, o_Quota_Request, o_RenderOverrideSet, o_FileOverride, o_File, o_File_Info, o_File_AsRef, o_InfrastructureState, o_MachineState, o_Endpoint, o_Docker_ContainerOutput, o_Yandex_VmOutput, o_Quota_Allocation, o_DeploymentPlan, o_ComponentDeployment, o_AgentStep, o_Dir, o_Dir_Info, o_Cmd, o_Cmd_Spec, o_Cmd_Argv, o_Cmd_Script, o_Cmd_Streams, o_Cmd_Result, o_RunState, o_Stage, o_Worker, o_PipelineOperation, o_PipelineOutput, o_ShareRecord_Target, o_CreateShareResponse, o_ShareRecord, o_GetShareResponse, o_ListSharesResponse, o_RevokeShareResponse, o_SetShareExpiryResponse, o_DeleteShareResponse, o_ListStroppyVersionsResponse, o_SuiteRecord, o_SuiteRecord_Summary, o_Suite, o_SuiteCell, o_SuiteCell_PresetPair, o_Schedule, o_CreateSuiteResponse, o_GetSuiteResponse, o_ListSuitesResponse, o_ListSuiteFacetsResponse, o_UpdateSuiteResponse, o_DeleteSuiteResponse, o_CloneSuiteResponse, o_SetSuiteScheduleResponse, o_StartSuiteResponse, o_SuiteRunRecord, o_SuiteRunRecord_Summary, o_SuiteRunRecord_ChildRun, o_GetSuiteRunResponse, o_ListSuiteRunsResponse, o_CancelSuiteRunResponse, o_DeleteSuiteRunResponse, o_StartSuiteWizardResponse, o_SuiteWizardDraftRecord, o_SuiteWizardDraftRecord_Cell, o_RenderPreview, o_ComponentRender, o_RenderArtifact, o_FieldError, o_GetSuiteWizardDraftResponse, o_ListSuiteWizardDraftsResponse, o_PatchSuiteWizardResponse, o_DeleteSuiteWizardDraftResponse, o_FinishSuiteWizardResponse, o_GetSystemSettingsResponse, o_UpdateSystemSettingsResponse, o_GetPublicConfigResponse, o_StatusCounts, o_UpcomingSuite, o_TenantDashboard, o_GetTenantDashboardResponse, o_GetTenantSettingsResponse, o_TenantSettingsRecord, o_UpdateTenantSettingsResponse, o_StartTestRunResponse, o_GetTestRunResponse, o_ListTestRunsResponse, o_ListTestRunFacetsResponse, o_CancelTestRunResponse, o_DeleteTestRunResponse, o_ExtractToPresetResponse, o_LogFilter, o_TestRunOverviewSnapshot, o_Topology, o_RuntimeNode, o_RuntimeConnection, o_Overview, o_PipelineView, o_PipelineNode, o_Baked, o_Schema, o_Schema_Filed, o_Schema_Filed_Float, o_Schema_Filed_Double, o_Schema_Filed_Int32, o_Schema_Filed_Int64, o_Schema_Filed_UInt32, o_Schema_Filed_UInt64, o_Schema_Filed_Bool, o_Schema_Filed_String, o_Schema_Filed_Enum, o_Schema_Filed_Duration, o_Schema_Filed_Timestamp, o_Schema_Filed_List, o_Schema_Filed_Object, o_Schema_Filed_Computed, o_Schema_Filed_Rule, o_Schema_Filed_OneOf, o_Schema_Filed_Ref, o_SchemaIdentity, o_LogRef, o_LogCursor, o_WorkerInfo, o_Event, o_GetTestRunOverviewResponse, o_QueryLogsResponse, o_LogLine, o_ResolveLogRefResponse, o_GetRunMetricsResponse, o_LogFacetValue, o_LogFacetField, o_GetLogFacetsResponse, o_StartTestWizardResponse, o_TestWizardDraftRecord, o_GetTestWizardDraftResponse, o_ListTestWizardDraftsResponse, o_PatchTestWizardResponse, o_DeleteTestWizardDraftResponse, o_FinishTestWizardResponse, o_ProbeScriptResponse, o_ProbeCatalogResponse, o_Empty, o_Workload_ExecutionLimitDuration, o_Workload_ExecutionLimitIterations, o_FileContentText, o_FileContentBytes, o_SuiteCellSourceTestPresetId, o_RenderArtifactArtifactRuntimeValue, o_Schema_Filed_RefTargetName, u_DatabaseSource, u_DatabaseParamsEngine, u_Workload_ExecutionLimit, u_ShareRecord_SnapshotView, u_ProviderSettingsSettings, u_MachinePlanProviderParams, u_FileContent, u_MachineStateProviderOutput, u_AgentStepAction, u_Cmd_SpecCommand, u_SuiteCellSource, u_RenderArtifactArtifact, u_Schema_FiledKind, u_Schema_Filed_RefTarget, i_PlatformSettingsInput, i_TimeRangeInput, i_CompareRunsRequest, i_AddFavoriteRequest, i_EntityInput, i_TimingsInput, i_RemoveFavoriteRequest, i_ListFavoritesRequest, i_PageInput, i_RegisterRequest, i_LoginRequest, i_RefreshRequest, i_LogoutRequest, i_CreateAccountRequest, i_ExternalIdentityLinkInput, i_GetAccountRequest, i_LookupAccountByEmailRequest, i_GetMyAccountRequest, i_ListAccountsRequest, i_UpdateAccountRequest, i_DeleteAccountRequest, i_ChangePasswordRequest, i_ResetPasswordRequest, i_RequestPasswordResetRequest, i_ConfirmPasswordResetRequest, i_VerifyEmailRequest, i_ResendVerificationRequest, i_CreateTenantRequest, i_TagsInput, i_GetTenantRequest, i_GetTenantRequestRef, i_ListMyTenantsRequest, i_UpdateTenantRequest, i_DeleteTenantRequest, i_TransferTenantOwnershipRequest, i_LeaveTenantRequest, i_CreateRoleRequest, i_PermissionInput, i_GetRoleRequest, i_ListRolesRequest, i_UpdateRoleRequest, i_DeleteRoleRequest, i_CreateMembershipRequest, i_GetMembershipRequest, i_ListMembershipsRequest, i_UpdateMembershipRequest, i_DeleteMembershipRequest, i_GetMyPermissionsRequest, i_ListPermissionsRequest, i_CreateIdentityProviderRequest, i_GetIdentityProviderRequest, i_UpdateIdentityProviderRequest, i_DeleteIdentityProviderRequest, i_ListIdentityProvidersRequest, i_StartSSORequest, i_CompleteSSORequest, i_LinkExternalIdentityRequest, i_UnlinkExternalIdentityRequest, i_ListExternalIdentitiesRequest, i_CreateApiTokenRequest, i_ListApiTokensRequest, i_RevokeApiTokenRequest, i_SubmitRegistrationRequestRequest, i_ListRegistrationRequestsRequest, i_MarkRegistrationRequestHandledRequest, i_CreatePackageUploadRequest, i_CompleteUploadRequest, i_GetPackageRequest, i_ListPackagesRequest, i_EntityFilterInput, i_EntitySortInput, i_DeletePackageRequest, i_CreateDatabasePresetRequest, i_DatabasePresetRecordInput, i_DatabasePresetRecord_SummaryInput, i_DatabaseInput, i_DatabaseSourceInput, i_Database_PresetIdInput, i_Database_ExternalInput, i_DatabaseParamsInput, i_DatabaseParamsEngineInput, i_PackageInput, i_PostgresParamsInput, i_MySqlParamsInput, i_PicodataParamsInput, i_PicodataTierInput, i_YdbParamsInput, i_YdbManagedParamsInput, i_YdbManagedParams_AutoScaleInput, i_CockroachParamsInput, i_OrioledbParamsInput, i_NoopParamsInput, i_PgNoopParamsInput, i_GetDatabasePresetRequest, i_ListDatabasePresetsRequest, i_ListDatabasePresetsRequest_SortInput, i_ListDatabasePresetsRequest_SortBy, i_UpdateDatabasePresetRequest, i_DeleteDatabasePresetRequest, i_CloneDatabasePresetRequest, i_CreateWorkloadPresetRequest, i_WorkloadPresetRecordInput, i_WorkloadPresetRecord_SummaryInput, i_WorkloadInput, i_Workload_ExecutionInput, i_Workload_ExecutionLimitInput, i_Workload_ParametersInput, i_Workload_WorkloadFileInput, i_Workload_SegmentInput, i_GetWorkloadPresetRequest, i_ListWorkloadPresetsRequest, i_ListWorkloadPresetsRequest_SortInput, i_ListWorkloadPresetsRequest_SortBy, i_UpdateWorkloadPresetRequest, i_DeleteWorkloadPresetRequest, i_CloneWorkloadPresetRequest, i_CreateTestPresetRequest, i_TestPresetRecordInput, i_TestPresetRecord_SummaryInput, i_TestInput, i_GetTestPresetRequest, i_ListTestPresetsRequest, i_ListTestPresetsRequest_SortInput, i_ListTestPresetsRequest_SortBy, i_UpdateTestPresetRequest, i_DeleteTestPresetRequest, i_CloneTestPresetRequest, i_RatingFilterInput, i_GetSystemRatingRequest, i_GetTenantRatingRequest, i_GetPublicRatingRequest, i_GetSharedRunRequest, i_Quota_InfoInput, i_ListQuotasRequest, i_RefreshQuotasRequest, i_GetRunQuotaUsageRequest, i_CreateRecipeRequest, i_RecipeRecordInput, i_RecipeRecord_SummaryInput, i_RecipeBundleInput, i_GetRecipeRequest, i_ListRecipesRequest, i_DeleteRecipeRequest, i_CheckRecipeRequest, i_StartRunRequest, i_TestRunInput, i_TopologySpecInput, i_NodeInput, i_ComponentInput, i_ConnectionInput, i_InfrastructurePlanInput, i_ProviderSettingsInput, i_ProviderSettingsSettingsInput, i_Docker_SettingsInput, i_Yandex_SettingsInput, i_MachinePlanInput, i_MachinePlanProviderParamsInput, i_Docker_ContainerInput, i_Docker_VolumeMountInput, i_Docker_PortBindingInput, i_Docker_FileInput, i_Docker_HealthcheckInput, i_Docker_ResourcesInput, i_Yandex_VmInput, i_Yandex_DiskInput, i_Quota_RequestInput, i_RenderOverrideSetInput, i_FileOverrideInput, i_FileInput, i_FileContentInput, i_File_InfoInput, i_File_AsRefInput, i_CreateShareRequest, i_ShareRecord_TargetInput, i_GetShareRequest, i_ListSharesRequest, i_RevokeShareRequest, i_SetShareExpiryRequest, i_DeleteShareRequest, i_ListStroppyVersionsRequest, i_CreateSuiteRequest, i_SuiteRecordInput, i_SuiteRecord_SummaryInput, i_SuiteInput, i_SuiteCellInput, i_SuiteCellSourceInput, i_SuiteCell_PresetPairInput, i_ScheduleInput, i_GetSuiteRequest, i_ListSuitesRequest, i_ListSuitesRequest_SortInput, i_ListSuitesRequest_SortBy, i_ListSuiteFacetsRequest, i_UpdateSuiteRequest, i_DeleteSuiteRequest, i_CloneSuiteRequest, i_SetSuiteScheduleRequest, i_StartSuiteRequest, i_StartSuiteRequestSource, i_GetSuiteRunRequest, i_ListSuiteRunsRequest, i_ListSuiteRunsRequest_SortInput, i_ListSuiteRunsRequest_SortBy, i_CancelSuiteRunRequest, i_DeleteSuiteRunRequest, i_SuiteWizardCellPatchInput, i_SuiteWizardCellPatchSource, i_StartSuiteWizardRequest, i_GetSuiteWizardDraftRequest, i_ListSuiteWizardDraftsRequest, i_PatchSuiteWizardRequest, i_DeleteSuiteWizardDraftRequest, i_FinishSuiteWizardRequest, i_GetSystemSettingsRequest, i_UpdateSystemSettingsRequest, i_GetPublicConfigRequest, i_GetTenantDashboardRequest, i_GetTenantSettingsRequest, i_TenantSettingsRecordInput, i_UpdateTenantSettingsRequest, i_SetTenantProviderSettingsRequest, i_StartTestRunRequest, i_StartTestRunRequestSource, i_GetTestRunRequest, i_ListTestRunsRequest, i_ListTestRunsRequest_SortInput, i_ListTestRunsRequest_SortBy, i_ListTestRunFacetsRequest, i_CancelTestRunRequest, i_DeleteTestRunRequest, i_ExtractToPresetRequest, i_LogFilterInput, i_LogRefInput, i_LogCursorInput, i_GetTestRunOverviewRequest, i_StreamTestRunOverviewRequest, i_QueryLogsRequest, i_StreamLogsRequest, i_ResolveLogRefRequest, i_GetRunMetricsRequest, i_GetLogFacetsRequest, i_StartTestWizardRequest, i_GetTestWizardDraftRequest, i_ListTestWizardDraftsRequest, i_PatchTestWizardRequest, i_DeleteTestWizardDraftRequest, i_FinishTestWizardRequest, i_ProbeScriptRequest, i_ProbeWorkloadFileInput, i_ProbeCatalogRequest}
 	return graphql.NewSchema(cfg)
 }

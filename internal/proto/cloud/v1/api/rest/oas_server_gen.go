@@ -619,6 +619,14 @@ type RecipeHandler interface {
 	//
 	// GET /api/v1/recipe/list-recipes
 	ListRecipes(ctx context.Context, req *ListRecipesRequest) (*ListRecipesResponse, error)
+	// StartRun implements startRun operation.
+	//
+	// StartRun launches a new run of an already-stored recipe bundle: it
+	// persists a run record and starts RunRecipeWorkflow for it. Not
+	// idempotent — each call mints a new run.
+	//
+	// POST /api/v1/recipe/start-run
+	StartRun(ctx context.Context, req *StartRunRequest) (*StartRunResponse, error)
 }
 
 // ShareHandler handles operations described by OpenAPI v3 specification.

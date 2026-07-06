@@ -7,6 +7,7 @@ import "cloud/v1/dsl/service.proto";
 import "cloud/v1/iam/options.proto";
 import "cloud/v1/iam/permission.proto";
 import "cloud/v1/models/recipe.proto";
+import "cloud/v1/models/test_run.proto";
 import "validate/validate.proto";
 
 import "ogen/ogen.proto";
@@ -151,6 +152,33 @@ message CheckRecipeResponse {
 }
 
 /*
+    StartRunRequest launches a new run of an already-stored recipe bundle.
+ */
+message StartRunRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        recipe_id is the recipe record whose stored bundle is launched.
+     */
+    string recipe_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+/*
+    StartRunResponse returns the persisted, launched run record. The run
+    reuses models.TestRunRecord so overview/metrics/logs work unchanged for
+    a recipe run; its spec/topology fields are left empty (a recipe run has
+    no baked domain.TestRun — its input is the recipe bundle, carried by the
+    launched RunRecipeWorkflow instead).
+ */
+message StartRunResponse {
+    /*
+        run is the persisted, launched run record.
+     */
+    models.TestRunRecord run = 1 [(validate.rules).message.required = true];
+}
+
+/*
     RecipeService is the tenant-scoped CRUD + check API for persisted DSL
     recipe bundles.
  */
@@ -291,5 +319,32 @@ service RecipeService {
 
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_RECIPE, action: ACTION_READ}]};
+    }
+    /*
+        StartRun launches a new run of an already-stored recipe bundle: it
+        persists a run record and starts RunRecipeWorkflow for it. Not
+        idempotent — each call mints a new run.
+     */
+    rpc StartRun (StartRunRequest) returns (StartRunResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/start-run"
+            operation_id: "startRun"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_RECIPE, action: ACTION_CREATE}]};
     }
 }

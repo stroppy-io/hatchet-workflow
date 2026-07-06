@@ -614,3 +614,118 @@ func (m *CheckRecipeResponse) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return m.Decode(d)
 }
+
+func (m *StartRunRequest) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.TenantId != "" {
+		e.FieldStart("tenantId")
+		e.Str(m.TenantId)
+	}
+	if m.RecipeId != "" {
+		e.FieldStart("recipeId")
+		e.Str(m.RecipeId)
+	}
+	e.ObjEnd()
+}
+
+func (m *StartRunRequest) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "tenantId", "tenant_id":
+			if seen["TenantId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["TenantId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.TenantId = v
+			return nil
+		case "recipeId", "recipe_id":
+			if seen["RecipeId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["RecipeId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.RecipeId = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *StartRunRequest) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *StartRunRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *StartRunResponse) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Run != nil {
+		e.FieldStart("run")
+		jxpb.EncMessage(e, m.Run)
+	}
+	e.ObjEnd()
+}
+
+func (m *StartRunResponse) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "run":
+			if seen["Run"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Run"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Run = &models.TestRunRecord{}
+			if err := jxpb.DecMessage(d, m.Run); err != nil {
+				return err
+			}
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *StartRunResponse) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *StartRunResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}

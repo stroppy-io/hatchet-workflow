@@ -47,6 +47,8 @@ const (
 	// RecipeServiceCheckRecipeProcedure is the fully-qualified name of the RecipeService's CheckRecipe
 	// RPC.
 	RecipeServiceCheckRecipeProcedure = "/cloud.v1.api.RecipeService/CheckRecipe"
+	// RecipeServiceStartRunProcedure is the fully-qualified name of the RecipeService's StartRun RPC.
+	RecipeServiceStartRunProcedure = "/cloud.v1.api.RecipeService/StartRun"
 )
 
 // RecipeServiceClient is a client for the cloud.v1.api.RecipeService service.
@@ -64,6 +66,10 @@ type RecipeServiceClient interface {
 	// CheckRecipe compiles the stored bundle in check-mode. Read-only: it
 	// never mutates the stored record.
 	CheckRecipe(context.Context, *api.CheckRecipeRequest) (*api.CheckRecipeResponse, error)
+	// StartRun launches a new run of an already-stored recipe bundle: it
+	// persists a run record and starts RunRecipeWorkflow for it. Not
+	// idempotent — each call mints a new run.
+	StartRun(context.Context, *api.StartRunRequest) (*api.StartRunResponse, error)
 }
 
 // NewRecipeServiceClient constructs a client for the cloud.v1.api.RecipeService service. By
@@ -111,6 +117,12 @@ func NewRecipeServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 			connect.WithClientOptions(opts...),
 		),
+		startRun: connect.NewClient[api.StartRunRequest, api.StartRunResponse](
+			httpClient,
+			baseURL+RecipeServiceStartRunProcedure,
+			connect.WithSchema(recipeServiceMethods.ByName("StartRun")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -121,6 +133,7 @@ type recipeServiceClient struct {
 	listRecipes  *connect.Client[api.ListRecipesRequest, api.ListRecipesResponse]
 	deleteRecipe *connect.Client[api.DeleteRecipeRequest, api.DeleteRecipeResponse]
 	checkRecipe  *connect.Client[api.CheckRecipeRequest, api.CheckRecipeResponse]
+	startRun     *connect.Client[api.StartRunRequest, api.StartRunResponse]
 }
 
 // CreateRecipe calls cloud.v1.api.RecipeService.CreateRecipe.
@@ -168,6 +181,15 @@ func (c *recipeServiceClient) CheckRecipe(ctx context.Context, req *api.CheckRec
 	return nil, err
 }
 
+// StartRun calls cloud.v1.api.RecipeService.StartRun.
+func (c *recipeServiceClient) StartRun(ctx context.Context, req *api.StartRunRequest) (*api.StartRunResponse, error) {
+	response, err := c.startRun.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // RecipeServiceHandler is an implementation of the cloud.v1.api.RecipeService service.
 type RecipeServiceHandler interface {
 	// CreateRecipe persists a new recipe bundle. Not idempotent.
@@ -183,6 +205,10 @@ type RecipeServiceHandler interface {
 	// CheckRecipe compiles the stored bundle in check-mode. Read-only: it
 	// never mutates the stored record.
 	CheckRecipe(context.Context, *api.CheckRecipeRequest) (*api.CheckRecipeResponse, error)
+	// StartRun launches a new run of an already-stored recipe bundle: it
+	// persists a run record and starts RunRecipeWorkflow for it. Not
+	// idempotent — each call mints a new run.
+	StartRun(context.Context, *api.StartRunRequest) (*api.StartRunResponse, error)
 }
 
 // NewRecipeServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -226,6 +252,12 @@ func NewRecipeServiceHandler(svc RecipeServiceHandler, opts ...connect.HandlerOp
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
+	recipeServiceStartRunHandler := connect.NewUnaryHandlerSimple(
+		RecipeServiceStartRunProcedure,
+		svc.StartRun,
+		connect.WithSchema(recipeServiceMethods.ByName("StartRun")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/cloud.v1.api.RecipeService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case RecipeServiceCreateRecipeProcedure:
@@ -238,6 +270,8 @@ func NewRecipeServiceHandler(svc RecipeServiceHandler, opts ...connect.HandlerOp
 			recipeServiceDeleteRecipeHandler.ServeHTTP(w, r)
 		case RecipeServiceCheckRecipeProcedure:
 			recipeServiceCheckRecipeHandler.ServeHTTP(w, r)
+		case RecipeServiceStartRunProcedure:
+			recipeServiceStartRunHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -265,4 +299,8 @@ func (UnimplementedRecipeServiceHandler) DeleteRecipe(context.Context, *api.Dele
 
 func (UnimplementedRecipeServiceHandler) CheckRecipe(context.Context, *api.CheckRecipeRequest) (*api.CheckRecipeResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.RecipeService.CheckRecipe is not implemented"))
+}
+
+func (UnimplementedRecipeServiceHandler) StartRun(context.Context, *api.StartRunRequest) (*api.StartRunResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.RecipeService.StartRun is not implemented"))
 }
