@@ -11,7 +11,6 @@ import {
   Network,
   RefreshCw,
   Repeat,
-  Save,
   ScrollText,
   SlidersHorizontal,
   Share2,
@@ -47,10 +46,7 @@ import {
   type WorkerPresence,
   type EventSeverity,
 } from "@/services/run_overview";
-// getRunsProvider is kept ONLY for extractToPreset ("Save preset"), which this
-// task does not rewire (no recipe.ts equivalent exists). rerun/cancel/delete
-// below now go through recipe.ts instead.
-import { actionsForStatus, getRunsProvider } from "@/services/runs";
+import { actionsForStatus } from "@/services/runs";
 import {
   cancelRun as recipeCancelRun,
   deleteRun as recipeDeleteRun,
@@ -302,8 +298,8 @@ export function RunDetail() {
     window.setTimeout(() => setNotice(null), 2500);
   }, []);
 
-  // Action dispatch — each maps to a real TestRunService RPC via the runs
-  // provider (the same surface the runs table uses). Gated by actionsForStatus.
+  // Action dispatch — cancel/rerun/delete go through recipe.ts (RecipeService);
+  // share is in-app only. Gated by actionsForStatus.
   const onShare = useCallback(async () => {
     setBusy(true);
     try {
@@ -339,18 +335,6 @@ export function RunDetail() {
       setBusy(false);
     }
   }, [tenantSlug, run?.recipeId, flash, navigate]);
-
-  const onSavePreset = useCallback(async () => {
-    setBusy(true);
-    try {
-      await getRunsProvider().extractToPreset(tenantSlug, id);
-      flash("Saved as preset");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save preset");
-    } finally {
-      setBusy(false);
-    }
-  }, [tenantSlug, id, flash]);
 
   const onCancel = useCallback(async () => {
     const ok = await confirm({
@@ -468,11 +452,6 @@ export function RunDetail() {
               title="Re-launch this run's recipe bundle as a new run"
             >
               <Repeat className="h-4 w-4" /> Rerun
-            </Button>
-          )}
-          {allowed.has("extract") && (
-            <Button variant="outline" size="sm" onClick={() => void onSavePreset()} disabled={busy}>
-              <Save className="h-4 w-4" /> Save preset
             </Button>
           )}
           <Button variant="outline" size="sm" onClick={() => void onShare()} disabled={busy}>

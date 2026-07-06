@@ -9,7 +9,6 @@ import { createConnectTransport } from "@connectrpc/connect-web";
 import { IamService } from "@/lib/proto/cloud/v1/api/iam_pb";
 import { QuotaService } from "@/lib/proto/cloud/v1/api/quota_pb";
 import { StroppyService } from "@/lib/proto/cloud/v1/api/stroppy_pb";
-import { TestRunService } from "@/lib/proto/cloud/v1/api/test_run_pb";
 import { TestRunOverviewService } from "@/lib/proto/cloud/v1/api/test_run_overview_pb";
 import { TenantSettingsService } from "@/lib/proto/cloud/v1/api/tenant_settings_pb";
 import { TenantDashboardService } from "@/lib/proto/cloud/v1/api/tenant_dashboard_pb";
@@ -122,7 +121,6 @@ export const transport = createConnectTransport({
 });
 
 export const iamClient = createClient(IamService, transport);
-export const testRunClient = createClient(TestRunService, transport);
 export const testRunOverviewClient = createClient(TestRunOverviewService, transport);
 export const stroppyClient = createClient(StroppyService, transport);
 export const quotaClient = createClient(QuotaService, transport);

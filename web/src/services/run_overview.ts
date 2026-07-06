@@ -1,7 +1,6 @@
 // Run-detail data surface — wraps cloud.v1.api.TestRunOverviewService (overview
-// snapshot, metrics, log query, optional log stream) + a single getTestRun via
-// TestRunService for the header record. Proto -> flat VM via toJson, reusing the
-// shared statusToVM / enum helpers.
+// snapshot, metrics, log query, optional log stream). Proto -> flat VM via
+// toJson, reusing the shared statusToVM / enum helpers.
 
 import { fromJson, toJson } from "@bufbuild/protobuf";
 import { timestampFromDate } from "@bufbuild/protobuf/wkt";
@@ -16,10 +15,7 @@ import {
 } from "@/lib/proto/cloud/v1/api/test_run_overview_pb";
 import { LogCursorSchema, LogLineSchema, type Source, type Stream } from "@/lib/proto/cloud/v1/monitor/logs_pb";
 import type { TopologyJson } from "@/lib/proto/cloud/v1/topology/topology_pb";
-import {
-  testRunOverviewClient,
-  testRunClient,
-} from "@/services/client";
+import { testRunOverviewClient } from "@/services/client";
 import { resolveTenantId } from "@/services/tenant";
 import { statusToVM, type RunStatus } from "@/services/dashboard";
 import { dbKindLabelFromJson, providerLabelFromJson } from "@/services/enums";
@@ -863,16 +859,6 @@ export async function streamRunOverview(
     if (err instanceof Error && err.name === "AbortError") return;
     throw err;
   }
-}
-
-/** Fetch just the run record header (TestRunService.GetTestRun -> RunVM). */
-export async function getRunRecord(
-  tenantSlug: string,
-  runId: string,
-): Promise<RunVM | undefined> {
-  const tenantId = await resolveTenantId(tenantSlug);
-  const resp = await testRunClient.getTestRun({ tenantId, id: runId });
-  return resp.run ? testRunRecordToVM(resp.run) : undefined;
 }
 
 // Re-exported for callers that want the raw record schema/enums.
