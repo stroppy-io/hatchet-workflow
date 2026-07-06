@@ -7,7 +7,6 @@ import (
 
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
-	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
@@ -73,62 +72,6 @@ func InfrastructurePlanOutputs(plan *deploymentpb.InfrastructurePlan) []*monitor
 			}
 			outputs = append(outputs, quotaRequestOutput(machine.GetNodeId(), req))
 		}
-	}
-	return outputs
-}
-
-// QuotaRequestRefOutputs exposes the normalized quota request list returned by
-// CalculateQuotasWorkflow, including the node each request belongs to.
-func QuotaRequestRefOutputs(refs []*workflowpb.QuotaRequestRef) []*monitor.PipelineOutput {
-	outputs := make([]*monitor.PipelineOutput, 0, len(refs)+1)
-	outputs = append(outputs, &monitor.PipelineOutput{
-		Kind:    monitor.OutputKind_OUTPUT_KIND_SUMMARY,
-		Id:      "quota/requests",
-		Name:    "quota requests",
-		Summary: fmt.Sprintf("%d quota requests", len(refs)),
-		Count:   uint32(len(refs)),
-	})
-	for _, ref := range refs {
-		if ref == nil || ref.GetRequest() == nil || len(outputs) >= maxPipelineOutputs {
-			continue
-		}
-		outputs = append(outputs, quotaRequestOutput(ref.GetNodeId(), ref.GetRequest()))
-	}
-	return outputs
-}
-
-// QuotaAllocationRefOutputs exposes provider quota reservations/allocations
-// returned by acquire/commit activities.
-func QuotaAllocationRefOutputs(refs []*workflowpb.QuotaAllocationRef) []*monitor.PipelineOutput {
-	outputs := make([]*monitor.PipelineOutput, 0, len(refs)+1)
-	outputs = append(outputs, &monitor.PipelineOutput{
-		Kind:    monitor.OutputKind_OUTPUT_KIND_SUMMARY,
-		Id:      "quota/allocations",
-		Name:    "quota allocations",
-		Summary: fmt.Sprintf("%d quota allocations", len(refs)),
-		Count:   uint32(len(refs)),
-	})
-	for _, ref := range refs {
-		if ref == nil || ref.GetAllocation() == nil || len(outputs) >= maxPipelineOutputs {
-			continue
-		}
-		allocation := ref.GetAllocation()
-		info := allocation.GetInfo()
-		outputs = append(outputs, &monitor.PipelineOutput{
-			Kind:           monitor.OutputKind_OUTPUT_KIND_SUMMARY,
-			Id:             "quota/allocation/" + ref.GetNodeId() + "/" + info.GetName(),
-			Name:           info.GetName(),
-			Summary:        fmt.Sprintf("%s allocated %d %s on %s", info.GetName(), allocation.GetUsed(), info.GetUnits(), ref.GetNodeId()),
-			MachineId:      ref.GetNodeId(),
-			Target:         info.GetName(),
-			ContentPreview: protoPreview(allocation),
-			Count:          uint32(allocation.GetUsed()),
-			Labels: map[string]string{
-				"provider": providerLabel(info.GetProvider()),
-				"quota":    info.GetName(),
-				"units":    info.GetUnits(),
-			},
-		})
 	}
 	return outputs
 }

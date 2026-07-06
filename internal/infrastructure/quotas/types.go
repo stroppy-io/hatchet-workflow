@@ -6,7 +6,6 @@ import (
 
 	api "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
-	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
 )
 
 const (
@@ -51,16 +50,6 @@ type Reservation struct {
 	ExpiresAt    *time.Time
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
-}
-
-type ReserveInput struct {
-	TenantID       string
-	RunID          string
-	WorkflowID     string
-	Scope          Scope
-	QuotaRequests  []*workflowpb.QuotaRequestRef
-	ReservationTTL time.Duration
-	Now            time.Time
 }
 
 type SourceRequest struct {

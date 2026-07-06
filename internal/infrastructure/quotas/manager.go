@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"sort"
 	"strings"
 	"time"
 
@@ -15,7 +14,6 @@ import (
 	api "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
-	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
 )
 
 type TenantSettingsReader interface {
@@ -112,74 +110,6 @@ func (m *Manager) RunUsage(ctx context.Context, tenantID, runID string) ([]*api.
 		return nil, err
 	}
 	return ReservationsToViews(reservations), nil
-}
-
-func (m *Manager) Reserve(ctx context.Context, tenantID, runID, workflowID string, plan *deploymentpb.InfrastructurePlan, refs []*workflowpb.QuotaRequestRef) ([]*workflowpb.QuotaAllocationRef, error) {
-	if tenantID == "" {
-		return nil, derrors.Invalid("tenant_id", "tenant_id is required")
-	}
-	if runID == "" {
-		return nil, derrors.Invalid("run_id", "run_id is required")
-	}
-	if plan == nil {
-		return nil, derrors.Invalid("plan", "infrastructure plan is required")
-	}
-	if len(refs) == 0 {
-		return nil, nil
-	}
-	scope, settings, err := m.scopeForProvider(ctx, tenantID, plan.GetProvider(), plan.GetSettings())
-	if err != nil {
-		return nil, err
-	}
-	services := servicesFromRequests(refs)
-	names := quotaNames(refs)
-	now := m.now()
-	needsRefresh, err := m.store.ScopeNeedsRefresh(ctx, scope, names, now)
-	if err != nil {
-		return nil, err
-	}
-	if needsRefresh {
-		if err := m.refreshScope(ctx, scope, settings, services); err != nil {
-			return nil, err
-		}
-	}
-	input := ReserveInput{
-		TenantID:       tenantID,
-		RunID:          runID,
-		WorkflowID:     workflowID,
-		Scope:          scope,
-		QuotaRequests:  refs,
-		ReservationTTL: m.cfg.ReservationTTL,
-		Now:            m.now(),
-	}
-	reservations, err := m.store.Reserve(ctx, input)
-	if err == nil {
-		return ReservationsToAllocationRefs(reservations), nil
-	}
-	if !errors.Is(err, ErrSnapshotMissing) && !errors.Is(err, ErrSnapshotStale) && !errors.Is(err, ErrInsufficient) {
-		return nil, err
-	}
-	if refreshErr := m.refreshScope(ctx, scope, settings, services); refreshErr != nil {
-		return nil, refreshErr
-	}
-	input.Now = m.now()
-	reservations, err = m.store.Reserve(ctx, input)
-	if err != nil {
-		return nil, mapReserveErr(err)
-	}
-	return ReservationsToAllocationRefs(reservations), nil
-}
-
-func (m *Manager) Commit(ctx context.Context, tenantID, runID string) ([]*workflowpb.QuotaAllocationRef, error) {
-	reservations, err := m.store.CommitRun(ctx, tenantID, runID, m.now())
-	if err != nil {
-		return nil, err
-	}
-	return ReservationsToAllocationRefs(reservations), nil
-}
-
-func (m *Manager) Release(ctx context.Context, tenantID, runID string) (uint32, error) {
-	return m.store.ReleaseRun(ctx, tenantID, runID, m.now())
 }
 
 func (m *Manager) RefreshAllConfigured(ctx context.Context) error {
@@ -353,45 +283,6 @@ func overlayYandexSettings(base, override *deploymentpb.Yandex_Settings) {
 
 func (m *Manager) now() time.Time { return m.cfg.Now().UTC() }
 
-func quotaNames(refs []*workflowpb.QuotaRequestRef) []string {
-	seen := map[string]bool{}
-	for _, ref := range refs {
-		name := ref.GetRequest().GetInfo().GetName()
-		if name != "" {
-			seen[name] = true
-		}
-	}
-	out := make([]string, 0, len(seen))
-	for name := range seen {
-		out = append(out, name)
-	}
-	sort.Strings(out)
-	return out
-}
-
-func servicesFromRequests(refs []*workflowpb.QuotaRequestRef) []string {
-	seen := map[string]bool{}
-	for _, ref := range refs {
-		name := ref.GetRequest().GetInfo().GetName()
-		if name != "" {
-			seen[serviceFromQuota(name)] = true
-		}
-	}
-	out := make([]string, 0, len(seen))
-	for service := range seen {
-		out = append(out, service)
-	}
-	sort.Strings(out)
-	return out
-}
-
-func serviceFromQuota(name string) string {
-	if i := strings.IndexByte(name, '.'); i > 0 {
-		return name[:i]
-	}
-	return ""
-}
-
 func unitsOrInfer(units, quotaName string) string {
 	if units != "" {
 		return units
@@ -408,12 +299,3 @@ func unitsOrInfer(units, quotaName string) string {
 	}
 }
 
-func mapReserveErr(err error) error {
-	if errors.Is(err, ErrSnapshotMissing) {
-		return derrors.FailedPrecondition("QUOTA_SNAPSHOT_MISSING", "quota snapshot is missing").Wrap(err)
-	}
-	if errors.Is(err, ErrSnapshotStale) {
-		return derrors.FailedPrecondition("QUOTA_SNAPSHOT_STALE", "quota snapshot is stale").Wrap(err)
-	}
-	return err
-}
