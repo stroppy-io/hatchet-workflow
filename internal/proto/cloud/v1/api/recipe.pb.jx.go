@@ -745,6 +745,10 @@ func (m *ListRunsRequest) Encode(e *jx.Encoder) {
 		e.FieldStart("recipeId")
 		e.Str(m.RecipeId)
 	}
+	if m.Page != nil {
+		e.FieldStart("page")
+		jxpb.EncMessage(e, m.Page)
+	}
 	e.ObjEnd()
 }
 
@@ -780,6 +784,19 @@ func (m *ListRunsRequest) Decode(d *jx.Decoder) error {
 			}
 			m.RecipeId = v
 			return nil
+		case "page":
+			if seen["Page"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Page"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Page = &common.Page{}
+			if err := jxpb.DecMessage(d, m.Page); err != nil {
+				return err
+			}
+			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}
@@ -812,6 +829,10 @@ func (m *ListRunsResponse) Encode(e *jx.Encoder) {
 		}
 		e.ArrEnd()
 	}
+	if m.NextPageToken != "" {
+		e.FieldStart("nextPageToken")
+		e.Str(m.NextPageToken)
+	}
 	e.ObjEnd()
 }
 
@@ -835,6 +856,20 @@ func (m *ListRunsResponse) Decode(d *jx.Decoder) error {
 				m.Runs = append(m.Runs, el)
 				return nil
 			})
+		case "nextPageToken", "next_page_token":
+			if seen["NextPageToken"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["NextPageToken"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.NextPageToken = v
+			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}

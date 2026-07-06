@@ -3,6 +3,8 @@ package recipe
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strconv"
 	"testing"
 
 	"google.golang.org/grpc/codes"
@@ -509,6 +511,148 @@ func TestListRunsMissingTenantIsInvalidArgument(t *testing.T) {
 	}
 }
 
+// TestListRunsPageSizeIsRespectedAndNextPageTokenSurfaced is the regression
+// test for the truncation bug this change fixes: ListRuns used to call
+// Runs.List with a bare tenant-only ListTestRunsRequest (no page at all),
+// so a tenant with more runs than TestRunRepo.List's default page size (50)
+// could never see its older runs, and ListRunsResponse had no field to
+// expose that more rows existed even if it had asked. This asserts (a) the
+// handler passes ListRunsRequest.page through to Runs.List rather than
+// dropping it, and (b) the previously-discarded next_page_token now reaches
+// the response — a client can tell there is more to fetch and paginate to
+// it, instead of silently only ever seeing the first page.
+func TestListRunsPageSizeIsRespectedAndNextPageTokenSurfaced(t *testing.T) {
+	repo := newFakeRecipeRepo()
+	runs := newFakeRunRepo()
+	svc := NewService(Deps{Repo: repo, Authn: fakeAuthn{}, Checker: stubChecker(nil), Runs: runs, Workflows: newFakeRecipeWorkflows(nil)})
+
+	recipe, err := svc.CreateRecipe(context.Background(), &api.CreateRecipeRequest{
+		TenantId: "tenant-1",
+		Recipe:   &models.RecipeRecord{Entity: &common.Entity{Name: "pg-ha"}, Bundle: newBundle()},
+	})
+	if err != nil {
+		t.Fatalf("create recipe: %v", err)
+	}
+	recipeID := recipe.GetRecipe().GetEntity().GetId()
+
+	const totalRuns = 3
+	for i := 0; i < totalRuns; i++ {
+		if _, err := svc.StartRun(context.Background(), &api.StartRunRequest{TenantId: "tenant-1", RecipeId: recipeID}); err != nil {
+			t.Fatalf("start run %d: %v", i, err)
+		}
+	}
+
+	// First page: page_size=2 must be threaded to Runs.List, so only 2 of
+	// the 3 runs come back and next_page_token must be non-empty (proof the
+	// handler no longer discards it via `runs, _, err := ...`).
+	first, err := svc.ListRuns(context.Background(), &api.ListRunsRequest{
+		TenantId: "tenant-1",
+		Page:     &common.Page{Size: 2},
+	})
+	if err != nil {
+		t.Fatalf("list runs page 1: %v", err)
+	}
+	if len(first.GetRuns()) != 2 {
+		t.Fatalf("page 1 runs = %d, want 2 (page_size was not passed through to Runs.List)", len(first.GetRuns()))
+	}
+	if first.GetNextPageToken() == "" {
+		t.Fatal("page 1 next_page_token = \"\", want non-empty (a third run still exists beyond this page)")
+	}
+
+	// Second page: passing the returned token back must reach the storage
+	// layer and yield the remaining run, with an empty token signalling the
+	// end — proof next_page_token round-trips rather than being a dead field.
+	second, err := svc.ListRuns(context.Background(), &api.ListRunsRequest{
+		TenantId: "tenant-1",
+		Page:     &common.Page{Size: 2, Token: first.GetNextPageToken()},
+	})
+	if err != nil {
+		t.Fatalf("list runs page 2: %v", err)
+	}
+	if len(second.GetRuns()) != 1 {
+		t.Fatalf("page 2 runs = %d, want 1 (the third, previously-truncated run)", len(second.GetRuns()))
+	}
+	if second.GetNextPageToken() != "" {
+		t.Fatalf("page 2 next_page_token = %q, want empty (no further pages)", second.GetNextPageToken())
+	}
+
+	seen := map[string]bool{}
+	for _, run := range append(first.GetRuns(), second.GetRuns()...) {
+		seen[run.GetEntity().GetId()] = true
+	}
+	if len(seen) != totalRuns {
+		t.Fatalf("distinct runs across both pages = %d, want %d (no run silently dropped or duplicated)", len(seen), totalRuns)
+	}
+}
+
+// TestListRunsRecipeIDFilterAppliesPerPage documents (and locks in) the v1
+// tradeoff called out on ListRunsResponse.next_page_token: recipe_id
+// filtering happens in Go over an already-paginated storage page, so a page
+// can legitimately return zero matching runs while next_page_token is still
+// non-empty. This is acceptable now that a client can tell there is more to
+// fetch (before this fix there was no token at all, so a recipe_id filter
+// landing beyond the first 50 tenant-runs silently returned empty with no
+// error and no way to know more existed).
+func TestListRunsRecipeIDFilterAppliesPerPage(t *testing.T) {
+	repo := newFakeRecipeRepo()
+	runs := newFakeRunRepo()
+	svc := NewService(Deps{Repo: repo, Authn: fakeAuthn{}, Checker: stubChecker(nil), Runs: runs, Workflows: newFakeRecipeWorkflows(nil)})
+
+	noise, err := svc.CreateRecipe(context.Background(), &api.CreateRecipeRequest{
+		TenantId: "tenant-1",
+		Recipe:   &models.RecipeRecord{Entity: &common.Entity{Name: "noise"}, Bundle: newBundle()},
+	})
+	if err != nil {
+		t.Fatalf("create noise recipe: %v", err)
+	}
+	// Two runs of a recipe we do NOT filter on occupy the first page.
+	for i := 0; i < 2; i++ {
+		if _, err := svc.StartRun(context.Background(), &api.StartRunRequest{TenantId: "tenant-1", RecipeId: noise.GetRecipe().GetEntity().GetId()}); err != nil {
+			t.Fatalf("start noise run %d: %v", i, err)
+		}
+	}
+
+	target, err := svc.CreateRecipe(context.Background(), &api.CreateRecipeRequest{
+		TenantId: "tenant-1",
+		Recipe:   &models.RecipeRecord{Entity: &common.Entity{Name: "target"}, Bundle: newBundle()},
+	})
+	if err != nil {
+		t.Fatalf("create target recipe: %v", err)
+	}
+	targetID := target.GetRecipe().GetEntity().GetId()
+	// The run we actually want lands on the second storage page (page_size=2).
+	if _, err := svc.StartRun(context.Background(), &api.StartRunRequest{TenantId: "tenant-1", RecipeId: targetID}); err != nil {
+		t.Fatalf("start target run: %v", err)
+	}
+
+	firstPage, err := svc.ListRuns(context.Background(), &api.ListRunsRequest{
+		TenantId: "tenant-1",
+		RecipeId: targetID,
+		Page:     &common.Page{Size: 2},
+	})
+	if err != nil {
+		t.Fatalf("list runs page 1: %v", err)
+	}
+	if len(firstPage.GetRuns()) != 0 {
+		t.Fatalf("page 1 filtered runs = %d, want 0 (target run is on page 2)", len(firstPage.GetRuns()))
+	}
+	if firstPage.GetNextPageToken() == "" {
+		t.Fatal("page 1 next_page_token = \"\", want non-empty (the target run still exists on the next page)")
+	}
+
+	secondPage, err := svc.ListRuns(context.Background(), &api.ListRunsRequest{
+		TenantId: "tenant-1",
+		RecipeId: targetID,
+		Page:     &common.Page{Size: 2, Token: firstPage.GetNextPageToken()},
+	})
+	if err != nil {
+		t.Fatalf("list runs page 2: %v", err)
+	}
+	if len(secondPage.GetRuns()) != 1 || secondPage.GetRuns()[0].GetRecipeId() != targetID {
+		t.Fatalf("page 2 filtered runs = %v, want exactly the target run", secondPage.GetRuns())
+	}
+}
+
 /*
 	===== CancelRun =====
 */
@@ -736,9 +880,15 @@ func (r *fakeRecipeRepo) Delete(_ context.Context, tenantID, id string) error {
 	return nil
 }
 
-// fakeRunRepo is an in-memory RunRepo keyed by (tenantID, id).
+// fakeRunRepo is an in-memory RunRepo keyed by (tenantID, id). order tracks
+// insertion order so List can honor page.size/page.token deterministically,
+// mirroring postgres.TestRunRepo.List's offset-cursor pagination (see
+// test_run_list.go's decodeOffsetToken/LIMIT size+1 dance): the fake encodes
+// its cursor as a plain decimal offset rather than the real repo's opaque
+// token, which is fine since nothing outside this fake ever inspects it.
 type fakeRunRepo struct {
-	byID map[string]*models.TestRunRecord
+	byID  map[string]*models.TestRunRecord
+	order []string
 }
 
 func newFakeRunRepo() *fakeRunRepo {
@@ -746,7 +896,11 @@ func newFakeRunRepo() *fakeRunRepo {
 }
 
 func (r *fakeRunRepo) Create(_ context.Context, run *models.TestRunRecord) error {
-	r.byID[run.GetEntity().GetId()] = run
+	id := run.GetEntity().GetId()
+	if _, exists := r.byID[id]; !exists {
+		r.order = append(r.order, id)
+	}
+	r.byID[id] = run
 	return nil
 }
 
@@ -768,17 +922,48 @@ func (r *fakeRunRepo) Get(_ context.Context, tenantID, id string) (*models.TestR
 	return run, nil
 }
 
-// List ignores every ListTestRunsRequest facet except tenant_id: the recipe
-// service applies its own recipe_id filter in Go over the tenant's full run
-// set, matching how ListRuns calls this in production.
+// List honors tenant_id plus query.GetPage() (size + offset-token), ignoring
+// every other ListTestRunsRequest facet: the recipe service applies its own
+// recipe_id filter in Go over the returned page, matching how ListRuns calls
+// this in production. When no page is set (page == nil or size == 0) it
+// returns every matching row with an empty next token — the same shape the
+// real repo falls back to with its own default page size, just without a
+// truncation cap, since these fakes exist to exercise the handler rather
+// than reproduce the storage layer's default LIMIT.
 func (r *fakeRunRepo) List(_ context.Context, query *api.ListTestRunsRequest, _ string) ([]*models.TestRunRecord, string, error) {
-	out := make([]*models.TestRunRecord, 0, len(r.byID))
-	for _, run := range r.byID {
+	matched := make([]*models.TestRunRecord, 0, len(r.order))
+	for _, id := range r.order {
+		run := r.byID[id]
 		if run.GetEntity().GetTenantId() == query.GetTenantId() {
-			out = append(out, run)
+			matched = append(matched, run)
 		}
 	}
-	return out, "", nil
+
+	page := query.GetPage()
+	if page == nil || page.GetSize() == 0 {
+		return matched, "", nil
+	}
+
+	offset := 0
+	if tok := page.GetToken(); tok != "" {
+		o, err := strconv.Atoi(tok)
+		if err != nil {
+			return nil, "", fmt.Errorf("invalid fake page token %q: %w", tok, err)
+		}
+		offset = o
+	}
+	if offset >= len(matched) {
+		return []*models.TestRunRecord{}, "", nil
+	}
+
+	end := offset + int(page.GetSize())
+	nextToken := ""
+	if end < len(matched) {
+		nextToken = strconv.Itoa(end)
+	} else {
+		end = len(matched)
+	}
+	return matched[offset:end], nextToken, nil
 }
 
 // Delete returns derrors.ErrNotFound for an absent id or one owned by
@@ -789,6 +974,12 @@ func (r *fakeRunRepo) Delete(_ context.Context, tenantID, id string) error {
 		return derrors.NotFound("test_run", "run not found")
 	}
 	delete(r.byID, id)
+	for i, existing := range r.order {
+		if existing == id {
+			r.order = append(r.order[:i], r.order[i+1:]...)
+			break
+		}
+	}
 	return nil
 }
 

@@ -662,7 +662,10 @@ type ListRunsRequest struct {
 	// recipe_id, when set, filters to runs launched from that recipe record
 	// (matches models.TestRunRecord.recipe_id). Empty returns every recipe
 	// run for the tenant.
-	RecipeId      string `protobuf:"bytes,2,opt,name=recipe_id,json=recipeId,proto3" json:"recipe_id,omitempty"`
+	RecipeId string `protobuf:"bytes,2,opt,name=recipe_id,json=recipeId,proto3" json:"recipe_id,omitempty"`
+	// page carries pagination (page size + token). See ListRunsResponse.next_page_token
+	// for the important caveat when recipe_id is also set.
+	Page          *common.Page `protobuf:"bytes,3,opt,name=page,proto3" json:"page,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -711,11 +714,27 @@ func (x *ListRunsRequest) GetRecipeId() string {
 	return ""
 }
 
-// ListRunsResponse returns the matching recipe runs.
+func (x *ListRunsRequest) GetPage() *common.Page {
+	if x != nil {
+		return x.Page
+	}
+	return nil
+}
+
+// ListRunsResponse returns a page of the matching recipe runs.
 type ListRunsResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// runs is the matching set of run records.
-	Runs          []*models.TestRunRecord `protobuf:"bytes,1,rep,name=runs,proto3" json:"runs,omitempty"`
+	// runs is the matching page of run records.
+	Runs []*models.TestRunRecord `protobuf:"bytes,1,rep,name=runs,proto3" json:"runs,omitempty"`
+	// next_page_token fetches the following page; empty when at the end.
+	//
+	// Caveat when ListRunsRequest.recipe_id is set: the recipe_id filter is
+	// applied in-process over the already-paginated tenant page (see
+	// RecipeService.ListRuns's doc), so a single page can legitimately
+	// return zero matching rows while next_page_token is still non-empty.
+	// Clients filtering by recipe_id MUST keep paginating until
+	// next_page_token is empty rather than stopping on an empty runs page.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -755,6 +774,13 @@ func (x *ListRunsResponse) GetRuns() []*models.TestRunRecord {
 		return x.Runs
 	}
 	return nil
+}
+
+func (x *ListRunsResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
 }
 
 // CancelRunRequest requests cancellation of an in-flight recipe run.
@@ -977,12 +1003,14 @@ const file_cloud_v1_api_recipe_proto_rawDesc = "" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12&\n" +
 	"\trecipe_id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\brecipeId\"N\n" +
 	"\x10StartRunResponse\x12:\n" +
-	"\x03run\x18\x01 \x01(\v2\x1e.cloud.v1.models.TestRunRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x03run\"_\n" +
+	"\x03run\x18\x01 \x01(\v2\x1e.cloud.v1.models.TestRunRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x03run\"\x8a\x01\n" +
 	"\x0fListRunsRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12$\n" +
-	"\trecipe_id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x18@R\brecipeId\"F\n" +
+	"\trecipe_id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x18@R\brecipeId\x12)\n" +
+	"\x04page\x18\x03 \x01(\v2\x15.cloud.v1.common.PageR\x04page\"n\n" +
 	"\x10ListRunsResponse\x122\n" +
-	"\x04runs\x18\x01 \x03(\v2\x1e.cloud.v1.models.TestRunRecordR\x04runs\"\\\n" +
+	"\x04runs\x18\x01 \x03(\v2\x1e.cloud.v1.models.TestRunRecordR\x04runs\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\\\n" +
 	"\x10CancelRunRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12 \n" +
 	"\x06run_id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x05runId\"\x13\n" +
@@ -1060,30 +1088,31 @@ var file_cloud_v1_api_recipe_proto_depIdxs = []int32{
 	18, // 5: cloud.v1.api.ListRecipesResponse.recipes:type_name -> cloud.v1.models.RecipeRecord
 	21, // 6: cloud.v1.api.CheckRecipeResponse.diagnostics:type_name -> cloud.v1.dsl.Diagnostic
 	22, // 7: cloud.v1.api.StartRunResponse.run:type_name -> cloud.v1.models.TestRunRecord
-	22, // 8: cloud.v1.api.ListRunsResponse.runs:type_name -> cloud.v1.models.TestRunRecord
-	0,  // 9: cloud.v1.api.RecipeService.CreateRecipe:input_type -> cloud.v1.api.CreateRecipeRequest
-	2,  // 10: cloud.v1.api.RecipeService.GetRecipe:input_type -> cloud.v1.api.GetRecipeRequest
-	4,  // 11: cloud.v1.api.RecipeService.ListRecipes:input_type -> cloud.v1.api.ListRecipesRequest
-	6,  // 12: cloud.v1.api.RecipeService.DeleteRecipe:input_type -> cloud.v1.api.DeleteRecipeRequest
-	8,  // 13: cloud.v1.api.RecipeService.CheckRecipe:input_type -> cloud.v1.api.CheckRecipeRequest
-	10, // 14: cloud.v1.api.RecipeService.StartRun:input_type -> cloud.v1.api.StartRunRequest
-	12, // 15: cloud.v1.api.RecipeService.ListRuns:input_type -> cloud.v1.api.ListRunsRequest
-	14, // 16: cloud.v1.api.RecipeService.CancelRun:input_type -> cloud.v1.api.CancelRunRequest
-	16, // 17: cloud.v1.api.RecipeService.DeleteRun:input_type -> cloud.v1.api.DeleteRunRequest
-	1,  // 18: cloud.v1.api.RecipeService.CreateRecipe:output_type -> cloud.v1.api.CreateRecipeResponse
-	3,  // 19: cloud.v1.api.RecipeService.GetRecipe:output_type -> cloud.v1.api.GetRecipeResponse
-	5,  // 20: cloud.v1.api.RecipeService.ListRecipes:output_type -> cloud.v1.api.ListRecipesResponse
-	7,  // 21: cloud.v1.api.RecipeService.DeleteRecipe:output_type -> cloud.v1.api.DeleteRecipeResponse
-	9,  // 22: cloud.v1.api.RecipeService.CheckRecipe:output_type -> cloud.v1.api.CheckRecipeResponse
-	11, // 23: cloud.v1.api.RecipeService.StartRun:output_type -> cloud.v1.api.StartRunResponse
-	13, // 24: cloud.v1.api.RecipeService.ListRuns:output_type -> cloud.v1.api.ListRunsResponse
-	15, // 25: cloud.v1.api.RecipeService.CancelRun:output_type -> cloud.v1.api.CancelRunResponse
-	17, // 26: cloud.v1.api.RecipeService.DeleteRun:output_type -> cloud.v1.api.DeleteRunResponse
-	18, // [18:27] is the sub-list for method output_type
-	9,  // [9:18] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	20, // 8: cloud.v1.api.ListRunsRequest.page:type_name -> cloud.v1.common.Page
+	22, // 9: cloud.v1.api.ListRunsResponse.runs:type_name -> cloud.v1.models.TestRunRecord
+	0,  // 10: cloud.v1.api.RecipeService.CreateRecipe:input_type -> cloud.v1.api.CreateRecipeRequest
+	2,  // 11: cloud.v1.api.RecipeService.GetRecipe:input_type -> cloud.v1.api.GetRecipeRequest
+	4,  // 12: cloud.v1.api.RecipeService.ListRecipes:input_type -> cloud.v1.api.ListRecipesRequest
+	6,  // 13: cloud.v1.api.RecipeService.DeleteRecipe:input_type -> cloud.v1.api.DeleteRecipeRequest
+	8,  // 14: cloud.v1.api.RecipeService.CheckRecipe:input_type -> cloud.v1.api.CheckRecipeRequest
+	10, // 15: cloud.v1.api.RecipeService.StartRun:input_type -> cloud.v1.api.StartRunRequest
+	12, // 16: cloud.v1.api.RecipeService.ListRuns:input_type -> cloud.v1.api.ListRunsRequest
+	14, // 17: cloud.v1.api.RecipeService.CancelRun:input_type -> cloud.v1.api.CancelRunRequest
+	16, // 18: cloud.v1.api.RecipeService.DeleteRun:input_type -> cloud.v1.api.DeleteRunRequest
+	1,  // 19: cloud.v1.api.RecipeService.CreateRecipe:output_type -> cloud.v1.api.CreateRecipeResponse
+	3,  // 20: cloud.v1.api.RecipeService.GetRecipe:output_type -> cloud.v1.api.GetRecipeResponse
+	5,  // 21: cloud.v1.api.RecipeService.ListRecipes:output_type -> cloud.v1.api.ListRecipesResponse
+	7,  // 22: cloud.v1.api.RecipeService.DeleteRecipe:output_type -> cloud.v1.api.DeleteRecipeResponse
+	9,  // 23: cloud.v1.api.RecipeService.CheckRecipe:output_type -> cloud.v1.api.CheckRecipeResponse
+	11, // 24: cloud.v1.api.RecipeService.StartRun:output_type -> cloud.v1.api.StartRunResponse
+	13, // 25: cloud.v1.api.RecipeService.ListRuns:output_type -> cloud.v1.api.ListRunsResponse
+	15, // 26: cloud.v1.api.RecipeService.CancelRun:output_type -> cloud.v1.api.CancelRunResponse
+	17, // 27: cloud.v1.api.RecipeService.DeleteRun:output_type -> cloud.v1.api.DeleteRunResponse
+	19, // [19:28] is the sub-list for method output_type
+	10, // [10:19] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_api_recipe_proto_init() }

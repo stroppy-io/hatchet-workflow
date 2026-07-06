@@ -193,15 +193,31 @@ message ListRunsRequest {
         run for the tenant.
      */
     string recipe_id = 2 [(validate.rules).string.max_len = 64];
+    /*
+        page carries pagination (page size + token). See ListRunsResponse.next_page_token
+        for the important caveat when recipe_id is also set.
+     */
+    common.Page page = 3;
 }
 /*
-    ListRunsResponse returns the matching recipe runs.
+    ListRunsResponse returns a page of the matching recipe runs.
  */
 message ListRunsResponse {
     /*
-        runs is the matching set of run records.
+        runs is the matching page of run records.
      */
     repeated models.TestRunRecord runs = 1;
+    /*
+        next_page_token fetches the following page; empty when at the end.
+
+        Caveat when ListRunsRequest.recipe_id is set: the recipe_id filter is
+        applied in-process over the already-paginated tenant page (see
+        RecipeService.ListRuns's doc), so a single page can legitimately
+        return zero matching rows while next_page_token is still non-empty.
+        Clients filtering by recipe_id MUST keep paginating until
+        next_page_token is empty rather than stopping on an empty runs page.
+     */
+    string next_page_token = 2;
 }
 
 /*

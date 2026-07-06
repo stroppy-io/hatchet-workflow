@@ -9622,8 +9622,14 @@ func (s *ListRolesResponse) SetRoles(val []Role) {
 
 // Ref: #/components/schemas/ListRunsRequest
 type ListRunsRequest struct {
+	Page     OptPage   `json:"page"`
 	RecipeId OptString `json:"recipeId"`
 	TenantId OptString `json:"tenantId"`
+}
+
+// GetPage returns the value of Page.
+func (s *ListRunsRequest) GetPage() OptPage {
+	return s.Page
 }
 
 // GetRecipeId returns the value of RecipeId.
@@ -9634,6 +9640,11 @@ func (s *ListRunsRequest) GetRecipeId() OptString {
 // GetTenantId returns the value of TenantId.
 func (s *ListRunsRequest) GetTenantId() OptString {
 	return s.TenantId
+}
+
+// SetPage sets the value of Page.
+func (s *ListRunsRequest) SetPage(val OptPage) {
+	s.Page = val
 }
 
 // SetRecipeId sets the value of RecipeId.
@@ -9648,12 +9659,23 @@ func (s *ListRunsRequest) SetTenantId(val OptString) {
 
 // Ref: #/components/schemas/ListRunsResponse
 type ListRunsResponse struct {
-	Runs []TestRunRecord `json:"runs"`
+	NextPageToken OptString       `json:"nextPageToken"`
+	Runs          []TestRunRecord `json:"runs"`
+}
+
+// GetNextPageToken returns the value of NextPageToken.
+func (s *ListRunsResponse) GetNextPageToken() OptString {
+	return s.NextPageToken
 }
 
 // GetRuns returns the value of Runs.
 func (s *ListRunsResponse) GetRuns() []TestRunRecord {
 	return s.Runs
+}
+
+// SetNextPageToken sets the value of NextPageToken.
+func (s *ListRunsResponse) SetNextPageToken(val OptString) {
+	s.NextPageToken = val
 }
 
 // SetRuns sets the value of Runs.

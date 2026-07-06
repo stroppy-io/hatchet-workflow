@@ -214,14 +214,27 @@ func (s *Service) StartRun(ctx context.Context, req *api.StartRunRequest) (*api.
 	return &api.StartRunResponse{Run: run}, nil
 }
 
-// ListRuns returns every run for the tenant, optionally narrowed to a single
-// recipe. It reuses the same s.d.Runs.List that backed the (removed)
-// test_run service, passing a tenant-only ListTestRunsRequest so no facet
-// filter is applied at the storage layer; the recipe_id filter (a facet
-// ListTestRunsRequest has no field for) is then applied in Go. Recipe run
-// sets are expected to stay small enough per tenant for this to be
-// unproblematic; a dedicated storage-side recipe_id facet is a documented
-// follow-up if that stops being true.
+// ListRuns returns one page of runs for the tenant, optionally narrowed to a
+// single recipe. It reuses the same s.d.Runs.List that backed the (removed)
+// test_run service, passing req.GetPage() straight through so the storage
+// layer's own LIMIT/OFFSET pagination applies (rather than silently relying
+// on TestRunRepo.List's default page size, which would otherwise cap every
+// call at the first 50 tenant runs); the recipe_id filter (a facet
+// ListTestRunsRequest has no field for) is then applied in Go.
+//
+// IMPORTANT recipe_id caveat: because the recipe_id filter runs in-process
+// over the already-paginated storage page rather than in the storage query
+// itself, it is a per-page filter, not a global one. A page can come back
+// with zero matching runs while ListRunsResponse.next_page_token is still
+// non-empty (the matching runs may live on a later tenant page). Callers
+// that set recipe_id MUST keep calling ListRuns with the returned
+// next_page_token until it is empty rather than stopping on the first empty
+// runs page — otherwise they will silently miss older runs of that recipe,
+// which is exactly the truncation bug this pagination fixes. Recipe run
+// sets are expected to stay small enough per tenant that this remains a
+// handful of pages in practice; a dedicated storage-side recipe_id facet
+// (filtering inside the SQL query, not after it) is the proper follow-up if
+// that stops being true.
 func (s *Service) ListRuns(ctx context.Context, req *api.ListRunsRequest) (*api.ListRunsResponse, error) {
 	if err := requireTenant(req.GetTenantId()); err != nil {
 		return nil, err
@@ -231,7 +244,10 @@ func (s *Service) ListRuns(ctx context.Context, req *api.ListRunsRequest) (*api.
 		return nil, err
 	}
 
-	runs, _, err := s.d.Runs.List(ctx, &api.ListTestRunsRequest{TenantId: req.GetTenantId()}, c.GetAccountId())
+	runs, nextPageToken, err := s.d.Runs.List(ctx, &api.ListTestRunsRequest{
+		TenantId: req.GetTenantId(),
+		Page:     req.GetPage(),
+	}, c.GetAccountId())
 	if err != nil {
 		return nil, utils.MapErr(err)
 	}
@@ -246,7 +262,7 @@ func (s *Service) ListRuns(ctx context.Context, req *api.ListRunsRequest) (*api.
 		runs = filtered
 	}
 
-	return &api.ListRunsResponse{Runs: runs}, nil
+	return &api.ListRunsResponse{Runs: runs, NextPageToken: nextPageToken}, nil
 }
 
 // CancelRun requests cancellation of an in-flight recipe run's

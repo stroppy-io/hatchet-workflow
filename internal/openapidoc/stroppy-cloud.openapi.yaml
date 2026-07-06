@@ -3729,6 +3729,8 @@ components:
         ListRunsRequest:
             additionalProperties: false
             properties:
+                page:
+                    $ref: '#/components/schemas/Page'
                 recipeId:
                     maxLength: 64
                     type: string
@@ -3740,6 +3742,8 @@ components:
         ListRunsResponse:
             additionalProperties: false
             properties:
+                nextPageToken:
+                    type: string
                 runs:
                     items:
                         $ref: '#/components/schemas/TestRunRecord'

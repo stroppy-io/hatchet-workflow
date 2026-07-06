@@ -423,6 +423,13 @@ func (src *ListRunsRequest) ToOgen() (*rest.ListRunsRequest, error) {
 	}
 	dst.TenantId.SetTo(string(src.GetTenantId()))
 	dst.RecipeId.SetTo(string(src.GetRecipeId()))
+	if src.Page != nil {
+		o1, err := PageToOgen(src.GetPage())
+		if err != nil {
+			return nil, err
+		}
+		dst.Page.SetTo(*o1)
+	}
 	return &dst, nil
 }
 
@@ -437,6 +444,13 @@ func ListRunsRequestFromOgen(src *rest.ListRunsRequest) (*ListRunsRequest, error
 	}
 	if v2, ok := src.RecipeId.Get(); ok {
 		dst.RecipeId = string(v2)
+	}
+	if v3, ok := src.Page.Get(); ok {
+		m4, err := PageFromOgen(&v3)
+		if err != nil {
+			return nil, err
+		}
+		dst.Page = m4
 	}
 	return dst, nil
 }
@@ -458,6 +472,7 @@ func (src *ListRunsResponse) ToOgen() (*rest.ListRunsResponse, error) {
 		return nil, err
 	}
 	dst.Runs = c1
+	dst.NextPageToken.SetTo(string(src.GetNextPageToken()))
 	return &dst, nil
 }
 
@@ -478,6 +493,9 @@ func ListRunsResponseFromOgen(src *rest.ListRunsResponse) (*ListRunsResponse, er
 		return nil, err
 	}
 	dst.Runs = c1
+	if v3, ok := src.NextPageToken.Get(); ok {
+		dst.NextPageToken = string(v3)
+	}
 	return dst, nil
 }
 

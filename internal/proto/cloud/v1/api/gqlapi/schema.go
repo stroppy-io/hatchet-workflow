@@ -2562,6 +2562,9 @@ func decode_ListRunsRequest(m map[string]interface{}) *pb.ListRunsRequest {
 	}
 	out.TenantId = graphqlrt.AsString(m["tenantId"])
 	out.RecipeId = graphqlrt.AsString(m["recipeId"])
+	if mm, ok := m["page"].(map[string]interface{}); ok {
+		out.Page = decode_PageInput(mm)
+	}
 	return out
 }
 
@@ -11198,6 +11201,13 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 				}
 				return obj.GetRuns(), nil
 			}},
+			"nextPageToken": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb.ListRunsResponse)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetNextPageToken(), nil
+			}},
 		}
 	})})
 	o_CancelRunResponse = graphql.NewObject(graphql.ObjectConfig{Name: "CancelRunResponse", Fields: graphql.Fields{
@@ -16548,6 +16558,7 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 		return graphql.InputObjectConfigFieldMap{
 			"tenantId": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
 			"recipeId": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"page":     &graphql.InputObjectFieldConfig{Type: i_PageInput},
 		}
 	})})
 	i_CancelRunRequest = graphql.NewInputObject(graphql.InputObjectConfig{Name: "CancelRunRequest", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
@@ -17866,6 +17877,7 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 		"listRuns": &graphql.Field{Type: o_ListRunsResponse, Args: graphql.FieldConfigArgument{
 			"tenantId": &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.String)},
 			"recipeId": &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.String)},
+			"page":     &graphql.ArgumentConfig{Type: i_PageInput},
 		}, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 			req := decode_ListRunsRequest(p.Args)
 			ctx := p.Context

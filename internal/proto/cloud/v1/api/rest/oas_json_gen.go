@@ -28208,6 +28208,12 @@ func (s *ListRunsRequest) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *ListRunsRequest) encodeFields(e *jx.Encoder) {
 	{
+		if s.Page.Set {
+			e.FieldStart("page")
+			s.Page.Encode(e)
+		}
+	}
+	{
 		if s.RecipeId.Set {
 			e.FieldStart("recipeId")
 			s.RecipeId.Encode(e)
@@ -28221,9 +28227,10 @@ func (s *ListRunsRequest) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfListRunsRequest = [2]string{
-	0: "recipeId",
-	1: "tenantId",
+var jsonFieldsNameOfListRunsRequest = [3]string{
+	0: "page",
+	1: "recipeId",
+	2: "tenantId",
 }
 
 // Decode decodes ListRunsRequest from json.
@@ -28234,6 +28241,16 @@ func (s *ListRunsRequest) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
+		case "page":
+			if err := func() error {
+				s.Page.Reset()
+				if err := s.Page.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"page\"")
+			}
 		case "recipeId":
 			if err := func() error {
 				s.RecipeId.Reset()
@@ -28288,6 +28305,12 @@ func (s *ListRunsResponse) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *ListRunsResponse) encodeFields(e *jx.Encoder) {
 	{
+		if s.NextPageToken.Set {
+			e.FieldStart("nextPageToken")
+			s.NextPageToken.Encode(e)
+		}
+	}
+	{
 		if s.Runs != nil {
 			e.FieldStart("runs")
 			e.ArrStart()
@@ -28299,8 +28322,9 @@ func (s *ListRunsResponse) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfListRunsResponse = [1]string{
-	0: "runs",
+var jsonFieldsNameOfListRunsResponse = [2]string{
+	0: "nextPageToken",
+	1: "runs",
 }
 
 // Decode decodes ListRunsResponse from json.
@@ -28311,6 +28335,16 @@ func (s *ListRunsResponse) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
+		case "nextPageToken":
+			if err := func() error {
+				s.NextPageToken.Reset()
+				if err := s.NextPageToken.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"nextPageToken\"")
+			}
 		case "runs":
 			if err := func() error {
 				s.Runs = make([]TestRunRecord, 0)

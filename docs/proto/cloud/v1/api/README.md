@@ -6278,6 +6278,15 @@ go_name: Roles</pre></td>
 <th>Description</th>
 </tr>
 <tr>
+<td>page</td>
+<td><a href="../common/README.md#cloud-v1-common-page">cloud.v1.common.Page</a></td>
+<td><pre>
+//page carries pagination (page size + token). See ListRunsResponse.next_page_token
+//for the important caveat when recipe_id is also set.<br>
+
+json_name: page
+go_name: Page</pre></td>
+</tr><tr>
 <td>recipe_id</td>
 <td>string</td>
 <td><pre>
@@ -6304,7 +6313,7 @@ go_name: TenantId</pre></td>
 ### cloud.v1.api.ListRunsResponse
 
 <pre>
-//ListRunsResponse returns the matching recipe runs.
+//ListRunsResponse returns a page of the matching recipe runs.
 </pre>
 
 <table>
@@ -6314,10 +6323,25 @@ go_name: TenantId</pre></td>
 <th>Description</th>
 </tr>
 <tr>
+<td>next_page_token</td>
+<td>string</td>
+<td><pre>
+//next_page_token fetches the following page; empty when at the end.
+
+//Caveat when ListRunsRequest.recipe_id is set: the recipe_id filter is
+//applied in-process over the already-paginated tenant page (see
+//RecipeService.ListRuns's doc), so a single page can legitimately
+//return zero matching rows while next_page_token is still non-empty.
+//Clients filtering by recipe_id MUST keep paginating until
+//next_page_token is empty rather than stopping on an empty runs page.<br>
+
+json_name: nextPageToken
+go_name: NextPageToken</pre></td>
+</tr><tr>
 <td>runs</td>
 <td><a href="../models/README.md#cloud-v1-models-testrunrecord">cloud.v1.models.TestRunRecord</a></td>
 <td><pre>
-//runs is the matching set of run records.<br>
+//runs is the matching page of run records.<br>
 
 json_name: runs
 go_name: Runs</pre></td>
