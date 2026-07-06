@@ -173,6 +173,49 @@ func TestTerraform_Provision_MissingStroppyMachinesOutput(t *testing.T) {
 	require.True(t, strings.Contains(err.Error(), "stroppy_machines"))
 }
 
+// privateLabel returns a label from a MachineState's "private" endpoint, or
+// "" if the endpoint or label is absent.
+func privateLabel(m *deploymentpb.MachineState, key string) string {
+	for _, ep := range m.GetEndpoints() {
+		if ep.GetName() == "private" {
+			return ep.GetLabels()[key]
+		}
+	}
+	return ""
+}
+
+// TestTerraform_Provision_StampsDiskDeviceLabel is the I2 provider-side lock:
+// machineState must carry the disk_device label on the private endpoint —
+// from the module output when present, defaulting to defaultDiskDevice
+// ("/dev/vdb") when the module omits it.
+func TestTerraform_Provision_StampsDiskDeviceLabel(t *testing.T) {
+	fake := &fakeTerraformExec{
+		applyOutputs: stroppyMachinesOutput(t, []map[string]any{
+			{"id": "db-0", "private_ip": "10.0.0.1", "disk_device": "/dev/nvme1n1"},
+			{"id": "db-1", "private_ip": "10.0.0.2"},
+		}),
+	}
+	p := NewTerraform("/modules/yandex", fake)
+
+	ref := &dslpb.ProviderRef{Name: "yandex", ParamsJson: `{"zone":"ru-central1-a"}`}
+	group := dbGroup()
+	group.Count = 2
+	groups := []*dslpb.MachineGroup{group}
+
+	result, err := p.Provision(context.Background(), ref, groups)
+	require.NoError(t, err)
+
+	byNodeID := map[string]*deploymentpb.MachineState{}
+	for _, m := range result["db"] {
+		byNodeID[m.GetNodeId()] = m
+	}
+
+	require.Equal(t, "/dev/nvme1n1", privateLabel(byNodeID["db-0"], "disk_device"),
+		"module-provided disk_device must be threaded through")
+	require.Equal(t, defaultDiskDevice, privateLabel(byNodeID["db-1"], "disk_device"),
+		"disk_device must default to defaultDiskDevice when the module output omits it")
+}
+
 func TestTerraform_Destroy_DelegatesWithSameParams(t *testing.T) {
 	fake := &fakeTerraformExec{}
 	p := NewTerraform("/modules/yandex", fake)

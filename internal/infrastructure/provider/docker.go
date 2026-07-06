@@ -109,7 +109,18 @@ func (p *dockerProvider) Provision(ctx context.Context, ref *dslpb.ProviderRef, 
 					{
 						Name:    "private",
 						Address: state.InternalIP,
-						Labels:  map[string]string{"scope": "private"},
+						// disk_device (I2): docker containers have no block
+						// device of their own — ContainerSpec has no
+						// volume/bind plumbing today (see provider.go), so
+						// there is no host path to report. The label is
+						// still set, explicitly empty, so recipe authors see
+						// an intentional "not applicable" rather than a
+						// silently missing key; a step that does
+						// `mkfs ${{ machine.disks[0].path }}` against a
+						// docker topology is a recipe bug, not a provider
+						// one, and should target a terraform-backed
+						// topology instead.
+						Labels: map[string]string{"scope": "private", "disk_device": ""},
 					},
 				},
 				Labels: map[string]string{

@@ -322,7 +322,7 @@ func machineViewFor(mg *dslpb.MachineGroup, state *deploymentpb.MachineState) ex
 	var disks []expr.DiskView
 	if ds := mg.GetDisks(); len(ds) > 0 {
 		diskGb = int64(ds[0].GetSizeGb()) //nolint:gosec // machine disk/GB values are far below MaxInt64.
-		disks = []expr.DiskView{{Path: "", SizeGb: diskGb}}
+		disks = []expr.DiskView{{Path: machineDiskDevice(state), SizeGb: diskGb}}
 	}
 	return expr.MachineView{
 		IP:     machinePrivateAddress(state),
@@ -345,6 +345,30 @@ func machinePrivateAddress(state *deploymentpb.MachineState) string {
 	}
 	if eps := state.GetEndpoints(); len(eps) > 0 {
 		return eps[0].GetAddress()
+	}
+	return ""
+}
+
+// machineDiskDevice returns the device path a provider stamped onto a
+// machine's disk (I2: dslrun used to hardcode DiskView.Path to "", making
+// `mkfs ${{ machine.disks[0].path }}`-style recipe steps non-functional).
+// Convention (see internal/infrastructure/provider/terraform.go and
+// docker.go): the provider labels the machine's "private" endpoint with
+// disk_device — mirroring machinePrivateAddress's own endpoint lookup, so a
+// disk device is scoped to the same endpoint object as the machine's
+// reachable address, consistent with how managed-service endpoints already
+// carry endpoint-specific facts (e.g. deployment.go's database_path label).
+// Falls back to the first endpoint if none is named "private", or "" if the
+// machine has no endpoints, or the label is absent (docker containers have
+// no block device — see docker.go).
+func machineDiskDevice(state *deploymentpb.MachineState) string {
+	for _, ep := range state.GetEndpoints() {
+		if ep.GetName() == "private" {
+			return ep.GetLabels()["disk_device"]
+		}
+	}
+	if eps := state.GetEndpoints(); len(eps) > 0 {
+		return eps[0].GetLabels()["disk_device"]
 	}
 	return ""
 }

@@ -81,6 +81,35 @@ func TestDocker_Provision_OneContainerPerMachineWithBootstrapEnv(t *testing.T) {
 	}
 }
 
+// TestDocker_Provision_StampsEmptyDiskDeviceLabel is the I2 provider-side
+// lock for the docker builtin provider: containers have no block device
+// (ContainerSpec has no volume/bind plumbing today), so disk_device must
+// still be present on the private endpoint — explicitly empty, documenting
+// the "not applicable" convention rather than silently omitting the key.
+func TestDocker_Provision_StampsEmptyDiskDeviceLabel(t *testing.T) {
+	fake := &fakeDockerExec{}
+	p := NewDocker(fake)
+
+	groups := []*dslpb.MachineGroup{runnerGroup()}
+	result, err := p.Provision(context.Background(), dockerRef(), groups)
+	require.NoError(t, err)
+
+	require.Contains(t, result, "runner")
+	require.NotEmpty(t, result["runner"])
+	for _, m := range result["runner"] {
+		found := false
+		for _, ep := range m.GetEndpoints() {
+			if ep.GetName() == "private" {
+				found = true
+				value, ok := ep.GetLabels()["disk_device"]
+				require.True(t, ok, "disk_device label must be present (documented as intentionally empty)")
+				require.Empty(t, value)
+			}
+		}
+		require.True(t, found, "machine state must carry a private endpoint")
+	}
+}
+
 func TestDocker_Destroy_RemovesRunNetwork(t *testing.T) {
 	fake := &fakeDockerExec{}
 	p := NewDocker(fake)

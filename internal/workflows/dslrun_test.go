@@ -352,3 +352,75 @@ func TestExecuteCompiledPlanWorkflow(t *testing.T) {
 		t.Errorf("NomadSubmitJob activity dispatched to queue %q, want %q", nomadQueues[0], "tq-gateway")
 	}
 }
+
+// machineStateWithDiskDevice builds a MachineState whose "private" endpoint
+// carries the disk_device label — the convention machineViewFor (dslrun.go)
+// reads DiskView.Path from, mirroring how the provider packages
+// (terraform.go, docker.go) stamp it after provisioning.
+func machineStateWithDiskDevice(nodeID, ip, diskDevice string) *deploymentpb.MachineState {
+	return &deploymentpb.MachineState{
+		NodeId: nodeID,
+		Endpoints: []*deploymentpb.Endpoint{
+			{
+				Name:    "private",
+				Address: ip,
+				Labels:  map[string]string{"disk_device": diskDevice},
+			},
+		},
+	}
+}
+
+// TestExecuteCompiledPlanWorkflowDiskDevicePath is the I2 regression lock:
+// machineViewFor (dslrun.go) used to hardcode DiskView.Path to "" regardless
+// of what the provider actually provisioned, so any recipe step interpolating
+// ${{ machine.disks[0].path }} (e.g. postgres-ha's prep-disks `mkfs.ext4`
+// step) resolved to an empty device — non-functional. This asserts the
+// resolved script carries the disk_device value stamped on the machine's
+// private endpoint by the provider.
+func TestExecuteCompiledPlanWorkflowDiskDevicePath(t *testing.T) {
+	var suite testsuite.WorkflowTestSuite
+	env := suite.NewTestWorkflowEnvironment()
+	RegisterWorkflows(env, DefaultOptions())
+	registerCompiledPlanActivityStubs(env)
+
+	var capturedScript string
+	env.OnActivity(workflowpb.CallCmdActivityActivityName, mock.Anything, mock.Anything).Return(
+		func(_ context.Context, cmd *common.Cmd) (*common.Cmd_Result, error) {
+			capturedScript = cmd.GetSpec().GetScript().GetText()
+			return &common.Cmd_Result{ExitCode: 0}, nil
+		},
+	)
+
+	plan := &dslpb.CompiledPlan{
+		MachineGroups: []*dslpb.MachineGroup{
+			{Name: "db", Count: 1, Cpu: 2, RamMb: 2048, Disks: []*dslpb.DiskSpec{{SizeGb: 20}}},
+		},
+		Jobs: []*dslpb.CompiledJob{
+			stepsJob("prep-disks", nil, "db", "", nil,
+				deploymentbuilder.CallCmdStep("prep-disks/0", 0, "mkfs.ext4 ${{ machine.disks[0].path }}")),
+		},
+	}
+
+	input := &ExecuteCompiledPlanInput{
+		Plan: plan,
+		Machines: map[string][]*deploymentpb.MachineState{
+			"db": {machineStateWithDiskDevice("db-1", "10.0.0.5", "/dev/vdb")},
+		},
+		Bootstrap: &workflowpb.AgentBootstrap{
+			AgentTaskQueues: map[string]string{"db-1": "tq-db-1"},
+		},
+	}
+
+	env.ExecuteWorkflow(ExecuteCompiledPlanWorkflowName, input)
+
+	if !env.IsWorkflowCompleted() {
+		t.Fatal("workflow did not complete")
+	}
+	if err := env.GetWorkflowError(); err != nil {
+		t.Fatalf("workflow failed: %v", err)
+	}
+
+	if !strings.Contains(capturedScript, "/dev/vdb") {
+		t.Fatalf("resolved mkfs script = %q, want it to contain the provisioned disk device %q (not empty)", capturedScript, "/dev/vdb")
+	}
+}

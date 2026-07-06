@@ -16,6 +16,14 @@ import (
 // the machines it provisioned for the stroppy_nodes it was given.
 const stroppyMachinesOutputKey = "stroppy_machines"
 
+// defaultDiskDevice is stamped as the disk_device label (I2) when a
+// terraform module's stroppy_machines output omits disk_device: a sane
+// single-data-disk default for modules (e.g. the yandex module) that
+// provision one extra block device per node without exporting its path —
+// cloud images conventionally attach the first extra disk as /dev/vdb (the
+// boot disk being /dev/vda).
+const defaultDiskDevice = "/dev/vdb"
+
 // terraformProvider adapts a terraform module (moduleDir) into the Provider
 // interface: it lowers MachineGroups into the module's stroppy_nodes input,
 // applies it via exec, and lowers the stroppy_machines output back into
@@ -50,9 +58,10 @@ type tfNode struct {
 
 // tfMachineOutput is one entry of the module's stroppy_machines output.
 type tfMachineOutput struct {
-	ID        string `json:"id"`
-	PrivateIP string `json:"private_ip"`
-	PublicIP  string `json:"public_ip"`
+	ID         string `json:"id"`
+	PrivateIP  string `json:"private_ip"`
+	PublicIP   string `json:"public_ip"`
+	DiskDevice string `json:"disk_device"`
 }
 
 func (p *terraformProvider) Provision(ctx context.Context, ref *dslpb.ProviderRef, groups []*dslpb.MachineGroup) (map[string][]*deploymentpb.MachineState, error) {
@@ -181,13 +190,21 @@ func tfNodesForGroup(group *dslpb.MachineGroup) ([]tfNode, error) {
 
 // machineState lowers one stroppy_machines output entry into a MachineState,
 // mirroring the private/public endpoint convention used elsewhere (see
-// internal/workflows/deployment.go's privateEndpoints).
+// internal/workflows/deployment.go's privateEndpoints). The private
+// endpoint also carries the disk_device label (I2): dslrun.go's
+// machineViewFor reads it into DiskView.Path for recipe steps like
+// `mkfs ${{ machine.disks[0].path }}`, defaulting to defaultDiskDevice when
+// the module output omits disk_device.
 func machineState(groupName string, machine tfMachineOutput) *deploymentpb.MachineState {
+	diskDevice := machine.DiskDevice
+	if diskDevice == "" {
+		diskDevice = defaultDiskDevice
+	}
 	endpoints := []*deploymentpb.Endpoint{
 		{
 			Name:    "private",
 			Address: machine.PrivateIP,
-			Labels:  map[string]string{"scope": "private"},
+			Labels:  map[string]string{"scope": "private", "disk_device": diskDevice},
 		},
 	}
 	if machine.PublicIP != "" {
