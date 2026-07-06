@@ -586,6 +586,14 @@ type RatingHandler interface {
 //
 // x-ogen-operation-group: Recipe
 type RecipeHandler interface {
+	// CancelRun implements cancelRun operation.
+	//
+	// CancelRun requests cancellation of an in-flight run's
+	// RunRecipeWorkflow. Cancellation is asynchronous: the resulting status
+	// transition is observed via ListRuns/Overview, not this response.
+	//
+	// POST /api/v1/recipe/cancel-run
+	CancelRun(ctx context.Context, req *CancelRunRequest) error
 	// CheckRecipe implements checkRecipe operation.
 	//
 	// CheckRecipe compiles the stored bundle in check-mode. Read-only: it
@@ -606,6 +614,12 @@ type RecipeHandler interface {
 	//
 	// POST /api/v1/recipe/delete-recipe
 	DeleteRecipe(ctx context.Context, req *DeleteRecipeRequest, params DeleteRecipeParams) error
+	// DeleteRun implements deleteRun operation.
+	//
+	// DeleteRun deletes a run record by id.
+	//
+	// POST /api/v1/recipe/delete-run
+	DeleteRun(ctx context.Context, req *DeleteRunRequest, params DeleteRunParams) error
 	// GetRecipe implements getRecipe operation.
 	//
 	// GetRecipe fetches a single recipe record by id. Read-only.
@@ -619,6 +633,13 @@ type RecipeHandler interface {
 	//
 	// GET /api/v1/recipe/list-recipes
 	ListRecipes(ctx context.Context, req *ListRecipesRequest) (*ListRecipesResponse, error)
+	// ListRuns implements listRuns operation.
+	//
+	// ListRuns lists the runs launched from recipe bundles for the tenant,
+	// optionally filtered to one recipe. Read-only.
+	//
+	// GET /api/v1/recipe/list-runs
+	ListRuns(ctx context.Context, req *ListRunsRequest) (*ListRunsResponse, error)
 	// StartRun implements startRun operation.
 	//
 	// StartRun launches a new run of an already-stored recipe bundle: it

@@ -653,6 +653,295 @@ func (x *StartRunResponse) GetRun() *models.TestRunRecord {
 	return nil
 }
 
+// ListRunsRequest lists the runs launched from recipe bundles for a tenant,
+// optionally narrowed to one recipe.
+type ListRunsRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// recipe_id, when set, filters to runs launched from that recipe record
+	// (matches models.TestRunRecord.recipe_id). Empty returns every recipe
+	// run for the tenant.
+	RecipeId      string `protobuf:"bytes,2,opt,name=recipe_id,json=recipeId,proto3" json:"recipe_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListRunsRequest) Reset() {
+	*x = ListRunsRequest{}
+	mi := &file_cloud_v1_api_recipe_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListRunsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListRunsRequest) ProtoMessage() {}
+
+func (x *ListRunsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_recipe_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListRunsRequest.ProtoReflect.Descriptor instead.
+func (*ListRunsRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_recipe_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *ListRunsRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *ListRunsRequest) GetRecipeId() string {
+	if x != nil {
+		return x.RecipeId
+	}
+	return ""
+}
+
+// ListRunsResponse returns the matching recipe runs.
+type ListRunsResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// runs is the matching set of run records.
+	Runs          []*models.TestRunRecord `protobuf:"bytes,1,rep,name=runs,proto3" json:"runs,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListRunsResponse) Reset() {
+	*x = ListRunsResponse{}
+	mi := &file_cloud_v1_api_recipe_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListRunsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListRunsResponse) ProtoMessage() {}
+
+func (x *ListRunsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_recipe_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListRunsResponse.ProtoReflect.Descriptor instead.
+func (*ListRunsResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_recipe_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *ListRunsResponse) GetRuns() []*models.TestRunRecord {
+	if x != nil {
+		return x.Runs
+	}
+	return nil
+}
+
+// CancelRunRequest requests cancellation of an in-flight recipe run.
+type CancelRunRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// run_id is the run record identifier to cancel.
+	RunId         string `protobuf:"bytes,2,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CancelRunRequest) Reset() {
+	*x = CancelRunRequest{}
+	mi := &file_cloud_v1_api_recipe_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CancelRunRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CancelRunRequest) ProtoMessage() {}
+
+func (x *CancelRunRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_recipe_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CancelRunRequest.ProtoReflect.Descriptor instead.
+func (*CancelRunRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_recipe_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *CancelRunRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *CancelRunRequest) GetRunId() string {
+	if x != nil {
+		return x.RunId
+	}
+	return ""
+}
+
+// CancelRunResponse is empty; cancellation is asynchronous — poll the run
+// record (or ListRuns/Overview) to observe the resulting status.
+type CancelRunResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CancelRunResponse) Reset() {
+	*x = CancelRunResponse{}
+	mi := &file_cloud_v1_api_recipe_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CancelRunResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CancelRunResponse) ProtoMessage() {}
+
+func (x *CancelRunResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_recipe_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CancelRunResponse.ProtoReflect.Descriptor instead.
+func (*CancelRunResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_recipe_proto_rawDescGZIP(), []int{15}
+}
+
+// DeleteRunRequest deletes a run record by id.
+type DeleteRunRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// run_id is the run record identifier to delete.
+	RunId         string `protobuf:"bytes,2,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteRunRequest) Reset() {
+	*x = DeleteRunRequest{}
+	mi := &file_cloud_v1_api_recipe_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteRunRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteRunRequest) ProtoMessage() {}
+
+func (x *DeleteRunRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_recipe_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteRunRequest.ProtoReflect.Descriptor instead.
+func (*DeleteRunRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_recipe_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *DeleteRunRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *DeleteRunRequest) GetRunId() string {
+	if x != nil {
+		return x.RunId
+	}
+	return ""
+}
+
+// DeleteRunResponse is empty; success is signalled by a non-error reply.
+type DeleteRunResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteRunResponse) Reset() {
+	*x = DeleteRunResponse{}
+	mi := &file_cloud_v1_api_recipe_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteRunResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteRunResponse) ProtoMessage() {}
+
+func (x *DeleteRunResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_recipe_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteRunResponse.ProtoReflect.Descriptor instead.
+func (*DeleteRunResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_recipe_proto_rawDescGZIP(), []int{17}
+}
+
 var File_cloud_v1_api_recipe_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_recipe_proto_rawDesc = "" +
@@ -688,7 +977,20 @@ const file_cloud_v1_api_recipe_proto_rawDesc = "" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12&\n" +
 	"\trecipe_id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\brecipeId\"N\n" +
 	"\x10StartRunResponse\x12:\n" +
-	"\x03run\x18\x01 \x01(\v2\x1e.cloud.v1.models.TestRunRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x03run2\xd4\t\n" +
+	"\x03run\x18\x01 \x01(\v2\x1e.cloud.v1.models.TestRunRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x03run\"_\n" +
+	"\x0fListRunsRequest\x12&\n" +
+	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12$\n" +
+	"\trecipe_id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x18@R\brecipeId\"F\n" +
+	"\x10ListRunsResponse\x122\n" +
+	"\x04runs\x18\x01 \x03(\v2\x1e.cloud.v1.models.TestRunRecordR\x04runs\"\\\n" +
+	"\x10CancelRunRequest\x12&\n" +
+	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12 \n" +
+	"\x06run_id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x05runId\"\x13\n" +
+	"\x11CancelRunResponse\"\\\n" +
+	"\x10DeleteRunRequest\x12&\n" +
+	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12 \n" +
+	"\x06run_id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x05runId\"\x13\n" +
+	"\x11DeleteRunResponse2\x89\x0e\n" +
 	"\rRecipeService\x12\xc8\x01\n" +
 	"\fCreateRecipe\x12!.cloud.v1.api.CreateRecipeRequest\x1a\".cloud.v1.api.CreateRecipeResponse\"q\x8a\xb5\x18\x06\x12\x04\b\x0f\x10\x01\xf2\xa7\x1dc\x10\x02\x1a\x0e/create-recipe\"\fcreateRecipe\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
 	"\x1a#/components/schemas/Error\x12\xbc\x01\n" +
@@ -702,7 +1004,14 @@ const file_cloud_v1_api_recipe_proto_rawDesc = "" +
 	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xba\x01\n" +
 	"\bStartRun\x12\x1d.cloud.v1.api.StartRunRequest\x1a\x1e.cloud.v1.api.StartRunResponse\"o\x8a\xb5\x18\f\x12\x04\b\b\x10\x01\x12\x04\b\x0f\x10\x02\xf2\xa7\x1d[\x10\x02\x1a\n" +
 	"/start-run\"\bstartRun\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
-	"\x1a#/components/schemas/Error\x1a\x1c\xf2\xa7\x1d\x18\x12\x0e/api/v1/recipe\x1a\x06recipeBG\xf2\xa7\x1d\x02\b\x01Z?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
+	"\x1a#/components/schemas/Error\x12\xb7\x01\n" +
+	"\bListRuns\x12\x1d.cloud.v1.api.ListRunsRequest\x1a\x1e.cloud.v1.api.ListRunsResponse\"l\x8a\xb5\x18\x06\x12\x04\b\b\x10\x05\xf2\xa7\x1d[\x10\x01\x1a\n" +
+	"/list-runs\"\blistRuns\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xb9\x01\n" +
+	"\tCancelRun\x12\x1e.cloud.v1.api.CancelRunRequest\x1a\x1f.cloud.v1.api.CancelRunResponse\"k\x8a\xb5\x18\x06\x12\x04\b\b\x10\x03\xf2\xa7\x1d]\x10\x02\x1a\v/cancel-run\"\tcancelRun\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x12\xbc\x01\n" +
+	"\tDeleteRun\x12\x1e.cloud.v1.api.DeleteRunRequest\x1a\x1f.cloud.v1.api.DeleteRunResponse\"n\x8a\xb5\x18\x06\x12\x04\b\b\x10\x04\xf2\xa7\x1d]\x10\x02\x1a\v/delete-run\"\tdeleteRun\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x02\x1a\x1c\xf2\xa7\x1d\x18\x12\x0e/api/v1/recipe\x1a\x06recipeBG\xf2\xa7\x1d\x02\b\x01Z?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/apib\x06proto3"
 
 var (
 	file_cloud_v1_api_recipe_proto_rawDescOnce sync.Once
@@ -716,7 +1025,7 @@ func file_cloud_v1_api_recipe_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_api_recipe_proto_rawDescData
 }
 
-var file_cloud_v1_api_recipe_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_cloud_v1_api_recipe_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_cloud_v1_api_recipe_proto_goTypes = []any{
 	(*CreateRecipeRequest)(nil),  // 0: cloud.v1.api.CreateRecipeRequest
 	(*CreateRecipeResponse)(nil), // 1: cloud.v1.api.CreateRecipeResponse
@@ -730,38 +1039,51 @@ var file_cloud_v1_api_recipe_proto_goTypes = []any{
 	(*CheckRecipeResponse)(nil),  // 9: cloud.v1.api.CheckRecipeResponse
 	(*StartRunRequest)(nil),      // 10: cloud.v1.api.StartRunRequest
 	(*StartRunResponse)(nil),     // 11: cloud.v1.api.StartRunResponse
-	(*models.RecipeRecord)(nil),  // 12: cloud.v1.models.RecipeRecord
-	(*common.EntityFilter)(nil),  // 13: cloud.v1.common.EntityFilter
-	(*common.Page)(nil),          // 14: cloud.v1.common.Page
-	(*dsl.Diagnostic)(nil),       // 15: cloud.v1.dsl.Diagnostic
-	(*models.TestRunRecord)(nil), // 16: cloud.v1.models.TestRunRecord
+	(*ListRunsRequest)(nil),      // 12: cloud.v1.api.ListRunsRequest
+	(*ListRunsResponse)(nil),     // 13: cloud.v1.api.ListRunsResponse
+	(*CancelRunRequest)(nil),     // 14: cloud.v1.api.CancelRunRequest
+	(*CancelRunResponse)(nil),    // 15: cloud.v1.api.CancelRunResponse
+	(*DeleteRunRequest)(nil),     // 16: cloud.v1.api.DeleteRunRequest
+	(*DeleteRunResponse)(nil),    // 17: cloud.v1.api.DeleteRunResponse
+	(*models.RecipeRecord)(nil),  // 18: cloud.v1.models.RecipeRecord
+	(*common.EntityFilter)(nil),  // 19: cloud.v1.common.EntityFilter
+	(*common.Page)(nil),          // 20: cloud.v1.common.Page
+	(*dsl.Diagnostic)(nil),       // 21: cloud.v1.dsl.Diagnostic
+	(*models.TestRunRecord)(nil), // 22: cloud.v1.models.TestRunRecord
 }
 var file_cloud_v1_api_recipe_proto_depIdxs = []int32{
-	12, // 0: cloud.v1.api.CreateRecipeRequest.recipe:type_name -> cloud.v1.models.RecipeRecord
-	12, // 1: cloud.v1.api.CreateRecipeResponse.recipe:type_name -> cloud.v1.models.RecipeRecord
-	12, // 2: cloud.v1.api.GetRecipeResponse.recipe:type_name -> cloud.v1.models.RecipeRecord
-	13, // 3: cloud.v1.api.ListRecipesRequest.filter:type_name -> cloud.v1.common.EntityFilter
-	14, // 4: cloud.v1.api.ListRecipesRequest.page:type_name -> cloud.v1.common.Page
-	12, // 5: cloud.v1.api.ListRecipesResponse.recipes:type_name -> cloud.v1.models.RecipeRecord
-	15, // 6: cloud.v1.api.CheckRecipeResponse.diagnostics:type_name -> cloud.v1.dsl.Diagnostic
-	16, // 7: cloud.v1.api.StartRunResponse.run:type_name -> cloud.v1.models.TestRunRecord
-	0,  // 8: cloud.v1.api.RecipeService.CreateRecipe:input_type -> cloud.v1.api.CreateRecipeRequest
-	2,  // 9: cloud.v1.api.RecipeService.GetRecipe:input_type -> cloud.v1.api.GetRecipeRequest
-	4,  // 10: cloud.v1.api.RecipeService.ListRecipes:input_type -> cloud.v1.api.ListRecipesRequest
-	6,  // 11: cloud.v1.api.RecipeService.DeleteRecipe:input_type -> cloud.v1.api.DeleteRecipeRequest
-	8,  // 12: cloud.v1.api.RecipeService.CheckRecipe:input_type -> cloud.v1.api.CheckRecipeRequest
-	10, // 13: cloud.v1.api.RecipeService.StartRun:input_type -> cloud.v1.api.StartRunRequest
-	1,  // 14: cloud.v1.api.RecipeService.CreateRecipe:output_type -> cloud.v1.api.CreateRecipeResponse
-	3,  // 15: cloud.v1.api.RecipeService.GetRecipe:output_type -> cloud.v1.api.GetRecipeResponse
-	5,  // 16: cloud.v1.api.RecipeService.ListRecipes:output_type -> cloud.v1.api.ListRecipesResponse
-	7,  // 17: cloud.v1.api.RecipeService.DeleteRecipe:output_type -> cloud.v1.api.DeleteRecipeResponse
-	9,  // 18: cloud.v1.api.RecipeService.CheckRecipe:output_type -> cloud.v1.api.CheckRecipeResponse
-	11, // 19: cloud.v1.api.RecipeService.StartRun:output_type -> cloud.v1.api.StartRunResponse
-	14, // [14:20] is the sub-list for method output_type
-	8,  // [8:14] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	18, // 0: cloud.v1.api.CreateRecipeRequest.recipe:type_name -> cloud.v1.models.RecipeRecord
+	18, // 1: cloud.v1.api.CreateRecipeResponse.recipe:type_name -> cloud.v1.models.RecipeRecord
+	18, // 2: cloud.v1.api.GetRecipeResponse.recipe:type_name -> cloud.v1.models.RecipeRecord
+	19, // 3: cloud.v1.api.ListRecipesRequest.filter:type_name -> cloud.v1.common.EntityFilter
+	20, // 4: cloud.v1.api.ListRecipesRequest.page:type_name -> cloud.v1.common.Page
+	18, // 5: cloud.v1.api.ListRecipesResponse.recipes:type_name -> cloud.v1.models.RecipeRecord
+	21, // 6: cloud.v1.api.CheckRecipeResponse.diagnostics:type_name -> cloud.v1.dsl.Diagnostic
+	22, // 7: cloud.v1.api.StartRunResponse.run:type_name -> cloud.v1.models.TestRunRecord
+	22, // 8: cloud.v1.api.ListRunsResponse.runs:type_name -> cloud.v1.models.TestRunRecord
+	0,  // 9: cloud.v1.api.RecipeService.CreateRecipe:input_type -> cloud.v1.api.CreateRecipeRequest
+	2,  // 10: cloud.v1.api.RecipeService.GetRecipe:input_type -> cloud.v1.api.GetRecipeRequest
+	4,  // 11: cloud.v1.api.RecipeService.ListRecipes:input_type -> cloud.v1.api.ListRecipesRequest
+	6,  // 12: cloud.v1.api.RecipeService.DeleteRecipe:input_type -> cloud.v1.api.DeleteRecipeRequest
+	8,  // 13: cloud.v1.api.RecipeService.CheckRecipe:input_type -> cloud.v1.api.CheckRecipeRequest
+	10, // 14: cloud.v1.api.RecipeService.StartRun:input_type -> cloud.v1.api.StartRunRequest
+	12, // 15: cloud.v1.api.RecipeService.ListRuns:input_type -> cloud.v1.api.ListRunsRequest
+	14, // 16: cloud.v1.api.RecipeService.CancelRun:input_type -> cloud.v1.api.CancelRunRequest
+	16, // 17: cloud.v1.api.RecipeService.DeleteRun:input_type -> cloud.v1.api.DeleteRunRequest
+	1,  // 18: cloud.v1.api.RecipeService.CreateRecipe:output_type -> cloud.v1.api.CreateRecipeResponse
+	3,  // 19: cloud.v1.api.RecipeService.GetRecipe:output_type -> cloud.v1.api.GetRecipeResponse
+	5,  // 20: cloud.v1.api.RecipeService.ListRecipes:output_type -> cloud.v1.api.ListRecipesResponse
+	7,  // 21: cloud.v1.api.RecipeService.DeleteRecipe:output_type -> cloud.v1.api.DeleteRecipeResponse
+	9,  // 22: cloud.v1.api.RecipeService.CheckRecipe:output_type -> cloud.v1.api.CheckRecipeResponse
+	11, // 23: cloud.v1.api.RecipeService.StartRun:output_type -> cloud.v1.api.StartRunResponse
+	13, // 24: cloud.v1.api.RecipeService.ListRuns:output_type -> cloud.v1.api.ListRunsResponse
+	15, // 25: cloud.v1.api.RecipeService.CancelRun:output_type -> cloud.v1.api.CancelRunResponse
+	17, // 26: cloud.v1.api.RecipeService.DeleteRun:output_type -> cloud.v1.api.DeleteRunResponse
+	18, // [18:27] is the sub-list for method output_type
+	9,  // [9:18] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_api_recipe_proto_init() }
@@ -775,7 +1097,7 @@ func file_cloud_v1_api_recipe_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_api_recipe_proto_rawDesc), len(file_cloud_v1_api_recipe_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   12,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

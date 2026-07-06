@@ -581,6 +581,35 @@ func (s *Baked) SetValues(val jx.Raw) {
 	s.Values = val
 }
 
+// Ref: #/components/schemas/CancelRunRequest
+type CancelRunRequest struct {
+	RunId    OptString `json:"runId"`
+	TenantId OptString `json:"tenantId"`
+}
+
+// GetRunId returns the value of RunId.
+func (s *CancelRunRequest) GetRunId() OptString {
+	return s.RunId
+}
+
+// GetTenantId returns the value of TenantId.
+func (s *CancelRunRequest) GetTenantId() OptString {
+	return s.TenantId
+}
+
+// SetRunId sets the value of RunId.
+func (s *CancelRunRequest) SetRunId(val OptString) {
+	s.RunId = val
+}
+
+// SetTenantId sets the value of TenantId.
+func (s *CancelRunRequest) SetTenantId(val OptString) {
+	s.TenantId = val
+}
+
+// Ref: #/components/schemas/CancelRunResponse
+type CancelRunResponse struct{}
+
 // Ref: #/components/schemas/CancelSuiteRunRequest
 type CancelSuiteRunRequest struct {
 	ID       OptString `json:"id"`
@@ -3685,6 +3714,35 @@ func (s *DeleteRoleRequest) SetID(val OptString) {
 
 // Ref: #/components/schemas/DeleteRoleResponse
 type DeleteRoleResponse struct{}
+
+// Ref: #/components/schemas/DeleteRunRequest
+type DeleteRunRequest struct {
+	RunId    OptString `json:"runId"`
+	TenantId OptString `json:"tenantId"`
+}
+
+// GetRunId returns the value of RunId.
+func (s *DeleteRunRequest) GetRunId() OptString {
+	return s.RunId
+}
+
+// GetTenantId returns the value of TenantId.
+func (s *DeleteRunRequest) GetTenantId() OptString {
+	return s.TenantId
+}
+
+// SetRunId sets the value of RunId.
+func (s *DeleteRunRequest) SetRunId(val OptString) {
+	s.RunId = val
+}
+
+// SetTenantId sets the value of TenantId.
+func (s *DeleteRunRequest) SetTenantId(val OptString) {
+	s.TenantId = val
+}
+
+// Ref: #/components/schemas/DeleteRunResponse
+type DeleteRunResponse struct{}
 
 // Ref: #/components/schemas/DeleteShareRequest
 type DeleteShareRequest struct {
@@ -9560,6 +9618,47 @@ func (s *ListRolesResponse) SetNextPageToken(val OptString) {
 // SetRoles sets the value of Roles.
 func (s *ListRolesResponse) SetRoles(val []Role) {
 	s.Roles = val
+}
+
+// Ref: #/components/schemas/ListRunsRequest
+type ListRunsRequest struct {
+	RecipeId OptString `json:"recipeId"`
+	TenantId OptString `json:"tenantId"`
+}
+
+// GetRecipeId returns the value of RecipeId.
+func (s *ListRunsRequest) GetRecipeId() OptString {
+	return s.RecipeId
+}
+
+// GetTenantId returns the value of TenantId.
+func (s *ListRunsRequest) GetTenantId() OptString {
+	return s.TenantId
+}
+
+// SetRecipeId sets the value of RecipeId.
+func (s *ListRunsRequest) SetRecipeId(val OptString) {
+	s.RecipeId = val
+}
+
+// SetTenantId sets the value of TenantId.
+func (s *ListRunsRequest) SetTenantId(val OptString) {
+	s.TenantId = val
+}
+
+// Ref: #/components/schemas/ListRunsResponse
+type ListRunsResponse struct {
+	Runs []TestRunRecord `json:"runs"`
+}
+
+// GetRuns returns the value of Runs.
+func (s *ListRunsResponse) GetRuns() []TestRunRecord {
+	return s.Runs
+}
+
+// SetRuns sets the value of Runs.
+func (s *ListRunsResponse) SetRuns(val []TestRunRecord) {
+	s.Runs = val
 }
 
 // Ref: #/components/schemas/ListSharesRequest
@@ -36819,6 +36918,7 @@ type TestRunRecord struct {
 	InGlobalRating      OptBool                 `json:"inGlobalRating"`
 	InTenantRating      OptBool                 `json:"inTenantRating"`
 	InfrastructureState OptInfrastructureState  `json:"infrastructureState"`
+	RecipeId            OptString               `json:"recipeId"`
 	RuntimeState        OptRunState             `json:"runtimeState"`
 	Spec                TestRun                 `json:"spec"`
 	Status              OptTestRunRecordStatus  `json:"status"`
@@ -36851,6 +36951,11 @@ func (s *TestRunRecord) GetInTenantRating() OptBool {
 // GetInfrastructureState returns the value of InfrastructureState.
 func (s *TestRunRecord) GetInfrastructureState() OptInfrastructureState {
 	return s.InfrastructureState
+}
+
+// GetRecipeId returns the value of RecipeId.
+func (s *TestRunRecord) GetRecipeId() OptString {
+	return s.RecipeId
 }
 
 // GetRuntimeState returns the value of RuntimeState.
@@ -36911,6 +37016,11 @@ func (s *TestRunRecord) SetInTenantRating(val OptBool) {
 // SetInfrastructureState sets the value of InfrastructureState.
 func (s *TestRunRecord) SetInfrastructureState(val OptInfrastructureState) {
 	s.InfrastructureState = val
+}
+
+// SetRecipeId sets the value of RecipeId.
+func (s *TestRunRecord) SetRecipeId(val OptString) {
+	s.RecipeId = val
 }
 
 // SetRuntimeState sets the value of RuntimeState.

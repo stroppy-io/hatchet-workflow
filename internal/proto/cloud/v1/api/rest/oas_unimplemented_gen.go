@@ -22,6 +22,17 @@ func (UnimplementedHandler) AddFavorite(ctx context.Context, req *AddFavoriteReq
 	return r, ht.ErrNotImplemented
 }
 
+// CancelRun implements cancelRun operation.
+//
+// CancelRun requests cancellation of an in-flight run's
+// RunRecipeWorkflow. Cancellation is asynchronous: the resulting status
+// transition is observed via ListRuns/Overview, not this response.
+//
+// POST /api/v1/recipe/cancel-run
+func (UnimplementedHandler) CancelRun(ctx context.Context, req *CancelRunRequest) error {
+	return ht.ErrNotImplemented
+}
+
 // CancelSuiteRun implements cancelSuiteRun operation.
 //
 // CancelSuiteRun is idempotent: cancelling a finished/cancelled run is a no-op.
@@ -329,6 +340,15 @@ func (UnimplementedHandler) DeleteRecipe(ctx context.Context, req *DeleteRecipeR
 //
 // POST /api/v1/iam/delete-role
 func (UnimplementedHandler) DeleteRole(ctx context.Context, req *DeleteRoleRequest, params DeleteRoleParams) error {
+	return ht.ErrNotImplemented
+}
+
+// DeleteRun implements deleteRun operation.
+//
+// DeleteRun deletes a run record by id.
+//
+// POST /api/v1/recipe/delete-run
+func (UnimplementedHandler) DeleteRun(ctx context.Context, req *DeleteRunRequest, params DeleteRunParams) error {
 	return ht.ErrNotImplemented
 }
 
@@ -873,6 +893,16 @@ func (UnimplementedHandler) ListRegistrationRequests(ctx context.Context, req *L
 //
 // GET /api/v1/iam/list-roles
 func (UnimplementedHandler) ListRoles(ctx context.Context, req *ListRolesRequest) (r *ListRolesResponse, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListRuns implements listRuns operation.
+//
+// ListRuns lists the runs launched from recipe bundles for the tenant,
+// optionally filtered to one recipe. Read-only.
+//
+// GET /api/v1/recipe/list-runs
+func (UnimplementedHandler) ListRuns(ctx context.Context, req *ListRunsRequest) (r *ListRunsResponse, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

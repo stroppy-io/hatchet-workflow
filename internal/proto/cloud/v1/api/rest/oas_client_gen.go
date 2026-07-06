@@ -601,6 +601,14 @@ type RatingInvoker interface {
 //
 // x-gen-operation-group: Recipe
 type RecipeInvoker interface {
+	// CancelRun invokes cancelRun operation.
+	//
+	// CancelRun requests cancellation of an in-flight run's
+	// RunRecipeWorkflow. Cancellation is asynchronous: the resulting status
+	// transition is observed via ListRuns/Overview, not this response.
+	//
+	// POST /api/v1/recipe/cancel-run
+	CancelRun(ctx context.Context, request *CancelRunRequest) error
 	// CheckRecipe invokes checkRecipe operation.
 	//
 	// CheckRecipe compiles the stored bundle in check-mode. Read-only: it
@@ -621,6 +629,12 @@ type RecipeInvoker interface {
 	//
 	// POST /api/v1/recipe/delete-recipe
 	DeleteRecipe(ctx context.Context, request *DeleteRecipeRequest, params DeleteRecipeParams) error
+	// DeleteRun invokes deleteRun operation.
+	//
+	// DeleteRun deletes a run record by id.
+	//
+	// POST /api/v1/recipe/delete-run
+	DeleteRun(ctx context.Context, request *DeleteRunRequest, params DeleteRunParams) error
 	// GetRecipe invokes getRecipe operation.
 	//
 	// GetRecipe fetches a single recipe record by id. Read-only.
@@ -634,6 +648,13 @@ type RecipeInvoker interface {
 	//
 	// GET /api/v1/recipe/list-recipes
 	ListRecipes(ctx context.Context, request *ListRecipesRequest) (*ListRecipesResponse, error)
+	// ListRuns invokes listRuns operation.
+	//
+	// ListRuns lists the runs launched from recipe bundles for the tenant,
+	// optionally filtered to one recipe. Read-only.
+	//
+	// GET /api/v1/recipe/list-runs
+	ListRuns(ctx context.Context, request *ListRunsRequest) (*ListRunsResponse, error)
 	// StartRun invokes startRun operation.
 	//
 	// StartRun launches a new run of an already-stored recipe bundle: it
@@ -1273,6 +1294,85 @@ func (c *Client) sendAddFavorite(ctx context.Context, request *AddFavoriteReques
 
 	stage = "DecodeResponse"
 	result, err := decodeAddFavoriteResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// CancelRun invokes cancelRun operation.
+//
+// CancelRun requests cancellation of an in-flight run's
+// RunRecipeWorkflow. Cancellation is asynchronous: the resulting status
+// transition is observed via ListRuns/Overview, not this response.
+//
+// POST /api/v1/recipe/cancel-run
+func (c *Client) CancelRun(ctx context.Context, request *CancelRunRequest) error {
+	_, err := c.sendCancelRun(ctx, request)
+	return err
+}
+
+func (c *Client) sendCancelRun(ctx context.Context, request *CancelRunRequest) (res *CancelRunResponse, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("cancelRun"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/api/v1/recipe/cancel-run"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, CancelRunOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/api/v1/recipe/cancel-run"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeCancelRunRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeCancelRunResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -3929,6 +4029,100 @@ func (c *Client) sendDeleteRole(ctx context.Context, request *DeleteRoleRequest,
 
 	stage = "DecodeResponse"
 	result, err := decodeDeleteRoleResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// DeleteRun invokes deleteRun operation.
+//
+// DeleteRun deletes a run record by id.
+//
+// POST /api/v1/recipe/delete-run
+func (c *Client) DeleteRun(ctx context.Context, request *DeleteRunRequest, params DeleteRunParams) error {
+	_, err := c.sendDeleteRun(ctx, request, params)
+	return err
+}
+
+func (c *Client) sendDeleteRun(ctx context.Context, request *DeleteRunRequest, params DeleteRunParams) (res *DeleteRunResponse, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("deleteRun"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/api/v1/recipe/delete-run"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, DeleteRunOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/api/v1/recipe/delete-run"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeDeleteRunRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "EncodeHeaderParams"
+	h := uri.NewHeaderEncoder(r.Header)
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "Idempotency-Key",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.IdempotencyKey.Get(); ok {
+				return e.EncodeValue(conv.UUIDToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeDeleteRunResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -8586,6 +8780,84 @@ func (c *Client) sendListRoles(ctx context.Context, request *ListRolesRequest) (
 
 	stage = "DecodeResponse"
 	result, err := decodeListRolesResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// ListRuns invokes listRuns operation.
+//
+// ListRuns lists the runs launched from recipe bundles for the tenant,
+// optionally filtered to one recipe. Read-only.
+//
+// GET /api/v1/recipe/list-runs
+func (c *Client) ListRuns(ctx context.Context, request *ListRunsRequest) (*ListRunsResponse, error) {
+	res, err := c.sendListRuns(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendListRuns(ctx context.Context, request *ListRunsRequest) (res *ListRunsResponse, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("listRuns"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/api/v1/recipe/list-runs"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, ListRunsOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/api/v1/recipe/list-runs"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeListRunsRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeListRunsResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

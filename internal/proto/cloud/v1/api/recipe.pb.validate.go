@@ -1650,3 +1650,707 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = StartRunResponseValidationError{}
+
+// Validate checks the field values on ListRunsRequest with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *ListRunsRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListRunsRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListRunsRequestMultiError, or nil if none found.
+func (m *ListRunsRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListRunsRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetTenantId()); l < 1 || l > 64 {
+		err := ListRunsRequestValidationError{
+			field:  "TenantId",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetRecipeId()) > 64 {
+		err := ListRunsRequestValidationError{
+			field:  "RecipeId",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return ListRunsRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListRunsRequestMultiError is an error wrapping multiple validation errors
+// returned by ListRunsRequest.ValidateAll() if the designated constraints
+// aren't met.
+type ListRunsRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListRunsRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListRunsRequestMultiError) AllErrors() []error { return m }
+
+// ListRunsRequestValidationError is the validation error returned by
+// ListRunsRequest.Validate if the designated constraints aren't met.
+type ListRunsRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListRunsRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListRunsRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListRunsRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListRunsRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListRunsRequestValidationError) ErrorName() string { return "ListRunsRequestValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ListRunsRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListRunsRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListRunsRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListRunsRequestValidationError{}
+
+// Validate checks the field values on ListRunsResponse with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *ListRunsResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListRunsResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListRunsResponseMultiError, or nil if none found.
+func (m *ListRunsResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListRunsResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetRuns() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListRunsResponseValidationError{
+						field:  fmt.Sprintf("Runs[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListRunsResponseValidationError{
+						field:  fmt.Sprintf("Runs[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListRunsResponseValidationError{
+					field:  fmt.Sprintf("Runs[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return ListRunsResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListRunsResponseMultiError is an error wrapping multiple validation errors
+// returned by ListRunsResponse.ValidateAll() if the designated constraints
+// aren't met.
+type ListRunsResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListRunsResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListRunsResponseMultiError) AllErrors() []error { return m }
+
+// ListRunsResponseValidationError is the validation error returned by
+// ListRunsResponse.Validate if the designated constraints aren't met.
+type ListRunsResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListRunsResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListRunsResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListRunsResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListRunsResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListRunsResponseValidationError) ErrorName() string { return "ListRunsResponseValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ListRunsResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListRunsResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListRunsResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListRunsResponseValidationError{}
+
+// Validate checks the field values on CancelRunRequest with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *CancelRunRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CancelRunRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CancelRunRequestMultiError, or nil if none found.
+func (m *CancelRunRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CancelRunRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetTenantId()); l < 1 || l > 64 {
+		err := CancelRunRequestValidationError{
+			field:  "TenantId",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetRunId()); l < 1 || l > 64 {
+		err := CancelRunRequestValidationError{
+			field:  "RunId",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return CancelRunRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// CancelRunRequestMultiError is an error wrapping multiple validation errors
+// returned by CancelRunRequest.ValidateAll() if the designated constraints
+// aren't met.
+type CancelRunRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CancelRunRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CancelRunRequestMultiError) AllErrors() []error { return m }
+
+// CancelRunRequestValidationError is the validation error returned by
+// CancelRunRequest.Validate if the designated constraints aren't met.
+type CancelRunRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CancelRunRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CancelRunRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CancelRunRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CancelRunRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CancelRunRequestValidationError) ErrorName() string { return "CancelRunRequestValidationError" }
+
+// Error satisfies the builtin error interface
+func (e CancelRunRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCancelRunRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CancelRunRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CancelRunRequestValidationError{}
+
+// Validate checks the field values on CancelRunResponse with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *CancelRunResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CancelRunResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CancelRunResponseMultiError, or nil if none found.
+func (m *CancelRunResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CancelRunResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return CancelRunResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// CancelRunResponseMultiError is an error wrapping multiple validation errors
+// returned by CancelRunResponse.ValidateAll() if the designated constraints
+// aren't met.
+type CancelRunResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CancelRunResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CancelRunResponseMultiError) AllErrors() []error { return m }
+
+// CancelRunResponseValidationError is the validation error returned by
+// CancelRunResponse.Validate if the designated constraints aren't met.
+type CancelRunResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CancelRunResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CancelRunResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CancelRunResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CancelRunResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CancelRunResponseValidationError) ErrorName() string {
+	return "CancelRunResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CancelRunResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCancelRunResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CancelRunResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CancelRunResponseValidationError{}
+
+// Validate checks the field values on DeleteRunRequest with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *DeleteRunRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DeleteRunRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// DeleteRunRequestMultiError, or nil if none found.
+func (m *DeleteRunRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DeleteRunRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetTenantId()); l < 1 || l > 64 {
+		err := DeleteRunRequestValidationError{
+			field:  "TenantId",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetRunId()); l < 1 || l > 64 {
+		err := DeleteRunRequestValidationError{
+			field:  "RunId",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return DeleteRunRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// DeleteRunRequestMultiError is an error wrapping multiple validation errors
+// returned by DeleteRunRequest.ValidateAll() if the designated constraints
+// aren't met.
+type DeleteRunRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DeleteRunRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DeleteRunRequestMultiError) AllErrors() []error { return m }
+
+// DeleteRunRequestValidationError is the validation error returned by
+// DeleteRunRequest.Validate if the designated constraints aren't met.
+type DeleteRunRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DeleteRunRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DeleteRunRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DeleteRunRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DeleteRunRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DeleteRunRequestValidationError) ErrorName() string { return "DeleteRunRequestValidationError" }
+
+// Error satisfies the builtin error interface
+func (e DeleteRunRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDeleteRunRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DeleteRunRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DeleteRunRequestValidationError{}
+
+// Validate checks the field values on DeleteRunResponse with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *DeleteRunResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DeleteRunResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// DeleteRunResponseMultiError, or nil if none found.
+func (m *DeleteRunResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DeleteRunResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return DeleteRunResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// DeleteRunResponseMultiError is an error wrapping multiple validation errors
+// returned by DeleteRunResponse.ValidateAll() if the designated constraints
+// aren't met.
+type DeleteRunResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DeleteRunResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DeleteRunResponseMultiError) AllErrors() []error { return m }
+
+// DeleteRunResponseValidationError is the validation error returned by
+// DeleteRunResponse.Validate if the designated constraints aren't met.
+type DeleteRunResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DeleteRunResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DeleteRunResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DeleteRunResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DeleteRunResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DeleteRunResponseValidationError) ErrorName() string {
+	return "DeleteRunResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DeleteRunResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDeleteRunResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DeleteRunResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DeleteRunResponseValidationError{}

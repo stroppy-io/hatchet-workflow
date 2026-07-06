@@ -101,6 +101,36 @@ func TestLaunchRecipeRunMissingRunIDErrors(t *testing.T) {
 	}
 }
 
+func TestCancelRecipeRunCancelsTheDeterministicWorkflowID(t *testing.T) {
+	starter := &fakeWorkflowStarter{}
+	rw := &RecipeWorkflows{client: starter}
+
+	if err := rw.CancelRecipeRun(context.Background(), "run-1"); err != nil {
+		t.Fatalf("cancel recipe run: %v", err)
+	}
+	if got, want := len(starter.cancelCalls), 1; got != want {
+		t.Fatalf("CancelWorkflow calls = %d, want %d", got, want)
+	}
+	call := starter.cancelCalls[0]
+	if got, want := call.workflowID, "run-recipe/run-1"; got != want {
+		t.Fatalf("workflow id = %q, want %q", got, want)
+	}
+	if call.runID != "" {
+		t.Fatalf("temporal run id = %q, want empty (target latest execution)", call.runID)
+	}
+}
+
+func TestCancelRecipeRunPropagatesCancelWorkflowError(t *testing.T) {
+	wantErr := errors.New("temporal unavailable")
+	starter := &fakeWorkflowStarter{cancelErr: wantErr}
+	rw := &RecipeWorkflows{client: starter}
+
+	err := rw.CancelRecipeRun(context.Background(), "run-1")
+	if !errors.Is(err, wantErr) {
+		t.Fatalf("err = %v, want %v", err, wantErr)
+	}
+}
+
 /*
 	===== test doubles =====
 */
@@ -111,9 +141,16 @@ type executeWorkflowCall struct {
 	args     []interface{}
 }
 
+type cancelWorkflowCall struct {
+	workflowID string
+	runID      string
+}
+
 type fakeWorkflowStarter struct {
-	err   error
-	calls []executeWorkflowCall
+	err         error
+	cancelErr   error
+	calls       []executeWorkflowCall
+	cancelCalls []cancelWorkflowCall
 }
 
 func (f *fakeWorkflowStarter) ExecuteWorkflow(_ context.Context, options client.StartWorkflowOptions, workflow interface{}, args ...interface{}) (client.WorkflowRun, error) {
@@ -122,6 +159,11 @@ func (f *fakeWorkflowStarter) ExecuteWorkflow(_ context.Context, options client.
 		return nil, f.err
 	}
 	return nil, nil
+}
+
+func (f *fakeWorkflowStarter) CancelWorkflow(_ context.Context, workflowID string, runID string) error {
+	f.cancelCalls = append(f.cancelCalls, cancelWorkflowCall{workflowID: workflowID, runID: runID})
+	return f.cancelErr
 }
 
 // fakeStandaloneBootstrap is a stub domsettings.AgentBootstrapSource-shaped

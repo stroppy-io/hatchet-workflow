@@ -208,6 +208,22 @@ components:
                     $ref: '#/components/schemas/Schema'
                 values: {}
             type: object
+        CancelRunRequest:
+            additionalProperties: false
+            properties:
+                runId:
+                    maxLength: 64
+                    minLength: 1
+                    type: string
+                tenantId:
+                    maxLength: 64
+                    minLength: 1
+                    type: string
+            type: object
+        CancelRunResponse:
+            additionalProperties: false
+            properties: {}
+            type: object
         CancelSuiteRunRequest:
             additionalProperties: false
             properties:
@@ -1443,6 +1459,22 @@ components:
                     type: string
             type: object
         DeleteRoleResponse:
+            additionalProperties: false
+            properties: {}
+            type: object
+        DeleteRunRequest:
+            additionalProperties: false
+            properties:
+                runId:
+                    maxLength: 64
+                    minLength: 1
+                    type: string
+                tenantId:
+                    maxLength: 64
+                    minLength: 1
+                    type: string
+            type: object
+        DeleteRunResponse:
             additionalProperties: false
             properties: {}
             type: object
@@ -3692,6 +3724,25 @@ components:
                 roles:
                     items:
                         $ref: '#/components/schemas/Role'
+                    type: array
+            type: object
+        ListRunsRequest:
+            additionalProperties: false
+            properties:
+                recipeId:
+                    maxLength: 64
+                    type: string
+                tenantId:
+                    maxLength: 64
+                    minLength: 1
+                    type: string
+            type: object
+        ListRunsResponse:
+            additionalProperties: false
+            properties:
+                runs:
+                    items:
+                        $ref: '#/components/schemas/TestRunRecord'
                     type: array
             type: object
         ListSharesRequest:
@@ -8373,6 +8424,9 @@ components:
                     type: boolean
                 infrastructureState:
                     $ref: '#/components/schemas/InfrastructureState'
+                recipeId:
+                    maxLength: 64
+                    type: string
                 runtimeState:
                     $ref: '#/components/schemas/RunState'
                 spec:
@@ -11562,6 +11616,36 @@ paths:
                 - rating
             x-idempotency-level: NO_SIDE_EFFECTS
             x-ogen-operation-group: Rating
+    /api/v1/recipe/cancel-run:
+        post:
+            description: |-
+                CancelRun requests cancellation of an in-flight run's
+                RunRecipeWorkflow. Cancellation is asynchronous: the resulting status
+                transition is observed via ListRuns/Overview, not this response.
+            operationId: cancelRun
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CancelRunRequest'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/CancelRunResponse'
+                    description: OK
+                default:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Unexpected error.
+            summary: CancelRun requests cancellation of an in-flight run's
+            tags:
+                - recipe
+            x-ogen-operation-group: Recipe
     /api/v1/recipe/check-recipe:
         get:
             description: |-
@@ -11657,6 +11741,42 @@ paths:
                 - recipe
             x-idempotency-level: IDEMPOTENT
             x-ogen-operation-group: Recipe
+    /api/v1/recipe/delete-run:
+        post:
+            description: DeleteRun deletes a run record by id.
+            operationId: deleteRun
+            parameters:
+                - description: Optional idempotency key used to safely retry the request.
+                  in: header
+                  name: Idempotency-Key
+                  required: false
+                  schema:
+                    format: uuid
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/DeleteRunRequest'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DeleteRunResponse'
+                    description: OK
+                default:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Unexpected error.
+            summary: DeleteRun deletes a run record by id.
+            tags:
+                - recipe
+            x-idempotency-level: IDEMPOTENT
+            x-ogen-operation-group: Recipe
     /api/v1/recipe/get-recipe:
         get:
             description: GetRecipe fetches a single recipe record by id. Read-only.
@@ -11711,6 +11831,36 @@ paths:
                                 $ref: '#/components/schemas/Error'
                     description: Unexpected error.
             summary: ListRecipes lists recipe records with filtering and pagination.
+            tags:
+                - recipe
+            x-idempotency-level: NO_SIDE_EFFECTS
+            x-ogen-operation-group: Recipe
+    /api/v1/recipe/list-runs:
+        get:
+            description: |-
+                ListRuns lists the runs launched from recipe bundles for the tenant,
+                optionally filtered to one recipe. Read-only.
+            operationId: listRuns
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ListRunsRequest'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListRunsResponse'
+                    description: OK
+                default:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Unexpected error.
+            summary: ListRuns lists the runs launched from recipe bundles for the tenant,
             tags:
                 - recipe
             x-idempotency-level: NO_SIDE_EFFECTS

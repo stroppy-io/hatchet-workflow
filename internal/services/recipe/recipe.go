@@ -154,9 +154,9 @@ RunRecipeWorkflow directly. Overview/metrics/logs still work unchanged
 because they key off Entity.Id/TenantId/Status/RuntimeState, none of which
 require Spec (see internal/infrastructure/execution/overview.go's
 overviewFromRecord, which already branches on RuntimeState rather than
-Spec). Name/Description carry the recipe's identity so the run is still
-traceable back to the recipe bundle that produced it (models.TestRunRecord
-has no dedicated recipe_id field).
+Spec). Name/Description carry the recipe's identity, and RecipeId is
+stamped with the recipe record's id so ListRuns can filter by recipe and
+RunDetail/rerun can trace the run back to the bundle that produced it.
 
 Not idempotent: each call mints a new run, exactly like
 test_run.StartTestRun.
@@ -191,8 +191,9 @@ func (s *Service) StartRun(ctx context.Context, req *api.StartRunRequest) (*api.
 				UpdatedAt: s.now(),
 			},
 		},
-		Status:  common.Status_STATUS_PENDING,
-		Trigger: common.Trigger_TRIGGER_API,
+		Status:   common.Status_STATUS_PENDING,
+		Trigger:  common.Trigger_TRIGGER_API,
+		RecipeId: recipeRec.GetEntity().GetId(),
 	}
 
 	if err := s.d.Runs.Create(ctx, run); err != nil {
@@ -211,6 +212,89 @@ func (s *Service) StartRun(ctx context.Context, req *api.StartRunRequest) (*api.
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	return &api.StartRunResponse{Run: run}, nil
+}
+
+// ListRuns returns every run for the tenant, optionally narrowed to a single
+// recipe. It reuses the same s.d.Runs.List that backed the (removed)
+// test_run service, passing a tenant-only ListTestRunsRequest so no facet
+// filter is applied at the storage layer; the recipe_id filter (a facet
+// ListTestRunsRequest has no field for) is then applied in Go. Recipe run
+// sets are expected to stay small enough per tenant for this to be
+// unproblematic; a dedicated storage-side recipe_id facet is a documented
+// follow-up if that stops being true.
+func (s *Service) ListRuns(ctx context.Context, req *api.ListRunsRequest) (*api.ListRunsResponse, error) {
+	if err := requireTenant(req.GetTenantId()); err != nil {
+		return nil, err
+	}
+	c, err := s.caller(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	runs, _, err := s.d.Runs.List(ctx, &api.ListTestRunsRequest{TenantId: req.GetTenantId()}, c.GetAccountId())
+	if err != nil {
+		return nil, utils.MapErr(err)
+	}
+
+	if recipeID := req.GetRecipeId(); recipeID != "" {
+		filtered := make([]*models.TestRunRecord, 0, len(runs))
+		for _, run := range runs {
+			if run.GetRecipeId() == recipeID {
+				filtered = append(filtered, run)
+			}
+		}
+		runs = filtered
+	}
+
+	return &api.ListRunsResponse{Runs: runs}, nil
+}
+
+// CancelRun requests cancellation of an in-flight recipe run's
+// RunRecipeWorkflow. It first confirms the run is owned by the caller's
+// tenant (Runs.Get returns derrors.ErrNotFound for an absent or
+// cross-tenant row, mapped to codes.NotFound) so a caller can never
+// request cancellation of another tenant's run by guessing its id.
+// Cancellation itself is asynchronous — this handler only triggers it; the
+// workflow's own cancel path persists the resulting run status.
+func (s *Service) CancelRun(ctx context.Context, req *api.CancelRunRequest) (*api.CancelRunResponse, error) {
+	if err := requireTenant(req.GetTenantId()); err != nil {
+		return nil, err
+	}
+	if req.GetRunId() == "" {
+		return nil, status.Error(codes.InvalidArgument, "run_id is required")
+	}
+
+	if _, err := s.d.Runs.Get(ctx, req.GetTenantId(), req.GetRunId()); err != nil {
+		return nil, utils.MapErr(err)
+	}
+
+	if err := s.d.Workflows.CancelRecipeRun(ctx, req.GetRunId()); err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return &api.CancelRunResponse{}, nil
+}
+
+// DeleteRun removes a run record. Like CancelRun, it first confirms tenant
+// ownership via Runs.Get before deleting, so a caller can never delete
+// another tenant's run by guessing its id (Runs.Delete alone is already
+// tenant-scoped, but a bare Delete would map an absent row and a
+// cross-tenant row to the same NotFound either way — the explicit Get
+// keeps the ownership check visible and consistent with CancelRun).
+func (s *Service) DeleteRun(ctx context.Context, req *api.DeleteRunRequest) (*api.DeleteRunResponse, error) {
+	if err := requireTenant(req.GetTenantId()); err != nil {
+		return nil, err
+	}
+	if req.GetRunId() == "" {
+		return nil, status.Error(codes.InvalidArgument, "run_id is required")
+	}
+
+	if _, err := s.d.Runs.Get(ctx, req.GetTenantId(), req.GetRunId()); err != nil {
+		return nil, utils.MapErr(err)
+	}
+	if err := s.d.Runs.Delete(ctx, req.GetTenantId(), req.GetRunId()); err != nil {
+		return nil, utils.MapErr(err)
+	}
+	return &api.DeleteRunResponse{}, nil
 }
 
 /*

@@ -12270,6 +12270,7 @@ func TestRunRecordToOgen(src *models.TestRunRecord) (*rest.TestRunRecord, error)
 		}
 		dst.RuntimeState.SetTo(*o8)
 	}
+	dst.RecipeId.SetTo(string(src.GetRecipeId()))
 	return &dst, nil
 }
 
@@ -12376,6 +12377,9 @@ func TestRunRecordFromOgen(src *rest.TestRunRecord) (*models.TestRunRecord, erro
 			return nil, err
 		}
 		dst.RuntimeState = m18
+	}
+	if v19, ok := src.RecipeId.Get(); ok {
+		dst.RecipeId = string(v19)
 	}
 	return dst, nil
 }

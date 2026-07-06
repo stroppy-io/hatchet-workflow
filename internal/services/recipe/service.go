@@ -50,23 +50,47 @@ type RecipeRepo interface {
 // the same postgres.TestRunRepo the test_run service already writes through)
 // so the run immediately participates in overview/metrics/logs without any
 // new plumbing — see StartRun's doc comment for what a recipe run's record
-// does and does not populate. Only Create/Update are needed here: StartRun
-// never lists or re-fetches a run it just minted in the same call.
+// does and does not populate.
+//
+// Get/List/Delete mirror postgres.TestRunRepo's existing methods exactly
+// (same signatures) so that repo satisfies this port without any new
+// storage-layer code: List(ctx, query, callerAccountID) is the same
+// full-filter ListTestRunsRequest query the (removed) test_run service used,
+// reused here rather than adding a second, narrower list method — ListRuns
+// passes a tenant-only query and filters the recipe_id facet in Go (see
+// recipe.go's ListRuns), since ListTestRunsRequest has no recipe_id facet of
+// its own.
 type RunRepo interface {
 	Create(ctx context.Context, run *models.TestRunRecord) error
 	Update(ctx context.Context, run *models.TestRunRecord) error
+	// Get returns the tenant-scoped run record, or derrors.ErrNotFound for an
+	// absent row or one owned by another tenant.
+	Get(ctx context.Context, tenantID, id string) (*models.TestRunRecord, error)
+	// List returns the page of runs matching query (tenant-scoped) plus the
+	// next-page token; callerAccountID fills each row's per-caller
+	// is_favorite (see postgres.TestRunRepo.List).
+	List(ctx context.Context, query *api.ListTestRunsRequest, callerAccountID string) ([]*models.TestRunRecord, string, error)
+	// Delete removes the tenant-scoped run record, or derrors.ErrNotFound for
+	// an absent row or one owned by another tenant.
+	Delete(ctx context.Context, tenantID, id string) error
 }
 
-// RecipeWorkflows launches the per-run RunRecipeWorkflow (internal/workflows/
-// runrecipe.go) for a persisted recipe run. Launch is started AFTER the run
-// record is committed — it is external IO and must not run inside an
-// ambient transaction — mirroring test_run.Workflows.LaunchTest's own
-// contract. bundle is the recipe's raw files (models.RecipeBundle.Files);
-// the implementation resolves everything else (agent bootstrap, task queue,
-// workflow id) itself, the same way infrastructure/execution.TestWorkflows
-// resolves bootstrap internally rather than taking it as a parameter.
+// RecipeWorkflows launches and cancels the per-run RunRecipeWorkflow
+// (internal/workflows/runrecipe.go) for a persisted recipe run. Launch is
+// started AFTER the run record is committed — it is external IO and must
+// not run inside an ambient transaction — mirroring test_run.Workflows.
+// LaunchTest's own contract. bundle is the recipe's raw files
+// (models.RecipeBundle.Files); the implementation resolves everything else
+// (agent bootstrap, task queue, workflow id) itself, the same way
+// infrastructure/execution.TestWorkflows resolves bootstrap internally
+// rather than taking it as a parameter.
 type RecipeWorkflows interface {
 	LaunchRecipeRun(ctx context.Context, run *models.TestRunRecord, bundle map[string][]byte) error
+	// CancelRecipeRun requests cancellation of the RunRecipeWorkflow bound to
+	// runID (the same deterministic workflow id LaunchRecipeRun started).
+	// Cancellation is asynchronous: the workflow's own cancel path persists
+	// the resulting run status, this call only requests it.
+	CancelRecipeRun(ctx context.Context, runID string) error
 }
 
 // Deps bundles every dependency for the constructor.

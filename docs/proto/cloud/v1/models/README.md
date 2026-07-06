@@ -1810,6 +1810,19 @@ go_name: InTenantRating</pre></td>
 json_name: infrastructureState
 go_name: InfrastructureState</pre></td>
 </tr><tr>
+<td>recipe_id</td>
+<td>string</td>
+<td><pre>
+//recipe_id is the originating models.RecipeRecord.entity.id for a run
+//launched via RecipeService.StartRun; empty for a classic run launched
+//from a baked domain.TestRun spec (wizard/suite/cron). Stamped once at
+//StartRun and never changed afterwards. RecipeService.ListRuns filters
+//on this field when the caller supplies recipe_id; it also lets
+//RunDetail trace a recipe run back to the bundle that produced it.<br>
+
+json_name: recipeId
+go_name: RecipeId</pre></td>
+</tr><tr>
 <td>runtime_state</td>
 <td><a href="../workflow/README.md#cloud-v1-workflow-runstate">cloud.v1.workflow.RunState</a></td>
 <td><pre>

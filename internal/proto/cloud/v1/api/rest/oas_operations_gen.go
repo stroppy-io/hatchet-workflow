@@ -7,6 +7,7 @@ type OperationName = string
 
 const (
 	AddFavoriteOperation                    OperationName = "AddFavorite"
+	CancelRunOperation                      OperationName = "CancelRun"
 	CancelSuiteRunOperation                 OperationName = "CancelSuiteRun"
 	CancelTestRunOperation                  OperationName = "CancelTestRun"
 	ChangePasswordOperation                 OperationName = "ChangePassword"
@@ -39,6 +40,7 @@ const (
 	DeletePackageOperation                  OperationName = "DeletePackage"
 	DeleteRecipeOperation                   OperationName = "DeleteRecipe"
 	DeleteRoleOperation                     OperationName = "DeleteRole"
+	DeleteRunOperation                      OperationName = "DeleteRun"
 	DeleteShareOperation                    OperationName = "DeleteShare"
 	DeleteSuiteOperation                    OperationName = "DeleteSuite"
 	DeleteSuiteRunOperation                 OperationName = "DeleteSuiteRun"
@@ -97,6 +99,7 @@ const (
 	ListRecipesOperation                    OperationName = "ListRecipes"
 	ListRegistrationRequestsOperation       OperationName = "ListRegistrationRequests"
 	ListRolesOperation                      OperationName = "ListRoles"
+	ListRunsOperation                       OperationName = "ListRuns"
 	ListSharesOperation                     OperationName = "ListShares"
 	ListStroppyVersionsOperation            OperationName = "ListStroppyVersions"
 	ListSuiteFacetsOperation                OperationName = "ListSuiteFacets"

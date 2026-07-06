@@ -7,6 +7,8 @@
 - Messages
   - [cloud.v1.api.AddFavoriteRequest](#cloud-v1-api-addfavoriterequest)
   - [cloud.v1.api.AddFavoriteResponse](#cloud-v1-api-addfavoriteresponse)
+  - [cloud.v1.api.CancelRunRequest](#cloud-v1-api-cancelrunrequest)
+  - [cloud.v1.api.CancelRunResponse](#cloud-v1-api-cancelrunresponse)
   - [cloud.v1.api.CancelSuiteRunRequest](#cloud-v1-api-cancelsuiterunrequest)
   - [cloud.v1.api.CancelSuiteRunResponse](#cloud-v1-api-cancelsuiterunresponse)
   - [cloud.v1.api.CancelTestRunRequest](#cloud-v1-api-canceltestrunrequest)
@@ -73,6 +75,8 @@
   - [cloud.v1.api.DeleteRecipeResponse](#cloud-v1-api-deletereciperesponse)
   - [cloud.v1.api.DeleteRoleRequest](#cloud-v1-api-deleterolerequest)
   - [cloud.v1.api.DeleteRoleResponse](#cloud-v1-api-deleteroleresponse)
+  - [cloud.v1.api.DeleteRunRequest](#cloud-v1-api-deleterunrequest)
+  - [cloud.v1.api.DeleteRunResponse](#cloud-v1-api-deleterunresponse)
   - [cloud.v1.api.DeleteShareRequest](#cloud-v1-api-deletesharerequest)
   - [cloud.v1.api.DeleteShareResponse](#cloud-v1-api-deleteshareresponse)
   - [cloud.v1.api.DeleteSuiteRequest](#cloud-v1-api-deletesuiterequest)
@@ -194,6 +198,8 @@
   - [cloud.v1.api.ListRegistrationRequestsResponse](#cloud-v1-api-listregistrationrequestsresponse)
   - [cloud.v1.api.ListRolesRequest](#cloud-v1-api-listrolesrequest)
   - [cloud.v1.api.ListRolesResponse](#cloud-v1-api-listrolesresponse)
+  - [cloud.v1.api.ListRunsRequest](#cloud-v1-api-listrunsrequest)
+  - [cloud.v1.api.ListRunsResponse](#cloud-v1-api-listrunsresponse)
   - [cloud.v1.api.ListSharesRequest](#cloud-v1-api-listsharesrequest)
   - [cloud.v1.api.ListSharesResponse](#cloud-v1-api-listsharesresponse)
   - [cloud.v1.api.ListStroppyVersionsRequest](#cloud-v1-api-liststroppyversionsrequest)
@@ -411,6 +417,50 @@ json_name: favorite
 go_name: Favorite</pre></td>
 </tr>
 </table>
+
+
+
+<a name="cloud-v1-api-cancelrunrequest"></a>
+### cloud.v1.api.CancelRunRequest
+
+<pre>
+//CancelRunRequest requests cancellation of an in-flight recipe run.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>run_id</td>
+<td>string</td>
+<td><pre>
+//run_id is the run record identifier to cancel.<br>
+
+json_name: runId
+go_name: RunId</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+//tenant_id scopes the request to the owning tenant.<br>
+
+json_name: tenantId
+go_name: TenantId</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-cancelrunresponse"></a>
+### cloud.v1.api.CancelRunResponse
+
+<pre>
+//CancelRunResponse is empty; cancellation is asynchronous — poll the run
+//record (or ListRuns/Overview) to observe the resulting status.
+</pre>
 
 
 
@@ -2556,6 +2606,49 @@ go_name: Id</pre></td>
 
 <pre>
 //DeleteRoleResponse is empty; success is signalled by the absence of error.
+</pre>
+
+
+
+<a name="cloud-v1-api-deleterunrequest"></a>
+### cloud.v1.api.DeleteRunRequest
+
+<pre>
+//DeleteRunRequest deletes a run record by id.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>run_id</td>
+<td>string</td>
+<td><pre>
+//run_id is the run record identifier to delete.<br>
+
+json_name: runId
+go_name: RunId</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+//tenant_id scopes the request to the owning tenant.<br>
+
+json_name: tenantId
+go_name: TenantId</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-deleterunresponse"></a>
+### cloud.v1.api.DeleteRunResponse
+
+<pre>
+//DeleteRunResponse is empty; success is signalled by a non-error reply.
 </pre>
 
 
@@ -6165,6 +6258,69 @@ go_name: NextPageToken</pre></td>
 
 json_name: roles
 go_name: Roles</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-listrunsrequest"></a>
+### cloud.v1.api.ListRunsRequest
+
+<pre>
+//ListRunsRequest lists the runs launched from recipe bundles for a tenant,
+//optionally narrowed to one recipe.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>recipe_id</td>
+<td>string</td>
+<td><pre>
+//recipe_id, when set, filters to runs launched from that recipe record
+//(matches models.TestRunRecord.recipe_id). Empty returns every recipe
+//run for the tenant.<br>
+
+json_name: recipeId
+go_name: RecipeId</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+//tenant_id scopes the request to the owning tenant.<br>
+
+json_name: tenantId
+go_name: TenantId</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-listrunsresponse"></a>
+### cloud.v1.api.ListRunsResponse
+
+<pre>
+//ListRunsResponse returns the matching recipe runs.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>runs</td>
+<td><a href="../models/README.md#cloud-v1-models-testrunrecord">cloud.v1.models.TestRunRecord</a></td>
+<td><pre>
+//runs is the matching set of run records.<br>
+
+json_name: runs
+go_name: Runs</pre></td>
 </tr>
 </table>
 

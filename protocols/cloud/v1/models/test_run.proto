@@ -107,6 +107,16 @@ message TestRunRecord {
     workflow.RunState runtime_state = 13;
 
     /*
+        recipe_id is the originating models.RecipeRecord.entity.id for a run
+        launched via RecipeService.StartRun; empty for a classic run launched
+        from a baked domain.TestRun spec (wizard/suite/cron). Stamped once at
+        StartRun and never changed afterwards. RecipeService.ListRuns filters
+        on this field when the caller supplies recipe_id; it also lets
+        RunDetail trace a recipe run back to the bundle that produced it.
+     */
+    string recipe_id = 14 [(validate.rules).string.max_len = 64];
+
+    /*
         Summary is the flat, indexed projection of the run used by the table:
         every field is filterable and sortable without touching the baked spec.
      */

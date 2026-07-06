@@ -399,6 +399,268 @@ func TestStartRunUnknownRecipeIsNotFound(t *testing.T) {
 	}
 }
 
+func TestStartRunStampsRecipeIDLabel(t *testing.T) {
+	repo := newFakeRecipeRepo()
+	runs := newFakeRunRepo()
+	workflows := newFakeRecipeWorkflows(nil)
+	svc := NewService(Deps{Repo: repo, Authn: fakeAuthn{}, Checker: stubChecker(nil), Runs: runs, Workflows: workflows})
+
+	created, err := svc.CreateRecipe(context.Background(), &api.CreateRecipeRequest{
+		TenantId: "tenant-1",
+		Recipe: &models.RecipeRecord{
+			Entity: &common.Entity{Name: "pg-ha"},
+			Bundle: newBundle(),
+		},
+	})
+	if err != nil {
+		t.Fatalf("create recipe: %v", err)
+	}
+	recipeID := created.GetRecipe().GetEntity().GetId()
+
+	resp, err := svc.StartRun(context.Background(), &api.StartRunRequest{TenantId: "tenant-1", RecipeId: recipeID})
+	if err != nil {
+		t.Fatalf("start run: %v", err)
+	}
+	if resp.GetRun().GetRecipeId() != recipeID {
+		t.Fatalf("run.recipe_id = %q, want %q", resp.GetRun().GetRecipeId(), recipeID)
+	}
+}
+
+/*
+	===== ListRuns =====
+*/
+
+func TestListRunsReturnsTenantRuns(t *testing.T) {
+	repo := newFakeRecipeRepo()
+	runs := newFakeRunRepo()
+	svc := NewService(Deps{Repo: repo, Authn: fakeAuthn{}, Checker: stubChecker(nil), Runs: runs, Workflows: newFakeRecipeWorkflows(nil)})
+
+	for _, tenantID := range []string{"tenant-1", "tenant-1", "tenant-2"} {
+		recipe, err := svc.CreateRecipe(context.Background(), &api.CreateRecipeRequest{
+			TenantId: tenantID,
+			Recipe:   &models.RecipeRecord{Entity: &common.Entity{Name: "pg-ha"}, Bundle: newBundle()},
+		})
+		if err != nil {
+			t.Fatalf("create recipe: %v", err)
+		}
+		if _, err := svc.StartRun(context.Background(), &api.StartRunRequest{
+			TenantId: tenantID,
+			RecipeId: recipe.GetRecipe().GetEntity().GetId(),
+		}); err != nil {
+			t.Fatalf("start run: %v", err)
+		}
+	}
+
+	resp, err := svc.ListRuns(context.Background(), &api.ListRunsRequest{TenantId: "tenant-1"})
+	if err != nil {
+		t.Fatalf("list runs: %v", err)
+	}
+	if len(resp.GetRuns()) != 2 {
+		t.Fatalf("runs = %d, want 2 (only tenant-1's)", len(resp.GetRuns()))
+	}
+	for _, run := range resp.GetRuns() {
+		if run.GetEntity().GetTenantId() != "tenant-1" {
+			t.Fatalf("run tenant_id = %q, want tenant-1", run.GetEntity().GetTenantId())
+		}
+	}
+}
+
+func TestListRunsFiltersByRecipeID(t *testing.T) {
+	repo := newFakeRecipeRepo()
+	runs := newFakeRunRepo()
+	svc := NewService(Deps{Repo: repo, Authn: fakeAuthn{}, Checker: stubChecker(nil), Runs: runs, Workflows: newFakeRecipeWorkflows(nil)})
+
+	var recipeIDs []string
+	for _, name := range []string{"pg-ha", "ydb-mirror"} {
+		recipe, err := svc.CreateRecipe(context.Background(), &api.CreateRecipeRequest{
+			TenantId: "tenant-1",
+			Recipe:   &models.RecipeRecord{Entity: &common.Entity{Name: name}, Bundle: newBundle()},
+		})
+		if err != nil {
+			t.Fatalf("create recipe %s: %v", name, err)
+		}
+		recipeIDs = append(recipeIDs, recipe.GetRecipe().GetEntity().GetId())
+		if _, err := svc.StartRun(context.Background(), &api.StartRunRequest{
+			TenantId: "tenant-1",
+			RecipeId: recipe.GetRecipe().GetEntity().GetId(),
+		}); err != nil {
+			t.Fatalf("start run for %s: %v", name, err)
+		}
+	}
+
+	resp, err := svc.ListRuns(context.Background(), &api.ListRunsRequest{TenantId: "tenant-1", RecipeId: recipeIDs[0]})
+	if err != nil {
+		t.Fatalf("list runs: %v", err)
+	}
+	if len(resp.GetRuns()) != 1 {
+		t.Fatalf("runs = %d, want 1", len(resp.GetRuns()))
+	}
+	if resp.GetRuns()[0].GetRecipeId() != recipeIDs[0] {
+		t.Fatalf("run.recipe_id = %q, want %q", resp.GetRuns()[0].GetRecipeId(), recipeIDs[0])
+	}
+}
+
+func TestListRunsMissingTenantIsInvalidArgument(t *testing.T) {
+	svc := NewService(Deps{Repo: newFakeRecipeRepo(), Authn: fakeAuthn{}, Checker: stubChecker(nil), Runs: newFakeRunRepo(), Workflows: newFakeRecipeWorkflows(nil)})
+
+	_, err := svc.ListRuns(context.Background(), &api.ListRunsRequest{})
+	if status.Code(err) != codes.InvalidArgument {
+		t.Fatalf("status = %s, want %s; err=%v", status.Code(err), codes.InvalidArgument, err)
+	}
+}
+
+/*
+	===== CancelRun =====
+*/
+
+func TestCancelRunCallsCancelRecipeRunForOwnedRun(t *testing.T) {
+	repo := newFakeRecipeRepo()
+	runs := newFakeRunRepo()
+	workflows := newFakeRecipeWorkflows(nil)
+	svc := NewService(Deps{Repo: repo, Authn: fakeAuthn{}, Checker: stubChecker(nil), Runs: runs, Workflows: workflows})
+
+	recipe, err := svc.CreateRecipe(context.Background(), &api.CreateRecipeRequest{
+		TenantId: "tenant-1",
+		Recipe:   &models.RecipeRecord{Entity: &common.Entity{Name: "pg-ha"}, Bundle: newBundle()},
+	})
+	if err != nil {
+		t.Fatalf("create recipe: %v", err)
+	}
+	started, err := svc.StartRun(context.Background(), &api.StartRunRequest{TenantId: "tenant-1", RecipeId: recipe.GetRecipe().GetEntity().GetId()})
+	if err != nil {
+		t.Fatalf("start run: %v", err)
+	}
+	runID := started.GetRun().GetEntity().GetId()
+
+	if _, err := svc.CancelRun(context.Background(), &api.CancelRunRequest{TenantId: "tenant-1", RunId: runID}); err != nil {
+		t.Fatalf("cancel run: %v", err)
+	}
+	if len(workflows.cancelled) != 1 || workflows.cancelled[0] != runID {
+		t.Fatalf("cancelled = %v, want [%s]", workflows.cancelled, runID)
+	}
+}
+
+func TestCancelRunForeignRunIsNotFound(t *testing.T) {
+	repo := newFakeRecipeRepo()
+	runs := newFakeRunRepo()
+	workflows := newFakeRecipeWorkflows(nil)
+	svc := NewService(Deps{Repo: repo, Authn: fakeAuthn{}, Checker: stubChecker(nil), Runs: runs, Workflows: workflows})
+
+	recipe, err := svc.CreateRecipe(context.Background(), &api.CreateRecipeRequest{
+		TenantId: "tenant-1",
+		Recipe:   &models.RecipeRecord{Entity: &common.Entity{Name: "pg-ha"}, Bundle: newBundle()},
+	})
+	if err != nil {
+		t.Fatalf("create recipe: %v", err)
+	}
+	started, err := svc.StartRun(context.Background(), &api.StartRunRequest{TenantId: "tenant-1", RecipeId: recipe.GetRecipe().GetEntity().GetId()})
+	if err != nil {
+		t.Fatalf("start run: %v", err)
+	}
+	runID := started.GetRun().GetEntity().GetId()
+
+	_, err = svc.CancelRun(context.Background(), &api.CancelRunRequest{TenantId: "tenant-2", RunId: runID})
+	if status.Code(err) != codes.NotFound {
+		t.Fatalf("status = %s, want %s; err=%v", status.Code(err), codes.NotFound, err)
+	}
+	if len(workflows.cancelled) != 0 {
+		t.Fatalf("cancelled = %v, want none (foreign tenant must not trigger cancel)", workflows.cancelled)
+	}
+}
+
+func TestCancelRunAbsentRunIsNotFound(t *testing.T) {
+	svc := NewService(Deps{Repo: newFakeRecipeRepo(), Authn: fakeAuthn{}, Checker: stubChecker(nil), Runs: newFakeRunRepo(), Workflows: newFakeRecipeWorkflows(nil)})
+
+	_, err := svc.CancelRun(context.Background(), &api.CancelRunRequest{TenantId: "tenant-1", RunId: "missing"})
+	if status.Code(err) != codes.NotFound {
+		t.Fatalf("status = %s, want %s; err=%v", status.Code(err), codes.NotFound, err)
+	}
+}
+
+func TestCancelRunMissingTenantIsInvalidArgument(t *testing.T) {
+	svc := NewService(Deps{Repo: newFakeRecipeRepo(), Authn: fakeAuthn{}, Checker: stubChecker(nil), Runs: newFakeRunRepo(), Workflows: newFakeRecipeWorkflows(nil)})
+
+	_, err := svc.CancelRun(context.Background(), &api.CancelRunRequest{RunId: "some-id"})
+	if status.Code(err) != codes.InvalidArgument {
+		t.Fatalf("status = %s, want %s; err=%v", status.Code(err), codes.InvalidArgument, err)
+	}
+}
+
+/*
+	===== DeleteRun =====
+*/
+
+func TestDeleteRunRemovesOwnedRun(t *testing.T) {
+	repo := newFakeRecipeRepo()
+	runs := newFakeRunRepo()
+	svc := NewService(Deps{Repo: repo, Authn: fakeAuthn{}, Checker: stubChecker(nil), Runs: runs, Workflows: newFakeRecipeWorkflows(nil)})
+
+	recipe, err := svc.CreateRecipe(context.Background(), &api.CreateRecipeRequest{
+		TenantId: "tenant-1",
+		Recipe:   &models.RecipeRecord{Entity: &common.Entity{Name: "pg-ha"}, Bundle: newBundle()},
+	})
+	if err != nil {
+		t.Fatalf("create recipe: %v", err)
+	}
+	started, err := svc.StartRun(context.Background(), &api.StartRunRequest{TenantId: "tenant-1", RecipeId: recipe.GetRecipe().GetEntity().GetId()})
+	if err != nil {
+		t.Fatalf("start run: %v", err)
+	}
+	runID := started.GetRun().GetEntity().GetId()
+
+	if _, err := svc.DeleteRun(context.Background(), &api.DeleteRunRequest{TenantId: "tenant-1", RunId: runID}); err != nil {
+		t.Fatalf("delete run: %v", err)
+	}
+	if len(runs.byID) != 0 {
+		t.Fatalf("run repo has %d rows, want 0", len(runs.byID))
+	}
+}
+
+func TestDeleteRunForeignRunIsNotFound(t *testing.T) {
+	repo := newFakeRecipeRepo()
+	runs := newFakeRunRepo()
+	svc := NewService(Deps{Repo: repo, Authn: fakeAuthn{}, Checker: stubChecker(nil), Runs: runs, Workflows: newFakeRecipeWorkflows(nil)})
+
+	recipe, err := svc.CreateRecipe(context.Background(), &api.CreateRecipeRequest{
+		TenantId: "tenant-1",
+		Recipe:   &models.RecipeRecord{Entity: &common.Entity{Name: "pg-ha"}, Bundle: newBundle()},
+	})
+	if err != nil {
+		t.Fatalf("create recipe: %v", err)
+	}
+	started, err := svc.StartRun(context.Background(), &api.StartRunRequest{TenantId: "tenant-1", RecipeId: recipe.GetRecipe().GetEntity().GetId()})
+	if err != nil {
+		t.Fatalf("start run: %v", err)
+	}
+	runID := started.GetRun().GetEntity().GetId()
+
+	_, err = svc.DeleteRun(context.Background(), &api.DeleteRunRequest{TenantId: "tenant-2", RunId: runID})
+	if status.Code(err) != codes.NotFound {
+		t.Fatalf("status = %s, want %s; err=%v", status.Code(err), codes.NotFound, err)
+	}
+	if len(runs.byID) != 1 {
+		t.Fatalf("run repo has %d rows, want 1 (foreign-tenant delete must not remove it)", len(runs.byID))
+	}
+}
+
+func TestDeleteRunAbsentRunIsNotFound(t *testing.T) {
+	svc := NewService(Deps{Repo: newFakeRecipeRepo(), Authn: fakeAuthn{}, Checker: stubChecker(nil), Runs: newFakeRunRepo(), Workflows: newFakeRecipeWorkflows(nil)})
+
+	_, err := svc.DeleteRun(context.Background(), &api.DeleteRunRequest{TenantId: "tenant-1", RunId: "missing"})
+	if status.Code(err) != codes.NotFound {
+		t.Fatalf("status = %s, want %s; err=%v", status.Code(err), codes.NotFound, err)
+	}
+}
+
+func TestDeleteRunMissingTenantIsInvalidArgument(t *testing.T) {
+	svc := NewService(Deps{Repo: newFakeRecipeRepo(), Authn: fakeAuthn{}, Checker: stubChecker(nil), Runs: newFakeRunRepo(), Workflows: newFakeRecipeWorkflows(nil)})
+
+	_, err := svc.DeleteRun(context.Background(), &api.DeleteRunRequest{RunId: "some-id"})
+	if status.Code(err) != codes.InvalidArgument {
+		t.Fatalf("status = %s, want %s; err=%v", status.Code(err), codes.InvalidArgument, err)
+	}
+}
+
 /*
 	===== test doubles =====
 */
@@ -474,7 +736,7 @@ func (r *fakeRecipeRepo) Delete(_ context.Context, tenantID, id string) error {
 	return nil
 }
 
-// fakeRunRepo is an in-memory RunRepo keyed by run id.
+// fakeRunRepo is an in-memory RunRepo keyed by (tenantID, id).
 type fakeRunRepo struct {
 	byID map[string]*models.TestRunRecord
 }
@@ -496,6 +758,40 @@ func (r *fakeRunRepo) Update(_ context.Context, run *models.TestRunRecord) error
 	return nil
 }
 
+// Get returns derrors.ErrNotFound for an absent id or one owned by another
+// tenant, mirroring postgres.TestRunRepo.Get's tenant-scoping contract.
+func (r *fakeRunRepo) Get(_ context.Context, tenantID, id string) (*models.TestRunRecord, error) {
+	run, ok := r.byID[id]
+	if !ok || run.GetEntity().GetTenantId() != tenantID {
+		return nil, derrors.NotFound("test_run", "run not found")
+	}
+	return run, nil
+}
+
+// List ignores every ListTestRunsRequest facet except tenant_id: the recipe
+// service applies its own recipe_id filter in Go over the tenant's full run
+// set, matching how ListRuns calls this in production.
+func (r *fakeRunRepo) List(_ context.Context, query *api.ListTestRunsRequest, _ string) ([]*models.TestRunRecord, string, error) {
+	out := make([]*models.TestRunRecord, 0, len(r.byID))
+	for _, run := range r.byID {
+		if run.GetEntity().GetTenantId() == query.GetTenantId() {
+			out = append(out, run)
+		}
+	}
+	return out, "", nil
+}
+
+// Delete returns derrors.ErrNotFound for an absent id or one owned by
+// another tenant, mirroring postgres.TestRunRepo.Delete's contract.
+func (r *fakeRunRepo) Delete(_ context.Context, tenantID, id string) error {
+	run, ok := r.byID[id]
+	if !ok || run.GetEntity().GetTenantId() != tenantID {
+		return derrors.NotFound("test_run", "run not found")
+	}
+	delete(r.byID, id)
+	return nil
+}
+
 // launchedRecipeRun captures one LaunchRecipeRun call for assertions.
 type launchedRecipeRun struct {
 	run    *models.TestRunRecord
@@ -503,10 +799,13 @@ type launchedRecipeRun struct {
 }
 
 // fakeRecipeWorkflows is a RecipeWorkflows double that records every launch
-// and returns launchErr (nil for success) from LaunchRecipeRun.
+// and cancel call, returning launchErr (nil for success) from
+// LaunchRecipeRun and cancelErr (nil for success) from CancelRecipeRun.
 type fakeRecipeWorkflows struct {
 	launchErr error
+	cancelErr error
 	launched  []launchedRecipeRun
+	cancelled []string
 }
 
 func newFakeRecipeWorkflows(launchErr error) *fakeRecipeWorkflows {
@@ -516,4 +815,9 @@ func newFakeRecipeWorkflows(launchErr error) *fakeRecipeWorkflows {
 func (w *fakeRecipeWorkflows) LaunchRecipeRun(_ context.Context, run *models.TestRunRecord, bundle map[string][]byte) error {
 	w.launched = append(w.launched, launchedRecipeRun{run: run, bundle: bundle})
 	return w.launchErr
+}
+
+func (w *fakeRecipeWorkflows) CancelRecipeRun(_ context.Context, runID string) error {
+	w.cancelled = append(w.cancelled, runID)
+	return w.cancelErr
 }

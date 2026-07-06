@@ -22,7 +22,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/api/recipe.proto.
  */
 export const file_cloud_v1_api_recipe: GenFile = /*@__PURE__*/
-  fileDesc("ChljbG91ZC92MS9hcGkvcmVjaXBlLnByb3RvEgxjbG91ZC52MS5hcGkibAoTQ3JlYXRlUmVjaXBlUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEGEAQARI3CgZyZWNpcGUYAiABKAsyHS5jbG91ZC52MS5tb2RlbHMuUmVjaXBlUmVjb3JkQgj6QgWKAQIQASJPChRDcmVhdGVSZWNpcGVSZXNwb25zZRI3CgZyZWNpcGUYASABKAsyHS5jbG91ZC52MS5tb2RlbHMuUmVjaXBlUmVjb3JkQgj6QgWKAQIQASJHChBHZXRSZWNpcGVSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhUKAmlkGAIgASgJQgn6QgZyBBABGEAiTAoRR2V0UmVjaXBlUmVzcG9uc2USNwoGcmVjaXBlGAEgASgLMh0uY2xvdWQudjEubW9kZWxzLlJlY2lwZVJlY29yZEII+kIFigECEAEihgEKEkxpc3RSZWNpcGVzUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBItCgZmaWx0ZXIYAiABKAsyHS5jbG91ZC52MS5jb21tb24uRW50aXR5RmlsdGVyEiMKBHBhZ2UYAyABKAsyFS5jbG91ZC52MS5jb21tb24uUGFnZSJeChNMaXN0UmVjaXBlc1Jlc3BvbnNlEi4KB3JlY2lwZXMYASADKAsyHS5jbG91ZC52MS5tb2RlbHMuUmVjaXBlUmVjb3JkEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSJKChNEZWxldGVSZWNpcGVSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhUKAmlkGAIgASgJQgn6QgZyBBhAEAEiFgoURGVsZXRlUmVjaXBlUmVzcG9uc2UiSQoSQ2hlY2tSZWNpcGVSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhUKAmlkGAIgASgJQgn6QgZyBBABGEAiRAoTQ2hlY2tSZWNpcGVSZXNwb25zZRItCgtkaWFnbm9zdGljcxgBIAMoCzIYLmNsb3VkLnYxLmRzbC5EaWFnbm9zdGljIk0KD1N0YXJ0UnVuUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEGEAQARIcCglyZWNpcGVfaWQYAiABKAlCCfpCBnIEEAEYQCJJChBTdGFydFJ1blJlc3BvbnNlEjUKA3J1bhgBIAEoCzIeLmNsb3VkLnYxLm1vZGVscy5UZXN0UnVuUmVjb3JkQgj6QgWKAQIQATLUCQoNUmVjaXBlU2VydmljZRLIAQoMQ3JlYXRlUmVjaXBlEiEuY2xvdWQudjEuYXBpLkNyZWF0ZVJlY2lwZVJlcXVlc3QaIi5jbG91ZC52MS5hcGkuQ3JlYXRlUmVjaXBlUmVzcG9uc2UicYq1GAYSBAgPEAHypx1jogECEAGyAQcIyAESAk9LsgExEhFVbmV4cGVjdGVkIGVycm9yLiocChojL2NvbXBvbmVudHMvc2NoZW1hcy9FcnJvchACGg4vY3JlYXRlLXJlY2lwZSIMY3JlYXRlUmVjaXBlErwBCglHZXRSZWNpcGUSHi5jbG91ZC52MS5hcGkuR2V0UmVjaXBlUmVxdWVzdBofLmNsb3VkLnYxLmFwaS5HZXRSZWNpcGVSZXNwb25zZSJukAIBirUYBhIECA8QAvKnHV0QARoLL2dldC1yZWNpcGUiCWdldFJlY2lwZaIBAhABsgEHCMgBEgJPS7IBMRIRVW5leHBlY3RlZCBlcnJvci4qHAoaIy9jb21wb25lbnRzL3NjaGVtYXMvRXJyb3ISxgEKC0xpc3RSZWNpcGVzEiAuY2xvdWQudjEuYXBpLkxpc3RSZWNpcGVzUmVxdWVzdBohLmNsb3VkLnYxLmFwaS5MaXN0UmVjaXBlc1Jlc3BvbnNlInKQAgGKtRgGEgQIDxAF8qcdYRABGg0vbGlzdC1yZWNpcGVzIgtsaXN0UmVjaXBlc6IBAhABsgEHEgJPSwjIAbIBMRIRVW5leHBlY3RlZCBlcnJvci4qHAoaIy9jb21wb25lbnRzL3NjaGVtYXMvRXJyb3ISywEKDERlbGV0ZVJlY2lwZRIhLmNsb3VkLnYxLmFwaS5EZWxldGVSZWNpcGVSZXF1ZXN0GiIuY2xvdWQudjEuYXBpLkRlbGV0ZVJlY2lwZVJlc3BvbnNlInSQAgKKtRgGEgQIDxAE8qcdYxoOL2RlbGV0ZS1yZWNpcGUiDGRlbGV0ZVJlY2lwZaIBAhABsgEHCMgBEgJPS7IBMRIRVW5leHBlY3RlZCBlcnJvci4qHAoaIy9jb21wb25lbnRzL3NjaGVtYXMvRXJyb3IQAhLGAQoLQ2hlY2tSZWNpcGUSIC5jbG91ZC52MS5hcGkuQ2hlY2tSZWNpcGVSZXF1ZXN0GiEuY2xvdWQudjEuYXBpLkNoZWNrUmVjaXBlUmVzcG9uc2UicpACAYq1GAYSBBACCA/ypx1hEAEaDS9jaGVjay1yZWNpcGUiC2NoZWNrUmVjaXBlogECEAGyAQcIyAESAk9LsgExEhFVbmV4cGVjdGVkIGVycm9yLiocChojL2NvbXBvbmVudHMvc2NoZW1hcy9FcnJvchK6AQoIU3RhcnRSdW4SHS5jbG91ZC52MS5hcGkuU3RhcnRSdW5SZXF1ZXN0Gh4uY2xvdWQudjEuYXBpLlN0YXJ0UnVuUmVzcG9uc2Uib4q1GAwSBAgIEAESBBACCA/ypx1bEAIaCi9zdGFydC1ydW4iCHN0YXJ0UnVuogECEAGyAQcIyAESAk9LsgExKhwKGiMvY29tcG9uZW50cy9zY2hlbWFzL0Vycm9yEhFVbmV4cGVjdGVkIGVycm9yLhoc8qcdGBIOL2FwaS92MS9yZWNpcGUaBnJlY2lwZUJHWj9naXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9hcGnypx0CCAFiBnByb3RvMw", [file_cloud_v1_common_entity, file_cloud_v1_dsl_service, file_cloud_v1_iam_options, file_cloud_v1_iam_permission, file_cloud_v1_models_recipe, file_cloud_v1_models_test_run, file_validate_validate, file_ogen_ogen]);
+  fileDesc("ChljbG91ZC92MS9hcGkvcmVjaXBlLnByb3RvEgxjbG91ZC52MS5hcGkibAoTQ3JlYXRlUmVjaXBlUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBI3CgZyZWNpcGUYAiABKAsyHS5jbG91ZC52MS5tb2RlbHMuUmVjaXBlUmVjb3JkQgj6QgWKAQIQASJPChRDcmVhdGVSZWNpcGVSZXNwb25zZRI3CgZyZWNpcGUYASABKAsyHS5jbG91ZC52MS5tb2RlbHMuUmVjaXBlUmVjb3JkQgj6QgWKAQIQASJHChBHZXRSZWNpcGVSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhUKAmlkGAIgASgJQgn6QgZyBBABGEAiTAoRR2V0UmVjaXBlUmVzcG9uc2USNwoGcmVjaXBlGAEgASgLMh0uY2xvdWQudjEubW9kZWxzLlJlY2lwZVJlY29yZEII+kIFigECEAEihgEKEkxpc3RSZWNpcGVzUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEGEAQARItCgZmaWx0ZXIYAiABKAsyHS5jbG91ZC52MS5jb21tb24uRW50aXR5RmlsdGVyEiMKBHBhZ2UYAyABKAsyFS5jbG91ZC52MS5jb21tb24uUGFnZSJeChNMaXN0UmVjaXBlc1Jlc3BvbnNlEi4KB3JlY2lwZXMYASADKAsyHS5jbG91ZC52MS5tb2RlbHMuUmVjaXBlUmVjb3JkEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSJKChNEZWxldGVSZWNpcGVSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQYQBABEhUKAmlkGAIgASgJQgn6QgZyBBABGEAiFgoURGVsZXRlUmVjaXBlUmVzcG9uc2UiSQoSQ2hlY2tSZWNpcGVSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQYQBABEhUKAmlkGAIgASgJQgn6QgZyBBABGEAiRAoTQ2hlY2tSZWNpcGVSZXNwb25zZRItCgtkaWFnbm9zdGljcxgBIAMoCzIYLmNsb3VkLnYxLmRzbC5EaWFnbm9zdGljIk0KD1N0YXJ0UnVuUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEGEAQARIcCglyZWNpcGVfaWQYAiABKAlCCfpCBnIEEAEYQCJJChBTdGFydFJ1blJlc3BvbnNlEjUKA3J1bhgBIAEoCzIeLmNsb3VkLnYxLm1vZGVscy5UZXN0UnVuUmVjb3JkQgj6QgWKAQIQASJLCg9MaXN0UnVuc1JlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBhAEAESGgoJcmVjaXBlX2lkGAIgASgJQgf6QgRyAhhAIkAKEExpc3RSdW5zUmVzcG9uc2USLAoEcnVucxgBIAMoCzIeLmNsb3VkLnYxLm1vZGVscy5UZXN0UnVuUmVjb3JkIksKEENhbmNlbFJ1blJlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASGQoGcnVuX2lkGAIgASgJQgn6QgZyBBABGEAiEwoRQ2FuY2VsUnVuUmVzcG9uc2UiSwoQRGVsZXRlUnVuUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIZCgZydW5faWQYAiABKAlCCfpCBnIEGEAQASITChFEZWxldGVSdW5SZXNwb25zZTKJDgoNUmVjaXBlU2VydmljZRLIAQoMQ3JlYXRlUmVjaXBlEiEuY2xvdWQudjEuYXBpLkNyZWF0ZVJlY2lwZVJlcXVlc3QaIi5jbG91ZC52MS5hcGkuQ3JlYXRlUmVjaXBlUmVzcG9uc2UicYq1GAYSBAgPEAHypx1jIgxjcmVhdGVSZWNpcGWiAQIQAbIBBwjIARICT0uyATESEVVuZXhwZWN0ZWQgZXJyb3IuKhwKGiMvY29tcG9uZW50cy9zY2hlbWFzL0Vycm9yEAIaDi9jcmVhdGUtcmVjaXBlErwBCglHZXRSZWNpcGUSHi5jbG91ZC52MS5hcGkuR2V0UmVjaXBlUmVxdWVzdBofLmNsb3VkLnYxLmFwaS5HZXRSZWNpcGVSZXNwb25zZSJukAIBirUYBhIECA8QAvKnHV0aCy9nZXQtcmVjaXBlIglnZXRSZWNpcGWiAQIQAbIBBwjIARICT0uyATESEVVuZXhwZWN0ZWQgZXJyb3IuKhwKGiMvY29tcG9uZW50cy9zY2hlbWFzL0Vycm9yEAESxgEKC0xpc3RSZWNpcGVzEiAuY2xvdWQudjEuYXBpLkxpc3RSZWNpcGVzUmVxdWVzdBohLmNsb3VkLnYxLmFwaS5MaXN0UmVjaXBlc1Jlc3BvbnNlInKQAgGKtRgGEgQIDxAF8qcdYRoNL2xpc3QtcmVjaXBlcyILbGlzdFJlY2lwZXOiAQIQAbIBBwjIARICT0uyATESEVVuZXhwZWN0ZWQgZXJyb3IuKhwKGiMvY29tcG9uZW50cy9zY2hlbWFzL0Vycm9yEAESywEKDERlbGV0ZVJlY2lwZRIhLmNsb3VkLnYxLmFwaS5EZWxldGVSZWNpcGVSZXF1ZXN0GiIuY2xvdWQudjEuYXBpLkRlbGV0ZVJlY2lwZVJlc3BvbnNlInSQAgKKtRgGEgQQBAgP8qcdYyIMZGVsZXRlUmVjaXBlogECEAGyAQcSAk9LCMgBsgExEhFVbmV4cGVjdGVkIGVycm9yLiocChojL2NvbXBvbmVudHMvc2NoZW1hcy9FcnJvchACGg4vZGVsZXRlLXJlY2lwZRLGAQoLQ2hlY2tSZWNpcGUSIC5jbG91ZC52MS5hcGkuQ2hlY2tSZWNpcGVSZXF1ZXN0GiEuY2xvdWQudjEuYXBpLkNoZWNrUmVjaXBlUmVzcG9uc2UicpACAYq1GAYSBBACCA/ypx1hsgEHEgJPSwjIAbIBMRIRVW5leHBlY3RlZCBlcnJvci4qHAoaIy9jb21wb25lbnRzL3NjaGVtYXMvRXJyb3IQARoNL2NoZWNrLXJlY2lwZSILY2hlY2tSZWNpcGWiAQIQARK6AQoIU3RhcnRSdW4SHS5jbG91ZC52MS5hcGkuU3RhcnRSdW5SZXF1ZXN0Gh4uY2xvdWQudjEuYXBpLlN0YXJ0UnVuUmVzcG9uc2Uib4q1GAwSBAgIEAESBAgPEALypx1bsgEHCMgBEgJPS7IBMRIRVW5leHBlY3RlZCBlcnJvci4qHAoaIy9jb21wb25lbnRzL3NjaGVtYXMvRXJyb3IQAhoKL3N0YXJ0LXJ1biIIc3RhcnRSdW6iAQIQARK3AQoITGlzdFJ1bnMSHS5jbG91ZC52MS5hcGkuTGlzdFJ1bnNSZXF1ZXN0Gh4uY2xvdWQudjEuYXBpLkxpc3RSdW5zUmVzcG9uc2UibJACAYq1GAYSBAgIEAXypx1bGgovbGlzdC1ydW5zIghsaXN0UnVuc6IBAhABsgEHCMgBEgJPS7IBMSocChojL2NvbXBvbmVudHMvc2NoZW1hcy9FcnJvchIRVW5leHBlY3RlZCBlcnJvci4QARK5AQoJQ2FuY2VsUnVuEh4uY2xvdWQudjEuYXBpLkNhbmNlbFJ1blJlcXVlc3QaHy5jbG91ZC52MS5hcGkuQ2FuY2VsUnVuUmVzcG9uc2Uia4q1GAYSBBADCAjypx1dEAIaCy9jYW5jZWwtcnVuIgljYW5jZWxSdW6iAQIQAbIBBwjIARICT0uyATESEVVuZXhwZWN0ZWQgZXJyb3IuKhwKGiMvY29tcG9uZW50cy9zY2hlbWFzL0Vycm9yErwBCglEZWxldGVSdW4SHi5jbG91ZC52MS5hcGkuRGVsZXRlUnVuUmVxdWVzdBofLmNsb3VkLnYxLmFwaS5EZWxldGVSdW5SZXNwb25zZSJukAICirUYBhIECAgQBPKnHV2iAQIQAbIBBwjIARICT0uyATESEVVuZXhwZWN0ZWQgZXJyb3IuKhwKGiMvY29tcG9uZW50cy9zY2hlbWFzL0Vycm9yEAIaCy9kZWxldGUtcnVuIglkZWxldGVSdW4aHPKnHRgaBnJlY2lwZRIOL2FwaS92MS9yZWNpcGVCR1o/Z2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvYXBp8qcdAggBYgZwcm90bzM", [file_cloud_v1_common_entity, file_cloud_v1_dsl_service, file_cloud_v1_iam_options, file_cloud_v1_iam_permission, file_cloud_v1_models_recipe, file_cloud_v1_models_test_run, file_validate_validate, file_ogen_ogen]);
 
 /**
  *
@@ -654,6 +654,280 @@ export const StartRunResponseSchema: GenMessage<StartRunResponse, {jsonType: Sta
 
 /**
  *
+ * ListRunsRequest lists the runs launched from recipe bundles for a tenant,
+ * optionally narrowed to one recipe.
+ *
+ * @generated from message cloud.v1.api.ListRunsRequest
+ */
+export type ListRunsRequest = Message<"cloud.v1.api.ListRunsRequest"> & {
+  /**
+   *
+   * tenant_id scopes the request to the owning tenant.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   *
+   * recipe_id, when set, filters to runs launched from that recipe record
+   * (matches models.TestRunRecord.recipe_id). Empty returns every recipe
+   * run for the tenant.
+   *
+   * @generated from field: string recipe_id = 2;
+   */
+  recipeId: string;
+};
+
+/**
+ *
+ * ListRunsRequest lists the runs launched from recipe bundles for a tenant,
+ * optionally narrowed to one recipe.
+ *
+ * @generated from message cloud.v1.api.ListRunsRequest
+ */
+export type ListRunsRequestJson = {
+  /**
+   *
+   * tenant_id scopes the request to the owning tenant.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId?: string;
+
+  /**
+   *
+   * recipe_id, when set, filters to runs launched from that recipe record
+   * (matches models.TestRunRecord.recipe_id). Empty returns every recipe
+   * run for the tenant.
+   *
+   * @generated from field: string recipe_id = 2;
+   */
+  recipeId?: string;
+};
+
+export type ListRunsRequestValid = ListRunsRequest;
+
+/**
+ * Describes the message cloud.v1.api.ListRunsRequest.
+ * Use `create(ListRunsRequestSchema)` to create a new message.
+ */
+export const ListRunsRequestSchema: GenMessage<ListRunsRequest, {jsonType: ListRunsRequestJson, validType: ListRunsRequestValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_recipe, 12);
+
+/**
+ *
+ * ListRunsResponse returns the matching recipe runs.
+ *
+ * @generated from message cloud.v1.api.ListRunsResponse
+ */
+export type ListRunsResponse = Message<"cloud.v1.api.ListRunsResponse"> & {
+  /**
+   *
+   * runs is the matching set of run records.
+   *
+   * @generated from field: repeated cloud.v1.models.TestRunRecord runs = 1;
+   */
+  runs: TestRunRecord[];
+};
+
+/**
+ *
+ * ListRunsResponse returns the matching recipe runs.
+ *
+ * @generated from message cloud.v1.api.ListRunsResponse
+ */
+export type ListRunsResponseJson = {
+  /**
+   *
+   * runs is the matching set of run records.
+   *
+   * @generated from field: repeated cloud.v1.models.TestRunRecord runs = 1;
+   */
+  runs?: TestRunRecordJson[];
+};
+
+export type ListRunsResponseValid = ListRunsResponse;
+
+/**
+ * Describes the message cloud.v1.api.ListRunsResponse.
+ * Use `create(ListRunsResponseSchema)` to create a new message.
+ */
+export const ListRunsResponseSchema: GenMessage<ListRunsResponse, {jsonType: ListRunsResponseJson, validType: ListRunsResponseValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_recipe, 13);
+
+/**
+ *
+ * CancelRunRequest requests cancellation of an in-flight recipe run.
+ *
+ * @generated from message cloud.v1.api.CancelRunRequest
+ */
+export type CancelRunRequest = Message<"cloud.v1.api.CancelRunRequest"> & {
+  /**
+   *
+   * tenant_id scopes the request to the owning tenant.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   *
+   * run_id is the run record identifier to cancel.
+   *
+   * @generated from field: string run_id = 2;
+   */
+  runId: string;
+};
+
+/**
+ *
+ * CancelRunRequest requests cancellation of an in-flight recipe run.
+ *
+ * @generated from message cloud.v1.api.CancelRunRequest
+ */
+export type CancelRunRequestJson = {
+  /**
+   *
+   * tenant_id scopes the request to the owning tenant.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId?: string;
+
+  /**
+   *
+   * run_id is the run record identifier to cancel.
+   *
+   * @generated from field: string run_id = 2;
+   */
+  runId?: string;
+};
+
+export type CancelRunRequestValid = CancelRunRequest;
+
+/**
+ * Describes the message cloud.v1.api.CancelRunRequest.
+ * Use `create(CancelRunRequestSchema)` to create a new message.
+ */
+export const CancelRunRequestSchema: GenMessage<CancelRunRequest, {jsonType: CancelRunRequestJson, validType: CancelRunRequestValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_recipe, 14);
+
+/**
+ *
+ * CancelRunResponse is empty; cancellation is asynchronous — poll the run
+ * record (or ListRuns/Overview) to observe the resulting status.
+ *
+ * @generated from message cloud.v1.api.CancelRunResponse
+ */
+export type CancelRunResponse = Message<"cloud.v1.api.CancelRunResponse"> & {
+};
+
+/**
+ *
+ * CancelRunResponse is empty; cancellation is asynchronous — poll the run
+ * record (or ListRuns/Overview) to observe the resulting status.
+ *
+ * @generated from message cloud.v1.api.CancelRunResponse
+ */
+export type CancelRunResponseJson = {
+};
+
+export type CancelRunResponseValid = CancelRunResponse;
+
+/**
+ * Describes the message cloud.v1.api.CancelRunResponse.
+ * Use `create(CancelRunResponseSchema)` to create a new message.
+ */
+export const CancelRunResponseSchema: GenMessage<CancelRunResponse, {jsonType: CancelRunResponseJson, validType: CancelRunResponseValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_recipe, 15);
+
+/**
+ *
+ * DeleteRunRequest deletes a run record by id.
+ *
+ * @generated from message cloud.v1.api.DeleteRunRequest
+ */
+export type DeleteRunRequest = Message<"cloud.v1.api.DeleteRunRequest"> & {
+  /**
+   *
+   * tenant_id scopes the request to the owning tenant.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   *
+   * run_id is the run record identifier to delete.
+   *
+   * @generated from field: string run_id = 2;
+   */
+  runId: string;
+};
+
+/**
+ *
+ * DeleteRunRequest deletes a run record by id.
+ *
+ * @generated from message cloud.v1.api.DeleteRunRequest
+ */
+export type DeleteRunRequestJson = {
+  /**
+   *
+   * tenant_id scopes the request to the owning tenant.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId?: string;
+
+  /**
+   *
+   * run_id is the run record identifier to delete.
+   *
+   * @generated from field: string run_id = 2;
+   */
+  runId?: string;
+};
+
+export type DeleteRunRequestValid = DeleteRunRequest;
+
+/**
+ * Describes the message cloud.v1.api.DeleteRunRequest.
+ * Use `create(DeleteRunRequestSchema)` to create a new message.
+ */
+export const DeleteRunRequestSchema: GenMessage<DeleteRunRequest, {jsonType: DeleteRunRequestJson, validType: DeleteRunRequestValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_recipe, 16);
+
+/**
+ *
+ * DeleteRunResponse is empty; success is signalled by a non-error reply.
+ *
+ * @generated from message cloud.v1.api.DeleteRunResponse
+ */
+export type DeleteRunResponse = Message<"cloud.v1.api.DeleteRunResponse"> & {
+};
+
+/**
+ *
+ * DeleteRunResponse is empty; success is signalled by a non-error reply.
+ *
+ * @generated from message cloud.v1.api.DeleteRunResponse
+ */
+export type DeleteRunResponseJson = {
+};
+
+export type DeleteRunResponseValid = DeleteRunResponse;
+
+/**
+ * Describes the message cloud.v1.api.DeleteRunResponse.
+ * Use `create(DeleteRunResponseSchema)` to create a new message.
+ */
+export const DeleteRunResponseSchema: GenMessage<DeleteRunResponse, {jsonType: DeleteRunResponseJson, validType: DeleteRunResponseValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_recipe, 17);
+
+/**
+ *
  * RecipeService is the tenant-scoped CRUD + check API for persisted DSL
  * recipe bundles.
  *
@@ -730,6 +1004,42 @@ export const RecipeService: GenService<{
     methodKind: "unary";
     input: typeof StartRunRequestSchema;
     output: typeof StartRunResponseSchema;
+  },
+  /**
+   *
+   * ListRuns lists the runs launched from recipe bundles for the tenant,
+   * optionally filtered to one recipe. Read-only.
+   *
+   * @generated from rpc cloud.v1.api.RecipeService.ListRuns
+   */
+  listRuns: {
+    methodKind: "unary";
+    input: typeof ListRunsRequestSchema;
+    output: typeof ListRunsResponseSchema;
+  },
+  /**
+   *
+   * CancelRun requests cancellation of an in-flight run's
+   * RunRecipeWorkflow. Cancellation is asynchronous: the resulting status
+   * transition is observed via ListRuns/Overview, not this response.
+   *
+   * @generated from rpc cloud.v1.api.RecipeService.CancelRun
+   */
+  cancelRun: {
+    methodKind: "unary";
+    input: typeof CancelRunRequestSchema;
+    output: typeof CancelRunResponseSchema;
+  },
+  /**
+   *
+   * DeleteRun deletes a run record by id.
+   *
+   * @generated from rpc cloud.v1.api.RecipeService.DeleteRun
+   */
+  deleteRun: {
+    methodKind: "unary";
+    input: typeof DeleteRunRequestSchema;
+    output: typeof DeleteRunResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_cloud_v1_api_recipe, 0);

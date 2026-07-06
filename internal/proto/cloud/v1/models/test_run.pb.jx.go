@@ -77,6 +77,10 @@ func (m *TestRunRecord) Encode(e *jx.Encoder) {
 		e.FieldStart("runtimeState")
 		jxpb.EncMessage(e, m.RuntimeState)
 	}
+	if m.RecipeId != "" {
+		e.FieldStart("recipeId")
+		e.Str(m.RecipeId)
+	}
 	e.ObjEnd()
 }
 
@@ -275,6 +279,20 @@ func (m *TestRunRecord) Decode(d *jx.Decoder) error {
 			if err := jxpb.DecMessage(d, m.RuntimeState); err != nil {
 				return err
 			}
+			return nil
+		case "recipeId", "recipe_id":
+			if seen["RecipeId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["RecipeId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.RecipeId = v
 			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)

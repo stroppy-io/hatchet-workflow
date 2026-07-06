@@ -179,6 +179,69 @@ message StartRunResponse {
 }
 
 /*
+    ListRunsRequest lists the runs launched from recipe bundles for a tenant,
+    optionally narrowed to one recipe.
+ */
+message ListRunsRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        recipe_id, when set, filters to runs launched from that recipe record
+        (matches models.TestRunRecord.recipe_id). Empty returns every recipe
+        run for the tenant.
+     */
+    string recipe_id = 2 [(validate.rules).string.max_len = 64];
+}
+/*
+    ListRunsResponse returns the matching recipe runs.
+ */
+message ListRunsResponse {
+    /*
+        runs is the matching set of run records.
+     */
+    repeated models.TestRunRecord runs = 1;
+}
+
+/*
+    CancelRunRequest requests cancellation of an in-flight recipe run.
+ */
+message CancelRunRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        run_id is the run record identifier to cancel.
+     */
+    string run_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+/*
+    CancelRunResponse is empty; cancellation is asynchronous — poll the run
+    record (or ListRuns/Overview) to observe the resulting status.
+ */
+message CancelRunResponse {}
+
+/*
+    DeleteRunRequest deletes a run record by id.
+ */
+message DeleteRunRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        run_id is the run record identifier to delete.
+     */
+    string run_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+/*
+    DeleteRunResponse is empty; success is signalled by a non-error reply.
+ */
+message DeleteRunResponse {}
+
+/*
     RecipeService is the tenant-scoped CRUD + check API for persisted DSL
     recipe bundles.
  */
@@ -349,5 +412,85 @@ service RecipeService {
             {resource: RESOURCE_TEST_RUN, action: ACTION_CREATE},
             {resource: RESOURCE_RECIPE, action: ACTION_READ}
         ]};
+    }
+    /*
+        ListRuns lists the runs launched from recipe bundles for the tenant,
+        optionally filtered to one recipe. Read-only.
+     */
+    rpc ListRuns (ListRunsRequest) returns (ListRunsResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/list-runs"
+            operation_id: "listRuns"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TEST_RUN, action: ACTION_LIST}]};
+    }
+    /*
+        CancelRun requests cancellation of an in-flight run's
+        RunRecipeWorkflow. Cancellation is asynchronous: the resulting status
+        transition is observed via ListRuns/Overview, not this response.
+     */
+    rpc CancelRun (CancelRunRequest) returns (CancelRunResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/cancel-run"
+            operation_id: "cancelRun"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TEST_RUN, action: ACTION_UPDATE}]};
+    }
+    /*
+        DeleteRun deletes a run record by id.
+     */
+    rpc DeleteRun (DeleteRunRequest) returns (DeleteRunResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_POST
+            path: "/delete-run"
+            operation_id: "deleteRun"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
+        option idempotency_level = IDEMPOTENT;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TEST_RUN, action: ACTION_DELETE}]};
     }
 }

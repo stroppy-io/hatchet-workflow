@@ -33,7 +33,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/models/test_run.proto.
  */
 export const file_cloud_v1_models_test_run: GenFile = /*@__PURE__*/
-  fileDesc("Ch5jbG91ZC92MS9tb2RlbHMvdGVzdF9ydW4ucHJvdG8SD2Nsb3VkLnYxLm1vZGVscyKyCQoNVGVzdFJ1blJlY29yZBIxCgZlbnRpdHkYASABKAsyFy5jbG91ZC52MS5jb21tb24uRW50aXR5Qgj6QgWKAQIQARIwCgRzcGVjGAIgASgLMhguY2xvdWQudjEuZG9tYWluLlRlc3RSdW5CCPpCBYoBAhABEicKBnN0YXR1cxgDIAEoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXMSHQoMc3VpdGVfcnVuX2lkGAQgASgJQgf6QgRyAhhAEh4KDXN1aXRlX2NlbGxfaWQYDCABKAlCB/pCBHICGEASKQoHdHJpZ2dlchgHIAEoDjIYLmNsb3VkLnYxLmNvbW1vbi5UcmlnZ2VyEhgKEGluX3RlbmFudF9yYXRpbmcYCCABKAgSGAoQaW5fZ2xvYmFsX3JhdGluZxgJIAEoCBI3CgdzdW1tYXJ5GAYgASgLMiYuY2xvdWQudjEubW9kZWxzLlRlc3RSdW5SZWNvcmQuU3VtbWFyeRJGChRpbmZyYXN0cnVjdHVyZV9zdGF0ZRgKIAEoCzIoLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVTdGF0ZRI8Cg9kZXBsb3ltZW50X3BsYW4YCyABKAsyIy5jbG91ZC52MS5kZXBsb3ltZW50LkRlcGxveW1lbnRQbGFuEjIKDXJ1bnRpbWVfc3RhdGUYDSABKAsyGy5jbG91ZC52MS53b3JrZmxvdy5SdW5TdGF0ZRr7BAoHU3VtbWFyeRIvCgdkYl9raW5kGAEgASgOMh4uY2xvdWQudjEuZG9tYWluLkRhdGFiYXNlLktpbmQSHQoMZGJfcHJlc2V0X2lkGAIgASgJQgf6QgRyAhhAEiAKDmRiX3ByZXNldF9uYW1lGAMgASgJQgj6QgVyAxj/ARIjChJ3b3JrbG9hZF9wcmVzZXRfaWQYBCABKAlCB/pCBHICGEASHwoNd29ya2xvYWRfbmFtZRgFIAEoCUII+kIFcgMY/wESIAoPc3Ryb3BweV92ZXJzaW9uGAYgASgJQgf6QgRyAhhAEj0KEXdvcmtsb2FkX3Byb3RvY29sGA4gASgOMiIuY2xvdWQudjEuZG9tYWluLldvcmtsb2FkLlByb3RvY29sEh8KDnRlc3RfcHJlc2V0X2lkGA8gASgJQgf6QgRyAhhAEiIKEHRlc3RfcHJlc2V0X25hbWUYECABKAlCCPpCBXIDGP8BEiAKDnRvcG9sb2d5X2xhYmVsGAcgASgJQgj6QgVyAxiAARISCgpub2RlX2NvdW50GAggASgNEi8KCHByb3ZpZGVyGAkgASgOMh0uY2xvdWQudjEuZGVwbG95bWVudC5Qcm92aWRlchIdCgxwcm9ncmVzc19wY3QYCiABKA1CB/pCBCoCGGQSLgoKc3RhcnRlZF9hdBgLIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLwoLZmluaXNoZWRfYXQYDCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEisKCGR1cmF0aW9uGA0gASgLMhkuZ29vZ2xlLnByb3RvYnVmLkR1cmF0aW9uSgQIBRAGQkRaQmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL21vZGVsc2IGcHJvdG8z", [file_cloud_v1_common_entity, file_cloud_v1_common_status, file_cloud_v1_common_trigger, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_plan, file_cloud_v1_deployment_provider, file_cloud_v1_domain_database, file_cloud_v1_domain_test, file_cloud_v1_domain_workload, file_cloud_v1_workflow_test, file_google_protobuf_duration, file_google_protobuf_timestamp, file_validate_validate]);
+  fileDesc("Ch5jbG91ZC92MS9tb2RlbHMvdGVzdF9ydW4ucHJvdG8SD2Nsb3VkLnYxLm1vZGVscyLOCQoNVGVzdFJ1blJlY29yZBIxCgZlbnRpdHkYASABKAsyFy5jbG91ZC52MS5jb21tb24uRW50aXR5Qgj6QgWKAQIQARIwCgRzcGVjGAIgASgLMhguY2xvdWQudjEuZG9tYWluLlRlc3RSdW5CCPpCBYoBAhABEicKBnN0YXR1cxgDIAEoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXMSHQoMc3VpdGVfcnVuX2lkGAQgASgJQgf6QgRyAhhAEh4KDXN1aXRlX2NlbGxfaWQYDCABKAlCB/pCBHICGEASKQoHdHJpZ2dlchgHIAEoDjIYLmNsb3VkLnYxLmNvbW1vbi5UcmlnZ2VyEhgKEGluX3RlbmFudF9yYXRpbmcYCCABKAgSGAoQaW5fZ2xvYmFsX3JhdGluZxgJIAEoCBI3CgdzdW1tYXJ5GAYgASgLMiYuY2xvdWQudjEubW9kZWxzLlRlc3RSdW5SZWNvcmQuU3VtbWFyeRJGChRpbmZyYXN0cnVjdHVyZV9zdGF0ZRgKIAEoCzIoLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVTdGF0ZRI8Cg9kZXBsb3ltZW50X3BsYW4YCyABKAsyIy5jbG91ZC52MS5kZXBsb3ltZW50LkRlcGxveW1lbnRQbGFuEjIKDXJ1bnRpbWVfc3RhdGUYDSABKAsyGy5jbG91ZC52MS53b3JrZmxvdy5SdW5TdGF0ZRIaCglyZWNpcGVfaWQYDiABKAlCB/pCBHICGEAa+wQKB1N1bW1hcnkSLwoHZGJfa2luZBgBIAEoDjIeLmNsb3VkLnYxLmRvbWFpbi5EYXRhYmFzZS5LaW5kEh0KDGRiX3ByZXNldF9pZBgCIAEoCUIH+kIEcgIYQBIgCg5kYl9wcmVzZXRfbmFtZRgDIAEoCUII+kIFcgMY/wESIwoSd29ya2xvYWRfcHJlc2V0X2lkGAQgASgJQgf6QgRyAhhAEh8KDXdvcmtsb2FkX25hbWUYBSABKAlCCPpCBXIDGP8BEiAKD3N0cm9wcHlfdmVyc2lvbhgGIAEoCUIH+kIEcgIYQBI9ChF3b3JrbG9hZF9wcm90b2NvbBgOIAEoDjIiLmNsb3VkLnYxLmRvbWFpbi5Xb3JrbG9hZC5Qcm90b2NvbBIfCg50ZXN0X3ByZXNldF9pZBgPIAEoCUIH+kIEcgIYQBIiChB0ZXN0X3ByZXNldF9uYW1lGBAgASgJQgj6QgVyAxj/ARIgCg50b3BvbG9neV9sYWJlbBgHIAEoCUII+kIFcgMYgAESEgoKbm9kZV9jb3VudBgIIAEoDRIvCghwcm92aWRlchgJIAEoDjIdLmNsb3VkLnYxLmRlcGxveW1lbnQuUHJvdmlkZXISHQoMcHJvZ3Jlc3NfcGN0GAogASgNQgf6QgQqAhhkEi4KCnN0YXJ0ZWRfYXQYCyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC2ZpbmlzaGVkX2F0GAwgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIrCghkdXJhdGlvbhgNIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbkoECAUQBkJEWkJnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9tb2RlbHNiBnByb3RvMw", [file_cloud_v1_common_entity, file_cloud_v1_common_status, file_cloud_v1_common_trigger, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_plan, file_cloud_v1_deployment_provider, file_cloud_v1_domain_database, file_cloud_v1_domain_test, file_cloud_v1_domain_workload, file_cloud_v1_workflow_test, file_google_protobuf_duration, file_google_protobuf_timestamp, file_validate_validate]);
 
 /**
  *
@@ -164,6 +164,19 @@ export type TestRunRecord = Message<"cloud.v1.models.TestRunRecord"> & {
    * @generated from field: cloud.v1.workflow.RunState runtime_state = 13;
    */
   runtimeState?: RunState;
+
+  /**
+   *
+   * recipe_id is the originating models.RecipeRecord.entity.id for a run
+   * launched via RecipeService.StartRun; empty for a classic run launched
+   * from a baked domain.TestRun spec (wizard/suite/cron). Stamped once at
+   * StartRun and never changed afterwards. RecipeService.ListRuns filters
+   * on this field when the caller supplies recipe_id; it also lets
+   * RunDetail trace a recipe run back to the bundle that produced it.
+   *
+   * @generated from field: string recipe_id = 14;
+   */
+  recipeId: string;
 };
 
 /**
@@ -295,6 +308,19 @@ export type TestRunRecordJson = {
    * @generated from field: cloud.v1.workflow.RunState runtime_state = 13;
    */
   runtimeState?: RunStateJson;
+
+  /**
+   *
+   * recipe_id is the originating models.RecipeRecord.entity.id for a run
+   * launched via RecipeService.StartRun; empty for a classic run launched
+   * from a baked domain.TestRun spec (wizard/suite/cron). Stamped once at
+   * StartRun and never changed afterwards. RecipeService.ListRuns filters
+   * on this field when the caller supplies recipe_id; it also lets
+   * RunDetail trace a recipe run back to the bundle that produced it.
+   *
+   * @generated from field: string recipe_id = 14;
+   */
+  recipeId?: string;
 };
 
 export type TestRunRecordValid = TestRunRecord;

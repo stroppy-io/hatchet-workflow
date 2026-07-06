@@ -18,11 +18,12 @@ import (
 const recipeTaskQueue = "stroppy-cloud"
 
 // workflowStarter is the minimal slice of client.Client RecipeWorkflows
-// depends on to start RunRecipeWorkflow. Kept narrow (mirroring
-// runStateQuerier in overview.go) so LaunchRecipeRun is unit-testable
-// without a live Temporal server.
+// depends on to start and cancel RunRecipeWorkflow. Kept narrow (mirroring
+// runStateQuerier in overview.go) so LaunchRecipeRun/CancelRecipeRun are
+// unit-testable without a live Temporal server.
 type workflowStarter interface {
 	ExecuteWorkflow(ctx context.Context, options client.StartWorkflowOptions, workflow interface{}, args ...interface{}) (client.WorkflowRun, error)
+	CancelWorkflow(ctx context.Context, workflowID string, runID string) error
 }
 
 // RecipeWorkflows implements recipe.RecipeWorkflows over a Temporal client.
@@ -77,6 +78,17 @@ func (w *RecipeWorkflows) LaunchRecipeRun(ctx context.Context, run *models.TestR
 	// live-query being a follow-up for recipe runs).
 	_, err = w.client.ExecuteWorkflow(ctx, opts, workflows.RunRecipeWorkflowName, in)
 	return err
+}
+
+// CancelRecipeRun requests cancellation of the RunRecipeWorkflow launched
+// for runID, addressed by the same deterministic workflow id
+// LaunchRecipeRun used (runRecipeWorkflowID). The client.CancelWorkflow
+// runID parameter (Temporal's own execution-run identifier, distinct from
+// our runID) is left empty to target the workflow's current/latest
+// execution. Cancellation is asynchronous: the workflow's own cancel
+// handling persists the resulting run status; this call only requests it.
+func (w *RecipeWorkflows) CancelRecipeRun(ctx context.Context, runID string) error {
+	return w.client.CancelWorkflow(ctx, runRecipeWorkflowID(runID), "")
 }
 
 func (w *RecipeWorkflows) runRecipeInput(ctx context.Context, run *models.TestRunRecord, bundle map[string][]byte) (*workflows.RunRecipeInput, error) {

@@ -49,6 +49,12 @@ const (
 	RecipeServiceCheckRecipeProcedure = "/cloud.v1.api.RecipeService/CheckRecipe"
 	// RecipeServiceStartRunProcedure is the fully-qualified name of the RecipeService's StartRun RPC.
 	RecipeServiceStartRunProcedure = "/cloud.v1.api.RecipeService/StartRun"
+	// RecipeServiceListRunsProcedure is the fully-qualified name of the RecipeService's ListRuns RPC.
+	RecipeServiceListRunsProcedure = "/cloud.v1.api.RecipeService/ListRuns"
+	// RecipeServiceCancelRunProcedure is the fully-qualified name of the RecipeService's CancelRun RPC.
+	RecipeServiceCancelRunProcedure = "/cloud.v1.api.RecipeService/CancelRun"
+	// RecipeServiceDeleteRunProcedure is the fully-qualified name of the RecipeService's DeleteRun RPC.
+	RecipeServiceDeleteRunProcedure = "/cloud.v1.api.RecipeService/DeleteRun"
 )
 
 // RecipeServiceClient is a client for the cloud.v1.api.RecipeService service.
@@ -70,6 +76,15 @@ type RecipeServiceClient interface {
 	// persists a run record and starts RunRecipeWorkflow for it. Not
 	// idempotent — each call mints a new run.
 	StartRun(context.Context, *api.StartRunRequest) (*api.StartRunResponse, error)
+	// ListRuns lists the runs launched from recipe bundles for the tenant,
+	// optionally filtered to one recipe. Read-only.
+	ListRuns(context.Context, *api.ListRunsRequest) (*api.ListRunsResponse, error)
+	// CancelRun requests cancellation of an in-flight run's
+	// RunRecipeWorkflow. Cancellation is asynchronous: the resulting status
+	// transition is observed via ListRuns/Overview, not this response.
+	CancelRun(context.Context, *api.CancelRunRequest) (*api.CancelRunResponse, error)
+	// DeleteRun deletes a run record by id.
+	DeleteRun(context.Context, *api.DeleteRunRequest) (*api.DeleteRunResponse, error)
 }
 
 // NewRecipeServiceClient constructs a client for the cloud.v1.api.RecipeService service. By
@@ -123,6 +138,26 @@ func NewRecipeServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(recipeServiceMethods.ByName("StartRun")),
 			connect.WithClientOptions(opts...),
 		),
+		listRuns: connect.NewClient[api.ListRunsRequest, api.ListRunsResponse](
+			httpClient,
+			baseURL+RecipeServiceListRunsProcedure,
+			connect.WithSchema(recipeServiceMethods.ByName("ListRuns")),
+			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+			connect.WithClientOptions(opts...),
+		),
+		cancelRun: connect.NewClient[api.CancelRunRequest, api.CancelRunResponse](
+			httpClient,
+			baseURL+RecipeServiceCancelRunProcedure,
+			connect.WithSchema(recipeServiceMethods.ByName("CancelRun")),
+			connect.WithClientOptions(opts...),
+		),
+		deleteRun: connect.NewClient[api.DeleteRunRequest, api.DeleteRunResponse](
+			httpClient,
+			baseURL+RecipeServiceDeleteRunProcedure,
+			connect.WithSchema(recipeServiceMethods.ByName("DeleteRun")),
+			connect.WithIdempotency(connect.IdempotencyIdempotent),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -134,6 +169,9 @@ type recipeServiceClient struct {
 	deleteRecipe *connect.Client[api.DeleteRecipeRequest, api.DeleteRecipeResponse]
 	checkRecipe  *connect.Client[api.CheckRecipeRequest, api.CheckRecipeResponse]
 	startRun     *connect.Client[api.StartRunRequest, api.StartRunResponse]
+	listRuns     *connect.Client[api.ListRunsRequest, api.ListRunsResponse]
+	cancelRun    *connect.Client[api.CancelRunRequest, api.CancelRunResponse]
+	deleteRun    *connect.Client[api.DeleteRunRequest, api.DeleteRunResponse]
 }
 
 // CreateRecipe calls cloud.v1.api.RecipeService.CreateRecipe.
@@ -190,6 +228,33 @@ func (c *recipeServiceClient) StartRun(ctx context.Context, req *api.StartRunReq
 	return nil, err
 }
 
+// ListRuns calls cloud.v1.api.RecipeService.ListRuns.
+func (c *recipeServiceClient) ListRuns(ctx context.Context, req *api.ListRunsRequest) (*api.ListRunsResponse, error) {
+	response, err := c.listRuns.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// CancelRun calls cloud.v1.api.RecipeService.CancelRun.
+func (c *recipeServiceClient) CancelRun(ctx context.Context, req *api.CancelRunRequest) (*api.CancelRunResponse, error) {
+	response, err := c.cancelRun.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// DeleteRun calls cloud.v1.api.RecipeService.DeleteRun.
+func (c *recipeServiceClient) DeleteRun(ctx context.Context, req *api.DeleteRunRequest) (*api.DeleteRunResponse, error) {
+	response, err := c.deleteRun.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // RecipeServiceHandler is an implementation of the cloud.v1.api.RecipeService service.
 type RecipeServiceHandler interface {
 	// CreateRecipe persists a new recipe bundle. Not idempotent.
@@ -209,6 +274,15 @@ type RecipeServiceHandler interface {
 	// persists a run record and starts RunRecipeWorkflow for it. Not
 	// idempotent — each call mints a new run.
 	StartRun(context.Context, *api.StartRunRequest) (*api.StartRunResponse, error)
+	// ListRuns lists the runs launched from recipe bundles for the tenant,
+	// optionally filtered to one recipe. Read-only.
+	ListRuns(context.Context, *api.ListRunsRequest) (*api.ListRunsResponse, error)
+	// CancelRun requests cancellation of an in-flight run's
+	// RunRecipeWorkflow. Cancellation is asynchronous: the resulting status
+	// transition is observed via ListRuns/Overview, not this response.
+	CancelRun(context.Context, *api.CancelRunRequest) (*api.CancelRunResponse, error)
+	// DeleteRun deletes a run record by id.
+	DeleteRun(context.Context, *api.DeleteRunRequest) (*api.DeleteRunResponse, error)
 }
 
 // NewRecipeServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -258,6 +332,26 @@ func NewRecipeServiceHandler(svc RecipeServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(recipeServiceMethods.ByName("StartRun")),
 		connect.WithHandlerOptions(opts...),
 	)
+	recipeServiceListRunsHandler := connect.NewUnaryHandlerSimple(
+		RecipeServiceListRunsProcedure,
+		svc.ListRuns,
+		connect.WithSchema(recipeServiceMethods.ByName("ListRuns")),
+		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+		connect.WithHandlerOptions(opts...),
+	)
+	recipeServiceCancelRunHandler := connect.NewUnaryHandlerSimple(
+		RecipeServiceCancelRunProcedure,
+		svc.CancelRun,
+		connect.WithSchema(recipeServiceMethods.ByName("CancelRun")),
+		connect.WithHandlerOptions(opts...),
+	)
+	recipeServiceDeleteRunHandler := connect.NewUnaryHandlerSimple(
+		RecipeServiceDeleteRunProcedure,
+		svc.DeleteRun,
+		connect.WithSchema(recipeServiceMethods.ByName("DeleteRun")),
+		connect.WithIdempotency(connect.IdempotencyIdempotent),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/cloud.v1.api.RecipeService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case RecipeServiceCreateRecipeProcedure:
@@ -272,6 +366,12 @@ func NewRecipeServiceHandler(svc RecipeServiceHandler, opts ...connect.HandlerOp
 			recipeServiceCheckRecipeHandler.ServeHTTP(w, r)
 		case RecipeServiceStartRunProcedure:
 			recipeServiceStartRunHandler.ServeHTTP(w, r)
+		case RecipeServiceListRunsProcedure:
+			recipeServiceListRunsHandler.ServeHTTP(w, r)
+		case RecipeServiceCancelRunProcedure:
+			recipeServiceCancelRunHandler.ServeHTTP(w, r)
+		case RecipeServiceDeleteRunProcedure:
+			recipeServiceDeleteRunHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -303,4 +403,16 @@ func (UnimplementedRecipeServiceHandler) CheckRecipe(context.Context, *api.Check
 
 func (UnimplementedRecipeServiceHandler) StartRun(context.Context, *api.StartRunRequest) (*api.StartRunResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.RecipeService.StartRun is not implemented"))
+}
+
+func (UnimplementedRecipeServiceHandler) ListRuns(context.Context, *api.ListRunsRequest) (*api.ListRunsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.RecipeService.ListRuns is not implemented"))
+}
+
+func (UnimplementedRecipeServiceHandler) CancelRun(context.Context, *api.CancelRunRequest) (*api.CancelRunResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.RecipeService.CancelRun is not implemented"))
+}
+
+func (UnimplementedRecipeServiceHandler) DeleteRun(context.Context, *api.DeleteRunRequest) (*api.DeleteRunResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.RecipeService.DeleteRun is not implemented"))
 }

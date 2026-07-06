@@ -9,6 +9,50 @@ import (
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 )
 
+// ToOgen converts CancelRunRequest to its ogen representation.
+func (src *CancelRunRequest) ToOgen() (*rest.CancelRunRequest, error) {
+	var dst rest.CancelRunRequest
+	if src == nil {
+		return &dst, nil
+	}
+	dst.TenantId.SetTo(string(src.GetTenantId()))
+	dst.RunId.SetTo(string(src.GetRunId()))
+	return &dst, nil
+}
+
+// CancelRunRequestFromOgen converts the ogen representation back to CancelRunRequest.
+func CancelRunRequestFromOgen(src *rest.CancelRunRequest) (*CancelRunRequest, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &CancelRunRequest{}
+	if v1, ok := src.TenantId.Get(); ok {
+		dst.TenantId = string(v1)
+	}
+	if v2, ok := src.RunId.Get(); ok {
+		dst.RunId = string(v2)
+	}
+	return dst, nil
+}
+
+// ToOgen converts CancelRunResponse to its ogen representation.
+func (src *CancelRunResponse) ToOgen() (*rest.CancelRunResponse, error) {
+	var dst rest.CancelRunResponse
+	if src == nil {
+		return &dst, nil
+	}
+	return &dst, nil
+}
+
+// CancelRunResponseFromOgen converts the ogen representation back to CancelRunResponse.
+func CancelRunResponseFromOgen(src *rest.CancelRunResponse) (*CancelRunResponse, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &CancelRunResponse{}
+	return dst, nil
+}
+
 // ToOgen converts CheckRecipeRequest to its ogen representation.
 func (src *CheckRecipeRequest) ToOgen() (*rest.CheckRecipeRequest, error) {
 	var dst rest.CheckRecipeRequest
@@ -179,6 +223,50 @@ func DeleteRecipeResponseFromOgen(src *rest.DeleteRecipeResponse) (*DeleteRecipe
 	return dst, nil
 }
 
+// ToOgen converts DeleteRunRequest to its ogen representation.
+func (src *DeleteRunRequest) ToOgen() (*rest.DeleteRunRequest, error) {
+	var dst rest.DeleteRunRequest
+	if src == nil {
+		return &dst, nil
+	}
+	dst.TenantId.SetTo(string(src.GetTenantId()))
+	dst.RunId.SetTo(string(src.GetRunId()))
+	return &dst, nil
+}
+
+// DeleteRunRequestFromOgen converts the ogen representation back to DeleteRunRequest.
+func DeleteRunRequestFromOgen(src *rest.DeleteRunRequest) (*DeleteRunRequest, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &DeleteRunRequest{}
+	if v1, ok := src.TenantId.Get(); ok {
+		dst.TenantId = string(v1)
+	}
+	if v2, ok := src.RunId.Get(); ok {
+		dst.RunId = string(v2)
+	}
+	return dst, nil
+}
+
+// ToOgen converts DeleteRunResponse to its ogen representation.
+func (src *DeleteRunResponse) ToOgen() (*rest.DeleteRunResponse, error) {
+	var dst rest.DeleteRunResponse
+	if src == nil {
+		return &dst, nil
+	}
+	return &dst, nil
+}
+
+// DeleteRunResponseFromOgen converts the ogen representation back to DeleteRunResponse.
+func DeleteRunResponseFromOgen(src *rest.DeleteRunResponse) (*DeleteRunResponse, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &DeleteRunResponse{}
+	return dst, nil
+}
+
 // ToOgen converts GetRecipeRequest to its ogen representation.
 func (src *GetRecipeRequest) ToOgen() (*rest.GetRecipeRequest, error) {
 	var dst rest.GetRecipeRequest
@@ -324,6 +412,72 @@ func ListRecipesResponseFromOgen(src *rest.ListRecipesResponse) (*ListRecipesRes
 	if v3, ok := src.NextPageToken.Get(); ok {
 		dst.NextPageToken = string(v3)
 	}
+	return dst, nil
+}
+
+// ToOgen converts ListRunsRequest to its ogen representation.
+func (src *ListRunsRequest) ToOgen() (*rest.ListRunsRequest, error) {
+	var dst rest.ListRunsRequest
+	if src == nil {
+		return &dst, nil
+	}
+	dst.TenantId.SetTo(string(src.GetTenantId()))
+	dst.RecipeId.SetTo(string(src.GetRecipeId()))
+	return &dst, nil
+}
+
+// ListRunsRequestFromOgen converts the ogen representation back to ListRunsRequest.
+func ListRunsRequestFromOgen(src *rest.ListRunsRequest) (*ListRunsRequest, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &ListRunsRequest{}
+	if v1, ok := src.TenantId.Get(); ok {
+		dst.TenantId = string(v1)
+	}
+	if v2, ok := src.RecipeId.Get(); ok {
+		dst.RecipeId = string(v2)
+	}
+	return dst, nil
+}
+
+// ToOgen converts ListRunsResponse to its ogen representation.
+func (src *ListRunsResponse) ToOgen() (*rest.ListRunsResponse, error) {
+	var dst rest.ListRunsResponse
+	if src == nil {
+		return &dst, nil
+	}
+	c1, err := convert.SliceErr(src.GetRuns(), func(e *models.TestRunRecord) (zero rest.TestRunRecord, _ error) {
+		o2, err := TestRunRecordToOgen(e)
+		if err != nil {
+			return zero, err
+		}
+		return *o2, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dst.Runs = c1
+	return &dst, nil
+}
+
+// ListRunsResponseFromOgen converts the ogen representation back to ListRunsResponse.
+func ListRunsResponseFromOgen(src *rest.ListRunsResponse) (*ListRunsResponse, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &ListRunsResponse{}
+	c1, err := convert.SliceErr(src.Runs, func(e rest.TestRunRecord) (zero *models.TestRunRecord, _ error) {
+		m2, err := TestRunRecordFromOgen(&e)
+		if err != nil {
+			return zero, err
+		}
+		return m2, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dst.Runs = c1
 	return dst, nil
 }
 

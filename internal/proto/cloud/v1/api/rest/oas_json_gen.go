@@ -1404,6 +1404,130 @@ func (s *Baked) UnmarshalJSON(data []byte) error {
 }
 
 // Encode implements json.Marshaler.
+func (s *CancelRunRequest) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *CancelRunRequest) encodeFields(e *jx.Encoder) {
+	{
+		if s.RunId.Set {
+			e.FieldStart("runId")
+			s.RunId.Encode(e)
+		}
+	}
+	{
+		if s.TenantId.Set {
+			e.FieldStart("tenantId")
+			s.TenantId.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfCancelRunRequest = [2]string{
+	0: "runId",
+	1: "tenantId",
+}
+
+// Decode decodes CancelRunRequest from json.
+func (s *CancelRunRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode CancelRunRequest to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "runId":
+			if err := func() error {
+				s.RunId.Reset()
+				if err := s.RunId.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"runId\"")
+			}
+		case "tenantId":
+			if err := func() error {
+				s.TenantId.Reset()
+				if err := s.TenantId.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"tenantId\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode CancelRunRequest")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *CancelRunRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *CancelRunRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *CancelRunResponse) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *CancelRunResponse) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfCancelRunResponse = [0]string{}
+
+// Decode decodes CancelRunResponse from json.
+func (s *CancelRunResponse) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode CancelRunResponse to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode CancelRunResponse")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *CancelRunResponse) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *CancelRunResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
 func (s *CancelSuiteRunRequest) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
@@ -10949,6 +11073,130 @@ func (s *DeleteRoleResponse) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *DeleteRoleResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *DeleteRunRequest) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *DeleteRunRequest) encodeFields(e *jx.Encoder) {
+	{
+		if s.RunId.Set {
+			e.FieldStart("runId")
+			s.RunId.Encode(e)
+		}
+	}
+	{
+		if s.TenantId.Set {
+			e.FieldStart("tenantId")
+			s.TenantId.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfDeleteRunRequest = [2]string{
+	0: "runId",
+	1: "tenantId",
+}
+
+// Decode decodes DeleteRunRequest from json.
+func (s *DeleteRunRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode DeleteRunRequest to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "runId":
+			if err := func() error {
+				s.RunId.Reset()
+				if err := s.RunId.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"runId\"")
+			}
+		case "tenantId":
+			if err := func() error {
+				s.TenantId.Reset()
+				if err := s.TenantId.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"tenantId\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode DeleteRunRequest")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *DeleteRunRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *DeleteRunRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *DeleteRunResponse) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *DeleteRunResponse) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfDeleteRunResponse = [0]string{}
+
+// Decode decodes DeleteRunResponse from json.
+func (s *DeleteRunResponse) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode DeleteRunResponse to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode DeleteRunResponse")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *DeleteRunResponse) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *DeleteRunResponse) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -27946,6 +28194,160 @@ func (s *ListRolesResponse) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *ListRolesResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *ListRunsRequest) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *ListRunsRequest) encodeFields(e *jx.Encoder) {
+	{
+		if s.RecipeId.Set {
+			e.FieldStart("recipeId")
+			s.RecipeId.Encode(e)
+		}
+	}
+	{
+		if s.TenantId.Set {
+			e.FieldStart("tenantId")
+			s.TenantId.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfListRunsRequest = [2]string{
+	0: "recipeId",
+	1: "tenantId",
+}
+
+// Decode decodes ListRunsRequest from json.
+func (s *ListRunsRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ListRunsRequest to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "recipeId":
+			if err := func() error {
+				s.RecipeId.Reset()
+				if err := s.RecipeId.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"recipeId\"")
+			}
+		case "tenantId":
+			if err := func() error {
+				s.TenantId.Reset()
+				if err := s.TenantId.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"tenantId\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode ListRunsRequest")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *ListRunsRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ListRunsRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *ListRunsResponse) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *ListRunsResponse) encodeFields(e *jx.Encoder) {
+	{
+		if s.Runs != nil {
+			e.FieldStart("runs")
+			e.ArrStart()
+			for _, elem := range s.Runs {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+}
+
+var jsonFieldsNameOfListRunsResponse = [1]string{
+	0: "runs",
+}
+
+// Decode decodes ListRunsResponse from json.
+func (s *ListRunsResponse) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ListRunsResponse to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "runs":
+			if err := func() error {
+				s.Runs = make([]TestRunRecord, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem TestRunRecord
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Runs = append(s.Runs, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"runs\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode ListRunsResponse")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *ListRunsResponse) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ListRunsResponse) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -69177,6 +69579,12 @@ func (s *TestRunRecord) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.RecipeId.Set {
+			e.FieldStart("recipeId")
+			s.RecipeId.Encode(e)
+		}
+	}
+	{
 		if s.RuntimeState.Set {
 			e.FieldStart("runtimeState")
 			s.RuntimeState.Encode(e)
@@ -69218,19 +69626,20 @@ func (s *TestRunRecord) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfTestRunRecord = [12]string{
+var jsonFieldsNameOfTestRunRecord = [13]string{
 	0:  "deploymentPlan",
 	1:  "entity",
 	2:  "inGlobalRating",
 	3:  "inTenantRating",
 	4:  "infrastructureState",
-	5:  "runtimeState",
-	6:  "spec",
-	7:  "status",
-	8:  "suiteCellId",
-	9:  "suiteRunId",
-	10: "summary",
-	11: "trigger",
+	5:  "recipeId",
+	6:  "runtimeState",
+	7:  "spec",
+	8:  "status",
+	9:  "suiteCellId",
+	10: "suiteRunId",
+	11: "summary",
+	12: "trigger",
 }
 
 // Decode decodes TestRunRecord from json.
@@ -69292,6 +69701,16 @@ func (s *TestRunRecord) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"infrastructureState\"")
 			}
+		case "recipeId":
+			if err := func() error {
+				s.RecipeId.Reset()
+				if err := s.RecipeId.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"recipeId\"")
+			}
 		case "runtimeState":
 			if err := func() error {
 				s.RuntimeState.Reset()
@@ -69303,7 +69722,7 @@ func (s *TestRunRecord) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"runtimeState\"")
 			}
 		case "spec":
-			requiredBitSet[0] |= 1 << 6
+			requiredBitSet[0] |= 1 << 7
 			if err := func() error {
 				if err := s.Spec.Decode(d); err != nil {
 					return err
@@ -69372,7 +69791,7 @@ func (s *TestRunRecord) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [2]uint8{
-		0b01000010,
+		0b10000010,
 		0b00000000,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {

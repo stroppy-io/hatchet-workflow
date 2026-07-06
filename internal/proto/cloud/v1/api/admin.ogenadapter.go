@@ -108,6 +108,21 @@ func (a *OgenAdapter) AddFavorite(ctx context.Context, req *rest.AddFavoriteRequ
 	return out, nil
 }
 
+func (a *OgenAdapter) CancelRun(ctx context.Context, req *rest.CancelRunRequest) error {
+	in := &CancelRunRequest{}
+	b, err := CancelRunRequestFromOgen(req)
+	if err != nil {
+		return err
+	}
+	in = b
+	resp, err := a.recipeService.CancelRun(ctx, in)
+	if err != nil {
+		return err
+	}
+	_ = resp
+	return nil
+}
+
 func (a *OgenAdapter) CancelSuiteRun(ctx context.Context, req *rest.CancelSuiteRunRequest, params rest.CancelSuiteRunParams) (*rest.CancelSuiteRunResponse, error) {
 	in := &CancelSuiteRunRequest{}
 	b, err := CancelSuiteRunRequestFromOgen(req)
@@ -650,6 +665,21 @@ func (a *OgenAdapter) DeleteRole(ctx context.Context, req *rest.DeleteRoleReques
 	}
 	in = b
 	resp, err := a.iamService.DeleteRole(ctx, in)
+	if err != nil {
+		return err
+	}
+	_ = resp
+	return nil
+}
+
+func (a *OgenAdapter) DeleteRun(ctx context.Context, req *rest.DeleteRunRequest, params rest.DeleteRunParams) error {
+	in := &DeleteRunRequest{}
+	b, err := DeleteRunRequestFromOgen(req)
+	if err != nil {
+		return err
+	}
+	in = b
+	resp, err := a.recipeService.DeleteRun(ctx, in)
 	if err != nil {
 		return err
 	}
@@ -1631,6 +1661,24 @@ func (a *OgenAdapter) ListRoles(ctx context.Context, req *rest.ListRolesRequest)
 	}
 	in = b
 	resp, err := a.iamService.ListRoles(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+	out, err := resp.ToOgen()
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (a *OgenAdapter) ListRuns(ctx context.Context, req *rest.ListRunsRequest) (*rest.ListRunsResponse, error) {
+	in := &ListRunsRequest{}
+	b, err := ListRunsRequestFromOgen(req)
+	if err != nil {
+		return nil, err
+	}
+	in = b
+	resp, err := a.recipeService.ListRuns(ctx, in)
 	if err != nil {
 		return nil, err
 	}

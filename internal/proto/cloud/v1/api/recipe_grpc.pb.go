@@ -25,6 +25,9 @@ const (
 	RecipeService_DeleteRecipe_FullMethodName = "/cloud.v1.api.RecipeService/DeleteRecipe"
 	RecipeService_CheckRecipe_FullMethodName  = "/cloud.v1.api.RecipeService/CheckRecipe"
 	RecipeService_StartRun_FullMethodName     = "/cloud.v1.api.RecipeService/StartRun"
+	RecipeService_ListRuns_FullMethodName     = "/cloud.v1.api.RecipeService/ListRuns"
+	RecipeService_CancelRun_FullMethodName    = "/cloud.v1.api.RecipeService/CancelRun"
+	RecipeService_DeleteRun_FullMethodName    = "/cloud.v1.api.RecipeService/DeleteRun"
 )
 
 // RecipeServiceClient is the client API for RecipeService service.
@@ -51,6 +54,15 @@ type RecipeServiceClient interface {
 	// persists a run record and starts RunRecipeWorkflow for it. Not
 	// idempotent — each call mints a new run.
 	StartRun(ctx context.Context, in *StartRunRequest, opts ...grpc.CallOption) (*StartRunResponse, error)
+	// ListRuns lists the runs launched from recipe bundles for the tenant,
+	// optionally filtered to one recipe. Read-only.
+	ListRuns(ctx context.Context, in *ListRunsRequest, opts ...grpc.CallOption) (*ListRunsResponse, error)
+	// CancelRun requests cancellation of an in-flight run's
+	// RunRecipeWorkflow. Cancellation is asynchronous: the resulting status
+	// transition is observed via ListRuns/Overview, not this response.
+	CancelRun(ctx context.Context, in *CancelRunRequest, opts ...grpc.CallOption) (*CancelRunResponse, error)
+	// DeleteRun deletes a run record by id.
+	DeleteRun(ctx context.Context, in *DeleteRunRequest, opts ...grpc.CallOption) (*DeleteRunResponse, error)
 }
 
 type recipeServiceClient struct {
@@ -121,6 +133,36 @@ func (c *recipeServiceClient) StartRun(ctx context.Context, in *StartRunRequest,
 	return out, nil
 }
 
+func (c *recipeServiceClient) ListRuns(ctx context.Context, in *ListRunsRequest, opts ...grpc.CallOption) (*ListRunsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListRunsResponse)
+	err := c.cc.Invoke(ctx, RecipeService_ListRuns_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *recipeServiceClient) CancelRun(ctx context.Context, in *CancelRunRequest, opts ...grpc.CallOption) (*CancelRunResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CancelRunResponse)
+	err := c.cc.Invoke(ctx, RecipeService_CancelRun_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *recipeServiceClient) DeleteRun(ctx context.Context, in *DeleteRunRequest, opts ...grpc.CallOption) (*DeleteRunResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteRunResponse)
+	err := c.cc.Invoke(ctx, RecipeService_DeleteRun_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RecipeServiceServer is the server API for RecipeService service.
 // All implementations must embed UnimplementedRecipeServiceServer
 // for forward compatibility.
@@ -145,6 +187,15 @@ type RecipeServiceServer interface {
 	// persists a run record and starts RunRecipeWorkflow for it. Not
 	// idempotent — each call mints a new run.
 	StartRun(context.Context, *StartRunRequest) (*StartRunResponse, error)
+	// ListRuns lists the runs launched from recipe bundles for the tenant,
+	// optionally filtered to one recipe. Read-only.
+	ListRuns(context.Context, *ListRunsRequest) (*ListRunsResponse, error)
+	// CancelRun requests cancellation of an in-flight run's
+	// RunRecipeWorkflow. Cancellation is asynchronous: the resulting status
+	// transition is observed via ListRuns/Overview, not this response.
+	CancelRun(context.Context, *CancelRunRequest) (*CancelRunResponse, error)
+	// DeleteRun deletes a run record by id.
+	DeleteRun(context.Context, *DeleteRunRequest) (*DeleteRunResponse, error)
 	mustEmbedUnimplementedRecipeServiceServer()
 }
 
@@ -172,6 +223,15 @@ func (UnimplementedRecipeServiceServer) CheckRecipe(context.Context, *CheckRecip
 }
 func (UnimplementedRecipeServiceServer) StartRun(context.Context, *StartRunRequest) (*StartRunResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method StartRun not implemented")
+}
+func (UnimplementedRecipeServiceServer) ListRuns(context.Context, *ListRunsRequest) (*ListRunsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListRuns not implemented")
+}
+func (UnimplementedRecipeServiceServer) CancelRun(context.Context, *CancelRunRequest) (*CancelRunResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CancelRun not implemented")
+}
+func (UnimplementedRecipeServiceServer) DeleteRun(context.Context, *DeleteRunRequest) (*DeleteRunResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteRun not implemented")
 }
 func (UnimplementedRecipeServiceServer) mustEmbedUnimplementedRecipeServiceServer() {}
 func (UnimplementedRecipeServiceServer) testEmbeddedByValue()                       {}
@@ -302,6 +362,60 @@ func _RecipeService_StartRun_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RecipeService_ListRuns_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListRunsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RecipeServiceServer).ListRuns(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RecipeService_ListRuns_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RecipeServiceServer).ListRuns(ctx, req.(*ListRunsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RecipeService_CancelRun_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CancelRunRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RecipeServiceServer).CancelRun(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RecipeService_CancelRun_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RecipeServiceServer).CancelRun(ctx, req.(*CancelRunRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RecipeService_DeleteRun_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteRunRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RecipeServiceServer).DeleteRun(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RecipeService_DeleteRun_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RecipeServiceServer).DeleteRun(ctx, req.(*DeleteRunRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RecipeService_ServiceDesc is the grpc.ServiceDesc for RecipeService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -332,6 +446,18 @@ var RecipeService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "StartRun",
 			Handler:    _RecipeService_StartRun_Handler,
+		},
+		{
+			MethodName: "ListRuns",
+			Handler:    _RecipeService_ListRuns_Handler,
+		},
+		{
+			MethodName: "CancelRun",
+			Handler:    _RecipeService_CancelRun_Handler,
+		},
+		{
+			MethodName: "DeleteRun",
+			Handler:    _RecipeService_DeleteRun_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

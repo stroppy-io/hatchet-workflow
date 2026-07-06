@@ -295,6 +295,17 @@ func (m *TestRunRecord) validate(all bool) error {
 		}
 	}
 
+	if utf8.RuneCountInString(m.GetRecipeId()) > 64 {
+		err := TestRunRecordValidationError{
+			field:  "RecipeId",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if len(errors) > 0 {
 		return TestRunRecordMultiError(errors)
 	}

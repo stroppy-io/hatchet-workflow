@@ -24,6 +24,20 @@ func encodeAddFavoriteRequest(
 	return nil
 }
 
+func encodeCancelRunRequest(
+	req *CancelRunRequest,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
 func encodeCancelSuiteRunRequest(
 	req *CancelSuiteRunRequest,
 	r *http.Request,
@@ -460,6 +474,20 @@ func encodeDeleteRecipeRequest(
 
 func encodeDeleteRoleRequest(
 	req *DeleteRoleRequest,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeDeleteRunRequest(
+	req *DeleteRunRequest,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -1188,6 +1216,20 @@ func encodeListRegistrationRequestsRequest(
 
 func encodeListRolesRequest(
 	req *ListRolesRequest,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeListRunsRequest(
+	req *ListRunsRequest,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"

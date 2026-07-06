@@ -81,7 +81,14 @@ type TestRunRecord struct {
 	// runtime_state is the last TestWorkflow RunState persisted by the
 	// workflow itself. Overview uses it as the durable projection when the
 	// Temporal workflow is already closed and no longer queryable.
-	RuntimeState  *workflow.RunState `protobuf:"bytes,13,opt,name=runtime_state,json=runtimeState,proto3" json:"runtime_state,omitempty"`
+	RuntimeState *workflow.RunState `protobuf:"bytes,13,opt,name=runtime_state,json=runtimeState,proto3" json:"runtime_state,omitempty"`
+	// recipe_id is the originating models.RecipeRecord.entity.id for a run
+	// launched via RecipeService.StartRun; empty for a classic run launched
+	// from a baked domain.TestRun spec (wizard/suite/cron). Stamped once at
+	// StartRun and never changed afterwards. RecipeService.ListRuns filters
+	// on this field when the caller supplies recipe_id; it also lets
+	// RunDetail trace a recipe run back to the bundle that produced it.
+	RecipeId      string `protobuf:"bytes,14,opt,name=recipe_id,json=recipeId,proto3" json:"recipe_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -198,6 +205,13 @@ func (x *TestRunRecord) GetRuntimeState() *workflow.RunState {
 		return x.RuntimeState
 	}
 	return nil
+}
+
+func (x *TestRunRecord) GetRecipeId() string {
+	if x != nil {
+		return x.RecipeId
+	}
+	return ""
 }
 
 // Summary is the flat, indexed projection of the run used by the table:
@@ -390,7 +404,7 @@ var File_cloud_v1_models_test_run_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_models_test_run_proto_rawDesc = "" +
 	"\n" +
-	"\x1ecloud/v1/models/test_run.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ccloud/v1/common/status.proto\x1a\x1dcloud/v1/common/trigger.proto\x1a(cloud/v1/deployment/infrastructure.proto\x1a\x1ecloud/v1/deployment/plan.proto\x1a\"cloud/v1/deployment/provider.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a\x1ccloud/v1/workflow/test.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\x9a\f\n" +
+	"\x1ecloud/v1/models/test_run.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ccloud/v1/common/status.proto\x1a\x1dcloud/v1/common/trigger.proto\x1a(cloud/v1/deployment/infrastructure.proto\x1a\x1ecloud/v1/deployment/plan.proto\x1a\"cloud/v1/deployment/provider.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a\x1ccloud/v1/workflow/test.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\xc0\f\n" +
 	"\rTestRunRecord\x129\n" +
 	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.common.EntityB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06entity\x126\n" +
 	"\x04spec\x18\x02 \x01(\v2\x18.cloud.v1.domain.TestRunB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04spec\x12/\n" +
@@ -405,7 +419,8 @@ const file_cloud_v1_models_test_run_proto_rawDesc = "" +
 	"\x14infrastructure_state\x18\n" +
 	" \x01(\v2(.cloud.v1.deployment.InfrastructureStateR\x13infrastructureState\x12L\n" +
 	"\x0fdeployment_plan\x18\v \x01(\v2#.cloud.v1.deployment.DeploymentPlanR\x0edeploymentPlan\x12@\n" +
-	"\rruntime_state\x18\r \x01(\v2\x1b.cloud.v1.workflow.RunStateR\fruntimeState\x1a\xcf\x06\n" +
+	"\rruntime_state\x18\r \x01(\v2\x1b.cloud.v1.workflow.RunStateR\fruntimeState\x12$\n" +
+	"\trecipe_id\x18\x0e \x01(\tB\a\xfaB\x04r\x02\x18@R\brecipeId\x1a\xcf\x06\n" +
 	"\aSummary\x127\n" +
 	"\adb_kind\x18\x01 \x01(\x0e2\x1e.cloud.v1.domain.Database.KindR\x06dbKind\x12)\n" +
 	"\fdb_preset_id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x18@R\n" +
