@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/dsl/compiled.proto.
  */
 export const file_cloud_v1_dsl_compiled: GenFile = /*@__PURE__*/
-  fileDesc("ChtjbG91ZC92MS9kc2wvY29tcGlsZWQucHJvdG8SDGNsb3VkLnYxLmRzbCLFAQoMQ29tcGlsZWRQbGFuEisKCHByb3ZpZGVyGAEgASgLMhkuY2xvdWQudjEuZHNsLlByb3ZpZGVyUmVmEjIKDm1hY2hpbmVfZ3JvdXBzGAIgAygLMhouY2xvdWQudjEuZHNsLk1hY2hpbmVHcm91cBIrCghzZXJ2aWNlcxgDIAMoCzIZLmNsb3VkLnYxLmRzbC5TZXJ2aWNlU3BlYxInCgRqb2JzGAQgAygLMhkuY2xvdWQudjEuZHNsLkNvbXBpbGVkSm9iIjAKC1Byb3ZpZGVyUmVmEgwKBG5hbWUYASABKAkSEwoLcGFyYW1zX2pzb24YAiABKAkigQEKDE1hY2hpbmVHcm91cBIMCgRuYW1lGAEgASgJEg0KBWNvdW50GAIgASgNEgsKA2NwdRgDIAEoDRIOCgZyYW1fbWIYBCABKAQSJQoFZGlza3MYBSADKAsyFi5jbG91ZC52MS5kc2wuRGlza1NwZWMSEAoIZXh0X2pzb24YBiABKAkiKQoIRGlza1NwZWMSDwoHc2l6ZV9nYhgBIAEoBBIMCgR0eXBlGAIgASgJIpECCgtTZXJ2aWNlU3BlYxIMCgRuYW1lGAEgASgJEhAKCG9uX2dyb3VwGAIgASgJEg0KBWltYWdlGAMgASgJEg8KB25ldHdvcmsYBCABKAkSDwoHdm9sdW1lcxgFIAMoCRIvCgNlbnYYBiADKAsyIi5jbG91ZC52MS5kc2wuU2VydmljZVNwZWMuRW52RW50cnkSKQoHY29uZmlncxgHIAMoCzIYLmNsb3VkLnYxLmRzbC5Db25maWdGaWxlEikKBmhlYWx0aBgIIAEoCzIZLmNsb3VkLnYxLmRzbC5IZWFsdGhDaGVjaxoqCghFbnZFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIjEKCkNvbmZpZ0ZpbGUSFQoNdGVtcGxhdGVfcGF0aBgBIAEoCRIMCgRkZXN0GAIgASgJIiwKC0hlYWx0aENoZWNrEgwKBGh0dHAYASABKAkSDwoHdGltZW91dBgCIAEoCSLUAgoLQ29tcGlsZWRKb2ISCgoCaWQYASABKAkSDQoFbmVlZHMYAiADKAkSEAoIb25fZ3JvdXAYAyABKAkSNQoGbWF0cml4GAQgAygLMiUuY2xvdWQudjEuZHNsLkNvbXBpbGVkSm9iLk1hdHJpeEVudHJ5EgwKBHdoZW4YBSABKAkSJwoFc3RlcHMYCiABKAsyFi5jbG91ZC52MS5kc2wuU3RlcExpc3RIABIRCgdzZXJ2aWNlGAsgASgJSAASMQoEd2l0aBgGIAMoCzIjLmNsb3VkLnYxLmRzbC5Db21waWxlZEpvYi5XaXRoRW50cnkaLQoLTWF0cml4RW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ARorCglXaXRoRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4AUIICgZhY3Rpb24iMAoIU3RlcExpc3QSJAoFc3RlcHMYASADKAsyFS5jbG91ZC52MS5kc2wuRHNsU3RlcCJqCgdEc2xTdGVwEi8KBWFnZW50GAEgASgLMh4uY2xvdWQudjEuZGVwbG95bWVudC5BZ2VudFN0ZXBIABImCgR3YWl0GAIgASgLMhYuY2xvdWQudjEuZHNsLldhaXRTdGVwSABCBgoEc3RlcCIpCghXYWl0U3RlcBIMCgRodHRwGAEgASgJEg8KB3RpbWVvdXQYAiABKAlCQVo/Z2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvZHNsYgZwcm90bzM", [file_cloud_v1_deployment_plan]);
+  fileDesc("ChtjbG91ZC92MS9kc2wvY29tcGlsZWQucHJvdG8SDGNsb3VkLnYxLmRzbCLFAQoMQ29tcGlsZWRQbGFuEisKCHByb3ZpZGVyGAEgASgLMhkuY2xvdWQudjEuZHNsLlByb3ZpZGVyUmVmEjIKDm1hY2hpbmVfZ3JvdXBzGAIgAygLMhouY2xvdWQudjEuZHNsLk1hY2hpbmVHcm91cBIrCghzZXJ2aWNlcxgDIAMoCzIZLmNsb3VkLnYxLmRzbC5TZXJ2aWNlU3BlYxInCgRqb2JzGAQgAygLMhkuY2xvdWQudjEuZHNsLkNvbXBpbGVkSm9iIjAKC1Byb3ZpZGVyUmVmEgwKBG5hbWUYASABKAkSEwoLcGFyYW1zX2pzb24YAiABKAkigQEKDE1hY2hpbmVHcm91cBIMCgRuYW1lGAEgASgJEg0KBWNvdW50GAIgASgNEgsKA2NwdRgDIAEoDRIOCgZyYW1fbWIYBCABKAQSJQoFZGlza3MYBSADKAsyFi5jbG91ZC52MS5kc2wuRGlza1NwZWMSEAoIZXh0X2pzb24YBiABKAkiKQoIRGlza1NwZWMSDwoHc2l6ZV9nYhgBIAEoBBIMCgR0eXBlGAIgASgJIpECCgtTZXJ2aWNlU3BlYxIMCgRuYW1lGAEgASgJEhAKCG9uX2dyb3VwGAIgASgJEg0KBWltYWdlGAMgASgJEg8KB25ldHdvcmsYBCABKAkSDwoHdm9sdW1lcxgFIAMoCRIvCgNlbnYYBiADKAsyIi5jbG91ZC52MS5kc2wuU2VydmljZVNwZWMuRW52RW50cnkSKQoHY29uZmlncxgHIAMoCzIYLmNsb3VkLnYxLmRzbC5Db25maWdGaWxlEikKBmhlYWx0aBgIIAEoCzIZLmNsb3VkLnYxLmRzbC5IZWFsdGhDaGVjaxoqCghFbnZFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIjEKCkNvbmZpZ0ZpbGUSFQoNdGVtcGxhdGVfcGF0aBgBIAEoCRIMCgRkZXN0GAIgASgJIiwKC0hlYWx0aENoZWNrEgwKBGh0dHAYASABKAkSDwoHdGltZW91dBgCIAEoCSLfBAoLQ29tcGlsZWRKb2ISCgoCaWQYASABKAkSDQoFbmVlZHMYAiADKAkSEAoIb25fZ3JvdXAYAyABKAkSNQoGbWF0cml4GAQgAygLMiUuY2xvdWQudjEuZHNsLkNvbXBpbGVkSm9iLk1hdHJpeEVudHJ5EgwKBHdoZW4YBSABKAkSJwoFc3RlcHMYCiABKAsyFi5jbG91ZC52MS5kc2wuU3RlcExpc3RIABIRCgdzZXJ2aWNlGAsgASgJSAASMQoEd2l0aBgGIAMoCzIjLmNsb3VkLnYxLmRzbC5Db21waWxlZEpvYi5XaXRoRW50cnkSRgoPcmVzb2x2ZWRfaW5wdXRzGAcgAygLMi0uY2xvdWQudjEuZHNsLkNvbXBpbGVkSm9iLlJlc29sdmVkSW5wdXRzRW50cnkSQAoMaW5wdXRfZ3JvdXBzGAggAygLMiouY2xvdWQudjEuZHNsLkNvbXBpbGVkSm9iLklucHV0R3JvdXBzRW50cnkSFAoMdGFyZ2V0X2dyb3VwGAkgASgJGi0KC01hdHJpeEVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEaKwoJV2l0aEVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEaNQoTUmVzb2x2ZWRJbnB1dHNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGjIKEElucHV0R3JvdXBzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4AUIICgZhY3Rpb24iMAoIU3RlcExpc3QSJAoFc3RlcHMYASADKAsyFS5jbG91ZC52MS5kc2wuRHNsU3RlcCJqCgdEc2xTdGVwEi8KBWFnZW50GAEgASgLMh4uY2xvdWQudjEuZGVwbG95bWVudC5BZ2VudFN0ZXBIABImCgR3YWl0GAIgASgLMhYuY2xvdWQudjEuZHNsLldhaXRTdGVwSABCBgoEc3RlcCIpCghXYWl0U3RlcBIMCgRodHRwGAEgASgJEg8KB3RpbWVvdXQYAiABKAlCQVo/Z2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvZHNsYgZwcm90bzM", [file_cloud_v1_deployment_plan]);
 
 /**
  * CompiledPlan — результат компиляции DSL-бандла: запрос машин провайдеру,
@@ -483,6 +483,37 @@ export type CompiledJob = Message<"cloud.v1.dsl.CompiledJob"> & {
    * @generated from field: map<string, string> with = 6;
    */
   with: { [key: string]: string };
+
+  /**
+   * resolved_inputs are the component's scalar inputs (int/string/bool)
+   * resolved at compile time, bound as CEL `inputs.<name>` at runtime.
+   * Values are the stringified scalar; the runtime rebinds them typed via
+   * the component's InputSpec if needed (v1: string-typed dyn). Empty for
+   * a job that did not originate from an include component.
+   *
+   * @generated from field: map<string, string> resolved_inputs = 7;
+   */
+  resolvedInputs: { [key: string]: string };
+
+  /**
+   * input_groups maps a machine_group-typed input name → the cluster
+   * machine group name it was bound to, so the runtime can bind
+   * `inputs.<name>` to that group's MachineGroupView. Empty for a job that
+   * did not originate from an include component.
+   *
+   * @generated from field: map<string, string> input_groups = 8;
+   */
+  inputGroups: { [key: string]: string };
+
+  /**
+   * target_group is the single machine_group input's group name (the CEL
+   * `target` binding), empty when the component has zero or multiple
+   * machine_group inputs, or the job did not originate from an include
+   * component.
+   *
+   * @generated from field: string target_group = 9;
+   */
+  targetGroup: string;
 };
 
 /**
@@ -534,6 +565,37 @@ export type CompiledJobJson = {
    * @generated from field: map<string, string> with = 6;
    */
   with?: { [key: string]: string };
+
+  /**
+   * resolved_inputs are the component's scalar inputs (int/string/bool)
+   * resolved at compile time, bound as CEL `inputs.<name>` at runtime.
+   * Values are the stringified scalar; the runtime rebinds them typed via
+   * the component's InputSpec if needed (v1: string-typed dyn). Empty for
+   * a job that did not originate from an include component.
+   *
+   * @generated from field: map<string, string> resolved_inputs = 7;
+   */
+  resolvedInputs?: { [key: string]: string };
+
+  /**
+   * input_groups maps a machine_group-typed input name → the cluster
+   * machine group name it was bound to, so the runtime can bind
+   * `inputs.<name>` to that group's MachineGroupView. Empty for a job that
+   * did not originate from an include component.
+   *
+   * @generated from field: map<string, string> input_groups = 8;
+   */
+  inputGroups?: { [key: string]: string };
+
+  /**
+   * target_group is the single machine_group input's group name (the CEL
+   * `target` binding), empty when the component has zero or multiple
+   * machine_group inputs, or the job did not originate from an include
+   * component.
+   *
+   * @generated from field: string target_group = 9;
+   */
+  targetGroup?: string;
 };
 
 export type CompiledJobValid = CompiledJob;

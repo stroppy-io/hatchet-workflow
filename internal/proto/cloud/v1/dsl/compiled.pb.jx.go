@@ -786,6 +786,28 @@ func (m *CompiledJob) Encode(e *jx.Encoder) {
 		}
 		e.ObjEnd()
 	}
+	if len(m.ResolvedInputs) > 0 {
+		e.FieldStart("resolvedInputs")
+		e.ObjStart()
+		for k, v := range m.ResolvedInputs {
+			e.FieldStart(k)
+			e.Str(v)
+		}
+		e.ObjEnd()
+	}
+	if len(m.InputGroups) > 0 {
+		e.FieldStart("inputGroups")
+		e.ObjStart()
+		for k, v := range m.InputGroups {
+			e.FieldStart(k)
+			e.Str(v)
+		}
+		e.ObjEnd()
+	}
+	if m.TargetGroup != "" {
+		e.FieldStart("targetGroup")
+		e.Str(m.TargetGroup)
+	}
 	switch v := m.Action.(type) {
 	case *CompiledJob_Steps:
 		e.FieldStart("steps")
@@ -903,6 +925,64 @@ func (m *CompiledJob) Decode(d *jx.Decoder) error {
 				m.With[mk] = mv
 				return nil
 			})
+		case "resolvedInputs", "resolved_inputs":
+			if seen["ResolvedInputs"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["ResolvedInputs"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			if m.ResolvedInputs == nil {
+				m.ResolvedInputs = make(map[string]string)
+			}
+			return d.Obj(func(d *jx.Decoder, ks string) error {
+				mk := ks
+				var mv string
+				tv, err := d.Str()
+				if err != nil {
+					return err
+				}
+				mv = tv
+				m.ResolvedInputs[mk] = mv
+				return nil
+			})
+		case "inputGroups", "input_groups":
+			if seen["InputGroups"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["InputGroups"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			if m.InputGroups == nil {
+				m.InputGroups = make(map[string]string)
+			}
+			return d.Obj(func(d *jx.Decoder, ks string) error {
+				mk := ks
+				var mv string
+				tv, err := d.Str()
+				if err != nil {
+					return err
+				}
+				mv = tv
+				m.InputGroups[mk] = mv
+				return nil
+			})
+		case "targetGroup", "target_group":
+			if seen["TargetGroup"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["TargetGroup"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.TargetGroup = v
+			return nil
 		case "steps":
 			if seen["oneof:Action"] {
 				return fmt.Errorf("multiple keys for oneof action")

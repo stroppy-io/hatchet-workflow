@@ -106,7 +106,7 @@ func Compile(in Input) (*dslpb.CompiledPlan, diag.List) {
 
 	jobs := graph.Expand(resolved)
 
-	plan, err := lower.Lower(cluster, dom, jobs)
+	plan, err := lower.Lower(cluster, dom, jobs, resolved.Components)
 	if err != nil {
 		diags.Errorf("", diag.Pos{}, "lower: %v", err)
 		return nil, diags

@@ -72,6 +72,22 @@ message CompiledJob {
         string service = 11;
     }
     map<string, string> with = 6;
+    // resolved_inputs are the component's scalar inputs (int/string/bool)
+    // resolved at compile time, bound as CEL `inputs.<name>` at runtime.
+    // Values are the stringified scalar; the runtime rebinds them typed via
+    // the component's InputSpec if needed (v1: string-typed dyn). Empty for
+    // a job that did not originate from an include component.
+    map<string, string> resolved_inputs = 7;
+    // input_groups maps a machine_group-typed input name → the cluster
+    // machine group name it was bound to, so the runtime can bind
+    // `inputs.<name>` to that group's MachineGroupView. Empty for a job that
+    // did not originate from an include component.
+    map<string, string> input_groups = 8;
+    // target_group is the single machine_group input's group name (the CEL
+    // `target` binding), empty when the component has zero or multiple
+    // machine_group inputs, or the job did not originate from an include
+    // component.
+    string target_group = 9;
 }
 
 message StepList {

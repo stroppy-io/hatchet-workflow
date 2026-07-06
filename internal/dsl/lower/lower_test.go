@@ -6,8 +6,10 @@ import (
 
 	"github.com/stroppy-io/stroppy-cloud/internal/dsl/ast"
 	"github.com/stroppy-io/stroppy-cloud/internal/dsl/graph"
+	"github.com/stroppy-io/stroppy-cloud/internal/dsl/include"
 	"github.com/stroppy-io/stroppy-cloud/internal/dsl/lower"
 	commonpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
+	dslpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dsl"
 )
 
 func plainCluster() *ast.ClusterDoc {
@@ -36,7 +38,7 @@ func TestLowerWriteFileStep(t *testing.T) {
 		}},
 	}
 	cluster := plainCluster()
-	plan, err := lower.Lower(cluster, plainDomain(cluster), jobs)
+	plan, err := lower.Lower(cluster, plainDomain(cluster), jobs, nil)
 	if err != nil {
 		t.Fatalf("Lower: %v", err)
 	}
@@ -66,7 +68,7 @@ func TestLowerFetchStep(t *testing.T) {
 		}},
 	}
 	cluster := plainCluster()
-	plan, err := lower.Lower(cluster, plainDomain(cluster), jobs)
+	plan, err := lower.Lower(cluster, plainDomain(cluster), jobs, nil)
 	if err != nil {
 		t.Fatalf("Lower: %v", err)
 	}
@@ -91,7 +93,7 @@ func TestLowerDirStep(t *testing.T) {
 		"mk": {Steps: []ast.Step{{Dir: "/var/lib/app"}}},
 	}
 	cluster := plainCluster()
-	plan, err := lower.Lower(cluster, plainDomain(cluster), jobs)
+	plan, err := lower.Lower(cluster, plainDomain(cluster), jobs, nil)
 	if err != nil {
 		t.Fatalf("Lower: %v", err)
 	}
@@ -128,7 +130,7 @@ func TestLowerStepWithNoActionErrors(t *testing.T) {
 				t.Fatalf("Lower panicked: %v", r)
 			}
 		}()
-		_, err = lower.Lower(cluster, plainDomain(cluster), jobs)
+		_, err = lower.Lower(cluster, plainDomain(cluster), jobs, nil)
 	}()
 
 	if err == nil {
@@ -167,7 +169,7 @@ func TestLowerMachineGroupDiskAndExt(t *testing.T) {
 		t.Fatalf("graph.Build: %+v", diags)
 	}
 
-	plan, err := lower.Lower(cluster, dom, map[string]ast.Job{})
+	plan, err := lower.Lower(cluster, dom, map[string]ast.Job{}, nil)
 	if err != nil {
 		t.Fatalf("Lower: %v", err)
 	}
@@ -223,7 +225,7 @@ func TestLowerServiceHealthAndConfigs(t *testing.T) {
 	}
 	dom := plainDomain(cluster)
 
-	plan, err := lower.Lower(cluster, dom, map[string]ast.Job{})
+	plan, err := lower.Lower(cluster, dom, map[string]ast.Job{}, nil)
 	if err != nil {
 		t.Fatalf("Lower: %v", err)
 	}
@@ -263,7 +265,7 @@ func TestLowerSortsMachineGroupsServicesJobsByName(t *testing.T) {
 		"aaa-job": {Steps: []ast.Step{{Cmd: "true"}}},
 	}
 
-	plan, err := lower.Lower(cluster, dom, jobs)
+	plan, err := lower.Lower(cluster, dom, jobs, nil)
 	if err != nil {
 		t.Fatalf("Lower: %v", err)
 	}
@@ -293,5 +295,151 @@ func TestLowerSortsMachineGroupsServicesJobsByName(t *testing.T) {
 	wantJobs := []string{"aaa-job", "zzz-job"}
 	if strings.Join(gotJobs, ",") != strings.Join(wantJobs, ",") {
 		t.Fatalf("job order = %v, want %v", gotJobs, wantJobs)
+	}
+}
+
+// findJob returns the CompiledJob with the given id from plan, failing the
+// test if it is absent.
+func findJob(t *testing.T, plan *dslpb.CompiledPlan, id string) *dslpb.CompiledJob {
+	t.Helper()
+	for _, j := range plan.GetJobs() {
+		if j.GetId() == id {
+			return j
+		}
+	}
+	t.Fatalf("job %q not found in plan (have: %v)", id, plan.GetJobs())
+	return nil
+}
+
+// TestLowerFillsResolvedInputsAndTargetGroupFromBoundComponent locks I1's
+// groundwork (see internal/dsl/lower's package doc): a CompiledJob that
+// originated from an include component (its id carries the component's
+// job-name prefix, e.g. "ha/install" for a component instantiated as job
+// "ha" — see include.BoundComponent's godoc) gets its resolved_inputs/
+// input_groups/target_group filled from that BoundComponent — scalar inputs
+// (Type != "machine_group") stringified into resolved_inputs, the sole
+// machine_group input's bound group name into both input_groups and
+// target_group. A job with no matching BoundComponent (never produced by an
+// `include:` job) gets all three left zero.
+func TestLowerFillsResolvedInputsAndTargetGroupFromBoundComponent(t *testing.T) {
+	jobs := map[string]ast.Job{
+		"ha/install": {On: "db", Steps: []ast.Step{{Cmd: "ha-install"}}},
+		"top":        {Steps: []ast.Step{{Cmd: "true"}}},
+	}
+	components := []include.BoundComponent{
+		{
+			Name: "ha",
+			Doc: &ast.ComponentDoc{
+				Inputs: map[string]ast.InputSpec{
+					"nodes": {Type: "machine_group"},
+					"count": {Type: "int"},
+				},
+			},
+			Inputs: map[string]any{"nodes": "db", "count": 3},
+		},
+	}
+	cluster := plainCluster()
+
+	plan, err := lower.Lower(cluster, plainDomain(cluster), jobs, components)
+	if err != nil {
+		t.Fatalf("Lower: %v", err)
+	}
+
+	haJob := findJob(t, plan, "ha/install")
+	if got := haJob.GetInputGroups()["nodes"]; got != "db" {
+		t.Fatalf("input_groups[nodes] = %q, want %q", got, "db")
+	}
+	if got := haJob.GetTargetGroup(); got != "db" {
+		t.Fatalf("target_group = %q, want %q", got, "db")
+	}
+	if got := haJob.GetResolvedInputs()["count"]; got != "3" {
+		t.Fatalf("resolved_inputs[count] = %q, want %q", got, "3")
+	}
+
+	topJob := findJob(t, plan, "top")
+	if len(topJob.GetResolvedInputs()) != 0 {
+		t.Fatalf("top-level job resolved_inputs = %+v, want empty", topJob.GetResolvedInputs())
+	}
+	if len(topJob.GetInputGroups()) != 0 {
+		t.Fatalf("top-level job input_groups = %+v, want empty", topJob.GetInputGroups())
+	}
+	if topJob.GetTargetGroup() != "" {
+		t.Fatalf("top-level job target_group = %q, want empty", topJob.GetTargetGroup())
+	}
+}
+
+// TestLowerTargetGroupEmptyWithZeroOrManyMachineGroupInputs locks the "0 or
+// >1 machine_group inputs -> target_group empty" half of the brief: a
+// component with two machine_group inputs bound gets both recorded in
+// input_groups, but target_group stays "" since there is no single input to
+// pick.
+func TestLowerTargetGroupEmptyWithZeroOrManyMachineGroupInputs(t *testing.T) {
+	jobs := map[string]ast.Job{
+		"link/setup": {Steps: []ast.Step{{Cmd: "link"}}},
+	}
+	components := []include.BoundComponent{
+		{
+			Name: "link",
+			Doc: &ast.ComponentDoc{
+				Inputs: map[string]ast.InputSpec{
+					"a": {Type: "machine_group"},
+					"b": {Type: "machine_group"},
+				},
+			},
+			Inputs: map[string]any{"a": "db", "b": "app"},
+		},
+	}
+	cluster := plainCluster()
+
+	plan, err := lower.Lower(cluster, plainDomain(cluster), jobs, components)
+	if err != nil {
+		t.Fatalf("Lower: %v", err)
+	}
+
+	job := findJob(t, plan, "link/setup")
+	if job.GetInputGroups()["a"] != "db" || job.GetInputGroups()["b"] != "app" {
+		t.Fatalf("input_groups = %+v, want a=db b=app", job.GetInputGroups())
+	}
+	if job.GetTargetGroup() != "" {
+		t.Fatalf("target_group = %q, want empty with two machine_group inputs", job.GetTargetGroup())
+	}
+}
+
+// TestLowerNestedIncludeAttributesJobToInnermostComponent locks
+// componentForJob's "most specific match wins" rule: when one component's
+// own fragment includes another (jobs prefixed "outer/inner/..."), a job
+// under the nested prefix is attributed to the inner BoundComponent (Name
+// "outer/inner"), not the outer one, even though the outer's Name is also a
+// (shorter) prefix match.
+func TestLowerNestedIncludeAttributesJobToInnermostComponent(t *testing.T) {
+	jobs := map[string]ast.Job{
+		"outer/inner/setup": {Steps: []ast.Step{{Cmd: "inner"}}},
+	}
+	components := []include.BoundComponent{
+		{
+			Name: "outer",
+			Doc: &ast.ComponentDoc{
+				Inputs: map[string]ast.InputSpec{"nodes": {Type: "machine_group"}},
+			},
+			Inputs: map[string]any{"nodes": "outer-group"},
+		},
+		{
+			Name: "outer/inner",
+			Doc: &ast.ComponentDoc{
+				Inputs: map[string]ast.InputSpec{"nodes": {Type: "machine_group"}},
+			},
+			Inputs: map[string]any{"nodes": "inner-group"},
+		},
+	}
+	cluster := plainCluster()
+
+	plan, err := lower.Lower(cluster, plainDomain(cluster), jobs, components)
+	if err != nil {
+		t.Fatalf("Lower: %v", err)
+	}
+
+	job := findJob(t, plan, "outer/inner/setup")
+	if got := job.GetTargetGroup(); got != "inner-group" {
+		t.Fatalf("target_group = %q, want %q (innermost component, not %q)", got, "inner-group", "outer-group")
 	}
 }

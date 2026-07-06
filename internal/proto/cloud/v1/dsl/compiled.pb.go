@@ -500,8 +500,24 @@ type CompiledJob struct {
 	//
 	//	*CompiledJob_Steps
 	//	*CompiledJob_Service
-	Action        isCompiledJob_Action `protobuf_oneof:"action"`
-	With          map[string]string    `protobuf:"bytes,6,rep,name=with,proto3" json:"with,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Action isCompiledJob_Action `protobuf_oneof:"action"`
+	With   map[string]string    `protobuf:"bytes,6,rep,name=with,proto3" json:"with,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// resolved_inputs are the component's scalar inputs (int/string/bool)
+	// resolved at compile time, bound as CEL `inputs.<name>` at runtime.
+	// Values are the stringified scalar; the runtime rebinds them typed via
+	// the component's InputSpec if needed (v1: string-typed dyn). Empty for
+	// a job that did not originate from an include component.
+	ResolvedInputs map[string]string `protobuf:"bytes,7,rep,name=resolved_inputs,json=resolvedInputs,proto3" json:"resolved_inputs,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// input_groups maps a machine_group-typed input name → the cluster
+	// machine group name it was bound to, so the runtime can bind
+	// `inputs.<name>` to that group's MachineGroupView. Empty for a job that
+	// did not originate from an include component.
+	InputGroups map[string]string `protobuf:"bytes,8,rep,name=input_groups,json=inputGroups,proto3" json:"input_groups,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// target_group is the single machine_group input's group name (the CEL
+	// `target` binding), empty when the component has zero or multiple
+	// machine_group inputs, or the job did not originate from an include
+	// component.
+	TargetGroup   string `protobuf:"bytes,9,opt,name=target_group,json=targetGroup,proto3" json:"target_group,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -601,6 +617,27 @@ func (x *CompiledJob) GetWith() map[string]string {
 		return x.With
 	}
 	return nil
+}
+
+func (x *CompiledJob) GetResolvedInputs() map[string]string {
+	if x != nil {
+		return x.ResolvedInputs
+	}
+	return nil
+}
+
+func (x *CompiledJob) GetInputGroups() map[string]string {
+	if x != nil {
+		return x.InputGroups
+	}
+	return nil
+}
+
+func (x *CompiledJob) GetTargetGroup() string {
+	if x != nil {
+		return x.TargetGroup
+	}
+	return ""
 }
 
 type isCompiledJob_Action interface {
@@ -840,7 +877,7 @@ const file_cloud_v1_dsl_compiled_proto_rawDesc = "" +
 	"\x04dest\x18\x02 \x01(\tR\x04dest\";\n" +
 	"\vHealthCheck\x12\x12\n" +
 	"\x04http\x18\x01 \x01(\tR\x04http\x12\x18\n" +
-	"\atimeout\x18\x02 \x01(\tR\atimeout\"\xa4\x03\n" +
+	"\atimeout\x18\x02 \x01(\tR\atimeout\"\xf1\x05\n" +
 	"\vCompiledJob\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05needs\x18\x02 \x03(\tR\x05needs\x12\x19\n" +
@@ -850,11 +887,20 @@ const file_cloud_v1_dsl_compiled_proto_rawDesc = "" +
 	"\x05steps\x18\n" +
 	" \x01(\v2\x16.cloud.v1.dsl.StepListH\x00R\x05steps\x12\x1a\n" +
 	"\aservice\x18\v \x01(\tH\x00R\aservice\x127\n" +
-	"\x04with\x18\x06 \x03(\v2#.cloud.v1.dsl.CompiledJob.WithEntryR\x04with\x1a9\n" +
+	"\x04with\x18\x06 \x03(\v2#.cloud.v1.dsl.CompiledJob.WithEntryR\x04with\x12V\n" +
+	"\x0fresolved_inputs\x18\a \x03(\v2-.cloud.v1.dsl.CompiledJob.ResolvedInputsEntryR\x0eresolvedInputs\x12M\n" +
+	"\finput_groups\x18\b \x03(\v2*.cloud.v1.dsl.CompiledJob.InputGroupsEntryR\vinputGroups\x12!\n" +
+	"\ftarget_group\x18\t \x01(\tR\vtargetGroup\x1a9\n" +
 	"\vMatrixEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a7\n" +
 	"\tWithEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1aA\n" +
+	"\x13ResolvedInputsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a>\n" +
+	"\x10InputGroupsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\b\n" +
 	"\x06action\"7\n" +
@@ -880,7 +926,7 @@ func file_cloud_v1_dsl_compiled_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_dsl_compiled_proto_rawDescData
 }
 
-var file_cloud_v1_dsl_compiled_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_cloud_v1_dsl_compiled_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_cloud_v1_dsl_compiled_proto_goTypes = []any{
 	(*CompiledPlan)(nil),         // 0: cloud.v1.dsl.CompiledPlan
 	(*ProviderRef)(nil),          // 1: cloud.v1.dsl.ProviderRef
@@ -896,7 +942,9 @@ var file_cloud_v1_dsl_compiled_proto_goTypes = []any{
 	nil,                          // 11: cloud.v1.dsl.ServiceSpec.EnvEntry
 	nil,                          // 12: cloud.v1.dsl.CompiledJob.MatrixEntry
 	nil,                          // 13: cloud.v1.dsl.CompiledJob.WithEntry
-	(*deployment.AgentStep)(nil), // 14: cloud.v1.deployment.AgentStep
+	nil,                          // 14: cloud.v1.dsl.CompiledJob.ResolvedInputsEntry
+	nil,                          // 15: cloud.v1.dsl.CompiledJob.InputGroupsEntry
+	(*deployment.AgentStep)(nil), // 16: cloud.v1.deployment.AgentStep
 }
 var file_cloud_v1_dsl_compiled_proto_depIdxs = []int32{
 	1,  // 0: cloud.v1.dsl.CompiledPlan.provider:type_name -> cloud.v1.dsl.ProviderRef
@@ -910,14 +958,16 @@ var file_cloud_v1_dsl_compiled_proto_depIdxs = []int32{
 	12, // 8: cloud.v1.dsl.CompiledJob.matrix:type_name -> cloud.v1.dsl.CompiledJob.MatrixEntry
 	8,  // 9: cloud.v1.dsl.CompiledJob.steps:type_name -> cloud.v1.dsl.StepList
 	13, // 10: cloud.v1.dsl.CompiledJob.with:type_name -> cloud.v1.dsl.CompiledJob.WithEntry
-	9,  // 11: cloud.v1.dsl.StepList.steps:type_name -> cloud.v1.dsl.DslStep
-	14, // 12: cloud.v1.dsl.DslStep.agent:type_name -> cloud.v1.deployment.AgentStep
-	10, // 13: cloud.v1.dsl.DslStep.wait:type_name -> cloud.v1.dsl.WaitStep
-	14, // [14:14] is the sub-list for method output_type
-	14, // [14:14] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	14, // 11: cloud.v1.dsl.CompiledJob.resolved_inputs:type_name -> cloud.v1.dsl.CompiledJob.ResolvedInputsEntry
+	15, // 12: cloud.v1.dsl.CompiledJob.input_groups:type_name -> cloud.v1.dsl.CompiledJob.InputGroupsEntry
+	9,  // 13: cloud.v1.dsl.StepList.steps:type_name -> cloud.v1.dsl.DslStep
+	16, // 14: cloud.v1.dsl.DslStep.agent:type_name -> cloud.v1.deployment.AgentStep
+	10, // 15: cloud.v1.dsl.DslStep.wait:type_name -> cloud.v1.dsl.WaitStep
+	16, // [16:16] is the sub-list for method output_type
+	16, // [16:16] is the sub-list for method input_type
+	16, // [16:16] is the sub-list for extension type_name
+	16, // [16:16] is the sub-list for extension extendee
+	0,  // [0:16] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_dsl_compiled_proto_init() }
@@ -939,7 +989,7 @@ func file_cloud_v1_dsl_compiled_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_dsl_compiled_proto_rawDesc), len(file_cloud_v1_dsl_compiled_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   14,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

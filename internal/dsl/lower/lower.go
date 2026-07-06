@@ -22,10 +22,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/dsl/ast"
 	"github.com/stroppy-io/stroppy-cloud/internal/dsl/graph"
+	"github.com/stroppy-io/stroppy-cloud/internal/dsl/include"
 	commonpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	dslpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dsl"
@@ -50,9 +52,12 @@ const (
 
 // Lower builds the CompiledPlan for cluster/dom/jobs. cluster supplies the
 // provider reference and service specs, dom supplies the (already lowered
-// disk-type, ext-merged) machine group states, and jobs is the flat,
+// disk-type, ext-merged) machine group states, jobs is the flat,
 // matrix-expanded job map (internal/dsl/graph.Expand's output) to compile
-// into the job DAG.
+// into the job DAG, and components is every include.BoundComponent
+// instantiation the recipe's `include:` jobs produced (include.Resolve's
+// Resolved.Components) — the source Lower reads each CompiledJob's
+// resolved_inputs/input_groups/target_group from (see jobInputFields).
 //
 // Output is deterministic: MachineGroups, Services and Jobs are each sorted
 // by name, so two calls with equal inputs produce proto.Equal plans.
@@ -69,7 +74,7 @@ const (
 // Lower with such a step is therefore a programmatic inconsistency between
 // compiler stages, reported as an error rather than silently producing an
 // empty DslStep or panicking on a nil pointer deref.
-func Lower(cluster *ast.ClusterDoc, dom *graph.Domain, jobs map[string]ast.Job) (*dslpb.CompiledPlan, error) {
+func Lower(cluster *ast.ClusterDoc, dom *graph.Domain, jobs map[string]ast.Job, components []include.BoundComponent) (*dslpb.CompiledPlan, error) {
 	provider, err := lowerProvider(cluster)
 	if err != nil {
 		return nil, err
@@ -80,7 +85,7 @@ func Lower(cluster *ast.ClusterDoc, dom *graph.Domain, jobs map[string]ast.Job) 
 		return nil, err
 	}
 
-	compiledJobs, err := lowerJobs(jobs)
+	compiledJobs, err := lowerJobs(jobs, components)
 	if err != nil {
 		return nil, err
 	}
@@ -215,7 +220,7 @@ func lowerHealth(h *ast.Health) *dslpb.HealthCheck {
 
 // lowerJobs builds one CompiledJob per jobs entry, sorted by (instance) name
 // for determinism.
-func lowerJobs(jobs map[string]ast.Job) ([]*dslpb.CompiledJob, error) {
+func lowerJobs(jobs map[string]ast.Job, components []include.BoundComponent) ([]*dslpb.CompiledJob, error) {
 	names := make([]string, 0, len(jobs))
 	for name := range jobs {
 		names = append(names, name)
@@ -224,7 +229,7 @@ func lowerJobs(jobs map[string]ast.Job) ([]*dslpb.CompiledJob, error) {
 
 	out := make([]*dslpb.CompiledJob, 0, len(names))
 	for _, name := range names {
-		cj, err := lowerJob(name, jobs[name])
+		cj, err := lowerJob(name, jobs[name], components)
 		if err != nil {
 			return nil, err
 		}
@@ -233,14 +238,19 @@ func lowerJobs(jobs map[string]ast.Job) ([]*dslpb.CompiledJob, error) {
 	return out, nil
 }
 
-func lowerJob(name string, job ast.Job) (*dslpb.CompiledJob, error) {
+func lowerJob(name string, job ast.Job, components []include.BoundComponent) (*dslpb.CompiledJob, error) {
+	resolvedInputs, inputGroups, targetGroup := jobInputFields(name, components)
+
 	cj := &dslpb.CompiledJob{
-		Id:      name,
-		Needs:   append([]string(nil), job.Needs...),
-		OnGroup: job.On,
-		Matrix:  job.MatrixValues,
-		When:    job.When,
-		With:    job.With,
+		Id:             name,
+		Needs:          append([]string(nil), job.Needs...),
+		OnGroup:        job.On,
+		Matrix:         job.MatrixValues,
+		When:           job.When,
+		With:           job.With,
+		ResolvedInputs: resolvedInputs,
+		InputGroups:    inputGroups,
+		TargetGroup:    targetGroup,
 	}
 
 	if job.Service != "" {
@@ -254,6 +264,81 @@ func lowerJob(name string, job ast.Job) (*dslpb.CompiledJob, error) {
 	}
 	cj.Action = &dslpb.CompiledJob_Steps{Steps: &dslpb.StepList{Steps: steps}}
 	return cj, nil
+}
+
+// jobInputFields computes a CompiledJob's resolved_inputs/input_groups/
+// target_group from the include.BoundComponent that produced jobID, per
+// componentForJob's association rule. A jobID with no matching
+// BoundComponent (a top-level workflow job, never reached via an
+// `include:`) yields all three zero values, matching the brief's "jobs not
+// from a component -> all three empty".
+//
+// resolvedInputs holds every scalar (non machine_group) input, stringified
+// via fmt.Sprint; inputGroups holds every machine_group input's bound group
+// name; targetGroup is that single group name when the component declares
+// exactly one machine_group input, else "" (0 or >1).
+func jobInputFields(jobID string, components []include.BoundComponent) (resolvedInputs, inputGroups map[string]string, targetGroup string) {
+	bc := componentForJob(baseJobName(jobID), components)
+	if bc == nil {
+		return nil, nil, ""
+	}
+
+	resolvedInputs = map[string]string{}
+	inputGroups = map[string]string{}
+	for inputName, spec := range bc.Doc.Inputs {
+		val, has := bc.Inputs[inputName]
+		if !has {
+			continue
+		}
+		if spec.Type == "machine_group" {
+			if group, ok := val.(string); ok {
+				inputGroups[inputName] = group
+			}
+			continue
+		}
+		resolvedInputs[inputName] = fmt.Sprint(val)
+	}
+
+	if len(inputGroups) == 1 {
+		for _, group := range inputGroups {
+			targetGroup = group
+		}
+	}
+
+	return resolvedInputs, inputGroups, targetGroup
+}
+
+// baseJobName strips a matrix instance's "[k=v,...]" suffix (see
+// graph.Expand), recovering the include.Resolve-produced job name a
+// BoundComponent.Name prefix match compares against — Expand appends that
+// suffix only after Resolve has already fixed every job's name.
+func baseJobName(id string) string {
+	if idx := strings.IndexByte(id, '['); idx >= 0 {
+		return id[:idx]
+	}
+	return id
+}
+
+// componentForJob finds the BoundComponent that directly produced the job
+// named baseName, per include.Resolve's naming rule: an include job
+// instantiated as name N produces its own fragment's jobs under the "N/"
+// prefix (see include.BoundComponent's godoc and expandInclude). When
+// baseName matches more than one candidate (a nested include: an outer
+// component's own fragment includes another), the most specific — longest
+// Name — match wins, so a job is attributed to the innermost component that
+// literally declared it, not an ancestor it happens to be nested under.
+func componentForJob(baseName string, components []include.BoundComponent) *include.BoundComponent {
+	var best *include.BoundComponent
+	for i := range components {
+		c := &components[i]
+		if baseName != c.Name && !strings.HasPrefix(baseName, c.Name+"/") {
+			continue
+		}
+		if best == nil || len(c.Name) > len(best.Name) {
+			best = c
+		}
+	}
+	return best
 }
 
 func lowerSteps(jobID string, steps []ast.Step) ([]*dslpb.DslStep, error) {

@@ -28,17 +28,25 @@
     },
     {
       "id": "etcd/up",
+      "inputGroups": {
+        "nodes": "db"
+      },
       "needs": [
         "prep-disks"
       ],
-      "service": "etcd"
+      "service": "etcd",
+      "targetGroup": "db"
     },
     {
       "id": "patroni/up",
+      "inputGroups": {
+        "nodes": "db"
+      },
       "needs": [
         "etcd/up"
       ],
-      "service": "patroni-postgres"
+      "service": "patroni-postgres",
+      "targetGroup": "db"
     },
     {
       "id": "prep-disks",

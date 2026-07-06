@@ -1024,6 +1024,12 @@ func (m *CompiledJob) validate(all bool) error {
 
 	// no validation rules for With
 
+	// no validation rules for ResolvedInputs
+
+	// no validation rules for InputGroups
+
+	// no validation rules for TargetGroup
+
 	switch v := m.Action.(type) {
 	case *CompiledJob_Steps:
 		if v == nil {
