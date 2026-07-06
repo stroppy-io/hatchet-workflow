@@ -28,8 +28,8 @@ import (
 // logs; per-run isolation is by the stroppy_run_id label / run_id field.
 //
 // The server address / run id travel from the run config into the TopologySpec
-// labels (see internal/domain/run/workflow_config.go). The bearer token is the
-// per-node agent token passed through RenderContext, never topology labels.
+// labels (LabelServerAddr/LabelRunID below). The bearer token is the per-node
+// agent token passed through RenderContext, never topology labels.
 
 const (
 	// LabelServerAddr is the topology-spec label carrying the control-plane

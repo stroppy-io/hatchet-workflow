@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	agentdomain "github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
-	"github.com/stroppy-io/stroppy-cloud/internal/domain/database/orioledb"
 	apipb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	modelspb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
@@ -93,8 +92,8 @@ func TestAgentBootstrapInjectsRegistryMirrorEnv(t *testing.T) {
 	}
 
 	wantMirror := agentdomain.AptProxyURL("https://env.example")
-	if got := bootstrap.GetExtraEnv()[orioledb.RegistryMirrorEnv]; got != wantMirror {
-		t.Fatalf("ExtraEnv[%q] = %q, want %q", orioledb.RegistryMirrorEnv, got, wantMirror)
+	if got := bootstrap.GetExtraEnv()[registryMirrorEnv]; got != wantMirror {
+		t.Fatalf("ExtraEnv[%q] = %q, want %q", registryMirrorEnv, got, wantMirror)
 	}
 }
 
@@ -102,7 +101,7 @@ func TestAgentBootstrapRegistryMirrorEnvOverrideWins(t *testing.T) {
 	overrideURL := "http://custom-registry:5000"
 	resolver := Resolver{
 		DefaultServerAddr: "https://env.example",
-		DefaultAgentEnv:   map[string]string{orioledb.RegistryMirrorEnv: overrideURL},
+		DefaultAgentEnv:   map[string]string{registryMirrorEnv: overrideURL},
 	}
 
 	bootstrap, err := resolver.AgentBootstrap(context.Background())
@@ -110,8 +109,8 @@ func TestAgentBootstrapRegistryMirrorEnvOverrideWins(t *testing.T) {
 		t.Fatalf("agent bootstrap: %v", err)
 	}
 
-	if got := bootstrap.GetExtraEnv()[orioledb.RegistryMirrorEnv]; got != overrideURL {
-		t.Fatalf("ExtraEnv[%q] = %q, want explicit override %q", orioledb.RegistryMirrorEnv, got, overrideURL)
+	if got := bootstrap.GetExtraEnv()[registryMirrorEnv]; got != overrideURL {
+		t.Fatalf("ExtraEnv[%q] = %q, want explicit override %q", registryMirrorEnv, got, overrideURL)
 	}
 }
 

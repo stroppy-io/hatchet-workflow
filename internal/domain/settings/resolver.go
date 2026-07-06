@@ -5,16 +5,24 @@ import (
 	"errors"
 	"fmt"
 
+	"google.golang.org/protobuf/proto"
+
 	agentdomain "github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
-	"github.com/stroppy-io/stroppy-cloud/internal/domain/database/orioledb"
 	apipb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	modelspb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
-	"google.golang.org/protobuf/proto"
 )
 
 const DefaultLocalServerAddr = "http://host.docker.internal:8080"
+
+// registryMirrorEnv is the env var the agent expands (from the bootstrap
+// extra-env map) into its docker pull-through registry mirror config.
+// Inlined here (previously lived on the per-database orioledb package) since
+// the per-database engine packages were deleted in the old-backend cleanup,
+// but domain/settings — a shared seam that cleanup's recon missed — still
+// needs the constant to stamp every agent bootstrap's extra env.
+const registryMirrorEnv = "STROPPY_REGISTRY_MIRROR"
 
 type PlatformSettingsSource interface {
 	PlatformSettings(ctx context.Context) (*apipb.PlatformSettings, error)
@@ -90,10 +98,10 @@ func (r Resolver) AgentBootstrap(ctx context.Context) (*workflowpb.AgentBootstra
 	// is empty or the caller already provides an explicit override via
 	// DefaultAgentEnv (let an explicit setting win).
 	if serverAddr != "" {
-		if _, alreadySet := extraEnv[orioledb.RegistryMirrorEnv]; !alreadySet {
+		if _, alreadySet := extraEnv[registryMirrorEnv]; !alreadySet {
 			// mirror URL == server origin; /v2 is routed to the registry backend by the gateway (and Caddy).
 			if mirrorURL := agentdomain.AptProxyURL(serverAddr); mirrorURL != "" {
-				extraEnv[orioledb.RegistryMirrorEnv] = mirrorURL
+				extraEnv[registryMirrorEnv] = mirrorURL
 			}
 		}
 	}
