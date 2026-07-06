@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sync"
 
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
@@ -77,8 +78,12 @@ func (a *dockerExecutorExec) EnsureContainer(ctx context.Context, spec Container
 }
 
 // RemoveContainers removes every container EnsureContainer has tracked for
-// networkName (plus the network itself) by calling Down, then clears the
-// tracking for that network.
+// networkName (plus the network itself) by calling Down, then untracks only
+// the names it removed. It does not clear the whole byNet entry outright:
+// a concurrent EnsureContainer can track a new name for networkName between
+// the snapshot read below and this method's post-Down update, and that name
+// must survive — otherwise it would be dropped by this Down call *and*
+// erased from byNet, so no future RemoveContainers would ever remove it.
 func (a *dockerExecutorExec) RemoveContainers(ctx context.Context, networkName string) error {
 	a.mu.Lock()
 	names := a.byNet[networkName]
@@ -99,7 +104,17 @@ func (a *dockerExecutorExec) RemoveContainers(ctx context.Context, networkName s
 	}
 
 	a.mu.Lock()
-	delete(a.byNet, networkName)
+	remaining := make([]string, 0, len(a.byNet[networkName]))
+	for _, name := range a.byNet[networkName] {
+		if !slices.Contains(names, name) {
+			remaining = append(remaining, name)
+		}
+	}
+	if len(remaining) == 0 {
+		delete(a.byNet, networkName)
+	} else {
+		a.byNet[networkName] = remaining
+	}
 	a.mu.Unlock()
 
 	return nil
@@ -108,10 +123,8 @@ func (a *dockerExecutorExec) RemoveContainers(ctx context.Context, networkName s
 func (a *dockerExecutorExec) track(networkName, containerName string) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	for _, name := range a.byNet[networkName] {
-		if name == containerName {
-			return
-		}
+	if slices.Contains(a.byNet[networkName], containerName) {
+		return
 	}
 	a.byNet[networkName] = append(a.byNet[networkName], containerName)
 }

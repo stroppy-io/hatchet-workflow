@@ -19,6 +19,11 @@ type fakeDockerRunner struct {
 	downInput *deploymentpb.Docker_Input
 	downOut   *deploymentpb.Docker_Output
 	downErr   error
+
+	// downFn, if set, runs while Down is "in flight" (before it returns),
+	// letting tests simulate a concurrent tracker mutating adapter state
+	// between RemoveContainers' snapshot-read and its post-Down clear.
+	downFn func()
 }
 
 func (f *fakeDockerRunner) Up(_ context.Context, input *deploymentpb.Docker_Input) (*deploymentpb.Docker_Output, error) {
@@ -28,6 +33,9 @@ func (f *fakeDockerRunner) Up(_ context.Context, input *deploymentpb.Docker_Inpu
 
 func (f *fakeDockerRunner) Down(_ context.Context, input *deploymentpb.Docker_Input) (*deploymentpb.Docker_Output, error) {
 	f.downInput = input
+	if f.downFn != nil {
+		f.downFn()
+	}
 	return f.downOut, f.downErr
 }
 
@@ -135,6 +143,51 @@ func TestDockerExecutorExec_RemoveContainers_DownsAllTrackedNamesForNetwork(t *t
 	require.NoError(t, err)
 	require.Empty(t, fake.downInput.GetContainers())
 	require.Equal(t, "stroppy-run1", fake.downInput.GetNetwork().GetName())
+}
+
+func TestRemoveContainersPreservesConcurrentlyTrackedContainer(t *testing.T) {
+	fake := &fakeDockerRunner{
+		upOut: &deploymentpb.Docker_Output{
+			Containers: map[string]*deploymentpb.Docker_ContainerOutput{
+				"c1": {Id: "id-c1"},
+			},
+		},
+	}
+	adapter := NewDockerExecutorExec(fake)
+
+	_, err := adapter.EnsureContainer(context.Background(), ContainerSpec{Name: "c1", Network: "n"})
+	require.NoError(t, err)
+	fake.upOut = &deploymentpb.Docker_Output{
+		Containers: map[string]*deploymentpb.Docker_ContainerOutput{
+			"c2": {Id: "id-c2"},
+		},
+	}
+	_, err = adapter.EnsureContainer(context.Background(), ContainerSpec{Name: "c2", Network: "n"})
+	require.NoError(t, err)
+
+	// Simulate a concurrent EnsureContainer for the same network racing with
+	// RemoveContainers: it tracks c3 while Down (for c1+c2) is in flight,
+	// i.e. after RemoveContainers has already snapshotted the names to
+	// remove but before it clears byNet["n"].
+	fake.downFn = func() {
+		adapter.track("n", "c3")
+	}
+
+	err = adapter.RemoveContainers(context.Background(), "n")
+	require.NoError(t, err)
+
+	// Down must only have been asked to remove what it snapshotted.
+	require.Len(t, fake.downInput.GetContainers(), 2)
+	require.Contains(t, fake.downInput.GetContainers(), "c1")
+	require.Contains(t, fake.downInput.GetContainers(), "c2")
+	require.NotContains(t, fake.downInput.GetContainers(), "c3")
+
+	// c3, tracked concurrently, must survive the clear: it was never in the
+	// removed set, so it must still be tracked for a future RemoveContainers.
+	adapter.mu.Lock()
+	remaining := adapter.byNet["n"]
+	adapter.mu.Unlock()
+	require.Equal(t, []string{"c3"}, remaining)
 }
 
 func TestDockerExecutorExec_RemoveContainers_PropagatesRunnerError(t *testing.T) {
