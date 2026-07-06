@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	agentdomain "github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
 	dslpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dsl"
 )
 
@@ -108,6 +109,78 @@ func TestDocker_Provision_StampsEmptyDiskDeviceLabel(t *testing.T) {
 		}
 		require.True(t, found, "machine state must carry a private endpoint")
 	}
+}
+
+// gatewayGroup is a single-node control-plane group: docker recipes are
+// expected to size the gateway group at 1 (see dockerParams.GatewayGroup
+// doc), so the Nomad sidecar renders exactly once for it.
+func gatewayGroup() *dslpb.MachineGroup {
+	return &dslpb.MachineGroup{Name: "gateway", Count: 1, Cpu: 2, RamMb: 4 * 1024}
+}
+
+func dockerRefWithGateway() *dslpb.ProviderRef {
+	return &dslpb.ProviderRef{
+		Name: "docker",
+		ParamsJson: `{"image":"stroppy-agent:latest","server_addr":"http://gateway:8080",` +
+			`"binary_url":"http://gateway:8080/agent/binary","run_id":"run-1",` +
+			`"gateway_group":"gateway"}`,
+	}
+}
+
+func TestDocker_Provision_GatewayGroup_RendersNomadSidecarContainer(t *testing.T) {
+	fake := &fakeDockerExec{}
+	p := NewDocker(fake)
+
+	groups := []*dslpb.MachineGroup{gatewayGroup(), runnerGroup()}
+	result, err := p.Provision(context.Background(), dockerRefWithGateway(), groups)
+	require.NoError(t, err)
+
+	// 1 gateway agent container + 1 nomad sidecar + 2 runner agent containers.
+	require.Len(t, fake.ensured, 4)
+
+	var nomadSpec *ContainerSpec
+	for i := range fake.ensured {
+		if fake.ensured[i].Labels["stroppy.cloud/role"] == "nomad-gateway" {
+			nomadSpec = &fake.ensured[i]
+		}
+	}
+	require.NotNil(t, nomadSpec, "nomad gateway sidecar must be rendered")
+
+	require.Equal(t, "hashicorp/nomad:"+agentdomain.DefaultNomadVersion, nomadSpec.Image)
+	require.True(t, nomadSpec.Privileged, "nomad sidecar must run privileged for the docker task driver")
+	require.Contains(t, nomadSpec.Binds, "/var/run/docker.sock:/var/run/docker.sock")
+	require.Equal(t, []string{"agent", "-config=" + agentdomain.NomadConfigDir}, nomadSpec.Cmd)
+	require.NotEmpty(t, nomadSpec.Network)
+
+	require.Len(t, nomadSpec.Files, 1)
+	configFile := nomadSpec.Files[0]
+	require.Equal(t, agentdomain.NomadServerHCLPath, configFile.Path)
+	require.Equal(t, agentdomain.NomadServerHCL(), string(configFile.Content))
+	// The rendered server config must actually configure a Nomad server +
+	// docker driver, not just be non-empty.
+	require.Contains(t, string(configFile.Content), "server {")
+	require.Contains(t, string(configFile.Content), `plugin "docker"`)
+
+	// The nomad sidecar is infrastructure the docker provider adds
+	// transparently; it must not show up as a requested machine's state.
+	require.Contains(t, result, "gateway")
+	require.Len(t, result["gateway"], 1)
+	require.Contains(t, result, "runner")
+	require.Len(t, result["runner"], 2)
+}
+
+func TestDocker_Provision_NoGatewayGroupSet_NoNomadSidecar(t *testing.T) {
+	fake := &fakeDockerExec{}
+	p := NewDocker(fake)
+
+	groups := []*dslpb.MachineGroup{runnerGroup()}
+	_, err := p.Provision(context.Background(), dockerRef(), groups)
+	require.NoError(t, err)
+
+	for _, spec := range fake.ensured {
+		require.NotEqual(t, "nomad-gateway", spec.Labels["stroppy.cloud/role"])
+	}
+	require.Len(t, fake.ensured, 2, "no extra sidecar container when gateway_group is unset")
 }
 
 func TestDocker_Destroy_RemovesRunNetwork(t *testing.T) {

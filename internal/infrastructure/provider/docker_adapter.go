@@ -55,9 +55,13 @@ func (a *dockerExecutorExec) EnsureContainer(ctx context.Context, spec Container
 		Network: &deploymentpb.Docker_Network{Name: spec.Network},
 		Containers: map[string]*deploymentpb.Docker_Container{
 			spec.Name: {
-				Image:  spec.Image,
-				Env:    spec.Env,
-				Labels: spec.Labels,
+				Image:      spec.Image,
+				Env:        spec.Env,
+				Labels:     spec.Labels,
+				Privileged: spec.Privileged,
+				Binds:      spec.Binds,
+				Cmd:        spec.Cmd,
+				Files:      containerFiles(spec.Files),
 			},
 		},
 	}
@@ -118,6 +122,25 @@ func (a *dockerExecutorExec) RemoveContainers(ctx context.Context, networkName s
 	a.mu.Unlock()
 
 	return nil
+}
+
+// containerFiles maps ContainerSpec's thin ContainerFile slice onto the
+// Docker_File proto messages Docker_Container carries. Returns nil (not an
+// empty slice) for a nil/empty input so callers that never set Files keep
+// producing the same Docker_Container shape as before this field existed.
+func containerFiles(files []ContainerFile) []*deploymentpb.Docker_File {
+	if len(files) == 0 {
+		return nil
+	}
+	out := make([]*deploymentpb.Docker_File, 0, len(files))
+	for _, f := range files {
+		out = append(out, &deploymentpb.Docker_File{
+			Path:    f.Path,
+			Content: f.Content,
+			Mode:    f.Mode,
+		})
+	}
+	return out
 }
 
 func (a *dockerExecutorExec) track(networkName, containerName string) {

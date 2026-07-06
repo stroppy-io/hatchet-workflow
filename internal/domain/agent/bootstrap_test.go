@@ -275,6 +275,54 @@ func TestCloudInitNomadServerRendersServerHCLAndInstall(t *testing.T) {
 	}
 }
 
+// TestNomadServerHCLMatchesCloudInitServerRendering guards the invariant
+// docker.go's nomadGatewayContainer relies on: the exported NomadServerHCL
+// wrapper (used to deliver a config file into the docker Nomad gateway
+// sidecar) must render byte-identical content to what CloudInit's
+// NomadRoleServer path embeds into /etc/nomad.d/server.hcl for cloud-init
+// providers, so the docker and cloud-init paths never drift on what a
+// "gateway" Nomad config looks like.
+func TestNomadServerHCLMatchesCloudInitServerRendering(t *testing.T) {
+	got := NomadServerHCL()
+	want := renderNomadHCL(NomadRoleServer, "", "")
+	if got != want {
+		t.Fatalf("NomadServerHCL diverged from renderNomadHCL(NomadRoleServer, \"\", \"\"):\ngot:\n%s\nwant:\n%s", got, want)
+	}
+
+	for _, wantSubstr := range []string{
+		`datacenter = "dc1"`,
+		"server {",
+		"bootstrap_expect = 1",
+		"client {",
+		`plugin "docker"`,
+		"allow_privileged = true",
+	} {
+		if !strings.Contains(got, wantSubstr) {
+			t.Fatalf("NomadServerHCL missing %q:\n%s", wantSubstr, got)
+		}
+	}
+	// NomadRoleServer stamps no meta.stroppy_node_id (only NomadRoleClient
+	// does) — this is the documented single-node docker gap (see
+	// nomadGatewayContainer's doc in internal/infrastructure/provider/docker.go):
+	// nomad.BuildJob's per-node constraint can never match this node.
+	if strings.Contains(got, "stroppy_node_id") {
+		t.Fatalf("NomadServerHCL unexpectedly stamps stroppy_node_id meta:\n%s", got)
+	}
+}
+
+// TestNomadConfigConstantsMatchUnexportedPaths guards NomadConfigDir/
+// NomadServerHCLPath (the exported aliases internal/infrastructure/
+// provider/docker.go uses) against drifting from the unexported cloud-init
+// paths they mirror.
+func TestNomadConfigConstantsMatchUnexportedPaths(t *testing.T) {
+	if NomadConfigDir != nomadConfigDir {
+		t.Fatalf("NomadConfigDir = %q, want %q", NomadConfigDir, nomadConfigDir)
+	}
+	if NomadServerHCLPath != nomadServerHCLPath {
+		t.Fatalf("NomadServerHCLPath = %q, want %q", NomadServerHCLPath, nomadServerHCLPath)
+	}
+}
+
 func TestAptProxyURLAddsExplicitDefaultProxyPort(t *testing.T) {
 	proxyURL := AptProxyURL("http://caddy")
 	if got, want := proxyURL, "http://caddy:80"; got != want {

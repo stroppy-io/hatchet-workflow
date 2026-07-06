@@ -80,12 +80,41 @@ type dockerExec interface {
 
 // ContainerSpec is the thin per-machine container request NewDocker builds
 // for each requested node.
+//
+// Privileged, Binds, Cmd, and Files exist for docker-in-docker sidecars (the
+// gateway node's Nomad server/client container, see docker.go's
+// nomadGatewayContainer) that need more than an image/env/labels: a
+// privileged container with /var/run/docker.sock bind-mounted in, a config
+// file delivered before the container starts, and a non-default command to
+// point Nomad at that config. The underlying deployment.Docker_Container
+// proto and internal/infrastructure/docker.Executor already support all four
+// (Privileged/Binds via HostConfig, Files via CopyToContainer before
+// ContainerStart, Cmd as the container's command) — this is docker_adapter.go
+// mapping ContainerSpec's thinner per-node fields onto the fuller proto that
+// was already there.
 type ContainerSpec struct {
-	Name    string
-	Image   string
-	Network string
-	Env     map[string]string
-	Labels  map[string]string
+	Name       string
+	Image      string
+	Network    string
+	Env        map[string]string
+	Labels     map[string]string
+	Privileged bool
+	Binds      []string
+	Cmd        []string
+	Files      []ContainerFile
+}
+
+// ContainerFile is a single file EnsureContainer should have the container
+// receive before it starts (see internal/infrastructure/docker.Executor's
+// copyFileToContainer, called before ContainerStart) — the same
+// content-addressed delivery mechanism internal/workflows/provider_render.go
+// already uses for the stroppy-agent's env/apt-proxy files
+// (upsertDockerFile), exposed here for ContainerSpec's thinner per-node
+// abstraction.
+type ContainerFile struct {
+	Path    string
+	Content []byte
+	Mode    uint32
 }
 
 // ContainerState is the runtime result of ensuring a container.

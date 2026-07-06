@@ -39,6 +39,18 @@ const (
 	// against the target Nomad server version) — it is deploy-gated (see
 	// renderNomadInstall doc).
 	DefaultNomadVersion = "1.9.3"
+
+	// NomadConfigDir and NomadServerHCLPath re-export the unexported
+	// nomadConfigDir/nomadServerHCLPath paths for callers outside this package
+	// that deliver the Nomad config through a different mechanism than
+	// cloud-init's write_files — e.g. the docker provider's Nomad gateway
+	// sidecar (internal/infrastructure/provider/docker.go), which copies
+	// NomadServerHCL() into the container at this path (via
+	// deployment.Docker_File / Executor.copyFileToContainer, run before
+	// ContainerStart) instead of a cloud-init write_files entry, then points
+	// the container's command at -config=NomadConfigDir.
+	NomadConfigDir     = nomadConfigDir
+	NomadServerHCLPath = nomadServerHCLPath
 )
 
 // NomadRole selects which Nomad agent cloud-init installs and configures on
@@ -245,6 +257,19 @@ func CloudInit(machineID string, bootstrap Bootstrap, options CloudInitOptions) 
 		return "", fmt.Errorf("agent bootstrap: render cloud-init: %w", err)
 	}
 	return buf.String(), nil
+}
+
+// NomadServerHCL renders the single-node Nomad server+client config
+// (bootstrap_expect=1, docker driver with allow_privileged) used by both
+// cloud-init's NomadRoleServer path and the docker provider's Nomad gateway
+// sidecar (internal/infrastructure/provider/docker.go), so the two callers
+// never drift on what a "gateway" Nomad config looks like. It carries no
+// serverAddr/machineID (NomadRoleServer ignores both, see renderNomadHCL) and
+// therefore, unlike NomadRoleClient, stamps no meta.stroppy_node_id — see
+// docker.go's nomadGatewayContainer doc for why that is a known gap for
+// nomad's BuildJob per-node constraint on the docker single-node path.
+func NomadServerHCL() string {
+	return renderNomadHCL(NomadRoleServer, "", "")
 }
 
 // renderNomadHCL renders the /etc/nomad.d/{server,client}.hcl content for

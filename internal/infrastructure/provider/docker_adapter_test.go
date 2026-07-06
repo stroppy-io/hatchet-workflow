@@ -71,6 +71,63 @@ func TestDockerExecutorExec_EnsureContainer_BuildsInputAndReturnsState(t *testin
 	require.Equal(t, map[string]string{"stroppy.cloud/run_id": "run1"}, container.GetLabels())
 }
 
+func TestDockerExecutorExec_EnsureContainer_MapsPrivilegedBindsCmdFiles(t *testing.T) {
+	fake := &fakeDockerRunner{
+		upOut: &deploymentpb.Docker_Output{
+			Containers: map[string]*deploymentpb.Docker_ContainerOutput{
+				"stroppy-run1-nomad": {Id: "container-id-nomad", InternalIp: "10.0.0.9"},
+			},
+		},
+	}
+	adapter := NewDockerExecutorExec(fake)
+
+	spec := ContainerSpec{
+		Name:       "stroppy-run1-nomad",
+		Image:      "hashicorp/nomad:1.9.3",
+		Network:    "stroppy-run1",
+		Privileged: true,
+		Binds:      []string{"/var/run/docker.sock:/var/run/docker.sock"},
+		Cmd:        []string{"agent", "-config=/etc/nomad.d"},
+		Files: []ContainerFile{
+			{Path: "/etc/nomad.d/server.hcl", Content: []byte("datacenter = \"dc1\"\n"), Mode: 0o644},
+		},
+	}
+
+	_, err := adapter.EnsureContainer(context.Background(), spec)
+	require.NoError(t, err)
+
+	container := fake.upInput.GetContainers()["stroppy-run1-nomad"]
+	require.NotNil(t, container)
+	require.True(t, container.GetPrivileged())
+	require.Equal(t, []string{"/var/run/docker.sock:/var/run/docker.sock"}, container.GetBinds())
+	require.Equal(t, []string{"agent", "-config=/etc/nomad.d"}, container.GetCmd())
+	require.Len(t, container.GetFiles(), 1)
+	require.Equal(t, "/etc/nomad.d/server.hcl", container.GetFiles()[0].GetPath())
+	require.Equal(t, []byte("datacenter = \"dc1\"\n"), container.GetFiles()[0].GetContent())
+	require.EqualValues(t, 0o644, container.GetFiles()[0].GetMode())
+}
+
+func TestDockerExecutorExec_EnsureContainer_NoFilesSet_NilNotEmptySlice(t *testing.T) {
+	fake := &fakeDockerRunner{
+		upOut: &deploymentpb.Docker_Output{
+			Containers: map[string]*deploymentpb.Docker_ContainerOutput{
+				"node-0": {Id: "id-0"},
+			},
+		},
+	}
+	adapter := NewDockerExecutorExec(fake)
+
+	_, err := adapter.EnsureContainer(context.Background(), ContainerSpec{Name: "node-0", Network: "net"})
+	require.NoError(t, err)
+
+	container := fake.upInput.GetContainers()["node-0"]
+	require.NotNil(t, container)
+	require.Empty(t, container.GetFiles())
+	require.False(t, container.GetPrivileged())
+	require.Empty(t, container.GetBinds())
+	require.Empty(t, container.GetCmd())
+}
+
 func TestDockerExecutorExec_EnsureContainer_MissingOutputEntry_Errors(t *testing.T) {
 	fake := &fakeDockerRunner{
 		upOut: &deploymentpb.Docker_Output{Containers: map[string]*deploymentpb.Docker_ContainerOutput{}},
