@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/mock"
 	"go.temporal.io/sdk/activity"
+	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/testsuite"
 	"go.temporal.io/sdk/workflow"
 
@@ -345,5 +347,115 @@ func TestRunRecipeWorkflowCompileFails(t *testing.T) {
 	}
 	if got := state.GetStages()[runRecipeStageTeardownIndex].GetStatus(); got != common.Status_STATUS_COMPLETED {
 		t.Fatalf("teardown stage status = %s, want COMPLETED (no-op)", got)
+	}
+}
+
+// TestRunRecipeWorkflowCanceledDuringProvision asserts that a cancellation
+// landing while the workflow is blocked in ProvisionActivity is NOT swallowed
+// into an infra-stage failure: the workflow must return a Temporal
+// cancellation error (so the server records the execution as Canceled, not
+// Completed/Failed), teardown must still run on the disconnected context, and
+// the run/stages must be reported CANCELED rather than "failed" — regression
+// test for the bug where run()'s compile/provision/execute branches swallowed
+// ierr/cerr/eerr into a stage failure and `return nil, nil` even when the
+// underlying error was a temporal.CanceledError, which made the deferred
+// block's `canceled := temporal.IsCanceledError(err)` check always false
+// (err was nil) and let Temporal record the workflow as Completed.
+func TestRunRecipeWorkflowCanceledDuringProvision(t *testing.T) {
+	var suite testsuite.WorkflowTestSuite
+	env := suite.NewTestWorkflowEnvironment()
+	RegisterWorkflows(env, DefaultOptions())
+	registerRunRecipeActivityStubs(env)
+	runtime := &fakeRuntimeActivities{}
+	registerFakeRuntimeActivities(env, runtime)
+
+	plan := runRecipeTestPlan()
+	var teardownCalled bool
+
+	env.OnActivity(CompileRecipeActivityName, mock.Anything, mock.Anything).Return(
+		&CompileRecipeActivityOutput{Plan: plan}, nil,
+	)
+	// ProvisionActivity blocks (heartbeating, checking ctx.Done()) exactly like
+	// the SDK's own testActivityHeartbeat cancellation fixture — mirrors how
+	// terraform apply/docker up would block for real until the workflow is
+	// canceled mid-provision.
+	env.OnActivity(ProvisionActivityName, mock.Anything, mock.Anything).Return(
+		func(ctx context.Context, _ *ProvisionActivityInput) (*ProvisionActivityOutput, error) {
+			for i := 0; i < 100; i++ {
+				activity.RecordHeartbeat(ctx)
+				select {
+				case <-ctx.Done():
+					return nil, ctx.Err()
+				default:
+				}
+				time.Sleep(50 * time.Millisecond)
+			}
+			return &ProvisionActivityOutput{}, nil
+		},
+	)
+	env.OnWorkflow(ExecuteCompiledPlanWorkflowName, mock.Anything, mock.Anything).Return(
+		func(_ workflow.Context, _ *ExecuteCompiledPlanInput) (*ExecuteCompiledPlanOutput, error) {
+			t.Fatal("execute child ran despite cancellation during provision")
+			return nil, nil
+		},
+	)
+	env.OnActivity(TeardownActivityName, mock.Anything, mock.Anything).Return(
+		func(_ context.Context, in *TeardownActivityInput) error {
+			teardownCalled = true
+			if got := in.ProviderRef.GetName(); got != "docker" {
+				t.Errorf("teardown providerRef.name = %q, want %q", got, "docker")
+			}
+			return nil
+		},
+	)
+
+	// Mirrors go.temporal.io/sdk/internal's own Test_WorkflowCancellation
+	// fixture: the workflow is blocked in the (heartbeating) activity, so the
+	// test suite's clock advances at wall-clock pace and this delayed callback
+	// fires almost immediately, requesting cancellation mid-provision.
+	env.RegisterDelayedCallback(func() {
+		env.CancelWorkflow()
+	}, time.Millisecond)
+
+	env.ExecuteWorkflow(RunRecipeWorkflowName, runRecipeTestInput())
+
+	if !env.IsWorkflowCompleted() {
+		t.Fatal("workflow did not complete")
+	}
+
+	err := env.GetWorkflowError()
+	if err == nil {
+		t.Fatal("workflow returned no error; want a cancellation error (Temporal must record this execution as Canceled, not Completed)")
+	}
+	if !temporal.IsCanceledError(err) {
+		t.Fatalf("workflow error = %v, want a cancellation error", err)
+	}
+
+	if !teardownCalled {
+		t.Fatal("teardown did not run after cancellation during provision")
+	}
+
+	value, err := env.QueryWorkflow(workflowpb.GetRunStateQueryName)
+	if err != nil {
+		t.Fatalf("query run state: %v", err)
+	}
+	var state workflowpb.RunState
+	if err := value.Get(&state); err != nil {
+		t.Fatalf("decode run state: %v", err)
+	}
+	if got, want := state.GetStatus(), common.Status_STATUS_CANCELLED; got != want { //nolint:misspell // generated proto enum identifier.
+		t.Fatalf("run state status = %s, want %s", got, want)
+	}
+	if got := state.GetStages()[runRecipeStageCompileIndex].GetStatus(); got != common.Status_STATUS_COMPLETED {
+		t.Fatalf("compile stage status = %s, want COMPLETED", got)
+	}
+	if got := state.GetStages()[runRecipeStageInfraIndex].GetStatus(); got != common.Status_STATUS_CANCELLED { //nolint:misspell // generated proto enum identifier.
+		t.Fatalf("infra stage status = %s, want CANCELED", got)
+	}
+	if got := state.GetStages()[runRecipeStageExecuteIndex].GetStatus(); got != common.Status_STATUS_CANCELLED { //nolint:misspell // generated proto enum identifier.
+		t.Fatalf("execute stage status = %s, want CANCELED (never started, but marked canceled)", got)
+	}
+	if got := state.GetStages()[runRecipeStageTeardownIndex].GetStatus(); got != common.Status_STATUS_COMPLETED {
+		t.Fatalf("teardown stage status = %s, want COMPLETED", got)
 	}
 }

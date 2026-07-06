@@ -285,6 +285,9 @@ func (w *runRecipeWorkflow) run(ctx workflow.Context) (result *RunRecipeOutput, 
 	}
 	plan, cerr := w.compileRecipe(ctx)
 	if cerr != nil {
+		if temporal.IsCanceledError(cerr) {
+			return nil, cerr //nolint:wrapcheck // propagated verbatim so the deferred teardown's temporal.IsCanceledError(err) check engages — see package doc's "Cancel / teardown" note.
+		}
 		w.failStage(ctx, runRecipeStageCompileIndex, cerr.Error())
 		stageFailed = true
 		if perr := w.persist(ctx); perr != nil {
@@ -304,6 +307,9 @@ func (w *runRecipeWorkflow) run(ctx workflow.Context) (result *RunRecipeOutput, 
 	}
 	machines, ierr := w.provision(ctx, plan, providerRef)
 	if ierr != nil {
+		if temporal.IsCanceledError(ierr) {
+			return nil, ierr //nolint:wrapcheck // propagated verbatim — see compileRecipe's identical guard above.
+		}
 		w.failStage(ctx, runRecipeStageInfraIndex, ierr.Error())
 		stageFailed = true
 		if perr := w.persist(ctx); perr != nil {
@@ -323,6 +329,9 @@ func (w *runRecipeWorkflow) run(ctx workflow.Context) (result *RunRecipeOutput, 
 	}
 	execOut, eerr := w.executeCompiledPlan(ctx, plan, machines, gatewayNodeID)
 	if eerr != nil {
+		if temporal.IsCanceledError(eerr) {
+			return nil, eerr //nolint:wrapcheck // propagated verbatim — see compileRecipe's identical guard above.
+		}
 		w.failStage(ctx, runRecipeStageExecuteIndex, eerr.Error())
 		stageFailed = true
 		if perr := w.persist(ctx); perr != nil {
