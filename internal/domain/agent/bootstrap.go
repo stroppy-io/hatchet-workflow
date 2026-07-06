@@ -359,6 +359,7 @@ runcmd:
   - systemctl enable --now stroppy-agent
 {{- if .NomadEnabled}}
   - mkdir -p {{.NomadConfigDir}}
+  - apt-get update && apt-get install -y unzip
   - curl -fsSL --retry 30 --retry-delay 5 --retry-connrefused -o /tmp/nomad.zip "{{.NomadZipURL}}" && unzip -o /tmp/nomad.zip -d /usr/local/bin && chmod +x {{.NomadBinPath}} && rm -f /tmp/nomad.zip
   - systemctl daemon-reload
   - systemctl enable --now nomad

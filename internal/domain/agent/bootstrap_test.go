@@ -231,6 +231,7 @@ func TestCloudInitNomadClientRendersClientHCLAndInstall(t *testing.T) {
 		"nomad.service",
 		"ExecStart=/usr/local/bin/nomad agent -config=/etc/nomad.d",
 		"https://releases.hashicorp.com/nomad/" + DefaultNomadVersion + "/nomad_" + DefaultNomadVersion + "_linux_amd64.zip",
+		"apt-get install -y unzip",
 		"systemctl enable --now nomad",
 	} {
 		if !strings.Contains(cloudInit, want) {
@@ -262,6 +263,7 @@ func TestCloudInitNomadServerRendersServerHCLAndInstall(t *testing.T) {
 		"client {",
 		"enabled = true",
 		"nomad.service",
+		"apt-get install -y unzip",
 		"systemctl enable --now nomad",
 	} {
 		if !strings.Contains(cloudInit, want) {
