@@ -15,22 +15,6 @@ type TestRunRecords struct {
 	Data      json.RawMessage
 }
 
-type TestWizardDrafts struct {
-	ID        string
-	TenantID  string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Data      json.RawMessage
-}
-
-type TestPresetRecords struct {
-	ID        string
-	TenantID  string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Data      json.RawMessage
-}
-
 type PlatformSettings struct {
 	ID        string
 	UpdatedAt time.Time
@@ -46,35 +30,11 @@ type RegistrationRequests struct {
 	Data      json.RawMessage
 }
 
-type SuiteRecords struct {
-	ID        string
-	TenantID  string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Data      json.RawMessage
-}
-
 type RecipeRecords struct {
 	ID        string
 	TenantID  string
 	Name      string
 	Version   int32
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Data      json.RawMessage
-}
-
-type SuiteRunRecords struct {
-	ID        string
-	TenantID  string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Data      json.RawMessage
-}
-
-type SuiteWizardDrafts struct {
-	ID        string
-	TenantID  string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	Data      json.RawMessage
@@ -101,22 +61,6 @@ type FavoriteRecords struct {
 }
 
 type PackageRecords struct {
-	ID        string
-	TenantID  string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Data      json.RawMessage
-}
-
-type DatabasePresetRecords struct {
-	ID        string
-	TenantID  string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Data      json.RawMessage
-}
-
-type WorkloadPresetRecords struct {
 	ID        string
 	TenantID  string
 	CreatedAt time.Time
@@ -158,21 +102,6 @@ type QuotaReservations struct {
 	QuotaName    string
 	Units        string
 	Amount       string
-	Status       int32
-	WorkflowID   string
-	ExpiresAt    *time.Time
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-}
-
-type NetworkReservations struct {
-	ID           string
-	TenantID     string
-	RunID        string
-	Provider     int32
-	ResourceType string
-	ResourceID   string
-	Cidr         string
 	Status       int32
 	WorkflowID   string
 	ExpiresAt    *time.Time

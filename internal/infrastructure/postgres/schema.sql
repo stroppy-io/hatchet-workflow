@@ -15,24 +15,6 @@ CREATE TABLE test_run_records (
 );
 CREATE INDEX idx_test_run_records_tenant ON test_run_records (tenant_id);
 
-CREATE TABLE test_wizard_drafts (
-  id         text PRIMARY KEY,
-  tenant_id  text NOT NULL,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now(),
-  data       jsonb NOT NULL
-);
-CREATE INDEX idx_test_wizard_drafts_tenant ON test_wizard_drafts (tenant_id);
-
-CREATE TABLE test_preset_records (
-  id         text PRIMARY KEY,
-  tenant_id  text NOT NULL,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now(),
-  data       jsonb NOT NULL
-);
-CREATE INDEX idx_test_preset_records_tenant ON test_preset_records (tenant_id);
-
 CREATE TABLE platform_settings (
   id         text PRIMARY KEY,
   updated_at timestamptz NOT NULL DEFAULT now(),
@@ -50,15 +32,6 @@ CREATE TABLE registration_requests (
 CREATE UNIQUE INDEX idx_registration_requests_email ON registration_requests (email);
 CREATE INDEX idx_registration_requests_status ON registration_requests (status);
 
-CREATE TABLE suite_records (
-  id         text PRIMARY KEY,
-  tenant_id  text NOT NULL,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now(),
-  data       jsonb NOT NULL
-);
-CREATE INDEX idx_suite_records_tenant ON suite_records (tenant_id);
-
 CREATE TABLE recipe_records (
   id         text PRIMARY KEY,
   tenant_id  text NOT NULL,
@@ -70,24 +43,6 @@ CREATE TABLE recipe_records (
 );
 CREATE INDEX idx_recipe_records_tenant ON recipe_records (tenant_id);
 CREATE UNIQUE INDEX uq_recipe_records_tenant_name_version ON recipe_records (tenant_id, name, version);
-
-CREATE TABLE suite_run_records (
-  id         text PRIMARY KEY,
-  tenant_id  text NOT NULL,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now(),
-  data       jsonb NOT NULL
-);
-CREATE INDEX idx_suite_run_records_tenant ON suite_run_records (tenant_id);
-
-CREATE TABLE suite_wizard_drafts (
-  id         text PRIMARY KEY,
-  tenant_id  text NOT NULL,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now(),
-  data       jsonb NOT NULL
-);
-CREATE INDEX idx_suite_wizard_drafts_tenant ON suite_wizard_drafts (tenant_id);
 
 CREATE TABLE share_records (
   id         text PRIMARY KEY,
@@ -121,24 +76,6 @@ CREATE TABLE package_records (
   data       jsonb NOT NULL
 );
 CREATE INDEX idx_package_records_tenant ON package_records (tenant_id);
-
-CREATE TABLE database_preset_records (
-  id         text PRIMARY KEY,
-  tenant_id  text NOT NULL,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now(),
-  data       jsonb NOT NULL
-);
-CREATE INDEX idx_database_preset_records_tenant ON database_preset_records (tenant_id);
-
-CREATE TABLE workload_preset_records (
-  id         text PRIMARY KEY,
-  tenant_id  text NOT NULL,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now(),
-  data       jsonb NOT NULL
-);
-CREATE INDEX idx_workload_preset_records_tenant ON workload_preset_records (tenant_id);
 
 CREATE TABLE tenant_settings_records (
   tenant_id  text PRIMARY KEY,
@@ -188,26 +125,6 @@ CREATE TABLE quota_reservations (
 );
 CREATE INDEX idx_quota_reservations_run ON quota_reservations (tenant_id, run_id);
 CREATE INDEX idx_quota_reservations_scope_status ON quota_reservations (tenant_id, provider, resource_type, resource_id, status);
-
--- ===== network reservation ledger (network allocation) =====
-
-CREATE TABLE network_reservations (
-  id            text PRIMARY KEY,
-  tenant_id     text NOT NULL,
-  run_id        text NOT NULL,
-  provider      integer NOT NULL,
-  resource_type text NOT NULL,
-  resource_id   text NOT NULL,
-  cidr          text NOT NULL,
-  status        integer NOT NULL,
-  workflow_id   text NOT NULL DEFAULT '',
-  expires_at    timestamptz,
-  created_at    timestamptz NOT NULL DEFAULT now(),
-  updated_at    timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (tenant_id, run_id, provider, resource_type, resource_id)
-);
-CREATE INDEX idx_network_reservations_run ON network_reservations (tenant_id, run_id);
-CREATE INDEX idx_network_reservations_scope_status ON network_reservations (tenant_id, provider, resource_type, resource_id, status);
 
 -- ===== IAM tables (iam.go) =====
 

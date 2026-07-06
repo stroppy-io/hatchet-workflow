@@ -18,23 +18,15 @@ var (
 
 func Where[Q psql.Filterable]() struct {
 	TestRunRecords          testRunRecordWhere[Q]
-	TestWizardDrafts        testWizardDraftWhere[Q]
-	TestPresetRecords       testPresetRecordWhere[Q]
 	PlatformSettings        platformSettingWhere[Q]
 	RegistrationRequests    registrationRequestWhere[Q]
-	SuiteRecords            suiteRecordWhere[Q]
 	RecipeRecords           recipeRecordWhere[Q]
-	SuiteRunRecords         suiteRunRecordWhere[Q]
-	SuiteWizardDrafts       suiteWizardDraftWhere[Q]
 	ShareRecords            shareRecordWhere[Q]
 	FavoriteRecords         favoriteRecordWhere[Q]
 	PackageRecords          packageRecordWhere[Q]
-	DatabasePresetRecords   databasePresetRecordWhere[Q]
-	WorkloadPresetRecords   workloadPresetRecordWhere[Q]
 	TenantSettingsRecords   tenantSettingsRecordWhere[Q]
 	QuotaSnapshots          quotaSnapshotWhere[Q]
 	QuotaReservations       quotaReservationWhere[Q]
-	NetworkReservations     networkReservationWhere[Q]
 	IamAccounts             iamAccountWhere[Q]
 	IamCredentials          iamCredentialWhere[Q]
 	IamAPITokens            iamAPITokenWhere[Q]
@@ -50,23 +42,15 @@ func Where[Q psql.Filterable]() struct {
 } {
 	return struct {
 		TestRunRecords          testRunRecordWhere[Q]
-		TestWizardDrafts        testWizardDraftWhere[Q]
-		TestPresetRecords       testPresetRecordWhere[Q]
 		PlatformSettings        platformSettingWhere[Q]
 		RegistrationRequests    registrationRequestWhere[Q]
-		SuiteRecords            suiteRecordWhere[Q]
 		RecipeRecords           recipeRecordWhere[Q]
-		SuiteRunRecords         suiteRunRecordWhere[Q]
-		SuiteWizardDrafts       suiteWizardDraftWhere[Q]
 		ShareRecords            shareRecordWhere[Q]
 		FavoriteRecords         favoriteRecordWhere[Q]
 		PackageRecords          packageRecordWhere[Q]
-		DatabasePresetRecords   databasePresetRecordWhere[Q]
-		WorkloadPresetRecords   workloadPresetRecordWhere[Q]
 		TenantSettingsRecords   tenantSettingsRecordWhere[Q]
 		QuotaSnapshots          quotaSnapshotWhere[Q]
 		QuotaReservations       quotaReservationWhere[Q]
-		NetworkReservations     networkReservationWhere[Q]
 		IamAccounts             iamAccountWhere[Q]
 		IamCredentials          iamCredentialWhere[Q]
 		IamAPITokens            iamAPITokenWhere[Q]
@@ -81,23 +65,15 @@ func Where[Q psql.Filterable]() struct {
 		IdentitySsoStates       identitySsoStateWhere[Q]
 	}{
 		TestRunRecords:          buildTestRunRecordWhere[Q](TestRunRecords.Columns),
-		TestWizardDrafts:        buildTestWizardDraftWhere[Q](TestWizardDrafts.Columns),
-		TestPresetRecords:       buildTestPresetRecordWhere[Q](TestPresetRecords.Columns),
 		PlatformSettings:        buildPlatformSettingWhere[Q](PlatformSettings.Columns),
 		RegistrationRequests:    buildRegistrationRequestWhere[Q](RegistrationRequests.Columns),
-		SuiteRecords:            buildSuiteRecordWhere[Q](SuiteRecords.Columns),
 		RecipeRecords:           buildRecipeRecordWhere[Q](RecipeRecords.Columns),
-		SuiteRunRecords:         buildSuiteRunRecordWhere[Q](SuiteRunRecords.Columns),
-		SuiteWizardDrafts:       buildSuiteWizardDraftWhere[Q](SuiteWizardDrafts.Columns),
 		ShareRecords:            buildShareRecordWhere[Q](ShareRecords.Columns),
 		FavoriteRecords:         buildFavoriteRecordWhere[Q](FavoriteRecords.Columns),
 		PackageRecords:          buildPackageRecordWhere[Q](PackageRecords.Columns),
-		DatabasePresetRecords:   buildDatabasePresetRecordWhere[Q](DatabasePresetRecords.Columns),
-		WorkloadPresetRecords:   buildWorkloadPresetRecordWhere[Q](WorkloadPresetRecords.Columns),
 		TenantSettingsRecords:   buildTenantSettingsRecordWhere[Q](TenantSettingsRecords.Columns),
 		QuotaSnapshots:          buildQuotaSnapshotWhere[Q](QuotaSnapshots.Columns),
 		QuotaReservations:       buildQuotaReservationWhere[Q](QuotaReservations.Columns),
-		NetworkReservations:     buildNetworkReservationWhere[Q](NetworkReservations.Columns),
 		IamAccounts:             buildIamAccountWhere[Q](IamAccounts.Columns),
 		IamCredentials:          buildIamCredentialWhere[Q](IamCredentials.Columns),
 		IamAPITokens:            buildIamAPITokenWhere[Q](IamAPITokens.Columns),
