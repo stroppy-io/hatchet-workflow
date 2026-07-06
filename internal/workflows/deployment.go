@@ -529,17 +529,6 @@ func executeComponentDeployment(ctx workflow.Context, runID string, plan *deploy
 	return nil
 }
 
-func agentTaskQueue(bootstrap *workflowpb.AgentBootstrap, nodeID string) (string, error) {
-	if bootstrap == nil {
-		return "", fmt.Errorf("agent task queue for node %q is missing: agent bootstrap is not configured", nodeID)
-	}
-	queue := bootstrap.GetAgentTaskQueues()[nodeID]
-	if queue == "" {
-		return "", fmt.Errorf("agent task queue for node %q is missing", nodeID)
-	}
-	return queue, nil
-}
-
 func appendDeploymentStepLog(ctx workflow.Context, runID string, component *deploymentpb.ComponentDeployment, step *deploymentpb.AgentStep, stream monitor.Stream, line string) error {
 	if runID == "" || component == nil || step == nil || line == "" {
 		return nil
@@ -602,46 +591,6 @@ func agentStepDescription(step *deploymentpb.AgentStep) string {
 	default:
 		return step.GetId()
 	}
-}
-
-func executeAgentStep(ctx workflow.Context, step *deploymentpb.AgentStep) error {
-	switch action := step.GetAction().(type) {
-	case *deploymentpb.AgentStep_CreateDir:
-		return executeActivityNoResult(ctx, workflowpb.CreateDirActivityActivityName, action.CreateDir)
-	case *deploymentpb.AgentStep_WriteFile:
-		return executeActivityNoResult(ctx, workflowpb.WriteFileActivityActivityName, action.WriteFile)
-	case *deploymentpb.AgentStep_FetchFile:
-		return executeActivityNoResult(ctx, workflowpb.FetchFileActivityActivityName, action.FetchFile)
-	case *deploymentpb.AgentStep_CallCmd:
-		var result common.Cmd_Result
-		if err := workflow.ExecuteActivity(ctx, workflowpb.CallCmdActivityActivityName, action.CallCmd).Get(ctx, &result); err != nil {
-			return err
-		}
-		if !expectedExitCode(action.CallCmd, result.GetExitCode()) {
-			return fmt.Errorf("command exited %d: %s", result.GetExitCode(), string(result.GetStderr()))
-		}
-		action.CallCmd.Result = &result
-		return nil
-	default:
-		return fmt.Errorf("unsupported agent step action %T", action)
-	}
-}
-
-func executeActivityNoResult(ctx workflow.Context, name string, args ...any) error {
-	return workflow.ExecuteActivity(ctx, name, args...).Get(ctx, nil)
-}
-
-func expectedExitCode(cmd *common.Cmd, exitCode int32) bool {
-	expected := cmd.GetSpec().GetExpectedExitCodes()
-	if len(expected) == 0 {
-		expected = []int32{0}
-	}
-	for _, code := range expected {
-		if code == exitCode {
-			return true
-		}
-	}
-	return false
 }
 
 func sortComponentExecution(components []*deploymentpb.ComponentDeployment) {
