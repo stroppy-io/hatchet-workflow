@@ -1,8 +1,9 @@
 package workflows
 
 import (
-	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
 	"google.golang.org/protobuf/proto"
+
+	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
 )
 
 // Runtime-projection compaction keeps GetRunState query payloads (and the

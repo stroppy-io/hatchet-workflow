@@ -33,7 +33,6 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/docker"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/execution"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/identity"
-	networkinfra "github.com/stroppy-io/stroppy-cloud/internal/infrastructure/networks"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/provider"
 	quotainfra "github.com/stroppy-io/stroppy-cloud/internal/infrastructure/quotas"
@@ -52,7 +51,6 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/services/favorite"
 	iamsvc "github.com/stroppy-io/stroppy-cloud/internal/services/iam"
 	packagessvc "github.com/stroppy-io/stroppy-cloud/internal/services/packages"
-	presetsvc "github.com/stroppy-io/stroppy-cloud/internal/services/preset"
 	publicrating "github.com/stroppy-io/stroppy-cloud/internal/services/public_rating"
 	publicshare "github.com/stroppy-io/stroppy-cloud/internal/services/public_share"
 	quotasvc "github.com/stroppy-io/stroppy-cloud/internal/services/quota"
@@ -60,15 +58,10 @@ import (
 	recipesvc "github.com/stroppy-io/stroppy-cloud/internal/services/recipe"
 	sharesvc "github.com/stroppy-io/stroppy-cloud/internal/services/share"
 	stroppysvc "github.com/stroppy-io/stroppy-cloud/internal/services/stroppy"
-	suitesvc "github.com/stroppy-io/stroppy-cloud/internal/services/suite"
-	suiterunsvc "github.com/stroppy-io/stroppy-cloud/internal/services/suite_run"
-	suitewizardsvc "github.com/stroppy-io/stroppy-cloud/internal/services/suite_wizard"
 	systemsettings "github.com/stroppy-io/stroppy-cloud/internal/services/system_settings"
 	tenantdashboard "github.com/stroppy-io/stroppy-cloud/internal/services/tenant_dashboard"
 	tenantsettings "github.com/stroppy-io/stroppy-cloud/internal/services/tenant_settings"
-	testrunsvc "github.com/stroppy-io/stroppy-cloud/internal/services/test_run"
 	testrunoverview "github.com/stroppy-io/stroppy-cloud/internal/services/test_run_overview"
-	testwizardsvc "github.com/stroppy-io/stroppy-cloud/internal/services/test_wizard"
 	"github.com/stroppy-io/stroppy-cloud/internal/temporalopts"
 	"github.com/stroppy-io/stroppy-cloud/internal/workflows"
 	"github.com/stroppy-io/stroppy-cloud/web"
@@ -154,7 +147,6 @@ func Run(ctx context.Context, cfg Config) error {
 	}
 
 	// 4) Execution layer.
-	caller := authnCaller{authn: authn}
 	bid := byIDReader{db: db}
 
 	// Settings resolver feeds the agent bootstrap baked into launched workflows.
@@ -165,10 +157,8 @@ func Run(ctx context.Context, cfg Config) error {
 		DefaultTemporalNamespace: cfg.TemporalNS,
 	}
 
-	testWorkflows := execution.NewTestWorkflows(tc, resolver, agentTokens, log)
-	summarizer := execution.NewRunSummarizer()
-	snapReader := snapshotRunReader{r: bid, suiteRuns: store.SuiteRuns()}
-	runtimeStore := runtimePersistenceStore{r: bid, runs: store.TestRuns(), suiteRuns: store.SuiteRuns(), suites: store.Suites()}
+	snapReader := snapshotRunReader{r: bid}
+	runtimeStore := runtimePersistenceStore{r: bid, runs: store.TestRuns()}
 	runLogWriter := execution.NewRunLogWriter(cfg.MonitoringURL, cfg.MonitoringToken)
 	runtimeActivities := execution.NewRunPersistenceActivities(runtimeStore, runLogWriter)
 	agentRegistry := execution.NewAgentRegistryService(log)
@@ -176,20 +166,7 @@ func Run(ctx context.Context, cfg Config) error {
 	logReader := execution.NewLogReader(cfg.MonitoringURL, cfg.MonitoringToken, log)
 	agentLogIngest := execution.NewAgentLogIngestService(cfg.MonitoringURL, cfg.MonitoringToken, agentTokens, log)
 	metricsReader := execution.NewMetricsReader(cfg.MonitoringURL, cfg.MonitoringToken, snapReader, log)
-	runStarter := execution.NewTestRunStarter(store.TestRuns(), summarizer, testWorkflows, caller, store.Packages())
-	testWizardEngine := execution.NewTestWizardEngine()
 
-	// Server-side stroppy "probe": script-metadata introspection (available
-	// steps, declared env vars, SQL sections, driver defaults, pool size) the
-	// monolith exposed at POST /api/v1/probe. The prober execs a server-local
-	// `stroppy probe` against a generated minimal run config, fetching/caching the
-	// stroppy binary from the same upstream the gateway serves the "stroppy"
-	// artifact from (cfg.StroppyUpstream), under a probe-specific cache subdir.
-	//
-	// It backs the TestWizardService.ProbeScript RPC through the
-	// stroppyProberAdapter (a cycle-free port: the service must not import
-	// execution), injected into the wizard service's Deps below.
-	stroppyProber := execution.NewStroppyProber(cfg.StroppyUpstream, probeBinaryCacheDir(cfg.CacheDir))
 	stroppyVersions, err := adapters.NewGitHubStroppyVersionSource(adapters.GitHubStroppyVersionConfig{
 		Repo:       cfg.StroppyGitHubRepo,
 		MinVersion: cfg.StroppyMinVersion,
@@ -223,26 +200,7 @@ func Run(ctx context.Context, cfg Config) error {
 			ReservationTTL: quotaReservationTTL,
 		},
 	)
-	networkStore := networkinfra.NewStore(db)
-	networkManager := networkinfra.NewManager(
-		networkStore,
-		store.TenantSettings(),
-		map[deploymentpb.Provider]networkinfra.ProviderSource{
-			deploymentpb.Provider_PROVIDER_YANDEX: networkinfra.NewYandexSource(),
-		},
-		networkinfra.ManagerConfig{
-			ReservationTTL: quotaReservationTTL,
-		},
-	)
 	quotainfra.StartRefresher(ctx, quotaManager, quotaRefreshInterval, log)
-
-	cells := cellResolver{
-		dbPresets:       store.DatabasePresets(),
-		workloadPresets: store.WorkloadPresets(),
-		testPresets:     store.TestPresets(),
-	}
-	suiteLauncher := execution.NewSuiteRunLauncher(tc, cells, childRunPersister{runs: store.TestRuns()}, suiteRunPersister{suiteRuns: store.SuiteRuns()}, resolver, agentTokens, store.Packages())
-	suiteCanceller := execution.NewSuiteRunCanceller(tc)
 
 	// 5) Adapters layer.
 	blobStore, err := adapters.NewLocalBlobStore(cfg.PackageBlobDir, "")
@@ -254,7 +212,7 @@ func Run(ctx context.Context, cfg Config) error {
 	uploadTTL := adapters.NewStaticUploadTTL(0)
 	tokenMinter := adapters.NewRandomTokenMinter(0)
 
-	shareRuns := shareRunReader{r: bid, suiteRuns: store.SuiteRuns()}
+	shareRuns := shareRunReader{r: bid}
 	snapshotBuilder := adapters.NewRunSnapshotBuilder(shareRuns, metricsReader)
 
 	compareRuns := runRecordGetter{r: bid}
@@ -266,46 +224,16 @@ func Run(ctx context.Context, cfg Config) error {
 	ratingBoard := adapters.NewRatingBoard(ratingRuns, metricsReader, ratingNames)
 	publicRatingBoard := adapters.NewPublicRatingBoard(ratingRuns, metricsReader)
 
+	// Only the TestRuns favorite target is resolvable now that the preset/suite
+	// services (and their repos) were deleted; DatabasePresets/WorkloadPresets/
+	// TestPresets/Suites/SuiteRuns are left nil, so favoriting those kinds
+	// reports not-found (favorite.TargetResolver's documented behavior for an
+	// unresolvable getter) rather than referencing a repo that no longer exists.
 	favoriteTargets := adapters.NewFavoriteTargetResolver(adapters.FavoriteTargetRepos{
-		DatabasePresets: adapters.EntityGetterFunc(func(ctx context.Context, tenantID, id string) (*commonEntity, error) {
-			rec, err := store.DatabasePresets().Get(ctx, tenantID, id, "")
-			if err != nil {
-				return nil, err
-			}
-			return rec.GetEntity(), nil
-		}),
-		WorkloadPresets: adapters.EntityGetterFunc(func(ctx context.Context, tenantID, id string) (*commonEntity, error) {
-			rec, err := store.WorkloadPresets().Get(ctx, tenantID, id, "")
-			if err != nil {
-				return nil, err
-			}
-			return rec.GetEntity(), nil
-		}),
-		TestPresets: adapters.EntityGetterFunc(func(ctx context.Context, tenantID, id string) (*commonEntity, error) {
-			rec, err := store.TestPresets().Get(ctx, tenantID, id, "")
-			if err != nil {
-				return nil, err
-			}
-			return rec.GetEntity(), nil
-		}),
-		// test_run / suite_run are keyed by id only — the tenant is validated by
-		// the favorite service after resolution.
+		// test_run is keyed by id only — the tenant is validated by the favorite
+		// service after resolution.
 		TestRuns: adapters.EntityGetterFunc(func(ctx context.Context, _, id string) (*commonEntity, error) {
 			rec, err := bid.testRun(ctx, id)
-			if err != nil {
-				return nil, err
-			}
-			return rec.GetEntity(), nil
-		}),
-		Suites: adapters.EntityGetterFunc(func(ctx context.Context, tenantID, id string) (*commonEntity, error) {
-			rec, err := store.Suites().Get(ctx, tenantID, id)
-			if err != nil {
-				return nil, err
-			}
-			return rec.GetEntity(), nil
-		}),
-		SuiteRuns: adapters.EntityGetterFunc(func(ctx context.Context, _, id string) (*commonEntity, error) {
-			rec, err := store.SuiteRuns().Get(ctx, id)
 			if err != nil {
 				return nil, err
 			}
@@ -318,19 +246,11 @@ func Run(ctx context.Context, cfg Config) error {
 	tenantGuard := adapters.NewTenantGuard(tenantMembership{memberships: store.Memberships()})
 	shellAudit := adapters.NewSlogShellAudit(log)
 
-	dashRuns := dashboardRuns{runs: store.TestRuns(), suiteRuns: store.SuiteRuns(), suites: store.Suites()}
+	dashRuns := dashboardRuns{runs: store.TestRuns()}
 	runStats := adapters.NewRunStatsReader(dashRuns)
 	recentRuns := adapters.NewRecentRunsReader(dashRuns)
 	scheduleReader := adapters.NewScheduleReader(dashRuns)
 	dashRating := adapters.NewDashboardRatingReader(ratingBoard, dashboardRatingMetricKey)
-
-	baker := &suiteBaker{
-		suites:    store.Suites(),
-		suiteRuns: store.SuiteRuns(),
-		launcher:  suiteLauncher,
-		caller:    caller,
-	}
-	suiteWizardEngine := adapters.NewSuiteWizardEngine(cells, baker)
 
 	// 6) Services.
 	iamService := iamsvc.NewIamService(iamsvc.IamDeps{
@@ -379,28 +299,6 @@ func Run(ctx context.Context, cfg Config) error {
 		Quotas:  quotaManager,
 	})
 
-	databasePresetService := presetsvc.NewDatabasePresetService(presetsvc.Deps{
-		Authn:     authn,
-		Databases: store.DatabasePresets(),
-		Workloads: store.WorkloadPresets(),
-		Tests:     store.TestPresets(),
-		Tx:        trm,
-	})
-	workloadPresetService := presetsvc.NewWorkloadPresetService(presetsvc.Deps{
-		Authn:     authn,
-		Databases: store.DatabasePresets(),
-		Workloads: store.WorkloadPresets(),
-		Tests:     store.TestPresets(),
-		Tx:        trm,
-	})
-	testPresetService := presetsvc.NewTestPresetService(presetsvc.Deps{
-		Authn:     authn,
-		Databases: store.DatabasePresets(),
-		Workloads: store.WorkloadPresets(),
-		Tests:     store.TestPresets(),
-		Tx:        trm,
-	})
-
 	packageService := packagessvc.NewPackageService(packagessvc.PackageDeps{
 		Authn:    authn,
 		Packages: store.Packages(),
@@ -409,16 +307,6 @@ func Run(ctx context.Context, cfg Config) error {
 		Limits:   limits,
 		TTL:      uploadTTL,
 		Tx:       trm,
-	})
-
-	testRunService := testrunsvc.NewTestRunService(testrunsvc.TestRunDeps{
-		Authn:      authn,
-		Runs:       store.TestRuns(),
-		Presets:    store.Presets(),
-		Packages:   store.Packages(),
-		Summarizer: summarizer,
-		Workflows:  testWorkflows,
-		Tx:         trm,
 	})
 
 	testRunOverviewService := testrunoverview.NewTestRunOverviewService(testrunoverview.TestRunOverviewDeps{
@@ -430,44 +318,9 @@ func Run(ctx context.Context, cfg Config) error {
 		Tx:       trm,
 	})
 
-	testWizardService := testwizardsvc.NewTestWizardService(testwizardsvc.TestWizardDeps{
-		Authn:    authn,
-		Drafts:   store.Drafts(),
-		Presets:  store.Presets(),
-		Engine:   testWizardEngine,
-		Runs:     runStarter,
-		RunSpecs: store.TestRuns(),
-		Saver:    store.Presets(),
-		Prober:   stroppyProberAdapter{prober: stroppyProber},
-		Tx:       trm,
-	})
-
 	stroppyService := stroppysvc.NewService(stroppysvc.Deps{
 		Authn:    authn,
 		Versions: stroppyVersions,
-	})
-
-	suiteService := suitesvc.NewSuiteService(suitesvc.SuiteDeps{
-		Authn:    authn,
-		Suites:   store.Suites(),
-		Launcher: suiteLauncher,
-		Tx:       trm,
-	})
-
-	suiteRunService := suiterunsvc.NewSuiteRunService(suiterunsvc.SuiteRunDeps{
-		Authn:     authn,
-		SuiteRuns: store.SuiteRuns(),
-		Runs:      store.TestRuns(),
-		Canceller: suiteCanceller,
-		Tx:        trm,
-	})
-
-	suiteWizardService := suitewizardsvc.NewSuiteWizardService(suitewizardsvc.SuiteWizardDeps{
-		Authn:  authn,
-		Drafts: store.SuiteDrafts(),
-		Suites: suiteSpecReader{suites: store.Suites()},
-		Engine: suiteWizardEngine,
-		Tx:     trm,
 	})
 
 	compareService := compare.NewCompareService(compare.CompareDeps{
@@ -627,38 +480,16 @@ func Run(ctx context.Context, cfg Config) error {
 			return apiconnect.NewQuotaServiceHandler(quotaService, handlerOpts...)
 		},
 		func() (string, http.Handler) {
-			return apiconnect.NewDatabasePresetServiceHandler(databasePresetService, handlerOpts...)
-		},
-		func() (string, http.Handler) {
-			return apiconnect.NewWorkloadPresetServiceHandler(workloadPresetService, handlerOpts...)
-		},
-		func() (string, http.Handler) {
-			return apiconnect.NewTestPresetServiceHandler(testPresetService, handlerOpts...)
-		},
-		func() (string, http.Handler) {
 			return apiconnect.NewPackageServiceHandler(packageService, handlerOpts...)
-		},
-		func() (string, http.Handler) {
-			return apiconnect.NewTestRunServiceHandler(testRunService, handlerOpts...)
 		},
 		func() (string, http.Handler) {
 			return apiconnect.NewTestRunOverviewServiceHandler(testrunoverview.NewConnectHandler(testRunOverviewService), handlerOpts...)
 		},
 		func() (string, http.Handler) {
-			return apiconnect.NewTestWizardServiceHandler(testWizardService, handlerOpts...)
-		},
-		func() (string, http.Handler) {
 			return apiconnect.NewStroppyServiceHandler(stroppyService, handlerOpts...)
 		},
-		func() (string, http.Handler) { return apiconnect.NewSuiteServiceHandler(suiteService, handlerOpts...) },
 		func() (string, http.Handler) {
 			return apiconnect.NewRecipeServiceHandler(recipeService, handlerOpts...)
-		},
-		func() (string, http.Handler) {
-			return apiconnect.NewSuiteRunServiceHandler(suiteRunService, handlerOpts...)
-		},
-		func() (string, http.Handler) {
-			return apiconnect.NewSuiteWizardServiceHandler(suiteWizardService, handlerOpts...)
 		},
 		func() (string, http.Handler) {
 			return apiconnect.NewCompareServiceHandler(compareService, handlerOpts...)
@@ -697,9 +528,6 @@ func Run(ctx context.Context, cfg Config) error {
 		FavoriteService:        favoriteService,
 		IamService:             iamService,
 		PackageService:         packageService,
-		DatabasePresetService:  databasePresetService,
-		WorkloadPresetService:  workloadPresetService,
-		TestPresetService:      testPresetService,
 		RatingService:          ratingService,
 		PublicRatingService:    publicRatingService,
 		PublicShareService:     publicShareService,
@@ -707,15 +535,10 @@ func Run(ctx context.Context, cfg Config) error {
 		RecipeService:          recipeService,
 		ShareService:           shareService,
 		StroppyService:         stroppyService,
-		SuiteService:           suiteService,
-		SuiteRunService:        suiteRunService,
-		SuiteWizardService:     suiteWizardService,
 		SystemSettingsService:  systemSettingsService,
 		TenantDashboardService: tenantDashboardService,
 		TenantSettingsService:  tenantSettingsService,
-		TestRunService:         testRunService,
 		TestRunOverviewService: testRunOverviewService,
-		TestWizardService:      testWizardService,
 		Authorize:              authzGate.AuthorizeGraphQL,
 	})
 	if err != nil {
@@ -758,14 +581,22 @@ func Run(ctx context.Context, cfg Config) error {
 	// middleware re-applies the identical per-method authn+authz: it bridges
 	// the Authorization header into gRPC incoming metadata and calls the
 	// shared AuthorizeGraphQL gate keyed by the gRPC procedure.
+	//
+	// databasePresetService/workloadPresetService/testPresetService/
+	// suiteService/suiteRunService/suiteWizardService/testRunService/
+	// testWizardService no longer exist (their backend was deleted); the ogen
+	// adapter's generated constructor still takes one positional arg per
+	// cloud.v1.api service (proto deletion is deferred to 1E-B), so those slots
+	// are nil. Their REST routes become runtime errors, not compile errors —
+	// same deferred-cleanup posture as the untouched frontend screens for them.
 	ogenAdapter := api.NewOgenAdapter(
 		compareService,
 		favoriteService,
 		iamService,
 		packageService,
-		databasePresetService,
-		workloadPresetService,
-		testPresetService,
+		nil,
+		nil,
+		nil,
 		ratingService,
 		publicRatingService,
 		publicShareService,
@@ -773,15 +604,15 @@ func Run(ctx context.Context, cfg Config) error {
 		recipeService,
 		shareService,
 		stroppyService,
-		suiteService,
-		suiteRunService,
-		suiteWizardService,
+		nil,
+		nil,
+		nil,
 		systemSettingsService,
 		tenantDashboardService,
 		tenantSettingsService,
-		testRunService,
+		nil,
 		testRunOverviewService,
-		testWizardService,
+		nil,
 	)
 	restProcedures := apiProcedureByMethod()
 	restAuthMW := func(req middleware.Request, next middleware.Next) (middleware.Response, error) {
@@ -842,8 +673,8 @@ func Run(ctx context.Context, cfg Config) error {
 
 	// 8) Temporal server worker.
 	w := worker.New(tc, "stroppy-cloud", worker.Options{})
-	workflows.RegisterWorkflows(w, workflows.DefaultOptions())
-	workflows.RegisterActivities(w, runtimeActivities, workflows.ActivityOptions{Quotas: quotaManager, Networks: networkManager, Logs: runLogWriter})
+	workflows.RegisterWorkflows(w)
+	workflows.RegisterActivities(w, runtimeActivities)
 	workflows.RegisterRecipeActivities(w, recipeActivities)
 	if err := w.Start(); err != nil {
 		return fmt.Errorf("start temporal worker: %w", err)

@@ -3,12 +3,13 @@ package workflows
 import (
 	"strings"
 
+	"go.temporal.io/sdk/workflow"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	deploymentbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	domainpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
-	"go.temporal.io/sdk/workflow"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const stageUpdateStatusPrefix = "workflow_stage_"
