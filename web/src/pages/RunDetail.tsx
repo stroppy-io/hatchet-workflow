@@ -7,7 +7,6 @@ import {
   BarChart3,
   Gauge,
   GitCompare,
-  CopyPlus,
   LineChart,
   Network,
   RefreshCw,
@@ -437,7 +436,7 @@ export function RunDetail() {
       {/* Top bar: name + status (left), run actions (right) */}
       <div className="flex shrink-0 flex-col gap-3 border-b border-border pb-2 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
-          <Link to="/runs" className="mb-1 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+          <Link to="/recipes/runs" className="mb-1 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-3 w-3" /> Runs
           </Link>
           <div className="flex items-center gap-2.5">
@@ -471,11 +470,6 @@ export function RunDetail() {
               <Repeat className="h-4 w-4" /> Rerun
             </Button>
           )}
-          <Link to={`/runs/new?from=${id}`} title="Open the wizard pre-filled with this run's parameters">
-            <Button variant="outline" size="sm">
-              <CopyPlus className="h-4 w-4" /> New from
-            </Button>
-          </Link>
           {allowed.has("extract") && (
             <Button variant="outline" size="sm" onClick={() => void onSavePreset()} disabled={busy}>
               <Save className="h-4 w-4" /> Save preset
