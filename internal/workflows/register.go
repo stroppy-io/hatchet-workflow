@@ -89,6 +89,13 @@ func RegisterWorkflows(registry worker.WorkflowRegistry, options Options) {
 	registry.RegisterWorkflowWithOptions(ExecuteCompiledPlanWorkflow, workflow.RegisterOptions{
 		Name: ExecuteCompiledPlanWorkflowName,
 	})
+	// RunRecipeWorkflow (runrecipe.go) orchestrates one recipe run
+	// (compile -> provision -> execute -> teardown). Like
+	// ExecuteCompiledPlanWorkflow, it has no proto workflow service of its
+	// own, so it registers directly against the SDK too.
+	registry.RegisterWorkflowWithOptions(RunRecipeWorkflow, workflow.RegisterOptions{
+		Name: RunRecipeWorkflowName,
+	})
 }
 
 func RegisterActivities(registry worker.ActivityRegistry, runtime RuntimeActivities, options ...ActivityOptions) {
