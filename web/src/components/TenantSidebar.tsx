@@ -2,12 +2,8 @@ import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   List,
-  Play,
   GitCompare,
-  Boxes,
-  Database,
-  Gauge,
-  FlaskConical,
+  FileCode,
   Package,
   Activity,
   PanelLeftClose,
@@ -51,25 +47,17 @@ const navGroups: NavGroup[] = [
   {
     label: "Tests",
     items: [
-      { to: "/suites", icon: Boxes, label: "Suites", minLevel: 1 },
-      { to: "/runs", icon: List, label: "Test Runs", minLevel: 1 },
+      { to: "/recipes", icon: FileCode, label: "Recipes", minLevel: 1 },
+      { to: "/recipes/runs", icon: List, label: "Runs", minLevel: 1 },
     ],
   },
   {
     label: "Actions",
-    items: [
-      { to: "/runs/new", icon: Play, label: "New Run", minLevel: 2 },
-      { to: "/compare", icon: GitCompare, label: "Compare", minLevel: 1 },
-    ],
+    items: [{ to: "/compare", icon: GitCompare, label: "Compare", minLevel: 1 }],
   },
   {
     label: "Library",
-    items: [
-      { to: "/presets/database", icon: Database, label: "Database Presets", minLevel: 1 },
-      { to: "/presets/workload", icon: Gauge, label: "Workload Presets", minLevel: 1 },
-      { to: "/presets/test", icon: FlaskConical, label: "Test Presets", minLevel: 1 },
-      { to: "/packages", icon: Package, label: "Packages", minLevel: 1 },
-    ],
+    items: [{ to: "/packages", icon: Package, label: "Packages", minLevel: 1 }],
   },
 ];
 
@@ -217,9 +205,18 @@ function tenantRelativePath(pathname: string, slug?: string): string {
 
 function navItemActive(to: string, tenantPath: string, routerActive: boolean): boolean {
   if (to === "/") return tenantPath === "/";
-  if (to === "/runs") {
-    return tenantPath === "/runs" || (tenantPath.startsWith("/runs/") && tenantPath !== "/runs/new");
+  // "/recipes" covers the list plus the editor (new/:id), but not the runs
+  // sub-route (which has its own nav item below).
+  if (to === "/recipes") {
+    return (
+      tenantPath === "/recipes" ||
+      (tenantPath.startsWith("/recipes/") && !tenantPath.startsWith("/recipes/runs"))
+    );
   }
-  if (to === "/runs/new") return tenantPath === "/runs/new";
+  // "/recipes/runs" also covers run detail pages ("/runs/:id"), which are
+  // reached from the Runs list.
+  if (to === "/recipes/runs") {
+    return tenantPath === "/recipes/runs" || tenantPath.startsWith("/runs/");
+  }
   return routerActive;
 }

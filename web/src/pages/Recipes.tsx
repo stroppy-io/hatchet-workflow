@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/table";
 import { deleteRecipe, listRecipes, type RecipeVM } from "@/services/recipe";
 
-export default function Recipes() {
+export function Recipes() {
   const slug = useTenantSlug() ?? "";
   const navigate = useNavigate();
   const { user } = useAuth();
