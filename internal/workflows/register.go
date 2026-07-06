@@ -39,6 +39,24 @@ type RuntimeActivities interface {
 	PersistSuiteRun(context.Context, string, common.Status) error
 }
 
+// RecipeActivityImpl is the interface RunRecipeWorkflow's three by-name
+// activities (CompileRecipeActivityName/ProvisionActivityName/
+// TeardownActivityName — see runrecipe.go) must satisfy to register a real
+// implementation via RegisterRecipeActivities. It exists as an interface
+// here — rather than RegisterRecipeActivities simply taking a concrete
+// *execution.RecipeActivities — so this package never needs to import
+// internal/infrastructure/execution: execution already imports this package
+// for the CompileRecipeActivityInput/Output etc. types (see recipe_
+// activities.go), and workflows importing execution back would cycle.
+// *execution.RecipeActivities satisfies this interface structurally, so
+// app wiring (Task 6) passes it here without either package naming the
+// other's concrete type. Mirrors RuntimeActivities' own precedent above.
+type RecipeActivityImpl interface {
+	CompileRecipeActivity(context.Context, *CompileRecipeActivityInput) (*CompileRecipeActivityOutput, error)
+	ProvisionActivity(context.Context, *ProvisionActivityInput) (*ProvisionActivityOutput, error)
+	TeardownActivity(context.Context, *TeardownActivityInput) error
+}
+
 type Options struct {
 	PackageResolver     packages.Resolver
 	DeploymentRenderers deploymentbuilder.Registry
@@ -110,6 +128,24 @@ func RegisterActivities(registry worker.ActivityRegistry, runtime RuntimeActivit
 		registry.RegisterActivityWithOptions(runtime.AppendRunLogs, activity.RegisterOptions{Name: AppendRunLogsActivityName})
 		registry.RegisterActivityWithOptions(runtime.PersistSuiteRun, activity.RegisterOptions{Name: PersistSuiteRunActivityName})
 	}
+}
+
+// RegisterRecipeActivities registers a RecipeActivityImpl's three methods
+// under the exact activity names RunRecipeWorkflow (runrecipe.go) calls by
+// name — CompileRecipeActivityName/ProvisionActivityName/
+// TeardownActivityName. impl is typically *execution.RecipeActivities
+// (internal/infrastructure/execution/recipe_activities.go, Task 4),
+// constructed by app wiring (Task 6) with the real provider.Deps. A nil impl
+// is a documented no-op, mirroring RegisterActivities' own runtime==nil
+// guard above, so a caller that has not wired recipe execution yet can still
+// call this without special-casing it.
+func RegisterRecipeActivities(registry worker.ActivityRegistry, impl RecipeActivityImpl) {
+	if impl == nil {
+		return
+	}
+	registry.RegisterActivityWithOptions(impl.CompileRecipeActivity, activity.RegisterOptions{Name: CompileRecipeActivityName})
+	registry.RegisterActivityWithOptions(impl.ProvisionActivity, activity.RegisterOptions{Name: ProvisionActivityName})
+	registry.RegisterActivityWithOptions(impl.TeardownActivity, activity.RegisterOptions{Name: TeardownActivityName})
 }
 
 func NewDeploymentWorkflows(options Options) workflowpb.DeploymentServiceWorkflows {
