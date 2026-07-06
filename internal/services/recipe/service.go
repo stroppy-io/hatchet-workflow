@@ -4,7 +4,8 @@
 // already-stored bundle. It owns no storage or compilation of its own —
 // persistence goes through RecipeRepo and compilation goes through the
 // injected Checker (in production, internal/services/dsl.CheckBundle),
-// mirroring internal/services/suite's Deps/port shape.
+// following the same Deps/port shape as the other tenant-scoped CRUD
+// services in this directory.
 package recipe
 
 import (

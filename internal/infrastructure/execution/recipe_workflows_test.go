@@ -9,6 +9,7 @@ import (
 
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
+	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
 	"github.com/stroppy-io/stroppy-cloud/internal/workflows"
 )
 
@@ -121,4 +122,17 @@ func (f *fakeWorkflowStarter) ExecuteWorkflow(_ context.Context, options client.
 		return nil, f.err
 	}
 	return nil, nil
+}
+
+// fakeStandaloneBootstrap is a stub domsettings.AgentBootstrapSource-shaped
+// source (the port's actual name lives in the domain/settings package;
+// RecipeWorkflows only needs the AgentBootstrap method). Extracted (verbatim)
+// from the deleted test_workflows_test.go, whose TestWorkflows-only test was
+// removed along with test_workflows.go; RecipeWorkflows still needs the double.
+type fakeStandaloneBootstrap struct {
+	serverAddr string
+}
+
+func (f fakeStandaloneBootstrap) AgentBootstrap(context.Context) (*workflowpb.AgentBootstrap, error) {
+	return &workflowpb.AgentBootstrap{ServerAddr: f.serverAddr}, nil
 }
