@@ -1,63 +1,15 @@
 package postgres
 
 import (
-	"context"
 	"testing"
 	"time"
 
-	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
-	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	"github.com/stroppy-io/stroppy-cloud/internal/services/packages"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
-
-func TestFilterSuiteRunRecordsHonorsFacetsSortAndPage(t *testing.T) {
-	minProgress := uint32(80)
-	req := &api.ListSuiteRunsRequest{
-		TenantId:    "tenant-1",
-		Statuses:    []common.Status{common.Status_STATUS_COMPLETED},
-		Providers:   []deployment.Provider{deployment.Provider_PROVIDER_DOCKER},
-		ProgressMin: &minProgress,
-		Sort: &api.ListSuiteRunsRequest_Sort{
-			By:   &api.ListSuiteRunsRequest_Sort_Kind_{Kind: api.ListSuiteRunsRequest_Sort_KIND_PROGRESS},
-			Desc: true,
-		},
-		Page: &common.Page{Size: 1},
-	}
-	records := []*models.SuiteRunRecord{
-		suiteRun("low", common.Status_STATUS_COMPLETED, deployment.Provider_PROVIDER_DOCKER, 70),
-		suiteRun("top", common.Status_STATUS_COMPLETED, deployment.Provider_PROVIDER_DOCKER, 100),
-		suiteRun("mid", common.Status_STATUS_COMPLETED, deployment.Provider_PROVIDER_DOCKER, 90),
-		suiteRun("wrong-status", common.Status_STATUS_RUNNING, deployment.Provider_PROVIDER_DOCKER, 100),
-		suiteRun("wrong-provider", common.Status_STATUS_COMPLETED, deployment.Provider_PROVIDER_YANDEX, 100),
-	}
-
-	page, next, err := filterSuiteRunRecords(context.Background(), nil, records, req, "")
-	if err != nil {
-		t.Fatalf("filter suite runs: %v", err)
-	}
-	if len(page) != 1 || page[0].GetEntity().GetId() != "top" {
-		t.Fatalf("first page = %v, want top", ids(page))
-	}
-	if next == "" {
-		t.Fatal("next page token is empty")
-	}
-
-	req.Page.Token = next
-	page, next, err = filterSuiteRunRecords(context.Background(), nil, records, req, "")
-	if err != nil {
-		t.Fatalf("filter suite runs page 2: %v", err)
-	}
-	if len(page) != 1 || page[0].GetEntity().GetId() != "mid" {
-		t.Fatalf("second page = %v, want mid", ids(page))
-	}
-	if next != "" {
-		t.Fatalf("unexpected next token %q", next)
-	}
-}
 
 func TestFilterPackageRecordsHonorsEntityFacetAndPage(t *testing.T) {
 	query := packages.PackageQuery{
@@ -89,52 +41,6 @@ func TestFilterPackageRecordsHonorsEntityFacetAndPage(t *testing.T) {
 	}
 	if next != "" {
 		t.Fatalf("unexpected next token %q", next)
-	}
-}
-
-func TestEnsurePresetSummariesBackfillsDecodedRows(t *testing.T) {
-	dbPreset := &models.DatabasePresetRecord{Database: &domain.Database{
-		Kind:   domain.Database_KIND_POSTGRES,
-		Source: &domain.Database_Params{Params: &domain.DatabaseParams{Version: "16"}},
-	}}
-	ensureDatabasePresetSummary(dbPreset)
-	if dbPreset.GetSummary().GetDbKind() != domain.Database_KIND_POSTGRES || dbPreset.GetSummary().GetVersion() != "16" {
-		t.Fatalf("database summary = %+v", dbPreset.GetSummary())
-	}
-
-	workloadPreset := &models.WorkloadPresetRecord{Workload: &domain.Workload{
-		Protocol:       domain.Workload_PROTOCOL_PG,
-		StroppyVersion: "1.2.3",
-		Segments: []*domain.Workload_Segment{{
-			Name:   "workload",
-			Script: "tpcc",
-		}},
-	}}
-	ensureWorkloadPresetSummary(workloadPreset)
-	if workloadPreset.GetSummary().GetProtocol() != domain.Workload_PROTOCOL_PG || workloadPreset.GetSummary().GetScript() != "tpcc" {
-		t.Fatalf("workload summary = %+v", workloadPreset.GetSummary())
-	}
-
-	testPreset := &models.TestPresetRecord{Test: &domain.Test{
-		Database: dbPreset.GetDatabase(),
-		Workload: workloadPreset.GetWorkload(),
-	}}
-	ensureTestPresetSummary(testPreset)
-	if testPreset.GetSummary().GetDbKind() != domain.Database_KIND_POSTGRES || testPreset.GetSummary().GetStroppyVersion() != "1.2.3" {
-		t.Fatalf("test summary = %+v", testPreset.GetSummary())
-	}
-}
-
-func suiteRun(id string, status common.Status, provider deployment.Provider, progress uint32) *models.SuiteRunRecord {
-	return &models.SuiteRunRecord{
-		Entity:  entity(id, id),
-		Status:  status,
-		SuiteId: "suite-1",
-		Summary: &models.SuiteRunRecord_Summary{
-			Provider:    provider,
-			DbKinds:     []domain.Database_Kind{domain.Database_KIND_POSTGRES},
-			ProgressPct: progress,
-		},
 	}
 }
 

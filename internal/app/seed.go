@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gopherex/pgtx/pkg/tx"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	derrors "github.com/stroppy-io/stroppy-cloud/internal/domain/errors"
@@ -15,7 +14,6 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/postgres"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
-	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	iamsvc "github.com/stroppy-io/stroppy-cloud/internal/services/iam"
 )
 
@@ -66,18 +64,12 @@ func seedFirstBoot(ctx context.Context, log *slog.Logger, store *postgres.Store,
 		}
 		if len(existing) > 0 {
 			log.Info("first-boot seeding skipped: an account already exists", slog.Int("accounts", len(existing)))
-			if err := ensurePlatformSettings(ctx, log, settings, cfg); err != nil {
-				return err
-			}
-			return seedExistingDefaultTenantCatalog(ctx, log, store, tenants)
+			return ensurePlatformSettings(ctx, log, settings, cfg)
 		}
 		// Belt-and-suspenders: also short-circuit on the specific email.
 		if _, err := accounts.GetByEmail(ctx, email); err == nil {
 			log.Info("first-boot seeding skipped: admin account already exists", slog.String("email", email))
-			if err := ensurePlatformSettings(ctx, log, settings, cfg); err != nil {
-				return err
-			}
-			return seedExistingDefaultTenantCatalog(ctx, log, store, tenants)
+			return ensurePlatformSettings(ctx, log, settings, cfg)
 		} else if !errors.Is(err, derrors.ErrNotFound) {
 			return err
 		}
@@ -155,11 +147,6 @@ func seedFirstBoot(ctx context.Context, log *slog.Logger, store *postgres.Store,
 			return err
 		}
 
-		// 7) Builtin/system preset catalog and the default self-check suite.
-		if err := seedBuiltinCatalog(ctx, log, store, tenant.Id, account.Id); err != nil {
-			return err
-		}
-
 		log.Info("first-boot seeding complete",
 			slog.String("admin_email", email),
 			slog.String("admin_account_id", account.Id),
@@ -170,34 +157,6 @@ func seedFirstBoot(ctx context.Context, log *slog.Logger, store *postgres.Store,
 		)
 		return nil
 	}, tx.WithRetry(tx.DefaultRetryPolicy))
-}
-
-func seedExistingDefaultTenantCatalog(ctx context.Context, log *slog.Logger, store *postgres.Store, tenants *postgres.TenantRepo) error {
-	tenant, err := tenants.GetBySlug(ctx, "default")
-	if errors.Is(err, derrors.ErrNotFound) {
-		log.Info("first-boot seeding: default tenant not found, builtin catalog skipped")
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	return seedBuiltinCatalog(ctx, log, store, tenant.GetId(), tenant.GetOwnerAccountId())
-}
-
-func seedBuiltinCatalog(ctx context.Context, log *slog.Logger, store *postgres.Store, tenantID, authorID string) error {
-	dbPresets, err := seedDatabasePresets(ctx, log, store.DatabasePresets(), tenantID, authorID)
-	if err != nil {
-		return err
-	}
-	workloads, err := seedWorkloadPresets(ctx, log, store.WorkloadPresets(), tenantID, authorID)
-	if err != nil {
-		return err
-	}
-	tests, err := seedTestPresets(ctx, log, store.TestPresets(), tenantID, authorID, dbPresets, workloads)
-	if err != nil {
-		return err
-	}
-	return seedSuites(ctx, log, store.Suites(), tenantID, authorID, tests)
 }
 
 // ensurePlatformSettings creates the singleton PlatformSettings row if absent,
@@ -220,70 +179,6 @@ func ensurePlatformSettings(ctx context.Context, log *slog.Logger, settings *pos
 	log.Info("first-boot seeding: default platform settings created",
 		slog.String("server_addr", defaults.ServerAddr))
 	return nil
-}
-
-// seedDatabasePresets ensures the builtin/system database presets for the
-// tenant, mirroring the catalog `main` shipped. It is idempotent by entity name:
-// missing builtin names are inserted, and existing builtin records are
-// reconciled with non-destructive catalog metadata such as the builtin package.
-func seedDatabasePresets(ctx context.Context, log *slog.Logger, repo *postgres.DatabasePresetRepo, tenantID, authorID string) ([]*models.DatabasePresetRecord, error) {
-	existing, _, err := repo.List(ctx, &api.ListDatabasePresetsRequest{TenantId: tenantID}, authorID)
-	if err != nil {
-		return nil, err
-	}
-	byName := databasePresetsByName(existing)
-	presets := builtinDatabasePresets(tenantID, authorID)
-	created := 0
-	updated := 0
-	out := make([]*models.DatabasePresetRecord, 0, len(presets))
-	for _, p := range presets {
-		if current := byName[p.GetEntity().GetName()]; current != nil {
-			if reconcileBuiltinDatabasePreset(current, p) {
-				if err := repo.Update(ctx, current); err != nil {
-					return nil, err
-				}
-				updated++
-			}
-			out = append(out, current)
-			continue
-		}
-		if err := repo.Create(ctx, p); err != nil {
-			return nil, err
-		}
-		created++
-		out = append(out, p)
-	}
-	log.Info("first-boot seeding: builtin database presets ensured",
-		slog.String("tenant_id", tenantID), slog.Int("created", created), slog.Int("updated", updated), slog.Int("catalog", len(out)))
-	return out, nil
-}
-
-func reconcileBuiltinDatabasePreset(rec, canonical *models.DatabasePresetRecord) bool {
-	if rec == nil || rec.GetDatabase() == nil || rec.GetDatabase().GetParams() == nil {
-		return false
-	}
-	next := cloneDatabaseWithBuiltinPackage(rec.GetDatabase())
-	description := rec.GetEntity().GetDescription()
-	if canonical != nil && canonical.GetDatabase() != nil {
-		next = cloneDatabaseWithBuiltinPackage(canonical.GetDatabase())
-		description = canonical.GetEntity().GetDescription()
-	}
-	changed := !proto.Equal(rec.GetDatabase(), next) ||
-		rec.GetIsSystem() != true ||
-		rec.GetEntity().GetDescription() != description
-	if !changed {
-		return false
-	}
-	rec.Database = next
-	rec.IsSystem = true
-	if entity := rec.GetEntity(); entity != nil {
-		entity.Description = description
-		entity.IsFavorite = false
-		if timings := entity.GetTimings(); timings != nil {
-			timings.UpdatedAt = timestamppb.Now()
-		}
-	}
-	return true
 }
 
 // catalogManagePermissions returns one MANAGE permission per grantable resource,

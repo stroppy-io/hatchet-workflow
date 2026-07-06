@@ -6,12 +6,10 @@ import (
 
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	commonpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
-	"github.com/stroppy-io/stroppy-cloud/internal/services/suite"
 )
 
 const (
 	tableTestRunRecords = "test_run_records"
-	tableSuiteRecords   = "suite_records"
 )
 
 // ListFacets returns distinct run-list facet values from tenant-scoped,
@@ -45,17 +43,6 @@ func (r *TestRunRepo) ListFacets(ctx context.Context, req *api.ListTestRunFacets
 		WorkloadPresetIds: workloadPresetIDs,
 		TestPresetIds:     testPresetIDs,
 	}, nil
-}
-
-// ListFacets returns distinct suite-list facet values from tenant-scoped,
-// entity-filtered rows without loading every record blob into memory.
-func (r *SuiteRepo) ListFacets(ctx context.Context, query suite.SuiteFacetQuery) (*api.ListSuiteFacetsResponse, error) {
-	where, args := facetEntityWhere(query.TenantID, query.Filter, query.CallerID, commonpb.FavoriteKind_FAVORITE_KIND_SUITE, tableSuiteRecords)
-	authorIDs, err := distinctTextFacet(ctx, r.db, tableSuiteRecords, jAuthorID, where, args)
-	if err != nil {
-		return nil, err
-	}
-	return &api.ListSuiteFacetsResponse{AuthorIds: authorIDs}, nil
 }
 
 func facetEntityWhere(tenantID string, filter *commonpb.EntityFilter, callerAccountID string, favoriteKind commonpb.FavoriteKind, table string) ([]string, []any) {

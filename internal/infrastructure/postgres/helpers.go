@@ -2,14 +2,11 @@ package postgres
 
 import (
 	"errors"
-	"time"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	derrors "github.com/stroppy-io/stroppy-cloud/internal/domain/errors"
 )
@@ -50,9 +47,3 @@ func isUniqueViolation(err error) bool {
 	}
 	return false
 }
-
-// newUUID mints a fresh record id.
-func newUUID() string { return uuid.NewString() }
-
-// timestamppbNow is the current wall-clock time as a protobuf timestamp.
-func timestamppbNow() *timestamppb.Timestamp { return timestamppb.New(time.Now()) }
