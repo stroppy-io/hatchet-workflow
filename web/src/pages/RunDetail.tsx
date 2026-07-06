@@ -48,7 +48,15 @@ import {
   type WorkerPresence,
   type EventSeverity,
 } from "@/services/run_overview";
+// getRunsProvider is kept ONLY for extractToPreset ("Save preset"), which this
+// task does not rewire (no recipe.ts equivalent exists). rerun/cancel/delete
+// below now go through recipe.ts instead.
 import { actionsForStatus, getRunsProvider } from "@/services/runs";
+import {
+  cancelRun as recipeCancelRun,
+  deleteRun as recipeDeleteRun,
+  startRun as recipeStartRun,
+} from "@/services/recipe";
 import type { RunStatus } from "@/services/dashboard";
 import type { QuotaReservationView } from "@/lib/proto/cloud/v1/api/quota_pb";
 import { Quota_ReservationStatus } from "@/lib/proto/cloud/v1/deployment/quota_pb";
@@ -312,18 +320,26 @@ export function RunDetail() {
     }
   }, [tenantSlug, id, flash]);
 
+  // Rerun re-launches the run's ORIGINATING RECIPE bundle (RecipeService.StartRun),
+  // not the run itself — there is no recipe-side "restart this exact run" RPC.
+  // That only makes sense for a run that was itself launched from a recipe
+  // (run.recipeId set); classic runs (wizard/suite/cron) have no recipe to
+  // relaunch, so the button is hidden for those (see allowed.has("rerun") &&
+  // run?.recipeId below).
   const onRerun = useCallback(async () => {
+    const recipeId = run?.recipeId;
+    if (!recipeId) return;
     setBusy(true);
     try {
-      await getRunsProvider().rerunRun(tenantSlug, id);
+      const newRunId = await recipeStartRun(tenantSlug, recipeId);
       flash("Run re-launched");
-      navigate("/runs");
+      navigate(`/runs/${newRunId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to rerun");
     } finally {
       setBusy(false);
     }
-  }, [tenantSlug, id, flash, navigate]);
+  }, [tenantSlug, run?.recipeId, flash, navigate]);
 
   const onSavePreset = useCallback(async () => {
     setBusy(true);
@@ -347,7 +363,7 @@ export function RunDetail() {
     if (!ok) return;
     setBusy(true);
     try {
-      await getRunsProvider().cancelRun(tenantSlug, id);
+      await recipeCancelRun(tenantSlug, id);
       flash("Cancel requested");
       await load();
     } catch (err) {
@@ -367,8 +383,8 @@ export function RunDetail() {
     if (!ok) return;
     setBusy(true);
     try {
-      await getRunsProvider().deleteRun(tenantSlug, id);
-      navigate("/runs");
+      await recipeDeleteRun(tenantSlug, id);
+      navigate("/recipes/runs");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete");
       setBusy(false);
@@ -444,8 +460,14 @@ export function RunDetail() {
           <Button variant="outline" size="sm" onClick={() => void load()} disabled={loading}>
             <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} /> Refresh
           </Button>
-          {allowed.has("rerun") && (
-            <Button variant="outline" size="sm" onClick={() => void onRerun()} disabled={busy}>
+          {allowed.has("rerun") && !!run?.recipeId && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void onRerun()}
+              disabled={busy}
+              title="Re-launch this run's recipe bundle as a new run"
+            >
               <Repeat className="h-4 w-4" /> Rerun
             </Button>
           )}

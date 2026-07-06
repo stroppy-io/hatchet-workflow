@@ -212,6 +212,14 @@ export interface RunVM {
   durationSec?: number;
   /** record.suite_run_id ("" for standalone runs). */
   suiteRunId: string;
+  /**
+   * record.recipe_id — the originating models.RecipeRecord.entity.id for a run
+   * launched via RecipeService.StartRun; "" for a classic run launched from a
+   * baked domain.TestRun spec (wizard/suite/cron). Lets RunDetail's Rerun
+   * action re-launch through RecipeService.StartRun(recipeId) and gate itself
+   * off for non-recipe runs.
+   */
+  recipeId: string;
   /** summary.provider (deployment backend), lower-cased ("" when unspecified). */
   provider: DeployProvider;
   /** summary.db_preset_id ("" when the run did not use a saved db preset). */
@@ -453,6 +461,7 @@ export function testRunRecordToVM(rec: TestRunRecord): RunVM {
     status?: string;
     trigger?: string;
     suiteRunId?: string;
+    recipeId?: string;
     summary?: {
       dbKind?: string;
       workloadName?: string;
@@ -536,6 +545,7 @@ export function testRunRecordToVM(rec: TestRunRecord): RunVM {
     finishedAt: s.finishedAt,
     durationSec: s.duration ? parseFloat(s.duration) : undefined,
     suiteRunId: j.suiteRunId ?? "",
+    recipeId: j.recipeId ?? "",
     provider: providerLabelFromJson(s.provider),
     dbPresetId: s.dbPresetId ?? "",
     workloadPresetId: s.workloadPresetId ?? "",
