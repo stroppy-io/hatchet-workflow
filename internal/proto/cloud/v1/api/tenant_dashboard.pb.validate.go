@@ -395,40 +395,6 @@ func (m *TenantDashboard) validate(all bool) error {
 
 	}
 
-	for idx, item := range m.GetRecentSuiteRuns() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, TenantDashboardValidationError{
-						field:  fmt.Sprintf("RecentSuiteRuns[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, TenantDashboardValidationError{
-						field:  fmt.Sprintf("RecentSuiteRuns[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return TenantDashboardValidationError{
-					field:  fmt.Sprintf("RecentSuiteRuns[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
 	for idx, item := range m.GetUpcoming() {
 		_, _ = idx, item
 

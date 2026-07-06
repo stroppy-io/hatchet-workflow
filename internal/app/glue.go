@@ -62,26 +62,14 @@ func (g runRecordGetter) Get(ctx context.Context, id string) (*modelspb.TestRunR
 	return g.r.testRun(ctx, id)
 }
 
-// shareRunReader backs adapters.ShareRunReader (GetTestRun/GetSuiteRun by id).
-// Suite runs are no longer a supported share target (the suite/suite_run
-// services were deleted): GetSuiteRun reports not-found rather than reading a
-// (now absent) suite_run_records repo.
+// shareRunReader backs adapters.ShareRunReader (GetTestRun by id).
 type shareRunReader struct{ r byIDReader }
 
 func (s shareRunReader) GetTestRun(ctx context.Context, id string) (*modelspb.TestRunRecord, error) {
 	return s.r.testRun(ctx, id)
 }
 
-func (s shareRunReader) GetSuiteRun(context.Context, string) (*modelspb.SuiteRunRecord, error) {
-	return nil, derrors.NotFound("suite_run", "suite runs are no longer supported")
-}
-
-// snapshotRunReader backs execution.SnapshotRunReader: RunRecord by id + SuiteRun
-// by id (nil when the run is standalone). Every run built by the recipe/DSL path
-// is standalone, so SuiteRun always reports "no suite" — including for any
-// pre-existing row that still carries a stale suite_run_id from before the
-// suite feature was removed, which degrades the overview to no suite info
-// rather than erroring.
+// snapshotRunReader backs execution.SnapshotRunReader: RunRecord by id.
 type snapshotRunReader struct{ r byIDReader }
 
 var _ execution.SnapshotRunReader = snapshotRunReader{}
@@ -90,20 +78,9 @@ func (s snapshotRunReader) RunRecord(ctx context.Context, runID string) (*models
 	return s.r.testRun(ctx, runID)
 }
 
-func (s snapshotRunReader) SuiteRun(context.Context, string) (*modelspb.SuiteRunRecord, error) {
-	return nil, nil
-}
-
 // runtimePersistenceStore backs workflow runtime persistence activities. Reads are
 // by id because workflows know the run id, then writes go through the typed repo
 // using the tenant carried in the record.
-//
-// The suite-run/suite-record methods only fire when a persisted TestRunRecord
-// carries a non-empty suite_run_id (execution.RunPersistenceActivities guards
-// every call site on that), which no run produced by the recipe/DSL path ever
-// sets. They report not-found rather than reading a (now absent) suite
-// repo — this is unreachable in practice post-cleanup, kept only to satisfy the
-// shared execution.RunPersistenceStore port.
 type runtimePersistenceStore struct {
 	r    byIDReader
 	runs *postgres.TestRunRepo
@@ -117,22 +94,6 @@ func (s runtimePersistenceStore) RunRecord(ctx context.Context, runID string) (*
 
 func (s runtimePersistenceStore) SaveRunRecord(ctx context.Context, run *modelspb.TestRunRecord) error {
 	return s.runs.Update(ctx, run)
-}
-
-func (s runtimePersistenceStore) SuiteRun(context.Context, string) (*modelspb.SuiteRunRecord, error) {
-	return nil, derrors.NotFound("suite_run", "suite runs are no longer supported")
-}
-
-func (s runtimePersistenceStore) SaveSuiteRun(context.Context, *modelspb.SuiteRunRecord) error {
-	return derrors.NotFound("suite_run", "suite runs are no longer supported")
-}
-
-func (s runtimePersistenceStore) SuiteRecord(context.Context, string, string) (*modelspb.SuiteRecord, error) {
-	return nil, derrors.NotFound("suite", "suites are no longer supported")
-}
-
-func (s runtimePersistenceStore) SaveSuiteRecord(context.Context, *modelspb.SuiteRecord) error {
-	return derrors.NotFound("suite", "suites are no longer supported")
 }
 
 /*
@@ -269,10 +230,9 @@ func (allMachinesResolver) Lookup(context.Context, string, string, string) error
 	===== dashboard runs reader =====
 
 	Suites and suite runs were removed with the old test-orchestration backend
-	(the suite/suite_run/suite_wizard services), so the dashboard's scheduled
-	suites and suite-run history tiles are legitimately empty going forward —
-	ListTenantSuiteRuns/ListScheduledSuites report no rows rather than reading a
-	(now absent) suite repo.
+	(the suite/suite_run/suite_wizard services), so the dashboard's "Upcoming
+	suites" tile is legitimately empty going forward — ListScheduledSuites
+	reports no rows rather than reading a (now absent) suite repo.
 */
 
 type dashboardRuns struct {
@@ -286,10 +246,6 @@ func (d dashboardRuns) ListTenantRuns(ctx context.Context, tenantID string) ([]*
 	return out, err
 }
 
-func (d dashboardRuns) ListTenantSuiteRuns(context.Context, string) ([]*modelspb.SuiteRunRecord, error) {
-	return nil, nil
-}
-
-func (d dashboardRuns) ListScheduledSuites(context.Context, string) ([]*modelspb.SuiteRecord, error) {
+func (d dashboardRuns) ListScheduledSuites(context.Context, string) ([]adapters.ScheduledSuite, error) {
 	return nil, nil
 }

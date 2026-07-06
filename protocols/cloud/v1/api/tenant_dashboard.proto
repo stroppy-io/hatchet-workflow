@@ -5,7 +5,6 @@ package cloud.v1.api;
 import "cloud/v1/api/rating.proto";
 import "cloud/v1/iam/options.proto";
 import "cloud/v1/iam/permission.proto";
-import "cloud/v1/models/suite.proto";
 import "cloud/v1/models/test_run.proto";
 import "google/protobuf/timestamp.proto";
 import "validate/validate.proto";
@@ -94,10 +93,6 @@ message TenantDashboard {
      */
     repeated models.TestRunRecord recent_runs = 3;
     /*
-        recent_suite_runs is the most recent suite runs (limited).
-     */
-    repeated models.SuiteRunRecord recent_suite_runs = 4;
-    /*
         upcoming is the scheduled suites with their next planned auto-run.
      */
     repeated UpcomingSuite upcoming = 5;
@@ -105,6 +100,12 @@ message TenantDashboard {
         top_benchmarks is this tenant's top benchmarks (tenant rating top-N).
      */
     repeated RatingEntry top_benchmarks = 6;
+
+    // 4 was recent_suite_runs (repeated models.SuiteRunRecord): suites/suite
+    // runs were removed with the old test-orchestration backend, and the field
+    // was already dead on the frontend (no hand-written consumer).
+    reserved 4;
+    reserved "recent_suite_runs";
 }
 
 /*

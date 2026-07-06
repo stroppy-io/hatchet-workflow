@@ -13,29 +13,14 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func TestPersistRunStateUpdatesRecordAndSuiteAggregate(t *testing.T) {
+func TestPersistRunStateUpdatesRecord(t *testing.T) {
 	started := timestamppb.New(time.Unix(10, 0))
 	finished := timestamppb.New(time.Unix(20, 0))
 	store := &fakeRunPersistenceStore{
 		runs: map[string]*models.TestRunRecord{
 			"run-1": {
-				Entity:     &common.Entity{Id: "run-1"},
-				Status:     common.Status_STATUS_PENDING,
-				SuiteRunId: "suite-run-1",
-			},
-			"run-2": {
-				Entity: &common.Entity{Id: "run-2"},
+				Entity: &common.Entity{Id: "run-1"},
 				Status: common.Status_STATUS_PENDING,
-			},
-		},
-		suites: map[string]*models.SuiteRunRecord{
-			"suite-run-1": {
-				Entity: &common.Entity{Id: "suite-run-1"},
-				Status: common.Status_STATUS_PENDING,
-				Children: []*models.SuiteRunRecord_ChildRun{
-					{TestRunId: "run-1"},
-					{TestRunId: "run-2"},
-				},
 			},
 		},
 	}
@@ -79,175 +64,6 @@ func TestPersistRunStateUpdatesRecordAndSuiteAggregate(t *testing.T) {
 	}
 	if run.GetEntity().GetTimings().GetUpdatedAt() == nil {
 		t.Fatal("run updated_at was not touched")
-	}
-
-	suite := store.suites["suite-run-1"]
-	if got := suite.GetStatus(); got != common.Status_STATUS_RUNNING {
-		t.Fatalf("suite status = %s, want %s", got, common.Status_STATUS_RUNNING)
-	}
-	if got := suite.GetSummary().GetRunning(); got != 1 {
-		t.Fatalf("suite running = %d, want 1", got)
-	}
-	if got := suite.GetSummary().GetPending(); got != 1 {
-		t.Fatalf("suite pending = %d, want 1", got)
-	}
-	if got := suite.GetSummary().GetProgressPct(); got != 0 {
-		t.Fatalf("suite progress = %d, want 0", got)
-	}
-	if got := suite.GetChildren()[0].GetStatus(); got != common.Status_STATUS_RUNNING {
-		t.Fatalf("suite child status = %s, want %s", got, common.Status_STATUS_RUNNING)
-	}
-}
-
-func TestPersistSuiteRunDerivesTerminalAggregate(t *testing.T) {
-	store := &fakeRunPersistenceStore{
-		runs: map[string]*models.TestRunRecord{
-			"run-1": {Entity: &common.Entity{Id: "run-1"}, Status: common.Status_STATUS_COMPLETED},
-			"run-2": {Entity: &common.Entity{Id: "run-2"}, Status: common.Status_STATUS_FAILED},
-		},
-		suites: map[string]*models.SuiteRunRecord{
-			"suite-run-1": {
-				Entity: &common.Entity{Id: "suite-run-1"},
-				Status: common.Status_STATUS_RUNNING,
-				Children: []*models.SuiteRunRecord_ChildRun{
-					{TestRunId: "run-1"},
-					{TestRunId: "run-2"},
-				},
-			},
-		},
-	}
-	activities := NewRunPersistenceActivities(store)
-
-	if err := activities.PersistSuiteRun(context.Background(), "suite-run-1", common.Status_STATUS_UNSPECIFIED); err != nil {
-		t.Fatalf("persist suite run: %v", err)
-	}
-
-	suite := store.suites["suite-run-1"]
-	if got := suite.GetStatus(); got != common.Status_STATUS_FAILED {
-		t.Fatalf("suite status = %s, want %s", got, common.Status_STATUS_FAILED)
-	}
-	if got := suite.GetSummary().GetCompleted(); got != 1 {
-		t.Fatalf("suite completed = %d, want 1", got)
-	}
-	if got := suite.GetSummary().GetFailed(); got != 1 {
-		t.Fatalf("suite failed = %d, want 1", got)
-	}
-	if got := suite.GetSummary().GetProgressPct(); got != 100 {
-		t.Fatalf("suite progress = %d, want 100", got)
-	}
-	if suite.GetSummary().GetFinishedAt() == nil {
-		t.Fatal("suite finished_at was not persisted")
-	}
-}
-
-func TestPersistSuiteRunCancelsPendingChildrenOnFailure(t *testing.T) {
-	store := &fakeRunPersistenceStore{
-		runs: map[string]*models.TestRunRecord{
-			"run-1": {Entity: &common.Entity{Id: "run-1"}, Status: common.Status_STATUS_COMPLETED},
-			"run-2": {Entity: &common.Entity{Id: "run-2"}, Status: common.Status_STATUS_FAILED},
-			"run-3": {Entity: &common.Entity{Id: "run-3"}, Status: common.Status_STATUS_PENDING},
-		},
-		suites: map[string]*models.SuiteRunRecord{
-			"suite-run-1": {
-				Entity: &common.Entity{Id: "suite-run-1"},
-				Status: common.Status_STATUS_RUNNING,
-				Children: []*models.SuiteRunRecord_ChildRun{
-					{TestRunId: "run-1"},
-					{TestRunId: "run-2"},
-					{TestRunId: "run-3"},
-				},
-			},
-		},
-	}
-	activities := NewRunPersistenceActivities(store)
-
-	if err := activities.PersistSuiteRun(context.Background(), "suite-run-1", common.Status_STATUS_FAILED); err != nil {
-		t.Fatalf("persist suite run: %v", err)
-	}
-
-	if got := store.runs["run-3"].GetStatus(); got != common.Status_STATUS_CANCELLED {
-		t.Fatalf("pending child status = %s, want %s", got, common.Status_STATUS_CANCELLED)
-	}
-	if store.runs["run-3"].GetSummary().GetFinishedAt() == nil {
-		t.Fatal("cancelled child finished_at was not persisted")
-	}
-	suite := store.suites["suite-run-1"]
-	if got := suite.GetSummary().GetPending(); got != 0 {
-		t.Fatalf("suite pending = %d, want 0", got)
-	}
-	if got := suite.GetSummary().GetFailed(); got != 2 {
-		t.Fatalf("suite failed = %d, want 2", got)
-	}
-	if got := suite.GetSummary().GetProgressPct(); got != 100 {
-		t.Fatalf("suite progress = %d, want 100", got)
-	}
-	if got := suite.GetChildren()[2].GetStatus(); got != common.Status_STATUS_CANCELLED {
-		t.Fatalf("suite child status = %s, want %s", got, common.Status_STATUS_CANCELLED)
-	}
-}
-
-func TestPersistSuiteRunDoesNotOverwriteTerminalStatus(t *testing.T) {
-	store := &fakeRunPersistenceStore{
-		runs: map[string]*models.TestRunRecord{
-			"run-1": {Entity: &common.Entity{Id: "run-1"}, Status: common.Status_STATUS_COMPLETED},
-		},
-		suites: map[string]*models.SuiteRunRecord{
-			"suite-run-1": {
-				Entity: &common.Entity{Id: "suite-run-1"},
-				Status: common.Status_STATUS_CANCELLED,
-				Children: []*models.SuiteRunRecord_ChildRun{
-					{TestRunId: "run-1"},
-				},
-			},
-		},
-	}
-	activities := NewRunPersistenceActivities(store)
-
-	if err := activities.PersistSuiteRun(context.Background(), "suite-run-1", common.Status_STATUS_UNSPECIFIED); err != nil {
-		t.Fatalf("persist suite run: %v", err)
-	}
-
-	if got := store.suites["suite-run-1"].GetStatus(); got != common.Status_STATUS_CANCELLED {
-		t.Fatalf("suite status = %s, want %s", got, common.Status_STATUS_CANCELLED)
-	}
-}
-
-func TestPersistSuiteRunUpdatesParentSuiteSummary(t *testing.T) {
-	started := timestamppb.New(time.Unix(100, 0))
-	store := &fakeRunPersistenceStore{
-		runs: map[string]*models.TestRunRecord{
-			"run-1": {Entity: &common.Entity{Id: "run-1"}, Status: common.Status_STATUS_COMPLETED},
-		},
-		suites: map[string]*models.SuiteRunRecord{
-			"suite-run-1": {
-				Entity:  &common.Entity{Id: "suite-run-1", TenantId: "tenant-1", Timings: &common.Timings{CreatedAt: started}},
-				SuiteId: "suite-1",
-				Status:  common.Status_STATUS_RUNNING,
-				Summary: &models.SuiteRunRecord_Summary{StartedAt: started},
-				Children: []*models.SuiteRunRecord_ChildRun{
-					{TestRunId: "run-1"},
-				},
-			},
-		},
-		suiteDefinitions: map[string]*models.SuiteRecord{
-			"suite-1": {
-				Entity:  &common.Entity{Id: "suite-1", TenantId: "tenant-1"},
-				Summary: &models.SuiteRecord_Summary{RunCount: 1, LastRunAt: started, LastRunStatus: common.Status_STATUS_PENDING},
-			},
-		},
-	}
-	activities := NewRunPersistenceActivities(store)
-
-	if err := activities.PersistSuiteRun(context.Background(), "suite-run-1", common.Status_STATUS_UNSPECIFIED); err != nil {
-		t.Fatalf("persist suite run: %v", err)
-	}
-
-	parent := store.suiteDefinitions["suite-1"]
-	if got := parent.GetSummary().GetLastRunStatus(); got != common.Status_STATUS_COMPLETED {
-		t.Fatalf("parent last_run_status = %s, want completed", got)
-	}
-	if parent.GetSummary().GetLastRunAt() != started {
-		t.Fatal("parent last_run_at changed unexpectedly")
 	}
 }
 
@@ -294,9 +110,7 @@ func TestNextRunStatusDoesNotDowngradeDurableTerminalState(t *testing.T) {
 }
 
 type fakeRunPersistenceStore struct {
-	runs             map[string]*models.TestRunRecord
-	suites           map[string]*models.SuiteRunRecord
-	suiteDefinitions map[string]*models.SuiteRecord
+	runs map[string]*models.TestRunRecord
 }
 
 func (f *fakeRunPersistenceStore) RunRecord(_ context.Context, runID string) (*models.TestRunRecord, error) {
@@ -309,37 +123,5 @@ func (f *fakeRunPersistenceStore) RunRecord(_ context.Context, runID string) (*m
 
 func (f *fakeRunPersistenceStore) SaveRunRecord(_ context.Context, run *models.TestRunRecord) error {
 	f.runs[run.GetEntity().GetId()] = run
-	return nil
-}
-
-func (f *fakeRunPersistenceStore) SuiteRun(_ context.Context, suiteRunID string) (*models.SuiteRunRecord, error) {
-	rec, ok := f.suites[suiteRunID]
-	if !ok {
-		return nil, fmt.Errorf("suite run %q not found", suiteRunID)
-	}
-	return rec, nil
-}
-
-func (f *fakeRunPersistenceStore) SaveSuiteRun(_ context.Context, suiteRun *models.SuiteRunRecord) error {
-	f.suites[suiteRun.GetEntity().GetId()] = suiteRun
-	return nil
-}
-
-func (f *fakeRunPersistenceStore) SuiteRecord(_ context.Context, _, suiteID string) (*models.SuiteRecord, error) {
-	if f.suiteDefinitions == nil {
-		return nil, fmt.Errorf("suite %q not found", suiteID)
-	}
-	rec, ok := f.suiteDefinitions[suiteID]
-	if !ok {
-		return nil, fmt.Errorf("suite %q not found", suiteID)
-	}
-	return rec, nil
-}
-
-func (f *fakeRunPersistenceStore) SaveSuiteRecord(_ context.Context, suite *models.SuiteRecord) error {
-	if f.suiteDefinitions == nil {
-		f.suiteDefinitions = make(map[string]*models.SuiteRecord)
-	}
-	f.suiteDefinitions[suite.GetEntity().GetId()] = suite
 	return nil
 }

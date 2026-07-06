@@ -7,7 +7,6 @@ import (
 	"go.temporal.io/sdk/worker"
 	"go.temporal.io/sdk/workflow"
 
-	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
 	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
@@ -17,14 +16,12 @@ const (
 	PersistRunStateActivityName       = "stroppy.runtime.PersistRunState"
 	PersistDeploymentPlanActivityName = "stroppy.runtime.PersistDeploymentPlan"
 	AppendRunLogsActivityName         = "stroppy.runtime.AppendRunLogs"
-	PersistSuiteRunActivityName       = "stroppy.runtime.PersistSuiteRun"
 )
 
 type RuntimeActivities interface {
 	PersistRunState(context.Context, string, *workflowpb.RunState, *deploymentpb.InfrastructureState, *deploymentpb.DeploymentPlan) error
 	PersistDeploymentPlan(context.Context, string, *deploymentpb.DeploymentPlan) error
 	AppendRunLogs(context.Context, []*monitor.LogLine) error
-	PersistSuiteRun(context.Context, string, common.Status) error
 }
 
 // RecipeActivityImpl is the interface RunRecipeWorkflow's three by-name
@@ -68,7 +65,6 @@ func RegisterActivities(registry worker.ActivityRegistry, runtime RuntimeActivit
 		registry.RegisterActivityWithOptions(runtime.PersistRunState, activity.RegisterOptions{Name: PersistRunStateActivityName})
 		registry.RegisterActivityWithOptions(runtime.PersistDeploymentPlan, activity.RegisterOptions{Name: PersistDeploymentPlanActivityName})
 		registry.RegisterActivityWithOptions(runtime.AppendRunLogs, activity.RegisterOptions{Name: AppendRunLogsActivityName})
-		registry.RegisterActivityWithOptions(runtime.PersistSuiteRun, activity.RegisterOptions{Name: PersistSuiteRunActivityName})
 	}
 }
 

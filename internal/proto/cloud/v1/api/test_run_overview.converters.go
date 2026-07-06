@@ -826,13 +826,6 @@ func (src *TestRunOverviewSnapshot) ToOgen() (*rest.TestRunOverviewSnapshot, err
 		return nil, err
 	}
 	dst.Overview = *o3
-	if src.SuiteRun != nil {
-		o4, err := SuiteRunRecordToOgen(src.GetSuiteRun())
-		if err != nil {
-			return nil, err
-		}
-		dst.SuiteRun.SetTo(*o4)
-	}
 	return &dst, nil
 }
 
@@ -857,12 +850,5 @@ func TestRunOverviewSnapshotFromOgen(src *rest.TestRunOverviewSnapshot) (*TestRu
 		return nil, err
 	}
 	dst.Overview = m3
-	if v4, ok := src.SuiteRun.Get(); ok {
-		m5, err := SuiteRunRecordFromOgen(&v4)
-		if err != nil {
-			return nil, err
-		}
-		dst.SuiteRun = m5
-	}
 	return dst, nil
 }

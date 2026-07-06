@@ -668,35 +668,6 @@ func (m *TestRunOverviewSnapshot) validate(all bool) error {
 		}
 	}
 
-	if all {
-		switch v := interface{}(m.GetSuiteRun()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, TestRunOverviewSnapshotValidationError{
-					field:  "SuiteRun",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, TestRunOverviewSnapshotValidationError{
-					field:  "SuiteRun",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetSuiteRun()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return TestRunOverviewSnapshotValidationError{
-				field:  "SuiteRun",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	if len(errors) > 0 {
 		return TestRunOverviewSnapshotMultiError(errors)
 	}

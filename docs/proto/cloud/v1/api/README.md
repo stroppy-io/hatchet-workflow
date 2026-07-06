@@ -11649,14 +11649,6 @@ go_name: TestPresetId</pre></td>
 json_name: recentRuns
 go_name: RecentRuns</pre></td>
 </tr><tr>
-<td>recent_suite_runs</td>
-<td><a href="../models/README.md#cloud-v1-models-suiterunrecord">cloud.v1.models.SuiteRunRecord</a></td>
-<td><pre>
-//recent_suite_runs is the most recent suite runs (limited).<br>
-
-json_name: recentSuiteRuns
-go_name: RecentSuiteRuns</pre></td>
-</tr><tr>
 <td>run_counts</td>
 <td><a href="#cloud-v1-api-statuscounts">cloud.v1.api.StatusCounts</a></td>
 <td><pre>
@@ -11724,16 +11716,6 @@ go_name: Overview</pre></td>
 
 json_name: run
 go_name: Run</pre></td>
-</tr><tr>
-<td>suite_run</td>
-<td><a href="../models/README.md#cloud-v1-models-suiterunrecord">cloud.v1.models.SuiteRunRecord</a></td>
-<td><pre>
-//suite_run is populated when run.suite_run_id is set. It gives the overview
-//page enough parent/sibling context for suite children without forcing a
-//second API round trip.<br>
-
-json_name: suiteRun
-go_name: SuiteRun</pre></td>
 </tr><tr>
 <td>topology</td>
 <td><a href="../topology/README.md#cloud-v1-topology-topology">cloud.v1.topology.Topology</a></td>

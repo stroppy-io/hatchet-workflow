@@ -13,17 +13,31 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+// ScheduledSuite is the minimal projection of a scheduled suite DEFINITION the
+// "Upcoming suites" dashboard tile needs to compute the next planned auto-run.
+// It is a plain (non-proto) struct rather than the models suite-record proto:
+// suites and suite runs were removed with the old test-orchestration backend,
+// so ListScheduledSuites has no dependency on that (now orphaned) proto model.
+type ScheduledSuite struct {
+	// ID is the suite definition's entity id.
+	ID string
+	// Name is the suite's display name.
+	Name string
+	// Cron is the schedule expression driving the auto-runs.
+	Cron string
+	// ScheduleEnabled mirrors the suite's spec.schedule.enabled.
+	ScheduleEnabled bool
+}
+
 // DashboardRunsReader is the consumer interface the dashboard aggregates run data
-// through. The gormstore TestRuns / SuiteRuns repos satisfy these once injected:
+// through. The gormstore TestRuns repo satisfies ListTenantRuns once injected:
 //   - ListTenantRuns lists ALL of a tenant's test runs (status + started_at are
 //     read for the headline tiles; ordering does not matter, the adapter sorts).
-//   - ListTenantSuiteRuns lists the tenant's suite runs similarly.
 //   - ListScheduledSuites lists the tenant's suite DEFINITIONS that carry an
 //     enabled schedule (so the adapter can compute the next planned auto-run).
 type DashboardRunsReader interface {
 	ListTenantRuns(ctx context.Context, tenantID string) ([]*models.TestRunRecord, error)
-	ListTenantSuiteRuns(ctx context.Context, tenantID string) ([]*models.SuiteRunRecord, error)
-	ListScheduledSuites(ctx context.Context, tenantID string) ([]*models.SuiteRecord, error)
+	ListScheduledSuites(ctx context.Context, tenantID string) ([]ScheduledSuite, error)
 }
 
 // RunStatsReader implements tenant_dashboard.RunStatsReader: status breakdown and
@@ -91,8 +105,8 @@ func (r *RunStatsReader) SuccessRate(ctx context.Context, tenantID string, windo
 	return float32(completed) / float32(finished), nil
 }
 
-// RecentRunsReader implements tenant_dashboard.RecentRunsReader: newest-first,
-// capped lists of the tenant's test runs and suite runs.
+// RecentRunsReader implements tenant_dashboard.RecentRunsReader: a newest-first,
+// capped list of the tenant's test runs.
 type RecentRunsReader struct{ runs DashboardRunsReader }
 
 var _ tenant_dashboard.RecentRunsReader = (*RecentRunsReader)(nil)
@@ -109,16 +123,6 @@ func (r *RecentRunsReader) RecentRuns(ctx context.Context, tenantID string, limi
 		return nil, err
 	}
 	sortByCreatedDesc(all, func(rec *models.TestRunRecord) time.Time { return createdAt(rec.GetEntity()) })
-	return capRuns(all, limit), nil
-}
-
-// RecentSuiteRuns returns the most recent suite runs, newest first, capped at limit.
-func (r *RecentRunsReader) RecentSuiteRuns(ctx context.Context, tenantID string, limit uint32) ([]*models.SuiteRunRecord, error) {
-	all, err := r.runs.ListTenantSuiteRuns(ctx, tenantID)
-	if err != nil {
-		return nil, err
-	}
-	sortByCreatedDesc(all, func(rec *models.SuiteRunRecord) time.Time { return createdAt(rec.GetEntity()) })
 	return capRuns(all, limit), nil
 }
 
@@ -144,19 +148,18 @@ func (r *ScheduleReader) UpcomingSuites(ctx context.Context, tenantID string, li
 
 	var upcoming []*api.UpcomingSuite
 	for _, suite := range suites {
-		sched := suite.GetSpec().GetSchedule()
-		if sched == nil || !sched.GetEnabled() || sched.GetCron() == "" {
+		if !suite.ScheduleEnabled || suite.Cron == "" {
 			continue
 		}
-		schedule, perr := parser.Parse(sched.GetCron())
+		schedule, perr := parser.Parse(suite.Cron)
 		if perr != nil {
 			continue
 		}
 		next := schedule.Next(now)
 		upcoming = append(upcoming, &api.UpcomingSuite{
-			SuiteId:   suite.GetEntity().GetId(),
-			Name:      suite.GetEntity().GetName(),
-			Cron:      sched.GetCron(),
+			SuiteId:   suite.ID,
+			Name:      suite.Name,
+			Cron:      suite.Cron,
 			NextRunAt: timestamppb.New(next),
 		})
 	}

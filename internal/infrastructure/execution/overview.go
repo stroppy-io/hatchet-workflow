@@ -47,17 +47,14 @@ type runStateQuerier interface {
 	GetRunState(ctx context.Context, workflowID string, runID string) (*workflowpb.RunState, error)
 }
 
-// SnapshotRunReader loads the persisted run record + parent suite run that the
-// snapshot bundles alongside the live workflow projection. It is a read-only,
-// tenant-agnostic lookup by id (the service has already authorised the caller).
-// Implemented by the storage layer; injected so the overview reader stays an
-// execution adapter without owning storage.
+// SnapshotRunReader loads the persisted run record that the snapshot bundles
+// alongside the live workflow projection. It is a read-only, tenant-agnostic
+// lookup by id (the service has already authorised the caller). Implemented by
+// the storage layer; injected so the overview reader stays an execution
+// adapter without owning storage.
 type SnapshotRunReader interface {
 	// RunRecord returns the persisted TestRunRecord for the run id.
 	RunRecord(ctx context.Context, runID string) (*models.TestRunRecord, error)
-	// SuiteRun returns the parent SuiteRunRecord when the run belongs to a suite,
-	// or (nil, nil) when it is a standalone run.
-	SuiteRun(ctx context.Context, suiteRunID string) (*models.SuiteRunRecord, error)
 }
 
 // AgentPresenceReader returns the registry-backed liveness samples for run
@@ -68,9 +65,9 @@ type AgentPresenceReader interface {
 }
 
 // OverviewReader implements test_run_overview.OverviewReader. It assembles the
-// snapshot from (a) the persisted run record and its staged topology, (b) the
-// live monitor.Overview projected from the Temporal TestWorkflow's RunState, and
-// (c) the parent suite-run record when the run belongs to a suite.
+// snapshot from (a) the persisted run record and its staged topology, and (b)
+// the live monitor.Overview projected from the Temporal TestWorkflow's
+// RunState.
 type OverviewReader struct {
 	tc                   runStateQuerier
 	store                SnapshotRunReader
@@ -82,8 +79,8 @@ var _ test_run_overview.OverviewReader = (*OverviewReader)(nil)
 
 // NewOverviewReader builds the test_run_overview.OverviewReader adapter over a
 // Temporal client (the live RunState source) and a SnapshotRunReader (the
-// persisted run/suite-run + topology source). store may be nil, in which case
-// the snapshot carries only the live Overview projection.
+// persisted run + topology source). store may be nil, in which case the
+// snapshot carries only the live Overview projection.
 func NewOverviewReader(c client.Client, store SnapshotRunReader, presence ...AgentPresenceReader) *OverviewReader {
 	r := &OverviewReader{tc: workflowpb.NewTestServiceClient(c), store: store}
 	if len(presence) > 0 {
@@ -109,13 +106,6 @@ func (r *OverviewReader) Get(ctx context.Context, runID string) (*api.TestRunOve
 		}
 		snap.Run = rec
 		snap.Topology = topologyFromRecord(rec)
-		if sid := rec.GetSuiteRunId(); sid != "" {
-			suiteRun, err := r.store.SuiteRun(ctx, sid)
-			if err != nil {
-				return nil, err
-			}
-			snap.SuiteRun = suiteRun
-		}
 	}
 
 	presence, err := r.agentPresence(ctx, runID, rec)

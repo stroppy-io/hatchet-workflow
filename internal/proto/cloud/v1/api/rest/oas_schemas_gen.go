@@ -36542,22 +36542,16 @@ func (s *Tenant) SetUpdatedAt(val OptDateTime) {
 
 // Ref: #/components/schemas/TenantDashboard
 type TenantDashboard struct {
-	RecentRuns      []TestRunRecord  `json:"recentRuns"`
-	RecentSuiteRuns []SuiteRunRecord `json:"recentSuiteRuns"`
-	RunCounts       OptStatusCounts  `json:"runCounts"`
-	SuccessRate     OptFloat32       `json:"successRate"`
-	TopBenchmarks   []RatingEntry    `json:"topBenchmarks"`
-	Upcoming        []UpcomingSuite  `json:"upcoming"`
+	RecentRuns    []TestRunRecord `json:"recentRuns"`
+	RunCounts     OptStatusCounts `json:"runCounts"`
+	SuccessRate   OptFloat32      `json:"successRate"`
+	TopBenchmarks []RatingEntry   `json:"topBenchmarks"`
+	Upcoming      []UpcomingSuite `json:"upcoming"`
 }
 
 // GetRecentRuns returns the value of RecentRuns.
 func (s *TenantDashboard) GetRecentRuns() []TestRunRecord {
 	return s.RecentRuns
-}
-
-// GetRecentSuiteRuns returns the value of RecentSuiteRuns.
-func (s *TenantDashboard) GetRecentSuiteRuns() []SuiteRunRecord {
-	return s.RecentSuiteRuns
 }
 
 // GetRunCounts returns the value of RunCounts.
@@ -36583,11 +36577,6 @@ func (s *TenantDashboard) GetUpcoming() []UpcomingSuite {
 // SetRecentRuns sets the value of RecentRuns.
 func (s *TenantDashboard) SetRecentRuns(val []TestRunRecord) {
 	s.RecentRuns = val
-}
-
-// SetRecentSuiteRuns sets the value of RecentSuiteRuns.
-func (s *TenantDashboard) SetRecentSuiteRuns(val []SuiteRunRecord) {
-	s.RecentSuiteRuns = val
 }
 
 // SetRunCounts sets the value of RunCounts.
@@ -36887,10 +36876,9 @@ func (s *TestRun) SetWorkload(val Workload) {
 
 // Ref: #/components/schemas/TestRunOverviewSnapshot
 type TestRunOverviewSnapshot struct {
-	Overview Overview          `json:"overview"`
-	Run      TestRunRecord     `json:"run"`
-	SuiteRun OptSuiteRunRecord `json:"suiteRun"`
-	Topology Topology          `json:"topology"`
+	Overview Overview      `json:"overview"`
+	Run      TestRunRecord `json:"run"`
+	Topology Topology      `json:"topology"`
 }
 
 // GetOverview returns the value of Overview.
@@ -36901,11 +36889,6 @@ func (s *TestRunOverviewSnapshot) GetOverview() Overview {
 // GetRun returns the value of Run.
 func (s *TestRunOverviewSnapshot) GetRun() TestRunRecord {
 	return s.Run
-}
-
-// GetSuiteRun returns the value of SuiteRun.
-func (s *TestRunOverviewSnapshot) GetSuiteRun() OptSuiteRunRecord {
-	return s.SuiteRun
 }
 
 // GetTopology returns the value of Topology.
@@ -36921,11 +36904,6 @@ func (s *TestRunOverviewSnapshot) SetOverview(val Overview) {
 // SetRun sets the value of Run.
 func (s *TestRunOverviewSnapshot) SetRun(val TestRunRecord) {
 	s.Run = val
-}
-
-// SetSuiteRun sets the value of SuiteRun.
-func (s *TestRunOverviewSnapshot) SetSuiteRun(val OptSuiteRunRecord) {
-	s.SuiteRun = val
 }
 
 // SetTopology sets the value of Topology.

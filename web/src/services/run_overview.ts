@@ -422,7 +422,6 @@ function nodeToVM(n: PipelineNodeJson): PipelineNodeVM {
 /** Shape of api.TestRunOverviewSnapshot after toJson (the fields we read). */
 interface SnapshotJson {
   topology?: TopologyJson;
-  suiteRun?: { entity?: { id?: string } };
   overview?: {
     runId?: string;
     status?: string;
@@ -504,7 +503,7 @@ function snapshotToVM(snap: SnapshotJson, runRecord: TestRunRecord | undefined, 
       detail: e.detail ?? "",
     })),
     run: runRecord ? testRunRecordToVM(runRecord) : undefined,
-    suiteRunId: snap.suiteRun?.entity?.id ?? "",
+    suiteRunId: runRecord?.suiteRunId ?? "",
     topology: snap.topology,
     observedAt: ov.observedAt,
     degradedReasons: ov.degradedReasons ?? [],

@@ -500,10 +500,6 @@ func (m *TestRunOverviewSnapshot) Encode(e *jx.Encoder) {
 		e.FieldStart("overview")
 		jxpb.EncMessage(e, m.Overview)
 	}
-	if m.SuiteRun != nil {
-		e.FieldStart("suiteRun")
-		jxpb.EncMessage(e, m.SuiteRun)
-	}
 	e.ObjEnd()
 }
 
@@ -547,19 +543,6 @@ func (m *TestRunOverviewSnapshot) Decode(d *jx.Decoder) error {
 			}
 			m.Overview = &monitor.Overview{}
 			if err := jxpb.DecMessage(d, m.Overview); err != nil {
-				return err
-			}
-			return nil
-		case "suiteRun", "suite_run":
-			if seen["SuiteRun"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["SuiteRun"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			m.SuiteRun = &models.SuiteRunRecord{}
-			if err := jxpb.DecMessage(d, m.SuiteRun); err != nil {
 				return err
 			}
 			return nil

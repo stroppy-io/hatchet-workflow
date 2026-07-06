@@ -27,9 +27,8 @@ func TestOverviewGetFallsBackToPersistedTerminalRecord(t *testing.T) {
 		tc: tc,
 		store: fakeSnapshotStore{
 			run: &models.TestRunRecord{
-				Entity:     &common.Entity{Id: "run-1"},
-				Status:     common.Status_STATUS_COMPLETED,
-				SuiteRunId: "suite-run-1",
+				Entity: &common.Entity{Id: "run-1"},
+				Status: common.Status_STATUS_COMPLETED,
 				InfrastructureState: &deploymentpb.InfrastructureState{
 					Machines: []*deploymentpb.MachineState{
 						{NodeId: "node-1", Status: common.Status_STATUS_DEPLOYED},
@@ -46,10 +45,6 @@ func TestOverviewGetFallsBackToPersistedTerminalRecord(t *testing.T) {
 					Duration:    durationpb.New(time.Minute),
 					ProgressPct: 100,
 				},
-			},
-			suite: &models.SuiteRunRecord{
-				Entity: &common.Entity{Id: "suite-run-1"},
-				Status: common.Status_STATUS_COMPLETED,
 			},
 		},
 	}
@@ -70,9 +65,6 @@ func TestOverviewGetFallsBackToPersistedTerminalRecord(t *testing.T) {
 	}
 	if got := snap.GetRun().GetStatus(); got != common.Status_STATUS_COMPLETED {
 		t.Fatalf("run status = %s, want %s", got, common.Status_STATUS_COMPLETED)
-	}
-	if got := snap.GetSuiteRun().GetStatus(); got != common.Status_STATUS_COMPLETED {
-		t.Fatalf("suite run status = %s, want %s", got, common.Status_STATUS_COMPLETED)
 	}
 	roots := snap.GetOverview().GetPipeline().GetRoots()
 	if got, want := len(roots), 5; got != want {
@@ -926,16 +918,11 @@ func (f *blockingRunStateQuerier) GetRunState(ctx context.Context, _, _ string) 
 }
 
 type fakeSnapshotStore struct {
-	run   *models.TestRunRecord
-	suite *models.SuiteRunRecord
+	run *models.TestRunRecord
 }
 
 func (f fakeSnapshotStore) RunRecord(context.Context, string) (*models.TestRunRecord, error) {
 	return f.run, nil
-}
-
-func (f fakeSnapshotStore) SuiteRun(context.Context, string) (*models.SuiteRunRecord, error) {
-	return f.suite, nil
 }
 
 func containsString(values []string, want string) bool {

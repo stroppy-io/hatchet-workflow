@@ -296,11 +296,7 @@ type TestRunOverviewSnapshot struct {
 	// infrastructure state and deployment plan.
 	Topology *topology.Topology `protobuf:"bytes,2,opt,name=topology,proto3" json:"topology,omitempty"`
 	// overview is the live status/pipeline/workers/timeline projection.
-	Overview *monitor.Overview `protobuf:"bytes,3,opt,name=overview,proto3" json:"overview,omitempty"`
-	// suite_run is populated when run.suite_run_id is set. It gives the overview
-	// page enough parent/sibling context for suite children without forcing a
-	// second API round trip.
-	SuiteRun      *models.SuiteRunRecord `protobuf:"bytes,4,opt,name=suite_run,json=suiteRun,proto3" json:"suite_run,omitempty"`
+	Overview      *monitor.Overview `protobuf:"bytes,3,opt,name=overview,proto3" json:"overview,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -352,13 +348,6 @@ func (x *TestRunOverviewSnapshot) GetTopology() *topology.Topology {
 func (x *TestRunOverviewSnapshot) GetOverview() *monitor.Overview {
 	if x != nil {
 		return x.Overview
-	}
-	return nil
-}
-
-func (x *TestRunOverviewSnapshot) GetSuiteRun() *models.SuiteRunRecord {
-	if x != nil {
-		return x.SuiteRun
 	}
 	return nil
 }
@@ -1220,7 +1209,7 @@ var File_cloud_v1_api_test_run_overview_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_test_run_overview_proto_rawDesc = "" +
 	"\n" +
-	"$cloud/v1/api/test_run_overview.proto\x12\fcloud.v1.api\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1bcloud/v1/models/suite.proto\x1a\x1ecloud/v1/models/test_run.proto\x1a\x1bcloud/v1/monitor/logs.proto\x1a\x1ecloud/v1/monitor/metrics.proto\x1a\x1fcloud/v1/monitor/overview.proto\x1a cloud/v1/topology/topology.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\xe0\x06\n" +
+	"$cloud/v1/api/test_run_overview.proto\x12\fcloud.v1.api\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1ecloud/v1/models/test_run.proto\x1a\x1bcloud/v1/monitor/logs.proto\x1a\x1ecloud/v1/monitor/metrics.proto\x1a\x1fcloud/v1/monitor/overview.proto\x1a cloud/v1/topology/topology.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"\xe0\x06\n" +
 	"\tLogFilter\x12>\n" +
 	"\x12node_execution_ids\x18\x01 \x03(\tB\x10\xfaB\r\x92\x01\n" +
 	"\x10\x80\x02\"\x05r\x03\x18\x80\x01R\x10nodeExecutionIds\x125\n" +
@@ -1250,12 +1239,11 @@ const file_cloud_v1_api_test_run_overview_proto_rawDesc = "" +
 	"\x10\x80\x02\"\x05r\x03\x18\x80\x01R\n" +
 	"machineIds\x12&\n" +
 	"\x05units\x18\x12 \x03(\tB\x10\xfaB\r\x92\x01\n" +
-	"\x10\x80\x02\"\x05r\x03\x18\x80\x02R\x05units\"\x98\x02\n" +
+	"\x10\x80\x02\"\x05r\x03\x18\x80\x02R\x05units\"\xeb\x01\n" +
 	"\x17TestRunOverviewSnapshot\x12:\n" +
 	"\x03run\x18\x01 \x01(\v2\x1e.cloud.v1.models.TestRunRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x03run\x12A\n" +
 	"\btopology\x18\x02 \x01(\v2\x1b.cloud.v1.topology.TopologyB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btopology\x12@\n" +
-	"\boverview\x18\x03 \x01(\v2\x1a.cloud.v1.monitor.OverviewB\b\xfaB\x05\x8a\x01\x02\x10\x01R\boverview\x12<\n" +
-	"\tsuite_run\x18\x04 \x01(\v2\x1f.cloud.v1.models.SuiteRunRecordR\bsuiteRun\"f\n" +
+	"\boverview\x18\x03 \x01(\v2\x1a.cloud.v1.monitor.OverviewB\b\xfaB\x05\x8a\x01\x02\x10\x01R\boverviewJ\x04\b\x04\x10\x05R\tsuite_run\"f\n" +
 	"\x19GetTestRunOverviewRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12!\n" +
 	"\x06run_id\x18\x02 \x01(\tB\n" +
@@ -1371,12 +1359,11 @@ var file_cloud_v1_api_test_run_overview_proto_goTypes = []any{
 	(*models.TestRunRecord)(nil),         // 20: cloud.v1.models.TestRunRecord
 	(*topology.Topology)(nil),            // 21: cloud.v1.topology.Topology
 	(*monitor.Overview)(nil),             // 22: cloud.v1.monitor.Overview
-	(*models.SuiteRunRecord)(nil),        // 23: cloud.v1.models.SuiteRunRecord
-	(*monitor.LogCursor)(nil),            // 24: cloud.v1.monitor.LogCursor
-	(*monitor.LogLine)(nil),              // 25: cloud.v1.monitor.LogLine
-	(*monitor.LogRef)(nil),               // 26: cloud.v1.monitor.LogRef
-	(*monitor.TimeRange)(nil),            // 27: cloud.v1.monitor.TimeRange
-	(*monitor.RunMetrics)(nil),           // 28: cloud.v1.monitor.RunMetrics
+	(*monitor.LogCursor)(nil),            // 23: cloud.v1.monitor.LogCursor
+	(*monitor.LogLine)(nil),              // 24: cloud.v1.monitor.LogLine
+	(*monitor.LogRef)(nil),               // 25: cloud.v1.monitor.LogRef
+	(*monitor.TimeRange)(nil),            // 26: cloud.v1.monitor.TimeRange
+	(*monitor.RunMetrics)(nil),           // 27: cloud.v1.monitor.RunMetrics
 }
 var file_cloud_v1_api_test_run_overview_proto_depIdxs = []int32{
 	17, // 0: cloud.v1.api.LogFilter.sources:type_name -> cloud.v1.monitor.Source
@@ -1386,43 +1373,42 @@ var file_cloud_v1_api_test_run_overview_proto_depIdxs = []int32{
 	20, // 4: cloud.v1.api.TestRunOverviewSnapshot.run:type_name -> cloud.v1.models.TestRunRecord
 	21, // 5: cloud.v1.api.TestRunOverviewSnapshot.topology:type_name -> cloud.v1.topology.Topology
 	22, // 6: cloud.v1.api.TestRunOverviewSnapshot.overview:type_name -> cloud.v1.monitor.Overview
-	23, // 7: cloud.v1.api.TestRunOverviewSnapshot.suite_run:type_name -> cloud.v1.models.SuiteRunRecord
-	2,  // 8: cloud.v1.api.GetTestRunOverviewResponse.snapshot:type_name -> cloud.v1.api.TestRunOverviewSnapshot
-	1,  // 9: cloud.v1.api.QueryLogsRequest.filter:type_name -> cloud.v1.api.LogFilter
-	24, // 10: cloud.v1.api.QueryLogsRequest.from:type_name -> cloud.v1.monitor.LogCursor
-	0,  // 11: cloud.v1.api.QueryLogsRequest.direction:type_name -> cloud.v1.api.LogScrollDirection
-	25, // 12: cloud.v1.api.QueryLogsResponse.lines:type_name -> cloud.v1.monitor.LogLine
-	24, // 13: cloud.v1.api.QueryLogsResponse.older:type_name -> cloud.v1.monitor.LogCursor
-	24, // 14: cloud.v1.api.QueryLogsResponse.newer:type_name -> cloud.v1.monitor.LogCursor
-	1,  // 15: cloud.v1.api.StreamLogsRequest.filter:type_name -> cloud.v1.api.LogFilter
-	24, // 16: cloud.v1.api.StreamLogsRequest.from:type_name -> cloud.v1.monitor.LogCursor
-	26, // 17: cloud.v1.api.ResolveLogRefRequest.ref:type_name -> cloud.v1.monitor.LogRef
-	1,  // 18: cloud.v1.api.ResolveLogRefResponse.filter:type_name -> cloud.v1.api.LogFilter
-	24, // 19: cloud.v1.api.ResolveLogRefResponse.cursor:type_name -> cloud.v1.monitor.LogCursor
-	27, // 20: cloud.v1.api.GetRunMetricsRequest.window:type_name -> cloud.v1.monitor.TimeRange
-	28, // 21: cloud.v1.api.GetRunMetricsResponse.metrics:type_name -> cloud.v1.monitor.RunMetrics
-	1,  // 22: cloud.v1.api.GetLogFacetsRequest.filter:type_name -> cloud.v1.api.LogFilter
-	14, // 23: cloud.v1.api.LogFacetField.values:type_name -> cloud.v1.api.LogFacetValue
-	15, // 24: cloud.v1.api.GetLogFacetsResponse.fields:type_name -> cloud.v1.api.LogFacetField
-	3,  // 25: cloud.v1.api.TestRunOverviewService.GetTestRunOverview:input_type -> cloud.v1.api.GetTestRunOverviewRequest
-	5,  // 26: cloud.v1.api.TestRunOverviewService.StreamTestRunOverview:input_type -> cloud.v1.api.StreamTestRunOverviewRequest
-	6,  // 27: cloud.v1.api.TestRunOverviewService.QueryLogs:input_type -> cloud.v1.api.QueryLogsRequest
-	8,  // 28: cloud.v1.api.TestRunOverviewService.StreamLogs:input_type -> cloud.v1.api.StreamLogsRequest
-	9,  // 29: cloud.v1.api.TestRunOverviewService.ResolveLogRef:input_type -> cloud.v1.api.ResolveLogRefRequest
-	11, // 30: cloud.v1.api.TestRunOverviewService.GetRunMetrics:input_type -> cloud.v1.api.GetRunMetricsRequest
-	13, // 31: cloud.v1.api.TestRunOverviewService.GetLogFacets:input_type -> cloud.v1.api.GetLogFacetsRequest
-	4,  // 32: cloud.v1.api.TestRunOverviewService.GetTestRunOverview:output_type -> cloud.v1.api.GetTestRunOverviewResponse
-	2,  // 33: cloud.v1.api.TestRunOverviewService.StreamTestRunOverview:output_type -> cloud.v1.api.TestRunOverviewSnapshot
-	7,  // 34: cloud.v1.api.TestRunOverviewService.QueryLogs:output_type -> cloud.v1.api.QueryLogsResponse
-	25, // 35: cloud.v1.api.TestRunOverviewService.StreamLogs:output_type -> cloud.v1.monitor.LogLine
-	10, // 36: cloud.v1.api.TestRunOverviewService.ResolveLogRef:output_type -> cloud.v1.api.ResolveLogRefResponse
-	12, // 37: cloud.v1.api.TestRunOverviewService.GetRunMetrics:output_type -> cloud.v1.api.GetRunMetricsResponse
-	16, // 38: cloud.v1.api.TestRunOverviewService.GetLogFacets:output_type -> cloud.v1.api.GetLogFacetsResponse
-	32, // [32:39] is the sub-list for method output_type
-	25, // [25:32] is the sub-list for method input_type
-	25, // [25:25] is the sub-list for extension type_name
-	25, // [25:25] is the sub-list for extension extendee
-	0,  // [0:25] is the sub-list for field type_name
+	2,  // 7: cloud.v1.api.GetTestRunOverviewResponse.snapshot:type_name -> cloud.v1.api.TestRunOverviewSnapshot
+	1,  // 8: cloud.v1.api.QueryLogsRequest.filter:type_name -> cloud.v1.api.LogFilter
+	23, // 9: cloud.v1.api.QueryLogsRequest.from:type_name -> cloud.v1.monitor.LogCursor
+	0,  // 10: cloud.v1.api.QueryLogsRequest.direction:type_name -> cloud.v1.api.LogScrollDirection
+	24, // 11: cloud.v1.api.QueryLogsResponse.lines:type_name -> cloud.v1.monitor.LogLine
+	23, // 12: cloud.v1.api.QueryLogsResponse.older:type_name -> cloud.v1.monitor.LogCursor
+	23, // 13: cloud.v1.api.QueryLogsResponse.newer:type_name -> cloud.v1.monitor.LogCursor
+	1,  // 14: cloud.v1.api.StreamLogsRequest.filter:type_name -> cloud.v1.api.LogFilter
+	23, // 15: cloud.v1.api.StreamLogsRequest.from:type_name -> cloud.v1.monitor.LogCursor
+	25, // 16: cloud.v1.api.ResolveLogRefRequest.ref:type_name -> cloud.v1.monitor.LogRef
+	1,  // 17: cloud.v1.api.ResolveLogRefResponse.filter:type_name -> cloud.v1.api.LogFilter
+	23, // 18: cloud.v1.api.ResolveLogRefResponse.cursor:type_name -> cloud.v1.monitor.LogCursor
+	26, // 19: cloud.v1.api.GetRunMetricsRequest.window:type_name -> cloud.v1.monitor.TimeRange
+	27, // 20: cloud.v1.api.GetRunMetricsResponse.metrics:type_name -> cloud.v1.monitor.RunMetrics
+	1,  // 21: cloud.v1.api.GetLogFacetsRequest.filter:type_name -> cloud.v1.api.LogFilter
+	14, // 22: cloud.v1.api.LogFacetField.values:type_name -> cloud.v1.api.LogFacetValue
+	15, // 23: cloud.v1.api.GetLogFacetsResponse.fields:type_name -> cloud.v1.api.LogFacetField
+	3,  // 24: cloud.v1.api.TestRunOverviewService.GetTestRunOverview:input_type -> cloud.v1.api.GetTestRunOverviewRequest
+	5,  // 25: cloud.v1.api.TestRunOverviewService.StreamTestRunOverview:input_type -> cloud.v1.api.StreamTestRunOverviewRequest
+	6,  // 26: cloud.v1.api.TestRunOverviewService.QueryLogs:input_type -> cloud.v1.api.QueryLogsRequest
+	8,  // 27: cloud.v1.api.TestRunOverviewService.StreamLogs:input_type -> cloud.v1.api.StreamLogsRequest
+	9,  // 28: cloud.v1.api.TestRunOverviewService.ResolveLogRef:input_type -> cloud.v1.api.ResolveLogRefRequest
+	11, // 29: cloud.v1.api.TestRunOverviewService.GetRunMetrics:input_type -> cloud.v1.api.GetRunMetricsRequest
+	13, // 30: cloud.v1.api.TestRunOverviewService.GetLogFacets:input_type -> cloud.v1.api.GetLogFacetsRequest
+	4,  // 31: cloud.v1.api.TestRunOverviewService.GetTestRunOverview:output_type -> cloud.v1.api.GetTestRunOverviewResponse
+	2,  // 32: cloud.v1.api.TestRunOverviewService.StreamTestRunOverview:output_type -> cloud.v1.api.TestRunOverviewSnapshot
+	7,  // 33: cloud.v1.api.TestRunOverviewService.QueryLogs:output_type -> cloud.v1.api.QueryLogsResponse
+	24, // 34: cloud.v1.api.TestRunOverviewService.StreamLogs:output_type -> cloud.v1.monitor.LogLine
+	10, // 35: cloud.v1.api.TestRunOverviewService.ResolveLogRef:output_type -> cloud.v1.api.ResolveLogRefResponse
+	12, // 36: cloud.v1.api.TestRunOverviewService.GetRunMetrics:output_type -> cloud.v1.api.GetRunMetricsResponse
+	16, // 37: cloud.v1.api.TestRunOverviewService.GetLogFacets:output_type -> cloud.v1.api.GetLogFacetsResponse
+	31, // [31:38] is the sub-list for method output_type
+	24, // [24:31] is the sub-list for method input_type
+	24, // [24:24] is the sub-list for extension type_name
+	24, // [24:24] is the sub-list for extension extendee
+	0,  // [0:24] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_api_test_run_overview_proto_init() }

@@ -8298,10 +8298,6 @@ components:
                     items:
                         $ref: '#/components/schemas/TestRunRecord'
                     type: array
-                recentSuiteRuns:
-                    items:
-                        $ref: '#/components/schemas/SuiteRunRecord'
-                    type: array
                 runCounts:
                     $ref: '#/components/schemas/StatusCounts'
                 successRate:
@@ -8406,8 +8402,6 @@ components:
                     $ref: '#/components/schemas/Overview'
                 run:
                     $ref: '#/components/schemas/TestRunRecord'
-                suiteRun:
-                    $ref: '#/components/schemas/SuiteRunRecord'
                 topology:
                     $ref: '#/components/schemas/Topology'
             required:

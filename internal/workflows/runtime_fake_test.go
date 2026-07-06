@@ -8,7 +8,6 @@ import (
 	"go.temporal.io/sdk/testsuite"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
 	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
@@ -26,14 +25,12 @@ type fakeRuntimeActivities struct {
 	runStates       []*workflowpb.RunState
 	deploymentPlans []*deploymentpb.DeploymentPlan
 	logLines        []*monitor.LogLine
-	suiteStatuses   []common.Status
 }
 
 func registerFakeRuntimeActivities(env *testsuite.TestWorkflowEnvironment, fake *fakeRuntimeActivities) {
 	env.RegisterActivityWithOptions(fake.PersistRunState, activity.RegisterOptions{Name: PersistRunStateActivityName})
 	env.RegisterActivityWithOptions(fake.PersistDeploymentPlan, activity.RegisterOptions{Name: PersistDeploymentPlanActivityName})
 	env.RegisterActivityWithOptions(fake.AppendRunLogs, activity.RegisterOptions{Name: AppendRunLogsActivityName})
-	env.RegisterActivityWithOptions(fake.PersistSuiteRun, activity.RegisterOptions{Name: PersistSuiteRunActivityName})
 }
 
 func (f *fakeRuntimeActivities) PersistRunState(
@@ -81,13 +78,5 @@ func (f *fakeRuntimeActivities) AppendRunLogs(_ context.Context, lines []*monito
 		}
 		f.logLines = append(f.logLines, proto.Clone(line).(*monitor.LogLine))
 	}
-	return nil
-}
-
-func (f *fakeRuntimeActivities) PersistSuiteRun(_ context.Context, _ string, status common.Status) error {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-
-	f.suiteStatuses = append(f.suiteStatuses, status)
 	return nil
 }

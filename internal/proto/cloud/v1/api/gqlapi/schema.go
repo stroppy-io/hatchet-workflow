@@ -12474,13 +12474,6 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 				}
 				return obj.GetRecentRuns(), nil
 			}},
-			"recentSuiteRuns": &graphql.Field{Type: graphql.NewList(o_SuiteRunRecord), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb.TenantDashboard)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetRecentSuiteRuns(), nil
-			}},
 			"upcoming": &graphql.Field{Type: graphql.NewList(o_UpcomingSuite), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 				obj, _ := p.Source.(*pb.TenantDashboard)
 				if obj == nil {
@@ -12839,13 +12832,6 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 					return nil, nil
 				}
 				return obj.GetOverview(), nil
-			}},
-			"suiteRun": &graphql.Field{Type: o_SuiteRunRecord, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb.TestRunOverviewSnapshot)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetSuiteRun(), nil
 			}},
 		}
 	})})

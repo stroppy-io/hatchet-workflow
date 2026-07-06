@@ -125,8 +125,8 @@ func (src *TenantDashboard) ToOgen() (*rest.TenantDashboard, error) {
 		return nil, err
 	}
 	dst.RecentRuns = c2
-	c4, err := convert.SliceErr(src.GetRecentSuiteRuns(), func(e *models.SuiteRunRecord) (zero rest.SuiteRunRecord, _ error) {
-		o5, err := SuiteRunRecordToOgen(e)
+	c4, err := convert.SliceErr(src.GetUpcoming(), func(e *UpcomingSuite) (zero rest.UpcomingSuite, _ error) {
+		o5, err := e.ToOgen()
 		if err != nil {
 			return zero, err
 		}
@@ -135,8 +135,8 @@ func (src *TenantDashboard) ToOgen() (*rest.TenantDashboard, error) {
 	if err != nil {
 		return nil, err
 	}
-	dst.RecentSuiteRuns = c4
-	c6, err := convert.SliceErr(src.GetUpcoming(), func(e *UpcomingSuite) (zero rest.UpcomingSuite, _ error) {
+	dst.Upcoming = c4
+	c6, err := convert.SliceErr(src.GetTopBenchmarks(), func(e *RatingEntry) (zero rest.RatingEntry, _ error) {
 		o7, err := e.ToOgen()
 		if err != nil {
 			return zero, err
@@ -146,18 +146,7 @@ func (src *TenantDashboard) ToOgen() (*rest.TenantDashboard, error) {
 	if err != nil {
 		return nil, err
 	}
-	dst.Upcoming = c6
-	c8, err := convert.SliceErr(src.GetTopBenchmarks(), func(e *RatingEntry) (zero rest.RatingEntry, _ error) {
-		o9, err := e.ToOgen()
-		if err != nil {
-			return zero, err
-		}
-		return *o9, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.TopBenchmarks = c8
+	dst.TopBenchmarks = c6
 	return &dst, nil
 }
 
@@ -188,8 +177,8 @@ func TenantDashboardFromOgen(src *rest.TenantDashboard) (*TenantDashboard, error
 		return nil, err
 	}
 	dst.RecentRuns = c4
-	c6, err := convert.SliceErr(src.RecentSuiteRuns, func(e rest.SuiteRunRecord) (zero *models.SuiteRunRecord, _ error) {
-		m7, err := SuiteRunRecordFromOgen(&e)
+	c6, err := convert.SliceErr(src.Upcoming, func(e rest.UpcomingSuite) (zero *UpcomingSuite, _ error) {
+		m7, err := UpcomingSuiteFromOgen(&e)
 		if err != nil {
 			return zero, err
 		}
@@ -198,9 +187,9 @@ func TenantDashboardFromOgen(src *rest.TenantDashboard) (*TenantDashboard, error
 	if err != nil {
 		return nil, err
 	}
-	dst.RecentSuiteRuns = c6
-	c8, err := convert.SliceErr(src.Upcoming, func(e rest.UpcomingSuite) (zero *UpcomingSuite, _ error) {
-		m9, err := UpcomingSuiteFromOgen(&e)
+	dst.Upcoming = c6
+	c8, err := convert.SliceErr(src.TopBenchmarks, func(e rest.RatingEntry) (zero *RatingEntry, _ error) {
+		m9, err := RatingEntryFromOgen(&e)
 		if err != nil {
 			return zero, err
 		}
@@ -209,18 +198,7 @@ func TenantDashboardFromOgen(src *rest.TenantDashboard) (*TenantDashboard, error
 	if err != nil {
 		return nil, err
 	}
-	dst.Upcoming = c8
-	c10, err := convert.SliceErr(src.TopBenchmarks, func(e rest.RatingEntry) (zero *RatingEntry, _ error) {
-		m11, err := RatingEntryFromOgen(&e)
-		if err != nil {
-			return zero, err
-		}
-		return m11, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.TopBenchmarks = c10
+	dst.TopBenchmarks = c8
 	return dst, nil
 }
 

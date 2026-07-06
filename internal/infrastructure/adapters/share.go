@@ -42,15 +42,13 @@ func (m *RandomTokenMinter) Mint() (string, error) {
 }
 
 // ShareRunReader is the minimal consumer interface SnapshotBuilder needs to load
-// the targeted run for projection. The gormstore TestRuns repo (Get by id) and
-// SuiteRuns repo (Get by id) satisfy these once injected. Get returns
-// derrors.ErrNotFound for an unknown id.
+// the targeted run for projection. The gormstore TestRuns repo (Get by id)
+// satisfies this once injected. Get returns derrors.ErrNotFound for an unknown
+// id.
 type ShareRunReader interface {
 	// GetTestRun loads a test run by id (tenant ownership is asserted by the
 	// builder against the returned record's entity).
 	GetTestRun(ctx context.Context, id string) (*models.TestRunRecord, error)
-	// GetSuiteRun loads a suite run by id.
-	GetSuiteRun(ctx context.Context, id string) (*models.SuiteRunRecord, error)
 }
 
 // ShareMetricsReader optionally yields a run's computed metric snapshot so the
@@ -91,15 +89,6 @@ func (b *RunSnapshotBuilder) Build(ctx context.Context, tenantID string, target 
 			return nil, derrors.NotFound("test_run", "run not found in tenant")
 		}
 		snap.View = &models.ShareRecord_Snapshot_TestRun{TestRun: b.sharedTestRun(ctx, rec)}
-	case models.ShareRecord_Target_KIND_SUITE_RUN:
-		rec, err := b.runs.GetSuiteRun(ctx, target.GetId())
-		if err != nil {
-			return nil, err
-		}
-		if rec.GetEntity().GetTenantId() != tenantID {
-			return nil, derrors.NotFound("suite_run", "suite run not found in tenant")
-		}
-		snap.View = &models.ShareRecord_Snapshot_SuiteRun{SuiteRun: b.sharedSuiteRun(rec)}
 	default:
 		return nil, derrors.Invalid("target.kind", "unsupported share target kind")
 	}
@@ -130,23 +119,4 @@ func (b *RunSnapshotBuilder) sharedTestRun(ctx context.Context, rec *models.Test
 		}
 	}
 	return view
-}
-
-// sharedSuiteRun projects a stored suite run into its limited public view.
-func (b *RunSnapshotBuilder) sharedSuiteRun(rec *models.SuiteRunRecord) *models.SharedSuiteRun {
-	sum := rec.GetSummary()
-	return &models.SharedSuiteRun{
-		Name:        rec.GetEntity().GetName(),
-		Status:      rec.GetStatus(),
-		Provider:    sum.GetProvider(),
-		DbKinds:     sum.GetDbKinds(),
-		Total:       sum.GetTotal(),
-		Completed:   sum.GetCompleted(),
-		Failed:      sum.GetFailed(),
-		Running:     sum.GetRunning(),
-		ProgressPct: sum.GetProgressPct(),
-		StartedAt:   sum.GetStartedAt(),
-		FinishedAt:  sum.GetFinishedAt(),
-		Duration:    sum.GetDuration(),
-	}
 }

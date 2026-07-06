@@ -275,14 +275,6 @@ func (m *TenantDashboard) Encode(e *jx.Encoder) {
 		}
 		e.ArrEnd()
 	}
-	if len(m.RecentSuiteRuns) > 0 {
-		e.FieldStart("recentSuiteRuns")
-		e.ArrStart()
-		for _, v := range m.RecentSuiteRuns {
-			jxpb.EncMessage(e, v)
-		}
-		e.ArrEnd()
-	}
 	if len(m.Upcoming) > 0 {
 		e.FieldStart("upcoming")
 		e.ArrStart()
@@ -347,22 +339,6 @@ func (m *TenantDashboard) Decode(d *jx.Decoder) error {
 					return err
 				}
 				m.RecentRuns = append(m.RecentRuns, el)
-				return nil
-			})
-		case "recentSuiteRuns", "recent_suite_runs":
-			if seen["RecentSuiteRuns"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["RecentSuiteRuns"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			return d.Arr(func(d *jx.Decoder) error {
-				el := &models.SuiteRunRecord{}
-				if err := jxpb.DecMessage(d, el); err != nil {
-					return err
-				}
-				m.RecentSuiteRuns = append(m.RecentSuiteRuns, el)
 				return nil
 			})
 		case "upcoming":

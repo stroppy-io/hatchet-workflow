@@ -42,7 +42,6 @@ import (
 // view's notion of "recent" can be tuned without touching the RPC contract.
 const (
 	defaultRecentRuns       = 10
-	defaultRecentSuiteRuns  = 10
 	defaultUpcomingSuites   = 10
 	defaultTopBenchmarks    = 10
 	defaultSuccessRateScope = 30 * 24 * time.Hour
@@ -56,11 +55,10 @@ type RunStatsReader interface {
 	SuccessRate(ctx context.Context, tenantID string, window time.Duration) (float32, error)
 }
 
-// RecentRunsReader yields the most recent test runs and suite runs of a tenant,
-// newest first, each capped at limit.
+// RecentRunsReader yields the most recent test runs of a tenant, newest first,
+// capped at limit.
 type RecentRunsReader interface {
 	RecentRuns(ctx context.Context, tenantID string, limit uint32) ([]*models.TestRunRecord, error)
-	RecentSuiteRuns(ctx context.Context, tenantID string, limit uint32) ([]*models.SuiteRunRecord, error)
 }
 
 // ScheduleReader yields the tenant's scheduled suites together with their next
@@ -175,11 +173,6 @@ func (s *TenantDashboardService) GetTenantDashboard(ctx context.Context, req *ap
 			return nil, utils.MapErr(err)
 		}
 
-		recentSuiteRuns, err := s.d.Recent.RecentSuiteRuns(ctx, tenantID, defaultRecentSuiteRuns)
-		if err != nil {
-			return nil, utils.MapErr(err)
-		}
-
 		upcoming, err := s.d.Schedule.UpcomingSuites(ctx, tenantID, defaultUpcomingSuites)
 		if err != nil {
 			return nil, utils.MapErr(err)
@@ -191,12 +184,11 @@ func (s *TenantDashboardService) GetTenantDashboard(ctx context.Context, req *ap
 		}
 
 		return &api.TenantDashboard{
-			RunCounts:       counts,
-			SuccessRate:     successRate,
-			RecentRuns:      recentRuns,
-			RecentSuiteRuns: recentSuiteRuns,
-			Upcoming:        upcoming,
-			TopBenchmarks:   topBenchmarks,
+			RunCounts:     counts,
+			SuccessRate:   successRate,
+			RecentRuns:    recentRuns,
+			Upcoming:      upcoming,
+			TopBenchmarks: topBenchmarks,
 		}, nil
 	})
 	if err != nil {

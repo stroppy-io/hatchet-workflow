@@ -68558,16 +68558,6 @@ func (s *TenantDashboard) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
-		if s.RecentSuiteRuns != nil {
-			e.FieldStart("recentSuiteRuns")
-			e.ArrStart()
-			for _, elem := range s.RecentSuiteRuns {
-				elem.Encode(e)
-			}
-			e.ArrEnd()
-		}
-	}
-	{
 		if s.RunCounts.Set {
 			e.FieldStart("runCounts")
 			s.RunCounts.Encode(e)
@@ -68601,13 +68591,12 @@ func (s *TenantDashboard) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfTenantDashboard = [6]string{
+var jsonFieldsNameOfTenantDashboard = [5]string{
 	0: "recentRuns",
-	1: "recentSuiteRuns",
-	2: "runCounts",
-	3: "successRate",
-	4: "topBenchmarks",
-	5: "upcoming",
+	1: "runCounts",
+	2: "successRate",
+	3: "topBenchmarks",
+	4: "upcoming",
 }
 
 // Decode decodes TenantDashboard from json.
@@ -68634,23 +68623,6 @@ func (s *TenantDashboard) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"recentRuns\"")
-			}
-		case "recentSuiteRuns":
-			if err := func() error {
-				s.RecentSuiteRuns = make([]SuiteRunRecord, 0)
-				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem SuiteRunRecord
-					if err := elem.Decode(d); err != nil {
-						return err
-					}
-					s.RecentSuiteRuns = append(s.RecentSuiteRuns, elem)
-					return nil
-				}); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"recentSuiteRuns\"")
 			}
 		case "runCounts":
 			if err := func() error {
@@ -69452,22 +69424,15 @@ func (s *TestRunOverviewSnapshot) encodeFields(e *jx.Encoder) {
 		s.Run.Encode(e)
 	}
 	{
-		if s.SuiteRun.Set {
-			e.FieldStart("suiteRun")
-			s.SuiteRun.Encode(e)
-		}
-	}
-	{
 		e.FieldStart("topology")
 		s.Topology.Encode(e)
 	}
 }
 
-var jsonFieldsNameOfTestRunOverviewSnapshot = [4]string{
+var jsonFieldsNameOfTestRunOverviewSnapshot = [3]string{
 	0: "overview",
 	1: "run",
-	2: "suiteRun",
-	3: "topology",
+	2: "topology",
 }
 
 // Decode decodes TestRunOverviewSnapshot from json.
@@ -69499,18 +69464,8 @@ func (s *TestRunOverviewSnapshot) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"run\"")
 			}
-		case "suiteRun":
-			if err := func() error {
-				s.SuiteRun.Reset()
-				if err := s.SuiteRun.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"suiteRun\"")
-			}
 		case "topology":
-			requiredBitSet[0] |= 1 << 3
+			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
 				if err := s.Topology.Decode(d); err != nil {
 					return err
@@ -69529,7 +69484,7 @@ func (s *TestRunOverviewSnapshot) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00001011,
+		0b00000111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
