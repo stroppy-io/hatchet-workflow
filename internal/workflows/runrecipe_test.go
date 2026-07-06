@@ -77,7 +77,7 @@ func runRecipeTestInput() *RunRecipeInput {
 func TestRunRecipeWorkflowHappyPath(t *testing.T) {
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
-	RegisterWorkflows(env, DefaultOptions())
+	RegisterWorkflows(env)
 	registerRunRecipeActivityStubs(env)
 	runtime := &fakeRuntimeActivities{}
 	registerFakeRuntimeActivities(env, runtime)
@@ -191,7 +191,7 @@ func TestRunRecipeWorkflowHappyPath(t *testing.T) {
 func TestRunRecipeWorkflowProvisionFails(t *testing.T) {
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
-	RegisterWorkflows(env, DefaultOptions())
+	RegisterWorkflows(env)
 	registerRunRecipeActivityStubs(env)
 	runtime := &fakeRuntimeActivities{}
 	registerFakeRuntimeActivities(env, runtime)
@@ -271,7 +271,7 @@ func TestRunRecipeWorkflowProvisionFails(t *testing.T) {
 func TestRunRecipeWorkflowCompileFails(t *testing.T) {
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
-	RegisterWorkflows(env, DefaultOptions())
+	RegisterWorkflows(env)
 	registerRunRecipeActivityStubs(env)
 	runtime := &fakeRuntimeActivities{}
 	registerFakeRuntimeActivities(env, runtime)
@@ -364,7 +364,7 @@ func TestRunRecipeWorkflowCompileFails(t *testing.T) {
 func TestRunRecipeWorkflowCanceledDuringProvision(t *testing.T) {
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
-	RegisterWorkflows(env, DefaultOptions())
+	RegisterWorkflows(env)
 	registerRunRecipeActivityStubs(env)
 	runtime := &fakeRuntimeActivities{}
 	registerFakeRuntimeActivities(env, runtime)

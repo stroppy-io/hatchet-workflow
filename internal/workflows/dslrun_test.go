@@ -190,7 +190,7 @@ func buildTestInput() *ExecuteCompiledPlanInput {
 func TestExecuteCompiledPlanWorkflow(t *testing.T) {
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
-	RegisterWorkflows(env, DefaultOptions())
+	RegisterWorkflows(env)
 	registerCompiledPlanActivityStubs(env)
 
 	rec := &recorder{}
@@ -380,7 +380,7 @@ func machineStateWithDiskDevice(nodeID, ip, diskDevice string) *deploymentpb.Mac
 func TestExecuteCompiledPlanWorkflowDiskDevicePath(t *testing.T) {
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
-	RegisterWorkflows(env, DefaultOptions())
+	RegisterWorkflows(env)
 	registerCompiledPlanActivityStubs(env)
 
 	var capturedScript string
@@ -435,7 +435,7 @@ func TestExecuteCompiledPlanWorkflowDiskDevicePath(t *testing.T) {
 func TestExecuteCompiledPlanWorkflowInputsGroupBinding(t *testing.T) {
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
-	RegisterWorkflows(env, DefaultOptions())
+	RegisterWorkflows(env)
 	registerCompiledPlanActivityStubs(env)
 
 	var capturedScript string
@@ -507,7 +507,7 @@ func TestExecuteCompiledPlanWorkflowInputsGroupBinding(t *testing.T) {
 func TestExecuteCompiledPlanWorkflowScalarInputInterpolation(t *testing.T) {
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
-	RegisterWorkflows(env, DefaultOptions())
+	RegisterWorkflows(env)
 	registerCompiledPlanActivityStubs(env)
 
 	var capturedScript string
@@ -575,7 +575,7 @@ func TestExecuteCompiledPlanWorkflowScalarInputInterpolation(t *testing.T) {
 func TestExecuteCompiledPlanWorkflowTargetBinding(t *testing.T) {
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
-	RegisterWorkflows(env, DefaultOptions())
+	RegisterWorkflows(env)
 	registerCompiledPlanActivityStubs(env)
 
 	var capturedScript string
@@ -652,7 +652,7 @@ func TestExecuteCompiledPlanWorkflowTargetBinding(t *testing.T) {
 func TestExecuteCompiledPlanWorkflowMissingInputEvalError(t *testing.T) {
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
-	RegisterWorkflows(env, DefaultOptions())
+	RegisterWorkflows(env)
 	registerCompiledPlanActivityStubs(env)
 
 	env.OnActivity(workflowpb.CallCmdActivityActivityName, mock.Anything, mock.Anything).Return(
