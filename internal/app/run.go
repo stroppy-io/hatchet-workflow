@@ -52,6 +52,7 @@ import (
 	publicshare "github.com/stroppy-io/stroppy-cloud/internal/services/public_share"
 	quotasvc "github.com/stroppy-io/stroppy-cloud/internal/services/quota"
 	ratingsvc "github.com/stroppy-io/stroppy-cloud/internal/services/rating"
+	recipesvc "github.com/stroppy-io/stroppy-cloud/internal/services/recipe"
 	sharesvc "github.com/stroppy-io/stroppy-cloud/internal/services/share"
 	stroppysvc "github.com/stroppy-io/stroppy-cloud/internal/services/stroppy"
 	suitesvc "github.com/stroppy-io/stroppy-cloud/internal/services/suite"
@@ -528,6 +529,12 @@ func Run(ctx context.Context, cfg Config) error {
 	// there; see (graphqlopt.service).skip on cloud/v1/dsl/service.proto).
 	dslService := dslsvc.NewDslService()
 
+	recipeService := recipesvc.NewService(recipesvc.Deps{
+		Repo:    store.Recipes(),
+		Authn:   authn,
+		Checker: dslsvc.CheckBundle,
+	})
+
 	// 7) Connect handlers + embedded SPA on one mux.
 	mux := http.NewServeMux()
 	handlerOpts := []connect.HandlerOption{
@@ -582,6 +589,9 @@ func Run(ctx context.Context, cfg Config) error {
 		},
 		func() (string, http.Handler) { return apiconnect.NewSuiteServiceHandler(suiteService, handlerOpts...) },
 		func() (string, http.Handler) {
+			return apiconnect.NewRecipeServiceHandler(recipeService, handlerOpts...)
+		},
+		func() (string, http.Handler) {
 			return apiconnect.NewSuiteRunServiceHandler(suiteRunService, handlerOpts...)
 		},
 		func() (string, http.Handler) {
@@ -631,6 +641,7 @@ func Run(ctx context.Context, cfg Config) error {
 		PublicRatingService:    publicRatingService,
 		PublicShareService:     publicShareService,
 		QuotaService:           quotaService,
+		RecipeService:          recipeService,
 		ShareService:           shareService,
 		StroppyService:         stroppyService,
 		SuiteService:           suiteService,
@@ -696,7 +707,7 @@ func Run(ctx context.Context, cfg Config) error {
 		publicRatingService,
 		publicShareService,
 		quotaService,
-		&api.UnimplementedRecipeServiceServer{}, // no RecipeService implementation yet — proto-only (phase 1A task 1); real wiring lands in a later phase-1a task.
+		recipeService,
 		shareService,
 		stroppyService,
 		suiteService,
