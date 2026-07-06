@@ -2,6 +2,7 @@ package recipe
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"google.golang.org/grpc/codes"
@@ -283,6 +284,122 @@ func TestListRecipesMissingTenantIsInvalidArgument(t *testing.T) {
 }
 
 /*
+	===== StartRun =====
+*/
+
+func TestStartRunPersistsRunAndLaunchesWorkflow(t *testing.T) {
+	repo := newFakeRecipeRepo()
+	runs := newFakeRunRepo()
+	workflows := newFakeRecipeWorkflows(nil)
+	svc := NewService(Deps{Repo: repo, Authn: fakeAuthn{}, Checker: stubChecker(nil), Runs: runs, Workflows: workflows})
+
+	created, err := svc.CreateRecipe(context.Background(), &api.CreateRecipeRequest{
+		TenantId: "tenant-1",
+		Recipe: &models.RecipeRecord{
+			Entity: &common.Entity{Name: "pg-ha"},
+			Bundle: newBundle(),
+		},
+	})
+	if err != nil {
+		t.Fatalf("create recipe: %v", err)
+	}
+	recipeID := created.GetRecipe().GetEntity().GetId()
+
+	resp, err := svc.StartRun(context.Background(), &api.StartRunRequest{TenantId: "tenant-1", RecipeId: recipeID})
+	if err != nil {
+		t.Fatalf("start run: %v", err)
+	}
+	run := resp.GetRun()
+	if run.GetEntity().GetId() == "" {
+		t.Fatal("run id was not stamped")
+	}
+	if run.GetEntity().GetTenantId() != "tenant-1" {
+		t.Fatalf("tenant_id = %q, want tenant-1", run.GetEntity().GetTenantId())
+	}
+	if run.GetStatus() != common.Status_STATUS_PENDING {
+		t.Fatalf("status = %s, want PENDING (workflow launched synchronously by the fake and did not fail)", run.GetStatus())
+	}
+	if len(runs.byID) != 1 {
+		t.Fatalf("run repo has %d rows, want 1", len(runs.byID))
+	}
+	if len(workflows.launched) != 1 {
+		t.Fatalf("workflows launched %d times, want 1", len(workflows.launched))
+	}
+	launched := workflows.launched[0]
+	if launched.run.GetEntity().GetId() != run.GetEntity().GetId() {
+		t.Fatal("workflow was launched for a different run id than the one returned")
+	}
+	if string(launched.bundle["cluster.yaml"]) != clusterYAML {
+		t.Fatal("workflow was launched with a different bundle than the recipe's")
+	}
+}
+
+func TestStartRunLaunchFailureMarksRunFailed(t *testing.T) {
+	repo := newFakeRecipeRepo()
+	runs := newFakeRunRepo()
+	launchErr := errors.New("temporal unavailable")
+	workflows := newFakeRecipeWorkflows(launchErr)
+	svc := NewService(Deps{Repo: repo, Authn: fakeAuthn{}, Checker: stubChecker(nil), Runs: runs, Workflows: workflows})
+
+	created, err := svc.CreateRecipe(context.Background(), &api.CreateRecipeRequest{
+		TenantId: "tenant-1",
+		Recipe: &models.RecipeRecord{
+			Entity: &common.Entity{Name: "pg-ha"},
+			Bundle: newBundle(),
+		},
+	})
+	if err != nil {
+		t.Fatalf("create recipe: %v", err)
+	}
+	recipeID := created.GetRecipe().GetEntity().GetId()
+
+	_, err = svc.StartRun(context.Background(), &api.StartRunRequest{TenantId: "tenant-1", RecipeId: recipeID})
+	if status.Code(err) != codes.Internal {
+		t.Fatalf("status = %s, want %s; err=%v", status.Code(err), codes.Internal, err)
+	}
+	if len(runs.byID) != 1 {
+		t.Fatalf("run repo has %d rows, want 1 (the record must still be visible)", len(runs.byID))
+	}
+	var rec *models.TestRunRecord
+	for _, r := range runs.byID {
+		rec = r
+	}
+	if rec.GetStatus() != common.Status_STATUS_FAILED {
+		t.Fatalf("status = %s, want FAILED", rec.GetStatus())
+	}
+}
+
+func TestStartRunMissingTenantIsInvalidArgument(t *testing.T) {
+	repo := newFakeRecipeRepo()
+	svc := NewService(Deps{Repo: repo, Authn: fakeAuthn{}, Checker: stubChecker(nil), Runs: newFakeRunRepo(), Workflows: newFakeRecipeWorkflows(nil)})
+
+	_, err := svc.StartRun(context.Background(), &api.StartRunRequest{RecipeId: "some-id"})
+	if status.Code(err) != codes.InvalidArgument {
+		t.Fatalf("status = %s, want %s; err=%v", status.Code(err), codes.InvalidArgument, err)
+	}
+}
+
+func TestStartRunMissingRecipeIDIsInvalidArgument(t *testing.T) {
+	repo := newFakeRecipeRepo()
+	svc := NewService(Deps{Repo: repo, Authn: fakeAuthn{}, Checker: stubChecker(nil), Runs: newFakeRunRepo(), Workflows: newFakeRecipeWorkflows(nil)})
+
+	_, err := svc.StartRun(context.Background(), &api.StartRunRequest{TenantId: "tenant-1"})
+	if status.Code(err) != codes.InvalidArgument {
+		t.Fatalf("status = %s, want %s; err=%v", status.Code(err), codes.InvalidArgument, err)
+	}
+}
+
+func TestStartRunUnknownRecipeIsNotFound(t *testing.T) {
+	repo := newFakeRecipeRepo()
+	svc := NewService(Deps{Repo: repo, Authn: fakeAuthn{}, Checker: stubChecker(nil), Runs: newFakeRunRepo(), Workflows: newFakeRecipeWorkflows(nil)})
+
+	_, err := svc.StartRun(context.Background(), &api.StartRunRequest{TenantId: "tenant-1", RecipeId: "missing"})
+	if status.Code(err) != codes.NotFound {
+		t.Fatalf("status = %s, want %s; err=%v", status.Code(err), codes.NotFound, err)
+	}
+}
+
+/*
 	===== test doubles =====
 */
 
@@ -355,4 +472,48 @@ func (r *fakeRecipeRepo) Delete(_ context.Context, tenantID, id string) error {
 	}
 	delete(r.byTenantID[tenantID], id)
 	return nil
+}
+
+// fakeRunRepo is an in-memory RunRepo keyed by run id.
+type fakeRunRepo struct {
+	byID map[string]*models.TestRunRecord
+}
+
+func newFakeRunRepo() *fakeRunRepo {
+	return &fakeRunRepo{byID: map[string]*models.TestRunRecord{}}
+}
+
+func (r *fakeRunRepo) Create(_ context.Context, run *models.TestRunRecord) error {
+	r.byID[run.GetEntity().GetId()] = run
+	return nil
+}
+
+func (r *fakeRunRepo) Update(_ context.Context, run *models.TestRunRecord) error {
+	if _, ok := r.byID[run.GetEntity().GetId()]; !ok {
+		return derrors.NotFound("test_run", "run not found")
+	}
+	r.byID[run.GetEntity().GetId()] = run
+	return nil
+}
+
+// launchedRecipeRun captures one LaunchRecipeRun call for assertions.
+type launchedRecipeRun struct {
+	run    *models.TestRunRecord
+	bundle map[string][]byte
+}
+
+// fakeRecipeWorkflows is a RecipeWorkflows double that records every launch
+// and returns launchErr (nil for success) from LaunchRecipeRun.
+type fakeRecipeWorkflows struct {
+	launchErr error
+	launched  []launchedRecipeRun
+}
+
+func newFakeRecipeWorkflows(launchErr error) *fakeRecipeWorkflows {
+	return &fakeRecipeWorkflows{launchErr: launchErr}
+}
+
+func (w *fakeRecipeWorkflows) LaunchRecipeRun(_ context.Context, run *models.TestRunRecord, bundle map[string][]byte) error {
+	w.launched = append(w.launched, launchedRecipeRun{run: run, bundle: bundle})
+	return w.launchErr
 }

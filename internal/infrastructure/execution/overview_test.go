@@ -390,6 +390,69 @@ func TestRecordFallbackUsesPersistedRuntimeState(t *testing.T) {
 	}
 }
 
+// TestRecordFallbackProjectsRecipeRunDynamicStagesGenerically is Task 5's
+// overview acceptance case: a recipe run's TestRunRecord (no Spec/
+// InfrastructureState/DeploymentPlan — see recipe.Service.StartRun's doc
+// comment) carries a RunState with RunRecipeWorkflow's own dynamic stage
+// names (compile/infra/execute — see internal/workflows/runrecipe.go), not
+// domainTestWorkflow's 5 hardcoded pipeline names. The record-fallback
+// projection must render exactly those stages, not force them into
+// stageInfrastructureNodeName/stageRenderDeploymentPlanNodeName/etc.
+func TestRecordFallbackProjectsRecipeRunDynamicStagesGenerically(t *testing.T) {
+	rec := &models.TestRunRecord{
+		Entity: &common.Entity{Id: "run-1"},
+		Status: common.Status_STATUS_RUNNING,
+		RuntimeState: &workflowpb.RunState{
+			Status: common.Status_STATUS_RUNNING,
+			Stages: []*workflowpb.Stage{
+				{
+					NodeExecutionId: deploymentbuilder.StageExecutionID("compile"),
+					Name:            "compile",
+					Status:          common.Status_STATUS_COMPLETED,
+					Order:           1,
+					Phase:           "compile",
+				},
+				{
+					NodeExecutionId: deploymentbuilder.StageExecutionID("infra"),
+					Name:            "infra",
+					Status:          common.Status_STATUS_RUNNING,
+					Order:           2,
+					Phase:           "infra",
+				},
+				{
+					NodeExecutionId: deploymentbuilder.StageExecutionID("execute"),
+					Name:            "execute",
+					Status:          common.Status_STATUS_PENDING,
+					Order:           3,
+					Phase:           "execute",
+				},
+			},
+		},
+	}
+
+	overview := overviewFromRecord("run-1", rec, nil, timestamppb.Now())
+	roots := overview.GetPipeline().GetRoots()
+	if got, want := len(roots), 3; got != want {
+		t.Fatalf("roots = %d, want %d (compile/infra/execute, not the 5 fixed test-run stages)", got, want)
+	}
+	wantNames := []string{"compile", "infra", "execute"}
+	for i, want := range wantNames {
+		if got := roots[i].GetName(); got != want {
+			t.Fatalf("root[%d] name = %q, want %q", i, got, want)
+		}
+	}
+	for _, forbidden := range []string{
+		stageInfrastructureNodeName, stageRenderDeploymentPlanNodeName,
+		executeDeploymentPlanNodeName, stageWorkloadNodeName, stageTeardownNodeName,
+	} {
+		for _, root := range roots {
+			if root.GetName() == forbidden {
+				t.Fatalf("root %q is one of the hardcoded test-run stage names, want generic projection", forbidden)
+			}
+		}
+	}
+}
+
 func TestTopologyFromRecordIncludesRuntimeControlPlaneMonitoringAndActionEdges(t *testing.T) {
 	started := timestamppb.New(time.Unix(100, 0))
 	installCollectors := &deploymentpb.AgentStep{

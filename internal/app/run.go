@@ -529,10 +529,21 @@ func Run(ctx context.Context, cfg Config) error {
 	// there; see (graphqlopt.service).skip on cloud/v1/dsl/service.proto).
 	dslService := dslsvc.NewDslService()
 
+	// recipeWorkflows launches RunRecipeWorkflow for RecipeService.StartRun.
+	// Note: the worker started below (RegisterWorkflows) registers
+	// RunRecipeWorkflow itself unconditionally, but its three by-name
+	// activities (CompileRecipeActivity/ProvisionActivity/TeardownActivity —
+	// see internal/workflows/register.go's RegisterRecipeActivities) are not
+	// yet wired here: that needs a provider.Deps this app wiring does not
+	// build today. A launched recipe run will start but stall on its first
+	// activity call until that follow-up wiring lands.
+	recipeWorkflows := execution.NewRecipeWorkflows(tc, resolver, log)
 	recipeService := recipesvc.NewService(recipesvc.Deps{
-		Repo:    store.Recipes(),
-		Authn:   authn,
-		Checker: dslsvc.CheckBundle,
+		Repo:      store.Recipes(),
+		Authn:     authn,
+		Checker:   dslsvc.CheckBundle,
+		Runs:      store.TestRuns(),
+		Workflows: recipeWorkflows,
 	})
 
 	// 7) Connect handlers + embedded SPA on one mux.

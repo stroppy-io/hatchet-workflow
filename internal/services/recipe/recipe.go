@@ -2,11 +2,13 @@ package recipe
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gopkg.in/yaml.v3"
 
@@ -140,6 +142,78 @@ func (s *Service) CheckRecipe(ctx context.Context, req *api.CheckRecipeRequest) 
 }
 
 /*
+StartRun launches a new run of an already-stored recipe bundle: it persists a
+run record (reusing models.TestRunRecord — see the package doc's RunRepo/
+RecipeWorkflows comments) and starts RunRecipeWorkflow for it via
+s.d.Workflows.LaunchRecipeRun.
+
+The minted TestRunRecord deliberately carries no Spec/Topology: those fields
+describe a domain.TestRun (the classic TestWorkflow input), which a recipe
+run has none of — its input is the recipe bundle's raw files, threaded to
+RunRecipeWorkflow directly. Overview/metrics/logs still work unchanged
+because they key off Entity.Id/TenantId/Status/RuntimeState, none of which
+require Spec (see internal/infrastructure/execution/overview.go's
+overviewFromRecord, which already branches on RuntimeState rather than
+Spec). Name/Description carry the recipe's identity so the run is still
+traceable back to the recipe bundle that produced it (models.TestRunRecord
+has no dedicated recipe_id field).
+
+Not idempotent: each call mints a new run, exactly like
+test_run.StartTestRun.
+*/
+func (s *Service) StartRun(ctx context.Context, req *api.StartRunRequest) (*api.StartRunResponse, error) {
+	if err := requireTenant(req.GetTenantId()); err != nil {
+		return nil, err
+	}
+	if req.GetRecipeId() == "" {
+		return nil, status.Error(codes.InvalidArgument, "recipe_id is required")
+	}
+	c, err := s.caller(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	recipeRec, err := s.d.Repo.Get(ctx, req.GetTenantId(), req.GetRecipeId())
+	if err != nil {
+		return nil, utils.MapErr(err)
+	}
+
+	runID := uuid.NewString()
+	run := &models.TestRunRecord{
+		Entity: &common.Entity{
+			Id:          runID,
+			TenantId:    req.GetTenantId(),
+			Name:        recipeRec.GetEntity().GetName(),
+			Description: "recipe run of " + recipeRec.GetEntity().GetId() + " v" + strconv.FormatUint(uint64(recipeRec.GetVersion()), 10),
+			AuthorId:    c.GetAccountId(),
+			Timings: &common.Timings{
+				CreatedAt: s.now(),
+				UpdatedAt: s.now(),
+			},
+		},
+		Status:  common.Status_STATUS_PENDING,
+		Trigger: common.Trigger_TRIGGER_API,
+	}
+
+	if err := s.d.Runs.Create(ctx, run); err != nil {
+		return nil, utils.MapErr(err)
+	}
+
+	// Launch is external IO: it MUST happen after the record commits. If
+	// launch fails, close the already-visible record as FAILED so
+	// list/overview do not expose an unrecoverable PENDING run forever —
+	// mirrors test_run.StartTestRun's finishFailedRun.
+	if err := s.d.Workflows.LaunchRecipeRun(ctx, run, recipeRec.GetBundle().GetFiles()); err != nil {
+		markRunFailed(run, s.now())
+		if uerr := s.d.Runs.Update(ctx, run); uerr != nil {
+			return nil, utils.MapErr(uerr)
+		}
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return &api.StartRunResponse{Run: run}, nil
+}
+
+/*
 	===== helpers =====
 */
 
@@ -153,6 +227,35 @@ func (s *Service) caller(ctx context.Context) (*iam.AccessClaims, error) {
 
 func (s *Service) now() *timestamppb.Timestamp {
 	return timestamppb.New(time.Now())
+}
+
+// markRunFailed closes a just-minted run record as FAILED in place, mirroring
+// internal/services/test_run's own unexported markFailed (re-declared here
+// rather than imported: that package exports no such helper, and StartRun
+// already holds the record in memory so — unlike test_run.finishFailedRun —
+// there is no need to re-fetch it from storage first).
+func markRunFailed(rec *models.TestRunRecord, now *timestamppb.Timestamp) {
+	rec.Status = common.Status_STATUS_FAILED
+	if rec.Summary == nil {
+		rec.Summary = &models.TestRunRecord_Summary{}
+	}
+	if rec.Summary.StartedAt == nil {
+		rec.Summary.StartedAt = now
+	}
+	if rec.Summary.FinishedAt == nil {
+		rec.Summary.FinishedAt = now
+	}
+	if start := rec.Summary.GetStartedAt(); start != nil && now != nil {
+		d := now.AsTime().Sub(start.AsTime())
+		if d < 0 {
+			d = 0
+		}
+		rec.Summary.Duration = durationpb.New(d)
+	}
+	if rec.Entity.Timings == nil {
+		rec.Entity.Timings = &common.Timings{CreatedAt: now}
+	}
+	rec.Entity.Timings.UpdatedAt = now
 }
 
 // requireTenant validates tenant_id is present. RBAC is enforced upstream by

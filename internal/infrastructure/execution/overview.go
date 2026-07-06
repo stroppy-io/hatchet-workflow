@@ -136,6 +136,22 @@ func (r *OverviewReader) Get(ctx context.Context, runID string) (*api.TestRunOve
 		return snap, nil
 	}
 
+	// NOTE (recipe runs): this always queries the TestWorkflow id
+	// (testWorkflowID). A non-terminal recipe run's live workflow is
+	// RunRecipeWorkflow, addressed by runRecipeWorkflowID(runID) instead (see
+	// ids.go) — that id is not tried here, so a live (non-terminal) recipe
+	// run's query below always misses and degrades to the branch below,
+	// which falls back to overviewFromRecord. That fallback is already
+	// generic: it projects straight from rec.GetRuntimeState() (the last
+	// RunState RunRecipeWorkflow itself persisted — see
+	// TestRecordFallbackUsesPersistedRuntimeState) via
+	// projectOverviewWithSource, so a DAG-shaped/dynamic-stage recipe
+	// RunState still renders correctly; it just never gets the sub-second
+	// "live" freshness a successful Temporal query would give a running
+	// test run. Making this id resolvable for both workflow kinds (e.g. by
+	// having the reader learn "this run is a recipe run" and try
+	// runRecipeWorkflowID too) is a documented follow-up, not required for
+	// correct rendering today.
 	queryCtx, cancel := context.WithTimeout(ctx, r.effectiveRunStateQueryTimeout())
 	defer cancel()
 	rs, err := r.tc.GetRunState(queryCtx, testWorkflowID(runID), "")
