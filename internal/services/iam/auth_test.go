@@ -77,11 +77,11 @@ func TestMethodAuthGeneratedDescriptors(t *testing.T) {
 		}
 	}
 
-	auth := methodAuth(api.DatabasePresetService_CreateDatabasePreset_FullMethodName)
+	auth := methodAuth(api.RecipeService_CreateRecipe_FullMethodName)
 	if auth == nil || !hasAll(auth.GetAllOf(), []*iampb.Permission{
-		{Resource: iampb.Resource_RESOURCE_PRESET, Action: iampb.Action_ACTION_CREATE},
+		{Resource: iampb.Resource_RESOURCE_RECIPE, Action: iampb.Action_ACTION_CREATE},
 	}) {
-		t.Fatalf("CreateDatabasePreset auth = %v, want preset create", auth)
+		t.Fatalf("CreateRecipe auth = %v, want recipe create", auth)
 	}
 }
 
@@ -123,7 +123,7 @@ func TestAuthorizeRestrictedTokenRequiresTokenPermission(t *testing.T) {
 			{Resource: iampb.Resource_RESOURCE_TEST_RUN, Action: iampb.Action_ACTION_READ},
 		},
 		restricted: true,
-	}, &api.DeleteTestRunRequest{TenantId: "tenant-1", Id: "run-1"}, methodAuth)
+	}, &api.DeleteRecipeRequest{TenantId: "tenant-1", Id: "run-1"}, methodAuth)
 	if status.Code(err) != codes.PermissionDenied {
 		t.Fatalf("status = %s, want %s (err %v)", status.Code(err), codes.PermissionDenied, err)
 	}
@@ -148,7 +148,7 @@ func TestAuthorizeRestrictedTokenAllowsTokenPermission(t *testing.T) {
 			{Resource: iampb.Resource_RESOURCE_TEST_RUN, Action: iampb.Action_ACTION_MANAGE},
 		},
 		restricted: true,
-	}, &api.DeleteTestRunRequest{TenantId: "tenant-1", Id: "run-1"}, methodAuth)
+	}, &api.DeleteRecipeRequest{TenantId: "tenant-1", Id: "run-1"}, methodAuth)
 	if err != nil {
 		t.Fatalf("authorize restricted token: %v", err)
 	}

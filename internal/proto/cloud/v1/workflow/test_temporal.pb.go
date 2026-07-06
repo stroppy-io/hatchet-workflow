@@ -11,7 +11,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	expression "github.com/cludden/protoc-gen-go-temporal/pkg/expression"
 	helpers "github.com/cludden/protoc-gen-go-temporal/pkg/helpers"
 	scheme "github.com/cludden/protoc-gen-go-temporal/pkg/scheme"
 	enumsv1 "go.temporal.io/api/enums/v1"
@@ -33,15 +32,7 @@ var TestServiceTaskQueue = "stroppy-cloud"
 
 // cloud.v1.workflow.TestService workflow names
 const (
-	InstallDatabaseWorkflowWorkflowName = "InstallDatabaseWorkflow"
-	InstallStroppyWorkflowWorkflowName  = "InstallStroppyWorkflow"
-	RunWorkloadWorkflowWorkflowName     = "RunWorkloadWorkflow"
-	TestWorkflowWorkflowName            = "TestWorkflow"
-)
-
-// cloud.v1.workflow.TestService workflow id expressions
-var (
-	TestWorkflowIdexpression = expression.MustParseExpression("test-run/${! testRun.id }")
+	PlaceholderWorkflowWorkflowName = "PlaceholderWorkflow"
 )
 
 // cloud.v1.workflow.TestService query names
@@ -56,45 +47,15 @@ const (
 
 // TestServiceClient describes a client for a(n) cloud.v1.workflow.TestService worker
 type TestServiceClient interface {
-	// InstallDatabaseWorkflow brings up / provisions the database (child of
-	// TestWorkflow; idempotent and retryable).
-	InstallDatabaseWorkflow(ctx context.Context, req *InstallDatabaseWorkflowRequest, opts ...*InstallDatabaseWorkflowOptions) (*InstallDatabaseWorkflowResponse, error)
+	// PlaceholderWorkflow: see the message doc above — required by the
+	// code generator, never started.
+	PlaceholderWorkflow(ctx context.Context, req *PlaceholderWorkflowRequest, opts ...*PlaceholderWorkflowOptions) (*PlaceholderWorkflowResponse, error)
 
-	// InstallDatabaseWorkflowAsync starts a(n) InstallDatabaseWorkflow workflow and returns a handle to the workflow run
-	InstallDatabaseWorkflowAsync(ctx context.Context, req *InstallDatabaseWorkflowRequest, opts ...*InstallDatabaseWorkflowOptions) (InstallDatabaseWorkflowRun, error)
+	// PlaceholderWorkflowAsync starts a(n) PlaceholderWorkflow workflow and returns a handle to the workflow run
+	PlaceholderWorkflowAsync(ctx context.Context, req *PlaceholderWorkflowRequest, opts ...*PlaceholderWorkflowOptions) (PlaceholderWorkflowRun, error)
 
-	// GetInstallDatabaseWorkflow retrieves a handle to an existing InstallDatabaseWorkflow workflow execution
-	GetInstallDatabaseWorkflow(ctx context.Context, workflowID string, runID string) InstallDatabaseWorkflowRun
-
-	// InstallStroppyWorkflow installs stroppy onto the runner machines (child
-	// of TestWorkflow; idempotent and retryable).
-	InstallStroppyWorkflow(ctx context.Context, req *InstallStroppyWorkflowRequest, opts ...*InstallStroppyWorkflowOptions) (*InstallStroppyWorkflowResponse, error)
-
-	// InstallStroppyWorkflowAsync starts a(n) InstallStroppyWorkflow workflow and returns a handle to the workflow run
-	InstallStroppyWorkflowAsync(ctx context.Context, req *InstallStroppyWorkflowRequest, opts ...*InstallStroppyWorkflowOptions) (InstallStroppyWorkflowRun, error)
-
-	// GetInstallStroppyWorkflow retrieves a handle to an existing InstallStroppyWorkflow workflow execution
-	GetInstallStroppyWorkflow(ctx context.Context, workflowID string, runID string) InstallStroppyWorkflowRun
-
-	// RunWorkloadWorkflow runs the workload via the agent (child of
-	// TestWorkflow; unbounded, never retried to avoid double load).
-	RunWorkloadWorkflow(ctx context.Context, req *RunWorkloadWorkflowRequest, opts ...*RunWorkloadWorkflowOptions) (*RunWorkloadWorkflowResponse, error)
-
-	// RunWorkloadWorkflowAsync starts a(n) RunWorkloadWorkflow workflow and returns a handle to the workflow run
-	RunWorkloadWorkflowAsync(ctx context.Context, req *RunWorkloadWorkflowRequest, opts ...*RunWorkloadWorkflowOptions) (RunWorkloadWorkflowRun, error)
-
-	// GetRunWorkloadWorkflow retrieves a handle to an existing RunWorkloadWorkflow workflow execution
-	GetRunWorkloadWorkflow(ctx context.Context, workflowID string, runID string) RunWorkloadWorkflowRun
-
-	// TestWorkflow runs one full test cycle, deduplicated by a deterministic id
-	// derived from TestRun.id and never auto-retried as a whole.
-	TestWorkflow(ctx context.Context, req *TestWorkflowRequest, opts ...*TestWorkflowOptions) (*TestWorkflowResponse, error)
-
-	// TestWorkflowAsync starts a(n) TestWorkflow workflow and returns a handle to the workflow run
-	TestWorkflowAsync(ctx context.Context, req *TestWorkflowRequest, opts ...*TestWorkflowOptions) (TestWorkflowRun, error)
-
-	// GetTestWorkflow retrieves a handle to an existing TestWorkflow workflow execution
-	GetTestWorkflow(ctx context.Context, workflowID string, runID string) TestWorkflowRun
+	// GetPlaceholderWorkflow retrieves a handle to an existing PlaceholderWorkflow workflow execution
+	GetPlaceholderWorkflow(ctx context.Context, workflowID string, runID string) PlaceholderWorkflowRun
 
 	// CancelWorkflow requests cancellation of an existing workflow execution
 	CancelWorkflow(ctx context.Context, workflowID string, runID string) error
@@ -177,177 +138,45 @@ func (opts *testServiceClientOptions) getLogger() *slog.Logger {
 	return slog.Default()
 }
 
-// InstallDatabaseWorkflow brings up / provisions the database (child of
-// TestWorkflow; idempotent and retryable).
-func (c *testServiceClient) InstallDatabaseWorkflow(ctx context.Context, req *InstallDatabaseWorkflowRequest, options ...*InstallDatabaseWorkflowOptions) (*InstallDatabaseWorkflowResponse, error) {
-	run, err := c.InstallDatabaseWorkflowAsync(ctx, req, options...)
+// PlaceholderWorkflow: see the message doc above — required by the
+// code generator, never started.
+func (c *testServiceClient) PlaceholderWorkflow(ctx context.Context, req *PlaceholderWorkflowRequest, options ...*PlaceholderWorkflowOptions) (*PlaceholderWorkflowResponse, error) {
+	run, err := c.PlaceholderWorkflowAsync(ctx, req, options...)
 	if err != nil {
 		return nil, err
 	}
 	return run.Get(ctx)
 }
 
-// InstallDatabaseWorkflow brings up / provisions the database (child of
-// TestWorkflow; idempotent and retryable).
-func (c *testServiceClient) InstallDatabaseWorkflowAsync(ctx context.Context, req *InstallDatabaseWorkflowRequest, options ...*InstallDatabaseWorkflowOptions) (InstallDatabaseWorkflowRun, error) {
-	var o *InstallDatabaseWorkflowOptions
+// PlaceholderWorkflow: see the message doc above — required by the
+// code generator, never started.
+func (c *testServiceClient) PlaceholderWorkflowAsync(ctx context.Context, req *PlaceholderWorkflowRequest, options ...*PlaceholderWorkflowOptions) (PlaceholderWorkflowRun, error) {
+	var o *PlaceholderWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
 	} else {
-		o = NewInstallDatabaseWorkflowOptions()
+		o = NewPlaceholderWorkflowOptions()
 	}
 	opts, err := o.Build(req.ProtoReflect())
 	if err != nil {
 		return nil, fmt.Errorf("error initializing client.StartWorkflowOptions: %w", err)
 	}
-	run, err := c.client.ExecuteWorkflow(ctx, opts, InstallDatabaseWorkflowWorkflowName, req)
+	run, err := c.client.ExecuteWorkflow(ctx, opts, PlaceholderWorkflowWorkflowName, req)
 	if err != nil {
 		return nil, err
 	}
 	if run == nil {
 		return nil, errors.New("execute workflow returned nil run")
 	}
-	return &installDatabaseWorkflowRun{
+	return &placeholderWorkflowRun{
 		client: c,
 		run:    run,
 	}, nil
 }
 
-// GetInstallDatabaseWorkflow fetches an existing InstallDatabaseWorkflow execution
-func (c *testServiceClient) GetInstallDatabaseWorkflow(ctx context.Context, workflowID string, runID string) InstallDatabaseWorkflowRun {
-	return &installDatabaseWorkflowRun{
-		client: c,
-		run:    c.client.GetWorkflow(ctx, workflowID, runID),
-	}
-}
-
-// InstallStroppyWorkflow installs stroppy onto the runner machines (child
-// of TestWorkflow; idempotent and retryable).
-func (c *testServiceClient) InstallStroppyWorkflow(ctx context.Context, req *InstallStroppyWorkflowRequest, options ...*InstallStroppyWorkflowOptions) (*InstallStroppyWorkflowResponse, error) {
-	run, err := c.InstallStroppyWorkflowAsync(ctx, req, options...)
-	if err != nil {
-		return nil, err
-	}
-	return run.Get(ctx)
-}
-
-// InstallStroppyWorkflow installs stroppy onto the runner machines (child
-// of TestWorkflow; idempotent and retryable).
-func (c *testServiceClient) InstallStroppyWorkflowAsync(ctx context.Context, req *InstallStroppyWorkflowRequest, options ...*InstallStroppyWorkflowOptions) (InstallStroppyWorkflowRun, error) {
-	var o *InstallStroppyWorkflowOptions
-	if len(options) > 0 && options[0] != nil {
-		o = options[0]
-	} else {
-		o = NewInstallStroppyWorkflowOptions()
-	}
-	opts, err := o.Build(req.ProtoReflect())
-	if err != nil {
-		return nil, fmt.Errorf("error initializing client.StartWorkflowOptions: %w", err)
-	}
-	run, err := c.client.ExecuteWorkflow(ctx, opts, InstallStroppyWorkflowWorkflowName, req)
-	if err != nil {
-		return nil, err
-	}
-	if run == nil {
-		return nil, errors.New("execute workflow returned nil run")
-	}
-	return &installStroppyWorkflowRun{
-		client: c,
-		run:    run,
-	}, nil
-}
-
-// GetInstallStroppyWorkflow fetches an existing InstallStroppyWorkflow execution
-func (c *testServiceClient) GetInstallStroppyWorkflow(ctx context.Context, workflowID string, runID string) InstallStroppyWorkflowRun {
-	return &installStroppyWorkflowRun{
-		client: c,
-		run:    c.client.GetWorkflow(ctx, workflowID, runID),
-	}
-}
-
-// RunWorkloadWorkflow runs the workload via the agent (child of
-// TestWorkflow; unbounded, never retried to avoid double load).
-func (c *testServiceClient) RunWorkloadWorkflow(ctx context.Context, req *RunWorkloadWorkflowRequest, options ...*RunWorkloadWorkflowOptions) (*RunWorkloadWorkflowResponse, error) {
-	run, err := c.RunWorkloadWorkflowAsync(ctx, req, options...)
-	if err != nil {
-		return nil, err
-	}
-	return run.Get(ctx)
-}
-
-// RunWorkloadWorkflow runs the workload via the agent (child of
-// TestWorkflow; unbounded, never retried to avoid double load).
-func (c *testServiceClient) RunWorkloadWorkflowAsync(ctx context.Context, req *RunWorkloadWorkflowRequest, options ...*RunWorkloadWorkflowOptions) (RunWorkloadWorkflowRun, error) {
-	var o *RunWorkloadWorkflowOptions
-	if len(options) > 0 && options[0] != nil {
-		o = options[0]
-	} else {
-		o = NewRunWorkloadWorkflowOptions()
-	}
-	opts, err := o.Build(req.ProtoReflect())
-	if err != nil {
-		return nil, fmt.Errorf("error initializing client.StartWorkflowOptions: %w", err)
-	}
-	run, err := c.client.ExecuteWorkflow(ctx, opts, RunWorkloadWorkflowWorkflowName, req)
-	if err != nil {
-		return nil, err
-	}
-	if run == nil {
-		return nil, errors.New("execute workflow returned nil run")
-	}
-	return &runWorkloadWorkflowRun{
-		client: c,
-		run:    run,
-	}, nil
-}
-
-// GetRunWorkloadWorkflow fetches an existing RunWorkloadWorkflow execution
-func (c *testServiceClient) GetRunWorkloadWorkflow(ctx context.Context, workflowID string, runID string) RunWorkloadWorkflowRun {
-	return &runWorkloadWorkflowRun{
-		client: c,
-		run:    c.client.GetWorkflow(ctx, workflowID, runID),
-	}
-}
-
-// TestWorkflow runs one full test cycle, deduplicated by a deterministic id
-// derived from TestRun.id and never auto-retried as a whole.
-func (c *testServiceClient) TestWorkflow(ctx context.Context, req *TestWorkflowRequest, options ...*TestWorkflowOptions) (*TestWorkflowResponse, error) {
-	run, err := c.TestWorkflowAsync(ctx, req, options...)
-	if err != nil {
-		return nil, err
-	}
-	return run.Get(ctx)
-}
-
-// TestWorkflow runs one full test cycle, deduplicated by a deterministic id
-// derived from TestRun.id and never auto-retried as a whole.
-func (c *testServiceClient) TestWorkflowAsync(ctx context.Context, req *TestWorkflowRequest, options ...*TestWorkflowOptions) (TestWorkflowRun, error) {
-	var o *TestWorkflowOptions
-	if len(options) > 0 && options[0] != nil {
-		o = options[0]
-	} else {
-		o = NewTestWorkflowOptions()
-	}
-	opts, err := o.Build(req.ProtoReflect())
-	if err != nil {
-		return nil, fmt.Errorf("error initializing client.StartWorkflowOptions: %w", err)
-	}
-	run, err := c.client.ExecuteWorkflow(ctx, opts, TestWorkflowWorkflowName, req)
-	if err != nil {
-		return nil, err
-	}
-	if run == nil {
-		return nil, errors.New("execute workflow returned nil run")
-	}
-	return &testWorkflowRun{
-		client: c,
-		run:    run,
-	}, nil
-}
-
-// GetTestWorkflow fetches an existing TestWorkflow execution
-func (c *testServiceClient) GetTestWorkflow(ctx context.Context, workflowID string, runID string) TestWorkflowRun {
-	return &testWorkflowRun{
+// GetPlaceholderWorkflow fetches an existing PlaceholderWorkflow execution
+func (c *testServiceClient) GetPlaceholderWorkflow(ctx context.Context, workflowID string, runID string) PlaceholderWorkflowRun {
+	return &placeholderWorkflowRun{
 		client: c,
 		run:    c.client.GetWorkflow(ctx, workflowID, runID),
 	}
@@ -382,8 +211,8 @@ func (c *testServiceClient) UpdateStage(ctx context.Context, workflowID string, 
 	return c.client.SignalWorkflow(ctx, workflowID, runID, UpdateStageSignalName, signal)
 }
 
-// InstallDatabaseWorkflowOptions provides configuration for a InstallDatabaseWorkflow workflow operation
-type InstallDatabaseWorkflowOptions struct {
+// PlaceholderWorkflowOptions provides configuration for a PlaceholderWorkflow workflow operation
+type PlaceholderWorkflowOptions struct {
 	options                  client.StartWorkflowOptions
 	executionTimeout         *time.Duration
 	id                       *string
@@ -398,417 +227,13 @@ type InstallDatabaseWorkflowOptions struct {
 	workflowIdConflictPolicy enumsv1.WorkflowIdConflictPolicy
 }
 
-// NewInstallDatabaseWorkflowOptions initializes a new InstallDatabaseWorkflowOptions value
-func NewInstallDatabaseWorkflowOptions() *InstallDatabaseWorkflowOptions {
-	return &InstallDatabaseWorkflowOptions{}
+// NewPlaceholderWorkflowOptions initializes a new PlaceholderWorkflowOptions value
+func NewPlaceholderWorkflowOptions() *PlaceholderWorkflowOptions {
+	return &PlaceholderWorkflowOptions{}
 }
 
 // Build initializes a new go.temporal.io/sdk/client.StartWorkflowOptions value with defaults and overrides applied
-func (o *InstallDatabaseWorkflowOptions) Build(req protoreflect.Message) (client.StartWorkflowOptions, error) {
-	opts := o.options
-	if v := o.id; v != nil {
-		opts.ID = *v
-	}
-	if v := o.idReusePolicy; v != enumsv1.WORKFLOW_ID_REUSE_POLICY_UNSPECIFIED {
-		opts.WorkflowIDReusePolicy = v
-	}
-	if v := o.workflowIdConflictPolicy; v != enumsv1.WORKFLOW_ID_CONFLICT_POLICY_UNSPECIFIED {
-		opts.WorkflowIDConflictPolicy = v
-	}
-	if v := o.taskQueue; v != nil {
-		opts.TaskQueue = *v
-	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = TestServiceTaskQueue
-	}
-	if v := o.retryPolicy; v != nil {
-		opts.RetryPolicy = v
-	} else if opts.RetryPolicy == nil {
-		opts.RetryPolicy = &temporal.RetryPolicy{
-			InitialInterval: 5000000000,
-			MaximumAttempts: int32(3),
-		}
-	}
-	if v := o.searchAttributes; v != nil {
-		opts.SearchAttributes = o.searchAttributes
-	}
-	if v := o.typedSearchAttributes; v != nil {
-		opts.TypedSearchAttributes = *v
-	}
-	if v := o.enableEagerStart; v != nil {
-		opts.EnableEagerStart = *v
-	}
-	if v := o.executionTimeout; v != nil {
-		opts.WorkflowExecutionTimeout = *v
-	}
-	if v := o.runTimeout; v != nil {
-		opts.WorkflowRunTimeout = *v
-	} else if opts.WorkflowRunTimeout == 0 {
-		opts.WorkflowRunTimeout = 1800000000000 // 30 minutes
-	}
-	if v := o.taskTimeout; v != nil {
-		opts.WorkflowTaskTimeout = *v
-	}
-	return opts, nil
-}
-
-// WithStartWorkflowOptions sets the initial go.temporal.io/sdk/client.StartWorkflowOptions
-func (o *InstallDatabaseWorkflowOptions) WithStartWorkflowOptions(options client.StartWorkflowOptions) *InstallDatabaseWorkflowOptions {
-	o.options = options
-	return o
-}
-
-// WithEnableEagerStart sets the EnableEagerStart value
-func (o *InstallDatabaseWorkflowOptions) WithEnableEagerStart(enable bool) *InstallDatabaseWorkflowOptions {
-	o.enableEagerStart = &enable
-	return o
-}
-
-// WithExecutionTimeout sets the WorkflowExecutionTimeout value
-func (o *InstallDatabaseWorkflowOptions) WithExecutionTimeout(d time.Duration) *InstallDatabaseWorkflowOptions {
-	o.executionTimeout = &d
-	return o
-}
-
-// WithID sets the ID value
-func (o *InstallDatabaseWorkflowOptions) WithID(id string) *InstallDatabaseWorkflowOptions {
-	o.id = &id
-	return o
-}
-
-// WithIDReusePolicy sets the WorkflowIDReusePolicy value
-func (o *InstallDatabaseWorkflowOptions) WithIDReusePolicy(policy enumsv1.WorkflowIdReusePolicy) *InstallDatabaseWorkflowOptions {
-	o.idReusePolicy = policy
-	return o
-}
-
-// WithRetryPolicy sets the RetryPolicy value
-func (o *InstallDatabaseWorkflowOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *InstallDatabaseWorkflowOptions {
-	o.retryPolicy = policy
-	return o
-}
-
-// WithRunTimeout sets the WorkflowRunTimeout value
-func (o *InstallDatabaseWorkflowOptions) WithRunTimeout(d time.Duration) *InstallDatabaseWorkflowOptions {
-	o.runTimeout = &d
-	return o
-}
-
-// WithSearchAttributes sets the SearchAttributes value
-func (o *InstallDatabaseWorkflowOptions) WithSearchAttributes(sa map[string]any) *InstallDatabaseWorkflowOptions {
-	o.searchAttributes = sa
-	return o
-}
-
-// WithTaskTimeout sets the WorkflowTaskTimeout value
-func (o *InstallDatabaseWorkflowOptions) WithTaskTimeout(d time.Duration) *InstallDatabaseWorkflowOptions {
-	o.taskTimeout = &d
-	return o
-}
-
-// WithTaskQueue sets the TaskQueue value
-func (o *InstallDatabaseWorkflowOptions) WithTaskQueue(tq string) *InstallDatabaseWorkflowOptions {
-	o.taskQueue = &tq
-	return o
-}
-
-// WithTypedSearchAttributes sets the TypedSearchAttributes value
-func (o *InstallDatabaseWorkflowOptions) WithTypedSearchAttributes(tsa temporal.SearchAttributes) *InstallDatabaseWorkflowOptions {
-	o.typedSearchAttributes = &tsa
-	return o
-}
-
-// WithWorkflowIdConflictPolicy sets the WorkflowIdConflictPolicy value
-func (o *InstallDatabaseWorkflowOptions) WithWorkflowIdConflictPolicy(policy enumsv1.WorkflowIdConflictPolicy) *InstallDatabaseWorkflowOptions {
-	o.workflowIdConflictPolicy = policy
-	return o
-}
-
-// InstallDatabaseWorkflowRun describes a(n) InstallDatabaseWorkflow workflow run
-type InstallDatabaseWorkflowRun interface {
-	// ID returns the workflow ID
-	ID() string
-
-	// RunID returns the workflow instance ID
-	RunID() string
-
-	// Run returns the inner client.WorkflowRun
-	Run() client.WorkflowRun
-
-	// Get blocks until the workflow is complete and returns the result
-	Get(ctx context.Context) (*InstallDatabaseWorkflowResponse, error)
-
-	// Cancel requests cancellation of a workflow in execution, returning an error if applicable
-	Cancel(ctx context.Context) error
-
-	// Terminate terminates a workflow in execution, returning an error if applicable
-	Terminate(ctx context.Context, reason string, details ...interface{}) error
-}
-
-// installDatabaseWorkflowRun provides an internal implementation of a(n) InstallDatabaseWorkflowRunRun
-type installDatabaseWorkflowRun struct {
-	client *testServiceClient
-	run    client.WorkflowRun
-}
-
-// ID returns the workflow ID
-func (r *installDatabaseWorkflowRun) ID() string {
-	return r.run.GetID()
-}
-
-// Run returns the inner client.WorkflowRun
-func (r *installDatabaseWorkflowRun) Run() client.WorkflowRun {
-	return r.run
-}
-
-// RunID returns the execution ID
-func (r *installDatabaseWorkflowRun) RunID() string {
-	return r.run.GetRunID()
-}
-
-// Cancel requests cancellation of a workflow in execution, returning an error if applicable
-func (r *installDatabaseWorkflowRun) Cancel(ctx context.Context) error {
-	return r.client.CancelWorkflow(ctx, r.ID(), r.RunID())
-}
-
-// Get blocks until the workflow is complete, returning the result if applicable
-func (r *installDatabaseWorkflowRun) Get(ctx context.Context) (*InstallDatabaseWorkflowResponse, error) {
-	var resp InstallDatabaseWorkflowResponse
-	if err := r.run.Get(ctx, &resp); err != nil {
-		return nil, err
-	}
-	return &resp, nil
-}
-
-// Terminate terminates a workflow in execution, returning an error if applicable
-func (r *installDatabaseWorkflowRun) Terminate(ctx context.Context, reason string, details ...interface{}) error {
-	return r.client.TerminateWorkflow(ctx, r.ID(), r.RunID(), reason, details...)
-}
-
-// InstallStroppyWorkflowOptions provides configuration for a InstallStroppyWorkflow workflow operation
-type InstallStroppyWorkflowOptions struct {
-	options                  client.StartWorkflowOptions
-	executionTimeout         *time.Duration
-	id                       *string
-	idReusePolicy            enumsv1.WorkflowIdReusePolicy
-	retryPolicy              *temporal.RetryPolicy
-	runTimeout               *time.Duration
-	searchAttributes         map[string]any
-	taskQueue                *string
-	taskTimeout              *time.Duration
-	typedSearchAttributes    *temporal.SearchAttributes
-	enableEagerStart         *bool
-	workflowIdConflictPolicy enumsv1.WorkflowIdConflictPolicy
-}
-
-// NewInstallStroppyWorkflowOptions initializes a new InstallStroppyWorkflowOptions value
-func NewInstallStroppyWorkflowOptions() *InstallStroppyWorkflowOptions {
-	return &InstallStroppyWorkflowOptions{}
-}
-
-// Build initializes a new go.temporal.io/sdk/client.StartWorkflowOptions value with defaults and overrides applied
-func (o *InstallStroppyWorkflowOptions) Build(req protoreflect.Message) (client.StartWorkflowOptions, error) {
-	opts := o.options
-	if v := o.id; v != nil {
-		opts.ID = *v
-	}
-	if v := o.idReusePolicy; v != enumsv1.WORKFLOW_ID_REUSE_POLICY_UNSPECIFIED {
-		opts.WorkflowIDReusePolicy = v
-	}
-	if v := o.workflowIdConflictPolicy; v != enumsv1.WORKFLOW_ID_CONFLICT_POLICY_UNSPECIFIED {
-		opts.WorkflowIDConflictPolicy = v
-	}
-	if v := o.taskQueue; v != nil {
-		opts.TaskQueue = *v
-	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = TestServiceTaskQueue
-	}
-	if v := o.retryPolicy; v != nil {
-		opts.RetryPolicy = v
-	} else if opts.RetryPolicy == nil {
-		opts.RetryPolicy = &temporal.RetryPolicy{
-			InitialInterval: 5000000000,
-			MaximumAttempts: int32(3),
-		}
-	}
-	if v := o.searchAttributes; v != nil {
-		opts.SearchAttributes = o.searchAttributes
-	}
-	if v := o.typedSearchAttributes; v != nil {
-		opts.TypedSearchAttributes = *v
-	}
-	if v := o.enableEagerStart; v != nil {
-		opts.EnableEagerStart = *v
-	}
-	if v := o.executionTimeout; v != nil {
-		opts.WorkflowExecutionTimeout = *v
-	}
-	if v := o.runTimeout; v != nil {
-		opts.WorkflowRunTimeout = *v
-	} else if opts.WorkflowRunTimeout == 0 {
-		opts.WorkflowRunTimeout = 1800000000000 // 30 minutes
-	}
-	if v := o.taskTimeout; v != nil {
-		opts.WorkflowTaskTimeout = *v
-	}
-	return opts, nil
-}
-
-// WithStartWorkflowOptions sets the initial go.temporal.io/sdk/client.StartWorkflowOptions
-func (o *InstallStroppyWorkflowOptions) WithStartWorkflowOptions(options client.StartWorkflowOptions) *InstallStroppyWorkflowOptions {
-	o.options = options
-	return o
-}
-
-// WithEnableEagerStart sets the EnableEagerStart value
-func (o *InstallStroppyWorkflowOptions) WithEnableEagerStart(enable bool) *InstallStroppyWorkflowOptions {
-	o.enableEagerStart = &enable
-	return o
-}
-
-// WithExecutionTimeout sets the WorkflowExecutionTimeout value
-func (o *InstallStroppyWorkflowOptions) WithExecutionTimeout(d time.Duration) *InstallStroppyWorkflowOptions {
-	o.executionTimeout = &d
-	return o
-}
-
-// WithID sets the ID value
-func (o *InstallStroppyWorkflowOptions) WithID(id string) *InstallStroppyWorkflowOptions {
-	o.id = &id
-	return o
-}
-
-// WithIDReusePolicy sets the WorkflowIDReusePolicy value
-func (o *InstallStroppyWorkflowOptions) WithIDReusePolicy(policy enumsv1.WorkflowIdReusePolicy) *InstallStroppyWorkflowOptions {
-	o.idReusePolicy = policy
-	return o
-}
-
-// WithRetryPolicy sets the RetryPolicy value
-func (o *InstallStroppyWorkflowOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *InstallStroppyWorkflowOptions {
-	o.retryPolicy = policy
-	return o
-}
-
-// WithRunTimeout sets the WorkflowRunTimeout value
-func (o *InstallStroppyWorkflowOptions) WithRunTimeout(d time.Duration) *InstallStroppyWorkflowOptions {
-	o.runTimeout = &d
-	return o
-}
-
-// WithSearchAttributes sets the SearchAttributes value
-func (o *InstallStroppyWorkflowOptions) WithSearchAttributes(sa map[string]any) *InstallStroppyWorkflowOptions {
-	o.searchAttributes = sa
-	return o
-}
-
-// WithTaskTimeout sets the WorkflowTaskTimeout value
-func (o *InstallStroppyWorkflowOptions) WithTaskTimeout(d time.Duration) *InstallStroppyWorkflowOptions {
-	o.taskTimeout = &d
-	return o
-}
-
-// WithTaskQueue sets the TaskQueue value
-func (o *InstallStroppyWorkflowOptions) WithTaskQueue(tq string) *InstallStroppyWorkflowOptions {
-	o.taskQueue = &tq
-	return o
-}
-
-// WithTypedSearchAttributes sets the TypedSearchAttributes value
-func (o *InstallStroppyWorkflowOptions) WithTypedSearchAttributes(tsa temporal.SearchAttributes) *InstallStroppyWorkflowOptions {
-	o.typedSearchAttributes = &tsa
-	return o
-}
-
-// WithWorkflowIdConflictPolicy sets the WorkflowIdConflictPolicy value
-func (o *InstallStroppyWorkflowOptions) WithWorkflowIdConflictPolicy(policy enumsv1.WorkflowIdConflictPolicy) *InstallStroppyWorkflowOptions {
-	o.workflowIdConflictPolicy = policy
-	return o
-}
-
-// InstallStroppyWorkflowRun describes a(n) InstallStroppyWorkflow workflow run
-type InstallStroppyWorkflowRun interface {
-	// ID returns the workflow ID
-	ID() string
-
-	// RunID returns the workflow instance ID
-	RunID() string
-
-	// Run returns the inner client.WorkflowRun
-	Run() client.WorkflowRun
-
-	// Get blocks until the workflow is complete and returns the result
-	Get(ctx context.Context) (*InstallStroppyWorkflowResponse, error)
-
-	// Cancel requests cancellation of a workflow in execution, returning an error if applicable
-	Cancel(ctx context.Context) error
-
-	// Terminate terminates a workflow in execution, returning an error if applicable
-	Terminate(ctx context.Context, reason string, details ...interface{}) error
-}
-
-// installStroppyWorkflowRun provides an internal implementation of a(n) InstallStroppyWorkflowRunRun
-type installStroppyWorkflowRun struct {
-	client *testServiceClient
-	run    client.WorkflowRun
-}
-
-// ID returns the workflow ID
-func (r *installStroppyWorkflowRun) ID() string {
-	return r.run.GetID()
-}
-
-// Run returns the inner client.WorkflowRun
-func (r *installStroppyWorkflowRun) Run() client.WorkflowRun {
-	return r.run
-}
-
-// RunID returns the execution ID
-func (r *installStroppyWorkflowRun) RunID() string {
-	return r.run.GetRunID()
-}
-
-// Cancel requests cancellation of a workflow in execution, returning an error if applicable
-func (r *installStroppyWorkflowRun) Cancel(ctx context.Context) error {
-	return r.client.CancelWorkflow(ctx, r.ID(), r.RunID())
-}
-
-// Get blocks until the workflow is complete, returning the result if applicable
-func (r *installStroppyWorkflowRun) Get(ctx context.Context) (*InstallStroppyWorkflowResponse, error) {
-	var resp InstallStroppyWorkflowResponse
-	if err := r.run.Get(ctx, &resp); err != nil {
-		return nil, err
-	}
-	return &resp, nil
-}
-
-// Terminate terminates a workflow in execution, returning an error if applicable
-func (r *installStroppyWorkflowRun) Terminate(ctx context.Context, reason string, details ...interface{}) error {
-	return r.client.TerminateWorkflow(ctx, r.ID(), r.RunID(), reason, details...)
-}
-
-// RunWorkloadWorkflowOptions provides configuration for a RunWorkloadWorkflow workflow operation
-type RunWorkloadWorkflowOptions struct {
-	options                  client.StartWorkflowOptions
-	executionTimeout         *time.Duration
-	id                       *string
-	idReusePolicy            enumsv1.WorkflowIdReusePolicy
-	retryPolicy              *temporal.RetryPolicy
-	runTimeout               *time.Duration
-	searchAttributes         map[string]any
-	taskQueue                *string
-	taskTimeout              *time.Duration
-	typedSearchAttributes    *temporal.SearchAttributes
-	enableEagerStart         *bool
-	workflowIdConflictPolicy enumsv1.WorkflowIdConflictPolicy
-}
-
-// NewRunWorkloadWorkflowOptions initializes a new RunWorkloadWorkflowOptions value
-func NewRunWorkloadWorkflowOptions() *RunWorkloadWorkflowOptions {
-	return &RunWorkloadWorkflowOptions{}
-}
-
-// Build initializes a new go.temporal.io/sdk/client.StartWorkflowOptions value with defaults and overrides applied
-func (o *RunWorkloadWorkflowOptions) Build(req protoreflect.Message) (client.StartWorkflowOptions, error) {
+func (o *PlaceholderWorkflowOptions) Build(req protoreflect.Message) (client.StartWorkflowOptions, error) {
 	opts := o.options
 	if v := o.id; v != nil {
 		opts.ID = *v
@@ -853,79 +278,79 @@ func (o *RunWorkloadWorkflowOptions) Build(req protoreflect.Message) (client.Sta
 }
 
 // WithStartWorkflowOptions sets the initial go.temporal.io/sdk/client.StartWorkflowOptions
-func (o *RunWorkloadWorkflowOptions) WithStartWorkflowOptions(options client.StartWorkflowOptions) *RunWorkloadWorkflowOptions {
+func (o *PlaceholderWorkflowOptions) WithStartWorkflowOptions(options client.StartWorkflowOptions) *PlaceholderWorkflowOptions {
 	o.options = options
 	return o
 }
 
 // WithEnableEagerStart sets the EnableEagerStart value
-func (o *RunWorkloadWorkflowOptions) WithEnableEagerStart(enable bool) *RunWorkloadWorkflowOptions {
+func (o *PlaceholderWorkflowOptions) WithEnableEagerStart(enable bool) *PlaceholderWorkflowOptions {
 	o.enableEagerStart = &enable
 	return o
 }
 
 // WithExecutionTimeout sets the WorkflowExecutionTimeout value
-func (o *RunWorkloadWorkflowOptions) WithExecutionTimeout(d time.Duration) *RunWorkloadWorkflowOptions {
+func (o *PlaceholderWorkflowOptions) WithExecutionTimeout(d time.Duration) *PlaceholderWorkflowOptions {
 	o.executionTimeout = &d
 	return o
 }
 
 // WithID sets the ID value
-func (o *RunWorkloadWorkflowOptions) WithID(id string) *RunWorkloadWorkflowOptions {
+func (o *PlaceholderWorkflowOptions) WithID(id string) *PlaceholderWorkflowOptions {
 	o.id = &id
 	return o
 }
 
 // WithIDReusePolicy sets the WorkflowIDReusePolicy value
-func (o *RunWorkloadWorkflowOptions) WithIDReusePolicy(policy enumsv1.WorkflowIdReusePolicy) *RunWorkloadWorkflowOptions {
+func (o *PlaceholderWorkflowOptions) WithIDReusePolicy(policy enumsv1.WorkflowIdReusePolicy) *PlaceholderWorkflowOptions {
 	o.idReusePolicy = policy
 	return o
 }
 
 // WithRetryPolicy sets the RetryPolicy value
-func (o *RunWorkloadWorkflowOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *RunWorkloadWorkflowOptions {
+func (o *PlaceholderWorkflowOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *PlaceholderWorkflowOptions {
 	o.retryPolicy = policy
 	return o
 }
 
 // WithRunTimeout sets the WorkflowRunTimeout value
-func (o *RunWorkloadWorkflowOptions) WithRunTimeout(d time.Duration) *RunWorkloadWorkflowOptions {
+func (o *PlaceholderWorkflowOptions) WithRunTimeout(d time.Duration) *PlaceholderWorkflowOptions {
 	o.runTimeout = &d
 	return o
 }
 
 // WithSearchAttributes sets the SearchAttributes value
-func (o *RunWorkloadWorkflowOptions) WithSearchAttributes(sa map[string]any) *RunWorkloadWorkflowOptions {
+func (o *PlaceholderWorkflowOptions) WithSearchAttributes(sa map[string]any) *PlaceholderWorkflowOptions {
 	o.searchAttributes = sa
 	return o
 }
 
 // WithTaskTimeout sets the WorkflowTaskTimeout value
-func (o *RunWorkloadWorkflowOptions) WithTaskTimeout(d time.Duration) *RunWorkloadWorkflowOptions {
+func (o *PlaceholderWorkflowOptions) WithTaskTimeout(d time.Duration) *PlaceholderWorkflowOptions {
 	o.taskTimeout = &d
 	return o
 }
 
 // WithTaskQueue sets the TaskQueue value
-func (o *RunWorkloadWorkflowOptions) WithTaskQueue(tq string) *RunWorkloadWorkflowOptions {
+func (o *PlaceholderWorkflowOptions) WithTaskQueue(tq string) *PlaceholderWorkflowOptions {
 	o.taskQueue = &tq
 	return o
 }
 
 // WithTypedSearchAttributes sets the TypedSearchAttributes value
-func (o *RunWorkloadWorkflowOptions) WithTypedSearchAttributes(tsa temporal.SearchAttributes) *RunWorkloadWorkflowOptions {
+func (o *PlaceholderWorkflowOptions) WithTypedSearchAttributes(tsa temporal.SearchAttributes) *PlaceholderWorkflowOptions {
 	o.typedSearchAttributes = &tsa
 	return o
 }
 
 // WithWorkflowIdConflictPolicy sets the WorkflowIdConflictPolicy value
-func (o *RunWorkloadWorkflowOptions) WithWorkflowIdConflictPolicy(policy enumsv1.WorkflowIdConflictPolicy) *RunWorkloadWorkflowOptions {
+func (o *PlaceholderWorkflowOptions) WithWorkflowIdConflictPolicy(policy enumsv1.WorkflowIdConflictPolicy) *PlaceholderWorkflowOptions {
 	o.workflowIdConflictPolicy = policy
 	return o
 }
 
-// RunWorkloadWorkflowRun describes a(n) RunWorkloadWorkflow workflow run
-type RunWorkloadWorkflowRun interface {
+// PlaceholderWorkflowRun describes a(n) PlaceholderWorkflow workflow run
+type PlaceholderWorkflowRun interface {
 	// ID returns the workflow ID
 	ID() string
 
@@ -936,7 +361,7 @@ type RunWorkloadWorkflowRun interface {
 	Run() client.WorkflowRun
 
 	// Get blocks until the workflow is complete and returns the result
-	Get(ctx context.Context) (*RunWorkloadWorkflowResponse, error)
+	Get(ctx context.Context) (*PlaceholderWorkflowResponse, error)
 
 	// Cancel requests cancellation of a workflow in execution, returning an error if applicable
 	Cancel(ctx context.Context) error
@@ -945,35 +370,35 @@ type RunWorkloadWorkflowRun interface {
 	Terminate(ctx context.Context, reason string, details ...interface{}) error
 }
 
-// runWorkloadWorkflowRun provides an internal implementation of a(n) RunWorkloadWorkflowRunRun
-type runWorkloadWorkflowRun struct {
+// placeholderWorkflowRun provides an internal implementation of a(n) PlaceholderWorkflowRunRun
+type placeholderWorkflowRun struct {
 	client *testServiceClient
 	run    client.WorkflowRun
 }
 
 // ID returns the workflow ID
-func (r *runWorkloadWorkflowRun) ID() string {
+func (r *placeholderWorkflowRun) ID() string {
 	return r.run.GetID()
 }
 
 // Run returns the inner client.WorkflowRun
-func (r *runWorkloadWorkflowRun) Run() client.WorkflowRun {
+func (r *placeholderWorkflowRun) Run() client.WorkflowRun {
 	return r.run
 }
 
 // RunID returns the execution ID
-func (r *runWorkloadWorkflowRun) RunID() string {
+func (r *placeholderWorkflowRun) RunID() string {
 	return r.run.GetRunID()
 }
 
 // Cancel requests cancellation of a workflow in execution, returning an error if applicable
-func (r *runWorkloadWorkflowRun) Cancel(ctx context.Context) error {
+func (r *placeholderWorkflowRun) Cancel(ctx context.Context) error {
 	return r.client.CancelWorkflow(ctx, r.ID(), r.RunID())
 }
 
 // Get blocks until the workflow is complete, returning the result if applicable
-func (r *runWorkloadWorkflowRun) Get(ctx context.Context) (*RunWorkloadWorkflowResponse, error) {
-	var resp RunWorkloadWorkflowResponse
+func (r *placeholderWorkflowRun) Get(ctx context.Context) (*PlaceholderWorkflowResponse, error) {
+	var resp PlaceholderWorkflowResponse
 	if err := r.run.Get(ctx, &resp); err != nil {
 		return nil, err
 	}
@@ -981,273 +406,26 @@ func (r *runWorkloadWorkflowRun) Get(ctx context.Context) (*RunWorkloadWorkflowR
 }
 
 // Terminate terminates a workflow in execution, returning an error if applicable
-func (r *runWorkloadWorkflowRun) Terminate(ctx context.Context, reason string, details ...interface{}) error {
+func (r *placeholderWorkflowRun) Terminate(ctx context.Context, reason string, details ...interface{}) error {
 	return r.client.TerminateWorkflow(ctx, r.ID(), r.RunID(), reason, details...)
-}
-
-// TestWorkflowOptions provides configuration for a TestWorkflow workflow operation
-type TestWorkflowOptions struct {
-	options                  client.StartWorkflowOptions
-	executionTimeout         *time.Duration
-	id                       *string
-	idReusePolicy            enumsv1.WorkflowIdReusePolicy
-	retryPolicy              *temporal.RetryPolicy
-	runTimeout               *time.Duration
-	searchAttributes         map[string]any
-	taskQueue                *string
-	taskTimeout              *time.Duration
-	typedSearchAttributes    *temporal.SearchAttributes
-	enableEagerStart         *bool
-	workflowIdConflictPolicy enumsv1.WorkflowIdConflictPolicy
-}
-
-// NewTestWorkflowOptions initializes a new TestWorkflowOptions value
-func NewTestWorkflowOptions() *TestWorkflowOptions {
-	return &TestWorkflowOptions{}
-}
-
-// Build initializes a new go.temporal.io/sdk/client.StartWorkflowOptions value with defaults and overrides applied
-func (o *TestWorkflowOptions) Build(req protoreflect.Message) (client.StartWorkflowOptions, error) {
-	opts := o.options
-	if v := o.id; v != nil {
-		opts.ID = *v
-	} else if opts.ID == "" {
-		id, err := expression.EvalExpression(TestWorkflowIdexpression, req)
-		if err != nil {
-			return opts, fmt.Errorf("error evaluating id expression for %q workflow: %w", TestWorkflowWorkflowName, err)
-		}
-		opts.ID = id
-	}
-	if v := o.idReusePolicy; v != enumsv1.WORKFLOW_ID_REUSE_POLICY_UNSPECIFIED {
-		opts.WorkflowIDReusePolicy = v
-	} else if opts.WorkflowIDReusePolicy == enumsv1.WORKFLOW_ID_REUSE_POLICY_UNSPECIFIED {
-		opts.WorkflowIDReusePolicy = enumsv1.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY
-	}
-	if v := o.workflowIdConflictPolicy; v != enumsv1.WORKFLOW_ID_CONFLICT_POLICY_UNSPECIFIED {
-		opts.WorkflowIDConflictPolicy = v
-	}
-	if v := o.taskQueue; v != nil {
-		opts.TaskQueue = *v
-	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = TestServiceTaskQueue
-	}
-	if v := o.retryPolicy; v != nil {
-		opts.RetryPolicy = v
-	} else if opts.RetryPolicy == nil {
-		opts.RetryPolicy = &temporal.RetryPolicy{
-			MaximumAttempts: int32(1),
-		}
-	}
-	if v := o.searchAttributes; v != nil {
-		opts.SearchAttributes = o.searchAttributes
-	}
-	if v := o.typedSearchAttributes; v != nil {
-		opts.TypedSearchAttributes = *v
-	}
-	if v := o.enableEagerStart; v != nil {
-		opts.EnableEagerStart = *v
-	}
-	if v := o.executionTimeout; v != nil {
-		opts.WorkflowExecutionTimeout = *v
-	}
-	if v := o.runTimeout; v != nil {
-		opts.WorkflowRunTimeout = *v
-	}
-	if v := o.taskTimeout; v != nil {
-		opts.WorkflowTaskTimeout = *v
-	}
-	return opts, nil
-}
-
-// WithStartWorkflowOptions sets the initial go.temporal.io/sdk/client.StartWorkflowOptions
-func (o *TestWorkflowOptions) WithStartWorkflowOptions(options client.StartWorkflowOptions) *TestWorkflowOptions {
-	o.options = options
-	return o
-}
-
-// WithEnableEagerStart sets the EnableEagerStart value
-func (o *TestWorkflowOptions) WithEnableEagerStart(enable bool) *TestWorkflowOptions {
-	o.enableEagerStart = &enable
-	return o
-}
-
-// WithExecutionTimeout sets the WorkflowExecutionTimeout value
-func (o *TestWorkflowOptions) WithExecutionTimeout(d time.Duration) *TestWorkflowOptions {
-	o.executionTimeout = &d
-	return o
-}
-
-// WithID sets the ID value
-func (o *TestWorkflowOptions) WithID(id string) *TestWorkflowOptions {
-	o.id = &id
-	return o
-}
-
-// WithIDReusePolicy sets the WorkflowIDReusePolicy value
-func (o *TestWorkflowOptions) WithIDReusePolicy(policy enumsv1.WorkflowIdReusePolicy) *TestWorkflowOptions {
-	o.idReusePolicy = policy
-	return o
-}
-
-// WithRetryPolicy sets the RetryPolicy value
-func (o *TestWorkflowOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *TestWorkflowOptions {
-	o.retryPolicy = policy
-	return o
-}
-
-// WithRunTimeout sets the WorkflowRunTimeout value
-func (o *TestWorkflowOptions) WithRunTimeout(d time.Duration) *TestWorkflowOptions {
-	o.runTimeout = &d
-	return o
-}
-
-// WithSearchAttributes sets the SearchAttributes value
-func (o *TestWorkflowOptions) WithSearchAttributes(sa map[string]any) *TestWorkflowOptions {
-	o.searchAttributes = sa
-	return o
-}
-
-// WithTaskTimeout sets the WorkflowTaskTimeout value
-func (o *TestWorkflowOptions) WithTaskTimeout(d time.Duration) *TestWorkflowOptions {
-	o.taskTimeout = &d
-	return o
-}
-
-// WithTaskQueue sets the TaskQueue value
-func (o *TestWorkflowOptions) WithTaskQueue(tq string) *TestWorkflowOptions {
-	o.taskQueue = &tq
-	return o
-}
-
-// WithTypedSearchAttributes sets the TypedSearchAttributes value
-func (o *TestWorkflowOptions) WithTypedSearchAttributes(tsa temporal.SearchAttributes) *TestWorkflowOptions {
-	o.typedSearchAttributes = &tsa
-	return o
-}
-
-// WithWorkflowIdConflictPolicy sets the WorkflowIdConflictPolicy value
-func (o *TestWorkflowOptions) WithWorkflowIdConflictPolicy(policy enumsv1.WorkflowIdConflictPolicy) *TestWorkflowOptions {
-	o.workflowIdConflictPolicy = policy
-	return o
-}
-
-// TestWorkflowRun describes a(n) TestWorkflow workflow run
-type TestWorkflowRun interface {
-	// ID returns the workflow ID
-	ID() string
-
-	// RunID returns the workflow instance ID
-	RunID() string
-
-	// Run returns the inner client.WorkflowRun
-	Run() client.WorkflowRun
-
-	// Get blocks until the workflow is complete and returns the result
-	Get(ctx context.Context) (*TestWorkflowResponse, error)
-
-	// Cancel requests cancellation of a workflow in execution, returning an error if applicable
-	Cancel(ctx context.Context) error
-
-	// Terminate terminates a workflow in execution, returning an error if applicable
-	Terminate(ctx context.Context, reason string, details ...interface{}) error
-
-	// GetRunState is a Temporal query against a running TestWorkflow returning
-	// the live RunState (overall status + per-stage breakdown) for the run
-	// Overview. Read-only; takes no input.
-	GetRunState(ctx context.Context) (*RunState, error)
-
-	// UpdateStage is a Temporal signal used by child workflows to update one
-	// concrete runtime stage inside the parent TestWorkflow RunState.
-	UpdateStage(ctx context.Context, req *StageUpdate) error
-}
-
-// testWorkflowRun provides an internal implementation of a(n) TestWorkflowRunRun
-type testWorkflowRun struct {
-	client *testServiceClient
-	run    client.WorkflowRun
-}
-
-// ID returns the workflow ID
-func (r *testWorkflowRun) ID() string {
-	return r.run.GetID()
-}
-
-// Run returns the inner client.WorkflowRun
-func (r *testWorkflowRun) Run() client.WorkflowRun {
-	return r.run
-}
-
-// RunID returns the execution ID
-func (r *testWorkflowRun) RunID() string {
-	return r.run.GetRunID()
-}
-
-// Cancel requests cancellation of a workflow in execution, returning an error if applicable
-func (r *testWorkflowRun) Cancel(ctx context.Context) error {
-	return r.client.CancelWorkflow(ctx, r.ID(), r.RunID())
-}
-
-// Get blocks until the workflow is complete, returning the result if applicable
-func (r *testWorkflowRun) Get(ctx context.Context) (*TestWorkflowResponse, error) {
-	var resp TestWorkflowResponse
-	if err := r.run.Get(ctx, &resp); err != nil {
-		return nil, err
-	}
-	return &resp, nil
-}
-
-// Terminate terminates a workflow in execution, returning an error if applicable
-func (r *testWorkflowRun) Terminate(ctx context.Context, reason string, details ...interface{}) error {
-	return r.client.TerminateWorkflow(ctx, r.ID(), r.RunID(), reason, details...)
-}
-
-// GetRunState is a Temporal query against a running TestWorkflow returning
-// the live RunState (overall status + per-stage breakdown) for the run
-// Overview. Read-only; takes no input.
-func (r *testWorkflowRun) GetRunState(ctx context.Context) (*RunState, error) {
-	return r.client.GetRunState(ctx, r.ID(), "")
-}
-
-// UpdateStage is a Temporal signal used by child workflows to update one
-// concrete runtime stage inside the parent TestWorkflow RunState.
-func (r *testWorkflowRun) UpdateStage(ctx context.Context, req *StageUpdate) error {
-	return r.client.UpdateStage(ctx, r.ID(), "", req)
 }
 
 // Reference to generated workflow functions
 var (
 	// testServiceRegistrationMutex is a mutex for registering cloud.v1.workflow.TestService workflows
 	testServiceRegistrationMutex sync.Mutex
-	// InstallDatabaseWorkflow brings up / provisions the database (child of
-	// TestWorkflow; idempotent and retryable).
-	InstallDatabaseWorkflowFunction func(workflow.Context, *InstallDatabaseWorkflowRequest) (*InstallDatabaseWorkflowResponse, error)
-	// InstallStroppyWorkflow installs stroppy onto the runner machines (child
-	// of TestWorkflow; idempotent and retryable).
-	InstallStroppyWorkflowFunction func(workflow.Context, *InstallStroppyWorkflowRequest) (*InstallStroppyWorkflowResponse, error)
-	// RunWorkloadWorkflow runs the workload via the agent (child of
-	// TestWorkflow; unbounded, never retried to avoid double load).
-	RunWorkloadWorkflowFunction func(workflow.Context, *RunWorkloadWorkflowRequest) (*RunWorkloadWorkflowResponse, error)
-	// TestWorkflow runs one full test cycle, deduplicated by a deterministic id
-	// derived from TestRun.id and never auto-retried as a whole.
-	TestWorkflowFunction func(workflow.Context, *TestWorkflowRequest) (*TestWorkflowResponse, error)
+	// PlaceholderWorkflow: see the message doc above — required by the
+	// code generator, never started.
+	PlaceholderWorkflowFunction func(workflow.Context, *PlaceholderWorkflowRequest) (*PlaceholderWorkflowResponse, error)
 )
 
 // TestServiceWorkflowFunctions describes a mockable dependency for inlining workflows within other workflows
 type (
 	// TestServiceWorkflowFunctions describes a mockable dependency for inlining workflows within other workflows
 	TestServiceWorkflowFunctions interface {
-		// InstallDatabaseWorkflow brings up / provisions the database (child of
-		// TestWorkflow; idempotent and retryable).
-		InstallDatabaseWorkflow(workflow.Context, *InstallDatabaseWorkflowRequest) (*InstallDatabaseWorkflowResponse, error)
-		// InstallStroppyWorkflow installs stroppy onto the runner machines (child
-		// of TestWorkflow; idempotent and retryable).
-		InstallStroppyWorkflow(workflow.Context, *InstallStroppyWorkflowRequest) (*InstallStroppyWorkflowResponse, error)
-		// RunWorkloadWorkflow runs the workload via the agent (child of
-		// TestWorkflow; unbounded, never retried to avoid double load).
-		RunWorkloadWorkflow(workflow.Context, *RunWorkloadWorkflowRequest) (*RunWorkloadWorkflowResponse, error)
-		// TestWorkflow runs one full test cycle, deduplicated by a deterministic id
-		// derived from TestRun.id and never auto-retried as a whole.
-		TestWorkflow(workflow.Context, *TestWorkflowRequest) (*TestWorkflowResponse, error)
+		// PlaceholderWorkflow: see the message doc above — required by the
+		// code generator, never started.
+		PlaceholderWorkflow(workflow.Context, *PlaceholderWorkflowRequest) (*PlaceholderWorkflowResponse, error)
 	}
 	// testServiceWorkflowFunctions provides an internal TestServiceWorkflowFunctions implementation
 	testServiceWorkflowFunctions struct{}
@@ -1257,81 +435,39 @@ func NewTestServiceWorkflowFunctions() TestServiceWorkflowFunctions {
 	return &testServiceWorkflowFunctions{}
 }
 
-// InstallDatabaseWorkflow brings up / provisions the database (child of
-// TestWorkflow; idempotent and retryable).
-func (f *testServiceWorkflowFunctions) InstallDatabaseWorkflow(ctx workflow.Context, req *InstallDatabaseWorkflowRequest) (*InstallDatabaseWorkflowResponse, error) {
-	if InstallDatabaseWorkflowFunction == nil {
-		return nil, errors.New("InstallDatabaseWorkflow requires workflow registration via RegisterTestServiceWorkflows or RegisterInstallDatabaseWorkflowWorkflow")
+// PlaceholderWorkflow: see the message doc above — required by the
+// code generator, never started.
+func (f *testServiceWorkflowFunctions) PlaceholderWorkflow(ctx workflow.Context, req *PlaceholderWorkflowRequest) (*PlaceholderWorkflowResponse, error) {
+	if PlaceholderWorkflowFunction == nil {
+		return nil, errors.New("PlaceholderWorkflow requires workflow registration via RegisterTestServiceWorkflows or RegisterPlaceholderWorkflowWorkflow")
 	}
-	return InstallDatabaseWorkflowFunction(ctx, req)
-}
-
-// InstallStroppyWorkflow installs stroppy onto the runner machines (child
-// of TestWorkflow; idempotent and retryable).
-func (f *testServiceWorkflowFunctions) InstallStroppyWorkflow(ctx workflow.Context, req *InstallStroppyWorkflowRequest) (*InstallStroppyWorkflowResponse, error) {
-	if InstallStroppyWorkflowFunction == nil {
-		return nil, errors.New("InstallStroppyWorkflow requires workflow registration via RegisterTestServiceWorkflows or RegisterInstallStroppyWorkflowWorkflow")
-	}
-	return InstallStroppyWorkflowFunction(ctx, req)
-}
-
-// RunWorkloadWorkflow runs the workload via the agent (child of
-// TestWorkflow; unbounded, never retried to avoid double load).
-func (f *testServiceWorkflowFunctions) RunWorkloadWorkflow(ctx workflow.Context, req *RunWorkloadWorkflowRequest) (*RunWorkloadWorkflowResponse, error) {
-	if RunWorkloadWorkflowFunction == nil {
-		return nil, errors.New("RunWorkloadWorkflow requires workflow registration via RegisterTestServiceWorkflows or RegisterRunWorkloadWorkflowWorkflow")
-	}
-	return RunWorkloadWorkflowFunction(ctx, req)
-}
-
-// TestWorkflow runs one full test cycle, deduplicated by a deterministic id
-// derived from TestRun.id and never auto-retried as a whole.
-func (f *testServiceWorkflowFunctions) TestWorkflow(ctx workflow.Context, req *TestWorkflowRequest) (*TestWorkflowResponse, error) {
-	if TestWorkflowFunction == nil {
-		return nil, errors.New("TestWorkflow requires workflow registration via RegisterTestServiceWorkflows or RegisterTestWorkflowWorkflow")
-	}
-	return TestWorkflowFunction(ctx, req)
+	return PlaceholderWorkflowFunction(ctx, req)
 }
 
 // TestServiceWorkflows provides methods for initializing new cloud.v1.workflow.TestService workflow values
 type TestServiceWorkflows interface {
-	// InstallDatabaseWorkflow brings up / provisions the database (child of
-	// TestWorkflow; idempotent and retryable).
-	InstallDatabaseWorkflow(ctx workflow.Context, input *InstallDatabaseWorkflowWorkflowInput) (InstallDatabaseWorkflowWorkflow, error)
-
-	// InstallStroppyWorkflow installs stroppy onto the runner machines (child
-	// of TestWorkflow; idempotent and retryable).
-	InstallStroppyWorkflow(ctx workflow.Context, input *InstallStroppyWorkflowWorkflowInput) (InstallStroppyWorkflowWorkflow, error)
-
-	// RunWorkloadWorkflow runs the workload via the agent (child of
-	// TestWorkflow; unbounded, never retried to avoid double load).
-	RunWorkloadWorkflow(ctx workflow.Context, input *RunWorkloadWorkflowWorkflowInput) (RunWorkloadWorkflowWorkflow, error)
-
-	// TestWorkflow runs one full test cycle, deduplicated by a deterministic id
-	// derived from TestRun.id and never auto-retried as a whole.
-	TestWorkflow(ctx workflow.Context, input *TestWorkflowWorkflowInput) (TestWorkflowWorkflow, error)
+	// PlaceholderWorkflow: see the message doc above — required by the
+	// code generator, never started.
+	PlaceholderWorkflow(ctx workflow.Context, input *PlaceholderWorkflowWorkflowInput) (PlaceholderWorkflowWorkflow, error)
 }
 
 // RegisterTestServiceWorkflows registers cloud.v1.workflow.TestService workflows with the given worker
 func RegisterTestServiceWorkflows(r worker.WorkflowRegistry, workflows TestServiceWorkflows) {
-	RegisterInstallDatabaseWorkflowWorkflow(r, workflows.InstallDatabaseWorkflow)
-	RegisterInstallStroppyWorkflowWorkflow(r, workflows.InstallStroppyWorkflow)
-	RegisterRunWorkloadWorkflowWorkflow(r, workflows.RunWorkloadWorkflow)
-	RegisterTestWorkflowWorkflow(r, workflows.TestWorkflow)
+	RegisterPlaceholderWorkflowWorkflow(r, workflows.PlaceholderWorkflow)
 }
 
-// RegisterInstallDatabaseWorkflowWorkflow registers a cloud.v1.workflow.TestService.InstallDatabaseWorkflow workflow with the given worker
-func RegisterInstallDatabaseWorkflowWorkflow(r worker.WorkflowRegistry, wf func(workflow.Context, *InstallDatabaseWorkflowWorkflowInput) (InstallDatabaseWorkflowWorkflow, error)) {
+// RegisterPlaceholderWorkflowWorkflow registers a cloud.v1.workflow.TestService.PlaceholderWorkflow workflow with the given worker
+func RegisterPlaceholderWorkflowWorkflow(r worker.WorkflowRegistry, wf func(workflow.Context, *PlaceholderWorkflowWorkflowInput) (PlaceholderWorkflowWorkflow, error)) {
 	testServiceRegistrationMutex.Lock()
 	defer testServiceRegistrationMutex.Unlock()
-	InstallDatabaseWorkflowFunction = buildInstallDatabaseWorkflow(wf)
-	r.RegisterWorkflowWithOptions(InstallDatabaseWorkflowFunction, workflow.RegisterOptions{Name: InstallDatabaseWorkflowWorkflowName})
+	PlaceholderWorkflowFunction = buildPlaceholderWorkflow(wf)
+	r.RegisterWorkflowWithOptions(PlaceholderWorkflowFunction, workflow.RegisterOptions{Name: PlaceholderWorkflowWorkflowName})
 }
 
-// buildInstallDatabaseWorkflow converts a InstallDatabaseWorkflow workflow struct into a valid workflow function
-func buildInstallDatabaseWorkflow(ctor func(workflow.Context, *InstallDatabaseWorkflowWorkflowInput) (InstallDatabaseWorkflowWorkflow, error)) func(workflow.Context, *InstallDatabaseWorkflowRequest) (*InstallDatabaseWorkflowResponse, error) {
-	return func(ctx workflow.Context, req *InstallDatabaseWorkflowRequest) (*InstallDatabaseWorkflowResponse, error) {
-		input := &InstallDatabaseWorkflowWorkflowInput{
+// buildPlaceholderWorkflow converts a PlaceholderWorkflow workflow struct into a valid workflow function
+func buildPlaceholderWorkflow(ctor func(workflow.Context, *PlaceholderWorkflowWorkflowInput) (PlaceholderWorkflowWorkflow, error)) func(workflow.Context, *PlaceholderWorkflowRequest) (*PlaceholderWorkflowResponse, error) {
+	return func(ctx workflow.Context, req *PlaceholderWorkflowRequest) (*PlaceholderWorkflowResponse, error) {
+		input := &PlaceholderWorkflowWorkflowInput{
 			Req: req,
 		}
 		wf, err := ctor(ctx, input)
@@ -1347,48 +483,48 @@ func buildInstallDatabaseWorkflow(ctor func(workflow.Context, *InstallDatabaseWo
 	}
 }
 
-// InstallDatabaseWorkflowWorkflowInput describes the input to a(n) InstallDatabaseWorkflow workflow constructor
-type InstallDatabaseWorkflowWorkflowInput struct {
-	Req *InstallDatabaseWorkflowRequest
+// PlaceholderWorkflowWorkflowInput describes the input to a(n) PlaceholderWorkflow workflow constructor
+type PlaceholderWorkflowWorkflowInput struct {
+	Req *PlaceholderWorkflowRequest
 }
 
 // ContinueAsNew returns an appropriately configured ContinueAsNewError
-func (i *InstallDatabaseWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Context, input *InstallDatabaseWorkflowRequest, options ...workflow.ContinueAsNewErrorOptions) (*InstallDatabaseWorkflowResponse, error) {
+func (i *PlaceholderWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Context, input *PlaceholderWorkflowRequest, options ...workflow.ContinueAsNewErrorOptions) (*PlaceholderWorkflowResponse, error) {
 	next := i.Req
 	if input != nil {
 		next = input
 	}
 	if len(options) > 0 {
-		return nil, workflow.NewContinueAsNewErrorWithOptions(ctx, options[0], InstallDatabaseWorkflowWorkflowName, next)
+		return nil, workflow.NewContinueAsNewErrorWithOptions(ctx, options[0], PlaceholderWorkflowWorkflowName, next)
 	}
-	return nil, workflow.NewContinueAsNewError(ctx, InstallDatabaseWorkflowWorkflowName, next)
+	return nil, workflow.NewContinueAsNewError(ctx, PlaceholderWorkflowWorkflowName, next)
 }
 
-// InstallDatabaseWorkflow brings up / provisions the database (child of
-// TestWorkflow; idempotent and retryable).
-type InstallDatabaseWorkflowWorkflow interface {
-	// Execute defines the entrypoint to a(n) InstallDatabaseWorkflow workflow
-	Execute(ctx workflow.Context) (*InstallDatabaseWorkflowResponse, error)
+// PlaceholderWorkflow: see the message doc above — required by the
+// code generator, never started.
+type PlaceholderWorkflowWorkflow interface {
+	// Execute defines the entrypoint to a(n) PlaceholderWorkflow workflow
+	Execute(ctx workflow.Context) (*PlaceholderWorkflowResponse, error)
 }
 
-// InstallDatabaseWorkflow brings up / provisions the database (child of
-// TestWorkflow; idempotent and retryable).
-func InstallDatabaseWorkflowChild(ctx workflow.Context, req *InstallDatabaseWorkflowRequest, options ...*InstallDatabaseWorkflowChildOptions) (*InstallDatabaseWorkflowResponse, error) {
-	childRun, err := InstallDatabaseWorkflowChildAsync(ctx, req, options...)
+// PlaceholderWorkflow: see the message doc above — required by the
+// code generator, never started.
+func PlaceholderWorkflowChild(ctx workflow.Context, req *PlaceholderWorkflowRequest, options ...*PlaceholderWorkflowChildOptions) (*PlaceholderWorkflowResponse, error) {
+	childRun, err := PlaceholderWorkflowChildAsync(ctx, req, options...)
 	if err != nil {
 		return nil, err
 	}
 	return childRun.Get(ctx)
 }
 
-// InstallDatabaseWorkflow brings up / provisions the database (child of
-// TestWorkflow; idempotent and retryable).
-func InstallDatabaseWorkflowChildAsync(ctx workflow.Context, req *InstallDatabaseWorkflowRequest, options ...*InstallDatabaseWorkflowChildOptions) (*InstallDatabaseWorkflowChildRun, error) {
-	var o *InstallDatabaseWorkflowChildOptions
+// PlaceholderWorkflow: see the message doc above — required by the
+// code generator, never started.
+func PlaceholderWorkflowChildAsync(ctx workflow.Context, req *PlaceholderWorkflowRequest, options ...*PlaceholderWorkflowChildOptions) (*PlaceholderWorkflowChildRun, error) {
+	var o *PlaceholderWorkflowChildOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
 	} else {
-		o = NewInstallDatabaseWorkflowChildOptions()
+		o = NewPlaceholderWorkflowChildOptions()
 	}
 	opts, err := o.Build(ctx, req.ProtoReflect())
 	if err != nil {
@@ -1398,11 +534,11 @@ func InstallDatabaseWorkflowChildAsync(ctx workflow.Context, req *InstallDatabas
 	if o.dc != nil {
 		ctx = workflow.WithDataConverter(ctx, o.dc)
 	}
-	return &InstallDatabaseWorkflowChildRun{Future: workflow.ExecuteChildWorkflow(ctx, InstallDatabaseWorkflowWorkflowName, req)}, nil
+	return &PlaceholderWorkflowChildRun{Future: workflow.ExecuteChildWorkflow(ctx, PlaceholderWorkflowWorkflowName, req)}, nil
 }
 
-// InstallDatabaseWorkflowChildOptions provides configuration for a child InstallDatabaseWorkflow workflow operation
-type InstallDatabaseWorkflowChildOptions struct {
+// PlaceholderWorkflowChildOptions provides configuration for a child PlaceholderWorkflow workflow operation
+type PlaceholderWorkflowChildOptions struct {
 	options               workflow.ChildWorkflowOptions
 	executionTimeout      *time.Duration
 	id                    *string
@@ -1418,553 +554,13 @@ type InstallDatabaseWorkflowChildOptions struct {
 	waitForCancellation   *bool
 }
 
-// NewInstallDatabaseWorkflowChildOptions initializes a new InstallDatabaseWorkflowChildOptions value
-func NewInstallDatabaseWorkflowChildOptions() *InstallDatabaseWorkflowChildOptions {
-	return &InstallDatabaseWorkflowChildOptions{}
+// NewPlaceholderWorkflowChildOptions initializes a new PlaceholderWorkflowChildOptions value
+func NewPlaceholderWorkflowChildOptions() *PlaceholderWorkflowChildOptions {
+	return &PlaceholderWorkflowChildOptions{}
 }
 
 // Build initializes a new go.temporal.io/sdk/workflow.ChildWorkflowOptions value with defaults and overrides applied
-func (o *InstallDatabaseWorkflowChildOptions) Build(ctx workflow.Context, req protoreflect.Message) (workflow.ChildWorkflowOptions, error) {
-	opts := o.options
-	if v := o.id; v != nil {
-		opts.WorkflowID = *v
-	}
-	if v := o.idReusePolicy; v != enumsv1.WORKFLOW_ID_REUSE_POLICY_UNSPECIFIED {
-		opts.WorkflowIDReusePolicy = v
-	}
-	if v := o.taskQueue; v != nil {
-		opts.TaskQueue = *v
-	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = TestServiceTaskQueue
-	}
-	if v := o.retryPolicy; v != nil {
-		opts.RetryPolicy = v
-	} else if opts.RetryPolicy == nil {
-		opts.RetryPolicy = &temporal.RetryPolicy{
-			InitialInterval: 5000000000,
-			MaximumAttempts: int32(3),
-		}
-	}
-	if v := o.searchAttributes; v != nil {
-		opts.SearchAttributes = o.searchAttributes
-	}
-	if v := o.typedSearchAttributes; v != nil {
-		opts.TypedSearchAttributes = *v
-	}
-	if v := o.executionTimeout; v != nil {
-		opts.WorkflowExecutionTimeout = *v
-	}
-	if v := o.runTimeout; v != nil {
-		opts.WorkflowRunTimeout = *v
-	} else if opts.WorkflowRunTimeout == 0 {
-		opts.WorkflowRunTimeout = 1800000000000 // 30 minutes
-	}
-	if v := o.taskTimeout; v != nil {
-		opts.WorkflowTaskTimeout = *v
-	}
-	if v := o.parentClosePolicy; v != enumsv1.PARENT_CLOSE_POLICY_UNSPECIFIED {
-		opts.ParentClosePolicy = v
-	}
-	if v := o.waitForCancellation; v != nil {
-		opts.WaitForCancellation = *v
-	}
-	return opts, nil
-}
-
-// WithChildWorkflowOptions sets the initial go.temporal.io/sdk/workflow.ChildWorkflowOptions
-func (o *InstallDatabaseWorkflowChildOptions) WithChildWorkflowOptions(options workflow.ChildWorkflowOptions) *InstallDatabaseWorkflowChildOptions {
-	o.options = options
-	return o
-}
-
-// WithDataConverter registers a DataConverter for the child workflow
-func (o *InstallDatabaseWorkflowChildOptions) WithDataConverter(dc converter.DataConverter) *InstallDatabaseWorkflowChildOptions {
-	o.dc = dc
-	return o
-}
-
-// WithExecutionTimeout sets the WorkflowExecutionTimeout value
-func (o *InstallDatabaseWorkflowChildOptions) WithExecutionTimeout(d time.Duration) *InstallDatabaseWorkflowChildOptions {
-	o.executionTimeout = &d
-	return o
-}
-
-// WithID sets the WorkflowID value
-func (o *InstallDatabaseWorkflowChildOptions) WithID(id string) *InstallDatabaseWorkflowChildOptions {
-	o.id = &id
-	return o
-}
-
-// WithIDReusePolicy sets the WorkflowIDReusePolicy value
-func (o *InstallDatabaseWorkflowChildOptions) WithIDReusePolicy(policy enumsv1.WorkflowIdReusePolicy) *InstallDatabaseWorkflowChildOptions {
-	o.idReusePolicy = policy
-	return o
-}
-
-// WithParentClosePolicy sets the WorkflowIDReusePolicy value
-func (o *InstallDatabaseWorkflowChildOptions) WithParentClosePolicy(policy enumsv1.ParentClosePolicy) *InstallDatabaseWorkflowChildOptions {
-	o.parentClosePolicy = policy
-	return o
-}
-
-// WithRetryPolicy sets the RetryPolicy value
-func (o *InstallDatabaseWorkflowChildOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *InstallDatabaseWorkflowChildOptions {
-	o.retryPolicy = policy
-	return o
-}
-
-// WithRunTimeout sets the WorkflowRunTimeout value
-func (o *InstallDatabaseWorkflowChildOptions) WithRunTimeout(d time.Duration) *InstallDatabaseWorkflowChildOptions {
-	o.runTimeout = &d
-	return o
-}
-
-// WithSearchAttributes sets the SearchAttributes value
-func (o *InstallDatabaseWorkflowChildOptions) WithSearchAttributes(sa map[string]any) *InstallDatabaseWorkflowChildOptions {
-	o.searchAttributes = sa
-	return o
-}
-
-// WithTaskTimeout sets the WorkflowTaskTimeout value
-func (o *InstallDatabaseWorkflowChildOptions) WithTaskTimeout(d time.Duration) *InstallDatabaseWorkflowChildOptions {
-	o.taskTimeout = &d
-	return o
-}
-
-// WithTaskQueue sets the TaskQueue value
-func (o *InstallDatabaseWorkflowChildOptions) WithTaskQueue(tq string) *InstallDatabaseWorkflowChildOptions {
-	o.taskQueue = &tq
-	return o
-}
-
-// WithTypedSearchAttributes sets the TypedSearchAttributes value
-func (o *InstallDatabaseWorkflowChildOptions) WithTypedSearchAttributes(tsa temporal.SearchAttributes) *InstallDatabaseWorkflowChildOptions {
-	o.typedSearchAttributes = &tsa
-	return o
-}
-
-// WithWaitForCancellation sets the WaitForCancellation value
-func (o *InstallDatabaseWorkflowChildOptions) WithWaitForCancellation(wait bool) *InstallDatabaseWorkflowChildOptions {
-	o.waitForCancellation = &wait
-	return o
-}
-
-// InstallDatabaseWorkflowChildRun describes a child InstallDatabaseWorkflow workflow run
-type InstallDatabaseWorkflowChildRun struct {
-	Future workflow.ChildWorkflowFuture
-}
-
-// Get blocks until the workflow is completed, returning the response value
-func (r *InstallDatabaseWorkflowChildRun) Get(ctx workflow.Context) (*InstallDatabaseWorkflowResponse, error) {
-	var resp InstallDatabaseWorkflowResponse
-	if err := r.Future.Get(ctx, &resp); err != nil {
-		return nil, err
-	}
-	return &resp, nil
-}
-
-// Select adds this completion to the selector. Callback can be nil.
-func (r *InstallDatabaseWorkflowChildRun) Select(sel workflow.Selector, fn func(*InstallDatabaseWorkflowChildRun)) workflow.Selector {
-	return sel.AddFuture(r.Future, func(workflow.Future) {
-		if fn != nil {
-			fn(r)
-		}
-	})
-}
-
-// SelectStart adds waiting for start to the selector. Callback can be nil.
-func (r *InstallDatabaseWorkflowChildRun) SelectStart(sel workflow.Selector, fn func(*InstallDatabaseWorkflowChildRun)) workflow.Selector {
-	return sel.AddFuture(r.Future.GetChildWorkflowExecution(), func(workflow.Future) {
-		if fn != nil {
-			fn(r)
-		}
-	})
-}
-
-// WaitStart waits for the child workflow to start
-func (r *InstallDatabaseWorkflowChildRun) WaitStart(ctx workflow.Context) (*workflow.Execution, error) {
-	var exec workflow.Execution
-	if err := r.Future.GetChildWorkflowExecution().Get(ctx, &exec); err != nil {
-		return nil, err
-	}
-	return &exec, nil
-}
-
-// RegisterInstallStroppyWorkflowWorkflow registers a cloud.v1.workflow.TestService.InstallStroppyWorkflow workflow with the given worker
-func RegisterInstallStroppyWorkflowWorkflow(r worker.WorkflowRegistry, wf func(workflow.Context, *InstallStroppyWorkflowWorkflowInput) (InstallStroppyWorkflowWorkflow, error)) {
-	testServiceRegistrationMutex.Lock()
-	defer testServiceRegistrationMutex.Unlock()
-	InstallStroppyWorkflowFunction = buildInstallStroppyWorkflow(wf)
-	r.RegisterWorkflowWithOptions(InstallStroppyWorkflowFunction, workflow.RegisterOptions{Name: InstallStroppyWorkflowWorkflowName})
-}
-
-// buildInstallStroppyWorkflow converts a InstallStroppyWorkflow workflow struct into a valid workflow function
-func buildInstallStroppyWorkflow(ctor func(workflow.Context, *InstallStroppyWorkflowWorkflowInput) (InstallStroppyWorkflowWorkflow, error)) func(workflow.Context, *InstallStroppyWorkflowRequest) (*InstallStroppyWorkflowResponse, error) {
-	return func(ctx workflow.Context, req *InstallStroppyWorkflowRequest) (*InstallStroppyWorkflowResponse, error) {
-		input := &InstallStroppyWorkflowWorkflowInput{
-			Req: req,
-		}
-		wf, err := ctor(ctx, input)
-		if err != nil {
-			return nil, err
-		}
-		if initializable, ok := wf.(helpers.Initializable); ok {
-			if err := initializable.Initialize(ctx); err != nil {
-				return nil, err
-			}
-		}
-		return wf.Execute(ctx)
-	}
-}
-
-// InstallStroppyWorkflowWorkflowInput describes the input to a(n) InstallStroppyWorkflow workflow constructor
-type InstallStroppyWorkflowWorkflowInput struct {
-	Req *InstallStroppyWorkflowRequest
-}
-
-// ContinueAsNew returns an appropriately configured ContinueAsNewError
-func (i *InstallStroppyWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Context, input *InstallStroppyWorkflowRequest, options ...workflow.ContinueAsNewErrorOptions) (*InstallStroppyWorkflowResponse, error) {
-	next := i.Req
-	if input != nil {
-		next = input
-	}
-	if len(options) > 0 {
-		return nil, workflow.NewContinueAsNewErrorWithOptions(ctx, options[0], InstallStroppyWorkflowWorkflowName, next)
-	}
-	return nil, workflow.NewContinueAsNewError(ctx, InstallStroppyWorkflowWorkflowName, next)
-}
-
-// InstallStroppyWorkflow installs stroppy onto the runner machines (child
-// of TestWorkflow; idempotent and retryable).
-type InstallStroppyWorkflowWorkflow interface {
-	// Execute defines the entrypoint to a(n) InstallStroppyWorkflow workflow
-	Execute(ctx workflow.Context) (*InstallStroppyWorkflowResponse, error)
-}
-
-// InstallStroppyWorkflow installs stroppy onto the runner machines (child
-// of TestWorkflow; idempotent and retryable).
-func InstallStroppyWorkflowChild(ctx workflow.Context, req *InstallStroppyWorkflowRequest, options ...*InstallStroppyWorkflowChildOptions) (*InstallStroppyWorkflowResponse, error) {
-	childRun, err := InstallStroppyWorkflowChildAsync(ctx, req, options...)
-	if err != nil {
-		return nil, err
-	}
-	return childRun.Get(ctx)
-}
-
-// InstallStroppyWorkflow installs stroppy onto the runner machines (child
-// of TestWorkflow; idempotent and retryable).
-func InstallStroppyWorkflowChildAsync(ctx workflow.Context, req *InstallStroppyWorkflowRequest, options ...*InstallStroppyWorkflowChildOptions) (*InstallStroppyWorkflowChildRun, error) {
-	var o *InstallStroppyWorkflowChildOptions
-	if len(options) > 0 && options[0] != nil {
-		o = options[0]
-	} else {
-		o = NewInstallStroppyWorkflowChildOptions()
-	}
-	opts, err := o.Build(ctx, req.ProtoReflect())
-	if err != nil {
-		return nil, fmt.Errorf("error initializing workflow.ChildWorkflowOptions: %w", err)
-	}
-	ctx = workflow.WithChildOptions(ctx, opts)
-	if o.dc != nil {
-		ctx = workflow.WithDataConverter(ctx, o.dc)
-	}
-	return &InstallStroppyWorkflowChildRun{Future: workflow.ExecuteChildWorkflow(ctx, InstallStroppyWorkflowWorkflowName, req)}, nil
-}
-
-// InstallStroppyWorkflowChildOptions provides configuration for a child InstallStroppyWorkflow workflow operation
-type InstallStroppyWorkflowChildOptions struct {
-	options               workflow.ChildWorkflowOptions
-	executionTimeout      *time.Duration
-	id                    *string
-	idReusePolicy         enumsv1.WorkflowIdReusePolicy
-	retryPolicy           *temporal.RetryPolicy
-	runTimeout            *time.Duration
-	searchAttributes      map[string]any
-	taskQueue             *string
-	taskTimeout           *time.Duration
-	typedSearchAttributes *temporal.SearchAttributes
-	dc                    converter.DataConverter
-	parentClosePolicy     enumsv1.ParentClosePolicy
-	waitForCancellation   *bool
-}
-
-// NewInstallStroppyWorkflowChildOptions initializes a new InstallStroppyWorkflowChildOptions value
-func NewInstallStroppyWorkflowChildOptions() *InstallStroppyWorkflowChildOptions {
-	return &InstallStroppyWorkflowChildOptions{}
-}
-
-// Build initializes a new go.temporal.io/sdk/workflow.ChildWorkflowOptions value with defaults and overrides applied
-func (o *InstallStroppyWorkflowChildOptions) Build(ctx workflow.Context, req protoreflect.Message) (workflow.ChildWorkflowOptions, error) {
-	opts := o.options
-	if v := o.id; v != nil {
-		opts.WorkflowID = *v
-	}
-	if v := o.idReusePolicy; v != enumsv1.WORKFLOW_ID_REUSE_POLICY_UNSPECIFIED {
-		opts.WorkflowIDReusePolicy = v
-	}
-	if v := o.taskQueue; v != nil {
-		opts.TaskQueue = *v
-	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = TestServiceTaskQueue
-	}
-	if v := o.retryPolicy; v != nil {
-		opts.RetryPolicy = v
-	} else if opts.RetryPolicy == nil {
-		opts.RetryPolicy = &temporal.RetryPolicy{
-			InitialInterval: 5000000000,
-			MaximumAttempts: int32(3),
-		}
-	}
-	if v := o.searchAttributes; v != nil {
-		opts.SearchAttributes = o.searchAttributes
-	}
-	if v := o.typedSearchAttributes; v != nil {
-		opts.TypedSearchAttributes = *v
-	}
-	if v := o.executionTimeout; v != nil {
-		opts.WorkflowExecutionTimeout = *v
-	}
-	if v := o.runTimeout; v != nil {
-		opts.WorkflowRunTimeout = *v
-	} else if opts.WorkflowRunTimeout == 0 {
-		opts.WorkflowRunTimeout = 1800000000000 // 30 minutes
-	}
-	if v := o.taskTimeout; v != nil {
-		opts.WorkflowTaskTimeout = *v
-	}
-	if v := o.parentClosePolicy; v != enumsv1.PARENT_CLOSE_POLICY_UNSPECIFIED {
-		opts.ParentClosePolicy = v
-	}
-	if v := o.waitForCancellation; v != nil {
-		opts.WaitForCancellation = *v
-	}
-	return opts, nil
-}
-
-// WithChildWorkflowOptions sets the initial go.temporal.io/sdk/workflow.ChildWorkflowOptions
-func (o *InstallStroppyWorkflowChildOptions) WithChildWorkflowOptions(options workflow.ChildWorkflowOptions) *InstallStroppyWorkflowChildOptions {
-	o.options = options
-	return o
-}
-
-// WithDataConverter registers a DataConverter for the child workflow
-func (o *InstallStroppyWorkflowChildOptions) WithDataConverter(dc converter.DataConverter) *InstallStroppyWorkflowChildOptions {
-	o.dc = dc
-	return o
-}
-
-// WithExecutionTimeout sets the WorkflowExecutionTimeout value
-func (o *InstallStroppyWorkflowChildOptions) WithExecutionTimeout(d time.Duration) *InstallStroppyWorkflowChildOptions {
-	o.executionTimeout = &d
-	return o
-}
-
-// WithID sets the WorkflowID value
-func (o *InstallStroppyWorkflowChildOptions) WithID(id string) *InstallStroppyWorkflowChildOptions {
-	o.id = &id
-	return o
-}
-
-// WithIDReusePolicy sets the WorkflowIDReusePolicy value
-func (o *InstallStroppyWorkflowChildOptions) WithIDReusePolicy(policy enumsv1.WorkflowIdReusePolicy) *InstallStroppyWorkflowChildOptions {
-	o.idReusePolicy = policy
-	return o
-}
-
-// WithParentClosePolicy sets the WorkflowIDReusePolicy value
-func (o *InstallStroppyWorkflowChildOptions) WithParentClosePolicy(policy enumsv1.ParentClosePolicy) *InstallStroppyWorkflowChildOptions {
-	o.parentClosePolicy = policy
-	return o
-}
-
-// WithRetryPolicy sets the RetryPolicy value
-func (o *InstallStroppyWorkflowChildOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *InstallStroppyWorkflowChildOptions {
-	o.retryPolicy = policy
-	return o
-}
-
-// WithRunTimeout sets the WorkflowRunTimeout value
-func (o *InstallStroppyWorkflowChildOptions) WithRunTimeout(d time.Duration) *InstallStroppyWorkflowChildOptions {
-	o.runTimeout = &d
-	return o
-}
-
-// WithSearchAttributes sets the SearchAttributes value
-func (o *InstallStroppyWorkflowChildOptions) WithSearchAttributes(sa map[string]any) *InstallStroppyWorkflowChildOptions {
-	o.searchAttributes = sa
-	return o
-}
-
-// WithTaskTimeout sets the WorkflowTaskTimeout value
-func (o *InstallStroppyWorkflowChildOptions) WithTaskTimeout(d time.Duration) *InstallStroppyWorkflowChildOptions {
-	o.taskTimeout = &d
-	return o
-}
-
-// WithTaskQueue sets the TaskQueue value
-func (o *InstallStroppyWorkflowChildOptions) WithTaskQueue(tq string) *InstallStroppyWorkflowChildOptions {
-	o.taskQueue = &tq
-	return o
-}
-
-// WithTypedSearchAttributes sets the TypedSearchAttributes value
-func (o *InstallStroppyWorkflowChildOptions) WithTypedSearchAttributes(tsa temporal.SearchAttributes) *InstallStroppyWorkflowChildOptions {
-	o.typedSearchAttributes = &tsa
-	return o
-}
-
-// WithWaitForCancellation sets the WaitForCancellation value
-func (o *InstallStroppyWorkflowChildOptions) WithWaitForCancellation(wait bool) *InstallStroppyWorkflowChildOptions {
-	o.waitForCancellation = &wait
-	return o
-}
-
-// InstallStroppyWorkflowChildRun describes a child InstallStroppyWorkflow workflow run
-type InstallStroppyWorkflowChildRun struct {
-	Future workflow.ChildWorkflowFuture
-}
-
-// Get blocks until the workflow is completed, returning the response value
-func (r *InstallStroppyWorkflowChildRun) Get(ctx workflow.Context) (*InstallStroppyWorkflowResponse, error) {
-	var resp InstallStroppyWorkflowResponse
-	if err := r.Future.Get(ctx, &resp); err != nil {
-		return nil, err
-	}
-	return &resp, nil
-}
-
-// Select adds this completion to the selector. Callback can be nil.
-func (r *InstallStroppyWorkflowChildRun) Select(sel workflow.Selector, fn func(*InstallStroppyWorkflowChildRun)) workflow.Selector {
-	return sel.AddFuture(r.Future, func(workflow.Future) {
-		if fn != nil {
-			fn(r)
-		}
-	})
-}
-
-// SelectStart adds waiting for start to the selector. Callback can be nil.
-func (r *InstallStroppyWorkflowChildRun) SelectStart(sel workflow.Selector, fn func(*InstallStroppyWorkflowChildRun)) workflow.Selector {
-	return sel.AddFuture(r.Future.GetChildWorkflowExecution(), func(workflow.Future) {
-		if fn != nil {
-			fn(r)
-		}
-	})
-}
-
-// WaitStart waits for the child workflow to start
-func (r *InstallStroppyWorkflowChildRun) WaitStart(ctx workflow.Context) (*workflow.Execution, error) {
-	var exec workflow.Execution
-	if err := r.Future.GetChildWorkflowExecution().Get(ctx, &exec); err != nil {
-		return nil, err
-	}
-	return &exec, nil
-}
-
-// RegisterRunWorkloadWorkflowWorkflow registers a cloud.v1.workflow.TestService.RunWorkloadWorkflow workflow with the given worker
-func RegisterRunWorkloadWorkflowWorkflow(r worker.WorkflowRegistry, wf func(workflow.Context, *RunWorkloadWorkflowWorkflowInput) (RunWorkloadWorkflowWorkflow, error)) {
-	testServiceRegistrationMutex.Lock()
-	defer testServiceRegistrationMutex.Unlock()
-	RunWorkloadWorkflowFunction = buildRunWorkloadWorkflow(wf)
-	r.RegisterWorkflowWithOptions(RunWorkloadWorkflowFunction, workflow.RegisterOptions{Name: RunWorkloadWorkflowWorkflowName})
-}
-
-// buildRunWorkloadWorkflow converts a RunWorkloadWorkflow workflow struct into a valid workflow function
-func buildRunWorkloadWorkflow(ctor func(workflow.Context, *RunWorkloadWorkflowWorkflowInput) (RunWorkloadWorkflowWorkflow, error)) func(workflow.Context, *RunWorkloadWorkflowRequest) (*RunWorkloadWorkflowResponse, error) {
-	return func(ctx workflow.Context, req *RunWorkloadWorkflowRequest) (*RunWorkloadWorkflowResponse, error) {
-		input := &RunWorkloadWorkflowWorkflowInput{
-			Req: req,
-		}
-		wf, err := ctor(ctx, input)
-		if err != nil {
-			return nil, err
-		}
-		if initializable, ok := wf.(helpers.Initializable); ok {
-			if err := initializable.Initialize(ctx); err != nil {
-				return nil, err
-			}
-		}
-		return wf.Execute(ctx)
-	}
-}
-
-// RunWorkloadWorkflowWorkflowInput describes the input to a(n) RunWorkloadWorkflow workflow constructor
-type RunWorkloadWorkflowWorkflowInput struct {
-	Req *RunWorkloadWorkflowRequest
-}
-
-// ContinueAsNew returns an appropriately configured ContinueAsNewError
-func (i *RunWorkloadWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Context, input *RunWorkloadWorkflowRequest, options ...workflow.ContinueAsNewErrorOptions) (*RunWorkloadWorkflowResponse, error) {
-	next := i.Req
-	if input != nil {
-		next = input
-	}
-	if len(options) > 0 {
-		return nil, workflow.NewContinueAsNewErrorWithOptions(ctx, options[0], RunWorkloadWorkflowWorkflowName, next)
-	}
-	return nil, workflow.NewContinueAsNewError(ctx, RunWorkloadWorkflowWorkflowName, next)
-}
-
-// RunWorkloadWorkflow runs the workload via the agent (child of
-// TestWorkflow; unbounded, never retried to avoid double load).
-type RunWorkloadWorkflowWorkflow interface {
-	// Execute defines the entrypoint to a(n) RunWorkloadWorkflow workflow
-	Execute(ctx workflow.Context) (*RunWorkloadWorkflowResponse, error)
-}
-
-// RunWorkloadWorkflow runs the workload via the agent (child of
-// TestWorkflow; unbounded, never retried to avoid double load).
-func RunWorkloadWorkflowChild(ctx workflow.Context, req *RunWorkloadWorkflowRequest, options ...*RunWorkloadWorkflowChildOptions) (*RunWorkloadWorkflowResponse, error) {
-	childRun, err := RunWorkloadWorkflowChildAsync(ctx, req, options...)
-	if err != nil {
-		return nil, err
-	}
-	return childRun.Get(ctx)
-}
-
-// RunWorkloadWorkflow runs the workload via the agent (child of
-// TestWorkflow; unbounded, never retried to avoid double load).
-func RunWorkloadWorkflowChildAsync(ctx workflow.Context, req *RunWorkloadWorkflowRequest, options ...*RunWorkloadWorkflowChildOptions) (*RunWorkloadWorkflowChildRun, error) {
-	var o *RunWorkloadWorkflowChildOptions
-	if len(options) > 0 && options[0] != nil {
-		o = options[0]
-	} else {
-		o = NewRunWorkloadWorkflowChildOptions()
-	}
-	opts, err := o.Build(ctx, req.ProtoReflect())
-	if err != nil {
-		return nil, fmt.Errorf("error initializing workflow.ChildWorkflowOptions: %w", err)
-	}
-	ctx = workflow.WithChildOptions(ctx, opts)
-	if o.dc != nil {
-		ctx = workflow.WithDataConverter(ctx, o.dc)
-	}
-	return &RunWorkloadWorkflowChildRun{Future: workflow.ExecuteChildWorkflow(ctx, RunWorkloadWorkflowWorkflowName, req)}, nil
-}
-
-// RunWorkloadWorkflowChildOptions provides configuration for a child RunWorkloadWorkflow workflow operation
-type RunWorkloadWorkflowChildOptions struct {
-	options               workflow.ChildWorkflowOptions
-	executionTimeout      *time.Duration
-	id                    *string
-	idReusePolicy         enumsv1.WorkflowIdReusePolicy
-	retryPolicy           *temporal.RetryPolicy
-	runTimeout            *time.Duration
-	searchAttributes      map[string]any
-	taskQueue             *string
-	taskTimeout           *time.Duration
-	typedSearchAttributes *temporal.SearchAttributes
-	dc                    converter.DataConverter
-	parentClosePolicy     enumsv1.ParentClosePolicy
-	waitForCancellation   *bool
-}
-
-// NewRunWorkloadWorkflowChildOptions initializes a new RunWorkloadWorkflowChildOptions value
-func NewRunWorkloadWorkflowChildOptions() *RunWorkloadWorkflowChildOptions {
-	return &RunWorkloadWorkflowChildOptions{}
-}
-
-// Build initializes a new go.temporal.io/sdk/workflow.ChildWorkflowOptions value with defaults and overrides applied
-func (o *RunWorkloadWorkflowChildOptions) Build(ctx workflow.Context, req protoreflect.Message) (workflow.ChildWorkflowOptions, error) {
+func (o *PlaceholderWorkflowChildOptions) Build(ctx workflow.Context, req protoreflect.Message) (workflow.ChildWorkflowOptions, error) {
 	opts := o.options
 	if v := o.id; v != nil {
 		opts.WorkflowID = *v
@@ -2009,91 +605,91 @@ func (o *RunWorkloadWorkflowChildOptions) Build(ctx workflow.Context, req protor
 }
 
 // WithChildWorkflowOptions sets the initial go.temporal.io/sdk/workflow.ChildWorkflowOptions
-func (o *RunWorkloadWorkflowChildOptions) WithChildWorkflowOptions(options workflow.ChildWorkflowOptions) *RunWorkloadWorkflowChildOptions {
+func (o *PlaceholderWorkflowChildOptions) WithChildWorkflowOptions(options workflow.ChildWorkflowOptions) *PlaceholderWorkflowChildOptions {
 	o.options = options
 	return o
 }
 
 // WithDataConverter registers a DataConverter for the child workflow
-func (o *RunWorkloadWorkflowChildOptions) WithDataConverter(dc converter.DataConverter) *RunWorkloadWorkflowChildOptions {
+func (o *PlaceholderWorkflowChildOptions) WithDataConverter(dc converter.DataConverter) *PlaceholderWorkflowChildOptions {
 	o.dc = dc
 	return o
 }
 
 // WithExecutionTimeout sets the WorkflowExecutionTimeout value
-func (o *RunWorkloadWorkflowChildOptions) WithExecutionTimeout(d time.Duration) *RunWorkloadWorkflowChildOptions {
+func (o *PlaceholderWorkflowChildOptions) WithExecutionTimeout(d time.Duration) *PlaceholderWorkflowChildOptions {
 	o.executionTimeout = &d
 	return o
 }
 
 // WithID sets the WorkflowID value
-func (o *RunWorkloadWorkflowChildOptions) WithID(id string) *RunWorkloadWorkflowChildOptions {
+func (o *PlaceholderWorkflowChildOptions) WithID(id string) *PlaceholderWorkflowChildOptions {
 	o.id = &id
 	return o
 }
 
 // WithIDReusePolicy sets the WorkflowIDReusePolicy value
-func (o *RunWorkloadWorkflowChildOptions) WithIDReusePolicy(policy enumsv1.WorkflowIdReusePolicy) *RunWorkloadWorkflowChildOptions {
+func (o *PlaceholderWorkflowChildOptions) WithIDReusePolicy(policy enumsv1.WorkflowIdReusePolicy) *PlaceholderWorkflowChildOptions {
 	o.idReusePolicy = policy
 	return o
 }
 
 // WithParentClosePolicy sets the WorkflowIDReusePolicy value
-func (o *RunWorkloadWorkflowChildOptions) WithParentClosePolicy(policy enumsv1.ParentClosePolicy) *RunWorkloadWorkflowChildOptions {
+func (o *PlaceholderWorkflowChildOptions) WithParentClosePolicy(policy enumsv1.ParentClosePolicy) *PlaceholderWorkflowChildOptions {
 	o.parentClosePolicy = policy
 	return o
 }
 
 // WithRetryPolicy sets the RetryPolicy value
-func (o *RunWorkloadWorkflowChildOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *RunWorkloadWorkflowChildOptions {
+func (o *PlaceholderWorkflowChildOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *PlaceholderWorkflowChildOptions {
 	o.retryPolicy = policy
 	return o
 }
 
 // WithRunTimeout sets the WorkflowRunTimeout value
-func (o *RunWorkloadWorkflowChildOptions) WithRunTimeout(d time.Duration) *RunWorkloadWorkflowChildOptions {
+func (o *PlaceholderWorkflowChildOptions) WithRunTimeout(d time.Duration) *PlaceholderWorkflowChildOptions {
 	o.runTimeout = &d
 	return o
 }
 
 // WithSearchAttributes sets the SearchAttributes value
-func (o *RunWorkloadWorkflowChildOptions) WithSearchAttributes(sa map[string]any) *RunWorkloadWorkflowChildOptions {
+func (o *PlaceholderWorkflowChildOptions) WithSearchAttributes(sa map[string]any) *PlaceholderWorkflowChildOptions {
 	o.searchAttributes = sa
 	return o
 }
 
 // WithTaskTimeout sets the WorkflowTaskTimeout value
-func (o *RunWorkloadWorkflowChildOptions) WithTaskTimeout(d time.Duration) *RunWorkloadWorkflowChildOptions {
+func (o *PlaceholderWorkflowChildOptions) WithTaskTimeout(d time.Duration) *PlaceholderWorkflowChildOptions {
 	o.taskTimeout = &d
 	return o
 }
 
 // WithTaskQueue sets the TaskQueue value
-func (o *RunWorkloadWorkflowChildOptions) WithTaskQueue(tq string) *RunWorkloadWorkflowChildOptions {
+func (o *PlaceholderWorkflowChildOptions) WithTaskQueue(tq string) *PlaceholderWorkflowChildOptions {
 	o.taskQueue = &tq
 	return o
 }
 
 // WithTypedSearchAttributes sets the TypedSearchAttributes value
-func (o *RunWorkloadWorkflowChildOptions) WithTypedSearchAttributes(tsa temporal.SearchAttributes) *RunWorkloadWorkflowChildOptions {
+func (o *PlaceholderWorkflowChildOptions) WithTypedSearchAttributes(tsa temporal.SearchAttributes) *PlaceholderWorkflowChildOptions {
 	o.typedSearchAttributes = &tsa
 	return o
 }
 
 // WithWaitForCancellation sets the WaitForCancellation value
-func (o *RunWorkloadWorkflowChildOptions) WithWaitForCancellation(wait bool) *RunWorkloadWorkflowChildOptions {
+func (o *PlaceholderWorkflowChildOptions) WithWaitForCancellation(wait bool) *PlaceholderWorkflowChildOptions {
 	o.waitForCancellation = &wait
 	return o
 }
 
-// RunWorkloadWorkflowChildRun describes a child RunWorkloadWorkflow workflow run
-type RunWorkloadWorkflowChildRun struct {
+// PlaceholderWorkflowChildRun describes a child PlaceholderWorkflow workflow run
+type PlaceholderWorkflowChildRun struct {
 	Future workflow.ChildWorkflowFuture
 }
 
 // Get blocks until the workflow is completed, returning the response value
-func (r *RunWorkloadWorkflowChildRun) Get(ctx workflow.Context) (*RunWorkloadWorkflowResponse, error) {
-	var resp RunWorkloadWorkflowResponse
+func (r *PlaceholderWorkflowChildRun) Get(ctx workflow.Context) (*PlaceholderWorkflowResponse, error) {
+	var resp PlaceholderWorkflowResponse
 	if err := r.Future.Get(ctx, &resp); err != nil {
 		return nil, err
 	}
@@ -2101,7 +697,7 @@ func (r *RunWorkloadWorkflowChildRun) Get(ctx workflow.Context) (*RunWorkloadWor
 }
 
 // Select adds this completion to the selector. Callback can be nil.
-func (r *RunWorkloadWorkflowChildRun) Select(sel workflow.Selector, fn func(*RunWorkloadWorkflowChildRun)) workflow.Selector {
+func (r *PlaceholderWorkflowChildRun) Select(sel workflow.Selector, fn func(*PlaceholderWorkflowChildRun)) workflow.Selector {
 	return sel.AddFuture(r.Future, func(workflow.Future) {
 		if fn != nil {
 			fn(r)
@@ -2110,7 +706,7 @@ func (r *RunWorkloadWorkflowChildRun) Select(sel workflow.Selector, fn func(*Run
 }
 
 // SelectStart adds waiting for start to the selector. Callback can be nil.
-func (r *RunWorkloadWorkflowChildRun) SelectStart(sel workflow.Selector, fn func(*RunWorkloadWorkflowChildRun)) workflow.Selector {
+func (r *PlaceholderWorkflowChildRun) SelectStart(sel workflow.Selector, fn func(*PlaceholderWorkflowChildRun)) workflow.Selector {
 	return sel.AddFuture(r.Future.GetChildWorkflowExecution(), func(workflow.Future) {
 		if fn != nil {
 			fn(r)
@@ -2119,327 +715,12 @@ func (r *RunWorkloadWorkflowChildRun) SelectStart(sel workflow.Selector, fn func
 }
 
 // WaitStart waits for the child workflow to start
-func (r *RunWorkloadWorkflowChildRun) WaitStart(ctx workflow.Context) (*workflow.Execution, error) {
+func (r *PlaceholderWorkflowChildRun) WaitStart(ctx workflow.Context) (*workflow.Execution, error) {
 	var exec workflow.Execution
 	if err := r.Future.GetChildWorkflowExecution().Get(ctx, &exec); err != nil {
 		return nil, err
 	}
 	return &exec, nil
-}
-
-// RegisterTestWorkflowWorkflow registers a cloud.v1.workflow.TestService.TestWorkflow workflow with the given worker
-func RegisterTestWorkflowWorkflow(r worker.WorkflowRegistry, wf func(workflow.Context, *TestWorkflowWorkflowInput) (TestWorkflowWorkflow, error)) {
-	testServiceRegistrationMutex.Lock()
-	defer testServiceRegistrationMutex.Unlock()
-	TestWorkflowFunction = buildTestWorkflow(wf)
-	r.RegisterWorkflowWithOptions(TestWorkflowFunction, workflow.RegisterOptions{Name: TestWorkflowWorkflowName})
-}
-
-// buildTestWorkflow converts a TestWorkflow workflow struct into a valid workflow function
-func buildTestWorkflow(ctor func(workflow.Context, *TestWorkflowWorkflowInput) (TestWorkflowWorkflow, error)) func(workflow.Context, *TestWorkflowRequest) (*TestWorkflowResponse, error) {
-	return func(ctx workflow.Context, req *TestWorkflowRequest) (*TestWorkflowResponse, error) {
-		input := &TestWorkflowWorkflowInput{
-			Req: req,
-			UpdateStage: &UpdateStageSignal{
-				Channel: workflow.GetSignalChannel(ctx, UpdateStageSignalName),
-			},
-		}
-		wf, err := ctor(ctx, input)
-		if err != nil {
-			return nil, err
-		}
-		if initializable, ok := wf.(helpers.Initializable); ok {
-			if err := initializable.Initialize(ctx); err != nil {
-				return nil, err
-			}
-		}
-		if err := workflow.SetQueryHandler(ctx, GetRunStateQueryName, wf.GetRunState); err != nil {
-			return nil, err
-		}
-		return wf.Execute(ctx)
-	}
-}
-
-// TestWorkflowWorkflowInput describes the input to a(n) TestWorkflow workflow constructor
-type TestWorkflowWorkflowInput struct {
-	Req         *TestWorkflowRequest
-	UpdateStage *UpdateStageSignal
-}
-
-// ContinueAsNew returns an appropriately configured ContinueAsNewError
-func (i *TestWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Context, input *TestWorkflowRequest, options ...workflow.ContinueAsNewErrorOptions) (*TestWorkflowResponse, error) {
-	next := i.Req
-	if input != nil {
-		next = input
-	}
-	if len(options) > 0 {
-		return nil, workflow.NewContinueAsNewErrorWithOptions(ctx, options[0], TestWorkflowWorkflowName, next)
-	}
-	return nil, workflow.NewContinueAsNewError(ctx, TestWorkflowWorkflowName, next)
-}
-
-// TestWorkflow runs one full test cycle, deduplicated by a deterministic id
-// derived from TestRun.id and never auto-retried as a whole.
-//
-// workflow details: (id: "test-run/${! testRun.id }")
-type TestWorkflowWorkflow interface {
-	// Execute defines the entrypoint to a(n) TestWorkflow workflow
-	Execute(ctx workflow.Context) (*TestWorkflowResponse, error)
-
-	// GetRunState is a Temporal query against a running TestWorkflow returning
-	// the live RunState (overall status + per-stage breakdown) for the run
-	// Overview. Read-only; takes no input.
-	GetRunState() (*RunState, error)
-}
-
-// TestWorkflow runs one full test cycle, deduplicated by a deterministic id
-// derived from TestRun.id and never auto-retried as a whole.
-func TestWorkflowChild(ctx workflow.Context, req *TestWorkflowRequest, options ...*TestWorkflowChildOptions) (*TestWorkflowResponse, error) {
-	childRun, err := TestWorkflowChildAsync(ctx, req, options...)
-	if err != nil {
-		return nil, err
-	}
-	return childRun.Get(ctx)
-}
-
-// TestWorkflow runs one full test cycle, deduplicated by a deterministic id
-// derived from TestRun.id and never auto-retried as a whole.
-func TestWorkflowChildAsync(ctx workflow.Context, req *TestWorkflowRequest, options ...*TestWorkflowChildOptions) (*TestWorkflowChildRun, error) {
-	var o *TestWorkflowChildOptions
-	if len(options) > 0 && options[0] != nil {
-		o = options[0]
-	} else {
-		o = NewTestWorkflowChildOptions()
-	}
-	opts, err := o.Build(ctx, req.ProtoReflect())
-	if err != nil {
-		return nil, fmt.Errorf("error initializing workflow.ChildWorkflowOptions: %w", err)
-	}
-	ctx = workflow.WithChildOptions(ctx, opts)
-	if o.dc != nil {
-		ctx = workflow.WithDataConverter(ctx, o.dc)
-	}
-	return &TestWorkflowChildRun{Future: workflow.ExecuteChildWorkflow(ctx, TestWorkflowWorkflowName, req)}, nil
-}
-
-// TestWorkflowChildOptions provides configuration for a child TestWorkflow workflow operation
-type TestWorkflowChildOptions struct {
-	options               workflow.ChildWorkflowOptions
-	executionTimeout      *time.Duration
-	id                    *string
-	idReusePolicy         enumsv1.WorkflowIdReusePolicy
-	retryPolicy           *temporal.RetryPolicy
-	runTimeout            *time.Duration
-	searchAttributes      map[string]any
-	taskQueue             *string
-	taskTimeout           *time.Duration
-	typedSearchAttributes *temporal.SearchAttributes
-	dc                    converter.DataConverter
-	parentClosePolicy     enumsv1.ParentClosePolicy
-	waitForCancellation   *bool
-}
-
-// NewTestWorkflowChildOptions initializes a new TestWorkflowChildOptions value
-func NewTestWorkflowChildOptions() *TestWorkflowChildOptions {
-	return &TestWorkflowChildOptions{}
-}
-
-// Build initializes a new go.temporal.io/sdk/workflow.ChildWorkflowOptions value with defaults and overrides applied
-func (o *TestWorkflowChildOptions) Build(ctx workflow.Context, req protoreflect.Message) (workflow.ChildWorkflowOptions, error) {
-	opts := o.options
-	if v := o.id; v != nil {
-		opts.WorkflowID = *v
-	} else if opts.WorkflowID == "" {
-		// wrap expression evaluation in local activity
-		// more info: https://cludden.github.io/protoc-gen-go-temporal/docs/guides/patches#pv_64-expression-evaluation-local-activity
-		if workflow.GetVersion(ctx, "cludden_protoc-gen-go-temporal_64_expression-evaluation-local-activity", workflow.DefaultVersion, 1) == 1 {
-			lao := workflow.GetLocalActivityOptions(ctx)
-			lao.ScheduleToCloseTimeout = time.Second * 10
-			if err := workflow.ExecuteLocalActivity(workflow.WithLocalActivityOptions(ctx, lao), func(ctx context.Context) (string, error) {
-				id, err := expression.EvalExpression(TestWorkflowIdexpression, req)
-				if err != nil {
-					return "", fmt.Errorf("error evaluating id expression for %q workflow: %w", TestWorkflowWorkflowName, err)
-				}
-				return id, nil
-			}).Get(ctx, &opts.WorkflowID); err != nil {
-				return opts, fmt.Errorf("error evaluating id expression for %q workflow: %w", TestWorkflowWorkflowName, err)
-			}
-		} else {
-			id, err := expression.EvalExpression(TestWorkflowIdexpression, req)
-			if err != nil {
-				return opts, fmt.Errorf("error evaluating id expression for %q workflow: %w", TestWorkflowWorkflowName, err)
-			}
-			opts.WorkflowID = id
-		}
-	}
-	if v := o.idReusePolicy; v != enumsv1.WORKFLOW_ID_REUSE_POLICY_UNSPECIFIED {
-		opts.WorkflowIDReusePolicy = v
-	} else if opts.WorkflowIDReusePolicy == enumsv1.WORKFLOW_ID_REUSE_POLICY_UNSPECIFIED {
-		opts.WorkflowIDReusePolicy = enumsv1.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY
-	}
-	if v := o.taskQueue; v != nil {
-		opts.TaskQueue = *v
-	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = TestServiceTaskQueue
-	}
-	if v := o.retryPolicy; v != nil {
-		opts.RetryPolicy = v
-	} else if opts.RetryPolicy == nil {
-		opts.RetryPolicy = &temporal.RetryPolicy{
-			MaximumAttempts: int32(1),
-		}
-	}
-	if v := o.searchAttributes; v != nil {
-		opts.SearchAttributes = o.searchAttributes
-	}
-	if v := o.typedSearchAttributes; v != nil {
-		opts.TypedSearchAttributes = *v
-	}
-	if v := o.executionTimeout; v != nil {
-		opts.WorkflowExecutionTimeout = *v
-	}
-	if v := o.runTimeout; v != nil {
-		opts.WorkflowRunTimeout = *v
-	}
-	if v := o.taskTimeout; v != nil {
-		opts.WorkflowTaskTimeout = *v
-	}
-	if v := o.parentClosePolicy; v != enumsv1.PARENT_CLOSE_POLICY_UNSPECIFIED {
-		opts.ParentClosePolicy = v
-	}
-	if v := o.waitForCancellation; v != nil {
-		opts.WaitForCancellation = *v
-	}
-	return opts, nil
-}
-
-// WithChildWorkflowOptions sets the initial go.temporal.io/sdk/workflow.ChildWorkflowOptions
-func (o *TestWorkflowChildOptions) WithChildWorkflowOptions(options workflow.ChildWorkflowOptions) *TestWorkflowChildOptions {
-	o.options = options
-	return o
-}
-
-// WithDataConverter registers a DataConverter for the child workflow
-func (o *TestWorkflowChildOptions) WithDataConverter(dc converter.DataConverter) *TestWorkflowChildOptions {
-	o.dc = dc
-	return o
-}
-
-// WithExecutionTimeout sets the WorkflowExecutionTimeout value
-func (o *TestWorkflowChildOptions) WithExecutionTimeout(d time.Duration) *TestWorkflowChildOptions {
-	o.executionTimeout = &d
-	return o
-}
-
-// WithID sets the WorkflowID value
-func (o *TestWorkflowChildOptions) WithID(id string) *TestWorkflowChildOptions {
-	o.id = &id
-	return o
-}
-
-// WithIDReusePolicy sets the WorkflowIDReusePolicy value
-func (o *TestWorkflowChildOptions) WithIDReusePolicy(policy enumsv1.WorkflowIdReusePolicy) *TestWorkflowChildOptions {
-	o.idReusePolicy = policy
-	return o
-}
-
-// WithParentClosePolicy sets the WorkflowIDReusePolicy value
-func (o *TestWorkflowChildOptions) WithParentClosePolicy(policy enumsv1.ParentClosePolicy) *TestWorkflowChildOptions {
-	o.parentClosePolicy = policy
-	return o
-}
-
-// WithRetryPolicy sets the RetryPolicy value
-func (o *TestWorkflowChildOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *TestWorkflowChildOptions {
-	o.retryPolicy = policy
-	return o
-}
-
-// WithRunTimeout sets the WorkflowRunTimeout value
-func (o *TestWorkflowChildOptions) WithRunTimeout(d time.Duration) *TestWorkflowChildOptions {
-	o.runTimeout = &d
-	return o
-}
-
-// WithSearchAttributes sets the SearchAttributes value
-func (o *TestWorkflowChildOptions) WithSearchAttributes(sa map[string]any) *TestWorkflowChildOptions {
-	o.searchAttributes = sa
-	return o
-}
-
-// WithTaskTimeout sets the WorkflowTaskTimeout value
-func (o *TestWorkflowChildOptions) WithTaskTimeout(d time.Duration) *TestWorkflowChildOptions {
-	o.taskTimeout = &d
-	return o
-}
-
-// WithTaskQueue sets the TaskQueue value
-func (o *TestWorkflowChildOptions) WithTaskQueue(tq string) *TestWorkflowChildOptions {
-	o.taskQueue = &tq
-	return o
-}
-
-// WithTypedSearchAttributes sets the TypedSearchAttributes value
-func (o *TestWorkflowChildOptions) WithTypedSearchAttributes(tsa temporal.SearchAttributes) *TestWorkflowChildOptions {
-	o.typedSearchAttributes = &tsa
-	return o
-}
-
-// WithWaitForCancellation sets the WaitForCancellation value
-func (o *TestWorkflowChildOptions) WithWaitForCancellation(wait bool) *TestWorkflowChildOptions {
-	o.waitForCancellation = &wait
-	return o
-}
-
-// TestWorkflowChildRun describes a child TestWorkflow workflow run
-type TestWorkflowChildRun struct {
-	Future workflow.ChildWorkflowFuture
-}
-
-// Get blocks until the workflow is completed, returning the response value
-func (r *TestWorkflowChildRun) Get(ctx workflow.Context) (*TestWorkflowResponse, error) {
-	var resp TestWorkflowResponse
-	if err := r.Future.Get(ctx, &resp); err != nil {
-		return nil, err
-	}
-	return &resp, nil
-}
-
-// Select adds this completion to the selector. Callback can be nil.
-func (r *TestWorkflowChildRun) Select(sel workflow.Selector, fn func(*TestWorkflowChildRun)) workflow.Selector {
-	return sel.AddFuture(r.Future, func(workflow.Future) {
-		if fn != nil {
-			fn(r)
-		}
-	})
-}
-
-// SelectStart adds waiting for start to the selector. Callback can be nil.
-func (r *TestWorkflowChildRun) SelectStart(sel workflow.Selector, fn func(*TestWorkflowChildRun)) workflow.Selector {
-	return sel.AddFuture(r.Future.GetChildWorkflowExecution(), func(workflow.Future) {
-		if fn != nil {
-			fn(r)
-		}
-	})
-}
-
-// WaitStart waits for the child workflow to start
-func (r *TestWorkflowChildRun) WaitStart(ctx workflow.Context) (*workflow.Execution, error) {
-	var exec workflow.Execution
-	if err := r.Future.GetChildWorkflowExecution().Get(ctx, &exec); err != nil {
-		return nil, err
-	}
-	return &exec, nil
-}
-
-// UpdateStage sends a(n) "UpdateStage" signal request to the child workflow
-func (r *TestWorkflowChildRun) UpdateStage(ctx workflow.Context, input *StageUpdate) error {
-	return r.UpdateStageAsync(ctx, input).Get(ctx, nil)
-}
-
-// UpdateStageAsync sends a(n) "UpdateStage" signal request to the child workflow
-func (r *TestWorkflowChildRun) UpdateStageAsync(ctx workflow.Context, input *StageUpdate) workflow.Future {
-	return r.Future.SignalChildWorkflow(ctx, UpdateStageSignalName, input)
 }
 
 // UpdateStageSignal describes a(n) cloud.v1.workflow.TestService.UpdateStage signal
@@ -2527,120 +808,33 @@ func NewTestTestServiceClient(env *testsuite.TestWorkflowEnvironment, workflows 
 	return &TestTestServiceClient{env, workflows}
 }
 
-// InstallDatabaseWorkflow executes a(n) InstallDatabaseWorkflow workflow in the test environment
-func (c *TestTestServiceClient) InstallDatabaseWorkflow(ctx context.Context, req *InstallDatabaseWorkflowRequest, opts ...*InstallDatabaseWorkflowOptions) (*InstallDatabaseWorkflowResponse, error) {
-	run, err := c.InstallDatabaseWorkflowAsync(ctx, req, opts...)
+// PlaceholderWorkflow executes a(n) PlaceholderWorkflow workflow in the test environment
+func (c *TestTestServiceClient) PlaceholderWorkflow(ctx context.Context, req *PlaceholderWorkflowRequest, opts ...*PlaceholderWorkflowOptions) (*PlaceholderWorkflowResponse, error) {
+	run, err := c.PlaceholderWorkflowAsync(ctx, req, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return run.Get(ctx)
 }
 
-// InstallDatabaseWorkflowAsync executes a(n) InstallDatabaseWorkflow workflow in the test environment
-func (c *TestTestServiceClient) InstallDatabaseWorkflowAsync(ctx context.Context, req *InstallDatabaseWorkflowRequest, options ...*InstallDatabaseWorkflowOptions) (InstallDatabaseWorkflowRun, error) {
-	var o *InstallDatabaseWorkflowOptions
+// PlaceholderWorkflowAsync executes a(n) PlaceholderWorkflow workflow in the test environment
+func (c *TestTestServiceClient) PlaceholderWorkflowAsync(ctx context.Context, req *PlaceholderWorkflowRequest, options ...*PlaceholderWorkflowOptions) (PlaceholderWorkflowRun, error) {
+	var o *PlaceholderWorkflowOptions
 	if len(options) > 0 && options[0] != nil {
 		o = options[0]
 	} else {
-		o = NewInstallDatabaseWorkflowOptions()
+		o = NewPlaceholderWorkflowOptions()
 	}
 	opts, err := o.Build(req.ProtoReflect())
 	if err != nil {
 		return nil, fmt.Errorf("error initializing client.StartWorkflowOptions: %w", err)
 	}
-	return &testInstallDatabaseWorkflowRun{client: c, env: c.env, opts: &opts, req: req, workflows: c.workflows}, nil
+	return &testPlaceholderWorkflowRun{client: c, env: c.env, opts: &opts, req: req, workflows: c.workflows}, nil
 }
 
-// GetInstallDatabaseWorkflow is a noop
-func (c *TestTestServiceClient) GetInstallDatabaseWorkflow(ctx context.Context, workflowID string, runID string) InstallDatabaseWorkflowRun {
-	return &testInstallDatabaseWorkflowRun{env: c.env, workflows: c.workflows}
-}
-
-// InstallStroppyWorkflow executes a(n) InstallStroppyWorkflow workflow in the test environment
-func (c *TestTestServiceClient) InstallStroppyWorkflow(ctx context.Context, req *InstallStroppyWorkflowRequest, opts ...*InstallStroppyWorkflowOptions) (*InstallStroppyWorkflowResponse, error) {
-	run, err := c.InstallStroppyWorkflowAsync(ctx, req, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return run.Get(ctx)
-}
-
-// InstallStroppyWorkflowAsync executes a(n) InstallStroppyWorkflow workflow in the test environment
-func (c *TestTestServiceClient) InstallStroppyWorkflowAsync(ctx context.Context, req *InstallStroppyWorkflowRequest, options ...*InstallStroppyWorkflowOptions) (InstallStroppyWorkflowRun, error) {
-	var o *InstallStroppyWorkflowOptions
-	if len(options) > 0 && options[0] != nil {
-		o = options[0]
-	} else {
-		o = NewInstallStroppyWorkflowOptions()
-	}
-	opts, err := o.Build(req.ProtoReflect())
-	if err != nil {
-		return nil, fmt.Errorf("error initializing client.StartWorkflowOptions: %w", err)
-	}
-	return &testInstallStroppyWorkflowRun{client: c, env: c.env, opts: &opts, req: req, workflows: c.workflows}, nil
-}
-
-// GetInstallStroppyWorkflow is a noop
-func (c *TestTestServiceClient) GetInstallStroppyWorkflow(ctx context.Context, workflowID string, runID string) InstallStroppyWorkflowRun {
-	return &testInstallStroppyWorkflowRun{env: c.env, workflows: c.workflows}
-}
-
-// RunWorkloadWorkflow executes a(n) RunWorkloadWorkflow workflow in the test environment
-func (c *TestTestServiceClient) RunWorkloadWorkflow(ctx context.Context, req *RunWorkloadWorkflowRequest, opts ...*RunWorkloadWorkflowOptions) (*RunWorkloadWorkflowResponse, error) {
-	run, err := c.RunWorkloadWorkflowAsync(ctx, req, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return run.Get(ctx)
-}
-
-// RunWorkloadWorkflowAsync executes a(n) RunWorkloadWorkflow workflow in the test environment
-func (c *TestTestServiceClient) RunWorkloadWorkflowAsync(ctx context.Context, req *RunWorkloadWorkflowRequest, options ...*RunWorkloadWorkflowOptions) (RunWorkloadWorkflowRun, error) {
-	var o *RunWorkloadWorkflowOptions
-	if len(options) > 0 && options[0] != nil {
-		o = options[0]
-	} else {
-		o = NewRunWorkloadWorkflowOptions()
-	}
-	opts, err := o.Build(req.ProtoReflect())
-	if err != nil {
-		return nil, fmt.Errorf("error initializing client.StartWorkflowOptions: %w", err)
-	}
-	return &testRunWorkloadWorkflowRun{client: c, env: c.env, opts: &opts, req: req, workflows: c.workflows}, nil
-}
-
-// GetRunWorkloadWorkflow is a noop
-func (c *TestTestServiceClient) GetRunWorkloadWorkflow(ctx context.Context, workflowID string, runID string) RunWorkloadWorkflowRun {
-	return &testRunWorkloadWorkflowRun{env: c.env, workflows: c.workflows}
-}
-
-// TestWorkflow executes a(n) TestWorkflow workflow in the test environment
-func (c *TestTestServiceClient) TestWorkflow(ctx context.Context, req *TestWorkflowRequest, opts ...*TestWorkflowOptions) (*TestWorkflowResponse, error) {
-	run, err := c.TestWorkflowAsync(ctx, req, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return run.Get(ctx)
-}
-
-// TestWorkflowAsync executes a(n) TestWorkflow workflow in the test environment
-func (c *TestTestServiceClient) TestWorkflowAsync(ctx context.Context, req *TestWorkflowRequest, options ...*TestWorkflowOptions) (TestWorkflowRun, error) {
-	var o *TestWorkflowOptions
-	if len(options) > 0 && options[0] != nil {
-		o = options[0]
-	} else {
-		o = NewTestWorkflowOptions()
-	}
-	opts, err := o.Build(req.ProtoReflect())
-	if err != nil {
-		return nil, fmt.Errorf("error initializing client.StartWorkflowOptions: %w", err)
-	}
-	return &testTestWorkflowRun{client: c, env: c.env, opts: &opts, req: req, workflows: c.workflows}, nil
-}
-
-// GetTestWorkflow is a noop
-func (c *TestTestServiceClient) GetTestWorkflow(ctx context.Context, workflowID string, runID string) TestWorkflowRun {
-	return &testTestWorkflowRun{env: c.env, workflows: c.workflows}
+// GetPlaceholderWorkflow is a noop
+func (c *TestTestServiceClient) GetPlaceholderWorkflow(ctx context.Context, workflowID string, runID string) PlaceholderWorkflowRun {
+	return &testPlaceholderWorkflowRun{env: c.env, workflows: c.workflows}
 }
 
 // CancelWorkflow requests cancellation of an existing workflow execution
@@ -2676,27 +870,27 @@ func (c *TestTestServiceClient) UpdateStage(ctx context.Context, workflowID stri
 	return nil
 }
 
-var _ InstallDatabaseWorkflowRun = &testInstallDatabaseWorkflowRun{}
+var _ PlaceholderWorkflowRun = &testPlaceholderWorkflowRun{}
 
-// testInstallDatabaseWorkflowRun provides convenience methods for interacting with a(n) InstallDatabaseWorkflow workflow in the test environment
-type testInstallDatabaseWorkflowRun struct {
+// testPlaceholderWorkflowRun provides convenience methods for interacting with a(n) PlaceholderWorkflow workflow in the test environment
+type testPlaceholderWorkflowRun struct {
 	client    *TestTestServiceClient
 	env       *testsuite.TestWorkflowEnvironment
 	isStarted atomic.Bool
 	opts      *client.StartWorkflowOptions
-	req       *InstallDatabaseWorkflowRequest
+	req       *PlaceholderWorkflowRequest
 	workflows TestServiceWorkflows
 }
 
 // Cancel requests cancellation of a workflow in execution, returning an error if applicable
-func (r *testInstallDatabaseWorkflowRun) Cancel(ctx context.Context) error {
+func (r *testPlaceholderWorkflowRun) Cancel(ctx context.Context) error {
 	return r.client.CancelWorkflow(ctx, r.ID(), r.RunID())
 }
 
-// Get retrieves a test InstallDatabaseWorkflow workflow result
-func (r *testInstallDatabaseWorkflowRun) Get(context.Context) (*InstallDatabaseWorkflowResponse, error) {
+// Get retrieves a test PlaceholderWorkflow workflow result
+func (r *testPlaceholderWorkflowRun) Get(context.Context) (*PlaceholderWorkflowResponse, error) {
 	if r.isStarted.CompareAndSwap(false, true) {
-		r.env.ExecuteWorkflow(InstallDatabaseWorkflowWorkflowName, r.req)
+		r.env.ExecuteWorkflow(PlaceholderWorkflowWorkflowName, r.req)
 	}
 	if !r.env.IsWorkflowCompleted() {
 		return nil, errors.New("workflow in progress")
@@ -2704,15 +898,15 @@ func (r *testInstallDatabaseWorkflowRun) Get(context.Context) (*InstallDatabaseW
 	if err := r.env.GetWorkflowError(); err != nil {
 		return nil, err
 	}
-	var result InstallDatabaseWorkflowResponse
+	var result PlaceholderWorkflowResponse
 	if err := r.env.GetWorkflowResult(&result); err != nil {
 		return nil, err
 	}
 	return &result, nil
 }
 
-// ID returns a test InstallDatabaseWorkflow workflow run's workflow ID
-func (r *testInstallDatabaseWorkflowRun) ID() string {
+// ID returns a test PlaceholderWorkflow workflow run's workflow ID
+func (r *testPlaceholderWorkflowRun) ID() string {
 	if r.opts != nil {
 		return r.opts.ID
 	}
@@ -2720,202 +914,18 @@ func (r *testInstallDatabaseWorkflowRun) ID() string {
 }
 
 // Run noop implementation
-func (r *testInstallDatabaseWorkflowRun) Run() client.WorkflowRun {
+func (r *testPlaceholderWorkflowRun) Run() client.WorkflowRun {
 	return nil
 }
 
 // RunID noop implementation
-func (r *testInstallDatabaseWorkflowRun) RunID() string {
+func (r *testPlaceholderWorkflowRun) RunID() string {
 	return ""
 }
 
 // Terminate terminates a workflow in execution, returning an error if applicable
-func (r *testInstallDatabaseWorkflowRun) Terminate(ctx context.Context, reason string, details ...interface{}) error {
+func (r *testPlaceholderWorkflowRun) Terminate(ctx context.Context, reason string, details ...interface{}) error {
 	return r.client.TerminateWorkflow(ctx, r.ID(), r.RunID(), reason, details...)
-}
-
-var _ InstallStroppyWorkflowRun = &testInstallStroppyWorkflowRun{}
-
-// testInstallStroppyWorkflowRun provides convenience methods for interacting with a(n) InstallStroppyWorkflow workflow in the test environment
-type testInstallStroppyWorkflowRun struct {
-	client    *TestTestServiceClient
-	env       *testsuite.TestWorkflowEnvironment
-	isStarted atomic.Bool
-	opts      *client.StartWorkflowOptions
-	req       *InstallStroppyWorkflowRequest
-	workflows TestServiceWorkflows
-}
-
-// Cancel requests cancellation of a workflow in execution, returning an error if applicable
-func (r *testInstallStroppyWorkflowRun) Cancel(ctx context.Context) error {
-	return r.client.CancelWorkflow(ctx, r.ID(), r.RunID())
-}
-
-// Get retrieves a test InstallStroppyWorkflow workflow result
-func (r *testInstallStroppyWorkflowRun) Get(context.Context) (*InstallStroppyWorkflowResponse, error) {
-	if r.isStarted.CompareAndSwap(false, true) {
-		r.env.ExecuteWorkflow(InstallStroppyWorkflowWorkflowName, r.req)
-	}
-	if !r.env.IsWorkflowCompleted() {
-		return nil, errors.New("workflow in progress")
-	}
-	if err := r.env.GetWorkflowError(); err != nil {
-		return nil, err
-	}
-	var result InstallStroppyWorkflowResponse
-	if err := r.env.GetWorkflowResult(&result); err != nil {
-		return nil, err
-	}
-	return &result, nil
-}
-
-// ID returns a test InstallStroppyWorkflow workflow run's workflow ID
-func (r *testInstallStroppyWorkflowRun) ID() string {
-	if r.opts != nil {
-		return r.opts.ID
-	}
-	return ""
-}
-
-// Run noop implementation
-func (r *testInstallStroppyWorkflowRun) Run() client.WorkflowRun {
-	return nil
-}
-
-// RunID noop implementation
-func (r *testInstallStroppyWorkflowRun) RunID() string {
-	return ""
-}
-
-// Terminate terminates a workflow in execution, returning an error if applicable
-func (r *testInstallStroppyWorkflowRun) Terminate(ctx context.Context, reason string, details ...interface{}) error {
-	return r.client.TerminateWorkflow(ctx, r.ID(), r.RunID(), reason, details...)
-}
-
-var _ RunWorkloadWorkflowRun = &testRunWorkloadWorkflowRun{}
-
-// testRunWorkloadWorkflowRun provides convenience methods for interacting with a(n) RunWorkloadWorkflow workflow in the test environment
-type testRunWorkloadWorkflowRun struct {
-	client    *TestTestServiceClient
-	env       *testsuite.TestWorkflowEnvironment
-	isStarted atomic.Bool
-	opts      *client.StartWorkflowOptions
-	req       *RunWorkloadWorkflowRequest
-	workflows TestServiceWorkflows
-}
-
-// Cancel requests cancellation of a workflow in execution, returning an error if applicable
-func (r *testRunWorkloadWorkflowRun) Cancel(ctx context.Context) error {
-	return r.client.CancelWorkflow(ctx, r.ID(), r.RunID())
-}
-
-// Get retrieves a test RunWorkloadWorkflow workflow result
-func (r *testRunWorkloadWorkflowRun) Get(context.Context) (*RunWorkloadWorkflowResponse, error) {
-	if r.isStarted.CompareAndSwap(false, true) {
-		r.env.ExecuteWorkflow(RunWorkloadWorkflowWorkflowName, r.req)
-	}
-	if !r.env.IsWorkflowCompleted() {
-		return nil, errors.New("workflow in progress")
-	}
-	if err := r.env.GetWorkflowError(); err != nil {
-		return nil, err
-	}
-	var result RunWorkloadWorkflowResponse
-	if err := r.env.GetWorkflowResult(&result); err != nil {
-		return nil, err
-	}
-	return &result, nil
-}
-
-// ID returns a test RunWorkloadWorkflow workflow run's workflow ID
-func (r *testRunWorkloadWorkflowRun) ID() string {
-	if r.opts != nil {
-		return r.opts.ID
-	}
-	return ""
-}
-
-// Run noop implementation
-func (r *testRunWorkloadWorkflowRun) Run() client.WorkflowRun {
-	return nil
-}
-
-// RunID noop implementation
-func (r *testRunWorkloadWorkflowRun) RunID() string {
-	return ""
-}
-
-// Terminate terminates a workflow in execution, returning an error if applicable
-func (r *testRunWorkloadWorkflowRun) Terminate(ctx context.Context, reason string, details ...interface{}) error {
-	return r.client.TerminateWorkflow(ctx, r.ID(), r.RunID(), reason, details...)
-}
-
-var _ TestWorkflowRun = &testTestWorkflowRun{}
-
-// testTestWorkflowRun provides convenience methods for interacting with a(n) TestWorkflow workflow in the test environment
-type testTestWorkflowRun struct {
-	client    *TestTestServiceClient
-	env       *testsuite.TestWorkflowEnvironment
-	isStarted atomic.Bool
-	opts      *client.StartWorkflowOptions
-	req       *TestWorkflowRequest
-	workflows TestServiceWorkflows
-}
-
-// Cancel requests cancellation of a workflow in execution, returning an error if applicable
-func (r *testTestWorkflowRun) Cancel(ctx context.Context) error {
-	return r.client.CancelWorkflow(ctx, r.ID(), r.RunID())
-}
-
-// Get retrieves a test TestWorkflow workflow result
-func (r *testTestWorkflowRun) Get(context.Context) (*TestWorkflowResponse, error) {
-	if r.isStarted.CompareAndSwap(false, true) {
-		r.env.ExecuteWorkflow(TestWorkflowWorkflowName, r.req)
-	}
-	if !r.env.IsWorkflowCompleted() {
-		return nil, errors.New("workflow in progress")
-	}
-	if err := r.env.GetWorkflowError(); err != nil {
-		return nil, err
-	}
-	var result TestWorkflowResponse
-	if err := r.env.GetWorkflowResult(&result); err != nil {
-		return nil, err
-	}
-	return &result, nil
-}
-
-// ID returns a test TestWorkflow workflow run's workflow ID
-func (r *testTestWorkflowRun) ID() string {
-	if r.opts != nil {
-		return r.opts.ID
-	}
-	return ""
-}
-
-// Run noop implementation
-func (r *testTestWorkflowRun) Run() client.WorkflowRun {
-	return nil
-}
-
-// RunID noop implementation
-func (r *testTestWorkflowRun) RunID() string {
-	return ""
-}
-
-// Terminate terminates a workflow in execution, returning an error if applicable
-func (r *testTestWorkflowRun) Terminate(ctx context.Context, reason string, details ...interface{}) error {
-	return r.client.TerminateWorkflow(ctx, r.ID(), r.RunID(), reason, details...)
-}
-
-// GetRunState executes a GetRunState query against a test TestWorkflow workflow
-func (r *testTestWorkflowRun) GetRunState(ctx context.Context) (*RunState, error) {
-	return r.client.GetRunState(ctx, r.ID(), r.RunID())
-}
-
-// UpdateStage executes a UpdateStage signal against a test TestWorkflow workflow
-func (r *testTestWorkflowRun) UpdateStage(ctx context.Context, req *StageUpdate) error {
-	return r.client.UpdateStage(ctx, r.ID(), r.RunID(), req)
 }
 
 // WithTestServiceSchemeTypes registers all TestService protobuf types with the given scheme
@@ -2923,842 +933,7 @@ func WithTestServiceSchemeTypes() scheme.Option {
 	return func(s *scheme.Scheme) {
 		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("RunState"))
 		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("StageUpdate"))
-		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("InstallDatabaseWorkflowRequest"))
-		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("InstallDatabaseWorkflowResponse"))
-		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("InstallStroppyWorkflowRequest"))
-		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("InstallStroppyWorkflowResponse"))
-		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("RunWorkloadWorkflowRequest"))
-		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("RunWorkloadWorkflowResponse"))
-		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("TestWorkflowRequest"))
-		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("TestWorkflowResponse"))
-	}
-}
-
-// SuiteWorkflowServiceTaskQueue is the default task-queue for a cloud.v1.workflow.SuiteWorkflowService worker
-var SuiteWorkflowServiceTaskQueue = "stroppy-cloud"
-
-// cloud.v1.workflow.SuiteWorkflowService workflow names
-const (
-	SuiteWorkflowWorkflowName = "SuiteWorkflow"
-)
-
-// cloud.v1.workflow.SuiteWorkflowService workflow id expressions
-var (
-	SuiteWorkflowIdexpression = expression.MustParseExpression("suite-run/${! suiteRunId }")
-)
-
-// SuiteWorkflowServiceClient describes a client for a(n) cloud.v1.workflow.SuiteWorkflowService worker
-type SuiteWorkflowServiceClient interface {
-	// SuiteWorkflow fans out a child TestWorkflow per run in the suite,
-	// deduplicated by a deterministic id derived from suite_run_id.
-	SuiteWorkflow(ctx context.Context, req *SuiteWorkflowRequest, opts ...*SuiteWorkflowOptions) (*SuiteWorkflowResponse, error)
-
-	// SuiteWorkflowAsync starts a(n) SuiteWorkflow workflow and returns a handle to the workflow run
-	SuiteWorkflowAsync(ctx context.Context, req *SuiteWorkflowRequest, opts ...*SuiteWorkflowOptions) (SuiteWorkflowRun, error)
-
-	// GetSuiteWorkflow retrieves a handle to an existing SuiteWorkflow workflow execution
-	GetSuiteWorkflow(ctx context.Context, workflowID string, runID string) SuiteWorkflowRun
-
-	// CancelWorkflow requests cancellation of an existing workflow execution
-	CancelWorkflow(ctx context.Context, workflowID string, runID string) error
-
-	// TerminateWorkflow an existing workflow execution
-	TerminateWorkflow(ctx context.Context, workflowID string, runID string, reason string, details ...interface{}) error
-}
-
-// suiteWorkflowServiceClient implements a temporal client for a cloud.v1.workflow.SuiteWorkflowService service
-type suiteWorkflowServiceClient struct {
-	client client.Client
-	log    *slog.Logger
-}
-
-// NewSuiteWorkflowServiceClient initializes a new cloud.v1.workflow.SuiteWorkflowService client
-func NewSuiteWorkflowServiceClient(c client.Client, options ...*suiteWorkflowServiceClientOptions) SuiteWorkflowServiceClient {
-	var cfg *suiteWorkflowServiceClientOptions
-	if len(options) > 0 {
-		cfg = options[0]
-	} else {
-		cfg = NewSuiteWorkflowServiceClientOptions()
-	}
-	return &suiteWorkflowServiceClient{
-		client: c,
-		log:    cfg.getLogger(),
-	}
-}
-
-// NewSuiteWorkflowServiceClientWithOptions initializes a new SuiteWorkflowService client with the given options
-func NewSuiteWorkflowServiceClientWithOptions(c client.Client, opts client.Options, options ...*suiteWorkflowServiceClientOptions) (SuiteWorkflowServiceClient, error) {
-	var err error
-	c, err = client.NewClientFromExisting(c, opts)
-	if err != nil {
-		return nil, fmt.Errorf("error initializing client with options: %w", err)
-	}
-	var cfg *suiteWorkflowServiceClientOptions
-	if len(options) > 0 {
-		cfg = options[0]
-	} else {
-		cfg = NewSuiteWorkflowServiceClientOptions()
-	}
-	return &suiteWorkflowServiceClient{
-		client: c,
-		log:    cfg.getLogger(),
-	}, nil
-}
-
-// suiteWorkflowServiceClientOptions describes optional runtime configuration for a SuiteWorkflowServiceClient
-type suiteWorkflowServiceClientOptions struct {
-	log *slog.Logger
-}
-
-// NewSuiteWorkflowServiceClientOptions initializes a new suiteWorkflowServiceClientOptions value
-func NewSuiteWorkflowServiceClientOptions() *suiteWorkflowServiceClientOptions {
-	return &suiteWorkflowServiceClientOptions{}
-}
-
-// WithLogger can be used to override the default logger
-func (opts *suiteWorkflowServiceClientOptions) WithLogger(l *slog.Logger) *suiteWorkflowServiceClientOptions {
-	if l != nil {
-		opts.log = l
-	}
-	return opts
-}
-
-// getLogger returns the configured logger, or the default logger
-func (opts *suiteWorkflowServiceClientOptions) getLogger() *slog.Logger {
-	if opts != nil && opts.log != nil {
-		return opts.log
-	}
-	return slog.Default()
-}
-
-// SuiteWorkflow fans out a child TestWorkflow per run in the suite,
-// deduplicated by a deterministic id derived from suite_run_id.
-func (c *suiteWorkflowServiceClient) SuiteWorkflow(ctx context.Context, req *SuiteWorkflowRequest, options ...*SuiteWorkflowOptions) (*SuiteWorkflowResponse, error) {
-	run, err := c.SuiteWorkflowAsync(ctx, req, options...)
-	if err != nil {
-		return nil, err
-	}
-	return run.Get(ctx)
-}
-
-// SuiteWorkflow fans out a child TestWorkflow per run in the suite,
-// deduplicated by a deterministic id derived from suite_run_id.
-func (c *suiteWorkflowServiceClient) SuiteWorkflowAsync(ctx context.Context, req *SuiteWorkflowRequest, options ...*SuiteWorkflowOptions) (SuiteWorkflowRun, error) {
-	var o *SuiteWorkflowOptions
-	if len(options) > 0 && options[0] != nil {
-		o = options[0]
-	} else {
-		o = NewSuiteWorkflowOptions()
-	}
-	opts, err := o.Build(req.ProtoReflect())
-	if err != nil {
-		return nil, fmt.Errorf("error initializing client.StartWorkflowOptions: %w", err)
-	}
-	run, err := c.client.ExecuteWorkflow(ctx, opts, SuiteWorkflowWorkflowName, req)
-	if err != nil {
-		return nil, err
-	}
-	if run == nil {
-		return nil, errors.New("execute workflow returned nil run")
-	}
-	return &suiteWorkflowRun{
-		client: c,
-		run:    run,
-	}, nil
-}
-
-// GetSuiteWorkflow fetches an existing SuiteWorkflow execution
-func (c *suiteWorkflowServiceClient) GetSuiteWorkflow(ctx context.Context, workflowID string, runID string) SuiteWorkflowRun {
-	return &suiteWorkflowRun{
-		client: c,
-		run:    c.client.GetWorkflow(ctx, workflowID, runID),
-	}
-}
-
-// CancelWorkflow requests cancellation of an existing workflow execution
-func (c *suiteWorkflowServiceClient) CancelWorkflow(ctx context.Context, workflowID string, runID string) error {
-	return c.client.CancelWorkflow(ctx, workflowID, runID)
-}
-
-// TerminateWorkflow terminates an existing workflow execution
-func (c *suiteWorkflowServiceClient) TerminateWorkflow(ctx context.Context, workflowID string, runID string, reason string, details ...interface{}) error {
-	return c.client.TerminateWorkflow(ctx, workflowID, runID, reason, details...)
-}
-
-// SuiteWorkflowOptions provides configuration for a SuiteWorkflow workflow operation
-type SuiteWorkflowOptions struct {
-	options                  client.StartWorkflowOptions
-	executionTimeout         *time.Duration
-	id                       *string
-	idReusePolicy            enumsv1.WorkflowIdReusePolicy
-	retryPolicy              *temporal.RetryPolicy
-	runTimeout               *time.Duration
-	searchAttributes         map[string]any
-	taskQueue                *string
-	taskTimeout              *time.Duration
-	typedSearchAttributes    *temporal.SearchAttributes
-	enableEagerStart         *bool
-	workflowIdConflictPolicy enumsv1.WorkflowIdConflictPolicy
-}
-
-// NewSuiteWorkflowOptions initializes a new SuiteWorkflowOptions value
-func NewSuiteWorkflowOptions() *SuiteWorkflowOptions {
-	return &SuiteWorkflowOptions{}
-}
-
-// Build initializes a new go.temporal.io/sdk/client.StartWorkflowOptions value with defaults and overrides applied
-func (o *SuiteWorkflowOptions) Build(req protoreflect.Message) (client.StartWorkflowOptions, error) {
-	opts := o.options
-	if v := o.id; v != nil {
-		opts.ID = *v
-	} else if opts.ID == "" {
-		id, err := expression.EvalExpression(SuiteWorkflowIdexpression, req)
-		if err != nil {
-			return opts, fmt.Errorf("error evaluating id expression for %q workflow: %w", SuiteWorkflowWorkflowName, err)
-		}
-		opts.ID = id
-	}
-	if v := o.idReusePolicy; v != enumsv1.WORKFLOW_ID_REUSE_POLICY_UNSPECIFIED {
-		opts.WorkflowIDReusePolicy = v
-	} else if opts.WorkflowIDReusePolicy == enumsv1.WORKFLOW_ID_REUSE_POLICY_UNSPECIFIED {
-		opts.WorkflowIDReusePolicy = enumsv1.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY
-	}
-	if v := o.workflowIdConflictPolicy; v != enumsv1.WORKFLOW_ID_CONFLICT_POLICY_UNSPECIFIED {
-		opts.WorkflowIDConflictPolicy = v
-	}
-	if v := o.taskQueue; v != nil {
-		opts.TaskQueue = *v
-	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = SuiteWorkflowServiceTaskQueue
-	}
-	if v := o.retryPolicy; v != nil {
-		opts.RetryPolicy = v
-	} else if opts.RetryPolicy == nil {
-		opts.RetryPolicy = &temporal.RetryPolicy{
-			MaximumAttempts: int32(1),
-		}
-	}
-	if v := o.searchAttributes; v != nil {
-		opts.SearchAttributes = o.searchAttributes
-	}
-	if v := o.typedSearchAttributes; v != nil {
-		opts.TypedSearchAttributes = *v
-	}
-	if v := o.enableEagerStart; v != nil {
-		opts.EnableEagerStart = *v
-	}
-	if v := o.executionTimeout; v != nil {
-		opts.WorkflowExecutionTimeout = *v
-	}
-	if v := o.runTimeout; v != nil {
-		opts.WorkflowRunTimeout = *v
-	}
-	if v := o.taskTimeout; v != nil {
-		opts.WorkflowTaskTimeout = *v
-	}
-	return opts, nil
-}
-
-// WithStartWorkflowOptions sets the initial go.temporal.io/sdk/client.StartWorkflowOptions
-func (o *SuiteWorkflowOptions) WithStartWorkflowOptions(options client.StartWorkflowOptions) *SuiteWorkflowOptions {
-	o.options = options
-	return o
-}
-
-// WithEnableEagerStart sets the EnableEagerStart value
-func (o *SuiteWorkflowOptions) WithEnableEagerStart(enable bool) *SuiteWorkflowOptions {
-	o.enableEagerStart = &enable
-	return o
-}
-
-// WithExecutionTimeout sets the WorkflowExecutionTimeout value
-func (o *SuiteWorkflowOptions) WithExecutionTimeout(d time.Duration) *SuiteWorkflowOptions {
-	o.executionTimeout = &d
-	return o
-}
-
-// WithID sets the ID value
-func (o *SuiteWorkflowOptions) WithID(id string) *SuiteWorkflowOptions {
-	o.id = &id
-	return o
-}
-
-// WithIDReusePolicy sets the WorkflowIDReusePolicy value
-func (o *SuiteWorkflowOptions) WithIDReusePolicy(policy enumsv1.WorkflowIdReusePolicy) *SuiteWorkflowOptions {
-	o.idReusePolicy = policy
-	return o
-}
-
-// WithRetryPolicy sets the RetryPolicy value
-func (o *SuiteWorkflowOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *SuiteWorkflowOptions {
-	o.retryPolicy = policy
-	return o
-}
-
-// WithRunTimeout sets the WorkflowRunTimeout value
-func (o *SuiteWorkflowOptions) WithRunTimeout(d time.Duration) *SuiteWorkflowOptions {
-	o.runTimeout = &d
-	return o
-}
-
-// WithSearchAttributes sets the SearchAttributes value
-func (o *SuiteWorkflowOptions) WithSearchAttributes(sa map[string]any) *SuiteWorkflowOptions {
-	o.searchAttributes = sa
-	return o
-}
-
-// WithTaskTimeout sets the WorkflowTaskTimeout value
-func (o *SuiteWorkflowOptions) WithTaskTimeout(d time.Duration) *SuiteWorkflowOptions {
-	o.taskTimeout = &d
-	return o
-}
-
-// WithTaskQueue sets the TaskQueue value
-func (o *SuiteWorkflowOptions) WithTaskQueue(tq string) *SuiteWorkflowOptions {
-	o.taskQueue = &tq
-	return o
-}
-
-// WithTypedSearchAttributes sets the TypedSearchAttributes value
-func (o *SuiteWorkflowOptions) WithTypedSearchAttributes(tsa temporal.SearchAttributes) *SuiteWorkflowOptions {
-	o.typedSearchAttributes = &tsa
-	return o
-}
-
-// WithWorkflowIdConflictPolicy sets the WorkflowIdConflictPolicy value
-func (o *SuiteWorkflowOptions) WithWorkflowIdConflictPolicy(policy enumsv1.WorkflowIdConflictPolicy) *SuiteWorkflowOptions {
-	o.workflowIdConflictPolicy = policy
-	return o
-}
-
-// SuiteWorkflowRun describes a(n) SuiteWorkflow workflow run
-type SuiteWorkflowRun interface {
-	// ID returns the workflow ID
-	ID() string
-
-	// RunID returns the workflow instance ID
-	RunID() string
-
-	// Run returns the inner client.WorkflowRun
-	Run() client.WorkflowRun
-
-	// Get blocks until the workflow is complete and returns the result
-	Get(ctx context.Context) (*SuiteWorkflowResponse, error)
-
-	// Cancel requests cancellation of a workflow in execution, returning an error if applicable
-	Cancel(ctx context.Context) error
-
-	// Terminate terminates a workflow in execution, returning an error if applicable
-	Terminate(ctx context.Context, reason string, details ...interface{}) error
-}
-
-// suiteWorkflowRun provides an internal implementation of a(n) SuiteWorkflowRunRun
-type suiteWorkflowRun struct {
-	client *suiteWorkflowServiceClient
-	run    client.WorkflowRun
-}
-
-// ID returns the workflow ID
-func (r *suiteWorkflowRun) ID() string {
-	return r.run.GetID()
-}
-
-// Run returns the inner client.WorkflowRun
-func (r *suiteWorkflowRun) Run() client.WorkflowRun {
-	return r.run
-}
-
-// RunID returns the execution ID
-func (r *suiteWorkflowRun) RunID() string {
-	return r.run.GetRunID()
-}
-
-// Cancel requests cancellation of a workflow in execution, returning an error if applicable
-func (r *suiteWorkflowRun) Cancel(ctx context.Context) error {
-	return r.client.CancelWorkflow(ctx, r.ID(), r.RunID())
-}
-
-// Get blocks until the workflow is complete, returning the result if applicable
-func (r *suiteWorkflowRun) Get(ctx context.Context) (*SuiteWorkflowResponse, error) {
-	var resp SuiteWorkflowResponse
-	if err := r.run.Get(ctx, &resp); err != nil {
-		return nil, err
-	}
-	return &resp, nil
-}
-
-// Terminate terminates a workflow in execution, returning an error if applicable
-func (r *suiteWorkflowRun) Terminate(ctx context.Context, reason string, details ...interface{}) error {
-	return r.client.TerminateWorkflow(ctx, r.ID(), r.RunID(), reason, details...)
-}
-
-// Reference to generated workflow functions
-var (
-	// suiteWorkflowServiceRegistrationMutex is a mutex for registering cloud.v1.workflow.SuiteWorkflowService workflows
-	suiteWorkflowServiceRegistrationMutex sync.Mutex
-	// SuiteWorkflow fans out a child TestWorkflow per run in the suite,
-	// deduplicated by a deterministic id derived from suite_run_id.
-	SuiteWorkflowFunction func(workflow.Context, *SuiteWorkflowRequest) (*SuiteWorkflowResponse, error)
-)
-
-// SuiteWorkflowServiceWorkflowFunctions describes a mockable dependency for inlining workflows within other workflows
-type (
-	// SuiteWorkflowServiceWorkflowFunctions describes a mockable dependency for inlining workflows within other workflows
-	SuiteWorkflowServiceWorkflowFunctions interface {
-		// SuiteWorkflow fans out a child TestWorkflow per run in the suite,
-		// deduplicated by a deterministic id derived from suite_run_id.
-		SuiteWorkflow(workflow.Context, *SuiteWorkflowRequest) (*SuiteWorkflowResponse, error)
-	}
-	// suiteWorkflowServiceWorkflowFunctions provides an internal SuiteWorkflowServiceWorkflowFunctions implementation
-	suiteWorkflowServiceWorkflowFunctions struct{}
-)
-
-func NewSuiteWorkflowServiceWorkflowFunctions() SuiteWorkflowServiceWorkflowFunctions {
-	return &suiteWorkflowServiceWorkflowFunctions{}
-}
-
-// SuiteWorkflow fans out a child TestWorkflow per run in the suite,
-// deduplicated by a deterministic id derived from suite_run_id.
-func (f *suiteWorkflowServiceWorkflowFunctions) SuiteWorkflow(ctx workflow.Context, req *SuiteWorkflowRequest) (*SuiteWorkflowResponse, error) {
-	if SuiteWorkflowFunction == nil {
-		return nil, errors.New("SuiteWorkflow requires workflow registration via RegisterSuiteWorkflowServiceWorkflows or RegisterSuiteWorkflowWorkflow")
-	}
-	return SuiteWorkflowFunction(ctx, req)
-}
-
-// SuiteWorkflowServiceWorkflows provides methods for initializing new cloud.v1.workflow.SuiteWorkflowService workflow values
-type SuiteWorkflowServiceWorkflows interface {
-	// SuiteWorkflow fans out a child TestWorkflow per run in the suite,
-	// deduplicated by a deterministic id derived from suite_run_id.
-	SuiteWorkflow(ctx workflow.Context, input *SuiteWorkflowWorkflowInput) (SuiteWorkflowWorkflow, error)
-}
-
-// RegisterSuiteWorkflowServiceWorkflows registers cloud.v1.workflow.SuiteWorkflowService workflows with the given worker
-func RegisterSuiteWorkflowServiceWorkflows(r worker.WorkflowRegistry, workflows SuiteWorkflowServiceWorkflows) {
-	RegisterSuiteWorkflowWorkflow(r, workflows.SuiteWorkflow)
-}
-
-// RegisterSuiteWorkflowWorkflow registers a cloud.v1.workflow.SuiteWorkflowService.SuiteWorkflow workflow with the given worker
-func RegisterSuiteWorkflowWorkflow(r worker.WorkflowRegistry, wf func(workflow.Context, *SuiteWorkflowWorkflowInput) (SuiteWorkflowWorkflow, error)) {
-	suiteWorkflowServiceRegistrationMutex.Lock()
-	defer suiteWorkflowServiceRegistrationMutex.Unlock()
-	SuiteWorkflowFunction = buildSuiteWorkflow(wf)
-	r.RegisterWorkflowWithOptions(SuiteWorkflowFunction, workflow.RegisterOptions{Name: SuiteWorkflowWorkflowName})
-}
-
-// buildSuiteWorkflow converts a SuiteWorkflow workflow struct into a valid workflow function
-func buildSuiteWorkflow(ctor func(workflow.Context, *SuiteWorkflowWorkflowInput) (SuiteWorkflowWorkflow, error)) func(workflow.Context, *SuiteWorkflowRequest) (*SuiteWorkflowResponse, error) {
-	return func(ctx workflow.Context, req *SuiteWorkflowRequest) (*SuiteWorkflowResponse, error) {
-		input := &SuiteWorkflowWorkflowInput{
-			Req: req,
-		}
-		wf, err := ctor(ctx, input)
-		if err != nil {
-			return nil, err
-		}
-		if initializable, ok := wf.(helpers.Initializable); ok {
-			if err := initializable.Initialize(ctx); err != nil {
-				return nil, err
-			}
-		}
-		return wf.Execute(ctx)
-	}
-}
-
-// SuiteWorkflowWorkflowInput describes the input to a(n) SuiteWorkflow workflow constructor
-type SuiteWorkflowWorkflowInput struct {
-	Req *SuiteWorkflowRequest
-}
-
-// ContinueAsNew returns an appropriately configured ContinueAsNewError
-func (i *SuiteWorkflowWorkflowInput) ContinueAsNew(ctx workflow.Context, input *SuiteWorkflowRequest, options ...workflow.ContinueAsNewErrorOptions) (*SuiteWorkflowResponse, error) {
-	next := i.Req
-	if input != nil {
-		next = input
-	}
-	if len(options) > 0 {
-		return nil, workflow.NewContinueAsNewErrorWithOptions(ctx, options[0], SuiteWorkflowWorkflowName, next)
-	}
-	return nil, workflow.NewContinueAsNewError(ctx, SuiteWorkflowWorkflowName, next)
-}
-
-// SuiteWorkflow fans out a child TestWorkflow per run in the suite,
-// deduplicated by a deterministic id derived from suite_run_id.
-//
-// workflow details: (id: "suite-run/${! suiteRunId }")
-type SuiteWorkflowWorkflow interface {
-	// Execute defines the entrypoint to a(n) SuiteWorkflow workflow
-	Execute(ctx workflow.Context) (*SuiteWorkflowResponse, error)
-}
-
-// SuiteWorkflow fans out a child TestWorkflow per run in the suite,
-// deduplicated by a deterministic id derived from suite_run_id.
-func SuiteWorkflowChild(ctx workflow.Context, req *SuiteWorkflowRequest, options ...*SuiteWorkflowChildOptions) (*SuiteWorkflowResponse, error) {
-	childRun, err := SuiteWorkflowChildAsync(ctx, req, options...)
-	if err != nil {
-		return nil, err
-	}
-	return childRun.Get(ctx)
-}
-
-// SuiteWorkflow fans out a child TestWorkflow per run in the suite,
-// deduplicated by a deterministic id derived from suite_run_id.
-func SuiteWorkflowChildAsync(ctx workflow.Context, req *SuiteWorkflowRequest, options ...*SuiteWorkflowChildOptions) (*SuiteWorkflowChildRun, error) {
-	var o *SuiteWorkflowChildOptions
-	if len(options) > 0 && options[0] != nil {
-		o = options[0]
-	} else {
-		o = NewSuiteWorkflowChildOptions()
-	}
-	opts, err := o.Build(ctx, req.ProtoReflect())
-	if err != nil {
-		return nil, fmt.Errorf("error initializing workflow.ChildWorkflowOptions: %w", err)
-	}
-	ctx = workflow.WithChildOptions(ctx, opts)
-	if o.dc != nil {
-		ctx = workflow.WithDataConverter(ctx, o.dc)
-	}
-	return &SuiteWorkflowChildRun{Future: workflow.ExecuteChildWorkflow(ctx, SuiteWorkflowWorkflowName, req)}, nil
-}
-
-// SuiteWorkflowChildOptions provides configuration for a child SuiteWorkflow workflow operation
-type SuiteWorkflowChildOptions struct {
-	options               workflow.ChildWorkflowOptions
-	executionTimeout      *time.Duration
-	id                    *string
-	idReusePolicy         enumsv1.WorkflowIdReusePolicy
-	retryPolicy           *temporal.RetryPolicy
-	runTimeout            *time.Duration
-	searchAttributes      map[string]any
-	taskQueue             *string
-	taskTimeout           *time.Duration
-	typedSearchAttributes *temporal.SearchAttributes
-	dc                    converter.DataConverter
-	parentClosePolicy     enumsv1.ParentClosePolicy
-	waitForCancellation   *bool
-}
-
-// NewSuiteWorkflowChildOptions initializes a new SuiteWorkflowChildOptions value
-func NewSuiteWorkflowChildOptions() *SuiteWorkflowChildOptions {
-	return &SuiteWorkflowChildOptions{}
-}
-
-// Build initializes a new go.temporal.io/sdk/workflow.ChildWorkflowOptions value with defaults and overrides applied
-func (o *SuiteWorkflowChildOptions) Build(ctx workflow.Context, req protoreflect.Message) (workflow.ChildWorkflowOptions, error) {
-	opts := o.options
-	if v := o.id; v != nil {
-		opts.WorkflowID = *v
-	} else if opts.WorkflowID == "" {
-		// wrap expression evaluation in local activity
-		// more info: https://cludden.github.io/protoc-gen-go-temporal/docs/guides/patches#pv_64-expression-evaluation-local-activity
-		if workflow.GetVersion(ctx, "cludden_protoc-gen-go-temporal_64_expression-evaluation-local-activity", workflow.DefaultVersion, 1) == 1 {
-			lao := workflow.GetLocalActivityOptions(ctx)
-			lao.ScheduleToCloseTimeout = time.Second * 10
-			if err := workflow.ExecuteLocalActivity(workflow.WithLocalActivityOptions(ctx, lao), func(ctx context.Context) (string, error) {
-				id, err := expression.EvalExpression(SuiteWorkflowIdexpression, req)
-				if err != nil {
-					return "", fmt.Errorf("error evaluating id expression for %q workflow: %w", SuiteWorkflowWorkflowName, err)
-				}
-				return id, nil
-			}).Get(ctx, &opts.WorkflowID); err != nil {
-				return opts, fmt.Errorf("error evaluating id expression for %q workflow: %w", SuiteWorkflowWorkflowName, err)
-			}
-		} else {
-			id, err := expression.EvalExpression(SuiteWorkflowIdexpression, req)
-			if err != nil {
-				return opts, fmt.Errorf("error evaluating id expression for %q workflow: %w", SuiteWorkflowWorkflowName, err)
-			}
-			opts.WorkflowID = id
-		}
-	}
-	if v := o.idReusePolicy; v != enumsv1.WORKFLOW_ID_REUSE_POLICY_UNSPECIFIED {
-		opts.WorkflowIDReusePolicy = v
-	} else if opts.WorkflowIDReusePolicy == enumsv1.WORKFLOW_ID_REUSE_POLICY_UNSPECIFIED {
-		opts.WorkflowIDReusePolicy = enumsv1.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY
-	}
-	if v := o.taskQueue; v != nil {
-		opts.TaskQueue = *v
-	} else if opts.TaskQueue == "" {
-		opts.TaskQueue = SuiteWorkflowServiceTaskQueue
-	}
-	if v := o.retryPolicy; v != nil {
-		opts.RetryPolicy = v
-	} else if opts.RetryPolicy == nil {
-		opts.RetryPolicy = &temporal.RetryPolicy{
-			MaximumAttempts: int32(1),
-		}
-	}
-	if v := o.searchAttributes; v != nil {
-		opts.SearchAttributes = o.searchAttributes
-	}
-	if v := o.typedSearchAttributes; v != nil {
-		opts.TypedSearchAttributes = *v
-	}
-	if v := o.executionTimeout; v != nil {
-		opts.WorkflowExecutionTimeout = *v
-	}
-	if v := o.runTimeout; v != nil {
-		opts.WorkflowRunTimeout = *v
-	}
-	if v := o.taskTimeout; v != nil {
-		opts.WorkflowTaskTimeout = *v
-	}
-	if v := o.parentClosePolicy; v != enumsv1.PARENT_CLOSE_POLICY_UNSPECIFIED {
-		opts.ParentClosePolicy = v
-	}
-	if v := o.waitForCancellation; v != nil {
-		opts.WaitForCancellation = *v
-	}
-	return opts, nil
-}
-
-// WithChildWorkflowOptions sets the initial go.temporal.io/sdk/workflow.ChildWorkflowOptions
-func (o *SuiteWorkflowChildOptions) WithChildWorkflowOptions(options workflow.ChildWorkflowOptions) *SuiteWorkflowChildOptions {
-	o.options = options
-	return o
-}
-
-// WithDataConverter registers a DataConverter for the child workflow
-func (o *SuiteWorkflowChildOptions) WithDataConverter(dc converter.DataConverter) *SuiteWorkflowChildOptions {
-	o.dc = dc
-	return o
-}
-
-// WithExecutionTimeout sets the WorkflowExecutionTimeout value
-func (o *SuiteWorkflowChildOptions) WithExecutionTimeout(d time.Duration) *SuiteWorkflowChildOptions {
-	o.executionTimeout = &d
-	return o
-}
-
-// WithID sets the WorkflowID value
-func (o *SuiteWorkflowChildOptions) WithID(id string) *SuiteWorkflowChildOptions {
-	o.id = &id
-	return o
-}
-
-// WithIDReusePolicy sets the WorkflowIDReusePolicy value
-func (o *SuiteWorkflowChildOptions) WithIDReusePolicy(policy enumsv1.WorkflowIdReusePolicy) *SuiteWorkflowChildOptions {
-	o.idReusePolicy = policy
-	return o
-}
-
-// WithParentClosePolicy sets the WorkflowIDReusePolicy value
-func (o *SuiteWorkflowChildOptions) WithParentClosePolicy(policy enumsv1.ParentClosePolicy) *SuiteWorkflowChildOptions {
-	o.parentClosePolicy = policy
-	return o
-}
-
-// WithRetryPolicy sets the RetryPolicy value
-func (o *SuiteWorkflowChildOptions) WithRetryPolicy(policy *temporal.RetryPolicy) *SuiteWorkflowChildOptions {
-	o.retryPolicy = policy
-	return o
-}
-
-// WithRunTimeout sets the WorkflowRunTimeout value
-func (o *SuiteWorkflowChildOptions) WithRunTimeout(d time.Duration) *SuiteWorkflowChildOptions {
-	o.runTimeout = &d
-	return o
-}
-
-// WithSearchAttributes sets the SearchAttributes value
-func (o *SuiteWorkflowChildOptions) WithSearchAttributes(sa map[string]any) *SuiteWorkflowChildOptions {
-	o.searchAttributes = sa
-	return o
-}
-
-// WithTaskTimeout sets the WorkflowTaskTimeout value
-func (o *SuiteWorkflowChildOptions) WithTaskTimeout(d time.Duration) *SuiteWorkflowChildOptions {
-	o.taskTimeout = &d
-	return o
-}
-
-// WithTaskQueue sets the TaskQueue value
-func (o *SuiteWorkflowChildOptions) WithTaskQueue(tq string) *SuiteWorkflowChildOptions {
-	o.taskQueue = &tq
-	return o
-}
-
-// WithTypedSearchAttributes sets the TypedSearchAttributes value
-func (o *SuiteWorkflowChildOptions) WithTypedSearchAttributes(tsa temporal.SearchAttributes) *SuiteWorkflowChildOptions {
-	o.typedSearchAttributes = &tsa
-	return o
-}
-
-// WithWaitForCancellation sets the WaitForCancellation value
-func (o *SuiteWorkflowChildOptions) WithWaitForCancellation(wait bool) *SuiteWorkflowChildOptions {
-	o.waitForCancellation = &wait
-	return o
-}
-
-// SuiteWorkflowChildRun describes a child SuiteWorkflow workflow run
-type SuiteWorkflowChildRun struct {
-	Future workflow.ChildWorkflowFuture
-}
-
-// Get blocks until the workflow is completed, returning the response value
-func (r *SuiteWorkflowChildRun) Get(ctx workflow.Context) (*SuiteWorkflowResponse, error) {
-	var resp SuiteWorkflowResponse
-	if err := r.Future.Get(ctx, &resp); err != nil {
-		return nil, err
-	}
-	return &resp, nil
-}
-
-// Select adds this completion to the selector. Callback can be nil.
-func (r *SuiteWorkflowChildRun) Select(sel workflow.Selector, fn func(*SuiteWorkflowChildRun)) workflow.Selector {
-	return sel.AddFuture(r.Future, func(workflow.Future) {
-		if fn != nil {
-			fn(r)
-		}
-	})
-}
-
-// SelectStart adds waiting for start to the selector. Callback can be nil.
-func (r *SuiteWorkflowChildRun) SelectStart(sel workflow.Selector, fn func(*SuiteWorkflowChildRun)) workflow.Selector {
-	return sel.AddFuture(r.Future.GetChildWorkflowExecution(), func(workflow.Future) {
-		if fn != nil {
-			fn(r)
-		}
-	})
-}
-
-// WaitStart waits for the child workflow to start
-func (r *SuiteWorkflowChildRun) WaitStart(ctx workflow.Context) (*workflow.Execution, error) {
-	var exec workflow.Execution
-	if err := r.Future.GetChildWorkflowExecution().Get(ctx, &exec); err != nil {
-		return nil, err
-	}
-	return &exec, nil
-}
-
-// SuiteWorkflowServiceActivities describes available worker activities
-type SuiteWorkflowServiceActivities interface{}
-
-// RegisterSuiteWorkflowServiceActivities registers activities with a worker
-func RegisterSuiteWorkflowServiceActivities(r worker.ActivityRegistry, activities SuiteWorkflowServiceActivities) {
-}
-
-// TestClient provides a testsuite-compatible Client
-type TestSuiteWorkflowServiceClient struct {
-	env       *testsuite.TestWorkflowEnvironment
-	workflows SuiteWorkflowServiceWorkflows
-}
-
-var _ SuiteWorkflowServiceClient = &TestSuiteWorkflowServiceClient{}
-
-// NewTestSuiteWorkflowServiceClient initializes a new TestSuiteWorkflowServiceClient value
-func NewTestSuiteWorkflowServiceClient(env *testsuite.TestWorkflowEnvironment, workflows SuiteWorkflowServiceWorkflows, activities SuiteWorkflowServiceActivities) *TestSuiteWorkflowServiceClient {
-	if workflows != nil {
-		RegisterSuiteWorkflowServiceWorkflows(env, workflows)
-	}
-	if activities != nil {
-		RegisterSuiteWorkflowServiceActivities(env, activities)
-	}
-	return &TestSuiteWorkflowServiceClient{env, workflows}
-}
-
-// SuiteWorkflow executes a(n) SuiteWorkflow workflow in the test environment
-func (c *TestSuiteWorkflowServiceClient) SuiteWorkflow(ctx context.Context, req *SuiteWorkflowRequest, opts ...*SuiteWorkflowOptions) (*SuiteWorkflowResponse, error) {
-	run, err := c.SuiteWorkflowAsync(ctx, req, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return run.Get(ctx)
-}
-
-// SuiteWorkflowAsync executes a(n) SuiteWorkflow workflow in the test environment
-func (c *TestSuiteWorkflowServiceClient) SuiteWorkflowAsync(ctx context.Context, req *SuiteWorkflowRequest, options ...*SuiteWorkflowOptions) (SuiteWorkflowRun, error) {
-	var o *SuiteWorkflowOptions
-	if len(options) > 0 && options[0] != nil {
-		o = options[0]
-	} else {
-		o = NewSuiteWorkflowOptions()
-	}
-	opts, err := o.Build(req.ProtoReflect())
-	if err != nil {
-		return nil, fmt.Errorf("error initializing client.StartWorkflowOptions: %w", err)
-	}
-	return &testSuiteWorkflowRun{client: c, env: c.env, opts: &opts, req: req, workflows: c.workflows}, nil
-}
-
-// GetSuiteWorkflow is a noop
-func (c *TestSuiteWorkflowServiceClient) GetSuiteWorkflow(ctx context.Context, workflowID string, runID string) SuiteWorkflowRun {
-	return &testSuiteWorkflowRun{env: c.env, workflows: c.workflows}
-}
-
-// CancelWorkflow requests cancellation of an existing workflow execution
-func (c *TestSuiteWorkflowServiceClient) CancelWorkflow(ctx context.Context, workflowID string, runID string) error {
-	c.env.CancelWorkflow()
-	return nil
-}
-
-// TerminateWorkflow terminates an existing workflow execution
-func (c *TestSuiteWorkflowServiceClient) TerminateWorkflow(ctx context.Context, workflowID string, runID string, reason string, details ...interface{}) error {
-	return c.CancelWorkflow(ctx, workflowID, runID)
-}
-
-var _ SuiteWorkflowRun = &testSuiteWorkflowRun{}
-
-// testSuiteWorkflowRun provides convenience methods for interacting with a(n) SuiteWorkflow workflow in the test environment
-type testSuiteWorkflowRun struct {
-	client    *TestSuiteWorkflowServiceClient
-	env       *testsuite.TestWorkflowEnvironment
-	isStarted atomic.Bool
-	opts      *client.StartWorkflowOptions
-	req       *SuiteWorkflowRequest
-	workflows SuiteWorkflowServiceWorkflows
-}
-
-// Cancel requests cancellation of a workflow in execution, returning an error if applicable
-func (r *testSuiteWorkflowRun) Cancel(ctx context.Context) error {
-	return r.client.CancelWorkflow(ctx, r.ID(), r.RunID())
-}
-
-// Get retrieves a test SuiteWorkflow workflow result
-func (r *testSuiteWorkflowRun) Get(context.Context) (*SuiteWorkflowResponse, error) {
-	if r.isStarted.CompareAndSwap(false, true) {
-		r.env.ExecuteWorkflow(SuiteWorkflowWorkflowName, r.req)
-	}
-	if !r.env.IsWorkflowCompleted() {
-		return nil, errors.New("workflow in progress")
-	}
-	if err := r.env.GetWorkflowError(); err != nil {
-		return nil, err
-	}
-	var result SuiteWorkflowResponse
-	if err := r.env.GetWorkflowResult(&result); err != nil {
-		return nil, err
-	}
-	return &result, nil
-}
-
-// ID returns a test SuiteWorkflow workflow run's workflow ID
-func (r *testSuiteWorkflowRun) ID() string {
-	if r.opts != nil {
-		return r.opts.ID
-	}
-	return ""
-}
-
-// Run noop implementation
-func (r *testSuiteWorkflowRun) Run() client.WorkflowRun {
-	return nil
-}
-
-// RunID noop implementation
-func (r *testSuiteWorkflowRun) RunID() string {
-	return ""
-}
-
-// Terminate terminates a workflow in execution, returning an error if applicable
-func (r *testSuiteWorkflowRun) Terminate(ctx context.Context, reason string, details ...interface{}) error {
-	return r.client.TerminateWorkflow(ctx, r.ID(), r.RunID(), reason, details...)
-}
-
-// WithSuiteWorkflowServiceSchemeTypes registers all SuiteWorkflowService protobuf types with the given scheme
-func WithSuiteWorkflowServiceSchemeTypes() scheme.Option {
-	return func(s *scheme.Scheme) {
-		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("SuiteWorkflowRequest"))
-		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("SuiteWorkflowResponse"))
+		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("PlaceholderWorkflowRequest"))
+		s.RegisterType(File_cloud_v1_workflow_test_proto.Messages().ByName("PlaceholderWorkflowResponse"))
 	}
 }

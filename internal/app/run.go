@@ -581,22 +581,11 @@ func Run(ctx context.Context, cfg Config) error {
 	// middleware re-applies the identical per-method authn+authz: it bridges
 	// the Authorization header into gRPC incoming metadata and calls the
 	// shared AuthorizeGraphQL gate keyed by the gRPC procedure.
-	//
-	// databasePresetService/workloadPresetService/testPresetService/
-	// suiteService/suiteRunService/suiteWizardService/testRunService/
-	// testWizardService no longer exist (their backend was deleted); the ogen
-	// adapter's generated constructor still takes one positional arg per
-	// cloud.v1.api service (proto deletion is deferred to 1E-B), so those slots
-	// are nil. Their REST routes become runtime errors, not compile errors —
-	// same deferred-cleanup posture as the untouched frontend screens for them.
 	ogenAdapter := api.NewOgenAdapter(
 		compareService,
 		favoriteService,
 		iamService,
 		packageService,
-		nil,
-		nil,
-		nil,
 		ratingService,
 		publicRatingService,
 		publicShareService,
@@ -604,15 +593,10 @@ func Run(ctx context.Context, cfg Config) error {
 		recipeService,
 		shareService,
 		stroppyService,
-		nil,
-		nil,
-		nil,
 		systemSettingsService,
 		tenantDashboardService,
 		tenantSettingsService,
-		nil,
 		testRunOverviewService,
-		nil,
 	)
 	restProcedures := apiProcedureByMethod()
 	restAuthMW := func(req middleware.Request, next middleware.Next) (middleware.Response, error) {

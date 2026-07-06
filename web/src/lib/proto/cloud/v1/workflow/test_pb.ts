@@ -6,25 +6,10 @@ import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegen
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Status, StatusJson } from "../common/status_pb.ts";
 import { file_cloud_v1_common_status } from "../common/status_pb.ts";
-import type { InfrastructureState, InfrastructureStateJson } from "../deployment/infrastructure_pb.ts";
-import { file_cloud_v1_deployment_infrastructure } from "../deployment/infrastructure_pb.ts";
-import type { DeploymentPlan, DeploymentPlanJson } from "../deployment/plan_pb.ts";
-import { file_cloud_v1_deployment_plan } from "../deployment/plan_pb.ts";
 import type { Worker, WorkerJson } from "../domain/worker_pb.ts";
 import { file_cloud_v1_domain_worker } from "../domain/worker_pb.ts";
 import type { PipelineOperation, PipelineOperationJson, PipelineOutput, PipelineOutputJson } from "../monitor/overview_pb.ts";
 import { file_cloud_v1_monitor_overview } from "../monitor/overview_pb.ts";
-import type { AgentBootstrap, AgentBootstrapJson } from "./deployment_pb.ts";
-import { file_cloud_v1_workflow_deployment } from "./deployment_pb.ts";
-import type { Database, DatabaseJson } from "../domain/database_pb.ts";
-import { file_cloud_v1_domain_database } from "../domain/database_pb.ts";
-import { file_cloud_v1_domain_suite } from "../domain/suite_pb.ts";
-import type { TestRun, TestRunJson } from "../domain/test_pb.ts";
-import { file_cloud_v1_domain_test } from "../domain/test_pb.ts";
-import type { Workload, WorkloadJson } from "../domain/workload_pb.ts";
-import { file_cloud_v1_domain_workload } from "../domain/workload_pb.ts";
-import type { RunConfig, RunConfigJson } from "./run_pb.ts";
-import { file_cloud_v1_workflow_run } from "./run_pb.ts";
 import type { EmptySchema, Timestamp, TimestampJson } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_empty, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import { file_temporal_v1_temporal } from "../../../temporal/v1/temporal_pb.ts";
@@ -35,108 +20,74 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/workflow/test.proto.
  */
 export const file_cloud_v1_workflow_test: GenFile = /*@__PURE__*/
-  fileDesc("ChxjbG91ZC92MS93b3JrZmxvdy90ZXN0LnByb3RvEhFjbG91ZC52MS53b3JrZmxvdyKlAQoTVGVzdFdvcmtmbG93UmVxdWVzdBIcCgl0ZW5hbnRfaWQYAyABKAlCCfpCBnIEEAEYQBI0Cgh0ZXN0X3J1bhgBIAEoCzIYLmNsb3VkLnYxLmRvbWFpbi5UZXN0UnVuQgj6QgWKAQIQARI6Cg9hZ2VudF9ib290c3RyYXAYAiABKAsyIS5jbG91ZC52MS53b3JrZmxvdy5BZ2VudEJvb3RzdHJhcCIWChRUZXN0V29ya2Zsb3dSZXNwb25zZSJdCghSdW5TdGF0ZRInCgZzdGF0dXMYASABKA4yFy5jbG91ZC52MS5jb21tb24uU3RhdHVzEigKBnN0YWdlcxgCIAMoCzIYLmNsb3VkLnYxLndvcmtmbG93LlN0YWdlIr4ECgVTdGFnZRIZChFub2RlX2V4ZWN1dGlvbl9pZBgBIAEoCRIMCgRuYW1lGAIgASgJEicKBnN0YXR1cxgDIAEoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXMSLgoKc3RhcnRlZF9hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLwoLZmluaXNoZWRfYXQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEg8KB2F0dGVtcHQYBiABKA0SDQoFb3JkZXIYByABKA0SKgoYcGFyZW50X25vZGVfZXhlY3V0aW9uX2lkGAggASgJQgj6QgVyAxiAARIXCgVwaGFzZRgJIAEoCUII+kIFcgMYgAESHgoMY29tcG9uZW50X2lkGAogASgJQgj6QgVyAxiAARIcCgptYWNoaW5lX2lkGAsgASgJQgj6QgVyAxiAARInCgZ3b3JrZXIYDCABKAsyFy5jbG91ZC52MS5kb21haW4uV29ya2VyEh8KDXN0YXR1c19yZWFzb24YDSABKAlCCPpCBXIDGIACEh8KDWVycm9yX21lc3NhZ2UYDiABKAlCCPpCBXIDGIAgEjYKCW9wZXJhdGlvbhgPIAEoCzIjLmNsb3VkLnYxLm1vbml0b3IuUGlwZWxpbmVPcGVyYXRpb24SPAoHb3V0cHV0cxgQIAMoCzIgLmNsb3VkLnYxLm1vbml0b3IuUGlwZWxpbmVPdXRwdXRCCfpCBpIBAxCAICJACgtTdGFnZVVwZGF0ZRIxCgVzdGFnZRgBIAEoCzIYLmNsb3VkLnYxLndvcmtmbG93LlN0YWdlQgj6QgWKAQIQASK5AQodSW5zdGFsbFN0cm9wcHlXb3JrZmxvd1JlcXVlc3QSUAoUaW5mcmFzdHJ1Y3R1cmVfc3RhdGUYASABKAsyKC5jbG91ZC52MS5kZXBsb3ltZW50LkluZnJhc3RydWN0dXJlU3RhdGVCCPpCBYoBAhABEkYKD2RlcGxveW1lbnRfcGxhbhgCIAEoCzIjLmNsb3VkLnYxLmRlcGxveW1lbnQuRGVwbG95bWVudFBsYW5CCPpCBYoBAhABIiAKHkluc3RhbGxTdHJvcHB5V29ya2Zsb3dSZXNwb25zZSLxAQoeSW5zdGFsbERhdGFiYXNlV29ya2Zsb3dSZXF1ZXN0ElAKFGluZnJhc3RydWN0dXJlX3N0YXRlGAEgASgLMiguY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVN0YXRlQgj6QgWKAQIQARI1CghkYXRhYmFzZRgCIAEoCzIZLmNsb3VkLnYxLmRvbWFpbi5EYXRhYmFzZUII+kIFigECEAESRgoPZGVwbG95bWVudF9wbGFuGAMgASgLMiMuY2xvdWQudjEuZGVwbG95bWVudC5EZXBsb3ltZW50UGxhbkII+kIFigECEAEiIQofSW5zdGFsbERhdGFiYXNlV29ya2Zsb3dSZXNwb25zZSLPAgoaUnVuV29ya2xvYWRXb3JrZmxvd1JlcXVlc3QSGgoGcnVuX2lkGAEgASgJQgr6QgdyBRABGIABEkYKD2RlcGxveW1lbnRfcGxhbhgCIAEoCzIjLmNsb3VkLnYxLmRlcGxveW1lbnQuRGVwbG95bWVudFBsYW5CCPpCBYoBAhABElAKFGluZnJhc3RydWN0dXJlX3N0YXRlGAMgASgLMiguY2xvdWQudjEuZGVwbG95bWVudC5JbmZyYXN0cnVjdHVyZVN0YXRlQgj6QgWKAQIQARJECg9hZ2VudF9ib290c3RyYXAYBCABKAsyIS5jbG91ZC52MS53b3JrZmxvdy5BZ2VudEJvb3RzdHJhcEII+kIFigECEAESNQoId29ya2xvYWQYBSABKAsyGS5jbG91ZC52MS5kb21haW4uV29ya2xvYWRCCPpCBYoBAhABIh0KG1J1bldvcmtsb2FkV29ya2Zsb3dSZXNwb25zZSKGAQoUU3VpdGVXb3JrZmxvd1JlcXVlc3QSHwoMc3VpdGVfcnVuX2lkGAEgASgJQgn6QgZyBBABGEASNwoEcnVucxgCIAMoCzIcLmNsb3VkLnYxLndvcmtmbG93LlJ1bkNvbmZpZ0IL+kIIkgEFCAEQ6AcSFAoMbWF4X3BhcmFsbGVsGAMgASgNIhcKFVN1aXRlV29ya2Zsb3dSZXNwb25zZTL4BgoLVGVzdFNlcnZpY2USsgEKDFRlc3RXb3JrZmxvdxImLmNsb3VkLnYxLndvcmtmbG93LlRlc3RXb3JrZmxvd1JlcXVlc3QaJy5jbG91ZC52MS53b3JrZmxvdy5UZXN0V29ya2Zsb3dSZXNwb25zZSJRisQDTSoZdGVzdC1ydW4vJHshIHRlc3RSdW4uaWQgfTACSgIgAQoNCgtHZXRSdW5TdGF0ZRINCgtVcGRhdGVTdGFnZXIMVGVzdFdvcmtmbG93ElUKC0dldFJ1blN0YXRlEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GhsuY2xvdWQudjEud29ya2Zsb3cuUnVuU3RhdGUiEZrEAw0KC0dldFJ1blN0YXRlElgKC1VwZGF0ZVN0YWdlEh4uY2xvdWQudjEud29ya2Zsb3cuU3RhZ2VVcGRhdGUaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiEaLEAw0KC1VwZGF0ZVN0YWdlEqgBChZJbnN0YWxsU3Ryb3BweVdvcmtmbG93EjAuY2xvdWQudjEud29ya2Zsb3cuSW5zdGFsbFN0cm9wcHlXb3JrZmxvd1JlcXVlc3QaMS5jbG91ZC52MS53b3JrZmxvdy5JbnN0YWxsU3Ryb3BweVdvcmtmbG93UmVzcG9uc2UiKYrEAyVSAwiIDkoGIAMKAggFchZJbnN0YWxsU3Ryb3BweVdvcmtmbG93EqwBChdJbnN0YWxsRGF0YWJhc2VXb3JrZmxvdxIxLmNsb3VkLnYxLndvcmtmbG93Lkluc3RhbGxEYXRhYmFzZVdvcmtmbG93UmVxdWVzdBoyLmNsb3VkLnYxLndvcmtmbG93Lkluc3RhbGxEYXRhYmFzZVdvcmtmbG93UmVzcG9uc2UiKorEAyZyF0luc3RhbGxEYXRhYmFzZVdvcmtmbG93UgMIiA5KBiADCgIIBRKTAQoTUnVuV29ya2xvYWRXb3JrZmxvdxItLmNsb3VkLnYxLndvcmtmbG93LlJ1bldvcmtsb2FkV29ya2Zsb3dSZXF1ZXN0Gi4uY2xvdWQudjEud29ya2Zsb3cuUnVuV29ya2xvYWRXb3JrZmxvd1Jlc3BvbnNlIh2KxAMZchNSdW5Xb3JrbG9hZFdvcmtmbG93SgIgARoTisQDDwoNc3Ryb3BweS1jbG91ZDLHAQoUU3VpdGVXb3JrZmxvd1NlcnZpY2USmQEKDVN1aXRlV29ya2Zsb3cSJy5jbG91ZC52MS53b3JrZmxvdy5TdWl0ZVdvcmtmbG93UmVxdWVzdBooLmNsb3VkLnYxLndvcmtmbG93LlN1aXRlV29ya2Zsb3dSZXNwb25zZSI1isQDMSoac3VpdGUtcnVuLyR7ISBzdWl0ZVJ1bklkIH0wAkoCIAFyDVN1aXRlV29ya2Zsb3caE4rEAw8KDXN0cm9wcHktY2xvdWRCRlpEZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvd29ya2Zsb3diBnByb3RvMw", [file_cloud_v1_common_status, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_plan, file_cloud_v1_domain_worker, file_cloud_v1_monitor_overview, file_cloud_v1_workflow_deployment, file_cloud_v1_domain_database, file_cloud_v1_domain_suite, file_cloud_v1_domain_test, file_cloud_v1_domain_workload, file_cloud_v1_workflow_run, file_google_protobuf_empty, file_google_protobuf_timestamp, file_temporal_v1_temporal, file_validate_validate]);
+  fileDesc("ChxjbG91ZC92MS93b3JrZmxvdy90ZXN0LnByb3RvEhFjbG91ZC52MS53b3JrZmxvdyIcChpQbGFjZWhvbGRlcldvcmtmbG93UmVxdWVzdCIdChtQbGFjZWhvbGRlcldvcmtmbG93UmVzcG9uc2UiXQoIUnVuU3RhdGUSJwoGc3RhdHVzGAEgASgOMhcuY2xvdWQudjEuY29tbW9uLlN0YXR1cxIoCgZzdGFnZXMYAiADKAsyGC5jbG91ZC52MS53b3JrZmxvdy5TdGFnZSK+BAoFU3RhZ2USGQoRbm9kZV9leGVjdXRpb25faWQYASABKAkSDAoEbmFtZRgCIAEoCRInCgZzdGF0dXMYAyABKA4yFy5jbG91ZC52MS5jb21tb24uU3RhdHVzEi4KCnN0YXJ0ZWRfYXQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC2ZpbmlzaGVkX2F0GAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIPCgdhdHRlbXB0GAYgASgNEg0KBW9yZGVyGAcgASgNEioKGHBhcmVudF9ub2RlX2V4ZWN1dGlvbl9pZBgIIAEoCUII+kIFcgMYgAESFwoFcGhhc2UYCSABKAlCCPpCBXIDGIABEh4KDGNvbXBvbmVudF9pZBgKIAEoCUII+kIFcgMYgAESHAoKbWFjaGluZV9pZBgLIAEoCUII+kIFcgMYgAESJwoGd29ya2VyGAwgASgLMhcuY2xvdWQudjEuZG9tYWluLldvcmtlchIfCg1zdGF0dXNfcmVhc29uGA0gASgJQgj6QgVyAxiAAhIfCg1lcnJvcl9tZXNzYWdlGA4gASgJQgj6QgVyAxiAIBI2CglvcGVyYXRpb24YDyABKAsyIy5jbG91ZC52MS5tb25pdG9yLlBpcGVsaW5lT3BlcmF0aW9uEjwKB291dHB1dHMYECADKAsyIC5jbG91ZC52MS5tb25pdG9yLlBpcGVsaW5lT3V0cHV0Qgn6QgaSAQMQgCAiQAoLU3RhZ2VVcGRhdGUSMQoFc3RhZ2UYASABKAsyGC5jbG91ZC52MS53b3JrZmxvdy5TdGFnZUII+kIFigECEAEy6QIKC1Rlc3RTZXJ2aWNlEpMBChNQbGFjZWhvbGRlcldvcmtmbG93Ei0uY2xvdWQudjEud29ya2Zsb3cuUGxhY2Vob2xkZXJXb3JrZmxvd1JlcXVlc3QaLi5jbG91ZC52MS53b3JrZmxvdy5QbGFjZWhvbGRlcldvcmtmbG93UmVzcG9uc2UiHYrEAxlyE1BsYWNlaG9sZGVyV29ya2Zsb3dKAiABElUKC0dldFJ1blN0YXRlEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GhsuY2xvdWQudjEud29ya2Zsb3cuUnVuU3RhdGUiEZrEAw0KC0dldFJ1blN0YXRlElgKC1VwZGF0ZVN0YWdlEh4uY2xvdWQudjEud29ya2Zsb3cuU3RhZ2VVcGRhdGUaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiEaLEAw0KC1VwZGF0ZVN0YWdlGhOKxAMPCg1zdHJvcHB5LWNsb3VkQkZaRGdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL3dvcmtmbG93YgZwcm90bzM", [file_cloud_v1_common_status, file_cloud_v1_domain_worker, file_cloud_v1_monitor_overview, file_google_protobuf_empty, file_google_protobuf_timestamp, file_temporal_v1_temporal, file_validate_validate]);
 
 /**
  *
- * TestWorkflowRequest is the input to a single test run.
+ * PlaceholderWorkflow is NOT a real, startable workflow — nothing registers
+ * or starts it. It exists only so protoc-gen-go-temporal emits a valid
+ * TestService: the plugin's generated TestClient (testsuite-environment
+ * helper) unconditionally references a "TestServiceWorkflows" interface,
+ * which the plugin itself only generates when the service declares at
+ * least one (temporal.v1.workflow) rpc — a service with only
+ * query/signal rpcs (GetRunState/UpdateStage, needed by the live run
+ * Overview and by RunRecipeWorkflow) hits that gap and fails to compile
+ * without one. Do not add real fields or logic here; if this whole
+ * workaround ever becomes unnecessary (e.g. a fixed plugin version), delete
+ * this message + rpc first.
  *
- * @generated from message cloud.v1.workflow.TestWorkflowRequest
+ * @generated from message cloud.v1.workflow.PlaceholderWorkflowRequest
  */
-export type TestWorkflowRequest = Message<"cloud.v1.workflow.TestWorkflowRequest"> & {
-  /**
-   *
-   * tenant_id scopes quota reservations and provider settings lookup.
-   *
-   * @generated from field: string tenant_id = 3;
-   */
-  tenantId: string;
-
-  /**
-   *
-   * test_run is the full description of the test run to execute.
-   *
-   * @generated from field: cloud.v1.domain.TestRun test_run = 1;
-   */
-  testRun?: TestRun;
-
-  /**
-   *
-   * agent_bootstrap is runtime control-plane data delivered to provisioned
-   * agents through the provider-specific carrier.
-   *
-   * @generated from field: cloud.v1.workflow.AgentBootstrap agent_bootstrap = 2;
-   */
-  agentBootstrap?: AgentBootstrap;
+export type PlaceholderWorkflowRequest = Message<"cloud.v1.workflow.PlaceholderWorkflowRequest"> & {
 };
 
 /**
  *
- * TestWorkflowRequest is the input to a single test run.
+ * PlaceholderWorkflow is NOT a real, startable workflow — nothing registers
+ * or starts it. It exists only so protoc-gen-go-temporal emits a valid
+ * TestService: the plugin's generated TestClient (testsuite-environment
+ * helper) unconditionally references a "TestServiceWorkflows" interface,
+ * which the plugin itself only generates when the service declares at
+ * least one (temporal.v1.workflow) rpc — a service with only
+ * query/signal rpcs (GetRunState/UpdateStage, needed by the live run
+ * Overview and by RunRecipeWorkflow) hits that gap and fails to compile
+ * without one. Do not add real fields or logic here; if this whole
+ * workaround ever becomes unnecessary (e.g. a fixed plugin version), delete
+ * this message + rpc first.
  *
- * @generated from message cloud.v1.workflow.TestWorkflowRequest
+ * @generated from message cloud.v1.workflow.PlaceholderWorkflowRequest
  */
-export type TestWorkflowRequestJson = {
-  /**
-   *
-   * tenant_id scopes quota reservations and provider settings lookup.
-   *
-   * @generated from field: string tenant_id = 3;
-   */
-  tenantId?: string;
-
-  /**
-   *
-   * test_run is the full description of the test run to execute.
-   *
-   * @generated from field: cloud.v1.domain.TestRun test_run = 1;
-   */
-  testRun?: TestRunJson;
-
-  /**
-   *
-   * agent_bootstrap is runtime control-plane data delivered to provisioned
-   * agents through the provider-specific carrier.
-   *
-   * @generated from field: cloud.v1.workflow.AgentBootstrap agent_bootstrap = 2;
-   */
-  agentBootstrap?: AgentBootstrapJson;
+export type PlaceholderWorkflowRequestJson = {
 };
 
-export type TestWorkflowRequestValid = TestWorkflowRequest;
+export type PlaceholderWorkflowRequestValid = PlaceholderWorkflowRequest;
 
 /**
- * Describes the message cloud.v1.workflow.TestWorkflowRequest.
- * Use `create(TestWorkflowRequestSchema)` to create a new message.
+ * Describes the message cloud.v1.workflow.PlaceholderWorkflowRequest.
+ * Use `create(PlaceholderWorkflowRequestSchema)` to create a new message.
  */
-export const TestWorkflowRequestSchema: GenMessage<TestWorkflowRequest, {jsonType: TestWorkflowRequestJson, validType: TestWorkflowRequestValid}> = /*@__PURE__*/
+export const PlaceholderWorkflowRequestSchema: GenMessage<PlaceholderWorkflowRequest, {jsonType: PlaceholderWorkflowRequestJson, validType: PlaceholderWorkflowRequestValid}> = /*@__PURE__*/
   messageDesc(file_cloud_v1_workflow_test, 0);
 
 /**
- *
- * TestWorkflowResponse is the empty result of a completed test run.
- *
- * @generated from message cloud.v1.workflow.TestWorkflowResponse
+ * @generated from message cloud.v1.workflow.PlaceholderWorkflowResponse
  */
-export type TestWorkflowResponse = Message<"cloud.v1.workflow.TestWorkflowResponse"> & {
+export type PlaceholderWorkflowResponse = Message<"cloud.v1.workflow.PlaceholderWorkflowResponse"> & {
 };
 
 /**
- *
- * TestWorkflowResponse is the empty result of a completed test run.
- *
- * @generated from message cloud.v1.workflow.TestWorkflowResponse
+ * @generated from message cloud.v1.workflow.PlaceholderWorkflowResponse
  */
-export type TestWorkflowResponseJson = {
+export type PlaceholderWorkflowResponseJson = {
 };
 
-export type TestWorkflowResponseValid = TestWorkflowResponse;
+export type PlaceholderWorkflowResponseValid = PlaceholderWorkflowResponse;
 
 /**
- * Describes the message cloud.v1.workflow.TestWorkflowResponse.
- * Use `create(TestWorkflowResponseSchema)` to create a new message.
+ * Describes the message cloud.v1.workflow.PlaceholderWorkflowResponse.
+ * Use `create(PlaceholderWorkflowResponseSchema)` to create a new message.
  */
-export const TestWorkflowResponseSchema: GenMessage<TestWorkflowResponse, {jsonType: TestWorkflowResponseJson, validType: TestWorkflowResponseValid}> = /*@__PURE__*/
+export const PlaceholderWorkflowResponseSchema: GenMessage<PlaceholderWorkflowResponse, {jsonType: PlaceholderWorkflowResponseJson, validType: PlaceholderWorkflowResponseValid}> = /*@__PURE__*/
   messageDesc(file_cloud_v1_workflow_test, 1);
 
 /**
@@ -530,469 +481,28 @@ export const StageUpdateSchema: GenMessage<StageUpdate, {jsonType: StageUpdateJs
 
 /**
  *
- * InstallStroppyWorkflowRequest asks to execute stroppy installation steps on
- * runner nodes.
- *
- * @generated from message cloud.v1.workflow.InstallStroppyWorkflowRequest
- */
-export type InstallStroppyWorkflowRequest = Message<"cloud.v1.workflow.InstallStroppyWorkflowRequest"> & {
-  /**
-   *
-   * infrastructure_state is used to route steps to node agents.
-   *
-   * @generated from field: cloud.v1.deployment.InfrastructureState infrastructure_state = 1;
-   */
-  infrastructureState?: InfrastructureState;
-
-  /**
-   *
-   * deployment_plan contains the stroppy-related agent steps.
-   *
-   * @generated from field: cloud.v1.deployment.DeploymentPlan deployment_plan = 2;
-   */
-  deploymentPlan?: DeploymentPlan;
-};
-
-/**
- *
- * InstallStroppyWorkflowRequest asks to execute stroppy installation steps on
- * runner nodes.
- *
- * @generated from message cloud.v1.workflow.InstallStroppyWorkflowRequest
- */
-export type InstallStroppyWorkflowRequestJson = {
-  /**
-   *
-   * infrastructure_state is used to route steps to node agents.
-   *
-   * @generated from field: cloud.v1.deployment.InfrastructureState infrastructure_state = 1;
-   */
-  infrastructureState?: InfrastructureStateJson;
-
-  /**
-   *
-   * deployment_plan contains the stroppy-related agent steps.
-   *
-   * @generated from field: cloud.v1.deployment.DeploymentPlan deployment_plan = 2;
-   */
-  deploymentPlan?: DeploymentPlanJson;
-};
-
-export type InstallStroppyWorkflowRequestValid = InstallStroppyWorkflowRequest;
-
-/**
- * Describes the message cloud.v1.workflow.InstallStroppyWorkflowRequest.
- * Use `create(InstallStroppyWorkflowRequestSchema)` to create a new message.
- */
-export const InstallStroppyWorkflowRequestSchema: GenMessage<InstallStroppyWorkflowRequest, {jsonType: InstallStroppyWorkflowRequestJson, validType: InstallStroppyWorkflowRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_test, 5);
-
-/**
- *
- * InstallStroppyWorkflowResponse is the empty result of installing stroppy.
- *
- * @generated from message cloud.v1.workflow.InstallStroppyWorkflowResponse
- */
-export type InstallStroppyWorkflowResponse = Message<"cloud.v1.workflow.InstallStroppyWorkflowResponse"> & {
-};
-
-/**
- *
- * InstallStroppyWorkflowResponse is the empty result of installing stroppy.
- *
- * @generated from message cloud.v1.workflow.InstallStroppyWorkflowResponse
- */
-export type InstallStroppyWorkflowResponseJson = {
-};
-
-export type InstallStroppyWorkflowResponseValid = InstallStroppyWorkflowResponse;
-
-/**
- * Describes the message cloud.v1.workflow.InstallStroppyWorkflowResponse.
- * Use `create(InstallStroppyWorkflowResponseSchema)` to create a new message.
- */
-export const InstallStroppyWorkflowResponseSchema: GenMessage<InstallStroppyWorkflowResponse, {jsonType: InstallStroppyWorkflowResponseJson, validType: InstallStroppyWorkflowResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_test, 6);
-
-/**
- *
- * InstallDatabaseWorkflowRequest asks to bring up / provision the database
- * (self-deploy or managed). Our responsibility for every kind except external;
- * skipped for external dbs.
- *
- * @generated from message cloud.v1.workflow.InstallDatabaseWorkflowRequest
- */
-export type InstallDatabaseWorkflowRequest = Message<"cloud.v1.workflow.InstallDatabaseWorkflowRequest"> & {
-  /**
-   *
-   * infrastructure_state is used to route steps to node agents.
-   *
-   * @generated from field: cloud.v1.deployment.InfrastructureState infrastructure_state = 1;
-   */
-  infrastructureState?: InfrastructureState;
-
-  /**
-   *
-   * database is the database definition to provision.
-   *
-   * @generated from field: cloud.v1.domain.Database database = 2;
-   */
-  database?: Database;
-
-  /**
-   *
-   * deployment_plan contains the database-related agent steps.
-   *
-   * @generated from field: cloud.v1.deployment.DeploymentPlan deployment_plan = 3;
-   */
-  deploymentPlan?: DeploymentPlan;
-};
-
-/**
- *
- * InstallDatabaseWorkflowRequest asks to bring up / provision the database
- * (self-deploy or managed). Our responsibility for every kind except external;
- * skipped for external dbs.
- *
- * @generated from message cloud.v1.workflow.InstallDatabaseWorkflowRequest
- */
-export type InstallDatabaseWorkflowRequestJson = {
-  /**
-   *
-   * infrastructure_state is used to route steps to node agents.
-   *
-   * @generated from field: cloud.v1.deployment.InfrastructureState infrastructure_state = 1;
-   */
-  infrastructureState?: InfrastructureStateJson;
-
-  /**
-   *
-   * database is the database definition to provision.
-   *
-   * @generated from field: cloud.v1.domain.Database database = 2;
-   */
-  database?: DatabaseJson;
-
-  /**
-   *
-   * deployment_plan contains the database-related agent steps.
-   *
-   * @generated from field: cloud.v1.deployment.DeploymentPlan deployment_plan = 3;
-   */
-  deploymentPlan?: DeploymentPlanJson;
-};
-
-export type InstallDatabaseWorkflowRequestValid = InstallDatabaseWorkflowRequest;
-
-/**
- * Describes the message cloud.v1.workflow.InstallDatabaseWorkflowRequest.
- * Use `create(InstallDatabaseWorkflowRequestSchema)` to create a new message.
- */
-export const InstallDatabaseWorkflowRequestSchema: GenMessage<InstallDatabaseWorkflowRequest, {jsonType: InstallDatabaseWorkflowRequestJson, validType: InstallDatabaseWorkflowRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_test, 7);
-
-/**
- *
- * InstallDatabaseWorkflowResponse is the empty result of installing the database.
- *
- * @generated from message cloud.v1.workflow.InstallDatabaseWorkflowResponse
- */
-export type InstallDatabaseWorkflowResponse = Message<"cloud.v1.workflow.InstallDatabaseWorkflowResponse"> & {
-};
-
-/**
- *
- * InstallDatabaseWorkflowResponse is the empty result of installing the database.
- *
- * @generated from message cloud.v1.workflow.InstallDatabaseWorkflowResponse
- */
-export type InstallDatabaseWorkflowResponseJson = {
-};
-
-export type InstallDatabaseWorkflowResponseValid = InstallDatabaseWorkflowResponse;
-
-/**
- * Describes the message cloud.v1.workflow.InstallDatabaseWorkflowResponse.
- * Use `create(InstallDatabaseWorkflowResponseSchema)` to create a new message.
- */
-export const InstallDatabaseWorkflowResponseSchema: GenMessage<InstallDatabaseWorkflowResponse, {jsonType: InstallDatabaseWorkflowResponseJson, validType: InstallDatabaseWorkflowResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_test, 8);
-
-/**
- *
- * RunWorkloadWorkflowRequest asks to run the already-rendered workload via
- * the agent. Deployment rendering writes stroppy-config.json and monitor
- * collectors first; this workflow executes the real stroppy load and relies on
- * the OTLP exporter in that config for metrics.
- *
- * @generated from message cloud.v1.workflow.RunWorkloadWorkflowRequest
- */
-export type RunWorkloadWorkflowRequest = Message<"cloud.v1.workflow.RunWorkloadWorkflowRequest"> & {
-  /**
-   *
-   * run_id is the stable run identifier used for stage/log correlation.
-   *
-   * @generated from field: string run_id = 1;
-   */
-  runId: string;
-
-  /**
-   *
-   * deployment_plan is the materialized plan containing the workload-runner
-   * component and its rendered config path.
-   *
-   * @generated from field: cloud.v1.deployment.DeploymentPlan deployment_plan = 2;
-   */
-  deploymentPlan?: DeploymentPlan;
-
-  /**
-   *
-   * infrastructure_state carries runtime machine state for route validation.
-   *
-   * @generated from field: cloud.v1.deployment.InfrastructureState infrastructure_state = 3;
-   */
-  infrastructureState?: InfrastructureState;
-
-  /**
-   *
-   * agent_bootstrap carries the per-node Temporal task queues used to reach
-   * the workload runner agent.
-   *
-   * @generated from field: cloud.v1.workflow.AgentBootstrap agent_bootstrap = 4;
-   */
-  agentBootstrap?: AgentBootstrap;
-
-  /**
-   *
-   * workload is the test's workload — its ordered segments drive one stroppy
-   * run step each (against the per-segment config the deployment plan wrote),
-   * executed sequentially on the same database.
-   *
-   * @generated from field: cloud.v1.domain.Workload workload = 5;
-   */
-  workload?: Workload;
-};
-
-/**
- *
- * RunWorkloadWorkflowRequest asks to run the already-rendered workload via
- * the agent. Deployment rendering writes stroppy-config.json and monitor
- * collectors first; this workflow executes the real stroppy load and relies on
- * the OTLP exporter in that config for metrics.
- *
- * @generated from message cloud.v1.workflow.RunWorkloadWorkflowRequest
- */
-export type RunWorkloadWorkflowRequestJson = {
-  /**
-   *
-   * run_id is the stable run identifier used for stage/log correlation.
-   *
-   * @generated from field: string run_id = 1;
-   */
-  runId?: string;
-
-  /**
-   *
-   * deployment_plan is the materialized plan containing the workload-runner
-   * component and its rendered config path.
-   *
-   * @generated from field: cloud.v1.deployment.DeploymentPlan deployment_plan = 2;
-   */
-  deploymentPlan?: DeploymentPlanJson;
-
-  /**
-   *
-   * infrastructure_state carries runtime machine state for route validation.
-   *
-   * @generated from field: cloud.v1.deployment.InfrastructureState infrastructure_state = 3;
-   */
-  infrastructureState?: InfrastructureStateJson;
-
-  /**
-   *
-   * agent_bootstrap carries the per-node Temporal task queues used to reach
-   * the workload runner agent.
-   *
-   * @generated from field: cloud.v1.workflow.AgentBootstrap agent_bootstrap = 4;
-   */
-  agentBootstrap?: AgentBootstrapJson;
-
-  /**
-   *
-   * workload is the test's workload — its ordered segments drive one stroppy
-   * run step each (against the per-segment config the deployment plan wrote),
-   * executed sequentially on the same database.
-   *
-   * @generated from field: cloud.v1.domain.Workload workload = 5;
-   */
-  workload?: WorkloadJson;
-};
-
-export type RunWorkloadWorkflowRequestValid = RunWorkloadWorkflowRequest;
-
-/**
- * Describes the message cloud.v1.workflow.RunWorkloadWorkflowRequest.
- * Use `create(RunWorkloadWorkflowRequestSchema)` to create a new message.
- */
-export const RunWorkloadWorkflowRequestSchema: GenMessage<RunWorkloadWorkflowRequest, {jsonType: RunWorkloadWorkflowRequestJson, validType: RunWorkloadWorkflowRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_test, 9);
-
-/**
- *
- * RunWorkloadWorkflowResponse is the empty result of a workload run (results go
- * to metrics).
- *
- * @generated from message cloud.v1.workflow.RunWorkloadWorkflowResponse
- */
-export type RunWorkloadWorkflowResponse = Message<"cloud.v1.workflow.RunWorkloadWorkflowResponse"> & {
-};
-
-/**
- *
- * RunWorkloadWorkflowResponse is the empty result of a workload run (results go
- * to metrics).
- *
- * @generated from message cloud.v1.workflow.RunWorkloadWorkflowResponse
- */
-export type RunWorkloadWorkflowResponseJson = {
-};
-
-export type RunWorkloadWorkflowResponseValid = RunWorkloadWorkflowResponse;
-
-/**
- * Describes the message cloud.v1.workflow.RunWorkloadWorkflowResponse.
- * Use `create(RunWorkloadWorkflowResponseSchema)` to create a new message.
- */
-export const RunWorkloadWorkflowResponseSchema: GenMessage<RunWorkloadWorkflowResponse, {jsonType: RunWorkloadWorkflowResponseJson, validType: RunWorkloadWorkflowResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_test, 10);
-
-/**
- *
- * SuiteWorkflowRequest is the input to a suite run. The API/start layer expands
- * the suite definition into persisted child TestRunRecords and then builds one
- * RunConfig per child with provider settings and agent bootstrap resolved.
- *
- * @generated from message cloud.v1.workflow.SuiteWorkflowRequest
- */
-export type SuiteWorkflowRequest = Message<"cloud.v1.workflow.SuiteWorkflowRequest"> & {
-  /**
-   *
-   * suite_run_id is the persisted SuiteRunRecord id.
-   *
-   * @generated from field: string suite_run_id = 1;
-   */
-  suiteRunId: string;
-
-  /**
-   *
-   * runs are the child run workflow inputs.
-   *
-   * @generated from field: repeated cloud.v1.workflow.RunConfig runs = 2;
-   */
-  runs: RunConfig[];
-
-  /**
-   *
-   * max_parallel caps concurrent child TestWorkflow executions. 0 =
-   * unlimited.
-   *
-   * @generated from field: uint32 max_parallel = 3;
-   */
-  maxParallel: number;
-};
-
-/**
- *
- * SuiteWorkflowRequest is the input to a suite run. The API/start layer expands
- * the suite definition into persisted child TestRunRecords and then builds one
- * RunConfig per child with provider settings and agent bootstrap resolved.
- *
- * @generated from message cloud.v1.workflow.SuiteWorkflowRequest
- */
-export type SuiteWorkflowRequestJson = {
-  /**
-   *
-   * suite_run_id is the persisted SuiteRunRecord id.
-   *
-   * @generated from field: string suite_run_id = 1;
-   */
-  suiteRunId?: string;
-
-  /**
-   *
-   * runs are the child run workflow inputs.
-   *
-   * @generated from field: repeated cloud.v1.workflow.RunConfig runs = 2;
-   */
-  runs?: RunConfigJson[];
-
-  /**
-   *
-   * max_parallel caps concurrent child TestWorkflow executions. 0 =
-   * unlimited.
-   *
-   * @generated from field: uint32 max_parallel = 3;
-   */
-  maxParallel?: number;
-};
-
-export type SuiteWorkflowRequestValid = SuiteWorkflowRequest;
-
-/**
- * Describes the message cloud.v1.workflow.SuiteWorkflowRequest.
- * Use `create(SuiteWorkflowRequestSchema)` to create a new message.
- */
-export const SuiteWorkflowRequestSchema: GenMessage<SuiteWorkflowRequest, {jsonType: SuiteWorkflowRequestJson, validType: SuiteWorkflowRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_test, 11);
-
-/**
- *
- * SuiteWorkflowResponse is the empty result of a completed suite run.
- *
- * @generated from message cloud.v1.workflow.SuiteWorkflowResponse
- */
-export type SuiteWorkflowResponse = Message<"cloud.v1.workflow.SuiteWorkflowResponse"> & {
-};
-
-/**
- *
- * SuiteWorkflowResponse is the empty result of a completed suite run.
- *
- * @generated from message cloud.v1.workflow.SuiteWorkflowResponse
- */
-export type SuiteWorkflowResponseJson = {
-};
-
-export type SuiteWorkflowResponseValid = SuiteWorkflowResponse;
-
-/**
- * Describes the message cloud.v1.workflow.SuiteWorkflowResponse.
- * Use `create(SuiteWorkflowResponseSchema)` to create a new message.
- */
-export const SuiteWorkflowResponseSchema: GenMessage<SuiteWorkflowResponse, {jsonType: SuiteWorkflowResponseJson, validType: SuiteWorkflowResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_workflow_test, 12);
-
-/**
- *
- * TestService orchestrates one full test cycle:
- * deploy -> install stroppy -> [install database unless external] -> run workload -> teardown.
- * It composes child workflows; topology stays baked, only runtime info from the
- * deployment is carried forward.
+ * TestService exposes the live run-state query/signal surface a running test
+ * workflow answers. It composed the full test-run orchestration workflows;
+ * that orchestration is now driven by the generic DSL interpreter workflow
+ * (RunRecipeWorkflow, internal/workflows/runrecipe.go), which answers the
+ * same GetRunState query / UpdateStage signal directly against the SDK
+ * (see runrecipe.go's GetRunState/GetRunStateQueryName) without going
+ * through this generated service.
  *
  * @generated from service cloud.v1.workflow.TestService
  */
 export const TestService: GenService<{
   /**
    *
-   * TestWorkflow runs one full test cycle, deduplicated by a deterministic id
-   * derived from TestRun.id and never auto-retried as a whole.
+   * PlaceholderWorkflow: see the message doc above — required by the
+   * code generator, never started.
    *
-   * @generated from rpc cloud.v1.workflow.TestService.TestWorkflow
+   * @generated from rpc cloud.v1.workflow.TestService.PlaceholderWorkflow
    */
-  testWorkflow: {
+  placeholderWorkflow: {
     methodKind: "unary";
-    input: typeof TestWorkflowRequestSchema;
-    output: typeof TestWorkflowResponseSchema;
+    input: typeof PlaceholderWorkflowRequestSchema;
+    output: typeof PlaceholderWorkflowResponseSchema;
   },
   /**
    *
@@ -1019,65 +529,6 @@ export const TestService: GenService<{
     input: typeof StageUpdateSchema;
     output: typeof EmptySchema;
   },
-  /**
-   *
-   * InstallStroppyWorkflow installs stroppy onto the runner machines (child
-   * of TestWorkflow; idempotent and retryable).
-   *
-   * @generated from rpc cloud.v1.workflow.TestService.InstallStroppyWorkflow
-   */
-  installStroppyWorkflow: {
-    methodKind: "unary";
-    input: typeof InstallStroppyWorkflowRequestSchema;
-    output: typeof InstallStroppyWorkflowResponseSchema;
-  },
-  /**
-   *
-   * InstallDatabaseWorkflow brings up / provisions the database (child of
-   * TestWorkflow; idempotent and retryable).
-   *
-   * @generated from rpc cloud.v1.workflow.TestService.InstallDatabaseWorkflow
-   */
-  installDatabaseWorkflow: {
-    methodKind: "unary";
-    input: typeof InstallDatabaseWorkflowRequestSchema;
-    output: typeof InstallDatabaseWorkflowResponseSchema;
-  },
-  /**
-   *
-   * RunWorkloadWorkflow runs the workload via the agent (child of
-   * TestWorkflow; unbounded, never retried to avoid double load).
-   *
-   * @generated from rpc cloud.v1.workflow.TestService.RunWorkloadWorkflow
-   */
-  runWorkloadWorkflow: {
-    methodKind: "unary";
-    input: typeof RunWorkloadWorkflowRequestSchema;
-    output: typeof RunWorkloadWorkflowResponseSchema;
-  },
 }> = /*@__PURE__*/
   serviceDesc(file_cloud_v1_workflow_test, 0);
-
-/**
- *
- * SuiteWorkflowService runs a child TestWorkflow per RunConfig, honoring
- * max_parallel.
- *
- * @generated from service cloud.v1.workflow.SuiteWorkflowService
- */
-export const SuiteWorkflowService: GenService<{
-  /**
-   *
-   * SuiteWorkflow fans out a child TestWorkflow per run in the suite,
-   * deduplicated by a deterministic id derived from suite_run_id.
-   *
-   * @generated from rpc cloud.v1.workflow.SuiteWorkflowService.SuiteWorkflow
-   */
-  suiteWorkflow: {
-    methodKind: "unary";
-    input: typeof SuiteWorkflowRequestSchema;
-    output: typeof SuiteWorkflowResponseSchema;
-  },
-}> = /*@__PURE__*/
-  serviceDesc(file_cloud_v1_workflow_test, 1);
 

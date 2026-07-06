@@ -2,8 +2,8 @@
 // @generated from file cloud/v1/workflow/agent.proto (package cloud.v1.workflow, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenService } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
+import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Cmd_ResultSchema, CmdSchema } from "../common/cmd_pb.ts";
 import { file_cloud_v1_common_cmd } from "../common/cmd_pb.ts";
 import type { Dir_TempSchema, DirSchema } from "../common/dir_pb.ts";
@@ -13,12 +13,155 @@ import { file_cloud_v1_common_file } from "../common/file_pb.ts";
 import type { EmptySchema } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_empty } from "@bufbuild/protobuf/wkt";
 import { file_temporal_v1_temporal } from "../../../temporal/v1/temporal_pb.ts";
+import { file_validate_validate } from "../../../validate/validate_pb.ts";
+import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file cloud/v1/workflow/agent.proto.
  */
 export const file_cloud_v1_workflow_agent: GenFile = /*@__PURE__*/
-  fileDesc("Ch1jbG91ZC92MS93b3JrZmxvdy9hZ2VudC5wcm90bxIRY2xvdWQudjEud29ya2Zsb3cy2wQKE0FnZW50Q29tbWFuZFNlcnZpY2USbQoZRW5zdXJlQWdlbnRPbmxpbmVBY3Rpdml0eRIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIgksQDHCoCCDwyEQoCCAURAAAAAAAAAEAaAgg8IgMIhAcSUwoRQ3JlYXRlRGlyQWN0aXZpdHkSFC5jbG91ZC52MS5jb21tb24uRGlyGhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IhCSxAMMMgYgAwoCCAIiAggeElYKFUNyZWF0ZVRlbXBEaXJBY3Rpdml0eRIZLmNsb3VkLnYxLmNvbW1vbi5EaXIuVGVtcBoULmNsb3VkLnYxLmNvbW1vbi5EaXIiDJLEAwgiAggeMgIgARJUChFXcml0ZUZpbGVBY3Rpdml0eRIVLmNsb3VkLnYxLmNvbW1vbi5GaWxlGhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IhCSxAMMIgIIHjIGIAMKAggCEmIKEUZldGNoRmlsZUFjdGl2aXR5EhUuY2xvdWQudjEuY29tbW9uLkZpbGUaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiHpLEAxoyDwoCCAURAAAAAAAAAEAgAyIDCNgEKgIIPBJZCg9DYWxsQ21kQWN0aXZpdHkSFC5jbG91ZC52MS5jb21tb24uQ21kGhsuY2xvdWQudjEuY29tbW9uLkNtZC5SZXN1bHQiE5LEAw8iBQiAmp4BKgIIPDICIAEaE4rEAw8KDXN0cm9wcHktY2xvdWRCRlpEZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvd29ya2Zsb3diBnByb3RvMw", [file_cloud_v1_common_cmd, file_cloud_v1_common_dir, file_cloud_v1_common_file, file_google_protobuf_empty, file_temporal_v1_temporal]);
+  fileDesc("Ch1jbG91ZC92MS93b3JrZmxvdy9hZ2VudC5wcm90bxIRY2xvdWQudjEud29ya2Zsb3ci2QQKDkFnZW50Qm9vdHN0cmFwEh0KC3NlcnZlcl9hZGRyGAEgASgJQgj6QgVyAxiAEBIcCgpiaW5hcnlfdXJsGAIgASgJQgj6QgVyAxiAEBIkChJ0ZW1wb3JhbF9uYW1lc3BhY2UYAyABKAlCCPpCBXIDGIABEnAKCWV4dHJhX2VudhgEIAMoCzIvLmNsb3VkLnYxLndvcmtmbG93LkFnZW50Qm9vdHN0cmFwLkV4dHJhRW52RW50cnlCLPpCKZoBJiIbchkQARiAAjISXltBLVpfXVtBLVowLTlfXSokKgVyAxiAQBBAEmUKDGFnZW50X3Rva2VucxgFIAMoCzIyLmNsb3VkLnYxLndvcmtmbG93LkFnZW50Qm9vdHN0cmFwLkFnZW50VG9rZW5zRW50cnlCG/pCGJoBFSIHcgUQARiAAioHcgUQARiAQBCACBJuChFhZ2VudF90YXNrX3F1ZXVlcxgGIAMoCzI2LmNsb3VkLnYxLndvcmtmbG93LkFnZW50Qm9vdHN0cmFwLkFnZW50VGFza1F1ZXVlc0VudHJ5Qhv6QhiaARUQgAgiB3IFEAEYgAIqB3IFEAEYgAQaLwoNRXh0cmFFbnZFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGjIKEEFnZW50VG9rZW5zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ARo2ChRBZ2VudFRhc2tRdWV1ZXNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBMtsEChNBZ2VudENvbW1hbmRTZXJ2aWNlEm0KGUVuc3VyZUFnZW50T25saW5lQWN0aXZpdHkSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiIJLEAxwiAwiEByoCCDwyEQoCCAURAAAAAAAAAEAaAgg8ElMKEUNyZWF0ZURpckFjdGl2aXR5EhQuY2xvdWQudjEuY29tbW9uLkRpchoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIQksQDDCICCB4yBiADCgIIAhJWChVDcmVhdGVUZW1wRGlyQWN0aXZpdHkSGS5jbG91ZC52MS5jb21tb24uRGlyLlRlbXAaFC5jbG91ZC52MS5jb21tb24uRGlyIgySxAMIIgIIHjICIAESVAoRV3JpdGVGaWxlQWN0aXZpdHkSFS5jbG91ZC52MS5jb21tb24uRmlsZRoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIQksQDDDIGIAMKAggCIgIIHhJiChFGZXRjaEZpbGVBY3Rpdml0eRIVLmNsb3VkLnYxLmNvbW1vbi5GaWxlGhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5Ih6SxAMaIgMI2AQqAgg8Mg8RAAAAAAAAAEAgAwoCCAUSWQoPQ2FsbENtZEFjdGl2aXR5EhQuY2xvdWQudjEuY29tbW9uLkNtZBobLmNsb3VkLnYxLmNvbW1vbi5DbWQuUmVzdWx0IhOSxAMPIgUIgJqeASoCCDwyAiABGhOKxAMPCg1zdHJvcHB5LWNsb3VkQkZaRGdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL3dvcmtmbG93YgZwcm90bzM", [file_cloud_v1_common_cmd, file_cloud_v1_common_dir, file_cloud_v1_common_file, file_google_protobuf_empty, file_temporal_v1_temporal, file_validate_validate]);
+
+/**
+ *
+ * AgentBootstrap is the provider-independent startup contract for every agent.
+ * It is runtime control-plane data, not topology and not provider settings.
+ *
+ * @generated from message cloud.v1.workflow.AgentBootstrap
+ */
+export type AgentBootstrap = Message<"cloud.v1.workflow.AgentBootstrap"> & {
+  /**
+   *
+   * server_addr is the public/base control-plane address agents use to reach
+   * the server and Temporal proxy, e.g. http://10.0.0.10:8080.
+   *
+   * @generated from field: string server_addr = 1;
+   */
+  serverAddr: string;
+
+  /**
+   *
+   * binary_url overrides the agent binary URL. Empty means
+   * server_addr + "/agent/binary".
+   *
+   * @generated from field: string binary_url = 2;
+   */
+  binaryUrl: string;
+
+  /**
+   *
+   * temporal_namespace is the namespace agents use when registering their
+   * Temporal worker. Empty means default.
+   *
+   * @generated from field: string temporal_namespace = 3;
+   */
+  temporalNamespace: string;
+
+  /**
+   *
+   * extra_env is appended to the agent env file. Core STROPPY and AGENT
+   * fields are still rendered by the system and win over this map.
+   *
+   * @generated from field: map<string, string> extra_env = 4;
+   */
+  extraEnv: { [key: string]: string };
+
+  /**
+   *
+   * agent_tokens carries per-node bearer tokens. The renderer injects only
+   * the token matching the current node into that node's env as
+   * STROPPY_AGENT_TOKEN; it must not be rendered as generic extra env.
+   *
+   * @generated from field: map<string, string> agent_tokens = 5;
+   */
+  agentTokens: { [key: string]: string };
+
+  /**
+   *
+   * agent_task_queues carries the per-node Temporal task queue name. It is
+   * generated with a per-run secret suffix and rendered only to the matching
+   * node so a valid agent token alone is not enough to poll another node's
+   * work.
+   *
+   * @generated from field: map<string, string> agent_task_queues = 6;
+   */
+  agentTaskQueues: { [key: string]: string };
+};
+
+/**
+ *
+ * AgentBootstrap is the provider-independent startup contract for every agent.
+ * It is runtime control-plane data, not topology and not provider settings.
+ *
+ * @generated from message cloud.v1.workflow.AgentBootstrap
+ */
+export type AgentBootstrapJson = {
+  /**
+   *
+   * server_addr is the public/base control-plane address agents use to reach
+   * the server and Temporal proxy, e.g. http://10.0.0.10:8080.
+   *
+   * @generated from field: string server_addr = 1;
+   */
+  serverAddr?: string;
+
+  /**
+   *
+   * binary_url overrides the agent binary URL. Empty means
+   * server_addr + "/agent/binary".
+   *
+   * @generated from field: string binary_url = 2;
+   */
+  binaryUrl?: string;
+
+  /**
+   *
+   * temporal_namespace is the namespace agents use when registering their
+   * Temporal worker. Empty means default.
+   *
+   * @generated from field: string temporal_namespace = 3;
+   */
+  temporalNamespace?: string;
+
+  /**
+   *
+   * extra_env is appended to the agent env file. Core STROPPY and AGENT
+   * fields are still rendered by the system and win over this map.
+   *
+   * @generated from field: map<string, string> extra_env = 4;
+   */
+  extraEnv?: { [key: string]: string };
+
+  /**
+   *
+   * agent_tokens carries per-node bearer tokens. The renderer injects only
+   * the token matching the current node into that node's env as
+   * STROPPY_AGENT_TOKEN; it must not be rendered as generic extra env.
+   *
+   * @generated from field: map<string, string> agent_tokens = 5;
+   */
+  agentTokens?: { [key: string]: string };
+
+  /**
+   *
+   * agent_task_queues carries the per-node Temporal task queue name. It is
+   * generated with a per-run secret suffix and rendered only to the matching
+   * node so a valid agent token alone is not enough to poll another node's
+   * work.
+   *
+   * @generated from field: map<string, string> agent_task_queues = 6;
+   */
+  agentTaskQueues?: { [key: string]: string };
+};
+
+export type AgentBootstrapValid = AgentBootstrap;
+
+/**
+ * Describes the message cloud.v1.workflow.AgentBootstrap.
+ * Use `create(AgentBootstrapSchema)` to create a new message.
+ */
+export const AgentBootstrapSchema: GenMessage<AgentBootstrap, {jsonType: AgentBootstrapJson, validType: AgentBootstrapValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_workflow_agent, 0);
 
 /**
  *

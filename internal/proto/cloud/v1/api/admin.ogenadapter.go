@@ -16,9 +16,6 @@ type OgenAdapter struct {
 	favoriteService        FavoriteServiceServer
 	iamService             IamServiceServer
 	packageService         PackageServiceServer
-	databasePresetService  DatabasePresetServiceServer
-	workloadPresetService  WorkloadPresetServiceServer
-	testPresetService      TestPresetServiceServer
 	ratingService          RatingServiceServer
 	publicRatingService    PublicRatingServiceServer
 	publicShareService     PublicShareServiceServer
@@ -26,15 +23,10 @@ type OgenAdapter struct {
 	recipeService          RecipeServiceServer
 	shareService           ShareServiceServer
 	stroppyService         StroppyServiceServer
-	suiteService           SuiteServiceServer
-	suiteRunService        SuiteRunServiceServer
-	suiteWizardService     SuiteWizardServiceServer
 	systemSettingsService  SystemSettingsServiceServer
 	tenantDashboardService TenantDashboardServiceServer
 	tenantSettingsService  TenantSettingsServiceServer
-	testRunService         TestRunServiceServer
 	testRunOverviewService TestRunOverviewServiceServer
-	testWizardService      TestWizardServiceServer
 }
 
 // NewOgenAdapter builds an OgenAdapter from the gRPC service implementations.
@@ -43,9 +35,6 @@ func NewOgenAdapter(
 	favoriteService FavoriteServiceServer,
 	iamService IamServiceServer,
 	packageService PackageServiceServer,
-	databasePresetService DatabasePresetServiceServer,
-	workloadPresetService WorkloadPresetServiceServer,
-	testPresetService TestPresetServiceServer,
 	ratingService RatingServiceServer,
 	publicRatingService PublicRatingServiceServer,
 	publicShareService PublicShareServiceServer,
@@ -53,24 +42,16 @@ func NewOgenAdapter(
 	recipeService RecipeServiceServer,
 	shareService ShareServiceServer,
 	stroppyService StroppyServiceServer,
-	suiteService SuiteServiceServer,
-	suiteRunService SuiteRunServiceServer,
-	suiteWizardService SuiteWizardServiceServer,
 	systemSettingsService SystemSettingsServiceServer,
 	tenantDashboardService TenantDashboardServiceServer,
 	tenantSettingsService TenantSettingsServiceServer,
-	testRunService TestRunServiceServer,
 	testRunOverviewService TestRunOverviewServiceServer,
-	testWizardService TestWizardServiceServer,
 ) *OgenAdapter {
 	return &OgenAdapter{
 		compareService:         compareService,
 		favoriteService:        favoriteService,
 		iamService:             iamService,
 		packageService:         packageService,
-		databasePresetService:  databasePresetService,
-		workloadPresetService:  workloadPresetService,
-		testPresetService:      testPresetService,
 		ratingService:          ratingService,
 		publicRatingService:    publicRatingService,
 		publicShareService:     publicShareService,
@@ -78,15 +59,10 @@ func NewOgenAdapter(
 		recipeService:          recipeService,
 		shareService:           shareService,
 		stroppyService:         stroppyService,
-		suiteService:           suiteService,
-		suiteRunService:        suiteRunService,
-		suiteWizardService:     suiteWizardService,
 		systemSettingsService:  systemSettingsService,
 		tenantDashboardService: tenantDashboardService,
 		tenantSettingsService:  tenantSettingsService,
-		testRunService:         testRunService,
 		testRunOverviewService: testRunOverviewService,
-		testWizardService:      testWizardService,
 	}
 }
 
@@ -123,42 +99,6 @@ func (a *OgenAdapter) CancelRun(ctx context.Context, req *rest.CancelRunRequest)
 	return nil
 }
 
-func (a *OgenAdapter) CancelSuiteRun(ctx context.Context, req *rest.CancelSuiteRunRequest, params rest.CancelSuiteRunParams) (*rest.CancelSuiteRunResponse, error) {
-	in := &CancelSuiteRunRequest{}
-	b, err := CancelSuiteRunRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.suiteRunService.CancelSuiteRun(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) CancelTestRun(ctx context.Context, req *rest.CancelTestRunRequest, params rest.CancelTestRunParams) (*rest.CancelTestRunResponse, error) {
-	in := &CancelTestRunRequest{}
-	b, err := CancelTestRunRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.testRunService.CancelTestRun(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (a *OgenAdapter) ChangePassword(ctx context.Context, req *rest.ChangePasswordRequest) error {
 	in := &ChangePasswordRequest{}
 	b, err := ChangePasswordRequestFromOgen(req)
@@ -182,78 +122,6 @@ func (a *OgenAdapter) CheckRecipe(ctx context.Context, req *rest.CheckRecipeRequ
 	}
 	in = b
 	resp, err := a.recipeService.CheckRecipe(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) CloneDatabasePreset(ctx context.Context, req *rest.CloneDatabasePresetRequest) (*rest.CloneDatabasePresetResponse, error) {
-	in := &CloneDatabasePresetRequest{}
-	b, err := CloneDatabasePresetRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.databasePresetService.CloneDatabasePreset(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) CloneSuite(ctx context.Context, req *rest.CloneSuiteRequest) (*rest.CloneSuiteResponse, error) {
-	in := &CloneSuiteRequest{}
-	b, err := CloneSuiteRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.suiteService.CloneSuite(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) CloneTestPreset(ctx context.Context, req *rest.CloneTestPresetRequest) (*rest.CloneTestPresetResponse, error) {
-	in := &CloneTestPresetRequest{}
-	b, err := CloneTestPresetRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.testPresetService.CloneTestPreset(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) CloneWorkloadPreset(ctx context.Context, req *rest.CloneWorkloadPresetRequest) (*rest.CloneWorkloadPresetResponse, error) {
-	in := &CloneWorkloadPresetRequest{}
-	b, err := CloneWorkloadPresetRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.workloadPresetService.CloneWorkloadPreset(ctx, in)
 	if err != nil {
 		return nil, err
 	}
@@ -359,24 +227,6 @@ func (a *OgenAdapter) CreateApiToken(ctx context.Context, req *rest.CreateApiTok
 	}
 	in = b
 	resp, err := a.iamService.CreateApiToken(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) CreateDatabasePreset(ctx context.Context, req *rest.CreateDatabasePresetRequest) (*rest.CreateDatabasePresetResponse, error) {
-	in := &CreateDatabasePresetRequest{}
-	b, err := CreateDatabasePresetRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.databasePresetService.CreateDatabasePreset(ctx, in)
 	if err != nil {
 		return nil, err
 	}
@@ -495,24 +345,6 @@ func (a *OgenAdapter) CreateShare(ctx context.Context, req *rest.CreateShareRequ
 	return out, nil
 }
 
-func (a *OgenAdapter) CreateSuite(ctx context.Context, req *rest.CreateSuiteRequest) (*rest.CreateSuiteResponse, error) {
-	in := &CreateSuiteRequest{}
-	b, err := CreateSuiteRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.suiteService.CreateSuite(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (a *OgenAdapter) CreateTenant(ctx context.Context, req *rest.CreateTenantRequest) (*rest.CreateTenantResponse, error) {
 	in := &CreateTenantRequest{}
 	b, err := CreateTenantRequestFromOgen(req)
@@ -531,42 +363,6 @@ func (a *OgenAdapter) CreateTenant(ctx context.Context, req *rest.CreateTenantRe
 	return out, nil
 }
 
-func (a *OgenAdapter) CreateTestPreset(ctx context.Context, req *rest.CreateTestPresetRequest) (*rest.CreateTestPresetResponse, error) {
-	in := &CreateTestPresetRequest{}
-	b, err := CreateTestPresetRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.testPresetService.CreateTestPreset(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) CreateWorkloadPreset(ctx context.Context, req *rest.CreateWorkloadPresetRequest) (*rest.CreateWorkloadPresetResponse, error) {
-	in := &CreateWorkloadPresetRequest{}
-	b, err := CreateWorkloadPresetRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.workloadPresetService.CreateWorkloadPreset(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (a *OgenAdapter) DeleteAccount(ctx context.Context, req *rest.DeleteAccountRequest, params rest.DeleteAccountParams) error {
 	in := &DeleteAccountRequest{}
 	b, err := DeleteAccountRequestFromOgen(req)
@@ -575,21 +371,6 @@ func (a *OgenAdapter) DeleteAccount(ctx context.Context, req *rest.DeleteAccount
 	}
 	in = b
 	resp, err := a.iamService.DeleteAccount(ctx, in)
-	if err != nil {
-		return err
-	}
-	_ = resp
-	return nil
-}
-
-func (a *OgenAdapter) DeleteDatabasePreset(ctx context.Context, req *rest.DeleteDatabasePresetRequest, params rest.DeleteDatabasePresetParams) error {
-	in := &DeleteDatabasePresetRequest{}
-	b, err := DeleteDatabasePresetRequestFromOgen(req)
-	if err != nil {
-		return err
-	}
-	in = b
-	resp, err := a.databasePresetService.DeleteDatabasePreset(ctx, in)
 	if err != nil {
 		return err
 	}
@@ -702,51 +483,6 @@ func (a *OgenAdapter) DeleteShare(ctx context.Context, req *rest.DeleteShareRequ
 	return nil
 }
 
-func (a *OgenAdapter) DeleteSuite(ctx context.Context, req *rest.DeleteSuiteRequest, params rest.DeleteSuiteParams) error {
-	in := &DeleteSuiteRequest{}
-	b, err := DeleteSuiteRequestFromOgen(req)
-	if err != nil {
-		return err
-	}
-	in = b
-	resp, err := a.suiteService.DeleteSuite(ctx, in)
-	if err != nil {
-		return err
-	}
-	_ = resp
-	return nil
-}
-
-func (a *OgenAdapter) DeleteSuiteRun(ctx context.Context, req *rest.DeleteSuiteRunRequest, params rest.DeleteSuiteRunParams) error {
-	in := &DeleteSuiteRunRequest{}
-	b, err := DeleteSuiteRunRequestFromOgen(req)
-	if err != nil {
-		return err
-	}
-	in = b
-	resp, err := a.suiteRunService.DeleteSuiteRun(ctx, in)
-	if err != nil {
-		return err
-	}
-	_ = resp
-	return nil
-}
-
-func (a *OgenAdapter) DeleteSuiteWizardDraft(ctx context.Context, req *rest.DeleteSuiteWizardDraftRequest, params rest.DeleteSuiteWizardDraftParams) error {
-	in := &DeleteSuiteWizardDraftRequest{}
-	b, err := DeleteSuiteWizardDraftRequestFromOgen(req)
-	if err != nil {
-		return err
-	}
-	in = b
-	resp, err := a.suiteWizardService.DeleteSuiteWizardDraft(ctx, in)
-	if err != nil {
-		return err
-	}
-	_ = resp
-	return nil
-}
-
 func (a *OgenAdapter) DeleteTenant(ctx context.Context, req *rest.DeleteTenantRequest, params rest.DeleteTenantParams) error {
 	in := &DeleteTenantRequest{}
 	b, err := DeleteTenantRequestFromOgen(req)
@@ -762,120 +498,6 @@ func (a *OgenAdapter) DeleteTenant(ctx context.Context, req *rest.DeleteTenantRe
 	return nil
 }
 
-func (a *OgenAdapter) DeleteTestPreset(ctx context.Context, req *rest.DeleteTestPresetRequest, params rest.DeleteTestPresetParams) error {
-	in := &DeleteTestPresetRequest{}
-	b, err := DeleteTestPresetRequestFromOgen(req)
-	if err != nil {
-		return err
-	}
-	in = b
-	resp, err := a.testPresetService.DeleteTestPreset(ctx, in)
-	if err != nil {
-		return err
-	}
-	_ = resp
-	return nil
-}
-
-func (a *OgenAdapter) DeleteTestRun(ctx context.Context, req *rest.DeleteTestRunRequest, params rest.DeleteTestRunParams) error {
-	in := &DeleteTestRunRequest{}
-	b, err := DeleteTestRunRequestFromOgen(req)
-	if err != nil {
-		return err
-	}
-	in = b
-	resp, err := a.testRunService.DeleteTestRun(ctx, in)
-	if err != nil {
-		return err
-	}
-	_ = resp
-	return nil
-}
-
-func (a *OgenAdapter) DeleteTestWizardDraft(ctx context.Context, req *rest.DeleteTestWizardDraftRequest, params rest.DeleteTestWizardDraftParams) error {
-	in := &DeleteTestWizardDraftRequest{}
-	b, err := DeleteTestWizardDraftRequestFromOgen(req)
-	if err != nil {
-		return err
-	}
-	in = b
-	resp, err := a.testWizardService.DeleteTestWizardDraft(ctx, in)
-	if err != nil {
-		return err
-	}
-	_ = resp
-	return nil
-}
-
-func (a *OgenAdapter) DeleteWorkloadPreset(ctx context.Context, req *rest.DeleteWorkloadPresetRequest, params rest.DeleteWorkloadPresetParams) error {
-	in := &DeleteWorkloadPresetRequest{}
-	b, err := DeleteWorkloadPresetRequestFromOgen(req)
-	if err != nil {
-		return err
-	}
-	in = b
-	resp, err := a.workloadPresetService.DeleteWorkloadPreset(ctx, in)
-	if err != nil {
-		return err
-	}
-	_ = resp
-	return nil
-}
-
-func (a *OgenAdapter) ExtractToPreset(ctx context.Context, req *rest.ExtractToPresetRequest) (*rest.ExtractToPresetResponse, error) {
-	in := &ExtractToPresetRequest{}
-	b, err := ExtractToPresetRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.testRunService.ExtractToPreset(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) FinishSuiteWizard(ctx context.Context, req *rest.FinishSuiteWizardRequest) (*rest.FinishSuiteWizardResponse, error) {
-	in := &FinishSuiteWizardRequest{}
-	b, err := FinishSuiteWizardRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.suiteWizardService.FinishSuiteWizard(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) FinishTestWizard(ctx context.Context, req *rest.FinishTestWizardRequest) (*rest.FinishTestWizardResponse, error) {
-	in := &FinishTestWizardRequest{}
-	b, err := FinishTestWizardRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.testWizardService.FinishTestWizard(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (a *OgenAdapter) GetAccount(ctx context.Context, req *rest.GetAccountRequest) (*rest.GetAccountResponse, error) {
 	in := &GetAccountRequest{}
 	b, err := GetAccountRequestFromOgen(req)
@@ -884,24 +506,6 @@ func (a *OgenAdapter) GetAccount(ctx context.Context, req *rest.GetAccountReques
 	}
 	in = b
 	resp, err := a.iamService.GetAccount(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) GetDatabasePreset(ctx context.Context, req *rest.GetDatabasePresetRequest) (*rest.GetDatabasePresetResponse, error) {
-	in := &GetDatabasePresetRequest{}
-	b, err := GetDatabasePresetRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.databasePresetService.GetDatabasePreset(ctx, in)
 	if err != nil {
 		return nil, err
 	}
@@ -1154,60 +758,6 @@ func (a *OgenAdapter) GetSharedRun(ctx context.Context, req *rest.GetSharedRunRe
 	return out, nil
 }
 
-func (a *OgenAdapter) GetSuite(ctx context.Context, req *rest.GetSuiteRequest) (*rest.GetSuiteResponse, error) {
-	in := &GetSuiteRequest{}
-	b, err := GetSuiteRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.suiteService.GetSuite(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) GetSuiteRun(ctx context.Context, req *rest.GetSuiteRunRequest) (*rest.GetSuiteRunResponse, error) {
-	in := &GetSuiteRunRequest{}
-	b, err := GetSuiteRunRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.suiteRunService.GetSuiteRun(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) GetSuiteWizardDraft(ctx context.Context, req *rest.GetSuiteWizardDraftRequest) (*rest.GetSuiteWizardDraftResponse, error) {
-	in := &GetSuiteWizardDraftRequest{}
-	b, err := GetSuiteWizardDraftRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.suiteWizardService.GetSuiteWizardDraft(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (a *OgenAdapter) GetSystemRating(ctx context.Context, req *rest.GetSystemRatingRequest) (*rest.GetSystemRatingResponse, error) {
 	in := &GetSystemRatingRequest{}
 	b, err := GetSystemRatingRequestFromOgen(req)
@@ -1311,42 +861,6 @@ func (a *OgenAdapter) GetTenantSettings(ctx context.Context, req *rest.GetTenant
 	return out, nil
 }
 
-func (a *OgenAdapter) GetTestPreset(ctx context.Context, req *rest.GetTestPresetRequest) (*rest.GetTestPresetResponse, error) {
-	in := &GetTestPresetRequest{}
-	b, err := GetTestPresetRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.testPresetService.GetTestPreset(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) GetTestRun(ctx context.Context, req *rest.GetTestRunRequest) (*rest.GetTestRunResponse, error) {
-	in := &GetTestRunRequest{}
-	b, err := GetTestRunRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.testRunService.GetTestRun(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (a *OgenAdapter) GetTestRunOverview(ctx context.Context, req *rest.GetTestRunOverviewRequest) (*rest.GetTestRunOverviewResponse, error) {
 	in := &GetTestRunOverviewRequest{}
 	b, err := GetTestRunOverviewRequestFromOgen(req)
@@ -1355,42 +869,6 @@ func (a *OgenAdapter) GetTestRunOverview(ctx context.Context, req *rest.GetTestR
 	}
 	in = b
 	resp, err := a.testRunOverviewService.GetTestRunOverview(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) GetTestWizardDraft(ctx context.Context, req *rest.GetTestWizardDraftRequest) (*rest.GetTestWizardDraftResponse, error) {
-	in := &GetTestWizardDraftRequest{}
-	b, err := GetTestWizardDraftRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.testWizardService.GetTestWizardDraft(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) GetWorkloadPreset(ctx context.Context, req *rest.GetWorkloadPresetRequest) (*rest.GetWorkloadPresetResponse, error) {
-	in := &GetWorkloadPresetRequest{}
-	b, err := GetWorkloadPresetRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.workloadPresetService.GetWorkloadPreset(ctx, in)
 	if err != nil {
 		return nil, err
 	}
@@ -1460,24 +938,6 @@ func (a *OgenAdapter) ListApiTokens(ctx context.Context, req *rest.ListApiTokens
 	}
 	in = b
 	resp, err := a.iamService.ListApiTokens(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) ListDatabasePresets(ctx context.Context, req *rest.ListDatabasePresetsRequest) (*rest.ListDatabasePresetsResponse, error) {
-	in := &ListDatabasePresetsRequest{}
-	b, err := ListDatabasePresetsRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.databasePresetService.ListDatabasePresets(ctx, in)
 	if err != nil {
 		return nil, err
 	}
@@ -1725,168 +1185,6 @@ func (a *OgenAdapter) ListStroppyVersions(ctx context.Context, req *rest.ListStr
 	return out, nil
 }
 
-func (a *OgenAdapter) ListSuiteFacets(ctx context.Context, req *rest.ListSuiteFacetsRequest) (*rest.ListSuiteFacetsResponse, error) {
-	in := &ListSuiteFacetsRequest{}
-	b, err := ListSuiteFacetsRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.suiteService.ListSuiteFacets(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) ListSuiteRuns(ctx context.Context, req *rest.ListSuiteRunsRequest) (*rest.ListSuiteRunsResponse, error) {
-	in := &ListSuiteRunsRequest{}
-	b, err := ListSuiteRunsRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.suiteRunService.ListSuiteRuns(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) ListSuiteWizardDrafts(ctx context.Context, req *rest.ListSuiteWizardDraftsRequest) (*rest.ListSuiteWizardDraftsResponse, error) {
-	in := &ListSuiteWizardDraftsRequest{}
-	b, err := ListSuiteWizardDraftsRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.suiteWizardService.ListSuiteWizardDrafts(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) ListSuites(ctx context.Context, req *rest.ListSuitesRequest) (*rest.ListSuitesResponse, error) {
-	in := &ListSuitesRequest{}
-	b, err := ListSuitesRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.suiteService.ListSuites(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) ListTestPresets(ctx context.Context, req *rest.ListTestPresetsRequest) (*rest.ListTestPresetsResponse, error) {
-	in := &ListTestPresetsRequest{}
-	b, err := ListTestPresetsRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.testPresetService.ListTestPresets(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) ListTestRunFacets(ctx context.Context, req *rest.ListTestRunFacetsRequest) (*rest.ListTestRunFacetsResponse, error) {
-	in := &ListTestRunFacetsRequest{}
-	b, err := ListTestRunFacetsRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.testRunService.ListTestRunFacets(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) ListTestRuns(ctx context.Context, req *rest.ListTestRunsRequest) (*rest.ListTestRunsResponse, error) {
-	in := &ListTestRunsRequest{}
-	b, err := ListTestRunsRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.testRunService.ListTestRuns(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) ListTestWizardDrafts(ctx context.Context, req *rest.ListTestWizardDraftsRequest) (*rest.ListTestWizardDraftsResponse, error) {
-	in := &ListTestWizardDraftsRequest{}
-	b, err := ListTestWizardDraftsRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.testWizardService.ListTestWizardDrafts(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) ListWorkloadPresets(ctx context.Context, req *rest.ListWorkloadPresetsRequest) (*rest.ListWorkloadPresetsResponse, error) {
-	in := &ListWorkloadPresetsRequest{}
-	b, err := ListWorkloadPresetsRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.workloadPresetService.ListWorkloadPresets(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (a *OgenAdapter) Login(ctx context.Context, req *rest.LoginRequest) (*rest.LoginResponse, error) {
 	in := &LoginRequest{}
 	b, err := LoginRequestFromOgen(req)
@@ -1946,78 +1244,6 @@ func (a *OgenAdapter) MarkRegistrationRequestHandled(ctx context.Context, req *r
 	}
 	in = b
 	resp, err := a.iamService.MarkRegistrationRequestHandled(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) PatchSuiteWizard(ctx context.Context, req *rest.PatchSuiteWizardRequest, params rest.PatchSuiteWizardParams) (*rest.PatchSuiteWizardResponse, error) {
-	in := &PatchSuiteWizardRequest{}
-	b, err := PatchSuiteWizardRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.suiteWizardService.PatchSuiteWizard(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) PatchTestWizard(ctx context.Context, req *rest.PatchTestWizardRequest, params rest.PatchTestWizardParams) (*rest.PatchTestWizardResponse, error) {
-	in := &PatchTestWizardRequest{}
-	b, err := PatchTestWizardRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.testWizardService.PatchTestWizard(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) ProbeCatalog(ctx context.Context, req *rest.ProbeCatalogRequest) (*rest.ProbeCatalogResponse, error) {
-	in := &ProbeCatalogRequest{}
-	b, err := ProbeCatalogRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.testWizardService.ProbeCatalog(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) ProbeScript(ctx context.Context, req *rest.ProbeScriptRequest) (*rest.ProbeScriptResponse, error) {
-	in := &ProbeScriptRequest{}
-	b, err := ProbeScriptRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.testWizardService.ProbeScript(ctx, in)
 	if err != nil {
 		return nil, err
 	}
@@ -2224,24 +1450,6 @@ func (a *OgenAdapter) SetShareExpiry(ctx context.Context, req *rest.SetShareExpi
 	return out, nil
 }
 
-func (a *OgenAdapter) SetSuiteSchedule(ctx context.Context, req *rest.SetSuiteScheduleRequest, params rest.SetSuiteScheduleParams) (*rest.SetSuiteScheduleResponse, error) {
-	in := &SetSuiteScheduleRequest{}
-	b, err := SetSuiteScheduleRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.suiteService.SetSuiteSchedule(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (a *OgenAdapter) SetTenantProviderSettings(ctx context.Context, req *rest.SetTenantProviderSettingsRequest, params rest.SetTenantProviderSettingsParams) error {
 	in := &SetTenantProviderSettingsRequest{}
 	b, err := SetTenantProviderSettingsRequestFromOgen(req)
@@ -2283,78 +1491,6 @@ func (a *OgenAdapter) StartSSO(ctx context.Context, req *rest.StartSSORequest) (
 	}
 	in = b
 	resp, err := a.iamService.StartSSO(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) StartSuite(ctx context.Context, req *rest.StartSuiteRequest) (*rest.StartSuiteResponse, error) {
-	in := &StartSuiteRequest{}
-	b, err := StartSuiteRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.suiteService.StartSuite(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) StartSuiteWizard(ctx context.Context, req *rest.StartSuiteWizardRequest) (*rest.StartSuiteWizardResponse, error) {
-	in := &StartSuiteWizardRequest{}
-	b, err := StartSuiteWizardRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.suiteWizardService.StartSuiteWizard(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) StartTestRun(ctx context.Context, req *rest.StartTestRunRequest) (*rest.StartTestRunResponse, error) {
-	in := &StartTestRunRequest{}
-	b, err := StartTestRunRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.testRunService.StartTestRun(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) StartTestWizard(ctx context.Context, req *rest.StartTestWizardRequest) (*rest.StartTestWizardResponse, error) {
-	in := &StartTestWizardRequest{}
-	b, err := StartTestWizardRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.testWizardService.StartTestWizard(ctx, in)
 	if err != nil {
 		return nil, err
 	}
@@ -2459,24 +1595,6 @@ func (a *OgenAdapter) UpdateAccount(ctx context.Context, req *rest.UpdateAccount
 	return out, nil
 }
 
-func (a *OgenAdapter) UpdateDatabasePreset(ctx context.Context, req *rest.UpdateDatabasePresetRequest, params rest.UpdateDatabasePresetParams) (*rest.UpdateDatabasePresetResponse, error) {
-	in := &UpdateDatabasePresetRequest{}
-	b, err := UpdateDatabasePresetRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.databasePresetService.UpdateDatabasePreset(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (a *OgenAdapter) UpdateIdentityProvider(ctx context.Context, req *rest.UpdateIdentityProviderRequest, params rest.UpdateIdentityProviderParams) (*rest.UpdateIdentityProviderResponse, error) {
 	in := &UpdateIdentityProviderRequest{}
 	b, err := UpdateIdentityProviderRequestFromOgen(req)
@@ -2531,24 +1649,6 @@ func (a *OgenAdapter) UpdateRole(ctx context.Context, req *rest.UpdateRoleReques
 	return out, nil
 }
 
-func (a *OgenAdapter) UpdateSuite(ctx context.Context, req *rest.UpdateSuiteRequest, params rest.UpdateSuiteParams) (*rest.UpdateSuiteResponse, error) {
-	in := &UpdateSuiteRequest{}
-	b, err := UpdateSuiteRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.suiteService.UpdateSuite(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (a *OgenAdapter) UpdateSystemSettings(ctx context.Context, req *rest.UpdateSystemSettingsRequest, params rest.UpdateSystemSettingsParams) (*rest.UpdateSystemSettingsResponse, error) {
 	in := &UpdateSystemSettingsRequest{}
 	b, err := UpdateSystemSettingsRequestFromOgen(req)
@@ -2593,42 +1693,6 @@ func (a *OgenAdapter) UpdateTenantSettings(ctx context.Context, req *rest.Update
 	}
 	in = b
 	resp, err := a.tenantSettingsService.UpdateTenantSettings(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) UpdateTestPreset(ctx context.Context, req *rest.UpdateTestPresetRequest, params rest.UpdateTestPresetParams) (*rest.UpdateTestPresetResponse, error) {
-	in := &UpdateTestPresetRequest{}
-	b, err := UpdateTestPresetRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.testPresetService.UpdateTestPreset(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	out, err := resp.ToOgen()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (a *OgenAdapter) UpdateWorkloadPreset(ctx context.Context, req *rest.UpdateWorkloadPresetRequest, params rest.UpdateWorkloadPresetParams) (*rest.UpdateWorkloadPresetResponse, error) {
-	in := &UpdateWorkloadPresetRequest{}
-	b, err := UpdateWorkloadPresetRequestFromOgen(req)
-	if err != nil {
-		return nil, err
-	}
-	in = b
-	resp, err := a.workloadPresetService.UpdateWorkloadPreset(ctx, in)
 	if err != nil {
 		return nil, err
 	}

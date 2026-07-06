@@ -3,16 +3,8 @@ syntax = "proto3";
 package cloud.v1.workflow;
 
 import "cloud/v1/common/status.proto";
-import "cloud/v1/deployment/infrastructure.proto";
-import "cloud/v1/deployment/plan.proto";
 import "cloud/v1/domain/worker.proto";
 import "cloud/v1/monitor/overview.proto";
-import "cloud/v1/workflow/deployment.proto";
-import "cloud/v1/domain/database.proto";
-import "cloud/v1/domain/suite.proto";
-import "cloud/v1/domain/test.proto";
-import "cloud/v1/domain/workload.proto";
-import "cloud/v1/workflow/run.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 import "temporal/v1/temporal.proto";
@@ -21,34 +13,35 @@ import "validate/validate.proto";
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow";
 
 /*
-    test.proto defines the Temporal workflows that run benchmarks: TestWorkflow
-    orchestrates one full test cycle (deploy -> install stroppy -> install
-    database -> run workload -> teardown) by composing child workflows, and
-    SuiteWorkflow fans out a TestWorkflow per child run in a suite.
+    test.proto defines the live run-state contract shared with a running test
+    workflow: RunState/Stage/StageUpdate are the query/signal payloads, and
+    TestService exposes the minimal GetRunState query + UpdateStage signal
+    surface the run Overview (internal/infrastructure/execution/overview.go)
+    depends on. The orchestration workflows/messages that used to live here
+    (TestWorkflowRequest/Response, InstallStroppyWorkflow*,
+    InstallDatabaseWorkflow*, RunWorkloadWorkflow*, SuiteWorkflowService) were
+    removed with the DAG-based executor in favor of the generic YAML-DSL
+    interpreter (RunRecipeWorkflow, internal/workflows/runrecipe.go), which
+    answers the same GetRunState query directly against the SDK (see
+    runrecipe.go's GetRunState/GetRunStateQueryName) rather than through a
+    generated workflow implementation.
  */
 
 /*
-    TestWorkflowRequest is the input to a single test run.
+    PlaceholderWorkflow is NOT a real, startable workflow — nothing registers
+    or starts it. It exists only so protoc-gen-go-temporal emits a valid
+    TestService: the plugin's generated TestClient (testsuite-environment
+    helper) unconditionally references a "TestServiceWorkflows" interface,
+    which the plugin itself only generates when the service declares at
+    least one (temporal.v1.workflow) rpc — a service with only
+    query/signal rpcs (GetRunState/UpdateStage, needed by the live run
+    Overview and by RunRecipeWorkflow) hits that gap and fails to compile
+    without one. Do not add real fields or logic here; if this whole
+    workaround ever becomes unnecessary (e.g. a fixed plugin version), delete
+    this message + rpc first.
  */
-message TestWorkflowRequest {
-    /*
-        tenant_id scopes quota reservations and provider settings lookup.
-     */
-    string tenant_id = 3 [(validate.rules).string = {min_len: 1, max_len: 64}];
-    /*
-        test_run is the full description of the test run to execute.
-     */
-    domain.TestRun test_run = 1 [(validate.rules).message.required = true];
-    /*
-        agent_bootstrap is runtime control-plane data delivered to provisioned
-        agents through the provider-specific carrier.
-     */
-    AgentBootstrap agent_bootstrap = 2;
-}
-/*
-    TestWorkflowResponse is the empty result of a completed test run.
- */
-message TestWorkflowResponse {}
+message PlaceholderWorkflowRequest {}
+message PlaceholderWorkflowResponse {}
 
 /*
     RunState is the live overview of a test run, returned by the GetRunState
@@ -148,139 +141,28 @@ message StageUpdate {
 }
 
 /*
-    InstallStroppyWorkflowRequest asks to execute stroppy installation steps on
-    runner nodes.
- */
-message InstallStroppyWorkflowRequest {
-    /*
-        infrastructure_state is used to route steps to node agents.
-     */
-    deployment.InfrastructureState infrastructure_state = 1 [(validate.rules).message.required = true];
-    /*
-        deployment_plan contains the stroppy-related agent steps.
-     */
-    deployment.DeploymentPlan deployment_plan = 2 [(validate.rules).message.required = true];
-}
-/*
-    InstallStroppyWorkflowResponse is the empty result of installing stroppy.
- */
-message InstallStroppyWorkflowResponse {}
-
-/*
-    InstallDatabaseWorkflowRequest asks to bring up / provision the database
-    (self-deploy or managed). Our responsibility for every kind except external;
-    skipped for external dbs.
- */
-message InstallDatabaseWorkflowRequest {
-    /*
-        infrastructure_state is used to route steps to node agents.
-     */
-    deployment.InfrastructureState infrastructure_state = 1 [(validate.rules).message.required = true];
-    /*
-        database is the database definition to provision.
-     */
-    domain.Database database = 2 [(validate.rules).message.required = true];
-    /*
-        deployment_plan contains the database-related agent steps.
-     */
-    deployment.DeploymentPlan deployment_plan = 3 [(validate.rules).message.required = true];
-}
-/*
-    InstallDatabaseWorkflowResponse is the empty result of installing the database.
- */
-message InstallDatabaseWorkflowResponse {}
-
-/*
-    RunWorkloadWorkflowRequest asks to run the already-rendered workload via
-    the agent. Deployment rendering writes stroppy-config.json and monitor
-    collectors first; this workflow executes the real stroppy load and relies on
-    the OTLP exporter in that config for metrics.
- */
-message RunWorkloadWorkflowRequest {
-    /*
-        run_id is the stable run identifier used for stage/log correlation.
-     */
-    string run_id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
-    /*
-        deployment_plan is the materialized plan containing the workload-runner
-        component and its rendered config path.
-     */
-    deployment.DeploymentPlan deployment_plan = 2 [(validate.rules).message.required = true];
-    /*
-        infrastructure_state carries runtime machine state for route validation.
-     */
-    deployment.InfrastructureState infrastructure_state = 3 [(validate.rules).message.required = true];
-    /*
-        agent_bootstrap carries the per-node Temporal task queues used to reach
-        the workload runner agent.
-     */
-    AgentBootstrap agent_bootstrap = 4 [(validate.rules).message.required = true];
-    /*
-        workload is the test's workload — its ordered segments drive one stroppy
-        run step each (against the per-segment config the deployment plan wrote),
-        executed sequentially on the same database.
-     */
-    domain.Workload workload = 5 [(validate.rules).message.required = true];
-}
-/*
-    RunWorkloadWorkflowResponse is the empty result of a workload run (results go
-    to metrics).
- */
-message RunWorkloadWorkflowResponse {}
-
-/*
-    TestService orchestrates one full test cycle:
-      deploy -> install stroppy -> [install database unless external] -> run workload -> teardown.
-    It composes child workflows; topology stays baked, only runtime info from the
-    deployment is carried forward.
+    TestService exposes the live run-state query/signal surface a running test
+    workflow answers. It composed the full test-run orchestration workflows;
+    that orchestration is now driven by the generic DSL interpreter workflow
+    (RunRecipeWorkflow, internal/workflows/runrecipe.go), which answers the
+    same GetRunState query / UpdateStage signal directly against the SDK
+    (see runrecipe.go's GetRunState/GetRunStateQueryName) without going
+    through this generated service.
  */
 service TestService {
     /*
         task_queue: shared queue for every workflow/activity of this service.
-        The worker polls it. Child workflows inherit it unless overridden.
     */
     option (temporal.v1.service) = {task_queue: "stroppy-cloud"};
 
     /*
-        TestWorkflow runs one full test cycle, deduplicated by a deterministic id
-        derived from TestRun.id and never auto-retried as a whole.
+        PlaceholderWorkflow: see the message doc above — required by the
+        code generator, never started.
      */
-    rpc TestWorkflow (TestWorkflowRequest) returns (TestWorkflowResponse) {
+    rpc PlaceholderWorkflow (PlaceholderWorkflowRequest) returns (PlaceholderWorkflowResponse) {
         option (temporal.v1.workflow) = {
-            name: "TestWorkflow"
-            /*
-                id: deterministic workflow id derived from TestRun.id via bloblang
-                interpolation. Same TestRun => same id => duplicate concurrent
-                starts are deduplicated by the server.
-            */
-            id: 'test-run/${! testRun.id }'
-            /*
-                id_reuse_policy: re-running with the same id is allowed ONLY when
-                the previous run ended unsuccessfully (failed / terminated /
-                timed out / cancelled). Prevents accidental re-run of a success.
-            */
-            id_reuse_policy: WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY
-            /*
-                No execution_timeout on purpose: a workload may load terabytes and
-                run for days. A hard cap here would kill long-but-healthy runs.
-                Liveness is enforced by activity heartbeats, not by a wall clock.
-            */
-            /*
-                retry_policy: do NOT auto-retry the orchestration as a whole — it
-                has side effects (deploy/teardown). Retries live on the child
-                workflows / activities instead.
-            */
+            name: "PlaceholderWorkflow"
             retry_policy: {max_attempts: 1}
-            /*
-                query: TestWorkflow answers the GetRunState query, used by the run
-                Overview to read the live RunState (status + per-stage breakdown).
-            */
-            query: {ref: "GetRunState"}
-            /*
-                signal: child workflows push concrete runtime stage status
-                changes into TestWorkflow so GetRunState is live and complete.
-            */
-            signal: {ref: "UpdateStage"}
         };
     }
     /*
@@ -297,132 +179,5 @@ service TestService {
      */
     rpc UpdateStage (StageUpdate) returns (google.protobuf.Empty) {
         option (temporal.v1.signal) = {name: "UpdateStage"};
-    }
-    /*
-        InstallStroppyWorkflow installs stroppy onto the runner machines (child
-        of TestWorkflow; idempotent and retryable).
-     */
-    rpc InstallStroppyWorkflow (InstallStroppyWorkflowRequest) returns (InstallStroppyWorkflowResponse) {
-        option (temporal.v1.workflow) = {
-            name: "InstallStroppyWorkflow"
-            /*
-                No explicit id: this is always a child of TestWorkflow. Trace it
-                via workflow.GetInfo(ctx).RootWorkflowExecution.ID (the TestWorkflow
-                id), so we don't thread run_id through every child.
-            */
-            /*
-                run_timeout: install stroppy onto the runner machines. 30m.
-            */
-            run_timeout: {seconds: 1800}
-            /*
-                Idempotent (drops a binary) => safe to retry.
-            */
-            retry_policy: {max_attempts: 3, initial_interval: {seconds: 5}}
-        };
-    }
-    /*
-        InstallDatabaseWorkflow brings up / provisions the database (child of
-        TestWorkflow; idempotent and retryable).
-     */
-    rpc InstallDatabaseWorkflow (InstallDatabaseWorkflowRequest) returns (InstallDatabaseWorkflowResponse) {
-        option (temporal.v1.workflow) = {
-            name: "InstallDatabaseWorkflow"
-            /*
-                No explicit id: always a child of TestWorkflow; trace via the root
-                workflow execution.
-            */
-            /*
-                run_timeout: bring up / provision the DB (self-deploy or managed).
-                30m.
-            */
-            run_timeout: {seconds: 1800}
-            /*
-                Idempotent => safe to retry.
-            */
-            retry_policy: {max_attempts: 3, initial_interval: {seconds: 5}}
-        };
-    }
-    /*
-        RunWorkloadWorkflow runs the workload via the agent (child of
-        TestWorkflow; unbounded, never retried to avoid double load).
-     */
-    rpc RunWorkloadWorkflow (RunWorkloadWorkflowRequest) returns (RunWorkloadWorkflowResponse) {
-        option (temporal.v1.workflow) = {
-            name: "RunWorkloadWorkflow"
-            /*
-                No explicit id: always a child of TestWorkflow; trace via the root
-                workflow execution.
-            */
-            /*
-                No run_timeout: the load run is the unbounded part — terabytes /
-                multi-day runs are expected. Liveness is enforced by the
-                CallCmdActivity heartbeat, not by a workflow timeout.
-            */
-            /*
-                Do NOT retry: an automatic re-run means double load and corrupted
-                metrics.
-            */
-            retry_policy: {max_attempts: 1}
-        };
-    }
-}
-
-/*
-    SuiteWorkflowRequest is the input to a suite run. The API/start layer expands
-    the suite definition into persisted child TestRunRecords and then builds one
-    RunConfig per child with provider settings and agent bootstrap resolved.
- */
-message SuiteWorkflowRequest {
-    /*
-        suite_run_id is the persisted SuiteRunRecord id.
-     */
-    string suite_run_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
-    /*
-        runs are the child run workflow inputs.
-     */
-    repeated RunConfig runs = 2 [(validate.rules).repeated = {min_items: 1, max_items: 1000}];
-    /*
-        max_parallel caps concurrent child TestWorkflow executions. 0 =
-        unlimited.
-     */
-    uint32 max_parallel = 3;
-}
-/*
-    SuiteWorkflowResponse is the empty result of a completed suite run.
- */
-message SuiteWorkflowResponse {}
-
-/*
-    SuiteWorkflowService runs a child TestWorkflow per RunConfig, honoring
-    max_parallel.
- */
-service SuiteWorkflowService {
-    /*
-        task_queue: shared queue for the suite workflow/activities.
-     */
-    option (temporal.v1.service) = {task_queue: "stroppy-cloud"};
-
-    /*
-        SuiteWorkflow fans out a child TestWorkflow per run in the suite,
-        deduplicated by a deterministic id derived from suite_run_id.
-     */
-    rpc SuiteWorkflow (SuiteWorkflowRequest) returns (SuiteWorkflowResponse) {
-        option (temporal.v1.workflow) = {
-            name: "SuiteWorkflow"
-            /*
-                id: deterministic, derived from suite_run_id.
-            */
-            id: 'suite-run/${! suiteRunId }'
-            id_reuse_policy: WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY
-            /*
-                No execution_timeout: a suite runs N child TestWorkflows, each of
-                which can itself run for days. Capping here would kill a healthy
-                long suite. Liveness comes from the children's activity heartbeats.
-            */
-            /*
-                Do NOT retry the suite orchestrator as a whole.
-            */
-            retry_policy: {max_attempts: 1}
-        };
     }
 }

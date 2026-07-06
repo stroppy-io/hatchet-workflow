@@ -7,96 +7,42 @@ import (
 	jx "github.com/go-faster/jx"
 	jxpb "github.com/gopherex/protoc-gen-go-jx/jxpb"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
-	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	monitor "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func (m *TestWorkflowRequest) Encode(e *jx.Encoder) {
+func (m *PlaceholderWorkflowRequest) Encode(e *jx.Encoder) {
 	if m == nil {
 		e.ObjStart()
 		e.ObjEnd()
 		return
 	}
 	e.ObjStart()
-	if m.TenantId != "" {
-		e.FieldStart("tenantId")
-		e.Str(m.TenantId)
-	}
-	if m.TestRun != nil {
-		e.FieldStart("testRun")
-		jxpb.EncMessage(e, m.TestRun)
-	}
-	if m.AgentBootstrap != nil {
-		e.FieldStart("agentBootstrap")
-		m.AgentBootstrap.Encode(e)
-	}
 	e.ObjEnd()
 }
 
-func (m *TestWorkflowRequest) Decode(d *jx.Decoder) error {
-	seen := map[string]bool{}
+func (m *PlaceholderWorkflowRequest) Decode(d *jx.Decoder) error {
 	return d.Obj(func(d *jx.Decoder, key string) error {
 		switch key {
-		case "tenantId", "tenant_id":
-			if seen["TenantId"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["TenantId"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			v, err := d.Str()
-			if err != nil {
-				return err
-			}
-			m.TenantId = v
-			return nil
-		case "testRun", "test_run":
-			if seen["TestRun"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["TestRun"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			m.TestRun = &domain.TestRun{}
-			if err := jxpb.DecMessage(d, m.TestRun); err != nil {
-				return err
-			}
-			return nil
-		case "agentBootstrap", "agent_bootstrap":
-			if seen["AgentBootstrap"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["AgentBootstrap"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			m.AgentBootstrap = &AgentBootstrap{}
-			if err := m.AgentBootstrap.Decode(d); err != nil {
-				return err
-			}
-			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}
 	})
 }
 
-func (m *TestWorkflowRequest) MarshalJSON() ([]byte, error) {
+func (m *PlaceholderWorkflowRequest) MarshalJSON() ([]byte, error) {
 	var e jx.Encoder
 	m.Encode(&e)
 	return e.Bytes(), nil
 }
 
-func (m *TestWorkflowRequest) UnmarshalJSON(data []byte) error {
+func (m *PlaceholderWorkflowRequest) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return m.Decode(d)
 }
 
-func (m *TestWorkflowResponse) Encode(e *jx.Encoder) {
+func (m *PlaceholderWorkflowResponse) Encode(e *jx.Encoder) {
 	if m == nil {
 		e.ObjStart()
 		e.ObjEnd()
@@ -106,7 +52,7 @@ func (m *TestWorkflowResponse) Encode(e *jx.Encoder) {
 	e.ObjEnd()
 }
 
-func (m *TestWorkflowResponse) Decode(d *jx.Decoder) error {
+func (m *PlaceholderWorkflowResponse) Decode(d *jx.Decoder) error {
 	return d.Obj(func(d *jx.Decoder, key string) error {
 		switch key {
 		default:
@@ -115,13 +61,13 @@ func (m *TestWorkflowResponse) Decode(d *jx.Decoder) error {
 	})
 }
 
-func (m *TestWorkflowResponse) MarshalJSON() ([]byte, error) {
+func (m *PlaceholderWorkflowResponse) MarshalJSON() ([]byte, error) {
 	var e jx.Encoder
 	m.Encode(&e)
 	return e.Bytes(), nil
 }
 
-func (m *TestWorkflowResponse) UnmarshalJSON(data []byte) error {
+func (m *PlaceholderWorkflowResponse) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return m.Decode(d)
 }
@@ -602,481 +548,6 @@ func (m *StageUpdate) MarshalJSON() ([]byte, error) {
 }
 
 func (m *StageUpdate) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return m.Decode(d)
-}
-
-func (m *InstallStroppyWorkflowRequest) Encode(e *jx.Encoder) {
-	if m == nil {
-		e.ObjStart()
-		e.ObjEnd()
-		return
-	}
-	e.ObjStart()
-	if m.InfrastructureState != nil {
-		e.FieldStart("infrastructureState")
-		jxpb.EncMessage(e, m.InfrastructureState)
-	}
-	if m.DeploymentPlan != nil {
-		e.FieldStart("deploymentPlan")
-		jxpb.EncMessage(e, m.DeploymentPlan)
-	}
-	e.ObjEnd()
-}
-
-func (m *InstallStroppyWorkflowRequest) Decode(d *jx.Decoder) error {
-	seen := map[string]bool{}
-	return d.Obj(func(d *jx.Decoder, key string) error {
-		switch key {
-		case "infrastructureState", "infrastructure_state":
-			if seen["InfrastructureState"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["InfrastructureState"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			m.InfrastructureState = &deployment.InfrastructureState{}
-			if err := jxpb.DecMessage(d, m.InfrastructureState); err != nil {
-				return err
-			}
-			return nil
-		case "deploymentPlan", "deployment_plan":
-			if seen["DeploymentPlan"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["DeploymentPlan"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			m.DeploymentPlan = &deployment.DeploymentPlan{}
-			if err := jxpb.DecMessage(d, m.DeploymentPlan); err != nil {
-				return err
-			}
-			return nil
-		default:
-			return fmt.Errorf("unknown field %q", key)
-		}
-	})
-}
-
-func (m *InstallStroppyWorkflowRequest) MarshalJSON() ([]byte, error) {
-	var e jx.Encoder
-	m.Encode(&e)
-	return e.Bytes(), nil
-}
-
-func (m *InstallStroppyWorkflowRequest) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return m.Decode(d)
-}
-
-func (m *InstallStroppyWorkflowResponse) Encode(e *jx.Encoder) {
-	if m == nil {
-		e.ObjStart()
-		e.ObjEnd()
-		return
-	}
-	e.ObjStart()
-	e.ObjEnd()
-}
-
-func (m *InstallStroppyWorkflowResponse) Decode(d *jx.Decoder) error {
-	return d.Obj(func(d *jx.Decoder, key string) error {
-		switch key {
-		default:
-			return fmt.Errorf("unknown field %q", key)
-		}
-	})
-}
-
-func (m *InstallStroppyWorkflowResponse) MarshalJSON() ([]byte, error) {
-	var e jx.Encoder
-	m.Encode(&e)
-	return e.Bytes(), nil
-}
-
-func (m *InstallStroppyWorkflowResponse) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return m.Decode(d)
-}
-
-func (m *InstallDatabaseWorkflowRequest) Encode(e *jx.Encoder) {
-	if m == nil {
-		e.ObjStart()
-		e.ObjEnd()
-		return
-	}
-	e.ObjStart()
-	if m.InfrastructureState != nil {
-		e.FieldStart("infrastructureState")
-		jxpb.EncMessage(e, m.InfrastructureState)
-	}
-	if m.Database != nil {
-		e.FieldStart("database")
-		jxpb.EncMessage(e, m.Database)
-	}
-	if m.DeploymentPlan != nil {
-		e.FieldStart("deploymentPlan")
-		jxpb.EncMessage(e, m.DeploymentPlan)
-	}
-	e.ObjEnd()
-}
-
-func (m *InstallDatabaseWorkflowRequest) Decode(d *jx.Decoder) error {
-	seen := map[string]bool{}
-	return d.Obj(func(d *jx.Decoder, key string) error {
-		switch key {
-		case "infrastructureState", "infrastructure_state":
-			if seen["InfrastructureState"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["InfrastructureState"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			m.InfrastructureState = &deployment.InfrastructureState{}
-			if err := jxpb.DecMessage(d, m.InfrastructureState); err != nil {
-				return err
-			}
-			return nil
-		case "database":
-			if seen["Database"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["Database"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			m.Database = &domain.Database{}
-			if err := jxpb.DecMessage(d, m.Database); err != nil {
-				return err
-			}
-			return nil
-		case "deploymentPlan", "deployment_plan":
-			if seen["DeploymentPlan"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["DeploymentPlan"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			m.DeploymentPlan = &deployment.DeploymentPlan{}
-			if err := jxpb.DecMessage(d, m.DeploymentPlan); err != nil {
-				return err
-			}
-			return nil
-		default:
-			return fmt.Errorf("unknown field %q", key)
-		}
-	})
-}
-
-func (m *InstallDatabaseWorkflowRequest) MarshalJSON() ([]byte, error) {
-	var e jx.Encoder
-	m.Encode(&e)
-	return e.Bytes(), nil
-}
-
-func (m *InstallDatabaseWorkflowRequest) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return m.Decode(d)
-}
-
-func (m *InstallDatabaseWorkflowResponse) Encode(e *jx.Encoder) {
-	if m == nil {
-		e.ObjStart()
-		e.ObjEnd()
-		return
-	}
-	e.ObjStart()
-	e.ObjEnd()
-}
-
-func (m *InstallDatabaseWorkflowResponse) Decode(d *jx.Decoder) error {
-	return d.Obj(func(d *jx.Decoder, key string) error {
-		switch key {
-		default:
-			return fmt.Errorf("unknown field %q", key)
-		}
-	})
-}
-
-func (m *InstallDatabaseWorkflowResponse) MarshalJSON() ([]byte, error) {
-	var e jx.Encoder
-	m.Encode(&e)
-	return e.Bytes(), nil
-}
-
-func (m *InstallDatabaseWorkflowResponse) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return m.Decode(d)
-}
-
-func (m *RunWorkloadWorkflowRequest) Encode(e *jx.Encoder) {
-	if m == nil {
-		e.ObjStart()
-		e.ObjEnd()
-		return
-	}
-	e.ObjStart()
-	if m.RunId != "" {
-		e.FieldStart("runId")
-		e.Str(m.RunId)
-	}
-	if m.DeploymentPlan != nil {
-		e.FieldStart("deploymentPlan")
-		jxpb.EncMessage(e, m.DeploymentPlan)
-	}
-	if m.InfrastructureState != nil {
-		e.FieldStart("infrastructureState")
-		jxpb.EncMessage(e, m.InfrastructureState)
-	}
-	if m.AgentBootstrap != nil {
-		e.FieldStart("agentBootstrap")
-		m.AgentBootstrap.Encode(e)
-	}
-	if m.Workload != nil {
-		e.FieldStart("workload")
-		jxpb.EncMessage(e, m.Workload)
-	}
-	e.ObjEnd()
-}
-
-func (m *RunWorkloadWorkflowRequest) Decode(d *jx.Decoder) error {
-	seen := map[string]bool{}
-	return d.Obj(func(d *jx.Decoder, key string) error {
-		switch key {
-		case "runId", "run_id":
-			if seen["RunId"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["RunId"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			v, err := d.Str()
-			if err != nil {
-				return err
-			}
-			m.RunId = v
-			return nil
-		case "deploymentPlan", "deployment_plan":
-			if seen["DeploymentPlan"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["DeploymentPlan"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			m.DeploymentPlan = &deployment.DeploymentPlan{}
-			if err := jxpb.DecMessage(d, m.DeploymentPlan); err != nil {
-				return err
-			}
-			return nil
-		case "infrastructureState", "infrastructure_state":
-			if seen["InfrastructureState"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["InfrastructureState"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			m.InfrastructureState = &deployment.InfrastructureState{}
-			if err := jxpb.DecMessage(d, m.InfrastructureState); err != nil {
-				return err
-			}
-			return nil
-		case "agentBootstrap", "agent_bootstrap":
-			if seen["AgentBootstrap"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["AgentBootstrap"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			m.AgentBootstrap = &AgentBootstrap{}
-			if err := m.AgentBootstrap.Decode(d); err != nil {
-				return err
-			}
-			return nil
-		case "workload":
-			if seen["Workload"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["Workload"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			m.Workload = &domain.Workload{}
-			if err := jxpb.DecMessage(d, m.Workload); err != nil {
-				return err
-			}
-			return nil
-		default:
-			return fmt.Errorf("unknown field %q", key)
-		}
-	})
-}
-
-func (m *RunWorkloadWorkflowRequest) MarshalJSON() ([]byte, error) {
-	var e jx.Encoder
-	m.Encode(&e)
-	return e.Bytes(), nil
-}
-
-func (m *RunWorkloadWorkflowRequest) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return m.Decode(d)
-}
-
-func (m *RunWorkloadWorkflowResponse) Encode(e *jx.Encoder) {
-	if m == nil {
-		e.ObjStart()
-		e.ObjEnd()
-		return
-	}
-	e.ObjStart()
-	e.ObjEnd()
-}
-
-func (m *RunWorkloadWorkflowResponse) Decode(d *jx.Decoder) error {
-	return d.Obj(func(d *jx.Decoder, key string) error {
-		switch key {
-		default:
-			return fmt.Errorf("unknown field %q", key)
-		}
-	})
-}
-
-func (m *RunWorkloadWorkflowResponse) MarshalJSON() ([]byte, error) {
-	var e jx.Encoder
-	m.Encode(&e)
-	return e.Bytes(), nil
-}
-
-func (m *RunWorkloadWorkflowResponse) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return m.Decode(d)
-}
-
-func (m *SuiteWorkflowRequest) Encode(e *jx.Encoder) {
-	if m == nil {
-		e.ObjStart()
-		e.ObjEnd()
-		return
-	}
-	e.ObjStart()
-	if m.SuiteRunId != "" {
-		e.FieldStart("suiteRunId")
-		e.Str(m.SuiteRunId)
-	}
-	if len(m.Runs) > 0 {
-		e.FieldStart("runs")
-		e.ArrStart()
-		for _, v := range m.Runs {
-			v.Encode(e)
-		}
-		e.ArrEnd()
-	}
-	if m.MaxParallel != 0 {
-		e.FieldStart("maxParallel")
-		e.UInt32(m.MaxParallel)
-	}
-	e.ObjEnd()
-}
-
-func (m *SuiteWorkflowRequest) Decode(d *jx.Decoder) error {
-	seen := map[string]bool{}
-	return d.Obj(func(d *jx.Decoder, key string) error {
-		switch key {
-		case "suiteRunId", "suite_run_id":
-			if seen["SuiteRunId"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["SuiteRunId"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			v, err := d.Str()
-			if err != nil {
-				return err
-			}
-			m.SuiteRunId = v
-			return nil
-		case "runs":
-			if seen["Runs"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["Runs"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			return d.Arr(func(d *jx.Decoder) error {
-				el := &RunConfig{}
-				if err := el.Decode(d); err != nil {
-					return err
-				}
-				m.Runs = append(m.Runs, el)
-				return nil
-			})
-		case "maxParallel", "max_parallel":
-			if seen["MaxParallel"] {
-				return fmt.Errorf("duplicate field %q", key)
-			}
-			seen["MaxParallel"] = true
-			if d.Next() == jx.Null {
-				return d.Null()
-			}
-			v, err := jxpb.DecUint32(d)
-			if err != nil {
-				return err
-			}
-			m.MaxParallel = v
-			return nil
-		default:
-			return fmt.Errorf("unknown field %q", key)
-		}
-	})
-}
-
-func (m *SuiteWorkflowRequest) MarshalJSON() ([]byte, error) {
-	var e jx.Encoder
-	m.Encode(&e)
-	return e.Bytes(), nil
-}
-
-func (m *SuiteWorkflowRequest) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return m.Decode(d)
-}
-
-func (m *SuiteWorkflowResponse) Encode(e *jx.Encoder) {
-	if m == nil {
-		e.ObjStart()
-		e.ObjEnd()
-		return
-	}
-	e.ObjStart()
-	e.ObjEnd()
-}
-
-func (m *SuiteWorkflowResponse) Decode(d *jx.Decoder) error {
-	return d.Obj(func(d *jx.Decoder, key string) error {
-		switch key {
-		default:
-			return fmt.Errorf("unknown field %q", key)
-		}
-	})
-}
-
-func (m *SuiteWorkflowResponse) MarshalJSON() ([]byte, error) {
-	var e jx.Encoder
-	m.Encode(&e)
-	return e.Bytes(), nil
-}
-
-func (m *SuiteWorkflowResponse) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return m.Decode(d)
 }

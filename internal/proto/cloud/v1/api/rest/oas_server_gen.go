@@ -9,7 +9,6 @@ import (
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
 	CompareHandler
-	DatabasePresetHandler
 	FavoriteHandler
 	IamHandler
 	PackageHandler
@@ -20,17 +19,10 @@ type Handler interface {
 	RecipeHandler
 	ShareHandler
 	StroppyHandler
-	SuiteHandler
-	SuiteRunHandler
-	SuiteWizardHandler
 	SystemSettingsHandler
 	TenantDashboardHandler
 	TenantSettingsHandler
-	TestPresetHandler
-	TestRunHandler
 	TestRunOverviewHandler
-	TestWizardHandler
-	WorkloadPresetHandler
 	// NewError creates *ErrorStatusCode from error returned by handler.
 	//
 	// Used for common default response.
@@ -48,53 +40,6 @@ type CompareHandler interface {
 	//
 	// GET /api/v1/compare/compare-runs
 	CompareRuns(ctx context.Context, req *CompareRunsRequest) (*CompareRunsResponse, error)
-}
-
-// DatabasePresetHandler handles operations described by OpenAPI v3 specification.
-//
-// x-ogen-operation-group: DatabasePreset
-type DatabasePresetHandler interface {
-	// CloneDatabasePreset implements cloneDatabasePreset operation.
-	//
-	// CloneDatabasePreset creates a new editable copy. Not idempotent: each call
-	// mints a new preset.
-	//
-	// POST /api/v1/database-preset/clone-database-preset
-	CloneDatabasePreset(ctx context.Context, req *CloneDatabasePresetRequest) (*CloneDatabasePresetResponse, error)
-	// CreateDatabasePreset implements createDatabasePreset operation.
-	//
-	// CreateDatabasePreset creates a database preset. Not idempotent: each call
-	// mints a new preset.
-	//
-	// POST /api/v1/database-preset/create-database-preset
-	CreateDatabasePreset(ctx context.Context, req *CreateDatabasePresetRequest) (*CreateDatabasePresetResponse, error)
-	// DeleteDatabasePreset implements deleteDatabasePreset operation.
-	//
-	// DeleteDatabasePreset is idempotent: soft-deleting an absent or
-	// already-deleted preset is a no-op.
-	// System presets (is_system) are rejected.
-	//
-	// POST /api/v1/database-preset/delete-database-preset
-	DeleteDatabasePreset(ctx context.Context, req *DeleteDatabasePresetRequest, params DeleteDatabasePresetParams) error
-	// GetDatabasePreset implements getDatabasePreset operation.
-	//
-	// GetDatabasePreset fetches one database preset by id. Read-only.
-	//
-	// GET /api/v1/database-preset/get-database-preset
-	GetDatabasePreset(ctx context.Context, req *GetDatabasePresetRequest) (*GetDatabasePresetResponse, error)
-	// ListDatabasePresets implements listDatabasePresets operation.
-	//
-	// ListDatabasePresets lists a tenant's database presets. Read-only.
-	//
-	// GET /api/v1/database-preset/list-database-presets
-	ListDatabasePresets(ctx context.Context, req *ListDatabasePresetsRequest) (*ListDatabasePresetsResponse, error)
-	// UpdateDatabasePreset implements updateDatabasePreset operation.
-	//
-	// UpdateDatabasePreset is idempotent: a wholesale field set converges on retry.
-	// System presets (is_system) are read-only and rejected — clone instead.
-	//
-	// POST /api/v1/database-preset/update-database-preset
-	UpdateDatabasePreset(ctx context.Context, req *UpdateDatabasePresetRequest, params UpdateDatabasePresetParams) (*UpdateDatabasePresetResponse, error)
 }
 
 // FavoriteHandler handles operations described by OpenAPI v3 specification.
@@ -704,141 +649,6 @@ type StroppyHandler interface {
 	ListStroppyVersions(ctx context.Context, req *ListStroppyVersionsRequest) (*ListStroppyVersionsResponse, error)
 }
 
-// SuiteHandler handles operations described by OpenAPI v3 specification.
-//
-// x-ogen-operation-group: Suite
-type SuiteHandler interface {
-	// CloneSuite implements cloneSuite operation.
-	//
-	// CloneSuite mints a new definition. Not idempotent.
-	//
-	// POST /api/v1/suite/clone-suite
-	CloneSuite(ctx context.Context, req *CloneSuiteRequest) (*CloneSuiteResponse, error)
-	// CreateSuite implements createSuite operation.
-	//
-	// CreateSuite persists a new suite definition. Not idempotent.
-	//
-	// POST /api/v1/suite/create-suite
-	CreateSuite(ctx context.Context, req *CreateSuiteRequest) (*CreateSuiteResponse, error)
-	// DeleteSuite implements deleteSuite operation.
-	//
-	// DeleteSuite is idempotent: soft-deleting an absent or already-deleted
-	// suite is a no-op.
-	//
-	// POST /api/v1/suite/delete-suite
-	DeleteSuite(ctx context.Context, req *DeleteSuiteRequest, params DeleteSuiteParams) error
-	// GetSuite implements getSuite operation.
-	//
-	// GetSuite fetches a single suite definition by id. Read-only.
-	//
-	// GET /api/v1/suite/get-suite
-	GetSuite(ctx context.Context, req *GetSuiteRequest) (*GetSuiteResponse, error)
-	// ListSuiteFacets implements listSuiteFacets operation.
-	//
-	// ListSuiteFacets lists distinct values for suite-list facet controls.
-	// Read-only.
-	//
-	// GET /api/v1/suite/list-suite-facets
-	ListSuiteFacets(ctx context.Context, req *ListSuiteFacetsRequest) (*ListSuiteFacetsResponse, error)
-	// ListSuites implements listSuites operation.
-	//
-	// ListSuites lists suite definitions with filtering and pagination. Read-only.
-	//
-	// GET /api/v1/suite/list-suites
-	ListSuites(ctx context.Context, req *ListSuitesRequest) (*ListSuitesResponse, error)
-	// SetSuiteSchedule implements setSuiteSchedule operation.
-	//
-	// SetSuiteSchedule is idempotent: setting the same schedule converges.
-	//
-	// POST /api/v1/suite/set-suite-schedule
-	SetSuiteSchedule(ctx context.Context, req *SetSuiteScheduleRequest, params SetSuiteScheduleParams) (*SetSuiteScheduleResponse, error)
-	// StartSuite implements startSuite operation.
-	//
-	// StartSuite mints a SuiteRunRecord. Not idempotent: each call launches a run.
-	//
-	// POST /api/v1/suite/start-suite
-	StartSuite(ctx context.Context, req *StartSuiteRequest) (*StartSuiteResponse, error)
-	// UpdateSuite implements updateSuite operation.
-	//
-	// UpdateSuite is idempotent: a wholesale field set converges on retry.
-	//
-	// POST /api/v1/suite/update-suite
-	UpdateSuite(ctx context.Context, req *UpdateSuiteRequest, params UpdateSuiteParams) (*UpdateSuiteResponse, error)
-}
-
-// SuiteRunHandler handles operations described by OpenAPI v3 specification.
-//
-// x-ogen-operation-group: SuiteRun
-type SuiteRunHandler interface {
-	// CancelSuiteRun implements cancelSuiteRun operation.
-	//
-	// CancelSuiteRun is idempotent: cancelling a finished/cancelled run is a no-op.
-	//
-	// POST /api/v1/suite-run/cancel-suite-run
-	CancelSuiteRun(ctx context.Context, req *CancelSuiteRunRequest, params CancelSuiteRunParams) (*CancelSuiteRunResponse, error)
-	// DeleteSuiteRun implements deleteSuiteRun operation.
-	//
-	// DeleteSuiteRun is idempotent: soft-deleting an absent or already-deleted
-	// suite run is a no-op.
-	//
-	// POST /api/v1/suite-run/delete-suite-run
-	DeleteSuiteRun(ctx context.Context, req *DeleteSuiteRunRequest, params DeleteSuiteRunParams) error
-	// GetSuiteRun implements getSuiteRun operation.
-	//
-	// GetSuiteRun fetches a single suite run by id. Read-only.
-	//
-	// GET /api/v1/suite-run/get-suite-run
-	GetSuiteRun(ctx context.Context, req *GetSuiteRunRequest) (*GetSuiteRunResponse, error)
-	// ListSuiteRuns implements listSuiteRuns operation.
-	//
-	// ListSuiteRuns lists suite runs with filtering and pagination. Read-only.
-	//
-	// GET /api/v1/suite-run/list-suite-runs
-	ListSuiteRuns(ctx context.Context, req *ListSuiteRunsRequest) (*ListSuiteRunsResponse, error)
-}
-
-// SuiteWizardHandler handles operations described by OpenAPI v3 specification.
-//
-// x-ogen-operation-group: SuiteWizard
-type SuiteWizardHandler interface {
-	// DeleteSuiteWizardDraft implements deleteSuiteWizardDraft operation.
-	//
-	// DeleteSuiteWizardDraft is idempotent.
-	//
-	// POST /api/v1/suite-wizard/delete-suite-wizard-draft
-	DeleteSuiteWizardDraft(ctx context.Context, req *DeleteSuiteWizardDraftRequest, params DeleteSuiteWizardDraftParams) error
-	// FinishSuiteWizard implements finishSuiteWizard operation.
-	//
-	// FinishSuiteWizard persists a suite and optionally launches it.
-	//
-	// POST /api/v1/suite-wizard/finish-suite-wizard
-	FinishSuiteWizard(ctx context.Context, req *FinishSuiteWizardRequest) (*FinishSuiteWizardResponse, error)
-	// GetSuiteWizardDraft implements getSuiteWizardDraft operation.
-	//
-	// GetSuiteWizardDraft fetches a single draft by id. Read-only.
-	//
-	// GET /api/v1/suite-wizard/get-suite-wizard-draft
-	GetSuiteWizardDraft(ctx context.Context, req *GetSuiteWizardDraftRequest) (*GetSuiteWizardDraftResponse, error)
-	// ListSuiteWizardDrafts implements listSuiteWizardDrafts operation.
-	//
-	// ListSuiteWizardDrafts lists drafts with filtering and pagination. Read-only.
-	//
-	// GET /api/v1/suite-wizard/list-suite-wizard-drafts
-	ListSuiteWizardDrafts(ctx context.Context, req *ListSuiteWizardDraftsRequest) (*ListSuiteWizardDraftsResponse, error)
-	// PatchSuiteWizard implements patchSuiteWizard operation.
-	//
-	// PatchSuiteWizard is idempotent: re-submitting the same patch converges.
-	//
-	// POST /api/v1/suite-wizard/patch-suite-wizard
-	PatchSuiteWizard(ctx context.Context, req *PatchSuiteWizardRequest, params PatchSuiteWizardParams) (*PatchSuiteWizardResponse, error)
-	// StartSuiteWizard implements startSuiteWizard operation.
-	//
-	// StartSuiteWizard opens a new draft. Not idempotent.
-	//
-	// POST /api/v1/suite-wizard/start-suite-wizard
-	StartSuiteWizard(ctx context.Context, req *StartSuiteWizardRequest) (*StartSuiteWizardResponse, error)
-}
-
 // SystemSettingsHandler handles operations described by OpenAPI v3 specification.
 //
 // x-ogen-operation-group: SystemSettings
@@ -903,103 +713,6 @@ type TenantSettingsHandler interface {
 	UpdateTenantSettings(ctx context.Context, req *UpdateTenantSettingsRequest, params UpdateTenantSettingsParams) (*UpdateTenantSettingsResponse, error)
 }
 
-// TestPresetHandler handles operations described by OpenAPI v3 specification.
-//
-// x-ogen-operation-group: TestPreset
-type TestPresetHandler interface {
-	// CloneTestPreset implements cloneTestPreset operation.
-	//
-	// CloneTestPreset creates a new editable copy. Not idempotent: each call
-	// mints a new preset.
-	//
-	// POST /api/v1/test-preset/clone-test-preset
-	CloneTestPreset(ctx context.Context, req *CloneTestPresetRequest) (*CloneTestPresetResponse, error)
-	// CreateTestPreset implements createTestPreset operation.
-	//
-	// CreateTestPreset creates a test preset. Not idempotent: each call mints a
-	// new preset.
-	//
-	// POST /api/v1/test-preset/create-test-preset
-	CreateTestPreset(ctx context.Context, req *CreateTestPresetRequest) (*CreateTestPresetResponse, error)
-	// DeleteTestPreset implements deleteTestPreset operation.
-	//
-	// DeleteTestPreset is idempotent: soft-deleting an absent or
-	// already-deleted preset is a no-op.
-	// System presets (is_system) are rejected.
-	//
-	// POST /api/v1/test-preset/delete-test-preset
-	DeleteTestPreset(ctx context.Context, req *DeleteTestPresetRequest, params DeleteTestPresetParams) error
-	// GetTestPreset implements getTestPreset operation.
-	//
-	// GetTestPreset fetches one test preset by id. Read-only.
-	//
-	// GET /api/v1/test-preset/get-test-preset
-	GetTestPreset(ctx context.Context, req *GetTestPresetRequest) (*GetTestPresetResponse, error)
-	// ListTestPresets implements listTestPresets operation.
-	//
-	// ListTestPresets lists a tenant's test presets. Read-only.
-	//
-	// GET /api/v1/test-preset/list-test-presets
-	ListTestPresets(ctx context.Context, req *ListTestPresetsRequest) (*ListTestPresetsResponse, error)
-	// UpdateTestPreset implements updateTestPreset operation.
-	//
-	// UpdateTestPreset is idempotent: a wholesale field set converges on retry.
-	// System presets (is_system) are read-only and rejected — clone instead.
-	//
-	// POST /api/v1/test-preset/update-test-preset
-	UpdateTestPreset(ctx context.Context, req *UpdateTestPresetRequest, params UpdateTestPresetParams) (*UpdateTestPresetResponse, error)
-}
-
-// TestRunHandler handles operations described by OpenAPI v3 specification.
-//
-// x-ogen-operation-group: TestRun
-type TestRunHandler interface {
-	// CancelTestRun implements cancelTestRun operation.
-	//
-	// CancelTestRun is idempotent: cancelling a finished/cancelled run is a no-op.
-	//
-	// POST /api/v1/test-run/cancel-test-run
-	CancelTestRun(ctx context.Context, req *CancelTestRunRequest, params CancelTestRunParams) (*CancelTestRunResponse, error)
-	// DeleteTestRun implements deleteTestRun operation.
-	//
-	// DeleteTestRun is idempotent: soft-deleting an absent or already-deleted
-	// run is a no-op.
-	//
-	// POST /api/v1/test-run/delete-test-run
-	DeleteTestRun(ctx context.Context, req *DeleteTestRunRequest, params DeleteTestRunParams) error
-	// ExtractToPreset implements extractToPreset operation.
-	//
-	// ExtractToPreset mints a new preset. Not idempotent.
-	//
-	// POST /api/v1/test-run/extract-to-preset
-	ExtractToPreset(ctx context.Context, req *ExtractToPresetRequest) (*ExtractToPresetResponse, error)
-	// GetTestRun implements getTestRun operation.
-	//
-	// GetTestRun fetches a single run by id. Read-only.
-	//
-	// GET /api/v1/test-run/get-test-run
-	GetTestRun(ctx context.Context, req *GetTestRunRequest) (*GetTestRunResponse, error)
-	// ListTestRunFacets implements listTestRunFacets operation.
-	//
-	// ListTestRunFacets lists distinct values for run-list facet controls.
-	// Read-only.
-	//
-	// GET /api/v1/test-run/list-test-run-facets
-	ListTestRunFacets(ctx context.Context, req *ListTestRunFacetsRequest) (*ListTestRunFacetsResponse, error)
-	// ListTestRuns implements listTestRuns operation.
-	//
-	// ListTestRuns lists runs with filtering and pagination. Read-only.
-	//
-	// GET /api/v1/test-run/list-test-runs
-	ListTestRuns(ctx context.Context, req *ListTestRunsRequest) (*ListTestRunsResponse, error)
-	// StartTestRun implements startTestRun operation.
-	//
-	// StartTestRun is not idempotent: each call launches a new run.
-	//
-	// POST /api/v1/test-run/start-test-run
-	StartTestRun(ctx context.Context, req *StartTestRunRequest) (*StartTestRunResponse, error)
-}
-
 // TestRunOverviewHandler handles operations described by OpenAPI v3 specification.
 //
 // x-ogen-operation-group: TestRunOverview
@@ -1048,109 +761,6 @@ type TestRunOverviewHandler interface {
 	//
 	// POST /api/v1/test-run-overview/stream-test-run-overview
 	StreamTestRunOverview(ctx context.Context, req *StreamTestRunOverviewRequest) (StreamTestRunOverviewOK, error)
-}
-
-// TestWizardHandler handles operations described by OpenAPI v3 specification.
-//
-// x-ogen-operation-group: TestWizard
-type TestWizardHandler interface {
-	// DeleteTestWizardDraft implements deleteTestWizardDraft operation.
-	//
-	// DeleteTestWizardDraft is idempotent: deleting an absent draft is a no-op.
-	//
-	// POST /api/v1/test-wizard/delete-test-wizard-draft
-	DeleteTestWizardDraft(ctx context.Context, req *DeleteTestWizardDraftRequest, params DeleteTestWizardDraftParams) error
-	// FinishTestWizard implements finishTestWizard operation.
-	//
-	// FinishTestWizard mints a TestRun from the draft. Not idempotent.
-	//
-	// POST /api/v1/test-wizard/finish-test-wizard
-	FinishTestWizard(ctx context.Context, req *FinishTestWizardRequest) (*FinishTestWizardResponse, error)
-	// GetTestWizardDraft implements getTestWizardDraft operation.
-	//
-	// GetTestWizardDraft fetches a single draft by id. Read-only.
-	//
-	// GET /api/v1/test-wizard/get-test-wizard-draft
-	GetTestWizardDraft(ctx context.Context, req *GetTestWizardDraftRequest) (*GetTestWizardDraftResponse, error)
-	// ListTestWizardDrafts implements listTestWizardDrafts operation.
-	//
-	// ListTestWizardDrafts lists drafts with filtering and pagination. Read-only.
-	//
-	// GET /api/v1/test-wizard/list-test-wizard-drafts
-	ListTestWizardDrafts(ctx context.Context, req *ListTestWizardDraftsRequest) (*ListTestWizardDraftsResponse, error)
-	// PatchTestWizard implements patchTestWizard operation.
-	//
-	// PatchTestWizard is idempotent: re-submitting the same form converges.
-	//
-	// POST /api/v1/test-wizard/patch-test-wizard
-	PatchTestWizard(ctx context.Context, req *PatchTestWizardRequest, params PatchTestWizardParams) (*PatchTestWizardResponse, error)
-	// ProbeCatalog implements probeCatalog operation.
-	//
-	// ProbeCatalog lists the runnable scripts a stroppy binary embeds (its
-	// `probe -o json` catalog). Read-only / no side effects.
-	//
-	// GET /api/v1/test-wizard/probe-catalog
-	ProbeCatalog(ctx context.Context, req *ProbeCatalogRequest) (*ProbeCatalogResponse, error)
-	// ProbeScript implements probeScript operation.
-	//
-	// ProbeScript introspects a stroppy script. Read-only / no side effects.
-	//
-	// GET /api/v1/test-wizard/probe-script
-	ProbeScript(ctx context.Context, req *ProbeScriptRequest) (*ProbeScriptResponse, error)
-	// StartTestWizard implements startTestWizard operation.
-	//
-	// StartTestWizard opens a new draft. Not idempotent.
-	//
-	// POST /api/v1/test-wizard/start-test-wizard
-	StartTestWizard(ctx context.Context, req *StartTestWizardRequest) (*StartTestWizardResponse, error)
-}
-
-// WorkloadPresetHandler handles operations described by OpenAPI v3 specification.
-//
-// x-ogen-operation-group: WorkloadPreset
-type WorkloadPresetHandler interface {
-	// CloneWorkloadPreset implements cloneWorkloadPreset operation.
-	//
-	// CloneWorkloadPreset creates a new editable copy. Not idempotent: each call
-	// mints a new preset.
-	//
-	// POST /api/v1/workload-preset/clone-workload-preset
-	CloneWorkloadPreset(ctx context.Context, req *CloneWorkloadPresetRequest) (*CloneWorkloadPresetResponse, error)
-	// CreateWorkloadPreset implements createWorkloadPreset operation.
-	//
-	// CreateWorkloadPreset creates a workload preset. Not idempotent: each call
-	// mints a new preset.
-	//
-	// POST /api/v1/workload-preset/create-workload-preset
-	CreateWorkloadPreset(ctx context.Context, req *CreateWorkloadPresetRequest) (*CreateWorkloadPresetResponse, error)
-	// DeleteWorkloadPreset implements deleteWorkloadPreset operation.
-	//
-	// DeleteWorkloadPreset is idempotent: soft-deleting an absent or
-	// already-deleted preset is a no-op.
-	// System presets (is_system) are rejected.
-	//
-	// POST /api/v1/workload-preset/delete-workload-preset
-	DeleteWorkloadPreset(ctx context.Context, req *DeleteWorkloadPresetRequest, params DeleteWorkloadPresetParams) error
-	// GetWorkloadPreset implements getWorkloadPreset operation.
-	//
-	// GetWorkloadPreset fetches one workload preset by id. Read-only.
-	//
-	// GET /api/v1/workload-preset/get-workload-preset
-	GetWorkloadPreset(ctx context.Context, req *GetWorkloadPresetRequest) (*GetWorkloadPresetResponse, error)
-	// ListWorkloadPresets implements listWorkloadPresets operation.
-	//
-	// ListWorkloadPresets lists a tenant's workload presets. Read-only.
-	//
-	// GET /api/v1/workload-preset/list-workload-presets
-	ListWorkloadPresets(ctx context.Context, req *ListWorkloadPresetsRequest) (*ListWorkloadPresetsResponse, error)
-	// UpdateWorkloadPreset implements updateWorkloadPreset operation.
-	//
-	// UpdateWorkloadPreset is idempotent: a wholesale field set converges on
-	// retry. System presets (is_system) are read-only and rejected — clone
-	// instead.
-	//
-	// POST /api/v1/workload-preset/update-workload-preset
-	UpdateWorkloadPreset(ctx context.Context, req *UpdateWorkloadPresetRequest, params UpdateWorkloadPresetParams) (*UpdateWorkloadPresetResponse, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and

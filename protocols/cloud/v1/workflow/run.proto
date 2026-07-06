@@ -5,7 +5,7 @@ package cloud.v1.workflow;
 import "cloud/v1/deployment/infrastructure.proto";
 import "cloud/v1/deployment/plan.proto";
 import "cloud/v1/deployment/render.proto";
-import "cloud/v1/workflow/deployment.proto";
+import "cloud/v1/workflow/agent.proto";
 import "cloud/v1/domain/database.proto";
 import "cloud/v1/domain/workload.proto";
 import "cloud/v1/topology/topology.proto";

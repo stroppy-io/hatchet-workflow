@@ -8,11 +8,13 @@ package workflow
 
 import (
 	_ "github.com/cludden/protoc-gen-go-temporal/gen/temporal/v1"
+	_ "github.com/envoyproxy/protoc-gen-validate/validate"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	reflect "reflect"
+	sync "sync"
 	unsafe "unsafe"
 )
 
@@ -23,11 +25,130 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// AgentBootstrap is the provider-independent startup contract for every agent.
+// It is runtime control-plane data, not topology and not provider settings.
+type AgentBootstrap struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// server_addr is the public/base control-plane address agents use to reach
+	// the server and Temporal proxy, e.g. http://10.0.0.10:8080.
+	ServerAddr string `protobuf:"bytes,1,opt,name=server_addr,json=serverAddr,proto3" json:"server_addr,omitempty"`
+	// binary_url overrides the agent binary URL. Empty means
+	// server_addr + "/agent/binary".
+	BinaryUrl string `protobuf:"bytes,2,opt,name=binary_url,json=binaryUrl,proto3" json:"binary_url,omitempty"`
+	// temporal_namespace is the namespace agents use when registering their
+	// Temporal worker. Empty means default.
+	TemporalNamespace string `protobuf:"bytes,3,opt,name=temporal_namespace,json=temporalNamespace,proto3" json:"temporal_namespace,omitempty"`
+	// extra_env is appended to the agent env file. Core STROPPY and AGENT
+	// fields are still rendered by the system and win over this map.
+	ExtraEnv map[string]string `protobuf:"bytes,4,rep,name=extra_env,json=extraEnv,proto3" json:"extra_env,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// agent_tokens carries per-node bearer tokens. The renderer injects only
+	// the token matching the current node into that node's env as
+	// STROPPY_AGENT_TOKEN; it must not be rendered as generic extra env.
+	AgentTokens map[string]string `protobuf:"bytes,5,rep,name=agent_tokens,json=agentTokens,proto3" json:"agent_tokens,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// agent_task_queues carries the per-node Temporal task queue name. It is
+	// generated with a per-run secret suffix and rendered only to the matching
+	// node so a valid agent token alone is not enough to poll another node's
+	// work.
+	AgentTaskQueues map[string]string `protobuf:"bytes,6,rep,name=agent_task_queues,json=agentTaskQueues,proto3" json:"agent_task_queues,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *AgentBootstrap) Reset() {
+	*x = AgentBootstrap{}
+	mi := &file_cloud_v1_workflow_agent_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AgentBootstrap) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AgentBootstrap) ProtoMessage() {}
+
+func (x *AgentBootstrap) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_workflow_agent_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AgentBootstrap.ProtoReflect.Descriptor instead.
+func (*AgentBootstrap) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_workflow_agent_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *AgentBootstrap) GetServerAddr() string {
+	if x != nil {
+		return x.ServerAddr
+	}
+	return ""
+}
+
+func (x *AgentBootstrap) GetBinaryUrl() string {
+	if x != nil {
+		return x.BinaryUrl
+	}
+	return ""
+}
+
+func (x *AgentBootstrap) GetTemporalNamespace() string {
+	if x != nil {
+		return x.TemporalNamespace
+	}
+	return ""
+}
+
+func (x *AgentBootstrap) GetExtraEnv() map[string]string {
+	if x != nil {
+		return x.ExtraEnv
+	}
+	return nil
+}
+
+func (x *AgentBootstrap) GetAgentTokens() map[string]string {
+	if x != nil {
+		return x.AgentTokens
+	}
+	return nil
+}
+
+func (x *AgentBootstrap) GetAgentTaskQueues() map[string]string {
+	if x != nil {
+		return x.AgentTaskQueues
+	}
+	return nil
+}
+
 var File_cloud_v1_workflow_agent_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_workflow_agent_proto_rawDesc = "" +
 	"\n" +
-	"\x1dcloud/v1/workflow/agent.proto\x12\x11cloud.v1.workflow\x1a\x19cloud/v1/common/cmd.proto\x1a\x19cloud/v1/common/dir.proto\x1a\x1acloud/v1/common/file.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1atemporal/v1/temporal.proto2\xdb\x04\n" +
+	"\x1dcloud/v1/workflow/agent.proto\x12\x11cloud.v1.workflow\x1a\x19cloud/v1/common/cmd.proto\x1a\x19cloud/v1/common/dir.proto\x1a\x1acloud/v1/common/file.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1atemporal/v1/temporal.proto\x1a\x17validate/validate.proto\"\xcf\x05\n" +
+	"\x0eAgentBootstrap\x12)\n" +
+	"\vserver_addr\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x10R\n" +
+	"serverAddr\x12'\n" +
+	"\n" +
+	"binary_url\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x10R\tbinaryUrl\x127\n" +
+	"\x12temporal_namespace\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\x11temporalNamespace\x12z\n" +
+	"\textra_env\x18\x04 \x03(\v2/.cloud.v1.workflow.AgentBootstrap.ExtraEnvEntryB,\xfaB)\x9a\x01&\x10@\"\x1br\x19\x10\x01\x18\x80\x022\x12^[A-Z_][A-Z0-9_]*$*\x05r\x03\x18\x80@R\bextraEnv\x12r\n" +
+	"\fagent_tokens\x18\x05 \x03(\v22.cloud.v1.workflow.AgentBootstrap.AgentTokensEntryB\x1b\xfaB\x18\x9a\x01\x15\x10\x80\b\"\ar\x05\x10\x01\x18\x80\x02*\ar\x05\x10\x01\x18\x80@R\vagentTokens\x12\x7f\n" +
+	"\x11agent_task_queues\x18\x06 \x03(\v26.cloud.v1.workflow.AgentBootstrap.AgentTaskQueuesEntryB\x1b\xfaB\x18\x9a\x01\x15\x10\x80\b\"\ar\x05\x10\x01\x18\x80\x02*\ar\x05\x10\x01\x18\x80\x04R\x0fagentTaskQueues\x1a;\n" +
+	"\rExtraEnvEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a>\n" +
+	"\x10AgentTokensEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1aB\n" +
+	"\x14AgentTaskQueuesEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x012\xdb\x04\n" +
 	"\x13AgentCommandService\x12m\n" +
 	"\x19EnsureAgentOnlineActivity\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.Empty\" \x92\xc4\x03\x1c\"\x03\b\x84\a*\x02\b<2\x11\n" +
 	"\x02\b\x05\x11\x00\x00\x00\x00\x00\x00\x00@\x1a\x02\b<\x12S\n" +
@@ -41,32 +162,52 @@ const file_cloud_v1_workflow_agent_proto_rawDesc = "" +
 	"\x0fCallCmdActivity\x12\x14.cloud.v1.common.Cmd\x1a\x1b.cloud.v1.common.Cmd.Result\"\x13\x92\xc4\x03\x0f\"\x05\b\x80\x9a\x9e\x01*\x02\b<2\x02 \x01\x1a\x13\x8a\xc4\x03\x0f\n" +
 	"\rstroppy-cloudBFZDgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflowb\x06proto3"
 
+var (
+	file_cloud_v1_workflow_agent_proto_rawDescOnce sync.Once
+	file_cloud_v1_workflow_agent_proto_rawDescData []byte
+)
+
+func file_cloud_v1_workflow_agent_proto_rawDescGZIP() []byte {
+	file_cloud_v1_workflow_agent_proto_rawDescOnce.Do(func() {
+		file_cloud_v1_workflow_agent_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_cloud_v1_workflow_agent_proto_rawDesc), len(file_cloud_v1_workflow_agent_proto_rawDesc)))
+	})
+	return file_cloud_v1_workflow_agent_proto_rawDescData
+}
+
+var file_cloud_v1_workflow_agent_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_cloud_v1_workflow_agent_proto_goTypes = []any{
-	(*emptypb.Empty)(nil),     // 0: google.protobuf.Empty
-	(*common.Dir)(nil),        // 1: cloud.v1.common.Dir
-	(*common.Dir_Temp)(nil),   // 2: cloud.v1.common.Dir.Temp
-	(*common.File)(nil),       // 3: cloud.v1.common.File
-	(*common.Cmd)(nil),        // 4: cloud.v1.common.Cmd
-	(*common.Cmd_Result)(nil), // 5: cloud.v1.common.Cmd.Result
+	(*AgentBootstrap)(nil),    // 0: cloud.v1.workflow.AgentBootstrap
+	nil,                       // 1: cloud.v1.workflow.AgentBootstrap.ExtraEnvEntry
+	nil,                       // 2: cloud.v1.workflow.AgentBootstrap.AgentTokensEntry
+	nil,                       // 3: cloud.v1.workflow.AgentBootstrap.AgentTaskQueuesEntry
+	(*emptypb.Empty)(nil),     // 4: google.protobuf.Empty
+	(*common.Dir)(nil),        // 5: cloud.v1.common.Dir
+	(*common.Dir_Temp)(nil),   // 6: cloud.v1.common.Dir.Temp
+	(*common.File)(nil),       // 7: cloud.v1.common.File
+	(*common.Cmd)(nil),        // 8: cloud.v1.common.Cmd
+	(*common.Cmd_Result)(nil), // 9: cloud.v1.common.Cmd.Result
 }
 var file_cloud_v1_workflow_agent_proto_depIdxs = []int32{
-	0, // 0: cloud.v1.workflow.AgentCommandService.EnsureAgentOnlineActivity:input_type -> google.protobuf.Empty
-	1, // 1: cloud.v1.workflow.AgentCommandService.CreateDirActivity:input_type -> cloud.v1.common.Dir
-	2, // 2: cloud.v1.workflow.AgentCommandService.CreateTempDirActivity:input_type -> cloud.v1.common.Dir.Temp
-	3, // 3: cloud.v1.workflow.AgentCommandService.WriteFileActivity:input_type -> cloud.v1.common.File
-	3, // 4: cloud.v1.workflow.AgentCommandService.FetchFileActivity:input_type -> cloud.v1.common.File
-	4, // 5: cloud.v1.workflow.AgentCommandService.CallCmdActivity:input_type -> cloud.v1.common.Cmd
-	0, // 6: cloud.v1.workflow.AgentCommandService.EnsureAgentOnlineActivity:output_type -> google.protobuf.Empty
-	0, // 7: cloud.v1.workflow.AgentCommandService.CreateDirActivity:output_type -> google.protobuf.Empty
-	1, // 8: cloud.v1.workflow.AgentCommandService.CreateTempDirActivity:output_type -> cloud.v1.common.Dir
-	0, // 9: cloud.v1.workflow.AgentCommandService.WriteFileActivity:output_type -> google.protobuf.Empty
-	0, // 10: cloud.v1.workflow.AgentCommandService.FetchFileActivity:output_type -> google.protobuf.Empty
-	5, // 11: cloud.v1.workflow.AgentCommandService.CallCmdActivity:output_type -> cloud.v1.common.Cmd.Result
-	6, // [6:12] is the sub-list for method output_type
-	0, // [0:6] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	1, // 0: cloud.v1.workflow.AgentBootstrap.extra_env:type_name -> cloud.v1.workflow.AgentBootstrap.ExtraEnvEntry
+	2, // 1: cloud.v1.workflow.AgentBootstrap.agent_tokens:type_name -> cloud.v1.workflow.AgentBootstrap.AgentTokensEntry
+	3, // 2: cloud.v1.workflow.AgentBootstrap.agent_task_queues:type_name -> cloud.v1.workflow.AgentBootstrap.AgentTaskQueuesEntry
+	4, // 3: cloud.v1.workflow.AgentCommandService.EnsureAgentOnlineActivity:input_type -> google.protobuf.Empty
+	5, // 4: cloud.v1.workflow.AgentCommandService.CreateDirActivity:input_type -> cloud.v1.common.Dir
+	6, // 5: cloud.v1.workflow.AgentCommandService.CreateTempDirActivity:input_type -> cloud.v1.common.Dir.Temp
+	7, // 6: cloud.v1.workflow.AgentCommandService.WriteFileActivity:input_type -> cloud.v1.common.File
+	7, // 7: cloud.v1.workflow.AgentCommandService.FetchFileActivity:input_type -> cloud.v1.common.File
+	8, // 8: cloud.v1.workflow.AgentCommandService.CallCmdActivity:input_type -> cloud.v1.common.Cmd
+	4, // 9: cloud.v1.workflow.AgentCommandService.EnsureAgentOnlineActivity:output_type -> google.protobuf.Empty
+	4, // 10: cloud.v1.workflow.AgentCommandService.CreateDirActivity:output_type -> google.protobuf.Empty
+	5, // 11: cloud.v1.workflow.AgentCommandService.CreateTempDirActivity:output_type -> cloud.v1.common.Dir
+	4, // 12: cloud.v1.workflow.AgentCommandService.WriteFileActivity:output_type -> google.protobuf.Empty
+	4, // 13: cloud.v1.workflow.AgentCommandService.FetchFileActivity:output_type -> google.protobuf.Empty
+	9, // 14: cloud.v1.workflow.AgentCommandService.CallCmdActivity:output_type -> cloud.v1.common.Cmd.Result
+	9, // [9:15] is the sub-list for method output_type
+	3, // [3:9] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_workflow_agent_proto_init() }
@@ -80,12 +221,13 @@ func file_cloud_v1_workflow_agent_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_workflow_agent_proto_rawDesc), len(file_cloud_v1_workflow_agent_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   0,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_cloud_v1_workflow_agent_proto_goTypes,
 		DependencyIndexes: file_cloud_v1_workflow_agent_proto_depIdxs,
+		MessageInfos:      file_cloud_v1_workflow_agent_proto_msgTypes,
 	}.Build()
 	File_cloud_v1_workflow_agent_proto = out.File
 	file_cloud_v1_workflow_agent_proto_goTypes = nil

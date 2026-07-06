@@ -33,24 +33,6 @@ func (UnimplementedHandler) CancelRun(ctx context.Context, req *CancelRunRequest
 	return ht.ErrNotImplemented
 }
 
-// CancelSuiteRun implements cancelSuiteRun operation.
-//
-// CancelSuiteRun is idempotent: cancelling a finished/cancelled run is a no-op.
-//
-// POST /api/v1/suite-run/cancel-suite-run
-func (UnimplementedHandler) CancelSuiteRun(ctx context.Context, req *CancelSuiteRunRequest, params CancelSuiteRunParams) (r *CancelSuiteRunResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// CancelTestRun implements cancelTestRun operation.
-//
-// CancelTestRun is idempotent: cancelling a finished/cancelled run is a no-op.
-//
-// POST /api/v1/test-run/cancel-test-run
-func (UnimplementedHandler) CancelTestRun(ctx context.Context, req *CancelTestRunRequest, params CancelTestRunParams) (r *CancelTestRunResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
 // ChangePassword implements changePassword operation.
 //
 // ChangePassword is authenticated self-service (old + new). Not idempotent.
@@ -67,45 +49,6 @@ func (UnimplementedHandler) ChangePassword(ctx context.Context, req *ChangePassw
 //
 // GET /api/v1/recipe/check-recipe
 func (UnimplementedHandler) CheckRecipe(ctx context.Context, req *CheckRecipeRequest) (r *CheckRecipeResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// CloneDatabasePreset implements cloneDatabasePreset operation.
-//
-// CloneDatabasePreset creates a new editable copy. Not idempotent: each call
-// mints a new preset.
-//
-// POST /api/v1/database-preset/clone-database-preset
-func (UnimplementedHandler) CloneDatabasePreset(ctx context.Context, req *CloneDatabasePresetRequest) (r *CloneDatabasePresetResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// CloneSuite implements cloneSuite operation.
-//
-// CloneSuite mints a new definition. Not idempotent.
-//
-// POST /api/v1/suite/clone-suite
-func (UnimplementedHandler) CloneSuite(ctx context.Context, req *CloneSuiteRequest) (r *CloneSuiteResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// CloneTestPreset implements cloneTestPreset operation.
-//
-// CloneTestPreset creates a new editable copy. Not idempotent: each call
-// mints a new preset.
-//
-// POST /api/v1/test-preset/clone-test-preset
-func (UnimplementedHandler) CloneTestPreset(ctx context.Context, req *CloneTestPresetRequest) (r *CloneTestPresetResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// CloneWorkloadPreset implements cloneWorkloadPreset operation.
-//
-// CloneWorkloadPreset creates a new editable copy. Not idempotent: each call
-// mints a new preset.
-//
-// POST /api/v1/workload-preset/clone-workload-preset
-func (UnimplementedHandler) CloneWorkloadPreset(ctx context.Context, req *CloneWorkloadPresetRequest) (r *CloneWorkloadPresetResponse, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -170,16 +113,6 @@ func (UnimplementedHandler) CreateApiToken(ctx context.Context, req *CreateApiTo
 	return r, ht.ErrNotImplemented
 }
 
-// CreateDatabasePreset implements createDatabasePreset operation.
-//
-// CreateDatabasePreset creates a database preset. Not idempotent: each call
-// mints a new preset.
-//
-// POST /api/v1/database-preset/create-database-preset
-func (UnimplementedHandler) CreateDatabasePreset(ctx context.Context, req *CreateDatabasePresetRequest) (r *CreateDatabasePresetResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
 // CreateIdentityProvider implements createIdentityProvider operation.
 //
 // CreateIdentityProvider configures a new OIDC provider. Admin-only. Not
@@ -235,15 +168,6 @@ func (UnimplementedHandler) CreateShare(ctx context.Context, req *CreateShareReq
 	return r, ht.ErrNotImplemented
 }
 
-// CreateSuite implements createSuite operation.
-//
-// CreateSuite persists a new suite definition. Not idempotent.
-//
-// POST /api/v1/suite/create-suite
-func (UnimplementedHandler) CreateSuite(ctx context.Context, req *CreateSuiteRequest) (r *CreateSuiteResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
 // CreateTenant implements createTenant operation.
 //
 // CreateTenant is gated by PlatformSettings.allow_member_tenant_creation.
@@ -254,43 +178,12 @@ func (UnimplementedHandler) CreateTenant(ctx context.Context, req *CreateTenantR
 	return r, ht.ErrNotImplemented
 }
 
-// CreateTestPreset implements createTestPreset operation.
-//
-// CreateTestPreset creates a test preset. Not idempotent: each call mints a
-// new preset.
-//
-// POST /api/v1/test-preset/create-test-preset
-func (UnimplementedHandler) CreateTestPreset(ctx context.Context, req *CreateTestPresetRequest) (r *CreateTestPresetResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// CreateWorkloadPreset implements createWorkloadPreset operation.
-//
-// CreateWorkloadPreset creates a workload preset. Not idempotent: each call
-// mints a new preset.
-//
-// POST /api/v1/workload-preset/create-workload-preset
-func (UnimplementedHandler) CreateWorkloadPreset(ctx context.Context, req *CreateWorkloadPresetRequest) (r *CreateWorkloadPresetResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
 // DeleteAccount implements deleteAccount operation.
 //
 // DeleteAccount is idempotent: deleting an absent account is a no-op.
 //
 // POST /api/v1/iam/delete-account
 func (UnimplementedHandler) DeleteAccount(ctx context.Context, req *DeleteAccountRequest, params DeleteAccountParams) error {
-	return ht.ErrNotImplemented
-}
-
-// DeleteDatabasePreset implements deleteDatabasePreset operation.
-//
-// DeleteDatabasePreset is idempotent: soft-deleting an absent or
-// already-deleted preset is a no-op.
-// System presets (is_system) are rejected.
-//
-// POST /api/v1/database-preset/delete-database-preset
-func (UnimplementedHandler) DeleteDatabasePreset(ctx context.Context, req *DeleteDatabasePresetRequest, params DeleteDatabasePresetParams) error {
 	return ht.ErrNotImplemented
 }
 
@@ -361,35 +254,6 @@ func (UnimplementedHandler) DeleteShare(ctx context.Context, req *DeleteShareReq
 	return ht.ErrNotImplemented
 }
 
-// DeleteSuite implements deleteSuite operation.
-//
-// DeleteSuite is idempotent: soft-deleting an absent or already-deleted
-// suite is a no-op.
-//
-// POST /api/v1/suite/delete-suite
-func (UnimplementedHandler) DeleteSuite(ctx context.Context, req *DeleteSuiteRequest, params DeleteSuiteParams) error {
-	return ht.ErrNotImplemented
-}
-
-// DeleteSuiteRun implements deleteSuiteRun operation.
-//
-// DeleteSuiteRun is idempotent: soft-deleting an absent or already-deleted
-// suite run is a no-op.
-//
-// POST /api/v1/suite-run/delete-suite-run
-func (UnimplementedHandler) DeleteSuiteRun(ctx context.Context, req *DeleteSuiteRunRequest, params DeleteSuiteRunParams) error {
-	return ht.ErrNotImplemented
-}
-
-// DeleteSuiteWizardDraft implements deleteSuiteWizardDraft operation.
-//
-// DeleteSuiteWizardDraft is idempotent.
-//
-// POST /api/v1/suite-wizard/delete-suite-wizard-draft
-func (UnimplementedHandler) DeleteSuiteWizardDraft(ctx context.Context, req *DeleteSuiteWizardDraftRequest, params DeleteSuiteWizardDraftParams) error {
-	return ht.ErrNotImplemented
-}
-
 // DeleteTenant implements deleteTenant operation.
 //
 // DeleteTenant removes a tenant. Idempotent: deleting an absent tenant is a
@@ -400,74 +264,6 @@ func (UnimplementedHandler) DeleteTenant(ctx context.Context, req *DeleteTenantR
 	return ht.ErrNotImplemented
 }
 
-// DeleteTestPreset implements deleteTestPreset operation.
-//
-// DeleteTestPreset is idempotent: soft-deleting an absent or
-// already-deleted preset is a no-op.
-// System presets (is_system) are rejected.
-//
-// POST /api/v1/test-preset/delete-test-preset
-func (UnimplementedHandler) DeleteTestPreset(ctx context.Context, req *DeleteTestPresetRequest, params DeleteTestPresetParams) error {
-	return ht.ErrNotImplemented
-}
-
-// DeleteTestRun implements deleteTestRun operation.
-//
-// DeleteTestRun is idempotent: soft-deleting an absent or already-deleted
-// run is a no-op.
-//
-// POST /api/v1/test-run/delete-test-run
-func (UnimplementedHandler) DeleteTestRun(ctx context.Context, req *DeleteTestRunRequest, params DeleteTestRunParams) error {
-	return ht.ErrNotImplemented
-}
-
-// DeleteTestWizardDraft implements deleteTestWizardDraft operation.
-//
-// DeleteTestWizardDraft is idempotent: deleting an absent draft is a no-op.
-//
-// POST /api/v1/test-wizard/delete-test-wizard-draft
-func (UnimplementedHandler) DeleteTestWizardDraft(ctx context.Context, req *DeleteTestWizardDraftRequest, params DeleteTestWizardDraftParams) error {
-	return ht.ErrNotImplemented
-}
-
-// DeleteWorkloadPreset implements deleteWorkloadPreset operation.
-//
-// DeleteWorkloadPreset is idempotent: soft-deleting an absent or
-// already-deleted preset is a no-op.
-// System presets (is_system) are rejected.
-//
-// POST /api/v1/workload-preset/delete-workload-preset
-func (UnimplementedHandler) DeleteWorkloadPreset(ctx context.Context, req *DeleteWorkloadPresetRequest, params DeleteWorkloadPresetParams) error {
-	return ht.ErrNotImplemented
-}
-
-// ExtractToPreset implements extractToPreset operation.
-//
-// ExtractToPreset mints a new preset. Not idempotent.
-//
-// POST /api/v1/test-run/extract-to-preset
-func (UnimplementedHandler) ExtractToPreset(ctx context.Context, req *ExtractToPresetRequest) (r *ExtractToPresetResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// FinishSuiteWizard implements finishSuiteWizard operation.
-//
-// FinishSuiteWizard persists a suite and optionally launches it.
-//
-// POST /api/v1/suite-wizard/finish-suite-wizard
-func (UnimplementedHandler) FinishSuiteWizard(ctx context.Context, req *FinishSuiteWizardRequest) (r *FinishSuiteWizardResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// FinishTestWizard implements finishTestWizard operation.
-//
-// FinishTestWizard mints a TestRun from the draft. Not idempotent.
-//
-// POST /api/v1/test-wizard/finish-test-wizard
-func (UnimplementedHandler) FinishTestWizard(ctx context.Context, req *FinishTestWizardRequest) (r *FinishTestWizardResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
 // GetAccount implements getAccount operation.
 //
 // GetAccount fetches one account by id. The handler allows platform admins,
@@ -475,15 +271,6 @@ func (UnimplementedHandler) FinishTestWizard(ctx context.Context, req *FinishTes
 //
 // GET /api/v1/iam/get-account
 func (UnimplementedHandler) GetAccount(ctx context.Context, req *GetAccountRequest) (r *GetAccountResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// GetDatabasePreset implements getDatabasePreset operation.
-//
-// GetDatabasePreset fetches one database preset by id. Read-only.
-//
-// GET /api/v1/database-preset/get-database-preset
-func (UnimplementedHandler) GetDatabasePreset(ctx context.Context, req *GetDatabasePresetRequest) (r *GetDatabasePresetResponse, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -616,33 +403,6 @@ func (UnimplementedHandler) GetSharedRun(ctx context.Context, req *GetSharedRunR
 	return r, ht.ErrNotImplemented
 }
 
-// GetSuite implements getSuite operation.
-//
-// GetSuite fetches a single suite definition by id. Read-only.
-//
-// GET /api/v1/suite/get-suite
-func (UnimplementedHandler) GetSuite(ctx context.Context, req *GetSuiteRequest) (r *GetSuiteResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// GetSuiteRun implements getSuiteRun operation.
-//
-// GetSuiteRun fetches a single suite run by id. Read-only.
-//
-// GET /api/v1/suite-run/get-suite-run
-func (UnimplementedHandler) GetSuiteRun(ctx context.Context, req *GetSuiteRunRequest) (r *GetSuiteRunResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// GetSuiteWizardDraft implements getSuiteWizardDraft operation.
-//
-// GetSuiteWizardDraft fetches a single draft by id. Read-only.
-//
-// GET /api/v1/suite-wizard/get-suite-wizard-draft
-func (UnimplementedHandler) GetSuiteWizardDraft(ctx context.Context, req *GetSuiteWizardDraftRequest) (r *GetSuiteWizardDraftResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
 // GetSystemRating implements getSystemRating operation.
 //
 // GetSystemRating: cross-system private board over in_global_rating runs. Any
@@ -701,48 +461,12 @@ func (UnimplementedHandler) GetTenantSettings(ctx context.Context, req *GetTenan
 	return r, ht.ErrNotImplemented
 }
 
-// GetTestPreset implements getTestPreset operation.
-//
-// GetTestPreset fetches one test preset by id. Read-only.
-//
-// GET /api/v1/test-preset/get-test-preset
-func (UnimplementedHandler) GetTestPreset(ctx context.Context, req *GetTestPresetRequest) (r *GetTestPresetResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// GetTestRun implements getTestRun operation.
-//
-// GetTestRun fetches a single run by id. Read-only.
-//
-// GET /api/v1/test-run/get-test-run
-func (UnimplementedHandler) GetTestRun(ctx context.Context, req *GetTestRunRequest) (r *GetTestRunResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
 // GetTestRunOverview implements getTestRunOverview operation.
 //
 // GetTestRunOverview fetches the Overview snapshot. Read-only.
 //
 // GET /api/v1/test-run-overview/get-test-run-overview
 func (UnimplementedHandler) GetTestRunOverview(ctx context.Context, req *GetTestRunOverviewRequest) (r *GetTestRunOverviewResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// GetTestWizardDraft implements getTestWizardDraft operation.
-//
-// GetTestWizardDraft fetches a single draft by id. Read-only.
-//
-// GET /api/v1/test-wizard/get-test-wizard-draft
-func (UnimplementedHandler) GetTestWizardDraft(ctx context.Context, req *GetTestWizardDraftRequest) (r *GetTestWizardDraftResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// GetWorkloadPreset implements getWorkloadPreset operation.
-//
-// GetWorkloadPreset fetches one workload preset by id. Read-only.
-//
-// GET /api/v1/workload-preset/get-workload-preset
-func (UnimplementedHandler) GetWorkloadPreset(ctx context.Context, req *GetWorkloadPresetRequest) (r *GetWorkloadPresetResponse, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -782,15 +506,6 @@ func (UnimplementedHandler) ListAccounts(ctx context.Context, req *ListAccountsR
 //
 // GET /api/v1/iam/list-api-tokens
 func (UnimplementedHandler) ListApiTokens(ctx context.Context, req *ListApiTokensRequest) (r *ListApiTokensResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// ListDatabasePresets implements listDatabasePresets operation.
-//
-// ListDatabasePresets lists a tenant's database presets. Read-only.
-//
-// GET /api/v1/database-preset/list-database-presets
-func (UnimplementedHandler) ListDatabasePresets(ctx context.Context, req *ListDatabasePresetsRequest) (r *ListDatabasePresetsResponse, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -924,89 +639,6 @@ func (UnimplementedHandler) ListStroppyVersions(ctx context.Context, req *ListSt
 	return r, ht.ErrNotImplemented
 }
 
-// ListSuiteFacets implements listSuiteFacets operation.
-//
-// ListSuiteFacets lists distinct values for suite-list facet controls.
-// Read-only.
-//
-// GET /api/v1/suite/list-suite-facets
-func (UnimplementedHandler) ListSuiteFacets(ctx context.Context, req *ListSuiteFacetsRequest) (r *ListSuiteFacetsResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// ListSuiteRuns implements listSuiteRuns operation.
-//
-// ListSuiteRuns lists suite runs with filtering and pagination. Read-only.
-//
-// GET /api/v1/suite-run/list-suite-runs
-func (UnimplementedHandler) ListSuiteRuns(ctx context.Context, req *ListSuiteRunsRequest) (r *ListSuiteRunsResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// ListSuiteWizardDrafts implements listSuiteWizardDrafts operation.
-//
-// ListSuiteWizardDrafts lists drafts with filtering and pagination. Read-only.
-//
-// GET /api/v1/suite-wizard/list-suite-wizard-drafts
-func (UnimplementedHandler) ListSuiteWizardDrafts(ctx context.Context, req *ListSuiteWizardDraftsRequest) (r *ListSuiteWizardDraftsResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// ListSuites implements listSuites operation.
-//
-// ListSuites lists suite definitions with filtering and pagination. Read-only.
-//
-// GET /api/v1/suite/list-suites
-func (UnimplementedHandler) ListSuites(ctx context.Context, req *ListSuitesRequest) (r *ListSuitesResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// ListTestPresets implements listTestPresets operation.
-//
-// ListTestPresets lists a tenant's test presets. Read-only.
-//
-// GET /api/v1/test-preset/list-test-presets
-func (UnimplementedHandler) ListTestPresets(ctx context.Context, req *ListTestPresetsRequest) (r *ListTestPresetsResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// ListTestRunFacets implements listTestRunFacets operation.
-//
-// ListTestRunFacets lists distinct values for run-list facet controls.
-// Read-only.
-//
-// GET /api/v1/test-run/list-test-run-facets
-func (UnimplementedHandler) ListTestRunFacets(ctx context.Context, req *ListTestRunFacetsRequest) (r *ListTestRunFacetsResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// ListTestRuns implements listTestRuns operation.
-//
-// ListTestRuns lists runs with filtering and pagination. Read-only.
-//
-// GET /api/v1/test-run/list-test-runs
-func (UnimplementedHandler) ListTestRuns(ctx context.Context, req *ListTestRunsRequest) (r *ListTestRunsResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// ListTestWizardDrafts implements listTestWizardDrafts operation.
-//
-// ListTestWizardDrafts lists drafts with filtering and pagination. Read-only.
-//
-// GET /api/v1/test-wizard/list-test-wizard-drafts
-func (UnimplementedHandler) ListTestWizardDrafts(ctx context.Context, req *ListTestWizardDraftsRequest) (r *ListTestWizardDraftsResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// ListWorkloadPresets implements listWorkloadPresets operation.
-//
-// ListWorkloadPresets lists a tenant's workload presets. Read-only.
-//
-// GET /api/v1/workload-preset/list-workload-presets
-func (UnimplementedHandler) ListWorkloadPresets(ctx context.Context, req *ListWorkloadPresetsRequest) (r *ListWorkloadPresetsResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
 // Login implements login operation.
 //
 // Login authenticates by nickname|email + password and issues a TokenPair.
@@ -1045,43 +677,6 @@ func (UnimplementedHandler) LookupAccountByEmail(ctx context.Context, req *Looku
 //
 // POST /api/v1/iam/mark-registration-request-handled
 func (UnimplementedHandler) MarkRegistrationRequestHandled(ctx context.Context, req *MarkRegistrationRequestHandledRequest, params MarkRegistrationRequestHandledParams) (r *MarkRegistrationRequestHandledResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// PatchSuiteWizard implements patchSuiteWizard operation.
-//
-// PatchSuiteWizard is idempotent: re-submitting the same patch converges.
-//
-// POST /api/v1/suite-wizard/patch-suite-wizard
-func (UnimplementedHandler) PatchSuiteWizard(ctx context.Context, req *PatchSuiteWizardRequest, params PatchSuiteWizardParams) (r *PatchSuiteWizardResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// PatchTestWizard implements patchTestWizard operation.
-//
-// PatchTestWizard is idempotent: re-submitting the same form converges.
-//
-// POST /api/v1/test-wizard/patch-test-wizard
-func (UnimplementedHandler) PatchTestWizard(ctx context.Context, req *PatchTestWizardRequest, params PatchTestWizardParams) (r *PatchTestWizardResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// ProbeCatalog implements probeCatalog operation.
-//
-// ProbeCatalog lists the runnable scripts a stroppy binary embeds (its
-// `probe -o json` catalog). Read-only / no side effects.
-//
-// GET /api/v1/test-wizard/probe-catalog
-func (UnimplementedHandler) ProbeCatalog(ctx context.Context, req *ProbeCatalogRequest) (r *ProbeCatalogResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// ProbeScript implements probeScript operation.
-//
-// ProbeScript introspects a stroppy script. Read-only / no side effects.
-//
-// GET /api/v1/test-wizard/probe-script
-func (UnimplementedHandler) ProbeScript(ctx context.Context, req *ProbeScriptRequest) (r *ProbeScriptResponse, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1199,15 +794,6 @@ func (UnimplementedHandler) SetShareExpiry(ctx context.Context, req *SetShareExp
 	return r, ht.ErrNotImplemented
 }
 
-// SetSuiteSchedule implements setSuiteSchedule operation.
-//
-// SetSuiteSchedule is idempotent: setting the same schedule converges.
-//
-// POST /api/v1/suite/set-suite-schedule
-func (UnimplementedHandler) SetSuiteSchedule(ctx context.Context, req *SetSuiteScheduleRequest, params SetSuiteScheduleParams) (r *SetSuiteScheduleResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
 // SetTenantProviderSettings implements setTenantProviderSettings operation.
 //
 // SetTenantProviderSettings is idempotent: setting the same provider config
@@ -1236,42 +822,6 @@ func (UnimplementedHandler) StartRun(ctx context.Context, req *StartRunRequest) 
 //
 // POST /api/v1/iam/start-sso
 func (UnimplementedHandler) StartSSO(ctx context.Context, req *StartSSORequest) (r *StartSSOResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// StartSuite implements startSuite operation.
-//
-// StartSuite mints a SuiteRunRecord. Not idempotent: each call launches a run.
-//
-// POST /api/v1/suite/start-suite
-func (UnimplementedHandler) StartSuite(ctx context.Context, req *StartSuiteRequest) (r *StartSuiteResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// StartSuiteWizard implements startSuiteWizard operation.
-//
-// StartSuiteWizard opens a new draft. Not idempotent.
-//
-// POST /api/v1/suite-wizard/start-suite-wizard
-func (UnimplementedHandler) StartSuiteWizard(ctx context.Context, req *StartSuiteWizardRequest) (r *StartSuiteWizardResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// StartTestRun implements startTestRun operation.
-//
-// StartTestRun is not idempotent: each call launches a new run.
-//
-// POST /api/v1/test-run/start-test-run
-func (UnimplementedHandler) StartTestRun(ctx context.Context, req *StartTestRunRequest) (r *StartTestRunResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// StartTestWizard implements startTestWizard operation.
-//
-// StartTestWizard opens a new draft. Not idempotent.
-//
-// POST /api/v1/test-wizard/start-test-wizard
-func (UnimplementedHandler) StartTestWizard(ctx context.Context, req *StartTestWizardRequest) (r *StartTestWizardResponse, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1334,16 +884,6 @@ func (UnimplementedHandler) UpdateAccount(ctx context.Context, req *UpdateAccoun
 	return r, ht.ErrNotImplemented
 }
 
-// UpdateDatabasePreset implements updateDatabasePreset operation.
-//
-// UpdateDatabasePreset is idempotent: a wholesale field set converges on retry.
-// System presets (is_system) are read-only and rejected — clone instead.
-//
-// POST /api/v1/database-preset/update-database-preset
-func (UnimplementedHandler) UpdateDatabasePreset(ctx context.Context, req *UpdateDatabasePresetRequest, params UpdateDatabasePresetParams) (r *UpdateDatabasePresetResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
 // UpdateIdentityProvider implements updateIdentityProvider operation.
 //
 // UpdateIdentityProvider edits a provider (a present secret rotates it).
@@ -1369,15 +909,6 @@ func (UnimplementedHandler) UpdateMembership(ctx context.Context, req *UpdateMem
 //
 // POST /api/v1/iam/update-role
 func (UnimplementedHandler) UpdateRole(ctx context.Context, req *UpdateRoleRequest, params UpdateRoleParams) (r *UpdateRoleResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// UpdateSuite implements updateSuite operation.
-//
-// UpdateSuite is idempotent: a wholesale field set converges on retry.
-//
-// POST /api/v1/suite/update-suite
-func (UnimplementedHandler) UpdateSuite(ctx context.Context, req *UpdateSuiteRequest, params UpdateSuiteParams) (r *UpdateSuiteResponse, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -1407,27 +938,6 @@ func (UnimplementedHandler) UpdateTenant(ctx context.Context, req *UpdateTenantR
 //
 // POST /api/v1/tenant-settings/update-tenant-settings
 func (UnimplementedHandler) UpdateTenantSettings(ctx context.Context, req *UpdateTenantSettingsRequest, params UpdateTenantSettingsParams) (r *UpdateTenantSettingsResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// UpdateTestPreset implements updateTestPreset operation.
-//
-// UpdateTestPreset is idempotent: a wholesale field set converges on retry.
-// System presets (is_system) are read-only and rejected — clone instead.
-//
-// POST /api/v1/test-preset/update-test-preset
-func (UnimplementedHandler) UpdateTestPreset(ctx context.Context, req *UpdateTestPresetRequest, params UpdateTestPresetParams) (r *UpdateTestPresetResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// UpdateWorkloadPreset implements updateWorkloadPreset operation.
-//
-// UpdateWorkloadPreset is idempotent: a wholesale field set converges on
-// retry. System presets (is_system) are read-only and rejected — clone
-// instead.
-//
-// POST /api/v1/workload-preset/update-workload-preset
-func (UnimplementedHandler) UpdateWorkloadPreset(ctx context.Context, req *UpdateWorkloadPresetRequest, params UpdateWorkloadPresetParams) (r *UpdateWorkloadPresetResponse, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

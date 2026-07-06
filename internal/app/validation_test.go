@@ -17,12 +17,12 @@ func TestRequestValidationRejectsInvalidUnaryBeforeHandler(t *testing.T) {
 	called := false
 	next := func(context.Context, connect.AnyRequest) (connect.AnyResponse, error) {
 		called = true
-		return connect.NewResponse(&api.GetTestRunResponse{}), nil
+		return connect.NewResponse(&api.GetRecipeResponse{}), nil
 	}
 
 	_, err := (requestValidationInterceptor{}).WrapUnary(next)(
 		context.Background(),
-		connect.NewRequest(&api.GetTestRunRequest{}),
+		connect.NewRequest(&api.GetRecipeRequest{}),
 	)
 	if status.Code(err) != codes.InvalidArgument {
 		t.Fatalf("code = %s, want %s (err %v)", status.Code(err), codes.InvalidArgument, err)
@@ -36,13 +36,13 @@ func TestRequestValidationRejectsInvalidStreamingMessage(t *testing.T) {
 	called := false
 	next := func(ctx context.Context, conn connect.StreamingHandlerConn) error {
 		called = true
-		var req api.GetTestRunRequest
+		var req api.GetRecipeRequest
 		return conn.Receive(&req)
 	}
 
 	err := (requestValidationInterceptor{}).WrapStreamingHandler(next)(
 		context.Background(),
-		&fakeStreamingConn{msg: &api.GetTestRunRequest{}},
+		&fakeStreamingConn{msg: &api.GetRecipeRequest{}},
 	)
 	if status.Code(err) != codes.InvalidArgument {
 		t.Fatalf("code = %s, want %s (err %v)", status.Code(err), codes.InvalidArgument, err)

@@ -177,13 +177,13 @@ func (s *AddFavoriteResponse) SetFavorite(val FavoriteRecord) {
 type AgentStep struct {
 	CallCmd   OptCmd             `json:"callCmd"`
 	CreateDir OptDir             `json:"createDir"`
-	FetchFile OptFile2           `json:"fetchFile"`
+	FetchFile OptFile            `json:"fetchFile"`
 	ID        OptString          `json:"id"`
 	Labels    OptAgentStepLabels `json:"labels"`
 	Order     OptInt32           `json:"order"`
 	Status    OptAgentStepStatus `json:"status"`
 	Tags      OptTags            `json:"tags"`
-	WriteFile OptFile2           `json:"writeFile"`
+	WriteFile OptFile            `json:"writeFile"`
 }
 
 // GetCallCmd returns the value of CallCmd.
@@ -197,7 +197,7 @@ func (s *AgentStep) GetCreateDir() OptDir {
 }
 
 // GetFetchFile returns the value of FetchFile.
-func (s *AgentStep) GetFetchFile() OptFile2 {
+func (s *AgentStep) GetFetchFile() OptFile {
 	return s.FetchFile
 }
 
@@ -227,7 +227,7 @@ func (s *AgentStep) GetTags() OptTags {
 }
 
 // GetWriteFile returns the value of WriteFile.
-func (s *AgentStep) GetWriteFile() OptFile2 {
+func (s *AgentStep) GetWriteFile() OptFile {
 	return s.WriteFile
 }
 
@@ -242,7 +242,7 @@ func (s *AgentStep) SetCreateDir(val OptDir) {
 }
 
 // SetFetchFile sets the value of FetchFile.
-func (s *AgentStep) SetFetchFile(val OptFile2) {
+func (s *AgentStep) SetFetchFile(val OptFile) {
 	s.FetchFile = val
 }
 
@@ -272,7 +272,7 @@ func (s *AgentStep) SetTags(val OptTags) {
 }
 
 // SetWriteFile sets the value of WriteFile.
-func (s *AgentStep) SetWriteFile(val OptFile2) {
+func (s *AgentStep) SetWriteFile(val OptFile) {
 	s.WriteFile = val
 }
 
@@ -610,88 +610,6 @@ func (s *CancelRunRequest) SetTenantId(val OptString) {
 // Ref: #/components/schemas/CancelRunResponse
 type CancelRunResponse struct{}
 
-// Ref: #/components/schemas/CancelSuiteRunRequest
-type CancelSuiteRunRequest struct {
-	ID       OptString `json:"id"`
-	TenantId OptString `json:"tenantId"`
-}
-
-// GetID returns the value of ID.
-func (s *CancelSuiteRunRequest) GetID() OptString {
-	return s.ID
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *CancelSuiteRunRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetID sets the value of ID.
-func (s *CancelSuiteRunRequest) SetID(val OptString) {
-	s.ID = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *CancelSuiteRunRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/CancelSuiteRunResponse
-type CancelSuiteRunResponse struct {
-	SuiteRun SuiteRunRecord `json:"suiteRun"`
-}
-
-// GetSuiteRun returns the value of SuiteRun.
-func (s *CancelSuiteRunResponse) GetSuiteRun() SuiteRunRecord {
-	return s.SuiteRun
-}
-
-// SetSuiteRun sets the value of SuiteRun.
-func (s *CancelSuiteRunResponse) SetSuiteRun(val SuiteRunRecord) {
-	s.SuiteRun = val
-}
-
-// Ref: #/components/schemas/CancelTestRunRequest
-type CancelTestRunRequest struct {
-	ID       OptString `json:"id"`
-	TenantId OptString `json:"tenantId"`
-}
-
-// GetID returns the value of ID.
-func (s *CancelTestRunRequest) GetID() OptString {
-	return s.ID
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *CancelTestRunRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetID sets the value of ID.
-func (s *CancelTestRunRequest) SetID(val OptString) {
-	s.ID = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *CancelTestRunRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/CancelTestRunResponse
-type CancelTestRunResponse struct {
-	Run TestRunRecord `json:"run"`
-}
-
-// GetRun returns the value of Run.
-func (s *CancelTestRunResponse) GetRun() TestRunRecord {
-	return s.Run
-}
-
-// SetRun sets the value of Run.
-func (s *CancelTestRunResponse) SetRun(val TestRunRecord) {
-	s.Run = val
-}
-
 // Ref: #/components/schemas/CatalogEntry
 type CatalogEntry struct {
 	Label      OptString  `json:"label"`
@@ -716,109 +634,6 @@ func (s *CatalogEntry) SetLabel(val OptString) {
 // SetPermission sets the value of Permission.
 func (s *CatalogEntry) SetPermission(val Permission) {
 	s.Permission = val
-}
-
-// Ref: #/components/schemas/Cell
-type Cell struct {
-	Compatible         OptBool               `json:"compatible"`
-	Database           OptDatabase           `json:"database"`
-	Errors             []FieldError          `json:"errors"`
-	InfrastructurePlan OptInfrastructurePlan `json:"infrastructurePlan"`
-	Ready              OptBool               `json:"ready"`
-	RenderPreview      OptRenderPreview      `json:"renderPreview"`
-	Spec               SuiteCell             `json:"spec"`
-	TopologySpec       OptTopologySpec       `json:"topologySpec"`
-	Workload           OptWorkload           `json:"workload"`
-}
-
-// GetCompatible returns the value of Compatible.
-func (s *Cell) GetCompatible() OptBool {
-	return s.Compatible
-}
-
-// GetDatabase returns the value of Database.
-func (s *Cell) GetDatabase() OptDatabase {
-	return s.Database
-}
-
-// GetErrors returns the value of Errors.
-func (s *Cell) GetErrors() []FieldError {
-	return s.Errors
-}
-
-// GetInfrastructurePlan returns the value of InfrastructurePlan.
-func (s *Cell) GetInfrastructurePlan() OptInfrastructurePlan {
-	return s.InfrastructurePlan
-}
-
-// GetReady returns the value of Ready.
-func (s *Cell) GetReady() OptBool {
-	return s.Ready
-}
-
-// GetRenderPreview returns the value of RenderPreview.
-func (s *Cell) GetRenderPreview() OptRenderPreview {
-	return s.RenderPreview
-}
-
-// GetSpec returns the value of Spec.
-func (s *Cell) GetSpec() SuiteCell {
-	return s.Spec
-}
-
-// GetTopologySpec returns the value of TopologySpec.
-func (s *Cell) GetTopologySpec() OptTopologySpec {
-	return s.TopologySpec
-}
-
-// GetWorkload returns the value of Workload.
-func (s *Cell) GetWorkload() OptWorkload {
-	return s.Workload
-}
-
-// SetCompatible sets the value of Compatible.
-func (s *Cell) SetCompatible(val OptBool) {
-	s.Compatible = val
-}
-
-// SetDatabase sets the value of Database.
-func (s *Cell) SetDatabase(val OptDatabase) {
-	s.Database = val
-}
-
-// SetErrors sets the value of Errors.
-func (s *Cell) SetErrors(val []FieldError) {
-	s.Errors = val
-}
-
-// SetInfrastructurePlan sets the value of InfrastructurePlan.
-func (s *Cell) SetInfrastructurePlan(val OptInfrastructurePlan) {
-	s.InfrastructurePlan = val
-}
-
-// SetReady sets the value of Ready.
-func (s *Cell) SetReady(val OptBool) {
-	s.Ready = val
-}
-
-// SetRenderPreview sets the value of RenderPreview.
-func (s *Cell) SetRenderPreview(val OptRenderPreview) {
-	s.RenderPreview = val
-}
-
-// SetSpec sets the value of Spec.
-func (s *Cell) SetSpec(val SuiteCell) {
-	s.Spec = val
-}
-
-// SetTopologySpec sets the value of TopologySpec.
-func (s *Cell) SetTopologySpec(val OptTopologySpec) {
-	s.TopologySpec = val
-}
-
-// SetWorkload sets the value of Workload.
-func (s *Cell) SetWorkload(val OptWorkload) {
-	s.Workload = val
 }
 
 // Ref: #/components/schemas/ChangePasswordRequest
@@ -889,297 +704,6 @@ func (s *CheckRecipeResponse) GetDiagnostics() []Diagnostic {
 // SetDiagnostics sets the value of Diagnostics.
 func (s *CheckRecipeResponse) SetDiagnostics(val []Diagnostic) {
 	s.Diagnostics = val
-}
-
-// Ref: #/components/schemas/ChildRun
-type ChildRun struct {
-	Name        OptString         `json:"name"`
-	Status      OptChildRunStatus `json:"status"`
-	SuiteCellId OptString         `json:"suiteCellId"`
-	TestRunId   OptString         `json:"testRunId"`
-}
-
-// GetName returns the value of Name.
-func (s *ChildRun) GetName() OptString {
-	return s.Name
-}
-
-// GetStatus returns the value of Status.
-func (s *ChildRun) GetStatus() OptChildRunStatus {
-	return s.Status
-}
-
-// GetSuiteCellId returns the value of SuiteCellId.
-func (s *ChildRun) GetSuiteCellId() OptString {
-	return s.SuiteCellId
-}
-
-// GetTestRunId returns the value of TestRunId.
-func (s *ChildRun) GetTestRunId() OptString {
-	return s.TestRunId
-}
-
-// SetName sets the value of Name.
-func (s *ChildRun) SetName(val OptString) {
-	s.Name = val
-}
-
-// SetStatus sets the value of Status.
-func (s *ChildRun) SetStatus(val OptChildRunStatus) {
-	s.Status = val
-}
-
-// SetSuiteCellId sets the value of SuiteCellId.
-func (s *ChildRun) SetSuiteCellId(val OptString) {
-	s.SuiteCellId = val
-}
-
-// SetTestRunId sets the value of TestRunId.
-func (s *ChildRun) SetTestRunId(val OptString) {
-	s.TestRunId = val
-}
-
-type ChildRunStatus int32
-
-const (
-	ChildRunStatus0  ChildRunStatus = 0
-	ChildRunStatus1  ChildRunStatus = 1
-	ChildRunStatus2  ChildRunStatus = 2
-	ChildRunStatus5  ChildRunStatus = 5
-	ChildRunStatus3  ChildRunStatus = 3
-	ChildRunStatus4  ChildRunStatus = 4
-	ChildRunStatus6  ChildRunStatus = 6
-	ChildRunStatus7  ChildRunStatus = 7
-	ChildRunStatus8  ChildRunStatus = 8
-	ChildRunStatus9  ChildRunStatus = 9
-	ChildRunStatus10 ChildRunStatus = 10
-	ChildRunStatus11 ChildRunStatus = 11
-)
-
-// AllValues returns all ChildRunStatus values.
-func (ChildRunStatus) AllValues() []ChildRunStatus {
-	return []ChildRunStatus{
-		ChildRunStatus0,
-		ChildRunStatus1,
-		ChildRunStatus2,
-		ChildRunStatus5,
-		ChildRunStatus3,
-		ChildRunStatus4,
-		ChildRunStatus6,
-		ChildRunStatus7,
-		ChildRunStatus8,
-		ChildRunStatus9,
-		ChildRunStatus10,
-		ChildRunStatus11,
-	}
-}
-
-// Ref: #/components/schemas/CloneDatabasePresetRequest
-type CloneDatabasePresetRequest struct {
-	ID       OptString `json:"id"`
-	Name     OptString `json:"name"`
-	TenantId OptString `json:"tenantId"`
-}
-
-// GetID returns the value of ID.
-func (s *CloneDatabasePresetRequest) GetID() OptString {
-	return s.ID
-}
-
-// GetName returns the value of Name.
-func (s *CloneDatabasePresetRequest) GetName() OptString {
-	return s.Name
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *CloneDatabasePresetRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetID sets the value of ID.
-func (s *CloneDatabasePresetRequest) SetID(val OptString) {
-	s.ID = val
-}
-
-// SetName sets the value of Name.
-func (s *CloneDatabasePresetRequest) SetName(val OptString) {
-	s.Name = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *CloneDatabasePresetRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/CloneDatabasePresetResponse
-type CloneDatabasePresetResponse struct {
-	Preset DatabasePresetRecord `json:"preset"`
-}
-
-// GetPreset returns the value of Preset.
-func (s *CloneDatabasePresetResponse) GetPreset() DatabasePresetRecord {
-	return s.Preset
-}
-
-// SetPreset sets the value of Preset.
-func (s *CloneDatabasePresetResponse) SetPreset(val DatabasePresetRecord) {
-	s.Preset = val
-}
-
-// Ref: #/components/schemas/CloneSuiteRequest
-type CloneSuiteRequest struct {
-	ID       OptString `json:"id"`
-	Name     OptString `json:"name"`
-	TenantId OptString `json:"tenantId"`
-}
-
-// GetID returns the value of ID.
-func (s *CloneSuiteRequest) GetID() OptString {
-	return s.ID
-}
-
-// GetName returns the value of Name.
-func (s *CloneSuiteRequest) GetName() OptString {
-	return s.Name
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *CloneSuiteRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetID sets the value of ID.
-func (s *CloneSuiteRequest) SetID(val OptString) {
-	s.ID = val
-}
-
-// SetName sets the value of Name.
-func (s *CloneSuiteRequest) SetName(val OptString) {
-	s.Name = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *CloneSuiteRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/CloneSuiteResponse
-type CloneSuiteResponse struct {
-	Suite SuiteRecord `json:"suite"`
-}
-
-// GetSuite returns the value of Suite.
-func (s *CloneSuiteResponse) GetSuite() SuiteRecord {
-	return s.Suite
-}
-
-// SetSuite sets the value of Suite.
-func (s *CloneSuiteResponse) SetSuite(val SuiteRecord) {
-	s.Suite = val
-}
-
-// Ref: #/components/schemas/CloneTestPresetRequest
-type CloneTestPresetRequest struct {
-	ID       OptString `json:"id"`
-	Name     OptString `json:"name"`
-	TenantId OptString `json:"tenantId"`
-}
-
-// GetID returns the value of ID.
-func (s *CloneTestPresetRequest) GetID() OptString {
-	return s.ID
-}
-
-// GetName returns the value of Name.
-func (s *CloneTestPresetRequest) GetName() OptString {
-	return s.Name
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *CloneTestPresetRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetID sets the value of ID.
-func (s *CloneTestPresetRequest) SetID(val OptString) {
-	s.ID = val
-}
-
-// SetName sets the value of Name.
-func (s *CloneTestPresetRequest) SetName(val OptString) {
-	s.Name = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *CloneTestPresetRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/CloneTestPresetResponse
-type CloneTestPresetResponse struct {
-	Preset TestPresetRecord `json:"preset"`
-}
-
-// GetPreset returns the value of Preset.
-func (s *CloneTestPresetResponse) GetPreset() TestPresetRecord {
-	return s.Preset
-}
-
-// SetPreset sets the value of Preset.
-func (s *CloneTestPresetResponse) SetPreset(val TestPresetRecord) {
-	s.Preset = val
-}
-
-// Ref: #/components/schemas/CloneWorkloadPresetRequest
-type CloneWorkloadPresetRequest struct {
-	ID       OptString `json:"id"`
-	Name     OptString `json:"name"`
-	TenantId OptString `json:"tenantId"`
-}
-
-// GetID returns the value of ID.
-func (s *CloneWorkloadPresetRequest) GetID() OptString {
-	return s.ID
-}
-
-// GetName returns the value of Name.
-func (s *CloneWorkloadPresetRequest) GetName() OptString {
-	return s.Name
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *CloneWorkloadPresetRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetID sets the value of ID.
-func (s *CloneWorkloadPresetRequest) SetID(val OptString) {
-	s.ID = val
-}
-
-// SetName sets the value of Name.
-func (s *CloneWorkloadPresetRequest) SetName(val OptString) {
-	s.Name = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *CloneWorkloadPresetRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/CloneWorkloadPresetResponse
-type CloneWorkloadPresetResponse struct {
-	Preset WorkloadPresetRecord `json:"preset"`
-}
-
-// GetPreset returns the value of Preset.
-func (s *CloneWorkloadPresetResponse) GetPreset() WorkloadPresetRecord {
-	return s.Preset
-}
-
-// SetPreset sets the value of Preset.
-func (s *CloneWorkloadPresetResponse) SetPreset(val WorkloadPresetRecord) {
-	s.Preset = val
 }
 
 // Ref: #/components/schemas/Cmd
@@ -1712,65 +1236,6 @@ func (s *ComponentLabels) init() ComponentLabels {
 	return m
 }
 
-// Ref: #/components/schemas/ComponentRender
-type ComponentRender struct {
-	ArtifactIds []string                 `json:"artifactIds"`
-	ComponentId OptString                `json:"componentId"`
-	Labels      OptComponentRenderLabels `json:"labels"`
-	NodeId      OptString                `json:"nodeId"`
-}
-
-// GetArtifactIds returns the value of ArtifactIds.
-func (s *ComponentRender) GetArtifactIds() []string {
-	return s.ArtifactIds
-}
-
-// GetComponentId returns the value of ComponentId.
-func (s *ComponentRender) GetComponentId() OptString {
-	return s.ComponentId
-}
-
-// GetLabels returns the value of Labels.
-func (s *ComponentRender) GetLabels() OptComponentRenderLabels {
-	return s.Labels
-}
-
-// GetNodeId returns the value of NodeId.
-func (s *ComponentRender) GetNodeId() OptString {
-	return s.NodeId
-}
-
-// SetArtifactIds sets the value of ArtifactIds.
-func (s *ComponentRender) SetArtifactIds(val []string) {
-	s.ArtifactIds = val
-}
-
-// SetComponentId sets the value of ComponentId.
-func (s *ComponentRender) SetComponentId(val OptString) {
-	s.ComponentId = val
-}
-
-// SetLabels sets the value of Labels.
-func (s *ComponentRender) SetLabels(val OptComponentRenderLabels) {
-	s.Labels = val
-}
-
-// SetNodeId sets the value of NodeId.
-func (s *ComponentRender) SetNodeId(val OptString) {
-	s.NodeId = val
-}
-
-type ComponentRenderLabels map[string]string
-
-func (s *ComponentRenderLabels) init() ComponentRenderLabels {
-	m := *s
-	if m == nil {
-		m = map[string]string{}
-		*s = m
-	}
-	return m
-}
-
 // Ref: #/components/schemas/Computed
 type Computed struct {
 	Expr   OptString         `json:"expr"`
@@ -2042,7 +1507,7 @@ type Container struct {
 	Entrypoint    []string                  `json:"entrypoint"`
 	Env           OptContainerEnv           `json:"env"`
 	FallbackImage OptString                 `json:"fallbackImage"`
-	Files         []File                    `json:"files"`
+	Files         []File2                   `json:"files"`
 	Healthcheck   OptHealthcheck            `json:"healthcheck"`
 	Hostname      OptString                 `json:"hostname"`
 	Image         OptString                 `json:"image"`
@@ -2091,7 +1556,7 @@ func (s *Container) GetFallbackImage() OptString {
 }
 
 // GetFiles returns the value of Files.
-func (s *Container) GetFiles() []File {
+func (s *Container) GetFiles() []File2 {
 	return s.Files
 }
 
@@ -2181,7 +1646,7 @@ func (s *Container) SetFallbackImage(val OptString) {
 }
 
 // SetFiles sets the value of Files.
-func (s *Container) SetFiles(val []File) {
+func (s *Container) SetFiles(val []File2) {
 	s.Files = val
 }
 
@@ -2542,47 +2007,6 @@ func (s *CreateApiTokenResponse) SetSecret(val OptString) {
 // SetToken sets the value of Token.
 func (s *CreateApiTokenResponse) SetToken(val ApiToken) {
 	s.Token = val
-}
-
-// Ref: #/components/schemas/CreateDatabasePresetRequest
-type CreateDatabasePresetRequest struct {
-	Preset   DatabasePresetRecord `json:"preset"`
-	TenantId OptString            `json:"tenantId"`
-}
-
-// GetPreset returns the value of Preset.
-func (s *CreateDatabasePresetRequest) GetPreset() DatabasePresetRecord {
-	return s.Preset
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *CreateDatabasePresetRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetPreset sets the value of Preset.
-func (s *CreateDatabasePresetRequest) SetPreset(val DatabasePresetRecord) {
-	s.Preset = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *CreateDatabasePresetRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/CreateDatabasePresetResponse
-type CreateDatabasePresetResponse struct {
-	Preset DatabasePresetRecord `json:"preset"`
-}
-
-// GetPreset returns the value of Preset.
-func (s *CreateDatabasePresetResponse) GetPreset() DatabasePresetRecord {
-	return s.Preset
-}
-
-// SetPreset sets the value of Preset.
-func (s *CreateDatabasePresetResponse) SetPreset(val DatabasePresetRecord) {
-	s.Preset = val
 }
 
 // Ref: #/components/schemas/CreateIdentityProviderRequest
@@ -3105,47 +2529,6 @@ func (s *CreateShareResponse) SetShare(val ShareRecord) {
 	s.Share = val
 }
 
-// Ref: #/components/schemas/CreateSuiteRequest
-type CreateSuiteRequest struct {
-	Suite    SuiteRecord `json:"suite"`
-	TenantId OptString   `json:"tenantId"`
-}
-
-// GetSuite returns the value of Suite.
-func (s *CreateSuiteRequest) GetSuite() SuiteRecord {
-	return s.Suite
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *CreateSuiteRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetSuite sets the value of Suite.
-func (s *CreateSuiteRequest) SetSuite(val SuiteRecord) {
-	s.Suite = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *CreateSuiteRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/CreateSuiteResponse
-type CreateSuiteResponse struct {
-	Suite SuiteRecord `json:"suite"`
-}
-
-// GetSuite returns the value of Suite.
-func (s *CreateSuiteResponse) GetSuite() SuiteRecord {
-	return s.Suite
-}
-
-// SetSuite sets the value of Suite.
-func (s *CreateSuiteResponse) SetSuite(val SuiteRecord) {
-	s.Suite = val
-}
-
 // Ref: #/components/schemas/CreateTenantRequest
 type CreateTenantRequest struct {
 	Name OptString `json:"name"`
@@ -3185,88 +2568,6 @@ func (s *CreateTenantResponse) GetTenant() Tenant {
 // SetTenant sets the value of Tenant.
 func (s *CreateTenantResponse) SetTenant(val Tenant) {
 	s.Tenant = val
-}
-
-// Ref: #/components/schemas/CreateTestPresetRequest
-type CreateTestPresetRequest struct {
-	Preset   TestPresetRecord `json:"preset"`
-	TenantId OptString        `json:"tenantId"`
-}
-
-// GetPreset returns the value of Preset.
-func (s *CreateTestPresetRequest) GetPreset() TestPresetRecord {
-	return s.Preset
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *CreateTestPresetRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetPreset sets the value of Preset.
-func (s *CreateTestPresetRequest) SetPreset(val TestPresetRecord) {
-	s.Preset = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *CreateTestPresetRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/CreateTestPresetResponse
-type CreateTestPresetResponse struct {
-	Preset TestPresetRecord `json:"preset"`
-}
-
-// GetPreset returns the value of Preset.
-func (s *CreateTestPresetResponse) GetPreset() TestPresetRecord {
-	return s.Preset
-}
-
-// SetPreset sets the value of Preset.
-func (s *CreateTestPresetResponse) SetPreset(val TestPresetRecord) {
-	s.Preset = val
-}
-
-// Ref: #/components/schemas/CreateWorkloadPresetRequest
-type CreateWorkloadPresetRequest struct {
-	Preset   WorkloadPresetRecord `json:"preset"`
-	TenantId OptString            `json:"tenantId"`
-}
-
-// GetPreset returns the value of Preset.
-func (s *CreateWorkloadPresetRequest) GetPreset() WorkloadPresetRecord {
-	return s.Preset
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *CreateWorkloadPresetRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetPreset sets the value of Preset.
-func (s *CreateWorkloadPresetRequest) SetPreset(val WorkloadPresetRecord) {
-	s.Preset = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *CreateWorkloadPresetRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/CreateWorkloadPresetResponse
-type CreateWorkloadPresetResponse struct {
-	Preset WorkloadPresetRecord `json:"preset"`
-}
-
-// GetPreset returns the value of Preset.
-func (s *CreateWorkloadPresetResponse) GetPreset() WorkloadPresetRecord {
-	return s.Preset
-}
-
-// SetPreset sets the value of Preset.
-func (s *CreateWorkloadPresetResponse) SetPreset(val WorkloadPresetRecord) {
-	s.Preset = val
 }
 
 // Ref: #/components/schemas/Database
@@ -3508,54 +2809,6 @@ func (s *DatabaseParams) SetYdbManaged(val OptYdbManagedParams) {
 	s.YdbManaged = val
 }
 
-// Ref: #/components/schemas/DatabasePresetRecord
-type DatabasePresetRecord struct {
-	Database Database   `json:"database"`
-	Entity   Entity     `json:"entity"`
-	IsSystem OptBool    `json:"isSystem"`
-	Summary  OptSummary `json:"summary"`
-}
-
-// GetDatabase returns the value of Database.
-func (s *DatabasePresetRecord) GetDatabase() Database {
-	return s.Database
-}
-
-// GetEntity returns the value of Entity.
-func (s *DatabasePresetRecord) GetEntity() Entity {
-	return s.Entity
-}
-
-// GetIsSystem returns the value of IsSystem.
-func (s *DatabasePresetRecord) GetIsSystem() OptBool {
-	return s.IsSystem
-}
-
-// GetSummary returns the value of Summary.
-func (s *DatabasePresetRecord) GetSummary() OptSummary {
-	return s.Summary
-}
-
-// SetDatabase sets the value of Database.
-func (s *DatabasePresetRecord) SetDatabase(val Database) {
-	s.Database = val
-}
-
-// SetEntity sets the value of Entity.
-func (s *DatabasePresetRecord) SetEntity(val Entity) {
-	s.Entity = val
-}
-
-// SetIsSystem sets the value of IsSystem.
-func (s *DatabasePresetRecord) SetIsSystem(val OptBool) {
-	s.IsSystem = val
-}
-
-// SetSummary sets the value of Summary.
-func (s *DatabasePresetRecord) SetSummary(val OptSummary) {
-	s.Summary = val
-}
-
 // Ref: #/components/schemas/DeleteAccountRequest
 type DeleteAccountRequest struct {
 	ID OptString `json:"id"`
@@ -3573,35 +2826,6 @@ func (s *DeleteAccountRequest) SetID(val OptString) {
 
 // Ref: #/components/schemas/DeleteAccountResponse
 type DeleteAccountResponse struct{}
-
-// Ref: #/components/schemas/DeleteDatabasePresetRequest
-type DeleteDatabasePresetRequest struct {
-	ID       OptString `json:"id"`
-	TenantId OptString `json:"tenantId"`
-}
-
-// GetID returns the value of ID.
-func (s *DeleteDatabasePresetRequest) GetID() OptString {
-	return s.ID
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *DeleteDatabasePresetRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetID sets the value of ID.
-func (s *DeleteDatabasePresetRequest) SetID(val OptString) {
-	s.ID = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *DeleteDatabasePresetRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/DeleteDatabasePresetResponse
-type DeleteDatabasePresetResponse struct{}
 
 // Ref: #/components/schemas/DeleteIdentityProviderRequest
 type DeleteIdentityProviderRequest struct {
@@ -3773,93 +2997,6 @@ func (s *DeleteShareRequest) SetTenantId(val OptString) {
 // Ref: #/components/schemas/DeleteShareResponse
 type DeleteShareResponse struct{}
 
-// Ref: #/components/schemas/DeleteSuiteRequest
-type DeleteSuiteRequest struct {
-	ID       OptString `json:"id"`
-	TenantId OptString `json:"tenantId"`
-}
-
-// GetID returns the value of ID.
-func (s *DeleteSuiteRequest) GetID() OptString {
-	return s.ID
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *DeleteSuiteRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetID sets the value of ID.
-func (s *DeleteSuiteRequest) SetID(val OptString) {
-	s.ID = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *DeleteSuiteRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/DeleteSuiteResponse
-type DeleteSuiteResponse struct{}
-
-// Ref: #/components/schemas/DeleteSuiteRunRequest
-type DeleteSuiteRunRequest struct {
-	ID       OptString `json:"id"`
-	TenantId OptString `json:"tenantId"`
-}
-
-// GetID returns the value of ID.
-func (s *DeleteSuiteRunRequest) GetID() OptString {
-	return s.ID
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *DeleteSuiteRunRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetID sets the value of ID.
-func (s *DeleteSuiteRunRequest) SetID(val OptString) {
-	s.ID = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *DeleteSuiteRunRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/DeleteSuiteRunResponse
-type DeleteSuiteRunResponse struct{}
-
-// Ref: #/components/schemas/DeleteSuiteWizardDraftRequest
-type DeleteSuiteWizardDraftRequest struct {
-	DraftId  OptString `json:"draftId"`
-	TenantId OptString `json:"tenantId"`
-}
-
-// GetDraftId returns the value of DraftId.
-func (s *DeleteSuiteWizardDraftRequest) GetDraftId() OptString {
-	return s.DraftId
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *DeleteSuiteWizardDraftRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetDraftId sets the value of DraftId.
-func (s *DeleteSuiteWizardDraftRequest) SetDraftId(val OptString) {
-	s.DraftId = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *DeleteSuiteWizardDraftRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/DeleteSuiteWizardDraftResponse
-type DeleteSuiteWizardDraftResponse struct{}
-
 // Ref: #/components/schemas/DeleteTenantRequest
 type DeleteTenantRequest struct {
 	ID OptString `json:"id"`
@@ -3877,122 +3014,6 @@ func (s *DeleteTenantRequest) SetID(val OptString) {
 
 // Ref: #/components/schemas/DeleteTenantResponse
 type DeleteTenantResponse struct{}
-
-// Ref: #/components/schemas/DeleteTestPresetRequest
-type DeleteTestPresetRequest struct {
-	ID       OptString `json:"id"`
-	TenantId OptString `json:"tenantId"`
-}
-
-// GetID returns the value of ID.
-func (s *DeleteTestPresetRequest) GetID() OptString {
-	return s.ID
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *DeleteTestPresetRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetID sets the value of ID.
-func (s *DeleteTestPresetRequest) SetID(val OptString) {
-	s.ID = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *DeleteTestPresetRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/DeleteTestPresetResponse
-type DeleteTestPresetResponse struct{}
-
-// Ref: #/components/schemas/DeleteTestRunRequest
-type DeleteTestRunRequest struct {
-	ID       OptString `json:"id"`
-	TenantId OptString `json:"tenantId"`
-}
-
-// GetID returns the value of ID.
-func (s *DeleteTestRunRequest) GetID() OptString {
-	return s.ID
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *DeleteTestRunRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetID sets the value of ID.
-func (s *DeleteTestRunRequest) SetID(val OptString) {
-	s.ID = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *DeleteTestRunRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/DeleteTestRunResponse
-type DeleteTestRunResponse struct{}
-
-// Ref: #/components/schemas/DeleteTestWizardDraftRequest
-type DeleteTestWizardDraftRequest struct {
-	DraftId  OptString `json:"draftId"`
-	TenantId OptString `json:"tenantId"`
-}
-
-// GetDraftId returns the value of DraftId.
-func (s *DeleteTestWizardDraftRequest) GetDraftId() OptString {
-	return s.DraftId
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *DeleteTestWizardDraftRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetDraftId sets the value of DraftId.
-func (s *DeleteTestWizardDraftRequest) SetDraftId(val OptString) {
-	s.DraftId = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *DeleteTestWizardDraftRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/DeleteTestWizardDraftResponse
-type DeleteTestWizardDraftResponse struct{}
-
-// Ref: #/components/schemas/DeleteWorkloadPresetRequest
-type DeleteWorkloadPresetRequest struct {
-	ID       OptString `json:"id"`
-	TenantId OptString `json:"tenantId"`
-}
-
-// GetID returns the value of ID.
-func (s *DeleteWorkloadPresetRequest) GetID() OptString {
-	return s.ID
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *DeleteWorkloadPresetRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetID sets the value of ID.
-func (s *DeleteWorkloadPresetRequest) SetID(val OptString) {
-	s.ID = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *DeleteWorkloadPresetRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/DeleteWorkloadPresetResponse
-type DeleteWorkloadPresetResponse struct{}
 
 // Ref: #/components/schemas/DeploymentPlan
 type DeploymentPlan struct {
@@ -5104,58 +4125,6 @@ func (s *ExternalIdentityLink) SetSubject(val OptString) {
 	s.Subject = val
 }
 
-// Ref: #/components/schemas/ExtractToPresetRequest
-type ExtractToPresetRequest struct {
-	ID       OptString `json:"id"`
-	Name     OptString `json:"name"`
-	TenantId OptString `json:"tenantId"`
-}
-
-// GetID returns the value of ID.
-func (s *ExtractToPresetRequest) GetID() OptString {
-	return s.ID
-}
-
-// GetName returns the value of Name.
-func (s *ExtractToPresetRequest) GetName() OptString {
-	return s.Name
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *ExtractToPresetRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetID sets the value of ID.
-func (s *ExtractToPresetRequest) SetID(val OptString) {
-	s.ID = val
-}
-
-// SetName sets the value of Name.
-func (s *ExtractToPresetRequest) SetName(val OptString) {
-	s.Name = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *ExtractToPresetRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/ExtractToPresetResponse
-type ExtractToPresetResponse struct {
-	Preset TestPresetRecord `json:"preset"`
-}
-
-// GetPreset returns the value of Preset.
-func (s *ExtractToPresetResponse) GetPreset() TestPresetRecord {
-	return s.Preset
-}
-
-// SetPreset sets the value of Preset.
-func (s *ExtractToPresetResponse) SetPreset(val TestPresetRecord) {
-	s.Preset = val
-}
-
 // Ref: #/components/schemas/FavoriteRecord
 type FavoriteRecord struct {
 	Entity   Entity                `json:"entity"`
@@ -5216,143 +4185,8 @@ func (FavoriteRecordKind) AllValues() []FavoriteRecordKind {
 	}
 }
 
-// Ref: #/components/schemas/FieldError
-type FieldError struct {
-	Code     OptString             `json:"code"`
-	Field    OptString             `json:"field"`
-	Message  OptString             `json:"message"`
-	Params   OptFieldErrorParams   `json:"params"`
-	RuleId   OptString             `json:"ruleId"`
-	Severity OptFieldErrorSeverity `json:"severity"`
-}
-
-// GetCode returns the value of Code.
-func (s *FieldError) GetCode() OptString {
-	return s.Code
-}
-
-// GetField returns the value of Field.
-func (s *FieldError) GetField() OptString {
-	return s.Field
-}
-
-// GetMessage returns the value of Message.
-func (s *FieldError) GetMessage() OptString {
-	return s.Message
-}
-
-// GetParams returns the value of Params.
-func (s *FieldError) GetParams() OptFieldErrorParams {
-	return s.Params
-}
-
-// GetRuleId returns the value of RuleId.
-func (s *FieldError) GetRuleId() OptString {
-	return s.RuleId
-}
-
-// GetSeverity returns the value of Severity.
-func (s *FieldError) GetSeverity() OptFieldErrorSeverity {
-	return s.Severity
-}
-
-// SetCode sets the value of Code.
-func (s *FieldError) SetCode(val OptString) {
-	s.Code = val
-}
-
-// SetField sets the value of Field.
-func (s *FieldError) SetField(val OptString) {
-	s.Field = val
-}
-
-// SetMessage sets the value of Message.
-func (s *FieldError) SetMessage(val OptString) {
-	s.Message = val
-}
-
-// SetParams sets the value of Params.
-func (s *FieldError) SetParams(val OptFieldErrorParams) {
-	s.Params = val
-}
-
-// SetRuleId sets the value of RuleId.
-func (s *FieldError) SetRuleId(val OptString) {
-	s.RuleId = val
-}
-
-// SetSeverity sets the value of Severity.
-func (s *FieldError) SetSeverity(val OptFieldErrorSeverity) {
-	s.Severity = val
-}
-
-type FieldErrorParams map[string]string
-
-func (s *FieldErrorParams) init() FieldErrorParams {
-	m := *s
-	if m == nil {
-		m = map[string]string{}
-		*s = m
-	}
-	return m
-}
-
-type FieldErrorSeverity int32
-
-const (
-	FieldErrorSeverity0 FieldErrorSeverity = 0
-	FieldErrorSeverity1 FieldErrorSeverity = 1
-	FieldErrorSeverity2 FieldErrorSeverity = 2
-)
-
-// AllValues returns all FieldErrorSeverity values.
-func (FieldErrorSeverity) AllValues() []FieldErrorSeverity {
-	return []FieldErrorSeverity{
-		FieldErrorSeverity0,
-		FieldErrorSeverity1,
-		FieldErrorSeverity2,
-	}
-}
-
 // Ref: #/components/schemas/File
 type File struct {
-	Content []byte    `json:"content"`
-	Mode    OptInt32  `json:"mode"`
-	Path    OptString `json:"path"`
-}
-
-// GetContent returns the value of Content.
-func (s *File) GetContent() []byte {
-	return s.Content
-}
-
-// GetMode returns the value of Mode.
-func (s *File) GetMode() OptInt32 {
-	return s.Mode
-}
-
-// GetPath returns the value of Path.
-func (s *File) GetPath() OptString {
-	return s.Path
-}
-
-// SetContent sets the value of Content.
-func (s *File) SetContent(val []byte) {
-	s.Content = val
-}
-
-// SetMode sets the value of Mode.
-func (s *File) SetMode(val OptInt32) {
-	s.Mode = val
-}
-
-// SetPath sets the value of Path.
-func (s *File) SetPath(val OptString) {
-	s.Path = val
-}
-
-// Ref: #/components/schemas/File2
-type File2 struct {
 	Append OptBool   `json:"append"`
 	AsRef  OptAsRef  `json:"asRef"`
 	Bytes  []byte    `json:"bytes"`
@@ -5361,53 +4195,90 @@ type File2 struct {
 }
 
 // GetAppend returns the value of Append.
-func (s *File2) GetAppend() OptBool {
+func (s *File) GetAppend() OptBool {
 	return s.Append
 }
 
 // GetAsRef returns the value of AsRef.
-func (s *File2) GetAsRef() OptAsRef {
+func (s *File) GetAsRef() OptAsRef {
 	return s.AsRef
 }
 
 // GetBytes returns the value of Bytes.
-func (s *File2) GetBytes() []byte {
+func (s *File) GetBytes() []byte {
 	return s.Bytes
 }
 
 // GetInfo returns the value of Info.
-func (s *File2) GetInfo() Info2 {
+func (s *File) GetInfo() Info2 {
 	return s.Info
 }
 
 // GetText returns the value of Text.
-func (s *File2) GetText() OptString {
+func (s *File) GetText() OptString {
 	return s.Text
 }
 
 // SetAppend sets the value of Append.
-func (s *File2) SetAppend(val OptBool) {
+func (s *File) SetAppend(val OptBool) {
 	s.Append = val
 }
 
 // SetAsRef sets the value of AsRef.
-func (s *File2) SetAsRef(val OptAsRef) {
+func (s *File) SetAsRef(val OptAsRef) {
 	s.AsRef = val
 }
 
 // SetBytes sets the value of Bytes.
-func (s *File2) SetBytes(val []byte) {
+func (s *File) SetBytes(val []byte) {
 	s.Bytes = val
 }
 
 // SetInfo sets the value of Info.
-func (s *File2) SetInfo(val Info2) {
+func (s *File) SetInfo(val Info2) {
 	s.Info = val
 }
 
 // SetText sets the value of Text.
-func (s *File2) SetText(val OptString) {
+func (s *File) SetText(val OptString) {
 	s.Text = val
+}
+
+// Ref: #/components/schemas/File2
+type File2 struct {
+	Content []byte    `json:"content"`
+	Mode    OptInt32  `json:"mode"`
+	Path    OptString `json:"path"`
+}
+
+// GetContent returns the value of Content.
+func (s *File2) GetContent() []byte {
+	return s.Content
+}
+
+// GetMode returns the value of Mode.
+func (s *File2) GetMode() OptInt32 {
+	return s.Mode
+}
+
+// GetPath returns the value of Path.
+func (s *File2) GetPath() OptString {
+	return s.Path
+}
+
+// SetContent sets the value of Content.
+func (s *File2) SetContent(val []byte) {
+	s.Content = val
+}
+
+// SetMode sets the value of Mode.
+func (s *File2) SetMode(val OptInt32) {
+	s.Mode = val
+}
+
+// SetPath sets the value of Path.
+func (s *File2) SetPath(val OptString) {
+	s.Path = val
 }
 
 // Ref: #/components/schemas/FileOverride
@@ -5415,7 +4286,7 @@ type FileOverride struct {
 	ArtifactId  OptString             `json:"artifactId"`
 	BaseHash    OptString             `json:"baseHash"`
 	ComponentId OptString             `json:"componentId"`
-	File        File2                 `json:"file"`
+	File        File                  `json:"file"`
 	Labels      OptFileOverrideLabels `json:"labels"`
 }
 
@@ -5435,7 +4306,7 @@ func (s *FileOverride) GetComponentId() OptString {
 }
 
 // GetFile returns the value of File.
-func (s *FileOverride) GetFile() File2 {
+func (s *FileOverride) GetFile() File {
 	return s.File
 }
 
@@ -5460,7 +4331,7 @@ func (s *FileOverride) SetComponentId(val OptString) {
 }
 
 // SetFile sets the value of File.
-func (s *FileOverride) SetFile(val File2) {
+func (s *FileOverride) SetFile(val File) {
 	s.File = val
 }
 
@@ -6712,220 +5583,6 @@ func (s *FiledUInt64) SetNotIn(val []uint64) {
 	s.NotIn = val
 }
 
-// Ref: #/components/schemas/FinishSuiteWizardRequest
-type FinishSuiteWizardRequest struct {
-	DraftId        OptString `json:"draftId"`
-	InGlobalRating OptBool   `json:"inGlobalRating"`
-	InTenantRating OptBool   `json:"inTenantRating"`
-	Start          OptBool   `json:"start"`
-	SuiteName      OptString `json:"suiteName"`
-	TenantId       OptString `json:"tenantId"`
-}
-
-// GetDraftId returns the value of DraftId.
-func (s *FinishSuiteWizardRequest) GetDraftId() OptString {
-	return s.DraftId
-}
-
-// GetInGlobalRating returns the value of InGlobalRating.
-func (s *FinishSuiteWizardRequest) GetInGlobalRating() OptBool {
-	return s.InGlobalRating
-}
-
-// GetInTenantRating returns the value of InTenantRating.
-func (s *FinishSuiteWizardRequest) GetInTenantRating() OptBool {
-	return s.InTenantRating
-}
-
-// GetStart returns the value of Start.
-func (s *FinishSuiteWizardRequest) GetStart() OptBool {
-	return s.Start
-}
-
-// GetSuiteName returns the value of SuiteName.
-func (s *FinishSuiteWizardRequest) GetSuiteName() OptString {
-	return s.SuiteName
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *FinishSuiteWizardRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetDraftId sets the value of DraftId.
-func (s *FinishSuiteWizardRequest) SetDraftId(val OptString) {
-	s.DraftId = val
-}
-
-// SetInGlobalRating sets the value of InGlobalRating.
-func (s *FinishSuiteWizardRequest) SetInGlobalRating(val OptBool) {
-	s.InGlobalRating = val
-}
-
-// SetInTenantRating sets the value of InTenantRating.
-func (s *FinishSuiteWizardRequest) SetInTenantRating(val OptBool) {
-	s.InTenantRating = val
-}
-
-// SetStart sets the value of Start.
-func (s *FinishSuiteWizardRequest) SetStart(val OptBool) {
-	s.Start = val
-}
-
-// SetSuiteName sets the value of SuiteName.
-func (s *FinishSuiteWizardRequest) SetSuiteName(val OptString) {
-	s.SuiteName = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *FinishSuiteWizardRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/FinishSuiteWizardResponse
-type FinishSuiteWizardResponse struct {
-	Suite    SuiteRecord       `json:"suite"`
-	SuiteRun OptSuiteRunRecord `json:"suiteRun"`
-}
-
-// GetSuite returns the value of Suite.
-func (s *FinishSuiteWizardResponse) GetSuite() SuiteRecord {
-	return s.Suite
-}
-
-// GetSuiteRun returns the value of SuiteRun.
-func (s *FinishSuiteWizardResponse) GetSuiteRun() OptSuiteRunRecord {
-	return s.SuiteRun
-}
-
-// SetSuite sets the value of Suite.
-func (s *FinishSuiteWizardResponse) SetSuite(val SuiteRecord) {
-	s.Suite = val
-}
-
-// SetSuiteRun sets the value of SuiteRun.
-func (s *FinishSuiteWizardResponse) SetSuiteRun(val OptSuiteRunRecord) {
-	s.SuiteRun = val
-}
-
-// Ref: #/components/schemas/FinishTestWizardRequest
-type FinishTestWizardRequest struct {
-	DraftId        OptString `json:"draftId"`
-	InGlobalRating OptBool   `json:"inGlobalRating"`
-	InTenantRating OptBool   `json:"inTenantRating"`
-	PresetName     OptString `json:"presetName"`
-	SaveAsPreset   OptBool   `json:"saveAsPreset"`
-	Start          OptBool   `json:"start"`
-	TenantId       OptString `json:"tenantId"`
-}
-
-// GetDraftId returns the value of DraftId.
-func (s *FinishTestWizardRequest) GetDraftId() OptString {
-	return s.DraftId
-}
-
-// GetInGlobalRating returns the value of InGlobalRating.
-func (s *FinishTestWizardRequest) GetInGlobalRating() OptBool {
-	return s.InGlobalRating
-}
-
-// GetInTenantRating returns the value of InTenantRating.
-func (s *FinishTestWizardRequest) GetInTenantRating() OptBool {
-	return s.InTenantRating
-}
-
-// GetPresetName returns the value of PresetName.
-func (s *FinishTestWizardRequest) GetPresetName() OptString {
-	return s.PresetName
-}
-
-// GetSaveAsPreset returns the value of SaveAsPreset.
-func (s *FinishTestWizardRequest) GetSaveAsPreset() OptBool {
-	return s.SaveAsPreset
-}
-
-// GetStart returns the value of Start.
-func (s *FinishTestWizardRequest) GetStart() OptBool {
-	return s.Start
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *FinishTestWizardRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetDraftId sets the value of DraftId.
-func (s *FinishTestWizardRequest) SetDraftId(val OptString) {
-	s.DraftId = val
-}
-
-// SetInGlobalRating sets the value of InGlobalRating.
-func (s *FinishTestWizardRequest) SetInGlobalRating(val OptBool) {
-	s.InGlobalRating = val
-}
-
-// SetInTenantRating sets the value of InTenantRating.
-func (s *FinishTestWizardRequest) SetInTenantRating(val OptBool) {
-	s.InTenantRating = val
-}
-
-// SetPresetName sets the value of PresetName.
-func (s *FinishTestWizardRequest) SetPresetName(val OptString) {
-	s.PresetName = val
-}
-
-// SetSaveAsPreset sets the value of SaveAsPreset.
-func (s *FinishTestWizardRequest) SetSaveAsPreset(val OptBool) {
-	s.SaveAsPreset = val
-}
-
-// SetStart sets the value of Start.
-func (s *FinishTestWizardRequest) SetStart(val OptBool) {
-	s.Start = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *FinishTestWizardRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/FinishTestWizardResponse
-type FinishTestWizardResponse struct {
-	Preset  OptTestPresetRecord `json:"preset"`
-	Run     OptTestRunRecord    `json:"run"`
-	TestRun TestRun             `json:"testRun"`
-}
-
-// GetPreset returns the value of Preset.
-func (s *FinishTestWizardResponse) GetPreset() OptTestPresetRecord {
-	return s.Preset
-}
-
-// GetRun returns the value of Run.
-func (s *FinishTestWizardResponse) GetRun() OptTestRunRecord {
-	return s.Run
-}
-
-// GetTestRun returns the value of TestRun.
-func (s *FinishTestWizardResponse) GetTestRun() TestRun {
-	return s.TestRun
-}
-
-// SetPreset sets the value of Preset.
-func (s *FinishTestWizardResponse) SetPreset(val OptTestPresetRecord) {
-	s.Preset = val
-}
-
-// SetRun sets the value of Run.
-func (s *FinishTestWizardResponse) SetRun(val OptTestRunRecord) {
-	s.Run = val
-}
-
-// SetTestRun sets the value of TestRun.
-func (s *FinishTestWizardResponse) SetTestRun(val TestRun) {
-	s.TestRun = val
-}
-
 // Ref: #/components/schemas/GetAccountRequest
 type GetAccountRequest struct {
 	ID OptString `json:"id"`
@@ -6954,47 +5611,6 @@ func (s *GetAccountResponse) GetAccount() Account {
 // SetAccount sets the value of Account.
 func (s *GetAccountResponse) SetAccount(val Account) {
 	s.Account = val
-}
-
-// Ref: #/components/schemas/GetDatabasePresetRequest
-type GetDatabasePresetRequest struct {
-	ID       OptString `json:"id"`
-	TenantId OptString `json:"tenantId"`
-}
-
-// GetID returns the value of ID.
-func (s *GetDatabasePresetRequest) GetID() OptString {
-	return s.ID
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *GetDatabasePresetRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetID sets the value of ID.
-func (s *GetDatabasePresetRequest) SetID(val OptString) {
-	s.ID = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *GetDatabasePresetRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/GetDatabasePresetResponse
-type GetDatabasePresetResponse struct {
-	Preset DatabasePresetRecord `json:"preset"`
-}
-
-// GetPreset returns the value of Preset.
-func (s *GetDatabasePresetResponse) GetPreset() DatabasePresetRecord {
-	return s.Preset
-}
-
-// SetPreset sets the value of Preset.
-func (s *GetDatabasePresetResponse) SetPreset(val DatabasePresetRecord) {
-	s.Preset = val
 }
 
 // Ref: #/components/schemas/GetIdentityProviderRequest
@@ -7519,129 +6135,6 @@ func (s *GetSharedRunResponse) SetSnapshot(val Snapshot) {
 	s.Snapshot = val
 }
 
-// Ref: #/components/schemas/GetSuiteRequest
-type GetSuiteRequest struct {
-	ID       OptString `json:"id"`
-	TenantId OptString `json:"tenantId"`
-}
-
-// GetID returns the value of ID.
-func (s *GetSuiteRequest) GetID() OptString {
-	return s.ID
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *GetSuiteRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetID sets the value of ID.
-func (s *GetSuiteRequest) SetID(val OptString) {
-	s.ID = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *GetSuiteRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/GetSuiteResponse
-type GetSuiteResponse struct {
-	Suite SuiteRecord `json:"suite"`
-}
-
-// GetSuite returns the value of Suite.
-func (s *GetSuiteResponse) GetSuite() SuiteRecord {
-	return s.Suite
-}
-
-// SetSuite sets the value of Suite.
-func (s *GetSuiteResponse) SetSuite(val SuiteRecord) {
-	s.Suite = val
-}
-
-// Ref: #/components/schemas/GetSuiteRunRequest
-type GetSuiteRunRequest struct {
-	ID       OptString `json:"id"`
-	TenantId OptString `json:"tenantId"`
-}
-
-// GetID returns the value of ID.
-func (s *GetSuiteRunRequest) GetID() OptString {
-	return s.ID
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *GetSuiteRunRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetID sets the value of ID.
-func (s *GetSuiteRunRequest) SetID(val OptString) {
-	s.ID = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *GetSuiteRunRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/GetSuiteRunResponse
-type GetSuiteRunResponse struct {
-	SuiteRun SuiteRunRecord `json:"suiteRun"`
-}
-
-// GetSuiteRun returns the value of SuiteRun.
-func (s *GetSuiteRunResponse) GetSuiteRun() SuiteRunRecord {
-	return s.SuiteRun
-}
-
-// SetSuiteRun sets the value of SuiteRun.
-func (s *GetSuiteRunResponse) SetSuiteRun(val SuiteRunRecord) {
-	s.SuiteRun = val
-}
-
-// Ref: #/components/schemas/GetSuiteWizardDraftRequest
-type GetSuiteWizardDraftRequest struct {
-	DraftId  OptString `json:"draftId"`
-	TenantId OptString `json:"tenantId"`
-}
-
-// GetDraftId returns the value of DraftId.
-func (s *GetSuiteWizardDraftRequest) GetDraftId() OptString {
-	return s.DraftId
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *GetSuiteWizardDraftRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetDraftId sets the value of DraftId.
-func (s *GetSuiteWizardDraftRequest) SetDraftId(val OptString) {
-	s.DraftId = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *GetSuiteWizardDraftRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/GetSuiteWizardDraftResponse
-type GetSuiteWizardDraftResponse struct {
-	Draft SuiteWizardDraftRecord `json:"draft"`
-}
-
-// GetDraft returns the value of Draft.
-func (s *GetSuiteWizardDraftResponse) GetDraft() SuiteWizardDraftRecord {
-	return s.Draft
-}
-
-// SetDraft sets the value of Draft.
-func (s *GetSuiteWizardDraftResponse) SetDraft(val SuiteWizardDraftRecord) {
-	s.Draft = val
-}
-
 // Ref: #/components/schemas/GetSystemRatingRequest
 type GetSystemRatingRequest struct {
 	Filter    RatingFilter `json:"filter"`
@@ -7895,47 +6388,6 @@ func (s *GetTenantSettingsResponse) SetSettings(val TenantSettingsRecord) {
 	s.Settings = val
 }
 
-// Ref: #/components/schemas/GetTestPresetRequest
-type GetTestPresetRequest struct {
-	ID       OptString `json:"id"`
-	TenantId OptString `json:"tenantId"`
-}
-
-// GetID returns the value of ID.
-func (s *GetTestPresetRequest) GetID() OptString {
-	return s.ID
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *GetTestPresetRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetID sets the value of ID.
-func (s *GetTestPresetRequest) SetID(val OptString) {
-	s.ID = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *GetTestPresetRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/GetTestPresetResponse
-type GetTestPresetResponse struct {
-	Preset TestPresetRecord `json:"preset"`
-}
-
-// GetPreset returns the value of Preset.
-func (s *GetTestPresetResponse) GetPreset() TestPresetRecord {
-	return s.Preset
-}
-
-// SetPreset sets the value of Preset.
-func (s *GetTestPresetResponse) SetPreset(val TestPresetRecord) {
-	s.Preset = val
-}
-
 // Ref: #/components/schemas/GetTestRunOverviewRequest
 type GetTestRunOverviewRequest struct {
 	RunId    OptString `json:"runId"`
@@ -7975,129 +6427,6 @@ func (s *GetTestRunOverviewResponse) GetSnapshot() TestRunOverviewSnapshot {
 // SetSnapshot sets the value of Snapshot.
 func (s *GetTestRunOverviewResponse) SetSnapshot(val TestRunOverviewSnapshot) {
 	s.Snapshot = val
-}
-
-// Ref: #/components/schemas/GetTestRunRequest
-type GetTestRunRequest struct {
-	ID       OptString `json:"id"`
-	TenantId OptString `json:"tenantId"`
-}
-
-// GetID returns the value of ID.
-func (s *GetTestRunRequest) GetID() OptString {
-	return s.ID
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *GetTestRunRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetID sets the value of ID.
-func (s *GetTestRunRequest) SetID(val OptString) {
-	s.ID = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *GetTestRunRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/GetTestRunResponse
-type GetTestRunResponse struct {
-	Run TestRunRecord `json:"run"`
-}
-
-// GetRun returns the value of Run.
-func (s *GetTestRunResponse) GetRun() TestRunRecord {
-	return s.Run
-}
-
-// SetRun sets the value of Run.
-func (s *GetTestRunResponse) SetRun(val TestRunRecord) {
-	s.Run = val
-}
-
-// Ref: #/components/schemas/GetTestWizardDraftRequest
-type GetTestWizardDraftRequest struct {
-	DraftId  OptString `json:"draftId"`
-	TenantId OptString `json:"tenantId"`
-}
-
-// GetDraftId returns the value of DraftId.
-func (s *GetTestWizardDraftRequest) GetDraftId() OptString {
-	return s.DraftId
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *GetTestWizardDraftRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetDraftId sets the value of DraftId.
-func (s *GetTestWizardDraftRequest) SetDraftId(val OptString) {
-	s.DraftId = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *GetTestWizardDraftRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/GetTestWizardDraftResponse
-type GetTestWizardDraftResponse struct {
-	Draft TestWizardDraftRecord `json:"draft"`
-}
-
-// GetDraft returns the value of Draft.
-func (s *GetTestWizardDraftResponse) GetDraft() TestWizardDraftRecord {
-	return s.Draft
-}
-
-// SetDraft sets the value of Draft.
-func (s *GetTestWizardDraftResponse) SetDraft(val TestWizardDraftRecord) {
-	s.Draft = val
-}
-
-// Ref: #/components/schemas/GetWorkloadPresetRequest
-type GetWorkloadPresetRequest struct {
-	ID       OptString `json:"id"`
-	TenantId OptString `json:"tenantId"`
-}
-
-// GetID returns the value of ID.
-func (s *GetWorkloadPresetRequest) GetID() OptString {
-	return s.ID
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *GetWorkloadPresetRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetID sets the value of ID.
-func (s *GetWorkloadPresetRequest) SetID(val OptString) {
-	s.ID = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *GetWorkloadPresetRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/GetWorkloadPresetResponse
-type GetWorkloadPresetResponse struct {
-	Preset WorkloadPresetRecord `json:"preset"`
-}
-
-// GetPreset returns the value of Preset.
-func (s *GetWorkloadPresetResponse) GetPreset() WorkloadPresetRecord {
-	return s.Preset
-}
-
-// SetPreset sets the value of Preset.
-func (s *GetWorkloadPresetResponse) SetPreset(val WorkloadPresetRecord) {
-	s.Preset = val
 }
 
 // Ref: #/components/schemas/Healthcheck
@@ -8800,189 +7129,6 @@ func (s *ListApiTokensResponse) GetTokens() []ApiToken {
 // SetTokens sets the value of Tokens.
 func (s *ListApiTokensResponse) SetTokens(val []ApiToken) {
 	s.Tokens = val
-}
-
-// Ref: #/components/schemas/ListDatabasePresetsRequest
-type ListDatabasePresetsRequest struct {
-	DbKinds  []ListDatabasePresetsRequestDbKindsItem `json:"dbKinds"`
-	Filter   OptEntityFilter                         `json:"filter"`
-	IsSystem OptBool                                 `json:"isSystem"`
-	Page     OptPage                                 `json:"page"`
-	Sort     OptSort                                 `json:"sort"`
-	Sources  []ListDatabasePresetsRequestSourcesItem `json:"sources"`
-	Tags     OptListDatabasePresetsRequestTags       `json:"tags"`
-	TenantId OptString                               `json:"tenantId"`
-}
-
-// GetDbKinds returns the value of DbKinds.
-func (s *ListDatabasePresetsRequest) GetDbKinds() []ListDatabasePresetsRequestDbKindsItem {
-	return s.DbKinds
-}
-
-// GetFilter returns the value of Filter.
-func (s *ListDatabasePresetsRequest) GetFilter() OptEntityFilter {
-	return s.Filter
-}
-
-// GetIsSystem returns the value of IsSystem.
-func (s *ListDatabasePresetsRequest) GetIsSystem() OptBool {
-	return s.IsSystem
-}
-
-// GetPage returns the value of Page.
-func (s *ListDatabasePresetsRequest) GetPage() OptPage {
-	return s.Page
-}
-
-// GetSort returns the value of Sort.
-func (s *ListDatabasePresetsRequest) GetSort() OptSort {
-	return s.Sort
-}
-
-// GetSources returns the value of Sources.
-func (s *ListDatabasePresetsRequest) GetSources() []ListDatabasePresetsRequestSourcesItem {
-	return s.Sources
-}
-
-// GetTags returns the value of Tags.
-func (s *ListDatabasePresetsRequest) GetTags() OptListDatabasePresetsRequestTags {
-	return s.Tags
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *ListDatabasePresetsRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetDbKinds sets the value of DbKinds.
-func (s *ListDatabasePresetsRequest) SetDbKinds(val []ListDatabasePresetsRequestDbKindsItem) {
-	s.DbKinds = val
-}
-
-// SetFilter sets the value of Filter.
-func (s *ListDatabasePresetsRequest) SetFilter(val OptEntityFilter) {
-	s.Filter = val
-}
-
-// SetIsSystem sets the value of IsSystem.
-func (s *ListDatabasePresetsRequest) SetIsSystem(val OptBool) {
-	s.IsSystem = val
-}
-
-// SetPage sets the value of Page.
-func (s *ListDatabasePresetsRequest) SetPage(val OptPage) {
-	s.Page = val
-}
-
-// SetSort sets the value of Sort.
-func (s *ListDatabasePresetsRequest) SetSort(val OptSort) {
-	s.Sort = val
-}
-
-// SetSources sets the value of Sources.
-func (s *ListDatabasePresetsRequest) SetSources(val []ListDatabasePresetsRequestSourcesItem) {
-	s.Sources = val
-}
-
-// SetTags sets the value of Tags.
-func (s *ListDatabasePresetsRequest) SetTags(val OptListDatabasePresetsRequestTags) {
-	s.Tags = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *ListDatabasePresetsRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-type ListDatabasePresetsRequestDbKindsItem int32
-
-const (
-	ListDatabasePresetsRequestDbKindsItem0  ListDatabasePresetsRequestDbKindsItem = 0
-	ListDatabasePresetsRequestDbKindsItem1  ListDatabasePresetsRequestDbKindsItem = 1
-	ListDatabasePresetsRequestDbKindsItem2  ListDatabasePresetsRequestDbKindsItem = 2
-	ListDatabasePresetsRequestDbKindsItem3  ListDatabasePresetsRequestDbKindsItem = 3
-	ListDatabasePresetsRequestDbKindsItem4  ListDatabasePresetsRequestDbKindsItem = 4
-	ListDatabasePresetsRequestDbKindsItem5  ListDatabasePresetsRequestDbKindsItem = 5
-	ListDatabasePresetsRequestDbKindsItem6  ListDatabasePresetsRequestDbKindsItem = 6
-	ListDatabasePresetsRequestDbKindsItem7  ListDatabasePresetsRequestDbKindsItem = 7
-	ListDatabasePresetsRequestDbKindsItem8  ListDatabasePresetsRequestDbKindsItem = 8
-	ListDatabasePresetsRequestDbKindsItem9  ListDatabasePresetsRequestDbKindsItem = 9
-	ListDatabasePresetsRequestDbKindsItem10 ListDatabasePresetsRequestDbKindsItem = 10
-	ListDatabasePresetsRequestDbKindsItem11 ListDatabasePresetsRequestDbKindsItem = 11
-)
-
-// AllValues returns all ListDatabasePresetsRequestDbKindsItem values.
-func (ListDatabasePresetsRequestDbKindsItem) AllValues() []ListDatabasePresetsRequestDbKindsItem {
-	return []ListDatabasePresetsRequestDbKindsItem{
-		ListDatabasePresetsRequestDbKindsItem0,
-		ListDatabasePresetsRequestDbKindsItem1,
-		ListDatabasePresetsRequestDbKindsItem2,
-		ListDatabasePresetsRequestDbKindsItem3,
-		ListDatabasePresetsRequestDbKindsItem4,
-		ListDatabasePresetsRequestDbKindsItem5,
-		ListDatabasePresetsRequestDbKindsItem6,
-		ListDatabasePresetsRequestDbKindsItem7,
-		ListDatabasePresetsRequestDbKindsItem8,
-		ListDatabasePresetsRequestDbKindsItem9,
-		ListDatabasePresetsRequestDbKindsItem10,
-		ListDatabasePresetsRequestDbKindsItem11,
-	}
-}
-
-type ListDatabasePresetsRequestSourcesItem int32
-
-const (
-	ListDatabasePresetsRequestSourcesItem0 ListDatabasePresetsRequestSourcesItem = 0
-	ListDatabasePresetsRequestSourcesItem1 ListDatabasePresetsRequestSourcesItem = 1
-	ListDatabasePresetsRequestSourcesItem2 ListDatabasePresetsRequestSourcesItem = 2
-	ListDatabasePresetsRequestSourcesItem3 ListDatabasePresetsRequestSourcesItem = 3
-)
-
-// AllValues returns all ListDatabasePresetsRequestSourcesItem values.
-func (ListDatabasePresetsRequestSourcesItem) AllValues() []ListDatabasePresetsRequestSourcesItem {
-	return []ListDatabasePresetsRequestSourcesItem{
-		ListDatabasePresetsRequestSourcesItem0,
-		ListDatabasePresetsRequestSourcesItem1,
-		ListDatabasePresetsRequestSourcesItem2,
-		ListDatabasePresetsRequestSourcesItem3,
-	}
-}
-
-type ListDatabasePresetsRequestTags map[string]string
-
-func (s *ListDatabasePresetsRequestTags) init() ListDatabasePresetsRequestTags {
-	m := *s
-	if m == nil {
-		m = map[string]string{}
-		*s = m
-	}
-	return m
-}
-
-// Ref: #/components/schemas/ListDatabasePresetsResponse
-type ListDatabasePresetsResponse struct {
-	NextPageToken OptString              `json:"nextPageToken"`
-	Presets       []DatabasePresetRecord `json:"presets"`
-}
-
-// GetNextPageToken returns the value of NextPageToken.
-func (s *ListDatabasePresetsResponse) GetNextPageToken() OptString {
-	return s.NextPageToken
-}
-
-// GetPresets returns the value of Presets.
-func (s *ListDatabasePresetsResponse) GetPresets() []DatabasePresetRecord {
-	return s.Presets
-}
-
-// SetNextPageToken sets the value of NextPageToken.
-func (s *ListDatabasePresetsResponse) SetNextPageToken(val OptString) {
-	s.NextPageToken = val
-}
-
-// SetPresets sets the value of Presets.
-func (s *ListDatabasePresetsResponse) SetPresets(val []DatabasePresetRecord) {
-	s.Presets = val
 }
 
 // Ref: #/components/schemas/ListExternalIdentitiesRequest
@@ -9796,1512 +7942,6 @@ func (s *ListStroppyVersionsResponse) GetVersions() []string {
 // SetVersions sets the value of Versions.
 func (s *ListStroppyVersionsResponse) SetVersions(val []string) {
 	s.Versions = val
-}
-
-// Ref: #/components/schemas/ListSuiteFacetsRequest
-type ListSuiteFacetsRequest struct {
-	Filter   OptEntityFilter `json:"filter"`
-	TenantId OptString       `json:"tenantId"`
-}
-
-// GetFilter returns the value of Filter.
-func (s *ListSuiteFacetsRequest) GetFilter() OptEntityFilter {
-	return s.Filter
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *ListSuiteFacetsRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetFilter sets the value of Filter.
-func (s *ListSuiteFacetsRequest) SetFilter(val OptEntityFilter) {
-	s.Filter = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *ListSuiteFacetsRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/ListSuiteFacetsResponse
-type ListSuiteFacetsResponse struct {
-	AuthorIds []string `json:"authorIds"`
-}
-
-// GetAuthorIds returns the value of AuthorIds.
-func (s *ListSuiteFacetsResponse) GetAuthorIds() []string {
-	return s.AuthorIds
-}
-
-// SetAuthorIds sets the value of AuthorIds.
-func (s *ListSuiteFacetsResponse) SetAuthorIds(val []string) {
-	s.AuthorIds = val
-}
-
-// Ref: #/components/schemas/ListSuiteRunsRequest
-type ListSuiteRunsRequest struct {
-	DbKinds        []ListSuiteRunsRequestDbKindsItem   `json:"dbKinds"`
-	DurationMax    OptDuration                         `json:"durationMax"`
-	DurationMin    OptDuration                         `json:"durationMin"`
-	Filter         OptEntityFilter                     `json:"filter"`
-	FinishedAfter  OptDateTime                         `json:"finishedAfter"`
-	FinishedBefore OptDateTime                         `json:"finishedBefore"`
-	Page           OptPage                             `json:"page"`
-	ProgressMax    OptInt32                            `json:"progressMax"`
-	ProgressMin    OptInt32                            `json:"progressMin"`
-	Providers      []ListSuiteRunsRequestProvidersItem `json:"providers"`
-	Sort           OptSort5                            `json:"sort"`
-	StartedAfter   OptDateTime                         `json:"startedAfter"`
-	StartedBefore  OptDateTime                         `json:"startedBefore"`
-	Statuses       []ListSuiteRunsRequestStatusesItem  `json:"statuses"`
-	SuiteId        OptString                           `json:"suiteId"`
-	TenantId       OptString                           `json:"tenantId"`
-	Triggers       []ListSuiteRunsRequestTriggersItem  `json:"triggers"`
-}
-
-// GetDbKinds returns the value of DbKinds.
-func (s *ListSuiteRunsRequest) GetDbKinds() []ListSuiteRunsRequestDbKindsItem {
-	return s.DbKinds
-}
-
-// GetDurationMax returns the value of DurationMax.
-func (s *ListSuiteRunsRequest) GetDurationMax() OptDuration {
-	return s.DurationMax
-}
-
-// GetDurationMin returns the value of DurationMin.
-func (s *ListSuiteRunsRequest) GetDurationMin() OptDuration {
-	return s.DurationMin
-}
-
-// GetFilter returns the value of Filter.
-func (s *ListSuiteRunsRequest) GetFilter() OptEntityFilter {
-	return s.Filter
-}
-
-// GetFinishedAfter returns the value of FinishedAfter.
-func (s *ListSuiteRunsRequest) GetFinishedAfter() OptDateTime {
-	return s.FinishedAfter
-}
-
-// GetFinishedBefore returns the value of FinishedBefore.
-func (s *ListSuiteRunsRequest) GetFinishedBefore() OptDateTime {
-	return s.FinishedBefore
-}
-
-// GetPage returns the value of Page.
-func (s *ListSuiteRunsRequest) GetPage() OptPage {
-	return s.Page
-}
-
-// GetProgressMax returns the value of ProgressMax.
-func (s *ListSuiteRunsRequest) GetProgressMax() OptInt32 {
-	return s.ProgressMax
-}
-
-// GetProgressMin returns the value of ProgressMin.
-func (s *ListSuiteRunsRequest) GetProgressMin() OptInt32 {
-	return s.ProgressMin
-}
-
-// GetProviders returns the value of Providers.
-func (s *ListSuiteRunsRequest) GetProviders() []ListSuiteRunsRequestProvidersItem {
-	return s.Providers
-}
-
-// GetSort returns the value of Sort.
-func (s *ListSuiteRunsRequest) GetSort() OptSort5 {
-	return s.Sort
-}
-
-// GetStartedAfter returns the value of StartedAfter.
-func (s *ListSuiteRunsRequest) GetStartedAfter() OptDateTime {
-	return s.StartedAfter
-}
-
-// GetStartedBefore returns the value of StartedBefore.
-func (s *ListSuiteRunsRequest) GetStartedBefore() OptDateTime {
-	return s.StartedBefore
-}
-
-// GetStatuses returns the value of Statuses.
-func (s *ListSuiteRunsRequest) GetStatuses() []ListSuiteRunsRequestStatusesItem {
-	return s.Statuses
-}
-
-// GetSuiteId returns the value of SuiteId.
-func (s *ListSuiteRunsRequest) GetSuiteId() OptString {
-	return s.SuiteId
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *ListSuiteRunsRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// GetTriggers returns the value of Triggers.
-func (s *ListSuiteRunsRequest) GetTriggers() []ListSuiteRunsRequestTriggersItem {
-	return s.Triggers
-}
-
-// SetDbKinds sets the value of DbKinds.
-func (s *ListSuiteRunsRequest) SetDbKinds(val []ListSuiteRunsRequestDbKindsItem) {
-	s.DbKinds = val
-}
-
-// SetDurationMax sets the value of DurationMax.
-func (s *ListSuiteRunsRequest) SetDurationMax(val OptDuration) {
-	s.DurationMax = val
-}
-
-// SetDurationMin sets the value of DurationMin.
-func (s *ListSuiteRunsRequest) SetDurationMin(val OptDuration) {
-	s.DurationMin = val
-}
-
-// SetFilter sets the value of Filter.
-func (s *ListSuiteRunsRequest) SetFilter(val OptEntityFilter) {
-	s.Filter = val
-}
-
-// SetFinishedAfter sets the value of FinishedAfter.
-func (s *ListSuiteRunsRequest) SetFinishedAfter(val OptDateTime) {
-	s.FinishedAfter = val
-}
-
-// SetFinishedBefore sets the value of FinishedBefore.
-func (s *ListSuiteRunsRequest) SetFinishedBefore(val OptDateTime) {
-	s.FinishedBefore = val
-}
-
-// SetPage sets the value of Page.
-func (s *ListSuiteRunsRequest) SetPage(val OptPage) {
-	s.Page = val
-}
-
-// SetProgressMax sets the value of ProgressMax.
-func (s *ListSuiteRunsRequest) SetProgressMax(val OptInt32) {
-	s.ProgressMax = val
-}
-
-// SetProgressMin sets the value of ProgressMin.
-func (s *ListSuiteRunsRequest) SetProgressMin(val OptInt32) {
-	s.ProgressMin = val
-}
-
-// SetProviders sets the value of Providers.
-func (s *ListSuiteRunsRequest) SetProviders(val []ListSuiteRunsRequestProvidersItem) {
-	s.Providers = val
-}
-
-// SetSort sets the value of Sort.
-func (s *ListSuiteRunsRequest) SetSort(val OptSort5) {
-	s.Sort = val
-}
-
-// SetStartedAfter sets the value of StartedAfter.
-func (s *ListSuiteRunsRequest) SetStartedAfter(val OptDateTime) {
-	s.StartedAfter = val
-}
-
-// SetStartedBefore sets the value of StartedBefore.
-func (s *ListSuiteRunsRequest) SetStartedBefore(val OptDateTime) {
-	s.StartedBefore = val
-}
-
-// SetStatuses sets the value of Statuses.
-func (s *ListSuiteRunsRequest) SetStatuses(val []ListSuiteRunsRequestStatusesItem) {
-	s.Statuses = val
-}
-
-// SetSuiteId sets the value of SuiteId.
-func (s *ListSuiteRunsRequest) SetSuiteId(val OptString) {
-	s.SuiteId = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *ListSuiteRunsRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// SetTriggers sets the value of Triggers.
-func (s *ListSuiteRunsRequest) SetTriggers(val []ListSuiteRunsRequestTriggersItem) {
-	s.Triggers = val
-}
-
-type ListSuiteRunsRequestDbKindsItem int32
-
-const (
-	ListSuiteRunsRequestDbKindsItem0  ListSuiteRunsRequestDbKindsItem = 0
-	ListSuiteRunsRequestDbKindsItem1  ListSuiteRunsRequestDbKindsItem = 1
-	ListSuiteRunsRequestDbKindsItem2  ListSuiteRunsRequestDbKindsItem = 2
-	ListSuiteRunsRequestDbKindsItem3  ListSuiteRunsRequestDbKindsItem = 3
-	ListSuiteRunsRequestDbKindsItem4  ListSuiteRunsRequestDbKindsItem = 4
-	ListSuiteRunsRequestDbKindsItem5  ListSuiteRunsRequestDbKindsItem = 5
-	ListSuiteRunsRequestDbKindsItem6  ListSuiteRunsRequestDbKindsItem = 6
-	ListSuiteRunsRequestDbKindsItem7  ListSuiteRunsRequestDbKindsItem = 7
-	ListSuiteRunsRequestDbKindsItem8  ListSuiteRunsRequestDbKindsItem = 8
-	ListSuiteRunsRequestDbKindsItem9  ListSuiteRunsRequestDbKindsItem = 9
-	ListSuiteRunsRequestDbKindsItem10 ListSuiteRunsRequestDbKindsItem = 10
-	ListSuiteRunsRequestDbKindsItem11 ListSuiteRunsRequestDbKindsItem = 11
-)
-
-// AllValues returns all ListSuiteRunsRequestDbKindsItem values.
-func (ListSuiteRunsRequestDbKindsItem) AllValues() []ListSuiteRunsRequestDbKindsItem {
-	return []ListSuiteRunsRequestDbKindsItem{
-		ListSuiteRunsRequestDbKindsItem0,
-		ListSuiteRunsRequestDbKindsItem1,
-		ListSuiteRunsRequestDbKindsItem2,
-		ListSuiteRunsRequestDbKindsItem3,
-		ListSuiteRunsRequestDbKindsItem4,
-		ListSuiteRunsRequestDbKindsItem5,
-		ListSuiteRunsRequestDbKindsItem6,
-		ListSuiteRunsRequestDbKindsItem7,
-		ListSuiteRunsRequestDbKindsItem8,
-		ListSuiteRunsRequestDbKindsItem9,
-		ListSuiteRunsRequestDbKindsItem10,
-		ListSuiteRunsRequestDbKindsItem11,
-	}
-}
-
-type ListSuiteRunsRequestProvidersItem int32
-
-const (
-	ListSuiteRunsRequestProvidersItem0 ListSuiteRunsRequestProvidersItem = 0
-	ListSuiteRunsRequestProvidersItem1 ListSuiteRunsRequestProvidersItem = 1
-	ListSuiteRunsRequestProvidersItem2 ListSuiteRunsRequestProvidersItem = 2
-)
-
-// AllValues returns all ListSuiteRunsRequestProvidersItem values.
-func (ListSuiteRunsRequestProvidersItem) AllValues() []ListSuiteRunsRequestProvidersItem {
-	return []ListSuiteRunsRequestProvidersItem{
-		ListSuiteRunsRequestProvidersItem0,
-		ListSuiteRunsRequestProvidersItem1,
-		ListSuiteRunsRequestProvidersItem2,
-	}
-}
-
-type ListSuiteRunsRequestStatusesItem int32
-
-const (
-	ListSuiteRunsRequestStatusesItem0  ListSuiteRunsRequestStatusesItem = 0
-	ListSuiteRunsRequestStatusesItem1  ListSuiteRunsRequestStatusesItem = 1
-	ListSuiteRunsRequestStatusesItem2  ListSuiteRunsRequestStatusesItem = 2
-	ListSuiteRunsRequestStatusesItem5  ListSuiteRunsRequestStatusesItem = 5
-	ListSuiteRunsRequestStatusesItem3  ListSuiteRunsRequestStatusesItem = 3
-	ListSuiteRunsRequestStatusesItem4  ListSuiteRunsRequestStatusesItem = 4
-	ListSuiteRunsRequestStatusesItem6  ListSuiteRunsRequestStatusesItem = 6
-	ListSuiteRunsRequestStatusesItem7  ListSuiteRunsRequestStatusesItem = 7
-	ListSuiteRunsRequestStatusesItem8  ListSuiteRunsRequestStatusesItem = 8
-	ListSuiteRunsRequestStatusesItem9  ListSuiteRunsRequestStatusesItem = 9
-	ListSuiteRunsRequestStatusesItem10 ListSuiteRunsRequestStatusesItem = 10
-	ListSuiteRunsRequestStatusesItem11 ListSuiteRunsRequestStatusesItem = 11
-)
-
-// AllValues returns all ListSuiteRunsRequestStatusesItem values.
-func (ListSuiteRunsRequestStatusesItem) AllValues() []ListSuiteRunsRequestStatusesItem {
-	return []ListSuiteRunsRequestStatusesItem{
-		ListSuiteRunsRequestStatusesItem0,
-		ListSuiteRunsRequestStatusesItem1,
-		ListSuiteRunsRequestStatusesItem2,
-		ListSuiteRunsRequestStatusesItem5,
-		ListSuiteRunsRequestStatusesItem3,
-		ListSuiteRunsRequestStatusesItem4,
-		ListSuiteRunsRequestStatusesItem6,
-		ListSuiteRunsRequestStatusesItem7,
-		ListSuiteRunsRequestStatusesItem8,
-		ListSuiteRunsRequestStatusesItem9,
-		ListSuiteRunsRequestStatusesItem10,
-		ListSuiteRunsRequestStatusesItem11,
-	}
-}
-
-type ListSuiteRunsRequestTriggersItem int32
-
-const (
-	ListSuiteRunsRequestTriggersItem0 ListSuiteRunsRequestTriggersItem = 0
-	ListSuiteRunsRequestTriggersItem1 ListSuiteRunsRequestTriggersItem = 1
-	ListSuiteRunsRequestTriggersItem2 ListSuiteRunsRequestTriggersItem = 2
-	ListSuiteRunsRequestTriggersItem3 ListSuiteRunsRequestTriggersItem = 3
-)
-
-// AllValues returns all ListSuiteRunsRequestTriggersItem values.
-func (ListSuiteRunsRequestTriggersItem) AllValues() []ListSuiteRunsRequestTriggersItem {
-	return []ListSuiteRunsRequestTriggersItem{
-		ListSuiteRunsRequestTriggersItem0,
-		ListSuiteRunsRequestTriggersItem1,
-		ListSuiteRunsRequestTriggersItem2,
-		ListSuiteRunsRequestTriggersItem3,
-	}
-}
-
-// Ref: #/components/schemas/ListSuiteRunsResponse
-type ListSuiteRunsResponse struct {
-	NextPageToken OptString        `json:"nextPageToken"`
-	SuiteRuns     []SuiteRunRecord `json:"suiteRuns"`
-}
-
-// GetNextPageToken returns the value of NextPageToken.
-func (s *ListSuiteRunsResponse) GetNextPageToken() OptString {
-	return s.NextPageToken
-}
-
-// GetSuiteRuns returns the value of SuiteRuns.
-func (s *ListSuiteRunsResponse) GetSuiteRuns() []SuiteRunRecord {
-	return s.SuiteRuns
-}
-
-// SetNextPageToken sets the value of NextPageToken.
-func (s *ListSuiteRunsResponse) SetNextPageToken(val OptString) {
-	s.NextPageToken = val
-}
-
-// SetSuiteRuns sets the value of SuiteRuns.
-func (s *ListSuiteRunsResponse) SetSuiteRuns(val []SuiteRunRecord) {
-	s.SuiteRuns = val
-}
-
-// Ref: #/components/schemas/ListSuiteWizardDraftsRequest
-type ListSuiteWizardDraftsRequest struct {
-	Filter   OptEntityFilter `json:"filter"`
-	Page     OptPage         `json:"page"`
-	Sort     OptEntitySort   `json:"sort"`
-	TenantId OptString       `json:"tenantId"`
-}
-
-// GetFilter returns the value of Filter.
-func (s *ListSuiteWizardDraftsRequest) GetFilter() OptEntityFilter {
-	return s.Filter
-}
-
-// GetPage returns the value of Page.
-func (s *ListSuiteWizardDraftsRequest) GetPage() OptPage {
-	return s.Page
-}
-
-// GetSort returns the value of Sort.
-func (s *ListSuiteWizardDraftsRequest) GetSort() OptEntitySort {
-	return s.Sort
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *ListSuiteWizardDraftsRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetFilter sets the value of Filter.
-func (s *ListSuiteWizardDraftsRequest) SetFilter(val OptEntityFilter) {
-	s.Filter = val
-}
-
-// SetPage sets the value of Page.
-func (s *ListSuiteWizardDraftsRequest) SetPage(val OptPage) {
-	s.Page = val
-}
-
-// SetSort sets the value of Sort.
-func (s *ListSuiteWizardDraftsRequest) SetSort(val OptEntitySort) {
-	s.Sort = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *ListSuiteWizardDraftsRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/ListSuiteWizardDraftsResponse
-type ListSuiteWizardDraftsResponse struct {
-	Drafts        []SuiteWizardDraftRecord `json:"drafts"`
-	NextPageToken OptString                `json:"nextPageToken"`
-}
-
-// GetDrafts returns the value of Drafts.
-func (s *ListSuiteWizardDraftsResponse) GetDrafts() []SuiteWizardDraftRecord {
-	return s.Drafts
-}
-
-// GetNextPageToken returns the value of NextPageToken.
-func (s *ListSuiteWizardDraftsResponse) GetNextPageToken() OptString {
-	return s.NextPageToken
-}
-
-// SetDrafts sets the value of Drafts.
-func (s *ListSuiteWizardDraftsResponse) SetDrafts(val []SuiteWizardDraftRecord) {
-	s.Drafts = val
-}
-
-// SetNextPageToken sets the value of NextPageToken.
-func (s *ListSuiteWizardDraftsResponse) SetNextPageToken(val OptString) {
-	s.NextPageToken = val
-}
-
-// Ref: #/components/schemas/ListSuitesRequest
-type ListSuitesRequest struct {
-	Filter          OptEntityFilter                  `json:"filter"`
-	Page            OptPage                          `json:"page"`
-	Providers       []ListSuitesRequestProvidersItem `json:"providers"`
-	ScheduleEnabled OptBool                          `json:"scheduleEnabled"`
-	Sort            OptSort4                         `json:"sort"`
-	TenantId        OptString                        `json:"tenantId"`
-}
-
-// GetFilter returns the value of Filter.
-func (s *ListSuitesRequest) GetFilter() OptEntityFilter {
-	return s.Filter
-}
-
-// GetPage returns the value of Page.
-func (s *ListSuitesRequest) GetPage() OptPage {
-	return s.Page
-}
-
-// GetProviders returns the value of Providers.
-func (s *ListSuitesRequest) GetProviders() []ListSuitesRequestProvidersItem {
-	return s.Providers
-}
-
-// GetScheduleEnabled returns the value of ScheduleEnabled.
-func (s *ListSuitesRequest) GetScheduleEnabled() OptBool {
-	return s.ScheduleEnabled
-}
-
-// GetSort returns the value of Sort.
-func (s *ListSuitesRequest) GetSort() OptSort4 {
-	return s.Sort
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *ListSuitesRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetFilter sets the value of Filter.
-func (s *ListSuitesRequest) SetFilter(val OptEntityFilter) {
-	s.Filter = val
-}
-
-// SetPage sets the value of Page.
-func (s *ListSuitesRequest) SetPage(val OptPage) {
-	s.Page = val
-}
-
-// SetProviders sets the value of Providers.
-func (s *ListSuitesRequest) SetProviders(val []ListSuitesRequestProvidersItem) {
-	s.Providers = val
-}
-
-// SetScheduleEnabled sets the value of ScheduleEnabled.
-func (s *ListSuitesRequest) SetScheduleEnabled(val OptBool) {
-	s.ScheduleEnabled = val
-}
-
-// SetSort sets the value of Sort.
-func (s *ListSuitesRequest) SetSort(val OptSort4) {
-	s.Sort = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *ListSuitesRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-type ListSuitesRequestProvidersItem int32
-
-const (
-	ListSuitesRequestProvidersItem0 ListSuitesRequestProvidersItem = 0
-	ListSuitesRequestProvidersItem1 ListSuitesRequestProvidersItem = 1
-	ListSuitesRequestProvidersItem2 ListSuitesRequestProvidersItem = 2
-)
-
-// AllValues returns all ListSuitesRequestProvidersItem values.
-func (ListSuitesRequestProvidersItem) AllValues() []ListSuitesRequestProvidersItem {
-	return []ListSuitesRequestProvidersItem{
-		ListSuitesRequestProvidersItem0,
-		ListSuitesRequestProvidersItem1,
-		ListSuitesRequestProvidersItem2,
-	}
-}
-
-// Ref: #/components/schemas/ListSuitesResponse
-type ListSuitesResponse struct {
-	NextPageToken OptString     `json:"nextPageToken"`
-	Suites        []SuiteRecord `json:"suites"`
-}
-
-// GetNextPageToken returns the value of NextPageToken.
-func (s *ListSuitesResponse) GetNextPageToken() OptString {
-	return s.NextPageToken
-}
-
-// GetSuites returns the value of Suites.
-func (s *ListSuitesResponse) GetSuites() []SuiteRecord {
-	return s.Suites
-}
-
-// SetNextPageToken sets the value of NextPageToken.
-func (s *ListSuitesResponse) SetNextPageToken(val OptString) {
-	s.NextPageToken = val
-}
-
-// SetSuites sets the value of Suites.
-func (s *ListSuitesResponse) SetSuites(val []SuiteRecord) {
-	s.Suites = val
-}
-
-// Ref: #/components/schemas/ListTestPresetsRequest
-type ListTestPresetsRequest struct {
-	DbKinds         []ListTestPresetsRequestDbKindsItem   `json:"dbKinds"`
-	Filter          OptEntityFilter                       `json:"filter"`
-	IsSystem        OptBool                               `json:"isSystem"`
-	Page            OptPage                               `json:"page"`
-	Protocols       []ListTestPresetsRequestProtocolsItem `json:"protocols"`
-	Sort            OptSort3                              `json:"sort"`
-	StroppyVersions []string                              `json:"stroppyVersions"`
-	Tags            OptListTestPresetsRequestTags         `json:"tags"`
-	TenantId        OptString                             `json:"tenantId"`
-}
-
-// GetDbKinds returns the value of DbKinds.
-func (s *ListTestPresetsRequest) GetDbKinds() []ListTestPresetsRequestDbKindsItem {
-	return s.DbKinds
-}
-
-// GetFilter returns the value of Filter.
-func (s *ListTestPresetsRequest) GetFilter() OptEntityFilter {
-	return s.Filter
-}
-
-// GetIsSystem returns the value of IsSystem.
-func (s *ListTestPresetsRequest) GetIsSystem() OptBool {
-	return s.IsSystem
-}
-
-// GetPage returns the value of Page.
-func (s *ListTestPresetsRequest) GetPage() OptPage {
-	return s.Page
-}
-
-// GetProtocols returns the value of Protocols.
-func (s *ListTestPresetsRequest) GetProtocols() []ListTestPresetsRequestProtocolsItem {
-	return s.Protocols
-}
-
-// GetSort returns the value of Sort.
-func (s *ListTestPresetsRequest) GetSort() OptSort3 {
-	return s.Sort
-}
-
-// GetStroppyVersions returns the value of StroppyVersions.
-func (s *ListTestPresetsRequest) GetStroppyVersions() []string {
-	return s.StroppyVersions
-}
-
-// GetTags returns the value of Tags.
-func (s *ListTestPresetsRequest) GetTags() OptListTestPresetsRequestTags {
-	return s.Tags
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *ListTestPresetsRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetDbKinds sets the value of DbKinds.
-func (s *ListTestPresetsRequest) SetDbKinds(val []ListTestPresetsRequestDbKindsItem) {
-	s.DbKinds = val
-}
-
-// SetFilter sets the value of Filter.
-func (s *ListTestPresetsRequest) SetFilter(val OptEntityFilter) {
-	s.Filter = val
-}
-
-// SetIsSystem sets the value of IsSystem.
-func (s *ListTestPresetsRequest) SetIsSystem(val OptBool) {
-	s.IsSystem = val
-}
-
-// SetPage sets the value of Page.
-func (s *ListTestPresetsRequest) SetPage(val OptPage) {
-	s.Page = val
-}
-
-// SetProtocols sets the value of Protocols.
-func (s *ListTestPresetsRequest) SetProtocols(val []ListTestPresetsRequestProtocolsItem) {
-	s.Protocols = val
-}
-
-// SetSort sets the value of Sort.
-func (s *ListTestPresetsRequest) SetSort(val OptSort3) {
-	s.Sort = val
-}
-
-// SetStroppyVersions sets the value of StroppyVersions.
-func (s *ListTestPresetsRequest) SetStroppyVersions(val []string) {
-	s.StroppyVersions = val
-}
-
-// SetTags sets the value of Tags.
-func (s *ListTestPresetsRequest) SetTags(val OptListTestPresetsRequestTags) {
-	s.Tags = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *ListTestPresetsRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-type ListTestPresetsRequestDbKindsItem int32
-
-const (
-	ListTestPresetsRequestDbKindsItem0  ListTestPresetsRequestDbKindsItem = 0
-	ListTestPresetsRequestDbKindsItem1  ListTestPresetsRequestDbKindsItem = 1
-	ListTestPresetsRequestDbKindsItem2  ListTestPresetsRequestDbKindsItem = 2
-	ListTestPresetsRequestDbKindsItem3  ListTestPresetsRequestDbKindsItem = 3
-	ListTestPresetsRequestDbKindsItem4  ListTestPresetsRequestDbKindsItem = 4
-	ListTestPresetsRequestDbKindsItem5  ListTestPresetsRequestDbKindsItem = 5
-	ListTestPresetsRequestDbKindsItem6  ListTestPresetsRequestDbKindsItem = 6
-	ListTestPresetsRequestDbKindsItem7  ListTestPresetsRequestDbKindsItem = 7
-	ListTestPresetsRequestDbKindsItem8  ListTestPresetsRequestDbKindsItem = 8
-	ListTestPresetsRequestDbKindsItem9  ListTestPresetsRequestDbKindsItem = 9
-	ListTestPresetsRequestDbKindsItem10 ListTestPresetsRequestDbKindsItem = 10
-	ListTestPresetsRequestDbKindsItem11 ListTestPresetsRequestDbKindsItem = 11
-)
-
-// AllValues returns all ListTestPresetsRequestDbKindsItem values.
-func (ListTestPresetsRequestDbKindsItem) AllValues() []ListTestPresetsRequestDbKindsItem {
-	return []ListTestPresetsRequestDbKindsItem{
-		ListTestPresetsRequestDbKindsItem0,
-		ListTestPresetsRequestDbKindsItem1,
-		ListTestPresetsRequestDbKindsItem2,
-		ListTestPresetsRequestDbKindsItem3,
-		ListTestPresetsRequestDbKindsItem4,
-		ListTestPresetsRequestDbKindsItem5,
-		ListTestPresetsRequestDbKindsItem6,
-		ListTestPresetsRequestDbKindsItem7,
-		ListTestPresetsRequestDbKindsItem8,
-		ListTestPresetsRequestDbKindsItem9,
-		ListTestPresetsRequestDbKindsItem10,
-		ListTestPresetsRequestDbKindsItem11,
-	}
-}
-
-type ListTestPresetsRequestProtocolsItem int32
-
-const (
-	ListTestPresetsRequestProtocolsItem0 ListTestPresetsRequestProtocolsItem = 0
-	ListTestPresetsRequestProtocolsItem1 ListTestPresetsRequestProtocolsItem = 1
-	ListTestPresetsRequestProtocolsItem2 ListTestPresetsRequestProtocolsItem = 2
-	ListTestPresetsRequestProtocolsItem3 ListTestPresetsRequestProtocolsItem = 3
-	ListTestPresetsRequestProtocolsItem4 ListTestPresetsRequestProtocolsItem = 4
-	ListTestPresetsRequestProtocolsItem5 ListTestPresetsRequestProtocolsItem = 5
-	ListTestPresetsRequestProtocolsItem7 ListTestPresetsRequestProtocolsItem = 7
-	ListTestPresetsRequestProtocolsItem8 ListTestPresetsRequestProtocolsItem = 8
-)
-
-// AllValues returns all ListTestPresetsRequestProtocolsItem values.
-func (ListTestPresetsRequestProtocolsItem) AllValues() []ListTestPresetsRequestProtocolsItem {
-	return []ListTestPresetsRequestProtocolsItem{
-		ListTestPresetsRequestProtocolsItem0,
-		ListTestPresetsRequestProtocolsItem1,
-		ListTestPresetsRequestProtocolsItem2,
-		ListTestPresetsRequestProtocolsItem3,
-		ListTestPresetsRequestProtocolsItem4,
-		ListTestPresetsRequestProtocolsItem5,
-		ListTestPresetsRequestProtocolsItem7,
-		ListTestPresetsRequestProtocolsItem8,
-	}
-}
-
-type ListTestPresetsRequestTags map[string]string
-
-func (s *ListTestPresetsRequestTags) init() ListTestPresetsRequestTags {
-	m := *s
-	if m == nil {
-		m = map[string]string{}
-		*s = m
-	}
-	return m
-}
-
-// Ref: #/components/schemas/ListTestPresetsResponse
-type ListTestPresetsResponse struct {
-	NextPageToken OptString          `json:"nextPageToken"`
-	Presets       []TestPresetRecord `json:"presets"`
-}
-
-// GetNextPageToken returns the value of NextPageToken.
-func (s *ListTestPresetsResponse) GetNextPageToken() OptString {
-	return s.NextPageToken
-}
-
-// GetPresets returns the value of Presets.
-func (s *ListTestPresetsResponse) GetPresets() []TestPresetRecord {
-	return s.Presets
-}
-
-// SetNextPageToken sets the value of NextPageToken.
-func (s *ListTestPresetsResponse) SetNextPageToken(val OptString) {
-	s.NextPageToken = val
-}
-
-// SetPresets sets the value of Presets.
-func (s *ListTestPresetsResponse) SetPresets(val []TestPresetRecord) {
-	s.Presets = val
-}
-
-// Ref: #/components/schemas/ListTestRunFacetsRequest
-type ListTestRunFacetsRequest struct {
-	Filter   OptEntityFilter `json:"filter"`
-	TenantId OptString       `json:"tenantId"`
-}
-
-// GetFilter returns the value of Filter.
-func (s *ListTestRunFacetsRequest) GetFilter() OptEntityFilter {
-	return s.Filter
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *ListTestRunFacetsRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetFilter sets the value of Filter.
-func (s *ListTestRunFacetsRequest) SetFilter(val OptEntityFilter) {
-	s.Filter = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *ListTestRunFacetsRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/ListTestRunFacetsResponse
-type ListTestRunFacetsResponse struct {
-	AuthorIds         []string `json:"authorIds"`
-	DbPresetIds       []string `json:"dbPresetIds"`
-	StroppyVersions   []string `json:"stroppyVersions"`
-	TestPresetIds     []string `json:"testPresetIds"`
-	WorkloadPresetIds []string `json:"workloadPresetIds"`
-}
-
-// GetAuthorIds returns the value of AuthorIds.
-func (s *ListTestRunFacetsResponse) GetAuthorIds() []string {
-	return s.AuthorIds
-}
-
-// GetDbPresetIds returns the value of DbPresetIds.
-func (s *ListTestRunFacetsResponse) GetDbPresetIds() []string {
-	return s.DbPresetIds
-}
-
-// GetStroppyVersions returns the value of StroppyVersions.
-func (s *ListTestRunFacetsResponse) GetStroppyVersions() []string {
-	return s.StroppyVersions
-}
-
-// GetTestPresetIds returns the value of TestPresetIds.
-func (s *ListTestRunFacetsResponse) GetTestPresetIds() []string {
-	return s.TestPresetIds
-}
-
-// GetWorkloadPresetIds returns the value of WorkloadPresetIds.
-func (s *ListTestRunFacetsResponse) GetWorkloadPresetIds() []string {
-	return s.WorkloadPresetIds
-}
-
-// SetAuthorIds sets the value of AuthorIds.
-func (s *ListTestRunFacetsResponse) SetAuthorIds(val []string) {
-	s.AuthorIds = val
-}
-
-// SetDbPresetIds sets the value of DbPresetIds.
-func (s *ListTestRunFacetsResponse) SetDbPresetIds(val []string) {
-	s.DbPresetIds = val
-}
-
-// SetStroppyVersions sets the value of StroppyVersions.
-func (s *ListTestRunFacetsResponse) SetStroppyVersions(val []string) {
-	s.StroppyVersions = val
-}
-
-// SetTestPresetIds sets the value of TestPresetIds.
-func (s *ListTestRunFacetsResponse) SetTestPresetIds(val []string) {
-	s.TestPresetIds = val
-}
-
-// SetWorkloadPresetIds sets the value of WorkloadPresetIds.
-func (s *ListTestRunFacetsResponse) SetWorkloadPresetIds(val []string) {
-	s.WorkloadPresetIds = val
-}
-
-// Ref: #/components/schemas/ListTestRunsRequest
-type ListTestRunsRequest struct {
-	DbKinds           []ListTestRunsRequestDbKindsItem   `json:"dbKinds"`
-	DbPresetIds       []string                           `json:"dbPresetIds"`
-	DurationMax       OptDuration                        `json:"durationMax"`
-	DurationMin       OptDuration                        `json:"durationMin"`
-	Filter            OptEntityFilter                    `json:"filter"`
-	FinishedAfter     OptDateTime                        `json:"finishedAfter"`
-	FinishedBefore    OptDateTime                        `json:"finishedBefore"`
-	Page              OptPage                            `json:"page"`
-	ProgressMax       OptInt32                           `json:"progressMax"`
-	ProgressMin       OptInt32                           `json:"progressMin"`
-	Protocols         []ListTestRunsRequestProtocolsItem `json:"protocols"`
-	Providers         []ListTestRunsRequestProvidersItem `json:"providers"`
-	Sort              OptSort6                           `json:"sort"`
-	Standalone        OptBool                            `json:"standalone"`
-	StartedAfter      OptDateTime                        `json:"startedAfter"`
-	StartedBefore     OptDateTime                        `json:"startedBefore"`
-	Statuses          []ListTestRunsRequestStatusesItem  `json:"statuses"`
-	StroppyVersions   []string                           `json:"stroppyVersions"`
-	SuiteCellIds      []string                           `json:"suiteCellIds"`
-	SuiteRunId        OptString                          `json:"suiteRunId"`
-	TenantId          OptString                          `json:"tenantId"`
-	TestPresetIds     []string                           `json:"testPresetIds"`
-	Triggers          []ListTestRunsRequestTriggersItem  `json:"triggers"`
-	WorkloadPresetIds []string                           `json:"workloadPresetIds"`
-}
-
-// GetDbKinds returns the value of DbKinds.
-func (s *ListTestRunsRequest) GetDbKinds() []ListTestRunsRequestDbKindsItem {
-	return s.DbKinds
-}
-
-// GetDbPresetIds returns the value of DbPresetIds.
-func (s *ListTestRunsRequest) GetDbPresetIds() []string {
-	return s.DbPresetIds
-}
-
-// GetDurationMax returns the value of DurationMax.
-func (s *ListTestRunsRequest) GetDurationMax() OptDuration {
-	return s.DurationMax
-}
-
-// GetDurationMin returns the value of DurationMin.
-func (s *ListTestRunsRequest) GetDurationMin() OptDuration {
-	return s.DurationMin
-}
-
-// GetFilter returns the value of Filter.
-func (s *ListTestRunsRequest) GetFilter() OptEntityFilter {
-	return s.Filter
-}
-
-// GetFinishedAfter returns the value of FinishedAfter.
-func (s *ListTestRunsRequest) GetFinishedAfter() OptDateTime {
-	return s.FinishedAfter
-}
-
-// GetFinishedBefore returns the value of FinishedBefore.
-func (s *ListTestRunsRequest) GetFinishedBefore() OptDateTime {
-	return s.FinishedBefore
-}
-
-// GetPage returns the value of Page.
-func (s *ListTestRunsRequest) GetPage() OptPage {
-	return s.Page
-}
-
-// GetProgressMax returns the value of ProgressMax.
-func (s *ListTestRunsRequest) GetProgressMax() OptInt32 {
-	return s.ProgressMax
-}
-
-// GetProgressMin returns the value of ProgressMin.
-func (s *ListTestRunsRequest) GetProgressMin() OptInt32 {
-	return s.ProgressMin
-}
-
-// GetProtocols returns the value of Protocols.
-func (s *ListTestRunsRequest) GetProtocols() []ListTestRunsRequestProtocolsItem {
-	return s.Protocols
-}
-
-// GetProviders returns the value of Providers.
-func (s *ListTestRunsRequest) GetProviders() []ListTestRunsRequestProvidersItem {
-	return s.Providers
-}
-
-// GetSort returns the value of Sort.
-func (s *ListTestRunsRequest) GetSort() OptSort6 {
-	return s.Sort
-}
-
-// GetStandalone returns the value of Standalone.
-func (s *ListTestRunsRequest) GetStandalone() OptBool {
-	return s.Standalone
-}
-
-// GetStartedAfter returns the value of StartedAfter.
-func (s *ListTestRunsRequest) GetStartedAfter() OptDateTime {
-	return s.StartedAfter
-}
-
-// GetStartedBefore returns the value of StartedBefore.
-func (s *ListTestRunsRequest) GetStartedBefore() OptDateTime {
-	return s.StartedBefore
-}
-
-// GetStatuses returns the value of Statuses.
-func (s *ListTestRunsRequest) GetStatuses() []ListTestRunsRequestStatusesItem {
-	return s.Statuses
-}
-
-// GetStroppyVersions returns the value of StroppyVersions.
-func (s *ListTestRunsRequest) GetStroppyVersions() []string {
-	return s.StroppyVersions
-}
-
-// GetSuiteCellIds returns the value of SuiteCellIds.
-func (s *ListTestRunsRequest) GetSuiteCellIds() []string {
-	return s.SuiteCellIds
-}
-
-// GetSuiteRunId returns the value of SuiteRunId.
-func (s *ListTestRunsRequest) GetSuiteRunId() OptString {
-	return s.SuiteRunId
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *ListTestRunsRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// GetTestPresetIds returns the value of TestPresetIds.
-func (s *ListTestRunsRequest) GetTestPresetIds() []string {
-	return s.TestPresetIds
-}
-
-// GetTriggers returns the value of Triggers.
-func (s *ListTestRunsRequest) GetTriggers() []ListTestRunsRequestTriggersItem {
-	return s.Triggers
-}
-
-// GetWorkloadPresetIds returns the value of WorkloadPresetIds.
-func (s *ListTestRunsRequest) GetWorkloadPresetIds() []string {
-	return s.WorkloadPresetIds
-}
-
-// SetDbKinds sets the value of DbKinds.
-func (s *ListTestRunsRequest) SetDbKinds(val []ListTestRunsRequestDbKindsItem) {
-	s.DbKinds = val
-}
-
-// SetDbPresetIds sets the value of DbPresetIds.
-func (s *ListTestRunsRequest) SetDbPresetIds(val []string) {
-	s.DbPresetIds = val
-}
-
-// SetDurationMax sets the value of DurationMax.
-func (s *ListTestRunsRequest) SetDurationMax(val OptDuration) {
-	s.DurationMax = val
-}
-
-// SetDurationMin sets the value of DurationMin.
-func (s *ListTestRunsRequest) SetDurationMin(val OptDuration) {
-	s.DurationMin = val
-}
-
-// SetFilter sets the value of Filter.
-func (s *ListTestRunsRequest) SetFilter(val OptEntityFilter) {
-	s.Filter = val
-}
-
-// SetFinishedAfter sets the value of FinishedAfter.
-func (s *ListTestRunsRequest) SetFinishedAfter(val OptDateTime) {
-	s.FinishedAfter = val
-}
-
-// SetFinishedBefore sets the value of FinishedBefore.
-func (s *ListTestRunsRequest) SetFinishedBefore(val OptDateTime) {
-	s.FinishedBefore = val
-}
-
-// SetPage sets the value of Page.
-func (s *ListTestRunsRequest) SetPage(val OptPage) {
-	s.Page = val
-}
-
-// SetProgressMax sets the value of ProgressMax.
-func (s *ListTestRunsRequest) SetProgressMax(val OptInt32) {
-	s.ProgressMax = val
-}
-
-// SetProgressMin sets the value of ProgressMin.
-func (s *ListTestRunsRequest) SetProgressMin(val OptInt32) {
-	s.ProgressMin = val
-}
-
-// SetProtocols sets the value of Protocols.
-func (s *ListTestRunsRequest) SetProtocols(val []ListTestRunsRequestProtocolsItem) {
-	s.Protocols = val
-}
-
-// SetProviders sets the value of Providers.
-func (s *ListTestRunsRequest) SetProviders(val []ListTestRunsRequestProvidersItem) {
-	s.Providers = val
-}
-
-// SetSort sets the value of Sort.
-func (s *ListTestRunsRequest) SetSort(val OptSort6) {
-	s.Sort = val
-}
-
-// SetStandalone sets the value of Standalone.
-func (s *ListTestRunsRequest) SetStandalone(val OptBool) {
-	s.Standalone = val
-}
-
-// SetStartedAfter sets the value of StartedAfter.
-func (s *ListTestRunsRequest) SetStartedAfter(val OptDateTime) {
-	s.StartedAfter = val
-}
-
-// SetStartedBefore sets the value of StartedBefore.
-func (s *ListTestRunsRequest) SetStartedBefore(val OptDateTime) {
-	s.StartedBefore = val
-}
-
-// SetStatuses sets the value of Statuses.
-func (s *ListTestRunsRequest) SetStatuses(val []ListTestRunsRequestStatusesItem) {
-	s.Statuses = val
-}
-
-// SetStroppyVersions sets the value of StroppyVersions.
-func (s *ListTestRunsRequest) SetStroppyVersions(val []string) {
-	s.StroppyVersions = val
-}
-
-// SetSuiteCellIds sets the value of SuiteCellIds.
-func (s *ListTestRunsRequest) SetSuiteCellIds(val []string) {
-	s.SuiteCellIds = val
-}
-
-// SetSuiteRunId sets the value of SuiteRunId.
-func (s *ListTestRunsRequest) SetSuiteRunId(val OptString) {
-	s.SuiteRunId = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *ListTestRunsRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// SetTestPresetIds sets the value of TestPresetIds.
-func (s *ListTestRunsRequest) SetTestPresetIds(val []string) {
-	s.TestPresetIds = val
-}
-
-// SetTriggers sets the value of Triggers.
-func (s *ListTestRunsRequest) SetTriggers(val []ListTestRunsRequestTriggersItem) {
-	s.Triggers = val
-}
-
-// SetWorkloadPresetIds sets the value of WorkloadPresetIds.
-func (s *ListTestRunsRequest) SetWorkloadPresetIds(val []string) {
-	s.WorkloadPresetIds = val
-}
-
-type ListTestRunsRequestDbKindsItem int32
-
-const (
-	ListTestRunsRequestDbKindsItem0  ListTestRunsRequestDbKindsItem = 0
-	ListTestRunsRequestDbKindsItem1  ListTestRunsRequestDbKindsItem = 1
-	ListTestRunsRequestDbKindsItem2  ListTestRunsRequestDbKindsItem = 2
-	ListTestRunsRequestDbKindsItem3  ListTestRunsRequestDbKindsItem = 3
-	ListTestRunsRequestDbKindsItem4  ListTestRunsRequestDbKindsItem = 4
-	ListTestRunsRequestDbKindsItem5  ListTestRunsRequestDbKindsItem = 5
-	ListTestRunsRequestDbKindsItem6  ListTestRunsRequestDbKindsItem = 6
-	ListTestRunsRequestDbKindsItem7  ListTestRunsRequestDbKindsItem = 7
-	ListTestRunsRequestDbKindsItem8  ListTestRunsRequestDbKindsItem = 8
-	ListTestRunsRequestDbKindsItem9  ListTestRunsRequestDbKindsItem = 9
-	ListTestRunsRequestDbKindsItem10 ListTestRunsRequestDbKindsItem = 10
-	ListTestRunsRequestDbKindsItem11 ListTestRunsRequestDbKindsItem = 11
-)
-
-// AllValues returns all ListTestRunsRequestDbKindsItem values.
-func (ListTestRunsRequestDbKindsItem) AllValues() []ListTestRunsRequestDbKindsItem {
-	return []ListTestRunsRequestDbKindsItem{
-		ListTestRunsRequestDbKindsItem0,
-		ListTestRunsRequestDbKindsItem1,
-		ListTestRunsRequestDbKindsItem2,
-		ListTestRunsRequestDbKindsItem3,
-		ListTestRunsRequestDbKindsItem4,
-		ListTestRunsRequestDbKindsItem5,
-		ListTestRunsRequestDbKindsItem6,
-		ListTestRunsRequestDbKindsItem7,
-		ListTestRunsRequestDbKindsItem8,
-		ListTestRunsRequestDbKindsItem9,
-		ListTestRunsRequestDbKindsItem10,
-		ListTestRunsRequestDbKindsItem11,
-	}
-}
-
-type ListTestRunsRequestProtocolsItem int32
-
-const (
-	ListTestRunsRequestProtocolsItem0 ListTestRunsRequestProtocolsItem = 0
-	ListTestRunsRequestProtocolsItem1 ListTestRunsRequestProtocolsItem = 1
-	ListTestRunsRequestProtocolsItem2 ListTestRunsRequestProtocolsItem = 2
-	ListTestRunsRequestProtocolsItem3 ListTestRunsRequestProtocolsItem = 3
-	ListTestRunsRequestProtocolsItem4 ListTestRunsRequestProtocolsItem = 4
-	ListTestRunsRequestProtocolsItem5 ListTestRunsRequestProtocolsItem = 5
-	ListTestRunsRequestProtocolsItem7 ListTestRunsRequestProtocolsItem = 7
-	ListTestRunsRequestProtocolsItem8 ListTestRunsRequestProtocolsItem = 8
-)
-
-// AllValues returns all ListTestRunsRequestProtocolsItem values.
-func (ListTestRunsRequestProtocolsItem) AllValues() []ListTestRunsRequestProtocolsItem {
-	return []ListTestRunsRequestProtocolsItem{
-		ListTestRunsRequestProtocolsItem0,
-		ListTestRunsRequestProtocolsItem1,
-		ListTestRunsRequestProtocolsItem2,
-		ListTestRunsRequestProtocolsItem3,
-		ListTestRunsRequestProtocolsItem4,
-		ListTestRunsRequestProtocolsItem5,
-		ListTestRunsRequestProtocolsItem7,
-		ListTestRunsRequestProtocolsItem8,
-	}
-}
-
-type ListTestRunsRequestProvidersItem int32
-
-const (
-	ListTestRunsRequestProvidersItem0 ListTestRunsRequestProvidersItem = 0
-	ListTestRunsRequestProvidersItem1 ListTestRunsRequestProvidersItem = 1
-	ListTestRunsRequestProvidersItem2 ListTestRunsRequestProvidersItem = 2
-)
-
-// AllValues returns all ListTestRunsRequestProvidersItem values.
-func (ListTestRunsRequestProvidersItem) AllValues() []ListTestRunsRequestProvidersItem {
-	return []ListTestRunsRequestProvidersItem{
-		ListTestRunsRequestProvidersItem0,
-		ListTestRunsRequestProvidersItem1,
-		ListTestRunsRequestProvidersItem2,
-	}
-}
-
-type ListTestRunsRequestStatusesItem int32
-
-const (
-	ListTestRunsRequestStatusesItem0  ListTestRunsRequestStatusesItem = 0
-	ListTestRunsRequestStatusesItem1  ListTestRunsRequestStatusesItem = 1
-	ListTestRunsRequestStatusesItem2  ListTestRunsRequestStatusesItem = 2
-	ListTestRunsRequestStatusesItem5  ListTestRunsRequestStatusesItem = 5
-	ListTestRunsRequestStatusesItem3  ListTestRunsRequestStatusesItem = 3
-	ListTestRunsRequestStatusesItem4  ListTestRunsRequestStatusesItem = 4
-	ListTestRunsRequestStatusesItem6  ListTestRunsRequestStatusesItem = 6
-	ListTestRunsRequestStatusesItem7  ListTestRunsRequestStatusesItem = 7
-	ListTestRunsRequestStatusesItem8  ListTestRunsRequestStatusesItem = 8
-	ListTestRunsRequestStatusesItem9  ListTestRunsRequestStatusesItem = 9
-	ListTestRunsRequestStatusesItem10 ListTestRunsRequestStatusesItem = 10
-	ListTestRunsRequestStatusesItem11 ListTestRunsRequestStatusesItem = 11
-)
-
-// AllValues returns all ListTestRunsRequestStatusesItem values.
-func (ListTestRunsRequestStatusesItem) AllValues() []ListTestRunsRequestStatusesItem {
-	return []ListTestRunsRequestStatusesItem{
-		ListTestRunsRequestStatusesItem0,
-		ListTestRunsRequestStatusesItem1,
-		ListTestRunsRequestStatusesItem2,
-		ListTestRunsRequestStatusesItem5,
-		ListTestRunsRequestStatusesItem3,
-		ListTestRunsRequestStatusesItem4,
-		ListTestRunsRequestStatusesItem6,
-		ListTestRunsRequestStatusesItem7,
-		ListTestRunsRequestStatusesItem8,
-		ListTestRunsRequestStatusesItem9,
-		ListTestRunsRequestStatusesItem10,
-		ListTestRunsRequestStatusesItem11,
-	}
-}
-
-type ListTestRunsRequestTriggersItem int32
-
-const (
-	ListTestRunsRequestTriggersItem0 ListTestRunsRequestTriggersItem = 0
-	ListTestRunsRequestTriggersItem1 ListTestRunsRequestTriggersItem = 1
-	ListTestRunsRequestTriggersItem2 ListTestRunsRequestTriggersItem = 2
-	ListTestRunsRequestTriggersItem3 ListTestRunsRequestTriggersItem = 3
-)
-
-// AllValues returns all ListTestRunsRequestTriggersItem values.
-func (ListTestRunsRequestTriggersItem) AllValues() []ListTestRunsRequestTriggersItem {
-	return []ListTestRunsRequestTriggersItem{
-		ListTestRunsRequestTriggersItem0,
-		ListTestRunsRequestTriggersItem1,
-		ListTestRunsRequestTriggersItem2,
-		ListTestRunsRequestTriggersItem3,
-	}
-}
-
-// Ref: #/components/schemas/ListTestRunsResponse
-type ListTestRunsResponse struct {
-	NextPageToken OptString       `json:"nextPageToken"`
-	Runs          []TestRunRecord `json:"runs"`
-}
-
-// GetNextPageToken returns the value of NextPageToken.
-func (s *ListTestRunsResponse) GetNextPageToken() OptString {
-	return s.NextPageToken
-}
-
-// GetRuns returns the value of Runs.
-func (s *ListTestRunsResponse) GetRuns() []TestRunRecord {
-	return s.Runs
-}
-
-// SetNextPageToken sets the value of NextPageToken.
-func (s *ListTestRunsResponse) SetNextPageToken(val OptString) {
-	s.NextPageToken = val
-}
-
-// SetRuns sets the value of Runs.
-func (s *ListTestRunsResponse) SetRuns(val []TestRunRecord) {
-	s.Runs = val
-}
-
-// Ref: #/components/schemas/ListTestWizardDraftsRequest
-type ListTestWizardDraftsRequest struct {
-	Filter   OptEntityFilter `json:"filter"`
-	Page     OptPage         `json:"page"`
-	Sort     OptEntitySort   `json:"sort"`
-	TenantId OptString       `json:"tenantId"`
-}
-
-// GetFilter returns the value of Filter.
-func (s *ListTestWizardDraftsRequest) GetFilter() OptEntityFilter {
-	return s.Filter
-}
-
-// GetPage returns the value of Page.
-func (s *ListTestWizardDraftsRequest) GetPage() OptPage {
-	return s.Page
-}
-
-// GetSort returns the value of Sort.
-func (s *ListTestWizardDraftsRequest) GetSort() OptEntitySort {
-	return s.Sort
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *ListTestWizardDraftsRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetFilter sets the value of Filter.
-func (s *ListTestWizardDraftsRequest) SetFilter(val OptEntityFilter) {
-	s.Filter = val
-}
-
-// SetPage sets the value of Page.
-func (s *ListTestWizardDraftsRequest) SetPage(val OptPage) {
-	s.Page = val
-}
-
-// SetSort sets the value of Sort.
-func (s *ListTestWizardDraftsRequest) SetSort(val OptEntitySort) {
-	s.Sort = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *ListTestWizardDraftsRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/ListTestWizardDraftsResponse
-type ListTestWizardDraftsResponse struct {
-	Drafts        []TestWizardDraftRecord `json:"drafts"`
-	NextPageToken OptString               `json:"nextPageToken"`
-}
-
-// GetDrafts returns the value of Drafts.
-func (s *ListTestWizardDraftsResponse) GetDrafts() []TestWizardDraftRecord {
-	return s.Drafts
-}
-
-// GetNextPageToken returns the value of NextPageToken.
-func (s *ListTestWizardDraftsResponse) GetNextPageToken() OptString {
-	return s.NextPageToken
-}
-
-// SetDrafts sets the value of Drafts.
-func (s *ListTestWizardDraftsResponse) SetDrafts(val []TestWizardDraftRecord) {
-	s.Drafts = val
-}
-
-// SetNextPageToken sets the value of NextPageToken.
-func (s *ListTestWizardDraftsResponse) SetNextPageToken(val OptString) {
-	s.NextPageToken = val
-}
-
-// Ref: #/components/schemas/ListWorkloadPresetsRequest
-type ListWorkloadPresetsRequest struct {
-	Filter          OptEntityFilter                           `json:"filter"`
-	IsSystem        OptBool                                   `json:"isSystem"`
-	Page            OptPage                                   `json:"page"`
-	Protocols       []ListWorkloadPresetsRequestProtocolsItem `json:"protocols"`
-	Scripts         []string                                  `json:"scripts"`
-	Sort            OptSort2                                  `json:"sort"`
-	StroppyVersions []string                                  `json:"stroppyVersions"`
-	Tags            OptListWorkloadPresetsRequestTags         `json:"tags"`
-	TenantId        OptString                                 `json:"tenantId"`
-}
-
-// GetFilter returns the value of Filter.
-func (s *ListWorkloadPresetsRequest) GetFilter() OptEntityFilter {
-	return s.Filter
-}
-
-// GetIsSystem returns the value of IsSystem.
-func (s *ListWorkloadPresetsRequest) GetIsSystem() OptBool {
-	return s.IsSystem
-}
-
-// GetPage returns the value of Page.
-func (s *ListWorkloadPresetsRequest) GetPage() OptPage {
-	return s.Page
-}
-
-// GetProtocols returns the value of Protocols.
-func (s *ListWorkloadPresetsRequest) GetProtocols() []ListWorkloadPresetsRequestProtocolsItem {
-	return s.Protocols
-}
-
-// GetScripts returns the value of Scripts.
-func (s *ListWorkloadPresetsRequest) GetScripts() []string {
-	return s.Scripts
-}
-
-// GetSort returns the value of Sort.
-func (s *ListWorkloadPresetsRequest) GetSort() OptSort2 {
-	return s.Sort
-}
-
-// GetStroppyVersions returns the value of StroppyVersions.
-func (s *ListWorkloadPresetsRequest) GetStroppyVersions() []string {
-	return s.StroppyVersions
-}
-
-// GetTags returns the value of Tags.
-func (s *ListWorkloadPresetsRequest) GetTags() OptListWorkloadPresetsRequestTags {
-	return s.Tags
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *ListWorkloadPresetsRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetFilter sets the value of Filter.
-func (s *ListWorkloadPresetsRequest) SetFilter(val OptEntityFilter) {
-	s.Filter = val
-}
-
-// SetIsSystem sets the value of IsSystem.
-func (s *ListWorkloadPresetsRequest) SetIsSystem(val OptBool) {
-	s.IsSystem = val
-}
-
-// SetPage sets the value of Page.
-func (s *ListWorkloadPresetsRequest) SetPage(val OptPage) {
-	s.Page = val
-}
-
-// SetProtocols sets the value of Protocols.
-func (s *ListWorkloadPresetsRequest) SetProtocols(val []ListWorkloadPresetsRequestProtocolsItem) {
-	s.Protocols = val
-}
-
-// SetScripts sets the value of Scripts.
-func (s *ListWorkloadPresetsRequest) SetScripts(val []string) {
-	s.Scripts = val
-}
-
-// SetSort sets the value of Sort.
-func (s *ListWorkloadPresetsRequest) SetSort(val OptSort2) {
-	s.Sort = val
-}
-
-// SetStroppyVersions sets the value of StroppyVersions.
-func (s *ListWorkloadPresetsRequest) SetStroppyVersions(val []string) {
-	s.StroppyVersions = val
-}
-
-// SetTags sets the value of Tags.
-func (s *ListWorkloadPresetsRequest) SetTags(val OptListWorkloadPresetsRequestTags) {
-	s.Tags = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *ListWorkloadPresetsRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-type ListWorkloadPresetsRequestProtocolsItem int32
-
-const (
-	ListWorkloadPresetsRequestProtocolsItem0 ListWorkloadPresetsRequestProtocolsItem = 0
-	ListWorkloadPresetsRequestProtocolsItem1 ListWorkloadPresetsRequestProtocolsItem = 1
-	ListWorkloadPresetsRequestProtocolsItem2 ListWorkloadPresetsRequestProtocolsItem = 2
-	ListWorkloadPresetsRequestProtocolsItem3 ListWorkloadPresetsRequestProtocolsItem = 3
-	ListWorkloadPresetsRequestProtocolsItem4 ListWorkloadPresetsRequestProtocolsItem = 4
-	ListWorkloadPresetsRequestProtocolsItem5 ListWorkloadPresetsRequestProtocolsItem = 5
-	ListWorkloadPresetsRequestProtocolsItem7 ListWorkloadPresetsRequestProtocolsItem = 7
-	ListWorkloadPresetsRequestProtocolsItem8 ListWorkloadPresetsRequestProtocolsItem = 8
-)
-
-// AllValues returns all ListWorkloadPresetsRequestProtocolsItem values.
-func (ListWorkloadPresetsRequestProtocolsItem) AllValues() []ListWorkloadPresetsRequestProtocolsItem {
-	return []ListWorkloadPresetsRequestProtocolsItem{
-		ListWorkloadPresetsRequestProtocolsItem0,
-		ListWorkloadPresetsRequestProtocolsItem1,
-		ListWorkloadPresetsRequestProtocolsItem2,
-		ListWorkloadPresetsRequestProtocolsItem3,
-		ListWorkloadPresetsRequestProtocolsItem4,
-		ListWorkloadPresetsRequestProtocolsItem5,
-		ListWorkloadPresetsRequestProtocolsItem7,
-		ListWorkloadPresetsRequestProtocolsItem8,
-	}
-}
-
-type ListWorkloadPresetsRequestTags map[string]string
-
-func (s *ListWorkloadPresetsRequestTags) init() ListWorkloadPresetsRequestTags {
-	m := *s
-	if m == nil {
-		m = map[string]string{}
-		*s = m
-	}
-	return m
-}
-
-// Ref: #/components/schemas/ListWorkloadPresetsResponse
-type ListWorkloadPresetsResponse struct {
-	NextPageToken OptString              `json:"nextPageToken"`
-	Presets       []WorkloadPresetRecord `json:"presets"`
-}
-
-// GetNextPageToken returns the value of NextPageToken.
-func (s *ListWorkloadPresetsResponse) GetNextPageToken() OptString {
-	return s.NextPageToken
-}
-
-// GetPresets returns the value of Presets.
-func (s *ListWorkloadPresetsResponse) GetPresets() []WorkloadPresetRecord {
-	return s.Presets
-}
-
-// SetNextPageToken sets the value of NextPageToken.
-func (s *ListWorkloadPresetsResponse) SetNextPageToken(val OptString) {
-	s.NextPageToken = val
-}
-
-// SetPresets sets the value of Presets.
-func (s *ListWorkloadPresetsResponse) SetPresets(val []WorkloadPresetRecord) {
-	s.Presets = val
 }
 
 // Ref: #/components/schemas/LogCursor
@@ -13299,52 +9939,6 @@ func (o OptBool) Or(d bool) bool {
 	return d
 }
 
-// NewOptChildRunStatus returns new OptChildRunStatus with value set to v.
-func NewOptChildRunStatus(v ChildRunStatus) OptChildRunStatus {
-	return OptChildRunStatus{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptChildRunStatus is optional ChildRunStatus.
-type OptChildRunStatus struct {
-	Value ChildRunStatus
-	Set   bool
-}
-
-// IsSet returns true if OptChildRunStatus was set.
-func (o OptChildRunStatus) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptChildRunStatus) Reset() {
-	var v ChildRunStatus
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptChildRunStatus) SetTo(v ChildRunStatus) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptChildRunStatus) Get() (v ChildRunStatus, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptChildRunStatus) Or(d ChildRunStatus) ChildRunStatus {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptCmd returns new OptCmd with value set to v.
 func NewOptCmd(v Cmd) OptCmd {
 	return OptCmd{
@@ -13707,52 +10301,6 @@ func (o OptComponentLabels) Get() (v ComponentLabels, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptComponentLabels) Or(d ComponentLabels) ComponentLabels {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptComponentRenderLabels returns new OptComponentRenderLabels with value set to v.
-func NewOptComponentRenderLabels(v ComponentRenderLabels) OptComponentRenderLabels {
-	return OptComponentRenderLabels{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptComponentRenderLabels is optional ComponentRenderLabels.
-type OptComponentRenderLabels struct {
-	Value ComponentRenderLabels
-	Set   bool
-}
-
-// IsSet returns true if OptComponentRenderLabels was set.
-func (o OptComponentRenderLabels) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptComponentRenderLabels) Reset() {
-	var v ComponentRenderLabels
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptComponentRenderLabels) SetTo(v ComponentRenderLabels) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptComponentRenderLabels) Get() (v ComponentRenderLabels, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptComponentRenderLabels) Or(d ComponentRenderLabels) ComponentRenderLabels {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -14489,52 +11037,6 @@ func (o OptCreateRoleRequestScope) Get() (v CreateRoleRequestScope, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptCreateRoleRequestScope) Or(d CreateRoleRequestScope) CreateRoleRequestScope {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptDatabase returns new OptDatabase with value set to v.
-func NewOptDatabase(v Database) OptDatabase {
-	return OptDatabase{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptDatabase is optional Database.
-type OptDatabase struct {
-	Value Database
-	Set   bool
-}
-
-// IsSet returns true if OptDatabase was set.
-func (o OptDatabase) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptDatabase) Reset() {
-	var v Database
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptDatabase) SetTo(v Database) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptDatabase) Get() (v Database, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptDatabase) Or(d Database) Database {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -15553,38 +12055,38 @@ func (o OptFavoriteRecordKind) Or(d FavoriteRecordKind) FavoriteRecordKind {
 	return d
 }
 
-// NewOptFieldErrorParams returns new OptFieldErrorParams with value set to v.
-func NewOptFieldErrorParams(v FieldErrorParams) OptFieldErrorParams {
-	return OptFieldErrorParams{
+// NewOptFile returns new OptFile with value set to v.
+func NewOptFile(v File) OptFile {
+	return OptFile{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptFieldErrorParams is optional FieldErrorParams.
-type OptFieldErrorParams struct {
-	Value FieldErrorParams
+// OptFile is optional File.
+type OptFile struct {
+	Value File
 	Set   bool
 }
 
-// IsSet returns true if OptFieldErrorParams was set.
-func (o OptFieldErrorParams) IsSet() bool { return o.Set }
+// IsSet returns true if OptFile was set.
+func (o OptFile) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptFieldErrorParams) Reset() {
-	var v FieldErrorParams
+func (o *OptFile) Reset() {
+	var v File
 	o.Value = v
 	o.Set = false
 }
 
 // SetTo sets value to v.
-func (o *OptFieldErrorParams) SetTo(v FieldErrorParams) {
+func (o *OptFile) SetTo(v File) {
 	o.Set = true
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptFieldErrorParams) Get() (v FieldErrorParams, ok bool) {
+func (o OptFile) Get() (v File, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -15592,99 +12094,7 @@ func (o OptFieldErrorParams) Get() (v FieldErrorParams, ok bool) {
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptFieldErrorParams) Or(d FieldErrorParams) FieldErrorParams {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptFieldErrorSeverity returns new OptFieldErrorSeverity with value set to v.
-func NewOptFieldErrorSeverity(v FieldErrorSeverity) OptFieldErrorSeverity {
-	return OptFieldErrorSeverity{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptFieldErrorSeverity is optional FieldErrorSeverity.
-type OptFieldErrorSeverity struct {
-	Value FieldErrorSeverity
-	Set   bool
-}
-
-// IsSet returns true if OptFieldErrorSeverity was set.
-func (o OptFieldErrorSeverity) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptFieldErrorSeverity) Reset() {
-	var v FieldErrorSeverity
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptFieldErrorSeverity) SetTo(v FieldErrorSeverity) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptFieldErrorSeverity) Get() (v FieldErrorSeverity, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptFieldErrorSeverity) Or(d FieldErrorSeverity) FieldErrorSeverity {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptFile2 returns new OptFile2 with value set to v.
-func NewOptFile2(v File2) OptFile2 {
-	return OptFile2{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptFile2 is optional File2.
-type OptFile2 struct {
-	Value File2
-	Set   bool
-}
-
-// IsSet returns true if OptFile2 was set.
-func (o OptFile2) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptFile2) Reset() {
-	var v File2
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptFile2) SetTo(v File2) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptFile2) Get() (v File2, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptFile2) Or(d File2) File2 {
+func (o OptFile) Or(d File) File {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -16795,52 +13205,6 @@ func (o OptList) Or(d List) List {
 	return d
 }
 
-// NewOptListDatabasePresetsRequestTags returns new OptListDatabasePresetsRequestTags with value set to v.
-func NewOptListDatabasePresetsRequestTags(v ListDatabasePresetsRequestTags) OptListDatabasePresetsRequestTags {
-	return OptListDatabasePresetsRequestTags{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptListDatabasePresetsRequestTags is optional ListDatabasePresetsRequestTags.
-type OptListDatabasePresetsRequestTags struct {
-	Value ListDatabasePresetsRequestTags
-	Set   bool
-}
-
-// IsSet returns true if OptListDatabasePresetsRequestTags was set.
-func (o OptListDatabasePresetsRequestTags) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptListDatabasePresetsRequestTags) Reset() {
-	var v ListDatabasePresetsRequestTags
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptListDatabasePresetsRequestTags) SetTo(v ListDatabasePresetsRequestTags) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptListDatabasePresetsRequestTags) Get() (v ListDatabasePresetsRequestTags, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptListDatabasePresetsRequestTags) Or(d ListDatabasePresetsRequestTags) ListDatabasePresetsRequestTags {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptListFavoritesRequestKind returns new OptListFavoritesRequestKind with value set to v.
 func NewOptListFavoritesRequestKind(v ListFavoritesRequestKind) OptListFavoritesRequestKind {
 	return OptListFavoritesRequestKind{
@@ -17019,98 +13383,6 @@ func (o OptListRegistrationRequestsRequestStatus) Get() (v ListRegistrationReque
 
 // Or returns value if set, or given parameter if does not.
 func (o OptListRegistrationRequestsRequestStatus) Or(d ListRegistrationRequestsRequestStatus) ListRegistrationRequestsRequestStatus {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptListTestPresetsRequestTags returns new OptListTestPresetsRequestTags with value set to v.
-func NewOptListTestPresetsRequestTags(v ListTestPresetsRequestTags) OptListTestPresetsRequestTags {
-	return OptListTestPresetsRequestTags{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptListTestPresetsRequestTags is optional ListTestPresetsRequestTags.
-type OptListTestPresetsRequestTags struct {
-	Value ListTestPresetsRequestTags
-	Set   bool
-}
-
-// IsSet returns true if OptListTestPresetsRequestTags was set.
-func (o OptListTestPresetsRequestTags) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptListTestPresetsRequestTags) Reset() {
-	var v ListTestPresetsRequestTags
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptListTestPresetsRequestTags) SetTo(v ListTestPresetsRequestTags) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptListTestPresetsRequestTags) Get() (v ListTestPresetsRequestTags, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptListTestPresetsRequestTags) Or(d ListTestPresetsRequestTags) ListTestPresetsRequestTags {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptListWorkloadPresetsRequestTags returns new OptListWorkloadPresetsRequestTags with value set to v.
-func NewOptListWorkloadPresetsRequestTags(v ListWorkloadPresetsRequestTags) OptListWorkloadPresetsRequestTags {
-	return OptListWorkloadPresetsRequestTags{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptListWorkloadPresetsRequestTags is optional ListWorkloadPresetsRequestTags.
-type OptListWorkloadPresetsRequestTags struct {
-	Value ListWorkloadPresetsRequestTags
-	Set   bool
-}
-
-// IsSet returns true if OptListWorkloadPresetsRequestTags was set.
-func (o OptListWorkloadPresetsRequestTags) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptListWorkloadPresetsRequestTags) Reset() {
-	var v ListWorkloadPresetsRequestTags
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptListWorkloadPresetsRequestTags) SetTo(v ListWorkloadPresetsRequestTags) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptListWorkloadPresetsRequestTags) Get() (v ListWorkloadPresetsRequestTags, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptListWorkloadPresetsRequestTags) Or(d ListWorkloadPresetsRequestTags) ListWorkloadPresetsRequestTags {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -18543,98 +14815,6 @@ func (o OptParametersEnv) Or(d ParametersEnv) ParametersEnv {
 	return d
 }
 
-// NewOptPatchSuiteWizardRequestProvider returns new OptPatchSuiteWizardRequestProvider with value set to v.
-func NewOptPatchSuiteWizardRequestProvider(v PatchSuiteWizardRequestProvider) OptPatchSuiteWizardRequestProvider {
-	return OptPatchSuiteWizardRequestProvider{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptPatchSuiteWizardRequestProvider is optional PatchSuiteWizardRequestProvider.
-type OptPatchSuiteWizardRequestProvider struct {
-	Value PatchSuiteWizardRequestProvider
-	Set   bool
-}
-
-// IsSet returns true if OptPatchSuiteWizardRequestProvider was set.
-func (o OptPatchSuiteWizardRequestProvider) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptPatchSuiteWizardRequestProvider) Reset() {
-	var v PatchSuiteWizardRequestProvider
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptPatchSuiteWizardRequestProvider) SetTo(v PatchSuiteWizardRequestProvider) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptPatchSuiteWizardRequestProvider) Get() (v PatchSuiteWizardRequestProvider, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptPatchSuiteWizardRequestProvider) Or(d PatchSuiteWizardRequestProvider) PatchSuiteWizardRequestProvider {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptPatchTestWizardRequestProvider returns new OptPatchTestWizardRequestProvider with value set to v.
-func NewOptPatchTestWizardRequestProvider(v PatchTestWizardRequestProvider) OptPatchTestWizardRequestProvider {
-	return OptPatchTestWizardRequestProvider{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptPatchTestWizardRequestProvider is optional PatchTestWizardRequestProvider.
-type OptPatchTestWizardRequestProvider struct {
-	Value PatchTestWizardRequestProvider
-	Set   bool
-}
-
-// IsSet returns true if OptPatchTestWizardRequestProvider was set.
-func (o OptPatchTestWizardRequestProvider) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptPatchTestWizardRequestProvider) Reset() {
-	var v PatchTestWizardRequestProvider
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptPatchTestWizardRequestProvider) SetTo(v PatchTestWizardRequestProvider) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptPatchTestWizardRequestProvider) Get() (v PatchTestWizardRequestProvider, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptPatchTestWizardRequestProvider) Or(d PatchTestWizardRequestProvider) PatchTestWizardRequestProvider {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptPermissionAction returns new OptPermissionAction with value set to v.
 func NewOptPermissionAction(v PermissionAction) OptPermissionAction {
 	return OptPermissionAction{
@@ -19739,98 +15919,6 @@ func (o OptPresetId) Or(d PresetId) PresetId {
 	return d
 }
 
-// NewOptPresetPair returns new OptPresetPair with value set to v.
-func NewOptPresetPair(v PresetPair) OptPresetPair {
-	return OptPresetPair{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptPresetPair is optional PresetPair.
-type OptPresetPair struct {
-	Value PresetPair
-	Set   bool
-}
-
-// IsSet returns true if OptPresetPair was set.
-func (o OptPresetPair) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptPresetPair) Reset() {
-	var v PresetPair
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptPresetPair) SetTo(v PresetPair) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptPresetPair) Get() (v PresetPair, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptPresetPair) Or(d PresetPair) PresetPair {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptProbeScriptRequestEnv returns new OptProbeScriptRequestEnv with value set to v.
-func NewOptProbeScriptRequestEnv(v ProbeScriptRequestEnv) OptProbeScriptRequestEnv {
-	return OptProbeScriptRequestEnv{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptProbeScriptRequestEnv is optional ProbeScriptRequestEnv.
-type OptProbeScriptRequestEnv struct {
-	Value ProbeScriptRequestEnv
-	Set   bool
-}
-
-// IsSet returns true if OptProbeScriptRequestEnv was set.
-func (o OptProbeScriptRequestEnv) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptProbeScriptRequestEnv) Reset() {
-	var v ProbeScriptRequestEnv
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptProbeScriptRequestEnv) SetTo(v ProbeScriptRequestEnv) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptProbeScriptRequestEnv) Get() (v ProbeScriptRequestEnv, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptProbeScriptRequestEnv) Or(d ProbeScriptRequestEnv) ProbeScriptRequestEnv {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptProviderSettings returns new OptProviderSettings with value set to v.
 func NewOptProviderSettings(v ProviderSettings) OptProviderSettings {
 	return OptProviderSettings{
@@ -20429,190 +16517,6 @@ func (o OptRemoveFavoriteRequestKind) Or(d RemoveFavoriteRequestKind) RemoveFavo
 	return d
 }
 
-// NewOptRenderArtifactKind returns new OptRenderArtifactKind with value set to v.
-func NewOptRenderArtifactKind(v RenderArtifactKind) OptRenderArtifactKind {
-	return OptRenderArtifactKind{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptRenderArtifactKind is optional RenderArtifactKind.
-type OptRenderArtifactKind struct {
-	Value RenderArtifactKind
-	Set   bool
-}
-
-// IsSet returns true if OptRenderArtifactKind was set.
-func (o OptRenderArtifactKind) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptRenderArtifactKind) Reset() {
-	var v RenderArtifactKind
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptRenderArtifactKind) SetTo(v RenderArtifactKind) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptRenderArtifactKind) Get() (v RenderArtifactKind, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptRenderArtifactKind) Or(d RenderArtifactKind) RenderArtifactKind {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptRenderArtifactLabels returns new OptRenderArtifactLabels with value set to v.
-func NewOptRenderArtifactLabels(v RenderArtifactLabels) OptRenderArtifactLabels {
-	return OptRenderArtifactLabels{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptRenderArtifactLabels is optional RenderArtifactLabels.
-type OptRenderArtifactLabels struct {
-	Value RenderArtifactLabels
-	Set   bool
-}
-
-// IsSet returns true if OptRenderArtifactLabels was set.
-func (o OptRenderArtifactLabels) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptRenderArtifactLabels) Reset() {
-	var v RenderArtifactLabels
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptRenderArtifactLabels) SetTo(v RenderArtifactLabels) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptRenderArtifactLabels) Get() (v RenderArtifactLabels, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptRenderArtifactLabels) Or(d RenderArtifactLabels) RenderArtifactLabels {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptRenderArtifactMutability returns new OptRenderArtifactMutability with value set to v.
-func NewOptRenderArtifactMutability(v RenderArtifactMutability) OptRenderArtifactMutability {
-	return OptRenderArtifactMutability{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptRenderArtifactMutability is optional RenderArtifactMutability.
-type OptRenderArtifactMutability struct {
-	Value RenderArtifactMutability
-	Set   bool
-}
-
-// IsSet returns true if OptRenderArtifactMutability was set.
-func (o OptRenderArtifactMutability) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptRenderArtifactMutability) Reset() {
-	var v RenderArtifactMutability
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptRenderArtifactMutability) SetTo(v RenderArtifactMutability) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptRenderArtifactMutability) Get() (v RenderArtifactMutability, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptRenderArtifactMutability) Or(d RenderArtifactMutability) RenderArtifactMutability {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptRenderArtifactOrigin returns new OptRenderArtifactOrigin with value set to v.
-func NewOptRenderArtifactOrigin(v RenderArtifactOrigin) OptRenderArtifactOrigin {
-	return OptRenderArtifactOrigin{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptRenderArtifactOrigin is optional RenderArtifactOrigin.
-type OptRenderArtifactOrigin struct {
-	Value RenderArtifactOrigin
-	Set   bool
-}
-
-// IsSet returns true if OptRenderArtifactOrigin was set.
-func (o OptRenderArtifactOrigin) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptRenderArtifactOrigin) Reset() {
-	var v RenderArtifactOrigin
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptRenderArtifactOrigin) SetTo(v RenderArtifactOrigin) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptRenderArtifactOrigin) Get() (v RenderArtifactOrigin, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptRenderArtifactOrigin) Or(d RenderArtifactOrigin) RenderArtifactOrigin {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptRenderOverrideSet returns new OptRenderOverrideSet with value set to v.
 func NewOptRenderOverrideSet(v RenderOverrideSet) OptRenderOverrideSet {
 	return OptRenderOverrideSet{
@@ -20699,98 +16603,6 @@ func (o OptRenderOverrideSetLabels) Get() (v RenderOverrideSetLabels, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptRenderOverrideSetLabels) Or(d RenderOverrideSetLabels) RenderOverrideSetLabels {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptRenderPreview returns new OptRenderPreview with value set to v.
-func NewOptRenderPreview(v RenderPreview) OptRenderPreview {
-	return OptRenderPreview{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptRenderPreview is optional RenderPreview.
-type OptRenderPreview struct {
-	Value RenderPreview
-	Set   bool
-}
-
-// IsSet returns true if OptRenderPreview was set.
-func (o OptRenderPreview) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptRenderPreview) Reset() {
-	var v RenderPreview
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptRenderPreview) SetTo(v RenderPreview) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptRenderPreview) Get() (v RenderPreview, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptRenderPreview) Or(d RenderPreview) RenderPreview {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptRenderPreviewLabels returns new OptRenderPreviewLabels with value set to v.
-func NewOptRenderPreviewLabels(v RenderPreviewLabels) OptRenderPreviewLabels {
-	return OptRenderPreviewLabels{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptRenderPreviewLabels is optional RenderPreviewLabels.
-type OptRenderPreviewLabels struct {
-	Value RenderPreviewLabels
-	Set   bool
-}
-
-// IsSet returns true if OptRenderPreviewLabels was set.
-func (o OptRenderPreviewLabels) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptRenderPreviewLabels) Reset() {
-	var v RenderPreviewLabels
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptRenderPreviewLabels) SetTo(v RenderPreviewLabels) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptRenderPreviewLabels) Get() (v RenderPreviewLabels, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptRenderPreviewLabels) Or(d RenderPreviewLabels) RenderPreviewLabels {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -21625,52 +17437,6 @@ func (o OptRuntimeNodeStatus) Or(d RuntimeNodeStatus) RuntimeNodeStatus {
 	return d
 }
 
-// NewOptSchedule returns new OptSchedule with value set to v.
-func NewOptSchedule(v Schedule) OptSchedule {
-	return OptSchedule{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSchedule is optional Schedule.
-type OptSchedule struct {
-	Value Schedule
-	Set   bool
-}
-
-// IsSet returns true if OptSchedule was set.
-func (o OptSchedule) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSchedule) Reset() {
-	var v Schedule
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSchedule) SetTo(v Schedule) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSchedule) Get() (v Schedule, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSchedule) Or(d Schedule) Schedule {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptSchema returns new OptSchema with value set to v.
 func NewOptSchema(v Schema) OptSchema {
 	return OptSchema{
@@ -22361,834 +18127,6 @@ func (o OptSnapshot) Or(d Snapshot) Snapshot {
 	return d
 }
 
-// NewOptSort returns new OptSort with value set to v.
-func NewOptSort(v Sort) OptSort {
-	return OptSort{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSort is optional Sort.
-type OptSort struct {
-	Value Sort
-	Set   bool
-}
-
-// IsSet returns true if OptSort was set.
-func (o OptSort) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSort) Reset() {
-	var v Sort
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSort) SetTo(v Sort) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSort) Get() (v Sort, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSort) Or(d Sort) Sort {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSort2 returns new OptSort2 with value set to v.
-func NewOptSort2(v Sort2) OptSort2 {
-	return OptSort2{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSort2 is optional Sort2.
-type OptSort2 struct {
-	Value Sort2
-	Set   bool
-}
-
-// IsSet returns true if OptSort2 was set.
-func (o OptSort2) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSort2) Reset() {
-	var v Sort2
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSort2) SetTo(v Sort2) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSort2) Get() (v Sort2, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSort2) Or(d Sort2) Sort2 {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSort2Entity returns new OptSort2Entity with value set to v.
-func NewOptSort2Entity(v Sort2Entity) OptSort2Entity {
-	return OptSort2Entity{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSort2Entity is optional Sort2Entity.
-type OptSort2Entity struct {
-	Value Sort2Entity
-	Set   bool
-}
-
-// IsSet returns true if OptSort2Entity was set.
-func (o OptSort2Entity) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSort2Entity) Reset() {
-	var v Sort2Entity
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSort2Entity) SetTo(v Sort2Entity) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSort2Entity) Get() (v Sort2Entity, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSort2Entity) Or(d Sort2Entity) Sort2Entity {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSort2Kind returns new OptSort2Kind with value set to v.
-func NewOptSort2Kind(v Sort2Kind) OptSort2Kind {
-	return OptSort2Kind{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSort2Kind is optional Sort2Kind.
-type OptSort2Kind struct {
-	Value Sort2Kind
-	Set   bool
-}
-
-// IsSet returns true if OptSort2Kind was set.
-func (o OptSort2Kind) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSort2Kind) Reset() {
-	var v Sort2Kind
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSort2Kind) SetTo(v Sort2Kind) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSort2Kind) Get() (v Sort2Kind, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSort2Kind) Or(d Sort2Kind) Sort2Kind {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSort3 returns new OptSort3 with value set to v.
-func NewOptSort3(v Sort3) OptSort3 {
-	return OptSort3{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSort3 is optional Sort3.
-type OptSort3 struct {
-	Value Sort3
-	Set   bool
-}
-
-// IsSet returns true if OptSort3 was set.
-func (o OptSort3) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSort3) Reset() {
-	var v Sort3
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSort3) SetTo(v Sort3) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSort3) Get() (v Sort3, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSort3) Or(d Sort3) Sort3 {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSort3Entity returns new OptSort3Entity with value set to v.
-func NewOptSort3Entity(v Sort3Entity) OptSort3Entity {
-	return OptSort3Entity{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSort3Entity is optional Sort3Entity.
-type OptSort3Entity struct {
-	Value Sort3Entity
-	Set   bool
-}
-
-// IsSet returns true if OptSort3Entity was set.
-func (o OptSort3Entity) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSort3Entity) Reset() {
-	var v Sort3Entity
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSort3Entity) SetTo(v Sort3Entity) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSort3Entity) Get() (v Sort3Entity, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSort3Entity) Or(d Sort3Entity) Sort3Entity {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSort3Kind returns new OptSort3Kind with value set to v.
-func NewOptSort3Kind(v Sort3Kind) OptSort3Kind {
-	return OptSort3Kind{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSort3Kind is optional Sort3Kind.
-type OptSort3Kind struct {
-	Value Sort3Kind
-	Set   bool
-}
-
-// IsSet returns true if OptSort3Kind was set.
-func (o OptSort3Kind) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSort3Kind) Reset() {
-	var v Sort3Kind
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSort3Kind) SetTo(v Sort3Kind) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSort3Kind) Get() (v Sort3Kind, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSort3Kind) Or(d Sort3Kind) Sort3Kind {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSort4 returns new OptSort4 with value set to v.
-func NewOptSort4(v Sort4) OptSort4 {
-	return OptSort4{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSort4 is optional Sort4.
-type OptSort4 struct {
-	Value Sort4
-	Set   bool
-}
-
-// IsSet returns true if OptSort4 was set.
-func (o OptSort4) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSort4) Reset() {
-	var v Sort4
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSort4) SetTo(v Sort4) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSort4) Get() (v Sort4, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSort4) Or(d Sort4) Sort4 {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSort4Entity returns new OptSort4Entity with value set to v.
-func NewOptSort4Entity(v Sort4Entity) OptSort4Entity {
-	return OptSort4Entity{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSort4Entity is optional Sort4Entity.
-type OptSort4Entity struct {
-	Value Sort4Entity
-	Set   bool
-}
-
-// IsSet returns true if OptSort4Entity was set.
-func (o OptSort4Entity) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSort4Entity) Reset() {
-	var v Sort4Entity
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSort4Entity) SetTo(v Sort4Entity) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSort4Entity) Get() (v Sort4Entity, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSort4Entity) Or(d Sort4Entity) Sort4Entity {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSort4Kind returns new OptSort4Kind with value set to v.
-func NewOptSort4Kind(v Sort4Kind) OptSort4Kind {
-	return OptSort4Kind{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSort4Kind is optional Sort4Kind.
-type OptSort4Kind struct {
-	Value Sort4Kind
-	Set   bool
-}
-
-// IsSet returns true if OptSort4Kind was set.
-func (o OptSort4Kind) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSort4Kind) Reset() {
-	var v Sort4Kind
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSort4Kind) SetTo(v Sort4Kind) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSort4Kind) Get() (v Sort4Kind, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSort4Kind) Or(d Sort4Kind) Sort4Kind {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSort5 returns new OptSort5 with value set to v.
-func NewOptSort5(v Sort5) OptSort5 {
-	return OptSort5{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSort5 is optional Sort5.
-type OptSort5 struct {
-	Value Sort5
-	Set   bool
-}
-
-// IsSet returns true if OptSort5 was set.
-func (o OptSort5) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSort5) Reset() {
-	var v Sort5
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSort5) SetTo(v Sort5) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSort5) Get() (v Sort5, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSort5) Or(d Sort5) Sort5 {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSort5Entity returns new OptSort5Entity with value set to v.
-func NewOptSort5Entity(v Sort5Entity) OptSort5Entity {
-	return OptSort5Entity{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSort5Entity is optional Sort5Entity.
-type OptSort5Entity struct {
-	Value Sort5Entity
-	Set   bool
-}
-
-// IsSet returns true if OptSort5Entity was set.
-func (o OptSort5Entity) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSort5Entity) Reset() {
-	var v Sort5Entity
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSort5Entity) SetTo(v Sort5Entity) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSort5Entity) Get() (v Sort5Entity, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSort5Entity) Or(d Sort5Entity) Sort5Entity {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSort5Kind returns new OptSort5Kind with value set to v.
-func NewOptSort5Kind(v Sort5Kind) OptSort5Kind {
-	return OptSort5Kind{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSort5Kind is optional Sort5Kind.
-type OptSort5Kind struct {
-	Value Sort5Kind
-	Set   bool
-}
-
-// IsSet returns true if OptSort5Kind was set.
-func (o OptSort5Kind) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSort5Kind) Reset() {
-	var v Sort5Kind
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSort5Kind) SetTo(v Sort5Kind) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSort5Kind) Get() (v Sort5Kind, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSort5Kind) Or(d Sort5Kind) Sort5Kind {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSort6 returns new OptSort6 with value set to v.
-func NewOptSort6(v Sort6) OptSort6 {
-	return OptSort6{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSort6 is optional Sort6.
-type OptSort6 struct {
-	Value Sort6
-	Set   bool
-}
-
-// IsSet returns true if OptSort6 was set.
-func (o OptSort6) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSort6) Reset() {
-	var v Sort6
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSort6) SetTo(v Sort6) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSort6) Get() (v Sort6, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSort6) Or(d Sort6) Sort6 {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSort6Entity returns new OptSort6Entity with value set to v.
-func NewOptSort6Entity(v Sort6Entity) OptSort6Entity {
-	return OptSort6Entity{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSort6Entity is optional Sort6Entity.
-type OptSort6Entity struct {
-	Value Sort6Entity
-	Set   bool
-}
-
-// IsSet returns true if OptSort6Entity was set.
-func (o OptSort6Entity) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSort6Entity) Reset() {
-	var v Sort6Entity
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSort6Entity) SetTo(v Sort6Entity) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSort6Entity) Get() (v Sort6Entity, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSort6Entity) Or(d Sort6Entity) Sort6Entity {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSort6Kind returns new OptSort6Kind with value set to v.
-func NewOptSort6Kind(v Sort6Kind) OptSort6Kind {
-	return OptSort6Kind{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSort6Kind is optional Sort6Kind.
-type OptSort6Kind struct {
-	Value Sort6Kind
-	Set   bool
-}
-
-// IsSet returns true if OptSort6Kind was set.
-func (o OptSort6Kind) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSort6Kind) Reset() {
-	var v Sort6Kind
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSort6Kind) SetTo(v Sort6Kind) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSort6Kind) Get() (v Sort6Kind, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSort6Kind) Or(d Sort6Kind) Sort6Kind {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSortEntity returns new OptSortEntity with value set to v.
-func NewOptSortEntity(v SortEntity) OptSortEntity {
-	return OptSortEntity{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSortEntity is optional SortEntity.
-type OptSortEntity struct {
-	Value SortEntity
-	Set   bool
-}
-
-// IsSet returns true if OptSortEntity was set.
-func (o OptSortEntity) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSortEntity) Reset() {
-	var v SortEntity
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSortEntity) SetTo(v SortEntity) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSortEntity) Get() (v SortEntity, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSortEntity) Or(d SortEntity) SortEntity {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSortKind returns new OptSortKind with value set to v.
-func NewOptSortKind(v SortKind) OptSortKind {
-	return OptSortKind{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSortKind is optional SortKind.
-type OptSortKind struct {
-	Value SortKind
-	Set   bool
-}
-
-// IsSet returns true if OptSortKind was set.
-func (o OptSortKind) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSortKind) Reset() {
-	var v SortKind
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSortKind) SetTo(v SortKind) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSortKind) Get() (v SortKind, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSortKind) Or(d SortKind) SortKind {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptSpecEnv returns new OptSpecEnv with value set to v.
 func NewOptSpecEnv(v SpecEnv) OptSpecEnv {
 	return OptSpecEnv{
@@ -23603,282 +18541,6 @@ func (o OptStringUint64) Or(d uint64) uint64 {
 	return d
 }
 
-// NewOptSuite returns new OptSuite with value set to v.
-func NewOptSuite(v Suite) OptSuite {
-	return OptSuite{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSuite is optional Suite.
-type OptSuite struct {
-	Value Suite
-	Set   bool
-}
-
-// IsSet returns true if OptSuite was set.
-func (o OptSuite) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSuite) Reset() {
-	var v Suite
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSuite) SetTo(v Suite) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSuite) Get() (v Suite, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSuite) Or(d Suite) Suite {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSuiteProvider returns new OptSuiteProvider with value set to v.
-func NewOptSuiteProvider(v SuiteProvider) OptSuiteProvider {
-	return OptSuiteProvider{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSuiteProvider is optional SuiteProvider.
-type OptSuiteProvider struct {
-	Value SuiteProvider
-	Set   bool
-}
-
-// IsSet returns true if OptSuiteProvider was set.
-func (o OptSuiteProvider) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSuiteProvider) Reset() {
-	var v SuiteProvider
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSuiteProvider) SetTo(v SuiteProvider) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSuiteProvider) Get() (v SuiteProvider, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSuiteProvider) Or(d SuiteProvider) SuiteProvider {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSuiteRunRecord returns new OptSuiteRunRecord with value set to v.
-func NewOptSuiteRunRecord(v SuiteRunRecord) OptSuiteRunRecord {
-	return OptSuiteRunRecord{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSuiteRunRecord is optional SuiteRunRecord.
-type OptSuiteRunRecord struct {
-	Value SuiteRunRecord
-	Set   bool
-}
-
-// IsSet returns true if OptSuiteRunRecord was set.
-func (o OptSuiteRunRecord) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSuiteRunRecord) Reset() {
-	var v SuiteRunRecord
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSuiteRunRecord) SetTo(v SuiteRunRecord) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSuiteRunRecord) Get() (v SuiteRunRecord, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSuiteRunRecord) Or(d SuiteRunRecord) SuiteRunRecord {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSuiteRunRecordStatus returns new OptSuiteRunRecordStatus with value set to v.
-func NewOptSuiteRunRecordStatus(v SuiteRunRecordStatus) OptSuiteRunRecordStatus {
-	return OptSuiteRunRecordStatus{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSuiteRunRecordStatus is optional SuiteRunRecordStatus.
-type OptSuiteRunRecordStatus struct {
-	Value SuiteRunRecordStatus
-	Set   bool
-}
-
-// IsSet returns true if OptSuiteRunRecordStatus was set.
-func (o OptSuiteRunRecordStatus) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSuiteRunRecordStatus) Reset() {
-	var v SuiteRunRecordStatus
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSuiteRunRecordStatus) SetTo(v SuiteRunRecordStatus) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSuiteRunRecordStatus) Get() (v SuiteRunRecordStatus, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSuiteRunRecordStatus) Or(d SuiteRunRecordStatus) SuiteRunRecordStatus {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSuiteRunRecordTrigger returns new OptSuiteRunRecordTrigger with value set to v.
-func NewOptSuiteRunRecordTrigger(v SuiteRunRecordTrigger) OptSuiteRunRecordTrigger {
-	return OptSuiteRunRecordTrigger{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSuiteRunRecordTrigger is optional SuiteRunRecordTrigger.
-type OptSuiteRunRecordTrigger struct {
-	Value SuiteRunRecordTrigger
-	Set   bool
-}
-
-// IsSet returns true if OptSuiteRunRecordTrigger was set.
-func (o OptSuiteRunRecordTrigger) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSuiteRunRecordTrigger) Reset() {
-	var v SuiteRunRecordTrigger
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSuiteRunRecordTrigger) SetTo(v SuiteRunRecordTrigger) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSuiteRunRecordTrigger) Get() (v SuiteRunRecordTrigger, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSuiteRunRecordTrigger) Or(d SuiteRunRecordTrigger) SuiteRunRecordTrigger {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSuiteWizardDraftRecordProvider returns new OptSuiteWizardDraftRecordProvider with value set to v.
-func NewOptSuiteWizardDraftRecordProvider(v SuiteWizardDraftRecordProvider) OptSuiteWizardDraftRecordProvider {
-	return OptSuiteWizardDraftRecordProvider{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSuiteWizardDraftRecordProvider is optional SuiteWizardDraftRecordProvider.
-type OptSuiteWizardDraftRecordProvider struct {
-	Value SuiteWizardDraftRecordProvider
-	Set   bool
-}
-
-// IsSet returns true if OptSuiteWizardDraftRecordProvider was set.
-func (o OptSuiteWizardDraftRecordProvider) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSuiteWizardDraftRecordProvider) Reset() {
-	var v SuiteWizardDraftRecordProvider
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSuiteWizardDraftRecordProvider) SetTo(v SuiteWizardDraftRecordProvider) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSuiteWizardDraftRecordProvider) Get() (v SuiteWizardDraftRecordProvider, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSuiteWizardDraftRecordProvider) Or(d SuiteWizardDraftRecordProvider) SuiteWizardDraftRecordProvider {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptSummary returns new OptSummary with value set to v.
 func NewOptSummary(v Summary) OptSummary {
 	return OptSummary{
@@ -23971,38 +18633,38 @@ func (o OptSummary2) Or(d Summary2) Summary2 {
 	return d
 }
 
-// NewOptSummary2Protocol returns new OptSummary2Protocol with value set to v.
-func NewOptSummary2Protocol(v Summary2Protocol) OptSummary2Protocol {
-	return OptSummary2Protocol{
+// NewOptSummary2DbKind returns new OptSummary2DbKind with value set to v.
+func NewOptSummary2DbKind(v Summary2DbKind) OptSummary2DbKind {
+	return OptSummary2DbKind{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptSummary2Protocol is optional Summary2Protocol.
-type OptSummary2Protocol struct {
-	Value Summary2Protocol
+// OptSummary2DbKind is optional Summary2DbKind.
+type OptSummary2DbKind struct {
+	Value Summary2DbKind
 	Set   bool
 }
 
-// IsSet returns true if OptSummary2Protocol was set.
-func (o OptSummary2Protocol) IsSet() bool { return o.Set }
+// IsSet returns true if OptSummary2DbKind was set.
+func (o OptSummary2DbKind) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptSummary2Protocol) Reset() {
-	var v Summary2Protocol
+func (o *OptSummary2DbKind) Reset() {
+	var v Summary2DbKind
 	o.Value = v
 	o.Set = false
 }
 
 // SetTo sets value to v.
-func (o *OptSummary2Protocol) SetTo(v Summary2Protocol) {
+func (o *OptSummary2DbKind) SetTo(v Summary2DbKind) {
 	o.Set = true
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptSummary2Protocol) Get() (v Summary2Protocol, ok bool) {
+func (o OptSummary2DbKind) Get() (v Summary2DbKind, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -24010,45 +18672,45 @@ func (o OptSummary2Protocol) Get() (v Summary2Protocol, ok bool) {
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptSummary2Protocol) Or(d Summary2Protocol) Summary2Protocol {
+func (o OptSummary2DbKind) Or(d Summary2DbKind) Summary2DbKind {
 	if v, ok := o.Get(); ok {
 		return v
 	}
 	return d
 }
 
-// NewOptSummary3 returns new OptSummary3 with value set to v.
-func NewOptSummary3(v Summary3) OptSummary3 {
-	return OptSummary3{
+// NewOptSummary2Provider returns new OptSummary2Provider with value set to v.
+func NewOptSummary2Provider(v Summary2Provider) OptSummary2Provider {
+	return OptSummary2Provider{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptSummary3 is optional Summary3.
-type OptSummary3 struct {
-	Value Summary3
+// OptSummary2Provider is optional Summary2Provider.
+type OptSummary2Provider struct {
+	Value Summary2Provider
 	Set   bool
 }
 
-// IsSet returns true if OptSummary3 was set.
-func (o OptSummary3) IsSet() bool { return o.Set }
+// IsSet returns true if OptSummary2Provider was set.
+func (o OptSummary2Provider) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptSummary3) Reset() {
-	var v Summary3
+func (o *OptSummary2Provider) Reset() {
+	var v Summary2Provider
 	o.Value = v
 	o.Set = false
 }
 
 // SetTo sets value to v.
-func (o *OptSummary3) SetTo(v Summary3) {
+func (o *OptSummary2Provider) SetTo(v Summary2Provider) {
 	o.Set = true
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptSummary3) Get() (v Summary3, ok bool) {
+func (o OptSummary2Provider) Get() (v Summary2Provider, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -24056,45 +18718,45 @@ func (o OptSummary3) Get() (v Summary3, ok bool) {
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptSummary3) Or(d Summary3) Summary3 {
+func (o OptSummary2Provider) Or(d Summary2Provider) Summary2Provider {
 	if v, ok := o.Get(); ok {
 		return v
 	}
 	return d
 }
 
-// NewOptSummary3DbKind returns new OptSummary3DbKind with value set to v.
-func NewOptSummary3DbKind(v Summary3DbKind) OptSummary3DbKind {
-	return OptSummary3DbKind{
+// NewOptSummary2WorkloadProtocol returns new OptSummary2WorkloadProtocol with value set to v.
+func NewOptSummary2WorkloadProtocol(v Summary2WorkloadProtocol) OptSummary2WorkloadProtocol {
+	return OptSummary2WorkloadProtocol{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptSummary3DbKind is optional Summary3DbKind.
-type OptSummary3DbKind struct {
-	Value Summary3DbKind
+// OptSummary2WorkloadProtocol is optional Summary2WorkloadProtocol.
+type OptSummary2WorkloadProtocol struct {
+	Value Summary2WorkloadProtocol
 	Set   bool
 }
 
-// IsSet returns true if OptSummary3DbKind was set.
-func (o OptSummary3DbKind) IsSet() bool { return o.Set }
+// IsSet returns true if OptSummary2WorkloadProtocol was set.
+func (o OptSummary2WorkloadProtocol) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptSummary3DbKind) Reset() {
-	var v Summary3DbKind
+func (o *OptSummary2WorkloadProtocol) Reset() {
+	var v Summary2WorkloadProtocol
 	o.Value = v
 	o.Set = false
 }
 
 // SetTo sets value to v.
-func (o *OptSummary3DbKind) SetTo(v Summary3DbKind) {
+func (o *OptSummary2WorkloadProtocol) SetTo(v Summary2WorkloadProtocol) {
 	o.Set = true
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptSummary3DbKind) Get() (v Summary3DbKind, ok bool) {
+func (o OptSummary2WorkloadProtocol) Get() (v Summary2WorkloadProtocol, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -24102,513 +18764,7 @@ func (o OptSummary3DbKind) Get() (v Summary3DbKind, ok bool) {
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptSummary3DbKind) Or(d Summary3DbKind) Summary3DbKind {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSummary3Protocol returns new OptSummary3Protocol with value set to v.
-func NewOptSummary3Protocol(v Summary3Protocol) OptSummary3Protocol {
-	return OptSummary3Protocol{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSummary3Protocol is optional Summary3Protocol.
-type OptSummary3Protocol struct {
-	Value Summary3Protocol
-	Set   bool
-}
-
-// IsSet returns true if OptSummary3Protocol was set.
-func (o OptSummary3Protocol) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSummary3Protocol) Reset() {
-	var v Summary3Protocol
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSummary3Protocol) SetTo(v Summary3Protocol) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSummary3Protocol) Get() (v Summary3Protocol, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSummary3Protocol) Or(d Summary3Protocol) Summary3Protocol {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSummary4 returns new OptSummary4 with value set to v.
-func NewOptSummary4(v Summary4) OptSummary4 {
-	return OptSummary4{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSummary4 is optional Summary4.
-type OptSummary4 struct {
-	Value Summary4
-	Set   bool
-}
-
-// IsSet returns true if OptSummary4 was set.
-func (o OptSummary4) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSummary4) Reset() {
-	var v Summary4
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSummary4) SetTo(v Summary4) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSummary4) Get() (v Summary4, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSummary4) Or(d Summary4) Summary4 {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSummary5 returns new OptSummary5 with value set to v.
-func NewOptSummary5(v Summary5) OptSummary5 {
-	return OptSummary5{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSummary5 is optional Summary5.
-type OptSummary5 struct {
-	Value Summary5
-	Set   bool
-}
-
-// IsSet returns true if OptSummary5 was set.
-func (o OptSummary5) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSummary5) Reset() {
-	var v Summary5
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSummary5) SetTo(v Summary5) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSummary5) Get() (v Summary5, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSummary5) Or(d Summary5) Summary5 {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSummary5DbKind returns new OptSummary5DbKind with value set to v.
-func NewOptSummary5DbKind(v Summary5DbKind) OptSummary5DbKind {
-	return OptSummary5DbKind{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSummary5DbKind is optional Summary5DbKind.
-type OptSummary5DbKind struct {
-	Value Summary5DbKind
-	Set   bool
-}
-
-// IsSet returns true if OptSummary5DbKind was set.
-func (o OptSummary5DbKind) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSummary5DbKind) Reset() {
-	var v Summary5DbKind
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSummary5DbKind) SetTo(v Summary5DbKind) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSummary5DbKind) Get() (v Summary5DbKind, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSummary5DbKind) Or(d Summary5DbKind) Summary5DbKind {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSummary5Provider returns new OptSummary5Provider with value set to v.
-func NewOptSummary5Provider(v Summary5Provider) OptSummary5Provider {
-	return OptSummary5Provider{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSummary5Provider is optional Summary5Provider.
-type OptSummary5Provider struct {
-	Value Summary5Provider
-	Set   bool
-}
-
-// IsSet returns true if OptSummary5Provider was set.
-func (o OptSummary5Provider) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSummary5Provider) Reset() {
-	var v Summary5Provider
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSummary5Provider) SetTo(v Summary5Provider) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSummary5Provider) Get() (v Summary5Provider, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSummary5Provider) Or(d Summary5Provider) Summary5Provider {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSummary5WorkloadProtocol returns new OptSummary5WorkloadProtocol with value set to v.
-func NewOptSummary5WorkloadProtocol(v Summary5WorkloadProtocol) OptSummary5WorkloadProtocol {
-	return OptSummary5WorkloadProtocol{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSummary5WorkloadProtocol is optional Summary5WorkloadProtocol.
-type OptSummary5WorkloadProtocol struct {
-	Value Summary5WorkloadProtocol
-	Set   bool
-}
-
-// IsSet returns true if OptSummary5WorkloadProtocol was set.
-func (o OptSummary5WorkloadProtocol) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSummary5WorkloadProtocol) Reset() {
-	var v Summary5WorkloadProtocol
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSummary5WorkloadProtocol) SetTo(v Summary5WorkloadProtocol) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSummary5WorkloadProtocol) Get() (v Summary5WorkloadProtocol, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSummary5WorkloadProtocol) Or(d Summary5WorkloadProtocol) Summary5WorkloadProtocol {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSummary6 returns new OptSummary6 with value set to v.
-func NewOptSummary6(v Summary6) OptSummary6 {
-	return OptSummary6{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSummary6 is optional Summary6.
-type OptSummary6 struct {
-	Value Summary6
-	Set   bool
-}
-
-// IsSet returns true if OptSummary6 was set.
-func (o OptSummary6) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSummary6) Reset() {
-	var v Summary6
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSummary6) SetTo(v Summary6) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSummary6) Get() (v Summary6, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSummary6) Or(d Summary6) Summary6 {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSummary6LastRunStatus returns new OptSummary6LastRunStatus with value set to v.
-func NewOptSummary6LastRunStatus(v Summary6LastRunStatus) OptSummary6LastRunStatus {
-	return OptSummary6LastRunStatus{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSummary6LastRunStatus is optional Summary6LastRunStatus.
-type OptSummary6LastRunStatus struct {
-	Value Summary6LastRunStatus
-	Set   bool
-}
-
-// IsSet returns true if OptSummary6LastRunStatus was set.
-func (o OptSummary6LastRunStatus) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSummary6LastRunStatus) Reset() {
-	var v Summary6LastRunStatus
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSummary6LastRunStatus) SetTo(v Summary6LastRunStatus) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSummary6LastRunStatus) Get() (v Summary6LastRunStatus, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSummary6LastRunStatus) Or(d Summary6LastRunStatus) Summary6LastRunStatus {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSummary7 returns new OptSummary7 with value set to v.
-func NewOptSummary7(v Summary7) OptSummary7 {
-	return OptSummary7{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSummary7 is optional Summary7.
-type OptSummary7 struct {
-	Value Summary7
-	Set   bool
-}
-
-// IsSet returns true if OptSummary7 was set.
-func (o OptSummary7) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSummary7) Reset() {
-	var v Summary7
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSummary7) SetTo(v Summary7) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSummary7) Get() (v Summary7, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSummary7) Or(d Summary7) Summary7 {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSummary7Provider returns new OptSummary7Provider with value set to v.
-func NewOptSummary7Provider(v Summary7Provider) OptSummary7Provider {
-	return OptSummary7Provider{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSummary7Provider is optional Summary7Provider.
-type OptSummary7Provider struct {
-	Value Summary7Provider
-	Set   bool
-}
-
-// IsSet returns true if OptSummary7Provider was set.
-func (o OptSummary7Provider) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSummary7Provider) Reset() {
-	var v Summary7Provider
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSummary7Provider) SetTo(v Summary7Provider) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSummary7Provider) Get() (v Summary7Provider, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSummary7Provider) Or(d Summary7Provider) Summary7Provider {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptSummaryDbKind returns new OptSummaryDbKind with value set to v.
-func NewOptSummaryDbKind(v SummaryDbKind) OptSummaryDbKind {
-	return OptSummaryDbKind{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSummaryDbKind is optional SummaryDbKind.
-type OptSummaryDbKind struct {
-	Value SummaryDbKind
-	Set   bool
-}
-
-// IsSet returns true if OptSummaryDbKind was set.
-func (o OptSummaryDbKind) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSummaryDbKind) Reset() {
-	var v SummaryDbKind
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSummaryDbKind) SetTo(v SummaryDbKind) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSummaryDbKind) Get() (v SummaryDbKind, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSummaryDbKind) Or(d SummaryDbKind) SummaryDbKind {
+func (o OptSummary2WorkloadProtocol) Or(d Summary2WorkloadProtocol) Summary2WorkloadProtocol {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -24799,190 +18955,6 @@ func (o OptTenantSettingsRecordDefaultProvider) Or(d TenantSettingsRecordDefault
 	return d
 }
 
-// NewOptTest returns new OptTest with value set to v.
-func NewOptTest(v Test) OptTest {
-	return OptTest{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptTest is optional Test.
-type OptTest struct {
-	Value Test
-	Set   bool
-}
-
-// IsSet returns true if OptTest was set.
-func (o OptTest) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptTest) Reset() {
-	var v Test
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptTest) SetTo(v Test) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptTest) Get() (v Test, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptTest) Or(d Test) Test {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptTestPresetRecord returns new OptTestPresetRecord with value set to v.
-func NewOptTestPresetRecord(v TestPresetRecord) OptTestPresetRecord {
-	return OptTestPresetRecord{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptTestPresetRecord is optional TestPresetRecord.
-type OptTestPresetRecord struct {
-	Value TestPresetRecord
-	Set   bool
-}
-
-// IsSet returns true if OptTestPresetRecord was set.
-func (o OptTestPresetRecord) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptTestPresetRecord) Reset() {
-	var v TestPresetRecord
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptTestPresetRecord) SetTo(v TestPresetRecord) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptTestPresetRecord) Get() (v TestPresetRecord, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptTestPresetRecord) Or(d TestPresetRecord) TestPresetRecord {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptTestRun returns new OptTestRun with value set to v.
-func NewOptTestRun(v TestRun) OptTestRun {
-	return OptTestRun{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptTestRun is optional TestRun.
-type OptTestRun struct {
-	Value TestRun
-	Set   bool
-}
-
-// IsSet returns true if OptTestRun was set.
-func (o OptTestRun) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptTestRun) Reset() {
-	var v TestRun
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptTestRun) SetTo(v TestRun) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptTestRun) Get() (v TestRun, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptTestRun) Or(d TestRun) TestRun {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptTestRunRecord returns new OptTestRunRecord with value set to v.
-func NewOptTestRunRecord(v TestRunRecord) OptTestRunRecord {
-	return OptTestRunRecord{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptTestRunRecord is optional TestRunRecord.
-type OptTestRunRecord struct {
-	Value TestRunRecord
-	Set   bool
-}
-
-// IsSet returns true if OptTestRunRecord was set.
-func (o OptTestRunRecord) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptTestRunRecord) Reset() {
-	var v TestRunRecord
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptTestRunRecord) SetTo(v TestRunRecord) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptTestRunRecord) Get() (v TestRunRecord, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptTestRunRecord) Or(d TestRunRecord) TestRunRecord {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptTestRunRecordStatus returns new OptTestRunRecordStatus with value set to v.
 func NewOptTestRunRecordStatus(v TestRunRecordStatus) OptTestRunRecordStatus {
 	return OptTestRunRecordStatus{
@@ -25075,52 +19047,6 @@ func (o OptTestRunRecordTrigger) Or(d TestRunRecordTrigger) TestRunRecordTrigger
 	return d
 }
 
-// NewOptTestWizardDraftRecordProvider returns new OptTestWizardDraftRecordProvider with value set to v.
-func NewOptTestWizardDraftRecordProvider(v TestWizardDraftRecordProvider) OptTestWizardDraftRecordProvider {
-	return OptTestWizardDraftRecordProvider{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptTestWizardDraftRecordProvider is optional TestWizardDraftRecordProvider.
-type OptTestWizardDraftRecordProvider struct {
-	Value TestWizardDraftRecordProvider
-	Set   bool
-}
-
-// IsSet returns true if OptTestWizardDraftRecordProvider was set.
-func (o OptTestWizardDraftRecordProvider) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptTestWizardDraftRecordProvider) Reset() {
-	var v TestWizardDraftRecordProvider
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptTestWizardDraftRecordProvider) SetTo(v TestWizardDraftRecordProvider) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptTestWizardDraftRecordProvider) Get() (v TestWizardDraftRecordProvider, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptTestWizardDraftRecordProvider) Or(d TestWizardDraftRecordProvider) TestWizardDraftRecordProvider {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptTimeRange returns new OptTimeRange with value set to v.
 func NewOptTimeRange(v TimeRange) OptTimeRange {
 	return OptTimeRange{
@@ -25207,52 +19133,6 @@ func (o OptTimings) Get() (v Timings, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptTimings) Or(d Timings) Timings {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptTopologySpec returns new OptTopologySpec with value set to v.
-func NewOptTopologySpec(v TopologySpec) OptTopologySpec {
-	return OptTopologySpec{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptTopologySpec is optional TopologySpec.
-type OptTopologySpec struct {
-	Value TopologySpec
-	Set   bool
-}
-
-// IsSet returns true if OptTopologySpec was set.
-func (o OptTopologySpec) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptTopologySpec) Reset() {
-	var v TopologySpec
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptTopologySpec) SetTo(v TopologySpec) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptTopologySpec) Get() (v TopologySpec, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptTopologySpec) Or(d TopologySpec) TopologySpec {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -25943,52 +19823,6 @@ func (o OptWorkerKind) Get() (v WorkerKind, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptWorkerKind) Or(d WorkerKind) WorkerKind {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptWorkload returns new OptWorkload with value set to v.
-func NewOptWorkload(v Workload) OptWorkload {
-	return OptWorkload{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptWorkload is optional Workload.
-type OptWorkload struct {
-	Value Workload
-	Set   bool
-}
-
-// IsSet returns true if OptWorkload was set.
-func (o OptWorkload) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptWorkload) Reset() {
-	var v Workload
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptWorkload) SetTo(v Workload) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptWorkload) Get() (v Workload, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptWorkload) Or(d Workload) Workload {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -27292,276 +21126,6 @@ func (s *ParametersEnv) init() ParametersEnv {
 	return m
 }
 
-// Ref: #/components/schemas/PatchSuiteWizardRequest
-type PatchSuiteWizardRequest struct {
-	Cells                 []SuiteWizardCellPatch             `json:"cells"`
-	DefaultInGlobalRating OptBool                            `json:"defaultInGlobalRating"`
-	DefaultInTenantRating OptBool                            `json:"defaultInTenantRating"`
-	DraftId               OptString                          `json:"draftId"`
-	MaxParallel           OptInt32                           `json:"maxParallel"`
-	Provider              OptPatchSuiteWizardRequestProvider `json:"provider"`
-	ReplaceCells          OptBool                            `json:"replaceCells"`
-	Schedule              OptSchedule                        `json:"schedule"`
-	TenantId              OptString                          `json:"tenantId"`
-}
-
-// GetCells returns the value of Cells.
-func (s *PatchSuiteWizardRequest) GetCells() []SuiteWizardCellPatch {
-	return s.Cells
-}
-
-// GetDefaultInGlobalRating returns the value of DefaultInGlobalRating.
-func (s *PatchSuiteWizardRequest) GetDefaultInGlobalRating() OptBool {
-	return s.DefaultInGlobalRating
-}
-
-// GetDefaultInTenantRating returns the value of DefaultInTenantRating.
-func (s *PatchSuiteWizardRequest) GetDefaultInTenantRating() OptBool {
-	return s.DefaultInTenantRating
-}
-
-// GetDraftId returns the value of DraftId.
-func (s *PatchSuiteWizardRequest) GetDraftId() OptString {
-	return s.DraftId
-}
-
-// GetMaxParallel returns the value of MaxParallel.
-func (s *PatchSuiteWizardRequest) GetMaxParallel() OptInt32 {
-	return s.MaxParallel
-}
-
-// GetProvider returns the value of Provider.
-func (s *PatchSuiteWizardRequest) GetProvider() OptPatchSuiteWizardRequestProvider {
-	return s.Provider
-}
-
-// GetReplaceCells returns the value of ReplaceCells.
-func (s *PatchSuiteWizardRequest) GetReplaceCells() OptBool {
-	return s.ReplaceCells
-}
-
-// GetSchedule returns the value of Schedule.
-func (s *PatchSuiteWizardRequest) GetSchedule() OptSchedule {
-	return s.Schedule
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *PatchSuiteWizardRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetCells sets the value of Cells.
-func (s *PatchSuiteWizardRequest) SetCells(val []SuiteWizardCellPatch) {
-	s.Cells = val
-}
-
-// SetDefaultInGlobalRating sets the value of DefaultInGlobalRating.
-func (s *PatchSuiteWizardRequest) SetDefaultInGlobalRating(val OptBool) {
-	s.DefaultInGlobalRating = val
-}
-
-// SetDefaultInTenantRating sets the value of DefaultInTenantRating.
-func (s *PatchSuiteWizardRequest) SetDefaultInTenantRating(val OptBool) {
-	s.DefaultInTenantRating = val
-}
-
-// SetDraftId sets the value of DraftId.
-func (s *PatchSuiteWizardRequest) SetDraftId(val OptString) {
-	s.DraftId = val
-}
-
-// SetMaxParallel sets the value of MaxParallel.
-func (s *PatchSuiteWizardRequest) SetMaxParallel(val OptInt32) {
-	s.MaxParallel = val
-}
-
-// SetProvider sets the value of Provider.
-func (s *PatchSuiteWizardRequest) SetProvider(val OptPatchSuiteWizardRequestProvider) {
-	s.Provider = val
-}
-
-// SetReplaceCells sets the value of ReplaceCells.
-func (s *PatchSuiteWizardRequest) SetReplaceCells(val OptBool) {
-	s.ReplaceCells = val
-}
-
-// SetSchedule sets the value of Schedule.
-func (s *PatchSuiteWizardRequest) SetSchedule(val OptSchedule) {
-	s.Schedule = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *PatchSuiteWizardRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-type PatchSuiteWizardRequestProvider int32
-
-const (
-	PatchSuiteWizardRequestProvider0 PatchSuiteWizardRequestProvider = 0
-	PatchSuiteWizardRequestProvider1 PatchSuiteWizardRequestProvider = 1
-	PatchSuiteWizardRequestProvider2 PatchSuiteWizardRequestProvider = 2
-)
-
-// AllValues returns all PatchSuiteWizardRequestProvider values.
-func (PatchSuiteWizardRequestProvider) AllValues() []PatchSuiteWizardRequestProvider {
-	return []PatchSuiteWizardRequestProvider{
-		PatchSuiteWizardRequestProvider0,
-		PatchSuiteWizardRequestProvider1,
-		PatchSuiteWizardRequestProvider2,
-	}
-}
-
-// Ref: #/components/schemas/PatchSuiteWizardResponse
-type PatchSuiteWizardResponse struct {
-	Draft SuiteWizardDraftRecord `json:"draft"`
-}
-
-// GetDraft returns the value of Draft.
-func (s *PatchSuiteWizardResponse) GetDraft() SuiteWizardDraftRecord {
-	return s.Draft
-}
-
-// SetDraft sets the value of Draft.
-func (s *PatchSuiteWizardResponse) SetDraft(val SuiteWizardDraftRecord) {
-	s.Draft = val
-}
-
-// Ref: #/components/schemas/PatchTestWizardRequest
-type PatchTestWizardRequest struct {
-	Database           OptDatabase                       `json:"database"`
-	DraftId            OptString                         `json:"draftId"`
-	InfrastructurePlan OptInfrastructurePlan             `json:"infrastructurePlan"`
-	MachineOverrides   []MachinePlan                     `json:"machineOverrides"`
-	Provider           OptPatchTestWizardRequestProvider `json:"provider"`
-	RenderOverrides    OptRenderOverrideSet              `json:"renderOverrides"`
-	TenantId           OptString                         `json:"tenantId"`
-	TopologySpec       OptTopologySpec                   `json:"topologySpec"`
-	Workload           OptWorkload                       `json:"workload"`
-}
-
-// GetDatabase returns the value of Database.
-func (s *PatchTestWizardRequest) GetDatabase() OptDatabase {
-	return s.Database
-}
-
-// GetDraftId returns the value of DraftId.
-func (s *PatchTestWizardRequest) GetDraftId() OptString {
-	return s.DraftId
-}
-
-// GetInfrastructurePlan returns the value of InfrastructurePlan.
-func (s *PatchTestWizardRequest) GetInfrastructurePlan() OptInfrastructurePlan {
-	return s.InfrastructurePlan
-}
-
-// GetMachineOverrides returns the value of MachineOverrides.
-func (s *PatchTestWizardRequest) GetMachineOverrides() []MachinePlan {
-	return s.MachineOverrides
-}
-
-// GetProvider returns the value of Provider.
-func (s *PatchTestWizardRequest) GetProvider() OptPatchTestWizardRequestProvider {
-	return s.Provider
-}
-
-// GetRenderOverrides returns the value of RenderOverrides.
-func (s *PatchTestWizardRequest) GetRenderOverrides() OptRenderOverrideSet {
-	return s.RenderOverrides
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *PatchTestWizardRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// GetTopologySpec returns the value of TopologySpec.
-func (s *PatchTestWizardRequest) GetTopologySpec() OptTopologySpec {
-	return s.TopologySpec
-}
-
-// GetWorkload returns the value of Workload.
-func (s *PatchTestWizardRequest) GetWorkload() OptWorkload {
-	return s.Workload
-}
-
-// SetDatabase sets the value of Database.
-func (s *PatchTestWizardRequest) SetDatabase(val OptDatabase) {
-	s.Database = val
-}
-
-// SetDraftId sets the value of DraftId.
-func (s *PatchTestWizardRequest) SetDraftId(val OptString) {
-	s.DraftId = val
-}
-
-// SetInfrastructurePlan sets the value of InfrastructurePlan.
-func (s *PatchTestWizardRequest) SetInfrastructurePlan(val OptInfrastructurePlan) {
-	s.InfrastructurePlan = val
-}
-
-// SetMachineOverrides sets the value of MachineOverrides.
-func (s *PatchTestWizardRequest) SetMachineOverrides(val []MachinePlan) {
-	s.MachineOverrides = val
-}
-
-// SetProvider sets the value of Provider.
-func (s *PatchTestWizardRequest) SetProvider(val OptPatchTestWizardRequestProvider) {
-	s.Provider = val
-}
-
-// SetRenderOverrides sets the value of RenderOverrides.
-func (s *PatchTestWizardRequest) SetRenderOverrides(val OptRenderOverrideSet) {
-	s.RenderOverrides = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *PatchTestWizardRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// SetTopologySpec sets the value of TopologySpec.
-func (s *PatchTestWizardRequest) SetTopologySpec(val OptTopologySpec) {
-	s.TopologySpec = val
-}
-
-// SetWorkload sets the value of Workload.
-func (s *PatchTestWizardRequest) SetWorkload(val OptWorkload) {
-	s.Workload = val
-}
-
-type PatchTestWizardRequestProvider int32
-
-const (
-	PatchTestWizardRequestProvider0 PatchTestWizardRequestProvider = 0
-	PatchTestWizardRequestProvider1 PatchTestWizardRequestProvider = 1
-	PatchTestWizardRequestProvider2 PatchTestWizardRequestProvider = 2
-)
-
-// AllValues returns all PatchTestWizardRequestProvider values.
-func (PatchTestWizardRequestProvider) AllValues() []PatchTestWizardRequestProvider {
-	return []PatchTestWizardRequestProvider{
-		PatchTestWizardRequestProvider0,
-		PatchTestWizardRequestProvider1,
-		PatchTestWizardRequestProvider2,
-	}
-}
-
-// Ref: #/components/schemas/PatchTestWizardResponse
-type PatchTestWizardResponse struct {
-	Draft TestWizardDraftRecord `json:"draft"`
-}
-
-// GetDraft returns the value of Draft.
-func (s *PatchTestWizardResponse) GetDraft() TestWizardDraftRecord {
-	return s.Draft
-}
-
-// SetDraft sets the value of Draft.
-func (s *PatchTestWizardResponse) SetDraft(val TestWizardDraftRecord) {
-	s.Draft = val
-}
-
 // Ref: #/components/schemas/Permission
 type Permission struct {
 	Action   OptPermissionAction   `json:"action"`
@@ -28142,7 +21706,7 @@ type PipelineOperation struct {
 	Dir             OptDir                     `json:"dir"`
 	Elapsed         OptDuration                `json:"elapsed"`
 	ExitCode        OptInt32                   `json:"exitCode"`
-	File            OptFile2                   `json:"file"`
+	File            OptFile                    `json:"file"`
 	FilePath        OptString                  `json:"filePath"`
 	FileSizeBytes   OptStringUint64            `json:"fileSizeBytes"`
 	Kind            OptPipelineOperationKind   `json:"kind"`
@@ -28195,7 +21759,7 @@ func (s *PipelineOperation) GetExitCode() OptInt32 {
 }
 
 // GetFile returns the value of File.
-func (s *PipelineOperation) GetFile() OptFile2 {
+func (s *PipelineOperation) GetFile() OptFile {
 	return s.File
 }
 
@@ -28305,7 +21869,7 @@ func (s *PipelineOperation) SetExitCode(val OptInt32) {
 }
 
 // SetFile sets the value of File.
-func (s *PipelineOperation) SetFile(val OptFile2) {
+func (s *PipelineOperation) SetFile(val OptFile) {
 	s.File = val
 }
 
@@ -28937,228 +22501,6 @@ func (s *PresetId) GetID() OptString {
 // SetID sets the value of ID.
 func (s *PresetId) SetID(val OptString) {
 	s.ID = val
-}
-
-// Ref: #/components/schemas/PresetPair
-type PresetPair struct {
-	DbPresetId       OptString `json:"dbPresetId"`
-	WorkloadPresetId OptString `json:"workloadPresetId"`
-}
-
-// GetDbPresetId returns the value of DbPresetId.
-func (s *PresetPair) GetDbPresetId() OptString {
-	return s.DbPresetId
-}
-
-// GetWorkloadPresetId returns the value of WorkloadPresetId.
-func (s *PresetPair) GetWorkloadPresetId() OptString {
-	return s.WorkloadPresetId
-}
-
-// SetDbPresetId sets the value of DbPresetId.
-func (s *PresetPair) SetDbPresetId(val OptString) {
-	s.DbPresetId = val
-}
-
-// SetWorkloadPresetId sets the value of WorkloadPresetId.
-func (s *PresetPair) SetWorkloadPresetId(val OptString) {
-	s.WorkloadPresetId = val
-}
-
-// Ref: #/components/schemas/ProbeCatalogRequest
-type ProbeCatalogRequest struct {
-	Version OptString `json:"version"`
-}
-
-// GetVersion returns the value of Version.
-func (s *ProbeCatalogRequest) GetVersion() OptString {
-	return s.Version
-}
-
-// SetVersion sets the value of Version.
-func (s *ProbeCatalogRequest) SetVersion(val OptString) {
-	s.Version = val
-}
-
-// Ref: #/components/schemas/ProbeCatalogResponse
-type ProbeCatalogResponse struct {
-	Scripts []string `json:"scripts"`
-}
-
-// GetScripts returns the value of Scripts.
-func (s *ProbeCatalogResponse) GetScripts() []string {
-	return s.Scripts
-}
-
-// SetScripts sets the value of Scripts.
-func (s *ProbeCatalogResponse) SetScripts(val []string) {
-	s.Scripts = val
-}
-
-// Ref: #/components/schemas/ProbeScriptRequest
-type ProbeScriptRequest struct {
-	DriverType   OptString                `json:"driverType"`
-	Env          OptProbeScriptRequestEnv `json:"env"`
-	Files        []ProbeWorkloadFile      `json:"files"`
-	IncludeHuman OptBool                  `json:"includeHuman"`
-	PoolSize     OptInt32                 `json:"poolSize"`
-	ScaleFactor  OptFloat64               `json:"scaleFactor"`
-	Script       OptString                `json:"script"`
-	SQL          OptString                `json:"sql"`
-	Version      OptString                `json:"version"`
-}
-
-// GetDriverType returns the value of DriverType.
-func (s *ProbeScriptRequest) GetDriverType() OptString {
-	return s.DriverType
-}
-
-// GetEnv returns the value of Env.
-func (s *ProbeScriptRequest) GetEnv() OptProbeScriptRequestEnv {
-	return s.Env
-}
-
-// GetFiles returns the value of Files.
-func (s *ProbeScriptRequest) GetFiles() []ProbeWorkloadFile {
-	return s.Files
-}
-
-// GetIncludeHuman returns the value of IncludeHuman.
-func (s *ProbeScriptRequest) GetIncludeHuman() OptBool {
-	return s.IncludeHuman
-}
-
-// GetPoolSize returns the value of PoolSize.
-func (s *ProbeScriptRequest) GetPoolSize() OptInt32 {
-	return s.PoolSize
-}
-
-// GetScaleFactor returns the value of ScaleFactor.
-func (s *ProbeScriptRequest) GetScaleFactor() OptFloat64 {
-	return s.ScaleFactor
-}
-
-// GetScript returns the value of Script.
-func (s *ProbeScriptRequest) GetScript() OptString {
-	return s.Script
-}
-
-// GetSQL returns the value of SQL.
-func (s *ProbeScriptRequest) GetSQL() OptString {
-	return s.SQL
-}
-
-// GetVersion returns the value of Version.
-func (s *ProbeScriptRequest) GetVersion() OptString {
-	return s.Version
-}
-
-// SetDriverType sets the value of DriverType.
-func (s *ProbeScriptRequest) SetDriverType(val OptString) {
-	s.DriverType = val
-}
-
-// SetEnv sets the value of Env.
-func (s *ProbeScriptRequest) SetEnv(val OptProbeScriptRequestEnv) {
-	s.Env = val
-}
-
-// SetFiles sets the value of Files.
-func (s *ProbeScriptRequest) SetFiles(val []ProbeWorkloadFile) {
-	s.Files = val
-}
-
-// SetIncludeHuman sets the value of IncludeHuman.
-func (s *ProbeScriptRequest) SetIncludeHuman(val OptBool) {
-	s.IncludeHuman = val
-}
-
-// SetPoolSize sets the value of PoolSize.
-func (s *ProbeScriptRequest) SetPoolSize(val OptInt32) {
-	s.PoolSize = val
-}
-
-// SetScaleFactor sets the value of ScaleFactor.
-func (s *ProbeScriptRequest) SetScaleFactor(val OptFloat64) {
-	s.ScaleFactor = val
-}
-
-// SetScript sets the value of Script.
-func (s *ProbeScriptRequest) SetScript(val OptString) {
-	s.Script = val
-}
-
-// SetSQL sets the value of SQL.
-func (s *ProbeScriptRequest) SetSQL(val OptString) {
-	s.SQL = val
-}
-
-// SetVersion sets the value of Version.
-func (s *ProbeScriptRequest) SetVersion(val OptString) {
-	s.Version = val
-}
-
-type ProbeScriptRequestEnv map[string]string
-
-func (s *ProbeScriptRequestEnv) init() ProbeScriptRequestEnv {
-	m := *s
-	if m == nil {
-		m = map[string]string{}
-		*s = m
-	}
-	return m
-}
-
-// Ref: #/components/schemas/ProbeScriptResponse
-type ProbeScriptResponse struct {
-	Human    OptString `json:"human"`
-	Metadata jx.Raw    `json:"metadata"`
-}
-
-// GetHuman returns the value of Human.
-func (s *ProbeScriptResponse) GetHuman() OptString {
-	return s.Human
-}
-
-// GetMetadata returns the value of Metadata.
-func (s *ProbeScriptResponse) GetMetadata() jx.Raw {
-	return s.Metadata
-}
-
-// SetHuman sets the value of Human.
-func (s *ProbeScriptResponse) SetHuman(val OptString) {
-	s.Human = val
-}
-
-// SetMetadata sets the value of Metadata.
-func (s *ProbeScriptResponse) SetMetadata(val jx.Raw) {
-	s.Metadata = val
-}
-
-// Ref: #/components/schemas/ProbeWorkloadFile
-type ProbeWorkloadFile struct {
-	Content OptString `json:"content"`
-	Name    OptString `json:"name"`
-}
-
-// GetContent returns the value of Content.
-func (s *ProbeWorkloadFile) GetContent() OptString {
-	return s.Content
-}
-
-// GetName returns the value of Name.
-func (s *ProbeWorkloadFile) GetName() OptString {
-	return s.Name
-}
-
-// SetContent sets the value of Content.
-func (s *ProbeWorkloadFile) SetContent(val OptString) {
-	s.Content = val
-}
-
-// SetName sets the value of Name.
-func (s *ProbeWorkloadFile) SetName(val OptString) {
-	s.Name = val
 }
 
 // Ref: #/components/schemas/ProviderSettings
@@ -30110,7 +23452,7 @@ func (s *RecipeBundleFiles) init() RecipeBundleFiles {
 type RecipeRecord struct {
 	Bundle  RecipeBundle `json:"bundle"`
 	Entity  Entity       `json:"entity"`
-	Summary OptSummary4  `json:"summary"`
+	Summary OptSummary   `json:"summary"`
 	Version OptInt32     `json:"version"`
 }
 
@@ -30125,7 +23467,7 @@ func (s *RecipeRecord) GetEntity() Entity {
 }
 
 // GetSummary returns the value of Summary.
-func (s *RecipeRecord) GetSummary() OptSummary4 {
+func (s *RecipeRecord) GetSummary() OptSummary {
 	return s.Summary
 }
 
@@ -30145,7 +23487,7 @@ func (s *RecipeRecord) SetEntity(val Entity) {
 }
 
 // SetSummary sets the value of Summary.
-func (s *RecipeRecord) SetSummary(val OptSummary4) {
+func (s *RecipeRecord) SetSummary(val OptSummary) {
 	s.Summary = val
 }
 
@@ -30479,230 +23821,6 @@ func (RemoveFavoriteRequestKind) AllValues() []RemoveFavoriteRequestKind {
 // Ref: #/components/schemas/RemoveFavoriteResponse
 type RemoveFavoriteResponse struct{}
 
-// Ref: #/components/schemas/RenderArtifact
-type RenderArtifact struct {
-	BaseHash     OptString                   `json:"baseHash"`
-	Cmd          OptCmd                      `json:"cmd"`
-	ComponentId  OptString                   `json:"componentId"`
-	Dir          OptDir                      `json:"dir"`
-	File         OptFile2                    `json:"file"`
-	ID           OptString                   `json:"id"`
-	Kind         OptRenderArtifactKind       `json:"kind"`
-	Labels       OptRenderArtifactLabels     `json:"labels"`
-	LockReason   OptString                   `json:"lockReason"`
-	Mutability   OptRenderArtifactMutability `json:"mutability"`
-	Origin       OptRenderArtifactOrigin     `json:"origin"`
-	RendererName OptString                   `json:"rendererName"`
-	RuntimeValue OptString                   `json:"runtimeValue"`
-	Tags         OptTags                     `json:"tags"`
-}
-
-// GetBaseHash returns the value of BaseHash.
-func (s *RenderArtifact) GetBaseHash() OptString {
-	return s.BaseHash
-}
-
-// GetCmd returns the value of Cmd.
-func (s *RenderArtifact) GetCmd() OptCmd {
-	return s.Cmd
-}
-
-// GetComponentId returns the value of ComponentId.
-func (s *RenderArtifact) GetComponentId() OptString {
-	return s.ComponentId
-}
-
-// GetDir returns the value of Dir.
-func (s *RenderArtifact) GetDir() OptDir {
-	return s.Dir
-}
-
-// GetFile returns the value of File.
-func (s *RenderArtifact) GetFile() OptFile2 {
-	return s.File
-}
-
-// GetID returns the value of ID.
-func (s *RenderArtifact) GetID() OptString {
-	return s.ID
-}
-
-// GetKind returns the value of Kind.
-func (s *RenderArtifact) GetKind() OptRenderArtifactKind {
-	return s.Kind
-}
-
-// GetLabels returns the value of Labels.
-func (s *RenderArtifact) GetLabels() OptRenderArtifactLabels {
-	return s.Labels
-}
-
-// GetLockReason returns the value of LockReason.
-func (s *RenderArtifact) GetLockReason() OptString {
-	return s.LockReason
-}
-
-// GetMutability returns the value of Mutability.
-func (s *RenderArtifact) GetMutability() OptRenderArtifactMutability {
-	return s.Mutability
-}
-
-// GetOrigin returns the value of Origin.
-func (s *RenderArtifact) GetOrigin() OptRenderArtifactOrigin {
-	return s.Origin
-}
-
-// GetRendererName returns the value of RendererName.
-func (s *RenderArtifact) GetRendererName() OptString {
-	return s.RendererName
-}
-
-// GetRuntimeValue returns the value of RuntimeValue.
-func (s *RenderArtifact) GetRuntimeValue() OptString {
-	return s.RuntimeValue
-}
-
-// GetTags returns the value of Tags.
-func (s *RenderArtifact) GetTags() OptTags {
-	return s.Tags
-}
-
-// SetBaseHash sets the value of BaseHash.
-func (s *RenderArtifact) SetBaseHash(val OptString) {
-	s.BaseHash = val
-}
-
-// SetCmd sets the value of Cmd.
-func (s *RenderArtifact) SetCmd(val OptCmd) {
-	s.Cmd = val
-}
-
-// SetComponentId sets the value of ComponentId.
-func (s *RenderArtifact) SetComponentId(val OptString) {
-	s.ComponentId = val
-}
-
-// SetDir sets the value of Dir.
-func (s *RenderArtifact) SetDir(val OptDir) {
-	s.Dir = val
-}
-
-// SetFile sets the value of File.
-func (s *RenderArtifact) SetFile(val OptFile2) {
-	s.File = val
-}
-
-// SetID sets the value of ID.
-func (s *RenderArtifact) SetID(val OptString) {
-	s.ID = val
-}
-
-// SetKind sets the value of Kind.
-func (s *RenderArtifact) SetKind(val OptRenderArtifactKind) {
-	s.Kind = val
-}
-
-// SetLabels sets the value of Labels.
-func (s *RenderArtifact) SetLabels(val OptRenderArtifactLabels) {
-	s.Labels = val
-}
-
-// SetLockReason sets the value of LockReason.
-func (s *RenderArtifact) SetLockReason(val OptString) {
-	s.LockReason = val
-}
-
-// SetMutability sets the value of Mutability.
-func (s *RenderArtifact) SetMutability(val OptRenderArtifactMutability) {
-	s.Mutability = val
-}
-
-// SetOrigin sets the value of Origin.
-func (s *RenderArtifact) SetOrigin(val OptRenderArtifactOrigin) {
-	s.Origin = val
-}
-
-// SetRendererName sets the value of RendererName.
-func (s *RenderArtifact) SetRendererName(val OptString) {
-	s.RendererName = val
-}
-
-// SetRuntimeValue sets the value of RuntimeValue.
-func (s *RenderArtifact) SetRuntimeValue(val OptString) {
-	s.RuntimeValue = val
-}
-
-// SetTags sets the value of Tags.
-func (s *RenderArtifact) SetTags(val OptTags) {
-	s.Tags = val
-}
-
-type RenderArtifactKind int32
-
-const (
-	RenderArtifactKind1 RenderArtifactKind = 1
-	RenderArtifactKind2 RenderArtifactKind = 2
-	RenderArtifactKind3 RenderArtifactKind = 3
-	RenderArtifactKind4 RenderArtifactKind = 4
-)
-
-// AllValues returns all RenderArtifactKind values.
-func (RenderArtifactKind) AllValues() []RenderArtifactKind {
-	return []RenderArtifactKind{
-		RenderArtifactKind1,
-		RenderArtifactKind2,
-		RenderArtifactKind3,
-		RenderArtifactKind4,
-	}
-}
-
-type RenderArtifactLabels map[string]string
-
-func (s *RenderArtifactLabels) init() RenderArtifactLabels {
-	m := *s
-	if m == nil {
-		m = map[string]string{}
-		*s = m
-	}
-	return m
-}
-
-type RenderArtifactMutability int32
-
-const (
-	RenderArtifactMutability1 RenderArtifactMutability = 1
-	RenderArtifactMutability2 RenderArtifactMutability = 2
-	RenderArtifactMutability3 RenderArtifactMutability = 3
-)
-
-// AllValues returns all RenderArtifactMutability values.
-func (RenderArtifactMutability) AllValues() []RenderArtifactMutability {
-	return []RenderArtifactMutability{
-		RenderArtifactMutability1,
-		RenderArtifactMutability2,
-		RenderArtifactMutability3,
-	}
-}
-
-type RenderArtifactOrigin int32
-
-const (
-	RenderArtifactOrigin1 RenderArtifactOrigin = 1
-	RenderArtifactOrigin2 RenderArtifactOrigin = 2
-	RenderArtifactOrigin3 RenderArtifactOrigin = 3
-	RenderArtifactOrigin4 RenderArtifactOrigin = 4
-)
-
-// AllValues returns all RenderArtifactOrigin values.
-func (RenderArtifactOrigin) AllValues() []RenderArtifactOrigin {
-	return []RenderArtifactOrigin{
-		RenderArtifactOrigin1,
-		RenderArtifactOrigin2,
-		RenderArtifactOrigin3,
-		RenderArtifactOrigin4,
-	}
-}
-
 // Ref: #/components/schemas/RenderOverrideSet
 type RenderOverrideSet struct {
 	Files  []FileOverride             `json:"files"`
@@ -30743,76 +23861,6 @@ func (s *RenderOverrideSet) SetTags(val OptTags) {
 type RenderOverrideSetLabels map[string]string
 
 func (s *RenderOverrideSetLabels) init() RenderOverrideSetLabels {
-	m := *s
-	if m == nil {
-		m = map[string]string{}
-		*s = m
-	}
-	return m
-}
-
-// Ref: #/components/schemas/RenderPreview
-type RenderPreview struct {
-	Artifacts  []RenderArtifact       `json:"artifacts"`
-	Components []ComponentRender      `json:"components"`
-	Labels     OptRenderPreviewLabels `json:"labels"`
-	Overrides  OptRenderOverrideSet   `json:"overrides"`
-	Tags       OptTags                `json:"tags"`
-}
-
-// GetArtifacts returns the value of Artifacts.
-func (s *RenderPreview) GetArtifacts() []RenderArtifact {
-	return s.Artifacts
-}
-
-// GetComponents returns the value of Components.
-func (s *RenderPreview) GetComponents() []ComponentRender {
-	return s.Components
-}
-
-// GetLabels returns the value of Labels.
-func (s *RenderPreview) GetLabels() OptRenderPreviewLabels {
-	return s.Labels
-}
-
-// GetOverrides returns the value of Overrides.
-func (s *RenderPreview) GetOverrides() OptRenderOverrideSet {
-	return s.Overrides
-}
-
-// GetTags returns the value of Tags.
-func (s *RenderPreview) GetTags() OptTags {
-	return s.Tags
-}
-
-// SetArtifacts sets the value of Artifacts.
-func (s *RenderPreview) SetArtifacts(val []RenderArtifact) {
-	s.Artifacts = val
-}
-
-// SetComponents sets the value of Components.
-func (s *RenderPreview) SetComponents(val []ComponentRender) {
-	s.Components = val
-}
-
-// SetLabels sets the value of Labels.
-func (s *RenderPreview) SetLabels(val OptRenderPreviewLabels) {
-	s.Labels = val
-}
-
-// SetOverrides sets the value of Overrides.
-func (s *RenderPreview) SetOverrides(val OptRenderOverrideSet) {
-	s.Overrides = val
-}
-
-// SetTags sets the value of Tags.
-func (s *RenderPreview) SetTags(val OptTags) {
-	s.Tags = val
-}
-
-type RenderPreviewLabels map[string]string
-
-func (s *RenderPreviewLabels) init() RenderPreviewLabels {
 	m := *s
 	if m == nil {
 		m = map[string]string{}
@@ -32238,43 +25286,6 @@ func (RuntimeNodeStatus) AllValues() []RuntimeNodeStatus {
 	}
 }
 
-// Ref: #/components/schemas/Schedule
-type Schedule struct {
-	Cron     OptString `json:"cron"`
-	Enabled  OptBool   `json:"enabled"`
-	Timezone OptString `json:"timezone"`
-}
-
-// GetCron returns the value of Cron.
-func (s *Schedule) GetCron() OptString {
-	return s.Cron
-}
-
-// GetEnabled returns the value of Enabled.
-func (s *Schedule) GetEnabled() OptBool {
-	return s.Enabled
-}
-
-// GetTimezone returns the value of Timezone.
-func (s *Schedule) GetTimezone() OptString {
-	return s.Timezone
-}
-
-// SetCron sets the value of Cron.
-func (s *Schedule) SetCron(val OptString) {
-	s.Cron = val
-}
-
-// SetEnabled sets the value of Enabled.
-func (s *Schedule) SetEnabled(val OptBool) {
-	s.Enabled = val
-}
-
-// SetTimezone sets the value of Timezone.
-func (s *Schedule) SetTimezone(val OptString) {
-	s.Timezone = val
-}
-
 // Ref: #/components/schemas/Schema
 type Schema struct {
 	Coerce        OptBool           `json:"coerce"`
@@ -32572,58 +25583,6 @@ func (s *SetShareExpiryResponse) GetShare() ShareRecord {
 // SetShare sets the value of Share.
 func (s *SetShareExpiryResponse) SetShare(val ShareRecord) {
 	s.Share = val
-}
-
-// Ref: #/components/schemas/SetSuiteScheduleRequest
-type SetSuiteScheduleRequest struct {
-	ID       OptString `json:"id"`
-	Schedule Schedule  `json:"schedule"`
-	TenantId OptString `json:"tenantId"`
-}
-
-// GetID returns the value of ID.
-func (s *SetSuiteScheduleRequest) GetID() OptString {
-	return s.ID
-}
-
-// GetSchedule returns the value of Schedule.
-func (s *SetSuiteScheduleRequest) GetSchedule() Schedule {
-	return s.Schedule
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *SetSuiteScheduleRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetID sets the value of ID.
-func (s *SetSuiteScheduleRequest) SetID(val OptString) {
-	s.ID = val
-}
-
-// SetSchedule sets the value of Schedule.
-func (s *SetSuiteScheduleRequest) SetSchedule(val Schedule) {
-	s.Schedule = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *SetSuiteScheduleRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/SetSuiteScheduleResponse
-type SetSuiteScheduleResponse struct {
-	Suite SuiteRecord `json:"suite"`
-}
-
-// GetSuite returns the value of Suite.
-func (s *SetSuiteScheduleResponse) GetSuite() SuiteRecord {
-	return s.Suite
-}
-
-// SetSuite sets the value of Suite.
-func (s *SetSuiteScheduleResponse) SetSuite(val SuiteRecord) {
-	s.Suite = val
 }
 
 // SetTenantProviderSettingsOK is response for SetTenantProviderSettings operation.
@@ -33433,512 +26392,6 @@ func (s *Snapshot) SetTestRun(val OptSharedTestRun) {
 	s.TestRun = val
 }
 
-// Ref: #/components/schemas/Sort
-type Sort struct {
-	Desc   OptBool       `json:"desc"`
-	Entity OptSortEntity `json:"entity"`
-	Kind   OptSortKind   `json:"kind"`
-}
-
-// GetDesc returns the value of Desc.
-func (s *Sort) GetDesc() OptBool {
-	return s.Desc
-}
-
-// GetEntity returns the value of Entity.
-func (s *Sort) GetEntity() OptSortEntity {
-	return s.Entity
-}
-
-// GetKind returns the value of Kind.
-func (s *Sort) GetKind() OptSortKind {
-	return s.Kind
-}
-
-// SetDesc sets the value of Desc.
-func (s *Sort) SetDesc(val OptBool) {
-	s.Desc = val
-}
-
-// SetEntity sets the value of Entity.
-func (s *Sort) SetEntity(val OptSortEntity) {
-	s.Entity = val
-}
-
-// SetKind sets the value of Kind.
-func (s *Sort) SetKind(val OptSortKind) {
-	s.Kind = val
-}
-
-// Ref: #/components/schemas/Sort2
-type Sort2 struct {
-	Desc   OptBool        `json:"desc"`
-	Entity OptSort2Entity `json:"entity"`
-	Kind   OptSort2Kind   `json:"kind"`
-}
-
-// GetDesc returns the value of Desc.
-func (s *Sort2) GetDesc() OptBool {
-	return s.Desc
-}
-
-// GetEntity returns the value of Entity.
-func (s *Sort2) GetEntity() OptSort2Entity {
-	return s.Entity
-}
-
-// GetKind returns the value of Kind.
-func (s *Sort2) GetKind() OptSort2Kind {
-	return s.Kind
-}
-
-// SetDesc sets the value of Desc.
-func (s *Sort2) SetDesc(val OptBool) {
-	s.Desc = val
-}
-
-// SetEntity sets the value of Entity.
-func (s *Sort2) SetEntity(val OptSort2Entity) {
-	s.Entity = val
-}
-
-// SetKind sets the value of Kind.
-func (s *Sort2) SetKind(val OptSort2Kind) {
-	s.Kind = val
-}
-
-type Sort2Entity int32
-
-const (
-	Sort2Entity0 Sort2Entity = 0
-	Sort2Entity1 Sort2Entity = 1
-	Sort2Entity2 Sort2Entity = 2
-	Sort2Entity3 Sort2Entity = 3
-	Sort2Entity4 Sort2Entity = 4
-	Sort2Entity5 Sort2Entity = 5
-)
-
-// AllValues returns all Sort2Entity values.
-func (Sort2Entity) AllValues() []Sort2Entity {
-	return []Sort2Entity{
-		Sort2Entity0,
-		Sort2Entity1,
-		Sort2Entity2,
-		Sort2Entity3,
-		Sort2Entity4,
-		Sort2Entity5,
-	}
-}
-
-type Sort2Kind int32
-
-const (
-	Sort2Kind0 Sort2Kind = 0
-	Sort2Kind1 Sort2Kind = 1
-	Sort2Kind2 Sort2Kind = 2
-	Sort2Kind3 Sort2Kind = 3
-	Sort2Kind4 Sort2Kind = 4
-)
-
-// AllValues returns all Sort2Kind values.
-func (Sort2Kind) AllValues() []Sort2Kind {
-	return []Sort2Kind{
-		Sort2Kind0,
-		Sort2Kind1,
-		Sort2Kind2,
-		Sort2Kind3,
-		Sort2Kind4,
-	}
-}
-
-// Ref: #/components/schemas/Sort3
-type Sort3 struct {
-	Desc   OptBool        `json:"desc"`
-	Entity OptSort3Entity `json:"entity"`
-	Kind   OptSort3Kind   `json:"kind"`
-}
-
-// GetDesc returns the value of Desc.
-func (s *Sort3) GetDesc() OptBool {
-	return s.Desc
-}
-
-// GetEntity returns the value of Entity.
-func (s *Sort3) GetEntity() OptSort3Entity {
-	return s.Entity
-}
-
-// GetKind returns the value of Kind.
-func (s *Sort3) GetKind() OptSort3Kind {
-	return s.Kind
-}
-
-// SetDesc sets the value of Desc.
-func (s *Sort3) SetDesc(val OptBool) {
-	s.Desc = val
-}
-
-// SetEntity sets the value of Entity.
-func (s *Sort3) SetEntity(val OptSort3Entity) {
-	s.Entity = val
-}
-
-// SetKind sets the value of Kind.
-func (s *Sort3) SetKind(val OptSort3Kind) {
-	s.Kind = val
-}
-
-type Sort3Entity int32
-
-const (
-	Sort3Entity0 Sort3Entity = 0
-	Sort3Entity1 Sort3Entity = 1
-	Sort3Entity2 Sort3Entity = 2
-	Sort3Entity3 Sort3Entity = 3
-	Sort3Entity4 Sort3Entity = 4
-	Sort3Entity5 Sort3Entity = 5
-)
-
-// AllValues returns all Sort3Entity values.
-func (Sort3Entity) AllValues() []Sort3Entity {
-	return []Sort3Entity{
-		Sort3Entity0,
-		Sort3Entity1,
-		Sort3Entity2,
-		Sort3Entity3,
-		Sort3Entity4,
-		Sort3Entity5,
-	}
-}
-
-type Sort3Kind int32
-
-const (
-	Sort3Kind0 Sort3Kind = 0
-	Sort3Kind1 Sort3Kind = 1
-	Sort3Kind2 Sort3Kind = 2
-	Sort3Kind3 Sort3Kind = 3
-	Sort3Kind4 Sort3Kind = 4
-)
-
-// AllValues returns all Sort3Kind values.
-func (Sort3Kind) AllValues() []Sort3Kind {
-	return []Sort3Kind{
-		Sort3Kind0,
-		Sort3Kind1,
-		Sort3Kind2,
-		Sort3Kind3,
-		Sort3Kind4,
-	}
-}
-
-// Ref: #/components/schemas/Sort4
-type Sort4 struct {
-	Desc   OptBool        `json:"desc"`
-	Entity OptSort4Entity `json:"entity"`
-	Kind   OptSort4Kind   `json:"kind"`
-}
-
-// GetDesc returns the value of Desc.
-func (s *Sort4) GetDesc() OptBool {
-	return s.Desc
-}
-
-// GetEntity returns the value of Entity.
-func (s *Sort4) GetEntity() OptSort4Entity {
-	return s.Entity
-}
-
-// GetKind returns the value of Kind.
-func (s *Sort4) GetKind() OptSort4Kind {
-	return s.Kind
-}
-
-// SetDesc sets the value of Desc.
-func (s *Sort4) SetDesc(val OptBool) {
-	s.Desc = val
-}
-
-// SetEntity sets the value of Entity.
-func (s *Sort4) SetEntity(val OptSort4Entity) {
-	s.Entity = val
-}
-
-// SetKind sets the value of Kind.
-func (s *Sort4) SetKind(val OptSort4Kind) {
-	s.Kind = val
-}
-
-type Sort4Entity int32
-
-const (
-	Sort4Entity0 Sort4Entity = 0
-	Sort4Entity1 Sort4Entity = 1
-	Sort4Entity2 Sort4Entity = 2
-	Sort4Entity3 Sort4Entity = 3
-	Sort4Entity4 Sort4Entity = 4
-	Sort4Entity5 Sort4Entity = 5
-)
-
-// AllValues returns all Sort4Entity values.
-func (Sort4Entity) AllValues() []Sort4Entity {
-	return []Sort4Entity{
-		Sort4Entity0,
-		Sort4Entity1,
-		Sort4Entity2,
-		Sort4Entity3,
-		Sort4Entity4,
-		Sort4Entity5,
-	}
-}
-
-type Sort4Kind int32
-
-const (
-	Sort4Kind0 Sort4Kind = 0
-	Sort4Kind1 Sort4Kind = 1
-	Sort4Kind2 Sort4Kind = 2
-	Sort4Kind3 Sort4Kind = 3
-	Sort4Kind4 Sort4Kind = 4
-	Sort4Kind5 Sort4Kind = 5
-)
-
-// AllValues returns all Sort4Kind values.
-func (Sort4Kind) AllValues() []Sort4Kind {
-	return []Sort4Kind{
-		Sort4Kind0,
-		Sort4Kind1,
-		Sort4Kind2,
-		Sort4Kind3,
-		Sort4Kind4,
-		Sort4Kind5,
-	}
-}
-
-// Ref: #/components/schemas/Sort5
-type Sort5 struct {
-	Desc   OptBool        `json:"desc"`
-	Entity OptSort5Entity `json:"entity"`
-	Kind   OptSort5Kind   `json:"kind"`
-}
-
-// GetDesc returns the value of Desc.
-func (s *Sort5) GetDesc() OptBool {
-	return s.Desc
-}
-
-// GetEntity returns the value of Entity.
-func (s *Sort5) GetEntity() OptSort5Entity {
-	return s.Entity
-}
-
-// GetKind returns the value of Kind.
-func (s *Sort5) GetKind() OptSort5Kind {
-	return s.Kind
-}
-
-// SetDesc sets the value of Desc.
-func (s *Sort5) SetDesc(val OptBool) {
-	s.Desc = val
-}
-
-// SetEntity sets the value of Entity.
-func (s *Sort5) SetEntity(val OptSort5Entity) {
-	s.Entity = val
-}
-
-// SetKind sets the value of Kind.
-func (s *Sort5) SetKind(val OptSort5Kind) {
-	s.Kind = val
-}
-
-type Sort5Entity int32
-
-const (
-	Sort5Entity0 Sort5Entity = 0
-	Sort5Entity1 Sort5Entity = 1
-	Sort5Entity2 Sort5Entity = 2
-	Sort5Entity3 Sort5Entity = 3
-	Sort5Entity4 Sort5Entity = 4
-	Sort5Entity5 Sort5Entity = 5
-)
-
-// AllValues returns all Sort5Entity values.
-func (Sort5Entity) AllValues() []Sort5Entity {
-	return []Sort5Entity{
-		Sort5Entity0,
-		Sort5Entity1,
-		Sort5Entity2,
-		Sort5Entity3,
-		Sort5Entity4,
-		Sort5Entity5,
-	}
-}
-
-type Sort5Kind int32
-
-const (
-	Sort5Kind0 Sort5Kind = 0
-	Sort5Kind1 Sort5Kind = 1
-	Sort5Kind2 Sort5Kind = 2
-	Sort5Kind3 Sort5Kind = 3
-	Sort5Kind4 Sort5Kind = 4
-	Sort5Kind5 Sort5Kind = 5
-	Sort5Kind6 Sort5Kind = 6
-	Sort5Kind7 Sort5Kind = 7
-)
-
-// AllValues returns all Sort5Kind values.
-func (Sort5Kind) AllValues() []Sort5Kind {
-	return []Sort5Kind{
-		Sort5Kind0,
-		Sort5Kind1,
-		Sort5Kind2,
-		Sort5Kind3,
-		Sort5Kind4,
-		Sort5Kind5,
-		Sort5Kind6,
-		Sort5Kind7,
-	}
-}
-
-// Ref: #/components/schemas/Sort6
-type Sort6 struct {
-	Desc   OptBool        `json:"desc"`
-	Entity OptSort6Entity `json:"entity"`
-	Kind   OptSort6Kind   `json:"kind"`
-}
-
-// GetDesc returns the value of Desc.
-func (s *Sort6) GetDesc() OptBool {
-	return s.Desc
-}
-
-// GetEntity returns the value of Entity.
-func (s *Sort6) GetEntity() OptSort6Entity {
-	return s.Entity
-}
-
-// GetKind returns the value of Kind.
-func (s *Sort6) GetKind() OptSort6Kind {
-	return s.Kind
-}
-
-// SetDesc sets the value of Desc.
-func (s *Sort6) SetDesc(val OptBool) {
-	s.Desc = val
-}
-
-// SetEntity sets the value of Entity.
-func (s *Sort6) SetEntity(val OptSort6Entity) {
-	s.Entity = val
-}
-
-// SetKind sets the value of Kind.
-func (s *Sort6) SetKind(val OptSort6Kind) {
-	s.Kind = val
-}
-
-type Sort6Entity int32
-
-const (
-	Sort6Entity0 Sort6Entity = 0
-	Sort6Entity1 Sort6Entity = 1
-	Sort6Entity2 Sort6Entity = 2
-	Sort6Entity3 Sort6Entity = 3
-	Sort6Entity4 Sort6Entity = 4
-	Sort6Entity5 Sort6Entity = 5
-)
-
-// AllValues returns all Sort6Entity values.
-func (Sort6Entity) AllValues() []Sort6Entity {
-	return []Sort6Entity{
-		Sort6Entity0,
-		Sort6Entity1,
-		Sort6Entity2,
-		Sort6Entity3,
-		Sort6Entity4,
-		Sort6Entity5,
-	}
-}
-
-type Sort6Kind int32
-
-const (
-	Sort6Kind0  Sort6Kind = 0
-	Sort6Kind1  Sort6Kind = 1
-	Sort6Kind2  Sort6Kind = 2
-	Sort6Kind3  Sort6Kind = 3
-	Sort6Kind4  Sort6Kind = 4
-	Sort6Kind5  Sort6Kind = 5
-	Sort6Kind6  Sort6Kind = 6
-	Sort6Kind7  Sort6Kind = 7
-	Sort6Kind8  Sort6Kind = 8
-	Sort6Kind9  Sort6Kind = 9
-	Sort6Kind10 Sort6Kind = 10
-	Sort6Kind11 Sort6Kind = 11
-	Sort6Kind12 Sort6Kind = 12
-)
-
-// AllValues returns all Sort6Kind values.
-func (Sort6Kind) AllValues() []Sort6Kind {
-	return []Sort6Kind{
-		Sort6Kind0,
-		Sort6Kind1,
-		Sort6Kind2,
-		Sort6Kind3,
-		Sort6Kind4,
-		Sort6Kind5,
-		Sort6Kind6,
-		Sort6Kind7,
-		Sort6Kind8,
-		Sort6Kind9,
-		Sort6Kind10,
-		Sort6Kind11,
-		Sort6Kind12,
-	}
-}
-
-type SortEntity int32
-
-const (
-	SortEntity0 SortEntity = 0
-	SortEntity1 SortEntity = 1
-	SortEntity2 SortEntity = 2
-	SortEntity3 SortEntity = 3
-	SortEntity4 SortEntity = 4
-	SortEntity5 SortEntity = 5
-)
-
-// AllValues returns all SortEntity values.
-func (SortEntity) AllValues() []SortEntity {
-	return []SortEntity{
-		SortEntity0,
-		SortEntity1,
-		SortEntity2,
-		SortEntity3,
-		SortEntity4,
-		SortEntity5,
-	}
-}
-
-type SortKind int32
-
-const (
-	SortKind0 SortKind = 0
-	SortKind1 SortKind = 1
-	SortKind2 SortKind = 2
-)
-
-// AllValues returns all SortKind values.
-func (SortKind) AllValues() []SortKind {
-	return []SortKind{
-		SortKind0,
-		SortKind1,
-		SortKind2,
-	}
-}
-
 // Ref: #/components/schemas/Spec
 type Spec struct {
 	Argv              OptArgv     `json:"argv"`
@@ -34376,280 +26829,6 @@ func (s *StartSSOResponse) SetState(val OptString) {
 	s.State = val
 }
 
-// Ref: #/components/schemas/StartSuiteRequest
-type StartSuiteRequest struct {
-	InGlobalRating OptBool   `json:"inGlobalRating"`
-	InTenantRating OptBool   `json:"inTenantRating"`
-	MaxParallel    OptInt32  `json:"maxParallel"`
-	Suite          OptSuite  `json:"suite"`
-	SuiteId        OptString `json:"suiteId"`
-	TenantId       OptString `json:"tenantId"`
-}
-
-// GetInGlobalRating returns the value of InGlobalRating.
-func (s *StartSuiteRequest) GetInGlobalRating() OptBool {
-	return s.InGlobalRating
-}
-
-// GetInTenantRating returns the value of InTenantRating.
-func (s *StartSuiteRequest) GetInTenantRating() OptBool {
-	return s.InTenantRating
-}
-
-// GetMaxParallel returns the value of MaxParallel.
-func (s *StartSuiteRequest) GetMaxParallel() OptInt32 {
-	return s.MaxParallel
-}
-
-// GetSuite returns the value of Suite.
-func (s *StartSuiteRequest) GetSuite() OptSuite {
-	return s.Suite
-}
-
-// GetSuiteId returns the value of SuiteId.
-func (s *StartSuiteRequest) GetSuiteId() OptString {
-	return s.SuiteId
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *StartSuiteRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetInGlobalRating sets the value of InGlobalRating.
-func (s *StartSuiteRequest) SetInGlobalRating(val OptBool) {
-	s.InGlobalRating = val
-}
-
-// SetInTenantRating sets the value of InTenantRating.
-func (s *StartSuiteRequest) SetInTenantRating(val OptBool) {
-	s.InTenantRating = val
-}
-
-// SetMaxParallel sets the value of MaxParallel.
-func (s *StartSuiteRequest) SetMaxParallel(val OptInt32) {
-	s.MaxParallel = val
-}
-
-// SetSuite sets the value of Suite.
-func (s *StartSuiteRequest) SetSuite(val OptSuite) {
-	s.Suite = val
-}
-
-// SetSuiteId sets the value of SuiteId.
-func (s *StartSuiteRequest) SetSuiteId(val OptString) {
-	s.SuiteId = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *StartSuiteRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/StartSuiteResponse
-type StartSuiteResponse struct {
-	SuiteRun SuiteRunRecord `json:"suiteRun"`
-}
-
-// GetSuiteRun returns the value of SuiteRun.
-func (s *StartSuiteResponse) GetSuiteRun() SuiteRunRecord {
-	return s.SuiteRun
-}
-
-// SetSuiteRun sets the value of SuiteRun.
-func (s *StartSuiteResponse) SetSuiteRun(val SuiteRunRecord) {
-	s.SuiteRun = val
-}
-
-// Ref: #/components/schemas/StartSuiteWizardRequest
-type StartSuiteWizardRequest struct {
-	Name     OptString `json:"name"`
-	SuiteId  OptString `json:"suiteId"`
-	TenantId OptString `json:"tenantId"`
-}
-
-// GetName returns the value of Name.
-func (s *StartSuiteWizardRequest) GetName() OptString {
-	return s.Name
-}
-
-// GetSuiteId returns the value of SuiteId.
-func (s *StartSuiteWizardRequest) GetSuiteId() OptString {
-	return s.SuiteId
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *StartSuiteWizardRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetName sets the value of Name.
-func (s *StartSuiteWizardRequest) SetName(val OptString) {
-	s.Name = val
-}
-
-// SetSuiteId sets the value of SuiteId.
-func (s *StartSuiteWizardRequest) SetSuiteId(val OptString) {
-	s.SuiteId = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *StartSuiteWizardRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/StartSuiteWizardResponse
-type StartSuiteWizardResponse struct {
-	Draft SuiteWizardDraftRecord `json:"draft"`
-}
-
-// GetDraft returns the value of Draft.
-func (s *StartSuiteWizardResponse) GetDraft() SuiteWizardDraftRecord {
-	return s.Draft
-}
-
-// SetDraft sets the value of Draft.
-func (s *StartSuiteWizardResponse) SetDraft(val SuiteWizardDraftRecord) {
-	s.Draft = val
-}
-
-// Ref: #/components/schemas/StartTestRunRequest
-type StartTestRunRequest struct {
-	InGlobalRating OptBool    `json:"inGlobalRating"`
-	InTenantRating OptBool    `json:"inTenantRating"`
-	Run            OptTestRun `json:"run"`
-	TenantId       OptString  `json:"tenantId"`
-	TestRunId      OptString  `json:"testRunId"`
-}
-
-// GetInGlobalRating returns the value of InGlobalRating.
-func (s *StartTestRunRequest) GetInGlobalRating() OptBool {
-	return s.InGlobalRating
-}
-
-// GetInTenantRating returns the value of InTenantRating.
-func (s *StartTestRunRequest) GetInTenantRating() OptBool {
-	return s.InTenantRating
-}
-
-// GetRun returns the value of Run.
-func (s *StartTestRunRequest) GetRun() OptTestRun {
-	return s.Run
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *StartTestRunRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// GetTestRunId returns the value of TestRunId.
-func (s *StartTestRunRequest) GetTestRunId() OptString {
-	return s.TestRunId
-}
-
-// SetInGlobalRating sets the value of InGlobalRating.
-func (s *StartTestRunRequest) SetInGlobalRating(val OptBool) {
-	s.InGlobalRating = val
-}
-
-// SetInTenantRating sets the value of InTenantRating.
-func (s *StartTestRunRequest) SetInTenantRating(val OptBool) {
-	s.InTenantRating = val
-}
-
-// SetRun sets the value of Run.
-func (s *StartTestRunRequest) SetRun(val OptTestRun) {
-	s.Run = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *StartTestRunRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// SetTestRunId sets the value of TestRunId.
-func (s *StartTestRunRequest) SetTestRunId(val OptString) {
-	s.TestRunId = val
-}
-
-// Ref: #/components/schemas/StartTestRunResponse
-type StartTestRunResponse struct {
-	Run TestRunRecord `json:"run"`
-}
-
-// GetRun returns the value of Run.
-func (s *StartTestRunResponse) GetRun() TestRunRecord {
-	return s.Run
-}
-
-// SetRun sets the value of Run.
-func (s *StartTestRunResponse) SetRun(val TestRunRecord) {
-	s.Run = val
-}
-
-// Ref: #/components/schemas/StartTestWizardRequest
-type StartTestWizardRequest struct {
-	Name         OptString `json:"name"`
-	SourceRunId  OptString `json:"sourceRunId"`
-	TenantId     OptString `json:"tenantId"`
-	TestPresetId OptString `json:"testPresetId"`
-}
-
-// GetName returns the value of Name.
-func (s *StartTestWizardRequest) GetName() OptString {
-	return s.Name
-}
-
-// GetSourceRunId returns the value of SourceRunId.
-func (s *StartTestWizardRequest) GetSourceRunId() OptString {
-	return s.SourceRunId
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *StartTestWizardRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// GetTestPresetId returns the value of TestPresetId.
-func (s *StartTestWizardRequest) GetTestPresetId() OptString {
-	return s.TestPresetId
-}
-
-// SetName sets the value of Name.
-func (s *StartTestWizardRequest) SetName(val OptString) {
-	s.Name = val
-}
-
-// SetSourceRunId sets the value of SourceRunId.
-func (s *StartTestWizardRequest) SetSourceRunId(val OptString) {
-	s.SourceRunId = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *StartTestWizardRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// SetTestPresetId sets the value of TestPresetId.
-func (s *StartTestWizardRequest) SetTestPresetId(val OptString) {
-	s.TestPresetId = val
-}
-
-// Ref: #/components/schemas/StartTestWizardResponse
-type StartTestWizardResponse struct {
-	Draft TestWizardDraftRecord `json:"draft"`
-}
-
-// GetDraft returns the value of Draft.
-func (s *StartTestWizardResponse) GetDraft() TestWizardDraftRecord {
-	return s.Draft
-}
-
-// SetDraft sets the value of Draft.
-func (s *StartTestWizardResponse) SetDraft(val TestWizardDraftRecord) {
-	s.Draft = val
-}
-
 // Ref: #/components/schemas/StatusCounts
 type StatusCounts struct {
 	Cancelled OptInt32 `json:"cancelled"`
@@ -34919,824 +27098,8 @@ func (s *SubmitRegistrationRequestRequest) SetMessage(val OptString) {
 // Ref: #/components/schemas/SubmitRegistrationRequestResponse
 type SubmitRegistrationRequestResponse struct{}
 
-// Ref: #/components/schemas/Suite
-type Suite struct {
-	Cells                 []SuiteCell      `json:"cells"`
-	DefaultInGlobalRating OptBool          `json:"defaultInGlobalRating"`
-	DefaultInTenantRating OptBool          `json:"defaultInTenantRating"`
-	DefaultMaxParallel    OptInt32         `json:"defaultMaxParallel"`
-	ID                    OptString        `json:"id"`
-	Provider              OptSuiteProvider `json:"provider"`
-	Schedule              OptSchedule      `json:"schedule"`
-	Tags                  OptTags          `json:"tags"`
-}
-
-// GetCells returns the value of Cells.
-func (s *Suite) GetCells() []SuiteCell {
-	return s.Cells
-}
-
-// GetDefaultInGlobalRating returns the value of DefaultInGlobalRating.
-func (s *Suite) GetDefaultInGlobalRating() OptBool {
-	return s.DefaultInGlobalRating
-}
-
-// GetDefaultInTenantRating returns the value of DefaultInTenantRating.
-func (s *Suite) GetDefaultInTenantRating() OptBool {
-	return s.DefaultInTenantRating
-}
-
-// GetDefaultMaxParallel returns the value of DefaultMaxParallel.
-func (s *Suite) GetDefaultMaxParallel() OptInt32 {
-	return s.DefaultMaxParallel
-}
-
-// GetID returns the value of ID.
-func (s *Suite) GetID() OptString {
-	return s.ID
-}
-
-// GetProvider returns the value of Provider.
-func (s *Suite) GetProvider() OptSuiteProvider {
-	return s.Provider
-}
-
-// GetSchedule returns the value of Schedule.
-func (s *Suite) GetSchedule() OptSchedule {
-	return s.Schedule
-}
-
-// GetTags returns the value of Tags.
-func (s *Suite) GetTags() OptTags {
-	return s.Tags
-}
-
-// SetCells sets the value of Cells.
-func (s *Suite) SetCells(val []SuiteCell) {
-	s.Cells = val
-}
-
-// SetDefaultInGlobalRating sets the value of DefaultInGlobalRating.
-func (s *Suite) SetDefaultInGlobalRating(val OptBool) {
-	s.DefaultInGlobalRating = val
-}
-
-// SetDefaultInTenantRating sets the value of DefaultInTenantRating.
-func (s *Suite) SetDefaultInTenantRating(val OptBool) {
-	s.DefaultInTenantRating = val
-}
-
-// SetDefaultMaxParallel sets the value of DefaultMaxParallel.
-func (s *Suite) SetDefaultMaxParallel(val OptInt32) {
-	s.DefaultMaxParallel = val
-}
-
-// SetID sets the value of ID.
-func (s *Suite) SetID(val OptString) {
-	s.ID = val
-}
-
-// SetProvider sets the value of Provider.
-func (s *Suite) SetProvider(val OptSuiteProvider) {
-	s.Provider = val
-}
-
-// SetSchedule sets the value of Schedule.
-func (s *Suite) SetSchedule(val OptSchedule) {
-	s.Schedule = val
-}
-
-// SetTags sets the value of Tags.
-func (s *Suite) SetTags(val OptTags) {
-	s.Tags = val
-}
-
-// Ref: #/components/schemas/SuiteCell
-type SuiteCell struct {
-	Enabled          OptBool              `json:"enabled"`
-	ID               OptString            `json:"id"`
-	InlineTest       OptTest              `json:"inlineTest"`
-	MachineOverrides []MachinePlan        `json:"machineOverrides"`
-	Name             OptString            `json:"name"`
-	PresetPair       OptPresetPair        `json:"presetPair"`
-	RenderOverrides  OptRenderOverrideSet `json:"renderOverrides"`
-	Tags             OptTags              `json:"tags"`
-	TestPresetId     OptString            `json:"testPresetId"`
-}
-
-// GetEnabled returns the value of Enabled.
-func (s *SuiteCell) GetEnabled() OptBool {
-	return s.Enabled
-}
-
-// GetID returns the value of ID.
-func (s *SuiteCell) GetID() OptString {
-	return s.ID
-}
-
-// GetInlineTest returns the value of InlineTest.
-func (s *SuiteCell) GetInlineTest() OptTest {
-	return s.InlineTest
-}
-
-// GetMachineOverrides returns the value of MachineOverrides.
-func (s *SuiteCell) GetMachineOverrides() []MachinePlan {
-	return s.MachineOverrides
-}
-
-// GetName returns the value of Name.
-func (s *SuiteCell) GetName() OptString {
-	return s.Name
-}
-
-// GetPresetPair returns the value of PresetPair.
-func (s *SuiteCell) GetPresetPair() OptPresetPair {
-	return s.PresetPair
-}
-
-// GetRenderOverrides returns the value of RenderOverrides.
-func (s *SuiteCell) GetRenderOverrides() OptRenderOverrideSet {
-	return s.RenderOverrides
-}
-
-// GetTags returns the value of Tags.
-func (s *SuiteCell) GetTags() OptTags {
-	return s.Tags
-}
-
-// GetTestPresetId returns the value of TestPresetId.
-func (s *SuiteCell) GetTestPresetId() OptString {
-	return s.TestPresetId
-}
-
-// SetEnabled sets the value of Enabled.
-func (s *SuiteCell) SetEnabled(val OptBool) {
-	s.Enabled = val
-}
-
-// SetID sets the value of ID.
-func (s *SuiteCell) SetID(val OptString) {
-	s.ID = val
-}
-
-// SetInlineTest sets the value of InlineTest.
-func (s *SuiteCell) SetInlineTest(val OptTest) {
-	s.InlineTest = val
-}
-
-// SetMachineOverrides sets the value of MachineOverrides.
-func (s *SuiteCell) SetMachineOverrides(val []MachinePlan) {
-	s.MachineOverrides = val
-}
-
-// SetName sets the value of Name.
-func (s *SuiteCell) SetName(val OptString) {
-	s.Name = val
-}
-
-// SetPresetPair sets the value of PresetPair.
-func (s *SuiteCell) SetPresetPair(val OptPresetPair) {
-	s.PresetPair = val
-}
-
-// SetRenderOverrides sets the value of RenderOverrides.
-func (s *SuiteCell) SetRenderOverrides(val OptRenderOverrideSet) {
-	s.RenderOverrides = val
-}
-
-// SetTags sets the value of Tags.
-func (s *SuiteCell) SetTags(val OptTags) {
-	s.Tags = val
-}
-
-// SetTestPresetId sets the value of TestPresetId.
-func (s *SuiteCell) SetTestPresetId(val OptString) {
-	s.TestPresetId = val
-}
-
-type SuiteProvider int32
-
-const (
-	SuiteProvider1 SuiteProvider = 1
-	SuiteProvider2 SuiteProvider = 2
-)
-
-// AllValues returns all SuiteProvider values.
-func (SuiteProvider) AllValues() []SuiteProvider {
-	return []SuiteProvider{
-		SuiteProvider1,
-		SuiteProvider2,
-	}
-}
-
-// Ref: #/components/schemas/SuiteRecord
-type SuiteRecord struct {
-	Entity  Entity      `json:"entity"`
-	Spec    Suite       `json:"spec"`
-	Summary OptSummary6 `json:"summary"`
-}
-
-// GetEntity returns the value of Entity.
-func (s *SuiteRecord) GetEntity() Entity {
-	return s.Entity
-}
-
-// GetSpec returns the value of Spec.
-func (s *SuiteRecord) GetSpec() Suite {
-	return s.Spec
-}
-
-// GetSummary returns the value of Summary.
-func (s *SuiteRecord) GetSummary() OptSummary6 {
-	return s.Summary
-}
-
-// SetEntity sets the value of Entity.
-func (s *SuiteRecord) SetEntity(val Entity) {
-	s.Entity = val
-}
-
-// SetSpec sets the value of Spec.
-func (s *SuiteRecord) SetSpec(val Suite) {
-	s.Spec = val
-}
-
-// SetSummary sets the value of Summary.
-func (s *SuiteRecord) SetSummary(val OptSummary6) {
-	s.Summary = val
-}
-
-// Ref: #/components/schemas/SuiteRunRecord
-type SuiteRunRecord struct {
-	Children    []ChildRun               `json:"children"`
-	Entity      Entity                   `json:"entity"`
-	MaxParallel OptInt32                 `json:"maxParallel"`
-	Status      OptSuiteRunRecordStatus  `json:"status"`
-	SuiteId     OptString                `json:"suiteId"`
-	Summary     OptSummary7              `json:"summary"`
-	Trigger     OptSuiteRunRecordTrigger `json:"trigger"`
-}
-
-// GetChildren returns the value of Children.
-func (s *SuiteRunRecord) GetChildren() []ChildRun {
-	return s.Children
-}
-
-// GetEntity returns the value of Entity.
-func (s *SuiteRunRecord) GetEntity() Entity {
-	return s.Entity
-}
-
-// GetMaxParallel returns the value of MaxParallel.
-func (s *SuiteRunRecord) GetMaxParallel() OptInt32 {
-	return s.MaxParallel
-}
-
-// GetStatus returns the value of Status.
-func (s *SuiteRunRecord) GetStatus() OptSuiteRunRecordStatus {
-	return s.Status
-}
-
-// GetSuiteId returns the value of SuiteId.
-func (s *SuiteRunRecord) GetSuiteId() OptString {
-	return s.SuiteId
-}
-
-// GetSummary returns the value of Summary.
-func (s *SuiteRunRecord) GetSummary() OptSummary7 {
-	return s.Summary
-}
-
-// GetTrigger returns the value of Trigger.
-func (s *SuiteRunRecord) GetTrigger() OptSuiteRunRecordTrigger {
-	return s.Trigger
-}
-
-// SetChildren sets the value of Children.
-func (s *SuiteRunRecord) SetChildren(val []ChildRun) {
-	s.Children = val
-}
-
-// SetEntity sets the value of Entity.
-func (s *SuiteRunRecord) SetEntity(val Entity) {
-	s.Entity = val
-}
-
-// SetMaxParallel sets the value of MaxParallel.
-func (s *SuiteRunRecord) SetMaxParallel(val OptInt32) {
-	s.MaxParallel = val
-}
-
-// SetStatus sets the value of Status.
-func (s *SuiteRunRecord) SetStatus(val OptSuiteRunRecordStatus) {
-	s.Status = val
-}
-
-// SetSuiteId sets the value of SuiteId.
-func (s *SuiteRunRecord) SetSuiteId(val OptString) {
-	s.SuiteId = val
-}
-
-// SetSummary sets the value of Summary.
-func (s *SuiteRunRecord) SetSummary(val OptSummary7) {
-	s.Summary = val
-}
-
-// SetTrigger sets the value of Trigger.
-func (s *SuiteRunRecord) SetTrigger(val OptSuiteRunRecordTrigger) {
-	s.Trigger = val
-}
-
-type SuiteRunRecordStatus int32
-
-const (
-	SuiteRunRecordStatus0  SuiteRunRecordStatus = 0
-	SuiteRunRecordStatus1  SuiteRunRecordStatus = 1
-	SuiteRunRecordStatus2  SuiteRunRecordStatus = 2
-	SuiteRunRecordStatus5  SuiteRunRecordStatus = 5
-	SuiteRunRecordStatus3  SuiteRunRecordStatus = 3
-	SuiteRunRecordStatus4  SuiteRunRecordStatus = 4
-	SuiteRunRecordStatus6  SuiteRunRecordStatus = 6
-	SuiteRunRecordStatus7  SuiteRunRecordStatus = 7
-	SuiteRunRecordStatus8  SuiteRunRecordStatus = 8
-	SuiteRunRecordStatus9  SuiteRunRecordStatus = 9
-	SuiteRunRecordStatus10 SuiteRunRecordStatus = 10
-	SuiteRunRecordStatus11 SuiteRunRecordStatus = 11
-)
-
-// AllValues returns all SuiteRunRecordStatus values.
-func (SuiteRunRecordStatus) AllValues() []SuiteRunRecordStatus {
-	return []SuiteRunRecordStatus{
-		SuiteRunRecordStatus0,
-		SuiteRunRecordStatus1,
-		SuiteRunRecordStatus2,
-		SuiteRunRecordStatus5,
-		SuiteRunRecordStatus3,
-		SuiteRunRecordStatus4,
-		SuiteRunRecordStatus6,
-		SuiteRunRecordStatus7,
-		SuiteRunRecordStatus8,
-		SuiteRunRecordStatus9,
-		SuiteRunRecordStatus10,
-		SuiteRunRecordStatus11,
-	}
-}
-
-type SuiteRunRecordTrigger int32
-
-const (
-	SuiteRunRecordTrigger0 SuiteRunRecordTrigger = 0
-	SuiteRunRecordTrigger1 SuiteRunRecordTrigger = 1
-	SuiteRunRecordTrigger2 SuiteRunRecordTrigger = 2
-	SuiteRunRecordTrigger3 SuiteRunRecordTrigger = 3
-)
-
-// AllValues returns all SuiteRunRecordTrigger values.
-func (SuiteRunRecordTrigger) AllValues() []SuiteRunRecordTrigger {
-	return []SuiteRunRecordTrigger{
-		SuiteRunRecordTrigger0,
-		SuiteRunRecordTrigger1,
-		SuiteRunRecordTrigger2,
-		SuiteRunRecordTrigger3,
-	}
-}
-
-// Ref: #/components/schemas/SuiteWizardCellPatch
-type SuiteWizardCellPatch struct {
-	CellId           OptString            `json:"cellId"`
-	Enabled          OptBool              `json:"enabled"`
-	InlineTest       OptTest              `json:"inlineTest"`
-	MachineOverrides []MachinePlan        `json:"machineOverrides"`
-	Name             OptString            `json:"name"`
-	PresetPair       OptPresetPair        `json:"presetPair"`
-	Remove           OptBool              `json:"remove"`
-	RenderOverrides  OptRenderOverrideSet `json:"renderOverrides"`
-	TestPresetId     OptString            `json:"testPresetId"`
-}
-
-// GetCellId returns the value of CellId.
-func (s *SuiteWizardCellPatch) GetCellId() OptString {
-	return s.CellId
-}
-
-// GetEnabled returns the value of Enabled.
-func (s *SuiteWizardCellPatch) GetEnabled() OptBool {
-	return s.Enabled
-}
-
-// GetInlineTest returns the value of InlineTest.
-func (s *SuiteWizardCellPatch) GetInlineTest() OptTest {
-	return s.InlineTest
-}
-
-// GetMachineOverrides returns the value of MachineOverrides.
-func (s *SuiteWizardCellPatch) GetMachineOverrides() []MachinePlan {
-	return s.MachineOverrides
-}
-
-// GetName returns the value of Name.
-func (s *SuiteWizardCellPatch) GetName() OptString {
-	return s.Name
-}
-
-// GetPresetPair returns the value of PresetPair.
-func (s *SuiteWizardCellPatch) GetPresetPair() OptPresetPair {
-	return s.PresetPair
-}
-
-// GetRemove returns the value of Remove.
-func (s *SuiteWizardCellPatch) GetRemove() OptBool {
-	return s.Remove
-}
-
-// GetRenderOverrides returns the value of RenderOverrides.
-func (s *SuiteWizardCellPatch) GetRenderOverrides() OptRenderOverrideSet {
-	return s.RenderOverrides
-}
-
-// GetTestPresetId returns the value of TestPresetId.
-func (s *SuiteWizardCellPatch) GetTestPresetId() OptString {
-	return s.TestPresetId
-}
-
-// SetCellId sets the value of CellId.
-func (s *SuiteWizardCellPatch) SetCellId(val OptString) {
-	s.CellId = val
-}
-
-// SetEnabled sets the value of Enabled.
-func (s *SuiteWizardCellPatch) SetEnabled(val OptBool) {
-	s.Enabled = val
-}
-
-// SetInlineTest sets the value of InlineTest.
-func (s *SuiteWizardCellPatch) SetInlineTest(val OptTest) {
-	s.InlineTest = val
-}
-
-// SetMachineOverrides sets the value of MachineOverrides.
-func (s *SuiteWizardCellPatch) SetMachineOverrides(val []MachinePlan) {
-	s.MachineOverrides = val
-}
-
-// SetName sets the value of Name.
-func (s *SuiteWizardCellPatch) SetName(val OptString) {
-	s.Name = val
-}
-
-// SetPresetPair sets the value of PresetPair.
-func (s *SuiteWizardCellPatch) SetPresetPair(val OptPresetPair) {
-	s.PresetPair = val
-}
-
-// SetRemove sets the value of Remove.
-func (s *SuiteWizardCellPatch) SetRemove(val OptBool) {
-	s.Remove = val
-}
-
-// SetRenderOverrides sets the value of RenderOverrides.
-func (s *SuiteWizardCellPatch) SetRenderOverrides(val OptRenderOverrideSet) {
-	s.RenderOverrides = val
-}
-
-// SetTestPresetId sets the value of TestPresetId.
-func (s *SuiteWizardCellPatch) SetTestPresetId(val OptString) {
-	s.TestPresetId = val
-}
-
-// Ref: #/components/schemas/SuiteWizardDraftRecord
-type SuiteWizardDraftRecord struct {
-	Cells                 []Cell                            `json:"cells"`
-	DefaultInGlobalRating OptBool                           `json:"defaultInGlobalRating"`
-	DefaultInTenantRating OptBool                           `json:"defaultInTenantRating"`
-	Entity                Entity                            `json:"entity"`
-	Errors                []FieldError                      `json:"errors"`
-	MaxParallel           OptInt32                          `json:"maxParallel"`
-	Provider              OptSuiteWizardDraftRecordProvider `json:"provider"`
-	Ready                 OptBool                           `json:"ready"`
-	Schedule              OptSchedule                       `json:"schedule"`
-	SuiteId               OptString                         `json:"suiteId"`
-}
-
-// GetCells returns the value of Cells.
-func (s *SuiteWizardDraftRecord) GetCells() []Cell {
-	return s.Cells
-}
-
-// GetDefaultInGlobalRating returns the value of DefaultInGlobalRating.
-func (s *SuiteWizardDraftRecord) GetDefaultInGlobalRating() OptBool {
-	return s.DefaultInGlobalRating
-}
-
-// GetDefaultInTenantRating returns the value of DefaultInTenantRating.
-func (s *SuiteWizardDraftRecord) GetDefaultInTenantRating() OptBool {
-	return s.DefaultInTenantRating
-}
-
-// GetEntity returns the value of Entity.
-func (s *SuiteWizardDraftRecord) GetEntity() Entity {
-	return s.Entity
-}
-
-// GetErrors returns the value of Errors.
-func (s *SuiteWizardDraftRecord) GetErrors() []FieldError {
-	return s.Errors
-}
-
-// GetMaxParallel returns the value of MaxParallel.
-func (s *SuiteWizardDraftRecord) GetMaxParallel() OptInt32 {
-	return s.MaxParallel
-}
-
-// GetProvider returns the value of Provider.
-func (s *SuiteWizardDraftRecord) GetProvider() OptSuiteWizardDraftRecordProvider {
-	return s.Provider
-}
-
-// GetReady returns the value of Ready.
-func (s *SuiteWizardDraftRecord) GetReady() OptBool {
-	return s.Ready
-}
-
-// GetSchedule returns the value of Schedule.
-func (s *SuiteWizardDraftRecord) GetSchedule() OptSchedule {
-	return s.Schedule
-}
-
-// GetSuiteId returns the value of SuiteId.
-func (s *SuiteWizardDraftRecord) GetSuiteId() OptString {
-	return s.SuiteId
-}
-
-// SetCells sets the value of Cells.
-func (s *SuiteWizardDraftRecord) SetCells(val []Cell) {
-	s.Cells = val
-}
-
-// SetDefaultInGlobalRating sets the value of DefaultInGlobalRating.
-func (s *SuiteWizardDraftRecord) SetDefaultInGlobalRating(val OptBool) {
-	s.DefaultInGlobalRating = val
-}
-
-// SetDefaultInTenantRating sets the value of DefaultInTenantRating.
-func (s *SuiteWizardDraftRecord) SetDefaultInTenantRating(val OptBool) {
-	s.DefaultInTenantRating = val
-}
-
-// SetEntity sets the value of Entity.
-func (s *SuiteWizardDraftRecord) SetEntity(val Entity) {
-	s.Entity = val
-}
-
-// SetErrors sets the value of Errors.
-func (s *SuiteWizardDraftRecord) SetErrors(val []FieldError) {
-	s.Errors = val
-}
-
-// SetMaxParallel sets the value of MaxParallel.
-func (s *SuiteWizardDraftRecord) SetMaxParallel(val OptInt32) {
-	s.MaxParallel = val
-}
-
-// SetProvider sets the value of Provider.
-func (s *SuiteWizardDraftRecord) SetProvider(val OptSuiteWizardDraftRecordProvider) {
-	s.Provider = val
-}
-
-// SetReady sets the value of Ready.
-func (s *SuiteWizardDraftRecord) SetReady(val OptBool) {
-	s.Ready = val
-}
-
-// SetSchedule sets the value of Schedule.
-func (s *SuiteWizardDraftRecord) SetSchedule(val OptSchedule) {
-	s.Schedule = val
-}
-
-// SetSuiteId sets the value of SuiteId.
-func (s *SuiteWizardDraftRecord) SetSuiteId(val OptString) {
-	s.SuiteId = val
-}
-
-type SuiteWizardDraftRecordProvider int32
-
-const (
-	SuiteWizardDraftRecordProvider0 SuiteWizardDraftRecordProvider = 0
-	SuiteWizardDraftRecordProvider1 SuiteWizardDraftRecordProvider = 1
-	SuiteWizardDraftRecordProvider2 SuiteWizardDraftRecordProvider = 2
-)
-
-// AllValues returns all SuiteWizardDraftRecordProvider values.
-func (SuiteWizardDraftRecordProvider) AllValues() []SuiteWizardDraftRecordProvider {
-	return []SuiteWizardDraftRecordProvider{
-		SuiteWizardDraftRecordProvider0,
-		SuiteWizardDraftRecordProvider1,
-		SuiteWizardDraftRecordProvider2,
-	}
-}
-
 // Ref: #/components/schemas/Summary
 type Summary struct {
-	DbKind   OptSummaryDbKind `json:"dbKind"`
-	External OptBool          `json:"external"`
-	Version  OptString        `json:"version"`
-}
-
-// GetDbKind returns the value of DbKind.
-func (s *Summary) GetDbKind() OptSummaryDbKind {
-	return s.DbKind
-}
-
-// GetExternal returns the value of External.
-func (s *Summary) GetExternal() OptBool {
-	return s.External
-}
-
-// GetVersion returns the value of Version.
-func (s *Summary) GetVersion() OptString {
-	return s.Version
-}
-
-// SetDbKind sets the value of DbKind.
-func (s *Summary) SetDbKind(val OptSummaryDbKind) {
-	s.DbKind = val
-}
-
-// SetExternal sets the value of External.
-func (s *Summary) SetExternal(val OptBool) {
-	s.External = val
-}
-
-// SetVersion sets the value of Version.
-func (s *Summary) SetVersion(val OptString) {
-	s.Version = val
-}
-
-// Ref: #/components/schemas/Summary2
-type Summary2 struct {
-	Protocol       OptSummary2Protocol `json:"protocol"`
-	Script         OptString           `json:"script"`
-	StroppyVersion OptString           `json:"stroppyVersion"`
-}
-
-// GetProtocol returns the value of Protocol.
-func (s *Summary2) GetProtocol() OptSummary2Protocol {
-	return s.Protocol
-}
-
-// GetScript returns the value of Script.
-func (s *Summary2) GetScript() OptString {
-	return s.Script
-}
-
-// GetStroppyVersion returns the value of StroppyVersion.
-func (s *Summary2) GetStroppyVersion() OptString {
-	return s.StroppyVersion
-}
-
-// SetProtocol sets the value of Protocol.
-func (s *Summary2) SetProtocol(val OptSummary2Protocol) {
-	s.Protocol = val
-}
-
-// SetScript sets the value of Script.
-func (s *Summary2) SetScript(val OptString) {
-	s.Script = val
-}
-
-// SetStroppyVersion sets the value of StroppyVersion.
-func (s *Summary2) SetStroppyVersion(val OptString) {
-	s.StroppyVersion = val
-}
-
-type Summary2Protocol int32
-
-const (
-	Summary2Protocol0 Summary2Protocol = 0
-	Summary2Protocol1 Summary2Protocol = 1
-	Summary2Protocol2 Summary2Protocol = 2
-	Summary2Protocol3 Summary2Protocol = 3
-	Summary2Protocol4 Summary2Protocol = 4
-	Summary2Protocol5 Summary2Protocol = 5
-	Summary2Protocol7 Summary2Protocol = 7
-	Summary2Protocol8 Summary2Protocol = 8
-)
-
-// AllValues returns all Summary2Protocol values.
-func (Summary2Protocol) AllValues() []Summary2Protocol {
-	return []Summary2Protocol{
-		Summary2Protocol0,
-		Summary2Protocol1,
-		Summary2Protocol2,
-		Summary2Protocol3,
-		Summary2Protocol4,
-		Summary2Protocol5,
-		Summary2Protocol7,
-		Summary2Protocol8,
-	}
-}
-
-// Ref: #/components/schemas/Summary3
-type Summary3 struct {
-	DbKind         OptSummary3DbKind   `json:"dbKind"`
-	Protocol       OptSummary3Protocol `json:"protocol"`
-	StroppyVersion OptString           `json:"stroppyVersion"`
-}
-
-// GetDbKind returns the value of DbKind.
-func (s *Summary3) GetDbKind() OptSummary3DbKind {
-	return s.DbKind
-}
-
-// GetProtocol returns the value of Protocol.
-func (s *Summary3) GetProtocol() OptSummary3Protocol {
-	return s.Protocol
-}
-
-// GetStroppyVersion returns the value of StroppyVersion.
-func (s *Summary3) GetStroppyVersion() OptString {
-	return s.StroppyVersion
-}
-
-// SetDbKind sets the value of DbKind.
-func (s *Summary3) SetDbKind(val OptSummary3DbKind) {
-	s.DbKind = val
-}
-
-// SetProtocol sets the value of Protocol.
-func (s *Summary3) SetProtocol(val OptSummary3Protocol) {
-	s.Protocol = val
-}
-
-// SetStroppyVersion sets the value of StroppyVersion.
-func (s *Summary3) SetStroppyVersion(val OptString) {
-	s.StroppyVersion = val
-}
-
-type Summary3DbKind int32
-
-const (
-	Summary3DbKind0  Summary3DbKind = 0
-	Summary3DbKind1  Summary3DbKind = 1
-	Summary3DbKind2  Summary3DbKind = 2
-	Summary3DbKind3  Summary3DbKind = 3
-	Summary3DbKind4  Summary3DbKind = 4
-	Summary3DbKind5  Summary3DbKind = 5
-	Summary3DbKind6  Summary3DbKind = 6
-	Summary3DbKind7  Summary3DbKind = 7
-	Summary3DbKind8  Summary3DbKind = 8
-	Summary3DbKind9  Summary3DbKind = 9
-	Summary3DbKind10 Summary3DbKind = 10
-	Summary3DbKind11 Summary3DbKind = 11
-)
-
-// AllValues returns all Summary3DbKind values.
-func (Summary3DbKind) AllValues() []Summary3DbKind {
-	return []Summary3DbKind{
-		Summary3DbKind0,
-		Summary3DbKind1,
-		Summary3DbKind2,
-		Summary3DbKind3,
-		Summary3DbKind4,
-		Summary3DbKind5,
-		Summary3DbKind6,
-		Summary3DbKind7,
-		Summary3DbKind8,
-		Summary3DbKind9,
-		Summary3DbKind10,
-		Summary3DbKind11,
-	}
-}
-
-type Summary3Protocol int32
-
-const (
-	Summary3Protocol0 Summary3Protocol = 0
-	Summary3Protocol1 Summary3Protocol = 1
-	Summary3Protocol2 Summary3Protocol = 2
-	Summary3Protocol3 Summary3Protocol = 3
-	Summary3Protocol4 Summary3Protocol = 4
-	Summary3Protocol5 Summary3Protocol = 5
-	Summary3Protocol7 Summary3Protocol = 7
-	Summary3Protocol8 Summary3Protocol = 8
-)
-
-// AllValues returns all Summary3Protocol values.
-func (Summary3Protocol) AllValues() []Summary3Protocol {
-	return []Summary3Protocol{
-		Summary3Protocol0,
-		Summary3Protocol1,
-		Summary3Protocol2,
-		Summary3Protocol3,
-		Summary3Protocol4,
-		Summary3Protocol5,
-		Summary3Protocol7,
-		Summary3Protocol8,
-	}
-}
-
-// Ref: #/components/schemas/Summary4
-type Summary4 struct {
 	Compiles          OptBool   `json:"compiles"`
 	MachineGroupCount OptInt32  `json:"machineGroupCount"`
 	Provider          OptString `json:"provider"`
@@ -35744,55 +27107,55 @@ type Summary4 struct {
 }
 
 // GetCompiles returns the value of Compiles.
-func (s *Summary4) GetCompiles() OptBool {
+func (s *Summary) GetCompiles() OptBool {
 	return s.Compiles
 }
 
 // GetMachineGroupCount returns the value of MachineGroupCount.
-func (s *Summary4) GetMachineGroupCount() OptInt32 {
+func (s *Summary) GetMachineGroupCount() OptInt32 {
 	return s.MachineGroupCount
 }
 
 // GetProvider returns the value of Provider.
-func (s *Summary4) GetProvider() OptString {
+func (s *Summary) GetProvider() OptString {
 	return s.Provider
 }
 
 // GetServiceCount returns the value of ServiceCount.
-func (s *Summary4) GetServiceCount() OptInt32 {
+func (s *Summary) GetServiceCount() OptInt32 {
 	return s.ServiceCount
 }
 
 // SetCompiles sets the value of Compiles.
-func (s *Summary4) SetCompiles(val OptBool) {
+func (s *Summary) SetCompiles(val OptBool) {
 	s.Compiles = val
 }
 
 // SetMachineGroupCount sets the value of MachineGroupCount.
-func (s *Summary4) SetMachineGroupCount(val OptInt32) {
+func (s *Summary) SetMachineGroupCount(val OptInt32) {
 	s.MachineGroupCount = val
 }
 
 // SetProvider sets the value of Provider.
-func (s *Summary4) SetProvider(val OptString) {
+func (s *Summary) SetProvider(val OptString) {
 	s.Provider = val
 }
 
 // SetServiceCount sets the value of ServiceCount.
-func (s *Summary4) SetServiceCount(val OptInt32) {
+func (s *Summary) SetServiceCount(val OptInt32) {
 	s.ServiceCount = val
 }
 
-// Ref: #/components/schemas/Summary5
-type Summary5 struct {
-	DbKind           OptSummary5DbKind           `json:"dbKind"`
+// Ref: #/components/schemas/Summary2
+type Summary2 struct {
+	DbKind           OptSummary2DbKind           `json:"dbKind"`
 	DbPresetId       OptString                   `json:"dbPresetId"`
 	DbPresetName     OptString                   `json:"dbPresetName"`
 	Duration         OptDuration                 `json:"duration"`
 	FinishedAt       OptDateTime                 `json:"finishedAt"`
 	NodeCount        OptInt32                    `json:"nodeCount"`
 	ProgressPct      OptInt32                    `json:"progressPct"`
-	Provider         OptSummary5Provider         `json:"provider"`
+	Provider         OptSummary2Provider         `json:"provider"`
 	StartedAt        OptDateTime                 `json:"startedAt"`
 	StroppyVersion   OptString                   `json:"stroppyVersion"`
 	TestPresetId     OptString                   `json:"testPresetId"`
@@ -35800,584 +27163,245 @@ type Summary5 struct {
 	TopologyLabel    OptString                   `json:"topologyLabel"`
 	WorkloadName     OptString                   `json:"workloadName"`
 	WorkloadPresetId OptString                   `json:"workloadPresetId"`
-	WorkloadProtocol OptSummary5WorkloadProtocol `json:"workloadProtocol"`
+	WorkloadProtocol OptSummary2WorkloadProtocol `json:"workloadProtocol"`
 }
 
 // GetDbKind returns the value of DbKind.
-func (s *Summary5) GetDbKind() OptSummary5DbKind {
+func (s *Summary2) GetDbKind() OptSummary2DbKind {
 	return s.DbKind
 }
 
 // GetDbPresetId returns the value of DbPresetId.
-func (s *Summary5) GetDbPresetId() OptString {
+func (s *Summary2) GetDbPresetId() OptString {
 	return s.DbPresetId
 }
 
 // GetDbPresetName returns the value of DbPresetName.
-func (s *Summary5) GetDbPresetName() OptString {
+func (s *Summary2) GetDbPresetName() OptString {
 	return s.DbPresetName
 }
 
 // GetDuration returns the value of Duration.
-func (s *Summary5) GetDuration() OptDuration {
+func (s *Summary2) GetDuration() OptDuration {
 	return s.Duration
 }
 
 // GetFinishedAt returns the value of FinishedAt.
-func (s *Summary5) GetFinishedAt() OptDateTime {
+func (s *Summary2) GetFinishedAt() OptDateTime {
 	return s.FinishedAt
 }
 
 // GetNodeCount returns the value of NodeCount.
-func (s *Summary5) GetNodeCount() OptInt32 {
+func (s *Summary2) GetNodeCount() OptInt32 {
 	return s.NodeCount
 }
 
 // GetProgressPct returns the value of ProgressPct.
-func (s *Summary5) GetProgressPct() OptInt32 {
+func (s *Summary2) GetProgressPct() OptInt32 {
 	return s.ProgressPct
 }
 
 // GetProvider returns the value of Provider.
-func (s *Summary5) GetProvider() OptSummary5Provider {
+func (s *Summary2) GetProvider() OptSummary2Provider {
 	return s.Provider
 }
 
 // GetStartedAt returns the value of StartedAt.
-func (s *Summary5) GetStartedAt() OptDateTime {
+func (s *Summary2) GetStartedAt() OptDateTime {
 	return s.StartedAt
 }
 
 // GetStroppyVersion returns the value of StroppyVersion.
-func (s *Summary5) GetStroppyVersion() OptString {
+func (s *Summary2) GetStroppyVersion() OptString {
 	return s.StroppyVersion
 }
 
 // GetTestPresetId returns the value of TestPresetId.
-func (s *Summary5) GetTestPresetId() OptString {
+func (s *Summary2) GetTestPresetId() OptString {
 	return s.TestPresetId
 }
 
 // GetTestPresetName returns the value of TestPresetName.
-func (s *Summary5) GetTestPresetName() OptString {
+func (s *Summary2) GetTestPresetName() OptString {
 	return s.TestPresetName
 }
 
 // GetTopologyLabel returns the value of TopologyLabel.
-func (s *Summary5) GetTopologyLabel() OptString {
+func (s *Summary2) GetTopologyLabel() OptString {
 	return s.TopologyLabel
 }
 
 // GetWorkloadName returns the value of WorkloadName.
-func (s *Summary5) GetWorkloadName() OptString {
+func (s *Summary2) GetWorkloadName() OptString {
 	return s.WorkloadName
 }
 
 // GetWorkloadPresetId returns the value of WorkloadPresetId.
-func (s *Summary5) GetWorkloadPresetId() OptString {
+func (s *Summary2) GetWorkloadPresetId() OptString {
 	return s.WorkloadPresetId
 }
 
 // GetWorkloadProtocol returns the value of WorkloadProtocol.
-func (s *Summary5) GetWorkloadProtocol() OptSummary5WorkloadProtocol {
+func (s *Summary2) GetWorkloadProtocol() OptSummary2WorkloadProtocol {
 	return s.WorkloadProtocol
 }
 
 // SetDbKind sets the value of DbKind.
-func (s *Summary5) SetDbKind(val OptSummary5DbKind) {
+func (s *Summary2) SetDbKind(val OptSummary2DbKind) {
 	s.DbKind = val
 }
 
 // SetDbPresetId sets the value of DbPresetId.
-func (s *Summary5) SetDbPresetId(val OptString) {
+func (s *Summary2) SetDbPresetId(val OptString) {
 	s.DbPresetId = val
 }
 
 // SetDbPresetName sets the value of DbPresetName.
-func (s *Summary5) SetDbPresetName(val OptString) {
+func (s *Summary2) SetDbPresetName(val OptString) {
 	s.DbPresetName = val
 }
 
 // SetDuration sets the value of Duration.
-func (s *Summary5) SetDuration(val OptDuration) {
+func (s *Summary2) SetDuration(val OptDuration) {
 	s.Duration = val
 }
 
 // SetFinishedAt sets the value of FinishedAt.
-func (s *Summary5) SetFinishedAt(val OptDateTime) {
+func (s *Summary2) SetFinishedAt(val OptDateTime) {
 	s.FinishedAt = val
 }
 
 // SetNodeCount sets the value of NodeCount.
-func (s *Summary5) SetNodeCount(val OptInt32) {
+func (s *Summary2) SetNodeCount(val OptInt32) {
 	s.NodeCount = val
 }
 
 // SetProgressPct sets the value of ProgressPct.
-func (s *Summary5) SetProgressPct(val OptInt32) {
+func (s *Summary2) SetProgressPct(val OptInt32) {
 	s.ProgressPct = val
 }
 
 // SetProvider sets the value of Provider.
-func (s *Summary5) SetProvider(val OptSummary5Provider) {
+func (s *Summary2) SetProvider(val OptSummary2Provider) {
 	s.Provider = val
 }
 
 // SetStartedAt sets the value of StartedAt.
-func (s *Summary5) SetStartedAt(val OptDateTime) {
+func (s *Summary2) SetStartedAt(val OptDateTime) {
 	s.StartedAt = val
 }
 
 // SetStroppyVersion sets the value of StroppyVersion.
-func (s *Summary5) SetStroppyVersion(val OptString) {
+func (s *Summary2) SetStroppyVersion(val OptString) {
 	s.StroppyVersion = val
 }
 
 // SetTestPresetId sets the value of TestPresetId.
-func (s *Summary5) SetTestPresetId(val OptString) {
+func (s *Summary2) SetTestPresetId(val OptString) {
 	s.TestPresetId = val
 }
 
 // SetTestPresetName sets the value of TestPresetName.
-func (s *Summary5) SetTestPresetName(val OptString) {
+func (s *Summary2) SetTestPresetName(val OptString) {
 	s.TestPresetName = val
 }
 
 // SetTopologyLabel sets the value of TopologyLabel.
-func (s *Summary5) SetTopologyLabel(val OptString) {
+func (s *Summary2) SetTopologyLabel(val OptString) {
 	s.TopologyLabel = val
 }
 
 // SetWorkloadName sets the value of WorkloadName.
-func (s *Summary5) SetWorkloadName(val OptString) {
+func (s *Summary2) SetWorkloadName(val OptString) {
 	s.WorkloadName = val
 }
 
 // SetWorkloadPresetId sets the value of WorkloadPresetId.
-func (s *Summary5) SetWorkloadPresetId(val OptString) {
+func (s *Summary2) SetWorkloadPresetId(val OptString) {
 	s.WorkloadPresetId = val
 }
 
 // SetWorkloadProtocol sets the value of WorkloadProtocol.
-func (s *Summary5) SetWorkloadProtocol(val OptSummary5WorkloadProtocol) {
+func (s *Summary2) SetWorkloadProtocol(val OptSummary2WorkloadProtocol) {
 	s.WorkloadProtocol = val
 }
 
-type Summary5DbKind int32
+type Summary2DbKind int32
 
 const (
-	Summary5DbKind0  Summary5DbKind = 0
-	Summary5DbKind1  Summary5DbKind = 1
-	Summary5DbKind2  Summary5DbKind = 2
-	Summary5DbKind3  Summary5DbKind = 3
-	Summary5DbKind4  Summary5DbKind = 4
-	Summary5DbKind5  Summary5DbKind = 5
-	Summary5DbKind6  Summary5DbKind = 6
-	Summary5DbKind7  Summary5DbKind = 7
-	Summary5DbKind8  Summary5DbKind = 8
-	Summary5DbKind9  Summary5DbKind = 9
-	Summary5DbKind10 Summary5DbKind = 10
-	Summary5DbKind11 Summary5DbKind = 11
+	Summary2DbKind0  Summary2DbKind = 0
+	Summary2DbKind1  Summary2DbKind = 1
+	Summary2DbKind2  Summary2DbKind = 2
+	Summary2DbKind3  Summary2DbKind = 3
+	Summary2DbKind4  Summary2DbKind = 4
+	Summary2DbKind5  Summary2DbKind = 5
+	Summary2DbKind6  Summary2DbKind = 6
+	Summary2DbKind7  Summary2DbKind = 7
+	Summary2DbKind8  Summary2DbKind = 8
+	Summary2DbKind9  Summary2DbKind = 9
+	Summary2DbKind10 Summary2DbKind = 10
+	Summary2DbKind11 Summary2DbKind = 11
 )
 
-// AllValues returns all Summary5DbKind values.
-func (Summary5DbKind) AllValues() []Summary5DbKind {
-	return []Summary5DbKind{
-		Summary5DbKind0,
-		Summary5DbKind1,
-		Summary5DbKind2,
-		Summary5DbKind3,
-		Summary5DbKind4,
-		Summary5DbKind5,
-		Summary5DbKind6,
-		Summary5DbKind7,
-		Summary5DbKind8,
-		Summary5DbKind9,
-		Summary5DbKind10,
-		Summary5DbKind11,
+// AllValues returns all Summary2DbKind values.
+func (Summary2DbKind) AllValues() []Summary2DbKind {
+	return []Summary2DbKind{
+		Summary2DbKind0,
+		Summary2DbKind1,
+		Summary2DbKind2,
+		Summary2DbKind3,
+		Summary2DbKind4,
+		Summary2DbKind5,
+		Summary2DbKind6,
+		Summary2DbKind7,
+		Summary2DbKind8,
+		Summary2DbKind9,
+		Summary2DbKind10,
+		Summary2DbKind11,
 	}
 }
 
-type Summary5Provider int32
+type Summary2Provider int32
 
 const (
-	Summary5Provider0 Summary5Provider = 0
-	Summary5Provider1 Summary5Provider = 1
-	Summary5Provider2 Summary5Provider = 2
+	Summary2Provider0 Summary2Provider = 0
+	Summary2Provider1 Summary2Provider = 1
+	Summary2Provider2 Summary2Provider = 2
 )
 
-// AllValues returns all Summary5Provider values.
-func (Summary5Provider) AllValues() []Summary5Provider {
-	return []Summary5Provider{
-		Summary5Provider0,
-		Summary5Provider1,
-		Summary5Provider2,
+// AllValues returns all Summary2Provider values.
+func (Summary2Provider) AllValues() []Summary2Provider {
+	return []Summary2Provider{
+		Summary2Provider0,
+		Summary2Provider1,
+		Summary2Provider2,
 	}
 }
 
-type Summary5WorkloadProtocol int32
+type Summary2WorkloadProtocol int32
 
 const (
-	Summary5WorkloadProtocol0 Summary5WorkloadProtocol = 0
-	Summary5WorkloadProtocol1 Summary5WorkloadProtocol = 1
-	Summary5WorkloadProtocol2 Summary5WorkloadProtocol = 2
-	Summary5WorkloadProtocol3 Summary5WorkloadProtocol = 3
-	Summary5WorkloadProtocol4 Summary5WorkloadProtocol = 4
-	Summary5WorkloadProtocol5 Summary5WorkloadProtocol = 5
-	Summary5WorkloadProtocol7 Summary5WorkloadProtocol = 7
-	Summary5WorkloadProtocol8 Summary5WorkloadProtocol = 8
+	Summary2WorkloadProtocol0 Summary2WorkloadProtocol = 0
+	Summary2WorkloadProtocol1 Summary2WorkloadProtocol = 1
+	Summary2WorkloadProtocol2 Summary2WorkloadProtocol = 2
+	Summary2WorkloadProtocol3 Summary2WorkloadProtocol = 3
+	Summary2WorkloadProtocol4 Summary2WorkloadProtocol = 4
+	Summary2WorkloadProtocol5 Summary2WorkloadProtocol = 5
+	Summary2WorkloadProtocol7 Summary2WorkloadProtocol = 7
+	Summary2WorkloadProtocol8 Summary2WorkloadProtocol = 8
 )
 
-// AllValues returns all Summary5WorkloadProtocol values.
-func (Summary5WorkloadProtocol) AllValues() []Summary5WorkloadProtocol {
-	return []Summary5WorkloadProtocol{
-		Summary5WorkloadProtocol0,
-		Summary5WorkloadProtocol1,
-		Summary5WorkloadProtocol2,
-		Summary5WorkloadProtocol3,
-		Summary5WorkloadProtocol4,
-		Summary5WorkloadProtocol5,
-		Summary5WorkloadProtocol7,
-		Summary5WorkloadProtocol8,
-	}
-}
-
-// Ref: #/components/schemas/Summary6
-type Summary6 struct {
-	CellCount       OptInt32                 `json:"cellCount"`
-	Cron            OptString                `json:"cron"`
-	LastRunAt       OptDateTime              `json:"lastRunAt"`
-	LastRunStatus   OptSummary6LastRunStatus `json:"lastRunStatus"`
-	NextRunAt       OptDateTime              `json:"nextRunAt"`
-	RunCount        OptInt32                 `json:"runCount"`
-	ScheduleEnabled OptBool                  `json:"scheduleEnabled"`
-}
-
-// GetCellCount returns the value of CellCount.
-func (s *Summary6) GetCellCount() OptInt32 {
-	return s.CellCount
-}
-
-// GetCron returns the value of Cron.
-func (s *Summary6) GetCron() OptString {
-	return s.Cron
-}
-
-// GetLastRunAt returns the value of LastRunAt.
-func (s *Summary6) GetLastRunAt() OptDateTime {
-	return s.LastRunAt
-}
-
-// GetLastRunStatus returns the value of LastRunStatus.
-func (s *Summary6) GetLastRunStatus() OptSummary6LastRunStatus {
-	return s.LastRunStatus
-}
-
-// GetNextRunAt returns the value of NextRunAt.
-func (s *Summary6) GetNextRunAt() OptDateTime {
-	return s.NextRunAt
-}
-
-// GetRunCount returns the value of RunCount.
-func (s *Summary6) GetRunCount() OptInt32 {
-	return s.RunCount
-}
-
-// GetScheduleEnabled returns the value of ScheduleEnabled.
-func (s *Summary6) GetScheduleEnabled() OptBool {
-	return s.ScheduleEnabled
-}
-
-// SetCellCount sets the value of CellCount.
-func (s *Summary6) SetCellCount(val OptInt32) {
-	s.CellCount = val
-}
-
-// SetCron sets the value of Cron.
-func (s *Summary6) SetCron(val OptString) {
-	s.Cron = val
-}
-
-// SetLastRunAt sets the value of LastRunAt.
-func (s *Summary6) SetLastRunAt(val OptDateTime) {
-	s.LastRunAt = val
-}
-
-// SetLastRunStatus sets the value of LastRunStatus.
-func (s *Summary6) SetLastRunStatus(val OptSummary6LastRunStatus) {
-	s.LastRunStatus = val
-}
-
-// SetNextRunAt sets the value of NextRunAt.
-func (s *Summary6) SetNextRunAt(val OptDateTime) {
-	s.NextRunAt = val
-}
-
-// SetRunCount sets the value of RunCount.
-func (s *Summary6) SetRunCount(val OptInt32) {
-	s.RunCount = val
-}
-
-// SetScheduleEnabled sets the value of ScheduleEnabled.
-func (s *Summary6) SetScheduleEnabled(val OptBool) {
-	s.ScheduleEnabled = val
-}
-
-type Summary6LastRunStatus int32
-
-const (
-	Summary6LastRunStatus0  Summary6LastRunStatus = 0
-	Summary6LastRunStatus1  Summary6LastRunStatus = 1
-	Summary6LastRunStatus2  Summary6LastRunStatus = 2
-	Summary6LastRunStatus5  Summary6LastRunStatus = 5
-	Summary6LastRunStatus3  Summary6LastRunStatus = 3
-	Summary6LastRunStatus4  Summary6LastRunStatus = 4
-	Summary6LastRunStatus6  Summary6LastRunStatus = 6
-	Summary6LastRunStatus7  Summary6LastRunStatus = 7
-	Summary6LastRunStatus8  Summary6LastRunStatus = 8
-	Summary6LastRunStatus9  Summary6LastRunStatus = 9
-	Summary6LastRunStatus10 Summary6LastRunStatus = 10
-	Summary6LastRunStatus11 Summary6LastRunStatus = 11
-)
-
-// AllValues returns all Summary6LastRunStatus values.
-func (Summary6LastRunStatus) AllValues() []Summary6LastRunStatus {
-	return []Summary6LastRunStatus{
-		Summary6LastRunStatus0,
-		Summary6LastRunStatus1,
-		Summary6LastRunStatus2,
-		Summary6LastRunStatus5,
-		Summary6LastRunStatus3,
-		Summary6LastRunStatus4,
-		Summary6LastRunStatus6,
-		Summary6LastRunStatus7,
-		Summary6LastRunStatus8,
-		Summary6LastRunStatus9,
-		Summary6LastRunStatus10,
-		Summary6LastRunStatus11,
-	}
-}
-
-// Ref: #/components/schemas/Summary7
-type Summary7 struct {
-	Completed   OptInt32              `json:"completed"`
-	DbKinds     []Summary7DbKindsItem `json:"dbKinds"`
-	Duration    OptDuration           `json:"duration"`
-	Failed      OptInt32              `json:"failed"`
-	FinishedAt  OptDateTime           `json:"finishedAt"`
-	Pending     OptInt32              `json:"pending"`
-	ProgressPct OptInt32              `json:"progressPct"`
-	Provider    OptSummary7Provider   `json:"provider"`
-	Running     OptInt32              `json:"running"`
-	StartedAt   OptDateTime           `json:"startedAt"`
-	SuiteName   OptString             `json:"suiteName"`
-	Total       OptInt32              `json:"total"`
-}
-
-// GetCompleted returns the value of Completed.
-func (s *Summary7) GetCompleted() OptInt32 {
-	return s.Completed
-}
-
-// GetDbKinds returns the value of DbKinds.
-func (s *Summary7) GetDbKinds() []Summary7DbKindsItem {
-	return s.DbKinds
-}
-
-// GetDuration returns the value of Duration.
-func (s *Summary7) GetDuration() OptDuration {
-	return s.Duration
-}
-
-// GetFailed returns the value of Failed.
-func (s *Summary7) GetFailed() OptInt32 {
-	return s.Failed
-}
-
-// GetFinishedAt returns the value of FinishedAt.
-func (s *Summary7) GetFinishedAt() OptDateTime {
-	return s.FinishedAt
-}
-
-// GetPending returns the value of Pending.
-func (s *Summary7) GetPending() OptInt32 {
-	return s.Pending
-}
-
-// GetProgressPct returns the value of ProgressPct.
-func (s *Summary7) GetProgressPct() OptInt32 {
-	return s.ProgressPct
-}
-
-// GetProvider returns the value of Provider.
-func (s *Summary7) GetProvider() OptSummary7Provider {
-	return s.Provider
-}
-
-// GetRunning returns the value of Running.
-func (s *Summary7) GetRunning() OptInt32 {
-	return s.Running
-}
-
-// GetStartedAt returns the value of StartedAt.
-func (s *Summary7) GetStartedAt() OptDateTime {
-	return s.StartedAt
-}
-
-// GetSuiteName returns the value of SuiteName.
-func (s *Summary7) GetSuiteName() OptString {
-	return s.SuiteName
-}
-
-// GetTotal returns the value of Total.
-func (s *Summary7) GetTotal() OptInt32 {
-	return s.Total
-}
-
-// SetCompleted sets the value of Completed.
-func (s *Summary7) SetCompleted(val OptInt32) {
-	s.Completed = val
-}
-
-// SetDbKinds sets the value of DbKinds.
-func (s *Summary7) SetDbKinds(val []Summary7DbKindsItem) {
-	s.DbKinds = val
-}
-
-// SetDuration sets the value of Duration.
-func (s *Summary7) SetDuration(val OptDuration) {
-	s.Duration = val
-}
-
-// SetFailed sets the value of Failed.
-func (s *Summary7) SetFailed(val OptInt32) {
-	s.Failed = val
-}
-
-// SetFinishedAt sets the value of FinishedAt.
-func (s *Summary7) SetFinishedAt(val OptDateTime) {
-	s.FinishedAt = val
-}
-
-// SetPending sets the value of Pending.
-func (s *Summary7) SetPending(val OptInt32) {
-	s.Pending = val
-}
-
-// SetProgressPct sets the value of ProgressPct.
-func (s *Summary7) SetProgressPct(val OptInt32) {
-	s.ProgressPct = val
-}
-
-// SetProvider sets the value of Provider.
-func (s *Summary7) SetProvider(val OptSummary7Provider) {
-	s.Provider = val
-}
-
-// SetRunning sets the value of Running.
-func (s *Summary7) SetRunning(val OptInt32) {
-	s.Running = val
-}
-
-// SetStartedAt sets the value of StartedAt.
-func (s *Summary7) SetStartedAt(val OptDateTime) {
-	s.StartedAt = val
-}
-
-// SetSuiteName sets the value of SuiteName.
-func (s *Summary7) SetSuiteName(val OptString) {
-	s.SuiteName = val
-}
-
-// SetTotal sets the value of Total.
-func (s *Summary7) SetTotal(val OptInt32) {
-	s.Total = val
-}
-
-type Summary7DbKindsItem int32
-
-const (
-	Summary7DbKindsItem0  Summary7DbKindsItem = 0
-	Summary7DbKindsItem1  Summary7DbKindsItem = 1
-	Summary7DbKindsItem2  Summary7DbKindsItem = 2
-	Summary7DbKindsItem3  Summary7DbKindsItem = 3
-	Summary7DbKindsItem4  Summary7DbKindsItem = 4
-	Summary7DbKindsItem5  Summary7DbKindsItem = 5
-	Summary7DbKindsItem6  Summary7DbKindsItem = 6
-	Summary7DbKindsItem7  Summary7DbKindsItem = 7
-	Summary7DbKindsItem8  Summary7DbKindsItem = 8
-	Summary7DbKindsItem9  Summary7DbKindsItem = 9
-	Summary7DbKindsItem10 Summary7DbKindsItem = 10
-	Summary7DbKindsItem11 Summary7DbKindsItem = 11
-)
-
-// AllValues returns all Summary7DbKindsItem values.
-func (Summary7DbKindsItem) AllValues() []Summary7DbKindsItem {
-	return []Summary7DbKindsItem{
-		Summary7DbKindsItem0,
-		Summary7DbKindsItem1,
-		Summary7DbKindsItem2,
-		Summary7DbKindsItem3,
-		Summary7DbKindsItem4,
-		Summary7DbKindsItem5,
-		Summary7DbKindsItem6,
-		Summary7DbKindsItem7,
-		Summary7DbKindsItem8,
-		Summary7DbKindsItem9,
-		Summary7DbKindsItem10,
-		Summary7DbKindsItem11,
-	}
-}
-
-type Summary7Provider int32
-
-const (
-	Summary7Provider0 Summary7Provider = 0
-	Summary7Provider1 Summary7Provider = 1
-	Summary7Provider2 Summary7Provider = 2
-)
-
-// AllValues returns all Summary7Provider values.
-func (Summary7Provider) AllValues() []Summary7Provider {
-	return []Summary7Provider{
-		Summary7Provider0,
-		Summary7Provider1,
-		Summary7Provider2,
-	}
-}
-
-type SummaryDbKind int32
-
-const (
-	SummaryDbKind0  SummaryDbKind = 0
-	SummaryDbKind1  SummaryDbKind = 1
-	SummaryDbKind2  SummaryDbKind = 2
-	SummaryDbKind3  SummaryDbKind = 3
-	SummaryDbKind4  SummaryDbKind = 4
-	SummaryDbKind5  SummaryDbKind = 5
-	SummaryDbKind6  SummaryDbKind = 6
-	SummaryDbKind7  SummaryDbKind = 7
-	SummaryDbKind8  SummaryDbKind = 8
-	SummaryDbKind9  SummaryDbKind = 9
-	SummaryDbKind10 SummaryDbKind = 10
-	SummaryDbKind11 SummaryDbKind = 11
-)
-
-// AllValues returns all SummaryDbKind values.
-func (SummaryDbKind) AllValues() []SummaryDbKind {
-	return []SummaryDbKind{
-		SummaryDbKind0,
-		SummaryDbKind1,
-		SummaryDbKind2,
-		SummaryDbKind3,
-		SummaryDbKind4,
-		SummaryDbKind5,
-		SummaryDbKind6,
-		SummaryDbKind7,
-		SummaryDbKind8,
-		SummaryDbKind9,
-		SummaryDbKind10,
-		SummaryDbKind11,
+// AllValues returns all Summary2WorkloadProtocol values.
+func (Summary2WorkloadProtocol) AllValues() []Summary2WorkloadProtocol {
+	return []Summary2WorkloadProtocol{
+		Summary2WorkloadProtocol0,
+		Summary2WorkloadProtocol1,
+		Summary2WorkloadProtocol2,
+		Summary2WorkloadProtocol3,
+		Summary2WorkloadProtocol4,
+		Summary2WorkloadProtocol5,
+		Summary2WorkloadProtocol7,
+		Summary2WorkloadProtocol8,
 	}
 }
 
@@ -36697,91 +27721,6 @@ func (TenantSettingsRecordDefaultProvider) AllValues() []TenantSettingsRecordDef
 	}
 }
 
-// Ref: #/components/schemas/Test
-type Test struct {
-	Database Database `json:"database"`
-	Tags     OptTags  `json:"tags"`
-	Workload Workload `json:"workload"`
-}
-
-// GetDatabase returns the value of Database.
-func (s *Test) GetDatabase() Database {
-	return s.Database
-}
-
-// GetTags returns the value of Tags.
-func (s *Test) GetTags() OptTags {
-	return s.Tags
-}
-
-// GetWorkload returns the value of Workload.
-func (s *Test) GetWorkload() Workload {
-	return s.Workload
-}
-
-// SetDatabase sets the value of Database.
-func (s *Test) SetDatabase(val Database) {
-	s.Database = val
-}
-
-// SetTags sets the value of Tags.
-func (s *Test) SetTags(val OptTags) {
-	s.Tags = val
-}
-
-// SetWorkload sets the value of Workload.
-func (s *Test) SetWorkload(val Workload) {
-	s.Workload = val
-}
-
-// Ref: #/components/schemas/TestPresetRecord
-type TestPresetRecord struct {
-	Entity   Entity      `json:"entity"`
-	IsSystem OptBool     `json:"isSystem"`
-	Summary  OptSummary3 `json:"summary"`
-	Test     Test        `json:"test"`
-}
-
-// GetEntity returns the value of Entity.
-func (s *TestPresetRecord) GetEntity() Entity {
-	return s.Entity
-}
-
-// GetIsSystem returns the value of IsSystem.
-func (s *TestPresetRecord) GetIsSystem() OptBool {
-	return s.IsSystem
-}
-
-// GetSummary returns the value of Summary.
-func (s *TestPresetRecord) GetSummary() OptSummary3 {
-	return s.Summary
-}
-
-// GetTest returns the value of Test.
-func (s *TestPresetRecord) GetTest() Test {
-	return s.Test
-}
-
-// SetEntity sets the value of Entity.
-func (s *TestPresetRecord) SetEntity(val Entity) {
-	s.Entity = val
-}
-
-// SetIsSystem sets the value of IsSystem.
-func (s *TestPresetRecord) SetIsSystem(val OptBool) {
-	s.IsSystem = val
-}
-
-// SetSummary sets the value of Summary.
-func (s *TestPresetRecord) SetSummary(val OptSummary3) {
-	s.Summary = val
-}
-
-// SetTest sets the value of Test.
-func (s *TestPresetRecord) SetTest(val Test) {
-	s.Test = val
-}
-
 // Ref: #/components/schemas/TestRun
 type TestRun struct {
 	Database           Database             `json:"database"`
@@ -36924,7 +27863,7 @@ type TestRunRecord struct {
 	Status              OptTestRunRecordStatus  `json:"status"`
 	SuiteCellId         OptString               `json:"suiteCellId"`
 	SuiteRunId          OptString               `json:"suiteRunId"`
-	Summary             OptSummary5             `json:"summary"`
+	Summary             OptSummary2             `json:"summary"`
 	Trigger             OptTestRunRecordTrigger `json:"trigger"`
 }
 
@@ -36984,7 +27923,7 @@ func (s *TestRunRecord) GetSuiteRunId() OptString {
 }
 
 // GetSummary returns the value of Summary.
-func (s *TestRunRecord) GetSummary() OptSummary5 {
+func (s *TestRunRecord) GetSummary() OptSummary2 {
 	return s.Summary
 }
 
@@ -37049,7 +27988,7 @@ func (s *TestRunRecord) SetSuiteRunId(val OptString) {
 }
 
 // SetSummary sets the value of Summary.
-func (s *TestRunRecord) SetSummary(val OptSummary5) {
+func (s *TestRunRecord) SetSummary(val OptSummary2) {
 	s.Summary = val
 }
 
@@ -37109,159 +28048,6 @@ func (TestRunRecordTrigger) AllValues() []TestRunRecordTrigger {
 		TestRunRecordTrigger1,
 		TestRunRecordTrigger2,
 		TestRunRecordTrigger3,
-	}
-}
-
-// Ref: #/components/schemas/TestWizardDraftRecord
-type TestWizardDraftRecord struct {
-	Database           OptDatabase                      `json:"database"`
-	Entity             Entity                           `json:"entity"`
-	Errors             []FieldError                     `json:"errors"`
-	InfrastructurePlan OptInfrastructurePlan            `json:"infrastructurePlan"`
-	MachineOverrides   []MachinePlan                    `json:"machineOverrides"`
-	Provider           OptTestWizardDraftRecordProvider `json:"provider"`
-	Ready              OptBool                          `json:"ready"`
-	RenderOverrides    OptRenderOverrideSet             `json:"renderOverrides"`
-	RenderPreview      OptRenderPreview                 `json:"renderPreview"`
-	TestPresetId       OptString                        `json:"testPresetId"`
-	TopologySpec       OptTopologySpec                  `json:"topologySpec"`
-	Workload           OptWorkload                      `json:"workload"`
-}
-
-// GetDatabase returns the value of Database.
-func (s *TestWizardDraftRecord) GetDatabase() OptDatabase {
-	return s.Database
-}
-
-// GetEntity returns the value of Entity.
-func (s *TestWizardDraftRecord) GetEntity() Entity {
-	return s.Entity
-}
-
-// GetErrors returns the value of Errors.
-func (s *TestWizardDraftRecord) GetErrors() []FieldError {
-	return s.Errors
-}
-
-// GetInfrastructurePlan returns the value of InfrastructurePlan.
-func (s *TestWizardDraftRecord) GetInfrastructurePlan() OptInfrastructurePlan {
-	return s.InfrastructurePlan
-}
-
-// GetMachineOverrides returns the value of MachineOverrides.
-func (s *TestWizardDraftRecord) GetMachineOverrides() []MachinePlan {
-	return s.MachineOverrides
-}
-
-// GetProvider returns the value of Provider.
-func (s *TestWizardDraftRecord) GetProvider() OptTestWizardDraftRecordProvider {
-	return s.Provider
-}
-
-// GetReady returns the value of Ready.
-func (s *TestWizardDraftRecord) GetReady() OptBool {
-	return s.Ready
-}
-
-// GetRenderOverrides returns the value of RenderOverrides.
-func (s *TestWizardDraftRecord) GetRenderOverrides() OptRenderOverrideSet {
-	return s.RenderOverrides
-}
-
-// GetRenderPreview returns the value of RenderPreview.
-func (s *TestWizardDraftRecord) GetRenderPreview() OptRenderPreview {
-	return s.RenderPreview
-}
-
-// GetTestPresetId returns the value of TestPresetId.
-func (s *TestWizardDraftRecord) GetTestPresetId() OptString {
-	return s.TestPresetId
-}
-
-// GetTopologySpec returns the value of TopologySpec.
-func (s *TestWizardDraftRecord) GetTopologySpec() OptTopologySpec {
-	return s.TopologySpec
-}
-
-// GetWorkload returns the value of Workload.
-func (s *TestWizardDraftRecord) GetWorkload() OptWorkload {
-	return s.Workload
-}
-
-// SetDatabase sets the value of Database.
-func (s *TestWizardDraftRecord) SetDatabase(val OptDatabase) {
-	s.Database = val
-}
-
-// SetEntity sets the value of Entity.
-func (s *TestWizardDraftRecord) SetEntity(val Entity) {
-	s.Entity = val
-}
-
-// SetErrors sets the value of Errors.
-func (s *TestWizardDraftRecord) SetErrors(val []FieldError) {
-	s.Errors = val
-}
-
-// SetInfrastructurePlan sets the value of InfrastructurePlan.
-func (s *TestWizardDraftRecord) SetInfrastructurePlan(val OptInfrastructurePlan) {
-	s.InfrastructurePlan = val
-}
-
-// SetMachineOverrides sets the value of MachineOverrides.
-func (s *TestWizardDraftRecord) SetMachineOverrides(val []MachinePlan) {
-	s.MachineOverrides = val
-}
-
-// SetProvider sets the value of Provider.
-func (s *TestWizardDraftRecord) SetProvider(val OptTestWizardDraftRecordProvider) {
-	s.Provider = val
-}
-
-// SetReady sets the value of Ready.
-func (s *TestWizardDraftRecord) SetReady(val OptBool) {
-	s.Ready = val
-}
-
-// SetRenderOverrides sets the value of RenderOverrides.
-func (s *TestWizardDraftRecord) SetRenderOverrides(val OptRenderOverrideSet) {
-	s.RenderOverrides = val
-}
-
-// SetRenderPreview sets the value of RenderPreview.
-func (s *TestWizardDraftRecord) SetRenderPreview(val OptRenderPreview) {
-	s.RenderPreview = val
-}
-
-// SetTestPresetId sets the value of TestPresetId.
-func (s *TestWizardDraftRecord) SetTestPresetId(val OptString) {
-	s.TestPresetId = val
-}
-
-// SetTopologySpec sets the value of TopologySpec.
-func (s *TestWizardDraftRecord) SetTopologySpec(val OptTopologySpec) {
-	s.TopologySpec = val
-}
-
-// SetWorkload sets the value of Workload.
-func (s *TestWizardDraftRecord) SetWorkload(val OptWorkload) {
-	s.Workload = val
-}
-
-type TestWizardDraftRecordProvider int32
-
-const (
-	TestWizardDraftRecordProvider0 TestWizardDraftRecordProvider = 0
-	TestWizardDraftRecordProvider1 TestWizardDraftRecordProvider = 1
-	TestWizardDraftRecordProvider2 TestWizardDraftRecordProvider = 2
-)
-
-// AllValues returns all TestWizardDraftRecordProvider values.
-func (TestWizardDraftRecordProvider) AllValues() []TestWizardDraftRecordProvider {
-	return []TestWizardDraftRecordProvider{
-		TestWizardDraftRecordProvider0,
-		TestWizardDraftRecordProvider1,
-		TestWizardDraftRecordProvider2,
 	}
 }
 
@@ -37733,47 +28519,6 @@ func (s *UpdateAccountResponse) SetAccount(val Account) {
 	s.Account = val
 }
 
-// Ref: #/components/schemas/UpdateDatabasePresetRequest
-type UpdateDatabasePresetRequest struct {
-	Preset   DatabasePresetRecord `json:"preset"`
-	TenantId OptString            `json:"tenantId"`
-}
-
-// GetPreset returns the value of Preset.
-func (s *UpdateDatabasePresetRequest) GetPreset() DatabasePresetRecord {
-	return s.Preset
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *UpdateDatabasePresetRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetPreset sets the value of Preset.
-func (s *UpdateDatabasePresetRequest) SetPreset(val DatabasePresetRecord) {
-	s.Preset = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *UpdateDatabasePresetRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/UpdateDatabasePresetResponse
-type UpdateDatabasePresetResponse struct {
-	Preset DatabasePresetRecord `json:"preset"`
-}
-
-// GetPreset returns the value of Preset.
-func (s *UpdateDatabasePresetResponse) GetPreset() DatabasePresetRecord {
-	return s.Preset
-}
-
-// SetPreset sets the value of Preset.
-func (s *UpdateDatabasePresetResponse) SetPreset(val DatabasePresetRecord) {
-	s.Preset = val
-}
-
 // Ref: #/components/schemas/UpdateIdentityProviderRequest
 type UpdateIdentityProviderRequest struct {
 	AllowedDomains []string  `json:"allowedDomains"`
@@ -37985,47 +28730,6 @@ func (s *UpdateRoleResponse) SetRole(val Role) {
 	s.Role = val
 }
 
-// Ref: #/components/schemas/UpdateSuiteRequest
-type UpdateSuiteRequest struct {
-	Suite    SuiteRecord `json:"suite"`
-	TenantId OptString   `json:"tenantId"`
-}
-
-// GetSuite returns the value of Suite.
-func (s *UpdateSuiteRequest) GetSuite() SuiteRecord {
-	return s.Suite
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *UpdateSuiteRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetSuite sets the value of Suite.
-func (s *UpdateSuiteRequest) SetSuite(val SuiteRecord) {
-	s.Suite = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *UpdateSuiteRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/UpdateSuiteResponse
-type UpdateSuiteResponse struct {
-	Suite SuiteRecord `json:"suite"`
-}
-
-// GetSuite returns the value of Suite.
-func (s *UpdateSuiteResponse) GetSuite() SuiteRecord {
-	return s.Suite
-}
-
-// SetSuite sets the value of Suite.
-func (s *UpdateSuiteResponse) SetSuite(val SuiteRecord) {
-	s.Suite = val
-}
-
 // Ref: #/components/schemas/UpdateSystemSettingsRequest
 type UpdateSystemSettingsRequest struct {
 	Settings PlatformSettings `json:"settings"`
@@ -38147,88 +28851,6 @@ func (s *UpdateTenantSettingsResponse) GetSettings() TenantSettingsRecord {
 // SetSettings sets the value of Settings.
 func (s *UpdateTenantSettingsResponse) SetSettings(val TenantSettingsRecord) {
 	s.Settings = val
-}
-
-// Ref: #/components/schemas/UpdateTestPresetRequest
-type UpdateTestPresetRequest struct {
-	Preset   TestPresetRecord `json:"preset"`
-	TenantId OptString        `json:"tenantId"`
-}
-
-// GetPreset returns the value of Preset.
-func (s *UpdateTestPresetRequest) GetPreset() TestPresetRecord {
-	return s.Preset
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *UpdateTestPresetRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetPreset sets the value of Preset.
-func (s *UpdateTestPresetRequest) SetPreset(val TestPresetRecord) {
-	s.Preset = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *UpdateTestPresetRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/UpdateTestPresetResponse
-type UpdateTestPresetResponse struct {
-	Preset TestPresetRecord `json:"preset"`
-}
-
-// GetPreset returns the value of Preset.
-func (s *UpdateTestPresetResponse) GetPreset() TestPresetRecord {
-	return s.Preset
-}
-
-// SetPreset sets the value of Preset.
-func (s *UpdateTestPresetResponse) SetPreset(val TestPresetRecord) {
-	s.Preset = val
-}
-
-// Ref: #/components/schemas/UpdateWorkloadPresetRequest
-type UpdateWorkloadPresetRequest struct {
-	Preset   WorkloadPresetRecord `json:"preset"`
-	TenantId OptString            `json:"tenantId"`
-}
-
-// GetPreset returns the value of Preset.
-func (s *UpdateWorkloadPresetRequest) GetPreset() WorkloadPresetRecord {
-	return s.Preset
-}
-
-// GetTenantId returns the value of TenantId.
-func (s *UpdateWorkloadPresetRequest) GetTenantId() OptString {
-	return s.TenantId
-}
-
-// SetPreset sets the value of Preset.
-func (s *UpdateWorkloadPresetRequest) SetPreset(val WorkloadPresetRecord) {
-	s.Preset = val
-}
-
-// SetTenantId sets the value of TenantId.
-func (s *UpdateWorkloadPresetRequest) SetTenantId(val OptString) {
-	s.TenantId = val
-}
-
-// Ref: #/components/schemas/UpdateWorkloadPresetResponse
-type UpdateWorkloadPresetResponse struct {
-	Preset WorkloadPresetRecord `json:"preset"`
-}
-
-// GetPreset returns the value of Preset.
-func (s *UpdateWorkloadPresetResponse) GetPreset() WorkloadPresetRecord {
-	return s.Preset
-}
-
-// SetPreset sets the value of Preset.
-func (s *UpdateWorkloadPresetResponse) SetPreset(val WorkloadPresetRecord) {
-	s.Preset = val
 }
 
 // Ref: #/components/schemas/Vm
@@ -38999,54 +29621,6 @@ func (s *WorkloadFile) SetKind(val OptString) {
 // SetName sets the value of Name.
 func (s *WorkloadFile) SetName(val OptString) {
 	s.Name = val
-}
-
-// Ref: #/components/schemas/WorkloadPresetRecord
-type WorkloadPresetRecord struct {
-	Entity   Entity      `json:"entity"`
-	IsSystem OptBool     `json:"isSystem"`
-	Summary  OptSummary2 `json:"summary"`
-	Workload Workload    `json:"workload"`
-}
-
-// GetEntity returns the value of Entity.
-func (s *WorkloadPresetRecord) GetEntity() Entity {
-	return s.Entity
-}
-
-// GetIsSystem returns the value of IsSystem.
-func (s *WorkloadPresetRecord) GetIsSystem() OptBool {
-	return s.IsSystem
-}
-
-// GetSummary returns the value of Summary.
-func (s *WorkloadPresetRecord) GetSummary() OptSummary2 {
-	return s.Summary
-}
-
-// GetWorkload returns the value of Workload.
-func (s *WorkloadPresetRecord) GetWorkload() Workload {
-	return s.Workload
-}
-
-// SetEntity sets the value of Entity.
-func (s *WorkloadPresetRecord) SetEntity(val Entity) {
-	s.Entity = val
-}
-
-// SetIsSystem sets the value of IsSystem.
-func (s *WorkloadPresetRecord) SetIsSystem(val OptBool) {
-	s.IsSystem = val
-}
-
-// SetSummary sets the value of Summary.
-func (s *WorkloadPresetRecord) SetSummary(val OptSummary2) {
-	s.Summary = val
-}
-
-// SetWorkload sets the value of Workload.
-func (s *WorkloadPresetRecord) SetWorkload(val Workload) {
-	s.Workload = val
 }
 
 type WorkloadProtocol int32

@@ -38,34 +38,6 @@ func encodeCancelRunRequest(
 	return nil
 }
 
-func encodeCancelSuiteRunRequest(
-	req *CancelSuiteRunRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeCancelTestRunRequest(
-	req *CancelTestRunRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
 func encodeChangePasswordRequest(
 	req *ChangePasswordRequest,
 	r *http.Request,
@@ -82,62 +54,6 @@ func encodeChangePasswordRequest(
 
 func encodeCheckRecipeRequest(
 	req *CheckRecipeRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeCloneDatabasePresetRequest(
-	req *CloneDatabasePresetRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeCloneSuiteRequest(
-	req *CloneSuiteRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeCloneTestPresetRequest(
-	req *CloneTestPresetRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeCloneWorkloadPresetRequest(
-	req *CloneWorkloadPresetRequest,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -234,20 +150,6 @@ func encodeCreateApiTokenRequest(
 	return nil
 }
 
-func encodeCreateDatabasePresetRequest(
-	req *CreateDatabasePresetRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
 func encodeCreateIdentityProviderRequest(
 	req *CreateIdentityProviderRequest,
 	r *http.Request,
@@ -332,20 +234,6 @@ func encodeCreateShareRequest(
 	return nil
 }
 
-func encodeCreateSuiteRequest(
-	req *CreateSuiteRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
 func encodeCreateTenantRequest(
 	req *CreateTenantRequest,
 	r *http.Request,
@@ -360,50 +248,8 @@ func encodeCreateTenantRequest(
 	return nil
 }
 
-func encodeCreateTestPresetRequest(
-	req *CreateTestPresetRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeCreateWorkloadPresetRequest(
-	req *CreateWorkloadPresetRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
 func encodeDeleteAccountRequest(
 	req *DeleteAccountRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeDeleteDatabasePresetRequest(
-	req *DeleteDatabasePresetRequest,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -514,48 +360,6 @@ func encodeDeleteShareRequest(
 	return nil
 }
 
-func encodeDeleteSuiteRequest(
-	req *DeleteSuiteRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeDeleteSuiteRunRequest(
-	req *DeleteSuiteRunRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeDeleteSuiteWizardDraftRequest(
-	req *DeleteSuiteWizardDraftRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
 func encodeDeleteTenantRequest(
 	req *DeleteTenantRequest,
 	r *http.Request,
@@ -570,120 +374,8 @@ func encodeDeleteTenantRequest(
 	return nil
 }
 
-func encodeDeleteTestPresetRequest(
-	req *DeleteTestPresetRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeDeleteTestRunRequest(
-	req *DeleteTestRunRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeDeleteTestWizardDraftRequest(
-	req *DeleteTestWizardDraftRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeDeleteWorkloadPresetRequest(
-	req *DeleteWorkloadPresetRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeExtractToPresetRequest(
-	req *ExtractToPresetRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeFinishSuiteWizardRequest(
-	req *FinishSuiteWizardRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeFinishTestWizardRequest(
-	req *FinishTestWizardRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
 func encodeGetAccountRequest(
 	req *GetAccountRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeGetDatabasePresetRequest(
-	req *GetDatabasePresetRequest,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -864,48 +556,6 @@ func encodeGetSharedRunRequest(
 	return nil
 }
 
-func encodeGetSuiteRequest(
-	req *GetSuiteRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeGetSuiteRunRequest(
-	req *GetSuiteRunRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeGetSuiteWizardDraftRequest(
-	req *GetSuiteWizardDraftRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
 func encodeGetSystemRatingRequest(
 	req *GetSystemRatingRequest,
 	r *http.Request,
@@ -976,64 +626,8 @@ func encodeGetTenantSettingsRequest(
 	return nil
 }
 
-func encodeGetTestPresetRequest(
-	req *GetTestPresetRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeGetTestRunRequest(
-	req *GetTestRunRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
 func encodeGetTestRunOverviewRequest(
 	req *GetTestRunOverviewRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeGetTestWizardDraftRequest(
-	req *GetTestWizardDraftRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeGetWorkloadPresetRequest(
-	req *GetWorkloadPresetRequest,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -1090,20 +684,6 @@ func encodeListAccountsRequest(
 
 func encodeListApiTokensRequest(
 	req *ListApiTokensRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeListDatabasePresetsRequest(
-	req *ListDatabasePresetsRequest,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -1270,132 +850,6 @@ func encodeListStroppyVersionsRequest(
 	return nil
 }
 
-func encodeListSuiteFacetsRequest(
-	req *ListSuiteFacetsRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeListSuiteRunsRequest(
-	req *ListSuiteRunsRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeListSuiteWizardDraftsRequest(
-	req *ListSuiteWizardDraftsRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeListSuitesRequest(
-	req *ListSuitesRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeListTestPresetsRequest(
-	req *ListTestPresetsRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeListTestRunFacetsRequest(
-	req *ListTestRunFacetsRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeListTestRunsRequest(
-	req *ListTestRunsRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeListTestWizardDraftsRequest(
-	req *ListTestWizardDraftsRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeListWorkloadPresetsRequest(
-	req *ListWorkloadPresetsRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
 func encodeLoginRequest(
 	req *LoginRequest,
 	r *http.Request,
@@ -1440,62 +894,6 @@ func encodeLookupAccountByEmailRequest(
 
 func encodeMarkRegistrationRequestHandledRequest(
 	req *MarkRegistrationRequestHandledRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodePatchSuiteWizardRequest(
-	req *PatchSuiteWizardRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodePatchTestWizardRequest(
-	req *PatchTestWizardRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeProbeCatalogRequest(
-	req *ProbeCatalogRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeProbeScriptRequest(
-	req *ProbeScriptRequest,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -1662,20 +1060,6 @@ func encodeSetShareExpiryRequest(
 	return nil
 }
 
-func encodeSetSuiteScheduleRequest(
-	req *SetSuiteScheduleRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
 func encodeSetTenantProviderSettingsRequest(
 	req *SetTenantProviderSettingsRequest,
 	r *http.Request,
@@ -1706,62 +1090,6 @@ func encodeStartRunRequest(
 
 func encodeStartSSORequest(
 	req *StartSSORequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeStartSuiteRequest(
-	req *StartSuiteRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeStartSuiteWizardRequest(
-	req *StartSuiteWizardRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeStartTestRunRequest(
-	req *StartTestRunRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeStartTestWizardRequest(
-	req *StartTestWizardRequest,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -1858,20 +1186,6 @@ func encodeUpdateAccountRequest(
 	return nil
 }
 
-func encodeUpdateDatabasePresetRequest(
-	req *UpdateDatabasePresetRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
 func encodeUpdateIdentityProviderRequest(
 	req *UpdateIdentityProviderRequest,
 	r *http.Request,
@@ -1914,20 +1228,6 @@ func encodeUpdateRoleRequest(
 	return nil
 }
 
-func encodeUpdateSuiteRequest(
-	req *UpdateSuiteRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
 func encodeUpdateSystemSettingsRequest(
 	req *UpdateSystemSettingsRequest,
 	r *http.Request,
@@ -1958,34 +1258,6 @@ func encodeUpdateTenantRequest(
 
 func encodeUpdateTenantSettingsRequest(
 	req *UpdateTenantSettingsRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeUpdateTestPresetRequest(
-	req *UpdateTestPresetRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeUpdateWorkloadPresetRequest(
-	req *UpdateWorkloadPresetRequest,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"

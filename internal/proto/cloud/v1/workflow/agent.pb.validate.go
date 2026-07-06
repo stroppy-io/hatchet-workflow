@@ -34,3 +34,293 @@ var (
 	_ = anypb.Any{}
 	_ = sort.Sort
 )
+
+// Validate checks the field values on AgentBootstrap with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *AgentBootstrap) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on AgentBootstrap with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in AgentBootstrapMultiError,
+// or nil if none found.
+func (m *AgentBootstrap) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *AgentBootstrap) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetServerAddr()) > 2048 {
+		err := AgentBootstrapValidationError{
+			field:  "ServerAddr",
+			reason: "value length must be at most 2048 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetBinaryUrl()) > 2048 {
+		err := AgentBootstrapValidationError{
+			field:  "BinaryUrl",
+			reason: "value length must be at most 2048 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetTemporalNamespace()) > 128 {
+		err := AgentBootstrapValidationError{
+			field:  "TemporalNamespace",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetExtraEnv()) > 64 {
+		err := AgentBootstrapValidationError{
+			field:  "ExtraEnv",
+			reason: "value must contain no more than 64 pair(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	{
+		sorted_keys := make([]string, len(m.GetExtraEnv()))
+		i := 0
+		for key := range m.GetExtraEnv() {
+			sorted_keys[i] = key
+			i++
+		}
+		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
+		for _, key := range sorted_keys {
+			val := m.GetExtraEnv()[key]
+			_ = val
+
+			if l := utf8.RuneCountInString(key); l < 1 || l > 256 {
+				err := AgentBootstrapValidationError{
+					field:  fmt.Sprintf("ExtraEnv[%v]", key),
+					reason: "value length must be between 1 and 256 runes, inclusive",
+				}
+				if !all {
+					return err
+				}
+				errors = append(errors, err)
+			}
+
+			if !_AgentBootstrap_ExtraEnv_Pattern.MatchString(key) {
+				err := AgentBootstrapValidationError{
+					field:  fmt.Sprintf("ExtraEnv[%v]", key),
+					reason: "value does not match regex pattern \"^[A-Z_][A-Z0-9_]*$\"",
+				}
+				if !all {
+					return err
+				}
+				errors = append(errors, err)
+			}
+
+			if utf8.RuneCountInString(val) > 8192 {
+				err := AgentBootstrapValidationError{
+					field:  fmt.Sprintf("ExtraEnv[%v]", key),
+					reason: "value length must be at most 8192 runes",
+				}
+				if !all {
+					return err
+				}
+				errors = append(errors, err)
+			}
+
+		}
+	}
+
+	if len(m.GetAgentTokens()) > 1024 {
+		err := AgentBootstrapValidationError{
+			field:  "AgentTokens",
+			reason: "value must contain no more than 1024 pair(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	{
+		sorted_keys := make([]string, len(m.GetAgentTokens()))
+		i := 0
+		for key := range m.GetAgentTokens() {
+			sorted_keys[i] = key
+			i++
+		}
+		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
+		for _, key := range sorted_keys {
+			val := m.GetAgentTokens()[key]
+			_ = val
+
+			if l := utf8.RuneCountInString(key); l < 1 || l > 256 {
+				err := AgentBootstrapValidationError{
+					field:  fmt.Sprintf("AgentTokens[%v]", key),
+					reason: "value length must be between 1 and 256 runes, inclusive",
+				}
+				if !all {
+					return err
+				}
+				errors = append(errors, err)
+			}
+
+			if l := utf8.RuneCountInString(val); l < 1 || l > 8192 {
+				err := AgentBootstrapValidationError{
+					field:  fmt.Sprintf("AgentTokens[%v]", key),
+					reason: "value length must be between 1 and 8192 runes, inclusive",
+				}
+				if !all {
+					return err
+				}
+				errors = append(errors, err)
+			}
+
+		}
+	}
+
+	if len(m.GetAgentTaskQueues()) > 1024 {
+		err := AgentBootstrapValidationError{
+			field:  "AgentTaskQueues",
+			reason: "value must contain no more than 1024 pair(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	{
+		sorted_keys := make([]string, len(m.GetAgentTaskQueues()))
+		i := 0
+		for key := range m.GetAgentTaskQueues() {
+			sorted_keys[i] = key
+			i++
+		}
+		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
+		for _, key := range sorted_keys {
+			val := m.GetAgentTaskQueues()[key]
+			_ = val
+
+			if l := utf8.RuneCountInString(key); l < 1 || l > 256 {
+				err := AgentBootstrapValidationError{
+					field:  fmt.Sprintf("AgentTaskQueues[%v]", key),
+					reason: "value length must be between 1 and 256 runes, inclusive",
+				}
+				if !all {
+					return err
+				}
+				errors = append(errors, err)
+			}
+
+			if l := utf8.RuneCountInString(val); l < 1 || l > 512 {
+				err := AgentBootstrapValidationError{
+					field:  fmt.Sprintf("AgentTaskQueues[%v]", key),
+					reason: "value length must be between 1 and 512 runes, inclusive",
+				}
+				if !all {
+					return err
+				}
+				errors = append(errors, err)
+			}
+
+		}
+	}
+
+	if len(errors) > 0 {
+		return AgentBootstrapMultiError(errors)
+	}
+
+	return nil
+}
+
+// AgentBootstrapMultiError is an error wrapping multiple validation errors
+// returned by AgentBootstrap.ValidateAll() if the designated constraints
+// aren't met.
+type AgentBootstrapMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m AgentBootstrapMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m AgentBootstrapMultiError) AllErrors() []error { return m }
+
+// AgentBootstrapValidationError is the validation error returned by
+// AgentBootstrap.Validate if the designated constraints aren't met.
+type AgentBootstrapValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e AgentBootstrapValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e AgentBootstrapValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e AgentBootstrapValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e AgentBootstrapValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e AgentBootstrapValidationError) ErrorName() string { return "AgentBootstrapValidationError" }
+
+// Error satisfies the builtin error interface
+func (e AgentBootstrapValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAgentBootstrap.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = AgentBootstrapValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = AgentBootstrapValidationError{}
+
+var _AgentBootstrap_ExtraEnv_Pattern = regexp.MustCompile("^[A-Z_][A-Z0-9_]*$")

@@ -7,6 +7,7 @@ import "cloud/v1/common/dir.proto";
 import "cloud/v1/common/file.proto";
 import "google/protobuf/empty.proto";
 import "temporal/v1/temporal.proto";
+import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow";
 
@@ -15,8 +16,61 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
     agent host: ensuring the agent is online, creating directories, writing
     files, and running commands. These are the low-level building blocks that the
     higher-level test/deployment workflows compose, each annotated with its own
-    timeout/heartbeat/retry policy.
+    timeout/heartbeat/retry policy. It also carries AgentBootstrap, the runtime
+    control-plane data delivered to every provisioned agent.
  */
+
+/*
+    AgentBootstrap is the provider-independent startup contract for every agent.
+    It is runtime control-plane data, not topology and not provider settings.
+ */
+message AgentBootstrap {
+    /*
+        server_addr is the public/base control-plane address agents use to reach
+        the server and Temporal proxy, e.g. http://10.0.0.10:8080.
+     */
+    string server_addr = 1 [(validate.rules).string.max_len = 2048];
+    /*
+        binary_url overrides the agent binary URL. Empty means
+        server_addr + "/agent/binary".
+     */
+    string binary_url = 2 [(validate.rules).string.max_len = 2048];
+    /*
+        temporal_namespace is the namespace agents use when registering their
+        Temporal worker. Empty means default.
+     */
+    string temporal_namespace = 3 [(validate.rules).string.max_len = 128];
+    /*
+        extra_env is appended to the agent env file. Core STROPPY and AGENT
+        fields are still rendered by the system and win over this map.
+     */
+    map<string, string> extra_env = 4 [(validate.rules).map = {
+        max_pairs: 64,
+        keys: {string: {min_len: 1, max_len: 256, pattern: "^[A-Z_][A-Z0-9_]*$"}},
+        values: {string: {max_len: 8192}}
+    }];
+    /*
+        agent_tokens carries per-node bearer tokens. The renderer injects only
+        the token matching the current node into that node's env as
+        STROPPY_AGENT_TOKEN; it must not be rendered as generic extra env.
+     */
+    map<string, string> agent_tokens = 5 [(validate.rules).map = {
+        max_pairs: 1024,
+        keys: {string: {min_len: 1, max_len: 256}},
+        values: {string: {min_len: 1, max_len: 8192}}
+    }];
+    /*
+        agent_task_queues carries the per-node Temporal task queue name. It is
+        generated with a per-run secret suffix and rendered only to the matching
+        node so a valid agent token alone is not enough to poll another node's
+        work.
+     */
+    map<string, string> agent_task_queues = 6 [(validate.rules).map = {
+        max_pairs: 1024,
+        keys: {string: {min_len: 1, max_len: 256}},
+        values: {string: {min_len: 1, max_len: 512}}
+    }];
+}
 
 /*
     AgentCommandService groups the agent-facing Temporal activities that perform

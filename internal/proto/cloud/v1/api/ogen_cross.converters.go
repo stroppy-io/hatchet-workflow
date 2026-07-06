@@ -129,13 +129,13 @@ func AgentStepToOgen(src *deployment.AgentStep) (*rest.AgentStep, error) {
 		}
 		dst.CreateDir.SetTo(*o4)
 	case *deployment.AgentStep_WriteFile:
-		o5, err := File2ToOgen(src.GetWriteFile())
+		o5, err := FileToOgen(src.GetWriteFile())
 		if err != nil {
 			return nil, err
 		}
 		dst.WriteFile.SetTo(*o5)
 	case *deployment.AgentStep_FetchFile:
-		o6, err := File2ToOgen(src.GetFetchFile())
+		o6, err := FileToOgen(src.GetFetchFile())
 		if err != nil {
 			return nil, err
 		}
@@ -215,14 +215,14 @@ func AgentStepFromOgen(src *rest.AgentStep) (*deployment.AgentStep, error) {
 		dst.Action = &deployment.AgentStep_CreateDir{CreateDir: m10}
 	}
 	if v11, ok := src.WriteFile.Get(); ok {
-		m12, err := File2FromOgen(&v11)
+		m12, err := FileFromOgen(&v11)
 		if err != nil {
 			return nil, err
 		}
 		dst.Action = &deployment.AgentStep_WriteFile{WriteFile: m12}
 	}
 	if v13, ok := src.FetchFile.Get(); ok {
-		m14, err := File2FromOgen(&v13)
+		m14, err := FileFromOgen(&v13)
 		if err != nil {
 			return nil, err
 		}
@@ -493,226 +493,6 @@ func BakedFromOgen(src *rest.Baked) (*schemapb.Baked, error) {
 		return nil, err
 	}
 	dst.Values = j3
-	return dst, nil
-}
-
-// CellToOgen converts models.SuiteWizardDraftRecord_Cell (an imported type) to its ogen representation.
-func CellToOgen(src *models.SuiteWizardDraftRecord_Cell) (*rest.Cell, error) {
-	var dst rest.Cell
-	if src == nil {
-		return &dst, nil
-	}
-	o1, err := SuiteCellToOgen(src.GetSpec())
-	if err != nil {
-		return nil, err
-	}
-	dst.Spec = *o1
-	if src.Database != nil {
-		o2, err := DatabaseToOgen(src.GetDatabase())
-		if err != nil {
-			return nil, err
-		}
-		dst.Database.SetTo(*o2)
-	}
-	if src.Workload != nil {
-		o3, err := WorkloadToOgen(src.GetWorkload())
-		if err != nil {
-			return nil, err
-		}
-		dst.Workload.SetTo(*o3)
-	}
-	if src.TopologySpec != nil {
-		o4, err := TopologySpecToOgen(src.GetTopologySpec())
-		if err != nil {
-			return nil, err
-		}
-		dst.TopologySpec.SetTo(*o4)
-	}
-	if src.InfrastructurePlan != nil {
-		o5, err := InfrastructurePlanToOgen(src.GetInfrastructurePlan())
-		if err != nil {
-			return nil, err
-		}
-		dst.InfrastructurePlan.SetTo(*o5)
-	}
-	if src.RenderPreview != nil {
-		o6, err := RenderPreviewToOgen(src.GetRenderPreview())
-		if err != nil {
-			return nil, err
-		}
-		dst.RenderPreview.SetTo(*o6)
-	}
-	dst.Compatible.SetTo(bool(src.GetCompatible()))
-	dst.Ready.SetTo(bool(src.GetReady()))
-	c7, err := convert.SliceErr(src.GetErrors(), func(e *schemapb.FieldError) (zero rest.FieldError, _ error) {
-		o8, err := FieldErrorToOgen(e)
-		if err != nil {
-			return zero, err
-		}
-		return *o8, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.Errors = c7
-	return &dst, nil
-}
-
-// CellFromOgen converts the ogen representation back to SuiteWizardDraftRecord_Cell.
-func CellFromOgen(src *rest.Cell) (*models.SuiteWizardDraftRecord_Cell, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &models.SuiteWizardDraftRecord_Cell{}
-	m1, err := SuiteCellFromOgen(&src.Spec)
-	if err != nil {
-		return nil, err
-	}
-	dst.Spec = m1
-	if v2, ok := src.Database.Get(); ok {
-		m3, err := DatabaseFromOgen(&v2)
-		if err != nil {
-			return nil, err
-		}
-		dst.Database = m3
-	}
-	if v4, ok := src.Workload.Get(); ok {
-		m5, err := WorkloadFromOgen(&v4)
-		if err != nil {
-			return nil, err
-		}
-		dst.Workload = m5
-	}
-	if v6, ok := src.TopologySpec.Get(); ok {
-		m7, err := TopologySpecFromOgen(&v6)
-		if err != nil {
-			return nil, err
-		}
-		dst.TopologySpec = m7
-	}
-	if v8, ok := src.InfrastructurePlan.Get(); ok {
-		m9, err := InfrastructurePlanFromOgen(&v8)
-		if err != nil {
-			return nil, err
-		}
-		dst.InfrastructurePlan = m9
-	}
-	if v10, ok := src.RenderPreview.Get(); ok {
-		m11, err := RenderPreviewFromOgen(&v10)
-		if err != nil {
-			return nil, err
-		}
-		dst.RenderPreview = m11
-	}
-	if v12, ok := src.Compatible.Get(); ok {
-		dst.Compatible = bool(v12)
-	}
-	if v13, ok := src.Ready.Get(); ok {
-		dst.Ready = bool(v13)
-	}
-	c14, err := convert.SliceErr(src.Errors, func(e rest.FieldError) (zero *schemapb.FieldError, _ error) {
-		m15, err := FieldErrorFromOgen(&e)
-		if err != nil {
-			return zero, err
-		}
-		return m15, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.Errors = c14
-	return dst, nil
-}
-
-// ChildRunToOgen converts models.SuiteRunRecord_ChildRun (an imported type) to its ogen representation.
-func ChildRunToOgen(src *models.SuiteRunRecord_ChildRun) (*rest.ChildRun, error) {
-	var dst rest.ChildRun
-	if src == nil {
-		return &dst, nil
-	}
-	dst.SuiteCellId.SetTo(string(src.GetSuiteCellId()))
-	dst.TestRunId.SetTo(string(src.GetTestRunId()))
-	dst.Name.SetTo(string(src.GetName()))
-	var en1 rest.ChildRunStatus
-	switch src.GetStatus() {
-	case common.Status_STATUS_UNSPECIFIED:
-		en1 = rest.ChildRunStatus0
-	case common.Status_STATUS_PENDING:
-		en1 = rest.ChildRunStatus1
-	case common.Status_STATUS_RUNNING:
-		en1 = rest.ChildRunStatus2
-	case common.Status_STATUS_RETRY_WAIT:
-		en1 = rest.ChildRunStatus5
-	case common.Status_STATUS_COMPLETED:
-		en1 = rest.ChildRunStatus3
-	case common.Status_STATUS_FAILED:
-		en1 = rest.ChildRunStatus4
-	case common.Status_STATUS_SKIPPED:
-		en1 = rest.ChildRunStatus6
-	case common.Status_STATUS_CANCELLING:
-		en1 = rest.ChildRunStatus7
-	case common.Status_STATUS_CANCELLED:
-		en1 = rest.ChildRunStatus8
-	case common.Status_STATUS_ALLOCATED:
-		en1 = rest.ChildRunStatus9
-	case common.Status_STATUS_DEPLOYMENT:
-		en1 = rest.ChildRunStatus10
-	case common.Status_STATUS_DEPLOYED:
-		en1 = rest.ChildRunStatus11
-	default:
-		return nil, fmt.Errorf("cloud.v1.models.SuiteRunRecord.ChildRun.status: enum value %v has no ogen ChildRunStatus variant", src.GetStatus())
-	}
-	dst.Status.SetTo(en1)
-	return &dst, nil
-}
-
-// ChildRunFromOgen converts the ogen representation back to SuiteRunRecord_ChildRun.
-func ChildRunFromOgen(src *rest.ChildRun) (*models.SuiteRunRecord_ChildRun, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &models.SuiteRunRecord_ChildRun{}
-	if v1, ok := src.SuiteCellId.Get(); ok {
-		dst.SuiteCellId = string(v1)
-	}
-	if v2, ok := src.TestRunId.Get(); ok {
-		dst.TestRunId = string(v2)
-	}
-	if v3, ok := src.Name.Get(); ok {
-		dst.Name = string(v3)
-	}
-	if v4, ok := src.Status.Get(); ok {
-		var en5 common.Status
-		switch v4 {
-		case rest.ChildRunStatus0:
-			en5 = common.Status_STATUS_UNSPECIFIED
-		case rest.ChildRunStatus1:
-			en5 = common.Status_STATUS_PENDING
-		case rest.ChildRunStatus2:
-			en5 = common.Status_STATUS_RUNNING
-		case rest.ChildRunStatus5:
-			en5 = common.Status_STATUS_RETRY_WAIT
-		case rest.ChildRunStatus3:
-			en5 = common.Status_STATUS_COMPLETED
-		case rest.ChildRunStatus4:
-			en5 = common.Status_STATUS_FAILED
-		case rest.ChildRunStatus6:
-			en5 = common.Status_STATUS_SKIPPED
-		case rest.ChildRunStatus7:
-			en5 = common.Status_STATUS_CANCELLING
-		case rest.ChildRunStatus8:
-			en5 = common.Status_STATUS_CANCELLED
-		case rest.ChildRunStatus9:
-			en5 = common.Status_STATUS_ALLOCATED
-		case rest.ChildRunStatus10:
-			en5 = common.Status_STATUS_DEPLOYMENT
-		case rest.ChildRunStatus11:
-			en5 = common.Status_STATUS_DEPLOYED
-		default:
-			return nil, fmt.Errorf("cloud.v1.models.SuiteRunRecord.ChildRun.status: enum value %v has no Status variant", v4)
-		}
-		dst.Status = en5
-	}
 	return dst, nil
 }
 
@@ -1128,50 +908,6 @@ func ComponentDeploymentFromOgen(src *rest.ComponentDeployment) (*deployment.Com
 	return dst, nil
 }
 
-// ComponentRenderToOgen converts deployment.ComponentRender (an imported type) to its ogen representation.
-func ComponentRenderToOgen(src *deployment.ComponentRender) (*rest.ComponentRender, error) {
-	var dst rest.ComponentRender
-	if src == nil {
-		return &dst, nil
-	}
-	dst.ComponentId.SetTo(string(src.GetComponentId()))
-	dst.NodeId.SetTo(string(src.GetNodeId()))
-	c1 := convert.Slice(src.GetArtifactIds(), func(e string) string {
-		return string(e)
-	})
-	dst.ArtifactIds = c1
-	c2 := convert.Map(src.GetLabels(), func(v string) string {
-		return string(v)
-	})
-	dst.Labels.SetTo(c2)
-	return &dst, nil
-}
-
-// ComponentRenderFromOgen converts the ogen representation back to ComponentRender.
-func ComponentRenderFromOgen(src *rest.ComponentRender) (*deployment.ComponentRender, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &deployment.ComponentRender{}
-	if v1, ok := src.ComponentId.Get(); ok {
-		dst.ComponentId = string(v1)
-	}
-	if v2, ok := src.NodeId.Get(); ok {
-		dst.NodeId = string(v2)
-	}
-	c3 := convert.Slice(src.ArtifactIds, func(e string) string {
-		return string(e)
-	})
-	dst.ArtifactIds = c3
-	if mv4, ok := src.Labels.Get(); ok {
-		c5 := convert.Map(mv4, func(v string) string {
-			return string(v)
-		})
-		dst.Labels = c5
-	}
-	return dst, nil
-}
-
 // ComputedToOgen converts schemapb.Schema_Filed_Computed (an imported type) to its ogen representation.
 func ComputedToOgen(src *schemapb.Schema_Filed_Computed) (*rest.Computed, error) {
 	var dst rest.Computed
@@ -1485,8 +1221,8 @@ func ContainerToOgen(src *deployment.Docker_Container) (*rest.Container, error) 
 		return nil, err
 	}
 	dst.Ports = c9
-	c11, err := convert.SliceErr(src.GetFiles(), func(e *deployment.Docker_File) (zero rest.File, _ error) {
-		o12, err := FileToOgen(e)
+	c11, err := convert.SliceErr(src.GetFiles(), func(e *deployment.Docker_File) (zero rest.File2, _ error) {
+		o12, err := File2ToOgen(e)
 		if err != nil {
 			return zero, err
 		}
@@ -1606,8 +1342,8 @@ func ContainerFromOgen(src *rest.Container) (*deployment.Docker_Container, error
 		return nil, err
 	}
 	dst.Ports = c17
-	c19, err := convert.SliceErr(src.Files, func(e rest.File) (zero *deployment.Docker_File, _ error) {
-		m20, err := FileFromOgen(&e)
+	c19, err := convert.SliceErr(src.Files, func(e rest.File2) (zero *deployment.Docker_File, _ error) {
+		m20, err := File2FromOgen(&e)
 		if err != nil {
 			return zero, err
 		}
@@ -1996,62 +1732,6 @@ func DatabaseParamsFromOgen(src *rest.DatabaseParams) (*domain.DatabaseParams, e
 			return nil, err
 		}
 		dst.Engine = &domain.DatabaseParams_PgNoop{PgNoop: m21}
-	}
-	return dst, nil
-}
-
-// DatabasePresetRecordToOgen converts models.DatabasePresetRecord (an imported type) to its ogen representation.
-func DatabasePresetRecordToOgen(src *models.DatabasePresetRecord) (*rest.DatabasePresetRecord, error) {
-	var dst rest.DatabasePresetRecord
-	if src == nil {
-		return &dst, nil
-	}
-	o1, err := EntityToOgen(src.GetEntity())
-	if err != nil {
-		return nil, err
-	}
-	dst.Entity = *o1
-	o2, err := DatabaseToOgen(src.GetDatabase())
-	if err != nil {
-		return nil, err
-	}
-	dst.Database = *o2
-	dst.IsSystem.SetTo(bool(src.GetIsSystem()))
-	if src.Summary != nil {
-		o3, err := SummaryToOgen(src.GetSummary())
-		if err != nil {
-			return nil, err
-		}
-		dst.Summary.SetTo(*o3)
-	}
-	return &dst, nil
-}
-
-// DatabasePresetRecordFromOgen converts the ogen representation back to DatabasePresetRecord.
-func DatabasePresetRecordFromOgen(src *rest.DatabasePresetRecord) (*models.DatabasePresetRecord, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &models.DatabasePresetRecord{}
-	m1, err := EntityFromOgen(&src.Entity)
-	if err != nil {
-		return nil, err
-	}
-	dst.Entity = m1
-	m2, err := DatabaseFromOgen(&src.Database)
-	if err != nil {
-		return nil, err
-	}
-	dst.Database = m2
-	if v3, ok := src.IsSystem.Get(); ok {
-		dst.IsSystem = bool(v3)
-	}
-	if v4, ok := src.Summary.Get(); ok {
-		m5, err := SummaryFromOgen(&v4)
-		if err != nil {
-			return nil, err
-		}
-		dst.Summary = m5
 	}
 	return dst, nil
 }
@@ -2973,110 +2653,9 @@ func FavoriteRecordFromOgen(src *rest.FavoriteRecord) (*models.FavoriteRecord, e
 	return dst, nil
 }
 
-// FieldErrorToOgen converts schemapb.FieldError (an imported type) to its ogen representation.
-func FieldErrorToOgen(src *schemapb.FieldError) (*rest.FieldError, error) {
-	var dst rest.FieldError
-	if src == nil {
-		return &dst, nil
-	}
-	dst.Field.SetTo(string(src.GetField()))
-	dst.Message.SetTo(string(src.GetMessage()))
-	if src.RuleId != nil {
-		dst.RuleId.SetTo(string(src.GetRuleId()))
-	}
-	var en1 rest.FieldErrorSeverity
-	switch src.GetSeverity() {
-	case schemapb.Schema_Filed_SEVERITY_UNSPECIFIED:
-		en1 = rest.FieldErrorSeverity0
-	case schemapb.Schema_Filed_ERROR:
-		en1 = rest.FieldErrorSeverity1
-	case schemapb.Schema_Filed_WARNING:
-		en1 = rest.FieldErrorSeverity2
-	default:
-		return nil, fmt.Errorf("schemapb.FieldError.severity: enum value %v has no ogen FieldErrorSeverity variant", src.GetSeverity())
-	}
-	dst.Severity.SetTo(en1)
-	dst.Code.SetTo(string(src.GetCode()))
-	c2 := convert.Map(src.GetParams(), func(v string) string {
-		return string(v)
-	})
-	dst.Params.SetTo(c2)
-	return &dst, nil
-}
-
-// FieldErrorFromOgen converts the ogen representation back to FieldError.
-func FieldErrorFromOgen(src *rest.FieldError) (*schemapb.FieldError, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &schemapb.FieldError{}
-	if v1, ok := src.Field.Get(); ok {
-		dst.Field = string(v1)
-	}
-	if v2, ok := src.Message.Get(); ok {
-		dst.Message = string(v2)
-	}
-	if v3, ok := src.RuleId.Get(); ok {
-		p4 := string(v3)
-		dst.RuleId = &p4
-	}
-	if v5, ok := src.Severity.Get(); ok {
-		var en6 schemapb.Schema_Filed_Severity
-		switch v5 {
-		case rest.FieldErrorSeverity0:
-			en6 = schemapb.Schema_Filed_SEVERITY_UNSPECIFIED
-		case rest.FieldErrorSeverity1:
-			en6 = schemapb.Schema_Filed_ERROR
-		case rest.FieldErrorSeverity2:
-			en6 = schemapb.Schema_Filed_WARNING
-		default:
-			return nil, fmt.Errorf("schemapb.FieldError.severity: enum value %v has no Schema_Filed_Severity variant", v5)
-		}
-		dst.Severity = en6
-	}
-	if v7, ok := src.Code.Get(); ok {
-		dst.Code = string(v7)
-	}
-	if mv8, ok := src.Params.Get(); ok {
-		c9 := convert.Map(mv8, func(v string) string {
-			return string(v)
-		})
-		dst.Params = c9
-	}
-	return dst, nil
-}
-
-// FileToOgen converts deployment.Docker_File (an imported type) to its ogen representation.
-func FileToOgen(src *deployment.Docker_File) (*rest.File, error) {
+// FileToOgen converts common.File (an imported type) to its ogen representation.
+func FileToOgen(src *common.File) (*rest.File, error) {
 	var dst rest.File
-	if src == nil {
-		return &dst, nil
-	}
-	dst.Path.SetTo(string(src.GetPath()))
-	dst.Content = []byte(src.GetContent())
-	dst.Mode.SetTo(int32(src.GetMode()))
-	return &dst, nil
-}
-
-// FileFromOgen converts the ogen representation back to Docker_File.
-func FileFromOgen(src *rest.File) (*deployment.Docker_File, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &deployment.Docker_File{}
-	if v1, ok := src.Path.Get(); ok {
-		dst.Path = string(v1)
-	}
-	dst.Content = []byte(src.Content)
-	if v2, ok := src.Mode.Get(); ok {
-		dst.Mode = uint32(v2)
-	}
-	return dst, nil
-}
-
-// File2ToOgen converts common.File (an imported type) to its ogen representation.
-func File2ToOgen(src *common.File) (*rest.File2, error) {
-	var dst rest.File2
 	if src == nil {
 		return &dst, nil
 	}
@@ -3101,8 +2680,8 @@ func File2ToOgen(src *common.File) (*rest.File2, error) {
 	return &dst, nil
 }
 
-// File2FromOgen converts the ogen representation back to File.
-func File2FromOgen(src *rest.File2) (*common.File, error) {
+// FileFromOgen converts the ogen representation back to File.
+func FileFromOgen(src *rest.File) (*common.File, error) {
 	if src == nil {
 		return nil, nil
 	}
@@ -3128,6 +2707,34 @@ func File2FromOgen(src *rest.File2) (*common.File, error) {
 	return dst, nil
 }
 
+// File2ToOgen converts deployment.Docker_File (an imported type) to its ogen representation.
+func File2ToOgen(src *deployment.Docker_File) (*rest.File2, error) {
+	var dst rest.File2
+	if src == nil {
+		return &dst, nil
+	}
+	dst.Path.SetTo(string(src.GetPath()))
+	dst.Content = []byte(src.GetContent())
+	dst.Mode.SetTo(int32(src.GetMode()))
+	return &dst, nil
+}
+
+// File2FromOgen converts the ogen representation back to Docker_File.
+func File2FromOgen(src *rest.File2) (*deployment.Docker_File, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &deployment.Docker_File{}
+	if v1, ok := src.Path.Get(); ok {
+		dst.Path = string(v1)
+	}
+	dst.Content = []byte(src.Content)
+	if v2, ok := src.Mode.Get(); ok {
+		dst.Mode = uint32(v2)
+	}
+	return dst, nil
+}
+
 // FileOverrideToOgen converts deployment.FileOverride (an imported type) to its ogen representation.
 func FileOverrideToOgen(src *deployment.FileOverride) (*rest.FileOverride, error) {
 	var dst rest.FileOverride
@@ -3137,7 +2744,7 @@ func FileOverrideToOgen(src *deployment.FileOverride) (*rest.FileOverride, error
 	dst.ArtifactId.SetTo(string(src.GetArtifactId()))
 	dst.ComponentId.SetTo(string(src.GetComponentId()))
 	dst.BaseHash.SetTo(string(src.GetBaseHash()))
-	o1, err := File2ToOgen(src.GetFile())
+	o1, err := FileToOgen(src.GetFile())
 	if err != nil {
 		return nil, err
 	}
@@ -3164,7 +2771,7 @@ func FileOverrideFromOgen(src *rest.FileOverride) (*deployment.FileOverride, err
 	if v3, ok := src.BaseHash.Get(); ok {
 		dst.BaseHash = string(v3)
 	}
-	m4, err := File2FromOgen(&src.File)
+	m4, err := FileFromOgen(&src.File)
 	if err != nil {
 		return nil, err
 	}
@@ -7018,7 +6625,7 @@ func PipelineOperationToOgen(src *monitor.PipelineOperation) (*rest.PipelineOper
 		dst.Command.SetTo(*o4)
 	}
 	if src.File != nil {
-		o5, err := File2ToOgen(src.GetFile())
+		o5, err := FileToOgen(src.GetFile())
 		if err != nil {
 			return nil, err
 		}
@@ -7105,7 +6712,7 @@ func PipelineOperationFromOgen(src *rest.PipelineOperation) (*monitor.PipelineOp
 		dst.Command = m11
 	}
 	if v12, ok := src.File.Get(); ok {
-		m13, err := File2FromOgen(&v12)
+		m13, err := FileFromOgen(&v12)
 		if err != nil {
 			return nil, err
 		}
@@ -7496,32 +7103,6 @@ func PresetIdFromOgen(src *rest.PresetId) (*domain.Database_PresetId, error) {
 	return dst, nil
 }
 
-// PresetPairToOgen converts domain.SuiteCell_PresetPair (an imported type) to its ogen representation.
-func PresetPairToOgen(src *domain.SuiteCell_PresetPair) (*rest.PresetPair, error) {
-	var dst rest.PresetPair
-	if src == nil {
-		return &dst, nil
-	}
-	dst.DbPresetId.SetTo(string(src.GetDbPresetId()))
-	dst.WorkloadPresetId.SetTo(string(src.GetWorkloadPresetId()))
-	return &dst, nil
-}
-
-// PresetPairFromOgen converts the ogen representation back to SuiteCell_PresetPair.
-func PresetPairFromOgen(src *rest.PresetPair) (*domain.SuiteCell_PresetPair, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &domain.SuiteCell_PresetPair{}
-	if v1, ok := src.DbPresetId.Get(); ok {
-		dst.DbPresetId = string(v1)
-	}
-	if v2, ok := src.WorkloadPresetId.Get(); ok {
-		dst.WorkloadPresetId = string(v2)
-	}
-	return dst, nil
-}
-
 // ProviderSettingsToOgen converts deployment.ProviderSettings (an imported type) to its ogen representation.
 func ProviderSettingsToOgen(src *deployment.ProviderSettings) (*rest.ProviderSettings, error) {
 	var dst rest.ProviderSettings
@@ -7602,7 +7183,7 @@ func RecipeRecordToOgen(src *models.RecipeRecord) (*rest.RecipeRecord, error) {
 	dst.Bundle = *o2
 	dst.Version.SetTo(int32(src.GetVersion()))
 	if src.Summary != nil {
-		o3, err := Summary4ToOgen(src.GetSummary())
+		o3, err := SummaryToOgen(src.GetSummary())
 		if err != nil {
 			return nil, err
 		}
@@ -7631,7 +7212,7 @@ func RecipeRecordFromOgen(src *rest.RecipeRecord) (*models.RecipeRecord, error) 
 		dst.Version = uint32(v3)
 	}
 	if v4, ok := src.Summary.Get(); ok {
-		m5, err := Summary4FromOgen(&v4)
+		m5, err := SummaryFromOgen(&v4)
 		if err != nil {
 			return nil, err
 		}
@@ -7674,200 +7255,6 @@ func RefFromOgen(src *rest.Ref) (*schemapb.Schema_Filed_Ref, error) {
 			return nil, err
 		}
 		dst.Target = &schemapb.Schema_Filed_Ref_Id{Id: m3}
-	}
-	return dst, nil
-}
-
-// RenderArtifactToOgen converts deployment.RenderArtifact (an imported type) to its ogen representation.
-func RenderArtifactToOgen(src *deployment.RenderArtifact) (*rest.RenderArtifact, error) {
-	var dst rest.RenderArtifact
-	if src == nil {
-		return &dst, nil
-	}
-	dst.ID.SetTo(string(src.GetId()))
-	dst.ComponentId.SetTo(string(src.GetComponentId()))
-	var en1 rest.RenderArtifactKind
-	switch src.GetKind() {
-	case deployment.RenderArtifact_KIND_FILE:
-		en1 = rest.RenderArtifactKind1
-	case deployment.RenderArtifact_KIND_COMMAND:
-		en1 = rest.RenderArtifactKind2
-	case deployment.RenderArtifact_KIND_DIRECTORY:
-		en1 = rest.RenderArtifactKind3
-	case deployment.RenderArtifact_KIND_RUNTIME_VALUE:
-		en1 = rest.RenderArtifactKind4
-	default:
-		return nil, fmt.Errorf("cloud.v1.deployment.RenderArtifact.kind: enum value %v has no ogen RenderArtifactKind variant", src.GetKind())
-	}
-	dst.Kind.SetTo(en1)
-	var en2 rest.RenderArtifactOrigin
-	switch src.GetOrigin() {
-	case deployment.RenderArtifact_ORIGIN_SYSTEM:
-		en2 = rest.RenderArtifactOrigin1
-	case deployment.RenderArtifact_ORIGIN_RENDERED_DEFAULT:
-		en2 = rest.RenderArtifactOrigin2
-	case deployment.RenderArtifact_ORIGIN_USER_OVERRIDE:
-		en2 = rest.RenderArtifactOrigin3
-	case deployment.RenderArtifact_ORIGIN_RUNTIME:
-		en2 = rest.RenderArtifactOrigin4
-	default:
-		return nil, fmt.Errorf("cloud.v1.deployment.RenderArtifact.origin: enum value %v has no ogen RenderArtifactOrigin variant", src.GetOrigin())
-	}
-	dst.Origin.SetTo(en2)
-	var en3 rest.RenderArtifactMutability
-	switch src.GetMutability() {
-	case deployment.RenderArtifact_MUTABILITY_READ_ONLY:
-		en3 = rest.RenderArtifactMutability1
-	case deployment.RenderArtifact_MUTABILITY_EDITABLE:
-		en3 = rest.RenderArtifactMutability2
-	case deployment.RenderArtifact_MUTABILITY_RUNTIME_ONLY:
-		en3 = rest.RenderArtifactMutability3
-	default:
-		return nil, fmt.Errorf("cloud.v1.deployment.RenderArtifact.mutability: enum value %v has no ogen RenderArtifactMutability variant", src.GetMutability())
-	}
-	dst.Mutability.SetTo(en3)
-	dst.LockReason.SetTo(string(src.GetLockReason()))
-	dst.RendererName.SetTo(string(src.GetRendererName()))
-	dst.BaseHash.SetTo(string(src.GetBaseHash()))
-	c4 := convert.Map(src.GetLabels(), func(v string) string {
-		return string(v)
-	})
-	dst.Labels.SetTo(c4)
-	if src.Tags != nil {
-		o5, err := TagsToOgen(src.GetTags())
-		if err != nil {
-			return nil, err
-		}
-		dst.Tags.SetTo(*o5)
-	}
-	switch src.GetArtifact().(type) {
-	case *deployment.RenderArtifact_File:
-		o6, err := File2ToOgen(src.GetFile())
-		if err != nil {
-			return nil, err
-		}
-		dst.File.SetTo(*o6)
-	case *deployment.RenderArtifact_Cmd:
-		o7, err := CmdToOgen(src.GetCmd())
-		if err != nil {
-			return nil, err
-		}
-		dst.Cmd.SetTo(*o7)
-	case *deployment.RenderArtifact_Dir:
-		o8, err := DirToOgen(src.GetDir())
-		if err != nil {
-			return nil, err
-		}
-		dst.Dir.SetTo(*o8)
-	case *deployment.RenderArtifact_RuntimeValue:
-		dst.RuntimeValue.SetTo(string(src.GetRuntimeValue()))
-	}
-	return &dst, nil
-}
-
-// RenderArtifactFromOgen converts the ogen representation back to RenderArtifact.
-func RenderArtifactFromOgen(src *rest.RenderArtifact) (*deployment.RenderArtifact, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &deployment.RenderArtifact{}
-	if v1, ok := src.ID.Get(); ok {
-		dst.Id = string(v1)
-	}
-	if v2, ok := src.ComponentId.Get(); ok {
-		dst.ComponentId = string(v2)
-	}
-	if v3, ok := src.Kind.Get(); ok {
-		var en4 deployment.RenderArtifact_Kind
-		switch v3 {
-		case rest.RenderArtifactKind1:
-			en4 = deployment.RenderArtifact_KIND_FILE
-		case rest.RenderArtifactKind2:
-			en4 = deployment.RenderArtifact_KIND_COMMAND
-		case rest.RenderArtifactKind3:
-			en4 = deployment.RenderArtifact_KIND_DIRECTORY
-		case rest.RenderArtifactKind4:
-			en4 = deployment.RenderArtifact_KIND_RUNTIME_VALUE
-		default:
-			return nil, fmt.Errorf("cloud.v1.deployment.RenderArtifact.kind: enum value %v has no RenderArtifact_Kind variant", v3)
-		}
-		dst.Kind = en4
-	}
-	if v5, ok := src.Origin.Get(); ok {
-		var en6 deployment.RenderArtifact_Origin
-		switch v5 {
-		case rest.RenderArtifactOrigin1:
-			en6 = deployment.RenderArtifact_ORIGIN_SYSTEM
-		case rest.RenderArtifactOrigin2:
-			en6 = deployment.RenderArtifact_ORIGIN_RENDERED_DEFAULT
-		case rest.RenderArtifactOrigin3:
-			en6 = deployment.RenderArtifact_ORIGIN_USER_OVERRIDE
-		case rest.RenderArtifactOrigin4:
-			en6 = deployment.RenderArtifact_ORIGIN_RUNTIME
-		default:
-			return nil, fmt.Errorf("cloud.v1.deployment.RenderArtifact.origin: enum value %v has no RenderArtifact_Origin variant", v5)
-		}
-		dst.Origin = en6
-	}
-	if v7, ok := src.Mutability.Get(); ok {
-		var en8 deployment.RenderArtifact_Mutability
-		switch v7 {
-		case rest.RenderArtifactMutability1:
-			en8 = deployment.RenderArtifact_MUTABILITY_READ_ONLY
-		case rest.RenderArtifactMutability2:
-			en8 = deployment.RenderArtifact_MUTABILITY_EDITABLE
-		case rest.RenderArtifactMutability3:
-			en8 = deployment.RenderArtifact_MUTABILITY_RUNTIME_ONLY
-		default:
-			return nil, fmt.Errorf("cloud.v1.deployment.RenderArtifact.mutability: enum value %v has no RenderArtifact_Mutability variant", v7)
-		}
-		dst.Mutability = en8
-	}
-	if v9, ok := src.LockReason.Get(); ok {
-		dst.LockReason = string(v9)
-	}
-	if v10, ok := src.RendererName.Get(); ok {
-		dst.RendererName = string(v10)
-	}
-	if v11, ok := src.BaseHash.Get(); ok {
-		dst.BaseHash = string(v11)
-	}
-	if mv12, ok := src.Labels.Get(); ok {
-		c13 := convert.Map(mv12, func(v string) string {
-			return string(v)
-		})
-		dst.Labels = c13
-	}
-	if v14, ok := src.Tags.Get(); ok {
-		m15, err := TagsFromOgen(&v14)
-		if err != nil {
-			return nil, err
-		}
-		dst.Tags = m15
-	}
-	if v16, ok := src.File.Get(); ok {
-		m17, err := File2FromOgen(&v16)
-		if err != nil {
-			return nil, err
-		}
-		dst.Artifact = &deployment.RenderArtifact_File{File: m17}
-	}
-	if v18, ok := src.Cmd.Get(); ok {
-		m19, err := CmdFromOgen(&v18)
-		if err != nil {
-			return nil, err
-		}
-		dst.Artifact = &deployment.RenderArtifact_Cmd{Cmd: m19}
-	}
-	if v20, ok := src.Dir.Get(); ok {
-		m21, err := DirFromOgen(&v20)
-		if err != nil {
-			return nil, err
-		}
-		dst.Artifact = &deployment.RenderArtifact_Dir{Dir: m21}
-	}
-	if v22, ok := src.RuntimeValue.Get(); ok {
-		dst.Artifact = &deployment.RenderArtifact_RuntimeValue{RuntimeValue: string(v22)}
 	}
 	return dst, nil
 }
@@ -7932,106 +7319,6 @@ func RenderOverrideSetFromOgen(src *rest.RenderOverrideSet) (*deployment.RenderO
 			return nil, err
 		}
 		dst.Tags = m6
-	}
-	return dst, nil
-}
-
-// RenderPreviewToOgen converts deployment.RenderPreview (an imported type) to its ogen representation.
-func RenderPreviewToOgen(src *deployment.RenderPreview) (*rest.RenderPreview, error) {
-	var dst rest.RenderPreview
-	if src == nil {
-		return &dst, nil
-	}
-	c1, err := convert.SliceErr(src.GetComponents(), func(e *deployment.ComponentRender) (zero rest.ComponentRender, _ error) {
-		o2, err := ComponentRenderToOgen(e)
-		if err != nil {
-			return zero, err
-		}
-		return *o2, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.Components = c1
-	c3, err := convert.SliceErr(src.GetArtifacts(), func(e *deployment.RenderArtifact) (zero rest.RenderArtifact, _ error) {
-		o4, err := RenderArtifactToOgen(e)
-		if err != nil {
-			return zero, err
-		}
-		return *o4, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.Artifacts = c3
-	if src.Overrides != nil {
-		o5, err := RenderOverrideSetToOgen(src.GetOverrides())
-		if err != nil {
-			return nil, err
-		}
-		dst.Overrides.SetTo(*o5)
-	}
-	c6 := convert.Map(src.GetLabels(), func(v string) string {
-		return string(v)
-	})
-	dst.Labels.SetTo(c6)
-	if src.Tags != nil {
-		o7, err := TagsToOgen(src.GetTags())
-		if err != nil {
-			return nil, err
-		}
-		dst.Tags.SetTo(*o7)
-	}
-	return &dst, nil
-}
-
-// RenderPreviewFromOgen converts the ogen representation back to RenderPreview.
-func RenderPreviewFromOgen(src *rest.RenderPreview) (*deployment.RenderPreview, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &deployment.RenderPreview{}
-	c1, err := convert.SliceErr(src.Components, func(e rest.ComponentRender) (zero *deployment.ComponentRender, _ error) {
-		m2, err := ComponentRenderFromOgen(&e)
-		if err != nil {
-			return zero, err
-		}
-		return m2, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.Components = c1
-	c3, err := convert.SliceErr(src.Artifacts, func(e rest.RenderArtifact) (zero *deployment.RenderArtifact, _ error) {
-		m4, err := RenderArtifactFromOgen(&e)
-		if err != nil {
-			return zero, err
-		}
-		return m4, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.Artifacts = c3
-	if v5, ok := src.Overrides.Get(); ok {
-		m6, err := RenderOverrideSetFromOgen(&v5)
-		if err != nil {
-			return nil, err
-		}
-		dst.Overrides = m6
-	}
-	if mv7, ok := src.Labels.Get(); ok {
-		c8 := convert.Map(mv7, func(v string) string {
-			return string(v)
-		})
-		dst.Labels = c8
-	}
-	if v9, ok := src.Tags.Get(); ok {
-		m10, err := TagsFromOgen(&v9)
-		if err != nil {
-			return nil, err
-		}
-		dst.Tags = m10
 	}
 	return dst, nil
 }
@@ -8974,36 +8261,6 @@ func RuntimeNodeFromOgen(src *rest.RuntimeNode) (*topology.RuntimeNode, error) {
 			return nil, err
 		}
 		dst.Tags = m21
-	}
-	return dst, nil
-}
-
-// ScheduleToOgen converts domain.Schedule (an imported type) to its ogen representation.
-func ScheduleToOgen(src *domain.Schedule) (*rest.Schedule, error) {
-	var dst rest.Schedule
-	if src == nil {
-		return &dst, nil
-	}
-	dst.Enabled.SetTo(bool(src.GetEnabled()))
-	dst.Cron.SetTo(string(src.GetCron()))
-	dst.Timezone.SetTo(string(src.GetTimezone()))
-	return &dst, nil
-}
-
-// ScheduleFromOgen converts the ogen representation back to Schedule.
-func ScheduleFromOgen(src *rest.Schedule) (*domain.Schedule, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &domain.Schedule{}
-	if v1, ok := src.Enabled.Get(); ok {
-		dst.Enabled = bool(v1)
-	}
-	if v2, ok := src.Cron.Get(); ok {
-		dst.Cron = string(v2)
-	}
-	if v3, ok := src.Timezone.Get(); ok {
-		dst.Timezone = string(v3)
 	}
 	return dst, nil
 }
@@ -10363,878 +9620,9 @@ func StreamsFromOgen(src *rest.Streams) (*common.Cmd_Streams, error) {
 	return dst, nil
 }
 
-// SuiteToOgen converts domain.Suite (an imported type) to its ogen representation.
-func SuiteToOgen(src *domain.Suite) (*rest.Suite, error) {
-	var dst rest.Suite
-	if src == nil {
-		return &dst, nil
-	}
-	dst.ID.SetTo(string(src.GetId()))
-	c1, err := convert.SliceErr(src.GetCells(), func(e *domain.SuiteCell) (zero rest.SuiteCell, _ error) {
-		o2, err := SuiteCellToOgen(e)
-		if err != nil {
-			return zero, err
-		}
-		return *o2, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.Cells = c1
-	var en3 rest.SuiteProvider
-	switch src.GetProvider() {
-	case deployment.Provider_PROVIDER_DOCKER:
-		en3 = rest.SuiteProvider1
-	case deployment.Provider_PROVIDER_YANDEX:
-		en3 = rest.SuiteProvider2
-	default:
-		return nil, fmt.Errorf("cloud.v1.domain.Suite.provider: enum value %v has no ogen SuiteProvider variant", src.GetProvider())
-	}
-	dst.Provider.SetTo(en3)
-	if src.Tags != nil {
-		o4, err := TagsToOgen(src.GetTags())
-		if err != nil {
-			return nil, err
-		}
-		dst.Tags.SetTo(*o4)
-	}
-	if src.Schedule != nil {
-		o5, err := ScheduleToOgen(src.GetSchedule())
-		if err != nil {
-			return nil, err
-		}
-		dst.Schedule.SetTo(*o5)
-	}
-	if src.DefaultInTenantRating != nil {
-		dst.DefaultInTenantRating.SetTo(bool(src.GetDefaultInTenantRating()))
-	}
-	if src.DefaultInGlobalRating != nil {
-		dst.DefaultInGlobalRating.SetTo(bool(src.GetDefaultInGlobalRating()))
-	}
-	dst.DefaultMaxParallel.SetTo(int32(src.GetDefaultMaxParallel()))
-	return &dst, nil
-}
-
-// SuiteFromOgen converts the ogen representation back to Suite.
-func SuiteFromOgen(src *rest.Suite) (*domain.Suite, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &domain.Suite{}
-	if v1, ok := src.ID.Get(); ok {
-		dst.Id = string(v1)
-	}
-	c2, err := convert.SliceErr(src.Cells, func(e rest.SuiteCell) (zero *domain.SuiteCell, _ error) {
-		m3, err := SuiteCellFromOgen(&e)
-		if err != nil {
-			return zero, err
-		}
-		return m3, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.Cells = c2
-	if v4, ok := src.Provider.Get(); ok {
-		var en5 deployment.Provider
-		switch v4 {
-		case rest.SuiteProvider1:
-			en5 = deployment.Provider_PROVIDER_DOCKER
-		case rest.SuiteProvider2:
-			en5 = deployment.Provider_PROVIDER_YANDEX
-		default:
-			return nil, fmt.Errorf("cloud.v1.domain.Suite.provider: enum value %v has no Provider variant", v4)
-		}
-		dst.Provider = en5
-	}
-	if v6, ok := src.Tags.Get(); ok {
-		m7, err := TagsFromOgen(&v6)
-		if err != nil {
-			return nil, err
-		}
-		dst.Tags = m7
-	}
-	if v8, ok := src.Schedule.Get(); ok {
-		m9, err := ScheduleFromOgen(&v8)
-		if err != nil {
-			return nil, err
-		}
-		dst.Schedule = m9
-	}
-	if v10, ok := src.DefaultInTenantRating.Get(); ok {
-		p11 := bool(v10)
-		dst.DefaultInTenantRating = &p11
-	}
-	if v12, ok := src.DefaultInGlobalRating.Get(); ok {
-		p13 := bool(v12)
-		dst.DefaultInGlobalRating = &p13
-	}
-	if v14, ok := src.DefaultMaxParallel.Get(); ok {
-		dst.DefaultMaxParallel = uint32(v14)
-	}
-	return dst, nil
-}
-
-// SuiteCellToOgen converts domain.SuiteCell (an imported type) to its ogen representation.
-func SuiteCellToOgen(src *domain.SuiteCell) (*rest.SuiteCell, error) {
-	var dst rest.SuiteCell
-	if src == nil {
-		return &dst, nil
-	}
-	dst.ID.SetTo(string(src.GetId()))
-	dst.Name.SetTo(string(src.GetName()))
-	dst.Enabled.SetTo(bool(src.GetEnabled()))
-	c1, err := convert.SliceErr(src.GetMachineOverrides(), func(e *deployment.MachinePlan) (zero rest.MachinePlan, _ error) {
-		o2, err := MachinePlanToOgen(e)
-		if err != nil {
-			return zero, err
-		}
-		return *o2, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.MachineOverrides = c1
-	if src.RenderOverrides != nil {
-		o3, err := RenderOverrideSetToOgen(src.GetRenderOverrides())
-		if err != nil {
-			return nil, err
-		}
-		dst.RenderOverrides.SetTo(*o3)
-	}
-	if src.Tags != nil {
-		o4, err := TagsToOgen(src.GetTags())
-		if err != nil {
-			return nil, err
-		}
-		dst.Tags.SetTo(*o4)
-	}
-	switch src.GetSource().(type) {
-	case *domain.SuiteCell_PresetPair_:
-		o5, err := PresetPairToOgen(src.GetPresetPair())
-		if err != nil {
-			return nil, err
-		}
-		dst.PresetPair.SetTo(*o5)
-	case *domain.SuiteCell_TestPresetId:
-		dst.TestPresetId.SetTo(string(src.GetTestPresetId()))
-	case *domain.SuiteCell_InlineTest:
-		o6, err := TestToOgen(src.GetInlineTest())
-		if err != nil {
-			return nil, err
-		}
-		dst.InlineTest.SetTo(*o6)
-	}
-	return &dst, nil
-}
-
-// SuiteCellFromOgen converts the ogen representation back to SuiteCell.
-func SuiteCellFromOgen(src *rest.SuiteCell) (*domain.SuiteCell, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &domain.SuiteCell{}
-	if v1, ok := src.ID.Get(); ok {
-		dst.Id = string(v1)
-	}
-	if v2, ok := src.Name.Get(); ok {
-		dst.Name = string(v2)
-	}
-	if v3, ok := src.Enabled.Get(); ok {
-		dst.Enabled = bool(v3)
-	}
-	c4, err := convert.SliceErr(src.MachineOverrides, func(e rest.MachinePlan) (zero *deployment.MachinePlan, _ error) {
-		m5, err := MachinePlanFromOgen(&e)
-		if err != nil {
-			return zero, err
-		}
-		return m5, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.MachineOverrides = c4
-	if v6, ok := src.RenderOverrides.Get(); ok {
-		m7, err := RenderOverrideSetFromOgen(&v6)
-		if err != nil {
-			return nil, err
-		}
-		dst.RenderOverrides = m7
-	}
-	if v8, ok := src.Tags.Get(); ok {
-		m9, err := TagsFromOgen(&v8)
-		if err != nil {
-			return nil, err
-		}
-		dst.Tags = m9
-	}
-	if v10, ok := src.PresetPair.Get(); ok {
-		m11, err := PresetPairFromOgen(&v10)
-		if err != nil {
-			return nil, err
-		}
-		dst.Source = &domain.SuiteCell_PresetPair_{PresetPair: m11}
-	}
-	if v12, ok := src.TestPresetId.Get(); ok {
-		dst.Source = &domain.SuiteCell_TestPresetId{TestPresetId: string(v12)}
-	}
-	if v13, ok := src.InlineTest.Get(); ok {
-		m14, err := TestFromOgen(&v13)
-		if err != nil {
-			return nil, err
-		}
-		dst.Source = &domain.SuiteCell_InlineTest{InlineTest: m14}
-	}
-	return dst, nil
-}
-
-// SuiteRecordToOgen converts models.SuiteRecord (an imported type) to its ogen representation.
-func SuiteRecordToOgen(src *models.SuiteRecord) (*rest.SuiteRecord, error) {
-	var dst rest.SuiteRecord
-	if src == nil {
-		return &dst, nil
-	}
-	o1, err := EntityToOgen(src.GetEntity())
-	if err != nil {
-		return nil, err
-	}
-	dst.Entity = *o1
-	o2, err := SuiteToOgen(src.GetSpec())
-	if err != nil {
-		return nil, err
-	}
-	dst.Spec = *o2
-	if src.Summary != nil {
-		o3, err := Summary6ToOgen(src.GetSummary())
-		if err != nil {
-			return nil, err
-		}
-		dst.Summary.SetTo(*o3)
-	}
-	return &dst, nil
-}
-
-// SuiteRecordFromOgen converts the ogen representation back to SuiteRecord.
-func SuiteRecordFromOgen(src *rest.SuiteRecord) (*models.SuiteRecord, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &models.SuiteRecord{}
-	m1, err := EntityFromOgen(&src.Entity)
-	if err != nil {
-		return nil, err
-	}
-	dst.Entity = m1
-	m2, err := SuiteFromOgen(&src.Spec)
-	if err != nil {
-		return nil, err
-	}
-	dst.Spec = m2
-	if v3, ok := src.Summary.Get(); ok {
-		m4, err := Summary6FromOgen(&v3)
-		if err != nil {
-			return nil, err
-		}
-		dst.Summary = m4
-	}
-	return dst, nil
-}
-
-// SuiteRunRecordToOgen converts models.SuiteRunRecord (an imported type) to its ogen representation.
-func SuiteRunRecordToOgen(src *models.SuiteRunRecord) (*rest.SuiteRunRecord, error) {
-	var dst rest.SuiteRunRecord
-	if src == nil {
-		return &dst, nil
-	}
-	o1, err := EntityToOgen(src.GetEntity())
-	if err != nil {
-		return nil, err
-	}
-	dst.Entity = *o1
-	dst.SuiteId.SetTo(string(src.GetSuiteId()))
-	var en2 rest.SuiteRunRecordStatus
-	switch src.GetStatus() {
-	case common.Status_STATUS_UNSPECIFIED:
-		en2 = rest.SuiteRunRecordStatus0
-	case common.Status_STATUS_PENDING:
-		en2 = rest.SuiteRunRecordStatus1
-	case common.Status_STATUS_RUNNING:
-		en2 = rest.SuiteRunRecordStatus2
-	case common.Status_STATUS_RETRY_WAIT:
-		en2 = rest.SuiteRunRecordStatus5
-	case common.Status_STATUS_COMPLETED:
-		en2 = rest.SuiteRunRecordStatus3
-	case common.Status_STATUS_FAILED:
-		en2 = rest.SuiteRunRecordStatus4
-	case common.Status_STATUS_SKIPPED:
-		en2 = rest.SuiteRunRecordStatus6
-	case common.Status_STATUS_CANCELLING:
-		en2 = rest.SuiteRunRecordStatus7
-	case common.Status_STATUS_CANCELLED:
-		en2 = rest.SuiteRunRecordStatus8
-	case common.Status_STATUS_ALLOCATED:
-		en2 = rest.SuiteRunRecordStatus9
-	case common.Status_STATUS_DEPLOYMENT:
-		en2 = rest.SuiteRunRecordStatus10
-	case common.Status_STATUS_DEPLOYED:
-		en2 = rest.SuiteRunRecordStatus11
-	default:
-		return nil, fmt.Errorf("cloud.v1.models.SuiteRunRecord.status: enum value %v has no ogen SuiteRunRecordStatus variant", src.GetStatus())
-	}
-	dst.Status.SetTo(en2)
-	var en3 rest.SuiteRunRecordTrigger
-	switch src.GetTrigger() {
-	case common.Trigger_TRIGGER_UNSPECIFIED:
-		en3 = rest.SuiteRunRecordTrigger0
-	case common.Trigger_TRIGGER_MANUAL:
-		en3 = rest.SuiteRunRecordTrigger1
-	case common.Trigger_TRIGGER_CRON:
-		en3 = rest.SuiteRunRecordTrigger2
-	case common.Trigger_TRIGGER_API:
-		en3 = rest.SuiteRunRecordTrigger3
-	default:
-		return nil, fmt.Errorf("cloud.v1.models.SuiteRunRecord.trigger: enum value %v has no ogen SuiteRunRecordTrigger variant", src.GetTrigger())
-	}
-	dst.Trigger.SetTo(en3)
-	dst.MaxParallel.SetTo(int32(src.GetMaxParallel()))
-	c4, err := convert.SliceErr(src.GetChildren(), func(e *models.SuiteRunRecord_ChildRun) (zero rest.ChildRun, _ error) {
-		o5, err := ChildRunToOgen(e)
-		if err != nil {
-			return zero, err
-		}
-		return *o5, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.Children = c4
-	if src.Summary != nil {
-		o6, err := Summary7ToOgen(src.GetSummary())
-		if err != nil {
-			return nil, err
-		}
-		dst.Summary.SetTo(*o6)
-	}
-	return &dst, nil
-}
-
-// SuiteRunRecordFromOgen converts the ogen representation back to SuiteRunRecord.
-func SuiteRunRecordFromOgen(src *rest.SuiteRunRecord) (*models.SuiteRunRecord, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &models.SuiteRunRecord{}
-	m1, err := EntityFromOgen(&src.Entity)
-	if err != nil {
-		return nil, err
-	}
-	dst.Entity = m1
-	if v2, ok := src.SuiteId.Get(); ok {
-		dst.SuiteId = string(v2)
-	}
-	if v3, ok := src.Status.Get(); ok {
-		var en4 common.Status
-		switch v3 {
-		case rest.SuiteRunRecordStatus0:
-			en4 = common.Status_STATUS_UNSPECIFIED
-		case rest.SuiteRunRecordStatus1:
-			en4 = common.Status_STATUS_PENDING
-		case rest.SuiteRunRecordStatus2:
-			en4 = common.Status_STATUS_RUNNING
-		case rest.SuiteRunRecordStatus5:
-			en4 = common.Status_STATUS_RETRY_WAIT
-		case rest.SuiteRunRecordStatus3:
-			en4 = common.Status_STATUS_COMPLETED
-		case rest.SuiteRunRecordStatus4:
-			en4 = common.Status_STATUS_FAILED
-		case rest.SuiteRunRecordStatus6:
-			en4 = common.Status_STATUS_SKIPPED
-		case rest.SuiteRunRecordStatus7:
-			en4 = common.Status_STATUS_CANCELLING
-		case rest.SuiteRunRecordStatus8:
-			en4 = common.Status_STATUS_CANCELLED
-		case rest.SuiteRunRecordStatus9:
-			en4 = common.Status_STATUS_ALLOCATED
-		case rest.SuiteRunRecordStatus10:
-			en4 = common.Status_STATUS_DEPLOYMENT
-		case rest.SuiteRunRecordStatus11:
-			en4 = common.Status_STATUS_DEPLOYED
-		default:
-			return nil, fmt.Errorf("cloud.v1.models.SuiteRunRecord.status: enum value %v has no Status variant", v3)
-		}
-		dst.Status = en4
-	}
-	if v5, ok := src.Trigger.Get(); ok {
-		var en6 common.Trigger
-		switch v5 {
-		case rest.SuiteRunRecordTrigger0:
-			en6 = common.Trigger_TRIGGER_UNSPECIFIED
-		case rest.SuiteRunRecordTrigger1:
-			en6 = common.Trigger_TRIGGER_MANUAL
-		case rest.SuiteRunRecordTrigger2:
-			en6 = common.Trigger_TRIGGER_CRON
-		case rest.SuiteRunRecordTrigger3:
-			en6 = common.Trigger_TRIGGER_API
-		default:
-			return nil, fmt.Errorf("cloud.v1.models.SuiteRunRecord.trigger: enum value %v has no Trigger variant", v5)
-		}
-		dst.Trigger = en6
-	}
-	if v7, ok := src.MaxParallel.Get(); ok {
-		dst.MaxParallel = uint32(v7)
-	}
-	c8, err := convert.SliceErr(src.Children, func(e rest.ChildRun) (zero *models.SuiteRunRecord_ChildRun, _ error) {
-		m9, err := ChildRunFromOgen(&e)
-		if err != nil {
-			return zero, err
-		}
-		return m9, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.Children = c8
-	if v10, ok := src.Summary.Get(); ok {
-		m11, err := Summary7FromOgen(&v10)
-		if err != nil {
-			return nil, err
-		}
-		dst.Summary = m11
-	}
-	return dst, nil
-}
-
-// SuiteWizardDraftRecordToOgen converts models.SuiteWizardDraftRecord (an imported type) to its ogen representation.
-func SuiteWizardDraftRecordToOgen(src *models.SuiteWizardDraftRecord) (*rest.SuiteWizardDraftRecord, error) {
-	var dst rest.SuiteWizardDraftRecord
-	if src == nil {
-		return &dst, nil
-	}
-	o1, err := EntityToOgen(src.GetEntity())
-	if err != nil {
-		return nil, err
-	}
-	dst.Entity = *o1
-	var en2 rest.SuiteWizardDraftRecordProvider
-	switch src.GetProvider() {
-	case deployment.Provider_PROVIDER_UNSPECIFIED:
-		en2 = rest.SuiteWizardDraftRecordProvider0
-	case deployment.Provider_PROVIDER_DOCKER:
-		en2 = rest.SuiteWizardDraftRecordProvider1
-	case deployment.Provider_PROVIDER_YANDEX:
-		en2 = rest.SuiteWizardDraftRecordProvider2
-	default:
-		return nil, fmt.Errorf("cloud.v1.models.SuiteWizardDraftRecord.provider: enum value %v has no ogen SuiteWizardDraftRecordProvider variant", src.GetProvider())
-	}
-	dst.Provider.SetTo(en2)
-	c3, err := convert.SliceErr(src.GetCells(), func(e *models.SuiteWizardDraftRecord_Cell) (zero rest.Cell, _ error) {
-		o4, err := CellToOgen(e)
-		if err != nil {
-			return zero, err
-		}
-		return *o4, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.Cells = c3
-	dst.MaxParallel.SetTo(int32(src.GetMaxParallel()))
-	if src.Schedule != nil {
-		o5, err := ScheduleToOgen(src.GetSchedule())
-		if err != nil {
-			return nil, err
-		}
-		dst.Schedule.SetTo(*o5)
-	}
-	c6, err := convert.SliceErr(src.GetErrors(), func(e *schemapb.FieldError) (zero rest.FieldError, _ error) {
-		o7, err := FieldErrorToOgen(e)
-		if err != nil {
-			return zero, err
-		}
-		return *o7, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.Errors = c6
-	dst.Ready.SetTo(bool(src.GetReady()))
-	if src.DefaultInTenantRating != nil {
-		dst.DefaultInTenantRating.SetTo(bool(src.GetDefaultInTenantRating()))
-	}
-	if src.DefaultInGlobalRating != nil {
-		dst.DefaultInGlobalRating.SetTo(bool(src.GetDefaultInGlobalRating()))
-	}
-	dst.SuiteId.SetTo(string(src.GetSuiteId()))
-	return &dst, nil
-}
-
-// SuiteWizardDraftRecordFromOgen converts the ogen representation back to SuiteWizardDraftRecord.
-func SuiteWizardDraftRecordFromOgen(src *rest.SuiteWizardDraftRecord) (*models.SuiteWizardDraftRecord, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &models.SuiteWizardDraftRecord{}
-	m1, err := EntityFromOgen(&src.Entity)
-	if err != nil {
-		return nil, err
-	}
-	dst.Entity = m1
-	if v2, ok := src.Provider.Get(); ok {
-		var en3 deployment.Provider
-		switch v2 {
-		case rest.SuiteWizardDraftRecordProvider0:
-			en3 = deployment.Provider_PROVIDER_UNSPECIFIED
-		case rest.SuiteWizardDraftRecordProvider1:
-			en3 = deployment.Provider_PROVIDER_DOCKER
-		case rest.SuiteWizardDraftRecordProvider2:
-			en3 = deployment.Provider_PROVIDER_YANDEX
-		default:
-			return nil, fmt.Errorf("cloud.v1.models.SuiteWizardDraftRecord.provider: enum value %v has no Provider variant", v2)
-		}
-		dst.Provider = en3
-	}
-	c4, err := convert.SliceErr(src.Cells, func(e rest.Cell) (zero *models.SuiteWizardDraftRecord_Cell, _ error) {
-		m5, err := CellFromOgen(&e)
-		if err != nil {
-			return zero, err
-		}
-		return m5, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.Cells = c4
-	if v6, ok := src.MaxParallel.Get(); ok {
-		dst.MaxParallel = uint32(v6)
-	}
-	if v7, ok := src.Schedule.Get(); ok {
-		m8, err := ScheduleFromOgen(&v7)
-		if err != nil {
-			return nil, err
-		}
-		dst.Schedule = m8
-	}
-	c9, err := convert.SliceErr(src.Errors, func(e rest.FieldError) (zero *schemapb.FieldError, _ error) {
-		m10, err := FieldErrorFromOgen(&e)
-		if err != nil {
-			return zero, err
-		}
-		return m10, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.Errors = c9
-	if v11, ok := src.Ready.Get(); ok {
-		dst.Ready = bool(v11)
-	}
-	if v12, ok := src.DefaultInTenantRating.Get(); ok {
-		p13 := bool(v12)
-		dst.DefaultInTenantRating = &p13
-	}
-	if v14, ok := src.DefaultInGlobalRating.Get(); ok {
-		p15 := bool(v14)
-		dst.DefaultInGlobalRating = &p15
-	}
-	if v16, ok := src.SuiteId.Get(); ok {
-		dst.SuiteId = string(v16)
-	}
-	return dst, nil
-}
-
-// SummaryToOgen converts models.DatabasePresetRecord_Summary (an imported type) to its ogen representation.
-func SummaryToOgen(src *models.DatabasePresetRecord_Summary) (*rest.Summary, error) {
+// SummaryToOgen converts models.RecipeRecord_Summary (an imported type) to its ogen representation.
+func SummaryToOgen(src *models.RecipeRecord_Summary) (*rest.Summary, error) {
 	var dst rest.Summary
-	if src == nil {
-		return &dst, nil
-	}
-	var en1 rest.SummaryDbKind
-	switch src.GetDbKind() {
-	case domain.Database_KIND_UNSPECIFIED:
-		en1 = rest.SummaryDbKind0
-	case domain.Database_KIND_POSTGRES:
-		en1 = rest.SummaryDbKind1
-	case domain.Database_KIND_MYSQL:
-		en1 = rest.SummaryDbKind2
-	case domain.Database_KIND_MARIADB:
-		en1 = rest.SummaryDbKind3
-	case domain.Database_KIND_YDB:
-		en1 = rest.SummaryDbKind4
-	case domain.Database_KIND_YDB_MANAGED:
-		en1 = rest.SummaryDbKind5
-	case domain.Database_KIND_COCKROACH:
-		en1 = rest.SummaryDbKind6
-	case domain.Database_KIND_PICODATA:
-		en1 = rest.SummaryDbKind7
-	case domain.Database_KIND_EXTERNAL:
-		en1 = rest.SummaryDbKind8
-	case domain.Database_KIND_ORIOLEDB:
-		en1 = rest.SummaryDbKind9
-	case domain.Database_KIND_NOOP:
-		en1 = rest.SummaryDbKind10
-	case domain.Database_KIND_PG_NOOP:
-		en1 = rest.SummaryDbKind11
-	default:
-		return nil, fmt.Errorf("cloud.v1.models.DatabasePresetRecord.Summary.db_kind: enum value %v has no ogen SummaryDbKind variant", src.GetDbKind())
-	}
-	dst.DbKind.SetTo(en1)
-	dst.Version.SetTo(string(src.GetVersion()))
-	dst.External.SetTo(bool(src.GetExternal()))
-	return &dst, nil
-}
-
-// SummaryFromOgen converts the ogen representation back to DatabasePresetRecord_Summary.
-func SummaryFromOgen(src *rest.Summary) (*models.DatabasePresetRecord_Summary, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &models.DatabasePresetRecord_Summary{}
-	if v1, ok := src.DbKind.Get(); ok {
-		var en2 domain.Database_Kind
-		switch v1 {
-		case rest.SummaryDbKind0:
-			en2 = domain.Database_KIND_UNSPECIFIED
-		case rest.SummaryDbKind1:
-			en2 = domain.Database_KIND_POSTGRES
-		case rest.SummaryDbKind2:
-			en2 = domain.Database_KIND_MYSQL
-		case rest.SummaryDbKind3:
-			en2 = domain.Database_KIND_MARIADB
-		case rest.SummaryDbKind4:
-			en2 = domain.Database_KIND_YDB
-		case rest.SummaryDbKind5:
-			en2 = domain.Database_KIND_YDB_MANAGED
-		case rest.SummaryDbKind6:
-			en2 = domain.Database_KIND_COCKROACH
-		case rest.SummaryDbKind7:
-			en2 = domain.Database_KIND_PICODATA
-		case rest.SummaryDbKind8:
-			en2 = domain.Database_KIND_EXTERNAL
-		case rest.SummaryDbKind9:
-			en2 = domain.Database_KIND_ORIOLEDB
-		case rest.SummaryDbKind10:
-			en2 = domain.Database_KIND_NOOP
-		case rest.SummaryDbKind11:
-			en2 = domain.Database_KIND_PG_NOOP
-		default:
-			return nil, fmt.Errorf("cloud.v1.models.DatabasePresetRecord.Summary.db_kind: enum value %v has no Database_Kind variant", v1)
-		}
-		dst.DbKind = en2
-	}
-	if v3, ok := src.Version.Get(); ok {
-		dst.Version = string(v3)
-	}
-	if v4, ok := src.External.Get(); ok {
-		dst.External = bool(v4)
-	}
-	return dst, nil
-}
-
-// Summary2ToOgen converts models.WorkloadPresetRecord_Summary (an imported type) to its ogen representation.
-func Summary2ToOgen(src *models.WorkloadPresetRecord_Summary) (*rest.Summary2, error) {
-	var dst rest.Summary2
-	if src == nil {
-		return &dst, nil
-	}
-	var en1 rest.Summary2Protocol
-	switch src.GetProtocol() {
-	case domain.Workload_PROTOCOL_UNSPECIFIED:
-		en1 = rest.Summary2Protocol0
-	case domain.Workload_PROTOCOL_PG:
-		en1 = rest.Summary2Protocol1
-	case domain.Workload_PROTOCOL_MYSQL:
-		en1 = rest.Summary2Protocol2
-	case domain.Workload_PROTOCOL_PICODATA:
-		en1 = rest.Summary2Protocol3
-	case domain.Workload_PROTOCOL_YDB_GRPC:
-		en1 = rest.Summary2Protocol4
-	case domain.Workload_PROTOCOL_YDB_GRPCS:
-		en1 = rest.Summary2Protocol5
-	case domain.Workload_PROTOCOL_COCKROACH:
-		en1 = rest.Summary2Protocol7
-	case domain.Workload_PROTOCOL_NOOP:
-		en1 = rest.Summary2Protocol8
-	default:
-		return nil, fmt.Errorf("cloud.v1.models.WorkloadPresetRecord.Summary.protocol: enum value %v has no ogen Summary2Protocol variant", src.GetProtocol())
-	}
-	dst.Protocol.SetTo(en1)
-	dst.StroppyVersion.SetTo(string(src.GetStroppyVersion()))
-	dst.Script.SetTo(string(src.GetScript()))
-	return &dst, nil
-}
-
-// Summary2FromOgen converts the ogen representation back to WorkloadPresetRecord_Summary.
-func Summary2FromOgen(src *rest.Summary2) (*models.WorkloadPresetRecord_Summary, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &models.WorkloadPresetRecord_Summary{}
-	if v1, ok := src.Protocol.Get(); ok {
-		var en2 domain.Workload_Protocol
-		switch v1 {
-		case rest.Summary2Protocol0:
-			en2 = domain.Workload_PROTOCOL_UNSPECIFIED
-		case rest.Summary2Protocol1:
-			en2 = domain.Workload_PROTOCOL_PG
-		case rest.Summary2Protocol2:
-			en2 = domain.Workload_PROTOCOL_MYSQL
-		case rest.Summary2Protocol3:
-			en2 = domain.Workload_PROTOCOL_PICODATA
-		case rest.Summary2Protocol4:
-			en2 = domain.Workload_PROTOCOL_YDB_GRPC
-		case rest.Summary2Protocol5:
-			en2 = domain.Workload_PROTOCOL_YDB_GRPCS
-		case rest.Summary2Protocol7:
-			en2 = domain.Workload_PROTOCOL_COCKROACH
-		case rest.Summary2Protocol8:
-			en2 = domain.Workload_PROTOCOL_NOOP
-		default:
-			return nil, fmt.Errorf("cloud.v1.models.WorkloadPresetRecord.Summary.protocol: enum value %v has no Workload_Protocol variant", v1)
-		}
-		dst.Protocol = en2
-	}
-	if v3, ok := src.StroppyVersion.Get(); ok {
-		dst.StroppyVersion = string(v3)
-	}
-	if v4, ok := src.Script.Get(); ok {
-		dst.Script = string(v4)
-	}
-	return dst, nil
-}
-
-// Summary3ToOgen converts models.TestPresetRecord_Summary (an imported type) to its ogen representation.
-func Summary3ToOgen(src *models.TestPresetRecord_Summary) (*rest.Summary3, error) {
-	var dst rest.Summary3
-	if src == nil {
-		return &dst, nil
-	}
-	var en1 rest.Summary3DbKind
-	switch src.GetDbKind() {
-	case domain.Database_KIND_UNSPECIFIED:
-		en1 = rest.Summary3DbKind0
-	case domain.Database_KIND_POSTGRES:
-		en1 = rest.Summary3DbKind1
-	case domain.Database_KIND_MYSQL:
-		en1 = rest.Summary3DbKind2
-	case domain.Database_KIND_MARIADB:
-		en1 = rest.Summary3DbKind3
-	case domain.Database_KIND_YDB:
-		en1 = rest.Summary3DbKind4
-	case domain.Database_KIND_YDB_MANAGED:
-		en1 = rest.Summary3DbKind5
-	case domain.Database_KIND_COCKROACH:
-		en1 = rest.Summary3DbKind6
-	case domain.Database_KIND_PICODATA:
-		en1 = rest.Summary3DbKind7
-	case domain.Database_KIND_EXTERNAL:
-		en1 = rest.Summary3DbKind8
-	case domain.Database_KIND_ORIOLEDB:
-		en1 = rest.Summary3DbKind9
-	case domain.Database_KIND_NOOP:
-		en1 = rest.Summary3DbKind10
-	case domain.Database_KIND_PG_NOOP:
-		en1 = rest.Summary3DbKind11
-	default:
-		return nil, fmt.Errorf("cloud.v1.models.TestPresetRecord.Summary.db_kind: enum value %v has no ogen Summary3DbKind variant", src.GetDbKind())
-	}
-	dst.DbKind.SetTo(en1)
-	var en2 rest.Summary3Protocol
-	switch src.GetProtocol() {
-	case domain.Workload_PROTOCOL_UNSPECIFIED:
-		en2 = rest.Summary3Protocol0
-	case domain.Workload_PROTOCOL_PG:
-		en2 = rest.Summary3Protocol1
-	case domain.Workload_PROTOCOL_MYSQL:
-		en2 = rest.Summary3Protocol2
-	case domain.Workload_PROTOCOL_PICODATA:
-		en2 = rest.Summary3Protocol3
-	case domain.Workload_PROTOCOL_YDB_GRPC:
-		en2 = rest.Summary3Protocol4
-	case domain.Workload_PROTOCOL_YDB_GRPCS:
-		en2 = rest.Summary3Protocol5
-	case domain.Workload_PROTOCOL_COCKROACH:
-		en2 = rest.Summary3Protocol7
-	case domain.Workload_PROTOCOL_NOOP:
-		en2 = rest.Summary3Protocol8
-	default:
-		return nil, fmt.Errorf("cloud.v1.models.TestPresetRecord.Summary.protocol: enum value %v has no ogen Summary3Protocol variant", src.GetProtocol())
-	}
-	dst.Protocol.SetTo(en2)
-	dst.StroppyVersion.SetTo(string(src.GetStroppyVersion()))
-	return &dst, nil
-}
-
-// Summary3FromOgen converts the ogen representation back to TestPresetRecord_Summary.
-func Summary3FromOgen(src *rest.Summary3) (*models.TestPresetRecord_Summary, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &models.TestPresetRecord_Summary{}
-	if v1, ok := src.DbKind.Get(); ok {
-		var en2 domain.Database_Kind
-		switch v1 {
-		case rest.Summary3DbKind0:
-			en2 = domain.Database_KIND_UNSPECIFIED
-		case rest.Summary3DbKind1:
-			en2 = domain.Database_KIND_POSTGRES
-		case rest.Summary3DbKind2:
-			en2 = domain.Database_KIND_MYSQL
-		case rest.Summary3DbKind3:
-			en2 = domain.Database_KIND_MARIADB
-		case rest.Summary3DbKind4:
-			en2 = domain.Database_KIND_YDB
-		case rest.Summary3DbKind5:
-			en2 = domain.Database_KIND_YDB_MANAGED
-		case rest.Summary3DbKind6:
-			en2 = domain.Database_KIND_COCKROACH
-		case rest.Summary3DbKind7:
-			en2 = domain.Database_KIND_PICODATA
-		case rest.Summary3DbKind8:
-			en2 = domain.Database_KIND_EXTERNAL
-		case rest.Summary3DbKind9:
-			en2 = domain.Database_KIND_ORIOLEDB
-		case rest.Summary3DbKind10:
-			en2 = domain.Database_KIND_NOOP
-		case rest.Summary3DbKind11:
-			en2 = domain.Database_KIND_PG_NOOP
-		default:
-			return nil, fmt.Errorf("cloud.v1.models.TestPresetRecord.Summary.db_kind: enum value %v has no Database_Kind variant", v1)
-		}
-		dst.DbKind = en2
-	}
-	if v3, ok := src.Protocol.Get(); ok {
-		var en4 domain.Workload_Protocol
-		switch v3 {
-		case rest.Summary3Protocol0:
-			en4 = domain.Workload_PROTOCOL_UNSPECIFIED
-		case rest.Summary3Protocol1:
-			en4 = domain.Workload_PROTOCOL_PG
-		case rest.Summary3Protocol2:
-			en4 = domain.Workload_PROTOCOL_MYSQL
-		case rest.Summary3Protocol3:
-			en4 = domain.Workload_PROTOCOL_PICODATA
-		case rest.Summary3Protocol4:
-			en4 = domain.Workload_PROTOCOL_YDB_GRPC
-		case rest.Summary3Protocol5:
-			en4 = domain.Workload_PROTOCOL_YDB_GRPCS
-		case rest.Summary3Protocol7:
-			en4 = domain.Workload_PROTOCOL_COCKROACH
-		case rest.Summary3Protocol8:
-			en4 = domain.Workload_PROTOCOL_NOOP
-		default:
-			return nil, fmt.Errorf("cloud.v1.models.TestPresetRecord.Summary.protocol: enum value %v has no Workload_Protocol variant", v3)
-		}
-		dst.Protocol = en4
-	}
-	if v5, ok := src.StroppyVersion.Get(); ok {
-		dst.StroppyVersion = string(v5)
-	}
-	return dst, nil
-}
-
-// Summary4ToOgen converts models.RecipeRecord_Summary (an imported type) to its ogen representation.
-func Summary4ToOgen(src *models.RecipeRecord_Summary) (*rest.Summary4, error) {
-	var dst rest.Summary4
 	if src == nil {
 		return &dst, nil
 	}
@@ -11245,8 +9633,8 @@ func Summary4ToOgen(src *models.RecipeRecord_Summary) (*rest.Summary4, error) {
 	return &dst, nil
 }
 
-// Summary4FromOgen converts the ogen representation back to RecipeRecord_Summary.
-func Summary4FromOgen(src *rest.Summary4) (*models.RecipeRecord_Summary, error) {
+// SummaryFromOgen converts the ogen representation back to RecipeRecord_Summary.
+func SummaryFromOgen(src *rest.Summary) (*models.RecipeRecord_Summary, error) {
 	if src == nil {
 		return nil, nil
 	}
@@ -11266,40 +9654,40 @@ func Summary4FromOgen(src *rest.Summary4) (*models.RecipeRecord_Summary, error) 
 	return dst, nil
 }
 
-// Summary5ToOgen converts models.TestRunRecord_Summary (an imported type) to its ogen representation.
-func Summary5ToOgen(src *models.TestRunRecord_Summary) (*rest.Summary5, error) {
-	var dst rest.Summary5
+// Summary2ToOgen converts models.TestRunRecord_Summary (an imported type) to its ogen representation.
+func Summary2ToOgen(src *models.TestRunRecord_Summary) (*rest.Summary2, error) {
+	var dst rest.Summary2
 	if src == nil {
 		return &dst, nil
 	}
-	var en1 rest.Summary5DbKind
+	var en1 rest.Summary2DbKind
 	switch src.GetDbKind() {
 	case domain.Database_KIND_UNSPECIFIED:
-		en1 = rest.Summary5DbKind0
+		en1 = rest.Summary2DbKind0
 	case domain.Database_KIND_POSTGRES:
-		en1 = rest.Summary5DbKind1
+		en1 = rest.Summary2DbKind1
 	case domain.Database_KIND_MYSQL:
-		en1 = rest.Summary5DbKind2
+		en1 = rest.Summary2DbKind2
 	case domain.Database_KIND_MARIADB:
-		en1 = rest.Summary5DbKind3
+		en1 = rest.Summary2DbKind3
 	case domain.Database_KIND_YDB:
-		en1 = rest.Summary5DbKind4
+		en1 = rest.Summary2DbKind4
 	case domain.Database_KIND_YDB_MANAGED:
-		en1 = rest.Summary5DbKind5
+		en1 = rest.Summary2DbKind5
 	case domain.Database_KIND_COCKROACH:
-		en1 = rest.Summary5DbKind6
+		en1 = rest.Summary2DbKind6
 	case domain.Database_KIND_PICODATA:
-		en1 = rest.Summary5DbKind7
+		en1 = rest.Summary2DbKind7
 	case domain.Database_KIND_EXTERNAL:
-		en1 = rest.Summary5DbKind8
+		en1 = rest.Summary2DbKind8
 	case domain.Database_KIND_ORIOLEDB:
-		en1 = rest.Summary5DbKind9
+		en1 = rest.Summary2DbKind9
 	case domain.Database_KIND_NOOP:
-		en1 = rest.Summary5DbKind10
+		en1 = rest.Summary2DbKind10
 	case domain.Database_KIND_PG_NOOP:
-		en1 = rest.Summary5DbKind11
+		en1 = rest.Summary2DbKind11
 	default:
-		return nil, fmt.Errorf("cloud.v1.models.TestRunRecord.Summary.db_kind: enum value %v has no ogen Summary5DbKind variant", src.GetDbKind())
+		return nil, fmt.Errorf("cloud.v1.models.TestRunRecord.Summary.db_kind: enum value %v has no ogen Summary2DbKind variant", src.GetDbKind())
 	}
 	dst.DbKind.SetTo(en1)
 	dst.DbPresetId.SetTo(string(src.GetDbPresetId()))
@@ -11307,42 +9695,42 @@ func Summary5ToOgen(src *models.TestRunRecord_Summary) (*rest.Summary5, error) {
 	dst.WorkloadPresetId.SetTo(string(src.GetWorkloadPresetId()))
 	dst.WorkloadName.SetTo(string(src.GetWorkloadName()))
 	dst.StroppyVersion.SetTo(string(src.GetStroppyVersion()))
-	var en2 rest.Summary5WorkloadProtocol
+	var en2 rest.Summary2WorkloadProtocol
 	switch src.GetWorkloadProtocol() {
 	case domain.Workload_PROTOCOL_UNSPECIFIED:
-		en2 = rest.Summary5WorkloadProtocol0
+		en2 = rest.Summary2WorkloadProtocol0
 	case domain.Workload_PROTOCOL_PG:
-		en2 = rest.Summary5WorkloadProtocol1
+		en2 = rest.Summary2WorkloadProtocol1
 	case domain.Workload_PROTOCOL_MYSQL:
-		en2 = rest.Summary5WorkloadProtocol2
+		en2 = rest.Summary2WorkloadProtocol2
 	case domain.Workload_PROTOCOL_PICODATA:
-		en2 = rest.Summary5WorkloadProtocol3
+		en2 = rest.Summary2WorkloadProtocol3
 	case domain.Workload_PROTOCOL_YDB_GRPC:
-		en2 = rest.Summary5WorkloadProtocol4
+		en2 = rest.Summary2WorkloadProtocol4
 	case domain.Workload_PROTOCOL_YDB_GRPCS:
-		en2 = rest.Summary5WorkloadProtocol5
+		en2 = rest.Summary2WorkloadProtocol5
 	case domain.Workload_PROTOCOL_COCKROACH:
-		en2 = rest.Summary5WorkloadProtocol7
+		en2 = rest.Summary2WorkloadProtocol7
 	case domain.Workload_PROTOCOL_NOOP:
-		en2 = rest.Summary5WorkloadProtocol8
+		en2 = rest.Summary2WorkloadProtocol8
 	default:
-		return nil, fmt.Errorf("cloud.v1.models.TestRunRecord.Summary.workload_protocol: enum value %v has no ogen Summary5WorkloadProtocol variant", src.GetWorkloadProtocol())
+		return nil, fmt.Errorf("cloud.v1.models.TestRunRecord.Summary.workload_protocol: enum value %v has no ogen Summary2WorkloadProtocol variant", src.GetWorkloadProtocol())
 	}
 	dst.WorkloadProtocol.SetTo(en2)
 	dst.TestPresetId.SetTo(string(src.GetTestPresetId()))
 	dst.TestPresetName.SetTo(string(src.GetTestPresetName()))
 	dst.TopologyLabel.SetTo(string(src.GetTopologyLabel()))
 	dst.NodeCount.SetTo(int32(src.GetNodeCount()))
-	var en3 rest.Summary5Provider
+	var en3 rest.Summary2Provider
 	switch src.GetProvider() {
 	case deployment.Provider_PROVIDER_UNSPECIFIED:
-		en3 = rest.Summary5Provider0
+		en3 = rest.Summary2Provider0
 	case deployment.Provider_PROVIDER_DOCKER:
-		en3 = rest.Summary5Provider1
+		en3 = rest.Summary2Provider1
 	case deployment.Provider_PROVIDER_YANDEX:
-		en3 = rest.Summary5Provider2
+		en3 = rest.Summary2Provider2
 	default:
-		return nil, fmt.Errorf("cloud.v1.models.TestRunRecord.Summary.provider: enum value %v has no ogen Summary5Provider variant", src.GetProvider())
+		return nil, fmt.Errorf("cloud.v1.models.TestRunRecord.Summary.provider: enum value %v has no ogen Summary2Provider variant", src.GetProvider())
 	}
 	dst.Provider.SetTo(en3)
 	dst.ProgressPct.SetTo(int32(src.GetProgressPct()))
@@ -11358,8 +9746,8 @@ func Summary5ToOgen(src *models.TestRunRecord_Summary) (*rest.Summary5, error) {
 	return &dst, nil
 }
 
-// Summary5FromOgen converts the ogen representation back to TestRunRecord_Summary.
-func Summary5FromOgen(src *rest.Summary5) (*models.TestRunRecord_Summary, error) {
+// Summary2FromOgen converts the ogen representation back to TestRunRecord_Summary.
+func Summary2FromOgen(src *rest.Summary2) (*models.TestRunRecord_Summary, error) {
 	if src == nil {
 		return nil, nil
 	}
@@ -11367,29 +9755,29 @@ func Summary5FromOgen(src *rest.Summary5) (*models.TestRunRecord_Summary, error)
 	if v1, ok := src.DbKind.Get(); ok {
 		var en2 domain.Database_Kind
 		switch v1 {
-		case rest.Summary5DbKind0:
+		case rest.Summary2DbKind0:
 			en2 = domain.Database_KIND_UNSPECIFIED
-		case rest.Summary5DbKind1:
+		case rest.Summary2DbKind1:
 			en2 = domain.Database_KIND_POSTGRES
-		case rest.Summary5DbKind2:
+		case rest.Summary2DbKind2:
 			en2 = domain.Database_KIND_MYSQL
-		case rest.Summary5DbKind3:
+		case rest.Summary2DbKind3:
 			en2 = domain.Database_KIND_MARIADB
-		case rest.Summary5DbKind4:
+		case rest.Summary2DbKind4:
 			en2 = domain.Database_KIND_YDB
-		case rest.Summary5DbKind5:
+		case rest.Summary2DbKind5:
 			en2 = domain.Database_KIND_YDB_MANAGED
-		case rest.Summary5DbKind6:
+		case rest.Summary2DbKind6:
 			en2 = domain.Database_KIND_COCKROACH
-		case rest.Summary5DbKind7:
+		case rest.Summary2DbKind7:
 			en2 = domain.Database_KIND_PICODATA
-		case rest.Summary5DbKind8:
+		case rest.Summary2DbKind8:
 			en2 = domain.Database_KIND_EXTERNAL
-		case rest.Summary5DbKind9:
+		case rest.Summary2DbKind9:
 			en2 = domain.Database_KIND_ORIOLEDB
-		case rest.Summary5DbKind10:
+		case rest.Summary2DbKind10:
 			en2 = domain.Database_KIND_NOOP
-		case rest.Summary5DbKind11:
+		case rest.Summary2DbKind11:
 			en2 = domain.Database_KIND_PG_NOOP
 		default:
 			return nil, fmt.Errorf("cloud.v1.models.TestRunRecord.Summary.db_kind: enum value %v has no Database_Kind variant", v1)
@@ -11414,21 +9802,21 @@ func Summary5FromOgen(src *rest.Summary5) (*models.TestRunRecord_Summary, error)
 	if v8, ok := src.WorkloadProtocol.Get(); ok {
 		var en9 domain.Workload_Protocol
 		switch v8 {
-		case rest.Summary5WorkloadProtocol0:
+		case rest.Summary2WorkloadProtocol0:
 			en9 = domain.Workload_PROTOCOL_UNSPECIFIED
-		case rest.Summary5WorkloadProtocol1:
+		case rest.Summary2WorkloadProtocol1:
 			en9 = domain.Workload_PROTOCOL_PG
-		case rest.Summary5WorkloadProtocol2:
+		case rest.Summary2WorkloadProtocol2:
 			en9 = domain.Workload_PROTOCOL_MYSQL
-		case rest.Summary5WorkloadProtocol3:
+		case rest.Summary2WorkloadProtocol3:
 			en9 = domain.Workload_PROTOCOL_PICODATA
-		case rest.Summary5WorkloadProtocol4:
+		case rest.Summary2WorkloadProtocol4:
 			en9 = domain.Workload_PROTOCOL_YDB_GRPC
-		case rest.Summary5WorkloadProtocol5:
+		case rest.Summary2WorkloadProtocol5:
 			en9 = domain.Workload_PROTOCOL_YDB_GRPCS
-		case rest.Summary5WorkloadProtocol7:
+		case rest.Summary2WorkloadProtocol7:
 			en9 = domain.Workload_PROTOCOL_COCKROACH
-		case rest.Summary5WorkloadProtocol8:
+		case rest.Summary2WorkloadProtocol8:
 			en9 = domain.Workload_PROTOCOL_NOOP
 		default:
 			return nil, fmt.Errorf("cloud.v1.models.TestRunRecord.Summary.workload_protocol: enum value %v has no Workload_Protocol variant", v8)
@@ -11450,11 +9838,11 @@ func Summary5FromOgen(src *rest.Summary5) (*models.TestRunRecord_Summary, error)
 	if v14, ok := src.Provider.Get(); ok {
 		var en15 deployment.Provider
 		switch v14 {
-		case rest.Summary5Provider0:
+		case rest.Summary2Provider0:
 			en15 = deployment.Provider_PROVIDER_UNSPECIFIED
-		case rest.Summary5Provider1:
+		case rest.Summary2Provider1:
 			en15 = deployment.Provider_PROVIDER_DOCKER
-		case rest.Summary5Provider2:
+		case rest.Summary2Provider2:
 			en15 = deployment.Provider_PROVIDER_YANDEX
 		default:
 			return nil, fmt.Errorf("cloud.v1.models.TestRunRecord.Summary.provider: enum value %v has no Provider variant", v14)
@@ -11472,276 +9860,6 @@ func Summary5FromOgen(src *rest.Summary5) (*models.TestRunRecord_Summary, error)
 	}
 	if v19, ok := src.Duration.Get(); ok {
 		dst.Duration = convert.DurationToProto(v19)
-	}
-	return dst, nil
-}
-
-// Summary6ToOgen converts models.SuiteRecord_Summary (an imported type) to its ogen representation.
-func Summary6ToOgen(src *models.SuiteRecord_Summary) (*rest.Summary6, error) {
-	var dst rest.Summary6
-	if src == nil {
-		return &dst, nil
-	}
-	dst.ScheduleEnabled.SetTo(bool(src.GetScheduleEnabled()))
-	dst.Cron.SetTo(string(src.GetCron()))
-	if src.NextRunAt != nil {
-		dst.NextRunAt.SetTo(convert.TimeFromProto(src.GetNextRunAt()))
-	}
-	if src.LastRunAt != nil {
-		dst.LastRunAt.SetTo(convert.TimeFromProto(src.GetLastRunAt()))
-	}
-	var en1 rest.Summary6LastRunStatus
-	switch src.GetLastRunStatus() {
-	case common.Status_STATUS_UNSPECIFIED:
-		en1 = rest.Summary6LastRunStatus0
-	case common.Status_STATUS_PENDING:
-		en1 = rest.Summary6LastRunStatus1
-	case common.Status_STATUS_RUNNING:
-		en1 = rest.Summary6LastRunStatus2
-	case common.Status_STATUS_RETRY_WAIT:
-		en1 = rest.Summary6LastRunStatus5
-	case common.Status_STATUS_COMPLETED:
-		en1 = rest.Summary6LastRunStatus3
-	case common.Status_STATUS_FAILED:
-		en1 = rest.Summary6LastRunStatus4
-	case common.Status_STATUS_SKIPPED:
-		en1 = rest.Summary6LastRunStatus6
-	case common.Status_STATUS_CANCELLING:
-		en1 = rest.Summary6LastRunStatus7
-	case common.Status_STATUS_CANCELLED:
-		en1 = rest.Summary6LastRunStatus8
-	case common.Status_STATUS_ALLOCATED:
-		en1 = rest.Summary6LastRunStatus9
-	case common.Status_STATUS_DEPLOYMENT:
-		en1 = rest.Summary6LastRunStatus10
-	case common.Status_STATUS_DEPLOYED:
-		en1 = rest.Summary6LastRunStatus11
-	default:
-		return nil, fmt.Errorf("cloud.v1.models.SuiteRecord.Summary.last_run_status: enum value %v has no ogen Summary6LastRunStatus variant", src.GetLastRunStatus())
-	}
-	dst.LastRunStatus.SetTo(en1)
-	dst.RunCount.SetTo(int32(src.GetRunCount()))
-	dst.CellCount.SetTo(int32(src.GetCellCount()))
-	return &dst, nil
-}
-
-// Summary6FromOgen converts the ogen representation back to SuiteRecord_Summary.
-func Summary6FromOgen(src *rest.Summary6) (*models.SuiteRecord_Summary, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &models.SuiteRecord_Summary{}
-	if v1, ok := src.ScheduleEnabled.Get(); ok {
-		dst.ScheduleEnabled = bool(v1)
-	}
-	if v2, ok := src.Cron.Get(); ok {
-		dst.Cron = string(v2)
-	}
-	if v3, ok := src.NextRunAt.Get(); ok {
-		dst.NextRunAt = convert.TimeToProto(v3)
-	}
-	if v4, ok := src.LastRunAt.Get(); ok {
-		dst.LastRunAt = convert.TimeToProto(v4)
-	}
-	if v5, ok := src.LastRunStatus.Get(); ok {
-		var en6 common.Status
-		switch v5 {
-		case rest.Summary6LastRunStatus0:
-			en6 = common.Status_STATUS_UNSPECIFIED
-		case rest.Summary6LastRunStatus1:
-			en6 = common.Status_STATUS_PENDING
-		case rest.Summary6LastRunStatus2:
-			en6 = common.Status_STATUS_RUNNING
-		case rest.Summary6LastRunStatus5:
-			en6 = common.Status_STATUS_RETRY_WAIT
-		case rest.Summary6LastRunStatus3:
-			en6 = common.Status_STATUS_COMPLETED
-		case rest.Summary6LastRunStatus4:
-			en6 = common.Status_STATUS_FAILED
-		case rest.Summary6LastRunStatus6:
-			en6 = common.Status_STATUS_SKIPPED
-		case rest.Summary6LastRunStatus7:
-			en6 = common.Status_STATUS_CANCELLING
-		case rest.Summary6LastRunStatus8:
-			en6 = common.Status_STATUS_CANCELLED
-		case rest.Summary6LastRunStatus9:
-			en6 = common.Status_STATUS_ALLOCATED
-		case rest.Summary6LastRunStatus10:
-			en6 = common.Status_STATUS_DEPLOYMENT
-		case rest.Summary6LastRunStatus11:
-			en6 = common.Status_STATUS_DEPLOYED
-		default:
-			return nil, fmt.Errorf("cloud.v1.models.SuiteRecord.Summary.last_run_status: enum value %v has no Status variant", v5)
-		}
-		dst.LastRunStatus = en6
-	}
-	if v7, ok := src.RunCount.Get(); ok {
-		dst.RunCount = uint32(v7)
-	}
-	if v8, ok := src.CellCount.Get(); ok {
-		dst.CellCount = uint32(v8)
-	}
-	return dst, nil
-}
-
-// Summary7ToOgen converts models.SuiteRunRecord_Summary (an imported type) to its ogen representation.
-func Summary7ToOgen(src *models.SuiteRunRecord_Summary) (*rest.Summary7, error) {
-	var dst rest.Summary7
-	if src == nil {
-		return &dst, nil
-	}
-	dst.SuiteName.SetTo(string(src.GetSuiteName()))
-	var en1 rest.Summary7Provider
-	switch src.GetProvider() {
-	case deployment.Provider_PROVIDER_UNSPECIFIED:
-		en1 = rest.Summary7Provider0
-	case deployment.Provider_PROVIDER_DOCKER:
-		en1 = rest.Summary7Provider1
-	case deployment.Provider_PROVIDER_YANDEX:
-		en1 = rest.Summary7Provider2
-	default:
-		return nil, fmt.Errorf("cloud.v1.models.SuiteRunRecord.Summary.provider: enum value %v has no ogen Summary7Provider variant", src.GetProvider())
-	}
-	dst.Provider.SetTo(en1)
-	c2, err := convert.SliceErr(src.GetDbKinds(), func(e domain.Database_Kind) (zero rest.Summary7DbKindsItem, _ error) {
-		var en3 rest.Summary7DbKindsItem
-		switch e {
-		case domain.Database_KIND_UNSPECIFIED:
-			en3 = rest.Summary7DbKindsItem0
-		case domain.Database_KIND_POSTGRES:
-			en3 = rest.Summary7DbKindsItem1
-		case domain.Database_KIND_MYSQL:
-			en3 = rest.Summary7DbKindsItem2
-		case domain.Database_KIND_MARIADB:
-			en3 = rest.Summary7DbKindsItem3
-		case domain.Database_KIND_YDB:
-			en3 = rest.Summary7DbKindsItem4
-		case domain.Database_KIND_YDB_MANAGED:
-			en3 = rest.Summary7DbKindsItem5
-		case domain.Database_KIND_COCKROACH:
-			en3 = rest.Summary7DbKindsItem6
-		case domain.Database_KIND_PICODATA:
-			en3 = rest.Summary7DbKindsItem7
-		case domain.Database_KIND_EXTERNAL:
-			en3 = rest.Summary7DbKindsItem8
-		case domain.Database_KIND_ORIOLEDB:
-			en3 = rest.Summary7DbKindsItem9
-		case domain.Database_KIND_NOOP:
-			en3 = rest.Summary7DbKindsItem10
-		case domain.Database_KIND_PG_NOOP:
-			en3 = rest.Summary7DbKindsItem11
-		default:
-			return zero, fmt.Errorf("cloud.v1.models.SuiteRunRecord.Summary.db_kinds: enum value %v has no ogen Summary7DbKindsItem variant", e)
-		}
-		return en3, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.DbKinds = c2
-	dst.Total.SetTo(int32(src.GetTotal()))
-	dst.Completed.SetTo(int32(src.GetCompleted()))
-	dst.Failed.SetTo(int32(src.GetFailed()))
-	dst.Running.SetTo(int32(src.GetRunning()))
-	dst.Pending.SetTo(int32(src.GetPending()))
-	dst.ProgressPct.SetTo(int32(src.GetProgressPct()))
-	if src.StartedAt != nil {
-		dst.StartedAt.SetTo(convert.TimeFromProto(src.GetStartedAt()))
-	}
-	if src.FinishedAt != nil {
-		dst.FinishedAt.SetTo(convert.TimeFromProto(src.GetFinishedAt()))
-	}
-	if src.Duration != nil {
-		dst.Duration.SetTo(convert.DurationFromProto(src.GetDuration()))
-	}
-	return &dst, nil
-}
-
-// Summary7FromOgen converts the ogen representation back to SuiteRunRecord_Summary.
-func Summary7FromOgen(src *rest.Summary7) (*models.SuiteRunRecord_Summary, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &models.SuiteRunRecord_Summary{}
-	if v1, ok := src.SuiteName.Get(); ok {
-		dst.SuiteName = string(v1)
-	}
-	if v2, ok := src.Provider.Get(); ok {
-		var en3 deployment.Provider
-		switch v2 {
-		case rest.Summary7Provider0:
-			en3 = deployment.Provider_PROVIDER_UNSPECIFIED
-		case rest.Summary7Provider1:
-			en3 = deployment.Provider_PROVIDER_DOCKER
-		case rest.Summary7Provider2:
-			en3 = deployment.Provider_PROVIDER_YANDEX
-		default:
-			return nil, fmt.Errorf("cloud.v1.models.SuiteRunRecord.Summary.provider: enum value %v has no Provider variant", v2)
-		}
-		dst.Provider = en3
-	}
-	c4, err := convert.SliceErr(src.DbKinds, func(e rest.Summary7DbKindsItem) (zero domain.Database_Kind, _ error) {
-		var en5 domain.Database_Kind
-		switch e {
-		case rest.Summary7DbKindsItem0:
-			en5 = domain.Database_KIND_UNSPECIFIED
-		case rest.Summary7DbKindsItem1:
-			en5 = domain.Database_KIND_POSTGRES
-		case rest.Summary7DbKindsItem2:
-			en5 = domain.Database_KIND_MYSQL
-		case rest.Summary7DbKindsItem3:
-			en5 = domain.Database_KIND_MARIADB
-		case rest.Summary7DbKindsItem4:
-			en5 = domain.Database_KIND_YDB
-		case rest.Summary7DbKindsItem5:
-			en5 = domain.Database_KIND_YDB_MANAGED
-		case rest.Summary7DbKindsItem6:
-			en5 = domain.Database_KIND_COCKROACH
-		case rest.Summary7DbKindsItem7:
-			en5 = domain.Database_KIND_PICODATA
-		case rest.Summary7DbKindsItem8:
-			en5 = domain.Database_KIND_EXTERNAL
-		case rest.Summary7DbKindsItem9:
-			en5 = domain.Database_KIND_ORIOLEDB
-		case rest.Summary7DbKindsItem10:
-			en5 = domain.Database_KIND_NOOP
-		case rest.Summary7DbKindsItem11:
-			en5 = domain.Database_KIND_PG_NOOP
-		default:
-			return zero, fmt.Errorf("cloud.v1.models.SuiteRunRecord.Summary.db_kinds: enum value %v has no Database_Kind variant", e)
-		}
-		return en5, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.DbKinds = c4
-	if v6, ok := src.Total.Get(); ok {
-		dst.Total = uint32(v6)
-	}
-	if v7, ok := src.Completed.Get(); ok {
-		dst.Completed = uint32(v7)
-	}
-	if v8, ok := src.Failed.Get(); ok {
-		dst.Failed = uint32(v8)
-	}
-	if v9, ok := src.Running.Get(); ok {
-		dst.Running = uint32(v9)
-	}
-	if v10, ok := src.Pending.Get(); ok {
-		dst.Pending = uint32(v10)
-	}
-	if v11, ok := src.ProgressPct.Get(); ok {
-		dst.ProgressPct = uint32(v11)
-	}
-	if v12, ok := src.StartedAt.Get(); ok {
-		dst.StartedAt = convert.TimeToProto(v12)
-	}
-	if v13, ok := src.FinishedAt.Get(); ok {
-		dst.FinishedAt = convert.TimeToProto(v13)
-	}
-	if v14, ok := src.Duration.Get(); ok {
-		dst.Duration = convert.DurationToProto(v14)
 	}
 	return dst, nil
 }
@@ -11976,114 +10094,6 @@ func TenantSettingsRecordFromOgen(src *rest.TenantSettingsRecord) (*models.Tenan
 	return dst, nil
 }
 
-// TestToOgen converts domain.Test (an imported type) to its ogen representation.
-func TestToOgen(src *domain.Test) (*rest.Test, error) {
-	var dst rest.Test
-	if src == nil {
-		return &dst, nil
-	}
-	o1, err := DatabaseToOgen(src.GetDatabase())
-	if err != nil {
-		return nil, err
-	}
-	dst.Database = *o1
-	o2, err := WorkloadToOgen(src.GetWorkload())
-	if err != nil {
-		return nil, err
-	}
-	dst.Workload = *o2
-	if src.Tags != nil {
-		o3, err := TagsToOgen(src.GetTags())
-		if err != nil {
-			return nil, err
-		}
-		dst.Tags.SetTo(*o3)
-	}
-	return &dst, nil
-}
-
-// TestFromOgen converts the ogen representation back to Test.
-func TestFromOgen(src *rest.Test) (*domain.Test, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &domain.Test{}
-	m1, err := DatabaseFromOgen(&src.Database)
-	if err != nil {
-		return nil, err
-	}
-	dst.Database = m1
-	m2, err := WorkloadFromOgen(&src.Workload)
-	if err != nil {
-		return nil, err
-	}
-	dst.Workload = m2
-	if v3, ok := src.Tags.Get(); ok {
-		m4, err := TagsFromOgen(&v3)
-		if err != nil {
-			return nil, err
-		}
-		dst.Tags = m4
-	}
-	return dst, nil
-}
-
-// TestPresetRecordToOgen converts models.TestPresetRecord (an imported type) to its ogen representation.
-func TestPresetRecordToOgen(src *models.TestPresetRecord) (*rest.TestPresetRecord, error) {
-	var dst rest.TestPresetRecord
-	if src == nil {
-		return &dst, nil
-	}
-	o1, err := EntityToOgen(src.GetEntity())
-	if err != nil {
-		return nil, err
-	}
-	dst.Entity = *o1
-	o2, err := TestToOgen(src.GetTest())
-	if err != nil {
-		return nil, err
-	}
-	dst.Test = *o2
-	dst.IsSystem.SetTo(bool(src.GetIsSystem()))
-	if src.Summary != nil {
-		o3, err := Summary3ToOgen(src.GetSummary())
-		if err != nil {
-			return nil, err
-		}
-		dst.Summary.SetTo(*o3)
-	}
-	return &dst, nil
-}
-
-// TestPresetRecordFromOgen converts the ogen representation back to TestPresetRecord.
-func TestPresetRecordFromOgen(src *rest.TestPresetRecord) (*models.TestPresetRecord, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &models.TestPresetRecord{}
-	m1, err := EntityFromOgen(&src.Entity)
-	if err != nil {
-		return nil, err
-	}
-	dst.Entity = m1
-	m2, err := TestFromOgen(&src.Test)
-	if err != nil {
-		return nil, err
-	}
-	dst.Test = m2
-	if v3, ok := src.IsSystem.Get(); ok {
-		dst.IsSystem = bool(v3)
-	}
-	if v4, ok := src.Summary.Get(); ok {
-		m5, err := Summary3FromOgen(&v4)
-		if err != nil {
-			return nil, err
-		}
-		dst.Summary = m5
-	}
-	return dst, nil
-}
-
 // TestRunToOgen converts domain.TestRun (an imported type) to its ogen representation.
 func TestRunToOgen(src *domain.TestRun) (*rest.TestRun, error) {
 	var dst rest.TestRun
@@ -12243,7 +10253,7 @@ func TestRunRecordToOgen(src *models.TestRunRecord) (*rest.TestRunRecord, error)
 	dst.InTenantRating.SetTo(bool(src.GetInTenantRating()))
 	dst.InGlobalRating.SetTo(bool(src.GetInGlobalRating()))
 	if src.Summary != nil {
-		o5, err := Summary5ToOgen(src.GetSummary())
+		o5, err := Summary2ToOgen(src.GetSummary())
 		if err != nil {
 			return nil, err
 		}
@@ -12351,7 +10361,7 @@ func TestRunRecordFromOgen(src *rest.TestRunRecord) (*models.TestRunRecord, erro
 		dst.InGlobalRating = bool(v10)
 	}
 	if v11, ok := src.Summary.Get(); ok {
-		m12, err := Summary5FromOgen(&v11)
+		m12, err := Summary2FromOgen(&v11)
 		if err != nil {
 			return nil, err
 		}
@@ -12380,196 +10390,6 @@ func TestRunRecordFromOgen(src *rest.TestRunRecord) (*models.TestRunRecord, erro
 	}
 	if v19, ok := src.RecipeId.Get(); ok {
 		dst.RecipeId = string(v19)
-	}
-	return dst, nil
-}
-
-// TestWizardDraftRecordToOgen converts models.TestWizardDraftRecord (an imported type) to its ogen representation.
-func TestWizardDraftRecordToOgen(src *models.TestWizardDraftRecord) (*rest.TestWizardDraftRecord, error) {
-	var dst rest.TestWizardDraftRecord
-	if src == nil {
-		return &dst, nil
-	}
-	o1, err := EntityToOgen(src.GetEntity())
-	if err != nil {
-		return nil, err
-	}
-	dst.Entity = *o1
-	var en2 rest.TestWizardDraftRecordProvider
-	switch src.GetProvider() {
-	case deployment.Provider_PROVIDER_UNSPECIFIED:
-		en2 = rest.TestWizardDraftRecordProvider0
-	case deployment.Provider_PROVIDER_DOCKER:
-		en2 = rest.TestWizardDraftRecordProvider1
-	case deployment.Provider_PROVIDER_YANDEX:
-		en2 = rest.TestWizardDraftRecordProvider2
-	default:
-		return nil, fmt.Errorf("cloud.v1.models.TestWizardDraftRecord.provider: enum value %v has no ogen TestWizardDraftRecordProvider variant", src.GetProvider())
-	}
-	dst.Provider.SetTo(en2)
-	if src.Database != nil {
-		o3, err := DatabaseToOgen(src.GetDatabase())
-		if err != nil {
-			return nil, err
-		}
-		dst.Database.SetTo(*o3)
-	}
-	if src.Workload != nil {
-		o4, err := WorkloadToOgen(src.GetWorkload())
-		if err != nil {
-			return nil, err
-		}
-		dst.Workload.SetTo(*o4)
-	}
-	if src.TopologySpec != nil {
-		o5, err := TopologySpecToOgen(src.GetTopologySpec())
-		if err != nil {
-			return nil, err
-		}
-		dst.TopologySpec.SetTo(*o5)
-	}
-	if src.InfrastructurePlan != nil {
-		o6, err := InfrastructurePlanToOgen(src.GetInfrastructurePlan())
-		if err != nil {
-			return nil, err
-		}
-		dst.InfrastructurePlan.SetTo(*o6)
-	}
-	c7, err := convert.SliceErr(src.GetMachineOverrides(), func(e *deployment.MachinePlan) (zero rest.MachinePlan, _ error) {
-		o8, err := MachinePlanToOgen(e)
-		if err != nil {
-			return zero, err
-		}
-		return *o8, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.MachineOverrides = c7
-	if src.RenderPreview != nil {
-		o9, err := RenderPreviewToOgen(src.GetRenderPreview())
-		if err != nil {
-			return nil, err
-		}
-		dst.RenderPreview.SetTo(*o9)
-	}
-	if src.RenderOverrides != nil {
-		o10, err := RenderOverrideSetToOgen(src.GetRenderOverrides())
-		if err != nil {
-			return nil, err
-		}
-		dst.RenderOverrides.SetTo(*o10)
-	}
-	c11, err := convert.SliceErr(src.GetErrors(), func(e *schemapb.FieldError) (zero rest.FieldError, _ error) {
-		o12, err := FieldErrorToOgen(e)
-		if err != nil {
-			return zero, err
-		}
-		return *o12, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.Errors = c11
-	dst.Ready.SetTo(bool(src.GetReady()))
-	dst.TestPresetId.SetTo(string(src.GetTestPresetId()))
-	return &dst, nil
-}
-
-// TestWizardDraftRecordFromOgen converts the ogen representation back to TestWizardDraftRecord.
-func TestWizardDraftRecordFromOgen(src *rest.TestWizardDraftRecord) (*models.TestWizardDraftRecord, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &models.TestWizardDraftRecord{}
-	m1, err := EntityFromOgen(&src.Entity)
-	if err != nil {
-		return nil, err
-	}
-	dst.Entity = m1
-	if v2, ok := src.Provider.Get(); ok {
-		var en3 deployment.Provider
-		switch v2 {
-		case rest.TestWizardDraftRecordProvider0:
-			en3 = deployment.Provider_PROVIDER_UNSPECIFIED
-		case rest.TestWizardDraftRecordProvider1:
-			en3 = deployment.Provider_PROVIDER_DOCKER
-		case rest.TestWizardDraftRecordProvider2:
-			en3 = deployment.Provider_PROVIDER_YANDEX
-		default:
-			return nil, fmt.Errorf("cloud.v1.models.TestWizardDraftRecord.provider: enum value %v has no Provider variant", v2)
-		}
-		dst.Provider = en3
-	}
-	if v4, ok := src.Database.Get(); ok {
-		m5, err := DatabaseFromOgen(&v4)
-		if err != nil {
-			return nil, err
-		}
-		dst.Database = m5
-	}
-	if v6, ok := src.Workload.Get(); ok {
-		m7, err := WorkloadFromOgen(&v6)
-		if err != nil {
-			return nil, err
-		}
-		dst.Workload = m7
-	}
-	if v8, ok := src.TopologySpec.Get(); ok {
-		m9, err := TopologySpecFromOgen(&v8)
-		if err != nil {
-			return nil, err
-		}
-		dst.TopologySpec = m9
-	}
-	if v10, ok := src.InfrastructurePlan.Get(); ok {
-		m11, err := InfrastructurePlanFromOgen(&v10)
-		if err != nil {
-			return nil, err
-		}
-		dst.InfrastructurePlan = m11
-	}
-	c12, err := convert.SliceErr(src.MachineOverrides, func(e rest.MachinePlan) (zero *deployment.MachinePlan, _ error) {
-		m13, err := MachinePlanFromOgen(&e)
-		if err != nil {
-			return zero, err
-		}
-		return m13, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.MachineOverrides = c12
-	if v14, ok := src.RenderPreview.Get(); ok {
-		m15, err := RenderPreviewFromOgen(&v14)
-		if err != nil {
-			return nil, err
-		}
-		dst.RenderPreview = m15
-	}
-	if v16, ok := src.RenderOverrides.Get(); ok {
-		m17, err := RenderOverrideSetFromOgen(&v16)
-		if err != nil {
-			return nil, err
-		}
-		dst.RenderOverrides = m17
-	}
-	c18, err := convert.SliceErr(src.Errors, func(e rest.FieldError) (zero *schemapb.FieldError, _ error) {
-		m19, err := FieldErrorFromOgen(&e)
-		if err != nil {
-			return zero, err
-		}
-		return m19, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.Errors = c18
-	if v20, ok := src.Ready.Get(); ok {
-		dst.Ready = bool(v20)
-	}
-	if v21, ok := src.TestPresetId.Get(); ok {
-		dst.TestPresetId = string(v21)
 	}
 	return dst, nil
 }
@@ -13498,62 +11318,6 @@ func WorkloadFileFromOgen(src *rest.WorkloadFile) (*domain.Workload_WorkloadFile
 	}
 	if v3, ok := src.Content.Get(); ok {
 		dst.Content = string(v3)
-	}
-	return dst, nil
-}
-
-// WorkloadPresetRecordToOgen converts models.WorkloadPresetRecord (an imported type) to its ogen representation.
-func WorkloadPresetRecordToOgen(src *models.WorkloadPresetRecord) (*rest.WorkloadPresetRecord, error) {
-	var dst rest.WorkloadPresetRecord
-	if src == nil {
-		return &dst, nil
-	}
-	o1, err := EntityToOgen(src.GetEntity())
-	if err != nil {
-		return nil, err
-	}
-	dst.Entity = *o1
-	o2, err := WorkloadToOgen(src.GetWorkload())
-	if err != nil {
-		return nil, err
-	}
-	dst.Workload = *o2
-	dst.IsSystem.SetTo(bool(src.GetIsSystem()))
-	if src.Summary != nil {
-		o3, err := Summary2ToOgen(src.GetSummary())
-		if err != nil {
-			return nil, err
-		}
-		dst.Summary.SetTo(*o3)
-	}
-	return &dst, nil
-}
-
-// WorkloadPresetRecordFromOgen converts the ogen representation back to WorkloadPresetRecord.
-func WorkloadPresetRecordFromOgen(src *rest.WorkloadPresetRecord) (*models.WorkloadPresetRecord, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &models.WorkloadPresetRecord{}
-	m1, err := EntityFromOgen(&src.Entity)
-	if err != nil {
-		return nil, err
-	}
-	dst.Entity = m1
-	m2, err := WorkloadFromOgen(&src.Workload)
-	if err != nil {
-		return nil, err
-	}
-	dst.Workload = m2
-	if v3, ok := src.IsSystem.Get(); ok {
-		dst.IsSystem = bool(v3)
-	}
-	if v4, ok := src.Summary.Get(); ok {
-		m5, err := Summary2FromOgen(&v4)
-		if err != nil {
-			return nil, err
-		}
-		dst.Summary = m5
 	}
 	return dst, nil
 }

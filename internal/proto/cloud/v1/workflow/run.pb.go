@@ -160,7 +160,7 @@ var File_cloud_v1_workflow_run_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_workflow_run_proto_rawDesc = "" +
 	"\n" +
-	"\x1bcloud/v1/workflow/run.proto\x12\x11cloud.v1.workflow\x1a(cloud/v1/deployment/infrastructure.proto\x1a\x1ecloud/v1/deployment/plan.proto\x1a cloud/v1/deployment/render.proto\x1a\"cloud/v1/workflow/deployment.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a cloud/v1/topology/topology.proto\x1a\x17validate/validate.proto\"\xcf\x05\n" +
+	"\x1bcloud/v1/workflow/run.proto\x12\x11cloud.v1.workflow\x1a(cloud/v1/deployment/infrastructure.proto\x1a\x1ecloud/v1/deployment/plan.proto\x1a cloud/v1/deployment/render.proto\x1a\x1dcloud/v1/workflow/agent.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a cloud/v1/topology/topology.proto\x1a\x17validate/validate.proto\"\xcf\x05\n" +
 	"\tRunConfig\x12&\n" +
 	"\ttenant_id\x18\n" +
 	" \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x1a\n" +
@@ -220,7 +220,7 @@ func file_cloud_v1_workflow_run_proto_init() {
 	if File_cloud_v1_workflow_run_proto != nil {
 		return
 	}
-	file_cloud_v1_workflow_deployment_proto_init()
+	file_cloud_v1_workflow_agent_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

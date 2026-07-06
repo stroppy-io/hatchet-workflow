@@ -39,122 +39,42 @@ var (
 	_ = common.Status(0)
 )
 
-// Validate checks the field values on TestWorkflowRequest with the rules
-// defined in the proto definition for this message. If any rules are
+// Validate checks the field values on PlaceholderWorkflowRequest with the
+// rules defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
-func (m *TestWorkflowRequest) Validate() error {
+func (m *PlaceholderWorkflowRequest) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on TestWorkflowRequest with the rules
-// defined in the proto definition for this message. If any rules are
+// ValidateAll checks the field values on PlaceholderWorkflowRequest with the
+// rules defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// TestWorkflowRequestMultiError, or nil if none found.
-func (m *TestWorkflowRequest) ValidateAll() error {
+// PlaceholderWorkflowRequestMultiError, or nil if none found.
+func (m *PlaceholderWorkflowRequest) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *TestWorkflowRequest) validate(all bool) error {
+func (m *PlaceholderWorkflowRequest) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
 
-	if l := utf8.RuneCountInString(m.GetTenantId()); l < 1 || l > 64 {
-		err := TestWorkflowRequestValidationError{
-			field:  "TenantId",
-			reason: "value length must be between 1 and 64 runes, inclusive",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if m.GetTestRun() == nil {
-		err := TestWorkflowRequestValidationError{
-			field:  "TestRun",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetTestRun()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, TestWorkflowRequestValidationError{
-					field:  "TestRun",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, TestWorkflowRequestValidationError{
-					field:  "TestRun",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetTestRun()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return TestWorkflowRequestValidationError{
-				field:  "TestRun",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if all {
-		switch v := interface{}(m.GetAgentBootstrap()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, TestWorkflowRequestValidationError{
-					field:  "AgentBootstrap",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, TestWorkflowRequestValidationError{
-					field:  "AgentBootstrap",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetAgentBootstrap()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return TestWorkflowRequestValidationError{
-				field:  "AgentBootstrap",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	if len(errors) > 0 {
-		return TestWorkflowRequestMultiError(errors)
+		return PlaceholderWorkflowRequestMultiError(errors)
 	}
 
 	return nil
 }
 
-// TestWorkflowRequestMultiError is an error wrapping multiple validation
-// errors returned by TestWorkflowRequest.ValidateAll() if the designated
-// constraints aren't met.
-type TestWorkflowRequestMultiError []error
+// PlaceholderWorkflowRequestMultiError is an error wrapping multiple
+// validation errors returned by PlaceholderWorkflowRequest.ValidateAll() if
+// the designated constraints aren't met.
+type PlaceholderWorkflowRequestMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m TestWorkflowRequestMultiError) Error() string {
+func (m PlaceholderWorkflowRequestMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -163,11 +83,11 @@ func (m TestWorkflowRequestMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m TestWorkflowRequestMultiError) AllErrors() []error { return m }
+func (m PlaceholderWorkflowRequestMultiError) AllErrors() []error { return m }
 
-// TestWorkflowRequestValidationError is the validation error returned by
-// TestWorkflowRequest.Validate if the designated constraints aren't met.
-type TestWorkflowRequestValidationError struct {
+// PlaceholderWorkflowRequestValidationError is the validation error returned
+// by PlaceholderWorkflowRequest.Validate if the designated constraints aren't met.
+type PlaceholderWorkflowRequestValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -175,24 +95,24 @@ type TestWorkflowRequestValidationError struct {
 }
 
 // Field function returns field value.
-func (e TestWorkflowRequestValidationError) Field() string { return e.field }
+func (e PlaceholderWorkflowRequestValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e TestWorkflowRequestValidationError) Reason() string { return e.reason }
+func (e PlaceholderWorkflowRequestValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e TestWorkflowRequestValidationError) Cause() error { return e.cause }
+func (e PlaceholderWorkflowRequestValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e TestWorkflowRequestValidationError) Key() bool { return e.key }
+func (e PlaceholderWorkflowRequestValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e TestWorkflowRequestValidationError) ErrorName() string {
-	return "TestWorkflowRequestValidationError"
+func (e PlaceholderWorkflowRequestValidationError) ErrorName() string {
+	return "PlaceholderWorkflowRequestValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e TestWorkflowRequestValidationError) Error() string {
+func (e PlaceholderWorkflowRequestValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -204,14 +124,14 @@ func (e TestWorkflowRequestValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sTestWorkflowRequest.%s: %s%s",
+		"invalid %sPlaceholderWorkflowRequest.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = TestWorkflowRequestValidationError{}
+var _ error = PlaceholderWorkflowRequestValidationError{}
 
 var _ interface {
 	Field() string
@@ -219,24 +139,24 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = TestWorkflowRequestValidationError{}
+} = PlaceholderWorkflowRequestValidationError{}
 
-// Validate checks the field values on TestWorkflowResponse with the rules
-// defined in the proto definition for this message. If any rules are
+// Validate checks the field values on PlaceholderWorkflowResponse with the
+// rules defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
-func (m *TestWorkflowResponse) Validate() error {
+func (m *PlaceholderWorkflowResponse) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on TestWorkflowResponse with the rules
-// defined in the proto definition for this message. If any rules are
+// ValidateAll checks the field values on PlaceholderWorkflowResponse with the
+// rules defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// TestWorkflowResponseMultiError, or nil if none found.
-func (m *TestWorkflowResponse) ValidateAll() error {
+// PlaceholderWorkflowResponseMultiError, or nil if none found.
+func (m *PlaceholderWorkflowResponse) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *TestWorkflowResponse) validate(all bool) error {
+func (m *PlaceholderWorkflowResponse) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -244,19 +164,19 @@ func (m *TestWorkflowResponse) validate(all bool) error {
 	var errors []error
 
 	if len(errors) > 0 {
-		return TestWorkflowResponseMultiError(errors)
+		return PlaceholderWorkflowResponseMultiError(errors)
 	}
 
 	return nil
 }
 
-// TestWorkflowResponseMultiError is an error wrapping multiple validation
-// errors returned by TestWorkflowResponse.ValidateAll() if the designated
-// constraints aren't met.
-type TestWorkflowResponseMultiError []error
+// PlaceholderWorkflowResponseMultiError is an error wrapping multiple
+// validation errors returned by PlaceholderWorkflowResponse.ValidateAll() if
+// the designated constraints aren't met.
+type PlaceholderWorkflowResponseMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m TestWorkflowResponseMultiError) Error() string {
+func (m PlaceholderWorkflowResponseMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -265,11 +185,12 @@ func (m TestWorkflowResponseMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m TestWorkflowResponseMultiError) AllErrors() []error { return m }
+func (m PlaceholderWorkflowResponseMultiError) AllErrors() []error { return m }
 
-// TestWorkflowResponseValidationError is the validation error returned by
-// TestWorkflowResponse.Validate if the designated constraints aren't met.
-type TestWorkflowResponseValidationError struct {
+// PlaceholderWorkflowResponseValidationError is the validation error returned
+// by PlaceholderWorkflowResponse.Validate if the designated constraints
+// aren't met.
+type PlaceholderWorkflowResponseValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -277,24 +198,24 @@ type TestWorkflowResponseValidationError struct {
 }
 
 // Field function returns field value.
-func (e TestWorkflowResponseValidationError) Field() string { return e.field }
+func (e PlaceholderWorkflowResponseValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e TestWorkflowResponseValidationError) Reason() string { return e.reason }
+func (e PlaceholderWorkflowResponseValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e TestWorkflowResponseValidationError) Cause() error { return e.cause }
+func (e PlaceholderWorkflowResponseValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e TestWorkflowResponseValidationError) Key() bool { return e.key }
+func (e PlaceholderWorkflowResponseValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e TestWorkflowResponseValidationError) ErrorName() string {
-	return "TestWorkflowResponseValidationError"
+func (e PlaceholderWorkflowResponseValidationError) ErrorName() string {
+	return "PlaceholderWorkflowResponseValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e TestWorkflowResponseValidationError) Error() string {
+func (e PlaceholderWorkflowResponseValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -306,14 +227,14 @@ func (e TestWorkflowResponseValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sTestWorkflowResponse.%s: %s%s",
+		"invalid %sPlaceholderWorkflowResponse.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = TestWorkflowResponseValidationError{}
+var _ error = PlaceholderWorkflowResponseValidationError{}
 
 var _ interface {
 	Field() string
@@ -321,7 +242,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = TestWorkflowResponseValidationError{}
+} = PlaceholderWorkflowResponseValidationError{}
 
 // Validate checks the field values on RunState with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
@@ -931,1253 +852,3 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = StageUpdateValidationError{}
-
-// Validate checks the field values on InstallStroppyWorkflowRequest with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *InstallStroppyWorkflowRequest) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on InstallStroppyWorkflowRequest with
-// the rules defined in the proto definition for this message. If any rules
-// are violated, the result is a list of violation errors wrapped in
-// InstallStroppyWorkflowRequestMultiError, or nil if none found.
-func (m *InstallStroppyWorkflowRequest) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *InstallStroppyWorkflowRequest) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if m.GetInfrastructureState() == nil {
-		err := InstallStroppyWorkflowRequestValidationError{
-			field:  "InfrastructureState",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetInfrastructureState()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, InstallStroppyWorkflowRequestValidationError{
-					field:  "InfrastructureState",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, InstallStroppyWorkflowRequestValidationError{
-					field:  "InfrastructureState",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetInfrastructureState()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return InstallStroppyWorkflowRequestValidationError{
-				field:  "InfrastructureState",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if m.GetDeploymentPlan() == nil {
-		err := InstallStroppyWorkflowRequestValidationError{
-			field:  "DeploymentPlan",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetDeploymentPlan()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, InstallStroppyWorkflowRequestValidationError{
-					field:  "DeploymentPlan",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, InstallStroppyWorkflowRequestValidationError{
-					field:  "DeploymentPlan",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetDeploymentPlan()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return InstallStroppyWorkflowRequestValidationError{
-				field:  "DeploymentPlan",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if len(errors) > 0 {
-		return InstallStroppyWorkflowRequestMultiError(errors)
-	}
-
-	return nil
-}
-
-// InstallStroppyWorkflowRequestMultiError is an error wrapping multiple
-// validation errors returned by InstallStroppyWorkflowRequest.ValidateAll()
-// if the designated constraints aren't met.
-type InstallStroppyWorkflowRequestMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m InstallStroppyWorkflowRequestMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m InstallStroppyWorkflowRequestMultiError) AllErrors() []error { return m }
-
-// InstallStroppyWorkflowRequestValidationError is the validation error
-// returned by InstallStroppyWorkflowRequest.Validate if the designated
-// constraints aren't met.
-type InstallStroppyWorkflowRequestValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e InstallStroppyWorkflowRequestValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e InstallStroppyWorkflowRequestValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e InstallStroppyWorkflowRequestValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e InstallStroppyWorkflowRequestValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e InstallStroppyWorkflowRequestValidationError) ErrorName() string {
-	return "InstallStroppyWorkflowRequestValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e InstallStroppyWorkflowRequestValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sInstallStroppyWorkflowRequest.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = InstallStroppyWorkflowRequestValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = InstallStroppyWorkflowRequestValidationError{}
-
-// Validate checks the field values on InstallStroppyWorkflowResponse with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *InstallStroppyWorkflowResponse) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on InstallStroppyWorkflowResponse with
-// the rules defined in the proto definition for this message. If any rules
-// are violated, the result is a list of violation errors wrapped in
-// InstallStroppyWorkflowResponseMultiError, or nil if none found.
-func (m *InstallStroppyWorkflowResponse) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *InstallStroppyWorkflowResponse) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if len(errors) > 0 {
-		return InstallStroppyWorkflowResponseMultiError(errors)
-	}
-
-	return nil
-}
-
-// InstallStroppyWorkflowResponseMultiError is an error wrapping multiple
-// validation errors returned by InstallStroppyWorkflowResponse.ValidateAll()
-// if the designated constraints aren't met.
-type InstallStroppyWorkflowResponseMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m InstallStroppyWorkflowResponseMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m InstallStroppyWorkflowResponseMultiError) AllErrors() []error { return m }
-
-// InstallStroppyWorkflowResponseValidationError is the validation error
-// returned by InstallStroppyWorkflowResponse.Validate if the designated
-// constraints aren't met.
-type InstallStroppyWorkflowResponseValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e InstallStroppyWorkflowResponseValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e InstallStroppyWorkflowResponseValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e InstallStroppyWorkflowResponseValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e InstallStroppyWorkflowResponseValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e InstallStroppyWorkflowResponseValidationError) ErrorName() string {
-	return "InstallStroppyWorkflowResponseValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e InstallStroppyWorkflowResponseValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sInstallStroppyWorkflowResponse.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = InstallStroppyWorkflowResponseValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = InstallStroppyWorkflowResponseValidationError{}
-
-// Validate checks the field values on InstallDatabaseWorkflowRequest with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *InstallDatabaseWorkflowRequest) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on InstallDatabaseWorkflowRequest with
-// the rules defined in the proto definition for this message. If any rules
-// are violated, the result is a list of violation errors wrapped in
-// InstallDatabaseWorkflowRequestMultiError, or nil if none found.
-func (m *InstallDatabaseWorkflowRequest) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *InstallDatabaseWorkflowRequest) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if m.GetInfrastructureState() == nil {
-		err := InstallDatabaseWorkflowRequestValidationError{
-			field:  "InfrastructureState",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetInfrastructureState()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, InstallDatabaseWorkflowRequestValidationError{
-					field:  "InfrastructureState",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, InstallDatabaseWorkflowRequestValidationError{
-					field:  "InfrastructureState",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetInfrastructureState()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return InstallDatabaseWorkflowRequestValidationError{
-				field:  "InfrastructureState",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if m.GetDatabase() == nil {
-		err := InstallDatabaseWorkflowRequestValidationError{
-			field:  "Database",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetDatabase()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, InstallDatabaseWorkflowRequestValidationError{
-					field:  "Database",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, InstallDatabaseWorkflowRequestValidationError{
-					field:  "Database",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetDatabase()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return InstallDatabaseWorkflowRequestValidationError{
-				field:  "Database",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if m.GetDeploymentPlan() == nil {
-		err := InstallDatabaseWorkflowRequestValidationError{
-			field:  "DeploymentPlan",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetDeploymentPlan()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, InstallDatabaseWorkflowRequestValidationError{
-					field:  "DeploymentPlan",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, InstallDatabaseWorkflowRequestValidationError{
-					field:  "DeploymentPlan",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetDeploymentPlan()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return InstallDatabaseWorkflowRequestValidationError{
-				field:  "DeploymentPlan",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if len(errors) > 0 {
-		return InstallDatabaseWorkflowRequestMultiError(errors)
-	}
-
-	return nil
-}
-
-// InstallDatabaseWorkflowRequestMultiError is an error wrapping multiple
-// validation errors returned by InstallDatabaseWorkflowRequest.ValidateAll()
-// if the designated constraints aren't met.
-type InstallDatabaseWorkflowRequestMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m InstallDatabaseWorkflowRequestMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m InstallDatabaseWorkflowRequestMultiError) AllErrors() []error { return m }
-
-// InstallDatabaseWorkflowRequestValidationError is the validation error
-// returned by InstallDatabaseWorkflowRequest.Validate if the designated
-// constraints aren't met.
-type InstallDatabaseWorkflowRequestValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e InstallDatabaseWorkflowRequestValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e InstallDatabaseWorkflowRequestValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e InstallDatabaseWorkflowRequestValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e InstallDatabaseWorkflowRequestValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e InstallDatabaseWorkflowRequestValidationError) ErrorName() string {
-	return "InstallDatabaseWorkflowRequestValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e InstallDatabaseWorkflowRequestValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sInstallDatabaseWorkflowRequest.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = InstallDatabaseWorkflowRequestValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = InstallDatabaseWorkflowRequestValidationError{}
-
-// Validate checks the field values on InstallDatabaseWorkflowResponse with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *InstallDatabaseWorkflowResponse) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on InstallDatabaseWorkflowResponse with
-// the rules defined in the proto definition for this message. If any rules
-// are violated, the result is a list of violation errors wrapped in
-// InstallDatabaseWorkflowResponseMultiError, or nil if none found.
-func (m *InstallDatabaseWorkflowResponse) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *InstallDatabaseWorkflowResponse) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if len(errors) > 0 {
-		return InstallDatabaseWorkflowResponseMultiError(errors)
-	}
-
-	return nil
-}
-
-// InstallDatabaseWorkflowResponseMultiError is an error wrapping multiple
-// validation errors returned by InstallDatabaseWorkflowResponse.ValidateAll()
-// if the designated constraints aren't met.
-type InstallDatabaseWorkflowResponseMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m InstallDatabaseWorkflowResponseMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m InstallDatabaseWorkflowResponseMultiError) AllErrors() []error { return m }
-
-// InstallDatabaseWorkflowResponseValidationError is the validation error
-// returned by InstallDatabaseWorkflowResponse.Validate if the designated
-// constraints aren't met.
-type InstallDatabaseWorkflowResponseValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e InstallDatabaseWorkflowResponseValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e InstallDatabaseWorkflowResponseValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e InstallDatabaseWorkflowResponseValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e InstallDatabaseWorkflowResponseValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e InstallDatabaseWorkflowResponseValidationError) ErrorName() string {
-	return "InstallDatabaseWorkflowResponseValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e InstallDatabaseWorkflowResponseValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sInstallDatabaseWorkflowResponse.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = InstallDatabaseWorkflowResponseValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = InstallDatabaseWorkflowResponseValidationError{}
-
-// Validate checks the field values on RunWorkloadWorkflowRequest with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *RunWorkloadWorkflowRequest) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on RunWorkloadWorkflowRequest with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// RunWorkloadWorkflowRequestMultiError, or nil if none found.
-func (m *RunWorkloadWorkflowRequest) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *RunWorkloadWorkflowRequest) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if l := utf8.RuneCountInString(m.GetRunId()); l < 1 || l > 128 {
-		err := RunWorkloadWorkflowRequestValidationError{
-			field:  "RunId",
-			reason: "value length must be between 1 and 128 runes, inclusive",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if m.GetDeploymentPlan() == nil {
-		err := RunWorkloadWorkflowRequestValidationError{
-			field:  "DeploymentPlan",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetDeploymentPlan()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, RunWorkloadWorkflowRequestValidationError{
-					field:  "DeploymentPlan",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, RunWorkloadWorkflowRequestValidationError{
-					field:  "DeploymentPlan",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetDeploymentPlan()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return RunWorkloadWorkflowRequestValidationError{
-				field:  "DeploymentPlan",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if m.GetInfrastructureState() == nil {
-		err := RunWorkloadWorkflowRequestValidationError{
-			field:  "InfrastructureState",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetInfrastructureState()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, RunWorkloadWorkflowRequestValidationError{
-					field:  "InfrastructureState",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, RunWorkloadWorkflowRequestValidationError{
-					field:  "InfrastructureState",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetInfrastructureState()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return RunWorkloadWorkflowRequestValidationError{
-				field:  "InfrastructureState",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if m.GetAgentBootstrap() == nil {
-		err := RunWorkloadWorkflowRequestValidationError{
-			field:  "AgentBootstrap",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetAgentBootstrap()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, RunWorkloadWorkflowRequestValidationError{
-					field:  "AgentBootstrap",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, RunWorkloadWorkflowRequestValidationError{
-					field:  "AgentBootstrap",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetAgentBootstrap()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return RunWorkloadWorkflowRequestValidationError{
-				field:  "AgentBootstrap",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if m.GetWorkload() == nil {
-		err := RunWorkloadWorkflowRequestValidationError{
-			field:  "Workload",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetWorkload()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, RunWorkloadWorkflowRequestValidationError{
-					field:  "Workload",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, RunWorkloadWorkflowRequestValidationError{
-					field:  "Workload",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetWorkload()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return RunWorkloadWorkflowRequestValidationError{
-				field:  "Workload",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if len(errors) > 0 {
-		return RunWorkloadWorkflowRequestMultiError(errors)
-	}
-
-	return nil
-}
-
-// RunWorkloadWorkflowRequestMultiError is an error wrapping multiple
-// validation errors returned by RunWorkloadWorkflowRequest.ValidateAll() if
-// the designated constraints aren't met.
-type RunWorkloadWorkflowRequestMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m RunWorkloadWorkflowRequestMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m RunWorkloadWorkflowRequestMultiError) AllErrors() []error { return m }
-
-// RunWorkloadWorkflowRequestValidationError is the validation error returned
-// by RunWorkloadWorkflowRequest.Validate if the designated constraints aren't met.
-type RunWorkloadWorkflowRequestValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e RunWorkloadWorkflowRequestValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e RunWorkloadWorkflowRequestValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e RunWorkloadWorkflowRequestValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e RunWorkloadWorkflowRequestValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e RunWorkloadWorkflowRequestValidationError) ErrorName() string {
-	return "RunWorkloadWorkflowRequestValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e RunWorkloadWorkflowRequestValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sRunWorkloadWorkflowRequest.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = RunWorkloadWorkflowRequestValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = RunWorkloadWorkflowRequestValidationError{}
-
-// Validate checks the field values on RunWorkloadWorkflowResponse with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *RunWorkloadWorkflowResponse) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on RunWorkloadWorkflowResponse with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// RunWorkloadWorkflowResponseMultiError, or nil if none found.
-func (m *RunWorkloadWorkflowResponse) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *RunWorkloadWorkflowResponse) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if len(errors) > 0 {
-		return RunWorkloadWorkflowResponseMultiError(errors)
-	}
-
-	return nil
-}
-
-// RunWorkloadWorkflowResponseMultiError is an error wrapping multiple
-// validation errors returned by RunWorkloadWorkflowResponse.ValidateAll() if
-// the designated constraints aren't met.
-type RunWorkloadWorkflowResponseMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m RunWorkloadWorkflowResponseMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m RunWorkloadWorkflowResponseMultiError) AllErrors() []error { return m }
-
-// RunWorkloadWorkflowResponseValidationError is the validation error returned
-// by RunWorkloadWorkflowResponse.Validate if the designated constraints
-// aren't met.
-type RunWorkloadWorkflowResponseValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e RunWorkloadWorkflowResponseValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e RunWorkloadWorkflowResponseValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e RunWorkloadWorkflowResponseValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e RunWorkloadWorkflowResponseValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e RunWorkloadWorkflowResponseValidationError) ErrorName() string {
-	return "RunWorkloadWorkflowResponseValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e RunWorkloadWorkflowResponseValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sRunWorkloadWorkflowResponse.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = RunWorkloadWorkflowResponseValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = RunWorkloadWorkflowResponseValidationError{}
-
-// Validate checks the field values on SuiteWorkflowRequest with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *SuiteWorkflowRequest) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on SuiteWorkflowRequest with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// SuiteWorkflowRequestMultiError, or nil if none found.
-func (m *SuiteWorkflowRequest) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *SuiteWorkflowRequest) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if l := utf8.RuneCountInString(m.GetSuiteRunId()); l < 1 || l > 64 {
-		err := SuiteWorkflowRequestValidationError{
-			field:  "SuiteRunId",
-			reason: "value length must be between 1 and 64 runes, inclusive",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if l := len(m.GetRuns()); l < 1 || l > 1000 {
-		err := SuiteWorkflowRequestValidationError{
-			field:  "Runs",
-			reason: "value must contain between 1 and 1000 items, inclusive",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	for idx, item := range m.GetRuns() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, SuiteWorkflowRequestValidationError{
-						field:  fmt.Sprintf("Runs[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, SuiteWorkflowRequestValidationError{
-						field:  fmt.Sprintf("Runs[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return SuiteWorkflowRequestValidationError{
-					field:  fmt.Sprintf("Runs[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	// no validation rules for MaxParallel
-
-	if len(errors) > 0 {
-		return SuiteWorkflowRequestMultiError(errors)
-	}
-
-	return nil
-}
-
-// SuiteWorkflowRequestMultiError is an error wrapping multiple validation
-// errors returned by SuiteWorkflowRequest.ValidateAll() if the designated
-// constraints aren't met.
-type SuiteWorkflowRequestMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m SuiteWorkflowRequestMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m SuiteWorkflowRequestMultiError) AllErrors() []error { return m }
-
-// SuiteWorkflowRequestValidationError is the validation error returned by
-// SuiteWorkflowRequest.Validate if the designated constraints aren't met.
-type SuiteWorkflowRequestValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e SuiteWorkflowRequestValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e SuiteWorkflowRequestValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e SuiteWorkflowRequestValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e SuiteWorkflowRequestValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e SuiteWorkflowRequestValidationError) ErrorName() string {
-	return "SuiteWorkflowRequestValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e SuiteWorkflowRequestValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sSuiteWorkflowRequest.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = SuiteWorkflowRequestValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = SuiteWorkflowRequestValidationError{}
-
-// Validate checks the field values on SuiteWorkflowResponse with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *SuiteWorkflowResponse) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on SuiteWorkflowResponse with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// SuiteWorkflowResponseMultiError, or nil if none found.
-func (m *SuiteWorkflowResponse) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *SuiteWorkflowResponse) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if len(errors) > 0 {
-		return SuiteWorkflowResponseMultiError(errors)
-	}
-
-	return nil
-}
-
-// SuiteWorkflowResponseMultiError is an error wrapping multiple validation
-// errors returned by SuiteWorkflowResponse.ValidateAll() if the designated
-// constraints aren't met.
-type SuiteWorkflowResponseMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m SuiteWorkflowResponseMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m SuiteWorkflowResponseMultiError) AllErrors() []error { return m }
-
-// SuiteWorkflowResponseValidationError is the validation error returned by
-// SuiteWorkflowResponse.Validate if the designated constraints aren't met.
-type SuiteWorkflowResponseValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e SuiteWorkflowResponseValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e SuiteWorkflowResponseValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e SuiteWorkflowResponseValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e SuiteWorkflowResponseValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e SuiteWorkflowResponseValidationError) ErrorName() string {
-	return "SuiteWorkflowResponseValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e SuiteWorkflowResponseValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sSuiteWorkflowResponse.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = SuiteWorkflowResponseValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = SuiteWorkflowResponseValidationError{}
