@@ -124,15 +124,41 @@ func (s *DslService) Check(ctx context.Context, req *dslpb.CheckRequest) (*dslpb
 // problem is folded into a diagnostic instead); the error return exists so
 // callers have a seam for a future failure mode that genuinely isn't
 // bundle-shaped (e.g. an IO error), not because one exists today.
+//
+// CheckBundle discards the compiled plan CompileBundle also produces — it
+// only ever needs the wire-shaped diagnostics for the connect/recipe check
+// surfaces. Task 4's RecipeActivities.CompileRecipeActivity (internal/
+// infrastructure/execution) needs the plan itself, so it calls CompileBundle
+// directly instead of duplicating the provider-resolution + dsl.Compile call
+// pair here.
 func CheckBundle(_ context.Context, files map[string][]byte) ([]*dslpb.Diagnostic, error) {
+	_, diags := CompileBundle(files)
+	return toProtoDiagnostics(diags), nil
+}
+
+// CompileBundle runs the check-mode compile pipeline (provider resolution +
+// dsl.Compile) over a bundle's raw files and returns both the compiled plan
+// and every diagnostic (errors and warnings) gathered along the way — the
+// same (plan, diag.List) shape dsl.Compile itself returns. It is the single
+// place that resolves a bundle's provider manifest via the path-traversal-
+// safe resolveProvider/deriveProviderSchema pair; CheckBundle and
+// RecipeActivities.CompileRecipeActivity (internal/infrastructure/execution,
+// Task 4) both call it rather than duplicating that resolution logic.
+//
+// The returned plan may be non-nil even when diags.HasErrors() is true (see
+// resolveProvider's own doc comment: a schema-derivation failure still hands
+// the decoded manifest to dsl.Compile so contract checking keeps running) —
+// callers must gate on diags.HasErrors(), never on a nil plan check alone,
+// mirroring dsl.Compile's own contract.
+func CompileBundle(files map[string][]byte) (*dslpb.CompiledPlan, diag.List) {
 	sources := include.Sources{Files: files}
 
 	provider, composed, diags := resolveProvider(files)
 
-	_, compileDiags := dsl.Compile(dsl.Input{Sources: sources, Provider: provider, Composed: composed})
+	plan, compileDiags := dsl.Compile(dsl.Input{Sources: sources, Provider: provider, Composed: composed})
 	diags = append(diags, compileDiags...)
 
-	return toProtoDiagnostics(diags), nil
+	return plan, diags
 }
 
 // resolveProvider finds and decodes the provider cluster.yaml's provider.use
