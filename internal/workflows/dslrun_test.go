@@ -424,3 +424,282 @@ func TestExecuteCompiledPlanWorkflowDiskDevicePath(t *testing.T) {
 		t.Fatalf("resolved mkfs script = %q, want it to contain the provisioned disk device %q (not empty)", capturedScript, "/dev/vdb")
 	}
 }
+
+// TestExecuteCompiledPlanWorkflowInputsGroupBinding is the I1 closure lock
+// for machine_group-typed inputs: a job whose CompiledJob.InputGroups maps
+// the component's "nodes" input to the plan's "db" machine group must
+// resolve `${{ inputs.nodes.machines[0].ip }}` to db's real provisioned IP —
+// exactly what graph.Validate typechecked `inputs.nodes` as (a
+// MachineGroupView) against expr.ComponentEnv, closing the gap where
+// baseJobVars never bound `inputs` at all.
+func TestExecuteCompiledPlanWorkflowInputsGroupBinding(t *testing.T) {
+	var suite testsuite.WorkflowTestSuite
+	env := suite.NewTestWorkflowEnvironment()
+	RegisterWorkflows(env, DefaultOptions())
+	registerCompiledPlanActivityStubs(env)
+
+	var capturedScript string
+	env.OnActivity(workflowpb.CallCmdActivityActivityName, mock.Anything, mock.Anything).Return(
+		func(_ context.Context, cmd *common.Cmd) (*common.Cmd_Result, error) {
+			capturedScript = cmd.GetSpec().GetScript().GetText()
+			return &common.Cmd_Result{ExitCode: 0}, nil
+		},
+	)
+
+	plan := &dslpb.CompiledPlan{
+		MachineGroups: []*dslpb.MachineGroup{
+			{Name: "db", Count: 1, Cpu: 2, RamMb: 2048},
+		},
+		Jobs: []*dslpb.CompiledJob{
+			{
+				Id:          "use-nodes",
+				OnGroup:     "db",
+				InputGroups: map[string]string{"nodes": "db"},
+				Action: &dslpb.CompiledJob_Steps{Steps: &dslpb.StepList{Steps: []*dslpb.DslStep{
+					{Step: &dslpb.DslStep_Agent{Agent: deploymentbuilder.CallCmdStep(
+						"use-nodes/0", 0, "echo ${{ inputs.nodes.machines[0].ip }}",
+					)}},
+				}}},
+			},
+		},
+	}
+
+	input := &ExecuteCompiledPlanInput{
+		Plan: plan,
+		Machines: map[string][]*deploymentpb.MachineState{
+			"db": {machineState("db-1", "10.0.0.7")},
+		},
+		Bootstrap: &workflowpb.AgentBootstrap{
+			AgentTaskQueues: map[string]string{"db-1": "tq-db-1"},
+		},
+	}
+
+	env.ExecuteWorkflow(ExecuteCompiledPlanWorkflowName, input)
+
+	if !env.IsWorkflowCompleted() {
+		t.Fatal("workflow did not complete")
+	}
+	if err := env.GetWorkflowError(); err != nil {
+		t.Fatalf("workflow failed: %v", err)
+	}
+
+	var resp ExecuteCompiledPlanOutput
+	if err := env.GetWorkflowResult(&resp); err != nil {
+		t.Fatalf("get workflow result: %v", err)
+	}
+	if got := resp.JobStatuses["use-nodes"]; got != jobStatusOK {
+		t.Fatalf("job status = %q, want %q", got, jobStatusOK)
+	}
+
+	if !strings.Contains(capturedScript, "10.0.0.7") {
+		t.Fatalf("resolved script = %q, want it to contain the input group's real IP %q", capturedScript, "10.0.0.7")
+	}
+}
+
+// TestExecuteCompiledPlanWorkflowScalarInputInterpolation locks the scalar
+// half of I1: CompiledJob.ResolvedInputs binds `inputs.<name>` as a string,
+// so `${{ inputs.count }}` interpolation resolves — but (documented
+// limitation, see baseJobVars) a `when:` comparing a scalar input against a
+// number is NOT exercised here because it does not work at runtime (CEL
+// compares the bound string to an int and errors); this test only asserts
+// the interpolation case that graph.Validate and the runtime actually agree
+// on.
+func TestExecuteCompiledPlanWorkflowScalarInputInterpolation(t *testing.T) {
+	var suite testsuite.WorkflowTestSuite
+	env := suite.NewTestWorkflowEnvironment()
+	RegisterWorkflows(env, DefaultOptions())
+	registerCompiledPlanActivityStubs(env)
+
+	var capturedScript string
+	env.OnActivity(workflowpb.CallCmdActivityActivityName, mock.Anything, mock.Anything).Return(
+		func(_ context.Context, cmd *common.Cmd) (*common.Cmd_Result, error) {
+			capturedScript = cmd.GetSpec().GetScript().GetText()
+			return &common.Cmd_Result{ExitCode: 0}, nil
+		},
+	)
+
+	plan := &dslpb.CompiledPlan{
+		MachineGroups: []*dslpb.MachineGroup{
+			{Name: "app", Count: 1, Cpu: 2, RamMb: 2048},
+		},
+		Jobs: []*dslpb.CompiledJob{
+			{
+				Id:             "use-count",
+				OnGroup:        "app",
+				ResolvedInputs: map[string]string{"count": "3"},
+				Action: &dslpb.CompiledJob_Steps{Steps: &dslpb.StepList{Steps: []*dslpb.DslStep{
+					{Step: &dslpb.DslStep_Agent{Agent: deploymentbuilder.CallCmdStep(
+						"use-count/0", 0, "echo ${{ inputs.count }}",
+					)}},
+				}}},
+			},
+		},
+	}
+
+	input := &ExecuteCompiledPlanInput{
+		Plan: plan,
+		Machines: map[string][]*deploymentpb.MachineState{
+			"app": {machineState("app-1", "10.0.0.1")},
+		},
+		Bootstrap: &workflowpb.AgentBootstrap{
+			AgentTaskQueues: map[string]string{"app-1": "tq-app-1"},
+		},
+	}
+
+	env.ExecuteWorkflow(ExecuteCompiledPlanWorkflowName, input)
+
+	if !env.IsWorkflowCompleted() {
+		t.Fatal("workflow did not complete")
+	}
+	if err := env.GetWorkflowError(); err != nil {
+		t.Fatalf("workflow failed: %v", err)
+	}
+
+	var resp ExecuteCompiledPlanOutput
+	if err := env.GetWorkflowResult(&resp); err != nil {
+		t.Fatalf("get workflow result: %v", err)
+	}
+	if got := resp.JobStatuses["use-count"]; got != jobStatusOK {
+		t.Fatalf("job status = %q, want %q", got, jobStatusOK)
+	}
+
+	if !strings.Contains(capturedScript, "echo 3") {
+		t.Fatalf("resolved script = %q, want it to contain the interpolated scalar input %q", capturedScript, "echo 3")
+	}
+}
+
+// TestExecuteCompiledPlanWorkflowTargetBinding locks the `target` half of I1:
+// CompiledJob.TargetGroup binds `target` to that group's MachineGroupView —
+// `${{ target.count }}` resolves to the real number of provisioned machines
+// in the group.
+func TestExecuteCompiledPlanWorkflowTargetBinding(t *testing.T) {
+	var suite testsuite.WorkflowTestSuite
+	env := suite.NewTestWorkflowEnvironment()
+	RegisterWorkflows(env, DefaultOptions())
+	registerCompiledPlanActivityStubs(env)
+
+	var capturedScript string
+	env.OnActivity(workflowpb.CallCmdActivityActivityName, mock.Anything, mock.Anything).Return(
+		func(_ context.Context, cmd *common.Cmd) (*common.Cmd_Result, error) {
+			capturedScript = cmd.GetSpec().GetScript().GetText()
+			return &common.Cmd_Result{ExitCode: 0}, nil
+		},
+	)
+
+	plan := &dslpb.CompiledPlan{
+		MachineGroups: []*dslpb.MachineGroup{
+			{Name: "db", Count: 3, Cpu: 2, RamMb: 2048},
+		},
+		Jobs: []*dslpb.CompiledJob{
+			{
+				Id:          "use-target",
+				OnGroup:     "db",
+				TargetGroup: "db",
+				Action: &dslpb.CompiledJob_Steps{Steps: &dslpb.StepList{Steps: []*dslpb.DslStep{
+					{Step: &dslpb.DslStep_Agent{Agent: deploymentbuilder.CallCmdStep(
+						"use-target/0", 0, "echo ${{ target.count }}",
+					)}},
+				}}},
+			},
+		},
+	}
+
+	input := &ExecuteCompiledPlanInput{
+		Plan: plan,
+		Machines: map[string][]*deploymentpb.MachineState{
+			"db": {
+				machineState("db-1", "10.0.0.10"),
+				machineState("db-2", "10.0.0.11"),
+				machineState("db-3", "10.0.0.12"),
+			},
+		},
+		Bootstrap: &workflowpb.AgentBootstrap{
+			AgentTaskQueues: map[string]string{
+				"db-1": "tq-db-1",
+				"db-2": "tq-db-1",
+				"db-3": "tq-db-1",
+			},
+		},
+	}
+
+	env.ExecuteWorkflow(ExecuteCompiledPlanWorkflowName, input)
+
+	if !env.IsWorkflowCompleted() {
+		t.Fatal("workflow did not complete")
+	}
+	if err := env.GetWorkflowError(); err != nil {
+		t.Fatalf("workflow failed: %v", err)
+	}
+
+	var resp ExecuteCompiledPlanOutput
+	if err := env.GetWorkflowResult(&resp); err != nil {
+		t.Fatalf("get workflow result: %v", err)
+	}
+	if got := resp.JobStatuses["use-target"]; got != jobStatusOK {
+		t.Fatalf("job status = %q, want %q", got, jobStatusOK)
+	}
+
+	if !strings.Contains(capturedScript, "echo 3") {
+		t.Fatalf("resolved script = %q, want it to contain the target group's real count %q", capturedScript, "echo 3")
+	}
+}
+
+// TestExecuteCompiledPlanWorkflowMissingInputEvalError confirms the
+// existing when/eval error path handles a `${{ inputs.missing }}` reference
+// to an input the job's ResolvedInputs does not carry gracefully: the job
+// fails (its status is "failed"), the workflow itself completes without
+// panicking.
+func TestExecuteCompiledPlanWorkflowMissingInputEvalError(t *testing.T) {
+	var suite testsuite.WorkflowTestSuite
+	env := suite.NewTestWorkflowEnvironment()
+	RegisterWorkflows(env, DefaultOptions())
+	registerCompiledPlanActivityStubs(env)
+
+	env.OnActivity(workflowpb.CallCmdActivityActivityName, mock.Anything, mock.Anything).Return(
+		&common.Cmd_Result{ExitCode: 0}, nil,
+	)
+
+	plan := &dslpb.CompiledPlan{
+		MachineGroups: []*dslpb.MachineGroup{
+			{Name: "app", Count: 1, Cpu: 2, RamMb: 2048},
+		},
+		Jobs: []*dslpb.CompiledJob{
+			{
+				Id:      "use-missing",
+				OnGroup: "app",
+				Action: &dslpb.CompiledJob_Steps{Steps: &dslpb.StepList{Steps: []*dslpb.DslStep{
+					{Step: &dslpb.DslStep_Agent{Agent: deploymentbuilder.CallCmdStep(
+						"use-missing/0", 0, "echo ${{ inputs.missing }}",
+					)}},
+				}}},
+			},
+		},
+	}
+
+	input := &ExecuteCompiledPlanInput{
+		Plan: plan,
+		Machines: map[string][]*deploymentpb.MachineState{
+			"app": {machineState("app-1", "10.0.0.1")},
+		},
+		Bootstrap: &workflowpb.AgentBootstrap{
+			AgentTaskQueues: map[string]string{"app-1": "tq-app-1"},
+		},
+	}
+
+	env.ExecuteWorkflow(ExecuteCompiledPlanWorkflowName, input)
+
+	if !env.IsWorkflowCompleted() {
+		t.Fatal("workflow did not complete")
+	}
+	if err := env.GetWorkflowError(); err != nil {
+		t.Fatalf("workflow itself must not error on a job-level eval failure: %v", err)
+	}
+
+	var resp ExecuteCompiledPlanOutput
+	if err := env.GetWorkflowResult(&resp); err != nil {
+		t.Fatalf("get workflow result: %v", err)
+	}
+	if got := resp.JobStatuses["use-missing"]; got != jobStatusFailed {
+		t.Fatalf("job status = %q, want %q (missing input reference must fail the job, not panic the workflow)", got, jobStatusFailed)
+	}
+}

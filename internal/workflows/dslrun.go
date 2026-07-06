@@ -93,11 +93,12 @@ type ExecuteCompiledPlanOutput struct {
 // # when / skip semantics
 //
 // A non-empty CompiledJob.When is evaluated once per job (see evaluateWhen)
-// against expr.ComponentEnv with only `machines` and `matrix` bound — it is
-// deterministic because both are pure functions of ExecuteCompiledPlanInput
-// (the workflow's own arguments), so replaying the workflow re-derives the
-// exact same bindings and therefore the exact same when-decision without any
-// non-deterministic input (no SideEffect needed).
+// against expr.ComponentEnv with `machines`, `matrix`, `inputs` and `target`
+// all bound (see baseJobVars) — it is deterministic because every binding is
+// a pure function of ExecuteCompiledPlanInput and the job's own compiled
+// fields (the workflow's own arguments), so replaying the workflow
+// re-derives the exact same bindings and therefore the exact same
+// when-decision without any non-deterministic input (no SideEffect needed).
 //
 // False decisions do not run the job's action; the job is marked "skipped".
 // Per the task-16 brief's decision (GitLab-CI rules:-skip semantics), a
@@ -258,20 +259,82 @@ func executeCompiledJob(
 }
 
 // baseJobVars builds the CEL bindings shared by a job's When and every
-// ${{ }} interpolation it triggers: `machines` (every machine_groups entry,
-// keyed by name, as an expr.MachineGroupView) and `matrix` (the job's own,
-// already matrix-expanded instance values — see dslpb.CompiledJob.Matrix's
-// doc: matrix expansion happened at compile time, one CompiledJob per
-// instance, so there is nothing left to expand here).
+// ${{ }} interpolation it triggers — the same four names expr.ComponentEnv
+// declares (Task 1's graph.Validate already typechecked every `requires:`/
+// `when:` expression against exactly these):
+//
+//   - `machines`: every machine_groups entry, keyed by name, as an
+//     expr.MachineGroupView (compiledMachinesBinding).
+//   - `matrix`: the job's own, already matrix-expanded instance values — see
+//     dslpb.CompiledJob.Matrix's doc: matrix expansion happened at compile
+//     time, one CompiledJob per instance, so there is nothing left to expand
+//     here.
+//   - `inputs`: the job's resolved component inputs (empty for a job that
+//     did not originate from an include component). Scalar inputs
+//     (CompiledJob.ResolvedInputs) bind as their compile-time-stringified
+//     value; machine_group-typed inputs (CompiledJob.InputGroups) bind as
+//     the referenced group's expr.MachineGroupView, built by groupView from
+//     the SAME groupsBinding `machines` uses — so `inputs.nodes` and
+//     `machines.<group>` are identical views for the same group, and
+//     `inputs.nodes.machines[0].ip` resolves exactly as graph.Validate
+//     typechecked it (expr.ComponentEnv declares inputs as
+//     map[string]dyn, so a string next to a native MachineGroupView value in
+//     the same map is legal).
+//   - `target`: the target_group's expr.MachineGroupView, left UNBOUND when
+//     CompiledJob.TargetGroup is empty (a component with zero or multiple
+//     machine_group inputs — see its doc). An expression referencing
+//     `target` on such a job was never accepted by graph.Validate in the
+//     first place, so there is nothing to bind it to.
+//
+// Scalar inputs are string-typed at runtime (see ResolvedInputs' doc):
+// `${{ inputs.count }}` interpolates fine, but a `when: inputs.count > 0`
+// against an int-typed InputSpec is a KNOWN LIMITATION — CEL compares the
+// bound string "3" to the int 0 and errors at eval time (job fails, not a
+// workflow panic — see evaluateWhen), even though expr.ComponentEnv's dyn
+// typing let it pass Task 1's compile-time check. CompiledJob does not carry
+// per-input types, so v1 does not attempt to rebind scalars by their
+// InputSpec kind; recipes must treat scalar inputs as strings (interpolate
+// or compare as strings) until a future task threads input types through to
+// the runtime.
 func baseJobVars(job *dslpb.CompiledJob, groupsBinding map[string]any) map[string]any {
 	matrixBinding := job.GetMatrix()
 	if matrixBinding == nil {
 		matrixBinding = map[string]string{}
 	}
-	return map[string]any{
+
+	inputs := make(map[string]any, len(job.GetResolvedInputs())+len(job.GetInputGroups()))
+	for name, val := range job.GetResolvedInputs() {
+		inputs[name] = val
+	}
+	for name, group := range job.GetInputGroups() {
+		inputs[name] = groupView(groupsBinding, group)
+	}
+
+	vars := map[string]any{
 		"machines": groupsBinding,
 		"matrix":   matrixBinding,
+		"inputs":   inputs,
 	}
+	if tg := job.GetTargetGroup(); tg != "" {
+		vars["target"] = groupView(groupsBinding, tg)
+	}
+	return vars
+}
+
+// groupView looks up group's expr.MachineGroupView in groupsBinding (built
+// by compiledMachinesBinding — the same map the `machines` binding uses, so
+// `inputs.<name>`/`target` and `machines.<group>` are identical views for the
+// same group name), falling back to an empty view (Count 0, no Machines) if
+// the name is missing. A missing group means CompiledJob.InputGroups/
+// TargetGroup pointed at a machine_groups entry the plan does not define —
+// graph.Validate is expected to reject that inconsistency at compile time, so
+// this fallback only keeps runtime evaluation total (no map-lookup panic)
+// rather than papering over an expected case.
+func groupView(groupsBinding map[string]any, group string) any {
+	if v, ok := groupsBinding[group]; ok {
+		return v
+	}
+	return expr.MachineGroupView{}
 }
 
 // evaluateWhen evaluates a job's When expression (empty = always true).
