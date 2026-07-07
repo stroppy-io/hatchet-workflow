@@ -22,6 +22,7 @@ import {
   type TestRunRecord,
 } from "@/lib/proto/cloud/v1/models/test_run_pb";
 import { Severity, type Diagnostic } from "@/lib/proto/cloud/v1/dsl/service_pb";
+import type { CompiledPlan } from "@/lib/proto/cloud/v1/dsl/compiled_pb";
 import { recipeClient, dslClient } from "@/services/client";
 import { resolveTenantId } from "@/services/tenant";
 import { statusToVM, type RunStatus } from "@/services/dashboard";
@@ -54,6 +55,39 @@ export interface DiagnosticVM {
   col: number;
   message: string;
   module: string;
+}
+
+/** One cloud.v1.dsl.MachineGroup from a Preview plan, flattened for the panel. */
+export interface PreviewMachineGroupVM {
+  name: string;
+  count: number;
+  cpu: number;
+  ramMb: number;
+  /** Sum of the group's disk sizes (GB), per-machine (not multiplied by count). */
+  diskGb: number;
+}
+
+/** One cloud.v1.dsl.ServiceSpec from a Preview plan, flattened for the panel. */
+export interface PreviewServiceVM {
+  name: string;
+  onGroup: string;
+  image: string;
+  network: string;
+}
+
+/** cloud.v1.dsl.CompiledPlan, flattened to what the RecipeEditor preview panel renders. */
+export interface PreviewPlanVM {
+  provider: string;
+  machineGroups: PreviewMachineGroupVM[];
+  services: PreviewServiceVM[];
+  /** Sum of machineGroups[].count — total provisioned node count. */
+  nodeTotal: number;
+}
+
+/** DslService.Preview's response, flattened: plan is null when the bundle failed to compile. */
+export interface PreviewVM {
+  plan: PreviewPlanVM | null;
+  diagnostics: DiagnosticVM[];
 }
 
 /** One run launched from a recipe bundle, flattened from models.TestRunRecord. */
@@ -201,6 +235,50 @@ export async function checkBundle(
 export async function composedSchema(files: Record<string, string>): Promise<string> {
   const { schemaJson } = await dslClient.composedSchema({ files: encodeFiles(files) });
   return schemaJson;
+}
+
+// plan is a bare Message with no toJson usage here (its ramMb/sizeGb are
+// uint64 -> bigint on the wire): reading fields directly off the message and
+// narrowing to number keeps the VM JSON-serializable and avoids the
+// precision-preserving-but-awkward bigint type leaking into the UI layer.
+// Machine sizes (RAM in MB, disk in GB) never approach Number.MAX_SAFE_INTEGER
+// in practice, so the narrowing is safe.
+function planToVM(plan: CompiledPlan | undefined): PreviewPlanVM | null {
+  if (!plan) return null;
+  return {
+    provider: plan.provider?.name ?? "",
+    machineGroups: plan.machineGroups.map((g) => ({
+      name: g.name,
+      count: g.count,
+      cpu: g.cpu,
+      ramMb: Number(g.ramMb),
+      diskGb: g.disks.reduce((sum, d) => sum + Number(d.sizeGb), 0),
+    })),
+    services: plan.services.map((s) => ({
+      name: s.name,
+      onGroup: s.onGroup,
+      image: s.image,
+      network: s.network,
+    })),
+    nodeTotal: plan.machineGroups.reduce((sum, g) => sum + g.count, 0),
+  };
+}
+
+/**
+ * DslService.Preview — compiles an in-memory (not-yet-saved) bundle and
+ * returns the resolved CompiledPlan (machine groups, services) for the
+ * RecipeEditor's "what will be provisioned" panel, plus diagnostics. Unlike
+ * checkBundle (auto-run on every edit, debounced), this is called on-demand
+ * from a "Preview" button — a full compile is heavier than Check's own
+ * diagnostics pass, and the diagnostics panel already covers the
+ * edit-as-you-type linting need.
+ */
+export async function previewBundle(files: Record<string, string>): Promise<PreviewVM> {
+  const { plan, diagnostics } = await dslClient.preview({ files: encodeFiles(files) });
+  return {
+    plan: planToVM(plan),
+    diagnostics: diagnostics.map(diagnosticToVM),
+  };
 }
 
 // --- RecipeService: run lifecycle -------------------------------------------

@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	DslService_ComposedSchema_FullMethodName = "/cloud.v1.dsl.DslService/ComposedSchema"
 	DslService_Check_FullMethodName          = "/cloud.v1.dsl.DslService/Check"
+	DslService_Preview_FullMethodName        = "/cloud.v1.dsl.DslService/Preview"
 )
 
 // DslServiceClient is the client API for DslService service.
@@ -36,6 +37,11 @@ type DslServiceClient interface {
 	ComposedSchema(ctx context.Context, in *ComposedSchemaRequest, opts ...grpc.CallOption) (*ComposedSchemaResponse, error)
 	// Check компилирует бандл в check-режиме и возвращает диагностики.
 	Check(ctx context.Context, in *CheckRequest, opts ...grpc.CallOption) (*CheckResponse, error)
+	// Preview компилирует бандл и возвращает резолвленный CompiledPlan
+	// (машины/сервисы/DAG джобов) для панели "что будет развёрнуто" в
+	// редакторе рецепта, до запуска Run. Как и Check — stateless, без
+	// побочных эффектов; ошибки пользовательского ввода всегда диагностика.
+	Preview(ctx context.Context, in *PreviewRequest, opts ...grpc.CallOption) (*PreviewResponse, error)
 }
 
 type dslServiceClient struct {
@@ -66,6 +72,16 @@ func (c *dslServiceClient) Check(ctx context.Context, in *CheckRequest, opts ...
 	return out, nil
 }
 
+func (c *dslServiceClient) Preview(ctx context.Context, in *PreviewRequest, opts ...grpc.CallOption) (*PreviewResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PreviewResponse)
+	err := c.cc.Invoke(ctx, DslService_Preview_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DslServiceServer is the server API for DslService service.
 // All implementations must embed UnimplementedDslServiceServer
 // for forward compatibility.
@@ -79,6 +95,11 @@ type DslServiceServer interface {
 	ComposedSchema(context.Context, *ComposedSchemaRequest) (*ComposedSchemaResponse, error)
 	// Check компилирует бандл в check-режиме и возвращает диагностики.
 	Check(context.Context, *CheckRequest) (*CheckResponse, error)
+	// Preview компилирует бандл и возвращает резолвленный CompiledPlan
+	// (машины/сервисы/DAG джобов) для панели "что будет развёрнуто" в
+	// редакторе рецепта, до запуска Run. Как и Check — stateless, без
+	// побочных эффектов; ошибки пользовательского ввода всегда диагностика.
+	Preview(context.Context, *PreviewRequest) (*PreviewResponse, error)
 	mustEmbedUnimplementedDslServiceServer()
 }
 
@@ -94,6 +115,9 @@ func (UnimplementedDslServiceServer) ComposedSchema(context.Context, *ComposedSc
 }
 func (UnimplementedDslServiceServer) Check(context.Context, *CheckRequest) (*CheckResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Check not implemented")
+}
+func (UnimplementedDslServiceServer) Preview(context.Context, *PreviewRequest) (*PreviewResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Preview not implemented")
 }
 func (UnimplementedDslServiceServer) mustEmbedUnimplementedDslServiceServer() {}
 func (UnimplementedDslServiceServer) testEmbeddedByValue()                    {}
@@ -152,6 +176,24 @@ func _DslService_Check_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DslService_Preview_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PreviewRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DslServiceServer).Preview(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DslService_Preview_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DslServiceServer).Preview(ctx, req.(*PreviewRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // DslService_ServiceDesc is the grpc.ServiceDesc for DslService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -166,6 +208,10 @@ var DslService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Check",
 			Handler:    _DslService_Check_Handler,
+		},
+		{
+			MethodName: "Preview",
+			Handler:    _DslService_Preview_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -236,6 +236,140 @@ func (m *CheckResponse) UnmarshalJSON(data []byte) error {
 	return m.Decode(d)
 }
 
+func (m *PreviewRequest) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if len(m.Files) > 0 {
+		e.FieldStart("files")
+		e.ObjStart()
+		for k, v := range m.Files {
+			e.FieldStart(k)
+			jxpb.EncBytes(e, v)
+		}
+		e.ObjEnd()
+	}
+	e.ObjEnd()
+}
+
+func (m *PreviewRequest) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "files":
+			if seen["Files"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Files"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			if m.Files == nil {
+				m.Files = make(map[string][]byte)
+			}
+			return d.Obj(func(d *jx.Decoder, ks string) error {
+				mk := ks
+				var mv []byte
+				tv, err := jxpb.DecBytes(d)
+				if err != nil {
+					return err
+				}
+				mv = tv
+				m.Files[mk] = mv
+				return nil
+			})
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *PreviewRequest) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *PreviewRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *PreviewResponse) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Plan != nil {
+		e.FieldStart("plan")
+		m.Plan.Encode(e)
+	}
+	if len(m.Diagnostics) > 0 {
+		e.FieldStart("diagnostics")
+		e.ArrStart()
+		for _, v := range m.Diagnostics {
+			v.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	e.ObjEnd()
+}
+
+func (m *PreviewResponse) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "plan":
+			if seen["Plan"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Plan"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Plan = &CompiledPlan{}
+			if err := m.Plan.Decode(d); err != nil {
+				return err
+			}
+			return nil
+		case "diagnostics":
+			if seen["Diagnostics"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Diagnostics"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &Diagnostic{}
+				if err := el.Decode(d); err != nil {
+					return err
+				}
+				m.Diagnostics = append(m.Diagnostics, el)
+				return nil
+			})
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *PreviewResponse) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *PreviewResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
 func (m *Diagnostic) Encode(e *jx.Encoder) {
 	if m == nil {
 		e.ObjStart()

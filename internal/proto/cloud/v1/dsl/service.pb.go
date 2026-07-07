@@ -256,6 +256,109 @@ func (x *CheckResponse) GetDiagnostics() []*Diagnostic {
 	return nil
 }
 
+// PreviewRequest несёт тот же бандл, что и CheckRequest/ComposedSchemaRequest.
+type PreviewRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Files         map[string][]byte      `protobuf:"bytes,1,rep,name=files,proto3" json:"files,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PreviewRequest) Reset() {
+	*x = PreviewRequest{}
+	mi := &file_cloud_v1_dsl_service_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PreviewRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PreviewRequest) ProtoMessage() {}
+
+func (x *PreviewRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_dsl_service_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PreviewRequest.ProtoReflect.Descriptor instead.
+func (*PreviewRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_dsl_service_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *PreviewRequest) GetFiles() map[string][]byte {
+	if x != nil {
+		return x.Files
+	}
+	return nil
+}
+
+type PreviewResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// plan — резолвленный CompiledPlan (machine_groups/services/jobs) для
+	// панели предпросмотра в редакторе рецепта. Может быть nil, если бандл не
+	// скомпилировался (см. diagnostics) — плана "что будет развёрнуто"
+	// показать нечего.
+	Plan *CompiledPlan `protobuf:"bytes,1,opt,name=plan,proto3" json:"plan,omitempty"`
+	// diagnostics — как в CheckResponse: ошибки пользовательского ввода
+	// ВСЕГДА диагностика, никогда RPC-ошибка.
+	Diagnostics   []*Diagnostic `protobuf:"bytes,2,rep,name=diagnostics,proto3" json:"diagnostics,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PreviewResponse) Reset() {
+	*x = PreviewResponse{}
+	mi := &file_cloud_v1_dsl_service_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PreviewResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PreviewResponse) ProtoMessage() {}
+
+func (x *PreviewResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_dsl_service_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PreviewResponse.ProtoReflect.Descriptor instead.
+func (*PreviewResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_dsl_service_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *PreviewResponse) GetPlan() *CompiledPlan {
+	if x != nil {
+		return x.Plan
+	}
+	return nil
+}
+
+func (x *PreviewResponse) GetDiagnostics() []*Diagnostic {
+	if x != nil {
+		return x.Diagnostics
+	}
+	return nil
+}
+
 type Diagnostic struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
 	Severity Severity               `protobuf:"varint,1,opt,name=severity,proto3,enum=cloud.v1.dsl.Severity" json:"severity,omitempty"`
@@ -273,7 +376,7 @@ type Diagnostic struct {
 
 func (x *Diagnostic) Reset() {
 	*x = Diagnostic{}
-	mi := &file_cloud_v1_dsl_service_proto_msgTypes[4]
+	mi := &file_cloud_v1_dsl_service_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -285,7 +388,7 @@ func (x *Diagnostic) String() string {
 func (*Diagnostic) ProtoMessage() {}
 
 func (x *Diagnostic) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_dsl_service_proto_msgTypes[4]
+	mi := &file_cloud_v1_dsl_service_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -298,7 +401,7 @@ func (x *Diagnostic) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Diagnostic.ProtoReflect.Descriptor instead.
 func (*Diagnostic) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_dsl_service_proto_rawDescGZIP(), []int{4}
+	return file_cloud_v1_dsl_service_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *Diagnostic) GetSeverity() Severity {
@@ -347,7 +450,7 @@ var File_cloud_v1_dsl_service_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_dsl_service_proto_rawDesc = "" +
 	"\n" +
-	"\x1acloud/v1/dsl/service.proto\x12\fcloud.v1.dsl\x1a\x1acloud/v1/iam/options.proto\x1a\x18graphqlopt/graphql.proto\"\x97\x01\n" +
+	"\x1acloud/v1/dsl/service.proto\x12\fcloud.v1.dsl\x1a\x1bcloud/v1/dsl/compiled.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x18graphqlopt/graphql.proto\"\x97\x01\n" +
 	"\x15ComposedSchemaRequest\x12D\n" +
 	"\x05files\x18\x01 \x03(\v2..cloud.v1.dsl.ComposedSchemaRequest.FilesEntryR\x05files\x1a8\n" +
 	"\n" +
@@ -364,7 +467,16 @@ const file_cloud_v1_dsl_service_proto_rawDesc = "" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\fR\x05value:\x028\x01\"K\n" +
 	"\rCheckResponse\x12:\n" +
-	"\vdiagnostics\x18\x01 \x03(\v2\x18.cloud.v1.dsl.DiagnosticR\vdiagnostics\"\xac\x01\n" +
+	"\vdiagnostics\x18\x01 \x03(\v2\x18.cloud.v1.dsl.DiagnosticR\vdiagnostics\"\x89\x01\n" +
+	"\x0ePreviewRequest\x12=\n" +
+	"\x05files\x18\x01 \x03(\v2'.cloud.v1.dsl.PreviewRequest.FilesEntryR\x05files\x1a8\n" +
+	"\n" +
+	"FilesEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\fR\x05value:\x028\x01\"}\n" +
+	"\x0fPreviewResponse\x12.\n" +
+	"\x04plan\x18\x01 \x01(\v2\x1a.cloud.v1.dsl.CompiledPlanR\x04plan\x12:\n" +
+	"\vdiagnostics\x18\x02 \x03(\v2\x18.cloud.v1.dsl.DiagnosticR\vdiagnostics\"\xac\x01\n" +
 	"\n" +
 	"Diagnostic\x122\n" +
 	"\bseverity\x18\x01 \x01(\x0e2\x16.cloud.v1.dsl.SeverityR\bseverity\x12\x12\n" +
@@ -376,11 +488,12 @@ const file_cloud_v1_dsl_service_proto_rawDesc = "" +
 	"\bSeverity\x12\x18\n" +
 	"\x14SEVERITY_UNSPECIFIED\x10\x00\x12\x12\n" +
 	"\x0eSEVERITY_ERROR\x10\x01\x12\x14\n" +
-	"\x10SEVERITY_WARNING\x10\x022\xc5\x01\n" +
+	"\x10SEVERITY_WARNING\x10\x022\x96\x02\n" +
 	"\n" +
 	"DslService\x12d\n" +
 	"\x0eComposedSchema\x12#.cloud.v1.dsl.ComposedSchemaRequest\x1a$.cloud.v1.dsl.ComposedSchemaResponse\"\a\x8a\xb5\x18\x00\x90\x02\x01\x12I\n" +
-	"\x05Check\x12\x1a.cloud.v1.dsl.CheckRequest\x1a\x1b.cloud.v1.dsl.CheckResponse\"\a\x8a\xb5\x18\x00\x90\x02\x01\x1a\x06\xc2\xc9&\x02\b\x01BAZ?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dslb\x06proto3"
+	"\x05Check\x12\x1a.cloud.v1.dsl.CheckRequest\x1a\x1b.cloud.v1.dsl.CheckResponse\"\a\x8a\xb5\x18\x00\x90\x02\x01\x12O\n" +
+	"\aPreview\x12\x1c.cloud.v1.dsl.PreviewRequest\x1a\x1d.cloud.v1.dsl.PreviewResponse\"\a\x8a\xb5\x18\x00\x90\x02\x01\x1a\x06\xc2\xc9&\x02\b\x01BAZ?github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dslb\x06proto3"
 
 var (
 	file_cloud_v1_dsl_service_proto_rawDescOnce sync.Once
@@ -395,31 +508,40 @@ func file_cloud_v1_dsl_service_proto_rawDescGZIP() []byte {
 }
 
 var file_cloud_v1_dsl_service_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_cloud_v1_dsl_service_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_cloud_v1_dsl_service_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_cloud_v1_dsl_service_proto_goTypes = []any{
 	(Severity)(0),                  // 0: cloud.v1.dsl.Severity
 	(*ComposedSchemaRequest)(nil),  // 1: cloud.v1.dsl.ComposedSchemaRequest
 	(*ComposedSchemaResponse)(nil), // 2: cloud.v1.dsl.ComposedSchemaResponse
 	(*CheckRequest)(nil),           // 3: cloud.v1.dsl.CheckRequest
 	(*CheckResponse)(nil),          // 4: cloud.v1.dsl.CheckResponse
-	(*Diagnostic)(nil),             // 5: cloud.v1.dsl.Diagnostic
-	nil,                            // 6: cloud.v1.dsl.ComposedSchemaRequest.FilesEntry
-	nil,                            // 7: cloud.v1.dsl.CheckRequest.FilesEntry
+	(*PreviewRequest)(nil),         // 5: cloud.v1.dsl.PreviewRequest
+	(*PreviewResponse)(nil),        // 6: cloud.v1.dsl.PreviewResponse
+	(*Diagnostic)(nil),             // 7: cloud.v1.dsl.Diagnostic
+	nil,                            // 8: cloud.v1.dsl.ComposedSchemaRequest.FilesEntry
+	nil,                            // 9: cloud.v1.dsl.CheckRequest.FilesEntry
+	nil,                            // 10: cloud.v1.dsl.PreviewRequest.FilesEntry
+	(*CompiledPlan)(nil),           // 11: cloud.v1.dsl.CompiledPlan
 }
 var file_cloud_v1_dsl_service_proto_depIdxs = []int32{
-	6, // 0: cloud.v1.dsl.ComposedSchemaRequest.files:type_name -> cloud.v1.dsl.ComposedSchemaRequest.FilesEntry
-	7, // 1: cloud.v1.dsl.CheckRequest.files:type_name -> cloud.v1.dsl.CheckRequest.FilesEntry
-	5, // 2: cloud.v1.dsl.CheckResponse.diagnostics:type_name -> cloud.v1.dsl.Diagnostic
-	0, // 3: cloud.v1.dsl.Diagnostic.severity:type_name -> cloud.v1.dsl.Severity
-	1, // 4: cloud.v1.dsl.DslService.ComposedSchema:input_type -> cloud.v1.dsl.ComposedSchemaRequest
-	3, // 5: cloud.v1.dsl.DslService.Check:input_type -> cloud.v1.dsl.CheckRequest
-	2, // 6: cloud.v1.dsl.DslService.ComposedSchema:output_type -> cloud.v1.dsl.ComposedSchemaResponse
-	4, // 7: cloud.v1.dsl.DslService.Check:output_type -> cloud.v1.dsl.CheckResponse
-	6, // [6:8] is the sub-list for method output_type
-	4, // [4:6] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	8,  // 0: cloud.v1.dsl.ComposedSchemaRequest.files:type_name -> cloud.v1.dsl.ComposedSchemaRequest.FilesEntry
+	9,  // 1: cloud.v1.dsl.CheckRequest.files:type_name -> cloud.v1.dsl.CheckRequest.FilesEntry
+	7,  // 2: cloud.v1.dsl.CheckResponse.diagnostics:type_name -> cloud.v1.dsl.Diagnostic
+	10, // 3: cloud.v1.dsl.PreviewRequest.files:type_name -> cloud.v1.dsl.PreviewRequest.FilesEntry
+	11, // 4: cloud.v1.dsl.PreviewResponse.plan:type_name -> cloud.v1.dsl.CompiledPlan
+	7,  // 5: cloud.v1.dsl.PreviewResponse.diagnostics:type_name -> cloud.v1.dsl.Diagnostic
+	0,  // 6: cloud.v1.dsl.Diagnostic.severity:type_name -> cloud.v1.dsl.Severity
+	1,  // 7: cloud.v1.dsl.DslService.ComposedSchema:input_type -> cloud.v1.dsl.ComposedSchemaRequest
+	3,  // 8: cloud.v1.dsl.DslService.Check:input_type -> cloud.v1.dsl.CheckRequest
+	5,  // 9: cloud.v1.dsl.DslService.Preview:input_type -> cloud.v1.dsl.PreviewRequest
+	2,  // 10: cloud.v1.dsl.DslService.ComposedSchema:output_type -> cloud.v1.dsl.ComposedSchemaResponse
+	4,  // 11: cloud.v1.dsl.DslService.Check:output_type -> cloud.v1.dsl.CheckResponse
+	6,  // 12: cloud.v1.dsl.DslService.Preview:output_type -> cloud.v1.dsl.PreviewResponse
+	10, // [10:13] is the sub-list for method output_type
+	7,  // [7:10] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_dsl_service_proto_init() }
@@ -427,13 +549,14 @@ func file_cloud_v1_dsl_service_proto_init() {
 	if File_cloud_v1_dsl_service_proto != nil {
 		return
 	}
+	file_cloud_v1_dsl_compiled_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_dsl_service_proto_rawDesc), len(file_cloud_v1_dsl_service_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   7,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

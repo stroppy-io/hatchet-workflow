@@ -29,6 +29,7 @@ import {
   AlertCircle,
   AlertTriangle,
   ArrowLeft,
+  Eye,
   FileCode2,
   Loader2,
   Play,
@@ -42,14 +43,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import { DslEditor } from "@/components/ui/dsl-editor";
 import {
   checkBundle,
   createRecipe,
   getRecipe,
+  previewBundle,
   startRun,
   type DiagnosticVM,
+  type PreviewPlanVM,
 } from "@/services/recipe";
 
 // A minimal, intentionally-not-guaranteed-to-compile starting point for a
@@ -110,6 +114,17 @@ export function RecipeEditor() {
   const [diagnostics, setDiagnostics] = useState<DiagnosticVM[]>([]);
   const [checking, setChecking] = useState(false);
 
+  // Compile-plan preview: on-demand (a "Preview" button), NOT debounced —
+  // Check already re-runs on every edit for the diagnostics panel above; a
+  // full compile-to-plan on every keystroke would be redundant work for a
+  // panel the user only consults right before Run.
+  const [previewPlan, setPreviewPlan] = useState<PreviewPlanVM | null>(null);
+  const [previewDiagnostics, setPreviewDiagnostics] = useState<DiagnosticVM[]>([]);
+  const [previewing, setPreviewing] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [previewRequested, setPreviewRequested] = useState(false);
+  const previewSnapshotRef = useRef<string | null>(null);
+
   const [newFileName, setNewFileName] = useState("");
 
   // Snapshot of the last-saved (or last-loaded) state, used to gate Run on
@@ -166,6 +181,31 @@ export function RecipeEditor() {
     if (savedSnapshotRef.current === null) return true; // never saved yet
     return snapshotOf(name, files) !== savedSnapshotRef.current;
   }, [name, files]);
+
+  // Has the bundle changed since the last Preview run? Compared against
+  // savedSnapshotRef's sibling (previewSnapshotRef), so an edit after
+  // previewing flags the shown plan as stale without re-running the compile.
+  const previewStale = useMemo(() => {
+    if (!previewRequested || previewSnapshotRef.current === null) return false;
+    return snapshotOf(name, files) !== previewSnapshotRef.current;
+  }, [name, files, previewRequested]);
+
+  const onPreview = useCallback(async () => {
+    setPreviewing(true);
+    setPreviewError(null);
+    setPreviewRequested(true);
+    try {
+      const { plan, diagnostics: previewDiags } = await previewBundle(files);
+      setPreviewPlan(plan);
+      setPreviewDiagnostics(previewDiags);
+      previewSnapshotRef.current = snapshotOf(name, files);
+    } catch (e) {
+      setPreviewError(e instanceof Error ? e.message : String(e));
+      setPreviewPlan(null);
+    } finally {
+      setPreviewing(false);
+    }
+  }, [files, name]);
 
   const nameMissing = !name.trim();
   const canSave = !saving && !nameMissing && Object.keys(files).length > 0;
@@ -411,45 +451,162 @@ export function RecipeEditor() {
             </div>
           </div>
 
-          {/* Right: bundle-wide diagnostics panel */}
-          <Card className="flex min-h-0 flex-col">
-            <CardContent className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto p-2">
-              <div className="flex items-center justify-between px-1">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">
-                  Diagnostics
-                </span>
-                {diagnostics.length > 0 && (
-                  <span className="text-[10px] font-mono text-zinc-600">{diagnostics.length}</span>
-                )}
-              </div>
-              {diagnostics.length === 0 ? (
-                <div className="px-1 py-2 text-xs text-zinc-600">
-                  {checking ? "Checking…" : "No issues found."}
-                </div>
-              ) : (
-                diagnostics.map((d, i) => (
-                  <button
-                    key={`${d.path}:${d.line}:${d.col}:${i}`}
-                    type="button"
-                    onClick={() => files[d.path] !== undefined && setActivePath(d.path)}
-                    className="flex items-start gap-1.5 border border-zinc-800 bg-[#0a0a0a] px-2 py-1.5 text-left text-xs transition-colors hover:border-zinc-700"
-                  >
-                    {d.severity === "error" ? (
-                      <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-400" />
-                    ) : (
-                      <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-400" />
-                    )}
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate font-mono text-[10px] text-zinc-500">
-                        {d.path}:{d.line}:{d.col}
-                        {d.module && ` · ${d.module}`}
+          {/* Right: diagnostics + compile-plan preview panel */}
+          <Card className="flex min-h-0 flex-col overflow-hidden">
+            <Tabs defaultValue="diagnostics" className="flex min-h-0 flex-1 flex-col">
+              <TabsList className="h-8 shrink-0 justify-start gap-1 border-b border-zinc-800/80 bg-transparent p-1">
+                <TabsTrigger
+                  value="diagnostics"
+                  className="h-6 px-2 text-[10px] font-mono uppercase tracking-wider data-[state=active]:bg-zinc-900 data-[state=active]:text-zinc-200"
+                >
+                  Diagnostics{diagnostics.length > 0 && ` (${diagnostics.length})`}
+                </TabsTrigger>
+                <TabsTrigger
+                  value="preview"
+                  className="h-6 px-2 text-[10px] font-mono uppercase tracking-wider data-[state=active]:bg-zinc-900 data-[state=active]:text-zinc-200"
+                >
+                  Preview
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent
+                value="diagnostics"
+                className="mt-0 flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto p-2"
+              >
+                {diagnostics.length === 0 ? (
+                  <div className="px-1 py-2 text-xs text-zinc-600">
+                    {checking ? "Checking…" : "No issues found."}
+                  </div>
+                ) : (
+                  diagnostics.map((d, i) => (
+                    <button
+                      key={`${d.path}:${d.line}:${d.col}:${i}`}
+                      type="button"
+                      onClick={() => files[d.path] !== undefined && setActivePath(d.path)}
+                      className="flex items-start gap-1.5 border border-zinc-800 bg-[#0a0a0a] px-2 py-1.5 text-left text-xs transition-colors hover:border-zinc-700"
+                    >
+                      {d.severity === "error" ? (
+                        <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-400" />
+                      ) : (
+                        <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-400" />
+                      )}
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-mono text-[10px] text-zinc-500">
+                          {d.path}:{d.line}:{d.col}
+                          {d.module && ` · ${d.module}`}
+                        </span>
+                        <span className="block text-zinc-300">{d.message}</span>
                       </span>
-                      <span className="block text-zinc-300">{d.message}</span>
-                    </span>
-                  </button>
-                ))
-              )}
-            </CardContent>
+                    </button>
+                  ))
+                )}
+              </TabsContent>
+
+              <TabsContent
+                value="preview"
+                className="mt-0 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2"
+              >
+                <div className="flex items-center gap-2 px-1">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 flex-1"
+                    disabled={previewing || Object.keys(files).length === 0}
+                    onClick={() => void onPreview()}
+                  >
+                    {previewing ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Eye className="h-3.5 w-3.5" />
+                    )}
+                    {previewRequested ? "Refresh preview" : "Preview plan"}
+                  </Button>
+                  {previewStale && !previewing && (
+                    <Badge variant="warning" className="shrink-0">stale</Badge>
+                  )}
+                </div>
+
+                {previewError && (
+                  <div className="mx-1 flex items-center gap-1.5 border border-red-900/50 bg-red-950/30 px-2 py-1.5 text-xs text-red-400">
+                    <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {previewError}
+                  </div>
+                )}
+
+                {!previewRequested && !previewError && (
+                  <div className="px-1 py-2 text-xs text-zinc-600">
+                    Compile the bundle to see what will be provisioned before running it.
+                  </div>
+                )}
+
+                {previewRequested && !previewing && !previewError && !previewPlan && (
+                  <div className="px-1 py-2 text-xs text-zinc-600">
+                    {previewDiagnostics.some((d) => d.severity === "error")
+                      ? "The bundle has compile errors — fix them (see Diagnostics) to preview a plan."
+                      : "No plan available."}
+                  </div>
+                )}
+
+                {previewPlan && (
+                  <div className="flex flex-col gap-3 px-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-zinc-500">Provider</span>
+                      <span className="font-mono text-zinc-200">{previewPlan.provider || "—"}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-zinc-500">Nodes</span>
+                      <span className="font-mono text-zinc-200">
+                        {previewPlan.nodeTotal} across {previewPlan.machineGroups.length} group
+                        {previewPlan.machineGroups.length === 1 ? "" : "s"}
+                      </span>
+                    </div>
+
+                    <div>
+                      <div className="mb-1 text-[10px] font-mono uppercase tracking-wider text-zinc-600">
+                        Machine groups
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        {previewPlan.machineGroups.map((g) => (
+                          <div
+                            key={g.name}
+                            className="border border-zinc-800 bg-[#0a0a0a] px-2 py-1.5 text-xs"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-mono text-zinc-200">{g.name}</span>
+                              <span className="text-zinc-500">×{g.count}</span>
+                            </div>
+                            <div className="text-[10px] text-zinc-500">
+                              {g.cpu} vCPU · {(g.ramMb / 1024).toFixed(1)} GB RAM
+                              {g.diskGb > 0 && ` · ${g.diskGb} GB disk`}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="mb-1 text-[10px] font-mono uppercase tracking-wider text-zinc-600">
+                        Services
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        {previewPlan.services.map((s) => (
+                          <div
+                            key={s.name}
+                            className="border border-zinc-800 bg-[#0a0a0a] px-2 py-1.5 text-xs"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-mono text-zinc-200">{s.name}</span>
+                              <span className="text-zinc-500">on {s.onGroup}</span>
+                            </div>
+                            <div className="truncate text-[10px] text-zinc-500">{s.image}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           </Card>
         </div>
       </div>

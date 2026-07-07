@@ -478,6 +478,271 @@ var _ interface {
 	ErrorName() string
 } = CheckResponseValidationError{}
 
+// Validate checks the field values on PreviewRequest with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *PreviewRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on PreviewRequest with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in PreviewRequestMultiError,
+// or nil if none found.
+func (m *PreviewRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *PreviewRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Files
+
+	if len(errors) > 0 {
+		return PreviewRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// PreviewRequestMultiError is an error wrapping multiple validation errors
+// returned by PreviewRequest.ValidateAll() if the designated constraints
+// aren't met.
+type PreviewRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m PreviewRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m PreviewRequestMultiError) AllErrors() []error { return m }
+
+// PreviewRequestValidationError is the validation error returned by
+// PreviewRequest.Validate if the designated constraints aren't met.
+type PreviewRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PreviewRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PreviewRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PreviewRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PreviewRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PreviewRequestValidationError) ErrorName() string { return "PreviewRequestValidationError" }
+
+// Error satisfies the builtin error interface
+func (e PreviewRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPreviewRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PreviewRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PreviewRequestValidationError{}
+
+// Validate checks the field values on PreviewResponse with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *PreviewResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on PreviewResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// PreviewResponseMultiError, or nil if none found.
+func (m *PreviewResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *PreviewResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetPlan()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, PreviewResponseValidationError{
+					field:  "Plan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, PreviewResponseValidationError{
+					field:  "Plan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPlan()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return PreviewResponseValidationError{
+				field:  "Plan",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	for idx, item := range m.GetDiagnostics() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, PreviewResponseValidationError{
+						field:  fmt.Sprintf("Diagnostics[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, PreviewResponseValidationError{
+						field:  fmt.Sprintf("Diagnostics[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return PreviewResponseValidationError{
+					field:  fmt.Sprintf("Diagnostics[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return PreviewResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// PreviewResponseMultiError is an error wrapping multiple validation errors
+// returned by PreviewResponse.ValidateAll() if the designated constraints
+// aren't met.
+type PreviewResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m PreviewResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m PreviewResponseMultiError) AllErrors() []error { return m }
+
+// PreviewResponseValidationError is the validation error returned by
+// PreviewResponse.Validate if the designated constraints aren't met.
+type PreviewResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PreviewResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PreviewResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PreviewResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PreviewResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PreviewResponseValidationError) ErrorName() string { return "PreviewResponseValidationError" }
+
+// Error satisfies the builtin error interface
+func (e PreviewResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPreviewResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PreviewResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PreviewResponseValidationError{}
+
 // Validate checks the field values on Diagnostic with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.

@@ -96,6 +96,63 @@ func TestCheckEtcdQuorumViolationDiagnostic(t *testing.T) {
 	}
 }
 
+func TestPreviewPostgresHAReturnsResolvedPlan(t *testing.T) {
+	svc := NewDslService()
+	files := loadBundle(t, postgresHADir)
+
+	resp, err := svc.Preview(context.Background(), &dslpb.PreviewRequest{Files: files})
+	if err != nil {
+		t.Fatalf("Preview returned an RPC error: %v", err)
+	}
+	if len(resp.GetDiagnostics()) != 0 {
+		t.Fatalf("expected 0 diagnostics for a clean bundle, got %+v", resp.GetDiagnostics())
+	}
+
+	plan := resp.GetPlan()
+	if plan == nil {
+		t.Fatal("expected a non-nil CompiledPlan for a clean bundle")
+	}
+
+	groups := map[string]*dslpb.MachineGroup{}
+	for _, g := range plan.GetMachineGroups() {
+		groups[g.GetName()] = g
+	}
+	db, ok := groups["db"]
+	if !ok {
+		t.Fatalf("expected a %q machine group, got %+v", "db", plan.GetMachineGroups())
+	}
+	if db.GetCount() != 3 {
+		t.Fatalf("expected db group count 3, got %d", db.GetCount())
+	}
+	runner, ok := groups["runner"]
+	if !ok {
+		t.Fatalf("expected a %q machine group, got %+v", "runner", plan.GetMachineGroups())
+	}
+	if runner.GetCount() != 1 {
+		t.Fatalf("expected runner group count 1, got %d", runner.GetCount())
+	}
+	if len(plan.GetServices()) == 0 {
+		t.Fatal("expected at least one resolved service in the plan")
+	}
+}
+
+func TestPreviewBrokenBundleReturnsDiagnosticsNilPlan(t *testing.T) {
+	svc := NewDslService()
+	files := loadBundle(t, postgresHADir)
+	delete(files, "providers/yandex/manifest.yaml")
+
+	resp, err := svc.Preview(context.Background(), &dslpb.PreviewRequest{Files: files})
+	if err != nil {
+		t.Fatalf("Preview must never return an RPC error for a bundle-content problem, got: %v", err)
+	}
+	if len(resp.GetDiagnostics()) == 0 {
+		t.Fatal("expected at least one diagnostic for a missing provider manifest")
+	}
+	if resp.GetPlan() != nil {
+		t.Fatalf("expected a nil plan when compile has error diagnostics, got %+v", resp.GetPlan())
+	}
+}
+
 func TestComposedSchemaContainsPlatformID(t *testing.T) {
 	svc := NewDslService()
 	files := loadBundle(t, postgresHADir)

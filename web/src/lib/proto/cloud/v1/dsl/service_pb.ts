@@ -4,6 +4,8 @@
 
 import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { CompiledPlan, CompiledPlanJson } from "./compiled_pb.ts";
+import { file_cloud_v1_dsl_compiled } from "./compiled_pb.ts";
 import { file_cloud_v1_iam_options } from "../iam/options_pb.ts";
 import { file_graphqlopt_graphql } from "../../../graphqlopt/graphql_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
@@ -12,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/dsl/service.proto.
  */
 export const file_cloud_v1_dsl_service: GenFile = /*@__PURE__*/
-  fileDesc("ChpjbG91ZC92MS9kc2wvc2VydmljZS5wcm90bxIMY2xvdWQudjEuZHNsIoQBChVDb21wb3NlZFNjaGVtYVJlcXVlc3QSPQoFZmlsZXMYASADKAsyLi5jbG91ZC52MS5kc2wuQ29tcG9zZWRTY2hlbWFSZXF1ZXN0LkZpbGVzRW50cnkaLAoKRmlsZXNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAw6AjgBIi0KFkNvbXBvc2VkU2NoZW1hUmVzcG9uc2USEwoLc2NoZW1hX2pzb24YASABKAkicgoMQ2hlY2tSZXF1ZXN0EjQKBWZpbGVzGAEgAygLMiUuY2xvdWQudjEuZHNsLkNoZWNrUmVxdWVzdC5GaWxlc0VudHJ5GiwKCkZpbGVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgMOgI4ASI+Cg1DaGVja1Jlc3BvbnNlEi0KC2RpYWdub3N0aWNzGAEgAygLMhguY2xvdWQudjEuZHNsLkRpYWdub3N0aWMigAEKCkRpYWdub3N0aWMSKAoIc2V2ZXJpdHkYASABKA4yFi5jbG91ZC52MS5kc2wuU2V2ZXJpdHkSDAoEcGF0aBgCIAEoCRIMCgRsaW5lGAMgASgNEgsKA2NvbBgEIAEoDRIPCgdtZXNzYWdlGAUgASgJEg4KBm1vZHVsZRgGIAEoCSpOCghTZXZlcml0eRIYChRTRVZFUklUWV9VTlNQRUNJRklFRBAAEhIKDlNFVkVSSVRZX0VSUk9SEAESFAoQU0VWRVJJVFlfV0FSTklORxACMsUBCgpEc2xTZXJ2aWNlEmQKDkNvbXBvc2VkU2NoZW1hEiMuY2xvdWQudjEuZHNsLkNvbXBvc2VkU2NoZW1hUmVxdWVzdBokLmNsb3VkLnYxLmRzbC5Db21wb3NlZFNjaGVtYVJlc3BvbnNlIgeQAgGKtRgAEkkKBUNoZWNrEhouY2xvdWQudjEuZHNsLkNoZWNrUmVxdWVzdBobLmNsb3VkLnYxLmRzbC5DaGVja1Jlc3BvbnNlIgeQAgGKtRgAGgbCySYCCAFCQVo/Z2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvZHNsYgZwcm90bzM", [file_cloud_v1_iam_options, file_graphqlopt_graphql]);
+  fileDesc("ChpjbG91ZC92MS9kc2wvc2VydmljZS5wcm90bxIMY2xvdWQudjEuZHNsIoQBChVDb21wb3NlZFNjaGVtYVJlcXVlc3QSPQoFZmlsZXMYASADKAsyLi5jbG91ZC52MS5kc2wuQ29tcG9zZWRTY2hlbWFSZXF1ZXN0LkZpbGVzRW50cnkaLAoKRmlsZXNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAw6AjgBIi0KFkNvbXBvc2VkU2NoZW1hUmVzcG9uc2USEwoLc2NoZW1hX2pzb24YASABKAkicgoMQ2hlY2tSZXF1ZXN0EjQKBWZpbGVzGAEgAygLMiUuY2xvdWQudjEuZHNsLkNoZWNrUmVxdWVzdC5GaWxlc0VudHJ5GiwKCkZpbGVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgMOgI4ASI+Cg1DaGVja1Jlc3BvbnNlEi0KC2RpYWdub3N0aWNzGAEgAygLMhguY2xvdWQudjEuZHNsLkRpYWdub3N0aWMidgoOUHJldmlld1JlcXVlc3QSNgoFZmlsZXMYASADKAsyJy5jbG91ZC52MS5kc2wuUHJldmlld1JlcXVlc3QuRmlsZXNFbnRyeRosCgpGaWxlc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoDDoCOAEiagoPUHJldmlld1Jlc3BvbnNlEigKBHBsYW4YASABKAsyGi5jbG91ZC52MS5kc2wuQ29tcGlsZWRQbGFuEi0KC2RpYWdub3N0aWNzGAIgAygLMhguY2xvdWQudjEuZHNsLkRpYWdub3N0aWMigAEKCkRpYWdub3N0aWMSKAoIc2V2ZXJpdHkYASABKA4yFi5jbG91ZC52MS5kc2wuU2V2ZXJpdHkSDAoEcGF0aBgCIAEoCRIMCgRsaW5lGAMgASgNEgsKA2NvbBgEIAEoDRIPCgdtZXNzYWdlGAUgASgJEg4KBm1vZHVsZRgGIAEoCSpOCghTZXZlcml0eRIYChRTRVZFUklUWV9VTlNQRUNJRklFRBAAEhIKDlNFVkVSSVRZX0VSUk9SEAESFAoQU0VWRVJJVFlfV0FSTklORxACMpYCCgpEc2xTZXJ2aWNlEmQKDkNvbXBvc2VkU2NoZW1hEiMuY2xvdWQudjEuZHNsLkNvbXBvc2VkU2NoZW1hUmVxdWVzdBokLmNsb3VkLnYxLmRzbC5Db21wb3NlZFNjaGVtYVJlc3BvbnNlIgeQAgGKtRgAEkkKBUNoZWNrEhouY2xvdWQudjEuZHNsLkNoZWNrUmVxdWVzdBobLmNsb3VkLnYxLmRzbC5DaGVja1Jlc3BvbnNlIgeQAgGKtRgAEk8KB1ByZXZpZXcSHC5jbG91ZC52MS5kc2wuUHJldmlld1JlcXVlc3QaHS5jbG91ZC52MS5kc2wuUHJldmlld1Jlc3BvbnNlIgeQAgGKtRgAGgbCySYCCAFCQVo/Z2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvZHNsYgZwcm90bzM", [file_cloud_v1_dsl_compiled, file_cloud_v1_iam_options, file_graphqlopt_graphql]);
 
 /**
  * ComposedSchemaRequest несёт весь бандл рецепта (cluster.yaml, workflow.yaml,
@@ -155,6 +157,94 @@ export const CheckResponseSchema: GenMessage<CheckResponse, {jsonType: CheckResp
   messageDesc(file_cloud_v1_dsl_service, 3);
 
 /**
+ * PreviewRequest несёт тот же бандл, что и CheckRequest/ComposedSchemaRequest.
+ *
+ * @generated from message cloud.v1.dsl.PreviewRequest
+ */
+export type PreviewRequest = Message<"cloud.v1.dsl.PreviewRequest"> & {
+  /**
+   * @generated from field: map<string, bytes> files = 1;
+   */
+  files: { [key: string]: Uint8Array };
+};
+
+/**
+ * PreviewRequest несёт тот же бандл, что и CheckRequest/ComposedSchemaRequest.
+ *
+ * @generated from message cloud.v1.dsl.PreviewRequest
+ */
+export type PreviewRequestJson = {
+  /**
+   * @generated from field: map<string, bytes> files = 1;
+   */
+  files?: { [key: string]: string };
+};
+
+export type PreviewRequestValid = PreviewRequest;
+
+/**
+ * Describes the message cloud.v1.dsl.PreviewRequest.
+ * Use `create(PreviewRequestSchema)` to create a new message.
+ */
+export const PreviewRequestSchema: GenMessage<PreviewRequest, {jsonType: PreviewRequestJson, validType: PreviewRequestValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_dsl_service, 4);
+
+/**
+ * @generated from message cloud.v1.dsl.PreviewResponse
+ */
+export type PreviewResponse = Message<"cloud.v1.dsl.PreviewResponse"> & {
+  /**
+   * plan — резолвленный CompiledPlan (machine_groups/services/jobs) для
+   * панели предпросмотра в редакторе рецепта. Может быть nil, если бандл не
+   * скомпилировался (см. diagnostics) — плана "что будет развёрнуто"
+   * показать нечего.
+   *
+   * @generated from field: cloud.v1.dsl.CompiledPlan plan = 1;
+   */
+  plan?: CompiledPlan;
+
+  /**
+   * diagnostics — как в CheckResponse: ошибки пользовательского ввода
+   * ВСЕГДА диагностика, никогда RPC-ошибка.
+   *
+   * @generated from field: repeated cloud.v1.dsl.Diagnostic diagnostics = 2;
+   */
+  diagnostics: Diagnostic[];
+};
+
+/**
+ * @generated from message cloud.v1.dsl.PreviewResponse
+ */
+export type PreviewResponseJson = {
+  /**
+   * plan — резолвленный CompiledPlan (machine_groups/services/jobs) для
+   * панели предпросмотра в редакторе рецепта. Может быть nil, если бандл не
+   * скомпилировался (см. diagnostics) — плана "что будет развёрнуто"
+   * показать нечего.
+   *
+   * @generated from field: cloud.v1.dsl.CompiledPlan plan = 1;
+   */
+  plan?: CompiledPlanJson;
+
+  /**
+   * diagnostics — как в CheckResponse: ошибки пользовательского ввода
+   * ВСЕГДА диагностика, никогда RPC-ошибка.
+   *
+   * @generated from field: repeated cloud.v1.dsl.Diagnostic diagnostics = 2;
+   */
+  diagnostics?: DiagnosticJson[];
+};
+
+export type PreviewResponseValid = PreviewResponse;
+
+/**
+ * Describes the message cloud.v1.dsl.PreviewResponse.
+ * Use `create(PreviewResponseSchema)` to create a new message.
+ */
+export const PreviewResponseSchema: GenMessage<PreviewResponse, {jsonType: PreviewResponseJson, validType: PreviewResponseValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_dsl_service, 5);
+
+/**
  * @generated from message cloud.v1.dsl.Diagnostic
  */
 export type Diagnostic = Message<"cloud.v1.dsl.Diagnostic"> & {
@@ -241,7 +331,7 @@ export type DiagnosticValid = Diagnostic;
  * Use `create(DiagnosticSchema)` to create a new message.
  */
 export const DiagnosticSchema: GenMessage<Diagnostic, {jsonType: DiagnosticJson, validType: DiagnosticValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_dsl_service, 4);
+  messageDesc(file_cloud_v1_dsl_service, 6);
 
 /**
  * @generated from enum cloud.v1.dsl.Severity
@@ -302,6 +392,19 @@ export const DslService: GenService<{
     methodKind: "unary";
     input: typeof CheckRequestSchema;
     output: typeof CheckResponseSchema;
+  },
+  /**
+   * Preview компилирует бандл и возвращает резолвленный CompiledPlan
+   * (машины/сервисы/DAG джобов) для панели "что будет развёрнуто" в
+   * редакторе рецепта, до запуска Run. Как и Check — stateless, без
+   * побочных эффектов; ошибки пользовательского ввода всегда диагностика.
+   *
+   * @generated from rpc cloud.v1.dsl.DslService.Preview
+   */
+  preview: {
+    methodKind: "unary";
+    input: typeof PreviewRequestSchema;
+    output: typeof PreviewResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_cloud_v1_dsl_service, 0);

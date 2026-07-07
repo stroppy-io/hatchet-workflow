@@ -113,6 +113,21 @@ func (s *DslService) Check(ctx context.Context, req *dslpb.CheckRequest) (*dslpb
 	return &dslpb.CheckResponse{Diagnostics: diags}, nil
 }
 
+// Preview compiles req's bundle via CompileBundle and returns the resolved
+// CompiledPlan (machine groups, services, job DAG) alongside every
+// diagnostic — the "what will be provisioned" surface the RecipeEditor's
+// preview panel renders before a user clicks Run. Like Check, it never
+// returns an RPC error for a problem in the bundle itself: a bundle that
+// fails to compile still comes back with a nil Plan and the diagnostics
+// explaining why, never a transport-level error.
+func (s *DslService) Preview(_ context.Context, req *dslpb.PreviewRequest) (*dslpb.PreviewResponse, error) {
+	plan, diags := CompileBundle(req.GetFiles())
+	if diags.HasErrors() {
+		plan = nil
+	}
+	return &dslpb.PreviewResponse{Plan: plan, Diagnostics: toProtoDiagnostics(diags)}, nil
+}
+
 // CheckBundle runs the same check-mode compile pipeline as Check
 // (provider resolution + dsl.Compile) directly over a bundle's files,
 // returning wire-shaped diagnostics. It is the shared implementation behind

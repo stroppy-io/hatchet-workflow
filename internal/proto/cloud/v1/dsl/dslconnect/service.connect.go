@@ -38,6 +38,8 @@ const (
 	DslServiceComposedSchemaProcedure = "/cloud.v1.dsl.DslService/ComposedSchema"
 	// DslServiceCheckProcedure is the fully-qualified name of the DslService's Check RPC.
 	DslServiceCheckProcedure = "/cloud.v1.dsl.DslService/Check"
+	// DslServicePreviewProcedure is the fully-qualified name of the DslService's Preview RPC.
+	DslServicePreviewProcedure = "/cloud.v1.dsl.DslService/Preview"
 )
 
 // DslServiceClient is a client for the cloud.v1.dsl.DslService service.
@@ -47,6 +49,11 @@ type DslServiceClient interface {
 	ComposedSchema(context.Context, *dsl.ComposedSchemaRequest) (*dsl.ComposedSchemaResponse, error)
 	// Check компилирует бандл в check-режиме и возвращает диагностики.
 	Check(context.Context, *dsl.CheckRequest) (*dsl.CheckResponse, error)
+	// Preview компилирует бандл и возвращает резолвленный CompiledPlan
+	// (машины/сервисы/DAG джобов) для панели "что будет развёрнуто" в
+	// редакторе рецепта, до запуска Run. Как и Check — stateless, без
+	// побочных эффектов; ошибки пользовательского ввода всегда диагностика.
+	Preview(context.Context, *dsl.PreviewRequest) (*dsl.PreviewResponse, error)
 }
 
 // NewDslServiceClient constructs a client for the cloud.v1.dsl.DslService service. By default, it
@@ -74,6 +81,13 @@ func NewDslServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 			connect.WithClientOptions(opts...),
 		),
+		preview: connect.NewClient[dsl.PreviewRequest, dsl.PreviewResponse](
+			httpClient,
+			baseURL+DslServicePreviewProcedure,
+			connect.WithSchema(dslServiceMethods.ByName("Preview")),
+			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -81,6 +95,7 @@ func NewDslServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 type dslServiceClient struct {
 	composedSchema *connect.Client[dsl.ComposedSchemaRequest, dsl.ComposedSchemaResponse]
 	check          *connect.Client[dsl.CheckRequest, dsl.CheckResponse]
+	preview        *connect.Client[dsl.PreviewRequest, dsl.PreviewResponse]
 }
 
 // ComposedSchema calls cloud.v1.dsl.DslService.ComposedSchema.
@@ -101,6 +116,15 @@ func (c *dslServiceClient) Check(ctx context.Context, req *dsl.CheckRequest) (*d
 	return nil, err
 }
 
+// Preview calls cloud.v1.dsl.DslService.Preview.
+func (c *dslServiceClient) Preview(ctx context.Context, req *dsl.PreviewRequest) (*dsl.PreviewResponse, error) {
+	response, err := c.preview.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // DslServiceHandler is an implementation of the cloud.v1.dsl.DslService service.
 type DslServiceHandler interface {
 	// ComposedSchema возвращает динамическую JSON Schema организации бандла
@@ -108,6 +132,11 @@ type DslServiceHandler interface {
 	ComposedSchema(context.Context, *dsl.ComposedSchemaRequest) (*dsl.ComposedSchemaResponse, error)
 	// Check компилирует бандл в check-режиме и возвращает диагностики.
 	Check(context.Context, *dsl.CheckRequest) (*dsl.CheckResponse, error)
+	// Preview компилирует бандл и возвращает резолвленный CompiledPlan
+	// (машины/сервисы/DAG джобов) для панели "что будет развёрнуто" в
+	// редакторе рецепта, до запуска Run. Как и Check — stateless, без
+	// побочных эффектов; ошибки пользовательского ввода всегда диагностика.
+	Preview(context.Context, *dsl.PreviewRequest) (*dsl.PreviewResponse, error)
 }
 
 // NewDslServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -131,12 +160,21 @@ func NewDslServiceHandler(svc DslServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
+	dslServicePreviewHandler := connect.NewUnaryHandlerSimple(
+		DslServicePreviewProcedure,
+		svc.Preview,
+		connect.WithSchema(dslServiceMethods.ByName("Preview")),
+		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/cloud.v1.dsl.DslService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case DslServiceComposedSchemaProcedure:
 			dslServiceComposedSchemaHandler.ServeHTTP(w, r)
 		case DslServiceCheckProcedure:
 			dslServiceCheckHandler.ServeHTTP(w, r)
+		case DslServicePreviewProcedure:
+			dslServicePreviewHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -152,4 +190,8 @@ func (UnimplementedDslServiceHandler) ComposedSchema(context.Context, *dsl.Compo
 
 func (UnimplementedDslServiceHandler) Check(context.Context, *dsl.CheckRequest) (*dsl.CheckResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.dsl.DslService.Check is not implemented"))
+}
+
+func (UnimplementedDslServiceHandler) Preview(context.Context, *dsl.PreviewRequest) (*dsl.PreviewResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.dsl.DslService.Preview is not implemented"))
 }

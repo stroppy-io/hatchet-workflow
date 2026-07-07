@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package cloud.v1.dsl;
 
+import "cloud/v1/dsl/compiled.proto";
 import "cloud/v1/iam/options.proto";
 import "graphqlopt/graphql.proto";
 
@@ -39,6 +40,22 @@ message CheckResponse {
     repeated Diagnostic diagnostics = 1;
 }
 
+// PreviewRequest несёт тот же бандл, что и CheckRequest/ComposedSchemaRequest.
+message PreviewRequest {
+    map<string, bytes> files = 1;
+}
+
+message PreviewResponse {
+    // plan — резолвленный CompiledPlan (machine_groups/services/jobs) для
+    // панели предпросмотра в редакторе рецепта. Может быть nil, если бандл не
+    // скомпилировался (см. diagnostics) — плана "что будет развёрнуто"
+    // показать нечего.
+    cloud.v1.dsl.CompiledPlan plan = 1;
+    // diagnostics — как в CheckResponse: ошибки пользовательского ввода
+    // ВСЕГДА диагностика, никогда RPC-ошибка.
+    repeated Diagnostic diagnostics = 2;
+}
+
 enum Severity {
     SEVERITY_UNSPECIFIED = 0;
     SEVERITY_ERROR = 1;
@@ -74,6 +91,14 @@ service DslService {
     }
     // Check компилирует бандл в check-режиме и возвращает диагностики.
     rpc Check (CheckRequest) returns (CheckResponse) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {};
+    }
+    // Preview компилирует бандл и возвращает резолвленный CompiledPlan
+    // (машины/сервисы/DAG джобов) для панели "что будет развёрнуто" в
+    // редакторе рецепта, до запуска Run. Как и Check — stateless, без
+    // побочных эффектов; ошибки пользовательского ввода всегда диагностика.
+    rpc Preview (PreviewRequest) returns (PreviewResponse) {
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {};
     }
