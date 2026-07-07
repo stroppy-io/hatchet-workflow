@@ -134,6 +134,12 @@ func enrichDockerRuntimeParams(ref *dslpb.ProviderRef, runID, serverAddr, gatewa
 		if err := json.Unmarshal([]byte(raw), &params); err != nil {
 			return nil, fmt.Errorf("provision activity: decode docker params_json: %w", err)
 		}
+		// A ParamsJson of the JSON literal "null" (or an explicit {} that
+		// unmarshals fine) leaves params nil; re-initialize so the injections
+		// below do not panic with "assignment to entry in nil map".
+		if params == nil {
+			params = map[string]any{}
+		}
 	}
 	// Only inject a runtime value when we actually have one: an empty field
 	// must not clobber a value the recipe (or a direct caller/test) already

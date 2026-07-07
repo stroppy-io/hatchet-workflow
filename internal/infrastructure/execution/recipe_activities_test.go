@@ -135,6 +135,26 @@ func TestProvisionActivity_Docker_InjectsRuntimeParams(t *testing.T) {
 	require.Len(t, out.Machines["runner"], 2)
 }
 
+// TestProvisionActivity_Docker_NullParamsJson guards the live regression where
+// a recipe's ProviderRef.ParamsJson serialized to the JSON literal "null":
+// json.Unmarshal("null", &map) leaves the map nil, so injecting the runtime
+// params must not panic with "assignment to entry in nil map".
+func TestProvisionActivity_Docker_NullParamsJson(t *testing.T) {
+	fake := &fakeDockerExec{}
+	a := NewRecipeActivities(provider.Deps{DockerExec: fake}, nil)
+
+	out, err := a.ProvisionActivity(context.Background(), &workflows.ProvisionActivityInput{
+		Groups:       groups(),
+		ProviderRef:  &dslpb.ProviderRef{Name: "docker", ParamsJson: "null"},
+		RunID:        "run-xyz",
+		ServerAddr:   "http://gateway:8080",
+		GatewayGroup: "runner",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, out)
+	require.Len(t, out.Machines["runner"], 2)
+}
+
 func TestProvisionActivity_NilInput_Errors(t *testing.T) {
 	a := NewRecipeActivities(provider.Deps{}, nil)
 	out, err := a.ProvisionActivity(context.Background(), nil)
