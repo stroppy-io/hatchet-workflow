@@ -46,7 +46,7 @@ const STATUS_VARIANT: Record<RunStatus, "default" | "success" | "destructive" | 
 // Cancel is only meaningful while a run can still accept a cancel request;
 // delete is blocked only while the run is actively in flight (mirrors
 // services/runs.ts's actionsForStatus gating, without importing it — that
-// helper's action set (rerun/clone/...) belongs to a wider surface this page
+// helper's action set (rerun/share/...) belongs to a wider surface this page
 // does not use).
 function canCancel(status: RunStatus): boolean {
   return status === "running" || status === "pending";

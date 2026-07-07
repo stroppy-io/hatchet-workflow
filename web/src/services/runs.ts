@@ -180,19 +180,21 @@ export interface WorkloadSegmentVM {
  * no speculative operations:
  *   * "view"      -> in-app route /runs/:id (no RPC; always available).
  *   * "share"     -> copy an in-app /runs/:id link (no RPC; always available).
- *   * "clone"     -> in-app route /runs/new?from=:id ("New from run"; seeds the
- *                    wizard from this run's spec — always available).
  *   * "cancel"    -> RecipeService.CancelRun  (running / pending only).
  *   * "rerun"     -> RecipeService.StartRun on the run's originating recipe
  *                    (terminal states only: completed / failed / cancelled).
  *   * "delete"    -> RecipeService.DeleteRun  (anything NOT running).
  * Favorite toggling is intentionally NOT a RunAction menu item: it maps to the
  * cross-resource FavoriteService AddFavorite/RemoveFavorite pair.
+ *
+ * A "clone"/"New from run" action was removed here: it pointed at
+ * /runs/new?from=:id, a route that was never wired to any handler (dead —
+ * re-running a recipe run is already covered by "rerun", which relaunches the
+ * run's originating recipe bundle via RecipeService.StartRun).
  */
 export type RunAction =
   | "view"
   | "share"
-  | "clone"
   | "cancel"
   | "rerun"
   | "delete";
@@ -220,7 +222,7 @@ export type RunAction =
  *   * Share    — always (copies the in-app run link).
  */
 export function actionsForStatus(status: RunStatus): Set<RunAction> {
-  const set = new Set<RunAction>(["view", "share", "clone"]);
+  const set = new Set<RunAction>(["view", "share"]);
   const canCancel = status === "running" || status === "pending";
   const inFlight = canCancel || status === "cancelling";
   const terminal =
