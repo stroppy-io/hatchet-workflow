@@ -46,16 +46,50 @@ const (
 // + check-mode compilation, both stateless and side-effect-free.
 type DslService struct {
 	*dslpb.UnimplementedDslServiceServer
+	versions VersionSource
 }
 
 var _ dslpb.DslServiceServer = (*DslService)(nil)
 
+// VersionSource lists known Stroppy release versions Check/Preview validate
+// a recipe's stroppy service image tag against (Task 7 — audit Part A #3:
+// nothing validated a recipe's stroppy image/version before this, so a
+// bogus pin only failed late, at container-pull/exec). Structurally
+// identical to internal/services/stroppy.VersionSource; kept as its own
+// interface here rather than importing that unrelated service package —
+// any implementation of one already satisfies the other.
+type VersionSource interface {
+	List(ctx context.Context) ([]string, error)
+}
+
+// Option configures an optional DslService dependency. WithVersionSource is
+// the only one today (Task 7); see NewDslService's doc comment for why
+// DslService has no XDeps-struct constructor like its siblings.
+type Option func(*DslService)
+
+// WithVersionSource injects the known-stroppy-versions source Check/Preview
+// validate a recipe's stroppy service image tag against. Omitted (every
+// call site but internal/app/run.go's production wiring omits it, including
+// every existing test), Check/Preview behave exactly as before this task:
+// no stroppy-version diagnostic at all, never a false "unknown version" for
+// a tag no source was configured to confirm.
+func WithVersionSource(vs VersionSource) Option {
+	return func(s *DslService) { s.versions = vs }
+}
+
 // NewDslService constructs the DSL connect handler. It is deliberately
-// dependency-free, unlike every sibling service's XDeps-struct constructor
-// — v1 has no storage or collaborator of its own to inject (see the package
-// doc); a future persistent provider catalog (spec §11) would add one.
-func NewDslService() *DslService {
-	return &DslService{UnimplementedDslServiceServer: &dslpb.UnimplementedDslServiceServer{}}
+// dependency-free by default, unlike every sibling service's XDeps-struct
+// constructor — v1 has no storage or collaborator of its own to inject (see
+// the package doc); a future persistent provider catalog (spec §11) would
+// add one. WithVersionSource (Task 7) is the sole opt-in exception, added
+// as a variadic Option rather than a Deps struct so every pre-existing
+// zero-arg NewDslService() call site keeps compiling unchanged.
+func NewDslService(opts ...Option) *DslService {
+	s := &DslService{UnimplementedDslServiceServer: &dslpb.UnimplementedDslServiceServer{}}
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s
 }
 
 // ComposedSchema returns the dynamic JSON Schema for req's bundle: the core
@@ -100,28 +134,37 @@ func (s *DslService) ComposedSchema(_ context.Context, req *dslpb.ComposedSchema
 // Check compiles req's bundle in check-mode and returns every diagnostic the
 // full dsl.Compile pipeline finds (schema, decode, contract, graph,
 // lowering), plus this handler's own provider-resolution diagnostics
-// (unresolvable provider.use, missing manifest, failed schema derivation).
-// It NEVER returns an RPC error for a problem in the bundle itself — every
+// (unresolvable provider.use, missing manifest, failed schema derivation)
+// and, when a VersionSource was injected via WithVersionSource, Task 7's
+// advisory stroppy-version diagnostic (see validateStroppyVersion). It
+// NEVER returns an RPC error for a problem in the bundle itself — every
 // user-input problem comes back as a Diagnostic entry, exactly like an IDE
 // linter would report it. An RPC error would mean a transport-level failure
 // only; nothing in this method's current implementation produces one.
+//
+// This calls CompileBundle directly rather than the CheckBundle package
+// function (which wraps it and discards the plan): validateStroppyVersion
+// needs the compiled plan's services, and CheckBundle's error return is
+// documented as always nil today anyway (see its own doc comment), so
+// nothing is lost by not going through it here.
 func (s *DslService) Check(ctx context.Context, req *dslpb.CheckRequest) (*dslpb.CheckResponse, error) {
-	diags, err := CheckBundle(ctx, req.GetFiles())
-	if err != nil {
-		return nil, err
-	}
-	return &dslpb.CheckResponse{Diagnostics: diags}, nil
+	plan, diags := CompileBundle(req.GetFiles())
+	validateStroppyVersion(ctx, plan, s.versions, &diags)
+	return &dslpb.CheckResponse{Diagnostics: toProtoDiagnostics(diags)}, nil
 }
 
 // Preview compiles req's bundle via CompileBundle and returns the resolved
 // CompiledPlan (machine groups, services, job DAG) alongside every
 // diagnostic — the "what will be provisioned" surface the RecipeEditor's
-// preview panel renders before a user clicks Run. Like Check, it never
-// returns an RPC error for a problem in the bundle itself: a bundle that
-// fails to compile still comes back with a nil Plan and the diagnostics
-// explaining why, never a transport-level error.
-func (s *DslService) Preview(_ context.Context, req *dslpb.PreviewRequest) (*dslpb.PreviewResponse, error) {
+// preview panel renders before a user clicks Run — plus, when a
+// VersionSource was injected via WithVersionSource, Task 7's advisory
+// stroppy-version diagnostic (see validateStroppyVersion). Like Check, it
+// never returns an RPC error for a problem in the bundle itself: a bundle
+// that fails to compile still comes back with a nil Plan and the
+// diagnostics explaining why, never a transport-level error.
+func (s *DslService) Preview(ctx context.Context, req *dslpb.PreviewRequest) (*dslpb.PreviewResponse, error) {
 	plan, diags := CompileBundle(req.GetFiles())
+	validateStroppyVersion(ctx, plan, s.versions, &diags)
 	if diags.HasErrors() {
 		plan = nil
 	}
@@ -395,6 +438,81 @@ func deriveProviderSchema(files map[string][]byte, name string) (params, ext map
 
 	params, ext, err = schema.DeriveParamsSchema(tmp)
 	return params, ext, diags, err
+}
+
+// validateStroppyVersion appends a Warning diagnostic to diags when plan
+// names an identifiable stroppy service (findStroppySvc) whose image tag is
+// absent from versions' known-releases list (Task 7). It is deliberately
+// advisory, never an Error: the known-versions list (backed by GitHub
+// Releases — see internal/services/stroppy.Service.ListStroppyVersions and
+// internal/infrastructure/adapters.GitHubStroppyVersionSource) may be stale
+// or momentarily unreachable, and a self-hosted/custom stroppy image is a
+// legitimate recipe that will never appear in stroppy-io/stroppy's release
+// list at all — neither should ever hard-fail a compile.
+//
+// versions == nil (WithVersionSource was never passed to NewDslService — the
+// default) or a plan with no identifiable stroppy service skip silently:
+// this function only flags a KNOWN-BAD pinned tag, it does not enforce that
+// a recipe have a stroppy service in the first place (the graph/contract
+// compile stages already do that where required). "latest" and an untagged
+// image (Docker's own implicit "latest") are likewise skipped — a floating
+// tag has no fixed version to check against a release list. A
+// versions.List failure (network error, GitHub rate limit, ...) also skips
+// rather than warning: a transient version-source outage must not read as
+// "every recipe's stroppy tag is unknown".
+func validateStroppyVersion(ctx context.Context, plan *dslpb.CompiledPlan, versions VersionSource, diags *diag.List) {
+	if versions == nil || plan == nil {
+		return
+	}
+	svc := findStroppySvc(plan.GetServices())
+	if svc == nil {
+		return
+	}
+	tag := strings.ToLower(stroppyImageTag(svc.GetImage()))
+	if tag == "" || tag == "latest" {
+		return
+	}
+	known, err := versions.List(ctx)
+	if err != nil {
+		return
+	}
+	normalized := strings.TrimPrefix(tag, "v")
+	for _, v := range known {
+		if strings.EqualFold(strings.TrimPrefix(v, "v"), normalized) {
+			return
+		}
+	}
+	diags.Add(diag.Diagnostic{
+		Severity: diag.Warning,
+		Path:     clusterFile,
+		Message:  fmt.Sprintf("stroppy version %q not found in known releases; run may fail if the image is unavailable", tag),
+		Module:   "stroppy",
+	})
+}
+
+// findStroppySvc identifies plan's benchmark-runner ServiceSpec using the
+// same best-effort convention internal/workflows.findStroppySvc anchors its
+// own Summary derivation on (see that function's doc comment): named
+// "stroppy", or an image prefixed "stroppy:"/"stroppy/". That function is
+// unexported in an otherwise-unrelated, Temporal-SDK-heavy package, so the
+// tiny heuristic is mirrored here rather than imported.
+func findStroppySvc(services []*dslpb.ServiceSpec) *dslpb.ServiceSpec {
+	for _, svc := range services {
+		name := strings.ToLower(svc.GetName())
+		image := strings.ToLower(svc.GetImage())
+		if name == "stroppy" || strings.HasPrefix(image, "stroppy:") || strings.HasPrefix(image, "stroppy/") {
+			return svc
+		}
+	}
+	return nil
+}
+
+// stroppyImageTag extracts the tag portion of a ServiceSpec image
+// ("stroppy:1.2.3" -> "1.2.3"). An image with no ":" (bare "stroppy",
+// implicitly Docker's "latest") returns "".
+func stroppyImageTag(image string) string {
+	_, tag, _ := strings.Cut(image, ":")
+	return tag
 }
 
 // joinDiagMessages flattens a diag.List's messages into one string, for the

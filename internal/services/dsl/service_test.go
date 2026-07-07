@@ -237,3 +237,117 @@ func TestCheckMissingProviderManifestIsDiagnosticNotError(t *testing.T) {
 		t.Fatalf("expected a diagnostic naming the missing yandex manifest, got %+v", resp.GetDiagnostics())
 	}
 }
+
+// fakeVersionSource is a test-only VersionSource returning a fixed list,
+// standing in for internal/services/stroppy's GitHub-backed one (Task 7).
+type fakeVersionSource struct {
+	versions []string
+	err      error
+}
+
+func (f fakeVersionSource) List(context.Context) ([]string, error) {
+	return f.versions, f.err
+}
+
+// withStroppyImage returns a copy of files with cluster.yaml's stroppy
+// service image tag replaced by image (e.g. "stroppy:9.9.9-bogus"),
+// standing in for a hand-edited recipe pinning an arbitrary stroppy
+// version. postgres-ha's fixture pins "image: stroppy:latest" (see
+// examples/dsl/postgres-ha/cluster.yaml).
+func withStroppyImage(t *testing.T, files map[string][]byte, image string) map[string][]byte {
+	t.Helper()
+
+	out := make(map[string][]byte, len(files))
+	for k, v := range files {
+		out[k] = v
+	}
+	cluster, ok := out[clusterFile]
+	if !ok {
+		t.Fatalf("bundle has no %s", clusterFile)
+	}
+	patched := bytes.Replace(cluster, []byte("image: stroppy:latest"), []byte("image: "+image), 1)
+	if bytes.Equal(patched, cluster) {
+		t.Fatalf("expected to patch %s's stroppy image, but %q was not found", clusterFile, "image: stroppy:latest")
+	}
+	out[clusterFile] = patched
+	return out
+}
+
+// findDiagnostic returns the first diagnostic whose Module and Message
+// (substring, case-insensitive) match, or nil.
+func findDiagnostic(diags []*dslpb.Diagnostic, module, messageContains string) *dslpb.Diagnostic {
+	for _, d := range diags {
+		if d.GetModule() == module && strings.Contains(strings.ToLower(d.GetMessage()), strings.ToLower(messageContains)) {
+			return d
+		}
+	}
+	return nil
+}
+
+func TestCheckUnknownStroppyVersionWarns(t *testing.T) {
+	svc := NewDslService(WithVersionSource(fakeVersionSource{versions: []string{"1.0.0", "2.0.0"}}))
+	files := withStroppyImage(t, loadBundle(t, postgresHADir), "stroppy:9.9.9-bogus")
+
+	resp, err := svc.Check(context.Background(), &dslpb.CheckRequest{Files: files})
+	if err != nil {
+		t.Fatalf("Check must never return an RPC error for a bundle-content problem, got: %v", err)
+	}
+
+	d := findDiagnostic(resp.GetDiagnostics(), "stroppy", "9.9.9-bogus")
+	if d == nil {
+		t.Fatalf("expected a diagnostic naming the unknown stroppy version %q, got %+v", "9.9.9-bogus", resp.GetDiagnostics())
+	}
+	if d.GetSeverity() != dslpb.Severity_SEVERITY_WARNING {
+		t.Fatalf("expected the stroppy-version diagnostic to be a WARNING (advisory only), got %v", d.GetSeverity())
+	}
+}
+
+func TestCheckKnownStroppyVersionNoWarning(t *testing.T) {
+	svc := NewDslService(WithVersionSource(fakeVersionSource{versions: []string{"1.0.0", "2.0.0"}}))
+	files := withStroppyImage(t, loadBundle(t, postgresHADir), "stroppy:2.0.0")
+
+	resp, err := svc.Check(context.Background(), &dslpb.CheckRequest{Files: files})
+	if err != nil {
+		t.Fatalf("Check must never return an RPC error for a bundle-content problem, got: %v", err)
+	}
+
+	if d := findDiagnostic(resp.GetDiagnostics(), "stroppy", "not found in known releases"); d != nil {
+		t.Fatalf("expected no stroppy-version diagnostic for a known tag, got %+v", d)
+	}
+}
+
+func TestCheckNoVersionSourceSkipsStroppyValidation(t *testing.T) {
+	// No WithVersionSource — the default every pre-Task-7 call site uses.
+	// An unknown/bogus tag must not warn: absent a version source, there is
+	// nothing to validate against, and the check must not manufacture a
+	// false "unknown version" out of that absence.
+	svc := NewDslService()
+	files := withStroppyImage(t, loadBundle(t, postgresHADir), "stroppy:9.9.9-bogus")
+
+	resp, err := svc.Check(context.Background(), &dslpb.CheckRequest{Files: files})
+	if err != nil {
+		t.Fatalf("Check must never return an RPC error for a bundle-content problem, got: %v", err)
+	}
+	if d := findDiagnostic(resp.GetDiagnostics(), "stroppy", "not found in known releases"); d != nil {
+		t.Fatalf("expected no stroppy-version diagnostic without an injected VersionSource, got %+v", d)
+	}
+}
+
+func TestPreviewUnknownStroppyVersionWarns(t *testing.T) {
+	svc := NewDslService(WithVersionSource(fakeVersionSource{versions: []string{"1.0.0"}}))
+	files := withStroppyImage(t, loadBundle(t, postgresHADir), "stroppy:9.9.9-bogus")
+
+	resp, err := svc.Preview(context.Background(), &dslpb.PreviewRequest{Files: files})
+	if err != nil {
+		t.Fatalf("Preview must never return an RPC error for a bundle-content problem, got: %v", err)
+	}
+	if d := findDiagnostic(resp.GetDiagnostics(), "stroppy", "9.9.9-bogus"); d == nil {
+		t.Fatalf("expected a diagnostic naming the unknown stroppy version, got %+v", resp.GetDiagnostics())
+	}
+	// The stroppy-version diagnostic is a warning, not an error, so a
+	// bundle that otherwise compiles cleanly must still return a non-nil
+	// plan (Preview only nils the plan when diags.HasErrors()).
+	if resp.GetPlan() == nil {
+		t.Fatal("expected a non-nil plan: the stroppy-version diagnostic is advisory, not an error")
+	}
+}

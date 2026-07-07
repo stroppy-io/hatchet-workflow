@@ -385,7 +385,11 @@ func Run(ctx context.Context, cfg Config) error {
 	// doc) — the browser IDE's schema/lint surface over internal/dsl, not
 	// exposed via GraphQL/REST (map<string, bytes> has no clean surface
 	// there; see (graphqlopt.service).skip on cloud/v1/dsl/service.proto).
-	dslService := dslsvc.NewDslService()
+	// WithVersionSource reuses the same stroppyVersions source ListStroppyVersions
+	// serves (Task 7): Check/Preview add an advisory warning when a recipe's
+	// stroppy service pins an image tag absent from that known-releases list,
+	// so a bogus version fails fast in the editor instead of at container-pull.
+	dslService := dslsvc.NewDslService(dslsvc.WithVersionSource(stroppyVersions))
 
 	// recipeWorkflows launches RunRecipeWorkflow for RecipeService.StartRun.
 	recipeWorkflows := execution.NewRecipeWorkflows(tc, resolver, log)
