@@ -131,11 +131,30 @@ func (p *dockerProvider) Provision(ctx context.Context, ref *dslpb.ProviderRef, 
 				return nil, fmt.Errorf("render agent bootstrap env for %q: %w", nodeID, err)
 			}
 
+			// The agent image runs systemd as PID 1 (see
+			// deployments/docker/agent.Dockerfile), and its stroppy-agent.service
+			// unit reads its env from EnvironmentFile=/etc/stroppy-agent.env —
+			// docker-level Env is NOT inherited by systemd services — so the
+			// bootstrap env is delivered as that file. systemd itself needs
+			// privileged + the host cgroup ns + a writable /run tmpfs +
+			// the host cgroup fs bind-mounted, exactly as the pre-DSL docker
+			// deployer ran these containers.
 			spec := ContainerSpec{
-				Name:    containerName,
-				Image:   params.Image,
-				Network: params.Network,
-				Env:     env,
+				Name:         containerName,
+				Image:        params.Image,
+				Network:      params.Network,
+				Env:          env,
+				Privileged:   true,
+				CgroupnsMode: "host",
+				Tmpfs:        map[string]string{"/run": "exec,mode=755", "/run/lock": ""},
+				Binds:        []string{"/sys/fs/cgroup:/sys/fs/cgroup:rw"},
+				Files: []ContainerFile{
+					{
+						Path:    agentdomain.DockerEnvFilePath,
+						Content: []byte(agentdomain.EnvFileFromMap(env)),
+						Mode:    0o644,
+					},
+				},
 				Labels: map[string]string{
 					"stroppy.cloud/run_id":  params.RunID,
 					"stroppy.cloud/node_id": nodeID,
@@ -181,7 +200,12 @@ func (p *dockerProvider) Provision(ctx context.Context, ref *dslpb.ProviderRef, 
 		}
 
 		if params.GatewayGroup != "" && group.GetName() == params.GatewayGroup {
-			nomadSpec := nomadGatewayContainer(params.RunID, params.Network, params.NomadVersion)
+			// The gateway node is the first machine of the gateway group
+			// (idx 0), matching RunRecipeWorkflow.pickGatewayNodeID's "first
+			// machine of the gateway group" convention; the sidecar advertises
+			// that node id so service jobs targeting it place successfully.
+			gatewayNodeID := fmt.Sprintf("%s-0", group.GetName())
+			nomadSpec := nomadGatewayContainer(params.RunID, params.Network, params.NomadVersion, gatewayNodeID)
 			if _, err := p.exec.EnsureContainer(ctx, nomadSpec); err != nil {
 				return nil, fmt.Errorf("ensure nomad gateway container %q: %w", nomadSpec.Name, err)
 			}
@@ -228,8 +252,9 @@ func nomadContainerName(runID string) string {
 //     "agent -config=<NomadConfigDir>" — the entrypoint just execs
 //     "nomad $@", it does not read any NOMAD_LOCAL_CONFIG-style env var, so
 //     the config MUST land on disk before the container starts.
-//   - Config is agentdomain.NomadServerHCL() (the same single-node
-//     server+client HCL cloud-init renders for NomadRoleServer), delivered
+//   - Config is agentdomain.NomadGatewayHCL(gatewayNodeID) (the single-node
+//     server+client HCL, additionally stamping meta.stroppy_node_id =
+//     gatewayNodeID so BuildJob's per-node constraint matches), delivered
 //     via ContainerSpec.Files at agentdomain.NomadServerHCLPath — Executor
 //     copies files into the container before ContainerStart (see
 //     docker_adapter.go/executor.go), so the file is present when Nomad's
@@ -246,20 +271,17 @@ func nomadContainerName(runID string) string {
 //     network override would be a docker.Executor/proto change, out of
 //     scope for this task (flagged in task-2-report.md).
 //
-// KNOWN GAP (documented, not fixed here — a 1D concern): NomadServerHCL
-// renders NomadRoleServer, which stamps NO meta.stroppy_node_id (only
-// NomadRoleClient does, see bootstrap.go's renderNomadHCL). nomad.BuildJob
-// pins every task group with a `${meta.stroppy_node_id} == NodeID`
-// constraint (jobspec.go's nodeIDMetaAttr), so on this single-node docker
-// Nomad, no task group's constraint will ever match — placement fails for
-// any node id BuildJob is given. Resolving this needs either (a) the docker
-// service-job path dropping/relaxing that per-node constraint, or (b)
-// teaching this single node to stamp every requested NodeID's meta — both
-// are internal/dsl/nomad (jobspec.go) or run/recipe-orchestration changes,
-// out of scope here per the task's scope guard. This function only renders
-// the sidecar container; the constraint reconciliation is left to the 1D
-// docker-scheduling integration task.
-func nomadGatewayContainer(runID, network, version string) ContainerSpec {
+// NODE-CONSTRAINT RECONCILIATION: nomad.BuildJob pins every task group with a
+// `${meta.stroppy_node_id} == NodeID` constraint (jobspec.go's nodeIDMetaAttr).
+// The sidecar advertises gatewayNodeID as its client's meta.stroppy_node_id
+// (via agentdomain.NomadGatewayHCL), so a service job targeting the gateway
+// node places successfully on this single-node Nomad. A single combined
+// server+client can only advertise ONE node id, so a docker service job that
+// fans a group across multiple nodes still cannot place its non-gateway task
+// groups — that multi-node case remains a terraform/cloud (real multi-client
+// Nomad) concern. Docker recipes are expected to run their service jobs on the
+// gateway node's group.
+func nomadGatewayContainer(runID, network, version, gatewayNodeID string) ContainerSpec {
 	if version == "" {
 		version = agentdomain.DefaultNomadVersion
 	}
@@ -268,12 +290,20 @@ func nomadGatewayContainer(runID, network, version string) ContainerSpec {
 		Image:      fmt.Sprintf("hashicorp/nomad:%s", version),
 		Network:    network,
 		Privileged: true,
-		Binds:      []string{"/var/run/docker.sock:/var/run/docker.sock"},
-		Cmd:        []string{"agent", "-config=" + agentdomain.NomadConfigDir},
+		// Nomad's client fingerprinter creates cgroups; inside a container on a
+		// cgroup v2 host it fails ("failed to create nomad cgroup: write
+		// /sys/fs/cgroup/cgroup.subtree_control: device or resource busy")
+		// unless it shares the host cgroup namespace.
+		CgroupnsMode: "host",
+		Binds: []string{
+			"/var/run/docker.sock:/var/run/docker.sock",
+			"/sys/fs/cgroup:/sys/fs/cgroup:rw",
+		},
+		Cmd: []string{"agent", "-config=" + agentdomain.NomadConfigDir},
 		Files: []ContainerFile{
 			{
 				Path:    agentdomain.NomadServerHCLPath,
-				Content: []byte(agentdomain.NomadServerHCL()),
+				Content: []byte(agentdomain.NomadGatewayHCL(gatewayNodeID)),
 				Mode:    0o644,
 			},
 		},

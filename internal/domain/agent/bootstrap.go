@@ -272,6 +272,23 @@ func NomadServerHCL() string {
 	return renderNomadHCL(NomadRoleServer, "", "")
 }
 
+// NomadGatewayHCL renders the docker gateway sidecar's Nomad config: the same
+// single-node server+client as NomadServerHCL, but additionally stamping
+// meta.stroppy_node_id = machineID on the combined client so nomad.BuildJob's
+// per-node placement constraint (${meta.stroppy_node_id} == NodeID) matches a
+// service job targeting the gateway node. This is what makes docker service
+// jobs schedulable on the single-node Nomad: the sidecar advertises itself as
+// the gateway node. An empty machineID degrades to NomadServerHCL (no meta).
+//
+// Limitation: one combined node can only advertise ONE stroppy_node_id, so a
+// docker service job that fans a group across several nodes still cannot place
+// its non-gateway task groups — multi-node service placement remains a
+// terraform/cloud (real multi-client Nomad) concern. Docker recipes are
+// expected to run their service jobs on the gateway node's group.
+func NomadGatewayHCL(machineID string) string {
+	return renderNomadHCL(NomadRoleServer, "", machineID)
+}
+
 // renderNomadHCL renders the /etc/nomad.d/{server,client}.hcl content for
 // role. serverAddr is the Nomad server's advertise address a client joins
 // (ignored for NomadRoleServer); machineID is stamped into a client's
@@ -296,6 +313,15 @@ func renderNomadHCL(role NomadRole, serverAddr, machineID string) string {
 		b.WriteString("}\n\n")
 		b.WriteString("client {\n")
 		b.WriteString("  enabled = true\n")
+		if machineID != "" {
+			// Stamp the single combined server+client node with the gateway
+			// node's id so nomad.BuildJob's ${meta.stroppy_node_id} == NodeID
+			// placement constraint matches a service job targeting it (the
+			// docker single-node case — see NomadGatewayHCL).
+			b.WriteString("  meta {\n")
+			fmt.Fprintf(&b, "    stroppy_node_id = %q\n", machineID)
+			b.WriteString("  }\n")
+		}
 		b.WriteString("}\n\n")
 	case NomadRoleClient:
 		b.WriteString("client {\n")

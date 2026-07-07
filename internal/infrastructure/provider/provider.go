@@ -102,6 +102,13 @@ type ContainerSpec struct {
 	Binds      []string
 	Cmd        []string
 	Files      []ContainerFile
+	// Tmpfs and CgroupnsMode support systemd-in-container images (the agent
+	// runs systemd as PID 1): systemd needs a writable /run tmpfs and, on
+	// cgroup v2 hosts, the host cgroup namespace to manage its own cgroups.
+	// Zero values (nil / "") reproduce the pre-existing behavior for every
+	// non-systemd container.
+	Tmpfs        map[string]string
+	CgroupnsMode string
 }
 
 // ContainerFile is a single file EnsureContainer should have the container

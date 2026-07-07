@@ -64,6 +64,23 @@ func TestDocker_Provision_OneContainerPerMachineWithBootstrapEnv(t *testing.T) {
 		require.Equal(t, "http://gateway:8080/agent/binary", spec.Env["STROPPY_AGENT_BINARY_URL"])
 		require.Equal(t, "run-1", spec.Env["STROPPY_RUN_ID"])
 		require.Equal(t, "runner", spec.Labels["group"])
+
+		// The agent image runs systemd as PID 1: it must be privileged, share
+		// the host cgroup ns, get a writable /run tmpfs + the host cgroup fs,
+		// and receive its env as a FILE (systemd services do not inherit docker
+		// env) at agentdomain.DockerEnvFilePath.
+		require.True(t, spec.Privileged, "systemd agent container must be privileged")
+		require.Equal(t, "host", spec.CgroupnsMode)
+		require.Contains(t, spec.Tmpfs, "/run")
+		require.Contains(t, spec.Binds, "/sys/fs/cgroup:/sys/fs/cgroup:rw")
+		var envFile *ContainerFile
+		for i := range spec.Files {
+			if spec.Files[i].Path == agentdomain.DockerEnvFilePath {
+				envFile = &spec.Files[i]
+			}
+		}
+		require.NotNil(t, envFile, "agent env must be delivered as %s", agentdomain.DockerEnvFilePath)
+		require.Contains(t, string(envFile.Content), "STROPPY_SERVER_ADDR=http://gateway:8080")
 	}
 	require.Len(t, byName, 2, "container names must be unique per machine")
 
@@ -192,17 +209,23 @@ func TestDocker_Provision_GatewayGroup_RendersNomadSidecarContainer(t *testing.T
 	require.Equal(t, "hashicorp/nomad:"+agentdomain.DefaultNomadVersion, nomadSpec.Image)
 	require.True(t, nomadSpec.Privileged, "nomad sidecar must run privileged for the docker task driver")
 	require.Contains(t, nomadSpec.Binds, "/var/run/docker.sock:/var/run/docker.sock")
+	require.Contains(t, nomadSpec.Binds, "/sys/fs/cgroup:/sys/fs/cgroup:rw")
+	require.Equal(t, "host", nomadSpec.CgroupnsMode, "nomad client needs the host cgroup ns on cgroup v2")
 	require.Equal(t, []string{"agent", "-config=" + agentdomain.NomadConfigDir}, nomadSpec.Cmd)
 	require.NotEmpty(t, nomadSpec.Network)
 
 	require.Len(t, nomadSpec.Files, 1)
 	configFile := nomadSpec.Files[0]
 	require.Equal(t, agentdomain.NomadServerHCLPath, configFile.Path)
-	require.Equal(t, agentdomain.NomadServerHCL(), string(configFile.Content))
+	// The gateway group here is "gateway", so its first node is "gateway-0";
+	// the sidecar stamps that as meta.stroppy_node_id so service jobs targeting
+	// the gateway node place (nomad.BuildJob's per-node constraint).
+	require.Equal(t, agentdomain.NomadGatewayHCL("gateway-0"), string(configFile.Content))
 	// The rendered server config must actually configure a Nomad server +
-	// docker driver, not just be non-empty.
+	// docker driver and stamp the gateway node meta, not just be non-empty.
 	require.Contains(t, string(configFile.Content), "server {")
 	require.Contains(t, string(configFile.Content), `plugin "docker"`)
+	require.Contains(t, string(configFile.Content), `stroppy_node_id = "gateway-0"`)
 
 	// The nomad sidecar is infrastructure the docker provider adds
 	// transparently; it must not show up as a requested machine's state.
