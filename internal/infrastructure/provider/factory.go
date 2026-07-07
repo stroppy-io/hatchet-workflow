@@ -47,6 +47,22 @@ type Deps struct {
 	// built (builtin-only vs. builtin+recipe-storage-backed) is the caller's
 	// choice.
 	ModuleDir func(providerName string) (dir string, tfFiles []terraform.TfFile, ok bool)
+	// AgentTokens issues the per-node agent bearer token the docker builtin
+	// bakes into each agent container's STROPPY_AGENT_TOKEN env (the agent
+	// refuses to start without one — see cmd/cli/agent_cmd.go — and the
+	// gateway's Temporal proxy rejects an unauthenticated worker). Only the
+	// docker branch uses it; terraform-module providers issue their tokens
+	// through the classic attachAgentTokens path instead. Nil is tolerated
+	// (tests whose fake DockerExec never runs a real agent), in which case the
+	// docker provider renders no token.
+	AgentTokens AgentTokenIssuer
+}
+
+// AgentTokenIssuer mints an agent bearer token scoped to a single
+// (tenant, run, machine, task-queue). It is the minimal surface of
+// internal/domain/agent.TokenService.IssueAgentToken the docker provider needs.
+type AgentTokenIssuer interface {
+	IssueAgentToken(tenantID, runID, machineID, taskQueue string) (string, error)
 }
 
 // NewProviderForRef returns the Provider that provisions/destroys machines
@@ -62,7 +78,7 @@ func NewProviderForRef(ref *dslpb.ProviderRef, deps Deps) (Provider, error) {
 		if deps.DockerExec == nil {
 			return nil, fmt.Errorf("provider %q: no DockerExec configured", name)
 		}
-		return NewDocker(deps.DockerExec), nil
+		return NewDocker(deps.DockerExec, deps.AgentTokens), nil
 	}
 
 	if deps.ModuleDir == nil {

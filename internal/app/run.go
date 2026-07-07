@@ -442,9 +442,10 @@ func Run(ctx context.Context, cfg Config) error {
 		"YC_ZONE":      os.Getenv("YC_ZONE"),
 	}
 	providerDeps := provider.Deps{
-		DockerExec: provider.NewDockerExecutorExec(dockerExecutor),
-		Actor:      terraformActor,
-		Env:        providerEnv,
+		DockerExec:  provider.NewDockerExecutorExec(dockerExecutor),
+		Actor:       terraformActor,
+		Env:         providerEnv,
+		AgentTokens: agentTokens,
 		ModuleDir: func(name string) (string, []terraform.TfFile, bool) {
 			if name != "yandex" {
 				return "", nil, false

@@ -22,14 +22,16 @@ const defaultAgentImage = "stroppy-agent:latest"
 // convention as the pre-DSL renderDockerInput/agentdomain path), with no
 // terraform module involved.
 type dockerProvider struct {
-	exec dockerExec
+	exec   dockerExec
+	tokens AgentTokenIssuer
 }
 
 // NewDocker builds the docker builtin Provider. exec performs the actual
 // container lifecycle (see dockerExec for the adaptation gap against the
-// real docker.Executor runner).
-func NewDocker(exec dockerExec) Provider {
-	return &dockerProvider{exec: exec}
+// real docker.Executor runner). tokens mints each agent container's bearer
+// token; nil is tolerated (tests) and renders agents with no token.
+func NewDocker(exec dockerExec, tokens AgentTokenIssuer) Provider {
+	return &dockerProvider{exec: exec, tokens: tokens}
 }
 
 // dockerParams is the dynamic shape of a docker ProviderRef.ParamsJson: it
@@ -42,6 +44,7 @@ type dockerParams struct {
 	ServerAddr string            `json:"server_addr"`
 	BinaryURL  string            `json:"binary_url"`
 	RunID      string            `json:"run_id"`
+	TenantID   string            `json:"tenant_id"`
 	Env        map[string]string `json:"env"`
 
 	// GatewayGroup, when set, names the MachineGroup that is this run's
@@ -99,12 +102,31 @@ func (p *dockerProvider) Provision(ctx context.Context, ref *dslpb.ProviderRef, 
 			nodeID := fmt.Sprintf("%s-%d", group.GetName(), idx)
 			containerName := dockerContainerName(params.RunID, nodeID)
 
-			env, err := agentdomain.Env(nodeID, agentdomain.Bootstrap{
+			// The agent refuses to start without a token + task queue
+			// (cmd/cli/agent_cmd.go), and the gateway Temporal proxy rejects an
+			// unauthenticated worker. Issue a token scoped to this node's
+			// deterministic TaskQueue(nodeID) — the SAME queue
+			// RunRecipeWorkflow.bootstrapWithAgentQueues routes service jobs to,
+			// so the two agree without any handshake. When no issuer is wired
+			// (tests with a fake exec that never runs a real agent) the agent is
+			// rendered without a token, preserving the pre-token test behavior.
+			bootstrap := agentdomain.Bootstrap{
 				ServerAddr: params.ServerAddr,
 				BinaryURL:  params.BinaryURL,
 				RunID:      params.RunID,
 				ExtraEnv:   params.Env,
-			})
+			}
+			if p.tokens != nil {
+				queue := agentdomain.TaskQueue(nodeID)
+				token, terr := p.tokens.IssueAgentToken(params.TenantID, params.RunID, nodeID, queue)
+				if terr != nil {
+					return nil, fmt.Errorf("issue agent token for %q: %w", nodeID, terr)
+				}
+				bootstrap.AgentToken = token
+				bootstrap.AgentTaskQueue = queue
+			}
+
+			env, err := agentdomain.Env(nodeID, bootstrap)
 			if err != nil {
 				return nil, fmt.Errorf("render agent bootstrap env for %q: %w", nodeID, err)
 			}

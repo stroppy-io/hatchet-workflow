@@ -47,7 +47,7 @@ func dockerRef() *dslpb.ProviderRef {
 
 func TestDocker_Provision_OneContainerPerMachineWithBootstrapEnv(t *testing.T) {
 	fake := &fakeDockerExec{}
-	p := NewDocker(fake)
+	p := NewDocker(fake, nil)
 
 	groups := []*dslpb.MachineGroup{runnerGroup()}
 	result, err := p.Provision(context.Background(), dockerRef(), groups)
@@ -82,6 +82,49 @@ func TestDocker_Provision_OneContainerPerMachineWithBootstrapEnv(t *testing.T) {
 	}
 }
 
+// fakeTokenIssuer records the (tenant, run, machine, queue) tuples it was
+// asked to mint tokens for and returns a deterministic sentinel token.
+type fakeTokenIssuer struct {
+	calls []struct{ tenant, run, machine, queue string }
+}
+
+func (f *fakeTokenIssuer) IssueAgentToken(tenantID, runID, machineID, taskQueue string) (string, error) {
+	f.calls = append(f.calls, struct{ tenant, run, machine, queue string }{tenantID, runID, machineID, taskQueue})
+	return "token-" + machineID, nil
+}
+
+// TestDocker_Provision_IssuesAgentTokenPerNode locks the token-injection path:
+// when an issuer is wired, every agent container is rendered with a valid
+// STROPPY_AGENT_TOKEN and an AGENT_TASK_QUEUE equal to the deterministic
+// TaskQueue(nodeID) the token was minted for (so RunRecipeWorkflow's queue
+// routing agrees). Without this the agent refuses to start.
+func TestDocker_Provision_IssuesAgentTokenPerNode(t *testing.T) {
+	fake := &fakeDockerExec{}
+	issuer := &fakeTokenIssuer{}
+	p := NewDocker(fake, issuer)
+
+	ref := &dslpb.ProviderRef{
+		Name: "docker",
+		ParamsJson: `{"image":"stroppy-agent:latest","server_addr":"http://gateway:8080",` +
+			`"run_id":"run-1","tenant_id":"tenant-1"}`,
+	}
+	_, err := p.Provision(context.Background(), ref, []*dslpb.MachineGroup{runnerGroup()})
+	require.NoError(t, err)
+
+	require.Len(t, fake.ensured, 2)
+	for _, spec := range fake.ensured {
+		nodeID := spec.Labels["stroppy.cloud/node_id"]
+		require.Equal(t, "token-"+nodeID, spec.Env["STROPPY_AGENT_TOKEN"])
+		require.Equal(t, agentdomain.TaskQueue(nodeID), spec.Env["AGENT_TASK_QUEUE"])
+	}
+	require.Len(t, issuer.calls, 2)
+	for _, c := range issuer.calls {
+		require.Equal(t, "tenant-1", c.tenant)
+		require.Equal(t, "run-1", c.run)
+		require.Equal(t, agentdomain.TaskQueue(c.machine), c.queue)
+	}
+}
+
 // TestDocker_Provision_StampsEmptyDiskDeviceLabel is the I2 provider-side
 // lock for the docker builtin provider: containers have no block device
 // (ContainerSpec has no volume/bind plumbing today), so disk_device must
@@ -89,7 +132,7 @@ func TestDocker_Provision_OneContainerPerMachineWithBootstrapEnv(t *testing.T) {
 // the "not applicable" convention rather than silently omitting the key.
 func TestDocker_Provision_StampsEmptyDiskDeviceLabel(t *testing.T) {
 	fake := &fakeDockerExec{}
-	p := NewDocker(fake)
+	p := NewDocker(fake, nil)
 
 	groups := []*dslpb.MachineGroup{runnerGroup()}
 	result, err := p.Provision(context.Background(), dockerRef(), groups)
@@ -129,7 +172,7 @@ func dockerRefWithGateway() *dslpb.ProviderRef {
 
 func TestDocker_Provision_GatewayGroup_RendersNomadSidecarContainer(t *testing.T) {
 	fake := &fakeDockerExec{}
-	p := NewDocker(fake)
+	p := NewDocker(fake, nil)
 
 	groups := []*dslpb.MachineGroup{gatewayGroup(), runnerGroup()}
 	result, err := p.Provision(context.Background(), dockerRefWithGateway(), groups)
@@ -171,7 +214,7 @@ func TestDocker_Provision_GatewayGroup_RendersNomadSidecarContainer(t *testing.T
 
 func TestDocker_Provision_NoGatewayGroupSet_NoNomadSidecar(t *testing.T) {
 	fake := &fakeDockerExec{}
-	p := NewDocker(fake)
+	p := NewDocker(fake, nil)
 
 	groups := []*dslpb.MachineGroup{runnerGroup()}
 	_, err := p.Provision(context.Background(), dockerRef(), groups)
@@ -185,7 +228,7 @@ func TestDocker_Provision_NoGatewayGroupSet_NoNomadSidecar(t *testing.T) {
 
 func TestDocker_Destroy_RemovesRunNetwork(t *testing.T) {
 	fake := &fakeDockerExec{}
-	p := NewDocker(fake)
+	p := NewDocker(fake, nil)
 
 	err := p.Destroy(context.Background(), dockerRef())
 	require.NoError(t, err)
