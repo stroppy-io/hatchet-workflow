@@ -6,9 +6,12 @@
 // fully reproducible / auditable without "New from run". The workload section is
 // curated; the database + anything else is rendered generically from the decoded
 // spec so new engines / fields show up without a UI change.
-import { useState } from "react";
-import { ChevronRight, Code2, Database, FileCode, Gauge, Settings2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ChevronRight, Code2, Database, ExternalLink, FileCode, Gauge, Settings2 } from "lucide-react";
 import type { RunVM, WorkloadSegmentVM } from "@/services/runs";
+import { getRecipe, type RecipeVM } from "@/services/recipe";
+import { DslEditor } from "@/components/ui/dsl-editor";
+import { Link, useTenantSlug } from "@/lib/router";
 import { cn } from "@/lib/utils";
 
 function humanizeKey(k: string): string {
@@ -170,10 +173,119 @@ function extractDbParams(db: Record<string, unknown>): { engine: string; params:
   return null;
 }
 
+// Recipe runs persist no Spec by design (they're launched from a DSL bundle,
+// not a baked domain.TestRun). Instead of the generic "No spec available"
+// empty-state, fetch the recipe that produced the run and show its bundle
+// read-only, so the run stays auditable — you can see exactly which
+// cluster.yaml/workflow.yaml/components produced it, and jump to the recipe.
+type RecipeBundleState =
+  | { status: "loading" }
+  | { status: "error"; message: string }
+  | { status: "ready"; recipe: RecipeVM };
+
+function RecipeBundleView({ tenantSlug, recipeId }: { tenantSlug: string; recipeId: string }) {
+  const [state, setState] = useState<RecipeBundleState>({ status: "loading" });
+  const [activePath, setActivePath] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setState({ status: "loading" });
+    getRecipe(tenantSlug, recipeId)
+      .then((recipe) => {
+        if (cancelled) return;
+        setState({ status: "ready", recipe });
+        const paths = Object.keys(recipe.files).sort();
+        setActivePath(paths.includes("cluster.yaml") ? "cluster.yaml" : (paths[0] ?? null));
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setState({ status: "error", message: err instanceof Error ? err.message : String(err) });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [tenantSlug, recipeId]);
+
+  if (state.status === "loading") {
+    return <div className="p-6 text-sm text-muted-foreground">Loading recipe bundle…</div>;
+  }
+
+  if (state.status === "error") {
+    return (
+      <div className="p-6 text-sm text-muted-foreground">
+        Recipe no longer available — this run was launched from recipe{" "}
+        <span className="font-mono text-foreground">{recipeId}</span>.
+      </div>
+    );
+  }
+
+  const { recipe } = state;
+  const paths = Object.keys(recipe.files).sort();
+
+  return (
+    <div className="flex flex-col gap-3 p-1">
+      <div className="flex items-center justify-between rounded-lg border border-border bg-card/40 p-4">
+        <div>
+          <div className="text-sm font-semibold text-foreground">{recipe.name}</div>
+          <div className="text-[11px] text-muted-foreground">
+            v{recipe.version} · {recipe.provider || "—"}
+          </div>
+        </div>
+        <Link
+          to={`/recipes/${recipe.id}`}
+          className="flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+          Open recipe
+        </Link>
+      </div>
+
+      {paths.length === 0 ? (
+        <div className="rounded-lg border border-border bg-card/40 p-3 text-[11px] text-muted-foreground">
+          Recipe bundle has no files.
+        </div>
+      ) : (
+        <div className="rounded-lg border border-border bg-card/40">
+          <div className="flex flex-wrap gap-1 border-b border-border p-2">
+            {paths.map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setActivePath(p)}
+                className={cn(
+                  "rounded px-2 py-1 font-mono text-[11px]",
+                  p === activePath ? "bg-primary/20 text-foreground" : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+          {activePath && (
+            <div className="h-[28rem]">
+              <DslEditor
+                path={activePath}
+                value={recipe.files[activePath] ?? ""}
+                onChange={() => {}}
+                files={recipe.files}
+                readOnly
+              />
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function RunConfigTab({ run }: { run: RunVM }) {
   const [rawOpen, setRawOpen] = useState(false);
+  const tenantSlug = useTenantSlug() ?? "";
 
   if (!run.spec || Object.keys(run.spec).length === 0) {
+    if (run.recipeId) {
+      return <RecipeBundleView tenantSlug={tenantSlug} recipeId={run.recipeId} />;
+    }
     return (
       <div className="p-6 text-sm text-muted-foreground">
         No spec available for this run (list summary only — open the run detail to load the full spec).
