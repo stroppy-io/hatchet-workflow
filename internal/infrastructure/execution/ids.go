@@ -23,13 +23,13 @@ func suiteWorkflowID(suiteRunID string) string {
 // runRecipeWorkflowID is the deterministic RunRecipeWorkflow id for a recipe
 // run id — the parent workflow RecipeWorkflows.LaunchRecipeRun starts (see
 // recipe_workflows.go). Unlike testWorkflowID/suiteWorkflowID, this is not
-// (yet) baked into a generated client's query/cancel options: RunRecipeWorkflow
-// has no proto workflow service of its own (internal/workflows/runrecipe.go
-// registers it directly against the SDK), so there is no query/cancel path
-// wired to this id today — overview's live query still only tries
-// testWorkflowID(runID), degrading to the persisted RuntimeState fallback for
-// a recipe run (see overview.go's package-level note). Extending the live
-// query to try this id too is a documented follow-up.
+// baked into a generated client's query/cancel options: RunRecipeWorkflow has
+// no proto workflow service of its own (internal/workflows/runrecipe.go
+// registers it directly against the SDK). OverviewReader.Get still queries it
+// directly by this id for recipe runs (rec.GetRecipeId() != "") — see
+// overview.go — using the same GetRunState query name RunRecipeWorkflow
+// registers (subproject 1D-T3), so the live query works without a generated
+// client wired to this id.
 func runRecipeWorkflowID(runID string) string {
 	return "run-recipe/" + runID
 }

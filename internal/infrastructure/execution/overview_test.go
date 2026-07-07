@@ -170,6 +170,57 @@ func TestOverviewGetSkipsTemporalWhenPersistedRuntimeStateIsTerminal(t *testing.
 	}
 }
 
+func TestOverviewGetQueriesRunRecipeWorkflowIDForRecipeRuns(t *testing.T) {
+	tc := &capturingRunStateQuerier{
+		state: &workflowpb.RunState{Status: common.Status_STATUS_RUNNING},
+	}
+	reader := &OverviewReader{
+		tc: tc,
+		store: fakeSnapshotStore{
+			run: &models.TestRunRecord{
+				Entity:   &common.Entity{Id: "run-1"},
+				Status:   common.Status_STATUS_RUNNING,
+				RecipeId: "recipe-1",
+			},
+		},
+	}
+
+	if _, err := reader.Get(context.Background(), "run-1"); err != nil {
+		t.Fatalf("get overview: %v", err)
+	}
+	if got, want := tc.calls, 1; got != want {
+		t.Fatalf("temporal queries = %d, want %d", got, want)
+	}
+	if got, want := tc.gotWorkflowID, runRecipeWorkflowID("run-1"); got != want {
+		t.Fatalf("queried workflow id = %q, want %q (recipe run)", got, want)
+	}
+}
+
+func TestOverviewGetQueriesTestWorkflowIDForNonRecipeRuns(t *testing.T) {
+	tc := &capturingRunStateQuerier{
+		state: &workflowpb.RunState{Status: common.Status_STATUS_RUNNING},
+	}
+	reader := &OverviewReader{
+		tc: tc,
+		store: fakeSnapshotStore{
+			run: &models.TestRunRecord{
+				Entity: &common.Entity{Id: "run-1"},
+				Status: common.Status_STATUS_RUNNING,
+			},
+		},
+	}
+
+	if _, err := reader.Get(context.Background(), "run-1"); err != nil {
+		t.Fatalf("get overview: %v", err)
+	}
+	if got, want := tc.calls, 1; got != want {
+		t.Fatalf("temporal queries = %d, want %d", got, want)
+	}
+	if got, want := tc.gotWorkflowID, testWorkflowID("run-1"); got != want {
+		t.Fatalf("queried workflow id = %q, want %q (legacy test run)", got, want)
+	}
+}
+
 func TestOverviewProjectsRunStateStageTree(t *testing.T) {
 	stepOperation := deploymentbuilder.AgentStepOperation(&deploymentpb.AgentStep{
 		Id:     "010_write_config",
@@ -989,6 +1040,27 @@ type countingRunStateQuerier struct {
 
 func (f *countingRunStateQuerier) GetRunState(context.Context, string, string) (*workflowpb.RunState, error) {
 	f.calls++
+	if f.err != nil {
+		return nil, f.err
+	}
+	return f.state, nil
+}
+
+// capturingRunStateQuerier records the workflowID it was queried with, so
+// tests can assert which workflow (test-run/<id> vs run-recipe/<id>) the
+// reader addressed.
+type capturingRunStateQuerier struct {
+	state         *workflowpb.RunState
+	err           error
+	gotWorkflowID string
+	gotRunIDArg   string
+	calls         int
+}
+
+func (f *capturingRunStateQuerier) GetRunState(_ context.Context, workflowID string, runID string) (*workflowpb.RunState, error) {
+	f.calls++
+	f.gotWorkflowID = workflowID
+	f.gotRunIDArg = runID
 	if f.err != nil {
 		return nil, f.err
 	}
