@@ -297,6 +297,15 @@ func (w *runRecipeWorkflow) run(ctx workflow.Context) (result *RunRecipeOutput, 
 	}
 	providerRef = plan.GetProvider()
 	w.completeStage(ctx, runRecipeStageCompileIndex)
+	// Stamp the recipe-derived Summary facets (Provider/NodeCount/
+	// TopologyLabel/DbKind/WorkloadName/StroppyVersion) onto the run record
+	// as soon as the plan exists — this is the ROOT fix for rating/metrics/
+	// compare/share/dashboard, all of which read Summary rather than the
+	// (absent, for a recipe run) domain.TestRun spec. See runrecipe_summary.
+	// go's deriveRunSummary for the derivation heuristics.
+	if perr := persistRunSummary(ctx, w.in.RunID, deriveRunSummary(plan)); perr != nil {
+		return nil, perr
+	}
 	if perr := w.persist(ctx); perr != nil {
 		return nil, perr
 	}

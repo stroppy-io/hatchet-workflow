@@ -194,6 +194,16 @@ func (s *Service) StartRun(ctx context.Context, req *api.StartRunRequest) (*api.
 		Status:   common.Status_STATUS_PENDING,
 		Trigger:  common.Trigger_TRIGGER_API,
 		RecipeId: recipeRec.GetEntity().GetId(),
+		// Rating flags mirror TestRunRecord.Summary's documented platform
+		// defaults (tenant_settings.proto: default_in_tenant_rating/
+		// default_in_global_rating doc comments) — "tenant true, global
+		// false". Every recipe run counts toward its own tenant's
+		// leaderboard/dashboard ("Top benchmarks") by default;
+		// cross-tenant/public global-leaderboard membership stays an
+		// explicit opt-in (there is no tenant-settings override wired here
+		// yet — see task-1-report.md).
+		InTenantRating: true,
+		InGlobalRating: false,
 	}
 
 	if err := s.d.Runs.Create(ctx, run); err != nil {

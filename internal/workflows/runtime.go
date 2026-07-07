@@ -7,6 +7,7 @@ import (
 	"go.temporal.io/sdk/workflow"
 
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
+	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
 )
 
@@ -37,4 +38,18 @@ func persistRunState(
 		infrastructureState,
 		deploymentPlan,
 	).Get(actx, nil)
+}
+
+// persistRunSummary calls PersistRunSummaryActivityName to merge a
+// recipe-derived TestRunRecord.Summary (see runrecipe_summary.go's
+// deriveRunSummary) onto the run's stored record. Distinct from
+// persistRunState above: that one carries the RunState-derived timing/
+// progress facets applyRunSummary computes on every stage transition, while
+// this one carries the CompiledPlan-derived static facets (Provider/
+// NodeCount/TopologyLabel/DbKind/WorkloadName/StroppyVersion), computed
+// once right after compile succeeds — see RunRecipeWorkflow.run's call
+// right after the compile stage completes.
+func persistRunSummary(ctx workflow.Context, runID string, summary *models.TestRunRecord_Summary) error {
+	actx := runtimeActivityContext(ctx)
+	return workflow.ExecuteActivity(actx, PersistRunSummaryActivityName, runID, summary).Get(actx, nil)
 }

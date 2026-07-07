@@ -9,6 +9,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
+	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
 	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
 )
@@ -25,12 +26,14 @@ type fakeRuntimeActivities struct {
 	runStates       []*workflowpb.RunState
 	deploymentPlans []*deploymentpb.DeploymentPlan
 	logLines        []*monitor.LogLine
+	summaries       []*models.TestRunRecord_Summary
 }
 
 func registerFakeRuntimeActivities(env *testsuite.TestWorkflowEnvironment, fake *fakeRuntimeActivities) {
 	env.RegisterActivityWithOptions(fake.PersistRunState, activity.RegisterOptions{Name: PersistRunStateActivityName})
 	env.RegisterActivityWithOptions(fake.PersistDeploymentPlan, activity.RegisterOptions{Name: PersistDeploymentPlanActivityName})
 	env.RegisterActivityWithOptions(fake.AppendRunLogs, activity.RegisterOptions{Name: AppendRunLogsActivityName})
+	env.RegisterActivityWithOptions(fake.PersistRunSummary, activity.RegisterOptions{Name: PersistRunSummaryActivityName})
 }
 
 func (f *fakeRuntimeActivities) PersistRunState(
@@ -64,6 +67,22 @@ func (f *fakeRuntimeActivities) PersistDeploymentPlan(
 		return nil
 	}
 	f.deploymentPlans = append(f.deploymentPlans, proto.Clone(plan).(*deploymentpb.DeploymentPlan))
+	return nil
+}
+
+func (f *fakeRuntimeActivities) PersistRunSummary(
+	_ context.Context,
+	_ string,
+	summary *models.TestRunRecord_Summary,
+) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	if summary == nil {
+		f.summaries = append(f.summaries, nil)
+		return nil
+	}
+	f.summaries = append(f.summaries, proto.Clone(summary).(*models.TestRunRecord_Summary))
 	return nil
 }
 

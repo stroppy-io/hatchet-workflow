@@ -8,6 +8,7 @@ import (
 
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
+	domainpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -61,6 +62,71 @@ func TestPersistRunStateUpdatesRecord(t *testing.T) {
 	}
 	if got := len(run.GetRuntimeState().GetStages()); got != 2 {
 		t.Fatalf("runtime_state stages = %d, want 2", got)
+	}
+	if run.GetEntity().GetTimings().GetUpdatedAt() == nil {
+		t.Fatal("run updated_at was not touched")
+	}
+}
+
+// TestPersistRunSummaryMergesRecipeFacetsWithoutClobberingTiming asserts
+// PersistRunSummary (a) writes the recipe-derived static facets onto the
+// record's Summary and (b) never touches timing/progress fields
+// PersistRunState's applyRunSummary already set — the two activities must
+// compose, since RunRecipeWorkflow calls both across the run's lifetime.
+func TestPersistRunSummaryMergesRecipeFacetsWithoutClobberingTiming(t *testing.T) {
+	started := timestamppb.New(time.Unix(10, 0))
+	store := &fakeRunPersistenceStore{
+		runs: map[string]*models.TestRunRecord{
+			"run-1": {
+				Entity: &common.Entity{Id: "run-1"},
+				Status: common.Status_STATUS_RUNNING,
+				Summary: &models.TestRunRecord_Summary{
+					StartedAt:   started,
+					ProgressPct: 25,
+				},
+			},
+		},
+	}
+	activities := NewRunPersistenceActivities(store)
+
+	err := activities.PersistRunSummary(context.Background(), "run-1", &models.TestRunRecord_Summary{
+		Provider:       deploymentpb.Provider_PROVIDER_YANDEX,
+		NodeCount:      4,
+		TopologyLabel:  "yandex · 4 nodes",
+		DbKind:         domainpb.Database_KIND_POSTGRES,
+		WorkloadName:   "insert+select",
+		StroppyVersion: "1.2.3",
+	})
+	if err != nil {
+		t.Fatalf("persist run summary: %v", err)
+	}
+
+	run := store.runs["run-1"]
+	sum := run.GetSummary()
+	if sum.GetProvider() != deploymentpb.Provider_PROVIDER_YANDEX {
+		t.Errorf("provider = %s, want %s", sum.GetProvider(), deploymentpb.Provider_PROVIDER_YANDEX)
+	}
+	if sum.GetNodeCount() != 4 {
+		t.Errorf("node_count = %d, want 4", sum.GetNodeCount())
+	}
+	if sum.GetTopologyLabel() != "yandex · 4 nodes" {
+		t.Errorf("topology_label = %q, want %q", sum.GetTopologyLabel(), "yandex · 4 nodes")
+	}
+	if sum.GetDbKind() != domainpb.Database_KIND_POSTGRES {
+		t.Errorf("db_kind = %s, want %s", sum.GetDbKind(), domainpb.Database_KIND_POSTGRES)
+	}
+	if sum.GetWorkloadName() != "insert+select" {
+		t.Errorf("workload_name = %q, want %q", sum.GetWorkloadName(), "insert+select")
+	}
+	if sum.GetStroppyVersion() != "1.2.3" {
+		t.Errorf("stroppy_version = %q, want %q", sum.GetStroppyVersion(), "1.2.3")
+	}
+	// Timing/progress previously set by PersistRunState must survive.
+	if sum.GetStartedAt() == nil || !sum.GetStartedAt().AsTime().Equal(started.AsTime()) {
+		t.Error("started_at was clobbered by PersistRunSummary")
+	}
+	if sum.GetProgressPct() != 25 {
+		t.Errorf("progress_pct = %d, want 25 (must not be clobbered)", sum.GetProgressPct())
 	}
 	if run.GetEntity().GetTimings().GetUpdatedAt() == nil {
 		t.Fatal("run updated_at was not touched")

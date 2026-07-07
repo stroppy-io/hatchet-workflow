@@ -336,6 +336,46 @@ func TestStartRunPersistsRunAndLaunchesWorkflow(t *testing.T) {
 	}
 }
 
+// TestStartRunSetsRatingFlags asserts a recipe run defaults to the tenant
+// leaderboard (in_tenant_rating) but NOT the cross-tenant/public global
+// leaderboard (in_global_rating), matching TestRunRecord.Summary's own
+// documented platform defaults ("tenant true, global false" — see
+// tenant_settings.proto's default_in_tenant_rating/default_in_global_rating
+// doc comments). Before this, StartRun left both flags at their proto zero
+// value (false), so recipe runs never appeared on the tenant dashboard's
+// "Top benchmarks" board — see internal/app/glue.go's ratingRunsLister,
+// which reads exactly these two flags.
+func TestStartRunSetsRatingFlags(t *testing.T) {
+	repo := newFakeRecipeRepo()
+	runs := newFakeRunRepo()
+	workflows := newFakeRecipeWorkflows(nil)
+	svc := NewService(Deps{Repo: repo, Authn: fakeAuthn{}, Checker: stubChecker(nil), Runs: runs, Workflows: workflows})
+
+	created, err := svc.CreateRecipe(context.Background(), &api.CreateRecipeRequest{
+		TenantId: "tenant-1",
+		Recipe: &models.RecipeRecord{
+			Entity: &common.Entity{Name: "pg-ha"},
+			Bundle: newBundle(),
+		},
+	})
+	if err != nil {
+		t.Fatalf("create recipe: %v", err)
+	}
+	recipeID := created.GetRecipe().GetEntity().GetId()
+
+	resp, err := svc.StartRun(context.Background(), &api.StartRunRequest{TenantId: "tenant-1", RecipeId: recipeID})
+	if err != nil {
+		t.Fatalf("start run: %v", err)
+	}
+	run := resp.GetRun()
+	if !run.GetInTenantRating() {
+		t.Error("in_tenant_rating = false, want true (recipe runs must appear on the tenant leaderboard by default)")
+	}
+	if run.GetInGlobalRating() {
+		t.Error("in_global_rating = true, want false (global/public leaderboard membership stays opt-in)")
+	}
+}
+
 func TestStartRunLaunchFailureMarksRunFailed(t *testing.T) {
 	repo := newFakeRecipeRepo()
 	runs := newFakeRunRepo()

@@ -16,6 +16,7 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/dsl/diag"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
+	domainpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	dslpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dsl"
 	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
 )
@@ -179,6 +180,78 @@ func TestRunRecipeWorkflowHappyPath(t *testing.T) {
 		if stage.GetStatus() != common.Status_STATUS_COMPLETED {
 			t.Fatalf("stage %q status = %s, want COMPLETED", stage.GetName(), stage.GetStatus())
 		}
+	}
+}
+
+// TestRunRecipeWorkflowPersistsSummaryFromCompiledPlan asserts that right
+// after the compile stage succeeds, RunRecipeWorkflow calls
+// PersistRunSummaryActivityName with a Summary derived from the compiled
+// plan (see deriveRunSummary in runrecipe_summary.go) — the ROOT fix for
+// rating/metrics/compare/share/dashboard, all of which read
+// TestRunRecord.Summary rather than the (absent, for a recipe run) baked
+// domain.TestRun spec.
+func TestRunRecipeWorkflowPersistsSummaryFromCompiledPlan(t *testing.T) {
+	var suite testsuite.WorkflowTestSuite
+	env := suite.NewTestWorkflowEnvironment()
+	RegisterWorkflows(env)
+	registerRunRecipeActivityStubs(env)
+	runtime := &fakeRuntimeActivities{}
+	registerFakeRuntimeActivities(env, runtime)
+
+	plan := postgresHaTestPlan()
+	machines := map[string][]*deploymentpb.MachineState{
+		"db":     {machineState("db-1", "10.0.0.1"), machineState("db-2", "10.0.0.2"), machineState("db-3", "10.0.0.3")},
+		"runner": {machineState("runner-1", "10.0.0.4")},
+	}
+
+	env.OnActivity(CompileRecipeActivityName, mock.Anything, mock.Anything).Return(
+		&CompileRecipeActivityOutput{Plan: plan}, nil,
+	)
+	env.OnActivity(ProvisionActivityName, mock.Anything, mock.Anything).Return(
+		&ProvisionActivityOutput{Machines: machines}, nil,
+	)
+	env.OnWorkflow(ExecuteCompiledPlanWorkflowName, mock.Anything, mock.Anything).Return(
+		&ExecuteCompiledPlanOutput{JobStatuses: map[string]string{"bench[workload=insert]": jobStatusOK, "bench[workload=select]": jobStatusOK}}, nil,
+	)
+	env.OnActivity(TeardownActivityName, mock.Anything, mock.Anything).Return(nil)
+
+	env.ExecuteWorkflow(RunRecipeWorkflowName, runRecipeTestInput())
+
+	if !env.IsWorkflowCompleted() {
+		t.Fatal("workflow did not complete")
+	}
+	if err := env.GetWorkflowError(); err != nil {
+		t.Fatalf("workflow failed: %v", err)
+	}
+
+	runtime.mu.Lock()
+	summaries := runtime.summaries
+	runtime.mu.Unlock()
+
+	if len(summaries) == 0 {
+		t.Fatal("PersistRunSummaryActivityName was never called")
+	}
+	summary := summaries[len(summaries)-1]
+	if summary == nil {
+		t.Fatal("persisted summary is nil")
+	}
+	if got, want := summary.GetProvider(), deploymentpb.Provider_PROVIDER_YANDEX; got != want {
+		t.Errorf("provider = %s, want %s", got, want)
+	}
+	if got, want := summary.GetNodeCount(), uint32(4); got != want {
+		t.Errorf("node_count = %d, want %d", got, want)
+	}
+	if got, want := summary.GetDbKind(), domainpb.Database_KIND_POSTGRES; got != want {
+		t.Errorf("db_kind = %s, want %s — monitoring.dbKindString now resolves the real metrics kind instead of defaulting", got, want)
+	}
+	if got, want := summary.GetWorkloadName(), "insert+select"; got != want {
+		t.Errorf("workload_name = %q, want %q", got, want)
+	}
+	if got, want := summary.GetStroppyVersion(), "1.2.3"; got != want {
+		t.Errorf("stroppy_version = %q, want %q", got, want)
+	}
+	if got, want := summary.GetTopologyLabel(), "yandex · 4 nodes"; got != want {
+		t.Errorf("topology_label = %q, want %q", got, want)
 	}
 }
 

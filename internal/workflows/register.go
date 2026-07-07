@@ -8,6 +8,7 @@ import (
 	"go.temporal.io/sdk/workflow"
 
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
+	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
 	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
 )
@@ -16,12 +17,21 @@ const (
 	PersistRunStateActivityName       = "stroppy.runtime.PersistRunState"
 	PersistDeploymentPlanActivityName = "stroppy.runtime.PersistDeploymentPlan"
 	AppendRunLogsActivityName         = "stroppy.runtime.AppendRunLogs"
+	// PersistRunSummaryActivityName merges a recipe-derived
+	// TestRunRecord.Summary onto the run record — see runtime.go's
+	// persistRunSummary and runrecipe_summary.go's deriveRunSummary.
+	PersistRunSummaryActivityName = "stroppy.runtime.PersistRunSummary"
 )
 
 type RuntimeActivities interface {
 	PersistRunState(context.Context, string, *workflowpb.RunState, *deploymentpb.InfrastructureState, *deploymentpb.DeploymentPlan) error
 	PersistDeploymentPlan(context.Context, string, *deploymentpb.DeploymentPlan) error
 	AppendRunLogs(context.Context, []*monitor.LogLine) error
+	// PersistRunSummary merges the given Summary's non-zero fields onto the
+	// run record's stored Summary (see execution.RunPersistenceActivities.
+	// PersistRunSummary) — additive, never clobbers the timing/progress
+	// facets PersistRunState's own applyRunSummary maintains.
+	PersistRunSummary(context.Context, string, *models.TestRunRecord_Summary) error
 }
 
 // RecipeActivityImpl is the interface RunRecipeWorkflow's three by-name
@@ -65,6 +75,7 @@ func RegisterActivities(registry worker.ActivityRegistry, runtime RuntimeActivit
 		registry.RegisterActivityWithOptions(runtime.PersistRunState, activity.RegisterOptions{Name: PersistRunStateActivityName})
 		registry.RegisterActivityWithOptions(runtime.PersistDeploymentPlan, activity.RegisterOptions{Name: PersistDeploymentPlanActivityName})
 		registry.RegisterActivityWithOptions(runtime.AppendRunLogs, activity.RegisterOptions{Name: AppendRunLogsActivityName})
+		registry.RegisterActivityWithOptions(runtime.PersistRunSummary, activity.RegisterOptions{Name: PersistRunSummaryActivityName})
 	}
 }
 
