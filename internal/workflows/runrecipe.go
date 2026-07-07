@@ -71,7 +71,9 @@ import (
 
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
+	"google.golang.org/protobuf/proto"
 
+	agentdomain "github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
 	"github.com/stroppy-io/stroppy-cloud/internal/dsl/diag"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
@@ -172,6 +174,10 @@ type ProvisionActivityInput struct {
 	RunID        string
 	ServerAddr   string
 	GatewayGroup string
+	// TenantID scopes the per-node agent tokens the docker builtin provider
+	// issues while rendering each agent container (IssueAgentToken needs the
+	// owning tenant). Non-docker providers ignore it.
+	TenantID string
 }
 
 // ProvisionActivityOutput is ProvisionActivity's output: the real machines
@@ -186,6 +192,15 @@ type ProvisionActivityOutput struct {
 // internal/infrastructure/provider.Provider.Destroy's own argument.
 type TeardownActivityInput struct {
 	ProviderRef *dslpb.ProviderRef
+	// RunID and ServerAddr mirror ProvisionActivityInput's runtime triad:
+	// the docker builtin's Destroy needs the run id (to compute the shared
+	// network name it removes containers from), and decodeDockerParams —
+	// shared with Provision — still validates server_addr, so it is injected
+	// here too even though Destroy itself never reads it. Non-docker refs
+	// ignore both. GatewayGroup is not carried: Destroy renders no sidecar,
+	// so the group placement is irrelevant at teardown.
+	RunID      string
+	ServerAddr string
 }
 
 // ReserveQuotasActivityInput is ReserveQuotasActivity's input: the compiled
@@ -492,6 +507,7 @@ func (w *runRecipeWorkflow) provision(ctx workflow.Context, plan *dslpb.Compiled
 		RunID:        w.in.RunID,
 		ServerAddr:   w.in.Bootstrap.GetServerAddr(),
 		GatewayGroup: gatewayGroupName(plan),
+		TenantID:     w.in.TenantID,
 	}).Get(actx, &out); err != nil {
 		return nil, err
 	}
@@ -516,7 +532,7 @@ func (w *runRecipeWorkflow) executeCompiledPlan(
 	if err := workflow.ExecuteChildWorkflow(cctx, ExecuteCompiledPlanWorkflowName, &ExecuteCompiledPlanInput{
 		Plan:          plan,
 		Machines:      machines,
-		Bootstrap:     w.in.Bootstrap,
+		Bootstrap:     bootstrapWithAgentQueues(w.in.Bootstrap, machines),
 		GatewayNodeID: gatewayNodeID,
 	}).Get(cctx, &out); err != nil {
 		return nil, err
@@ -538,6 +554,8 @@ func (w *runRecipeWorkflow) teardown(ctx workflow.Context, ref *dslpb.ProviderRe
 	})
 	return workflow.ExecuteActivity(actx, TeardownActivityName, &TeardownActivityInput{
 		ProviderRef: ref,
+		RunID:       w.in.RunID,
+		ServerAddr:  w.in.Bootstrap.GetServerAddr(),
 	}).Get(actx, nil)
 }
 
@@ -691,6 +709,41 @@ func diagErrorSummary(diags diag.List) string {
 // where to place the sidecar, whereas pickGatewayNodeID needs the resulting
 // node id after provisioning. Returns "" when the plan has no machine groups,
 // in which case no sidecar is rendered.
+// bootstrapWithAgentQueues returns a clone of bootstrap whose AgentTaskQueues
+// map is populated with an entry per provisioned machine: node id ->
+// agentdomain.TaskQueue(nodeID). The execute child's service-job steps route
+// activities to bootstrap.AgentTaskQueues[nodeID] (see agent_exec.go's
+// agentTaskQueue lookup), so without this every service job fails with "agent
+// task queue for node ... is missing".
+//
+// The queue name is the DETERMINISTIC TaskQueue(nodeID) — not the nonce-bearing
+// NewTaskQueue — because the docker builtin provider renders each agent
+// container's AGENT_TASK_QUEUE from the same deterministic TaskQueue(nodeID)
+// (internal/domain/agent.Env, called with an empty Bootstrap.AgentTaskQueue),
+// so both sides must agree on the exact string. TaskQueue is a pure function
+// of nodeID, so calling it here is workflow-deterministic. Returns bootstrap
+// unchanged when it is nil (compile failed before a bootstrap existed) or when
+// there are no machines.
+func bootstrapWithAgentQueues(bootstrap *workflowpb.AgentBootstrap, machines map[string][]*deploymentpb.MachineState) *workflowpb.AgentBootstrap {
+	if bootstrap == nil || len(machines) == 0 {
+		return bootstrap
+	}
+	out := proto.Clone(bootstrap).(*workflowpb.AgentBootstrap)
+	if out.AgentTaskQueues == nil {
+		out.AgentTaskQueues = map[string]string{}
+	}
+	for _, group := range machines {
+		for _, m := range group {
+			nodeID := m.GetNodeId()
+			if nodeID == "" {
+				continue
+			}
+			out.AgentTaskQueues[nodeID] = agentdomain.TaskQueue(nodeID)
+		}
+	}
+	return out
+}
+
 func gatewayGroupName(plan *dslpb.CompiledPlan) string {
 	groups := plan.GetMachineGroups()
 	for _, name := range []string{"runner", "gateway"} {

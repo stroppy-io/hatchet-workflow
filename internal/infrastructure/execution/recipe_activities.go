@@ -95,7 +95,7 @@ func (a *RecipeActivities) ProvisionActivity(
 		return nil, errors.New("provision activity: input is required")
 	}
 
-	ref, err := enrichDockerRuntimeParams(in.ProviderRef, in.RunID, in.ServerAddr, in.GatewayGroup)
+	ref, err := enrichDockerRuntimeParams(in.ProviderRef, in.RunID, in.ServerAddr, in.GatewayGroup, in.TenantID)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +124,7 @@ func (a *RecipeActivities) ProvisionActivity(
 // gateway_group with the runtime truth. Non-docker refs are returned
 // unchanged — terraform providers derive their runtime inputs from the
 // module's variables.tf, not from this fixed docker-specific triad.
-func enrichDockerRuntimeParams(ref *dslpb.ProviderRef, runID, serverAddr, gatewayGroup string) (*dslpb.ProviderRef, error) {
+func enrichDockerRuntimeParams(ref *dslpb.ProviderRef, runID, serverAddr, gatewayGroup, tenantID string) (*dslpb.ProviderRef, error) {
 	if ref == nil || ref.GetName() != "docker" {
 		return ref, nil
 	}
@@ -154,6 +154,9 @@ func enrichDockerRuntimeParams(ref *dslpb.ProviderRef, runID, serverAddr, gatewa
 	if gatewayGroup != "" {
 		params["gateway_group"] = gatewayGroup
 	}
+	if tenantID != "" {
+		params["tenant_id"] = tenantID
+	}
 
 	merged, err := json.Marshal(params)
 	if err != nil {
@@ -179,12 +182,21 @@ func (a *RecipeActivities) TeardownActivity(ctx context.Context, in *workflows.T
 		return nil
 	}
 
-	p, err := provider.NewProviderForRef(in.ProviderRef, a.deps)
+	// Destroy needs the same docker runtime params Provision does (run_id ->
+	// network name), and decodeDockerParams — shared with Provision — still
+	// validates server_addr; inject both. GatewayGroup is empty here (Destroy
+	// renders no sidecar). Non-docker refs pass through unchanged.
+	ref, err := enrichDockerRuntimeParams(in.ProviderRef, in.RunID, in.ServerAddr, "", "")
 	if err != nil {
 		return err
 	}
 
-	return p.Destroy(ctx, in.ProviderRef)
+	p, err := provider.NewProviderForRef(ref, a.deps)
+	if err != nil {
+		return err
+	}
+
+	return p.Destroy(ctx, ref)
 }
 
 // ReserveQuotasActivity reserves in.Provider/in.Groups' computed quota
