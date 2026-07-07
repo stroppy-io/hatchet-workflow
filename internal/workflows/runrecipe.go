@@ -162,6 +162,16 @@ type CompileRecipeActivityOutput struct {
 type ProvisionActivityInput struct {
 	Groups      []*dslpb.MachineGroup
 	ProviderRef *dslpb.ProviderRef
+	// RunID, ServerAddr and GatewayGroup carry the infra-authored runtime
+	// context the docker builtin provider needs but a recipe's cluster.yaml
+	// provider.params cannot supply: the run's id (used to name the shared
+	// docker network and containers), the agent-facing server address the
+	// bootstrap dials home to, and which MachineGroup hosts the Nomad gateway
+	// sidecar. ProvisionActivity injects them into a docker ProviderRef's
+	// ParamsJson before calling Provision; non-docker providers ignore them.
+	RunID        string
+	ServerAddr   string
+	GatewayGroup string
 }
 
 // ProvisionActivityOutput is ProvisionActivity's output: the real machines
@@ -477,8 +487,11 @@ func (w *runRecipeWorkflow) provision(ctx workflow.Context, plan *dslpb.Compiled
 	})
 	var out ProvisionActivityOutput
 	if err := workflow.ExecuteActivity(actx, ProvisionActivityName, &ProvisionActivityInput{
-		Groups:      plan.GetMachineGroups(),
-		ProviderRef: ref,
+		Groups:       plan.GetMachineGroups(),
+		ProviderRef:  ref,
+		RunID:        w.in.RunID,
+		ServerAddr:   w.in.Bootstrap.GetServerAddr(),
+		GatewayGroup: gatewayGroupName(plan),
 	}).Get(actx, &out); err != nil {
 		return nil, err
 	}
@@ -670,6 +683,29 @@ func diagErrorSummary(diags diag.List) string {
 // a recipe with a service job but no eligible group is a bundle authoring
 // problem executeServiceJob already reports clearly ("on_group ... has no
 // machines" / "gateway task queue: ...").
+// gatewayGroupName selects, by MachineGroup name alone, which group hosts the
+// Nomad gateway sidecar the docker builtin provider renders. It mirrors
+// pickGatewayNodeID's group-selection convention (prefer a group literally
+// named "runner" then "gateway", else the first declared group) but runs
+// before any machine is provisioned — Provision needs the group name to decide
+// where to place the sidecar, whereas pickGatewayNodeID needs the resulting
+// node id after provisioning. Returns "" when the plan has no machine groups,
+// in which case no sidecar is rendered.
+func gatewayGroupName(plan *dslpb.CompiledPlan) string {
+	groups := plan.GetMachineGroups()
+	for _, name := range []string{"runner", "gateway"} {
+		for _, mg := range groups {
+			if mg.GetName() == name {
+				return name
+			}
+		}
+	}
+	if len(groups) == 0 {
+		return ""
+	}
+	return groups[0].GetName()
+}
+
 func pickGatewayNodeID(plan *dslpb.CompiledPlan, machines map[string][]*deploymentpb.MachineState) string {
 	groups := plan.GetMachineGroups()
 	for _, name := range []string{"runner", "gateway"} {

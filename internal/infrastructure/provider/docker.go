@@ -11,6 +11,12 @@ import (
 	dslpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dsl"
 )
 
+// defaultAgentImage is the stroppy-agent container tag the docker builtin
+// provider uses when a recipe's provider.params sets no explicit image. It
+// matches cmd/cli/serve_cmd.go's AGENT_IMAGE default so the DSL flow and the
+// pre-DSL config path agree on the same stock image.
+const defaultAgentImage = "stroppy-agent:latest"
+
 // dockerProvider is the builtin Provider implementation: one container per
 // requested machine, running the stroppy-agent bootstrap (same env
 // convention as the pre-DSL renderDockerInput/agentdomain path), with no
@@ -63,7 +69,11 @@ func decodeDockerParams(ref *dslpb.ProviderRef) (dockerParams, error) {
 		}
 	}
 	if params.Image == "" {
-		return params, fmt.Errorf("docker provider params: image is required")
+		// The docker builtin has no variables.tf to carry a default, so the
+		// stock stroppy-agent image is the implicit default when a recipe's
+		// provider.params does not pin one — mirrors the pre-DSL
+		// renderDockerInput path that also hardcoded this tag.
+		params.Image = defaultAgentImage
 	}
 	if params.ServerAddr == "" {
 		return params, fmt.Errorf("docker provider params: server_addr is required")

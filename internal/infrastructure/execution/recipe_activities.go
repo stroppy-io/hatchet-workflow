@@ -2,7 +2,11 @@ package execution
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
+
+	"google.golang.org/protobuf/proto"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/provider"
 	dslpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dsl"
@@ -91,17 +95,68 @@ func (a *RecipeActivities) ProvisionActivity(
 		return nil, errors.New("provision activity: input is required")
 	}
 
-	p, err := provider.NewProviderForRef(in.ProviderRef, a.deps)
+	ref, err := enrichDockerRuntimeParams(in.ProviderRef, in.RunID, in.ServerAddr, in.GatewayGroup)
 	if err != nil {
 		return nil, err
 	}
 
-	machines, err := p.Provision(ctx, in.ProviderRef, in.Groups)
+	p, err := provider.NewProviderForRef(ref, a.deps)
+	if err != nil {
+		return nil, err
+	}
+
+	machines, err := p.Provision(ctx, ref, in.Groups)
 	if err != nil {
 		return nil, err
 	}
 
 	return &workflows.ProvisionActivityOutput{Machines: machines}, nil
+}
+
+// enrichDockerRuntimeParams injects the infra-authored runtime context
+// (run id, agent-facing server address, gateway group) into a docker
+// ProviderRef's ParamsJson. These three values are not recipe-authorable —
+// a cluster.yaml's provider.params only carries what the recipe author
+// controls (image, env), while server_addr/run_id/gateway_group are known
+// only to RunRecipeWorkflow at provision time (see runrecipe.go's provision
+// method). The merge preserves any params the recipe did set (image, env,
+// network, nomad_version) and always overwrites server_addr/run_id/
+// gateway_group with the runtime truth. Non-docker refs are returned
+// unchanged — terraform providers derive their runtime inputs from the
+// module's variables.tf, not from this fixed docker-specific triad.
+func enrichDockerRuntimeParams(ref *dslpb.ProviderRef, runID, serverAddr, gatewayGroup string) (*dslpb.ProviderRef, error) {
+	if ref == nil || ref.GetName() != "docker" {
+		return ref, nil
+	}
+
+	params := map[string]any{}
+	if raw := ref.GetParamsJson(); raw != "" {
+		if err := json.Unmarshal([]byte(raw), &params); err != nil {
+			return nil, fmt.Errorf("provision activity: decode docker params_json: %w", err)
+		}
+	}
+	// Only inject a runtime value when we actually have one: an empty field
+	// must not clobber a value the recipe (or a direct caller/test) already
+	// placed in params. In the live RunRecipeWorkflow path all three are
+	// populated; the guards keep this a no-op when they are not.
+	if runID != "" {
+		params["run_id"] = runID
+	}
+	if serverAddr != "" {
+		params["server_addr"] = serverAddr
+	}
+	if gatewayGroup != "" {
+		params["gateway_group"] = gatewayGroup
+	}
+
+	merged, err := json.Marshal(params)
+	if err != nil {
+		return nil, fmt.Errorf("provision activity: encode docker params_json: %w", err)
+	}
+
+	enriched := proto.Clone(ref).(*dslpb.ProviderRef)
+	enriched.ParamsJson = string(merged)
+	return enriched, nil
 }
 
 // TeardownActivity builds the Provider for in.ProviderRef and destroys every

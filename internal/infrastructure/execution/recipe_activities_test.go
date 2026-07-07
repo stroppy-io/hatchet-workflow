@@ -113,6 +113,28 @@ func TestProvisionActivity_Docker_ReturnsMachines(t *testing.T) {
 	require.Len(t, fake.ensured, 2)
 }
 
+// TestProvisionActivity_Docker_InjectsRuntimeParams reproduces the live stand
+// scenario: a docker recipe whose provider.params carry none of the
+// infra-authored runtime fields (image/server_addr/run_id/gateway_group). The
+// activity must inject RunID/ServerAddr/GatewayGroup from its input (and the
+// docker provider must default the image) so Provision no longer fails with
+// "server_addr is required" / "run_id is required".
+func TestProvisionActivity_Docker_InjectsRuntimeParams(t *testing.T) {
+	fake := &fakeDockerExec{}
+	a := NewRecipeActivities(provider.Deps{DockerExec: fake}, nil)
+
+	out, err := a.ProvisionActivity(context.Background(), &workflows.ProvisionActivityInput{
+		Groups:       groups(),
+		ProviderRef:  &dslpb.ProviderRef{Name: "docker"}, // empty params, as a bundle's cluster.yaml produces
+		RunID:        "run-xyz",
+		ServerAddr:   "http://gateway:8080",
+		GatewayGroup: "runner",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, out)
+	require.Len(t, out.Machines["runner"], 2)
+}
+
 func TestProvisionActivity_NilInput_Errors(t *testing.T) {
 	a := NewRecipeActivities(provider.Deps{}, nil)
 	out, err := a.ProvisionActivity(context.Background(), nil)
