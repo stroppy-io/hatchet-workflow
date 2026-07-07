@@ -238,6 +238,31 @@ func TestCheckMissingProviderManifestIsDiagnosticNotError(t *testing.T) {
 	}
 }
 
+// TestCheckDockerBuiltinNeedsNoManifest verifies the docker builtin provider
+// compiles with no user-authored providers/docker/manifest.yaml — resolveProvider
+// supplies a built-in manifest, so a bare docker recipe is not rejected with
+// "manifest not found".
+func TestCheckDockerBuiltinNeedsNoManifest(t *testing.T) {
+	svc := NewDslService()
+	files := map[string][]byte{
+		"cluster.yaml": []byte("version: 1\n" +
+			"provider:\n  use: docker\n" +
+			"machines:\n  db:\n    count: 1\n    resources: { cpu: 2, ram: 2g, disk: { size: 10g, type: ssd } }\n" +
+			"services:\n  postgres:\n    on: db\n    image: postgres:17\n    network: host\n"),
+		"workflow.yaml": []byte("jobs:\n  postgres:\n    service: postgres\n"),
+	}
+
+	resp, err := svc.Check(context.Background(), &dslpb.CheckRequest{Files: files})
+	if err != nil {
+		t.Fatalf("Check must not RPC-error for a docker bundle, got: %v", err)
+	}
+	for _, d := range resp.GetDiagnostics() {
+		if d.GetSeverity() == dslpb.Severity_SEVERITY_ERROR {
+			t.Fatalf("docker builtin bundle must compile clean, got error diagnostic: %+v", d)
+		}
+	}
+}
+
 // fakeVersionSource is a test-only VersionSource returning a fixed list,
 // standing in for internal/services/stroppy's GitHub-backed one (Task 7).
 type fakeVersionSource struct {

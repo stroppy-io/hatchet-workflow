@@ -40,7 +40,23 @@ const (
 	providersDir  = "providers"
 	manifestFile  = "manifest.yaml"
 	moduleDirName = "module"
+
+	// builtinDockerProviderName is the provider.use value handled by the
+	// docker builtin (provider.NewProviderForRef's "docker" branch). It has
+	// no tf module, so resolveProvider supplies builtinDockerManifest instead
+	// of requiring a user-authored providers/docker/manifest.yaml.
+	builtinDockerProviderName = "docker"
 )
+
+// builtinDockerManifest is the compile-time manifest for the docker builtin
+// provider. Docker has no tf module / variables.tf, so it declares no params
+// schema; it provisions machines locally as containers and does no disk-type
+// remapping (cluster disk.type passes through unlowered). It is intentionally
+// permissive — no cpu/ram enum caps — matching the docker daemon's own limits.
+const builtinDockerManifest = `name: docker
+provides:
+  - machines
+`
 
 // DslService implements dslpb.DslServiceServer: dynamic composed JSON Schema
 // + check-mode compilation, both stateless and side-effect-free.
@@ -259,6 +275,23 @@ func resolveProvider(files map[string][]byte) (*ast.ProviderManifest, *jsonschem
 	mp := manifestPath(name)
 	manifestSrc, ok := files[mp]
 	if !ok {
+		// The docker provider is a builtin backed by the local docker daemon
+		// (provider.NewProviderForRef's "docker" branch): it has no tf module
+		// and therefore no user-authored providers/docker/manifest.yaml. Supply
+		// a built-in manifest so compile/contract/lowering treat it as a
+		// first-class provider without forcing every docker recipe to ship a
+		// manifest for a provider that has no schema to declare.
+		if name == builtinDockerProviderName {
+			manifest, mdiags := ast.DecodeProviderManifest(mp, []byte(builtinDockerManifest))
+			diags = append(diags, mdiags...)
+			if mdiags.HasErrors() {
+				return nil, nil, diags
+			}
+			// No tf module → no derived params/ext schema; contract/capability
+			// checking uses the manifest, and cluster disk.type passes through
+			// unlowered (docker has no block-device remapping).
+			return manifest, nil, diags
+		}
 		diags.Add(diag.Diagnostic{
 			Severity: diag.Error,
 			Path:     clusterFile,
