@@ -442,7 +442,7 @@ func Run(ctx context.Context, cfg Config) error {
 			return "yandex", files, true
 		},
 	}
-	recipeActivities := execution.NewRecipeActivities(providerDeps)
+	recipeActivities := execution.NewRecipeActivities(providerDeps, quotaManager)
 	recipeService := recipesvc.NewService(recipesvc.Deps{
 		Repo:      store.Recipes(),
 		Authn:     authn,

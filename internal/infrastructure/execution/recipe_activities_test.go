@@ -2,6 +2,7 @@ package execution
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -12,6 +13,10 @@ import (
 	dslpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dsl"
 	"github.com/stroppy-io/stroppy-cloud/internal/workflows"
 )
+
+// errQuotaInsufficientFixture is a fixture error fakeQuotaManager.Reserve
+// returns to exercise ReserveQuotasActivity's error passthrough.
+var errQuotaInsufficientFixture = errors.New("quota insufficient (fixture)")
 
 // postgresHADir is the golden recipe bundle fixture reused across
 // internal/dsl, internal/services/dsl and (here) recipe activity tests.
@@ -51,7 +56,7 @@ func loadBundle(t *testing.T, dir string) map[string][]byte {
 }
 
 func TestCompileRecipeActivity_PostgresHA_NoErrorDiagnostics(t *testing.T) {
-	a := NewRecipeActivities(provider.Deps{})
+	a := NewRecipeActivities(provider.Deps{}, nil)
 	files := loadBundle(t, postgresHADir)
 
 	out, err := a.CompileRecipeActivity(context.Background(), &workflows.CompileRecipeActivityInput{Bundle: files})
@@ -64,7 +69,7 @@ func TestCompileRecipeActivity_PostgresHA_NoErrorDiagnostics(t *testing.T) {
 }
 
 func TestCompileRecipeActivity_BrokenBundle_ReturnsDiagnosticsNoGoError(t *testing.T) {
-	a := NewRecipeActivities(provider.Deps{})
+	a := NewRecipeActivities(provider.Deps{}, nil)
 	files := loadBundle(t, postgresHADir)
 	delete(files, "cluster.yaml")
 
@@ -76,7 +81,7 @@ func TestCompileRecipeActivity_BrokenBundle_ReturnsDiagnosticsNoGoError(t *testi
 }
 
 func TestCompileRecipeActivity_NilInput_Errors(t *testing.T) {
-	a := NewRecipeActivities(provider.Deps{})
+	a := NewRecipeActivities(provider.Deps{}, nil)
 	out, err := a.CompileRecipeActivity(context.Background(), nil)
 	require.Error(t, err)
 	require.Nil(t, out)
@@ -96,7 +101,7 @@ func groups() []*dslpb.MachineGroup {
 
 func TestProvisionActivity_Docker_ReturnsMachines(t *testing.T) {
 	fake := &fakeDockerExec{}
-	a := NewRecipeActivities(provider.Deps{DockerExec: fake})
+	a := NewRecipeActivities(provider.Deps{DockerExec: fake}, nil)
 
 	out, err := a.ProvisionActivity(context.Background(), &workflows.ProvisionActivityInput{
 		Groups:      groups(),
@@ -109,14 +114,14 @@ func TestProvisionActivity_Docker_ReturnsMachines(t *testing.T) {
 }
 
 func TestProvisionActivity_NilInput_Errors(t *testing.T) {
-	a := NewRecipeActivities(provider.Deps{})
+	a := NewRecipeActivities(provider.Deps{}, nil)
 	out, err := a.ProvisionActivity(context.Background(), nil)
 	require.Error(t, err)
 	require.Nil(t, out)
 }
 
 func TestProvisionActivity_UnresolvableProvider_Errors(t *testing.T) {
-	a := NewRecipeActivities(provider.Deps{})
+	a := NewRecipeActivities(provider.Deps{}, nil)
 
 	out, err := a.ProvisionActivity(context.Background(), &workflows.ProvisionActivityInput{
 		Groups:      groups(),
@@ -128,7 +133,7 @@ func TestProvisionActivity_UnresolvableProvider_Errors(t *testing.T) {
 
 func TestTeardownActivity_Docker_CallsDestroy(t *testing.T) {
 	fake := &fakeDockerExec{}
-	a := NewRecipeActivities(provider.Deps{DockerExec: fake})
+	a := NewRecipeActivities(provider.Deps{DockerExec: fake}, nil)
 
 	err := a.TeardownActivity(context.Background(), &workflows.TeardownActivityInput{ProviderRef: dockerRef()})
 	require.NoError(t, err)
@@ -136,16 +141,126 @@ func TestTeardownActivity_Docker_CallsDestroy(t *testing.T) {
 }
 
 func TestTeardownActivity_NilProviderRef_NoOp(t *testing.T) {
-	a := NewRecipeActivities(provider.Deps{})
+	a := NewRecipeActivities(provider.Deps{}, nil)
 
 	err := a.TeardownActivity(context.Background(), &workflows.TeardownActivityInput{ProviderRef: nil})
 	require.NoError(t, err)
 }
 
 func TestTeardownActivity_NilInput_Errors(t *testing.T) {
-	a := NewRecipeActivities(provider.Deps{})
+	a := NewRecipeActivities(provider.Deps{}, nil)
 	err := a.TeardownActivity(context.Background(), nil)
 	require.Error(t, err)
+}
+
+// fakeQuotaManager is a test double for QuotaManager — recipe_activities.go
+// declares QuotaManager as an interface specifically so these activity tests
+// never need a real *quotas.Manager (which needs a live postgres.DB).
+type fakeQuotaManager struct {
+	reserveErr error
+	commitErr  error
+	releaseErr error
+
+	reserveCalls []reserveCall
+	commitCalls  []runKey
+	releaseCalls []runKey
+}
+
+type reserveCall struct {
+	tenantID, runID, workflowID, provider string
+	groups                                []*dslpb.MachineGroup
+}
+
+type runKey struct{ tenantID, runID string }
+
+func (f *fakeQuotaManager) Reserve(_ context.Context, tenantID, runID, workflowID, provider string, groups []*dslpb.MachineGroup) error {
+	f.reserveCalls = append(f.reserveCalls, reserveCall{tenantID, runID, workflowID, provider, groups})
+	return f.reserveErr
+}
+
+func (f *fakeQuotaManager) Commit(_ context.Context, tenantID, runID string) error {
+	f.commitCalls = append(f.commitCalls, runKey{tenantID, runID})
+	return f.commitErr
+}
+
+func (f *fakeQuotaManager) Release(_ context.Context, tenantID, runID string) error {
+	f.releaseCalls = append(f.releaseCalls, runKey{tenantID, runID})
+	return f.releaseErr
+}
+
+func TestReserveQuotasActivity_CallsManagerReserveWithInput(t *testing.T) {
+	fake := &fakeQuotaManager{}
+	a := NewRecipeActivities(provider.Deps{}, fake)
+
+	groups := []*dslpb.MachineGroup{{Name: "app", Count: 1, Cpu: 2, RamMb: 2048}}
+	err := a.ReserveQuotasActivity(context.Background(), &workflows.ReserveQuotasActivityInput{
+		TenantID: "tenant-1", RunID: "run-1", WorkflowID: "wf-1", Provider: "docker", Groups: groups,
+	})
+	require.NoError(t, err)
+	require.Len(t, fake.reserveCalls, 1)
+	require.Equal(t, "tenant-1", fake.reserveCalls[0].tenantID)
+	require.Equal(t, "run-1", fake.reserveCalls[0].runID)
+	require.Equal(t, "wf-1", fake.reserveCalls[0].workflowID)
+	require.Equal(t, "docker", fake.reserveCalls[0].provider)
+	require.Equal(t, groups, fake.reserveCalls[0].groups)
+}
+
+func TestReserveQuotasActivity_PropagatesManagerError(t *testing.T) {
+	fake := &fakeQuotaManager{reserveErr: errQuotaInsufficientFixture}
+	a := NewRecipeActivities(provider.Deps{}, fake)
+
+	err := a.ReserveQuotasActivity(context.Background(), &workflows.ReserveQuotasActivityInput{
+		TenantID: "tenant-1", RunID: "run-1",
+	})
+	require.ErrorIs(t, err, errQuotaInsufficientFixture)
+}
+
+func TestReserveQuotasActivity_NilInput_Errors(t *testing.T) {
+	a := NewRecipeActivities(provider.Deps{}, &fakeQuotaManager{})
+	require.Error(t, a.ReserveQuotasActivity(context.Background(), nil))
+}
+
+func TestReserveQuotasActivity_NilQuotaManager_Errors(t *testing.T) {
+	a := NewRecipeActivities(provider.Deps{}, nil)
+	err := a.ReserveQuotasActivity(context.Background(), &workflows.ReserveQuotasActivityInput{TenantID: "t", RunID: "r"})
+	require.Error(t, err)
+}
+
+func TestCommitQuotasActivity_CallsManagerCommit(t *testing.T) {
+	fake := &fakeQuotaManager{}
+	a := NewRecipeActivities(provider.Deps{}, fake)
+
+	err := a.CommitQuotasActivity(context.Background(), &workflows.CommitQuotasActivityInput{TenantID: "tenant-1", RunID: "run-1"})
+	require.NoError(t, err)
+	require.Equal(t, []runKey{{"tenant-1", "run-1"}}, fake.commitCalls)
+}
+
+func TestCommitQuotasActivity_NilInput_Errors(t *testing.T) {
+	a := NewRecipeActivities(provider.Deps{}, &fakeQuotaManager{})
+	require.Error(t, a.CommitQuotasActivity(context.Background(), nil))
+}
+
+func TestReleaseQuotasActivity_CallsManagerRelease(t *testing.T) {
+	fake := &fakeQuotaManager{}
+	a := NewRecipeActivities(provider.Deps{}, fake)
+
+	err := a.ReleaseQuotasActivity(context.Background(), &workflows.ReleaseQuotasActivityInput{TenantID: "tenant-1", RunID: "run-1"})
+	require.NoError(t, err)
+	require.Equal(t, []runKey{{"tenant-1", "run-1"}}, fake.releaseCalls)
+}
+
+func TestReleaseQuotasActivity_NilQuotaManager_IsANoOp(t *testing.T) {
+	// Unlike Reserve/Commit, Release must tolerate a nil QuotaManager: the
+	// teardown defer (runrecipe.go's releaseQuotas) calls it unconditionally,
+	// including on paths where quota reservation was never reached.
+	a := NewRecipeActivities(provider.Deps{}, nil)
+	err := a.ReleaseQuotasActivity(context.Background(), &workflows.ReleaseQuotasActivityInput{TenantID: "t", RunID: "r"})
+	require.NoError(t, err)
+}
+
+func TestReleaseQuotasActivity_NilInput_Errors(t *testing.T) {
+	a := NewRecipeActivities(provider.Deps{}, &fakeQuotaManager{})
+	require.Error(t, a.ReleaseQuotasActivity(context.Background(), nil))
 }
 
 // fakeDockerExec is a minimal test double satisfying provider's unexported

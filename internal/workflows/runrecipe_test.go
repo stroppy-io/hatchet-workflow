@@ -40,10 +40,17 @@ func stubProvisionActivity(context.Context, *ProvisionActivityInput) (*Provision
 
 func stubTeardownActivity(context.Context, *TeardownActivityInput) error { return nil }
 
+func stubReserveQuotasActivity(context.Context, *ReserveQuotasActivityInput) error { return nil }
+func stubCommitQuotasActivity(context.Context, *CommitQuotasActivityInput) error   { return nil }
+func stubReleaseQuotasActivity(context.Context, *ReleaseQuotasActivityInput) error { return nil }
+
 func registerRunRecipeActivityStubs(env *testsuite.TestWorkflowEnvironment) {
 	env.RegisterActivityWithOptions(stubCompileRecipeActivity, activity.RegisterOptions{Name: CompileRecipeActivityName})
 	env.RegisterActivityWithOptions(stubProvisionActivity, activity.RegisterOptions{Name: ProvisionActivityName})
 	env.RegisterActivityWithOptions(stubTeardownActivity, activity.RegisterOptions{Name: TeardownActivityName})
+	env.RegisterActivityWithOptions(stubReserveQuotasActivity, activity.RegisterOptions{Name: ReserveQuotasActivityName})
+	env.RegisterActivityWithOptions(stubCommitQuotasActivity, activity.RegisterOptions{Name: CommitQuotasActivityName})
+	env.RegisterActivityWithOptions(stubReleaseQuotasActivity, activity.RegisterOptions{Name: ReleaseQuotasActivityName})
 }
 
 func runRecipeTestPlan() *dslpb.CompiledPlan {
@@ -420,6 +427,420 @@ func TestRunRecipeWorkflowCompileFails(t *testing.T) {
 	}
 	if got := state.GetStages()[runRecipeStageTeardownIndex].GetStatus(); got != common.Status_STATUS_COMPLETED {
 		t.Fatalf("teardown stage status = %s, want COMPLETED (no-op)", got)
+	}
+}
+
+// TestRunRecipeWorkflowReservesQuotasBeforeProvision asserts ReserveQuotasActivity
+// runs in the infra stage, before ProvisionActivity, carrying the compiled
+// plan's provider name and machine groups plus the run's identity — see
+// runrecipe.go's reserveQuotas and the package doc's quota reserve/commit/
+// release hooks.
+func TestRunRecipeWorkflowReservesQuotasBeforeProvision(t *testing.T) {
+	var suite testsuite.WorkflowTestSuite
+	env := suite.NewTestWorkflowEnvironment()
+	RegisterWorkflows(env)
+	registerRunRecipeActivityStubs(env)
+	runtime := &fakeRuntimeActivities{}
+	registerFakeRuntimeActivities(env, runtime)
+
+	plan := runRecipeTestPlan()
+	machines := map[string][]*deploymentpb.MachineState{
+		"app": {machineState("app-1", "10.0.0.1")},
+	}
+	rec := &recorder{}
+
+	env.OnActivity(CompileRecipeActivityName, mock.Anything, mock.Anything).Return(
+		&CompileRecipeActivityOutput{Plan: plan}, nil,
+	)
+	env.OnActivity(ReserveQuotasActivityName, mock.Anything, mock.Anything).Return(
+		func(_ context.Context, in *ReserveQuotasActivityInput) error {
+			rec.add("reserve")
+			if in.TenantID != "tenant-1" {
+				t.Errorf("reserve tenant_id = %q, want %q", in.TenantID, "tenant-1")
+			}
+			if in.RunID != "run-1" {
+				t.Errorf("reserve run_id = %q, want %q", in.RunID, "run-1")
+			}
+			if in.WorkflowID == "" {
+				t.Error("reserve workflow_id is empty, want the run-recipe workflow's own id")
+			}
+			if in.Provider != "docker" {
+				t.Errorf("reserve provider = %q, want %q", in.Provider, "docker")
+			}
+			if len(in.Groups) != 1 || in.Groups[0].GetName() != "app" {
+				t.Errorf("reserve groups = %v, want the plan's machine_groups", in.Groups)
+			}
+			return nil
+		},
+	)
+	env.OnActivity(ProvisionActivityName, mock.Anything, mock.Anything).Return(
+		func(_ context.Context, _ *ProvisionActivityInput) (*ProvisionActivityOutput, error) {
+			rec.add("provision")
+			return &ProvisionActivityOutput{Machines: machines}, nil
+		},
+	)
+	env.OnWorkflow(ExecuteCompiledPlanWorkflowName, mock.Anything, mock.Anything).Return(
+		&ExecuteCompiledPlanOutput{JobStatuses: map[string]string{"a": jobStatusOK}}, nil,
+	)
+	env.OnActivity(TeardownActivityName, mock.Anything, mock.Anything).Return(nil)
+
+	env.ExecuteWorkflow(RunRecipeWorkflowName, runRecipeTestInput())
+
+	if !env.IsWorkflowCompleted() {
+		t.Fatal("workflow did not complete")
+	}
+	if err := env.GetWorkflowError(); err != nil {
+		t.Fatalf("workflow failed: %v", err)
+	}
+	if !rec.contains("reserve") || !rec.contains("provision") {
+		t.Fatalf("expected both reserve and provision to run: %v", rec.events)
+	}
+	if rec.indexOf("reserve") > rec.indexOf("provision") {
+		t.Fatalf("reserve ran after provision: %v", rec.events)
+	}
+}
+
+// TestRunRecipeWorkflowOverLimitReserveFailsInfraAndSkipsProvision asserts
+// that when ReserveQuotasActivity fails (e.g. the over-limit
+// derrors.FailedPrecondition Manager.Reserve returns — see
+// internal/infrastructure/quotas/reserve.go), the infra stage is marked
+// FAILED, ProvisionActivity is never called, the workflow still completes
+// (activity failure surfaces via RunRecipeOutput.Status, not a workflow
+// error — see the package doc's "stage failure vs workflow error" note),
+// and teardown (with its own release-quotas call) still runs.
+func TestRunRecipeWorkflowOverLimitReserveFailsInfraAndSkipsProvision(t *testing.T) {
+	var suite testsuite.WorkflowTestSuite
+	env := suite.NewTestWorkflowEnvironment()
+	RegisterWorkflows(env)
+	registerRunRecipeActivityStubs(env)
+	runtime := &fakeRuntimeActivities{}
+	registerFakeRuntimeActivities(env, runtime)
+
+	plan := runRecipeTestPlan()
+	var provisionCalled, releaseCalled bool
+
+	env.OnActivity(CompileRecipeActivityName, mock.Anything, mock.Anything).Return(
+		&CompileRecipeActivityOutput{Plan: plan}, nil,
+	)
+	env.OnActivity(ReserveQuotasActivityName, mock.Anything, mock.Anything).Return(
+		errors.New("quota host.cpuCores has 1 available, needs 2"),
+	)
+	env.OnActivity(ProvisionActivityName, mock.Anything, mock.Anything).Return(
+		func(_ context.Context, _ *ProvisionActivityInput) (*ProvisionActivityOutput, error) {
+			provisionCalled = true
+			return &ProvisionActivityOutput{}, nil
+		},
+	)
+	env.OnWorkflow(ExecuteCompiledPlanWorkflowName, mock.Anything, mock.Anything).Return(
+		func(_ workflow.Context, _ *ExecuteCompiledPlanInput) (*ExecuteCompiledPlanOutput, error) {
+			t.Fatal("execute child ran despite the reserve-quotas failure")
+			return nil, nil
+		},
+	)
+	env.OnActivity(TeardownActivityName, mock.Anything, mock.Anything).Return(nil)
+	env.OnActivity(ReleaseQuotasActivityName, mock.Anything, mock.Anything).Return(
+		func(_ context.Context, in *ReleaseQuotasActivityInput) error {
+			releaseCalled = true
+			if in.RunID != "run-1" {
+				t.Errorf("release run_id = %q, want %q", in.RunID, "run-1")
+			}
+			return nil
+		},
+	)
+
+	env.ExecuteWorkflow(RunRecipeWorkflowName, runRecipeTestInput())
+
+	if !env.IsWorkflowCompleted() {
+		t.Fatal("workflow did not complete")
+	}
+	if err := env.GetWorkflowError(); err != nil {
+		t.Fatalf("workflow returned a Go error, want the failure reported via output.Status instead: %v", err)
+	}
+
+	var out RunRecipeOutput
+	if err := env.GetWorkflowResult(&out); err != nil {
+		t.Fatalf("get workflow result: %v", err)
+	}
+	if out.Status != "failed" {
+		t.Errorf("status = %q, want %q", out.Status, "failed")
+	}
+	if provisionCalled {
+		t.Fatal("provision ran despite the reserve-quotas failure")
+	}
+	if !releaseCalled {
+		t.Fatal("release-quotas did not run in teardown after the reserve-quotas failure")
+	}
+
+	value, err := env.QueryWorkflow(workflowpb.GetRunStateQueryName)
+	if err != nil {
+		t.Fatalf("query run state: %v", err)
+	}
+	var state workflowpb.RunState
+	if err := value.Get(&state); err != nil {
+		t.Fatalf("decode run state: %v", err)
+	}
+	if got := state.GetStages()[runRecipeStageInfraIndex].GetStatus(); got != common.Status_STATUS_FAILED {
+		t.Fatalf("infra stage status = %s, want FAILED", got)
+	}
+	if got := state.GetStages()[runRecipeStageInfraIndex].GetErrorMessage(); got == "" {
+		t.Fatal("infra stage has no error message")
+	}
+	if got := state.GetStages()[runRecipeStageExecuteIndex].GetStatus(); got != common.Status_STATUS_PENDING {
+		t.Fatalf("execute stage status = %s, want PENDING (never started)", got)
+	}
+}
+
+// TestRunRecipeWorkflowCommitsQuotasAfterExecute asserts CommitQuotasActivity
+// runs after ExecuteCompiledPlanWorkflow succeeds, before the execute stage
+// is marked COMPLETED — see runrecipe.go's commitQuotas.
+func TestRunRecipeWorkflowCommitsQuotasAfterExecute(t *testing.T) {
+	var suite testsuite.WorkflowTestSuite
+	env := suite.NewTestWorkflowEnvironment()
+	RegisterWorkflows(env)
+	registerRunRecipeActivityStubs(env)
+	runtime := &fakeRuntimeActivities{}
+	registerFakeRuntimeActivities(env, runtime)
+
+	plan := runRecipeTestPlan()
+	machines := map[string][]*deploymentpb.MachineState{
+		"app": {machineState("app-1", "10.0.0.1")},
+	}
+	rec := &recorder{}
+
+	env.OnActivity(CompileRecipeActivityName, mock.Anything, mock.Anything).Return(
+		&CompileRecipeActivityOutput{Plan: plan}, nil,
+	)
+	env.OnActivity(ReserveQuotasActivityName, mock.Anything, mock.Anything).Return(nil)
+	env.OnActivity(ProvisionActivityName, mock.Anything, mock.Anything).Return(
+		&ProvisionActivityOutput{Machines: machines}, nil,
+	)
+	env.OnWorkflow(ExecuteCompiledPlanWorkflowName, mock.Anything, mock.Anything).Return(
+		func(_ workflow.Context, _ *ExecuteCompiledPlanInput) (*ExecuteCompiledPlanOutput, error) {
+			rec.add("execute")
+			return &ExecuteCompiledPlanOutput{JobStatuses: map[string]string{"a": jobStatusOK}}, nil
+		},
+	)
+	env.OnActivity(CommitQuotasActivityName, mock.Anything, mock.Anything).Return(
+		func(_ context.Context, in *CommitQuotasActivityInput) error {
+			rec.add("commit")
+			if in.RunID != "run-1" {
+				t.Errorf("commit run_id = %q, want %q", in.RunID, "run-1")
+			}
+			return nil
+		},
+	)
+	env.OnActivity(TeardownActivityName, mock.Anything, mock.Anything).Return(nil)
+
+	env.ExecuteWorkflow(RunRecipeWorkflowName, runRecipeTestInput())
+
+	if !env.IsWorkflowCompleted() {
+		t.Fatal("workflow did not complete")
+	}
+	if err := env.GetWorkflowError(); err != nil {
+		t.Fatalf("workflow failed: %v", err)
+	}
+	if !rec.contains("execute") || !rec.contains("commit") {
+		t.Fatalf("expected both execute and commit to run: %v", rec.events)
+	}
+	if rec.indexOf("execute") > rec.indexOf("commit") {
+		t.Fatalf("commit ran before execute: %v", rec.events)
+	}
+
+	value, err := env.QueryWorkflow(workflowpb.GetRunStateQueryName)
+	if err != nil {
+		t.Fatalf("query run state: %v", err)
+	}
+	var state workflowpb.RunState
+	if err := value.Get(&state); err != nil {
+		t.Fatalf("decode run state: %v", err)
+	}
+	if got := state.GetStages()[runRecipeStageExecuteIndex].GetStatus(); got != common.Status_STATUS_COMPLETED {
+		t.Fatalf("execute stage status = %s, want COMPLETED", got)
+	}
+}
+
+// TestRunRecipeWorkflowCommitQuotasFailureFailsExecuteStage asserts a
+// CommitQuotasActivity failure marks the execute stage FAILED (mirroring
+// every other activity-failure-in-a-stage path in this workflow) rather than
+// silently reporting the run as completed despite never allocating its
+// reservation.
+func TestRunRecipeWorkflowCommitQuotasFailureFailsExecuteStage(t *testing.T) {
+	var suite testsuite.WorkflowTestSuite
+	env := suite.NewTestWorkflowEnvironment()
+	RegisterWorkflows(env)
+	registerRunRecipeActivityStubs(env)
+	runtime := &fakeRuntimeActivities{}
+	registerFakeRuntimeActivities(env, runtime)
+
+	plan := runRecipeTestPlan()
+	machines := map[string][]*deploymentpb.MachineState{
+		"app": {machineState("app-1", "10.0.0.1")},
+	}
+
+	env.OnActivity(CompileRecipeActivityName, mock.Anything, mock.Anything).Return(
+		&CompileRecipeActivityOutput{Plan: plan}, nil,
+	)
+	env.OnActivity(ReserveQuotasActivityName, mock.Anything, mock.Anything).Return(nil)
+	env.OnActivity(ProvisionActivityName, mock.Anything, mock.Anything).Return(
+		&ProvisionActivityOutput{Machines: machines}, nil,
+	)
+	env.OnWorkflow(ExecuteCompiledPlanWorkflowName, mock.Anything, mock.Anything).Return(
+		&ExecuteCompiledPlanOutput{JobStatuses: map[string]string{"a": jobStatusOK}}, nil,
+	)
+	env.OnActivity(CommitQuotasActivityName, mock.Anything, mock.Anything).Return(
+		errors.New("commit boom"),
+	)
+	env.OnActivity(TeardownActivityName, mock.Anything, mock.Anything).Return(nil)
+
+	env.ExecuteWorkflow(RunRecipeWorkflowName, runRecipeTestInput())
+
+	if !env.IsWorkflowCompleted() {
+		t.Fatal("workflow did not complete")
+	}
+	if err := env.GetWorkflowError(); err != nil {
+		t.Fatalf("workflow returned a Go error, want the failure reported via output.Status instead: %v", err)
+	}
+
+	var out RunRecipeOutput
+	if err := env.GetWorkflowResult(&out); err != nil {
+		t.Fatalf("get workflow result: %v", err)
+	}
+	if out.Status != "failed" {
+		t.Errorf("status = %q, want %q", out.Status, "failed")
+	}
+
+	value, err := env.QueryWorkflow(workflowpb.GetRunStateQueryName)
+	if err != nil {
+		t.Fatalf("query run state: %v", err)
+	}
+	var state workflowpb.RunState
+	if err := value.Get(&state); err != nil {
+		t.Fatalf("decode run state: %v", err)
+	}
+	if got := state.GetStages()[runRecipeStageExecuteIndex].GetStatus(); got != common.Status_STATUS_FAILED {
+		t.Fatalf("execute stage status = %s, want FAILED", got)
+	}
+}
+
+// TestRunRecipeWorkflowReleasesQuotasInTeardownAlways asserts
+// ReleaseQuotasActivity runs from the teardown defer on every terminal path
+// this table covers — happy path, a provision failure, and a compile
+// failure (where reserveQuotas itself never even ran) — mirroring "always"
+// in runrecipe.go's releaseQuotas doc comment.
+func TestRunRecipeWorkflowReleasesQuotasInTeardownAlways(t *testing.T) {
+	cases := []struct {
+		name           string
+		compileErr     error
+		provisionErr   error
+		wantWorkflowOK bool
+	}{
+		{name: "happy path", wantWorkflowOK: true},
+		{name: "provision fails", provisionErr: errors.New("provision boom"), wantWorkflowOK: true},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var suite testsuite.WorkflowTestSuite
+			env := suite.NewTestWorkflowEnvironment()
+			RegisterWorkflows(env)
+			registerRunRecipeActivityStubs(env)
+			runtime := &fakeRuntimeActivities{}
+			registerFakeRuntimeActivities(env, runtime)
+
+			plan := runRecipeTestPlan()
+			machines := map[string][]*deploymentpb.MachineState{
+				"app": {machineState("app-1", "10.0.0.1")},
+			}
+			var releaseCalled bool
+
+			env.OnActivity(CompileRecipeActivityName, mock.Anything, mock.Anything).Return(
+				&CompileRecipeActivityOutput{Plan: plan}, nil,
+			)
+			env.OnActivity(ReserveQuotasActivityName, mock.Anything, mock.Anything).Return(nil)
+			if tc.provisionErr != nil {
+				env.OnActivity(ProvisionActivityName, mock.Anything, mock.Anything).Return(nil, tc.provisionErr)
+			} else {
+				env.OnActivity(ProvisionActivityName, mock.Anything, mock.Anything).Return(
+					&ProvisionActivityOutput{Machines: machines}, nil,
+				)
+			}
+			env.OnWorkflow(ExecuteCompiledPlanWorkflowName, mock.Anything, mock.Anything).Return(
+				&ExecuteCompiledPlanOutput{JobStatuses: map[string]string{"a": jobStatusOK}}, nil,
+			)
+			env.OnActivity(CommitQuotasActivityName, mock.Anything, mock.Anything).Return(nil)
+			env.OnActivity(TeardownActivityName, mock.Anything, mock.Anything).Return(nil)
+			env.OnActivity(ReleaseQuotasActivityName, mock.Anything, mock.Anything).Return(
+				func(_ context.Context, _ *ReleaseQuotasActivityInput) error {
+					releaseCalled = true
+					return nil
+				},
+			)
+
+			env.ExecuteWorkflow(RunRecipeWorkflowName, runRecipeTestInput())
+
+			if !env.IsWorkflowCompleted() {
+				t.Fatal("workflow did not complete")
+			}
+			if err := env.GetWorkflowError(); (err == nil) != tc.wantWorkflowOK {
+				t.Fatalf("workflow error = %v, want ok=%v", err, tc.wantWorkflowOK)
+			}
+			if !releaseCalled {
+				t.Fatal("release-quotas did not run in teardown")
+			}
+		})
+	}
+}
+
+// TestRunRecipeWorkflowReleasesQuotasEvenWhenCompileFails asserts
+// ReleaseQuotasActivity still runs from the teardown defer when the compile
+// stage itself fails (reserveQuotas was never reached: compile never
+// resolved a provider) — the strongest form of "always" in releaseQuotas'
+// doc comment, since TeardownActivity itself is a documented no-op on this
+// exact path (see TestRunRecipeWorkflowCompileFails above).
+func TestRunRecipeWorkflowReleasesQuotasEvenWhenCompileFails(t *testing.T) {
+	var suite testsuite.WorkflowTestSuite
+	env := suite.NewTestWorkflowEnvironment()
+	RegisterWorkflows(env)
+	registerRunRecipeActivityStubs(env)
+	runtime := &fakeRuntimeActivities{}
+	registerFakeRuntimeActivities(env, runtime)
+
+	var releaseCalled, teardownCalled bool
+
+	env.OnActivity(CompileRecipeActivityName, mock.Anything, mock.Anything).Return(
+		&CompileRecipeActivityOutput{
+			Diagnostics: diag.List{{Severity: diag.Error, Path: "cluster.yaml", Message: "boom"}},
+		}, nil,
+	)
+	env.OnActivity(TeardownActivityName, mock.Anything, mock.Anything).Return(
+		func(_ context.Context, _ *TeardownActivityInput) error {
+			teardownCalled = true
+			return nil
+		},
+	)
+	env.OnActivity(ReleaseQuotasActivityName, mock.Anything, mock.Anything).Return(
+		func(_ context.Context, in *ReleaseQuotasActivityInput) error {
+			releaseCalled = true
+			if in.TenantID != "tenant-1" || in.RunID != "run-1" {
+				t.Errorf("release input = %+v, want tenant-1/run-1", in)
+			}
+			return nil
+		},
+	)
+
+	env.ExecuteWorkflow(RunRecipeWorkflowName, runRecipeTestInput())
+
+	if !env.IsWorkflowCompleted() {
+		t.Fatal("workflow did not complete")
+	}
+	if err := env.GetWorkflowError(); err != nil {
+		t.Fatalf("workflow returned a Go error, want the failure reported via output.Status instead: %v", err)
+	}
+	if teardownCalled {
+		t.Fatal("teardown activity ran despite compile never resolving a provider (should stay a no-op)")
+	}
+	if !releaseCalled {
+		t.Fatal("release-quotas did not run despite the compile-stage failure")
 	}
 }
 

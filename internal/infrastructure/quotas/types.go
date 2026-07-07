@@ -52,6 +52,20 @@ type Reservation struct {
 	UpdatedAt    time.Time
 }
 
+// QuotaAmount is one resource-kind demand Manager.Reserve computes from a
+// CompiledPlan's machine groups (see reserve.go's amountsForGroups/
+// buildQuotaAmounts) — one row per resource kind for the whole run (not per
+// node/machine: a machine_groups-derived demand is an aggregate across every
+// machine the group asks for, see reserve.go's doc comment on why reservation
+// rows carry an empty NodeID). QuotaName/Units are the provider-specific quota
+// a live quota_snapshots row is keyed/reported in (see quotaDimensionsFor);
+// Amount is already expressed in those Units.
+type QuotaAmount struct {
+	QuotaName string
+	Units     string
+	Amount    uint64
+}
+
 type SourceRequest struct {
 	TenantID string
 	Scope    Scope

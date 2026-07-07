@@ -50,6 +50,14 @@ type RecipeActivityImpl interface {
 	CompileRecipeActivity(context.Context, *CompileRecipeActivityInput) (*CompileRecipeActivityOutput, error)
 	ProvisionActivity(context.Context, *ProvisionActivityInput) (*ProvisionActivityOutput, error)
 	TeardownActivity(context.Context, *TeardownActivityInput) error
+	// ReserveQuotasActivity/CommitQuotasActivity/ReleaseQuotasActivity back
+	// RunRecipeWorkflow's quota reserve/commit/release hooks (runrecipe.go's
+	// reserveQuotas/commitQuotas/releaseQuotas) — see
+	// internal/infrastructure/quotas/reserve.go's Manager.Reserve/Commit/
+	// Release for the machine_groups-derived remodel these wrap.
+	ReserveQuotasActivity(context.Context, *ReserveQuotasActivityInput) error
+	CommitQuotasActivity(context.Context, *CommitQuotasActivityInput) error
+	ReleaseQuotasActivity(context.Context, *ReleaseQuotasActivityInput) error
 }
 
 func RegisterWorkflows(registry worker.WorkflowRegistry) {
@@ -95,4 +103,7 @@ func RegisterRecipeActivities(registry worker.ActivityRegistry, impl RecipeActiv
 	registry.RegisterActivityWithOptions(impl.CompileRecipeActivity, activity.RegisterOptions{Name: CompileRecipeActivityName})
 	registry.RegisterActivityWithOptions(impl.ProvisionActivity, activity.RegisterOptions{Name: ProvisionActivityName})
 	registry.RegisterActivityWithOptions(impl.TeardownActivity, activity.RegisterOptions{Name: TeardownActivityName})
+	registry.RegisterActivityWithOptions(impl.ReserveQuotasActivity, activity.RegisterOptions{Name: ReserveQuotasActivityName})
+	registry.RegisterActivityWithOptions(impl.CommitQuotasActivity, activity.RegisterOptions{Name: CommitQuotasActivityName})
+	registry.RegisterActivityWithOptions(impl.ReleaseQuotasActivity, activity.RegisterOptions{Name: ReleaseQuotasActivityName})
 }

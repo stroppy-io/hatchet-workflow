@@ -5,9 +5,23 @@ import (
 	"errors"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/provider"
+	dslpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dsl"
 	dslservice "github.com/stroppy-io/stroppy-cloud/internal/services/dsl"
 	"github.com/stroppy-io/stroppy-cloud/internal/workflows"
 )
+
+// QuotaManager is the subset of *quotas.Manager (internal/infrastructure/
+// quotas/reserve.go) RecipeActivities' three quota activities call —
+// declared as an interface here (mirroring RecipeActivityImpl's own
+// precedent in internal/workflows/register.go) so this package need not
+// import internal/infrastructure/quotas at every call site, and so
+// recipe_activities_test.go can inject a fake instead of a real *quotas.
+// Manager (which needs a live postgres.DB — see quotas.NewStore).
+type QuotaManager interface {
+	Reserve(ctx context.Context, tenantID, runID, workflowID, provider string, groups []*dslpb.MachineGroup) error
+	Commit(ctx context.Context, tenantID, runID string) error
+	Release(ctx context.Context, tenantID, runID string) error
+}
 
 // RecipeActivities implements the real CompileRecipeActivity/
 // ProvisionActivity/TeardownActivity bodies RunRecipeWorkflow
@@ -22,11 +36,22 @@ type RecipeActivities struct {
 	// selects between. Phase 1D's app wiring (Task 6) constructs one with real
 	// adapters; tests construct one with fakes (see recipe_activities_test.go).
 	deps provider.Deps
+	// quotas backs ReserveQuotasActivity/CommitQuotasActivity/
+	// ReleaseQuotasActivity — nil is tolerated (Compile/Provision/Teardown
+	// tests that never touch quotas construct RecipeActivities with a nil
+	// QuotaManager), but calling any of the three quota activities with a
+	// nil quotas is a configuration error, not a silent no-op: RunRecipeWorkflow
+	// depends on ReserveQuotasActivity actually failing closed if quota
+	// enforcement was never wired, rather than silently reserving nothing.
+	quotas QuotaManager
 }
 
-// NewRecipeActivities constructs RecipeActivities against deps.
-func NewRecipeActivities(deps provider.Deps) *RecipeActivities {
-	return &RecipeActivities{deps: deps}
+// NewRecipeActivities constructs RecipeActivities against deps and quotas
+// (the Manager backing the quota reserve/commit/release activities — see
+// internal/app/run.go's quotaManager construction site, the only real
+// caller).
+func NewRecipeActivities(deps provider.Deps, quotas QuotaManager) *RecipeActivities {
+	return &RecipeActivities{deps: deps, quotas: quotas}
 }
 
 // CompileRecipeActivity compiles in.Bundle via internal/services/dsl.
@@ -99,4 +124,48 @@ func (a *RecipeActivities) TeardownActivity(ctx context.Context, in *workflows.T
 	}
 
 	return p.Destroy(ctx, in.ProviderRef)
+}
+
+// ReserveQuotasActivity reserves in.Provider/in.Groups' computed quota
+// demand for (in.TenantID, in.RunID) via a.quotas.Reserve — see
+// internal/infrastructure/quotas/reserve.go's Manager.Reserve for the
+// machine_groups -> per-kind amount computation and the over-limit check.
+func (a *RecipeActivities) ReserveQuotasActivity(ctx context.Context, in *workflows.ReserveQuotasActivityInput) error {
+	if in == nil {
+		return errors.New("reserve quotas activity: input is required")
+	}
+	if a.quotas == nil {
+		return errors.New("reserve quotas activity: quota manager is not configured")
+	}
+	return a.quotas.Reserve(ctx, in.TenantID, in.RunID, in.WorkflowID, in.Provider, in.Groups)
+}
+
+// CommitQuotasActivity promotes (in.TenantID, in.RunID)'s reservation to
+// allocated via a.quotas.Commit.
+func (a *RecipeActivities) CommitQuotasActivity(ctx context.Context, in *workflows.CommitQuotasActivityInput) error {
+	if in == nil {
+		return errors.New("commit quotas activity: input is required")
+	}
+	if a.quotas == nil {
+		return errors.New("commit quotas activity: quota manager is not configured")
+	}
+	return a.quotas.Commit(ctx, in.TenantID, in.RunID)
+}
+
+// ReleaseQuotasActivity frees (in.TenantID, in.RunID)'s reservation via
+// a.quotas.Release. Unlike Reserve/Commit above, a nil a.quotas here is a
+// documented no-op rather than an error: releaseQuotas (runrecipe.go) calls
+// this unconditionally from the teardown defer, including on paths where
+// reserveQuotas itself was never reached (e.g. a compile-stage failure) —
+// treating "quota manager not configured" as fatal here would turn every
+// such run's teardown stage FAILED for a dependency it never actually
+// needed.
+func (a *RecipeActivities) ReleaseQuotasActivity(ctx context.Context, in *workflows.ReleaseQuotasActivityInput) error {
+	if in == nil {
+		return errors.New("release quotas activity: input is required")
+	}
+	if a.quotas == nil {
+		return nil
+	}
+	return a.quotas.Release(ctx, in.TenantID, in.RunID)
 }

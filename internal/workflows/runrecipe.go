@@ -99,6 +99,19 @@ const (
 	// TeardownActivityName destroys every resource a provider previously
 	// provisioned for a ProviderRef.
 	TeardownActivityName = "TeardownActivity"
+	// ReserveQuotasActivityName reserves the quota demand the compiled
+	// plan's machine groups compute (see internal/infrastructure/quotas/
+	// reserve.go's Manager.Reserve) — called before ProvisionActivity so a
+	// run that would exceed capacity never provisions unmetered
+	// infrastructure (see reserveQuotas below).
+	ReserveQuotasActivityName = "ReserveQuotasActivity"
+	// CommitQuotasActivityName promotes a run's reservation to allocated
+	// once ExecuteCompiledPlanWorkflow succeeds (see commitQuotas below).
+	CommitQuotasActivityName = "CommitQuotasActivity"
+	// ReleaseQuotasActivityName frees a run's quota reservation/allocation —
+	// called unconditionally from the teardown defer (see releaseQuotas
+	// below), regardless of how the run ended.
+	ReleaseQuotasActivityName = "ReleaseQuotasActivity"
 )
 
 // RunRecipeInput is RunRecipeWorkflow's input: a run id, the owning tenant,
@@ -163,6 +176,33 @@ type ProvisionActivityOutput struct {
 // internal/infrastructure/provider.Provider.Destroy's own argument.
 type TeardownActivityInput struct {
 	ProviderRef *dslpb.ProviderRef
+}
+
+// ReserveQuotasActivityInput is ReserveQuotasActivity's input: the compiled
+// plan's provider name (plan.GetProvider().GetName() — "docker"/"yandex",
+// see quotas.providerFromDslName) and machine groups, plus the run's
+// identity — mirrors quotas.Manager.Reserve's own (tenantID, runID,
+// workflowID, providerName, groups) argument shape.
+type ReserveQuotasActivityInput struct {
+	TenantID   string
+	RunID      string
+	WorkflowID string
+	Provider   string
+	Groups     []*dslpb.MachineGroup
+}
+
+// CommitQuotasActivityInput is CommitQuotasActivity's input — mirrors
+// quotas.Manager.Commit's (tenantID, runID) argument shape.
+type CommitQuotasActivityInput struct {
+	TenantID string
+	RunID    string
+}
+
+// ReleaseQuotasActivityInput is ReleaseQuotasActivity's input — mirrors
+// quotas.Manager.Release's (tenantID, runID) argument shape.
+type ReleaseQuotasActivityInput struct {
+	TenantID string
+	RunID    string
 }
 
 // RunRecipeWorkflow orchestrates one recipe run: compile the bundle, provision
@@ -249,15 +289,30 @@ func (w *runRecipeWorkflow) run(ctx workflow.Context) (result *RunRecipeOutput, 
 		if perr := w.persist(tctx); perr != nil && err == nil {
 			err = fmt.Errorf("persist teardown run state: %w", perr)
 		}
-		if terr := w.teardown(tctx, providerRef); terr != nil {
+		// teardown and releaseQuotas both run unconditionally — a
+		// TeardownActivity failure must never skip freeing the run's quota
+		// reservation (and vice versa), since either alone would strand a
+		// resource (infrastructure or quota capacity) that this run no
+		// longer needs. See releaseQuotas' own doc comment for why this is
+		// always safe to call, even when Reserve was never called for this
+		// run (e.g. the compile stage failed before an infra stage ever
+		// ran).
+		terr := w.teardown(tctx, providerRef)
+		rerr := w.releaseQuotas(tctx)
+		switch {
+		case terr != nil && rerr != nil:
+			w.failStage(tctx, runRecipeStageTeardownIndex, fmt.Sprintf("teardown: %s; release quotas: %s", terr.Error(), rerr.Error()))
+			stageFailed = true
+			err = teardownErr(err, fmt.Errorf("teardown: %w; release quotas: %w", terr, rerr))
+		case terr != nil:
 			w.failStage(tctx, runRecipeStageTeardownIndex, terr.Error())
 			stageFailed = true
-			if err != nil {
-				err = fmt.Errorf("%w; teardown: %w", err, terr)
-			} else {
-				err = fmt.Errorf("teardown: %w", terr)
-			}
-		} else {
+			err = teardownErr(err, fmt.Errorf("teardown: %w", terr))
+		case rerr != nil:
+			w.failStage(tctx, runRecipeStageTeardownIndex, rerr.Error())
+			stageFailed = true
+			err = teardownErr(err, fmt.Errorf("release quotas: %w", rerr))
+		default:
 			w.completeStage(tctx, runRecipeStageTeardownIndex)
 		}
 
@@ -314,6 +369,17 @@ func (w *runRecipeWorkflow) run(ctx workflow.Context) (result *RunRecipeOutput, 
 	if perr := w.persist(ctx); perr != nil {
 		return nil, perr
 	}
+	if rerr := w.reserveQuotas(ctx, plan); rerr != nil {
+		if temporal.IsCanceledError(rerr) {
+			return nil, rerr //nolint:wrapcheck // propagated verbatim — see compileRecipe's identical guard above.
+		}
+		w.failStage(ctx, runRecipeStageInfraIndex, rerr.Error())
+		stageFailed = true
+		if perr := w.persist(ctx); perr != nil {
+			return nil, perr
+		}
+		return nil, nil //nolint:nilnil // see above.
+	}
 	machines, ierr := w.provision(ctx, plan, providerRef)
 	if ierr != nil {
 		if temporal.IsCanceledError(ierr) {
@@ -349,6 +415,17 @@ func (w *runRecipeWorkflow) run(ctx workflow.Context) (result *RunRecipeOutput, 
 		return nil, nil //nolint:nilnil // see above.
 	}
 	jobStatuses = execOut.JobStatuses
+	if cerr := w.commitQuotas(ctx); cerr != nil {
+		if temporal.IsCanceledError(cerr) {
+			return nil, cerr //nolint:wrapcheck // propagated verbatim — see compileRecipe's identical guard above.
+		}
+		w.failStage(ctx, runRecipeStageExecuteIndex, cerr.Error())
+		stageFailed = true
+		if perr := w.persist(ctx); perr != nil {
+			return nil, perr
+		}
+		return nil, nil //nolint:nilnil // see above.
+	}
 	w.completeStage(ctx, runRecipeStageExecuteIndex)
 	if perr := w.persist(ctx); perr != nil {
 		return nil, perr
@@ -440,6 +517,65 @@ func (w *runRecipeWorkflow) teardown(ctx workflow.Context, ref *dslpb.ProviderRe
 	return workflow.ExecuteActivity(actx, TeardownActivityName, &TeardownActivityInput{
 		ProviderRef: ref,
 	}).Get(actx, nil)
+}
+
+// reserveQuotas calls ReserveQuotasActivity for plan's provider and machine
+// groups, run in the infra stage BEFORE provision (see run's infra-stage
+// block) — a non-nil error here fails the infra stage and skips
+// ProvisionActivity entirely, exactly like a ProvisionActivity failure
+// itself. workflow.GetInfo(ctx).WorkflowExecution.ID is threaded through as
+// the reservation's WorkflowID (mirrors the pre-DSL-pivot AcquireQuotasActivity
+// caller's own convention of stamping the acquiring workflow's id onto each
+// reservation row).
+func (w *runRecipeWorkflow) reserveQuotas(ctx workflow.Context, plan *dslpb.CompiledPlan) error {
+	actx := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+		StartToCloseTimeout: time.Minute,
+	})
+	return workflow.ExecuteActivity(actx, ReserveQuotasActivityName, &ReserveQuotasActivityInput{
+		TenantID:   w.in.TenantID,
+		RunID:      w.in.RunID,
+		WorkflowID: workflow.GetInfo(ctx).WorkflowExecution.ID,
+		Provider:   plan.GetProvider().GetName(),
+		Groups:     plan.GetMachineGroups(),
+	}).Get(actx, nil)
+}
+
+// commitQuotas calls CommitQuotasActivity once ExecuteCompiledPlanWorkflow
+// has succeeded (see run's execute-stage block) — promotes the run's
+// reservation to allocated.
+func (w *runRecipeWorkflow) commitQuotas(ctx workflow.Context) error {
+	actx := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+		StartToCloseTimeout: time.Minute,
+	})
+	return workflow.ExecuteActivity(actx, CommitQuotasActivityName, &CommitQuotasActivityInput{
+		TenantID: w.in.TenantID,
+		RunID:    w.in.RunID,
+	}).Get(actx, nil)
+}
+
+// releaseQuotas calls ReleaseQuotasActivity — run unconditionally from the
+// teardown defer (see run's deferred func), regardless of whether
+// reserveQuotas ever ran or succeeded for this run: freeing a reservation
+// that was never made is a documented no-op (see quotas.Store.ReleaseRun).
+func (w *runRecipeWorkflow) releaseQuotas(ctx workflow.Context) error {
+	actx := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+		StartToCloseTimeout: time.Minute,
+	})
+	return workflow.ExecuteActivity(actx, ReleaseQuotasActivityName, &ReleaseQuotasActivityInput{
+		TenantID: w.in.TenantID,
+		RunID:    w.in.RunID,
+	}).Get(actx, nil)
+}
+
+// teardownErr folds next onto existing (nil-safe) — used by the teardown
+// defer to combine a pre-existing workflow error (e.g. a persist failure
+// observed earlier in the same defer) with a teardown/release-quotas
+// failure discovered afterward, without ever losing either message.
+func teardownErr(existing, next error) error {
+	if existing != nil {
+		return fmt.Errorf("%w; %w", existing, next)
+	}
+	return next
 }
 
 // persist mirrors domainTestWorkflow.persist, minus the infrastructure-state/
