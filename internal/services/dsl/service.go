@@ -189,8 +189,28 @@ func (s *DslService) Preview(ctx context.Context, req *dslpb.PreviewRequest) (*d
 // infrastructure/execution) needs the plan itself, so it calls CompileBundle
 // directly instead of duplicating the provider-resolution + dsl.Compile call
 // pair here.
+//
+// This package-level function has no VersionSource, so it never appends
+// Task 7's advisory stroppy-version diagnostic — bind the (*DslService)
+// CheckBundle method instead (see below) wherever that warning should also
+// cover the stored-recipe Create/CheckRecipe path.
 func CheckBundle(_ context.Context, files map[string][]byte) ([]*dslpb.Diagnostic, error) {
 	_, diags := CompileBundle(files)
+	return toProtoDiagnostics(diags), nil
+}
+
+// CheckBundle (method) is the (*DslService) counterpart of the package-level
+// CheckBundle function above: same check-mode compile pipeline, but also
+// applies Task 7's advisory stroppy-version diagnostic via this service's
+// injected VersionSource (validateStroppyVersion; a no-op when none was
+// injected — see WithVersionSource). internal/app/run.go binds this method
+// (not the package function) as recipe.Deps.Checker so a stored recipe's
+// Create/CheckRecipe path surfaces the same bogus-stroppy-version warning
+// DslService.Check already gives the live editor, instead of two check paths
+// silently disagreeing on what they validate.
+func (s *DslService) CheckBundle(ctx context.Context, files map[string][]byte) ([]*dslpb.Diagnostic, error) {
+	plan, diags := CompileBundle(files)
+	validateStroppyVersion(ctx, plan, s.versions, &diags)
 	return toProtoDiagnostics(diags), nil
 }
 

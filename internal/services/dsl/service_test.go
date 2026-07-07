@@ -351,3 +351,40 @@ func TestPreviewUnknownStroppyVersionWarns(t *testing.T) {
 		t.Fatal("expected a non-nil plan: the stroppy-version diagnostic is advisory, not an error")
 	}
 }
+
+// TestDslServiceCheckBundleMethodWarnsOnUnknownStroppyVersion covers the
+// (*DslService) CheckBundle method (distinct from the package-level
+// CheckBundle function, which has no VersionSource and never warns): it is
+// bound as internal/services/recipe.Deps.Checker in production
+// (internal/app/run.go) so the stored-recipe Create/CheckRecipe path gets the
+// same advisory stroppy-version diagnostic DslService.Check gives the live
+// editor.
+func TestDslServiceCheckBundleMethodWarnsOnUnknownStroppyVersion(t *testing.T) {
+	svc := NewDslService(WithVersionSource(fakeVersionSource{versions: []string{"1.0.0", "2.0.0"}}))
+	files := withStroppyImage(t, loadBundle(t, postgresHADir), "stroppy:9.9.9-bogus")
+
+	diags, err := svc.CheckBundle(context.Background(), files)
+	if err != nil {
+		t.Fatalf("CheckBundle must never return a Go error for a bundle-content problem, got: %v", err)
+	}
+	if d := findDiagnostic(diags, "stroppy", "9.9.9-bogus"); d == nil {
+		t.Fatalf("expected a diagnostic naming the unknown stroppy version, got %+v", diags)
+	}
+}
+
+// TestDslServiceCheckBundleMethodNoVersionSourceSkipsValidation mirrors
+// TestCheckNoVersionSourceSkipsStroppyValidation for the method form: absent
+// an injected VersionSource, the method behaves exactly like the
+// package-level CheckBundle function — no manufactured warning.
+func TestDslServiceCheckBundleMethodNoVersionSourceSkipsValidation(t *testing.T) {
+	svc := NewDslService()
+	files := withStroppyImage(t, loadBundle(t, postgresHADir), "stroppy:9.9.9-bogus")
+
+	diags, err := svc.CheckBundle(context.Background(), files)
+	if err != nil {
+		t.Fatalf("CheckBundle must never return a Go error for a bundle-content problem, got: %v", err)
+	}
+	if d := findDiagnostic(diags, "stroppy", "not found in known releases"); d != nil {
+		t.Fatalf("expected no stroppy-version diagnostic without an injected VersionSource, got %+v", d)
+	}
+}

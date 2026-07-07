@@ -458,9 +458,15 @@ func Run(ctx context.Context, cfg Config) error {
 	}
 	recipeActivities := execution.NewRecipeActivities(providerDeps, quotaManager)
 	recipeService := recipesvc.NewService(recipesvc.Deps{
-		Repo:      store.Recipes(),
-		Authn:     authn,
-		Checker:   dslsvc.CheckBundle,
+		Repo:  store.Recipes(),
+		Authn: authn,
+		// dslService.CheckBundle (the *DslService method), not the package-level
+		// dslsvc.CheckBundle function: the method applies the same advisory
+		// stroppy-version diagnostic (Task 7's validateStroppyVersion, via the
+		// VersionSource dslService was constructed with above) that
+		// DslService.Check already gives the live editor, so a stored recipe's
+		// Create/CheckRecipe path warns on a bogus stroppy version too.
+		Checker:   dslService.CheckBundle,
 		Runs:      store.TestRuns(),
 		Workflows: recipeWorkflows,
 	})
