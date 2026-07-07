@@ -30,4 +30,6 @@ enum FavoriteKind {
     FAVORITE_KIND_SUITE = 5;
     /* FAVORITE_KIND_SUITE_RUN targets a suite run row. */
     FAVORITE_KIND_SUITE_RUN = 6;
+    /* FAVORITE_KIND_RECIPE targets a recipe record row. */
+    FAVORITE_KIND_RECIPE = 7;
 }

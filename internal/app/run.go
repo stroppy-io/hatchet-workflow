@@ -224,16 +224,26 @@ func Run(ctx context.Context, cfg Config) error {
 	ratingBoard := adapters.NewRatingBoard(ratingRuns, metricsReader, ratingNames)
 	publicRatingBoard := adapters.NewPublicRatingBoard(ratingRuns, metricsReader)
 
-	// Only the TestRuns favorite target is resolvable now that the preset/suite
-	// services (and their repos) were deleted; DatabasePresets/WorkloadPresets/
-	// TestPresets/Suites/SuiteRuns are left nil, so favoriting those kinds
-	// reports not-found (favorite.TargetResolver's documented behavior for an
-	// unresolvable getter) rather than referencing a repo that no longer exists.
+	// Only TestRuns and Recipes favorite targets are resolvable now that the
+	// preset/suite services (and their repos) were deleted; DatabasePresets/
+	// WorkloadPresets/TestPresets/Suites/SuiteRuns are left nil, so favoriting
+	// those kinds reports not-found (favorite.TargetResolver's documented
+	// behavior for an unresolvable getter) rather than referencing a repo that
+	// no longer exists.
 	favoriteTargets := adapters.NewFavoriteTargetResolver(adapters.FavoriteTargetRepos{
 		// test_run is keyed by id only — the tenant is validated by the favorite
 		// service after resolution.
 		TestRuns: adapters.EntityGetterFunc(func(ctx context.Context, _, id string) (*commonEntity, error) {
 			rec, err := bid.testRun(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			return rec.GetEntity(), nil
+		}),
+		// recipe is tenant-partitioned — pass tenantID through so the lookup
+		// scopes to the caller's tenant.
+		Recipes: adapters.EntityGetterFunc(func(ctx context.Context, tenantID, id string) (*commonEntity, error) {
+			rec, err := store.Recipes().Get(ctx, tenantID, id)
 			if err != nil {
 				return nil, err
 			}

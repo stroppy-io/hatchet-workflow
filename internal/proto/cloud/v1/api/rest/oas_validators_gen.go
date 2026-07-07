@@ -215,6 +215,8 @@ func (s AddFavoriteRequestKind) Validate() error {
 		return nil
 	case 6:
 		return nil
+	case 7:
+		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
 	}
@@ -6768,6 +6770,8 @@ func (s FavoriteRecordKind) Validate() error {
 		return nil
 	case 6:
 		return nil
+	case 7:
+		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
 	}
@@ -10929,6 +10933,8 @@ func (s ListFavoritesRequestKind) Validate() error {
 	case 5:
 		return nil
 	case 6:
+		return nil
+	case 7:
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
@@ -20251,6 +20257,8 @@ func (s RemoveFavoriteRequestKind) Validate() error {
 	case 5:
 		return nil
 	case 6:
+		return nil
+	case 7:
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)

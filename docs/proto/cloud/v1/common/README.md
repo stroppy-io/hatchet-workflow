@@ -760,6 +760,11 @@ FAVORITE_KIND_SUITE targets a suite row.
 <td><pre>
 FAVORITE_KIND_SUITE_RUN targets a suite run row.
 </pre></td>
+</tr><tr>
+<td>FAVORITE_KIND_RECIPE</td>
+<td><pre>
+FAVORITE_KIND_RECIPE targets a recipe record row.
+</pre></td>
 </tr>
 </table>
 

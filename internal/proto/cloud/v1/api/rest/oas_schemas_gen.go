@@ -144,6 +144,7 @@ const (
 	AddFavoriteRequestKind4 AddFavoriteRequestKind = 4
 	AddFavoriteRequestKind5 AddFavoriteRequestKind = 5
 	AddFavoriteRequestKind6 AddFavoriteRequestKind = 6
+	AddFavoriteRequestKind7 AddFavoriteRequestKind = 7
 )
 
 // AllValues returns all AddFavoriteRequestKind values.
@@ -155,6 +156,7 @@ func (AddFavoriteRequestKind) AllValues() []AddFavoriteRequestKind {
 		AddFavoriteRequestKind4,
 		AddFavoriteRequestKind5,
 		AddFavoriteRequestKind6,
+		AddFavoriteRequestKind7,
 	}
 }
 
@@ -4171,6 +4173,7 @@ const (
 	FavoriteRecordKind4 FavoriteRecordKind = 4
 	FavoriteRecordKind5 FavoriteRecordKind = 5
 	FavoriteRecordKind6 FavoriteRecordKind = 6
+	FavoriteRecordKind7 FavoriteRecordKind = 7
 )
 
 // AllValues returns all FavoriteRecordKind values.
@@ -4182,6 +4185,7 @@ func (FavoriteRecordKind) AllValues() []FavoriteRecordKind {
 		FavoriteRecordKind4,
 		FavoriteRecordKind5,
 		FavoriteRecordKind6,
+		FavoriteRecordKind7,
 	}
 }
 
@@ -7208,6 +7212,7 @@ const (
 	ListFavoritesRequestKind4 ListFavoritesRequestKind = 4
 	ListFavoritesRequestKind5 ListFavoritesRequestKind = 5
 	ListFavoritesRequestKind6 ListFavoritesRequestKind = 6
+	ListFavoritesRequestKind7 ListFavoritesRequestKind = 7
 )
 
 // AllValues returns all ListFavoritesRequestKind values.
@@ -7220,6 +7225,7 @@ func (ListFavoritesRequestKind) AllValues() []ListFavoritesRequestKind {
 		ListFavoritesRequestKind4,
 		ListFavoritesRequestKind5,
 		ListFavoritesRequestKind6,
+		ListFavoritesRequestKind7,
 	}
 }
 
@@ -24084,6 +24090,7 @@ const (
 	RemoveFavoriteRequestKind4 RemoveFavoriteRequestKind = 4
 	RemoveFavoriteRequestKind5 RemoveFavoriteRequestKind = 5
 	RemoveFavoriteRequestKind6 RemoveFavoriteRequestKind = 6
+	RemoveFavoriteRequestKind7 RemoveFavoriteRequestKind = 7
 )
 
 // AllValues returns all RemoveFavoriteRequestKind values.
@@ -24095,6 +24102,7 @@ func (RemoveFavoriteRequestKind) AllValues() []RemoveFavoriteRequestKind {
 		RemoveFavoriteRequestKind4,
 		RemoveFavoriteRequestKind5,
 		RemoveFavoriteRequestKind6,
+		RemoveFavoriteRequestKind7,
 	}
 }
 

@@ -24,7 +24,8 @@ export type FavoriteKindLabel =
   | "test_preset"
   | "test_run"
   | "suite"
-  | "suite_run";
+  | "suite_run"
+  | "recipe";
 
 /** JSON-string enum form -> flat label ("" for unspecified/unknown). */
 function favoriteKindLabelFromJson(s: string | undefined): FavoriteKindLabel | "" {
@@ -41,6 +42,8 @@ function favoriteKindLabelFromJson(s: string | undefined): FavoriteKindLabel | "
       return "suite";
     case "FAVORITE_KIND_SUITE_RUN":
       return "suite_run";
+    case "FAVORITE_KIND_RECIPE":
+      return "recipe";
     default:
       return "";
   }
@@ -61,6 +64,8 @@ export function favoriteKindProto(label: FavoriteKindLabel | ""): FavoriteKind {
       return FavoriteKind.SUITE;
     case "suite_run":
       return FavoriteKind.SUITE_RUN;
+    case "recipe":
+      return FavoriteKind.RECIPE;
     default:
       return FavoriteKind.UNSPECIFIED;
   }
@@ -129,6 +134,7 @@ export const FAVORITE_KIND_LABEL: Record<FavoriteKindLabel, string> = {
   test_run: "Test Run",
   suite: "Suite",
   suite_run: "Suite Run",
+  recipe: "Recipe",
 };
 
 /**
@@ -151,7 +157,40 @@ export function favoriteTargetPath(
       return `/runs/${targetId}`;
     case "suite":
       return `/suites/${targetId}`;
+    case "recipe":
+      return `/recipes/${targetId}`;
     default:
       return undefined;
   }
+}
+
+/**
+ * Add (kind, targetId) to the caller's favorites for the tenant. Idempotent —
+ * favoriting an already-favorited target is a no-op server-side.
+ */
+export async function addFavorite(
+  tenantSlug: string,
+  kind: FavoriteKindLabel,
+  targetId: string,
+): Promise<void> {
+  const tenantId = await resolveTenantId(tenantSlug);
+  await favoriteClient.addFavorite({
+    tenantId,
+    kind: favoriteKindProto(kind),
+    targetId,
+  });
+}
+
+/** Remove (kind, targetId) from the caller's favorites for the tenant. */
+export async function removeFavorite(
+  tenantSlug: string,
+  kind: FavoriteKindLabel,
+  targetId: string,
+): Promise<void> {
+  const tenantId = await resolveTenantId(tenantSlug);
+  await favoriteClient.removeFavorite({
+    tenantId,
+    kind: favoriteKindProto(kind),
+    targetId,
+  });
 }

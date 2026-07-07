@@ -20,6 +20,7 @@ import (
 //	TestRuns        -> *TestRunRepo.Get(ctx, id)                    (entity, by id)
 //	Suites          -> *SuiteRepo.Get(ctx, tenantID, id)           (entity)
 //	SuiteRuns       -> *SuiteRunRepo.Get(ctx, id)                   (entity, by id)
+//	Recipes         -> *RecipeRepo.Get(ctx, tenantID, id)           (entity)
 //
 // A thin per-kind adapter (closure) maps each repo's record to its
 // GetEntity(); the wiring layer supplies these so the resolver stays
@@ -31,6 +32,7 @@ type FavoriteTargetRepos struct {
 	TestRuns        EntityGetter
 	Suites          EntityGetter
 	SuiteRuns       EntityGetter
+	Recipes         EntityGetter
 }
 
 // EntityGetter resolves a target's common.Entity by (tenant, id), returning
@@ -79,6 +81,8 @@ func (r *FavoriteTargetResolver) Resolve(ctx context.Context, kind common.Favori
 		getter = r.repos.Suites
 	case common.FavoriteKind_FAVORITE_KIND_SUITE_RUN:
 		getter = r.repos.SuiteRuns
+	case common.FavoriteKind_FAVORITE_KIND_RECIPE:
+		getter = r.repos.Recipes
 	default:
 		return nil, derrors.Invalid("kind", "unsupported favorite kind")
 	}

@@ -2155,6 +2155,7 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 		"FAVORITE_KIND_TEST_RUN":        &graphql.EnumValueConfig{Value: pb1.FavoriteKind_FAVORITE_KIND_TEST_RUN},
 		"FAVORITE_KIND_SUITE":           &graphql.EnumValueConfig{Value: pb1.FavoriteKind_FAVORITE_KIND_SUITE},
 		"FAVORITE_KIND_SUITE_RUN":       &graphql.EnumValueConfig{Value: pb1.FavoriteKind_FAVORITE_KIND_SUITE_RUN},
+		"FAVORITE_KIND_RECIPE":          &graphql.EnumValueConfig{Value: pb1.FavoriteKind_FAVORITE_KIND_RECIPE},
 	}})
 	e_RegistrationRequestStatus = graphql.NewEnum(graphql.EnumConfig{Name: "RegistrationRequestStatus", Values: graphql.EnumValueConfigMap{
 		"REGISTRATION_REQUEST_STATUS_UNSPECIFIED": &graphql.EnumValueConfig{Value: pb.RegistrationRequestStatus_REGISTRATION_REQUEST_STATUS_UNSPECIFIED},

@@ -13,7 +13,7 @@
 // actions.
 
 import { useCallback, useEffect, useState } from "react";
-import { AlertCircle, Loader2, Plus, Trash2 } from "lucide-react";
+import { AlertCircle, Loader2, Plus, Star, Trash2 } from "lucide-react";
 import { Link, useNavigate, useTenantSlug } from "@/lib/router";
 import { useAuth } from "@/hooks/useAuth";
 import { roleLevel } from "@/lib/roles";
@@ -30,6 +30,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { deleteRecipe, listRecipes, type RecipeVM } from "@/services/recipe";
+import { addFavorite, listFavorites, removeFavorite } from "@/services/favorites";
+import { cn } from "@/lib/utils";
 
 export function Recipes() {
   const slug = useTenantSlug() ?? "";
@@ -41,6 +43,8 @@ export function Recipes() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   // operator+ (>=2) on the active tenant, or platform admin, may create/delete.
   const tenant = user?.tenants.find((t) => t.slug === slug);
@@ -61,6 +65,47 @@ export function Recipes() {
       setLoading(false);
     }
   }, [slug]);
+
+  useEffect(() => {
+    if (!slug) return;
+    let cancelled = false;
+    void listFavorites(slug, { kind: "recipe" })
+      .then((page) => {
+        if (!cancelled) setFavoriteIds(new Set(page.favorites.map((f) => f.targetId)));
+      })
+      .catch(() => {
+        // favorites are a non-critical affordance — leave the star row empty on error.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [slug]);
+
+  const handleToggleFavorite = useCallback(
+    async (recipe: RecipeVM) => {
+      if (!slug) return;
+      const isFavorite = favoriteIds.has(recipe.id);
+      setTogglingId(recipe.id);
+      try {
+        if (isFavorite) {
+          await removeFavorite(slug, "recipe", recipe.id);
+          setFavoriteIds((prev) => {
+            const next = new Set(prev);
+            next.delete(recipe.id);
+            return next;
+          });
+        } else {
+          await addFavorite(slug, "recipe", recipe.id);
+          setFavoriteIds((prev) => new Set(prev).add(recipe.id));
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to update favorite");
+      } finally {
+        setTogglingId(null);
+      }
+    },
+    [slug, favoriteIds],
+  );
 
   useEffect(() => {
     void fetchRecipes();
@@ -180,6 +225,29 @@ export function Recipes() {
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled={togglingId === recipe.id}
+                          onClick={() => void handleToggleFavorite(recipe)}
+                          title={
+                            favoriteIds.has(recipe.id)
+                              ? "Remove from favorites"
+                              : "Add to favorites"
+                          }
+                        >
+                          {togglingId === recipe.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Star
+                              className={cn(
+                                "h-4 w-4",
+                                favoriteIds.has(recipe.id) &&
+                                  "fill-yellow-400 text-yellow-400",
+                              )}
+                            />
+                          )}
+                        </Button>
                         <Button
                           variant="outline"
                           size="sm"

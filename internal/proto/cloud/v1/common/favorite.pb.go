@@ -42,6 +42,8 @@ const (
 	FavoriteKind_FAVORITE_KIND_SUITE FavoriteKind = 5
 	// FAVORITE_KIND_SUITE_RUN targets a suite run row.
 	FavoriteKind_FAVORITE_KIND_SUITE_RUN FavoriteKind = 6
+	// FAVORITE_KIND_RECIPE targets a recipe record row.
+	FavoriteKind_FAVORITE_KIND_RECIPE FavoriteKind = 7
 )
 
 // Enum value maps for FavoriteKind.
@@ -54,6 +56,7 @@ var (
 		4: "FAVORITE_KIND_TEST_RUN",
 		5: "FAVORITE_KIND_SUITE",
 		6: "FAVORITE_KIND_SUITE_RUN",
+		7: "FAVORITE_KIND_RECIPE",
 	}
 	FavoriteKind_value = map[string]int32{
 		"FAVORITE_KIND_UNSPECIFIED":     0,
@@ -63,6 +66,7 @@ var (
 		"FAVORITE_KIND_TEST_RUN":        4,
 		"FAVORITE_KIND_SUITE":           5,
 		"FAVORITE_KIND_SUITE_RUN":       6,
+		"FAVORITE_KIND_RECIPE":          7,
 	}
 )
 
@@ -97,7 +101,7 @@ var File_cloud_v1_common_favorite_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_common_favorite_proto_rawDesc = "" +
 	"\n" +
-	"\x1ecloud/v1/common/favorite.proto\x12\x0fcloud.v1.common*\xe4\x01\n" +
+	"\x1ecloud/v1/common/favorite.proto\x12\x0fcloud.v1.common*\xfe\x01\n" +
 	"\fFavoriteKind\x12\x1d\n" +
 	"\x19FAVORITE_KIND_UNSPECIFIED\x10\x00\x12!\n" +
 	"\x1dFAVORITE_KIND_DATABASE_PRESET\x10\x01\x12!\n" +
@@ -105,7 +109,8 @@ const file_cloud_v1_common_favorite_proto_rawDesc = "" +
 	"\x19FAVORITE_KIND_TEST_PRESET\x10\x03\x12\x1a\n" +
 	"\x16FAVORITE_KIND_TEST_RUN\x10\x04\x12\x17\n" +
 	"\x13FAVORITE_KIND_SUITE\x10\x05\x12\x1b\n" +
-	"\x17FAVORITE_KIND_SUITE_RUN\x10\x06BDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/commonb\x06proto3"
+	"\x17FAVORITE_KIND_SUITE_RUN\x10\x06\x12\x18\n" +
+	"\x14FAVORITE_KIND_RECIPE\x10\aBDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/commonb\x06proto3"
 
 var (
 	file_cloud_v1_common_favorite_proto_rawDescOnce sync.Once

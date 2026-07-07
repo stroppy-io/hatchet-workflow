@@ -2608,6 +2608,8 @@ func FavoriteRecordToOgen(src *models.FavoriteRecord) (*rest.FavoriteRecord, err
 		en2 = rest.FavoriteRecordKind5
 	case common.FavoriteKind_FAVORITE_KIND_SUITE_RUN:
 		en2 = rest.FavoriteRecordKind6
+	case common.FavoriteKind_FAVORITE_KIND_RECIPE:
+		en2 = rest.FavoriteRecordKind7
 	default:
 		return nil, fmt.Errorf("cloud.v1.models.FavoriteRecord.kind: enum value %v has no ogen FavoriteRecordKind variant", src.GetKind())
 	}
@@ -2642,6 +2644,8 @@ func FavoriteRecordFromOgen(src *rest.FavoriteRecord) (*models.FavoriteRecord, e
 			en3 = common.FavoriteKind_FAVORITE_KIND_SUITE
 		case rest.FavoriteRecordKind6:
 			en3 = common.FavoriteKind_FAVORITE_KIND_SUITE_RUN
+		case rest.FavoriteRecordKind7:
+			en3 = common.FavoriteKind_FAVORITE_KIND_RECIPE
 		default:
 			return nil, fmt.Errorf("cloud.v1.models.FavoriteRecord.kind: enum value %v has no FavoriteKind variant", v2)
 		}

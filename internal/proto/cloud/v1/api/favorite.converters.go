@@ -31,6 +31,8 @@ func (src *AddFavoriteRequest) ToOgen() (*rest.AddFavoriteRequest, error) {
 		en1 = rest.AddFavoriteRequestKind5
 	case common.FavoriteKind_FAVORITE_KIND_SUITE_RUN:
 		en1 = rest.AddFavoriteRequestKind6
+	case common.FavoriteKind_FAVORITE_KIND_RECIPE:
+		en1 = rest.AddFavoriteRequestKind7
 	default:
 		return nil, fmt.Errorf("cloud.v1.api.AddFavoriteRequest.kind: enum value %v has no ogen AddFavoriteRequestKind variant", src.GetKind())
 	}
@@ -63,6 +65,8 @@ func AddFavoriteRequestFromOgen(src *rest.AddFavoriteRequest) (*AddFavoriteReque
 			en3 = common.FavoriteKind_FAVORITE_KIND_SUITE
 		case rest.AddFavoriteRequestKind6:
 			en3 = common.FavoriteKind_FAVORITE_KIND_SUITE_RUN
+		case rest.AddFavoriteRequestKind7:
+			en3 = common.FavoriteKind_FAVORITE_KIND_RECIPE
 		default:
 			return nil, fmt.Errorf("cloud.v1.api.AddFavoriteRequest.kind: enum value %v has no FavoriteKind variant", v2)
 		}
@@ -125,6 +129,8 @@ func (src *ListFavoritesRequest) ToOgen() (*rest.ListFavoritesRequest, error) {
 		en1 = rest.ListFavoritesRequestKind5
 	case common.FavoriteKind_FAVORITE_KIND_SUITE_RUN:
 		en1 = rest.ListFavoritesRequestKind6
+	case common.FavoriteKind_FAVORITE_KIND_RECIPE:
+		en1 = rest.ListFavoritesRequestKind7
 	default:
 		return nil, fmt.Errorf("cloud.v1.api.ListFavoritesRequest.kind: enum value %v has no ogen ListFavoritesRequestKind variant", src.GetKind())
 	}
@@ -165,6 +171,8 @@ func ListFavoritesRequestFromOgen(src *rest.ListFavoritesRequest) (*ListFavorite
 			en3 = common.FavoriteKind_FAVORITE_KIND_SUITE
 		case rest.ListFavoritesRequestKind6:
 			en3 = common.FavoriteKind_FAVORITE_KIND_SUITE_RUN
+		case rest.ListFavoritesRequestKind7:
+			en3 = common.FavoriteKind_FAVORITE_KIND_RECIPE
 		default:
 			return nil, fmt.Errorf("cloud.v1.api.ListFavoritesRequest.kind: enum value %v has no FavoriteKind variant", v2)
 		}
@@ -245,6 +253,8 @@ func (src *RemoveFavoriteRequest) ToOgen() (*rest.RemoveFavoriteRequest, error) 
 		en1 = rest.RemoveFavoriteRequestKind5
 	case common.FavoriteKind_FAVORITE_KIND_SUITE_RUN:
 		en1 = rest.RemoveFavoriteRequestKind6
+	case common.FavoriteKind_FAVORITE_KIND_RECIPE:
+		en1 = rest.RemoveFavoriteRequestKind7
 	default:
 		return nil, fmt.Errorf("cloud.v1.api.RemoveFavoriteRequest.kind: enum value %v has no ogen RemoveFavoriteRequestKind variant", src.GetKind())
 	}
@@ -277,6 +287,8 @@ func RemoveFavoriteRequestFromOgen(src *rest.RemoveFavoriteRequest) (*RemoveFavo
 			en3 = common.FavoriteKind_FAVORITE_KIND_SUITE
 		case rest.RemoveFavoriteRequestKind6:
 			en3 = common.FavoriteKind_FAVORITE_KIND_SUITE_RUN
+		case rest.RemoveFavoriteRequestKind7:
+			en3 = common.FavoriteKind_FAVORITE_KIND_RECIPE
 		default:
 			return nil, fmt.Errorf("cloud.v1.api.RemoveFavoriteRequest.kind: enum value %v has no FavoriteKind variant", v2)
 		}
