@@ -264,6 +264,13 @@ func topologyState(rec *models.TestRunRecord) topology.Topology_State {
 		return topology.Topology_STATE_INFRASTRUCTURE_PLANNED
 	case rec.GetSpec().GetTopologySpec() != nil:
 		return topology.Topology_STATE_SPEC
+	case rec.GetRecipeTopology() != nil:
+		// Recipe runs never produce a deployment.InfrastructureState/
+		// DeploymentPlan (see runrecipe.go's persist doc) — their topology
+		// snapshot is filled once, right after ProvisionActivity, which is
+		// the closest classic-run equivalent to
+		// STATE_INFRASTRUCTURE_DEPLOYED.
+		return topology.Topology_STATE_INFRASTRUCTURE_DEPLOYED
 	default:
 		return topology.Topology_STATE_UNSPECIFIED
 	}

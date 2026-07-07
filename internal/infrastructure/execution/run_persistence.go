@@ -118,6 +118,26 @@ func mergeRunSummary(dst, src *models.TestRunRecord_Summary) {
 	}
 }
 
+// PersistRecipeTopology replaces the run record's recipe_topology field
+// wholesale with snapshot — a full-replace write mirroring PersistDeploymentPlan
+// just below (not a merge like PersistRunSummary): RunRecipeWorkflow builds
+// the snapshot exactly once, right after ProvisionActivity succeeds (see
+// workflows.deriveRecipeTopology), so there is no accreting-facets concern a
+// merge would otherwise guard against.
+func (a *RunPersistenceActivities) PersistRecipeTopology(ctx context.Context, runID string, snapshot *models.RecipeTopologySnapshot) error {
+	if a == nil || a.store == nil || runID == "" || snapshot == nil {
+		return nil
+	}
+	rec, err := a.store.RunRecord(ctx, runID)
+	if err != nil {
+		return err
+	}
+	now := time.Now()
+	rec.RecipeTopology = proto.Clone(snapshot).(*models.RecipeTopologySnapshot)
+	touchRecordUpdated(rec.GetEntity(), now)
+	return a.store.SaveRunRecord(ctx, rec)
+}
+
 func (a *RunPersistenceActivities) PersistDeploymentPlan(ctx context.Context, runID string, deploymentPlan *deploymentpb.DeploymentPlan) error {
 	if a == nil || a.store == nil || runID == "" || deploymentPlan == nil {
 		return nil

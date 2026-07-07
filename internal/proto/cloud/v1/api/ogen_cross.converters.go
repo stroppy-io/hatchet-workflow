@@ -4621,6 +4621,130 @@ func LogRefFromOgen(src *rest.LogRef) (*monitor.LogRef, error) {
 	return dst, nil
 }
 
+// MachineNodeToOgen converts models.RecipeTopologySnapshot_MachineNode (an imported type) to its ogen representation.
+func MachineNodeToOgen(src *models.RecipeTopologySnapshot_MachineNode) (*rest.MachineNode, error) {
+	var dst rest.MachineNode
+	if src == nil {
+		return &dst, nil
+	}
+	dst.NodeId.SetTo(string(src.GetNodeId()))
+	dst.Group.SetTo(string(src.GetGroup()))
+	dst.IP.SetTo(string(src.GetIp()))
+	var en1 rest.MachineNodeStatus
+	switch src.GetStatus() {
+	case common.Status_STATUS_UNSPECIFIED:
+		en1 = rest.MachineNodeStatus0
+	case common.Status_STATUS_PENDING:
+		en1 = rest.MachineNodeStatus1
+	case common.Status_STATUS_RUNNING:
+		en1 = rest.MachineNodeStatus2
+	case common.Status_STATUS_RETRY_WAIT:
+		en1 = rest.MachineNodeStatus5
+	case common.Status_STATUS_COMPLETED:
+		en1 = rest.MachineNodeStatus3
+	case common.Status_STATUS_FAILED:
+		en1 = rest.MachineNodeStatus4
+	case common.Status_STATUS_SKIPPED:
+		en1 = rest.MachineNodeStatus6
+	case common.Status_STATUS_CANCELLING:
+		en1 = rest.MachineNodeStatus7
+	case common.Status_STATUS_CANCELLED:
+		en1 = rest.MachineNodeStatus8
+	case common.Status_STATUS_ALLOCATED:
+		en1 = rest.MachineNodeStatus9
+	case common.Status_STATUS_DEPLOYMENT:
+		en1 = rest.MachineNodeStatus10
+	case common.Status_STATUS_DEPLOYED:
+		en1 = rest.MachineNodeStatus11
+	default:
+		return nil, fmt.Errorf("cloud.v1.models.RecipeTopologySnapshot.MachineNode.status: enum value %v has no ogen MachineNodeStatus variant", src.GetStatus())
+	}
+	dst.Status.SetTo(en1)
+	c2, err := convert.SliceErr(src.GetServices(), func(e *models.RecipeTopologySnapshot_ServiceNode) (zero rest.ServiceNode, _ error) {
+		o3, err := ServiceNodeToOgen(e)
+		if err != nil {
+			return zero, err
+		}
+		return *o3, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dst.Services = c2
+	c4 := convert.Map(src.GetLabels(), func(v string) string {
+		return string(v)
+	})
+	dst.Labels.SetTo(c4)
+	return &dst, nil
+}
+
+// MachineNodeFromOgen converts the ogen representation back to RecipeTopologySnapshot_MachineNode.
+func MachineNodeFromOgen(src *rest.MachineNode) (*models.RecipeTopologySnapshot_MachineNode, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &models.RecipeTopologySnapshot_MachineNode{}
+	if v1, ok := src.NodeId.Get(); ok {
+		dst.NodeId = string(v1)
+	}
+	if v2, ok := src.Group.Get(); ok {
+		dst.Group = string(v2)
+	}
+	if v3, ok := src.IP.Get(); ok {
+		dst.Ip = string(v3)
+	}
+	if v4, ok := src.Status.Get(); ok {
+		var en5 common.Status
+		switch v4 {
+		case rest.MachineNodeStatus0:
+			en5 = common.Status_STATUS_UNSPECIFIED
+		case rest.MachineNodeStatus1:
+			en5 = common.Status_STATUS_PENDING
+		case rest.MachineNodeStatus2:
+			en5 = common.Status_STATUS_RUNNING
+		case rest.MachineNodeStatus5:
+			en5 = common.Status_STATUS_RETRY_WAIT
+		case rest.MachineNodeStatus3:
+			en5 = common.Status_STATUS_COMPLETED
+		case rest.MachineNodeStatus4:
+			en5 = common.Status_STATUS_FAILED
+		case rest.MachineNodeStatus6:
+			en5 = common.Status_STATUS_SKIPPED
+		case rest.MachineNodeStatus7:
+			en5 = common.Status_STATUS_CANCELLING
+		case rest.MachineNodeStatus8:
+			en5 = common.Status_STATUS_CANCELLED
+		case rest.MachineNodeStatus9:
+			en5 = common.Status_STATUS_ALLOCATED
+		case rest.MachineNodeStatus10:
+			en5 = common.Status_STATUS_DEPLOYMENT
+		case rest.MachineNodeStatus11:
+			en5 = common.Status_STATUS_DEPLOYED
+		default:
+			return nil, fmt.Errorf("cloud.v1.models.RecipeTopologySnapshot.MachineNode.status: enum value %v has no Status variant", v4)
+		}
+		dst.Status = en5
+	}
+	c6, err := convert.SliceErr(src.Services, func(e rest.ServiceNode) (zero *models.RecipeTopologySnapshot_ServiceNode, _ error) {
+		m7, err := ServiceNodeFromOgen(&e)
+		if err != nil {
+			return zero, err
+		}
+		return m7, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dst.Services = c6
+	if mv8, ok := src.Labels.Get(); ok {
+		c9 := convert.Map(mv8, func(v string) string {
+			return string(v)
+		})
+		dst.Labels = c9
+	}
+	return dst, nil
+}
+
 // MachinePlanToOgen converts deployment.MachinePlan (an imported type) to its ogen representation.
 func MachinePlanToOgen(src *deployment.MachinePlan) (*rest.MachinePlan, error) {
 	var dst rest.MachinePlan
@@ -7221,6 +7345,50 @@ func RecipeRecordFromOgen(src *rest.RecipeRecord) (*models.RecipeRecord, error) 
 	return dst, nil
 }
 
+// RecipeTopologySnapshotToOgen converts models.RecipeTopologySnapshot (an imported type) to its ogen representation.
+func RecipeTopologySnapshotToOgen(src *models.RecipeTopologySnapshot) (*rest.RecipeTopologySnapshot, error) {
+	var dst rest.RecipeTopologySnapshot
+	if src == nil {
+		return &dst, nil
+	}
+	dst.Provider.SetTo(string(src.GetProvider()))
+	c1, err := convert.SliceErr(src.GetNodes(), func(e *models.RecipeTopologySnapshot_MachineNode) (zero rest.MachineNode, _ error) {
+		o2, err := MachineNodeToOgen(e)
+		if err != nil {
+			return zero, err
+		}
+		return *o2, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dst.Nodes = c1
+	return &dst, nil
+}
+
+// RecipeTopologySnapshotFromOgen converts the ogen representation back to RecipeTopologySnapshot.
+func RecipeTopologySnapshotFromOgen(src *rest.RecipeTopologySnapshot) (*models.RecipeTopologySnapshot, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &models.RecipeTopologySnapshot{}
+	if v1, ok := src.Provider.Get(); ok {
+		dst.Provider = string(v1)
+	}
+	c2, err := convert.SliceErr(src.Nodes, func(e rest.MachineNode) (zero *models.RecipeTopologySnapshot_MachineNode, _ error) {
+		m3, err := MachineNodeFromOgen(&e)
+		if err != nil {
+			return zero, err
+		}
+		return m3, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dst.Nodes = c2
+	return dst, nil
+}
+
 // RefToOgen converts schemapb.Schema_Filed_Ref (an imported type) to its ogen representation.
 func RefToOgen(src *schemapb.Schema_Filed_Ref) (*rest.Ref, error) {
 	var dst rest.Ref
@@ -8523,6 +8691,32 @@ func SegmentFromOgen(src *rest.Segment) (*domain.Workload_Segment, error) {
 		return nil, err
 	}
 	dst.Files = c7
+	return dst, nil
+}
+
+// ServiceNodeToOgen converts models.RecipeTopologySnapshot_ServiceNode (an imported type) to its ogen representation.
+func ServiceNodeToOgen(src *models.RecipeTopologySnapshot_ServiceNode) (*rest.ServiceNode, error) {
+	var dst rest.ServiceNode
+	if src == nil {
+		return &dst, nil
+	}
+	dst.Name.SetTo(string(src.GetName()))
+	dst.Image.SetTo(string(src.GetImage()))
+	return &dst, nil
+}
+
+// ServiceNodeFromOgen converts the ogen representation back to RecipeTopologySnapshot_ServiceNode.
+func ServiceNodeFromOgen(src *rest.ServiceNode) (*models.RecipeTopologySnapshot_ServiceNode, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &models.RecipeTopologySnapshot_ServiceNode{}
+	if v1, ok := src.Name.Get(); ok {
+		dst.Name = string(v1)
+	}
+	if v2, ok := src.Image.Get(); ok {
+		dst.Image = string(v2)
+	}
 	return dst, nil
 }
 
@@ -10281,6 +10475,13 @@ func TestRunRecordToOgen(src *models.TestRunRecord) (*rest.TestRunRecord, error)
 		dst.RuntimeState.SetTo(*o8)
 	}
 	dst.RecipeId.SetTo(string(src.GetRecipeId()))
+	if src.RecipeTopology != nil {
+		o9, err := RecipeTopologySnapshotToOgen(src.GetRecipeTopology())
+		if err != nil {
+			return nil, err
+		}
+		dst.RecipeTopology.SetTo(*o9)
+	}
 	return &dst, nil
 }
 
@@ -10390,6 +10591,13 @@ func TestRunRecordFromOgen(src *rest.TestRunRecord) (*models.TestRunRecord, erro
 	}
 	if v19, ok := src.RecipeId.Get(); ok {
 		dst.RecipeId = string(v19)
+	}
+	if v20, ok := src.RecipeTopology.Get(); ok {
+		m21, err := RecipeTopologySnapshotFromOgen(&v20)
+		if err != nil {
+			return nil, err
+		}
+		dst.RecipeTopology = m21
 	}
 	return dst, nil
 }

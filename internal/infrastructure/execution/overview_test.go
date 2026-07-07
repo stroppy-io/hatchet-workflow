@@ -588,6 +588,94 @@ func TestTopologyFromRecordIncludesRuntimeControlPlaneMonitoringAndActionEdges(t
 	}
 }
 
+// TestTopologyFromRecordProjectsRecipeTopologySnapshot asserts that a recipe
+// run's persisted RecipeTopologySnapshot (rec.Spec is nil — a recipe run has
+// no baked domain.TestRun spec, so topologyFromRecord's classic TopologySpec/
+// InfrastructureState/DeploymentPlan path finds nothing) still yields a
+// topology with the provisioned machine/agent/service nodes, not just the
+// lone control-plane node the audit's Q3 finding describes (see the plan's
+// "Task 3: Topology projection for recipe runs").
+func TestTopologyFromRecordProjectsRecipeTopologySnapshot(t *testing.T) {
+	rec := &models.TestRunRecord{
+		Entity:   &common.Entity{Id: "run-1"},
+		Status:   common.Status_STATUS_RUNNING,
+		RecipeId: "recipe-1",
+		RecipeTopology: &models.RecipeTopologySnapshot{
+			Provider: "yandex",
+			Nodes: []*models.RecipeTopologySnapshot_MachineNode{
+				{
+					NodeId: "db-0",
+					Group:  "db",
+					Ip:     "10.0.0.1",
+					Status: common.Status_STATUS_DEPLOYED,
+					Services: []*models.RecipeTopologySnapshot_ServiceNode{
+						{Name: "patroni-postgres", Image: "spilo:16"},
+					},
+				},
+				{
+					NodeId: "db-1",
+					Group:  "db",
+					Ip:     "10.0.0.2",
+					Status: common.Status_STATUS_DEPLOYED,
+					Services: []*models.RecipeTopologySnapshot_ServiceNode{
+						{Name: "patroni-postgres", Image: "spilo:16"},
+					},
+				},
+				{
+					NodeId: "runner-0",
+					Group:  "runner",
+					Ip:     "10.0.0.3",
+					Status: common.Status_STATUS_DEPLOYED,
+					Services: []*models.RecipeTopologySnapshot_ServiceNode{
+						{Name: "stroppy", Image: "stroppy:1.2.3"},
+					},
+				},
+			},
+		},
+	}
+
+	topo := topologyFromRecord(rec)
+
+	if got, want := topo.GetState(), topologypb.Topology_STATE_INFRASTRUCTURE_DEPLOYED; got != want {
+		t.Fatalf("topology state = %s, want %s", got, want)
+	}
+
+	nodes := topo.GetRuntimeNodes()
+	if got := len(nodes); got <= 1 {
+		t.Fatalf("runtime node count = %d, want more than just the control-plane node (audit Q3 regression)", got)
+	}
+
+	for _, id := range []string{
+		"control-plane",
+		"machine/db-0",
+		"machine/db-1",
+		"machine/runner-0",
+		"agent/db-0",
+		"agent/runner-0",
+		"component/patroni-postgres",
+		"component/stroppy",
+	} {
+		if node := runtimeNodeByID(topo, id); node == nil {
+			t.Fatalf("runtime node %q missing: %v", id, nodes)
+		}
+	}
+
+	dbNode := runtimeNodeByID(topo, "machine/db-0")
+	if got, want := dbNode.GetRole(), "db"; got != want {
+		t.Errorf("machine/db-0 role = %q, want %q", got, want)
+	}
+	if got, want := dbNode.GetAddress(), "10.0.0.1"; got != want {
+		t.Errorf("machine/db-0 address = %q, want %q", got, want)
+	}
+	if got, want := dbNode.GetStatus(), common.Status_STATUS_DEPLOYED; got != want {
+		t.Errorf("machine/db-0 status = %s, want %s", got, want)
+	}
+
+	assertRuntimeEdge(t, topo, "machine/db-0", "component/patroni-postgres", "placement")
+	assertRuntimeEdge(t, topo, "machine/runner-0", "component/stroppy", "placement")
+	assertRuntimeEdge(t, topo, "agent/db-0", "control-plane", "agent_control")
+}
+
 func TestTopologyFromRecordLabelsUnspecifiedLogicalConnections(t *testing.T) {
 	rec := &models.TestRunRecord{
 		Entity: &common.Entity{Id: "run-1"},

@@ -262,6 +262,84 @@ func TestRunRecipeWorkflowPersistsSummaryFromCompiledPlan(t *testing.T) {
 	}
 }
 
+// TestRunRecipeWorkflowPersistsRecipeTopologyAfterProvision asserts that
+// right after ProvisionActivity succeeds, RunRecipeWorkflow calls
+// PersistRecipeTopologyActivityName with a snapshot derived from the
+// compiled plan's machine_groups/services and the provisioned machines (see
+// deriveRecipeTopology in runrecipe_topology.go) — the ROOT fix for
+// recipe-run topology, which otherwise renders only the lone control-plane
+// node (overview.go/runtime_topology.go project this snapshot for a recipe
+// run in place of the classic TopologySpec/InfrastructureState/
+// DeploymentPlan trio).
+func TestRunRecipeWorkflowPersistsRecipeTopologyAfterProvision(t *testing.T) {
+	var suite testsuite.WorkflowTestSuite
+	env := suite.NewTestWorkflowEnvironment()
+	RegisterWorkflows(env)
+	registerRunRecipeActivityStubs(env)
+	runtime := &fakeRuntimeActivities{}
+	registerFakeRuntimeActivities(env, runtime)
+
+	plan := postgresHaTestPlan()
+	machines := map[string][]*deploymentpb.MachineState{
+		"db":     {machineState("db-1", "10.0.0.1"), machineState("db-2", "10.0.0.2"), machineState("db-3", "10.0.0.3")},
+		"runner": {machineState("runner-1", "10.0.0.4")},
+	}
+
+	env.OnActivity(CompileRecipeActivityName, mock.Anything, mock.Anything).Return(
+		&CompileRecipeActivityOutput{Plan: plan}, nil,
+	)
+	env.OnActivity(ProvisionActivityName, mock.Anything, mock.Anything).Return(
+		&ProvisionActivityOutput{Machines: machines}, nil,
+	)
+	env.OnWorkflow(ExecuteCompiledPlanWorkflowName, mock.Anything, mock.Anything).Return(
+		&ExecuteCompiledPlanOutput{JobStatuses: map[string]string{"bench[workload=insert]": jobStatusOK, "bench[workload=select]": jobStatusOK}}, nil,
+	)
+	env.OnActivity(TeardownActivityName, mock.Anything, mock.Anything).Return(nil)
+
+	env.ExecuteWorkflow(RunRecipeWorkflowName, runRecipeTestInput())
+
+	if !env.IsWorkflowCompleted() {
+		t.Fatal("workflow did not complete")
+	}
+	if err := env.GetWorkflowError(); err != nil {
+		t.Fatalf("workflow failed: %v", err)
+	}
+
+	runtime.mu.Lock()
+	snapshots := runtime.recipeTopologies
+	runtime.mu.Unlock()
+
+	if len(snapshots) == 0 {
+		t.Fatal("PersistRecipeTopologyActivityName was never called")
+	}
+	snap := snapshots[len(snapshots)-1]
+	if snap == nil {
+		t.Fatal("persisted recipe topology snapshot is nil")
+	}
+	if got, want := snap.GetProvider(), "yandex"; got != want {
+		t.Errorf("provider = %q, want %q", got, want)
+	}
+	nodes := snap.GetNodes()
+	if got, want := len(nodes), 4; got != want {
+		t.Fatalf("node count = %d, want %d", got, want)
+	}
+	var sawDB, sawRunner bool
+	for _, node := range nodes {
+		switch node.GetGroup() {
+		case "db":
+			sawDB = true
+		case "runner":
+			sawRunner = true
+			if len(node.GetServices()) == 0 {
+				t.Errorf("runner node %q has no services, want the stroppy service", node.GetNodeId())
+			}
+		}
+	}
+	if !sawDB || !sawRunner {
+		t.Fatalf("expected both db and runner groups represented in nodes: %v", nodes)
+	}
+}
+
 // TestRunRecipeWorkflowProvisionFails asserts a ProvisionActivity failure
 // marks the infra stage FAILED, skips the execute child entirely, still runs
 // teardown (compile already resolved a provider), and the workflow itself

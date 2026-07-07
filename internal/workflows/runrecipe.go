@@ -393,6 +393,15 @@ func (w *runRecipeWorkflow) run(ctx workflow.Context) (result *RunRecipeOutput, 
 		return nil, nil //nolint:nilnil // see above.
 	}
 	w.completeStage(ctx, runRecipeStageInfraIndex)
+	// Stamp the recipe topology snapshot (machines + their group/service
+	// placement) onto the run record now that ProvisionActivity has
+	// returned real machines — this is the ROOT fix for recipe-run topology
+	// (overview.go/runtime_topology.go project it for a recipe run in place
+	// of the TopologySpec/InfrastructureState/DeploymentPlan trio a classic
+	// run has). See runrecipe_topology.go's deriveRecipeTopology.
+	if perr := persistRecipeTopology(ctx, w.in.RunID, deriveRecipeTopology(plan, machines)); perr != nil {
+		return nil, perr
+	}
 	if perr := w.persist(ctx); perr != nil {
 		return nil, perr
 	}

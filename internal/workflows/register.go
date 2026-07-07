@@ -21,6 +21,12 @@ const (
 	// TestRunRecord.Summary onto the run record — see runtime.go's
 	// persistRunSummary and runrecipe_summary.go's deriveRunSummary.
 	PersistRunSummaryActivityName = "stroppy.runtime.PersistRunSummary"
+	// PersistRecipeTopologyActivityName stores a recipe run's topology
+	// snapshot (machines + their group/service placement) onto the run
+	// record's recipe_topology field — see runtime.go's
+	// persistRecipeTopology and runrecipe_topology.go's
+	// deriveRecipeTopology.
+	PersistRecipeTopologyActivityName = "stroppy.runtime.PersistRecipeTopology"
 )
 
 type RuntimeActivities interface {
@@ -32,6 +38,12 @@ type RuntimeActivities interface {
 	// PersistRunSummary) — additive, never clobbers the timing/progress
 	// facets PersistRunState's own applyRunSummary maintains.
 	PersistRunSummary(context.Context, string, *models.TestRunRecord_Summary) error
+	// PersistRecipeTopology replaces the run record's recipe_topology field
+	// wholesale (see execution.RunPersistenceActivities.PersistRecipeTopology)
+	// — a full-replace write, like PersistDeploymentPlan, not a merge like
+	// PersistRunSummary: the snapshot is built once from a single
+	// ProvisionActivity result, so there is nothing to accrete.
+	PersistRecipeTopology(context.Context, string, *models.RecipeTopologySnapshot) error
 }
 
 // RecipeActivityImpl is the interface RunRecipeWorkflow's three by-name
@@ -84,6 +96,7 @@ func RegisterActivities(registry worker.ActivityRegistry, runtime RuntimeActivit
 		registry.RegisterActivityWithOptions(runtime.PersistDeploymentPlan, activity.RegisterOptions{Name: PersistDeploymentPlanActivityName})
 		registry.RegisterActivityWithOptions(runtime.AppendRunLogs, activity.RegisterOptions{Name: AppendRunLogsActivityName})
 		registry.RegisterActivityWithOptions(runtime.PersistRunSummary, activity.RegisterOptions{Name: PersistRunSummaryActivityName})
+		registry.RegisterActivityWithOptions(runtime.PersistRecipeTopology, activity.RegisterOptions{Name: PersistRecipeTopologyActivityName})
 	}
 }
 

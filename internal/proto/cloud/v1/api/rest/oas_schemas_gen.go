@@ -8650,6 +8650,122 @@ func (s *LookupAccountByEmailResponse) SetAccount(val Account) {
 	s.Account = val
 }
 
+// Ref: #/components/schemas/MachineNode
+type MachineNode struct {
+	Group    OptString            `json:"group"`
+	IP       OptString            `json:"ip"`
+	Labels   OptMachineNodeLabels `json:"labels"`
+	NodeId   OptString            `json:"nodeId"`
+	Services []ServiceNode        `json:"services"`
+	Status   OptMachineNodeStatus `json:"status"`
+}
+
+// GetGroup returns the value of Group.
+func (s *MachineNode) GetGroup() OptString {
+	return s.Group
+}
+
+// GetIP returns the value of IP.
+func (s *MachineNode) GetIP() OptString {
+	return s.IP
+}
+
+// GetLabels returns the value of Labels.
+func (s *MachineNode) GetLabels() OptMachineNodeLabels {
+	return s.Labels
+}
+
+// GetNodeId returns the value of NodeId.
+func (s *MachineNode) GetNodeId() OptString {
+	return s.NodeId
+}
+
+// GetServices returns the value of Services.
+func (s *MachineNode) GetServices() []ServiceNode {
+	return s.Services
+}
+
+// GetStatus returns the value of Status.
+func (s *MachineNode) GetStatus() OptMachineNodeStatus {
+	return s.Status
+}
+
+// SetGroup sets the value of Group.
+func (s *MachineNode) SetGroup(val OptString) {
+	s.Group = val
+}
+
+// SetIP sets the value of IP.
+func (s *MachineNode) SetIP(val OptString) {
+	s.IP = val
+}
+
+// SetLabels sets the value of Labels.
+func (s *MachineNode) SetLabels(val OptMachineNodeLabels) {
+	s.Labels = val
+}
+
+// SetNodeId sets the value of NodeId.
+func (s *MachineNode) SetNodeId(val OptString) {
+	s.NodeId = val
+}
+
+// SetServices sets the value of Services.
+func (s *MachineNode) SetServices(val []ServiceNode) {
+	s.Services = val
+}
+
+// SetStatus sets the value of Status.
+func (s *MachineNode) SetStatus(val OptMachineNodeStatus) {
+	s.Status = val
+}
+
+type MachineNodeLabels map[string]string
+
+func (s *MachineNodeLabels) init() MachineNodeLabels {
+	m := *s
+	if m == nil {
+		m = map[string]string{}
+		*s = m
+	}
+	return m
+}
+
+type MachineNodeStatus int32
+
+const (
+	MachineNodeStatus0  MachineNodeStatus = 0
+	MachineNodeStatus1  MachineNodeStatus = 1
+	MachineNodeStatus2  MachineNodeStatus = 2
+	MachineNodeStatus5  MachineNodeStatus = 5
+	MachineNodeStatus3  MachineNodeStatus = 3
+	MachineNodeStatus4  MachineNodeStatus = 4
+	MachineNodeStatus6  MachineNodeStatus = 6
+	MachineNodeStatus7  MachineNodeStatus = 7
+	MachineNodeStatus8  MachineNodeStatus = 8
+	MachineNodeStatus9  MachineNodeStatus = 9
+	MachineNodeStatus10 MachineNodeStatus = 10
+	MachineNodeStatus11 MachineNodeStatus = 11
+)
+
+// AllValues returns all MachineNodeStatus values.
+func (MachineNodeStatus) AllValues() []MachineNodeStatus {
+	return []MachineNodeStatus{
+		MachineNodeStatus0,
+		MachineNodeStatus1,
+		MachineNodeStatus2,
+		MachineNodeStatus5,
+		MachineNodeStatus3,
+		MachineNodeStatus4,
+		MachineNodeStatus6,
+		MachineNodeStatus7,
+		MachineNodeStatus8,
+		MachineNodeStatus9,
+		MachineNodeStatus10,
+		MachineNodeStatus11,
+	}
+}
+
 // Ref: #/components/schemas/MachinePlan
 type MachinePlan struct {
 	Docker        OptContainer         `json:"docker"`
@@ -13619,6 +13735,98 @@ func (o OptLogRef) Or(d LogRef) LogRef {
 	return d
 }
 
+// NewOptMachineNodeLabels returns new OptMachineNodeLabels with value set to v.
+func NewOptMachineNodeLabels(v MachineNodeLabels) OptMachineNodeLabels {
+	return OptMachineNodeLabels{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptMachineNodeLabels is optional MachineNodeLabels.
+type OptMachineNodeLabels struct {
+	Value MachineNodeLabels
+	Set   bool
+}
+
+// IsSet returns true if OptMachineNodeLabels was set.
+func (o OptMachineNodeLabels) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptMachineNodeLabels) Reset() {
+	var v MachineNodeLabels
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptMachineNodeLabels) SetTo(v MachineNodeLabels) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptMachineNodeLabels) Get() (v MachineNodeLabels, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptMachineNodeLabels) Or(d MachineNodeLabels) MachineNodeLabels {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptMachineNodeStatus returns new OptMachineNodeStatus with value set to v.
+func NewOptMachineNodeStatus(v MachineNodeStatus) OptMachineNodeStatus {
+	return OptMachineNodeStatus{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptMachineNodeStatus is optional MachineNodeStatus.
+type OptMachineNodeStatus struct {
+	Value MachineNodeStatus
+	Set   bool
+}
+
+// IsSet returns true if OptMachineNodeStatus was set.
+func (o OptMachineNodeStatus) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptMachineNodeStatus) Reset() {
+	var v MachineNodeStatus
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptMachineNodeStatus) SetTo(v MachineNodeStatus) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptMachineNodeStatus) Get() (v MachineNodeStatus, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptMachineNodeStatus) Or(d MachineNodeStatus) MachineNodeStatus {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptMachinePlanLabels returns new OptMachinePlanLabels with value set to v.
 func NewOptMachinePlanLabels(v MachinePlanLabels) OptMachinePlanLabels {
 	return OptMachinePlanLabels{
@@ -16281,6 +16489,52 @@ func (o OptRecipeBundleFiles) Get() (v RecipeBundleFiles, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptRecipeBundleFiles) Or(d RecipeBundleFiles) RecipeBundleFiles {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptRecipeTopologySnapshot returns new OptRecipeTopologySnapshot with value set to v.
+func NewOptRecipeTopologySnapshot(v RecipeTopologySnapshot) OptRecipeTopologySnapshot {
+	return OptRecipeTopologySnapshot{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptRecipeTopologySnapshot is optional RecipeTopologySnapshot.
+type OptRecipeTopologySnapshot struct {
+	Value RecipeTopologySnapshot
+	Set   bool
+}
+
+// IsSet returns true if OptRecipeTopologySnapshot was set.
+func (o OptRecipeTopologySnapshot) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptRecipeTopologySnapshot) Reset() {
+	var v RecipeTopologySnapshot
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptRecipeTopologySnapshot) SetTo(v RecipeTopologySnapshot) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptRecipeTopologySnapshot) Get() (v RecipeTopologySnapshot, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptRecipeTopologySnapshot) Or(d RecipeTopologySnapshot) RecipeTopologySnapshot {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -23496,6 +23750,32 @@ func (s *RecipeRecord) SetVersion(val OptInt32) {
 	s.Version = val
 }
 
+// Ref: #/components/schemas/RecipeTopologySnapshot
+type RecipeTopologySnapshot struct {
+	Nodes    []MachineNode `json:"nodes"`
+	Provider OptString     `json:"provider"`
+}
+
+// GetNodes returns the value of Nodes.
+func (s *RecipeTopologySnapshot) GetNodes() []MachineNode {
+	return s.Nodes
+}
+
+// GetProvider returns the value of Provider.
+func (s *RecipeTopologySnapshot) GetProvider() OptString {
+	return s.Provider
+}
+
+// SetNodes sets the value of Nodes.
+func (s *RecipeTopologySnapshot) SetNodes(val []MachineNode) {
+	s.Nodes = val
+}
+
+// SetProvider sets the value of Provider.
+func (s *RecipeTopologySnapshot) SetProvider(val OptString) {
+	s.Provider = val
+}
+
 // Ref: #/components/schemas/Ref
 type Ref struct {
 	ID   OptSchemaIdentity `json:"id"`
@@ -25531,6 +25811,32 @@ func (s *Segment) SetScript(val OptString) {
 // SetSQL sets the value of SQL.
 func (s *Segment) SetSQL(val OptString) {
 	s.SQL = val
+}
+
+// Ref: #/components/schemas/ServiceNode
+type ServiceNode struct {
+	Image OptString `json:"image"`
+	Name  OptString `json:"name"`
+}
+
+// GetImage returns the value of Image.
+func (s *ServiceNode) GetImage() OptString {
+	return s.Image
+}
+
+// GetName returns the value of Name.
+func (s *ServiceNode) GetName() OptString {
+	return s.Name
+}
+
+// SetImage sets the value of Image.
+func (s *ServiceNode) SetImage(val OptString) {
+	s.Image = val
+}
+
+// SetName sets the value of Name.
+func (s *ServiceNode) SetName(val OptString) {
+	s.Name = val
 }
 
 // Ref: #/components/schemas/SetShareExpiryRequest
@@ -27852,19 +28158,20 @@ func (s *TestRunOverviewSnapshot) SetTopology(val Topology) {
 
 // Ref: #/components/schemas/TestRunRecord
 type TestRunRecord struct {
-	DeploymentPlan      OptDeploymentPlan       `json:"deploymentPlan"`
-	Entity              Entity                  `json:"entity"`
-	InGlobalRating      OptBool                 `json:"inGlobalRating"`
-	InTenantRating      OptBool                 `json:"inTenantRating"`
-	InfrastructureState OptInfrastructureState  `json:"infrastructureState"`
-	RecipeId            OptString               `json:"recipeId"`
-	RuntimeState        OptRunState             `json:"runtimeState"`
-	Spec                TestRun                 `json:"spec"`
-	Status              OptTestRunRecordStatus  `json:"status"`
-	SuiteCellId         OptString               `json:"suiteCellId"`
-	SuiteRunId          OptString               `json:"suiteRunId"`
-	Summary             OptSummary2             `json:"summary"`
-	Trigger             OptTestRunRecordTrigger `json:"trigger"`
+	DeploymentPlan      OptDeploymentPlan         `json:"deploymentPlan"`
+	Entity              Entity                    `json:"entity"`
+	InGlobalRating      OptBool                   `json:"inGlobalRating"`
+	InTenantRating      OptBool                   `json:"inTenantRating"`
+	InfrastructureState OptInfrastructureState    `json:"infrastructureState"`
+	RecipeId            OptString                 `json:"recipeId"`
+	RecipeTopology      OptRecipeTopologySnapshot `json:"recipeTopology"`
+	RuntimeState        OptRunState               `json:"runtimeState"`
+	Spec                TestRun                   `json:"spec"`
+	Status              OptTestRunRecordStatus    `json:"status"`
+	SuiteCellId         OptString                 `json:"suiteCellId"`
+	SuiteRunId          OptString                 `json:"suiteRunId"`
+	Summary             OptSummary2               `json:"summary"`
+	Trigger             OptTestRunRecordTrigger   `json:"trigger"`
 }
 
 // GetDeploymentPlan returns the value of DeploymentPlan.
@@ -27895,6 +28202,11 @@ func (s *TestRunRecord) GetInfrastructureState() OptInfrastructureState {
 // GetRecipeId returns the value of RecipeId.
 func (s *TestRunRecord) GetRecipeId() OptString {
 	return s.RecipeId
+}
+
+// GetRecipeTopology returns the value of RecipeTopology.
+func (s *TestRunRecord) GetRecipeTopology() OptRecipeTopologySnapshot {
+	return s.RecipeTopology
 }
 
 // GetRuntimeState returns the value of RuntimeState.
@@ -27960,6 +28272,11 @@ func (s *TestRunRecord) SetInfrastructureState(val OptInfrastructureState) {
 // SetRecipeId sets the value of RecipeId.
 func (s *TestRunRecord) SetRecipeId(val OptString) {
 	s.RecipeId = val
+}
+
+// SetRecipeTopology sets the value of RecipeTopology.
+func (s *TestRunRecord) SetRecipeTopology(val OptRecipeTopologySnapshot) {
+	s.RecipeTopology = val
 }
 
 // SetRuntimeState sets the value of RuntimeState.

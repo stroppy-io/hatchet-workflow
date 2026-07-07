@@ -1903,6 +1903,9 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 	var o_Worker *graphql.Object
 	var o_PipelineOperation *graphql.Object
 	var o_PipelineOutput *graphql.Object
+	var o_RecipeTopologySnapshot *graphql.Object
+	var o_RecipeTopologySnapshot_ServiceNode *graphql.Object
+	var o_RecipeTopologySnapshot_MachineNode *graphql.Object
 	var o_ListRunsResponse *graphql.Object
 	var o_CancelRunResponse *graphql.Object
 	var o_DeleteRunResponse *graphql.Object
@@ -5254,6 +5257,13 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 				}
 				return obj.GetRecipeId(), nil
 			}},
+			"recipeTopology": &graphql.Field{Type: o_RecipeTopologySnapshot, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.TestRunRecord)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetRecipeTopology(), nil
+			}},
 		}
 	})})
 	o_TestRunRecord_Summary = graphql.NewObject(graphql.ObjectConfig{Name: "TestRunRecord_Summary", Fields: graphql.FieldsThunk(func() graphql.Fields {
@@ -8264,6 +8274,88 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 			}},
 			"labels": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 				obj, _ := p.Source.(*pb4.PipelineOutput)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetLabels(), nil
+			}},
+		}
+	})})
+	o_RecipeTopologySnapshot = graphql.NewObject(graphql.ObjectConfig{Name: "RecipeTopologySnapshot", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"provider": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.RecipeTopologySnapshot)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetProvider(), nil
+			}},
+			"nodes": &graphql.Field{Type: graphql.NewList(o_RecipeTopologySnapshot_MachineNode), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.RecipeTopologySnapshot)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetNodes(), nil
+			}},
+		}
+	})})
+	o_RecipeTopologySnapshot_ServiceNode = graphql.NewObject(graphql.ObjectConfig{Name: "RecipeTopologySnapshot_ServiceNode", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"name": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.RecipeTopologySnapshot_ServiceNode)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetName(), nil
+			}},
+			"image": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.RecipeTopologySnapshot_ServiceNode)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetImage(), nil
+			}},
+		}
+	})})
+	o_RecipeTopologySnapshot_MachineNode = graphql.NewObject(graphql.ObjectConfig{Name: "RecipeTopologySnapshot_MachineNode", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"nodeId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.RecipeTopologySnapshot_MachineNode)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetNodeId(), nil
+			}},
+			"group": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.RecipeTopologySnapshot_MachineNode)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetGroup(), nil
+			}},
+			"ip": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.RecipeTopologySnapshot_MachineNode)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetIp(), nil
+			}},
+			"status": &graphql.Field{Type: graphql.NewNonNull(e_Status), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.RecipeTopologySnapshot_MachineNode)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetStatus(), nil
+			}},
+			"services": &graphql.Field{Type: graphql.NewList(o_RecipeTopologySnapshot_ServiceNode), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.RecipeTopologySnapshot_MachineNode)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetServices(), nil
+			}},
+			"labels": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.RecipeTopologySnapshot_MachineNode)
 				if obj == nil {
 					return nil, nil
 				}
@@ -13759,6 +13851,6 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 	cfg.Query = queryRoot
 	cfg.Mutation = mutationRoot
 	cfg.Subscription = subscriptionRoot
-	cfg.Types = []graphql.Type{e_Status, e_Database_Kind, e_Provider, e_Verdict, e_FavoriteKind, e_RegistrationRequestStatus, e_Scope, e_Resource, e_Action, e_ApiTokenType, e_PackageRecord_Format, e_PackageRecord_Status, e_EntitySortField, e_QuotaRefreshPolicy, e_Quota_ReservationStatus, e_Severity, e_Workload_Protocol, e_YdbParams_FaultTolerance, e_YdbParams_FailureDomain, e_YdbParams_DiskType, e_YdbManagedParams_Type, e_YdbManagedParams_ComputeType, e_Component_Kind, e_Connection_Kind, e_Connection_Protocol, e_Connection_Mode, e_Yandex_Settings_PlatformId, e_Yandex_Settings_Zone, e_Docker_Protocol, e_Docker_RestartPolicy, e_Trigger, e_Cmd_Streams_Mode, e_Worker_Kind, e_OperationKind, e_OutputKind, e_ShareRecord_Target_Kind, e_ListTestRunsRequest_Sort_Kind, e_LogScrollDirection, e_Source, e_Stream, e_Topology_State, e_RuntimeNode_Kind, e_Schema_Filed_ResultType, e_Schema_Filed_Severity, e_Schema_Filed_String_StringFormat, e_ObservationSource, e_WorkerPresence, e_Event_Kind, e_EventSeverity, o_PlatformSettings, o_RunColumn, o_CompareView, o_Comparison, o_Comparison_RunSummary, o_TimeRange, o_MetricRow, o_MetricCell, o_CompareRunsResponse, o_AddFavoriteResponse, o_FavoriteRecord, o_Entity, o_Timings, o_RemoveFavoriteResponse, o_ListFavoritesResponse, o_TokenPair, o_RegisterResponse, o_LoginResponse, o_RefreshResponse, o_LogoutResponse, o_CreateAccountResponse, o_Account, o_GetAccountResponse, o_LookupAccountByEmailResponse, o_GetMyAccountResponse, o_ListAccountsResponse, o_UpdateAccountResponse, o_DeleteAccountResponse, o_ChangePasswordResponse, o_ResetPasswordResponse, o_RequestPasswordResetResponse, o_ConfirmPasswordResetResponse, o_VerifyEmailResponse, o_ResendVerificationResponse, o_CreateTenantResponse, o_Tenant, o_Tags, o_GetTenantResponse, o_ListMyTenantsResponse, o_UpdateTenantResponse, o_DeleteTenantResponse, o_TransferTenantOwnershipResponse, o_LeaveTenantResponse, o_Permission, o_CreateRoleResponse, o_Role, o_GetRoleResponse, o_ListRolesResponse, o_UpdateRoleResponse, o_DeleteRoleResponse, o_CreateMembershipResponse, o_Membership, o_GetMembershipResponse, o_ListMembershipsResponse, o_UpdateMembershipResponse, o_DeleteMembershipResponse, o_GetMyPermissionsResponse, o_CatalogEntry, o_ListPermissionsResponse, o_CreateIdentityProviderResponse, o_IdentityProvider, o_GetIdentityProviderResponse, o_UpdateIdentityProviderResponse, o_DeleteIdentityProviderResponse, o_SsoButton, o_ListIdentityProvidersResponse, o_StartSSOResponse, o_CompleteSSOResponse, o_LinkExternalIdentityResponse, o_ExternalIdentity, o_UnlinkExternalIdentityResponse, o_ListExternalIdentitiesResponse, o_CreateApiTokenResponse, o_ApiToken, o_ListApiTokensResponse, o_RevokeApiTokenResponse, o_RegistrationRequest, o_SubmitRegistrationRequestResponse, o_ListRegistrationRequestsResponse, o_MarkRegistrationRequestHandledResponse, o_CreatePackageUploadResponse, o_PackageRecord, o_CompleteUploadResponse, o_GetPackageResponse, o_ListPackagesResponse, o_DeletePackageResponse, o_RatingEntry, o_GetSystemRatingResponse, o_GetTenantRatingResponse, o_PublicRatingEntry, o_GetPublicRatingResponse, o_GetSharedRunResponse, o_ShareRecord_Snapshot, o_SharedTestRun, o_RunMetrics, o_MetricSummary, o_SharedSuiteRun, o_QuotaView, o_Quota_Info, o_QuotaReservationView, o_ListQuotasResponse, o_RefreshQuotasResponse, o_GetRunQuotaUsageResponse, o_RecipeRecord, o_RecipeRecord_Summary, o_RecipeBundle, o_CreateRecipeResponse, o_GetRecipeResponse, o_ListRecipesResponse, o_DeleteRecipeResponse, o_CheckRecipeResponse, o_Diagnostic, o_StartRunResponse, o_TestRunRecord, o_TestRunRecord_Summary, o_TestRun, o_Database, o_Database_PresetId, o_Database_External, o_DatabaseParams, o_Package, o_PostgresParams, o_MySqlParams, o_PicodataParams, o_PicodataTier, o_YdbParams, o_YdbManagedParams, o_YdbManagedParams_AutoScale, o_CockroachParams, o_OrioledbParams, o_NoopParams, o_PgNoopParams, o_Workload, o_Workload_Execution, o_Workload_Parameters, o_Workload_WorkloadFile, o_Workload_Segment, o_TopologySpec, o_Node, o_Component, o_Connection, o_InfrastructurePlan, o_ProviderSettings, o_Docker_Settings, o_Yandex_Settings, o_MachinePlan, o_Docker_Container, o_Docker_VolumeMount, o_Docker_PortBinding, o_Docker_File, o_Docker_Healthcheck, o_Docker_Resources, o_Yandex_Vm, o_Yandex_Disk, o_Quota_Request, o_RenderOverrideSet, o_FileOverride, o_File, o_File_Info, o_File_AsRef, o_InfrastructureState, o_MachineState, o_Endpoint, o_Docker_ContainerOutput, o_Yandex_VmOutput, o_Quota_Allocation, o_DeploymentPlan, o_ComponentDeployment, o_AgentStep, o_Dir, o_Dir_Info, o_Cmd, o_Cmd_Spec, o_Cmd_Argv, o_Cmd_Script, o_Cmd_Streams, o_Cmd_Result, o_RunState, o_Stage, o_Worker, o_PipelineOperation, o_PipelineOutput, o_ListRunsResponse, o_CancelRunResponse, o_DeleteRunResponse, o_ShareRecord_Target, o_CreateShareResponse, o_ShareRecord, o_GetShareResponse, o_ListSharesResponse, o_RevokeShareResponse, o_SetShareExpiryResponse, o_DeleteShareResponse, o_ListStroppyVersionsResponse, o_GetSystemSettingsResponse, o_UpdateSystemSettingsResponse, o_GetPublicConfigResponse, o_StatusCounts, o_UpcomingSuite, o_TenantDashboard, o_GetTenantDashboardResponse, o_GetTenantSettingsResponse, o_TenantSettingsRecord, o_UpdateTenantSettingsResponse, o_LogFilter, o_TestRunOverviewSnapshot, o_Topology, o_RuntimeNode, o_RuntimeConnection, o_Overview, o_PipelineView, o_PipelineNode, o_Baked, o_Schema, o_Schema_Filed, o_Schema_Filed_Float, o_Schema_Filed_Double, o_Schema_Filed_Int32, o_Schema_Filed_Int64, o_Schema_Filed_UInt32, o_Schema_Filed_UInt64, o_Schema_Filed_Bool, o_Schema_Filed_String, o_Schema_Filed_Enum, o_Schema_Filed_Duration, o_Schema_Filed_Timestamp, o_Schema_Filed_List, o_Schema_Filed_Object, o_Schema_Filed_Computed, o_Schema_Filed_Rule, o_Schema_Filed_OneOf, o_Schema_Filed_Ref, o_SchemaIdentity, o_LogRef, o_LogCursor, o_WorkerInfo, o_Event, o_GetTestRunOverviewResponse, o_QueryLogsResponse, o_LogLine, o_ResolveLogRefResponse, o_GetRunMetricsResponse, o_LogFacetValue, o_LogFacetField, o_GetLogFacetsResponse, o_Empty, o_Workload_ExecutionLimitDuration, o_Workload_ExecutionLimitIterations, o_FileContentText, o_FileContentBytes, o_Schema_Filed_RefTargetName, u_ShareRecord_SnapshotView, u_DatabaseSource, u_DatabaseParamsEngine, u_Workload_ExecutionLimit, u_ProviderSettingsSettings, u_MachinePlanProviderParams, u_FileContent, u_MachineStateProviderOutput, u_AgentStepAction, u_Cmd_SpecCommand, u_Schema_FiledKind, u_Schema_Filed_RefTarget, i_PlatformSettingsInput, i_TimeRangeInput, i_CompareRunsRequest, i_AddFavoriteRequest, i_EntityInput, i_TimingsInput, i_RemoveFavoriteRequest, i_ListFavoritesRequest, i_PageInput, i_RegisterRequest, i_LoginRequest, i_RefreshRequest, i_LogoutRequest, i_CreateAccountRequest, i_ExternalIdentityLinkInput, i_GetAccountRequest, i_LookupAccountByEmailRequest, i_GetMyAccountRequest, i_ListAccountsRequest, i_UpdateAccountRequest, i_DeleteAccountRequest, i_ChangePasswordRequest, i_ResetPasswordRequest, i_RequestPasswordResetRequest, i_ConfirmPasswordResetRequest, i_VerifyEmailRequest, i_ResendVerificationRequest, i_CreateTenantRequest, i_GetTenantRequest, i_GetTenantRequestRef, i_ListMyTenantsRequest, i_UpdateTenantRequest, i_DeleteTenantRequest, i_TransferTenantOwnershipRequest, i_LeaveTenantRequest, i_CreateRoleRequest, i_PermissionInput, i_GetRoleRequest, i_ListRolesRequest, i_UpdateRoleRequest, i_DeleteRoleRequest, i_CreateMembershipRequest, i_GetMembershipRequest, i_ListMembershipsRequest, i_UpdateMembershipRequest, i_DeleteMembershipRequest, i_GetMyPermissionsRequest, i_ListPermissionsRequest, i_CreateIdentityProviderRequest, i_GetIdentityProviderRequest, i_UpdateIdentityProviderRequest, i_DeleteIdentityProviderRequest, i_ListIdentityProvidersRequest, i_StartSSORequest, i_CompleteSSORequest, i_LinkExternalIdentityRequest, i_UnlinkExternalIdentityRequest, i_ListExternalIdentitiesRequest, i_CreateApiTokenRequest, i_ListApiTokensRequest, i_RevokeApiTokenRequest, i_SubmitRegistrationRequestRequest, i_ListRegistrationRequestsRequest, i_MarkRegistrationRequestHandledRequest, i_CreatePackageUploadRequest, i_CompleteUploadRequest, i_GetPackageRequest, i_ListPackagesRequest, i_EntityFilterInput, i_EntitySortInput, i_DeletePackageRequest, i_RatingFilterInput, i_GetSystemRatingRequest, i_GetTenantRatingRequest, i_GetPublicRatingRequest, i_GetSharedRunRequest, i_ListQuotasRequest, i_RefreshQuotasRequest, i_GetRunQuotaUsageRequest, i_CreateRecipeRequest, i_RecipeRecordInput, i_RecipeRecord_SummaryInput, i_RecipeBundleInput, i_GetRecipeRequest, i_ListRecipesRequest, i_DeleteRecipeRequest, i_CheckRecipeRequest, i_StartRunRequest, i_ProviderSettingsInput, i_ProviderSettingsSettingsInput, i_Docker_SettingsInput, i_Yandex_SettingsInput, i_ListRunsRequest, i_CancelRunRequest, i_DeleteRunRequest, i_CreateShareRequest, i_ShareRecord_TargetInput, i_GetShareRequest, i_ListSharesRequest, i_RevokeShareRequest, i_SetShareExpiryRequest, i_DeleteShareRequest, i_ListStroppyVersionsRequest, i_GetSystemSettingsRequest, i_UpdateSystemSettingsRequest, i_GetPublicConfigRequest, i_GetTenantDashboardRequest, i_GetTenantSettingsRequest, i_TenantSettingsRecordInput, i_UpdateTenantSettingsRequest, i_SetTenantProviderSettingsRequest, i_LogFilterInput, i_LogRefInput, i_LogCursorInput, i_GetTestRunOverviewRequest, i_StreamTestRunOverviewRequest, i_QueryLogsRequest, i_StreamLogsRequest, i_ResolveLogRefRequest, i_GetRunMetricsRequest, i_GetLogFacetsRequest}
+	cfg.Types = []graphql.Type{e_Status, e_Database_Kind, e_Provider, e_Verdict, e_FavoriteKind, e_RegistrationRequestStatus, e_Scope, e_Resource, e_Action, e_ApiTokenType, e_PackageRecord_Format, e_PackageRecord_Status, e_EntitySortField, e_QuotaRefreshPolicy, e_Quota_ReservationStatus, e_Severity, e_Workload_Protocol, e_YdbParams_FaultTolerance, e_YdbParams_FailureDomain, e_YdbParams_DiskType, e_YdbManagedParams_Type, e_YdbManagedParams_ComputeType, e_Component_Kind, e_Connection_Kind, e_Connection_Protocol, e_Connection_Mode, e_Yandex_Settings_PlatformId, e_Yandex_Settings_Zone, e_Docker_Protocol, e_Docker_RestartPolicy, e_Trigger, e_Cmd_Streams_Mode, e_Worker_Kind, e_OperationKind, e_OutputKind, e_ShareRecord_Target_Kind, e_ListTestRunsRequest_Sort_Kind, e_LogScrollDirection, e_Source, e_Stream, e_Topology_State, e_RuntimeNode_Kind, e_Schema_Filed_ResultType, e_Schema_Filed_Severity, e_Schema_Filed_String_StringFormat, e_ObservationSource, e_WorkerPresence, e_Event_Kind, e_EventSeverity, o_PlatformSettings, o_RunColumn, o_CompareView, o_Comparison, o_Comparison_RunSummary, o_TimeRange, o_MetricRow, o_MetricCell, o_CompareRunsResponse, o_AddFavoriteResponse, o_FavoriteRecord, o_Entity, o_Timings, o_RemoveFavoriteResponse, o_ListFavoritesResponse, o_TokenPair, o_RegisterResponse, o_LoginResponse, o_RefreshResponse, o_LogoutResponse, o_CreateAccountResponse, o_Account, o_GetAccountResponse, o_LookupAccountByEmailResponse, o_GetMyAccountResponse, o_ListAccountsResponse, o_UpdateAccountResponse, o_DeleteAccountResponse, o_ChangePasswordResponse, o_ResetPasswordResponse, o_RequestPasswordResetResponse, o_ConfirmPasswordResetResponse, o_VerifyEmailResponse, o_ResendVerificationResponse, o_CreateTenantResponse, o_Tenant, o_Tags, o_GetTenantResponse, o_ListMyTenantsResponse, o_UpdateTenantResponse, o_DeleteTenantResponse, o_TransferTenantOwnershipResponse, o_LeaveTenantResponse, o_Permission, o_CreateRoleResponse, o_Role, o_GetRoleResponse, o_ListRolesResponse, o_UpdateRoleResponse, o_DeleteRoleResponse, o_CreateMembershipResponse, o_Membership, o_GetMembershipResponse, o_ListMembershipsResponse, o_UpdateMembershipResponse, o_DeleteMembershipResponse, o_GetMyPermissionsResponse, o_CatalogEntry, o_ListPermissionsResponse, o_CreateIdentityProviderResponse, o_IdentityProvider, o_GetIdentityProviderResponse, o_UpdateIdentityProviderResponse, o_DeleteIdentityProviderResponse, o_SsoButton, o_ListIdentityProvidersResponse, o_StartSSOResponse, o_CompleteSSOResponse, o_LinkExternalIdentityResponse, o_ExternalIdentity, o_UnlinkExternalIdentityResponse, o_ListExternalIdentitiesResponse, o_CreateApiTokenResponse, o_ApiToken, o_ListApiTokensResponse, o_RevokeApiTokenResponse, o_RegistrationRequest, o_SubmitRegistrationRequestResponse, o_ListRegistrationRequestsResponse, o_MarkRegistrationRequestHandledResponse, o_CreatePackageUploadResponse, o_PackageRecord, o_CompleteUploadResponse, o_GetPackageResponse, o_ListPackagesResponse, o_DeletePackageResponse, o_RatingEntry, o_GetSystemRatingResponse, o_GetTenantRatingResponse, o_PublicRatingEntry, o_GetPublicRatingResponse, o_GetSharedRunResponse, o_ShareRecord_Snapshot, o_SharedTestRun, o_RunMetrics, o_MetricSummary, o_SharedSuiteRun, o_QuotaView, o_Quota_Info, o_QuotaReservationView, o_ListQuotasResponse, o_RefreshQuotasResponse, o_GetRunQuotaUsageResponse, o_RecipeRecord, o_RecipeRecord_Summary, o_RecipeBundle, o_CreateRecipeResponse, o_GetRecipeResponse, o_ListRecipesResponse, o_DeleteRecipeResponse, o_CheckRecipeResponse, o_Diagnostic, o_StartRunResponse, o_TestRunRecord, o_TestRunRecord_Summary, o_TestRun, o_Database, o_Database_PresetId, o_Database_External, o_DatabaseParams, o_Package, o_PostgresParams, o_MySqlParams, o_PicodataParams, o_PicodataTier, o_YdbParams, o_YdbManagedParams, o_YdbManagedParams_AutoScale, o_CockroachParams, o_OrioledbParams, o_NoopParams, o_PgNoopParams, o_Workload, o_Workload_Execution, o_Workload_Parameters, o_Workload_WorkloadFile, o_Workload_Segment, o_TopologySpec, o_Node, o_Component, o_Connection, o_InfrastructurePlan, o_ProviderSettings, o_Docker_Settings, o_Yandex_Settings, o_MachinePlan, o_Docker_Container, o_Docker_VolumeMount, o_Docker_PortBinding, o_Docker_File, o_Docker_Healthcheck, o_Docker_Resources, o_Yandex_Vm, o_Yandex_Disk, o_Quota_Request, o_RenderOverrideSet, o_FileOverride, o_File, o_File_Info, o_File_AsRef, o_InfrastructureState, o_MachineState, o_Endpoint, o_Docker_ContainerOutput, o_Yandex_VmOutput, o_Quota_Allocation, o_DeploymentPlan, o_ComponentDeployment, o_AgentStep, o_Dir, o_Dir_Info, o_Cmd, o_Cmd_Spec, o_Cmd_Argv, o_Cmd_Script, o_Cmd_Streams, o_Cmd_Result, o_RunState, o_Stage, o_Worker, o_PipelineOperation, o_PipelineOutput, o_RecipeTopologySnapshot, o_RecipeTopologySnapshot_ServiceNode, o_RecipeTopologySnapshot_MachineNode, o_ListRunsResponse, o_CancelRunResponse, o_DeleteRunResponse, o_ShareRecord_Target, o_CreateShareResponse, o_ShareRecord, o_GetShareResponse, o_ListSharesResponse, o_RevokeShareResponse, o_SetShareExpiryResponse, o_DeleteShareResponse, o_ListStroppyVersionsResponse, o_GetSystemSettingsResponse, o_UpdateSystemSettingsResponse, o_GetPublicConfigResponse, o_StatusCounts, o_UpcomingSuite, o_TenantDashboard, o_GetTenantDashboardResponse, o_GetTenantSettingsResponse, o_TenantSettingsRecord, o_UpdateTenantSettingsResponse, o_LogFilter, o_TestRunOverviewSnapshot, o_Topology, o_RuntimeNode, o_RuntimeConnection, o_Overview, o_PipelineView, o_PipelineNode, o_Baked, o_Schema, o_Schema_Filed, o_Schema_Filed_Float, o_Schema_Filed_Double, o_Schema_Filed_Int32, o_Schema_Filed_Int64, o_Schema_Filed_UInt32, o_Schema_Filed_UInt64, o_Schema_Filed_Bool, o_Schema_Filed_String, o_Schema_Filed_Enum, o_Schema_Filed_Duration, o_Schema_Filed_Timestamp, o_Schema_Filed_List, o_Schema_Filed_Object, o_Schema_Filed_Computed, o_Schema_Filed_Rule, o_Schema_Filed_OneOf, o_Schema_Filed_Ref, o_SchemaIdentity, o_LogRef, o_LogCursor, o_WorkerInfo, o_Event, o_GetTestRunOverviewResponse, o_QueryLogsResponse, o_LogLine, o_ResolveLogRefResponse, o_GetRunMetricsResponse, o_LogFacetValue, o_LogFacetField, o_GetLogFacetsResponse, o_Empty, o_Workload_ExecutionLimitDuration, o_Workload_ExecutionLimitIterations, o_FileContentText, o_FileContentBytes, o_Schema_Filed_RefTargetName, u_ShareRecord_SnapshotView, u_DatabaseSource, u_DatabaseParamsEngine, u_Workload_ExecutionLimit, u_ProviderSettingsSettings, u_MachinePlanProviderParams, u_FileContent, u_MachineStateProviderOutput, u_AgentStepAction, u_Cmd_SpecCommand, u_Schema_FiledKind, u_Schema_Filed_RefTarget, i_PlatformSettingsInput, i_TimeRangeInput, i_CompareRunsRequest, i_AddFavoriteRequest, i_EntityInput, i_TimingsInput, i_RemoveFavoriteRequest, i_ListFavoritesRequest, i_PageInput, i_RegisterRequest, i_LoginRequest, i_RefreshRequest, i_LogoutRequest, i_CreateAccountRequest, i_ExternalIdentityLinkInput, i_GetAccountRequest, i_LookupAccountByEmailRequest, i_GetMyAccountRequest, i_ListAccountsRequest, i_UpdateAccountRequest, i_DeleteAccountRequest, i_ChangePasswordRequest, i_ResetPasswordRequest, i_RequestPasswordResetRequest, i_ConfirmPasswordResetRequest, i_VerifyEmailRequest, i_ResendVerificationRequest, i_CreateTenantRequest, i_GetTenantRequest, i_GetTenantRequestRef, i_ListMyTenantsRequest, i_UpdateTenantRequest, i_DeleteTenantRequest, i_TransferTenantOwnershipRequest, i_LeaveTenantRequest, i_CreateRoleRequest, i_PermissionInput, i_GetRoleRequest, i_ListRolesRequest, i_UpdateRoleRequest, i_DeleteRoleRequest, i_CreateMembershipRequest, i_GetMembershipRequest, i_ListMembershipsRequest, i_UpdateMembershipRequest, i_DeleteMembershipRequest, i_GetMyPermissionsRequest, i_ListPermissionsRequest, i_CreateIdentityProviderRequest, i_GetIdentityProviderRequest, i_UpdateIdentityProviderRequest, i_DeleteIdentityProviderRequest, i_ListIdentityProvidersRequest, i_StartSSORequest, i_CompleteSSORequest, i_LinkExternalIdentityRequest, i_UnlinkExternalIdentityRequest, i_ListExternalIdentitiesRequest, i_CreateApiTokenRequest, i_ListApiTokensRequest, i_RevokeApiTokenRequest, i_SubmitRegistrationRequestRequest, i_ListRegistrationRequestsRequest, i_MarkRegistrationRequestHandledRequest, i_CreatePackageUploadRequest, i_CompleteUploadRequest, i_GetPackageRequest, i_ListPackagesRequest, i_EntityFilterInput, i_EntitySortInput, i_DeletePackageRequest, i_RatingFilterInput, i_GetSystemRatingRequest, i_GetTenantRatingRequest, i_GetPublicRatingRequest, i_GetSharedRunRequest, i_ListQuotasRequest, i_RefreshQuotasRequest, i_GetRunQuotaUsageRequest, i_CreateRecipeRequest, i_RecipeRecordInput, i_RecipeRecord_SummaryInput, i_RecipeBundleInput, i_GetRecipeRequest, i_ListRecipesRequest, i_DeleteRecipeRequest, i_CheckRecipeRequest, i_StartRunRequest, i_ProviderSettingsInput, i_ProviderSettingsSettingsInput, i_Docker_SettingsInput, i_Yandex_SettingsInput, i_ListRunsRequest, i_CancelRunRequest, i_DeleteRunRequest, i_CreateShareRequest, i_ShareRecord_TargetInput, i_GetShareRequest, i_ListSharesRequest, i_RevokeShareRequest, i_SetShareExpiryRequest, i_DeleteShareRequest, i_ListStroppyVersionsRequest, i_GetSystemSettingsRequest, i_UpdateSystemSettingsRequest, i_GetPublicConfigRequest, i_GetTenantDashboardRequest, i_GetTenantSettingsRequest, i_TenantSettingsRecordInput, i_UpdateTenantSettingsRequest, i_SetTenantProviderSettingsRequest, i_LogFilterInput, i_LogRefInput, i_LogCursorInput, i_GetTestRunOverviewRequest, i_StreamTestRunOverviewRequest, i_QueryLogsRequest, i_StreamLogsRequest, i_ResolveLogRefRequest, i_GetRunMetricsRequest, i_GetLogFacetsRequest}
 	return graphql.NewSchema(cfg)
 }

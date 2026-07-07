@@ -117,6 +117,26 @@ message TestRunRecord {
     string recipe_id = 14 [(validate.rules).string.max_len = 64];
 
     /*
+        recipe_topology is a compact topology snapshot for a recipe run: the
+        machines RunRecipeWorkflow's ProvisionActivity returned, each stamped
+        with its dsl.CompiledPlan machine_groups group name and the
+        dsl.ServiceSpec names on_group-placed on that group. A recipe run has
+        no domain.TestRun spec (so spec.topology_spec/infrastructure_plan are
+        always nil) and produces neither a deployment.InfrastructureState nor
+        a deployment.DeploymentPlan (see runrecipe.go's persist doc) — this is
+        the ONLY topology-shaped artifact a recipe run's execution ever
+        persists. Filled once, right after ProvisionActivity succeeds (see
+        RunRecipeWorkflow.run's infra-stage block), and never updated again
+        afterwards (unlike summary, which keeps accreting facets). overview.go
+        (topologyFromRecordWithRunState) and runtime_topology.go
+        (runtimeTopologyFromRecord) project this into the same
+        topology.RuntimeNode/RuntimeConnection shape a classic run's
+        TopologySpec/InfrastructureState/DeploymentPlan combination projects,
+        so both run kinds render through one topology.Topology envelope.
+     */
+    RecipeTopologySnapshot recipe_topology = 15;
+
+    /*
         Summary is the flat, indexed projection of the run used by the table:
         every field is filterable and sortable without touching the baked spec.
      */
@@ -190,4 +210,63 @@ message TestRunRecord {
          */
         google.protobuf.Duration duration = 13;
     }
+}
+
+/*
+    RecipeTopologySnapshot is the compact, denormalized topology a recipe run
+    persists onto TestRunRecord.recipe_topology (see that field's doc) — one
+    entry per provisioned machine, carrying just enough to reconstruct an
+    equivalent runtime topology to a classic run's TopologySpec/
+    InfrastructureState/DeploymentPlan trio: which dsl.CompiledPlan
+    machine_groups group the machine belongs to, and which dsl.ServiceSpec
+    services are on_group-placed on that group.
+ */
+message RecipeTopologySnapshot {
+    /*
+        ServiceNode is one dsl.ServiceSpec placed on a MachineNode's group.
+     */
+    message ServiceNode {
+        // name is the ServiceSpec.name (e.g. "patroni-postgres", "stroppy").
+        string name = 1;
+        // image is the ServiceSpec.image (Docker image ref), used for the
+        // runtime node's engine label.
+        string image = 2;
+    }
+    /*
+        MachineNode is one machine deployment.MachineState ProvisionActivity
+        returned for the recipe's compiled plan, stamped with its owning
+        machine_groups group and the services placed there.
+     */
+    message MachineNode {
+        // node_id is the deployment.MachineState.node_id (e.g. "db-0",
+        // "runner-0" — provider-assigned, group name + index).
+        string node_id = 1;
+        // group is the dsl.MachineGroup.name this machine was provisioned
+        // for (e.g. "db", "runner").
+        string group = 2;
+        // ip is the machine's primary address (private endpoint preferred,
+        // else the first available — mirrors overview.go's machineHost).
+        string ip = 3;
+        // status is the deployment.MachineState.status ProvisionActivity
+        // returned (STATUS_DEPLOYED for every provider today — see
+        // provider.docker/terraform's own MachineState construction); this
+        // snapshot is filled once and never re-derives a live status from
+        // RunState, so a terminal run keeps reporting "deployed" here even
+        // after teardown destroys the machine (documented, matches a classic
+        // run's own InfrastructureState fallback behavior).
+        common.Status status = 4;
+        // services are every ServiceSpec whose on_group equals group, in the
+        // compiled plan's declaration order.
+        repeated ServiceNode services = 5;
+        // labels carries the machine's deployment.MachineState.labels
+        // verbatim (e.g. "node_id"/"group" from the provider), for any
+        // future consumer that wants the raw provider labels.
+        map<string, string> labels = 6;
+    }
+    // provider is the dsl.ProviderRef.name the plan resolved (e.g. "docker",
+    // "yandex").
+    string provider = 1;
+    // nodes is every provisioned machine, sorted by (group, node_id) for a
+    // deterministic projection.
+    repeated MachineNode nodes = 2;
 }

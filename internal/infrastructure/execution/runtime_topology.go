@@ -35,6 +35,18 @@ func runtimeTopologyFromRecord(rec *models.TestRunRecord, rs *workflowpb.RunStat
 		return nil, nil
 	}
 
+	// A recipe run has no domain.TestRun spec at all (rec.GetSpec() is nil),
+	// so it never has a TopologySpec to project from — instead it persists
+	// a models.RecipeTopologySnapshot (see that field's doc on
+	// TestRunRecord) right after ProvisionActivity succeeds. Project from
+	// that snapshot instead of the classic spec/infrastructure-state/
+	// deployment-plan trio below.
+	if rec.GetSpec().GetTopologySpec() == nil {
+		if snap := rec.GetRecipeTopology(); snap != nil {
+			return runtimeTopologyFromRecipeSnapshot(rec, snap, rs)
+		}
+	}
+
 	b := &runtimeTopologyBuilder{
 		nodes: make(map[string]*topology.RuntimeNode),
 		edges: make(map[string]*topology.RuntimeConnection),
@@ -59,6 +71,37 @@ func runtimeTopologyFromRecord(rec *models.TestRunRecord, rs *workflowpb.RunStat
 	b.addComponentDependencies(rec.GetDeploymentPlan())
 	b.addMonitoringRuntime(rec, serverAddr, machines, components, componentIDsByMachine)
 	b.addStages(rs, components, machines)
+
+	return b.sortedNodes(), b.sortedEdges()
+}
+
+// runtimeTopologyFromRecipeSnapshot projects a recipe run's persisted
+// models.RecipeTopologySnapshot into the same topology.RuntimeNode/
+// RuntimeConnection shape runtimeTopologyFromRecord builds for a classic run:
+// a control-plane node, one machine+agent node pair per provisioned machine
+// (mirroring addMachineAndAgent's control-plane heartbeat/binary-cache
+// edges), and one component node per service placed on that machine's group,
+// connected to the machine by a placement edge (mirroring addComponents'
+// placement edge for a classic run's topology.Component). Recipe runs carry
+// no server_addr label source today (see topologyRuntimeServerAddr's label
+// sources, none of which a recipe run ever fills), so the binary-cache edge
+// and control-plane server_addr label are simply omitted rather than guessed.
+func runtimeTopologyFromRecipeSnapshot(rec *models.TestRunRecord, snap *models.RecipeTopologySnapshot, rs *workflowpb.RunState) ([]*topology.RuntimeNode, []*topology.RuntimeConnection) {
+	b := &runtimeTopologyBuilder{
+		nodes: make(map[string]*topology.RuntimeNode),
+		edges: make(map[string]*topology.RuntimeConnection),
+	}
+
+	b.addControlPlane(rec, "")
+	for _, node := range snap.GetNodes() {
+		b.addRecipeMachine(node)
+	}
+	// rs.GetStages() never carries a machine_id for RunRecipeWorkflow's own
+	// root stages (compile/infra/execute/teardown are workflow-level, not
+	// per-machine — see runrecipe.go's newRunRecipeWorkflow), so addStages
+	// is a documented no-op today; kept for forward compatibility if a
+	// future per-machine stage ever gets added to RunState here.
+	b.addStages(rs, nil, nil)
 
 	return b.sortedNodes(), b.sortedEdges()
 }
@@ -174,6 +217,117 @@ func (b *runtimeTopologyBuilder) addMachineAndAgent(rec *models.TestRunRecord, m
 			},
 		})
 	}
+}
+
+// addRecipeMachine adds the machine+agent node pair and service (component)
+// nodes for one models.RecipeTopologySnapshot_MachineNode entry — the
+// recipe-run counterpart to addMachineAndAgent+addComponents combined, since
+// a recipe run's snapshot already carries each machine's group/service
+// placement directly (no separate topology.Component/deployment.
+// ComponentDeployment lookup is needed). Status comes straight from the
+// snapshot (the deployment.MachineState.status ProvisionActivity captured —
+// see that field's doc), not derived from rec/rs: a recipe run's snapshot is
+// a point-in-time fact, not a live-updated one.
+func (b *runtimeTopologyBuilder) addRecipeMachine(node *models.RecipeTopologySnapshot_MachineNode) {
+	if node == nil || node.GetNodeId() == "" {
+		return
+	}
+	machineID := node.GetNodeId()
+	status := pendingIfUnspecified(node.GetStatus())
+	address := node.GetIp()
+
+	machineLabels := mergeRuntimeLabels(node.GetLabels(), map[string]string{
+		runtimeLabelSource:       "recipe_topology_snapshot",
+		runtimeLabelRuntimeClass: "machine",
+		"group":                  node.GetGroup(),
+	})
+	b.addNode(&topology.RuntimeNode{
+		Id:           runtimeMachineNodeID(machineID),
+		Kind:         topology.RuntimeNode_KIND_MACHINE,
+		Label:        machineID,
+		Role:         node.GetGroup(),
+		MachineId:    machineID,
+		Status:       status,
+		StatusReason: "recipe_topology_snapshot",
+		Address:      address,
+		Labels:       machineLabels,
+	})
+
+	agentID := runtimeAgentNodeID(machineID)
+	b.addNode(&topology.RuntimeNode{
+		Id:           agentID,
+		Kind:         topology.RuntimeNode_KIND_AGENT,
+		Label:        "agent/" + machineID,
+		Engine:       "stroppy",
+		Role:         "agent",
+		MachineId:    machineID,
+		Status:       status,
+		StatusReason: "recipe_topology_snapshot",
+		Address:      address,
+		Labels: map[string]string{
+			runtimeLabelSource:       "recipe_topology_snapshot",
+			runtimeLabelRuntimeClass: "agent",
+		},
+	})
+	b.addEdge(&topology.RuntimeConnection{
+		Id:           runtimeEdgeID("agent", machineID, "control-plane", "heartbeat"),
+		FromNodeId:   agentID,
+		ToNodeId:     runtimeControlPlaneID,
+		Kind:         topology.Connection_KIND_SUPPORT,
+		Protocol:     topology.Connection_PROTOCOL_CONTROL,
+		Mode:         topology.Connection_MODE_HEARTBEAT,
+		EndpointName: "agent_control",
+		Status:       status,
+		StatusReason: "agent_presence_and_control_channel",
+		Labels: map[string]string{
+			runtimeLabelRelation: "agent_control",
+		},
+	})
+
+	for _, svc := range node.GetServices() {
+		b.addRecipeService(machineID, status, svc)
+	}
+}
+
+// addRecipeService adds one service placed on a recipe-run machine as a
+// component-kind runtime node, plus its placement edge from the machine —
+// mirrors addComponents' machine->component placement edge for a classic
+// run's topology.Component.
+func (b *runtimeTopologyBuilder) addRecipeService(machineID string, status commonpb.Status, svc *models.RecipeTopologySnapshot_ServiceNode) {
+	if svc == nil || svc.GetName() == "" {
+		return
+	}
+	serviceID := svc.GetName()
+	nodeID := runtimeComponentNodeID(serviceID)
+	b.addNode(&topology.RuntimeNode{
+		Id:           nodeID,
+		Kind:         topology.RuntimeNode_KIND_COMPONENT,
+		Label:        serviceID,
+		Engine:       svc.GetImage(),
+		Role:         "service",
+		ComponentId:  serviceID,
+		MachineId:    machineID,
+		Status:       status,
+		StatusReason: "recipe_topology_snapshot",
+		Labels: map[string]string{
+			runtimeLabelSource:       "recipe_topology_snapshot",
+			runtimeLabelRuntimeClass: "service",
+		},
+	})
+	b.addEdge(&topology.RuntimeConnection{
+		Id:           runtimeEdgeID("placement", machineID, serviceID),
+		FromNodeId:   runtimeMachineNodeID(machineID),
+		ToNodeId:     nodeID,
+		Kind:         topology.Connection_KIND_SUPPORT,
+		Protocol:     topology.Connection_PROTOCOL_CONTROL,
+		Mode:         topology.Connection_MODE_REQUEST,
+		EndpointName: "placement",
+		Status:       status,
+		StatusReason: "service_placed_on_machine",
+		Labels: map[string]string{
+			runtimeLabelRelation: "placement",
+		},
+	})
 }
 
 func (b *runtimeTopologyBuilder) addComponents(

@@ -3489,6 +3489,40 @@ components:
             required:
                 - account
             type: object
+        MachineNode:
+            additionalProperties: false
+            properties:
+                group:
+                    type: string
+                ip:
+                    type: string
+                labels:
+                    additionalProperties:
+                        type: string
+                    type: object
+                nodeId:
+                    type: string
+                services:
+                    items:
+                        $ref: '#/components/schemas/ServiceNode'
+                    type: array
+                status:
+                    enum:
+                        - 0
+                        - 1
+                        - 2
+                        - 5
+                        - 3
+                        - 4
+                        - 6
+                        - 7
+                        - 8
+                        - 9
+                        - 10
+                        - 11
+                    format: int32
+                    type: integer
+            type: object
         MachinePlan:
             additionalProperties: false
             oneOf:
@@ -4782,6 +4816,16 @@ components:
                 - bundle
                 - entity
             type: object
+        RecipeTopologySnapshot:
+            additionalProperties: false
+            properties:
+                nodes:
+                    items:
+                        $ref: '#/components/schemas/MachineNode'
+                    type: array
+                provider:
+                    type: string
+            type: object
         Ref:
             additionalProperties: false
             oneOf:
@@ -5504,6 +5548,14 @@ components:
                     type: string
             required:
                 - execution
+            type: object
+        ServiceNode:
+            additionalProperties: false
+            properties:
+                image:
+                    type: string
+                name:
+                    type: string
             type: object
         SetShareExpiryRequest:
             additionalProperties: false
@@ -6358,6 +6410,8 @@ components:
                 recipeId:
                     maxLength: 64
                     type: string
+                recipeTopology:
+                    $ref: '#/components/schemas/RecipeTopologySnapshot'
                 runtimeState:
                     $ref: '#/components/schemas/RunState'
                 spec:

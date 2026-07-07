@@ -88,9 +88,26 @@ type TestRunRecord struct {
 	// StartRun and never changed afterwards. RecipeService.ListRuns filters
 	// on this field when the caller supplies recipe_id; it also lets
 	// RunDetail trace a recipe run back to the bundle that produced it.
-	RecipeId      string `protobuf:"bytes,14,opt,name=recipe_id,json=recipeId,proto3" json:"recipe_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	RecipeId string `protobuf:"bytes,14,opt,name=recipe_id,json=recipeId,proto3" json:"recipe_id,omitempty"`
+	// recipe_topology is a compact topology snapshot for a recipe run: the
+	// machines RunRecipeWorkflow's ProvisionActivity returned, each stamped
+	// with its dsl.CompiledPlan machine_groups group name and the
+	// dsl.ServiceSpec names on_group-placed on that group. A recipe run has
+	// no domain.TestRun spec (so spec.topology_spec/infrastructure_plan are
+	// always nil) and produces neither a deployment.InfrastructureState nor
+	// a deployment.DeploymentPlan (see runrecipe.go's persist doc) — this is
+	// the ONLY topology-shaped artifact a recipe run's execution ever
+	// persists. Filled once, right after ProvisionActivity succeeds (see
+	// RunRecipeWorkflow.run's infra-stage block), and never updated again
+	// afterwards (unlike summary, which keeps accreting facets). overview.go
+	// (topologyFromRecordWithRunState) and runtime_topology.go
+	// (runtimeTopologyFromRecord) project this into the same
+	// topology.RuntimeNode/RuntimeConnection shape a classic run's
+	// TopologySpec/InfrastructureState/DeploymentPlan combination projects,
+	// so both run kinds render through one topology.Topology envelope.
+	RecipeTopology *RecipeTopologySnapshot `protobuf:"bytes,15,opt,name=recipe_topology,json=recipeTopology,proto3" json:"recipe_topology,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *TestRunRecord) Reset() {
@@ -214,6 +231,76 @@ func (x *TestRunRecord) GetRecipeId() string {
 	return ""
 }
 
+func (x *TestRunRecord) GetRecipeTopology() *RecipeTopologySnapshot {
+	if x != nil {
+		return x.RecipeTopology
+	}
+	return nil
+}
+
+// RecipeTopologySnapshot is the compact, denormalized topology a recipe run
+// persists onto TestRunRecord.recipe_topology (see that field's doc) — one
+// entry per provisioned machine, carrying just enough to reconstruct an
+// equivalent runtime topology to a classic run's TopologySpec/
+// InfrastructureState/DeploymentPlan trio: which dsl.CompiledPlan
+// machine_groups group the machine belongs to, and which dsl.ServiceSpec
+// services are on_group-placed on that group.
+type RecipeTopologySnapshot struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// provider is the dsl.ProviderRef.name the plan resolved (e.g. "docker",
+	// "yandex").
+	Provider string `protobuf:"bytes,1,opt,name=provider,proto3" json:"provider,omitempty"`
+	// nodes is every provisioned machine, sorted by (group, node_id) for a
+	// deterministic projection.
+	Nodes         []*RecipeTopologySnapshot_MachineNode `protobuf:"bytes,2,rep,name=nodes,proto3" json:"nodes,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RecipeTopologySnapshot) Reset() {
+	*x = RecipeTopologySnapshot{}
+	mi := &file_cloud_v1_models_test_run_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RecipeTopologySnapshot) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecipeTopologySnapshot) ProtoMessage() {}
+
+func (x *RecipeTopologySnapshot) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_models_test_run_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecipeTopologySnapshot.ProtoReflect.Descriptor instead.
+func (*RecipeTopologySnapshot) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_models_test_run_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *RecipeTopologySnapshot) GetProvider() string {
+	if x != nil {
+		return x.Provider
+	}
+	return ""
+}
+
+func (x *RecipeTopologySnapshot) GetNodes() []*RecipeTopologySnapshot_MachineNode {
+	if x != nil {
+		return x.Nodes
+	}
+	return nil
+}
+
 // Summary is the flat, indexed projection of the run used by the table:
 // every field is filterable and sortable without touching the baked spec.
 type TestRunRecord_Summary struct {
@@ -260,7 +347,7 @@ type TestRunRecord_Summary struct {
 
 func (x *TestRunRecord_Summary) Reset() {
 	*x = TestRunRecord_Summary{}
-	mi := &file_cloud_v1_models_test_run_proto_msgTypes[1]
+	mi := &file_cloud_v1_models_test_run_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -272,7 +359,7 @@ func (x *TestRunRecord_Summary) String() string {
 func (*TestRunRecord_Summary) ProtoMessage() {}
 
 func (x *TestRunRecord_Summary) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_models_test_run_proto_msgTypes[1]
+	mi := &file_cloud_v1_models_test_run_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -400,11 +487,172 @@ func (x *TestRunRecord_Summary) GetDuration() *durationpb.Duration {
 	return nil
 }
 
+// ServiceNode is one dsl.ServiceSpec placed on a MachineNode's group.
+type RecipeTopologySnapshot_ServiceNode struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// name is the ServiceSpec.name (e.g. "patroni-postgres", "stroppy").
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// image is the ServiceSpec.image (Docker image ref), used for the
+	// runtime node's engine label.
+	Image         string `protobuf:"bytes,2,opt,name=image,proto3" json:"image,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RecipeTopologySnapshot_ServiceNode) Reset() {
+	*x = RecipeTopologySnapshot_ServiceNode{}
+	mi := &file_cloud_v1_models_test_run_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RecipeTopologySnapshot_ServiceNode) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecipeTopologySnapshot_ServiceNode) ProtoMessage() {}
+
+func (x *RecipeTopologySnapshot_ServiceNode) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_models_test_run_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecipeTopologySnapshot_ServiceNode.ProtoReflect.Descriptor instead.
+func (*RecipeTopologySnapshot_ServiceNode) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_models_test_run_proto_rawDescGZIP(), []int{1, 0}
+}
+
+func (x *RecipeTopologySnapshot_ServiceNode) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *RecipeTopologySnapshot_ServiceNode) GetImage() string {
+	if x != nil {
+		return x.Image
+	}
+	return ""
+}
+
+// MachineNode is one machine deployment.MachineState ProvisionActivity
+// returned for the recipe's compiled plan, stamped with its owning
+// machine_groups group and the services placed there.
+type RecipeTopologySnapshot_MachineNode struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// node_id is the deployment.MachineState.node_id (e.g. "db-0",
+	// "runner-0" — provider-assigned, group name + index).
+	NodeId string `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	// group is the dsl.MachineGroup.name this machine was provisioned
+	// for (e.g. "db", "runner").
+	Group string `protobuf:"bytes,2,opt,name=group,proto3" json:"group,omitempty"`
+	// ip is the machine's primary address (private endpoint preferred,
+	// else the first available — mirrors overview.go's machineHost).
+	Ip string `protobuf:"bytes,3,opt,name=ip,proto3" json:"ip,omitempty"`
+	// status is the deployment.MachineState.status ProvisionActivity
+	// returned (STATUS_DEPLOYED for every provider today — see
+	// provider.docker/terraform's own MachineState construction); this
+	// snapshot is filled once and never re-derives a live status from
+	// RunState, so a terminal run keeps reporting "deployed" here even
+	// after teardown destroys the machine (documented, matches a classic
+	// run's own InfrastructureState fallback behavior).
+	Status common.Status `protobuf:"varint,4,opt,name=status,proto3,enum=cloud.v1.common.Status" json:"status,omitempty"`
+	// services are every ServiceSpec whose on_group equals group, in the
+	// compiled plan's declaration order.
+	Services []*RecipeTopologySnapshot_ServiceNode `protobuf:"bytes,5,rep,name=services,proto3" json:"services,omitempty"`
+	// labels carries the machine's deployment.MachineState.labels
+	// verbatim (e.g. "node_id"/"group" from the provider), for any
+	// future consumer that wants the raw provider labels.
+	Labels        map[string]string `protobuf:"bytes,6,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RecipeTopologySnapshot_MachineNode) Reset() {
+	*x = RecipeTopologySnapshot_MachineNode{}
+	mi := &file_cloud_v1_models_test_run_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RecipeTopologySnapshot_MachineNode) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecipeTopologySnapshot_MachineNode) ProtoMessage() {}
+
+func (x *RecipeTopologySnapshot_MachineNode) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_models_test_run_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecipeTopologySnapshot_MachineNode.ProtoReflect.Descriptor instead.
+func (*RecipeTopologySnapshot_MachineNode) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_models_test_run_proto_rawDescGZIP(), []int{1, 1}
+}
+
+func (x *RecipeTopologySnapshot_MachineNode) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *RecipeTopologySnapshot_MachineNode) GetGroup() string {
+	if x != nil {
+		return x.Group
+	}
+	return ""
+}
+
+func (x *RecipeTopologySnapshot_MachineNode) GetIp() string {
+	if x != nil {
+		return x.Ip
+	}
+	return ""
+}
+
+func (x *RecipeTopologySnapshot_MachineNode) GetStatus() common.Status {
+	if x != nil {
+		return x.Status
+	}
+	return common.Status(0)
+}
+
+func (x *RecipeTopologySnapshot_MachineNode) GetServices() []*RecipeTopologySnapshot_ServiceNode {
+	if x != nil {
+		return x.Services
+	}
+	return nil
+}
+
+func (x *RecipeTopologySnapshot_MachineNode) GetLabels() map[string]string {
+	if x != nil {
+		return x.Labels
+	}
+	return nil
+}
+
 var File_cloud_v1_models_test_run_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_models_test_run_proto_rawDesc = "" +
 	"\n" +
-	"\x1ecloud/v1/models/test_run.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ccloud/v1/common/status.proto\x1a\x1dcloud/v1/common/trigger.proto\x1a(cloud/v1/deployment/infrastructure.proto\x1a\x1ecloud/v1/deployment/plan.proto\x1a\"cloud/v1/deployment/provider.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a\x1ccloud/v1/workflow/test.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\xc0\f\n" +
+	"\x1ecloud/v1/models/test_run.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ccloud/v1/common/status.proto\x1a\x1dcloud/v1/common/trigger.proto\x1a(cloud/v1/deployment/infrastructure.proto\x1a\x1ecloud/v1/deployment/plan.proto\x1a\"cloud/v1/deployment/provider.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a\x1ccloud/v1/workflow/test.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\"\x92\r\n" +
 	"\rTestRunRecord\x129\n" +
 	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.common.EntityB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06entity\x126\n" +
 	"\x04spec\x18\x02 \x01(\v2\x18.cloud.v1.domain.TestRunB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04spec\x12/\n" +
@@ -420,7 +668,8 @@ const file_cloud_v1_models_test_run_proto_rawDesc = "" +
 	" \x01(\v2(.cloud.v1.deployment.InfrastructureStateR\x13infrastructureState\x12L\n" +
 	"\x0fdeployment_plan\x18\v \x01(\v2#.cloud.v1.deployment.DeploymentPlanR\x0edeploymentPlan\x12@\n" +
 	"\rruntime_state\x18\r \x01(\v2\x1b.cloud.v1.workflow.RunStateR\fruntimeState\x12$\n" +
-	"\trecipe_id\x18\x0e \x01(\tB\a\xfaB\x04r\x02\x18@R\brecipeId\x1a\xcf\x06\n" +
+	"\trecipe_id\x18\x0e \x01(\tB\a\xfaB\x04r\x02\x18@R\brecipeId\x12P\n" +
+	"\x0frecipe_topology\x18\x0f \x01(\v2'.cloud.v1.models.RecipeTopologySnapshotR\x0erecipeTopology\x1a\xcf\x06\n" +
 	"\aSummary\x127\n" +
 	"\adb_kind\x18\x01 \x01(\x0e2\x1e.cloud.v1.domain.Database.KindR\x06dbKind\x12)\n" +
 	"\fdb_preset_id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x18@R\n" +
@@ -442,7 +691,23 @@ const file_cloud_v1_models_test_run_proto_rawDesc = "" +
 	"started_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\x12;\n" +
 	"\vfinished_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"finishedAt\x125\n" +
-	"\bduration\x18\r \x01(\v2\x19.google.protobuf.DurationR\bdurationJ\x04\b\x05\x10\x06BDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/modelsb\x06proto3"
+	"\bduration\x18\r \x01(\v2\x19.google.protobuf.DurationR\bdurationJ\x04\b\x05\x10\x06\"\x9d\x04\n" +
+	"\x16RecipeTopologySnapshot\x12\x1a\n" +
+	"\bprovider\x18\x01 \x01(\tR\bprovider\x12I\n" +
+	"\x05nodes\x18\x02 \x03(\v23.cloud.v1.models.RecipeTopologySnapshot.MachineNodeR\x05nodes\x1a7\n" +
+	"\vServiceNode\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
+	"\x05image\x18\x02 \x01(\tR\x05image\x1a\xe2\x02\n" +
+	"\vMachineNode\x12\x17\n" +
+	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12\x14\n" +
+	"\x05group\x18\x02 \x01(\tR\x05group\x12\x0e\n" +
+	"\x02ip\x18\x03 \x01(\tR\x02ip\x12/\n" +
+	"\x06status\x18\x04 \x01(\x0e2\x17.cloud.v1.common.StatusR\x06status\x12O\n" +
+	"\bservices\x18\x05 \x03(\v23.cloud.v1.models.RecipeTopologySnapshot.ServiceNodeR\bservices\x12W\n" +
+	"\x06labels\x18\x06 \x03(\v2?.cloud.v1.models.RecipeTopologySnapshot.MachineNode.LabelsEntryR\x06labels\x1a9\n" +
+	"\vLabelsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01BDZBgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/modelsb\x06proto3"
 
 var (
 	file_cloud_v1_models_test_run_proto_rawDescOnce sync.Once
@@ -456,43 +721,52 @@ func file_cloud_v1_models_test_run_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_models_test_run_proto_rawDescData
 }
 
-var file_cloud_v1_models_test_run_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_cloud_v1_models_test_run_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_cloud_v1_models_test_run_proto_goTypes = []any{
-	(*TestRunRecord)(nil),                  // 0: cloud.v1.models.TestRunRecord
-	(*TestRunRecord_Summary)(nil),          // 1: cloud.v1.models.TestRunRecord.Summary
-	(*common.Entity)(nil),                  // 2: cloud.v1.common.Entity
-	(*domain.TestRun)(nil),                 // 3: cloud.v1.domain.TestRun
-	(common.Status)(0),                     // 4: cloud.v1.common.Status
-	(common.Trigger)(0),                    // 5: cloud.v1.common.Trigger
-	(*deployment.InfrastructureState)(nil), // 6: cloud.v1.deployment.InfrastructureState
-	(*deployment.DeploymentPlan)(nil),      // 7: cloud.v1.deployment.DeploymentPlan
-	(*workflow.RunState)(nil),              // 8: cloud.v1.workflow.RunState
-	(domain.Database_Kind)(0),              // 9: cloud.v1.domain.Database.Kind
-	(domain.Workload_Protocol)(0),          // 10: cloud.v1.domain.Workload.Protocol
-	(deployment.Provider)(0),               // 11: cloud.v1.deployment.Provider
-	(*timestamppb.Timestamp)(nil),          // 12: google.protobuf.Timestamp
-	(*durationpb.Duration)(nil),            // 13: google.protobuf.Duration
+	(*TestRunRecord)(nil),                      // 0: cloud.v1.models.TestRunRecord
+	(*RecipeTopologySnapshot)(nil),             // 1: cloud.v1.models.RecipeTopologySnapshot
+	(*TestRunRecord_Summary)(nil),              // 2: cloud.v1.models.TestRunRecord.Summary
+	(*RecipeTopologySnapshot_ServiceNode)(nil), // 3: cloud.v1.models.RecipeTopologySnapshot.ServiceNode
+	(*RecipeTopologySnapshot_MachineNode)(nil), // 4: cloud.v1.models.RecipeTopologySnapshot.MachineNode
+	nil,                                    // 5: cloud.v1.models.RecipeTopologySnapshot.MachineNode.LabelsEntry
+	(*common.Entity)(nil),                  // 6: cloud.v1.common.Entity
+	(*domain.TestRun)(nil),                 // 7: cloud.v1.domain.TestRun
+	(common.Status)(0),                     // 8: cloud.v1.common.Status
+	(common.Trigger)(0),                    // 9: cloud.v1.common.Trigger
+	(*deployment.InfrastructureState)(nil), // 10: cloud.v1.deployment.InfrastructureState
+	(*deployment.DeploymentPlan)(nil),      // 11: cloud.v1.deployment.DeploymentPlan
+	(*workflow.RunState)(nil),              // 12: cloud.v1.workflow.RunState
+	(domain.Database_Kind)(0),              // 13: cloud.v1.domain.Database.Kind
+	(domain.Workload_Protocol)(0),          // 14: cloud.v1.domain.Workload.Protocol
+	(deployment.Provider)(0),               // 15: cloud.v1.deployment.Provider
+	(*timestamppb.Timestamp)(nil),          // 16: google.protobuf.Timestamp
+	(*durationpb.Duration)(nil),            // 17: google.protobuf.Duration
 }
 var file_cloud_v1_models_test_run_proto_depIdxs = []int32{
-	2,  // 0: cloud.v1.models.TestRunRecord.entity:type_name -> cloud.v1.common.Entity
-	3,  // 1: cloud.v1.models.TestRunRecord.spec:type_name -> cloud.v1.domain.TestRun
-	4,  // 2: cloud.v1.models.TestRunRecord.status:type_name -> cloud.v1.common.Status
-	5,  // 3: cloud.v1.models.TestRunRecord.trigger:type_name -> cloud.v1.common.Trigger
-	1,  // 4: cloud.v1.models.TestRunRecord.summary:type_name -> cloud.v1.models.TestRunRecord.Summary
-	6,  // 5: cloud.v1.models.TestRunRecord.infrastructure_state:type_name -> cloud.v1.deployment.InfrastructureState
-	7,  // 6: cloud.v1.models.TestRunRecord.deployment_plan:type_name -> cloud.v1.deployment.DeploymentPlan
-	8,  // 7: cloud.v1.models.TestRunRecord.runtime_state:type_name -> cloud.v1.workflow.RunState
-	9,  // 8: cloud.v1.models.TestRunRecord.Summary.db_kind:type_name -> cloud.v1.domain.Database.Kind
-	10, // 9: cloud.v1.models.TestRunRecord.Summary.workload_protocol:type_name -> cloud.v1.domain.Workload.Protocol
-	11, // 10: cloud.v1.models.TestRunRecord.Summary.provider:type_name -> cloud.v1.deployment.Provider
-	12, // 11: cloud.v1.models.TestRunRecord.Summary.started_at:type_name -> google.protobuf.Timestamp
-	12, // 12: cloud.v1.models.TestRunRecord.Summary.finished_at:type_name -> google.protobuf.Timestamp
-	13, // 13: cloud.v1.models.TestRunRecord.Summary.duration:type_name -> google.protobuf.Duration
-	14, // [14:14] is the sub-list for method output_type
-	14, // [14:14] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	6,  // 0: cloud.v1.models.TestRunRecord.entity:type_name -> cloud.v1.common.Entity
+	7,  // 1: cloud.v1.models.TestRunRecord.spec:type_name -> cloud.v1.domain.TestRun
+	8,  // 2: cloud.v1.models.TestRunRecord.status:type_name -> cloud.v1.common.Status
+	9,  // 3: cloud.v1.models.TestRunRecord.trigger:type_name -> cloud.v1.common.Trigger
+	2,  // 4: cloud.v1.models.TestRunRecord.summary:type_name -> cloud.v1.models.TestRunRecord.Summary
+	10, // 5: cloud.v1.models.TestRunRecord.infrastructure_state:type_name -> cloud.v1.deployment.InfrastructureState
+	11, // 6: cloud.v1.models.TestRunRecord.deployment_plan:type_name -> cloud.v1.deployment.DeploymentPlan
+	12, // 7: cloud.v1.models.TestRunRecord.runtime_state:type_name -> cloud.v1.workflow.RunState
+	1,  // 8: cloud.v1.models.TestRunRecord.recipe_topology:type_name -> cloud.v1.models.RecipeTopologySnapshot
+	4,  // 9: cloud.v1.models.RecipeTopologySnapshot.nodes:type_name -> cloud.v1.models.RecipeTopologySnapshot.MachineNode
+	13, // 10: cloud.v1.models.TestRunRecord.Summary.db_kind:type_name -> cloud.v1.domain.Database.Kind
+	14, // 11: cloud.v1.models.TestRunRecord.Summary.workload_protocol:type_name -> cloud.v1.domain.Workload.Protocol
+	15, // 12: cloud.v1.models.TestRunRecord.Summary.provider:type_name -> cloud.v1.deployment.Provider
+	16, // 13: cloud.v1.models.TestRunRecord.Summary.started_at:type_name -> google.protobuf.Timestamp
+	16, // 14: cloud.v1.models.TestRunRecord.Summary.finished_at:type_name -> google.protobuf.Timestamp
+	17, // 15: cloud.v1.models.TestRunRecord.Summary.duration:type_name -> google.protobuf.Duration
+	8,  // 16: cloud.v1.models.RecipeTopologySnapshot.MachineNode.status:type_name -> cloud.v1.common.Status
+	3,  // 17: cloud.v1.models.RecipeTopologySnapshot.MachineNode.services:type_name -> cloud.v1.models.RecipeTopologySnapshot.ServiceNode
+	5,  // 18: cloud.v1.models.RecipeTopologySnapshot.MachineNode.labels:type_name -> cloud.v1.models.RecipeTopologySnapshot.MachineNode.LabelsEntry
+	19, // [19:19] is the sub-list for method output_type
+	19, // [19:19] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_models_test_run_proto_init() }
@@ -506,7 +780,7 @@ func file_cloud_v1_models_test_run_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_models_test_run_proto_rawDesc), len(file_cloud_v1_models_test_run_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

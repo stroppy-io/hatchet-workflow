@@ -33,7 +33,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/models/test_run.proto.
  */
 export const file_cloud_v1_models_test_run: GenFile = /*@__PURE__*/
-  fileDesc("Ch5jbG91ZC92MS9tb2RlbHMvdGVzdF9ydW4ucHJvdG8SD2Nsb3VkLnYxLm1vZGVscyLOCQoNVGVzdFJ1blJlY29yZBIxCgZlbnRpdHkYASABKAsyFy5jbG91ZC52MS5jb21tb24uRW50aXR5Qgj6QgWKAQIQARIwCgRzcGVjGAIgASgLMhguY2xvdWQudjEuZG9tYWluLlRlc3RSdW5CCPpCBYoBAhABEicKBnN0YXR1cxgDIAEoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXMSHQoMc3VpdGVfcnVuX2lkGAQgASgJQgf6QgRyAhhAEh4KDXN1aXRlX2NlbGxfaWQYDCABKAlCB/pCBHICGEASKQoHdHJpZ2dlchgHIAEoDjIYLmNsb3VkLnYxLmNvbW1vbi5UcmlnZ2VyEhgKEGluX3RlbmFudF9yYXRpbmcYCCABKAgSGAoQaW5fZ2xvYmFsX3JhdGluZxgJIAEoCBI3CgdzdW1tYXJ5GAYgASgLMiYuY2xvdWQudjEubW9kZWxzLlRlc3RSdW5SZWNvcmQuU3VtbWFyeRJGChRpbmZyYXN0cnVjdHVyZV9zdGF0ZRgKIAEoCzIoLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVTdGF0ZRI8Cg9kZXBsb3ltZW50X3BsYW4YCyABKAsyIy5jbG91ZC52MS5kZXBsb3ltZW50LkRlcGxveW1lbnRQbGFuEjIKDXJ1bnRpbWVfc3RhdGUYDSABKAsyGy5jbG91ZC52MS53b3JrZmxvdy5SdW5TdGF0ZRIaCglyZWNpcGVfaWQYDiABKAlCB/pCBHICGEAa+wQKB1N1bW1hcnkSLwoHZGJfa2luZBgBIAEoDjIeLmNsb3VkLnYxLmRvbWFpbi5EYXRhYmFzZS5LaW5kEh0KDGRiX3ByZXNldF9pZBgCIAEoCUIH+kIEcgIYQBIgCg5kYl9wcmVzZXRfbmFtZRgDIAEoCUII+kIFcgMY/wESIwoSd29ya2xvYWRfcHJlc2V0X2lkGAQgASgJQgf6QgRyAhhAEh8KDXdvcmtsb2FkX25hbWUYBSABKAlCCPpCBXIDGP8BEiAKD3N0cm9wcHlfdmVyc2lvbhgGIAEoCUIH+kIEcgIYQBI9ChF3b3JrbG9hZF9wcm90b2NvbBgOIAEoDjIiLmNsb3VkLnYxLmRvbWFpbi5Xb3JrbG9hZC5Qcm90b2NvbBIfCg50ZXN0X3ByZXNldF9pZBgPIAEoCUIH+kIEcgIYQBIiChB0ZXN0X3ByZXNldF9uYW1lGBAgASgJQgj6QgVyAxj/ARIgCg50b3BvbG9neV9sYWJlbBgHIAEoCUII+kIFcgMYgAESEgoKbm9kZV9jb3VudBgIIAEoDRIvCghwcm92aWRlchgJIAEoDjIdLmNsb3VkLnYxLmRlcGxveW1lbnQuUHJvdmlkZXISHQoMcHJvZ3Jlc3NfcGN0GAogASgNQgf6QgQqAhhkEi4KCnN0YXJ0ZWRfYXQYCyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC2ZpbmlzaGVkX2F0GAwgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIrCghkdXJhdGlvbhgNIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbkoECAUQBkJEWkJnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9tb2RlbHNiBnByb3RvMw", [file_cloud_v1_common_entity, file_cloud_v1_common_status, file_cloud_v1_common_trigger, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_plan, file_cloud_v1_deployment_provider, file_cloud_v1_domain_database, file_cloud_v1_domain_test, file_cloud_v1_domain_workload, file_cloud_v1_workflow_test, file_google_protobuf_duration, file_google_protobuf_timestamp, file_validate_validate]);
+  fileDesc("Ch5jbG91ZC92MS9tb2RlbHMvdGVzdF9ydW4ucHJvdG8SD2Nsb3VkLnYxLm1vZGVscyKQCgoNVGVzdFJ1blJlY29yZBIxCgZlbnRpdHkYASABKAsyFy5jbG91ZC52MS5jb21tb24uRW50aXR5Qgj6QgWKAQIQARIwCgRzcGVjGAIgASgLMhguY2xvdWQudjEuZG9tYWluLlRlc3RSdW5CCPpCBYoBAhABEicKBnN0YXR1cxgDIAEoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXMSHQoMc3VpdGVfcnVuX2lkGAQgASgJQgf6QgRyAhhAEh4KDXN1aXRlX2NlbGxfaWQYDCABKAlCB/pCBHICGEASKQoHdHJpZ2dlchgHIAEoDjIYLmNsb3VkLnYxLmNvbW1vbi5UcmlnZ2VyEhgKEGluX3RlbmFudF9yYXRpbmcYCCABKAgSGAoQaW5fZ2xvYmFsX3JhdGluZxgJIAEoCBI3CgdzdW1tYXJ5GAYgASgLMiYuY2xvdWQudjEubW9kZWxzLlRlc3RSdW5SZWNvcmQuU3VtbWFyeRJGChRpbmZyYXN0cnVjdHVyZV9zdGF0ZRgKIAEoCzIoLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVTdGF0ZRI8Cg9kZXBsb3ltZW50X3BsYW4YCyABKAsyIy5jbG91ZC52MS5kZXBsb3ltZW50LkRlcGxveW1lbnRQbGFuEjIKDXJ1bnRpbWVfc3RhdGUYDSABKAsyGy5jbG91ZC52MS53b3JrZmxvdy5SdW5TdGF0ZRIaCglyZWNpcGVfaWQYDiABKAlCB/pCBHICGEASQAoPcmVjaXBlX3RvcG9sb2d5GA8gASgLMicuY2xvdWQudjEubW9kZWxzLlJlY2lwZVRvcG9sb2d5U25hcHNob3Qa+wQKB1N1bW1hcnkSLwoHZGJfa2luZBgBIAEoDjIeLmNsb3VkLnYxLmRvbWFpbi5EYXRhYmFzZS5LaW5kEh0KDGRiX3ByZXNldF9pZBgCIAEoCUIH+kIEcgIYQBIgCg5kYl9wcmVzZXRfbmFtZRgDIAEoCUII+kIFcgMY/wESIwoSd29ya2xvYWRfcHJlc2V0X2lkGAQgASgJQgf6QgRyAhhAEh8KDXdvcmtsb2FkX25hbWUYBSABKAlCCPpCBXIDGP8BEiAKD3N0cm9wcHlfdmVyc2lvbhgGIAEoCUIH+kIEcgIYQBI9ChF3b3JrbG9hZF9wcm90b2NvbBgOIAEoDjIiLmNsb3VkLnYxLmRvbWFpbi5Xb3JrbG9hZC5Qcm90b2NvbBIfCg50ZXN0X3ByZXNldF9pZBgPIAEoCUIH+kIEcgIYQBIiChB0ZXN0X3ByZXNldF9uYW1lGBAgASgJQgj6QgVyAxj/ARIgCg50b3BvbG9neV9sYWJlbBgHIAEoCUII+kIFcgMYgAESEgoKbm9kZV9jb3VudBgIIAEoDRIvCghwcm92aWRlchgJIAEoDjIdLmNsb3VkLnYxLmRlcGxveW1lbnQuUHJvdmlkZXISHQoMcHJvZ3Jlc3NfcGN0GAogASgNQgf6QgQqAhhkEi4KCnN0YXJ0ZWRfYXQYCyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC2ZpbmlzaGVkX2F0GAwgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIrCghkdXJhdGlvbhgNIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbkoECAUQBiLGAwoWUmVjaXBlVG9wb2xvZ3lTbmFwc2hvdBIQCghwcm92aWRlchgBIAEoCRJCCgVub2RlcxgCIAMoCzIzLmNsb3VkLnYxLm1vZGVscy5SZWNpcGVUb3BvbG9neVNuYXBzaG90Lk1hY2hpbmVOb2RlGioKC1NlcnZpY2VOb2RlEgwKBG5hbWUYASABKAkSDQoFaW1hZ2UYAiABKAkaqQIKC01hY2hpbmVOb2RlEg8KB25vZGVfaWQYASABKAkSDQoFZ3JvdXAYAiABKAkSCgoCaXAYAyABKAkSJwoGc3RhdHVzGAQgASgOMhcuY2xvdWQudjEuY29tbW9uLlN0YXR1cxJFCghzZXJ2aWNlcxgFIAMoCzIzLmNsb3VkLnYxLm1vZGVscy5SZWNpcGVUb3BvbG9neVNuYXBzaG90LlNlcnZpY2VOb2RlEk8KBmxhYmVscxgGIAMoCzI/LmNsb3VkLnYxLm1vZGVscy5SZWNpcGVUb3BvbG9neVNuYXBzaG90Lk1hY2hpbmVOb2RlLkxhYmVsc0VudHJ5Gi0KC0xhYmVsc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAFCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvbW9kZWxzYgZwcm90bzM", [file_cloud_v1_common_entity, file_cloud_v1_common_status, file_cloud_v1_common_trigger, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_plan, file_cloud_v1_deployment_provider, file_cloud_v1_domain_database, file_cloud_v1_domain_test, file_cloud_v1_domain_workload, file_cloud_v1_workflow_test, file_google_protobuf_duration, file_google_protobuf_timestamp, file_validate_validate]);
 
 /**
  *
@@ -177,6 +177,29 @@ export type TestRunRecord = Message<"cloud.v1.models.TestRunRecord"> & {
    * @generated from field: string recipe_id = 14;
    */
   recipeId: string;
+
+  /**
+   *
+   * recipe_topology is a compact topology snapshot for a recipe run: the
+   * machines RunRecipeWorkflow's ProvisionActivity returned, each stamped
+   * with its dsl.CompiledPlan machine_groups group name and the
+   * dsl.ServiceSpec names on_group-placed on that group. A recipe run has
+   * no domain.TestRun spec (so spec.topology_spec/infrastructure_plan are
+   * always nil) and produces neither a deployment.InfrastructureState nor
+   * a deployment.DeploymentPlan (see runrecipe.go's persist doc) — this is
+   * the ONLY topology-shaped artifact a recipe run's execution ever
+   * persists. Filled once, right after ProvisionActivity succeeds (see
+   * RunRecipeWorkflow.run's infra-stage block), and never updated again
+   * afterwards (unlike summary, which keeps accreting facets). overview.go
+   * (topologyFromRecordWithRunState) and runtime_topology.go
+   * (runtimeTopologyFromRecord) project this into the same
+   * topology.RuntimeNode/RuntimeConnection shape a classic run's
+   * TopologySpec/InfrastructureState/DeploymentPlan combination projects,
+   * so both run kinds render through one topology.Topology envelope.
+   *
+   * @generated from field: cloud.v1.models.RecipeTopologySnapshot recipe_topology = 15;
+   */
+  recipeTopology?: RecipeTopologySnapshot;
 };
 
 /**
@@ -321,6 +344,29 @@ export type TestRunRecordJson = {
    * @generated from field: string recipe_id = 14;
    */
   recipeId?: string;
+
+  /**
+   *
+   * recipe_topology is a compact topology snapshot for a recipe run: the
+   * machines RunRecipeWorkflow's ProvisionActivity returned, each stamped
+   * with its dsl.CompiledPlan machine_groups group name and the
+   * dsl.ServiceSpec names on_group-placed on that group. A recipe run has
+   * no domain.TestRun spec (so spec.topology_spec/infrastructure_plan are
+   * always nil) and produces neither a deployment.InfrastructureState nor
+   * a deployment.DeploymentPlan (see runrecipe.go's persist doc) — this is
+   * the ONLY topology-shaped artifact a recipe run's execution ever
+   * persists. Filled once, right after ProvisionActivity succeeds (see
+   * RunRecipeWorkflow.run's infra-stage block), and never updated again
+   * afterwards (unlike summary, which keeps accreting facets). overview.go
+   * (topologyFromRecordWithRunState) and runtime_topology.go
+   * (runtimeTopologyFromRecord) project this into the same
+   * topology.RuntimeNode/RuntimeConnection shape a classic run's
+   * TopologySpec/InfrastructureState/DeploymentPlan combination projects,
+   * so both run kinds render through one topology.Topology envelope.
+   *
+   * @generated from field: cloud.v1.models.RecipeTopologySnapshot recipe_topology = 15;
+   */
+  recipeTopology?: RecipeTopologySnapshotJson;
 };
 
 export type TestRunRecordValid = TestRunRecord;
@@ -622,4 +668,265 @@ export type TestRunRecord_SummaryValid = TestRunRecord_Summary;
  */
 export const TestRunRecord_SummarySchema: GenMessage<TestRunRecord_Summary, {jsonType: TestRunRecord_SummaryJson, validType: TestRunRecord_SummaryValid}> = /*@__PURE__*/
   messageDesc(file_cloud_v1_models_test_run, 0, 0);
+
+/**
+ *
+ * RecipeTopologySnapshot is the compact, denormalized topology a recipe run
+ * persists onto TestRunRecord.recipe_topology (see that field's doc) — one
+ * entry per provisioned machine, carrying just enough to reconstruct an
+ * equivalent runtime topology to a classic run's TopologySpec/
+ * InfrastructureState/DeploymentPlan trio: which dsl.CompiledPlan
+ * machine_groups group the machine belongs to, and which dsl.ServiceSpec
+ * services are on_group-placed on that group.
+ *
+ * @generated from message cloud.v1.models.RecipeTopologySnapshot
+ */
+export type RecipeTopologySnapshot = Message<"cloud.v1.models.RecipeTopologySnapshot"> & {
+  /**
+   * provider is the dsl.ProviderRef.name the plan resolved (e.g. "docker",
+   * "yandex").
+   *
+   * @generated from field: string provider = 1;
+   */
+  provider: string;
+
+  /**
+   * nodes is every provisioned machine, sorted by (group, node_id) for a
+   * deterministic projection.
+   *
+   * @generated from field: repeated cloud.v1.models.RecipeTopologySnapshot.MachineNode nodes = 2;
+   */
+  nodes: RecipeTopologySnapshot_MachineNode[];
+};
+
+/**
+ *
+ * RecipeTopologySnapshot is the compact, denormalized topology a recipe run
+ * persists onto TestRunRecord.recipe_topology (see that field's doc) — one
+ * entry per provisioned machine, carrying just enough to reconstruct an
+ * equivalent runtime topology to a classic run's TopologySpec/
+ * InfrastructureState/DeploymentPlan trio: which dsl.CompiledPlan
+ * machine_groups group the machine belongs to, and which dsl.ServiceSpec
+ * services are on_group-placed on that group.
+ *
+ * @generated from message cloud.v1.models.RecipeTopologySnapshot
+ */
+export type RecipeTopologySnapshotJson = {
+  /**
+   * provider is the dsl.ProviderRef.name the plan resolved (e.g. "docker",
+   * "yandex").
+   *
+   * @generated from field: string provider = 1;
+   */
+  provider?: string;
+
+  /**
+   * nodes is every provisioned machine, sorted by (group, node_id) for a
+   * deterministic projection.
+   *
+   * @generated from field: repeated cloud.v1.models.RecipeTopologySnapshot.MachineNode nodes = 2;
+   */
+  nodes?: RecipeTopologySnapshot_MachineNodeJson[];
+};
+
+export type RecipeTopologySnapshotValid = RecipeTopologySnapshot;
+
+/**
+ * Describes the message cloud.v1.models.RecipeTopologySnapshot.
+ * Use `create(RecipeTopologySnapshotSchema)` to create a new message.
+ */
+export const RecipeTopologySnapshotSchema: GenMessage<RecipeTopologySnapshot, {jsonType: RecipeTopologySnapshotJson, validType: RecipeTopologySnapshotValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_models_test_run, 1);
+
+/**
+ *
+ * ServiceNode is one dsl.ServiceSpec placed on a MachineNode's group.
+ *
+ * @generated from message cloud.v1.models.RecipeTopologySnapshot.ServiceNode
+ */
+export type RecipeTopologySnapshot_ServiceNode = Message<"cloud.v1.models.RecipeTopologySnapshot.ServiceNode"> & {
+  /**
+   * name is the ServiceSpec.name (e.g. "patroni-postgres", "stroppy").
+   *
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * image is the ServiceSpec.image (Docker image ref), used for the
+   * runtime node's engine label.
+   *
+   * @generated from field: string image = 2;
+   */
+  image: string;
+};
+
+/**
+ *
+ * ServiceNode is one dsl.ServiceSpec placed on a MachineNode's group.
+ *
+ * @generated from message cloud.v1.models.RecipeTopologySnapshot.ServiceNode
+ */
+export type RecipeTopologySnapshot_ServiceNodeJson = {
+  /**
+   * name is the ServiceSpec.name (e.g. "patroni-postgres", "stroppy").
+   *
+   * @generated from field: string name = 1;
+   */
+  name?: string;
+
+  /**
+   * image is the ServiceSpec.image (Docker image ref), used for the
+   * runtime node's engine label.
+   *
+   * @generated from field: string image = 2;
+   */
+  image?: string;
+};
+
+export type RecipeTopologySnapshot_ServiceNodeValid = RecipeTopologySnapshot_ServiceNode;
+
+/**
+ * Describes the message cloud.v1.models.RecipeTopologySnapshot.ServiceNode.
+ * Use `create(RecipeTopologySnapshot_ServiceNodeSchema)` to create a new message.
+ */
+export const RecipeTopologySnapshot_ServiceNodeSchema: GenMessage<RecipeTopologySnapshot_ServiceNode, {jsonType: RecipeTopologySnapshot_ServiceNodeJson, validType: RecipeTopologySnapshot_ServiceNodeValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_models_test_run, 1, 0);
+
+/**
+ *
+ * MachineNode is one machine deployment.MachineState ProvisionActivity
+ * returned for the recipe's compiled plan, stamped with its owning
+ * machine_groups group and the services placed there.
+ *
+ * @generated from message cloud.v1.models.RecipeTopologySnapshot.MachineNode
+ */
+export type RecipeTopologySnapshot_MachineNode = Message<"cloud.v1.models.RecipeTopologySnapshot.MachineNode"> & {
+  /**
+   * node_id is the deployment.MachineState.node_id (e.g. "db-0",
+   * "runner-0" — provider-assigned, group name + index).
+   *
+   * @generated from field: string node_id = 1;
+   */
+  nodeId: string;
+
+  /**
+   * group is the dsl.MachineGroup.name this machine was provisioned
+   * for (e.g. "db", "runner").
+   *
+   * @generated from field: string group = 2;
+   */
+  group: string;
+
+  /**
+   * ip is the machine's primary address (private endpoint preferred,
+   * else the first available — mirrors overview.go's machineHost).
+   *
+   * @generated from field: string ip = 3;
+   */
+  ip: string;
+
+  /**
+   * status is the deployment.MachineState.status ProvisionActivity
+   * returned (STATUS_DEPLOYED for every provider today — see
+   * provider.docker/terraform's own MachineState construction); this
+   * snapshot is filled once and never re-derives a live status from
+   * RunState, so a terminal run keeps reporting "deployed" here even
+   * after teardown destroys the machine (documented, matches a classic
+   * run's own InfrastructureState fallback behavior).
+   *
+   * @generated from field: cloud.v1.common.Status status = 4;
+   */
+  status: Status;
+
+  /**
+   * services are every ServiceSpec whose on_group equals group, in the
+   * compiled plan's declaration order.
+   *
+   * @generated from field: repeated cloud.v1.models.RecipeTopologySnapshot.ServiceNode services = 5;
+   */
+  services: RecipeTopologySnapshot_ServiceNode[];
+
+  /**
+   * labels carries the machine's deployment.MachineState.labels
+   * verbatim (e.g. "node_id"/"group" from the provider), for any
+   * future consumer that wants the raw provider labels.
+   *
+   * @generated from field: map<string, string> labels = 6;
+   */
+  labels: { [key: string]: string };
+};
+
+/**
+ *
+ * MachineNode is one machine deployment.MachineState ProvisionActivity
+ * returned for the recipe's compiled plan, stamped with its owning
+ * machine_groups group and the services placed there.
+ *
+ * @generated from message cloud.v1.models.RecipeTopologySnapshot.MachineNode
+ */
+export type RecipeTopologySnapshot_MachineNodeJson = {
+  /**
+   * node_id is the deployment.MachineState.node_id (e.g. "db-0",
+   * "runner-0" — provider-assigned, group name + index).
+   *
+   * @generated from field: string node_id = 1;
+   */
+  nodeId?: string;
+
+  /**
+   * group is the dsl.MachineGroup.name this machine was provisioned
+   * for (e.g. "db", "runner").
+   *
+   * @generated from field: string group = 2;
+   */
+  group?: string;
+
+  /**
+   * ip is the machine's primary address (private endpoint preferred,
+   * else the first available — mirrors overview.go's machineHost).
+   *
+   * @generated from field: string ip = 3;
+   */
+  ip?: string;
+
+  /**
+   * status is the deployment.MachineState.status ProvisionActivity
+   * returned (STATUS_DEPLOYED for every provider today — see
+   * provider.docker/terraform's own MachineState construction); this
+   * snapshot is filled once and never re-derives a live status from
+   * RunState, so a terminal run keeps reporting "deployed" here even
+   * after teardown destroys the machine (documented, matches a classic
+   * run's own InfrastructureState fallback behavior).
+   *
+   * @generated from field: cloud.v1.common.Status status = 4;
+   */
+  status?: StatusJson;
+
+  /**
+   * services are every ServiceSpec whose on_group equals group, in the
+   * compiled plan's declaration order.
+   *
+   * @generated from field: repeated cloud.v1.models.RecipeTopologySnapshot.ServiceNode services = 5;
+   */
+  services?: RecipeTopologySnapshot_ServiceNodeJson[];
+
+  /**
+   * labels carries the machine's deployment.MachineState.labels
+   * verbatim (e.g. "node_id"/"group" from the provider), for any
+   * future consumer that wants the raw provider labels.
+   *
+   * @generated from field: map<string, string> labels = 6;
+   */
+  labels?: { [key: string]: string };
+};
+
+export type RecipeTopologySnapshot_MachineNodeValid = RecipeTopologySnapshot_MachineNode;
+
+/**
+ * Describes the message cloud.v1.models.RecipeTopologySnapshot.MachineNode.
+ * Use `create(RecipeTopologySnapshot_MachineNodeSchema)` to create a new message.
+ */
+export const RecipeTopologySnapshot_MachineNodeSchema: GenMessage<RecipeTopologySnapshot_MachineNode, {jsonType: RecipeTopologySnapshot_MachineNodeJson, validType: RecipeTopologySnapshot_MachineNodeValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_models_test_run, 1, 1);
 

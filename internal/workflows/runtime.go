@@ -53,3 +53,14 @@ func persistRunSummary(ctx workflow.Context, runID string, summary *models.TestR
 	actx := runtimeActivityContext(ctx)
 	return workflow.ExecuteActivity(actx, PersistRunSummaryActivityName, runID, summary).Get(actx, nil)
 }
+
+// persistRecipeTopology calls PersistRecipeTopologyActivityName to store the
+// recipe run's topology snapshot (see runrecipe_topology.go's
+// deriveRecipeTopology) onto the run record's recipe_topology field — called
+// once, right after ProvisionActivity succeeds (see RunRecipeWorkflow.run's
+// infra-stage block), mirroring persistRunSummary's identical
+// call-right-after-the-activity-that-produced-the-data shape.
+func persistRecipeTopology(ctx workflow.Context, runID string, snapshot *models.RecipeTopologySnapshot) error {
+	actx := runtimeActivityContext(ctx)
+	return workflow.ExecuteActivity(actx, PersistRecipeTopologyActivityName, runID, snapshot).Get(actx, nil)
+}

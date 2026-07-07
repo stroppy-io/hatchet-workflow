@@ -22,11 +22,12 @@ import (
 // deleted workflows_test.go, which used the same fake for both the old
 // TestWorkflow/DeploymentWorkflow tests and RunRecipeWorkflow.
 type fakeRuntimeActivities struct {
-	mu              sync.Mutex
-	runStates       []*workflowpb.RunState
-	deploymentPlans []*deploymentpb.DeploymentPlan
-	logLines        []*monitor.LogLine
-	summaries       []*models.TestRunRecord_Summary
+	mu               sync.Mutex
+	runStates        []*workflowpb.RunState
+	deploymentPlans  []*deploymentpb.DeploymentPlan
+	logLines         []*monitor.LogLine
+	summaries        []*models.TestRunRecord_Summary
+	recipeTopologies []*models.RecipeTopologySnapshot
 }
 
 func registerFakeRuntimeActivities(env *testsuite.TestWorkflowEnvironment, fake *fakeRuntimeActivities) {
@@ -34,6 +35,7 @@ func registerFakeRuntimeActivities(env *testsuite.TestWorkflowEnvironment, fake 
 	env.RegisterActivityWithOptions(fake.PersistDeploymentPlan, activity.RegisterOptions{Name: PersistDeploymentPlanActivityName})
 	env.RegisterActivityWithOptions(fake.AppendRunLogs, activity.RegisterOptions{Name: AppendRunLogsActivityName})
 	env.RegisterActivityWithOptions(fake.PersistRunSummary, activity.RegisterOptions{Name: PersistRunSummaryActivityName})
+	env.RegisterActivityWithOptions(fake.PersistRecipeTopology, activity.RegisterOptions{Name: PersistRecipeTopologyActivityName})
 }
 
 func (f *fakeRuntimeActivities) PersistRunState(
@@ -83,6 +85,22 @@ func (f *fakeRuntimeActivities) PersistRunSummary(
 		return nil
 	}
 	f.summaries = append(f.summaries, proto.Clone(summary).(*models.TestRunRecord_Summary))
+	return nil
+}
+
+func (f *fakeRuntimeActivities) PersistRecipeTopology(
+	_ context.Context,
+	_ string,
+	snapshot *models.RecipeTopologySnapshot,
+) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	if snapshot == nil {
+		f.recipeTopologies = append(f.recipeTopologies, nil)
+		return nil
+	}
+	f.recipeTopologies = append(f.recipeTopologies, proto.Clone(snapshot).(*models.RecipeTopologySnapshot))
 	return nil
 }
 

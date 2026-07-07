@@ -306,6 +306,35 @@ func (m *TestRunRecord) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if all {
+		switch v := interface{}(m.GetRecipeTopology()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TestRunRecordValidationError{
+					field:  "RecipeTopology",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TestRunRecordValidationError{
+					field:  "RecipeTopology",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetRecipeTopology()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TestRunRecordValidationError{
+				field:  "RecipeTopology",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	if len(errors) > 0 {
 		return TestRunRecordMultiError(errors)
 	}
@@ -383,6 +412,144 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = TestRunRecordValidationError{}
+
+// Validate checks the field values on RecipeTopologySnapshot with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *RecipeTopologySnapshot) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RecipeTopologySnapshot with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// RecipeTopologySnapshotMultiError, or nil if none found.
+func (m *RecipeTopologySnapshot) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RecipeTopologySnapshot) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Provider
+
+	for idx, item := range m.GetNodes() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, RecipeTopologySnapshotValidationError{
+						field:  fmt.Sprintf("Nodes[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, RecipeTopologySnapshotValidationError{
+						field:  fmt.Sprintf("Nodes[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return RecipeTopologySnapshotValidationError{
+					field:  fmt.Sprintf("Nodes[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return RecipeTopologySnapshotMultiError(errors)
+	}
+
+	return nil
+}
+
+// RecipeTopologySnapshotMultiError is an error wrapping multiple validation
+// errors returned by RecipeTopologySnapshot.ValidateAll() if the designated
+// constraints aren't met.
+type RecipeTopologySnapshotMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RecipeTopologySnapshotMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RecipeTopologySnapshotMultiError) AllErrors() []error { return m }
+
+// RecipeTopologySnapshotValidationError is the validation error returned by
+// RecipeTopologySnapshot.Validate if the designated constraints aren't met.
+type RecipeTopologySnapshotValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e RecipeTopologySnapshotValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e RecipeTopologySnapshotValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e RecipeTopologySnapshotValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e RecipeTopologySnapshotValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e RecipeTopologySnapshotValidationError) ErrorName() string {
+	return "RecipeTopologySnapshotValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e RecipeTopologySnapshotValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRecipeTopologySnapshot.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = RecipeTopologySnapshotValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = RecipeTopologySnapshotValidationError{}
 
 // Validate checks the field values on TestRunRecord_Summary with the rules
 // defined in the proto definition for this message. If any rules are
@@ -679,3 +846,261 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = TestRunRecord_SummaryValidationError{}
+
+// Validate checks the field values on RecipeTopologySnapshot_ServiceNode with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *RecipeTopologySnapshot_ServiceNode) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RecipeTopologySnapshot_ServiceNode
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// RecipeTopologySnapshot_ServiceNodeMultiError, or nil if none found.
+func (m *RecipeTopologySnapshot_ServiceNode) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RecipeTopologySnapshot_ServiceNode) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Name
+
+	// no validation rules for Image
+
+	if len(errors) > 0 {
+		return RecipeTopologySnapshot_ServiceNodeMultiError(errors)
+	}
+
+	return nil
+}
+
+// RecipeTopologySnapshot_ServiceNodeMultiError is an error wrapping multiple
+// validation errors returned by
+// RecipeTopologySnapshot_ServiceNode.ValidateAll() if the designated
+// constraints aren't met.
+type RecipeTopologySnapshot_ServiceNodeMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RecipeTopologySnapshot_ServiceNodeMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RecipeTopologySnapshot_ServiceNodeMultiError) AllErrors() []error { return m }
+
+// RecipeTopologySnapshot_ServiceNodeValidationError is the validation error
+// returned by RecipeTopologySnapshot_ServiceNode.Validate if the designated
+// constraints aren't met.
+type RecipeTopologySnapshot_ServiceNodeValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e RecipeTopologySnapshot_ServiceNodeValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e RecipeTopologySnapshot_ServiceNodeValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e RecipeTopologySnapshot_ServiceNodeValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e RecipeTopologySnapshot_ServiceNodeValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e RecipeTopologySnapshot_ServiceNodeValidationError) ErrorName() string {
+	return "RecipeTopologySnapshot_ServiceNodeValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e RecipeTopologySnapshot_ServiceNodeValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRecipeTopologySnapshot_ServiceNode.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = RecipeTopologySnapshot_ServiceNodeValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = RecipeTopologySnapshot_ServiceNodeValidationError{}
+
+// Validate checks the field values on RecipeTopologySnapshot_MachineNode with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *RecipeTopologySnapshot_MachineNode) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RecipeTopologySnapshot_MachineNode
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// RecipeTopologySnapshot_MachineNodeMultiError, or nil if none found.
+func (m *RecipeTopologySnapshot_MachineNode) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RecipeTopologySnapshot_MachineNode) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for NodeId
+
+	// no validation rules for Group
+
+	// no validation rules for Ip
+
+	// no validation rules for Status
+
+	for idx, item := range m.GetServices() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, RecipeTopologySnapshot_MachineNodeValidationError{
+						field:  fmt.Sprintf("Services[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, RecipeTopologySnapshot_MachineNodeValidationError{
+						field:  fmt.Sprintf("Services[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return RecipeTopologySnapshot_MachineNodeValidationError{
+					field:  fmt.Sprintf("Services[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	// no validation rules for Labels
+
+	if len(errors) > 0 {
+		return RecipeTopologySnapshot_MachineNodeMultiError(errors)
+	}
+
+	return nil
+}
+
+// RecipeTopologySnapshot_MachineNodeMultiError is an error wrapping multiple
+// validation errors returned by
+// RecipeTopologySnapshot_MachineNode.ValidateAll() if the designated
+// constraints aren't met.
+type RecipeTopologySnapshot_MachineNodeMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RecipeTopologySnapshot_MachineNodeMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RecipeTopologySnapshot_MachineNodeMultiError) AllErrors() []error { return m }
+
+// RecipeTopologySnapshot_MachineNodeValidationError is the validation error
+// returned by RecipeTopologySnapshot_MachineNode.Validate if the designated
+// constraints aren't met.
+type RecipeTopologySnapshot_MachineNodeValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e RecipeTopologySnapshot_MachineNodeValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e RecipeTopologySnapshot_MachineNodeValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e RecipeTopologySnapshot_MachineNodeValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e RecipeTopologySnapshot_MachineNodeValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e RecipeTopologySnapshot_MachineNodeValidationError) ErrorName() string {
+	return "RecipeTopologySnapshot_MachineNodeValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e RecipeTopologySnapshot_MachineNodeValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRecipeTopologySnapshot_MachineNode.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = RecipeTopologySnapshot_MachineNodeValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = RecipeTopologySnapshot_MachineNodeValidationError{}

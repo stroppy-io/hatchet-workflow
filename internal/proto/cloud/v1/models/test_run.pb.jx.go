@@ -81,6 +81,10 @@ func (m *TestRunRecord) Encode(e *jx.Encoder) {
 		e.FieldStart("recipeId")
 		e.Str(m.RecipeId)
 	}
+	if m.RecipeTopology != nil {
+		e.FieldStart("recipeTopology")
+		m.RecipeTopology.Encode(e)
+	}
 	e.ObjEnd()
 }
 
@@ -293,6 +297,19 @@ func (m *TestRunRecord) Decode(d *jx.Decoder) error {
 				return err
 			}
 			m.RecipeId = v
+			return nil
+		case "recipeTopology", "recipe_topology":
+			if seen["RecipeTopology"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["RecipeTopology"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.RecipeTopology = &RecipeTopologySnapshot{}
+			if err := m.RecipeTopology.Decode(d); err != nil {
+				return err
+			}
 			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)
@@ -680,6 +697,323 @@ func (m *TestRunRecord_Summary) MarshalJSON() ([]byte, error) {
 }
 
 func (m *TestRunRecord_Summary) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *RecipeTopologySnapshot) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Provider != "" {
+		e.FieldStart("provider")
+		e.Str(m.Provider)
+	}
+	if len(m.Nodes) > 0 {
+		e.FieldStart("nodes")
+		e.ArrStart()
+		for _, v := range m.Nodes {
+			v.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	e.ObjEnd()
+}
+
+func (m *RecipeTopologySnapshot) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "provider":
+			if seen["Provider"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Provider"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Provider = v
+			return nil
+		case "nodes":
+			if seen["Nodes"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Nodes"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &RecipeTopologySnapshot_MachineNode{}
+				if err := el.Decode(d); err != nil {
+					return err
+				}
+				m.Nodes = append(m.Nodes, el)
+				return nil
+			})
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *RecipeTopologySnapshot) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *RecipeTopologySnapshot) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *RecipeTopologySnapshot_ServiceNode) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Name != "" {
+		e.FieldStart("name")
+		e.Str(m.Name)
+	}
+	if m.Image != "" {
+		e.FieldStart("image")
+		e.Str(m.Image)
+	}
+	e.ObjEnd()
+}
+
+func (m *RecipeTopologySnapshot_ServiceNode) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "name":
+			if seen["Name"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Name"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Name = v
+			return nil
+		case "image":
+			if seen["Image"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Image"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Image = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *RecipeTopologySnapshot_ServiceNode) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *RecipeTopologySnapshot_ServiceNode) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *RecipeTopologySnapshot_MachineNode) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.NodeId != "" {
+		e.FieldStart("nodeId")
+		e.Str(m.NodeId)
+	}
+	if m.Group != "" {
+		e.FieldStart("group")
+		e.Str(m.Group)
+	}
+	if m.Ip != "" {
+		e.FieldStart("ip")
+		e.Str(m.Ip)
+	}
+	if m.Status != 0 {
+		e.FieldStart("status")
+		if s, ok := common.Status_name[int32(m.Status)]; ok {
+			e.Str(s)
+		} else {
+			e.Int32(int32(m.Status))
+		}
+	}
+	if len(m.Services) > 0 {
+		e.FieldStart("services")
+		e.ArrStart()
+		for _, v := range m.Services {
+			v.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	if len(m.Labels) > 0 {
+		e.FieldStart("labels")
+		e.ObjStart()
+		for k, v := range m.Labels {
+			e.FieldStart(k)
+			e.Str(v)
+		}
+		e.ObjEnd()
+	}
+	e.ObjEnd()
+}
+
+func (m *RecipeTopologySnapshot_MachineNode) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "nodeId", "node_id":
+			if seen["NodeId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["NodeId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.NodeId = v
+			return nil
+		case "group":
+			if seen["Group"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Group"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Group = v
+			return nil
+		case "ip":
+			if seen["Ip"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Ip"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Ip = v
+			return nil
+		case "status":
+			if seen["Status"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Status"] = true
+			switch d.Next() {
+			case jx.String:
+				s, err := d.Str()
+				if err != nil {
+					return err
+				}
+				n, ok := common.Status_value[s]
+				if !ok {
+					return fmt.Errorf("unknown enum value %q", s)
+				}
+				m.Status = common.Status(n)
+				return nil
+			case jx.Number:
+				n, err := d.Int32()
+				if err != nil {
+					return err
+				}
+				m.Status = common.Status(n)
+				return nil
+			case jx.Null:
+				return d.Null()
+			default:
+				return fmt.Errorf("invalid enum token %s", d.Next())
+			}
+		case "services":
+			if seen["Services"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Services"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &RecipeTopologySnapshot_ServiceNode{}
+				if err := el.Decode(d); err != nil {
+					return err
+				}
+				m.Services = append(m.Services, el)
+				return nil
+			})
+		case "labels":
+			if seen["Labels"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Labels"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			if m.Labels == nil {
+				m.Labels = make(map[string]string)
+			}
+			return d.Obj(func(d *jx.Decoder, ks string) error {
+				mk := ks
+				var mv string
+				tv, err := d.Str()
+				if err != nil {
+					return err
+				}
+				mv = tv
+				m.Labels[mk] = mv
+				return nil
+			})
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *RecipeTopologySnapshot_MachineNode) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *RecipeTopologySnapshot_MachineNode) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return m.Decode(d)
 }

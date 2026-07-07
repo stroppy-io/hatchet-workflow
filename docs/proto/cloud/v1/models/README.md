@@ -13,6 +13,10 @@
   - [cloud.v1.models.RecipeBundle.FilesEntry](#cloud-v1-models-recipebundle-filesentry)
   - [cloud.v1.models.RecipeRecord](#cloud-v1-models-reciperecord)
   - [cloud.v1.models.RecipeRecord.Summary](#cloud-v1-models-reciperecord-summary)
+  - [cloud.v1.models.RecipeTopologySnapshot](#cloud-v1-models-recipetopologysnapshot)
+  - [cloud.v1.models.RecipeTopologySnapshot.MachineNode](#cloud-v1-models-recipetopologysnapshot-machinenode)
+  - [cloud.v1.models.RecipeTopologySnapshot.MachineNode.LabelsEntry](#cloud-v1-models-recipetopologysnapshot-machinenode-labelsentry)
+  - [cloud.v1.models.RecipeTopologySnapshot.ServiceNode](#cloud-v1-models-recipetopologysnapshot-servicenode)
   - [cloud.v1.models.ShareRecord](#cloud-v1-models-sharerecord)
   - [cloud.v1.models.ShareRecord.Snapshot](#cloud-v1-models-sharerecord-snapshot)
   - [cloud.v1.models.ShareRecord.Target](#cloud-v1-models-sharerecord-target)
@@ -419,6 +423,189 @@ go_name: Provider</pre></td>
 
 json_name: serviceCount
 go_name: ServiceCount</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-models-recipetopologysnapshot"></a>
+### cloud.v1.models.RecipeTopologySnapshot
+
+<pre>
+//RecipeTopologySnapshot is the compact, denormalized topology a recipe run
+//persists onto TestRunRecord.recipe_topology (see that field's doc) — one
+//entry per provisioned machine, carrying just enough to reconstruct an
+//equivalent runtime topology to a classic run's TopologySpec/
+//InfrastructureState/DeploymentPlan trio: which dsl.CompiledPlan
+//machine_groups group the machine belongs to, and which dsl.ServiceSpec
+//services are on_group-placed on that group.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>nodes</td>
+<td><a href="#cloud-v1-models-recipetopologysnapshot-machinenode">cloud.v1.models.RecipeTopologySnapshot.MachineNode</a></td>
+<td><pre>
+nodes is every provisioned machine, sorted by (group, node_id) for a
+deterministic projection.<br>
+
+json_name: nodes
+go_name: Nodes</pre></td>
+</tr><tr>
+<td>provider</td>
+<td>string</td>
+<td><pre>
+provider is the dsl.ProviderRef.name the plan resolved (e.g. "docker",
+"yandex").<br>
+
+json_name: provider
+go_name: Provider</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-models-recipetopologysnapshot-machinenode"></a>
+### cloud.v1.models.RecipeTopologySnapshot.MachineNode
+
+<pre>
+//MachineNode is one machine deployment.MachineState ProvisionActivity
+//returned for the recipe's compiled plan, stamped with its owning
+//machine_groups group and the services placed there.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>group</td>
+<td>string</td>
+<td><pre>
+group is the dsl.MachineGroup.name this machine was provisioned
+for (e.g. "db", "runner").<br>
+
+json_name: group
+go_name: Group</pre></td>
+</tr><tr>
+<td>ip</td>
+<td>string</td>
+<td><pre>
+ip is the machine's primary address (private endpoint preferred,
+else the first available — mirrors overview.go's machineHost).<br>
+
+json_name: ip
+go_name: Ip</pre></td>
+</tr><tr>
+<td>labels</td>
+<td><a href="#cloud-v1-models-recipetopologysnapshot-machinenode-labelsentry">cloud.v1.models.RecipeTopologySnapshot.MachineNode.LabelsEntry</a></td>
+<td><pre>
+labels carries the machine's deployment.MachineState.labels
+verbatim (e.g. "node_id"/"group" from the provider), for any
+future consumer that wants the raw provider labels.<br>
+
+json_name: labels
+go_name: Labels</pre></td>
+</tr><tr>
+<td>node_id</td>
+<td>string</td>
+<td><pre>
+node_id is the deployment.MachineState.node_id (e.g. "db-0",
+"runner-0" — provider-assigned, group name + index).<br>
+
+json_name: nodeId
+go_name: NodeId</pre></td>
+</tr><tr>
+<td>services</td>
+<td><a href="#cloud-v1-models-recipetopologysnapshot-servicenode">cloud.v1.models.RecipeTopologySnapshot.ServiceNode</a></td>
+<td><pre>
+services are every ServiceSpec whose on_group equals group, in the
+compiled plan's declaration order.<br>
+
+json_name: services
+go_name: Services</pre></td>
+</tr><tr>
+<td>status</td>
+<td><a href="../common/README.md#cloud-v1-common-status">cloud.v1.common.Status</a></td>
+<td><pre>
+status is the deployment.MachineState.status ProvisionActivity
+returned (STATUS_DEPLOYED for every provider today — see
+provider.docker/terraform's own MachineState construction); this
+snapshot is filled once and never re-derives a live status from
+RunState, so a terminal run keeps reporting "deployed" here even
+after teardown destroys the machine (documented, matches a classic
+run's own InfrastructureState fallback behavior).<br>
+
+json_name: status
+go_name: Status</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-models-recipetopologysnapshot-machinenode-labelsentry"></a>
+### cloud.v1.models.RecipeTopologySnapshot.MachineNode.LabelsEntry
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>key</td>
+<td>string</td>
+<td><pre>
+json_name: key
+go_name: Key</pre></td>
+</tr><tr>
+<td>value</td>
+<td>string</td>
+<td><pre>
+json_name: value
+go_name: Value</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-models-recipetopologysnapshot-servicenode"></a>
+### cloud.v1.models.RecipeTopologySnapshot.ServiceNode
+
+<pre>
+//ServiceNode is one dsl.ServiceSpec placed on a MachineNode's group.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>image</td>
+<td>string</td>
+<td><pre>
+image is the ServiceSpec.image (Docker image ref), used for the
+runtime node's engine label.<br>
+
+json_name: image
+go_name: Image</pre></td>
+</tr><tr>
+<td>name</td>
+<td>string</td>
+<td><pre>
+name is the ServiceSpec.name (e.g. "patroni-postgres", "stroppy").<br>
+
+json_name: name
+go_name: Name</pre></td>
 </tr>
 </table>
 
@@ -1035,6 +1222,29 @@ go_name: InfrastructureState</pre></td>
 
 json_name: recipeId
 go_name: RecipeId</pre></td>
+</tr><tr>
+<td>recipe_topology</td>
+<td><a href="#cloud-v1-models-recipetopologysnapshot">cloud.v1.models.RecipeTopologySnapshot</a></td>
+<td><pre>
+//recipe_topology is a compact topology snapshot for a recipe run: the
+//machines RunRecipeWorkflow's ProvisionActivity returned, each stamped
+//with its dsl.CompiledPlan machine_groups group name and the
+//dsl.ServiceSpec names on_group-placed on that group. A recipe run has
+//no domain.TestRun spec (so spec.topology_spec/infrastructure_plan are
+//always nil) and produces neither a deployment.InfrastructureState nor
+//a deployment.DeploymentPlan (see runrecipe.go's persist doc) — this is
+//the ONLY topology-shaped artifact a recipe run's execution ever
+//persists. Filled once, right after ProvisionActivity succeeds (see
+//RunRecipeWorkflow.run's infra-stage block), and never updated again
+//afterwards (unlike summary, which keeps accreting facets). overview.go
+//(topologyFromRecordWithRunState) and runtime_topology.go
+//(runtimeTopologyFromRecord) project this into the same
+//topology.RuntimeNode/RuntimeConnection shape a classic run's
+//TopologySpec/InfrastructureState/DeploymentPlan combination projects,
+//so both run kinds render through one topology.Topology envelope.<br>
+
+json_name: recipeTopology
+go_name: RecipeTopology</pre></td>
 </tr><tr>
 <td>runtime_state</td>
 <td><a href="../workflow/README.md#cloud-v1-workflow-runstate">cloud.v1.workflow.RunState</a></td>
