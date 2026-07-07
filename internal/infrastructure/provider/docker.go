@@ -17,6 +17,12 @@ import (
 // pre-DSL config path agree on the same stock image.
 const defaultAgentImage = "stroppy-agent:latest"
 
+// nomadAgentAddrEnv is the env var the agent's Nomad activities read to find
+// their Nomad HTTP endpoint (mirrors internal/agent/nomad_activities.go's
+// unexported nomadAddrEnv). The docker provider sets it to the gateway sidecar
+// container's address so the gateway agent can submit jobs to it.
+const nomadAgentAddrEnv = "STROPPY_NOMAD_ADDR"
+
 // dockerProvider is the builtin Provider implementation: one container per
 // requested machine, running the stroppy-agent bootstrap (same env
 // convention as the pre-DSL renderDockerInput/agentdomain path), with no
@@ -129,6 +135,17 @@ func (p *dockerProvider) Provision(ctx context.Context, ref *dslpb.ProviderRef, 
 			env, err := agentdomain.Env(nodeID, bootstrap)
 			if err != nil {
 				return nil, fmt.Errorf("render agent bootstrap env for %q: %w", nodeID, err)
+			}
+
+			// Point the agent's Nomad activities at the gateway sidecar
+			// container (a separate container on the run network, reached by
+			// its name via docker DNS) instead of the unreachable default
+			// http://127.0.0.1:4646. Only set when a gateway sidecar is
+			// actually rendered (params.GatewayGroup != ""); only the gateway
+			// node's task queue ever receives a NomadSubmitJobActivity, but
+			// setting it on every agent is harmless and keeps the env uniform.
+			if params.GatewayGroup != "" {
+				env[nomadAgentAddrEnv] = fmt.Sprintf("http://%s:4646", nomadContainerName(params.RunID))
 			}
 
 			// The agent image runs systemd as PID 1 (see
