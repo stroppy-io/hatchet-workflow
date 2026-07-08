@@ -8,7 +8,13 @@ import (
 
 // WorkflowDoc is the decoded form of a workflow.yaml document.
 type WorkflowDoc struct {
-	Jobs map[string]Job
+	// Inputs declares the workflow-level launch-form inputs (same InputSpec
+	// shape as ComponentDoc.Inputs — see component.go) surfaced by the
+	// DslService.ComposedSchema RPC's form schema. Optional: a workflow.yaml
+	// with no "inputs:" key decodes to an empty (non-nil) map, matching
+	// ComponentDoc's own zero-value convention.
+	Inputs map[string]InputSpec
+	Jobs   map[string]Job
 }
 
 // Job describes one named job in a workflow.
@@ -100,27 +106,29 @@ func DecodeWorkflow(path string, src []byte) (*WorkflowDoc, diag.List) {
 	}
 
 	dec := &workflowDecoder{decoderBase{path: path, diags: &diags}}
-	doc := &WorkflowDoc{Jobs: map[string]Job{}}
+	doc := &WorkflowDoc{Inputs: map[string]InputSpec{}, Jobs: map[string]Job{}}
 	dec.decodeDoc(docNode, doc)
 
 	return doc, diags
 }
 
 // workflowDecoder embeds decoderBase (errorf/decodeValue/alwaysOK/mapping,
-// and the generic decodeJobs/decodeSteps/... helpers); workflow.yaml has no
-// state of its own beyond that, unlike clusterDecoder's providerKey.
+// and the generic decodeInputs/decodeJobs/decodeSteps/... helpers);
+// workflow.yaml has no state of its own beyond that, unlike clusterDecoder's
+// providerKey.
 type workflowDecoder struct {
 	decoderBase
 }
 
 func (d *workflowDecoder) decodeDoc(node *yaml.Node, doc *WorkflowDoc) {
 	d.mapping(node, "workflow", map[string]func(*yaml.Node) error{
-		"jobs": d.alwaysOK(func(v *yaml.Node) { d.decodeJobs(v, doc.Jobs) }),
+		"inputs": d.alwaysOK(func(v *yaml.Node) { d.decodeInputs(v, doc.Inputs) }),
+		"jobs":   d.alwaysOK(func(v *yaml.Node) { d.decodeJobs(v, doc.Jobs) }),
 	})
 }
 
-// decodeJobs, decodeJob, decodeSteps, decodeStep, decodeWriteFile,
-// decodeFetch and decodeWait are generic (not tied to workflow.yaml
-// specifically — a component.yaml can nest the same `jobs:` shape) and live
-// on decoderBase in yamlwalk.go; workflowDecoder inherits them through
-// embedding.
+// decodeInputs, decodeInputSpec, decodeJobs, decodeJob, decodeSteps,
+// decodeStep, decodeWriteFile, decodeFetch and decodeWait are generic (not
+// tied to workflow.yaml specifically — a component.yaml can nest the same
+// `inputs:`/`jobs:` shapes) and live on decoderBase in component.go/
+// yamlwalk.go; workflowDecoder inherits them through embedding.

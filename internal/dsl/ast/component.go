@@ -96,12 +96,24 @@ func (d *componentDecoder) decodeDoc(node *yaml.Node, doc *ComponentDoc) {
 	})
 }
 
+func (d *componentDecoder) decodeClusterFragment(node *yaml.Node) ClusterFragment {
+	var cf ClusterFragment
+	cf.Services = map[string]Service{}
+	d.mapping(node, "cluster", map[string]func(*yaml.Node) error{
+		"services": d.alwaysOK(func(v *yaml.Node) { d.decodeServices(v, cf.Services) }),
+	})
+	return cf
+}
+
 // decodeInputs walks the "inputs" mapping, whose keys are arbitrary input
 // names (not a fixed schema), so it iterates node.Content directly rather
 // than going through decodeMapping's known-key dispatch. A duplicate input
 // name is reported as a diagnostic (anchored to the second occurrence's key
-// node) and the first entry is preserved.
-func (d *componentDecoder) decodeInputs(node *yaml.Node, out map[string]InputSpec) {
+// node) and the first entry is preserved. Defined on decoderBase (rather
+// than componentDecoder) so workflow.go's workflowDecoder gets it too
+// through embedding: a workflow's top-level "inputs:" is the same
+// name->InputSpec shape as a component's.
+func (d *decoderBase) decodeInputs(node *yaml.Node, out map[string]InputSpec) {
 	if node.Kind != yaml.MappingNode {
 		d.errorf(node, "inputs: expected a mapping, got %s", nodeKindName(node.Kind))
 		return
@@ -118,7 +130,7 @@ func (d *componentDecoder) decodeInputs(node *yaml.Node, out map[string]InputSpe
 
 // decodeInputSpec accepts either a bare scalar type name ("int") or a
 // mapping with type/default fields ("{ type: int, default: 512 }").
-func (d *componentDecoder) decodeInputSpec(node *yaml.Node) InputSpec {
+func (d *decoderBase) decodeInputSpec(node *yaml.Node) InputSpec {
 	var spec InputSpec
 	if node.Kind == yaml.ScalarNode {
 		d.decodeValue(node, &spec.Type, "inputs[]")
@@ -129,15 +141,6 @@ func (d *componentDecoder) decodeInputSpec(node *yaml.Node) InputSpec {
 		"default": d.alwaysOK(func(v *yaml.Node) { d.decodeValue(v, &spec.Default, "inputs[].default") }),
 	})
 	return spec
-}
-
-func (d *componentDecoder) decodeClusterFragment(node *yaml.Node) ClusterFragment {
-	var cf ClusterFragment
-	cf.Services = map[string]Service{}
-	d.mapping(node, "cluster", map[string]func(*yaml.Node) error{
-		"services": d.alwaysOK(func(v *yaml.Node) { d.decodeServices(v, cf.Services) }),
-	})
-	return cf
 }
 
 // decodeRequirements walks a "requires:"/"capabilities.constraints:"

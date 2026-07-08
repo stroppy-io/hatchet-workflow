@@ -138,6 +138,52 @@ jobs:
 	}
 }
 
+// TestDecodeWorkflowInputs verifies workflow.yaml's top-level "inputs:" key
+// decodes into WorkflowDoc.Inputs, mirroring ComponentDoc.Inputs's existing
+// {bare scalar type | {type, default} mapping} shape (component_test.go
+// covers that shape in depth; this only proves workflow.yaml recognizes the
+// key at all rather than reporting it "unknown key").
+func TestDecodeWorkflowInputs(t *testing.T) {
+	src := []byte(`
+inputs:
+  iterations: int
+  row_bytes: { type: int, default: 512 }
+  label: { type: string, default: "bench" }
+jobs:
+  a:
+    on: db
+    steps:
+      - cmd: x
+`)
+	doc, diags := ast.DecodeWorkflow("workflow.yaml", src)
+	if diags.HasErrors() {
+		t.Fatalf("unexpected diags: %+v", diags)
+	}
+	if got := doc.Inputs["iterations"]; got.Type != "int" {
+		t.Fatalf("bad iterations input: %+v", got)
+	}
+	if got := doc.Inputs["row_bytes"]; got.Type != "int" || got.Default != 512 {
+		t.Fatalf("bad row_bytes input: %+v", got)
+	}
+	if got := doc.Inputs["label"]; got.Type != "string" || got.Default != "bench" {
+		t.Fatalf("bad label input: %+v", got)
+	}
+}
+
+// TestDecodeWorkflowNoInputsOK verifies a workflow.yaml with no "inputs:"
+// key decodes cleanly to an empty (non-nil) Inputs map, matching
+// ComponentDoc's zero-value convention.
+func TestDecodeWorkflowNoInputsOK(t *testing.T) {
+	src := []byte("jobs:\n  a:\n    on: db\n    steps:\n      - cmd: x\n")
+	doc, diags := ast.DecodeWorkflow("workflow.yaml", src)
+	if diags.HasErrors() {
+		t.Fatalf("unexpected diags: %+v", diags)
+	}
+	if doc.Inputs == nil || len(doc.Inputs) != 0 {
+		t.Fatalf("expected empty non-nil Inputs map, got %+v", doc.Inputs)
+	}
+}
+
 func TestDecodeWorkflowJobFields(t *testing.T) {
 	src := []byte(`
 jobs:
