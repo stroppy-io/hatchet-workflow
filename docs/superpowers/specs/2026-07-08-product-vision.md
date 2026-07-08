@@ -171,11 +171,15 @@ Git-репо на instance/org; сервинг code-server (VSCode); плаги�
 
 ## 9. Открытые вопросы (уточняются при планировании SP)
 
-1. **Внутренний git-бэкенд:** встроенный (go-git/bare-repo на диске сервера) vs внешний (gitea sidecar)? Влияет на SP-C.
-2. **IDE-хостинг:** code-server per-user контейнер vs shared instance с воркспейсами? Ресурсы/изоляция.
-3. **Дефолт-ссылка instance→org:** «живая» ссылка (org видит апдейты instance-каталога) vs «форк» (копия на момент, апдейты вручную)? Влияет на SP-B.
-4. **variables.tf → schemapb:** насколько богато мапим (типы/валидации/UI-hints из HCL) — какой минимум для v1.
-5. **Провайдер-креды per-org:** где хранятся секреты (identity_secrets?) и как прокидываются в terraform без утечки в историю Temporal.
+**РЕШЕНО (2026-07-08):**
+1. ~~git-бэкенд~~ → **Gitea sidecar** (SP-C).
+2. ~~IDE-хостинг~~ → **shared per-org code-server** (SP-C).
+3. ~~дефолт-ссылка~~ → **живая ссылка + fork-on-edit** (LINKED→FORKED, SP-B).
+6. **provider.use** → **пиннинг версии** (`name@ver`, SP-B/SP-E) — воспроизводимость Run.
+7. **variables.tf → schemapb** → **богато** (типы+validation→CEL-rules+описания+secret+default, SP-A).
+
+**Ещё открыто:**
+5. **Провайдер-креды per-org:** где хранятся секреты (новый namespace в identity_secrets) и как прокидываются в terraform без утечки в историю Temporal (резолв внутри активности) — детали в SP-F.
 
 ---
 

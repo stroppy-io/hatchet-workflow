@@ -171,6 +171,11 @@ func (s *DslService) Preview(ctx, *PreviewRequest) (*PreviewResponse, error)
 
 ## 9. Открытые вопросы
 
+> **РЕШЕНО владельцем (2026-07-08):**
+> - **Git-бэкенд = Gitea sidecar** (§9.1 → gitea). RBAC SP-B — источник правды; gateway проверяет права ДО проксирования в gitea (не полагаемся на gitea-ACL).
+> - **IDE-хостинг = shared per-org code-server** (§9.2 → per-org): один code-server на org, воркспейс = git-репо org.
+> - Инициализация org-репо согласована с SP-B «живая ссылка + fork-on-edit» (org-репо стартует как ссылка на instance, форк-на-правку).
+
 ### 9.1 Git-бэкенд: встроенный vs внешний
 
 - **Встроенный** (`go-git` + bare-репо на диске сервера, git smart-HTTP руками поверх `internal/gateway`): ноль новых процессов/сервисов в деплое, полный контроль над ACL-проверкой на границе (переиспользует существующий auth-стек), но сервер сам реализует git-протокол (smart-HTTP upload-pack/receive-pack) и вопросы вроде GC/repack, что `gitea` даёт из коробки.
