@@ -1,6 +1,8 @@
 package schema
 
 import (
+	"fmt"
+
 	"github.com/stroppy-io/schemapb/schemapb"
 )
 
@@ -25,4 +27,17 @@ func ComposeFormSchema(namespace string, inputs, params *schemapb.Schema) (*sche
 	}
 
 	return schemapb.NewSchema(namespace, "form", "1").Fields(fields...).Build()
+}
+
+// BakeForm validates and resolves filled form values against form, then
+// seals them into a hashable Baked snapshot (the run identity). A nil
+// FieldError slice/empty result means values passed validation cleanly;
+// otherwise blocking errors leave baked nil while non-blocking warnings may
+// accompany a non-nil baked -- see schemapb.Schema.Bake.
+func BakeForm(form *schemapb.Schema, values map[string]any) (*schemapb.Baked, []*schemapb.FieldError, error) {
+	if form == nil {
+		return nil, nil, fmt.Errorf("bake form: nil schema")
+	}
+	baked, ferrs := form.Bake(values)
+	return baked, ferrs, nil
 }
