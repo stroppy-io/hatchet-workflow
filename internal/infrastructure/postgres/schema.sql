@@ -15,6 +15,15 @@ CREATE TABLE test_run_records (
 );
 CREATE INDEX idx_test_run_records_tenant ON test_run_records (tenant_id);
 
+CREATE TABLE run_records (
+  id         text PRIMARY KEY,
+  tenant_id  text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  data       jsonb NOT NULL
+);
+CREATE INDEX idx_run_records_tenant ON run_records (tenant_id);
+
 CREATE TABLE platform_settings (
   id         text PRIMARY KEY,
   updated_at timestamptz NOT NULL DEFAULT now(),

@@ -1298,7 +1298,7 @@ func (q *Queries) DeleteTestRunRecord(ctx context.Context, arg DeleteTestRunReco
 
 const existsTestRunRecordSQL = `select 1 from test_run_records where tenant_id = $1 and id = $2;
 
--- ===== share_records (records.go ShareRepo) =====`
+-- ===== run_records (run_store.go RunRepo) =====`
 
 type ExistsTestRunRecordParams struct {
 	TenantID string
@@ -1312,6 +1312,110 @@ type ExistsTestRunRecordRow struct {
 func (q *Queries) ExistsTestRunRecord(ctx context.Context, arg ExistsTestRunRecordParams) (ExistsTestRunRecordRow, error) {
 	row := q.db.QueryRow(ctx, existsTestRunRecordSQL, arg.TenantID, arg.ID)
 	var i ExistsTestRunRecordRow
+	err := row.Scan(&i.Column)
+	return i, err
+}
+
+const createRunRecordSQL = `insert into run_records (id, tenant_id, created_at, updated_at, data)
+values ($1, $2, now(), now(), $3);`
+
+type CreateRunRecordParams struct {
+	ID       any
+	TenantID any
+	Data     any
+}
+
+func (q *Queries) CreateRunRecord(ctx context.Context, arg CreateRunRecordParams) error {
+	_, err := q.db.Exec(ctx, createRunRecordSQL, arg.ID, arg.TenantID, arg.Data)
+	return err
+}
+
+const getRunRecordSQL = `select data from run_records where tenant_id = $1 and id = $2;`
+
+type GetRunRecordParams struct {
+	TenantID string
+	ID       string
+}
+
+type GetRunRecordRow struct {
+	Data json.RawMessage
+}
+
+func (q *Queries) GetRunRecord(ctx context.Context, arg GetRunRecordParams) (GetRunRecordRow, error) {
+	row := q.db.QueryRow(ctx, getRunRecordSQL, arg.TenantID, arg.ID)
+	var i GetRunRecordRow
+	err := row.Scan(&i.Data)
+	return i, err
+}
+
+const listRunRecordsSQL = `select data from run_records where tenant_id = $1;`
+
+type ListRunRecordsRow struct {
+	Data json.RawMessage
+}
+
+func (q *Queries) ListRunRecords(ctx context.Context, tenantID string) ([]ListRunRecordsRow, error) {
+	rows, err := q.db.Query(ctx, listRunRecordsSQL, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListRunRecordsRow
+	for rows.Next() {
+		var i ListRunRecordsRow
+		if err := rows.Scan(&i.Data); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateRunRecordSQL = `update run_records set data = $1, updated_at = now()
+where tenant_id = $2 and id = $3;`
+
+type UpdateRunRecordParams struct {
+	Data     json.RawMessage
+	TenantID string
+	ID       string
+}
+
+func (q *Queries) UpdateRunRecord(ctx context.Context, arg UpdateRunRecordParams) (int64, error) {
+	tag, err := q.db.Exec(ctx, updateRunRecordSQL, arg.Data, arg.TenantID, arg.ID)
+	return tag.RowsAffected(), err
+}
+
+const deleteRunRecordSQL = `delete from run_records where tenant_id = $1 and id = $2;`
+
+type DeleteRunRecordParams struct {
+	TenantID string
+	ID       string
+}
+
+func (q *Queries) DeleteRunRecord(ctx context.Context, arg DeleteRunRecordParams) (int64, error) {
+	tag, err := q.db.Exec(ctx, deleteRunRecordSQL, arg.TenantID, arg.ID)
+	return tag.RowsAffected(), err
+}
+
+const existsRunRecordSQL = `select 1 from run_records where tenant_id = $1 and id = $2;
+
+-- ===== share_records (records.go ShareRepo) =====`
+
+type ExistsRunRecordParams struct {
+	TenantID string
+	ID       string
+}
+
+type ExistsRunRecordRow struct {
+	Column int32
+}
+
+func (q *Queries) ExistsRunRecord(ctx context.Context, arg ExistsRunRecordParams) (ExistsRunRecordRow, error) {
+	row := q.db.QueryRow(ctx, existsRunRecordSQL, arg.TenantID, arg.ID)
+	var i ExistsRunRecordRow
 	err := row.Scan(&i.Column)
 	return i, err
 }

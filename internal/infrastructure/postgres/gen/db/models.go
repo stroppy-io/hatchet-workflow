@@ -15,6 +15,14 @@ type TestRunRecords struct {
 	Data      json.RawMessage
 }
 
+type RunRecords struct {
+	ID        string
+	TenantID  string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Data      json.RawMessage
+}
+
 type PlatformSettings struct {
 	ID        string
 	UpdatedAt time.Time

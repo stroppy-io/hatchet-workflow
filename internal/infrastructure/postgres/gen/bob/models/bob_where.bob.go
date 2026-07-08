@@ -18,6 +18,7 @@ var (
 
 func Where[Q psql.Filterable]() struct {
 	TestRunRecords          testRunRecordWhere[Q]
+	RunRecords              runRecordWhere[Q]
 	PlatformSettings        platformSettingWhere[Q]
 	RegistrationRequests    registrationRequestWhere[Q]
 	RecipeRecords           recipeRecordWhere[Q]
@@ -43,6 +44,7 @@ func Where[Q psql.Filterable]() struct {
 } {
 	return struct {
 		TestRunRecords          testRunRecordWhere[Q]
+		RunRecords              runRecordWhere[Q]
 		PlatformSettings        platformSettingWhere[Q]
 		RegistrationRequests    registrationRequestWhere[Q]
 		RecipeRecords           recipeRecordWhere[Q]
@@ -67,6 +69,7 @@ func Where[Q psql.Filterable]() struct {
 		IdentitySsoStates       identitySsoStateWhere[Q]
 	}{
 		TestRunRecords:          buildTestRunRecordWhere[Q](TestRunRecords.Columns),
+		RunRecords:              buildRunRecordWhere[Q](RunRecords.Columns),
 		PlatformSettings:        buildPlatformSettingWhere[Q](PlatformSettings.Columns),
 		RegistrationRequests:    buildRegistrationRequestWhere[Q](RegistrationRequests.Columns),
 		RecipeRecords:           buildRecipeRecordWhere[Q](RecipeRecords.Columns),

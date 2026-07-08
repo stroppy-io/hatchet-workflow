@@ -20,6 +20,28 @@ delete from test_run_records where tenant_id = @tenant_id and id = @id;
 -- name: ExistsTestRunRecord :one
 select 1 from test_run_records where tenant_id = @tenant_id and id = @id;
 
+-- ===== run_records (run_store.go RunRepo) =====
+
+-- name: CreateRunRecord :exec
+insert into run_records (id, tenant_id, created_at, updated_at, data)
+values (@id, @tenant_id, now(), now(), @data);
+
+-- name: GetRunRecord :one
+select data from run_records where tenant_id = @tenant_id and id = @id;
+
+-- name: ListRunRecords :many
+select data from run_records where tenant_id = @tenant_id;
+
+-- name: UpdateRunRecord :execrows
+update run_records set data = @data, updated_at = now()
+where tenant_id = @tenant_id and id = @id;
+
+-- name: DeleteRunRecord :execrows
+delete from run_records where tenant_id = @tenant_id and id = @id;
+
+-- name: ExistsRunRecord :one
+select 1 from run_records where tenant_id = @tenant_id and id = @id;
+
 -- ===== share_records (records.go ShareRepo) =====
 
 -- name: CreateShareRecord :exec
