@@ -315,10 +315,11 @@ func (s *Service) listEntries(ctx context.Context, level catalogpb.Level, tenant
 }
 
 // updateEntry is the shared implementation behind every Update* RPC: it
-// edits an existing NATIVE entry's files in place, re-running Check and
-// re-deriving Summary, without touching slug/version. Updating a LINKED or
-// FORKED row is refused for now — forking a linked row on first edit is
-// Task 6's job, not this one's.
+// edits an existing NATIVE or FORKED entry's files in place, re-running
+// Check and re-deriving Summary, without touching slug/version. Updating a
+// LINKED row directly is refused — updateOrgEntry forks it first (Task 6)
+// and re-enters here against the resulting FORKED row's id; LEVEL_INSTANCE
+// rows are always NATIVE, so this branch never fires for them.
 func (s *Service) updateEntry(ctx context.Context, level catalogpb.Level, tenantID, id string, kindHint catalogpb.Kind, files map[string][]byte) (*catalogpb.CatalogEntry, error) {
 	if err := requireLevel(level, tenantID); err != nil {
 		return nil, err
@@ -327,8 +328,8 @@ func (s *Service) updateEntry(ctx context.Context, level catalogpb.Level, tenant
 	if err != nil {
 		return nil, utils.MapErr(err)
 	}
-	if entry.GetOrigin() != catalogpb.Origin_ORIGIN_NATIVE {
-		return nil, status.Error(codes.FailedPrecondition, "updating a linked or forked catalog entry is not supported yet (fork-on-edit lands in a later task)")
+	if entry.GetOrigin() == catalogpb.Origin_ORIGIN_LINKED {
+		return nil, status.Error(codes.FailedPrecondition, "updating a linked catalog entry directly is not supported — fork it first")
 	}
 	diags, err := s.d.Check(ctx, entry.GetKind(), files)
 	if err != nil {
@@ -350,7 +351,27 @@ func (s *Service) updateEntry(ctx context.Context, level catalogpb.Level, tenant
 	return entry, nil
 }
 
+// updateOrgEntry is the shared implementation behind UpdateOrgProvider/
+// UpdateOrgWorkflow: if id currently names a LINKED row, it forks first
+// (ForkEntry) and applies the file diff to the resulting FORKED row instead
+// — the LINKED row, its source instance row, and every sibling org's LINKED
+// row are left untouched. NATIVE/FORKED rows are updated in place with no
+// extra fork.
 func (s *Service) updateOrgEntry(ctx context.Context, kind catalogpb.Kind, tenantID, id string, files map[string][]byte) (*catalogpb.CatalogEntry, error) {
+	if err := requireLevel(catalogpb.Level_LEVEL_ORG, tenantID); err != nil {
+		return nil, err
+	}
+	current, err := s.entryOfKind(ctx, catalogpb.Level_LEVEL_ORG, tenantID, id, kind)
+	if err != nil {
+		return nil, utils.MapErr(err)
+	}
+	if current.GetOrigin() == catalogpb.Origin_ORIGIN_LINKED {
+		forked, err := s.ForkEntry(ctx, tenantID, id)
+		if err != nil {
+			return nil, err
+		}
+		id = forked.GetEntity().GetId()
+	}
 	return s.updateEntry(ctx, catalogpb.Level_LEVEL_ORG, tenantID, id, kind, files)
 }
 

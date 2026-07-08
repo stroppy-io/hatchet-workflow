@@ -7,8 +7,10 @@ package catalog
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"gopkg.in/yaml.v3"
 
 	derrors "github.com/stroppy-io/stroppy-cloud/internal/domain/errors"
@@ -189,4 +191,53 @@ func peekProviderUse(clusterSrc []byte) string {
 		return ""
 	}
 	return doc.Provider.Use
+}
+
+// ForkEntry materializes an org-owned copy of a LINKED entry on first edit:
+// bumps version, sets origin=FORKED, and calls Bundles.Fork against the
+// bundle the LINKED row's files live in. A LINKED row seeded by
+// SeedOrgCatalog carries no source_ref of its own (see seed.go's doc) — its
+// files live at the *instance* row's source_ref, resolved here via
+// source_entry_id; a LINKED row created by LinkInstanceEntry does carry a
+// copy of that same ref directly. Either way, source_entry_id is preserved
+// on the forked row for future diff/re-sync tooling. UpdateOrgProvider/
+// UpdateOrgWorkflow call this internally; it is exposed separately so an
+// explicit "customize before editing" UI action can fork a row without
+// submitting a file diff yet. Calling ForkEntry on a NATIVE or already-
+// FORKED row is a no-op: both are already org-owned, so the entry is
+// returned unchanged.
+func (s *Service) ForkEntry(ctx context.Context, tenantID, orgEntryID string) (*catalogpb.CatalogEntry, error) {
+	entry, err := s.d.Entries.Get(ctx, LevelOrg, tenantID, orgEntryID)
+	if err != nil {
+		return nil, utils.MapErr(err)
+	}
+	if entry.GetOrigin() != OriginLinked {
+		return entry, nil
+	}
+	sourceRef := entry.GetSourceRef()
+	if sourceRef == "" {
+		// LINKED row with no own source_ref yet — read the instance row's ref.
+		src, err := s.d.Entries.Get(ctx, LevelInstance, "", entry.GetSourceEntryId())
+		if err != nil {
+			return nil, utils.MapErr(err)
+		}
+		sourceRef = src.GetSourceRef()
+	}
+	forkedRef, err := s.d.Bundles.Fork(ctx, sourceRef)
+	if err != nil {
+		return nil, utils.MapErr(err)
+	}
+	forked, ok := proto.Clone(entry).(*catalogpb.CatalogEntry)
+	if !ok {
+		return nil, status.Error(codes.Internal, "fork: cloned entry has unexpected type")
+	}
+	forked.Entity.Id = uuid.NewString()
+	forked.Version = entry.GetVersion() + 1
+	forked.Origin = OriginForked
+	forked.SourceRef = forkedRef
+	// SourceEntryId is preserved (cloned from entry) for lineage.
+	if err := s.d.Entries.Create(ctx, forked); err != nil {
+		return nil, utils.MapErr(err)
+	}
+	return forked, nil
 }

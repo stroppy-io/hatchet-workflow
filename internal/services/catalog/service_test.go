@@ -255,7 +255,15 @@ func TestUpdateOrgProvider_WrongKindIsNotFound(t *testing.T) {
 	}
 }
 
-func TestUpdateOrgProvider_LinkedEntryIsFailedPrecondition(t *testing.T) {
+// TestUpdateOrgProvider_LinkedEntryForksInsteadOfFailing exercises
+// updateOrgEntry's fork-on-edit path against a LINKED row created by
+// LinkInstanceProvider (which — unlike SeedOrgCatalog — copies the
+// instance row's source_ref directly onto the LINKED row), complementing
+// fork_test.go's SeedOrgCatalog-seeded coverage of ForkEntry's other
+// resolution path (an empty own source_ref, read via source_entry_id).
+// Before Task 6 this asserted FailedPrecondition; fork-on-edit supersedes
+// that placeholder behavior.
+func TestUpdateOrgProvider_LinkedEntryForksInsteadOfFailing(t *testing.T) {
 	svc := newTestService()
 	instance, err := svc.CreateInstanceEntry(context.Background(), &catalogpb.CreateInstanceEntryRequest{
 		Kind: catalogpb.Kind_KIND_PROVIDER, Slug: "yandex", Name: "Yandex", Files: providerFiles(),
@@ -270,11 +278,21 @@ func TestUpdateOrgProvider_LinkedEntryIsFailedPrecondition(t *testing.T) {
 		t.Fatalf("link: %v", err)
 	}
 
-	_, err = svc.UpdateOrgProvider(context.Background(), &catalogpb.UpdateOrgProviderRequest{
-		TenantId: "tenant-1", Id: linked.GetEntry().GetEntity().GetId(), Files: providerFiles(),
+	resp, err := svc.UpdateOrgProvider(context.Background(), &catalogpb.UpdateOrgProviderRequest{
+		TenantId: "tenant-1", Id: linked.GetEntry().GetEntity().GetId(),
+		Files: map[string][]byte{"manifest.yaml": []byte("name: yandex\nprovides:\n  - machines\n  - volumes\n")},
 	})
-	if status.Code(err) != codes.FailedPrecondition {
-		t.Fatalf("status = %s, want %s; err=%v", status.Code(err), codes.FailedPrecondition, err)
+	if err != nil {
+		t.Fatalf("UpdateOrgProvider: %v", err)
+	}
+	if resp.GetEntry().GetOrigin() != catalogpb.Origin_ORIGIN_FORKED {
+		t.Fatalf("origin = %v, want FORKED", resp.GetEntry().GetOrigin())
+	}
+	if resp.GetEntry().GetEntity().GetId() == linked.GetEntry().GetEntity().GetId() {
+		t.Fatal("fork-on-edit must produce a new row id, not mutate the LINKED row in place")
+	}
+	if resp.GetEntry().GetSourceRef() == "" || resp.GetEntry().GetSourceRef() == instance.GetEntry().GetSourceRef() {
+		t.Fatal("forked row must have its own distinct source_ref")
 	}
 }
 
