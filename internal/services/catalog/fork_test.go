@@ -170,7 +170,16 @@ func TestUpdateOrgProvider_ForksLinkedRow(t *testing.T) {
 	}
 }
 
-func TestUpdateOrgProvider_ForkedRowUpdatesInPlaceWithoutReForking(t *testing.T) {
+// TestUpdateOrgProvider_EditingForkedRowCreatesAnotherNewVersion locks the
+// owner-mandated immutability invariant for a second edit against an
+// already-FORKED row. Before this task, a second UpdateOrgProvider call
+// against a FORKED row mutated it in place, keeping its id/version — this
+// test used to assert exactly that
+// (TestUpdateOrgProvider_ForkedRowUpdatesInPlaceWithoutReForking). It is
+// rewritten here to assert the opposite: it must create yet another new
+// FORKED version, and the first FORKED version's bytes/summary must be
+// provably unchanged.
+func TestUpdateOrgProvider_EditingForkedRowCreatesAnotherNewVersion(t *testing.T) {
 	repo := newFakeEntryRepo()
 	store := NewMemoryBundleStore()
 	instanceRef, _ := store.Write(context.Background(), "", map[string][]byte{"manifest.yaml": []byte("name: yandex\n")})
@@ -189,24 +198,41 @@ func TestUpdateOrgProvider_ForkedRowUpdatesInPlaceWithoutReForking(t *testing.T)
 	if err != nil {
 		t.Fatalf("first update: %v", err)
 	}
-	forkedID := first.GetEntry().GetEntity().GetId()
-	forkedVersion := first.GetEntry().GetVersion()
+	firstID := first.GetEntry().GetEntity().GetId()
+	firstVersion := first.GetEntry().GetVersion()
+	firstSourceRef := first.GetEntry().GetSourceRef()
 
 	second, err := svc.UpdateOrgProvider(context.Background(), &catalogpb.UpdateOrgProviderRequest{
-		TenantId: "tenant-1", Id: forkedID,
+		TenantId: "tenant-1", Id: firstID,
 		Files: map[string][]byte{"manifest.yaml": []byte("name: yandex\nprovides:\n  - machines\n  - volumes\n")},
 	})
 	if err != nil {
 		t.Fatalf("second update: %v", err)
 	}
-	if second.GetEntry().GetEntity().GetId() != forkedID {
-		t.Fatal("editing an already-FORKED row must update it in place, not create another row")
+	if second.GetEntry().GetEntity().GetId() == firstID {
+		t.Fatal("editing a FORKED row must create a new row/version, not mutate it in place")
 	}
-	if second.GetEntry().GetVersion() != forkedVersion {
-		t.Fatalf("version changed from %d to %d — a plain edit must not bump version", forkedVersion, second.GetEntry().GetVersion())
+	if second.GetEntry().GetVersion() != firstVersion+1 {
+		t.Fatalf("version = %d, want %d (next free version)", second.GetEntry().GetVersion(), firstVersion+1)
 	}
+	if second.GetEntry().GetOrigin() != catalogpb.Origin_ORIGIN_FORKED {
+		t.Fatalf("origin = %v, want FORKED (origin carried forward from the row being edited)", second.GetEntry().GetOrigin())
+	}
+
+	// The first FORKED version must be provably untouched by the second edit.
+	stillFirst, err := repo.Get(context.Background(), catalogpb.Level_LEVEL_ORG, "tenant-1", firstID)
+	if err != nil {
+		t.Fatalf("get first forked version: %v", err)
+	}
+	if stillFirst.GetVersion() != firstVersion || stillFirst.GetSourceRef() != firstSourceRef {
+		t.Fatal("first forked version's version/source_ref must not change after a later edit")
+	}
+	if len(stillFirst.GetSummary().GetProvides()) != 1 {
+		t.Fatalf("first forked version's summary changed: provides = %v, want 1 entry ([machines])", stillFirst.GetSummary().GetProvides())
+	}
+
 	orgEntries, _ := repo.List(context.Background(), catalogpb.Level_LEVEL_ORG, "tenant-1", catalogpb.Kind_KIND_PROVIDER)
-	if len(orgEntries) != 2 {
-		t.Fatalf("len(orgEntries) = %d, want 2 (original LINKED row + one FORKED row, no re-fork)", len(orgEntries))
+	if len(orgEntries) != 3 {
+		t.Fatalf("len(orgEntries) = %d, want 3 (original LINKED row + two FORKED versions)", len(orgEntries))
 	}
 }

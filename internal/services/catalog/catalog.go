@@ -222,11 +222,11 @@ func peekProviderUse(clusterSrc []byte) string {
 // source_entry_id; a LINKED row created by LinkInstanceEntry does carry a
 // copy of that same ref directly. Either way, source_entry_id is preserved
 // on the forked row for future diff/re-sync tooling. UpdateOrgProvider/
-// UpdateOrgWorkflow call this internally; it is exposed separately so an
-// explicit "customize before editing" UI action can fork a row without
-// submitting a file diff yet. Calling ForkEntry on a NATIVE or already-
-// FORKED row is a no-op: both are already org-owned, so the entry is
-// returned unchanged.
+// UpdateOrgWorkflow do NOT call this internally (see service.go's
+// updateOrgEntry doc) — it is exposed standalone so an explicit "customize
+// before editing" UI action can fork a row without submitting a file diff
+// yet. Calling ForkEntry on a NATIVE or already-FORKED row is a no-op: both
+// are already org-owned, so the entry is returned unchanged.
 func (s *Service) ForkEntry(ctx context.Context, tenantID, orgEntryID string) (*catalogpb.CatalogEntry, error) {
 	entry, err := s.d.Entries.Get(ctx, LevelOrg, tenantID, orgEntryID)
 	if err != nil {

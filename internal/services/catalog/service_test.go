@@ -212,28 +212,77 @@ func TestListOrgProviders_ScopesByTenantAndKind(t *testing.T) {
 	===== UpdateOrgProvider / UpdateOrgWorkflow =====
 */
 
-func TestUpdateOrgProvider_EditsFilesInPlaceKeepingVersion(t *testing.T) {
-	svc := newTestService()
+// TestUpdateOrgProvider_EditCreatesNewVersionLeavingOldUntouched locks the
+// owner-mandated immutability invariant (SP-B follow-up task): a pinned
+// "slug@version" must resolve to bytes that never change. Before this task
+// UpdateOrgProvider mutated the existing row's SourceRef/Summary in place,
+// keeping the same version — this test used to assert exactly that
+// (TestUpdateOrgProvider_EditsFilesInPlaceKeepingVersion). It is rewritten
+// here to assert the opposite: editing a NATIVE row creates a brand-new row
+// at the next free version, and the old version's id/version/source_ref/
+// summary are provably unchanged and independently resolvable.
+func TestUpdateOrgProvider_EditCreatesNewVersionLeavingOldUntouched(t *testing.T) {
+	repo := newFakeEntryRepo()
+	svc := NewService(Deps{Entries: repo, Bundles: NewMemoryBundleStore(), Check: stubChecker(nil), Authn: fakeAuthn{}})
+
 	created, err := svc.CreateOrgProvider(context.Background(), &catalogpb.CreateOrgProviderRequest{
 		TenantId: "tenant-1", Slug: "yandex", Name: "Yandex", Files: providerFiles(),
 	})
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
-	id := created.GetEntry().GetEntity().GetId()
+	oldID := created.GetEntry().GetEntity().GetId()
+	oldVersion := created.GetEntry().GetVersion()
+	oldSourceRef := created.GetEntry().GetSourceRef()
 
 	resp, err := svc.UpdateOrgProvider(context.Background(), &catalogpb.UpdateOrgProviderRequest{
-		TenantId: "tenant-1", Id: id,
+		TenantId: "tenant-1", Id: oldID,
 		Files: map[string][]byte{"manifest.yaml": []byte("name: yandex\nprovides:\n  - machines\n  - network\n")},
 	})
 	if err != nil {
 		t.Fatalf("update: %v", err)
 	}
-	if resp.GetEntry().GetVersion() != created.GetEntry().GetVersion() {
-		t.Fatalf("version changed on update: got %d, want unchanged %d", resp.GetEntry().GetVersion(), created.GetEntry().GetVersion())
+	newEntry := resp.GetEntry()
+	if newEntry.GetVersion() != oldVersion+1 {
+		t.Fatalf("version = %d, want %d (a new version, not the same one)", newEntry.GetVersion(), oldVersion+1)
 	}
-	if len(resp.GetEntry().GetSummary().GetProvides()) != 2 {
-		t.Fatalf("provides = %v, want 2 entries reflecting the updated manifest", resp.GetEntry().GetSummary().GetProvides())
+	if newEntry.GetEntity().GetId() == oldID {
+		t.Fatal("update must create a new row id, not mutate the old row in place")
+	}
+	if len(newEntry.GetSummary().GetProvides()) != 2 {
+		t.Fatalf("provides = %v, want 2 entries reflecting the updated manifest", newEntry.GetSummary().GetProvides())
+	}
+
+	// The old version must be provably untouched: same id, same version, same
+	// source_ref, same (unedited) summary — and still directly resolvable by
+	// its own (slug, version), same as the new version.
+	oldByID, err := svc.GetOrgProvider(context.Background(), &catalogpb.GetOrgProviderRequest{TenantId: "tenant-1", Id: oldID})
+	if err != nil {
+		t.Fatalf("get old by id: %v", err)
+	}
+	if oldByID.GetEntry().GetVersion() != oldVersion {
+		t.Fatalf("old row's version changed: got %d, want %d", oldByID.GetEntry().GetVersion(), oldVersion)
+	}
+	if oldByID.GetEntry().GetSourceRef() != oldSourceRef {
+		t.Fatal("old row's source_ref changed — old version's bytes must never mutate")
+	}
+	if len(oldByID.GetEntry().GetSummary().GetProvides()) != 1 {
+		t.Fatalf("old row's summary changed: provides = %v, want 1 entry ([machines])", oldByID.GetEntry().GetSummary().GetProvides())
+	}
+
+	oldBySlugVersion, err := repo.GetBySlugVersion(context.Background(), catalogpb.Level_LEVEL_ORG, "tenant-1", catalogpb.Kind_KIND_PROVIDER, "yandex", oldVersion)
+	if err != nil {
+		t.Fatalf("GetBySlugVersion(old): %v", err)
+	}
+	if oldBySlugVersion.GetEntity().GetId() != oldID || oldBySlugVersion.GetSourceRef() != oldSourceRef {
+		t.Fatal("GetBySlugVersion for the old version must keep resolving the old, untouched row")
+	}
+	newBySlugVersion, err := repo.GetBySlugVersion(context.Background(), catalogpb.Level_LEVEL_ORG, "tenant-1", catalogpb.Kind_KIND_PROVIDER, "yandex", newEntry.GetVersion())
+	if err != nil {
+		t.Fatalf("GetBySlugVersion(new): %v", err)
+	}
+	if newBySlugVersion.GetEntity().GetId() != newEntry.GetEntity().GetId() {
+		t.Fatal("GetBySlugVersion for the new version must resolve the newly-created row")
 	}
 }
 
@@ -369,6 +418,13 @@ func TestCreateInstanceEntry_PersistsWithoutTenant(t *testing.T) {
 	}
 }
 
+// TestInstanceEntry_GetUpdateDeleteRoundtrip exercises Get/Update/Delete
+// together. It deliberately keeps using the pre-update id for both the
+// update call and the trailing delete: Update now creates a new row (see
+// TestUpdateInstanceEntry_EditCreatesNewVersionLeavingOldUntouched for the
+// dedicated immutability assertions), and deleting the pre-update id must
+// still delete that specific (untouched) old row — it is unaffected by
+// there now being a newer version of the same slug.
 func TestInstanceEntry_GetUpdateDeleteRoundtrip(t *testing.T) {
 	svc := newTestService()
 	created, err := svc.CreateInstanceEntry(context.Background(), &catalogpb.CreateInstanceEntryRequest{
@@ -403,6 +459,64 @@ func TestInstanceEntry_GetUpdateDeleteRoundtrip(t *testing.T) {
 	_, err = svc.GetInstanceEntry(context.Background(), &catalogpb.GetInstanceEntryRequest{Id: id})
 	if status.Code(err) != codes.NotFound {
 		t.Fatalf("status = %s, want %s; err=%v", status.Code(err), codes.NotFound, err)
+	}
+}
+
+// TestUpdateInstanceEntry_EditCreatesNewVersionLeavingOldUntouched is
+// TestUpdateOrgProvider_EditCreatesNewVersionLeavingOldUntouched's
+// LEVEL_INSTANCE counterpart: updateInstanceEntry routes through the same
+// updateEntry/newVersion path, just with an empty tenant_id, so this locks
+// that the immutability invariant holds there too, independent of RBAC
+// level.
+func TestUpdateInstanceEntry_EditCreatesNewVersionLeavingOldUntouched(t *testing.T) {
+	repo := newFakeEntryRepo()
+	svc := NewService(Deps{Entries: repo, Bundles: NewMemoryBundleStore(), Check: stubChecker(nil), Authn: fakeAuthn{}})
+
+	created, err := svc.CreateInstanceEntry(context.Background(), &catalogpb.CreateInstanceEntryRequest{
+		Kind: catalogpb.Kind_KIND_PROVIDER, Slug: "yandex", Name: "Yandex", Files: providerFiles(),
+	})
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	oldID := created.GetEntry().GetEntity().GetId()
+	oldVersion := created.GetEntry().GetVersion()
+	oldSourceRef := created.GetEntry().GetSourceRef()
+
+	resp, err := svc.UpdateInstanceEntry(context.Background(), &catalogpb.UpdateInstanceEntryRequest{
+		Id: oldID, Files: map[string][]byte{"manifest.yaml": []byte("name: yandex\nprovides:\n  - machines\n  - network\n")},
+	})
+	if err != nil {
+		t.Fatalf("update: %v", err)
+	}
+	newEntry := resp.GetEntry()
+	if newEntry.GetEntity().GetId() == oldID {
+		t.Fatal("update must create a new row id, not mutate the old row in place")
+	}
+	if newEntry.GetVersion() != oldVersion+1 {
+		t.Fatalf("version = %d, want %d", newEntry.GetVersion(), oldVersion+1)
+	}
+	if newEntry.GetOrigin() != catalogpb.Origin_ORIGIN_NATIVE {
+		t.Fatalf("origin = %v, want NATIVE", newEntry.GetOrigin())
+	}
+
+	oldByID, err := svc.GetInstanceEntry(context.Background(), &catalogpb.GetInstanceEntryRequest{Id: oldID})
+	if err != nil {
+		t.Fatalf("get old: %v", err)
+	}
+	if oldByID.GetEntry().GetVersion() != oldVersion || oldByID.GetEntry().GetSourceRef() != oldSourceRef {
+		t.Fatal("old row must be untouched by the update")
+	}
+	if len(oldByID.GetEntry().GetSummary().GetProvides()) != 1 {
+		t.Fatalf("old row's summary changed: provides = %v, want 1 entry ([machines])", oldByID.GetEntry().GetSummary().GetProvides())
+	}
+
+	oldBySlugVersion, err := repo.GetBySlugVersion(context.Background(), catalogpb.Level_LEVEL_INSTANCE, "", catalogpb.Kind_KIND_PROVIDER, "yandex", oldVersion)
+	if err != nil || oldBySlugVersion.GetEntity().GetId() != oldID {
+		t.Fatal("GetBySlugVersion for the old version must keep resolving the old, untouched row")
+	}
+	newBySlugVersion, err := repo.GetBySlugVersion(context.Background(), catalogpb.Level_LEVEL_INSTANCE, "", catalogpb.Kind_KIND_PROVIDER, "yandex", newEntry.GetVersion())
+	if err != nil || newBySlugVersion.GetEntity().GetId() != newEntry.GetEntity().GetId() {
+		t.Fatal("GetBySlugVersion for the new version must resolve the newly-created row")
 	}
 }
 

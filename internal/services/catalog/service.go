@@ -314,49 +314,93 @@ func (s *Service) listEntries(ctx context.Context, level catalogpb.Level, tenant
 	return entries, nil
 }
 
-// updateEntry is the shared implementation behind every Update* RPC: it
-// edits an existing NATIVE or FORKED entry's files in place, re-running
-// Check and re-deriving Summary, without touching slug/version. Updating a
-// LINKED row directly is refused — updateOrgEntry forks it first (Task 6)
-// and re-enters here against the resulting FORKED row's id; LEVEL_INSTANCE
-// rows are always NATIVE, so this branch never fires for them.
+// updateEntry is the shared implementation behind every Update* RPC that
+// edits a NATIVE or FORKED entry: rather than mutating the existing row in
+// place, it creates a brand-new row at the same (level, tenantID, kind,
+// slug) scope holding the edited files, stamped with the next free version
+// — the existing row's bytes/summary are never touched, so a pinned
+// "slug@version" resolving to it keeps resolving the same immutable bytes
+// forever. Updating a LINKED row directly is refused — updateOrgEntry
+// handles the fork-and-edit case itself instead of routing through here (see
+// its doc); LEVEL_INSTANCE rows are always NATIVE, so this branch never
+// fires for them.
 func (s *Service) updateEntry(ctx context.Context, level catalogpb.Level, tenantID, id string, kindHint catalogpb.Kind, files map[string][]byte) (*catalogpb.CatalogEntry, error) {
 	if err := requireLevel(level, tenantID); err != nil {
 		return nil, err
 	}
-	entry, err := s.entryOfKind(ctx, level, tenantID, id, kindHint)
+	current, err := s.entryOfKind(ctx, level, tenantID, id, kindHint)
 	if err != nil {
 		return nil, utils.MapErr(err)
 	}
-	if entry.GetOrigin() == catalogpb.Origin_ORIGIN_LINKED {
+	if current.GetOrigin() == catalogpb.Origin_ORIGIN_LINKED {
 		return nil, status.Error(codes.FailedPrecondition, "updating a linked catalog entry directly is not supported — fork it first")
 	}
-	diags, err := s.d.Check(ctx, entry.GetKind(), files)
+	return s.newVersion(ctx, current, current.GetOrigin(), files)
+}
+
+// newVersion is the shared implementation behind every edit path that must
+// produce a new, immutable catalog version rather than mutate an existing
+// row: updateEntry's NATIVE/FORKED path, and updateOrgEntry's LINKED path
+// (which forces origin to FORKED). base supplies the (level, tenant, kind,
+// slug) scope and the Entity.Name/Description/AuthorId/SourceEntryId
+// carried forward onto the new row — base itself is never mutated or
+// persisted again. The new row gets a fresh Entity.Id, the next free version
+// for the scope, a new content-addressed bundle ref for files (so
+// byte-identical edits naturally collapse to the same ref, and any
+// non-identical edit gets its own — either way base's own ref is never
+// touched), and a freshly derived Summary/Timings.
+func (s *Service) newVersion(ctx context.Context, base *catalogpb.CatalogEntry, origin catalogpb.Origin, files map[string][]byte) (*catalogpb.CatalogEntry, error) {
+	diags, err := s.d.Check(ctx, base.GetKind(), files)
 	if err != nil {
 		return nil, utils.MapErr(err)
 	}
-	ref, err := s.d.Bundles.Write(ctx, entry.GetSourceRef(), files)
+	ref, err := s.d.Bundles.Write(ctx, "", files)
 	if err != nil {
 		return nil, utils.MapErr(err)
 	}
-	entry.SourceRef = ref
-	entry.Summary = summaryFor(entry.GetKind(), files, diags)
-	if entry.GetEntity().GetTimings() == nil {
-		entry.Entity.Timings = &common.Timings{CreatedAt: s.now()}
+	level := base.GetLevel()
+	tenantID := base.GetEntity().GetTenantId()
+	nextVer, err := s.nextVersion(ctx, level, tenantID, base.GetKind(), base.GetSlug())
+	if err != nil {
+		return nil, err
 	}
-	entry.Entity.Timings.UpdatedAt = s.now()
-	if err := s.d.Entries.Update(ctx, entry); err != nil {
+	now := s.now()
+	entry := &catalogpb.CatalogEntry{
+		Entity: &common.Entity{
+			Id:          uuid.NewString(),
+			TenantId:    tenantID,
+			Name:        base.GetEntity().GetName(),
+			Description: base.GetEntity().GetDescription(),
+			AuthorId:    base.GetEntity().GetAuthorId(),
+			Timings:     &common.Timings{CreatedAt: now, UpdatedAt: now},
+		},
+		Level:         level,
+		Kind:          base.GetKind(),
+		Slug:          base.GetSlug(),
+		Version:       nextVer,
+		Origin:        origin,
+		SourceEntryId: base.GetSourceEntryId(),
+		SourceRef:     ref,
+		Summary:       summaryFor(base.GetKind(), files, diags),
+	}
+	if err := s.d.Entries.Create(ctx, entry); err != nil {
 		return nil, utils.MapErr(err)
 	}
 	return entry, nil
 }
 
 // updateOrgEntry is the shared implementation behind UpdateOrgProvider/
-// UpdateOrgWorkflow: if id currently names a LINKED row, it forks first
-// (ForkEntry) and applies the file diff to the resulting FORKED row instead
-// — the LINKED row, its source instance row, and every sibling org's LINKED
-// row are left untouched. NATIVE/FORKED rows are updated in place with no
-// extra fork.
+// UpdateOrgWorkflow: every edit — of a NATIVE, FORKED, or LINKED row —
+// creates a brand-new immutable version at the next free (level, tenant,
+// kind, slug) version rather than mutating an existing row (see newVersion).
+// A LINKED row's edit stamps the new row ORIGIN_FORKED (the LINKED row
+// itself, its source instance row, and every sibling org's LINKED row are
+// left untouched); NATIVE/FORKED rows carry their own origin forward onto
+// the new row. This deliberately does not compose through the standalone
+// ForkEntry RPC (which also persists a version of its own, for the
+// "customize before editing" UI action) — doing so would leave behind an
+// extra unedited version nobody asked for; here the fork-and-edit happens in
+// the single newVersion call below.
 func (s *Service) updateOrgEntry(ctx context.Context, kind catalogpb.Kind, tenantID, id string, files map[string][]byte) (*catalogpb.CatalogEntry, error) {
 	if err := requireLevel(catalogpb.Level_LEVEL_ORG, tenantID); err != nil {
 		return nil, err
@@ -365,14 +409,11 @@ func (s *Service) updateOrgEntry(ctx context.Context, kind catalogpb.Kind, tenan
 	if err != nil {
 		return nil, utils.MapErr(err)
 	}
-	if current.GetOrigin() == catalogpb.Origin_ORIGIN_LINKED {
-		forked, err := s.ForkEntry(ctx, tenantID, id)
-		if err != nil {
-			return nil, err
-		}
-		id = forked.GetEntity().GetId()
+	origin := current.GetOrigin()
+	if origin == catalogpb.Origin_ORIGIN_LINKED {
+		origin = catalogpb.Origin_ORIGIN_FORKED
 	}
-	return s.updateEntry(ctx, catalogpb.Level_LEVEL_ORG, tenantID, id, kind, files)
+	return s.newVersion(ctx, current, origin, files)
 }
 
 func (s *Service) updateInstanceEntry(ctx context.Context, id string, files map[string][]byte) (*catalogpb.CatalogEntry, error) {
