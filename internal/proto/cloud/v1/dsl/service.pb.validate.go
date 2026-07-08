@@ -267,6 +267,8 @@ func (m *CheckRequest) validate(all bool) error {
 
 	// no validation rules for Files
 
+	// no validation rules for TenantId
+
 	if len(errors) > 0 {
 		return CheckRequestMultiError(errors)
 	}
@@ -501,6 +503,8 @@ func (m *PreviewRequest) validate(all bool) error {
 	var errors []error
 
 	// no validation rules for Files
+
+	// no validation rules for TenantId
 
 	if len(errors) > 0 {
 		return PreviewRequestMultiError(errors)

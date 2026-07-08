@@ -586,6 +586,21 @@ func instanceEntry(kind catalogpb.Kind, slug string, version uint32) *catalogpb.
 	}
 }
 
+// orgEntry builds a minimal ORIGIN_NATIVE LEVEL_ORG row for
+// CatalogProviderResolver tests — like instanceEntry, it never goes through
+// createEntry, so callers set SourceRef themselves once the bundle it points
+// at is written to a BundleStore.
+func orgEntry(kind catalogpb.Kind, tenantID, slug string, version uint32) *catalogpb.CatalogEntry {
+	return &catalogpb.CatalogEntry{
+		Entity:  &common.Entity{Id: uuid.NewString(), Name: slug, TenantId: tenantID},
+		Level:   catalogpb.Level_LEVEL_ORG,
+		Kind:    kind,
+		Slug:    slug,
+		Version: version,
+		Origin:  catalogpb.Origin_ORIGIN_NATIVE,
+	}
+}
+
 func entryKey(level catalogpb.Level, tenantID, id string) string {
 	return fmt.Sprintf("%d|%s|%s", level, tenantID, id)
 }

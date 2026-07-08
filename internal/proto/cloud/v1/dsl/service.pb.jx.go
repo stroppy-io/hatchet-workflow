@@ -135,6 +135,10 @@ func (m *CheckRequest) Encode(e *jx.Encoder) {
 		}
 		e.ObjEnd()
 	}
+	if m.TenantId != "" {
+		e.FieldStart("tenantId")
+		e.Str(m.TenantId)
+	}
 	e.ObjEnd()
 }
 
@@ -164,6 +168,20 @@ func (m *CheckRequest) Decode(d *jx.Decoder) error {
 				m.Files[mk] = mv
 				return nil
 			})
+		case "tenantId", "tenant_id":
+			if seen["TenantId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["TenantId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.TenantId = v
+			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}
@@ -252,6 +270,10 @@ func (m *PreviewRequest) Encode(e *jx.Encoder) {
 		}
 		e.ObjEnd()
 	}
+	if m.TenantId != "" {
+		e.FieldStart("tenantId")
+		e.Str(m.TenantId)
+	}
 	e.ObjEnd()
 }
 
@@ -281,6 +303,20 @@ func (m *PreviewRequest) Decode(d *jx.Decoder) error {
 				m.Files[mk] = mv
 				return nil
 			})
+		case "tenantId", "tenant_id":
+			if seen["TenantId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["TenantId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.TenantId = v
+			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}

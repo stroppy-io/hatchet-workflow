@@ -58,6 +58,18 @@ CheckRequest несёт тот же бандл, что и ComposedSchemaRequest.
 <td><pre>
 json_name: files
 go_name: Files</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+tenant_id — если задан и сервер сконфигурирован с ProviderResolver
+(см. internal/services/dsl.WithProviderResolver), provider.use
+резолвится против org-каталога этого тенанта (SP-B §B5) вместо
+локального бандла. Пусто — прежнее поведение (лёгаси-lookup внутри
+бандла), без изменений.<br>
+
+json_name: tenantId
+go_name: TenantId</pre></td>
 </tr>
 </table>
 
@@ -670,6 +682,14 @@ PreviewRequest несёт тот же бандл, что и CheckRequest/Compose
 <td><pre>
 json_name: files
 go_name: Files</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+tenant_id — см. CheckRequest.tenant_id.<br>
+
+json_name: tenantId
+go_name: TenantId</pre></td>
 </tr>
 </table>
 

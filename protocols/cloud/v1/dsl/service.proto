@@ -34,6 +34,12 @@ message ComposedSchemaResponse {
 // CheckRequest несёт тот же бандл, что и ComposedSchemaRequest.
 message CheckRequest {
     map<string, bytes> files = 1;
+    // tenant_id — если задан и сервер сконфигурирован с ProviderResolver
+    // (см. internal/services/dsl.WithProviderResolver), provider.use
+    // резолвится против org-каталога этого тенанта (SP-B §B5) вместо
+    // локального бандла. Пусто — прежнее поведение (лёгаси-lookup внутри
+    // бандла), без изменений.
+    string tenant_id = 2;
 }
 
 message CheckResponse {
@@ -46,6 +52,8 @@ message CheckResponse {
 // PreviewRequest несёт тот же бандл, что и CheckRequest/ComposedSchemaRequest.
 message PreviewRequest {
     map<string, bytes> files = 1;
+    // tenant_id — см. CheckRequest.tenant_id.
+    string tenant_id = 2;
 }
 
 message PreviewResponse {

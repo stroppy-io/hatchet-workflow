@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
@@ -71,11 +72,25 @@ provides:
 // DeriveInputsSchema/ComposeFormSchema's signatures.
 const composedSchemaFormNamespace = "stroppy.form.recipe"
 
+// ProviderResolver resolves a provider.use slug (optionally pinned
+// "slug@version") against an org catalog, returning the provider's
+// manifest.yaml + module/*.tf files exactly as they'd have appeared under
+// providers/<name>/ in the pre-SP-B bundle layout. nil is a valid Deps value:
+// resolveProvider falls back to the legacy same-bundle lookup when unset.
+//
+// See internal/services/catalog.CatalogProviderResolver for the production
+// impl — this package does not import catalog (kept a pure compiler, per the
+// package doc comment above); the interface is satisfied structurally.
+type ProviderResolver interface {
+	ResolveProvider(ctx context.Context, tenantID, slug string, version uint32) (files map[string][]byte, resolvedVersion uint32, err error)
+}
+
 // DslService implements dslpb.DslServiceServer: dynamic composed JSON Schema
 // + check-mode compilation, both stateless and side-effect-free.
 type DslService struct {
 	*dslpb.UnimplementedDslServiceServer
-	versions VersionSource
+	versions  VersionSource
+	providers ProviderResolver
 }
 
 var _ dslpb.DslServiceServer = (*DslService)(nil)
@@ -104,6 +119,18 @@ type Option func(*DslService)
 // a tag no source was configured to confirm.
 func WithVersionSource(vs VersionSource) Option {
 	return func(s *DslService) { s.versions = vs }
+}
+
+// WithProviderResolver injects the org-catalog provider.use resolver Check/
+// Preview use in place of the legacy same-bundle providers/<name>/ lookup
+// (SP-B §B5). Omitted — every pre-SP-B call site, including every existing
+// test — Check/Preview keep resolving provider.use against the request's own
+// bundle exactly as before this task. Even with a resolver injected, a
+// request that carries no tenant_id still falls back to the legacy lookup
+// (see Check/Preview's own doc comments): the catalog is inherently
+// tenant-scoped, so there is no org catalog to resolve against without one.
+func WithProviderResolver(pr ProviderResolver) Option {
+	return func(s *DslService) { s.providers = pr }
 }
 
 // NewDslService constructs the DSL connect handler. It is deliberately
@@ -206,7 +233,13 @@ func (s *DslService) ComposedSchema(_ context.Context, req *dslpb.ComposedSchema
 // documented as always nil today anyway (see its own doc comment), so
 // nothing is lost by not going through it here.
 func (s *DslService) Check(ctx context.Context, req *dslpb.CheckRequest) (*dslpb.CheckResponse, error) {
-	plan, diags := CompileBundle(req.GetFiles())
+	var plan *dslpb.CompiledPlan
+	var diags diag.List
+	if s.providers != nil && req.GetTenantId() != "" {
+		plan, diags = CompileBundleWithCatalog(ctx, req.GetTenantId(), req.GetFiles(), s.providers)
+	} else {
+		plan, diags = CompileBundle(req.GetFiles())
+	}
 	validateStroppyVersion(ctx, plan, s.versions, &diags)
 	return &dslpb.CheckResponse{Diagnostics: toProtoDiagnostics(diags)}, nil
 }
@@ -221,7 +254,13 @@ func (s *DslService) Check(ctx context.Context, req *dslpb.CheckRequest) (*dslpb
 // that fails to compile still comes back with a nil Plan and the
 // diagnostics explaining why, never a transport-level error.
 func (s *DslService) Preview(ctx context.Context, req *dslpb.PreviewRequest) (*dslpb.PreviewResponse, error) {
-	plan, diags := CompileBundle(req.GetFiles())
+	var plan *dslpb.CompiledPlan
+	var diags diag.List
+	if s.providers != nil && req.GetTenantId() != "" {
+		plan, diags = CompileBundleWithCatalog(ctx, req.GetTenantId(), req.GetFiles(), s.providers)
+	} else {
+		plan, diags = CompileBundle(req.GetFiles())
+	}
 	validateStroppyVersion(ctx, plan, s.versions, &diags)
 	if diags.HasErrors() {
 		plan = nil
@@ -273,13 +312,11 @@ func (s *DslService) CheckBundle(ctx context.Context, files map[string][]byte) (
 }
 
 // CompileBundle runs the check-mode compile pipeline (provider resolution +
-// dsl.Compile) over a bundle's raw files and returns both the compiled plan
-// and every diagnostic (errors and warnings) gathered along the way — the
-// same (plan, diag.List) shape dsl.Compile itself returns. It is the single
-// place that resolves a bundle's provider manifest via the path-traversal-
-// safe resolveProvider/deriveProviderSchema pair; CheckBundle and
-// RecipeActivities.CompileRecipeActivity (internal/infrastructure/execution,
-// Task 4) both call it rather than duplicating that resolution logic.
+// dsl.Compile) over a bundle's raw files, resolving provider.use against the
+// bundle's own providers/<name>/ directory (the legacy, pre-SP-B lookup).
+// Every pre-SP-B caller keeps using this exact zero-arg signature unchanged
+// — it delegates to compileBundle with a nil resolver, which is defined to
+// behave identically to this function's pre-Task-7 body.
 //
 // The returned plan may be non-nil even when diags.HasErrors() is true (see
 // resolveProvider's own doc comment: a schema-derivation failure still hands
@@ -287,9 +324,30 @@ func (s *DslService) CheckBundle(ctx context.Context, files map[string][]byte) (
 // callers must gate on diags.HasErrors(), never on a nil plan check alone,
 // mirroring dsl.Compile's own contract.
 func CompileBundle(files map[string][]byte) (*dslpb.CompiledPlan, diag.List) {
+	return compileBundle(context.Background(), "", files, nil)
+}
+
+// CompileBundleWithCatalog compiles files exactly like CompileBundle, except
+// provider.use ("slug" or "slug@version") resolves against resolver's org
+// catalog instead of files' own providers/<name>/ directory (SP-B §B5). An
+// unpinned "slug" resolves to the org catalog's latest version and appends a
+// Warning diagnostic advising the caller to pin it for reproducible runs; a
+// pinned "slug@N" resolves that exact CatalogEntry.version. resolver == nil
+// falls back to the legacy same-bundle lookup exactly like CompileBundle.
+func CompileBundleWithCatalog(ctx context.Context, tenantID string, files map[string][]byte, resolver ProviderResolver) (*dslpb.CompiledPlan, diag.List) {
+	return compileBundle(ctx, tenantID, files, resolver)
+}
+
+// compileBundle is the shared implementation behind CompileBundle and
+// CompileBundleWithCatalog: it is the single place that resolves a bundle's
+// provider manifest via the path-traversal-safe resolveProvider/
+// deriveProviderSchema pair; CheckBundle and RecipeActivities.
+// CompileRecipeActivity (internal/infrastructure/execution, Task 4) both
+// call CompileBundle rather than duplicating that resolution logic.
+func compileBundle(ctx context.Context, tenantID string, files map[string][]byte, resolver ProviderResolver) (*dslpb.CompiledPlan, diag.List) {
 	sources := include.Sources{Files: files}
 
-	provider, composed, diags := resolveProvider(files)
+	provider, composed, diags := resolveProvider(ctx, tenantID, files, resolver)
 
 	plan, compileDiags := dsl.Compile(dsl.Input{Sources: sources, Provider: provider, Composed: composed})
 	diags = append(diags, compileDiags...)
@@ -306,57 +364,109 @@ func CompileBundle(files map[string][]byte) (*dslpb.CompiledPlan, diag.List) {
 // itself produces. A cluster.yaml with no resolvable provider.use returns
 // (nil, nil, empty diags): dsl.Compile's own graph.Build stage reports "no
 // provider manifest" for that case, so this function does not duplicate it.
-func resolveProvider(files map[string][]byte) (*ast.ProviderManifest, *jsonschema.Schema, diag.List) {
+//
+// resolver == nil resolves provider.use against files' own
+// providers/<name>/ directory — the legacy, pre-SP-B lookup, byte-for-byte
+// unchanged from before this task (including the docker-builtin special
+// case below). resolver != nil instead resolves provider.use ("slug" or
+// "slug@version" — see parseProviderUse) against tenantID's org catalog
+// (SP-B §B5): an unpinned slug resolves to the catalog's latest version and
+// appends a reproducibility Warning; a pinned "slug@N" resolves that exact
+// version. Either way, the resolved files are re-keyed under
+// providers/<slug>/ (rekeyUnderProvider) before the shared manifest-decode +
+// schema-derivation tail below, so that tail never needs to know which path
+// produced providerFiles.
+func resolveProvider(ctx context.Context, tenantID string, files map[string][]byte, resolver ProviderResolver) (*ast.ProviderManifest, *jsonschema.Schema, diag.List) {
 	var diags diag.List
 
-	name := peekProviderUse(files[clusterFile])
-	if name == "" {
+	use := peekProviderUse(files[clusterFile])
+	if use == "" {
 		return nil, nil, diags
 	}
+	slug, pinned, version := parseProviderUse(use)
 
-	mp := manifestPath(name)
-	manifestSrc, ok := files[mp]
-	if !ok {
-		// The docker provider is a builtin backed by the local docker daemon
-		// (provider.NewProviderForRef's "docker" branch): it has no tf module
-		// and therefore no user-authored providers/docker/manifest.yaml. Supply
-		// a built-in manifest so compile/contract/lowering treat it as a
-		// first-class provider without forcing every docker recipe to ship a
-		// manifest for a provider that has no schema to declare.
-		if name == builtinDockerProviderName {
-			manifest, mdiags := ast.DecodeProviderManifest(mp, []byte(builtinDockerManifest))
-			diags = append(diags, mdiags...)
-			if mdiags.HasErrors() {
-				return nil, nil, diags
-			}
-			// No tf module → no derived params/ext schema; contract/capability
-			// checking uses the manifest, and cluster disk.type passes through
-			// unlowered (docker has no block-device remapping).
-			return manifest, nil, diags
+	var providerFiles map[string][]byte
+	mp := manifestPath(slug)
+
+	switch {
+	case resolver != nil:
+		resolved, resolvedVersion, err := resolver.ResolveProvider(ctx, tenantID, slug, version)
+		if err != nil {
+			diags.Add(diag.Diagnostic{
+				Severity: diag.Error,
+				Path:     clusterFile,
+				Message:  fmt.Sprintf("provider %q: %v", slug, err),
+				Module:   slug,
+			})
+			return nil, nil, diags
 		}
-		diags.Add(diag.Diagnostic{
-			Severity: diag.Error,
-			Path:     clusterFile,
-			Message:  fmt.Sprintf("provider %q: manifest not found at %s", name, mp),
-			Module:   name,
-		})
-		return nil, nil, diags
+		if !pinned {
+			diags.Add(diag.Diagnostic{
+				Severity: diag.Warning,
+				Path:     clusterFile,
+				Module:   slug,
+				Message: fmt.Sprintf(
+					"provider.use %q is unpinned; resolved to org-catalog version %d — pin with %q for reproducible runs",
+					use, resolvedVersion, fmt.Sprintf("%s@%d", slug, resolvedVersion),
+				),
+			})
+		}
+		providerFiles = rekeyUnderProvider(resolved, slug)
+
+	default:
+		// Legacy same-bundle lookup — unchanged from pre-SP-B behavior.
+		if _, ok := files[mp]; !ok {
+			// The docker provider is a builtin backed by the local docker daemon
+			// (provider.NewProviderForRef's "docker" branch): it has no tf module
+			// and therefore no user-authored providers/docker/manifest.yaml.
+			// Supply a built-in manifest so compile/contract/lowering treat it as
+			// a first-class provider without forcing every docker recipe to ship
+			// a manifest for a provider that has no schema to declare.
+			if slug == builtinDockerProviderName {
+				manifest, mdiags := ast.DecodeProviderManifest(mp, []byte(builtinDockerManifest))
+				diags = append(diags, mdiags...)
+				if mdiags.HasErrors() {
+					return nil, nil, diags
+				}
+				// No tf module → no derived params/ext schema; contract/capability
+				// checking uses the manifest, and cluster disk.type passes through
+				// unlowered (docker has no block-device remapping).
+				return manifest, nil, diags
+			}
+			diags.Add(diag.Diagnostic{
+				Severity: diag.Error,
+				Path:     clusterFile,
+				Message:  fmt.Sprintf("provider %q: manifest not found at %s", slug, mp),
+				Module:   slug,
+			})
+			return nil, nil, diags
+		}
+		providerFiles = files
 	}
 
-	manifest, manifestDiags := ast.DecodeProviderManifest(mp, manifestSrc)
+	manifest, manifestDiags := ast.DecodeProviderManifest(mp, providerFiles[mp])
 	diags = append(diags, manifestDiags...)
 	if manifestDiags.HasErrors() {
 		return nil, nil, diags
 	}
 
-	params, ext, deriveDiags, err := deriveProviderSchema(files, name)
+	if resolver != nil && !hasModuleFiles(providerFiles, slug) {
+		// A catalog-resolved provider may ship no Terraform module at all
+		// (e.g. the docker builtin, unified into the org catalog by Task 5's
+		// ensureBuiltinInstanceEntries): no params/ext schema to derive;
+		// contract/capability checking uses the manifest alone, exactly like
+		// the legacy path's builtinDockerManifest special-case above.
+		return manifest, nil, diags
+	}
+
+	params, ext, deriveDiags, err := deriveProviderSchema(providerFiles, slug)
 	diags = append(diags, deriveDiags...)
 	if err != nil {
 		diags.Add(diag.Diagnostic{
 			Severity: diag.Error,
 			Path:     mp,
-			Message:  fmt.Sprintf("derive provider %q schema: %v", name, err),
-			Module:   name,
+			Message:  fmt.Sprintf("derive provider %q schema: %v", slug, err),
+			Module:   slug,
 		})
 		// The manifest itself decoded cleanly — still hand it to Compile so
 		// contract/capability checking (which only needs the manifest, not
@@ -364,18 +474,62 @@ func resolveProvider(files map[string][]byte) (*ast.ProviderManifest, *jsonschem
 		return manifest, nil, diags
 	}
 
-	composed, _, err := schema.Compose(map[string]schema.ProviderSchemas{name: {Params: params, Ext: ext}}, nil)
+	composed, _, err := schema.Compose(map[string]schema.ProviderSchemas{slug: {Params: params, Ext: ext}}, nil)
 	if err != nil {
 		diags.Add(diag.Diagnostic{
 			Severity: diag.Error,
 			Path:     mp,
-			Message:  fmt.Sprintf("compose provider %q schema: %v", name, err),
-			Module:   name,
+			Message:  fmt.Sprintf("compose provider %q schema: %v", slug, err),
+			Module:   slug,
 		})
 		return manifest, nil, diags
 	}
 
 	return manifest, composed, diags
+}
+
+// parseProviderUse splits "slug" or "slug@version" (SP-B §B5's pinned-version
+// syntax). An unparseable @-suffix (non-numeric) is treated as part of the
+// slug itself — permissive, matches diag.List's "never fail the whole module
+// over one bad field" convention; the legacy same-bundle lookup then simply
+// fails to find a providers/<slug>/manifest.yaml for that (unusual) slug and
+// reports it the same way a genuinely missing provider would be.
+func parseProviderUse(use string) (slug string, pinned bool, version uint32) {
+	i := strings.LastIndex(use, "@")
+	if i < 0 {
+		return use, false, 0
+	}
+	v, err := strconv.ParseUint(use[i+1:], 10, 32)
+	if err != nil {
+		return use, false, 0
+	}
+	return use[:i], true, uint32(v)
+}
+
+// rekeyUnderProvider re-keys a catalog-resolved provider's bare-keyed files
+// (manifest.yaml, module/*.tf) under providers/<slug>/, matching the
+// bundle-relative layout deriveProviderSchema/manifestPath/moduleFilePrefix
+// expect (see the const block above) — the same layout files itself carries
+// in the legacy same-bundle lookup.
+func rekeyUnderProvider(files map[string][]byte, slug string) map[string][]byte {
+	out := make(map[string][]byte, len(files))
+	for name, data := range files {
+		out[path.Join(providersDir, slug, name)] = data
+	}
+	return out
+}
+
+// hasModuleFiles reports whether files carries any providers/<name>/module/*
+// entry — used to skip schema derivation for a catalog-resolved provider
+// that ships no Terraform module at all (see resolveProvider's doc comment).
+func hasModuleFiles(files map[string][]byte, name string) bool {
+	prefix := moduleFilePrefix(name)
+	for p := range files {
+		if strings.HasPrefix(p, prefix) {
+			return true
+		}
+	}
+	return false
 }
 
 // resolveProviderName picks the single provider ComposedSchema composes

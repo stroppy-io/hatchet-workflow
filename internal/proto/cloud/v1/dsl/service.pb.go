@@ -169,8 +169,14 @@ func (x *ComposedSchemaResponse) GetSchemaJson() string {
 
 // CheckRequest несёт тот же бандл, что и ComposedSchemaRequest.
 type CheckRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Files         map[string][]byte      `protobuf:"bytes,1,rep,name=files,proto3" json:"files,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Files map[string][]byte      `protobuf:"bytes,1,rep,name=files,proto3" json:"files,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// tenant_id — если задан и сервер сконфигурирован с ProviderResolver
+	// (см. internal/services/dsl.WithProviderResolver), provider.use
+	// резолвится против org-каталога этого тенанта (SP-B §B5) вместо
+	// локального бандла. Пусто — прежнее поведение (лёгаси-lookup внутри
+	// бандла), без изменений.
+	TenantId      string `protobuf:"bytes,2,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -210,6 +216,13 @@ func (x *CheckRequest) GetFiles() map[string][]byte {
 		return x.Files
 	}
 	return nil
+}
+
+func (x *CheckRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
 }
 
 type CheckResponse struct {
@@ -261,8 +274,10 @@ func (x *CheckResponse) GetDiagnostics() []*Diagnostic {
 
 // PreviewRequest несёт тот же бандл, что и CheckRequest/ComposedSchemaRequest.
 type PreviewRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Files         map[string][]byte      `protobuf:"bytes,1,rep,name=files,proto3" json:"files,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Files map[string][]byte      `protobuf:"bytes,1,rep,name=files,proto3" json:"files,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// tenant_id — см. CheckRequest.tenant_id.
+	TenantId      string `protobuf:"bytes,2,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -302,6 +317,13 @@ func (x *PreviewRequest) GetFiles() map[string][]byte {
 		return x.Files
 	}
 	return nil
+}
+
+func (x *PreviewRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
 }
 
 type PreviewResponse struct {
@@ -462,17 +484,19 @@ const file_cloud_v1_dsl_service_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\fR\x05value:\x028\x01\"9\n" +
 	"\x16ComposedSchemaResponse\x12\x1f\n" +
 	"\vschema_json\x18\x01 \x01(\tR\n" +
-	"schemaJson\"\x85\x01\n" +
+	"schemaJson\"\xa2\x01\n" +
 	"\fCheckRequest\x12;\n" +
-	"\x05files\x18\x01 \x03(\v2%.cloud.v1.dsl.CheckRequest.FilesEntryR\x05files\x1a8\n" +
+	"\x05files\x18\x01 \x03(\v2%.cloud.v1.dsl.CheckRequest.FilesEntryR\x05files\x12\x1b\n" +
+	"\ttenant_id\x18\x02 \x01(\tR\btenantId\x1a8\n" +
 	"\n" +
 	"FilesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\fR\x05value:\x028\x01\"K\n" +
 	"\rCheckResponse\x12:\n" +
-	"\vdiagnostics\x18\x01 \x03(\v2\x18.cloud.v1.dsl.DiagnosticR\vdiagnostics\"\x89\x01\n" +
+	"\vdiagnostics\x18\x01 \x03(\v2\x18.cloud.v1.dsl.DiagnosticR\vdiagnostics\"\xa6\x01\n" +
 	"\x0ePreviewRequest\x12=\n" +
-	"\x05files\x18\x01 \x03(\v2'.cloud.v1.dsl.PreviewRequest.FilesEntryR\x05files\x1a8\n" +
+	"\x05files\x18\x01 \x03(\v2'.cloud.v1.dsl.PreviewRequest.FilesEntryR\x05files\x12\x1b\n" +
+	"\ttenant_id\x18\x02 \x01(\tR\btenantId\x1a8\n" +
 	"\n" +
 	"FilesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +

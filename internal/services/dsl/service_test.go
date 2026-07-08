@@ -12,6 +12,7 @@ import (
 	"github.com/stroppy-io/schemapb/schemapb"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"github.com/stroppy-io/stroppy-cloud/internal/dsl/diag"
 	dslpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dsl"
 )
 
@@ -278,15 +279,24 @@ func TestCheckMissingProviderManifestIsDiagnosticNotError(t *testing.T) {
 // compiles with no user-authored providers/docker/manifest.yaml — resolveProvider
 // supplies a built-in manifest, so a bare docker recipe is not rejected with
 // "manifest not found".
-func TestCheckDockerBuiltinNeedsNoManifest(t *testing.T) {
-	svc := NewDslService()
-	files := map[string][]byte{
+// dockerBundleFiles returns a minimal, self-contained docker-builtin recipe
+// bundle (no provider directory — see resolveProvider's builtinDockerManifest
+// path). Shared by TestCheckDockerBuiltinNeedsNoManifest and (Task 7)
+// TestCompileBundle_LegacySignatureUnaffected, which both need a bundle that
+// compiles clean with zero providers/<name>/ files.
+func dockerBundleFiles() map[string][]byte {
+	return map[string][]byte{
 		"cluster.yaml": []byte("version: 1\n" +
 			"provider:\n  use: docker\n" +
 			"machines:\n  db:\n    count: 1\n    resources: { cpu: 2, ram: 2g, disk: { size: 10g, type: ssd } }\n" +
 			"services:\n  postgres:\n    on: db\n    image: postgres:17\n    network: host\n"),
 		"workflow.yaml": []byte("jobs:\n  postgres:\n    service: postgres\n"),
 	}
+}
+
+func TestCheckDockerBuiltinNeedsNoManifest(t *testing.T) {
+	svc := NewDslService()
+	files := dockerBundleFiles()
 
 	resp, err := svc.Check(context.Background(), &dslpb.CheckRequest{Files: files})
 	if err != nil {
@@ -481,5 +491,81 @@ func TestDslServiceCheckBundleMethodNoVersionSourceSkipsValidation(t *testing.T)
 	}
 	if d := findDiagnostic(diags, "stroppy", "not found in known releases"); d != nil {
 		t.Fatalf("expected no stroppy-version diagnostic without an injected VersionSource, got %+v", d)
+	}
+}
+
+// fakeProviderResolver is a test-only dsl.ProviderResolver standing in for
+// catalog.CatalogProviderResolver (Task 7): it records the (slug, version)
+// it was called with and returns a fixed (files, version, err).
+type fakeProviderResolver struct {
+	files      map[string][]byte
+	version    uint32
+	err        error
+	gotSlug    string
+	gotVersion uint32
+}
+
+func (f *fakeProviderResolver) ResolveProvider(_ context.Context, _, slug string, version uint32) (map[string][]byte, uint32, error) {
+	f.gotSlug, f.gotVersion = slug, version
+	if f.err != nil {
+		return nil, 0, f.err
+	}
+	return f.files, f.version, nil
+}
+
+// hasWarning reports whether diags contains a Warning-severity diagnostic
+// whose message contains substr (case-insensitive).
+func hasWarning(diags diag.List, substr string) bool {
+	for _, d := range diags {
+		if d.Severity == diag.Warning && strings.Contains(strings.ToLower(d.Message), strings.ToLower(substr)) {
+			return true
+		}
+	}
+	return false
+}
+
+func TestCompileBundleWithCatalog_PinnedVersionParsed(t *testing.T) {
+	resolver := &fakeProviderResolver{
+		files:   map[string][]byte{"manifest.yaml": []byte("name: yandex\nprovides:\n  - machines\n")},
+		version: 3,
+	}
+	files := map[string][]byte{
+		"cluster.yaml":  []byte("version: 1\nprovider:\n  use: yandex@3\nmachines:\n  db:\n    count: 1\nservices: {}\n"),
+		"workflow.yaml": []byte("jobs: {}\n"),
+	}
+	_, diags := CompileBundleWithCatalog(context.Background(), "tenant-1", files, resolver)
+	if diags.HasErrors() {
+		t.Fatalf("unexpected errors: %s", diags.String())
+	}
+	if resolver.gotSlug != "yandex" || resolver.gotVersion != 3 {
+		t.Fatalf("resolver called with (%q, %d), want (yandex, 3)", resolver.gotSlug, resolver.gotVersion)
+	}
+}
+
+func TestCompileBundleWithCatalog_UnpinnedWarnsAndResolvesLatest(t *testing.T) {
+	resolver := &fakeProviderResolver{
+		files:   map[string][]byte{"manifest.yaml": []byte("name: yandex\nprovides:\n  - machines\n")},
+		version: 5,
+	}
+	files := map[string][]byte{
+		"cluster.yaml":  []byte("version: 1\nprovider:\n  use: yandex\nmachines:\n  db:\n    count: 1\nservices: {}\n"),
+		"workflow.yaml": []byte("jobs: {}\n"),
+	}
+	_, diags := CompileBundleWithCatalog(context.Background(), "tenant-1", files, resolver)
+	if resolver.gotVersion != 0 {
+		t.Fatalf("unpinned use should request version=0 (latest), got %d", resolver.gotVersion)
+	}
+	if !hasWarning(diags, "pin") {
+		t.Fatalf("expected a reproducibility warning diagnostic, got: %s", diags.String())
+	}
+}
+
+func TestCompileBundle_LegacySignatureUnaffected(t *testing.T) {
+	// Zero-arg CompileBundle must keep working exactly as before this task —
+	// no resolver, no tenant, same-bundle providers/<name>/ lookup.
+	files := dockerBundleFiles()
+	_, diags := CompileBundle(files)
+	if diags.HasErrors() {
+		t.Fatalf("unexpected errors: %s", diags.String())
 	}
 }
