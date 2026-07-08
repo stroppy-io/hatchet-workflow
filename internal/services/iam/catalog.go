@@ -129,6 +129,10 @@ func resourceWord(r iam.Resource) string {
 		return "membership"
 	case iam.Resource_RESOURCE_SETTINGS:
 		return "settings"
+	case iam.Resource_RESOURCE_PROVIDER:
+		return "provider"
+	case iam.Resource_RESOURCE_WORKFLOW:
+		return "workflow"
 	default:
 		return "resource"
 	}

@@ -6201,6 +6201,10 @@ func PermissionToOgen(src *iam.Permission) (*rest.Permission, error) {
 		en1 = rest.PermissionResource14
 	case iam.Resource_RESOURCE_RECIPE:
 		en1 = rest.PermissionResource15
+	case iam.Resource_RESOURCE_PROVIDER:
+		en1 = rest.PermissionResource16
+	case iam.Resource_RESOURCE_WORKFLOW:
+		en1 = rest.PermissionResource17
 	default:
 		return nil, fmt.Errorf("cloud.v1.iam.Permission.resource: enum value %v has no ogen PermissionResource variant", src.GetResource())
 	}
@@ -6265,6 +6269,10 @@ func PermissionFromOgen(src *rest.Permission) (*iam.Permission, error) {
 			en2 = iam.Resource_RESOURCE_PACKAGE
 		case rest.PermissionResource15:
 			en2 = iam.Resource_RESOURCE_RECIPE
+		case rest.PermissionResource16:
+			en2 = iam.Resource_RESOURCE_PROVIDER
+		case rest.PermissionResource17:
+			en2 = iam.Resource_RESOURCE_WORKFLOW
 		default:
 			return nil, fmt.Errorf("cloud.v1.iam.Permission.resource: enum value %v has no Resource variant", v1)
 		}

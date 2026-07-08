@@ -21453,6 +21453,8 @@ const (
 	PermissionResource13 PermissionResource = 13
 	PermissionResource14 PermissionResource = 14
 	PermissionResource15 PermissionResource = 15
+	PermissionResource16 PermissionResource = 16
+	PermissionResource17 PermissionResource = 17
 )
 
 // AllValues returns all PermissionResource values.
@@ -21473,6 +21475,8 @@ func (PermissionResource) AllValues() []PermissionResource {
 		PermissionResource13,
 		PermissionResource14,
 		PermissionResource15,
+		PermissionResource16,
+		PermissionResource17,
 	}
 }
 

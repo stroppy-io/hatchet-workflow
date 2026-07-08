@@ -104,6 +104,18 @@ enum Resource {
         (models.RecipeRecord): full CRUD + check.
      */
     RESOURCE_RECIPE = 15;
+    /*
+        RESOURCE_PROVIDER is a tenant-scoped catalog provider definition (see
+        SP-B CatalogService): the deployment-target templates a workflow can
+        target.
+     */
+    RESOURCE_PROVIDER = 16;
+    /*
+        RESOURCE_WORKFLOW is a tenant-scoped catalog workflow definition (see
+        SP-B CatalogService): the reusable DSL workflow templates a recipe can
+        be built from.
+     */
+    RESOURCE_WORKFLOW = 17;
 }
 
 /*

@@ -77,6 +77,14 @@ const (
 	// RESOURCE_RECIPE is a tenant-scoped persisted DSL recipe bundle
 	// (models.RecipeRecord): full CRUD + check.
 	Resource_RESOURCE_RECIPE Resource = 15
+	// RESOURCE_PROVIDER is a tenant-scoped catalog provider definition (see
+	// SP-B CatalogService): the deployment-target templates a workflow can
+	// target.
+	Resource_RESOURCE_PROVIDER Resource = 16
+	// RESOURCE_WORKFLOW is a tenant-scoped catalog workflow definition (see
+	// SP-B CatalogService): the reusable DSL workflow templates a recipe can
+	// be built from.
+	Resource_RESOURCE_WORKFLOW Resource = 17
 )
 
 // Enum value maps for Resource.
@@ -98,6 +106,8 @@ var (
 		13: "RESOURCE_SHARE",
 		14: "RESOURCE_PACKAGE",
 		15: "RESOURCE_RECIPE",
+		16: "RESOURCE_PROVIDER",
+		17: "RESOURCE_WORKFLOW",
 	}
 	Resource_value = map[string]int32{
 		"RESOURCE_UNSPECIFIED": 0,
@@ -116,6 +126,8 @@ var (
 		"RESOURCE_SHARE":       13,
 		"RESOURCE_PACKAGE":     14,
 		"RESOURCE_RECIPE":      15,
+		"RESOURCE_PROVIDER":    16,
+		"RESOURCE_WORKFLOW":    17,
 	}
 )
 
@@ -343,7 +355,7 @@ const file_cloud_v1_iam_permission_proto_rawDesc = "" +
 	"\bresource\x18\x01 \x01(\x0e2\x16.cloud.v1.iam.ResourceB\n" +
 	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\bresource\x128\n" +
 	"\x06action\x18\x02 \x01(\x0e2\x14.cloud.v1.iam.ActionB\n" +
-	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x06action*\xef\x02\n" +
+	"\xfaB\a\x82\x01\x04\x10\x01 \x00R\x06action*\x9d\x03\n" +
 	"\bResource\x12\x18\n" +
 	"\x14RESOURCE_UNSPECIFIED\x10\x00\x12\x14\n" +
 	"\x10RESOURCE_ACCOUNT\x10\x01\x12\x13\n" +
@@ -361,7 +373,9 @@ const file_cloud_v1_iam_permission_proto_rawDesc = "" +
 	"\x14RESOURCE_AGENT_SHELL\x10\f\x12\x12\n" +
 	"\x0eRESOURCE_SHARE\x10\r\x12\x14\n" +
 	"\x10RESOURCE_PACKAGE\x10\x0e\x12\x13\n" +
-	"\x0fRESOURCE_RECIPE\x10\x0f*\x8e\x01\n" +
+	"\x0fRESOURCE_RECIPE\x10\x0f\x12\x15\n" +
+	"\x11RESOURCE_PROVIDER\x10\x10\x12\x15\n" +
+	"\x11RESOURCE_WORKFLOW\x10\x11*\x8e\x01\n" +
 	"\x06Action\x12\x16\n" +
 	"\x12ACTION_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rACTION_CREATE\x10\x01\x12\x0f\n" +

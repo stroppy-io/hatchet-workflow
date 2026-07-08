@@ -735,6 +735,20 @@ go_name: Resource</pre></td>
 //RESOURCE_RECIPE is a tenant-scoped persisted DSL recipe bundle
 //(models.RecipeRecord): full CRUD + check.
 </pre></td>
+</tr><tr>
+<td>RESOURCE_PROVIDER</td>
+<td><pre>
+//RESOURCE_PROVIDER is a tenant-scoped catalog provider definition (see
+//SP-B CatalogService): the deployment-target templates a workflow can
+//target.
+</pre></td>
+</tr><tr>
+<td>RESOURCE_WORKFLOW</td>
+<td><pre>
+//RESOURCE_WORKFLOW is a tenant-scoped catalog workflow definition (see
+//SP-B CatalogService): the reusable DSL workflow templates a recipe can
+//be built from.
+</pre></td>
 </tr>
 </table>
 

@@ -2184,6 +2184,8 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 		"RESOURCE_SHARE":       &graphql.EnumValueConfig{Value: pb5.Resource_RESOURCE_SHARE},
 		"RESOURCE_PACKAGE":     &graphql.EnumValueConfig{Value: pb5.Resource_RESOURCE_PACKAGE},
 		"RESOURCE_RECIPE":      &graphql.EnumValueConfig{Value: pb5.Resource_RESOURCE_RECIPE},
+		"RESOURCE_PROVIDER":    &graphql.EnumValueConfig{Value: pb5.Resource_RESOURCE_PROVIDER},
+		"RESOURCE_WORKFLOW":    &graphql.EnumValueConfig{Value: pb5.Resource_RESOURCE_WORKFLOW},
 	}})
 	e_Action = graphql.NewEnum(graphql.EnumConfig{Name: "Action", Values: graphql.EnumValueConfigMap{
 		"ACTION_UNSPECIFIED": &graphql.EnumValueConfig{Value: pb5.Action_ACTION_UNSPECIFIED},

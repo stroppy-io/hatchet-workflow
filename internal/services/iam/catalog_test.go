@@ -37,6 +37,21 @@ func TestCatalogManagePermissionsReturnsManageForEveryGrantableResource(t *testi
 	}
 }
 
+func TestCatalogLabel_ProviderWorkflowResources(t *testing.T) {
+	cases := []struct {
+		perm *iampb.Permission
+		want string
+	}{
+		{&iampb.Permission{Resource: iampb.Resource_RESOURCE_PROVIDER, Action: iampb.Action_ACTION_READ}, "Read provider"},
+		{&iampb.Permission{Resource: iampb.Resource_RESOURCE_WORKFLOW, Action: iampb.Action_ACTION_MANAGE}, "Manage workflow"},
+	}
+	for _, c := range cases {
+		if got := catalogLabel(c.perm); got != c.want {
+			t.Errorf("catalogLabel(%v) = %q, want %q", c.perm, got, c.want)
+		}
+	}
+}
+
 type fakePermissionCatalog struct {
 	entries []*api.CatalogEntry
 }

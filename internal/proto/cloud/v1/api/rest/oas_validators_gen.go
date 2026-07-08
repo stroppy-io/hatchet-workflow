@@ -16239,6 +16239,10 @@ func (s PermissionResource) Validate() error {
 		return nil
 	case 15:
 		return nil
+	case 16:
+		return nil
+	case 17:
+		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
 	}
