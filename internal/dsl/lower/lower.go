@@ -103,16 +103,30 @@ func Lower(cluster *ast.ClusterDoc, dom *graph.Domain, jobs map[string]ast.Job, 
 // Name — the two are validated equal upstream, by whichever stage resolved
 // in.Provider from cluster.Provider.Use in the first place), params_json is
 // cluster.Provider.Params re-encoded as JSON, since the params shape is
-// provider-specific and not typed in the CompiledPlan proto.
+// provider-specific and not typed in the CompiledPlan proto. provider.use may
+// carry a catalog pin ("slug@version"); providerSlug strips that suffix so
+// the compiled name still matches the provider manifest's bare Name.
 func lowerProvider(cluster *ast.ClusterDoc) (*dslpb.ProviderRef, error) {
 	paramsJSON, err := json.Marshal(cluster.Provider.Params)
 	if err != nil {
 		return nil, fmt.Errorf("provider params: %w", err)
 	}
 	return &dslpb.ProviderRef{
-		Name:       cluster.Provider.Use,
+		Name:       providerSlug(cluster.Provider.Use),
 		ParamsJson: string(paramsJSON),
 	}, nil
+}
+
+// providerSlug strips a catalog pin suffix from a "provider.use" value: for
+// "slug@version" it returns "slug" (the substring before the LAST "@", so a
+// slug containing "@" — unlikely but not forbidden by the grammar — is still
+// handled correctly); for a bare "slug" (the legacy, bundle-local path, which
+// never contains "@") it returns the input unchanged.
+func providerSlug(use string) string {
+	if i := strings.LastIndex(use, "@"); i >= 0 {
+		return use[:i]
+	}
+	return use
 }
 
 // lowerMachineGroups builds one MachineGroup per dom.Groups entry, sorted by

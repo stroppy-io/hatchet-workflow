@@ -46,6 +46,45 @@ func TestForkEntry_LinkedRowForks(t *testing.T) {
 	}
 }
 
+// TestForkEntry_SkipsExistingVersion locks the version-collision fix:
+// stamping entry.GetVersion()+1 unconditionally is not safe when that
+// version is already occupied at this (level, tenant, kind, slug) scope
+// (e.g. a previous fork or an org-native row already claimed it) — it would
+// violate uq_catalog_entries_scope_slug_version. ForkEntry must instead pick
+// the actual next-free version for the scope.
+func TestForkEntry_SkipsExistingVersion(t *testing.T) {
+	repo := newFakeEntryRepo()
+	store := NewMemoryBundleStore()
+	instanceRef, _ := store.Write(context.Background(), "", map[string][]byte{"manifest.yaml": []byte("name: yandex\n")})
+	instance := instanceEntry(catalogpb.Kind_KIND_PROVIDER, "yandex", 1)
+	instance.SourceRef = instanceRef
+	repo.mustCreate(t, instance)
+
+	svc := NewService(Deps{Entries: repo, Bundles: store, Check: stubChecker(nil), Authn: fakeAuthn{}})
+	if err := svc.SeedOrgCatalog(context.Background(), "tenant-1"); err != nil {
+		t.Fatalf("seed: %v", err)
+	}
+	orgEntries, _ := repo.List(context.Background(), catalogpb.Level_LEVEL_ORG, "tenant-1", catalogpb.Kind_KIND_PROVIDER)
+	linked := orgEntries[0]
+	if linked.GetVersion() != 1 {
+		t.Fatalf("precondition: linked version = %d, want 1", linked.GetVersion())
+	}
+
+	// Simulate version 2 already occupied at this scope (e.g. by an earlier
+	// fork/update this test doesn't otherwise model) — entry.GetVersion()+1
+	// would collide with this row.
+	occupied := orgEntry(catalogpb.Kind_KIND_PROVIDER, "tenant-1", "yandex", 2)
+	repo.mustCreate(t, occupied)
+
+	forked, err := svc.ForkEntry(context.Background(), "tenant-1", linked.GetEntity().GetId())
+	if err != nil {
+		t.Fatalf("ForkEntry: %v", err)
+	}
+	if forked.GetVersion() != 3 {
+		t.Fatalf("version = %d, want 3 (next free version, skipping occupied v2)", forked.GetVersion())
+	}
+}
+
 func TestForkEntry_OtherTenantsLinkedRowUntouched(t *testing.T) {
 	repo := newFakeEntryRepo()
 	store := NewMemoryBundleStore()

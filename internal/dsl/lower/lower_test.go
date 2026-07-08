@@ -443,3 +443,33 @@ func TestLowerNestedIncludeAttributesJobToInnermostComponent(t *testing.T) {
 		t.Fatalf("target_group = %q, want %q (innermost component, not %q)", got, "inner-group", "outer-group")
 	}
 }
+
+// TestLowerProviderNameStripsCatalogPin locks providerSlug's contract via
+// Lower's public surface: a catalog-pinned "provider.use" ("slug@version")
+// must not leak its version suffix into CompiledPlan.Provider.Name, since
+// that name is expected to match the provider manifest/terraform module's
+// bare slug, not the pin. An unpinned "provider.use" passes through
+// unchanged.
+func TestLowerProviderNameStripsCatalogPin(t *testing.T) {
+	cases := []struct {
+		use  string
+		want string
+	}{
+		{use: "yandex@3", want: "yandex"},
+		{use: "yandex", want: "yandex"},
+	}
+	for _, tc := range cases {
+		cluster := &ast.ClusterDoc{
+			Provider: ast.ProviderUse{Use: tc.use, Params: map[string]any{}},
+			Machines: map[string]ast.MachineGroup{},
+			Services: map[string]ast.Service{},
+		}
+		plan, err := lower.Lower(cluster, plainDomain(cluster), nil, nil)
+		if err != nil {
+			t.Fatalf("Lower(%q): %v", tc.use, err)
+		}
+		if got := plan.GetProvider().GetName(); got != tc.want {
+			t.Fatalf("provider.use = %q: Provider.Name = %q, want %q", tc.use, got, tc.want)
+		}
+	}
+}

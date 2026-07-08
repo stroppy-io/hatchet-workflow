@@ -24,6 +24,20 @@ func TestDeriveWorkflowSummary_ReadsClusterYAML(t *testing.T) {
 	}
 }
 
+// TestDeriveWorkflowSummary_StripsPinnedProviderVersion locks
+// providerSlug's use in DeriveWorkflowSummary: a catalog-pinned
+// "provider.use" ("slug@version", SP-B §B5) must surface as the bare slug in
+// summary.provider_slug, not leak the pin.
+func TestDeriveWorkflowSummary_StripsPinnedProviderVersion(t *testing.T) {
+	files := map[string][]byte{
+		"cluster.yaml": []byte("version: 1\nprovider:\n  use: yandex@3\nmachines:\n  db:\n    count: 1\nservices:\n  postgres: {}\n"),
+	}
+	summary := DeriveWorkflowSummary(files, nil)
+	if summary.GetProviderSlug() != "yandex" {
+		t.Fatalf("provider_slug = %q, want yandex (pin stripped)", summary.GetProviderSlug())
+	}
+}
+
 func TestDeriveWorkflowSummary_MissingClusterYAML(t *testing.T) {
 	summary := DeriveWorkflowSummary(map[string][]byte{}, nil)
 	if summary.GetProviderSlug() != "" || summary.GetMachineGroupCount() != 0 || summary.GetServiceCount() != 0 {

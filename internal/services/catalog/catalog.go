@@ -6,6 +6,8 @@ package catalog
 
 import (
 	"context"
+	"strconv"
+	"strings"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
@@ -153,7 +155,7 @@ func DeriveWorkflowSummary(files map[string][]byte, diags []*dslpb.Diagnostic) *
 	if doc == nil {
 		return summary
 	}
-	summary.ProviderSlug = doc.Provider.Use
+	summary.ProviderSlug = providerSlug(doc.Provider.Use)
 	summary.MachineGroupCount = uint32(len(doc.Machines)) //nolint:gosec // bundle sizes are bounded; a machine-group count never approaches uint32's range.
 	summary.ServiceCount = uint32(len(doc.Services))      //nolint:gosec // same bound as above.
 	return summary
@@ -178,6 +180,25 @@ func DeriveProviderSummary(manifest *ast.ProviderManifest) *catalogpb.CatalogEnt
 // never treats this as a Go error. This is a catalog-owned copy of the same
 // helper recipe.go and internal/services/dsl each carry their own unexported
 // copy of (recipe.go's doc comment explains why it is not shared).
+// providerSlug strips a catalog pin ("slug@version", SP-B §B5) down to its
+// bare slug for display fields such as CatalogEntry_Summary.provider_slug,
+// which is meant to read as the provider's identity, not a specific pinned
+// version. Mirrors internal/services/dsl.parseProviderUse's permissive
+// splitting (an unparseable/non-numeric "@..." suffix is treated as part of
+// the slug itself) without importing that unexported helper across packages;
+// a bare, unpinned slug (the legacy path, which never contains "@") passes
+// through unchanged.
+func providerSlug(use string) string {
+	i := strings.LastIndex(use, "@")
+	if i < 0 {
+		return use
+	}
+	if _, err := strconv.ParseUint(use[i+1:], 10, 32); err != nil {
+		return use
+	}
+	return use[:i]
+}
+
 func peekProviderUse(clusterSrc []byte) string {
 	if len(clusterSrc) == 0 {
 		return ""
@@ -231,8 +252,16 @@ func (s *Service) ForkEntry(ctx context.Context, tenantID, orgEntryID string) (*
 	if !ok {
 		return nil, status.Error(codes.Internal, "fork: cloned entry has unexpected type")
 	}
+	// entry.GetVersion()+1 is not safe to stamp directly: a prior fork (or a
+	// native Create) may already occupy that (level, tenant, kind, slug)
+	// version, which would collide against uq_catalog_entries_scope_slug_version.
+	// nextVersion computes the actual next-free version for this scope instead.
+	nextVer, err := s.nextVersion(ctx, LevelOrg, tenantID, entry.GetKind(), entry.GetSlug())
+	if err != nil {
+		return nil, err
+	}
 	forked.Entity.Id = uuid.NewString()
-	forked.Version = entry.GetVersion() + 1
+	forked.Version = nextVer
 	forked.Origin = OriginForked
 	forked.SourceRef = forkedRef
 	// SourceEntryId is preserved (cloned from entry) for lineage.
