@@ -56,8 +56,11 @@ export const ComposedSchemaRequestSchema: GenMessage<ComposedSchemaRequest, {jso
  */
 export type ComposedSchemaResponse = Message<"cloud.v1.dsl.ComposedSchemaResponse"> & {
   /**
-   * schema_json — динамическая JSON Schema (core-схема + provider params/ext
-   * бандла), против которой редактор валидирует cluster.yaml.
+   * schema_json — protojson-сериализованная schemapb.Schema (не JSON
+   * Schema): launch-form схема бандла, где workflow inputs подняты на
+   * верхний уровень, а provider params (если есть) вложены под полем
+   * "provider" — см. internal/dsl/schema.ComposeFormSchema. По ней рендерится
+   * и валидируется форма запуска, а не cluster.yaml редактор.
    *
    * @generated from field: string schema_json = 1;
    */
@@ -69,8 +72,11 @@ export type ComposedSchemaResponse = Message<"cloud.v1.dsl.ComposedSchemaRespons
  */
 export type ComposedSchemaResponseJson = {
   /**
-   * schema_json — динамическая JSON Schema (core-схема + provider params/ext
-   * бандла), против которой редактор валидирует cluster.yaml.
+   * schema_json — protojson-сериализованная schemapb.Schema (не JSON
+   * Schema): launch-form схема бандла, где workflow inputs подняты на
+   * верхний уровень, а provider params (если есть) вложены под полем
+   * "provider" — см. internal/dsl/schema.ComposeFormSchema. По ней рендерится
+   * и валидируется форма запуска, а не cluster.yaml редактор.
    *
    * @generated from field: string schema_json = 1;
    */

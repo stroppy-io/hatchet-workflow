@@ -231,7 +231,7 @@ export async function checkBundle(
   return diagnostics.map(diagnosticToVM);
 }
 
-/** DslService.ComposedSchema — dynamic JSON Schema for the bundle's editor. */
+/** DslService.ComposedSchema — schemapb.Schema (protojson): the bundle's launch-form schema (workflow inputs + provider params), used to render/validate the launch form. */
 export async function composedSchema(files: Record<string, string>): Promise<string> {
   const { schemaJson } = await dslClient.composedSchema({ files: encodeFiles(files) });
   return schemaJson;

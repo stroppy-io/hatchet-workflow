@@ -34,6 +34,14 @@ func ComposeFormSchema(namespace string, inputs, params *schemapb.Schema) (*sche
 // FieldError slice/empty result means values passed validation cleanly;
 // otherwise blocking errors leave baked nil while non-blocking warnings may
 // accompany a non-nil baked -- see schemapb.Schema.Bake.
+//
+// Numeric contract: Go callers MUST supply numeric field values as float64
+// -- schemapb's numericCheck type-asserts the value to float64 and rejects
+// anything else (int, int64, ...) as a type-mismatch FieldError, even for
+// int/int64-kind fields. The live JSON (or YAML) -> structpb.Value ->
+// map[string]any decoding path already yields float64 for every JSON
+// number, so this only matters for values assembled directly in Go (e.g.
+// tests).
 func BakeForm(form *schemapb.Schema, values map[string]any) (*schemapb.Baked, []*schemapb.FieldError, error) {
 	if form == nil {
 		return nil, nil, fmt.Errorf("bake form: nil schema")

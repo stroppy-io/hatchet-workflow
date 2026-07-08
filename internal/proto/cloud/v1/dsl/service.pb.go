@@ -120,8 +120,11 @@ func (x *ComposedSchemaRequest) GetFiles() map[string][]byte {
 
 type ComposedSchemaResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// schema_json — динамическая JSON Schema (core-схема + provider params/ext
-	// бандла), против которой редактор валидирует cluster.yaml.
+	// schema_json — protojson-сериализованная schemapb.Schema (не JSON
+	// Schema): launch-form схема бандла, где workflow inputs подняты на
+	// верхний уровень, а provider params (если есть) вложены под полем
+	// "provider" — см. internal/dsl/schema.ComposeFormSchema. По ней рендерится
+	// и валидируется форма запуска, а не cluster.yaml редактор.
 	SchemaJson    string `protobuf:"bytes,1,opt,name=schema_json,json=schemaJson,proto3" json:"schema_json,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

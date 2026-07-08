@@ -425,8 +425,11 @@ go_name: Value</pre></td>
 <td>schema_json</td>
 <td>string</td>
 <td><pre>
-schema_json — динамическая JSON Schema (core-схема + provider params/ext
-бандла), против которой редактор валидирует cluster.yaml.<br>
+schema_json — protojson-сериализованная schemapb.Schema (не JSON
+Schema): launch-form схема бандла, где workflow inputs подняты на
+верхний уровень, а provider params (если есть) вложены под полем
+"provider" — см. internal/dsl/schema.ComposeFormSchema. По ней рендерится
+и валидируется форма запуска, а не cluster.yaml редактор.<br>
 
 json_name: schemaJson
 go_name: SchemaJson</pre></td>

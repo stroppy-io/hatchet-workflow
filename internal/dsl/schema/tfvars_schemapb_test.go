@@ -63,6 +63,8 @@ variable "stroppy_machine_ext" {
 	extFields := fieldsByName(ext)
 	require.Contains(t, extFields, "zone")
 	require.Contains(t, extFields, "disk_gb")
+	require.True(t, extFields["zone"].GetRequired(), "bare object() attribute is required")
+	require.False(t, extFields["disk_gb"].GetRequired(), "optional(...) object() attribute is not required")
 }
 
 func TestDeriveProviderParamsSchemapb_ValidationToRule(t *testing.T) {

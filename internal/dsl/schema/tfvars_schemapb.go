@@ -232,7 +232,11 @@ func toFloat64(v any) (float64, bool) {
 // splitTopLevel/splitFirstTopLevelEquals scanners) but emits schemapb
 // FieldDefs instead of JSON Schema fragments; optional(...) defaults are
 // applied per-kind the same way fieldForTFType applies variable-level
-// defaults.
+// defaults. Like parseObjectBody, a bare (non-optional(...)) attribute is
+// required -- that is marked on the built field via Schema_Filed.Required
+// (schemapb's fieldBase.Required() setter, applied here through the
+// Done() escape hatch since attrFieldFromExpr returns the FieldDef
+// interface rather than a concrete kind-specific builder).
 func objectFieldsFromBody(body string) []schemapb.FieldDef {
 	var fields []schemapb.FieldDef
 	for _, entry := range splitTopLevel(body, isCommaOrNewline) {
@@ -241,30 +245,36 @@ func objectFieldsFromBody(body string) []schemapb.FieldDef {
 			continue // malformed attribute definition; skip (permissive fallback)
 		}
 		key = strings.Trim(key, `"`)
-		fields = append(fields, attrFieldFromExpr(key, valueExpr))
+		field, optional := attrFieldFromExpr(key, valueExpr)
+		if !optional {
+			field.Done().Required = true
+		}
+		fields = append(fields, field)
 	}
 	return fields
 }
 
 // attrFieldFromExpr builds a schemapb field for one object() attribute's
-// value expression: either a bare type (required attribute) or
-// optional(type[, default]) (optional attribute, with the default applied
-// per-kind if given).
-func attrFieldFromExpr(name, valueExpr string) schemapb.FieldDef {
+// value expression: either a bare type (required attribute, optional=false)
+// or optional(type[, default]) (optional attribute, optional=true, with the
+// default applied per-kind if given). Mirrors tfvars.go's parseAttrExpr
+// bare-vs-optional return shape so callers can track required-ness the same
+// way parseObjectBody does for the JSON Schema path.
+func attrFieldFromExpr(name, valueExpr string) (field schemapb.FieldDef, optional bool) {
 	keyword, inner, ok := parseCall(valueExpr)
 	if !ok || keyword != "optional" {
-		return fieldForTFType(name, valueExpr, "", nil, false)
+		return fieldForTFType(name, valueExpr, "", nil, false), false
 	}
 
 	parts := splitTopLevel(inner, isComma)
 	if len(parts) == 0 {
-		return schemapb.Str(name)
+		return schemapb.Str(name), true
 	}
 	var def any
 	if len(parts) > 1 {
 		def = parseLiteral(strings.Join(parts[1:], ","))
 	}
-	return fieldForTFType(name, parts[0], "", def, false)
+	return fieldForTFType(name, parts[0], "", def, false), true
 }
 
 // objectFieldsOf returns f's inner fields if f is an object-kind field

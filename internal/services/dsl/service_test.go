@@ -299,6 +299,40 @@ func TestCheckDockerBuiltinNeedsNoManifest(t *testing.T) {
 	}
 }
 
+// TestComposedSchemaDockerBuiltinNoProviderField exercises the nil-params
+// path ComposedSchema takes for the docker builtin (no providers/ directory
+// at all in the bundle, so resolveProviderName returns "" and params stays
+// nil -- see service.go's ComposedSchema doc comment). This is the live
+// docker recipe-run path, so its form schema must still compose cleanly: the
+// workflow's declared top-level "inputs:" hoisted to the form's fields, and
+// no "provider" object field at all (schema.ComposeFormSchema only adds one
+// when params is non-nil with fields -- see form.go).
+func TestComposedSchemaDockerBuiltinNoProviderField(t *testing.T) {
+	svc := NewDslService()
+	files := map[string][]byte{
+		"cluster.yaml": []byte("version: 1\n" +
+			"provider:\n  use: docker\n" +
+			"machines:\n  db:\n    count: 1\n    resources: { cpu: 2, ram: 2g, disk: { size: 10g, type: ssd } }\n" +
+			"services:\n  postgres:\n    on: db\n    image: postgres:17\n    network: host\n"),
+		"workflow.yaml": []byte("inputs:\n  iterations: int\n" +
+			"jobs:\n  postgres:\n    service: postgres\n"),
+	}
+
+	resp, err := svc.ComposedSchema(context.Background(), &dslpb.ComposedSchemaRequest{Files: files})
+	require.NoError(t, err, "ComposedSchema must succeed for the nil-params docker builtin path")
+
+	var s schemapb.Schema
+	require.NoError(t, protojson.Unmarshal([]byte(resp.GetSchemaJson()), &s),
+		"response must be schemapb.Schema protojson")
+
+	byName := map[string]*schemapb.Schema_Filed{}
+	for _, f := range s.GetFields() {
+		byName[f.GetName()] = f
+	}
+	require.Contains(t, byName, "iterations", "workflow input must be hoisted to the form's top level")
+	require.NotContains(t, byName, "provider", "docker builtin has no tf module: form must carry no provider field")
+}
+
 // fakeVersionSource is a test-only VersionSource returning a fixed list,
 // standing in for internal/services/stroppy's GitHub-backed one (Task 7).
 type fakeVersionSource struct {

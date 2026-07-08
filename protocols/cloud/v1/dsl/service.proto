@@ -23,8 +23,11 @@ message ComposedSchemaRequest {
 }
 
 message ComposedSchemaResponse {
-    // schema_json — динамическая JSON Schema (core-схема + provider params/ext
-    // бандла), против которой редактор валидирует cluster.yaml.
+    // schema_json — protojson-сериализованная schemapb.Schema (не JSON
+    // Schema): launch-form схема бандла, где workflow inputs подняты на
+    // верхний уровень, а provider params (если есть) вложены под полем
+    // "provider" — см. internal/dsl/schema.ComposeFormSchema. По ней рендерится
+    // и валидируется форма запуска, а не cluster.yaml редактор.
     string schema_json = 1;
 }
 
