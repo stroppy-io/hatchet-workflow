@@ -551,6 +551,591 @@ var _ interface {
 	ErrorName() string
 } = RecipeTopologySnapshotValidationError{}
 
+// Validate checks the field values on Run with the rules defined in the proto
+// definition for this message. If any rules are violated, the first error
+// encountered is returned, or nil if there are no violations.
+func (m *Run) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Run with the rules defined in the
+// proto definition for this message. If any rules are violated, the result is
+// a list of violation errors wrapped in RunMultiError, or nil if none found.
+func (m *Run) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Run) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetEntity() == nil {
+		err := RunValidationError{
+			field:  "Entity",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetEntity()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RunValidationError{
+					field:  "Entity",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RunValidationError{
+					field:  "Entity",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetEntity()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RunValidationError{
+				field:  "Entity",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for Status
+
+	// no validation rules for Trigger
+
+	if utf8.RuneCountInString(m.GetWorkflowId()) > 64 {
+		err := RunValidationError{
+			field:  "WorkflowId",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetWorkflowVersion()) > 32 {
+		err := RunValidationError{
+			field:  "WorkflowVersion",
+			reason: "value length must be at most 32 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetBaked()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RunValidationError{
+					field:  "Baked",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RunValidationError{
+					field:  "Baked",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetBaked()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RunValidationError{
+				field:  "Baked",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetCompiledPlan()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RunValidationError{
+					field:  "CompiledPlan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RunValidationError{
+					field:  "CompiledPlan",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCompiledPlan()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RunValidationError{
+				field:  "CompiledPlan",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetTopology()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RunValidationError{
+					field:  "Topology",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RunValidationError{
+					field:  "Topology",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTopology()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RunValidationError{
+				field:  "Topology",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetRuntimeState()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RunValidationError{
+					field:  "RuntimeState",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RunValidationError{
+					field:  "RuntimeState",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetRuntimeState()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RunValidationError{
+				field:  "RuntimeState",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetObservability()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RunValidationError{
+					field:  "Observability",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RunValidationError{
+					field:  "Observability",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetObservability()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RunValidationError{
+				field:  "Observability",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for InTenantRating
+
+	// no validation rules for InGlobalRating
+
+	if all {
+		switch v := interface{}(m.GetSummary()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RunValidationError{
+					field:  "Summary",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RunValidationError{
+					field:  "Summary",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSummary()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RunValidationError{
+				field:  "Summary",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return RunMultiError(errors)
+	}
+
+	return nil
+}
+
+// RunMultiError is an error wrapping multiple validation errors returned by
+// Run.ValidateAll() if the designated constraints aren't met.
+type RunMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RunMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RunMultiError) AllErrors() []error { return m }
+
+// RunValidationError is the validation error returned by Run.Validate if the
+// designated constraints aren't met.
+type RunValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e RunValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e RunValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e RunValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e RunValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e RunValidationError) ErrorName() string { return "RunValidationError" }
+
+// Error satisfies the builtin error interface
+func (e RunValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRun.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = RunValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = RunValidationError{}
+
+// Validate checks the field values on RunTopology with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *RunTopology) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RunTopology with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in RunTopologyMultiError, or
+// nil if none found.
+func (m *RunTopology) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RunTopology) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Provider
+
+	for idx, item := range m.GetNodes() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, RunTopologyValidationError{
+						field:  fmt.Sprintf("Nodes[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, RunTopologyValidationError{
+						field:  fmt.Sprintf("Nodes[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return RunTopologyValidationError{
+					field:  fmt.Sprintf("Nodes[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return RunTopologyMultiError(errors)
+	}
+
+	return nil
+}
+
+// RunTopologyMultiError is an error wrapping multiple validation errors
+// returned by RunTopology.ValidateAll() if the designated constraints aren't met.
+type RunTopologyMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RunTopologyMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RunTopologyMultiError) AllErrors() []error { return m }
+
+// RunTopologyValidationError is the validation error returned by
+// RunTopology.Validate if the designated constraints aren't met.
+type RunTopologyValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e RunTopologyValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e RunTopologyValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e RunTopologyValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e RunTopologyValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e RunTopologyValidationError) ErrorName() string { return "RunTopologyValidationError" }
+
+// Error satisfies the builtin error interface
+func (e RunTopologyValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRunTopology.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = RunTopologyValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = RunTopologyValidationError{}
+
+// Validate checks the field values on ObservabilityRefs with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *ObservabilityRefs) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ObservabilityRefs with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ObservabilityRefsMultiError, or nil if none found.
+func (m *ObservabilityRefs) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ObservabilityRefs) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for MetricsQueryKey
+
+	// no validation rules for LogsQueryKey
+
+	// no validation rules for GrafanaDashboardUid
+
+	if len(errors) > 0 {
+		return ObservabilityRefsMultiError(errors)
+	}
+
+	return nil
+}
+
+// ObservabilityRefsMultiError is an error wrapping multiple validation errors
+// returned by ObservabilityRefs.ValidateAll() if the designated constraints
+// aren't met.
+type ObservabilityRefsMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ObservabilityRefsMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ObservabilityRefsMultiError) AllErrors() []error { return m }
+
+// ObservabilityRefsValidationError is the validation error returned by
+// ObservabilityRefs.Validate if the designated constraints aren't met.
+type ObservabilityRefsValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ObservabilityRefsValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ObservabilityRefsValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ObservabilityRefsValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ObservabilityRefsValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ObservabilityRefsValidationError) ErrorName() string {
+	return "ObservabilityRefsValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ObservabilityRefsValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sObservabilityRefs.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ObservabilityRefsValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ObservabilityRefsValidationError{}
+
 // Validate checks the field values on TestRunRecord_Summary with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
@@ -1104,3 +1689,548 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = RecipeTopologySnapshot_MachineNodeValidationError{}
+
+// Validate checks the field values on Run_Summary with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *Run_Summary) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Run_Summary with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in Run_SummaryMultiError, or
+// nil if none found.
+func (m *Run_Summary) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Run_Summary) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for DbKind
+
+	if utf8.RuneCountInString(m.GetDbPresetId()) > 64 {
+		err := Run_SummaryValidationError{
+			field:  "DbPresetId",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetDbPresetName()) > 255 {
+		err := Run_SummaryValidationError{
+			field:  "DbPresetName",
+			reason: "value length must be at most 255 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetWorkloadPresetId()) > 64 {
+		err := Run_SummaryValidationError{
+			field:  "WorkloadPresetId",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetWorkloadName()) > 255 {
+		err := Run_SummaryValidationError{
+			field:  "WorkloadName",
+			reason: "value length must be at most 255 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetStroppyVersion()) > 64 {
+		err := Run_SummaryValidationError{
+			field:  "StroppyVersion",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for WorkloadProtocol
+
+	if utf8.RuneCountInString(m.GetTestPresetId()) > 64 {
+		err := Run_SummaryValidationError{
+			field:  "TestPresetId",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetTestPresetName()) > 255 {
+		err := Run_SummaryValidationError{
+			field:  "TestPresetName",
+			reason: "value length must be at most 255 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetTopologyLabel()) > 128 {
+		err := Run_SummaryValidationError{
+			field:  "TopologyLabel",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for NodeCount
+
+	// no validation rules for Provider
+
+	if m.GetProgressPct() > 100 {
+		err := Run_SummaryValidationError{
+			field:  "ProgressPct",
+			reason: "value must be less than or equal to 100",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetStartedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Run_SummaryValidationError{
+					field:  "StartedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Run_SummaryValidationError{
+					field:  "StartedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetStartedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Run_SummaryValidationError{
+				field:  "StartedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetFinishedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Run_SummaryValidationError{
+					field:  "FinishedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Run_SummaryValidationError{
+					field:  "FinishedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetFinishedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Run_SummaryValidationError{
+				field:  "FinishedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetDuration()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Run_SummaryValidationError{
+					field:  "Duration",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Run_SummaryValidationError{
+					field:  "Duration",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDuration()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Run_SummaryValidationError{
+				field:  "Duration",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return Run_SummaryMultiError(errors)
+	}
+
+	return nil
+}
+
+// Run_SummaryMultiError is an error wrapping multiple validation errors
+// returned by Run_Summary.ValidateAll() if the designated constraints aren't met.
+type Run_SummaryMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Run_SummaryMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Run_SummaryMultiError) AllErrors() []error { return m }
+
+// Run_SummaryValidationError is the validation error returned by
+// Run_Summary.Validate if the designated constraints aren't met.
+type Run_SummaryValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Run_SummaryValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Run_SummaryValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Run_SummaryValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Run_SummaryValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Run_SummaryValidationError) ErrorName() string { return "Run_SummaryValidationError" }
+
+// Error satisfies the builtin error interface
+func (e Run_SummaryValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRun_Summary.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Run_SummaryValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Run_SummaryValidationError{}
+
+// Validate checks the field values on RunTopology_ServiceNode with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *RunTopology_ServiceNode) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RunTopology_ServiceNode with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// RunTopology_ServiceNodeMultiError, or nil if none found.
+func (m *RunTopology_ServiceNode) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RunTopology_ServiceNode) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Name
+
+	// no validation rules for Image
+
+	if len(errors) > 0 {
+		return RunTopology_ServiceNodeMultiError(errors)
+	}
+
+	return nil
+}
+
+// RunTopology_ServiceNodeMultiError is an error wrapping multiple validation
+// errors returned by RunTopology_ServiceNode.ValidateAll() if the designated
+// constraints aren't met.
+type RunTopology_ServiceNodeMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RunTopology_ServiceNodeMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RunTopology_ServiceNodeMultiError) AllErrors() []error { return m }
+
+// RunTopology_ServiceNodeValidationError is the validation error returned by
+// RunTopology_ServiceNode.Validate if the designated constraints aren't met.
+type RunTopology_ServiceNodeValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e RunTopology_ServiceNodeValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e RunTopology_ServiceNodeValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e RunTopology_ServiceNodeValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e RunTopology_ServiceNodeValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e RunTopology_ServiceNodeValidationError) ErrorName() string {
+	return "RunTopology_ServiceNodeValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e RunTopology_ServiceNodeValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRunTopology_ServiceNode.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = RunTopology_ServiceNodeValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = RunTopology_ServiceNodeValidationError{}
+
+// Validate checks the field values on RunTopology_MachineNode with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *RunTopology_MachineNode) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RunTopology_MachineNode with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// RunTopology_MachineNodeMultiError, or nil if none found.
+func (m *RunTopology_MachineNode) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RunTopology_MachineNode) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for NodeId
+
+	// no validation rules for Group
+
+	// no validation rules for Ip
+
+	// no validation rules for Status
+
+	for idx, item := range m.GetServices() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, RunTopology_MachineNodeValidationError{
+						field:  fmt.Sprintf("Services[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, RunTopology_MachineNodeValidationError{
+						field:  fmt.Sprintf("Services[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return RunTopology_MachineNodeValidationError{
+					field:  fmt.Sprintf("Services[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	// no validation rules for Labels
+
+	if len(errors) > 0 {
+		return RunTopology_MachineNodeMultiError(errors)
+	}
+
+	return nil
+}
+
+// RunTopology_MachineNodeMultiError is an error wrapping multiple validation
+// errors returned by RunTopology_MachineNode.ValidateAll() if the designated
+// constraints aren't met.
+type RunTopology_MachineNodeMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RunTopology_MachineNodeMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RunTopology_MachineNodeMultiError) AllErrors() []error { return m }
+
+// RunTopology_MachineNodeValidationError is the validation error returned by
+// RunTopology_MachineNode.Validate if the designated constraints aren't met.
+type RunTopology_MachineNodeValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e RunTopology_MachineNodeValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e RunTopology_MachineNodeValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e RunTopology_MachineNodeValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e RunTopology_MachineNodeValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e RunTopology_MachineNodeValidationError) ErrorName() string {
+	return "RunTopology_MachineNodeValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e RunTopology_MachineNodeValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRunTopology_MachineNode.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = RunTopology_MachineNodeValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = RunTopology_MachineNodeValidationError{}

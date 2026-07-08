@@ -6,9 +6,11 @@ import (
 	fmt "fmt"
 	jx "github.com/go-faster/jx"
 	jxpb "github.com/gopherex/protoc-gen-go-jx/jxpb"
+	schemapb "github.com/stroppy-io/schemapb/schemapb"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	domain "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
+	dsl "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dsl"
 	workflow "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -1014,6 +1016,1077 @@ func (m *RecipeTopologySnapshot_MachineNode) MarshalJSON() ([]byte, error) {
 }
 
 func (m *RecipeTopologySnapshot_MachineNode) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *Run) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Entity != nil {
+		e.FieldStart("entity")
+		jxpb.EncMessage(e, m.Entity)
+	}
+	if m.Status != 0 {
+		e.FieldStart("status")
+		if s, ok := common.Status_name[int32(m.Status)]; ok {
+			e.Str(s)
+		} else {
+			e.Int32(int32(m.Status))
+		}
+	}
+	if m.Trigger != 0 {
+		e.FieldStart("trigger")
+		if s, ok := common.Trigger_name[int32(m.Trigger)]; ok {
+			e.Str(s)
+		} else {
+			e.Int32(int32(m.Trigger))
+		}
+	}
+	if m.WorkflowId != "" {
+		e.FieldStart("workflowId")
+		e.Str(m.WorkflowId)
+	}
+	if m.WorkflowVersion != "" {
+		e.FieldStart("workflowVersion")
+		e.Str(m.WorkflowVersion)
+	}
+	if m.Baked != nil {
+		e.FieldStart("baked")
+		jxpb.EncMessage(e, m.Baked)
+	}
+	if m.CompiledPlan != nil {
+		e.FieldStart("compiledPlan")
+		jxpb.EncMessage(e, m.CompiledPlan)
+	}
+	if m.Topology != nil {
+		e.FieldStart("topology")
+		m.Topology.Encode(e)
+	}
+	if m.RuntimeState != nil {
+		e.FieldStart("runtimeState")
+		jxpb.EncMessage(e, m.RuntimeState)
+	}
+	if m.Observability != nil {
+		e.FieldStart("observability")
+		m.Observability.Encode(e)
+	}
+	if m.InTenantRating != false {
+		e.FieldStart("inTenantRating")
+		e.Bool(m.InTenantRating)
+	}
+	if m.InGlobalRating != false {
+		e.FieldStart("inGlobalRating")
+		e.Bool(m.InGlobalRating)
+	}
+	if m.Summary != nil {
+		e.FieldStart("summary")
+		m.Summary.Encode(e)
+	}
+	e.ObjEnd()
+}
+
+func (m *Run) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "entity":
+			if seen["Entity"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Entity"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Entity = &common.Entity{}
+			if err := jxpb.DecMessage(d, m.Entity); err != nil {
+				return err
+			}
+			return nil
+		case "status":
+			if seen["Status"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Status"] = true
+			switch d.Next() {
+			case jx.String:
+				s, err := d.Str()
+				if err != nil {
+					return err
+				}
+				n, ok := common.Status_value[s]
+				if !ok {
+					return fmt.Errorf("unknown enum value %q", s)
+				}
+				m.Status = common.Status(n)
+				return nil
+			case jx.Number:
+				n, err := d.Int32()
+				if err != nil {
+					return err
+				}
+				m.Status = common.Status(n)
+				return nil
+			case jx.Null:
+				return d.Null()
+			default:
+				return fmt.Errorf("invalid enum token %s", d.Next())
+			}
+		case "trigger":
+			if seen["Trigger"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Trigger"] = true
+			switch d.Next() {
+			case jx.String:
+				s, err := d.Str()
+				if err != nil {
+					return err
+				}
+				n, ok := common.Trigger_value[s]
+				if !ok {
+					return fmt.Errorf("unknown enum value %q", s)
+				}
+				m.Trigger = common.Trigger(n)
+				return nil
+			case jx.Number:
+				n, err := d.Int32()
+				if err != nil {
+					return err
+				}
+				m.Trigger = common.Trigger(n)
+				return nil
+			case jx.Null:
+				return d.Null()
+			default:
+				return fmt.Errorf("invalid enum token %s", d.Next())
+			}
+		case "workflowId", "workflow_id":
+			if seen["WorkflowId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["WorkflowId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.WorkflowId = v
+			return nil
+		case "workflowVersion", "workflow_version":
+			if seen["WorkflowVersion"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["WorkflowVersion"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.WorkflowVersion = v
+			return nil
+		case "baked":
+			if seen["Baked"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Baked"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Baked = &schemapb.Baked{}
+			if err := jxpb.DecMessage(d, m.Baked); err != nil {
+				return err
+			}
+			return nil
+		case "compiledPlan", "compiled_plan":
+			if seen["CompiledPlan"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["CompiledPlan"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.CompiledPlan = &dsl.CompiledPlan{}
+			if err := jxpb.DecMessage(d, m.CompiledPlan); err != nil {
+				return err
+			}
+			return nil
+		case "topology":
+			if seen["Topology"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Topology"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Topology = &RunTopology{}
+			if err := m.Topology.Decode(d); err != nil {
+				return err
+			}
+			return nil
+		case "runtimeState", "runtime_state":
+			if seen["RuntimeState"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["RuntimeState"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.RuntimeState = &workflow.RunState{}
+			if err := jxpb.DecMessage(d, m.RuntimeState); err != nil {
+				return err
+			}
+			return nil
+		case "observability":
+			if seen["Observability"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Observability"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Observability = &ObservabilityRefs{}
+			if err := m.Observability.Decode(d); err != nil {
+				return err
+			}
+			return nil
+		case "inTenantRating", "in_tenant_rating":
+			if seen["InTenantRating"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["InTenantRating"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Bool()
+			if err != nil {
+				return err
+			}
+			m.InTenantRating = v
+			return nil
+		case "inGlobalRating", "in_global_rating":
+			if seen["InGlobalRating"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["InGlobalRating"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Bool()
+			if err != nil {
+				return err
+			}
+			m.InGlobalRating = v
+			return nil
+		case "summary":
+			if seen["Summary"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Summary"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Summary = &Run_Summary{}
+			if err := m.Summary.Decode(d); err != nil {
+				return err
+			}
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *Run) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *Run) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *Run_Summary) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.DbKind != 0 {
+		e.FieldStart("dbKind")
+		if s, ok := domain.Database_Kind_name[int32(m.DbKind)]; ok {
+			e.Str(s)
+		} else {
+			e.Int32(int32(m.DbKind))
+		}
+	}
+	if m.DbPresetId != "" {
+		e.FieldStart("dbPresetId")
+		e.Str(m.DbPresetId)
+	}
+	if m.DbPresetName != "" {
+		e.FieldStart("dbPresetName")
+		e.Str(m.DbPresetName)
+	}
+	if m.WorkloadPresetId != "" {
+		e.FieldStart("workloadPresetId")
+		e.Str(m.WorkloadPresetId)
+	}
+	if m.WorkloadName != "" {
+		e.FieldStart("workloadName")
+		e.Str(m.WorkloadName)
+	}
+	if m.StroppyVersion != "" {
+		e.FieldStart("stroppyVersion")
+		e.Str(m.StroppyVersion)
+	}
+	if m.WorkloadProtocol != 0 {
+		e.FieldStart("workloadProtocol")
+		if s, ok := domain.Workload_Protocol_name[int32(m.WorkloadProtocol)]; ok {
+			e.Str(s)
+		} else {
+			e.Int32(int32(m.WorkloadProtocol))
+		}
+	}
+	if m.TestPresetId != "" {
+		e.FieldStart("testPresetId")
+		e.Str(m.TestPresetId)
+	}
+	if m.TestPresetName != "" {
+		e.FieldStart("testPresetName")
+		e.Str(m.TestPresetName)
+	}
+	if m.TopologyLabel != "" {
+		e.FieldStart("topologyLabel")
+		e.Str(m.TopologyLabel)
+	}
+	if m.NodeCount != 0 {
+		e.FieldStart("nodeCount")
+		e.UInt32(m.NodeCount)
+	}
+	if m.Provider != 0 {
+		e.FieldStart("provider")
+		if s, ok := deployment.Provider_name[int32(m.Provider)]; ok {
+			e.Str(s)
+		} else {
+			e.Int32(int32(m.Provider))
+		}
+	}
+	if m.ProgressPct != 0 {
+		e.FieldStart("progressPct")
+		e.UInt32(m.ProgressPct)
+	}
+	if m.StartedAt != nil {
+		e.FieldStart("startedAt")
+		jxpb.EncTimestamp(e, m.StartedAt)
+	}
+	if m.FinishedAt != nil {
+		e.FieldStart("finishedAt")
+		jxpb.EncTimestamp(e, m.FinishedAt)
+	}
+	if m.Duration != nil {
+		e.FieldStart("duration")
+		jxpb.EncDuration(e, m.Duration)
+	}
+	e.ObjEnd()
+}
+
+func (m *Run_Summary) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "dbKind", "db_kind":
+			if seen["DbKind"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["DbKind"] = true
+			switch d.Next() {
+			case jx.String:
+				s, err := d.Str()
+				if err != nil {
+					return err
+				}
+				n, ok := domain.Database_Kind_value[s]
+				if !ok {
+					return fmt.Errorf("unknown enum value %q", s)
+				}
+				m.DbKind = domain.Database_Kind(n)
+				return nil
+			case jx.Number:
+				n, err := d.Int32()
+				if err != nil {
+					return err
+				}
+				m.DbKind = domain.Database_Kind(n)
+				return nil
+			case jx.Null:
+				return d.Null()
+			default:
+				return fmt.Errorf("invalid enum token %s", d.Next())
+			}
+		case "dbPresetId", "db_preset_id":
+			if seen["DbPresetId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["DbPresetId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.DbPresetId = v
+			return nil
+		case "dbPresetName", "db_preset_name":
+			if seen["DbPresetName"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["DbPresetName"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.DbPresetName = v
+			return nil
+		case "workloadPresetId", "workload_preset_id":
+			if seen["WorkloadPresetId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["WorkloadPresetId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.WorkloadPresetId = v
+			return nil
+		case "workloadName", "workload_name":
+			if seen["WorkloadName"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["WorkloadName"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.WorkloadName = v
+			return nil
+		case "stroppyVersion", "stroppy_version":
+			if seen["StroppyVersion"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["StroppyVersion"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.StroppyVersion = v
+			return nil
+		case "workloadProtocol", "workload_protocol":
+			if seen["WorkloadProtocol"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["WorkloadProtocol"] = true
+			switch d.Next() {
+			case jx.String:
+				s, err := d.Str()
+				if err != nil {
+					return err
+				}
+				n, ok := domain.Workload_Protocol_value[s]
+				if !ok {
+					return fmt.Errorf("unknown enum value %q", s)
+				}
+				m.WorkloadProtocol = domain.Workload_Protocol(n)
+				return nil
+			case jx.Number:
+				n, err := d.Int32()
+				if err != nil {
+					return err
+				}
+				m.WorkloadProtocol = domain.Workload_Protocol(n)
+				return nil
+			case jx.Null:
+				return d.Null()
+			default:
+				return fmt.Errorf("invalid enum token %s", d.Next())
+			}
+		case "testPresetId", "test_preset_id":
+			if seen["TestPresetId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["TestPresetId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.TestPresetId = v
+			return nil
+		case "testPresetName", "test_preset_name":
+			if seen["TestPresetName"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["TestPresetName"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.TestPresetName = v
+			return nil
+		case "topologyLabel", "topology_label":
+			if seen["TopologyLabel"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["TopologyLabel"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.TopologyLabel = v
+			return nil
+		case "nodeCount", "node_count":
+			if seen["NodeCount"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["NodeCount"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint32(d)
+			if err != nil {
+				return err
+			}
+			m.NodeCount = v
+			return nil
+		case "provider":
+			if seen["Provider"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Provider"] = true
+			switch d.Next() {
+			case jx.String:
+				s, err := d.Str()
+				if err != nil {
+					return err
+				}
+				n, ok := deployment.Provider_value[s]
+				if !ok {
+					return fmt.Errorf("unknown enum value %q", s)
+				}
+				m.Provider = deployment.Provider(n)
+				return nil
+			case jx.Number:
+				n, err := d.Int32()
+				if err != nil {
+					return err
+				}
+				m.Provider = deployment.Provider(n)
+				return nil
+			case jx.Null:
+				return d.Null()
+			default:
+				return fmt.Errorf("invalid enum token %s", d.Next())
+			}
+		case "progressPct", "progress_pct":
+			if seen["ProgressPct"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["ProgressPct"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint32(d)
+			if err != nil {
+				return err
+			}
+			m.ProgressPct = v
+			return nil
+		case "startedAt", "started_at":
+			if seen["StartedAt"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["StartedAt"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.StartedAt = &timestamppb.Timestamp{}
+			if err := jxpb.DecTimestamp(d, m.StartedAt); err != nil {
+				return err
+			}
+			return nil
+		case "finishedAt", "finished_at":
+			if seen["FinishedAt"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["FinishedAt"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.FinishedAt = &timestamppb.Timestamp{}
+			if err := jxpb.DecTimestamp(d, m.FinishedAt); err != nil {
+				return err
+			}
+			return nil
+		case "duration":
+			if seen["Duration"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Duration"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Duration = &durationpb.Duration{}
+			if err := jxpb.DecDuration(d, m.Duration); err != nil {
+				return err
+			}
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *Run_Summary) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *Run_Summary) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *RunTopology) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Provider != "" {
+		e.FieldStart("provider")
+		e.Str(m.Provider)
+	}
+	if len(m.Nodes) > 0 {
+		e.FieldStart("nodes")
+		e.ArrStart()
+		for _, v := range m.Nodes {
+			v.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	e.ObjEnd()
+}
+
+func (m *RunTopology) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "provider":
+			if seen["Provider"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Provider"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Provider = v
+			return nil
+		case "nodes":
+			if seen["Nodes"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Nodes"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &RunTopology_MachineNode{}
+				if err := el.Decode(d); err != nil {
+					return err
+				}
+				m.Nodes = append(m.Nodes, el)
+				return nil
+			})
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *RunTopology) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *RunTopology) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *RunTopology_ServiceNode) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Name != "" {
+		e.FieldStart("name")
+		e.Str(m.Name)
+	}
+	if m.Image != "" {
+		e.FieldStart("image")
+		e.Str(m.Image)
+	}
+	e.ObjEnd()
+}
+
+func (m *RunTopology_ServiceNode) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "name":
+			if seen["Name"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Name"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Name = v
+			return nil
+		case "image":
+			if seen["Image"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Image"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Image = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *RunTopology_ServiceNode) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *RunTopology_ServiceNode) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *RunTopology_MachineNode) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.NodeId != "" {
+		e.FieldStart("nodeId")
+		e.Str(m.NodeId)
+	}
+	if m.Group != "" {
+		e.FieldStart("group")
+		e.Str(m.Group)
+	}
+	if m.Ip != "" {
+		e.FieldStart("ip")
+		e.Str(m.Ip)
+	}
+	if m.Status != 0 {
+		e.FieldStart("status")
+		if s, ok := common.Status_name[int32(m.Status)]; ok {
+			e.Str(s)
+		} else {
+			e.Int32(int32(m.Status))
+		}
+	}
+	if len(m.Services) > 0 {
+		e.FieldStart("services")
+		e.ArrStart()
+		for _, v := range m.Services {
+			v.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	if len(m.Labels) > 0 {
+		e.FieldStart("labels")
+		e.ObjStart()
+		for k, v := range m.Labels {
+			e.FieldStart(k)
+			e.Str(v)
+		}
+		e.ObjEnd()
+	}
+	e.ObjEnd()
+}
+
+func (m *RunTopology_MachineNode) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "nodeId", "node_id":
+			if seen["NodeId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["NodeId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.NodeId = v
+			return nil
+		case "group":
+			if seen["Group"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Group"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Group = v
+			return nil
+		case "ip":
+			if seen["Ip"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Ip"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Ip = v
+			return nil
+		case "status":
+			if seen["Status"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Status"] = true
+			switch d.Next() {
+			case jx.String:
+				s, err := d.Str()
+				if err != nil {
+					return err
+				}
+				n, ok := common.Status_value[s]
+				if !ok {
+					return fmt.Errorf("unknown enum value %q", s)
+				}
+				m.Status = common.Status(n)
+				return nil
+			case jx.Number:
+				n, err := d.Int32()
+				if err != nil {
+					return err
+				}
+				m.Status = common.Status(n)
+				return nil
+			case jx.Null:
+				return d.Null()
+			default:
+				return fmt.Errorf("invalid enum token %s", d.Next())
+			}
+		case "services":
+			if seen["Services"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Services"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &RunTopology_ServiceNode{}
+				if err := el.Decode(d); err != nil {
+					return err
+				}
+				m.Services = append(m.Services, el)
+				return nil
+			})
+		case "labels":
+			if seen["Labels"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Labels"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			if m.Labels == nil {
+				m.Labels = make(map[string]string)
+			}
+			return d.Obj(func(d *jx.Decoder, ks string) error {
+				mk := ks
+				var mv string
+				tv, err := d.Str()
+				if err != nil {
+					return err
+				}
+				mv = tv
+				m.Labels[mk] = mv
+				return nil
+			})
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *RunTopology_MachineNode) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *RunTopology_MachineNode) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *ObservabilityRefs) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.MetricsQueryKey != "" {
+		e.FieldStart("metricsQueryKey")
+		e.Str(m.MetricsQueryKey)
+	}
+	if m.LogsQueryKey != "" {
+		e.FieldStart("logsQueryKey")
+		e.Str(m.LogsQueryKey)
+	}
+	if m.GrafanaDashboardUid != "" {
+		e.FieldStart("grafanaDashboardUid")
+		e.Str(m.GrafanaDashboardUid)
+	}
+	e.ObjEnd()
+}
+
+func (m *ObservabilityRefs) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "metricsQueryKey", "metrics_query_key":
+			if seen["MetricsQueryKey"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["MetricsQueryKey"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.MetricsQueryKey = v
+			return nil
+		case "logsQueryKey", "logs_query_key":
+			if seen["LogsQueryKey"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["LogsQueryKey"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.LogsQueryKey = v
+			return nil
+		case "grafanaDashboardUid", "grafana_dashboard_uid":
+			if seen["GrafanaDashboardUid"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["GrafanaDashboardUid"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.GrafanaDashboardUid = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *ObservabilityRefs) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *ObservabilityRefs) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return m.Decode(d)
 }

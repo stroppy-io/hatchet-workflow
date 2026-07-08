@@ -16,6 +16,8 @@ import type { DeploymentPlan, DeploymentPlanJson } from "../deployment/plan_pb.t
 import { file_cloud_v1_deployment_plan } from "../deployment/plan_pb.ts";
 import type { Provider, ProviderJson } from "../deployment/provider_pb.ts";
 import { file_cloud_v1_deployment_provider } from "../deployment/provider_pb.ts";
+import type { CompiledPlan, CompiledPlanJson } from "../dsl/compiled_pb.ts";
+import { file_cloud_v1_dsl_compiled } from "../dsl/compiled_pb.ts";
 import type { Database_Kind, Database_KindJson } from "../domain/database_pb.ts";
 import { file_cloud_v1_domain_database } from "../domain/database_pb.ts";
 import type { TestRun, TestRunJson } from "../domain/test_pb.ts";
@@ -26,6 +28,8 @@ import type { RunState, RunStateJson } from "../workflow/test_pb.ts";
 import { file_cloud_v1_workflow_test } from "../workflow/test_pb.ts";
 import type { Duration, DurationJson, Timestamp, TimestampJson } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_duration, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
+import type { Baked, BakedJson } from "../../../schemapb/schema_pb.ts";
+import { file_schemapb_schema } from "../../../schemapb/schema_pb.ts";
 import { file_validate_validate } from "../../../validate/validate_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -33,7 +37,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/models/test_run.proto.
  */
 export const file_cloud_v1_models_test_run: GenFile = /*@__PURE__*/
-  fileDesc("Ch5jbG91ZC92MS9tb2RlbHMvdGVzdF9ydW4ucHJvdG8SD2Nsb3VkLnYxLm1vZGVscyKQCgoNVGVzdFJ1blJlY29yZBIxCgZlbnRpdHkYASABKAsyFy5jbG91ZC52MS5jb21tb24uRW50aXR5Qgj6QgWKAQIQARIwCgRzcGVjGAIgASgLMhguY2xvdWQudjEuZG9tYWluLlRlc3RSdW5CCPpCBYoBAhABEicKBnN0YXR1cxgDIAEoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXMSHQoMc3VpdGVfcnVuX2lkGAQgASgJQgf6QgRyAhhAEh4KDXN1aXRlX2NlbGxfaWQYDCABKAlCB/pCBHICGEASKQoHdHJpZ2dlchgHIAEoDjIYLmNsb3VkLnYxLmNvbW1vbi5UcmlnZ2VyEhgKEGluX3RlbmFudF9yYXRpbmcYCCABKAgSGAoQaW5fZ2xvYmFsX3JhdGluZxgJIAEoCBI3CgdzdW1tYXJ5GAYgASgLMiYuY2xvdWQudjEubW9kZWxzLlRlc3RSdW5SZWNvcmQuU3VtbWFyeRJGChRpbmZyYXN0cnVjdHVyZV9zdGF0ZRgKIAEoCzIoLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVTdGF0ZRI8Cg9kZXBsb3ltZW50X3BsYW4YCyABKAsyIy5jbG91ZC52MS5kZXBsb3ltZW50LkRlcGxveW1lbnRQbGFuEjIKDXJ1bnRpbWVfc3RhdGUYDSABKAsyGy5jbG91ZC52MS53b3JrZmxvdy5SdW5TdGF0ZRIaCglyZWNpcGVfaWQYDiABKAlCB/pCBHICGEASQAoPcmVjaXBlX3RvcG9sb2d5GA8gASgLMicuY2xvdWQudjEubW9kZWxzLlJlY2lwZVRvcG9sb2d5U25hcHNob3Qa+wQKB1N1bW1hcnkSLwoHZGJfa2luZBgBIAEoDjIeLmNsb3VkLnYxLmRvbWFpbi5EYXRhYmFzZS5LaW5kEh0KDGRiX3ByZXNldF9pZBgCIAEoCUIH+kIEcgIYQBIgCg5kYl9wcmVzZXRfbmFtZRgDIAEoCUII+kIFcgMY/wESIwoSd29ya2xvYWRfcHJlc2V0X2lkGAQgASgJQgf6QgRyAhhAEh8KDXdvcmtsb2FkX25hbWUYBSABKAlCCPpCBXIDGP8BEiAKD3N0cm9wcHlfdmVyc2lvbhgGIAEoCUIH+kIEcgIYQBI9ChF3b3JrbG9hZF9wcm90b2NvbBgOIAEoDjIiLmNsb3VkLnYxLmRvbWFpbi5Xb3JrbG9hZC5Qcm90b2NvbBIfCg50ZXN0X3ByZXNldF9pZBgPIAEoCUIH+kIEcgIYQBIiChB0ZXN0X3ByZXNldF9uYW1lGBAgASgJQgj6QgVyAxj/ARIgCg50b3BvbG9neV9sYWJlbBgHIAEoCUII+kIFcgMYgAESEgoKbm9kZV9jb3VudBgIIAEoDRIvCghwcm92aWRlchgJIAEoDjIdLmNsb3VkLnYxLmRlcGxveW1lbnQuUHJvdmlkZXISHQoMcHJvZ3Jlc3NfcGN0GAogASgNQgf6QgQqAhhkEi4KCnN0YXJ0ZWRfYXQYCyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC2ZpbmlzaGVkX2F0GAwgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIrCghkdXJhdGlvbhgNIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbkoECAUQBiLGAwoWUmVjaXBlVG9wb2xvZ3lTbmFwc2hvdBIQCghwcm92aWRlchgBIAEoCRJCCgVub2RlcxgCIAMoCzIzLmNsb3VkLnYxLm1vZGVscy5SZWNpcGVUb3BvbG9neVNuYXBzaG90Lk1hY2hpbmVOb2RlGioKC1NlcnZpY2VOb2RlEgwKBG5hbWUYASABKAkSDQoFaW1hZ2UYAiABKAkaqQIKC01hY2hpbmVOb2RlEg8KB25vZGVfaWQYASABKAkSDQoFZ3JvdXAYAiABKAkSCgoCaXAYAyABKAkSJwoGc3RhdHVzGAQgASgOMhcuY2xvdWQudjEuY29tbW9uLlN0YXR1cxJFCghzZXJ2aWNlcxgFIAMoCzIzLmNsb3VkLnYxLm1vZGVscy5SZWNpcGVUb3BvbG9neVNuYXBzaG90LlNlcnZpY2VOb2RlEk8KBmxhYmVscxgGIAMoCzI/LmNsb3VkLnYxLm1vZGVscy5SZWNpcGVUb3BvbG9neVNuYXBzaG90Lk1hY2hpbmVOb2RlLkxhYmVsc0VudHJ5Gi0KC0xhYmVsc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAFCRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvbW9kZWxzYgZwcm90bzM", [file_cloud_v1_common_entity, file_cloud_v1_common_status, file_cloud_v1_common_trigger, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_plan, file_cloud_v1_deployment_provider, file_cloud_v1_domain_database, file_cloud_v1_domain_test, file_cloud_v1_domain_workload, file_cloud_v1_workflow_test, file_google_protobuf_duration, file_google_protobuf_timestamp, file_validate_validate]);
+  fileDesc("Ch5jbG91ZC92MS9tb2RlbHMvdGVzdF9ydW4ucHJvdG8SD2Nsb3VkLnYxLm1vZGVscyKQCgoNVGVzdFJ1blJlY29yZBIxCgZlbnRpdHkYASABKAsyFy5jbG91ZC52MS5jb21tb24uRW50aXR5Qgj6QgWKAQIQARIwCgRzcGVjGAIgASgLMhguY2xvdWQudjEuZG9tYWluLlRlc3RSdW5CCPpCBYoBAhABEicKBnN0YXR1cxgDIAEoDjIXLmNsb3VkLnYxLmNvbW1vbi5TdGF0dXMSHQoMc3VpdGVfcnVuX2lkGAQgASgJQgf6QgRyAhhAEh4KDXN1aXRlX2NlbGxfaWQYDCABKAlCB/pCBHICGEASKQoHdHJpZ2dlchgHIAEoDjIYLmNsb3VkLnYxLmNvbW1vbi5UcmlnZ2VyEhgKEGluX3RlbmFudF9yYXRpbmcYCCABKAgSGAoQaW5fZ2xvYmFsX3JhdGluZxgJIAEoCBI3CgdzdW1tYXJ5GAYgASgLMiYuY2xvdWQudjEubW9kZWxzLlRlc3RSdW5SZWNvcmQuU3VtbWFyeRJGChRpbmZyYXN0cnVjdHVyZV9zdGF0ZRgKIAEoCzIoLmNsb3VkLnYxLmRlcGxveW1lbnQuSW5mcmFzdHJ1Y3R1cmVTdGF0ZRI8Cg9kZXBsb3ltZW50X3BsYW4YCyABKAsyIy5jbG91ZC52MS5kZXBsb3ltZW50LkRlcGxveW1lbnRQbGFuEjIKDXJ1bnRpbWVfc3RhdGUYDSABKAsyGy5jbG91ZC52MS53b3JrZmxvdy5SdW5TdGF0ZRIaCglyZWNpcGVfaWQYDiABKAlCB/pCBHICGEASQAoPcmVjaXBlX3RvcG9sb2d5GA8gASgLMicuY2xvdWQudjEubW9kZWxzLlJlY2lwZVRvcG9sb2d5U25hcHNob3Qa+wQKB1N1bW1hcnkSLwoHZGJfa2luZBgBIAEoDjIeLmNsb3VkLnYxLmRvbWFpbi5EYXRhYmFzZS5LaW5kEh0KDGRiX3ByZXNldF9pZBgCIAEoCUIH+kIEcgIYQBIgCg5kYl9wcmVzZXRfbmFtZRgDIAEoCUII+kIFcgMY/wESIwoSd29ya2xvYWRfcHJlc2V0X2lkGAQgASgJQgf6QgRyAhhAEh8KDXdvcmtsb2FkX25hbWUYBSABKAlCCPpCBXIDGP8BEiAKD3N0cm9wcHlfdmVyc2lvbhgGIAEoCUIH+kIEcgIYQBI9ChF3b3JrbG9hZF9wcm90b2NvbBgOIAEoDjIiLmNsb3VkLnYxLmRvbWFpbi5Xb3JrbG9hZC5Qcm90b2NvbBIfCg50ZXN0X3ByZXNldF9pZBgPIAEoCUIH+kIEcgIYQBIiChB0ZXN0X3ByZXNldF9uYW1lGBAgASgJQgj6QgVyAxj/ARIgCg50b3BvbG9neV9sYWJlbBgHIAEoCUII+kIFcgMYgAESEgoKbm9kZV9jb3VudBgIIAEoDRIvCghwcm92aWRlchgJIAEoDjIdLmNsb3VkLnYxLmRlcGxveW1lbnQuUHJvdmlkZXISHQoMcHJvZ3Jlc3NfcGN0GAogASgNQgf6QgQqAhhkEi4KCnN0YXJ0ZWRfYXQYCyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC2ZpbmlzaGVkX2F0GAwgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIrCghkdXJhdGlvbhgNIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbkoECAUQBiLGAwoWUmVjaXBlVG9wb2xvZ3lTbmFwc2hvdBIQCghwcm92aWRlchgBIAEoCRJCCgVub2RlcxgCIAMoCzIzLmNsb3VkLnYxLm1vZGVscy5SZWNpcGVUb3BvbG9neVNuYXBzaG90Lk1hY2hpbmVOb2RlGioKC1NlcnZpY2VOb2RlEgwKBG5hbWUYASABKAkSDQoFaW1hZ2UYAiABKAkaqQIKC01hY2hpbmVOb2RlEg8KB25vZGVfaWQYASABKAkSDQoFZ3JvdXAYAiABKAkSCgoCaXAYAyABKAkSJwoGc3RhdHVzGAQgASgOMhcuY2xvdWQudjEuY29tbW9uLlN0YXR1cxJFCghzZXJ2aWNlcxgFIAMoCzIzLmNsb3VkLnYxLm1vZGVscy5SZWNpcGVUb3BvbG9neVNuYXBzaG90LlNlcnZpY2VOb2RlEk8KBmxhYmVscxgGIAMoCzI/LmNsb3VkLnYxLm1vZGVscy5SZWNpcGVUb3BvbG9neVNuYXBzaG90Lk1hY2hpbmVOb2RlLkxhYmVsc0VudHJ5Gi0KC0xhYmVsc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEipgkKA1J1bhIxCgZlbnRpdHkYASABKAsyFy5jbG91ZC52MS5jb21tb24uRW50aXR5Qgj6QgWKAQIQARInCgZzdGF0dXMYAiABKA4yFy5jbG91ZC52MS5jb21tb24uU3RhdHVzEikKB3RyaWdnZXIYAyABKA4yGC5jbG91ZC52MS5jb21tb24uVHJpZ2dlchIcCgt3b3JrZmxvd19pZBgEIAEoCUIH+kIEcgIYQBIhChB3b3JrZmxvd192ZXJzaW9uGAUgASgJQgf6QgRyAhggEh4KBWJha2VkGAYgASgLMg8uc2NoZW1hcGIuQmFrZWQSMQoNY29tcGlsZWRfcGxhbhgHIAEoCzIaLmNsb3VkLnYxLmRzbC5Db21waWxlZFBsYW4SLgoIdG9wb2xvZ3kYCCABKAsyHC5jbG91ZC52MS5tb2RlbHMuUnVuVG9wb2xvZ3kSMgoNcnVudGltZV9zdGF0ZRgJIAEoCzIbLmNsb3VkLnYxLndvcmtmbG93LlJ1blN0YXRlEjkKDW9ic2VydmFiaWxpdHkYCiABKAsyIi5jbG91ZC52MS5tb2RlbHMuT2JzZXJ2YWJpbGl0eVJlZnMSGAoQaW5fdGVuYW50X3JhdGluZxgLIAEoCBIYChBpbl9nbG9iYWxfcmF0aW5nGAwgASgIEi0KB3N1bW1hcnkYDSABKAsyHC5jbG91ZC52MS5tb2RlbHMuUnVuLlN1bW1hcnka+wQKB1N1bW1hcnkSLwoHZGJfa2luZBgBIAEoDjIeLmNsb3VkLnYxLmRvbWFpbi5EYXRhYmFzZS5LaW5kEh0KDGRiX3ByZXNldF9pZBgCIAEoCUIH+kIEcgIYQBIgCg5kYl9wcmVzZXRfbmFtZRgDIAEoCUII+kIFcgMY/wESIwoSd29ya2xvYWRfcHJlc2V0X2lkGAQgASgJQgf6QgRyAhhAEh8KDXdvcmtsb2FkX25hbWUYBSABKAlCCPpCBXIDGP8BEiAKD3N0cm9wcHlfdmVyc2lvbhgGIAEoCUIH+kIEcgIYQBI9ChF3b3JrbG9hZF9wcm90b2NvbBgOIAEoDjIiLmNsb3VkLnYxLmRvbWFpbi5Xb3JrbG9hZC5Qcm90b2NvbBIfCg50ZXN0X3ByZXNldF9pZBgPIAEoCUIH+kIEcgIYQBIiChB0ZXN0X3ByZXNldF9uYW1lGBAgASgJQgj6QgVyAxj/ARIgCg50b3BvbG9neV9sYWJlbBgHIAEoCUII+kIFcgMYgAESEgoKbm9kZV9jb3VudBgIIAEoDRIvCghwcm92aWRlchgJIAEoDjIdLmNsb3VkLnYxLmRlcGxveW1lbnQuUHJvdmlkZXISHQoMcHJvZ3Jlc3NfcGN0GAogASgNQgf6QgQqAhhkEi4KCnN0YXJ0ZWRfYXQYCyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC2ZpbmlzaGVkX2F0GAwgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIrCghkdXJhdGlvbhgNIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbkoECA4QFSKaAwoLUnVuVG9wb2xvZ3kSEAoIcHJvdmlkZXIYASABKAkSNwoFbm9kZXMYAiADKAsyKC5jbG91ZC52MS5tb2RlbHMuUnVuVG9wb2xvZ3kuTWFjaGluZU5vZGUaKgoLU2VydmljZU5vZGUSDAoEbmFtZRgBIAEoCRINCgVpbWFnZRgCIAEoCRqTAgoLTWFjaGluZU5vZGUSDwoHbm9kZV9pZBgBIAEoCRINCgVncm91cBgCIAEoCRIKCgJpcBgDIAEoCRInCgZzdGF0dXMYBCABKA4yFy5jbG91ZC52MS5jb21tb24uU3RhdHVzEjoKCHNlcnZpY2VzGAUgAygLMiguY2xvdWQudjEubW9kZWxzLlJ1blRvcG9sb2d5LlNlcnZpY2VOb2RlEkQKBmxhYmVscxgGIAMoCzI0LmNsb3VkLnYxLm1vZGVscy5SdW5Ub3BvbG9neS5NYWNoaW5lTm9kZS5MYWJlbHNFbnRyeRotCgtMYWJlbHNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBImUKEU9ic2VydmFiaWxpdHlSZWZzEhkKEW1ldHJpY3NfcXVlcnlfa2V5GAEgASgJEhYKDmxvZ3NfcXVlcnlfa2V5GAIgASgJEh0KFWdyYWZhbmFfZGFzaGJvYXJkX3VpZBgDIAEoCUJEWkJnaXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9tb2RlbHNiBnByb3RvMw", [file_cloud_v1_common_entity, file_cloud_v1_common_status, file_cloud_v1_common_trigger, file_cloud_v1_deployment_infrastructure, file_cloud_v1_deployment_plan, file_cloud_v1_deployment_provider, file_cloud_v1_dsl_compiled, file_cloud_v1_domain_database, file_cloud_v1_domain_test, file_cloud_v1_domain_workload, file_cloud_v1_workflow_test, file_google_protobuf_duration, file_google_protobuf_timestamp, file_schemapb_schema, file_validate_validate]);
 
 /**
  *
@@ -929,4 +933,632 @@ export type RecipeTopologySnapshot_MachineNodeValid = RecipeTopologySnapshot_Mac
  */
 export const RecipeTopologySnapshot_MachineNodeSchema: GenMessage<RecipeTopologySnapshot_MachineNode, {jsonType: RecipeTopologySnapshot_MachineNodeJson, validType: RecipeTopologySnapshot_MachineNodeValid}> = /*@__PURE__*/
   messageDesc(file_cloud_v1_models_test_run, 1, 1);
+
+/**
+ *
+ * Run is a persisted recipe run (RunRecipeWorkflow's only live path — see
+ * package doc). Replaces TestRunRecord (above): every field here is
+ * something RunRecipeWorkflow actually produces (compile -> CompiledPlan +
+ * Baked identity; provision -> topology; execute -> per-job status via
+ * workflow.RunState; always -> observability refs), unlike TestRunRecord
+ * whose spec/infrastructure_state/deployment_plan fields a recipe run
+ * always leaves empty (see TestRunRecord's doc and StartRun's own comment).
+ *
+ * @generated from message cloud.v1.models.Run
+ */
+export type Run = Message<"cloud.v1.models.Run"> & {
+  /**
+   * @generated from field: cloud.v1.common.Entity entity = 1;
+   */
+  entity?: Entity;
+
+  /**
+   * @generated from field: cloud.v1.common.Status status = 2;
+   */
+  status: Status;
+
+  /**
+   * @generated from field: cloud.v1.common.Trigger trigger = 3;
+   */
+  trigger: Trigger;
+
+  /**
+   * workflow_id is the originating models.RecipeRecord.entity.id (ex
+   * recipe_id) that StartRun launched this run from. Stamped once, never
+   * changed. Reserves the name for SP-B's catalog Workflow — until then,
+   * its value is exactly what recipe_id carries on TestRunRecord today.
+   *
+   * @generated from field: string workflow_id = 4;
+   */
+  workflowId: string;
+
+  /**
+   * workflow_version identifies the bundle version at launch time:
+   * strconv.FormatUint(RecipeRecord.version, 10) (see recipe.go StartRun).
+   *
+   * @generated from field: string workflow_version = 5;
+   */
+  workflowVersion: string;
+
+  /**
+   * baked is the sealed launch-form snapshot (SP-A's schemapb.Bake
+   * output). nil until SP-D's generated-form launch path exists.
+   *
+   * @generated from field: schemapb.Baked baked = 6;
+   */
+  baked?: Baked;
+
+  /**
+   * compiled_plan is the compiled DSL plan RunRecipeWorkflow executed.
+   * NEW relative to TestRunRecord: today the plan lives only in workflow
+   * memory and is never persisted; see persistRunCompiledPlan (Task 3).
+   *
+   * @generated from field: cloud.v1.dsl.CompiledPlan compiled_plan = 7;
+   */
+  compiledPlan?: CompiledPlan;
+
+  /**
+   * topology is the provisioned-machine snapshot (renamed
+   * RecipeTopologySnapshot -> RunTopology, see below).
+   *
+   * @generated from field: cloud.v1.models.RunTopology topology = 8;
+   */
+  topology?: RunTopology;
+
+  /**
+   * runtime_state is the last workflow.RunState RunRecipeWorkflow
+   * persisted (unchanged type/semantics from TestRunRecord.runtime_state).
+   *
+   * @generated from field: cloud.v1.workflow.RunState runtime_state = 9;
+   */
+  runtimeState?: RunState;
+
+  /**
+   * @generated from field: cloud.v1.models.ObservabilityRefs observability = 10;
+   */
+  observability?: ObservabilityRefs;
+
+  /**
+   * @generated from field: bool in_tenant_rating = 11;
+   */
+  inTenantRating: boolean;
+
+  /**
+   * @generated from field: bool in_global_rating = 12;
+   */
+  inGlobalRating: boolean;
+
+  /**
+   * summary: same 15 fields as TestRunRecord.Summary (denormalized,
+   * queryable facets for the runs table). See Run.Summary below.
+   *
+   * @generated from field: cloud.v1.models.Run.Summary summary = 13;
+   */
+  summary?: Run_Summary;
+};
+
+/**
+ *
+ * Run is a persisted recipe run (RunRecipeWorkflow's only live path — see
+ * package doc). Replaces TestRunRecord (above): every field here is
+ * something RunRecipeWorkflow actually produces (compile -> CompiledPlan +
+ * Baked identity; provision -> topology; execute -> per-job status via
+ * workflow.RunState; always -> observability refs), unlike TestRunRecord
+ * whose spec/infrastructure_state/deployment_plan fields a recipe run
+ * always leaves empty (see TestRunRecord's doc and StartRun's own comment).
+ *
+ * @generated from message cloud.v1.models.Run
+ */
+export type RunJson = {
+  /**
+   * @generated from field: cloud.v1.common.Entity entity = 1;
+   */
+  entity?: EntityJson;
+
+  /**
+   * @generated from field: cloud.v1.common.Status status = 2;
+   */
+  status?: StatusJson;
+
+  /**
+   * @generated from field: cloud.v1.common.Trigger trigger = 3;
+   */
+  trigger?: TriggerJson;
+
+  /**
+   * workflow_id is the originating models.RecipeRecord.entity.id (ex
+   * recipe_id) that StartRun launched this run from. Stamped once, never
+   * changed. Reserves the name for SP-B's catalog Workflow — until then,
+   * its value is exactly what recipe_id carries on TestRunRecord today.
+   *
+   * @generated from field: string workflow_id = 4;
+   */
+  workflowId?: string;
+
+  /**
+   * workflow_version identifies the bundle version at launch time:
+   * strconv.FormatUint(RecipeRecord.version, 10) (see recipe.go StartRun).
+   *
+   * @generated from field: string workflow_version = 5;
+   */
+  workflowVersion?: string;
+
+  /**
+   * baked is the sealed launch-form snapshot (SP-A's schemapb.Bake
+   * output). nil until SP-D's generated-form launch path exists.
+   *
+   * @generated from field: schemapb.Baked baked = 6;
+   */
+  baked?: BakedJson;
+
+  /**
+   * compiled_plan is the compiled DSL plan RunRecipeWorkflow executed.
+   * NEW relative to TestRunRecord: today the plan lives only in workflow
+   * memory and is never persisted; see persistRunCompiledPlan (Task 3).
+   *
+   * @generated from field: cloud.v1.dsl.CompiledPlan compiled_plan = 7;
+   */
+  compiledPlan?: CompiledPlanJson;
+
+  /**
+   * topology is the provisioned-machine snapshot (renamed
+   * RecipeTopologySnapshot -> RunTopology, see below).
+   *
+   * @generated from field: cloud.v1.models.RunTopology topology = 8;
+   */
+  topology?: RunTopologyJson;
+
+  /**
+   * runtime_state is the last workflow.RunState RunRecipeWorkflow
+   * persisted (unchanged type/semantics from TestRunRecord.runtime_state).
+   *
+   * @generated from field: cloud.v1.workflow.RunState runtime_state = 9;
+   */
+  runtimeState?: RunStateJson;
+
+  /**
+   * @generated from field: cloud.v1.models.ObservabilityRefs observability = 10;
+   */
+  observability?: ObservabilityRefsJson;
+
+  /**
+   * @generated from field: bool in_tenant_rating = 11;
+   */
+  inTenantRating?: boolean;
+
+  /**
+   * @generated from field: bool in_global_rating = 12;
+   */
+  inGlobalRating?: boolean;
+
+  /**
+   * summary: same 15 fields as TestRunRecord.Summary (denormalized,
+   * queryable facets for the runs table). See Run.Summary below.
+   *
+   * @generated from field: cloud.v1.models.Run.Summary summary = 13;
+   */
+  summary?: Run_SummaryJson;
+};
+
+export type RunValid = Run;
+
+/**
+ * Describes the message cloud.v1.models.Run.
+ * Use `create(RunSchema)` to create a new message.
+ */
+export const RunSchema: GenMessage<Run, {jsonType: RunJson, validType: RunValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_models_test_run, 2);
+
+/**
+ * @generated from message cloud.v1.models.Run.Summary
+ */
+export type Run_Summary = Message<"cloud.v1.models.Run.Summary"> & {
+  /**
+   * @generated from field: cloud.v1.domain.Database.Kind db_kind = 1;
+   */
+  dbKind: Database_Kind;
+
+  /**
+   * @generated from field: string db_preset_id = 2;
+   */
+  dbPresetId: string;
+
+  /**
+   * @generated from field: string db_preset_name = 3;
+   */
+  dbPresetName: string;
+
+  /**
+   * @generated from field: string workload_preset_id = 4;
+   */
+  workloadPresetId: string;
+
+  /**
+   * @generated from field: string workload_name = 5;
+   */
+  workloadName: string;
+
+  /**
+   * @generated from field: string stroppy_version = 6;
+   */
+  stroppyVersion: string;
+
+  /**
+   * @generated from field: cloud.v1.domain.Workload.Protocol workload_protocol = 14;
+   */
+  workloadProtocol: Workload_Protocol;
+
+  /**
+   * @generated from field: string test_preset_id = 15;
+   */
+  testPresetId: string;
+
+  /**
+   * @generated from field: string test_preset_name = 16;
+   */
+  testPresetName: string;
+
+  /**
+   * @generated from field: string topology_label = 7;
+   */
+  topologyLabel: string;
+
+  /**
+   * @generated from field: uint32 node_count = 8;
+   */
+  nodeCount: number;
+
+  /**
+   * @generated from field: cloud.v1.deployment.Provider provider = 9;
+   */
+  provider: Provider;
+
+  /**
+   * @generated from field: uint32 progress_pct = 10;
+   */
+  progressPct: number;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp started_at = 11;
+   */
+  startedAt?: Timestamp;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp finished_at = 12;
+   */
+  finishedAt?: Timestamp;
+
+  /**
+   * @generated from field: google.protobuf.Duration duration = 13;
+   */
+  duration?: Duration;
+};
+
+/**
+ * @generated from message cloud.v1.models.Run.Summary
+ */
+export type Run_SummaryJson = {
+  /**
+   * @generated from field: cloud.v1.domain.Database.Kind db_kind = 1;
+   */
+  dbKind?: Database_KindJson;
+
+  /**
+   * @generated from field: string db_preset_id = 2;
+   */
+  dbPresetId?: string;
+
+  /**
+   * @generated from field: string db_preset_name = 3;
+   */
+  dbPresetName?: string;
+
+  /**
+   * @generated from field: string workload_preset_id = 4;
+   */
+  workloadPresetId?: string;
+
+  /**
+   * @generated from field: string workload_name = 5;
+   */
+  workloadName?: string;
+
+  /**
+   * @generated from field: string stroppy_version = 6;
+   */
+  stroppyVersion?: string;
+
+  /**
+   * @generated from field: cloud.v1.domain.Workload.Protocol workload_protocol = 14;
+   */
+  workloadProtocol?: Workload_ProtocolJson;
+
+  /**
+   * @generated from field: string test_preset_id = 15;
+   */
+  testPresetId?: string;
+
+  /**
+   * @generated from field: string test_preset_name = 16;
+   */
+  testPresetName?: string;
+
+  /**
+   * @generated from field: string topology_label = 7;
+   */
+  topologyLabel?: string;
+
+  /**
+   * @generated from field: uint32 node_count = 8;
+   */
+  nodeCount?: number;
+
+  /**
+   * @generated from field: cloud.v1.deployment.Provider provider = 9;
+   */
+  provider?: ProviderJson;
+
+  /**
+   * @generated from field: uint32 progress_pct = 10;
+   */
+  progressPct?: number;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp started_at = 11;
+   */
+  startedAt?: TimestampJson;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp finished_at = 12;
+   */
+  finishedAt?: TimestampJson;
+
+  /**
+   * @generated from field: google.protobuf.Duration duration = 13;
+   */
+  duration?: DurationJson;
+};
+
+export type Run_SummaryValid = Run_Summary;
+
+/**
+ * Describes the message cloud.v1.models.Run.Summary.
+ * Use `create(Run_SummarySchema)` to create a new message.
+ */
+export const Run_SummarySchema: GenMessage<Run_Summary, {jsonType: Run_SummaryJson, validType: Run_SummaryValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_models_test_run, 2, 0);
+
+/**
+ *
+ * RunTopology replaces RecipeTopologySnapshot (see that message's doc,
+ * above) — same shape, generalized name: every live run is now a
+ * recipe/workflow run, so the "Recipe" prefix no longer distinguishes
+ * anything.
+ *
+ * @generated from message cloud.v1.models.RunTopology
+ */
+export type RunTopology = Message<"cloud.v1.models.RunTopology"> & {
+  /**
+   * @generated from field: string provider = 1;
+   */
+  provider: string;
+
+  /**
+   * @generated from field: repeated cloud.v1.models.RunTopology.MachineNode nodes = 2;
+   */
+  nodes: RunTopology_MachineNode[];
+};
+
+/**
+ *
+ * RunTopology replaces RecipeTopologySnapshot (see that message's doc,
+ * above) — same shape, generalized name: every live run is now a
+ * recipe/workflow run, so the "Recipe" prefix no longer distinguishes
+ * anything.
+ *
+ * @generated from message cloud.v1.models.RunTopology
+ */
+export type RunTopologyJson = {
+  /**
+   * @generated from field: string provider = 1;
+   */
+  provider?: string;
+
+  /**
+   * @generated from field: repeated cloud.v1.models.RunTopology.MachineNode nodes = 2;
+   */
+  nodes?: RunTopology_MachineNodeJson[];
+};
+
+export type RunTopologyValid = RunTopology;
+
+/**
+ * Describes the message cloud.v1.models.RunTopology.
+ * Use `create(RunTopologySchema)` to create a new message.
+ */
+export const RunTopologySchema: GenMessage<RunTopology, {jsonType: RunTopologyJson, validType: RunTopologyValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_models_test_run, 3);
+
+/**
+ * @generated from message cloud.v1.models.RunTopology.ServiceNode
+ */
+export type RunTopology_ServiceNode = Message<"cloud.v1.models.RunTopology.ServiceNode"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string image = 2;
+   */
+  image: string;
+};
+
+/**
+ * @generated from message cloud.v1.models.RunTopology.ServiceNode
+ */
+export type RunTopology_ServiceNodeJson = {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name?: string;
+
+  /**
+   * @generated from field: string image = 2;
+   */
+  image?: string;
+};
+
+export type RunTopology_ServiceNodeValid = RunTopology_ServiceNode;
+
+/**
+ * Describes the message cloud.v1.models.RunTopology.ServiceNode.
+ * Use `create(RunTopology_ServiceNodeSchema)` to create a new message.
+ */
+export const RunTopology_ServiceNodeSchema: GenMessage<RunTopology_ServiceNode, {jsonType: RunTopology_ServiceNodeJson, validType: RunTopology_ServiceNodeValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_models_test_run, 3, 0);
+
+/**
+ * @generated from message cloud.v1.models.RunTopology.MachineNode
+ */
+export type RunTopology_MachineNode = Message<"cloud.v1.models.RunTopology.MachineNode"> & {
+  /**
+   * @generated from field: string node_id = 1;
+   */
+  nodeId: string;
+
+  /**
+   * @generated from field: string group = 2;
+   */
+  group: string;
+
+  /**
+   * @generated from field: string ip = 3;
+   */
+  ip: string;
+
+  /**
+   * @generated from field: cloud.v1.common.Status status = 4;
+   */
+  status: Status;
+
+  /**
+   * @generated from field: repeated cloud.v1.models.RunTopology.ServiceNode services = 5;
+   */
+  services: RunTopology_ServiceNode[];
+
+  /**
+   * @generated from field: map<string, string> labels = 6;
+   */
+  labels: { [key: string]: string };
+};
+
+/**
+ * @generated from message cloud.v1.models.RunTopology.MachineNode
+ */
+export type RunTopology_MachineNodeJson = {
+  /**
+   * @generated from field: string node_id = 1;
+   */
+  nodeId?: string;
+
+  /**
+   * @generated from field: string group = 2;
+   */
+  group?: string;
+
+  /**
+   * @generated from field: string ip = 3;
+   */
+  ip?: string;
+
+  /**
+   * @generated from field: cloud.v1.common.Status status = 4;
+   */
+  status?: StatusJson;
+
+  /**
+   * @generated from field: repeated cloud.v1.models.RunTopology.ServiceNode services = 5;
+   */
+  services?: RunTopology_ServiceNodeJson[];
+
+  /**
+   * @generated from field: map<string, string> labels = 6;
+   */
+  labels?: { [key: string]: string };
+};
+
+export type RunTopology_MachineNodeValid = RunTopology_MachineNode;
+
+/**
+ * Describes the message cloud.v1.models.RunTopology.MachineNode.
+ * Use `create(RunTopology_MachineNodeSchema)` to create a new message.
+ */
+export const RunTopology_MachineNodeSchema: GenMessage<RunTopology_MachineNode, {jsonType: RunTopology_MachineNodeJson, validType: RunTopology_MachineNodeValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_models_test_run, 3, 1);
+
+/**
+ *
+ * ObservabilityRefs makes the "runtime observations keyed by run id"
+ * convention (see logs.proto/metrics.proto doc comments) an explicit
+ * contract on Run instead of an implicit one on TestRunRecord. v1: every
+ * field is filled with entity.id (metrics/logs) or the relay's existing
+ * hardcoded uid (grafana) at mint time (Task 3) — SP-F gives these real
+ * per-provider variance.
+ *
+ * @generated from message cloud.v1.models.ObservabilityRefs
+ */
+export type ObservabilityRefs = Message<"cloud.v1.models.ObservabilityRefs"> & {
+  /**
+   * @generated from field: string metrics_query_key = 1;
+   */
+  metricsQueryKey: string;
+
+  /**
+   * @generated from field: string logs_query_key = 2;
+   */
+  logsQueryKey: string;
+
+  /**
+   * @generated from field: string grafana_dashboard_uid = 3;
+   */
+  grafanaDashboardUid: string;
+};
+
+/**
+ *
+ * ObservabilityRefs makes the "runtime observations keyed by run id"
+ * convention (see logs.proto/metrics.proto doc comments) an explicit
+ * contract on Run instead of an implicit one on TestRunRecord. v1: every
+ * field is filled with entity.id (metrics/logs) or the relay's existing
+ * hardcoded uid (grafana) at mint time (Task 3) — SP-F gives these real
+ * per-provider variance.
+ *
+ * @generated from message cloud.v1.models.ObservabilityRefs
+ */
+export type ObservabilityRefsJson = {
+  /**
+   * @generated from field: string metrics_query_key = 1;
+   */
+  metricsQueryKey?: string;
+
+  /**
+   * @generated from field: string logs_query_key = 2;
+   */
+  logsQueryKey?: string;
+
+  /**
+   * @generated from field: string grafana_dashboard_uid = 3;
+   */
+  grafanaDashboardUid?: string;
+};
+
+export type ObservabilityRefsValid = ObservabilityRefs;
+
+/**
+ * Describes the message cloud.v1.models.ObservabilityRefs.
+ * Use `create(ObservabilityRefsSchema)` to create a new message.
+ */
+export const ObservabilityRefsSchema: GenMessage<ObservabilityRefs, {jsonType: ObservabilityRefsJson, validType: ObservabilityRefsValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_models_test_run, 4);
 

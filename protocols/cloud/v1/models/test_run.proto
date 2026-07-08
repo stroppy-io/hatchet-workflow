@@ -8,12 +8,14 @@ import "cloud/v1/common/trigger.proto";
 import "cloud/v1/deployment/infrastructure.proto";
 import "cloud/v1/deployment/plan.proto";
 import "cloud/v1/deployment/provider.proto";
+import "cloud/v1/dsl/compiled.proto";
 import "cloud/v1/domain/database.proto";
 import "cloud/v1/domain/test.proto";
 import "cloud/v1/domain/workload.proto";
 import "cloud/v1/workflow/test.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
+import "schemapb/schema.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models";
@@ -269,4 +271,110 @@ message RecipeTopologySnapshot {
     // nodes is every provisioned machine, sorted by (group, node_id) for a
     // deterministic projection.
     repeated MachineNode nodes = 2;
+}
+
+/*
+    Run is a persisted recipe run (RunRecipeWorkflow's only live path — see
+    package doc). Replaces TestRunRecord (above): every field here is
+    something RunRecipeWorkflow actually produces (compile -> CompiledPlan +
+    Baked identity; provision -> topology; execute -> per-job status via
+    workflow.RunState; always -> observability refs), unlike TestRunRecord
+    whose spec/infrastructure_state/deployment_plan fields a recipe run
+    always leaves empty (see TestRunRecord's doc and StartRun's own comment).
+ */
+message Run {
+    common.Entity entity = 1 [(validate.rules).message.required = true];
+    common.Status status = 2;
+    common.Trigger trigger = 3;
+
+    // workflow_id is the originating models.RecipeRecord.entity.id (ex
+    // recipe_id) that StartRun launched this run from. Stamped once, never
+    // changed. Reserves the name for SP-B's catalog Workflow — until then,
+    // its value is exactly what recipe_id carries on TestRunRecord today.
+    string workflow_id = 4 [(validate.rules).string.max_len = 64];
+    // workflow_version identifies the bundle version at launch time:
+    // strconv.FormatUint(RecipeRecord.version, 10) (see recipe.go StartRun).
+    string workflow_version = 5 [(validate.rules).string.max_len = 32];
+    // baked is the sealed launch-form snapshot (SP-A's schemapb.Bake
+    // output). nil until SP-D's generated-form launch path exists.
+    schemapb.Baked baked = 6;
+    // compiled_plan is the compiled DSL plan RunRecipeWorkflow executed.
+    // NEW relative to TestRunRecord: today the plan lives only in workflow
+    // memory and is never persisted; see persistRunCompiledPlan (Task 3).
+    dsl.CompiledPlan compiled_plan = 7;
+
+    // topology is the provisioned-machine snapshot (renamed
+    // RecipeTopologySnapshot -> RunTopology, see below).
+    RunTopology topology = 8;
+
+    // runtime_state is the last workflow.RunState RunRecipeWorkflow
+    // persisted (unchanged type/semantics from TestRunRecord.runtime_state).
+    workflow.RunState runtime_state = 9;
+
+    ObservabilityRefs observability = 10;
+
+    bool in_tenant_rating = 11;
+    bool in_global_rating = 12;
+
+    // summary: same 15 fields as TestRunRecord.Summary (denormalized,
+    // queryable facets for the runs table). See Run.Summary below.
+    Summary summary = 13;
+
+    reserved 14 to 20; // headroom, mirrors TestRunRecord's own reserved-field discipline.
+
+    message Summary {
+        domain.Database.Kind db_kind = 1;
+        string db_preset_id = 2 [(validate.rules).string.max_len = 64];
+        string db_preset_name = 3 [(validate.rules).string.max_len = 255];
+        string workload_preset_id = 4 [(validate.rules).string.max_len = 64];
+        string workload_name = 5 [(validate.rules).string.max_len = 255];
+        string stroppy_version = 6 [(validate.rules).string.max_len = 64];
+        domain.Workload.Protocol workload_protocol = 14;
+        string test_preset_id = 15 [(validate.rules).string.max_len = 64];
+        string test_preset_name = 16 [(validate.rules).string.max_len = 255];
+        string topology_label = 7 [(validate.rules).string.max_len = 128];
+        uint32 node_count = 8;
+        deployment.Provider provider = 9;
+        uint32 progress_pct = 10 [(validate.rules).uint32.lte = 100];
+        google.protobuf.Timestamp started_at = 11;
+        google.protobuf.Timestamp finished_at = 12;
+        google.protobuf.Duration duration = 13;
+    }
+}
+
+/*
+    RunTopology replaces RecipeTopologySnapshot (see that message's doc,
+    above) — same shape, generalized name: every live run is now a
+    recipe/workflow run, so the "Recipe" prefix no longer distinguishes
+    anything.
+ */
+message RunTopology {
+    message ServiceNode {
+        string name = 1;
+        string image = 2;
+    }
+    message MachineNode {
+        string node_id = 1;
+        string group = 2;
+        string ip = 3;
+        common.Status status = 4;
+        repeated ServiceNode services = 5;
+        map<string, string> labels = 6;
+    }
+    string provider = 1;
+    repeated MachineNode nodes = 2;
+}
+
+/*
+    ObservabilityRefs makes the "runtime observations keyed by run id"
+    convention (see logs.proto/metrics.proto doc comments) an explicit
+    contract on Run instead of an implicit one on TestRunRecord. v1: every
+    field is filled with entity.id (metrics/logs) or the relay's existing
+    hardcoded uid (grafana) at mint time (Task 3) — SP-F gives these real
+    per-provider variance.
+ */
+message ObservabilityRefs {
+    string metrics_query_key = 1;
+    string logs_query_key = 2;
+    string grafana_dashboard_uid = 3;
 }
