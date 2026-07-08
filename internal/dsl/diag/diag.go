@@ -4,7 +4,10 @@
 // recipe bundle can be reported at once.
 package diag
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // Severity classifies a Diagnostic.
 type Severity int
@@ -40,6 +43,14 @@ func (l *List) Errorf(path string, pos Pos, format string, args ...any) {
 	l.Add(Diagnostic{Severity: Error, Path: path, Pos: pos, Message: fmt.Sprintf(format, args...)})
 }
 
+// Warnf appends a Warning-severity diagnostic built from a format string.
+// Warnings never fail compilation (see HasErrors); use them for best-effort
+// derivations that degrade gracefully instead of failing outright (e.g. a
+// terraform validation condition that couldn't be translated to CEL).
+func (l *List) Warnf(path string, pos Pos, format string, args ...any) {
+	l.Add(Diagnostic{Severity: Warning, Path: path, Pos: pos, Message: fmt.Sprintf(format, args...)})
+}
+
 // HasErrors reports whether the list contains at least one Error-severity
 // diagnostic.
 func (l List) HasErrors() bool {
@@ -49,4 +60,26 @@ func (l List) HasErrors() bool {
 		}
 	}
 	return false
+}
+
+// String renders the list as a human-readable, one-diagnostic-per-line
+// summary (e.g. "error: variables.tf:3:5: bad field \"cpu\""), primarily so
+// tests can pass it as a require.False failure message:
+// require.False(t, diags.HasErrors(), diags.String()).
+func (l List) String() string {
+	if len(l) == 0 {
+		return ""
+	}
+	var sb strings.Builder
+	for i, d := range l {
+		if i > 0 {
+			sb.WriteByte('\n')
+		}
+		sev := "error"
+		if d.Severity == Warning {
+			sev = "warning"
+		}
+		fmt.Fprintf(&sb, "%s: %s:%d:%d: %s", sev, d.Path, d.Pos.Line, d.Pos.Col, d.Message)
+	}
+	return sb.String()
 }
