@@ -45,6 +45,7 @@ func serveCmd() *cobra.Command {
 				GrafanaBackend:       os.Getenv("GRAFANA_BACKEND"),
 				RegistryBackend:      env("STROPPY_REGISTRY_BACKEND", "http://registry:5000"),
 				PackageBlobDir:       env("STROPPY_PACKAGE_DIR", "/var/lib/stroppy-cache/packages"),
+				CatalogBundleDir:     env("STROPPY_CATALOG_BUNDLE_DIR", "/var/lib/stroppy-cache/catalog-bundles"),
 				AdminEmail:           env("STROPPY_ADMIN_EMAIL", "admin@stroppy.local"),
 				AdminPassword:        os.Getenv("STROPPY_ADMIN_PASSWORD"),
 			}

@@ -221,13 +221,23 @@ export async function checkStoredRecipe(
   return diagnostics.map(diagnosticToVM);
 }
 
-// --- DslService: stateless check / schema (no tenant, no persistence) ------
+// --- DslService: stateless check / schema (no persistence) -----------------
+//
+// tenantSlug is OPTIONAL on Check/Preview (unlike every RecipeService
+// function above, which requires one): DslService.Check/Preview fall back to
+// resolving provider.use against the bundle's own providers/<name>/
+// subtree when no tenant_id is sent (see CheckRequest.tenant_id's proto
+// doc) — the SP-B org-catalog provider resolver only engages when a caller
+// supplies one. Passing it through here lets provider.use also resolve
+// catalog-managed providers by slug from the live editor.
 
 /** DslService.Check — check-mode compile of an in-memory (not-yet-saved) bundle. */
 export async function checkBundle(
   files: Record<string, string>,
+  tenantSlug?: string,
 ): Promise<DiagnosticVM[]> {
-  const { diagnostics } = await dslClient.check({ files: encodeFiles(files) });
+  const tenantId = tenantSlug ? await resolveTenantId(tenantSlug) : undefined;
+  const { diagnostics } = await dslClient.check({ files: encodeFiles(files), tenantId });
   return diagnostics.map(diagnosticToVM);
 }
 
@@ -273,8 +283,12 @@ function planToVM(plan: CompiledPlan | undefined): PreviewPlanVM | null {
  * diagnostics pass, and the diagnostics panel already covers the
  * edit-as-you-type linting need.
  */
-export async function previewBundle(files: Record<string, string>): Promise<PreviewVM> {
-  const { plan, diagnostics } = await dslClient.preview({ files: encodeFiles(files) });
+export async function previewBundle(
+  files: Record<string, string>,
+  tenantSlug?: string,
+): Promise<PreviewVM> {
+  const tenantId = tenantSlug ? await resolveTenantId(tenantSlug) : undefined;
+  const { plan, diagnostics } = await dslClient.preview({ files: encodeFiles(files), tenantId });
   return {
     plan: planToVM(plan),
     diagnostics: diagnostics.map(diagnosticToVM),

@@ -72,6 +72,10 @@ type Config struct {
 	RegistryBackend string
 	// PackageBlobDir is the local filesystem root for package blobs.
 	PackageBlobDir string
+	// CatalogBundleDir is the local filesystem root for catalog entry bundles
+	// (provider/workflow file sets — the SP-C seam's dev/staging BundleStore
+	// impl; see internal/services/catalog.FSBundleStore).
+	CatalogBundleDir string
 	// AdminEmail is the email/login of the first-boot admin account seeded on a
 	// brand-new database. Defaults to "admin@stroppy.local".
 	AdminEmail string

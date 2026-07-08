@@ -280,7 +280,7 @@ func TestCheckMissingProviderManifestIsDiagnosticNotError(t *testing.T) {
 // supplies a built-in manifest, so a bare docker recipe is not rejected with
 // "manifest not found".
 // dockerBundleFiles returns a minimal, self-contained docker-builtin recipe
-// bundle (no provider directory — see resolveProvider's builtinDockerManifest
+// bundle (no provider directory — see resolveProvider's BuiltinDockerManifest
 // path). Shared by TestCheckDockerBuiltinNeedsNoManifest and (Task 7)
 // TestCompileBundle_LegacySignatureUnaffected, which both need a bundle that
 // compiles clean with zero providers/<name>/ files.

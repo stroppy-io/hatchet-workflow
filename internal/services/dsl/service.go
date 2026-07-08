@@ -47,17 +47,21 @@ const (
 
 	// builtinDockerProviderName is the provider.use value handled by the
 	// docker builtin (provider.NewProviderForRef's "docker" branch). It has
-	// no tf module, so resolveProvider supplies builtinDockerManifest instead
+	// no tf module, so resolveProvider supplies BuiltinDockerManifest instead
 	// of requiring a user-authored providers/docker/manifest.yaml.
 	builtinDockerProviderName = "docker"
 )
 
-// builtinDockerManifest is the compile-time manifest for the docker builtin
+// BuiltinDockerManifest is the compile-time manifest for the docker builtin
 // provider. Docker has no tf module / variables.tf, so it declares no params
 // schema; it provisions machines locally as containers and does no disk-type
 // remapping (cluster disk.type passes through unlowered). It is intentionally
 // permissive — no cpu/ram enum caps — matching the docker daemon's own limits.
-const builtinDockerManifest = `name: docker
+// Exported so internal/app's production wiring can seed it as the catalog's
+// LEVEL_INSTANCE "docker" provider (catalog.Deps.BuiltinProviders — SP-B
+// Task 9), the same manifest resolveProvider falls back to for the legacy
+// same-bundle lookup below.
+const BuiltinDockerManifest = `name: docker
 provides:
   - machines
 `
@@ -423,7 +427,7 @@ func resolveProvider(ctx context.Context, tenantID string, files map[string][]by
 			// a first-class provider without forcing every docker recipe to ship
 			// a manifest for a provider that has no schema to declare.
 			if slug == builtinDockerProviderName {
-				manifest, mdiags := ast.DecodeProviderManifest(mp, []byte(builtinDockerManifest))
+				manifest, mdiags := ast.DecodeProviderManifest(mp, []byte(BuiltinDockerManifest))
 				diags = append(diags, mdiags...)
 				if mdiags.HasErrors() {
 					return nil, nil, diags
@@ -455,7 +459,7 @@ func resolveProvider(ctx context.Context, tenantID string, files map[string][]by
 		// (e.g. the docker builtin, unified into the org catalog by Task 5's
 		// ensureBuiltinInstanceEntries): no params/ext schema to derive;
 		// contract/capability checking uses the manifest alone, exactly like
-		// the legacy path's builtinDockerManifest special-case above.
+		// the legacy path's BuiltinDockerManifest special-case above.
 		return manifest, nil, diags
 	}
 

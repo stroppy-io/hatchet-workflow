@@ -162,7 +162,7 @@ export function RecipeEditor() {
     let cancelled = false;
     setChecking(true);
     const t = setTimeout(() => {
-      checkBundle(files)
+      checkBundle(files, slug)
         .then((diags) => !cancelled && setDiagnostics(diags))
         .catch((e) => {
           if (cancelled) return;
@@ -175,7 +175,7 @@ export function RecipeEditor() {
       cancelled = true;
       clearTimeout(t);
     };
-  }, [files, loading]);
+  }, [files, loading, slug]);
 
   const dirty = useMemo(() => {
     if (savedSnapshotRef.current === null) return true; // never saved yet
@@ -195,7 +195,7 @@ export function RecipeEditor() {
     setPreviewError(null);
     setPreviewRequested(true);
     try {
-      const { plan, diagnostics: previewDiags } = await previewBundle(files);
+      const { plan, diagnostics: previewDiags } = await previewBundle(files, slug);
       setPreviewPlan(plan);
       setPreviewDiagnostics(previewDiags);
       previewSnapshotRef.current = snapshotOf(name, files);
@@ -205,7 +205,7 @@ export function RecipeEditor() {
     } finally {
       setPreviewing(false);
     }
-  }, [files, name]);
+  }, [files, name, slug]);
 
   const nameMissing = !name.trim();
   const canSave = !saving && !nameMissing && Object.keys(files).length > 0;

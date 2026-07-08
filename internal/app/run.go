@@ -43,9 +43,11 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/apiconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/gqlapi"
 	rest "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/rest"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/catalog/catalogconnect"
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dsl/dslconnect"
 	"github.com/stroppy-io/stroppy-cloud/internal/services/agent_shell"
+	catalogsvc "github.com/stroppy-io/stroppy-cloud/internal/services/catalog"
 	"github.com/stroppy-io/stroppy-cloud/internal/services/compare"
 	dslsvc "github.com/stroppy-io/stroppy-cloud/internal/services/dsl"
 	"github.com/stroppy-io/stroppy-cloud/internal/services/favorite"
@@ -212,6 +214,16 @@ func Run(ctx context.Context, cfg Config) error {
 	uploadTTL := adapters.NewStaticUploadTTL(0)
 	tokenMinter := adapters.NewRandomTokenMinter(0)
 
+	// catalogBundles is the SP-C seam's dev/staging BundleStore impl (SP-B
+	// Task 9): a filesystem tree rooted under cfg.CatalogBundleDir, mirroring
+	// blobStore's local-filesystem convention above. SP-C will swap in a
+	// gitea-backed BundleStore without catalogService (or dslService's
+	// provider resolver below) changing.
+	catalogBundles, err := catalogsvc.NewFSBundleStore(cfg.CatalogBundleDir)
+	if err != nil {
+		return fmt.Errorf("catalog bundle store: %w", err)
+	}
+
 	shareRuns := shareRunReader{r: bid}
 	snapshotBuilder := adapters.NewRunSnapshotBuilder(shareRuns, metricsReader)
 
@@ -263,6 +275,48 @@ func Run(ctx context.Context, cfg Config) error {
 	dashRating := adapters.NewDashboardRatingReader(ratingBoard, dashboardRatingMetricKey)
 
 	// 6) Services.
+
+	// DslService is stateless (no XDeps: see internal/services/dsl's package
+	// doc) — the browser IDE's schema/lint surface over internal/dsl, not
+	// exposed via GraphQL/REST (map<string, bytes> has no clean surface
+	// there; see (graphqlopt.service).skip on cloud/v1/dsl/service.proto).
+	// WithVersionSource reuses the same stroppyVersions source ListStroppyVersions
+	// serves (Task 7): Check/Preview add an advisory warning when a recipe's
+	// stroppy service pins an image tag absent from that known-releases list,
+	// so a bogus version fails fast in the editor instead of at container-pull.
+	// WithProviderResolver (SP-B Task 9) resolves provider.use against the org
+	// catalog (catalogEntries below), so a recipe/workflow bundle can
+	// reference a catalog-managed provider by slug instead of shipping its own
+	// providers/<name>/ subtree; constructed here (ahead of catalogService)
+	// since it only needs the entry repo + bundle store, not catalogService
+	// itself — catalogService's own Checker dependency closes the loop the
+	// other direction, over dslService.CheckBundle below.
+	catalogEntries := store.CatalogEntries()
+	providerResolver := &catalogsvc.CatalogProviderResolver{Entries: catalogEntries, Bundles: catalogBundles}
+	dslService := dslsvc.NewDslService(
+		dslsvc.WithVersionSource(stroppyVersions),
+		dslsvc.WithProviderResolver(providerResolver),
+	)
+
+	// catalogService is the SP-B catalog domain (dark-launched until this
+	// wiring): provider/workflow objects promoted to first-class catalog
+	// entries at LEVEL_INSTANCE/LEVEL_ORG. BuiltinProviders seeds the docker
+	// builtin (no tf module — see dslsvc.BuiltinDockerManifest) as a
+	// LEVEL_INSTANCE row on first SeedOrgCatalog call, so day-one tenants link
+	// against it like any other catalog provider. Check reuses dslService's
+	// own check-mode compile pipeline for KIND_WORKFLOW bundles, and a
+	// manifest-only decode for KIND_PROVIDER bundles (see newCatalogChecker's
+	// doc).
+	catalogService := catalogsvc.NewService(catalogsvc.Deps{
+		Entries: catalogEntries,
+		Bundles: catalogBundles,
+		Check:   newCatalogChecker(dslService),
+		Authn:   authn,
+		BuiltinProviders: map[string]map[string][]byte{
+			"docker": {"manifest.yaml": []byte(dslsvc.BuiltinDockerManifest)},
+		},
+	})
+
 	iamService := iamsvc.NewIamService(iamsvc.IamDeps{
 		Authn:                authn,
 		Authz:                permResolver,
@@ -278,6 +332,7 @@ func Run(ctx context.Context, cfg Config) error {
 		Tenants:              store.Tenants(),
 		Roles:                store.Roles(),
 		Memberships:          store.Memberships(),
+		CatalogSeeder:        catalogService,
 		Providers:            store.IdentityProviders(),
 		ProviderSecrets:      providerSecrets,
 		ExternalIdentities:   store.ExternalIdentities(),
@@ -390,16 +445,6 @@ func Run(ctx context.Context, cfg Config) error {
 		Rating:   dashRating,
 		Tx:       trm,
 	})
-
-	// DslService is stateless (no XDeps: see internal/services/dsl's package
-	// doc) — the browser IDE's schema/lint surface over internal/dsl, not
-	// exposed via GraphQL/REST (map<string, bytes> has no clean surface
-	// there; see (graphqlopt.service).skip on cloud/v1/dsl/service.proto).
-	// WithVersionSource reuses the same stroppyVersions source ListStroppyVersions
-	// serves (Task 7): Check/Preview add an advisory warning when a recipe's
-	// stroppy service pins an image tag absent from that known-releases list,
-	// so a bogus version fails fast in the editor instead of at container-pull.
-	dslService := dslsvc.NewDslService(dslsvc.WithVersionSource(stroppyVersions))
 
 	// recipeWorkflows launches RunRecipeWorkflow for RecipeService.StartRun.
 	recipeWorkflows := execution.NewRecipeWorkflows(tc, resolver, log)
@@ -533,6 +578,9 @@ func Run(ctx context.Context, cfg Config) error {
 		},
 		func() (string, http.Handler) {
 			return dslconnect.NewDslServiceHandler(dslService, handlerOpts...)
+		},
+		func() (string, http.Handler) {
+			return catalogconnect.NewCatalogServiceHandler(catalogService, handlerOpts...)
 		},
 	)
 	mux.Handle(blobStore.UploadPathPrefix()+"/", blobStore.UploadHandler())
