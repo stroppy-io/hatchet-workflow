@@ -531,6 +531,7 @@ git commit -m "test(schema): stable Baked hash for identical form+values"
 - Compiler boundary (§7, Baked→CompiledPlan substitution) → deferred to SP-D, noted in spec; NOT a task here. ✓
 
 **Open items surfaced for the implementer:**
+- **Task 5 prerequisite (found in SP-D recon):** `ast.WorkflowDoc` today has NO top-level `inputs:` (only `ast.ComponentDoc` does). Before Task 5 can feed `DeriveInputsSchema` from the bundle's workflow, add `Inputs map[string]InputSpec` to `internal/dsl/ast/workflow.go` + an `inputs:` decoder in `workflow.yaml` decoding (mirror `ast.ComponentDoc`'s existing `decodeInputs`). Add this as Task 5 Step 0 (with a `WorkflowDoc.Inputs` decode test) before wiring `ComposedSchema`.
 - Task 1 Step 5: confirm whether `tfconfig` exposes variable `validation` blocks; if not, parse from raw HCL using existing scanners. (Spec §10.1.)
 - Task 3: exact `ObjectOf`/`rawField` adapter — verify against `schemapb/compose.go` (`ObjectOf(name, *Schema) *ObjectB`) before implementing. (Spec §10.2.)
 - Task 5: `ComposedSchemaResponse.SchemaJson` reused as protojson carrier avoids a proto message change and the ogen/GQL converter rabbit hole. (Spec §10.3.)

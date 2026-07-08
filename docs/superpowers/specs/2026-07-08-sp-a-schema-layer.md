@@ -44,12 +44,14 @@
 - `sensitive = true` → schemapb secret-флаг.
 - `machineExtVarName` (well-known) → отдельная `ext`-схема (как сейчас), но schemapb.
 
-Пакет: `internal/dsl/schema` расширяется (или новый `internal/dsl/schemapbderive`), функция `DeriveProviderParamsSchema(moduleDir string) (params, ext *schemapb.Schema, diags diag.List)`.
+Пакет: `internal/dsl/schema` расширяется, функция `DeriveProviderParamsSchemapb(moduleDir, providerName string) (params, ext *schemapb.Schema, diags diag.List)`. (`providerName` — для namespace схемы `stroppy.provider.<name>`.)
 
 ### A2. `workflow.inputs` → `schemapb.Schema`
 `ast.InputSpec{Type, Default, ...}` → schemapb field defs. Типы inputs: enum/number/version/bool/string/list/matrix-размерность. Заменяет «scalar inputs = strings» (снимает I1-ограничение для формы: типы сохраняются до Bake).
 
-Функция `DeriveInputsSchema(wf *ast.WorkflowDoc) (*schemapb.Schema, diag.List)`.
+**Предусловие (обнаружено при разведке SP-D):** сегодня топ-левел `inputs:` есть только у `ast.ComponentDoc`, но НЕ у `ast.WorkflowDoc` — а форма запускается по workflow. Нужно добавить `Inputs map[string]InputSpec` в `ast.WorkflowDoc` + декодер `inputs:` в `workflow.yaml` (первый шаг Task 2 плана). Поэтому сигнатура берёт готовую map, а не сам `wf`, чтобы не завязываться на структуру:
+
+Функция `DeriveInputsSchema(namespace string, inputs map[string]ast.InputSpec) (*schemapb.Schema, diag.List)`.
 
 ### A3. Form-schema композиция
 `form = ComposeFormSchema(inputs, params *schemapb.Schema) *schemapb.Schema` — через `schemapb` compose/merge (см. `schemapb/compose.go`), либо сборкой единой `NewSchema().Fields(inputsFields..., Object("provider", paramsFields...))`. Точный вызов добивает план SP-A.
@@ -62,7 +64,7 @@
 - `Baked` — хешируемый (`hashpb`), это **идентичность/воспроизводимость прогона** → сохраняется в Run (SP-E), подставляется в бандл для компиляции (§7).
 - Ошибки — `[]*FieldError` (стабильные машинные коды для i18n).
 
-Функция `BakeForm(form *schemapb.Schema, filled *schemapb.Filled) (*schemapb.Baked, []*schemapb.FieldError, error)`.
+Функция `BakeForm(form *schemapb.Schema, values map[string]any) (*schemapb.Baked, []*schemapb.FieldError, error)` (сервер бейкает значения из `Filled`, собранного браузером; см. план Task 4).
 
 ---
 
@@ -70,13 +72,13 @@
 
 ```go
 // A1
-func DeriveProviderParamsSchema(moduleDir string) (params, ext *schemapb.Schema, diags diag.List)
-// A2
-func DeriveInputsSchema(wf *ast.WorkflowDoc) (*schemapb.Schema, diag.List)
+func DeriveProviderParamsSchemapb(moduleDir, providerName string) (params, ext *schemapb.Schema, diags diag.List)
+// A2  (требует нового ast.WorkflowDoc.Inputs — см. §A2 предусловие)
+func DeriveInputsSchema(namespace string, inputs map[string]ast.InputSpec) (*schemapb.Schema, diag.List)
 // A3
-func ComposeFormSchema(inputs, params *schemapb.Schema) (*schemapb.Schema, error)
+func ComposeFormSchema(namespace string, inputs, params *schemapb.Schema) (*schemapb.Schema, error)
 // A4
-func BakeForm(form *schemapb.Schema, filled *schemapb.Filled) (*schemapb.Baked, []*schemapb.FieldError, error)
+func BakeForm(form *schemapb.Schema, values map[string]any) (*schemapb.Baked, []*schemapb.FieldError, error)
 ```
 
 RPC: `DslService.ComposedSchema` меняет ответ с `SchemaJson string` на `schemapb.Schema` (proto-месседж). Новый (или расширенный) путь для Bake — вероятнее в StartRun-потоке (SP-D), но контракт `BakeForm` живёт здесь.
