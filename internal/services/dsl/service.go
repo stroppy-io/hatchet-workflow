@@ -19,8 +19,10 @@ import (
 	"strings"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
+	"github.com/stroppy-io/schemapb/schemapb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
 	"gopkg.in/yaml.v3"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/dsl"
@@ -37,6 +39,7 @@ import (
 // Terraform variables schema.DeriveParamsSchema derives params/ext from).
 const (
 	clusterFile   = "cluster.yaml"
+	workflowFile  = "workflow.yaml"
 	providersDir  = "providers"
 	manifestFile  = "manifest.yaml"
 	moduleDirName = "module"
@@ -57,6 +60,16 @@ const builtinDockerManifest = `name: docker
 provides:
   - machines
 `
+
+// composedSchemaFormNamespace is the schemapb namespace ComposedSchema
+// builds its launch-form schema under (schema.DeriveInputsSchema/
+// ComposeFormSchema's "stroppy.form.<recipe-or-workflow-id>" convention —
+// see form_test.go's "stroppy.form.tpcc" example). ComposedSchemaRequest
+// carries no recipe/workflow id of its own (just Files — see the proto), so
+// this is a fixed placeholder rather than a per-request value; a future
+// request field could thread a real id through here without changing
+// DeriveInputsSchema/ComposeFormSchema's signatures.
+const composedSchemaFormNamespace = "stroppy.form.recipe"
 
 // DslService implements dslpb.DslServiceServer: dynamic composed JSON Schema
 // + check-mode compilation, both stateless and side-effect-free.
@@ -108,13 +121,23 @@ func NewDslService(opts ...Option) *DslService {
 	return s
 }
 
-// ComposedSchema returns the dynamic JSON Schema for req's bundle: the core
-// schema tightened to the bundle's single provider (params/ext derived from
-// providers/<name>/module/variables.tf), or the core schema's original
-// permissive placeholder when the bundle carries no provider directory at
-// all. Unlike Check, an unresolvable "which provider" situation here IS an
-// RPC error (InvalidArgument) — ComposedSchemaResponse carries no
-// diagnostics channel to report it through instead.
+// ComposedSchema returns req's bundle launch-form schema as a schemapb.Schema
+// protojson document: the workflow's declared "inputs:" (ast.WorkflowDoc.
+// Inputs) hoisted to the form's top level, plus — when the bundle resolves
+// to a single provider — that provider's Terraform params nested under a
+// "provider" object field (schema.ComposeFormSchema), or the permissive
+// no-params placeholder (nil params) when the bundle carries no provider
+// directory at all (e.g. the docker builtin, which has no tf module). This
+// supersedes the JSON-Schema-shaped output ComposedSchema returned before
+// this task; deriveProviderSchema/resolveProvider's JSON-Schema derivation
+// is unchanged and still backs bundle-structure/contract validation (Check/
+// Preview), which this method does not touch.
+//
+// Unlike Check, an unresolvable "which provider" situation here IS an RPC
+// error (InvalidArgument) — ComposedSchemaResponse carries no diagnostics
+// channel to report it through instead; a malformed workflow.yaml or a
+// schema-derivation failure are likewise folded into an RPC error rather
+// than silently composing a schema from partially-invalid input.
 func (s *DslService) ComposedSchema(_ context.Context, req *dslpb.ComposedSchemaRequest) (*dslpb.ComposedSchemaResponse, error) {
 	files := req.GetFiles()
 
@@ -123,9 +146,9 @@ func (s *DslService) ComposedSchema(_ context.Context, req *dslpb.ComposedSchema
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	providers := map[string]schema.ProviderSchemas{}
+	var params *schemapb.Schema
 	if name != "" {
-		params, ext, deriveDiags, derr := deriveProviderSchema(files, name)
+		p, _, deriveDiags, derr := deriveProviderParamsSchemapb(files, name)
 		if derr != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "derive provider %q schema: %v", name, derr)
 		}
@@ -136,12 +159,31 @@ func (s *DslService) ComposedSchema(_ context.Context, req *dslpb.ComposedSchema
 			// schema derived from a partially-rejected module.
 			return nil, status.Errorf(codes.InvalidArgument, "derive provider %q schema: %s", name, joinDiagMessages(deriveDiags))
 		}
-		providers[name] = schema.ProviderSchemas{Params: params, Ext: ext}
+		params = p
 	}
 
-	_, raw, err := schema.Compose(providers, nil)
+	var wfInputs map[string]ast.InputSpec
+	if wfSrc, ok := files[workflowFile]; ok {
+		wf, wfDiags := ast.DecodeWorkflow(workflowFile, wfSrc)
+		if wfDiags.HasErrors() {
+			return nil, status.Errorf(codes.InvalidArgument, "decode %s: %s", workflowFile, joinDiagMessages(wfDiags))
+		}
+		wfInputs = wf.Inputs
+	}
+
+	inputs, inputDiags := schema.DeriveInputsSchema(composedSchemaFormNamespace, wfInputs)
+	if inputDiags.HasErrors() {
+		return nil, status.Errorf(codes.InvalidArgument, "derive workflow inputs schema: %s", joinDiagMessages(inputDiags))
+	}
+
+	form, err := schema.ComposeFormSchema(composedSchemaFormNamespace, inputs, params)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "compose schema: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "compose form schema: %v", err)
+	}
+
+	raw, err := protojson.Marshal(form)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "marshal form schema: %v", err)
 	}
 
 	return &dslpb.ComposedSchemaResponse{SchemaJson: string(raw)}, nil
@@ -449,13 +491,61 @@ func moduleFilePrefix(name string) string {
 // key in an otherwise-valid bundle does not abort deriving the rest of the
 // module's schema.
 func deriveProviderSchema(files map[string][]byte, name string) (params, ext map[string]any, diags diag.List, err error) {
+	tmp, diags, err := materializeProviderModule(files, name)
+	if err != nil {
+		return nil, nil, diags, err
+	}
+	defer func() { _ = os.RemoveAll(tmp) }()
+
+	params, ext, err = schema.DeriveParamsSchema(tmp)
+	return params, ext, diags, err
+}
+
+// deriveProviderParamsSchemapb is deriveProviderSchema's schemapb-targeting
+// counterpart, used by ComposedSchema (the form-facing RPC output — see its
+// doc comment) instead of deriveProviderSchema's JSON-Schema derivation
+// (still used by resolveProvider for bundle-structure/contract validation).
+// It reuses the exact same path-traversal-safe materializeProviderModule
+// helper, so a malicious module file key is rejected identically on both
+// paths.
+func deriveProviderParamsSchemapb(files map[string][]byte, name string) (params, ext *schemapb.Schema, diags diag.List, err error) {
+	tmp, diags, err := materializeProviderModule(files, name)
+	if err != nil {
+		return nil, nil, diags, err
+	}
+	defer func() { _ = os.RemoveAll(tmp) }()
+
+	params, ext, deriveDiags := schema.DeriveProviderParamsSchemapb(tmp, name)
+	diags = append(diags, deriveDiags...)
+	return params, ext, diags, nil
+}
+
+// materializeProviderModule writes providers/<name>/module/**'s bundle bytes
+// into a fresh request-scoped temp dir and returns its path — the
+// bytes-to-filesystem bridge both deriveProviderSchema (JSON Schema) and
+// deriveProviderParamsSchemapb (schemapb) need, since the underlying
+// terraform-config-inspect-based derivation in internal/dsl/schema only
+// reads a directory (see DeriveParamsSchema's own doc comment for why: no
+// fs.FS-abstraction overload exists to hand it an in-memory tree). The
+// caller owns the returned dir and must os.RemoveAll it once done.
+//
+// files is caller-controlled request input: a "providers/<name>/module/"-
+// prefixed key may contain ".." segments (e.g.
+// "providers/yandex/module/../../../../etc/cron.d/evil") that, if joined
+// onto tmp unchecked, resolve outside tmp entirely — an arbitrary
+// server-side file write. Every candidate rel path is therefore required to
+// be filepath.IsLocal (never escapes tmp via ".." or an absolute path)
+// before it is joined and written; a rejected key is skipped and reported
+// as an Error diagnostic instead of a Go error, so one malicious/malformed
+// key in an otherwise-valid bundle does not abort deriving the rest of the
+// module's schema.
+func materializeProviderModule(files map[string][]byte, name string) (dir string, diags diag.List, err error) {
 	prefix := moduleFilePrefix(name)
 
 	tmp, err := os.MkdirTemp("", "dsl-provider-module-*")
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("create temp module dir: %w", err)
+		return "", nil, fmt.Errorf("create temp module dir: %w", err)
 	}
-	defer func() { _ = os.RemoveAll(tmp) }()
 
 	wrote := 0
 	for p, content := range files {
@@ -474,23 +564,25 @@ func deriveProviderSchema(files map[string][]byte, name string) (params, ext map
 			continue
 		}
 		dest := filepath.Join(tmp, relOS)
-		// 0o700/0o600: tmp is a private, request-scoped temp dir removed
-		// before this function returns (see the RemoveAll above) — no reason
-		// to leave it group/world-readable in the meantime.
+		// 0o700/0o600: tmp is a private, request-scoped temp dir the caller
+		// removes once done (see the doc comment above) — no reason to leave
+		// it group/world-readable in the meantime.
 		if mkErr := os.MkdirAll(filepath.Dir(dest), 0o700); mkErr != nil {
-			return nil, nil, diags, fmt.Errorf("mkdir %q: %w", filepath.Dir(dest), mkErr)
+			_ = os.RemoveAll(tmp)
+			return "", diags, fmt.Errorf("mkdir %q: %w", filepath.Dir(dest), mkErr)
 		}
 		if writeErr := os.WriteFile(dest, content, 0o600); writeErr != nil {
-			return nil, nil, diags, fmt.Errorf("write %q: %w", dest, writeErr)
+			_ = os.RemoveAll(tmp)
+			return "", diags, fmt.Errorf("write %q: %w", dest, writeErr)
 		}
 		wrote++
 	}
 	if wrote == 0 {
-		return nil, nil, diags, fmt.Errorf("no module files found under %s", prefix)
+		_ = os.RemoveAll(tmp)
+		return "", diags, fmt.Errorf("no module files found under %s", prefix)
 	}
 
-	params, ext, err = schema.DeriveParamsSchema(tmp)
-	return params, ext, diags, err
+	return tmp, diags, nil
 }
 
 // validateStroppyVersion appends a Warning diagnostic to diags when plan

@@ -8,6 +8,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+	"github.com/stroppy-io/schemapb/schemapb"
+	"google.golang.org/protobuf/encoding/protojson"
+
 	dslpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dsl"
 )
 
@@ -153,7 +157,20 @@ func TestPreviewBrokenBundleReturnsDiagnosticsNilPlan(t *testing.T) {
 	}
 }
 
-func TestComposedSchemaContainsPlatformID(t *testing.T) {
+// TestComposedSchemaContainsProviderParamField replaces the pre-Task-5
+// TestComposedSchemaContainsPlatformID: that test asserted "platform_id"
+// (the yandex module's stroppy_machine_ext variable, i.e. the per-machine
+// extension block schema — core.schema.json's $defs.machineExt) appeared in
+// schema_json, because the old jsonschema-shaped output embedded the whole
+// composed document (cluster shape, ext included) verbatim. The new
+// schemapb form schema (this task) is deliberately narrower — only
+// inputs+params, nested under "provider" (schema.ComposeFormSchema) — ext
+// belongs to a different UI concern (validating cluster.yaml's per-machine
+// blocks, not the launch form) and is intentionally not part of it, so
+// "platform_id" no longer appears. "zone" (postgres-ha's yandex module's
+// other, non-ext variable.tf entry — see providers/yandex/module/
+// variables.tf) is the right replacement assertion: it IS a params field.
+func TestComposedSchemaContainsProviderParamField(t *testing.T) {
 	svc := NewDslService()
 	files := loadBundle(t, postgresHADir)
 
@@ -161,9 +178,28 @@ func TestComposedSchemaContainsPlatformID(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ComposedSchema returned an RPC error: %v", err)
 	}
-	if !strings.Contains(resp.GetSchemaJson(), "platform_id") {
-		t.Fatalf("expected schema_json to contain the yandex provider's %q field, got:\n%s", "platform_id", resp.GetSchemaJson())
+	if !strings.Contains(resp.GetSchemaJson(), "zone") {
+		t.Fatalf("expected schema_json to contain the yandex provider's %q param field, got:\n%s", "zone", resp.GetSchemaJson())
 	}
+}
+
+// TestComposedSchema_ReturnsSchemapbProtojson verifies ComposedSchema's
+// SchemaJson is a schemapb.Schema protojson document (Task 5) rather than
+// the JSON-Schema document it returned before this task: it must
+// protojson.Unmarshal cleanly into a schemapb.Schema with a non-empty name
+// (schema.ComposeFormSchema always names the composed form schema "form" —
+// see form.go's NewSchema(namespace, "form", "1") call).
+func TestComposedSchema_ReturnsSchemapbProtojson(t *testing.T) {
+	svc := NewDslService()
+	files := loadBundle(t, postgresHADir)
+
+	resp, err := svc.ComposedSchema(context.Background(), &dslpb.ComposedSchemaRequest{Files: files})
+	require.NoError(t, err)
+
+	var s schemapb.Schema
+	require.NoError(t, protojson.Unmarshal([]byte(resp.GetSchemaJson()), &s),
+		"response must be schemapb.Schema protojson")
+	require.NotEmpty(t, s.GetId().GetName(), "composed form schema must carry a non-empty name")
 }
 
 // TestCheckRejectsPathTraversalInProviderModule guards against the
