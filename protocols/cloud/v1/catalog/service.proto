@@ -1,0 +1,217 @@
+syntax = "proto3";
+
+package cloud.v1.catalog;
+
+import "cloud/v1/catalog/models.proto";
+import "cloud/v1/iam/options.proto";
+import "cloud/v1/iam/permission.proto";
+import "cloud/v1/dsl/service.proto";
+import "graphqlopt/graphql.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/catalog";
+
+/*
+    service.proto is the connect-RPC surface over the catalog storage model
+    (models.proto). It is split into three groups:
+
+      - Instance-level CRUD (Create/Update/Delete/Get/ListInstanceEntries):
+        generic over Kind (one field on the request), gated admin_only —
+        LEVEL_INSTANCE rows have no tenant to resolve an all_of permission
+        against, so they are platform-reserved the same way CreateAccount/
+        CreateTenant are, not RBAC-delegated.
+
+      - Org-level CRUD + Link + Check: split into a PER-KIND pair of RPCs
+        (...Provider / ...Workflow) for every verb, because all_of is a pure
+        AND — a single generic "kind" field RPC could not be gated
+        separately on RESOURCE_PROVIDER vs RESOURCE_WORKFLOW. Each pair
+        shares one private Go helper in the service implementation; only the
+        proto surface (and therefore the RBAC annotation) is duplicated per
+        kind, never the Go logic.
+
+      - CheckCatalogProvider/CheckCatalogWorkflow carry tenant_id despite
+        never persisting anything: tenant_field-based all_of resolution
+        needs a tenant to resolve the caller's membership/role against, and
+        a missing request field resolves to "" (see iam/options.proto's
+        MethodAuth.tenant_field doc), which would fail every tenant-scoped
+        grant. The field exists purely for RBAC, not storage.
+
+    Every message carrying map<string, bytes> files has no GraphQL scalar
+    for that shape out of the box (see cloud/v1/dsl/service.proto's own
+    doc); the browser IDE that edits catalog bundles consumes this service
+    directly via Connect, so the whole service is excluded from the
+    generated GraphQL surface, mirroring DslService/AgentRegistryService.
+ */
+
+message CreateInstanceEntryRequest {
+    Kind kind = 1 [(validate.rules).enum = {defined_only: true, not_in: [0]}];
+    string slug = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    string name = 3 [(validate.rules).string = {min_len: 1, max_len: 255}];
+    string description = 4 [(validate.rules).string.max_len = 4096];
+    map<string, bytes> files = 5;
+}
+message CreateInstanceEntryResponse { CatalogEntry entry = 1; }
+
+message GetInstanceEntryRequest { string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}]; }
+message GetInstanceEntryResponse { CatalogEntry entry = 1; }
+
+message ListInstanceEntriesRequest { Kind kind = 1; }
+message ListInstanceEntriesResponse { repeated CatalogEntry entries = 1; }
+
+message UpdateInstanceEntryRequest {
+    string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    map<string, bytes> files = 2;
+}
+message UpdateInstanceEntryResponse { CatalogEntry entry = 1; }
+
+message DeleteInstanceEntryRequest { string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}]; }
+message DeleteInstanceEntryResponse {}
+
+message CreateOrgProviderRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string slug = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    string name = 3 [(validate.rules).string = {min_len: 1, max_len: 255}];
+    string description = 4 [(validate.rules).string.max_len = 4096];
+    map<string, bytes> files = 5;
+}
+message CreateOrgProviderResponse { CatalogEntry entry = 1; }
+message CreateOrgWorkflowRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string slug = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    string name = 3 [(validate.rules).string = {min_len: 1, max_len: 255}];
+    string description = 4 [(validate.rules).string.max_len = 4096];
+    map<string, bytes> files = 5;
+}
+message CreateOrgWorkflowResponse { CatalogEntry entry = 1; }
+
+message UpdateOrgProviderRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    map<string, bytes> files = 3;
+}
+message UpdateOrgProviderResponse { CatalogEntry entry = 1; }
+message UpdateOrgWorkflowRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    map<string, bytes> files = 3;
+}
+message UpdateOrgWorkflowResponse { CatalogEntry entry = 1; }
+
+message DeleteOrgProviderRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+message DeleteOrgProviderResponse {}
+message DeleteOrgWorkflowRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+message DeleteOrgWorkflowResponse {}
+
+message GetOrgProviderRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+message GetOrgProviderResponse { CatalogEntry entry = 1; }
+message GetOrgWorkflowRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+message GetOrgWorkflowResponse { CatalogEntry entry = 1; }
+
+message ListOrgProvidersRequest { string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}]; }
+message ListOrgProvidersResponse { repeated CatalogEntry entries = 1; }
+message ListOrgWorkflowsRequest { string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}]; }
+message ListOrgWorkflowsResponse { repeated CatalogEntry entries = 1; }
+
+message LinkInstanceProviderRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string instance_entry_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+message LinkInstanceProviderResponse { CatalogEntry entry = 1; }
+message LinkInstanceWorkflowRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string instance_entry_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+message LinkInstanceWorkflowResponse { CatalogEntry entry = 1; }
+
+// CheckCatalogProviderRequest/CheckCatalogWorkflowRequest carry tenant_id
+// purely for all_of/tenant_field RBAC resolution — see the file doc above.
+// Neither RPC persists anything.
+message CheckCatalogProviderRequest {
+    map<string, bytes> files = 1;
+    string tenant_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+message CheckCatalogProviderResponse { repeated cloud.v1.dsl.Diagnostic diagnostics = 1; }
+message CheckCatalogWorkflowRequest {
+    map<string, bytes> files = 1;
+    string tenant_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+message CheckCatalogWorkflowResponse { repeated cloud.v1.dsl.Diagnostic diagnostics = 1; }
+
+service CatalogService {
+    // map<string, bytes> has no GraphQL scalar out of the box; the browser
+    // IDE consumes this service directly via Connect (see the file doc).
+    option (graphqlopt.service).skip = true;
+
+    rpc CreateInstanceEntry(CreateInstanceEntryRequest) returns (CreateInstanceEntryResponse) {
+        option (cloud.v1.iam.auth) = { admin_only: true };
+    }
+    rpc UpdateInstanceEntry(UpdateInstanceEntryRequest) returns (UpdateInstanceEntryResponse) {
+        option (cloud.v1.iam.auth) = { admin_only: true };
+    }
+    rpc DeleteInstanceEntry(DeleteInstanceEntryRequest) returns (DeleteInstanceEntryResponse) {
+        option (cloud.v1.iam.auth) = { admin_only: true };
+    }
+    rpc GetInstanceEntry(GetInstanceEntryRequest) returns (GetInstanceEntryResponse) {
+        option (cloud.v1.iam.auth) = { admin_only: true };
+    }
+    rpc ListInstanceEntries(ListInstanceEntriesRequest) returns (ListInstanceEntriesResponse) {
+        option (cloud.v1.iam.auth) = { admin_only: true };
+    }
+
+    rpc CreateOrgProvider(CreateOrgProviderRequest) returns (CreateOrgProviderResponse) {
+        option (cloud.v1.iam.auth) = { all_of: [{resource: RESOURCE_PROVIDER, action: ACTION_CREATE}], tenant_field: "tenant_id" };
+    }
+    rpc CreateOrgWorkflow(CreateOrgWorkflowRequest) returns (CreateOrgWorkflowResponse) {
+        option (cloud.v1.iam.auth) = { all_of: [{resource: RESOURCE_WORKFLOW, action: ACTION_CREATE}], tenant_field: "tenant_id" };
+    }
+    rpc UpdateOrgProvider(UpdateOrgProviderRequest) returns (UpdateOrgProviderResponse) {
+        option (cloud.v1.iam.auth) = { all_of: [{resource: RESOURCE_PROVIDER, action: ACTION_UPDATE}], tenant_field: "tenant_id" };
+    }
+    rpc UpdateOrgWorkflow(UpdateOrgWorkflowRequest) returns (UpdateOrgWorkflowResponse) {
+        option (cloud.v1.iam.auth) = { all_of: [{resource: RESOURCE_WORKFLOW, action: ACTION_UPDATE}], tenant_field: "tenant_id" };
+    }
+    rpc DeleteOrgProvider(DeleteOrgProviderRequest) returns (DeleteOrgProviderResponse) {
+        option (cloud.v1.iam.auth) = { all_of: [{resource: RESOURCE_PROVIDER, action: ACTION_DELETE}], tenant_field: "tenant_id" };
+    }
+    rpc DeleteOrgWorkflow(DeleteOrgWorkflowRequest) returns (DeleteOrgWorkflowResponse) {
+        option (cloud.v1.iam.auth) = { all_of: [{resource: RESOURCE_WORKFLOW, action: ACTION_DELETE}], tenant_field: "tenant_id" };
+    }
+    rpc GetOrgProvider(GetOrgProviderRequest) returns (GetOrgProviderResponse) {
+        option (cloud.v1.iam.auth) = { all_of: [{resource: RESOURCE_PROVIDER, action: ACTION_READ}], tenant_field: "tenant_id" };
+    }
+    rpc GetOrgWorkflow(GetOrgWorkflowRequest) returns (GetOrgWorkflowResponse) {
+        option (cloud.v1.iam.auth) = { all_of: [{resource: RESOURCE_WORKFLOW, action: ACTION_READ}], tenant_field: "tenant_id" };
+    }
+    rpc ListOrgProviders(ListOrgProvidersRequest) returns (ListOrgProvidersResponse) {
+        option (cloud.v1.iam.auth) = { all_of: [{resource: RESOURCE_PROVIDER, action: ACTION_LIST}], tenant_field: "tenant_id" };
+    }
+    rpc ListOrgWorkflows(ListOrgWorkflowsRequest) returns (ListOrgWorkflowsResponse) {
+        option (cloud.v1.iam.auth) = { all_of: [{resource: RESOURCE_WORKFLOW, action: ACTION_LIST}], tenant_field: "tenant_id" };
+    }
+
+    rpc LinkInstanceProvider(LinkInstanceProviderRequest) returns (LinkInstanceProviderResponse) {
+        option (cloud.v1.iam.auth) = { all_of: [{resource: RESOURCE_PROVIDER, action: ACTION_CREATE}], tenant_field: "tenant_id" };
+    }
+    rpc LinkInstanceWorkflow(LinkInstanceWorkflowRequest) returns (LinkInstanceWorkflowResponse) {
+        option (cloud.v1.iam.auth) = { all_of: [{resource: RESOURCE_WORKFLOW, action: ACTION_CREATE}], tenant_field: "tenant_id" };
+    }
+
+    rpc CheckCatalogProvider(CheckCatalogProviderRequest) returns (CheckCatalogProviderResponse) {
+        option (cloud.v1.iam.auth) = { all_of: [{resource: RESOURCE_PROVIDER, action: ACTION_READ}], tenant_field: "tenant_id" };
+    }
+    rpc CheckCatalogWorkflow(CheckCatalogWorkflowRequest) returns (CheckCatalogWorkflowResponse) {
+        option (cloud.v1.iam.auth) = { all_of: [{resource: RESOURCE_WORKFLOW, action: ACTION_READ}], tenant_field: "tenant_id" };
+    }
+}
