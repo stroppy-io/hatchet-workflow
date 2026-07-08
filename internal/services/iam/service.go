@@ -157,6 +157,17 @@ type MembershipRepo interface {
 	DeleteByAccount(ctx context.Context, accountID string) error
 }
 
+// CatalogSeeder seeds a newly created tenant's org catalog inside the
+// ambient CreateTenant transaction (see SeedOrgCatalog's doc for the
+// LINKED/fork-on-edit semantics). Implemented by catalog.Service; iam never
+// imports package catalog — this is the Deps-of-interfaces shape every other
+// IamDeps field already follows, so wiring stays import-cycle-free (catalog
+// would otherwise need iam for tenant lifecycle context, and iam would need
+// catalog for this call — the interface breaks that cycle).
+type CatalogSeeder interface {
+	SeedOrgCatalog(ctx context.Context, tenantID string) error
+}
+
 // IdentityProviderRepo persists OIDC provider config (secret stored separately).
 type IdentityProviderRepo interface {
 	Create(ctx context.Context, provider *iam.IdentityProvider) error
@@ -215,6 +226,7 @@ type IamDeps struct {
 	Tenants              TenantRepo
 	Roles                RoleRepo
 	Memberships          MembershipRepo
+	CatalogSeeder        CatalogSeeder
 	Providers            IdentityProviderRepo
 	ProviderSecrets      ProviderSecrets
 	ExternalIdentities   ExternalIdentityRepo
@@ -755,6 +767,16 @@ func (s *IamService) CreateTenant(ctx context.Context, req *api.CreateTenantRequ
 		}
 		if err := s.d.Memberships.Create(ctx, membership); err != nil {
 			return nil, utils.MapErr(err)
+		}
+		// Seed the tenant's org catalog with a LINKED row per LEVEL_INSTANCE
+		// entry, in the same transaction as the role/membership seeding above
+		// — nil-guarded so every IamDeps literal that predates this field
+		// (across the existing test suite and any not-yet-updated wiring)
+		// keeps compiling and behaving unchanged.
+		if s.d.CatalogSeeder != nil {
+			if err := s.d.CatalogSeeder.SeedOrgCatalog(ctx, tenant.Id); err != nil {
+				return nil, utils.MapErr(err)
+			}
 		}
 		return &api.CreateTenantResponse{Tenant: tenant}, nil
 	})

@@ -14,6 +14,15 @@ func IgnoreNotFound(err error) error {
 	return err
 }
 
+// IgnoreConflict returns nil for a conflict error (so a racing/duplicate
+// create becomes a no-op) and passes any other error through unchanged.
+func IgnoreConflict(err error) error {
+	if stderrors.Is(err, ErrConflict) {
+		return nil
+	}
+	return err
+}
+
 /*
 	Domain errors are transport-agnostic on purpose: they carry enough structure
 	(kind, machine reason, affected resource/field, metadata) for any transport to

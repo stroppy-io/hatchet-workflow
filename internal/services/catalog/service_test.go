@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	derrors "github.com/stroppy-io/stroppy-cloud/internal/domain/errors"
 	catalogpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/catalog"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	dslpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dsl"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 )
@@ -539,6 +541,31 @@ type fakeEntryRepo struct {
 
 func newFakeEntryRepo() *fakeEntryRepo {
 	return &fakeEntryRepo{byID: map[string]*catalogpb.CatalogEntry{}}
+}
+
+// mustCreate persists e via Create, failing the test on error, and returns e
+// for chaining — a seed-test convenience so SeedOrgCatalog tests can set up
+// pre-existing LEVEL_INSTANCE rows in one line.
+func (r *fakeEntryRepo) mustCreate(t *testing.T, e *catalogpb.CatalogEntry) *catalogpb.CatalogEntry {
+	t.Helper()
+	if err := r.Create(context.Background(), e); err != nil {
+		t.Fatalf("mustCreate: %v", err)
+	}
+	return e
+}
+
+// instanceEntry builds a minimal ORIGIN_NATIVE LEVEL_INSTANCE row for
+// SeedOrgCatalog tests — it never goes through createEntry, so it carries no
+// bundle/summary, which SeedOrgCatalog's tests never assert on.
+func instanceEntry(kind catalogpb.Kind, slug string, version uint32) *catalogpb.CatalogEntry {
+	return &catalogpb.CatalogEntry{
+		Entity:  &common.Entity{Id: uuid.NewString(), Name: slug},
+		Level:   catalogpb.Level_LEVEL_INSTANCE,
+		Kind:    kind,
+		Slug:    slug,
+		Version: version,
+		Origin:  catalogpb.Origin_ORIGIN_NATIVE,
+	}
 }
 
 func entryKey(level catalogpb.Level, tenantID, id string) string {

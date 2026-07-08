@@ -2,6 +2,7 @@ package iam
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"google.golang.org/grpc/codes"
@@ -173,6 +174,77 @@ func TestDeleteRoleRejectsAssignedRole(t *testing.T) {
 	if status.Code(err) != codes.FailedPrecondition {
 		t.Fatalf("status = %s, want %s (err %v)", status.Code(err), codes.FailedPrecondition, err)
 	}
+}
+
+/*
+	===== CreateTenant / CatalogSeeder wiring =====
+*/
+
+func TestCreateTenant_SeedsOrgCatalog(t *testing.T) {
+	seeder := &fakeCatalogSeeder{}
+	svc := NewIamService(IamDeps{
+		Authn:         fakeIamAuthn{claims: &iampb.AccessClaims{AccountId: "acct-1", IsAdmin: true}},
+		Catalog:       fakePermissionCatalog{},
+		Tenants:       fakeTenantRepo{},
+		Roles:         fakeRoleRepo{},
+		Memberships:   fakeMembershipRepo{},
+		CatalogSeeder: seeder,
+		Tx:            noopTrm{},
+	})
+
+	resp, err := svc.CreateTenant(context.Background(), &api.CreateTenantRequest{Name: "Acme", Slug: "acme"})
+	if err != nil {
+		t.Fatalf("CreateTenant: %v", err)
+	}
+	if len(seeder.seeded) != 1 || seeder.seeded[0] != resp.GetTenant().GetId() {
+		t.Fatalf("expected SeedOrgCatalog called once with the new tenant id, got %v (tenant id %q)", seeder.seeded, resp.GetTenant().GetId())
+	}
+}
+
+func TestCreateTenant_SeedFailureAbortsTransaction(t *testing.T) {
+	seeder := &fakeCatalogSeeder{err: errors.New("bundle store unavailable")}
+	svc := NewIamService(IamDeps{
+		Authn:         fakeIamAuthn{claims: &iampb.AccessClaims{AccountId: "acct-1", IsAdmin: true}},
+		Catalog:       fakePermissionCatalog{},
+		Tenants:       fakeTenantRepo{},
+		Roles:         fakeRoleRepo{},
+		Memberships:   fakeMembershipRepo{},
+		CatalogSeeder: seeder,
+		Tx:            noopTrm{},
+	})
+
+	_, err := svc.CreateTenant(context.Background(), &api.CreateTenantRequest{Name: "Acme", Slug: "acme"})
+	if err == nil {
+		t.Fatal("expected CreateTenant to surface the CatalogSeeder error")
+	}
+}
+
+// TestCreateTenant_NilCatalogSeederStillSucceeds pins the nil-guard's
+// backward-compat contract: every IamDeps literal built before this task
+// (none of which set CatalogSeeder) must keep working unchanged.
+func TestCreateTenant_NilCatalogSeederStillSucceeds(t *testing.T) {
+	svc := NewIamService(IamDeps{
+		Authn:       fakeIamAuthn{claims: &iampb.AccessClaims{AccountId: "acct-1", IsAdmin: true}},
+		Catalog:     fakePermissionCatalog{},
+		Tenants:     fakeTenantRepo{},
+		Roles:       fakeRoleRepo{},
+		Memberships: fakeMembershipRepo{},
+		Tx:          noopTrm{},
+	})
+
+	if _, err := svc.CreateTenant(context.Background(), &api.CreateTenantRequest{Name: "Acme", Slug: "acme"}); err != nil {
+		t.Fatalf("CreateTenant with nil CatalogSeeder: %v", err)
+	}
+}
+
+type fakeCatalogSeeder struct {
+	seeded []string
+	err    error
+}
+
+func (f *fakeCatalogSeeder) SeedOrgCatalog(_ context.Context, tenantID string) error {
+	f.seeded = append(f.seeded, tenantID)
+	return f.err
 }
 
 func tenant(id, slug string) *iampb.Tenant {
