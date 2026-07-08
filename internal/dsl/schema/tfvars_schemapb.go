@@ -47,6 +47,7 @@ func DeriveProviderParamsSchemapb(moduleDir, providerName string) (params, ext *
 	var paramFields []schemapb.FieldDef
 	var extFields []schemapb.FieldDef
 	var rules []schemapb.RuleDef
+	fileContentCache := make(map[string]string)
 	for _, name := range names {
 		v := mod.Variables[name]
 		f := fieldForTFType(name, v.Type, v.Description, v.Default, v.Sensitive)
@@ -57,7 +58,7 @@ func DeriveProviderParamsSchemapb(moduleDir, providerName string) (params, ext *
 		}
 		paramFields = append(paramFields, f)
 
-		for _, val := range validationBlocksForVariable(v) {
+		for _, val := range validationBlocksForVariable(v, fileContentCache) {
 			celExpr, ok := translateValidationCondition(val.Condition)
 			if !ok {
 				diags.Warnf(v.Pos.Filename, diag.Pos{Line: v.Pos.Line},
@@ -301,14 +302,19 @@ type tfValidation struct {
 	ErrorMessage string
 }
 
-var fileContentCache = map[string]string{}
-
 // validationBlocksForVariable returns every validation block declared
 // inside v's `variable "name" { ... }` block. Returns nil (never an error)
 // if the source file can't be read or no validation block is found --
 // validation-rule derivation is a best-effort enrichment, not something
 // that should fail schema derivation.
-func validationBlocksForVariable(v *tfconfig.Variable) []tfValidation {
+//
+// fileContentCache is scoped to a single DeriveProviderParamsSchemapb call
+// (created fresh by the caller and threaded through here) so that repeated
+// reads of the same source file within that call are deduped without
+// sharing mutable state across concurrent calls -- a package-level cache
+// written here without synchronization would be a concurrent-map-write
+// crash risk if this function is ever called from multiple goroutines.
+func validationBlocksForVariable(v *tfconfig.Variable, fileContentCache map[string]string) []tfValidation {
 	if v.Pos.Filename == "" {
 		return nil
 	}
@@ -333,11 +339,10 @@ func validationBlocksForVariable(v *tfconfig.Variable) []tfValidation {
 // returns the text strictly between its matching outer braces.
 func findVariableBlockBody(src, name string) (string, bool) {
 	needle := fmt.Sprintf("variable %q", name)
-	idx := strings.Index(src, needle)
-	if idx < 0 {
+	_, rest, found := strings.Cut(src, needle)
+	if !found {
 		return "", false
 	}
-	rest := src[idx+len(needle):]
 	openIdx := strings.IndexByte(rest, '{')
 	if openIdx < 0 {
 		return "", false
