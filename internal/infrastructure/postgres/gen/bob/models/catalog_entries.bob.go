@@ -23,7 +23,7 @@ import (
 type CatalogEntry struct {
 	ID            string           `db:"id,pk" `
 	Level         string           `db:"level" `
-	TenantID      null.Val[string] `db:"tenant_id" `
+	TenantID      string           `db:"tenant_id" `
 	Kind          string           `db:"kind" `
 	Slug          string           `db:"slug" `
 	Version       int32            `db:"version" `
@@ -131,7 +131,7 @@ func (c catalogEntryColumn) ShouldOmitParens() bool {
 type CatalogEntrySetter struct {
 	ID            *string           `db:"id,pk" `
 	Level         *string           `db:"level" `
-	TenantID      *null.Val[string] `db:"tenant_id" `
+	TenantID      *string           `db:"tenant_id" `
 	Kind          *string           `db:"kind" `
 	Slug          *string           `db:"slug" `
 	Version       *int32            `db:"version" `
@@ -198,12 +198,11 @@ func (s CatalogEntrySetter) Overwrite(t *CatalogEntry) {
 		}()
 	}
 	if s.TenantID != nil {
-		t.TenantID = func() null.Val[string] {
+		t.TenantID = func() string {
 			if s.TenantID == nil {
-				return *new(null.Val[string])
+				return *new(string)
 			}
-			v := s.TenantID
-			return *v
+			return *s.TenantID
 		}()
 	}
 	if s.Kind != nil {
@@ -303,12 +302,11 @@ func (s *CatalogEntrySetter) Apply(q *dialect.InsertQuery) {
 		}
 
 		if s.TenantID != nil {
-			vals[2] = psql.Arg(func() null.Val[string] {
+			vals[2] = psql.Arg(func() string {
 				if s.TenantID == nil {
-					return *new(null.Val[string])
+					return *new(string)
 				}
-				v := s.TenantID
-				return *v
+				return *s.TenantID
 			}())
 		} else {
 			vals[2] = psql.Raw("DEFAULT")
@@ -751,7 +749,7 @@ func (o CatalogEntrySlice) ReloadAll(ctx context.Context, exec bob.Executor) err
 type catalogEntryWhere[Q psql.Filterable] struct {
 	ID            psql.WhereMod[Q, string]
 	Level         psql.WhereMod[Q, string]
-	TenantID      psql.WhereNullMod[Q, string]
+	TenantID      psql.WhereMod[Q, string]
 	Kind          psql.WhereMod[Q, string]
 	Slug          psql.WhereMod[Q, string]
 	Version       psql.WhereMod[Q, int32]
@@ -770,7 +768,7 @@ func buildCatalogEntryWhere[Q psql.Filterable](cols catalogEntryColumns) catalog
 	return catalogEntryWhere[Q]{
 		ID:            psql.Where[Q, string](cols.ID.Expression),
 		Level:         psql.Where[Q, string](cols.Level.Expression),
-		TenantID:      psql.WhereNull[Q, string](cols.TenantID.Expression),
+		TenantID:      psql.Where[Q, string](cols.TenantID.Expression),
 		Kind:          psql.Where[Q, string](cols.Kind.Expression),
 		Slug:          psql.Where[Q, string](cols.Slug.Expression),
 		Version:       psql.Where[Q, int32](cols.Version.Expression),

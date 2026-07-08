@@ -45,11 +45,11 @@ func (q *Queries) CreateCatalogEntry(ctx context.Context, arg CreateCatalogEntry
 	return err
 }
 
-const getCatalogEntrySQL = `select data from catalog_entries where level = $1 and coalesce(tenant_id,'') = coalesce($2,'') and id = $3;`
+const getCatalogEntrySQL = `select data from catalog_entries where level = $1 and tenant_id = $2 and id = $3;`
 
 type GetCatalogEntryParams struct {
 	Level    string
-	TenantID any
+	TenantID string
 	ID       string
 }
 
@@ -64,11 +64,11 @@ func (q *Queries) GetCatalogEntry(ctx context.Context, arg GetCatalogEntryParams
 	return i, err
 }
 
-const listCatalogEntriesSQL = `select data from catalog_entries where level = $1 and coalesce(tenant_id,'') = coalesce($2,'') and kind = $3 order by slug, version;`
+const listCatalogEntriesSQL = `select data from catalog_entries where level = $1 and tenant_id = $2 and kind = $3 order by slug, version;`
 
 type ListCatalogEntriesParams struct {
 	Level    string
-	TenantID any
+	TenantID string
 	Kind     string
 }
 
@@ -97,12 +97,12 @@ func (q *Queries) ListCatalogEntries(ctx context.Context, arg ListCatalogEntries
 }
 
 const getLatestCatalogEntryBySlugSQL = `select data from catalog_entries
-where level = $1 and coalesce(tenant_id,'') = coalesce($2,'') and kind = $3 and slug = $4
+where level = $1 and tenant_id = $2 and kind = $3 and slug = $4
 order by version desc limit 1;`
 
 type GetLatestCatalogEntryBySlugParams struct {
 	Level    string
-	TenantID any
+	TenantID string
 	Kind     string
 	Slug     string
 }
@@ -119,11 +119,11 @@ func (q *Queries) GetLatestCatalogEntryBySlug(ctx context.Context, arg GetLatest
 }
 
 const getCatalogEntryBySlugVersionSQL = `select data from catalog_entries
-where level = $1 and coalesce(tenant_id,'') = coalesce($2,'') and kind = $3 and slug = $4 and version = $5;`
+where level = $1 and tenant_id = $2 and kind = $3 and slug = $4 and version = $5;`
 
 type GetCatalogEntryBySlugVersionParams struct {
 	Level    string
-	TenantID any
+	TenantID string
 	Kind     string
 	Slug     string
 	Version  int32
@@ -167,12 +167,12 @@ func (q *Queries) ListCatalogEntriesBySource(ctx context.Context, sourceEntryID 
 }
 
 const updateCatalogEntrySQL = `update catalog_entries set data = $1, updated_at = now()
-where level = $2 and coalesce(tenant_id,'') = coalesce($3,'') and id = $4;`
+where level = $2 and tenant_id = $3 and id = $4;`
 
 type UpdateCatalogEntryParams struct {
 	Data     json.RawMessage
 	Level    string
-	TenantID any
+	TenantID string
 	ID       string
 }
 
@@ -181,11 +181,11 @@ func (q *Queries) UpdateCatalogEntry(ctx context.Context, arg UpdateCatalogEntry
 	return tag.RowsAffected(), err
 }
 
-const deleteCatalogEntrySQL = `delete from catalog_entries where level = $1 and coalesce(tenant_id,'') = coalesce($2,'') and id = $3;`
+const deleteCatalogEntrySQL = `delete from catalog_entries where level = $1 and tenant_id = $2 and id = $3;`
 
 type DeleteCatalogEntryParams struct {
 	Level    string
-	TenantID any
+	TenantID string
 	ID       string
 }
 

@@ -16,10 +16,10 @@ import (
 	tenant_id, kind, slug, version) tuple. level/tenant_id/kind/slug/version/
 	origin/source_entry_id are mirrored into indexed columns (alongside the
 	canonical protojson in data) so the scoped lookups can run without
-	decoding every row. tenant_id is NULL for LEVEL_INSTANCE rows and the
-	owning tenant for LEVEL_ORG rows; every query compares via
-	coalesce(tenant_id,'') so a NULL-tenant instance row and an
-	empty-string-tenant lookup match consistently.
+	decoding every row. tenant_id is '' (NOT NULL) for LEVEL_INSTANCE rows
+	and the owning tenant for LEVEL_ORG rows; the unique index is a plain
+	(level, tenant_id, kind, slug, version) column list — no NULL/coalesce
+	involved, since NULL would break equality-based uniqueness anyway.
 */
 
 // CatalogEntries returns the catalog.CatalogEntryRepo.
@@ -54,17 +54,6 @@ func originStr(o catalogpb.Origin) string {
 	}
 }
 
-// nullableTenant maps "" (LEVEL_INSTANCE, no owning tenant) to SQL NULL and
-// a non-empty tenant id to itself, for the `any`-typed tenant_id query params
-// (compared via a SQL coalesce-against-empty-string, so a NULL tenant_id and
-// an empty-string tenant_id resolve identically).
-func nullableTenant(tenantID string) any {
-	if tenantID == "" {
-		return nil
-	}
-	return tenantID
-}
-
 // nullableString maps "" to a nil *string (SQL NULL) and a non-empty string
 // to a pointer to it, for optional envelope columns such as source_entry_id.
 func nullableString(s string) *string {
@@ -82,7 +71,7 @@ func (r *CatalogEntryRepo) Create(ctx context.Context, e *catalogpb.CatalogEntry
 	err = r.db.q().CreateCatalogEntry(ctx, dbgen.CreateCatalogEntryParams{
 		ID:            e.GetEntity().GetId(),
 		Level:         levelStr(e.GetLevel()),
-		TenantID:      nullableString(e.GetEntity().GetTenantId()),
+		TenantID:      e.GetEntity().GetTenantId(),
 		Kind:          kindStr(e.GetKind()),
 		Slug:          e.GetSlug(),
 		Version:       e.GetVersion(),
@@ -102,7 +91,7 @@ func (r *CatalogEntryRepo) Create(ctx context.Context, e *catalogpb.CatalogEntry
 func (r *CatalogEntryRepo) Get(ctx context.Context, level catalogpb.Level, tenantID, id string) (*catalogpb.CatalogEntry, error) {
 	row, err := r.db.q().GetCatalogEntry(ctx, dbgen.GetCatalogEntryParams{
 		Level:    levelStr(level),
-		TenantID: nullableTenant(tenantID),
+		TenantID: tenantID,
 		ID:       id,
 	})
 	if err != nil {
@@ -114,7 +103,7 @@ func (r *CatalogEntryRepo) Get(ctx context.Context, level catalogpb.Level, tenan
 func (r *CatalogEntryRepo) List(ctx context.Context, level catalogpb.Level, tenantID string, kind catalogpb.Kind) ([]*catalogpb.CatalogEntry, error) {
 	rows, err := r.db.q().ListCatalogEntries(ctx, dbgen.ListCatalogEntriesParams{
 		Level:    levelStr(level),
-		TenantID: nullableTenant(tenantID),
+		TenantID: tenantID,
 		Kind:     kindStr(kind),
 	})
 	if err != nil {
@@ -134,7 +123,7 @@ func (r *CatalogEntryRepo) List(ctx context.Context, level catalogpb.Level, tena
 func (r *CatalogEntryRepo) GetLatestBySlug(ctx context.Context, level catalogpb.Level, tenantID string, kind catalogpb.Kind, slug string) (*catalogpb.CatalogEntry, error) {
 	row, err := r.db.q().GetLatestCatalogEntryBySlug(ctx, dbgen.GetLatestCatalogEntryBySlugParams{
 		Level:    levelStr(level),
-		TenantID: nullableTenant(tenantID),
+		TenantID: tenantID,
 		Kind:     kindStr(kind),
 		Slug:     slug,
 	})
@@ -147,7 +136,7 @@ func (r *CatalogEntryRepo) GetLatestBySlug(ctx context.Context, level catalogpb.
 func (r *CatalogEntryRepo) GetBySlugVersion(ctx context.Context, level catalogpb.Level, tenantID string, kind catalogpb.Kind, slug string, version uint32) (*catalogpb.CatalogEntry, error) {
 	row, err := r.db.q().GetCatalogEntryBySlugVersion(ctx, dbgen.GetCatalogEntryBySlugVersionParams{
 		Level:    levelStr(level),
-		TenantID: nullableTenant(tenantID),
+		TenantID: tenantID,
 		Kind:     kindStr(kind),
 		Slug:     slug,
 		Version:  int32(version), //nolint:gosec // version is a small monotonic counter, never approaches int32's range.
@@ -182,7 +171,7 @@ func (r *CatalogEntryRepo) Update(ctx context.Context, e *catalogpb.CatalogEntry
 	n, err := r.db.q().UpdateCatalogEntry(ctx, dbgen.UpdateCatalogEntryParams{
 		Data:     data,
 		Level:    levelStr(e.GetLevel()),
-		TenantID: nullableTenant(e.GetEntity().GetTenantId()),
+		TenantID: e.GetEntity().GetTenantId(),
 		ID:       e.GetEntity().GetId(),
 	})
 	if err != nil {
@@ -197,7 +186,7 @@ func (r *CatalogEntryRepo) Update(ctx context.Context, e *catalogpb.CatalogEntry
 func (r *CatalogEntryRepo) Delete(ctx context.Context, level catalogpb.Level, tenantID, id string) error {
 	n, err := r.db.q().DeleteCatalogEntry(ctx, dbgen.DeleteCatalogEntryParams{
 		Level:    levelStr(level),
-		TenantID: nullableTenant(tenantID),
+		TenantID: tenantID,
 		ID:       id,
 	})
 	if err != nil {

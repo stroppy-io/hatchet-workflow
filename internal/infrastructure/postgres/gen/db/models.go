@@ -43,7 +43,7 @@ type RecipeRecords struct {
 type CatalogEntries struct {
 	ID            string
 	Level         string
-	TenantID      *string
+	TenantID      string
 	Kind          string
 	Slug          string
 	Version       int32

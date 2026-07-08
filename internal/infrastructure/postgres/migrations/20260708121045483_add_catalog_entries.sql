@@ -2,7 +2,7 @@
 CREATE TABLE "public"."catalog_entries" (
   "id" text NOT NULL,
   "level" text NOT NULL,
-  "tenant_id" text,
+  "tenant_id" text NOT NULL DEFAULT ''::text,
   "kind" text NOT NULL,
   "slug" text NOT NULL,
   "version" int4 NOT NULL,
@@ -15,7 +15,7 @@ CREATE TABLE "public"."catalog_entries" (
 );
 CREATE INDEX "idx_catalog_entries_scope" ON "public"."catalog_entries" ("level", "tenant_id", "kind");
 CREATE INDEX "idx_catalog_entries_source" ON "public"."catalog_entries" ("source_entry_id");
-CREATE UNIQUE INDEX "uq_catalog_entries_scope_slug_version" ON "public"."catalog_entries" ("level", (level, COALESCE(tenant_id, ''::text), kind, slug, version), "kind", "slug", "version");
+CREATE UNIQUE INDEX "uq_catalog_entries_scope_slug_version" ON "public"."catalog_entries" ("level", "tenant_id", "kind", "slug", "version");
 
 -- sqld:down
 DROP INDEX "public"."uq_catalog_entries_scope_slug_version";
