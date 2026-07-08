@@ -45,31 +45,29 @@ type RecipeRepo interface {
 	Delete(ctx context.Context, tenantID, id string) error
 }
 
-// RunRepo persists the models.TestRunRecord StartRun mints for a recipe run.
-// This deliberately reuses the same storage row shape (and, transitively,
-// the same postgres.TestRunRepo the test_run service already writes through)
-// so the run immediately participates in overview/metrics/logs without any
-// new plumbing — see StartRun's doc comment for what a recipe run's record
-// does and does not populate.
+// RunRepo persists the models.Run StartRun mints for a recipe run — SP-E
+// Task 3's cutover: this used to reuse models.TestRunRecord/TestRunRepo, but
+// RunRecipeWorkflow's write path now targets models.Run/run_records (see
+// postgres.RunRepo, backing this port via Store.Runs()).
 //
-// Get/List/Delete mirror postgres.TestRunRepo's existing methods exactly
-// (same signatures) so that repo satisfies this port without any new
+// Get/List/Delete mirror postgres.RunRepo's existing methods exactly (same
+// signatures) so that repo satisfies this port without any new
 // storage-layer code: List(ctx, query, callerAccountID) is the same
-// full-filter ListTestRunsRequest query the (removed) test_run service used,
-// reused here rather than adding a second, narrower list method — ListRuns
-// passes a tenant-only query and filters the recipe_id facet in Go (see
-// recipe.go's ListRuns), since ListTestRunsRequest has no recipe_id facet of
+// full-filter ListTestRunsRequest query TestRunRepo.List used, reused here
+// rather than adding a second, narrower list method — ListRuns passes a
+// tenant-only query and filters the workflow_id facet in Go (see recipe.go's
+// ListRuns), since ListTestRunsRequest has no workflow_id/recipe_id facet of
 // its own.
 type RunRepo interface {
-	Create(ctx context.Context, run *models.TestRunRecord) error
-	Update(ctx context.Context, run *models.TestRunRecord) error
+	Create(ctx context.Context, run *models.Run) error
+	Update(ctx context.Context, run *models.Run) error
 	// Get returns the tenant-scoped run record, or derrors.ErrNotFound for an
 	// absent row or one owned by another tenant.
-	Get(ctx context.Context, tenantID, id string) (*models.TestRunRecord, error)
+	Get(ctx context.Context, tenantID, id string) (*models.Run, error)
 	// List returns the page of runs matching query (tenant-scoped) plus the
 	// next-page token; callerAccountID fills each row's per-caller
-	// is_favorite (see postgres.TestRunRepo.List).
-	List(ctx context.Context, query *api.ListTestRunsRequest, callerAccountID string) ([]*models.TestRunRecord, string, error)
+	// is_favorite (see postgres.RunRepo.List).
+	List(ctx context.Context, query *api.ListTestRunsRequest, callerAccountID string) ([]*models.Run, string, error)
 	// Delete removes the tenant-scoped run record, or derrors.ErrNotFound for
 	// an absent row or one owned by another tenant.
 	Delete(ctx context.Context, tenantID, id string) error
@@ -85,7 +83,7 @@ type RunRepo interface {
 // infrastructure/execution.TestWorkflows resolves bootstrap internally
 // rather than taking it as a parameter.
 type RecipeWorkflows interface {
-	LaunchRecipeRun(ctx context.Context, run *models.TestRunRecord, bundle map[string][]byte) error
+	LaunchRecipeRun(ctx context.Context, run *models.Run, bundle map[string][]byte) error
 	// CancelRecipeRun requests cancellation of the RunRecipeWorkflow bound to
 	// runID (the same deterministic workflow id LaunchRecipeRun started).
 	// Cancellation is asynchronous: the workflow's own cancel path persists
@@ -106,7 +104,7 @@ type Deps struct {
 	// means a genuine transport/compute failure and is mapped via
 	// utils.MapErr.
 	Checker func(ctx context.Context, files map[string][]byte) ([]*dslpb.Diagnostic, error)
-	// Runs persists the TestRunRecord StartRun mints. Required for StartRun;
+	// Runs persists the models.Run StartRun mints. Required for StartRun;
 	// every other handler works without it.
 	Runs RunRepo
 	// Workflows launches RunRecipeWorkflow for a StartRun call. Required for

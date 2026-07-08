@@ -27,6 +27,19 @@ import (
 // re-declared here rather than imported).
 const clusterFile = "cluster.yaml"
 
+// defaultGrafanaDashboardUID is the Grafana dashboard StartRun stamps onto a
+// freshly-minted Run's ObservabilityRefs.grafana_dashboard_uid (see that
+// field's own doc comment: "v1: ... filled with ... the relay's existing
+// hardcoded uid (grafana) at mint time"). There is no backend-side per-run
+// Grafana settings RPC (the gateway reverse-proxies the embedded Grafana at
+// a fixed /grafana sub-path — see internal/gateway/gateway.go's
+// GrafanaBackend doc); the frontend's own dashboard-kind -> uid table (web/
+// src/services/grafana.ts's DASHBOARD_UID) is the closest thing to an
+// existing convention, and "workload" is its always-shown, run-scoped
+// default dashboard. SP-F gives ObservabilityRefs real per-provider
+// variance; this is the documented v1 placeholder.
+const defaultGrafanaDashboardUID = "stroppy-metrics-v1"
+
 /*
 	===== Recipe records (CRUD + check) =====
 */
@@ -143,20 +156,21 @@ func (s *Service) CheckRecipe(ctx context.Context, req *api.CheckRecipeRequest) 
 
 /*
 StartRun launches a new run of an already-stored recipe bundle: it persists a
-run record (reusing models.TestRunRecord — see the package doc's RunRepo/
-RecipeWorkflows comments) and starts RunRecipeWorkflow for it via
-s.d.Workflows.LaunchRecipeRun.
+run record (models.Run — see the package doc's RunRepo/RecipeWorkflows
+comments; SP-E Task 3 cut this over from models.TestRunRecord) and starts
+RunRecipeWorkflow for it via s.d.Workflows.LaunchRecipeRun.
 
-The minted TestRunRecord deliberately carries no Spec/Topology: those fields
-describe a domain.TestRun (the classic TestWorkflow input), which a recipe
-run has none of — its input is the recipe bundle's raw files, threaded to
-RunRecipeWorkflow directly. Overview/metrics/logs still work unchanged
-because they key off Entity.Id/TenantId/Status/RuntimeState, none of which
-require Spec (see internal/infrastructure/execution/overview.go's
-overviewFromRecord, which already branches on RuntimeState rather than
-Spec). Name/Description carry the recipe's identity, and RecipeId is
-stamped with the recipe record's id so ListRuns can filter by recipe and
-RunDetail/rerun can trace the run back to the bundle that produced it.
+The minted Run deliberately carries no Baked/CompiledPlan at mint time:
+Baked is nil until SP-D's generated-form launch path exists, and CompiledPlan
+is filled later, durably, by RunRecipeWorkflow itself right after it compiles
+the bundle (see internal/workflows/runtime.go's persistRunCompiledPlan) — not
+here, since StartRun never compiles the bundle itself. Name/Description
+carry the recipe's identity, WorkflowId is stamped with the recipe record's
+id (see Run.workflow_id's own doc: "reserves the name for SP-B's catalog
+Workflow") so ListRuns can filter by recipe and RunDetail/rerun can trace the
+run back to the bundle that produced it, and WorkflowVersion mirrors it
+durably as a stamped string (previously only interpolated into
+Description's free text).
 
 Not idempotent: each call mints a new run, exactly like
 test_run.StartTestRun.
@@ -179,23 +193,35 @@ func (s *Service) StartRun(ctx context.Context, req *api.StartRunRequest) (*api.
 	}
 
 	runID := uuid.NewString()
-	run := &models.TestRunRecord{
+	workflowVersion := strconv.FormatUint(uint64(recipeRec.GetVersion()), 10)
+	run := &models.Run{
 		Entity: &common.Entity{
 			Id:          runID,
 			TenantId:    req.GetTenantId(),
 			Name:        recipeRec.GetEntity().GetName(),
-			Description: "recipe run of " + recipeRec.GetEntity().GetId() + " v" + strconv.FormatUint(uint64(recipeRec.GetVersion()), 10),
+			Description: "recipe run of " + recipeRec.GetEntity().GetId() + " v" + workflowVersion,
 			AuthorId:    c.GetAccountId(),
 			Timings: &common.Timings{
 				CreatedAt: s.now(),
 				UpdatedAt: s.now(),
 			},
 		},
-		Status:   common.Status_STATUS_PENDING,
-		Trigger:  common.Trigger_TRIGGER_API,
-		RecipeId: recipeRec.GetEntity().GetId(),
-		// Rating flags mirror TestRunRecord.Summary's documented platform
-		// defaults (tenant_settings.proto: default_in_tenant_rating/
+		Status:          common.Status_STATUS_PENDING,
+		Trigger:         common.Trigger_TRIGGER_API,
+		WorkflowId:      recipeRec.GetEntity().GetId(),
+		WorkflowVersion: workflowVersion,
+		// Observability is filled at mint time (v1 — see ObservabilityRefs'
+		// own doc comment): metrics/logs are keyed by the run's own entity
+		// id (the runtime observations convention every logs.proto/
+		// metrics.proto consumer already follows), grafana is the relay's
+		// existing hardcoded dashboard uid (see defaultGrafanaDashboardUID).
+		Observability: &models.ObservabilityRefs{
+			MetricsQueryKey:     runID,
+			LogsQueryKey:        runID,
+			GrafanaDashboardUid: defaultGrafanaDashboardUID,
+		},
+		// Rating flags mirror Run.Summary's documented platform defaults
+		// (tenant_settings.proto: default_in_tenant_rating/
 		// default_in_global_rating doc comments) — "tenant true, global
 		// false". Every recipe run counts toward its own tenant's
 		// leaderboard/dashboard ("Top benchmarks") by default;
@@ -221,16 +247,27 @@ func (s *Service) StartRun(ctx context.Context, req *api.StartRunRequest) (*api.
 		}
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	return &api.StartRunResponse{Run: run}, nil
+	// api.StartRunResponse.run is still models.TestRunRecord-typed —
+	// protocols/cloud/v1/api/recipe.proto is not retyped to models.Run until
+	// SP-E Task 5 (see that task's "Modify: protocols/cloud/v1/api/
+	// recipe.proto (StartRunResponse.run, ListRunsResponse.runs field
+	// types)" step). runToAPIResponse bridges the gap for the duration of
+	// Tasks 3-4, mirroring execution.RunToTestRunRecord's identical
+	// adapter (duplicated rather than imported: execution already imports
+	// this package for RecipeWorkflows, so the reverse import would cycle).
+	return &api.StartRunResponse{Run: runToAPIResponse(run)}, nil
 }
 
 // ListRuns returns one page of runs for the tenant, optionally narrowed to a
-// single recipe. It reuses the same s.d.Runs.List that backed the (removed)
-// test_run service, passing req.GetPage() straight through so the storage
-// layer's own LIMIT/OFFSET pagination applies (rather than silently relying
-// on TestRunRepo.List's default page size, which would otherwise cap every
-// call at the first 50 tenant runs); the recipe_id filter (a facet
-// ListTestRunsRequest has no field for) is then applied in Go.
+// single recipe. It reuses the same s.d.Runs.List that backs the postgres
+// RunRepo, passing req.GetPage() straight through so the storage layer's
+// own LIMIT/OFFSET pagination applies (rather than silently relying on
+// RunRepo.List's default page size, which would otherwise cap every call at
+// the first 50 tenant runs); the recipe_id filter (a facet
+// ListTestRunsRequest has no field for) is then applied in Go against
+// Run.workflow_id (renamed from TestRunRecord.recipe_id — see Run.workflow_id's
+// own doc comment: same value, "reserves the name for SP-B's catalog
+// Workflow").
 //
 // IMPORTANT recipe_id caveat: because the recipe_id filter runs in-process
 // over the already-paginated storage page rather than in the storage query
@@ -263,16 +300,23 @@ func (s *Service) ListRuns(ctx context.Context, req *api.ListRunsRequest) (*api.
 	}
 
 	if recipeID := req.GetRecipeId(); recipeID != "" {
-		filtered := make([]*models.TestRunRecord, 0, len(runs))
+		filtered := make([]*models.Run, 0, len(runs))
 		for _, run := range runs {
-			if run.GetRecipeId() == recipeID {
+			if run.GetWorkflowId() == recipeID {
 				filtered = append(filtered, run)
 			}
 		}
 		runs = filtered
 	}
 
-	return &api.ListRunsResponse{Runs: runs, NextPageToken: nextPageToken}, nil
+	// api.ListRunsResponse.runs is still models.TestRunRecord-typed until
+	// SP-E Task 5 — see StartRun's identical runToAPIResponse note above.
+	wireRuns := make([]*models.TestRunRecord, 0, len(runs))
+	for _, run := range runs {
+		wireRuns = append(wireRuns, runToAPIResponse(run))
+	}
+
+	return &api.ListRunsResponse{Runs: wireRuns, NextPageToken: nextPageToken}, nil
 }
 
 // CancelRun requests cancellation of an in-flight recipe run's
@@ -343,11 +387,12 @@ func (s *Service) now() *timestamppb.Timestamp {
 // internal/services/test_run's own unexported markFailed (re-declared here
 // rather than imported: that package exports no such helper, and StartRun
 // already holds the record in memory so — unlike test_run.finishFailedRun —
-// there is no need to re-fetch it from storage first).
-func markRunFailed(rec *models.TestRunRecord, now *timestamppb.Timestamp) {
+// there is no need to re-fetch it from storage first). Retyped for SP-E
+// Task 3's models.Run cutover (was *models.TestRunRecord).
+func markRunFailed(rec *models.Run, now *timestamppb.Timestamp) {
 	rec.Status = common.Status_STATUS_FAILED
 	if rec.Summary == nil {
-		rec.Summary = &models.TestRunRecord_Summary{}
+		rec.Summary = &models.Run_Summary{}
 	}
 	if rec.Summary.StartedAt == nil {
 		rec.Summary.StartedAt = now
@@ -366,6 +411,59 @@ func markRunFailed(rec *models.TestRunRecord, now *timestamppb.Timestamp) {
 		rec.Entity.Timings = &common.Timings{CreatedAt: now}
 	}
 	rec.Entity.Timings.UpdatedAt = now
+}
+
+// runToAPIResponse adapts a persisted models.Run onto the models.TestRunRecord
+// shape api.StartRunResponse.run / api.ListRunsResponse.runs still expect —
+// protocols/cloud/v1/api/recipe.proto is not retyped to models.Run until
+// SP-E Task 5. Deliberately lossy (mirrors
+// internal/infrastructure/execution/run_shim.go's RunToTestRunRecord, which
+// exists for the exact same reason on the OverviewReader side; duplicated
+// here rather than imported since execution already imports this package for
+// RecipeWorkflows — the reverse import would cycle). Delete both adapters
+// once Task 5 lands and the wire types carry models.Run directly.
+func runToAPIResponse(run *models.Run) *models.TestRunRecord {
+	if run == nil {
+		return nil
+	}
+	return &models.TestRunRecord{
+		Entity:         run.GetEntity(),
+		Status:         run.GetStatus(),
+		Trigger:        run.GetTrigger(),
+		InTenantRating: run.GetInTenantRating(),
+		InGlobalRating: run.GetInGlobalRating(),
+		Summary:        runSummaryToAPIResponse(run.GetSummary()),
+		RuntimeState:   run.GetRuntimeState(),
+		RecipeId:       run.GetWorkflowId(),
+	}
+}
+
+// runSummaryToAPIResponse field-copies a models.Run_Summary onto a
+// models.TestRunRecord_Summary — the two messages share an identical field
+// set (see models/test_run.proto's Run.Summary doc: "same 15 fields as
+// TestRunRecord.Summary"), so this is a straight, lossless copy.
+func runSummaryToAPIResponse(s *models.Run_Summary) *models.TestRunRecord_Summary {
+	if s == nil {
+		return nil
+	}
+	return &models.TestRunRecord_Summary{
+		DbKind:           s.GetDbKind(),
+		DbPresetId:       s.GetDbPresetId(),
+		DbPresetName:     s.GetDbPresetName(),
+		WorkloadPresetId: s.GetWorkloadPresetId(),
+		WorkloadName:     s.GetWorkloadName(),
+		StroppyVersion:   s.GetStroppyVersion(),
+		WorkloadProtocol: s.GetWorkloadProtocol(),
+		TestPresetId:     s.GetTestPresetId(),
+		TestPresetName:   s.GetTestPresetName(),
+		TopologyLabel:    s.GetTopologyLabel(),
+		NodeCount:        s.GetNodeCount(),
+		Provider:         s.GetProvider(),
+		ProgressPct:      s.GetProgressPct(),
+		StartedAt:        s.GetStartedAt(),
+		FinishedAt:       s.GetFinishedAt(),
+		Duration:         s.GetDuration(),
+	}
 }
 
 // requireTenant validates tenant_id is present. RBAC is enforced upstream by

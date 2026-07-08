@@ -11,24 +11,24 @@ import (
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 )
 
-// deriveRunSummary computes the TestRunRecord.Summary facets a recipe run's
+// deriveRunSummary computes the models.Run.Summary facets a recipe run's
 // CompiledPlan carries — Provider/NodeCount/TopologyLabel/DbKind/
 // WorkloadName/StroppyVersion — right after RunRecipeWorkflow's compile
 // stage succeeds (see run's persistRunSummary call in runrecipe.go). Every
 // kept feature that reads a recipe run (rating boards, the metrics tab's
-// dbKindString, compare, share, the runs table) reads Summary, never the
-// baked domain.TestRun spec a recipe run doesn't have — so this is the one
-// place a recipe run's queryable facets get filled in.
+// dbKindString, compare, share, the runs table) reads Summary, never a
+// baked domain.TestRun spec (Run has none) — so this is the one place a
+// recipe run's queryable facets get filled in.
 //
 // Every heuristic below is best-effort and documented at its own helper; an
 // unrecognized/absent value is left at its Go zero value rather than
 // guessed, and none of this ever fails the workflow.
-func deriveRunSummary(plan *dslpb.CompiledPlan) *models.TestRunRecord_Summary {
+func deriveRunSummary(plan *dslpb.CompiledPlan) *models.Run_Summary {
 	groups := plan.GetMachineGroups()
 	services := plan.GetServices()
 	stroppy := findStroppySvc(services)
 
-	return &models.TestRunRecord_Summary{
+	return &models.Run_Summary{
 		Provider:       providerKindFromName(plan.GetProvider().GetName()),
 		NodeCount:      nodeCount(groups),
 		TopologyLabel:  topologyLabel(plan.GetProvider().GetName(), groups),

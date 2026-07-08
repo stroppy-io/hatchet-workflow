@@ -8,6 +8,7 @@ import (
 	"go.temporal.io/sdk/workflow"
 
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
+	dslpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dsl"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
 	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
@@ -17,16 +18,22 @@ const (
 	PersistRunStateActivityName       = "stroppy.runtime.PersistRunState"
 	PersistDeploymentPlanActivityName = "stroppy.runtime.PersistDeploymentPlan"
 	AppendRunLogsActivityName         = "stroppy.runtime.AppendRunLogs"
-	// PersistRunSummaryActivityName merges a recipe-derived
-	// TestRunRecord.Summary onto the run record — see runtime.go's
-	// persistRunSummary and runrecipe_summary.go's deriveRunSummary.
+	// PersistRunSummaryActivityName merges a recipe-derived models.Run.Summary
+	// onto the run record — see runtime.go's persistRunSummary and
+	// runrecipe_summary.go's deriveRunSummary.
 	PersistRunSummaryActivityName = "stroppy.runtime.PersistRunSummary"
 	// PersistRecipeTopologyActivityName stores a recipe run's topology
 	// snapshot (machines + their group/service placement) onto the run
-	// record's recipe_topology field — see runtime.go's
-	// persistRecipeTopology and runrecipe_topology.go's
-	// deriveRecipeTopology.
+	// record's topology field — see runtime.go's persistRecipeTopology and
+	// runrecipe_topology.go's deriveRecipeTopology.
 	PersistRecipeTopologyActivityName = "stroppy.runtime.PersistRecipeTopology"
+	// PersistRunCompiledPlanActivityName persists the compiled DSL plan
+	// RunRecipeWorkflow executed onto the run record's compiled_plan field —
+	// see runtime.go's persistRunCompiledPlan. SP-E Task 3: today the plan
+	// lives only in workflow memory and is never durably stored; this
+	// activity is the fix, called once right after the compile stage
+	// succeeds (see runrecipe.go's run).
+	PersistRunCompiledPlanActivityName = "stroppy.runtime.PersistRunCompiledPlan"
 )
 
 type RuntimeActivities interface {
@@ -37,13 +44,22 @@ type RuntimeActivities interface {
 	// run record's stored Summary (see execution.RunPersistenceActivities.
 	// PersistRunSummary) — additive, never clobbers the timing/progress
 	// facets PersistRunState's own applyRunSummary maintains.
-	PersistRunSummary(context.Context, string, *models.TestRunRecord_Summary) error
-	// PersistRecipeTopology replaces the run record's recipe_topology field
+	PersistRunSummary(context.Context, string, *models.Run_Summary) error
+	// PersistRecipeTopology replaces the run record's topology field
 	// wholesale (see execution.RunPersistenceActivities.PersistRecipeTopology)
 	// — a full-replace write, like PersistDeploymentPlan, not a merge like
 	// PersistRunSummary: the snapshot is built once from a single
 	// ProvisionActivity result, so there is nothing to accrete.
-	PersistRecipeTopology(context.Context, string, *models.RecipeTopologySnapshot) error
+	PersistRecipeTopology(context.Context, string, *models.RunTopology) error
+	// PersistRunCompiledPlan replaces the run record's compiled_plan field
+	// wholesale (see execution.RunPersistenceActivities.PersistRunCompiledPlan)
+	// — called exactly once, right after CompileRecipeActivity succeeds (see
+	// runrecipe.go's run and runtime.go's persistRunCompiledPlan). Never
+	// called again for the same run (no re-compile mid-run), which is the
+	// SP history-bloat-avoidance property this activity depends on: unlike
+	// PersistRunState (called on every stage transition), this is a
+	// once-only write.
+	PersistRunCompiledPlan(context.Context, string, *dslpb.CompiledPlan) error
 }
 
 // RecipeActivityImpl is the interface RunRecipeWorkflow's three by-name
@@ -97,6 +113,7 @@ func RegisterActivities(registry worker.ActivityRegistry, runtime RuntimeActivit
 		registry.RegisterActivityWithOptions(runtime.AppendRunLogs, activity.RegisterOptions{Name: AppendRunLogsActivityName})
 		registry.RegisterActivityWithOptions(runtime.PersistRunSummary, activity.RegisterOptions{Name: PersistRunSummaryActivityName})
 		registry.RegisterActivityWithOptions(runtime.PersistRecipeTopology, activity.RegisterOptions{Name: PersistRecipeTopologyActivityName})
+		registry.RegisterActivityWithOptions(runtime.PersistRunCompiledPlan, activity.RegisterOptions{Name: PersistRunCompiledPlanActivityName})
 	}
 }
 

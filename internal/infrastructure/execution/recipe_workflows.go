@@ -63,7 +63,7 @@ func NewRecipeWorkflows(c client.Client, bootstrap settings.AgentBootstrapSource
 // runrecipe.go's package doc). Per-node agent auth for recipe runs is a
 // documented follow-up for the provisioning activities (Task 4+), not this
 // launch path.
-func (w *RecipeWorkflows) LaunchRecipeRun(ctx context.Context, run *models.TestRunRecord, bundle map[string][]byte) error {
+func (w *RecipeWorkflows) LaunchRecipeRun(ctx context.Context, run *models.Run, bundle map[string][]byte) error {
 	in, err := w.runRecipeInput(ctx, run, bundle)
 	if err != nil {
 		return err
@@ -91,7 +91,7 @@ func (w *RecipeWorkflows) CancelRecipeRun(ctx context.Context, runID string) err
 	return w.client.CancelWorkflow(ctx, runRecipeWorkflowID(runID), "")
 }
 
-func (w *RecipeWorkflows) runRecipeInput(ctx context.Context, run *models.TestRunRecord, bundle map[string][]byte) (*workflows.RunRecipeInput, error) {
+func (w *RecipeWorkflows) runRecipeInput(ctx context.Context, run *models.Run, bundle map[string][]byte) (*workflows.RunRecipeInput, error) {
 	runID := run.GetEntity().GetId()
 	if runID == "" {
 		return nil, errRecipeRunMissingID

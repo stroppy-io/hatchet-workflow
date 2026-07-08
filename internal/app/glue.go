@@ -47,6 +47,25 @@ func (r byIDReader) testRun(ctx context.Context, id string) (*modelspb.TestRunRe
 	return rec, nil
 }
 
+// run reads run_records by id alone, mirroring testRun above for the
+// models.Run write path SP-E Task 3 cut RunRecipeWorkflow over to. Used by
+// runtimePersistenceStore (workflow persist activities, which only know the
+// run id) and by snapshotRunReader's fallback (see that type's doc) for a
+// run that only exists in run_records (post-cutover), not test_run_records.
+func (r byIDReader) run(ctx context.Context, id string) (*modelspb.Run, error) {
+	var data []byte
+	err := r.db.TxDB.QueryRow(ctx,
+		`select data from run_records where id = $1`, id).Scan(&data)
+	if err != nil {
+		return nil, translate("run", err)
+	}
+	rec := &modelspb.Run{}
+	if err := unmarshalJSON.Unmarshal(data, rec); err != nil {
+		return nil, err
+	}
+	return rec, nil
+}
+
 func translate(resource string, err error) error {
 	if errors.Is(err, pgx.ErrNoRows) {
 		return derrors.NotFound(resource, "not found")
@@ -70,29 +89,54 @@ func (s shareRunReader) GetTestRun(ctx context.Context, id string) (*modelspb.Te
 }
 
 // snapshotRunReader backs execution.SnapshotRunReader: RunRecord by id.
+//
+// SP-E Task 3 cut RunRecipeWorkflow's write path over to models.Run/
+// run_records, but execution.OverviewReader (the sole consumer of this type)
+// is not migrated to read models.Run natively until Task 4 — see
+// execution.RunToTestRunRecord's doc. Until then, this reads test_run_records
+// first (pre-cutover / historical runs, still there since nothing deletes
+// them), falling back to run_records + the shim adapter for a run that only
+// exists there (any run started after this task landed). Delete the fallback
+// once Task 4 lands and OverviewReader reads *models.Run directly.
 type snapshotRunReader struct{ r byIDReader }
 
 var _ execution.SnapshotRunReader = snapshotRunReader{}
 
 func (s snapshotRunReader) RunRecord(ctx context.Context, runID string) (*modelspb.TestRunRecord, error) {
-	return s.r.testRun(ctx, runID)
+	rec, err := s.r.testRun(ctx, runID)
+	if err == nil {
+		return rec, nil
+	}
+	if !errors.Is(err, derrors.ErrNotFound) {
+		return nil, err
+	}
+	run, rerr := s.r.run(ctx, runID)
+	if rerr != nil {
+		// Neither table has this id: surface the original test_run_records
+		// not-found (preserves prior error semantics/messages).
+		return nil, err
+	}
+	return execution.RunToTestRunRecord(run), nil
 }
 
-// runtimePersistenceStore backs workflow runtime persistence activities. Reads are
-// by id because workflows know the run id, then writes go through the typed repo
-// using the tenant carried in the record.
+// runtimePersistenceStore backs workflow runtime persistence activities
+// (execution.RunPersistenceActivities) — SP-E Task 3: retyped from
+// *postgres.TestRunRepo/models.TestRunRecord to *postgres.RunRepo/models.Run,
+// mirroring the cutover. Reads are by id because workflows know the run id,
+// then writes go through the typed repo using the tenant carried in the
+// record.
 type runtimePersistenceStore struct {
 	r    byIDReader
-	runs *postgres.TestRunRepo
+	runs *postgres.RunRepo
 }
 
 var _ execution.RunPersistenceStore = runtimePersistenceStore{}
 
-func (s runtimePersistenceStore) RunRecord(ctx context.Context, runID string) (*modelspb.TestRunRecord, error) {
-	return s.r.testRun(ctx, runID)
+func (s runtimePersistenceStore) RunRecord(ctx context.Context, runID string) (*modelspb.Run, error) {
+	return s.r.run(ctx, runID)
 }
 
-func (s runtimePersistenceStore) SaveRunRecord(ctx context.Context, run *modelspb.TestRunRecord) error {
+func (s runtimePersistenceStore) SaveRunRecord(ctx context.Context, run *modelspb.Run) error {
 	return s.runs.Update(ctx, run)
 }
 

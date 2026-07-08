@@ -160,7 +160,7 @@ func Run(ctx context.Context, cfg Config) error {
 	}
 
 	snapReader := snapshotRunReader{r: bid}
-	runtimeStore := runtimePersistenceStore{r: bid, runs: store.TestRuns()}
+	runtimeStore := runtimePersistenceStore{r: bid, runs: store.Runs()}
 	runLogWriter := execution.NewRunLogWriter(cfg.MonitoringURL, cfg.MonitoringToken)
 	runtimeActivities := execution.NewRunPersistenceActivities(runtimeStore, runLogWriter)
 	agentRegistry := execution.NewAgentRegistryService(log)
@@ -513,7 +513,7 @@ func Run(ctx context.Context, cfg Config) error {
 		// DslService.Check already gives the live editor, so a stored recipe's
 		// Create/CheckRecipe path warns on a bogus stroppy version too.
 		Checker:   dslService.CheckBundle,
-		Runs:      store.TestRuns(),
+		Runs:      store.Runs(),
 		Workflows: recipeWorkflows,
 	})
 

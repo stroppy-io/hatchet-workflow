@@ -340,6 +340,67 @@ func TestRunRecipeWorkflowPersistsRecipeTopologyAfterProvision(t *testing.T) {
 	}
 }
 
+// TestRunRecipeWorkflowPersistsCompiledPlanAfterCompile asserts that right
+// after the compile stage succeeds, RunRecipeWorkflow calls
+// PersistRunCompiledPlanActivityName with the real compiled plan — the ROOT
+// fix for Run.compiled_plan, which before Task 3 lived only in workflow
+// memory and was never durably stored (see runtime.go's
+// persistRunCompiledPlan). It must persist no later than the summary (both
+// happen back-to-back in the same post-compile block — see runrecipe.go's
+// run — this task's ordering choice).
+func TestRunRecipeWorkflowPersistsCompiledPlanAfterCompile(t *testing.T) {
+	var suite testsuite.WorkflowTestSuite
+	env := suite.NewTestWorkflowEnvironment()
+	RegisterWorkflows(env)
+	registerRunRecipeActivityStubs(env)
+	runtime := &fakeRuntimeActivities{}
+	registerFakeRuntimeActivities(env, runtime)
+
+	plan := runRecipeTestPlan()
+	machines := map[string][]*deploymentpb.MachineState{
+		"app": {machineState("app-1", "10.0.0.1")},
+	}
+
+	env.OnActivity(CompileRecipeActivityName, mock.Anything, mock.Anything).Return(
+		&CompileRecipeActivityOutput{Plan: plan}, nil,
+	)
+	env.OnActivity(ProvisionActivityName, mock.Anything, mock.Anything).Return(
+		&ProvisionActivityOutput{Machines: machines}, nil,
+	)
+	env.OnWorkflow(ExecuteCompiledPlanWorkflowName, mock.Anything, mock.Anything).Return(
+		&ExecuteCompiledPlanOutput{JobStatuses: map[string]string{"a": jobStatusOK}}, nil,
+	)
+	env.OnActivity(TeardownActivityName, mock.Anything, mock.Anything).Return(nil)
+
+	env.ExecuteWorkflow(RunRecipeWorkflowName, runRecipeTestInput())
+
+	if !env.IsWorkflowCompleted() {
+		t.Fatal("workflow did not complete")
+	}
+	if err := env.GetWorkflowError(); err != nil {
+		t.Fatalf("workflow failed: %v", err)
+	}
+
+	runtime.mu.Lock()
+	persisted := runtime.persistedCompiledPlan
+	planAt := runtime.persistedCompiledPlanAt
+	summaryAt := runtime.persistedSummaryAt
+	runtime.mu.Unlock()
+
+	if persisted == nil {
+		t.Fatal("persistRunCompiledPlan must be called after compile succeeds")
+	}
+	if persisted.GetProvider().GetName() == "" {
+		t.Fatal("persisted plan is the real compiled plan, not empty")
+	}
+	if planAt == 0 {
+		t.Fatal("persistedCompiledPlanAt was never recorded")
+	}
+	if planAt > summaryAt {
+		t.Fatalf("compiled plan persisted after the summary: planAt=%d, summaryAt=%d", planAt, summaryAt)
+	}
+}
+
 // TestRunRecipeWorkflowProvisionFails asserts a ProvisionActivity failure
 // marks the infra stage FAILED, skips the execute child entirely, still runs
 // teardown (compile already resolved a provider), and the workflow itself

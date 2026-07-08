@@ -19,7 +19,7 @@ func TestLaunchRecipeRunStartsWorkflowWithExpectedIDAndInput(t *testing.T) {
 		client:    starter,
 		bootstrap: fakeStandaloneBootstrap{serverAddr: "https://control.example"},
 	}
-	run := &models.TestRunRecord{
+	run := &models.Run{
 		Entity: &common.Entity{Id: "run-1", TenantId: "tenant-1"},
 	}
 	bundle := map[string][]byte{"cluster.yaml": []byte("version: 1\n")}
@@ -64,7 +64,7 @@ func TestLaunchRecipeRunStartsWorkflowWithExpectedIDAndInput(t *testing.T) {
 func TestLaunchRecipeRunWithoutBootstrapSourceLeavesBootstrapNil(t *testing.T) {
 	starter := &fakeWorkflowStarter{}
 	rw := &RecipeWorkflows{client: starter}
-	run := &models.TestRunRecord{Entity: &common.Entity{Id: "run-1", TenantId: "tenant-1"}}
+	run := &models.Run{Entity: &common.Entity{Id: "run-1", TenantId: "tenant-1"}}
 
 	if err := rw.LaunchRecipeRun(context.Background(), run, nil); err != nil {
 		t.Fatalf("launch recipe run: %v", err)
@@ -79,7 +79,7 @@ func TestLaunchRecipeRunPropagatesExecuteWorkflowError(t *testing.T) {
 	wantErr := errors.New("temporal unavailable")
 	starter := &fakeWorkflowStarter{err: wantErr}
 	rw := &RecipeWorkflows{client: starter}
-	run := &models.TestRunRecord{Entity: &common.Entity{Id: "run-1", TenantId: "tenant-1"}}
+	run := &models.Run{Entity: &common.Entity{Id: "run-1", TenantId: "tenant-1"}}
 
 	err := rw.LaunchRecipeRun(context.Background(), run, nil)
 	if !errors.Is(err, wantErr) {
@@ -90,7 +90,7 @@ func TestLaunchRecipeRunPropagatesExecuteWorkflowError(t *testing.T) {
 func TestLaunchRecipeRunMissingRunIDErrors(t *testing.T) {
 	starter := &fakeWorkflowStarter{}
 	rw := &RecipeWorkflows{client: starter}
-	run := &models.TestRunRecord{Entity: &common.Entity{TenantId: "tenant-1"}}
+	run := &models.Run{Entity: &common.Entity{TenantId: "tenant-1"}}
 
 	err := rw.LaunchRecipeRun(context.Background(), run, nil)
 	if !errors.Is(err, errRecipeRunMissingID) {

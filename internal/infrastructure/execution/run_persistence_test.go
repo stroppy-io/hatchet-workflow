@@ -6,35 +6,41 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
+	commonpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	domainpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
+	dslpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dsl"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func TestPersistRunStateUpdatesRecord(t *testing.T) {
 	started := timestamppb.New(time.Unix(10, 0))
 	finished := timestamppb.New(time.Unix(20, 0))
 	store := &fakeRunPersistenceStore{
-		runs: map[string]*models.TestRunRecord{
+		runs: map[string]*models.Run{
 			"run-1": {
-				Entity: &common.Entity{Id: "run-1"},
-				Status: common.Status_STATUS_PENDING,
+				Entity: &commonpb.Entity{Id: "run-1"},
+				Status: commonpb.Status_STATUS_PENDING,
 			},
 		},
 	}
 	activities := NewRunPersistenceActivities(store)
 
+	// infrastructureState/deploymentPlan are accepted for RuntimeActivities
+	// interface stability but are documented no-ops on a models.Run-backed
+	// store (Run has no such fields — see PersistRunState's own doc
+	// comment), so this test only asserts the fields Run does carry.
 	err := activities.PersistRunState(
 		context.Background(),
 		"run-1",
 		&workflowpb.RunState{
-			Status: common.Status_STATUS_RUNNING,
+			Status: commonpb.Status_STATUS_RUNNING,
 			Stages: []*workflowpb.Stage{
-				{Name: "infrastructure", Status: common.Status_STATUS_COMPLETED, StartedAt: started, FinishedAt: finished},
-				{Name: "workload", Status: common.Status_STATUS_RUNNING, StartedAt: finished},
+				{Name: "infrastructure", Status: commonpb.Status_STATUS_COMPLETED, StartedAt: started, FinishedAt: finished},
+				{Name: "workload", Status: commonpb.Status_STATUS_RUNNING, StartedAt: finished},
 			},
 		},
 		&deploymentpb.InfrastructureState{Provider: deploymentpb.Provider_PROVIDER_DOCKER},
@@ -45,20 +51,14 @@ func TestPersistRunStateUpdatesRecord(t *testing.T) {
 	}
 
 	run := store.runs["run-1"]
-	if got := run.GetStatus(); got != common.Status_STATUS_RUNNING {
-		t.Fatalf("run status = %s, want %s", got, common.Status_STATUS_RUNNING)
+	if got := run.GetStatus(); got != commonpb.Status_STATUS_RUNNING {
+		t.Fatalf("run status = %s, want %s", got, commonpb.Status_STATUS_RUNNING)
 	}
 	if got := run.GetSummary().GetProgressPct(); got != 50 {
 		t.Fatalf("run progress = %d, want 50", got)
 	}
 	if run.GetSummary().GetStartedAt() == nil {
 		t.Fatal("run started_at was not persisted")
-	}
-	if run.GetInfrastructureState().GetProvider() != deploymentpb.Provider_PROVIDER_DOCKER {
-		t.Fatal("infrastructure state was not persisted")
-	}
-	if run.GetDeploymentPlan().GetLabels()["source"] != "test" {
-		t.Fatal("deployment plan was not persisted")
 	}
 	if got := len(run.GetRuntimeState().GetStages()); got != 2 {
 		t.Fatalf("runtime_state stages = %d, want 2", got)
@@ -76,11 +76,11 @@ func TestPersistRunStateUpdatesRecord(t *testing.T) {
 func TestPersistRunSummaryMergesRecipeFacetsWithoutClobberingTiming(t *testing.T) {
 	started := timestamppb.New(time.Unix(10, 0))
 	store := &fakeRunPersistenceStore{
-		runs: map[string]*models.TestRunRecord{
+		runs: map[string]*models.Run{
 			"run-1": {
-				Entity: &common.Entity{Id: "run-1"},
-				Status: common.Status_STATUS_RUNNING,
-				Summary: &models.TestRunRecord_Summary{
+				Entity: &commonpb.Entity{Id: "run-1"},
+				Status: commonpb.Status_STATUS_RUNNING,
+				Summary: &models.Run_Summary{
 					StartedAt:   started,
 					ProgressPct: 25,
 				},
@@ -89,7 +89,7 @@ func TestPersistRunSummaryMergesRecipeFacetsWithoutClobberingTiming(t *testing.T
 	}
 	activities := NewRunPersistenceActivities(store)
 
-	err := activities.PersistRunSummary(context.Background(), "run-1", &models.TestRunRecord_Summary{
+	err := activities.PersistRunSummary(context.Background(), "run-1", &models.Run_Summary{
 		Provider:       deploymentpb.Provider_PROVIDER_YANDEX,
 		NodeCount:      4,
 		TopologyLabel:  "yandex · 4 nodes",
@@ -133,36 +133,75 @@ func TestPersistRunSummaryMergesRecipeFacetsWithoutClobberingTiming(t *testing.T
 	}
 }
 
+// TestPersistRunCompiledPlan_StoresOnRunRecord asserts PersistRunCompiledPlan
+// (SP-E Task 3's new activity) stores the compiled plan onto the run
+// record's compiled_plan field — the fix for the plan otherwise living only
+// in workflow memory and never being durably persisted.
+func TestPersistRunCompiledPlan_StoresOnRunRecord(t *testing.T) {
+	store := &fakeRunPersistenceStore{
+		runs: map[string]*models.Run{
+			"run-1": {Entity: &commonpb.Entity{Id: "run-1", TenantId: "t1"}},
+		},
+	}
+	activities := NewRunPersistenceActivities(store)
+
+	plan := &dslpb.CompiledPlan{Provider: &dslpb.ProviderRef{Name: "docker"}}
+	if err := activities.PersistRunCompiledPlan(context.Background(), "run-1", plan); err != nil {
+		t.Fatalf("persist run compiled plan: %v", err)
+	}
+
+	got := store.runs["run-1"]
+	if got.GetCompiledPlan().GetProvider().GetName() != "docker" {
+		t.Fatalf("compiled_plan.provider.name = %q, want %q", got.GetCompiledPlan().GetProvider().GetName(), "docker")
+	}
+	if got.GetEntity().GetTimings().GetUpdatedAt() == nil {
+		t.Fatal("run updated_at was not touched")
+	}
+}
+
+// TestPersistRunCompiledPlan_UnknownRunReturnsError asserts a lookup failure
+// (unknown run id) propagates rather than being swallowed — mirrors every
+// other Persist* activity's error-propagation contract.
+func TestPersistRunCompiledPlan_UnknownRunReturnsError(t *testing.T) {
+	store := &fakeRunPersistenceStore{runs: map[string]*models.Run{}}
+	activities := NewRunPersistenceActivities(store)
+
+	err := activities.PersistRunCompiledPlan(context.Background(), "missing", &dslpb.CompiledPlan{})
+	if err == nil {
+		t.Fatal("expected an error for an unknown run id")
+	}
+}
+
 func TestNextRunStatusDoesNotDowngradeDurableTerminalState(t *testing.T) {
 	tests := []struct {
 		name     string
-		current  common.Status
-		incoming common.Status
-		want     common.Status
+		current  commonpb.Status
+		incoming commonpb.Status
+		want     commonpb.Status
 	}{
 		{
 			name:     "completed ignores running",
-			current:  common.Status_STATUS_COMPLETED,
-			incoming: common.Status_STATUS_RUNNING,
-			want:     common.Status_STATUS_COMPLETED,
+			current:  commonpb.Status_STATUS_COMPLETED,
+			incoming: commonpb.Status_STATUS_RUNNING,
+			want:     commonpb.Status_STATUS_COMPLETED,
 		},
 		{
 			name:     "failed ignores cancelled",
-			current:  common.Status_STATUS_FAILED,
-			incoming: common.Status_STATUS_CANCELLED,
-			want:     common.Status_STATUS_FAILED,
+			current:  commonpb.Status_STATUS_FAILED,
+			incoming: commonpb.Status_STATUS_CANCELLED,
+			want:     commonpb.Status_STATUS_FAILED,
 		},
 		{
 			name:     "cancelling ignores running",
-			current:  common.Status_STATUS_CANCELLING,
-			incoming: common.Status_STATUS_RUNNING,
-			want:     common.Status_STATUS_CANCELLING,
+			current:  commonpb.Status_STATUS_CANCELLING,
+			incoming: commonpb.Status_STATUS_RUNNING,
+			want:     commonpb.Status_STATUS_CANCELLING,
 		},
 		{
 			name:     "terminal can move from cancelling",
-			current:  common.Status_STATUS_CANCELLING,
-			incoming: common.Status_STATUS_CANCELLED,
-			want:     common.Status_STATUS_CANCELLED,
+			current:  commonpb.Status_STATUS_CANCELLING,
+			incoming: commonpb.Status_STATUS_CANCELLED,
+			want:     commonpb.Status_STATUS_CANCELLED,
 		},
 	}
 
@@ -176,10 +215,10 @@ func TestNextRunStatusDoesNotDowngradeDurableTerminalState(t *testing.T) {
 }
 
 type fakeRunPersistenceStore struct {
-	runs map[string]*models.TestRunRecord
+	runs map[string]*models.Run
 }
 
-func (f *fakeRunPersistenceStore) RunRecord(_ context.Context, runID string) (*models.TestRunRecord, error) {
+func (f *fakeRunPersistenceStore) RunRecord(_ context.Context, runID string) (*models.Run, error) {
 	rec, ok := f.runs[runID]
 	if !ok {
 		return nil, fmt.Errorf("run %q not found", runID)
@@ -187,7 +226,7 @@ func (f *fakeRunPersistenceStore) RunRecord(_ context.Context, runID string) (*m
 	return rec, nil
 }
 
-func (f *fakeRunPersistenceStore) SaveRunRecord(_ context.Context, run *models.TestRunRecord) error {
+func (f *fakeRunPersistenceStore) SaveRunRecord(_ context.Context, run *models.Run) error {
 	f.runs[run.GetEntity().GetId()] = run
 	return nil
 }

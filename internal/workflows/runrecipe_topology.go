@@ -8,17 +8,17 @@ import (
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 )
 
-// deriveRecipeTopology builds the models.RecipeTopologySnapshot RunRecipeWorkflow
-// persists onto TestRunRecord.recipe_topology (see that field's doc) right
-// after ProvisionActivity succeeds (see run's infra-stage block in
-// runrecipe.go). machines is ProvisionActivityOutput.Machines, keyed by the
-// plan's machine_groups entry name exactly as the provider returned it (see
+// deriveRecipeTopology builds the models.RunTopology RunRecipeWorkflow
+// persists onto Run.topology (see that field's doc) right after
+// ProvisionActivity succeeds (see run's infra-stage block in runrecipe.go).
+// machines is ProvisionActivityOutput.Machines, keyed by the plan's
+// machine_groups entry name exactly as the provider returned it (see
 // provider.docker/terraform's own map[group.Name][]*MachineState shape) —
 // this is the ONLY input needed to know which group each machine belongs to;
 // plan.GetServices() supplies which dsl.ServiceSpec entries are on_group
 // placed on that same group name. Deterministic: machines are emitted sorted
 // by (group, node_id) regardless of map iteration order.
-func deriveRecipeTopology(plan *dslpb.CompiledPlan, machines map[string][]*deploymentpb.MachineState) *models.RecipeTopologySnapshot {
+func deriveRecipeTopology(plan *dslpb.CompiledPlan, machines map[string][]*deploymentpb.MachineState) *models.RunTopology {
 	svcByGroup := servicesByGroup(plan.GetServices())
 
 	groups := make([]string, 0, len(machines))
@@ -27,7 +27,7 @@ func deriveRecipeTopology(plan *dslpb.CompiledPlan, machines map[string][]*deplo
 	}
 	sort.Strings(groups)
 
-	nodes := make([]*models.RecipeTopologySnapshot_MachineNode, 0)
+	nodes := make([]*models.RunTopology_MachineNode, 0)
 	for _, group := range groups {
 		groupServices := serviceNodesFor(svcByGroup[group])
 
@@ -40,7 +40,7 @@ func deriveRecipeTopology(plan *dslpb.CompiledPlan, machines map[string][]*deplo
 			if machine.GetNodeId() == "" {
 				continue
 			}
-			nodes = append(nodes, &models.RecipeTopologySnapshot_MachineNode{
+			nodes = append(nodes, &models.RunTopology_MachineNode{
 				NodeId:   machine.GetNodeId(),
 				Group:    group,
 				Ip:       recipeMachineAddress(machine),
@@ -51,7 +51,7 @@ func deriveRecipeTopology(plan *dslpb.CompiledPlan, machines map[string][]*deplo
 		}
 	}
 
-	return &models.RecipeTopologySnapshot{
+	return &models.RunTopology{
 		Provider: plan.GetProvider().GetName(),
 		Nodes:    nodes,
 	}
@@ -75,13 +75,13 @@ func servicesByGroup(services []*dslpb.ServiceSpec) map[string][]*dslpb.ServiceS
 // ServiceNode shape (name + image only — everything else a ServiceSpec
 // carries, e.g. env/volumes/health, is deployment detail the topology view
 // does not need).
-func serviceNodesFor(services []*dslpb.ServiceSpec) []*models.RecipeTopologySnapshot_ServiceNode {
+func serviceNodesFor(services []*dslpb.ServiceSpec) []*models.RunTopology_ServiceNode {
 	if len(services) == 0 {
 		return nil
 	}
-	nodes := make([]*models.RecipeTopologySnapshot_ServiceNode, 0, len(services))
+	nodes := make([]*models.RunTopology_ServiceNode, 0, len(services))
 	for _, svc := range services {
-		nodes = append(nodes, &models.RecipeTopologySnapshot_ServiceNode{
+		nodes = append(nodes, &models.RunTopology_ServiceNode{
 			Name:  svc.GetName(),
 			Image: svc.GetImage(),
 		})

@@ -377,12 +377,26 @@ func (w *runRecipeWorkflow) run(ctx workflow.Context) (result *RunRecipeOutput, 
 	}
 	providerRef = plan.GetProvider()
 	w.completeStage(ctx, runRecipeStageCompileIndex)
+	// Persist the compiled plan itself onto the run record — SP-E Task 3:
+	// before this, the plan lived only in this workflow's memory and was
+	// never durably stored (RunDetail/rerun/audit had no way to see exactly
+	// what a recipe run executed). Called exactly once, right here, never
+	// again for this run (no re-compile mid-run) — deliberately NOT wired
+	// into persist()/every heartbeat, mirroring the project's own prior
+	// history-bloat lesson (a deploy plan re-sent on every persist bloated
+	// Temporal history badly enough to need a fix — see runtime.go's
+	// persistRunCompiledPlan doc). Ordered before persistRunSummary below:
+	// both derive from the same just-compiled plan at the same commit
+	// point, so their relative order is arbitrary but fixed here.
+	if perr := persistRunCompiledPlan(ctx, w.in.RunID, plan); perr != nil {
+		return nil, perr
+	}
 	// Stamp the recipe-derived Summary facets (Provider/NodeCount/
 	// TopologyLabel/DbKind/WorkloadName/StroppyVersion) onto the run record
 	// as soon as the plan exists — this is the ROOT fix for rating/metrics/
-	// compare/share/dashboard, all of which read Summary rather than the
-	// (absent, for a recipe run) domain.TestRun spec. See runrecipe_summary.
-	// go's deriveRunSummary for the derivation heuristics.
+	// compare/share/dashboard, all of which read Summary rather than a
+	// baked domain.TestRun spec (Run has none). See runrecipe_summary.go's
+	// deriveRunSummary for the derivation heuristics.
 	if perr := persistRunSummary(ctx, w.in.RunID, deriveRunSummary(plan)); perr != nil {
 		return nil, perr
 	}

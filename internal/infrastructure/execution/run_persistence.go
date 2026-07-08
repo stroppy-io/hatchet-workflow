@@ -10,14 +10,22 @@ import (
 	commonpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	domainpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
+	dslpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dsl"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
 	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
 )
 
+// RunPersistenceStore persists a models.Run — SP-E Task 3's cutover: the
+// live RunRecipeWorkflow write path now targets Run/run_records instead of
+// TestRunRecord/test_run_records (see internal/app/glue.go's
+// runtimePersistenceStore for the postgres.RunRepo-backed implementation).
+// TestRunRecord/test_run_records are not written by this package anymore,
+// though they remain readable (OverviewReader et al.) until SP-E Tasks 4-6
+// migrate those readers.
 type RunPersistenceStore interface {
-	RunRecord(ctx context.Context, runID string) (*models.TestRunRecord, error)
-	SaveRunRecord(ctx context.Context, run *models.TestRunRecord) error
+	RunRecord(ctx context.Context, runID string) (*models.Run, error)
+	SaveRunRecord(ctx context.Context, run *models.Run) error
 }
 
 type RunPersistenceActivities struct {
@@ -33,12 +41,19 @@ func NewRunPersistenceActivities(store RunPersistenceStore, logs ...*RunLogWrite
 	return a
 }
 
+// PersistRunState persists state's stage tree + derived status/progress onto
+// the run record. infrastructureState/deploymentPlan are accepted for
+// interface stability with RuntimeActivities (register.go) — a recipe run
+// (models.Run) produces neither (see runrecipe.go's persist doc: its
+// provisioning result is a plain map[string][]*deploymentpb.MachineState,
+// not a deployment.InfrastructureState/DeploymentPlan), so both are simply
+// ignored/no-op here rather than stored.
 func (a *RunPersistenceActivities) PersistRunState(
 	ctx context.Context,
 	runID string,
 	state *workflowpb.RunState,
-	infrastructureState *deploymentpb.InfrastructureState,
-	deploymentPlan *deploymentpb.DeploymentPlan,
+	_ *deploymentpb.InfrastructureState,
+	_ *deploymentpb.DeploymentPlan,
 ) error {
 	if a == nil || a.store == nil || runID == "" {
 		return nil
@@ -51,17 +66,11 @@ func (a *RunPersistenceActivities) PersistRunState(
 	now := time.Now()
 	rec.Status = nextRunStatus(rec.GetStatus(), state.GetStatus())
 	if rec.Summary == nil {
-		rec.Summary = &models.TestRunRecord_Summary{}
+		rec.Summary = &models.Run_Summary{}
 	}
 	applyRunSummary(rec.Summary, state, rec.GetStatus(), now)
 	if state != nil {
 		rec.RuntimeState = proto.Clone(state).(*workflowpb.RunState)
-	}
-	if infrastructureState != nil {
-		rec.InfrastructureState = proto.Clone(infrastructureState).(*deploymentpb.InfrastructureState)
-	}
-	if deploymentPlan != nil {
-		rec.DeploymentPlan = proto.Clone(deploymentPlan).(*deploymentpb.DeploymentPlan)
 	}
 	touchRecordUpdated(rec.GetEntity(), now)
 
@@ -77,7 +86,7 @@ func (a *RunPersistenceActivities) PersistRunState(
 // value (e.g. a recipe whose stroppy service could not be identified keeps
 // whatever WorkloadName/StroppyVersion — none yet — the record already
 // has).
-func (a *RunPersistenceActivities) PersistRunSummary(ctx context.Context, runID string, summary *models.TestRunRecord_Summary) error {
+func (a *RunPersistenceActivities) PersistRunSummary(ctx context.Context, runID string, summary *models.Run_Summary) error {
 	if a == nil || a.store == nil || runID == "" || summary == nil {
 		return nil
 	}
@@ -86,7 +95,7 @@ func (a *RunPersistenceActivities) PersistRunSummary(ctx context.Context, runID 
 		return err
 	}
 	if rec.Summary == nil {
-		rec.Summary = &models.TestRunRecord_Summary{}
+		rec.Summary = &models.Run_Summary{}
 	}
 	mergeRunSummary(rec.Summary, summary)
 	touchRecordUpdated(rec.GetEntity(), time.Now())
@@ -97,7 +106,7 @@ func (a *RunPersistenceActivities) PersistRunSummary(ctx context.Context, runID 
 // mergeRunSummary copies every non-zero field of src onto dst, leaving
 // dst's existing value untouched where src is zero — see PersistRunSummary's
 // doc for why this must be additive rather than a wholesale overwrite.
-func mergeRunSummary(dst, src *models.TestRunRecord_Summary) {
+func mergeRunSummary(dst, src *models.Run_Summary) {
 	if src.GetDbKind() != domainpb.Database_KIND_UNSPECIFIED {
 		dst.DbKind = src.GetDbKind()
 	}
@@ -118,13 +127,13 @@ func mergeRunSummary(dst, src *models.TestRunRecord_Summary) {
 	}
 }
 
-// PersistRecipeTopology replaces the run record's recipe_topology field
-// wholesale with snapshot — a full-replace write mirroring PersistDeploymentPlan
-// just below (not a merge like PersistRunSummary): RunRecipeWorkflow builds
-// the snapshot exactly once, right after ProvisionActivity succeeds (see
+// PersistRecipeTopology replaces the run record's topology field wholesale
+// with snapshot — a full-replace write mirroring PersistRunCompiledPlan just
+// below (not a merge like PersistRunSummary): RunRecipeWorkflow builds the
+// snapshot exactly once, right after ProvisionActivity succeeds (see
 // workflows.deriveRecipeTopology), so there is no accreting-facets concern a
 // merge would otherwise guard against.
-func (a *RunPersistenceActivities) PersistRecipeTopology(ctx context.Context, runID string, snapshot *models.RecipeTopologySnapshot) error {
+func (a *RunPersistenceActivities) PersistRecipeTopology(ctx context.Context, runID string, snapshot *models.RunTopology) error {
 	if a == nil || a.store == nil || runID == "" || snapshot == nil {
 		return nil
 	}
@@ -133,13 +142,19 @@ func (a *RunPersistenceActivities) PersistRecipeTopology(ctx context.Context, ru
 		return err
 	}
 	now := time.Now()
-	rec.RecipeTopology = proto.Clone(snapshot).(*models.RecipeTopologySnapshot)
+	rec.Topology = proto.Clone(snapshot).(*models.RunTopology)
 	touchRecordUpdated(rec.GetEntity(), now)
 	return a.store.SaveRunRecord(ctx, rec)
 }
 
-func (a *RunPersistenceActivities) PersistDeploymentPlan(ctx context.Context, runID string, deploymentPlan *deploymentpb.DeploymentPlan) error {
-	if a == nil || a.store == nil || runID == "" || deploymentPlan == nil {
+// PersistRunCompiledPlan replaces the run record's compiled_plan field
+// wholesale with plan — called exactly once by RunRecipeWorkflow, right
+// after CompileRecipeActivity succeeds (see runtime.go's
+// persistRunCompiledPlan and runrecipe.go's run). SP-E Task 3: before this
+// activity existed, the compiled plan lived only in workflow memory and was
+// never durably stored.
+func (a *RunPersistenceActivities) PersistRunCompiledPlan(ctx context.Context, runID string, plan *dslpb.CompiledPlan) error {
+	if a == nil || a.store == nil || runID == "" || plan == nil {
 		return nil
 	}
 	rec, err := a.store.RunRecord(ctx, runID)
@@ -147,9 +162,22 @@ func (a *RunPersistenceActivities) PersistDeploymentPlan(ctx context.Context, ru
 		return err
 	}
 	now := time.Now()
-	rec.DeploymentPlan = proto.Clone(deploymentPlan).(*deploymentpb.DeploymentPlan)
+	rec.CompiledPlan = proto.Clone(plan).(*dslpb.CompiledPlan)
 	touchRecordUpdated(rec.GetEntity(), now)
 	return a.store.SaveRunRecord(ctx, rec)
+}
+
+// PersistDeploymentPlan is kept for RuntimeActivities interface stability
+// (register.go) but is a documented no-op for a models.Run-backed store: Run
+// has no deployment_plan field (see runrecipe.go's persist doc — a recipe
+// run's provisioning result is a plain map[string][]*deploymentpb.
+// MachineState, not a deployment.DeploymentPlan) and RunRecipeWorkflow never
+// calls this activity by name (grep internal/workflows: only the interface/
+// registration reference it). Retained rather than removed so
+// RuntimeActivities/RegisterActivities need no further churn if a future
+// caller starts calling it.
+func (a *RunPersistenceActivities) PersistDeploymentPlan(_ context.Context, _ string, _ *deploymentpb.DeploymentPlan) error {
+	return nil
 }
 
 func (a *RunPersistenceActivities) AppendRunLogs(ctx context.Context, lines []*monitor.LogLine) error {
@@ -172,7 +200,7 @@ func nextRunStatus(current, incoming commonpb.Status) commonpb.Status {
 	return incoming
 }
 
-func applyRunSummary(summary *models.TestRunRecord_Summary, state *workflowpb.RunState, status commonpb.Status, now time.Time) {
+func applyRunSummary(summary *models.Run_Summary, state *workflowpb.RunState, status commonpb.Status, now time.Time) {
 	if summary == nil || state == nil {
 		return
 	}

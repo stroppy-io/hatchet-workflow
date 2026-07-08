@@ -7,6 +7,7 @@ import (
 	"go.temporal.io/sdk/workflow"
 
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
+	dslpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dsl"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
 )
@@ -41,7 +42,7 @@ func persistRunState(
 }
 
 // persistRunSummary calls PersistRunSummaryActivityName to merge a
-// recipe-derived TestRunRecord.Summary (see runrecipe_summary.go's
+// recipe-derived models.Run.Summary (see runrecipe_summary.go's
 // deriveRunSummary) onto the run's stored record. Distinct from
 // persistRunState above: that one carries the RunState-derived timing/
 // progress facets applyRunSummary computes on every stage transition, while
@@ -49,18 +50,33 @@ func persistRunState(
 // NodeCount/TopologyLabel/DbKind/WorkloadName/StroppyVersion), computed
 // once right after compile succeeds — see RunRecipeWorkflow.run's call
 // right after the compile stage completes.
-func persistRunSummary(ctx workflow.Context, runID string, summary *models.TestRunRecord_Summary) error {
+func persistRunSummary(ctx workflow.Context, runID string, summary *models.Run_Summary) error {
 	actx := runtimeActivityContext(ctx)
 	return workflow.ExecuteActivity(actx, PersistRunSummaryActivityName, runID, summary).Get(actx, nil)
 }
 
 // persistRecipeTopology calls PersistRecipeTopologyActivityName to store the
 // recipe run's topology snapshot (see runrecipe_topology.go's
-// deriveRecipeTopology) onto the run record's recipe_topology field — called
-// once, right after ProvisionActivity succeeds (see RunRecipeWorkflow.run's
+// deriveRecipeTopology) onto the run record's topology field — called once,
+// right after ProvisionActivity succeeds (see RunRecipeWorkflow.run's
 // infra-stage block), mirroring persistRunSummary's identical
 // call-right-after-the-activity-that-produced-the-data shape.
-func persistRecipeTopology(ctx workflow.Context, runID string, snapshot *models.RecipeTopologySnapshot) error {
+func persistRecipeTopology(ctx workflow.Context, runID string, snapshot *models.RunTopology) error {
 	actx := runtimeActivityContext(ctx)
 	return workflow.ExecuteActivity(actx, PersistRecipeTopologyActivityName, runID, snapshot).Get(actx, nil)
+}
+
+// persistRunCompiledPlan calls PersistRunCompiledPlanActivityName to store
+// the compiled DSL plan RunRecipeWorkflow executed onto the run record's
+// compiled_plan field — called exactly once, right after CompileRecipeActivity
+// succeeds (see RunRecipeWorkflow.run's compile-stage block), NOT on every
+// heartbeat/persist — a re-send-per-tick of a (potentially large) compiled
+// plan would reproduce the same Temporal-history-bloat bug a prior stage
+// persist already hit (see project memory: "Temporal history bloat" — a
+// deploy plan re-sent ~25x into history). deriveRunSummary/
+// deriveRecipeTopology's own once-only call sites are the precedent this
+// mirrors.
+func persistRunCompiledPlan(ctx workflow.Context, runID string, plan *dslpb.CompiledPlan) error {
+	actx := runtimeActivityContext(ctx)
+	return workflow.ExecuteActivity(actx, PersistRunCompiledPlanActivityName, runID, plan).Get(actx, nil)
 }

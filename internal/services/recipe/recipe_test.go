@@ -402,7 +402,7 @@ func TestStartRunLaunchFailureMarksRunFailed(t *testing.T) {
 	if len(runs.byID) != 1 {
 		t.Fatalf("run repo has %d rows, want 1 (the record must still be visible)", len(runs.byID))
 	}
-	var rec *models.TestRunRecord
+	var rec *models.Run
 	for _, r := range runs.byID {
 		rec = r
 	}
@@ -927,15 +927,15 @@ func (r *fakeRecipeRepo) Delete(_ context.Context, tenantID, id string) error {
 // its cursor as a plain decimal offset rather than the real repo's opaque
 // token, which is fine since nothing outside this fake ever inspects it.
 type fakeRunRepo struct {
-	byID  map[string]*models.TestRunRecord
+	byID  map[string]*models.Run
 	order []string
 }
 
 func newFakeRunRepo() *fakeRunRepo {
-	return &fakeRunRepo{byID: map[string]*models.TestRunRecord{}}
+	return &fakeRunRepo{byID: map[string]*models.Run{}}
 }
 
-func (r *fakeRunRepo) Create(_ context.Context, run *models.TestRunRecord) error {
+func (r *fakeRunRepo) Create(_ context.Context, run *models.Run) error {
 	id := run.GetEntity().GetId()
 	if _, exists := r.byID[id]; !exists {
 		r.order = append(r.order, id)
@@ -944,7 +944,7 @@ func (r *fakeRunRepo) Create(_ context.Context, run *models.TestRunRecord) error
 	return nil
 }
 
-func (r *fakeRunRepo) Update(_ context.Context, run *models.TestRunRecord) error {
+func (r *fakeRunRepo) Update(_ context.Context, run *models.Run) error {
 	if _, ok := r.byID[run.GetEntity().GetId()]; !ok {
 		return derrors.NotFound("test_run", "run not found")
 	}
@@ -954,7 +954,7 @@ func (r *fakeRunRepo) Update(_ context.Context, run *models.TestRunRecord) error
 
 // Get returns derrors.ErrNotFound for an absent id or one owned by another
 // tenant, mirroring postgres.TestRunRepo.Get's tenant-scoping contract.
-func (r *fakeRunRepo) Get(_ context.Context, tenantID, id string) (*models.TestRunRecord, error) {
+func (r *fakeRunRepo) Get(_ context.Context, tenantID, id string) (*models.Run, error) {
 	run, ok := r.byID[id]
 	if !ok || run.GetEntity().GetTenantId() != tenantID {
 		return nil, derrors.NotFound("test_run", "run not found")
@@ -970,8 +970,8 @@ func (r *fakeRunRepo) Get(_ context.Context, tenantID, id string) (*models.TestR
 // real repo falls back to with its own default page size, just without a
 // truncation cap, since these fakes exist to exercise the handler rather
 // than reproduce the storage layer's default LIMIT.
-func (r *fakeRunRepo) List(_ context.Context, query *api.ListTestRunsRequest, _ string) ([]*models.TestRunRecord, string, error) {
-	matched := make([]*models.TestRunRecord, 0, len(r.order))
+func (r *fakeRunRepo) List(_ context.Context, query *api.ListTestRunsRequest, _ string) ([]*models.Run, string, error) {
+	matched := make([]*models.Run, 0, len(r.order))
 	for _, id := range r.order {
 		run := r.byID[id]
 		if run.GetEntity().GetTenantId() == query.GetTenantId() {
@@ -993,7 +993,7 @@ func (r *fakeRunRepo) List(_ context.Context, query *api.ListTestRunsRequest, _ 
 		offset = o
 	}
 	if offset >= len(matched) {
-		return []*models.TestRunRecord{}, "", nil
+		return []*models.Run{}, "", nil
 	}
 
 	end := offset + int(page.GetSize())
@@ -1025,7 +1025,7 @@ func (r *fakeRunRepo) Delete(_ context.Context, tenantID, id string) error {
 
 // launchedRecipeRun captures one LaunchRecipeRun call for assertions.
 type launchedRecipeRun struct {
-	run    *models.TestRunRecord
+	run    *models.Run
 	bundle map[string][]byte
 }
 
@@ -1043,7 +1043,7 @@ func newFakeRecipeWorkflows(launchErr error) *fakeRecipeWorkflows {
 	return &fakeRecipeWorkflows{launchErr: launchErr}
 }
 
-func (w *fakeRecipeWorkflows) LaunchRecipeRun(_ context.Context, run *models.TestRunRecord, bundle map[string][]byte) error {
+func (w *fakeRecipeWorkflows) LaunchRecipeRun(_ context.Context, run *models.Run, bundle map[string][]byte) error {
 	w.launched = append(w.launched, launchedRecipeRun{run: run, bundle: bundle})
 	return w.launchErr
 }
