@@ -385,6 +385,7 @@ func TestRunRecipeWorkflowPersistsCompiledPlanAfterCompile(t *testing.T) {
 	persisted := runtime.persistedCompiledPlan
 	planAt := runtime.persistedCompiledPlanAt
 	summaryAt := runtime.persistedSummaryAt
+	callCount := len(runtime.compiledPlans)
 	runtime.mu.Unlock()
 
 	if persisted == nil {
@@ -398,6 +399,15 @@ func TestRunRecipeWorkflowPersistsCompiledPlanAfterCompile(t *testing.T) {
 	}
 	if planAt > summaryAt {
 		t.Fatalf("compiled plan persisted after the summary: planAt=%d, summaryAt=%d", planAt, summaryAt)
+	}
+	// Regression guard for the Temporal history-bloat bug (see
+	// project_temporal_history_bloat notes / task-3-report.md): the compiled
+	// plan must be persisted exactly ONCE per successful run. If a future
+	// change re-wires this call into persist()'s per-tick loop (which runs on
+	// every RunState update), this call count would silently grow past 1 and
+	// flood workflow history the same way the old plan-resend bug did.
+	if callCount != 1 {
+		t.Fatalf("PersistRunCompiledPlan called %d times, want exactly 1 (guards against re-wiring into persist()'s per-tick loop)", callCount)
 	}
 }
 

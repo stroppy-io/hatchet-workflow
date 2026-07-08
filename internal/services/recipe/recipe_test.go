@@ -376,6 +376,61 @@ func TestStartRunSetsRatingFlags(t *testing.T) {
 	}
 }
 
+// TestStartRun_MintsWorkflowVersionAndObservability asserts StartRun mints a
+// Run whose WorkflowVersion mirrors the source recipe's version (formatted
+// as a decimal string, see recipe.go's StartRun) and whose
+// ObservabilityRefs are keyed by the run's own entity id for both metrics
+// and logs, with GrafanaDashboardUid set to the backend's
+// defaultGrafanaDashboardUID constant — asserted on the persisted Run
+// record (fakeRunRepo.byID), not just the API response, since these fields
+// are what every metrics/logs/dashboard consumer reads back from storage.
+func TestStartRun_MintsWorkflowVersionAndObservability(t *testing.T) {
+	repo := newFakeRecipeRepo()
+	runs := newFakeRunRepo()
+	workflows := newFakeRecipeWorkflows(nil)
+	svc := NewService(Deps{Repo: repo, Authn: fakeAuthn{}, Checker: stubChecker(nil), Runs: runs, Workflows: workflows})
+
+	created, err := svc.CreateRecipe(context.Background(), &api.CreateRecipeRequest{
+		TenantId: "tenant-1",
+		Recipe: &models.RecipeRecord{
+			Entity: &common.Entity{Name: "pg-ha"},
+			Bundle: newBundle(),
+		},
+	})
+	if err != nil {
+		t.Fatalf("create recipe: %v", err)
+	}
+	recipeID := created.GetRecipe().GetEntity().GetId()
+	recipeVersion := created.GetRecipe().GetVersion()
+
+	resp, err := svc.StartRun(context.Background(), &api.StartRunRequest{TenantId: "tenant-1", RecipeId: recipeID})
+	if err != nil {
+		t.Fatalf("start run: %v", err)
+	}
+	runID := resp.GetRun().GetEntity().GetId()
+
+	persisted, ok := runs.byID[runID]
+	if !ok {
+		t.Fatalf("run %q was not persisted into the run repo", runID)
+	}
+
+	wantVersion := strconv.FormatUint(uint64(recipeVersion), 10)
+	if got := persisted.GetWorkflowVersion(); got != wantVersion {
+		t.Fatalf("persisted run workflow_version = %q, want %q (recipe version %d)", got, wantVersion, recipeVersion)
+	}
+
+	obs := persisted.GetObservability()
+	if got := obs.GetMetricsQueryKey(); got != runID {
+		t.Fatalf("persisted run observability.metrics_query_key = %q, want %q (the run's own entity id)", got, runID)
+	}
+	if got := obs.GetLogsQueryKey(); got != runID {
+		t.Fatalf("persisted run observability.logs_query_key = %q, want %q (the run's own entity id)", got, runID)
+	}
+	if got, want := obs.GetGrafanaDashboardUid(), defaultGrafanaDashboardUID; got != want {
+		t.Fatalf("persisted run observability.grafana_dashboard_uid = %q, want %q (defaultGrafanaDashboardUID)", got, want)
+	}
+}
+
 func TestStartRunLaunchFailureMarksRunFailed(t *testing.T) {
 	repo := newFakeRecipeRepo()
 	runs := newFakeRunRepo()
