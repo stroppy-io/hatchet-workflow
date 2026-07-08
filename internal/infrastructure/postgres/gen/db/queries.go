@@ -25,6 +25,175 @@ func New(db DBTX) *Queries { return &Queries{db: db} }
 
 func (q *Queries) WithTx(tx pgx.Tx) *Queries { return &Queries{db: tx} }
 
+const createCatalogEntrySQL = `insert into catalog_entries (id, level, tenant_id, kind, slug, version, origin, source_entry_id, created_at, updated_at, data)
+values ($1, $2, $3, $4, $5, $6, $7, $8, now(), now(), $9);`
+
+type CreateCatalogEntryParams struct {
+	ID            any
+	Level         any
+	TenantID      any
+	Kind          any
+	Slug          any
+	Version       any
+	Origin        any
+	SourceEntryID any
+	Data          any
+}
+
+func (q *Queries) CreateCatalogEntry(ctx context.Context, arg CreateCatalogEntryParams) error {
+	_, err := q.db.Exec(ctx, createCatalogEntrySQL, arg.ID, arg.Level, arg.TenantID, arg.Kind, arg.Slug, arg.Version, arg.Origin, arg.SourceEntryID, arg.Data)
+	return err
+}
+
+const getCatalogEntrySQL = `select data from catalog_entries where level = $1 and coalesce(tenant_id,'') = coalesce($2,'') and id = $3;`
+
+type GetCatalogEntryParams struct {
+	Level    string
+	TenantID any
+	ID       string
+}
+
+type GetCatalogEntryRow struct {
+	Data json.RawMessage
+}
+
+func (q *Queries) GetCatalogEntry(ctx context.Context, arg GetCatalogEntryParams) (GetCatalogEntryRow, error) {
+	row := q.db.QueryRow(ctx, getCatalogEntrySQL, arg.Level, arg.TenantID, arg.ID)
+	var i GetCatalogEntryRow
+	err := row.Scan(&i.Data)
+	return i, err
+}
+
+const listCatalogEntriesSQL = `select data from catalog_entries where level = $1 and coalesce(tenant_id,'') = coalesce($2,'') and kind = $3 order by slug, version;`
+
+type ListCatalogEntriesParams struct {
+	Level    string
+	TenantID any
+	Kind     string
+}
+
+type ListCatalogEntriesRow struct {
+	Data json.RawMessage
+}
+
+func (q *Queries) ListCatalogEntries(ctx context.Context, arg ListCatalogEntriesParams) ([]ListCatalogEntriesRow, error) {
+	rows, err := q.db.Query(ctx, listCatalogEntriesSQL, arg.Level, arg.TenantID, arg.Kind)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListCatalogEntriesRow
+	for rows.Next() {
+		var i ListCatalogEntriesRow
+		if err := rows.Scan(&i.Data); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getLatestCatalogEntryBySlugSQL = `select data from catalog_entries
+where level = $1 and coalesce(tenant_id,'') = coalesce($2,'') and kind = $3 and slug = $4
+order by version desc limit 1;`
+
+type GetLatestCatalogEntryBySlugParams struct {
+	Level    string
+	TenantID any
+	Kind     string
+	Slug     string
+}
+
+type GetLatestCatalogEntryBySlugRow struct {
+	Data json.RawMessage
+}
+
+func (q *Queries) GetLatestCatalogEntryBySlug(ctx context.Context, arg GetLatestCatalogEntryBySlugParams) (GetLatestCatalogEntryBySlugRow, error) {
+	row := q.db.QueryRow(ctx, getLatestCatalogEntryBySlugSQL, arg.Level, arg.TenantID, arg.Kind, arg.Slug)
+	var i GetLatestCatalogEntryBySlugRow
+	err := row.Scan(&i.Data)
+	return i, err
+}
+
+const getCatalogEntryBySlugVersionSQL = `select data from catalog_entries
+where level = $1 and coalesce(tenant_id,'') = coalesce($2,'') and kind = $3 and slug = $4 and version = $5;`
+
+type GetCatalogEntryBySlugVersionParams struct {
+	Level    string
+	TenantID any
+	Kind     string
+	Slug     string
+	Version  int32
+}
+
+type GetCatalogEntryBySlugVersionRow struct {
+	Data json.RawMessage
+}
+
+func (q *Queries) GetCatalogEntryBySlugVersion(ctx context.Context, arg GetCatalogEntryBySlugVersionParams) (GetCatalogEntryBySlugVersionRow, error) {
+	row := q.db.QueryRow(ctx, getCatalogEntryBySlugVersionSQL, arg.Level, arg.TenantID, arg.Kind, arg.Slug, arg.Version)
+	var i GetCatalogEntryBySlugVersionRow
+	err := row.Scan(&i.Data)
+	return i, err
+}
+
+const listCatalogEntriesBySourceSQL = `select data from catalog_entries where source_entry_id = $1;`
+
+type ListCatalogEntriesBySourceRow struct {
+	Data json.RawMessage
+}
+
+func (q *Queries) ListCatalogEntriesBySource(ctx context.Context, sourceEntryID *string) ([]ListCatalogEntriesBySourceRow, error) {
+	rows, err := q.db.Query(ctx, listCatalogEntriesBySourceSQL, sourceEntryID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListCatalogEntriesBySourceRow
+	for rows.Next() {
+		var i ListCatalogEntriesBySourceRow
+		if err := rows.Scan(&i.Data); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateCatalogEntrySQL = `update catalog_entries set data = $1, updated_at = now()
+where level = $2 and coalesce(tenant_id,'') = coalesce($3,'') and id = $4;`
+
+type UpdateCatalogEntryParams struct {
+	Data     json.RawMessage
+	Level    string
+	TenantID any
+	ID       string
+}
+
+func (q *Queries) UpdateCatalogEntry(ctx context.Context, arg UpdateCatalogEntryParams) (int64, error) {
+	tag, err := q.db.Exec(ctx, updateCatalogEntrySQL, arg.Data, arg.Level, arg.TenantID, arg.ID)
+	return tag.RowsAffected(), err
+}
+
+const deleteCatalogEntrySQL = `delete from catalog_entries where level = $1 and coalesce(tenant_id,'') = coalesce($2,'') and id = $3;`
+
+type DeleteCatalogEntryParams struct {
+	Level    string
+	TenantID any
+	ID       string
+}
+
+func (q *Queries) DeleteCatalogEntry(ctx context.Context, arg DeleteCatalogEntryParams) (int64, error) {
+	tag, err := q.db.Exec(ctx, deleteCatalogEntrySQL, arg.Level, arg.TenantID, arg.ID)
+	return tag.RowsAffected(), err
+}
+
 const createIamAccountSQL = `insert into iam_accounts (id, email, nickname, created_at, updated_at, data)
 values ($1, $2, $3, now(), now(), $4);`
 

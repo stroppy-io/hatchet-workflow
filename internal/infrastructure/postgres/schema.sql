@@ -44,6 +44,24 @@ CREATE TABLE recipe_records (
 CREATE INDEX idx_recipe_records_tenant ON recipe_records (tenant_id);
 CREATE UNIQUE INDEX uq_recipe_records_tenant_name_version ON recipe_records (tenant_id, name, version);
 
+CREATE TABLE catalog_entries (
+  id               text PRIMARY KEY,
+  level            text NOT NULL,          -- 'instance' | 'org'
+  tenant_id        text NULL,              -- NULL for level='instance'
+  kind             text NOT NULL,          -- 'provider' | 'workflow'
+  slug             text NOT NULL,
+  version          integer NOT NULL,
+  origin           text NOT NULL DEFAULT 'native',
+  source_entry_id  text NULL,
+  created_at       timestamptz NOT NULL DEFAULT now(),
+  updated_at       timestamptz NOT NULL DEFAULT now(),
+  data             jsonb NOT NULL
+);
+CREATE UNIQUE INDEX uq_catalog_entries_scope_slug_version
+  ON catalog_entries (level, coalesce(tenant_id, ''), kind, slug, version);
+CREATE INDEX idx_catalog_entries_scope ON catalog_entries (level, tenant_id, kind);
+CREATE INDEX idx_catalog_entries_source ON catalog_entries (source_entry_id);
+
 CREATE TABLE share_records (
   id         text PRIMARY KEY,
   tenant_id  text NOT NULL,

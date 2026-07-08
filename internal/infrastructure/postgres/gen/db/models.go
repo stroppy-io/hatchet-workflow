@@ -40,6 +40,20 @@ type RecipeRecords struct {
 	Data      json.RawMessage
 }
 
+type CatalogEntries struct {
+	ID            string
+	Level         string
+	TenantID      *string
+	Kind          string
+	Slug          string
+	Version       int32
+	Origin        string
+	SourceEntryID *string
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	Data          json.RawMessage
+}
+
 type ShareRecords struct {
 	ID        string
 	TenantID  string

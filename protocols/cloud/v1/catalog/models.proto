@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package cloud.v1.catalog;
+
+import "cloud/v1/common/entity.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/catalog";
+
+/*
+    models.proto defines the catalog storage model (SP-B): provider and
+    workflow objects promoted to first-class catalog entries at two levels
+    (instance-wide and per-tenant/org), each carrying an origin (native,
+    linked from another level, or forked from another entry) for lineage.
+ */
+
+/* Level scopes a catalog entry: the shared instance catalog or a tenant's own. */
+enum Level {
+    LEVEL_UNSPECIFIED = 0;
+    /* LEVEL_INSTANCE entries are visible to every tenant (tenant_id unset). */
+    LEVEL_INSTANCE = 1;
+    /* LEVEL_ORG entries belong to a single tenant. */
+    LEVEL_ORG = 2;
+}
+
+/* Kind is the catalog object type. */
+enum Kind {
+    KIND_UNSPECIFIED = 0;
+    KIND_PROVIDER = 1;
+    KIND_WORKFLOW = 2;
+}
+
+/* Origin records how a catalog entry came to exist. */
+enum Origin {
+    /* ORIGIN_NATIVE entries were authored directly at this level. */
+    ORIGIN_NATIVE = 0;
+    /* ORIGIN_LINKED entries reference another level's entry without copying it. */
+    ORIGIN_LINKED = 1;
+    /* ORIGIN_FORKED entries were copied from another entry (source_entry_id) and diverge independently. */
+    ORIGIN_FORKED = 2;
+}
+
+/*
+    CatalogEntry is a persisted provider or workflow catalog object, scoped
+    by (level, tenant_id) and versioned by (slug, version).
+ */
+message CatalogEntry {
+    /* entity is the storage envelope (id, tenant_id, name, description, timings). */
+    common.Entity entity = 1 [(validate.rules).message.required = true];
+    /* level is the catalog scope this entry lives at. */
+    Level level = 2;
+    /* kind is the catalog object type (provider or workflow). */
+    Kind kind = 3;
+    /* slug is the entry's stable, human-facing identifier within its (level, tenant, kind) scope. */
+    string slug = 4 [(validate.rules).string = {min_len: 1, max_len: 128}];
+    /* version is the monotonic version number of this slug within its scope. */
+    uint32 version = 5;
+    /* origin records how this entry came to exist (native, linked, forked). */
+    Origin origin = 6;
+    /* source_entry_id is the CatalogEntry.entity.id this entry was linked or forked from (empty for native). */
+    string source_entry_id = 7 [(validate.rules).string.max_len = 64];
+    /* source_ref is an opaque bundle-store pointer resolving this entry's content. */
+    string source_ref = 8;
+    /* summary holds denormalized facets for catalog listing UIs. */
+    Summary summary = 9;
+
+    /* Summary is the flat, indexed projection of the entry used by catalog list views. */
+    message Summary {
+        /* provides is the KIND_PROVIDER manifest's declared capabilities (providers/<name>/manifest.yaml provides:). */
+        repeated string provides = 1;
+        /* provider_slug is the KIND_WORKFLOW bundle's declared provider (cluster.yaml provider.use). */
+        string provider_slug = 2 [(validate.rules).string.max_len = 128];
+        /* machine_group_count is the KIND_WORKFLOW bundle's cluster.yaml machine group count. */
+        uint32 machine_group_count = 3;
+        /* service_count is the KIND_WORKFLOW bundle's cluster.yaml service count. */
+        uint32 service_count = 4;
+        /* compiles is the last known Check result: true when the bundle compiled with no error diagnostics. */
+        bool compiles = 5;
+    }
+}
