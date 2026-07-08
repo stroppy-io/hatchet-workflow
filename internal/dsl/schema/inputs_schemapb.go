@@ -1,6 +1,8 @@
 package schema
 
 import (
+	"sort"
+
 	"github.com/stroppy-io/schemapb/schemapb"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/dsl/ast"
@@ -20,8 +22,16 @@ import (
 // three kinds -- confirmed against schemapb/new.go.
 func DeriveInputsSchema(namespace string, inputs map[string]ast.InputSpec) (*schemapb.Schema, diag.List) {
 	var diags diag.List
+
+	names := make([]string, 0, len(inputs))
+	for name := range inputs {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+
 	var fields []schemapb.FieldDef
-	for name, spec := range inputs {
+	for _, name := range names {
+		spec := inputs[name]
 		switch spec.Type {
 		case "string", "version", "":
 			b := schemapb.Str(name)
