@@ -334,8 +334,14 @@ type Run_Summary struct {
 	StartedAt        *timestamppb.Timestamp   `protobuf:"bytes,11,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
 	FinishedAt       *timestamppb.Timestamp   `protobuf:"bytes,12,opt,name=finished_at,json=finishedAt,proto3" json:"finished_at,omitempty"`
 	Duration         *durationpb.Duration     `protobuf:"bytes,13,opt,name=duration,proto3" json:"duration,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// db_version is the database engine's version, read from the same
+	// DB ServiceSpec image tag db_kind is inferred from (e.g.
+	// "postgres:16" -> "16") — parity with ref's runs table, which
+	// carried a db version the DSL-era table dropped (see
+	// internal/workflows/runrecipe_summary.go's inferDbKind/imageTag).
+	DbVersion     string `protobuf:"bytes,21,opt,name=db_version,json=dbVersion,proto3" json:"db_version,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Run_Summary) Reset() {
@@ -480,6 +486,13 @@ func (x *Run_Summary) GetDuration() *durationpb.Duration {
 	return nil
 }
 
+func (x *Run_Summary) GetDbVersion() string {
+	if x != nil {
+		return x.DbVersion
+	}
+	return ""
+}
+
 type RunTopology_ServiceNode struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
@@ -620,7 +633,7 @@ var File_cloud_v1_models_test_run_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_models_test_run_proto_rawDesc = "" +
 	"\n" +
-	"\x1ecloud/v1/models/test_run.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ccloud/v1/common/status.proto\x1a\x1dcloud/v1/common/trigger.proto\x1a(cloud/v1/deployment/infrastructure.proto\x1a\x1ecloud/v1/deployment/plan.proto\x1a\"cloud/v1/deployment/provider.proto\x1a\x1bcloud/v1/dsl/compiled.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a\x1ccloud/v1/workflow/test.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15schemapb/schema.proto\x1a\x17validate/validate.proto\"\x95\f\n" +
+	"\x1ecloud/v1/models/test_run.proto\x12\x0fcloud.v1.models\x1a\x1ccloud/v1/common/entity.proto\x1a\x1ccloud/v1/common/status.proto\x1a\x1dcloud/v1/common/trigger.proto\x1a(cloud/v1/deployment/infrastructure.proto\x1a\x1ecloud/v1/deployment/plan.proto\x1a\"cloud/v1/deployment/provider.proto\x1a\x1bcloud/v1/dsl/compiled.proto\x1a\x1ecloud/v1/domain/database.proto\x1a\x1acloud/v1/domain/test.proto\x1a\x1ecloud/v1/domain/workload.proto\x1a\x1ccloud/v1/workflow/test.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15schemapb/schema.proto\x1a\x17validate/validate.proto\"\xbd\f\n" +
 	"\x03Run\x129\n" +
 	"\x06entity\x18\x01 \x01(\v2\x17.cloud.v1.common.EntityB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06entity\x12/\n" +
 	"\x06status\x18\x02 \x01(\x0e2\x17.cloud.v1.common.StatusR\x06status\x122\n" +
@@ -636,7 +649,7 @@ const file_cloud_v1_models_test_run_proto_rawDesc = "" +
 	" \x01(\v2\".cloud.v1.models.ObservabilityRefsR\robservability\x12(\n" +
 	"\x10in_tenant_rating\x18\v \x01(\bR\x0einTenantRating\x12(\n" +
 	"\x10in_global_rating\x18\f \x01(\bR\x0einGlobalRating\x126\n" +
-	"\asummary\x18\r \x01(\v2\x1c.cloud.v1.models.Run.SummaryR\asummary\x1a\xcf\x06\n" +
+	"\asummary\x18\r \x01(\v2\x1c.cloud.v1.models.Run.SummaryR\asummary\x1a\xf7\x06\n" +
 	"\aSummary\x127\n" +
 	"\adb_kind\x18\x01 \x01(\x0e2\x1e.cloud.v1.domain.Database.KindR\x06dbKind\x12)\n" +
 	"\fdb_preset_id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x18@R\n" +
@@ -658,7 +671,9 @@ const file_cloud_v1_models_test_run_proto_rawDesc = "" +
 	"started_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\x12;\n" +
 	"\vfinished_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"finishedAt\x125\n" +
-	"\bduration\x18\r \x01(\v2\x19.google.protobuf.DurationR\bdurationJ\x04\b\x0e\x10\x15\"\xf1\x03\n" +
+	"\bduration\x18\r \x01(\v2\x19.google.protobuf.DurationR\bduration\x12&\n" +
+	"\n" +
+	"db_version\x18\x15 \x01(\tB\a\xfaB\x04r\x02\x18@R\tdbVersionJ\x04\b\x0e\x10\x15\"\xf1\x03\n" +
 	"\vRunTopology\x12\x1a\n" +
 	"\bprovider\x18\x01 \x01(\tR\bprovider\x12>\n" +
 	"\x05nodes\x18\x02 \x03(\v2(.cloud.v1.models.RunTopology.MachineNodeR\x05nodes\x1a7\n" +

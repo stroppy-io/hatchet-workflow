@@ -28,7 +28,6 @@
 //   * Workload "script"/"VUs"/configured-duration sub-labels — no DSL-era
 //     equivalent facet is denormalized onto Run.Summary (workload shape now
 //     lives in the recipe bundle's compiled plan, not a per-run knob).
-//   * db_version — Run.Summary has no db-version facet; only db_kind.
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -234,6 +233,7 @@ function makeColumns(opts: {
         return (
           <span className="font-mono text-xs" style={{ color }}>
             {DB_LABEL[r.dbKind]}
+            {r.dbVersion && <span className="text-zinc-500"> {r.dbVersion}</span>}
             {nodes && <span className="text-zinc-600"> · {nodes}</span>}
           </span>
         );

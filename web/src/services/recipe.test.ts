@@ -91,6 +91,7 @@ describe("listRuns", () => {
           workflowId: "recipe-1",
           summary: {
             dbKind: Database_Kind.POSTGRES,
+            dbVersion: "16",
             provider: Provider.DOCKER,
             nodeCount: 3,
             progressPct: 42,
@@ -109,6 +110,7 @@ describe("listRuns", () => {
       name: "postgres-ha smoke",
       status: "running",
       dbKind: "postgres",
+      dbVersion: "16",
       provider: "docker",
       nodeCount: 3,
       progressPct: 42,

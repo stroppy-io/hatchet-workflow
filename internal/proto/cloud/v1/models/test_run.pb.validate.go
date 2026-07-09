@@ -848,6 +848,17 @@ func (m *Run_Summary) validate(all bool) error {
 		}
 	}
 
+	if utf8.RuneCountInString(m.GetDbVersion()) > 64 {
+		err := Run_SummaryValidationError{
+			field:  "DbVersion",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if len(errors) > 0 {
 		return Run_SummaryMultiError(errors)
 	}

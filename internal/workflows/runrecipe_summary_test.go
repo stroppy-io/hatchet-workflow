@@ -59,6 +59,9 @@ func TestDeriveRunSummaryFromCompiledPlan(t *testing.T) {
 	if got, want := summary.GetDbKind(), domainpb.Database_KIND_POSTGRES; got != want {
 		t.Errorf("db_kind = %s, want %s (patroni-postgres service should be recognized as postgres)", got, want)
 	}
+	if got, want := summary.GetDbVersion(), "3.2-p3"; got != want {
+		t.Errorf("db_version = %q, want %q (tag of the matched patroni-postgres image)", got, want)
+	}
 	if got, want := summary.GetWorkloadName(), "insert+select"; got != want {
 		t.Errorf("workload_name = %q, want %q", got, want)
 	}
@@ -85,6 +88,9 @@ func TestDeriveRunSummaryUnrecognizedDbLeavesKindUnspecified(t *testing.T) {
 	summary := deriveRunSummary(plan)
 	if got := summary.GetDbKind(); got != domainpb.Database_KIND_UNSPECIFIED {
 		t.Errorf("db_kind = %s, want KIND_UNSPECIFIED for an unrecognized service", got)
+	}
+	if got := summary.GetDbVersion(); got != "" {
+		t.Errorf("db_version = %q, want empty (no db service matched, so no service to read a version off)", got)
 	}
 	if got, want := summary.GetStroppyVersion(), "latest"; got != want {
 		t.Errorf("stroppy_version = %q, want %q", got, want)

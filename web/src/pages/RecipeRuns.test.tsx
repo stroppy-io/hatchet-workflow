@@ -39,6 +39,7 @@ function runningRun(overrides: Partial<RunVM> = {}): RunVM {
     createdAt: "2026-07-01T00:00:00Z",
     status: "running",
     dbKind: "postgres",
+    dbVersion: "16",
     workload: "insert+select",
     stroppyVersion: "1.2.3",
     protocol: "pg",
@@ -82,6 +83,7 @@ describe("RecipeRuns table", () => {
     await waitFor(() => expect(screen.getByText("postgres-ha smoke")).toBeInTheDocument());
 
     expect(screen.getByText("PostgreSQL")).toBeInTheDocument();
+    expect(screen.getByText("16")).toBeInTheDocument();
     expect(screen.getByText(/3 nodes/)).toBeInTheDocument();
     expect(screen.getByText("docker")).toBeInTheDocument();
     expect(screen.getByText("42%")).toBeInTheDocument();

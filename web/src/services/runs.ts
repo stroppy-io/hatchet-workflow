@@ -85,6 +85,8 @@ export interface RunVM {
   status: RunStatus;
   /** summary.db_kind, lower-cased ("" when unspecified). */
   dbKind: DbKind;
+  /** summary.db_version, e.g. "16" ("" when unset). */
+  dbVersion: string;
   /** summary.workload_name. */
   workload: string;
   /** summary.stroppy_version ("" when unset). */
@@ -217,6 +219,7 @@ export function runToVM(rec: Run): RunVM {
     compiledPlan?: CompiledPlanJson;
     summary?: {
       dbKind?: string;
+      dbVersion?: string;
       workloadName?: string;
       stroppyVersion?: string;
       workloadProtocol?: string;
@@ -241,6 +244,7 @@ export function runToVM(rec: Run): RunVM {
     createdAt: e.timings?.createdAt ?? "",
     status: statusToVM(j.status),
     dbKind: dbKindLabelFromJson(s.dbKind),
+    dbVersion: s.dbVersion ?? "",
     workload: s.workloadName ?? "",
     stroppyVersion: s.stroppyVersion ?? "",
     protocol: protocolLabelFromJson(s.workloadProtocol),

@@ -624,6 +624,18 @@ go_name: DbPresetId</pre></td>
 json_name: dbPresetName
 go_name: DbPresetName</pre></td>
 </tr><tr>
+<td>db_version</td>
+<td>string</td>
+<td><pre>
+db_version is the database engine's version, read from the same
+DB ServiceSpec image tag db_kind is inferred from (e.g.
+"postgres:16" -> "16") — parity with ref's runs table, which
+carried a db version the DSL-era table dropped (see
+internal/workflows/runrecipe_summary.go's inferDbKind/imageTag).<br>
+
+json_name: dbVersion
+go_name: DbVersion</pre></td>
+</tr><tr>
 <td>duration</td>
 <td><a href="../../../google/protobuf/README.md#google-protobuf-duration">google.protobuf.Duration</a></td>
 <td><pre>

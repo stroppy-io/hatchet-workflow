@@ -86,6 +86,12 @@ message Run {
         google.protobuf.Timestamp started_at = 11;
         google.protobuf.Timestamp finished_at = 12;
         google.protobuf.Duration duration = 13;
+        // db_version is the database engine's version, read from the same
+        // DB ServiceSpec image tag db_kind is inferred from (e.g.
+        // "postgres:16" -> "16") — parity with ref's runs table, which
+        // carried a db version the DSL-era table dropped (see
+        // internal/workflows/runrecipe_summary.go's inferDbKind/imageTag).
+        string db_version = 21 [(validate.rules).string.max_len = 64];
     }
 }
 

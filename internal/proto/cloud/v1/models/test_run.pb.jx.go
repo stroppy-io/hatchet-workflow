@@ -395,6 +395,10 @@ func (m *Run_Summary) Encode(e *jx.Encoder) {
 		e.FieldStart("duration")
 		jxpb.EncDuration(e, m.Duration)
 	}
+	if m.DbVersion != "" {
+		e.FieldStart("dbVersion")
+		e.Str(m.DbVersion)
+	}
 	e.ObjEnd()
 }
 
@@ -667,6 +671,20 @@ func (m *Run_Summary) Decode(d *jx.Decoder) error {
 			if err := jxpb.DecDuration(d, m.Duration); err != nil {
 				return err
 			}
+			return nil
+		case "dbVersion", "db_version":
+			if seen["DbVersion"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["DbVersion"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.DbVersion = v
 			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)

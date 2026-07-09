@@ -27,12 +27,14 @@ func deriveRunSummary(plan *dslpb.CompiledPlan) *models.Run_Summary {
 	groups := plan.GetMachineGroups()
 	services := plan.GetServices()
 	stroppy := findStroppySvc(services)
+	dbKind, dbSvc := inferDbKind(services, stroppy)
 
 	return &models.Run_Summary{
 		Provider:       providerKindFromName(plan.GetProvider().GetName()),
 		NodeCount:      nodeCount(groups),
 		TopologyLabel:  topologyLabel(plan.GetProvider().GetName(), groups),
-		DbKind:         inferDbKind(services, stroppy),
+		DbKind:         dbKind,
+		DbVersion:      imageTag(dbSvc.GetImage()),
 		WorkloadName:   workloadName(plan.GetJobs(), stroppy),
 		StroppyVersion: imageTag(stroppy.GetImage()),
 	}
@@ -125,12 +127,16 @@ var dbKindKeywords = []struct { //nolint:gochecknoglobals // static lookup table
 // label anything — sidecar/infra services with no DB keyword match (e.g.
 // "etcd", "haproxy") are silently skipped, exactly like the DB service
 // itself would be if it were named unrecognizably. Returns
-// KIND_UNSPECIFIED when nothing matches; monitoring.dbKindString already
-// falls back to "postgres" for that case (documented, pre-existing
+// (KIND_UNSPECIFIED, nil) when nothing matches; monitoring.dbKindString
+// already falls back to "postgres" for that case (documented, pre-existing
 // behavior — see its own doc comment), so an unrecognized recipe's Metrics
 // tab still renders, just against the wrong PromQL until the recipe adopts
-// a recognized service name/image.
-func inferDbKind(services []*dslpb.ServiceSpec, stroppy *dslpb.ServiceSpec) domainpb.Database_Kind {
+// a recognized service name/image. The matched ServiceSpec is also
+// returned (nil when nothing matches) so deriveRunSummary can read
+// DbVersion off the SAME service DbKind came from, via the same
+// imageTag helper StroppyVersion already uses for the runner service —
+// there is deliberately no separate "db version" heuristic.
+func inferDbKind(services []*dslpb.ServiceSpec, stroppy *dslpb.ServiceSpec) (domainpb.Database_Kind, *dslpb.ServiceSpec) {
 	for _, svc := range services {
 		if svc == stroppy {
 			continue
@@ -138,11 +144,11 @@ func inferDbKind(services []*dslpb.ServiceSpec, stroppy *dslpb.ServiceSpec) doma
 		haystack := strings.ToLower(svc.GetName()) + " " + strings.ToLower(svc.GetImage())
 		for _, kw := range dbKindKeywords {
 			if strings.Contains(haystack, kw.keyword) {
-				return kw.kind
+				return kw.kind, svc
 			}
 		}
 	}
-	return domainpb.Database_KIND_UNSPECIFIED
+	return domainpb.Database_KIND_UNSPECIFIED, nil
 }
 
 // workloadName is the stroppy service's workload(s) — read from the
