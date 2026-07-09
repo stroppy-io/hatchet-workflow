@@ -36,6 +36,21 @@ type NomadAssignment struct {
 // ServerAddr with an empty host (e.g. ":4647") — it is the caller's
 // responsibility to supply a non-empty gatewayPrivateIP whenever any client
 // assignment is expected to be usable.
+//
+// NOT YET WIRED (SP-F carryover, see
+// docs/superpowers/specs/2026-07-08-sp-f-execution-shapeup.md §3 F5): the
+// only caller that could use this — RunRecipeWorkflow's terraform
+// provisioning path — issues a single terraform apply for every machine at
+// once (internal/infrastructure/provider/terraform.go's
+// terraformProvider.Provision), so the gateway's private IP this function
+// needs is not known until every OTHER machine's cloud-init has already been
+// baked into that same apply call. Wiring this for real needs either a
+// two-phase apply (gateway first, IP known, then the rest) or boot-time
+// server discovery instead of a statically baked ServerAddr — both are
+// provisioning-flow redesigns, out of scope for a point-fix. Single-node
+// docker deployments (the only live-verified path today) are unaffected:
+// the docker sidecar runs exactly one combined Nomad server+client, so
+// multi-node role assignment does not apply there either.
 func AssignNomadRoles(machineIDs []string, gatewayID, gatewayPrivateIP string) map[string]NomadAssignment {
 	clientAddr := net.JoinHostPort(gatewayPrivateIP, NomadServerRPCPort)
 
