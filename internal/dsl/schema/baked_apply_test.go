@@ -23,9 +23,60 @@ func TestApplyBakedInputs_OverlaysProviderParams(t *testing.T) {
 	require.NoError(t, err)
 	baked := &spb.Baked{Values: values}
 
-	require.NoError(t, schema.ApplyBakedInputs(resolved, baked))
+	paramsSchema := spb.NewSchema("ns", "params", "1").
+		Fields(spb.Double("replicas")).MustBuild()
+
+	require.NoError(t, schema.ApplyBakedInputs(resolved, baked, paramsSchema))
 	require.Equal(t, "ru-central1-a", cluster.Provider.Params["zone"], "existing static param untouched")
 	require.Equal(t, float64(5), cluster.Provider.Params["replicas"], "baked provider value overlaid")
+}
+
+// TestApplyBakedInputs_RejectsUndeclaredProviderParam is the apply-time half
+// of the SP-D T6 strict-fix (form.go's ComposeFormSchema is the bake-time
+// half): a Baked carrying a "provider" key the declared params schema never
+// mentions must be rejected outright rather than silently copied into
+// Provider.Params. This guards the path a Baked reaches dsl.Compile without
+// ever having been produced by BakeForm against the exact schema in play
+// (e.g. a stale or hand-crafted Baked attached to a Run).
+func TestApplyBakedInputs_RejectsUndeclaredProviderParam(t *testing.T) {
+	cluster := &ast.ClusterDoc{Provider: ast.ProviderUse{Use: "yandex", Params: map[string]any{"zone": "ru-central1-a"}}}
+	resolved := &include.Resolved{Cluster: cluster}
+
+	values, err := structpb.NewStruct(map[string]any{
+		"provider": map[string]any{"replicas": float64(5), "evil_injected_key": "rm -rf /"},
+	})
+	require.NoError(t, err)
+	baked := &spb.Baked{Values: values}
+
+	paramsSchema := spb.NewSchema("ns", "params", "1").
+		Fields(spb.Double("replicas")).MustBuild()
+
+	err = schema.ApplyBakedInputs(resolved, baked, paramsSchema)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "evil_injected_key")
+	require.NotContains(t, cluster.Provider.Params, "replicas", "no partial application on reject")
+	require.NotContains(t, cluster.Provider.Params, "evil_injected_key")
+	require.Equal(t, "ru-central1-a", cluster.Provider.Params["zone"], "pre-existing static param untouched")
+}
+
+// TestApplyBakedInputs_NilParamsSchemaRejectsAnyProviderParam covers the
+// no-provider-declared case (e.g. the docker builtin, which composes its
+// launch form with a nil params schema — see ComposeFormSchema): if baked
+// still carries a "provider" object, every key in it is by definition
+// undeclared, so the call must reject rather than silently accept it.
+func TestApplyBakedInputs_NilParamsSchemaRejectsAnyProviderParam(t *testing.T) {
+	cluster := &ast.ClusterDoc{Provider: ast.ProviderUse{Use: "docker"}}
+	resolved := &include.Resolved{Cluster: cluster}
+
+	values, err := structpb.NewStruct(map[string]any{
+		"provider": map[string]any{"anything": "goes"},
+	})
+	require.NoError(t, err)
+	baked := &spb.Baked{Values: values}
+
+	err = schema.ApplyBakedInputs(resolved, baked, nil)
+	require.Error(t, err)
+	require.Empty(t, cluster.Provider.Params)
 }
 
 func TestSplitBakedValues_NilSafe(t *testing.T) {

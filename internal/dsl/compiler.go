@@ -51,6 +51,14 @@ type Input struct {
 	// schema.SplitBakedValues/schema.ApplyBakedInputs for where its two
 	// halves (workflow inputs, provider params) actually flow.
 	Baked *spb.Baked
+	// ProviderParamsSchema declares the provider params Baked's "provider"
+	// object is allowed to carry (the same *spb.Schema ComposeFormSchema
+	// nested under "provider" when composing the launch form this Baked was
+	// sealed against). Only consulted when Baked is non-nil and carries
+	// provider params; see schema.ApplyBakedInputs for why this is required
+	// even though ComposeFormSchema/BakeForm already validate strictly --
+	// Baked can arrive here without ever having gone through BakeForm.
+	ProviderParamsSchema *spb.Schema
 }
 
 // Compile runs the full compiler pipeline over in, in stage order:
@@ -94,7 +102,7 @@ func Compile(in Input) (*dslpb.CompiledPlan, diag.List) {
 		return nil, diags
 	}
 
-	if err := schema.ApplyBakedInputs(resolved, in.Baked); err != nil {
+	if err := schema.ApplyBakedInputs(resolved, in.Baked, in.ProviderParamsSchema); err != nil {
 		diags.Errorf("", diag.Pos{}, "apply baked inputs: %v", err)
 		return nil, diags
 	}

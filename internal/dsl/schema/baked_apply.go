@@ -12,6 +12,8 @@ package schema
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 
 	spb "github.com/stroppy-io/schemapb/schemapb"
 
@@ -50,13 +52,21 @@ func SplitBakedValues(baked *spb.Baked) (workflowInputs, providerParams map[stri
 // form-driven launch). It is a no-op (nil error) when baked is nil, so
 // callers can invoke it unconditionally on the non-form launch path.
 //
-// Workflow-level input values are NOT applied here: they must be known
-// BEFORE/DURING include.Resolve (its `${{ inputs.x }}` substitution runs
-// inline during Resolve, not as a post-process — see resolve.go's
-// forwardInputs/substituteOn), so callers thread them via
-// SplitBakedValues + include.Resolve's workflowInputs parameter instead
-// (see internal/dsl/compiler.go's Compile).
-func ApplyBakedInputs(resolved *include.Resolved, baked *spb.Baked) error {
+// paramsSchema is the provider's declared params schema (the same *Schema
+// ComposeFormSchema nested under "provider" when the launch form was
+// composed). This is the second half of the defense-in-depth against the
+// "silent config injection" hole ComposeFormSchema's Strict() guards on the
+// BakeForm path: a Baked is a plain protojson-decodable message, so a
+// caller can hand dsl.Compile one that never went through BakeForm at all
+// (see models.Run.Baked / the Terraform/monitor protos that also carry a
+// schemapb.Baked). Without this check, any key under "provider" -- baked or
+// not -- would be copied verbatim into Provider.Params and flow straight
+// into lower.go's tfvars. If baked carries ANY provider-param key
+// paramsSchema doesn't declare (or paramsSchema is nil while baked still
+// carries provider params), the whole call fails closed: an error is
+// returned and Provider.Params is left completely untouched -- partial
+// application of an otherwise-suspect payload would be worse than none.
+func ApplyBakedInputs(resolved *include.Resolved, baked *spb.Baked, paramsSchema *spb.Schema) error {
 	if baked == nil {
 		return nil
 	}
@@ -67,6 +77,23 @@ func ApplyBakedInputs(resolved *include.Resolved, baked *spb.Baked) error {
 	if len(providerParams) == 0 {
 		return nil
 	}
+
+	declared := make(map[string]bool, len(paramsSchema.GetFields()))
+	for _, f := range paramsSchema.GetFields() {
+		declared[f.GetName()] = true
+	}
+
+	var unknown []string
+	for k := range providerParams {
+		if !declared[k] {
+			unknown = append(unknown, k)
+		}
+	}
+	if len(unknown) > 0 {
+		sort.Strings(unknown)
+		return fmt.Errorf("apply baked inputs: undeclared provider param(s): %s", strings.Join(unknown, ", "))
+	}
+
 	if resolved.Cluster.Provider.Params == nil {
 		resolved.Cluster.Provider.Params = make(map[string]any, len(providerParams))
 	}

@@ -17,16 +17,23 @@ import (
 // (new.go, "Done lets a raw field satisfy FieldDef"). So a *Schema_Filed
 // pulled from inputs.GetFields() already satisfies FieldDef and can be passed
 // straight to .Fields(...) -- no local shim is needed.
+// Both the composed root and (when present) the nested "provider" object are
+// built strict (schemapb.SchemaB.Strict / schemapb.ObjectB.Strict): Bake
+// rejects any key the schema didn't declare instead of silently letting it
+// through to ApplyBakedInputs (defense in depth -- see baked_apply.go's own
+// strict-by-declared-keys check, which guards the path that doesn't go
+// through a BakeForm call at all, e.g. a Baked crafted directly by a client
+// and handed straight to dsl.Compile).
 func ComposeFormSchema(namespace string, inputs, params *schemapb.Schema) (*schemapb.Schema, error) {
 	fields := make([]schemapb.FieldDef, 0, len(inputs.GetFields())+1)
 	for _, f := range inputs.GetFields() {
 		fields = append(fields, f)
 	}
 	if params != nil && len(params.GetFields()) > 0 {
-		fields = append(fields, schemapb.ObjectOf("provider", params))
+		fields = append(fields, schemapb.ObjectOf("provider", params).Strict())
 	}
 
-	return schemapb.NewSchema(namespace, "form", "1").Fields(fields...).Build()
+	return schemapb.NewSchema(namespace, "form", "1").Strict().Fields(fields...).Build()
 }
 
 // BakeForm validates and resolves filled form values against form, then
