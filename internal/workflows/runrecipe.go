@@ -82,7 +82,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/stroppy-io/schemapb/schemapb"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 	"google.golang.org/protobuf/proto"
@@ -144,23 +143,36 @@ type RunRecipeInput struct {
 	TenantID  string
 	Bundle    map[string][]byte
 	Bootstrap *workflowpb.AgentBootstrap
-	// Baked is the sealed launch-form snapshot (SP-D) this run was launched
-	// with — nil for a non-form launch. It is forwarded verbatim into
+	// Baked is the deterministically-marshaled (proto.Marshal) sealed
+	// launch-form snapshot (SP-D) this run was launched with — nil/empty for
+	// a non-form launch. It is forwarded verbatim into
 	// CompileRecipeActivityInput.Baked (see compileRecipe below); the
 	// compiler runs on the Temporal WORKER inside CompileRecipeActivity, not
 	// here in workflow code (see the package doc's Global Constraints), so
 	// this workflow never itself touches Baked's contents — it is pure
 	// data threaded through, exactly like Bootstrap above.
 	//
-	// Baked is a proto message and is serialized through Temporal's default
-	// data converter exactly like Bootstrap — no new (de)serialization
-	// plumbing needed. It is set once, here, at workflow-start time and
-	// never mutated afterward, so it is recorded exactly once in workflow
-	// history (the initial WorkflowExecutionStarted event's input), not
-	// re-sent on every heartbeat/attempt — see the project's own
-	// history-bloat precedent (persistRunCompiledPlan's doc comment) for why
-	// that distinction matters here.
-	Baked *schemapb.Baked
+	// Baked is carried as raw proto-marshaled bytes, NOT *schemapb.Baked,
+	// deliberately: schemapb.Baked.Schema.Fields[].Kind is a protobuf oneof,
+	// and RunRecipeInput is a plain Go struct — Temporal's default
+	// DataConverter serializes struct fields with encoding/json (the
+	// proto-aware converters in its chain only engage when the TOP-LEVEL
+	// value passed to ExecuteWorkflow/ExecuteActivity is itself a proto.
+	// Message), so a *schemapb.Baked struct field round-trips through
+	// json.Marshal fine but fails json.Unmarshal back into the oneof's
+	// interface-typed Kind field — this crashed RunRecipeWorkflow before a
+	// single line of workflow code ran (SP-D live-stand bug 2). []byte is
+	// plain JSON-serializable data (base64), sidestepping the issue entirely
+	// without a custom DataConverter. proto.Marshal is deterministic for a
+	// fixed message (field order is defined by the descriptor, not map
+	// iteration — schemapb.Baked has no map fields), so this is safe to
+	// depend on for Temporal replay: the exact same bytes are recorded in
+	// the initial WorkflowExecutionStarted history event on every replay,
+	// since Baked is set once, here, at workflow-start time and never
+	// mutated afterward (never re-sent per attempt/heartbeat — see the
+	// project's own history-bloat precedent, persistRunCompiledPlan's doc
+	// comment, for why that distinction matters here).
+	Baked []byte
 }
 
 // RunRecipeOutput is RunRecipeWorkflow's terminal result: Status is the
@@ -177,15 +189,20 @@ type RunRecipeOutput struct {
 // bundle's raw files.
 type CompileRecipeActivityInput struct {
 	Bundle map[string][]byte
-	// Baked mirrors RunRecipeInput.Baked (see its doc comment) — forwarded
-	// unchanged so CompileRecipeActivity can pass it straight to
-	// dslservice.CompileBundle, which derives the provider params schema it
-	// needs to validate Baked's provider params directly from Bundle itself
-	// (see CompileBundle's own doc comment). This input deliberately does
-	// NOT also carry a separately-derived *schemapb.Schema: that would be a
-	// second, larger value recorded in this activity's own history entry for
-	// no benefit, since Bundle is already present to re-derive it from.
-	Baked *schemapb.Baked
+	// Baked mirrors RunRecipeInput.Baked (see its doc comment): the sealed
+	// launch-form snapshot as raw proto.Marshal bytes, not *schemapb.Baked.
+	// CompileRecipeActivity (internal/infrastructure/execution/
+	// recipe_activities.go) unmarshals it back into *schemapb.Baked (a real
+	// proto.Message, decoded with proto.Unmarshal — no oneof/DataConverter
+	// hazard, since this happens in plain activity code, not via Temporal's
+	// converter) before passing it to dslservice.CompileBundle, which derives
+	// the provider params schema it needs to validate Baked's provider
+	// params directly from Bundle itself (see CompileBundle's own doc
+	// comment). This input deliberately does NOT also carry a
+	// separately-derived *schemapb.Schema: that would be a second, larger
+	// value recorded in this activity's own history entry for no benefit,
+	// since Bundle is already present to re-derive it from.
+	Baked []byte
 }
 
 // CompileRecipeActivityOutput is CompileRecipeActivity's output: the

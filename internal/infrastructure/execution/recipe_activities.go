@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/stroppy-io/schemapb/schemapb"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/provider"
@@ -69,16 +70,19 @@ func NewRecipeActivities(deps provider.Deps, quotas QuotaManager) *RecipeActivit
 // comment on why a non-nil plan can otherwise coexist with an error
 // diagnostic).
 //
-// in.Baked is forwarded straight through to CompileBundle — this is where
-// SP-D Task 8's launch-form values actually reach the compiler: the DSL
-// compiler (include.Resolve/schema.ApplyBakedInputs) runs here, on the
-// Temporal WORKER, never inside the connect-rpc StartRun handler (see
-// runrecipe.go's package doc, "Global Constraints"). CompileBundle itself
-// derives whatever provider params schema it needs to validate in.Baked's
-// provider params from in.Bundle — this activity does not (and must not)
-// pre-compute or separately carry that schema; see CompileBundle's own doc
-// comment for why re-deriving it here, from the bundle already present,
-// beats threading a second value through CompileRecipeActivityInput.
+// in.Baked (raw proto.Marshal bytes — see RunRecipeInput.Baked's doc comment
+// on why it is not carried as *schemapb.Baked through Temporal) is
+// unmarshaled back into a *schemapb.Baked here, in plain activity code, and
+// forwarded straight through to CompileBundle — this is where SP-D Task 8's
+// launch-form values actually reach the compiler: the DSL compiler
+// (include.Resolve/schema.ApplyBakedInputs) runs here, on the Temporal
+// WORKER, never inside the connect-rpc StartRun handler (see runrecipe.go's
+// package doc, "Global Constraints"). CompileBundle itself derives whatever
+// provider params schema it needs to validate in.Baked's provider params
+// from in.Bundle — this activity does not (and must not) pre-compute or
+// separately carry that schema; see CompileBundle's own doc comment for why
+// re-deriving it here, from the bundle already present, beats threading a
+// second value through CompileRecipeActivityInput.
 func (a *RecipeActivities) CompileRecipeActivity(
 	_ context.Context,
 	in *workflows.CompileRecipeActivityInput,
@@ -87,7 +91,15 @@ func (a *RecipeActivities) CompileRecipeActivity(
 		return nil, errors.New("compile recipe activity: input is required")
 	}
 
-	plan, diags := dslservice.CompileBundle(in.Bundle, in.Baked)
+	var baked *schemapb.Baked
+	if len(in.Baked) > 0 {
+		baked = &schemapb.Baked{}
+		if err := proto.Unmarshal(in.Baked, baked); err != nil {
+			return nil, fmt.Errorf("compile recipe activity: unmarshal baked: %w", err)
+		}
+	}
+
+	plan, diags := dslservice.CompileBundle(in.Bundle, baked)
 	if diags.HasErrors() {
 		plan = nil
 	}

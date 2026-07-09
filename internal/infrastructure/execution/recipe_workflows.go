@@ -2,10 +2,12 @@ package execution
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 
 	"github.com/stroppy-io/schemapb/schemapb"
 	"go.temporal.io/sdk/client"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/settings"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
@@ -66,13 +68,23 @@ func NewRecipeWorkflows(c client.Client, bootstrap settings.AgentBootstrapSource
 // launch path.
 func (w *RecipeWorkflows) LaunchRecipeRun(ctx context.Context, run *models.Run, bundle map[string][]byte, baked *schemapb.Baked) error {
 	// baked is the sealed launch-form snapshot StartRun already produced and
-	// validated (server-side BakeForm) — threaded straight into
-	// RunRecipeInput.Baked (SP-D Task 8). It is NOT applied here: the DSL
-	// compiler runs asynchronously inside CompileRecipeActivity on a
-	// Temporal worker (see runrecipe.go's package doc, "Global
-	// Constraints"), not in this connect-rpc-adjacent adapter, so this
-	// method's only job is to carry baked into the workflow input unchanged.
-	in, err := w.runRecipeInput(ctx, run, bundle, baked)
+	// validated (server-side BakeForm) — proto.Marshal'd and threaded into
+	// RunRecipeInput.Baked as raw bytes (SP-D Task 8, live-stand bug 2 fix —
+	// see RunRecipeInput.Baked's doc comment for why it is bytes, not
+	// *schemapb.Baked). It is NOT applied here: the DSL compiler runs
+	// asynchronously inside CompileRecipeActivity on a Temporal worker (see
+	// runrecipe.go's package doc, "Global Constraints"), not in this
+	// connect-rpc-adjacent adapter, so this method's only job is to carry
+	// baked's bytes into the workflow input unchanged.
+	var bakedBytes []byte
+	if baked != nil {
+		b, err := proto.Marshal(baked)
+		if err != nil {
+			return fmt.Errorf("launch recipe run: marshal baked: %w", err)
+		}
+		bakedBytes = b
+	}
+	in, err := w.runRecipeInput(ctx, run, bundle, bakedBytes)
 	if err != nil {
 		return err
 	}
@@ -99,7 +111,7 @@ func (w *RecipeWorkflows) CancelRecipeRun(ctx context.Context, runID string) err
 	return w.client.CancelWorkflow(ctx, runRecipeWorkflowID(runID), "")
 }
 
-func (w *RecipeWorkflows) runRecipeInput(ctx context.Context, run *models.Run, bundle map[string][]byte, baked *schemapb.Baked) (*workflows.RunRecipeInput, error) {
+func (w *RecipeWorkflows) runRecipeInput(ctx context.Context, run *models.Run, bundle map[string][]byte, baked []byte) (*workflows.RunRecipeInput, error) {
 	runID := run.GetEntity().GetId()
 	if runID == "" {
 		return nil, errRecipeRunMissingID

@@ -7,6 +7,7 @@ import (
 
 	"github.com/stroppy-io/schemapb/schemapb"
 	"go.temporal.io/sdk/client"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
@@ -65,9 +66,12 @@ func TestLaunchRecipeRunStartsWorkflowWithExpectedIDAndInput(t *testing.T) {
 
 // TestLaunchRecipeRunThreadsBakedIntoWorkflowInput is SP-D Task 8's
 // LaunchRecipeRun-level regression guard: baked must reach
-// RunRecipeInput.Baked unchanged (never dropped, never applied in-process
-// here — see LaunchRecipeRun's own doc comment on why the compiler runs
-// inside CompileRecipeActivity on a worker, not this adapter).
+// RunRecipeInput.Baked (as proto.Marshal bytes — see RunRecipeInput.Baked's
+// doc comment for why it is bytes, not *schemapb.Baked: a plain struct
+// field carrying a proto oneof crashes Temporal's default JSON
+// DataConverter) unchanged (never dropped, never applied in-process here —
+// see LaunchRecipeRun's own doc comment on why the compiler runs inside
+// CompileRecipeActivity on a worker, not this adapter).
 func TestLaunchRecipeRunThreadsBakedIntoWorkflowInput(t *testing.T) {
 	starter := &fakeWorkflowStarter{}
 	rw := &RecipeWorkflows{client: starter}
@@ -83,8 +87,32 @@ func TestLaunchRecipeRunThreadsBakedIntoWorkflowInput(t *testing.T) {
 		t.Fatalf("launch recipe run: %v", err)
 	}
 	in := starter.calls[0].args[0].(*workflows.RunRecipeInput) //nolint:forcetypeassert // test-only
-	if in.Baked != baked {
-		t.Fatalf("input.Baked = %+v, want the exact baked value passed in", in.Baked)
+	gotBaked := &schemapb.Baked{}
+	if err := proto.Unmarshal(in.Baked, gotBaked); err != nil {
+		t.Fatalf("unmarshal input.Baked: %v", err)
+	}
+	if !proto.Equal(gotBaked, baked) {
+		t.Fatalf("input.Baked = %+v, want an equal copy of baked (%+v)", gotBaked, baked)
+	}
+}
+
+// TestLaunchRecipeRunWithNilBakedLeavesInputBakedNil asserts a nil baked
+// (the non-form-launch default) survives LaunchRecipeRun as a nil/empty
+// RunRecipeInput.Baked — i.e. marshaling is skipped entirely, not just
+// producing an empty-but-non-nil slice, mirroring RunRecipeWorkflowInput's
+// own nil-Baked default every other test in this package exercises.
+func TestLaunchRecipeRunWithNilBakedLeavesInputBakedNil(t *testing.T) {
+	starter := &fakeWorkflowStarter{}
+	rw := &RecipeWorkflows{client: starter}
+	run := &models.Run{Entity: &common.Entity{Id: "run-1", TenantId: "tenant-1"}}
+	bundle := map[string][]byte{"cluster.yaml": []byte("version: 1\n")}
+
+	if err := rw.LaunchRecipeRun(context.Background(), run, bundle, nil); err != nil {
+		t.Fatalf("launch recipe run: %v", err)
+	}
+	in := starter.calls[0].args[0].(*workflows.RunRecipeInput) //nolint:forcetypeassert // test-only
+	if len(in.Baked) != 0 {
+		t.Fatalf("input.Baked = %v, want nil/empty for a nil baked launch", in.Baked)
 	}
 }
 

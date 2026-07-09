@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stroppy-io/schemapb/schemapb"
 	"go.temporal.io/sdk/activity"
+	"go.temporal.io/sdk/converter"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/testsuite"
 	"go.temporal.io/sdk/workflow"
@@ -219,13 +220,20 @@ func TestRunRecipeWorkflowThreadsBakedIntoCompileActivity(t *testing.T) {
 		t.Fatalf("build baked values: %v", err)
 	}
 	baked := &schemapb.Baked{Values: values}
+	bakedBytes, err := proto.Marshal(baked)
+	if err != nil {
+		t.Fatalf("marshal baked: %v", err)
+	}
 	in := runRecipeTestInput()
-	in.Baked = baked
+	in.Baked = bakedBytes
 
 	var gotBaked *schemapb.Baked
 	env.OnActivity(CompileRecipeActivityName, mock.Anything, mock.Anything).Return(
 		func(_ context.Context, in *CompileRecipeActivityInput) (*CompileRecipeActivityOutput, error) {
-			gotBaked = in.Baked
+			gotBaked = &schemapb.Baked{}
+			if err := proto.Unmarshal(in.Baked, gotBaked); err != nil {
+				t.Fatalf("unmarshal CompileRecipeActivityInput.Baked: %v", err)
+			}
 			return &CompileRecipeActivityOutput{Plan: plan}, nil
 		},
 	)
@@ -1169,5 +1177,98 @@ func TestRunRecipeWorkflowCanceledDuringProvision(t *testing.T) {
 	}
 	if got := state.GetStages()[runRecipeStageTeardownIndex].GetStatus(); got != common.Status_STATUS_COMPLETED {
 		t.Fatalf("teardown stage status = %s, want COMPLETED", got)
+	}
+}
+
+// TestRunRecipeInputSurvivesDefaultDataConverterRoundTrip is the SP-D
+// live-stand bug 2 regression test: it exercises Temporal's ACTUAL default
+// DataConverter (converter.GetDefaultDataConverter() — the one client.Dial
+// installs implicitly, internal/app/run.go:98) directly on *RunRecipeInput,
+// with no test-environment scaffolding, proving the exact failure mode the
+// live stand hit is fixed. Before RunRecipeInput.Baked became []byte (raw
+// proto.Marshal bytes) instead of *schemapb.Baked, ToPayloads happily
+// json.Marshal'd the struct (including the oneof-typed Baked.Schema.
+// Fields[].Kind field — protobuf's MarshalJSON makes that look fine), but
+// FromPayloads' plain json.Unmarshal into the interface-typed Kind field
+// failed with "unable to decode ... Schema_Filed.Baked.schema.fields.Kind"
+// — exactly the error `tctl workflow show` reported for every StartRun
+// carrying a non-nil Filled on the stand (f0d45dce.../e6fbf7d0.../
+// f560fed8...), even Filled.Values == {}.
+func TestRunRecipeInputSurvivesDefaultDataConverterRoundTrip(t *testing.T) {
+	values, err := structpb.NewStruct(map[string]any{
+		"target_machine": "db-b",
+		"reps":           7,
+	})
+	if err != nil {
+		t.Fatalf("build values: %v", err)
+	}
+	baked := &schemapb.Baked{
+		Values: values,
+		Schema: &schemapb.Schema{
+			Fields: []*schemapb.Schema_Filed{
+				{
+					Name: "target_machine",
+					Kind: &schemapb.Schema_Filed_String_{String_: &schemapb.Schema_Filed_String{Default: proto.String("db-a")}},
+				},
+				{
+					Name: "reps",
+					Kind: &schemapb.Schema_Filed_Int64_{Int64: &schemapb.Schema_Filed_Int64{Default: proto.Int64(1)}},
+				},
+			},
+		},
+	}
+	bakedBytes, err := proto.Marshal(baked)
+	if err != nil {
+		t.Fatalf("marshal baked: %v", err)
+	}
+
+	in := &RunRecipeInput{
+		RunID:    "run-1",
+		TenantID: "tenant-1",
+		Bundle:   map[string][]byte{"cluster.yaml": []byte("version: 1\n")},
+		Baked:    bakedBytes,
+	}
+
+	dc := converter.GetDefaultDataConverter()
+	payloads, err := dc.ToPayloads(in)
+	if err != nil {
+		t.Fatalf("ToPayloads: %v", err)
+	}
+	var got RunRecipeInput
+	if err := dc.FromPayloads(payloads, &got); err != nil {
+		t.Fatalf("FromPayloads: %v (this is exactly the live-stand crash: "+
+			"\"unable to decode ... Schema_Filed.Baked.schema.fields.Kind\")", err)
+	}
+
+	gotBaked := &schemapb.Baked{}
+	if err := proto.Unmarshal(got.Baked, gotBaked); err != nil {
+		t.Fatalf("unmarshal round-tripped Baked bytes: %v", err)
+	}
+	if !proto.Equal(gotBaked, baked) {
+		t.Fatalf("round-tripped Baked = %+v, want an equal copy of %+v", gotBaked, baked)
+	}
+	if got.RunID != in.RunID || got.TenantID != in.TenantID {
+		t.Fatalf("round-tripped RunID/TenantID = %q/%q, want %q/%q", got.RunID, got.TenantID, in.RunID, in.TenantID)
+	}
+}
+
+// TestRunRecipeInputNilBakedSurvivesDefaultDataConverterRoundTrip asserts a
+// nil Baked (the non-form-launch default, exercised by every other test in
+// this file) also round-trips cleanly — the fix must not regress the
+// existing nil-Baked path.
+func TestRunRecipeInputNilBakedSurvivesDefaultDataConverterRoundTrip(t *testing.T) {
+	in := &RunRecipeInput{RunID: "run-1", TenantID: "tenant-1"}
+
+	dc := converter.GetDefaultDataConverter()
+	payloads, err := dc.ToPayloads(in)
+	if err != nil {
+		t.Fatalf("ToPayloads: %v", err)
+	}
+	var got RunRecipeInput
+	if err := dc.FromPayloads(payloads, &got); err != nil {
+		t.Fatalf("FromPayloads: %v", err)
+	}
+	if got.Baked != nil {
+		t.Fatalf("round-tripped Baked = %v, want nil", got.Baked)
 	}
 }
