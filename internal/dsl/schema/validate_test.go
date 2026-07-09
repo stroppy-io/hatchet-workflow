@@ -155,6 +155,31 @@ func TestValidateWorkflowOK(t *testing.T) {
 	}
 }
 
+// workflowWithInputsYAML mirrors the launch-form path: a top-level `inputs:`
+// block is the only way ComposeLaunchFormSchema gets a non-empty form for a
+// workflow.yaml (see internal/services/dsl/service.go's ComposeLaunchFormSchema
+// and the live-stand probe recipe `spd-livestand-probe`). Before this fix,
+// $defs.workflow had no `inputs` property and additionalProperties: false, so
+// this document failed with "additional properties 'inputs' not allowed" even
+// though ast.WorkflowDoc/DecodeWorkflow fully supports it.
+const workflowWithInputsYAML = `
+inputs:
+  target_machine: { type: string, default: "db-a" }
+  reps: { type: int, default: 1 }
+jobs:
+  probe:
+    on: db-a
+    steps:
+      - cmd: echo probe
+`
+
+func TestValidateWorkflowWithInputsOK(t *testing.T) {
+	diags := schema.Validate(schema.Workflow, "workflow.yaml", []byte(workflowWithInputsYAML), nil)
+	if diags.HasErrors() {
+		t.Fatalf("workflow.yaml with a top-level inputs: block must validate clean, got: %+v", diags)
+	}
+}
+
 func TestValidateWorkflowStepTwoActionsErrors(t *testing.T) {
 	src := []byte("jobs:\n  a:\n    steps:\n      - { cmd: x, dir: /y }\n")
 	diags := schema.Validate(schema.Workflow, "workflow.yaml", src, nil)

@@ -25,6 +25,10 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "inputs": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/inputSpec" }
+        },
         "jobs": {
           "type": "object",
           "additionalProperties": { "$ref": "#/$defs/job" }
