@@ -11,6 +11,7 @@ import (
 	"github.com/stroppy-io/schemapb/schemapb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	derrors "github.com/stroppy-io/stroppy-cloud/internal/domain/errors"
@@ -662,6 +663,88 @@ func TestStartRun_FilledBakeSuccess_LaunchesWithBaked(t *testing.T) {
 	require.NotNil(t, resp.GetRun())
 	require.Empty(t, resp.GetFieldErrors())
 	require.NotNil(t, workflows.lastBaked, "Baked snapshot threaded into LaunchRecipeRun")
+}
+
+// TestStartRun_FilledBakeSuccess_PersistsBakedOnRunRecord is the SP-D
+// live-stand bug 3 regression test: before this fix, `baked` was threaded
+// ONLY as a side parameter into LaunchRecipeRun and never written back onto
+// the minted models.Run, so run_records.data never had a "baked" key for
+// any run (form-launched or not) and the rerun-prefill UI (commit
+// 82d6a8b0, /recipes/:id/launch?from=<runId>) had nothing to read —
+// confirmed live: `select id, data ? 'baked' from run_records` was false
+// for every run on the stand. This asserts both StartRunResponse.Run.Baked
+// AND the persisted record fetched back through Runs (mirroring what
+// GetTestRunOverview's snapshot.run would read) carry the sealed Baked,
+// tenant-scoped.
+func TestStartRun_FilledBakeSuccess_PersistsBakedOnRunRecord(t *testing.T) {
+	repo := newFakeRecipeRepo()
+	runs := newFakeRunRepo()
+	workflows := newFakeRecipeWorkflows(nil)
+	svc := NewService(Deps{
+		Repo: repo, Authn: fakeAuthn{}, Checker: stubChecker(nil),
+		Runs: runs, Workflows: workflows,
+		FormSchema: func(_ context.Context, files map[string][]byte) (*schemapb.Schema, diag.List, error) {
+			return dslservice.ComposeLaunchFormSchema(files)
+		},
+	})
+
+	created, err := svc.CreateRecipe(context.Background(), &api.CreateRecipeRequest{
+		TenantId: "t1",
+		Recipe: &models.RecipeRecord{
+			Entity: &common.Entity{Name: "pg-docker"},
+			Bundle: &models.RecipeBundle{Files: dockerBundleFilesWithInputs()},
+		},
+	})
+	require.NoError(t, err)
+	recipeID := created.GetRecipe().GetEntity().GetId()
+
+	values, err := structpb.NewStruct(map[string]any{"db_version": "17"})
+	require.NoError(t, err)
+
+	resp, err := svc.StartRun(context.Background(), &api.StartRunRequest{
+		TenantId: "t1", RecipeId: recipeID,
+		Filled: &schemapb.Filled{Values: values},
+	})
+	require.NoError(t, err)
+	require.NotNil(t, resp.GetRun())
+	require.NotNil(t, resp.GetRun().GetBaked(), "StartRunResponse.Run.Baked must be stamped at mint time")
+	require.True(t, proto.Equal(resp.GetRun().GetBaked(), workflows.lastBaked),
+		"StartRunResponse.Run.Baked must equal the same Baked snapshot threaded into LaunchRecipeRun")
+
+	// Fetch the record back through Runs (the persisted path GetTestRunOverview
+	// reads from) — Baked must survive a store round trip, tenant-scoped.
+	stored, err := runs.Get(context.Background(), "t1", resp.GetRun().GetEntity().GetId())
+	require.NoError(t, err)
+	require.NotNil(t, stored.GetBaked(), "persisted run record must carry baked")
+	require.True(t, proto.Equal(stored.GetBaked(), workflows.lastBaked))
+}
+
+// TestStartRun_NoFilled_RunBakedStaysNil: a non-form launch (no Filled) must
+// still mint a run with a nil Baked — the fix must not fabricate a Baked
+// snapshot when none was submitted.
+func TestStartRun_NoFilled_RunBakedStaysNil(t *testing.T) {
+	repo := newFakeRecipeRepo()
+	svc := NewService(Deps{
+		Repo: repo, Authn: fakeAuthn{}, Checker: stubChecker(nil),
+		Runs: newFakeRunRepo(), Workflows: newFakeRecipeWorkflows(nil),
+	})
+
+	created, err := svc.CreateRecipe(context.Background(), &api.CreateRecipeRequest{
+		TenantId: "t1",
+		Recipe: &models.RecipeRecord{
+			Entity: &common.Entity{Name: "pg-docker"},
+			Bundle: &models.RecipeBundle{Files: dockerBundleFilesWithInputs()},
+		},
+	})
+	require.NoError(t, err)
+	recipeID := created.GetRecipe().GetEntity().GetId()
+
+	resp, err := svc.StartRun(context.Background(), &api.StartRunRequest{
+		TenantId: "t1", RecipeId: recipeID,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, resp.GetRun())
+	require.Nil(t, resp.GetRun().GetBaked())
 }
 
 // TestStartRun_UndeclaredProviderKeyRejected: a Filled key the composed

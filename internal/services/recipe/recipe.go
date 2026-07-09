@@ -298,6 +298,18 @@ func (s *Service) StartRun(ctx context.Context, req *api.StartRunRequest) (*api.
 		// yet — see task-1-report.md).
 		InTenantRating: true,
 		InGlobalRating: false,
+		// Baked is the sealed launch-form snapshot this run was launched
+		// with (nil for a non-form launch — the same condition that leaves
+		// the local `baked` variable nil above). Stamped onto the persisted
+		// run record itself (NOT just threaded into the Temporal workflow
+		// input via LaunchRecipeRun below) so GetTestRunOverview's
+		// snapshot.run carries it durably — this is what the rerun-prefill
+		// UI (commit 82d6a8b0, /recipes/:id/launch?from=<runId>) reads to
+		// prefill a form from a previous run. Before this fix, `baked` was
+		// only ever passed as a side parameter to LaunchRecipeRun and never
+		// written back onto `run`, so run_records.data never had a "baked"
+		// key for any run, form-launched or not.
+		Baked: baked,
 	}
 
 	if err := s.d.Runs.Create(ctx, run); err != nil {
