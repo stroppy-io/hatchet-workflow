@@ -61,6 +61,19 @@
 // ExecuteCompiledPlanWorkflow's service jobs submit to Nomad directly — a
 // standalone WaitNomadReadyActivity is left for a later task rather than
 // adding a 5th RunState stage with no activity behind it yet.
+//
+// # Global Constraints
+//
+// The DSL compiler runs ASYNCHRONOUSLY on a Temporal worker, inside
+// CompileRecipeActivity — never inside the connect-rpc StartRun handler and
+// never here in workflow code. Workflow code is deterministic and replayed;
+// compilation is neither. RunRecipeInput.Baked (the sealed launch-form
+// snapshot) is therefore threaded as pure data: set once at workflow-start,
+// copied into CompileRecipeActivityInput, never inspected or mutated in
+// workflow context. The provider params schema Baked's provider params are
+// validated against is re-derived inside the activity from the bundle already
+// present there, rather than threaded as a second value — keeping workflow
+// history to just Baked itself.
 package workflows
 
 import (
