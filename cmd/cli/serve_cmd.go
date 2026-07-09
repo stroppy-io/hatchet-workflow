@@ -51,6 +51,18 @@ func serveCmd() *cobra.Command {
 				GiteaBackend:         env("GITEA_BACKEND", "http://gitea:3000"),
 				GiteaToken:           os.Getenv("GITEA_TOKEN"),
 				IdeBackend:           os.Getenv("IDE_BACKEND"),
+				IdeManagerEnabled:    os.Getenv("IDE_MANAGER_ENABLED") == "1" || os.Getenv("IDE_MANAGER_ENABLED") == "true",
+				// IDE_WORKTREE_ROOT MUST equal the ide-worktrees volume's mount
+				// point exactly (docker-compose.yaml's
+				// `ide-worktrees:/var/lib/stroppy-ide`) when IDE_WORKTREE_VOLUME
+				// is also set — Manager.workspaceMount's VolumeOptions.Subpath is
+				// computed relative to the VOLUME's root, so a root that is a
+				// subdirectory OF the mount point (not the mount point itself)
+				// would compute the wrong subpath. See internal/ide.Manager.Config.
+				IdeWorktreeRoot:   env("IDE_WORKTREE_ROOT", "/var/lib/stroppy-ide"),
+				IdeWorktreeVolume: os.Getenv("IDE_WORKTREE_VOLUME"),
+				IdeImage:          env("IDE_IMAGE", "codercom/code-server:4.96.4"),
+				IdeDockerNetwork:  os.Getenv("IDE_DOCKER_NETWORK"),
 			}
 
 			ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
