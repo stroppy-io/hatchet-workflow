@@ -258,6 +258,11 @@ type TeardownActivityInput struct {
 	// so the group placement is irrelevant at teardown.
 	RunID      string
 	ServerAddr string
+	// TenantID scopes F1's EnvFn credential resolution: Destroy must resolve
+	// the same tenant's deploy creds Provision used, not a process-wide
+	// default. Not a secret — an ordinary identifier, safe in Temporal
+	// history like RunID/ServerAddr above.
+	TenantID string
 }
 
 // ReserveQuotasActivityInput is ReserveQuotasActivity's input: the compiled
@@ -628,6 +633,7 @@ func (w *runRecipeWorkflow) teardown(ctx workflow.Context, ref *dslpb.ProviderRe
 		ProviderRef: ref,
 		RunID:       w.in.RunID,
 		ServerAddr:  w.in.Bootstrap.GetServerAddr(),
+		TenantID:    w.in.TenantID,
 	}).Get(actx, nil)
 }
 

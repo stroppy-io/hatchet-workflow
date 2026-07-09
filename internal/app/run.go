@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"log/slog"
 	"net"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -471,39 +471,46 @@ func Run(ctx context.Context, cfg Config) error {
 	if err != nil {
 		return fmt.Errorf("terraform actor: %w", err)
 	}
-	// providerEnv carries the control-plane's own Yandex Cloud credentials,
-	// applied to every terraform apply/destroy a recipe run's provisioning
-	// triggers. Sourced straight from the process environment — the same
-	// "terraform + YC_TOKEN env vars, never yc CLI" convention used
-	// elsewhere in this deployment (yandexEnv in
-	// internal/workflows/provider_render.go instead derives its own
-	// per-run YC_TOKEN from the DeploymentPlan's Yandex_Settings, since
-	// that old flow carries tenant-supplied credentials through the plan;
-	// no equivalent per-run credential path exists yet for the DSL
-	// ProviderRef, so a single control-plane-wide credential set is this
-	// wiring's v1). Unset/empty is fine for docker-only dev/test —
-	// ModuleDir below is only ever consulted for a non-"docker" ProviderRef.
-	providerEnv := map[string]string{
-		"YC_TOKEN":     os.Getenv("YC_TOKEN"),
-		"YC_CLOUD_ID":  os.Getenv("YC_CLOUD_ID"),
-		"YC_FOLDER_ID": os.Getenv("YC_FOLDER_ID"),
-		"YC_ZONE":      os.Getenv("YC_ZONE"),
+	// providerDeployCreds resolves per-tenant terraform deploy credentials
+	// (F1, docs/superpowers/specs/2026-07-08-sp-f-execution-shapeup.md §3
+	// F1): each tenant's YC_TOKEN and friends are sealed at rest (same
+	// SecretEncryptionKey/mechanism as providerSecrets above, distinct
+	// namespace) and resolved fresh inside ProvisionActivity/TeardownActivity
+	// per call — never built once, process-wide, from os.Getenv, and never
+	// carried as a plaintext value through Temporal workflow input (only the
+	// TenantID identifier crosses that boundary; see provider.Deps.EnvFn's
+	// doc comment and ProvisionActivityInput/TeardownActivityInput.TenantID).
+	providerDeployCreds, err := identity.NewProviderDeployCreds(store.Secrets(), idCfg)
+	if err != nil {
+		return fmt.Errorf("provider deploy creds: %w", err)
+	}
+	// yandexTfFiles is the "yandex" terraform module's embedded HCL, loaded
+	// once here (I/O only happens at wiring time) and handed to
+	// YandexModuleDirResolver, which derives a per-run workdir/state id from
+	// RunID (F4) instead of the pre-F4 constant "yandex" two runs would
+	// otherwise collide on.
+	yandexTfFiles, err := yandextf.EmbeddedTfFiles()
+	if err != nil {
+		return fmt.Errorf("load embedded yandex terraform files: %w", err)
 	}
 	providerDeps := provider.Deps{
-		DockerExec:  provider.NewDockerExecutorExec(dockerExecutor),
-		Actor:       terraformActor,
-		Env:         providerEnv,
-		AgentTokens: agentTokens,
-		ModuleDir: func(name string) (string, []terraform.TfFile, bool) {
-			if name != "yandex" {
-				return "", nil, false
-			}
-			files, err := yandextf.EmbeddedTfFiles()
-			if err != nil {
-				return "", nil, false
-			}
-			return "yandex", files, true
+		DockerExec: provider.NewDockerExecutorExec(dockerExecutor),
+		Actor:      terraformActor,
+		EnvFn:      providerDeployCreds.Get,
+		// LogSinkFn (F2) mirrors every terraform apply/destroy's output into a
+		// run_id-prefixed line written to the control-plane's own logger, in
+		// addition to the terraform.Actor's process-wide default writer. This
+		// is a v1 stopgap, not the target backend: the target (Vector/
+		// VictoriaMetrics Logs, matching agent-side logs — product-vision §6)
+		// needs the control-plane process to ship logs the way agent nodes'
+		// Vector sidecar does, which it does not today (spec §9.5, open
+		// question 5) — tracked, not solved, by this wiring.
+		LogSinkFn: func(_ context.Context, runID string) (io.Writer, io.Writer) {
+			return &slogLineWriter{log: log, runID: runID, stream: "stdout"},
+				&slogLineWriter{log: log, runID: runID, stream: "stderr"}
 		},
+		AgentTokens: agentTokens,
+		ModuleDir:   provider.YandexModuleDirResolver(yandexTfFiles),
 	}
 	recipeActivities := execution.NewRecipeActivities(providerDeps, quotaManager)
 	recipeService := recipesvc.NewService(recipesvc.Deps{
@@ -917,4 +924,29 @@ func parseDurationDefault(raw string, fallback time.Duration) (time.Duration, er
 		return fallback, nil
 	}
 	return time.ParseDuration(raw)
+}
+
+// slogLineWriter adapts *slog.Logger to io.Writer for F2's LogSinkFn: every
+// terraform apply/destroy write (a line, or a chunk of lines, from
+// tfexec's stdout/stderr) is logged with run_id/stream fields so it can be
+// found later. This is a v1 stopgap, not the target log backend — the
+// control-plane process has no Vector sidecar of its own the way agent
+// nodes do (product-vision §6, spec §9.5 open question 5), so this per-run
+// output lands in the control-plane's own structured log rather than the
+// same pipeline agent-side logs use. Reachable via `log_ref` fields SP-E can
+// key on (run_id) even before a dedicated backend exists.
+type slogLineWriter struct {
+	log    *slog.Logger
+	runID  string
+	stream string
+}
+
+func (w *slogLineWriter) Write(p []byte) (int, error) {
+	w.log.Info("provisioning output",
+		slog.String("run_id", w.runID),
+		slog.String("stream", w.stream),
+		slog.String("component", "terraform"),
+		slog.String("line", strings.TrimRight(string(p), "\n")),
+	)
+	return len(p), nil
 }

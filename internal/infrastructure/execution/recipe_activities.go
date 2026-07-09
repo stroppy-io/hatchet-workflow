@@ -123,7 +123,8 @@ func (a *RecipeActivities) ProvisionActivity(
 		return nil, err
 	}
 
-	p, err := provider.NewProviderForRef(ref, a.deps)
+	run := provider.RunContext{TenantID: in.TenantID, RunID: in.RunID}
+	p, err := provider.NewProviderForRef(ctx, ref, run, a.deps)
 	if err != nil {
 		return nil, err
 	}
@@ -214,7 +215,8 @@ func (a *RecipeActivities) TeardownActivity(ctx context.Context, in *workflows.T
 		return err
 	}
 
-	p, err := provider.NewProviderForRef(ref, a.deps)
+	run := provider.RunContext{TenantID: in.TenantID, RunID: in.RunID}
+	p, err := provider.NewProviderForRef(ctx, ref, run, a.deps)
 	if err != nil {
 		return err
 	}
