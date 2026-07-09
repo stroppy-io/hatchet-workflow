@@ -576,6 +576,58 @@ jobs:
 	require.True(t, diags.HasErrors(), "a non-integral float64 must still produce an error diagnostic")
 }
 
+// TestResolve_TopLevelJobOnSubstitutedFromWorkflowInput is the SP-D
+// live-stand regression: a workflow.yaml job placed directly under `jobs:`
+// (not behind an `include:`) with an `on: ${{ inputs.<name> }}` field
+// bound to a top-level `inputs:` value — exactly the spd-livestand-probe
+// fixture's `probe` job (`on: ${{ inputs.target_machine }}`), the ONLY
+// mechanism by which a launch form's string input can pick a machine group
+// for a bare job. Before this fix, Resolve's own top-level expandFragment
+// call always passed inputSubst: nil (only component fragments
+// instantiated via `include:` ever received a non-nil inputSubst, see
+// expandInclude), so this always failed to compile with "on references
+// unknown machine group \"${{ inputs.target_machine }}\"" — the literal
+// template text was left in CompiledJob.on_group, never substituted.
+func TestResolve_TopLevelJobOnSubstitutedFromWorkflowInput(t *testing.T) {
+	cluster := testCluster(t)
+	wf := testWorkflow(t, `
+jobs:
+  probe:
+    on: ${{ inputs.target_machine }}
+    steps:
+      - cmd: echo probe
+`)
+	resolved, diags := include.Resolve(cluster, wf, include.Sources{}, map[string]any{"target_machine": "db-b"})
+
+	require.False(t, diags.HasErrors(), diags.String())
+	job, ok := resolved.Jobs["probe"]
+	require.True(t, ok, "probe job must be present: %v", keys(resolved.Jobs))
+	require.Equal(t, "db-b", job.On, "top-level job On must be substituted from workflowInputs")
+}
+
+// TestResolve_NilWorkflowInputsLeavesTopLevelOnUnsubstituted asserts the nil/
+// empty workflowInputs default (the pre-existing non-form-launch path,
+// every other Resolve test using `nil`) still reproduces prior behavior
+// exactly: an On referencing an out-of-scope input is left as the literal
+// template text, no diagnostic — substituteOn's own documented no-op rule
+// for an unknown name, now reachable at the top level too.
+func TestResolve_NilWorkflowInputsLeavesTopLevelOnUnsubstituted(t *testing.T) {
+	cluster := testCluster(t)
+	wf := testWorkflow(t, `
+jobs:
+  probe:
+    on: ${{ inputs.target_machine }}
+    steps:
+      - cmd: echo probe
+`)
+	resolved, diags := include.Resolve(cluster, wf, include.Sources{}, nil)
+
+	require.False(t, diags.HasErrors(), diags.String())
+	job, ok := resolved.Jobs["probe"]
+	require.True(t, ok)
+	require.Equal(t, "${{ inputs.target_machine }}", job.On, "with no workflowInputs, On is left as literal template text (unchanged)")
+}
+
 func keys(m map[string]ast.Job) []string {
 	out := make([]string, 0, len(m))
 	for k := range m {

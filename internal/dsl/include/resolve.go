@@ -105,7 +105,29 @@ func Resolve(cluster *ast.ClusterDoc, wf *ast.WorkflowDoc, src Sources, workflow
 		out:        map[string]ast.Job{},
 		jobOrigins: map[string]jobOrigin{},
 	}
-	r.expandFragment(wf.Jobs, "", nil, map[string]bool{}, fragmentCtx{
+	// inputSubst mirrors expandInclude's own boundInputs -> inputSubst
+	// stringification (see below) so a TOP-LEVEL workflow job's `on: ${{
+	// inputs.<name> }}` can be substituted from workflowInputs exactly like
+	// a component fragment job's On already is — this is the SP-D
+	// live-stand gap the launch-form path actually needs: a workflow.yaml
+	// job placed directly under `jobs:` (not behind an `include:`) with an
+	// `on:` bound to a top-level `inputs:` field (the spd-livestand-probe
+	// fixture's `probe` job, `on: ${{ inputs.target_machine }}`) previously
+	// always failed to compile ("on references unknown machine group
+	// \"${{ inputs.target_machine }}\"") because Resolve's own top-level
+	// expandFragment call passed inputSubst: nil unconditionally — only
+	// fragments instantiated via `include:` ever received a non-nil
+	// inputSubst. A nil/empty workflowInputs yields a nil inputSubst here
+	// too, reproducing today's behavior exactly (substituteOn is a no-op
+	// when inputSubst is nil).
+	var inputSubst map[string]string
+	if len(workflowInputs) > 0 {
+		inputSubst = make(map[string]string, len(workflowInputs))
+		for k, v := range workflowInputs {
+			inputSubst[k] = fmt.Sprintf("%v", v)
+		}
+	}
+	r.expandFragment(wf.Jobs, "", inputSubst, map[string]bool{}, fragmentCtx{
 		path:        "workflow.yaml",
 		boundInputs: workflowInputs,
 	})
