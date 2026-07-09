@@ -19,15 +19,21 @@ import {
   RecipeRecordSchema,
   type RecipeRecord,
 } from "@/lib/proto/cloud/v1/models/recipe_pb";
-import {
-  RunSchema,
-  type Run,
-} from "@/lib/proto/cloud/v1/models/test_run_pb";
 import { Severity, type Diagnostic } from "@/lib/proto/cloud/v1/dsl/service_pb";
 import type { CompiledPlan } from "@/lib/proto/cloud/v1/dsl/compiled_pb";
 import { recipeClient, dslClient } from "@/services/client";
 import { resolveTenantId } from "@/services/tenant";
-import { statusToVM, type RunStatus } from "@/services/dashboard";
+import { runToVM, type RunVM } from "@/services/runs";
+
+// Re-exported so callers of RecipeService's run lifecycle (listRuns et al)
+// depend only on services/recipe.ts, without also importing services/runs.ts
+// directly. RunVM here is the SAME flat view-model runs.ts's runToVM
+// produces from models.Run — the runs table (RecipeRuns.tsx) and RunDetail
+// both need the full set of denormalized Summary facets (db_kind, provider,
+// node_count, progress_pct, started/finished/duration, ...), not just the
+// four fields a thin id/name/status/workflowId/startedAt projection carried
+// before (see the parity audit in .superpowers/sdd/runs-parity-report.md).
+export type { RunVM };
 
 /** One persisted DSL recipe bundle, flattened from cloud.v1.models.RecipeRecord. */
 export interface RecipeVM {
@@ -92,20 +98,6 @@ export interface PreviewVM {
   diagnostics: DiagnosticVM[];
 }
 
-/** One run launched from a recipe bundle, flattened from models.Run. */
-export interface RunVM {
-  /** entity.id */
-  id: string;
-  /** entity.name */
-  name: string;
-  /** record.status, mapped to the dashboard RunStatus union. */
-  status: RunStatus;
-  /** record.workflow_id — the originating recipe bundle. */
-  workflowId: string;
-  /** summary.started_at (ISO); absent until the run starts. */
-  startedAt?: string;
-}
-
 // --- encode/decode helpers ---------------------------------------------------
 
 const encoder = new TextEncoder();
@@ -156,24 +148,6 @@ function recipeRecordToVM(rec: RecipeRecord): RecipeVM {
     serviceCount: summary?.serviceCount ?? 0,
     compiles: summary?.compiles ?? false,
     files: decodeFiles(rec.bundle?.files ?? {}),
-  };
-}
-
-// Run.status/entity are proto enum/message fields — toJson gives us the
-// JSON-string enum form that statusToVM (services/dashboard.ts) expects.
-function runToVM(rec: Run): RunVM {
-  const j = toJson(RunSchema, rec) as {
-    entity?: { id?: string; name?: string };
-    status?: string;
-    workflowId?: string;
-    summary?: { startedAt?: string };
-  };
-  return {
-    id: j.entity?.id ?? "",
-    name: j.entity?.name ?? "",
-    status: statusToVM(j.status),
-    workflowId: j.workflowId ?? "",
-    startedAt: j.summary?.startedAt,
   };
 }
 

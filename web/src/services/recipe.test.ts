@@ -1,8 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { create } from "@bufbuild/protobuf";
 import { SchemaSchema, FieldErrorSchema } from "@stroppy-io/schemapb";
+import { RunSchema } from "@/lib/proto/cloud/v1/models/test_run_pb";
+import { Database_Kind } from "@/lib/proto/cloud/v1/domain/database_pb";
+import { Provider } from "@/lib/proto/cloud/v1/deployment/provider_pb";
+import { Status } from "@/lib/proto/cloud/v1/common/status_pb";
 
-const { startRunMock } = vi.hoisted(() => ({ startRunMock: vi.fn() }));
+const { startRunMock, listRunsMock } = vi.hoisted(() => ({ startRunMock: vi.fn(), listRunsMock: vi.fn() }));
 
 vi.mock("@/services/client", () => ({
   recipeClient: {
@@ -10,12 +14,13 @@ vi.mock("@/services/client", () => ({
       schema: create(SchemaSchema, { id: { namespace: "ns", name: "form", version: "v1" }, fields: [] }),
     }),
     startRun: startRunMock,
+    listRuns: listRunsMock,
   },
   dslClient: {},
 }));
 vi.mock("@/services/tenant", () => ({ resolveTenantId: vi.fn().mockResolvedValue("t1") }));
 
-import { fetchLaunchFormSchema, startRun, StartRunFieldError } from "./recipe";
+import { fetchLaunchFormSchema, startRun, StartRunFieldError, listRuns } from "./recipe";
 
 describe("fetchLaunchFormSchema", () => {
   it("resolves the tenant and returns the composed schema", async () => {
@@ -69,5 +74,46 @@ describe("startRun", () => {
 
     expect(runId).toBe("run-2");
     expect(startRunMock.mock.calls[0][0].filled).toBeUndefined();
+  });
+});
+
+describe("listRuns", () => {
+  // Guards the fix for "таблица запусков без контента" — listRuns must
+  // return the FULL flattened models.Run.Summary projection (db kind,
+  // provider, node count, ...), not just id/name/status/startedAt (see
+  // .superpowers/sdd/runs-parity-report.md).
+  it("maps the Run.Summary facets ref's runs table needs (db kind, provider, node count, progress)", async () => {
+    listRunsMock.mockResolvedValueOnce({
+      runs: [
+        create(RunSchema, {
+          entity: { id: "run-1", name: "postgres-ha smoke" },
+          status: Status.RUNNING,
+          workflowId: "recipe-1",
+          summary: {
+            dbKind: Database_Kind.POSTGRES,
+            provider: Provider.DOCKER,
+            nodeCount: 3,
+            progressPct: 42,
+            workloadName: "insert+select",
+          },
+        }),
+      ],
+      nextPageToken: "",
+    });
+
+    const rows = await listRuns("acme");
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      id: "run-1",
+      name: "postgres-ha smoke",
+      status: "running",
+      dbKind: "postgres",
+      provider: "docker",
+      nodeCount: 3,
+      progressPct: 42,
+      workload: "insert+select",
+      workflowId: "recipe-1",
+    });
   });
 });
