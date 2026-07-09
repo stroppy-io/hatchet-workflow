@@ -79,6 +79,68 @@ func TestApplyBakedInputs_NilParamsSchemaRejectsAnyProviderParam(t *testing.T) {
 	require.Empty(t, cluster.Provider.Params)
 }
 
+// TestApplyBakedInputs_RejectsUndeclaredNestedObjectKey is the ApplyBakedInputs
+// half of the SP-I1 fix: the top-level-only `declared` check (baked_apply.go)
+// let an unknown key nested under a fixed-attribute-set object() param
+// through, since it only ever inspected paramsSchema.GetFields() (top
+// level). A Baked reaching dsl.Compile without going through BakeForm at all
+// (see this function's own doc comment) bypasses schemapb.Bake's own strict
+// checks entirely, so this defense-in-depth check must recurse the same way.
+func TestApplyBakedInputs_RejectsUndeclaredNestedObjectKey(t *testing.T) {
+	cluster := &ast.ClusterDoc{Provider: ast.ProviderUse{Use: "yandex"}}
+	resolved := &include.Resolved{Cluster: cluster}
+
+	values, err := structpb.NewStruct(map[string]any{
+		"provider": map[string]any{
+			"network_settings": map[string]any{
+				"cidr":     "10.0.0.0/24",
+				"evil_key": "rm -rf /",
+			},
+		},
+	})
+	require.NoError(t, err)
+	baked := &spb.Baked{Values: values}
+
+	paramsSchema := spb.NewSchema("ns", "params", "1").
+		Fields(spb.Object("network_settings", spb.Str("cidr")).Strict()).MustBuild()
+
+	err = schema.ApplyBakedInputs(resolved, baked, paramsSchema)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "network_settings.evil_key")
+	require.Empty(t, cluster.Provider.Params, "no partial application on reject")
+}
+
+// TestApplyBakedInputs_AcceptsMapOfObjectArbitraryKeys is the green control
+// for the recursion fix: a map(object({...}))-shaped param (schemapb
+// fallback: a non-strict Object with zero declared fields, see
+// tfvars_schemapb.go's `case "map":`) must keep accepting arbitrary
+// user-chosen keys underneath it -- the recursion must only descend into
+// (and reject unknown keys within) an object field that itself declares a
+// fixed, non-empty field set.
+func TestApplyBakedInputs_AcceptsMapOfObjectArbitraryKeys(t *testing.T) {
+	cluster := &ast.ClusterDoc{Provider: ast.ProviderUse{Use: "yandex"}}
+	resolved := &include.Resolved{Cluster: cluster}
+
+	values, err := structpb.NewStruct(map[string]any{
+		"provider": map[string]any{
+			"subnets": map[string]any{
+				"my-subnet-a": map[string]any{"cidr": "10.0.1.0/24"},
+			},
+		},
+	})
+	require.NoError(t, err)
+	baked := &spb.Baked{Values: values}
+
+	// Mirrors the map(T) fallback: an Object field with no declared fields.
+	paramsSchema := spb.NewSchema("ns", "params", "1").
+		Fields(spb.Object("subnets")).MustBuild()
+
+	require.NoError(t, schema.ApplyBakedInputs(resolved, baked, paramsSchema))
+	subnets, ok := cluster.Provider.Params["subnets"].(map[string]any)
+	require.True(t, ok)
+	require.Contains(t, subnets, "my-subnet-a")
+}
+
 func TestSplitBakedValues_NilSafe(t *testing.T) {
 	wfInputs, providerParams := schema.SplitBakedValues(nil)
 	require.Nil(t, wfInputs)

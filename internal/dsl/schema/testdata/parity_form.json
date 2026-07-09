@@ -20,6 +20,12 @@
         }
       },
       {
+        "name": "maintenance_mode",
+        "bool": {
+          "default": false
+        }
+      },
+      {
         "name": "provider",
         "object": {
           "schema": {
@@ -34,6 +40,27 @@
                 "double": {
                   "default": 3
                 }
+              },
+              {
+                "name": "network_settings",
+                "object": {
+                  "schema": {
+                    "fields": [
+                      {
+                        "name": "cidr",
+                        "required": true,
+                        "string": {}
+                      }
+                    ],
+                    "strict": true
+                  }
+                }
+              }
+            ],
+            "rules": [
+              {
+                "expr": "this.replicas \u003c= 10",
+                "message": "replicas must be at most 10"
               }
             ],
             "strict": true
@@ -45,14 +72,22 @@
   },
   "valid_values": {
     "db_version": "17",
+    "maintenance_mode": false,
     "provider": {
+      "network_settings": {
+        "cidr": "10.0.0.0/24"
+      },
       "replicas": 5
     },
     "threads": 8
   },
   "invalid_values": {
     "db_version": "17",
+    "maintenance_mode": false,
     "provider": {
+      "network_settings": {
+        "cidr": "10.0.0.0/24"
+      },
       "replicas": 5
     },
     "threads": 0
@@ -60,15 +95,23 @@
   "undeclared_values": {
     "db_version": "17",
     "extra_field": "evil_injected_key",
+    "maintenance_mode": false,
     "provider": {
+      "network_settings": {
+        "cidr": "10.0.0.0/24"
+      },
       "replicas": 5
     },
     "threads": 8
   },
   "undeclared_provider_values": {
     "db_version": "17",
+    "maintenance_mode": false,
     "provider": {
       "extra_nested": "evil_injected_key",
+      "network_settings": {
+        "cidr": "10.0.0.0/24"
+      },
       "replicas": 5
     },
     "threads": 8
@@ -76,5 +119,30 @@
   "invalid_expected_field": "threads",
   "undeclared_expected_field": "extra_field",
   "undeclared_provider_expected_field": "provider.extra_nested",
-  "valid_baked_hash": "84f85303f7638d7fef2a01002570fc97170ae4a97821c87d60ba5f8c4ddf4b62"
+  "valid_baked_hash": "98f45b52d49740befe646751c3f0ef7cb36e8f1183af4ecfb475951d1f30ddb0",
+  "rule_invalid_values": {
+    "db_version": "17",
+    "maintenance_mode": false,
+    "provider": {
+      "network_settings": {
+        "cidr": "10.0.0.0/24"
+      },
+      "replicas": 50
+    },
+    "threads": 8
+  },
+  "rule_invalid_expected_field": "provider",
+  "nested_object_invalid_values": {
+    "db_version": "17",
+    "maintenance_mode": false,
+    "provider": {
+      "network_settings": {
+        "cidr": "10.0.0.0/24",
+        "evil_key": "rm -rf /"
+      },
+      "replicas": 5
+    },
+    "threads": 8
+  },
+  "nested_object_expected_field": "provider.network_settings.evil_key"
 }

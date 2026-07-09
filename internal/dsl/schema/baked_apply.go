@@ -78,18 +78,7 @@ func ApplyBakedInputs(resolved *include.Resolved, baked *spb.Baked, paramsSchema
 		return nil
 	}
 
-	declared := make(map[string]bool, len(paramsSchema.GetFields()))
-	for _, f := range paramsSchema.GetFields() {
-		declared[f.GetName()] = true
-	}
-
-	var unknown []string
-	for k := range providerParams {
-		if !declared[k] {
-			unknown = append(unknown, k)
-		}
-	}
-	if len(unknown) > 0 {
+	if unknown := unknownKeys(paramsSchema.GetFields(), providerParams); len(unknown) > 0 {
 		sort.Strings(unknown)
 		return fmt.Errorf("apply baked inputs: undeclared provider param(s): %s", strings.Join(unknown, ", "))
 	}
@@ -101,4 +90,56 @@ func ApplyBakedInputs(resolved *include.Resolved, baked *spb.Baked, paramsSchema
 		resolved.Cluster.Provider.Params[k] = v
 	}
 	return nil
+}
+
+// unknownKeys is the recursive counterpart of the top-level-only `declared`
+// check this function used to do inline (see SP-I1): it walks values against
+// fields the same way schemapb.Schema.Bake's own strict-mode check would
+// (schemapb/validate.go's checkObject -> validateFields), so a Baked that
+// bypassed BakeForm entirely still gets the same defense this package's own
+// ComposeFormSchema/BakeForm path gets from schemapb's Strict flag.
+//
+// A nil/empty fields slice makes every key in values unknown -- this is the
+// load-bearing fail-closed behavior for a nil paramsSchema (docker has no
+// terraform module, so no derivable schema at all: the empty top-level
+// `declared` set is what rejects everything).
+//
+// Object-kind fields are the ONLY ones recursed into, and only when they
+// declare a non-empty fixed field set: a terraform map(T) (e.g.
+// map(object({...})) -- yandex's subnets/vms) degrades in
+// DeriveProviderParamsSchemapb to a permissive Object with zero declared
+// fields (tfvars_schemapb.go's `case "map":`), and that shape is
+// indistinguishable, at the schemapb.Schema level, from a "real" object()
+// with no attributes -- so an empty field set is treated as "unvalidatable
+// free-form value" (accept whatever is under it) rather than "reject
+// everything under it", matching what schemapb.Bake itself would do for a
+// non-strict, fieldless nested Schema. This is the same schemapb gap (no
+// map-with-typed-values kind) DeriveProviderParamsSchemapb's own map(T)
+// fallback has to live with -- see this package's SP-I1 report.
+func unknownKeys(fields []*spb.Schema_Filed, values map[string]any) []string {
+	declared := make(map[string]*spb.Schema_Filed, len(fields))
+	for _, f := range fields {
+		declared[f.GetName()] = f
+	}
+
+	var unknown []string
+	for k, v := range values {
+		f, ok := declared[k]
+		if !ok {
+			unknown = append(unknown, k)
+			continue
+		}
+		obj := f.GetObject()
+		if obj == nil || obj.GetSchema() == nil || len(obj.GetSchema().GetFields()) == 0 {
+			continue // scalar/list/map-fallback/etc.: nothing further to recurse into
+		}
+		nested, ok := v.(map[string]any)
+		if !ok {
+			continue // type mismatch is schemapb.Bake's job to report, not this defense-in-depth check's
+		}
+		for _, u := range unknownKeys(obj.GetSchema().GetFields(), nested) {
+			unknown = append(unknown, k+"."+u)
+		}
+	}
+	return unknown
 }

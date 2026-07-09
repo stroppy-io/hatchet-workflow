@@ -28,6 +28,18 @@ type parityFixture struct {
 	UndeclaredExpectedField         string          `json:"undeclared_expected_field"`
 	UndeclaredProviderExpectedField string          `json:"undeclared_provider_expected_field"`
 	ValidBakedHash                  string          `json:"valid_baked_hash"`
+
+	// SP-I1 (finding I3) additions: cover the gap the merge gate named --
+	// Bool (inputs_schemapb.go:44), a CEL/expr rule derived from a tf
+	// validation{} block (tfvars_schemapb.go's translateValidationCondition,
+	// the richest Go/WASM divergence surface), and a nested-object rejection
+	// case (the SP-I1 fix itself: a fixed-attribute-set object() param
+	// nested under "provider" must reject an unknown key at every depth on
+	// BOTH engines).
+	RuleInvalidValues         map[string]any `json:"rule_invalid_values"`
+	RuleInvalidExpectedField  string         `json:"rule_invalid_expected_field"`
+	NestedObjectInvalidValues map[string]any `json:"nested_object_invalid_values"`
+	NestedObjectExpectedField string         `json:"nested_object_expected_field"`
 }
 
 // buildParityForm is the ONE schema-construction call shared by the fixture
@@ -37,9 +49,47 @@ type parityFixture struct {
 func buildParityForm(t *testing.T) *schemapb.Schema {
 	t.Helper()
 	inputs := schemapb.NewSchema("stroppy.test", "inputs", "1").
-		Fields(schemapb.Str("db_version").Default("16"), schemapb.Int64("threads").Gte(1).Default(4)).MustBuild()
+		Fields(
+			schemapb.Str("db_version").Default("16"),
+			schemapb.Int64("threads").Gte(1).Default(4),
+			// SP-I1/I3: Bool kind (inputs_schemapb.go:44 is the only production
+			// site that emits it) -- must round-trip identically through Go
+			// bake and the WASM engine.
+			schemapb.Bool("maintenance_mode").Default(false),
+		).MustBuild()
 	params := schemapb.NewSchema("stroppy.test", "params", "1").
-		Fields(schemapb.Double("replicas").Default(3)).MustBuild()
+		Fields(
+			schemapb.Double("replicas").Default(3),
+			// SP-I1: a fixed-attribute-set object() param nested under
+			// "provider" -- .Strict() is the fix this schema exercises (see
+			// tfvars_schemapb.go's `case "object":`); an unknown key under it
+			// must be rejected by both Go and WASM.
+			schemapb.Object("network_settings", schemapb.Str("cidr").Required()).Strict(),
+		).
+		// SP-I1/I3: a schema-level Rule, standing in for a tf validation{}
+		// block translated via translateValidationCondition (var.NAME ->
+		// root.NAME) -- the richest Go/WASM divergence surface per the merge
+		// gate, since it round-trips a raw expr-lang expression string
+		// through both engines' independent expr.Compile calls.
+		//
+		// NOTE: `this`, not `root` -- schemapb's checkObject (validate.go)
+		// evaluates a nested object schema's own Rules with `this` bound to
+		// THAT object's own scope (its local values) while `root` stays
+		// bound to the outermost form root throughout the whole recursion
+		// (see checkObject -> evalRule). DeriveProviderParamsSchemapb's
+		// translateValidationCondition emits `root.NAME` (tfvars_schemapb.go),
+		// which is only correct when the derived params schema is baked
+		// standalone (as tfvars_schemapb_test.go's tests do) -- once
+		// ComposeFormSchema nests it under "provider" via ObjectOf, `root`
+		// no longer points at the params scope, so a real tf validation{}
+		// rule would silently evaluate against the wrong scope post-nesting.
+		// That is a genuine, separate finding outside SP-I1's fix scope
+		// (see the SP-I1 report) -- `this.replicas` here is the correct
+		// form for a schema-level rule regardless of nesting depth, so this
+		// fixture's own Bake calls behave correctly while still exercising
+		// the same expr.Compile Rule machinery on both engines.
+		Rules(schemapb.Rule("this.replicas <= 10", "replicas must be at most 10")).
+		MustBuild()
 	form, err := ComposeFormSchema("stroppy.test.form", inputs, params)
 	require.NoError(t, err)
 	return form
@@ -58,27 +108,54 @@ func TestWriteParityFixture(t *testing.T) {
 	require.NoError(t, err)
 
 	validValues := map[string]any{
-		"db_version": "17",
-		"threads":    float64(8),
-		"provider":   map[string]any{"replicas": float64(5)},
+		"db_version":        "17",
+		"threads":           float64(8),
+		"maintenance_mode":  false,
+		"provider":          map[string]any{"replicas": float64(5), "network_settings": map[string]any{"cidr": "10.0.0.0/24"}},
 	}
 	invalidValues := map[string]any{
-		"db_version": "17",
-		"threads":    float64(0), // threads < Gte(1)
-		"provider":   map[string]any{"replicas": float64(5)},
+		"db_version":       "17",
+		"threads":          float64(0), // threads < Gte(1)
+		"maintenance_mode": false,
+		"provider":         map[string]any{"replicas": float64(5), "network_settings": map[string]any{"cidr": "10.0.0.0/24"}},
 	}
 	undeclaredValues := map[string]any{
-		"db_version":  "17",
-		"threads":     float64(8),
-		"provider":    map[string]any{"replicas": float64(5)},
-		"extra_field": "evil_injected_key", // root schema is Strict (commit 056becbb)
+		"db_version":       "17",
+		"threads":          float64(8),
+		"maintenance_mode": false,
+		"provider":         map[string]any{"replicas": float64(5), "network_settings": map[string]any{"cidr": "10.0.0.0/24"}},
+		"extra_field":      "evil_injected_key", // root schema is Strict (commit 056becbb)
 	}
 	undeclaredProviderValues := map[string]any{
-		"db_version": "17",
-		"threads":    float64(8),
+		"db_version":       "17",
+		"threads":          float64(8),
+		"maintenance_mode": false,
 		"provider": map[string]any{
-			"replicas":     float64(5),
-			"extra_nested": "evil_injected_key", // nested "provider" object is ALSO Strict
+			"replicas":         float64(5),
+			"network_settings": map[string]any{"cidr": "10.0.0.0/24"},
+			"extra_nested":     "evil_injected_key", // nested "provider" object is ALSO Strict
+		},
+	}
+	// SP-I1/I3: violates the schema-level Rule (replicas <= 10) while
+	// otherwise valid -- both engines must report the same rule violation at
+	// the same field path ("provider", the object field the rule is
+	// attached to; see schemapb/validate.go's checkObject).
+	ruleInvalidValues := map[string]any{
+		"db_version":       "17",
+		"threads":          float64(8),
+		"maintenance_mode": false,
+		"provider":         map[string]any{"replicas": float64(50), "network_settings": map[string]any{"cidr": "10.0.0.0/24"}},
+	}
+	// SP-I1: an unknown key nested inside the strict network_settings
+	// object() param, two levels under the form root -- the exact shape the
+	// SP-I1 fix (tfvars_schemapb.go's `case "object":` .Strict()) closes.
+	nestedObjectInvalidValues := map[string]any{
+		"db_version":       "17",
+		"threads":          float64(8),
+		"maintenance_mode": false,
+		"provider": map[string]any{
+			"replicas":         float64(5),
+			"network_settings": map[string]any{"cidr": "10.0.0.0/24", "evil_key": "rm -rf /"},
 		},
 	}
 
@@ -97,6 +174,10 @@ func TestWriteParityFixture(t *testing.T) {
 		UndeclaredExpectedField:         "extra_field",
 		UndeclaredProviderExpectedField: "provider.extra_nested",
 		ValidBakedHash:                  hex.EncodeToString(validBakedHash[:]),
+		RuleInvalidValues:               ruleInvalidValues,
+		RuleInvalidExpectedField:        "provider",
+		NestedObjectInvalidValues:       nestedObjectInvalidValues,
+		NestedObjectExpectedField:       "provider.network_settings.evil_key",
 	}
 	out, err := json.MarshalIndent(fixture, "", "  ")
 	require.NoError(t, err)
@@ -170,6 +251,22 @@ func TestGoBakeForm_MatchesFixtureExpectations(t *testing.T) {
 		require.NotEmpty(t, ferrs, "Go: undeclared nested provider key must be rejected (strict nested provider, commit 056becbb)")
 		require.Nil(t, baked)
 		require.True(t, hasFieldPath(ferrs, fixture.UndeclaredProviderExpectedField), "expected a FieldError at %q, got %+v", fixture.UndeclaredProviderExpectedField, ferrs)
+	})
+
+	t.Run("rule_invalid_values fails the schema-level CEL/expr rule (replicas <= 10)", func(t *testing.T) {
+		baked, ferrs, err := BakeForm(form, fixture.RuleInvalidValues)
+		require.NoError(t, err)
+		require.NotEmpty(t, ferrs, "Go: rule_invalid_values must fail the replicas<=10 rule")
+		require.Nil(t, baked)
+		require.True(t, hasFieldPath(ferrs, fixture.RuleInvalidExpectedField), "expected a FieldError at %q, got %+v", fixture.RuleInvalidExpectedField, ferrs)
+	})
+
+	t.Run("nested_object_invalid_values rejects an unknown key inside the strict nested network_settings object (SP-I1)", func(t *testing.T) {
+		baked, ferrs, err := BakeForm(form, fixture.NestedObjectInvalidValues)
+		require.NoError(t, err)
+		require.NotEmpty(t, ferrs, "Go: unknown key inside a fixed-attribute nested object() must be rejected")
+		require.Nil(t, baked)
+		require.True(t, hasFieldPath(ferrs, fixture.NestedObjectExpectedField), "expected a FieldError at %q, got %+v", fixture.NestedObjectExpectedField, ferrs)
 	})
 }
 

@@ -81,4 +81,34 @@ describe("WASM/Go BakeForm parity (SP-D Task 9)", () => {
     expect(result.errors.length).toBeGreaterThan(0);
     expect(fieldPaths(result.errors)).toContain(fixture.undeclared_provider_expected_field);
   });
+
+  // SP-I1 (finding I3): a schema-level CEL/expr rule (standing in for a tf
+  // validation{} block) is the richest divergence surface between the Go
+  // and WASM engines, since each independently compiles the same raw
+  // expr-lang expression string. Both must agree it fails, and on where.
+  it("agrees with Go: a schema-level rule violation (replicas <= 10) is rejected on both sides", async () => {
+    const engine = await loadSchemapbEngine();
+    const schema = fromJson(SchemaSchema, fixture.schema as unknown as JsonValue);
+
+    const result = engine.bake(schema, fixture.rule_invalid_values);
+    expect(result.baked).toBeUndefined();
+    expect(result.errors.length).toBeGreaterThan(0);
+    expect(fieldPaths(result.errors)).toContain(fixture.rule_invalid_expected_field);
+  });
+
+  // SP-I1: the actual security-fix shape -- an unknown key nested two
+  // levels deep, inside a fixed-attribute-set object() param
+  // (network_settings) nested under "provider". Both engines must reject
+  // it at the same deep field path, or a client could see a green form for
+  // a payload the server would silently accept (the original hole this
+  // task closes).
+  it("agrees with Go: an unknown key inside a nested strict object() param is rejected on both sides (SP-I1)", async () => {
+    const engine = await loadSchemapbEngine();
+    const schema = fromJson(SchemaSchema, fixture.schema as unknown as JsonValue);
+
+    const result = engine.bake(schema, fixture.nested_object_invalid_values);
+    expect(result.baked).toBeUndefined();
+    expect(result.errors.length).toBeGreaterThan(0);
+    expect(fieldPaths(result.errors)).toContain(fixture.nested_object_expected_field);
+  });
 });

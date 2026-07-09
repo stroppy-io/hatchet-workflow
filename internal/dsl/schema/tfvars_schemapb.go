@@ -146,6 +146,17 @@ func fieldForTFType(name, tfType, description string, def any, sensitive bool) s
 	case "map":
 		// v1 fallback: schemapb has no map(T)-with-typed-values kind, so a TF
 		// map(T) becomes a permissive object with no fixed properties.
+		//
+		// Deliberately NOT .Strict(): map(T) (and map(object({...})) in
+		// particular, e.g. yandex's subnets/vms variables) has free,
+		// user-chosen keys by design (subnet names, VM names) -- Strict()
+		// would reject every legitimate config. This is also why this
+		// fallback cannot validate the VALUE side either: schemapb's Object
+		// kind only knows how to declare a fixed set of named fields, so
+		// there is nowhere to attach `inner`'s value type/shape at all. That
+		// is a genuine schemapb gap (no Map kind), not something fixable
+		// here -- see SP-I1's report (.superpowers/sdd/spd-i1-fix-report.md)
+		// before attempting to "fix" this by hand.
 		b := schemapb.Object(name)
 		if description != "" {
 			b.Desc(description)
@@ -158,7 +169,19 @@ func fieldForTFType(name, tfType, description string, def any, sensitive bool) s
 		body := strings.TrimSpace(inner)
 		body = strings.TrimPrefix(body, "{")
 		body = strings.TrimSuffix(body, "}")
-		b := schemapb.Object(name, objectFieldsFromBody(body)...)
+		// A terraform object({...}) type constraint is a FIXED attribute set
+		// (unlike map(object({...})) above, whose keys are arbitrary and
+		// user-chosen by design) -- so unknown keys under it must be
+		// rejected. .Strict() here closes the "config-injection" hole
+		// commit 056becbb only closed at the top level (see SP-I1): since
+		// fieldForTFType calls itself recursively for nested object()
+		// attributes (via objectFieldsFromBody -> attrFieldFromExpr), every
+		// nested plain object() gets its own Strict() the same way, and
+		// schemapb's validator checks each nested Schema's own Strict flag
+		// independently (schemapb/validate.go's checkObject ->
+		// validateFields), so this is strict at every depth without any
+		// extra recursion here.
+		b := schemapb.Object(name, objectFieldsFromBody(body)...).Strict()
 		if description != "" {
 			b.Desc(description)
 		}
