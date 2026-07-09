@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/stroppy-io/stroppy-cloud/internal/dsl/ast"
 	"github.com/stroppy-io/stroppy-cloud/internal/dsl/diag"
 	"github.com/stroppy-io/stroppy-cloud/internal/dsl/include"
@@ -71,7 +73,7 @@ jobs:
 		"components/etcd/component.yaml": []byte(etcdComponentYAML),
 	}}
 
-	resolved, diags := include.Resolve(cluster, wf, src)
+	resolved, diags := include.Resolve(cluster, wf, src, nil)
 	if diags.HasErrors() {
 		t.Fatalf("unexpected diags: %+v", diags)
 	}
@@ -124,7 +126,7 @@ jobs:
 		"components/etcd/component.yaml": []byte(etcdComponentYAML),
 	}}
 
-	_, diags := include.Resolve(cluster, wf, src)
+	_, diags := include.Resolve(cluster, wf, src, nil)
 	if !diags.HasErrors() {
 		t.Fatal("missing required input must produce error diagnostic")
 	}
@@ -142,7 +144,7 @@ jobs:
 		"components/etcd/component.yaml": []byte(etcdComponentYAML),
 	}}
 
-	_, diags := include.Resolve(cluster, wf, src)
+	_, diags := include.Resolve(cluster, wf, src, nil)
 	if !diags.HasErrors() {
 		t.Fatal("inputs.nodes referencing a nonexistent machine group must error")
 	}
@@ -158,7 +160,7 @@ jobs:
 `)
 	src := include.Sources{Files: map[string][]byte{}}
 
-	_, diags := include.Resolve(cluster, wf, src)
+	_, diags := include.Resolve(cluster, wf, src, nil)
 	if !diags.HasErrors() {
 		t.Fatal("missing component.yaml must error")
 	}
@@ -179,7 +181,7 @@ jobs:
 	// Resolve must terminate on its own (visiting-set cycle detection); if
 	// it doesn't, go test's own timeout catches the hang and fails loudly
 	// rather than this test blocking forever.
-	_, diags := include.Resolve(cluster, wf, src)
+	_, diags := include.Resolve(cluster, wf, src, nil)
 	if !diags.HasErrors() {
 		t.Fatal("include cycle A->B->A must produce an error diagnostic")
 	}
@@ -199,7 +201,7 @@ jobs:
 		"components/etcd/component.yaml": []byte(etcdComponentYAML),
 	}}
 
-	_, diags := include.Resolve(cluster, wf, src)
+	_, diags := include.Resolve(cluster, wf, src, nil)
 	if !diags.HasErrors() {
 		t.Fatal("unknown input key must produce error diagnostic")
 	}
@@ -227,7 +229,7 @@ jobs:
 		"components/etcd/component.yaml": []byte(componentYAML),
 	}}
 
-	resolved, diags := include.Resolve(cluster, wf, src)
+	resolved, diags := include.Resolve(cluster, wf, src, nil)
 	if diags.HasErrors() {
 		t.Fatalf("unexpected diags: %+v", diags)
 	}
@@ -257,7 +259,7 @@ jobs:
 		"components/etcd/component.yaml":    []byte(etcdComponentYAML),
 	}}
 
-	resolved, diags := include.Resolve(cluster, wf, src)
+	resolved, diags := include.Resolve(cluster, wf, src, nil)
 	if diags.HasErrors() {
 		t.Fatalf("unexpected diags: %+v", diags)
 	}
@@ -294,7 +296,7 @@ jobs:
 		"components/etcd/component.yaml": []byte(etcdComponentYAML),
 	}}
 
-	resolved, diags := include.Resolve(cluster, wf, src)
+	resolved, diags := include.Resolve(cluster, wf, src, nil)
 	if !diags.HasErrors() {
 		t.Fatal("literal job name colliding with an include-instantiated job name must error")
 	}
@@ -344,7 +346,7 @@ jobs:
 		"components/etcd/component.yaml":    []byte(etcdComponentYAML),
 	}}
 
-	resolved, diags := include.Resolve(cluster, wf, src)
+	resolved, diags := include.Resolve(cluster, wf, src, nil)
 	if diags.HasErrors() {
 		t.Fatalf("unexpected diags: %+v", diags)
 	}
@@ -379,7 +381,7 @@ jobs:
 		"components/etcd/component.yaml":    []byte(etcdComponentYAML),
 	}}
 
-	_, diags := include.Resolve(cluster, wf, src)
+	_, diags := include.Resolve(cluster, wf, src, nil)
 	if !diags.HasErrors() {
 		t.Fatal("forwarding a nested include input from an unknown outer input name must error")
 	}
@@ -409,7 +411,7 @@ jobs:
 		"components/etcd/component.yaml": []byte(componentYAML),
 	}}
 
-	_, diags := include.Resolve(cluster, wf, src)
+	_, diags := include.Resolve(cluster, wf, src, nil)
 	if !diags.HasErrors() {
 		t.Fatal("a default value that fails typecheck must produce an error diagnostic, not be bound as-is")
 	}
@@ -426,7 +428,7 @@ jobs:
 		"components/etcd/component.yaml": []byte(etcdComponentYAML),
 	}}
 
-	_, diags := include.Resolve(nil, wf, src)
+	_, diags := include.Resolve(nil, wf, src, nil)
 	if !diags.HasErrors() {
 		t.Fatal("machine_group input with no cluster context must error")
 	}
@@ -476,12 +478,36 @@ jobs:
 				"components/etcd/component.yaml": []byte(componentYAML),
 			}}
 
-			_, diags := include.Resolve(cluster, wf, src)
+			_, diags := include.Resolve(cluster, wf, src, nil)
 			if !diags.HasErrors() {
 				t.Fatalf("wrong-typed %s input must produce an error diagnostic", tc.name)
 			}
 		})
 	}
+}
+
+// TestResolve_TopLevelWorkflowInputForwarding is the RED/GREEN case for the
+// D4-groundwork defect: prior to threading workflowInputs into the
+// top-level fragmentCtx, a workflow.yaml job's own `include: ...inputs:
+// {x: "${{ inputs.y }}"}` could never resolve, because Resolve's top-level
+// expandFragment call always passed boundInputs: nil. Only nested includes
+// (a component forwarding one of its own bound inputs into a component it
+// itself includes) had a non-nil boundInputs to forward from.
+func TestResolve_TopLevelWorkflowInputForwarding(t *testing.T) {
+	cluster := testCluster(t)
+	wf := testWorkflow(t, `
+jobs:
+  ha:
+    include: components/etcd
+    inputs: { nodes: "${{ inputs.target_group }}" }
+`)
+	resolved, diags := include.Resolve(cluster, wf, include.Sources{Files: map[string][]byte{
+		"components/etcd/component.yaml": []byte(etcdComponentYAML),
+	}}, map[string]any{"target_group": "db"})
+
+	require.False(t, diags.HasErrors(), diags.String())
+	require.Len(t, resolved.Components, 1)
+	require.Equal(t, "db", resolved.Components[0].Inputs["nodes"], "workflow-level input forwarded into the top-level include job")
 }
 
 func keys(m map[string]ast.Job) []string {

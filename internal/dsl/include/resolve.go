@@ -85,11 +85,19 @@ type BoundComponent struct {
 //     declares `inputs: {outer_nodes: {type: machine_group}}`. Unlike the
 //     On rule, a reference to an unknown outer input name here is an error.
 //
+// workflowInputs is the workflow document's own top-level bound input
+// values (e.g. from a launch form's schema.SplitBakedValues) — it seeds the
+// top-level fragmentCtx.boundInputs so a top-level job's `include:` inputs
+// or On field can forward/substitute a `${{ inputs.<name> }}` reference the
+// same way a nested include already can (see forwardInputs/substituteOn).
+// nil (or empty) reproduces today's behavior: no top-level input is in
+// scope, so any such reference is an error/left-as-is per the usual rules.
+//
 // Precondition: wf must already have passed ast.DecodeWorkflow without
 // producing any error diagnostic — Resolve does not re-validate wf's own
 // shape (mutually-exclusive Include/Service/On/Matrix, step actions, ...);
 // it assumes the caller checked DecodeWorkflow's diag.List first.
-func Resolve(cluster *ast.ClusterDoc, wf *ast.WorkflowDoc, src Sources) (*Resolved, diag.List) {
+func Resolve(cluster *ast.ClusterDoc, wf *ast.WorkflowDoc, src Sources, workflowInputs map[string]any) (*Resolved, diag.List) {
 	r := &resolver{
 		src:        src,
 		cluster:    cluster,
@@ -97,7 +105,10 @@ func Resolve(cluster *ast.ClusterDoc, wf *ast.WorkflowDoc, src Sources) (*Resolv
 		out:        map[string]ast.Job{},
 		jobOrigins: map[string]jobOrigin{},
 	}
-	r.expandFragment(wf.Jobs, "", nil, map[string]bool{}, fragmentCtx{path: "workflow.yaml"})
+	r.expandFragment(wf.Jobs, "", nil, map[string]bool{}, fragmentCtx{
+		path:        "workflow.yaml",
+		boundInputs: workflowInputs,
+	})
 
 	return &Resolved{
 		Cluster:    cluster,

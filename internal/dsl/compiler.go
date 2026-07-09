@@ -8,6 +8,7 @@ package dsl
 
 import (
 	"github.com/santhosh-tekuri/jsonschema/v6"
+	spb "github.com/stroppy-io/schemapb/schemapb"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/dsl/ast"
 	"github.com/stroppy-io/stroppy-cloud/internal/dsl/contract"
@@ -44,6 +45,12 @@ type Input struct {
 	// to the selected provider's declared shape. nil means core.schema.json
 	// validation only (schema.MustCore's $defs.cluster/$defs.workflow).
 	Composed *jsonschema.Schema
+	// Baked is the sealed launch-form values from a generated-launch-form
+	// submission (SP-D), if any. nil means a non-form launch: no workflow
+	// input or provider param overlay is applied. See
+	// schema.SplitBakedValues/schema.ApplyBakedInputs for where its two
+	// halves (workflow inputs, provider params) actually flow.
+	Baked *spb.Baked
 }
 
 // Compile runs the full compiler pipeline over in, in stage order:
@@ -80,9 +87,15 @@ func Compile(in Input) (*dslpb.CompiledPlan, diag.List) {
 		return nil, diags
 	}
 
-	resolved, resolveDiags := include.Resolve(cluster, wf, in.Sources)
+	workflowInputs, _ := schema.SplitBakedValues(in.Baked) // nil-safe: SplitBakedValues(nil) returns nil, nil
+	resolved, resolveDiags := include.Resolve(cluster, wf, in.Sources, workflowInputs)
 	diags = append(diags, resolveDiags...)
 	if diags.HasErrors() {
+		return nil, diags
+	}
+
+	if err := schema.ApplyBakedInputs(resolved, in.Baked); err != nil {
+		diags.Errorf("", diag.Pos{}, "apply baked inputs: %v", err)
 		return nil, diags
 	}
 
