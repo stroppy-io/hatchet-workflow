@@ -788,8 +788,14 @@ func Run(ctx context.Context, cfg Config) error {
 		AgentTokens:       agentTokens,
 		GrafanaBackend:    cfg.GrafanaBackend,  // serve /grafana/* from the server origin
 		RegistryBackend:   cfg.RegistryBackend, // serve /v2/* registry mirror from the server origin
-		HTTPFallback:      h2cHandler,
-		Logger:            log,
+		IdeBackend:        cfg.IdeBackend,      // serve /ide/* embedded code-server from the server origin (empty until Task 4 ships)
+		// TODO(SP-B): wire the RBAC-backed IdeAuthorizer once catalog/RBAC
+		// lands (spec SP-C §3 C4). nil here means /ide/* is unauthenticated
+		// at the gateway boundary whenever IdeBackend is set — acceptable
+		// only because IdeBackend is empty by default (Task 4 not shipped).
+		IdeAuthorizer: nil,
+		HTTPFallback:  h2cHandler,
+		Logger:        log,
 	})
 	if err != nil {
 		return fmt.Errorf("build gateway: %w", err)

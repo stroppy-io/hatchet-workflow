@@ -52,6 +52,17 @@ type Config struct {
 	// can pull images through the server origin without direct internet access.
 	// Empty disables the route (503).
 	RegistryBackend string
+	// IdeBackend is the internal code-server base URL (spec SP-C §3 C2) the
+	// gateway reverse-proxies /ide/* to, so the embedded IDE is served from
+	// the SAME server origin as the rest of the product — no separate public
+	// IDE URL needed, same pattern as GrafanaBackend/RegistryBackend. Empty
+	// disables the route (404).
+	IdeBackend string
+	// IdeAuthorizer gates /ide/* before code-server ever sees the request
+	// (spec SP-C §3 C4: RBAC-проверка на границе гейтвея, не внутри
+	// code-server). nil disables the check — dev/test only. SP-B supplies the
+	// real RBAC-backed implementation once catalog/RBAC lands.
+	IdeAuthorizer IdeAuthorizer
 	// HTTPFallback handles every HTTP/1.1 request that is not one of the gateway's
 	// own agent-facing routes — i.e. the control-plane connect API + the embedded
 	// SPA. Empty means unmatched routes 404. This lets the connect server and UI
@@ -75,6 +86,8 @@ type Gateway struct {
 	monitorProxy  http.Handler
 	grafanaProxy  http.Handler
 	registryProxy http.Handler
+	ideProxy      http.Handler
+	ideAuthorizer IdeAuthorizer
 
 	grpc    *grpc.Server
 	backend *grpc.ClientConn
@@ -130,6 +143,14 @@ func New(cfg Config) (*Gateway, error) {
 		}
 		g.registryProxy = rp
 	}
+	if cfg.IdeBackend != "" {
+		ip, err := newMonitorProxy(cfg.IdeBackend, "", nil) // single-host reverse proxy, no bearer
+		if err != nil {
+			return nil, fmt.Errorf("gateway: ide backend %q: %w", cfg.IdeBackend, err)
+		}
+		g.ideProxy = ip
+		g.ideAuthorizer = cfg.IdeAuthorizer
+	}
 	g.http = &http.Server{Handler: http.HandlerFunc(g.serveHTTP), ReadHeaderTimeout: 30 * time.Second}
 	return g, nil
 }
@@ -174,6 +195,20 @@ func (g *Gateway) serveHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		g.registryProxy.ServeHTTP(w, r)
+	case strings.HasPrefix(r.URL.Path, "/ide/"):
+		// Embedded IDE (code-server), served from the server origin
+		// (sub-path /ide) — spec SP-C §3 C2. Gated by IdeAuthorizer BEFORE
+		// the request ever reaches code-server (spec §3 C4): SP-B's
+		// RBAC-backed implementation lands separately, this is the seam.
+		if g.ideProxy == nil {
+			http.NotFound(w, r)
+			return
+		}
+		if g.ideAuthorizer != nil && !g.ideAuthorizer.CanAuthor(r) {
+			http.Error(w, "not authorized to author this repo", http.StatusForbidden)
+			return
+		}
+		g.ideProxy.ServeHTTP(w, r)
 	case g.httpFallback != nil:
 		// control-plane connect API + embedded SPA share the gateway port.
 		g.httpFallback.ServeHTTP(w, r)
