@@ -6,9 +6,11 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/nomad/api"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/testsuite"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -769,4 +771,66 @@ func TestExecuteCompiledPlanWorkflowMissingInputEvalError(t *testing.T) {
 	if got := resp.JobStatuses["use-missing"]; got != jobStatusFailed {
 		t.Fatalf("job status = %q, want %q (missing input reference must fail the job, not panic the workflow)", got, jobStatusFailed)
 	}
+}
+
+func TestExecuteCompiledPlanWorkflow_ServiceHealthTimeout_ThreadsIntoNomadWaitTimeout(t *testing.T) {
+	var suite testsuite.WorkflowTestSuite
+	env := suite.NewTestWorkflowEnvironment()
+	RegisterWorkflows(env)
+	registerCompiledPlanActivityStubs(env)
+
+	plan := buildTestPlan()
+	plan.Services[0].Health = &dslpb.HealthCheck{Http: ":8080/health", Timeout: "45s"}
+
+	var gotWaitTimeout time.Duration
+	var gotWaitTimeoutSet bool
+	env.OnActivity(NomadSubmitJobActivityName, mock.Anything, mock.Anything).Return(
+		func(ctx context.Context, in *stroppyagent.NomadSubmitJobInput) (*stroppyagent.NomadSubmitJobOutput, error) {
+			gotWaitTimeout = in.WaitTimeout
+			gotWaitTimeoutSet = true
+			return &stroppyagent.NomadSubmitJobOutput{JobID: "echo", EvalID: "eval-1"}, nil
+		},
+	)
+	env.OnActivity(workflowpb.CallCmdActivityActivityName, mock.Anything, mock.Anything).Return(
+		&common.Cmd_Result{ExitCode: 0}, nil)
+	env.OnActivity(workflowpb.EnsureAgentOnlineActivityActivityName, mock.Anything).Return(nil)
+
+	env.ExecuteWorkflow(ExecuteCompiledPlanWorkflowName, &ExecuteCompiledPlanInput{
+		Plan:          plan,
+		Machines:      buildTestInput().Machines,
+		Bootstrap:     buildTestInput().Bootstrap,
+		GatewayNodeID: buildTestInput().GatewayNodeID,
+	})
+
+	require.True(t, env.IsWorkflowCompleted())
+	require.NoError(t, env.GetWorkflowError())
+	require.True(t, gotWaitTimeoutSet, "NomadSubmitJobActivity was never called")
+	require.Equal(t, 45*time.Second, gotWaitTimeout,
+		"service.health.timeout must thread into NomadSubmitJobInput.WaitTimeout")
+}
+
+func TestExecuteCompiledPlanWorkflow_ServiceNoHealth_LeavesWaitTimeoutZero(t *testing.T) {
+	var suite testsuite.WorkflowTestSuite
+	env := suite.NewTestWorkflowEnvironment()
+	RegisterWorkflows(env)
+	registerCompiledPlanActivityStubs(env)
+
+	// buildTestInput's plan.Services[0].Health is nil, as today.
+
+	var gotWaitTimeout time.Duration
+	env.OnActivity(NomadSubmitJobActivityName, mock.Anything, mock.Anything).Return(
+		func(ctx context.Context, in *stroppyagent.NomadSubmitJobInput) (*stroppyagent.NomadSubmitJobOutput, error) {
+			gotWaitTimeout = in.WaitTimeout
+			return &stroppyagent.NomadSubmitJobOutput{JobID: "echo", EvalID: "eval-1"}, nil
+		},
+	)
+	env.OnActivity(workflowpb.CallCmdActivityActivityName, mock.Anything, mock.Anything).Return(
+		&common.Cmd_Result{ExitCode: 0}, nil)
+	env.OnActivity(workflowpb.EnsureAgentOnlineActivityActivityName, mock.Anything).Return(nil)
+
+	env.ExecuteWorkflow(ExecuteCompiledPlanWorkflowName, buildTestInput())
+
+	require.True(t, env.IsWorkflowCompleted())
+	require.NoError(t, env.GetWorkflowError())
+	require.Zero(t, gotWaitTimeout, "no health block -> zero WaitTimeout -> activity's own 5m default applies, unchanged")
 }

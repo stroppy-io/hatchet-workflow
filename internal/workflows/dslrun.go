@@ -653,22 +653,69 @@ func executeServiceJob(ctx workflow.Context, in *ExecuteCompiledPlanInput, job *
 		return fmt.Errorf("job %q: marshal nomad job for service %q: %w", job.GetId(), svcName, err)
 	}
 
+	// waitTimeout reuses the service's own health.timeout (already a
+	// compile-validated time.ParseDuration string — see internal/dsl/lower's
+	// health lowering) as the budget NomadSubmitJobActivity polls
+	// allocations for. A service with no health block (waitTimeout == 0)
+	// leaves NomadSubmitJobActivity's own default (5m,
+	// defaultNomadWaitTimeout) unchanged — this is additive, not a behavior
+	// change for existing recipes (F3).
+	waitTimeout, err := parseHealthTimeout(svc.GetHealth().GetTimeout())
+	if err != nil {
+		return fmt.Errorf("job %q: service %q: health.timeout: %w", job.GetId(), svcName, err)
+	}
+
 	taskQueue, err := agentTaskQueue(in.Bootstrap, in.GatewayNodeID)
 	if err != nil {
 		return fmt.Errorf("job %q: gateway task queue: %w", job.GetId(), err)
 	}
+	// activityTimeout must exceed waitTimeout (NomadSubmitJobActivity's own
+	// internal poll deadline) or Temporal cancels the activity call before
+	// that deadline is ever reached, silently truncating a longer configured
+	// health.timeout. 5 minutes of headroom covers job registration +
+	// scheduling overhead beyond the alloc-running wait itself.
+	activityTimeout := 10 * time.Minute
+	if waitTimeout > 0 {
+		activityTimeout = waitTimeout + 5*time.Minute
+	}
 	activityCtx := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
 		TaskQueue:           taskQueue,
-		StartToCloseTimeout: 10 * time.Minute,
+		StartToCloseTimeout: activityTimeout,
 		HeartbeatTimeout:    time.Minute,
 	})
 	var out stroppyagent.NomadSubmitJobOutput
 	if err := workflow.ExecuteActivity(activityCtx, NomadSubmitJobActivityName, &stroppyagent.NomadSubmitJobInput{
-		JobJSON: jobJSON,
+		JobJSON:     jobJSON,
+		WaitTimeout: waitTimeout,
 	}).Get(activityCtx, &out); err != nil {
 		return fmt.Errorf("job %q: nomad submit %q: %w", job.GetId(), svcName, err)
 	}
 	return nil
+}
+
+// parseHealthTimeout parses a ServiceSpec's health.timeout into the wait
+// budget NomadSubmitJobActivity should poll for. Empty (no health block on
+// this service) returns zero, which NomadSubmitJobActivity treats as "use
+// its own default" (defaultNomadWaitTimeout, 5m).
+//
+// Deferred (SP-F carryover, see
+// docs/superpowers/specs/2026-07-08-sp-f-execution-shapeup.md §3 F3, Variant
+// B): decoupling submit from wait into two separate DAG-visible steps (a new
+// ast/dslpb step type, built on the already-existing-but-unused
+// NomadJobStatusActivity, internal/agent/nomad_activities.go) so a Run's
+// per-job status (SP-E) can show "waiting for healthy" distinct from
+// "submitted", and so an operator can wait longer without re-submitting the
+// job. Deferred until live testing shows this Variant A's single-activity-
+// timeout budget is insufficient for a real slow-starting database.
+func parseHealthTimeout(raw string) (time.Duration, error) {
+	if raw == "" {
+		return 0, nil
+	}
+	d, err := time.ParseDuration(raw)
+	if err != nil {
+		return 0, fmt.Errorf("parse duration %q: %w", raw, err)
+	}
+	return d, nil
 }
 
 // interpolateAgentStep clones step and replaces every ${{ expr }} marker
