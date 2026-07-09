@@ -491,6 +491,26 @@ func checkInputType(cluster *ast.ClusterDoc, spec ast.InputSpec, val any) (bound
 		if n, isInt := val.(int); isInt {
 			return n, ""
 		}
+		// A workflow-level `${{ inputs.<name> }}` value forwarded here from a
+		// launch form (schema.SplitBakedValues -> Resolve's workflowInputs
+		// parameter) is ALWAYS a float64, never a Go int: schemapb's own
+		// documented numeric contract (form.go's "Numeric contract" doc
+		// comment) decodes every numeric baked value as float64, including
+		// int64-kind fields — google.protobuf.Value/structpb.Struct.AsMap()
+		// has no separate integer representation. A plain `val.(int)` check
+		// alone therefore accepts a static YAML-authored int (cluster.yaml/
+		// component.yaml default, decoded by the YAML library as Go int) but
+		// always rejects the exact same logical value when it arrived via a
+		// baked launch-form submission — which is every "typed int input"
+		// launched through the form path. Accept an integral float64 too,
+		// coerced to int; a non-integral float64 (e.g. a form bug that let a
+		// fractional value through) still errors.
+		if f, isFloat := val.(float64); isFloat {
+			if f == float64(int(f)) {
+				return int(f), ""
+			}
+			return nil, fmt.Sprintf("expected int, got non-integral float64 %v", f)
+		}
 		return nil, fmt.Sprintf("expected int, got %T", val)
 	case "string":
 		if s, isStr := val.(string); isStr {

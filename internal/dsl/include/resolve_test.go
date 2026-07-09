@@ -510,6 +510,72 @@ jobs:
 	require.Equal(t, "db", resolved.Components[0].Inputs["nodes"], "workflow-level input forwarded into the top-level include job")
 }
 
+// TestResolve_TopLevelWorkflowInputForwardingIntFromFloat64 is the SP-D
+// live-stand regression: schemapb's own documented numeric contract
+// (internal/dsl/schema/form.go's "Numeric contract" doc comment) decodes
+// EVERY numeric baked launch-form value as float64, including int64-kind
+// fields — google.protobuf.Value/structpb.Struct.AsMap() has no separate
+// integer representation. Before checkInputType accepted float64 for an
+// "int"-typed component input, a workflow.yaml top-level `inputs: {reps:
+// {type: int}}` forwarded via `${{ inputs.reps }}` into an included
+// component's own `inputs: {reps: {type: int}}` (exactly the
+// spd-livestand-probe fixture's `counter` include) always failed with
+// "expected int, got float64" the moment the value actually came from a
+// baked launch form — i.e. every real form submission of an int field
+// forwarded into a component, the entire point of SP-D's typed-scalar
+// resolved_inputs guarantee.
+func TestResolve_TopLevelWorkflowInputForwardingIntFromFloat64(t *testing.T) {
+	cluster := testCluster(t)
+	componentYAML := `
+inputs:
+  reps: { type: int }
+jobs:
+  run:
+    steps:
+      - cmd: echo reps
+`
+	wf := testWorkflow(t, `
+jobs:
+  counter:
+    include: components/counter
+    inputs: { reps: "${{ inputs.reps }}" }
+`)
+	resolved, diags := include.Resolve(cluster, wf, include.Sources{Files: map[string][]byte{
+		"components/counter/component.yaml": []byte(componentYAML),
+	}}, map[string]any{"reps": float64(7)})
+
+	require.False(t, diags.HasErrors(), diags.String())
+	require.Len(t, resolved.Components, 1)
+	require.Equal(t, 7, resolved.Components[0].Inputs["reps"], "float64(7) from a baked launch form must bind as Go int 7")
+}
+
+// TestResolve_TopLevelWorkflowInputForwardingIntFromNonIntegralFloat64Errors
+// asserts the coercion stays narrow: a non-integral float64 (which should
+// never legitimately occur for an int-kind schemapb field, but defense in
+// depth costs nothing here) is still rejected, not silently truncated.
+func TestResolve_TopLevelWorkflowInputForwardingIntFromNonIntegralFloat64Errors(t *testing.T) {
+	cluster := testCluster(t)
+	componentYAML := `
+inputs:
+  reps: { type: int }
+jobs:
+  run:
+    steps:
+      - cmd: echo reps
+`
+	wf := testWorkflow(t, `
+jobs:
+  counter:
+    include: components/counter
+    inputs: { reps: "${{ inputs.reps }}" }
+`)
+	_, diags := include.Resolve(cluster, wf, include.Sources{Files: map[string][]byte{
+		"components/counter/component.yaml": []byte(componentYAML),
+	}}, map[string]any{"reps": 7.5})
+
+	require.True(t, diags.HasErrors(), "a non-integral float64 must still produce an error diagnostic")
+}
+
 func keys(m map[string]ast.Job) []string {
 	out := make([]string, 0, len(m))
 	for k := range m {
